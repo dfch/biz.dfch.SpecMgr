@@ -198,14 +198,25 @@ convention), so the ADR feature is placed within that, not alongside it:
   relevant.
 
 ## 10. Next steps
-1. Write Pydantic models for frontmatter and body, under `models/adr/` (§6).
-2. Implement parser (`markdown-it-py` token walk → structured model) and
-   renderer (structured model → exact markdown), alongside the models in
-   `models/adr/` (§6).
+1. **Done.** Pydantic models for frontmatter and body, under `models/adr/v1/`
+   (§6): `AdrFrontmatter`, `AdrBody`, `AdrOption`, `Adr`.
+2. **Done.** Parser (`models/adr/v1/parser.py`, `markdown-it-py` token walk →
+   structured model, `parse_adr`/`AdrParseError`) and renderer
+   (`models/adr/v1/renderer.py`, structured model → exact markdown,
+   `render_adr`), alongside the models in `models/adr/v1/` (§6).
 3. Implement the MCP tool wrappers listed in §8, under `tools/adr/` (§6),
-   and import that subpackage from `server.py`.
-4. Add a drift-check test: render(parse(file)) reproduces canonical form for
-   every existing ADR, and add golden-file tests for each section/edge case
-   (mandatory-deletion error, sentinel deletion, option add/remove/numbering-
-   gap, zero-options heading omission).
-5. Wire `validate_adr` into CI/pre-commit as well as the MCP tool.
+   and import that subpackage from `server.py`. **Not started.**
+4. **Partially done.** `tests/models/adr/v1/test_renderer.py` covers the
+   renderer's own concerns: a golden-file test for a fully-populated ADR,
+   per-field optional-section-omission tests, the zero-options
+   "Pros and Cons" heading omission, option numbering-gap preservation, and
+   a drift-check (`render(parse(file))` is a stable, idempotent fixed point)
+   against the real `adr-template-valid.md`/`adr-template-minimal-valid.md`
+   fixtures plus a constructed full ADR. Still outstanding, and blocked on
+   item 3: golden-file tests for mandatory-deletion error, sentinel
+   deletion, and option add/remove — those exercise `update_section`/
+   `option_*` tool semantics that don't exist yet.
+5. Wire `validate_adr` into CI/pre-commit as well as the MCP tool. **Not
+   started** (no `validate_adr` tool exists yet; today, "validation" is
+   simply `AdrFrontmatter`/`AdrBody`/`Adr`'s own Pydantic validators running
+   during `parse_adr`, per §7).

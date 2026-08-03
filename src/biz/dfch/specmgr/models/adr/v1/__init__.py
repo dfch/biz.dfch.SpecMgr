@@ -32,6 +32,7 @@ from .body import AdrBody
 from .frontmatter import AdrFrontmatter
 from .option import AdrOption
 from .parser import AdrParseError, parse_adr
+from .renderer import render_adr
 
 __all__ = [
     "CURRENT_SCHEMA_VERSION",
@@ -42,4 +43,5 @@ __all__ = [
     "AdrOption",
     "AdrParseError",
     "parse_adr",
+    "render_adr",
 ]

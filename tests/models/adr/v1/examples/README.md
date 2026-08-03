@@ -19,3 +19,10 @@ These are unfilled placeholder templates, not real ADRs -- see
 `test_examples.py` for which ones are expected to parse successfully as-is
 versus raise `AdrParseError`/`pydantic.ValidationError` because a mandatory
 section, or `status`, still holds template placeholder text.
+
+## Renderer golden file
+
+`adr-full-golden.md` is a project-authored fixture (not a MADR upstream
+file, so it carries no third-party license note): the exact, byte-for-byte
+markdown that `render_adr` must produce for the fully-populated `Adr` built
+by `_full_adr()` in `test_renderer.py`'s `TestRenderAdrGoldenFile`.

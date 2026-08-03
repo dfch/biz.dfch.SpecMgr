@@ -29,9 +29,11 @@ See ``doc/adr-tool-plan.md`` §3-§6 for the design this package implements:
 - :func:`parse_adr` -- parses an on-disk ``.md`` file's text into an
   :class:`Adr` (plan §7/§10 item 2); :class:`AdrParseError` is its
   structural-error type (see ``v1.parser`` for the full parse-error split).
+- :func:`render_adr` -- renders an :class:`Adr` back into the canonical
+  on-disk ``.md`` text (plan §7/§10 item 2, the other half of the
+  parse/render pipeline).
 
-The renderer (the other half of plan §10 item 2) and the MCP tool wrappers
-(item 3) are separate, later steps.
+The MCP tool wrappers (plan §10 item 3) are a separate, later step.
 
 **Schema versioning (plan §6):** every model class lives under a ``vN``
 sibling package (currently only :mod:`.v1`), one per *major* schema
@@ -54,6 +56,7 @@ from .v1 import (
     AdrOption,
     AdrParseError,
     parse_adr,
+    render_adr,
 )
 
 # NOTE: mirrors v1.__all__ verbatim (this package always re-exports
@@ -69,4 +72,5 @@ __all__ = [
     "AdrOption",
     "AdrParseError",
     "parse_adr",
+    "render_adr",
 ]

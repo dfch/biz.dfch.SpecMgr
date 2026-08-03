@@ -20,6 +20,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `biz-dfch-asdste100mcp`'s dual-transport entry point.
 - `specmgr://version` MCP resource returning the installed
   `biz-dfch-specmgr` package version, plus the backing `VersionInfo` model.
+- ADR (Architecture Decision Record) schema, version 1, under
+  `src/biz/dfch/specmgr/models/adr/v1/` (see `doc/adr-tool-plan.md` for the
+  full design): Pydantic models `AdrFrontmatter`, `AdrBody`, `AdrOption`,
+  and `Adr`, covering the MADR 4.0.0-derived frontmatter block and body
+  sections, including the dynamic `### Option N: {title}` collection
+  backing the derived `## Pros and Cons of the Options` section.
+- `parse_adr`/`AdrParseError` (`models/adr/v1/parser.py`): parses an
+  on-disk ADR `.md` file's frontmatter and body into an `Adr`, using
+  `python-frontmatter` for the YAML block and a `markdown-it-py` token
+  walk to map fixed headings onto model fields.
+- `render_adr` (`models/adr/v1/renderer.py`): renders an `Adr` back into
+  the canonical MADR-derived markdown text, completing the
+  parse → validate → render pipeline — always regenerating the full file
+  deterministically, omitting optional sections whose field is unset, and
+  emitting the derived `## Pros and Cons of the Options` container iff at
+  least one option exists.
 
 ### Changed
 
