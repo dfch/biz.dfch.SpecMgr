@@ -304,20 +304,31 @@ and avoiding any server-side cache/staleness problem:
      parse, no cache, per §9a), `AdrNotFoundError`.
    - `tools/adr/_io.py`: `read_adr`/`write_adr`/`load_by_id` — thin
      `parse_adr`/`render_adr` + file I/O wrappers.
-   - `tools/adr/tools.py`: the 11 `@mcp.tool()` wrappers from §8's list
-     (`get_adr`, `create_adr`, `update_frontmatter`, `update_section`,
-     `set_status`, `option_list`/`option_create`/`option_read`/
-     `option_update`/`option_delete`, `validate_adr`), each doing the
-     re-read/re-parse/mutate/re-render/re-write cycle per call, imported
-     from `server.py`.
+   - `tools/adr/`: the 11 `@mcp.tool()` wrappers from §8's list (`get_adr`,
+     `create_adr`, `update_frontmatter`, `update_section`, `set_status`,
+     `option_list`/`option_create`/`option_read`/`option_update`/
+     `option_delete`, `validate_adr`), each doing the
+     re-read/re-parse/mutate/re-render/re-write cycle per call. **Split one
+     tool per module** (`get_adr.py`, `create_adr.py`, `update_frontmatter.py`,
+     `update_section.py`, `set_status.py`, `option_create.py`,
+     `option_update.py`, `option_read.py`, `option_delete.py`,
+     `option_list.py`, `validate_adr.py`) rather than a single `tools.py` —
+     `tools/adr/__init__.py` re-exports all 11 so `from biz.dfch.specmgr.tools
+     import adr` (imported from `server.py`) still registers every
+     `@mcp.tool()` decorator in one side-effecting import.
    - `resources/adr.py`: `specmgr://adr/list` resource (§9a), skipping
      unparseable files rather than failing the whole listing, plus the
      `specmgr://adr/{id}` template resource (`adr_get`) added afterward as
      a resource-based counterpart to the `get_adr` tool (§9a).
-   - Covered by `tests/tools/adr/test_paths.py`, `test_io.py`,
-     `test_tools.py`, and `tests/resources/test_adr.py` — end-to-end
-     through real temp-directory file I/O, not mocks. Full suite (143
-     tests), `ruff format --check`, and `ruff check` all pass.
+   - Covered by `tests/tools/adr/test_paths.py`, `test_io.py`, and one
+     `test_*.py` per tool module (`test_get_adr.py`, `test_create_adr.py`,
+     `test_update_frontmatter.py`, `test_update_section.py`,
+     `test_set_status.py`, `test_option_create.py`, `test_option_update.py`,
+     `test_option_read.py`, `test_option_delete.py`, `test_option_list.py`,
+     `test_validate_adr.py`, mirroring the one-tool-per-module split above),
+     plus `tests/resources/test_adr.py` — end-to-end through real
+     temp-directory file I/O, not mocks. Full suite (143 tests),
+     `ruff format --check`, and `ruff check` all pass.
 5. **Done.** `tests/models/adr/v1/test_renderer.py` covers the renderer's own
    concerns: a golden-file test for a fully-populated ADR, per-field
    optional-section-omission tests, the zero-options "Pros and Cons" heading
@@ -329,11 +340,35 @@ and avoiding any server-side cache/staleness problem:
    previously-blocked cases — mandatory-deletion error, sentinel deletion,
    and option add/remove/numbering-gap — are covered by item 3's
    `test_mutations.py`; the end-to-end tool-layer counterparts (same
-   behavior through actual file I/O) are covered by item 4's
-   `tests/tools/adr/test_tools.py`.
+   behavior through actual file I/O) are covered by item 4's per-tool test
+   modules under `tests/tools/adr/`.
 6. Wire `validate_adr` into CI/pre-commit. **Partially done** — the
    `validate_adr` MCP tool now exists (item 4: re-reads/re-parses by id,
    letting the models' own Pydantic validators run, per §7, propagating
    `AdrParseError`/`ValidationError` on failure). **Not yet done:** a
    corresponding `commands/` CLI command and a CI/pre-commit hook that calls
    it over every ADR file, independent of the MCP server.
+7. **Done.** `server.json` (repo root) — the MCP Registry publisher manifest
+   (`https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json`),
+   validated against the official draft `server.schema.json`. Models the
+   `pypi` package `biz-dfch-specmgr` and encodes the exact invocation already
+   documented in `README.md`'s "Add to OpenCode" section —
+   `uvx --from biz-dfch-specmgr[mcp] python -m biz.dfch.specmgr mcp` — via
+   `runtimeArguments` (`--from biz-dfch-specmgr[mcp]`, then `python`) plus
+   `packageArguments` (`-m biz.dfch.specmgr mcp`), rather than the package's
+   own `specmgr` console-script entry point, since the entry-point name
+   doesn't match the PyPI package name and `uvx <package>` alone would try to
+   run a script called `biz-dfch-specmgr`. Declares the four `commands/mcp.py`
+   environment variables (`SPECMGR_MCP_TRANSPORT`/`_HOST`/`_PORT`) plus
+   `SPECMGR_ADR_DIR` (§9a) so registry clients can surface/configure them.
+   `name` is `io.github.dfch/biz.dfch.specmgr`, matching this repo's verified
+   GitHub namespace (`github.com/dfch`); `repository.id` is the numeric
+   GitHub repo id (`1321701564`, from `gh api repos/dfch/biz.dfch.SpecMgr
+   --jq '.id'`), per the schema's repository-resurrection-detection guidance.
+   **Not yet done / blocked:** the package isn't published to PyPI yet (no
+   `publish.yml`, see `README.md`'s "Make a Release" note), so `server.json`
+   can't actually be submitted to the official registry (`mcp-publisher`)
+   until a first PyPI release exists for the registry to verify ownership
+   of — `version` in `server.json` must be bumped in lockstep with
+   `pyproject.toml`'s `version` from that point on (same discipline as
+   `CHANGELOG.md`, see `AGENTS.md`).

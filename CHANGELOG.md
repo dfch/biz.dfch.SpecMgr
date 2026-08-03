@@ -43,6 +43,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   mandatory-section rejection (`AdrSectionError`), and option lookup-by-title
   with not-found reporting (`AdrOptionNotFoundError`) — ahead of the
   file-I/O-backed MCP tool wrappers.
+- Server-assigned `id` field on `AdrFrontmatter` (`models/adr/v1/frontmatter.py`,
+  rendered by `renderer.py` immediately before `version`) and the new
+  `AdrSummary` model (`models/adr/v1/summary.py`: id/title/status/filename),
+  re-exported through `models/adr/__init__.py` and `models/__init__.py`
+  (plan §9a).
+- `tools/adr/` MCP tool wrappers (plan §8, §9a), each doing a
+  re-read/re-parse/mutate/re-render/re-write cycle against the on-disk `.md`
+  file (no in-memory cache): `get_adr`, `create_adr`, `update_frontmatter`,
+  `update_section`, `set_status`, `option_list`, `option_create`,
+  `option_read`, `option_update`, `option_delete`, and `validate_adr`.
+  Backed by `tools/adr/_paths.py` (`SPECMGR_ADR_DIR` env var, default
+  `docs/adr`; id → file-path resolution via directory scan, `slugify`,
+  `AdrNotFoundError`) and `tools/adr/_io.py` (`read_adr`/`write_adr`/
+  `load_by_id`).
+- `specmgr://adr/list` and `specmgr://adr/{id}` MCP resources
+  (`resources/adr_list.py`, `resources/adr_get.py`) — read-only,
+  no-tool-round-trip counterparts of the ADR listing/`get_adr` tool,
+  matching the existing `specmgr://version` resource convention. A file
+  that fails to parse is skipped by `adr_list` rather than failing the
+  whole listing.
+- `server.json` (repo root): the MCP Registry publisher manifest, modeling
+  the `biz-dfch-specmgr` `pypi` package and its `uvx --from
+  biz-dfch-specmgr[mcp] python -m biz.dfch.specmgr mcp` invocation (see
+  `README.md`'s "Add to OpenCode" section). Not yet publishable to the
+  official registry — that requires a first PyPI release (see "Make a
+  Release" in `README.md`).
 
 ### Changed
 
@@ -51,3 +77,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   on the Typer `app` in `cli.py` via `app.command()(fn)`, mirroring the
   `commands/` package layout used by sibling projects (e.g.
   `biz-dfch-asdste100vocab`).
+- Split `tools/adr/tools.py`'s 11 `@mcp.tool()` wrappers into one module
+  per tool (`get_adr.py`, `create_adr.py`, `update_frontmatter.py`,
+  `update_section.py`, `set_status.py`, `option_create.py`,
+  `option_update.py`, `option_read.py`, `option_delete.py`,
+  `option_list.py`, `validate_adr.py`), re-exported unchanged through
+  `tools/adr/__init__.py`.

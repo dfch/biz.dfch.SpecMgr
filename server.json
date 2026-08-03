@@ -1,0 +1,79 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.dfch/biz.dfch.specmgr",
+  "title": "SpecMgr",
+  "description": "An artifact manager for system specifications.",
+  "websiteUrl": "https://github.com/dfch/biz.dfch.SpecMgr#readme",
+  "repository": {
+    "url": "https://github.com/dfch/biz.dfch.SpecMgr",
+    "source": "github",
+    "id": "1321701564"
+  },
+  "version": "0.1.0",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "registryBaseUrl": "https://pypi.org",
+      "identifier": "biz-dfch-specmgr",
+      "version": "0.1.0",
+      "runtimeHint": "uvx",
+      "transport": {
+        "type": "stdio"
+      },
+      "runtimeArguments": [
+        {
+          "type": "named",
+          "name": "--from",
+          "value": "biz-dfch-specmgr[mcp]",
+          "description": "Install with the 'mcp' extra so the MCP server dependencies (mcp SDK) are available; the base package alone has no MCP support."
+        },
+        {
+          "type": "positional",
+          "value": "python"
+        }
+      ],
+      "packageArguments": [
+        {
+          "type": "positional",
+          "value": "-m"
+        },
+        {
+          "type": "positional",
+          "value": "biz.dfch.specmgr"
+        },
+        {
+          "type": "positional",
+          "value": "mcp"
+        }
+      ],
+      "environmentVariables": [
+        {
+          "name": "SPECMGR_MCP_TRANSPORT",
+          "description": "Transport mode for the MCP server.",
+          "default": "stdio",
+          "choices": [
+            "stdio",
+            "sse"
+          ]
+        },
+        {
+          "name": "SPECMGR_MCP_HOST",
+          "description": "Bind address, SSE transport only.",
+          "default": "localhost"
+        },
+        {
+          "name": "SPECMGR_MCP_PORT",
+          "description": "TCP port, SSE transport only.",
+          "default": "8000",
+          "format": "number"
+        },
+        {
+          "name": "SPECMGR_ADR_DIR",
+          "description": "Base directory scanned for Architecture Decision Record (.md) files.",
+          "default": "docs/adr",
+          "format": "filepath"
+        }
+      ]
+    }
+  ]
+}

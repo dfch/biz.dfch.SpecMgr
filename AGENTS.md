@@ -2,16 +2,41 @@
 
 Quick reference for OpenCode agents working on **biz.dfch.SpecMgr** — an artifact manager for system specifications.
 
-## Status: early scaffolding
+## Status: first domain feature (ADR tooling) implemented
 
-No domain model, tools, or CLI commands exist yet beyond placeholders
-(`specmgr version`, an unwired MCP server object). Don't assume any
-`models/`, `tools/`, or `resources/` sub-packages exist — check first.
+The ADR (Architecture Decision Record) feature described in
+`doc/adr-tool-plan.md` is now implemented end-to-end and is the only domain
+feature that exists — everything else is still scaffolding. Concretely:
 
-`doc/adr-tool-plan.md` and `doc/session-ses_038f-adr-tool-plan.md` are a
-design doc + raw planning-session log for a *future* ADR-editing MCP tool.
-Nothing in `src/` implements it yet — treat as background reading only,
-not as a description of current code.
+- `models/adr/v1/` — Pydantic schema (`AdrFrontmatter`, `AdrBody`,
+  `AdrOption`, `Adr`), parser (`parse_adr`), renderer (`render_adr`), and
+  pure in-memory mutation functions (`update_section`, `set_status`,
+  `option_*`), re-exported as "current" via `models/adr/__init__.py` and
+  `models/__init__.py`.
+- `tools/adr/` — 11 `@mcp.tool()` wrappers, one module per tool (`get_adr`,
+  `create_adr`, `update_frontmatter`, `update_section`, `set_status`,
+  `option_list`/`option_create`/`option_read`/`option_update`/
+  `option_delete`, `validate_adr`), plus `_paths.py`/`_io.py` for the
+  id → file-path resolution and file I/O (no in-memory cache — the `.md`
+  file on disk is the sole source of truth, re-read on every call).
+- `resources/adr_list.py`/`adr_get.py` — the `specmgr://adr/list` and
+  `specmgr://adr/{id}` MCP resources (read-only counterparts of the above).
+- 143 passing tests under `tests/models/adr/`, `tests/tools/adr/`,
+  `tests/resources/`.
+
+Still genuinely missing / not yet done (don't assume otherwise):
+- No `commands/` CLI subcommand for ADRs yet (no `specmgr adr ...`) — the
+  ADR feature is MCP-only so far.
+- No CI/pre-commit hook runs `validate_adr` over the repo's own ADRs.
+- No second document type (`req`/`uc`) exists yet, despite `models/adr/`'s
+  layout being designed to generalize to them (see `doc/adr-tool-plan.md`
+  §6).
+
+`doc/adr-tool-plan.md` §10 ("Next steps") tracks per-item done/not-done
+status and should be kept in sync with `src/` as this evolves; treat it as
+current-state tracking, not just a historical design doc. Don't assume any
+other `models/`, `tools/`, or `resources/` sub-package exists beyond `adr`/
+`version_info` (models) and `adr`/`version` (resources/tools) — check first.
 
 ## Project Shape
 
