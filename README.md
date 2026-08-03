@@ -1,2 +1,3 @@
-# biz.dfch.spec-mgr
+# biz.dfch.SpecMgr
+
 An artifact manager for system specifications.
