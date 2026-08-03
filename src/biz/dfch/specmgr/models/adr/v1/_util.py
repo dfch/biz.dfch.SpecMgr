@@ -19,6 +19,23 @@
 
 from __future__ import annotations
 
+import re
+
+#: The schema major version this ``v1`` package implements. Matches this
+#: package's folder name (plan §6) and is the value every
+#: ``AdrFrontmatter.version`` produced by this package must share the major
+#: component with -- a ``v1.AdrFrontmatter`` can never legitimately carry a
+#: ``"2.x.x"`` version.
+SCHEMA_MAJOR_VERSION = 1
+
+#: The current, default schema version for newly created v1 documents.
+#: Bump the minor/patch component here for non-breaking schema evolutions
+#: that don't warrant a new ``vN`` package (plan §6); only a breaking change
+#: gets a new major version, hence a new sibling package.
+CURRENT_SCHEMA_VERSION = f"{SCHEMA_MAJOR_VERSION}.0.0"
+
+_SEMVER_PATTERN = re.compile(r"^(?P<major>\d+)\.\d+\.\d+$")
+
 
 def blank_to_none(value: str | None) -> str | None:
     """Normalize a blank/whitespace-only string to ``None``.
@@ -31,4 +48,26 @@ def blank_to_none(value: str | None) -> str | None:
         return None
     if isinstance(value, str) and not value.strip():
         return None
+    return value
+
+
+def validate_schema_version(value: str) -> str:
+    """Validate a schema version string against this package's major version.
+
+    ``value`` must be a ``major.minor.patch`` string whose major component
+    equals :data:`SCHEMA_MAJOR_VERSION`. Used by ``AdrFrontmatter.version``
+    (plan §3/§6) -- this schema-tracking field is a specmgr-only extension
+    to the frontmatter block, not part of the MADR standard, kept alongside
+    the MADR-defined keys (``status``, ``date``, ...) purely so it survives
+    the parse/render round-trip of the on-disk ``.md`` file.
+    """
+    match = _SEMVER_PATTERN.match(value)
+    if not match:
+        raise ValueError(f"version must be 'major.minor.patch', got {value!r}")
+    major = int(match.group("major"))
+    if major != SCHEMA_MAJOR_VERSION:
+        raise ValueError(
+            f"version {value!r} has major component {major}, "
+            f"but models.adr.v1 only accepts major version {SCHEMA_MAJOR_VERSION}"
+        )
     return value

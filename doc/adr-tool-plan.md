@@ -29,6 +29,12 @@ Heading structure:
 - `status`: `Literal["proposed","rejected","accepted","deprecated"]` **or** a
   string matching `^superseded by .+$` (not a plain enum)
 - `date`, `decision-makers`, `consulted`, `informed`: all optional
+- `version`: **specmgr-only extension key, not part of the MADR 4.0.0
+  standard.** A `major.minor.patch` string (default `CURRENT_SCHEMA_VERSION`,
+  currently `"1.0.0"`), kept alongside the MADR-defined keys above purely so
+  the schema version round-trips through the on-disk file's YAML block (§7's
+  parse/render pipeline never persists anything outside frontmatter/body).
+  Lives on `AdrFrontmatter`, not on the `Adr` wrapper — see §6.
 - Update contract: **whole object, full replace only** — no partial/sentinel
   mechanism needed (omitting a key from the submitted object is how you drop it)
 
@@ -105,10 +111,13 @@ convention), so the ADR feature is placed within that, not alongside it:
     schema" import from `models.adr` directly and never need to know the
     version number; code that specifically needs an older version (e.g. a
     migration step) imports `models.adr.v1` (or `.v2`, ...) explicitly.
-    `Adr.version` is a `major.minor.patch` string (default
-    `CURRENT_SCHEMA_VERSION`), and each `vN.Adr` rejects any `version` whose
-    major component doesn't match its own `SCHEMA_MAJOR_VERSION` — a
-    `v1.Adr` can never carry `"2.x.x"`.
+    `AdrFrontmatter.version` is a `major.minor.patch` string (default
+    `CURRENT_SCHEMA_VERSION`), and each `vN.AdrFrontmatter` rejects any
+    `version` whose major component doesn't match its own
+    `SCHEMA_MAJOR_VERSION` — a `v1.AdrFrontmatter` can never carry
+    `"2.x.x"`. It lives on the frontmatter, not on the `Adr` wrapper class,
+    because only `frontmatter`/`body` are ever persisted to the on-disk
+    `.md` file (§7); a field on `Adr` itself would never round-trip.
     A **new major version does not duplicate the whole `vN` tree.** A
     breaking schema change gets a new `models/adr/v2/` package containing
     *only* the classes that actually changed; unchanged classes are

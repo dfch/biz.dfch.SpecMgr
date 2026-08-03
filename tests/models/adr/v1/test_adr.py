@@ -21,7 +21,7 @@ import unittest
 
 from pydantic import ValidationError
 
-from biz.dfch.specmgr.models import CURRENT_SCHEMA_VERSION, SCHEMA_MAJOR_VERSION, Adr, AdrBody, AdrFrontmatter
+from biz.dfch.specmgr.models import Adr, AdrBody, AdrFrontmatter
 
 
 def _make_body() -> AdrBody:
@@ -41,33 +41,6 @@ class TestAdr(unittest.TestCase):
         adr = Adr(frontmatter=AdrFrontmatter(status="accepted"), body=_make_body())
         self.assertEqual(adr.frontmatter.status, "accepted")
         self.assertEqual(adr.body.title, "A title")
-
-    def test_version_defaults_to_current_schema_version(self):
-        """Omitting version must default to CURRENT_SCHEMA_VERSION."""
-        adr = Adr(frontmatter=AdrFrontmatter(status="accepted"), body=_make_body())
-        self.assertEqual(adr.version, CURRENT_SCHEMA_VERSION)
-        self.assertEqual(adr.version, f"{SCHEMA_MAJOR_VERSION}.0.0")
-
-    def test_version_accepts_matching_major_with_different_minor_patch(self):
-        """A version with the same major but a different minor/patch must be accepted."""
-        adr = Adr(
-            version=f"{SCHEMA_MAJOR_VERSION}.4.2", frontmatter=AdrFrontmatter(status="accepted"), body=_make_body()
-        )
-        self.assertEqual(adr.version, f"{SCHEMA_MAJOR_VERSION}.4.2")
-
-    def test_version_rejects_mismatched_major(self):
-        """A version whose major component doesn't match this package's must be rejected."""
-        with self.assertRaises(ValidationError):
-            Adr(
-                version=f"{SCHEMA_MAJOR_VERSION + 1}.0.0",
-                frontmatter=AdrFrontmatter(status="accepted"),
-                body=_make_body(),
-            )
-
-    def test_version_rejects_non_semver_string(self):
-        """A malformed version string must be rejected."""
-        with self.assertRaises(ValidationError):
-            Adr(version="not-a-version", frontmatter=AdrFrontmatter(status="accepted"), body=_make_body())
 
     def test_accepts_nested_dicts(self):
         """Adr must validate nested plain dicts into the right sub-models."""

@@ -19,11 +19,13 @@
 
 See ``doc/adr-tool-plan.md`` §3-§6 for the design this package implements:
 
-- :class:`AdrFrontmatter` -- the YAML frontmatter block (plan §3).
+- :class:`AdrFrontmatter` -- the YAML frontmatter block (plan §3), including
+  the specmgr schema version (``version``, a specmgr-only extension key,
+  not part of the MADR 4.0.0 standard).
 - :class:`AdrBody` -- the whole-section body fields (plan §4) plus the
   dynamic :class:`AdrOption` collection (plan §5).
 - :class:`AdrOption` -- one ``### Option N: {title}`` sub-section.
-- :class:`Adr` -- a full ADR document (schema version + frontmatter + body).
+- :class:`Adr` -- a full ADR document (frontmatter + body).
 
 This subpackage holds only the schema itself; the parser/renderer and the
 MCP tool wrappers are separate, later steps (plan §10, items 2-3).
@@ -31,7 +33,8 @@ MCP tool wrappers are separate, later steps (plan §10, items 2-3).
 **Schema versioning (plan §6):** every model class lives under a ``vN``
 sibling package (currently only :mod:`.v1`), one per *major* schema
 version -- see :data:`SCHEMA_MAJOR_VERSION`/``CURRENT_SCHEMA_VERSION`` in
-``v1.adr``. The names re-exported here always point at the current
+``v1._util``, and ``AdrFrontmatter.version`` in ``v1.frontmatter``. The
+names re-exported here always point at the current
 version's classes, so ``from biz.dfch.specmgr.models.adr import Adr``
 tracks whichever ``vN`` is current without callers needing to know the
 version number -- callers that specifically need an older version's

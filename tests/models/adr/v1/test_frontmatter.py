@@ -21,11 +21,32 @@ import unittest
 
 from pydantic import ValidationError
 
-from biz.dfch.specmgr.models import AdrFrontmatter
+from biz.dfch.specmgr.models import CURRENT_SCHEMA_VERSION, SCHEMA_MAJOR_VERSION, AdrFrontmatter
 
 
 class TestAdrFrontmatter(unittest.TestCase):
     """Tests for the AdrFrontmatter Pydantic model."""
+
+    def test_version_defaults_to_current_schema_version(self):
+        """Omitting version must default to CURRENT_SCHEMA_VERSION."""
+        frontmatter = AdrFrontmatter(status="accepted")
+        self.assertEqual(frontmatter.version, CURRENT_SCHEMA_VERSION)
+        self.assertEqual(frontmatter.version, f"{SCHEMA_MAJOR_VERSION}.0.0")
+
+    def test_version_accepts_matching_major_with_different_minor_patch(self):
+        """A version with the same major but a different minor/patch must be accepted."""
+        frontmatter = AdrFrontmatter(status="accepted", version=f"{SCHEMA_MAJOR_VERSION}.4.2")
+        self.assertEqual(frontmatter.version, f"{SCHEMA_MAJOR_VERSION}.4.2")
+
+    def test_version_rejects_mismatched_major(self):
+        """A version whose major component doesn't match this package's must be rejected."""
+        with self.assertRaises(ValidationError):
+            AdrFrontmatter(status="accepted", version=f"{SCHEMA_MAJOR_VERSION + 1}.0.0")
+
+    def test_version_rejects_non_semver_string(self):
+        """A malformed version string must be rejected."""
+        with self.assertRaises(ValidationError):
+            AdrFrontmatter(status="accepted", version="not-a-version")
 
     def test_accepts_each_fixed_status(self):
         """Each of the four fixed status values must be accepted."""

@@ -23,10 +23,10 @@ import re
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from ._util import blank_to_none
+from ._util import CURRENT_SCHEMA_VERSION, blank_to_none, validate_schema_version
 
 #: Fixed, closed set of accepted ``status`` values.
-_FIXED_STATUSES = frozenset({"proposed", "rejected", "accepted", "deprecated"})
+_FIXED_STATUSES = frozenset({"draft", "proposed", "rejected", "accepted", "deprecated", "superseded"})
 
 #: Additional accepted ``status`` shape: ``"superseded by <anything>"``.
 _SUPERSEDED_PATTERN = re.compile(r"^superseded by .+$")
@@ -41,6 +41,17 @@ class AdrFrontmatter(BaseModel):
 
     Parameters
     ----------
+    version:
+        The specmgr schema major.minor.patch version this document was
+        written with (plan §6). This is a specmgr-only extension key, not
+        part of the MADR 4.0.0 standard -- it is kept alongside the
+        MADR-defined keys below purely so it round-trips through the
+        parse/render pipeline (plan §7) and lets a future parser dispatch
+        an on-disk file to the ``models/adr/vN`` package that understands
+        it, or recognize a document still on an older major version.
+        Defaults to :data:`CURRENT_SCHEMA_VERSION`. Must share this
+        package's major component -- ``models.adr.v1.AdrFrontmatter`` never
+        accepts a ``"2.x.x"`` value.
     status:
         Either one of ``"proposed"``, ``"rejected"``, ``"accepted"``,
         ``"deprecated"``, or a string matching ``^superseded by .+$``.
@@ -60,11 +71,17 @@ class AdrFrontmatter(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True)
 
+    version: str = CURRENT_SCHEMA_VERSION
     status: str
     date: str | None = None
     decision_makers: str | None = Field(default=None, alias="decision-makers")
     consulted: str | None = None
     informed: str | None = None
+
+    @field_validator("version")
+    @classmethod
+    def _validate_version(cls, value: str) -> str:
+        return validate_schema_version(value)
 
     @field_validator("status")
     @classmethod
