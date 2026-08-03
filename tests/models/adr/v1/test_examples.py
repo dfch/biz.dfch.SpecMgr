@@ -112,10 +112,16 @@ class TestMadrExampleTemplates(unittest.TestCase):
         md = result.body
         self.assertEqual(md.title, "Arbitrary short title")
         self.assertEqual(md.context_and_problem_statement, "This is the problem statement.")
-        self.assertEqual(md.decision_drivers, """* Driver 1
-* Driver 2""")
-        self.assertEqual(md.considered_options, """* Considered Option 1
-* Considered Option 2""")
+        self.assertEqual(
+            md.decision_drivers,
+            """* Driver 1
+* Driver 2""",
+        )
+        self.assertEqual(
+            md.considered_options,
+            """* Considered Option 1
+* Considered Option 2""",
+        )
         self.assertEqual(md.decision_outcome, "This is the decision outcome.")
         self.assertEqual(md.consequences, "All the consequences.")
         self.assertEqual(md.confirmation, "This is the confirmation.")
@@ -132,5 +138,7 @@ class TestMadrExampleTemplates(unittest.TestCase):
         self.assertEqual(o2.content, "This is Option 3. There is no Option 2.")
 
         self.assertEqual(md.more_information, "And here is some more information.")
+
+
 if __name__ == "__main__":
     unittest.main()
