@@ -25,6 +25,7 @@ from .adr import (
     AdrFrontmatter,
     AdrOption,
     AdrParseError,
+    AdrSummary,
     parse_adr,
 )
 from .version_info import VersionInfo
@@ -37,6 +38,7 @@ __all__ = [
     "AdrFrontmatter",
     "AdrOption",
     "AdrParseError",
+    "AdrSummary",
     "VersionInfo",
     "parse_adr",
 ]

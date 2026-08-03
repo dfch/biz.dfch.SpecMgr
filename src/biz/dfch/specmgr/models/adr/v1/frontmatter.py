@@ -41,6 +41,15 @@ class AdrFrontmatter(BaseModel):
 
     Parameters
     ----------
+    id:
+        The specmgr-assigned document identifier (a server-generated UUID
+        string), used to resolve ``id -> file path`` (plan §9a). This is a
+        specmgr-only extension key, not part of the MADR 4.0.0 standard --
+        assigned once by ``create_adr`` and never reassigned. Optional
+        (``str | None = None``, default ``None``), the same non-breaking-
+        addition pattern used for ``version`` below, so existing/hand-
+        authored files without an ``id`` still parse successfully; they are
+        just not addressable via id-based tools until one is assigned.
     version:
         The specmgr schema major.minor.patch version this document was
         written with (plan §6). This is a specmgr-only extension key, not
@@ -79,6 +88,7 @@ class AdrFrontmatter(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True)
 
+    id: str | None = None
     version: str = CURRENT_SCHEMA_VERSION
     status: str = "draft"
     date: str | None = None

@@ -99,6 +99,16 @@ class TestAdrFrontmatter(unittest.TestCase):
         self.assertIsNone(frontmatter.consulted)
         self.assertIsNone(frontmatter.informed)
 
+    def test_id_defaults_to_none(self):
+        """id must default to None -- existing/hand-authored files without one still parse."""
+        frontmatter = AdrFrontmatter(status="accepted")
+        self.assertIsNone(frontmatter.id)
+
+    def test_id_accepts_explicit_string(self):
+        """id must accept an explicit string, e.g. the UUID create_adr assigns."""
+        frontmatter = AdrFrontmatter(status="accepted", id="11111111-1111-1111-1111-111111111111")
+        self.assertEqual(frontmatter.id, "11111111-1111-1111-1111-111111111111")
+
 
 if __name__ == "__main__":
     unittest.main()

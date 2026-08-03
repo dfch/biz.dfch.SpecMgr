@@ -35,8 +35,16 @@ Heading structure:
   the schema version round-trips through the on-disk file's YAML block (§7's
   parse/render pipeline never persists anything outside frontmatter/body).
   Lives on `AdrFrontmatter`, not on the `Adr` wrapper — see §6.
+- `id`: **specmgr-only extension key, not part of the MADR 4.0.0 standard,
+  added per §9a.** `str | None`, default `None`. Server-assigned UUID,
+  system-owned (never settable/changeable by the LLM through the normal
+  frontmatter full-replace contract below — `create_adr`/`update_frontmatter`
+  always re-inject the correct value regardless of what is submitted). `None`
+  only for pre-existing/hand-authored files that predate this field; such a
+  file is not addressable by any `id`-taking tool until one is assigned.
 - Update contract: **whole object, full replace only** — no partial/sentinel
-  mechanism needed (omitting a key from the submitted object is how you drop it)
+  mechanism needed (omitting a key from the submitted object is how you drop
+  it) — **except `id`, which is never part of the replace, see §9a.**
 
 ## 4. Body schema — whole-section fields
 Each is independently full-replace via a generic `update_section(key, value)`
@@ -146,12 +154,14 @@ convention), so the ADR feature is placed within that, not alongside it:
     and rejected: it invites drift, since an unrelated bugfix would have to
     be manually ported to every historical folder.
 - **`tools/`** — MCP tool wrappers, one subdirectory per document type, e.g.
-  `tools/adr/` holds the `@mcp.tool()`-decorated wrappers (`list_adrs`,
-  `get_adr`, `create_adr`, `update_section`, `option_*`, `validate_adr`, ...)
-  that call into `models/adr/`. Each such subpackage must be imported at the
-  bottom of `server.py` (next to the existing `resources` import) or its
-  `@mcp.tool()` decorators never run — see the warning already in
-  `server.py`'s module docstring.
+  `tools/adr/` holds the `@mcp.tool()`-decorated wrappers (`get_adr`,
+  `create_adr`, `update_frontmatter`, `update_section`, `set_status`,
+  `option_*`, `validate_adr` — `list_adrs` is the one exception, implemented
+  as an MCP resource instead, see §9a) that call into `models/adr/`. Each such
+  subpackage must be imported at the bottom of `server.py` (next to the
+  existing `resources` import) or its `@mcp.tool()` decorators never run —
+  see the warning already in `server.py`'s module docstring. **Implemented**,
+  see §10 item 4.
 - **`commands/`** — one module per CLI command (existing convention, e.g.
   `commands/version.py`), extended with ADR commands that call the same
   `models/adr/` functions as the MCP tools do — CLI and MCP stay thin
@@ -187,7 +197,8 @@ convention), so the ADR feature is placed within that, not alongside it:
     doesn't exist) for the write path
 
 ## 8. MCP tool surface (Python MCP SDK)
-- `list_adrs()` — ids/titles/status for context
+- `list_adrs()` — ids/titles/status for context. **Implemented as an MCP
+  resource (`specmgr://adr/list`), not a `@mcp.tool()` — see §9a.**
 - `get_adr(id)` → structured object (frontmatter + body, not raw markdown)
 - `create_adr(frontmatter, body_fields)` → validates, assigns id/filename,
   renders, writes
@@ -204,9 +215,67 @@ convention), so the ADR feature is placed within that, not alongside it:
 ## 9. Open backlog items (non-blocking)
 - Possible future skill/tool to auto-summarize `Option` titles into
   `Considered Options` (explicitly not required now, drift accepted).
-- Whether `create_adr` needs a configurable numbering/filename scheme (e.g.
-  `NNNN-slug.md`) — not yet discussed, flag before implementation if
-  relevant.
+- ~~Whether `create_adr` needs a configurable numbering/filename scheme~~
+  **Resolved, see §9a.**
+
+## 9a. id/filename scheme and in-memory state (resolved)
+
+Prompted by a design question: since `models/adr/v1/mutations.py` functions
+take/return a whole in-memory `Adr`, but MCP tools (§8) only ever receive an
+`id` string, does the MCP server need to cache parsed `Adr` objects in memory,
+keyed by id? **No** — resolved as follows, keeping §7's "the `.md` file is
+the sole source of truth, no assumption the tool is the sole writer" intact
+and avoiding any server-side cache/staleness problem:
+
+- **id:** a server-generated UUID (`str`), created once by `create_adr` and
+  never reassigned. Persisted as a new `id` field on `AdrFrontmatter`
+  (`models/adr/v1/frontmatter.py`) — optional (`str | None = None`, default
+  `None`), the same non-breaking-addition pattern already used for `version`
+  (§3/§6): existing/hand-authored files without an `id` still parse
+  successfully, they are just not addressable via id-based tools until one is
+  assigned. Rendered in `renderer.py`'s fixed frontmatter key order
+  immediately before `version` (both are specmgr-only extensions, kept
+  together after the MADR-defined keys).
+- **Filename:** `f"{id}-{slug}.md"`, where `slug` is derived from `title` at
+  `create_adr` time. There is no separate sequential `NNNN` counter — the
+  UUID *is* the filename's identifying prefix, so there is no
+  counter/race/gap-numbering concern (unlike the `Option` numbering in §5,
+  which intentionally does have one).
+- **id resolution (`id -> file path`):** every tool call scans the ADR base
+  directory (`*.md`), parses each file's frontmatter via `parse_adr`, and
+  matches on `frontmatter.id` — done fresh on every call, with **no
+  in-memory cache**. This is the direct consequence of §7's design: the
+  filesystem itself is the "memory" the LLM addresses by id, not the MCP
+  server process. At expected ADR-repo scale (dozens to low hundreds of
+  files) this is cheap enough; an id -> path cache was explicitly rejected
+  because invalidating it correctly against concurrent human edits would
+  reintroduce the exact staleness problem §7 avoids.
+- **Base directory config:** environment variable `SPECMGR_ADR_DIR`, default
+  `./docs/adr`. The MCP server is a long-running process with no CLI arg
+  parsing of its own for this (`commands/mcp.py` only configures
+  transport/host/port), so an env var is the natural channel; `commands/`
+  ADR CLI commands (future work) read the same variable for consistency
+  with the shared `models/adr/` implementation (ports-and-adapters, §6).
+- **Listing:** `list_adrs` (§8) is implemented as an MCP **resource**
+  (`specmgr://adr/list`, `@mcp.resource()`), not a `@mcp.tool()` — matching
+  this repo's existing `resources/` convention (`specmgr://version`) rather
+  than the generic `list_adrs()` tool name originally sketched in §8.
+- **By-id read:** `specmgr://adr/{id}` is a second, template resource
+  (`resources/adr.py`'s `adr_get`) alongside the `get_adr` MCP tool (§8) —
+  both expose the identical read (same `find_adr_path`/`load_by_id`
+  id-resolution, no cache), just through the two different MCP surfaces: the
+  tool for an explicit LLM-invoked call, the resource for a host that wants
+  to address a specific ADR as context (e.g. attach/subscribe) without a
+  tool round-trip. The MCP SDK used here (`mcp>=2.0.0`) supports RFC 6570
+  URI templates on `@mcp.resource()` — a `{param}` in the URI is
+  auto-matched against a same-named function parameter.
+- **`update_frontmatter`'s whole-object replace vs. the system-owned `id`:**
+  `update_frontmatter(id, frontmatter)` still takes a full `AdrFrontmatter`
+  per §3's "whole object, full replace" contract, but the tool wrapper always
+  re-injects the *resolved* id after reconstructing the model, ignoring
+  whatever `frontmatter.id` the caller submitted — the id is system-managed
+  and never changes via this tool, even though every other frontmatter key
+  follows normal full-replace semantics.
 
 ## 10. Next steps
 1. **Done.** Pydantic models for frontmatter and body, under `models/adr/v1/`
@@ -222,27 +291,49 @@ convention), so the ADR feature is placed within that, not alongside it:
    rejection (`AdrSectionError`) and not-found reporting
    (`AdrOptionNotFoundError`). Covered by
    `tests/models/adr/v1/test_mutations.py`. Deliberately excludes file I/O
-   and id/filename lookup, which stay `tools/adr/`'s job (item 4).
-4. Implement the MCP tool wrappers listed in §8, under `tools/adr/` (§6) —
-   thin file-I/O/id-lookup adapters over `models/adr/v1/mutations.py`
-   (item 3) plus `parse_adr`/`render_adr` (item 2) for the
-   re-read/re-parse/re-render/re-write cycle (§7) — and import that
-   subpackage from `server.py`. **Not started**, and `create_adr`/
-   `list_adrs`/`get_adr` are additionally blocked on the open id/filename
-   scheme (§9).
-5. **Partially done.** `tests/models/adr/v1/test_renderer.py` covers the
-   renderer's own concerns: a golden-file test for a fully-populated ADR,
-   per-field optional-section-omission tests, the zero-options
-   "Pros and Cons" heading omission, option numbering-gap preservation, and
-   a drift-check (`render(parse(file))` is a stable, idempotent fixed point)
-   against the real `adr-template-valid.md`/`adr-template-minimal-valid.md`
-   fixtures plus a constructed full ADR. The model-layer counterparts of the
+   and id/filename lookup, which was `tools/adr/`'s job (item 4, now done).
+4. **Done.** MCP tool wrappers under `tools/adr/` (§6), per the id/filename
+   scheme resolved in §9a:
+   - `models/adr/v1/frontmatter.py`/`renderer.py`: new `id` field (§3, §9a).
+   - `models/adr/v1/summary.py`: new `AdrSummary` model (id/title/status/
+     filename), re-exported through `models/adr/__init__.py` and
+     `models/__init__.py`.
+   - `tools/adr/_paths.py`: `adr_base_dir`/`ensure_adr_base_dir`
+     (`SPECMGR_ADR_DIR` env var, default `docs/adr`), `slugify`,
+     `iter_adr_paths`, `find_adr_path` (id → path via directory scan +
+     parse, no cache, per §9a), `AdrNotFoundError`.
+   - `tools/adr/_io.py`: `read_adr`/`write_adr`/`load_by_id` — thin
+     `parse_adr`/`render_adr` + file I/O wrappers.
+   - `tools/adr/tools.py`: the 11 `@mcp.tool()` wrappers from §8's list
+     (`get_adr`, `create_adr`, `update_frontmatter`, `update_section`,
+     `set_status`, `option_list`/`option_create`/`option_read`/
+     `option_update`/`option_delete`, `validate_adr`), each doing the
+     re-read/re-parse/mutate/re-render/re-write cycle per call, imported
+     from `server.py`.
+   - `resources/adr.py`: `specmgr://adr/list` resource (§9a), skipping
+     unparseable files rather than failing the whole listing, plus the
+     `specmgr://adr/{id}` template resource (`adr_get`) added afterward as
+     a resource-based counterpart to the `get_adr` tool (§9a).
+   - Covered by `tests/tools/adr/test_paths.py`, `test_io.py`,
+     `test_tools.py`, and `tests/resources/test_adr.py` — end-to-end
+     through real temp-directory file I/O, not mocks. Full suite (143
+     tests), `ruff format --check`, and `ruff check` all pass.
+5. **Done.** `tests/models/adr/v1/test_renderer.py` covers the renderer's own
+   concerns: a golden-file test for a fully-populated ADR, per-field
+   optional-section-omission tests, the zero-options "Pros and Cons" heading
+   omission, option numbering-gap preservation, the `id` emission-order/
+   omission-when-`None` behavior (§9a), and a drift-check (`render(parse(file))`
+   is a stable, idempotent fixed point) against the real
+   `adr-template-valid.md`/`adr-template-minimal-valid.md` fixtures plus a
+   constructed full ADR. The model-layer counterparts of the
    previously-blocked cases — mandatory-deletion error, sentinel deletion,
-   and option add/remove/numbering-gap — are now covered by item 3's
-   `test_mutations.py` instead. Still outstanding: end-to-end tool-layer
-   tests exercising the same behavior through actual file I/O, once
-   `tools/adr/` (item 4) exists.
-6. Wire `validate_adr` into CI/pre-commit as well as the MCP tool. **Not
-   started** (no `validate_adr` tool exists yet; today, "validation" is
-   simply `AdrFrontmatter`/`AdrBody`/`Adr`'s own Pydantic validators running
-   during `parse_adr`, per §7).
+   and option add/remove/numbering-gap — are covered by item 3's
+   `test_mutations.py`; the end-to-end tool-layer counterparts (same
+   behavior through actual file I/O) are covered by item 4's
+   `tests/tools/adr/test_tools.py`.
+6. Wire `validate_adr` into CI/pre-commit. **Partially done** — the
+   `validate_adr` MCP tool now exists (item 4: re-reads/re-parses by id,
+   letting the models' own Pydantic validators run, per §7, propagating
+   `AdrParseError`/`ValidationError` on failure). **Not yet done:** a
+   corresponding `commands/` CLI command and a CI/pre-commit hook that calls
+   it over every ADR file, independent of the MCP server.

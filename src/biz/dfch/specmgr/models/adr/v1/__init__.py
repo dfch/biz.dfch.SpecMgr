@@ -44,6 +44,7 @@ from .mutations import (
 from .option import AdrOption
 from .parser import AdrParseError, parse_adr
 from .renderer import render_adr
+from .summary import AdrSummary
 
 __all__ = [
     "CURRENT_SCHEMA_VERSION",
@@ -55,6 +56,7 @@ __all__ = [
     "AdrOptionNotFoundError",
     "AdrParseError",
     "AdrSectionError",
+    "AdrSummary",
     "option_create",
     "option_delete",
     "option_list",

@@ -15,21 +15,16 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""MCP resource registrations for the ``biz-dfch-specmgr`` server.
+"""MCP tool wrappers for Architecture Decision Records (plan §6, §8, §10 item 4).
 
-Each module registers one resource against the shared ``mcp`` application
-instance: ``version`` for the server package version resource, ``adr_list``
-for the ADR listing resource (``specmgr://adr/list``), and ``adr_get`` for
-the by-id template resource (``specmgr://adr/{id}``), all plan §8, §9a.
-Import this package to load all resources at once::
+Thin file-I/O/id-lookup adapters over ``models/adr/v1/mutations.py`` plus
+``parse_adr``/``render_adr``, exposed as ``@mcp.tool()``-decorated functions
+against the shared ``mcp`` application instance. Import this package to
+register all ADR tools at once::
 
-    from biz.dfch.specmgr import resources  # noqa: F401 (side-effects only)
+    from biz.dfch.specmgr.tools import adr  # noqa: F401 (side-effects only)
 """
 
-from . import adr_get, adr_list, version  # noqa: F401
+from . import tools  # noqa: F401
 
-__all__ = [
-    "adr_get",
-    "adr_list",
-    "version",
-]
+__all__ = ["tools"]

@@ -56,14 +56,16 @@ from .frontmatter import AdrFrontmatter
 __all__ = ["render_adr"]
 
 #: ``AdrFrontmatter`` attribute name -> rendered YAML key, in the fixed
-#: emission order (plan §3's table order, ``version`` last since it is a
-#: specmgr-only extension appended after the MADR-defined keys).
+#: emission order (plan §3's table order, ``id``/``version`` last since
+#: both are specmgr-only extensions appended after the MADR-defined keys,
+#: plan §9a).
 _FRONTMATTER_KEYS: tuple[tuple[str, str], ...] = (
     ("status", "status"),
     ("date", "date"),
     ("decision_makers", "decision-makers"),
     ("consulted", "consulted"),
     ("informed", "informed"),
+    ("id", "id"),
     ("version", "version"),
 )
 

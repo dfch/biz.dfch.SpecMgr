@@ -19,16 +19,22 @@
 
 Requires the ``mcp`` extra (``pip install biz-dfch-specmgr[mcp]``).
 
-This is still a placeholder skeleton: no domain tools exist yet. It
-registers one resource so far:
+Registers the following resources and tools so far (plan §8, §9a):
 
 Resources
 ---------
 specmgr://version -- Installed version number of the ``biz-dfch-specmgr`` package.
+specmgr://adr/list -- Ids/titles/statuses/filenames of every ADR (``doc/adr-tool-plan.md``).
 
-Once a domain model exists, add tool modules (mirroring the ``tools/`` /
-``resources/`` package layout used by sibling projects) and import them
-at the bottom of this module, next to the ``resources`` import, so their
+Tools
+-----
+ADR tools (``tools/adr/``): ``get_adr``, ``create_adr``, ``update_frontmatter``,
+``update_section``, ``set_status``, ``option_list``, ``option_create``,
+``option_update``, ``option_read``, ``option_delete``, ``validate_adr``.
+
+Add further tool/resource modules (mirroring the ``tools/`` / ``resources/``
+package layout used by sibling projects) and import them at the bottom of
+this module, next to the existing ``resources``/``tools`` import, so their
 ``@mcp.tool()`` / ``@mcp.resource()`` decorators actually run.
 """
 
@@ -53,9 +59,9 @@ mcp = MCPServer(
 )
 
 # ---------------------------------------------------------------------------
-# Resource registration (side-effect: registers all resources on mcp).
-# Import tool modules here too once a domain model exists, e.g.:
-#   from . import resources, tools
+# Resource/tool registration (side-effect: registers all resources/tools on
+# mcp). Every sub-package here must be imported for its @mcp.tool()/
+# @mcp.resource() decorators to actually run.
 # ---------------------------------------------------------------------------
 
-from . import resources  # noqa: E402, F401
+from . import resources, tools  # noqa: E402, F401

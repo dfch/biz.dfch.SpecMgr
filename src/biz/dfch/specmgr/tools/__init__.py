@@ -15,21 +15,14 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""MCP resource registrations for the ``biz-dfch-specmgr`` server.
+"""MCP tool registrations for the biz-dfch-specmgr server.
 
-Each module registers one resource against the shared ``mcp`` application
-instance: ``version`` for the server package version resource, ``adr_list``
-for the ADR listing resource (``specmgr://adr/list``), and ``adr_get`` for
-the by-id template resource (``specmgr://adr/{id}``), all plan §8, §9a.
-Import this package to load all resources at once::
+Each sub-package/module registers a group of tools against the shared
+`mcp` application instance. Import this package to load all tools at once::
 
-    from biz.dfch.specmgr import resources  # noqa: F401 (side-effects only)
+    from biz.dfch.specmgr import tools  # noqa: F401 (side-effects only)
 """
 
-from . import adr_get, adr_list, version  # noqa: F401
+from . import adr  # noqa: F401
 
-__all__ = [
-    "adr_get",
-    "adr_list",
-    "version",
-]
+__all__ = ["adr"]

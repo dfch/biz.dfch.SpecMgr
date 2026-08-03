@@ -127,8 +127,19 @@ class TestRenderAdrOptionalSectionOmission(unittest.TestCase):
         """Unset optional frontmatter keys must not appear in the YAML block at all."""
         rendered = render_adr(self._minimal_adr())
         frontmatter_block = rendered.split("---")[1]
-        for key in ("date", "decision-makers", "consulted", "informed"):
+        for key in ("date", "decision-makers", "consulted", "informed", "id"):
             self.assertNotIn(key, frontmatter_block)
+
+    def test_id_rendered_immediately_before_version_when_set(self):
+        """id, when set, must be emitted right before version, both after the MADR keys."""
+        adr = self._minimal_adr()
+        adr.frontmatter.id = "11111111-1111-1111-1111-111111111111"
+        rendered = render_adr(adr)
+        frontmatter_block = rendered.split("---")[1]
+        id_index = frontmatter_block.index("id:")
+        version_index = frontmatter_block.index("version:")
+        self.assertLess(id_index, version_index)
+        self.assertIn("id: 11111111-1111-1111-1111-111111111111", frontmatter_block)
 
     def test_option_with_empty_content_renders_heading_only(self):
         """An option with empty content must render as a bare heading, no stray blank block."""
