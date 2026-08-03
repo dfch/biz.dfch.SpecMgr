@@ -1,0 +1,108 @@
+[build-system]
+requires = ["setuptools>=81.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "biz-dfch-specmgr"
+version = "0.1.0"
+description = "An artifact manager for system specifications."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "AGPL-3.0-or-later"
+license-files = ["LICENSE"]
+authors = [
+    {name = "Ronald Rink"}
+]
+maintainers = [
+    { name = "Ronald Rink" }
+]
+
+keywords = [
+  "specification management",
+  "specification",
+  "requirements",
+  "requirements management",
+  "systems engineering",
+  "artifact management",
+  "cli",
+  "library",
+  "mcp",
+  "model-context-protocol"
+]
+
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Information Technology",
+  "Natural Language :: English",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+]
+
+dependencies = [
+    "pydantic>=2.11",
+    "python-dotenv>=1.2.2",
+]
+
+# Install project in editable mode:
+# python -m pip install -e ".[dev]"
+[project.optional-dependencies]
+cli = [
+    "typer>=0.12",
+    "rich",
+]
+
+mcp = [
+    "mcp>=2.0.0",
+]
+
+test = [
+    "coverage",
+    "parameterized>=0.9.0",
+    "pylint>=4.0.0",
+]
+
+dev = [
+    "biz-dfch-specmgr[cli,mcp,test]",
+    "twine",
+    "build",
+    "ruff>=0.16.0",
+    "uv",
+]
+
+[project.urls]
+Homepage = "https://github.com/dfch/biz.dfch.SpecMgr"
+Repository = "https://github.com/dfch/biz.dfch.SpecMgr.git"
+Changelog = "https://github.com/dfch/biz.dfch.SpecMgr/blob/main/CHANGELOG.md"
+Issues = "https://github.com/dfch/biz.dfch.SpecMgr/issues"
+
+[project.scripts]
+specmgr = "biz.dfch.specmgr.cli:app"
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["E501"]
+
+[tool.pylint.format]
+max-line-length = 120
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+namespaces = true
+
+[tool.setuptools.package-data]
+"biz.dfch.specmgr" = [
+    "py.typed"
+]

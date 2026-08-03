@@ -1,0 +1,139 @@
+# ADR Tooling Plan — MADR 4.0.0-based, LLM-editable via MCP
+
+## 1. Goal
+Enable an LLM (via OpenCode) to create and update Architecture Decision Records
+that conform to a custom schema derived from MADR 4.0.0, through a Python MCP
+server exposing structured tools — never by having the LLM write raw markdown
+text directly.
+
+## 2. Source document
+MADR 4.0.0 template:
+`https://raw.githubusercontent.com/adr/madr/refs/tags/4.0.0/template/adr-template.md`
+
+Heading structure:
+```
+--- (YAML frontmatter) ---
+# {title}                                   H1
+## Context and Problem Statement            H2, required
+## Decision Drivers                         H2, optional
+## Considered Options                       H2, required
+## Decision Outcome                         H2, required
+### Consequences                            H3, optional
+### Confirmation                            H3, optional
+## Pros and Cons of the Options             H2, derived (see §5)
+### Option N: {title}                       H3, dynamic collection
+## More Information                         H2, optional
+```
+
+## 3. Frontmatter schema (Pydantic)
+- `status`: `Literal["proposed","rejected","accepted","deprecated"]` **or** a
+  string matching `^superseded by .+$` (not a plain enum)
+- `date`, `decision-makers`, `consulted`, `informed`: all optional
+- Update contract: **whole object, full replace only** — no partial/sentinel
+  mechanism needed (omitting a key from the submitted object is how you drop it)
+
+## 4. Body schema — whole-section fields
+Each is independently full-replace via a generic `update_section(key, value)`
+tool.
+
+| Key | Heading | Mandatory |
+|---|---|---|
+| `title` | H1 | yes |
+| `contextAndProblemStatement` | `## Context and Problem Statement` | yes |
+| `decisionDrivers` | `## Decision Drivers` | no |
+| `consideredOptions` | `## Considered Options` | yes |
+| `decisionOutcome` | `## Decision Outcome` (text before any H3) | yes |
+| `consequences` | `### Consequences` (under Decision Outcome) | no |
+| `confirmation` | `### Confirmation` (under Decision Outcome) | no |
+| `moreInformation` | `## More Information` (always last) | no |
+
+**Deletion sentinel:** submitting an empty string, a whitespace-only string, or
+the literal `"REMOVE"` (case-insensitive) as `value` removes that section
+(heading + content dropped from render). If the targeted section is
+**mandatory**, `update_section` errors immediately and does not write.
+
+**Considered Options vs. Option sub-sections:** kept fully independent.
+`consideredOptions` is manual, freeform; no consistency check against the
+`Option` collection is enforced. Drift is accepted; a future assistive
+"summarize options" skill is a backlog idea, not part of the schema/validator.
+
+## 5. `## Pros and Cons of the Options` — derived container
+- Not directly editable. Rendered automatically **iff** ≥1 `Option`
+  sub-section exists; otherwise the entire H2 (and any comment placeholder) is
+  omitted.
+- Options are never individually mandatory (zero is a valid state), so the
+  mandatory/error rule in §4 never applies to them.
+- Heading format: `f"Option {counter}: {partial_title}"` — plain ASCII
+  `"Option "`, unpadded monotonically increasing counter, never reused, no
+  line breaks allowed in `partial_title`. New options are always appended at
+  the end; deleting one leaves a gap in numbering and does not reorder or
+  renumber the rest.
+- Content is an opaque markdown blob (no enforced Good/Bad/Neutral structure)
+  — freeform text under each `### Option N: ...` heading.
+- Dedicated sub-API (separate from `update_section`; the deletion sentinel
+  from §4 does **not** apply here — deletion is exclusively via
+  `option_delete`):
+  - `option_list() -> list[str]` — full titles, e.g. `"Option 1: A title"`
+  - `option_create(partial_title: str, value: str) -> str` — returns the
+    assigned full title
+  - `option_update(full_title: str, value: str) -> str` — full content
+    replace, returns new content
+  - `option_read(full_title: str) -> str` — returns current content
+  - `option_delete(full_title: str) -> list[str]` — returns remaining titles
+
+## 6. Cross-cutting design decisions
+- **Source of truth:** the `.md` file itself. Humans can hand-edit it at any
+  time; every tool call re-reads and re-parses current on-disk state before
+  acting — no assumption that the tool is the sole writer.
+- **Validator:** one schema-driven `validate_adr` check, shared identically
+  between LLM tool calls and human edits, surfacing clear errors. Does not
+  enforce Considered-Options/Option-section consistency (see §4).
+- **Pipeline:** parse → validate → render, always regenerating the full file
+  deterministically from the parsed structured model rather than patching text
+  in place. This is sufficient (no need for AST-preserving round-trip tooling
+  like `remark`) because the validator/renderer define the canonical form;
+  arbitrary human formatting nuances outside the schema aren't a preservation
+  requirement.
+- **Libraries (Python):**
+  - `pydantic` for both the frontmatter model and the body model (mirrors the
+    earlier Zod idea, Python-native; also matches the Python MCP SDK's use of
+    Pydantic/type hints for tool schemas — one schema definition reused as the
+    tool contract)
+  - `python-frontmatter` or `PyYAML` for splitting/parsing the YAML header
+  - `markdown-it-py` for walking the body's token stream to locate fixed-
+    heading sections and the dynamic `Option N` collection
+  - Deterministic template rendering (not a markdown-it serializer, which
+    doesn't exist) for the write path
+
+## 7. MCP tool surface (Python MCP SDK)
+- `list_adrs()` — ids/titles/status for context
+- `get_adr(id)` → structured object (frontmatter + body, not raw markdown)
+- `create_adr(frontmatter, body_fields)` → validates, assigns id/filename,
+  renders, writes
+- `update_frontmatter(id, frontmatter)` — whole-object replace
+- `update_section(id, key, value)` — whole-section replace/delete per §4
+- `set_status(id, status, supersededBy?)` — narrow convenience wrapper over
+  frontmatter update for the common case
+- `option_list(id)`, `option_create(id, partial_title, value)`,
+  `option_update(id, full_title, value)`, `option_read(id, full_title)`,
+  `option_delete(id, full_title)`
+- `validate_adr(id)` — schema check, usable standalone (e.g. pre-commit/CI)
+  and by the LLM to self-correct
+
+## 8. Open backlog items (non-blocking)
+- Possible future skill/tool to auto-summarize `Option` titles into
+  `Considered Options` (explicitly not required now, drift accepted).
+- Whether `create_adr` needs a configurable numbering/filename scheme (e.g.
+  `NNNN-slug.md`) — not yet discussed, flag before implementation if
+  relevant.
+
+## 9. Next steps
+1. Write Pydantic models for frontmatter and body.
+2. Implement parser (`markdown-it-py` token walk → structured model) and
+   renderer (structured model → exact markdown).
+3. Implement the MCP tool wrappers listed in §7.
+4. Add a drift-check test: render(parse(file)) reproduces canonical form for
+   every existing ADR, and add golden-file tests for each section/edge case
+   (mandatory-deletion error, sentinel deletion, option add/remove/numbering-
+   gap, zero-options heading omission).
+5. Wire `validate_adr` into CI/pre-commit as well as the MCP tool.
