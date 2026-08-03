@@ -26,7 +26,7 @@ Heading structure:
 ```
 
 ## 3. Frontmatter schema (Pydantic)
-- `status`: `Literal["proposed","rejected","accepted","deprecated"]` **or** a
+- `status`: `Literal["proposed","rejected","accepted","deprecated","superseded"]` **or** a
   string matching `^superseded by .+$` (not a plain enum)
 - `date`, `decision-makers`, `consulted`, `informed`: all optional
 - `version`: **specmgr-only extension key, not part of the MADR 4.0.0

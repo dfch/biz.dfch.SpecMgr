@@ -49,8 +49,8 @@ class TestAdrFrontmatter(unittest.TestCase):
             AdrFrontmatter(status="accepted", version="not-a-version")
 
     def test_accepts_each_fixed_status(self):
-        """Each of the four fixed status values must be accepted."""
-        for status in ("proposed", "rejected", "accepted", "deprecated"):
+        """Each of the six fixed status values must be accepted."""
+        for status in ("draft", "proposed", "rejected", "accepted", "deprecated", "superseded"):
             with self.subTest(status=status):
                 self.assertEqual(AdrFrontmatter(status=status).status, status)
 
@@ -64,10 +64,10 @@ class TestAdrFrontmatter(unittest.TestCase):
         with self.assertRaises(ValidationError):
             AdrFrontmatter(status="in-review")
 
-    def test_rejects_missing_status(self):
-        """status is mandatory."""
-        with self.assertRaises(ValidationError):
-            AdrFrontmatter()
+    def test_status_defaults_to_draft(self):
+        """Omitting status must default to 'draft'."""
+        frontmatter = AdrFrontmatter()
+        self.assertEqual(frontmatter.status, "draft")
 
     def test_decision_makers_alias_accepts_hyphenated_key(self):
         """The frontmatter's literal YAML key 'decision-makers' must populate the field."""

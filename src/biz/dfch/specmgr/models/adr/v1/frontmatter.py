@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import re
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator
 
 from ._util import CURRENT_SCHEMA_VERSION, blank_to_none, validate_schema_version
 
@@ -53,16 +53,20 @@ class AdrFrontmatter(BaseModel):
         package's major component -- ``models.adr.v1.AdrFrontmatter`` never
         accepts a ``"2.x.x"`` value.
     status:
-        Either one of ``"proposed"``, ``"rejected"``, ``"accepted"``,
-        ``"deprecated"``, or a string matching ``^superseded by .+$``.
-        Mandatory.
+        Either one of ``"draft"``, ``"proposed"``, ``"rejected"``,
+        ``"accepted"``, ``"deprecated"``, ``"superseded"``, or a string
+        matching ``^superseded by .+$``. Defaults to ``"draft"``.
     date:
         Free-form date the decision was last updated (MADR uses
         ``YYYY-MM-DD``, not enforced here since the ``.md`` file is the
         source of truth). Optional.
     decision_makers:
         Free-form list of everyone involved in the decision, as written in
-        the frontmatter (YAML key ``decision-makers``). Optional.
+        the frontmatter (YAML key ``decision-makers``). Optional. Accepts
+        either the literal hyphenated YAML key or the snake_case field name
+        (``validation_alias``, not ``alias``, so static type checkers keep
+        seeing ``decision_makers`` as the constructor parameter name -- see
+        ``tests/models/adr/v1/test_frontmatter.py`` for both call shapes).
     consulted:
         Free-form list of subject-matter experts consulted. Optional.
     informed:
@@ -72,9 +76,11 @@ class AdrFrontmatter(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     version: str = CURRENT_SCHEMA_VERSION
-    status: str
+    status: str = "draft"
     date: str | None = None
-    decision_makers: str | None = Field(default=None, alias="decision-makers")
+    decision_makers: str | None = Field(
+        default=None, validation_alias=AliasChoices("decision_makers", "decision-makers")
+    )
     consulted: str | None = None
     informed: str | None = None
 
