@@ -44,7 +44,7 @@ def adr_get(id: str) -> Adr:  # noqa: A002 -- "id" matches the plan's tool/resou
     """Return the ADR identified by ``id`` as a template resource.
 
     Same id-resolution and no-cache, re-read-per-call design as
-    ``tools.adr.tools.get_adr`` (plan §7, §9a) -- this is simply that same
+    ``tools.adr.get_adr.get_adr`` (plan §7, §9a) -- this is simply that same
     read exposed as an MCP resource (``specmgr://adr/{id}``) instead of a
     ``@mcp.tool()``, for a host that wants to address a specific ADR as
     context without an explicit tool call.
