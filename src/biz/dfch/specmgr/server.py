@@ -19,11 +19,17 @@
 
 Requires the ``mcp`` extra (``pip install biz-dfch-specmgr[mcp]``).
 
-This is a placeholder skeleton: no tools or resources are registered yet.
-Once a domain model exists, add tool/resource modules (mirroring the
-``tools/`` / ``resources/`` package layout used by sibling projects) and
-import them as the last line of this module so their ``@mcp.tool()`` /
-``@mcp.resource()`` decorators actually run.
+This is still a placeholder skeleton: no domain tools exist yet. It
+registers one resource so far:
+
+Resources
+---------
+specmgr://version -- Installed version number of the ``biz-dfch-specmgr`` package.
+
+Once a domain model exists, add tool modules (mirroring the ``tools/`` /
+``resources/`` package layout used by sibling projects) and import them
+at the bottom of this module, next to the ``resources`` import, so their
+``@mcp.tool()`` / ``@mcp.resource()`` decorators actually run.
 """
 
 from __future__ import annotations
@@ -40,7 +46,16 @@ async def _lifespan(_server: MCPServer) -> AsyncGenerator[None, None]:
     yield
 
 
-mcp = MCPServer(name="specmgr", lifespan=_lifespan)
+mcp = MCPServer(
+    name="specmgr",
+    instructions="An artifact manager for system specifications.",
+    lifespan=_lifespan,
+)
 
-# Import tool/resource modules here (side-effecting registration), e.g.:
+# ---------------------------------------------------------------------------
+# Resource registration (side-effect: registers all resources on mcp).
+# Import tool modules here too once a domain model exists, e.g.:
 #   from . import resources, tools
+# ---------------------------------------------------------------------------
+
+from . import resources  # noqa: E402, F401

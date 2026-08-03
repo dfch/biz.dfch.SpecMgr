@@ -50,7 +50,7 @@ uv add "biz-dfch-specmgr[cli,mcp]"
 
 ## CLI Usage
 
-_TBD — no domain commands exist yet._
+_No domain commands exist yet — only `version` and `mcp` (below)._
 
 ```bash
 specmgr version
@@ -58,12 +58,32 @@ specmgr version
 
 ## MCP Server
 
-_TBD — no tools or resources are registered yet._
+_No domain tools exist yet — the server currently exposes one resource,
+`specmgr://version`. Requires the `mcp` extra._
+
+Start the server with the `mcp` command:
+
+```bash
+specmgr mcp
+```
+
+By default it runs over `stdio`, for MCP hosts that launch it as a
+subprocess (see [Add to OpenCode](#add-to-opencode) below). It can also
+run over SSE/network:
+
+```bash
+specmgr mcp --transport sse --host localhost --port 8000
+```
+
+| Option              | Env var                 | Default     | Description                     |
+| -------------------- | ------------------------ | ----------- | -------------------------------- |
+| `--transport` / `-t` | `SPECMGR_MCP_TRANSPORT` | `stdio`     | Transport mode: `stdio` or `sse` |
+| `--host` / `-h`      | `SPECMGR_MCP_HOST`      | `localhost` | Bind address (SSE mode only)     |
+| `--port` / `-p`      | `SPECMGR_MCP_PORT`      | `8000`      | TCP port (SSE mode only)         |
 
 ### Add to OpenCode
 
-To add the `specmgr` MCP server to your OpenCode configuration once it
-exposes tools:
+To add the `specmgr` MCP server to your OpenCode configuration:
 
 1. Open your OpenCode config file (typically `~/.config/opencode/opencode.json` or `~/.config/opencode/opencode.jsonc`)
 
@@ -73,7 +93,7 @@ exposes tools:
 "specmgr": {
   "type": "local",
   "enabled": true,
-  "command": ["uvx", "--from", "biz-dfch-specmgr[mcp]", "python", "-m", "biz.dfch.specmgr"]
+  "command": ["uvx", "--from", "biz-dfch-specmgr[mcp]", "python", "-m", "biz.dfch.specmgr", "mcp"]
 }
 ```
 

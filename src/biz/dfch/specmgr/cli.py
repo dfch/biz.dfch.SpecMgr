@@ -23,14 +23,19 @@ Requires the ``cli`` extra (``pip install biz-dfch-specmgr[cli]``)::
     uv run specmgr version
     python -m biz.dfch.specmgr version
 
-This is a placeholder skeleton: no domain commands exist yet.
-"""
+Each command is implemented in its own module under ``commands/`` and
+registered on ``app`` below; see that module for the ``mcp`` command's
+transport/host/port options and environment variables. ``mcp``
+additionally requires the ``mcp`` extra
+(``pip install biz-dfch-specmgr[mcp]``).
 
-from importlib.metadata import PackageNotFoundError
-from importlib.metadata import version as installed_version
+This is otherwise a placeholder skeleton: no domain commands exist yet.
+"""
 
 import typer
 from dotenv import find_dotenv, load_dotenv
+
+from .commands import mcp, version
 
 # ---------------------------------------------------------------------------
 # .env loading
@@ -69,13 +74,8 @@ def _callback() -> None:
     """
 
 
-@app.command()
-def version() -> None:
-    """Print the installed ``biz-dfch-specmgr`` version."""
-    try:
-        typer.echo(installed_version("biz-dfch-specmgr"))
-    except PackageNotFoundError:
-        typer.echo("unknown (package not installed)")
+app.command()(version)
+app.command()(mcp)
 
 
 if __name__ == "__main__":
