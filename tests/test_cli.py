@@ -63,7 +63,11 @@ class TestMcpCommand(unittest.TestCase):
 
     def test_mcp_is_registered(self):
         """The ``mcp`` command must be registered on the Typer app."""
-        names = {command.callback.__name__ for command in app.registered_commands}
+        names = set()
+        for command in app.registered_commands:
+            assert command.callback is not None
+            names.add(command.callback.__name__)
+
         self.assertIn("mcp", names)
 
     def test_mcp_help_lists_transport_host_port_options(self):
