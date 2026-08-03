@@ -365,10 +365,15 @@ and avoiding any server-side cache/staleness problem:
    GitHub namespace (`github.com/dfch`); `repository.id` is the numeric
    GitHub repo id (`1321701564`, from `gh api repos/dfch/biz.dfch.SpecMgr
    --jq '.id'`), per the schema's repository-resurrection-detection guidance.
-   **Not yet done / blocked:** the package isn't published to PyPI yet (no
-   `publish.yml`, see `README.md`'s "Make a Release" note), so `server.json`
-   can't actually be submitted to the official registry (`mcp-publisher`)
-   until a first PyPI release exists for the registry to verify ownership
-   of — `version` in `server.json` must be bumped in lockstep with
-   `pyproject.toml`'s `version` from that point on (same discipline as
-   `CHANGELOG.md`, see `AGENTS.md`).
+   **Done.** The package is now published to PyPI: `biz-dfch-specmgr`
+   `0.1.0` was released via `v0.1.0` (`.github/workflows/publish.yml`,
+   Trusted Publishing/OIDC, no stored token) and is live at
+   `https://pypi.org/project/biz-dfch-specmgr/`. `server.json` has also
+   been submitted to and accepted by the official MCP Registry — confirmed
+   live at
+   `https://registry.modelcontextprotocol.io/?q=io.github.dfch%2Fbiz.dfch.specmgr`
+   (`io.github.dfch/biz.dfch.specmgr` version `0.1.0`, status `active`).
+   `version` in `server.json` must be bumped in lockstep with
+   `pyproject.toml`'s `version` on every subsequent release, and the
+   registry re-published via `mcp-publisher` each time, to stay in sync
+   (same discipline as `CHANGELOG.md`, see `AGENTS.md`).

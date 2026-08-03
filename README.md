@@ -198,13 +198,18 @@ git tag v${VERSION}
 git push origin v${VERSION}
 ```
 
-_Note: there is no `publish.yml` workflow yet — packaging/publishing
-automation (PyPI, MCP Registry) will be added once there is a first
-release worth shipping. `server.json` (repo root) is the MCP Registry
-publisher manifest for that future submission (see the
-[server.json format spec](https://github.com/modelcontextprotocol/registry/blob/main/docs/reference/server-json/generic-server-json.md));
-it can't actually be published via `mcp-publisher` until `biz-dfch-specmgr`
-has a first release on PyPI for the registry to verify ownership of._
+_Note: `.github/workflows/publish.yml` handles the rest of the release
+automatically once the tag above is pushed — it builds and publishes the
+`sdist`/wheel to TestPyPI then PyPI via Trusted Publishing (OIDC, no
+stored token), creates the matching GitHub Release with the built
+artifacts attached, and publishes `server.json` (repo root, the MCP
+Registry publisher manifest — see the
+[server.json format spec](https://github.com/modelcontextprotocol/registry/blob/main/docs/reference/server-json/generic-server-json.md))
+to the [MCP Registry](https://registry.modelcontextprotocol.io/?q=io.github.dfch%2Fbiz.dfch.specmgr)
+via `mcp-publisher`/GitHub OIDC. `biz-dfch-specmgr` is live on
+[PyPI](https://pypi.org/project/biz-dfch-specmgr/) and in the
+[MCP Registry](https://registry.modelcontextprotocol.io/?q=io.github.dfch%2Fbiz.dfch.specmgr)
+as of `v0.1.0`._
 
 Then switch back to `dev` to continue work:
 
