@@ -1,6 +1,6 @@
 # biz.dfch.SpecMgr
 
-<!-- mcp-name: io.github.dfch/biz.dfch.specmgr -->
+<!-- mcp-name: io.github.dfch/biz-dfch-specmgr -->
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPLv3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 ![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue.svg)
