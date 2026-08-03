@@ -22,6 +22,7 @@ Per-command behaviour is tested next to each command under
 ``tests/commands/``; this module only covers registration on ``app``.
 """
 
+import re
 import unittest
 from importlib.metadata import version
 
@@ -30,6 +31,21 @@ from typer.testing import CliRunner
 from biz.dfch.specmgr.cli import app
 
 runner = CliRunner()
+
+_ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-9;]*m")
+
+
+def _strip_ansi(text: str) -> str:
+    """Remove ANSI colour/style escape codes from Rich-rendered CLI output.
+
+    Typer/Rich may render ``--transport`` as two adjacent, identically
+    styled spans (``-`` and ``-transport``), each wrapped in its own
+    escape sequence. Whether that happens depends on colour/terminal
+    detection (e.g. ``FORCE_COLOR`` in CI vs. a plain local shell), which
+    would otherwise make plain substring checks like ``"--transport" in
+    stdout`` environment-dependent.
+    """
+    return _ANSI_ESCAPE_RE.sub("", text)
 
 
 class TestVersionCommand(unittest.TestCase):
@@ -54,8 +70,9 @@ class TestMcpCommand(unittest.TestCase):
         """``mcp --help`` must document the transport, host, and port options."""
         result = runner.invoke(app, ["mcp", "--help"])
         self.assertEqual(result.exit_code, 0)
+        stdout = _strip_ansi(result.stdout)
         for option in ("--transport", "-t", "--host", "-h", "--port", "-p"):
-            self.assertIn(option, result.stdout)
+            self.assertIn(option, stdout)
 
 
 if __name__ == "__main__":
