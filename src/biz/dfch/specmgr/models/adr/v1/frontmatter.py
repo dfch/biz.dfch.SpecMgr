@@ -23,7 +23,7 @@ import re
 
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator
 
-from ._util import CURRENT_SCHEMA_VERSION, blank_to_none, validate_schema_version
+from ._util import CURRENT_SCHEMA_VERSION, blank_to_none, default_if_blank, validate_schema_version
 
 #: Fixed, closed set of accepted ``status`` values.
 _FIXED_STATUSES = frozenset({"draft", "proposed", "rejected", "accepted", "deprecated", "superseded"})
@@ -55,7 +55,11 @@ class AdrFrontmatter(BaseModel):
     status:
         Either one of ``"draft"``, ``"proposed"``, ``"rejected"``,
         ``"accepted"``, ``"deprecated"``, ``"superseded"``, or a string
-        matching ``^superseded by .+$``. Defaults to ``"draft"``.
+        matching ``^superseded by .+$``. Defaults to ``"draft"`` -- both
+        when the key is absent entirely and when it is present but blank
+        (e.g. MADR's bare-bones template ships a placeholder ``status:``
+        with nothing after the colon, which YAML parses as ``None``, not
+        an absent key).
     date:
         Free-form date the decision was last updated (MADR uses
         ``YYYY-MM-DD``, not enforced here since the ``.md`` file is the
@@ -88,6 +92,11 @@ class AdrFrontmatter(BaseModel):
     @classmethod
     def _validate_version(cls, value: str) -> str:
         return validate_schema_version(value)
+
+    @field_validator("status", mode="before")
+    @classmethod
+    def _default_blank_status_to_draft(cls, value: object) -> object:
+        return default_if_blank(value, "draft")
 
     @field_validator("status")
     @classmethod

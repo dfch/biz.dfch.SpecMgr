@@ -51,6 +51,26 @@ def blank_to_none(value: str | None) -> str | None:
     return value
 
 
+def default_if_blank(value: object, default: str) -> object:
+    """Normalize a blank/whitespace-only (or ``None``) value to ``default``.
+
+    Used as a ``mode="before"`` validator for mandatory-but-defaulted
+    string fields (``AdrFrontmatter.status``) so an explicit but empty YAML
+    key -- e.g. MADR's own bare-bones template ships a placeholder
+    ``status:`` with nothing after the colon, which a YAML loader parses as
+    ``None``, not an absent key -- is treated the same as the key being
+    absent entirely, rather than failing type validation before the
+    field's own membership check ever runs. Mirrors :func:`blank_to_none`,
+    but substitutes a caller-supplied default instead of ``None``, for
+    fields that are not ``Optional``.
+    """
+    if value is None:
+        return default
+    if isinstance(value, str) and not value.strip():
+        return default
+    return value
+
+
 def validate_schema_version(value: str) -> str:
     """Validate a schema version string against this package's major version.
 

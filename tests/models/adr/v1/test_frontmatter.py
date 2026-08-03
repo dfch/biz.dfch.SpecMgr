@@ -69,6 +69,11 @@ class TestAdrFrontmatter(unittest.TestCase):
         frontmatter = AdrFrontmatter()
         self.assertEqual(frontmatter.status, "draft")
 
+    def test_status_blank_or_none_defaults_to_draft(self):
+        """An explicit but blank/None status (e.g. MADR's bare template) must also default to 'draft'."""
+        self.assertEqual(AdrFrontmatter.model_validate({"status": None}).status, "draft")
+        self.assertEqual(AdrFrontmatter.model_validate({"status": "   "}).status, "draft")
+
     def test_decision_makers_alias_accepts_hyphenated_key(self):
         """The frontmatter's literal YAML key 'decision-makers' must populate the field."""
         frontmatter = AdrFrontmatter.model_validate({"status": "accepted", "decision-makers": "Alice, Bob"})

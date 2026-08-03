@@ -17,7 +17,16 @@
 
 """Pydantic models used by the ``biz-dfch-specmgr`` MCP server."""
 
-from .adr import CURRENT_SCHEMA_VERSION, SCHEMA_MAJOR_VERSION, Adr, AdrBody, AdrFrontmatter, AdrOption
+from .adr import (
+    CURRENT_SCHEMA_VERSION,
+    SCHEMA_MAJOR_VERSION,
+    Adr,
+    AdrBody,
+    AdrFrontmatter,
+    AdrOption,
+    AdrParseError,
+    parse_adr,
+)
 from .version_info import VersionInfo
 
 __all__ = [
@@ -27,5 +36,7 @@ __all__ = [
     "AdrBody",
     "AdrFrontmatter",
     "AdrOption",
+    "AdrParseError",
     "VersionInfo",
+    "parse_adr",
 ]

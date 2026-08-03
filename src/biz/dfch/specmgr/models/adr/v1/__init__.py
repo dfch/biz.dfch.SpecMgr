@@ -31,6 +31,7 @@ from .adr import CURRENT_SCHEMA_VERSION, SCHEMA_MAJOR_VERSION, Adr
 from .body import AdrBody
 from .frontmatter import AdrFrontmatter
 from .option import AdrOption
+from .parser import AdrParseError, parse_adr
 
 __all__ = [
     "CURRENT_SCHEMA_VERSION",
@@ -39,4 +40,6 @@ __all__ = [
     "AdrBody",
     "AdrFrontmatter",
     "AdrOption",
+    "AdrParseError",
+    "parse_adr",
 ]

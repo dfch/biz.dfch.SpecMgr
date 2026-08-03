@@ -26,9 +26,12 @@ See ``doc/adr-tool-plan.md`` §3-§6 for the design this package implements:
   dynamic :class:`AdrOption` collection (plan §5).
 - :class:`AdrOption` -- one ``### Option N: {title}`` sub-section.
 - :class:`Adr` -- a full ADR document (frontmatter + body).
+- :func:`parse_adr` -- parses an on-disk ``.md`` file's text into an
+  :class:`Adr` (plan §7/§10 item 2); :class:`AdrParseError` is its
+  structural-error type (see ``v1.parser`` for the full parse-error split).
 
-This subpackage holds only the schema itself; the parser/renderer and the
-MCP tool wrappers are separate, later steps (plan §10, items 2-3).
+The renderer (the other half of plan §10 item 2) and the MCP tool wrappers
+(item 3) are separate, later steps.
 
 **Schema versioning (plan §6):** every model class lives under a ``vN``
 sibling package (currently only :mod:`.v1`), one per *major* schema
@@ -42,7 +45,16 @@ classes (e.g. a migration step) import ``biz.dfch.specmgr.models.adr.v1``
 directly instead.
 """
 
-from .v1 import CURRENT_SCHEMA_VERSION, SCHEMA_MAJOR_VERSION, Adr, AdrBody, AdrFrontmatter, AdrOption
+from .v1 import (
+    CURRENT_SCHEMA_VERSION,
+    SCHEMA_MAJOR_VERSION,
+    Adr,
+    AdrBody,
+    AdrFrontmatter,
+    AdrOption,
+    AdrParseError,
+    parse_adr,
+)
 
 # NOTE: mirrors v1.__all__ verbatim (this package always re-exports
 # "current"); pylint flags this as duplicate-code (R0801), but a literal
@@ -55,4 +67,6 @@ __all__ = [
     "AdrBody",
     "AdrFrontmatter",
     "AdrOption",
+    "AdrParseError",
+    "parse_adr",
 ]
