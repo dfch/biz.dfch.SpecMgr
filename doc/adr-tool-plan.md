@@ -97,11 +97,22 @@ convention), so the ADR feature is placed within that, not alongside it:
 
 - **`models/`** — all Pydantic schemas, one subdirectory per document type,
   e.g. `models/adr/` holds the ADR frontmatter model, body/section model, and
-  `Option` sub-model. Parser and renderer functions for a document type live
-  next to its models in the same subdirectory (they operate purely on the
-  schema, no `mcp`/`typer` dependency — consistent with the core-library
-  isolation rule below). `req`/`uc` get their own `models/req/`, `models/uc/`
-  subdirectories later, following the same pattern.
+  `Option` sub-model. Parser, renderer, and mutation functions for a document
+  type live next to its models in the same subdirectory (they operate purely
+  on the schema, no `mcp`/`typer` dependency, no file I/O — consistent with
+  the core-library isolation rule below). `req`/`uc` get their own
+  `models/req/`, `models/uc/` subdirectories later, following the same
+  pattern.
+  - **Mutation logic placement (settled):** the §4/§5/§8 edit semantics
+    (`update_section`, `set_status`, `option_list`/`option_create`/
+    `option_read`/`option_update`/`option_delete`, including deletion-
+    sentinel handling and mandatory-section rejection) live as free
+    functions in `models/adr/v1/mutations.py` — each takes an `Adr` and
+    returns a new one (or plain data for read-only lookups), never mutating
+    its argument — mirroring `parser.py`/`renderer.py`'s own free-function
+    style rather than becoming methods on the Pydantic model classes
+    themselves. `tools/adr/` (below) wraps these with the file I/O and
+    id-lookup they deliberately exclude.
   - **Schema versioning:** within `models/adr/`, every model class lives in a
     `vN` sibling package, one per *major* schema version — currently only
     `models/adr/v1/` exists. `models/adr/__init__.py` re-exports whichever
@@ -204,19 +215,34 @@ convention), so the ADR feature is placed within that, not alongside it:
    structured model, `parse_adr`/`AdrParseError`) and renderer
    (`models/adr/v1/renderer.py`, structured model → exact markdown,
    `render_adr`), alongside the models in `models/adr/v1/` (§6).
-3. Implement the MCP tool wrappers listed in §8, under `tools/adr/` (§6),
-   and import that subpackage from `server.py`. **Not started.**
-4. **Partially done.** `tests/models/adr/v1/test_renderer.py` covers the
+3. **Done.** `models/adr/v1/mutations.py`: the §4/§5/§8 edit semantics as
+   pure, in-memory functions over `Adr` — `update_section`/`set_status`/
+   `option_list`/`option_create`/`option_read`/`option_update`/
+   `option_delete` — with deletion-sentinel handling and mandatory-section
+   rejection (`AdrSectionError`) and not-found reporting
+   (`AdrOptionNotFoundError`). Covered by
+   `tests/models/adr/v1/test_mutations.py`. Deliberately excludes file I/O
+   and id/filename lookup, which stay `tools/adr/`'s job (item 4).
+4. Implement the MCP tool wrappers listed in §8, under `tools/adr/` (§6) —
+   thin file-I/O/id-lookup adapters over `models/adr/v1/mutations.py`
+   (item 3) plus `parse_adr`/`render_adr` (item 2) for the
+   re-read/re-parse/re-render/re-write cycle (§7) — and import that
+   subpackage from `server.py`. **Not started**, and `create_adr`/
+   `list_adrs`/`get_adr` are additionally blocked on the open id/filename
+   scheme (§9).
+5. **Partially done.** `tests/models/adr/v1/test_renderer.py` covers the
    renderer's own concerns: a golden-file test for a fully-populated ADR,
    per-field optional-section-omission tests, the zero-options
    "Pros and Cons" heading omission, option numbering-gap preservation, and
    a drift-check (`render(parse(file))` is a stable, idempotent fixed point)
    against the real `adr-template-valid.md`/`adr-template-minimal-valid.md`
-   fixtures plus a constructed full ADR. Still outstanding, and blocked on
-   item 3: golden-file tests for mandatory-deletion error, sentinel
-   deletion, and option add/remove — those exercise `update_section`/
-   `option_*` tool semantics that don't exist yet.
-5. Wire `validate_adr` into CI/pre-commit as well as the MCP tool. **Not
+   fixtures plus a constructed full ADR. The model-layer counterparts of the
+   previously-blocked cases — mandatory-deletion error, sentinel deletion,
+   and option add/remove/numbering-gap — are now covered by item 3's
+   `test_mutations.py` instead. Still outstanding: end-to-end tool-layer
+   tests exercising the same behavior through actual file I/O, once
+   `tools/adr/` (item 4) exists.
+6. Wire `validate_adr` into CI/pre-commit as well as the MCP tool. **Not
    started** (no `validate_adr` tool exists yet; today, "validation" is
    simply `AdrFrontmatter`/`AdrBody`/`Adr`'s own Pydantic validators running
    during `parse_adr`, per §7).

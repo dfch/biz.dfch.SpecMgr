@@ -36,6 +36,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   deterministically, omitting optional sections whose field is unset, and
   emitting the derived `## Pros and Cons of the Options` container iff at
   least one option exists.
+- `models/adr/v1/mutations.py`: pure, in-memory edit operations on an `Adr`
+  (`update_section`, `set_status`, `option_list`, `option_create`,
+  `option_read`, `option_update`, `option_delete`), implementing the §4/§5/§8
+  update semantics — deletion-sentinel handling (blank or `"REMOVE"`) with
+  mandatory-section rejection (`AdrSectionError`), and option lookup-by-title
+  with not-found reporting (`AdrOptionNotFoundError`) — ahead of the
+  file-I/O-backed MCP tool wrappers.
 
 ### Changed
 

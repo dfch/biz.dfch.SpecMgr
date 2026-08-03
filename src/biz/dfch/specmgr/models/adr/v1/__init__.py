@@ -30,6 +30,17 @@ that later versions diff against.
 from .adr import CURRENT_SCHEMA_VERSION, SCHEMA_MAJOR_VERSION, Adr
 from .body import AdrBody
 from .frontmatter import AdrFrontmatter
+from .mutations import (
+    AdrOptionNotFoundError,
+    AdrSectionError,
+    option_create,
+    option_delete,
+    option_list,
+    option_read,
+    option_update,
+    set_status,
+    update_section,
+)
 from .option import AdrOption
 from .parser import AdrParseError, parse_adr
 from .renderer import render_adr
@@ -41,7 +52,16 @@ __all__ = [
     "AdrBody",
     "AdrFrontmatter",
     "AdrOption",
+    "AdrOptionNotFoundError",
     "AdrParseError",
+    "AdrSectionError",
+    "option_create",
+    "option_delete",
+    "option_list",
+    "option_read",
+    "option_update",
     "parse_adr",
     "render_adr",
+    "set_status",
+    "update_section",
 ]
