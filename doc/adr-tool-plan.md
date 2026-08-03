@@ -81,7 +81,64 @@ the literal `"REMOVE"` (case-insensitive) as `value` removes that section
   - `option_read(full_title: str) -> str` — returns current content
   - `option_delete(full_title: str) -> list[str]` — returns remaining titles
 
-## 6. Cross-cutting design decisions
+## 6. Module layout (`src/biz/dfch/specmgr/`)
+
+Supersedes the generic `core/`/`adr/`/`req/`/`uc/`/`cli/`/`mcp_server/` sketch
+from earlier drafts of this plan — this repo already has an established
+sibling-project convention (`models/`, `tools/`, `resources/`, `commands/`;
+see `AGENTS.md` and `server.py`'s own comment about the `tools/` import
+convention), so the ADR feature is placed within that, not alongside it:
+
+- **`models/`** — all Pydantic schemas, one subdirectory per document type,
+  e.g. `models/adr/` holds the ADR frontmatter model, body/section model, and
+  `Option` sub-model. Parser and renderer functions for a document type live
+  next to its models in the same subdirectory (they operate purely on the
+  schema, no `mcp`/`typer` dependency — consistent with the core-library
+  isolation rule below). `req`/`uc` get their own `models/req/`, `models/uc/`
+  subdirectories later, following the same pattern.
+  - **Schema versioning:** within `models/adr/`, every model class lives in a
+    `vN` sibling package, one per *major* schema version — currently only
+    `models/adr/v1/` exists. `models/adr/__init__.py` re-exports whichever
+    `vN` is current (today, `v1`) under the plain names (`Adr`, `AdrBody`,
+    `AdrFrontmatter`, `AdrOption`, plus `SCHEMA_MAJOR_VERSION` and
+    `CURRENT_SCHEMA_VERSION`), so callers that only care about "the current
+    schema" import from `models.adr` directly and never need to know the
+    version number; code that specifically needs an older version (e.g. a
+    migration step) imports `models.adr.v1` (or `.v2`, ...) explicitly.
+    `Adr.version` is a `major.minor.patch` string (default
+    `CURRENT_SCHEMA_VERSION`), and each `vN.Adr` rejects any `version` whose
+    major component doesn't match its own `SCHEMA_MAJOR_VERSION` — a
+    `v1.Adr` can never carry `"2.x.x"`.
+    A **new major version does not duplicate the whole `vN` tree.** A
+    breaking schema change gets a new `models/adr/v2/` package containing
+    *only* the classes that actually changed; unchanged classes are
+    imported from `v1` rather than copy-pasted, plus a
+    `migrate_v1_to_v2()`-style adapter function that upgrades a parsed `v1`
+    document into `v2` shape. Non-breaking evolutions (e.g. a new optional
+    field) don't need a new package at all — bump the minor/patch component
+    of `CURRENT_SCHEMA_VERSION` within the existing `vN` package instead.
+    This follows directly from §7's "no AST/round-trip preservation
+    requirement": the renderer only ever needs to emit the *current*
+    version's canonical form, so older versions only need a parser (or a
+    migration step feeding the current parser), never their own renderer —
+    avoiding an N-parsers-times-N-renderers maintenance matrix. Full,
+    independent wholesale duplication of every `vN` package was considered
+    and rejected: it invites drift, since an unrelated bugfix would have to
+    be manually ported to every historical folder.
+- **`tools/`** — MCP tool wrappers, one subdirectory per document type, e.g.
+  `tools/adr/` holds the `@mcp.tool()`-decorated wrappers (`list_adrs`,
+  `get_adr`, `create_adr`, `update_section`, `option_*`, `validate_adr`, ...)
+  that call into `models/adr/`. Each such subpackage must be imported at the
+  bottom of `server.py` (next to the existing `resources` import) or its
+  `@mcp.tool()` decorators never run — see the warning already in
+  `server.py`'s module docstring.
+- **`commands/`** — one module per CLI command (existing convention, e.g.
+  `commands/version.py`), extended with ADR commands that call the same
+  `models/adr/` functions as the MCP tools do — CLI and MCP stay thin
+  adapters over one shared implementation, per the ports-and-adapters
+  principle below.
+
+## 7. Cross-cutting design decisions
 - **Source of truth:** the `.md` file itself. Humans can hand-edit it at any
   time; every tool call re-reads and re-parses current on-disk state before
   acting — no assumption that the tool is the sole writer.
@@ -99,13 +156,17 @@ the literal `"REMOVE"` (case-insensitive) as `value` removes that section
     earlier Zod idea, Python-native; also matches the Python MCP SDK's use of
     Pydantic/type hints for tool schemas — one schema definition reused as the
     tool contract)
-  - `python-frontmatter` or `PyYAML` for splitting/parsing the YAML header
+  - `python-frontmatter` for splitting/parsing the YAML header (settled;
+    declared as a direct base dependency in `pyproject.toml`, not `PyYAML`
+    directly — `python-frontmatter` wraps it)
   - `markdown-it-py` for walking the body's token stream to locate fixed-
-    heading sections and the dynamic `Option N` collection
+    heading sections and the dynamic `Option N` collection (settled; declared
+    as a direct base dependency in `pyproject.toml`, promoted from what was
+    previously only a transitive dependency of `rich`)
   - Deterministic template rendering (not a markdown-it serializer, which
     doesn't exist) for the write path
 
-## 7. MCP tool surface (Python MCP SDK)
+## 8. MCP tool surface (Python MCP SDK)
 - `list_adrs()` — ids/titles/status for context
 - `get_adr(id)` → structured object (frontmatter + body, not raw markdown)
 - `create_adr(frontmatter, body_fields)` → validates, assigns id/filename,
@@ -120,18 +181,20 @@ the literal `"REMOVE"` (case-insensitive) as `value` removes that section
 - `validate_adr(id)` — schema check, usable standalone (e.g. pre-commit/CI)
   and by the LLM to self-correct
 
-## 8. Open backlog items (non-blocking)
+## 9. Open backlog items (non-blocking)
 - Possible future skill/tool to auto-summarize `Option` titles into
   `Considered Options` (explicitly not required now, drift accepted).
 - Whether `create_adr` needs a configurable numbering/filename scheme (e.g.
   `NNNN-slug.md`) — not yet discussed, flag before implementation if
   relevant.
 
-## 9. Next steps
-1. Write Pydantic models for frontmatter and body.
+## 10. Next steps
+1. Write Pydantic models for frontmatter and body, under `models/adr/` (§6).
 2. Implement parser (`markdown-it-py` token walk → structured model) and
-   renderer (structured model → exact markdown).
-3. Implement the MCP tool wrappers listed in §7.
+   renderer (structured model → exact markdown), alongside the models in
+   `models/adr/` (§6).
+3. Implement the MCP tool wrappers listed in §8, under `tools/adr/` (§6),
+   and import that subpackage from `server.py`.
 4. Add a drift-check test: render(parse(file)) reproduces canonical form for
    every existing ADR, and add golden-file tests for each section/edge case
    (mandatory-deletion error, sentinel deletion, option add/remove/numbering-

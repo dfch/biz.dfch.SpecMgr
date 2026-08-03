@@ -15,10 +15,22 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Pydantic models used by the ``biz-dfch-specmgr`` MCP server."""
+"""ADR schema version 1 (``SCHEMA_MAJOR_VERSION == 1``).
 
-from .adr import CURRENT_SCHEMA_VERSION, SCHEMA_MAJOR_VERSION, Adr, AdrBody, AdrFrontmatter, AdrOption
-from .version_info import VersionInfo
+Holds every model class for this schema major version. See
+``doc/adr-tool-plan.md`` §6 for the versioning strategy: a new major schema
+version gets its own sibling package (``models/adr/v2/``, ...) containing
+*only* the classes that actually changed for that version -- unchanged
+classes are imported from the previous version's package rather than
+duplicated -- plus a ``migrate_v1_to_v2()``-style adapter function. This
+package is never itself duplicated wholesale; it is the frozen v1 baseline
+that later versions diff against.
+"""
+
+from .adr import CURRENT_SCHEMA_VERSION, SCHEMA_MAJOR_VERSION, Adr
+from .body import AdrBody
+from .frontmatter import AdrFrontmatter
+from .option import AdrOption
 
 __all__ = [
     "CURRENT_SCHEMA_VERSION",
@@ -27,5 +39,4 @@ __all__ = [
     "AdrBody",
     "AdrFrontmatter",
     "AdrOption",
-    "VersionInfo",
 ]

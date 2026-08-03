@@ -216,3 +216,7 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# OpenCode session files
+doc/session-ses_*.md
+/session-ses_*.md

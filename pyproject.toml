@@ -46,6 +46,8 @@ classifiers = [
 dependencies = [
     "pydantic>=2.11",
     "python-dotenv>=1.2.2",
+    "markdown-it-py>=3.0",
+    "python-frontmatter>=1.1",
 ]
 
 # Install project in editable mode:

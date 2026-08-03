@@ -15,17 +15,20 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Pydantic models used by the ``biz-dfch-specmgr`` MCP server."""
+"""Shared, private validation helpers for the ``models.adr`` subpackage."""
 
-from .adr import CURRENT_SCHEMA_VERSION, SCHEMA_MAJOR_VERSION, Adr, AdrBody, AdrFrontmatter, AdrOption
-from .version_info import VersionInfo
+from __future__ import annotations
 
-__all__ = [
-    "CURRENT_SCHEMA_VERSION",
-    "SCHEMA_MAJOR_VERSION",
-    "Adr",
-    "AdrBody",
-    "AdrFrontmatter",
-    "AdrOption",
-    "VersionInfo",
-]
+
+def blank_to_none(value: str | None) -> str | None:
+    """Normalize a blank/whitespace-only string to ``None``.
+
+    Used by optional frontmatter/body fields so that "absent" and
+    "whitespace-only" are treated as the same state, consistent with the
+    render-time rule that an absent optional section omits its heading.
+    """
+    if value is None:
+        return None
+    if isinstance(value, str) and not value.strip():
+        return None
+    return value

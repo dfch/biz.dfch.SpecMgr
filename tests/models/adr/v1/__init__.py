@@ -14,18 +14,3 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
-
-"""Pydantic models used by the ``biz-dfch-specmgr`` MCP server."""
-
-from .adr import CURRENT_SCHEMA_VERSION, SCHEMA_MAJOR_VERSION, Adr, AdrBody, AdrFrontmatter, AdrOption
-from .version_info import VersionInfo
-
-__all__ = [
-    "CURRENT_SCHEMA_VERSION",
-    "SCHEMA_MAJOR_VERSION",
-    "Adr",
-    "AdrBody",
-    "AdrFrontmatter",
-    "AdrOption",
-    "VersionInfo",
-]
