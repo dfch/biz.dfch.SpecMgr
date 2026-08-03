@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-08-03
+
 ### Added
 
 - Initial project scaffolding: namespace package layout
@@ -69,6 +71,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `README.md`'s "Add to OpenCode" section). Not yet publishable to the
   official registry — that requires a first PyPI release (see "Make a
   Release" in `README.md`).
+- `.github/workflows/publish.yml`: release automation triggered on `v*`
+  tags — builds and publishes the `sdist`/wheel to TestPyPI then PyPI via
+  Trusted Publishing (OIDC, no stored token), creates the matching GitHub
+  Release with the built artifacts attached, and publishes `server.json`
+  to the MCP Registry via `mcp-publisher`/GitHub OIDC.
+- `README.md` badges: `mcp-name` HTML comment
+  (`io.github.dfch/biz.dfch.specmgr`, matching `server.json`) plus
+  TestPyPI/PyPI version, PyPI downloads, and MCP Registry badges.
 
 ### Changed
 
