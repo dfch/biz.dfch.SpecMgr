@@ -41,9 +41,13 @@ since it has no dependency on `mcp`/`tools`/`resources`/`prompts` and is
 meant to stay importable standalone.
 
 Still genuinely missing / not yet done (don't assume otherwise):
-- No `commands/` CLI subcommand for ADRs yet (no `specmgr adr ...`) — the
-  ADR feature is MCP-only so far.
-- No CI/pre-commit hook runs `validate_adr` over the repo's own ADRs. (ADR 9c687bb1-8ee7-41c8-84ec-07606356bc73: "Enforce doc generation/lint/tests locally via pre-commit hook, not just CI")
+- **`specmgr adr-toc`** — a CLI command that generates a table of contents
+  (`docs/adr/README.md`) listing all ADRs with their titles, frontmatter
+  (id, status, date, decision-makers, consulted, informed), and links to the
+  actual ADR files. Integrated into pre-commit hooks and CI (Python 3.13 only,
+  consistent with `specmgr docs`). (ADR 9c687bb1-8ee7-41c8-84ec-07606356bc73)
+- No `validate_adr` tool runs over the repo's own ADRs yet via pre-commit or CI.
+  (ADR 9c687bb1-8ee7-41c8-84ec-07606356bc73: "Enforce doc generation/lint/tests locally via pre-commit hook, not just CI")
 - No second document type (`req`/`uc`) exists yet, despite `adr/`'s
   domain-first layout and `models/adr/`'s internal layout being designed to
   generalize to them (see `doc/adr-tool-plan.md` §6, `doc/refactor-domain.md`).
@@ -76,6 +80,7 @@ uv run --frozen ruff format --check && uv run --frozen ruff check      # lint (e
 uv run --frozen pylint $(git ls-files '*.py')                          # lint (advisory only; CI runs it with `|| true`)
 uv run --frozen python -m unittest discover -v -s tests -t . -p "test_*.py"  # tests
 uv run --frozen specmgr docs                                           # regenerate docs/api/ + docs/GENERATED.md
+uv run --frozen specmgr adr-toc                                        # regenerate docs/adr/README.md (ADR table of contents)
 uv run --frozen specmgr version                                        # run the CLI
 ```
 
@@ -95,10 +100,11 @@ Without `--all-extras` on `uv run`, only base dependencies are installed, causin
 
 `pre-commit install` is one-time per clone (see `.pre-commit-config.yaml`):
 runs `ruff format`/`ruff check`, the full `unittest` suite (scoped to
-`src/**/*.py`/`tests/**/*.py` changes), and a local `specmgr docs` hook
-(scoped to `src/**/*.py` changes) before every commit, so a broken test or
-drift in `docs/api/`/`docs/GENERATED.md` gets caught locally instead of
-failing later in CI. (ADR 9c687bb1-8ee7-41c8-84ec-07606356bc73: "Enforce doc generation/lint/tests locally via pre-commit hook, not just CI")
+`src/**/*.py`/`tests/**/*.py` changes), a local `specmgr docs` hook (scoped to
+`src/**/*.py` changes), and a local `specmgr adr-toc` hook (scoped to
+`docs/adr/**/*.md` changes) before every commit, so a broken test or drift in
+`docs/api/`/`docs/GENERATED.md`/`docs/adr/README.md` gets caught locally instead
+of failing later in CI. (ADR 9c687bb1-8ee7-41c8-84ec-07606356bc73: "Enforce doc generation/lint/tests locally via pre-commit hook, not just CI")
 
 ## Extras split (base library has no CLI/MCP deps)
 
@@ -135,9 +141,10 @@ consumer of the base library.
 
 - Branches: `dev` (default, feature work) → `main` (stable) → tag.
 - `.github/workflows/ci.yml`: ruff + pylint (`|| true`) + unittest run on
-  matrix 3.11/3.12/3.13 via `uv sync --frozen --all-extras`, but `specmgr
-  docs` drift check runs **only on Python 3.13** (pinned, since different
-  Python versions generate different docstring formatting in the API docs).
+  matrix 3.11/3.12/3.13 via `uv sync --frozen --all-extras`, but `specmgr docs`
+  and `specmgr adr-toc` drift checks run **only on Python 3.13** (pinned, since
+  different Python versions generate different docstring formatting in the API
+  docs, and we want consistent ADR TOC generation).
 - `.github/workflows/publish.yml` exists and has shipped `v0.1.0`, `v0.2.0`,
   `v0.2.1` to PyPI/the MCP Registry, triggered on `v*` tags.
 - Version bumps: update `version` in `pyproject.toml` (single source) and
