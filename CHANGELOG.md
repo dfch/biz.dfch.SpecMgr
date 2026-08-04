@@ -7,6 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`specmgr docs`**: a single CLI command that writes `api/*.md`
+  (per-module Markdown API reference, plus a `README.md` index) and
+  `GENERATED.md` (implemented-domain list, per-module docstrings, and a
+  static test-file count) under an `--output`/`-o` base directory,
+  defaulting to the repo's `docs/` (committed, so it browses directly on
+  GitHub). Replaces the previous `generate-docs`, `markdown-docs`, and
+  `pydoc` commands (see "Removed" below).
+- `pre-commit` adoption: `.pre-commit-config.yaml` runs `ruff format`/`ruff
+  check`, the full `unittest` suite (scoped to `src/**/*.py`/`tests/**/*.py`
+  changes), and a local `specmgr docs` hook (scoped to `src/**/*.py`
+  changes) before every commit; `pre-commit` added to the `dev` extras.
+  One-time setup: `uv run --frozen pre-commit install`.
+- CI backstop: `.github/workflows/ci.yml` now regenerates `docs/` and
+  fails the build on drift, catching anyone who bypassed or never
+  installed the pre-commit hook.
+- `docs/api/` committed-to-repo policy: the Markdown API reference is
+  version-controlled, not generated on demand, so it renders on GitHub
+  without a build step.
+
+### Removed
+
+- The `generate-docs`, `markdown-docs`, and `pydoc` CLI commands (and
+  `docs/pydoc/` HTML output) — superseded by `specmgr docs` above. HTML
+  pydoc output didn't render usefully in GitHub's file browser and
+  duplicated the Markdown output.
+- 6 fabricated ADRs and a stray duplicate file that had been written into
+  `docs/adr/`/`doc/` by mistake.
+
+### Fixed
+
+- `AGENTS.md`'s auto-generated internals replaced with a short, permanent,
+  hand-written pointer to `docs/GENERATED.md` — eliminates the fragile
+  regex-splice logic that had produced a duplicate section.
+- Corrected a stale "no `publish.yml` yet" note in `AGENTS.md`'s "CI /
+  Release" section; `publish.yml` exists and has shipped `v0.1.0`,
+  `v0.2.0`, `v0.2.1`.
+
 ### Changed
 
 - **Breaking (internal-API only):** repackaged the ADR domain's interface

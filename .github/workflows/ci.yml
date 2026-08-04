@@ -47,3 +47,11 @@ jobs:
     - name: Run unit tests
       run: |
         uv run --frozen python -m unittest discover -v -s tests -t . -p "test_*.py"
+
+    - name: Check docs/ is up to date with the source tree
+      run: |
+        uv run --frozen specmgr docs
+        git diff --exit-code -- docs/ || {
+          echo "::error::docs/ is out of date -- run 'uv run --frozen specmgr docs' and commit the result (see AGENTS.md)."
+          exit 1
+        }

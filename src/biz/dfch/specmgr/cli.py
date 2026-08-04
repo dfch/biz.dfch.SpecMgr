@@ -28,14 +28,12 @@ registered on ``app`` below; see that module for the ``mcp`` command's
 transport/host/port options and environment variables. ``mcp``
 additionally requires the ``mcp`` extra
 (``pip install biz-dfch-specmgr[mcp]``).
-
-This is otherwise a placeholder skeleton: no domain commands exist yet.
 """
 
 import typer
 from dotenv import find_dotenv, load_dotenv
 
-from .commands import mcp, version
+from .commands import docs, mcp, version
 
 # ---------------------------------------------------------------------------
 # .env loading
@@ -76,6 +74,7 @@ def _callback() -> None:
 
 app.command()(version)
 app.command()(mcp)
+app.command()(docs)
 
 
 if __name__ == "__main__":

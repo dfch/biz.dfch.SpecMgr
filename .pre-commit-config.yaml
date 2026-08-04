@@ -1,0 +1,28 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.1
+    hooks:
+      - id: ruff-format
+      - id: ruff-check
+        args: [--fix]
+
+  - repo: local
+    hooks:
+      - id: unittest
+        name: unittest
+        description: Run the full test suite before every commit.
+        entry: uv run --frozen python -m unittest discover -v -s tests -t . -p "test_*.py"
+        language: system
+        pass_filenames: false
+        files: ^(src|tests)/.*\.py$
+
+      - id: specmgr-docs
+        name: specmgr docs
+        description: >-
+          Regenerate docs/api/ and docs/GENERATED.md, then fail if that
+          changed anything -- standard formatter-hook UX: review and
+          `git add` the regenerated files, then commit again.
+        entry: bash -c 'uv run --frozen specmgr docs && git diff --exit-code -- docs/'
+        language: system
+        pass_filenames: false
+        files: ^src/.*\.py$
