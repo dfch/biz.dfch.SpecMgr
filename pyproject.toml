@@ -74,6 +74,7 @@ dev = [
     "build",
     "ruff>=0.16.0",
     "uv",
+    "types-PyYAML",
 ]
 
 [project.urls]
