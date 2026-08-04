@@ -101,7 +101,11 @@ def mcp(
     ] = 8000,
 ) -> None:
     """Start the ``biz-dfch-specmgr`` MCP server."""
-    from ..server import mcp as mcp_server  # noqa: PLC0415 -- keep the `mcp` extra optional for other commands
+    try:
+        from ..server import mcp as mcp_server  # noqa: PLC0415
+    except ImportError as ex:
+        typer.echo("You must install the `mcp` extra to start this command (`biz-dfch-specmgr[mcp]`).")
+        raise typer.Exit(1) from ex
 
     if transport.lower() == "sse":
         _warn_on_public_binding(host)
