@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-08-04
+
+### Changed
+
+- `server.json`: corrected the MCP Registry server `name` from
+  `io.github.dfch/biz.dfch.specmgr` to `io.github.dfch/biz-dfch-specmgr`,
+  matching the `mcp-name` HTML comment convention (package identifier with
+  hyphens, not the repo/namespace name with dots).
+- `README.md`: updated the MCP Registry badge and registry search links to
+  match the corrected `io.github.dfch/biz-dfch-specmgr` server name.
+
 ## [0.2.0] - 2026-08-04
 
 ### Added

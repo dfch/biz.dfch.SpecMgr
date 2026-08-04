@@ -8,7 +8,7 @@
 [![TestPyPI version](https://img.shields.io/badge/dynamic/json?url=https://test.pypi.org/pypi/biz-dfch-specmgr/json&label=TestPyPI&query=$.info.version&color=orange)](https://test.pypi.org/project/biz-dfch-specmgr/)
 [![PyPI version](https://img.shields.io/badge/dynamic/json?url=https://pypi.org/pypi/biz-dfch-specmgr/json&label=PyPI&query=$.info.version&color=blue)](https://pypi.org/project/biz-dfch-specmgr/)
 [![PyPI downloads](https://img.shields.io/pypi/dm/biz-dfch-specmgr.svg)](https://pypistats.org/packages/biz-dfch-specmgr)
-[![MCP Registry](https://img.shields.io/badge/MCP_Registry-io.github.dfch%2Fbiz.dfch.specmgr-8A2BE2.svg)](https://registry.modelcontextprotocol.io/?q=io.github.dfch/biz.dfch.specmgr)
+[![MCP Registry](https://img.shields.io/badge/MCP_Registry-io.github.dfch%2Fbiz--dfch--specmgr-8A2BE2.svg)](https://registry.modelcontextprotocol.io/?q=io.github.dfch/biz-dfch-specmgr)
 
 An artifact manager for system specifications.
 
@@ -205,10 +205,10 @@ stored token), creates the matching GitHub Release with the built
 artifacts attached, and publishes `server.json` (repo root, the MCP
 Registry publisher manifest — see the
 [server.json format spec](https://github.com/modelcontextprotocol/registry/blob/main/docs/reference/server-json/generic-server-json.md))
-to the [MCP Registry](https://registry.modelcontextprotocol.io/?q=io.github.dfch%2Fbiz.dfch.specmgr)
+to the [MCP Registry](https://registry.modelcontextprotocol.io/?q=io.github.dfch%2Fbiz-dfch-specmgr)
 via `mcp-publisher`/GitHub OIDC. `biz-dfch-specmgr` is live on
 [PyPI](https://pypi.org/project/biz-dfch-specmgr/) and in the
-[MCP Registry](https://registry.modelcontextprotocol.io/?q=io.github.dfch%2Fbiz.dfch.specmgr)
+[MCP Registry](https://registry.modelcontextprotocol.io/?q=io.github.dfch%2Fbiz-dfch-specmgr)
 as of `v0.1.0`._
 
 Then switch back to `dev` to continue work:

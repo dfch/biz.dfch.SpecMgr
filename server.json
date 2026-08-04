@@ -1,6 +1,6 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.github.dfch/biz.dfch.specmgr",
+  "name": "io.github.dfch/biz-dfch-specmgr",
   "title": "SpecMgr",
   "description": "An artifact manager for system specifications.",
   "websiteUrl": "https://github.com/dfch/biz.dfch.SpecMgr#readme",
