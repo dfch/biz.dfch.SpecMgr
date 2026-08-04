@@ -239,8 +239,10 @@ def _collect_headings(lines: list[str]) -> list[_Heading]:
 
     headings: list[_Heading] = []
     for index, token in enumerate(tokens):
+        assert token.map is not None, "heading_open token must have a map"
         content_start = token.map[1]
-        content_end = tokens[index + 1].map[0] if index + 1 < len(tokens) else len(lines)
+        next_token_map = tokens[index + 1].map if index + 1 < len(tokens) else None
+        content_end = next_token_map[0] if next_token_map is not None else len(lines)
         headings.append(
             _Heading(
                 level=_heading_level(token),
@@ -252,7 +254,9 @@ def _collect_headings(lines: list[str]) -> list[_Heading]:
 
 
 def _reject_leading_content(lines: list[str], heading_tokens: list[Token]) -> None:
-    first_heading_line = heading_tokens[0].map[0] if heading_tokens else len(lines)
+    first_heading_line = (
+        heading_tokens[0].map[0] if heading_tokens and heading_tokens[0].map is not None else len(lines)
+    )
     if _join_content(lines[:first_heading_line]):
         raise AdrParseError("content found before the first (H1) heading, which the ADR schema does not allow")
 
@@ -263,6 +267,7 @@ def _heading_level(token: Token) -> int:
 
 
 def _heading_title(lines: list[str], token: Token) -> str:
+    assert token.map is not None, "heading_open token must have a map"
     raw_line = lines[token.map[0]]
     return _ATX_MARKER_PATTERN.sub("", raw_line).strip()
 
