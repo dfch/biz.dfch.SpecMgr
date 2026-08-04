@@ -35,7 +35,7 @@ feature that exists — everything else is still scaffolding. Concretely:
 
 `adr/` (`adr/tools/`, `adr/prompts/`, `adr/resources/`) is a top-level,
 domain-first package — see `doc/refactor-domain.md` for the rationale and
-migration record. The ADR *schema* layer, `models/adr/`, deliberately stays
+migration record (ADR ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by document-type domain: domain-first hierarchy for tools/prompts/resources, shared versioned models"). The ADR *schema* layer, `models/adr/`, deliberately stays
 under the shared top-level `models/` package instead of moving into `adr/`,
 since it has no dependency on `mcp`/`tools`/`resources`/`prompts` and is
 meant to stay importable standalone.
@@ -43,7 +43,7 @@ meant to stay importable standalone.
 Still genuinely missing / not yet done (don't assume otherwise):
 - No `commands/` CLI subcommand for ADRs yet (no `specmgr adr ...`) — the
   ADR feature is MCP-only so far.
-- No CI/pre-commit hook runs `validate_adr` over the repo's own ADRs.
+- No CI/pre-commit hook runs `validate_adr` over the repo's own ADRs. (ADR 9c687bb1-8ee7-41c8-84ec-07606356bc73: "Enforce doc generation/lint/tests locally via pre-commit hook, not just CI")
 - No second document type (`req`/`uc`) exists yet, despite `adr/`'s
   domain-first layout and `models/adr/`'s internal layout being designed to
   generalize to them (see `doc/adr-tool-plan.md` §6, `doc/refactor-domain.md`).
@@ -98,7 +98,7 @@ runs `ruff format`/`ruff check`, the full `unittest` suite (scoped to
 `src/**/*.py`/`tests/**/*.py` changes), and a local `specmgr docs` hook
 (scoped to `src/**/*.py` changes) before every commit, so a broken test or
 drift in `docs/api/`/`docs/GENERATED.md` gets caught locally instead of
-failing later in CI.
+failing later in CI. (ADR 9c687bb1-8ee7-41c8-84ec-07606356bc73: "Enforce doc generation/lint/tests locally via pre-commit hook, not just CI")
 
 ## Extras split (base library has no CLI/MCP deps)
 

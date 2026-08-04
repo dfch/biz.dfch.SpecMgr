@@ -18,7 +18,7 @@ First-line docstrings from each module, organized by domain:
 
 **adr/**
 
-- `adr/__init__.py` — The Architecture Decision Record (ADR) domain package (doc/refactor-domain.md).
+- `adr/__init__.py` — The Architecture Decision Record (ADR) domain package.
 - `adr/prompts/__init__.py` — MCP prompt wrappers for Architecture Decision Records (doc/adr-tool-plan.md §11).
 - `adr/prompts/create_adr.py` — ``@mcp.prompt()``: create_adr (doc/adr-tool-plan.md §11).
 - `adr/prompts/create_adr_test.py` — ``@mcp.prompt()``: create_adr_test (doc/adr-tool-plan.md §11).

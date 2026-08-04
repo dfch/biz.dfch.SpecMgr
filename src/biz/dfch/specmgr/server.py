@@ -39,7 +39,9 @@ ADR prompts (``adr/prompts/``): ``create_adr``, ``update_adr`` -- instructional
 text guiding an LLM through the ADR tool sequence above (``doc/adr-tool-plan.md``
 §11).
 
-Modules are grouped domain-first (doc/refactor-domain.md): each document
+Modules are grouped domain-first
+(ADR ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by
+document-type domain"): each document
 domain (``adr``, and later ``req``/``uc``/``ac``) is a top-level package
 with its own ``tools``/``prompts``/``resources`` sub-packages, self-
 registered via the domain package's own ``__init__.py``. Cross-cutting,
