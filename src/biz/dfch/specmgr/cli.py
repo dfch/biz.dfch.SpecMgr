@@ -33,7 +33,7 @@ additionally requires the ``mcp`` extra
 import typer
 from dotenv import find_dotenv, load_dotenv
 
-from .commands import docs, mcp, version
+from .commands import adr_toc, docs, mcp, version
 
 # ---------------------------------------------------------------------------
 # .env loading
@@ -75,6 +75,7 @@ def _callback() -> None:
 app.command()(version)
 app.command()(mcp)
 app.command()(docs)
+app.command()(adr_toc)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,59 @@
+# Architecture Decision Records
+
+Index of all ADRs in this repository.
+
+## All ADRs
+
+- [Filesystem is the sole source of truth: no in-memory id-to-document cache](33c5ab08-ff58-4c73-8c32-23abaf3838e3-filesystem-is-the-sole-source-of-truth-no-in-memory-id-to-do.md)
+  - Id: 33c5ab08-ff58-4c73-8c32-23abaf3838e3
+  - Status: accepted
+  - Decision-makers: dfch
+- [Parse-validate-render pipeline: library choices, no AST-preserving round-trip](4c6119c9-532f-4629-8977-108e78304f48-parse-validate-render-pipeline-library-choices-no-ast-preser.md)
+  - Id: 4c6119c9-532f-4629-8977-108e78304f48
+  - Status: accepted
+  - Decision-makers: dfch
+- [Generic update_section(key, value) with deletion sentinel and mandatory-section rejection](71fd95d7-07f2-466f-81aa-d29b7e3ef34c-generic-update-section-key-value-with-deletion-sentinel-and.md)
+  - Id: 71fd95d7-07f2-466f-81aa-d29b7e3ef34c
+  - Status: accepted
+  - Decision-makers: dfch
+- [Expose listing and by-id reads as MCP resources in addition to tools](7531106b-074b-4bd8-a83a-e433d01676e2-expose-listing-and-by-id-reads-as-mcp-resources-in-addition.md)
+  - Id: 7531106b-074b-4bd8-a83a-e433d01676e2
+  - Status: accepted
+  - Decision-makers: dfch
+- [Author and edit ADRs only through MCP structured tools, never raw markdown](898bfcd0-85f9-462f-93a8-747bda4166c8-author-and-edit-adrs-only-through-mcp-structured-tools-never.md)
+  - Id: 898bfcd0-85f9-462f-93a8-747bda4166c8
+  - Status: accepted
+  - Decision-makers: dfch
+- [id/filename/addressing scheme: server-generated UUID, {id}-{slug}.md, directory-scan resolution](8cf940c5-3100-485c-a12d-14b59b631712-id-filename-addressing-scheme-server-generated-uuid-id-slug.md)
+  - Id: 8cf940c5-3100-485c-a12d-14b59b631712
+  - Status: accepted
+  - Decision-makers: dfch
+- [Enforce doc generation, lint, and tests locally via pre-commit hook, not just CI](9c687bb1-8ee7-41c8-84ec-07606356bc73-enforce-doc-generation-lint-and-tests-locally-via-pre-commit.md)
+  - Id: 9c687bb1-8ee7-41c8-84ec-07606356bc73
+  - Status: accepted
+  - Decision-makers: dfch
+- [Frontmatter extension fields (id, version) with whole-object full-replace update contract](bbf412a7-965e-4435-8669-c338407d73b7-frontmatter-extension-fields-id-version-with-whole-object-fu.md)
+  - Id: bbf412a7-965e-4435-8669-c338407d73b7
+  - Status: accepted
+  - Decision-makers: dfch
+- [Base the ADR template on MADR 4.0.0](c73e4f9d-81f3-495d-bd3a-f660ab992ed3-base-the-adr-template-on-madr-4-0-0.md)
+  - Id: c73e4f9d-81f3-495d-bd3a-f660ab992ed3
+  - Status: accepted
+  - Decision-makers: dfch
+- ["Pros and Cons of the Options" as a derived container with a dedicated Option sub-API](d54abe50-a2c5-44f8-8bfe-11ea634b6f87-pros-and-cons-of-the-options-as-a-derived-container-with-a-d.md)
+  - Id: d54abe50-a2c5-44f8-8bfe-11ea634b6f87
+  - Status: accepted
+  - Decision-makers: dfch
+- [Prompt surface: narrated guidance plus step-gated test variants](ddd038f0-ae16-4f4b-beef-df06f7ed226f-prompt-surface-narrated-guidance-plus-step-gated-test-varian.md)
+  - Id: ddd038f0-ae16-4f4b-beef-df06f7ed226f
+  - Status: accepted
+  - Decision-makers: dfch
+- [Organize the codebase by document-type domain: domain-first hierarchy for tools/prompts/resources, shared versioned models](ece4554b-725c-4f76-bc04-5d2b760363d2-organize-the-codebase-by-document-type-domain-domain-first-h.md)
+  - Id: ece4554b-725c-4f76-bc04-5d2b760363d2
+  - Status: accepted
+  - Decision-makers: dfch
+- [Choice of Python Minor Version (3.11 vs 3.13)](test.md)
+  - Id: deaddead-dead-dead-dead-deaddeaddead
+  - Status: rejected
+  - Date: 2026-08-03
+  - Decision-makers: Platform Engineering Team

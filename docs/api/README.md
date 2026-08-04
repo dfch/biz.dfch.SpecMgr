@@ -34,6 +34,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.adr.tools.validate_adr`](biz.dfch.specmgr.adr.tools.validate_adr.md) — ``@mcp.tool()`` wrapper: validate_adr (plan §7, §8, §9a, §10 item 4).
 - [`biz.dfch.specmgr.cli`](biz.dfch.specmgr.cli.md) — Typer CLI entry point for ``biz-dfch-specmgr``.
 - [`biz.dfch.specmgr.commands`](biz.dfch.specmgr.commands.md) — commands module.
+- [`biz.dfch.specmgr.commands.adr_toc`](biz.dfch.specmgr.commands.adr_toc.md) — ``adr-toc`` -- generate table of contents for all ADRs in docs/adr.
 - [`biz.dfch.specmgr.commands.docs`](biz.dfch.specmgr.commands.docs.md) — ``docs`` -- regenerate ``docs/api/`` and ``docs/GENERATED.md`` from the codebase.
 - [`biz.dfch.specmgr.commands.mcp`](biz.dfch.specmgr.commands.mcp.md) — ``mcp`` -- start the ``biz-dfch-specmgr`` MCP server.
 - [`biz.dfch.specmgr.commands.version`](biz.dfch.specmgr.commands.version.md) — ``version`` -- print the installed ``biz-dfch-specmgr`` version.

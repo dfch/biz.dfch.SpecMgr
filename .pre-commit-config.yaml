@@ -26,3 +26,14 @@ repos:
         language: system
         pass_filenames: false
         files: ^src/.*\.py$
+
+      - id: specmgr-adr-toc
+        name: specmgr adr-toc
+        description: >-
+          Regenerate docs/adr/README.md, then fail if that changed anything
+          -- standard formatter-hook UX: review and `git add` the regenerated
+          file, then commit again.
+        entry: bash -c 'uv run --frozen specmgr adr-toc && git diff --exit-code -- docs/adr/README.md'
+        language: system
+        pass_filenames: false
+        files: ^docs/adr/.*\.md$

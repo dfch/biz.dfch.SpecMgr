@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`specmgr adr-toc`**: a CLI command that generates a table of contents
+  (`docs/adr/README.md`) listing all ADRs with their titles, frontmatter
+  (id, status, date, decision-makers, consulted, informed), and links to
+  the actual ADR files. Scans the configurable ADR base directory (default
+  `docs/adr`, via `SPECMGR_ADR_DIR` environment variable). Supports
+  `--output`/`-o` to write to an alternate location. Run after adding new
+  ADRs and commit the result.
 - **`specmgr docs`**: a single CLI command that writes `api/*.md`
   (per-module Markdown API reference, plus a `README.md` index) and
   `GENERATED.md` (implemented-domain list, per-module docstrings, and a

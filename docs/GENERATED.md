@@ -46,6 +46,7 @@ First-line docstrings from each module, organized by domain:
 **commands/**
 
 - `commands/__init__.py` — commands module.
+- `commands/adr_toc.py` — ``adr-toc`` -- generate table of contents for all ADRs in docs/adr.
 - `commands/docs.py` — ``docs`` -- regenerate ``docs/api/`` and ``docs/GENERATED.md`` from the codebase.
 - `commands/mcp.py` — ``mcp`` -- start the ``biz-dfch-specmgr`` MCP server.
 - `commands/version.py` — ``version`` -- print the installed ``biz-dfch-specmgr`` version.
