@@ -45,7 +45,7 @@ Count non-private, non-``__init__`` ``.py`` files directly under ``subdir``.
 Count ``test_*.py`` files under ``tests/`` -- static, no subprocess.
 
 
-### `_extract_module_docstring(file_path: pathlib.Path) -> Optional[str]`
+### `_extract_module_docstring(file_path: pathlib.Path) -> str | None`
 
 Extract the first docstring from a Python file.
 
@@ -62,7 +62,7 @@ Write one Markdown file per module of ``package`` under ``api_dir``, plus a READ
 Returns the number of module files written.
 
 
-### `_generate_module_markdown(module_name: str) -> Optional[str]`
+### `_generate_module_markdown(module_name: str) -> str | None`
 
 Generate Markdown documentation for a single module, or ``None`` if unimportable.
 
@@ -87,7 +87,7 @@ Extract module docstring.
 List domain packages and their subpackages (``models/``, ``adr/``).
 
 
-### `_stable_signature_str(func: Any) -> Optional[str]`
+### `_stable_signature_str(func: Any) -> str | None`
 
 Render ``func``'s signature as a string, stable across repeated runs and Python versions.
 
@@ -102,7 +102,7 @@ the pre-commit hook / CI drift check for ``docs/api/*.md``:
   Python version (see ``_PRIVATE_SUBMODULE_RE`` above).
 
 
-### `docs(output: Annotated[Optional[pathlib.Path], <typer.models.OptionInfo object>] = None) -> None`
+### `docs(output: Annotated[pathlib.Path | None, <typer.models.OptionInfo object>] = None) -> None`
 
 Regenerate ``api/`` and ``GENERATED.md`` from the codebase.
 

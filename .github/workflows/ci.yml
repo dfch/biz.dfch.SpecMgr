@@ -48,7 +48,7 @@ jobs:
       run: |
         uv run --frozen python -m unittest discover -v -s tests -t . -p "test_*.py"
 
-    - name: Check docs/ is up to date with the source tree
+    - name: Make sure `docs/` is correct
       # Python's inspect module (used by annotated-doc for API docs generation) formats
       # exception method signatures differently across Python versions (e.g., 3.12 vs 3.13).
       # This causes docs/ to differ when regenerated on different Python versions. To avoid

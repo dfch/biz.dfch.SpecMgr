@@ -15,7 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   static test-file count) under an `--output`/`-o` base directory,
   defaulting to the repo's `docs/` (committed, so it browses directly on
   GitHub). Replaces the previous `generate-docs`, `markdown-docs`, and
-  `pydoc` commands (see "Removed" below).
+  `pydoc` commands (see "Removed" below). The `api/README.md` index now
+  includes the first-line docstring for each module, improving discoverability.
 - `pre-commit` adoption: `.pre-commit-config.yaml` runs `ruff format`/`ruff
   check`, the full `unittest` suite (scoped to `src/**/*.py`/`tests/**/*.py`
   changes), and a local `specmgr docs` hook (scoped to `src/**/*.py`

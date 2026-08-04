@@ -40,7 +40,7 @@ import inspect
 import pkgutil
 import re
 from pathlib import Path
-from typing import Annotated, Any, Optional
+from typing import Annotated, Any
 
 import typer
 
@@ -56,7 +56,7 @@ _PACKAGE = "biz.dfch.specmgr"
 # ---------------------------------------------------------------------------
 
 
-def _extract_module_docstring(file_path: Path) -> Optional[str]:
+def _extract_module_docstring(file_path: Path) -> str | None:
     """Extract the first docstring from a Python file."""
     try:
         with open(file_path, "r", encoding="utf-8") as f:
@@ -250,7 +250,7 @@ _OBJECT_ADDRESS_RE = re.compile(r" at 0x[0-9a-fA-F]+")
 _PRIVATE_SUBMODULE_RE = re.compile(r"\b([A-Za-z_]\w*)\._[A-Za-z]\w*\.([A-Za-z_]\w*)\b")
 
 
-def _stable_signature_str(func: Any) -> Optional[str]:
+def _stable_signature_str(func: Any) -> str | None:
     """Render ``func``'s signature as a string, stable across repeated runs and Python versions.
 
     ``str(inspect.signature(func))`` already includes the surrounding
@@ -277,7 +277,7 @@ def _format_signature(func: Any) -> str:
     return sig if sig is not None else "()"
 
 
-def _generate_module_markdown(module_name: str) -> Optional[str]:
+def _generate_module_markdown(module_name: str) -> str | None:
     """Generate Markdown documentation for a single module, or ``None`` if unimportable."""
     try:
         module = importlib.import_module(module_name)
@@ -348,7 +348,7 @@ def _generate_api_docs(api_dir: Path, package: str) -> int:
     api_dir.mkdir(parents=True, exist_ok=True)
 
     modules = _collect_all_modules(package)
-    index_entries: list[tuple[str, str]] = []
+    index_entries: list[tuple[str, str, str | None]] = []
 
     for module_name in sorted(modules):
         markdown = _generate_module_markdown(module_name)
@@ -356,7 +356,16 @@ def _generate_api_docs(api_dir: Path, package: str) -> int:
             continue
         filename = f"{module_name}.md"
         (api_dir / filename).write_text(markdown, encoding="utf-8")
-        index_entries.append((module_name, filename))
+
+        # Extract first-line docstring for the index
+        try:
+            module = importlib.import_module(module_name)
+            module_doc = _get_module_doc(module)
+            first_line = module_doc.split("\n")[0].strip() if module_doc else None
+        except (ImportError, AttributeError):
+            first_line = None
+
+        index_entries.append((module_name, filename, first_line))
 
     if index_entries:
         index_lines = [
@@ -368,18 +377,21 @@ def _generate_api_docs(api_dir: Path, package: str) -> int:
             "",
         ]
 
-        domains: dict[str, list[tuple[str, str]]] = {}
-        for module_name, filename in index_entries:
+        domains: dict[str, list[tuple[str, str, str | None]]] = {}
+        for module_name, filename, first_line in index_entries:
             parts = module_name.split(".")
             domain = parts[0] if len(parts) > 1 else "root"
-            domains.setdefault(domain, []).append((module_name, filename))
+            domains.setdefault(domain, []).append((module_name, filename, first_line))
 
         for domain in sorted(domains.keys()):
             if domain != "root":
                 index_lines.append(f"### {domain.capitalize()}")
                 index_lines.append("")
-            for module_name, filename in sorted(domains[domain]):
-                index_lines.append(f"- [`{module_name}`]({filename})")
+            for module_name, filename, first_line in sorted(domains[domain]):
+                if first_line:
+                    index_lines.append(f"- [`{module_name}`]({filename}) — {first_line}")
+                else:
+                    index_lines.append(f"- [`{module_name}`]({filename})")
             index_lines.append("")
 
         (api_dir / "README.md").write_text("\n".join(index_lines), encoding="utf-8")
@@ -394,7 +406,7 @@ def _generate_api_docs(api_dir: Path, package: str) -> int:
 
 def docs(
     output: Annotated[
-        Optional[Path],
+        Path | None,
         typer.Option(
             "--output",
             "-o",
