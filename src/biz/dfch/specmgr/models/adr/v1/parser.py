@@ -45,7 +45,7 @@ Two error channels, by design:
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import frontmatter
 from markdown_it import MarkdownIt
@@ -58,23 +58,35 @@ from .option import AdrOption
 
 __all__ = ["AdrParseError", "parse_adr"]
 
-#: Fixed H2 heading text -> AdrBody field name (plan §4's table), excluding
-#: the derived "Pros and Cons of the Options" container (plan §5, handled
-#: separately below -- it has no field of its own).
-_H2_FIELD_BY_TITLE = {
+#: Fixed H2 heading text -> AdrBody field name (plan §4's table) for the
+#: "leaf" sections -- ones with no recognized sub-heading of their own, so
+#: anything nested underneath them (any heading level, any title) is just
+#: opaque content of that field, never separate structure. Excludes
+#: "Decision Outcome" (a composite section, handled on its own below) and
+#: the derived "Pros and Cons of the Options" container (plan §5, likewise
+#: composite and never stored as a field itself).
+_LEAF_H2_FIELD_BY_TITLE = {
     "Context and Problem Statement": "context_and_problem_statement",
     "Decision Drivers": "decision_drivers",
     "Considered Options": "considered_options",
-    "Decision Outcome": "decision_outcome",
     "More Information": "more_information",
 }
 
+#: The one composite H2 with a field of its own: its own text (before any
+#: recognized child heading) is "decision_outcome"; "Consequences" and
+#: "Confirmation" are its recognized H3 children (plan §4's table).
+_DECISION_OUTCOME_HEADING = "Decision Outcome"
+
 #: The one recognized-but-not-stored H2: rendered automatically from
-#: ``options`` (plan §5), never parsed into a field.
+#: ``options`` (plan §5), never parsed into a field. Composite like
+#: "Decision Outcome" above -- its only recognized children are
+#: "Option N: ..." headings.
 _PROS_AND_CONS_HEADING = "Pros and Cons of the Options"
 
 #: Fixed H3 heading text -> AdrBody field name (the two sub-sections of
-#: "Decision Outcome", plan §4's table).
+#: "Decision Outcome", plan §4's table). These are themselves "leaf"
+#: headings: anything nested underneath one (H4+, any title) is opaque
+#: content of that field, exactly like an "Option N: ..." heading's content.
 _H3_FIELD_BY_TITLE = {
     "Consequences": "consequences",
     "Confirmation": "confirmation",
@@ -101,13 +113,40 @@ class AdrParseError(ValueError):
     """
 
 
-@dataclass(frozen=True)
-class _Heading:
-    """One heading token, resolved to its literal text and content span."""
+@dataclass
+class _Node:
+    """One heading, resolved into the document's nesting (outline) tree.
+
+    Unlike the old flat "one entry per H1/H2/H3 token" model, a :class:`_Node`
+    also knows its *direct children* -- every subsequent heading, of any
+    level, that is nested more deeply and not itself nested under some other
+    heading in between (the same "outline" rule browsers/editors use to build
+    a table of contents from arbitrary heading levels, including skipped
+    ones). This is what lets a "leaf" heading (plan §4/§5's H2 sections other
+    than "Decision Outcome", plus "Consequences"/"Confirmation"/"Option N:
+    ...") swallow *any* heading nested underneath it -- whatever its level or
+    title -- as opaque text content, while a "composite" heading ("Decision
+    Outcome", "Pros and Cons of the Options") still validates its direct
+    children against the fixed patterns it recognizes.
+
+    heading_line/content_start/end are line indices into the body's
+    ``lines``: ``heading_line`` is the heading's own line, ``content_start``
+    is the first line after it, and ``end`` is the exclusive end of this
+    heading's *entire* subtree (i.e. up to the next heading anywhere in the
+    document, at this level or shallower, or end of file).
+    """
 
     level: int
     title: str
-    content: str
+    heading_line: int
+    content_start: int
+    children: list["_Node"] = field(default_factory=list)
+    end: int = 0
+
+    @property
+    def own_content_end(self) -> int:
+        """End of this heading's *own* text, i.e. before its first child."""
+        return self.children[0].heading_line if self.children else self.end
 
 
 def parse_adr(text: str) -> Adr:
@@ -151,7 +190,7 @@ def _stringify_metadata(metadata: dict[str, object]) -> dict[str, object]:
 
 @dataclass
 class _BodyAccumulator:
-    """Mutable state threaded through :func:`_parse_body`'s single heading pass."""
+    """Mutable state threaded through :func:`_parse_body`'s tree walk."""
 
     fields: dict[str, str]
     options: list[AdrOption]
@@ -164,129 +203,127 @@ class _BodyAccumulator:
 def _parse_body(content: str) -> AdrBody:
     """Parse the markdown body (frontmatter stripped) into an :class:`AdrBody`."""
     lines = content.splitlines()
-    headings = _collect_headings(lines)
+    all_tokens = [tok for tok in _MD.parse("\n".join(lines)) if tok.type == "heading_open"]
+    _reject_leading_content(lines, all_tokens)
+    roots = _build_outline(all_tokens, lines)
 
     state = _BodyAccumulator(fields={}, options=[], seen_h2=set(), seen_h3=set(), seen_option_numbers=set())
-    for heading in headings:
-        if heading.level == 1:
-            _handle_h1(heading, state)
-        elif heading.level == 2:
-            _handle_h2(heading, state)
-        elif heading.level == 3:
-            _handle_h3(heading, state)
+    for root in roots:
+        if root.level == 1:
+            _handle_title(root, state)
+            for child in root.children:
+                _handle_h2_node(child, lines, state)
+        elif root.level == 2:
+            _handle_h2_node(root, lines, state)
         else:
-            raise AdrParseError(f"heading level H{heading.level} is not part of the ADR schema: {heading.title!r}")
+            raise AdrParseError(f"heading level H{root.level} is not part of the ADR schema: {root.title!r}")
 
     return AdrBody.model_validate({**state.fields, "options": state.options})
 
 
-def _handle_h1(heading: _Heading, state: _BodyAccumulator) -> None:
+def _build_outline(tokens: list[Token], lines: list[str]) -> list[_Node]:
+    """Turn a flat, document-order token list into a heading *outline* tree.
+
+    Standard "table of contents" nesting rule: a heading's children are
+    every subsequent heading that is more deeply nested and not already
+    claimed by an intervening shallower-or-equal heading -- regardless of
+    whether intermediate levels are skipped (e.g. an H4 directly under an
+    H2, with no H3 in between, is still that H2's direct child).
+    """
+    flat: list[_Node] = []
+    roots: list[_Node] = []
+    stack: list[_Node] = []
+    for token in tokens:
+        assert token.map is not None, "heading_open token must have a map"
+        node = _Node(
+            level=_heading_level(token),
+            title=_heading_title(lines, token),
+            heading_line=token.map[0],
+            content_start=token.map[1],
+        )
+        flat.append(node)
+        while stack and stack[-1].level >= node.level:
+            stack.pop()
+        (stack[-1].children if stack else roots).append(node)
+        stack.append(node)
+
+    eof = len(lines)
+    for index, node in enumerate(flat):
+        node.end = eof
+        for later in flat[index + 1 :]:
+            if later.level <= node.level:
+                node.end = later.heading_line
+                break
+    return roots
+
+
+def _handle_title(node: _Node, state: _BodyAccumulator) -> None:
     if state.has_title:
-        raise AdrParseError(f"more than one top-level (H1) title found; second one is {heading.title!r}")
-    state.fields["title"] = heading.title
+        raise AdrParseError(f"more than one top-level (H1) title found; second one is {node.title!r}")
+    state.fields["title"] = node.title
     state.has_title = True
 
 
-def _handle_h2(heading: _Heading, state: _BodyAccumulator) -> None:
-    if heading.title == _PROS_AND_CONS_HEADING:
-        return  # derived container (plan §5); its own text is never stored
-    field_name = _H2_FIELD_BY_TITLE.get(heading.title)
-    if field_name is None:
-        raise AdrParseError(f"unrecognized H2 heading {heading.title!r}")
-    if field_name in state.seen_h2:
-        raise AdrParseError(f"duplicate H2 heading {heading.title!r}")
-    state.seen_h2.add(field_name)
-    state.fields[field_name] = heading.content
+def _handle_h2_node(node: _Node, lines: list[str], state: _BodyAccumulator) -> None:
+    if node.level != 2:
+        raise AdrParseError(f"heading level H{node.level} is not part of the ADR schema: {node.title!r}")
 
-
-def _handle_h3(heading: _Heading, state: _BodyAccumulator) -> None:
-    option_match = _OPTION_HEADING_PATTERN.match(heading.title)
-    if option_match is not None:
-        _handle_option_heading(heading, option_match, state)
+    if node.title == _PROS_AND_CONS_HEADING:
+        for child in node.children:
+            _handle_composite_child(child, lines, state)
         return
-    field_name = _H3_FIELD_BY_TITLE.get(heading.title)
+
+    if node.title == _DECISION_OUTCOME_HEADING:
+        _store_field("decision_outcome", _join_content(lines[node.content_start : node.own_content_end]), state)
+        for child in node.children:
+            _handle_composite_child(child, lines, state)
+        return
+
+    field_name = _LEAF_H2_FIELD_BY_TITLE.get(node.title)
     if field_name is None:
-        raise AdrParseError(f"unrecognized H3 heading {heading.title!r}")
-    if field_name in state.seen_h3:
-        raise AdrParseError(f"duplicate H3 heading {heading.title!r}")
-    state.seen_h3.add(field_name)
-    state.fields[field_name] = heading.content
+        raise AdrParseError(f"unrecognized H2 heading {node.title!r}")
+    # Leaf section: swallow its entire subtree verbatim, whatever headings (if any) it nests.
+    _store_field(field_name, _join_content(lines[node.content_start : node.end]), state)
 
 
-def _handle_option_heading(heading: _Heading, option_match: re.Match[str], state: _BodyAccumulator) -> None:
-    number = int(option_match.group("number"))
-    if number in state.seen_option_numbers:
-        raise AdrParseError(f"duplicate option number {number} (heading {heading.title!r})")
-    state.seen_option_numbers.add(number)
-    state.options.append(
-        AdrOption(number=number, partial_title=option_match.group("partial_title"), content=heading.content)
-    )
-
-
-def _collect_headings(lines: list[str]) -> list[_Heading]:
-    """Walk the token stream and resolve every heading to text + own content.
-
-    "Own content" of a heading is every line between the end of its own
-    heading line(s) and the start of the very next heading in document
-    order (of H1/H2/H3 only; H4+ are treated as opaque content only within
-    H3 "Option N: ..." sections), or end of file for the last heading.
-
-    H4+ headings that appear anywhere other than within option content are
-    rejected during this phase; those within option content are preserved as
-    text, not collected as separate heading structures.
-    """
-    all_tokens = [tok for tok in _MD.parse("\n".join(lines)) if tok.type == "heading_open"]
-    _reject_leading_content(lines, all_tokens)
-
-    # First pass: validate that H4+ only appear after H3 option headings
-    schema_tokens = [tok for tok in all_tokens if int(tok.tag[1]) <= 3]
-    _reject_h4_outside_options(lines, all_tokens, schema_tokens)
-
-    # Second pass: collect only H1/H2/H3 tokens for schema structure
-    headings: list[_Heading] = []
-    for index, token in enumerate(schema_tokens):
-        assert token.map is not None, "heading_open token must have a map"
-        content_start = token.map[1]
-        next_token_map = schema_tokens[index + 1].map if index + 1 < len(schema_tokens) else None
-        content_end = next_token_map[0] if next_token_map is not None else len(lines)
-        headings.append(
-            _Heading(
-                level=_heading_level(token),
-                title=_heading_title(lines, token),
-                content=_join_content(lines[content_start:content_end]),
+def _handle_composite_child(node: _Node, lines: list[str], state: _BodyAccumulator) -> None:
+    """Validate/collect one direct child of a composite H2 ("Decision Outcome" or
+    "Pros and Cons of the Options"): either an "Option N: ..." heading or one of the
+    fixed H3 sub-fields. Anything else -- wrong level, or an H3 with an unrecognized
+    title -- is a structural error."""
+    option_match = _OPTION_HEADING_PATTERN.match(node.title) if node.level == 3 else None
+    if option_match is not None:
+        number = int(option_match.group("number"))
+        if number in state.seen_option_numbers:
+            raise AdrParseError(f"duplicate option number {number} (heading {node.title!r})")
+        state.seen_option_numbers.add(number)
+        state.options.append(
+            AdrOption(
+                number=number,
+                partial_title=option_match.group("partial_title"),
+                content=_join_content(lines[node.content_start : node.end]),
             )
         )
-    return headings
-
-
-def _reject_h4_outside_options(lines: list[str], all_tokens: list[Token], schema_tokens: list[Token]) -> None:
-    """Reject any H4+ heading that doesn't appear within an H3 option section."""
-    h4_plus_tokens = [tok for tok in all_tokens if int(tok.tag[1]) >= 4]
-    if not h4_plus_tokens:
         return
 
-    # Build a set of (start_line, end_line) ranges for each option section
-    option_ranges: list[tuple[int, int]] = []
-    for i, token in enumerate(schema_tokens):
-        if int(token.tag[1]) == 3:
-            title = _heading_title(lines, token)
-            if _OPTION_HEADING_PATTERN.match(title):
-                assert token.map is not None
-                section_start = token.map[0]
-                # Option section ends at the next schema heading, or end of file
-                next_token = schema_tokens[i + 1] if i + 1 < len(schema_tokens) else None
-                section_end = next_token.map[0] if next_token and next_token.map else len(lines)
-                option_ranges.append((section_start, section_end))
+    if node.level != 3:
+        raise AdrParseError(f"heading level H{node.level} is not part of the ADR schema: {node.title!r}")
 
-    # Check each H4+ token
-    for h4_token in h4_plus_tokens:
-        assert h4_token.map is not None
-        h4_line = h4_token.map[0]
-        # Check if this H4+ is within any option section
-        in_option = any(start <= h4_line < end for start, end in option_ranges)
-        if not in_option:
-            title = _heading_title(lines, h4_token)
-            raise AdrParseError(f"heading level H{int(h4_token.tag[1])} is not part of the ADR schema: {title!r}")
+    field_name = _H3_FIELD_BY_TITLE.get(node.title)
+    if field_name is None:
+        raise AdrParseError(f"unrecognized H3 heading {node.title!r}")
+    if field_name in state.seen_h3:
+        raise AdrParseError(f"duplicate H3 heading {node.title!r}")
+    state.seen_h3.add(field_name)
+    # Leaf sub-field: swallow its entire subtree verbatim, whatever headings (if any) it nests.
+    state.fields[field_name] = _join_content(lines[node.content_start : node.end])
+
+
+def _store_field(field_name: str, value: str, state: _BodyAccumulator) -> None:
+    if field_name in state.seen_h2:
+        raise AdrParseError(f"duplicate H2 heading for {field_name!r}")
+    state.seen_h2.add(field_name)
+    state.fields[field_name] = value
 
 
 def _reject_leading_content(lines: list[str], heading_tokens: list[Token]) -> None:

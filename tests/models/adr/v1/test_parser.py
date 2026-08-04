@@ -469,6 +469,190 @@ class TestParseAdr(unittest.TestCase):
         with self.assertRaises(AdrParseError):
             parse_adr(text)
 
+    def test_h3_inside_considered_options_is_swallowed_as_content(self):
+        """A heading nested inside a 'leaf' H2 (e.g. Considered Options) must not break parsing."""
+        text = textwrap.dedent(
+            """\
+            ---
+            status: draft
+            ---
+            # A title
+
+            ## Context and Problem Statement
+
+            Context.
+
+            ## Considered Options
+
+            ### Postgres
+
+            Mature, ACID.
+
+            ### MongoDB
+
+            Flexible schema.
+
+            ## Decision Outcome
+
+            Outcome.
+            """
+        )
+        adr = parse_adr(text)
+        self.assertIn("### Postgres", adr.body.considered_options)
+        self.assertIn("Mature, ACID", adr.body.considered_options)
+        self.assertIn("### MongoDB", adr.body.considered_options)
+        self.assertIn("Flexible schema", adr.body.considered_options)
+
+    def test_h4_inside_consequences_is_swallowed_as_content(self):
+        """A heading nested inside 'Consequences' (H3) must not break parsing."""
+        text = textwrap.dedent(
+            """\
+            ---
+            status: draft
+            ---
+            # A title
+
+            ## Context and Problem Statement
+
+            Context.
+
+            ## Considered Options
+
+            Options.
+
+            ## Decision Outcome
+
+            Outcome.
+
+            ### Consequences
+
+            #### Good
+
+            ACID transactions.
+
+            #### Bad
+
+            More ops overhead.
+            """
+        )
+        adr = parse_adr(text)
+        self.assertIn("#### Good", adr.body.consequences)
+        self.assertIn("ACID transactions", adr.body.consequences)
+        self.assertIn("#### Bad", adr.body.consequences)
+        self.assertIn("More ops overhead", adr.body.consequences)
+
+    def test_h4_inside_confirmation_is_swallowed_as_content(self):
+        """A heading nested inside 'Confirmation' (H3) must not break parsing."""
+        text = textwrap.dedent(
+            """\
+            ---
+            status: draft
+            ---
+            # A title
+
+            ## Context and Problem Statement
+
+            Context.
+
+            ## Considered Options
+
+            Options.
+
+            ## Decision Outcome
+
+            Outcome.
+
+            ### Confirmation
+
+            #### Review board
+
+            Approved.
+            """
+        )
+        adr = parse_adr(text)
+        self.assertIn("#### Review board", adr.body.confirmation)
+        self.assertIn("Approved", adr.body.confirmation)
+
+    def test_h3_inside_more_information_is_swallowed_as_content(self):
+        """A heading nested inside 'More Information' (leaf H2) must not break parsing."""
+        text = textwrap.dedent(
+            """\
+            ---
+            status: draft
+            ---
+            # A title
+
+            ## Context and Problem Statement
+
+            Context.
+
+            ## Considered Options
+
+            Options.
+
+            ## Decision Outcome
+
+            Outcome.
+
+            ## More Information
+
+            ### Links
+
+            See the team wiki.
+            """
+        )
+        adr = parse_adr(text)
+        self.assertIn("### Links", adr.body.more_information)
+        self.assertIn("See the team wiki", adr.body.more_information)
+
+    def test_deeply_nested_headings_across_full_document_round_trip(self):
+        """A full document exercising all four previously-broken cases at once must parse cleanly."""
+        text = textwrap.dedent(
+            """\
+            ---
+            status: draft
+            ---
+            # A title
+
+            ## Context and Problem Statement
+
+            Context.
+
+            ## Considered Options
+
+            ### Postgres
+
+            Details.
+
+            ## Decision Outcome
+
+            Outcome.
+
+            ### Consequences
+
+            #### Good
+
+            Details.
+
+            ### Confirmation
+
+            #### Review
+
+            Details.
+
+            ## More Information
+
+            ### Links
+
+            Details.
+            """
+        )
+        adr = parse_adr(text)
+        self.assertIn("### Postgres", adr.body.considered_options)
+        self.assertIn("#### Good", adr.body.consequences)
+        self.assertIn("#### Review", adr.body.confirmation)
+        self.assertIn("### Links", adr.body.more_information)
+
 
 if __name__ == "__main__":
     unittest.main()
