@@ -21,7 +21,9 @@ Thin file-I/O/id-lookup adapter over
 ``models.adr.v1.mutations.option_delete``: re-reads and re-parses the
 current on-disk state, then re-renders and re-writes the full file; there
 is no in-memory cache of a parsed :class:`Adr` (plan §7, §9a): the ``.md``
-file itself is always the source of truth.
+file itself is always the source of truth. The whole sequence runs
+under ``_lock.adr_lock(id)`` so a concurrent mutation against the same
+id cannot interleave with it and cause a lost update.
 
 ``models.adr.v1.mutations`` is imported qualified (as ``mutations``)
 because the pure, in-memory operation it delegates to shares this
@@ -33,6 +35,7 @@ from __future__ import annotations
 from ...models.adr.v1 import mutations
 from ...server import mcp
 from ._io import load_by_id, write_adr
+from ._lock import adr_lock
 from ._paths import adr_base_dir
 
 
@@ -62,7 +65,8 @@ def option_delete(id: str, full_title: str) -> list[str]:
         The remaining options' full titles, in their original order.
     """
     base_dir = adr_base_dir()
-    path, adr = load_by_id(base_dir, id)
-    new_adr, remaining = mutations.option_delete(adr, full_title)
-    write_adr(path, new_adr)
+    with adr_lock(id):
+        path, adr = load_by_id(base_dir, id)
+        new_adr, remaining = mutations.option_delete(adr, full_title)
+        write_adr(path, new_adr)
     return remaining

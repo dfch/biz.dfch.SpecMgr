@@ -32,6 +32,12 @@ ADR tools (``tools/adr/``): ``get_adr``, ``create_adr``, ``update_frontmatter``,
 ``update_section``, ``set_status``, ``option_list``, ``option_create``,
 ``option_update``, ``option_read``, ``option_delete``, ``validate_adr``.
 
+Prompts
+-------
+ADR prompts (``prompts/adr/``): ``create_adr``, ``update_adr`` -- instructional
+text guiding an LLM through the ADR tool sequence above (``doc/adr-tool-plan.md``
+§11).
+
 Add further tool/resource modules (mirroring the ``tools/`` / ``resources/``
 package layout used by sibling projects) and import them at the bottom of
 this module, next to the existing ``resources``/``tools`` import, so their
@@ -64,4 +70,4 @@ mcp = MCPServer(
 # @mcp.resource() decorators to actually run.
 # ---------------------------------------------------------------------------
 
-from . import resources, tools  # noqa: E402, F401
+from . import prompts, resources, tools  # noqa: E402, F401

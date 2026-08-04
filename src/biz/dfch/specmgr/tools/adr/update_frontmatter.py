@@ -20,7 +20,9 @@
 Thin file-I/O/id-lookup adapter -- re-reads and re-parses the current
 on-disk state, then re-renders and re-writes the full file; there is no
 in-memory cache of a parsed :class:`Adr` (plan §7, §9a): the ``.md`` file
-itself is always the source of truth.
+itself is always the source of truth. The whole sequence runs under
+``_lock.adr_lock(id)`` so a concurrent mutation against the same id cannot
+interleave with it and cause a lost update.
 """
 
 from __future__ import annotations
@@ -28,6 +30,7 @@ from __future__ import annotations
 from ...models.adr import Adr, AdrFrontmatter
 from ...server import mcp
 from ._io import load_by_id, write_adr
+from ._lock import adr_lock
 from ._paths import adr_base_dir
 
 
@@ -61,8 +64,9 @@ def update_frontmatter(id: str, frontmatter: AdrFrontmatter) -> Adr:
         no ADR has this id.
     """
     base_dir = adr_base_dir()
-    path, adr = load_by_id(base_dir, id)
-    new_frontmatter = frontmatter.model_copy(update={"id": adr.frontmatter.id})
-    new_adr = adr.model_copy(update={"frontmatter": new_frontmatter})
-    write_adr(path, new_adr)
+    with adr_lock(id):
+        path, adr = load_by_id(base_dir, id)
+        new_frontmatter = frontmatter.model_copy(update={"id": adr.frontmatter.id})
+        new_adr = adr.model_copy(update={"frontmatter": new_frontmatter})
+        write_adr(path, new_adr)
     return new_adr

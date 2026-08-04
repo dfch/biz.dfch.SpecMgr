@@ -17,6 +17,7 @@
 
 """Tests for the ``option_create`` ``@mcp.tool()`` wrapper (plan §5, §8, §9a)."""
 
+import concurrent.futures
 import unittest
 
 from biz.dfch.specmgr.tools.adr.option_create import option_create
@@ -36,6 +37,30 @@ class TestOptionCreate(TempAdrDirTestCase):
         self.assertEqual(full_title, "Option 1: First option")
         self.assertEqual(option_list("doc-id"), ["Option 1: First option"])
         self.assertEqual(option_read("doc-id", full_title), "Some content.")
+
+    def test_concurrent_calls_against_the_same_id_do_not_lose_updates(self):
+        """Two option_create calls racing on the same doc must both survive.
+
+        Regression test for the read-modify-write lost-update race: without
+        ``_lock.adr_lock`` serializing ``load_by_id`` -> mutate -> ``write_adr``,
+        two threads can both read the same "no options yet" state, each compute
+        the same next option number, and then one thread's ``write_adr`` clobbers
+        the other's -- silently dropping one of the two options.
+        """
+        self.existing_adr(id_="doc-id")
+        worker_count = 8
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=worker_count) as executor:
+            futures = [
+                executor.submit(option_create, "doc-id", f"Option body {i}", f"Content {i}")
+                for i in range(worker_count)
+            ]
+            full_titles = [future.result() for future in futures]
+
+        # Every call must have returned a distinct title (no number reused)...
+        self.assertEqual(len(set(full_titles)), worker_count)
+        # ...and every one of them must actually be present on disk afterward.
+        self.assertEqual(len(option_list("doc-id")), worker_count)
 
 
 if __name__ == "__main__":

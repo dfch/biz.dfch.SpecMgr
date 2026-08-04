@@ -212,6 +212,10 @@ convention), so the ADR feature is placed within that, not alongside it:
 - `validate_adr(id)` — schema check, usable standalone (e.g. pre-commit/CI)
   and by the LLM to self-correct
 
+**Prompt surface:** in addition to the tools above, two `@mcp.prompt()`s
+(`create_adr`, `update_adr`) return instructional text driving this exact
+tool sequence — see §11.
+
 ## 9. Open backlog items (non-blocking)
 - Possible future skill/tool to auto-summarize `Option` titles into
   `Considered Options` (explicitly not required now, drift accepted).
@@ -377,3 +381,70 @@ and avoiding any server-side cache/staleness problem:
    `pyproject.toml`'s `version` on every subsequent release, and the
    registry re-published via `mcp-publisher` each time, to stay in sync
    (same discipline as `CHANGELOG.md`, see `AGENTS.md`).
+8. **Done.** `prompts/adr/` (§11): two `@mcp.prompt()`s, `create_adr` and
+   `update_adr`, one module per prompt mirroring `tools/adr/`'s own
+   one-item-per-module split, wired into `server.py` alongside the
+   existing `resources`/`tools` side-effecting imports. Covered by
+   `tests/prompts/adr/test_create_adr.py`/`test_update_adr.py`.
+
+## 11. Prompt surface (MCP prompts)
+
+Two `@mcp.prompt()`s in `prompts/adr/` (mirroring the `models/`/`tools/`/
+`resources/` per-document-type sub-package convention from §6) return plain
+instructional text — not tool calls themselves — that guide an LLM through
+driving the §8 tool surface in the right order. Registered via
+`server.py`'s `from . import prompts, resources, tools` side-effecting
+import, exactly like `tools/`/`resources/` already are.
+
+- **`create_adr(topic, decision_makers=None, consulted=None, informed=None)
+  -> str`** (`prompts/adr/create_adr.py`): drafting a brand-new ADR.
+  - Instructs the LLM to read the `specmgr://adr/list` resource *first* and
+    check for an existing ADR on a similar topic, surfacing it to the user
+    (and suggesting `update_adr` instead) rather than creating a duplicate.
+  - Recaps the MADR structure (§2) and the mandatory/optional split (§3/§4).
+  - Specifies the exact tool sequence: `create_adr(frontmatter, body)` (with
+    `options=[]`) → one `option_create` call per considered option worth
+    writing up → optional `set_status` → always `validate_adr(id)` last.
+  - `decision_makers`/`consulted`/`informed` are optional pre-fills;
+    when absent the returned text tells the LLM to ask the user rather than
+    guessing or silently omitting them.
+- **`update_adr(id, instructions=None) -> str`** (`prompts/adr/update_adr.py`):
+  revising an existing ADR by id.
+  - Instructs the LLM to call `get_adr(id)` (or read `specmgr://adr/{id}`)
+    first, never assuming prior state.
+  - When `instructions` is absent, tells the LLM to ask the user what
+    should change before calling any write tool.
+  - Maps a requested change onto the right tool: whole-section prose →
+    `update_section` (mandatory-section-rejection/deletion-sentinel rules
+    per §4 apply); status → `set_status`; other frontmatter fields →
+    `update_frontmatter` (calling out its whole-object-replace semantics —
+    unrelated fields must be carried forward from the just-read state, per
+    §3); options → `option_create`/`option_update`/`option_delete` (no
+    renumbering on delete, per §5).
+  - Always finishes with `validate_adr(id)`.
+
+**Naming note:** the `create_adr` *prompt* shares its name with the
+`create_adr` *tool* (§8). This is intentional and not a collision — MCP
+keeps prompts and tools in separate registries (`prompts/list` vs.
+`tools/list`) — but is called out in `prompts/adr/create_adr.py`'s own
+module docstring so the two are never mistaken for the same registration.
+
+**Step-gated test variants (`create_adr_test`/`update_adr_test`):** prompted
+by the open question of how far prompt text alone can *force* an LLM to
+follow a fixed sequence (vs. tool-side Pydantic validation, which only
+catches malformed/blank content, not fabricated-but-well-formed content; vs.
+real MCP elicitation, which removes the LLM from the answer-collection loop
+entirely but needs client-side support this repo hasn't wired up yet),
+`prompts/adr/create_adr_test.py`/`update_adr_test.py` register two more
+prompts under distinct names (`create_adr_test`, `update_adr_test`, no
+collision with anything in §8). Same parameters, same underlying MADR
+structure and `tools/adr/` sequence as `create_adr`/`update_adr`, but the
+narrated steps are rewritten as hard numbered `GATE 0`..`GATE N` blocks,
+each with an explicit "Exit condition", an explicit "do not proceed until
+this is met", and a standing "never fabricate a value to pass a gate"
+instruction — most pointedly in `create_adr_test`'s `GATE 2`, a checklist
+of the four mandatory body fields that must each be backed by an actual
+user answer, not a model guess. These exist purely so a caller can switch
+between the narrated and gated variant for the same task and compare
+compliance — no code elsewhere depends on which one is used, and neither
+supersedes the other.

@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-08-04
+
+### Added
+
+- `prompts/adr/` MCP prompts module with two main workflows and two experimental variants:
+  - `create_adr.py`: Prompt-driven workflow for drafting new Architecture Decision Records,
+    sequencing tool calls in the correct order (context → decision drivers → options → outcome).
+  - `update_adr.py`: Prompt-driven workflow for revising existing ADRs by id, supporting
+    frontmatter updates, section edits, and option management.
+  - `create_adr_test.py` and `update_adr_test.py`: Experimental step-gated variants with
+    explicit gates (`GATE 0`…`GATE N`), exit conditions, and stricter phrasing to test
+    compliance under more rigorous constraints (side-by-side A/B comparison, not yet
+    recommended for production).
+- `tools/adr/_lock.py`: File-locking mechanism for safe concurrent access to ADR files
+  during tool operations, preventing race conditions when multiple clients modify the
+  same ADR simultaneously.
+- Comprehensive test coverage for all new prompts and the lock mechanism with 175 passing
+  tests across `tests/prompts/adr/`, `tests/tools/adr/`, `tests/resources/`, and
+  `tests/models/adr/`.
+- Updated `AGENTS.md` to document the new prompt surface, experimental test variants,
+  and finalized ADR tooling status (§11 in `doc/adr-tool-plan.md`).
+- Updated `doc/adr-tool-plan.md` (§8 and §11) to finalize prompt design, document
+  experimental variants, and mark the implementation as complete.
+
 ## [0.1.0] - 2026-08-03
 
 ### Added

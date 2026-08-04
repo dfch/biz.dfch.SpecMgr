@@ -21,8 +21,17 @@ feature that exists — everything else is still scaffolding. Concretely:
   file on disk is the sole source of truth, re-read on every call).
 - `resources/adr_list.py`/`adr_get.py` — the `specmgr://adr/list` and
   `specmgr://adr/{id}` MCP resources (read-only counterparts of the above).
-- 143 passing tests under `tests/models/adr/`, `tests/tools/adr/`,
-  `tests/resources/`.
+- `prompts/adr/create_adr.py`/`update_adr.py` — two `@mcp.prompt()`s
+  returning instructional text that drives the `tools/adr/` surface above
+  in the right order (draft-a-new-ADR and revise-an-existing-ADR-by-id
+  flows respectively); see `doc/adr-tool-plan.md` §11.
+- `prompts/adr/create_adr_test.py`/`update_adr_test.py` — step-gated
+  (`GATE 0`..`GATE N`, explicit exit conditions, "never fabricate a
+  value") experimental variants of the two prompts above, registered
+  under distinct names for side-by-side A/B comparison; neither
+  supersedes the narrated originals. See `doc/adr-tool-plan.md` §11.
+- 175 passing tests under `tests/models/adr/`, `tests/tools/adr/`,
+  `tests/resources/`, `tests/prompts/adr/`.
 
 Still genuinely missing / not yet done (don't assume otherwise):
 - No `commands/` CLI subcommand for ADRs yet (no `specmgr adr ...`) — the
@@ -35,8 +44,9 @@ Still genuinely missing / not yet done (don't assume otherwise):
 `doc/adr-tool-plan.md` §10 ("Next steps") tracks per-item done/not-done
 status and should be kept in sync with `src/` as this evolves; treat it as
 current-state tracking, not just a historical design doc. Don't assume any
-other `models/`, `tools/`, or `resources/` sub-package exists beyond `adr`/
-`version_info` (models) and `adr`/`version` (resources/tools) — check first.
+other `models/`, `tools/`, `resources/`, or `prompts/` sub-package exists
+beyond `adr`/`version_info` (models) and `adr`/`version` (resources/tools)
+— check first.
 
 ## Project Shape
 

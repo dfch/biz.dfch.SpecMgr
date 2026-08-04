@@ -21,7 +21,9 @@ Thin file-I/O/id-lookup adapter over
 ``models.adr.v1.mutations.update_section``: re-reads and re-parses the
 current on-disk state, then re-renders and re-writes the full file; there
 is no in-memory cache of a parsed :class:`Adr` (plan §7, §9a): the ``.md``
-file itself is always the source of truth.
+file itself is always the source of truth. The whole sequence runs
+under ``_lock.adr_lock(id)`` so a concurrent mutation against the same
+id cannot interleave with it and cause a lost update.
 
 ``models.adr.v1.mutations`` is imported qualified (as ``mutations``)
 because the pure, in-memory operation it delegates to shares this
@@ -34,6 +36,7 @@ from ...models.adr import Adr
 from ...models.adr.v1 import mutations
 from ...server import mcp
 from ._io import load_by_id, write_adr
+from ._lock import adr_lock
 from ._paths import adr_base_dir
 
 
@@ -68,7 +71,8 @@ def update_section(id: str, key: str, value: str) -> Adr:
         The updated document.
     """
     base_dir = adr_base_dir()
-    path, adr = load_by_id(base_dir, id)
-    new_adr = mutations.update_section(adr, key, value)
-    write_adr(path, new_adr)
+    with adr_lock(id):
+        path, adr = load_by_id(base_dir, id)
+        new_adr = mutations.update_section(adr, key, value)
+        write_adr(path, new_adr)
     return new_adr
