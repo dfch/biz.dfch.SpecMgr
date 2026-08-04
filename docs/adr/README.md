@@ -52,8 +52,3 @@ Index of all ADRs in this repository.
   - Id: ece4554b-725c-4f76-bc04-5d2b760363d2
   - Status: accepted
   - Decision-makers: dfch
-- [Choice of Python Minor Version (3.11 vs 3.13)](test.md)
-  - Id: deaddead-dead-dead-dead-deaddeaddead
-  - Status: rejected
-  - Date: 2026-08-03
-  - Decision-makers: Platform Engineering Team
