@@ -96,7 +96,7 @@ answer, never a model guess. Optional fields (decision_drivers,
 consequences, confirmation, more_information, and the
 decision-makers/consulted/informed frontmatter below) may be asked for
 once and omitted if the user declines to answer -- they are not gated.
-Use the todo tool. Do not use the question tool or call any adr tools 
+Use the todo tool. Do not use the question tool or call any adr tools
 until this gate is passed.
 
 ## GATE 3 -- Tool call sequence (only after GATE 2 has passed)
