@@ -7,20 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
-
-- `models/adr/v1/parser.py`: rewrote the ADR body parser to build a proper
-  heading *outline tree* (`_Node`/`_build_outline`, standard table-of-contents
-  nesting rules) instead of a flat H1/H2/H3 token list. Headings nested inside
-  a "leaf" section (e.g. `### Postgres` under `## Considered Options`, `####
-  Good`/`#### Bad` under `### Consequences`, or any heading under `## More
-  Information`) are now correctly preserved as opaque section content instead
-  of being misparsed or rejected with a spurious "heading level is not part
-  of the ADR schema" error. Added regression tests in
-  `tests/models/adr/v1/test_parser.py` covering nested headings under
-  Considered Options, Consequences, Confirmation, More Information, and a
-  full-document round trip.
-
 ## [0.2.0] - 2026-08-04
 
 ### Added
@@ -44,6 +30,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and finalized ADR tooling status (§11 in `doc/adr-tool-plan.md`).
 - Updated `doc/adr-tool-plan.md` (§8 and §11) to finalize prompt design, document
   experimental variants, and mark the implementation as complete.
+
+### Fixed
+
+- `models/adr/v1/parser.py`: rewrote the ADR body parser to build a proper
+  heading *outline tree* (`_Node`/`_build_outline`, standard table-of-contents
+  nesting rules) instead of a flat H1/H2/H3 token list. Headings nested inside
+  a "leaf" section (e.g. `### Postgres` under `## Considered Options`, `####
+  Good`/`#### Bad` under `### Consequences`, or any heading under `## More
+  Information`) are now correctly preserved as opaque section content instead
+  of being misparsed or rejected with a spurious "heading level is not part
+  of the ADR schema" error. Added regression tests in
+  `tests/models/adr/v1/test_parser.py` covering nested headings under
+  Considered Options, Consequences, Confirmation, More Information, and a
+  full-document round trip.
 
 ## [0.1.0] - 2026-08-03
 
