@@ -15,19 +15,25 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""MCP resource registrations that are not specific to any single document
-domain (doc/refactor-domain.md).
+"""MCP prompt wrappers for Architecture Decision Records (doc/adr-tool-plan.md §11).
 
-``version`` registers the server package version resource. Domain-specific
-resources (e.g. ``adr_list``/``adr_get``) live under their own domain
-package instead (``biz.dfch.specmgr.adr.resources``). Import this package
-to load all cross-cutting resources at once::
+Each returns plain instructional text (auto-wrapped as a single
+``UserMessage`` by the SDK) that guides an LLM through driving the
+existing ``adr/tools/`` tool surface in the right order -- one module per
+prompt, mirroring ``adr/tools/``'s own one-tool-per-module split. Import
+this package to register all ADR prompts at once::
 
-    from biz.dfch.specmgr import resources  # noqa: F401 (side-effects only)
+    from biz.dfch.specmgr.adr import prompts  # noqa: F401 (side-effects only)
 """
 
-from . import version  # noqa: F401
+from .create_adr import create_adr
+from .create_adr_test import create_adr_test
+from .update_adr import update_adr
+from .update_adr_test import update_adr_test
 
 __all__ = [
-    "version",
+    "create_adr",
+    "create_adr_test",
+    "update_adr",
+    "update_adr_test",
 ]

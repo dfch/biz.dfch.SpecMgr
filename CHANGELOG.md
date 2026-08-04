@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking (internal-API only):** repackaged the ADR domain's interface
+  layer to be domain-first (`doc/refactor-domain.md`): `tools/adr/`,
+  `prompts/adr/`, and `resources/adr_get.py`/`adr_list.py` all moved under a
+  new top-level `adr/` package, becoming `adr/tools/`, `adr/prompts/`, and
+  `adr/resources/adr_get.py`/`adr_list.py` respectively. The now-empty
+  top-level `tools/` and `prompts/` packages were removed entirely.
+  `biz.dfch.specmgr.models.adr` is unchanged. No MCP-facing names change:
+  tool names (`get_adr`, `create_adr`, ...), resource URIs
+  (`specmgr://adr/{id}`, `specmgr://adr/list`), and prompt names
+  (`create_adr`, `update_adr`, ...) are all identical -- only the Python
+  import paths move. Test modules moved correspondingly:
+  `tests/tools/adr/` → `tests/adr/tools/`, `tests/prompts/adr/` →
+  `tests/adr/prompts/`, `tests/resources/test_adr.py` →
+  `tests/adr/resources/test_adr.py`.
+
 ## [0.2.1] - 2026-08-04
 
 ### Changed

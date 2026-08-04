@@ -13,40 +13,48 @@ feature that exists — everything else is still scaffolding. Concretely:
   pure in-memory mutation functions (`update_section`, `set_status`,
   `option_*`), re-exported as "current" via `models/adr/__init__.py` and
   `models/__init__.py`.
-- `tools/adr/` — 11 `@mcp.tool()` wrappers, one module per tool (`get_adr`,
+- `adr/tools/` — 11 `@mcp.tool()` wrappers, one module per tool (`get_adr`,
   `create_adr`, `update_frontmatter`, `update_section`, `set_status`,
   `option_list`/`option_create`/`option_read`/`option_update`/
   `option_delete`, `validate_adr`), plus `_paths.py`/`_io.py` for the
   id → file-path resolution and file I/O (no in-memory cache — the `.md`
   file on disk is the sole source of truth, re-read on every call).
-- `resources/adr_list.py`/`adr_get.py` — the `specmgr://adr/list` and
+- `adr/resources/adr_list.py`/`adr_get.py` — the `specmgr://adr/list` and
   `specmgr://adr/{id}` MCP resources (read-only counterparts of the above).
-- `prompts/adr/create_adr.py`/`update_adr.py` — two `@mcp.prompt()`s
-  returning instructional text that drives the `tools/adr/` surface above
+- `adr/prompts/create_adr.py`/`update_adr.py` — two `@mcp.prompt()`s
+  returning instructional text that drives the `adr/tools/` surface above
   in the right order (draft-a-new-ADR and revise-an-existing-ADR-by-id
   flows respectively); see `doc/adr-tool-plan.md` §11.
-- `prompts/adr/create_adr_test.py`/`update_adr_test.py` — step-gated
+- `adr/prompts/create_adr_test.py`/`update_adr_test.py` — step-gated
   (`GATE 0`..`GATE N`, explicit exit conditions, "never fabricate a
   value") experimental variants of the two prompts above, registered
   under distinct names for side-by-side A/B comparison; neither
   supersedes the narrated originals. See `doc/adr-tool-plan.md` §11.
-- 175 passing tests under `tests/models/adr/`, `tests/tools/adr/`,
-  `tests/resources/`, `tests/prompts/adr/`.
+- 186 passing tests under `tests/models/adr/`, `tests/adr/tools/`,
+  `tests/adr/resources/`, `tests/adr/prompts/`.
+
+`adr/` (`adr/tools/`, `adr/prompts/`, `adr/resources/`) is a top-level,
+domain-first package — see `doc/refactor-domain.md` for the rationale and
+migration record. The ADR *schema* layer, `models/adr/`, deliberately stays
+under the shared top-level `models/` package instead of moving into `adr/`,
+since it has no dependency on `mcp`/`tools`/`resources`/`prompts` and is
+meant to stay importable standalone.
 
 Still genuinely missing / not yet done (don't assume otherwise):
 - No `commands/` CLI subcommand for ADRs yet (no `specmgr adr ...`) — the
   ADR feature is MCP-only so far.
 - No CI/pre-commit hook runs `validate_adr` over the repo's own ADRs.
-- No second document type (`req`/`uc`) exists yet, despite `models/adr/`'s
-  layout being designed to generalize to them (see `doc/adr-tool-plan.md`
-  §6).
+- No second document type (`req`/`uc`) exists yet, despite `adr/`'s
+  domain-first layout and `models/adr/`'s internal layout being designed to
+  generalize to them (see `doc/adr-tool-plan.md` §6, `doc/refactor-domain.md`).
 
 `doc/adr-tool-plan.md` §10 ("Next steps") tracks per-item done/not-done
 status and should be kept in sync with `src/` as this evolves; treat it as
 current-state tracking, not just a historical design doc. Don't assume any
-other `models/`, `tools/`, `resources/`, or `prompts/` sub-package exists
-beyond `adr`/`version_info` (models) and `adr`/`version` (resources/tools)
-— check first.
+other domain package exists beyond `adr` (with its `tools`/`prompts`/
+`resources` sub-packages), or any other `models/` sub-package beyond
+`adr`/`version_info`, or anything in the top-level `resources/` package
+beyond `version` — check first.
 
 ## Project Shape
 
@@ -117,3 +125,31 @@ consumer of the base library.
 
 - Formatter/linter: `ruff` (enforced, not black), line length 120.
 - `pylint` is advisory fallback only (see pylint caveat above).
+
+## Generated Section (auto-updated by `specmgr generate-docs`)
+
+**Source tree scan** — last updated by running `specmgr generate-docs`:
+
+### Implemented Domains
+
+**Models** — schema definitions: adr
+
+**ADR domain** — subpackages: prompts, resources, tools
+  - 11 MCP tools
+  - 2 MCP resources
+
+### Test Coverage
+
+**Passing tests**: 186
+
+### Implemented Domains
+
+**Models** — schema definitions: adr
+
+**ADR domain** — subpackages: prompts, resources, tools
+  - 11 MCP tools
+  - 2 MCP resources
+
+### Test Coverage
+
+**Passing tests**: 186

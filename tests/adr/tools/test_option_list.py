@@ -15,19 +15,23 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""MCP resource registrations that are not specific to any single document
-domain (doc/refactor-domain.md).
+"""Tests for the ``option_list`` ``@mcp.tool()`` wrapper (plan §5, §8, §9a)."""
 
-``version`` registers the server package version resource. Domain-specific
-resources (e.g. ``adr_list``/``adr_get``) live under their own domain
-package instead (``biz.dfch.specmgr.adr.resources``). Import this package
-to load all cross-cutting resources at once::
+import unittest
 
-    from biz.dfch.specmgr import resources  # noqa: F401 (side-effects only)
-"""
+from biz.dfch.specmgr.adr.tools.option_list import option_list
 
-from . import version  # noqa: F401
+from ._helpers import TempAdrDirTestCase
 
-__all__ = [
-    "version",
-]
+
+class TestOptionList(TempAdrDirTestCase):
+    """Tests for the option_list tool."""
+
+    def test_option_list_empty_for_fresh_document(self):
+        """option_list must return an empty list for a document with no options."""
+        self.existing_adr(id_="doc-id")
+        self.assertEqual(option_list("doc-id"), [])
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -119,7 +119,7 @@ convention), so the ADR feature is placed within that, not alongside it:
     returns a new one (or plain data for read-only lookups), never mutating
     its argument — mirroring `parser.py`/`renderer.py`'s own free-function
     style rather than becoming methods on the Pydantic model classes
-    themselves. `tools/adr/` (below) wraps these with the file I/O and
+    themselves. `adr/tools/` (below) wraps these with the file I/O and
     id-lookup they deliberately exclude.
   - **Schema versioning:** within `models/adr/`, every model class lives in a
     `vN` sibling package, one per *major* schema version — currently only
@@ -153,15 +153,22 @@ convention), so the ADR feature is placed within that, not alongside it:
     independent wholesale duplication of every `vN` package was considered
     and rejected: it invites drift, since an unrelated bugfix would have to
     be manually ported to every historical folder.
-- **`tools/`** — MCP tool wrappers, one subdirectory per document type, e.g.
-  `tools/adr/` holds the `@mcp.tool()`-decorated wrappers (`get_adr`,
-  `create_adr`, `update_frontmatter`, `update_section`, `set_status`,
-  `option_*`, `validate_adr` — `list_adrs` is the one exception, implemented
-  as an MCP resource instead, see §9a) that call into `models/adr/`. Each such
-  subpackage must be imported at the bottom of `server.py` (next to the
-  existing `resources` import) or its `@mcp.tool()` decorators never run —
-  see the warning already in `server.py`'s module docstring. **Implemented**,
-  see §10 item 4.
+- **`tools/`** — MCP tool wrappers, one top-level domain package per document
+  type, e.g. `adr/tools/` holds the `@mcp.tool()`-decorated wrappers
+  (`get_adr`, `create_adr`, `update_frontmatter`, `update_section`,
+  `set_status`, `option_*`, `validate_adr` — `list_adrs` is the one
+  exception, implemented as an MCP resource instead, see §9a) that call into
+  `models/adr/`. Each such domain package must be imported at the bottom of
+  `server.py` (next to the existing `resources` import) or its
+  `@mcp.tool()` decorators never run — see the warning already in
+  `server.py`'s module docstring. **Implemented**, see §10 item 4. As of
+  `doc/refactor-domain.md`, `tools`/`prompts`/`resources` are nested *under*
+  the domain package (`adr/tools/`, `adr/prompts/`, `adr/resources/`)
+  rather than the other way around — this is now the template for `req`/
+  `uc`/`ac`. `models/` remains the exception: it stays a single shared,
+  internally-domain-organized package (`models/adr/`, later `models/req/`,
+  `models/uc/`), since it has no dependency on `mcp` and is meant to stay
+  importable standalone.
 - **`commands/`** — one module per CLI command (existing convention, e.g.
   `commands/version.py`), extended with ADR commands that call the same
   `models/adr/` functions as the MCP tools do — CLI and MCP stay thin
@@ -265,7 +272,7 @@ and avoiding any server-side cache/staleness problem:
   this repo's existing `resources/` convention (`specmgr://version`) rather
   than the generic `list_adrs()` tool name originally sketched in §8.
 - **By-id read:** `specmgr://adr/{id}` is a second, template resource
-  (`resources/adr.py`'s `adr_get`) alongside the `get_adr` MCP tool (§8) —
+  (`adr/resources/adr_get.py`'s `adr_get`) alongside the `get_adr` MCP tool (§8) —
   both expose the identical read (same `find_adr_path`/`load_by_id`
   id-resolution, no cache), just through the two different MCP surfaces: the
   tool for an explicit LLM-invoked call, the resource for a host that wants
@@ -295,20 +302,20 @@ and avoiding any server-side cache/staleness problem:
    rejection (`AdrSectionError`) and not-found reporting
    (`AdrOptionNotFoundError`). Covered by
    `tests/models/adr/v1/test_mutations.py`. Deliberately excludes file I/O
-   and id/filename lookup, which was `tools/adr/`'s job (item 4, now done).
-4. **Done.** MCP tool wrappers under `tools/adr/` (§6), per the id/filename
+   and id/filename lookup, which was `adr/tools/`'s job (item 4, now done).
+4. **Done.** MCP tool wrappers under `adr/tools/` (§6), per the id/filename
    scheme resolved in §9a:
    - `models/adr/v1/frontmatter.py`/`renderer.py`: new `id` field (§3, §9a).
    - `models/adr/v1/summary.py`: new `AdrSummary` model (id/title/status/
      filename), re-exported through `models/adr/__init__.py` and
      `models/__init__.py`.
-   - `tools/adr/_paths.py`: `adr_base_dir`/`ensure_adr_base_dir`
+   - `adr/tools/_paths.py`: `adr_base_dir`/`ensure_adr_base_dir`
      (`SPECMGR_ADR_DIR` env var, default `docs/adr`), `slugify`,
      `iter_adr_paths`, `find_adr_path` (id → path via directory scan +
      parse, no cache, per §9a), `AdrNotFoundError`.
-   - `tools/adr/_io.py`: `read_adr`/`write_adr`/`load_by_id` — thin
+   - `adr/tools/_io.py`: `read_adr`/`write_adr`/`load_by_id` — thin
      `parse_adr`/`render_adr` + file I/O wrappers.
-   - `tools/adr/`: the 11 `@mcp.tool()` wrappers from §8's list (`get_adr`,
+   - `adr/tools/`: the 11 `@mcp.tool()` wrappers from §8's list (`get_adr`,
      `create_adr`, `update_frontmatter`, `update_section`, `set_status`,
      `option_list`/`option_create`/`option_read`/`option_update`/
      `option_delete`, `validate_adr`), each doing the
@@ -317,21 +324,23 @@ and avoiding any server-side cache/staleness problem:
      `update_section.py`, `set_status.py`, `option_create.py`,
      `option_update.py`, `option_read.py`, `option_delete.py`,
      `option_list.py`, `validate_adr.py`) rather than a single `tools.py` —
-     `tools/adr/__init__.py` re-exports all 11 so `from biz.dfch.specmgr.tools
-     import adr` (imported from `server.py`) still registers every
-     `@mcp.tool()` decorator in one side-effecting import.
-   - `resources/adr.py`: `specmgr://adr/list` resource (§9a), skipping
-     unparseable files rather than failing the whole listing, plus the
-     `specmgr://adr/{id}` template resource (`adr_get`) added afterward as
-     a resource-based counterpart to the `get_adr` tool (§9a).
-   - Covered by `tests/tools/adr/test_paths.py`, `test_io.py`, and one
+     `adr/tools/__init__.py` re-exports all 11 so `from biz.dfch.specmgr.adr
+     import tools` (imported from `server.py` via the `adr` domain package,
+     doc/refactor-domain.md) still registers every `@mcp.tool()` decorator in
+     one side-effecting import.
+   - `adr/resources/adr_list.py`/`adr_get.py`: `specmgr://adr/list` resource
+     (§9a), skipping unparseable files rather than failing the whole
+     listing, plus the `specmgr://adr/{id}` template resource (`adr_get`)
+     added afterward as a resource-based counterpart to the `get_adr` tool
+     (§9a).
+   - Covered by `tests/adr/tools/test_paths.py`, `test_io.py`, and one
      `test_*.py` per tool module (`test_get_adr.py`, `test_create_adr.py`,
      `test_update_frontmatter.py`, `test_update_section.py`,
      `test_set_status.py`, `test_option_create.py`, `test_option_update.py`,
      `test_option_read.py`, `test_option_delete.py`, `test_option_list.py`,
      `test_validate_adr.py`, mirroring the one-tool-per-module split above),
-     plus `tests/resources/test_adr.py` — end-to-end through real
-     temp-directory file I/O, not mocks. Full suite (143 tests),
+     plus `tests/adr/resources/test_adr.py` — end-to-end through real
+     temp-directory file I/O, not mocks. Full suite (143 tests at the time),
      `ruff format --check`, and `ruff check` all pass.
 5. **Done.** `tests/models/adr/v1/test_renderer.py` covers the renderer's own
    concerns: a golden-file test for a fully-populated ADR, per-field
@@ -345,7 +354,7 @@ and avoiding any server-side cache/staleness problem:
    and option add/remove/numbering-gap — are covered by item 3's
    `test_mutations.py`; the end-to-end tool-layer counterparts (same
    behavior through actual file I/O) are covered by item 4's per-tool test
-   modules under `tests/tools/adr/`.
+     modules under `tests/adr/tools/`.
 6. Wire `validate_adr` into CI/pre-commit. **Partially done** — the
    `validate_adr` MCP tool now exists (item 4: re-reads/re-parses by id,
    letting the models' own Pydantic validators run, per §7, propagating
@@ -381,23 +390,25 @@ and avoiding any server-side cache/staleness problem:
    `pyproject.toml`'s `version` on every subsequent release, and the
    registry re-published via `mcp-publisher` each time, to stay in sync
    (same discipline as `CHANGELOG.md`, see `AGENTS.md`).
-8. **Done.** `prompts/adr/` (§11): two `@mcp.prompt()`s, `create_adr` and
-   `update_adr`, one module per prompt mirroring `tools/adr/`'s own
+8. **Done.** `adr/prompts/` (§11): two `@mcp.prompt()`s, `create_adr` and
+   `update_adr`, one module per prompt mirroring `adr/tools/`'s own
    one-item-per-module split, wired into `server.py` alongside the
-   existing `resources`/`tools` side-effecting imports. Covered by
-   `tests/prompts/adr/test_create_adr.py`/`test_update_adr.py`.
+   existing `resources`/`tools` side-effecting imports (now via the `adr`
+   domain package as a whole, doc/refactor-domain.md). Covered by
+   `tests/adr/prompts/test_create_adr.py`/`test_update_adr.py`.
 
 ## 11. Prompt surface (MCP prompts)
 
-Two `@mcp.prompt()`s in `prompts/adr/` (mirroring the `models/`/`tools/`/
-`resources/` per-document-type sub-package convention from §6) return plain
-instructional text — not tool calls themselves — that guide an LLM through
-driving the §8 tool surface in the right order. Registered via
-`server.py`'s `from . import prompts, resources, tools` side-effecting
-import, exactly like `tools/`/`resources/` already are.
+Two `@mcp.prompt()`s in `adr/prompts/` (mirroring the `adr/tools/`/
+`adr/resources/` domain-first sub-package convention from §6 --
+doc/refactor-domain.md) return plain instructional text — not tool calls
+themselves — that guide an LLM through driving the §8 tool surface in the
+right order. Registered via `server.py`'s `from . import adr, resources`
+side-effecting import: `adr`'s own `__init__.py` in turn imports its
+`tools`/`prompts`/`resources` sub-packages.
 
 - **`create_adr(topic, decision_makers=None, consulted=None, informed=None)
-  -> str`** (`prompts/adr/create_adr.py`): drafting a brand-new ADR.
+  -> str`** (`adr/prompts/create_adr.py`): drafting a brand-new ADR.
   - Instructs the LLM to read the `specmgr://adr/list` resource *first* and
     check for an existing ADR on a similar topic, surfacing it to the user
     (and suggesting `update_adr` instead) rather than creating a duplicate.
@@ -408,7 +419,7 @@ import, exactly like `tools/`/`resources/` already are.
   - `decision_makers`/`consulted`/`informed` are optional pre-fills;
     when absent the returned text tells the LLM to ask the user rather than
     guessing or silently omitting them.
-- **`update_adr(id, instructions=None) -> str`** (`prompts/adr/update_adr.py`):
+- **`update_adr(id, instructions=None) -> str`** (`adr/prompts/update_adr.py`):
   revising an existing ADR by id.
   - Instructs the LLM to call `get_adr(id)` (or read `specmgr://adr/{id}`)
     first, never assuming prior state.
@@ -426,7 +437,7 @@ import, exactly like `tools/`/`resources/` already are.
 **Naming note:** the `create_adr` *prompt* shares its name with the
 `create_adr` *tool* (§8). This is intentional and not a collision — MCP
 keeps prompts and tools in separate registries (`prompts/list` vs.
-`tools/list`) — but is called out in `prompts/adr/create_adr.py`'s own
+`tools/list`) — but is called out in `adr/prompts/create_adr.py`'s own
 module docstring so the two are never mistaken for the same registration.
 
 **Step-gated test variants (`create_adr_test`/`update_adr_test`):** prompted
@@ -435,10 +446,10 @@ follow a fixed sequence (vs. tool-side Pydantic validation, which only
 catches malformed/blank content, not fabricated-but-well-formed content; vs.
 real MCP elicitation, which removes the LLM from the answer-collection loop
 entirely but needs client-side support this repo hasn't wired up yet),
-`prompts/adr/create_adr_test.py`/`update_adr_test.py` register two more
+`adr/prompts/create_adr_test.py`/`update_adr_test.py` register two more
 prompts under distinct names (`create_adr_test`, `update_adr_test`, no
 collision with anything in §8). Same parameters, same underlying MADR
-structure and `tools/adr/` sequence as `create_adr`/`update_adr`, but the
+structure and `adr/tools/` sequence as `create_adr`/`update_adr`, but the
 narrated steps are rewritten as hard numbered `GATE 0`..`GATE N` blocks,
 each with an explicit "Exit condition", an explicit "do not proceed until
 this is met", and a standing "never fabricate a value to pass a gate"

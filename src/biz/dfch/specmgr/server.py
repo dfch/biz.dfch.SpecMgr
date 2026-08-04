@@ -25,23 +25,29 @@ Resources
 ---------
 specmgr://version -- Installed version number of the ``biz-dfch-specmgr`` package.
 specmgr://adr/list -- Ids/titles/statuses/filenames of every ADR (``doc/adr-tool-plan.md``).
+specmgr://adr/{id} -- Full ADR document for a given id (``doc/adr-tool-plan.md``).
 
 Tools
 -----
-ADR tools (``tools/adr/``): ``get_adr``, ``create_adr``, ``update_frontmatter``,
+ADR tools (``adr/tools/``): ``get_adr``, ``create_adr``, ``update_frontmatter``,
 ``update_section``, ``set_status``, ``option_list``, ``option_create``,
 ``option_update``, ``option_read``, ``option_delete``, ``validate_adr``.
 
 Prompts
 -------
-ADR prompts (``prompts/adr/``): ``create_adr``, ``update_adr`` -- instructional
+ADR prompts (``adr/prompts/``): ``create_adr``, ``update_adr`` -- instructional
 text guiding an LLM through the ADR tool sequence above (``doc/adr-tool-plan.md``
 §11).
 
-Add further tool/resource modules (mirroring the ``tools/`` / ``resources/``
-package layout used by sibling projects) and import them at the bottom of
-this module, next to the existing ``resources``/``tools`` import, so their
-``@mcp.tool()`` / ``@mcp.resource()`` decorators actually run.
+Modules are grouped domain-first (doc/refactor-domain.md): each document
+domain (``adr``, and later ``req``/``uc``/``ac``) is a top-level package
+with its own ``tools``/``prompts``/``resources`` sub-packages, self-
+registered via the domain package's own ``__init__.py``. Cross-cutting,
+non-domain-specific resources (e.g. ``specmgr://version``) stay under the
+top-level ``resources`` package instead. Add a new domain by creating its
+top-level package and importing it at the bottom of this module, next to
+the existing ``adr``/``resources`` import, so its ``@mcp.tool()`` /
+``@mcp.prompt()`` / ``@mcp.resource()`` decorators actually run.
 """
 
 from __future__ import annotations
@@ -65,9 +71,10 @@ mcp = MCPServer(
 )
 
 # ---------------------------------------------------------------------------
-# Resource/tool registration (side-effect: registers all resources/tools on
-# mcp). Every sub-package here must be imported for its @mcp.tool()/
-# @mcp.resource() decorators to actually run.
+# Resource/tool/prompt registration (side-effect: registers everything on
+# mcp). Every domain package (and the cross-cutting `resources` package)
+# here must be imported for its @mcp.tool()/@mcp.prompt()/@mcp.resource()
+# decorators to actually run.
 # ---------------------------------------------------------------------------
 
-from . import prompts, resources, tools  # noqa: E402, F401
+from . import adr, resources  # noqa: E402, F401

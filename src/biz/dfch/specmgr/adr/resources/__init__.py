@@ -15,19 +15,18 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""MCP resource registrations that are not specific to any single document
-domain (doc/refactor-domain.md).
+"""MCP resource registrations for Architecture Decision Records (plan §8, §9a).
 
-``version`` registers the server package version resource. Domain-specific
-resources (e.g. ``adr_list``/``adr_get``) live under their own domain
-package instead (``biz.dfch.specmgr.adr.resources``). Import this package
-to load all cross-cutting resources at once::
+``adr_list`` registers the ADR listing resource (``specmgr://adr/list``) and
+``adr_get`` registers the by-id template resource (``specmgr://adr/{id}``).
+Import this package to register both at once::
 
-    from biz.dfch.specmgr import resources  # noqa: F401 (side-effects only)
+    from biz.dfch.specmgr.adr import resources  # noqa: F401 (side-effects only)
 """
 
-from . import version  # noqa: F401
+from . import adr_get, adr_list  # noqa: F401
 
 __all__ = [
-    "version",
+    "adr_get",
+    "adr_list",
 ]

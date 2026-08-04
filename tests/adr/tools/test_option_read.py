@@ -15,19 +15,25 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""MCP resource registrations that are not specific to any single document
-domain (doc/refactor-domain.md).
+"""Tests for the ``option_read`` ``@mcp.tool()`` wrapper (plan §5, §8, §9a)."""
 
-``version`` registers the server package version resource. Domain-specific
-resources (e.g. ``adr_list``/``adr_get``) live under their own domain
-package instead (``biz.dfch.specmgr.adr.resources``). Import this package
-to load all cross-cutting resources at once::
+import unittest
 
-    from biz.dfch.specmgr import resources  # noqa: F401 (side-effects only)
-"""
+from biz.dfch.specmgr.models.adr import AdrOptionNotFoundError
+from biz.dfch.specmgr.adr.tools.option_read import option_read
 
-from . import version  # noqa: F401
+from ._helpers import TempAdrDirTestCase
 
-__all__ = [
-    "version",
-]
+
+class TestOptionRead(TempAdrDirTestCase):
+    """Tests for the option_read tool."""
+
+    def test_option_read_missing_raises(self):
+        """option_read must raise AdrOptionNotFoundError for an unknown full_title."""
+        self.existing_adr(id_="doc-id")
+        with self.assertRaises(AdrOptionNotFoundError):
+            option_read("doc-id", "Option 9: Missing")
+
+
+if __name__ == "__main__":
+    unittest.main()
