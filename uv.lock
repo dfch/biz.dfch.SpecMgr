@@ -96,6 +96,8 @@ dev = [
 ]
 mcp = [
     { name = "mcp" },
+    { name = "rich" },
+    { name = "typer" },
 ]
 test = [
     { name = "coverage" },
@@ -105,6 +107,7 @@ test = [
 
 [package.metadata]
 requires-dist = [
+    { name = "biz-dfch-specmgr", extras = ["cli"], marker = "extra == 'mcp'" },
     { name = "biz-dfch-specmgr", extras = ["cli", "mcp", "test"], marker = "extra == 'dev'" },
     { name = "build", marker = "extra == 'dev'" },
     { name = "coverage", marker = "extra == 'test'" },
