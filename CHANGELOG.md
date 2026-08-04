@@ -23,10 +23,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   One-time setup: `uv run --frozen pre-commit install`.
 - CI backstop: `.github/workflows/ci.yml` now regenerates `docs/` and
   fails the build on drift, catching anyone who bypassed or never
-  installed the pre-commit hook.
+  installed the pre-commit hook. The `specmgr docs` drift check is pinned
+  to Python 3.13 (the project's default dev version) since Python's
+  `inspect` module formats docstrings differently across versions, causing
+  false drift reports on Python 3.12 (see AGENTS.md for details).
 - `docs/api/` committed-to-repo policy: the Markdown API reference is
   version-controlled, not generated on demand, so it renders on GitHub
   without a build step.
+- **Developer experience**: documented Python version handling in AGENTS.md.
+  When using a non-default Python version (e.g., 3.12 instead of 3.13),
+  both `uv sync` and `uv run` require `--python X.Y` and `--all-extras` flags
+  to ensure CLI/MCP dependencies are installed correctly.
 
 ### Removed
 

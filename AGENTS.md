@@ -79,6 +79,17 @@ uv run --frozen specmgr docs                                           # regener
 uv run --frozen specmgr version                                        # run the CLI
 ```
 
+### Using a different Python version
+
+The project defaults to Python 3.13 (see `.python-version`). To use a different version (e.g., 3.12), add `--python X.Y` to **both** `uv sync` and `uv run` commands, and include `--all-extras` on the `uv run` call:
+
+```bash
+uv sync --all-extras --frozen --python 3.12
+uv run --frozen --all-extras --python 3.12 specmgr docs
+```
+
+Without `--all-extras` on `uv run`, only base dependencies are installed, causing `ModuleNotFoundError` for CLI/MCP extras like `typer`.
+
 `pylint` only sees files tracked by git (`git ls-files`) — new files must be
 `git add`ed before it will lint them, both locally and in CI.
 
@@ -123,9 +134,10 @@ consumer of the base library.
 ## CI / Release
 
 - Branches: `dev` (default, feature work) → `main` (stable) → tag.
-- `.github/workflows/ci.yml`: ruff + pylint (`|| true`) + unittest + a
-  `specmgr docs` drift check, matrix 3.11/3.12/3.13, via
-  `uv sync --frozen --all-extras`.
+- `.github/workflows/ci.yml`: ruff + pylint (`|| true`) + unittest run on
+  matrix 3.11/3.12/3.13 via `uv sync --frozen --all-extras`, but `specmgr
+  docs` drift check runs **only on Python 3.13** (pinned, since different
+  Python versions generate different docstring formatting in the API docs).
 - `.github/workflows/publish.yml` exists and has shipped `v0.1.0`, `v0.2.0`,
   `v0.2.1` to PyPI/the MCP Registry, triggered on `v*` tags.
 - Version bumps: update `version` in `pyproject.toml` (single source) and
