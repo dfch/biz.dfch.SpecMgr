@@ -40,6 +40,8 @@ Reviewed and confirmed by the architecture board.
 
 ### Option 1: Postgres
 
+#### Pros
+
 * Good, because mature
 
 ### Option 2: MongoDB

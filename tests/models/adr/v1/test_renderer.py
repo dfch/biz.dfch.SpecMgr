@@ -51,7 +51,7 @@ def _full_adr() -> Adr:
             consequences="* Good, because ACID transactions\n* Bad, because more ops overhead",
             confirmation="Reviewed and confirmed by the architecture board.",
             options=[
-                AdrOption(number=1, partial_title="Postgres", content="* Good, because mature"),
+                AdrOption(number=1, partial_title="Postgres", content="#### Pros\n\n* Good, because mature"),
                 AdrOption(number=2, partial_title="MongoDB", content="* Good, because flexible schema"),
             ],
             more_information="See the team wiki for background.",
@@ -149,6 +149,42 @@ class TestRenderAdrOptionalSectionOmission(unittest.TestCase):
         self.assertIn("### Option 1: Empty", rendered)
         # No stray blank content block between the option heading and whatever follows it.
         self.assertNotIn("### Option 1: Empty\n\n\n", rendered)
+
+
+class TestRenderAdrOptionHeadings(unittest.TestCase):
+    """Options can contain markdown headings within their content field."""
+
+    def test_option_content_with_markdown_headings_renders_correctly(self):
+        """Option content containing markdown headings (#### Pros, #### Cons) must render
+        as part of the option body without modification."""
+        option_content = """#### Pros
+- Mature and stable
+- Excellent ACID compliance
+
+#### Cons
+- Operational complexity
+- Resource overhead"""
+        adr = Adr(
+            frontmatter=AdrFrontmatter(),
+            body=AdrBody(
+                title="Database Choice",
+                context_and_problem_statement="Need a datastore.",
+                considered_options="Postgres or MongoDB",
+                decision_outcome="Chose Postgres.",
+                options=[
+                    AdrOption(number=1, partial_title="Postgres", content=option_content),
+                ],
+            ),
+        )
+        rendered = render_adr(adr)
+        # Verify the option heading is present
+        self.assertIn("### Option 1: Postgres", rendered)
+        # Verify the headings within the content are preserved
+        self.assertIn("#### Pros", rendered)
+        self.assertIn("#### Cons", rendered)
+        # Verify the bullet points under the headings are present
+        self.assertIn("- Mature and stable", rendered)
+        self.assertIn("- Operational complexity", rendered)
 
 
 class TestRenderAdrRoundTrip(unittest.TestCase):

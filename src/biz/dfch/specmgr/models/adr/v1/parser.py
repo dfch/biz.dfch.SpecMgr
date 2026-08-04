@@ -228,20 +228,26 @@ def _collect_headings(lines: list[str]) -> list[_Heading]:
 
     "Own content" of a heading is every line between the end of its own
     heading line(s) and the start of the very next heading in document
-    order (of *any* level), or end of file for the last heading -- this one
-    rule is what plan §4 spells out per-field ("text before any H3" for
-    ``decision_outcome``, implicitly the same for every other section) and
-    happens to be exactly what "next heading, whatever its level" gives for
-    every heading uniformly, so there is no special-casing per level here.
-    """
-    tokens = [tok for tok in _MD.parse("\n".join(lines)) if tok.type == "heading_open"]
-    _reject_leading_content(lines, tokens)
+    order (of H1/H2/H3 only; H4+ are treated as opaque content only within
+    H3 "Option N: ..." sections), or end of file for the last heading.
 
+    H4+ headings that appear anywhere other than within option content are
+    rejected during this phase; those within option content are preserved as
+    text, not collected as separate heading structures.
+    """
+    all_tokens = [tok for tok in _MD.parse("\n".join(lines)) if tok.type == "heading_open"]
+    _reject_leading_content(lines, all_tokens)
+
+    # First pass: validate that H4+ only appear after H3 option headings
+    schema_tokens = [tok for tok in all_tokens if int(tok.tag[1]) <= 3]
+    _reject_h4_outside_options(lines, all_tokens, schema_tokens)
+
+    # Second pass: collect only H1/H2/H3 tokens for schema structure
     headings: list[_Heading] = []
-    for index, token in enumerate(tokens):
+    for index, token in enumerate(schema_tokens):
         assert token.map is not None, "heading_open token must have a map"
         content_start = token.map[1]
-        next_token_map = tokens[index + 1].map if index + 1 < len(tokens) else None
+        next_token_map = schema_tokens[index + 1].map if index + 1 < len(schema_tokens) else None
         content_end = next_token_map[0] if next_token_map is not None else len(lines)
         headings.append(
             _Heading(
@@ -251,6 +257,36 @@ def _collect_headings(lines: list[str]) -> list[_Heading]:
             )
         )
     return headings
+
+
+def _reject_h4_outside_options(lines: list[str], all_tokens: list[Token], schema_tokens: list[Token]) -> None:
+    """Reject any H4+ heading that doesn't appear within an H3 option section."""
+    h4_plus_tokens = [tok for tok in all_tokens if int(tok.tag[1]) >= 4]
+    if not h4_plus_tokens:
+        return
+
+    # Build a set of (start_line, end_line) ranges for each option section
+    option_ranges: list[tuple[int, int]] = []
+    for i, token in enumerate(schema_tokens):
+        if int(token.tag[1]) == 3:
+            title = _heading_title(lines, token)
+            if _OPTION_HEADING_PATTERN.match(title):
+                assert token.map is not None
+                section_start = token.map[0]
+                # Option section ends at the next schema heading, or end of file
+                next_token = schema_tokens[i + 1] if i + 1 < len(schema_tokens) else None
+                section_end = next_token.map[0] if next_token and next_token.map else len(lines)
+                option_ranges.append((section_start, section_end))
+
+    # Check each H4+ token
+    for h4_token in h4_plus_tokens:
+        assert h4_token.map is not None
+        h4_line = h4_token.map[0]
+        # Check if this H4+ is within any option section
+        in_option = any(start <= h4_line < end for start, end in option_ranges)
+        if not in_option:
+            title = _heading_title(lines, h4_token)
+            raise AdrParseError(f"heading level H{int(h4_token.tag[1])} is not part of the ADR schema: {title!r}")
 
 
 def _reject_leading_content(lines: list[str], heading_tokens: list[Token]) -> None:

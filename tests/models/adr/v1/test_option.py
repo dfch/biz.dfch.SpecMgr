@@ -52,6 +52,20 @@ class TestAdrOption(unittest.TestCase):
         with self.assertRaises(ValidationError):
             AdrOption(number=1, partial_title="Use Postgres\nfor storage")
 
+    def test_content_can_contain_markdown_headings(self):
+        """content field accepts markdown headings as part of the opaque blob."""
+        heading_content = """#### Pros
+- Mature and stable
+- Strong ACID compliance
+
+#### Cons
+- Operational complexity
+- Slower for massive scale"""
+        option = AdrOption(number=1, partial_title="Use Postgres", content=heading_content)
+        self.assertEqual(option.content, heading_content)
+        self.assertIn("#### Pros", option.content)
+        self.assertIn("#### Cons", option.content)
+
 
 if __name__ == "__main__":
     unittest.main()
