@@ -52,6 +52,10 @@ Index of all ADRs in this repository.
   - Id: ddd038f0-ae16-4f4b-beef-df06f7ed226f
   - Status: accepted
   - Decision-makers: dfch
+- [Use Architecture Decision Records (ADRs) to document design decisions](e11421d3-cc1d-487b-af32-ee4093422712-use-architecture-decision-records-adrs-to-document-design-de.md)
+  - Id: e11421d3-cc1d-487b-af32-ee4093422712
+  - Status: accepted
+  - Decision-makers: dfch
 - [Organize development artifacts in .dfch-spec/ with feature-driven work units](e369ee2e-3353-4f92-991c-6367d76d832e-organize-development-artifacts-in-dfch-spec-with-feature-dri.md)
   - Id: e369ee2e-3353-4f92-991c-6367d76d832e
   - Status: proposed
