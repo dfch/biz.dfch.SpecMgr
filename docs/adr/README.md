@@ -6,7 +6,7 @@ Index of all ADRs in this repository.
 
 - [Use ISO 8601 for all dates and times](23a14195-339c-48af-99d2-97c9964041ae-use-iso-8601-for-all-dates-and-times.md)
   - Id: 23a14195-339c-48af-99d2-97c9964041ae
-  - Status: proposed
+  - Status: accepted
   - Date: 2026-08-05
 - [Filesystem is the sole source of truth: no in-memory id-to-document cache](33c5ab08-ff58-4c73-8c32-23abaf3838e3-filesystem-is-the-sole-source-of-truth-no-in-memory-id-to-do.md)
   - Id: 33c5ab08-ff58-4c73-8c32-23abaf3838e3
@@ -20,6 +20,10 @@ Index of all ADRs in this repository.
   - Id: 71fd95d7-07f2-466f-81aa-d29b7e3ef34c
   - Status: accepted
   - Decision-makers: dfch
+- [Use pre-commit hooks for local quality gates](737858a9-7796-4f01-ae35-5afc1c707818-use-pre-commit-hooks-for-local-quality-gates.md)
+  - Id: 737858a9-7796-4f01-ae35-5afc1c707818
+  - Status: accepted
+  - Date: 2026-08-05
 - [Expose listing and by-id reads as MCP resources in addition to tools](7531106b-074b-4bd8-a83a-e433d01676e2-expose-listing-and-by-id-reads-as-mcp-resources-in-addition.md)
   - Id: 7531106b-074b-4bd8-a83a-e433d01676e2
   - Status: accepted
@@ -44,6 +48,10 @@ Index of all ADRs in this repository.
   - Id: c73e4f9d-81f3-495d-bd3a-f660ab992ed3
   - Status: accepted
   - Decision-makers: dfch
+- [Use Conventional Commits for commit messages](cb5a2d5f-7020-4c6e-b28d-a38d17b23243-use-conventional-commits-for-commit-messages.md)
+  - Id: cb5a2d5f-7020-4c6e-b28d-a38d17b23243
+  - Status: accepted
+  - Date: 2026-08-05
 - ["Pros and Cons of the Options" as a derived container with a dedicated Option sub-API](d54abe50-a2c5-44f8-8bfe-11ea634b6f87-pros-and-cons-of-the-options-as-a-derived-container-with-a-d.md)
   - Id: d54abe50-a2c5-44f8-8bfe-11ea634b6f87
   - Status: accepted
