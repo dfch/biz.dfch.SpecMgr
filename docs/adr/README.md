@@ -4,6 +4,10 @@ Index of all ADRs in this repository.
 
 ## All ADRs
 
+- [Use ISO 8601 for all dates and times](23a14195-339c-48af-99d2-97c9964041ae-use-iso-8601-for-all-dates-and-times.md)
+  - Id: 23a14195-339c-48af-99d2-97c9964041ae
+  - Status: proposed
+  - Date: 2026-08-05
 - [Filesystem is the sole source of truth: no in-memory id-to-document cache](33c5ab08-ff58-4c73-8c32-23abaf3838e3-filesystem-is-the-sole-source-of-truth-no-in-memory-id-to-do.md)
   - Id: 33c5ab08-ff58-4c73-8c32-23abaf3838e3
   - Status: accepted
@@ -47,6 +51,10 @@ Index of all ADRs in this repository.
 - [Prompt surface: narrated guidance plus step-gated test variants](ddd038f0-ae16-4f4b-beef-df06f7ed226f-prompt-surface-narrated-guidance-plus-step-gated-test-varian.md)
   - Id: ddd038f0-ae16-4f4b-beef-df06f7ed226f
   - Status: accepted
+  - Decision-makers: dfch
+- [Organize development artifacts in .dfch-spec/ with feature-driven work units](e369ee2e-3353-4f92-991c-6367d76d832e-organize-development-artifacts-in-dfch-spec-with-feature-dri.md)
+  - Id: e369ee2e-3353-4f92-991c-6367d76d832e
+  - Status: proposed
   - Decision-makers: dfch
 - [Organize the codebase by document-type domain: domain-first hierarchy for tools/prompts/resources, shared versioned models](ece4554b-725c-4f76-bc04-5d2b760363d2-organize-the-codebase-by-document-type-domain-domain-first-h.md)
   - Id: ece4554b-725c-4f76-bc04-5d2b760363d2
