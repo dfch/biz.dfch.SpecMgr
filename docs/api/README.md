@@ -54,3 +54,20 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.resources`](biz.dfch.specmgr.resources.md) — MCP resource registrations that are not specific to any single document
 - [`biz.dfch.specmgr.resources.version`](biz.dfch.specmgr.resources.version.md) — Resource: specmgr://version — MCP server package version number.
 - [`biz.dfch.specmgr.server`](biz.dfch.specmgr.server.md) — MCP server for ``biz-dfch-specmgr``.
+- [`biz.dfch.specmgr.uc`](biz.dfch.specmgr.uc.md) — Use Case (UC) domain — Cockburn-based use case specification and validation.
+- [`biz.dfch.specmgr.uc.models`](biz.dfch.specmgr.uc.models.md) — Use Case models — Pydantic schema for Cockburn-based use cases.
+- [`biz.dfch.specmgr.uc.models.v1`](biz.dfch.specmgr.uc.models.v1.md) — Use Case models v1 — Pydantic schema for Cockburn-based use cases.
+- [`biz.dfch.specmgr.uc.models.v1.characteristic_information`](biz.dfch.specmgr.uc.models.v1.characteristic_information.md) — Pydantic model for the Use Case Characteristic Information section.
+- [`biz.dfch.specmgr.uc.models.v1.extension`](biz.dfch.specmgr.uc.models.v1.extension.md) — Pydantic model for a single use case extension.
+- [`biz.dfch.specmgr.uc.models.v1.extension_action`](biz.dfch.specmgr.uc.models.v1.extension_action.md) — Pydantic model for a single action within a use case extension.
+- [`biz.dfch.specmgr.uc.models.v1.extensions`](biz.dfch.specmgr.uc.models.v1.extensions.md) — Pydantic model for the collection of use case extensions.
+- [`biz.dfch.specmgr.uc.models.v1.main_success_scenario`](biz.dfch.specmgr.uc.models.v1.main_success_scenario.md) — Pydantic model for the Use Case main success scenario.
+- [`biz.dfch.specmgr.uc.models.v1.open_issues`](biz.dfch.specmgr.uc.models.v1.open_issues.md) — Pydantic model for the Use Case Open Issues section.
+- [`biz.dfch.specmgr.uc.models.v1.parser`](biz.dfch.specmgr.uc.models.v1.parser.md) — Parse an on-disk Use Case ``.md`` file into a :class:`UseCase` (feature plan Task 1.3A).
+- [`biz.dfch.specmgr.uc.models.v1.related_information`](biz.dfch.specmgr.uc.models.v1.related_information.md) — Pydantic model for the Use Case Related Information section.
+- [`biz.dfch.specmgr.uc.models.v1.related_use_cases`](biz.dfch.specmgr.uc.models.v1.related_use_cases.md) — Pydantic model for links between related use cases.
+- [`biz.dfch.specmgr.uc.models.v1.step`](biz.dfch.specmgr.uc.models.v1.step.md) — Pydantic model for a single scenario step.
+- [`biz.dfch.specmgr.uc.models.v1.sub_variation`](biz.dfch.specmgr.uc.models.v1.sub_variation.md) — Pydantic model for a single use case sub-variation.
+- [`biz.dfch.specmgr.uc.models.v1.sub_variations`](biz.dfch.specmgr.uc.models.v1.sub_variations.md) — Pydantic model for the collection of use case sub-variations.
+- [`biz.dfch.specmgr.uc.models.v1.use_case`](biz.dfch.specmgr.uc.models.v1.use_case.md) — Pydantic model for the complete Use Case document.
+- [`biz.dfch.specmgr.uc.models.v1.use_case_frontmatter`](biz.dfch.specmgr.uc.models.v1.use_case_frontmatter.md) — Pydantic model for Use Case YAML frontmatter metadata.

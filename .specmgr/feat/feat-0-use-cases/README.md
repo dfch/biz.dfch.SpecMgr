@@ -95,13 +95,14 @@ progresses (edit, don't duplicate).
 
 #### Phase 1: Schema Definition & Validation
 - [x] Task 1.1: Define Markdown schema for use cases (Cockburn attributes) — depends on: none — status: completed
-- [ ] Task 1.2: Create Pydantic models for use case structure — depends on: Task 1.1 — status: in-progress
-- [ ] Task 1.3: Implement validation tool (check required fields, format, step numbering) — depends on: Task 1.2 — status: not-started
+- [x] Task 1.2: Create Pydantic models for use case structure — depends on: Task 1.1 — status: completed
+- [x] Task 1.3A: Implement Markdown parser (parse_uc) + fix Extension model for compound action numbering — depends on: Task 1.2 — status: completed
+- [x] Task 1.3B: Implement validation tool (step-numbering, cross-reference model_validators) — depends on: Task 1.3A — status: completed
 - [ ] Task 1.4: Write schema documentation with examples — depends on: Task 1.1 — status: not-started
 
 #### Phase 2: PlantUML Diagram Generation
-- [ ] Task 2.1: Implement UC diagram generator (actors + use case associations) — depends on: Task 1.3 — status: not-started
-- [ ] Task 2.2: Implement Sequence diagram generator (main success path) — depends on: Task 1.3 — status: not-started
+- [ ] Task 2.1: Implement UC diagram generator (actors + use case associations) — depends on: Task 1.3B — status: not-started
+- [ ] Task 2.2: Implement Sequence diagram generator (main success path) — depends on: Task 1.3B — status: not-started
 - [ ] Task 2.3: Implement Sequence diagram generator (extensions) — depends on: Task 2.2 — status: not-started
 - [ ] Task 2.4: Test diagram generation with sample use cases — depends on: Task 2.3 — status: not-started
 
@@ -121,7 +122,7 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-05**: Phase 1 (Schema Definition & Validation) substantially complete. Task 1.1 finished with formal JSON Schema, example use case, and class diagram. Now starting Task 1.2 (Pydantic models).
+**As of 2026-08-05**: Phase 1 (Schema Definition & Validation) nearly complete. Tasks 1.1–1.3B finished: formal JSON Schema, example use case, class diagram, Pydantic models, a Markdown→`UseCase` parser (`parse_uc`), and cross-field validators (step numbering, action numbering, step-reference resolution). Remaining: Task 1.4 (schema documentation with examples).
 
 (No blockers identified at this time.)
 
@@ -144,10 +145,28 @@ same folder and leave a pointer here, e.g.:
   - Required sections: Characteristic Information, Goal in Context, Scope, Level, Preconditions, Success End Condition, Primary Actor, Trigger, Main Success Scenario
   - Optional sections: Failed End Condition, Secondary Actors, Frequency, Priority, Performance Target, Channels, Related Use Cases, Extensions, Sub-Variations, Open Issues, Related Information (Notes, Assumptions)
   - Generated PlantUML diagrams (activity and sequence diagrams for main success path and extensions)
-- **Task 1.2 IN PROGRESS**: Create Pydantic models from JSON Schema
-  - Next: Convert `uc_schema.json` into Python Pydantic models for validation
+- **Task 1.2 COMPLETED**: Create Pydantic models from JSON Schema
+  - Created 5 model files in `src/biz/dfch/specmgr/uc/models/v1/`:
+    - `frontmatter.py` — `UseCaseFrontmatter`
+    - `characteristic_information.py` — `CharacteristicInformation`, `RelatedUseCases`
+    - `scenario.py` — `Step`, `MainSuccessScenario`, `Extension`, `Extensions`, `SubVariation`, `SubVariations`
+    - `related_information.py` — `OpenIssues`, `RelatedInformation`
+    - `usecase.py` — `UseCase` (root model)
+  - 12 Pydantic model classes total, matching class diagram exactly
+  - Full validation with pattern matching, enum validation, min/max constraints, required/optional field enforcement
+  - Created comprehensive test suite: 55 tests across 5 test files covering all models and validation rules (tests/uc/models/v1/)
+  - All tests passing (257 total tests in project: 186 ADR + 55 UC + 16 other)
+  - Package structure follows DEC-004: models inside domain package (`uc/models/` not shared `models/uc/`)
+  - One class per file policy enforced (with logical grouping for tightly coupled classes)
+  - Class names aligned with class diagram: `UseCaseFrontmatter` (not `UcFrontmatter`), `Step` (not `MainSuccessScenarioStep`)
 - **Housekeeping**: Moved Java reference implementation files to `playground/` subdirectory (not part of Python implementation)
 - Notes: User confirmed preference for UC + Sequence diagrams (not Activity diagrams). Sequence diagrams will have separate diagrams for main success path and each extension. Reference: https://www.cs.otago.ac.nz/coursework/cosc461/uctempla.htm
+
+#### 2026-08-05 Task 1.3 split into 1.3A/1.3B
+- **Task 1.3 split**: Originally a single task ("Implement validation tool"), split into Task 1.3A (Markdown parser) and Task 1.3B (cross-field validators) since a `parse_uc` parser didn't yet exist — a prerequisite for any file-based validation, unlike ADR where `parse_adr` predates its `validate_adr` tool. Kept the dotted sub-numbering so the overall task numbering (Task 2.x, 3.x) didn't need renumbering. See DEC-006/DEC-007.
+- **Task 1.3A COMPLETED**: Fixed `Extension.actions` (previously `list[str]`) to `list[ExtensionAction]`, modeling the compound sub-numbering (`3a1`, `3a2`, ...) already present in `uc_example.md` but not yet in the Pydantic schema. Updated `uc_schema.json` to match. Implemented `parse_uc` (`uc/models/v1/parser.py`), mirroring ADR's `parse_adr` heading-outline-tree approach (`models/adr/v1/parser.py`) but extended with numbered/bulleted Markdown list parsing (Main Success Scenario steps, Extension actions, most `list[str]` fields) and compound-heading parsing (`### {stepRef}. {condition}` for Extensions, `### Step N: {label}` for Sub-Variations). Raises a dedicated `UcParseError` for structural problems, distinct from `pydantic.ValidationError` for field-content/invariant problems — same two-channel split as ADR's parser. Round-trips the full `uc_example.md` file correctly. 14 new parser tests (structural-error cases + full-document + minimal-document round trips), plus 1 new `ExtensionAction` test file and updated `Extension`/`Extensions`/`UseCase` model tests for the new `actions` shape.
+- **Task 1.3B COMPLETED**: Added three `model_validator`s not expressible in JSON Schema draft-07 (cross-item/cross-field invariants): (1) `MainSuccessScenario.steps` must be numbered contiguously 1, 2, 3, ... ascending, no gaps/duplicates/out-of-order; (2) `Extension.actions` must be numbered `{step_reference}1`, `{step_reference}2`, ... sequentially; (3) `UseCase`-level check that every `Extension`/`SubVariation` `step_reference` resolves to an existing `main_success_scenario` step number, with no duplicate references within either collection. Unlike ADR's analogous Considered-Options/Option-section gap (deliberately left unenforced per `doc/adr-tool-plan.md` §7), this cross-reference check is explicitly enforced here since Task 1.3's original title named "step numbering" as in-scope. 12 new tests across `test_main_success_scenario.py`, `test_extension.py`, `test_use_case.py`.
+- All 292 tests passing (186 ADR + 90 UC + 16 other), `ruff format`/`ruff check` clean, `specmgr docs` regenerated.
 
 ### Decisions Made
 
@@ -156,6 +175,9 @@ same folder and leave a pointer here, e.g.:
 - **DEC-003** [2026-08-05]: Markdown as source format (not a UI) — Keeps use cases in version control, reviewable in PRs, and compatible with existing specmgr workflow.
 - **DEC-004** [2026-08-05]: Create a new domain "uc" (use cases) — Following the domain-first hierarchy established in ADR ece4554b-725c-4f76-bc04-5d2b760363d2, create `uc/` as a top-level package alongside `adr/`, with sub-packages for `uc/models/`, `uc/tools/`, `uc/prompts/`, `uc/resources/`. This differs from current `adr/` structure (which has models in shared `models/adr/`) — see tech debt note below.
 - **DEC-005** [2026-08-05]: Always include all optional section headings in use case documents — Even when empty, include Extensions, Sub-Variations, Open Issues, and Related Information sections. This ensures structural consistency across all use cases, makes it clear that these aspects were considered (even if empty), simplifies parsing/validation, and makes git diffs cleaner when content is added later. Empty sections can contain "(None identified)" or similar placeholder text.
+- **DEC-006** [2026-08-05]: Split Task 1.3 into Task 1.3A (Markdown parser) and Task 1.3B (cross-field validators) — No `parse_uc` existed yet, and file-based "validation" is meaningless without first parsing a `.md` file into a `UseCase`. Splitting mirrors ADR's own parse/validate separation (`models/adr/v1/parser.py` vs. `adr/tools/validate_adr.py`) while keeping the overall task numbering stable via dotted sub-numbers.
+- **DEC-007** [2026-08-05]: Model `Extension.actions` as `list[ExtensionAction]` (compound number + description), not `list[str]` — `uc_example.md` already showed compound sub-numbering (`3a1`, `3a2`, ...) that the original `list[str]` model couldn't represent or validate. Fixed before writing the parser so the parser has a real target field to populate, and so action-numbering sequencing (Task 1.3B) has something to validate against.
+- **DEC-008** [2026-08-05]: Enforce Extension/SubVariation step-reference cross-resolution against `main_success_scenario.steps` via a `UseCase`-level `model_validator` — Unlike ADR's deliberate choice not to enforce Considered-Options/Option-section consistency (`doc/adr-tool-plan.md` §7), Task 1.3's original title explicitly named "step numbering" as in-scope, so this cross-check (plus step/action numbering contiguity) is enforced rather than left as a known gap.
 
 ### Related PRs / Commits
 
@@ -168,10 +190,14 @@ same folder and leave a pointer here, e.g.:
 
 Currently, `adr/` domain has its schema models in the shared `models/adr/` folder (outside the domain package). This feature establishes a new pattern: `uc/models/` (models inside the domain package). For consistency, `adr/models/` should be moved into `adr/models/` to match the new pattern. This is a separate refactoring task, not part of this feature's scope, but should be tracked and prioritized.
 
+**Tracking**: [GitHub Issue #1](https://github.com/dfch/biz.dfch.SpecMgr/issues/1)
+
 **Impact**: Once completed, both `adr/` and `uc/` will have consistent internal structure with models co-located in their respective domain packages.
 
 ### Update `.specmgr/_template/v1/README.md` to include Tech Debt section
 
 The feature template at `.specmgr/_template/v1/README.md` does not include a "Technical Debt" section. This section is useful for recording known issues, refactoring needs, and architectural inconsistencies discovered during feature work. The template should be updated to include an optional "## Technical Debt" section with guidance on when to use it.
+
+**Tracking**: [GitHub Issue #2](https://github.com/dfch/biz.dfch.SpecMgr/issues/2)
 
 **Impact**: Future features will have a consistent place to record tech debt, making it discoverable and prioritizable.

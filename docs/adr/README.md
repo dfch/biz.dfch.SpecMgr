@@ -56,6 +56,9 @@ Index of all ADRs in this repository.
   - Id: d54abe50-a2c5-44f8-8bfe-11ea634b6f87
   - Status: accepted
   - Decision-makers: dfch
+- [Shower vs Bath Tub](d9f8f011-e8dd-421b-b010-a2d8bd910b64-shower-vs-bath-tub.md)
+  - Id: d9f8f011-e8dd-421b-b010-a2d8bd910b64
+  - Status: proposed
 - [Prompt surface: narrated guidance plus step-gated test variants](ddd038f0-ae16-4f4b-beef-df06f7ed226f-prompt-surface-narrated-guidance-plus-step-gated-test-varian.md)
   - Id: ddd038f0-ae16-4f4b-beef-df06f7ed226f
   - Status: accepted

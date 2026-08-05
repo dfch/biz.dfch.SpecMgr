@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "UseCase",
-  "description": "A complete use case document based on Alistair Cockburn's template, with Markdown source and YAML frontmatter",
+  "description": "A complete use case document based on Alistair Cockburn's template, with Markdown source and YAML frontmatter. Note: cross-field/cross-item invariants (main_success_scenario step numbering contiguity, extension action numbering matching its parent step_reference, extensions/sub_variations step_reference resolving to an existing main_success_scenario step, no duplicate step_reference) cannot be expressed in JSON Schema draft-07 and are instead enforced by model_validator checks on the Pydantic models (uc/models/v1/) -- this schema documents field shape/format only.",
   "type": "object",
   "properties": {
     "frontmatter": {
@@ -213,10 +213,23 @@
               },
               "actions": {
                 "type": "array",
-                "description": "List of actions or sub-use cases to perform",
+                "description": "Ordered list of compound-numbered actions or sub-use cases to perform",
                 "items": {
-                  "type": "string",
-                  "minLength": 1
+                  "type": "object",
+                  "properties": {
+                    "number": {
+                      "type": "string",
+                      "description": "Compound action number, e.g. '3a1' (extension step_reference + sequential digit)",
+                      "pattern": "^[0-9]+[a-z]?[0-9]+$"
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "Action description",
+                      "minLength": 1
+                    }
+                  },
+                  "required": ["number", "description"],
+                  "additionalProperties": false
                 },
                 "minItems": 1
               }

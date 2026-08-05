@@ -72,6 +72,26 @@ First-line docstrings from each module, organized by domain:
 - `resources/__init__.py` — MCP resource registrations that are not specific to any single document
 - `resources/version.py` — Resource: specmgr://version — MCP server package version number.
 
+**uc/**
+
+- `uc/__init__.py` — Use Case (UC) domain — Cockburn-based use case specification and validation.
+- `uc/models/__init__.py` — Use Case models — Pydantic schema for Cockburn-based use cases.
+- `uc/models/v1/__init__.py` — Use Case models v1 — Pydantic schema for Cockburn-based use cases.
+- `uc/models/v1/characteristic_information.py` — Pydantic model for the Use Case Characteristic Information section.
+- `uc/models/v1/extension.py` — Pydantic model for a single use case extension.
+- `uc/models/v1/extension_action.py` — Pydantic model for a single action within a use case extension.
+- `uc/models/v1/extensions.py` — Pydantic model for the collection of use case extensions.
+- `uc/models/v1/main_success_scenario.py` — Pydantic model for the Use Case main success scenario.
+- `uc/models/v1/open_issues.py` — Pydantic model for the Use Case Open Issues section.
+- `uc/models/v1/parser.py` — Parse an on-disk Use Case ``.md`` file into a :class:`UseCase` (feature plan Task 1.3A).
+- `uc/models/v1/related_information.py` — Pydantic model for the Use Case Related Information section.
+- `uc/models/v1/related_use_cases.py` — Pydantic model for links between related use cases.
+- `uc/models/v1/step.py` — Pydantic model for a single scenario step.
+- `uc/models/v1/sub_variation.py` — Pydantic model for a single use case sub-variation.
+- `uc/models/v1/sub_variations.py` — Pydantic model for the collection of use case sub-variations.
+- `uc/models/v1/use_case.py` — Pydantic model for the complete Use Case document.
+- `uc/models/v1/use_case_frontmatter.py` — Pydantic model for Use Case YAML frontmatter metadata.
+
 ## Test Coverage
 
-**Test files**: 34
+**Test files**: 48
