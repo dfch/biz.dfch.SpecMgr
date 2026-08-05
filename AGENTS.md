@@ -71,6 +71,62 @@ beyond `version` — check first.
   defaults to 3.13 via `.python-version` — two separate settings, keep in
   sync intentionally, not by accident
 
+## Development Artifacts (`.specmgr/`)
+
+Per ADR e369ee2e-3353-4f92-991c-6367d76d832e ("Organize development
+artifacts in `.specmgr` with feature-driven work units"), development
+planning/progress artifacts live under `.specmgr/`, separate from published
+documentation in `docs/`:
+
+```
+.specmgr/
+├── _template/
+│   └── v1/
+│       └── README.md              # Versioned feature template (plan + progress)
+└── feat/
+    └── feat-NNN-slug/              # One folder per GitHub issue
+        ├── README.md               # Feature plan + progress (mandatory)
+        └── history.md              # Archived older "Recent Updates" entries (optional)
+```
+
+- **Naming convention**: `feat-NNN-slug`, where `NNN` is the GitHub issue
+  number. Work started without an issue yet uses `feat-0-slug` (issue number
+  `0`) until/unless an issue is later opened for it.
+- **Single `README.md` per feature** combines the plan (requirements,
+  acceptance criteria, scope, dependencies, design notes) and progress
+  (current status, blockers, recent updates, decisions made) — there is no
+  separate `progress.md`; status lives inline on each task line, edited in
+  place rather than duplicated.
+- **Template**: `.specmgr/_template/v1/README.md` is the versioned,
+  reusable template (copy it when starting a new feature folder). It is
+  hand-copied, not scaffolded by any tool — no automation exists for this
+  yet, and none is currently planned.
+- **Frontmatter**: every feature `README.md` starts with a minimal YAML
+  frontmatter block — `id` (the `feat-NNN-slug` folder name itself, not a
+  generated UUID), `version` (semver, starts at `1.0.0`), `status`
+  (`planning` | `in-progress` | `review` | `done`), and `created`/`updated`
+  (`YYYY-MM-DD`, `updated` bumped on every substantive edit). There is no
+  separate `GitHub Issue` field/body-line: the issue number is the `NNN`
+  infix already embedded in `id`/the folder name (`feat-NNN-slug`) — `0`
+  means no issue yet — so it is never duplicated elsewhere in the file. See
+  ADR e369ee2e-3353-4f92-991c-6367d76d832e's Option 1 for the full
+  rationale.
+- **`doc/` is not yet migrated** into this structure — `doc/adr-tool-plan.md`
+  and `doc/refactor-domain.md` still live at their original path for now;
+  don't assume they've moved.
+- **No CI/pre-commit enforcement** exists for `.specmgr/` content — unlike
+  `docs/adr/`, there is no `validate_adr`-equivalent check and no `adr-toc`-
+  equivalent generation step wired into hooks or CI for feature folders.
+- **ADR vs. feature-level "Decisions Made" log**: a decision belongs in a
+  full ADR (`docs/adr/`) if it's architecture/structure-level, affects more
+  than one feature or the repo as a whole, or reverses/supersedes a previous
+  ADR. It belongs in the feature's own "Decisions Made" log instead if it's
+  scoped entirely to that feature's implementation details. When in doubt,
+  write the ADR.
+- Existing feature folder: `.specmgr/feat/feat-0-pst-usecases/` (no GitHub
+  issue yet, hence `feat-0-`) — currently just a template-shaped stub with no
+  requirements/scope filled in yet.
+
 ## Developer Commands
 
 ```bash

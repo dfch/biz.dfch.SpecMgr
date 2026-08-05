@@ -1,0 +1,370 @@
+---
+status: accepted
+date: '2026-08-05'
+decision-makers: dfch
+id: e369ee2e-3353-4f92-991c-6367d76d832e
+version: 1.0.0
+---
+
+# Organize development artifacts in `.specmgr` with feature-driven work units
+
+## Context and Problem Statement
+
+The project maintains two documentation folders with an unclear split: `docs/` — published, generated documentation (API docs, ADRs, specifications), which reflects the current state of the project — and `doc/` — development progress notes, planning artifacts, research, which has no clear ongoing purpose once this ADR's structure exists. As part of adopting this ADR's outcome, `doc/` is dissolved: its content is migrated (manually, see Consequences) into the new structure below, and the `doc/` folder is retired. Development artifacts (plans, progress tracking, work-unit status) need a structured, agent-friendly location that is: (1) separate from published documentation (`docs/`); (2) organized by feature/work-unit for easy agent reference; (3) generic enough to serve as a template for future projects using specmgr as a toolkit.
+
+## Decision Drivers
+
+- Agent-friendly reference paths: agents should reference specific feature paths inline (e.g., "See `.specmgr/feat/feat-001-adr-toc/README.md`"), keeping agent instructions lean and focused
+- Toolkit reusability: structure should be generic enough for future projects adopting specmgr as a toolkit — the folder name itself (`.specmgr/`) is chosen for this reason, following the convention of tool-named dotfolders like `.github/`, `.vscode/`, `.docker/`
+- Clear separation of concerns: development artifacts must be distinct from published documentation
+- Version control and auditability: development progress should be tracked in git with full history
+
+## Considered Options
+
+- Single README.md per feature containing both plan and progress
+- Separate README.md (plan) and progress.md (status) per feature
+
+## Decision Outcome
+
+**Chosen option: "Option 1: .specmgr structure"** — a single `README.md` per feature combining plan and progress, with an optional sibling `history.md` for rotating out older `Recent Updates` entries. Every feature `README.md` also carries a minimal YAML frontmatter block (`id`, `version`, `status`, `created`, `updated` — see that option's "Frontmatter" note for details). There is no separate `GitHub Issue` field or body line: the issue number is the `NNN` infix already embedded in `id` (the folder name, `feat-NNN-slug`) itself.
+
+This is preferred over Option 2 (separate `README.md`/`progress.md`) for its simplicity: one file per feature, no cross-file cross-referencing needed to see the full feature story, and the single canonical Task List (status inline per task) removes the Implementation Plan/Execution Plan duplication that Option 2 still carries. See "Pros and Cons of the Options" below for the full tradeoff analysis, and that option's "Open Questions" for points intentionally left open for later decisions.
+
+### Consequences
+
+**Positive:**
+- Agents can reference specific feature paths inline, keeping instructions lean and focused
+- Clear separation: agents only read what's relevant to their task
+- Structure is reusable for future projects adopting specmgr as a toolkit
+- Development progress is version-controlled and auditable
+- The `.specmgr/` folder (and its `feat/` work units) is committed to git like any other tracked path in the repo — no `.gitignore` exclusion — so history and review apply to it the same way they do to `docs/` and source code
+
+**Negative:**
+- Adds another top-level folder to the repo structure
+- Requires discipline to keep progress sections updated (hand-maintained, not auto-generated)
+- Migrating `doc/`'s existing content (e.g. `doc/adr-tool-plan.md`, `doc/refactor-domain.md`) into the new structure is done manually, one file at a time, once this ADR is adopted — no automated migration tooling is planned
+
+**Numbering convention:**
+- `feat-NNN-slug` — `NNN` is the GitHub issue number for feature work tied to an issue. There is no separate `github_issue` frontmatter field or body line: `id` (the folder name itself) is the single source of truth for the issue number, read by parsing its `NNN` infix.
+- Work started without a GitHub issue yet uses `feat-0-slug` (issue number `0`) until/unless an issue is later opened for it
+
+**ADR vs. feature-level "Decisions Made" log:**
+A decision belongs in a full ADR (under `docs/adr/`) if it: (a) is architecture/structure-level and affects more than one feature or the repo as a whole, (b) would be relevant to someone joining the project later trying to understand why something is the way it is, or (c) reverses/supersedes a previous ADR. A decision belongs in the feature's own "Decisions Made" log instead if it: (a) is scoped entirely to that one feature's implementation details, (b) wouldn't need to be found by searching ADRs later, and (c) doesn't constrain future features. Tie-breaker: if in doubt, write the ADR — it is cheap to write and already indexed by `adr-toc`, so overuse is low-cost, while under-use risks losing a decision in a feature folder no one will grep later.
+
+### Confirmation
+
+For now, confirmation that new `feat-NNN-slug/README.md` files follow the chosen structure/template is done manually via PR review. Automated enforcement (e.g. a `specmgr feat-*` validation tool mirroring `validate_adr`) is deferred to future work, consistent with the other deferred-tooling items noted in the chosen option's Open Questions.
+
+## Pros and Cons of the Options
+
+### Option 1: .specmgr structure
+
+```
+.specmgr/
+├── feat/                          # Feature work units
+│   └── feat-NNN-slug/             # One folder per GitHub issue
+│       ├── README.md              # Feature plan + progress (mandatory)
+│       └── history.md             # Archived older "Recent Updates" entries (optional)
+└── (other dirs as needed)
+```
+
+**File purposes:**
+- `README.md` — Single file containing both the feature plan (requirements, acceptance criteria, task list, scope, dependencies, design notes) and progress tracking (current state, blockers, decisions made during implementation, links to related ADRs or PRs)
+- `history.md` — Optional sibling file. Holds older `Recent Updates` entries once `README.md` grows too long; `README.md` keeps only recent entries and links back to this file for anything older.
+
+**Frontmatter:** Every feature `README.md` carries a YAML frontmatter block, mandatory fields `id` (the `feat-NNN-slug` folder name itself, not a generated UUID — unlike ADR frontmatter's server-generated `id`), `version` (semver, starts at `1.0.0`), `status` (`planning` | `in-progress` | `review` | `done`), and `created`/`updated` (`YYYY-MM-DD`, `updated` bumped on every substantive edit). There is no separate `GitHub Issue` field, in frontmatter or body: the issue number is the `NNN` infix already embedded in `id` (i.e. the folder name, `feat-NNN-slug`) — `0` means no issue yet — so it is derived by reading `id`, never duplicated as its own field.
+
+**Template: README.md**
+
+```markdown
+---
+id: feat-NNN-slug
+version: 1.0.0
+status: planning
+created: YYYY-MM-DD
+updated: YYYY-MM-DD
+---
+
+# Feature: [Feature Title]
+
+## Plan
+
+### Overview
+
+Brief description of what this feature does and why it matters.
+
+### Requirements
+
+- REQ-001: [Functional requirement]
+- REQ-002: [Non-functional requirement]
+- REQ-003: [Constraint or dependency]
+
+### Acceptance Criteria
+
+- [ ] ACC-001: Verifies REQ-001 — [testable condition]
+- [ ] ACC-002: Verifies REQ-002 — [testable condition]
+- [ ] ACC-003: Verifies REQ-003 — [testable condition]
+
+### Scope
+
+What is included in this feature:
+- Item 1
+- Item 2
+
+What is explicitly out of scope:
+- Item A
+- Item B
+
+### Dependencies
+
+- Depends on: [other feat-NNN-slug, ADR id, or external]
+- Blocks: [other feat-NNN-slug]
+
+### Design Notes
+
+Any architectural decisions, patterns, or design rationale relevant to this feature.
+
+### Related ADRs
+
+- [ADR id]: [Title]
+- [ADR id]: [Title]
+
+### Task List
+
+Single, canonical breakdown of work phases and tasks. Status lives on the
+task itself — there is no separate "planned" vs. "executed" list to keep in
+sync; a task's line *is* its current status. Update it in place as work
+progresses (edit, don't duplicate).
+
+#### Phase 1: [Phase name]
+- [x] Task 1.1: [description] — depends on: none — status: done (2026-08-01)
+- [ ] Task 1.2: [description] — depends on: Task 1.1 — status: in-progress, ETA 2026-08-10
+- [ ] Task 1.3: [description] — depends on: Task 1.2 — status: blocked (see Blockers)
+
+#### Phase 2: [Phase name]
+- [ ] Task 2.1: [description] — depends on: Task 1.3 — status: not-started
+- [ ] Task 2.2: [description] — depends on: Task 2.1 — status: not-started
+
+**Note:** If a task's scope changes mid-flight, edit its description in place;
+rely on git history (`git log -p` on this file) to recover what was
+originally planned, rather than keeping a second copy of the task around.
+
+## Progress
+
+### Current Status
+
+**As of [YYYY-MM-DD]**: [Brief status summary]
+
+### Blockers
+
+- [ ] Blocker 1 — [description, impact, mitigation]
+- [ ] Blocker 2 — [description, impact, mitigation]
+
+(Remove this section if no blockers.)
+
+### Recent Updates
+
+If this section grows too long, move older entries to `history.md` in this
+same folder and leave a pointer here, e.g.:
+`See history.md for updates before YYYY-MM-DD.`
+
+#### [YYYY-MM-DD]
+- Completed: [what was done]
+- Next: [what comes next]
+- Notes: [any relevant context]
+
+#### [YYYY-MM-DD]
+- Completed: [what was done]
+- Next: [what comes next]
+- Notes: [any relevant context]
+
+### Decisions Made
+
+- **[YYYY-MM-DD]**: [Decision] — [Rationale]
+- **[YYYY-MM-DD]**: [Decision] — [Rationale]
+
+### Related PRs / Commits
+
+- [PR #NNN](link): [description]
+- [Commit hash](link): [description]
+```
+
+**Pros:**
+- Single file to maintain
+- Simpler structure: one file per feature
+- Plan and progress are always together in one document
+- Easier to see the full feature story (what was planned vs. what happened) in one place
+- Requirements and acceptance criteria are co-located with clear traceability
+- Single Task List: no separate Implementation/Execution Plan pair to keep in sync — status is a property of each task line, not a duplicated list, so there is nothing to drift
+- Auditability of "what was planned vs. what actually happened" comes from git history on this one file, not from a hand-maintained duplicate
+- `Recent Updates` growth is bounded by rotating older entries into an optional `history.md`, keeping `README.md` itself lean
+- Frontmatter `id`/`version`/`status`/`created`/`updated` gives each feature folder a compact, machine-readable header, mirroring the ADR frontmatter's `status` field for consistency across both document types
+- No `GitHub Issue` duplication: the issue number is already encoded in `id`'s `NNN` infix, so there is nothing to keep in sync between a frontmatter/body field and the folder name itself
+
+**Cons:**
+- File grows over time as progress updates (Recent Updates, Decisions Made) accumulate, even with rotation available
+- Plan and progress are intermingled, making it harder to extract just the plan for reference
+- No clear separation between "contract" (what we committed to) and "journal" (what actually happened) — relies on git history to reconstruct the original plan instead of a preserved, separate copy
+- Still hand-maintained/free-text: nothing currently enforces that a task's status field, or the frontmatter `status`/`updated` fields, are kept in sync with reality, or that `history.md` rotation actually happens
+- Deriving the GitHub issue number from `id`'s `NNN` infix requires parsing the folder name rather than reading a dedicated field — acceptable since `feat-NNN-slug` is already a fixed, documented convention
+
+**Open Questions:**
+- Archival/lifecycle rule for the file once `status: done` (stay in place / archive / prune) — intentionally left undecided here; treated as a separate future project decision, not a gap in this ADR.
+- Rotation strategy for `Recent Updates`: rotating older entries into `history.md` is documented here as an available option; the exact trigger (manual vs. a fixed entry-count rule) and mechanics are left to the user/agent maintaining the feature folder to decide at the time, not prescribed by this ADR.
+- Template location: **resolved** — the template now exists at `.specmgr/_template/v1/README.md`, matching the versioned path scheme originally proposed here.
+- Whether to add further frontmatter fields later (e.g. `decision_makers`, `related_adrs`, `tags`) is left open; the current five-field frontmatter (`id`, `version`, `status`, `created`, `updated`) is a deliberate, minimal starting point, not a ceiling.
+- Recommendation (not yet built, non-blocking): a dedicated MCP tool (analogous to this project's `update_section`/`option_update` for ADRs) that flips one task's status field, or the frontmatter `status`, atomically, instead of relying on an agent/human to locate and hand-edit the right line.
+
+### Option 2: .specmgr structure with separate README.md (plan) and progress.md (status)
+
+```
+.specmgr/
+├── feat/                          # Feature work units
+│   └── feat-NNN-slug/             # One folder per GitHub issue
+│       ├── README.md              # Feature plan (mandatory)
+│       └── progress.md            # Status tracking (mandatory)
+└── (other dirs as needed)
+```
+
+**File purposes:**
+- `README.md` — Contains the complete feature plan: requirements, acceptance criteria, implementation plan, scope, dependencies, design notes, any pre-implementation research. Treated as immutable once work begins (except Implementation Plan, which may be refined during execution).
+- `progress.md` — Hand-maintained status log: execution plan (tracking actual progress), current state, blockers, decisions made during implementation, links to related ADRs or PRs. Updated throughout the feature lifecycle.
+
+**Template: README.md**
+
+```markdown
+# Feature: [Feature Title]
+
+**GitHub Issue**: #NNN  
+**Status**: [Planning | In Progress | Review | Done]
+
+## Overview
+
+Brief description of what this feature does and why it matters.
+
+## Requirements
+
+- REQ-001: [Functional requirement]
+- REQ-002: [Non-functional requirement]
+- REQ-003: [Constraint or dependency]
+
+## Acceptance Criteria
+
+- [ ] ACC-001: Verifies REQ-001 — [testable condition]
+- [ ] ACC-002: Verifies REQ-002 — [testable condition]
+- [ ] ACC-003: Verifies REQ-003 — [testable condition]
+
+## Scope
+
+What is included in this feature:
+- Item 1
+- Item 2
+
+What is explicitly out of scope:
+- Item A
+- Item B
+
+## Dependencies
+
+- Depends on: [other feat-NNN-slug, ADR id, or external]
+- Blocks: [other feat-NNN-slug]
+
+## Design Notes
+
+Any architectural decisions, patterns, or design rationale relevant to this feature.
+
+## Related ADRs
+
+- [ADR id]: [Title]
+- [ADR id]: [Title]
+
+## Implementation Plan
+
+High-level breakdown of work phases and tasks:
+
+### Phase 1: [Phase name]
+- Task 1.1: [description] — Depends on: [none/other tasks]
+- Task 1.2: [description] — Depends on: Task 1.1
+
+### Phase 2: [Phase name]
+- Task 2.1: [description] — Depends on: Task 1.2
+- Task 2.2: [description] — Depends on: Task 2.1
+```
+
+**Template: progress.md**
+
+```markdown
+# Progress: [Feature Title]
+
+## Current Status
+
+**As of [YYYY-MM-DD]**: [Brief status summary]
+
+## Execution Plan
+
+Tracks actual progress against the Implementation Plan in README.md. Update task status here as work progresses.
+
+### Phase 1: [Phase name]
+- [x] Task 1.1: [description] — Completed [YYYY-MM-DD]
+- [ ] Task 1.2: [description] — In progress, ETA [YYYY-MM-DD]
+
+### Phase 2: [Phase name]
+- [ ] Task 2.1: [description] — Blocked by: [blocker]
+- [ ] Task 2.2: [description] — Not started
+
+### Blockers
+
+- [ ] Blocker 1 — [description, impact, mitigation]
+- [ ] Blocker 2 — [description, impact, mitigation]
+
+(Remove this section if no blockers.)
+
+## Recent Updates
+
+### [YYYY-MM-DD]
+- Completed: [what was done]
+- Next: [what comes next]
+- Notes: [any relevant context]
+
+### [YYYY-MM-DD]
+- Completed: [what was done]
+- Next: [what comes next]
+- Notes: [any relevant context]
+
+## Decisions Made
+
+- **[YYYY-MM-DD]**: [Decision] — [Rationale]
+- **[YYYY-MM-DD]**: [Decision] — [Rationale]
+
+## Related PRs / Commits
+
+- [PR #NNN](link): [description]
+- [Commit hash](link): [description]
+```
+
+**Pros:**
+- Clear separation of concerns: README.md is the immutable "contract" (what we committed to), progress.md is the mutable "journal" (what actually happened)
+- Auditability: you can see what was promised vs. what was delivered by comparing the two files
+- Plan stays clean and focused: not cluttered with progress updates
+- Easier to reference just the plan without scrolling through progress history
+- Requirements and acceptance criteria are co-located with clear traceability
+- Implementation Plan lives in README.md (single source of truth for the plan)
+- Execution Plan lives in progress.md (single source of truth for actual progress)
+
+**Cons:**
+- Two files to maintain — requires reading both to get the full picture
+- More complex structure
+- Requires discipline to keep progress.md updated (hand-maintained, not auto-generated)
+- Agents need to read both files to understand plan + current status
+- Implementation Plan and Execution Plan are in separate files (requires cross-referencing)
+
+**Open Questions:**
+- Not chosen — this option was not carried forward with the same scrutiny/refinement pass as Option 1, since Option 1 was selected as the Decision Outcome. Retained here for reference only.
+- Still has the original Implementation Plan / Execution Plan split (across two files, no less), i.e. the sync-burden issue identified and resolved in Option 1 via a single Task List with inline status was never addressed here.
+- No `history.md`-equivalent or rotation mechanism for `progress.md`'s `Recent Updates` growth.
+- Template-location ambiguity applies here too — no separate reusable template files, only what's embedded in this ADR.
+- To be answered later, if this option is ever revisited: same open items as Option 1 (archival/lifecycle rule, template versioning path, potential atomic status-update tooling).
+
+## More Information
+
+- specmgr repository: https://github.com/anomalyco/biz.dfch.SpecMgr

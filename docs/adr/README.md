@@ -56,9 +56,10 @@ Index of all ADRs in this repository.
   - Id: e11421d3-cc1d-487b-af32-ee4093422712
   - Status: accepted
   - Decision-makers: dfch
-- [Organize development artifacts in .dfch-spec/ with feature-driven work units](e369ee2e-3353-4f92-991c-6367d76d832e-organize-development-artifacts-in-dfch-spec-with-feature-dri.md)
+- [Organize development artifacts in `.specmgr` with feature-driven work units](e369ee2e-3353-4f92-991c-6367d76d832e-organize-development-artifacts-in-specmgr-with-feature.md)
   - Id: e369ee2e-3353-4f92-991c-6367d76d832e
-  - Status: proposed
+  - Status: accepted
+  - Date: 2026-08-05
   - Decision-makers: dfch
 - [Organize the codebase by document-type domain: domain-first hierarchy for tools/prompts/resources, shared versioned models](ece4554b-725c-4f76-bc04-5d2b760363d2-organize-the-codebase-by-document-type-domain-domain-first-h.md)
   - Id: ece4554b-725c-4f76-bc04-5d2b760363d2
