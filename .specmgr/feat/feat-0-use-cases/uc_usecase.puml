@@ -1,0 +1,83 @@
+@startuml Buy Goods - Use Case Diagram
+
+!define ACTOR_COLOR #FFE6E6
+!define SYSTEM_COLOR #E6F3FF
+!define USECASE_COLOR #FFF9E6
+
+skinparam backgroundColor #FEFEFE
+skinparam actor {
+    BackgroundColor ACTOR_COLOR
+    BorderColor #CC0000
+}
+skinparam usecase {
+    BackgroundColor USECASE_COLOR
+    BorderColor #FF9900
+}
+skinparam rectangle {
+    BackgroundColor SYSTEM_COLOR
+    BorderColor #0066CC
+}
+
+actor Buyer as buyer
+actor "Credit Card Company" as cc_company
+actor "Bank" as bank
+actor "Shipping Service" as shipping
+
+rectangle "Company System" {
+    usecase "Buy Goods" as buy_goods
+    usecase "Create Order" as create_order
+    usecase "Take Payment by Credit Card" as take_payment
+    usecase "Handle Returned Goods" as handle_returns
+    usecase "Check Inventory\n(IBM OS/390)" as check_inventory
+    usecase "Ship Order" as ship_order
+    usecase "Send Invoice" as send_invoice
+    usecase "Process Payment" as process_payment
+}
+
+buyer --> buy_goods : initiates
+buy_goods --> create_order : includes
+buy_goods --> check_inventory : includes
+buy_goods --> ship_order : includes
+buy_goods --> send_invoice : includes
+buy_goods --> process_payment : includes
+buy_goods --> take_payment : extends
+buy_goods --> handle_returns : extends
+
+take_payment --> cc_company : uses
+process_payment --> cc_company : uses
+process_payment --> bank : uses
+ship_order --> shipping : uses
+handle_returns --> buyer : notifies
+
+note right of buy_goods
+  **Main Success Scenario (11 steps):**
+  1. Buyer calls with purchase request
+  2. Capture buyer details & goods
+  3. Check inventory (IBM OS/390)
+  4. Provide goods info & pricing
+  5. Buyer confirms order
+  6. Create order in system
+  7. Ship order
+  8. Ship invoice
+  9. Buyer receives & verifies
+  10. Buyer pays invoice
+  11. Record payment
+  
+  **Extensions (8 alternative flows):**
+  - 3a: Out of stock items
+  - 4a: Expedited shipping
+  - 5a: Direct credit card payment
+  - 7a: Shipping unavailable
+  - 8a: Invoice delivery fails
+  - 10a: Buyer returns goods
+  - 10b: Buyer disputes charge
+  - 10c: Payment fails
+  
+  **Sub-Variations (4 steps with alternatives):**
+  - Step 1: 4 contact methods
+  - Step 2: 3 capture methods
+  - Step 7: 4 shipping methods
+  - Step 10: 6 payment methods
+end note
+
+@enduml

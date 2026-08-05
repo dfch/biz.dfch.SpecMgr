@@ -1,0 +1,139 @@
+@startuml Buy Goods - Sequence Diagram
+
+!define ACTOR_COLOR #FFE6E6
+!define SYSTEM_COLOR #E6F3FF
+!define EXTERNAL_COLOR #FFF9E6
+
+skinparam backgroundColor #FEFEFE
+skinparam sequence {
+    ActorBackgroundColor ACTOR_COLOR
+    ActorBorderColor #CC0000
+    ParticipantBackgroundColor SYSTEM_COLOR
+    ParticipantBorderColor #0066CC
+    LifeLineBorderColor #666666
+}
+
+actor Buyer
+participant "Company\nSystem" as Company
+participant "IBM OS/390\nInventory" as Inventory
+participant "Credit Card\nCompany" as CC
+participant "Shipping\nService" as Shipping
+participant "Bank" as Bank
+
+== MAIN SUCCESS SCENARIO ==
+
+Buyer -> Company: 1. Call with purchase request
+Company -> Company: 2. Capture buyer details & goods
+Company -> Inventory: 3. Check inventory (IBM OS/390)
+Inventory -> Company: Inventory data retrieved
+Company -> Buyer: 4. Provide goods info, prices, delivery dates
+Buyer -> Company: 5. Confirm order details & sign
+Company -> Company: 6. Create order in system
+Company -> Shipping: 7. Ship order to buyer
+Company -> Buyer: 8. Ship invoice to buyer
+Buyer -> Buyer: 9. Receive goods & verify order
+Buyer -> Company: 10. Pay invoice
+Company -> Company: 11. Record payment
+
+== EXTENSION 3a: OUT OF STOCK ==
+
+note over Company, Inventory
+  If inventory check (step 3) finds out-of-stock items:
+  (This should rarely happen)
+end note
+
+Company -> Inventory: 3. Check inventory
+Inventory -> Company: Some items out of stock
+Company -> Buyer: 3a1. Inform buyer of out-of-stock items
+Buyer -> Company: 3a2. Choose: wait/substitute/remove item
+Company -> Company: 3a3. Return to step 4
+
+== EXTENSION 4a: EXPEDITED SHIPPING ==
+
+note over Company
+  If buyer requests expedited shipping (step 4):
+end note
+
+Company -> Company: 4a1. Calculate expedited shipping cost
+Company -> Buyer: 4a2. Provide expedited shipping quote
+Buyer -> Company: 4a3. Accept or decline expedited shipping
+Company -> Company: 4a4. Return to step 5
+
+== EXTENSION 5a: DIRECT CREDIT CARD PAYMENT ==
+
+note over Buyer, CC
+  If buyer pays directly with credit card (step 5):
+end note
+
+Buyer -> Company: 5a1. Provide credit card information
+Company -> CC: 5a2. Take payment by credit card (UC-044)
+CC -> Company: Payment processed
+Company -> Company: 5a3. Continue to step 6
+
+== EXTENSION 7a: SHIPPING UNAVAILABLE ==
+
+note over Company, Shipping
+  If shipping service unavailable (step 7):
+end note
+
+Company -> Shipping: 7a1. Attempt to use primary shipping service
+Shipping --> Company: Service unavailable
+Company -> Shipping: 7a1b. Attempt backup shipping service
+alt Backup available
+    Shipping -> Company: Backup service available
+    Company -> Shipping: Ship order via backup
+else Backup unavailable
+    Company -> Buyer: 7a2. Inform buyer of delay
+    Company -> Shipping: 7a3. Retry when service available
+    Shipping -> Company: Service available
+    Company -> Shipping: Ship order
+end
+
+== EXTENSION 8a: INVOICE DELIVERY FAILS ==
+
+note over Company, Buyer
+  If invoice delivery fails (step 8):
+end note
+
+Company -> Buyer: 8a1. Retry via alternate channel (email/fax/mail)
+alt All channels fail
+    Company -> Company: 8a2. Log issue for manual follow-up
+else Channel succeeds
+    Buyer -> Buyer: Receive invoice
+end
+
+== EXTENSION 10a: BUYER RETURNS GOODS ==
+
+note over Buyer, Company
+  If buyer returns goods (step 10):
+end note
+
+Buyer -> Company: 10a1. Initiate return request
+Company -> Company: 10a2. Handle returned goods (UC-105)
+Company -> Buyer: 10a3. Process refund or credit
+
+== EXTENSION 10b: BUYER DISPUTES CHARGE ==
+
+note over Buyer, Company
+  If buyer disputes charge (step 10):
+end note
+
+Buyer -> Company: 10b1. Initiate dispute resolution
+Company -> Buyer: 10b2. Provide documentation
+Company -> Buyer: 10b3. Resolve dispute (refund/credit/confirm)
+
+== EXTENSION 10c: PAYMENT FAILS ==
+
+note over Buyer, Company
+  If payment fails (step 10):
+end note
+
+Company -> Bank: 10c1. Retry payment collection
+Bank --> Company: Payment failed
+Company -> Buyer: 10c2. Contact buyer to resolve payment issue
+Buyer -> Company: Provide payment information
+Company -> Bank: Retry payment
+Bank -> Company: Payment received
+Company -> Company: 10c3. Continue to step 11
+
+@enduml

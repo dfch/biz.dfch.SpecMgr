@@ -1,0 +1,312 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "UseCase",
+  "description": "A complete use case document based on Alistair Cockburn's template, with Markdown source and YAML frontmatter",
+  "type": "object",
+  "properties": {
+    "frontmatter": {
+      "type": "object",
+      "description": "YAML frontmatter metadata for the use case document",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the use case (e.g., 'uc-001')",
+          "pattern": "^uc-[0-9]+$"
+        },
+        "version": {
+          "type": "string",
+          "description": "Semantic version of the use case (e.g., '1.0.0')",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "status": {
+          "type": "string",
+          "description": "Current status of the use case",
+          "enum": ["draft", "proposed", "accepted", "deprecated", "superseded"]
+        },
+        "created": {
+          "type": "string",
+          "description": "ISO 8601 date when the use case was created",
+          "format": "date"
+        },
+        "updated": {
+          "type": "string",
+          "description": "ISO 8601 date when the use case was last updated",
+          "format": "date"
+        }
+      },
+      "required": ["id", "version", "status", "created", "updated"],
+      "additionalProperties": false
+    },
+    "title": {
+      "type": "string",
+      "description": "Use case name (from H1 heading, single line)",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "characteristic_information": {
+      "type": "object",
+      "description": "All metadata and context about the use case",
+      "properties": {
+        "goal_in_context": {
+          "type": "string",
+          "description": "Longer statement of the goal in context if needed"
+        },
+        "scope": {
+          "type": "string",
+          "description": "What system is being considered as a black box under design"
+        },
+        "level": {
+          "type": "string",
+          "description": "Scope level of the use case",
+          "enum": ["Summary", "Primary task", "Subfunction"]
+        },
+        "preconditions": {
+          "type": "array",
+          "description": "What we expect is already the state of the world",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        },
+        "success_end_condition": {
+          "type": "array",
+          "description": "The state of the world upon successful completion",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        },
+        "failed_end_condition": {
+          "type": "array",
+          "description": "The state of the world if goal is abandoned",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "primary_actor": {
+          "type": "string",
+          "description": "A role name for the primary actor or description"
+        },
+        "secondary_actors": {
+          "type": "array",
+          "description": "List of other systems or actors needed to accomplish use case",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "trigger": {
+          "type": "string",
+          "description": "The action upon the system that starts the use case (may be time event)"
+        },
+        "frequency": {
+          "type": "string",
+          "description": "How often it is expected to happen (e.g., '200 per day')"
+        },
+        "priority": {
+          "type": "string",
+          "description": "How critical to the system/organization (e.g., 'Top', 'High', 'Medium', 'Low')"
+        },
+        "performance_target": {
+          "type": "string",
+          "description": "The amount of time this use case should take"
+        },
+        "channels_to_primary_actor": {
+          "type": "array",
+          "description": "How the primary actor interacts with the system (e.g., 'interactive', 'static files', 'database')",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "channels_to_secondary_actors": {
+          "type": "array",
+          "description": "How secondary actors interact with the system (e.g., 'interactive', 'static', 'file', 'database', 'timeout')",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "related_use_cases": {
+          "type": "object",
+          "description": "Links to parent and child use cases",
+          "properties": {
+            "superordinate": {
+              "type": "string",
+              "description": "Name of use case that includes this one"
+            },
+            "subordinate": {
+              "type": "array",
+              "description": "List of use cases that are part of this one",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "goal_in_context",
+        "scope",
+        "level",
+        "preconditions",
+        "success_end_condition",
+        "primary_actor",
+        "trigger"
+      ],
+      "additionalProperties": false
+    },
+    "main_success_scenario": {
+      "type": "object",
+      "description": "The happy path: steps from trigger to goal completion",
+      "properties": {
+        "steps": {
+          "type": "array",
+          "description": "Ordered list of steps in the main success scenario",
+          "items": {
+            "type": "object",
+            "properties": {
+              "number": {
+                "type": "integer",
+                "description": "Step number (1, 2, 3, ...)",
+                "minimum": 1
+              },
+              "description": {
+                "type": "string",
+                "description": "Action description for this step",
+                "minLength": 1
+              }
+            },
+            "required": ["number", "description"],
+            "additionalProperties": false
+          },
+          "minItems": 1
+        }
+      },
+      "required": ["steps"],
+      "additionalProperties": false
+    },
+    "extensions": {
+      "type": "object",
+      "description": "Alternative flows that still result in success",
+      "properties": {
+        "items": {
+          "type": "array",
+          "description": "List of extensions",
+          "items": {
+            "type": "object",
+            "properties": {
+              "step_reference": {
+                "type": "string",
+                "description": "Reference to main scenario step (e.g., '3a', '4b')",
+                "pattern": "^[0-9]+[a-z]?$"
+              },
+              "condition": {
+                "type": "string",
+                "description": "Condition that triggers this extension",
+                "minLength": 1
+              },
+              "actions": {
+                "type": "array",
+                "description": "List of actions or sub-use cases to perform",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "minItems": 1
+              }
+            },
+            "required": ["step_reference", "condition", "actions"],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": ["items"],
+      "additionalProperties": false
+    },
+    "sub_variations": {
+      "type": "object",
+      "description": "Different technologies or methods for accomplishing a step",
+      "properties": {
+        "items": {
+          "type": "array",
+          "description": "List of sub-variations",
+          "items": {
+            "type": "object",
+            "properties": {
+              "step_reference": {
+                "type": "string",
+                "description": "Reference to main scenario step (e.g., '1', '7')",
+                "pattern": "^[0-9]+$"
+              },
+              "variations": {
+                "type": "array",
+                "description": "List of alternative ways to perform this step",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "minItems": 1
+              }
+            },
+            "required": ["step_reference", "variations"],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": ["items"],
+      "additionalProperties": false
+    },
+    "open_issues": {
+      "type": "object",
+      "description": "Questions and decisions awaiting resolution",
+      "properties": {
+        "items": {
+          "type": "array",
+          "description": "List of open issues",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "required": ["items"],
+      "additionalProperties": false
+    },
+    "related_information": {
+      "type": "object",
+      "description": "Additional context, notes, and assumptions",
+      "properties": {
+        "notes": {
+          "type": "array",
+          "description": "Additional notes about the use case",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "assumptions": {
+          "type": "array",
+          "description": "Assumptions made in this use case",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "frontmatter",
+    "title",
+    "characteristic_information",
+    "main_success_scenario"
+  ],
+  "additionalProperties": false
+}

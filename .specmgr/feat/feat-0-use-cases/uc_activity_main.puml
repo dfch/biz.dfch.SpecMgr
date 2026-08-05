@@ -1,0 +1,61 @@
+@startuml Buy Goods - Activity Diagram (Main Success Scenario)
+
+!define START_COLOR #90EE90
+!define ACTIVITY_COLOR #87CEEB
+!define END_COLOR #FFB6C6
+
+skinparam backgroundColor #FEFEFE
+skinparam activity {
+    BackgroundColor ACTIVITY_COLOR
+    BorderColor #0066CC
+}
+skinparam start {
+    BackgroundColor START_COLOR
+    BorderColor #00AA00
+}
+skinparam end {
+    BackgroundColor END_COLOR
+    BorderColor #CC0000
+}
+
+start
+:1. Buyer calls with purchase request;
+:2. Capture buyer details & goods;
+:3. Check inventory (IBM OS/390);
+note right
+  Very fast green screen application
+end note
+:4. Provide goods info, prices, delivery dates;
+:5. Buyer confirms order details & signs;
+:6. Create order in system;
+:7. Ship order to buyer;
+:8. Ship invoice to buyer;
+:9. Buyer receives goods & verifies order;
+:10. Buyer pays invoice;
+:11. Record payment;
+stop
+
+note right
+  **Main Success Scenario (Happy Path)**
+  
+  This is the ideal flow with no exceptions
+  or alternative paths. All steps execute
+  in sequence from trigger to goal completion.
+  
+  **Preconditions:**
+  - Customer record exists
+  - Customer address known
+  - Valid contact information on file
+  
+  **Success End Condition:**
+  - Buyer has goods
+  - Company has money
+  - Order recorded in system
+  - Invoice sent to buyer
+  
+  **Performance Target:**
+  - 5 minutes for order
+  - 45 days until paid
+end note
+
+@enduml

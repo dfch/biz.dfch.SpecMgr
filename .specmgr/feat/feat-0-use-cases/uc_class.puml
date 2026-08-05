@@ -1,0 +1,122 @@
+@startuml UseCase Schema
+
+!define REQUIRED_COLOR #FFE6E6
+!define OPTIONAL_COLOR #E6F3FF
+
+class UseCaseFrontmatter {
+    YAML frontmatter metadata for the use case document
+    --
+    id: str (required)
+    version: str (required)
+    status: str (required)
+    created: str (required, ISO 8601)
+    updated: str (required, ISO 8601)
+}
+
+class CharacteristicInformation {
+    All metadata and context about the use case
+    --
+    goal_in_context: str (required)
+    scope: str (required)
+    level: str (required)
+    preconditions: List[str] (required)
+    success_end_condition: List[str] (required)
+    failed_end_condition: List[str] (optional)
+    primary_actor: str (required)
+    secondary_actors: List[str] (optional)
+    trigger: str (required)
+    frequency: str (optional)
+    priority: str (optional)
+    performance_target: str (optional)
+    channels_to_primary_actor: List[str] (optional)
+    channels_to_secondary_actors: List[str] (optional)
+    related_use_cases: RelatedUseCases (optional)
+}
+
+class RelatedUseCases {
+    Links to parent and child use cases
+    --
+    superordinate: str (optional)
+    subordinate: List[str] (optional)
+}
+
+class MainSuccessScenario {
+    The happy path: steps from trigger to goal completion
+    --
+    steps: List[Step] (required)
+}
+
+class Step {
+    A single action or interaction in a scenario
+    --
+    number: int (required)
+    description: str (required)
+}
+
+class Extensions {
+    Alternative flows that still result in success
+    --
+    items: List[Extension] (optional)
+}
+
+class Extension {
+    An alternative flow triggered by a condition at a specific step
+    --
+    step_reference: str (required, e.g., "3a")
+    condition: str (required)
+    actions: List[str] (required)
+}
+
+class SubVariations {
+    Different technologies or methods for accomplishing a step
+    --
+    items: List[SubVariation] (optional)
+}
+
+class SubVariation {
+    Alternative ways to perform a specific step (e.g., payment methods)
+    --
+    step_reference: str (required, e.g., "1")
+    variations: List[str] (required)
+}
+
+class OpenIssues {
+    Questions and decisions awaiting resolution
+    --
+    items: List[str] (optional)
+}
+
+class RelatedInformation {
+    Additional context, notes, and assumptions
+    --
+    notes: List[str] (optional)
+    assumptions: List[str] (optional)
+}
+
+class UseCase {
+    Root class: a complete use case document
+    --
+    frontmatter: UseCaseFrontmatter (required)
+    title: str (required, from H1)
+    characteristic_information: CharacteristicInformation (required)
+    main_success_scenario: MainSuccessScenario (required)
+    extensions: Extensions (optional)
+    sub_variations: SubVariations (optional)
+    open_issues: OpenIssues (optional)
+    related_information: RelatedInformation (optional)
+}
+
+UseCase *-- UseCaseFrontmatter : contains
+UseCase *-- CharacteristicInformation : contains
+UseCase *-- MainSuccessScenario : contains
+UseCase *-- Extensions : contains
+UseCase *-- SubVariations : contains
+UseCase *-- OpenIssues : contains
+UseCase *-- RelatedInformation : contains
+
+CharacteristicInformation *-- RelatedUseCases : contains
+MainSuccessScenario *-- Step : contains
+Extensions *-- Extension : contains
+SubVariations *-- SubVariation : contains
+
+@enduml
