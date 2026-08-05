@@ -12,6 +12,7 @@ from .related_use_cases import RelatedUseCases
 from .step import Step
 from .sub_variation import SubVariation
 from .sub_variations import SubVariations
+from .uc_diagram import render_uc_diagram
 from .use_case import UseCase
 from .use_case_frontmatter import UseCaseFrontmatter
 
@@ -31,4 +32,5 @@ __all__ = [
     "UseCase",
     "parse_uc",
     "UcParseError",
+    "render_uc_diagram",
 ]

@@ -89,9 +89,10 @@ First-line docstrings from each module, organized by domain:
 - `uc/models/v1/step.py` — Pydantic model for a single scenario step.
 - `uc/models/v1/sub_variation.py` — Pydantic model for a single use case sub-variation.
 - `uc/models/v1/sub_variations.py` — Pydantic model for the collection of use case sub-variations.
+- `uc/models/v1/uc_diagram.py` — Render a :class:`UseCase` into a PlantUML Use Case diagram (feature plan Task 2.1).
 - `uc/models/v1/use_case.py` — Pydantic model for the complete Use Case document.
 - `uc/models/v1/use_case_frontmatter.py` — Pydantic model for Use Case YAML frontmatter metadata.
 
 ## Test Coverage
 
-**Test files**: 48
+**Test files**: 49

@@ -98,10 +98,10 @@ progresses (edit, don't duplicate).
 - [x] Task 1.2: Create Pydantic models for use case structure — depends on: Task 1.1 — status: completed
 - [x] Task 1.3A: Implement Markdown parser (parse_uc) + fix Extension model for compound action numbering — depends on: Task 1.2 — status: completed
 - [x] Task 1.3B: Implement validation tool (step-numbering, cross-reference model_validators) — depends on: Task 1.3A — status: completed
-- [ ] Task 1.4: Write schema documentation with examples — depends on: Task 1.1 — status: not-started
+- [x] Task 1.4: Write schema documentation with examples — depends on: Task 1.1 — status: completed
 
 #### Phase 2: PlantUML Diagram Generation
-- [ ] Task 2.1: Implement UC diagram generator (actors + use case associations) — depends on: Task 1.3B — status: not-started
+- [x] Task 2.1: Implement UC diagram generator (actors + use case associations) — depends on: Task 1.3B — status: completed
 - [ ] Task 2.2: Implement Sequence diagram generator (main success path) — depends on: Task 1.3B — status: not-started
 - [ ] Task 2.3: Implement Sequence diagram generator (extensions) — depends on: Task 2.2 — status: not-started
 - [ ] Task 2.4: Test diagram generation with sample use cases — depends on: Task 2.3 — status: not-started
@@ -122,7 +122,7 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-05**: Phase 1 (Schema Definition & Validation) nearly complete. Tasks 1.1–1.3B finished: formal JSON Schema, example use case, class diagram, Pydantic models, a Markdown→`UseCase` parser (`parse_uc`), and cross-field validators (step numbering, action numbering, step-reference resolution). Remaining: Task 1.4 (schema documentation with examples).
+**As of 2026-08-05**: Phase 1 complete. Phase 2 (PlantUML Diagram Generation) started: Task 2.1 (UC diagram generator) done — `render_uc_diagram(use_case: UseCase) -> str` (`uc/models/v1/uc_diagram.py`), a pure function producing a PlantUML Use Case diagram for a single document (one actor per distinct `primary_actor`/`secondary_actors` label, one association edge each, one `usecase` node for the document itself). Next: Task 2.2 (Sequence diagram generator, main success path).
 
 (No blockers identified at this time.)
 
@@ -167,6 +167,12 @@ same folder and leave a pointer here, e.g.:
 - **Task 1.3A COMPLETED**: Fixed `Extension.actions` (previously `list[str]`) to `list[ExtensionAction]`, modeling the compound sub-numbering (`3a1`, `3a2`, ...) already present in `uc_example.md` but not yet in the Pydantic schema. Updated `uc_schema.json` to match. Implemented `parse_uc` (`uc/models/v1/parser.py`), mirroring ADR's `parse_adr` heading-outline-tree approach (`models/adr/v1/parser.py`) but extended with numbered/bulleted Markdown list parsing (Main Success Scenario steps, Extension actions, most `list[str]` fields) and compound-heading parsing (`### {stepRef}. {condition}` for Extensions, `### Step N: {label}` for Sub-Variations). Raises a dedicated `UcParseError` for structural problems, distinct from `pydantic.ValidationError` for field-content/invariant problems — same two-channel split as ADR's parser. Round-trips the full `uc_example.md` file correctly. 14 new parser tests (structural-error cases + full-document + minimal-document round trips), plus 1 new `ExtensionAction` test file and updated `Extension`/`Extensions`/`UseCase` model tests for the new `actions` shape.
 - **Task 1.3B COMPLETED**: Added three `model_validator`s not expressible in JSON Schema draft-07 (cross-item/cross-field invariants): (1) `MainSuccessScenario.steps` must be numbered contiguously 1, 2, 3, ... ascending, no gaps/duplicates/out-of-order; (2) `Extension.actions` must be numbered `{step_reference}1`, `{step_reference}2`, ... sequentially; (3) `UseCase`-level check that every `Extension`/`SubVariation` `step_reference` resolves to an existing `main_success_scenario` step number, with no duplicate references within either collection. Unlike ADR's analogous Considered-Options/Option-section gap (deliberately left unenforced per `doc/adr-tool-plan.md` §7), this cross-reference check is explicitly enforced here since Task 1.3's original title named "step numbering" as in-scope. 12 new tests across `test_main_success_scenario.py`, `test_extension.py`, `test_use_case.py`.
 - All 292 tests passing (186 ADR + 90 UC + 16 other), `ruff format`/`ruff check` clean, `specmgr docs` regenerated.
+
+#### 2026-08-05 Task 1.4 completed
+- **Task 1.4 COMPLETED**: Wrote `uc-schema.md` — a narrative walkthrough of the Cockburn-based use case schema (heading structure, frontmatter, each H2 section, the three cross-field `model_validator` invariants and where each constraint lives across `uc_schema.json`/Pydantic field declarations/`model_validator`s, and how `parse_uc` maps Markdown onto it). References rather than duplicates `uc_schema.json` (exact field constraints) and `uc_example.md` (full worked example), mirroring how `doc/adr-tool-plan.md` explains MADR sections without restating the whole template. Placed at `.specmgr/feat/feat-0-use-cases/uc-schema.md` (feature-local, not top-level `doc/`) since the feature is still mid-flight. Phase 1 now fully complete.
+
+#### 2026-08-05 Task 2.1 completed
+- **Task 2.1 COMPLETED**: Implemented `render_uc_diagram(use_case: UseCase) -> str` (`uc/models/v1/uc_diagram.py`), a pure function (no file I/O, no multi-document resolution — parses/renders exactly one `UseCase` at a time, mirroring `models/adr/v1/renderer.py`'s style) that generates a PlantUML Use Case diagram: one `usecase` node for the document itself, one `actor` node per distinct label derived from `primary_actor`/`secondary_actors`, and one association edge per actor. Sub-use-case mentions in actor/extension text (e.g. "(UC-044)") are left as plain text, never resolved into separate nodes, since no id→document listing/resolution layer exists yet (Phase 3). Actor label extraction rule: use the contents of the first double-quoted substring if present (taking priority over any parenthetical), otherwise strip everything from the first `" ("` onward, otherwise use the text as-is. A label that is already a bare PlantUML identifier (e.g. `"Buyer"`, `"Bank"`) is reused as its own alias unquoted; otherwise a generated `actorN` alias is used with the label quoted. 12 new tests in `tests/uc/models/v1/test_uc_diagram.py` (label-extraction cases, diagram structure, full `uc_example.md` round-trip). 304 tests total (292 prior + 12 new), `ruff format`/`ruff check` clean, `specmgr docs` regenerated.
 
 ### Decisions Made
 

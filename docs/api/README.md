@@ -69,5 +69,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.uc.models.v1.step`](biz.dfch.specmgr.uc.models.v1.step.md) — Pydantic model for a single scenario step.
 - [`biz.dfch.specmgr.uc.models.v1.sub_variation`](biz.dfch.specmgr.uc.models.v1.sub_variation.md) — Pydantic model for a single use case sub-variation.
 - [`biz.dfch.specmgr.uc.models.v1.sub_variations`](biz.dfch.specmgr.uc.models.v1.sub_variations.md) — Pydantic model for the collection of use case sub-variations.
+- [`biz.dfch.specmgr.uc.models.v1.uc_diagram`](biz.dfch.specmgr.uc.models.v1.uc_diagram.md) — Render a :class:`UseCase` into a PlantUML Use Case diagram (feature plan Task 2.1).
 - [`biz.dfch.specmgr.uc.models.v1.use_case`](biz.dfch.specmgr.uc.models.v1.use_case.md) — Pydantic model for the complete Use Case document.
 - [`biz.dfch.specmgr.uc.models.v1.use_case_frontmatter`](biz.dfch.specmgr.uc.models.v1.use_case_frontmatter.md) — Pydantic model for Use Case YAML frontmatter metadata.
