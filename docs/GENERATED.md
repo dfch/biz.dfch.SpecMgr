@@ -95,4 +95,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 50
+**Test files**: 49
