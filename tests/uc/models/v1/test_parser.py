@@ -8,7 +8,7 @@ from pydantic import ValidationError
 
 from biz.dfch.specmgr.uc.models.v1.parser import UcParseError, parse_uc
 
-_EXAMPLE_PATH = Path(__file__).resolve().parents[4] / ".specmgr" / "feat" / "feat-0-use-cases" / "uc_example.md"
+_EXAMPLE_PATH = Path(__file__).resolve().parents[4] / ".specmgr" / "feat" / "feat-3-use-cases" / "uc_example.md"
 
 _MINIMAL_DOC = textwrap.dedent(
     """\
@@ -71,11 +71,11 @@ class TestParseUcExampleRoundTrip(unittest.TestCase):
         self.assertEqual(uc.frontmatter.id, "uc-001")
         self.assertEqual(uc.characteristic_information.level, "Summary")
         self.assertEqual(len(uc.characteristic_information.preconditions), 3)
-        self.assertEqual(
-            uc.characteristic_information.related_use_cases.superordinate,
-            "Manage customer relationship (UC-002)",
-        )
-        self.assertEqual(len(uc.characteristic_information.related_use_cases.subordinate), 3)
+        self.assertIsNotNone(uc.characteristic_information.related_use_cases)
+        rel_uc = uc.characteristic_information.related_use_cases
+        self.assertIsNotNone(rel_uc.subordinate)
+        self.assertEqual(rel_uc.superordinate, "Manage customer relationship (UC-002)")
+        self.assertEqual(len(rel_uc.subordinate), 3)
 
         self.assertEqual(len(uc.main_success_scenario.steps), 11)
         self.assertEqual(uc.main_success_scenario.steps[2].number, 3)

@@ -7,7 +7,7 @@ Alistair Cockburn's "fully dressed" template
 (https://www.cs.otago.ac.nz/coursework/cosc461/uctempla.htm), that is both
 human-readable and machine-parseable into a Pydantic model
 (`uc/models/v1/`). This mirrors the ADR feature's own schema doc
-(`doc/adr-tool-plan.md`), but stays local to `.specmgr/feat/feat-0-use-cases/`
+(`doc/adr-tool-plan.md`), but stays local to `.specmgr/feat/feat-3-use-cases/`
 for now rather than under top-level `doc/`, since the whole feature is still
 mid-flight (Task 1.4 of the feature plan, see `README.md`).
 

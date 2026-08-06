@@ -90,7 +90,11 @@ Top
 1. Buyer calls in with a purchase request.
 2. Company captures buyer's name, address, requested goods, quantity, and delivery date preference.
 3. Company checks inventory for requested goods.
-    This will use our trusty IBM OS/390 green screen application. Very fast!
+
+    This will use our trusty IBM OS/390 green screen application. Very fast!:
+    * ITem 1
+    * ITem 2
+    * ITem 3
 4. Company gives buyer information on goods, prices, delivery dates, and availability.
 5. Buyer confirms order details and signs for order.
 6. Company creates order in system.
