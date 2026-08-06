@@ -34,24 +34,18 @@ def process_items(items: list[str], filter_enabled: bool = True) -> str | None:
 
 **Rule 2:** Use assert statements for input parameter validation, preconditions, and program invariants only.
 
-**Rule 3:** Assert messages must be clear and describe what the assertion checks.
-
-**Rule 4:** Use existing constants from the module when available for comparison values in assert statements.
-
-**Rule 5:** Do not use assert for user-controlled flow control; use it only for program invariants and input validation.
+**Rule 3:** Do not use assert for user-controlled flow control; use it only for program invariants and input validation.
 
 **Example:**
 ```python
-MAX_PRICE: float = 100.0
-
-
 def calculate_discount(value: str, price: float, discount_rate: float) -> float:
 
     assert isinstance(value, str), type(value)
     assert value.strip()
     assert isinstance(price, float), type(price)
     assert 0 <= price, price
-    assert 0 <= discount_rate <= MAX_PRICE, discount_rate
+
+    discount_rate = 0.05
 
     result = price * (1 - discount_rate)
 
