@@ -12,7 +12,9 @@ updated: 2026-08-06
 
 ### Overview
 
-Create a reusable Markdown string type (`MdStr`) for specmgr models that can contain constrained Markdown content. This type will validate that only allowed Markdown elements are present, preventing structural problems (headings, code blocks, nested lists) while preserving rich text capabilities (bold, emphasis, bullets, paragraphs). This solves the fundamental schema mismatch where step descriptions containing bullets and sub-lists were flattened into strings, losing important structure.
+Create a reusable Markdown string type (`MdStr`) for specmgr models that can contain constrained Markdown content. This type will validate that only allowed Markdown elements are present, preventing structural problems (headings, code blocks, nested lists) while preserving rich text capabilities (bold, emphasis, bullets, paragraphs). 
+
+This feature is the basis for the feature "feat-4-use-cases".
 
 ### Requirements
 
