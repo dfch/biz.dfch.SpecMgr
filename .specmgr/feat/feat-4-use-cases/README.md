@@ -1,5 +1,5 @@
 ---
-id: feat-3-use-cases
+id: feat-4-use-cases
 version: 1.0.0
 status: planning
 created: 2026-08-05
@@ -169,7 +169,7 @@ same folder and leave a pointer here, e.g.:
 - All 292 tests passing (186 ADR + 90 UC + 16 other), `ruff format`/`ruff check` clean, `specmgr docs` regenerated.
 
 #### 2026-08-05 Task 1.4 completed
-- **Task 1.4 COMPLETED**: Wrote `uc-schema.md` — a narrative walkthrough of the Cockburn-based use case schema (heading structure, frontmatter, each H2 section, the three cross-field `model_validator` invariants and where each constraint lives across `uc_schema.json`/Pydantic field declarations/`model_validator`s, and how `parse_uc` maps Markdown onto it). References rather than duplicates `uc_schema.json` (exact field constraints) and `uc_example.md` (full worked example), mirroring how `doc/adr-tool-plan.md` explains MADR sections without restating the whole template. Placed at `.specmgr/feat/feat-3-use-cases/uc-schema.md` (feature-local, not top-level `doc/`) since the feature is still mid-flight. Phase 1 now fully complete.
+- **Task 1.4 COMPLETED**: Wrote `uc-schema.md` — a narrative walkthrough of the Cockburn-based use case schema (heading structure, frontmatter, each H2 section, the three cross-field `model_validator` invariants and where each constraint lives across `uc_schema.json`/Pydantic field declarations/`model_validator`s, and how `parse_uc` maps Markdown onto it). References rather than duplicates `uc_schema.json` (exact field constraints) and `uc_example.md` (full worked example), mirroring how `doc/adr-tool-plan.md` explains MADR sections without restating the whole template. Placed at `.specmgr/feat/feat-4-use-cases/uc-schema.md` (feature-local, not top-level `doc/`) since the feature is still mid-flight. Phase 1 now fully complete.
 
 #### 2026-08-05 Task 2.1 completed
 - **Task 2.1 COMPLETED**: Implemented `render_uc_diagram(use_case: UseCase) -> str` (`uc/models/v1/uc_diagram.py`), a pure function (no file I/O, no multi-document resolution — parses/renders exactly one `UseCase` at a time, mirroring `models/adr/v1/renderer.py`'s style) that generates a PlantUML Use Case diagram: one `usecase` node for the document itself, one `actor` node per distinct label derived from `primary_actor`/`secondary_actors`, and one association edge per actor. Sub-use-case mentions in actor/extension text (e.g. "(UC-044)") are left as plain text, never resolved into separate nodes, since no id→document listing/resolution layer exists yet (Phase 3). Actor label extraction rule: use the contents of the first double-quoted substring if present (taking priority over any parenthetical), otherwise strip everything from the first `" ("` onward, otherwise use the text as-is. A label that is already a bare PlantUML identifier (e.g. `"Buyer"`, `"Bank"`) is reused as its own alias unquoted; otherwise a generated `actorN` alias is used with the label quoted. 12 new tests in `tests/uc/models/v1/test_uc_diagram.py` (label-extraction cases, diagram structure, full `uc_example.md` round-trip). 304 tests total (292 prior + 12 new), `ruff format`/`ruff check` clean, `specmgr docs` regenerated.

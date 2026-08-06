@@ -49,7 +49,7 @@ Create a reusable Markdown string type (`MdStr`) for specmgr models that can con
 ### Dependencies
 
 - Depends on: ADR e369ee2e-3353-4f92-991c-6367d76d832e (`.specmgr` structure), ADR ece4554b-725c-4f76-bc04-5d2b760363d2 (domain-first hierarchy)
-- Blocks: `feat-3-use-cases` (UC Use Case models refactoring to use `MdStr`)
+- Blocks: `feat-4-use-cases` (UC Use Case models refactoring to use `MdStr`)
 - External: None
 
 ### Design Notes
