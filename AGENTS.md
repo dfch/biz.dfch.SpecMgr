@@ -206,7 +206,15 @@ consumer of the base library.
 - Version bumps: update `version` in `pyproject.toml` (single source) and
   move `CHANGELOG.md`'s `[Unreleased]` into a dated section, same commit.
 
-## Code Style
+## Coding Standards
+
+See `.specmgr/conventions.md` for detailed coding requirements and conventions:
+- Python version and type notation
+- Assert statement guidelines
+- Variable naming (use `result` for return values)
+- Comparison constants
+- Mandatory type hints
+- Documentation requirements for classes, attributes, and functions
 
 - Formatter/linter: `ruff` (enforced, not black), line length 120.
 - `pylint` is advisory fallback only (see pylint caveat above).
