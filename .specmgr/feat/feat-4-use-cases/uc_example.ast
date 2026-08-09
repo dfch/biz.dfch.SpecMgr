@@ -1,0 +1,656 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE document SYSTEM "http://commonmark.org/xml/1.0">
+<document xmlns="http://commonmark.org/xml/1.0">
+  <heading level="1">
+    <text>Buy Goods</text>
+  </heading>
+  <heading level="2">
+    <text>Characteristic Information (required)</text>
+  </heading>
+  <heading level="3">
+    <text>Goal in Context (required)</text>
+  </heading>
+  <paragraph>
+    <text>Buyer issues request directly to our company, expects goods shipped and to be billed.</text>
+  </paragraph>
+  <paragraph>
+    <text>Company (the system being designed as a black box)</text>
+  </paragraph>
+  <paragraph>
+    <text>Summary</text>
+  </paragraph>
+  <list type="bullet" tight="false">
+    <item>
+      <paragraph>
+        <text>We know Buyer (customer record exists in system)</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>We know Buyer's address</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>Buyer has valid contact information on file</text>
+      </paragraph>
+    </item>
+  </list>
+  <heading level="3">
+    <text>Preconditions (required)</text>
+  </heading>
+  <list type="bullet" tight="false">
+    <item>
+      <paragraph>
+        <text>We know Buyer (customer record exists in system)</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>We know Buyer's address</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>Buyer has valid contact information on file</text>
+      </paragraph>
+    </item>
+  </list>
+  <heading level="3">
+    <text>Success End Condition (required)</text>
+  </heading>
+  <list type="bullet" tight="false">
+    <item>
+      <paragraph>
+        <text>Buyer has goods</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>We have money for the goods</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>Order is recorded in system</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>Invoice is sent to Buyer</text>
+      </paragraph>
+    </item>
+  </list>
+  <heading level="3">
+    <text>Failed End Condition (optional)</text>
+  </heading>
+  <list type="bullet" tight="false">
+    <item>
+      <paragraph>
+        <text>We have not sent the goods</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>Buyer has not spent the money</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>Order is not recorded</text>
+      </paragraph>
+    </item>
+  </list>
+  <heading level="3">
+    <text>Primary Actor (required)</text>
+  </heading>
+  <paragraph>
+    <text>Buyer (any agent or computer acting for the customer)</text>
+  </paragraph>
+  <heading level="3">
+    <text>Secondary Actors (optional)</text>
+  </heading>
+  <list type="bullet" tight="false">
+    <item>
+      <paragraph>
+        <text>Credit card company (for payment processing)</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>Bank (for payment processing)</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>Shipping service (for delivery)</text>
+      </paragraph>
+    </item>
+  </list>
+  <heading level="3">
+    <text>Trigger (required)</text>
+  </heading>
+  <paragraph>
+    <text>Purchase request comes in (via phone, fax, web form, or electronic interchange)</text>
+  </paragraph>
+  <heading level="3">
+    <text>Frequency (optional)</text>
+  </heading>
+  <paragraph>
+    <text>200 per day</text>
+  </paragraph>
+  <heading level="3">
+    <text>Priority (optional)</text>
+  </heading>
+  <paragraph>
+    <text>Top</text>
+  </paragraph>
+  <heading level="3">
+    <text>Performance Target (optional)</text>
+  </heading>
+  <paragraph>
+    <text>5 minutes for order, 45 days until paid</text>
+  </paragraph>
+  <heading level="3">
+    <text>Channels to Primary Actor (optional)</text>
+  </heading>
+  <list type="bullet" tight="false">
+    <item>
+      <paragraph>
+        <text>Phone (interactive)</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>Fax (static file)</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>Web order form (interactive)</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>Electronic interchange (automated)</text>
+      </paragraph>
+    </item>
+  </list>
+  <heading level="3">
+    <text>Channels to Secondary Actors (optional)</text>
+  </heading>
+  <list type="bullet" tight="false">
+    <item>
+      <paragraph>
+        <text>Credit card company: interactive/API</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>Bank: file/API</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>Shipping service: file/API/timeout</text>
+      </paragraph>
+    </item>
+  </list>
+  <heading level="3">
+    <text>Related Use Cases (optional)</text>
+  </heading>
+  <list type="bullet" tight="false">
+    <item>
+      <paragraph>
+        <text>Superordinate: Manage customer relationship (UC-002)</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>Subordinate: Create order (UC-015), Take payment by credit card (UC-044), Handle returned goods (UC-105)</text>
+      </paragraph>
+    </item>
+  </list>
+  <heading level="2">
+    <text>Main Success Scenario (required)</text>
+  </heading>
+  <list type="ordered" start="1" tight="false" delimiter="period">
+    <item>
+      <paragraph>
+        <text>Buyer calls in with a purchase request.</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>Company captures buyer's name, address, requested goods, quantity, and delivery date preference.</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>Company checks inventory for requested goods.</text>
+      </paragraph>
+      <paragraph>
+        <text>This will use our trusty IBM OS/390 green screen application. Very fast!:</text>
+      </paragraph>
+      <list type="bullet" tight="false">
+        <item>
+          <paragraph>
+            <text>ITem 1</text>
+          </paragraph>
+        </item>
+        <item>
+          <paragraph>
+            <text>ITem 2</text>
+          </paragraph>
+        </item>
+        <item>
+          <paragraph>
+            <text>ITem 3</text>
+          </paragraph>
+        </item>
+      </list>
+    </item>
+    <item>
+      <paragraph>
+        <text>Company gives buyer information on goods, prices, delivery dates, and availability.</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>Buyer confirms order details and signs for order.</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>Company creates order in system.</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>Company ships order to buyer.</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>Company ships invoice to buyer.</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>Buyer receives goods and verifies order.</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>Buyer pays invoice.</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>Company receives payment and records it.</text>
+      </paragraph>
+    </item>
+  </list>
+  <heading level="2">
+    <text>Extensions (optional)</text>
+  </heading>
+  <heading level="3">
+    <text>3a. Company is out of one of the ordered items</text>
+  </heading>
+  <list type="ordered" start="1" tight="false" delimiter="period">
+    <item>
+      <paragraph>
+        <text>3a1. Company informs buyer of out-of-stock items.</text>
+      </paragraph>
+      <paragraph>
+        <text>This should rarely happen. Still we have to address this.</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>3a2. Buyer chooses to: (a) wait for restock, (b) substitute with similar item, or (c) remove item from order.</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>3a3. Return to step 4.</text>
+      </paragraph>
+    </item>
+  </list>
+  <heading level="3">
+    <text>4a. Buyer requests expedited shipping</text>
+  </heading>
+  <list type="ordered" start="1" tight="false" delimiter="period">
+    <item>
+      <paragraph>
+        <text>4a1. Company calculates expedited shipping cost.</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>4a2. Company provides expedited shipping quote to buyer.</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>4a3. Buyer accepts or declines expedited shipping.</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>4a4. Return to step 5.</text>
+      </paragraph>
+    </item>
+  </list>
+  <heading level="3">
+    <text>5a. Buyer pays directly with credit card</text>
+  </heading>
+  <list type="ordered" start="1" tight="false" delimiter="period">
+    <item>
+      <paragraph>
+        <text>5a1. Buyer provides credit card information.</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>5a2. Company takes payment by credit card (UC-044).</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>5a3. Continue to step 6.</text>
+      </paragraph>
+    </item>
+  </list>
+  <heading level="3">
+    <text>7a. Shipping service is unavailable</text>
+  </heading>
+  <list type="ordered" start="1" tight="false" delimiter="period">
+    <item>
+      <paragraph>
+        <text>7a1. Company attempts to use backup shipping service.</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>7a2. If backup service also unavailable, company informs buyer of delay.</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>7a3. Company retries shipping when service becomes available.</text>
+      </paragraph>
+    </item>
+  </list>
+  <heading level="3">
+    <text>8a. Invoice delivery fails</text>
+  </heading>
+  <list type="ordered" start="1" tight="false" delimiter="period">
+    <item>
+      <paragraph>
+        <text>8a1. Company retries invoice delivery via alternate channel (email, fax, mail).</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>8a2. If all channels fail, company logs issue for manual follow-up.</text>
+      </paragraph>
+    </item>
+  </list>
+  <heading level="3">
+    <text>10a. Buyer returns goods</text>
+  </heading>
+  <list type="ordered" start="1" tight="false" delimiter="period">
+    <item>
+      <paragraph>
+        <text>10a1. Buyer initiates return request.</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>10a2. Company handles returned goods (UC-105).</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>10a3. Company processes refund or credit.</text>
+      </paragraph>
+    </item>
+  </list>
+  <heading level="3">
+    <text>10b. Buyer disputes charge</text>
+  </heading>
+  <list type="ordered" start="1" tight="false" delimiter="period">
+    <item>
+      <paragraph>
+        <text>10b1. Company initiates dispute resolution process.</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>10b2. Company provides documentation to buyer.</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>10b3. Dispute is resolved (refund, credit, or confirmation of charge).</text>
+      </paragraph>
+    </item>
+  </list>
+  <heading level="3">
+    <text>10c. Payment fails</text>
+  </heading>
+  <list type="ordered" start="1" tight="false" delimiter="period">
+    <item>
+      <paragraph>
+        <text>10c1. Company retries payment collection.</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>10c2. If retry fails, company contacts buyer to resolve payment issue.</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>10c3. Once payment is received, continue to step 11.</text>
+      </paragraph>
+    </item>
+  </list>
+  <heading level="2">
+    <text>Sub-Variations (optional)</text>
+  </heading>
+  <heading level="3">
+    <text>Step 1: Buyer may use (optional)</text>
+  </heading>
+  <list type="bullet" tight="false">
+    <item>
+      <paragraph>
+        <text>Phone call</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>Fax</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>Web order form</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>Electronic data interchange (EDI)</text>
+      </paragraph>
+    </item>
+  </list>
+  <heading level="3">
+    <text>Step 2: Company may capture information via (optional)</text>
+  </heading>
+  <list type="bullet" tight="false">
+    <item>
+      <paragraph>
+        <text>Manual entry by customer service representative</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>Automated web form</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>EDI system</text>
+      </paragraph>
+    </item>
+  </list>
+  <heading level="3">
+    <text>Step 7: Company may ship via (optional)</text>
+  </heading>
+  <list type="bullet" tight="false">
+    <item>
+      <paragraph>
+        <text>Standard ground shipping</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>Expedited shipping</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>Overnight shipping</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>Local pickup</text>
+      </paragraph>
+    </item>
+  </list>
+  <heading level="3">
+    <text>Step 10: Buyer may pay via (optional)</text>
+  </heading>
+  <list type="bullet" tight="false">
+    <item>
+      <paragraph>
+        <text>Cash or money order</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>Check</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>Credit card</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>Debit card</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>Bank transfer</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>Digital wallet</text>
+      </paragraph>
+    </item>
+  </list>
+  <heading level="2">
+    <text>Open Issues (optional)</text>
+  </heading>
+  <list type="bullet" tight="false">
+    <item>
+      <paragraph>
+        <text>What happens if we have only part of the order in stock?</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>What happens if credit card is stolen?</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>What is the maximum wait time for out-of-stock items before order is cancelled?</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>How do we handle international orders?</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>What is the refund policy for returned goods?</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>How do we handle partial payments?</text>
+      </paragraph>
+    </item>
+  </list>
+  <heading level="2">
+    <text>Related Information (optional)</text>
+  </heading>
+  <heading level="3">
+    <text>Notes (optional)</text>
+  </heading>
+  <list type="bullet" tight="false">
+    <item>
+      <paragraph>
+        <text>This is a high-level summary use case that encompasses multiple lower-level use cases (UC-015, UC-044, UC-105).</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>The main success scenario represents the "happy path" with minimal exceptions.</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>Extensions represent alternative flows that still result in successful order completion.</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>Sub-variations represent different technologies or methods for accomplishing the same step.</text>
+      </paragraph>
+    </item>
+  </list>
+  <heading level="3">
+    <text>Assumptions (optional)</text>
+  </heading>
+  <list type="bullet" tight="false">
+    <item>
+      <paragraph>
+        <text>Buyer has already been authenticated and verified.</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>System has access to real-time inventory data.</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>Payment processing is handled by external services (credit card company, bank).</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>Shipping is handled by external shipping service.</text>
+      </paragraph>
+    </item>
+  </list>
+</document>
