@@ -24,7 +24,7 @@ import re
 from pydantic import computed_field
 
 from .markdown_str import MarkdownStr
-from ._markdown import format_text, md
+from ._markdown import format_text, parse
 
 #: The two markdown-it block-container token types a list item can be nested under.
 #: `MarkdownListItem` is deliberately shared between bullet (`ul`) and ordered (`ol`)
@@ -114,7 +114,7 @@ class MarkdownListItem(MarkdownStr):
         assert isinstance(text, str), type(text)
         assert text == format_text(text), "text is not in 'mdformat'."
 
-        tokens = md.parse(text)
+        tokens = parse(text)
 
         if len(tokens) < 2 or tokens[0].type not in _LIST_OPEN_TYPES or tokens[1].type != "list_item_open":
             return 0
@@ -153,7 +153,7 @@ class MarkdownListItem(MarkdownStr):
         assert isinstance(text, str), f"text: '{type(text)}' != 'str'."
         assert text == format_text(text), "text is not in 'mdformat'."
 
-        tokens = md.parse(text)
+        tokens = parse(text)
         assert len(tokens) >= 5, "Expected at least a list-open/list_item_open/paragraph triple"
 
         t_list_open = tokens[0]
@@ -241,7 +241,7 @@ class MarkdownListItem(MarkdownStr):
             >>> item.text
             'We know Buyer'
         """
-        tokens = md.parse(self._value)
+        tokens = parse(self._value)
 
         for i, token in enumerate(tokens):
             if token.type == "inline" and i > 0 and tokens[i - 1].type == "paragraph_open":

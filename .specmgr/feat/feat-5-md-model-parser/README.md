@@ -1,6 +1,6 @@
 ---
 id: feat-5-md-model-parser
-version: 1.12.0
+version: 1.14.0
 status: in-progress
 created: 2026-08-08
 updated: 2026-08-11
@@ -46,7 +46,7 @@ based recursive descent, not field-level `Annotated` metadata).
 - REQ-002: Define `MarkdownStr` (`markdown_str.py`), a Pydantic base model storing its rendered text verbatim in a private `_value: str` attribute (not parsed `markdown-it-py` tokens retained on the instance), exposing `__str__`/`__repr__` that return `_value` unchanged for a leaf class (no nested `MarkdownStr` fields) or the `mdformat`-normalized concatenation of every nested field's own `__str__()` for a composite class.
 - REQ-003: Implement a recursive parser, `MarkdownStr.from_text(text) -> MarkdownStr` (overridden by `MarkdownSection.from_text` for heading-bearing classes), that tokenizes `text` once per recursion step via a shared module-level `MarkdownIt` instance (`_markdown.py`), and recursively slices it into one block per declared nested field (in declaration order) using that field type's own `get_extent(text)` to determine the block boundary, to arbitrary nesting depth. Frontmatter splitting is explicitly **not** this engine's responsibility (see REQ-006) — callers strip it before calling `from_text`.
 - REQ-004: Implement the inverse `MarkdownStr.__str__`/`MarkdownSection.__str__`, producing Markdown text from a populated model instance. Because every leaf `_value` retains its complete heading+body extent verbatim (not just inline content), `str(instance)` reproduces the exact `mdformat`-normalized text `from_text` consumed — a byte-exact round-trip by construction, not merely a structural one. **Accepted exception (2026-08-11, Task 1.6.3):** `list[MarkdownListItem]` content is the one case where this is only structural, not byte-exact — a genuinely *tight* source list round-trips to an equivalent *loose* list (see `markdown_list_item.py`'s class docstring); loose lists are unaffected. This matches this feature's own founding ADR, which already treats list-rendering variance as out of scope for byte-exact fidelity.
-- REQ-005 *(not started, rescoped 2026-08-11)*: Reject raw HTML (both HTML blocks and inline HTML tags) anywhere in a parsed document — `MarkdownStr.from_text`/`MarkdownSection.from_text` must fail loudly if the tokenized text contains an `html_block`/`html_inline` token, since the shared `md = MarkdownIt("commonmark")` instance (`_markdown.py`) currently accepts raw HTML per the CommonMark spec's default. **Superseded scope note:** the previously-planned generic, composable `Annotated`-based constraint-marker framework (`AllowedTags(tags)`, `LengthConstraint(min_length=, max_length=)`, a generic `NoRawHtml()` marker, all evaluated by one shared validator, plus a `constraints.py` module) was dropped as speculative — only `@markdown`/`@alias` exist and are actually planned as class-level decorators; no `AllowedTags`/`LengthConstraint` mechanism is planned. Raw-HTML rejection is the one concrete, decided need and is tracked directly as this REQ, not as an instance of a generic marker framework. If another concrete constraint need arises later (e.g. a length limit), it should be scoped as its own fresh requirement then, not slotted into a speculative framework revived for the occasion. The previously-noted opt-in `RoundTrip()` marker remains moot regardless: REQ-004's byte-exact round-trip is already the engine's unconditional default behavior, not an opt-in feature to gate.
+- REQ-005 *(done, rescoped 2026-08-11)*: Reject raw HTML (both HTML blocks and inline HTML tags) anywhere in a parsed document. Landed as one choke point, `_markdown.py`'s `parse(text) -> list[Token]` (wrapping `md.parse(text)` plus a recursive `_assert_no_raw_html` walk that also descends into every `"inline"` token's `.children`, since `html_inline` tokens only ever appear there, never in the top-level token list — verified empirically), which every `get_extent`/`from_text` in `markdown_str.py`/`markdown_section.py`/`markdown_paragraph.py`/`markdown_list_item.py`/`markdown_code_block.py`/`markdown_block_quote.py` now calls instead of `md.parse(text)` directly — the same "one shared call site" convention `format_text` already established for `mdformat` options. `MarkdownStr.from_text`'s leaf branch (the one place that previously stored `_value` without ever tokenizing it) gained an explicit `parse(text)` call so a leaf class reached directly, not just via a composite parent's `get_extent`, is still checked. This also covers `MarkdownParagraph`/`MarkdownListItem`/`MarkdownCodeBlock`/`MarkdownBlockQuote`, not only the two classes this REQ's own wording names. **Superseded scope note:** the previously-planned generic, composable `Annotated`-based constraint-marker framework (`AllowedTags(tags)`, `LengthConstraint(min_length=, max_length=)`, a generic `NoRawHtml()` marker, all evaluated by one shared validator, plus a `constraints.py` module) was dropped as speculative — only `@markdown`/`@alias` exist and are actually planned as class-level decorators; no `AllowedTags`/`LengthConstraint` mechanism is planned. Raw-HTML rejection is the one concrete, decided need and is tracked directly as this REQ, not as an instance of a generic marker framework. If another concrete constraint need arises later (e.g. a length limit), it should be scoped as its own fresh requirement then, not slotted into a speculative framework revived for the occasion. The previously-noted opt-in `RoundTrip()` marker remains moot regardless: REQ-004's byte-exact round-trip is already the engine's unconditional default behavior, not an opt-in feature to gate.
 - REQ-006 *(not started, design changed)*: The originally-scoped typed `DocumentFrontMatter` Pydantic base (`id`, `version`, `status`, `created`, `updated`) does not exist. The proven approach instead (`tests/models/md/test_uc_example.py`) delegates frontmatter stripping entirely to the `python-frontmatter` package — already a project dependency, already used the same way by `models.adr.v1.parser` — via `frontmatter.loads(text).content`, since `mdformat.text()` is CommonMark-only and mangles a `---\n...\n---` block. Whether/how a typed frontmatter model gets layered on top of `.metadata` remains open.
 - REQ-007: Provide a fixture model reproducing the full nested structure of `tests/feat-5-md-model-parser/uc_example.md` (all three heading levels: `# Buy Goods` → nine `##` sections → all `###` children under `## Characteristic Information`/`## Related Information`), proving the recursive engine end-to-end, including a mix of required and `Optional[...]` fields. Landed as `UseCase`/`CharacteristicInformation`/etc. in `tests/models/md/test_uc_example.py` (distinct from the smaller, earlier `tests/models/md/various_models.py` fixture, which stays as a minimal unit-test double, not a superset of this one). This fixture is a proof of the generic engine, not the official use-case domain model (that ownership stays with `feat-4-use-cases`, if/when it chooses to adopt this engine). `Extensions`/`Sub-Variations`/`Open Issues` are modelled as leaf `MarkdownSection2`s (their dynamically-named, per-use-case h3 sub-headings are inert text) since the engine has no "repeated/list section" concept yet.
 - REQ-008: Add unit tests per building block (`@markdown`/`@alias`/`match_alias` behavior, `MarkdownStr.get_extent`/`from_text`/`__str__`, `MarkdownSection.get_extent`/`from_text`/`__str__`, `Optional[...]` field handling) plus an integration test that round-trips `MarkdownSection1.from_text`/`__str__` against both fixtures end-to-end.
@@ -57,7 +57,7 @@ based recursive descent, not field-level `Annotated` metadata).
 - [x] ACC-002: Verifies REQ-002 — `MarkdownStr.from_text(text).__str__()` round-trips at least: a single leaf paragraph (`test_leaf_class_stores_value_verbatim`), a multi-field composite document (`test_distributes_lines_across_fields_using_get_extent`), and inline-formatted content (heading text containing `*emphasis*`/`**strong**`, `test_leaf_section_preserves_inline_formatting_in_heading`).
 - [x] ACC-003: Verifies REQ-003 — `MarkdownSection1.from_text` on both the `various_models.py` fixture (two levels: `MainDocument` → `CharacteristicInformation`/`RelatedInformation` → h3 leaves) and the full `uc_example.md` fixture (three levels, ~15 h3 fields under `Characteristic Information`) populates every declared field, with a mandatory trailing-completeness assertion (`remaining_text == ""`) that fails loudly on any leftover unclaimed heading (`test_main_document_from_text`, `test_parses_title_and_top_level_sections`, `test_parses_all_characteristic_information_fields`).
 - [x] ACC-004: Verifies REQ-004 — `str(MarkdownSection1.from_text(text)) == text` holds exactly (byte-exact, not just structural) for both fixtures (`various_models.py`'s `MainDocument`, `uc_example.md`'s `UseCase` — `test_round_trip_reproduces_the_source_document`).
-- [ ] ACC-005 *(blocked — REQ-005 not started)*: No mechanism yet exists to reject raw HTML; pass/fail cases (an `html_block`/inline HTML tag causing `from_text` to raise, plain Markdown formatting like `**strong**`/`*emphasis*` staying unaffected) remain to be written once REQ-005 lands. No `AllowedTags`/`LengthConstraint` cases are planned (see REQ-005's superseded-scope note); the `RoundTrip()`-inactive-by-default half of the original criterion no longer applies either.
+- [x] ACC-005: Verifies REQ-005 — `tests/models/md/test_markdown_html_rejection.py` (12 cases): `_markdown.parse` raises on an `html_block`, on `html_inline` nested inside a paragraph's or a heading's `inline` children, and stays unaffected by plain Markdown formatting (`**strong**`/`*emphasis*`) and by HTML-looking text inside a fenced code block (opaque code, not raw HTML); plus end-to-end cases through `MarkdownStr.from_text` (leaf) and `MarkdownSection.from_text` (leaf, `html_block` in body / `html_inline` in heading) confirming both raise loudly and both stay unaffected by plain formatting. No `AllowedTags`/`LengthConstraint` cases are planned (see REQ-005's superseded-scope note); the `RoundTrip()`-inactive-by-default half of the original criterion no longer applies either.
 - [ ] ACC-006 *(blocked — REQ-006 not started)*: No `DocumentFrontMatter` model exists yet to reject an invalid frontmatter block; current tests only strip frontmatter via `python-frontmatter` before parsing (`test_uc_example.py::setUpClass`), performing no validation on `.metadata`.
 - [x] ACC-007: Verifies REQ-007 — `UseCase.from_text` (`tests/models/md/test_uc_example.py`) successfully parses the entirety of `tests/feat-5-md-model-parser/uc_example.md`'s body (post frontmatter-stripping) without falling back to an untyped/opaque blob for any `##`/`###` section — every field down to `RelatedUseCases`/`Assumptions` is a typed `MarkdownSection3`, not a dict or raw string.
 - [x] ACC-008: Verifies REQ-008 — Full suite passes under `uv run --frozen python -m unittest discover -v -s tests -t . -p "test_*.py"` (374 tests as of this reconciliation, all for this feature's modules under `tests/models/md/` passing, none skipped).
@@ -143,22 +143,34 @@ superseded-scope rationale.
 
 ### Design Notes
 
-See ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae for the full rationale and
+See ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae (v1.5.0) for the full rationale,
 considered alternatives (imperative class decorator; convention-only field
-name matching). Key points carried over here for quick reference:
+name matching), and the actual-vs.-originally-sketched implementation
+reconciliation. Key points carried over here for quick reference (updated
+2026-08-11 to match that reconciliation — see git history for the earlier,
+now-superseded bullets this replaced):
 
-- Recursive slicing algorithm: for a field's token range (from its
-  `heading_open` to just before the next `heading_open` of `<=` its own
-  level), any child field whose type itself declares `Heading`-annotated
-  fields is parsed from that slice at the next heading level down. The full
-  slice (heading + all nested content) is retained as the field's own
-  `_tokens`, so rendering at any level reproduces that whole subtree.
-- Constraint markers are opt-in composables, not required on every field;
-  a bare `MarkdownStr` field with no constraint metadata is valid and
-  unconstrained beyond basic Markdown parseability.
+- Recursive slicing algorithm: for a field's own extent (from its
+  `heading_open` line through just before the next sibling/ancestor heading,
+  i.e. level `<=` its own — `MarkdownSection.get_extent`), any child field
+  whose type itself declares nested `MarkdownStr` fields is parsed from that
+  slice at the next heading level down (`MarkdownStr.from_text`'s recursion).
+  A leaf field's complete extent (heading + body, or just the body for a
+  non-heading leaf) is stored verbatim in its own private `_value: str`
+  (not retained `markdown-it-py` tokens), so `__str__` at any level
+  reproduces that whole subtree by concatenating its children's own
+  `__str__()`.
+- No constraint-marker mechanism is planned as opt-in composables on
+  `MarkdownStr` fields — that generic framework (`AllowedTags`/
+  `LengthConstraint`/a generic `NoRawHtml()` marker) was dropped as
+  speculative (see REQ-005's 2026-08-11 rescoping above). The only content
+  constraint currently planned is REQ-005's concrete raw-HTML rejection,
+  which is not field-opt-in — it applies unconditionally to every
+  `MarkdownStr.from_text`/`MarkdownSection.from_text` call once implemented.
 - Originating sketch and fixture: `tests/feat-5-md-model-parser/req_parser.py`,
   `tests/feat-5-md-model-parser/uc_example.md` (fixture file is reused
-  as-is; this feature's own model/tests live under `tests/models/markdown/v1/`).
+  as-is; this feature's own model/tests live under `tests/models/md/`, not
+  `tests/models/markdown/v1/` as originally sketched here).
 
 ### Related ADRs
 
@@ -205,9 +217,9 @@ history is lost — the original phase text remains recoverable via `git log
 - [x] Task 2.3: Implement `MarkdownSection.__str__` (re-emits the section's own heading for a composite section; a leaf section's `_value` already holds its full extent verbatim) and the `name` computed field — depends on: Task 2.2 — status: done
 - [x] Task 2.4: Unit tests for Tasks 2.1–2.3 — `test_markdown_str.py` (leaf/composite `from_text`, missing-extent/leftover-text error cases, three `Optional[...]` field cases, `get_extent` line-count contract) and `test_markdown_section.py` (no-extent/end-of-input/nested-deeper/sibling-stops/ancestor-stops `get_extent` cases parametrized across h1–h6, plus `__str__` round-trip and `@alias`-enforcement cases) — depends on: Task 2.3 — status: done
 
-#### Phase 3: Reject raw HTML *(not started, rescoped 2026-08-11)*
-- [ ] Task 3.1: Make `MarkdownStr.from_text`/`MarkdownSection.from_text` reject raw HTML (`html_block`/`html_inline` tokens) anywhere in the tokenized text — e.g. asserting no such token appears among `md.parse(text)`'s results, or disabling the two rules on the shared module-level `MarkdownIt` instance (`_markdown.py`) outright — depends on: Task 2.1 — status: not-started
-- [ ] Task 3.2: Unit tests for Task 3.1 (an `html_block`/inline HTML tag causes `from_text` to raise; plain Markdown formatting like `**strong**`/`*emphasis*` is unaffected) — depends on: Task 3.1 — status: not-started
+#### Phase 3: Reject raw HTML *(done, rescoped 2026-08-11)*
+- [x] Task 3.1: Make `MarkdownStr.from_text`/`MarkdownSection.from_text` reject raw HTML (`html_block`/`html_inline` tokens) anywhere in the tokenized text — depends on: Task 2.1 — status: done. Implemented as a single choke point rather than per-class special-casing: `_markdown.py` gained `parse(text) -> list[Token]` (wraps `md.parse(text)`, then a recursive `_assert_no_raw_html` walk that also descends into every `"inline"` token's `.children`, since `html_inline` only ever nests there) and `_RAW_HTML_TOKEN_TYPES = ("html_block", "html_inline")`. Every `md.parse(text)` call site across `markdown_str.py`/`markdown_section.py`/`markdown_paragraph.py`/`markdown_list_item.py`/`markdown_code_block.py`/`markdown_block_quote.py` (14 sites) now calls `parse(text)` instead — disabling markdown-it's `html_block`/`html_inline` rules outright (the plan's other originally-sketched option) was rejected because that would make raw HTML silently parse as something else (e.g. plain text), not raise, which contradicts "reject". `MarkdownStr.from_text`'s leaf branch also gained an explicit `parse(text)` call it previously lacked entirely (it stored `_value` unchecked), so a leaf class reached directly — not only via a composite parent's `get_extent` — is still guarded.
+- [x] Task 3.2: Unit tests for Task 3.1 — depends on: Task 3.1 — status: done. `tests/models/md/test_markdown_html_rejection.py` (12 cases): `_markdown.parse` raising on `html_block`/on `html_inline` nested in a paragraph's or heading's `inline` children, staying unaffected by plain Markdown formatting (`**strong**`/`*emphasis*`) and by HTML-looking text inside a fenced code block; plus end-to-end `MarkdownStr.from_text`/`MarkdownSection.from_text` (leaf) pass/fail cases per ACC-005.
 - **Note (rescoped 2026-08-11):** this phase no longer plans a generic `constraints.py` module with composable `AllowedTags`/`LengthConstraint`/`NoRawHtml` marker classes plus a shared validator — that framework was speculative and dropped; only `@markdown`/`@alias` exist as class-level decorators, and raw-HTML rejection above is the one concrete, decided need. The previously-noted opt-in `RoundTrip()` marker remains dropped too — REQ-004's byte-exact round-trip is already the engine's unconditional default (see Requirements/Scope above), so there is nothing left for such a marker to gate.
 
 #### Phase 4: Frontmatter *(not started; design changed)*
@@ -321,8 +333,81 @@ left as-is).
    `items: list[MarkdownListItem]` shape from Task 1.6.3 -- optional future
    follow-up, not required by this feature (that fixture is a proof of the
    generic engine, not the official use-case domain model).
+6. ~~Phase 3 (REQ-005, raw HTML rejection)~~ — **done 2026-08-11**: see Task
+   3.1/3.2 and the new Recent Updates entry below. The only remaining
+   not-started work is Phase 4 (REQ-006, typed frontmatter model) — pick
+   that up next.
 
 ### Recent Updates
+
+#### 2026-08-11 (continued, part 10)
+- Completed: Task 3.1/3.2 (REQ-005/ACC-005) — raw HTML rejection, the last
+  item Phase 3 needed. Implemented as one choke point rather than
+  per-class special-casing: `_markdown.py` gained `parse(text) ->
+  list[Token]` (wraps `md.parse(text)`, then a recursive
+  `_assert_no_raw_html` walk over the token list) plus
+  `_RAW_HTML_TOKEN_TYPES = ("html_block", "html_inline")`. Confirmed
+  empirically first (`markdown_it.parse`) that `html_block` tokens appear
+  in the flat top-level list but `html_inline` tokens only ever appear
+  nested inside an `"inline"` token's own `.children` -- never flattened
+  into the top-level list -- so `_assert_no_raw_html` recurses into
+  `.children` too, or it would silently miss every inline HTML tag.
+  - Every direct `md.parse(text)`/`md.parse(self._value)` call site (14
+    total, across `markdown_str.py`, `markdown_section.py` (x4),
+    `markdown_paragraph.py` (x2), `markdown_list_item.py` (x3),
+    `markdown_code_block.py` (x3), `markdown_block_quote.py` (x2)) now
+    calls the new guarded `parse(text)` instead, importing it in place of
+    the bare `md` symbol -- the same "one shared call site" convention
+    `_markdown.format_text()` already established for `mdformat` options
+    (Task 1.6.3). This means the fix automatically covers
+    `MarkdownParagraph`/`MarkdownListItem`/`MarkdownCodeBlock`/
+    `MarkdownBlockQuote` too, not only the two classes REQ-005's own
+    wording names.
+  - Rejected the plan's other originally-sketched option (disabling the
+    `html_block`/`html_inline` rules on the shared `MarkdownIt` instance
+    outright): that would make markdown-it silently re-tokenize raw HTML
+    as something else (e.g. plain text/a paragraph) instead of raising,
+    which is the opposite of "reject".
+  - `MarkdownStr.from_text`'s leaf branch previously stored `_value`
+    without ever tokenizing `text` at all (it relied entirely on a
+    composite parent's `get_extent` call having already parsed it first);
+    it now also calls `parse(text)` directly, so a leaf class reached
+    directly -- not only via a parent -- is still guarded.
+  - New tests: `tests/models/md/test_markdown_html_rejection.py` (12
+    cases) -- `_markdown.parse` raising on a top-level `html_block`, on
+    `html_inline` nested inside a paragraph's or a heading's `inline`
+    children, and staying unaffected by plain Markdown formatting
+    (`**strong**`/`*emphasis*`) and by HTML-looking text inside a fenced
+    code block (opaque code, never block-parsed); plus end-to-end
+    `MarkdownStr.from_text` (leaf) and `MarkdownSection.from_text` (leaf,
+    via a `@alias(value=".+", type=AliasType.REGEX)`-decorated
+    `MarkdownSection2` test double) pass/fail pairs matching ACC-005's
+    literal wording.
+  - Full suite: 479 tests (up from 467), all passing; `ruff format
+    --check`/`ruff check`/`vulture` clean on every touched file;
+    `specmgr docs` re-run with no unexpected drift beyond the new
+    `_markdown.py` docstring content and the test-file count bump.
+  - Updated Requirements (REQ-005 -> done), Acceptance Criteria (ACC-005
+    -> done), Task List (Phase 3/Task 3.1/3.2 -> done) accordingly. Phase
+    4 (REQ-006, typed frontmatter) is now the only not-started work left
+    in this feature's Task List.
+
+#### 2026-08-11 (continued, part 9)
+- Found and fixed one more piece of stale documentation missed by the
+  ADR-reconciliation/REQ-005-rescoping passes above: the plan's own
+  **Design Notes** section (not a dated Recent-Updates entry, so it doesn't
+  auto-expire the way those do) still described the superseded
+  `Heading`-annotated/`_tokens`-based recursive slicing algorithm, still
+  called content constraints "opt-in composables" as if the dropped generic
+  marker framework were still planned, and still pointed at
+  `tests/models/markdown/v1/` instead of the actual `tests/models/md/`.
+  Rewrote all three bullets to describe the actual `get_extent`/`_value: str`
+  design, REQ-005's concrete (non-opt-in) raw-HTML rejection, and the real
+  test path; also pointed the ADR cross-reference at v1.5.0 explicitly.
+  Prompted by repo-owner asking "any more updates to our docs needed?" after
+  the REQ-005/ADR reconciliation — a reminder that a non-dated "current
+  state" section can drift silently in exactly the way dated history entries
+  can't.
 
 #### 2026-08-11 (continued, part 8)
 - Rescoped: REQ-005 (and its Phase 3/Task 3.1/3.2/ACC-005 counterparts), per

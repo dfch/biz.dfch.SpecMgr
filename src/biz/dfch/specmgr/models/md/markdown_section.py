@@ -25,7 +25,7 @@ from markdown_it.token import Token
 from pydantic import model_validator, computed_field, PrivateAttr
 
 from .markdown_str import MarkdownStr
-from ._markdown import format_text, md
+from ._markdown import format_text, parse
 from .markdown import markdown
 from .alias_match import match_alias
 
@@ -74,7 +74,7 @@ class MarkdownSection(MarkdownStr, ABC):
         )
         own_level = _HEADING_TAGS.index(own_tag) + 1
 
-        tokens = md.parse(text)
+        tokens = parse(text)
 
         if not tokens or tokens[0].type != own_type or tokens[0].tag != own_tag:
             return 0
@@ -124,7 +124,7 @@ class MarkdownSection(MarkdownStr, ABC):
         assert isinstance(text, str), f"text: '{type(text)}' != 'str'."
         assert text == format_text(text), "text is not in 'mdformat'."
 
-        tokens = md.parse(text)
+        tokens = parse(text)
         assert len(tokens) >= 3, "Expected at least 3 tokens for heading triple"
 
         # Get the expected heading tag from decorator metadata
@@ -203,7 +203,7 @@ class MarkdownSection(MarkdownStr, ABC):
         Token [0] must have tag h1-h6.
         """
         text = str(self)
-        tokens = md.parse(text)
+        tokens = parse(text)
         _ = tokens
 
         # assert len(tokens) >= 3, "Expected at least 3 tokens for heading triple"
@@ -238,7 +238,7 @@ class MarkdownSection(MarkdownStr, ABC):
             'My Notes'
         """
         text = str(self)
-        tokens = md.parse(text)
+        tokens = parse(text)
 
         # Get the expected heading tag from the @markdown decorator metadata
         metadata = getattr(self.__class__, "_metadata", {})

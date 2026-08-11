@@ -20,7 +20,7 @@
 from __future__ import annotations
 
 from .markdown_str import MarkdownStr
-from ._markdown import format_text, md
+from ._markdown import format_text, parse
 from .markdown import markdown
 from .markdown_section import _HEADING_TAGS
 
@@ -94,7 +94,7 @@ class MarkdownParagraph(MarkdownStr):
             f"{cls.__name__}: expected type='paragraph_open', tag='p', got type={own_type!r}, tag={own_tag!r}"
         )
 
-        tokens = md.parse(text)
+        tokens = parse(text)
 
         if not tokens or tokens[0].type != own_type or tokens[0].tag != own_tag:
             return 0
@@ -145,7 +145,7 @@ class MarkdownParagraph(MarkdownStr):
         assert isinstance(text, str), f"text: '{type(text)}' != 'str'."
         assert text == format_text(text), "text is not in 'mdformat'."
 
-        tokens = md.parse(text)
+        tokens = parse(text)
         assert len(tokens) >= 3, "Expected at least 3 tokens for paragraph triple"
 
         metadata = getattr(cls, "_metadata", {})

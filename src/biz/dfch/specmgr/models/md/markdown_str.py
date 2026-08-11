@@ -27,7 +27,7 @@ import types
 import typing
 from typing import Any
 from pydantic import BaseModel
-from ._markdown import format_text, md
+from ._markdown import format_text, parse
 
 
 class MarkdownStr(BaseModel):
@@ -63,7 +63,7 @@ class MarkdownStr(BaseModel):
         assert isinstance(text, str), type(text)
         assert text == format_text(text), "text is not in 'mdformat'."
 
-        tokens = md.parse(text)
+        tokens = parse(text)
 
         result: int = 0
         for tok in tokens:
@@ -304,6 +304,12 @@ class MarkdownStr(BaseModel):
         field_names = cls._get_field_names()
 
         if not field_names:
+            # Nothing below calls `get_extent` on `text` for a leaf class reached
+            # directly (as opposed to via a parent's `process_field`/
+            # `process_list_field`, which already tokenizes it first) -- parse
+            # here purely to enforce REQ-005's raw-HTML rejection at every entry
+            # point, not just ones a composite parent happens to route through.
+            parse(text)
             instance = cls()
             instance._value = text
             return instance

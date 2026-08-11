@@ -19,8 +19,18 @@
 
 import mdformat
 from markdown_it import MarkdownIt
+from markdown_it.token import Token
 
 md = MarkdownIt("commonmark")
+
+#: Token types that mark raw HTML (REQ-005). `"html_block"` always appears in
+#: the flat top-level token list; `"html_inline"` only ever appears nested
+#: inside an `"inline"` token's own `.children` (verified empirically -- the
+#: shared `md` instance's default inline-token representation keeps inline
+#: children nested, it does not flatten them into the top-level list), which
+#: is why `_assert_no_raw_html` below recurses into `.children` rather than
+#: scanning the top-level list alone.
+_RAW_HTML_TOKEN_TYPES = ("html_block", "html_inline")
 
 #: `mdformat` options shared by every normalization call across `models/md/`.
 #:
@@ -54,3 +64,43 @@ def format_text(text: str) -> str:
     """
     assert isinstance(text, str), type(text)
     return mdformat.text(text, options=_MDFORMAT_OPTIONS)
+
+
+def _assert_no_raw_html(tokens: list[Token]) -> None:
+    """Raise if any token in `tokens` (recursively, including `.children`) is raw HTML.
+
+    Args:
+        tokens: a token list, or a token's own `.children`.
+    """
+    for tok in tokens:
+        assert tok.type not in _RAW_HTML_TOKEN_TYPES, (
+            f"raw HTML is not permitted in a parsed document: {tok.type} {tok.content!r}"
+        )
+        if tok.children:
+            _assert_no_raw_html(tok.children)
+
+
+def parse(text: str) -> list[Token]:
+    """Tokenize `text` with the shared `md` instance, rejecting raw HTML (REQ-005).
+
+    Every module under `models/md/` must call this instead of calling
+    `md.parse(text)` directly, so raw HTML (both HTML blocks and inline HTML
+    tags) is rejected consistently everywhere text gets tokenized -- the same
+    "one shared call site" convention `format_text` above already
+    establishes for `mdformat` normalization options.
+
+    Args:
+        text: Markdown source to tokenize.
+
+    Returns:
+        The token list `md.parse(text)` would have returned.
+
+    Raises:
+        AssertionError: `text` contains an `html_block` or `html_inline`
+            token anywhere (including nested inside an `"inline"` token's
+            `.children`).
+    """
+    assert isinstance(text, str), type(text)
+    tokens = md.parse(text)
+    _assert_no_raw_html(tokens)
+    return tokens

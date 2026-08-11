@@ -24,7 +24,7 @@ import re
 from pydantic import computed_field
 
 from .markdown_str import MarkdownStr
-from ._markdown import format_text, md
+from ._markdown import format_text, parse
 from .markdown import markdown
 
 #: Matches a block quote marker (">" or "> ") at the start of a line.
@@ -152,7 +152,7 @@ class MarkdownBlockQuote(MarkdownStr):
             f"{cls.__name__}: expected type='blockquote_open', tag='blockquote', got type={own_type!r}, tag={own_tag!r}"
         )
 
-        tokens = md.parse(text)
+        tokens = parse(text)
 
         if not tokens or tokens[0].type != own_type or tokens[0].tag != own_tag:
             return 0
@@ -196,7 +196,7 @@ class MarkdownBlockQuote(MarkdownStr):
         assert isinstance(text, str), f"text: '{type(text)}' != 'str'."
         assert text == format_text(text), "text is not in 'mdformat'."
 
-        tokens = md.parse(text)
+        tokens = parse(text)
         assert tokens, "Expected at least one token for a block quote"
 
         metadata = getattr(cls, "_metadata", {})
