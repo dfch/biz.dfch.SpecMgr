@@ -71,6 +71,7 @@ First-line docstrings from each module, organized by domain:
 - `models/md/alias.py` — Alias decorator for MarkdownStr class name transformation.
 - `models/md/alias_match.py` — Match a parsed heading's actual text against a class's declared `@alias`.
 - `models/md/alias_type.py` — Alias type enumeration for MarkdownStr class name transformation.
+- `models/md/markdown_paragraph.py` — Base class for a markdown paragraph ("p"), the non-heading sibling of `MarkdownSection`.
 - `models/md/markdown_section.py` — Base class for markdown sections with heading constraints.
 - `models/md/markdown_section1.py` — Markdown section starting with h1 heading.
 - `models/md/markdown_section2.py` — Markdown section starting with h2 heading.
@@ -109,4 +110,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 59
+**Test files**: 60

@@ -21,6 +21,7 @@ from .alias_type import AliasType
 from .markdown import markdown
 from .alias import alias
 from .markdown_str import MarkdownStr
+from .markdown_paragraph import MarkdownParagraph
 from .markdown_section import MarkdownSection
 from .markdown_section1 import MarkdownSection1
 from .markdown_section2 import MarkdownSection2
@@ -34,6 +35,7 @@ __all__ = [
     "alias",
     "AliasType",
     "MarkdownStr",
+    "MarkdownParagraph",
     "MarkdownSection",
     "MarkdownSection1",
     "MarkdownSection2",

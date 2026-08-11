@@ -57,6 +57,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.models.md.alias_match`](biz.dfch.specmgr.models.md.alias_match.md) — Match a parsed heading's actual text against a class's declared `@alias`.
 - [`biz.dfch.specmgr.models.md.alias_type`](biz.dfch.specmgr.models.md.alias_type.md) — Alias type enumeration for MarkdownStr class name transformation.
 - [`biz.dfch.specmgr.models.md.markdown`](biz.dfch.specmgr.models.md.markdown.md) — No documentation available.
+- [`biz.dfch.specmgr.models.md.markdown_paragraph`](biz.dfch.specmgr.models.md.markdown_paragraph.md) — Base class for a markdown paragraph ("p"), the non-heading sibling of `MarkdownSection`.
 - [`biz.dfch.specmgr.models.md.markdown_section`](biz.dfch.specmgr.models.md.markdown_section.md) — Base class for markdown sections with heading constraints.
 - [`biz.dfch.specmgr.models.md.markdown_section1`](biz.dfch.specmgr.models.md.markdown_section1.md) — Markdown section starting with h1 heading.
 - [`biz.dfch.specmgr.models.md.markdown_section2`](biz.dfch.specmgr.models.md.markdown_section2.md) — Markdown section starting with h2 heading.

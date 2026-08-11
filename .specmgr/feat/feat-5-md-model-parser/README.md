@@ -1,6 +1,6 @@
 ---
 id: feat-5-md-model-parser
-version: 1.8.0
+version: 1.9.0
 status: in-progress
 created: 2026-08-08
 updated: 2026-08-11
@@ -185,7 +185,7 @@ history is lost — the original phase text remains recoverable via `git log
 - [x] ~~Task 1.5: Create `metadata_utils.py`~~ — **removed 2026-08-11**: `_metadata` introspection helpers (`get_direct_metadata`, `get_inherited_metadata`, `find_metadata_source`, `get_metadata_chain`, `has_metadata`) were dead code — never called by the core recursion path, never re-exercised by any test, and its own docstring examples referenced a nonexistent `@annotate` decorator (the real one is `@markdown`). Deleted the module, its `docs/api/` page, and its `models/md/__init__.py` re-exports rather than backfilling tests for unused code — depends on: Task 1.1 — status: removed
 - [x] Task 1.6: Unit tests for Tasks 1.1–1.5 (`test_alias_match.py`: `space_separated_name` conversion cases, every `match_alias` branch including no-alias-always-matches and `LITERAL`'s case-sensitivity) — depends on: Task 1.3 — status: done
 - [x] Task 1.6.1: Support `list[MarkdownStr]` (or `list[SomeMarkdownStrSubclass]`) fields in `markdown_str.py`'s `_get_field_names`/`from_text`/`__str__`. Detection: `_unwrap_list(annotation) -> tuple[type, bool]` (sibling to `_unwrap_optional`, plain `list[X]` only via `typing.get_origin(annotation) is list` — no `Sequence`/`tuple` support), applied after `_unwrap_optional` so `list[X] | None` unwraps to `(X, optional=True, is_list=True)`. Consumption: `process_list_field(name, item_type, text, *, optional=False) -> tuple[str, list[MarkdownStr] | None]` — deliberately **not** mirroring `process_field`'s `(extent, value)` contract (an earlier draft did and was wrong: summing per-item extents against a locally-renormalized string silently loses lines dropped by `mdformat.text()` between items, e.g. a separating blank line, causing `from_text`'s generic `remaining_text.splitlines()[extent:]` slice to misalign against the caller's *original*, not-yet-renormalized `remaining_text` — the exact class of bug `from_text` itself already moved off a line-index `cursor` to avoid). Instead it loops `item_type.get_extent`/slice/`mdformat`-renormalize/`item_type.from_text` while extent `> 0` and returns the already-fully-reduced `remaining_text` string directly, which `from_text` adopts as-is for list fields (bypassing the generic extent-slicing step used for scalar fields). No item found on the *first* iteration is an absence (mandatory `list[X]` -> assertion error, matching today's missing-mandatory-scalar-field behavior; `list[X] | None` -> field left `None`, `text` returned unchanged) while no item found on any *subsequent* iteration just ends the list normally (items 2+ are implicitly optional without needing `Optional[X]` themselves). Rendering: `__str__` iterates the list and appends `str(item)` per element, same as today's single-field append, skipping a `None` list exactly like an absent optional scalar field — depends on: Task 2.1 — status: done
-- [ ] Task 1.6.2: Support base object `MarkdownParagraph` — depends on: TBD — status: not-started
+- [x] Task 1.6.2: Support base object `MarkdownParagraph` (`markdown_paragraph.py`) — a single class (`@markdown(type="paragraph_open", tag="p")`, no level spectrum, no `@alias` enforcement — a paragraph's text is free-form content, not a title). Leaf case (no declared fields): `get_extent`/`from_text` claim exactly the paragraph's own line span, nothing more — content that follows (even a sibling paragraph) is left untouched, unlike a leaf `MarkdownSection`'s greedy-to-next-heading behavior. Composite case (has declared `MarkdownStr`/`list[MarkdownStr]` fields): `_value` holds only the paragraph's own inline text; the remainder is delegated to `super().from_text()` (`MarkdownStr.from_text`) for field population, exactly like `MarkdownSection.from_text` delegates its post-heading body — bounded, in `get_extent`, only by the next heading of *any* level (h1-h6), since a paragraph has no level of its own and can never itself contain a heading. `__str__` mirrors `MarkdownSection.__str__` minus the heading-marker reconstruction — depends on: Task 2.1 — status: done
 - [ ] Task 1.6.3: Support `MarkdownList` — depends on: TBD — status: not-started
 - [ ] Task 1.7: Exercise `@alias`'s `REGEX` branch end-to-end through a real `MarkdownSection.from_text` call (currently only unit-tested in isolation; no fixture class declares `AliasType.REGEX` yet) — depends on: Task 1.6 — status: not-started (low priority; `@alias`'s mechanism may itself be revisited later)
 
@@ -305,6 +305,49 @@ left as-is).
    short-lived/superseded later, so this is a minor gap, not a priority.
 
 ### Recent Updates
+
+#### 2026-08-11 (continued, part 6)
+- Completed: Task 1.6.2 -- `MarkdownParagraph` (`markdown_paragraph.py`), a
+  single class (no `MarkdownParagraph1..6` spectrum -- a paragraph has no
+  level) pinned to `@markdown(type="paragraph_open", tag="p")`, with no
+  `@alias` enforcement of its own text (agreed via clarifying questions this
+  session: a paragraph's content is free-form prose, not a title to match
+  against a class-name-derived alias, unlike a heading).
+  - `get_extent`/`from_text`: leaf case (no declared fields) claims exactly
+    the paragraph's own line span (`paragraph_open.map[1]`), nothing more --
+    unlike a leaf `MarkdownSection`, which greedily claims everything up to
+    the next sibling/ancestor heading since "nothing else will retain that
+    text." A leaf `MarkdownParagraph` deliberately does *not* mirror that:
+    content following it (even a sibling paragraph) is left untouched.
+  - Composite case (has declared `MarkdownStr`/`list[MarkdownStr]` fields):
+    `_value` holds only the paragraph's own inline text; the remainder is
+    delegated to `super().from_text()` for field population, exactly like
+    `MarkdownSection.from_text`'s post-heading body delegation. `get_extent`
+    bounds this delegation only by the next heading of *any* level (h1-h6)
+    -- not some paragraph-specific level, since a paragraph has none and,
+    per repo-owner clarification, can never itself contain a heading. A
+    following sibling paragraph does *not* stop it; only a heading does.
+    `__str__` mirrors `MarkdownSection.__str__`'s composite branch minus the
+    heading-marker (`"#" * level`) reconstruction, since a paragraph has
+    none to reconstruct.
+  - Design converged via clarifying questions before implementation (leaf
+    extent = own block only; no `@alias` check; composite stop condition =
+    any heading level, with the child fields' own `get_extent`/`from_text`
+    determining the real boundary within that window) -- see this session's
+    Q&A for the reasoning `git log -p` doesn't otherwise capture.
+  - New tests: `tests/models/md/test_markdown_paragraph.py` (12 cases) --
+    `get_extent` (no-extent, leaf-own-span-only including multi-line and
+    trailing-sibling-paragraph cases, composite-to-end-of-input,
+    composite-not-stopped-by-a-sibling-paragraph, composite-stops-before-any-
+    heading-level parametrized h1-h6) and `from_text`/`__str__` (leaf
+    round-trip, leaf inline-formatting preservation, leaf rejects
+    non-paragraph text, composite splits intro text from its delegated
+    field, composite round-trips exactly, composite leaves a following
+    heading available for a sibling field in a larger document).
+  - Registered in `models/md/__init__.py`'s imports/`__all__`.
+  - Full suite: 402 passed, 0 failed (390 -> 402, 12 new). `ruff format
+    --check`/`ruff check`/`vulture` clean.
+  - Task 1.6.3 (`MarkdownList`) remains not-started.
 
 #### 2026-08-11 (continued, part 5)
 - Completed: Task 1.6.1 -- `list[MarkdownStr]`/`list[MarkdownStr] | None` field
