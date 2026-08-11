@@ -3,7 +3,7 @@ id: feat-4-use-cases
 version: 1.0.0
 status: planning
 created: 2026-08-05
-updated: 2026-08-05
+updated: 2026-08-11
 ---
 
 # Feature: Create Use Cases with tool support
@@ -49,7 +49,7 @@ Create a Markdown schema for use cases based on Alistair Cockburn's template, wi
 
 ### Dependencies
 
-- Depends on: ADR e369ee2e-3353-4f92-991c-6367d76d832e (`.specmgr` structure), ADR ece4554b-725c-4f76-bc04-5d2b760363d2 (domain-first hierarchy)
+- Depends on: ADR e369ee2e-3353-4f92-991c-6367d76d832e (`.specmgr` structure), ADR ece4554b-725c-4f76-bc04-5d2b760363d2 (domain-first hierarchy), feat-5-md-model-parser (done, 2026-08-11) — Task 1.5 rebuilds the uc schema/models on its `models/md` engine
 - Blocks: None identified yet
 - External: PlantUML (for diagram rendering, not included in this feature)
 
@@ -99,10 +99,11 @@ progresses (edit, don't duplicate).
 - [x] Task 1.3A: Implement Markdown parser (parse_uc) + fix Extension model for compound action numbering — depends on: Task 1.2 — status: completed
 - [x] Task 1.3B: Implement validation tool (step-numbering, cross-reference model_validators) — depends on: Task 1.3A — status: completed
 - [x] Task 1.4: Write schema documentation with examples — depends on: Task 1.1 — status: completed
+- [ ] Task 1.5: Rebuild the uc schema/models on feat-5-md-model-parser's generic `models/md` engine (`MarkdownStr`, `MarkdownSection1`..`6`, `MarkdownParagraph`, `MarkdownListItem`, `MarkdownFrontmatter`), replacing the hand-written `uc/models/v1` Pydantic models and the custom `parse_uc` parser/renderer with a class tree built on that engine's recursive `from_text`/`__str__` — depends on: Task 1.4, feat-5-md-model-parser (done) — status: not-started (draft sketch done, see below). Reopens Phase 1 (previously marked complete); see feat-5's own Follow-up #3, which explicitly flagged this as worth revisiting once feat-4 evaluates adoption. The three cross-field `model_validator`s from Task 1.3B (step/action numbering contiguity, Extension/SubVariation step-reference resolution) must be preserved on the rebuilt model tree, since the generic engine has no equivalent built-in check. **Blocks Task 2.2 onward** — see Phase 2 note below. **Finding (2026-08-11, see Design Notes):** a literal "full rebuild" is not achievable as scoped — Cockburn's compound action numbering (`3a1.`, `3a2.`, ...) is not valid CommonMark list syntax (verified via `markdown-it`: it tokenizes as one plain paragraph, not a list), and `Extensions`/`SubVariations`'s own per-item h3 headings are dynamically named per document, which the generic engine cannot yet decompose at all (no "repeated section" primitive, only "repeated list item"). A draft sketch (`.specmgr/feat/feat-4-use-cases/uc_model_v2_draft.py`) implements a hybrid instead: the generic engine for frontmatter/top-level sections/Characteristic Information's ~15 h3 fields/Main Success Scenario's real ordered list, plus a second, dedicated regex pass (reusing `uc/models/v1/parser.py`'s existing patterns unchanged) recovering `Extension`/`SubVariation` structure from the two leaf sections' raw text. Three open decisions block finalizing this task — see the sketch's trailing comment block: (a) accept the hybrid as final, (b) change the on-disk document format so extension actions become real ordered lists (schema/format-level change, likely its own ADR), or (c) raise a "repeated section" primitive as new follow-up work against the now-closed feat-5 (not a reopening of it).
 
 #### Phase 2: PlantUML Diagram Generation
-- [x] Task 2.1: Implement UC diagram generator (actors + use case associations) — depends on: Task 1.3B — status: completed
-- [ ] Task 2.2: Implement Sequence diagram generator (main success path) — depends on: Task 1.3B — status: not-started
+- [x] Task 2.1: Implement UC diagram generator (actors + use case associations) — depends on: Task 1.3B — status: completed. **Note (2026-08-11):** built against the current custom `UseCase` model (`uc/models/v1/usecase.py`); may need rework once Task 1.5 lands and the model shape changes.
+- [ ] Task 2.2: Implement Sequence diagram generator (main success path) — depends on: Task 1.3B, Task 1.5 — status: blocked (pending Task 1.5's outcome — do not build against the current model shape if it is about to be replaced)
 - [ ] Task 2.3: Implement Sequence diagram generator (extensions) — depends on: Task 2.2 — status: not-started
 - [ ] Task 2.4: Test diagram generation with sample use cases — depends on: Task 2.3 — status: not-started
 
@@ -122,15 +123,21 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-05**: Phase 1 complete. Phase 2 (PlantUML Diagram Generation) started: Task 2.1 (UC diagram generator) done — `render_uc_diagram(use_case: UseCase) -> str` (`uc/models/v1/uc_diagram.py`), a pure function producing a PlantUML Use Case diagram for a single document (one actor per distinct `primary_actor`/`secondary_actors` label, one association edge each, one `usecase` node for the document itself). Next: Task 2.2 (Sequence diagram generator, main success path).
+**As of 2026-08-11**: Phase 1 reopened. Task 1.5 added: rebuild the uc schema/models on feat-5-md-model-parser's now-closed (2026-08-11) generic `models/md` Markdown-to-Pydantic engine, in place of the hand-written `uc/models/v1` models and custom `parse_uc` parser/renderer. This follows directly from feat-5's own Follow-up #3. Task 2.1 (UC diagram generator, done 2026-08-05) is built against the current custom `UseCase` model and may need rework once Task 1.5 lands; Task 2.2 (Sequence diagram generator, main success path) is blocked pending Task 1.5's outcome rather than started against a model shape that may be replaced.
 
-(No blockers identified at this time.)
+**Blocker:** Task 2.2 onward blocked on Task 1.5 (see Task List, Phase 1/2).
 
 ### Recent Updates
 
 If this section grows too long, move older entries to `history.md` in this
 same folder and leave a pointer here, e.g.:
 `See history.md for updates before YYYY-MM-DD.`
+
+#### 2026-08-11 Task 1.5 draft sketch — full-rebuild feasibility finding
+- **Task 1.5 draft**: Wrote `.specmgr/feat/feat-4-use-cases/uc_model_v2_draft.py`, a design-review-only sketch (not wired into `src/`, not tested) of the rebuilt model tree. Found, and verified empirically via `MarkdownIt().parse(...)`, that a literal full rebuild is not achievable as scoped: Cockburn's compound extension-action numbering (`"3a1. ..."`) is not valid CommonMark ordered-list syntax (letters after the leading digits disqualify it) — it tokenizes as one plain paragraph, not a list — unlike Main Success Scenario's steps (`"1. ..."`, `"2. ..."`), which *are* a real `ordered_list_open`/`list_item_open` list. Worse, `Extensions`/`SubVariations`'s own per-item h3 headings (`"### 3a. ..."`, `"### Step 1: ..."`) are dynamically named per document, which `MarkdownStr.from_text`'s statically-declared-field model cannot decompose at all yet — feat-5's own REQ-007 note already flagged this same gap for its fixture. The draft sketch adopts a hybrid instead: the generic engine owns frontmatter, top-level sections, Characteristic Information's ~15 h3 fields (via a new `BulletListSection`/`ProseSection` convenience pair, an improvement over the fixture's opaque-leaf shape), and Main Success Scenario's real ordered list (`Step(MarkdownListItem)`, `MainSuccessScenario.steps: list[Step]` — as a bonus, Task 1.3B's step-numbering-contiguity validator becomes structurally unnecessary under this shape, not just ported forward); `Extensions`/`SubVariations` stay leaf `MarkdownSection2`s with a second, dedicated regex-based parse pass (reusing `uc/models/v1/parser.py`'s existing patterns and the existing `Extension`/`ExtensionAction`/`SubVariation` models unchanged) recovering typed structure from the leaf's raw text. Left `parsed_items()`/the cross-reference re-validation as `NotImplementedError` in the sketch (routine porting, not a design question). Three open decisions block finalizing Task 1.5 (see the sketch's trailing comment block): accept the hybrid as final; change the on-disk document format so extension actions become real ordered lists (schema/format-level, likely its own ADR); or raise a "repeated section" primitive as new follow-up work against the now-closed feat-5.
+
+#### 2026-08-11 Task 1.5 added (Phase 1 reopened)
+- **Task 1.5 ADDED**: Rebuild the uc schema/models on feat-5-md-model-parser's now-closed generic `models/md` Markdown-to-Pydantic engine (`MarkdownStr`, `MarkdownSection1`..`6`, `MarkdownParagraph`, `MarkdownListItem`, `MarkdownFrontmatter`), replacing the hand-written `uc/models/v1` Pydantic models and the custom `parse_uc` parser/renderer. Directly actions feat-5's own Follow-up #3 ("worth revisiting if/when `feat-4-use-cases` evaluates adopting this engine for its own `uc` schema"). Scoped as a full rebuild (DEC-009), not an evaluation-only spike. Reopens Phase 1 (previously marked complete on 2026-08-05); the three cross-field `model_validator`s from Task 1.3B must be preserved on the rebuilt model tree, since the generic engine has no equivalent built-in check. Task 2.1 (UC diagram generator, done) is flagged as possibly needing rework once Task 1.5 lands; Task 2.2 (Sequence diagram generator, main success path) is now explicitly blocked on Task 1.5 rather than started against a model shape that may be replaced. Dependencies section updated to record feat-5-md-model-parser as a completed dependency for this task.
 
 #### 2026-08-05 (continued)
 - **Task 1.1 COMPLETED**: Markdown schema definition and formal specification
@@ -184,6 +191,7 @@ same folder and leave a pointer here, e.g.:
 - **DEC-006** [2026-08-05]: Split Task 1.3 into Task 1.3A (Markdown parser) and Task 1.3B (cross-field validators) — No `parse_uc` existed yet, and file-based "validation" is meaningless without first parsing a `.md` file into a `UseCase`. Splitting mirrors ADR's own parse/validate separation (`models/adr/v1/parser.py` vs. `adr/tools/validate_adr.py`) while keeping the overall task numbering stable via dotted sub-numbers.
 - **DEC-007** [2026-08-05]: Model `Extension.actions` as `list[ExtensionAction]` (compound number + description), not `list[str]` — `uc_example.md` already showed compound sub-numbering (`3a1`, `3a2`, ...) that the original `list[str]` model couldn't represent or validate. Fixed before writing the parser so the parser has a real target field to populate, and so action-numbering sequencing (Task 1.3B) has something to validate against.
 - **DEC-008** [2026-08-05]: Enforce Extension/SubVariation step-reference cross-resolution against `main_success_scenario.steps` via a `UseCase`-level `model_validator` — Unlike ADR's deliberate choice not to enforce Considered-Options/Option-section consistency (`.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md` §7), Task 1.3's original title explicitly named "step numbering" as in-scope, so this cross-check (plus step/action numbering contiguity) is enforced rather than left as a known gap.
+- **DEC-009** [2026-08-11]: Rebuild the uc schema/models on feat-5-md-model-parser's `models/md` engine (Task 1.5), fully replacing the hand-written `uc/models/v1` Pydantic models and custom `parse_uc` parser/renderer, rather than keeping the two in parallel or leaving adoption as an unscheduled follow-up — feat-5 closed 2026-08-11 with a generic, proven (498 tests) heading-recursion engine (`MarkdownStr`/`MarkdownSection1`..`6`/`MarkdownParagraph`/`MarkdownListItem`) and explicitly flagged this exact adoption as its own Follow-up #3. Doing a full rebuild now (rather than a spike/evaluation-only task) avoids maintaining two parsing mechanisms for the same document type. Consequence: Task 2.1 (UC diagram generator) may need rework, and Task 2.2 onward (Sequence diagram generator) is blocked until Task 1.5 lands, since building further diagram/MCP tooling against a model shape that is about to be replaced would be wasted work.
 
 ### Related PRs / Commits
 
