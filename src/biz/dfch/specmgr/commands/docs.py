@@ -249,12 +249,19 @@ _OBJECT_ADDRESS_RE = re.compile(r" at 0x[0-9a-fA-F]+")
 # (3.11/3.12/3.13) would flag its own byte-identical output as drift.
 _PRIVATE_SUBMODULE_RE = re.compile(r"\b([A-Za-z_]\w*)\._[A-Za-z]\w*\.([A-Za-z_]\w*)\b")
 
+# Normalizes absolute PosixPath/WindowsPath representations in signatures by replacing
+# full absolute paths with just the final path component. This avoids CI drift when the
+# same repo is cloned to different paths (e.g. /home/user/... vs /home/runner/...).
+# Matches patterns like ``PosixPath('/home/user/src/biz.dfch.SpecMgr/src')`` and
+# replaces them with ``PosixPath('/src')`` (just the innermost directory).
+_ABSOLUTE_PATH_RE = re.compile(r"(PosixPath|WindowsPath|Path)\('([^']+)'\)", re.MULTILINE)
+
 
 def _stable_signature_str(func: Any) -> str | None:
     """Render ``func``'s signature as a string, stable across repeated runs and Python versions.
 
     ``str(inspect.signature(func))`` already includes the surrounding
-    parentheses. Two things make this otherwise non-reproducible, breaking
+    parentheses. Three things make this otherwise non-reproducible, breaking
     the pre-commit hook / CI drift check for ``docs/api/*.md``:
 
     * Parameters annotated via ``Annotated[T, typer.Option(...)]`` (as every
@@ -262,13 +269,27 @@ def _stable_signature_str(func: Any) -> str | None:
       embeds the object's memory address -- different on every run.
     * A type's qualified name can include a private submodule that varies by
       Python version (see ``_PRIVATE_SUBMODULE_RE`` above).
+    * Absolute paths in default ``Path`` parameters vary by checkout location
+      (e.g. ``/home/user/...`` vs ``/home/runner/...`` in CI), so they are
+      normalized to just the final path component (see ``_ABSOLUTE_PATH_RE``).
     """
     try:
         sig = inspect.signature(func)
     except (ValueError, TypeError):
         return None
     text = _OBJECT_ADDRESS_RE.sub("", str(sig))
-    return _PRIVATE_SUBMODULE_RE.sub(r"\1.\2", text)
+    text = _PRIVATE_SUBMODULE_RE.sub(r"\1.\2", text)
+
+    # Normalize absolute paths: extract just the innermost directory name
+    # from patterns like PosixPath('/home/user/src/biz.dfch.SpecMgr/src')
+    def normalize_path(match: Any) -> str:
+        path_type = match.group(1)
+        path_str = match.group(2)
+        basename = Path(path_str).name
+        return f"{path_type}('/{basename}')"
+
+    text = _ABSOLUTE_PATH_RE.sub(normalize_path, text)
+    return text
 
 
 def _format_signature(func: Any) -> str:

@@ -75,7 +75,7 @@ definition site, so a name can be reported once even if several unrelated defini
 it. Used by `--test` mode, which relies on exactly that name-based comparison.
 
 
-### `unused_code(src: Annotated[pathlib.Path, <typer.models.OptionInfo object>] = PosixPath('/home/user/src/biz.dfch.SpecMgr/src'), tests: Annotated[pathlib.Path, <typer.models.OptionInfo object>] = PosixPath('/home/user/src/biz.dfch.SpecMgr/tests'), whitelist: Annotated[pathlib.Path, <typer.models.OptionInfo object>] = PosixPath('/home/user/src/biz.dfch.SpecMgr/whitelist.py'), min_confidence: Annotated[int, <typer.models.OptionInfo object>] = 60, test_only: Annotated[bool, <typer.models.OptionInfo object>] = False, strict: Annotated[bool, <typer.models.OptionInfo object>] = False) -> None`
+### `unused_code(src: Annotated[pathlib.Path, <typer.models.OptionInfo object>] = PosixPath('/src'), tests: Annotated[pathlib.Path, <typer.models.OptionInfo object>] = PosixPath('/tests'), whitelist: Annotated[pathlib.Path, <typer.models.OptionInfo object>] = PosixPath('/whitelist.py'), min_confidence: Annotated[int, <typer.models.OptionInfo object>] = 60, test_only: Annotated[bool, <typer.models.OptionInfo object>] = False, strict: Annotated[bool, <typer.models.OptionInfo object>] = False) -> None`
 
 Report unused code (or, with ``--test``, code referenced only by tests).
 

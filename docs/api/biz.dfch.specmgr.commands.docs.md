@@ -92,7 +92,7 @@ List domain packages and their subpackages (``models/``, ``adr/``).
 Render ``func``'s signature as a string, stable across repeated runs and Python versions.
 
 ``str(inspect.signature(func))`` already includes the surrounding
-parentheses. Two things make this otherwise non-reproducible, breaking
+parentheses. Three things make this otherwise non-reproducible, breaking
 the pre-commit hook / CI drift check for ``docs/api/*.md``:
 
 * Parameters annotated via ``Annotated[T, typer.Option(...)]`` (as every
@@ -100,6 +100,9 @@ the pre-commit hook / CI drift check for ``docs/api/*.md``:
   embeds the object's memory address -- different on every run.
 * A type's qualified name can include a private submodule that varies by
   Python version (see ``_PRIVATE_SUBMODULE_RE`` above).
+* Absolute paths in default ``Path`` parameters vary by checkout location
+  (e.g. ``/home/user/...`` vs ``/home/runner/...`` in CI), so they are
+  normalized to just the final path component (see ``_ABSOLUTE_PATH_RE``).
 
 
 ### `docs(output: Annotated[pathlib.Path | None, <typer.models.OptionInfo object>] = None) -> None`
