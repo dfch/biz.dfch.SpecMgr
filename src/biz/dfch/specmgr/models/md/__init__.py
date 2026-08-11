@@ -15,22 +15,30 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""commands module.
+"""Markdown base models."""
 
-Each CLI command lives in its own module, exposing a plain function that
-``cli.py`` registers on the Typer ``app`` via ``app.command()(fn)``.
-"""
-
-from .adr_toc import adr_toc
-from .docs import docs
-from .mcp import mcp
-from .unused_code import unused_code
-from .version import version
+from .alias_type import AliasType
+from .markdown import markdown
+from .alias import alias
+from .markdown_str import MarkdownStr
+from .markdown_section import MarkdownSection
+from .markdown_section1 import MarkdownSection1
+from .markdown_section2 import MarkdownSection2
+from .markdown_section3 import MarkdownSection3
+from .markdown_section4 import MarkdownSection4
+from .markdown_section5 import MarkdownSection5
+from .markdown_section6 import MarkdownSection6
 
 __all__ = [
-    "adr_toc",
-    "docs",
-    "mcp",
-    "unused_code",
-    "version",
+    "markdown",
+    "alias",
+    "AliasType",
+    "MarkdownStr",
+    "MarkdownSection",
+    "MarkdownSection1",
+    "MarkdownSection2",
+    "MarkdownSection3",
+    "MarkdownSection4",
+    "MarkdownSection5",
+    "MarkdownSection6",
 ]

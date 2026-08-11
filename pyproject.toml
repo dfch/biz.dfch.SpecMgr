@@ -48,6 +48,7 @@ dependencies = [
     "python-dotenv>=1.2.2",
     "markdown-it-py>=3.0",
     "python-frontmatter>=1.1",
+    "mdformat>=1.0.0",
 ]
 
 # Install project in editable mode:
@@ -69,6 +70,7 @@ test = [
     "pylint>=4.0.0",
     "mypy>=1.0",
     "ruff>=0.16.0",
+    "vulture>=2.14",
 ]
 
 dev = [
@@ -97,6 +99,8 @@ select = ["E", "F", "W"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["E501"]
+# vulture whitelist: bare name/attribute references are intentional (see whitelist.py).
+"whitelist.py" = ["F821"]
 
 [tool.pylint.format]
 max-line-length = 120

@@ -5,7 +5,7 @@ regenerate with `uv run --frozen specmgr docs` and commit the result.
 
 ## Implemented Domains
 
-**Models** — schema definitions: adr
+**Models** — schema definitions: adr, md
 
 **ADR domain** — subpackages: prompts, resources, tools
   - 11 MCP tools
@@ -49,6 +49,7 @@ First-line docstrings from each module, organized by domain:
 - `commands/adr_toc.py` — ``adr-toc`` -- generate table of contents for all ADRs in docs/adr.
 - `commands/docs.py` — ``docs`` -- regenerate ``docs/api/`` and ``docs/GENERATED.md`` from the codebase.
 - `commands/mcp.py` — ``mcp`` -- start the ``biz-dfch-specmgr`` MCP server.
+- `commands/unused_code.py` — ``unused-code`` -- report unreferenced Python symbols, or (with ``--test``) test-only ones.
 - `commands/version.py` — ``version`` -- print the installed ``biz-dfch-specmgr`` version.
 
 **models/**
@@ -65,6 +66,19 @@ First-line docstrings from each module, organized by domain:
 - `models/adr/v1/parser.py` — Parse an on-disk ADR ``.md`` file into an :class:`Adr` (plan §7, §10 item 2).
 - `models/adr/v1/renderer.py` — Render an :class:`Adr` back into the canonical on-disk ``.md`` text (plan §7, §10 item 2).
 - `models/adr/v1/summary.py` — Pydantic model for one line of ADR listing output (plan §8, §9a).
+- `models/md/__init__.py` — Markdown base models.
+- `models/md/_markdown.py` — Markdown shared instance.
+- `models/md/alias.py` — Alias decorator for MarkdownStr class name transformation.
+- `models/md/alias_match.py` — Match a parsed heading's actual text against a class's declared `@alias`.
+- `models/md/alias_type.py` — Alias type enumeration for MarkdownStr class name transformation.
+- `models/md/markdown_section.py` — Base class for markdown sections with heading constraints.
+- `models/md/markdown_section1.py` — Markdown section starting with h1 heading.
+- `models/md/markdown_section2.py` — Markdown section starting with h2 heading.
+- `models/md/markdown_section3.py` — Markdown section starting with h3 heading.
+- `models/md/markdown_section4.py` — Markdown section starting with h4 heading.
+- `models/md/markdown_section5.py` — Markdown section starting with h5 heading.
+- `models/md/markdown_section6.py` — Markdown section starting with h6 heading.
+- `models/md/markdown_str.py` — Parse markdown into tokens using shared MarkdownIt instance.
 - `models/version_info.py` — Pydantic model for the ``specmgr://version`` resource.
 
 **resources/**
@@ -95,4 +109,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 49
+**Test files**: 59

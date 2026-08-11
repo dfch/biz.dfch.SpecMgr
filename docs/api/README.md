@@ -37,6 +37,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.commands.adr_toc`](biz.dfch.specmgr.commands.adr_toc.md) — ``adr-toc`` -- generate table of contents for all ADRs in docs/adr.
 - [`biz.dfch.specmgr.commands.docs`](biz.dfch.specmgr.commands.docs.md) — ``docs`` -- regenerate ``docs/api/`` and ``docs/GENERATED.md`` from the codebase.
 - [`biz.dfch.specmgr.commands.mcp`](biz.dfch.specmgr.commands.mcp.md) — ``mcp`` -- start the ``biz-dfch-specmgr`` MCP server.
+- [`biz.dfch.specmgr.commands.unused_code`](biz.dfch.specmgr.commands.unused_code.md) — ``unused-code`` -- report unreferenced Python symbols, or (with ``--test``) test-only ones.
 - [`biz.dfch.specmgr.commands.version`](biz.dfch.specmgr.commands.version.md) — ``version`` -- print the installed ``biz-dfch-specmgr`` version.
 - [`biz.dfch.specmgr.models`](biz.dfch.specmgr.models.md) — Pydantic models used by the ``biz-dfch-specmgr`` MCP server.
 - [`biz.dfch.specmgr.models.adr`](biz.dfch.specmgr.models.adr.md) — Pydantic models for MADR 4.0.0-based Architecture Decision Records.
@@ -50,6 +51,20 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.models.adr.v1.parser`](biz.dfch.specmgr.models.adr.v1.parser.md) — Parse an on-disk ADR ``.md`` file into an :class:`Adr` (plan §7, §10 item 2).
 - [`biz.dfch.specmgr.models.adr.v1.renderer`](biz.dfch.specmgr.models.adr.v1.renderer.md) — Render an :class:`Adr` back into the canonical on-disk ``.md`` text (plan §7, §10 item 2).
 - [`biz.dfch.specmgr.models.adr.v1.summary`](biz.dfch.specmgr.models.adr.v1.summary.md) — Pydantic model for one line of ADR listing output (plan §8, §9a).
+- [`biz.dfch.specmgr.models.md`](biz.dfch.specmgr.models.md.md) — Markdown base models.
+- [`biz.dfch.specmgr.models.md._markdown`](biz.dfch.specmgr.models.md._markdown.md) — Markdown shared instance.
+- [`biz.dfch.specmgr.models.md.alias`](biz.dfch.specmgr.models.md.alias.md) — Alias decorator for MarkdownStr class name transformation.
+- [`biz.dfch.specmgr.models.md.alias_match`](biz.dfch.specmgr.models.md.alias_match.md) — Match a parsed heading's actual text against a class's declared `@alias`.
+- [`biz.dfch.specmgr.models.md.alias_type`](biz.dfch.specmgr.models.md.alias_type.md) — Alias type enumeration for MarkdownStr class name transformation.
+- [`biz.dfch.specmgr.models.md.markdown`](biz.dfch.specmgr.models.md.markdown.md) — No documentation available.
+- [`biz.dfch.specmgr.models.md.markdown_section`](biz.dfch.specmgr.models.md.markdown_section.md) — Base class for markdown sections with heading constraints.
+- [`biz.dfch.specmgr.models.md.markdown_section1`](biz.dfch.specmgr.models.md.markdown_section1.md) — Markdown section starting with h1 heading.
+- [`biz.dfch.specmgr.models.md.markdown_section2`](biz.dfch.specmgr.models.md.markdown_section2.md) — Markdown section starting with h2 heading.
+- [`biz.dfch.specmgr.models.md.markdown_section3`](biz.dfch.specmgr.models.md.markdown_section3.md) — Markdown section starting with h3 heading.
+- [`biz.dfch.specmgr.models.md.markdown_section4`](biz.dfch.specmgr.models.md.markdown_section4.md) — Markdown section starting with h4 heading.
+- [`biz.dfch.specmgr.models.md.markdown_section5`](biz.dfch.specmgr.models.md.markdown_section5.md) — Markdown section starting with h5 heading.
+- [`biz.dfch.specmgr.models.md.markdown_section6`](biz.dfch.specmgr.models.md.markdown_section6.md) — Markdown section starting with h6 heading.
+- [`biz.dfch.specmgr.models.md.markdown_str`](biz.dfch.specmgr.models.md.markdown_str.md) — Parse markdown into tokens using shared MarkdownIt instance.
 - [`biz.dfch.specmgr.models.version_info`](biz.dfch.specmgr.models.version_info.md) — Pydantic model for the ``specmgr://version`` resource.
 - [`biz.dfch.specmgr.resources`](biz.dfch.specmgr.resources.md) — MCP resource registrations that are not specific to any single document
 - [`biz.dfch.specmgr.resources.version`](biz.dfch.specmgr.resources.version.md) — Resource: specmgr://version — MCP server package version number.

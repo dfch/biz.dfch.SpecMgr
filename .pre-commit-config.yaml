@@ -8,6 +8,19 @@ repos:
 
   - repo: local
     hooks:
+      - id: vulture
+        name: vulture
+        description: >-
+          Static dead-code check. Known false positives (Pydantic
+          validators/config, MCP resource/tool entry points, the Typer
+          `_callback`, etc.) are suppressed via whitelist.py -- add a name
+          there only after confirming it's a real false positive, not
+          genuine dead code, which should be deleted instead.
+        entry: uv run --frozen vulture src/ whitelist.py --min-confidence 60
+        language: system
+        pass_filenames: false
+        files: ^(src/.*\.py|whitelist\.py)$
+
       - id: unittest
         name: unittest
         description: Run the full test suite before every commit.

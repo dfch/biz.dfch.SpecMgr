@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `vulture` dead-code detector: added to the `test` extra, wired into a new
+  local `vulture` pre-commit hook (`uv run --frozen vulture src/
+  whitelist.py --min-confidence 60`) and into CI's lint step across the
+  full 3.11/3.12/3.13 matrix. Known framework false positives (Pydantic
+  `@field_validator`/`@model_validator` methods and `model_config`, and MCP
+  `@mcp.resource()`/`@mcp.tool()` entry points) are suppressed via a new
+  root-level `whitelist.py`, grouped and commented by the reason each is a
+  false positive rather than real dead code.
+- **`specmgr unused-code`**: a CLI command wrapping `vulture`. By default,
+  reports every unreferenced symbol in `--src` (plus `--whitelist`, if it
+  exists) -- the same check the pre-commit hook/CI step enforce, without
+  having to remember the raw `vulture` invocation. With `--test`/`-t`,
+  instead reports symbols `vulture` only considers "used" because the
+  test suite references them, never production code itself: compares a
+  scan of `--src` alone against a scan of `--src` together with `--tests`,
+  and reports the symbol names that disappear from the findings once
+  tests are included -- a lead worth a manual look, since it may indicate
+  an orphaned public surface. Supports `--min-confidence` and an opt-in
+  `--strict` flag (exit 1 if any findings are reported, for future CI
+  wiring). Requires the `test` extra, since `vulture` is only declared
+  there.
 - **`specmgr adr-toc`**: a CLI command that generates a table of contents
   (`docs/adr/README.md`) listing all ADRs with their titles, frontmatter
   (id, status, date, decision-makers, consulted, informed), and links to

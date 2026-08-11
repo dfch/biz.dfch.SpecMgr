@@ -15,22 +15,8 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""commands module.
+"""Markdown shared instance."""
 
-Each CLI command lives in its own module, exposing a plain function that
-``cli.py`` registers on the Typer ``app`` via ``app.command()(fn)``.
-"""
+from markdown_it import MarkdownIt
 
-from .adr_toc import adr_toc
-from .docs import docs
-from .mcp import mcp
-from .unused_code import unused_code
-from .version import version
-
-__all__ = [
-    "adr_toc",
-    "docs",
-    "mcp",
-    "unused_code",
-    "version",
-]
+md = MarkdownIt("commonmark")

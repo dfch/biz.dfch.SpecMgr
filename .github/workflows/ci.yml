@@ -37,12 +37,17 @@ jobs:
         uv run --frozen python --version
         uv run --frozen ruff --version
         uv run --frozen pylint --version
+        uv run --frozen vulture --version
 
     - name: Analyzing the code with pylint and ruff
       run: |
         uv run --frozen ruff format --check
         uv run --frozen ruff check
         uv run --frozen pylint $(git ls-files '*.py') || true
+
+    - name: Check for dead code with vulture
+      run: |
+        uv run --frozen vulture src/ whitelist.py --min-confidence 60
 
     - name: Run unit tests
       run: |

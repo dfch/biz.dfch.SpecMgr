@@ -28,6 +28,10 @@ Index of all ADRs in this repository.
   - Id: 7531106b-074b-4bd8-a83a-e433d01676e2
   - Status: accepted
   - Decision-makers: dfch
+- [Generic heading-mapped markdown-to-Pydantic parsing with declarative Heading metadata and opt-in constraints](832cd6c1-ef8a-4bfc-990e-a610823f61ae-generic-heading-mapped-markdown-to-pydantic-parsing-with-dec.md)
+  - Id: 832cd6c1-ef8a-4bfc-990e-a610823f61ae
+  - Status: accepted
+  - Decision-makers: dfch
 - [Author and edit ADRs only through MCP structured tools, never raw markdown](898bfcd0-85f9-462f-93a8-747bda4166c8-author-and-edit-adrs-only-through-mcp-structured-tools-never.md)
   - Id: 898bfcd0-85f9-462f-93a8-747bda4166c8
   - Status: accepted
@@ -38,6 +42,10 @@ Index of all ADRs in this repository.
   - Decision-makers: dfch
 - [Enforce doc generation, lint, and tests locally via pre-commit hook, not just CI](9c687bb1-8ee7-41c8-84ec-07606356bc73-enforce-doc-generation-lint-and-tests-locally-via-pre-commit.md)
   - Id: 9c687bb1-8ee7-41c8-84ec-07606356bc73
+  - Status: accepted
+  - Decision-makers: dfch
+- [Detect unreferenced Python Code](9d3800cf-b3b4-4d46-8b68-3573d932b1c8-detect-unreferenced-code-with-vulture-not-snakefood-enforced.md)
+  - Id: 9d3800cf-b3b4-4d46-8b68-3573d932b1c8
   - Status: accepted
   - Decision-makers: dfch
 - [Frontmatter extension fields (id, version) with whole-object full-replace update contract](bbf412a7-965e-4435-8669-c338407d73b7-frontmatter-extension-fields-id-version-with-whole-object-fu.md)
@@ -56,9 +64,6 @@ Index of all ADRs in this repository.
   - Id: d54abe50-a2c5-44f8-8bfe-11ea634b6f87
   - Status: accepted
   - Decision-makers: dfch
-- [Shower vs Bath Tub](d9f8f011-e8dd-421b-b010-a2d8bd910b64-shower-vs-bath-tub.md)
-  - Id: d9f8f011-e8dd-421b-b010-a2d8bd910b64
-  - Status: proposed
 - [Prompt surface: narrated guidance plus step-gated test variants](ddd038f0-ae16-4f4b-beef-df06f7ed226f-prompt-surface-narrated-guidance-plus-step-gated-test-varian.md)
   - Id: ddd038f0-ae16-4f4b-beef-df06f7ed226f
   - Status: accepted

@@ -66,6 +66,7 @@ def calculate_discount(value: str, price: float, discount_rate: float) -> float:
 - Follow this convention consistently for all return value assignments
 
 **Example:**
+
 ```python
 def get_status() -> str:
     result = "active"
@@ -77,14 +78,6 @@ def calculate_total(items: list[str]) -> int:
     for item in items:
         result += len(item)
     return result
-```
-
-**Exception:** For functions with a clear, single purpose that justifies a more descriptive name, use that name:
-
-```python
-def format_username(user_id: int) -> str:
-    formatted = f"user_{user_id}"
-    return formatted
 ```
 
 ## Comparison Constants
@@ -273,21 +266,76 @@ def load_file(path: str) -> str:
     return result
 ```
 
+### Test Framework
+
+**Requirement:** Use `unittest` for all test cases and follow a consistent structure.
+
+-[ ] All tests must use the `unittest` framework, not `pytest`
+-[ ] Tests must be in the `tests/` directory and have the same hierarchy as the source structure
+-[ ] Test file names start with `test_`
+-[ ] Test classes inherit from `unittest.TestCase`
+-[ ] Test class names start with `Test`
+-[ ] Test methods start with `test_`
+-[ ] Use descriptive names that show what the test does and under what conditions
+-[ ] Do not use docstrings for test methods
+-[ ] Tests have one *subject under test*. The subject variable name is `sut`. 
+-[ ] Tests have a clear *arrange*-*act*-*assert* (AAA) structure
+-[ ] Place shared test fixtures in `fixtures` directory
+-[ ] Avoid complex setup/teardown; prefer simple, isolated tests
+-[ ] Use `setUp()` and `tearDown()` methods for test initialization and cleanup
+-[ ] Mock external dependencies using `unittest.mock`
+
+**Examples**:
+
+```python
+. <project-root>
++ src
+    + project
+      + domainA
+        + moduleA1
+          : class Calculator
++ tests
+    + project
+      + domainA
+        + moduleA1
+          - Test_Calculator.py
+            : test_divide_by_zero_fails
+            : test_divide_by_int_returns_float
+            : test_add_int_and_float_succeeds
+```
+
+```python
+# test_Calculator.py
+class TestCalculator(unittest.TestCase):
+    def test_add_int_float_succeeds() -> None:
+        expected = 42.0
+        addend: int = 5
+        summand: float = 37.0
+
+        sut = Calculator()
+
+        result = sut.add(addend, summand)
+
+        self.assertEqual(result, expected)
+
+    def test_divide_by_zero_fails() -> None: ...
+```
+
+
 ## TODO
 
-* use unittest, do not use pytest
-* use "uv", do not use "pip"
-" use "setuptools", do not use "hatchling"
+* Use "uv", do not use "pip"
+* Use "setuptools", do not use "hatchling"
 
 ## Rationale
 
 These conventions were chosen to:
 
- 1. **Simplicity:** Modern Python types are more intuitive than typing aliases
- 2. **Clarity:** Assert statements provide clear preconditions and invariants
- 3. **Consistency:** `result` variable name makes return values obvious
- 4. **Type Safety:** Mandatory type hints ensure code is self-documenting and catch type errors early
- 5. **Readability:** Followed conventions make the codebase easier to understand and maintain
+1. **Simplicity:** Modern Python types are more intuitive than typing aliases
+2. **Clarity:** Assert statements provide clear preconditions and invariants
+3. **Consistency:** `result` variable name makes return values obvious
+4. **Type Safety:** Mandatory type hints ensure code is self-documenting and catch type errors early
+5. **Readability:** Followed conventions make the codebase easier to understand and maintain
 
 ## Changelog
 
@@ -297,3 +345,7 @@ These conventions were chosen to:
 - **2026-08-06:** Added variable naming convention requirement
 - **2026-08-06:** Added mandatory type hints requirement
 - **2026-08-06:** Added documentation requirements with reference to AGENTS.md
+- **2026-08-06:** Added test framework conventions
+- **2026-08-06:** Added test file organization guidelines
+- **2026-08-06:** Added test method naming conventions
+- **2026-08-06:** Added test data and fixtures guidelines

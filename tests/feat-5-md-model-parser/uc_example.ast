@@ -1,6 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE document SYSTEM "http://commonmark.org/xml/1.0">
+<!DOCTYPE document SYSTEM "CommonMark.dtd">
+
 <document xmlns="http://commonmark.org/xml/1.0">
+  <thematic_break />
+  <heading level="2">
+    <text>id: uc-001</text>
+    <softbreak />
+    <text>version: 1.0.0</text>
+    <softbreak />
+    <text>status: draft</text>
+    <softbreak />
+    <text>created: 2026-08-05</text>
+    <softbreak />
+    <text>updated: 2026-08-05</text>
+  </heading>
   <heading level="1">
     <text>Buy Goods</text>
   </heading>
@@ -13,33 +26,22 @@
   <paragraph>
     <text>Buyer issues request directly to our company, expects goods shipped and to be billed.</text>
   </paragraph>
+  <heading level="3">
+    <text>Scope (required)</text>
+  </heading>
   <paragraph>
     <text>Company (the system being designed as a black box)</text>
   </paragraph>
+  <heading level="3">
+    <text>Level (required)</text>
+  </heading>
   <paragraph>
     <text>Summary</text>
   </paragraph>
-  <list type="bullet" tight="false">
-    <item>
-      <paragraph>
-        <text>We know Buyer (customer record exists in system)</text>
-      </paragraph>
-    </item>
-    <item>
-      <paragraph>
-        <text>We know Buyer's address</text>
-      </paragraph>
-    </item>
-    <item>
-      <paragraph>
-        <text>Buyer has valid contact information on file</text>
-      </paragraph>
-    </item>
-  </list>
   <heading level="3">
     <text>Preconditions (required)</text>
   </heading>
-  <list type="bullet" tight="false">
+  <list type="bullet" tight="true">
     <item>
       <paragraph>
         <text>We know Buyer (customer record exists in system)</text>
@@ -47,7 +49,9 @@
     </item>
     <item>
       <paragraph>
-        <text>We know Buyer's address</text>
+        <text>We know Buyer</text>
+        <text>'</text>
+        <text>s address</text>
       </paragraph>
     </item>
     <item>
@@ -59,7 +63,7 @@
   <heading level="3">
     <text>Success End Condition (required)</text>
   </heading>
-  <list type="bullet" tight="false">
+  <list type="bullet" tight="true">
     <item>
       <paragraph>
         <text>Buyer has goods</text>
@@ -84,7 +88,7 @@
   <heading level="3">
     <text>Failed End Condition (optional)</text>
   </heading>
-  <list type="bullet" tight="false">
+  <list type="bullet" tight="true">
     <item>
       <paragraph>
         <text>We have not sent the goods</text>
@@ -110,7 +114,7 @@
   <heading level="3">
     <text>Secondary Actors (optional)</text>
   </heading>
-  <list type="bullet" tight="false">
+  <list type="bullet" tight="true">
     <item>
       <paragraph>
         <text>Credit card company (for payment processing)</text>
@@ -154,7 +158,7 @@
   <heading level="3">
     <text>Channels to Primary Actor (optional)</text>
   </heading>
-  <list type="bullet" tight="false">
+  <list type="bullet" tight="true">
     <item>
       <paragraph>
         <text>Phone (interactive)</text>
@@ -179,7 +183,7 @@
   <heading level="3">
     <text>Channels to Secondary Actors (optional)</text>
   </heading>
-  <list type="bullet" tight="false">
+  <list type="bullet" tight="true">
     <item>
       <paragraph>
         <text>Credit card company: interactive/API</text>
@@ -199,7 +203,7 @@
   <heading level="3">
     <text>Related Use Cases (optional)</text>
   </heading>
-  <list type="bullet" tight="false">
+  <list type="bullet" tight="true">
     <item>
       <paragraph>
         <text>Superordinate: Manage customer relationship (UC-002)</text>
@@ -222,7 +226,9 @@
     </item>
     <item>
       <paragraph>
-        <text>Company captures buyer's name, address, requested goods, quantity, and delivery date preference.</text>
+        <text>Company captures buyer</text>
+        <text>'</text>
+        <text>s name, address, requested goods, quantity, and delivery date preference.</text>
       </paragraph>
     </item>
     <item>
@@ -230,9 +236,11 @@
         <text>Company checks inventory for requested goods.</text>
       </paragraph>
       <paragraph>
-        <text>This will use our trusty IBM OS/390 green screen application. Very fast!:</text>
+        <text>This will use our trusty IBM OS/390 green screen application. Very fast</text>
+        <text>!</text>
+        <text>:</text>
       </paragraph>
-      <list type="bullet" tight="false">
+      <list type="bullet" tight="true">
         <item>
           <paragraph>
             <text>Item 1</text>
@@ -297,173 +305,92 @@
   <heading level="3">
     <text>3a. Company is out of one of the ordered items</text>
   </heading>
-  <list type="ordered" start="1" tight="false" delimiter="period">
-    <item>
-      <paragraph>
-        <text>3a1. Company informs buyer of out-of-stock items.</text>
-      </paragraph>
-      <paragraph>
-        <text>This should rarely happen. Still we have to address this.</text>
-      </paragraph>
-    </item>
-    <item>
-      <paragraph>
-        <text>3a2. Buyer chooses to: (a) wait for restock, (b) substitute with similar item, or (c) remove item from order.</text>
-      </paragraph>
-    </item>
-    <item>
-      <paragraph>
-        <text>3a3. Return to step 4.</text>
-      </paragraph>
-    </item>
-  </list>
+  <paragraph>
+    <text>3a1. Company informs buyer of out-of-stock items.</text>
+    <softbreak />
+    <text>This should rarely happen. Still we have to address this.</text>
+    <softbreak />
+    <text>3a2. Buyer chooses to: (a) wait for restock, (b) substitute with similar item, or (c) remove item from order.</text>
+    <softbreak />
+    <text>3a3. Return to step 4.</text>
+  </paragraph>
   <heading level="3">
     <text>4a. Buyer requests expedited shipping</text>
   </heading>
-  <list type="ordered" start="1" tight="false" delimiter="period">
-    <item>
-      <paragraph>
-        <text>4a1. Company calculates expedited shipping cost.</text>
-      </paragraph>
-    </item>
-    <item>
-      <paragraph>
-        <text>4a2. Company provides expedited shipping quote to buyer.</text>
-      </paragraph>
-    </item>
-    <item>
-      <paragraph>
-        <text>4a3. Buyer accepts or declines expedited shipping.</text>
-      </paragraph>
-    </item>
-    <item>
-      <paragraph>
-        <text>4a4. Return to step 5.</text>
-      </paragraph>
-    </item>
-  </list>
+  <paragraph>
+    <text>4a1. Company calculates expedited shipping cost.</text>
+    <softbreak />
+    <text>4a2. Company provides expedited shipping quote to buyer.</text>
+    <softbreak />
+    <text>4a3. Buyer accepts or declines expedited shipping.</text>
+    <softbreak />
+    <text>4a4. Return to step 5.</text>
+  </paragraph>
   <heading level="3">
     <text>5a. Buyer pays directly with credit card</text>
   </heading>
-  <list type="ordered" start="1" tight="false" delimiter="period">
-    <item>
-      <paragraph>
-        <text>5a1. Buyer provides credit card information.</text>
-      </paragraph>
-    </item>
-    <item>
-      <paragraph>
-        <text>5a2. Company takes payment by credit card (UC-044).</text>
-      </paragraph>
-    </item>
-    <item>
-      <paragraph>
-        <text>5a3. Continue to step 6.</text>
-      </paragraph>
-    </item>
-  </list>
+  <paragraph>
+    <text>5a1. Buyer provides credit card information.</text>
+    <softbreak />
+    <text>5a2. Company takes payment by credit card (UC-044).</text>
+    <softbreak />
+    <text>5a3. Continue to step 6.</text>
+  </paragraph>
   <heading level="3">
     <text>7a. Shipping service is unavailable</text>
   </heading>
-  <list type="ordered" start="1" tight="false" delimiter="period">
-    <item>
-      <paragraph>
-        <text>7a1. Company attempts to use backup shipping service.</text>
-      </paragraph>
-    </item>
-    <item>
-      <paragraph>
-        <text>7a2. If backup service also unavailable, company informs buyer of delay.</text>
-      </paragraph>
-    </item>
-    <item>
-      <paragraph>
-        <text>7a3. Company retries shipping when service becomes available.</text>
-      </paragraph>
-    </item>
-  </list>
+  <paragraph>
+    <text>7a1. Company attempts to use backup shipping service.</text>
+    <softbreak />
+    <text>7a2. If backup service also unavailable, company informs buyer of delay.</text>
+    <softbreak />
+    <text>7a3. Company retries shipping when service becomes available.</text>
+  </paragraph>
   <heading level="3">
     <text>8a. Invoice delivery fails</text>
   </heading>
-  <list type="ordered" start="1" tight="false" delimiter="period">
-    <item>
-      <paragraph>
-        <text>8a1. Company retries invoice delivery via alternate channel (email, fax, mail).</text>
-      </paragraph>
-    </item>
-    <item>
-      <paragraph>
-        <text>8a2. If all channels fail, company logs issue for manual follow-up.</text>
-      </paragraph>
-    </item>
-  </list>
+  <paragraph>
+    <text>8a1. Company retries invoice delivery via alternate channel (email, fax, mail).</text>
+    <softbreak />
+    <text>8a2. If all channels fail, company logs issue for manual follow-up.</text>
+  </paragraph>
   <heading level="3">
     <text>10a. Buyer returns goods</text>
   </heading>
-  <list type="ordered" start="1" tight="false" delimiter="period">
-    <item>
-      <paragraph>
-        <text>10a1. Buyer initiates return request.</text>
-      </paragraph>
-    </item>
-    <item>
-      <paragraph>
-        <text>10a2. Company handles returned goods (UC-105).</text>
-      </paragraph>
-    </item>
-    <item>
-      <paragraph>
-        <text>10a3. Company processes refund or credit.</text>
-      </paragraph>
-    </item>
-  </list>
+  <paragraph>
+    <text>10a1. Buyer initiates return request.</text>
+    <softbreak />
+    <text>10a2. Company handles returned goods (UC-105).</text>
+    <softbreak />
+    <text>10a3. Company processes refund or credit.</text>
+  </paragraph>
   <heading level="3">
     <text>10b. Buyer disputes charge</text>
   </heading>
-  <list type="ordered" start="1" tight="false" delimiter="period">
-    <item>
-      <paragraph>
-        <text>10b1. Company initiates dispute resolution process.</text>
-      </paragraph>
-    </item>
-    <item>
-      <paragraph>
-        <text>10b2. Company provides documentation to buyer.</text>
-      </paragraph>
-    </item>
-    <item>
-      <paragraph>
-        <text>10b3. Dispute is resolved (refund, credit, or confirmation of charge).</text>
-      </paragraph>
-    </item>
-  </list>
+  <paragraph>
+    <text>10b1. Company initiates dispute resolution process.</text>
+    <softbreak />
+    <text>10b2. Company provides documentation to buyer.</text>
+    <softbreak />
+    <text>10b3. Dispute is resolved (refund, credit, or confirmation of charge).</text>
+  </paragraph>
   <heading level="3">
     <text>10c. Payment fails</text>
   </heading>
-  <list type="ordered" start="1" tight="false" delimiter="period">
-    <item>
-      <paragraph>
-        <text>10c1. Company retries payment collection.</text>
-      </paragraph>
-    </item>
-    <item>
-      <paragraph>
-        <text>10c2. If retry fails, company contacts buyer to resolve payment issue.</text>
-      </paragraph>
-    </item>
-    <item>
-      <paragraph>
-        <text>10c3. Once payment is received, continue to step 11.</text>
-      </paragraph>
-    </item>
-  </list>
+  <paragraph>
+    <text>10c1. Company retries payment collection.</text>
+    <softbreak />
+    <text>10c2. If retry fails, company contacts buyer to resolve payment issue.</text>
+    <softbreak />
+    <text>10c3. Once payment is received, continue to step 11.</text>
+  </paragraph>
   <heading level="2">
     <text>Sub-Variations (optional)</text>
   </heading>
   <heading level="3">
     <text>Step 1: Buyer may use (optional)</text>
   </heading>
-  <list type="bullet" tight="false">
+  <list type="bullet" tight="true">
     <item>
       <paragraph>
         <text>Phone call</text>
@@ -488,7 +415,7 @@
   <heading level="3">
     <text>Step 2: Company may capture information via (optional)</text>
   </heading>
-  <list type="bullet" tight="false">
+  <list type="bullet" tight="true">
     <item>
       <paragraph>
         <text>Manual entry by customer service representative</text>
@@ -508,7 +435,7 @@
   <heading level="3">
     <text>Step 7: Company may ship via (optional)</text>
   </heading>
-  <list type="bullet" tight="false">
+  <list type="bullet" tight="true">
     <item>
       <paragraph>
         <text>Standard ground shipping</text>
@@ -533,7 +460,7 @@
   <heading level="3">
     <text>Step 10: Buyer may pay via (optional)</text>
   </heading>
-  <list type="bullet" tight="false">
+  <list type="bullet" tight="true">
     <item>
       <paragraph>
         <text>Cash or money order</text>
@@ -568,7 +495,7 @@
   <heading level="2">
     <text>Open Issues (optional)</text>
   </heading>
-  <list type="bullet" tight="false">
+  <list type="bullet" tight="true">
     <item>
       <paragraph>
         <text>What happens if we have only part of the order in stock?</text>
@@ -606,7 +533,7 @@
   <heading level="3">
     <text>Notes (optional)</text>
   </heading>
-  <list type="bullet" tight="false">
+  <list type="bullet" tight="true">
     <item>
       <paragraph>
         <text>This is a high-level summary use case that encompasses multiple lower-level use cases (UC-015, UC-044, UC-105).</text>
@@ -614,7 +541,11 @@
     </item>
     <item>
       <paragraph>
-        <text>The main success scenario represents the "happy path" with minimal exceptions.</text>
+        <text>The main success scenario represents the </text>
+        <text>&quot;</text>
+        <text>happy path</text>
+        <text>&quot;</text>
+        <text> with minimal exceptions.</text>
       </paragraph>
     </item>
     <item>
@@ -631,7 +562,7 @@
   <heading level="3">
     <text>Assumptions (optional)</text>
   </heading>
-  <list type="bullet" tight="false">
+  <list type="bullet" tight="true">
     <item>
       <paragraph>
         <text>Buyer has already been authenticated and verified.</text>

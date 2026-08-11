@@ -134,9 +134,12 @@ uv sync --all-extras                                                   # install
 uv run --frozen pre-commit install                                     # one-time: enable pre-commit hooks
 uv run --frozen ruff format --check && uv run --frozen ruff check      # lint (enforced)
 uv run --frozen pylint $(git ls-files '*.py')                          # lint (advisory only; CI runs it with `|| true`)
+uv run --frozen vulture src/ whitelist.py --min-confidence 60          # dead-code check (enforced)
 uv run --frozen python -m unittest discover -v -s tests -t . -p "test_*.py"  # tests
 uv run --frozen specmgr docs                                           # regenerate docs/api/ + docs/GENERATED.md
 uv run --frozen specmgr adr-toc                                        # regenerate docs/adr/README.md (ADR table of contents)
+uv run --frozen specmgr unused-code                                    # report unused code in src/ (same check as the vulture hook)
+uv run --frozen specmgr unused-code --test                             # report symbols only referenced from tests/, never src/
 uv run --frozen specmgr version                                        # run the CLI
 ```
 
@@ -196,11 +199,12 @@ consumer of the base library.
 ## CI / Release
 
 - Branches: `dev` (default, feature work) → `main` (stable) → tag.
-- `.github/workflows/ci.yml`: ruff + pylint (`|| true`) + unittest run on
-  matrix 3.11/3.12/3.13 via `uv sync --frozen --all-extras`, but `specmgr docs`
-  and `specmgr adr-toc` drift checks run **only on Python 3.13** (pinned, since
-  different Python versions generate different docstring formatting in the API
-  docs, and we want consistent ADR TOC generation).
+- `.github/workflows/ci.yml`: ruff + pylint (`|| true`) + vulture + unittest
+  run on matrix 3.11/3.12/3.13 via `uv sync --frozen --all-extras`, but
+  `specmgr docs` and `specmgr adr-toc` drift checks run **only on Python
+  3.13** (pinned, since different Python versions generate different
+  docstring formatting in the API docs, and we want consistent ADR TOC
+  generation).
 - `.github/workflows/publish.yml` exists and has shipped `v0.1.0`, `v0.2.0`,
   `v0.2.1` to PyPI/the MCP Registry, triggered on `v*` tags.
 - Version bumps: update `version` in `pyproject.toml` (single source) and

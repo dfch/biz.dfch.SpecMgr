@@ -84,7 +84,7 @@ def generate_adr_toc() -> str:
     if summaries:
         lines.append("## All ADRs")
         lines.append("")
-        for adr_id, title, filename, frontmatter_dict in summaries:
+        for _adr_id, title, filename, frontmatter_dict in summaries:
             lines.append(f"- [{title}]({filename})")
             # Add frontmatter fields as indented nested list items (skip None values)
             for key, value in frontmatter_dict.items():
