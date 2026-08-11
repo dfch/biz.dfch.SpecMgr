@@ -1,6 +1,6 @@
 ---
 id: feat-5-md-model-parser
-version: 1.9.0
+version: 1.10.0
 status: in-progress
 created: 2026-08-08
 updated: 2026-08-11
@@ -45,7 +45,7 @@ based recursive descent, not field-level `Annotated` metadata).
 - REQ-001: Define a `@markdown(type=, tag=)` class decorator (`markdown.py`) attaching a `_metadata` dict (markdown-it token `type`/HTML `tag`) to a `MarkdownStr` subclass, and six concrete `MarkdownSection1`..`MarkdownSection6` base classes (`markdown_section1.py`..`markdown_section6.py`) that each pin `tag` to `h1`..`h6` respectively — heading level is expressed as which base class is inherited, not as `Annotated` field metadata. Separately, an opt-in `@alias(value=, type=)` class decorator (`alias.py`, `alias_type.py`'s `AliasType.LITERAL`/`SPACE_SEPARATED`/`REGEX`) attaches `_alias_metadata` used only for identity matching at parse time (`alias_match.match_alias`), never for rendering; a class with no `@alias` at all defaults to `AliasType.SPACE_SEPARATED`'s derivation of its own class name (ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae v1.4.0), not "accept any heading text". `LITERAL` matching is exact and case-sensitive (no normalization, no trailing-parenthetical stripping) — a heading like `"Extensions (optional)"` must be declared verbatim, since `SPACE_SEPARATED`'s automatic class-name-derived alias cannot express such suffixes. Field optionality (`X | None`) is driven only by the Python type (`MarkdownStr._unwrap_optional`), never by heading text.
 - REQ-002: Define `MarkdownStr` (`markdown_str.py`), a Pydantic base model storing its rendered text verbatim in a private `_value: str` attribute (not parsed `markdown-it-py` tokens retained on the instance), exposing `__str__`/`__repr__` that return `_value` unchanged for a leaf class (no nested `MarkdownStr` fields) or the `mdformat`-normalized concatenation of every nested field's own `__str__()` for a composite class.
 - REQ-003: Implement a recursive parser, `MarkdownStr.from_text(text) -> MarkdownStr` (overridden by `MarkdownSection.from_text` for heading-bearing classes), that tokenizes `text` once per recursion step via a shared module-level `MarkdownIt` instance (`_markdown.py`), and recursively slices it into one block per declared nested field (in declaration order) using that field type's own `get_extent(text)` to determine the block boundary, to arbitrary nesting depth. Frontmatter splitting is explicitly **not** this engine's responsibility (see REQ-006) — callers strip it before calling `from_text`.
-- REQ-004: Implement the inverse `MarkdownStr.__str__`/`MarkdownSection.__str__`, producing Markdown text from a populated model instance. Because every leaf `_value` retains its complete heading+body extent verbatim (not just inline content), `str(instance)` reproduces the exact `mdformat`-normalized text `from_text` consumed — a byte-exact round-trip by construction, not merely a structural one.
+- REQ-004: Implement the inverse `MarkdownStr.__str__`/`MarkdownSection.__str__`, producing Markdown text from a populated model instance. Because every leaf `_value` retains its complete heading+body extent verbatim (not just inline content), `str(instance)` reproduces the exact `mdformat`-normalized text `from_text` consumed — a byte-exact round-trip by construction, not merely a structural one. **Accepted exception (2026-08-11, Task 1.6.3):** `list[MarkdownListItem]` content is the one case where this is only structural, not byte-exact — a genuinely *tight* source list round-trips to an equivalent *loose* list (see `markdown_list_item.py`'s class docstring); loose lists are unaffected. This matches this feature's own founding ADR, which already treats list-rendering variance as out of scope for byte-exact fidelity.
 - REQ-005 *(not started)*: Provide composable, `Annotated`-based content constraint markers — `AllowedTags(tags)`, `LengthConstraint(min_length=, max_length=)`, `NoRawHtml()` — evaluated by a shared validator on `MarkdownStr`. No `constraints.py` module or any such marker exists yet; content is currently unconstrained beyond basic Markdown parseability. A separate opt-in `RoundTrip()` marker, as originally scoped, is now moot: REQ-004's byte-exact round-trip is already the engine's unconditional default behavior, not an opt-in feature to gate.
 - REQ-006 *(not started, design changed)*: The originally-scoped typed `DocumentFrontMatter` Pydantic base (`id`, `version`, `status`, `created`, `updated`) does not exist. The proven approach instead (`tests/models/md/test_uc_example.py`) delegates frontmatter stripping entirely to the `python-frontmatter` package — already a project dependency, already used the same way by `models.adr.v1.parser` — via `frontmatter.loads(text).content`, since `mdformat.text()` is CommonMark-only and mangles a `---\n...\n---` block. Whether/how a typed frontmatter model gets layered on top of `.metadata` remains open.
 - REQ-007: Provide a fixture model reproducing the full nested structure of `tests/feat-5-md-model-parser/uc_example.md` (all three heading levels: `# Buy Goods` → nine `##` sections → all `###` children under `## Characteristic Information`/`## Related Information`), proving the recursive engine end-to-end, including a mix of required and `Optional[...]` fields. Landed as `UseCase`/`CharacteristicInformation`/etc. in `tests/models/md/test_uc_example.py` (distinct from the smaller, earlier `tests/models/md/various_models.py` fixture, which stays as a minimal unit-test double, not a superset of this one). This fixture is a proof of the generic engine, not the official use-case domain model (that ownership stays with `feat-4-use-cases`, if/when it chooses to adopt this engine). `Extensions`/`Sub-Variations`/`Open Issues` are modelled as leaf `MarkdownSection2`s (their dynamically-named, per-use-case h3 sub-headings are inert text) since the engine has no "repeated/list section" concept yet.
@@ -186,7 +186,9 @@ history is lost — the original phase text remains recoverable via `git log
 - [x] Task 1.6: Unit tests for Tasks 1.1–1.5 (`test_alias_match.py`: `space_separated_name` conversion cases, every `match_alias` branch including no-alias-always-matches and `LITERAL`'s case-sensitivity) — depends on: Task 1.3 — status: done
 - [x] Task 1.6.1: Support `list[MarkdownStr]` (or `list[SomeMarkdownStrSubclass]`) fields in `markdown_str.py`'s `_get_field_names`/`from_text`/`__str__`. Detection: `_unwrap_list(annotation) -> tuple[type, bool]` (sibling to `_unwrap_optional`, plain `list[X]` only via `typing.get_origin(annotation) is list` — no `Sequence`/`tuple` support), applied after `_unwrap_optional` so `list[X] | None` unwraps to `(X, optional=True, is_list=True)`. Consumption: `process_list_field(name, item_type, text, *, optional=False) -> tuple[str, list[MarkdownStr] | None]` — deliberately **not** mirroring `process_field`'s `(extent, value)` contract (an earlier draft did and was wrong: summing per-item extents against a locally-renormalized string silently loses lines dropped by `mdformat.text()` between items, e.g. a separating blank line, causing `from_text`'s generic `remaining_text.splitlines()[extent:]` slice to misalign against the caller's *original*, not-yet-renormalized `remaining_text` — the exact class of bug `from_text` itself already moved off a line-index `cursor` to avoid). Instead it loops `item_type.get_extent`/slice/`mdformat`-renormalize/`item_type.from_text` while extent `> 0` and returns the already-fully-reduced `remaining_text` string directly, which `from_text` adopts as-is for list fields (bypassing the generic extent-slicing step used for scalar fields). No item found on the *first* iteration is an absence (mandatory `list[X]` -> assertion error, matching today's missing-mandatory-scalar-field behavior; `list[X] | None` -> field left `None`, `text` returned unchanged) while no item found on any *subsequent* iteration just ends the list normally (items 2+ are implicitly optional without needing `Optional[X]` themselves). Rendering: `__str__` iterates the list and appends `str(item)` per element, same as today's single-field append, skipping a `None` list exactly like an absent optional scalar field — depends on: Task 2.1 — status: done
 - [x] Task 1.6.2: Support base object `MarkdownParagraph` (`markdown_paragraph.py`) — a single class (`@markdown(type="paragraph_open", tag="p")`, no level spectrum, no `@alias` enforcement — a paragraph's text is free-form content, not a title). Leaf case (no declared fields): `get_extent`/`from_text` claim exactly the paragraph's own line span, nothing more — content that follows (even a sibling paragraph) is left untouched, unlike a leaf `MarkdownSection`'s greedy-to-next-heading behavior. Composite case (has declared `MarkdownStr`/`list[MarkdownStr]` fields): `_value` holds only the paragraph's own inline text; the remainder is delegated to `super().from_text()` (`MarkdownStr.from_text`) for field population, exactly like `MarkdownSection.from_text` delegates its post-heading body — bounded, in `get_extent`, only by the next heading of *any* level (h1-h6), since a paragraph has no level of its own and can never itself contain a heading. `__str__` mirrors `MarkdownSection.__str__` minus the heading-marker reconstruction — depends on: Task 2.1 — status: done
-- [ ] Task 1.6.3: Support `MarkdownList` — depends on: TBD — status: not-started
+- [x] Task 1.6.3: Support `MarkdownListItem` (`markdown_list_item.py`), a single, subclassable, leaf-or-composite class shared by bullet and ordered lists, used only as `items: list[MarkdownListItem]`/`list[MarkdownListItem] | None` on whatever `MarkdownSection`/`MarkdownParagraph`/`MarkdownListItem` wants a list-shaped field — deliberately **not** a dedicated `MarkdownList`/`MarkdownBulletList`/`MarkdownOrderedList` container class (an earlier-drafted design, discarded before implementation once the container turned out to add no capability the existing `list[MarkdownStr]` machinery didn't already provide). Leaf case (no declared fields): `_value` = the item's complete extent verbatim, marker and any un-modelled nested content included. Composite case (a subclass declares fields, e.g. a nested `list[MarkdownListItem]` for a sub-list): `_value` = the item's own leading paragraph verbatim *including its marker* (not marker-free like `MarkdownParagraph`'s `_value`, since a list item's marker cannot be reconstructed from class metadata alone — it depends on bullet-vs-ordered and, for ordered lists, final position); `__str__` re-indents the declared fields' rendered output by the marker's own width before recombining. A computed `text` field (mirroring `MarkdownSection.name`) exposes the leading paragraph's marker/indent-free text. Required a cross-cutting fix, `_markdown.py`'s new `format_text()` (`mdformat.text(text, options={"number": True})`), adopted by every normalization call site in `markdown_str.py`/`markdown_section.py`/`markdown_paragraph.py`/`test_uc_example.py` — `mdformat`'s default option collapses every ordered-list item to `"1."` on each normalization pass (only the first number is CommonMark-semantically meaningful), which would otherwise make real sequential numbering unrepresentable. Accepted, documented exception to REQ-004: a genuinely *tight* source list currently round-trips to a structurally-equivalent *loose* list (loose lists round-trip byte-exact) — see `markdown_list_item.py`'s class docstring — since each item is independently `mdformat`-renormalized in isolation before the parent's existing `list[MarkdownStr]` `__str__` rejoins them, which is where the tight/loose distinction (a property of the gap *between* items) is unavoidably lost. Restriction: `MarkdownListItem` can only be used inside `list[MarkdownListItem]`, never as a bare top-level/scalar field, since `get_extent`/`from_text` require the enclosing `bullet_list_open`/`ordered_list_open` wrapper token — depends on: Task 2.1 — status: done
+- [x] Task 1.6.4: Create `MarkdownCodeBlock` (`markdown_code_block.py`) — renamed from the originally-scoped `MarkdownCodeFence` once the design settled on handling only fenced (` ``` `) code blocks, never indented (4-space) ones — a single, **leaf-only** class (no composite/subclassing case, unlike `MarkdownParagraph`/`MarkdownListItem`), `@markdown(type="fence", tag="code")`. markdown-it tokenizes a fenced block as one self-closing token (`nesting == 0`), not an open/mid/close triple, whose own `.map` already spans exactly the fence markers + content, so `get_extent` is just `tokens[0].map[1]` (or `0` if the first token doesn't match `type`/`tag`) — no stop-condition scan needed. `from_text` asserts the single-token match (`type`/`tag`/`nesting == 0`) and stores the *complete extent verbatim* in `_value` (fence markers, info string if any, and code content) — same "leaf stores its full extent" convention as `MarkdownParagraph`/`MarkdownSection`'s leaf case. New computed field `text` (mirrors `MarkdownSection.name`/`MarkdownListItem.text`) re-parses and returns the fence token's own `.content` unchanged, trailing `"\n"` included (left as-is since `mdformat` re-normalizes on render anyway). No language/info-string handling or restriction — any (or no) info string after the opening fence matches; `~~~`-style fences are moot since `mdformat.text()` already normalizes them to `` ``` `` before this class ever sees the text (verified: `mdformat.text("~~~\n...\n~~~\n")` → `` ``` ``-fenced), so no separate `markup` assertion is needed. Leaf-only is actively enforced, not just documented: both `get_extent` and `from_text` `assert not cls._get_field_names()`, failing loudly if ever subclassed with declared fields. No `__str__` override — the inherited `MarkdownStr.__str__` already returns `_value` unchanged when there are no declared fields, which is always true here. Implemented 2026-08-11 with `tests/models/md/test_markdown_code_block.py` (17 cases: `get_extent` no-extent/whole-fence/multi-line/stops-before-following-content/info-string/empty-fence/leaf-only-guard cases, `from_text`/`__str__` round-trip cases for plain/info-string/multi-line/empty fences plus rejection/leaf-only-guard cases, and `text` computed-field cases for inner-content-only/info-string-excluded/empty/multi-line-preserved) — registered in `models/md/__init__.py`; full suite green (447 passed), `ruff format --check`/`ruff check`/`vulture` clean, `specmgr docs` regenerated with no drift on re-run — depends on: Task 2.1 — status: done
+- [x] Task 1.6.5: Create `MarkdownBlockQuote` (`markdown_block_quote.py`), `@markdown(type="blockquote_open", tag="blockquote")`, no `@alias` enforcement (quoted content is free-form, not a title). markdown-it already groups every *consecutive* `>` line -- including internal blank `>` continuation lines (a "loose" quote with several paragraphs) and any more deeply nested quote (`> > ...`) -- into one `blockquote_open`/`blockquote_close` pair whose own `.map` already spans the whole thing (two quotes separated by a real blank line are two separate pairs, already exactly "consecutive `>` = one instance"), so `get_extent` needs no stop-condition scan -- `tokens[0].map[1]` directly, same situation as `MarkdownListItem`/`MarkdownCodeBlock`. Unlike `MarkdownListItem` (which always assumes a leading paragraph), a quote's content can start with *any* block type (heading, list, nested quote, ...), so `from_text` validates only `tokens[0]` itself (`type`/`tag`/`nesting == 1`), nothing about what follows. Deliberately **not leaf-only** (unlike `MarkdownCodeBlock`) -- future typed fields (e.g. `emphasis`/`strong` as separate objects) are meant to nest inside it -- but a quote has no separate "own text" line the way a heading/paragraph/list item does, since *every* line carries the `>` marker regardless of that line's own block type. So the composite split differs from `MarkdownSection`/`MarkdownParagraph`: leaf case stores the complete extent verbatim (marker included on every line), same as any other leaf; composite case strips the marker from **every** line of the extent (`_dedent_quote_lines`, not just a leading line), re-`format_text`s the result, and delegates it *whole* to `super().from_text()` -- since the entire extent is body this way, `_value` is set to `""` (nothing left to keep, unlike Section's heading-inline-text or Paragraph's lead-sentence). `__str__`'s composite branch re-applies the marker to every line of `super().__str__()`'s output (`_indent_quote_lines`) rather than reconstructing a single heading/lead-sentence line. New computed field `text` mirrors `MarkdownSection.name`/`MarkdownListItem.text`'s "own source, markers stripped" semantics (nested markdown syntax like `*emphasis*` preserved as-is, not rendered to plain text) but applied line-by-line: leaf dedents `_value`; composite returns `super().__str__()` directly, since that's already marker-free by construction. Confirmed via a manual dedent/reindent round-trip check before implementing that a composite quote containing a nested `MarkdownBlockQuote` field round-trips byte-exact. Implemented 2026-08-11 with `tests/models/md/test_markdown_block_quote.py` (20 cases: `get_extent` no-extent/single-line/multi-line/loose-multi-paragraph/stops-at-real-blank-line/two-blank-separated-quotes-are-separate/nested-deeper-quote-included/heading-and-list-inside-quote cases; leaf `from_text`/`__str__`/`text` round-trip, inline-formatting-preserved, loose-quote round-trip, rejection, and marker-stripping cases; composite `from_text`/`__str__`/`text` field-split, round-trip, dedented-text, nested-quote-field round-trip, and full-document sibling-field cases) — registered in `models/md/__init__.py`; full suite green (467 passed), `ruff format --check`/`ruff check`/`vulture` clean, `specmgr docs` regenerated (85 module files) with no drift on re-run — depends on: Task 2.1 — status: done
 - [ ] Task 1.7: Exercise `@alias`'s `REGEX` branch end-to-end through a real `MarkdownSection.from_text` call (currently only unit-tested in isolation; no fixture class declares `AliasType.REGEX` yet) — depends on: Task 1.6 — status: not-started (low priority; `@alias`'s mechanism may itself be revisited later)
 
 #### Phase 2: Recursive engine (`MarkdownStr`/`MarkdownSection`)
@@ -303,8 +305,112 @@ left as-is).
    fixture classes currently declare `AliasType.REGEX`. Per explicit
    repo-owner direction this session, `@alias`'s whole mechanism may be
    short-lived/superseded later, so this is a minor gap, not a priority.
+5. `test_uc_example.py`'s `Assumptions`/`OpenIssues`/`MainSuccessScenario`/
+   `Extensions`/`SubVariations` still stay leaf `MarkdownSection2`/`3`s (see
+   REQ-007's note) rather than adopting the now-available
+   `items: list[MarkdownListItem]` shape from Task 1.6.3 -- optional future
+   follow-up, not required by this feature (that fixture is a proof of the
+   generic engine, not the official use-case domain model).
 
 ### Recent Updates
+
+#### 2026-08-11 (continued, part 7)
+- Completed: Task 1.6.3 -- `MarkdownListItem` (`markdown_list_item.py`), the
+  final Phase 1 building block, resolving a stalled prior session (see
+  `session-ses_00ed-markdown-list.md`) that had converged on a
+  `MarkdownList`/`MarkdownBulletList`/`MarkdownOrderedList` container-class
+  design but stopped short of implementing it. Repo-owner corrected that
+  design mid-session: no separate container class is needed at all -- a
+  single `MarkdownListItem` (subclassable, leaf-or-composite, shared by
+  bullet and ordered lists) used purely as `items: list[MarkdownListItem]`/
+  `list[MarkdownListItem] | None` on any existing `MarkdownSection`/
+  `MarkdownParagraph`/`MarkdownListItem` fully reuses Task 1.6.1's
+  `list[MarkdownStr]` machinery unchanged, with no new container-level
+  parsing/rendering code.
+  - `get_extent`: requires `tokens[0].type` in `("bullet_list_open",
+    "ordered_list_open")` and `tokens[1].type == "list_item_open"`; returns
+    `tokens[1].map[1]` directly -- unlike `MarkdownSection`/`MarkdownParagraph`,
+    `list_item_open`'s own map already spans nested content, so no
+    stop-condition scan is needed.
+  - `from_text`: asserts the same triple plus `tokens[2].type ==
+    "paragraph_open"` (every item is assumed to start with a paragraph).
+    Leaf (no declared fields): `_value` = the complete extent verbatim,
+    marker and any un-modelled nested content included (mirrors
+    `MarkdownSection`/`MarkdownParagraph`'s leaf case). Composite (a
+    subclass declares fields): `_value` = the leading paragraph's own lines
+    verbatim, *marker included* -- deliberately unlike `MarkdownParagraph`'s
+    marker-free `_value`, since an item cannot reconstruct its own marker
+    from class metadata alone (it depends on bullet-vs-ordered and, for
+    ordered lists, final position, neither known to the item itself); the
+    remainder is dedented (`mdformat` dedents an extracted indented
+    sub-block automatically) and delegated to `super().from_text()`.
+  - `__str__`: leaf defers to `super().__str__()`. Composite re-indents the
+    declared fields' rendered output by the marker's own width (derived via
+    regex from `_value`'s first line) before recombining -- verified
+    empirically (throwaway scripts, not committed) that this indent, always
+    computed from the item's own *solo* pre-renumbering marker (e.g. always
+    `"1. "` for an ordered item in isolation, never the final padded
+    `"10. "`), still parses correctly once combined with sibling items and
+    renormalized, because CommonMark's nesting rule only needs indentation
+    to meet the *literal* text's own marker width at parse time -- the final
+    padded renumbering is a pure render-time transformation applied
+    afterwards. Confirmed with a real 11-item ordered list (matching
+    `uc_example.md`'s `Main Success Scenario` size) with a composite item at
+    position 10 (to stress 1- vs 2-digit padding): byte-exact match.
+  - New computed field `text` (mirrors `MarkdownSection.name`): re-parses
+    `_value` and returns the leading paragraph's inline content,
+    marker/indent-stripped.
+  - **Cross-cutting prerequisite**: `_markdown.py` gained `format_text()`
+    (`mdformat.text(text, options={"number": True})`), adopted by every
+    normalization call site in `markdown_str.py`/`markdown_section.py`/
+    `markdown_paragraph.py`/`test_uc_example.py`'s `setUpClass`, replacing
+    bare `mdformat.text(text)`. Without `number=True`, `mdformat`'s default
+    collapses every ordered-list item's marker to `"1."` on each
+    normalization pass (CommonMark only treats a list's first number as
+    semantically meaningful), making real sequential numbering
+    unrepresentable -- confirmed empirically that `number=True` has no
+    effect on headings/paragraphs/bullet lists, and the full suite (405
+    tests, pre-Task-1.6.3 baseline) stayed green after this switch alone.
+  - **Accepted, documented exception to REQ-004** (discussed and agreed with
+    repo-owner before implementing): a genuinely *tight* source list
+    round-trips to a structurally-equivalent *loose* list, not byte-exact --
+    because each item is independently `mdformat`-renormalized in isolation
+    (already true of Task 1.6.1's `process_list_field`, not something this
+    task changed) before the parent's existing generic `list[MarkdownStr]`
+    `__str__` rejoins them, and tightness is a property of the *gap between*
+    items, which a solo-renormalized item cannot retain. Loose lists are
+    unaffected and remain byte-exact. This matches this feature's own
+    founding ADR (832cd6c1-ef8a-4bfc-990e-a610823f61ae), which already
+    treats list-rendering variance as out of scope for byte-exact fidelity.
+  - Restriction (accepted trade-off, per the design discussion): a bare
+    `MarkdownListItem` can only be used inside `list[MarkdownListItem]`,
+    never as a top-level/scalar field, since `get_extent`/`from_text`
+    structurally require the enclosing list-open wrapper token to exist.
+  - New tests: `tests/models/md/test_markdown_list_item.py` (24 cases) --
+    `get_extent` (no-extent for a non-list/heading start, leaf bullet/
+    ordered own-span-only including a following sibling, extent including
+    an un-modelled nested sub-list), `from_text`/`__str__` (leaf bullet/
+    ordered round-trip, inline-formatting preservation, opaque nested
+    sub-list round-trip, rejects non-list text, composite split/round-trip
+    for both bullet and ordered markers, composite with a nested
+    `list[MarkdownListItem]` sub-list round-tripping to its loose
+    equivalent, the tight->loose widening and loose-stays-exact cases side
+    by side, a real 11-item ordered-list-as-a-section-field case with
+    correct numbering, the same with a composite item stressing padding,
+    and an absent optional `list[MarkdownListItem] | None` field), and
+    `text` (marker/indent stripping for leaf bullet/ordered/composite items,
+    ignoring an un-modelled nested sub-list).
+  - Full suite: 429 passed, 0 failed (405 -> 429, 24 new). `ruff format
+    --check`/`ruff check`/`vulture` clean. `specmgr docs` regenerated (83
+    module files, up from 82) and re-run confirmed no further drift;
+    `specmgr adr-toc` re-run confirmed no drift (unrelated to this task).
+  - Task List: Task 1.6.3 marked done above, its description rewritten to
+    describe the actual `MarkdownListItem`-only design (no `MarkdownList`
+    container ever landed, by explicit repo-owner decision mid-session).
+    Task 1.7 (exercise `@alias`'s `REGEX` branch end-to-end) remains the
+    only not-started task left in Phase 1.
+- Next: see item 5 above (optional future adoption in `test_uc_example.py`'s
+  fixture); items 2-4 above are unchanged, not touched this session.
 
 #### 2026-08-11 (continued, part 6)
 - Completed: Task 1.6.2 -- `MarkdownParagraph` (`markdown_paragraph.py`), a

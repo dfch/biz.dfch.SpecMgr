@@ -27,9 +27,7 @@ import types
 import typing
 from typing import Any
 from pydantic import BaseModel
-import mdformat
-
-from ._markdown import md
+from ._markdown import format_text, md
 
 
 class MarkdownStr(BaseModel):
@@ -63,7 +61,7 @@ class MarkdownStr(BaseModel):
         """
 
         assert isinstance(text, str), type(text)
-        assert text == mdformat.text(text), "text is not in 'mdformat'."
+        assert text == format_text(text), "text is not in 'mdformat'."
 
         tokens = md.parse(text)
 
@@ -168,7 +166,7 @@ class MarkdownStr(BaseModel):
         assert extent > 0, f"{cls.__name__}.{name}: get_extent found no extent in remaining text"
 
         lines = text.splitlines()
-        field_text = mdformat.text("\n".join(lines[:extent]))
+        field_text = format_text("\n".join(lines[:extent]))
         instance = type_.from_text(field_text)
 
         result = (extent, instance)
@@ -241,11 +239,11 @@ class MarkdownStr(BaseModel):
                 break
 
             lines = remaining_text.splitlines()
-            item_text = mdformat.text("\n".join(lines[:extent]))
+            item_text = format_text("\n".join(lines[:extent]))
             items.append(item_type.from_text(item_text))
 
             remaining_lines = lines[extent:]
-            remaining_text = mdformat.text("\n".join(remaining_lines)) if remaining_lines else ""
+            remaining_text = format_text("\n".join(remaining_lines)) if remaining_lines else ""
 
         if not items:
             if optional:
@@ -301,7 +299,7 @@ class MarkdownStr(BaseModel):
         optional regardless of which of the two was declared.
         """
         assert isinstance(text, str), f"text: '{type(text)}' != 'str'."
-        assert text == mdformat.text(text), "text is not in 'mdformat'."
+        assert text == format_text(text), "text is not in 'mdformat'."
 
         field_names = cls._get_field_names()
 
@@ -345,7 +343,7 @@ class MarkdownStr(BaseModel):
             kwargs[field_name] = instance_value
 
             remaining_lines = remaining_text.splitlines()[extent:]
-            remaining_text = mdformat.text("\n".join(remaining_lines)) if remaining_lines else ""
+            remaining_text = format_text("\n".join(remaining_lines)) if remaining_lines else ""
 
         assert remaining_text == "", f"{cls.__name__}: text left over after processing all fields: {remaining_text!r}"
 
@@ -376,7 +374,7 @@ class MarkdownStr(BaseModel):
             assert isinstance(field, MarkdownStr), type(field)
             result.append(str(field))
 
-        formatted = mdformat.text("\n".join(result))
+        formatted = format_text("\n".join(result))
         return formatted
 
     def __repr__(self) -> str:

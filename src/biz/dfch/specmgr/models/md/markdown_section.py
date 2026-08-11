@@ -21,12 +21,11 @@ from __future__ import annotations
 
 from abc import ABC
 
-import mdformat
 from markdown_it.token import Token
 from pydantic import model_validator, computed_field, PrivateAttr
 
 from .markdown_str import MarkdownStr
-from ._markdown import md
+from ._markdown import format_text, md
 from .markdown import markdown
 from .alias_match import match_alias
 
@@ -66,7 +65,7 @@ class MarkdownSection(MarkdownStr, ABC):
                 sibling/ancestor heading or at the end of `text`.
         """
         assert isinstance(text, str), type(text)
-        assert text == mdformat.text(text), "text is not in 'mdformat'."
+        assert text == format_text(text), "text is not in 'mdformat'."
 
         own_tag = cls._metadata.get("tag")
         own_type = cls._metadata.get("type")
@@ -123,7 +122,7 @@ class MarkdownSection(MarkdownStr, ABC):
         duplicating what the children already carry.
         """
         assert isinstance(text, str), f"text: '{type(text)}' != 'str'."
-        assert text == mdformat.text(text), "text is not in 'mdformat'."
+        assert text == format_text(text), "text is not in 'mdformat'."
 
         tokens = md.parse(text)
         assert len(tokens) >= 3, "Expected at least 3 tokens for heading triple"
@@ -160,7 +159,7 @@ class MarkdownSection(MarkdownStr, ABC):
         heading_lines = heading_map[1]
 
         body_lines = text.splitlines()[heading_lines:]
-        body_text = mdformat.text("\n".join(body_lines)) if body_lines else ""
+        body_text = format_text("\n".join(body_lines)) if body_lines else ""
 
         instance = super().from_text(body_text)
         instance._value = heading_text
@@ -194,7 +193,7 @@ class MarkdownSection(MarkdownStr, ABC):
         heading_line = f"{'#' * level} {self._value}"
 
         body = super().__str__()
-        return mdformat.text(f"{heading_line}\n\n{body}")
+        return format_text(f"{heading_line}\n\n{body}")
 
     @model_validator(mode="after")
     def validate_heading_structure(self) -> MarkdownSection:
@@ -217,7 +216,7 @@ class MarkdownSection(MarkdownStr, ABC):
 
     @computed_field  # type: ignore
     @property
-    def name(self) -> str:
+    def text(self) -> str:
         """Computed property that extracts the heading text from this section.
 
         Uses the @markdown decorator metadata to find the expected heading tag,

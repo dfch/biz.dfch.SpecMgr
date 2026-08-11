@@ -17,6 +17,40 @@
 
 """Markdown shared instance."""
 
+import mdformat
 from markdown_it import MarkdownIt
 
 md = MarkdownIt("commonmark")
+
+#: `mdformat` options shared by every normalization call across `models/md/`.
+#:
+#: `number=True` switches `mdformat`'s ordered-list renderer from its default
+#: behavior (collapsing every item's marker to `"1."`, since CommonMark only
+#: treats a list's *first* number as semantically meaningful) to genuine
+#: consecutive numbering (`"1."`, `"2."`, `"3."`, ...) derived from each
+#: item's position. This is required for `MarkdownListItem`-based ordered
+#: lists to round-trip their real numbering at all -- without it, the
+#: `text == format_text(text)` invariant every `get_extent`/`from_text`
+#: implementation asserts would hold, but only by *destroying* the original
+#: sequential numbers on the very first normalization pass. It has no effect
+#: on bullet lists, headings, or paragraphs.
+_MDFORMAT_OPTIONS = {"number": True}
+
+
+def format_text(text: str) -> str:
+    """Normalize `text` with the shared `mdformat` options (see `_MDFORMAT_OPTIONS`).
+
+    Every module under `models/md/` must call this instead of calling
+    `mdformat.text(text)` directly, so the whole engine normalizes
+    consistently -- `get_extent`/`from_text`'s `text == format_text(text)`
+    precondition would otherwise fail as soon as two call sites disagreed on
+    options.
+
+    Args:
+        text: Markdown source to normalize.
+
+    Returns:
+        The `mdformat`-normalized text.
+    """
+    assert isinstance(text, str), type(text)
+    return mdformat.text(text, options=_MDFORMAT_OPTIONS)

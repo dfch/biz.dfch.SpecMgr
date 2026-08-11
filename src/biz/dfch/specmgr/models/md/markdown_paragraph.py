@@ -19,10 +19,8 @@
 
 from __future__ import annotations
 
-import mdformat
-
 from .markdown_str import MarkdownStr
-from ._markdown import md
+from ._markdown import format_text, md
 from .markdown import markdown
 from .markdown_section import _HEADING_TAGS
 
@@ -88,7 +86,7 @@ class MarkdownParagraph(MarkdownStr):
                 `text`.
         """
         assert isinstance(text, str), type(text)
-        assert text == mdformat.text(text), "text is not in 'mdformat'."
+        assert text == format_text(text), "text is not in 'mdformat'."
 
         own_type = cls._metadata.get("type")
         own_tag = cls._metadata.get("tag")
@@ -145,7 +143,7 @@ class MarkdownParagraph(MarkdownStr):
         the children already carry.
         """
         assert isinstance(text, str), f"text: '{type(text)}' != 'str'."
-        assert text == mdformat.text(text), "text is not in 'mdformat'."
+        assert text == format_text(text), "text is not in 'mdformat'."
 
         tokens = md.parse(text)
         assert len(tokens) >= 3, "Expected at least 3 tokens for paragraph triple"
@@ -178,7 +176,7 @@ class MarkdownParagraph(MarkdownStr):
         own_lines = own_map[1]
 
         body_lines = text.splitlines()[own_lines:]
-        body_text = mdformat.text("\n".join(body_lines)) if body_lines else ""
+        body_text = format_text("\n".join(body_lines)) if body_lines else ""
 
         instance = super().from_text(body_text)
         instance._value = paragraph_text
@@ -205,4 +203,4 @@ class MarkdownParagraph(MarkdownStr):
             return super().__str__()
 
         body = super().__str__()
-        return mdformat.text(f"{self._value}\n\n{body}")
+        return format_text(f"{self._value}\n\n{body}")

@@ -55,8 +55,8 @@ import unittest
 from pathlib import Path
 
 import frontmatter
-import mdformat
 
+from biz.dfch.specmgr.models.md._markdown import format_text
 from biz.dfch.specmgr.models.md.alias import alias
 from biz.dfch.specmgr.models.md.alias_type import AliasType
 from biz.dfch.specmgr.models.md.markdown_section1 import MarkdownSection1
@@ -231,7 +231,7 @@ class TestUseCaseFromText(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         raw_text = _UC_EXAMPLE_PATH.read_text(encoding="utf-8")
-        cls.body = mdformat.text(frontmatter.loads(raw_text).content)
+        cls.body = format_text(frontmatter.loads(raw_text).content)
 
     def test_parses_title_and_top_level_sections(self) -> None:
         """The h1 title and all h2 sections (required and present-optional) are populated."""
