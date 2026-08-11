@@ -58,10 +58,10 @@ jobs:
       # exception method signatures differently across Python versions (e.g., 3.12 vs 3.13).
       # This causes docs/ to differ when regenerated on different Python versions. To avoid
       # CI failures due to Python version differences rather than actual code changes, we
-      # pin this check to Python 3.13 (the project's default dev version in .python-version).
+      # pin this check to Python 3.13.13 (the project's default dev version in .python-version).
       if: matrix.python-version == '3.13'
       run: |
-        uv run --frozen --all-extras --python 3.13 specmgr docs
+        uv run --frozen --all-extras --python 3.13.13 specmgr docs
         git diff --exit-code -- docs/ || {
           echo "::error::docs/ is out of date -- run 'uv run --frozen --all-extras specmgr docs' and commit the result (see AGENTS.md)."
           exit 1
@@ -70,7 +70,7 @@ jobs:
     - name: Make sure `docs/adr/README.md` is correct
       if: matrix.python-version == '3.13'
       run: |
-        uv run --frozen --all-extras --python 3.13 specmgr adr-toc
+        uv run --frozen --all-extras --python 3.13.13 specmgr adr-toc
         git diff --exit-code -- docs/adr/README.md || {
           echo "::error::docs/adr/README.md is out of date -- run 'uv run --frozen --all-extras specmgr adr-toc' and commit the result (see AGENTS.md)."
           exit 1
