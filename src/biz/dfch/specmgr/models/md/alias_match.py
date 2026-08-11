@@ -29,24 +29,29 @@ import re
 
 from .alias_type import AliasType
 
-_SPACE_SEPARATED_PATTERN = re.compile(r"(?<!^)(?=[A-Z])")
+_SPACE_SEPARATED_PATTERN = re.compile(r"(?<!^)(?=[A-Z])|(?<=[A-Za-z])(?=[0-9])|(?<=[0-9])(?=[A-Za-z])")
 
 
 def space_separated_name(class_name: str) -> str:
     """Convert a PascalCase class name to space-separated title case.
 
-    E.g. `"GoalInContext"` -> `"Goal In Context"`. This is `AliasType.
-    SPACE_SEPARATED`'s auto-derivation rule -- an explicit, opt-in
-    alternative for a class whose natural heading text differs from its bare
-    class name (see `match_alias`; this is no longer the fallback for a
-    class with no `@alias` metadata at all).
+    E.g. `"GoalInContext"` -> `"Goal In Context"`, `"SectionLevel1"` ->
+    `"Section Level 1"`. This is `AliasType.SPACE_SEPARATED`'s
+    auto-derivation rule -- an explicit, opt-in alternative for a class
+    whose natural heading text differs from its bare class name (see
+    `match_alias`; this is no longer the fallback for a class with no
+    `@alias` metadata at all).
 
     Args:
         class_name: A class's `__name__`, e.g. `"GoalInContext"`.
 
     Returns:
         `class_name` with a space inserted before every non-leading
-        uppercase letter.
+        uppercase letter, and at every letter<->digit boundary in either
+        direction (e.g. `"SectionLevel1"` -> `"Section Level 1"`,
+        `"Level1abc"` -> `"Level 1 abc"`). A run of consecutive digits
+        (`"Level123"` -> `"Level 123"`) or consecutive uppercase letters is
+        never split internally by this rule.
     """
     assert isinstance(class_name, str) and class_name, class_name
 

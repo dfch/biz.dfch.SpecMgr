@@ -171,7 +171,7 @@ class TestMarkdownSectionAliasEnforcement(unittest.TestCase):
         `AliasType.SPACE_SEPARATED`'s derivation of its own class name (ADR
         832cd6c1-ef8a-4bfc-990e-a610823f61ae v1.4.0), not "accept any heading
         text", and not a literal match against the raw class name."""
-        text = mdformat.text("### Markdown Section3\ncontent\n")
+        text = mdformat.text("### Markdown Section 3\ncontent\n")
         instance = MarkdownSection3.from_text(text)
         self.assertEqual(instance._value, text)
 

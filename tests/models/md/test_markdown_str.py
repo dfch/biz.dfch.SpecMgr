@@ -22,7 +22,7 @@ from typing import ClassVar, Optional
 
 import mdformat
 
-from biz.dfch.specmgr.models.md.markdown_str import MarkdownStr
+from biz.dfch.specmgr.models.md import alias, AliasType, MarkdownStr, MarkdownSection1, MarkdownSection2
 
 from .various_models import CharacteristicInformation, RelatedInformation, MainDocument
 
@@ -92,6 +92,71 @@ class _PresentOptionalContainer(MarkdownStr):
     optional_second: Optional[_OneLineField] = None
 
 
+class _MarkerItemField(MarkdownStr):
+    """Test double: claims exactly one line if it starts with a marker, else no extent.
+
+    Used as the item type of a `list[...]` field, so a `process_list_field`
+    loop can be driven by real content (marker present/absent) instead of a
+    fixed line count, isolating "keep matching while the marker is present"
+    from `MarkdownSection`'s heading-specific semantics.
+
+    Deliberately *not* real markdown list syntax (`"- "`/`"* "`): joining
+    several already-`mdformat`-rendered leaf blocks with a blank line (as
+    `MarkdownStr.__str__` always does) turns a *tight* markdown list back
+    into a *loose* one, which would make a round-trip assertion fail for a
+    reason unrelated to list-*field* support itself. A plain-text marker
+    avoids that orthogonal quirk, so each item is just an ordinary paragraph.
+    """
+
+    _MARKER: ClassVar[str] = "item: "
+
+    @classmethod
+    def get_extent(cls, text: str) -> int:
+        lines = text.splitlines()
+        if not lines or not lines[0].startswith(cls._MARKER):
+            return 0
+        return 1
+
+
+@alias(type=AliasType.SPACE_SEPARATED)
+class SectionLevel1(MarkdownSection1):
+    """SectionLevel1."""
+
+    @alias(value="Section Level 2 .*", type=AliasType.REGEX)
+    class SectionLevel2(MarkdownSection2): ...
+
+    """SectionLevel2."""
+
+    items: list[SectionLevel2]
+
+
+class _RequiredListContainer(MarkdownStr):
+    """A single mandatory `list[...]` field."""
+
+    items: list[_MarkerItemField]
+
+
+class _TrailingOptionalListContainer(MarkdownStr):
+    """A required field fully consumes the text; a trailing optional list field is absent."""
+
+    first: _OneLineField
+    items: Optional[list[_MarkerItemField]] = None
+
+
+class _PresentOptionalListContainer(MarkdownStr):
+    """An optional `list[...]` field that does find items in the remaining text."""
+
+    first: _OneLineField
+    items: Optional[list[_MarkerItemField]] = None
+
+
+class _ListThenTrailingContainer(MarkdownStr):
+    """A mandatory `list[...]` field followed by another required scalar field."""
+
+    items: list[_MarkerItemField]
+    trailing: _OneLineField
+
+
 class TestFromText(unittest.TestCase):
     """Tests for from_text class method."""
 
@@ -156,6 +221,68 @@ class TestFromText(unittest.TestCase):
         self.assertEqual(instance.first._value, mdformat.text("line0\nline1"))
         self.assertEqual(instance.optional_second._value, mdformat.text("line2"))
         self.assertEqual(instance._value, text)
+
+    def test_mandatory_list_field_collects_all_matching_items(self) -> None:
+        """A `list[X]` field repeatedly matches `X` until `X.get_extent` finds no further item."""
+        text = mdformat.text("item: one\n\nitem: two\n\nitem: three")
+        instance = _RequiredListContainer.from_text(text)
+        self.assertIsInstance(instance, _RequiredListContainer)
+        self.assertEqual(len(instance.items), 3)
+        for item in instance.items:
+            self.assertIsInstance(item, _MarkerItemField)
+        self.assertEqual(instance._value, text)
+        self.assertEqual(str(instance), text)
+
+    def test_space_separated_with_leading_number_must_not_fail(self) -> None:
+        """A `list[X]` field repeatedly matches `X` until `X.get_extent` finds no further item."""
+        text = mdformat.text("""# Section Level 1
+
+## Section Level 2 ABC
+
+## Section Level 2 DEF
+
+""")
+        instance = SectionLevel1.from_text(text)
+        self.assertIsInstance(instance, SectionLevel1)
+        self.assertEqual(len(instance.items), 2)
+        for item in instance.items:
+            self.assertIsInstance(item, SectionLevel1.SectionLevel2)
+        self.assertEqual(str(instance), text)
+
+    def test_mandatory_list_field_raises_when_no_item_matches(self) -> None:
+        """A mandatory `list[X]` field with zero matched items fails loudly, like a scalar field."""
+        with self.assertRaises(AssertionError):
+            _RequiredListContainer.from_text(mdformat.text("plain text, no marker"))
+
+    def test_optional_list_field_absent_when_remaining_text_is_empty(self) -> None:
+        """A trailing `Optional[list[X]]` field is left `None` once prior fields consume all text."""
+        text = mdformat.text("line0")
+        instance = _TrailingOptionalListContainer.from_text(text)
+        self.assertIsInstance(instance, _TrailingOptionalListContainer)
+        self.assertIsNone(instance.items)
+        self.assertEqual(instance.first._value, mdformat.text("line0"))
+        self.assertEqual(instance._value, text)
+
+    def test_optional_list_field_is_populated_when_items_are_found(self) -> None:
+        """An `Optional[list[X]]` field behaves like a mandatory one once items are found."""
+        text = mdformat.text("line0\n\nitem: one\n\nitem: two")
+        instance = _PresentOptionalListContainer.from_text(text)
+        self.assertIsInstance(instance, _PresentOptionalListContainer)
+        self.assertIsNotNone(instance.items)
+        assert instance.items is not None, type(instance.items)
+        self.assertEqual(len(instance.items), 2)
+        self.assertEqual(instance.first._value, mdformat.text("line0"))
+        self.assertEqual(str(instance), text)
+
+    def test_list_field_stops_at_first_non_matching_item_and_next_field_continues(self) -> None:
+        """Only the first item of a `list[X]` field is mandatory; the list stops once `X` no longer matches,
+        leaving the remainder for the next declared field."""
+        text = mdformat.text("item: one\n\nitem: two\n\nplain line")
+        instance = _ListThenTrailingContainer.from_text(text)
+        self.assertIsInstance(instance, _ListThenTrailingContainer)
+        self.assertEqual(len(instance.items), 2)
+        self.assertEqual(instance.trailing._value, mdformat.text("plain line"))
+        self.assertEqual(str(instance), text)
 
     def test_main_document_from_text(self) -> None:
         """Test creating MainDocument from a realistic, multi-heading document.

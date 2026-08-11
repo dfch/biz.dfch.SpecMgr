@@ -48,6 +48,17 @@ Markdown text parsed into token stream.
   untouched (nothing was consumed), and the loop simply continues to
   the next declared field.
 
+  A field declared `list[X]`/`list[X] | None` (see `_unwrap_list`) is
+  handled by `process_list_field` instead of `process_field`: it
+  repeatedly matches `X` against the not-yet-consumed remainder, once
+  per item, until `X.get_extent` finds no further extent. The `list[X]`
+  vs. `list[X] | None` distinction plays exactly the same role as it
+  does for a scalar field -- a mandatory `list[X]` requires at least
+  one matched item (else `process_list_field` raises), while
+  `list[X] | None` allows zero items (the field is left `None`); once
+  the first item is found, every subsequent item is implicitly
+  optional regardless of which of the two was declared.
+
 - `get_extent(text: 'str') -> 'int'`
   Return the extent of the markdown token stream parsed from `text`, as a line count.
 
@@ -229,6 +240,57 @@ Markdown text parsed into token stream.
       `type_.from_text` on exactly those `extent` leading lines -- or
       `(0, None)` for an absent optional field (see `optional` above).
 
+- `process_list_field(name: 'str', item_type: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False) -> 'tuple[str, list[MarkdownStr] | None]'`
+  Resolve one repeated `list[MarkdownStr]` field's parsed items and new remainder from `text`.
+
+  Repeats `process_field`'s single-item extent/slice/parse step against
+  a local `remaining_text`, once per matched item, re-normalizing with
+  `mdformat.text()` after every item consumed -- same reasoning as
+  `from_text`'s own `remaining_text` handling: a raw substring of an
+  already-`mdformat`-compliant document is not itself guaranteed
+  `mdformat`-compliant (e.g. it can start with a blank line separating
+  two items, which `mdformat` would strip). The loop stops as soon as
+  `item_type.get_extent` finds no further extent.
+
+  Unlike `process_field`, this does **not** return a single combined
+  line-count `extent` for the caller to slice `text` with. Doing so
+  would silently miscount: every intermediate `mdformat.text()`
+  renormalization can drop lines (e.g. a blank line separating two
+  items) that never show up in any individual item's own `get_extent`
+  result, so a caller-side `text.splitlines()[extent:]` computed from a
+  *summed* extent would not line up with `text`'s original line
+  numbering (exactly the class of bug `from_text` itself already moved
+  away from a line-index `cursor` to avoid). Returning the
+  already-fully-reduced `remaining_text` string sidesteps this by
+  construction, the same way `from_text` tracks its own state.
+
+  The *first* item follows the same `optional` contract as
+  `process_field`: no item found there is an absence, which is an
+  error for a mandatory `list[X]` field, or `(text, None)` (untouched)
+  for an optional `list[X] | None` field. Every *subsequent* item is
+  implicitly optional -- no further item found there simply ends the
+  list, with no `Optional[X]` needed on `item_type` itself.
+
+  Args:
+      name: the field's attribute name (used only for error messages).
+      item_type: the field's declared `MarkdownStr` subclass (the `X`
+          in `list[X]`/`list[X] | None`).
+      text: the not-yet-consumed remainder of the parent's markdown
+          text; the first item, if any, is assumed to start at the very
+          first line of `text`.
+      optional: whether the field is declared `list[X] | None`. When
+          `True` and no item at all is found, this is not an error:
+          `(text, None)` is returned so the caller can move on to the
+          next field without consuming any of `text`.
+
+  Returns:
+      A `(remaining_text, items)` pair: `remaining_text` is `text` with
+      every matched item (and any separating blank lines) removed and
+      re-normalized via `mdformat.text()`, ready to be handed directly
+      to the next declared field -- and `items` is the non-empty list
+      of parsed instances, or `(text, None)` for an absent optional
+      field (see `optional` above).
+
 - `schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}') -> 'Dict[str, Any]'`
 
 - `schema_json(*, by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', **dumps_kwargs: 'Any') -> 'str'`
@@ -296,6 +358,17 @@ Markdown text parsed into token stream.
   `None`) rather than added to `kwargs`, `remaining_text` is left
   untouched (nothing was consumed), and the loop simply continues to
   the next declared field.
+
+  A field declared `list[X]`/`list[X] | None` (see `_unwrap_list`) is
+  handled by `process_list_field` instead of `process_field`: it
+  repeatedly matches `X` against the not-yet-consumed remainder, once
+  per item, until `X.get_extent` finds no further extent. The `list[X]`
+  vs. `list[X] | None` distinction plays exactly the same role as it
+  does for a scalar field -- a mandatory `list[X]` requires at least
+  one matched item (else `process_list_field` raises), while
+  `list[X] | None` allows zero items (the field is left `None`); once
+  the first item is found, every subsequent item is implicitly
+  optional regardless of which of the two was declared.
 
 - `get_extent(text: 'str') -> 'int'`
   Return the extent of the markdown token stream parsed from `text`, as a line count.
@@ -569,6 +642,57 @@ Markdown text parsed into token stream.
       and `instance` is the field's value, parsed via
       `type_.from_text` on exactly those `extent` leading lines -- or
       `(0, None)` for an absent optional field (see `optional` above).
+
+- `process_list_field(name: 'str', item_type: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False) -> 'tuple[str, list[MarkdownStr] | None]'`
+  Resolve one repeated `list[MarkdownStr]` field's parsed items and new remainder from `text`.
+
+  Repeats `process_field`'s single-item extent/slice/parse step against
+  a local `remaining_text`, once per matched item, re-normalizing with
+  `mdformat.text()` after every item consumed -- same reasoning as
+  `from_text`'s own `remaining_text` handling: a raw substring of an
+  already-`mdformat`-compliant document is not itself guaranteed
+  `mdformat`-compliant (e.g. it can start with a blank line separating
+  two items, which `mdformat` would strip). The loop stops as soon as
+  `item_type.get_extent` finds no further extent.
+
+  Unlike `process_field`, this does **not** return a single combined
+  line-count `extent` for the caller to slice `text` with. Doing so
+  would silently miscount: every intermediate `mdformat.text()`
+  renormalization can drop lines (e.g. a blank line separating two
+  items) that never show up in any individual item's own `get_extent`
+  result, so a caller-side `text.splitlines()[extent:]` computed from a
+  *summed* extent would not line up with `text`'s original line
+  numbering (exactly the class of bug `from_text` itself already moved
+  away from a line-index `cursor` to avoid). Returning the
+  already-fully-reduced `remaining_text` string sidesteps this by
+  construction, the same way `from_text` tracks its own state.
+
+  The *first* item follows the same `optional` contract as
+  `process_field`: no item found there is an absence, which is an
+  error for a mandatory `list[X]` field, or `(text, None)` (untouched)
+  for an optional `list[X] | None` field. Every *subsequent* item is
+  implicitly optional -- no further item found there simply ends the
+  list, with no `Optional[X]` needed on `item_type` itself.
+
+  Args:
+      name: the field's attribute name (used only for error messages).
+      item_type: the field's declared `MarkdownStr` subclass (the `X`
+          in `list[X]`/`list[X] | None`).
+      text: the not-yet-consumed remainder of the parent's markdown
+          text; the first item, if any, is assumed to start at the very
+          first line of `text`.
+      optional: whether the field is declared `list[X] | None`. When
+          `True` and no item at all is found, this is not an error:
+          `(text, None)` is returned so the caller can move on to the
+          next field without consuming any of `text`.
+
+  Returns:
+      A `(remaining_text, items)` pair: `remaining_text` is `text` with
+      every matched item (and any separating blank lines) removed and
+      re-normalized via `mdformat.text()`, ready to be handed directly
+      to the next declared field -- and `items` is the non-empty list
+      of parsed instances, or `(text, None)` for an absent optional
+      field (see `optional` above).
 
 - `schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}') -> 'Dict[str, Any]'`
 

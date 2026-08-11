@@ -102,6 +102,36 @@ class MarkdownStr(BaseModel):
         return annotation, False
 
     @classmethod
+    def _unwrap_list(cls, annotation: Any) -> tuple[Any, bool]:
+        """Return `(item_type, is_list)` for a field's (already `Optional`-unwrapped) annotation.
+
+        Recognizes plain `list[X]` (`typing.get_origin(annotation) is list`)
+        with exactly one type argument, and unwraps it to `(X, True)`. Any
+        other annotation (including a bare `X`, or `tuple[X, ...]`/
+        `Sequence[X]`, deliberately not supported) is returned unchanged as
+        `(annotation, False)`.
+
+        Callers apply this *after* `_unwrap_optional`, so `list[X] | None`
+        first unwraps to `(list[X], True)` via `_unwrap_optional`, then to
+        `(X, True)` here -- i.e. "optional" and "list" are independent axes,
+        checked one after the other.
+
+        Args:
+            annotation: a field's annotation, already passed through
+                `_unwrap_optional`.
+
+        Returns:
+            `(item_type, is_list)`.
+        """
+        origin = typing.get_origin(annotation)
+        if origin is list:
+            args = typing.get_args(annotation)
+            if len(args) == 1:
+                return args[0], True
+
+        return annotation, False
+
+    @classmethod
     def process_field(
         cls, name: str, type_: type[MarkdownStr], text: str, *, optional: bool = False
     ) -> tuple[int, MarkdownStr | None]:
@@ -146,6 +176,88 @@ class MarkdownStr(BaseModel):
         return result
 
     @classmethod
+    def process_list_field(
+        cls, name: str, item_type: type[MarkdownStr], text: str, *, optional: bool = False
+    ) -> tuple[str, list[MarkdownStr] | None]:
+        """Resolve one repeated `list[MarkdownStr]` field's parsed items and new remainder from `text`.
+
+        Repeats `process_field`'s single-item extent/slice/parse step against
+        a local `remaining_text`, once per matched item, re-normalizing with
+        `mdformat.text()` after every item consumed -- same reasoning as
+        `from_text`'s own `remaining_text` handling: a raw substring of an
+        already-`mdformat`-compliant document is not itself guaranteed
+        `mdformat`-compliant (e.g. it can start with a blank line separating
+        two items, which `mdformat` would strip). The loop stops as soon as
+        `item_type.get_extent` finds no further extent.
+
+        Unlike `process_field`, this does **not** return a single combined
+        line-count `extent` for the caller to slice `text` with. Doing so
+        would silently miscount: every intermediate `mdformat.text()`
+        renormalization can drop lines (e.g. a blank line separating two
+        items) that never show up in any individual item's own `get_extent`
+        result, so a caller-side `text.splitlines()[extent:]` computed from a
+        *summed* extent would not line up with `text`'s original line
+        numbering (exactly the class of bug `from_text` itself already moved
+        away from a line-index `cursor` to avoid). Returning the
+        already-fully-reduced `remaining_text` string sidesteps this by
+        construction, the same way `from_text` tracks its own state.
+
+        The *first* item follows the same `optional` contract as
+        `process_field`: no item found there is an absence, which is an
+        error for a mandatory `list[X]` field, or `(text, None)` (untouched)
+        for an optional `list[X] | None` field. Every *subsequent* item is
+        implicitly optional -- no further item found there simply ends the
+        list, with no `Optional[X]` needed on `item_type` itself.
+
+        Args:
+            name: the field's attribute name (used only for error messages).
+            item_type: the field's declared `MarkdownStr` subclass (the `X`
+                in `list[X]`/`list[X] | None`).
+            text: the not-yet-consumed remainder of the parent's markdown
+                text; the first item, if any, is assumed to start at the very
+                first line of `text`.
+            optional: whether the field is declared `list[X] | None`. When
+                `True` and no item at all is found, this is not an error:
+                `(text, None)` is returned so the caller can move on to the
+                next field without consuming any of `text`.
+
+        Returns:
+            A `(remaining_text, items)` pair: `remaining_text` is `text` with
+            every matched item (and any separating blank lines) removed and
+            re-normalized via `mdformat.text()`, ready to be handed directly
+            to the next declared field -- and `items` is the non-empty list
+            of parsed instances, or `(text, None)` for an absent optional
+            field (see `optional` above).
+        """
+        assert isinstance(name, str), type(name)
+        assert isinstance(item_type, type) and issubclass(item_type, MarkdownStr), item_type
+        assert isinstance(text, str), type(text)
+
+        items: list[MarkdownStr] = []
+        remaining_text = text
+        while remaining_text:
+            extent = item_type.get_extent(remaining_text)
+            if extent == 0:
+                break
+
+            lines = remaining_text.splitlines()
+            item_text = mdformat.text("\n".join(lines[:extent]))
+            items.append(item_type.from_text(item_text))
+
+            remaining_lines = lines[extent:]
+            remaining_text = mdformat.text("\n".join(remaining_lines)) if remaining_lines else ""
+
+        if not items:
+            if optional:
+                result: tuple[str, list[MarkdownStr] | None] = (text, None)
+                return result
+            assert False, f"{cls.__name__}.{name}: get_extent found no extent in remaining text"
+
+        result = (remaining_text, items)
+
+        return result
+
+    @classmethod
     def from_text(cls, text: str) -> MarkdownStr:
         """Create an instance from markdown text, splitting `text` among nested fields.
 
@@ -176,6 +288,17 @@ class MarkdownStr(BaseModel):
         `None`) rather than added to `kwargs`, `remaining_text` is left
         untouched (nothing was consumed), and the loop simply continues to
         the next declared field.
+
+        A field declared `list[X]`/`list[X] | None` (see `_unwrap_list`) is
+        handled by `process_list_field` instead of `process_field`: it
+        repeatedly matches `X` against the not-yet-consumed remainder, once
+        per item, until `X.get_extent` finds no further extent. The `list[X]`
+        vs. `list[X] | None` distinction plays exactly the same role as it
+        does for a scalar field -- a mandatory `list[X]` requires at least
+        one matched item (else `process_list_field` raises), while
+        `list[X] | None` allows zero items (the field is left `None`); once
+        the first item is found, every subsequent item is implicitly
+        optional regardless of which of the two was declared.
         """
         assert isinstance(text, str), f"text: '{type(text)}' != 'str'."
         assert text == mdformat.text(text), "text is not in 'mdformat'."
@@ -187,20 +310,39 @@ class MarkdownStr(BaseModel):
             instance._value = text
             return instance
 
-        kwargs: dict[str, MarkdownStr] = {}
+        kwargs: dict[str, MarkdownStr | list[MarkdownStr]] = {}
         remaining_text = text
         for field_name in field_names:
             raw_field_type = cls.model_fields[field_name].annotation
             field_type, is_optional = cls._unwrap_optional(raw_field_type)
-            assert isinstance(field_type, type) and issubclass(field_type, MarkdownStr), type(field_type)
+            item_type, is_list = cls._unwrap_list(field_type)
 
-            extent, instance_field = cls.process_field(field_name, field_type, remaining_text, optional=is_optional)
-            if instance_field is None:
+            if is_list:
+                # `process_list_field` returns the already-fully-reduced remaining
+                # text directly (see its docstring for why a combined line-count
+                # extent would be unsafe here), so it is adopted as-is below
+                # instead of going through the generic extent-based slicing.
+                assert isinstance(item_type, type) and issubclass(item_type, MarkdownStr), type(item_type)
+                new_remaining_text, list_value = cls.process_list_field(
+                    field_name, item_type, remaining_text, optional=is_optional
+                )
+                if list_value is None:
+                    # Optional field with no item found in the remaining text: leave it
+                    # unset (pydantic default, e.g. `None`) and don't consume any
+                    # of `remaining_text` -- move on to the next field.
+                    continue
+                kwargs[field_name] = list_value
+                remaining_text = new_remaining_text
+                continue
+
+            assert isinstance(field_type, type) and issubclass(field_type, MarkdownStr), type(field_type)
+            extent, instance_value = cls.process_field(field_name, field_type, remaining_text, optional=is_optional)
+            if instance_value is None:
                 # Optional field with no extent in the remaining text: leave it
                 # unset (pydantic default, e.g. `None`) and don't consume any
                 # of `remaining_text` -- move on to the next field.
                 continue
-            kwargs[field_name] = instance_field
+            kwargs[field_name] = instance_value
 
             remaining_lines = remaining_text.splitlines()[extent:]
             remaining_text = mdformat.text("\n".join(remaining_lines)) if remaining_lines else ""
@@ -224,6 +366,13 @@ class MarkdownStr(BaseModel):
             if field is None:
                 # Absent optional field (see `_unwrap_optional`/`from_text`): nothing to render.
                 continue
+            if isinstance(field, list):
+                # `list[MarkdownStr]`/`list[MarkdownStr] | None` field (see `_unwrap_list`):
+                # render every item in order, same as a scalar field rendered once.
+                for item in field:
+                    assert isinstance(item, MarkdownStr), type(item)
+                    result.append(str(item))
+                continue
             assert isinstance(field, MarkdownStr), type(field)
             result.append(str(field))
 
@@ -242,18 +391,25 @@ class MarkdownStr(BaseModel):
         `_unwrap_optional` before the `issubclass` check) -- they are still
         `MarkdownStr` fields as far as `from_text`/`__str__` distribution is
         concerned, just ones that may end up unset (`None`) after `from_text`.
+
+        `list[X]`/`list[X] | None` fields are included as well: `annotation`
+        is unwrapped via `_unwrap_optional` and then `_unwrap_list` (in that
+        order) before the `issubclass` check, so both axes -- optional and
+        repeated -- are resolved down to the underlying `X` independently of
+        each other.
         """
         field_names = []
         for field_name, field_info in cls.model_fields.items():
-            # Check if the field type is a MarkdownStr subclass
+            # Check if the field type is a MarkdownStr subclass, possibly wrapped
+            # in Optional[...] and/or list[...].
             field_type, _is_optional = cls._unwrap_optional(field_info.annotation)
+            field_type, _is_list = cls._unwrap_list(field_type)
             try:
                 if isinstance(field_type, type) and issubclass(field_type, MarkdownStr):
                     field_names.append(field_name)
             except TypeError:
                 # Handle complex types (nested Optional/Union combinations, etc.)
                 pass
-        print(f"_get_field_names: '{cls.__name__}': {field_names}")
         return field_names
 
     # @field_validator("_value")

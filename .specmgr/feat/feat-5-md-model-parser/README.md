@@ -184,6 +184,9 @@ history is lost — the original phase text remains recoverable via `git log
 - [x] Task 1.4: Create `markdown_section1.py`..`markdown_section6.py` — concrete `MarkdownSection` subclasses for h1..h6, each just supplying `@markdown(type="heading_open", tag="hN")` — depends on: Task 2.1 (below) — status: done. h4/h5/h6 additionally needed a bugfix (a live, always-crashing `_tokens`-based assertion left over from before `_value` replaced `_tokens`, see Recent Updates) and dedicated test coverage (`tests/models/md/test_markdown_section_levels.py`), neither of which existed until this reconciliation.
 - [x] ~~Task 1.5: Create `metadata_utils.py`~~ — **removed 2026-08-11**: `_metadata` introspection helpers (`get_direct_metadata`, `get_inherited_metadata`, `find_metadata_source`, `get_metadata_chain`, `has_metadata`) were dead code — never called by the core recursion path, never re-exercised by any test, and its own docstring examples referenced a nonexistent `@annotate` decorator (the real one is `@markdown`). Deleted the module, its `docs/api/` page, and its `models/md/__init__.py` re-exports rather than backfilling tests for unused code — depends on: Task 1.1 — status: removed
 - [x] Task 1.6: Unit tests for Tasks 1.1–1.5 (`test_alias_match.py`: `space_separated_name` conversion cases, every `match_alias` branch including no-alias-always-matches and `LITERAL`'s case-sensitivity) — depends on: Task 1.3 — status: done
+- [x] Task 1.6.1: Support `list[MarkdownStr]` (or `list[SomeMarkdownStrSubclass]`) fields in `markdown_str.py`'s `_get_field_names`/`from_text`/`__str__`. Detection: `_unwrap_list(annotation) -> tuple[type, bool]` (sibling to `_unwrap_optional`, plain `list[X]` only via `typing.get_origin(annotation) is list` — no `Sequence`/`tuple` support), applied after `_unwrap_optional` so `list[X] | None` unwraps to `(X, optional=True, is_list=True)`. Consumption: `process_list_field(name, item_type, text, *, optional=False) -> tuple[str, list[MarkdownStr] | None]` — deliberately **not** mirroring `process_field`'s `(extent, value)` contract (an earlier draft did and was wrong: summing per-item extents against a locally-renormalized string silently loses lines dropped by `mdformat.text()` between items, e.g. a separating blank line, causing `from_text`'s generic `remaining_text.splitlines()[extent:]` slice to misalign against the caller's *original*, not-yet-renormalized `remaining_text` — the exact class of bug `from_text` itself already moved off a line-index `cursor` to avoid). Instead it loops `item_type.get_extent`/slice/`mdformat`-renormalize/`item_type.from_text` while extent `> 0` and returns the already-fully-reduced `remaining_text` string directly, which `from_text` adopts as-is for list fields (bypassing the generic extent-slicing step used for scalar fields). No item found on the *first* iteration is an absence (mandatory `list[X]` -> assertion error, matching today's missing-mandatory-scalar-field behavior; `list[X] | None` -> field left `None`, `text` returned unchanged) while no item found on any *subsequent* iteration just ends the list normally (items 2+ are implicitly optional without needing `Optional[X]` themselves). Rendering: `__str__` iterates the list and appends `str(item)` per element, same as today's single-field append, skipping a `None` list exactly like an absent optional scalar field — depends on: Task 2.1 — status: done
+- [ ] Task 1.6.2: Support base object `MarkdownParagraph` — depends on: TBD — status: not-started
+- [ ] Task 1.6.3: Support `MarkdownList` — depends on: TBD — status: not-started
 - [ ] Task 1.7: Exercise `@alias`'s `REGEX` branch end-to-end through a real `MarkdownSection.from_text` call (currently only unit-tested in isolation; no fixture class declares `AliasType.REGEX` yet) — depends on: Task 1.6 — status: not-started (low priority; `@alias`'s mechanism may itself be revisited later)
 
 #### Phase 2: Recursive engine (`MarkdownStr`/`MarkdownSection`)
@@ -302,6 +305,66 @@ left as-is).
    short-lived/superseded later, so this is a minor gap, not a priority.
 
 ### Recent Updates
+
+#### 2026-08-11 (continued, part 5)
+- Completed: Task 1.6.1 -- `list[MarkdownStr]`/`list[MarkdownStr] | None` field
+  support in `markdown_str.py`, added ad hoc (not part of the original task
+  list; repo-owner requested it directly this session):
+  - `_unwrap_list(annotation) -> tuple[type, bool]`: new sibling to
+    `_unwrap_optional`, recognizing plain `list[X]` only (no
+    `Sequence`/`tuple` support by explicit decision).
+    `_get_field_names`/`from_text` apply `_unwrap_optional` then
+    `_unwrap_list` in that order, so `list[X] | None` resolves to
+    `(X, optional=True, is_list=True)` -- the two axes are independent.
+  - `process_list_field(name, item_type, text, *, optional=False) ->
+    tuple[str, list[MarkdownStr] | None]`: loops `item_type.get_extent`/
+    slice/`mdformat`-renormalize/`item_type.from_text` while an item
+    matches. A first draft mirrored `process_field`'s `(extent, value)`
+    contract (matching the initial design discussion) but this was found to
+    be **incorrect**, not just a style choice: summing per-item extents
+    computed against a locally-renormalized string silently loses lines
+    `mdformat.text()` drops between items (e.g. a separating blank line),
+    so a caller-side `remaining_text.splitlines()[extent:]` computed from
+    that sum no longer lines up with the caller's actual `remaining_text`
+    -- exactly the class of bug `from_text` itself already moved off an
+    integer line-index `cursor` to avoid (see 2026-08-10 entry below).
+    Fixed by having `process_list_field` return the already-fully-reduced
+    `remaining_text` string directly; `from_text`'s per-field loop adopts it
+    as-is for list fields, bypassing the generic extent-based slicing step
+    used for scalar fields.
+  - Semantics: no item found on the list's *first* iteration is an absence
+    -- an assertion error for a mandatory `list[X]` field, or `(text,
+    None)` (untouched) for `list[X] | None`. No item found on any
+    *subsequent* iteration just ends the list normally, i.e. items 2+ are
+    implicitly optional without needing `Optional[X]` on `item_type`
+    itself.
+  - `__str__`: a list field renders every item in declaration order via
+    `str(item)`, appended the same way a scalar field's single rendered
+    string is today; a `None` list is skipped exactly like an absent
+    optional scalar field.
+  - Also removed a leftover debug `print(f"_get_field_names: ...")` from
+    `_get_field_names` while touching that method (unrelated cleanup, not
+    gated behind its own task).
+  - New tests in `tests/models/md/test_markdown_str.py`
+    (`_MarkerItemField`/`_RequiredListContainer`/
+    `_TrailingOptionalListContainer`/`_PresentOptionalListContainer`/
+    `_ListThenTrailingContainer` fixtures): mandatory list collects all
+    matching items and round-trips, mandatory list with zero items raises,
+    optional list absent when remaining text is empty, optional list
+    populated when items are found, and a list stopping at the first
+    non-matching item so a subsequent scalar field can still consume the
+    remainder. `_MarkerItemField` deliberately uses a plain-text marker
+    (`"item: "`), not real list syntax (`"- "`) -- joining several
+    pre-rendered leaf blocks with a blank line (`MarkdownStr.__str__`'s
+    normal behavior) turns a *tight* markdown list back into a *loose* one,
+    which would fail a round-trip assertion for a reason unrelated to
+    list-field support itself.
+  - Full suite: 389 passed, 0 failed (384 -> 389, 5 new).
+    `ruff format --check`/`ruff check`/`vulture` clean.
+  - Task 1.6.2 (`MarkdownParagraph`) and Task 1.6.3 (`MarkdownList`) remain
+    not-started -- their descriptions are still pending from the
+    repo-owner, deliberately deferred to a later session per explicit
+    instruction this session.
 
 #### 2026-08-11 (continued, part 4)
 - Completed: Corrected an error in ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae
