@@ -1,7 +1,7 @@
 ---
 id: feat-5-md-model-parser
-version: 1.15.0
-status: in-progress
+version: 1.16.0
+status: done
 created: 2026-08-08
 updated: 2026-08-11
 ---
@@ -253,107 +253,104 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-10**: Implementation is underway directly under
-`src/biz/dfch/specmgr/models/md/` (superseding the originally-planned
-`models/markdown/` path and the `Annotated[Heading(...)]` mechanism — see
-Scope above). `MarkdownStr.get_extent`/`from_text`/`process_field` and
-`MarkdownSection.get_extent`/`from_text`/`__str__` are all now implemented
-and unit-tested, including with real nested-heading content (not just the
-fixed-extent test doubles) — see Recent Updates below for the fixes this
-required. `MarkdownSection._value` semantics (corrected this session, see
-Recent Updates): a **leaf** section (no nested fields) stores its complete
-extent verbatim (heading and body), exactly like the base
-`MarkdownStr.from_text` leaf case, since nothing else will ever retain that
-text. A **composite** section (has nested fields) stores only its own
-heading's inline content, since the body is already fully represented,
-recursively, by its nested fields (down to whichever leaf(ves) ultimately
-hold it in full) — storing the full extent there too would just duplicate
-what the children already carry. `MarkdownSection.__str__` mirrors this:
-leaf sections defer to `super().__str__()` (returns `_value` verbatim,
-already the full extent); composite sections reconstruct
-`"#" * level + " " + self._value` from `cls._metadata['tag']` and prepend
-it to `super().__str__()`'s children output. Net effect: `str(instance)`
-is now a full, byte-exact round-trip of whatever `from_text` consumed, for
-both leaf and composite sections — the previous session's "leaf body text
-is silently dropped" trade-off is resolved, not just documented. As a side
-effect this also fixed `MarkdownSection.name` (a `computed_field` that
-re-parses `str(self)` to extract the heading text) for composite sections,
-which previously found no heading to extract since `str(self)` didn't
-contain one.
-
-`MarkdownSection.from_text` now also enforces `@alias`, via the new
-`alias_match.py` module's `match_alias(cls, heading_text)`: previously
-`_alias_metadata` (set by `@alias`) was inert class data that nothing ever
-checked against the actual parsed heading text. A class with no `@alias` at
-all always matches (opt-in, not mandatory) — see Recent Updates for the
-`various_models.py` fixture aliases this uncovered as already wrong
-(`GoalInContext`'s `"Goats in Coats"`, `CharacteristicInformation`'s
-`"characteristic_information"`), now corrected to match the fixture
-documents' actual heading text.
-
-**All of `src/biz/dfch/specmgr/models/md/` and `tests/models/md/` are
-currently untracked in git** (`git status` shows `??`, not staged) — nothing
-here has been committed yet. A new session should run `git status` first to
-confirm this is still the case before doing anything else.
+**Done, as of 2026-08-11.** Every phase in the Task List (0–6, including
+Phase 4/REQ-006's typed frontmatter model, the last item to land) is
+complete. The generic engine lives under
+`src/biz/dfch/specmgr/models/md/` (`MarkdownStr`/`MarkdownSection` +
+`MarkdownSection1`..`6`, `@markdown`/`@alias` identity decorators,
+`MarkdownParagraph`/`MarkdownListItem`/`MarkdownCodeBlock`/
+`MarkdownBlockQuote` content classes, raw-HTML rejection, and the
+`MarkdownFrontmatter` base frontmatter model), proven end-to-end against
+both `tests/models/md/various_models.py` (small, hand-built fixture) and
+`tests/models/md/test_uc_example.py` (the full `uc_example.md` fixture, all
+three heading levels). All work is committed and pushed — `git log`'s most
+recent commits for this feature are `8d99dd3` ("feat(models/md): add
+MarkdownFrontmatter Pydantic model with validation helpers"), `e243386`
+("feat(md): add HTML rejection to the Markdown parser"), and `8aec612`
+("chore(doc): align feature and ADR documentation with implementation");
+nothing under `src/biz/dfch/specmgr/models/md/`/`tests/models/md/` is
+untracked or uncommitted. GitHub issue #5 is **closed**.
 
 Test baseline as of this update:
 ```
 uv run --frozen python -m unittest discover -v -s tests -t . -p "test_*.py"
-# Ran 367 tests. OK.
+# Ran 498 tests. OK.
 ```
-`ruff format --check` / `ruff check` are clean on all files touched in this
-feature except one **pre-existing, unrelated** warning (`F841` on an unused
-`tokens` local in `MarkdownSection.validate_heading_structure`'s
-mostly-commented-out body — not introduced by this feature's recent work,
-left as-is).
+`ruff format --check` / `ruff check` / `vulture src/ whitelist.py
+--min-confidence 60` are all clean on every file this feature touched — the
+`F841` warning on an unused `tokens` local in
+`MarkdownSection.validate_heading_structure`'s mostly-commented-out body,
+previously noted here as a pre-existing exception, no longer reproduces.
+`specmgr docs`/`specmgr adr-toc` are up to date with no drift.
+
+See "Follow-ups" below for the small number of optional, explicitly
+non-blocking items intentionally left open when this feature was closed.
 
 ### Blockers
 
 - [ ] None identified at this time.
 
-### Next (exact resumption point for a new session)
+### Follow-ups
 
-1. ~~Revisit Requirements/Acceptance Criteria/Task List below~~ — **done
-   2026-08-11**: reconciled to describe the actual
-   `MarkdownSection1..6`/`get_extent`/`from_text`/`__str__`/`alias_match`
-   implementation (see Recent Updates below); no longer stale.
-2. `validate_heading_structure` (`MarkdownSection`, `model_validator(mode="after")`)
+This feature is closed (status `done`, GitHub issue #5 closed) — the items
+below are optional, explicitly non-blocking, and were left open on purpose
+when the feature was closed. They are not "next steps required to finish
+this feature"; pick any of them up as its own future work (a new
+`feat-N-slug`, or folded into whichever feature first needs it) if/when it
+becomes relevant. Earlier, now-resolved "Next" entries from this feature's
+active development are not repeated here — see git history (`git log -p`
+on this file) or the Recent Updates log below for that record.
+
+1. `validate_heading_structure` (`MarkdownSection`, `model_validator(mode="after")`)
    and the docstring `Example` under `name` are effectively inert (all
-   assertions commented out); revisit now that `str(self)` inside them
-   actually contains the heading again and real assertions have become
-   meaningful to add.
-3. The current byte-exact round-trip only holds for the `various_models.py`
-   fixture's flat leaf content (single paragraph per leaf, no lists/code
-   blocks/etc.). Worth a dedicated test with structurally richer leaf body
-   content (lists, nested headings inside a "leaf" in the domain-model
-   sense, multiple paragraphs) once a real (non-fixture) document type
-   starts adopting this engine, per the still-unverified `mdformat`
-   reformatting/line-count caveat noted earlier this session.
-4. ~~`match_alias`'s `REGEX` branch not yet exercised end-to-end~~ — **stale,
-   corrected 2026-08-11**: it already is, via `various_models.py`'s
-   `MainDocument` fixture and `test_markdown_section.py`'s
-   `test_regex_alias_accepts_any_non_empty_heading_text` (see Task 1.7,
-   now marked done). Per explicit repo-owner direction this session,
-   `@alias`'s whole mechanism may still be short-lived/superseded later,
-   but that is a separate, forward-looking consideration, not an
-   open gap.
-5. `test_uc_example.py`'s `Assumptions`/`OpenIssues`/`MainSuccessScenario`/
+   assertions commented out). Revisit and add real assertions now that
+   `str(self)` inside them actually contains the heading again (this
+   feature never got around to it, since the equivalent protection is
+   already delivered structurally by `MarkdownSection.get_extent`'s own
+   stop condition plus `from_text`'s trailing-completeness check — see ADR
+   832cd6c1-ef8a-4bfc-990e-a610823f61ae's Consequences).
+2. The engine's byte-exact round-trip guarantee (REQ-004) has only been
+   exercised against the two fixtures' actual content shapes, not every
+   structural combination (e.g. a leaf section with multiple paragraphs,
+   an embedded list, or a code block all together). Worth a dedicated test
+   with structurally richer leaf body content once a real (non-fixture)
+   document type starts adopting this engine.
+3. `test_uc_example.py`'s `Assumptions`/`OpenIssues`/`MainSuccessScenario`/
    `Extensions`/`SubVariations` still stay leaf `MarkdownSection2`/`3`s (see
-   REQ-007's note) rather than adopting the now-available
-   `items: list[MarkdownListItem]` shape from Task 1.6.3 -- optional future
-   follow-up, not required by this feature (that fixture is a proof of the
-   generic engine, not the official use-case domain model).
-6. ~~Phase 3 (REQ-005, raw HTML rejection)~~ — **done 2026-08-11**: see Task
-   3.1/3.2 and the Recent Updates entry below.
-7. ~~Phase 4 (REQ-006, typed frontmatter model)~~ — **done 2026-08-11**: see
-   Task 4.1/4.2, ADR bc5e18ad-6bbf-4265-bae4-3e34984a2d29, and the newest
-   Recent Updates entry below. All phases in this feature's Task List are
-   now done; remaining open items are the smaller follow-ups already noted
-   above (item 2's inert `validate_heading_structure`, item 3's richer
-   round-trip test, item 5's optional `list[MarkdownListItem]` adoption in
-   `test_uc_example.py`), none of which block closing out this feature.
+   REQ-007's note) rather than adopting the `items: list[MarkdownListItem]`
+   shape from Task 1.6.3. Not required by this feature — that fixture
+   proves the generic engine, not the official use-case domain model — but
+   worth revisiting if/when `feat-4-use-cases` evaluates adopting this
+   engine for its own `uc` schema.
+4. `AdrFrontmatter` (`models/adr/v1/frontmatter.py`) was deliberately left
+   independent of the new `MarkdownFrontmatter` base (ADR
+   bc5e18ad-6bbf-4265-bae4-3e34984a2d29) rather than converted to subclass
+   it. A future decision may converge the two once there is appetite to
+   touch the ADR pipeline; not scheduled here.
 
 ### Recent Updates
+
+#### 2026-08-11 (continued, part 12) — feature closed
+- Confirmed Task 4.1/4.2's commit (`8d99dd3`) was pushed and GitHub issue #5
+  was closed. Set frontmatter `status: done` (from `in-progress`); every
+  Task List phase (0–6) is now complete, so there is no remaining planned
+  work to track under this feature.
+- Reconciled the stale "Current Status" paragraph, which still described a
+  2026-08-10 in-progress snapshot (untracked git state, 367 tests, a
+  pre-existing `F841` exception) that had drifted well behind reality
+  (everything committed across several commits since, 498 tests, `ruff`/
+  `vulture` fully clean) -- rewritten to describe the actual, final closed
+  state instead.
+- Replaced the "Next (exact resumption point for a new session)" list --
+  meant for an in-progress feature, no longer applicable -- with a
+  "Follow-ups" section: trimmed down to the genuinely open, explicitly
+  non-blocking items only (inert `validate_heading_structure` assertions,
+  a richer round-trip test, `test_uc_example.py`'s optional
+  `list[MarkdownListItem]` adoption, and a possible future
+  `AdrFrontmatter`/`MarkdownFrontmatter` convergence), dropping the
+  already-resolved/strikethrough entries per this file's own "edit in
+  place, rely on git history" convention -- their resolution is already
+  recorded in this Recent Updates log and in git history.
 
 #### 2026-08-11 (continued, part 11)
 - Completed: Task 4.1/4.2 (REQ-006/ACC-006), the last not-started item in
