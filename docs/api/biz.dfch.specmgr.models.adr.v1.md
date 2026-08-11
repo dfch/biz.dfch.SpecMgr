@@ -3,7 +3,7 @@
 ADR schema version 1 (``SCHEMA_MAJOR_VERSION == 1``).
 
 Holds every model class for this schema major version. See
-``doc/adr-tool-plan.md`` §6 for the versioning strategy: a new major schema
+``.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md`` §6 for the versioning strategy: a new major schema
 version gets its own sibling package (``models/adr/v2/``, ...) containing
 *only* the classes that actually changed for that version -- unchanged
 classes are imported from the previous version's package rather than

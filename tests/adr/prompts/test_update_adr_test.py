@@ -15,7 +15,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Tests for the ``update_adr_test`` ``@mcp.prompt()`` (doc/adr-tool-plan.md §11)."""
+"""Tests for the ``update_adr_test`` ``@mcp.prompt()`` (.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md §11)."""
 
 import unittest
 

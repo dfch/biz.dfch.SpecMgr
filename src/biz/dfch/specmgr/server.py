@@ -23,9 +23,10 @@ Registers the following resources and tools so far (plan §8, §9a):
 
 Resources
 ---------
-specmgr://version -- Installed version number of the ``biz-dfch-specmgr`` package.
-specmgr://adr/list -- Ids/titles/statuses/filenames of every ADR (``doc/adr-tool-plan.md``).
-specmgr://adr/{id} -- Full ADR document for a given id (``doc/adr-tool-plan.md``).
+specmgr://version --    Installed version number of the ``biz-dfch-specmgr`` package.
+specmgr://adr/list --   Ids/titles/statuses/filenames of every ADR
+                        (``.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md``).
+specmgr://adr/{id} --    Full ADR document for a given id (``.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md``).
 
 Tools
 -----
@@ -36,7 +37,7 @@ ADR tools (``adr/tools/``): ``get_adr``, ``create_adr``, ``update_frontmatter``,
 Prompts
 -------
 ADR prompts (``adr/prompts/``): ``create_adr``, ``update_adr`` -- instructional
-text guiding an LLM through the ADR tool sequence above (``doc/adr-tool-plan.md``
+text guiding an LLM through the ADR tool sequence above (``.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md``
 §11).
 
 Modules are grouped domain-first

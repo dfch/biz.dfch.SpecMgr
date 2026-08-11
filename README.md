@@ -19,7 +19,7 @@ need via extras (see [Installation](#installation)).
 _Status: first domain feature shipped. Architecture Decision Record (ADR)
 management — creating, reading, and editing MADR 4.0.0-derived ADRs — is
 implemented end-to-end as MCP tools/resources (see
-[MCP Server](#mcp-server) below and `doc/adr-tool-plan.md` for the full
+[MCP Server](#mcp-server) below and `.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md` for the full
 design). It is MCP-only so far: there is no `specmgr adr ...` CLI command
 yet, and no second document type beyond ADRs._
 
@@ -72,7 +72,7 @@ specmgr version
 Requires the `mcp` extra. In addition to the `specmgr://version` resource,
 the server exposes a full set of Architecture Decision Record (ADR) tools
 and resources, implementing the MADR 4.0.0-derived schema described in
-`doc/adr-tool-plan.md`:
+`.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md`:
 
 | Kind     | Name(s)                                                                                                                                   | Description                                                     |
 | -------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------- |

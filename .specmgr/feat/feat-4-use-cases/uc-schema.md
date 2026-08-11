@@ -7,7 +7,7 @@ Alistair Cockburn's "fully dressed" template
 (https://www.cs.otago.ac.nz/coursework/cosc461/uctempla.htm), that is both
 human-readable and machine-parseable into a Pydantic model
 (`uc/models/v1/`). This mirrors the ADR feature's own schema doc
-(`doc/adr-tool-plan.md`), but stays local to `.specmgr/feat/feat-4-use-cases/`
+(`.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md`), but stays local to `.specmgr/feat/feat-4-use-cases/`
 for now rather than under top-level `doc/`, since the whole feature is still
 mid-flight (Task 1.4 of the feature plan, see `README.md`).
 
@@ -218,7 +218,7 @@ Three places carry validation, deliberately split by what each can express:
 
 Unlike ADR's deliberate choice *not* to cross-check
 `Considered Options` prose against the `Option` sub-section collection
-(`doc/adr-tool-plan.md` §7 — accepted drift, no validator), the use case
+(`.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md` §7 — accepted drift, no validator), the use case
 schema's Task 1.3 was explicitly scoped to include "step numbering", so (3)
 above is enforced rather than left as a known gap (see DEC-008).
 

@@ -56,7 +56,7 @@ class UseCase(BaseModel):
         against the sibling ``main_success_scenario.steps`` collection, and detecting duplicate
         references within each of ``extensions``/``sub_variations``. Unlike ADR's analogous
         Considered-Options/Option-section gap (deliberately left unenforced, per
-        doc/adr-tool-plan.md §7), this check is explicitly in scope here (Task 1.3B).
+        .specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md §7), this check is explicitly in scope here (Task 1.3B).
         """
         step_numbers = {step.number for step in self.main_success_scenario.steps}
 

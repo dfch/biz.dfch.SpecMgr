@@ -15,7 +15,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""``@mcp.prompt()``: create_adr_test (doc/adr-tool-plan.md §11).
+"""``@mcp.prompt()``: create_adr_test (.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md §11).
 
 Experimental, strictly step-gated variant of ``create_adr`` (see
 ``adr/prompts/create_adr.py``), kept as a *separate* prompt -- not a
@@ -28,7 +28,7 @@ lets a caller switch between ``create_adr`` and ``create_adr_test`` for
 the same topic and observe whether the stricter phrasing measurably
 improves compliance (e.g. fewer fabricated mandatory-field values, fewer
 skipped duplicate checks) -- see the conversation in
-doc/adr-tool-plan.md §11 for the rationale.
+.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md §11 for the rationale.
 
 Naming note: like ``create_adr`` itself, this prompt's name does not
 collide with any ``@mcp.tool()`` -- ``adr/tools/`` has no ``create_adr_test``

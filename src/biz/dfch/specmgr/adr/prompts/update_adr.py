@@ -15,7 +15,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""``@mcp.prompt()``: update_adr (doc/adr-tool-plan.md §11).
+"""``@mcp.prompt()``: update_adr (.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md §11).
 
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through revising an existing MADR 4.0.0-based ADR by id, using the
