@@ -44,6 +44,7 @@ _._optional_blank_to_none
 _._required_non_blank
 _._validate_partial_title
 _._validate_status
+_._validate_type_non_blank
 _._validate_version
 _.validate_actions_numbered_sequentially
 _.validate_heading_structure

@@ -1,6 +1,6 @@
 ---
 id: feat-5-md-model-parser
-version: 1.14.0
+version: 1.15.0
 status: in-progress
 created: 2026-08-08
 updated: 2026-08-11
@@ -47,7 +47,7 @@ based recursive descent, not field-level `Annotated` metadata).
 - REQ-003: Implement a recursive parser, `MarkdownStr.from_text(text) -> MarkdownStr` (overridden by `MarkdownSection.from_text` for heading-bearing classes), that tokenizes `text` once per recursion step via a shared module-level `MarkdownIt` instance (`_markdown.py`), and recursively slices it into one block per declared nested field (in declaration order) using that field type's own `get_extent(text)` to determine the block boundary, to arbitrary nesting depth. Frontmatter splitting is explicitly **not** this engine's responsibility (see REQ-006) — callers strip it before calling `from_text`.
 - REQ-004: Implement the inverse `MarkdownStr.__str__`/`MarkdownSection.__str__`, producing Markdown text from a populated model instance. Because every leaf `_value` retains its complete heading+body extent verbatim (not just inline content), `str(instance)` reproduces the exact `mdformat`-normalized text `from_text` consumed — a byte-exact round-trip by construction, not merely a structural one. **Accepted exception (2026-08-11, Task 1.6.3):** `list[MarkdownListItem]` content is the one case where this is only structural, not byte-exact — a genuinely *tight* source list round-trips to an equivalent *loose* list (see `markdown_list_item.py`'s class docstring); loose lists are unaffected. This matches this feature's own founding ADR, which already treats list-rendering variance as out of scope for byte-exact fidelity.
 - REQ-005 *(done, rescoped 2026-08-11)*: Reject raw HTML (both HTML blocks and inline HTML tags) anywhere in a parsed document. Landed as one choke point, `_markdown.py`'s `parse(text) -> list[Token]` (wrapping `md.parse(text)` plus a recursive `_assert_no_raw_html` walk that also descends into every `"inline"` token's `.children`, since `html_inline` tokens only ever appear there, never in the top-level token list — verified empirically), which every `get_extent`/`from_text` in `markdown_str.py`/`markdown_section.py`/`markdown_paragraph.py`/`markdown_list_item.py`/`markdown_code_block.py`/`markdown_block_quote.py` now calls instead of `md.parse(text)` directly — the same "one shared call site" convention `format_text` already established for `mdformat` options. `MarkdownStr.from_text`'s leaf branch (the one place that previously stored `_value` without ever tokenizing it) gained an explicit `parse(text)` call so a leaf class reached directly, not just via a composite parent's `get_extent`, is still checked. This also covers `MarkdownParagraph`/`MarkdownListItem`/`MarkdownCodeBlock`/`MarkdownBlockQuote`, not only the two classes this REQ's own wording names. **Superseded scope note:** the previously-planned generic, composable `Annotated`-based constraint-marker framework (`AllowedTags(tags)`, `LengthConstraint(min_length=, max_length=)`, a generic `NoRawHtml()` marker, all evaluated by one shared validator, plus a `constraints.py` module) was dropped as speculative — only `@markdown`/`@alias` exist and are actually planned as class-level decorators; no `AllowedTags`/`LengthConstraint` mechanism is planned. Raw-HTML rejection is the one concrete, decided need and is tracked directly as this REQ, not as an instance of a generic marker framework. If another concrete constraint need arises later (e.g. a length limit), it should be scoped as its own fresh requirement then, not slotted into a speculative framework revived for the occasion. The previously-noted opt-in `RoundTrip()` marker remains moot regardless: REQ-004's byte-exact round-trip is already the engine's unconditional default behavior, not an opt-in feature to gate.
-- REQ-006 *(not started, design changed)*: The originally-scoped typed `DocumentFrontMatter` Pydantic base (`id`, `version`, `status`, `created`, `updated`) does not exist. The proven approach instead (`tests/models/md/test_uc_example.py`) delegates frontmatter stripping entirely to the `python-frontmatter` package — already a project dependency, already used the same way by `models.adr.v1.parser` — via `frontmatter.loads(text).content`, since `mdformat.text()` is CommonMark-only and mangles a `---\n...\n---` block. Whether/how a typed frontmatter model gets layered on top of `.metadata` remains open.
+- REQ-006 *(done, 2026-08-11)*: Per ADR bc5e18ad-6bbf-4265-bae4-3e34984a2d29, added `MarkdownFrontmatter` (`models/md/frontmatter.py`), a base Pydantic model with the core fields `id`, `type`, `created`, `updated`, `status`, `version` shared by every markdown-backed document type. `type` is mandatory on the base with no default (non-blank, enforced) — a concrete document type (e.g. a future `uc`/`req`) subclasses `MarkdownFrontmatter` and narrows `type` to a fixed `Literal["..."]` value with a default, acting as a discriminator a generic loader could read before knowing which concrete subclass to validate the rest of the block against. `status` defaults to `"draft"` (blank/`None` normalizes to it too) but, unlike `AdrFrontmatter.status`'s closed six-value enum, is deliberately left free-form here — different document types may want different status vocabularies, and a subclass can add its own stricter validator. `version` is validated against this package's own `SCHEMA_MAJOR_VERSION`/`CURRENT_SCHEMA_VERSION` (`models/md/_util.py`), independent of `models.adr.v1._util`'s equivalent constants — no shared validator module was introduced (per repo-owner direction: `AdrFrontmatter` stays untouched/unconverted for now; a future convergence remains possible but undecided). Frontmatter *stripping* itself is still not this engine's job (unchanged from the original REQ-006 note) — `frontmatter.loads(text).content`/`.metadata` (`python-frontmatter`) remains the caller's responsibility; `MarkdownFrontmatter` only validates `.metadata` once stripped, it does not touch `.content`.
 - REQ-007: Provide a fixture model reproducing the full nested structure of `tests/feat-5-md-model-parser/uc_example.md` (all three heading levels: `# Buy Goods` → nine `##` sections → all `###` children under `## Characteristic Information`/`## Related Information`), proving the recursive engine end-to-end, including a mix of required and `Optional[...]` fields. Landed as `UseCase`/`CharacteristicInformation`/etc. in `tests/models/md/test_uc_example.py` (distinct from the smaller, earlier `tests/models/md/various_models.py` fixture, which stays as a minimal unit-test double, not a superset of this one). This fixture is a proof of the generic engine, not the official use-case domain model (that ownership stays with `feat-4-use-cases`, if/when it chooses to adopt this engine). `Extensions`/`Sub-Variations`/`Open Issues` are modelled as leaf `MarkdownSection2`s (their dynamically-named, per-use-case h3 sub-headings are inert text) since the engine has no "repeated/list section" concept yet.
 - REQ-008: Add unit tests per building block (`@markdown`/`@alias`/`match_alias` behavior, `MarkdownStr.get_extent`/`from_text`/`__str__`, `MarkdownSection.get_extent`/`from_text`/`__str__`, `Optional[...]` field handling) plus an integration test that round-trips `MarkdownSection1.from_text`/`__str__` against both fixtures end-to-end.
 
@@ -58,7 +58,7 @@ based recursive descent, not field-level `Annotated` metadata).
 - [x] ACC-003: Verifies REQ-003 — `MarkdownSection1.from_text` on both the `various_models.py` fixture (two levels: `MainDocument` → `CharacteristicInformation`/`RelatedInformation` → h3 leaves) and the full `uc_example.md` fixture (three levels, ~15 h3 fields under `Characteristic Information`) populates every declared field, with a mandatory trailing-completeness assertion (`remaining_text == ""`) that fails loudly on any leftover unclaimed heading (`test_main_document_from_text`, `test_parses_title_and_top_level_sections`, `test_parses_all_characteristic_information_fields`).
 - [x] ACC-004: Verifies REQ-004 — `str(MarkdownSection1.from_text(text)) == text` holds exactly (byte-exact, not just structural) for both fixtures (`various_models.py`'s `MainDocument`, `uc_example.md`'s `UseCase` — `test_round_trip_reproduces_the_source_document`).
 - [x] ACC-005: Verifies REQ-005 — `tests/models/md/test_markdown_html_rejection.py` (12 cases): `_markdown.parse` raises on an `html_block`, on `html_inline` nested inside a paragraph's or a heading's `inline` children, and stays unaffected by plain Markdown formatting (`**strong**`/`*emphasis*`) and by HTML-looking text inside a fenced code block (opaque code, not raw HTML); plus end-to-end cases through `MarkdownStr.from_text` (leaf) and `MarkdownSection.from_text` (leaf, `html_block` in body / `html_inline` in heading) confirming both raise loudly and both stay unaffected by plain formatting. No `AllowedTags`/`LengthConstraint` cases are planned (see REQ-005's superseded-scope note); the `RoundTrip()`-inactive-by-default half of the original criterion no longer applies either.
-- [ ] ACC-006 *(blocked — REQ-006 not started)*: No `DocumentFrontMatter` model exists yet to reject an invalid frontmatter block; current tests only strip frontmatter via `python-frontmatter` before parsing (`test_uc_example.py::setUpClass`), performing no validation on `.metadata`.
+- [x] ACC-006: Verifies REQ-006 — `tests/models/md/test_frontmatter.py` (19 cases): `MarkdownFrontmatter` rejects a missing/blank `type`, defaults `status`/`version` correctly (including blank-normalizes-to-default), rejects a mismatched-major/malformed `version`, normalizes blank `created`/`updated` to `None`; plus `TestMarkdownFrontmatterSubclassing` proving a document-type subclass can narrow `type` to a fixed `Literal[...]` (default applies with no explicit `type=`, a mismatched value is rejected), inherits the base's `status`/`version` defaults, and may add its own further fields. `test_uc_example.py::setUpClass` is unchanged — it still only strips via `python-frontmatter` and never constructs a `MarkdownFrontmatter`, since wiring a concrete `uc` frontmatter subclass into that fixture is out of scope for this feature (fixture proves the generic engine, not the official use-case domain model).
 - [x] ACC-007: Verifies REQ-007 — `UseCase.from_text` (`tests/models/md/test_uc_example.py`) successfully parses the entirety of `tests/feat-5-md-model-parser/uc_example.md`'s body (post frontmatter-stripping) without falling back to an untyped/opaque blob for any `##`/`###` section — every field down to `RelatedUseCases`/`Assumptions` is a typed `MarkdownSection3`, not a dict or raw string.
 - [x] ACC-008: Verifies REQ-008 — Full suite passes under `uv run --frozen python -m unittest discover -v -s tests -t . -p "test_*.py"` (374 tests as of this reconciliation, all for this feature's modules under `tests/models/md/` passing, none skipped).
 
@@ -90,6 +90,14 @@ based recursive descent, not field-level `Annotated` metadata).
   matches (opt-in, not mandatory)
 - `src/biz/dfch/specmgr/models/md/_markdown.py` — shared module-level
   `MarkdownIt` instance (`md`)
+- `src/biz/dfch/specmgr/models/md/frontmatter.py` — `MarkdownFrontmatter`,
+  the base frontmatter model (`id`/`type`/`created`/`updated`/`status`/
+  `version`) every document type's own frontmatter model subclasses,
+  per ADR bc5e18ad-6bbf-4265-bae4-3e34984a2d29 (REQ-006)
+- `src/biz/dfch/specmgr/models/md/_util.py` — private validator helpers
+  (`blank_to_none`, `default_if_blank`, `validate_schema_version`) and
+  `SCHEMA_MAJOR_VERSION`/`CURRENT_SCHEMA_VERSION` for `MarkdownFrontmatter`,
+  deliberately independent of `models/adr/v1/_util.py`'s equivalents
 - `tests/models/md/various_models.py` — the smaller, hand-built fixture
   model tree (`MainDocument`, `CharacteristicInformation`, `GoalInContext`,
   `Scope`, `RelatedInformation`, `Notes`, `Assumptions`), each inheriting
@@ -107,7 +115,8 @@ based recursive descent, not field-level `Annotated` metadata).
   frontmatter stripped externally via `python-frontmatter` (not by this
   engine — see REQ-006).
 - Tests under `tests/models/md/` (`test_markdown_str.py`,
-  `test_markdown_section.py`, `test_alias_match.py`, `test_uc_example.py`)
+  `test_markdown_section.py`, `test_alias_match.py`, `test_uc_example.py`,
+  `test_frontmatter.py`)
 
 **Reconciled with actual implementation (2026-08-11):** the original plan's
 `heading.py` (`Annotated[Heading(...)]` metadata), `constraints.py`,
@@ -137,7 +146,7 @@ superseded-scope rationale.
 
 ### Dependencies
 
-- Depends on: ADR e369ee2e-3353-4f92-991c-6367d76d832e (`.specmgr` structure), ADR ece4554b-725c-4f76-bc04-5d2b760363d2 (domain-first hierarchy, shared versioned `models/`), ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae (this feature's own design decision)
+- Depends on: ADR e369ee2e-3353-4f92-991c-6367d76d832e (`.specmgr` structure), ADR ece4554b-725c-4f76-bc04-5d2b760363d2 (domain-first hierarchy, shared versioned `models/`), ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae (this feature's own heading-recursion engine design decision), ADR bc5e18ad-6bbf-4265-bae4-3e34984a2d29 (this feature's frontmatter model design decision, REQ-006/Task 4.1)
 - Related, not blocking: `feat-3-md-str-constraints` (separate regex-based string constraint type), `feat-4-use-cases` (may evaluate adopting this engine for its UC schema later; not assumed here)
 - External: adds `markdown-it-py` (+ a YAML frontmatter parsing dependency) to the library's **base** dependencies, since parsing is core library behavior, not CLI/MCP-only
 
@@ -175,6 +184,7 @@ now-superseded bullets this replaced):
 ### Related ADRs
 
 - 832cd6c1-ef8a-4bfc-990e-a610823f61ae: Generic heading-mapped markdown-to-Pydantic parsing with declarative Heading metadata and opt-in constraints
+- bc5e18ad-6bbf-4265-bae4-3e34984a2d29: Generic base frontmatter model for markdown document types (`models/md/frontmatter.py`)
 - e369ee2e-3353-4f92-991c-6367d76d832e: Organize development artifacts in `.specmgr` with feature-driven work units
 - ece4554b-725c-4f76-bc04-5d2b760363d2: Organize the codebase by document-type domain (domain-first hierarchy)
 - 4c6119c9-532f-4629-8977-108e78304f48: Parse-validate-render pipeline for ADRs (related, not superseded — this feature does not migrate the ADR pipeline)
@@ -222,9 +232,9 @@ history is lost — the original phase text remains recoverable via `git log
 - [x] Task 3.2: Unit tests for Task 3.1 — depends on: Task 3.1 — status: done. `tests/models/md/test_markdown_html_rejection.py` (12 cases): `_markdown.parse` raising on `html_block`/on `html_inline` nested in a paragraph's or heading's `inline` children, staying unaffected by plain Markdown formatting (`**strong**`/`*emphasis*`) and by HTML-looking text inside a fenced code block; plus end-to-end `MarkdownStr.from_text`/`MarkdownSection.from_text` (leaf) pass/fail cases per ACC-005.
 - **Note (rescoped 2026-08-11):** this phase no longer plans a generic `constraints.py` module with composable `AllowedTags`/`LengthConstraint`/`NoRawHtml` marker classes plus a shared validator — that framework was speculative and dropped; only `@markdown`/`@alias` exist as class-level decorators, and raw-HTML rejection above is the one concrete, decided need. The previously-noted opt-in `RoundTrip()` marker remains dropped too — REQ-004's byte-exact round-trip is already the engine's unconditional default (see Requirements/Scope above), so there is nothing left for such a marker to gate.
 
-#### Phase 4: Frontmatter *(not started; design changed)*
-- [ ] Task 4.1: Decide whether/how a typed frontmatter model (`id`, `version`, `status`, `created`, `updated`) layers on top of the already-working `python-frontmatter`-based stripping (`frontmatter.loads(text).content`/`.metadata`, proven in `test_uc_example.py`) — depends on: none — status: not-started
-- [ ] Task 4.2: Unit tests for Task 4.1, once scoped — depends on: Task 4.1 — status: not-started
+#### Phase 4: Frontmatter *(done, 2026-08-11)*
+- [x] Task 4.1: Decide whether/how a typed frontmatter model (`id`, `version`, `status`, `created`, `updated`) layers on top of the already-working `python-frontmatter`-based stripping (`frontmatter.loads(text).content`/`.metadata`, proven in `test_uc_example.py`) — depends on: none — status: done. Decided via ADR bc5e18ad-6bbf-4265-bae4-3e34984a2d29: a base `MarkdownFrontmatter` (`models/md/frontmatter.py`) with core fields `id`/`type`/`created`/`updated`/`status`/`version` (`type` added beyond the task's original field list, as a mandatory document-type discriminator with no default), subclassed per document type (narrowing `type` to a fixed `Literal[...]`). `AdrFrontmatter` stays independent/unconverted; `models/md/_util.py` owns its own validator helpers rather than depending on `models/adr/v1/_util.py`.
+- [x] Task 4.2: Unit tests for Task 4.1 — depends on: Task 4.1 — status: done. `tests/models/md/test_frontmatter.py` (19 cases): base-model field defaults/validation (`type` mandatory/non-blank, `status`/`version` defaults and blank-normalization, `version` major-mismatch/malformed rejection, `created`/`updated` blank-to-`None`), plus a `TestMarkdownFrontmatterSubclassing` suite covering the `Literal`-narrowed `type` discriminator pattern end-to-end.
 
 #### Phase 5: Fixtures + integration
 - [x] Task 5.1: Define `tests/models/md/various_models.py` — a small, two-level-nested fixture (`MainDocument` → `CharacteristicInformation`/`RelatedInformation` → h3 leaves) proving the recursive mechanics — depends on: Task 2.3 — status: done
@@ -334,11 +344,65 @@ left as-is).
    follow-up, not required by this feature (that fixture is a proof of the
    generic engine, not the official use-case domain model).
 6. ~~Phase 3 (REQ-005, raw HTML rejection)~~ — **done 2026-08-11**: see Task
-   3.1/3.2 and the new Recent Updates entry below. The only remaining
-   not-started work is Phase 4 (REQ-006, typed frontmatter model) — pick
-   that up next.
+   3.1/3.2 and the Recent Updates entry below.
+7. ~~Phase 4 (REQ-006, typed frontmatter model)~~ — **done 2026-08-11**: see
+   Task 4.1/4.2, ADR bc5e18ad-6bbf-4265-bae4-3e34984a2d29, and the newest
+   Recent Updates entry below. All phases in this feature's Task List are
+   now done; remaining open items are the smaller follow-ups already noted
+   above (item 2's inert `validate_heading_structure`, item 3's richer
+   round-trip test, item 5's optional `list[MarkdownListItem]` adoption in
+   `test_uc_example.py`), none of which block closing out this feature.
 
 ### Recent Updates
+
+#### 2026-08-11 (continued, part 11)
+- Completed: Task 4.1/4.2 (REQ-006/ACC-006), the last not-started item in
+  this feature's Task List. Preceded by a design discussion with
+  repo-owner that produced a new ADR,
+  bc5e18ad-6bbf-4265-bae4-3e34984a2d29 ("Generic base frontmatter model for
+  markdown document types"): a base `MarkdownFrontmatter`
+  (`models/md/frontmatter.py`) with core fields `id`, `type` (a mandatory,
+  non-blank document-type discriminator with no default -- added beyond
+  the task's originally-listed field set), `created`, `updated`, `status`
+  (free-form, defaults to `"draft"`, deliberately not restricted to
+  `AdrFrontmatter`'s closed six-value enum), and `version` (validated
+  against a new, `models/md`-local `SCHEMA_MAJOR_VERSION`/
+  `CURRENT_SCHEMA_VERSION` pair in `models/md/_util.py`, independent of
+  `models/adr/v1/_util.py`'s equivalents by explicit repo-owner direction).
+  A concrete document type subclasses `MarkdownFrontmatter` and narrows
+  `type` to a fixed `Literal["..."]` value with a default (e.g.
+  `Literal["uc"] = "uc"`), letting a future generic loader dispatch on
+  `type` alone before knowing which concrete subclass applies.
+  `AdrFrontmatter` is explicitly left untouched/unconverted -- no shared
+  base, no shared validator module -- a possible future convergence is
+  noted in the ADR's Consequences but not decided or scheduled.
+  Frontmatter *stripping* remains exactly as already decided (REQ-003):
+  `python-frontmatter`'s `frontmatter.loads(text).content`/`.metadata`,
+  the caller's responsibility, not this engine's.
+  - New: `models/md/frontmatter.py` (`MarkdownFrontmatter`),
+    `models/md/_util.py` (private validator helpers + version constants),
+    both re-exported from `models/md/__init__.py`.
+  - New tests: `tests/models/md/test_frontmatter.py` (19 cases) --
+    `type` mandatory/non-blank, `status`/`version` defaulting and
+    blank-normalization, `version` major-mismatch/malformed rejection,
+    `created`/`updated` blank-to-`None`, plus a
+    `TestMarkdownFrontmatterSubclassing` suite exercising the
+    `Literal`-narrowed `type` discriminator pattern end-to-end (default
+    applies with no explicit `type=`, a mismatched value is rejected,
+    core-field defaults are still inherited, a subclass may add further
+    fields of its own).
+  - `whitelist.py` gained `_._validate_type_non_blank` (Pydantic
+    `@field_validator`, invoked by Pydantic's validation machinery, not by
+    any direct call -- same pattern as the other `_validate_*` entries
+    already there).
+  - Full suite: 498 tests (up from 479), all passing; `ruff format
+    --check`/`ruff check`/`vulture` clean on every touched file;
+    `specmgr docs`/`specmgr adr-toc` re-run, no unexpected drift beyond the
+    new module docs/ADR TOC entry.
+  - Updated Requirements (REQ-006 -> done), Acceptance Criteria (ACC-006 ->
+    done), Task List (Phase 4/Task 4.1/4.2 -> done), Scope (new files),
+    Dependencies/Related ADRs (new ADR) accordingly. All phases in this
+    feature's Task List are now done.
 
 #### 2026-08-11 (continued, part 10)
 - Completed: Task 3.1/3.2 (REQ-005/ACC-005) — raw HTML rejection, the last

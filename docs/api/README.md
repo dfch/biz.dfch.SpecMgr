@@ -53,9 +53,11 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.models.adr.v1.summary`](biz.dfch.specmgr.models.adr.v1.summary.md) — Pydantic model for one line of ADR listing output (plan §8, §9a).
 - [`biz.dfch.specmgr.models.md`](biz.dfch.specmgr.models.md.md) — Markdown base models.
 - [`biz.dfch.specmgr.models.md._markdown`](biz.dfch.specmgr.models.md._markdown.md) — Markdown shared instance.
+- [`biz.dfch.specmgr.models.md._util`](biz.dfch.specmgr.models.md._util.md) — Shared, private validation helpers for the ``models.md`` subpackage.
 - [`biz.dfch.specmgr.models.md.alias`](biz.dfch.specmgr.models.md.alias.md) — Alias decorator for MarkdownStr class name transformation.
 - [`biz.dfch.specmgr.models.md.alias_match`](biz.dfch.specmgr.models.md.alias_match.md) — Match a parsed heading's actual text against a class's declared `@alias`.
 - [`biz.dfch.specmgr.models.md.alias_type`](biz.dfch.specmgr.models.md.alias_type.md) — Alias type enumeration for MarkdownStr class name transformation.
+- [`biz.dfch.specmgr.models.md.frontmatter`](biz.dfch.specmgr.models.md.frontmatter.md) — Generic base frontmatter model shared by every markdown-backed document type.
 - [`biz.dfch.specmgr.models.md.markdown`](biz.dfch.specmgr.models.md.markdown.md) — No documentation available.
 - [`biz.dfch.specmgr.models.md.markdown_block_quote`](biz.dfch.specmgr.models.md.markdown_block_quote.md) — A markdown block quote ("blockquote"), grouping every consecutive '>' line as one instance.
 - [`biz.dfch.specmgr.models.md.markdown_code_block`](biz.dfch.specmgr.models.md.markdown_code_block.md) — A leaf-only fenced ("```") code block, never subclassable with declared fields.

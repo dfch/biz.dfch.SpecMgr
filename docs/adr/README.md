@@ -52,6 +52,10 @@ Index of all ADRs in this repository.
   - Id: bbf412a7-965e-4435-8669-c338407d73b7
   - Status: accepted
   - Decision-makers: dfch
+- [Generic base frontmatter model for markdown document types (models/md/frontmatter.py)](bc5e18ad-6bbf-4265-bae4-3e34984a2d29-generic-base-frontmatter-model-for-markdown-document-types-m.md)
+  - Id: bc5e18ad-6bbf-4265-bae4-3e34984a2d29
+  - Status: accepted
+  - Decision-makers: dfch
 - [Base the ADR template on MADR 4.0.0](c73e4f9d-81f3-495d-bd3a-f660ab992ed3-base-the-adr-template-on-madr-4-0-0.md)
   - Id: c73e4f9d-81f3-495d-bd3a-f660ab992ed3
   - Status: accepted

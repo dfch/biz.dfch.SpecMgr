@@ -20,6 +20,8 @@
 from .alias_type import AliasType
 from .markdown import markdown
 from .alias import alias
+from ._util import CURRENT_SCHEMA_VERSION, SCHEMA_MAJOR_VERSION
+from .frontmatter import MarkdownFrontmatter
 from .markdown_str import MarkdownStr
 from .markdown_block_quote import MarkdownBlockQuote
 from .markdown_code_block import MarkdownCodeBlock
@@ -37,6 +39,9 @@ __all__ = [
     "markdown",
     "alias",
     "AliasType",
+    "CURRENT_SCHEMA_VERSION",
+    "SCHEMA_MAJOR_VERSION",
+    "MarkdownFrontmatter",
     "MarkdownStr",
     "MarkdownBlockQuote",
     "MarkdownCodeBlock",

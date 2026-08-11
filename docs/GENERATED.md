@@ -68,9 +68,11 @@ First-line docstrings from each module, organized by domain:
 - `models/adr/v1/summary.py` — Pydantic model for one line of ADR listing output (plan §8, §9a).
 - `models/md/__init__.py` — Markdown base models.
 - `models/md/_markdown.py` — Markdown shared instance.
+- `models/md/_util.py` — Shared, private validation helpers for the ``models.md`` subpackage.
 - `models/md/alias.py` — Alias decorator for MarkdownStr class name transformation.
 - `models/md/alias_match.py` — Match a parsed heading's actual text against a class's declared `@alias`.
 - `models/md/alias_type.py` — Alias type enumeration for MarkdownStr class name transformation.
+- `models/md/frontmatter.py` — Generic base frontmatter model shared by every markdown-backed document type.
 - `models/md/markdown_block_quote.py` — A markdown block quote ("blockquote"), grouping every consecutive '>' line as one instance.
 - `models/md/markdown_code_block.py` — A leaf-only fenced ("```") code block, never subclassable with declared fields.
 - `models/md/markdown_list_item.py` — One item of a markdown bullet or numbered list, usable only via `list[MarkdownListItem]`.
@@ -113,4 +115,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 64
+**Test files**: 65
