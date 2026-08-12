@@ -79,6 +79,8 @@ scope
 specmgr
 success_end_condition
 trigger
+precondition
+intro
 
 # --- MCP `@mcp.resource(...)`/`@mcp.tool()` entry points -------------------------
 # Invoked by the MCP framework once registered, not called directly in `src/`.

@@ -112,7 +112,10 @@ First-line docstrings from each module, organized by domain:
 - `uc/models/v1/uc_diagram.py` — Render a :class:`UseCase` into a PlantUML Use Case diagram (feature plan Task 2.1).
 - `uc/models/v1/use_case.py` — Pydantic model for the complete Use Case document.
 - `uc/models/v1/use_case_frontmatter.py` — Pydantic model for Use Case YAML frontmatter metadata.
+- `uc/models/v2/__init__.py` — Use Case models v2 -- rebuilt on `feat-5-md-model-parser`'s generic `models/md` engine.
+- `uc/models/v2/document.py` — Pydantic model for a full use-case document (frontmatter + body).
+- `uc/models/v2/frontmatter.py` — Use-case frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
 
 ## Test Coverage
 
-**Test files**: 65
+**Test files**: 71

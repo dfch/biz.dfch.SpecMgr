@@ -1,9 +1,9 @@
 ---
 id: feat-5-md-model-parser
-version: 1.16.0
+version: 1.16.1
 status: done
 created: 2026-08-08
-updated: 2026-08-11
+updated: 2026-08-12
 ---
 
 # Feature: Generic heading-mapped Markdown-to-Pydantic document parser
@@ -223,7 +223,7 @@ history is lost — the original phase text remains recoverable via `git log
 
 #### Phase 2: Recursive engine (`MarkdownStr`/`MarkdownSection`)
 - [x] Task 2.1: Implement `markdown_str.py`'s `MarkdownStr.get_extent`/`_unwrap_optional`/`process_field`/`from_text`/`__str__`/`__repr__`/`_get_field_names` — generic (non-heading-aware) leaf/composite slicing and rendering, including `Optional[X]`/`X | None` field support (an absent optional field consumes `0` lines and is left unset rather than raising) — depends on: Task 0.2 — status: done
-- [x] Task 2.2: Implement `markdown_section.py`'s `MarkdownSection.get_extent` (heading-level-aware: stops at any sibling/ancestor heading, i.e. level `<= own_level`; nested deeper headings are included) and `from_text` (validates the heading triple against `@markdown`'s `_metadata` and, via `match_alias`, against any declared `@alias`; delegates body population to `MarkdownStr.from_text`) — depends on: Task 2.1, Task 1.3 — status: done
+- [x] Task 2.2: Implement `markdown_section.py`'s `MarkdownSection.get_extent` (heading-level-aware: stops at any sibling/ancestor heading, i.e. level `<= own_level`; nested deeper headings are included) and `from_text` (validates the heading triple against `@markdown`'s `_metadata` and, via `match_alias`, against any declared `@alias`; delegates body population to `MarkdownStr.from_text`) — depends on: Task 2.1, Task 1.3 — status: done. **Amended 2026-08-12**: `get_extent` originally checked heading *level* only, not `@alias` -- see Recent Updates' 2026-08-12 entry for the bug this caused and its fix (`get_extent` now also calls `match_alias`, matching `from_text`'s own check).
 - [x] Task 2.3: Implement `MarkdownSection.__str__` (re-emits the section's own heading for a composite section; a leaf section's `_value` already holds its full extent verbatim) and the `name` computed field — depends on: Task 2.2 — status: done
 - [x] Task 2.4: Unit tests for Tasks 2.1–2.3 — `test_markdown_str.py` (leaf/composite `from_text`, missing-extent/leftover-text error cases, three `Optional[...]` field cases, `get_extent` line-count contract) and `test_markdown_section.py` (no-extent/end-of-input/nested-deeper/sibling-stops/ancestor-stops `get_extent` cases parametrized across h1–h6, plus `__str__` round-trip and `@alias`-enforcement cases) — depends on: Task 2.3 — status: done
 
@@ -329,6 +329,60 @@ on this file) or the Recent Updates log below for that record.
    touch the ADR pipeline; not scheduled here.
 
 ### Recent Updates
+
+#### 2026-08-12 — post-closure bug fix: `get_extent` now also checks `@alias`
+
+Discovered while `feat-4-use-cases` adopted this engine for its own `uc`
+schema (exactly the scenario anticipated by Follow-up #3 above) — not new
+work on this closed feature's own scope, but a genuine bug in already-shipped
+code, fixed in place rather than worked around downstream.
+
+- **Bug**: `MarkdownSection.get_extent` only ever checked that the next
+  token was a heading of its own *level* (`own_tag`/`own_type`), never
+  whether that heading's *text* satisfied the class's declared `@alias` --
+  unlike `from_text`, which always has checked both. Consequence: for an
+  `Optional[...]`/`X | None` heading-section field, `process_field`'s
+  "absent" detection (`type_.get_extent(text) == 0`) could never actually
+  fire when a *different*, same-level sibling heading immediately followed
+  an absent optional field -- `get_extent` still reported a non-zero extent
+  (since *some* same-level heading was there), so `process_field` proceeded
+  to call `from_text` on the wrong slice, which then failed loudly with
+  `"<Class>: heading text '<other heading>' does not match its declared
+  @alias"` instead of correctly leaving the field `None` and moving on.
+  Verified this was not `uc/models/v2`-specific: the same pattern already
+  latent in this engine's own `CharacteristicInformation`-shaped fixtures
+  (an absent `Optional` h3 immediately followed by a *different* h3)
+  reproduces identically.
+- **Why this was never caught here**: every fixture this feature's own test
+  suite exercises (`various_models.py`, `test_uc_example.py`) only ever
+  parses documents with *every* optional section present, so the
+  "optional field absent, followed by a same-level sibling" path was never
+  actually exercised end-to-end against a real `MarkdownSection` subclass --
+  only against a synthetic, non-heading `_AlwaysAbsentField` fixture in
+  `test_markdown_str.py` (whose overridden `get_extent` was hardcoded to
+  always return `0`, sidestepping the very case that broke).
+- **Fix**: `MarkdownSection.get_extent` now additionally checks
+  `match_alias(cls, tokens[1].content.strip())` right after the existing
+  tag/type check, returning `0` (no extent) on a mismatch, mirroring
+  `from_text`'s own check exactly (see Task 2.2's amendment above).
+- **Test fallout**: `tests/models/md/test_markdown_section.py`'s
+  `TestMarkdownSectionGetExtent` (7 pre-existing cases) called
+  `get_extent` directly on the bare, unaliased `MarkdownSection3` with
+  arbitrary heading text (`"Sec3"`, `"Sibling"`, ...) that never matched
+  `MarkdownSection3`'s own `SPACE_SEPARATED`-derived default alias
+  (`"Markdown Section 3"`) -- these were deliberately testing
+  heading-*level* semantics in isolation from heading-*text* semantics, so
+  they were switched to the file's existing `_AnyHeadingLeafSection`
+  fixture (a permissive `.+` regex `@alias`) instead of the bare class,
+  preserving their original intent unchanged. Added one new regression
+  case, `test_no_extent_when_heading_text_does_not_match_declared_alias`.
+  No other test in the repo called `get_extent` on a `MarkdownSection`
+  subclass with mismatched heading text (confirmed by grep), so this was
+  the only fallout.
+- Full repo suite green after the fix (523 tests passing at the time of
+  this entry, up from the 498 recorded at this feature's own closure --
+  the difference is `feat-4-use-cases`' own new `uc/models/v2` test files,
+  not related to this fix's own test fallout).
 
 #### 2026-08-11 (continued, part 12) — feature closed
 - Confirmed Task 4.1/4.2's commit (`8d99dd3`) was pushed and GitHub issue #5

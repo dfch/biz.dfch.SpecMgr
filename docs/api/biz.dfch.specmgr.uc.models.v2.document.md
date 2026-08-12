@@ -1,82 +1,38 @@
-# `biz.dfch.specmgr.models.md.markdown_section1`
+# `biz.dfch.specmgr.uc.models.v2.document`
 
-Markdown section starting with h1 heading.
+Pydantic model for a full use-case document (frontmatter + body).
+
+Mirrors `models.adr.v1.Adr`'s own frontmatter+body pairing. `UcDocument` holds
+no file/id/path information itself -- that lives on `frontmatter.id`, same
+convention as `AdrFrontmatter.id`.
+
+Frontmatter *stripping* is deliberately not this module's responsibility
+(feat-5-md-model-parser's REQ-003/`MarkdownFrontmatter`'s own convention):
+a caller splits a raw `.md` file's `---...---` block from its body via
+`python-frontmatter` (`frontmatter.loads(text)`), validates `.metadata` as
+`UcFrontmatter` and `.content` as `UseCase.from_text(...)` separately, then
+constructs a `UcDocument` from the two already-parsed pieces -- there is no
+`UcDocument.from_text`/parser function here (unlike `models.adr.v1.parser`,
+which is a separate, not-yet-ported concern; see `.specmgr/feat/feat-4-use-cases/README.md`).
 
 ## Classes
 
-### `MarkdownSection1`
+### `UcDocument`
 
-Markdown content starting with an h1 heading, no nested headings allowed.
+A full use-case document: YAML frontmatter and body.
 
-Tokens [0:3] form the opening h1 heading triple (heading_open/inline/heading_close).
-All tokens after index 3 must not contain any heading tags (h1-h6).
+Parameters
+----------
+frontmatter:
+    The YAML frontmatter block. See :class:`UcFrontmatter`.
+body:
+    The parsed use-case sections. See :class:`UseCase`.
 
 **Methods:**
 
 - `construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
 
 - `from_orm(obj: 'Any') -> 'Self'`
-
-- `from_text(text: 'str') -> 'MarkdownSection'`
-  Create an instance from markdown text starting with this class's own heading.
-
-  Validates that `text` starts with the heading triple
-  (`heading_open`/`inline`/`heading_close`) declared by the `@markdown`
-  decorator's metadata (`type`/`tag`), then that the heading's actual
-  text satisfies `cls`'s effective `@alias` (`match_alias`) -- either
-  the one explicitly declared, or, absent one, the implicit
-  `AliasType.SPACE_SEPARATED` derivation of `cls.__name__` (see
-  `match_alias`).
-
-  If `cls` declares no nested `MarkdownStr` fields (leaf case), nothing
-  else will ever retain this section's body text, so `_value` is set to
-  the complete extent `from_text` received (heading and body verbatim),
-  exactly like the base `MarkdownStr.from_text` leaf case.
-
-  Otherwise the heading's own line span is stripped off `text` and the
-  remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
-
-- `get_extent(text: 'str') -> 'int'`
-  Return the extent of this heading section, as a line count.
-
-  Overrides `MarkdownStr.get_extent` for heading-based sections. A
-  level-N heading section's extent spans from its own `heading_open`
-  token through every subsequent token, up to (but excluding) the
-  next heading whose level is `<= N` -- i.e. a sibling or ancestor
-  heading. Deeper headings (level > N, nested subsections) do not end
-  the extent. If no such heading follows, the extent reaches the end
-  of `text`.
-
-  There is only an extent at all if the *first* token parsed from
-  `text` is a `heading_open` matching this class's own tag (from the
-  `@markdown` decorator's metadata) *and* that heading's own text
-  satisfies `cls`'s effective `@alias` (`match_alias`, the same check
-  `from_text` itself makes) -- otherwise this returns `0`, same as the
-  "no extent" case in the base class. This alias check is what lets
-  `process_field`'s optional-field handling correctly treat a
-  same-level-but-differently-named heading (e.g. an absent optional
-  `Notes` immediately followed by a sibling `Assumptions` heading) as
-  "this field is absent", instead of matching the wrong heading's
-  extent and then failing deeper inside `from_text`'s own alias
-  assertion.
-
-  Args:
-      text: Markdown source, pre-formatted with `mdformat`.
-
-  Returns:
-      0: `text` does not start with this class's own heading, or that
-          heading's text does not satisfy `cls`'s `@alias` (no extent).
-      int > 0: line count (see `MarkdownStr.get_extent`) covered by this
-          heading and its nested content, stopping before the next
-          sibling/ancestor heading or at the end of `text`.
 
 - `model_construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
   Creates a new instance of the `Model` class with validated data.
@@ -214,79 +170,6 @@ All tokens after index 3 must not contain any heading tags (h1-h6).
 
 - `parse_raw(b: 'str | bytes', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'`
 
-- `process_field(name: 'str', type_: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False) -> 'tuple[int, MarkdownStr | None]'`
-  Resolve one nested field's extent and parsed instance from `text`.
-
-  Args:
-      name: the field's attribute name (used only for error messages).
-      type_: the field's declared `MarkdownStr` subclass.
-      text: the not-yet-consumed remainder of the parent's markdown text;
-          the field is assumed to start at the very first line of `text`.
-      optional: whether the field is declared `Optional[type_]`/
-          `type_ | None`. When `True` and `type_.get_extent(text)` finds
-          no extent, this is not an error: the field is simply absent
-          from `text` (e.g. an optional section whose heading doesn't
-          appear next), and `(0, None)` is returned so the caller can
-          move on to the next field without consuming any of `text`.
-
-  Returns:
-      A `(extent, instance)` pair: `extent` is the number of leading
-      lines of `text` this field consumes (see `MarkdownStr.get_extent`),
-      and `instance` is the field's value, parsed via
-      `type_.from_text` on exactly those `extent` leading lines -- or
-      `(0, None)` for an absent optional field (see `optional` above).
-
-- `process_list_field(name: 'str', item_type: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False) -> 'tuple[str, list[MarkdownStr] | None]'`
-  Resolve one repeated `list[MarkdownStr]` field's parsed items and new remainder from `text`.
-
-  Repeats `process_field`'s single-item extent/slice/parse step against
-  a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
-  `from_text`'s own `remaining_text` handling: a raw substring of an
-  already-`mdformat`-compliant document is not itself guaranteed
-  `mdformat`-compliant (e.g. it can start with a blank line separating
-  two items, which `mdformat` would strip). The loop stops as soon as
-  `item_type.get_extent` finds no further extent.
-
-  Unlike `process_field`, this does **not** return a single combined
-  line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
-  renormalization can drop lines (e.g. a blank line separating two
-  items) that never show up in any individual item's own `get_extent`
-  result, so a caller-side `text.splitlines()[extent:]` computed from a
-  *summed* extent would not line up with `text`'s original line
-  numbering (exactly the class of bug `from_text` itself already moved
-  away from a line-index `cursor` to avoid). Returning the
-  already-fully-reduced `remaining_text` string sidesteps this by
-  construction, the same way `from_text` tracks its own state.
-
-  The *first* item follows the same `optional` contract as
-  `process_field`: no item found there is an absence, which is an
-  error for a mandatory `list[X]` field, or `(text, None)` (untouched)
-  for an optional `list[X] | None` field. Every *subsequent* item is
-  implicitly optional -- no further item found there simply ends the
-  list, with no `Optional[X]` needed on `item_type` itself.
-
-  Args:
-      name: the field's attribute name (used only for error messages).
-      item_type: the field's declared `MarkdownStr` subclass (the `X`
-          in `list[X]`/`list[X] | None`).
-      text: the not-yet-consumed remainder of the parent's markdown
-          text; the first item, if any, is assumed to start at the very
-          first line of `text`.
-      optional: whether the field is declared `list[X] | None`. When
-          `True` and no item at all is found, this is not an error:
-          `(text, None)` is returned so the caller can move on to the
-          next field without consuming any of `text`.
-
-  Returns:
-      A `(remaining_text, items)` pair: `remaining_text` is `text` with
-      every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
-      to the next declared field -- and `items` is the non-empty list
-      of parsed instances, or `(text, None)` for an absent optional
-      field (see `optional` above).
-
 - `schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}') -> 'Dict[str, Any]'`
 
 - `schema_json(*, by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', **dumps_kwargs: 'Any') -> 'str'`
@@ -323,67 +206,6 @@ All tokens after index 3 must not contain any heading tags (h1-h6).
 - `dict(self, *, include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, by_alias: 'bool' = False, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False) -> 'Dict[str, Any]'`
 
 - `from_orm(obj: 'Any') -> 'Self'`
-
-- `from_text(text: 'str') -> 'MarkdownSection'`
-  Create an instance from markdown text starting with this class's own heading.
-
-  Validates that `text` starts with the heading triple
-  (`heading_open`/`inline`/`heading_close`) declared by the `@markdown`
-  decorator's metadata (`type`/`tag`), then that the heading's actual
-  text satisfies `cls`'s effective `@alias` (`match_alias`) -- either
-  the one explicitly declared, or, absent one, the implicit
-  `AliasType.SPACE_SEPARATED` derivation of `cls.__name__` (see
-  `match_alias`).
-
-  If `cls` declares no nested `MarkdownStr` fields (leaf case), nothing
-  else will ever retain this section's body text, so `_value` is set to
-  the complete extent `from_text` received (heading and body verbatim),
-  exactly like the base `MarkdownStr.from_text` leaf case.
-
-  Otherwise the heading's own line span is stripped off `text` and the
-  remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
-
-- `get_extent(text: 'str') -> 'int'`
-  Return the extent of this heading section, as a line count.
-
-  Overrides `MarkdownStr.get_extent` for heading-based sections. A
-  level-N heading section's extent spans from its own `heading_open`
-  token through every subsequent token, up to (but excluding) the
-  next heading whose level is `<= N` -- i.e. a sibling or ancestor
-  heading. Deeper headings (level > N, nested subsections) do not end
-  the extent. If no such heading follows, the extent reaches the end
-  of `text`.
-
-  There is only an extent at all if the *first* token parsed from
-  `text` is a `heading_open` matching this class's own tag (from the
-  `@markdown` decorator's metadata) *and* that heading's own text
-  satisfies `cls`'s effective `@alias` (`match_alias`, the same check
-  `from_text` itself makes) -- otherwise this returns `0`, same as the
-  "no extent" case in the base class. This alias check is what lets
-  `process_field`'s optional-field handling correctly treat a
-  same-level-but-differently-named heading (e.g. an absent optional
-  `Notes` immediately followed by a sibling `Assumptions` heading) as
-  "this field is absent", instead of matching the wrong heading's
-  extent and then failing deeper inside `from_text`'s own alias
-  assertion.
-
-  Args:
-      text: Markdown source, pre-formatted with `mdformat`.
-
-  Returns:
-      0: `text` does not start with this class's own heading, or that
-          heading's text does not satisfy `cls`'s `@alias` (no extent).
-      int > 0: line count (see `MarkdownStr.get_extent`) covered by this
-          heading and its nested content, stopping before the next
-          sibling/ancestor heading or at the end of `text`.
 
 - `json(self, *, include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, by_alias: 'bool' = False, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False, encoder: 'Callable[[Any], Any] | None' = PydanticUndefined, models_as_dict: 'bool' = PydanticUndefined, **dumps_kwargs: 'Any') -> 'str'`
 
@@ -527,14 +349,9 @@ All tokens after index 3 must not contain any heading tags (h1-h6).
   Raises:
       TypeError: Raised when trying to generate concrete names for non-generic models.
 
-- `model_post_init(self: 'BaseModel', context: 'Any', /) -> 'None'`
-  This function is meant to behave like a BaseModel method to initialize private attributes.
-
-  It takes context as an argument since that's what pydantic-core passes when calling it.
-
-  Args:
-      self: The BaseModel instance.
-      context: The context.
+- `model_post_init(self, context: 'Any', /) -> 'None'`
+  Override this method to perform additional initialization after `__init__` and `model_construct`.
+  This is useful if you want to do some validation that requires the entire model to be initialized.
 
 - `model_rebuild(*, force: 'bool' = False, raise_errors: 'bool' = True, _parent_namespace_depth: 'int' = 2, _types_namespace: 'MappingNamespace | None' = None) -> 'bool | None'`
   Try to rebuild the pydantic-core schema for the model.
@@ -613,79 +430,6 @@ All tokens after index 3 must not contain any heading tags (h1-h6).
 
 - `parse_raw(b: 'str | bytes', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'`
 
-- `process_field(name: 'str', type_: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False) -> 'tuple[int, MarkdownStr | None]'`
-  Resolve one nested field's extent and parsed instance from `text`.
-
-  Args:
-      name: the field's attribute name (used only for error messages).
-      type_: the field's declared `MarkdownStr` subclass.
-      text: the not-yet-consumed remainder of the parent's markdown text;
-          the field is assumed to start at the very first line of `text`.
-      optional: whether the field is declared `Optional[type_]`/
-          `type_ | None`. When `True` and `type_.get_extent(text)` finds
-          no extent, this is not an error: the field is simply absent
-          from `text` (e.g. an optional section whose heading doesn't
-          appear next), and `(0, None)` is returned so the caller can
-          move on to the next field without consuming any of `text`.
-
-  Returns:
-      A `(extent, instance)` pair: `extent` is the number of leading
-      lines of `text` this field consumes (see `MarkdownStr.get_extent`),
-      and `instance` is the field's value, parsed via
-      `type_.from_text` on exactly those `extent` leading lines -- or
-      `(0, None)` for an absent optional field (see `optional` above).
-
-- `process_list_field(name: 'str', item_type: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False) -> 'tuple[str, list[MarkdownStr] | None]'`
-  Resolve one repeated `list[MarkdownStr]` field's parsed items and new remainder from `text`.
-
-  Repeats `process_field`'s single-item extent/slice/parse step against
-  a local `remaining_text`, once per matched item, re-normalizing with
-  `mdformat.text()` after every item consumed -- same reasoning as
-  `from_text`'s own `remaining_text` handling: a raw substring of an
-  already-`mdformat`-compliant document is not itself guaranteed
-  `mdformat`-compliant (e.g. it can start with a blank line separating
-  two items, which `mdformat` would strip). The loop stops as soon as
-  `item_type.get_extent` finds no further extent.
-
-  Unlike `process_field`, this does **not** return a single combined
-  line-count `extent` for the caller to slice `text` with. Doing so
-  would silently miscount: every intermediate `mdformat.text()`
-  renormalization can drop lines (e.g. a blank line separating two
-  items) that never show up in any individual item's own `get_extent`
-  result, so a caller-side `text.splitlines()[extent:]` computed from a
-  *summed* extent would not line up with `text`'s original line
-  numbering (exactly the class of bug `from_text` itself already moved
-  away from a line-index `cursor` to avoid). Returning the
-  already-fully-reduced `remaining_text` string sidesteps this by
-  construction, the same way `from_text` tracks its own state.
-
-  The *first* item follows the same `optional` contract as
-  `process_field`: no item found there is an absence, which is an
-  error for a mandatory `list[X]` field, or `(text, None)` (untouched)
-  for an optional `list[X] | None` field. Every *subsequent* item is
-  implicitly optional -- no further item found there simply ends the
-  list, with no `Optional[X]` needed on `item_type` itself.
-
-  Args:
-      name: the field's attribute name (used only for error messages).
-      item_type: the field's declared `MarkdownStr` subclass (the `X`
-          in `list[X]`/`list[X] | None`).
-      text: the not-yet-consumed remainder of the parent's markdown
-          text; the first item, if any, is assumed to start at the very
-          first line of `text`.
-      optional: whether the field is declared `list[X] | None`. When
-          `True` and no item at all is found, this is not an error:
-          `(text, None)` is returned so the caller can move on to the
-          next field without consuming any of `text`.
-
-  Returns:
-      A `(remaining_text, items)` pair: `remaining_text` is `text` with
-      every matched item (and any separating blank lines) removed and
-      re-normalized via `mdformat.text()`, ready to be handed directly
-      to the next declared field -- and `items` is the non-empty list
-      of parsed instances, or `(text, None)` for an absent optional
-      field (see `optional` above).
-
 - `schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}') -> 'Dict[str, Any]'`
 
 - `schema_json(*, by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', **dumps_kwargs: 'Any') -> 'str'`
@@ -693,16 +437,4 @@ All tokens after index 3 must not contain any heading tags (h1-h6).
 - `update_forward_refs(**localns: 'Any') -> 'None'`
 
 - `validate(value: 'Any') -> 'Self'`
-
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
-
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
-
-- `validate_headings(self) -> 'MarkdownSection1'`
-  Validate heading level and no nested headings.
-
-  Base class validates the heading triple structure.
-  This validates: specific tag h1 and no nested headings in tokens [3:].
 

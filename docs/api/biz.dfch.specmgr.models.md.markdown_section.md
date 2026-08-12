@@ -54,14 +54,23 @@ Abstract base class for markdown sections with heading constraints.
 
   There is only an extent at all if the *first* token parsed from
   `text` is a `heading_open` matching this class's own tag (from the
-  `@markdown` decorator's metadata); otherwise this returns `0`, same
-  as the "no extent" case in the base class.
+  `@markdown` decorator's metadata) *and* that heading's own text
+  satisfies `cls`'s effective `@alias` (`match_alias`, the same check
+  `from_text` itself makes) -- otherwise this returns `0`, same as the
+  "no extent" case in the base class. This alias check is what lets
+  `process_field`'s optional-field handling correctly treat a
+  same-level-but-differently-named heading (e.g. an absent optional
+  `Notes` immediately followed by a sibling `Assumptions` heading) as
+  "this field is absent", instead of matching the wrong heading's
+  extent and then failing deeper inside `from_text`'s own alias
+  assertion.
 
   Args:
       text: Markdown source, pre-formatted with `mdformat`.
 
   Returns:
-      0: `text` does not start with this class's own heading (no extent).
+      0: `text` does not start with this class's own heading, or that
+          heading's text does not satisfy `cls`'s `@alias` (no extent).
       int > 0: line count (see `MarkdownStr.get_extent`) covered by this
           heading and its nested content, stopping before the next
           sibling/ancestor heading or at the end of `text`.
@@ -352,14 +361,23 @@ Abstract base class for markdown sections with heading constraints.
 
   There is only an extent at all if the *first* token parsed from
   `text` is a `heading_open` matching this class's own tag (from the
-  `@markdown` decorator's metadata); otherwise this returns `0`, same
-  as the "no extent" case in the base class.
+  `@markdown` decorator's metadata) *and* that heading's own text
+  satisfies `cls`'s effective `@alias` (`match_alias`, the same check
+  `from_text` itself makes) -- otherwise this returns `0`, same as the
+  "no extent" case in the base class. This alias check is what lets
+  `process_field`'s optional-field handling correctly treat a
+  same-level-but-differently-named heading (e.g. an absent optional
+  `Notes` immediately followed by a sibling `Assumptions` heading) as
+  "this field is absent", instead of matching the wrong heading's
+  extent and then failing deeper inside `from_text`'s own alias
+  assertion.
 
   Args:
       text: Markdown source, pre-formatted with `mdformat`.
 
   Returns:
-      0: `text` does not start with this class's own heading (no extent).
+      0: `text` does not start with this class's own heading, or that
+          heading's text does not satisfy `cls`'s `@alias` (no extent).
       int > 0: line count (see `MarkdownStr.get_extent`) covered by this
           heading and its nested content, stopping before the next
           sibling/ancestor heading or at the end of `text`.

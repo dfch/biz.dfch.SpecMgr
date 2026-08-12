@@ -36,13 +36,23 @@ class _AnyHeadingLeafSection(MarkdownSection3): ...
 
 
 class TestMarkdownSectionGetExtent(unittest.TestCase):
-    """Tests for MarkdownSection.get_extent (heading-level-aware extent)."""
+    """Tests for MarkdownSection.get_extent (heading-level-aware extent).
+
+    Uses `_AnyHeadingLeafSection` (a permissive `.+` regex `@alias`), not the
+    bare `MarkdownSection3` -- `get_extent` also enforces the effective
+    `@alias` now (same check `from_text` already made), so a class relying on
+    the no-@alias `SPACE_SEPARATED` default (which derives
+    `"MarkdownSection3"` -> `"Markdown Section 3"`) would reject every one of
+    these fixtures' arbitrary heading text (`"Sec3"`, `"Sibling"`, ...); a
+    `.+` regex alias is what actually isolates "heading *level*" from
+    "heading *text*" for these level-only tests.
+    """
 
     def test_no_extent_when_first_token_is_not_own_heading(self) -> None:
         """A text not starting with this class's own heading tag has no extent."""
         text = mdformat.text("## Not h3\ncontent\n")
         lines = text.splitlines()
-        result = MarkdownSection3.get_extent(text)
+        result = _AnyHeadingLeafSection.get_extent(text)
         self.assertEqual(result, 0)
         print(lines[0:result])
 
@@ -50,7 +60,7 @@ class TestMarkdownSectionGetExtent(unittest.TestCase):
         """With no sibling/ancestor heading following, the extent reaches the end."""
         text = mdformat.text("### Sec3 only\ncontent\nmore content\n")
         lines = text.splitlines()
-        result = MarkdownSection3.get_extent(text)
+        result = _AnyHeadingLeafSection.get_extent(text)
         self.assertEqual(result, len(text.splitlines()))
         print(lines[0:result])
 
@@ -58,7 +68,7 @@ class TestMarkdownSectionGetExtent(unittest.TestCase):
         """A deeper heading (h4) is nested content and does not stop the extent."""
         text = mdformat.text("### Sec3\ncontent\n\n#### Sec4 nested\nnested content\n")
         lines = text.splitlines()
-        result = MarkdownSection3.get_extent(text)
+        result = _AnyHeadingLeafSection.get_extent(text)
         self.assertEqual(result, len(text.splitlines()))
         print(lines[0:result])
 
@@ -67,7 +77,7 @@ class TestMarkdownSectionGetExtent(unittest.TestCase):
         text = mdformat.text("### Sec3\ncontent\n\n### Sibling\nmore\n")
         lines = text.splitlines()
         stop_line = next(i for i, line in enumerate(lines) if line.startswith("### Sibling"))
-        result = MarkdownSection3.get_extent(text)
+        result = _AnyHeadingLeafSection.get_extent(text)
         self.assertEqual(result, stop_line)
         print(lines[0:result])
 
@@ -76,7 +86,7 @@ class TestMarkdownSectionGetExtent(unittest.TestCase):
         text = mdformat.text("### Sec3\ncontent\n\n#### Sec4 nested\nnested content\n\n## Sec2 stops here\nmore\n")
         lines = text.splitlines()
         stop_line = next(i for i, line in enumerate(lines) if line.startswith("## Sec2"))
-        result = MarkdownSection3.get_extent(text)
+        result = _AnyHeadingLeafSection.get_extent(text)
         self.assertEqual(result, stop_line)
         print(lines[0:result])
 
@@ -87,7 +97,7 @@ class TestMarkdownSectionGetExtent(unittest.TestCase):
                 text = mdformat.text(f"### Sec3\ncontent\n\n{marker} Next\nmore\n")
                 lines = text.splitlines()
                 stop_line = next(i for i, line in enumerate(lines) if line.startswith(f"{marker} Next"))
-                result = MarkdownSection3.get_extent(text)
+                result = _AnyHeadingLeafSection.get_extent(text)
                 self.assertEqual(result, stop_line)
                 print(lines[0:result])
 
@@ -97,9 +107,18 @@ class TestMarkdownSectionGetExtent(unittest.TestCase):
             with self.subTest(level=level):
                 text = mdformat.text(f"### Sec3\ncontent\n\n{marker} Nested\nmore\n")
                 lines = text.splitlines()
-                result = MarkdownSection3.get_extent(text)
+                result = _AnyHeadingLeafSection.get_extent(text)
                 self.assertEqual(result, len(text.splitlines()))
                 print(lines[0:result])
+
+    def test_no_extent_when_heading_text_does_not_match_declared_alias(self) -> None:
+        """A same-level heading that does NOT satisfy the class's own @alias has
+        no extent -- this is what lets `process_field`'s optional-field handling
+        correctly treat an absent optional section (followed by a *different*,
+        sibling h3) as absent, rather than mis-matching the wrong heading."""
+        text = mdformat.text("### Wrong Heading\ncontent\n")
+        result = _AliasedLeafSection.get_extent(text)
+        self.assertEqual(result, 0)
 
 
 class TestMarkdownSectionStr(unittest.TestCase):

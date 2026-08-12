@@ -93,3 +93,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.uc.models.v1.uc_diagram`](biz.dfch.specmgr.uc.models.v1.uc_diagram.md) — Render a :class:`UseCase` into a PlantUML Use Case diagram (feature plan Task 2.1).
 - [`biz.dfch.specmgr.uc.models.v1.use_case`](biz.dfch.specmgr.uc.models.v1.use_case.md) — Pydantic model for the complete Use Case document.
 - [`biz.dfch.specmgr.uc.models.v1.use_case_frontmatter`](biz.dfch.specmgr.uc.models.v1.use_case_frontmatter.md) — Pydantic model for Use Case YAML frontmatter metadata.
+- [`biz.dfch.specmgr.uc.models.v2`](biz.dfch.specmgr.uc.models.v2.md) — Use Case models v2 -- rebuilt on `feat-5-md-model-parser`'s generic `models/md` engine.
+- [`biz.dfch.specmgr.uc.models.v2.document`](biz.dfch.specmgr.uc.models.v2.document.md) — Pydantic model for a full use-case document (frontmatter + body).
+- [`biz.dfch.specmgr.uc.models.v2.frontmatter`](biz.dfch.specmgr.uc.models.v2.frontmatter.md) — Use-case frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
+- [`biz.dfch.specmgr.uc.models.v2.use_case`](biz.dfch.specmgr.uc.models.v2.use_case.md) — No documentation available.
