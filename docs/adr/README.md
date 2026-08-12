@@ -8,6 +8,11 @@ Index of all ADRs in this repository.
   - Id: 23a14195-339c-48af-99d2-97c9964041ae
   - Status: accepted
   - Date: 2026-08-05
+- [Adopt icontract as the Design by Contract library for SpecMgr](3159caf2-4beb-43f2-9f5d-8f46be0211af-adopt-icontract-as-the-design-by-contract-library-for-specmg.md)
+  - Id: 3159caf2-4beb-43f2-9f5d-8f46be0211af
+  - Status: accepted
+  - Date: 2026-08-12
+  - Decision-makers: OpenCode agent + user decision
 - [Filesystem is the sole source of truth: no in-memory id-to-document cache](33c5ab08-ff58-4c73-8c32-23abaf3838e3-filesystem-is-the-sole-source-of-truth-no-in-memory-id-to-do.md)
   - Id: 33c5ab08-ff58-4c73-8c32-23abaf3838e3
   - Status: accepted
