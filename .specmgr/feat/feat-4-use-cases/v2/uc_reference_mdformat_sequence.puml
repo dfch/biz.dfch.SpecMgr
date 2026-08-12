@@ -1,0 +1,158 @@
+@startuml uc_reference_mdformat_sequence
+!theme plain
+
+title Buy Goods - Main Success Scenario & Extensions
+
+actor Buyer
+participant Company
+participant "Inventory\nSystem"
+participant "Credit Card\nCompany"
+participant "Bank"
+participant "Shipping\nService"
+
+autonumber
+
+== Main Success Scenario ==
+
+Buyer -> Company: Calls in with purchase request
+activate Company
+
+Company -> Buyer: Request buyer info (name, address, goods, quantity, delivery date)
+activate Buyer
+Buyer -> Company: Provides information
+deactivate Buyer
+
+Company -> "Inventory\nSystem": Check inventory for requested goods
+activate "Inventory\nSystem"
+"Inventory\nSystem" -> Company: Return inventory status
+deactivate "Inventory\nSystem"
+
+Company -> Buyer: Provide goods info (prices, delivery dates, availability)
+activate Buyer
+Buyer -> Company: Confirm order details and sign
+deactivate Buyer
+
+Company -> Company: Create order in system
+Company -> Shipping\nService: Send order for shipment
+activate Shipping\nService
+
+Company -> Buyer: Send invoice
+Buyer -> Buyer: Receive goods and verify order
+Buyer -> Company: Pay invoice
+
+alt Payment Method
+  opt Credit Card Payment (Extension 5a)
+    Buyer -> Company: Provide credit card info
+    Company -> "Credit Card\nCompany": Process payment
+    activate "Credit Card\nCompany"
+    "Credit Card\nCompany" -> Company: Payment approved/declined
+    deactivate "Credit Card\nCompany"
+  else Other Payment Method
+    Buyer -> Company: Provide payment (cash, check, transfer, etc.)
+  end
+end
+
+Company -> Company: Record payment
+deactivate Company
+Shipping\nService -> Buyer: Deliver goods
+deactivate Shipping\nService
+
+== Extension 3a: Out of Stock ==
+
+note over Company
+  Triggers after step 3 if any item unavailable
+end note
+
+Company -> Buyer: Inform of out-of-stock items
+activate Buyer
+Buyer -> Company: Choose: (a) wait, (b) substitute, or (c) remove item
+deactivate Buyer
+note over Company
+  Return to step 4
+end note
+
+== Extension 4a: Expedited Shipping ==
+
+note over Company
+  Triggers after step 4 if buyer requests expedited shipping
+end note
+
+Company -> Company: Calculate expedited shipping cost
+Company -> Buyer: Provide expedited shipping quote
+activate Buyer
+Buyer -> Company: Accept or decline expedited shipping
+deactivate Buyer
+note over Company
+  Return to step 5
+end note
+
+== Extension 7a: Shipping Service Unavailable ==
+
+note over Shipping\nService
+  If shipping service unavailable after step 6
+end note
+
+Shipping\nService --> Company: Service unavailable
+Company -> Shipping\nService: Attempt backup shipping service
+
+alt Backup Available
+  Shipping\nService -> Buyer: Ship via backup service
+else Backup Also Unavailable
+  Company -> Buyer: Inform of shipping delay
+  Company -> Shipping\nService: Retry when service available
+  Shipping\nService -> Buyer: Ship when ready
+end
+
+== Extension 8a: Invoice Delivery Fails ==
+
+note over Company
+  If invoice delivery fails after step 7
+end note
+
+Company -> Buyer: Send invoice (attempt 1)
+alt Invoice Delivery
+  Company -> Buyer: Retry via alternate channel (email, fax, mail)
+else All Channels Fail
+  Company -> Company: Log issue for manual follow-up
+end
+
+== Extension 10a: Buyer Returns Goods ==
+
+note over Buyer
+  Triggered after step 9 if buyer initiates return
+end note
+
+Buyer -> Company: Initiate return request
+Company -> Company: Handle returned goods (UC-105)
+Company -> Buyer: Process refund or credit
+
+== Extension 10b: Buyer Disputes Charge ==
+
+note over Buyer
+  Triggered after step 10 if dispute arises
+end note
+
+Buyer -> Company: Dispute charge
+Company -> Company: Initiate dispute resolution
+Company -> Buyer: Provide documentation
+Company -> Buyer: Resolve (refund, credit, or confirm charge)
+
+== Extension 10c: Payment Fails ==
+
+note over Company
+  Triggered after step 10 if payment fails
+end note
+
+Company -> Company: Retry payment collection
+alt Retry Succeeds
+  Company -> Company: Record payment
+else Retry Fails
+  Company -> Buyer: Contact buyer to resolve
+  Buyer -> Company: Provide alternative payment
+  Company -> Company: Record payment
+  note over Company
+    Continue to step 11
+  end note
+end
+
+@enduml

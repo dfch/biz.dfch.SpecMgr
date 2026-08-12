@@ -47,7 +47,7 @@ Company.
 
 Summary
 
-### Precondition
+### Preconditions
 
 - We know Buyer
 

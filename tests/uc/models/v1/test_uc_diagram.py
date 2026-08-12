@@ -11,7 +11,9 @@ from biz.dfch.specmgr.uc.models.v1.step import Step
 from biz.dfch.specmgr.uc.models.v1.use_case import UseCase
 from biz.dfch.specmgr.uc.models.v1.use_case_frontmatter import UseCaseFrontmatter
 
-_EXAMPLE_PATH = Path(__file__).resolve().parents[4] / ".specmgr" / "feat" / "feat-4-use-cases" / "uc_example.md"
+_EXAMPLE_PATH = (
+    Path(__file__).resolve().parents[4] / ".specmgr" / "feat" / "feat-4-use-cases" / "v1" / "uc_example-v1.md"
+)
 
 
 def _make_use_case(primary_actor: str, secondary_actors: list[str] | None = None, title: str = "Buy Goods") -> UseCase:

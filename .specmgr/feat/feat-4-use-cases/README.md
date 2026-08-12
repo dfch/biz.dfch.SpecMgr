@@ -1,6 +1,6 @@
 ---
 id: feat-4-use-cases
-version: 1.1.0
+version: 1.3.0
 status: planning
 created: 2026-08-05
 updated: 2026-08-12
@@ -56,7 +56,7 @@ Create a Markdown schema for use cases based on Alistair Cockburn's template, wi
 ### Design Notes
 
 **Formal Schema Specification:**
-See `uc_schema.json` for the complete JSON Schema definition. This machine-readable schema defines all fields, types, constraints, and validation rules. Agents can parse this to understand the use case structure. See `uc_class.puml` for the class diagram and `uc_example.md` for a detailed example use case.
+See `uc_schema.json` for the complete JSON Schema definition. This machine-readable schema defines all fields, types, constraints, and validation rules. Agents can parse this to understand the use case structure. See `uc_class.puml` for the class diagram and `uc_reference.md` for a detailed example use case.
 
 **Markdown Schema Design:**
 - Use Cockburn's template attributes: Use Case name, Goal in Context, Scope, Level, Preconditions, Success End Condition, Failed End Condition, Primary Actor, Trigger, Main Success Scenario, Extensions, Sub-Variations, Related Information (Priority, Performance Target, Frequency, Channels, Secondary Actors, Open Issues, Schedule)
@@ -99,7 +99,7 @@ progresses (edit, don't duplicate).
 - [x] Task 1.3A: Implement Markdown parser (parse_uc) + fix Extension model for compound action numbering — depends on: Task 1.2 — status: completed
 - [x] Task 1.3B: Implement validation tool (step-numbering, cross-reference model_validators) — depends on: Task 1.3A — status: completed
 - [x] Task 1.4: Write schema documentation with examples — depends on: Task 1.1 — status: completed
-- [ ] Task 1.5: Rebuild the uc schema/models on feat-5-md-model-parser's generic `models/md` engine (`MarkdownStr`, `MarkdownSection1`..`6`, `MarkdownParagraph`, `MarkdownListItem`, `MarkdownFrontmatter`), replacing the hand-written `uc/models/v1` Pydantic models and the custom `parse_uc` parser/renderer with a class tree built on that engine's recursive `from_text`/`__str__` — depends on: Task 1.4, feat-5-md-model-parser (done) — status: **in-progress, substantially complete** (see 2026-08-12 Recent Updates entry for the full session log). Reopens Phase 1 (previously marked complete); see feat-5's own Follow-up #3, which explicitly flagged this as worth revisiting once feat-4 evaluates adoption. **Blocks Task 2.2 onward** — see Phase 2 note below.
+- [ ] Task 1.5: Rebuild the uc schema/models on feat-5-md-model-parser's generic `models/md` engine (`MarkdownStr`, `MarkdownSection1`..`6`, `MarkdownParagraph`, `MarkdownListItem`, `MarkdownFrontmatter`), replacing the hand-written `uc/models/v1` Pydantic models and the custom `parse_uc` parser/renderer with a class tree built on that engine's recursive `from_text`/`__str__` — depends on: Task 1.4, feat-5-md-model-parser (done) — status: **in-progress, model tree + validators done, gated on Task 1.7/1.8** (see 2026-08-12 Recent Updates entry for the full session log). Reopens Phase 1 (previously marked complete); see feat-5's own Follow-up #3, which explicitly flagged this as worth revisiting once feat-4 evaluates adoption. **Blocks Task 2.2 onward** — see Phase 2 note below.
 
   **Superseded finding (the 2026-08-11 finding below no longer holds; see DEC-010):** the original 2026-08-11 finding claimed a literal "full rebuild" was not achievable — Cockburn's compound action numbering (`3a1.`, `3a2.`, ...) is not valid CommonMark list syntax, and `Extensions`/`SubVariations`'s dynamically-named per-item h3 headings supposedly could not be decomposed by the generic engine at all, requiring a hybrid two-pass (generic engine + a second dedicated regex parser reusing `uc/models/v1/parser.py`'s patterns, with a `parsed_items()` escape hatch). **This is now known to be wrong on the second half of that claim**: the generic engine's regex `@alias` (`AliasType.REGEX`) natively supports a dynamically-named repeated h3 sub-heading under a fixed h2 parent (e.g. `Extension` matching `^Extension \d+[a-z]?\. .+$`, collected as `Extensions.extensions: list[Extension]`) — proven empirically in `tests/uc/models/v2/test_extensions_parsing.py`/`test_sub_variations_parsing.py`, including byte-exact round-trips. The compound-numbering half of the original blocker was resolved differently: **not** by parsing `3a1.`/`3a2.` at all, but by changing the on-disk schema itself (DEC-010, option 2 from the draft sketch's own "Open decisions" block) so extension actions are now a real, plain CommonMark ordered list (`1.`, `2.`, `3.`) under an `### Extension {ref}. {condition}` heading, with cross-references expressed as prose ("Return to step 4.") rather than encoded in a compound list marker. **No hybrid/second parsing pass/`parsed_items()` is needed** — the entire document tree, including `Extensions`/`SubVariations`, is now handled by the generic engine alone.
 
@@ -111,10 +111,24 @@ progresses (edit, don't duplicate).
 
   **What is still open** — see Task 1.6 below (validation porting) and the "Related Use Cases" free-text field (`related_use_cases: RelatedUseCases | None`, currently just `items: list[MarkdownListItem]` — v1's typed `superordinate: str | None`/`subordinate: list[str]` split, parsed on demand, was not ported; low priority, not blocking).
 
-- [ ] Task 1.6: Port the three Task 1.3B cross-field `model_validator`s onto the v2 (`uc/models/v2`) model tree — depends on: Task 1.5 — status: not-started. **Not all three still apply** — the move to the generic engine's real CommonMark lists structurally eliminates one of them:
+- [x] Task 1.6: Port the three Task 1.3B cross-field `model_validator`s onto the v2 (`uc/models/v2`) model tree — depends on: Task 1.5 — status: completed (2026-08-12). **Not all three still apply** — the move to the generic engine's real CommonMark lists structurally eliminates one of them:
   1. **`MainSuccessScenario.steps` numbered contiguously (1, 2, 3, ... no gaps/duplicates)** — **now structurally unnecessary**, not just "ported forward": `steps: list[MarkdownListItem]` is backed by a genuine CommonMark ordered list (via `feat-5`'s `process_list_field`), which has no representable gap/duplicate/out-of-order state to validate against in the first place. No action needed here; only note this finding on this task when picked up.
   2. **`Extension` actions numbered sequentially** — v1's shape was `{step_reference}1`, `{step_reference}2`, ... (compound numbering, e.g. `3a1`, `3a2`). Since v2's schema change (DEC-010) replaced compound numbering with a plain ordered list (`ExtensionItem` under `Extension.items: list[ExtensionItem]`), this validator's *original* form no longer applies either (same "real ordered list" argument as #1) — but confirm this explicitly with a test before crossing it off, since `ExtensionItem` uniquely also has an optional `notes: list[MarkdownParagraph]` field (continuation paragraphs) that v1 never had; make sure nothing about *that* addition needs its own invariant.
   3. **`UseCase`-level step-reference resolution**: every `Extension` heading's `{ref}` (e.g. `"3a"` in `"Extension 3a. ..."`) and every `SubVariation` heading's `{N}` (e.g. `"1"` in `"Step 1: ..."`) must resolve to an existing 1-based position in `main_success_scenario.steps`, with no duplicate `Extension`/`SubVariation` references within either collection. **This one still genuinely applies** and needs porting: extracting `{ref}`/`{N}` from the heading text requires a small regex (the same shape as the existing `@alias` patterns on `Extension`/`SubVariation`, e.g. `re.match(r"^Extension (\d+)([a-z]?)\. ", heading_text)`), then cross-checking against `len(main_success_scenario.steps)` (a plain step number) — `Extension`'s letter suffix (`3a` vs `3b` vs `3c`) is itself never checked against `main_success_scenario.steps`, only the leading digit portion, mirroring v1's own `_validate_unique_and_resolvable` behavior in `uc/models/v1/use_case.py`. Write this as a `model_validator(mode="after")` on the v2 `UseCase` class, with dedicated tests (both success and each failure mode: unresolvable reference, duplicate reference) mirroring `tests/uc/models/v1/test_use_case.py`'s existing coverage for the same invariant.
+
+  **Done (2026-08-12):** items #1/#2 confirmed structurally unnecessary (with a
+  dedicated documentation-only test for #2's `ExtensionItem.notes` question);
+  item #3 written as `UseCase.validate_step_references_resolve_and_are_unique`
+  (`uc/models/v2/use_case.py`) plus 7 new tests in
+  `tests/uc/models/v2/test_use_case.py` (success case, unresolvable/duplicate
+  reference for both `Extension` and `SubVariation`, letter-suffix-not-checked
+  case, and the `ExtensionItem.notes` documentation case). 545 tests total.
+
+- [ ] Task 1.7: Update `uc_schema.json`/`uc-schema.md` for DEC-010's schema change — depends on: Task 1.6 — status: not-started, partially superseded. The top-level `.specmgr/feat/feat-4-use-cases/uc_schema.json` (Task 1.1, now moved to `v1/uc_schema.json`) and `v1/uc-schema.md` (Task 1.4) still describe v1's compound extension-action numbering (`{step_reference}1`, `{step_reference}2`, ...) and v1's exact field/heading names; DEC-010 replaced compound numbering with a plain ordered list under `### Extension {ref}. {condition}`. **A first v2-shaped JSON Schema now exists** — `v2/uc_reference_mdformat_schema.json` (2026-08-12), built from `uc_reference_mdformat.md`/`.ast` against the current `uc/models/v2` code, including finding+fixing 3 heading/field-naming discrepancies between the two (see the matching Recent Updates entry). Still open for this task: an updated narrative `uc-schema.md` (v1's Task 1.4 equivalent) for the v2 shape, and deciding whether `v2/uc_reference_mdformat_schema.json` becomes *the* canonical `uc_schema.json` going forward (e.g. promoted/renamed) or stays a feature-local reference artifact alongside a separately-authored canonical schema.
+- [ ] Task 1.8: Add a `from_text`/parser entry point for `UcDocument` — depends on: Task 1.6 — status: not-started. No such convenience function exists yet: `UcDocument`'s own docstring documents frontmatter-stripping as a caller concern (`frontmatter.loads(text)` + separately validating `.metadata`/`.content`), mirroring feat-5's REQ-003 convention, but nothing in `uc/models/v2/` yet wraps that into a single `UcDocument.from_text(raw_text: str) -> UcDocument`-shaped call, unlike ADR's `parse_adr`. Decide during implementation whether this lives as a classmethod/`@model_validator` on `UcDocument` itself or a free function in a new `uc/models/v2/parser.py`, mirroring whichever convention feels closer to `models.adr.v1.parser.parse_adr`'s split.
+
+Once Task 1.7/1.8 land, Task 1.5 can be marked `completed` (see Current Status
+below for what already closed as of 2026-08-12 vs. what these two still gate).
 
 #### Phase 2: PlantUML Diagram Generation
 - [x] Task 2.1: Implement UC diagram generator (actors + use case associations) — depends on: Task 1.3B — status: completed. **Note (2026-08-11):** built against the current custom `UseCase` model (`uc/models/v1/usecase.py`); may need rework once Task 1.5 lands and the model shape changes.
@@ -140,31 +154,106 @@ originally planned, rather than keeping a second copy of the task around.
 
 **As of 2026-08-12**: Task 1.5 (rebuild `uc` on `models/md`) is substantially
 complete — see the Task List entry itself and the 2026-08-12 Recent Updates
-entry below for the full session log. The entire document tree
+entries below for the full session log. The entire document tree
 (`CharacteristicInformation`, `MainSuccessScenario`, `Extensions`/`Extension`,
 `SubVariations`/`SubVariation`, `OpenIssues`, `RelatedInformation`,
 `UcFrontmatter`, `UcDocument`) is implemented in `uc/models/v2/` and covered
-by 39 passing tests, with the original 2026-08-11 "full rebuild isn't
+by 46 passing tests, with the original 2026-08-11 "full rebuild isn't
 achievable" finding now superseded (DEC-010): the generic engine's regex
 `@alias` handles `Extensions`/`SubVariations`' dynamic h3 headings natively,
 once the on-disk schema itself dropped Cockburn's compound action numbering
 in favor of a plain ordered list. **A genuine framework bug was found and
 fixed while integrating** (`MarkdownSection.get_extent` never checked
 `@alias`) — see `.specmgr/feat/feat-5-md-model-parser/README.md`'s own
-2026-08-12 entry. Remaining work before Task 1.5 can be marked done: Task
-1.6 (port/re-verify the three Task 1.3B cross-field validators — one is now
-structurally obsolete, one needs re-confirming, one still needs writing),
-`uc_schema.json`/`uc-schema.md` updates for DEC-010's schema change, and a
-`from_text`/parser entry point for `UcDocument` (frontmatter stripping +
-`UseCase.from_text`, no such convenience function exists yet).
+2026-08-12 entry. **Task 1.6 (cross-field validator porting) is now done** —
+see the Task List entry and its own 2026-08-12 Recent Updates entry.
+Remaining work before Task 1.5 can be marked done: Task 1.7
+(`uc_schema.json`/`uc-schema.md` updates for DEC-010's schema change) and
+Task 1.8 (a `from_text`/parser entry point for `UcDocument`) — both added as
+their own Task List entries this session rather than left as untracked
+Current-Status prose.
 
-**Blocker:** Task 2.2 onward still blocked on Task 1.5/1.6 (see Task List, Phase 1/2).
+**Blocker:** Task 2.2 onward still blocked on Task 1.5, now down to Task 1.7/1.8 (see Task List, Phase 1/2).
 
 ### Recent Updates
 
 If this section grows too long, move older entries to `history.md` in this
 same folder and leave a pointer here, e.g.:
 `See history.md for updates before YYYY-MM-DD.`
+
+#### 2026-08-12 New `v2/uc_reference*` artifacts; `uc_reference_mdformat_schema.json` written; 3 model/document discrepancies resolved
+
+- Repo owner renamed `v2/uc_example.md` to `v2/uc_reference.md`, and added
+  `v2/uc_reference.ast` (its raw CommonMark AST dump), plus an mdformat-
+  normalized pair (`v2/uc_reference_mdformat.md`/`.ast`) and two `.puml`
+  diagrams. Old top-level exploration docs (`eval-uc.md`, `uc-schema.md`,
+  `uc_schema.json`, `uc_example.md`/`.ast`, etc.) were moved into a new
+  `v1/` subfolder for the same reason `v2/` exists — separating the
+  original hand-written-parser-era artifacts from the `models/md`-engine-era
+  ones. `tests/uc/models/v1/test_parser.py`/`test_uc_diagram.py`'s hardcoded
+  `_EXAMPLE_PATH` was updated to the new `v1/uc_example-v1.md` location (a
+  path-only fix, no behavior change) — this had silently broken 2 tests
+  until caught by this session's full-suite run.
+- **Wrote `v2/uc_reference_mdformat_schema.json`**: a JSON Schema (draft-07)
+  for `uc_reference_mdformat.md`, built by cross-referencing its AST against
+  `uc/models/v2/use_case.py`/`frontmatter.py`/`document.py`, mirroring those
+  Pydantic classes' property names/nesting (including the
+  `extensions.extensions`/`sub_variations.sub_variations` double-naming and
+  the extra `related_information.notes.items`/`.assumptions.items` nesting
+  level vs. v1's flatter shape). Validated via
+  `jsonschema.Draft7Validator.check_schema()` plus a hand-built instance
+  from the reference document's actual content.
+- **Found, then fixed, 3 discrepancies** between the reference document and
+  the then-current `uc/models/v2` code (surfaced while writing the schema
+  above — `UseCase.from_text()` would have failed on this exact reference
+  document before this fix):
+  1. `### Preconditions` (doc, plural) vs. `Precondition`'s auto-derived
+     singular heading — **resolved by renaming the class/field**
+     `Precondition`/`precondition` to `Preconditions`/`preconditions`
+     (matches the doc without needing an explicit `@alias`, same as every
+     other plain-name h3 field).
+  2. `### Channels to Primary/Secondary Actors` (doc, lowercase "to") vs.
+     `ChannelsToPrimaryActor`/`ChannelsToSecondaryActors`'s
+     `space_separated_name`-derived title-cased heading ("Channels **To**
+     ...") — **resolved by adding an explicit `@alias(..., AliasType.LITERAL)`**
+     to both classes, matching the document's exact casing.
+  3. Frontmatter `type: doc-uc` (doc) vs. `UcFrontmatter.type: Literal["uc"]`
+     (code) — **resolved in the document's favor of the code**: updated
+     `v2/uc_reference.md`'s frontmatter to `type: uc`. `uc_reference_mdformat.md`
+     itself carries no `type` field in its (AST-mangled, unstripped)
+     frontmatter heading, so nothing needed changing there.
+  `uc_reference_mdformat_schema.json` updated to drop its `x-discrepancy`
+  notes now that all three are resolved (`type` is `const: "uc"`, no
+  remaining code/document mismatch). `uc/models/v2/__init__.py`'s exports
+  updated for the `Preconditions` rename. 4 existing tests updated for the
+  heading-text rename (`test_use_case.py`, `test_document.py`) plus the
+  `_EXAMPLE_PATH` fixes above; 545 tests still passing, `ruff format`/
+  `ruff check`/`vulture` clean, `specmgr docs` regenerated.
+
+#### 2026-08-12 Task 1.6 completed; Task 1.7/1.8 added to close out Task 1.5
+
+- **Task 1.6 COMPLETED**: Ported the one still-applicable Task 1.3B cross-field
+  `model_validator` onto `uc/models/v2/use_case.py`:
+  `UseCase.validate_step_references_resolve_and_are_unique`, checking that every
+  `Extension`/`SubVariation` heading's `{ref}`/`{N}` resolves to an existing
+  1-based position in `main_success_scenario.steps`, with no duplicate
+  references within either collection — same invariant as v1's
+  `_validate_unique_and_resolvable`, adapted to extract the reference from the
+  heading's `.text` (via `_EXTENSION_HEADING_PATTERN`/`_SUB_VARIATION_HEADING_PATTERN`)
+  instead of a dedicated `step_reference` field, since v2 has no such field.
+  The other two original Task 1.3B validators were confirmed (not re-written)
+  as structurally unnecessary now that `steps`/`Extension.items` are real
+  CommonMark ordered lists — including a dedicated test proving
+  `ExtensionItem.notes` (new vs. v1) introduces no numbering invariant of its
+  own. `ruff format`/`ruff check` clean.
+- **Task 1.7/1.8 ADDED**: splitting the "remaining work before Task 1.5 can be
+  marked done" prose (previously only in Current Status, not the Task List)
+  into two tracked tasks — Task 1.7 (`uc_schema.json`/`uc-schema.md` updates
+  for DEC-010's schema change) and Task 1.8 (a `from_text`/parser entry point
+  for `UcDocument`) — per repo-owner request, so Task 1.5's remaining scope is
+  enumerated the same way every other task is, rather than living only as
+  Current-Status narrative.
+- 545 tests total (538 prior + 7 new: `tests/uc/models/v2/test_use_case.py`).
 
 #### 2026-08-12 Task 1.5 substantially implemented; full-rebuild finding superseded (DEC-010); framework bug found+fixed in feat-5
 
@@ -227,7 +316,7 @@ same folder and leave a pointer here, e.g.:
 #### 2026-08-05 (continued)
 - **Task 1.1 COMPLETED**: Markdown schema definition and formal specification
   - Created `uc_schema.json` — Complete JSON Schema with validation rules, constraints, and field types (312 lines)
-  - Created `uc_example.md` — Detailed "Buy Goods" use case example with all sections
+  - Created `uc_reference_mdformat.md` — Detailed "Buy Goods" use case example with all sections
   - Created `uc_class.puml` — Class diagram showing schema structure
   - Frontmatter: `id`, `version`, `status`, `created`, `updated` (no title field; H1 is source of truth)
   - H1: Use case name
@@ -256,15 +345,15 @@ same folder and leave a pointer here, e.g.:
 
 #### 2026-08-05 Task 1.3 split into 1.3A/1.3B
 - **Task 1.3 split**: Originally a single task ("Implement validation tool"), split into Task 1.3A (Markdown parser) and Task 1.3B (cross-field validators) since a `parse_uc` parser didn't yet exist — a prerequisite for any file-based validation, unlike ADR where `parse_adr` predates its `validate_adr` tool. Kept the dotted sub-numbering so the overall task numbering (Task 2.x, 3.x) didn't need renumbering. See DEC-006/DEC-007.
-- **Task 1.3A COMPLETED**: Fixed `Extension.actions` (previously `list[str]`) to `list[ExtensionAction]`, modeling the compound sub-numbering (`3a1`, `3a2`, ...) already present in `uc_example.md` but not yet in the Pydantic schema. Updated `uc_schema.json` to match. Implemented `parse_uc` (`uc/models/v1/parser.py`), mirroring ADR's `parse_adr` heading-outline-tree approach (`models/adr/v1/parser.py`) but extended with numbered/bulleted Markdown list parsing (Main Success Scenario steps, Extension actions, most `list[str]` fields) and compound-heading parsing (`### {stepRef}. {condition}` for Extensions, `### Step N: {label}` for Sub-Variations). Raises a dedicated `UcParseError` for structural problems, distinct from `pydantic.ValidationError` for field-content/invariant problems — same two-channel split as ADR's parser. Round-trips the full `uc_example.md` file correctly. 14 new parser tests (structural-error cases + full-document + minimal-document round trips), plus 1 new `ExtensionAction` test file and updated `Extension`/`Extensions`/`UseCase` model tests for the new `actions` shape.
+- **Task 1.3A COMPLETED**: Fixed `Extension.actions` (previously `list[str]`) to `list[ExtensionAction]`, modeling the compound sub-numbering (`3a1`, `3a2`, ...) already present in `uc_reference_mdformat.md` but not yet in the Pydantic schema. Updated `uc_schema.json` to match. Implemented `parse_uc` (`uc/models/v1/parser.py`), mirroring ADR's `parse_adr` heading-outline-tree approach (`models/adr/v1/parser.py`) but extended with numbered/bulleted Markdown list parsing (Main Success Scenario steps, Extension actions, most `list[str]` fields) and compound-heading parsing (`### {stepRef}. {condition}` for Extensions, `### Step N: {label}` for Sub-Variations). Raises a dedicated `UcParseError` for structural problems, distinct from `pydantic.ValidationError` for field-content/invariant problems — same two-channel split as ADR's parser. Round-trips the full `uc_reference_mdformat.md` file correctly. 14 new parser tests (structural-error cases + full-document + minimal-document round trips), plus 1 new `ExtensionAction` test file and updated `Extension`/`Extensions`/`UseCase` model tests for the new `actions` shape.
 - **Task 1.3B COMPLETED**: Added three `model_validator`s not expressible in JSON Schema draft-07 (cross-item/cross-field invariants): (1) `MainSuccessScenario.steps` must be numbered contiguously 1, 2, 3, ... ascending, no gaps/duplicates/out-of-order; (2) `Extension.actions` must be numbered `{step_reference}1`, `{step_reference}2`, ... sequentially; (3) `UseCase`-level check that every `Extension`/`SubVariation` `step_reference` resolves to an existing `main_success_scenario` step number, with no duplicate references within either collection. Unlike ADR's analogous Considered-Options/Option-section gap (deliberately left unenforced per `.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md` §7), this cross-reference check is explicitly enforced here since Task 1.3's original title named "step numbering" as in-scope. 12 new tests across `test_main_success_scenario.py`, `test_extension.py`, `test_use_case.py`.
 - All 292 tests passing (186 ADR + 90 UC + 16 other), `ruff format`/`ruff check` clean, `specmgr docs` regenerated.
 
 #### 2026-08-05 Task 1.4 completed
-- **Task 1.4 COMPLETED**: Wrote `uc-schema.md` — a narrative walkthrough of the Cockburn-based use case schema (heading structure, frontmatter, each H2 section, the three cross-field `model_validator` invariants and where each constraint lives across `uc_schema.json`/Pydantic field declarations/`model_validator`s, and how `parse_uc` maps Markdown onto it). References rather than duplicates `uc_schema.json` (exact field constraints) and `uc_example.md` (full worked example), mirroring how `.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md` explains MADR sections without restating the whole template. Placed at `.specmgr/feat/feat-4-use-cases/uc-schema.md` (feature-local, not top-level `doc/`) since the feature is still mid-flight. Phase 1 now fully complete.
+- **Task 1.4 COMPLETED**: Wrote `uc-schema.md` — a narrative walkthrough of the Cockburn-based use case schema (heading structure, frontmatter, each H2 section, the three cross-field `model_validator` invariants and where each constraint lives across `uc_schema.json`/Pydantic field declarations/`model_validator`s, and how `parse_uc` maps Markdown onto it). References rather than duplicates `uc_schema.json` (exact field constraints) and `uc_reference_mdformat.md` (full worked example), mirroring how `.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md` explains MADR sections without restating the whole template. Placed at `.specmgr/feat/feat-4-use-cases/uc-schema.md` (feature-local, not top-level `doc/`) since the feature is still mid-flight. Phase 1 now fully complete.
 
 #### 2026-08-05 Task 2.1 completed
-- **Task 2.1 COMPLETED**: Implemented `render_uc_diagram(use_case: UseCase) -> str` (`uc/models/v1/uc_diagram.py`), a pure function (no file I/O, no multi-document resolution — parses/renders exactly one `UseCase` at a time, mirroring `models/adr/v1/renderer.py`'s style) that generates a PlantUML Use Case diagram: one `usecase` node for the document itself, one `actor` node per distinct label derived from `primary_actor`/`secondary_actors`, and one association edge per actor. Sub-use-case mentions in actor/extension text (e.g. "(UC-044)") are left as plain text, never resolved into separate nodes, since no id→document listing/resolution layer exists yet (Phase 3). Actor label extraction rule: use the contents of the first double-quoted substring if present (taking priority over any parenthetical), otherwise strip everything from the first `" ("` onward, otherwise use the text as-is. A label that is already a bare PlantUML identifier (e.g. `"Buyer"`, `"Bank"`) is reused as its own alias unquoted; otherwise a generated `actorN` alias is used with the label quoted. 12 new tests in `tests/uc/models/v1/test_uc_diagram.py` (label-extraction cases, diagram structure, full `uc_example.md` round-trip). 304 tests total (292 prior + 12 new), `ruff format`/`ruff check` clean, `specmgr docs` regenerated.
+- **Task 2.1 COMPLETED**: Implemented `render_uc_diagram(use_case: UseCase) -> str` (`uc/models/v1/uc_diagram.py`), a pure function (no file I/O, no multi-document resolution — parses/renders exactly one `UseCase` at a time, mirroring `models/adr/v1/renderer.py`'s style) that generates a PlantUML Use Case diagram: one `usecase` node for the document itself, one `actor` node per distinct label derived from `primary_actor`/`secondary_actors`, and one association edge per actor. Sub-use-case mentions in actor/extension text (e.g. "(UC-044)") are left as plain text, never resolved into separate nodes, since no id→document listing/resolution layer exists yet (Phase 3). Actor label extraction rule: use the contents of the first double-quoted substring if present (taking priority over any parenthetical), otherwise strip everything from the first `" ("` onward, otherwise use the text as-is. A label that is already a bare PlantUML identifier (e.g. `"Buyer"`, `"Bank"`) is reused as its own alias unquoted; otherwise a generated `actorN` alias is used with the label quoted. 12 new tests in `tests/uc/models/v1/test_uc_diagram.py` (label-extraction cases, diagram structure, full `uc_reference_mdformat.md` round-trip). 304 tests total (292 prior + 12 new), `ruff format`/`ruff check` clean, `specmgr docs` regenerated.
 
 ### Decisions Made
 
@@ -274,10 +363,10 @@ same folder and leave a pointer here, e.g.:
 - **DEC-004** [2026-08-05]: Create a new domain "uc" (use cases) — Following the domain-first hierarchy established in ADR ece4554b-725c-4f76-bc04-5d2b760363d2, create `uc/` as a top-level package alongside `adr/`, with sub-packages for `uc/models/`, `uc/tools/`, `uc/prompts/`, `uc/resources/`. This differs from current `adr/` structure (which has models in shared `models/adr/`) — see tech debt note below.
 - **DEC-005** [2026-08-05]: Always include all optional section headings in use case documents — Even when empty, include Extensions, Sub-Variations, Open Issues, and Related Information sections. This ensures structural consistency across all use cases, makes it clear that these aspects were considered (even if empty), simplifies parsing/validation, and makes git diffs cleaner when content is added later. Empty sections can contain "(None identified)" or similar placeholder text.
 - **DEC-006** [2026-08-05]: Split Task 1.3 into Task 1.3A (Markdown parser) and Task 1.3B (cross-field validators) — No `parse_uc` existed yet, and file-based "validation" is meaningless without first parsing a `.md` file into a `UseCase`. Splitting mirrors ADR's own parse/validate separation (`models/adr/v1/parser.py` vs. `adr/tools/validate_adr.py`) while keeping the overall task numbering stable via dotted sub-numbers.
-- **DEC-007** [2026-08-05]: Model `Extension.actions` as `list[ExtensionAction]` (compound number + description), not `list[str]` — `uc_example.md` already showed compound sub-numbering (`3a1`, `3a2`, ...) that the original `list[str]` model couldn't represent or validate. Fixed before writing the parser so the parser has a real target field to populate, and so action-numbering sequencing (Task 1.3B) has something to validate against.
+- **DEC-007** [2026-08-05]: Model `Extension.actions` as `list[ExtensionAction]` (compound number + description), not `list[str]` — `uc_reference_mdformat.md` already showed compound sub-numbering (`3a1`, `3a2`, ...) that the original `list[str]` model couldn't represent or validate. Fixed before writing the parser so the parser has a real target field to populate, and so action-numbering sequencing (Task 1.3B) has something to validate against.
 - **DEC-008** [2026-08-05]: Enforce Extension/SubVariation step-reference cross-resolution against `main_success_scenario.steps` via a `UseCase`-level `model_validator` — Unlike ADR's deliberate choice not to enforce Considered-Options/Option-section consistency (`.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md` §7), Task 1.3's original title explicitly named "step numbering" as in-scope, so this cross-check (plus step/action numbering contiguity) is enforced rather than left as a known gap.
 - **DEC-009** [2026-08-11]: Rebuild the uc schema/models on feat-5-md-model-parser's `models/md` engine (Task 1.5), fully replacing the hand-written `uc/models/v1` Pydantic models and custom `parse_uc` parser/renderer, rather than keeping the two in parallel or leaving adoption as an unscheduled follow-up — feat-5 closed 2026-08-11 with a generic, proven (498 tests) heading-recursion engine (`MarkdownStr`/`MarkdownSection1`..`6`/`MarkdownParagraph`/`MarkdownListItem`) and explicitly flagged this exact adoption as its own Follow-up #3. Doing a full rebuild now (rather than a spike/evaluation-only task) avoids maintaining two parsing mechanisms for the same document type. Consequence: Task 2.1 (UC diagram generator) may need rework, and Task 2.2 onward (Sequence diagram generator) is blocked until Task 1.5 lands, since building further diagram/MCP tooling against a model shape that is about to be replaced would be wasted work.
-- **DEC-010** [2026-08-12]: Change the on-disk schema so `Extension` actions are a plain CommonMark ordered list (`1.`, `2.`, `3.` under `### Extension {ref}. {condition}`), abandoning Cockburn's compound sub-numbering (`3a1.`, `3a2.`, ...) entirely, rather than adopting the draft sketch's hybrid two-pass parser (option 1) or raising a "repeated section" primitive against feat-5 (option 3) — the two other options the draft sketch's "Open decisions" block left open. Chosen because it needed no new parsing machinery at all: the generic engine already handles a dynamically-named, regex-`@alias`ed, repeated h3 sub-heading (`Extension`) under a fixed h2 parent (`Extensions`) natively, once the *action list inside it* is a real ordered list rather than compound-numbered prose. Cross-references that compound numbering used to encode structurally (e.g. `"3a1."` implying "extension 3a's first action") are now expressed the same way Main Success Scenario's own steps already do it: prose text ("Return to step 4.", "Continue to step 6.") inside a plain list item, not the list marker itself. This also means `Extension`'s own heading `{ref}` (e.g. `"3a"`) is the *only* remaining structural cross-reference into `main_success_scenario.steps` that needs validating (Task 1.6, item 3) — nothing below that heading needs its own numbering invariant anymore. Consequence: `uc_example.md`'s literal Markdown shape changed (every `### {ref}1.`/`### {ref}2.`-style compound heading was rewritten to a heading + plain list), and `uc_schema.json`/`uc-schema.md` (Task 1.1/1.4 outputs) are now stale with respect to this new shape — updating them is follow-up work, not yet done as of this entry.
+- **DEC-010** [2026-08-12]: Change the on-disk schema so `Extension` actions are a plain CommonMark ordered list (`1.`, `2.`, `3.` under `### Extension {ref}. {condition}`), abandoning Cockburn's compound sub-numbering (`3a1.`, `3a2.`, ...) entirely, rather than adopting the draft sketch's hybrid two-pass parser (option 1) or raising a "repeated section" primitive against feat-5 (option 3) — the two other options the draft sketch's "Open decisions" block left open. Chosen because it needed no new parsing machinery at all: the generic engine already handles a dynamically-named, regex-`@alias`ed, repeated h3 sub-heading (`Extension`) under a fixed h2 parent (`Extensions`) natively, once the *action list inside it* is a real ordered list rather than compound-numbered prose. Cross-references that compound numbering used to encode structurally (e.g. `"3a1."` implying "extension 3a's first action") are now expressed the same way Main Success Scenario's own steps already do it: prose text ("Return to step 4.", "Continue to step 6.") inside a plain list item, not the list marker itself. This also means `Extension`'s own heading `{ref}` (e.g. `"3a"`) is the *only* remaining structural cross-reference into `main_success_scenario.steps` that needs validating (Task 1.6, item 3) — nothing below that heading needs its own numbering invariant anymore. Consequence: `uc_reference_mdformat.md`'s literal Markdown shape changed (every `### {ref}1.`/`### {ref}2.`-style compound heading was rewritten to a heading + plain list), and `uc_schema.json`/`uc-schema.md` (Task 1.1/1.4 outputs) are now stale with respect to this new shape — updating them is follow-up work, not yet done as of this entry.
 
 ### Related PRs / Commits
 

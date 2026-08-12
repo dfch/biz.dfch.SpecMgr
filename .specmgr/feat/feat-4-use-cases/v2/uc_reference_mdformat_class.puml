@@ -1,0 +1,259 @@
+@startuml BuyGoodsUseCase
+
+title Buy Goods (UC-001) - Class Diagram
+
+' Actors
+class Buyer {
+    -customerId: string
+    -name: string
+    -address: string
+    -contactInfo: string
+    -authenticated: boolean
+    --
+    +issueRequest()
+    +confirmOrder()
+    +receiveGoods()
+    +payInvoice()
+    +initiateReturn()
+    +disputeCharge()
+}
+
+class Company {
+    -systemId: string
+    --
+    +captureOrderInfo()
+    +checkInventory()
+    +provideInformation()
+    +createOrder()
+    +shipOrder()
+    +sendInvoice()
+    +receivePayment()
+    +handleReturnedGoods()
+    +retryPaymentCollection()
+}
+
+class CreditCardCompany {
+    -companyId: string
+    --
+    +processPayment()
+    +validateCard()
+}
+
+class Bank {
+    -bankId: string
+    --
+    +processTransfer()
+    +handleDispute()
+}
+
+class ShippingService {
+    -serviceId: string
+    -available: boolean
+    --
+    +shipGoods()
+    +trackShipment()
+    +handleUnavailability()
+}
+
+' Core Business Entities
+class Order {
+    -orderId: string
+    -buyerId: string
+    -createdDate: date
+    -status: OrderStatus
+    -items: List<OrderItem>
+    -totalAmount: decimal
+    -deliveryDate: date
+    -shippingMethod: ShippingMethod
+    --
+    +createOrder()
+    +updateStatus()
+    +getItems()
+    +calculateTotal()
+}
+
+class OrderItem {
+    -itemId: string
+    -orderId: string
+    -productId: string
+    -quantity: integer
+    -price: decimal
+    --
+    +getProduct()
+    +updateQuantity()
+}
+
+class Invoice {
+    -invoiceId: string
+    -orderId: string
+    -amount: decimal
+    -dueDate: date
+    -deliveryChannels: List<Channel>
+    -status: InvoiceStatus
+    --
+    +send()
+    +retry()
+    +markPaid()
+}
+
+class Payment {
+    -paymentId: string
+    -invoiceId: string
+    -amount: decimal
+    -paymentMethod: PaymentMethod
+    -processedDate: date
+    -status: PaymentStatus
+    --
+    +process()
+    +retry()
+    +record()
+}
+
+class Inventory {
+    -inventoryId: string
+    -items: List<InventoryItem>
+    --
+    +checkAvailability()
+    +updateStock()
+    +handleOutOfStock()
+}
+
+class InventoryItem {
+    -itemId: string
+    -productId: string
+    -quantity: integer
+    -reorderLevel: integer
+    --
+    +isAvailable()
+    +updateQuantity()
+}
+
+class ReturnRequest {
+    -returnId: string
+    -orderId: string
+    -buyerId: string
+    -requestDate: date
+    -status: ReturnStatus
+    -refundAmount: decimal
+    --
+    +initiateReturn()
+    +processRefund()
+    +processCredit()
+}
+
+class Dispute {
+    -disputeId: string
+    -paymentId: string
+    -initiatedDate: date
+    -status: DisputeStatus
+    -resolution: string
+    --
+    +initiateResolution()
+    +resolveDispute()
+}
+
+' Enumerations
+enum OrderStatus {
+    PENDING
+    CONFIRMED
+    PROCESSING
+    SHIPPED
+    DELIVERED
+    COMPLETED
+    CANCELLED
+}
+
+enum PaymentMethod {
+    CASH
+    CHECK
+    CREDIT_CARD
+    DEBIT_CARD
+    BANK_TRANSFER
+    DIGITAL_WALLET
+}
+
+enum PaymentStatus {
+    PENDING
+    PROCESSING
+    COMPLETED
+    FAILED
+    RETRYING
+}
+
+enum ShippingMethod {
+    STANDARD_GROUND
+    EXPEDITED
+    OVERNIGHT
+    LOCAL_PICKUP
+}
+
+enum Channel {
+    PHONE
+    FAX
+    WEB_FORM
+    EDI
+    EMAIL
+    MAIL
+}
+
+enum InvoiceStatus {
+    PENDING
+    SENT
+    DELIVERY_FAILED
+    PAID
+}
+
+enum ReturnStatus {
+    REQUESTED
+    APPROVED
+    PROCESSING
+    COMPLETED
+}
+
+enum DisputeStatus {
+    INITIATED
+    UNDER_REVIEW
+    RESOLVED
+}
+
+' Relationships
+Buyer "1" --> "1..*" Order : places
+Order "1" --> "1..*" OrderItem : contains
+Order "1" --> "1" Invoice : generates
+Invoice "1" --> "1" Payment : requests
+Payment "1" --> "0..1" Dispute : may trigger
+
+Order "1" --> "1" Inventory : checks
+Inventory "1" --> "1..*" InventoryItem : tracks
+
+Order "1" --> "1" ShippingService : uses
+Buyer "1" --> "0..*" ReturnRequest : initiates
+ReturnRequest "1" --> "1" Order : references
+
+Payment "1" --> "1" CreditCardCompany : processed by
+Payment "1" --> "1" Bank : processed by
+
+Order "1" --> "1" Company : created by
+Company "1" --> "1" ShippingService : works with
+Company "1" --> "1" Inventory : manages
+
+' Annotations
+note right of Order
+  Main business entity
+  Tracks customer purchases
+  Connects to all processes
+end note
+
+note right of Payment
+  Critical for order completion
+  Multiple retry mechanisms
+  Handles disputes
+end note
+
+note right of Invoice
+  Delivery via multiple channels
+  Retry on failure
+  Track payment status
+end note
+
+@enduml

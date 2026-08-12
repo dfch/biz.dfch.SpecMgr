@@ -1,0 +1,155 @@
+@startuml uc_structure_diagram
+!theme plain
+
+title Use Case Document Structure (uc_reference_mdformat.md)
+
+class UseCase {
+  id: String
+  version: String
+  status: String
+  created: Date
+  updated: Date
+  title: String
+}
+
+class CharacteristicInformation {
+}
+
+class Section {
+  title: String
+  content: String
+}
+
+class MainSuccessScenario {
+}
+
+class Step {
+  stepNumber: Integer
+  description: String
+}
+
+class Extensions {
+}
+
+class Extension {
+  extensionId: String
+  title: String
+  trigger: String
+}
+
+class ExtensionStep {
+  stepNumber: Integer
+  description: String
+}
+
+class SubVariations {
+}
+
+class StepVariation {
+  stepNumber: Integer
+  variations: List<String>
+}
+
+class OpenIssues {
+}
+
+class Issue {
+  question: String
+}
+
+class RelatedInformation {
+}
+
+class Notes {
+}
+
+class Assumptions {
+}
+
+class RelatedUseCases {
+}
+
+class RelatedUseCase {
+  relationship: String
+  useCaseId: String
+  title: String
+}
+
+class Actor {
+  name: String
+  role: String
+}
+
+class Channel {
+  name: String
+  type: String
+}
+
+' UseCase composition
+UseCase *-- CharacteristicInformation
+UseCase *-- MainSuccessScenario
+UseCase *-- Extensions
+UseCase *-- SubVariations
+UseCase *-- OpenIssues
+UseCase *-- RelatedInformation
+
+' CharacteristicInformation contains multiple Sections
+CharacteristicInformation *-- "many" Section
+
+' MainSuccessScenario contains Steps
+MainSuccessScenario *-- "1..11" Step
+
+' Extensions contains Extension groups
+Extensions *-- "many" Extension
+
+' Each Extension contains ExtensionSteps
+Extension *-- "1..4" ExtensionStep
+
+' SubVariations contains StepVariations
+SubVariations *-- "many" StepVariation
+
+' OpenIssues contains Issues
+OpenIssues *-- "many" Issue
+
+' RelatedInformation contains Notes, Assumptions, RelatedUseCases
+RelatedInformation *-- Notes
+RelatedInformation *-- Assumptions
+RelatedInformation *-- RelatedUseCases
+
+' RelatedUseCases contains RelatedUseCase entries
+RelatedUseCases *-- "many" RelatedUseCase
+
+' CharacteristicInformation references Actors and Channels
+CharacteristicInformation --> "1" Actor : primaryActor
+CharacteristicInformation --> "many" Actor : secondaryActors
+CharacteristicInformation --> "many" Channel : channelsToPrimaryActor
+CharacteristicInformation --> "many" Channel : channelsToSecondaryActors
+
+note right of UseCase
+  Root entity containing the entire
+  use case document structure
+end note
+
+note right of CharacteristicInformation
+  Contains metadata about the use case:
+  Goal, Scope, Level, Pre/Post conditions,
+  Actors, Triggers, Frequency, Priority,
+  Performance targets, Channels
+end note
+
+note right of MainSuccessScenario
+  Happy path: numbered sequence of
+  steps that define successful execution
+end note
+
+note right of Extensions
+  Alternative flows triggered by
+  specific conditions at each step
+end note
+
+note right of SubVariations
+  Technology/method variations for
+  accomplishing specific steps
+end note
+
+@enduml

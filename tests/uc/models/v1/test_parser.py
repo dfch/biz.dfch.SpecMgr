@@ -8,7 +8,9 @@ from pydantic import ValidationError
 
 from biz.dfch.specmgr.uc.models.v1.parser import UcParseError, parse_uc
 
-_EXAMPLE_PATH = Path(__file__).resolve().parents[4] / ".specmgr" / "feat" / "feat-4-use-cases" / "uc_example.md"
+_EXAMPLE_PATH = (
+    Path(__file__).resolve().parents[4] / ".specmgr" / "feat" / "feat-4-use-cases" / "v1" / "uc_example-v1.md"
+)
 
 _MINIMAL_DOC = textwrap.dedent(
     """\

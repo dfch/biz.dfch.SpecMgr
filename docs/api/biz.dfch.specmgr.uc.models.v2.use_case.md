@@ -10555,7 +10555,7 @@ All tokens after index 3 must not contain any heading tags (h1-h6).
   This validates: specific tag h3 and no nested headings in tokens [3:].
 
 
-### `Precondition`
+### `Preconditions`
 
 Markdown content starting with an h3 heading, no nested headings allowed.
 
@@ -18989,4 +18989,32 @@ All tokens after index 3 must not contain any heading tags (h1-h6).
 
   Base class validates the heading triple structure.
   This validates: specific tag h1 and no nested headings in tokens [3:].
+
+- `validate_step_references_resolve_and_are_unique(self) -> 'UseCase'`
+  `Extensions`/`SubVariations` step references must resolve to a real
+  `main_success_scenario` step, with no duplicates within either collection.
+
+  Neither the generic markdown engine nor a single model's own fields can
+  express this: it requires cross-checking each `Extension`/`SubVariation`
+  heading's `{ref}` against the sibling `main_success_scenario.steps`
+  collection. Ports Task 1.3B's `UseCase`-level cross-reference invariant
+  (`uc/models/v1/use_case.py`'s `_validate_unique_and_resolvable`) onto the
+  v2 model tree (Task 1.6, item 3) -- the only one of the original three
+  Task 1.3B validators that still applies: the other two (step/action
+  numbering contiguity) are now structurally unnecessary, since `steps`/
+  `Extension.items` are real CommonMark ordered lists (see DEC-010).
+
+
+## Functions
+
+### `_extract_reference(heading_text: str, pattern: re.Pattern[str], label: str) -> str`
+
+Extract the step-reference group (e.g. ``"3a"``/``"1"``) from a heading.
+
+
+### `_validate_unique_and_resolvable(references: list[str], step_count: int, section: str) -> None`
+
+Every reference in `references` must resolve to an existing step number
+(its leading digits, 1-based, within `1..step_count`) and must not appear
+more than once within `section`.
 
