@@ -1,10 +1,10 @@
 ---
+created: 2026-08-05 08:15:42
 id: deaddead-dead-dead-dead-deaddeaddead
-type: uc
-version: 1.0.0
 status: draft
-created: 2026-08-05T08:15:42
-updated: 2026-08-06T03:27:27
+type: uc
+updated: 2026-08-06 03:27:27
+version: 1.0.0
 ---
 
 # Buy Goods
@@ -88,33 +88,33 @@ Top
 
 ## Main Success Scenario
 
-1. Buyer calls in with a purchase request.
+01. Buyer calls in with a purchase request.
 
-1. Company captures buyer's name, address, requested goods, quantity, and delivery date preference.
+02. Company captures buyer's name, address, requested goods, quantity, and delivery date preference.
 
-1. Company checks inventory for requested goods.
+03. Company checks inventory for requested goods.
 
-   This will use our trusty IBM OS/390 green screen application. Very fast!:
+    This will use our trusty IBM OS/390 green screen application. Very fast!:
 
-   - Item 1
-   - Item 2
-   - Item 3
+    - Item 1
+    - Item 2
+    - Item 3
 
-1. Company gives buyer information on goods, prices, delivery dates, and availability.
+04. Company gives buyer information on goods, prices, delivery dates, and availability.
 
-1. Buyer confirms order details and signs for order.
+05. Buyer confirms order details and signs for order.
 
-1. Company creates order in system.
+06. Company creates order in system.
 
-1. Company ships order to buyer.
+07. Company ships order to buyer.
 
-1. Company ships invoice to buyer.
+08. Company ships invoice to buyer.
 
-1. Buyer receives goods and verifies order.
+09. Buyer receives goods and verifies order.
 
-1. Buyer pays invoice.
+10. Buyer pays invoice.
 
-1. Company receives payment and records it.
+11. Company receives payment and records it.
 
 ## Extensions
 
@@ -122,50 +122,50 @@ Top
 
 1. Company informs buyer of out-of-stock items.
    This should rarely happen. Still we have to address this.
-1. Buyer chooses to: (a) wait for restock, (b) substitute with similar item, or (c) remove item from order.
-1. Return to step 4.
+2. Buyer chooses to: (a) wait for restock, (b) substitute with similar item, or (c) remove item from order.
+3. Return to step 4.
 
 ### Extension 4a. Buyer requests expedited shipping
 
 1. Company calculates expedited shipping cost.
-1. Company provides expedited shipping quote to buyer.
-1. Buyer accepts or declines expedited shipping.
-1. Return to step 5.
+2. Company provides expedited shipping quote to buyer.
+3. Buyer accepts or declines expedited shipping.
+4. Return to step 5.
 
 ### Extension 5a. Buyer pays directly with credit card
 
 1. Buyer provides credit card information.
-1. Company takes payment by credit card (UC-044).
-1. Continue to step 6.
+2. Company takes payment by credit card (UC-044).
+3. Continue to step 6.
 
 ### Extension 7a. Shipping service is unavailable
 
 1. Company attempts to use backup shipping service.
-1. If backup service also unavailable, company informs buyer of delay.
-1. Company retries shipping when service becomes available.
+2. If backup service also unavailable, company informs buyer of delay.
+3. Company retries shipping when service becomes available.
 
 ### Extension 8a. Invoice delivery fails
 
 1. Company retries invoice delivery via alternate channel (email, fax, mail).
-1. If all channels fail, company logs issue for manual follow-up.
+2. If all channels fail, company logs issue for manual follow-up.
 
 ### Extension 10a. Buyer returns goods
 
 1. Buyer initiates return request.
-1. Company handles returned goods (UC-105).
-1. Company processes refund or credit.
+2. Company handles returned goods (UC-105).
+3. Company processes refund or credit.
 
 ### Extension 10b. Buyer disputes charge
 
 1. Company initiates dispute resolution process.
-1. Company provides documentation to buyer.
-1. Dispute is resolved (refund, credit, or confirmation of charge).
+2. Company provides documentation to buyer.
+3. Dispute is resolved (refund, credit, or confirmation of charge).
 
 ### Extension 10c. Payment fails
 
 1. Company retries payment collection.
-1. If retry fails, company contacts buyer to resolve payment issue.
-1. Once payment is received, continue to step 11.
+2. If retry fails, company contacts buyer to resolve payment issue.
+3. Once payment is received, continue to step 11.
 
 ## Sub-Variations
 

@@ -116,3 +116,6 @@ namespaces = true
 "biz.dfch.specmgr" = [
     "py.typed"
 ]
+
+[tool.coverage.run]
+source = ["src"]

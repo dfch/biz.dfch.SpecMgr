@@ -47,6 +47,7 @@ First-line docstrings from each module, organized by domain:
 
 - `commands/__init__.py` — commands module.
 - `commands/adr_toc.py` — ``adr-toc`` -- generate table of contents for all ADRs in docs/adr.
+- `commands/coverage_badge.py` — ``coverage-badge`` -- generate a static SVG coverage badge from .coverage data.
 - `commands/docs.py` — ``docs`` -- regenerate ``docs/api/`` and ``docs/GENERATED.md`` from the codebase.
 - `commands/mcp.py` — ``mcp`` -- start the ``biz-dfch-specmgr`` MCP server.
 - `commands/unused_code.py` — ``unused-code`` -- report unreferenced Python symbols, or (with ``--test``) test-only ones.
@@ -127,4 +128,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 75
+**Test files**: 76

@@ -22,6 +22,7 @@ Each CLI command lives in its own module, exposing a plain function that
 """
 
 from .adr_toc import adr_toc
+from .coverage_badge import coverage_badge
 from .docs import docs
 from .mcp import mcp
 from .unused_code import unused_code
@@ -29,6 +30,7 @@ from .version import version
 
 __all__ = [
     "adr_toc",
+    "coverage_badge",
     "docs",
     "mcp",
     "unused_code",

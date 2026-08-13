@@ -49,9 +49,9 @@ jobs:
       run: |
         uv run --frozen vulture src/ whitelist.py --min-confidence 60
 
-    - name: Run unit tests
+    - name: Run unit tests with coverage
       run: |
-        uv run --frozen python -m unittest discover -v -s tests -t . -p "test_*.py"
+        uv run --frozen coverage run -m unittest discover -v -s tests -t . -p "test_*.py"
 
     - name: Make sure `docs/` is correct
       # Python's inspect module (used by annotated-doc for API docs generation) formats
@@ -73,5 +73,14 @@ jobs:
         uv run --frozen --all-extras --python 3.13.13 specmgr adr-toc
         git diff --exit-code -- docs/adr/README.md || {
           echo "::error::docs/adr/README.md is out of date -- run 'uv run --frozen --all-extras specmgr adr-toc' and commit the result (see AGENTS.md)."
+          exit 1
+        }
+
+    - name: Make sure `docs/coverage.svg` is correct
+      if: matrix.python-version == '3.13'
+      run: |
+        uv run --frozen --all-extras --python 3.13.13 specmgr coverage-badge
+        git diff --exit-code -- docs/coverage.svg || {
+          echo "::error::docs/coverage.svg is out of date -- run 'uv run --frozen --all-extras specmgr coverage-badge' and commit the result (see AGENTS.md)."
           exit 1
         }

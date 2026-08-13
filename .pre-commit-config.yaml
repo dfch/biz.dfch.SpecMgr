@@ -23,8 +23,19 @@ repos:
 
       - id: unittest
         name: unittest
-        description: Run the full test suite before every commit.
-        entry: uv run --frozen python -m unittest discover -v -s tests -t . -p "test_*.py"
+        description: Run the full test suite with coverage before every commit.
+        entry: uv run --frozen coverage run -m unittest discover -v -s tests -t . -p "test_*.py"
+        language: system
+        pass_filenames: false
+        files: ^(src|tests)/.*\.py$
+
+      - id: specmgr-coverage-badge
+        name: specmgr coverage-badge
+        description: >-
+          Generate coverage badge SVG, then fail if that changed anything
+          -- standard formatter-hook UX: review and `git add` the regenerated
+          badge, then commit again.
+        entry: bash -c 'uv run --frozen specmgr coverage-badge && git diff --exit-code -- docs/coverage.svg'
         language: system
         pass_filenames: false
         files: ^(src|tests)/.*\.py$
