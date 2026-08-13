@@ -1,6 +1,11 @@
-______________________________________________________________________
-
-## id: uc-001 version: 1.0.0 status: draft created: 2026-08-05 updated: 2026-08-05
+---
+id: deaddead-dead-dead-dead-deaddeaddead
+type: uc
+version: 1.0.0
+status: draft
+created: 2026-08-05T08:15:42
+updated: 2026-08-06T03:27:27
+---
 
 # Buy Goods
 

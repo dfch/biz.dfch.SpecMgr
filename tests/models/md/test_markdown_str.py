@@ -177,7 +177,7 @@ class TestFromText(unittest.TestCase):
 
     def test_raises_when_a_field_has_no_extent(self) -> None:
         """If a field's get_extent finds nothing in the remaining text, from_text fails loudly."""
-        with self.assertRaises(AssertionError):
+        with self.assertRaisesRegex(AssertionError, r"expected.*found no match.*remaining text"):
             _TwoFieldContainer.from_text(mdformat.text("only one line"))
 
     def test_raises_when_leftover_text_remains_after_all_fields(self) -> None:
@@ -251,7 +251,7 @@ class TestFromText(unittest.TestCase):
 
     def test_mandatory_list_field_raises_when_no_item_matches(self) -> None:
         """A mandatory `list[X]` field with zero matched items fails loudly, like a scalar field."""
-        with self.assertRaises(AssertionError):
+        with self.assertRaisesRegex(AssertionError, r"expected.*list\[.*\].*found no match.*remaining text"):
             _RequiredListContainer.from_text(mdformat.text("plain text, no marker"))
 
     def test_optional_list_field_absent_when_remaining_text_is_empty(self) -> None:

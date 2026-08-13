@@ -39,6 +39,9 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.commands.mcp`](biz.dfch.specmgr.commands.mcp.md) — ``mcp`` -- start the ``biz-dfch-specmgr`` MCP server.
 - [`biz.dfch.specmgr.commands.unused_code`](biz.dfch.specmgr.commands.unused_code.md) — ``unused-code`` -- report unreferenced Python symbols, or (with ``--test``) test-only ones.
 - [`biz.dfch.specmgr.commands.version`](biz.dfch.specmgr.commands.version.md) — ``version`` -- print the installed ``biz-dfch-specmgr`` version.
+- [`biz.dfch.specmgr.general`](biz.dfch.specmgr.general.md) — General-purpose (cross-cutting, not domain-specific) tools.
+- [`biz.dfch.specmgr.general.tools`](biz.dfch.specmgr.general.tools.md) — MCP tool wrappers for general-purpose utilities (mirrors ``adr/tools/``'s shape).
+- [`biz.dfch.specmgr.general.tools.mdformat`](biz.dfch.specmgr.general.tools.mdformat.md) — ``@mcp.tool()`` wrapper: mdformat.
 - [`biz.dfch.specmgr.models`](biz.dfch.specmgr.models.md) — Pydantic models used by the ``biz-dfch-specmgr`` MCP server.
 - [`biz.dfch.specmgr.models.adr`](biz.dfch.specmgr.models.adr.md) — Pydantic models for MADR 4.0.0-based Architecture Decision Records.
 - [`biz.dfch.specmgr.models.adr.v1`](biz.dfch.specmgr.models.adr.v1.md) — ADR schema version 1 (``SCHEMA_MAJOR_VERSION == 1``).
@@ -96,4 +99,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.uc.models.v2`](biz.dfch.specmgr.uc.models.v2.md) — Use Case models v2 -- rebuilt on `feat-5-md-model-parser`'s generic `models/md` engine.
 - [`biz.dfch.specmgr.uc.models.v2.document`](biz.dfch.specmgr.uc.models.v2.document.md) — Pydantic model for a full use-case document (frontmatter + body).
 - [`biz.dfch.specmgr.uc.models.v2.frontmatter`](biz.dfch.specmgr.uc.models.v2.frontmatter.md) — Use-case frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
+- [`biz.dfch.specmgr.uc.models.v2.parser`](biz.dfch.specmgr.uc.models.v2.parser.md) — Parse raw use-case ``.md`` text into a :class:`UcDocument` (Task 1.8).
 - [`biz.dfch.specmgr.uc.models.v2.use_case`](biz.dfch.specmgr.uc.models.v2.use_case.md) — No documentation available.
+- [`biz.dfch.specmgr.uc.tools`](biz.dfch.specmgr.uc.tools.md) — MCP tool wrappers for use cases (mirrors ``adr/tools/``'s own shape).
+- [`biz.dfch.specmgr.uc.tools.parse_uc`](biz.dfch.specmgr.uc.tools.parse_uc.md) — ``@mcp.tool()`` wrapper: parse_uc.

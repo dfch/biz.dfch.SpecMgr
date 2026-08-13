@@ -702,3 +702,19 @@ Markdown text parsed into token stream.
 
 - `validate(value: 'Any') -> 'Self'`
 
+
+## Functions
+
+### `_snippet(text: 'str', max_lines: 'int' = 5, max_chars: 'int' = 300) -> 'str'`
+
+Return a truncated snippet of text for error messages.
+
+Args:
+    text: the markdown text to excerpt.
+    max_lines: maximum number of lines to include before truncating.
+    max_chars: maximum number of characters to include before truncating.
+
+Returns:
+    A snippet of up to `max_lines` lines and `max_chars` characters,
+    with a "... (truncated)" suffix if either limit was exceeded.
+

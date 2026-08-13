@@ -33,6 +33,9 @@ Tools
 ADR tools (``adr/tools/``): ``get_adr``, ``create_adr``, ``update_frontmatter``,
 ``update_section``, ``set_status``, ``option_list``, ``option_create``,
 ``option_update``, ``option_read``, ``option_delete``, ``validate_adr``.
+Use-case tools (``uc/tools/``): ``parse_uc``.
+General tools (``general/tools/``): ``mdformat`` -- format markdown files in place,
+preserving YAML frontmatter blocks.
 
 Prompts
 -------
@@ -43,14 +46,17 @@ text guiding an LLM through the ADR tool sequence above (``.specmgr/feat/feat-0-
 Modules are grouped domain-first
 (ADR ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by
 document-type domain"): each document
-domain (``adr``, and later ``req``/``uc``/``ac``) is a top-level package
+domain (``adr``, ``uc``, and later ``req``/``ac``) is a top-level package
 with its own ``tools``/``prompts``/``resources`` sub-packages, self-
-registered via the domain package's own ``__init__.py``. Cross-cutting,
-non-domain-specific resources (e.g. ``specmgr://version``) stay under the
-top-level ``resources`` package instead. Add a new domain by creating its
-top-level package and importing it at the bottom of this module, next to
-the existing ``adr``/``resources`` import, so its ``@mcp.tool()`` /
-``@mcp.prompt()`` / ``@mcp.resource()`` decorators actually run.
+registered via the domain package's own ``__init__.py``. ``uc`` currently
+only registers ``tools`` -- it has no ``prompts``/``resources`` sub-package
+yet. Cross-cutting, non-domain-specific tools/resources (e.g.
+``specmgr://version`` resource or ``mdformat`` tool) stay under the
+top-level ``general`` (for tools) or ``resources`` (for resources) packages
+instead. Add a new domain by creating its top-level package and importing
+it at the bottom of this module, next to the existing ``adr``/``general``/
+``resources``/``uc`` imports, so its ``@mcp.tool()`` / ``@mcp.prompt()`` /
+``@mcp.resource()`` decorators actually run.
 """
 
 from __future__ import annotations
@@ -80,4 +86,4 @@ mcp = MCPServer(
 # decorators to actually run.
 # ---------------------------------------------------------------------------
 
-from . import adr, resources  # noqa: E402, F401
+from . import adr, general, resources, uc  # noqa: E402, F401

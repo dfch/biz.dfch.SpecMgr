@@ -30,6 +30,28 @@ from pydantic import BaseModel
 from ._markdown import format_text, parse
 
 
+def _snippet(text: str, max_lines: int = 5, max_chars: int = 300) -> str:
+    """Return a truncated snippet of text for error messages.
+
+    Args:
+        text: the markdown text to excerpt.
+        max_lines: maximum number of lines to include before truncating.
+        max_chars: maximum number of characters to include before truncating.
+
+    Returns:
+        A snippet of up to `max_lines` lines and `max_chars` characters,
+        with a "... (truncated)" suffix if either limit was exceeded.
+    """
+    lines = text.splitlines()
+    truncated_lines = lines[:max_lines]
+    snippet = "\n".join(truncated_lines)
+
+    if len(lines) > max_lines or len(snippet) > max_chars:
+        snippet = snippet[:max_chars]
+        return f"{snippet}... (truncated)"
+    return snippet
+
+
 class MarkdownStr(BaseModel):
     """Markdown text parsed into token stream."""
 
@@ -163,7 +185,10 @@ class MarkdownStr(BaseModel):
             result: tuple[int, MarkdownStr | None] = (0, None)
             return result
 
-        assert extent > 0, f"{cls.__name__}.{name}: get_extent found no extent in remaining text"
+        assert extent > 0, (
+            f"{cls.__name__}.{name}: expected {type_.__name__}, found no match; "
+            f"remaining text ({len(text.splitlines())} line(s)) starts with:\n{_snippet(text)}"
+        )
 
         lines = text.splitlines()
         field_text = format_text("\n".join(lines[:extent]))
@@ -249,7 +274,10 @@ class MarkdownStr(BaseModel):
             if optional:
                 result: tuple[str, list[MarkdownStr] | None] = (text, None)
                 return result
-            assert False, f"{cls.__name__}.{name}: get_extent found no extent in remaining text"
+            assert False, (
+                f"{cls.__name__}.{name}: expected list[{item_type.__name__}], found no match; "
+                f"remaining text ({len(text.splitlines())} line(s)) starts with:\n{_snippet(text)}"
+            )
 
         result = (remaining_text, items)
 

@@ -164,17 +164,19 @@ Implementation checklist:
 ```python
 from icontract import require, ensure
 
+
 @require(lambda x: x > 0, "x must be positive")
 @ensure(lambda result: result > 0, "result must be positive")
 def sqrt(x: float) -> float:
     """Calculate square root with contracts."""
-    return x ** 0.5
+    return x**0.5
+
 
 # Valid call
-sqrt(9)      # Returns 3.0 ✓
+sqrt(9)  # Returns 3.0 ✓
 
 # Violates precondition
-sqrt(-1)     # ViolationError: x must be positive
+sqrt(-1)  # ViolationError: x must be positive
 ```
 
 #### 2. Class Invariants (Document State Consistency)
@@ -182,22 +184,24 @@ sqrt(-1)     # ViolationError: x must be positive
 ```python
 from icontract import invariant
 
+
 @invariant(lambda self: len(self.title) > 0, "title must not be empty")
 @invariant(lambda self: self.status in ("draft", "proposed", "accepted", "rejected"))
 class Document:
     """Base document class with state invariants."""
-    
+
     def __init__(self, title: str, status: str = "draft"):
         self.title = title
         self.status = status
-    
+
     @require(lambda self, new_status: new_status in ("draft", "proposed", "accepted", "rejected"))
     def set_status(self, new_status: str) -> None:
         self.status = new_status
 
+
 doc = Document("My ADR")
 doc.set_status("accepted")  # ✓
-doc.title = ""              # ViolationError: invariant violated
+doc.title = ""  # ViolationError: invariant violated
 ```
 
 #### 3. Contract Inheritance (Liskov Substitution Principle)
@@ -205,23 +209,25 @@ doc.title = ""              # ViolationError: invariant violated
 ```python
 from icontract import require, ensure, invariant
 
+
 @invariant(lambda self: self.balance >= 0)
 class Account:
     """Base account: precondition requires positive amount."""
-    
+
     def __init__(self, balance: float):
         self.balance = balance
-    
+
     @require(lambda self, amount: amount > 0, "amount must be positive")
     @ensure(lambda self, result: result > self.balance)
     def deposit(self, amount: float) -> float:
         self.balance += amount
         return self.balance
 
+
 @invariant(lambda self: self.balance >= 0)
 class PremiumAccount(Account):
     """Derived account: WEAKENS precondition (allows zero), STRENGTHENS postcondition (adds interest)."""
-    
+
     @require(lambda self, amount: amount >= 0, "amount must be non-negative")  # WEAKENED
     @ensure(lambda self, result: result >= self.balance)  # STRENGTHENED
     def deposit(self, amount: float) -> float:
@@ -229,10 +235,11 @@ class PremiumAccount(Account):
         self.balance *= 1.01  # Add 1% interest
         return self.balance
 
+
 # Both are substitutable: PremiumAccount can be used wherever Account is expected
 account: Account = PremiumAccount(100)
-account.deposit(0)      # Works! Precondition weakened to allow zero
-account.deposit(50)     # Works! Postcondition strengthened to guarantee interest
+account.deposit(0)  # Works! Precondition weakened to allow zero
+account.deposit(50)  # Works! Postcondition strengthened to guarantee interest
 ```
 
 #### 4. Snapshots (Capture Pre-execution State)
@@ -240,18 +247,20 @@ account.deposit(50)     # Works! Postcondition strengthened to guarantee interes
 ```python
 from icontract import snapshot, ensure
 
+
 class Document:
     def __init__(self, content: str):
         self.content = content
-    
+
     @snapshot(lambda self: len(self.content), name="old_length")
     @ensure(lambda self, old_length: len(self.content) == old_length + 1)
     def append_char(self, char: str) -> None:
         """Append a character, ensure length increases by exactly 1."""
         self.content += char
 
+
 doc = Document("hello")
-doc.append_char("!")     # ✓ Length: 5 → 6
+doc.append_char("!")  # ✓ Length: 5 → 6
 ```
 
 #### 5. For SpecMgr: ADR Document Contracts
@@ -259,27 +268,29 @@ doc.append_char("!")     # ✓ Length: 5 → 6
 ```python
 from icontract import require, ensure, invariant
 
+
 @invariant(lambda self: len(self.title) > 0, "ADR title required")
 @invariant(lambda self: self.status in ("draft", "proposed", "accepted", "rejected", "superseded"))
 class AdrDocument:
     """ADR with contracts on state and operations."""
-    
+
     def __init__(self, title: str):
         self.title = title
         self.status = "draft"
         self.options = []
-    
+
     @require(lambda self, option_title: len(option_title) > 0, "option title cannot be empty")
     @ensure(lambda self: len(self.options) > 0, "must have at least one option after add")
     def add_option(self, option_title: str) -> None:
         """Add a decision option; ensure non-empty options list."""
         self.options.append({"title": option_title})
-    
+
     @require(lambda self, new_status: new_status in ("draft", "proposed", "accepted", "rejected"))
     @ensure(lambda self, new_status: self.status == new_status)
     def set_status(self, new_status: str) -> None:
         """Update status; postcondition ensures status is set exactly."""
         self.status = new_status
+
 
 # Usage
 adr = AdrDocument("Adopt icontract")

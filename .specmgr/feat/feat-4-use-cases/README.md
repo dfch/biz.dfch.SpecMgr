@@ -1,9 +1,9 @@
 ---
 id: feat-4-use-cases
-version: 1.3.0
+version: 1.5.0
 status: planning
 created: 2026-08-05
-updated: 2026-08-12
+updated: 2026-08-13
 ---
 
 # Feature: Create Use Cases with tool support
@@ -56,7 +56,9 @@ Create a Markdown schema for use cases based on Alistair Cockburn's template, wi
 ### Design Notes
 
 **Formal Schema Specification:**
-See `uc_schema.json` for the complete JSON Schema definition. This machine-readable schema defines all fields, types, constraints, and validation rules. Agents can parse this to understand the use case structure. See `uc_class.puml` for the class diagram and `uc_reference.md` for a detailed example use case.
+Canonical (v2, current): `v2/uc_schema.json` for the complete JSON Schema definition, built on `uc/models/v2`'s `models/md`-engine-backed Pydantic models; `v2/uc-schema.md` for the narrative walkthrough; `v2/uc_reference_mdformat_class.puml` for the class diagram; `v2/uc_reference.md`/`v2/uc_reference_mdformat.md` for detailed example use cases. `v2/uc_reference_mdformat_schema.json` is a sibling artifact scoped to one specific worked example, not the general schema.
+
+**Superseded (v1, historical only — do not use for current schema shape):** `v1/uc_schema.json`, `v1/uc-schema.md`, `v1/uc_class.puml`, `v1/uc_example-v1.md`. These describe the hand-written `uc/models/v1` parser and Cockburn's compound extension-action numbering (`3a1.`, `3a2.`, ...), both replaced by Task 1.5/DEC-010's rebuild onto `uc/models/v2`. Kept only for historical reference (e.g. git-blame context on why v2 looks the way it does), never as a current schema description.
 
 **Markdown Schema Design:**
 - Use Cockburn's template attributes: Use Case name, Goal in Context, Scope, Level, Preconditions, Success End Condition, Failed End Condition, Primary Actor, Trigger, Main Success Scenario, Extensions, Sub-Variations, Related Information (Priority, Performance Target, Frequency, Channels, Secondary Actors, Open Issues, Schedule)
@@ -99,7 +101,7 @@ progresses (edit, don't duplicate).
 - [x] Task 1.3A: Implement Markdown parser (parse_uc) + fix Extension model for compound action numbering — depends on: Task 1.2 — status: completed
 - [x] Task 1.3B: Implement validation tool (step-numbering, cross-reference model_validators) — depends on: Task 1.3A — status: completed
 - [x] Task 1.4: Write schema documentation with examples — depends on: Task 1.1 — status: completed
-- [ ] Task 1.5: Rebuild the uc schema/models on feat-5-md-model-parser's generic `models/md` engine (`MarkdownStr`, `MarkdownSection1`..`6`, `MarkdownParagraph`, `MarkdownListItem`, `MarkdownFrontmatter`), replacing the hand-written `uc/models/v1` Pydantic models and the custom `parse_uc` parser/renderer with a class tree built on that engine's recursive `from_text`/`__str__` — depends on: Task 1.4, feat-5-md-model-parser (done) — status: **in-progress, model tree + validators done, gated on Task 1.7/1.8** (see 2026-08-12 Recent Updates entry for the full session log). Reopens Phase 1 (previously marked complete); see feat-5's own Follow-up #3, which explicitly flagged this as worth revisiting once feat-4 evaluates adoption. **Blocks Task 2.2 onward** — see Phase 2 note below.
+- [x] Task 1.5: Rebuild the uc schema/models on feat-5-md-model-parser's generic `models/md` engine (`MarkdownStr`, `MarkdownSection1`..`6`, `MarkdownParagraph`, `MarkdownListItem`, `MarkdownFrontmatter`), replacing the hand-written `uc/models/v1` Pydantic models and the custom `parse_uc` parser/renderer with a class tree built on that engine's recursive `from_text`/`__str__` — depends on: Task 1.4, feat-5-md-model-parser (done) — status: **completed (2026-08-12)**, now that Task 1.7 (its last remaining gate) is done too (see 2026-08-12 Recent Updates entries for the full session log). Reopened, then re-closed, Phase 1 (previously marked complete on 2026-08-05); see feat-5's own Follow-up #3, which explicitly flagged this as worth revisiting once feat-4 evaluates adoption. **Unblocks Task 2.2 onward** — see Phase 2 note below.
 
   **Superseded finding (the 2026-08-11 finding below no longer holds; see DEC-010):** the original 2026-08-11 finding claimed a literal "full rebuild" was not achievable — Cockburn's compound action numbering (`3a1.`, `3a2.`, ...) is not valid CommonMark list syntax, and `Extensions`/`SubVariations`'s dynamically-named per-item h3 headings supposedly could not be decomposed by the generic engine at all, requiring a hybrid two-pass (generic engine + a second dedicated regex parser reusing `uc/models/v1/parser.py`'s patterns, with a `parsed_items()` escape hatch). **This is now known to be wrong on the second half of that claim**: the generic engine's regex `@alias` (`AliasType.REGEX`) natively supports a dynamically-named repeated h3 sub-heading under a fixed h2 parent (e.g. `Extension` matching `^Extension \d+[a-z]?\. .+$`, collected as `Extensions.extensions: list[Extension]`) — proven empirically in `tests/uc/models/v2/test_extensions_parsing.py`/`test_sub_variations_parsing.py`, including byte-exact round-trips. The compound-numbering half of the original blocker was resolved differently: **not** by parsing `3a1.`/`3a2.` at all, but by changing the on-disk schema itself (DEC-010, option 2 from the draft sketch's own "Open decisions" block) so extension actions are now a real, plain CommonMark ordered list (`1.`, `2.`, `3.`) under an `### Extension {ref}. {condition}` heading, with cross-references expressed as prose ("Return to step 4.") rather than encoded in a compound list marker. **No hybrid/second parsing pass/`parsed_items()` is needed** — the entire document tree, including `Extensions`/`SubVariations`, is now handled by the generic engine alone.
 
@@ -124,19 +126,30 @@ progresses (edit, don't duplicate).
   reference for both `Extension` and `SubVariation`, letter-suffix-not-checked
   case, and the `ExtensionItem.notes` documentation case). 545 tests total.
 
-- [ ] Task 1.7: Update `uc_schema.json`/`uc-schema.md` for DEC-010's schema change — depends on: Task 1.6 — status: not-started, partially superseded. The top-level `.specmgr/feat/feat-4-use-cases/uc_schema.json` (Task 1.1, now moved to `v1/uc_schema.json`) and `v1/uc-schema.md` (Task 1.4) still describe v1's compound extension-action numbering (`{step_reference}1`, `{step_reference}2`, ...) and v1's exact field/heading names; DEC-010 replaced compound numbering with a plain ordered list under `### Extension {ref}. {condition}`. **A first v2-shaped JSON Schema now exists** — `v2/uc_reference_mdformat_schema.json` (2026-08-12), built from `uc_reference_mdformat.md`/`.ast` against the current `uc/models/v2` code, including finding+fixing 3 heading/field-naming discrepancies between the two (see the matching Recent Updates entry). Still open for this task: an updated narrative `uc-schema.md` (v1's Task 1.4 equivalent) for the v2 shape, and deciding whether `v2/uc_reference_mdformat_schema.json` becomes *the* canonical `uc_schema.json` going forward (e.g. promoted/renamed) or stays a feature-local reference artifact alongside a separately-authored canonical schema.
-- [ ] Task 1.8: Add a `from_text`/parser entry point for `UcDocument` — depends on: Task 1.6 — status: not-started. No such convenience function exists yet: `UcDocument`'s own docstring documents frontmatter-stripping as a caller concern (`frontmatter.loads(text)` + separately validating `.metadata`/`.content`), mirroring feat-5's REQ-003 convention, but nothing in `uc/models/v2/` yet wraps that into a single `UcDocument.from_text(raw_text: str) -> UcDocument`-shaped call, unlike ADR's `parse_adr`. Decide during implementation whether this lives as a classmethod/`@model_validator` on `UcDocument` itself or a free function in a new `uc/models/v2/parser.py`, mirroring whichever convention feels closer to `models.adr.v1.parser.parse_adr`'s split.
+- [x] Task 1.7: Update `uc_schema.json`/`uc-schema.md` for DEC-010's schema change — depends on: Task 1.6 — status: completed (2026-08-12). Resolved the "promote or duplicate" open decision by **duplicating**: `v2/uc_reference_mdformat_schema.json` (scoped to one specific worked example) stays untouched, and a new `v2/uc_schema.json` was created as its generalized duplicate — same field shape, but with example-specific commentary (reference-document literal values, "derived from `uc_reference_mdformat.md`/`.ast`" framing) stripped in favor of document-agnostic wording — this is now *the* canonical v2 schema. Wrote a fresh `v2/uc-schema.md` narrative walkthrough (not a port of `v1/uc-schema.md`), including a brief callout on why 2 of the 3 original Task 1.3B cross-field validators are now structurally unnecessary (§6/§7) versus the one that still applies (§9). `v1/uc_schema.json`/`v1/uc-schema.md` are explicitly marked superseded in this file's own Design Notes section (not edited themselves) rather than deleted, per repo-owner decision to keep them as historical-only artifacts. Feature README's Design Notes section repointed at the v2 artifacts as current/canonical.
+- [x] Task 1.8: Add a `from_text`/parser entry point for `UcDocument` — depends on: Task 1.6 — status: completed (2026-08-12). Added `uc/models/v2/parser.py::parse_uc(text: str) -> UcDocument` as a free function, mirroring `models.adr.v1.parser.parse_adr`'s own split (not a classmethod/`@model_validator` on `UcDocument`) — `frontmatter.loads(text)` + `UcFrontmatter.model_validate(...)` (with the same `_stringify_metadata` YAML-date-coercion fix `parse_adr` needed) for the frontmatter half, `UseCase.from_text(format_text(post.content))` for the body half. Unlike `parse_adr`, there is no dedicated `UcParseError`: a malformed heading/list structure surfaces as the generic `models/md` engine's own `AssertionError`, and field/cross-field validation failures as `pydantic.ValidationError` — both left uncaught, same as `parse_adr`'s two-channel split. Re-exported from `uc/models/v2/__init__.py`. 6 new tests in `tests/uc/models/v2/test_parser.py` (minimal doc, the feature's own `v2/uc_reference.md` full round-trip, absent-frontmatter defaulting, invalid-status/unresolvable-reference/malformed-structure failure modes).
 
-Once Task 1.7/1.8 land, Task 1.5 can be marked `completed` (see Current Status
-below for what already closed as of 2026-08-12 vs. what these two still gate).
+Task 1.5 is now fully done (see Current Status below).
 
 #### Phase 2: PlantUML Diagram Generation
-- [x] Task 2.1: Implement UC diagram generator (actors + use case associations) — depends on: Task 1.3B — status: completed. **Note (2026-08-11):** built against the current custom `UseCase` model (`uc/models/v1/usecase.py`); may need rework once Task 1.5 lands and the model shape changes.
-- [ ] Task 2.2: Implement Sequence diagram generator (main success path) — depends on: Task 1.3B, Task 1.5 — status: blocked (pending Task 1.5's outcome — do not build against the current model shape if it is about to be replaced)
+- [x] Task 2.1: Implement UC diagram generator (actors + use case associations) — depends on: Task 1.3B — status: completed. **Note (2026-08-11):** built against the current custom `UseCase` model (`uc/models/v1/usecase.py`); may need rework now that Task 1.5 has landed and the model shape changed (v1 → v2).
+- [ ] Task 2.2: Implement Sequence diagram generator (main success path) — depends on: Task 1.3B, Task 1.5 — status: not-started (Task 1.5 dependency now satisfied — no longer blocked, build against `uc/models/v2`)
 - [ ] Task 2.3: Implement Sequence diagram generator (extensions) — depends on: Task 2.2 — status: not-started
 - [ ] Task 2.4: Test diagram generation with sample use cases — depends on: Task 2.3 — status: not-started
 
 #### Phase 3: MCP Tools & CLI Integration
+
+**Note (2026-08-12):** a single `parse_uc` `@mcp.tool()` was added out of
+sequence, ahead of Task 3.1's specification, at the repo owner's explicit
+request (`uc/tools/parse_uc.py`, registered via `uc/__init__.py` +
+`server.py`; 3 tests in `tests/uc/tools/test_parse_uc.py`). It takes raw
+markdown text directly (there is no id-based file storage layer for use
+cases yet, unlike `adr/tools/`'s `_paths.py`/`_io.py`), and is a thin
+wrapper over Task 1.8's `parse_uc` free function. This is **not** Task 3.1
+(no specification was written first) nor a claim that Task 3.2 is done
+(only this one tool exists) — both tasks below remain open for the rest of
+the tool/prompt/resource surface.
+
 - [ ] Task 3.1: Define MCP tools, prompts, and resources (specification) — depends on: Task 2.4 — status: not-started
 - [ ] Task 3.2: Implement MCP tools per specification (Task 3.1) — depends on: Task 3.1 — status: not-started
 - [ ] Task 3.3: Implement MCP prompts per specification (Task 3.1) — depends on: Task 3.2 — status: not-started
@@ -152,8 +165,8 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-12**: Task 1.5 (rebuild `uc` on `models/md`) is substantially
-complete — see the Task List entry itself and the 2026-08-12 Recent Updates
+**As of 2026-08-12**: Task 1.5 (rebuild `uc` on `models/md`) is **fully
+complete** — see the Task List entry itself and the 2026-08-12 Recent Updates
 entries below for the full session log. The entire document tree
 (`CharacteristicInformation`, `MainSuccessScenario`, `Extensions`/`Extension`,
 `SubVariations`/`SubVariation`, `OpenIssues`, `RelatedInformation`,
@@ -165,21 +178,120 @@ once the on-disk schema itself dropped Cockburn's compound action numbering
 in favor of a plain ordered list. **A genuine framework bug was found and
 fixed while integrating** (`MarkdownSection.get_extent` never checked
 `@alias`) — see `.specmgr/feat/feat-5-md-model-parser/README.md`'s own
-2026-08-12 entry. **Task 1.6 (cross-field validator porting) is now done** —
-see the Task List entry and its own 2026-08-12 Recent Updates entry.
-Remaining work before Task 1.5 can be marked done: Task 1.7
-(`uc_schema.json`/`uc-schema.md` updates for DEC-010's schema change) and
-Task 1.8 (a `from_text`/parser entry point for `UcDocument`) — both added as
-their own Task List entries this session rather than left as untracked
-Current-Status prose.
+2026-08-12 entry. **Task 1.6 (cross-field validator porting) is done** — see
+the Task List entry and its own 2026-08-12 Recent Updates entry.
+**Task 1.8 (`parse_uc`/`UcDocument.from_text` entry point) is done**
+(`uc/models/v2/parser.py`) — see its Task List entry. **Task 1.7
+(`uc_schema.json`/`uc-schema.md` updates for DEC-010's schema change) is now
+done too** — `v2/uc_schema.json` (a generalized duplicate of
+`v2/uc_reference_mdformat_schema.json`) and a fresh `v2/uc-schema.md` were
+added; `v1/uc_schema.json`/`v1/uc-schema.md` are marked superseded in this
+file's own Design Notes section. This closes out Task 1.5's last remaining
+gate.
 
-**Blocker:** Task 2.2 onward still blocked on Task 1.5, now down to Task 1.7/1.8 (see Task List, Phase 1/2).
+A `parse_uc` `@mcp.tool()` (`uc/tools/parse_uc.py`) was also added this
+session, ahead of Task 3.1's specification, wrapping Task 1.8's parser
+function — see the Phase 3 Task List note for scope (single tool only, not
+the full Task 3.1/3.2 surface).
+
+**Blocker:** None — Task 1.5 is done, so Task 2.2 onward is unblocked (still
+not-started, but no longer waiting on a model-shape decision; see Task List,
+Phase 2).
 
 ### Recent Updates
 
 If this section grows too long, move older entries to `history.md` in this
 same folder and leave a pointer here, e.g.:
 `See history.md for updates before YYYY-MM-DD.`
+
+#### 2026-08-13 `parse_uc` MCP tool signature changed: text → path parameter
+
+- **`parse_uc` MCP tool signature changed** (`uc/tools/parse_uc.py`): the
+  `@mcp.tool()` wrapper now accepts a file path (`path: str`) instead of raw
+  markdown text (`text: str`), and reads the file from disk before parsing.
+  Breaking change — not a storage-layer addition (no id-based UC file storage
+  exists yet), just a convenience shift from "parse text you pass directly" to
+  "parse text read from a file you reference". File-access errors propagate
+  naturally as `FileNotFoundError`/`PermissionError`/`OSError`, mirroring the
+  existing "let parse/validation failures propagate uncaught" convention from
+  `adr/tools/` — no wrapping or custom error types introduced.
+- **Model-layer `parse_uc` unchanged** (`uc/models/v2/parser.py`): the free
+  function `parse_uc(text: str) -> UcDocument` stays as-is — it's still the
+  file-existence-agnostic entry point used by model tests and non-MCP code.
+  Only the thin `@mcp.tool()` wrapper in `uc/tools/parse_uc.py` changed.
+- **Tests fully rewritten** (`tests/uc/tools/test_parse_uc.py`): each test now
+  writes its test document to a `tempfile.TemporaryDirectory`, passes the path
+  string to `parse_uc`, and verifies the result. Added a new case:
+  nonexistent path → `FileNotFoundError`. Same three validation scenarios
+  (valid document, invalid frontmatter, malformed structure) covered, now
+  through file-based input. 4 tests → 4 tests (no net addition), all passing.
+- **Module and tool docstrings updated** to reflect path-based operation, with
+  explicit callout on file-access error propagation.
+- 555 tests total (554 prior + 1 new FileNotFoundError case), all passing.
+  `ruff format`/`ruff check`/`vulture` clean, `specmgr docs` regenerated.
+
+#### 2026-08-12 Task 1.7 completed; Task 1.5 fully closed
+
+- **Task 1.7 COMPLETED**: Resolved the two open decisions its own task text
+  had flagged (promote-vs-duplicate the JSON Schema; what to do about
+  `v1/uc-schema.md`):
+  - **Duplicated, not promoted**: `v2/uc_reference_mdformat_schema.json`
+    (scoped to, and named after, one specific worked example) is left
+    untouched. A new `v2/uc_schema.json` is a generalized duplicate of it —
+    identical field shape/nesting, but with every reference-document-specific
+    comment (literal `id`/`created`/`updated` values, "derived directly from
+    `uc_reference_mdformat.md`/`.ast`" framing) rewritten to be
+    document-agnostic. `v2/uc_schema.json` is now *the* canonical v2 schema;
+    validated via `jsonschema.Draft7Validator.check_schema()`.
+  - **Wrote `v2/uc-schema.md` from scratch** (not a port of `v1/uc-schema.md`)
+    — a narrative walkthrough of the current `uc/models/v2` shape: heading
+    structure (now with `Extensions`/`Sub-Variations`/`Open Issues`/
+    `Related Information` genuinely optional, not v1's always-present
+    DEC-005 convention), frontmatter, each H2 section, and a brief callout
+    (§6/§7) on why 2 of the original 3 Task 1.3B cross-field validators are
+    now structurally unnecessary versus the one (§9) that still applies and
+    how it's implemented (`UseCase.validate_step_references_resolve_and_are_unique`).
+  - **`v1/uc_schema.json`/`v1/uc-schema.md` marked superseded**: not edited
+    themselves (kept as an unmodified historical record), but the feature
+    README's own Design Notes section now explicitly calls out all `v1/`
+    schema artifacts as superseded/historical-only, and repoints the
+    "canonical schema" pointer at the `v2/` artifacts.
+  - No re-diff of the schema against `uc/models/v2` code was needed — Task
+    1.8 (added after the original `uc_reference_mdformat_schema.json` was
+    written) only added a parser function, no model/field changes.
+- **Task 1.5 marked COMPLETED**: its last remaining gate (Task 1.7) is now
+  closed, so the whole "rebuild `uc` on `models/md`" task is done. Phase 2's
+  Task 2.2 (blocked on Task 1.5) is now unblocked (still not-started, but
+  no longer waiting on a model-shape decision) — see the Phase 2 Task List
+  note.
+- No test/code changes this session (documentation/schema-artifact task
+  only); `ruff format`/`ruff check`/`vulture` untouched, no new tests added
+  (554 tests remains current).
+
+#### 2026-08-12 Task 1.8 completed (`parse_uc`); `parse_uc` MCP tool added ahead of Phase 3
+
+- **Task 1.8 COMPLETED**: `uc/models/v2/parser.py::parse_uc(text: str) -> UcDocument`,
+  a free function mirroring `models.adr.v1.parser.parse_adr`'s split (frontmatter via
+  `frontmatter.loads`/`UcFrontmatter.model_validate` with the same YAML-date
+  `_stringify_metadata` coercion `parse_adr` needed; body via
+  `UseCase.from_text(format_text(post.content))`). No dedicated `UcParseError`
+  introduced — structural failures surface as the generic engine's own
+  `AssertionError`, field/cross-field failures as `pydantic.ValidationError`,
+  both left uncaught like `parse_adr`. Re-exported from `uc/models/v2/__init__.py`.
+  6 new tests in `tests/uc/models/v2/test_parser.py`, including a full round-trip
+  of the feature's own `v2/uc_reference.md` reference document.
+- **`parse_uc` MCP tool ADDED** (`uc/tools/parse_uc.py`, `uc/tools/__init__.py`),
+  per repo-owner request, ahead of Task 3.1's specification/Task 3.2's full
+  implementation: a thin `@mcp.tool()` wrapper over the parser function above,
+  taking raw markdown text directly since no id-based use-case file storage
+  layer exists yet (unlike `adr/tools/`'s `_paths.py`/`_io.py`). Registered by
+  `uc/__init__.py` (new, previously empty) and wired into `server.py`'s
+  domain-package import list, mirroring `adr`'s own self-registration
+  pattern. 3 new tests in `tests/uc/tools/test_parse_uc.py`. Explicitly scoped
+  as a single tool, not a claim that Phase 3 is done — see the Task List's
+  Phase 3 note.
+- 554 tests total (545 prior + 6 + 3 new), `ruff format`/`ruff check`/`vulture`
+  clean, `specmgr docs` regenerated.
 
 #### 2026-08-12 New `v2/uc_reference*` artifacts; `uc_reference_mdformat_schema.json` written; 3 model/document discrepancies resolved
 

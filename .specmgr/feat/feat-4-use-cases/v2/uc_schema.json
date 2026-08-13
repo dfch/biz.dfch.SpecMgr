@@ -1,0 +1,485 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "UcDocument",
+  "description": "A complete use-case document (YAML frontmatter + Cockburn-template body). Canonical, document-agnostic JSON Schema (draft-07) for the `uc` document type, distinct from `v2/uc_reference_mdformat_schema.json` (a schema derived from, and scoped to, one specific worked example, `uc_reference_mdformat.md`/`.ast`) -- this file is a deliberate duplicate of that one, generalized to drop example-specific commentary, so it can be pointed to as *the* v2 use-case schema going forward. Property names/nesting mirror `src/biz/dfch/specmgr/uc/models/v2/use_case.py`, `frontmatter.py`, `document.py` (the `models/md`-engine-backed Pydantic models). As with `v1/uc_schema.json` (now superseded, see the feature README's Design Notes), cross-field/cross-item invariants (e.g. `UseCase.validate_step_references_resolve_and_are_unique`) cannot be expressed in JSON Schema draft-07 and are enforced by `model_validator`s instead -- this schema documents field shape/format only. Frontmatter stripping is not this schema's concern either (same `models/md` REQ-003 convention as the Pydantic models): a conforming document's `---...---` YAML block is parsed separately from the body. A document conforming to this schema is always assumed to be mdformat-normalized source, per project convention -- see `uc_reference_mdformat.md` for a full worked example.",
+  "type": "object",
+  "properties": {
+    "frontmatter": {
+      "type": "object",
+      "description": "YAML frontmatter metadata, parsed independently of the CommonMark body (see `models.md.MarkdownFrontmatter`/`uc.models.v2.UcFrontmatter`).",
+      "properties": {
+        "id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Specmgr-assigned document identifier. Optional; `null`/absent for a not-yet-registered, hand-authored document. Unlike `uc/models/v1`, no `^uc-[0-9]+$` pattern is enforced -- any string is accepted (see `UcFrontmatter`'s own docstring).",
+          "default": null
+        },
+        "type": {
+          "type": "string",
+          "description": "Document-type discriminator. Fixed to \"uc\", matching `UcFrontmatter.type: Literal[\"uc\"] = \"uc\"`.",
+          "const": "uc"
+        },
+        "version": {
+          "type": "string",
+          "description": "The `models.md` schema major.minor.patch version this frontmatter was written with.",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "default": "1.0.0"
+        },
+        "status": {
+          "type": "string",
+          "description": "Lifecycle status.",
+          "enum": [
+            "draft",
+            "proposed",
+            "accepted",
+            "deprecated",
+            "superseded"
+          ],
+          "default": "draft"
+        },
+        "created": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Free-form date/timestamp the document was first created (not format-validated -- `models.md.MarkdownFrontmatter.created` is a plain optional string).",
+          "default": null
+        },
+        "updated": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Free-form date/timestamp the document was last updated (not format-validated).",
+          "default": null
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "title": {
+      "type": "string",
+      "description": "Use case name, from the document's single H1 heading.",
+      "minLength": 1
+    },
+    "characteristic_information": {
+      "type": "object",
+      "description": "Body of the H2 'Characteristic Information' section. Every h3 sub-field is modeled as `list[MarkdownParagraph]` ('body' shape, prose) or `list[MarkdownListItem]` ('items' shape, bullet list) on the corresponding v2 class -- represented uniformly below as a JSON array of strings, one entry per paragraph/list item (almost always length 1 for the 'body'-shaped fields in practice).",
+      "properties": {
+        "goal_in_context": {
+          "type": "array",
+          "description": "H3 'Goal in Context'. Longer statement of the goal in context, if needed.",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        },
+        "scope": {
+          "type": "array",
+          "description": "H3 'Scope'. What system is being considered as a black box under design.",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        },
+        "level": {
+          "type": "array",
+          "description": "H3 'Level'. Scope level of the use case (e.g. 'Summary', 'Primary task', 'Subfunction' -- not enforced as an enum by the v2 model, unlike v1's JSON Schema).",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        },
+        "preconditions": {
+          "type": "array",
+          "description": "H3 'Preconditions'. What we expect is already the state of the world. `uc.models.v2.use_case.Preconditions` (renamed from the singular `Precondition`) derives this exact heading from its own class name -- no explicit `@alias` needed.",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        },
+        "success_end_condition": {
+          "type": "array",
+          "description": "H3 'Success End Condition'. The state of the world upon successful completion.",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        },
+        "failed_end_condition": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "description": "H3 'Failed End Condition' (optional). The state of the world if the goal is abandoned.",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "default": null
+        },
+        "primary_actor": {
+          "type": "array",
+          "description": "H3 'Primary Actor'. A role name for the primary actor, or a description.",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        },
+        "secondary_actors": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "description": "H3 'Secondary Actors' (optional). Other systems/actors needed to accomplish the use case.",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "default": null
+        },
+        "trigger": {
+          "type": "array",
+          "description": "H3 'Trigger'. The action upon the system that starts the use case (may be a time event).",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        },
+        "frequency": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "description": "H3 'Frequency' (optional). How often the use case is expected to happen (e.g. '200 per day').",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "default": null
+        },
+        "priority": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "description": "H3 'Priority' (optional). How critical this use case is to the system/organization.",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "default": null
+        },
+        "performance_target": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "description": "H3 'Performance Target' (optional). The amount of time this use case should take.",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "default": null
+        },
+        "channels_to_primary_actor": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "description": "H3 'Channels to Primary Actor' (optional). How the primary actor interacts with the system. `uc.models.v2.use_case.ChannelsToPrimaryActor` declares an explicit `@alias(value=\"Channels to Primary Actor\", type=AliasType.LITERAL)` matching this exact (lowercase 'to') heading, overriding `space_separated_name`'s title-cased default derivation.",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "default": null
+        },
+        "channels_to_secondary_actors": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "description": "H3 'Channels to Secondary Actors' (optional). How secondary actors interact with the system. Same explicit-`@alias` treatment as `channels_to_primary_actor` above.",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "default": null
+        },
+        "related_use_cases": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "description": "H3 'Related Use Cases' (optional). Free-text bullet list linking to parent/child use cases (e.g. 'Superordinate: ...', 'Subordinate: ...'). Unlike v1's typed `{superordinate, subordinate}` split, v2's `RelatedUseCases.items` is an untyped `list[MarkdownListItem]` -- represented here as a flat array of raw item strings, parsed on demand by a caller if the superordinate/subordinate split is needed.",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "default": null
+        }
+      },
+      "required": [
+        "goal_in_context",
+        "scope",
+        "level",
+        "preconditions",
+        "success_end_condition",
+        "primary_actor",
+        "trigger"
+      ],
+      "additionalProperties": false
+    },
+    "main_success_scenario": {
+      "type": "object",
+      "description": "Body of the H2 'Main Success Scenario' section: a single real CommonMark ordered list.",
+      "properties": {
+        "steps": {
+          "type": "array",
+          "description": "Ordered list of steps, in list order (position is the step's 1-based number -- v2 has no separate `number` field, unlike v1's `Step.number`). `MainSuccessScenario.steps` is `list[MarkdownListItem]` with no declared sub-fields (a 'leaf' list item), so each array entry is a step's *complete* raw content verbatim, including any nested continuation paragraph/sub-list it may contain -- not just its first line.",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "steps"
+      ],
+      "additionalProperties": false
+    },
+    "extensions": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Body of the optional H2 'Extensions' section.",
+      "properties": {
+        "intro": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "An optional leading paragraph directly under the 'Extensions' h2, before any 'Extension N.' h3 sub-heading.",
+          "default": null
+        },
+        "extensions": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "description": "One entry per dynamically-named 'Extension {ref}. {condition}' h3 sub-heading (matched via `Extension`'s regex `@alias`, `^Extension \\d+[a-z]?\\. .+$`). Named `extensions` (same as the parent object's own top-level key) because it mirrors `uc.models.v2.use_case.Extensions.extensions: list[Extension] | None` exactly.",
+          "items": {
+            "type": "object",
+            "description": "One 'Extension {ref}. {condition}' h3 sub-section. `reference`/`condition` are derived from the heading text (`Extension.text`), not separate declared Pydantic fields -- `UseCase.validate_step_references_resolve_and_are_unique` (Task 1.6) extracts `reference` the same way, via `_EXTENSION_HEADING_PATTERN`.",
+            "properties": {
+              "heading": {
+                "type": "string",
+                "description": "The h3 heading's full, verbatim text, e.g. \"Extension 3a. Company is out of one of the ordered items\"."
+              },
+              "reference": {
+                "type": "string",
+                "description": "The heading's `{ref}` group, e.g. \"3a\". Its leading digits must resolve to an existing 1-based position in `main_success_scenario.steps`; the trailing letter (if any) is never itself checked. Must be unique among all `extensions[].reference` values in the document.",
+                "pattern": "^[0-9]+[a-z]?$"
+              },
+              "condition": {
+                "type": "string",
+                "description": "The heading's `{condition}` group, e.g. \"Company is out of one of the ordered items\".",
+                "minLength": 1
+              },
+              "actions": {
+                "type": "array",
+                "description": "The h3's own CommonMark ordered list of actions (no compound sub-numbering, unlike v1/pre-DEC-010 -- cross-references to the main scenario, e.g. \"Return to step 4.\", are expressed as plain prose inside an action's own text, not encoded in the list marker).",
+                "items": {
+                  "type": "object",
+                  "description": "One `ExtensionItem`: `text` is the action's own leading paragraph (verbatim, marker-free); `notes` is populated only when the action has a genuine block-level continuation paragraph (a *loose*-list blank line before the next block) -- a same-paragraph soft line break stays part of `text` instead.",
+                  "properties": {
+                    "text": {
+                      "type": "string",
+                      "description": "The action's own leading paragraph.",
+                      "minLength": 1
+                    },
+                    "notes": {
+                      "type": [
+                        "array",
+                        "null"
+                      ],
+                      "description": "Optional continuation paragraph(s) following the action's leading paragraph, inside the same list item.",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "default": null
+                    }
+                  },
+                  "required": [
+                    "text"
+                  ],
+                  "additionalProperties": false
+                },
+                "minItems": 1
+              }
+            },
+            "required": [
+              "heading",
+              "reference",
+              "condition",
+              "actions"
+            ],
+            "additionalProperties": false
+          },
+          "default": null
+        }
+      },
+      "additionalProperties": false
+    },
+    "sub_variations": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Body of the optional H2 'Sub-Variations' section.",
+      "properties": {
+        "sub_variations": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "description": "One entry per dynamically-named 'Step {N}: {label}' h3 sub-heading (matched via `SubVariation`'s regex `@alias`, `^Step \\d+: .+$`). Named `sub_variations` (same as the parent object's own top-level key), mirroring `uc.models.v2.use_case.SubVariations.sub_variations: list[SubVariation] | None` exactly.",
+          "items": {
+            "type": "object",
+            "description": "One 'Step {N}: {label}' h3 sub-section. `reference`/`label` are derived from the heading text (`SubVariation.text`), not separate declared Pydantic fields -- same derivation as `Extension.reference`/`condition` above.",
+            "properties": {
+              "heading": {
+                "type": "string",
+                "description": "The h3 heading's full, verbatim text, e.g. \"Step 1: Buyer may use\"."
+              },
+              "reference": {
+                "type": "string",
+                "description": "The heading's `{N}` group, e.g. \"1\". Must resolve to an existing 1-based position in `main_success_scenario.steps` and be unique among all `sub_variations[].reference` values in the document.",
+                "pattern": "^[0-9]+$"
+              },
+              "label": {
+                "type": "string",
+                "description": "The heading's `{label}` group, e.g. \"Buyer may use\".",
+                "minLength": 1
+              },
+              "variations": {
+                "type": "array",
+                "description": "The h3's own bullet list of alternative ways to perform the referenced step -- a flat `list[MarkdownListItem]` (unlike `Extension.items`, no `text`/`notes` split).",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "minItems": 1
+              }
+            },
+            "required": [
+              "heading",
+              "reference",
+              "label",
+              "variations"
+            ],
+            "additionalProperties": false
+          },
+          "default": null
+        }
+      },
+      "additionalProperties": false
+    },
+    "open_issues": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Body of the optional H2 'Open Issues' section.",
+      "properties": {
+        "items": {
+          "type": "array",
+          "description": "Flat bullet list of open questions/decisions awaiting resolution.",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "additionalProperties": false
+    },
+    "related_information": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Body of the optional H2 'Related Information' section. Unlike v1 (flat `notes`/`assumptions` arrays directly on this object), v2 models each as its own h3 sub-section wrapping an `items` list -- one extra level of nesting versus v1's own `uc_schema.json`.",
+      "properties": {
+        "notes": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "description": "Optional h3 'Notes' sub-section.",
+          "properties": {
+            "items": {
+              "type": "array",
+              "description": "Additional notes about the use case.",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "required": [
+            "items"
+          ],
+          "additionalProperties": false,
+          "default": null
+        },
+        "assumptions": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "description": "Optional h3 'Assumptions' sub-section.",
+          "properties": {
+            "items": {
+              "type": "array",
+              "description": "Assumptions made in this use case.",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "required": [
+            "items"
+          ],
+          "additionalProperties": false,
+          "default": null
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "frontmatter",
+    "title",
+    "characteristic_information",
+    "main_success_scenario"
+  ],
+  "additionalProperties": false
+}

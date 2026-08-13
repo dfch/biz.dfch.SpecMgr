@@ -52,6 +52,12 @@ First-line docstrings from each module, organized by domain:
 - `commands/unused_code.py` — ``unused-code`` -- report unreferenced Python symbols, or (with ``--test``) test-only ones.
 - `commands/version.py` — ``version`` -- print the installed ``biz-dfch-specmgr`` version.
 
+**general/**
+
+- `general/__init__.py` — General-purpose (cross-cutting, not domain-specific) tools.
+- `general/tools/__init__.py` — MCP tool wrappers for general-purpose utilities (mirrors ``adr/tools/``'s shape).
+- `general/tools/mdformat.py` — ``@mcp.tool()`` wrapper: mdformat.
+
 **models/**
 
 - `models/__init__.py` — Pydantic models used by the ``biz-dfch-specmgr`` MCP server.
@@ -115,7 +121,10 @@ First-line docstrings from each module, organized by domain:
 - `uc/models/v2/__init__.py` — Use Case models v2 -- rebuilt on `feat-5-md-model-parser`'s generic `models/md` engine.
 - `uc/models/v2/document.py` — Pydantic model for a full use-case document (frontmatter + body).
 - `uc/models/v2/frontmatter.py` — Use-case frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
+- `uc/models/v2/parser.py` — Parse raw use-case ``.md`` text into a :class:`UcDocument` (Task 1.8).
+- `uc/tools/__init__.py` — MCP tool wrappers for use cases (mirrors ``adr/tools/``'s own shape).
+- `uc/tools/parse_uc.py` — ``@mcp.tool()`` wrapper: parse_uc.
 
 ## Test Coverage
 
-**Test files**: 72
+**Test files**: 75

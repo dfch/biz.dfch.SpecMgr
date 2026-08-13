@@ -40,6 +40,12 @@ under the shared top-level `models/` package instead of moving into `adr/`,
 since it has no dependency on `mcp`/`tools`/`resources`/`prompts` and is
 meant to stay importable standalone.
 
+A new cross-cutting `general/` domain package now exists:
+- `general/tools/` — 1 `@mcp.tool()` wrapper so far: `mdformat` (format
+  markdown files in place, preserving YAML frontmatter blocks for ADR/UC files).
+  Tools-only, no `prompts`/`resources` sub-packages yet.
+- 10 passing tests under `tests/general/tools/test_mdformat.py`.
+
 Still genuinely missing / not yet done (don't assume otherwise):
 - **`specmgr adr-toc`** — a CLI command that generates a table of contents
   (`docs/adr/README.md`) listing all ADRs with their titles, frontmatter
@@ -55,10 +61,10 @@ Still genuinely missing / not yet done (don't assume otherwise):
 `.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md` §10 ("Next steps") tracks per-item done/not-done
 status and should be kept in sync with `src/` as this evolves; treat it as
 current-state tracking, not just a historical design doc. Don't assume any
-other domain package exists beyond `adr` (with its `tools`/`prompts`/
-`resources` sub-packages), or any other `models/` sub-package beyond
-`adr`/`version_info`, or anything in the top-level `resources/` package
-beyond `version` — check first.
+other domain package exists beyond `adr`/`general`/`uc` (with their respective
+`tools`/`prompts`/`resources` sub-packages where implemented), or any other
+`models/` sub-package beyond `adr`/`version_info`, or anything in the top-level
+`resources/` package beyond `version` — check first.
 
 ## Project Shape
 
