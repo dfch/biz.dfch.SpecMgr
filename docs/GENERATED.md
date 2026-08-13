@@ -94,6 +94,17 @@ First-line docstrings from each module, organized by domain:
 - `models/md/markdown_str.py` — Parse markdown into tokens using shared MarkdownIt instance.
 - `models/version_info.py` — Pydantic model for the ``specmgr://version`` resource.
 
+**req/**
+
+- `req/__init__.py` — Requirement (REQ) domain -- requirement specifications.
+- `req/models/v1/__init__.py` — Requirement (REQ) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- `req/models/v1/body.py` — Requirement (REQ) models.
+- `req/models/v1/document.py` — Pydantic model for a full requirement document (frontmatter + body).
+- `req/models/v1/frontmatter.py` — Requirement frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
+- `req/models/v1/parser.py` — Parse raw requirement ``.md`` text into a :class:`ReqDocument` (Task 1.x).
+- `req/tools/__init__.py` — MCP tool wrappers for requirements (mirrors ``uc/tools/``'s own shape).
+- `req/tools/parse_req.py` — ``@mcp.tool()`` wrapper: parse_req.
+
 **resources/**
 
 - `resources/__init__.py` — MCP resource registrations that are not specific to any single document
@@ -128,4 +139,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 76
+**Test files**: 79

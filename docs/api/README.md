@@ -76,6 +76,9 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.models.md.markdown_section6`](biz.dfch.specmgr.models.md.markdown_section6.md) — Markdown section starting with h6 heading.
 - [`biz.dfch.specmgr.models.md.markdown_str`](biz.dfch.specmgr.models.md.markdown_str.md) — Parse markdown into tokens using shared MarkdownIt instance.
 - [`biz.dfch.specmgr.models.version_info`](biz.dfch.specmgr.models.version_info.md) — Pydantic model for the ``specmgr://version`` resource.
+- [`biz.dfch.specmgr.req`](biz.dfch.specmgr.req.md) — Requirement (REQ) domain -- requirement specifications.
+- [`biz.dfch.specmgr.req.tools`](biz.dfch.specmgr.req.tools.md) — MCP tool wrappers for requirements (mirrors ``uc/tools/``'s own shape).
+- [`biz.dfch.specmgr.req.tools.parse_req`](biz.dfch.specmgr.req.tools.parse_req.md) — ``@mcp.tool()`` wrapper: parse_req.
 - [`biz.dfch.specmgr.resources`](biz.dfch.specmgr.resources.md) — MCP resource registrations that are not specific to any single document
 - [`biz.dfch.specmgr.resources.version`](biz.dfch.specmgr.resources.version.md) — Resource: specmgr://version — MCP server package version number.
 - [`biz.dfch.specmgr.server`](biz.dfch.specmgr.server.md) — MCP server for ``biz-dfch-specmgr``.

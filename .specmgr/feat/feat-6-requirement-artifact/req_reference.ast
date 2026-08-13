@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE document SYSTEM "CommonMark.dtd">
+
+<document xmlns="http://commonmark.org/xml/1.0">
+  <heading level="1">
+    <text>Maximum Engine Temperature</text>
+  </heading>
+  <paragraph>
+    <text>WHILE the engine is running, THE temperature must be at a maximum of 80 °C.</text>
+  </paragraph>
+  <heading level="2">
+    <text>Description</text>
+  </heading>
+  <paragraph>
+    <text>If the engine becomes too hot, the lifetime of the system decreases.</text>
+  </paragraph>
+  <heading level="2">
+    <text>Characteristics</text>
+  </heading>
+  <list type="ordered" start="1" tight="true" delimiter="period">
+    <item>
+      <paragraph>
+        <text>Safety</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>Reliability</text>
+      </paragraph>
+    </item>
+  </list>
+  <heading level="2">
+    <text>Tags</text>
+  </heading>
+  <list type="bullet" tight="true">
+    <item>
+      <paragraph>
+        <text>Combustion Engines</text>
+      </paragraph>
+    </item>
+    <item>
+      <paragraph>
+        <text>Vehicles</text>
+      </paragraph>
+    </item>
+  </list>
+  <heading level="2">
+    <text>Source</text>
+  </heading>
+  <paragraph>
+    <text>The International Safety Board Association (TISBA)</text>
+  </paragraph>
+  <heading level="2">
+    <text>Related Artifacts</text>
+  </heading>
+  <heading level="3">
+    <text>Requirements</text>
+  </heading>
+  <list type="bullet" tight="true">
+    <item>
+      <paragraph>
+        <text>REQ-9687: Maximum temperatures of running engines in civil vehicles</text>
+      </paragraph>
+    </item>
+  </list>
+  <heading level="3">
+    <text>Decisions</text>
+  </heading>
+  <list type="bullet" tight="true">
+    <item>
+      <paragraph>
+        <text>DEC-2703: Usage of metal conductors in moving engine parts</text>
+      </paragraph>
+    </item>
+  </list>
+  <heading level="3">
+    <text>Acceptance Criteria</text>
+  </heading>
+  <list type="bullet" tight="true">
+    <item>
+      <paragraph>
+        <text>ACC-1234: Temperature Measurements on running combustion engines</text>
+      </paragraph>
+    </item>
+  </list>
+  <heading level="2">
+    <text>More Information</text>
+  </heading>
+  <paragraph>
+    <text>This optional section can contain additional information. There is no defined format for this section.</text>
+  </paragraph>
+</document>

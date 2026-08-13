@@ -1,9 +1,9 @@
 ---
 id: feat-5-md-model-parser
-version: 1.16.1
+version: 1.16.2
 status: done
 created: 2026-08-08
-updated: 2026-08-12
+updated: 2026-08-13
 ---
 
 # Feature: Generic heading-mapped Markdown-to-Pydantic document parser
@@ -329,6 +329,64 @@ on this file) or the Recent Updates log below for that record.
    touch the ADR pipeline; not scheduled here.
 
 ### Recent Updates
+
+#### 2026-08-13 — post-closure bug fix: `MarkdownSection.text` now returns everything for a leaf section
+
+Discovered while `feat-6-requirement-artifact`'s `parse_req` MCP tool
+serialized a parsed `Requirement` via `model_dump()` — again the same
+"discovered by a downstream feature adopting this closed engine" pattern as
+the 2026-08-12 entry below, not new work on this feature's own scope, but a
+genuine bug in already-shipped code, fixed in place.
+
+- **Bug**: `MarkdownSection.text` (the computed_field exposing a section's
+  content through `model_dump()`/`model_dump_json()`, since `_value` is a
+  private attribute invisible to both) always re-parsed `str(self)` and
+  returned only the heading's own inline text, regardless of whether the
+  class was a leaf (no declared nested fields) or composite. For a
+  composite section this is correct and intended — the body is already
+  reachable through the declared nested fields, each exposing its own
+  `.text` the same way. For a **leaf** section with no field of its own to
+  hold the body (e.g. `req/models/v1/body.py`'s bare `class
+  Notes(MarkdownSection2): ...`/`MoreInformation`/`Description`, the only
+  three such classes in the repo), this silently dropped the entire body:
+  `_value` held the complete heading+body extent verbatim (see
+  `from_text`'s leaf branch), but `.text` only ever surfaced the heading
+  (e.g. `"Notes"`), so `model_dump()` on such a field returned
+  `{"text": "Notes"}` with the prose gone — exactly the class of bug
+  `MarkdownParagraph.text`/`MarkdownListItem.text` were introduced to
+  prevent for their own leaf case, but `MarkdownSection.text` had never
+  been given the equivalent branch.
+- **Why this was never caught here**: neither of this feature's own
+  fixtures (`various_models.py`, `test_uc_example.py`) nor
+  `feat-4-use-cases`' `uc/models/v2` ever asserts on `.text`/`model_dump()`
+  for a bare leaf `MarkdownSection` carrying multi-line prose content —
+  every `.text` assertion in the repo targets either a composite section's
+  heading (e.g. `document.body.text == "Buy Goods"`) or a
+  `MarkdownParagraph`/`MarkdownListItem` leaf, both already correctly
+  handled.
+- **Fix**: `MarkdownSection.text` now checks `self._get_field_names()`
+  first; for a leaf (empty list), it returns `str(self)` unchanged (the
+  complete extent, heading and body) instead of extracting just the
+  heading. The composite branch (and its heading-only contract, still
+  relied on by `document.body.text`/`uc/models/v2`'s `Extension`/
+  `SubVariation` heading-reference extraction) is unchanged.
+- **Test fallout**: added
+  `tests/models/md/test_markdown_section.py::TestMarkdownSectionText` (3
+  new cases: leaf returns the complete extent, composite returns only the
+  heading, and a leaf child nested inside a composite parent still returns
+  its own complete extent independently of its parent). No existing test
+  asserted the old heading-only behavior for a leaf section, so nothing
+  needed updating for the behavior change itself.
+- Full repo suite green after the fix (604 tests passing at the time of
+  this entry, `tests/models/md/` alone at 175 — the difference from the
+  523 recorded in the 2026-08-12 entry below is
+  `feat-6-requirement-artifact`'s own new `req` test files, not related to
+  this fix's own test fallout). `ruff format --check`/`ruff check`/
+  `vulture` clean.
+- Addresses part of Follow-up #2 below (byte-exact round-trip/content
+  exposure for a leaf section with richer body content) for the
+  `model_dump()`/`.text` angle specifically — the round-trip (`__str__`)
+  guarantee itself was already correct and unaffected by this bug.
 
 #### 2026-08-12 — post-closure bug fix: `get_extent` now also checks `@alias`
 

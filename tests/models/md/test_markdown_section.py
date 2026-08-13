@@ -239,6 +239,90 @@ class TestMarkdownSectionAliasEnforcement(unittest.TestCase):
             MainDocument.from_text(text)
 
 
+class TestMarkdownSectionText(unittest.TestCase):
+    """Tests for `MarkdownSection.text` (computed_field), leaf vs. composite."""
+
+    def test_leaf_section_text_returns_the_complete_extent(self) -> None:
+        """A leaf section's `.text` returns everything -- its own heading and
+        body -- not just the heading, since it has no declared field of its
+        own to hold the body and `_value` is otherwise invisible to
+        `model_dump()`."""
+        text = mdformat.text("### Sec3\n\ncontent\n\nmore content\n")
+        instance = _AnyHeadingLeafSection.from_text(text)
+        self.assertEqual(instance.text, text)
+
+    def test_composite_section_text_returns_only_the_heading(self) -> None:
+        """A composite section's `.text` returns just its own heading text --
+        the body is already reachable through its declared nested fields."""
+        text = mdformat.text(
+            "# Main Title\n"
+            "\n"
+            "## Characteristic Information\n"
+            "\n"
+            "### *Goal* In Context\n"
+            "\n"
+            "Some goal text.\n"
+            "\n"
+            "### Scope\n"
+            "\n"
+            "Some scope text.\n"
+            "\n"
+            "## Related Information\n"
+            "\n"
+            "### Notes\n"
+            "\n"
+            "Some notes text.\n"
+            "\n"
+            "### Assumptions\n"
+            "\n"
+            "Some assumptions text.\n"
+        )
+
+        doc = MainDocument.from_text(text)
+
+        self.assertEqual(doc.text, "Main Title")
+        self.assertEqual(doc.characteristic_information.text, "Characteristic Information")
+
+    def test_leaf_child_of_a_composite_section_text_returns_its_own_complete_extent(self) -> None:
+        """A leaf section nested inside a composite parent still returns its
+        own full heading-and-body extent from `.text`, independently of its
+        parent's heading-only `.text`."""
+        text = mdformat.text(
+            "# Main Title\n"
+            "\n"
+            "## Characteristic Information\n"
+            "\n"
+            "### *Goal* In Context\n"
+            "\n"
+            "Some goal text.\n"
+            "\n"
+            "### Scope\n"
+            "\n"
+            "Some scope text.\n"
+            "\n"
+            "## Related Information\n"
+            "\n"
+            "### Notes\n"
+            "\n"
+            "Some notes text.\n"
+            "\n"
+            "### Assumptions\n"
+            "\n"
+            "Some assumptions text.\n"
+        )
+
+        doc = MainDocument.from_text(text)
+
+        self.assertEqual(
+            doc.characteristic_information.goal_in_context.text,
+            mdformat.text("### *Goal* In Context\n\nSome goal text.\n"),
+        )
+        self.assertEqual(
+            doc.related_information.notes.text,
+            mdformat.text("### Notes\n\nSome notes text.\n"),
+        )
+
+
 class TestMarkdownSectionNestedHeadingContent(unittest.TestCase):
     """Tests for how a leaf MarkdownSection's body handles an embedded heading."""
 

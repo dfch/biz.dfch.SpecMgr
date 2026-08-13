@@ -61,23 +61,32 @@ model_config
 # --- Pydantic model fields read only via (de)serialization/rendering -------------
 # Round-tripped through `model_dump()`/parsing/markdown rendering rather than
 # accessed as a plain Python attribute anywhere in `src/` today.
+acceptance_criteria
 assumptions
 channels_to_primary_actor
 channels_to_secondary_actors
+characteristics
 created
+decisions
 failed_end_condition
 frequency
 goal_in_context
+goals
 notes
 open_issues
 performance_target
 preconditions
 priority
+related_artifacts
 related_information
 related_use_cases
+requirements
 scope
+source
 specmgr
+statement
 success_end_condition
+tags
 trigger
 precondition
 intro

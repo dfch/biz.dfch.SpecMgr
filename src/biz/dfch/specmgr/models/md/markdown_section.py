@@ -229,26 +229,51 @@ class MarkdownSection(MarkdownStr, ABC):
     @computed_field  # type: ignore
     @property
     def text(self) -> str:
-        """Computed property that extracts the heading text from this section.
+        """Computed property exposing this section's textual content.
 
-        Uses the @markdown decorator metadata to find the expected heading tag,
-        then parses the markdown content and extracts the text from that heading.
-        Returns an empty string if no matching heading is found.
+        `_value` is a Pydantic private attribute (leading underscore), so it
+        is invisible to `model_dump()`/`model_dump_json()` -- exactly the
+        serialization path used, for example, by an MCP server transmitting a
+        tool's return value. This property is what makes a section's content
+        reachable through that path at all, mirroring `MarkdownParagraph.text`/
+        `MarkdownListItem.text`'s established "expose `_value` as a public
+        field" pattern.
 
-        The heading tag is determined by the 'tag' field in the class's _metadata,
-        which is set by the @markdown decorator (e.g., 'h1', 'h2', 'h3').
+        Leaf case (no declared nested fields, see `_get_field_names`):
+        `_value` already holds this section's complete extent verbatim --
+        its own heading *and* body (see `from_text`) -- so this returns
+        `str(self)` unchanged, i.e. everything, not just the heading.
+        Without this branch, a leaf section with no field of its own to hold
+        its body (e.g. a bare `class Notes(MarkdownSection2): ...`) would
+        serialize to just its heading text, silently dropping the entire
+        body from `model_dump()`.
+
+        Composite case (has declared nested fields): the body is already
+        fully represented by those nested fields (each recursively exposing
+        its own content the same way), so returning the whole extent here
+        again would only duplicate it. Instead this extracts and returns
+        just this section's own heading text, by locating the `inline` token
+        immediately following this section's own `heading_open` (tag taken
+        from the `@markdown` decorator's `tag` metadata) in `str(self)`'s
+        token stream.
 
         Returns:
-            The heading text without markdown formatting.
+            Leaf: the complete extent verbatim (heading and body).
+            Composite: the heading text alone, without markdown formatting,
+            or an empty string if no matching heading is found (e.g.
+            `_value` is unset).
 
         Example:
             >>> @markdown(type="notes", tag="h3")
             ... class Notes(MarkdownSection): ...
             >>> notes = Notes()
             >>> notes._value = "### My Notes\n\nSome content"
-            >>> notes.name
-            'My Notes'
+            >>> notes.text
+            '### My Notes\n\nSome content'
         """
+        if not self._get_field_names():
+            return str(self)
+
         text = str(self)
         tokens = parse(text)
 
