@@ -19,6 +19,8 @@
 
 from __future__ import annotations
 
+from pydantic import computed_field
+
 from .markdown_str import MarkdownStr
 from ._markdown import format_text, parse
 from .markdown import markdown
@@ -204,3 +206,43 @@ class MarkdownParagraph(MarkdownStr):
 
         body = super().__str__()
         return format_text(f"{self._value}\n\n{body}")
+
+    @computed_field  # type: ignore
+    @property
+    def text(self) -> str:
+        """Computed property that exposes this paragraph's own text.
+
+        `_value` is a Pydantic private attribute (leading underscore), so it
+        is invisible to `model_dump()`/`model_dump_json()` -- exactly the
+        serialization path used, for example, by an MCP server transmitting
+        a tool's return value. Without this property, a `MarkdownParagraph`
+        instance serializes to an empty object even though `str()` on it
+        still returns its full markdown. Mirrors `MarkdownSection.text` and
+        `MarkdownListItem.text`'s established pattern of re-parsing `_value`
+        and returning the inline text of its own leading paragraph.
+
+        Leaf case: `_value` holds the complete extent verbatim (see
+        `from_text`), so this returns that paragraph's full inline text,
+        including any embedded line breaks exactly as authored.
+
+        Composite case: `_value` holds only the paragraph's own inline text
+        (e.g. a lead-in sentence), which is exactly what gets returned --
+        any nested fields' content is available through those fields
+        themselves, not through this property.
+
+        Returns:
+            The paragraph's own inline text, or an empty string if `_value`
+            is unset (e.g. before `from_text` runs) or holds no paragraph.
+
+        Example:
+            >>> paragraph = MarkdownParagraph.from_text("Just a paragraph.\\n")
+            >>> paragraph.text
+            'Just a paragraph.'
+        """
+        tokens = parse(self._value)
+
+        for i, token in enumerate(tokens):
+            if token.type == "inline" and i > 0 and tokens[i - 1].type == "paragraph_open":
+                return token.content.strip()
+
+        return ""

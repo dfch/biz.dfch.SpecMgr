@@ -271,5 +271,55 @@ This is a section 2.
         self.assertEqual(result, expected)
 
 
+class TestMarkdownParagraphText(unittest.TestCase):
+    """Tests for MarkdownParagraph.text (computed_field).
+
+    Regression coverage for the bug where `MarkdownParagraph` was the only
+    `MarkdownStr` leaf subclass without a `text` computed_field: `_value` is
+    a private attribute, invisible to `model_dump()`/`model_dump_json()`
+    (the serialization path an MCP server uses to transmit a tool's return
+    value), so a `MarkdownParagraph`-backed field silently serialized to an
+    empty object even though `str()` on it still returned its full markdown.
+    """
+
+    def test_text_is_empty_before_from_text(self) -> None:
+        """`_value` is unset on a bare instance, so `.text` is the empty string."""
+        instance = MarkdownParagraph()
+        self.assertEqual(instance.text, "")
+
+    def test_text_returns_a_leaf_paragraphs_full_inline_text(self) -> None:
+        """A leaf paragraph's `.text` is its complete inline text, stripped."""
+        text = mdformat.text("Just a plain paragraph.\n")
+        instance = MarkdownParagraph.from_text(text)
+        self.assertEqual(instance.text, "Just a plain paragraph.")
+
+    def test_text_preserves_embedded_line_breaks_in_a_multi_line_paragraph(self) -> None:
+        """A paragraph spanning several source lines keeps its internal line
+        breaks verbatim in `.text` -- no collapsing/joining into one line."""
+        text = mdformat.text("Line one of the paragraph.\nLine two of the paragraph.\n")
+        instance = MarkdownParagraph.from_text(text)
+        self.assertEqual(instance.text, "Line one of the paragraph.\nLine two of the paragraph.")
+
+    def test_text_strips_inline_markup_source_but_keeps_it_verbatim(self) -> None:
+        """Inline markdown markup is part of `.text` verbatim (not rendered away)."""
+        text = mdformat.text("A paragraph with *emphasis* and **strong** text.\n")
+        instance = MarkdownParagraph.from_text(text)
+        self.assertEqual(instance.text, "A paragraph with *emphasis* and **strong** text.")
+
+    def test_text_of_a_composite_paragraph_is_only_its_own_intro_sentence(self) -> None:
+        """A composite paragraph's `.text` is its own inline text -- the
+        delegated field's content is available through that field, not here."""
+        text = mdformat.text("Intro sentence.\n\nBody content.\nMore body content.\n")
+        instance = _IntroParagraph.from_text(text)
+        self.assertEqual(instance.text, "Intro sentence.")
+
+    def test_model_dump_exposes_text(self) -> None:
+        """`model_dump()` surfaces the paragraph's content via `text` -- the
+        exact regression this computed_field fixes (previously `{}`)."""
+        text = mdformat.text("Content that must survive serialization.\n")
+        instance = MarkdownParagraph.from_text(text)
+        self.assertEqual(instance.model_dump(), {"text": "Content that must survive serialization."})
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -92,6 +92,31 @@ class TestParseUcTool(unittest.TestCase):
             self.assertEqual(result.frontmatter.id, "uc-001")
             self.assertEqual(result.body.text, "Buy Goods")
 
+    def test_model_dump_surfaces_markdownparagraph_backed_fields(self) -> None:
+        """Regression test: `model_dump()` must surface real content for every
+        `MarkdownParagraph`-backed field (`goal_in_context`, `scope`, `level`,
+        `primary_actor`, `trigger`), not an empty object.
+
+        Before `MarkdownParagraph` gained its `text` computed_field, these
+        fields serialized to `{}` because `_value` (where the parsed content
+        actually lives) is a Pydantic private attribute, invisible to
+        `model_dump()`/`model_dump_json()` -- exactly the path an MCP server
+        uses to transmit a tool's return value over the wire.
+        """
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "test.md"
+            path.write_text(_VALID_DOC, encoding="utf-8")
+
+            result = parse_uc(str(path))
+            dump = result.model_dump(mode="json")
+
+            ci = dump["body"]["characteristic_information"]
+            self.assertEqual(ci["goal_in_context"]["body"][0]["text"], "Buyer issues request.")
+            self.assertEqual(ci["scope"]["body"][0]["text"], "Company.")
+            self.assertEqual(ci["level"]["body"][0]["text"], "Summary")
+            self.assertEqual(ci["primary_actor"]["body"][0]["text"], "Buyer.")
+            self.assertEqual(ci["trigger"]["body"][0]["text"], "Purchase request comes in.")
+
     def test_raises_for_invalid_frontmatter(self) -> None:
         """parse_uc must let a frontmatter validation failure propagate."""
         text = _VALID_DOC.replace("status: draft", "status: not-a-real-status")
