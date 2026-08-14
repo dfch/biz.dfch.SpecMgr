@@ -27,6 +27,7 @@ specmgr://version --    Installed version number of the ``biz-dfch-specmgr`` pac
 specmgr://adr/list --   Ids/titles/statuses/filenames of every ADR
                         (``.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md``).
 specmgr://adr/{id} --    Full ADR document for a given id (``.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md``).
+specmgr://req/schema -- The persisted REQ JSON Schema (``docs/req_schema.json``).
 
 Tools
 -----
@@ -49,9 +50,10 @@ Modules are grouped domain-first
 document-type domain"): each document
 domain (``adr``, ``uc``, ``req``, and later ``ac``) is a top-level package
 with its own ``tools``/``prompts``/``resources`` sub-packages, self-
-registered via the domain package's own ``__init__.py``. ``uc``/``req``
-currently only register ``tools`` -- they have no ``prompts``/``resources``
-sub-package yet. Cross-cutting, non-domain-specific tools/resources (e.g.
+registered via the domain package's own ``__init__.py``. ``req`` registers
+``tools`` and ``resources``; ``uc`` currently only registers ``tools`` --
+neither has a ``prompts`` sub-package yet. Cross-cutting, non-domain-specific
+tools/resources (e.g.
 ``specmgr://version`` resource or ``mdformat`` tool) stay under the
 top-level ``general`` (for tools) or ``resources`` (for resources) packages
 instead. Add a new domain by creating its top-level package and importing

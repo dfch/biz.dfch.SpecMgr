@@ -3,7 +3,7 @@ created: 2026-08-13
 id: feat-6-requirement-artifact
 status: in-progress
 updated: 2026-08-14
-version: 1.4.5
+version: 1.4.6
 ---
 
 # Feature: Requirement (REQ) artifact template with characteristic assignment
@@ -99,7 +99,7 @@ progresses (edit, don't duplicate).
 - [x] Task 3.2: Implement MCP per specification (Task 3.1) — depends on: Task 3.1 — status: **partially completed (2026-08-13)** — `req/tools/parse_req.py` (`@mcp.tool()` wrapper, reads path from disk, delegates to `parser.parse_req`), `req/tools/__init__.py`, `req/__init__.py`; registered in `server.py` (`from . import adr, general, req, resources, uc`). Remaining Task 3.1 scope (prompts, resources, further tools) still not-started.
 - [ ] Task 3.3: Implement CLI commands (`req-get`, `req-parse`, etc.) — depends on: Task 3.2 — status: not-started
 - [x] Task 3.4: Add a `"$comment"` schema-version marker (e.g. `"v1"`, matching `req/models/v1`'s package version — not `"req v1"`, since the doc type is already clear from the file/resource identity) to `generate_req_schema()`'s emitted JSON, so a caller can detect a REQ schema layout change without diffing the whole file — depends on: Task 2.7 — status: **completed (2026-08-14)** — `SCHEMA_COMMENT_VERSION = "v1"` constant added to a new `req/models/v1/_util.py` (mirroring `models/adr/v1/_util.py`'s precedent), re-exported from `req/models/v1/__init__.py`, and injected as `generate_req_schema()`'s `$comment` key. `docs/req_schema.json` regenerated.
-- [ ] Task 3.5: Add `specmgr://req/schema` MCP resource — reads the persisted `docs/req_schema.json` directly from disk (trusts the `specmgr-schema` pre-commit hook to keep it current, same trust model as `adr-toc`'s `docs/adr/README.md`; no `commands/schema.py`/`typer` import, no on-the-fly regeneration). URI is deliberately unversioned (see Decisions Made) — depends on: Task 3.4 — status: not-started
+- [x] Task 3.5: Add `specmgr://req/schema` MCP resource — reads the persisted `docs/req_schema.json` directly from disk (trusts the `specmgr-schema` pre-commit hook to keep it current, same trust model as `adr-toc`'s `docs/adr/README.md`; no `commands/schema.py`/`typer` import, no on-the-fly regeneration). URI is deliberately unversioned (see Decisions Made) — depends on: Task 3.4 — status: **completed (2026-08-14)** — `req/resources/req_schema.py` (new `req/resources/` sub-package, registered from `req/__init__.py`); reads and `json.loads()`s a fixed path (no env var — this is a build artifact of the package's own source tree, not user-authored content), returning a parsed `dict`; missing/corrupted file raises `FileNotFoundError`/`json.JSONDecodeError` uncaught. Path resolution factored into a new, dependency-free `biz/dfch/specmgr/_paths.py` (`REPO_ROOT`/`DOCS_DIR`), shared with (and replacing the previously-duplicated computation in) `commands/schema.py`, so neither the `cli` extra (`typer`) nor the `mcp` extra leaks into the other's import graph.
 
 **Note:** If a task's scope changes mid-flight, edit its description in place;
 rely on git history (`git log -p` on this file) to recover what was
@@ -109,13 +109,59 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-14**: Phase 1 (Specification) and Phase 2 (Pydantic Models & Parser) are both **fully complete**, including `req_schema.json` (Task 1.2), now generated (not hand-authored) via a new generic `specmgr schema` CLI command (JSON Schema 2020-12), with CI wiring and a pre-commit hook keeping it in sync. Phase 3 (MCP Surface) has its first tool, `parse_req`, implemented and registered; the generated schema now also carries a `"$comment": "v1"` layout-version marker (Task 3.4). Prompts, `specmgr://req/schema` resource (Task 3.5), and further tools remain unspecified/not-started. No CLI commands yet (Task 3.3).
+**As of 2026-08-14**: Phase 1 (Specification) and Phase 2 (Pydantic Models & Parser) are both **fully complete**, including `req_schema.json` (Task 1.2), now generated (not hand-authored) via a new generic `specmgr schema` CLI command (JSON Schema 2020-12), with CI wiring and a pre-commit hook keeping it in sync. Phase 3 (MCP Surface) has its first tool, `parse_req`, and its first resource, `specmgr://req/schema`, both implemented and registered; the generated schema carries a `"$comment": "v1"` layout-version marker (Task 3.4). Prompts and further tools remain unspecified/not-started. No CLI commands yet (Task 3.3).
 
 ### Blockers
 
 None.
 
 ### Recent Updates
+
+#### 2026-08-14 (continued) — Task 3.5 implemented: `specmgr://req/schema` MCP resource
+
+- New `req/resources/` sub-package (`req/resources/req_schema.py` + `__init__.py`),
+  registered from `req/__init__.py` (`from . import resources, tools`) — the first
+  `resources` sub-package under `req/`, mirroring `adr/`'s
+  `tools`/`prompts`/`resources` shape.
+- `req_schema()` reads `docs/req_schema.json` fresh on every call (no
+  in-memory cache) and returns `json.loads()`'d content as a `dict[str, Any]` — chosen over a raw-`str` return after weighing fidelity
+  (byte-identical to the committed file) against consistency with every
+  other resource in this codebase (`version_info`/`adr_list`/`adr_get` all
+  return a structured type that FastMCP serializes) and against turning a
+  corrupted on-disk file into a hard failure at read time. Schema
+  *presence* is a build-time guarantee (the `specmgr-schema` pre-commit
+  hook/CI step), so a missing file raises `FileNotFoundError` and a
+  corrupted one raises `json.JSONDecodeError`, both uncaught — no
+  defensive handling, matching this codebase's existing let-it-raise
+  convention.
+- Path is a **fixed** location, not configurable via an env var (unlike
+  `adr.tools._paths.adr_base_dir`'s `SPECMGR_ADR_DIR`) — `docs/req_schema.json`
+  is a build artifact of this package's own source tree, not user-authored
+  content living elsewhere, so there's no meaningful "different location" to
+  override to.
+- New `biz/dfch/specmgr/_paths.py` — a top-level, dependency-free module
+  (only `pathlib`) exposing `REPO_ROOT`/`DOCS_DIR`, computed by climbing
+  from `__file__`. Both `commands/schema.py` (the `cli` extra) and
+  `req/resources/req_schema.py` (the `mcp` extra) import it, so neither
+  extra's optional dependency (`typer`/`mcp`) leaks into the other's import
+  graph — the Decisions Made entry below already ruled out importing
+  `commands.schema` directly from the resource for exactly this reason;
+  this factors out the *path* computation (previously duplicated inline in
+  `commands/schema.py`) into a shared home instead of a second duplicate.
+  Only resolves correctly from an editable/source checkout — a built,
+  non-editable install doesn't ship `docs/` as package data, so this would
+  hard-fail for a real `pip install` consumer; accepted as out of scope
+  (no `mcp.run()` caller exists yet regardless, per AGENTS.md).
+- Tests: `tests/req/resources/test_req_schema.py` (5 tests: real
+  committed-schema smoke test, patched-file round-trip, no-cache/fresh-read
+  regression, missing-file `FileNotFoundError`, corrupted-file
+  `json.JSONDecodeError`) and `tests/test_paths.py` (2 tests: `REPO_ROOT`
+  sanity-checked against `pyproject.toml`'s presence, `DOCS_DIR == REPO_ROOT / "docs"`) — 628 tests project-wide (up from 621), no
+  regressions. `ruff format --check`/`ruff check`/`vulture` clean;
+  `specmgr schema`/`specmgr docs`/`specmgr adr-toc` all regenerated with no
+  further drift (`docs/req_schema.json` itself is byte-identical --
+  `commands/schema.py`'s only change was importing the shared path
+  constant instead of computing its own).
 
 #### 2026-08-14 (continued) — Task 3.4 implemented: `"$comment": "v1"` schema-layout version marker
 
@@ -127,8 +173,7 @@ Implements the design queued in the "Tasks 3.4/3.5 queued" entry below.
   can't silently drift from the package's own `v1` folder name the way a
   hardcoded literal in `commands/schema.py` could. Re-exported from
   `req/models/v1/__init__.py`.
-- `generate_req_schema()` now injects `schema_dict["$comment"] =
-  SCHEMA_COMMENT_VERSION` alongside its existing `$schema` injection.
+- `generate_req_schema()` now injects `schema_dict["$comment"] = SCHEMA_COMMENT_VERSION` alongside its existing `$schema` injection.
   `docs/req_schema.json` regenerated (one new top-level key).
 - Deliberately **not** wired into `ReqFrontmatter.version`/any
   document-instance validation — this constant is scoped purely to the

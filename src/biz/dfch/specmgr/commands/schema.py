@@ -46,13 +46,11 @@ from typing import Annotated, Callable
 import typer
 from pydantic.json_schema import GenerateJsonSchema
 
+from .._paths import DOCS_DIR
 from ..req.models.v1 import SCHEMA_COMMENT_VERSION
 from ..req.models.v1.document import ReqDocument
 
-# __file__ = src/biz/dfch/specmgr/commands/schema.py
-_SRC_ROOT = Path(__file__).resolve().parent.parent  # src/biz/dfch/specmgr
-_REPO_ROOT = _SRC_ROOT.parent.parent.parent.parent  # repo root
-_DEFAULT_OUTPUT_DIR = _REPO_ROOT / "docs"
+_DEFAULT_OUTPUT_DIR = DOCS_DIR
 
 
 def generate_req_schema() -> str:

@@ -104,6 +104,8 @@ First-line docstrings from each module, organized by domain:
 - `req/models/v1/document.py` — Pydantic model for a full requirement document (frontmatter + body).
 - `req/models/v1/frontmatter.py` — Requirement frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
 - `req/models/v1/parser.py` — Parse raw requirement ``.md`` text into a :class:`ReqDocument` (Task 1.x).
+- `req/resources/__init__.py` — MCP resource registrations for Requirement (REQ) documents (Task 3.5).
+- `req/resources/req_schema.py` — Resource: specmgr://req/schema (Task 3.5).
 - `req/tools/__init__.py` — MCP tool wrappers for requirements (mirrors ``uc/tools/``'s own shape).
 - `req/tools/parse_req.py` — ``@mcp.tool()`` wrapper: parse_req.
 
@@ -141,4 +143,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 80
+**Test files**: 82
