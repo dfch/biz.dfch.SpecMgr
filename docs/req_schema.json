@@ -84,8 +84,20 @@
       "type": "object"
     },
     "Level": {
-      "description": "`## Level` -- single-line value giving the requirement's obligation\nstrength (e.g. \"MUST\"). Mandatory.",
+      "description": "`## Level` -- single-line value giving the requirement's obligation\nstrength (e.g. \"MUST\"). Mandatory. May be preceded by an explanatory\nHTML comment (e.g. listing the allowed values).",
       "properties": {
+        "comment": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MarkdownComment"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional explanatory HTML comment (`<!-- ... -->`) preceding `value`, e.g. listing the allowed obligation-strength values."
+        },
         "value": {
           "$ref": "#/$defs/MarkdownParagraph",
           "description": "Single-line value giving the requirement's obligation strength (e.g. \"MUST\")."
@@ -95,6 +107,12 @@
         "value"
       ],
       "title": "Level",
+      "type": "object"
+    },
+    "MarkdownComment": {
+      "description": "A standalone HTML comment block (`\"html_block\"`, e.g. `<!-- some note -->`).\n\nDeliberately leaf-only, like `MarkdownCodeBlock`. Declare an optional\n`comment: MarkdownComment | None` field on any `MarkdownStr` subclass to\nlet a value be preceded by such an explanatory comment without it\nbreaking that class's own structural field matching. See `get_extent`/\n`from_text`/`text` for the full mechanics.",
+      "properties": {},
+      "title": "MarkdownComment",
       "type": "object"
     },
     "MarkdownListItem": {
@@ -122,8 +140,20 @@
       "type": "object"
     },
     "Priority": {
-      "description": "`## Priority` -- single-line value giving the requirement's relative\npriority (e.g. a numeric rank). Optional.",
+      "description": "`## Priority` -- single-line value giving the requirement's relative\npriority (e.g. a numeric rank). Optional. May be preceded by an\nexplanatory HTML comment (e.g. describing the numeric range).",
       "properties": {
+        "comment": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MarkdownComment"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional explanatory HTML comment (`<!-- ... -->`) preceding `value`, e.g. describing the numeric range."
+        },
         "value": {
           "$ref": "#/$defs/MarkdownParagraph",
           "description": "Single-line value giving the requirement's relative importance (0 to 99, lower number is more important, e.g. 50)."

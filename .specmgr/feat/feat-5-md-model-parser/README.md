@@ -2,8 +2,8 @@
 created: 2026-08-08
 id: feat-5-md-model-parser
 status: done
-updated: 2026-08-14
-version: 1.16.3
+updated: 2026-08-15
+version: 1.16.4
 ---
 
 # Feature: Generic heading-mapped Markdown-to-Pydantic document parser
@@ -337,6 +337,47 @@ on this file) or the Recent Updates log below for that record.
    touch the ADR pipeline; not scheduled here.
 
 ### Recent Updates
+
+#### 2026-08-15 — post-closure addition: new `MarkdownComment` class + `_assert_no_raw_html` inline-comment permission
+
+Requested by `feat-6-requirement-artifact`'s Task 3.20, since both changes
+land in this feature's own `models/md/` module (`markdown_comment.py`
+new, `_markdown.py` modified) — same "downstream feature triggers a
+change in the closed engine" pattern as this file's other post-closure
+entries below, this time an addition rather than a bug fix or docstring
+trim.
+
+- **New `models/md/markdown_comment.py`**: `MarkdownComment`, a leaf-only
+  `MarkdownStr` subclass matching a single self-closing `"html_block"`
+  token whose content starts with `<!--` (an HTML comment) — mirrors
+  `MarkdownCodeBlock`'s established single-token (`nesting == 0`) leaf
+  pattern exactly (`get_extent`/`from_text`/`text`). Lets any
+  `MarkdownStr` subclass declare an optional `comment: MarkdownComment | None` field wherever an explanatory comment may precede/follow a real
+  value, without that comment breaking the class's own structural field
+  matching — the generic `MarkdownStr.from_text` field-distribution loop
+  already supports an `Optional[X]` field anywhere in declaration order,
+  so no engine change was needed to make the new class usable this way.
+  Registered in `models/md/__init__.py`. Class docstring kept short
+  (~400 chars) from the start, per the docstring-length lesson from this
+  file's own 2026-08-14 entry below (inlined into every schema `$defs`
+  entry that references it).
+- **`_markdown.py`'s `_assert_no_raw_html`** now also permits an
+  `"html_inline"` token whose content starts with `<!--` — previously only
+  `"html_block"` had this exception. A shared `_ALLOWED_RAW_HTML_PREFIX = "<!--"` constant backs both checks now. A non-comment inline tag (e.g.
+  `<b>bold</b>`) is still rejected exactly as before.
+- Both changes are independent of each other: `MarkdownComment` only ever
+  matches the already-permitted `"html_block"` shape, so it needed no new
+  engine permission; the `"html_inline"` change is a parallel, standalone
+  extension. `feat-6-requirement-artifact` used the former to fix
+  `req_template.md`'s actual (block-form) parse-validity break; the latter
+  was implemented alongside it since it was the literal ask in that
+  feature's Task 3.20, and is independently useful (e.g. a future
+  same-line inline annotation elsewhere).
+- Tests: `tests/models/md/test_markdown_comment.py` (8 new cases,
+  mirroring `test_markdown_code_block.py`'s structure) and two new cases
+  in `tests/models/md/test_markdown_html_rejection.py` (inline comment
+  permitted; non-comment inline tag still rejected). Full project suite
+  green (769 tests), `ruff format --check`/`ruff check`/`vulture` clean.
 
 #### 2026-08-14 — post-closure docstring shortening: `MarkdownListItem`/`MarkdownParagraph` class docstrings trimmed
 

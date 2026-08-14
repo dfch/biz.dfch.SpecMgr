@@ -86,6 +86,7 @@ First-line docstrings from each module, organized by domain:
 - `models/md/frontmatter.py` — Generic base frontmatter model shared by every markdown-backed document type.
 - `models/md/markdown_block_quote.py` — A markdown block quote ("blockquote"), grouping every consecutive '>' line as one instance.
 - `models/md/markdown_code_block.py` — A leaf-only fenced ("```") code block, never subclassable with declared fields.
+- `models/md/markdown_comment.py` — A leaf-only HTML comment block (`<!-- ... -->`), never subclassable with declared fields.
 - `models/md/markdown_list_item.py` — One item of a markdown bullet or numbered list, usable only via `list[MarkdownListItem]`.
 - `models/md/markdown_paragraph.py` — Base class for a markdown paragraph ("p"), the non-heading sibling of `MarkdownSection`.
 - `models/md/markdown_section.py` — Base class for markdown sections with heading constraints.
@@ -166,4 +167,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 103
+**Test files**: 104

@@ -8,6 +8,15 @@ Markdown shared instance.
 
 Raise if any token in `tokens` (recursively, including `.children`) is raw HTML.
 
+An `"html_block"` or `"html_inline"` token is permitted, not rejected,
+when its own `.content` starts with `_ALLOWED_RAW_HTML_PREFIX` (an HTML
+comment) -- both an already-established exception for `"html_block"`
+(e.g. `<!-- note -->` on its own line) and, since
+feat-6-requirement-artifact Task 3.20, the same exception for
+`"html_inline"` (e.g. an inline `MUST <!-- one of: ... -->` annotation on
+the same line as a value). Any other raw HTML (an actual tag, either
+kind) is still rejected.
+
 Args:
     tokens: a token list, or a token's own `.children`.
 

@@ -25,6 +25,7 @@ from .frontmatter import MarkdownFrontmatter
 from .markdown_str import MarkdownStr
 from .markdown_block_quote import MarkdownBlockQuote
 from .markdown_code_block import MarkdownCodeBlock
+from .markdown_comment import MarkdownComment
 from .markdown_list_item import MarkdownListItem
 from .markdown_paragraph import MarkdownParagraph
 from .markdown_section import MarkdownSection
@@ -45,6 +46,7 @@ __all__ = [
     "MarkdownStr",
     "MarkdownBlockQuote",
     "MarkdownCodeBlock",
+    "MarkdownComment",
     "MarkdownListItem",
     "MarkdownParagraph",
     "MarkdownSection",

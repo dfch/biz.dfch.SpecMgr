@@ -70,6 +70,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.models.md.markdown`](biz.dfch.specmgr.models.md.markdown.md) — No documentation available.
 - [`biz.dfch.specmgr.models.md.markdown_block_quote`](biz.dfch.specmgr.models.md.markdown_block_quote.md) — A markdown block quote ("blockquote"), grouping every consecutive '>' line as one instance.
 - [`biz.dfch.specmgr.models.md.markdown_code_block`](biz.dfch.specmgr.models.md.markdown_code_block.md) — A leaf-only fenced ("```") code block, never subclassable with declared fields.
+- [`biz.dfch.specmgr.models.md.markdown_comment`](biz.dfch.specmgr.models.md.markdown_comment.md) — A leaf-only HTML comment block (`<!-- ... -->`), never subclassable with declared fields.
 - [`biz.dfch.specmgr.models.md.markdown_list_item`](biz.dfch.specmgr.models.md.markdown_list_item.md) — One item of a markdown bullet or numbered list, usable only via `list[MarkdownListItem]`.
 - [`biz.dfch.specmgr.models.md.markdown_paragraph`](biz.dfch.specmgr.models.md.markdown_paragraph.md) — Base class for a markdown paragraph ("p"), the non-heading sibling of `MarkdownSection`.
 - [`biz.dfch.specmgr.models.md.markdown_section`](biz.dfch.specmgr.models.md.markdown_section.md) — Base class for markdown sections with heading constraints.

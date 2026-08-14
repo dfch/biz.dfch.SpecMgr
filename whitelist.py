@@ -67,6 +67,7 @@ assumptions
 channels_to_primary_actor
 channels_to_secondary_actors
 characteristics
+comment
 created
 decisions
 failed_end_condition

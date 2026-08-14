@@ -32,6 +32,7 @@ from ....models.md import (
     MarkdownSection3,
     MarkdownParagraph,
     MarkdownListItem,
+    MarkdownComment,
     alias,
     AliasType,
 )
@@ -61,9 +62,15 @@ _LEVEL_PATTERN = r"^(MUST|SHOULD|MUST NOT|SHOULD NOT|MAY)$"
 
 class Level(MarkdownSection2):
     """`## Level` -- single-line value giving the requirement's obligation
-    strength (e.g. "MUST"). Mandatory.
+    strength (e.g. "MUST"). Mandatory. May be preceded by an explanatory
+    HTML comment (e.g. listing the allowed values).
     """
 
+    comment: MarkdownComment | None = Field(
+        default=None,
+        description="Optional explanatory HTML comment (`<!-- ... -->`) preceding `value`, "
+        "e.g. listing the allowed obligation-strength values.",
+    )
     value: MarkdownParagraph = Field(
         description='Single-line value giving the requirement\'s obligation strength (e.g. "MUST").',
     )
@@ -89,9 +96,15 @@ _PRIORITY_PATTERN = r"^(0|[1-9][0-9]?)$"  # 0-99, no leading zeros other than "0
 
 class Priority(MarkdownSection2):
     """`## Priority` -- single-line value giving the requirement's relative
-    priority (e.g. a numeric rank). Optional.
+    priority (e.g. a numeric rank). Optional. May be preceded by an
+    explanatory HTML comment (e.g. describing the numeric range).
     """
 
+    comment: MarkdownComment | None = Field(
+        default=None,
+        description="Optional explanatory HTML comment (`<!-- ... -->`) preceding `value`, "
+        "e.g. describing the numeric range.",
+    )
     value: MarkdownParagraph = Field(
         description=(
             "Single-line value giving the requirement's relative importance (0 to 99, lower number"

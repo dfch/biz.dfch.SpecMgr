@@ -3,7 +3,7 @@ created: 2026-08-13
 id: feat-6-requirement-artifact
 status: in-progress
 updated: 2026-08-15
-version: 1.6.8
+version: 1.6.9
 ---
 
 # Feature: Requirement (REQ) artifact template with characteristic assignment
@@ -117,7 +117,7 @@ progresses (edit, don't duplicate).
 - [x] Task 3.17: `specmgr://req/{id}` resource — single-document read by id (mirrors `specmgr://adr/{id}`). Supersedes the earlier considered `get_req` tool — id-based single-document read is a resource only, everything else in this surface is a tool — depends on: Task 3.11 — status: **completed (2026-08-15)** — see Recent Updates.
 - [x] Task 3.18: `specmgr://req/list` resource — every document in the base directory, `ReqSummary` (id/title/status/filename, mirroring `AdrSummary`), unfiltered (characteristics/tags filtering was explicitly deferred earlier in the Task 3.9 discussion, see Recent Updates) — depends on: Task 3.11 — status: **completed (2026-08-15)** — see Recent Updates.
 - [x] Task 3.19: `req/prompts/create_req.py` + `update_req.py` — narrate the tool sequence above (mirroring ADR's `create_adr`/`update_adr` prompts): *create* — check `specmgr://req/list` for an existing duplicate, fetch `specmgr://req/template` or `/example` as a starting point, draft the body against `specmgr://req/schema`, call `create_req(content)`; *update* — read `specmgr://req/{id}`, edit the body, call `update_req(id, content)`, and route any status change through `set_status_req` instead of `update_req` — depends on: Tasks 3.12, 3.13, 3.14, 3.17, 3.18 — status: **completed (2026-08-15)** — see Recent Updates. Task 3.20 (unrelated: `models/md` inline-HTML-comment allowance) remains **not-started**, out of scope for this change.
-- [ ] Task 3.20: Coordinate with `feat-5-md-model-parser`: extend `models/md/_markdown.py`'s `_assert_no_raw_html` to also permit `html_inline` tokens whose content starts with `<!--` (block-level HTML comments are already permitted; inline ones are not). Unblocks Task 3.7's known, currently-blocked template-annotation attempt (an inline comment on the same line as a value, e.g. `MUST <!-- one of: MUST/SHOULD/MUST NOT/SHOULD NOT/MAY -->`, rather than a second standalone paragraph, which is what actually broke `Level`/`Priority`'s single-paragraph structural check) — depends on: none — status: **not-started**.
+- [x] Task 3.20: Coordinate with `feat-5-md-model-parser`: extend `models/md/_markdown.py`'s `_assert_no_raw_html` to also permit `html_inline` tokens whose content starts with `<!--` (block-level HTML comments are already permitted; inline ones are not). Unblocks Task 3.7's known, currently-blocked template-annotation attempt (an inline comment on the same line as a value, e.g. `MUST <!-- one of: MUST/SHOULD/MUST NOT/SHOULD NOT/MAY -->`, rather than a second standalone paragraph, which is what actually broke `Level`/`Priority`'s single-paragraph structural check) — depends on: none — status: **completed (2026-08-15)** — see Recent Updates. Implemented differently than originally sketched: rather than editing `req_template.md` to the same-line inline form, added a new, reusable `models.md.MarkdownComment` leaf class (an `"html_block"` comment) and declared an optional `comment: MarkdownComment | None` field ahead of `value` on `Level`/`Priority`, which fixes the *actual* structural break in the already-committed `req_template.md` (its two-block leading-comment-then-value form) without touching the template file or its `_LEVEL_PATTERN`/`_PRIORITY_PATTERN` regexes at all. The literal `_assert_no_raw_html` `html_inline` permission was implemented too (still independently useful/matches the task's own wording), but is not what unblocks the template — see Decisions Made.
 
 #### Phase 4: MCP server reference documentation (`docs/MCP.md`, cross-cutting — all domains, not REQ-specific)
 
@@ -138,13 +138,83 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-15**: Phase 1 (Specification) and Phase 2 (Pydantic Models & Parser) are both **fully complete**, including `req_schema.json` (Task 1.2), now generated (not hand-authored) via a new generic `specmgr schema` CLI command (JSON Schema 2020-12), with CI wiring and a pre-commit hook keeping it in sync. Phase 3 (MCP Surface) now has three tools (`parse_req`, `get_req_example`, `get_req_template`) and three resources (`specmgr://req/schema`, `specmgr://req/example`, `specmgr://req/template`); the generated schema carries a `"$comment": "v1"` layout-version marker (Task 3.4). `specmgr req-parse` (Task 3.3) is the first REQ CLI command. `specmgr://req/schema` now reads a packaged-data copy (`req/resources/data/req_schema.json`) instead of `docs/req_schema.json` directly, so it also works from a real, non-editable install (Task 3.8). Task 3.9's design discussion is **complete** (see Recent Updates for the full trail): granular ADR-style section-mutation tooling was rejected as not worth the effort for REQ; a lean, generic, id-based lifecycle (`create_req`/`update_req`/`set_status_req`/`delete_req`-stub/`validate_req` tools plus `specmgr://req/{id}`/`specmgr://req/list` resources plus `create_req`/`update_req` prompts) was designed instead, detailed in Tasks 3.10-3.20. Task 3.10 (generic `general/tools/_doc_paths.py` id → path lookup plumbing, shared by REQ now and UC later), Task 3.11 (`req/tools/_paths.py`/`_io.py`, REQ's own thin wrappers over it), Task 3.12 (`create_req` tool), Task 3.13 (`update_req` tool), Task 3.14 (`set_status_req` tool), Task 3.15 (`delete_req` stub), Task 3.16 (`validate_req` tool), Task 3.17 (`specmgr://req/{id}` resource), Task 3.18 (`specmgr://req/list` resource), and Task 3.19 (`req/prompts/create_req.py`/`update_req.py`) are now **completed**; Task 3.20 (unrelated `models/md` inline-HTML-comment allowance) remains **not-started**. **Phase 4** (cross-cutting MCP server reference documentation, prompted directly by observing this feature's own Phase 3 tools/resources missing from `README.md`'s stale hand-maintained table) is now also underway: Tasks 4.1-4.5 (`commands/mcp_docs.py`, the `specmgr mcp-docs` CLI command, the `specmgr-mcp-docs` pre-commit hook, the `README.md` rewrite, and tests) are **completed**; Task 4.6 (CI drift-check backstop) remains **not-started**.
+**As of 2026-08-15**: Phase 1 (Specification) and Phase 2 (Pydantic Models & Parser) are both **fully complete**, including `req_schema.json` (Task 1.2), now generated (not hand-authored) via a new generic `specmgr schema` CLI command (JSON Schema 2020-12), with CI wiring and a pre-commit hook keeping it in sync. Phase 3 (MCP Surface) now has three tools (`parse_req`, `get_req_example`, `get_req_template`) and three resources (`specmgr://req/schema`, `specmgr://req/example`, `specmgr://req/template`); the generated schema carries a `"$comment": "v1"` layout-version marker (Task 3.4). `specmgr req-parse` (Task 3.3) is the first REQ CLI command. `specmgr://req/schema` now reads a packaged-data copy (`req/resources/data/req_schema.json`) instead of `docs/req_schema.json` directly, so it also works from a real, non-editable install (Task 3.8). Task 3.9's design discussion is **complete** (see Recent Updates for the full trail): granular ADR-style section-mutation tooling was rejected as not worth the effort for REQ; a lean, generic, id-based lifecycle (`create_req`/`update_req`/`set_status_req`/`delete_req`-stub/`validate_req` tools plus `specmgr://req/{id}`/`specmgr://req/list` resources plus `create_req`/`update_req` prompts) was designed instead, detailed in Tasks 3.10-3.20. Task 3.10 (generic `general/tools/_doc_paths.py` id → path lookup plumbing, shared by REQ now and UC later), Task 3.11 (`req/tools/_paths.py`/`_io.py`, REQ's own thin wrappers over it), Task 3.12 (`create_req` tool), Task 3.13 (`update_req` tool), Task 3.14 (`set_status_req` tool), Task 3.15 (`delete_req` stub), Task 3.16 (`validate_req` tool), Task 3.17 (`specmgr://req/{id}` resource), Task 3.18 (`specmgr://req/list` resource), and Task 3.19 (`req/prompts/create_req.py`/`update_req.py`) are now **completed**; Task 3.20 (`models/md`'s new `MarkdownComment` class plus the `_assert_no_raw_html` inline-comment permission, fixing `req_template.md`'s Level/Priority parse-validity) is now also **completed**. **Phase 4** (cross-cutting MCP server reference documentation, prompted directly by observing this feature's own Phase 3 tools/resources missing from `README.md`'s stale hand-maintained table) is now also underway: Tasks 4.1-4.5 (`commands/mcp_docs.py`, the `specmgr mcp-docs` CLI command, the `specmgr-mcp-docs` pre-commit hook, the `README.md` rewrite, and tests) are **completed**; Task 4.6 (CI drift-check backstop) remains **not-started**.
 
 ### Blockers
 
 None.
 
 ### Recent Updates
+
+#### 2026-08-15 (continued) — Task 3.20 implemented: `models.md.MarkdownComment` + inline-HTML-comment permission; `req_template.md` parse-validity fixed
+
+- **Root-caused the actual break first**: `req_template.md` (Task 3.7's
+  template file, already committed) currently fails `parse_req` outright —
+  not because of raw-HTML rejection (an `"html_block"` comment starting
+  with `<!--` was already permitted before this change), but because
+  `Level`/`Priority`'s `value: MarkdownParagraph` field only ever expects a
+  single paragraph, and the template's own leading `<!-- ... -->` comment
+  line (mdformat-normalized onto its own separate block, blank-line
+  separated from the value paragraph that follows) is an *extra* sibling
+  block neither field declared or expected. Confirmed via `parse_req`
+  raising `Level.value: expected MarkdownParagraph, found no match` before
+  any of this change's code existed.
+- **New `models/md/markdown_comment.py`**: `MarkdownComment`, a leaf-only
+  `MarkdownStr` subclass matching a single self-closing `"html_block"`
+  token whose content starts with `<!--` — mirrors `MarkdownCodeBlock`'s
+  established single-token (`nesting == 0`) leaf pattern exactly
+  (`get_extent`/`from_text`/`text`). Registered in `models/md/__init__.py`.
+  Its class docstring was kept deliberately short (~400 chars, not the
+  ~2k-char first draft) since it gets inlined into every schema `$defs`
+  entry that uses it — same Task 2.6 concern this feature already applied
+  to `MarkdownListItem`/`MarkdownParagraph`.
+- **Fixed the actual template break** by declaring an optional
+  `comment: MarkdownComment | None = Field(default=None, ...)` field ahead
+  of `value` on both `Level` and `Priority` (`req/models/v1/body.py`) — the
+  existing generic `MarkdownStr.from_text` field-distribution loop already
+  supports an `Optional[X]` field anywhere in declaration order (consumes
+  it if present, skips it untouched otherwise), so no engine change was
+  needed for this part. `req_template.md` and the feature's own
+  `req_reference.md` (which has no comment) both now parse successfully via
+  `parse_req` — confirmed directly, not just via a new unit test.
+- **Also implemented the task's own literal ask**: extended
+  `models/md/_markdown.py`'s `_assert_no_raw_html` to permit an
+  `"html_inline"` token whose content starts with `<!--`, the same
+  exception `"html_block"` already had (`_ALLOWED_RAW_HTML_PREFIX`
+  constant, shared by both checks) — confirmed empirically first that
+  `mdformat`/`markdown-it` tokenize `MUST <!-- ... -->` as a single
+  paragraph with a nested `html_inline` child, so this permission alone
+  would have made that same-line form parseable too. **This is not what
+  fixes `req_template.md`**, though (that file uses the block form, not
+  inline) — it is independently useful (e.g. a future inline annotation
+  mid-sentence elsewhere) and is exactly what Task 3.20's own wording
+  asked for, so it was implemented alongside the `MarkdownComment` fix
+  rather than skipped. A non-comment inline tag (e.g. `<b>bold</b>`) is
+  still rejected exactly as before.
+- Tests: `tests/models/md/test_markdown_comment.py` (8 new cases:
+  `get_extent`/`from_text`/`text`/leaf-only-guard, mirroring
+  `test_markdown_code_block.py`'s structure) and two new cases added to
+  `tests/models/md/test_markdown_html_rejection.py` (inline comment
+  permitted, non-comment inline tag still rejected) — 769 tests
+  project-wide (up from 746 after Task 3.19), no regressions. `whitelist.py`
+  gained `comment` (a pydantic field name vulture otherwise flags as
+  unused, same reason `priority`/`source`/etc. are already listed).
+- `ruff format --check`/`ruff check`/`vulture` clean; `specmgr docs`/
+  `specmgr mcp-docs`/`specmgr adr-toc` regenerated (1 new module page:
+  `models.md.markdown_comment`; `docs/MCP.md`/`docs/adr/README.md` show no
+  drift, as expected — this change never touches either surface);
+  `specmgr schema` regenerated both `docs/req_schema.json` and the packaged
+  `req/resources/data/req_schema.json` copy (Level/Priority gained an
+  optional `comment` property, a new `MarkdownComment` `$defs` entry was
+  added).
+- **Decision**: chose the `MarkdownComment`-field approach over the task's
+  originally-sketched "edit `req_template.md` to the same-line inline form,
+  then make `_LEVEL_PATTERN`/`_PRIORITY_PATTERN` tolerate a trailing
+  comment via string-stripping" alternative — the field approach fixes the
+  template that is *actually* on disk today without touching regex
+  validators at all, and generalizes to any future section wanting an
+  optional explanatory comment, not just `Level`/`Priority`. See Decisions
+  Made.
 
 #### 2026-08-15 (continued) — Task 3.19 implemented: `req/prompts/create_req.py` + `update_req.py`
 
@@ -172,8 +242,7 @@ None.
   section not being changed) and a status change through
   `set_status_req(id, status)` instead, since `update_req` never accepts or
   changes `status`; check `specmgr://req/schema` before drafting the
-  replacement body; optionally dry-run via `validate_req(content,
-  full=False)` first. Simpler than `adr.prompts.update_adr`'s tool-mapping
+  replacement body; optionally dry-run via `validate_req(content, full=False)` first. Simpler than `adr.prompts.update_adr`'s tool-mapping
   table — REQ's lifecycle surface (Task 3.9's design) has no
   `update_frontmatter`/`option_*` equivalent, just the one whole-body-replace
   tool plus the one status-change tool.
@@ -1080,6 +1149,8 @@ feature's own `parse_req` tool.
 - Created `tests/req/models/v1/test_frontmatter.py` — 8 test cases mirroring existing patterns, all passing. 590 tests total (no regressions), ruff format/check clean, vulture clean.
 
 ### Decisions Made
+
+- **`req_template.md`'s Level/Priority parse-validity fixed via a new `models.md.MarkdownComment` field, not by editing the template to an inline same-line comment form (Task 3.20)**: the task as written pointed at extending `_assert_no_raw_html` to permit `html_inline` comments so the template could switch to a `MUST <!-- ... -->` same-line form, then making `_LEVEL_PATTERN`/`_PRIORITY_PATTERN` tolerate the trailing comment text. Rejected that path once the actual on-disk break was root-caused: `req_template.md` already uses the *block* form (a standalone `<!-- ... -->` line before the value), which fails not because of raw-HTML rejection (already permitted) but because `Level`/`Priority`'s single-`MarkdownParagraph` `value` field never expected the extra sibling block. Fixed that directly by declaring an optional `comment: MarkdownComment | None` field ahead of `value` on both classes — the generic `MarkdownStr.from_text` field-distribution loop already supports an optional field anywhere in declaration order, so this needed no engine change, no template edit, and no regex change; regex validators keep matching `value.text` alone, comment-free. `_assert_no_raw_html`'s `html_inline` permission was still implemented (the task's own literal ask, and independently useful), but is a parallel change, not what fixes the template. `MarkdownComment` is a general-purpose class, not REQ-specific — any future `models/md`-based section can declare the same optional field wherever an explanatory comment is meaningful. See Recent Updates for the full trail.
 
 - **Phase 4 (MCP reference documentation) tracked in this REQ feature's plan despite being cross-cutting**: `commands/mcp_docs.py`/`docs/MCP.md` cover every registered domain (ADR, REQ, UC, `general`), not just REQ, and by rights could warrant its own `feat-N-slug` folder. Logged here instead because (a) it was prompted directly by observing this feature's own Phase 3 REQ tools/resources missing from `README.md`'s hand-maintained table, and (b) it was implemented in the same working session as Phase 3's tail end. Revisit and split into its own feature folder if it grows further (e.g. the still-open CI-wiring task, or a second doc-type-specific enhancement).
 

@@ -33,6 +33,12 @@ md = MarkdownIt("commonmark")
 _RAW_HTML_TOKEN_TYPE_BLOCK = "html_block"
 _RAW_HTML_TOKEN_TYPE_INLINE = "html_inline"
 
+#: Both `"html_block"` and `"html_inline"` are permitted when their own
+#: `.content` starts with this prefix (an HTML comment, e.g. `<!-- note -->`)
+#: -- see `_assert_no_raw_html` (feat-6-requirement-artifact Task 3.20). Any
+#: other raw HTML (an actual tag) of either kind is still rejected.
+_ALLOWED_RAW_HTML_PREFIX = "<!--"
+
 #: `mdformat` options shared by every normalization call across `models/md/`.
 #:
 #: `number=True` switches `mdformat`'s ordered-list renderer from its default
@@ -70,15 +76,23 @@ def format_text(text: str) -> str:
 def _assert_no_raw_html(tokens: list[Token]) -> None:
     """Raise if any token in `tokens` (recursively, including `.children`) is raw HTML.
 
+    An `"html_block"` or `"html_inline"` token is permitted, not rejected,
+    when its own `.content` starts with `_ALLOWED_RAW_HTML_PREFIX` (an HTML
+    comment) -- both an already-established exception for `"html_block"`
+    (e.g. `<!-- note -->` on its own line) and, since
+    feat-6-requirement-artifact Task 3.20, the same exception for
+    `"html_inline"` (e.g. an inline `MUST <!-- one of: ... -->` annotation on
+    the same line as a value). Any other raw HTML (an actual tag, either
+    kind) is still rejected.
+
     Args:
         tokens: a token list, or a token's own `.children`.
     """
     for tok in tokens:
         tok_type = tok.type.lower()
         message = f"raw HTML is not permitted in a parsed document: {tok.type} {tok.content!r}"
-        assert _RAW_HTML_TOKEN_TYPE_INLINE != tok_type, message
-        if _RAW_HTML_TOKEN_TYPE_BLOCK == tok_type:
-            assert tok.content.startswith("<!--"), message
+        if tok_type in (_RAW_HTML_TOKEN_TYPE_BLOCK, _RAW_HTML_TOKEN_TYPE_INLINE):
+            assert tok.content.startswith(_ALLOWED_RAW_HTML_PREFIX), message
 
         if tok.children:
             _assert_no_raw_html(tok.children)

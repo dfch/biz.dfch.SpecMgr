@@ -70,6 +70,21 @@ class TestParseRejectsRawHtml(unittest.TestCase):
         tokens = parse(text)
         self.assertTrue(tokens)
 
+    def test_inline_html_comment_on_the_same_line_as_a_value_is_permitted(self) -> None:
+        """An `html_inline` comment (content starting with `<!--`) is not raw HTML rejection
+        material -- feat-6-requirement-artifact Task 3.20's "MUST <!-- ... -->"
+        same-line annotation case."""
+        text = format_text("MUST <!-- one of: MUST/SHOULD/MUST NOT/SHOULD NOT/MAY -->\n")
+        tokens = parse(text)
+        self.assertTrue(tokens)
+
+    def test_inline_html_tag_that_is_not_a_comment_still_raises(self) -> None:
+        """An `html_inline` tag that is not a comment (e.g. `<b>`) is still rejected,
+        even though comments are now permitted."""
+        text = format_text("Some <b>bold</b> text.\n")
+        with self.assertRaises(AssertionError):
+            parse(text)
+
 
 class TestFromTextRejectsRawHtml(unittest.TestCase):
     """End-to-end coverage of REQ-005 through `MarkdownStr.from_text`/`MarkdownSection.from_text`."""
