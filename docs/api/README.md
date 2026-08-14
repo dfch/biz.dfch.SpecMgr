@@ -87,6 +87,8 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.req.resources.req_schema`](biz.dfch.specmgr.req.resources.req_schema.md) — Resource: specmgr://req/schema (Task 3.5, packaged data since Task 3.8).
 - [`biz.dfch.specmgr.req.resources.req_template`](biz.dfch.specmgr.req.resources.req_template.md) — Resource: specmgr://req/template (Task 3.7).
 - [`biz.dfch.specmgr.req.tools`](biz.dfch.specmgr.req.tools.md) — MCP tool wrappers for requirements (mirrors ``uc/tools/``'s own shape).
+- [`biz.dfch.specmgr.req.tools._io`](biz.dfch.specmgr.req.tools._io.md) — Thin file read helpers over ``parse_req`` (Task 3.11).
+- [`biz.dfch.specmgr.req.tools._paths`](biz.dfch.specmgr.req.tools._paths.md) — Requirement base directory resolution and id -> path lookup (Task 3.11).
 - [`biz.dfch.specmgr.req.tools.get_req_example`](biz.dfch.specmgr.req.tools.get_req_example.md) — ``@mcp.tool()`` wrapper: get_req_example (Task 3.6).
 - [`biz.dfch.specmgr.req.tools.get_req_template`](biz.dfch.specmgr.req.tools.get_req_template.md) — ``@mcp.tool()`` wrapper: get_req_template (Task 3.7).
 - [`biz.dfch.specmgr.req.tools.parse_req`](biz.dfch.specmgr.req.tools.parse_req.md) — ``@mcp.tool()`` wrapper: parse_req.

@@ -3,7 +3,7 @@ created: 2026-08-13
 id: feat-6-requirement-artifact
 status: in-progress
 updated: 2026-08-14
-version: 1.6.1
+version: 1.6.2
 ---
 
 # Feature: Requirement (REQ) artifact template with characteristic assignment
@@ -108,7 +108,7 @@ progresses (edit, don't duplicate).
 #### Phase 3 (continued): REQ lifecycle tools/resources/prompts (Task 3.9's design, detailed)
 
 - [x] Task 3.10: Generalize id → file-path lookup plumbing into the `general/` domain (shared by REQ now, UC later) — `general/tools/_doc_paths.py` (name TBD at implementation time): `doc_base_dir(type_name: str) -> Path` (single root env var `SPECMGR_DOCS_DIR`, default `docs`, per-type subdirectory `{root}/{type_name}/`, e.g. `docs/req/`), `ensure_doc_base_dir(type_name)`, `iter_doc_paths(base_dir)`, `find_doc_path_by_id(base_dir, id_, parse_fn, get_id_fn)`, `slugify(title)` (ported from `adr/tools/_paths.py`). **ADR is explicitly left untouched** (`SPECMGR_ADR_DIR`/`docs/adr` unchanged) — migrating it to this shared module is optional future cleanup, not bundled here — depends on: none — status: **completed (2026-08-14)** — `general/tools/_doc_paths.py` (name kept, no rename needed); `DocNotFoundError(LookupError)` added (not explicitly named in the task text, needed by `find_doc_path_by_id`); `find_doc_path_by_id` catches `(AssertionError, ValueError)` around `parse_fn`, generic enough to cover both `AdrParseError`/`pydantic.ValidationError` (ADR) and the `AssertionError`/`pydantic.ValidationError` pair `parse_req` raises, without depending on either. Not re-exported from `general/tools/__init__.py`, matching `adr/tools/_paths.py`'s own private (underscore-prefixed, not `@mcp.tool()`) module convention.
-- [ ] Task 3.11: `req/tools/_paths.py` + `_io.py`, thin wrappers over Task 3.10's generic module — `req_base_dir()`, `iter_req_paths()`, `find_req_path(base_dir, id_)` (using `parse_req` + `frontmatter.id`, skip-on-parse-failure, mirroring `adr/tools/_paths.py::find_adr_path`), `ReqNotFoundError`, `read_req(path)`, `load_by_id(base_dir, id_)` — depends on: Task 3.10 — status: **not-started**.
+- [x] Task 3.11: `req/tools/_paths.py` + `_io.py`, thin wrappers over Task 3.10's generic module — `req_base_dir()`, `iter_req_paths()`, `find_req_path(base_dir, id_)` (using `parse_req` + `frontmatter.id`, skip-on-parse-failure, mirroring `adr/tools/_paths.py::find_adr_path`), `ReqNotFoundError`, `read_req(path)`, `load_by_id(base_dir, id_)` — depends on: Task 3.10 — status: **completed (2026-08-14)** — implemented exactly the listed surface, split as specified: `_paths.py` (`REQ_TYPE_NAME`, `ReqNotFoundError`, `req_base_dir()`, `ensure_req_base_dir()` (not explicitly listed, added for the future `create_req`/Task 3.12, mirroring `adr.tools._paths.ensure_adr_base_dir`), `iter_req_paths()` (zero-arg, unlike the generic/ADR `iter_*_paths(base_dir)` shape — resolves `req_base_dir()` internally, per the task's own literal signature), `find_req_path(base_dir, id_)`) and `_io.py` (`read_req(path)`, `load_by_id(base_dir, id_)`). No `write_req`/`render_req` — Task 3.9's design never renders a body from the parsed model, so none is needed. Neither module is re-exported from `req/tools/__init__.py`, matching `adr/tools/_paths.py`/`_io.py`'s own unexported-private-module precedent.
 - [ ] Task 3.12: `create_req(content: str) -> ReqDocument` tool — `content` is **body markdown only** (the `Requirement` H1 + sections), no frontmatter block. MCP builds the entire frontmatter itself: `id=uuid4()`, `type="req"`, `status="draft"` (always, never caller-supplied on create), `created=updated=now`, `version=CURRENT_SCHEMA_VERSION`. Validates `content` via `Requirement.from_text(format_text(content))` — failure raises uncaught (`AssertionError`/`pydantic.ValidationError`), nothing is written. Writes `{req_base_dir}/req-{id}-{slug}.md` (`slug` from the body's H1 title, mirroring ADR's filename scheme). No body rendering is ever needed — the caller's own already-validated text is persisted byte-for-byte; only the small frontmatter YAML block is code-generated — depends on: Task 3.11 — status: **not-started**.
 - [ ] Task 3.13: `update_req(id: str, content: str) -> ReqDocument` tool — `content` is body markdown only, same shape as `create_req`. Reads the *existing* file first to preserve `id`/`type`/`status`/`created`/`version` unchanged; only `updated=now` changes. Validates the new body the same way as `create_req`; failure raises uncaught, nothing written. `status` is never settable here — see Task 3.14 — depends on: Task 3.11 — status: **not-started**.
 - [ ] Task 3.14: `set_status_req(id: str, status: str) -> ReqDocument` tool — the only path that changes `status` (mirrors ADR's `set_status`, minus the `superseded_by`-composition special case, since `ReqFrontmatter.status` has no `"superseded by ..."` pattern — just the closed seven-value set). Also bumps `updated=now` — depends on: Task 3.11 — status: **not-started**.
@@ -127,13 +127,54 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-14**: Phase 1 (Specification) and Phase 2 (Pydantic Models & Parser) are both **fully complete**, including `req_schema.json` (Task 1.2), now generated (not hand-authored) via a new generic `specmgr schema` CLI command (JSON Schema 2020-12), with CI wiring and a pre-commit hook keeping it in sync. Phase 3 (MCP Surface) now has three tools (`parse_req`, `get_req_example`, `get_req_template`) and three resources (`specmgr://req/schema`, `specmgr://req/example`, `specmgr://req/template`); the generated schema carries a `"$comment": "v1"` layout-version marker (Task 3.4). `specmgr req-parse` (Task 3.3) is the first REQ CLI command. `specmgr://req/schema` now reads a packaged-data copy (`req/resources/data/req_schema.json`) instead of `docs/req_schema.json` directly, so it also works from a real, non-editable install (Task 3.8). Task 3.9's design discussion is **complete** (see Recent Updates for the full trail): granular ADR-style section-mutation tooling was rejected as not worth the effort for REQ; a lean, generic, id-based lifecycle (`create_req`/`update_req`/`set_status_req`/`delete_req`-stub/`validate_req` tools plus `specmgr://req/{id}`/`specmgr://req/list` resources plus `create_req`/`update_req` prompts) was designed instead, detailed in Tasks 3.10-3.20. Task 3.10 (generic `general/tools/_doc_paths.py` id → path lookup plumbing, shared by REQ now and UC later) is now **completed**; Tasks 3.11-3.20 remain **not-started**.
+**As of 2026-08-14**: Phase 1 (Specification) and Phase 2 (Pydantic Models & Parser) are both **fully complete**, including `req_schema.json` (Task 1.2), now generated (not hand-authored) via a new generic `specmgr schema` CLI command (JSON Schema 2020-12), with CI wiring and a pre-commit hook keeping it in sync. Phase 3 (MCP Surface) now has three tools (`parse_req`, `get_req_example`, `get_req_template`) and three resources (`specmgr://req/schema`, `specmgr://req/example`, `specmgr://req/template`); the generated schema carries a `"$comment": "v1"` layout-version marker (Task 3.4). `specmgr req-parse` (Task 3.3) is the first REQ CLI command. `specmgr://req/schema` now reads a packaged-data copy (`req/resources/data/req_schema.json`) instead of `docs/req_schema.json` directly, so it also works from a real, non-editable install (Task 3.8). Task 3.9's design discussion is **complete** (see Recent Updates for the full trail): granular ADR-style section-mutation tooling was rejected as not worth the effort for REQ; a lean, generic, id-based lifecycle (`create_req`/`update_req`/`set_status_req`/`delete_req`-stub/`validate_req` tools plus `specmgr://req/{id}`/`specmgr://req/list` resources plus `create_req`/`update_req` prompts) was designed instead, detailed in Tasks 3.10-3.20. Task 3.10 (generic `general/tools/_doc_paths.py` id → path lookup plumbing, shared by REQ now and UC later) and Task 3.11 (`req/tools/_paths.py`/`_io.py`, REQ's own thin wrappers over it) are now **completed**; Tasks 3.12-3.20 remain **not-started**.
 
 ### Blockers
 
 None.
 
 ### Recent Updates
+
+#### 2026-08-14 (continued) — Task 3.11 implemented: `req/tools/_paths.py` + `_io.py`, thin REQ wrappers over Task 3.10's generic module
+
+- New `req/tools/_paths.py`: `REQ_TYPE_NAME = "req"`, `ReqNotFoundError(LookupError)`
+  (its own class, not a subclass of `general.tools._doc_paths.DocNotFoundError`
+  — same non-relationship `AdrNotFoundError` has to anything generic),
+  `req_base_dir()`/`ensure_req_base_dir()` (thin wraps over
+  `doc_base_dir("req")`/`ensure_doc_base_dir("req")`), `iter_req_paths()`
+  (zero-arg — resolves `req_base_dir()` internally and delegates to
+  `iter_doc_paths`, deliberately differing from the generic module's/ADR's
+  own `iter_*_paths(base_dir)` shape, per Task 3.11's own literal wording),
+  and `find_req_path(base_dir, id_)` (delegates to
+  `find_doc_path_by_id(base_dir, id_, parse_req, _get_req_id)`, translating
+  the generic `DocNotFoundError` into `ReqNotFoundError` at the boundary).
+- New `req/tools/_io.py`: `read_req(path)` and `load_by_id(base_dir, id_)`,
+  mirroring `adr/tools/_io.py`'s shape exactly, minus `write_adr`'s
+  counterpart — no `write_req`/`render_req` exists or is planned, since
+  Task 3.9's design settled on `create_req`/`update_req` (Tasks 3.12/3.13)
+  persisting the caller's already-validated body text byte-for-byte rather
+  than rendering it back out from a parsed model.
+- `ensure_req_base_dir()` was added even though Task 3.11's own task text
+  only lists `req_base_dir()` — needed by the still-not-started `create_req`
+  (Task 3.12) and cheap/harmless to add now alongside its read-only sibling,
+  mirroring `adr.tools._paths.ensure_adr_base_dir`'s existence.
+- Neither module is re-exported from `req/tools/__init__.py`'s `__all__` —
+  both are underscore-prefixed, non-`@mcp.tool()` internal modules, matching
+  `adr/tools/_paths.py`/`_io.py`'s own precedent of staying unexported.
+- Tests: `tests/req/tools/test__paths.py` (12 tests: `req_base_dir`/
+  `ensure_req_base_dir` incl. env-var override and no-side-effect-on-read,
+  `iter_req_paths`, `find_req_path` incl. skip-on-parse-failure) and
+  `tests/req/tools/test__io.py` (4 tests: `read_req`, `load_by_id` incl.
+  not-found) — both use a small local minimal-requirement-text fixture
+  (mirroring `tests/req/models/v1/test_parser.py`'s own `_MINIMAL_DOC`
+  pattern) rather than the packaged `req_example.md`, so each test file
+  controls its own `id` per fixture instance. 696 tests project-wide (up
+  from 684), no regressions. `ruff format --check`/`ruff check`/`vulture`
+  clean; `specmgr docs` regenerated (2 new module pages:
+  `req.tools._paths`, `req.tools._io`); `specmgr schema` (both the
+  `docs/req_schema.json` and packaged-data invocations)/`specmgr adr-toc`
+  both confirmed to have no drift (this task never touches either
+  artifact).
 
 #### 2026-08-14 (continued) — Task 3.10 implemented: generic `general/tools/_doc_paths.py` id → path lookup plumbing
 

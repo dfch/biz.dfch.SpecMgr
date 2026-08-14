@@ -112,6 +112,8 @@ First-line docstrings from each module, organized by domain:
 - `req/resources/req_schema.py` — Resource: specmgr://req/schema (Task 3.5, packaged data since Task 3.8).
 - `req/resources/req_template.py` — Resource: specmgr://req/template (Task 3.7).
 - `req/tools/__init__.py` — MCP tool wrappers for requirements (mirrors ``uc/tools/``'s own shape).
+- `req/tools/_io.py` — Thin file read helpers over ``parse_req`` (Task 3.11).
+- `req/tools/_paths.py` — Requirement base directory resolution and id -> path lookup (Task 3.11).
 - `req/tools/get_req_example.py` — ``@mcp.tool()`` wrapper: get_req_example (Task 3.6).
 - `req/tools/get_req_template.py` — ``@mcp.tool()`` wrapper: get_req_template (Task 3.7).
 - `req/tools/parse_req.py` — ``@mcp.tool()`` wrapper: parse_req.
@@ -150,4 +152,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 89
+**Test files**: 91
