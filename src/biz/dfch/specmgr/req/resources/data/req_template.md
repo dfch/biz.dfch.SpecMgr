@@ -22,11 +22,13 @@ This is a description of the requirement statement that gives more context. Use 
 
 ## Level
 
-RFC 2119 Requirement Keyword. Mandatory
+<!-- RFC 2119 Requirement Keyword. Mandatory. -->
+MUST
 
 ## Priority
 
-A number between 0 and 99. Lower number is higher priority.
+<!-- A number between 0 and 99. Lower number is higher priority. -->
+50
 
 ## Tags
 

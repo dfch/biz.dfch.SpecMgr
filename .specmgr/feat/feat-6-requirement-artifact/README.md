@@ -101,8 +101,9 @@ progresses (edit, don't duplicate).
 - [x] Task 3.4: Add a `"$comment"` schema-version marker (e.g. `"v1"`, matching `req/models/v1`'s package version — not `"req v1"`, since the doc type is already clear from the file/resource identity) to `generate_req_schema()`'s emitted JSON, so a caller can detect a REQ schema layout change without diffing the whole file — depends on: Task 2.7 — status: **completed (2026-08-14)** — `SCHEMA_COMMENT_VERSION = "v1"` constant added to a new `req/models/v1/_util.py` (mirroring `models/adr/v1/_util.py`'s precedent), re-exported from `req/models/v1/__init__.py`, and injected as `generate_req_schema()`'s `$comment` key. `docs/req_schema.json` regenerated.
 - [x] Task 3.5: Add `specmgr://req/schema` MCP resource — reads the persisted `docs/req_schema.json` directly from disk (trusts the `specmgr-schema` pre-commit hook to keep it current, same trust model as `adr-toc`'s `docs/adr/README.md`; no `commands/schema.py`/`typer` import, no on-the-fly regeneration). URI is deliberately unversioned (see Decisions Made) — depends on: Task 3.4 — status: **completed (2026-08-14)** — `req/resources/req_schema.py` (new `req/resources/` sub-package, registered from `req/__init__.py`); reads and `json.loads()`s a fixed path (no env var — this is a build artifact of the package's own source tree, not user-authored content), returning a parsed `dict`; missing/corrupted file raises `FileNotFoundError`/`json.JSONDecodeError` uncaught. Path resolution factored into a new, dependency-free `biz/dfch/specmgr/_paths.py` (`REPO_ROOT`/`DOCS_DIR`), shared with (and replacing the previously-duplicated computation in) `commands/schema.py`, so neither the `cli` extra (`typer`) nor the `mcp` extra leaks into the other's import graph.
 - [x] Task 3.6: Add `specmgr://req/...` resources and tools: get_example - return an example file. The example file will be served by reading a file from disk (as we already do with the schema). We will search the example as markdown (maybe we have to encode this?) - opinions on this? The file must exist on disk (build time guarantee). Hard exception if not true. — depends on: Task 3.2 — status: **completed (2026-08-14)** — implemented as the `get_req_example` tool (domain-qualified, not the task's literal "get_example" wording) plus the `specmgr://req/example` resource (unversioned URI, matching the task's own wording and `specmgr://req/schema`'s precedent) — see Recent Updates and Decisions Made for the packaged-data storage choice, the raw-markdown/no-encoding return shape, and the naming rationale.
-- [ ] Task 3.7: Add `specmgr://req/...` resources and tools: get_template - return a template with all optional field and example text - very similar to the task 3.6. But this is not a full example, but a file with all fields and "blind text" (short lorem ipsum or similar) - same mechanism as in task 3.6. I already created a template file: src/biz/dfch/specmgr/req/resources/data/req_template.md.
-- [ ] Task 3.8: Discuss `specmgr://req/...` resources and tools and prompts: discuss what is useful for this artifact type
+- [x] Task 3.7: Add `specmgr://req/...` resources and tools: get_template - return a template with all optional field and example text - very similar to the task 3.6. But this is not a full example, but a file with all fields and "blind text" (short lorem ipsum or similar) - same mechanism as in task 3.6. I already created a template file: `src/biz/dfch/specmgr/req/resources/data/req_template.md`. — depends on: Task 3.2 — status: **completed (2026-08-14)** — implemented as the `get_req_template` tool plus the `specmgr://req/template` resource, mirroring Task 3.6's `get_req_example`/`specmgr://req/example` shape exactly (same `req/_data.py` packaged-data pattern, same naming rationale) — see Recent Updates and Decisions Made for the template's own parse-validity caveat (independently being addressed, see the template file's own in-progress edits).
+- [ ] Task 3.8: Make sure, that `docs/req_schema.json` is accessible by MCP server when the mcp is installed and not in DEV mode. If current location is not accessible by MCP then make a COPY of it (via pre-commit hook) to `src/biz/dfch/specmgr/req/resources/data/` and load from there as we already with `req_example.md`.
+- [ ] Task 3.9: Discuss `specmgr://req/...` resources and tools and prompts: discuss what is useful for this artifact type
 
 **Note:** If a task's scope changes mid-flight, edit its description in place;
 rely on git history (`git log -p` on this file) to recover what was
@@ -112,13 +113,53 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-14**: Phase 1 (Specification) and Phase 2 (Pydantic Models & Parser) are both **fully complete**, including `req_schema.json` (Task 1.2), now generated (not hand-authored) via a new generic `specmgr schema` CLI command (JSON Schema 2020-12), with CI wiring and a pre-commit hook keeping it in sync. Phase 3 (MCP Surface) now has two tools (`parse_req`, `get_req_example`) and two resources (`specmgr://req/schema`, `specmgr://req/example`); the generated schema carries a `"$comment": "v1"` layout-version marker (Task 3.4). `specmgr req-parse` (Task 3.3) is the first REQ CLI command. Prompts and Tasks 3.7 (`get_template`)/3.8 (design discussion) remain not-started.
+**As of 2026-08-14**: Phase 1 (Specification) and Phase 2 (Pydantic Models & Parser) are both **fully complete**, including `req_schema.json` (Task 1.2), now generated (not hand-authored) via a new generic `specmgr schema` CLI command (JSON Schema 2020-12), with CI wiring and a pre-commit hook keeping it in sync. Phase 3 (MCP Surface) now has three tools (`parse_req`, `get_req_example`, `get_req_template`) and three resources (`specmgr://req/schema`, `specmgr://req/example`, `specmgr://req/template`); the generated schema carries a `"$comment": "v1"` layout-version marker (Task 3.4). `specmgr req-parse` (Task 3.3) is the first REQ CLI command. Prompts and Tasks 3.8 (MCP-installed accessibility of `docs/req_schema.json`)/3.9 (design discussion) remain not-started.
 
 ### Blockers
 
 None.
 
 ### Recent Updates
+
+#### 2026-08-14 (continued) — Task 3.7 implemented: `get_req_template` tool + `specmgr://req/template` resource
+
+- Mechanical mirror of Task 3.6's shape: `req/_data.py` gained a second
+  patchable constant (`_TEMPLATE_PATH`) and reader function
+  (`read_req_template_text()`), reusing the same `_DATA_PACKAGE`/
+  `importlib.resources` plumbing -- no `pyproject.toml` change needed, since
+  the existing `"data/*.md"` package-data glob already covers the
+  already-committed `req_template.md`.
+- New `req/tools/get_req_template.py` (`@mcp.tool()`) and
+  `req/resources/req_template.py` (`@mcp.resource("specmgr://req/template", mime_type="text/markdown")`), both thin wrappers around
+  `_data.read_req_template_text()`, registered in `req/tools/__init__.py`,
+  `req/resources/__init__.py`, `req/__init__.py`'s docstring, and
+  `server.py`'s resource/tool docstring lists -- same registration points
+  Task 3.6 touched.
+- **Template parse-validity, decided differently from Task 3.6's example**:
+  unlike `req_example.md` (a byte-for-byte copy of the parser's own
+  `req_reference.md` fixture, and therefore implicitly round-trip tested),
+  `req_template.md` is **not** asserted to satisfy `parse_req`/
+  `ReqDocument`'s field-level validators -- confirmed by hand: parsing it
+  currently raises (first a `pydantic.ValidationError` on `## Level`'s
+  placeholder prose against `_LEVEL_PATTERN`, and -- after a separate,
+  in-progress edit to the template swapped in HTML-comment-annotated real
+  values -- an `AssertionError` instead, since `Level`/`Priority` only
+  accept a single paragraph and the comment is now a second one). No parse
+  round-trip test was added for the template (unlike the example's implicit
+  one via `req_reference.md`); both tool/resource docstrings state this
+  caveat explicitly. Revisit only if/when the template is made fully
+  parse-valid (see the next entry down for that in-progress, separate
+  effort) and a round-trip test becomes meaningful.
+- Tests: `tests/req/test_data.py` (+4: real packaged file, patched
+  round-trip, fresh-read-per-call, missing-file `FileNotFoundError`, mirrors
+  the existing example tests), `tests/req/tools/test_get_req_template.py`
+  (3 tests), `tests/req/resources/test_req_template.py` (4 tests, including
+  one asserting the tool and the resource return identical content) -- 660
+  tests project-wide (up from 649), no regressions. `ruff format --check`/
+  `ruff check`/`vulture` clean; `specmgr docs` regenerated (2 new module
+  pages: `req.tools.get_req_template`, `req.resources.req_template`, plus
+  the extended `req._data` page); `specmgr schema`/`specmgr adr-toc` both
+  confirmed to have no drift (this task never touches either artifact).
 
 #### 2026-08-14 (continued) — Task 3.6 implemented: `get_req_example` tool + `specmgr://req/example` resource
 

@@ -30,7 +30,8 @@ md = MarkdownIt("commonmark")
 #: children nested, it does not flatten them into the top-level list), which
 #: is why `_assert_no_raw_html` below recurses into `.children` rather than
 #: scanning the top-level list alone.
-_RAW_HTML_TOKEN_TYPES = ("html_block", "html_inline")
+_RAW_HTML_TOKEN_TYPE_BLOCK = "html_block"
+_RAW_HTML_TOKEN_TYPE_INLINE = "html_inline"
 
 #: `mdformat` options shared by every normalization call across `models/md/`.
 #:
@@ -73,9 +74,12 @@ def _assert_no_raw_html(tokens: list[Token]) -> None:
         tokens: a token list, or a token's own `.children`.
     """
     for tok in tokens:
-        assert tok.type not in _RAW_HTML_TOKEN_TYPES, (
-            f"raw HTML is not permitted in a parsed document: {tok.type} {tok.content!r}"
-        )
+        tok_type = tok.type.lower()
+        message = f"raw HTML is not permitted in a parsed document: {tok.type} {tok.content!r}"
+        assert _RAW_HTML_TOKEN_TYPE_INLINE != tok_type, message
+        if _RAW_HTML_TOKEN_TYPE_BLOCK == tok_type:
+            assert tok.content.startswith("<!--"), message
+
         if tok.children:
             _assert_no_raw_html(tok.children)
 
