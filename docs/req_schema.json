@@ -1,4 +1,5 @@
 {
+  "$comment": "v1",
   "$defs": {
     "AcceptanceCriteria": {
       "description": "`### Acceptance Criteria` under Related Artifacts -- bullet list of\ncross-references to acceptance criteria, one per line\n(e.g. \"ACC-1234: <title>\").",

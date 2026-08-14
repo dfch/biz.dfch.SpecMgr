@@ -48,6 +48,11 @@ class TestGenerateReqSchema(unittest.TestCase):
         result = json.loads(generate_req_schema())
         self.assertEqual(result["$schema"], "https://json-schema.org/draft/2020-12/schema")
 
+    def test_comment_is_schema_layout_version(self):
+        """`$comment` must be the bare schema-layout version token (currently 'v1')."""
+        result = json.loads(generate_req_schema())
+        self.assertEqual(result["$comment"], "v1")
+
     def test_contains_frontmatter_and_body_properties(self):
         """Top-level `ReqDocument` schema must expose `frontmatter`/`body` as required properties."""
         result = json.loads(generate_req_schema())

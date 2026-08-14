@@ -23,6 +23,7 @@ subclasses under this same package. Body classes map directly to heading section
 in a requirement markdown file -- see ``body.py`` for the full hierarchy.
 """
 
+from ._util import SCHEMA_COMMENT_VERSION
 from .body import (
     AcceptanceCriteria,
     Characteristics,
@@ -44,6 +45,7 @@ from .frontmatter import ReqFrontmatter
 from .parser import parse_req
 
 __all__ = [
+    "SCHEMA_COMMENT_VERSION",
     "AcceptanceCriteria",
     "Characteristics",
     "Decisions",

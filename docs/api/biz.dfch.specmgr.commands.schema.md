@@ -35,6 +35,12 @@ added explicitly here from ``GenerateJsonSchema.schema_dialect`` --
 otherwise the emitted file would not self-describe which JSON Schema
 dialect it actually uses.
 
+Also injects a ``"$comment"`` key holding
+``req.models.v1.SCHEMA_COMMENT_VERSION`` (currently ``"v1"``) -- a bare
+schema-layout version token, distinct from any document instance's own
+``frontmatter.version``, letting a caller that cached an earlier fetch
+detect a REQ schema shape change without diffing the whole file.
+
 Serializes with ``indent=2, sort_keys=True`` plus a trailing newline so
 repeated generation from unchanged models produces byte-identical
 output, which is what makes this command's own drift detection (and any

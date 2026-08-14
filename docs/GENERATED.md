@@ -99,6 +99,7 @@ First-line docstrings from each module, organized by domain:
 
 - `req/__init__.py` — Requirement (REQ) domain -- requirement specifications.
 - `req/models/v1/__init__.py` — Requirement (REQ) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- `req/models/v1/_util.py` — Shared, private constants for the ``req.models.v1`` subpackage.
 - `req/models/v1/body.py` — Requirement (REQ) models: whole-section fields under a single H1.
 - `req/models/v1/document.py` — Pydantic model for a full requirement document (frontmatter + body).
 - `req/models/v1/frontmatter.py` — Requirement frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.

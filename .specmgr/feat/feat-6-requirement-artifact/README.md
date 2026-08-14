@@ -3,7 +3,7 @@ created: 2026-08-13
 id: feat-6-requirement-artifact
 status: in-progress
 updated: 2026-08-14
-version: 1.4.4
+version: 1.4.5
 ---
 
 # Feature: Requirement (REQ) artifact template with characteristic assignment
@@ -98,7 +98,7 @@ progresses (edit, don't duplicate).
 - [x] Task 3.1: Define MCP tools, prompts, and resources for REQ management — depends on: Phase 2 complete — status: **partially completed (2026-08-13)** — only the `parse_req` tool defined/implemented so far (mirrors `uc/tools/`'s current scope, which also only has `parse_uc`); prompts/resources and id-based file storage (`_paths.py`/`_io.py` equivalent) not yet specified.
 - [x] Task 3.2: Implement MCP per specification (Task 3.1) — depends on: Task 3.1 — status: **partially completed (2026-08-13)** — `req/tools/parse_req.py` (`@mcp.tool()` wrapper, reads path from disk, delegates to `parser.parse_req`), `req/tools/__init__.py`, `req/__init__.py`; registered in `server.py` (`from . import adr, general, req, resources, uc`). Remaining Task 3.1 scope (prompts, resources, further tools) still not-started.
 - [ ] Task 3.3: Implement CLI commands (`req-get`, `req-parse`, etc.) — depends on: Task 3.2 — status: not-started
-- [ ] Task 3.4: Add a `"$comment"` schema-version marker (e.g. `"v1"`, matching `req/models/v1`'s package version — not `"req v1"`, since the doc type is already clear from the file/resource identity) to `generate_req_schema()`'s emitted JSON, so a caller can detect a REQ schema layout change without diffing the whole file — depends on: Task 2.7 — status: not-started
+- [x] Task 3.4: Add a `"$comment"` schema-version marker (e.g. `"v1"`, matching `req/models/v1`'s package version — not `"req v1"`, since the doc type is already clear from the file/resource identity) to `generate_req_schema()`'s emitted JSON, so a caller can detect a REQ schema layout change without diffing the whole file — depends on: Task 2.7 — status: **completed (2026-08-14)** — `SCHEMA_COMMENT_VERSION = "v1"` constant added to a new `req/models/v1/_util.py` (mirroring `models/adr/v1/_util.py`'s precedent), re-exported from `req/models/v1/__init__.py`, and injected as `generate_req_schema()`'s `$comment` key. `docs/req_schema.json` regenerated.
 - [ ] Task 3.5: Add `specmgr://req/schema` MCP resource — reads the persisted `docs/req_schema.json` directly from disk (trusts the `specmgr-schema` pre-commit hook to keep it current, same trust model as `adr-toc`'s `docs/adr/README.md`; no `commands/schema.py`/`typer` import, no on-the-fly regeneration). URI is deliberately unversioned (see Decisions Made) — depends on: Task 3.4 — status: not-started
 
 **Note:** If a task's scope changes mid-flight, edit its description in place;
@@ -109,13 +109,37 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-14**: Phase 1 (Specification) and Phase 2 (Pydantic Models & Parser) are both **fully complete**, including `req_schema.json` (Task 1.2), now generated (not hand-authored) via a new generic `specmgr schema` CLI command (JSON Schema 2020-12), with CI wiring and a pre-commit hook keeping it in sync. Phase 3 (MCP Surface) has its first tool, `parse_req`, implemented and registered; prompts, resources, and further tools remain unspecified. No CLI commands yet (Task 3.3).
+**As of 2026-08-14**: Phase 1 (Specification) and Phase 2 (Pydantic Models & Parser) are both **fully complete**, including `req_schema.json` (Task 1.2), now generated (not hand-authored) via a new generic `specmgr schema` CLI command (JSON Schema 2020-12), with CI wiring and a pre-commit hook keeping it in sync. Phase 3 (MCP Surface) has its first tool, `parse_req`, implemented and registered; the generated schema now also carries a `"$comment": "v1"` layout-version marker (Task 3.4). Prompts, `specmgr://req/schema` resource (Task 3.5), and further tools remain unspecified/not-started. No CLI commands yet (Task 3.3).
 
 ### Blockers
 
 None.
 
 ### Recent Updates
+
+#### 2026-08-14 (continued) — Task 3.4 implemented: `"$comment": "v1"` schema-layout version marker
+
+Implements the design queued in the "Tasks 3.4/3.5 queued" entry below.
+
+- Added `SCHEMA_COMMENT_VERSION = "v1"` to a new, private
+  `req/models/v1/_util.py` — mirroring `models/adr/v1/_util.py`'s existing
+  `SCHEMA_MAJOR_VERSION`/`CURRENT_SCHEMA_VERSION` precedent, so the value
+  can't silently drift from the package's own `v1` folder name the way a
+  hardcoded literal in `commands/schema.py` could. Re-exported from
+  `req/models/v1/__init__.py`.
+- `generate_req_schema()` now injects `schema_dict["$comment"] =
+  SCHEMA_COMMENT_VERSION` alongside its existing `$schema` injection.
+  `docs/req_schema.json` regenerated (one new top-level key).
+- Deliberately **not** wired into `ReqFrontmatter.version`/any
+  document-instance validation — this constant is scoped purely to the
+  generated schema *artifact's* own layout version, a different concept
+  from the frontmatter's semver (see Decisions Made, "Schema `"$comment"`
+  version marker omits the doc-type name").
+- Added `test_comment_is_schema_layout_version` to
+  `tests/commands/test_schema.py` — 621 tests project-wide (up from 620),
+  no regressions. `ruff format --check`/`ruff check`/`vulture` clean;
+  `specmgr schema`/`specmgr docs`/`specmgr adr-toc` all regenerated with no
+  further drift.
 
 #### 2026-08-14 (continued) — Bug fix: `## Priority` accepted any digit string, not just 0-99
 

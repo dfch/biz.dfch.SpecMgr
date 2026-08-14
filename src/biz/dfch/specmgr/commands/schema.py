@@ -46,6 +46,7 @@ from typing import Annotated, Callable
 import typer
 from pydantic.json_schema import GenerateJsonSchema
 
+from ..req.models.v1 import SCHEMA_COMMENT_VERSION
 from ..req.models.v1.document import ReqDocument
 
 # __file__ = src/biz/dfch/specmgr/commands/schema.py
@@ -63,6 +64,12 @@ def generate_req_schema() -> str:
     otherwise the emitted file would not self-describe which JSON Schema
     dialect it actually uses.
 
+    Also injects a ``"$comment"`` key holding
+    ``req.models.v1.SCHEMA_COMMENT_VERSION`` (currently ``"v1"``) -- a bare
+    schema-layout version token, distinct from any document instance's own
+    ``frontmatter.version``, letting a caller that cached an earlier fetch
+    detect a REQ schema shape change without diffing the whole file.
+
     Serializes with ``indent=2, sort_keys=True`` plus a trailing newline so
     repeated generation from unchanged models produces byte-identical
     output, which is what makes this command's own drift detection (and any
@@ -70,6 +77,7 @@ def generate_req_schema() -> str:
     """
     schema_dict = ReqDocument.model_json_schema()
     schema_dict["$schema"] = GenerateJsonSchema.schema_dialect
+    schema_dict["$comment"] = SCHEMA_COMMENT_VERSION
     return json.dumps(schema_dict, indent=2, sort_keys=True) + "\n"
 
 
