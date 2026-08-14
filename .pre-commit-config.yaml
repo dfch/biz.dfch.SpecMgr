@@ -51,6 +51,23 @@ repos:
         pass_filenames: false
         files: ^src/.*\.py$
 
+      - id: specmgr-mcp-docs
+        name: specmgr mcp-docs
+        description: >-
+          Regenerate docs/MCP.md (MCP tools/resources/prompts reference),
+          then fail if that changed anything -- standard formatter-hook UX:
+          review and `git add` the regenerated file, then commit again.
+          Triggers on any src/ change, not just adr/general/req/uc/resources/
+          server.py -- a tool's generated parameter schema also depends on
+          the shared models/ package (e.g. adding a field to AdrBody changes
+          create_adr's schema without touching adr/tools/*.py), so this
+          mirrors the equally broad specmgr-docs hook above rather than
+          risk a missed regeneration.
+        entry: bash -c 'uv run --frozen specmgr mcp-docs && git diff --exit-code -- docs/MCP.md'
+        language: system
+        pass_filenames: false
+        files: ^src/.*\.py$
+
       - id: specmgr-adr-toc
         name: specmgr adr-toc
         description: >-

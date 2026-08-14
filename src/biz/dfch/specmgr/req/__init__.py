@@ -11,8 +11,9 @@ the shared ``mcp`` application instance at once::
 Currently ``tools`` (``parse_req``, ``get_req_example``, ``get_req_template``,
 ``create_req``, ``update_req``, ``set_status_req``, ``delete_req``,
 ``validate_req``) and ``resources`` (``specmgr://req/schema``,
-``specmgr://req/example``, ``specmgr://req/template``) exist; ``prompts``
-is not implemented yet.
+``specmgr://req/example``, ``specmgr://req/template``,
+``specmgr://req/{id}``, ``specmgr://req/list``) exist; ``prompts`` is not
+implemented yet.
 """
 
 from . import resources, tools  # noqa: F401

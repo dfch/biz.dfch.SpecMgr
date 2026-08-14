@@ -43,6 +43,7 @@ from .body import (
 from .document import ReqDocument
 from .frontmatter import ReqFrontmatter
 from .parser import parse_req
+from .summary import ReqSummary
 
 __all__ = [
     "SCHEMA_COMMENT_VERSION",
@@ -60,6 +61,7 @@ __all__ = [
     "Requirement",
     "ReqFrontmatter",
     "Requirements",
+    "ReqSummary",
     "Source",
     "Tags",
     "parse_req",

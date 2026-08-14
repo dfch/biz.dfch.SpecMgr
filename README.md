@@ -70,17 +70,17 @@ specmgr version
 
 ## MCP Server
 
-Requires the `mcp` extra. In addition to the `specmgr://version` resource,
-the server exposes a full set of Architecture Decision Record (ADR) tools
-and resources, implementing the MADR 4.0.0-derived schema described in
-`.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md`:
+Requires the `mcp` extra. The server exposes resources, tools, and prompts
+for Architecture Decision Record (ADR), requirement (REQ), and use-case (UC)
+document management, plus cross-cutting utilities (e.g. markdown
+formatting).
 
-| Kind     | Name(s)                                                                                                                                   | Description                                                     |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------- |
-| Resource | `specmgr://version`                                                                                                                         | Installed `biz-dfch-specmgr` package version                      |
-| Resource | `specmgr://adr/list`                                                                                                                        | Id/title/status/filename of every ADR                             |
-| Resource | `specmgr://adr/{id}`                                                                                                                        | Full ADR document (frontmatter + body) by id                      |
-| Tool     | `get_adr`, `create_adr`, `update_frontmatter`, `update_section`, `set_status`, `option_list`, `option_create`, `option_read`, `option_update`, `option_delete`, `validate_adr` | Structured create/read/update operations over one ADR, by id |
+**The full, up-to-date list of every resource, resource template, tool, and
+prompt — with parameters, MIME types, and descriptions — lives in
+[docs/MCP.md](docs/MCP.md).** Unlike this README, it is not hand-maintained:
+it is regenerated from the live server registration by `specmgr mcp-docs`
+and kept in sync by a pre-commit hook, so it can never silently drift as
+tools/resources/prompts are added, renamed, or removed.
 
 ADRs live as `.md` files in a base directory (default `docs/adr`,
 configurable via the `SPECMGR_ADR_DIR` environment variable) — the file on

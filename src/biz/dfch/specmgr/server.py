@@ -33,6 +33,8 @@ specmgr://req/schema -- The generated REQ JSON Schema, read from a packaged data
 specmgr://req/example -- A complete, valid sample requirement document as raw markdown.
 specmgr://req/template -- A requirement template (every field present, placeholder text)
                           as raw markdown.
+specmgr://req/{id} --   Full requirement document for a given id.
+specmgr://req/list --   Ids/titles/statuses/filenames of every requirement.
 
 Tools
 -----

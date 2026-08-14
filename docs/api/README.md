@@ -39,6 +39,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.commands.coverage_badge`](biz.dfch.specmgr.commands.coverage_badge.md) — ``coverage-badge`` -- generate a static SVG coverage badge from .coverage data.
 - [`biz.dfch.specmgr.commands.docs`](biz.dfch.specmgr.commands.docs.md) — ``docs`` -- regenerate ``docs/api/`` and ``docs/GENERATED.md`` from the codebase.
 - [`biz.dfch.specmgr.commands.mcp`](biz.dfch.specmgr.commands.mcp.md) — ``mcp`` -- start the ``biz-dfch-specmgr`` MCP server.
+- [`biz.dfch.specmgr.commands.mcp_docs`](biz.dfch.specmgr.commands.mcp_docs.md) — ``mcp-docs`` -- regenerate docs/MCP.md from the live MCP server registration.
 - [`biz.dfch.specmgr.commands.req_parse`](biz.dfch.specmgr.commands.req_parse.md) — ``req-parse`` -- parse a REQ markdown file from disk and print it to the terminal.
 - [`biz.dfch.specmgr.commands.schema`](biz.dfch.specmgr.commands.schema.md) — ``schema`` -- generate JSON Schema (2020-12) for registered document-type models.
 - [`biz.dfch.specmgr.commands.unused_code`](biz.dfch.specmgr.commands.unused_code.md) — ``unused-code`` -- report unreferenced Python symbols, or (with ``--test``) test-only ones.
@@ -82,8 +83,10 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.models.version_info`](biz.dfch.specmgr.models.version_info.md) — Pydantic model for the ``specmgr://version`` resource.
 - [`biz.dfch.specmgr.req`](biz.dfch.specmgr.req.md) — Requirement (REQ) domain -- requirement specifications.
 - [`biz.dfch.specmgr.req._data`](biz.dfch.specmgr.req._data.md) — Private, dependency-free access to REQ's packaged example/template/schema
-- [`biz.dfch.specmgr.req.resources`](biz.dfch.specmgr.req.resources.md) — MCP resource registrations for Requirement (REQ) documents (Tasks 3.5-3.7).
+- [`biz.dfch.specmgr.req.resources`](biz.dfch.specmgr.req.resources.md) — MCP resource registrations for Requirement (REQ) documents (Tasks 3.5-3.7, 3.17-3.18).
 - [`biz.dfch.specmgr.req.resources.req_example`](biz.dfch.specmgr.req.resources.req_example.md) — Resource: specmgr://req/example (Task 3.6).
+- [`biz.dfch.specmgr.req.resources.req_get`](biz.dfch.specmgr.req.resources.req_get.md) — Resource: specmgr://req/{id} (Task 3.17).
+- [`biz.dfch.specmgr.req.resources.req_list`](biz.dfch.specmgr.req.resources.req_list.md) — Resource: specmgr://req/list (Task 3.18).
 - [`biz.dfch.specmgr.req.resources.req_schema`](biz.dfch.specmgr.req.resources.req_schema.md) — Resource: specmgr://req/schema (Task 3.5, packaged data since Task 3.8).
 - [`biz.dfch.specmgr.req.resources.req_template`](biz.dfch.specmgr.req.resources.req_template.md) — Resource: specmgr://req/template (Task 3.7).
 - [`biz.dfch.specmgr.req.tools`](biz.dfch.specmgr.req.tools.md) — MCP tool wrappers for requirements (mirrors ``uc/tools/``'s own shape).

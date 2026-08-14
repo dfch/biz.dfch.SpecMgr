@@ -3,7 +3,7 @@ created: 2026-08-13
 id: feat-6-requirement-artifact
 status: in-progress
 updated: 2026-08-15
-version: 1.6.6
+version: 1.6.7
 ---
 
 # Feature: Requirement (REQ) artifact template with characteristic assignment
@@ -114,10 +114,21 @@ progresses (edit, don't duplicate).
 - [x] Task 3.14: `set_status_req(id: str, status: str) -> ReqDocument` tool — the only path that changes `status` (mirrors ADR's `  `, minus the `superseded_by`-composition special case, since `ReqFrontmatter.status` has no `"superseded by ..."` pattern — just the closed seven-value set). Also bumps `updated=now` — depends on: Task 3.11 — status: **completed (2026-08-15)** — see Recent Updates.
 - [x] Task 3.15: `delete_req(id: str) -> NoReturn` tool — registered stub, always `raise NotImplementedError("delete_req is not yet implemented")`. Reserves the name/slot for a future real implementation (soft-delete via `status`, archival, or similar — undecided) without blocking the rest of this surface — depends on: Task 3.11 — status: **completed (2026-08-15)** — see Recent Updates.
 - [x] Task 3.16: `validate_req(content: str, full: bool = False) -> bool` tool — a disk-free, id-free dry run, always returns `True` on success (mirrors `validate_adr`'s "successfully constructing the model *is* the validation" contract), raises uncaught on failure. Uses `frontmatter.loads(content)` to detect whether `content` carries a frontmatter block (`post.metadata` non-empty). `full=False` (default): `content` must be body-only — raises `ValueError` with a clear corrective message if a frontmatter block is detected instead. `full=True`: `content` must be a complete document (frontmatter + body, same shape `parse_req` expects for a file) — raises the symmetric `ValueError` if *no* frontmatter block is found. Body-only validation (`full=False`) is literally the same check `create_req`/`update_req` run internally, exposed standalone — depends on: none (parallel to Task 3.12/3.13, not blocking them) — status: **completed (2026-08-15)** — see Recent Updates.
-- [ ] Task 3.17: `specmgr://req/{id}` resource — single-document read by id (mirrors `specmgr://adr/{id}`). Supersedes the earlier considered `get_req` tool — id-based single-document read is a resource only, everything else in this surface is a tool — depends on: Task 3.11 — status: **not-started**.
-- [ ] Task 3.18: `specmgr://req/list` resource — every document in the base directory, `ReqSummary` (id/title/status/filename, mirroring `AdrSummary`), unfiltered (characteristics/tags filtering was explicitly deferred earlier in the Task 3.9 discussion, see Recent Updates) — depends on: Task 3.11 — status: **not-started**.
+- [x] Task 3.17: `specmgr://req/{id}` resource — single-document read by id (mirrors `specmgr://adr/{id}`). Supersedes the earlier considered `get_req` tool — id-based single-document read is a resource only, everything else in this surface is a tool — depends on: Task 3.11 — status: **completed (2026-08-15)** — see Recent Updates.
+- [x] Task 3.18: `specmgr://req/list` resource — every document in the base directory, `ReqSummary` (id/title/status/filename, mirroring `AdrSummary`), unfiltered (characteristics/tags filtering was explicitly deferred earlier in the Task 3.9 discussion, see Recent Updates) — depends on: Task 3.11 — status: **completed (2026-08-15)** — see Recent Updates.
 - [ ] Task 3.19: `req/prompts/create_req.py` + `update_req.py` — narrate the tool sequence above (mirroring ADR's `create_adr`/`update_adr` prompts): *create* — check `specmgr://req/list` for an existing duplicate, fetch `specmgr://req/template` or `/example` as a starting point, draft the body against `specmgr://req/schema`, call `create_req(content)`; *update* — read `specmgr://req/{id}`, edit the body, call `update_req(id, content)`, and route any status change through `set_status_req` instead of `update_req` — depends on: Tasks 3.12, 3.13, 3.14, 3.17, 3.18 — status: **not-started**.
 - [ ] Task 3.20: Coordinate with `feat-5-md-model-parser`: extend `models/md/_markdown.py`'s `_assert_no_raw_html` to also permit `html_inline` tokens whose content starts with `<!--` (block-level HTML comments are already permitted; inline ones are not). Unblocks Task 3.7's known, currently-blocked template-annotation attempt (an inline comment on the same line as a value, e.g. `MUST <!-- one of: MUST/SHOULD/MUST NOT/SHOULD NOT/MAY -->`, rather than a second standalone paragraph, which is what actually broke `Level`/`Priority`'s single-paragraph structural check) — depends on: none — status: **not-started**.
+
+#### Phase 4: MCP server reference documentation (`docs/MCP.md`, cross-cutting — all domains, not REQ-specific)
+
+**Note on scope:** unlike Phases 1-3, this phase is cross-cutting infrastructure — it covers every registered domain (ADR, REQ, UC, `general`), not REQ specifically. Tracked here rather than in its own `feat-N-slug` folder because it was prompted directly by this feature's own Phase 3 REQ tools/resources being absent from `README.md`'s stale, hand-maintained table, and was carried out in the same working session as Phase 3's tail end — see Decisions Made.
+
+- [x] Task 4.1: Implement `commands/mcp_docs.py` (`generate_mcp_docs()` + `mcp_docs()` Typer entry point) — introspects the live `biz.dfch.specmgr.server:mcp` instance at runtime via its public `list_tools()`/`list_resources()`/`list_resource_templates()`/`list_prompts()` methods (not static `ast` parsing, contrast `commands/docs.py`) and writes a single `docs/MCP.md`: a summary/table-of-contents header plus one indexed table + one `### <Kind>: <name>` detail subsection per kind (Resources, Resource Templates, Tools, Prompts); tool parameter tables are derived from each tool's top-level JSON Schema `properties`/`required`, resolving `$ref`s to short type names rather than inlining the full nested schema — depends on: none — status: **completed (2026-08-15)**
+- [x] Task 4.2: Register the `mcp-docs` command (`app.command()(mcp_docs)` in `cli.py`, `from .mcp_docs import mcp_docs` in `commands/__init__.py`) — Typer's automatic underscore-to-hyphen conversion gives `specmgr mcp-docs`, matching `adr-toc`/`coverage-badge`'s existing precedent (no explicit `name=` needed) — depends on: Task 4.1 — status: **completed (2026-08-15)**
+- [x] Task 4.3: Add the `specmgr-mcp-docs` local pre-commit hook (`.pre-commit-config.yaml`), regenerating and `git diff --exit-code`-checking `docs/MCP.md` — trigger scope is `^src/.*\.py$` (the same broad pattern as `specmgr-docs`, not a narrower domain-only pattern), since a tool's generated parameter schema also depends on the shared `models/` package — depends on: Task 4.1, Task 4.2 — status: **completed (2026-08-15)**
+- [x] Task 4.4: Replace `README.md`'s stale, hand-maintained MCP resource/tool table (ADR-only, missing REQ/UC/`general` entirely) with a short prose summary plus a pointer to `docs/MCP.md` as the single, always-current source — depends on: Task 4.1 — status: **completed (2026-08-15)**
+- [x] Task 4.5: Tests (`tests/commands/test_mcp_docs.py`, 16 tests) mirroring `test_docs.py`'s "exercise the actual Typer entry point, not just private helpers" approach — covers both `--output` and default-path branches, output determinism across calls, unique anchors across kinds sharing a bare name (`create_adr` tool vs. prompt), and all three helper functions (`_schema_type_str`, `_tool_parameters`, `_slugify`); includes a regression guard for an off-by-one `_DEFAULT_OUTPUT` path bug caught during manual verification — depends on: Task 4.1 — status: **completed (2026-08-15)**
+- [ ] Task 4.6: Wire `specmgr mcp-docs` into `.github/workflows/ci.yml`'s Python-3.13-only job as a drift-check backstop, alongside the existing `specmgr docs`/`specmgr adr-toc` steps — currently only the pre-commit hook (Task 4.3) enforces this, unlike its two siblings which also have a CI-level check — depends on: Task 4.1 — status: **not-started**.
 
 **Note:** If a task's scope changes mid-flight, edit its description in place;
 rely on git history (`git log -p` on this file) to recover what was
@@ -127,13 +138,124 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-15**: Phase 1 (Specification) and Phase 2 (Pydantic Models & Parser) are both **fully complete**, including `req_schema.json` (Task 1.2), now generated (not hand-authored) via a new generic `specmgr schema` CLI command (JSON Schema 2020-12), with CI wiring and a pre-commit hook keeping it in sync. Phase 3 (MCP Surface) now has three tools (`parse_req`, `get_req_example`, `get_req_template`) and three resources (`specmgr://req/schema`, `specmgr://req/example`, `specmgr://req/template`); the generated schema carries a `"$comment": "v1"` layout-version marker (Task 3.4). `specmgr req-parse` (Task 3.3) is the first REQ CLI command. `specmgr://req/schema` now reads a packaged-data copy (`req/resources/data/req_schema.json`) instead of `docs/req_schema.json` directly, so it also works from a real, non-editable install (Task 3.8). Task 3.9's design discussion is **complete** (see Recent Updates for the full trail): granular ADR-style section-mutation tooling was rejected as not worth the effort for REQ; a lean, generic, id-based lifecycle (`create_req`/`update_req`/`set_status_req`/`delete_req`-stub/`validate_req` tools plus `specmgr://req/{id}`/`specmgr://req/list` resources plus `create_req`/`update_req` prompts) was designed instead, detailed in Tasks 3.10-3.20. Task 3.10 (generic `general/tools/_doc_paths.py` id → path lookup plumbing, shared by REQ now and UC later), Task 3.11 (`req/tools/_paths.py`/`_io.py`, REQ's own thin wrappers over it), Task 3.12 (`create_req` tool), Task 3.13 (`update_req` tool), Task 3.14 (`set_status_req` tool), Task 3.15 (`delete_req` stub), and Task 3.16 (`validate_req` tool) are now **completed**; Tasks 3.17-3.20 remain **not-started**.
+**As of 2026-08-15**: Phase 1 (Specification) and Phase 2 (Pydantic Models & Parser) are both **fully complete**, including `req_schema.json` (Task 1.2), now generated (not hand-authored) via a new generic `specmgr schema` CLI command (JSON Schema 2020-12), with CI wiring and a pre-commit hook keeping it in sync. Phase 3 (MCP Surface) now has three tools (`parse_req`, `get_req_example`, `get_req_template`) and three resources (`specmgr://req/schema`, `specmgr://req/example`, `specmgr://req/template`); the generated schema carries a `"$comment": "v1"` layout-version marker (Task 3.4). `specmgr req-parse` (Task 3.3) is the first REQ CLI command. `specmgr://req/schema` now reads a packaged-data copy (`req/resources/data/req_schema.json`) instead of `docs/req_schema.json` directly, so it also works from a real, non-editable install (Task 3.8). Task 3.9's design discussion is **complete** (see Recent Updates for the full trail): granular ADR-style section-mutation tooling was rejected as not worth the effort for REQ; a lean, generic, id-based lifecycle (`create_req`/`update_req`/`set_status_req`/`delete_req`-stub/`validate_req` tools plus `specmgr://req/{id}`/`specmgr://req/list` resources plus `create_req`/`update_req` prompts) was designed instead, detailed in Tasks 3.10-3.20. Task 3.10 (generic `general/tools/_doc_paths.py` id → path lookup plumbing, shared by REQ now and UC later), Task 3.11 (`req/tools/_paths.py`/`_io.py`, REQ's own thin wrappers over it), Task 3.12 (`create_req` tool), Task 3.13 (`update_req` tool), Task 3.14 (`set_status_req` tool), Task 3.15 (`delete_req` stub), Task 3.16 (`validate_req` tool), Task 3.17 (`specmgr://req/{id}` resource), and Task 3.18 (`specmgr://req/list` resource) are now **completed**; Tasks 3.19-3.20 remain **not-started**. **Phase 4** (cross-cutting MCP server reference documentation, prompted directly by observing this feature's own Phase 3 tools/resources missing from `README.md`'s stale hand-maintained table) is now also underway: Tasks 4.1-4.5 (`commands/mcp_docs.py`, the `specmgr mcp-docs` CLI command, the `specmgr-mcp-docs` pre-commit hook, the `README.md` rewrite, and tests) are **completed**; Task 4.6 (CI drift-check backstop) remains **not-started**.
 
 ### Blockers
 
 None.
 
 ### Recent Updates
+
+#### 2026-08-15 (continued) — Phase 4 implemented: `docs/MCP.md` auto-generated MCP server reference (`commands/mcp_docs.py`, cross-cutting — all domains, not REQ-specific)
+
+- New `commands/mcp_docs.py`: `generate_mcp_docs()` + `mcp_docs()` Typer entry
+  point — introspects the live `biz.dfch.specmgr.server:mcp` instance at
+  runtime via its public `list_tools()`/`list_resources()`/
+  `list_resource_templates()`/`list_prompts()` methods (async, driven via
+  `asyncio.run`), **not** static `ast` parsing (contrast `commands/docs.py`)
+  — so the emitted reference can never drift from what the server actually
+  registers. Writes a single `docs/MCP.md`: a summary/table-of-contents
+  header, then one indexed `Name | Description` table plus one
+  `### <Kind>: <name>` detail subsection per kind (Resources, Resource
+  Templates, Tools, Prompts). Tool parameter tables (`_tool_parameters`/
+  `_schema_type_str` helpers) only unpack each tool's top-level
+  `properties`/`required` — `$ref`s resolve to the referenced definition's
+  bare name rather than inlining the full, often-paragraphs-long nested
+  Pydantic model docstring from `$defs`.
+- **Headings are kind-prefixed** (`### Tool: create_adr` vs.
+  `### Prompt: create_adr`), not bare names — `create_adr` exists as both a
+  tool and a prompt name; bare headings would collide into duplicate
+  anchors that only GitHub's own undocumented `-1`/`-2`/... disambiguation
+  would resolve, which `_slugify` deliberately does not try to reproduce.
+- `mcp-docs` registered as a new Typer command (`app.command()(mcp_docs)`
+  in `cli.py`, `from .mcp_docs import mcp_docs` in `commands/__init__.py`)
+  — Typer's automatic underscore-to-hyphen conversion gives
+  `specmgr mcp-docs`, matching `adr-toc`/`coverage-badge`'s existing
+  precedent (no explicit `name=` needed).
+- New `specmgr-mcp-docs` local pre-commit hook (`.pre-commit-config.yaml`,
+  placed directly after `specmgr-docs`): regenerates `docs/MCP.md`, then
+  `git diff --exit-code`s it — standard formatter-hook UX, matching every
+  other `specmgr-*` hook. **Trigger scope is `^src/.*\.py$`** (the same
+  broad pattern as `specmgr-docs`), not a narrower
+  `adr/general/req/uc/resources`-only pattern — a tool's generated
+  parameter schema also depends on the shared `models/` package (e.g. a
+  field added to `AdrBody` changes `create_adr`'s emitted schema without
+  touching any `adr/tools/*.py` file), so a narrower trigger risked a
+  silently-missed regeneration; see Decisions Made.
+- `README.md`'s "MCP Server" section had a **stale, hand-maintained**
+  `Kind | Name(s) | Description` table listing only `specmgr://version` and
+  the ADR tools/resources — REQ, UC, and `general`'s `mdformat` tool were
+  entirely absent, exactly the drift this phase exists to prevent. Replaced
+  with a short prose summary plus a bolded pointer to `docs/MCP.md` as the
+  single, always-current source of truth.
+- Tests: `tests/commands/test_mcp_docs.py` (16 tests, mirroring
+  `test_docs.py`'s "exercise the actual Typer entry point, not just private
+  helpers" approach) — covers both `--output` and default-path branches,
+  output determinism across two calls, unique anchors across kinds sharing
+  a bare name, and all three helper functions (`_schema_type_str`,
+  `_tool_parameters`, `_slugify`). **Regression guard included**:
+  `test_default_output_resolves_under_repo_root_not_src` — an earlier draft
+  of `_DEFAULT_OUTPUT` resolved one `.parent` too shallow
+  (`src/docs/MCP.md` instead of the repo-root `docs/MCP.md`), caught by
+  manually running the generated pre-commit hook command during
+  verification, then locked in as a permanent regression test rather than
+  left as a one-off manual fix.
+- Full verification: `ruff format --check`/`ruff check` clean, `pylint`
+  only advisory-level warnings (same categories already present in sibling
+  `docs.py`/`test_docs.py`, not a regression), `vulture` clean, full suite
+  746 tests project-wide (up from 730), no regressions.
+- **No CI backstop yet** for `specmgr mcp-docs` (`specmgr docs`/
+  `specmgr adr-toc` both already have one in `.github/workflows/ci.yml`'s
+  Python-3.13-only job; `mcp-docs` does not yet) — tracked as the
+  still-open Task 4.6 rather than silently left undocumented.
+- **Caution for whoever commits this work**: while verifying with
+  `pylint`, `git add -A` was run once, which also staged unrelated,
+  already-in-progress Phase 3 work in this same feature (`req_get.py`/
+  `req_list.py`/`summary.py`/associated tests/this file itself) that
+  predates this phase — immediately caught and reverted via `git reset`
+  (nothing was committed), but noted here since `docs/MCP.md`/
+  `docs/GENERATED.md`/`docs/api/*` were regenerated afterward and now
+  reflect a mix of both this phase's and Phase 3's concurrent changes (by
+  design for `docs/MCP.md`, which always reflects whatever the live server
+  currently has registered — it correctly picked up
+  `specmgr://req/list`/`specmgr://req/{id}` from Phase 3 too).
+
+#### 2026-08-15 (continued) — Tasks 3.17/3.18 implemented: `specmgr://req/{id}` and `specmgr://req/list` resources
+
+- New `req/models/v1/summary.py`: `ReqSummary` (`id`/`title`/`status`/`filename`),
+  mirroring `models.adr.v1.summary.AdrSummary` field-for-field; re-exported from
+  `req/models/v1/__init__.py`.
+- New `req/resources/req_get.py` (`@mcp.resource("specmgr://req/{id}")`):
+  `req_get(id: str) -> ReqDocument` — single-document read by id, mirroring
+  `adr.resources.adr_get`/`specmgr://adr/{id}` exactly (same no-cache,
+  re-read-per-call design via `req.tools._io.load_by_id` +
+  `req.tools._paths.req_base_dir`). Confirms Task 3.9's design conclusion:
+  id-based single-document read is a resource only in this surface — there
+  is no `get_req` tool.
+- New `req/resources/req_list.py` (`@mcp.resource("specmgr://req/list")`):
+  `req_list() -> list[ReqSummary]` — every requirement in the configured base
+  directory, unfiltered (characteristics/tags filtering, i.e. ACC-002, stays
+  explicitly deferred per Task 3.9's discussion). A file that fails to parse
+  (`AssertionError`/`pydantic.ValidationError`, the two channels `parse_req`
+  raises) is silently skipped, mirroring `adr.resources.adr_list`'s own
+  skip-on-parse-failure rule. Uses `req.tools._paths.iter_req_paths()`'s own
+  zero-arg shape (resolves `req_base_dir()` internally, per Task 3.11's own
+  literal signature) rather than passing a `base_dir` explicitly.
+- Registered in `req/resources/__init__.py`, `req/__init__.py`'s docstring,
+  and `server.py`'s resource-list docstring block.
+- Tests: `tests/req/resources/test_req_get.py` (2 tests: returns the full
+  document for a known id, raises `ReqNotFoundError` for an unknown id) and
+  `tests/req/resources/test_req_list.py` (2 tests: returns summaries for
+  every valid requirement while silently skipping a broken file, returns an
+  empty list when the base directory does not exist yet) — both build their
+  fixture documents via `create_req` (or a raw hand-written broken file)
+  rather than a `render_req` that doesn't exist. 730 tests project-wide (up
+  from 726), no regressions. `ruff format --check`/`ruff check`/`vulture`
+  clean; `specmgr docs` regenerated (2 new module pages:
+  `req.resources.req_get`, `req.resources.req_list` — `req.models.v1.summary`
+  has no page of its own, folded into the existing `req.models.v1` page like
+  every other model submodule); `specmgr schema`/`specmgr adr-toc` both
+  confirmed to have no drift (this task never touches either artifact).
 
 #### 2026-08-15 (continued) — Task 3.15 implemented: `delete_req` stub tool
 

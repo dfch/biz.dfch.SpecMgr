@@ -50,6 +50,7 @@ First-line docstrings from each module, organized by domain:
 - `commands/coverage_badge.py` — ``coverage-badge`` -- generate a static SVG coverage badge from .coverage data.
 - `commands/docs.py` — ``docs`` -- regenerate ``docs/api/`` and ``docs/GENERATED.md`` from the codebase.
 - `commands/mcp.py` — ``mcp`` -- start the ``biz-dfch-specmgr`` MCP server.
+- `commands/mcp_docs.py` — ``mcp-docs`` -- regenerate docs/MCP.md from the live MCP server registration.
 - `commands/req_parse.py` — ``req-parse`` -- parse a REQ markdown file from disk and print it to the terminal.
 - `commands/schema.py` — ``schema`` -- generate JSON Schema (2020-12) for registered document-type models.
 - `commands/unused_code.py` — ``unused-code`` -- report unreferenced Python symbols, or (with ``--test``) test-only ones.
@@ -107,8 +108,11 @@ First-line docstrings from each module, organized by domain:
 - `req/models/v1/document.py` — Pydantic model for a full requirement document (frontmatter + body).
 - `req/models/v1/frontmatter.py` — Requirement frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
 - `req/models/v1/parser.py` — Parse raw requirement ``.md`` text into a :class:`ReqDocument` (Task 1.x).
-- `req/resources/__init__.py` — MCP resource registrations for Requirement (REQ) documents (Tasks 3.5-3.7).
+- `req/models/v1/summary.py` — Pydantic model for one line of REQ listing output (Task 3.18).
+- `req/resources/__init__.py` — MCP resource registrations for Requirement (REQ) documents (Tasks 3.5-3.7, 3.17-3.18).
 - `req/resources/req_example.py` — Resource: specmgr://req/example (Task 3.6).
+- `req/resources/req_get.py` — Resource: specmgr://req/{id} (Task 3.17).
+- `req/resources/req_list.py` — Resource: specmgr://req/list (Task 3.18).
 - `req/resources/req_schema.py` — Resource: specmgr://req/schema (Task 3.5, packaged data since Task 3.8).
 - `req/resources/req_template.py` — Resource: specmgr://req/template (Task 3.7).
 - `req/tools/__init__.py` — MCP tool wrappers for requirements (mirrors ``uc/tools/``'s own shape).
@@ -159,4 +163,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 98
+**Test files**: 101
