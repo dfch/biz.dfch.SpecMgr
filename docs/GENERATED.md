@@ -59,6 +59,7 @@ First-line docstrings from each module, organized by domain:
 
 - `general/__init__.py` — General-purpose (cross-cutting, not domain-specific) tools.
 - `general/tools/__init__.py` — MCP tool wrappers for general-purpose utilities (mirrors ``adr/tools/``'s shape).
+- `general/tools/_doc_paths.py` — Generic, doc-type-agnostic base directory resolution, filename slugification,
 - `general/tools/mdformat.py` — ``@mcp.tool()`` wrapper: mdformat.
 
 **models/**
@@ -149,4 +150,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 88
+**Test files**: 89

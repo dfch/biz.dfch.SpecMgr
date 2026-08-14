@@ -3,7 +3,7 @@ created: 2026-08-13
 id: feat-6-requirement-artifact
 status: in-progress
 updated: 2026-08-14
-version: 1.6.0
+version: 1.6.1
 ---
 
 # Feature: Requirement (REQ) artifact template with characteristic assignment
@@ -107,7 +107,7 @@ progresses (edit, don't duplicate).
 
 #### Phase 3 (continued): REQ lifecycle tools/resources/prompts (Task 3.9's design, detailed)
 
-- [ ] Task 3.10: Generalize id → file-path lookup plumbing into the `general/` domain (shared by REQ now, UC later) — `general/tools/_doc_paths.py` (name TBD at implementation time): `doc_base_dir(type_name: str) -> Path` (single root env var `SPECMGR_DOCS_DIR`, default `docs`, per-type subdirectory `{root}/{type_name}/`, e.g. `docs/req/`), `ensure_doc_base_dir(type_name)`, `iter_doc_paths(base_dir)`, `find_doc_path_by_id(base_dir, id_, parse_fn, get_id_fn)`, `slugify(title)` (ported from `adr/tools/_paths.py`). **ADR is explicitly left untouched** (`SPECMGR_ADR_DIR`/`docs/adr` unchanged) — migrating it to this shared module is optional future cleanup, not bundled here — depends on: none — status: **not-started**.
+- [x] Task 3.10: Generalize id → file-path lookup plumbing into the `general/` domain (shared by REQ now, UC later) — `general/tools/_doc_paths.py` (name TBD at implementation time): `doc_base_dir(type_name: str) -> Path` (single root env var `SPECMGR_DOCS_DIR`, default `docs`, per-type subdirectory `{root}/{type_name}/`, e.g. `docs/req/`), `ensure_doc_base_dir(type_name)`, `iter_doc_paths(base_dir)`, `find_doc_path_by_id(base_dir, id_, parse_fn, get_id_fn)`, `slugify(title)` (ported from `adr/tools/_paths.py`). **ADR is explicitly left untouched** (`SPECMGR_ADR_DIR`/`docs/adr` unchanged) — migrating it to this shared module is optional future cleanup, not bundled here — depends on: none — status: **completed (2026-08-14)** — `general/tools/_doc_paths.py` (name kept, no rename needed); `DocNotFoundError(LookupError)` added (not explicitly named in the task text, needed by `find_doc_path_by_id`); `find_doc_path_by_id` catches `(AssertionError, ValueError)` around `parse_fn`, generic enough to cover both `AdrParseError`/`pydantic.ValidationError` (ADR) and the `AssertionError`/`pydantic.ValidationError` pair `parse_req` raises, without depending on either. Not re-exported from `general/tools/__init__.py`, matching `adr/tools/_paths.py`'s own private (underscore-prefixed, not `@mcp.tool()`) module convention.
 - [ ] Task 3.11: `req/tools/_paths.py` + `_io.py`, thin wrappers over Task 3.10's generic module — `req_base_dir()`, `iter_req_paths()`, `find_req_path(base_dir, id_)` (using `parse_req` + `frontmatter.id`, skip-on-parse-failure, mirroring `adr/tools/_paths.py::find_adr_path`), `ReqNotFoundError`, `read_req(path)`, `load_by_id(base_dir, id_)` — depends on: Task 3.10 — status: **not-started**.
 - [ ] Task 3.12: `create_req(content: str) -> ReqDocument` tool — `content` is **body markdown only** (the `Requirement` H1 + sections), no frontmatter block. MCP builds the entire frontmatter itself: `id=uuid4()`, `type="req"`, `status="draft"` (always, never caller-supplied on create), `created=updated=now`, `version=CURRENT_SCHEMA_VERSION`. Validates `content` via `Requirement.from_text(format_text(content))` — failure raises uncaught (`AssertionError`/`pydantic.ValidationError`), nothing is written. Writes `{req_base_dir}/req-{id}-{slug}.md` (`slug` from the body's H1 title, mirroring ADR's filename scheme). No body rendering is ever needed — the caller's own already-validated text is persisted byte-for-byte; only the small frontmatter YAML block is code-generated — depends on: Task 3.11 — status: **not-started**.
 - [ ] Task 3.13: `update_req(id: str, content: str) -> ReqDocument` tool — `content` is body markdown only, same shape as `create_req`. Reads the *existing* file first to preserve `id`/`type`/`status`/`created`/`version` unchanged; only `updated=now` changes. Validates the new body the same way as `create_req`; failure raises uncaught, nothing written. `status` is never settable here — see Task 3.14 — depends on: Task 3.11 — status: **not-started**.
@@ -127,13 +127,54 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-14**: Phase 1 (Specification) and Phase 2 (Pydantic Models & Parser) are both **fully complete**, including `req_schema.json` (Task 1.2), now generated (not hand-authored) via a new generic `specmgr schema` CLI command (JSON Schema 2020-12), with CI wiring and a pre-commit hook keeping it in sync. Phase 3 (MCP Surface) now has three tools (`parse_req`, `get_req_example`, `get_req_template`) and three resources (`specmgr://req/schema`, `specmgr://req/example`, `specmgr://req/template`); the generated schema carries a `"$comment": "v1"` layout-version marker (Task 3.4). `specmgr req-parse` (Task 3.3) is the first REQ CLI command. `specmgr://req/schema` now reads a packaged-data copy (`req/resources/data/req_schema.json`) instead of `docs/req_schema.json` directly, so it also works from a real, non-editable install (Task 3.8). Task 3.9's design discussion is **complete** (see Recent Updates for the full trail): granular ADR-style section-mutation tooling was rejected as not worth the effort for REQ; a lean, generic, id-based lifecycle (`create_req`/`update_req`/`set_status_req`/`delete_req`-stub/`validate_req` tools plus `specmgr://req/{id}`/`specmgr://req/list` resources plus `create_req`/`update_req` prompts) was designed instead, detailed in Tasks 3.10-3.20, all **not-started**.
+**As of 2026-08-14**: Phase 1 (Specification) and Phase 2 (Pydantic Models & Parser) are both **fully complete**, including `req_schema.json` (Task 1.2), now generated (not hand-authored) via a new generic `specmgr schema` CLI command (JSON Schema 2020-12), with CI wiring and a pre-commit hook keeping it in sync. Phase 3 (MCP Surface) now has three tools (`parse_req`, `get_req_example`, `get_req_template`) and three resources (`specmgr://req/schema`, `specmgr://req/example`, `specmgr://req/template`); the generated schema carries a `"$comment": "v1"` layout-version marker (Task 3.4). `specmgr req-parse` (Task 3.3) is the first REQ CLI command. `specmgr://req/schema` now reads a packaged-data copy (`req/resources/data/req_schema.json`) instead of `docs/req_schema.json` directly, so it also works from a real, non-editable install (Task 3.8). Task 3.9's design discussion is **complete** (see Recent Updates for the full trail): granular ADR-style section-mutation tooling was rejected as not worth the effort for REQ; a lean, generic, id-based lifecycle (`create_req`/`update_req`/`set_status_req`/`delete_req`-stub/`validate_req` tools plus `specmgr://req/{id}`/`specmgr://req/list` resources plus `create_req`/`update_req` prompts) was designed instead, detailed in Tasks 3.10-3.20. Task 3.10 (generic `general/tools/_doc_paths.py` id → path lookup plumbing, shared by REQ now and UC later) is now **completed**; Tasks 3.11-3.20 remain **not-started**.
 
 ### Blockers
 
 None.
 
 ### Recent Updates
+
+#### 2026-08-14 (continued) — Task 3.10 implemented: generic `general/tools/_doc_paths.py` id → path lookup plumbing
+
+- New `general/tools/_doc_paths.py`: `doc_base_dir(type_name)`/`ensure_doc_base_dir(type_name)`
+  (root env var `SPECMGR_DOCS_DIR`, default `docs`, per-type subdirectory
+  `{root}/{type_name}/`), `iter_doc_paths(base_dir)`, `find_doc_path_by_id(base_dir, id_, parse_fn, get_id_fn)`, `slugify(title)` — a direct generalization of
+  `adr/tools/_paths.py`'s shape, parameterized by `type_name` and by
+  caller-supplied `parse_fn`/`get_id_fn` instead of being hardcoded to
+  `parse_adr`/`AdrFrontmatter.id`. `DocNotFoundError(LookupError)` is a new,
+  doc-type-agnostic exception (the task text didn't name one explicitly, but
+  `find_doc_path_by_id` needs a not-found signal); `ReqNotFoundError`
+  (Task 3.11) is expected to be its own separate class, not a subclass, same
+  relationship as `AdrNotFoundError` has to nothing generic today.
+- `find_doc_path_by_id` skips a file that fails to parse by catching
+  `(AssertionError, ValueError)` around `parse_fn(...)` — deliberately
+  narrower than a bare `except Exception`, but wide enough to cover every
+  parser error type in this codebase today: `AdrParseError` (a `ValueError`
+  subclass) and `pydantic.ValidationError` (also a `ValueError` subclass) for
+  ADR, plus the bare `AssertionError`/`pydantic.ValidationError` pair
+  `parse_req` raises for REQ (per Task 2.2's docstring) — no dedicated
+  `ReqParseError` exists.
+- `slugify` was ported unchanged except for its empty-title fallback
+  (`"doc"` instead of ADR's `"adr"`, since this module is no longer
+  ADR-specific).
+- **ADR left untouched, as specified**: `adr/tools/_paths.py` still has its
+  own `SPECMGR_ADR_DIR`/`DEFAULT_ADR_DIR`/`AdrNotFoundError`/`adr_base_dir`/
+  etc.; nothing there was changed or made to delegate to the new module.
+  Migrating ADR onto this shared module remains optional future cleanup.
+- Not re-exported from `general/tools/__init__.py`'s `__all__` — an
+  underscore-prefixed, non-`@mcp.tool()` internal module, matching
+  `adr/tools/_paths.py`'s own precedent of staying unexported.
+- Tests: `tests/general/tools/test__doc_paths.py` (20 tests: `slugify`,
+  `doc_base_dir`/`ensure_doc_base_dir` incl. env-var override and
+  no-side-effect-on-read, `iter_doc_paths`, and `find_doc_path_by_id`
+  including a second, independent `parse_fn`/`get_id_fn` pair to prove
+  genericity) — uses small in-test fake parse functions/doc objects rather
+  than importing `models.adr`/`models.req`, keeping this test file decoupled
+  from either concrete doc type. 684 tests project-wide (up from 664), no
+  regressions. `ruff format --check`/`ruff check`/`vulture` clean; `specmgr docs` regenerated (1 new module page: `general.tools._doc_paths`);
+  `specmgr schema`/`specmgr adr-toc` both confirmed to have no drift (this
+  task never touches either artifact).
 
 #### 2026-08-14 (continued) — Task 3.9 design discussion completed: lean, generic, id-based REQ lifecycle (Tasks 3.10-3.20 queued); no ADR-style granular section tools
 

@@ -45,6 +45,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.commands.version`](biz.dfch.specmgr.commands.version.md) — ``version`` -- print the installed ``biz-dfch-specmgr`` version.
 - [`biz.dfch.specmgr.general`](biz.dfch.specmgr.general.md) — General-purpose (cross-cutting, not domain-specific) tools.
 - [`biz.dfch.specmgr.general.tools`](biz.dfch.specmgr.general.tools.md) — MCP tool wrappers for general-purpose utilities (mirrors ``adr/tools/``'s shape).
+- [`biz.dfch.specmgr.general.tools._doc_paths`](biz.dfch.specmgr.general.tools._doc_paths.md) — Generic, doc-type-agnostic base directory resolution, filename slugification,
 - [`biz.dfch.specmgr.general.tools.mdformat`](biz.dfch.specmgr.general.tools.mdformat.md) — ``@mcp.tool()`` wrapper: mdformat.
 - [`biz.dfch.specmgr.models`](biz.dfch.specmgr.models.md) — Pydantic models used by the ``biz-dfch-specmgr`` MCP server.
 - [`biz.dfch.specmgr.models.adr`](biz.dfch.specmgr.models.adr.md) — Pydantic models for MADR 4.0.0-based Architecture Decision Records.
