@@ -99,15 +99,18 @@ First-line docstrings from each module, organized by domain:
 **req/**
 
 - `req/__init__.py` — Requirement (REQ) domain -- requirement specifications.
+- `req/_data.py` — Private, dependency-free access to REQ's packaged example markdown (Task 3.6).
 - `req/models/v1/__init__.py` — Requirement (REQ) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
 - `req/models/v1/_util.py` — Shared, private constants for the ``req.models.v1`` subpackage.
 - `req/models/v1/body.py` — Requirement (REQ) models: whole-section fields under a single H1.
 - `req/models/v1/document.py` — Pydantic model for a full requirement document (frontmatter + body).
 - `req/models/v1/frontmatter.py` — Requirement frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
 - `req/models/v1/parser.py` — Parse raw requirement ``.md`` text into a :class:`ReqDocument` (Task 1.x).
-- `req/resources/__init__.py` — MCP resource registrations for Requirement (REQ) documents (Task 3.5).
+- `req/resources/__init__.py` — MCP resource registrations for Requirement (REQ) documents (Tasks 3.5, 3.6).
+- `req/resources/req_example.py` — Resource: specmgr://req/example (Task 3.6).
 - `req/resources/req_schema.py` — Resource: specmgr://req/schema (Task 3.5).
 - `req/tools/__init__.py` — MCP tool wrappers for requirements (mirrors ``uc/tools/``'s own shape).
+- `req/tools/get_req_example.py` — ``@mcp.tool()`` wrapper: get_req_example (Task 3.6).
 - `req/tools/parse_req.py` — ``@mcp.tool()`` wrapper: parse_req.
 
 **resources/**
@@ -144,4 +147,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 83
+**Test files**: 86

@@ -15,17 +15,22 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""MCP resource registrations for Requirement (REQ) documents (Task 3.5).
+"""MCP resource registrations for Requirement (REQ) documents (Tasks 3.5, 3.6).
 
 ``req_schema`` registers the persisted-JSON-Schema resource
-(``specmgr://req/schema``). Import this package to register it against
-the shared ``mcp`` application instance::
+(``specmgr://req/schema``). ``req_example`` registers the packaged sample
+requirement document resource (``specmgr://req/example``). This sub-package
+also holds the ``data/`` directory of packaged, build-guaranteed example
+markdown files (declared package data, not Python modules). Import this
+package to register all requirement resources against the shared ``mcp``
+application instance::
 
     from biz.dfch.specmgr.req import resources  # noqa: F401 (side-effects only)
 """
 
-from . import req_schema  # noqa: F401
+from . import req_example, req_schema  # noqa: F401
 
 __all__ = [
+    "req_example",
     "req_schema",
 ]

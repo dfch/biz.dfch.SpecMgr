@@ -214,15 +214,14 @@ class Notes(MarkdownSection2):
 class Requirement(MarkdownSection1):
     """The requirement body: a single H1 section with the fields below.
 
-    The H1 heading text is free-form. `@alias(value=".+", type=AliasType.REGEX)`
-    matches any non-blank title.
+    The H1 heading text is free-form.
 
     Parameters
     ----------
     statement:
         The lead paragraph right after the H1. Mandatory.
     description:
-        `## Description`. Mandatory.
+        `## Description`. Optional.
     characteristics:
         `## Characteristics`. Mandatory.
     level:
@@ -245,7 +244,7 @@ class Requirement(MarkdownSection1):
         description="The lead paragraph directly under the H1, before any H2 section -- the "
         "requirement statement itself. Mandatory."
     )
-    description: Description = Field(description="`## Description` section. Mandatory.")
+    description: Description | None = Field(description="`## Description` section. Optional.")
     characteristics: Characteristics = Field(description="`## Characteristics` section. Mandatory.")
     level: Level = Field(description="`## Level` section. Mandatory.")
     priority: Priority | None = Field(default=None, description="`## Priority` section. Optional.")

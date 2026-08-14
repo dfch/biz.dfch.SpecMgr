@@ -10,5 +10,6 @@ the shared ``mcp`` application instance at once::
 
     from biz.dfch.specmgr import req  # noqa: F401 (side-effects only)
 
-Currently ``tools`` (``parse_req``) and ``resources`` (``specmgr://req/schema``)
-exist; ``prompts`` is not implemented yet.
+Currently ``tools`` (``parse_req``, ``get_req_example``) and ``resources``
+(``specmgr://req/schema``, ``specmgr://req/example``) exist; ``prompts`` is not
+implemented yet.

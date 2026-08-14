@@ -250,15 +250,22 @@
       "type": "object"
     },
     "Requirement": {
-      "description": "The requirement body: a single H1 section with the fields below.\n\nThe H1 heading text is free-form. `@alias(value=\".+\", type=AliasType.REGEX)`\nmatches any non-blank title.\n\nParameters\n----------\nstatement:\n    The lead paragraph right after the H1. Mandatory.\ndescription:\n    `## Description`. Mandatory.\ncharacteristics:\n    `## Characteristics`. Mandatory.\nlevel:\n    `## Level`. Mandatory.\npriority:\n    `## Priority`. Optional.\ntags:\n    `## Tags`. Optional.\nsource:\n    `## Source`. Mandatory.\nrelated_artifacts:\n    `## Related Artifacts`. Optional.\nmore_information:\n    `## More Information`. Optional.\nnotes:\n    `## Notes`. Optional.",
+      "description": "The requirement body: a single H1 section with the fields below.\n\nThe H1 heading text is free-form.\n\nParameters\n----------\nstatement:\n    The lead paragraph right after the H1. Mandatory.\ndescription:\n    `## Description`. Optional.\ncharacteristics:\n    `## Characteristics`. Mandatory.\nlevel:\n    `## Level`. Mandatory.\npriority:\n    `## Priority`. Optional.\ntags:\n    `## Tags`. Optional.\nsource:\n    `## Source`. Mandatory.\nrelated_artifacts:\n    `## Related Artifacts`. Optional.\nmore_information:\n    `## More Information`. Optional.\nnotes:\n    `## Notes`. Optional.",
       "properties": {
         "characteristics": {
           "$ref": "#/$defs/Characteristics",
           "description": "`## Characteristics` section. Mandatory."
         },
         "description": {
-          "$ref": "#/$defs/Description",
-          "description": "`## Description` section. Mandatory."
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Description"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "`## Description` section. Optional."
         },
         "level": {
           "$ref": "#/$defs/Level",

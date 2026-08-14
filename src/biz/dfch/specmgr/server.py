@@ -28,6 +28,7 @@ specmgr://adr/list --   Ids/titles/statuses/filenames of every ADR
                         (``.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md``).
 specmgr://adr/{id} --    Full ADR document for a given id (``.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md``).
 specmgr://req/schema -- The persisted REQ JSON Schema (``docs/req_schema.json``).
+specmgr://req/example -- A complete, valid sample requirement document as raw markdown.
 
 Tools
 -----
@@ -35,7 +36,7 @@ ADR tools (``adr/tools/``): ``get_adr``, ``create_adr``, ``update_frontmatter``,
 ``update_section``, ``set_status``, ``option_list``, ``option_create``,
 ``option_update``, ``option_read``, ``option_delete``, ``validate_adr``.
 Use-case tools (``uc/tools/``): ``parse_uc``.
-Requirement tools (``req/tools/``): ``parse_req``.
+Requirement tools (``req/tools/``): ``parse_req``, ``get_req_example``.
 General tools (``general/tools/``): ``mdformat`` -- format markdown files in place,
 preserving YAML frontmatter blocks.
 
