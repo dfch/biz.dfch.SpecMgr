@@ -25,7 +25,8 @@ ADR tools (``adr/tools/``): ``get_adr``, ``create_adr``, ``update_frontmatter``,
 ``update_section``, ``set_status``, ``option_list``, ``option_create``,
 ``option_update``, ``option_read``, ``option_delete``, ``validate_adr``.
 Use-case tools (``uc/tools/``): ``parse_uc``.
-Requirement tools (``req/tools/``): ``parse_req``, ``get_req_example``, ``get_req_template``.
+Requirement tools (``req/tools/``): ``parse_req``, ``get_req_example``, ``get_req_template``,
+``create_req``.
 General tools (``general/tools/``): ``mdformat`` -- format markdown files in place,
 preserving YAML frontmatter blocks.
 
