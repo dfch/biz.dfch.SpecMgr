@@ -14,8 +14,10 @@ assigns a fresh id, builds the frontmatter itself, and writes a new document
 existing document's body the same way, preserving every frontmatter field
 except ``updated``. ``set_status_req`` (Task 3.14) is the only path that
 changes ``status``, also bumping ``updated``, leaving the body untouched.
-``validate_req`` (Task 3.16) is a disk-free, id-free dry run against a
-submitted ``content`` string, independent of the other tools. Import this
-package to register all requirement tools at once::
+``delete_req`` (Task 3.15) is a registered stub -- always raises
+``NotImplementedError``, reserving the name for a future real
+implementation. ``validate_req`` (Task 3.16) is a disk-free, id-free dry
+run against a submitted ``content`` string, independent of the other
+tools. Import this package to register all requirement tools at once::
 
     from biz.dfch.specmgr.req import tools  # noqa: F401 (side-effects only)

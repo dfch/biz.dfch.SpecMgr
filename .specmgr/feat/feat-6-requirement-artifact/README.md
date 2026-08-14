@@ -112,8 +112,8 @@ progresses (edit, don't duplicate).
 - [x] Task 3.12: `create_req(content: str) -> ReqDocument` tool — `content` is **body markdown only** (the `Requirement` H1 + sections), no frontmatter block. MCP builds the entire frontmatter itself: `id=uuid4()`, `type="req"`, `status="draft"` (always, never caller-supplied on create), `created=updated=now`, `version=CURRENT_SCHEMA_VERSION`. Validates `content` via `Requirement.from_text(format_text(content))` — failure raises uncaught (`AssertionError`/`pydantic.ValidationError`), nothing is written. Writes `{req_base_dir}/req-{id}-{slug}.md` (`slug` from the body's H1 title, mirroring ADR's filename scheme). No body rendering is ever needed — the caller's own already-validated text is persisted byte-for-byte; only the small frontmatter YAML block is code-generated — depends on: Task 3.11 — status: **completed (2026-08-14)** — see Recent Updates.
 - [x] Task 3.13: `update_req(id: str, content: str) -> ReqDocument` tool — `content` is body markdown only, same shape as `create_req`. Reads the *existing* file first to preserve `id`/`type`/`status`/`created`/`version` unchanged; only `updated=now` changes. Validates the new body the same way as `create_req`; failure raises uncaught, nothing written. `status` is never settable here — see Task 3.14 — depends on: Task 3.11 — status: **completed (2026-08-14)** — see Recent Updates.
 - [x] Task 3.14: `set_status_req(id: str, status: str) -> ReqDocument` tool — the only path that changes `status` (mirrors ADR's `  `, minus the `superseded_by`-composition special case, since `ReqFrontmatter.status` has no `"superseded by ..."` pattern — just the closed seven-value set). Also bumps `updated=now` — depends on: Task 3.11 — status: **completed (2026-08-15)** — see Recent Updates.
-- [ ] Task 3.15: `delete_req(id: str) -> NoReturn` tool — registered stub, always `raise NotImplementedError("delete_req is not yet implemented")`. Reserves the name/slot for a future real implementation (soft-delete via `status`, archival, or similar — undecided) without blocking the rest of this surface — depends on: Task 3.11 — status: **not-started**.
-- [x] Task 3.16: `validate_req(content: str, full: bool = False) -> bool` tool — a disk-free, id-free dry run, always returns `True` on success (mirrors `validate_adr`'s "successfully constructing the model *is* the validation" contract), raises uncaught on failure. Uses `frontmatter.loads(content)` to detect whether `content` carries a frontmatter block (`post.metadata` non-empty). `full=False` (default): `content` must be body-only — raises `ValueError` with a clear corrective message if a frontmatter block is detected instead. `full=True`: `content` must be a complete document (frontmatter + body, same shape `parse_req` expects for a file) — raises the symmetric `ValueError` if *no* frontmatter block is found. Body-only validation (`full=False`) is literally the same check `create_req`/`update_req` run internally, exposed standalone — depends on: none (parallel to Task 3.12/3.13, not blocking them) — status: **completed (2026-08-15)** — see Recent Updates. Task 3.15 (`delete_req` stub) deliberately skipped for now, per explicit instruction.
+- [x] Task 3.15: `delete_req(id: str) -> NoReturn` tool — registered stub, always `raise NotImplementedError("delete_req is not yet implemented")`. Reserves the name/slot for a future real implementation (soft-delete via `status`, archival, or similar — undecided) without blocking the rest of this surface — depends on: Task 3.11 — status: **completed (2026-08-15)** — see Recent Updates.
+- [x] Task 3.16: `validate_req(content: str, full: bool = False) -> bool` tool — a disk-free, id-free dry run, always returns `True` on success (mirrors `validate_adr`'s "successfully constructing the model *is* the validation" contract), raises uncaught on failure. Uses `frontmatter.loads(content)` to detect whether `content` carries a frontmatter block (`post.metadata` non-empty). `full=False` (default): `content` must be body-only — raises `ValueError` with a clear corrective message if a frontmatter block is detected instead. `full=True`: `content` must be a complete document (frontmatter + body, same shape `parse_req` expects for a file) — raises the symmetric `ValueError` if *no* frontmatter block is found. Body-only validation (`full=False`) is literally the same check `create_req`/`update_req` run internally, exposed standalone — depends on: none (parallel to Task 3.12/3.13, not blocking them) — status: **completed (2026-08-15)** — see Recent Updates.
 - [ ] Task 3.17: `specmgr://req/{id}` resource — single-document read by id (mirrors `specmgr://adr/{id}`). Supersedes the earlier considered `get_req` tool — id-based single-document read is a resource only, everything else in this surface is a tool — depends on: Task 3.11 — status: **not-started**.
 - [ ] Task 3.18: `specmgr://req/list` resource — every document in the base directory, `ReqSummary` (id/title/status/filename, mirroring `AdrSummary`), unfiltered (characteristics/tags filtering was explicitly deferred earlier in the Task 3.9 discussion, see Recent Updates) — depends on: Task 3.11 — status: **not-started**.
 - [ ] Task 3.19: `req/prompts/create_req.py` + `update_req.py` — narrate the tool sequence above (mirroring ADR's `create_adr`/`update_adr` prompts): *create* — check `specmgr://req/list` for an existing duplicate, fetch `specmgr://req/template` or `/example` as a starting point, draft the body against `specmgr://req/schema`, call `create_req(content)`; *update* — read `specmgr://req/{id}`, edit the body, call `update_req(id, content)`, and route any status change through `set_status_req` instead of `update_req` — depends on: Tasks 3.12, 3.13, 3.14, 3.17, 3.18 — status: **not-started**.
@@ -127,13 +127,32 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-14**: Phase 1 (Specification) and Phase 2 (Pydantic Models & Parser) are both **fully complete**, including `req_schema.json` (Task 1.2), now generated (not hand-authored) via a new generic `specmgr schema` CLI command (JSON Schema 2020-12), with CI wiring and a pre-commit hook keeping it in sync. Phase 3 (MCP Surface) now has three tools (`parse_req`, `get_req_example`, `get_req_template`) and three resources (`specmgr://req/schema`, `specmgr://req/example`, `specmgr://req/template`); the generated schema carries a `"$comment": "v1"` layout-version marker (Task 3.4). `specmgr req-parse` (Task 3.3) is the first REQ CLI command. `specmgr://req/schema` now reads a packaged-data copy (`req/resources/data/req_schema.json`) instead of `docs/req_schema.json` directly, so it also works from a real, non-editable install (Task 3.8). Task 3.9's design discussion is **complete** (see Recent Updates for the full trail): granular ADR-style section-mutation tooling was rejected as not worth the effort for REQ; a lean, generic, id-based lifecycle (`create_req`/`update_req`/`set_status_req`/`delete_req`-stub/`validate_req` tools plus `specmgr://req/{id}`/`specmgr://req/list` resources plus `create_req`/`update_req` prompts) was designed instead, detailed in Tasks 3.10-3.20. Task 3.10 (generic `general/tools/_doc_paths.py` id → path lookup plumbing, shared by REQ now and UC later), Task 3.11 (`req/tools/_paths.py`/`_io.py`, REQ's own thin wrappers over it), Task 3.12 (`create_req` tool), Task 3.13 (`update_req` tool), Task 3.14 (`set_status_req` tool), and Task 3.16 (`validate_req` tool) are now **completed**; Task 3.15 (`delete_req` stub) is deliberately deferred (not started, skipped by explicit instruction); Tasks 3.17-3.20 remain **not-started**.
+**As of 2026-08-15**: Phase 1 (Specification) and Phase 2 (Pydantic Models & Parser) are both **fully complete**, including `req_schema.json` (Task 1.2), now generated (not hand-authored) via a new generic `specmgr schema` CLI command (JSON Schema 2020-12), with CI wiring and a pre-commit hook keeping it in sync. Phase 3 (MCP Surface) now has three tools (`parse_req`, `get_req_example`, `get_req_template`) and three resources (`specmgr://req/schema`, `specmgr://req/example`, `specmgr://req/template`); the generated schema carries a `"$comment": "v1"` layout-version marker (Task 3.4). `specmgr req-parse` (Task 3.3) is the first REQ CLI command. `specmgr://req/schema` now reads a packaged-data copy (`req/resources/data/req_schema.json`) instead of `docs/req_schema.json` directly, so it also works from a real, non-editable install (Task 3.8). Task 3.9's design discussion is **complete** (see Recent Updates for the full trail): granular ADR-style section-mutation tooling was rejected as not worth the effort for REQ; a lean, generic, id-based lifecycle (`create_req`/`update_req`/`set_status_req`/`delete_req`-stub/`validate_req` tools plus `specmgr://req/{id}`/`specmgr://req/list` resources plus `create_req`/`update_req` prompts) was designed instead, detailed in Tasks 3.10-3.20. Task 3.10 (generic `general/tools/_doc_paths.py` id → path lookup plumbing, shared by REQ now and UC later), Task 3.11 (`req/tools/_paths.py`/`_io.py`, REQ's own thin wrappers over it), Task 3.12 (`create_req` tool), Task 3.13 (`update_req` tool), Task 3.14 (`set_status_req` tool), Task 3.15 (`delete_req` stub), and Task 3.16 (`validate_req` tool) are now **completed**; Tasks 3.17-3.20 remain **not-started**.
 
 ### Blockers
 
 None.
 
 ### Recent Updates
+
+#### 2026-08-15 (continued) — Task 3.15 implemented: `delete_req` stub tool
+
+- New `req/tools/delete_req.py` (`@mcp.tool()`): `delete_req(id: str) -> NoReturn` —
+  a registered stub only, unconditionally `raise NotImplementedError("delete_req is not yet implemented")`. Never resolves or validates `id`, never touches the filesystem —
+  reserves the tool name/slot in the REQ lifecycle surface without committing to a
+  deletion strategy (soft-delete via `status`, archival, hard removal, or something else
+  is still undecided, per Task 3.9's design discussion).
+- **`structured_output=False`** passed to `@mcp.tool(...)` — `NoReturn` has no
+  pydantic-serializable schema (`PydanticSchemaGenerationError` at import time otherwise,
+  since `mcp.server.mcpserver`'s `func_metadata()` tries to derive an output schema from
+  the return-type annotation by default); `structured_output=False` skips that derivation
+  entirely instead of lying with a fake return type.
+- Registered in `req/tools/__init__.py`, `req/__init__.py`'s docstring, and
+  `server.py`'s tool-list docstring line.
+- Tests: `tests/req/tools/test_delete_req.py` (2 tests: raises for an arbitrary id, raises
+  for an unknown id without ever looking it up) — 726 tests project-wide (up from 724), no
+  regressions. `ruff format --check`/`ruff check`/`vulture` clean; `specmgr docs`
+  regenerated (1 new module page: `req.tools.delete_req`); `specmgr schema`/`specmgr adr-toc` both confirmed to have no drift (this task never touches either artifact).
 
 #### 2026-08-15 (continued) — Task 3.16 implemented: `validate_req` tool (Task 3.15 deliberately skipped for now)
 
@@ -168,8 +187,7 @@ None.
   failure, frontmatter-present-but-full=False rejection,
   frontmatter-absent-but-full=True rejection, invalid-frontmatter-under-
   full=True propagation) — 724 tests project-wide (up from 717), no
-  regressions. `ruff format --check`/`ruff check`/`vulture` clean; `specmgr
-  docs` regenerated (1 new module page: `req.tools.validate_req`);
+  regressions. `ruff format --check`/`ruff check`/`vulture` clean; `specmgr docs` regenerated (1 new module page: `req.tools.validate_req`);
   `specmgr schema`/`specmgr adr-toc` both confirmed to have no drift (this
   task never touches either artifact).
 
@@ -204,10 +222,8 @@ None.
   `updated` bumped + other fields preserved, body left byte-for-byte
   unchanged, round-trip via `parse_req`, `ReqNotFoundError` for an unknown
   id, invalid status raises `pydantic.ValidationError` and leaves the file
-  untouched) — 717 tests project-wide (up from 712), no regressions. `ruff
-  format --check`/`ruff check`/`vulture` clean; `specmgr docs` regenerated
-  (1 new module page: `req.tools.set_status_req`); `specmgr schema`/`specmgr
-  adr-toc` both confirmed to have no drift (this task never touches either
+  untouched) — 717 tests project-wide (up from 712), no regressions. `ruff format --check`/`ruff check`/`vulture` clean; `specmgr docs` regenerated
+  (1 new module page: `req.tools.set_status_req`); `specmgr schema`/`specmgr adr-toc` both confirmed to have no drift (this task never touches either
   artifact).
 
 #### 2026-08-14 (continued) — Task 3.13 implemented: `update_req` tool
@@ -304,8 +320,7 @@ None.
 - Tests: `tests/req/tools/test_create_req.py` (6 tests: frontmatter fields,
   expected filename, round-trip via `parse_req`, base-dir auto-creation,
   structural failure writes nothing, field-validation failure writes
-  nothing) — 702 tests project-wide (up from 696), no regressions. `ruff
-  format --check`/`ruff check`/`vulture` clean; `specmgr docs` regenerated (1
+  nothing) — 702 tests project-wide (up from 696), no regressions. `ruff format --check`/`ruff check`/`vulture` clean; `specmgr docs` regenerated (1
   new module page: `req.tools.create_req`); `specmgr schema`/`specmgr adr-toc`
   both confirmed to have no drift (this task never touches either artifact).
 

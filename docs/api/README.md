@@ -92,6 +92,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.req.tools._paths`](biz.dfch.specmgr.req.tools._paths.md) — Requirement base directory resolution and id -> path lookup (Task 3.11).
 - [`biz.dfch.specmgr.req.tools._write`](biz.dfch.specmgr.req.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_req``/``update_req``
 - [`biz.dfch.specmgr.req.tools.create_req`](biz.dfch.specmgr.req.tools.create_req.md) — ``@mcp.tool()`` wrapper: create_req (Task 3.12).
+- [`biz.dfch.specmgr.req.tools.delete_req`](biz.dfch.specmgr.req.tools.delete_req.md) — ``@mcp.tool()`` wrapper: delete_req (Task 3.15).
 - [`biz.dfch.specmgr.req.tools.get_req_example`](biz.dfch.specmgr.req.tools.get_req_example.md) — ``@mcp.tool()`` wrapper: get_req_example (Task 3.6).
 - [`biz.dfch.specmgr.req.tools.get_req_template`](biz.dfch.specmgr.req.tools.get_req_template.md) — ``@mcp.tool()`` wrapper: get_req_template (Task 3.7).
 - [`biz.dfch.specmgr.req.tools.parse_req`](biz.dfch.specmgr.req.tools.parse_req.md) — ``@mcp.tool()`` wrapper: parse_req.

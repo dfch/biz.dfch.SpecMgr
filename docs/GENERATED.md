@@ -117,6 +117,7 @@ First-line docstrings from each module, organized by domain:
 - `req/tools/_paths.py` — Requirement base directory resolution and id -> path lookup (Task 3.11).
 - `req/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_req``/``update_req``
 - `req/tools/create_req.py` — ``@mcp.tool()`` wrapper: create_req (Task 3.12).
+- `req/tools/delete_req.py` — ``@mcp.tool()`` wrapper: delete_req (Task 3.15).
 - `req/tools/get_req_example.py` — ``@mcp.tool()`` wrapper: get_req_example (Task 3.6).
 - `req/tools/get_req_template.py` — ``@mcp.tool()`` wrapper: get_req_template (Task 3.7).
 - `req/tools/parse_req.py` — ``@mcp.tool()`` wrapper: parse_req.
@@ -158,4 +159,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 97
+**Test files**: 98
