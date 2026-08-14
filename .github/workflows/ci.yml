@@ -76,6 +76,18 @@ jobs:
           exit 1
         }
 
+    - name: Make sure `docs/req_schema.json` is correct
+      # `specmgr schema` itself exits 1 when the regenerated content differs from what
+      # was already on disk (or the file didn't exist yet), so no separate
+      # `git diff --exit-code` step is needed here, unlike the `docs/`/`docs/adr/README.md`
+      # checks above.
+      if: matrix.python-version == '3.13'
+      run: |
+        uv run --frozen --all-extras --python 3.13.13 specmgr schema || {
+          echo "::error::docs/req_schema.json is out of date -- run 'uv run --frozen --all-extras specmgr schema' and commit the result (see AGENTS.md)."
+          exit 1
+        }
+
     - name: Make sure `docs/coverage.svg` is correct
       if: matrix.python-version == '3.13'
       run: |

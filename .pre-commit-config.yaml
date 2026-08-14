@@ -61,3 +61,17 @@ repos:
         language: system
         pass_filenames: false
         files: ^docs/adr/.*\.md$
+
+      - id: specmgr-schema
+        name: specmgr schema
+        description: >-
+          Regenerate every registered doc-type JSON Schema (docs/{type}_schema.json)
+          -- always runs with no `--type` (all registered types), even though `req`
+          is the only one today. `specmgr schema` itself exits non-zero when the
+          regenerated content differs from what was already on disk, so no separate
+          `git diff --exit-code` is needed here, unlike the other `specmgr-*` hooks
+          above.
+        entry: uv run --frozen specmgr schema
+        language: system
+        pass_filenames: false
+        files: ^src/biz/dfch/specmgr/(req/models/v1|models/md)/.*\.py$

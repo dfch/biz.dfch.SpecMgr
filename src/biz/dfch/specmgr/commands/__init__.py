@@ -25,6 +25,7 @@ from .adr_toc import adr_toc
 from .coverage_badge import coverage_badge
 from .docs import docs
 from .mcp import mcp
+from .schema import schema
 from .unused_code import unused_code
 from .version import version
 
@@ -33,6 +34,7 @@ __all__ = [
     "coverage_badge",
     "docs",
     "mcp",
+    "schema",
     "unused_code",
     "version",
 ]

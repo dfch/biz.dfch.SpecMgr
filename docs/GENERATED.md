@@ -50,6 +50,7 @@ First-line docstrings from each module, organized by domain:
 - `commands/coverage_badge.py` — ``coverage-badge`` -- generate a static SVG coverage badge from .coverage data.
 - `commands/docs.py` — ``docs`` -- regenerate ``docs/api/`` and ``docs/GENERATED.md`` from the codebase.
 - `commands/mcp.py` — ``mcp`` -- start the ``biz-dfch-specmgr`` MCP server.
+- `commands/schema.py` — ``schema`` -- generate JSON Schema (2020-12) for registered document-type models.
 - `commands/unused_code.py` — ``unused-code`` -- report unreferenced Python symbols, or (with ``--test``) test-only ones.
 - `commands/version.py` — ``version`` -- print the installed ``biz-dfch-specmgr`` version.
 
@@ -98,7 +99,7 @@ First-line docstrings from each module, organized by domain:
 
 - `req/__init__.py` — Requirement (REQ) domain -- requirement specifications.
 - `req/models/v1/__init__.py` — Requirement (REQ) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
-- `req/models/v1/body.py` — Requirement (REQ) models.
+- `req/models/v1/body.py` — Requirement (REQ) models: whole-section fields under a single H1.
 - `req/models/v1/document.py` — Pydantic model for a full requirement document (frontmatter + body).
 - `req/models/v1/frontmatter.py` — Requirement frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
 - `req/models/v1/parser.py` — Parse raw requirement ``.md`` text into a :class:`ReqDocument` (Task 1.x).
@@ -139,4 +140,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 79
+**Test files**: 80

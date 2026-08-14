@@ -1,9 +1,9 @@
 ---
-id: feat-5-md-model-parser
-version: 1.16.2
-status: done
 created: 2026-08-08
-updated: 2026-08-13
+id: feat-5-md-model-parser
+status: done
+updated: 2026-08-14
+version: 1.16.3
 ---
 
 # Feature: Generic heading-mapped Markdown-to-Pydantic document parser
@@ -65,6 +65,7 @@ based recursive descent, not field-level `Annotated` metadata).
 ### Scope
 
 **Included in this feature:**
+
 - `src/biz/dfch/specmgr/models/md/markdown_str.py` — `MarkdownStr` base
   model: `get_extent()` (generic, non-heading-aware fallback), `from_text()`
   (recursive field-by-field slicing via `process_field()`), `__str__`
@@ -83,8 +84,7 @@ based recursive descent, not field-level `Annotated` metadata).
 - `src/biz/dfch/specmgr/models/md/alias.py` / `alias_type.py` — `@alias`
   decorator attaching `_alias_metadata` (display naming, independent of
   `@markdown`)
-- `src/biz/dfch/specmgr/models/md/alias_match.py` — `match_alias(cls,
-  heading_text)`, enforcing that a parsed heading's actual text satisfies
+- `src/biz/dfch/specmgr/models/md/alias_match.py` — `match_alias(cls, heading_text)`, enforcing that a parsed heading's actual text satisfies
   the class's declared `@alias` (`LITERAL`/`SPACE_SEPARATED`/`REGEX`), used
   by `MarkdownSection.from_text`; a class with no `@alias` at all always
   matches (opt-in, not mandatory)
@@ -138,6 +138,7 @@ reject raw HTML anywhere in a parsed document. See REQ-005 for the
 superseded-scope rationale.
 
 **Explicitly out of scope:**
+
 - Migrating the existing ADR parser/renderer (`models/adr/v1/parser.py`, `renderer.py`) onto this engine — ADR 4c6119c9 stays as-is
 - The regex-based `MdStr`/`MdStrConstraints` single-field string type — owned by `feat-3-md-str-constraints`, a different mechanism for a different problem shape
 - Defining the official use-case (`uc`) domain model/schema — owned by `feat-4-use-cases`; this feature only proves the generic engine via a fixture
@@ -200,14 +201,15 @@ progresses (edit, don't duplicate).
 original `heading.py`/`constraints.py`/`frontmatter.py`/`parser.py`-shaped
 breakdown (superseded design, see Requirements above) with the actual
 `models/md/` module layout. Task numbering restarts at Phase 0 but no
-history is lost — the original phase text remains recoverable via `git log
--p` on this file.
+history is lost — the original phase text remains recoverable via `git log -p` on this file.
 
 #### Phase 0: Preparation
+
 - [x] Task 0.1: Create module level md parser instance in `src/biz/dfch/specmgr/models/md/_markdown.py` (shared `MarkdownIt` instance, `md`)
 - [x] Task 0.2: Create `class MarkdownStr(BaseModel)` (`markdown_str.py`) — landed as a plain Pydantic `BaseModel` with a private `_value: str` attribute, not a `StrictStr` subclass as originally sketched
 
 #### Phase 1: Metadata/identity decorators
+
 - [x] Task 1.1: Create `markdown.py` — `@markdown(type=, tag=)` class decorator attaching `_metadata` (markdown-it token `type`/HTML `tag`) — depends on: none — status: done
 - [x] Task 1.2: Create `alias_type.py` — `AliasType` (`LITERAL`/`SPACE_SEPARATED`/`REGEX`) and `alias.py` — `@alias(value=, type=)` class decorator attaching `_alias_metadata` (opt-in, parse-time identity only, never used for rendering) — depends on: none — status: done
 - [x] Task 1.3: Create `alias_match.py` — `space_separated_name(class_name)` and `match_alias(cls, heading_text)`, enforcing a declared `@alias` (or always matching if none declared) — depends on: Task 1.2 — status: done
@@ -217,31 +219,36 @@ history is lost — the original phase text remains recoverable via `git log
 - [x] Task 1.6.1: Support `list[MarkdownStr]` (or `list[SomeMarkdownStrSubclass]`) fields in `markdown_str.py`'s `_get_field_names`/`from_text`/`__str__`. Detection: `_unwrap_list(annotation) -> tuple[type, bool]` (sibling to `_unwrap_optional`, plain `list[X]` only via `typing.get_origin(annotation) is list` — no `Sequence`/`tuple` support), applied after `_unwrap_optional` so `list[X] | None` unwraps to `(X, optional=True, is_list=True)`. Consumption: `process_list_field(name, item_type, text, *, optional=False) -> tuple[str, list[MarkdownStr] | None]` — deliberately **not** mirroring `process_field`'s `(extent, value)` contract (an earlier draft did and was wrong: summing per-item extents against a locally-renormalized string silently loses lines dropped by `mdformat.text()` between items, e.g. a separating blank line, causing `from_text`'s generic `remaining_text.splitlines()[extent:]` slice to misalign against the caller's *original*, not-yet-renormalized `remaining_text` — the exact class of bug `from_text` itself already moved off a line-index `cursor` to avoid). Instead it loops `item_type.get_extent`/slice/`mdformat`-renormalize/`item_type.from_text` while extent `> 0` and returns the already-fully-reduced `remaining_text` string directly, which `from_text` adopts as-is for list fields (bypassing the generic extent-slicing step used for scalar fields). No item found on the *first* iteration is an absence (mandatory `list[X]` -> assertion error, matching today's missing-mandatory-scalar-field behavior; `list[X] | None` -> field left `None`, `text` returned unchanged) while no item found on any *subsequent* iteration just ends the list normally (items 2+ are implicitly optional without needing `Optional[X]` themselves). Rendering: `__str__` iterates the list and appends `str(item)` per element, same as today's single-field append, skipping a `None` list exactly like an absent optional scalar field — depends on: Task 2.1 — status: done
 - [x] Task 1.6.2: Support base object `MarkdownParagraph` (`markdown_paragraph.py`) — a single class (`@markdown(type="paragraph_open", tag="p")`, no level spectrum, no `@alias` enforcement — a paragraph's text is free-form content, not a title). Leaf case (no declared fields): `get_extent`/`from_text` claim exactly the paragraph's own line span, nothing more — content that follows (even a sibling paragraph) is left untouched, unlike a leaf `MarkdownSection`'s greedy-to-next-heading behavior. Composite case (has declared `MarkdownStr`/`list[MarkdownStr]` fields): `_value` holds only the paragraph's own inline text; the remainder is delegated to `super().from_text()` (`MarkdownStr.from_text`) for field population, exactly like `MarkdownSection.from_text` delegates its post-heading body — bounded, in `get_extent`, only by the next heading of *any* level (h1-h6), since a paragraph has no level of its own and can never itself contain a heading. `__str__` mirrors `MarkdownSection.__str__` minus the heading-marker reconstruction — depends on: Task 2.1 — status: done
 - [x] Task 1.6.3: Support `MarkdownListItem` (`markdown_list_item.py`), a single, subclassable, leaf-or-composite class shared by bullet and ordered lists, used only as `items: list[MarkdownListItem]`/`list[MarkdownListItem] | None` on whatever `MarkdownSection`/`MarkdownParagraph`/`MarkdownListItem` wants a list-shaped field — deliberately **not** a dedicated `MarkdownList`/`MarkdownBulletList`/`MarkdownOrderedList` container class (an earlier-drafted design, discarded before implementation once the container turned out to add no capability the existing `list[MarkdownStr]` machinery didn't already provide). Leaf case (no declared fields): `_value` = the item's complete extent verbatim, marker and any un-modelled nested content included. Composite case (a subclass declares fields, e.g. a nested `list[MarkdownListItem]` for a sub-list): `_value` = the item's own leading paragraph verbatim *including its marker* (not marker-free like `MarkdownParagraph`'s `_value`, since a list item's marker cannot be reconstructed from class metadata alone — it depends on bullet-vs-ordered and, for ordered lists, final position); `__str__` re-indents the declared fields' rendered output by the marker's own width before recombining. A computed `text` field (mirroring `MarkdownSection.name`) exposes the leading paragraph's marker/indent-free text. Required a cross-cutting fix, `_markdown.py`'s new `format_text()` (`mdformat.text(text, options={"number": True})`), adopted by every normalization call site in `markdown_str.py`/`markdown_section.py`/`markdown_paragraph.py`/`test_uc_example.py` — `mdformat`'s default option collapses every ordered-list item to `"1."` on each normalization pass (only the first number is CommonMark-semantically meaningful), which would otherwise make real sequential numbering unrepresentable. Accepted, documented exception to REQ-004: a genuinely *tight* source list currently round-trips to a structurally-equivalent *loose* list (loose lists round-trip byte-exact) — see `markdown_list_item.py`'s class docstring — since each item is independently `mdformat`-renormalized in isolation before the parent's existing `list[MarkdownStr]` `__str__` rejoins them, which is where the tight/loose distinction (a property of the gap *between* items) is unavoidably lost. Restriction: `MarkdownListItem` can only be used inside `list[MarkdownListItem]`, never as a bare top-level/scalar field, since `get_extent`/`from_text` require the enclosing `bullet_list_open`/`ordered_list_open` wrapper token — depends on: Task 2.1 — status: done
-- [x] Task 1.6.4: Create `MarkdownCodeBlock` (`markdown_code_block.py`) — renamed from the originally-scoped `MarkdownCodeFence` once the design settled on handling only fenced (` ``` `) code blocks, never indented (4-space) ones — a single, **leaf-only** class (no composite/subclassing case, unlike `MarkdownParagraph`/`MarkdownListItem`), `@markdown(type="fence", tag="code")`. markdown-it tokenizes a fenced block as one self-closing token (`nesting == 0`), not an open/mid/close triple, whose own `.map` already spans exactly the fence markers + content, so `get_extent` is just `tokens[0].map[1]` (or `0` if the first token doesn't match `type`/`tag`) — no stop-condition scan needed. `from_text` asserts the single-token match (`type`/`tag`/`nesting == 0`) and stores the *complete extent verbatim* in `_value` (fence markers, info string if any, and code content) — same "leaf stores its full extent" convention as `MarkdownParagraph`/`MarkdownSection`'s leaf case. New computed field `text` (mirrors `MarkdownSection.name`/`MarkdownListItem.text`) re-parses and returns the fence token's own `.content` unchanged, trailing `"\n"` included (left as-is since `mdformat` re-normalizes on render anyway). No language/info-string handling or restriction — any (or no) info string after the opening fence matches; `~~~`-style fences are moot since `mdformat.text()` already normalizes them to `` ``` `` before this class ever sees the text (verified: `mdformat.text("~~~\n...\n~~~\n")` → `` ``` ``-fenced), so no separate `markup` assertion is needed. Leaf-only is actively enforced, not just documented: both `get_extent` and `from_text` `assert not cls._get_field_names()`, failing loudly if ever subclassed with declared fields. No `__str__` override — the inherited `MarkdownStr.__str__` already returns `_value` unchanged when there are no declared fields, which is always true here. Implemented 2026-08-11 with `tests/models/md/test_markdown_code_block.py` (17 cases: `get_extent` no-extent/whole-fence/multi-line/stops-before-following-content/info-string/empty-fence/leaf-only-guard cases, `from_text`/`__str__` round-trip cases for plain/info-string/multi-line/empty fences plus rejection/leaf-only-guard cases, and `text` computed-field cases for inner-content-only/info-string-excluded/empty/multi-line-preserved) — registered in `models/md/__init__.py`; full suite green (447 passed), `ruff format --check`/`ruff check`/`vulture` clean, `specmgr docs` regenerated with no drift on re-run — depends on: Task 2.1 — status: done
+- [x] Task 1.6.4: Create `MarkdownCodeBlock` (`markdown_code_block.py`) — renamed from the originally-scoped `MarkdownCodeFence` once the design settled on handling only fenced (```` ``` ````) code blocks, never indented (4-space) ones — a single, **leaf-only** class (no composite/subclassing case, unlike `MarkdownParagraph`/`MarkdownListItem`), `@markdown(type="fence", tag="code")`. markdown-it tokenizes a fenced block as one self-closing token (`nesting == 0`), not an open/mid/close triple, whose own `.map` already spans exactly the fence markers + content, so `get_extent` is just `tokens[0].map[1]` (or `0` if the first token doesn't match `type`/`tag`) — no stop-condition scan needed. `from_text` asserts the single-token match (`type`/`tag`/`nesting == 0`) and stores the *complete extent verbatim* in `_value` (fence markers, info string if any, and code content) — same "leaf stores its full extent" convention as `MarkdownParagraph`/`MarkdownSection`'s leaf case. New computed field `text` (mirrors `MarkdownSection.name`/`MarkdownListItem.text`) re-parses and returns the fence token's own `.content` unchanged, trailing `"\n"` included (left as-is since `mdformat` re-normalizes on render anyway). No language/info-string handling or restriction — any (or no) info string after the opening fence matches; `~~~`-style fences are moot since `mdformat.text()` already normalizes them to ```` ``` ```` before this class ever sees the text (verified: `mdformat.text("~~~\n...\n~~~\n")` → ```` ``` ````-fenced), so no separate `markup` assertion is needed. Leaf-only is actively enforced, not just documented: both `get_extent` and `from_text` `assert not cls._get_field_names()`, failing loudly if ever subclassed with declared fields. No `__str__` override — the inherited `MarkdownStr.__str__` already returns `_value` unchanged when there are no declared fields, which is always true here. Implemented 2026-08-11 with `tests/models/md/test_markdown_code_block.py` (17 cases: `get_extent` no-extent/whole-fence/multi-line/stops-before-following-content/info-string/empty-fence/leaf-only-guard cases, `from_text`/`__str__` round-trip cases for plain/info-string/multi-line/empty fences plus rejection/leaf-only-guard cases, and `text` computed-field cases for inner-content-only/info-string-excluded/empty/multi-line-preserved) — registered in `models/md/__init__.py`; full suite green (447 passed), `ruff format --check`/`ruff check`/`vulture` clean, `specmgr docs` regenerated with no drift on re-run — depends on: Task 2.1 — status: done
 - [x] Task 1.6.5: Create `MarkdownBlockQuote` (`markdown_block_quote.py`), `@markdown(type="blockquote_open", tag="blockquote")`, no `@alias` enforcement (quoted content is free-form, not a title). markdown-it already groups every *consecutive* `>` line -- including internal blank `>` continuation lines (a "loose" quote with several paragraphs) and any more deeply nested quote (`> > ...`) -- into one `blockquote_open`/`blockquote_close` pair whose own `.map` already spans the whole thing (two quotes separated by a real blank line are two separate pairs, already exactly "consecutive `>` = one instance"), so `get_extent` needs no stop-condition scan -- `tokens[0].map[1]` directly, same situation as `MarkdownListItem`/`MarkdownCodeBlock`. Unlike `MarkdownListItem` (which always assumes a leading paragraph), a quote's content can start with *any* block type (heading, list, nested quote, ...), so `from_text` validates only `tokens[0]` itself (`type`/`tag`/`nesting == 1`), nothing about what follows. Deliberately **not leaf-only** (unlike `MarkdownCodeBlock`) -- future typed fields (e.g. `emphasis`/`strong` as separate objects) are meant to nest inside it -- but a quote has no separate "own text" line the way a heading/paragraph/list item does, since *every* line carries the `>` marker regardless of that line's own block type. So the composite split differs from `MarkdownSection`/`MarkdownParagraph`: leaf case stores the complete extent verbatim (marker included on every line), same as any other leaf; composite case strips the marker from **every** line of the extent (`_dedent_quote_lines`, not just a leading line), re-`format_text`s the result, and delegates it *whole* to `super().from_text()` -- since the entire extent is body this way, `_value` is set to `""` (nothing left to keep, unlike Section's heading-inline-text or Paragraph's lead-sentence). `__str__`'s composite branch re-applies the marker to every line of `super().__str__()`'s output (`_indent_quote_lines`) rather than reconstructing a single heading/lead-sentence line. New computed field `text` mirrors `MarkdownSection.name`/`MarkdownListItem.text`'s "own source, markers stripped" semantics (nested markdown syntax like `*emphasis*` preserved as-is, not rendered to plain text) but applied line-by-line: leaf dedents `_value`; composite returns `super().__str__()` directly, since that's already marker-free by construction. Confirmed via a manual dedent/reindent round-trip check before implementing that a composite quote containing a nested `MarkdownBlockQuote` field round-trips byte-exact. Implemented 2026-08-11 with `tests/models/md/test_markdown_block_quote.py` (20 cases: `get_extent` no-extent/single-line/multi-line/loose-multi-paragraph/stops-at-real-blank-line/two-blank-separated-quotes-are-separate/nested-deeper-quote-included/heading-and-list-inside-quote cases; leaf `from_text`/`__str__`/`text` round-trip, inline-formatting-preserved, loose-quote round-trip, rejection, and marker-stripping cases; composite `from_text`/`__str__`/`text` field-split, round-trip, dedented-text, nested-quote-field round-trip, and full-document sibling-field cases) — registered in `models/md/__init__.py`; full suite green (467 passed), `ruff format --check`/`ruff check`/`vulture` clean, `specmgr docs` regenerated (85 module files) with no drift on re-run — depends on: Task 2.1 — status: done
 - [x] Task 1.7: Exercise `@alias`'s `REGEX` branch end-to-end through a real `MarkdownSection.from_text` call — depends on: Task 1.6 — status: done (2026-08-11 reconciliation: already covered, not newly implemented — `tests/models/md/test_markdown_section.py::TestMarkdownSectionAliasEnforcement::test_regex_alias_accepts_any_non_empty_heading_text` calls `_AnyHeadingLeafSection.from_text` on an `@alias(value=".+", type=AliasType.REGEX)`-decorated `MarkdownSection3` subclass, and `various_models.py`'s `MainDocument` fixture — used throughout ACC-003/ACC-004's round-trip tests — is itself `REGEX`-aliased the same way, as are fixtures added since in `test_markdown_paragraph.py`, `test_markdown_str.py`, `test_uc_example.py`, and `test_markdown_list_item.py`. The task's original "no fixture class declares `AliasType.REGEX` yet" premise had already gone stale by the time this was checked)
 
 #### Phase 2: Recursive engine (`MarkdownStr`/`MarkdownSection`)
+
 - [x] Task 2.1: Implement `markdown_str.py`'s `MarkdownStr.get_extent`/`_unwrap_optional`/`process_field`/`from_text`/`__str__`/`__repr__`/`_get_field_names` — generic (non-heading-aware) leaf/composite slicing and rendering, including `Optional[X]`/`X | None` field support (an absent optional field consumes `0` lines and is left unset rather than raising) — depends on: Task 0.2 — status: done
 - [x] Task 2.2: Implement `markdown_section.py`'s `MarkdownSection.get_extent` (heading-level-aware: stops at any sibling/ancestor heading, i.e. level `<= own_level`; nested deeper headings are included) and `from_text` (validates the heading triple against `@markdown`'s `_metadata` and, via `match_alias`, against any declared `@alias`; delegates body population to `MarkdownStr.from_text`) — depends on: Task 2.1, Task 1.3 — status: done. **Amended 2026-08-12**: `get_extent` originally checked heading *level* only, not `@alias` -- see Recent Updates' 2026-08-12 entry for the bug this caused and its fix (`get_extent` now also calls `match_alias`, matching `from_text`'s own check).
 - [x] Task 2.3: Implement `MarkdownSection.__str__` (re-emits the section's own heading for a composite section; a leaf section's `_value` already holds its full extent verbatim) and the `name` computed field — depends on: Task 2.2 — status: done
 - [x] Task 2.4: Unit tests for Tasks 2.1–2.3 — `test_markdown_str.py` (leaf/composite `from_text`, missing-extent/leftover-text error cases, three `Optional[...]` field cases, `get_extent` line-count contract) and `test_markdown_section.py` (no-extent/end-of-input/nested-deeper/sibling-stops/ancestor-stops `get_extent` cases parametrized across h1–h6, plus `__str__` round-trip and `@alias`-enforcement cases) — depends on: Task 2.3 — status: done
 
 #### Phase 3: Reject raw HTML *(done, rescoped 2026-08-11)*
+
 - [x] Task 3.1: Make `MarkdownStr.from_text`/`MarkdownSection.from_text` reject raw HTML (`html_block`/`html_inline` tokens) anywhere in the tokenized text — depends on: Task 2.1 — status: done. Implemented as a single choke point rather than per-class special-casing: `_markdown.py` gained `parse(text) -> list[Token]` (wraps `md.parse(text)`, then a recursive `_assert_no_raw_html` walk that also descends into every `"inline"` token's `.children`, since `html_inline` only ever nests there) and `_RAW_HTML_TOKEN_TYPES = ("html_block", "html_inline")`. Every `md.parse(text)` call site across `markdown_str.py`/`markdown_section.py`/`markdown_paragraph.py`/`markdown_list_item.py`/`markdown_code_block.py`/`markdown_block_quote.py` (14 sites) now calls `parse(text)` instead — disabling markdown-it's `html_block`/`html_inline` rules outright (the plan's other originally-sketched option) was rejected because that would make raw HTML silently parse as something else (e.g. plain text), not raise, which contradicts "reject". `MarkdownStr.from_text`'s leaf branch also gained an explicit `parse(text)` call it previously lacked entirely (it stored `_value` unchecked), so a leaf class reached directly — not only via a composite parent's `get_extent` — is still guarded.
 - [x] Task 3.2: Unit tests for Task 3.1 — depends on: Task 3.1 — status: done. `tests/models/md/test_markdown_html_rejection.py` (12 cases): `_markdown.parse` raising on `html_block`/on `html_inline` nested in a paragraph's or heading's `inline` children, staying unaffected by plain Markdown formatting (`**strong**`/`*emphasis*`) and by HTML-looking text inside a fenced code block; plus end-to-end `MarkdownStr.from_text`/`MarkdownSection.from_text` (leaf) pass/fail cases per ACC-005.
 - **Note (rescoped 2026-08-11):** this phase no longer plans a generic `constraints.py` module with composable `AllowedTags`/`LengthConstraint`/`NoRawHtml` marker classes plus a shared validator — that framework was speculative and dropped; only `@markdown`/`@alias` exist as class-level decorators, and raw-HTML rejection above is the one concrete, decided need. The previously-noted opt-in `RoundTrip()` marker remains dropped too — REQ-004's byte-exact round-trip is already the engine's unconditional default (see Requirements/Scope above), so there is nothing left for such a marker to gate.
 
 #### Phase 4: Frontmatter *(done, 2026-08-11)*
+
 - [x] Task 4.1: Decide whether/how a typed frontmatter model (`id`, `version`, `status`, `created`, `updated`) layers on top of the already-working `python-frontmatter`-based stripping (`frontmatter.loads(text).content`/`.metadata`, proven in `test_uc_example.py`) — depends on: none — status: done. Decided via ADR bc5e18ad-6bbf-4265-bae4-3e34984a2d29: a base `MarkdownFrontmatter` (`models/md/frontmatter.py`) with core fields `id`/`type`/`created`/`updated`/`status`/`version` (`type` added beyond the task's original field list, as a mandatory document-type discriminator with no default), subclassed per document type (narrowing `type` to a fixed `Literal[...]`). `AdrFrontmatter` stays independent/unconverted; `models/md/_util.py` owns its own validator helpers rather than depending on `models/adr/v1/_util.py`.
 - [x] Task 4.2: Unit tests for Task 4.1 — depends on: Task 4.1 — status: done. `tests/models/md/test_frontmatter.py` (19 cases): base-model field defaults/validation (`type` mandatory/non-blank, `status`/`version` defaults and blank-normalization, `version` major-mismatch/malformed rejection, `created`/`updated` blank-to-`None`), plus a `TestMarkdownFrontmatterSubclassing` suite covering the `Literal`-narrowed `type` discriminator pattern end-to-end.
 
 #### Phase 5: Fixtures + integration
+
 - [x] Task 5.1: Define `tests/models/md/various_models.py` — a small, two-level-nested fixture (`MainDocument` → `CharacteristicInformation`/`RelatedInformation` → h3 leaves) proving the recursive mechanics — depends on: Task 2.3 — status: done
 - [x] Task 5.2: Define `tests/models/md/test_uc_example.py`'s model tree (`UseCase`, all `##`/`###` sections of `uc_example.md`, mixed required/`Optional[...]` fields) reproducing the fixture's full nested structure — depends on: Task 5.1 — status: done
 - [x] Task 5.3: Integration test: `UseCase.from_text` on `uc_example.md` (frontmatter stripped via `python-frontmatter`), assert every field populated, then assert `str(instance) == body` (byte-exact round-trip) — depends on: Task 5.2 — status: done
 
 #### Phase 6: Docs
+
 - [x] Task 6.1: Module docstrings for every file under `src/biz/dfch/specmgr/models/md/` per `.specmgr/conventions.md` — depends on: Task 5.3 — status: done
 - [x] Task 6.2: Run `specmgr docs` to regenerate `docs/api/`/`docs/GENERATED.md` — depends on: Task 6.1 — status: done (`docs/api/biz.dfch.specmgr.models.md.*.md` staged; confirmed no drift on re-run during this reconciliation)
 
@@ -272,12 +279,13 @@ nothing under `src/biz/dfch/specmgr/models/md/`/`tests/models/md/` is
 untracked or uncommitted. GitHub issue #5 is **closed**.
 
 Test baseline as of this update:
+
 ```
 uv run --frozen python -m unittest discover -v -s tests -t . -p "test_*.py"
 # Ran 498 tests. OK.
 ```
-`ruff format --check` / `ruff check` / `vulture src/ whitelist.py
---min-confidence 60` are all clean on every file this feature touched — the
+
+`ruff format --check` / `ruff check` / `vulture src/ whitelist.py --min-confidence 60` are all clean on every file this feature touched — the
 `F841` warning on an unused `tokens` local in
 `MarkdownSection.validate_heading_structure`'s mostly-commented-out body,
 previously noted here as a pre-existing exception, no longer reproduces.
@@ -330,6 +338,32 @@ on this file) or the Recent Updates log below for that record.
 
 ### Recent Updates
 
+#### 2026-08-14 — post-closure docstring shortening: `MarkdownListItem`/`MarkdownParagraph` class docstrings trimmed
+
+Requested by `feat-6-requirement-artifact`'s Task 2.6, since these two
+classes' verbose class docstrings get inlined verbatim into every JSON
+Schema `$defs` entry that references them (via `model_json_schema()`,
+surfaced e.g. as an MCP tool's `outputSchema`) — not new work on this
+feature's own scope, but a documentation-quality change to already-shipped
+code, made here since this feature owns the module, same
+"downstream feature triggers a fix in the closed engine" pattern as the
+2026-08-12/2026-08-13 entries below.
+
+- `MarkdownListItem`'s class docstring: ~2.7k chars → ~1.1k chars.
+  `MarkdownParagraph`'s: ~1.3k chars → ~0.7k chars. Only the **class**
+  docstring was shortened for both — `get_extent`/`from_text`/`__str__`'s
+  own method docstrings (which never surface in an emitted JSON schema)
+  are untouched, and each shortened class docstring points readers at those
+  method docstrings for the full mechanics instead of duplicating them.
+- No behavior change — `__doc__` content is not asserted by any test in the
+  repo. Full suite green after the change (604 tests passing), `ruff format --check`/`ruff check` clean.
+- Net effect on `feat-6-requirement-artifact`'s own `req_schema.json`
+  generation: roughly offset by that feature's own Task 2.4 (adding
+  `Field(description=...)` to its own fields), so the *total* schema size
+  is about the same as before either change — the benefit is capping/
+  reducing what these two shared base classes contribute per-reference,
+  not the REQ schema's overall size on this particular pass.
+
 #### 2026-08-13 — post-closure bug fix: `MarkdownSection.text` now returns everything for a leaf section
 
 Discovered while `feat-6-requirement-artifact`'s `parse_req` MCP tool
@@ -346,8 +380,7 @@ genuine bug in already-shipped code, fixed in place.
   composite section this is correct and intended — the body is already
   reachable through the declared nested fields, each exposing its own
   `.text` the same way. For a **leaf** section with no field of its own to
-  hold the body (e.g. `req/models/v1/body.py`'s bare `class
-  Notes(MarkdownSection2): ...`/`MoreInformation`/`Description`, the only
+  hold the body (e.g. `req/models/v1/body.py`'s bare `class Notes(MarkdownSection2): ...`/`MoreInformation`/`Description`, the only
   three such classes in the repo), this silently dropped the entire body:
   `_value` held the complete heading+body extent verbatim (see
   `from_text`'s leaf branch), but `.text` only ever surfaced the heading
@@ -405,8 +438,7 @@ code, fixed in place rather than worked around downstream.
   an absent optional field -- `get_extent` still reported a non-zero extent
   (since *some* same-level heading was there), so `process_field` proceeded
   to call `from_text` on the wrong slice, which then failed loudly with
-  `"<Class>: heading text '<other heading>' does not match its declared
-  @alias"` instead of correctly leaving the field `None` and moving on.
+  `"<Class>: heading text '<other heading>' does not match its declared @alias"` instead of correctly leaving the field `None` and moving on.
   Verified this was not `uc/models/v2`-specific: the same pattern already
   latent in this engine's own `CharacteristicInformation`-shaped fixtures
   (an absent `Optional` h3 immediately followed by a *different* h3)
@@ -443,6 +475,7 @@ code, fixed in place rather than worked around downstream.
   not related to this fix's own test fallout).
 
 #### 2026-08-11 (continued, part 12) — feature closed
+
 - Confirmed Task 4.1/4.2's commit (`8d99dd3`) was pushed and GitHub issue #5
   was closed. Set frontmatter `status: done` (from `in-progress`); every
   Task List phase (0–6) is now complete, so there is no remaining planned
@@ -465,6 +498,7 @@ code, fixed in place rather than worked around downstream.
   recorded in this Recent Updates log and in git history.
 
 #### 2026-08-11 (continued, part 11)
+
 - Completed: Task 4.1/4.2 (REQ-006/ACC-006), the last not-started item in
   this feature's Task List. Preceded by a design discussion with
   repo-owner that produced a new ADR,
@@ -504,8 +538,7 @@ code, fixed in place rather than worked around downstream.
     `@field_validator`, invoked by Pydantic's validation machinery, not by
     any direct call -- same pattern as the other `_validate_*` entries
     already there).
-  - Full suite: 498 tests (up from 479), all passing; `ruff format
-    --check`/`ruff check`/`vulture` clean on every touched file;
+  - Full suite: 498 tests (up from 479), all passing; `ruff format --check`/`ruff check`/`vulture` clean on every touched file;
     `specmgr docs`/`specmgr adr-toc` re-run, no unexpected drift beyond the
     new module docs/ADR TOC entry.
   - Updated Requirements (REQ-006 -> done), Acceptance Criteria (ACC-006 ->
@@ -514,10 +547,10 @@ code, fixed in place rather than worked around downstream.
     feature's Task List are now done.
 
 #### 2026-08-11 (continued, part 10)
+
 - Completed: Task 3.1/3.2 (REQ-005/ACC-005) — raw HTML rejection, the last
   item Phase 3 needed. Implemented as one choke point rather than
-  per-class special-casing: `_markdown.py` gained `parse(text) ->
-  list[Token]` (wraps `md.parse(text)`, then a recursive
+  per-class special-casing: `_markdown.py` gained `parse(text) -> list[Token]` (wraps `md.parse(text)`, then a recursive
   `_assert_no_raw_html` walk over the token list) plus
   `_RAW_HTML_TOKEN_TYPES = ("html_block", "html_inline")`. Confirmed
   empirically first (`markdown_it.parse`) that `html_block` tokens appear
@@ -556,8 +589,7 @@ code, fixed in place rather than worked around downstream.
     via a `@alias(value=".+", type=AliasType.REGEX)`-decorated
     `MarkdownSection2` test double) pass/fail pairs matching ACC-005's
     literal wording.
-  - Full suite: 479 tests (up from 467), all passing; `ruff format
-    --check`/`ruff check`/`vulture` clean on every touched file;
+  - Full suite: 479 tests (up from 467), all passing; `ruff format --check`/`ruff check`/`vulture` clean on every touched file;
     `specmgr docs` re-run with no unexpected drift beyond the new
     `_markdown.py` docstring content and the test-file count bump.
   - Updated Requirements (REQ-005 -> done), Acceptance Criteria (ACC-005
@@ -566,6 +598,7 @@ code, fixed in place rather than worked around downstream.
     in this feature's Task List.
 
 #### 2026-08-11 (continued, part 9)
+
 - Found and fixed one more piece of stale documentation missed by the
   ADR-reconciliation/REQ-005-rescoping passes above: the plan's own
   **Design Notes** section (not a dated Recent-Updates entry, so it doesn't
@@ -583,6 +616,7 @@ code, fixed in place rather than worked around downstream.
   can't.
 
 #### 2026-08-11 (continued, part 8)
+
 - Rescoped: REQ-005 (and its Phase 3/Task 3.1/3.2/ACC-005 counterparts), per
   repo-owner direction. Prior text planned a generic, composable
   `Annotated`-based content-constraint-marker framework (`AllowedTags`,
@@ -600,6 +634,7 @@ code, fixed in place rather than worked around downstream.
   Task List (Phase 3 header/Task 3.1/3.2) accordingly.
 
 #### 2026-08-11 (continued, part 7)
+
 - Completed: Task 1.6.3 -- `MarkdownListItem` (`markdown_list_item.py`), the
   final Phase 1 building block, resolving a stalled prior session (see
   `session-ses_00ed-markdown-list.md`) that had converged on a
@@ -612,13 +647,11 @@ code, fixed in place rather than worked around downstream.
   `MarkdownParagraph`/`MarkdownListItem` fully reuses Task 1.6.1's
   `list[MarkdownStr]` machinery unchanged, with no new container-level
   parsing/rendering code.
-  - `get_extent`: requires `tokens[0].type` in `("bullet_list_open",
-    "ordered_list_open")` and `tokens[1].type == "list_item_open"`; returns
+  - `get_extent`: requires `tokens[0].type` in `("bullet_list_open", "ordered_list_open")` and `tokens[1].type == "list_item_open"`; returns
     `tokens[1].map[1]` directly -- unlike `MarkdownSection`/`MarkdownParagraph`,
     `list_item_open`'s own map already spans nested content, so no
     stop-condition scan is needed.
-  - `from_text`: asserts the same triple plus `tokens[2].type ==
-    "paragraph_open"` (every item is assumed to start with a paragraph).
+  - `from_text`: asserts the same triple plus `tokens[2].type == "paragraph_open"` (every item is assumed to start with a paragraph).
     Leaf (no declared fields): `_value` = the complete extent verbatim,
     marker and any un-modelled nested content included (mirrors
     `MarkdownSection`/`MarkdownParagraph`'s leaf case). Composite (a
@@ -685,8 +718,7 @@ code, fixed in place rather than worked around downstream.
     and an absent optional `list[MarkdownListItem] | None` field), and
     `text` (marker/indent stripping for leaf bullet/ordered/composite items,
     ignoring an un-modelled nested sub-list).
-  - Full suite: 429 passed, 0 failed (405 -> 429, 24 new). `ruff format
-    --check`/`ruff check`/`vulture` clean. `specmgr docs` regenerated (83
+  - Full suite: 429 passed, 0 failed (405 -> 429, 24 new). `ruff format --check`/`ruff check`/`vulture` clean. `specmgr docs` regenerated (83
     module files, up from 82) and re-run confirmed no further drift;
     `specmgr adr-toc` re-run confirmed no drift (unrelated to this task).
   - Task List: Task 1.6.3 marked done above, its description rewritten to
@@ -698,6 +730,7 @@ code, fixed in place rather than worked around downstream.
   fixture); items 2-4 above are unchanged, not touched this session.
 
 #### 2026-08-11 (continued, part 6)
+
 - Completed: Task 1.6.2 -- `MarkdownParagraph` (`markdown_paragraph.py`), a
   single class (no `MarkdownParagraph1..6` spectrum -- a paragraph has no
   level) pinned to `@markdown(type="paragraph_open", tag="p")`, with no
@@ -736,11 +769,11 @@ code, fixed in place rather than worked around downstream.
     field, composite round-trips exactly, composite leaves a following
     heading available for a sibling field in a larger document).
   - Registered in `models/md/__init__.py`'s imports/`__all__`.
-  - Full suite: 402 passed, 0 failed (390 -> 402, 12 new). `ruff format
-    --check`/`ruff check`/`vulture` clean.
+  - Full suite: 402 passed, 0 failed (390 -> 402, 12 new). `ruff format --check`/`ruff check`/`vulture` clean.
   - Task 1.6.3 (`MarkdownList`) remains not-started.
 
 #### 2026-08-11 (continued, part 5)
+
 - Completed: Task 1.6.1 -- `list[MarkdownStr]`/`list[MarkdownStr] | None` field
   support in `markdown_str.py`, added ad hoc (not part of the original task
   list; repo-owner requested it directly this session):
@@ -750,8 +783,7 @@ code, fixed in place rather than worked around downstream.
     `_get_field_names`/`from_text` apply `_unwrap_optional` then
     `_unwrap_list` in that order, so `list[X] | None` resolves to
     `(X, optional=True, is_list=True)` -- the two axes are independent.
-  - `process_list_field(name, item_type, text, *, optional=False) ->
-    tuple[str, list[MarkdownStr] | None]`: loops `item_type.get_extent`/
+  - `process_list_field(name, item_type, text, *, optional=False) -> tuple[str, list[MarkdownStr] | None]`: loops `item_type.get_extent`/
     slice/`mdformat`-renormalize/`item_type.from_text` while an item
     matches. A first draft mirrored `process_field`'s `(extent, value)`
     contract (matching the initial design discussion) but this was found to
@@ -767,8 +799,7 @@ code, fixed in place rather than worked around downstream.
     as-is for list fields, bypassing the generic extent-based slicing step
     used for scalar fields.
   - Semantics: no item found on the list's *first* iteration is an absence
-    -- an assertion error for a mandatory `list[X]` field, or `(text,
-    None)` (untouched) for `list[X] | None`. No item found on any
+    -- an assertion error for a mandatory `list[X]` field, or `(text, None)` (untouched) for `list[X] | None`. No item found on any
     *subsequent* iteration just ends the list normally, i.e. items 2+ are
     implicitly optional without needing `Optional[X]` on `item_type`
     itself.
@@ -801,6 +832,7 @@ code, fixed in place rather than worked around downstream.
     instruction this session.
 
 #### 2026-08-11 (continued, part 4)
+
 - Completed: Corrected an error in ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae
   (now v1.4.0) and in `alias_match.py`'s actual code, per explicit
   repo-owner direction: a class declaring no `@alias` at all must default
@@ -838,12 +870,12 @@ code, fixed in place rather than worked around downstream.
     an underscore-prefixed name (the previous `_NoAlias`) produces an odd
     `"_ No Alias"` result, irrelevant to what the test demonstrates.
   - Full suite green (see next full-suite run for the exact count);
-    `ruff format --check`/`ruff check` clean; `specmgr docs`/`specmgr
-    adr-toc` regenerated.
+    `ruff format --check`/`ruff check` clean; `specmgr docs`/`specmgr adr-toc` regenerated.
   - REQ-001/ACC-001 above updated to stop claiming "a class with no `@alias`
     at all always matches any heading text", stale since before v1.2.0.
 
 #### 2026-08-11 (continued, part 3)
+
 - Completed: Brought `alias_match.py`/`markdown_section.py` in line with
   ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae v1.2.0/v1.3.1 (previously
   documentation-only revisions -- this entry is the code catching up):
@@ -871,14 +903,11 @@ code, fixed in place rather than worked around downstream.
     literal-class-name default: introduced `_AnyHeadingLeafSection`
     (`@alias(value=".+", type=AliasType.REGEX)`) for tests where the
     heading text is incidental to what's actually being tested (extent/
-    round-trip mechanics), and rewrote `test_class_with_no_alias_accepts_
-    any_heading_text` into two tests demonstrating the new default
-    directly: `test_class_with_no_alias_defaults_to_literal_class_name_
-    match` (heading equal to class name succeeds) and
+    round-trip mechanics), and rewrote `test_class_with_no_alias_accepts_ any_heading_text` into two tests demonstrating the new default
+    directly: `test_class_with_no_alias_defaults_to_literal_class_name_ match` (heading equal to class name succeeds) and
     `test_class_with_no_alias_rejects_a_different_heading` (anything else
     fails).
-  - `test_alias_match.py`: renamed/split `test_class_with_no_alias_
-    metadata_always_matches` into
+  - `test_alias_match.py`: renamed/split `test_class_with_no_alias_ metadata_always_matches` into
     `test_class_with_no_alias_defaults_to_literal_class_name_match` and
     `test_class_with_no_alias_rejects_a_different_heading`; added
     `test_regex_alias_accepts_any_non_empty_heading_text` (positive cases
@@ -889,6 +918,7 @@ code, fixed in place rather than worked around downstream.
     docstring content changes above (still 80 modules).
 
 #### 2026-08-11 (continued, part 2)
+
 - Completed: `markdown_section4.py`/`5.py`/`6.py` were also flagged as
   unreferenced (no import anywhere outside their own file, no test
   instantiated them), but unlike `metadata_utils.py` these are real,
@@ -916,6 +946,7 @@ code, fixed in place rather than worked around downstream.
     `ruff check` clean (same pre-existing, unrelated `F841`).
 
 #### 2026-08-11 (continued)
+
 - Completed: Deleted `src/biz/dfch/specmgr/models/md/metadata_utils.py`
   (`get_direct_metadata`/`get_inherited_metadata`/`find_metadata_source`/
   `get_metadata_chain`/`has_metadata`) after confirming, per repo-owner
@@ -931,6 +962,7 @@ code, fixed in place rather than worked around downstream.
   than done).
 
 #### 2026-08-11
+
 - Completed: Reconciled the Requirements/Acceptance Criteria/Task List
   sections above with the actual `src/biz/dfch/specmgr/models/md/`
   implementation (Next item 1 from 2026-08-10), replacing the superseded
@@ -984,8 +1016,7 @@ code, fixed in place rather than worked around downstream.
     remaining, unrelated spike files (`test_token_tree_sample_markdown1.py`,
     `test_uc_example_tokens.py`, fixtures) and `.specmgr/feat/feat-3-md-str-constraints/`
     itself were explicitly left in place, not part of this deletion. Suite:
-    380 -> 370 tests (10 removed, all belonging to the deleted files); `specmgr
-    docs` re-run clean (80 modules, down from 81).
+    380 -> 370 tests (10 removed, all belonging to the deleted files); `specmgr docs` re-run clean (80 modules, down from 81).
 - Next: unchanged — see Next items 2–4 above (item 1 is now struck through
   as done; items 2–4 were not investigated or touched this session, so
   item 3's premise may itself now be partly stale given `uc_example.md`'s
@@ -993,6 +1024,7 @@ code, fixed in place rather than worked around downstream.
   either way here).
 
 #### 2026-08-10
+
 - Completed (this session): Implemented and unit-tested the core recursive
   extraction mechanics under `src/biz/dfch/specmgr/models/md/`:
   - `MarkdownStr.get_extent(text) -> int`: generic fallback extent
@@ -1045,6 +1077,7 @@ code, fixed in place rather than worked around downstream.
   against realistic multi-heading input.
 
 #### 2026-08-10 (continued)
+
 - Completed: Fixed the two items from the "Next" list above, plus a bug
   discovered while prototyping the first fix:
   - `MarkdownStr.from_text`: the not-yet-consumed remainder was tracked as
@@ -1101,8 +1134,7 @@ code, fixed in place rather than worked around downstream.
     test-only fixture model tree, not production code. Updated its internal
     imports to absolute (`biz.dfch.specmgr.models.md....`) since it no
     longer lives inside that package, and updated
-    `test_markdown_str.py`'s import to a relative `from .various_models
-    import ...`.
+    `test_markdown_str.py`'s import to a relative `from .various_models import ...`.
   - Full suite: 349 passed, 0 failed (previously 349 passed, 1 known
     failure). `ruff format --check`/`ruff check` clean on every file touched
     this entry.
@@ -1111,10 +1143,10 @@ code, fixed in place rather than worked around downstream.
   section re-emits its own heading, not just its children's text.
 
 #### 2026-08-10 (continued, part 2)
+
 - Completed: Added `MarkdownSection.__str__`, overriding
   `MarkdownStr.__str__`. Derives the heading level from `cls._metadata['tag']`
-  (`_HEADING_TAGS.index(tag) + 1`), reconstructs `"#" * level + " " +
-  self._value`, and — only if the section declares nested fields — appends
+  (`_HEADING_TAGS.index(tag) + 1`), reconstructs `"#" * level + " " + self._value`, and — only if the section declares nested fields — appends
   `super().__str__()` (the children's already-`mdformat`-normalized
   concatenation) after a blank line, then re-normalizes the whole thing with
   `mdformat.text(...)`. A leaf section (no nested fields) renders just its
@@ -1141,6 +1173,7 @@ code, fixed in place rather than worked around downstream.
   retain body content.
 
 #### 2026-08-10 (continued, part 3)
+
 - Completed: Corrected a design error in the previous two entries, caught
   by the repo owner: `MarkdownSection._value` was being set to the
   heading's inline content for **every** section, leaf and composite alike
@@ -1159,14 +1192,12 @@ code, fixed in place rather than worked around downstream.
     duplicate what its children already carry.
   - `MarkdownSection.__str__`: the leaf branch now defers to
     `super().__str__()` (`MarkdownStr.__str__`'s leaf case, which returns
-    `_value` unchanged) instead of reconstructing `"#" * level + " " +
-    self._value` — since `_value` already *is* the full rendered section
+    `_value` unchanged) instead of reconstructing `"#" * level + " " + self._value` — since `_value` already *is* the full rendered section
     now, reconstructing the heading on top of it would have doubled it up.
     The composite branch is unchanged.
   - Net effect: `str(instance)` is now a full, byte-exact round-trip of
     whatever `from_text` consumed, verified end-to-end against the
-    `various_models.py` fixture (`str(MainDocument.from_text(text)) ==
-    text`, exactly). This resolves the "leaf body text is silently
+    `various_models.py` fixture (`str(MainDocument.from_text(text)) == text`, exactly). This resolves the "leaf body text is silently
     dropped"/"round-trip fidelity" caveat from the previous two entries —
     it was a bug in this session's own work, not an inherent, pre-existing
     limitation of the engine.
@@ -1190,31 +1221,28 @@ code, fixed in place rather than worked around downstream.
   resolved and removed from "Next".
 
 #### 2026-08-10 (continued, part 4)
+
 - Completed: Per repo-owner request, `MarkdownSection.from_text` now
   honours `@alias` (previously `_alias_metadata`, set by `@alias`, was
   inert class data — nothing ever checked it against the actual parsed
   heading text):
-  - Added `src/biz/dfch/specmgr/models/md/alias_match.py`: `match_alias(cls,
-    heading_text) -> bool`, encapsulating the three `AliasType` comparisons
+  - Added `src/biz/dfch/specmgr/models/md/alias_match.py`: `match_alias(cls, heading_text) -> bool`, encapsulating the three `AliasType` comparisons
     (`LITERAL`: exact string equality, case-sensitive, no normalization,
     per explicit repo-owner direction — "LITERAL means LITERAL";
     `SPACE_SEPARATED`: equality against `space_separated_name(cls.__name__)`,
-    a new PascalCase -> title-case-with-spaces helper; `REGEX`: `re.
-    fullmatch` against the declared pattern), plus the policy that a class
+    a new PascalCase -> title-case-with-spaces helper; `REGEX`: `re. fullmatch` against the declared pattern), plus the policy that a class
     with **no** `@alias` metadata at all always matches — `@alias` is
     opt-in per class, not mandatory on every `MarkdownSection` subclass.
   - Wired it into `MarkdownSection.from_text`: right after the existing
     `@markdown` type/tag heading-triple validation (as requested, so the
-    two checks read as one contiguous block), asserts `match_alias(cls,
-    heading_text)` before branching on leaf vs. composite. Moved the
+    two checks read as one contiguous block), asserts `match_alias(cls, heading_text)` before branching on leaf vs. composite. Moved the
     `heading_text = t_mid.content.strip()` computation earlier so it is
     available to this assertion in both branches (previously only computed
     in the composite branch).
   - This immediately surfaced two already-wrong `@alias` values in
     `tests/models/md/various_models.py` that had never been checked against
     anything: `GoalInContext`'s `@alias(value="Goats in Coats", ...)` and
-    `CharacteristicInformation`'s `@alias(value="characteristic_information",
-    ...)`, neither of which matched the fixture documents' actual heading
+    `CharacteristicInformation`'s `@alias(value="characteristic_information", ...)`, neither of which matched the fixture documents' actual heading
     text used throughout `test_markdown_str.py`/`test_markdown_section.py`
     (`"*Goal* In Context"` and `"Characteristic Information"` respectively).
     Corrected both literal values to match (per repo-owner direction:
@@ -1225,8 +1253,7 @@ code, fixed in place rather than worked around downstream.
     for `space_separated_name` and every `match_alias` branch (no-alias
     always matches; `LITERAL` match/mismatch/case-sensitivity/no-trailing-
     parenthetical-stripping; `SPACE_SEPARATED` match/mismatch; `REGEX`
-    match/mismatch). `tests/models/md/test_markdown_section.py::
-    TestMarkdownSectionAliasEnforcement` (4 cases) — `from_text` accepts a
+    match/mismatch). `tests/models/md/test_markdown_section.py:: TestMarkdownSectionAliasEnforcement` (4 cases) — `from_text` accepts a
     heading matching a declared `@alias`, rejects one that doesn't, accepts
     any heading text for a class with no `@alias`, and (end-to-end) rejects
     a `MainDocument` fixture document whose `CharacteristicInformation`
@@ -1245,6 +1272,7 @@ code, fixed in place rather than worked around downstream.
   implemented and needs reconciliation (see "Next" item 1).
 
 #### 2026-08-08 (even later)
+
 - Completed: Added a committed, standalone spike-test suite under
   `tests/feat-5-md-model-parser/` proving out several of the design
   primitives from `req_parser.py`'s continuation notes and the PARSING
@@ -1253,8 +1281,7 @@ code, fixed in place rather than worked around downstream.
     rather than an ad hoc chat check) that `pydantic.BaseModel.model_fields`
     preserves field declaration order, including fields inherited from a
     base class.
-  - `test_parse_heading.py` / `test_annotations.py` — a `get_section(token,
-    tokens)` helper (plus its `walk_token_tree` depth-first token-tree
+  - `test_parse_heading.py` / `test_annotations.py` — a `get_section(token, tokens)` helper (plus its `walk_token_tree` depth-first token-tree
     walker building block) that slices a heading's own span out of a flat
     `markdown-it-py` token list. Iterated twice: first only stopped at an
     exact `(type, tag)` match; then fixed, per explicit request, so any
@@ -1284,6 +1311,7 @@ code, fixed in place rather than worked around downstream.
   `feat-4-use-cases`.
 
 #### 2026-08-08 (later)
+
 - Completed: Revised the design (and ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae,
   now v1.1.0) after further review of `req_parser.py`: replaced the
   `Annotated[Heading(tag=, alias=)]` field-metadata mechanism with a
@@ -1312,6 +1340,7 @@ code, fixed in place rather than worked around downstream.
   top-of-file notes block for the fullest up-to-date design detail.
 
 #### 2026-08-08
+
 - Completed: Examined `tests/feat-5-md-model-parser/req_parser.py` and
   `uc_example.md`; clarified design (declarative `Heading` metadata, opt-in
   constraints, recursive nesting, typed frontmatter) via Q&A; wrote ADR

@@ -1,0 +1,55 @@
+# `biz.dfch.specmgr.commands.schema`
+
+``schema`` -- generate JSON Schema (2020-12) for registered document-type models.
+
+Generic, doc-type-agnostic command: each document type that wants a generated
+JSON Schema artifact registers a ``generate_x() -> str`` function in
+``_GENERATORS`` below, keyed by its short doc-type name (currently just
+``"req"``). ``--type`` restricts generation to one registered type; omitting
+it generates **all** registered types. Each type is written to its own
+``{output_dir}/{type}_schema.json`` (default ``docs/``).
+
+Unlike ``adr-toc``/``docs``, drift detection is built into this command
+itself rather than left to a separate ``git diff --exit-code`` CI step: the
+previous on-disk content (if any) is compared against the freshly generated
+content for every type this invocation touches, and the command exits with
+status 1 if any of them differ (including a file that did not exist yet).
+The file is still (re)written either way, so a local run always leaves
+``docs/`` up to date for a developer to commit; only the exit code signals
+drift, which is what a CI step relies on directly.
+
+The emitted dialect is Pydantic v2's native JSON Schema 2020-12 (``$defs``,
+not ``definitions``) -- see `feat-6-requirement-artifact`'s README
+"Decisions Made" for why this deliberately diverges from
+``uc_schema.json``'s hand-authored draft-07.
+
+## Functions
+
+### `generate_req_schema() -> str`
+
+Generate REQ's JSON Schema (2020-12 dialect) from ``ReqDocument.model_json_schema()``.
+
+Pydantic v2 deliberately omits the top-level ``$schema`` key by default
+(see ``GenerateJsonSchema.generate``'s own comment on this), so it is
+added explicitly here from ``GenerateJsonSchema.schema_dialect`` --
+otherwise the emitted file would not self-describe which JSON Schema
+dialect it actually uses.
+
+Serializes with ``indent=2, sort_keys=True`` plus a trailing newline so
+repeated generation from unchanged models produces byte-identical
+output, which is what makes this command's own drift detection (and any
+downstream ``git diff``) meaningful.
+
+
+### `schema(type_: Annotated[str | None, <typer.models.OptionInfo object>] = None, output_dir: Annotated[pathlib.Path, <typer.models.OptionInfo object>] = PosixPath('/docs')) -> None`
+
+Generate JSON Schema (2020-12) for one or all registered document types.
+
+Writes ``{output_dir}/{type}_schema.json`` for each selected type
+(``--type``, or every registered type if omitted). Exits with status 1
+if any written file's content differs from what was already on disk
+(including the file not existing yet), so CI can rely on this command's
+own exit code instead of a separate ``git diff --exit-code`` step. The
+file is written regardless of drift, so a local run always leaves
+``docs/`` up to date to commit.
+

@@ -33,7 +33,7 @@ additionally requires the ``mcp`` extra
 import typer
 from dotenv import find_dotenv, load_dotenv
 
-from .commands import adr_toc, coverage_badge, docs, mcp, unused_code, version
+from .commands import adr_toc, coverage_badge, docs, mcp, schema, unused_code, version
 
 # ---------------------------------------------------------------------------
 # .env loading
@@ -77,6 +77,7 @@ app.command()(mcp)
 app.command()(docs)
 app.command()(adr_toc)
 app.command()(coverage_badge)
+app.command()(schema)
 app.command()(unused_code)
 
 

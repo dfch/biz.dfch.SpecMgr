@@ -8,25 +8,17 @@ Base class for a markdown paragraph ("p"), the non-heading sibling of `MarkdownS
 
 A markdown paragraph ("p"), the non-heading sibling of `MarkdownSection`.
 
-Unlike a heading, a paragraph has no level, so there is a single
-`MarkdownParagraph` class -- no `MarkdownParagraph1`..`6` spectrum, and no
-`@alias` enforcement of its own text (a paragraph's content is free-form
-prose, not a title to match against a class-name-derived alias).
+A paragraph has no level, so there is a single `MarkdownParagraph` class
+(no `MarkdownParagraph1`..`6` spectrum) and no `@alias` check -- a
+paragraph's content is free-form prose, not a title.
 
-- Leaf (no nested `MarkdownStr`/`list[MarkdownStr]` fields declared):
-  `_value` holds exactly the matched paragraph's own line span, verbatim
-  -- nothing beyond `paragraph_close` is consumed. This mirrors the base
-  `MarkdownStr.from_text` leaf case, just with the added `p`-tag
-  validation from `@markdown`'s metadata.
-- Composite (has declared fields): `_value` holds only the paragraph's
-  own inline text (e.g. a lead-in sentence); the *remaining* text after
-  the paragraph's own line span is delegated to `super().from_text()`
-  (`MarkdownStr.from_text`) for recursive field population, exactly like
-  `MarkdownSection.from_text` delegates its post-heading body. Since a
-  paragraph can never structurally contain a heading, the only thing
-  that can bound how far this delegation reaches (see `get_extent`) is
-  the next heading of any level (h1-h6) -- not some paragraph-specific
-  level, since a paragraph has none.
+Leaf (no declared nested fields): `_value` holds the paragraph's own line
+span, verbatim. Composite (declares fields): `_value` holds only the
+paragraph's own inline text (e.g. a lead-in sentence); the remaining text
+is delegated to nested field parsing, bounded by the next heading of any
+level (a paragraph can never itself contain a heading). See
+`get_extent`/`from_text`/`__str__` docstrings below for the full
+mechanics.
 
 **Methods:**
 

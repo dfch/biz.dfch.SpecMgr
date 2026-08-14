@@ -65,7 +65,7 @@ class ReqFrontmatter(MarkdownFrontmatter):
     unchanged from :class:`MarkdownFrontmatter`.
     """
 
-    type: Literal["req"] = "req"
+    type: Literal["req"] = "req"  # type: ignore
 
     @field_validator("status")
     @classmethod

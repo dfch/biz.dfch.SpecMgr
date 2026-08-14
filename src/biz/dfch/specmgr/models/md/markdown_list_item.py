@@ -41,48 +41,24 @@ _MARKER_RE = re.compile(r"^(?:[-*+]|\d+[.)]) ")
 class MarkdownListItem(MarkdownStr):
     """One item ("li") of a markdown bullet or numbered list.
 
-    Unlike `MarkdownSection`/`MarkdownParagraph`, there is no dedicated
-    container class for the list itself (no `MarkdownList`/`MarkdownBulletList`/
-    `MarkdownOrderedList`) -- a `MarkdownListItem` (or a subclass of it) is used
-    purely as `items: list[MarkdownListItem]` (or `list[MarkdownListItem] | None`)
-    on whatever `MarkdownSection`/`MarkdownParagraph`/`MarkdownListItem` wants a
-    list-shaped field, fully reusing the existing `list[MarkdownStr]` machinery
-    (`MarkdownStr.process_list_field`, already built for `Optional`/repeated
-    fields in general). Consequently a bare `MarkdownListItem` can only ever be
-    parsed as part of such a list -- `get_extent`/`from_text` both require the
-    enclosing `bullet_list_open`/`ordered_list_open` wrapper token to be present,
-    so it cannot be used as a top-level/scalar field type on its own.
+    Used only as `items: list[MarkdownListItem]` (or `list[MarkdownListItem] |
+    None`) on a `MarkdownSection`/`MarkdownParagraph`/`MarkdownListItem` --
+    there is no separate list-container class, and a bare item cannot be
+    parsed as a top-level/scalar field on its own; every item is assumed to
+    start with at least one paragraph (its own lead text).
 
-    Every item is assumed to start with at least one paragraph (its own lead
-    text) -- `from_text` asserts this.
+    Leaf (no declared nested fields, the default): `_value` holds the item's
+    complete extent verbatim, marker included. Composite (a subclass declares
+    fields): `_value` holds only the item's own leading paragraph, marker
+    included -- the marker cannot be reconstructed from class metadata alone,
+    so it is kept verbatim -- and the remainder is dedented and delegated to
+    nested field parsing; `__str__` re-indents the children's rendered output
+    by the marker's own width before recombining.
 
-    - Leaf (no nested `MarkdownStr`/`list[MarkdownStr]` fields declared, the
-      default for a bare `MarkdownListItem`): `_value` holds the item's
-      complete extent verbatim, marker and any nested content (e.g. an
-      un-modelled nested sub-list) included -- nothing else will ever retain
-      it, exactly like a leaf `MarkdownSection`/`MarkdownParagraph`.
-    - Composite (a subclass declares fields, e.g. a nested
-      `notes: list[MarkdownListItem]` for a sub-list): `_value` holds only the
-      item's own leading paragraph, verbatim *including its marker*
-      (`"- "`/`"1. "`) -- unlike `MarkdownParagraph`, whose marker-free prose
-      needs no reconstruction, a list item's marker cannot be reconstructed
-      from class metadata (it depends on bullet-vs-ordered and, for ordered
-      lists, the item's final position, neither of which the item itself
-      knows), so it is kept verbatim instead. The remainder is dedented and
-      delegated to `super().from_text()` for the declared fields, exactly
-      like `MarkdownParagraph`'s composite case; `__str__` re-indents the
-      declared fields' rendered output by the marker's own width before
-      recombining.
-
-    Round-trip note: because every item is independently sliced,
-    `mdformat`-renormalized, and (for a composite item) reassembled by this
-    class before the *parent* class's already-existing `list[MarkdownStr]`
-    rendering rejoins every item, a genuinely *tight* source list currently
-    round-trips to a structurally-equivalent *loose* list rather than a
-    byte-exact one -- an accepted, documented exception to the engine's
-    otherwise byte-exact round-trip (loose lists are unaffected and remain
-    byte-exact). This matches this feature's own founding ADR, which already
-    treats list-rendering variance as out of scope for byte-exact fidelity.
+    Round-trip note: a tight source list currently round-trips to a
+    structurally-equivalent loose list rather than byte-exact (loose lists
+    remain byte-exact) -- an accepted, documented exception; see
+    `from_text`/`__str__` docstrings below for the full mechanics.
     """
 
     @classmethod
