@@ -117,7 +117,8 @@ namespaces = true
     "py.typed"
 ]
 "biz.dfch.specmgr.req.resources" = [
-    "data/*.md"
+    "data/*.md",
+    "data/*.json"
 ]
 
 [tool.coverage.run]

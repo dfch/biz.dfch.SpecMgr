@@ -23,7 +23,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from biz.dfch.specmgr.req.resources import req_schema as req_schema_module
+from biz.dfch.specmgr.req import _data
 from biz.dfch.specmgr.req.resources.req_schema import req_schema
 
 
@@ -31,7 +31,7 @@ class TestReqSchemaResource(unittest.TestCase):
     """Tests for the `req_schema` resource function."""
 
     def test_returns_parsed_repo_schema_by_default(self):
-        """Against the real, committed docs/req_schema.json, without any patching."""
+        """Against the real, committed packaged req_schema.json, without any patching."""
         sut = req_schema
 
         result = sut()
@@ -49,7 +49,7 @@ class TestReqSchemaResource(unittest.TestCase):
             schema_path = Path(tmp) / "req_schema.json"
             schema_path.write_text(json.dumps(payload), encoding="utf-8")
 
-            with mock.patch.object(req_schema_module, "_REQ_SCHEMA_PATH", schema_path):
+            with mock.patch.object(_data, "_SCHEMA_PATH", schema_path):
                 sut = req_schema
 
                 result = sut()
@@ -62,7 +62,7 @@ class TestReqSchemaResource(unittest.TestCase):
             schema_path = Path(tmp) / "req_schema.json"
             schema_path.write_text(json.dumps({"$comment": "v1"}), encoding="utf-8")
 
-            with mock.patch.object(req_schema_module, "_REQ_SCHEMA_PATH", schema_path):
+            with mock.patch.object(_data, "_SCHEMA_PATH", schema_path):
                 sut = req_schema
 
                 first = sut()
@@ -73,11 +73,11 @@ class TestReqSchemaResource(unittest.TestCase):
             self.assertEqual(second["$comment"], "v2")
 
     def test_raises_file_not_found_when_schema_missing(self):
-        """A missing docs/req_schema.json must propagate FileNotFoundError uncaught."""
+        """A missing packaged req_schema.json must propagate FileNotFoundError uncaught."""
         with tempfile.TemporaryDirectory() as tmp:
             missing_path = Path(tmp) / "does-not-exist.json"
 
-            with mock.patch.object(req_schema_module, "_REQ_SCHEMA_PATH", missing_path):
+            with mock.patch.object(_data, "_SCHEMA_PATH", missing_path):
                 sut = req_schema
 
                 with self.assertRaises(FileNotFoundError):
@@ -89,7 +89,7 @@ class TestReqSchemaResource(unittest.TestCase):
             schema_path = Path(tmp) / "req_schema.json"
             schema_path.write_text("{not valid json", encoding="utf-8")
 
-            with mock.patch.object(req_schema_module, "_REQ_SCHEMA_PATH", schema_path):
+            with mock.patch.object(_data, "_SCHEMA_PATH", schema_path):
                 sut = req_schema
 
                 with self.assertRaises(json.JSONDecodeError):

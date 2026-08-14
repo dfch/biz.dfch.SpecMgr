@@ -27,7 +27,9 @@ specmgr://version --    Installed version number of the ``biz-dfch-specmgr`` pac
 specmgr://adr/list --   Ids/titles/statuses/filenames of every ADR
                         (``.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md``).
 specmgr://adr/{id} --    Full ADR document for a given id (``.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md``).
-specmgr://req/schema -- The persisted REQ JSON Schema (``docs/req_schema.json``).
+specmgr://req/schema -- The generated REQ JSON Schema, read from a packaged data copy
+                        (kept in sync with ``docs/req_schema.json``) so it works from a
+                        real, non-editable install.
 specmgr://req/example -- A complete, valid sample requirement document as raw markdown.
 specmgr://req/template -- A requirement template (every field present, placeholder text)
                           as raw markdown.

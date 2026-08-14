@@ -88,6 +88,17 @@ jobs:
           exit 1
         }
 
+    - name: Make sure `src/biz/dfch/specmgr/req/resources/data/req_schema.json` is correct
+      # Packaged copy of the same schema, read by the `specmgr://req/schema` MCP resource
+      # via importlib.resources (Task 3.8) so it works from a real, non-editable install.
+      # Same generator as the step above, just a second --output-dir.
+      if: matrix.python-version == '3.13'
+      run: |
+        uv run --frozen --all-extras --python 3.13.13 specmgr schema --type req --output-dir src/biz/dfch/specmgr/req/resources/data || {
+          echo "::error::src/biz/dfch/specmgr/req/resources/data/req_schema.json is out of date -- run 'uv run --frozen --all-extras specmgr schema --type req --output-dir src/biz/dfch/specmgr/req/resources/data' and commit the result (see AGENTS.md)."
+          exit 1
+        }
+
     - name: Make sure `docs/coverage.svg` is correct
       if: matrix.python-version == '3.13'
       run: |

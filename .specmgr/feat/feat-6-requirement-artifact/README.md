@@ -3,7 +3,7 @@ created: 2026-08-13
 id: feat-6-requirement-artifact
 status: in-progress
 updated: 2026-08-14
-version: 1.5.0
+version: 1.5.1
 ---
 
 # Feature: Requirement (REQ) artifact template with characteristic assignment
@@ -102,7 +102,7 @@ progresses (edit, don't duplicate).
 - [x] Task 3.5: Add `specmgr://req/schema` MCP resource — reads the persisted `docs/req_schema.json` directly from disk (trusts the `specmgr-schema` pre-commit hook to keep it current, same trust model as `adr-toc`'s `docs/adr/README.md`; no `commands/schema.py`/`typer` import, no on-the-fly regeneration). URI is deliberately unversioned (see Decisions Made) — depends on: Task 3.4 — status: **completed (2026-08-14)** — `req/resources/req_schema.py` (new `req/resources/` sub-package, registered from `req/__init__.py`); reads and `json.loads()`s a fixed path (no env var — this is a build artifact of the package's own source tree, not user-authored content), returning a parsed `dict`; missing/corrupted file raises `FileNotFoundError`/`json.JSONDecodeError` uncaught. Path resolution factored into a new, dependency-free `biz/dfch/specmgr/_paths.py` (`REPO_ROOT`/`DOCS_DIR`), shared with (and replacing the previously-duplicated computation in) `commands/schema.py`, so neither the `cli` extra (`typer`) nor the `mcp` extra leaks into the other's import graph.
 - [x] Task 3.6: Add `specmgr://req/...` resources and tools: get_example - return an example file. The example file will be served by reading a file from disk (as we already do with the schema). We will search the example as markdown (maybe we have to encode this?) - opinions on this? The file must exist on disk (build time guarantee). Hard exception if not true. — depends on: Task 3.2 — status: **completed (2026-08-14)** — implemented as the `get_req_example` tool (domain-qualified, not the task's literal "get_example" wording) plus the `specmgr://req/example` resource (unversioned URI, matching the task's own wording and `specmgr://req/schema`'s precedent) — see Recent Updates and Decisions Made for the packaged-data storage choice, the raw-markdown/no-encoding return shape, and the naming rationale.
 - [x] Task 3.7: Add `specmgr://req/...` resources and tools: get_template - return a template with all optional field and example text - very similar to the task 3.6. But this is not a full example, but a file with all fields and "blind text" (short lorem ipsum or similar) - same mechanism as in task 3.6. I already created a template file: `src/biz/dfch/specmgr/req/resources/data/req_template.md`. — depends on: Task 3.2 — status: **completed (2026-08-14)** — implemented as the `get_req_template` tool plus the `specmgr://req/template` resource, mirroring Task 3.6's `get_req_example`/`specmgr://req/example` shape exactly (same `req/_data.py` packaged-data pattern, same naming rationale) — see Recent Updates and Decisions Made for the template's own parse-validity caveat (independently being addressed, see the template file's own in-progress edits).
-- [ ] Task 3.8: Make sure, that `docs/req_schema.json` is accessible by MCP server when the mcp is installed and not in DEV mode. If current location is not accessible by MCP then make a COPY of it (via pre-commit hook) to `src/biz/dfch/specmgr/req/resources/data/` and load from there as we already with `req_example.md`.
+- [x] Task 3.8: Make sure, that `docs/req_schema.json` is accessible by MCP server when the mcp is installed and not in DEV mode. If current location is not accessible by MCP then make a COPY of it (via pre-commit hook) to `src/biz/dfch/specmgr/req/resources/data/` and load from there as we already with `req_example.md`. — depends on: Task 3.5 — status: **completed (2026-08-14)** — see Recent Updates and Decisions Made.
 - [ ] Task 3.9: Discuss `specmgr://req/...` resources and tools and prompts: discuss what is useful for this artifact type
 
 **Note:** If a task's scope changes mid-flight, edit its description in place;
@@ -113,13 +113,68 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-14**: Phase 1 (Specification) and Phase 2 (Pydantic Models & Parser) are both **fully complete**, including `req_schema.json` (Task 1.2), now generated (not hand-authored) via a new generic `specmgr schema` CLI command (JSON Schema 2020-12), with CI wiring and a pre-commit hook keeping it in sync. Phase 3 (MCP Surface) now has three tools (`parse_req`, `get_req_example`, `get_req_template`) and three resources (`specmgr://req/schema`, `specmgr://req/example`, `specmgr://req/template`); the generated schema carries a `"$comment": "v1"` layout-version marker (Task 3.4). `specmgr req-parse` (Task 3.3) is the first REQ CLI command. Prompts and Tasks 3.8 (MCP-installed accessibility of `docs/req_schema.json`)/3.9 (design discussion) remain not-started.
+**As of 2026-08-14**: Phase 1 (Specification) and Phase 2 (Pydantic Models & Parser) are both **fully complete**, including `req_schema.json` (Task 1.2), now generated (not hand-authored) via a new generic `specmgr schema` CLI command (JSON Schema 2020-12), with CI wiring and a pre-commit hook keeping it in sync. Phase 3 (MCP Surface) now has three tools (`parse_req`, `get_req_example`, `get_req_template`) and three resources (`specmgr://req/schema`, `specmgr://req/example`, `specmgr://req/template`); the generated schema carries a `"$comment": "v1"` layout-version marker (Task 3.4). `specmgr req-parse` (Task 3.3) is the first REQ CLI command. `specmgr://req/schema` now reads a packaged-data copy (`req/resources/data/req_schema.json`) instead of `docs/req_schema.json` directly, so it also works from a real, non-editable install (Task 3.8). Prompts and Task 3.9 (design discussion) remain not-started.
 
 ### Blockers
 
 None.
 
 ### Recent Updates
+
+#### 2026-08-14 (continued) — Task 3.8 implemented: `specmgr://req/schema` now reads a packaged-data copy, not `docs/req_schema.json` directly
+
+- **No new copy logic in `commands/schema.py`**: the existing, fully generic
+  `specmgr schema --type req --output-dir <dir>` (already covered end-to-end
+  by `tests/commands/test_schema.py`) is simply invoked a **second** time
+  against `src/biz/dfch/specmgr/req/resources/data/` -- one new, committed
+  build artifact (`req/resources/data/req_schema.json`), zero new generation
+  code. `docs/req_schema.json` is unchanged and still generated/committed as
+  before (kept per Decisions Made).
+- `req/_data.py` gained a third patchable constant/reader, mirroring
+  `_EXAMPLE_PATH`/`read_req_example_text()` exactly: `_SCHEMA_PATH` (an
+  `importlib.resources` `Traversable`) and `read_req_schema_text() -> str`
+  (returns raw JSON text; the caller `json.loads()`s it, same split of
+  responsibility as the example/template readers).
+- `req/resources/req_schema.py`'s `req_schema()` resource now calls
+  `json.loads(read_req_schema_text())` instead of reading
+  `_paths.DOCS_DIR / "req_schema.json"` directly -- the `_paths`/`DOCS_DIR`
+  import was removed entirely from this module. This is the actual fix:
+  `DOCS_DIR` only resolves from an editable/source checkout (per its own
+  docstring), which would silently break `specmgr://req/schema` for a real
+  `pip install`; the packaged copy is real package data (`pyproject.toml`'s
+  `"biz.dfch.specmgr.req.resources"` package-data glob extended from
+  `["data/*.md"]` to `["data/*.md", "data/*.json"]`), so it survives one.
+- **Two independent drift gates, not one chained command**: a new
+  `specmgr-schema-req-package` pre-commit hook and a new "Make sure
+  `src/biz/dfch/specmgr/req/resources/data/req_schema.json` is correct" CI
+  step (Python-3.13-only, same as the existing `docs/req_schema.json` step)
+  each just run the second `specmgr schema` invocation and rely on its own
+  exit code -- deliberately not chained with `&&`/`;` into the existing
+  `specmgr-schema` hook/step, so each artifact's regeneration/drift check
+  stays its own clean, independently-failing gate (consistent with
+  `specmgr-docs`/`specmgr-adr-toc`/`specmgr-schema` already being three
+  separate entries, not one).
+- `_paths.py`'s module docstring and `server.py`'s `specmgr://req/schema`
+  resource-list line were both updated -- neither should still claim this
+  resource reads `docs/req_schema.json` via `DOCS_DIR` now that it doesn't.
+- Tests: `tests/req/test_data.py` gained `TestReadReqSchemaText` (4 tests,
+  mirroring the existing example/template reader test classes: real
+  packaged file, patched round-trip, fresh-read-per-call, missing-file
+  `FileNotFoundError`); `tests/req/resources/test_req_schema.py` was
+  rewritten to patch `req._data._SCHEMA_PATH` instead of the now-removed
+  `_REQ_SCHEMA_PATH` module constant, assertions otherwise unchanged. No
+  changes needed to `tests/commands/test_schema.py` -- `--type`/
+  `--output-dir` were already fully covered generically. 664 tests
+  project-wide (up from 660), no regressions. `ruff format --check`/
+  `ruff check`/`vulture` clean; `specmgr docs` regenerated (picks up the
+  `_paths.py`/`req._data`/`req.resources.req_schema`/`server.py` docstring
+  changes); `specmgr schema` (both invocations) and `specmgr adr-toc` both
+  confirmed to have no drift.
+- **Not verified against a real, non-editable wheel install this time**
+  (unlike Task 3.6's `get_req_example`, which was) -- deferred to manual
+  testing outside this session, per explicit instruction; the packaged-data/
+  `importlib.resources` mechanism itself is already proven by that Task 3.6
+  precedent.
 
 #### 2026-08-14 (continued) — Task 3.7 implemented: `get_req_template` tool + `specmgr://req/template` resource
 
@@ -556,6 +611,8 @@ feature's own `parse_req` tool.
 - Created `tests/req/models/v1/test_frontmatter.py` — 8 test cases mirroring existing patterns, all passing. 590 tests total (no regressions), ruff format/check clean, vulture clean.
 
 ### Decisions Made
+
+- **`specmgr://req/schema` reads a packaged-data copy, not `docs/req_schema.json` directly (Task 3.8)**: Task 3.5's implementation notes had accepted `DOCS_DIR`-based reads as an out-of-scope limitation ("no `mcp.run()` caller exists yet regardless"). Task 3.8 closes that gap specifically for this resource: `commands/schema.py` stays unmodified and doc-type-generic -- its existing `--type`/`--output-dir` options are simply invoked a second time, writing an additional, committed copy to `src/biz/dfch/specmgr/req/resources/data/req_schema.json` (real package data, per `pyproject.toml`), which `req._data.read_req_schema_text()` loads via `importlib.resources`, the same mechanism `req_example.md`/`req_template.md` already use. `docs/req_schema.json` is kept as-is -- it remains the human/GitHub-browsable, CI-checked artifact; the packaged copy is purely what the MCP resource itself reads. Two independent pre-commit hooks/CI steps (not one chained command) keep both copies in sync, matching this repo's existing one-hook-per-artifact convention. `commands/schema.py`'s own `DOCS_DIR` default remains fine as-is, since it is a dev/CI-only CLI command, not something that needs to survive a non-editable install.
 
 - **Characteristics/Tags modeled as flat lists, not key-value pairs**: REQ-002 originally described "characteristics (key-value pairs or tags)". The implemented `Characteristics`/`Tags` sections are both simple bullet/numbered lists (`list[MarkdownListItem]`, e.g. "Safety"/"Reliability" or "Combustion Engines"/"Vehicles") rather than a key-value map. This is scoped entirely to this feature's own implementation details (not architecture-level), so it is logged here rather than as a full ADR. Revisit if a future requirement needs structured key-value metadata rather than a flat tag/category list.
 
