@@ -97,7 +97,7 @@ progresses (edit, don't duplicate).
 
 - [x] Task 3.1: Define MCP tools, prompts, and resources for REQ management — depends on: Phase 2 complete — status: **partially completed (2026-08-13)** — only the `parse_req` tool defined/implemented so far (mirrors `uc/tools/`'s current scope, which also only has `parse_uc`); prompts/resources and id-based file storage (`_paths.py`/`_io.py` equivalent) not yet specified.
 - [x] Task 3.2: Implement MCP per specification (Task 3.1) — depends on: Task 3.1 — status: **partially completed (2026-08-13)** — `req/tools/parse_req.py` (`@mcp.tool()` wrapper, reads path from disk, delegates to `parser.parse_req`), `req/tools/__init__.py`, `req/__init__.py`; registered in `server.py` (`from . import adr, general, req, resources, uc`). Remaining Task 3.1 scope (prompts, resources, further tools) still not-started.
-- [ ] Task 3.3: Implement CLI commands (`req-get`, `req-parse`, etc.) — depends on: Task 3.2 — status: not-started
+- [x] Task 3.3: Implement CLI commands (`req-parse`, etc.) — depends on: Task 3.2 — status: **completed (2026-08-14)** — `commands/req_parse.py` (`req-parse <path> [--format json|markdown]`), registered in `cli.py`/`commands/__init__.py`. Scope narrowed to path-based `req-parse` only (mirroring `req.tools.parse_req`'s own path-based signature); no `req-get` (id-based) command, since REQ still has no id → file-path lookup layer (`_paths.py`/`_io.py` equivalent) — see Decisions Made.
 - [x] Task 3.4: Add a `"$comment"` schema-version marker (e.g. `"v1"`, matching `req/models/v1`'s package version — not `"req v1"`, since the doc type is already clear from the file/resource identity) to `generate_req_schema()`'s emitted JSON, so a caller can detect a REQ schema layout change without diffing the whole file — depends on: Task 2.7 — status: **completed (2026-08-14)** — `SCHEMA_COMMENT_VERSION = "v1"` constant added to a new `req/models/v1/_util.py` (mirroring `models/adr/v1/_util.py`'s precedent), re-exported from `req/models/v1/__init__.py`, and injected as `generate_req_schema()`'s `$comment` key. `docs/req_schema.json` regenerated.
 - [x] Task 3.5: Add `specmgr://req/schema` MCP resource — reads the persisted `docs/req_schema.json` directly from disk (trusts the `specmgr-schema` pre-commit hook to keep it current, same trust model as `adr-toc`'s `docs/adr/README.md`; no `commands/schema.py`/`typer` import, no on-the-fly regeneration). URI is deliberately unversioned (see Decisions Made) — depends on: Task 3.4 — status: **completed (2026-08-14)** — `req/resources/req_schema.py` (new `req/resources/` sub-package, registered from `req/__init__.py`); reads and `json.loads()`s a fixed path (no env var — this is a build artifact of the package's own source tree, not user-authored content), returning a parsed `dict`; missing/corrupted file raises `FileNotFoundError`/`json.JSONDecodeError` uncaught. Path resolution factored into a new, dependency-free `biz/dfch/specmgr/_paths.py` (`REPO_ROOT`/`DOCS_DIR`), shared with (and replacing the previously-duplicated computation in) `commands/schema.py`, so neither the `cli` extra (`typer`) nor the `mcp` extra leaks into the other's import graph.
 
@@ -109,13 +109,53 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-14**: Phase 1 (Specification) and Phase 2 (Pydantic Models & Parser) are both **fully complete**, including `req_schema.json` (Task 1.2), now generated (not hand-authored) via a new generic `specmgr schema` CLI command (JSON Schema 2020-12), with CI wiring and a pre-commit hook keeping it in sync. Phase 3 (MCP Surface) has its first tool, `parse_req`, and its first resource, `specmgr://req/schema`, both implemented and registered; the generated schema carries a `"$comment": "v1"` layout-version marker (Task 3.4). Prompts and further tools remain unspecified/not-started. No CLI commands yet (Task 3.3).
+**As of 2026-08-14**: Phase 1 (Specification) and Phase 2 (Pydantic Models & Parser) are both **fully complete**, including `req_schema.json` (Task 1.2), now generated (not hand-authored) via a new generic `specmgr schema` CLI command (JSON Schema 2020-12), with CI wiring and a pre-commit hook keeping it in sync. Phase 3 (MCP Surface) has its first tool, `parse_req`, and its first resource, `specmgr://req/schema`, both implemented and registered; the generated schema carries a `"$comment": "v1"` layout-version marker (Task 3.4). Prompts and further REQ tools remain unspecified/not-started. `specmgr req-parse` (Task 3.3) is now implemented, the first REQ CLI command.
 
 ### Blockers
 
 None.
 
 ### Recent Updates
+
+#### 2026-08-14 (continued) — Task 3.3 implemented: `specmgr req-parse` CLI command
+
+- New `src/biz/dfch/specmgr/commands/req_parse.py` — the first REQ-specific CLI
+  command, registered as flat top-level `specmgr req-parse <path>`
+  (Typer auto-derives the hyphenated name from the `req_parse` function, same
+  as `adr_toc` → `adr-toc`), consistent with this repo's existing flat command
+  list (no sub-app/command-group pattern introduced).
+- Path-based only, mirroring `req.tools.parse_req`'s own `Path(path).read_text(...)`
+  → `parse_req(text)` flow — **no `req-get`** (id-based lookup): REQ has no
+  `_paths.py`/`_io.py` equivalent to ADR's yet (Task 3.1/3.2 note this gap
+  explicitly), so an id → file-path resolver would need to be built first;
+  deferred to a future task rather than bundled into this one. Narrows Task
+  3.3's original "`req-get`, `req-parse`, etc." wording down to just
+  `req-parse` — see Decisions Made.
+- Two output formats: `--format json` (default) prints the full parsed
+  `ReqDocument` as `rich`-syntax-highlighted JSON (`Console.print_json`);
+  `--format markdown` re-reads the original file, splits it into its raw
+  YAML frontmatter block and markdown body, reformats the body via the
+  existing `format_text()` helper (`models/md/_markdown.py`, the same one
+  `general.tools.mdformat` uses) **without writing anything back to disk**,
+  and renders both through `rich` (`Syntax` for the frontmatter, `Markdown`
+  for the body). This is the first use of the `rich` dependency anywhere in
+  `src/` — previously declared in the `cli` extra (`pyproject.toml`) but
+  never actually imported.
+- Parse errors (missing file → `OSError`, malformed structure →
+  `AssertionError`, invalid field values → `pydantic.ValidationError`) are
+  caught here and reported via `typer.echo(f"Error parsing '{path}': {ex}")`
+  (the original exception's message included) followed by `typer.Exit(1)` —
+  deliberately diverging from the parser/MCP tool's own "let it raise"
+  philosophy, since a CLI should not surface a raw Python traceback for an
+  expected failure mode. An unknown `--format` value is rejected the same
+  way `schema.py`'s unknown `--type` is (plain `typer.echo` + `typer.Exit(1)`,
+  no `err=True`, matching this repo's existing convention across all other
+  commands).
+- Tests: `tests/commands/test_req_parse.py` (10 tests, mirroring
+  `test_schema.py`'s split between a pure-helper test class and a
+  CLI-wrapper test class) — 638 tests project-wide (up from 628), no
+  regressions. `ruff format --check`/`ruff check`/`vulture` clean;
+  `specmgr docs` regenerated (new `commands.req_parse` module page).
 
 #### 2026-08-14 (continued) — Task 3.5 implemented: `specmgr://req/schema` MCP resource
 
@@ -434,6 +474,8 @@ feature's own `parse_req` tool.
 - **JSON Schema dialect: 2020-12 (native Pydantic v2 output), not draft-07**: Task 1.2 originally specified "JSON Schema draft-07", matching the existing hand-authored `uc_schema.json`'s dialect (`.specmgr/feat/feat-4-use-cases/v2/uc_schema.json`). REQ's schema is instead **generated** directly from `ReqDocument.model_json_schema()` — Pydantic v2's native output (JSON Schema draft 2020-12: `$defs` not `definitions`, `prefixItems` where applicable). Converting to draft-07 would require lossy post-processing (`$defs`→`definitions`, `$ref` rewriting; some 2020-12-only keywords have no exact draft-07 equivalent) purely to match a dialect with no known external consumer yet (see the entry above). This deliberately diverges from `uc_schema.json`'s hand-authored draft-07 precedent — revisit if a future consumer specifically requires draft-07. Scoped to this feature's own generated-artifact choice, not a repo-wide architectural decision, so logged here rather than as a full ADR.
 - **`specmgr://req/schema` resource URI is unversioned (Task 3.5)**: considered addressing it as `specmgr://req/schema/v1` (mirroring `req/models/v1`'s package path) but rejected it — no existing resource or tool URI in this codebase ever exposes the internal `vN` model-package version: `specmgr://version`/`specmgr://adr/list`/`specmgr://adr/{id}` are all unversioned, and `parse_req`/`parse_uc` silently import from `models.v1`/`models.v2` respectively without either fact reaching the tool name, description, or signature. `vN` is purely an internal package-layout detail (ADR d54abe50's schema-versioning strategy), never part of the public MCP surface. Keeping `specmgr://req/schema` unversioned means it always means "the current REQ schema" — exactly like the tools already do — so a future `req/models/v2` (if REQ ever follows UC's v1→v2 migration) only changes what the resource reads internally, not its address, and callers never have to choose between two live, drifting endpoints. Scoped to this feature's own resource design, not a repo-wide architectural decision, so logged here rather than as a full ADR.
 - **Schema `"$comment"` version marker omits the doc-type name (Task 3.4)**: the marker added to `generate_req_schema()`'s output is a bare version token (e.g. `"v1"`), not `"req v1"` — the doc type is already unambiguous from context (the file is `docs/req_schema.json`, the resource is `specmgr://req/schema`), so repeating it inside the value would be redundant. Purpose is narrowly to let a caller that cached an earlier fetch notice the schema's layout changed, without diffing the whole document.
+- **`req-parse` scoped down to path-based only, no `req-get` (Task 3.3)**: Task 3.3 originally named `req-get`/`req-parse` as examples. Only `req-parse` (raw filesystem path, mirroring `parse_req`'s own signature) was implemented — `req-get` (by id) would need a REQ equivalent of `adr/tools/_paths.py`/`_io.py` (base-dir scan + id → path resolution) that does not exist yet and is out of this task's scope. Revisit once REQ gets its own id-based file-storage layer.
+- **`req-parse --format markdown` reformats in-memory only, reusing `format_text()` rather than a new `render_req()`**: no `render_req()` (analogous to `render_adr()`) exists for REQ, and building one purely for CLI display purposes was rejected as unnecessary scope — the CLI instead re-reads the original file, splits frontmatter, and normalizes the body via the same `format_text()` helper `general.tools.mdformat` already uses, without ever writing back to disk. `--format json` (default) and `--format markdown` both render through `rich` (`Console.print_json`/`Syntax`/`Markdown`) — the first actual use of the `rich` dependency in `src/`, previously declared but unused. Both choices are scoped entirely to this command's own implementation, not architecture-level, so logged here rather than as a full ADR.
 
 ### Related PRs / Commits
 

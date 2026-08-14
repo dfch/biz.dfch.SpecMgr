@@ -60,6 +60,9 @@ class ReqFrontmatter(MarkdownFrontmatter):
         free-form ``str = "draft"`` default to this closed seven-value set.
         Blank/absent still defaults to ``"draft"`` (inherited from the base's
         ``_default_blank_status_to_draft`` validator, which runs before this one).
+    version:
+        The ``models.md`` schema major.minor.patch version this document's
+        frontmatter was written with. DO NOT CHANGE!
 
     All other fields (``id``, ``created``, ``updated``, ``version``) are inherited
     unchanged from :class:`MarkdownFrontmatter`.
