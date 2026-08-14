@@ -113,11 +113,16 @@ First-line docstrings from each module, organized by domain:
 - `req/resources/req_template.py` — Resource: specmgr://req/template (Task 3.7).
 - `req/tools/__init__.py` — MCP tool wrappers for requirements (mirrors ``uc/tools/``'s own shape).
 - `req/tools/_io.py` — Thin file read helpers over ``parse_req`` (Task 3.11).
+- `req/tools/_lock.py` — Per-document in-process lock guarding requirement mutations.
 - `req/tools/_paths.py` — Requirement base directory resolution and id -> path lookup (Task 3.11).
+- `req/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_req``/``update_req``
 - `req/tools/create_req.py` — ``@mcp.tool()`` wrapper: create_req (Task 3.12).
 - `req/tools/get_req_example.py` — ``@mcp.tool()`` wrapper: get_req_example (Task 3.6).
 - `req/tools/get_req_template.py` — ``@mcp.tool()`` wrapper: get_req_template (Task 3.7).
 - `req/tools/parse_req.py` — ``@mcp.tool()`` wrapper: parse_req.
+- `req/tools/set_status_req.py` — ``@mcp.tool()`` wrapper: set_status_req (Task 3.14).
+- `req/tools/update_req.py` — ``@mcp.tool()`` wrapper: update_req (Task 3.13).
+- `req/tools/validate_req.py` — ``@mcp.tool()`` wrapper: validate_req (Task 3.16).
 
 **resources/**
 
@@ -153,4 +158,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 92
+**Test files**: 97

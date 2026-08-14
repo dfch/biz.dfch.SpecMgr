@@ -9,7 +9,8 @@ already-validated ``content`` text is persisted byte-for-byte, and only the
 small frontmatter YAML block is code-generated and prepended (Task 3.9's
 design). There is therefore no ``write_req``/``render_req`` in
 ``req.tools._io`` for this tool to call -- the frontmatter+content
-composition happens directly in this module instead.
+composition is factored into ``req.tools._write.write_req_file`` instead,
+shared with ``update_req`` (Task 3.13).
 
 Thin file-I/O adapter; there is no in-memory cache of a parsed
 :class:`~biz.dfch.specmgr.req.models.v1.ReqDocument` -- the ``.md`` file
@@ -17,24 +18,6 @@ itself is always the source of truth, matching every other tool in this
 codebase.
 
 ## Functions
-
-### `_write_req_file(path: 'Path', frontmatter_: 'ReqFrontmatter', content: 'str') -> 'None'`
-
-Compose a full requirement file (frontmatter + body) and write it to ``path``.
-
-``content`` is embedded verbatim, byte-for-byte -- it is never
-reformatted/re-rendered here, per this module's own docstring.
-
-Parameters
-----------
-path:
-    The destination file path.
-frontmatter_:
-    The already-constructed, already-validated frontmatter to serialize
-    as the file's YAML block.
-content:
-    The raw body markdown, exactly as submitted by the caller.
-
 
 ### `create_req(content: 'str') -> 'ReqDocument'`
 

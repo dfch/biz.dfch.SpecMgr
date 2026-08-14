@@ -24,7 +24,8 @@ already-validated ``content`` text is persisted byte-for-byte, and only the
 small frontmatter YAML block is code-generated and prepended (Task 3.9's
 design). There is therefore no ``write_req``/``render_req`` in
 ``req.tools._io`` for this tool to call -- the frontmatter+content
-composition happens directly in this module instead.
+composition is factored into ``req.tools._write.write_req_file`` instead,
+shared with ``update_req`` (Task 3.13).
 
 Thin file-I/O adapter; there is no in-memory cache of a parsed
 :class:`~biz.dfch.specmgr.req.models.v1.ReqDocument` -- the ``.md`` file
@@ -36,9 +37,6 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from pathlib import Path
-
-import frontmatter
 
 from ...general.tools._doc_paths import slugify
 from ...models.md import CURRENT_SCHEMA_VERSION
@@ -46,6 +44,7 @@ from ...models.md._markdown import format_text
 from ...server import mcp
 from ..models.v1 import ReqDocument, ReqFrontmatter, Requirement
 from ._paths import ensure_req_base_dir
+from ._write import write_req_file
 
 
 @mcp.tool(
@@ -92,7 +91,7 @@ def create_req(content: str) -> ReqDocument:
     body = Requirement.from_text(format_text(content))
 
     new_id = str(uuid.uuid4())
-    now = datetime.now().isoformat(timespec="seconds")
+    now = datetime.now().isoformat(timespec="microseconds")
     new_frontmatter = ReqFrontmatter(
         id=new_id,
         type="req",
@@ -105,28 +104,5 @@ def create_req(content: str) -> ReqDocument:
 
     filename = f"req-{new_id}-{slugify(body.text)}.md"
     base_dir = ensure_req_base_dir()
-    _write_req_file(base_dir / filename, new_frontmatter, content)
+    write_req_file(base_dir / filename, new_frontmatter, content)
     return new_doc
-
-
-def _write_req_file(path: Path, frontmatter_: ReqFrontmatter, content: str) -> None:
-    """Compose a full requirement file (frontmatter + body) and write it to ``path``.
-
-    ``content`` is embedded verbatim, byte-for-byte -- it is never
-    reformatted/re-rendered here, per this module's own docstring.
-
-    Parameters
-    ----------
-    path:
-        The destination file path.
-    frontmatter_:
-        The already-constructed, already-validated frontmatter to serialize
-        as the file's YAML block.
-    content:
-        The raw body markdown, exactly as submitted by the caller.
-    """
-    post = frontmatter.Post(content=content, **frontmatter_.model_dump())
-    text = frontmatter.dumps(post)
-    if not text.endswith("\n"):
-        text += "\n"
-    path.write_text(text, encoding="utf-8")

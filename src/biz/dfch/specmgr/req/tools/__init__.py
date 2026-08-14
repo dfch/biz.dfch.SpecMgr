@@ -25,8 +25,13 @@ content instead (Task 3.7) -- both read a packaged, build-guaranteed data file
 rather than anything on the caller's filesystem. ``create_req`` (Task 3.12)
 assigns a fresh id, builds the frontmatter itself, and writes a new document
 (body markdown only, no frontmatter) under the requirement base directory
-(``req.tools._paths``/``_io``). Import this package to register all
-requirement tools at once::
+(``req.tools._paths``/``_io``). ``update_req`` (Task 3.13) replaces an
+existing document's body the same way, preserving every frontmatter field
+except ``updated``. ``set_status_req`` (Task 3.14) is the only path that
+changes ``status``, also bumping ``updated``, leaving the body untouched.
+``validate_req`` (Task 3.16) is a disk-free, id-free dry run against a
+submitted ``content`` string, independent of the other tools. Import this
+package to register all requirement tools at once::
 
     from biz.dfch.specmgr.req import tools  # noqa: F401 (side-effects only)
 """
@@ -35,10 +40,16 @@ from .create_req import create_req
 from .get_req_example import get_req_example
 from .get_req_template import get_req_template
 from .parse_req import parse_req
+from .set_status_req import set_status_req
+from .update_req import update_req
+from .validate_req import validate_req
 
 __all__ = [
     "create_req",
     "get_req_example",
     "get_req_template",
     "parse_req",
+    "set_status_req",
+    "update_req",
+    "validate_req",
 ]
