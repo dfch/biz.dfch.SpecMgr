@@ -84,7 +84,7 @@ class Level(MarkdownSection2):
         return value
 
 
-_PRIORITY_PATTERN = r"^\d+$"
+_PRIORITY_PATTERN = r"^(0|[1-9][0-9]?)$"  # 0-99, no leading zeros other than "0" itself
 
 
 class Priority(MarkdownSection2):

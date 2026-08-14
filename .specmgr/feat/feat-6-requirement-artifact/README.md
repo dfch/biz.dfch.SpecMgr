@@ -3,7 +3,7 @@ created: 2026-08-13
 id: feat-6-requirement-artifact
 status: in-progress
 updated: 2026-08-14
-version: 1.4.1
+version: 1.4.4
 ---
 
 # Feature: Requirement (REQ) artifact template with characteristic assignment
@@ -82,7 +82,7 @@ progresses (edit, don't duplicate).
 
 - [x] Task 2.1: Write Pydantic model tree under `req/models/v1/` mirroring the schema — depends on: Task 1.3 — status: **completed (2026-08-13)** — `body.py` (all section classes, built on the generic `models/md` `MarkdownStr`/`MarkdownSectionN` engine from `feat-5-md-model-parser`, not a hand-written token parser), `document.py` (`ReqDocument(frontmatter, body)`, mirrors `UcDocument`).
 - [x] Task 2.2: Implement `parse_req(text: str) -> ReqDocument` (free function, following `parse_adr`/`parse_uc` pattern) — depends on: Task 2.1 — status: **completed (2026-08-13)** — `req/models/v1/parser.py`; mirrors `uc.models.v2.parser.parse_uc` exactly: `frontmatter.loads()` → `ReqFrontmatter.model_validate()` (via `_stringify_metadata`) → `Requirement.from_text(format_text(...))`. Same two uncaught error channels as `parse_uc` (`AssertionError` for structural failures, `pydantic.ValidationError` for field/cross-field failures) — no dedicated `ReqParseError`.
-- [ ] Task 2.3: Cross-field model validators (if any invariants arise from the specification) — depends on: Task 2.1 — status: not-started — no cross-field invariants identified yet (unlike UC's extension/sub-variation step-reference resolution).
+- [x] Task 2.3: Cross-field model validators (if any invariants arise from the specification) — depends on: Task 2.1 — status: **closed, not applicable (2026-08-14)** — no cross-field/model-level invariant exists anywhere in the current spec (unlike UC's extension/sub-variation step-reference resolution); the one candidate, validating `related_artifacts`' cross-reference IDs against other documents, is explicitly out of scope for this feature (see Scope) and wouldn't be a `@model_validator` in any case, since it needs data outside the document being validated. Re-open only if a genuine same-document cross-field rule is identified later.
 - [x] Task 2.4: Add field-level `Field(description=...)` (with constraints, e.g. "list must contain at least one item") to `Requirement`'s scalar/optional fields and section `items`/`value` fields — bare attribute docstrings are not picked up by `model_json_schema()`, only explicit `Field(description=...)` is — depends on: Task 2.1 — status: **completed (2026-08-14)** — also extended to `RelatedArtifacts`'s four optional sub-section fields (not literally "items"/"value", but the same optional-field-needs-a-description gap) and `min_length=1` added to every `items: list[MarkdownListItem]` field (`Characteristics`/`Tags`/`Requirements`/`Decisions`/`AcceptanceCriteria`/`Goals`).
 - [x] Task 2.5: Rewrite `req/models/v1/body.py` class docstrings to be self-contained — remove references to `models/adr/v1` and `req_reference.md`, dev-only artifacts an agent reading the emitted JSON schema at tool-discovery time cannot necessarily fetch or read — depends on: Task 2.1 — status: **completed (2026-08-14)** — the **class** docstrings (the only ones `model_json_schema()` surfaces) already had no such references from the 2026-08-14 audit above; only the **module**-level docstring did, cleaned up for consistency even though it never reaches the emitted schema.
 - [x] Task 2.6: Shorten verbose docstrings on shared `models/md` "base" classes referenced by REQ's schema (e.g. `MarkdownListItem` ~2.7k chars, `MarkdownParagraph` ~1.3k chars) — they get inlined into every schema `$defs` entry that uses them, inflating the tool-discovery payload every client fetches — depends on: none — status: **completed (2026-08-14)** — `MarkdownListItem` class docstring ~2.7k → ~1.1k chars, `MarkdownParagraph` ~1.3k → ~0.7k chars (method docstrings, never surfaced in a schema, left untouched); done as a post-closure change to `feat-5-md-model-parser` (which owns the module), logged in that feature's own Recent Updates per the established cross-feature precedent.
@@ -98,6 +98,8 @@ progresses (edit, don't duplicate).
 - [x] Task 3.1: Define MCP tools, prompts, and resources for REQ management — depends on: Phase 2 complete — status: **partially completed (2026-08-13)** — only the `parse_req` tool defined/implemented so far (mirrors `uc/tools/`'s current scope, which also only has `parse_uc`); prompts/resources and id-based file storage (`_paths.py`/`_io.py` equivalent) not yet specified.
 - [x] Task 3.2: Implement MCP per specification (Task 3.1) — depends on: Task 3.1 — status: **partially completed (2026-08-13)** — `req/tools/parse_req.py` (`@mcp.tool()` wrapper, reads path from disk, delegates to `parser.parse_req`), `req/tools/__init__.py`, `req/__init__.py`; registered in `server.py` (`from . import adr, general, req, resources, uc`). Remaining Task 3.1 scope (prompts, resources, further tools) still not-started.
 - [ ] Task 3.3: Implement CLI commands (`req-get`, `req-parse`, etc.) — depends on: Task 3.2 — status: not-started
+- [ ] Task 3.4: Add a `"$comment"` schema-version marker (e.g. `"v1"`, matching `req/models/v1`'s package version — not `"req v1"`, since the doc type is already clear from the file/resource identity) to `generate_req_schema()`'s emitted JSON, so a caller can detect a REQ schema layout change without diffing the whole file — depends on: Task 2.7 — status: not-started
+- [ ] Task 3.5: Add `specmgr://req/schema` MCP resource — reads the persisted `docs/req_schema.json` directly from disk (trusts the `specmgr-schema` pre-commit hook to keep it current, same trust model as `adr-toc`'s `docs/adr/README.md`; no `commands/schema.py`/`typer` import, no on-the-fly regeneration). URI is deliberately unversioned (see Decisions Made) — depends on: Task 3.4 — status: not-started
 
 **Note:** If a task's scope changes mid-flight, edit its description in place;
 rely on git history (`git log -p` on this file) to recover what was
@@ -114,6 +116,50 @@ originally planned, rather than keeping a second copy of the task around.
 None.
 
 ### Recent Updates
+
+#### 2026-08-14 (continued) — Bug fix: `## Priority` accepted any digit string, not just 0-99
+
+Found during the Task 2.3 review above: `Priority.value`'s `Field(description=...)`
+documents the range as "0 to 99", but `_PRIORITY_PATTERN` was `r"^\d+$"` —
+digits-only, no upper bound, so e.g. `"12345"` passed validation despite the
+stated contract. Fixed by narrowing the pattern to `r"^(0|[1-9][0-9]?)$"`
+(0-99, no leading zeros other than "0" itself); the `field_validator` logic
+around it (checking `value.text`, since `value` is a `MarkdownParagraph`
+model, not a plain string) is unchanged.
+
+Not a Task 2.4/2.3 scope change (both are already closed/completed) — fixed
+directly as a bug rather than reopening either task, since it's a pure
+correctness fix with no design decision attached. Added two regression
+tests to `tests/req/models/v1/test_parser.py`
+(`test_priority_out_of_range_raises_validation_error`,
+`test_priority_upper_bound_is_accepted`) — 620 tests project-wide (up from
+618), all passing. `ruff format --check`/`ruff check`/`vulture` clean;
+`specmgr schema` exits 0 (unchanged) since this validator was never
+reflected in the emitted JSON Schema's `pattern` keyword either before or
+after (same pydantic model-vs-string-field limitation noted in the
+2026-08-14 `Level`/`Priority` regression entry below).
+
+#### 2026-08-14 (continued) — Task 2.3 closed as not applicable
+
+Reviewed against `req/models/v1/body.py`'s final state (post Tasks 2.4–2.12):
+no cross-field/model-level invariant exists in the current spec. The only
+candidate — validating `related_artifacts`' cross-reference IDs against
+other documents on disk — is explicitly out of scope for this feature (see
+Scope) and, even if in scope, would need data outside the document being
+validated, so wouldn't be a `@model_validator` regardless. Closed Task 2.3
+rather than leave it open indefinitely, resolving the inconsistency between
+its `not-started` status and "Current Status"'s claim that Phase 2 is fully
+complete.
+
+#### 2026-08-14 (continued) — Tasks 3.4/3.5 queued: `specmgr://req/schema` resource design settled (unversioned URI, disk-read only, `$comment` version marker)
+
+Design-only entry (no code yet) resolving an agent-discoverability question raised in review: how should an agent learn the REQ schema's structure via MCP tools/resources, beyond `parse_req`'s own `outputSchema` (already fully populated via `model_json_schema()`, per the 2026-08-14 docstring-audit entry below).
+
+- Decided a new `specmgr://req/schema` resource is the right complement to `parse_req`'s tool-discovery `outputSchema` — the latter is free but host-dependent (not every MCP client surfaces it as agent-usable context); the former is an explicit, addressable fetch, mirroring the existing `specmgr://version`/`specmgr://adr/list`/`specmgr://adr/{id}` pattern.
+- Decided it must only read the already-persisted `docs/req_schema.json` from disk — trusting the `specmgr-schema` pre-commit hook to keep it current — rather than importing `commands/schema.py`'s `generate_req_schema()` directly, which would leak the `cli` extra's `typer` dependency into the `mcp` extra's import graph.
+- Decided the resource's URI stays unversioned (`specmgr://req/schema`, no `/v1`) — see Decisions Made.
+- Decided to add a bare `"$comment"` version marker (e.g. `"v1"`, no doc-type prefix) to `generate_req_schema()`'s output so a caller can detect a schema-layout change without diffing the whole document — see Decisions Made.
+- Queued as Task 3.4 (the `"$comment"` marker, in `generate_req_schema()`) and Task 3.5 (the resource itself, depends on 3.4).
 
 #### 2026-08-14 (continued) — Task 2.4 regression fixed: invalid `Field(pattern=...)` on model-typed `Level.value`/`Priority.value`
 
@@ -317,6 +363,8 @@ feature's own `parse_req` tool.
 - **Body model built on the generic `models/md` engine (v2-style), not a hand-written parser**: Unlike `uc/models/v1`/`models/adr/v1`'s custom `markdown_it`-token-based parsers, REQ's body (`body.py`) and parser (`parser.py`) are built directly on `feat-5-md-model-parser`'s `MarkdownStr`/`MarkdownSectionN` engine from day one — the same approach `uc/models/v2` migrated to. No REQ v1-style hand-written parser was ever written or needs to be superseded.
 - **`req_schema.json` (Task 1.2) deferred, not blocking**: the reference document (`req_reference.md`) plus the Pydantic model tree (`body.py`, `document.py`, `frontmatter.py`) already fully define and enforce the schema in practice; a standalone JSON Schema draft-07 file adds a second, hand-synced source of truth with no consumer yet. Revisit if/when an external tool needs a JSON Schema artifact specifically.
 - **JSON Schema dialect: 2020-12 (native Pydantic v2 output), not draft-07**: Task 1.2 originally specified "JSON Schema draft-07", matching the existing hand-authored `uc_schema.json`'s dialect (`.specmgr/feat/feat-4-use-cases/v2/uc_schema.json`). REQ's schema is instead **generated** directly from `ReqDocument.model_json_schema()` — Pydantic v2's native output (JSON Schema draft 2020-12: `$defs` not `definitions`, `prefixItems` where applicable). Converting to draft-07 would require lossy post-processing (`$defs`→`definitions`, `$ref` rewriting; some 2020-12-only keywords have no exact draft-07 equivalent) purely to match a dialect with no known external consumer yet (see the entry above). This deliberately diverges from `uc_schema.json`'s hand-authored draft-07 precedent — revisit if a future consumer specifically requires draft-07. Scoped to this feature's own generated-artifact choice, not a repo-wide architectural decision, so logged here rather than as a full ADR.
+- **`specmgr://req/schema` resource URI is unversioned (Task 3.5)**: considered addressing it as `specmgr://req/schema/v1` (mirroring `req/models/v1`'s package path) but rejected it — no existing resource or tool URI in this codebase ever exposes the internal `vN` model-package version: `specmgr://version`/`specmgr://adr/list`/`specmgr://adr/{id}` are all unversioned, and `parse_req`/`parse_uc` silently import from `models.v1`/`models.v2` respectively without either fact reaching the tool name, description, or signature. `vN` is purely an internal package-layout detail (ADR d54abe50's schema-versioning strategy), never part of the public MCP surface. Keeping `specmgr://req/schema` unversioned means it always means "the current REQ schema" — exactly like the tools already do — so a future `req/models/v2` (if REQ ever follows UC's v1→v2 migration) only changes what the resource reads internally, not its address, and callers never have to choose between two live, drifting endpoints. Scoped to this feature's own resource design, not a repo-wide architectural decision, so logged here rather than as a full ADR.
+- **Schema `"$comment"` version marker omits the doc-type name (Task 3.4)**: the marker added to `generate_req_schema()`'s output is a bare version token (e.g. `"v1"`), not `"req v1"` — the doc type is already unambiguous from context (the file is `docs/req_schema.json`, the resource is `specmgr://req/schema`), so repeating it inside the value would be redundant. Purpose is narrowly to let a caller that cached an earlier fetch notice the schema's layout changed, without diffing the whole document.
 
 ### Related PRs / Commits
 

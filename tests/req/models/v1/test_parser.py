@@ -143,6 +143,21 @@ class TestParseReq(unittest.TestCase):
         with self.assertRaises(ValidationError):
             parse_req(text)
 
+    def test_priority_out_of_range_raises_validation_error(self) -> None:
+        """A `## Priority` value outside 0-99 fails validation (regression: was only checking digits-only, not the range)."""
+        text = _MINIMAL_DOC.replace("## Source", "## Priority\n\n100\n\n## Source")
+
+        with self.assertRaises(ValidationError):
+            parse_req(text)
+
+    def test_priority_upper_bound_is_accepted(self) -> None:
+        """`## Priority` value 99 (the documented upper bound) is accepted."""
+        text = _MINIMAL_DOC.replace("## Source", "## Priority\n\n99\n\n## Source")
+
+        document = parse_req(text)
+
+        self.assertEqual(document.body.priority.value.text, "99")
+
     def test_malformed_structure_raises_assertion_error(self) -> None:
         """A missing mandatory section (no Description) is a structural failure."""
         text = textwrap.dedent(
