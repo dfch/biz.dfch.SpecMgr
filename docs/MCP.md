@@ -3,7 +3,7 @@
 Auto-generated from the live `biz.dfch.specmgr.server:mcp` registration --
 do not edit by hand, run `specmgr mcp-docs` instead (see `AGENTS.md`).
 
-6 resource(s), 2 resource template(s), 21 tool(s), 4 prompt(s).
+6 resource(s), 2 resource template(s), 21 tool(s), 6 prompt(s).
 
 ## Table of Contents
 
@@ -335,8 +335,10 @@ Disk-free, id-free dry run validating requirement content. `full=False` (default
 | --- | --- |
 | [`create_adr`](#prompt-create_adr) | Guides the LLM through checking for an existing similar ADR, gathering the required information, and driving create_adr/option_create/set_status/validate_adr to author a new MADR-4.0.0-based Architecture Decision Record. |
 | [`create_adr_test`](#prompt-create_adr_test) | Experimental, strictly step-gated variant of create_adr for A/B comparison: the same MADR-4.0.0 structure and create_adr/option_create/set_status/validate_adr tool sequence, rewritten as hard numbered gates instead of narrated steps. |
+| [`create_req`](#prompt-create_req) | Guides the LLM through checking for an existing similar requirement, gathering the required information, and driving create_req/validate_req to author a new REQ document. |
 | [`update_adr`](#prompt-update_adr) | Guides the LLM through revising an existing ADR by id: reading current state, applying the requested change with the right tool, and validating. |
 | [`update_adr_test`](#prompt-update_adr_test) | Experimental, strictly step-gated variant of update_adr for A/B comparison: the same read-first/map-to-tool/validate-last flow, rewritten as hard numbered gates instead of narrated steps. |
+| [`update_req`](#prompt-update_req) | Guides the LLM through revising an existing requirement by id: reading current state, applying the requested change with the right tool, and validating. |
 
 ### Prompt: create_adr
 
@@ -360,6 +362,14 @@ Experimental, strictly step-gated variant of create_adr for A/B comparison: the 
 | `consulted` | No |  |
 | `informed` | No |  |
 
+### Prompt: create_req
+
+Guides the LLM through checking for an existing similar requirement, gathering the required information, and driving create_req/validate_req to author a new REQ document.
+
+| Argument | Required | Description |
+| --- | --- | --- |
+| `topic` | Yes |  |
+
 ### Prompt: update_adr
 
 Guides the LLM through revising an existing ADR by id: reading current state, applying the requested change with the right tool, and validating.
@@ -372,6 +382,15 @@ Guides the LLM through revising an existing ADR by id: reading current state, ap
 ### Prompt: update_adr_test
 
 Experimental, strictly step-gated variant of update_adr for A/B comparison: the same read-first/map-to-tool/validate-last flow, rewritten as hard numbered gates instead of narrated steps.
+
+| Argument | Required | Description |
+| --- | --- | --- |
+| `id` | Yes |  |
+| `instructions` | No |  |
+
+### Prompt: update_req
+
+Guides the LLM through revising an existing requirement by id: reading current state, applying the requested change with the right tool, and validating.
 
 | Argument | Required | Description |
 | --- | --- | --- |

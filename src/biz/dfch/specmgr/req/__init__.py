@@ -8,17 +8,18 @@ the shared ``mcp`` application instance at once::
 
     from biz.dfch.specmgr import req  # noqa: F401 (side-effects only)
 
-Currently ``tools`` (``parse_req``, ``get_req_example``, ``get_req_template``,
+``tools`` (``parse_req``, ``get_req_example``, ``get_req_template``,
 ``create_req``, ``update_req``, ``set_status_req``, ``delete_req``,
-``validate_req``) and ``resources`` (``specmgr://req/schema``,
+``validate_req``), ``resources`` (``specmgr://req/schema``,
 ``specmgr://req/example``, ``specmgr://req/template``,
-``specmgr://req/{id}``, ``specmgr://req/list``) exist; ``prompts`` is not
-implemented yet.
+``specmgr://req/{id}``, ``specmgr://req/list``), and ``prompts``
+(``create_req``, ``update_req``) all exist.
 """
 
-from . import resources, tools  # noqa: F401
+from . import prompts, resources, tools  # noqa: F401
 
 __all__ = [
+    "prompts",
     "resources",
     "tools",
 ]

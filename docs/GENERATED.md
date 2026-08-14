@@ -109,6 +109,9 @@ First-line docstrings from each module, organized by domain:
 - `req/models/v1/frontmatter.py` — Requirement frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
 - `req/models/v1/parser.py` — Parse raw requirement ``.md`` text into a :class:`ReqDocument` (Task 1.x).
 - `req/models/v1/summary.py` — Pydantic model for one line of REQ listing output (Task 3.18).
+- `req/prompts/__init__.py` — MCP prompt wrappers for Requirements (Task 3.19).
+- `req/prompts/create_req.py` — ``@mcp.prompt()``: create_req (Task 3.19).
+- `req/prompts/update_req.py` — ``@mcp.prompt()``: update_req (Task 3.19).
 - `req/resources/__init__.py` — MCP resource registrations for Requirement (REQ) documents (Tasks 3.5-3.7, 3.17-3.18).
 - `req/resources/req_example.py` — Resource: specmgr://req/example (Task 3.6).
 - `req/resources/req_get.py` — Resource: specmgr://req/{id} (Task 3.17).
@@ -163,4 +166,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 101
+**Test files**: 103

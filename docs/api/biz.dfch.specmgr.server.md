@@ -38,6 +38,8 @@ Prompts
 ADR prompts (``adr/prompts/``): ``create_adr``, ``update_adr`` -- instructional
 text guiding an LLM through the ADR tool sequence above (``.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md``
 §11).
+Requirement prompts (``req/prompts/``): ``create_req``, ``update_req`` --
+instructional text guiding an LLM through the REQ tool sequence above (Task 3.19).
 
 Modules are grouped domain-first
 (ADR ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by
@@ -45,8 +47,8 @@ document-type domain"): each document
 domain (``adr``, ``uc``, ``req``, and later ``ac``) is a top-level package
 with its own ``tools``/``prompts``/``resources`` sub-packages, self-
 registered via the domain package's own ``__init__.py``. ``req`` registers
-``tools`` and ``resources``; ``uc`` currently only registers ``tools`` --
-neither has a ``prompts`` sub-package yet. Cross-cutting, non-domain-specific
+``tools``, ``resources``, and ``prompts``; ``uc`` currently only registers
+``tools`` -- it has no ``prompts`` sub-package yet. Cross-cutting, non-domain-specific
 tools/resources (e.g.
 ``specmgr://version`` resource or ``mdformat`` tool) stay under the
 top-level ``general`` (for tools) or ``resources`` (for resources) packages
