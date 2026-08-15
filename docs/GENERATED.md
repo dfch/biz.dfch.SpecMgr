@@ -91,11 +91,17 @@ First-line docstrings from each module, organized by domain:
 - `models/md/markdown_paragraph.py` — Base class for a markdown paragraph ("p"), the non-heading sibling of `MarkdownSection`.
 - `models/md/markdown_section.py` — Base class for markdown sections with heading constraints.
 - `models/md/markdown_section1.py` — Markdown section starting with h1 heading.
+- `models/md/markdown_section1_with_comment.py` — Opt-in `MarkdownSection1` variant allowing a leading explanatory comment.
 - `models/md/markdown_section2.py` — Markdown section starting with h2 heading.
+- `models/md/markdown_section2_with_comment.py` — Opt-in `MarkdownSection2` variant allowing a leading explanatory comment.
 - `models/md/markdown_section3.py` — Markdown section starting with h3 heading.
+- `models/md/markdown_section3_with_comment.py` — Opt-in `MarkdownSection3` variant allowing a leading explanatory comment.
 - `models/md/markdown_section4.py` — Markdown section starting with h4 heading.
+- `models/md/markdown_section4_with_comment.py` — Opt-in `MarkdownSection4` variant allowing a leading explanatory comment.
 - `models/md/markdown_section5.py` — Markdown section starting with h5 heading.
+- `models/md/markdown_section5_with_comment.py` — Opt-in `MarkdownSection5` variant allowing a leading explanatory comment.
 - `models/md/markdown_section6.py` — Markdown section starting with h6 heading.
+- `models/md/markdown_section6_with_comment.py` — Opt-in `MarkdownSection6` variant allowing a leading explanatory comment.
 - `models/md/markdown_str.py` — Parse markdown into tokens using shared MarkdownIt instance.
 - `models/version_info.py` — Pydantic model for the ``specmgr://version`` resource.
 
@@ -167,4 +173,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 104
+**Test files**: 105

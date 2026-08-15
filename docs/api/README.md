@@ -75,11 +75,17 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.models.md.markdown_paragraph`](biz.dfch.specmgr.models.md.markdown_paragraph.md) — Base class for a markdown paragraph ("p"), the non-heading sibling of `MarkdownSection`.
 - [`biz.dfch.specmgr.models.md.markdown_section`](biz.dfch.specmgr.models.md.markdown_section.md) — Base class for markdown sections with heading constraints.
 - [`biz.dfch.specmgr.models.md.markdown_section1`](biz.dfch.specmgr.models.md.markdown_section1.md) — Markdown section starting with h1 heading.
+- [`biz.dfch.specmgr.models.md.markdown_section1_with_comment`](biz.dfch.specmgr.models.md.markdown_section1_with_comment.md) — Opt-in `MarkdownSection1` variant allowing a leading explanatory comment.
 - [`biz.dfch.specmgr.models.md.markdown_section2`](biz.dfch.specmgr.models.md.markdown_section2.md) — Markdown section starting with h2 heading.
+- [`biz.dfch.specmgr.models.md.markdown_section2_with_comment`](biz.dfch.specmgr.models.md.markdown_section2_with_comment.md) — Opt-in `MarkdownSection2` variant allowing a leading explanatory comment.
 - [`biz.dfch.specmgr.models.md.markdown_section3`](biz.dfch.specmgr.models.md.markdown_section3.md) — Markdown section starting with h3 heading.
+- [`biz.dfch.specmgr.models.md.markdown_section3_with_comment`](biz.dfch.specmgr.models.md.markdown_section3_with_comment.md) — Opt-in `MarkdownSection3` variant allowing a leading explanatory comment.
 - [`biz.dfch.specmgr.models.md.markdown_section4`](biz.dfch.specmgr.models.md.markdown_section4.md) — Markdown section starting with h4 heading.
+- [`biz.dfch.specmgr.models.md.markdown_section4_with_comment`](biz.dfch.specmgr.models.md.markdown_section4_with_comment.md) — Opt-in `MarkdownSection4` variant allowing a leading explanatory comment.
 - [`biz.dfch.specmgr.models.md.markdown_section5`](biz.dfch.specmgr.models.md.markdown_section5.md) — Markdown section starting with h5 heading.
+- [`biz.dfch.specmgr.models.md.markdown_section5_with_comment`](biz.dfch.specmgr.models.md.markdown_section5_with_comment.md) — Opt-in `MarkdownSection5` variant allowing a leading explanatory comment.
 - [`biz.dfch.specmgr.models.md.markdown_section6`](biz.dfch.specmgr.models.md.markdown_section6.md) — Markdown section starting with h6 heading.
+- [`biz.dfch.specmgr.models.md.markdown_section6_with_comment`](biz.dfch.specmgr.models.md.markdown_section6_with_comment.md) — Opt-in `MarkdownSection6` variant allowing a leading explanatory comment.
 - [`biz.dfch.specmgr.models.md.markdown_str`](biz.dfch.specmgr.models.md.markdown_str.md) — Parse markdown into tokens using shared MarkdownIt instance.
 - [`biz.dfch.specmgr.models.version_info`](biz.dfch.specmgr.models.version_info.md) — Pydantic model for the ``specmgr://version`` resource.
 - [`biz.dfch.specmgr.req`](biz.dfch.specmgr.req.md) — Requirement (REQ) domain -- requirement specifications.

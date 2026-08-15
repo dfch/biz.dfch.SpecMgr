@@ -3,7 +3,7 @@ created: 2026-08-13
 id: feat-6-requirement-artifact
 status: in-progress
 updated: 2026-08-15
-version: 1.6.9
+version: 1.6.10
 ---
 
 # Feature: Requirement (REQ) artifact template with characteristic assignment
@@ -118,6 +118,8 @@ progresses (edit, don't duplicate).
 - [x] Task 3.18: `specmgr://req/list` resource — every document in the base directory, `ReqSummary` (id/title/status/filename, mirroring `AdrSummary`), unfiltered (characteristics/tags filtering was explicitly deferred earlier in the Task 3.9 discussion, see Recent Updates) — depends on: Task 3.11 — status: **completed (2026-08-15)** — see Recent Updates.
 - [x] Task 3.19: `req/prompts/create_req.py` + `update_req.py` — narrate the tool sequence above (mirroring ADR's `create_adr`/`update_adr` prompts): *create* — check `specmgr://req/list` for an existing duplicate, fetch `specmgr://req/template` or `/example` as a starting point, draft the body against `specmgr://req/schema`, call `create_req(content)`; *update* — read `specmgr://req/{id}`, edit the body, call `update_req(id, content)`, and route any status change through `set_status_req` instead of `update_req` — depends on: Tasks 3.12, 3.13, 3.14, 3.17, 3.18 — status: **completed (2026-08-15)** — see Recent Updates. Task 3.20 (unrelated: `models/md` inline-HTML-comment allowance) remains **not-started**, out of scope for this change.
 - [x] Task 3.20: Coordinate with `feat-5-md-model-parser`: extend `models/md/_markdown.py`'s `_assert_no_raw_html` to also permit `html_inline` tokens whose content starts with `<!--` (block-level HTML comments are already permitted; inline ones are not). Unblocks Task 3.7's known, currently-blocked template-annotation attempt (an inline comment on the same line as a value, e.g. `MUST <!-- one of: MUST/SHOULD/MUST NOT/SHOULD NOT/MAY -->`, rather than a second standalone paragraph, which is what actually broke `Level`/`Priority`'s single-paragraph structural check) — depends on: none — status: **completed (2026-08-15)** — see Recent Updates. Implemented differently than originally sketched: rather than editing `req_template.md` to the same-line inline form, added a new, reusable `models.md.MarkdownComment` leaf class (an `"html_block"` comment) and declared an optional `comment: MarkdownComment | None` field ahead of `value` on `Level`/`Priority`, which fixes the *actual* structural break in the already-committed `req_template.md` (its two-block leading-comment-then-value form) without touching the template file or its `_LEVEL_PATTERN`/`_PRIORITY_PATTERN` regexes at all. The literal `_assert_no_raw_html` `html_inline` permission was implemented too (still independently useful/matches the task's own wording), but is not what unblocks the template — see Decisions Made.
+- [x] Task 3.21: Discuss the placement of MarkdownComment | None in `Level` and `Priority` of "Requirement". Why not put an optional "comment" on each MarkdownSectionN or even MarkdownStr? Let's discuss pros and cons. — depends on: none — status: **completed (discussion only, 2026-08-15)** — conclusion: neither per-field duplication (status quo) nor a `comment` field on the shared `MarkdownSection`/`MarkdownStr` ABC (would touch every ADR/UC section too, for zero current benefit, and silently break any currently-leaf section that adopted it without also gaining a content-absorbing field — see Decisions Made for the `_get_field_names()`/leaf-path trace that found this). Settled on an opt-in `MarkdownSection{1..6}WithComment` mixin per level instead, implemented in Task 3.22. See Recent Updates for the full discussion trail.
+- [x] Task 3.22: Implement `MarkdownSection{1..6}WithComment` opt-in mixins (`models/md/`) and refactor `Level`/`Priority` to inherit from `MarkdownSection2WithComment` instead of declaring their own `comment` field — depends on: Task 3.21 — status: **completed (2026-08-15)** — see Recent Updates.
 
 #### Phase 4: MCP server reference documentation (`docs/MCP.md`, cross-cutting — all domains, not REQ-specific)
 
@@ -145,6 +147,77 @@ originally planned, rather than keeping a second copy of the task around.
 None.
 
 ### Recent Updates
+
+#### 2026-08-15 (continued) — Tasks 3.21/3.22: `MarkdownSection{1..6}WithComment` opt-in mixins, `Level`/`Priority` refactored
+
+- **Task 3.21 discussion trail**: prompted by a direct question on why Task
+  3.20's `comment: MarkdownComment | None` field lives on `Level`/`Priority`
+  individually rather than on a shared base. Two proposals were evaluated
+  and rejected before landing on the implemented design:
+  - **`comment` on the shared `MarkdownSection`/`MarkdownStr` ABC** (used by
+    ADR and UC too, not just REQ): rejected — no ADR/UC section has any
+    current use for it (neither domain even has a template/example
+    resource), so every section in every domain would carry a permanently-
+    unused property purely for a REQ-only need; a base-class field is also
+    always first in declaration order for every subclass forever
+    (pydantic's MRO-ordered `model_fields`), foreclosing any future section
+    wanting a different shape.
+  - **A correctness bug found while tracing the proposal**: any
+    `MarkdownStr`-typed field, including an inherited one, disqualifies a
+    class from `MarkdownStr`/`MarkdownSection`'s "leaf" verbatim-`_value`-
+    storage path (`if not field_names: instance._value = text`) — `_get_field_names()`
+    iterates `cls.model_fields`, which include inherited fields. So a
+    currently-bare/leaf section (e.g. `Description`, `MoreInformation`,
+    `Notes` — free-form prose, zero declared fields today) that merely
+    inherited a base-class `comment` field would break on any real content:
+    `_value` would hold only the heading text (not the body), the body
+    would go unmatched by anything, and `MarkdownStr.from_text`'s own
+    `assert remaining_text == ""` would raise. Confirmed by tracing
+    `MarkdownSection.from_text`/`MarkdownStr.from_text`/`_get_field_names`
+    together, not just by inspection.
+  - **Resolution**: an opt-in `MarkdownSection{N}WithComment` mixin per
+    level (N=1..6), documented as "must be paired with >=1 other declared
+    field" — exactly `Level`/`Priority`'s existing shape, generalized.
+    Zero impact on ADR/UC (they simply never inherit from it), and safe by
+    construction: the constraint is a class-shape requirement, not
+    something every section is forced to carry.
+- **Task 3.22 implementation**: 6 new `models/md/markdown_section{1..6}_with_comment.py`
+  files, mirroring the one-file-per-level `markdown_sectionN.py` convention.
+  Each `MarkdownSection{N}WithComment(MarkdownSection{N})` declares
+  `comment: MarkdownComment | None` plus a hard runtime guard
+  (`assert len(cls._get_field_names()) > 1` in both `get_extent` and
+  `from_text`) matching the codebase's existing guard idiom
+  (`MarkdownComment`'s own leaf-only `assert not cls._get_field_names()`),
+  rather than a novel `__pydantic_init_subclass__` hook (verified available
+  in pydantic 2.13 with `model_fields` already populated, but not used
+  anywhere else in this codebase, so rejected for consistency). Class
+  docstrings kept short (~250 chars), same Task 2.6 concern (inlined into
+  every schema `$defs` entry that references the class).
+- `req/models/v1/body.py`: `Level`/`Priority` now inherit from
+  `MarkdownSection2WithComment` instead of `MarkdownSection2`, dropping
+  their own duplicated `comment` field *declaration* -- each still
+  re-declares/overrides `comment`'s `Field(description=...)` with its own
+  more specific wording ("e.g. listing the allowed obligation-strength
+  values" / "e.g. describing the numeric range"), so no information was
+  lost. Purely a refactor: `value`/its validators untouched.
+- All 6 new classes exported from `models/md/__init__.py`.
+- Tests: new `tests/models/md/test_markdown_section_with_comment.py` (4
+  tests, looping across all 6 levels via `subTest`): a well-formed fixture
+  (comment + `value` field) round-trips with/without a leading comment; a
+  malformed comment-only fixture raises on both `get_extent` and
+  `from_text` — mirrors `test_markdown_comment.py`'s
+  `_InvalidCommentWithField` fixture-to-prove-a-guard pattern. 773 tests
+  project-wide (up from 769), no regressions -- confirmed the refactor is
+  fully behavior-preserving (identical `docs/req_schema.json` output,
+  byte-for-byte, since `Level`/`Priority` keep their own overridden
+  descriptions).
+- `ruff format --check`/`ruff check`/`vulture` clean; `specmgr schema`
+  reports `docs/req_schema.json` **unchanged** (mixin classes are never
+  directly referenced as a field type anywhere, so they never get their
+  own `$defs` entry — only `Level`/`Priority`'s own generated schema
+  entries matter, and those are identical to before); `specmgr docs`
+  regenerated (6 new module pages); `specmgr mcp-docs`/`specmgr adr-toc`
+  confirmed no drift (this change never touches either surface).
 
 #### 2026-08-15 (continued) — Task 3.20 implemented: `models.md.MarkdownComment` + inline-HTML-comment permission; `req_template.md` parse-validity fixed
 
@@ -1149,6 +1222,8 @@ feature's own `parse_req` tool.
 - Created `tests/req/models/v1/test_frontmatter.py` — 8 test cases mirroring existing patterns, all passing. 590 tests total (no regressions), ruff format/check clean, vulture clean.
 
 ### Decisions Made
+
+- **`comment` generalized into an opt-in `MarkdownSection{1..6}WithComment` mixin, not a field on the shared `MarkdownSection`/`MarkdownStr` ABC (Tasks 3.21/3.22)**: putting `comment` directly on the cross-domain ABC was rejected on two grounds — (1) it would add a permanently-unused property to every ADR/UC section too (neither domain has any current use for it, and neither even has a template/example resource yet), and (2) a base-class field is always first in `model_fields` declaration order for every subclass forever, foreclosing any future section wanting a different shape. Tracing the proposal through `MarkdownSection.from_text`/`MarkdownStr.from_text`/`_get_field_names()` also surfaced a genuine correctness bug it would have introduced: any inherited `MarkdownStr`-typed field disqualifies a class from the "leaf" verbatim-`_value`-storage path, so a currently-bare/leaf section (`Description`/`MoreInformation`/`Notes`) that merely inherited `comment` would raise (`assert remaining_text == ""`) on any real content, since nothing would absorb the body. The chosen design instead is a per-level opt-in mixin (`MarkdownSection{1..6}WithComment`, `models/md/`), explicitly documented as "must be paired with >=1 other declared field", with a hard runtime guard (`assert len(cls._get_field_names()) > 1` in `get_extent`/`from_text`) enforcing that constraint — matching `MarkdownComment`'s own existing leaf-only guard idiom rather than introducing a novel `__pydantic_init_subclass__` class-definition-time hook (verified working in pydantic 2.13, but not used anywhere else in this codebase). Zero impact on ADR/UC unless/until they opt in themselves. `Level`/`Priority` refactored to inherit from `MarkdownSection2WithComment`, keeping their own field-specific `comment` description overrides. See Recent Updates for the full trail.
 
 - **`req_template.md`'s Level/Priority parse-validity fixed via a new `models.md.MarkdownComment` field, not by editing the template to an inline same-line comment form (Task 3.20)**: the task as written pointed at extending `_assert_no_raw_html` to permit `html_inline` comments so the template could switch to a `MUST <!-- ... -->` same-line form, then making `_LEVEL_PATTERN`/`_PRIORITY_PATTERN` tolerate the trailing comment text. Rejected that path once the actual on-disk break was root-caused: `req_template.md` already uses the *block* form (a standalone `<!-- ... -->` line before the value), which fails not because of raw-HTML rejection (already permitted) but because `Level`/`Priority`'s single-`MarkdownParagraph` `value` field never expected the extra sibling block. Fixed that directly by declaring an optional `comment: MarkdownComment | None` field ahead of `value` on both classes — the generic `MarkdownStr.from_text` field-distribution loop already supports an optional field anywhere in declaration order, so this needed no engine change, no template edit, and no regex change; regex validators keep matching `value.text` alone, comment-free. `_assert_no_raw_html`'s `html_inline` permission was still implemented (the task's own literal ask, and independently useful), but is a parallel change, not what fixes the template. `MarkdownComment` is a general-purpose class, not REQ-specific — any future `models/md`-based section can declare the same optional field wherever an explanatory comment is meaningful. See Recent Updates for the full trail.
 

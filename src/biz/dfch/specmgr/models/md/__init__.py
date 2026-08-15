@@ -35,6 +35,12 @@ from .markdown_section3 import MarkdownSection3
 from .markdown_section4 import MarkdownSection4
 from .markdown_section5 import MarkdownSection5
 from .markdown_section6 import MarkdownSection6
+from .markdown_section1_with_comment import MarkdownSection1WithComment
+from .markdown_section2_with_comment import MarkdownSection2WithComment
+from .markdown_section3_with_comment import MarkdownSection3WithComment
+from .markdown_section4_with_comment import MarkdownSection4WithComment
+from .markdown_section5_with_comment import MarkdownSection5WithComment
+from .markdown_section6_with_comment import MarkdownSection6WithComment
 
 __all__ = [
     "markdown",
@@ -56,4 +62,10 @@ __all__ = [
     "MarkdownSection4",
     "MarkdownSection5",
     "MarkdownSection6",
+    "MarkdownSection1WithComment",
+    "MarkdownSection2WithComment",
+    "MarkdownSection3WithComment",
+    "MarkdownSection4WithComment",
+    "MarkdownSection5WithComment",
+    "MarkdownSection6WithComment",
 ]

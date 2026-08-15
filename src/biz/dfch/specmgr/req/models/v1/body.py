@@ -29,6 +29,7 @@ from pydantic import Field, field_validator
 from ....models.md import (
     MarkdownSection1,
     MarkdownSection2,
+    MarkdownSection2WithComment,
     MarkdownSection3,
     MarkdownParagraph,
     MarkdownListItem,
@@ -60,7 +61,7 @@ class Characteristics(MarkdownSection2):
 _LEVEL_PATTERN = r"^(MUST|SHOULD|MUST NOT|SHOULD NOT|MAY)$"
 
 
-class Level(MarkdownSection2):
+class Level(MarkdownSection2WithComment):
     """`## Level` -- single-line value giving the requirement's obligation
     strength (e.g. "MUST"). Mandatory. May be preceded by an explanatory
     HTML comment (e.g. listing the allowed values).
@@ -94,7 +95,7 @@ class Level(MarkdownSection2):
 _PRIORITY_PATTERN = r"^(0|[1-9][0-9]?)$"  # 0-99, no leading zeros other than "0" itself
 
 
-class Priority(MarkdownSection2):
+class Priority(MarkdownSection2WithComment):
     """`## Priority` -- single-line value giving the requirement's relative
     priority (e.g. a numeric rank). Optional. May be preceded by an
     explanatory HTML comment (e.g. describing the numeric range).
