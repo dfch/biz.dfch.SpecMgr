@@ -22,7 +22,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from biz.dfch.specmgr.req import _data
+from biz.dfch.specmgr.general.tools import _packaged_data
 from biz.dfch.specmgr.req.resources.req_example import req_example
 from biz.dfch.specmgr.req.tools.get_req_example import get_req_example
 
@@ -51,7 +51,7 @@ class TestReqExampleResource(unittest.TestCase):
             example_path = Path(tmp) / "req_example.md"
             example_path.write_text("first", encoding="utf-8")
 
-            with mock.patch.object(_data, "_EXAMPLE_PATH", example_path):
+            with mock.patch.object(_packaged_data, "packaged_data_path", return_value=example_path):
                 sut = req_example
 
                 first = sut()
@@ -66,7 +66,7 @@ class TestReqExampleResource(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             missing_path = Path(tmp) / "does-not-exist.md"
 
-            with mock.patch.object(_data, "_EXAMPLE_PATH", missing_path):
+            with mock.patch.object(_packaged_data, "packaged_data_path", return_value=missing_path):
                 sut = req_example
 
                 with self.assertRaises(FileNotFoundError):

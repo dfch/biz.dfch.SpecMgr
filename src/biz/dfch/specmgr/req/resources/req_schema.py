@@ -18,13 +18,13 @@
 """Resource: specmgr://req/schema (Task 3.5, packaged data since Task 3.8).
 
 Reads REQ's generated JSON Schema from the packaged data copy
-(``req/resources/data/req_schema.json``, via ``req._data.read_req_schema_text``)
-rather than ``docs/req_schema.json`` directly -- the latter is only readable
-from an editable/source checkout (``_paths.DOCS_DIR``'s own docstring
-documents this), which would break for a real, non-editable ``pip install``.
-The packaged copy is kept in sync with ``docs/req_schema.json`` by a
-dedicated pre-commit hook/CI step that runs
-``specmgr schema --type req --output-dir src/biz/dfch/specmgr/req/resources/data``
+(``req/data/req_schema.json``, via ``general.tools._packaged_data.read_packaged_text``,
+Task 5.3) rather than ``docs/req_schema.json`` directly -- the latter is only
+readable from an editable/source checkout (``_paths.DOCS_DIR``'s own
+docstring documents this), which would break for a real, non-editable
+``pip install``. The packaged copy is kept in sync with
+``docs/req_schema.json`` by a dedicated pre-commit hook/CI step that runs
+``specmgr schema --type req --output-dir src/biz/dfch/specmgr/req/data``
 -- the same generator as ``docs/req_schema.json``, just a second
 ``--output-dir``, so no bespoke copy logic exists in ``commands/schema.py``.
 Deliberately does not import ``commands.schema.generate_req_schema()``
@@ -42,7 +42,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from .._data import read_req_schema_text
+from ...general.tools._packaged_data import read_packaged_text
 from ...server import mcp
 
 
@@ -60,7 +60,7 @@ from ...server import mcp
 def req_schema() -> dict[str, Any]:
     """Return the parsed contents of REQ's packaged JSON Schema.
 
-    Reads the packaged copy (``req/resources/data/req_schema.json``) fresh
+    Reads the packaged copy (``req/data/req_schema.json``) fresh
     on every call (no in-memory cache, consistent with every other
     resource/tool in this codebase) but never regenerates it -- its
     presence is guaranteed at build time (real package data, kept in sync
@@ -81,5 +81,5 @@ def req_schema() -> dict[str, Any]:
     json.JSONDecodeError
         If the packaged file is not valid JSON.
     """
-    result: dict[str, Any] = json.loads(read_req_schema_text())
+    result: dict[str, Any] = json.loads(read_packaged_text("req", "schema", "json"))
     return result

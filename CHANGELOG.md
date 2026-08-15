@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-08-15
+
+### Added
+
+- **`general/tools/_packaged_data.py`**: Generic, doc-type-agnostic utility
+  module providing `packaged_data_path()` and `read_packaged_text()` functions
+  for accessing packaged data files (example/template/schema documents) across
+  all artifact types. Eliminates per-doc-type boilerplate and reduces
+  duplication.
+
+### Changed
+
+- REQ's packaged data files (example, template, schema) relocated from
+  `req/resources/data/` to `req/data/` for consistency with future artifact
+  types.
+- REQ tools updated to use `general.tools._packaged_data` instead of the
+  retired `req._data` module, centralizing packaged-data access.
+- `pyproject.toml` package-data key updated to reflect new `req/data/` path.
+- Pre-commit hook and CI step updated to reference new packaged-data location.
+
+### Removed
+
+- `req/_data.py`: REQ-specific packaged-data module superseded by
+  `general/tools/_packaged_data.py`.
+
 ## [0.3.0] - 2026-08-15
 
 ### Added

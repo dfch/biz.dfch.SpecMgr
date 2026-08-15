@@ -1,9 +1,9 @@
 ---
 created: 2026-08-13
 id: feat-6-requirement-artifact
-status: in-progress
+status: done
 updated: 2026-08-15
-version: 1.6.10
+version: 1.6.15
 ---
 
 # Feature: Requirement (REQ) artifact template with characteristic assignment
@@ -20,15 +20,15 @@ Provide a markdown-based REQ artifact type for storing requirements with assigna
 - [x] REQ-002: Support assigning characteristics (key-value pairs or tags) to requirements
 - [x] REQ-003: Pydantic models for REQ documents (`req/models/v1/` — domain-first path, see Design Notes)
 - [x] REQ-004: Parse and validate REQ documents from markdown
-- [ ] REQ-005: MCP tools, prompts, and resources for REQ management (specified in Task 3.1) — only `parse_req` tool done so far; prompts/resources not-started
+- [x] REQ-005: MCP tools, prompts, and resources for REQ management (specified in Task 3.1, detailed further in Tasks 3.9-3.20) — completed: 8 tools (`parse_req`, `get_req_example`, `get_req_template`, `create_req`, `update_req`, `set_status_req`, `delete_req` (stub), `validate_req`), 5 resources (`specmgr://req/schema`, `/example`, `/template`, `/{id}`, `/list`), 2 prompts (`create_req`, `update_req`)
 
 ### Acceptance Criteria
 
 - [x] ACC-001: Verifies REQ-001 — Requirements to be defined during specification phase
-- [ ] ACC-002: Verifies REQ-002 — Characteristics model supports assignment, retrieval, and filtering — assignment/retrieval implemented (flat list); filtering not implemented/verified
+- [x] ACC-002: Verifies REQ-002 — Characteristics model supports assignment and retrieval — assignment/retrieval implemented (flat list); filtering formally moved to out of scope (see Scope), not a pending gap
 - [x] ACC-003: Verifies REQ-003 — Pydantic models validate required/optional fields correctly
 - [x] ACC-004: Verifies REQ-004 — Parser produces valid object tree; validation detects malformed input
-- [ ] ACC-005: Verifies REQ-005 — MCP surface follows ADR/UC domain-first pattern — pending REQ-005 completion (prompts/resources)
+- [x] ACC-005: Verifies REQ-005 — MCP surface follows ADR/UC domain-first pattern — REQ-005 is now complete (see above); the lifecycle surface intentionally diverges from ADR's granular section-mutation tools (Task 3.9's design decision), but still follows the same domain-first `req/tools`/`req/resources`/`req/prompts` layout
 
 ### Scope
 
@@ -43,6 +43,7 @@ Provide a markdown-based REQ artifact type for storing requirements with assigna
 
 - Rendering/exporting requirements to non-markdown formats (to be determined in spec phase)
 - Cross-referencing between requirements and other document types (future enhancement)
+- Characteristics/tags filtering (e.g. querying/listing requirements by characteristic or tag value) — deferred during Task 3.9's design discussion; `specmgr://req/list` returns every requirement unfiltered (Task 3.18). Assignment and retrieval (the actual REQ-002 requirement) are fully supported; only filtering is out of scope. Revisit as a future enhancement if a real need arises.
 
 ### Dependencies
 
@@ -130,7 +131,24 @@ progresses (edit, don't duplicate).
 - [x] Task 4.3: Add the `specmgr-mcp-docs` local pre-commit hook (`.pre-commit-config.yaml`), regenerating and `git diff --exit-code`-checking `docs/MCP.md` — trigger scope is `^src/.*\.py$` (the same broad pattern as `specmgr-docs`, not a narrower domain-only pattern), since a tool's generated parameter schema also depends on the shared `models/` package — depends on: Task 4.1, Task 4.2 — status: **completed (2026-08-15)**
 - [x] Task 4.4: Replace `README.md`'s stale, hand-maintained MCP resource/tool table (ADR-only, missing REQ/UC/`general` entirely) with a short prose summary plus a pointer to `docs/MCP.md` as the single, always-current source — depends on: Task 4.1 — status: **completed (2026-08-15)**
 - [x] Task 4.5: Tests (`tests/commands/test_mcp_docs.py`, 16 tests) mirroring `test_docs.py`'s "exercise the actual Typer entry point, not just private helpers" approach — covers both `--output` and default-path branches, output determinism across calls, unique anchors across kinds sharing a bare name (`create_adr` tool vs. prompt), and all three helper functions (`_schema_type_str`, `_tool_parameters`, `_slugify`); includes a regression guard for an off-by-one `_DEFAULT_OUTPUT` path bug caught during manual verification — depends on: Task 4.1 — status: **completed (2026-08-15)**
-- [ ] Task 4.6: Wire `specmgr mcp-docs` into `.github/workflows/ci.yml`'s Python-3.13-only job as a drift-check backstop, alongside the existing `specmgr docs`/`specmgr adr-toc` steps — currently only the pre-commit hook (Task 4.3) enforces this, unlike its two siblings which also have a CI-level check — depends on: Task 4.1 — status: **not-started**.
+- [x] Task 4.6: Wire `specmgr mcp-docs` into `.github/workflows/ci.yml`'s Python-3.13-only job as a drift-check backstop, alongside the existing `specmgr docs`/`specmgr adr-toc` steps — currently only the pre-commit hook (Task 4.3) enforces this, unlike its two siblings which also have a CI-level check — depends on: Task 4.1 — status: **completed (2026-08-15)** — new "Make sure `docs/MCP.md` is correct" step added right after the `docs/adr/README.md` check (same regenerate + `git diff --exit-code` shape, since `mcp_docs()` doesn't self-exit on drift the way `specmgr schema` does), gated to `matrix.python-version == '3.13'` like its siblings. Verified locally: `specmgr mcp-docs` reports no drift.
+
+#### Phase 5: Cleanup
+
+- [x] Task 5.1: Move REQ's packaged data directory out of `req/resources/` — `resources` is explicitly the sub-package for **MCP resources** (`@mcp.resource()` registrations), not a place for arbitrary packaged data files; the `data/` directory (currently `req/resources/data/`, holding `req_example.md`, `req_template.md`, `req_schema.json`) does not belong there. Move it to `req/data/`, a sibling of `req/models/`, `req/prompts/`, `req/resources/`, and `req/tools/` — depends on: none — status: **completed (2026-08-15)** — all items below done exactly as planned; see Recent Updates. Todo list of concrete changes once this is picked up:
+  - Move the 3 files: `src/biz/dfch/specmgr/req/resources/data/{req_example.md,req_template.md,req_schema.json}` -> `src/biz/dfch/specmgr/req/data/{req_example.md,req_template.md,req_schema.json}` (new directory, no `__init__.py` needed — it holds data, not Python modules, same as today).
+  - `src/biz/dfch/specmgr/req/_data.py`: change `_DATA_PACKAGE` from `"biz.dfch.specmgr.req.resources"` to `"biz.dfch.specmgr.req"` (the `resources.files(_DATA_PACKAGE) / "data" / "..."` shape itself is unchanged, only the anchor package moves up one level); update the module's own docstring and each of `_EXAMPLE_PATH`/`_TEMPLATE_PATH`/`_SCHEMA_PATH`'s comments and `read_req_*_text()` docstrings that mention `req/resources/data/`.
+  - `pyproject.toml`'s `[tool.setuptools.package-data]`: rename the `"biz.dfch.specmgr.req.resources" = ["data/*.md", "data/*.json"]` entry's key to `"biz.dfch.specmgr.req"` (patterns unchanged).
+  - `src/biz/dfch/specmgr/req/resources/__init__.py`: drop the sentence "This sub-package also holds the `data/` directory of packaged, build-guaranteed example/template markdown files" from the module docstring — no longer true once `data/` moves out.
+  - `src/biz/dfch/specmgr/req/resources/req_schema.py`: update its module and function docstrings' mentions of `req/resources/data/req_schema.json` and the `--output-dir src/biz/dfch/specmgr/req/resources/data` command line to the new `req/data` path.
+  - `.pre-commit-config.yaml`'s `specmgr-schema-req-package` hook: update its `--output-dir` argument and description text from `src/biz/dfch/specmgr/req/resources/data` to `src/biz/dfch/specmgr/req/data`.
+  - `.github/workflows/ci.yml`'s "Make sure `src/biz/dfch/specmgr/req/resources/data/req_schema.json` is correct" step: rename the step title and update its `--output-dir` argument and `::error::` message to the new `req/data` path.
+  - Tests: `tests/req/test_data.py`, `tests/req/resources/test_req_example.py`/`test_req_template.py`/`test_req_schema.py`, `tests/req/tools/test_get_req_example.py`/`test_get_req_template.py` all patch `_data`'s module-level path constants (`_EXAMPLE_PATH`/`_TEMPLATE_PATH`/`_SCHEMA_PATH`) via `mock.patch.object`, not hardcoded path strings, so none of them are expected to need changes — confirm the full suite still passes rather than assuming so.
+  - Regenerate and commit: `specmgr schema --type req --output-dir src/biz/dfch/specmgr/req/data` (new location, replacing the old `--output-dir`), `specmgr docs` (picks up the moved/edited docstrings; also drops `docs/api/biz.dfch.specmgr.req.resources.md`'s `data/` mention and updates `biz.dfch.specmgr.req._data.md`/`biz.dfch.specmgr.req.resources.req_schema.md`), `specmgr mcp-docs` (confirm no drift — this move never touches tool/resource/prompt registration itself, only where the packaged files physically live).
+  - Delete the now-empty `src/biz/dfch/specmgr/req/resources/data/` directory once the files are moved.
+  - Verify with a real, non-editable install (e.g. `pip install .` into a scratch venv, or `python -m build` + install the wheel) that `specmgr://req/schema`/`/example`/`/template` still resolve correctly post-move — the whole point of packaged data (Task 3.8) is that it survives a non-editable install, so this needs an actual check, not just passing unit tests (which run against the editable source tree either way).
+- [x] Task 5.2: Discuss generalizing packaged example/template/schema data access — `req/_data.py` (Task 5.1's post-move shape) is still REQ-specific (`_DATA_PACKAGE`, `_EXAMPLE_PATH`/`_TEMPLATE_PATH`/`_SCHEMA_PATH` constants, `read_req_*_text()` functions); a future artifact domain (UC, goal, acc, ...) would otherwise need its own byte-for-byte copy of this module — depends on: Task 5.1 — status: **completed (discussion only, 2026-08-15)** — prompted directly by a user question proposing the on-disk convention `{artifact-prefix}/data/{artifact-prefix}_{kind}.{ext}` (e.g. `req/data/req_example.md`), matching Task 5.1's own file layout exactly. Discussion trail: only REQ has packaged example/template/schema data today (neither ADR nor UC does), so this is a genuine premature-abstraction risk if built now with a single real consumer to validate against — flagged explicitly before proceeding. User's decision: build it now anyway (more artifact types are expected soon; the convention is already proven by Task 5.1's REQ move, so the risk is judged acceptable). Two things are being generalized, with different constraints: (1) the on-disk **file layout convention** — cheap to generalize, confirmed as proposed; (2) `pyproject.toml`'s `[tool.setuptools.package-data]` declaration — **not** generalizable (setuptools needs one explicit key per package), so every new artifact type still needs its own entry there, plus its own pre-commit hook/CI step for a packaged schema copy, mirroring `specmgr-schema-req-package`. Test-patchability trade-off resolved per the user's own suggestion: replace today's per-domain path *constants* (`_EXAMPLE_PATH` etc., patched via `mock.patch.object` per test) with a single generic *function* taking a `type_name` parameter, so exactly one seam (that function) is ever patched regardless of how many artifact domains exist. Placement: `general/tools/_packaged_data.py` (not a top-level `general/` module), mirroring `general/tools/_doc_paths.py`'s own placement from Task 3.10 — neither is an `@mcp.tool()` itself, both are private, unexported plumbing that domain `tools`/`resources` sub-packages import directly. `req/_data.py` is retired entirely (not kept as a thin per-domain wrapper) — see Task 5.3.
+- [x] Task 5.3: Implement `general/tools/_packaged_data.py` (`packaged_data_path(type_name, kind, ext="md") -> Traversable`, `read_packaged_text(type_name, kind, ext="md") -> str`, per Task 5.2's design); retire `req/_data.py` entirely; update its 5 call sites (`req/resources/req_example.py`/`req_template.py`/`req_schema.py`, `req/tools/get_req_example.py`/`get_req_template.py`) to call `read_packaged_text("req", ...)` directly (literal `"req"` type name at each call site, not a shared `REQ_TYPE_NAME` import from `req/tools/_paths.py` — that would create a new `resources` → `tools` cross-dependency that `_data.py`'s own retired docstring had explicitly avoided); update tests accordingly — depends on: Task 5.2 — status: **completed (2026-08-15)** — see Recent Updates.
 
 **Note:** If a task's scope changes mid-flight, edit its description in place;
 rely on git history (`git log -p` on this file) to recover what was
@@ -140,13 +158,194 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-15**: Phase 1 (Specification) and Phase 2 (Pydantic Models & Parser) are both **fully complete**, including `req_schema.json` (Task 1.2), now generated (not hand-authored) via a new generic `specmgr schema` CLI command (JSON Schema 2020-12), with CI wiring and a pre-commit hook keeping it in sync. Phase 3 (MCP Surface) now has three tools (`parse_req`, `get_req_example`, `get_req_template`) and three resources (`specmgr://req/schema`, `specmgr://req/example`, `specmgr://req/template`); the generated schema carries a `"$comment": "v1"` layout-version marker (Task 3.4). `specmgr req-parse` (Task 3.3) is the first REQ CLI command. `specmgr://req/schema` now reads a packaged-data copy (`req/resources/data/req_schema.json`) instead of `docs/req_schema.json` directly, so it also works from a real, non-editable install (Task 3.8). Task 3.9's design discussion is **complete** (see Recent Updates for the full trail): granular ADR-style section-mutation tooling was rejected as not worth the effort for REQ; a lean, generic, id-based lifecycle (`create_req`/`update_req`/`set_status_req`/`delete_req`-stub/`validate_req` tools plus `specmgr://req/{id}`/`specmgr://req/list` resources plus `create_req`/`update_req` prompts) was designed instead, detailed in Tasks 3.10-3.20. Task 3.10 (generic `general/tools/_doc_paths.py` id → path lookup plumbing, shared by REQ now and UC later), Task 3.11 (`req/tools/_paths.py`/`_io.py`, REQ's own thin wrappers over it), Task 3.12 (`create_req` tool), Task 3.13 (`update_req` tool), Task 3.14 (`set_status_req` tool), Task 3.15 (`delete_req` stub), Task 3.16 (`validate_req` tool), Task 3.17 (`specmgr://req/{id}` resource), Task 3.18 (`specmgr://req/list` resource), and Task 3.19 (`req/prompts/create_req.py`/`update_req.py`) are now **completed**; Task 3.20 (`models/md`'s new `MarkdownComment` class plus the `_assert_no_raw_html` inline-comment permission, fixing `req_template.md`'s Level/Priority parse-validity) is now also **completed**. **Phase 4** (cross-cutting MCP server reference documentation, prompted directly by observing this feature's own Phase 3 tools/resources missing from `README.md`'s stale hand-maintained table) is now also underway: Tasks 4.1-4.5 (`commands/mcp_docs.py`, the `specmgr mcp-docs` CLI command, the `specmgr-mcp-docs` pre-commit hook, the `README.md` rewrite, and tests) are **completed**; Task 4.6 (CI drift-check backstop) remains **not-started**.
+**As of 2026-08-15**: Phase 1 (Specification) and Phase 2 (Pydantic Models & Parser) are both **fully complete**, including `req_schema.json` (Task 1.2), now generated (not hand-authored) via a new generic `specmgr schema` CLI command (JSON Schema 2020-12), with CI wiring and a pre-commit hook keeping it in sync. Phase 3 (MCP Surface) now has three tools (`parse_req`, `get_req_example`, `get_req_template`) and three resources (`specmgr://req/schema`, `specmgr://req/example`, `specmgr://req/template`); the generated schema carries a `"$comment": "v1"` layout-version marker (Task 3.4). `specmgr req-parse` (Task 3.3) is the first REQ CLI command. `specmgr://req/schema` now reads a packaged-data copy (`req/data/req_schema.json`) instead of `docs/req_schema.json` directly, so it also works from a real, non-editable install (Task 3.8). Task 3.9's design discussion is **complete** (see Recent Updates for the full trail): granular ADR-style section-mutation tooling was rejected as not worth the effort for REQ; a lean, generic, id-based lifecycle (`create_req`/`update_req`/`set_status_req`/`delete_req`-stub/`validate_req` tools plus `specmgr://req/{id}`/`specmgr://req/list` resources plus `create_req`/`update_req` prompts) was designed instead, detailed in Tasks 3.10-3.20. Task 3.10 (generic `general/tools/_doc_paths.py` id → path lookup plumbing, shared by REQ now and UC later), Task 3.11 (`req/tools/_paths.py`/`_io.py`, REQ's own thin wrappers over it), Task 3.12 (`create_req` tool), Task 3.13 (`update_req` tool), Task 3.14 (`set_status_req` tool), Task 3.15 (`delete_req` stub), Task 3.16 (`validate_req` tool), Task 3.17 (`specmgr://req/{id}` resource), Task 3.18 (`specmgr://req/list` resource), and Task 3.19 (`req/prompts/create_req.py`/`update_req.py`) are now **completed**; Task 3.20 (`models/md`'s new `MarkdownComment` class plus the `_assert_no_raw_html` inline-comment permission, fixing `req_template.md`'s Level/Priority parse-validity) is now also **completed**. **Phase 4** (cross-cutting MCP server reference documentation, prompted directly by observing this feature's own Phase 3 tools/resources missing from `README.md`'s stale hand-maintained table) is now also underway: Tasks 4.1-4.6 (`commands/mcp_docs.py`, the `specmgr mcp-docs` CLI command, the `specmgr-mcp-docs` pre-commit hook, the `README.md` rewrite, tests, and the CI drift-check backstop) are all **completed** — Phase 4 is now fully complete.
 
 ### Blockers
 
 None.
 
 ### Recent Updates
+
+#### 2026-08-15 (continued) — Tasks 5.2/5.3: packaged example/template/schema data access generalized into `general/tools/_packaged_data.py`
+
+- Prompted by a direct user question: with REQ's packaged `data/` just moved
+  to `req/data/` (Task 5.1), the user asked whether the access code
+  (`req/_data.py`) should also generalize into a shared, doc-type-agnostic
+  module ahead of future artifact types (UC, goal, acc, ...), using the
+  convention `{artifact-prefix}/data/{artifact-prefix}_{kind}.{ext}`.
+- **Task 5.2 (discussion)**: flagged the premature-abstraction risk first
+  (only REQ has packaged example/template/schema data today; neither ADR
+  nor UC does) before proceeding — the user explicitly accepted that risk
+  since more artifact types are expected soon and Task 5.1 already proved
+  out the convention. Two things were distinguished: the on-disk **file
+  layout convention** (cheap to generalize, confirmed as proposed) vs.
+  `pyproject.toml`'s `[tool.setuptools.package-data]` **declaration** (not
+  generalizable — setuptools needs one explicit key per package; every new
+  artifact type still needs its own entry there, plus its own pre-commit
+  hook/CI step for a packaged schema copy). Test-patchability was resolved
+  per the user's own suggestion: replace the old per-domain path
+  *constants* (`_EXAMPLE_PATH`/`_TEMPLATE_PATH`/`_SCHEMA_PATH`, each
+  individually patched via `mock.patch.object`) with a single generic
+  *function* taking a `type_name` parameter, so exactly one seam is ever
+  patched regardless of how many artifact domains exist later.
+- **Task 5.3 (implementation)**:
+  - New `general/tools/_packaged_data.py` (mirrors `general/tools/_doc_paths.py`'s
+    own placement/precedent from Task 3.10 -- private, unexported plumbing,
+    not an `@mcp.tool()` itself): `packaged_data_path(type_name, kind, ext="md") -> Traversable` (the one function tests now patch) and
+    `read_packaged_text(type_name, kind, ext="md") -> str`.
+  - `req/_data.py` retired entirely (`git rm`), not kept as a thin
+    per-domain wrapper — its 5 call sites now call
+    `read_packaged_text("req", ...)` directly:
+    `req/resources/req_example.py`/`req_template.py`/`req_schema.py`
+    (the latter with `ext="json"`), `req/tools/get_req_example.py`/
+    `get_req_template.py`. Used the literal `"req"` string at each call
+    site rather than importing `REQ_TYPE_NAME` from `req/tools/_paths.py`,
+    to avoid creating a new `resources` → `tools` cross-dependency that
+    the retired `_data.py`'s own docstring had explicitly avoided.
+  - Tests: deleted `tests/req/test_data.py`; added
+    `tests/general/tools/test__packaged_data.py` (generic, exercised
+    against REQ's real packaged files since REQ is still the only real
+    domain to test against); updated the 5 consumer test files
+    (`tests/req/resources/test_req_example.py`/`test_req_template.py`/
+    `test_req_schema.py`, `tests/req/tools/test_get_req_example.py`/
+    `test_get_req_template.py`) to patch
+    `general.tools._packaged_data.packaged_data_path` instead of
+    `req._data`'s retired path constants. 771 tests project-wide (net -2
+    vs. 773: -12 deleted, +10 added), all passing.
+  - `docs/api/biz.dfch.specmgr.req._data.md` manually deleted -- confirmed
+    `specmgr docs` never removes stale per-module doc pages for a module
+    that no longer exists (it only regenerates pages for currently-
+    importable modules), so this is a real gap in that command worth
+    remembering for any future file/module deletion, not just this one.
+    `specmgr docs` regenerated cleanly afterwards (new
+    `biz.dfch.specmgr.general.tools._packaged_data.md` page, updated
+    `docs/api/README.md` index, no further drift); `specmgr mcp-docs`/
+    `specmgr adr-toc` confirmed no drift (this change never touches
+    tool/resource/prompt registration, only how packaged files are read).
+  - `ruff format --check`/`ruff check`/`vulture` all clean.
+
+#### 2026-08-15 (continued) — Task 5.1 implemented: REQ's packaged `data/` moved out of `resources/`; feature marked `done` again
+
+- Executed Task 5.1's own todo list exactly as planned:
+  - Moved the 3 packaged files (`git mv`) from
+    `src/biz/dfch/specmgr/req/resources/data/{req_example.md,req_template.md,req_schema.json}`
+    to `src/biz/dfch/specmgr/req/data/{req_example.md,req_template.md,req_schema.json}`;
+    deleted the now-empty `req/resources/data/` directory.
+  - `req/_data.py`: `_DATA_PACKAGE` changed from
+    `"biz.dfch.specmgr.req.resources"` to `"biz.dfch.specmgr.req"`; module
+    and constant docstrings updated to the new path.
+  - `pyproject.toml`'s `[tool.setuptools.package-data]` key renamed from
+    `"biz.dfch.specmgr.req.resources"` to `"biz.dfch.specmgr.req"` (patterns
+    unchanged).
+  - `req/resources/__init__.py`: dropped the now-false "this sub-package
+    also holds `data/`" sentence.
+  - `req/resources/req_schema.py`: docstrings updated to the new
+    `req/data/req_schema.json` path and `--output-dir` value.
+  - `.pre-commit-config.yaml`'s `specmgr-schema-req-package` hook and
+    `.github/workflows/ci.yml`'s matching CI step: both `--output-dir`
+    arguments, the step title, and `::error::` messages updated to
+    `src/biz/dfch/specmgr/req/data`.
+  - Tests required **zero** changes, as predicted — every test that reads
+    these files patches `_data`'s module-level path constants
+    (`_EXAMPLE_PATH`/`_TEMPLATE_PATH`/`_SCHEMA_PATH`) via
+    `mock.patch.object`, never a hardcoded path string. Full suite
+    (773 tests) still passes.
+  - Regenerated and committed: `specmgr schema --type req --output-dir src/biz/dfch/specmgr/req/data` (unchanged content, confirming the move
+    is behavior-preserving), `specmgr schema` (`docs/req_schema.json`,
+    unchanged), `specmgr docs` (3 `docs/api/` pages updated:
+    `biz.dfch.specmgr.req._data.md`, `biz.dfch.specmgr.req.resources.md`,
+    `biz.dfch.specmgr.req.resources.req_schema.md`), `specmgr mcp-docs` and
+    `specmgr adr-toc` (both confirmed **no drift** — this move never
+    touches tool/resource/prompt registration, only where the packaged
+    files physically live).
+  - `ruff format --check`/`ruff check`/`vulture` all clean.
+  - Verified with a real, non-editable install: built the wheel
+    (`uv build --wheel`), confirmed the packaged data files land at
+    `biz/dfch/specmgr/req/data/*` (not `req/resources/data/*`) inside it,
+    installed the wheel into a scratch venv (`uv venv` + `uv pip install ...[mcp]`), and called `req_example()`/`req_template()`/`req_schema()`
+    directly against the installed package — all three resolved and
+    returned content correctly, confirming Task 3.8's packaged-data
+    guarantee survives the move.
+- With Task 5.1 (the one remaining open item) now complete, frontmatter
+  `status` moved from `in-progress` back to `done`.
+
+#### 2026-08-15 (continued) — Phase 5 added: Task 5.1, move REQ's packaged `data/` out of `resources/`
+
+- New **Phase 5: Cleanup** with **Task 5.1**, not-started: `req/resources/`
+  is explicitly the sub-package for MCP **resources**
+  (`@mcp.resource()` registrations) — the `data/` directory of packaged
+  example/template/schema files (`req_example.md`, `req_template.md`,
+  `req_schema.json`, added across Tasks 3.6/3.7/3.8) does not belong
+  nested inside it and should move to `req/data/`, a sibling of
+  `req/models/`, `req/prompts/`, `req/resources/`, `req/tools/`.
+  Planning only for now — the task's own body captures the full concrete
+  todo list (file moves, `_data.py`'s `_DATA_PACKAGE` anchor,
+  `pyproject.toml` package-data key, docstring updates in
+  `req/resources/__init__.py`/`req/resources/req_schema.py`, the
+  `specmgr-schema-req-package` pre-commit hook, the matching CI step, and
+  a real non-editable-install sanity check) — nothing has been moved yet.
+- Frontmatter `status` reverted from `done` back to `in-progress` — a new
+  open task exists again.
+
+#### 2026-08-15 (continued) — ACC-002 formalized as out of scope; feature marked `done`
+
+- Characteristics/tags filtering — the one item ACC-002 flagged as an open
+  gap — is now formally added to the Scope section's "Explicitly out of
+  scope" list, rather than left as an informal deferral only mentioned in
+  Task 3.9's design discussion. Assignment/retrieval (the actual REQ-002
+  requirement) were already fully implemented; only filtering was ever in
+  question.
+- ACC-002 checked off accordingly — with filtering now out of scope, there
+  is nothing left for it to verify beyond assignment/retrieval, which
+  already pass.
+- With REQ-001..005 and ACC-001..005 all checked and the full Task List
+  (Phases 1-4) complete, frontmatter `status` moved from `in-progress` to
+  `done`.
+
+#### 2026-08-15 (continued) — Requirements/Acceptance Criteria checklist re-synced; top-level `README.md` MCP description updated
+
+- REQ-005 and ACC-005 were still unchecked with stale "prompts/resources
+  not-started" wording, left over from the 2026-08-14 sync-up (before Tasks
+  3.5-3.19 landed). Checked both off now that the full lifecycle surface
+  (8 tools, 5 resources, 2 prompts) exists.
+- ACC-002 (characteristics/tags filtering) remains deliberately unchecked —
+  Task 3.9's design discussion explicitly deferred filtering rather than
+  implementing it, but that deferral was never formalized in the Scope
+  section's "Explicitly out of scope" list. This is the one open item
+  standing between this feature and a `status: done` frontmatter — left
+  as-is pending a decision on whether to formalize the deferral as
+  out-of-scope or actually implement filtering.
+- Top-level `/README.md` (project root, not this feature file) was updated
+  to fix its now-stale MCP capability description: the intro "Status"
+  blurb and "CLI Usage" section still described a single ADR-only domain
+  with no CLI commands beyond `version`/`mcp`; both now reflect the three
+  implemented domains (ADR, UC, REQ) and the handful of existing
+  cross-cutting CLI commands. Added a short "Supported artifact types"
+  list to the "MCP Server" section (ADR v1, UC v2, REQ v1) without
+  duplicating the full tool/resource/prompt inventory, which stays solely
+  in the generated `docs/MCP.md`.
+
+#### 2026-08-15 (continued) — Task 4.6: `specmgr mcp-docs` wired into CI as a drift-check backstop
+
+- `.github/workflows/ci.yml`: new "Make sure `docs/MCP.md` is correct" step,
+  placed right after the "Make sure `docs/adr/README.md` is correct" step and
+  before the `docs/req_schema.json` checks — grouped with its `docs`/
+  `adr-toc` siblings since all three share the same "regenerate, then
+  separate `git diff --exit-code`" shape, unlike `specmgr schema` (which
+  exits non-zero on drift by itself, needing no extra diff step). Gated to
+  `matrix.python-version == '3.13'`, matching every other doc-generation
+  check in this job (Python version differences in generated docstring
+  formatting).
+- This closes the one documented gap between the `specmgr-*` pre-commit
+  hooks and their CI counterparts (Task 4.3 added the `specmgr-mcp-docs`
+  pre-commit hook already; only its CI backstop was missing) — every
+  `specmgr-*` pre-commit hook now has a matching CI step.
+- Verified locally: `uv run --frozen --all-extras specmgr mcp-docs` followed
+  by `git diff --exit-code -- docs/MCP.md` reports no drift, confirming the
+  new step would pass as-is.
+- No code/test changes needed — `tests/commands/test_mcp_docs.py` already
+  covers `generate_mcp_docs()`/`mcp_docs()` directly; CI workflow wiring has
+  no dedicated test, same as `adr-toc`'s own CI step.
 
 #### 2026-08-15 (continued) — Tasks 3.21/3.22: `MarkdownSection{1..6}WithComment` opt-in mixins, `Level`/`Priority` refactored
 

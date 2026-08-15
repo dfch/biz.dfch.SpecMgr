@@ -22,9 +22,7 @@
 requirement document resource (``specmgr://req/example``). ``req_template``
 registers the packaged requirement template resource (``specmgr://req/template``)
 -- every field present, populated with short placeholder ("blind text")
-content rather than a valid document instance. This sub-package also holds
-the ``data/`` directory of packaged, build-guaranteed example/template
-markdown files (declared package data, not Python modules). ``req_get``
+content rather than a valid document instance. ``req_get``
 registers the by-id single-document resource (``specmgr://req/{id}``, Task
 3.17) and ``req_list`` registers the listing resource (``specmgr://req/list``,
 Task 3.18), both mirroring ``adr.resources.adr_get``/``adr_list``. Import

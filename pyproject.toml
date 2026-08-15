@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "biz-dfch-specmgr"
-version = "0.3.0"
+version = "0.3.1"
 description = "An artifact manager for system specifications."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -116,7 +116,7 @@ namespaces = true
 "biz.dfch.specmgr" = [
     "py.typed"
 ]
-"biz.dfch.specmgr.req.resources" = [
+"biz.dfch.specmgr.req" = [
     "data/*.md",
     "data/*.json"
 ]

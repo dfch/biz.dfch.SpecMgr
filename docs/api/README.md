@@ -47,6 +47,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general`](biz.dfch.specmgr.general.md) — General-purpose (cross-cutting, not domain-specific) tools.
 - [`biz.dfch.specmgr.general.tools`](biz.dfch.specmgr.general.tools.md) — MCP tool wrappers for general-purpose utilities (mirrors ``adr/tools/``'s shape).
 - [`biz.dfch.specmgr.general.tools._doc_paths`](biz.dfch.specmgr.general.tools._doc_paths.md) — Generic, doc-type-agnostic base directory resolution, filename slugification,
+- [`biz.dfch.specmgr.general.tools._packaged_data`](biz.dfch.specmgr.general.tools._packaged_data.md) — Generic, doc-type-agnostic access to packaged example/template/schema data
 - [`biz.dfch.specmgr.general.tools.mdformat`](biz.dfch.specmgr.general.tools.mdformat.md) — ``@mcp.tool()`` wrapper: mdformat.
 - [`biz.dfch.specmgr.models`](biz.dfch.specmgr.models.md) — Pydantic models used by the ``biz-dfch-specmgr`` MCP server.
 - [`biz.dfch.specmgr.models.adr`](biz.dfch.specmgr.models.adr.md) — Pydantic models for MADR 4.0.0-based Architecture Decision Records.
@@ -89,7 +90,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.models.md.markdown_str`](biz.dfch.specmgr.models.md.markdown_str.md) — Parse markdown into tokens using shared MarkdownIt instance.
 - [`biz.dfch.specmgr.models.version_info`](biz.dfch.specmgr.models.version_info.md) — Pydantic model for the ``specmgr://version`` resource.
 - [`biz.dfch.specmgr.req`](biz.dfch.specmgr.req.md) — Requirement (REQ) domain -- requirement specifications.
-- [`biz.dfch.specmgr.req._data`](biz.dfch.specmgr.req._data.md) — Private, dependency-free access to REQ's packaged example/template/schema
 - [`biz.dfch.specmgr.req.prompts`](biz.dfch.specmgr.req.prompts.md) — MCP prompt wrappers for Requirements (Task 3.19).
 - [`biz.dfch.specmgr.req.prompts.create_req`](biz.dfch.specmgr.req.prompts.create_req.md) — ``@mcp.prompt()``: create_req (Task 3.19).
 - [`biz.dfch.specmgr.req.prompts.update_req`](biz.dfch.specmgr.req.prompts.update_req.md) — ``@mcp.prompt()``: update_req (Task 3.19).
