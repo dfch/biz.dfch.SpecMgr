@@ -1,9 +1,9 @@
 ---
-id: feat-0-coverage-badge
-version: 1.0.0
-status: completed
 created: 2026-08-13
-updated: 2026-08-13
+id: feat-8-coverage-badge
+status: completed
+updated: 2026-08-15
+version: 1.0.0
 ---
 
 # Feature: Add coverage badge with SVG generation and CI/pre-commit enforcement
@@ -42,6 +42,7 @@ Add a self-hosted code coverage badge to the README via a new CLI command (`spec
 ### Scope
 
 **Included:**
+
 - CLI command with SVG badge generation
 - Unit tests for all functions
 - pyproject.toml coverage config
@@ -51,6 +52,7 @@ Add a self-hosted code coverage badge to the README via a new CLI command (`spec
 - Feature tracking document (this file)
 
 **Out of scope:**
+
 - Supporting coverage badges for specific test files/modules (only overall %)
 - Custom color palettes or badge styles
 - Integration with external coverage services
@@ -63,12 +65,14 @@ Add a self-hosted code coverage badge to the README via a new CLI command (`spec
 ### Design Notes
 
 **SVG rendering:**
+
 - Hand-written flat-style SVG (no external library like `genbadge` or `coverage-badge`)
 - Single-purpose: label "coverage", value "NN%"
 - Colors follow shields.io thresholds for consistency with other metric badges
 - No rounded corners or gradients — minimalist design, fast rendering
 
 **Coverage flow:**
+
 1. Tests run via `coverage run -m unittest discover ...` (not plain `python -m unittest`)
 2. `.coverage` binary data file is produced as a byproduct
 3. `specmgr coverage-badge` reads `.coverage`, calls `Coverage().load()`, invokes `cov.report()` to get percentage
@@ -77,6 +81,7 @@ Add a self-hosted code coverage badge to the README via a new CLI command (`spec
 6. CI (Python 3.13 only) also runs the check, matching `docs/` and `adr-toc` behavior
 
 **Error handling:**
+
 - Missing `.coverage` file → clear error message instructing user to run tests first
 - `Coverage.report()` returns `None` → explicit failure with diagnostic message
 - Invalid output path → parent directory is created (mkdir -p semantics)
@@ -100,9 +105,17 @@ None yet. Coverage badge generation and CI/pre-commit integration is implementat
 
 ## Recent Updates
 
+**2026-08-15 — Housekeeping: assigned GitHub issue**
+
+Opened and immediately closed [GitHub issue #8](https://github.com/dfch/biz.dfch.SpecMgr/issues/8)
+(feature was already completed) purely to backfill an issue number; renamed
+the folder `feat-0-coverage-badge` → `feat-8-coverage-badge` and updated the
+frontmatter `id` to match.
+
 **2026-08-13 — Initial implementation complete**
 
 All 10 tasks above completed. Feature tested locally:
+
 - `uv run --frozen coverage run -m unittest discover` produces `.coverage`
 - `uv run --frozen specmgr coverage-badge` generates `docs/coverage.svg` with 96% coverage
 - SVG displays correctly (green badge, flat style)

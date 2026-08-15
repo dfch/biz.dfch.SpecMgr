@@ -131,7 +131,7 @@ Create `commands/uc.py` (or split into `commands/uc_*.py` per operation):
 
 ### F1. Formalize Schema Documentation
 - Move/expand content from `doc/plantuml-analysis.md` and `doc/uc-example-for-plantuml.md` into a canonical spec
-- Create `doc/uc-tool-plan.md` (mirroring `.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md`) with:
+- Create `doc/uc-tool-plan.md` (mirroring `.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md`) with:
   - Complete schema and field definitions
   - Design rationale for each section
   - Next steps and per-item done/not-done tracking
@@ -271,7 +271,7 @@ Create `commands/uc.py` (or split into `commands/uc_*.py` per operation):
 
 ## Notes
 
-- This plan closely mirrors `.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md` in structure and scope — reuse ADR learnings where possible
+- This plan closely mirrors `.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md` in structure and scope — reuse ADR learnings where possible
 - Resist the urge to add "nice to have" features (e.g., UC diagram generation, swimlane optimization) until Phase H is complete
 - Keep mutations as pure functions in `models/uc/v1/mutations.py` (not Pydantic methods), matching ADR pattern
 - Every tool call should re-read and re-parse current on-disk state (no in-memory cache), matching ADR pattern

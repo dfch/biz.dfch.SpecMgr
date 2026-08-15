@@ -1,6 +1,6 @@
 # `biz.dfch.specmgr.adr.prompts.update_adr_test`
 
-``@mcp.prompt()``: update_adr_test (.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md §11).
+``@mcp.prompt()``: update_adr_test (.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md §11).
 
 Experimental, strictly step-gated variant of ``update_adr`` (see
 ``adr/prompts/update_adr.py``), kept as a *separate* prompt -- not a
@@ -13,7 +13,7 @@ pass a gate") instead of the softer step-by-step narration used by
 ``update_adr_test`` for the same revision and observe whether the
 stricter phrasing measurably improves compliance (e.g. always reading
 current state first, never guessing at an unspecified change) -- see
-the conversation in .specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md §11 for the rationale.
+the conversation in .specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md §11 for the rationale.
 
 ## Functions
 

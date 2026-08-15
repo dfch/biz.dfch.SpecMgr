@@ -10,11 +10,11 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.__main__`](biz.dfch.specmgr.__main__.md) — Entry point for ``python -m biz.dfch.specmgr``.
 - [`biz.dfch.specmgr._paths`](biz.dfch.specmgr._paths.md) — Private, dependency-free repo-root-relative path constants.
 - [`biz.dfch.specmgr.adr`](biz.dfch.specmgr.adr.md) — The Architecture Decision Record (ADR) domain package.
-- [`biz.dfch.specmgr.adr.prompts`](biz.dfch.specmgr.adr.prompts.md) — MCP prompt wrappers for Architecture Decision Records (.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md §11).
-- [`biz.dfch.specmgr.adr.prompts.create_adr`](biz.dfch.specmgr.adr.prompts.create_adr.md) — ``@mcp.prompt()``: create_adr (.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md §11).
-- [`biz.dfch.specmgr.adr.prompts.create_adr_test`](biz.dfch.specmgr.adr.prompts.create_adr_test.md) — ``@mcp.prompt()``: create_adr_test (.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md §11).
-- [`biz.dfch.specmgr.adr.prompts.update_adr`](biz.dfch.specmgr.adr.prompts.update_adr.md) — ``@mcp.prompt()``: update_adr (.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md §11).
-- [`biz.dfch.specmgr.adr.prompts.update_adr_test`](biz.dfch.specmgr.adr.prompts.update_adr_test.md) — ``@mcp.prompt()``: update_adr_test (.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md §11).
+- [`biz.dfch.specmgr.adr.prompts`](biz.dfch.specmgr.adr.prompts.md) — MCP prompt wrappers for Architecture Decision Records (.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md §11).
+- [`biz.dfch.specmgr.adr.prompts.create_adr`](biz.dfch.specmgr.adr.prompts.create_adr.md) — ``@mcp.prompt()``: create_adr (.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md §11).
+- [`biz.dfch.specmgr.adr.prompts.create_adr_test`](biz.dfch.specmgr.adr.prompts.create_adr_test.md) — ``@mcp.prompt()``: create_adr_test (.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md §11).
+- [`biz.dfch.specmgr.adr.prompts.update_adr`](biz.dfch.specmgr.adr.prompts.update_adr.md) — ``@mcp.prompt()``: update_adr (.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md §11).
+- [`biz.dfch.specmgr.adr.prompts.update_adr_test`](biz.dfch.specmgr.adr.prompts.update_adr_test.md) — ``@mcp.prompt()``: update_adr_test (.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md §11).
 - [`biz.dfch.specmgr.adr.resources`](biz.dfch.specmgr.adr.resources.md) — MCP resource registrations for Architecture Decision Records (plan §8, §9a).
 - [`biz.dfch.specmgr.adr.resources.adr_get`](biz.dfch.specmgr.adr.resources.adr_get.md) — Resource: specmgr://adr/{id} (plan §8, §9a).
 - [`biz.dfch.specmgr.adr.resources.adr_list`](biz.dfch.specmgr.adr.resources.adr_list.md) — Resource: specmgr://adr/list (plan §8, §9a).

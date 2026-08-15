@@ -15,7 +15,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""``@mcp.prompt()``: create_adr (.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md §11).
+"""``@mcp.prompt()``: create_adr (.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md §11).
 
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through drafting a brand-new MADR 4.0.0-based ADR using the existing

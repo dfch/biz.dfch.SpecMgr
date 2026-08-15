@@ -10,8 +10,8 @@ Resources
 ---------
 specmgr://version --    Installed version number of the ``biz-dfch-specmgr`` package.
 specmgr://adr/list --   Ids/titles/statuses/filenames of every ADR
-                        (``.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md``).
-specmgr://adr/{id} --    Full ADR document for a given id (``.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md``).
+                        (``.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md``).
+specmgr://adr/{id} --    Full ADR document for a given id (``.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md``).
 specmgr://req/schema -- The generated REQ JSON Schema, read from a packaged data copy
                         (kept in sync with ``docs/req_schema.json``) so it works from a
                         real, non-editable install.
@@ -36,7 +36,7 @@ preserving YAML frontmatter blocks.
 Prompts
 -------
 ADR prompts (``adr/prompts/``): ``create_adr``, ``update_adr`` -- instructional
-text guiding an LLM through the ADR tool sequence above (``.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md``
+text guiding an LLM through the ADR tool sequence above (``.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md``
 §11).
 Requirement prompts (``req/prompts/``): ``create_req``, ``update_req`` --
 instructional text guiding an LLM through the REQ tool sequence above (Task 3.19).

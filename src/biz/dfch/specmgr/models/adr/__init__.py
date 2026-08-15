@@ -17,7 +17,7 @@
 
 """Pydantic models for MADR 4.0.0-based Architecture Decision Records.
 
-See ``.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md`` §3-§6 for the design this package implements:
+See ``.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md`` §3-§6 for the design this package implements:
 
 - :class:`AdrFrontmatter` -- the YAML frontmatter block (plan §3), including
   the specmgr schema version (``version``, a specmgr-only extension key,

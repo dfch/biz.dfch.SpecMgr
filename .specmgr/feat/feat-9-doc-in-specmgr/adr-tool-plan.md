@@ -174,7 +174,7 @@ convention), so the ADR feature is placed within that, not alongside it:
   `server.py` (next to the existing `resources` import) or its
   `@mcp.tool()` decorators never run — see the warning already in
   `server.py`'s module docstring. **Implemented**, see §10 item 4. As of
-  `.specmgr/feat/feat-0-doc-in-specmgr/refactor-domain.md`, `tools`/`prompts`/`resources` are nested *under*
+  `.specmgr/feat/feat-9-doc-in-specmgr/refactor-domain.md`, `tools`/`prompts`/`resources` are nested *under*
   the domain package (`adr/tools/`, `adr/prompts/`, `adr/resources/`)
   rather than the other way around — this is now the template for `req`/
   `uc`/`ac`. `models/` remains the exception: it stays a single shared,
@@ -344,7 +344,7 @@ and avoiding any server-side cache/staleness problem:
      `option_list.py`, `validate_adr.py`) rather than a single `tools.py` —
      `adr/tools/__init__.py` re-exports all 11 so `from biz.dfch.specmgr.adr
      import tools` (imported from `server.py` via the `adr` domain package,
-     .specmgr/feat/feat-0-doc-in-specmgr/refactor-domain.md) still registers every `@mcp.tool()` decorator in
+     .specmgr/feat/feat-9-doc-in-specmgr/refactor-domain.md) still registers every `@mcp.tool()` decorator in
      one side-effecting import.
    - `adr/resources/adr_list.py`/`adr_get.py`: `specmgr://adr/list` resource
      (§9a), skipping unparseable files rather than failing the whole
@@ -412,7 +412,7 @@ and avoiding any server-side cache/staleness problem:
    `update_adr`, one module per prompt mirroring `adr/tools/`'s own
    one-item-per-module split, wired into `server.py` alongside the
    existing `resources`/`tools` side-effecting imports (now via the `adr`
-   domain package as a whole, .specmgr/feat/feat-0-doc-in-specmgr/refactor-domain.md). Covered by
+   domain package as a whole, .specmgr/feat/feat-9-doc-in-specmgr/refactor-domain.md). Covered by
    `tests/adr/prompts/test_create_adr.py`/`test_update_adr.py`.
 
 ## 11. Prompt surface (MCP prompts)

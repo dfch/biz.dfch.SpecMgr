@@ -1,5 +1,5 @@
 ---
-id: feat-0-doc-in-specmgr
+id: feat-9-doc-in-specmgr
 version: 1.0.0
 status: in-progress
 created: 2026-08-11
@@ -29,7 +29,7 @@ This feature consolidates development planning into a single, consistent locatio
 
 ### Acceptance Criteria
 
-- [x] ACC-001: Feature folder `.specmgr/feat/feat-0-doc-in-specmgr/` created with README
+- [x] ACC-001: Feature folder `.specmgr/feat/feat-9-doc-in-specmgr/` created with README
 - [x] ACC-002: All 10 files from `/doc/` are moved/categorized
 - [x] ACC-003: AGENTS.md updated to remove `/doc` references and point to new locations
 - [x] ACC-004: No git history or file contents are lost (move, not delete)
@@ -60,17 +60,17 @@ This feature consolidates development planning into a single, consistent locatio
 
 | File | Destination | Rationale |
 |------|-------------|-----------|
-| `adr-tool-plan.md` | `feat-0-doc-in-specmgr/` | Strategic ADR design doc; belongs with this migration work |
-| `refactor-domain.md` | `feat-0-doc-in-specmgr/` | Strategic refactoring design doc; preserved for reference |
+| `adr-tool-plan.md` | `feat-9-doc-in-specmgr/` | Strategic ADR design doc; belongs with this migration work |
+| `refactor-domain.md` | `feat-9-doc-in-specmgr/` | Strategic refactoring design doc; preserved for reference |
 | `eval-uc.md` | `feat/feat-4-use-cases/` | Use-case evaluation; already a feature folder for UCs |
 | `uc-example-cockburn-fully-dressed.md` | `feat/feat-4-use-cases/` | UC example; belongs with feat-4 |
 | `uc-example-for-plantuml.md` | `feat/feat-4-use-cases/` | UC example; belongs with feat-4 |
 | `uc-plantuml-examples.md` | `feat/feat-4-use-cases/` | UC example; belongs with feat-4 |
 | `plantuml-analysis.md` | `feat/feat-4-use-cases/` | UC/PlantUML analysis; belongs with feat-4 |
-| `create-adr.md` | `feat-0-doc-in-specmgr/` | ADR tool creation notes; preserved in this feature |
-| `docs-generator-cleanup-plan.md` | `feat-0-doc-in-specmgr/` | Cleanup planning; preserved in this feature |
-| `test.md` | `feat-0-doc-in-specmgr/history/` | Temporary test artifact; moved to history for archival |
-| `session-ses_038f-adr-tool-plan.md` | `feat-0-doc-in-specmgr/history/` | Session artifact; archived to history |
+| `create-adr.md` | `feat-9-doc-in-specmgr/` | ADR tool creation notes; preserved in this feature |
+| `docs-generator-cleanup-plan.md` | `feat-9-doc-in-specmgr/` | Cleanup planning; preserved in this feature |
+| `test.md` | `feat-9-doc-in-specmgr/history/` | Temporary test artifact; moved to history for archival |
+| `session-ses_038f-adr-tool-plan.md` | `feat-9-doc-in-specmgr/history/` | Session artifact; archived to history |
 
 ### Related ADRs
 

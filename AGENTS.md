@@ -5,7 +5,7 @@ Quick reference for OpenCode agents working on **biz.dfch.SpecMgr** — an artif
 ## Status: first domain feature (ADR tooling) implemented
 
 The ADR (Architecture Decision Record) feature described in
-`.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md` is now implemented end-to-end and is the only domain
+`.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md` is now implemented end-to-end and is the only domain
 feature that exists — everything else is still scaffolding. Concretely:
 
 - `models/adr/v1/` — Pydantic schema (`AdrFrontmatter`, `AdrBody`,
@@ -24,17 +24,17 @@ feature that exists — everything else is still scaffolding. Concretely:
 - `adr/prompts/create_adr.py`/`update_adr.py` — two `@mcp.prompt()`s
    returning instructional text that drives the `adr/tools/` surface above
    in the right order (draft-a-new-ADR and revise-an-existing-ADR-by-id
-   flows respectively); see `.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md` §11.
+   flows respectively); see `.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md` §11.
 - `adr/prompts/create_adr_test.py`/`update_adr_test.py` — step-gated
    (`GATE 0`..`GATE N`, explicit exit conditions, "never fabricate a
    value") experimental variants of the two prompts above, registered
    under distinct names for side-by-side A/B comparison; neither
-   supersedes the narrated originals. See `.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md` §11.
+   supersedes the narrated originals. See `.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md` §11.
 - 186 passing tests under `tests/models/adr/`, `tests/adr/tools/`,
   `tests/adr/resources/`, `tests/adr/prompts/`.
 
 `adr/` (`adr/tools/`, `adr/prompts/`, `adr/resources/`) is a top-level,
-domain-first package — see `.specmgr/feat/feat-0-doc-in-specmgr/refactor-domain.md` for the rationale and
+domain-first package — see `.specmgr/feat/feat-9-doc-in-specmgr/refactor-domain.md` for the rationale and
 migration record (ADR ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by document-type domain: domain-first hierarchy for tools/prompts/resources, shared versioned models"). The ADR *schema* layer, `models/adr/`, deliberately stays
 under the shared top-level `models/` package instead of moving into `adr/`,
 since it has no dependency on `mcp`/`tools`/`resources`/`prompts` and is
@@ -56,9 +56,9 @@ Still genuinely missing / not yet done (don't assume otherwise):
   (ADR 9c687bb1-8ee7-41c8-84ec-07606356bc73: "Enforce doc generation/lint/tests locally via pre-commit hook, not just CI")
 - No second document type (`req`/`uc`) exists yet, despite `adr/`'s
    domain-first layout and `models/adr/`'s internal layout being designed to
-   generalize to them (see `.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md` §6, `.specmgr/feat/feat-0-doc-in-specmgr/refactor-domain.md`).
+   generalize to them (see `.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md` §6, `.specmgr/feat/feat-9-doc-in-specmgr/refactor-domain.md`).
 
-`.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md` §10 ("Next steps") tracks per-item done/not-done
+`.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md` §10 ("Next steps") tracks per-item done/not-done
 status and should be kept in sync with `src/` as this evolves; treat it as
 current-state tracking, not just a historical design doc. Don't assume any
 other domain package exists beyond `adr`/`general`/`uc` (with their respective
@@ -128,7 +128,7 @@ documentation in `docs/`:
   ADR. It belongs in the feature's own "Decisions Made" log instead if it's
   scoped entirely to that feature's implementation details. When in doubt,
   write the ADR.
-- Existing feature folders: `.specmgr/feat/feat-0-doc-in-specmgr/`
+- Existing feature folders: `.specmgr/feat/feat-9-doc-in-specmgr/`
    (development artifacts migration), `.specmgr/feat/feat-4-use-cases/` (use-case
    modeling and examples), `.specmgr/feat/feat-5-md-model-parser/` (markdown
    parsing infrastructure).
