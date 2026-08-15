@@ -28,7 +28,7 @@ own equivalent.
 
 from __future__ import annotations
 
-from .._data import read_req_example_text
+from ...general.tools._packaged_data import read_packaged_text
 from ...server import mcp
 
 
@@ -58,4 +58,4 @@ def get_req_example() -> str:
         The example document's raw markdown source, including its YAML
         frontmatter block.
     """
-    return read_req_example_text()
+    return read_packaged_text("req", "example")

@@ -13,16 +13,19 @@
 
 An artifact manager for system specifications.
 
-This project is a **library**, a **CLI**, and an **MCP server**, all in one
-repository. The CLI and MCP server are optional — install only what you
-need via extras (see [Installation](#installation)).
+This project is an **MCP server** that you can use to manage different
+specification artifacts.
 
-_Status: first domain feature shipped. Architecture Decision Record (ADR)
-management — creating, reading, and editing MADR 4.0.0-derived ADRs — is
-implemented end-to-end as MCP tools/resources (see
-[MCP Server](#mcp-server) below and `.specmgr/feat/feat-0-doc-in-specmgr/adr-tool-plan.md` for the full
-design). It is MCP-only so far: there is no `specmgr adr ...` CLI command
-yet, and no second document type beyond ADRs._
+At this time, we have these artifact:
+
+- Architecture Decision Records (ADR)
+- Use Case (UC)
+- Requirement (REQ)
+
+See [MCP Server](#mcp-server) and [docs/MCP.md](docs/MCP.md) for details.
+
+The **MCP server** (and the management **CLI**) are optional. You install
+them as "extras" (see [Installation](#installation)).
 
 ## Table of Contents
 
@@ -61,8 +64,14 @@ uv add "biz-dfch-specmgr[cli,mcp]"
 
 ## CLI Usage
 
-_No ADR (or other domain) commands exist yet — only `version` and `mcp`
-(below). ADR management is currently MCP-only, see [MCP Server](#mcp-server)._
+With the CLI you can generate schema and documentation. We use these commands
+in pre-commit hooks and `ci.yml`.
+
+_No domain document-management commands (create/update/status/etc.) exist
+in the CLI yet — those are currently MCP-only, see
+[MCP Server](#mcp-server). The CLI covers `version`, `mcp` (below), and a
+handful of cross-cutting/doc-generation commands (`specmgr --help` for the
+full list)._
 
 ```bash
 specmgr version
@@ -71,21 +80,30 @@ specmgr version
 ## MCP Server
 
 Requires the `mcp` extra. The server exposes resources, tools, and prompts
-for Architecture Decision Record (ADR), requirement (REQ), and use-case (UC)
-document management, plus cross-cutting utilities (e.g. markdown
+for document management, plus cross-cutting utilities (e.g. markdown
 formatting).
 
 **The full, up-to-date list of every resource, resource template, tool, and
 prompt — with parameters, MIME types, and descriptions — lives in
-[docs/MCP.md](docs/MCP.md).** Unlike this README, it is not hand-maintained:
-it is regenerated from the live server registration by `specmgr mcp-docs`
-and kept in sync by a pre-commit hook, so it can never silently drift as
-tools/resources/prompts are added, renamed, or removed.
+[docs/MCP.md](docs/MCP.md).** That document generated from the live server
+registration by `specmgr mcp-docs` and kept in sync by a pre-commit hook and
+a CI check.
 
-ADRs live as `.md` files in a base directory (default `docs/adr`,
-configurable via the `SPECMGR_ADR_DIR` environment variable) — the file on
-disk is always the source of truth, re-read and re-parsed on every tool
-call, so hand-editing a file between calls is safe.
+### Environment Variables
+
+Every document type stores its `.md` files in a base directory on disk —
+the file is always the source of truth, re-read and re-parsed on every
+tool call, so hand-editing a file between calls is safe.
+
+- ADRs: base directory defaults to `docs/adr`, configurable via the
+  `SPECMGR_ADR_DIR` environment variable. This is ADR-specific and not
+  shared with other document types.
+- Requirements (REQ) and future document types: share one root directory,
+  configurable via the `SPECMGR_DOCS_DIR` environment variable (default
+  `docs`), with each type's own subdirectory appended automatically (e.g.
+  `docs/req` for requirements).
+
+### Start the MCP Server
 
 Start the server with the `mcp` command:
 
@@ -101,11 +119,11 @@ run over SSE/network:
 specmgr mcp --transport sse --host localhost --port 8000
 ```
 
-| Option              | Env var                 | Default     | Description                     |
+| Option | Env var | Default | Description |
 | -------------------- | ------------------------ | ----------- | -------------------------------- |
-| `--transport` / `-t` | `SPECMGR_MCP_TRANSPORT` | `stdio`     | Transport mode: `stdio` or `sse` |
-| `--host` / `-h`      | `SPECMGR_MCP_HOST`      | `localhost` | Bind address (SSE mode only)     |
-| `--port` / `-p`      | `SPECMGR_MCP_PORT`      | `8000`      | TCP port (SSE mode only)         |
+| `--transport` / `-t` | `SPECMGR_MCP_TRANSPORT` | `stdio` | Transport mode: `stdio` or `sse` |
+| `--host` / `-h` | `SPECMGR_MCP_HOST` | `localhost` | Bind address (SSE mode only) |
+| `--port` / `-p` | `SPECMGR_MCP_PORT` | `8000` | TCP port (SSE mode only) |
 
 ### Add to OpenCode
 
@@ -113,7 +131,7 @@ To add the `specmgr` MCP server to your OpenCode configuration:
 
 1. Open your OpenCode config file (typically `~/.config/opencode/opencode.json` or `~/.config/opencode/opencode.jsonc`)
 
-2. Add the following configuration to the `mcp` section (and use it via `stdio`):
+1. Add the following configuration to the `mcp` section (and use it via `stdio`):
 
 ```json
 "specmgr": {

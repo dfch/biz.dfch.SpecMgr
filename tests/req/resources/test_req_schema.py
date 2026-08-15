@@ -23,7 +23,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from biz.dfch.specmgr.req import _data
+from biz.dfch.specmgr.general.tools import _packaged_data
 from biz.dfch.specmgr.req.resources.req_schema import req_schema
 
 
@@ -49,7 +49,7 @@ class TestReqSchemaResource(unittest.TestCase):
             schema_path = Path(tmp) / "req_schema.json"
             schema_path.write_text(json.dumps(payload), encoding="utf-8")
 
-            with mock.patch.object(_data, "_SCHEMA_PATH", schema_path):
+            with mock.patch.object(_packaged_data, "packaged_data_path", return_value=schema_path):
                 sut = req_schema
 
                 result = sut()
@@ -62,7 +62,7 @@ class TestReqSchemaResource(unittest.TestCase):
             schema_path = Path(tmp) / "req_schema.json"
             schema_path.write_text(json.dumps({"$comment": "v1"}), encoding="utf-8")
 
-            with mock.patch.object(_data, "_SCHEMA_PATH", schema_path):
+            with mock.patch.object(_packaged_data, "packaged_data_path", return_value=schema_path):
                 sut = req_schema
 
                 first = sut()
@@ -77,7 +77,7 @@ class TestReqSchemaResource(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             missing_path = Path(tmp) / "does-not-exist.json"
 
-            with mock.patch.object(_data, "_SCHEMA_PATH", missing_path):
+            with mock.patch.object(_packaged_data, "packaged_data_path", return_value=missing_path):
                 sut = req_schema
 
                 with self.assertRaises(FileNotFoundError):
@@ -89,7 +89,7 @@ class TestReqSchemaResource(unittest.TestCase):
             schema_path = Path(tmp) / "req_schema.json"
             schema_path.write_text("{not valid json", encoding="utf-8")
 
-            with mock.patch.object(_data, "_SCHEMA_PATH", schema_path):
+            with mock.patch.object(_packaged_data, "packaged_data_path", return_value=schema_path):
                 sut = req_schema
 
                 with self.assertRaises(json.JSONDecodeError):

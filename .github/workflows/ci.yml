@@ -76,6 +76,15 @@ jobs:
           exit 1
         }
 
+    - name: Make sure `docs/MCP.md` is correct
+      if: matrix.python-version == '3.13'
+      run: |
+        uv run --frozen --all-extras --python 3.13.13 specmgr mcp-docs
+        git diff --exit-code -- docs/MCP.md || {
+          echo "::error::docs/MCP.md is out of date -- run 'uv run --frozen --all-extras specmgr mcp-docs' and commit the result (see AGENTS.md)."
+          exit 1
+        }
+
     - name: Make sure `docs/req_schema.json` is correct
       # `specmgr schema` itself exits 1 when the regenerated content differs from what
       # was already on disk (or the file didn't exist yet), so no separate
@@ -88,14 +97,14 @@ jobs:
           exit 1
         }
 
-    - name: Make sure `src/biz/dfch/specmgr/req/resources/data/req_schema.json` is correct
+    - name: Make sure `src/biz/dfch/specmgr/req/data/req_schema.json` is correct
       # Packaged copy of the same schema, read by the `specmgr://req/schema` MCP resource
       # via importlib.resources (Task 3.8) so it works from a real, non-editable install.
       # Same generator as the step above, just a second --output-dir.
       if: matrix.python-version == '3.13'
       run: |
-        uv run --frozen --all-extras --python 3.13.13 specmgr schema --type req --output-dir src/biz/dfch/specmgr/req/resources/data || {
-          echo "::error::src/biz/dfch/specmgr/req/resources/data/req_schema.json is out of date -- run 'uv run --frozen --all-extras specmgr schema --type req --output-dir src/biz/dfch/specmgr/req/resources/data' and commit the result (see AGENTS.md)."
+        uv run --frozen --all-extras --python 3.13.13 specmgr schema --type req --output-dir src/biz/dfch/specmgr/req/data || {
+          echo "::error::src/biz/dfch/specmgr/req/data/req_schema.json is out of date -- run 'uv run --frozen --all-extras specmgr schema --type req --output-dir src/biz/dfch/specmgr/req/data' and commit the result (see AGENTS.md)."
           exit 1
         }
 

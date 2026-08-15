@@ -22,8 +22,9 @@ this repo's existing tool+resource pairs (e.g. ``get_req_example`` /
 ``specmgr://req/example``) for a host that wants to fetch the template as
 context without an explicit tool call. Deliberately does not import from
 ``req.tools`` (nor vice versa): both this resource and the ``get_req_template``
-tool import the shared ``req._data`` helper directly, so neither sub-package
-depends on the other just for this one file read.
+tool import the shared, doc-type-agnostic ``general.tools._packaged_data``
+helper directly (Task 5.3), so neither sub-package depends on the other just
+for this one file read.
 
 The resource's URI is deliberately unversioned (no ``/v1``), matching
 ``specmgr://req/schema``/``specmgr://req/example``'s own precedent -- see
@@ -32,7 +33,7 @@ The resource's URI is deliberately unversioned (no ``/v1``), matching
 
 from __future__ import annotations
 
-from .._data import read_req_template_text
+from ...general.tools._packaged_data import read_packaged_text
 from ...server import mcp
 
 
@@ -62,4 +63,4 @@ def req_template() -> str:
         The template document's raw markdown source, including its YAML
         frontmatter block.
     """
-    return read_req_template_text()
+    return read_packaged_text("req", "template")

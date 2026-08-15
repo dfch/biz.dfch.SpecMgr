@@ -61,6 +61,7 @@ First-line docstrings from each module, organized by domain:
 - `general/__init__.py` — General-purpose (cross-cutting, not domain-specific) tools.
 - `general/tools/__init__.py` — MCP tool wrappers for general-purpose utilities (mirrors ``adr/tools/``'s shape).
 - `general/tools/_doc_paths.py` — Generic, doc-type-agnostic base directory resolution, filename slugification,
+- `general/tools/_packaged_data.py` — Generic, doc-type-agnostic access to packaged example/template/schema data
 - `general/tools/mdformat.py` — ``@mcp.tool()`` wrapper: mdformat.
 
 **models/**
@@ -108,7 +109,6 @@ First-line docstrings from each module, organized by domain:
 **req/**
 
 - `req/__init__.py` — Requirement (REQ) domain -- requirement specifications.
-- `req/_data.py` — Private, dependency-free access to REQ's packaged example/template/schema
 - `req/models/v1/__init__.py` — Requirement (REQ) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
 - `req/models/v1/_util.py` — Shared, private constants for the ``req.models.v1`` subpackage.
 - `req/models/v1/body.py` — Requirement (REQ) models: whole-section fields under a single H1.

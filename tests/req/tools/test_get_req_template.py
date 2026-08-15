@@ -24,7 +24,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from biz.dfch.specmgr.req import _data
+from biz.dfch.specmgr.general.tools import _packaged_data
 from biz.dfch.specmgr.req.tools.get_req_template import get_req_template
 
 
@@ -41,12 +41,12 @@ class TestGetReqTemplateTool(unittest.TestCase):
         self.assertIn("# Level 1 Heading is the Title of the Requirement", result)
 
     def test_delegates_to_shared_data_reader(self) -> None:
-        """The tool must return whatever req._data.read_req_template_text() returns."""
+        """The tool must return whatever general.tools._packaged_data.read_packaged_text() returns."""
         with tempfile.TemporaryDirectory() as tmp:
             template_path = Path(tmp) / "req_template.md"
             template_path.write_text("---\ntype: req\n---\n\n# Title\n", encoding="utf-8")
 
-            with mock.patch.object(_data, "_TEMPLATE_PATH", template_path):
+            with mock.patch.object(_packaged_data, "packaged_data_path", return_value=template_path):
                 result = get_req_template()
 
             self.assertEqual(result, "---\ntype: req\n---\n\n# Title\n")
@@ -56,7 +56,7 @@ class TestGetReqTemplateTool(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             missing_path = Path(tmp) / "does-not-exist.md"
 
-            with mock.patch.object(_data, "_TEMPLATE_PATH", missing_path):
+            with mock.patch.object(_packaged_data, "packaged_data_path", return_value=missing_path):
                 with self.assertRaises(FileNotFoundError):
                     get_req_template()
 

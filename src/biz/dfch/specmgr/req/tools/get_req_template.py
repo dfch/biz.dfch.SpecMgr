@@ -28,7 +28,7 @@ global across the whole MCP server.
 
 from __future__ import annotations
 
-from .._data import read_req_template_text
+from ...general.tools._packaged_data import read_packaged_text
 from ...server import mcp
 
 
@@ -65,4 +65,4 @@ def get_req_template() -> str:
         The template document's raw markdown source, including its YAML
         frontmatter block.
     """
-    return read_req_template_text()
+    return read_packaged_text("req", "template")

@@ -116,7 +116,7 @@ namespaces = true
 "biz.dfch.specmgr" = [
     "py.typed"
 ]
-"biz.dfch.specmgr.req.resources" = [
+"biz.dfch.specmgr.req" = [
     "data/*.md",
     "data/*.json"
 ]
