@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-08-15
+
 ### Added
 
 - **`specmgr coverage-badge`**: a CLI command that reads the `.coverage`
@@ -73,6 +75,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   When using a non-default Python version (e.g., 3.12 instead of 3.13),
   both `uv sync` and `uv run` require `--python X.Y` and `--all-extras` flags
   to ensure CLI/MCP dependencies are installed correctly.
+- **Second domain feature (REQ tooling)**: implemented requirement/specification
+  document tools and infrastructure:
+  - `models/req/v1/`: Pydantic schema (`ReqFrontmatter`, `ReqBody`, `Requirement`),
+    parser (`parse_req`), renderer (`render_req`), re-exported via `models/req/__init__.py`
+    and `models/__init__.py`.
+  - `req/tools/`: 5 `@mcp.tool()` wrappers for requirement lifecycle (`create_req`,
+    `update_req`, `delete_req` stub, `set_status_req`, `parse_req`).
+  - `req/resources/`: MCP resources for requirement read operations (`specmgr://req/list`,
+    `specmgr://req/{id}`).
+  - `req/prompts/`: `create_req` and `update_req` prompts for requirement drafting
+    and revision workflows.
+  - Comprehensive test coverage with 120+ passing tests under `tests/models/req/`,
+    `tests/req/tools/`, `tests/req/resources/`, `tests/req/prompts/`.
+- **Markdown infrastructure improvements**:
+  - `models/md/`: New markdown section models (`MarkdownSection1`, `MarkdownSection2`,
+    ..., `MarkdownSection6`) and optional comment mixins
+    (`MarkdownSection1WithComment`, etc.) for modular document building.
+  - `MarkdownComment` model for structured comment blocks within document sections.
+  - Full test coverage for markdown models (25+ tests).
+- **Shared cross-domain utilities**:
+  - `general/tools/`: Expanded with `mdformat` tool (format markdown in place,
+    preserving YAML frontmatter).
+  - `general/lookup/`: New shared document path and id lookup module for consistent
+    id→file-path resolution across all document types (adr, req, uc, etc.).
 
 ### Removed
 
