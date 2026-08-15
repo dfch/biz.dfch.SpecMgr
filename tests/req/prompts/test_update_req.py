@@ -30,12 +30,12 @@ class TestUpdateReqPrompt(unittest.TestCase):
         result = update_req("abc-123")
         self.assertIn("abc-123", result)
 
-    def test_mentions_get_resource_first(self):
-        """The prompt must instruct the LLM to read specmgr://req/{id} first,
+    def test_mentions_get_req_tool_first(self):
+        """The prompt must instruct the LLM to call get_req first,
         before the update_req write tool."""
         result = update_req("abc-123")
-        self.assertIn("specmgr://req/{id}", result)
-        self.assertLess(result.index("specmgr://req/{id}"), result.index("update_req(id, content)"))
+        self.assertIn("get_req(id)", result)
+        self.assertLess(result.index("get_req(id)"), result.index("update_req(id, content)"))
 
     def test_mentions_both_mutation_tools(self):
         """Both update_req and set_status_req must be named."""

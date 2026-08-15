@@ -85,6 +85,9 @@ class TestReqListResource(unittest.TestCase):
         self.assertEqual(titles, {"Maximum Engine Temperature", "Minimum Oil Pressure"})
         statuses = {summary.status for summary in result}
         self.assertEqual(statuses, {"draft"})
+        for summary in result:
+            self.assertNotIn(".md", summary.ref)
+            self.assertTrue(summary.ref)
 
     def test_empty_list_for_missing_directory(self) -> None:
         """req_list must return an empty list when the base directory does not exist."""

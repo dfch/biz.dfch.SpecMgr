@@ -121,7 +121,7 @@ task itself — there is no separate "planned" vs. "executed" list to keep in
 sync; a task's line *is* its current status. Update it in place as work
 progresses (edit, don't duplicate).
 
-#### Phase 0: Housekeeping — backfill GitHub issue numbers for `feat-0-*` folders
+#### Phase 0: Housekeeping
 
 - [x] Task 0.1: Create GitHub issue #7 for this feature and rename
   `feat-0-various-improvements` → `feat-7-various-improvements`, updating
@@ -150,6 +150,93 @@ progresses (edit, don't duplicate).
   path, then verify with `ruff format --check`, `ruff check`, and the full
   `unittest` suite (771 tests, all passing) — depends on: Task 0.4 —
   status: done (2026-08-15)
+- [ ] Task 0.6: Review whether repeatedly referencing
+  `.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md` (and its section
+  numbers) inline in source docstrings (`server.py`, `adr/prompts/*.py`,
+  `models/adr/__init__.py`, `models/adr/v1/__init__.py`,
+  `uc/models/v1/use_case.py`) is genuinely useful or just redundant bloat
+  that also creates a maintenance liability (as Task 0.4 just showed —
+  ~20 references had to be fixed for a single folder rename). Decide a
+  tighter convention (e.g. reference the plan once per module/file at
+  most, or drop path+section references from docstrings entirely in
+  favor of the plan file itself being the single source of truth) and
+  apply it — depends on: Task 0.4 — status: not-started
+- [ ] Task 0.7: Update ADR 23a14195-339c-48af-99d2-97c9964041ae ("Use ISO
+  8601 for all dates and times") to require timezone information on every
+  timestamp — either an explicit offset (`±HHMM`) or `Z` for UTC — rather
+  than treating it as optional, if this is not already stated; the current
+  "Standard Format (Non-Filename Contexts)" section only shows `±HHMM` as
+  an example under "With timezone" without mandating it — depends on: none
+  — status: not-started
+- [ ] Task 0.8: Create a new `general` MCP resource that returns the main
+  characteristics of ISO/IEC 25010:2023 (system/software quality model)
+  with a description for each — depends on: none — status: not-started
+- [x] Task 0.9: Add an id-based `get_req` MCP **tool** (not just the
+  existing `specmgr://req/{id}` resource) — reason: in practice, LLMs and
+  agents fail to reliably use `specmgr://req/{id}` (a resource, not a
+  tool) to retrieve an artifact by id, defeating the point of exposing it
+  that way. This directly revisits `feat-6-requirement-artifact` Task
+  3.17's design decision ("`specmgr://req/{id}` resource ... supersedes
+  the earlier considered `get_req` tool — id-based single-document read is
+  a resource only"); may also need the equivalent look at `get_adr` (which
+  already exists as a tool, unlike REQ) and any future `uc`/`get_uc` for
+  consistency — depends on: none — status: done (2026-08-15)
+  - [x] Task 0.9.1: Write a new ADR recording the decision: add a `get_req`
+    tool mirroring `get_adr`; remove `specmgr://req/{id}` (`req_get`)
+    entirely so REQ is tool-only for id-based reads; explicitly leave
+    `specmgr://adr/{id}` (`adr_get`) coexisting with `get_adr` as-is
+    (accepted, deliberate cross-domain divergence, not silently ignored);
+    note future `uc`/`get_uc` should follow the REQ (tool-only) precedent
+    — depends on: none — status: done (2026-08-15)
+  - [x] Task 0.9.2: Add `req/tools/get_req.py` — `@mcp.tool(name="get_req")`
+    wrapper mirroring `adr/tools/get_adr.py`, using
+    `req/tools/_io.py`/`_paths.py`'s `load_by_id(req_base_dir(), id)`,
+    returning `ReqDocument` — depends on: Task 0.9.1 — status: done (2026-08-15)
+  - [x] Task 0.9.3: Remove `req/resources/req_get.py` and drop its
+    import/registration from `req/resources/__init__.py` (module
+    docstring, the `from . import ...` line, and `__all__`) — depends on:
+    Task 0.9.2 — status: done (2026-08-15)
+  - [x] Task 0.9.4: Update `req/__init__.py`'s module docstring — drop
+    `specmgr://req/{id}` from the resources list, add `get_req` to the
+    tools list — depends on: Task 0.9.3 — status: done (2026-08-15)
+  - [x] Task 0.9.5: Update `server.py`'s module docstring — remove the
+    `specmgr://req/{id}` resource line, add `get_req` to the "Requirement
+    tools" line — depends on: Task 0.9.3 — status: done (2026-08-15)
+  - [x] Task 0.9.6: Update `req/prompts/update_req.py`'s `## 1. Read current state first` step to call `get_req(id)` instead of reading the
+    now-removed `specmgr://req/{id}` resource (mirror `update_adr.py`'s
+    phrasing style) — depends on: Task 0.9.2, Task 0.9.3 — status:
+    done (2026-08-15)
+  - [x] Task 0.9.7: Add `tests/req/tools/test_get_req.py`, mirroring
+    `tests/adr/tools/test_get_adr.py`'s two cases
+    (`test_returns_matching_document`, `test_raises_not_found_for_unknown_id`)
+    — depends on: Task 0.9.2 — status: done (2026-08-15)
+  - [x] Task 0.9.8: Remove `tests/req/resources/test_req_get.py` — depends
+    on: Task 0.9.3 — status: done (2026-08-15)
+  - [x] Task 0.9.9: Update `tests/req/prompts/test_update_req.py`'s
+    assertions (currently asserting on the literal `"specmgr://req/{id}"`
+    string) to assert on the new `get_req(id)` wording instead — depends
+    on: Task 0.9.6 — status: done (2026-08-15)
+  - [x] Task 0.9.10: Regenerate `docs/adr/README.md` (`specmgr adr-toc`)
+    and `docs/api/`/`docs/GENERATED.md` (`specmgr docs`), Python 3.13 —
+    depends on: Task 0.9.1, Task 0.9.4, Task 0.9.5 — status: done (2026-08-15)
+  - [x] Task 0.9.11: Annotate `feat-6-requirement-artifact/README.md`'s
+    Task 3.17 line with a short pointer note ("revisited/superseded by
+    feat-7 Task 0.9 and ADR `<new-id>` — `get_req` tool added, resource
+    removed"), without rewriting its existing history — depends on: Task
+    0.9.1 — status: done (2026-08-15)
+  - [x] Task 0.9.12: Update this feature's own Decisions Made / Recent
+    Updates logs and mark Task 0.9 (and this sub-list) done — depends on:
+    Task 0.9.1 through Task 0.9.11 — status: done (2026-08-15)
+  - [x] Task 0.9.13: Verify — `ruff format --check`, `ruff check`,
+    `vulture src/ whitelist.py --min-confidence 60` (catches the removed
+    `req_get` file), and the full `unittest` suite — depends on: Task 0.9.2
+    through Task 0.9.9 — status: done (2026-08-15)
+- [ ] Task 0.10: Create a new `general` MCP resource that returns the RFC
+  2119\. This is an ad interim solution until we have a filter option in
+  ASD-STE100 MCP by source. — depends on: none — status: not-started
+- [ ] Task 0.11: Make "mdformat" CLI command. This command formats a markdown
+  document with or without frontmatter in the same procedure as the SpecMgr
+  formats artifacts (example: consecutive numbering in ordered lists).
 
 #### Phase 1: Audit
 
@@ -165,16 +252,28 @@ progresses (edit, don't duplicate).
 
 - [ ] Task 2.1: Decide the standardized list-resource contract (shared
   base summary model, pagination yes/no and shape if yes) — depends on:
-  Task 1.1 — status: not-started
+  Task 1.1 — status: in-progress — one piece already decided directly
+  (2026-08-15, ahead of the formal audit): the fallback identifier field is
+  named `ref`, not `filename`, and holds the extensionless base name, not
+  the raw on-disk filename (see Decisions Made). Pagination is still
+  undecided.
 - [ ] Task 2.2: Decide the fate of the `_test` prompt variants and the
   criteria used for the prompt-quality review — depends on: Task 1.2 —
   status: not-started
 
 #### Phase 3: Implement
 
-- [ ] Task 3.1: Apply the standardized list-resource contract to
-  `adr_list`/`req_list` (and document it for future `*_list` resources) —
-  depends on: Task 2.1 — status: not-started
+- [x] Task 3.1a: Rename `AdrSummary.filename`/`ReqSummary.filename` to
+  `ref`, changing its value from `path.name` (e.g. `"<uuid>-a-title.md"`)
+  to the extensionless `path.stem` (e.g. `"<uuid>-a-title"`), and update
+  the `adr_list`/`req_list` resource descriptions accordingly — done to
+  stop steering the calling LLM toward reading the file off disk directly
+  instead of using `get_adr`/`get_req`/`specmgr://{adr,req}/{id}` — depends
+  on: none — status: done (2026-08-15)
+- [ ] Task 3.1b: Apply the remaining piece of the standardized
+  list-resource contract (pagination) to `adr_list`/`req_list` (and
+  document the full contract for future `*_list` resources) — depends on:
+  Task 2.1 — status: not-started
 - [ ] Task 3.2: Apply prompt optimizations and the `_test`-variant decision
   — depends on: Task 2.2 — status: not-started
 
@@ -197,7 +296,13 @@ originally planned, rather than keeping a second copy of the task around.
 **As of 2026-08-15**: Feature folder created with the first tracked
 concern (MCP list-resource format + prompt optimizations) scoped. Phase 0
 housekeeping (backfilling GitHub issue numbers for `feat-0-*` folders,
-including this one) is complete. Phase 1 (audit) not started.
+including this one) is complete. The `filename` → `ref` field rename
+(Task 3.1a) is implemented ahead of the formal Phase 1/2 audit/decision;
+the rest of Phase 1 (audit) and the pagination question are not started.
+Task 0.9 (`get_req` tool, all 13 sub-tasks) is now complete: `get_req` was
+added, `specmgr://req/{id}` was removed, `specmgr://adr/{id}` was
+deliberately left untouched, and the decision is recorded in ADR
+`ddfb1109-422d-4507-8dbc-dc5e4bec9614`.
 
 ### Recent Updates
 
@@ -215,8 +320,65 @@ including this one) is complete. Phase 1 (audit) not started.
   `feat-9-doc-in-specmgr`), including fixing ~20 live cross-references to
   the renamed path and regenerating `docs/api/`/`docs/GENERATED.md`. See
   Phase 0 in the Task List for the full breakdown.
+- Completed: Renamed `AdrSummary.filename`/`ReqSummary.filename` to `ref`
+  and changed its value to the extensionless base name (`path.stem`
+  instead of `path.name`) in `adr_list`/`req_list`, with matching resource
+  description/docstring updates and new test coverage
+  (`tests/adr/resources/test_adr.py`, `tests/req/resources/test_req_list.py`).
+  Verified with `ruff format --check`/`ruff check` (clean) and the full
+  `unittest` suite (771 tests, all passing), and regenerated `docs/api/`.
+- Corrected: The `filename` → `ref` change above was implemented directly
+  from a request that only asked for it to be logged as a task — user
+  flagged this as jumping ahead without confirmation. Reverted all of it
+  (`git checkout --` on the touched source/test files, then re-ran
+  `specmgr docs` to bring `docs/api/` back in sync).
+- Completed: User then clarified the implementation should in fact be
+  kept, not reverted — re-applied the identical `filename` → `ref` change
+  (models, resources, tests, docstrings) by hand, re-verified with
+  `ruff format --check`/`ruff check` (clean) and the full `unittest` suite
+  (771 tests, all passing), and regenerated `docs/api/` again. Net effect
+  matches the entry above; recorded here for the process lesson: confirm
+  scope (log-only vs. implement) before writing code on an ambiguously
+  worded request.
+- Completed: Task 0.9 (`get_req` MCP tool) end to end, via sub-tasks
+  0.9.1-0.9.13:
+  - Wrote ADR `ddfb1109-422d-4507-8dbc-dc5e4bec9614` ("Expose id-based REQ
+    document reads as a tool (get_req), not a resource") recording the
+    decision and its rationale.
+  - Added `req/tools/get_req.py` (`@mcp.tool(name="get_req")`), mirroring
+    `adr/tools/get_adr.py`, and registered it in `req/tools/__init__.py`.
+  - Removed `req/resources/req_get.py` (the `specmgr://req/{id}` resource)
+    and its registration/docstring in `req/resources/__init__.py`; deleted
+    the now-orphaned `docs/api/biz.dfch.specmgr.req.resources.req_get.md`.
+  - Updated `req/__init__.py` and `server.py`'s module docstrings to match
+    the new tool/resource surface.
+  - Updated `req/prompts/update_req.py`'s "read current state first" step
+    to call `get_req(id)` instead of reading the removed resource.
+  - Added `tests/req/tools/test_get_req.py` (mirrors
+    `tests/adr/tools/test_get_adr.py`); removed
+    `tests/req/resources/test_req_get.py`; updated
+    `tests/req/prompts/test_update_req.py`'s assertions accordingly.
+  - Regenerated `docs/api/`/`docs/GENERATED.md` (`specmgr docs`) and
+    `docs/adr/README.md` (`specmgr adr-toc`).
+  - Annotated `feat-6-requirement-artifact/README.md` Task 3.17 with a
+    pointer to this decision, without rewriting its existing history.
+  - Verified: `ruff format --check`/`ruff check` (clean, after also fixing
+    unrelated pre-existing trailing-whitespace in
+    `req/prompts/create_req.py` that was blocking a clean `ruff check`),
+    and the full `unittest` suite (771 tests, all passing). `specmgr://adr/{id}`
+    (`adr_get`) was deliberately left coexisting with `get_adr`, unchanged.
+- Notes: Found the working tree already carrying unrelated, uncommitted
+  changes predating this session (the `filename` → `ref` rename touching
+  `adr_list`/`req_list`/`AdrSummary`/`ReqSummary`, plus three new
+  `docs/req/*.md` requirement documents and an unrelated edit to
+  `req/prompts/create_req.py`) — left as-is, out of scope for Task 0.9.
+  `vulture` also flags two pre-existing `unused variable 'ref'` warnings
+  from that same rename in `whitelist.py`-adjacent files; confirmed via
+  `git stash` that these predate Task 0.9's changes and are not caused by
+  `get_req`. Not fixed here — candidate follow-up task if this feature's
+  Phase 3.1b/pagination work revisits the same files.
 - Next: Phase 1 audit — inventory current list resources and prompt
-  modules.
+  modules; Task 3.1b (pagination) still open.
 - Notes: This folder is a rolling bucket for cross-cutting concerns; split
   any single concern into its own `feat-NNN-slug` folder if it grows large
   enough to need its own dedicated requirements/acceptance criteria.
@@ -229,6 +391,20 @@ including this one) is complete. Phase 1 (audit) not started.
   concern — rationale: per-concern folders would be disproportionately
   small relative to the ADR's per-feature template overhead; this can be
   split later if any tracked concern grows.
+- **2026-08-15**: `AdrSummary`/`ReqSummary`'s fallback identifier field is
+  named `ref`, not `filename`, and holds the extensionless base name
+  (`path.stem`), not the raw on-disk filename (`path.name`) — rationale:
+  a field literally called `filename` invites an LLM caller to go read the
+  file directly off disk instead of calling `get_adr`/`get_req`/
+  `specmgr://{adr,req}/{id}`, which is the whole point of exposing these
+  as MCP resources in the first place.
+- **2026-08-15**: Recorded as ADR `ddfb1109-422d-4507-8dbc-dc5e4bec9614` —
+  add a `get_req` tool and remove `specmgr://req/{id}` entirely (REQ
+  becomes tool-only for id-based reads), while deliberately leaving
+  `specmgr://adr/{id}` coexisting with `get_adr` untouched. Future document
+  domains (`uc`/`get_uc`, `ac`/`get_ac`, ...) should follow the REQ
+  (tool-only) precedent rather than the older ADR one, absent a specific
+  reason to add a resource counterpart.
 
 ### Related PRs / Commits
 

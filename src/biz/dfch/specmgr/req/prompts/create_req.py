@@ -48,6 +48,8 @@ every write to disk goes through the specmgr MCP tools listed below.
 There is no frontmatter for you to draft: `create_req` builds
 id/type/status/created/updated/version automatically.
 
+Make a todo list and use the question tool.
+
 ## 0. Check for an existing requirement on this topic first
 Read the `specmgr://req/list` resource before creating anything. If a
 requirement with a similar title or topic already exists, tell the user
@@ -61,12 +63,13 @@ step 1 if this is genuinely a new requirement.
   itself, mandatory.
 - `## Description` -- optional prose giving context/rationale.
 - `## Characteristics` -- mandatory bullet list of ISO 25010:2023 quality
-  attributes (e.g. "Functional Suitability", "Performance", "Security");
-  at least one item.
+  attributes (e.g. "Functional Suitability", "Performance Efficiency",
+  "Compatibility", "Interaction Capability", "Reliability", "Security",
+  "Maintainability", "Flexibility", "Safety"); at least one item.
 - `## Level` -- mandatory single-line obligation strength: one of
-  MUST / SHOULD / MUST NOT / SHOULD NOT / MAY.
+  MUST / SHOULD / MUST NOT / SHOULD NOT / MAY (RFC 2119 keywords).
 - `## Priority` -- optional single-line value, 0-99 (lower means more
-  important).
+  important). Default: 50.
 - `## Tags` -- optional bullet list of free-form labels.
 - `## Source` -- mandatory single-line value naming the origin/authority
   of this requirement.

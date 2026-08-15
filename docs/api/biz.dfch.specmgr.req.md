@@ -10,9 +10,11 @@ the shared ``mcp`` application instance at once::
 
     from biz.dfch.specmgr import req  # noqa: F401 (side-effects only)
 
-``tools`` (``parse_req``, ``get_req_example``, ``get_req_template``,
-``create_req``, ``update_req``, ``set_status_req``, ``delete_req``,
-``validate_req``), ``resources`` (``specmgr://req/schema``,
+``tools`` (``parse_req``, ``get_req``, ``get_req_example``,
+``get_req_template``, ``create_req``, ``update_req``, ``set_status_req``,
+``delete_req``, ``validate_req``), ``resources`` (``specmgr://req/schema``,
 ``specmgr://req/example``, ``specmgr://req/template``,
-``specmgr://req/{id}``, ``specmgr://req/list``), and ``prompts``
-(``create_req``, ``update_req``) all exist.
+``specmgr://req/list``), and ``prompts`` (``create_req``, ``update_req``)
+all exist. Unlike ADR, REQ has no ``specmgr://req/{id}`` resource --
+id-based reads go through the ``get_req`` tool only (ADR
+ddfb1109-422d-4507-8dbc-dc5e4bec9614).

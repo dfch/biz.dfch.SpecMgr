@@ -119,9 +119,8 @@ First-line docstrings from each module, organized by domain:
 - `req/prompts/__init__.py` — MCP prompt wrappers for Requirements (Task 3.19).
 - `req/prompts/create_req.py` — ``@mcp.prompt()``: create_req (Task 3.19).
 - `req/prompts/update_req.py` — ``@mcp.prompt()``: update_req (Task 3.19).
-- `req/resources/__init__.py` — MCP resource registrations for Requirement (REQ) documents (Tasks 3.5-3.7, 3.17-3.18).
+- `req/resources/__init__.py` — MCP resource registrations for Requirement (REQ) documents (Tasks 3.5-3.7, 3.18).
 - `req/resources/req_example.py` — Resource: specmgr://req/example (Task 3.6).
-- `req/resources/req_get.py` — Resource: specmgr://req/{id} (Task 3.17).
 - `req/resources/req_list.py` — Resource: specmgr://req/list (Task 3.18).
 - `req/resources/req_schema.py` — Resource: specmgr://req/schema (Task 3.5, packaged data since Task 3.8).
 - `req/resources/req_template.py` — Resource: specmgr://req/template (Task 3.7).
@@ -132,6 +131,7 @@ First-line docstrings from each module, organized by domain:
 - `req/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_req``/``update_req``
 - `req/tools/create_req.py` — ``@mcp.tool()`` wrapper: create_req (Task 3.12).
 - `req/tools/delete_req.py` — ``@mcp.tool()`` wrapper: delete_req (Task 3.15).
+- `req/tools/get_req.py` — ``@mcp.tool()`` wrapper: get_req (feat-7-various-improvements Task 0.9).
 - `req/tools/get_req_example.py` — ``@mcp.tool()`` wrapper: get_req_example (Task 3.6).
 - `req/tools/get_req_template.py` — ``@mcp.tool()`` wrapper: get_req_template (Task 3.7).
 - `req/tools/parse_req.py` — ``@mcp.tool()`` wrapper: parse_req.

@@ -80,6 +80,11 @@ Index of all ADRs in this repository.
   - Id: ddd038f0-ae16-4f4b-beef-df06f7ed226f
   - Status: accepted
   - Decision-makers: dfch
+- [Expose id-based REQ document reads as a tool (get_req), not a resource](ddfb1109-422d-4507-8dbc-dc5e4bec9614-expose-id-based-req-document-reads-as-a-tool-get-req-not-a-r.md)
+  - Id: ddfb1109-422d-4507-8dbc-dc5e4bec9614
+  - Status: accepted
+  - Date: 2026-08-15
+  - Decision-makers: OpenCode agent + user decision
 - [Use Architecture Decision Records (ADRs) to document design decisions](e11421d3-cc1d-487b-af32-ee4093422712-use-architecture-decision-records-adrs-to-document-design-de.md)
   - Id: e11421d3-cc1d-487b-af32-ee4093422712
   - Status: accepted

@@ -79,6 +79,7 @@ open_issues
 performance_target
 preconditions
 priority
+ref
 related_artifacts
 related_information
 related_use_cases

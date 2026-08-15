@@ -24,7 +24,7 @@ Registers the following resources and tools so far (plan §8, §9a):
 Resources
 ---------
 specmgr://version --    Installed version number of the ``biz-dfch-specmgr`` package.
-specmgr://adr/list --   Ids/titles/statuses/filenames of every ADR
+specmgr://adr/list --   Ids/titles/statuses/refs of every ADR
                         (``.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md``).
 specmgr://adr/{id} --    Full ADR document for a given id (``.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md``).
 specmgr://req/schema -- The generated REQ JSON Schema, read from a packaged data copy
@@ -33,8 +33,10 @@ specmgr://req/schema -- The generated REQ JSON Schema, read from a packaged data
 specmgr://req/example -- A complete, valid sample requirement document as raw markdown.
 specmgr://req/template -- A requirement template (every field present, placeholder text)
                           as raw markdown.
-specmgr://req/{id} --   Full requirement document for a given id.
-specmgr://req/list --   Ids/titles/statuses/filenames of every requirement.
+specmgr://req/list --   Ids/titles/statuses/refs of every requirement.
+
+REQ has no ``specmgr://req/{id}`` resource, unlike ADR -- id-based reads go
+through the ``get_req`` tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
 
 Tools
 -----
@@ -42,15 +44,16 @@ ADR tools (``adr/tools/``): ``get_adr``, ``create_adr``, ``update_frontmatter``,
 ``update_section``, ``set_status``, ``option_list``, ``option_create``,
 ``option_update``, ``option_read``, ``option_delete``, ``validate_adr``.
 Use-case tools (``uc/tools/``): ``parse_uc``.
-Requirement tools (``req/tools/``): ``parse_req``, ``get_req_example``, ``get_req_template``,
-``create_req``, ``update_req``, ``set_status_req``, ``delete_req`` (stub, not yet
-implemented), ``validate_req``.
+Requirement tools (``req/tools/``): ``parse_req``, ``get_req``, ``get_req_example``,
+``get_req_template``, ``create_req``, ``update_req``, ``set_status_req``, ``delete_req``
+(stub, not yet implemented), ``validate_req``.
 General tools (``general/tools/``): ``mdformat`` -- format markdown files in place,
 preserving YAML frontmatter blocks.
 
 Prompts
 -------
 ADR prompts (``adr/prompts/``): ``create_adr``, ``update_adr`` -- instructional
+text guiding an LLM through the ADR tool sequence above (``.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md``
 text guiding an LLM through the ADR tool sequence above (``.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md``
 §11).
 Requirement prompts (``req/prompts/``): ``create_req``, ``update_req`` --

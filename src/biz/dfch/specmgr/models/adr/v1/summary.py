@@ -35,12 +35,16 @@ class AdrSummary(BaseModel):
         The ADR's ``# {title}`` H1.
     status:
         The ADR's ``frontmatter.status`` value, verbatim.
-    filename:
-        The on-disk file's base name (e.g. ``"<uuid>-a-title.md"``), not a
-        full path -- callers already know the configured ADR base directory.
+    ref:
+        The document's extensionless base name (e.g.
+        ``"<uuid>-a-title"``), deliberately *not* a filename or path --
+        callers must not read this off disk themselves, only pass it to
+        ``get_adr``/``specmgr://adr/{id}`` alongside (or instead of) ``id``.
+        Named ``ref`` rather than ``filename`` precisely to avoid inviting
+        direct filesystem access.
     """
 
     id: str | None
     title: str
     status: str
-    filename: str
+    ref: str

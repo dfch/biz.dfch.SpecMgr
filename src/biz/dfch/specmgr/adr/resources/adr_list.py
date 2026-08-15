@@ -36,8 +36,11 @@ from ..tools._paths import adr_base_dir, iter_adr_paths
     name="adr_list",
     title="ADR List",
     description=(
-        "Ids, titles, statuses, and filenames of every ADR in the configured ADR base "
-        "directory (SPECMGR_ADR_DIR), for context before addressing one by id."
+        "Ids, titles, statuses, and refs of every ADR in the configured ADR base "
+        "directory (SPECMGR_ADR_DIR), for context before addressing one by id. "
+        "'ref' is an opaque, extensionless identifier -- not a filename to read from "
+        "disk -- for documents that have no assigned id; use get_adr/specmgr://adr/{id} "
+        "with it instead."
     ),
     mime_type="application/json",
 )
@@ -63,6 +66,6 @@ def adr_list() -> list[AdrSummary]:
         except (AdrParseError, ValidationError):
             continue
         summaries.append(
-            AdrSummary(id=adr.frontmatter.id, title=adr.body.title, status=adr.frontmatter.status, filename=path.name)
+            AdrSummary(id=adr.frontmatter.id, title=adr.body.title, status=adr.frontmatter.status, ref=path.stem)
         )
     return summaries

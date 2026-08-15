@@ -93,9 +93,8 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.req.prompts`](biz.dfch.specmgr.req.prompts.md) — MCP prompt wrappers for Requirements (Task 3.19).
 - [`biz.dfch.specmgr.req.prompts.create_req`](biz.dfch.specmgr.req.prompts.create_req.md) — ``@mcp.prompt()``: create_req (Task 3.19).
 - [`biz.dfch.specmgr.req.prompts.update_req`](biz.dfch.specmgr.req.prompts.update_req.md) — ``@mcp.prompt()``: update_req (Task 3.19).
-- [`biz.dfch.specmgr.req.resources`](biz.dfch.specmgr.req.resources.md) — MCP resource registrations for Requirement (REQ) documents (Tasks 3.5-3.7, 3.17-3.18).
+- [`biz.dfch.specmgr.req.resources`](biz.dfch.specmgr.req.resources.md) — MCP resource registrations for Requirement (REQ) documents (Tasks 3.5-3.7, 3.18).
 - [`biz.dfch.specmgr.req.resources.req_example`](biz.dfch.specmgr.req.resources.req_example.md) — Resource: specmgr://req/example (Task 3.6).
-- [`biz.dfch.specmgr.req.resources.req_get`](biz.dfch.specmgr.req.resources.req_get.md) — Resource: specmgr://req/{id} (Task 3.17).
 - [`biz.dfch.specmgr.req.resources.req_list`](biz.dfch.specmgr.req.resources.req_list.md) — Resource: specmgr://req/list (Task 3.18).
 - [`biz.dfch.specmgr.req.resources.req_schema`](biz.dfch.specmgr.req.resources.req_schema.md) — Resource: specmgr://req/schema (Task 3.5, packaged data since Task 3.8).
 - [`biz.dfch.specmgr.req.resources.req_template`](biz.dfch.specmgr.req.resources.req_template.md) — Resource: specmgr://req/template (Task 3.7).
@@ -106,6 +105,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.req.tools._write`](biz.dfch.specmgr.req.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_req``/``update_req``
 - [`biz.dfch.specmgr.req.tools.create_req`](biz.dfch.specmgr.req.tools.create_req.md) — ``@mcp.tool()`` wrapper: create_req (Task 3.12).
 - [`biz.dfch.specmgr.req.tools.delete_req`](biz.dfch.specmgr.req.tools.delete_req.md) — ``@mcp.tool()`` wrapper: delete_req (Task 3.15).
+- [`biz.dfch.specmgr.req.tools.get_req`](biz.dfch.specmgr.req.tools.get_req.md) — ``@mcp.tool()`` wrapper: get_req (feat-7-various-improvements Task 0.9).
 - [`biz.dfch.specmgr.req.tools.get_req_example`](biz.dfch.specmgr.req.tools.get_req_example.md) — ``@mcp.tool()`` wrapper: get_req_example (Task 3.6).
 - [`biz.dfch.specmgr.req.tools.get_req_template`](biz.dfch.specmgr.req.tools.get_req_template.md) — ``@mcp.tool()`` wrapper: get_req_template (Task 3.7).
 - [`biz.dfch.specmgr.req.tools.parse_req`](biz.dfch.specmgr.req.tools.parse_req.md) — ``@mcp.tool()`` wrapper: parse_req.

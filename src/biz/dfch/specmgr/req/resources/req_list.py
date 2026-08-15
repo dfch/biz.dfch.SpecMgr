@@ -38,8 +38,11 @@ from ..tools._paths import iter_req_paths
     name="req_list",
     title="Requirement List",
     description=(
-        "Ids, titles, statuses, and filenames of every requirement in the configured "
-        "requirement base directory, for context before addressing one by id."
+        "Ids, titles, statuses, and refs of every requirement in the configured "
+        "requirement base directory, for context before addressing one by id. "
+        "'ref' is an opaque, extensionless identifier -- not a filename to read from "
+        "disk -- for documents that have no assigned id; use it with the get_req tool "
+        "instead."
     ),
     mime_type="application/json",
 )
@@ -71,7 +74,7 @@ def req_list() -> list[ReqSummary]:
                 id=doc.frontmatter.id,
                 title=doc.body.text,
                 status=doc.frontmatter.status,
-                filename=path.name,
+                ref=path.stem,
             )
         )
     return summaries

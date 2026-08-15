@@ -61,6 +61,10 @@ class TestAdrListResource(unittest.TestCase):
                 self.assertIsInstance(summary, AdrSummary)
             titles = {summary.title for summary in result}
             self.assertEqual(titles, {"First title", "Second title"})
+            refs = {summary.ref for summary in result}
+            self.assertEqual(refs, {"1", "2"})
+            for ref in refs:
+                self.assertNotIn(".md", ref)
 
     def test_empty_list_for_missing_directory(self):
         """adr_list must return an empty list when the base directory does not exist."""
