@@ -197,6 +197,7 @@ git push origin main
 export VERSION=x.y.z
 git tag v${VERSION}
 git push origin v${VERSION}
+git checkout dev
 ```
 
 _Note: `.github/workflows/publish.yml` handles the rest of the release
