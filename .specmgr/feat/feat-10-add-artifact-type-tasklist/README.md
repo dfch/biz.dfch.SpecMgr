@@ -1,7 +1,7 @@
 ---
 created: 2026-08-16
 id: feat-10-add-artifact-type-tasklist
-status: planning
+status: in-progress
 updated: 2026-08-16
 version: 1.0.0
 ---
@@ -181,13 +181,13 @@ into Phases 1–3 below (each phase now carries its own test tasks); Phase 4
 absorbs a final cross-cutting verification pass instead. This collapses the
 original 5 phases into **4 commits**.
 
-#### Phase 1: Specification (commit 1)
+#### Phase 1: Specification (commit 1) — done
 
-- [ ] Task 1.1: Define `tsk` frontmatter (`tsk/models/v1/frontmatter.py` —
+- [x] Task 1.1: Define `tsk` frontmatter (`tsk/models/v1/frontmatter.py` —
   `TskFrontmatter` subclass of `MarkdownFrontmatter`, `type=Literal["tsk"]`,
   4-value status set `draft`/`active`/`done`/`cancelled`) — depends on: none
-  — status: not-started
-- [ ] Task 1.2: Define `tsk` body structure (`tsk/models/v1/body.py`,
+  — status: done
+- [x] Task 1.2: Define `tsk` body structure (`tsk/models/v1/body.py`,
   `tsk/models/v1/task_item.py`) — `Task(MarkdownSection1WithComment)` with
   `items: list[TaskItem]` and `recent_updates: RecentUpdates`; `TaskItem`
   (checked/description computed fields, new `MarkdownListItem` subclass);
@@ -195,17 +195,20 @@ original 5 phases into **4 commits**.
   built on `models/md`'s generic `list[MarkdownStr]` engine
   (`process_list_field`), with `UpdateEntry` a free-form-title H3 leaf via
   `@alias(value=".+", type=AliasType.REGEX)` — not ADR's numbered-option
-  pattern — depends on: Task 1.1 — status: not-started
-- [ ] Task 1.3 (renumbered; was 1.4): Create a reference `tsk` document
+  pattern — depends on: Task 1.1 — status: done
+- [x] Task 1.3 (renumbered; was 1.4): Create a reference `tsk` document
   (`tsk_reference.md`) exercising every field, used as the parser's
-  round-trip test fixture — depends on: Task 1.2 — status: not-started
-- [ ] Task 1.4 (renumbered; was 1.5, folded from former Task 5.1):
+  round-trip test fixture — depends on: Task 1.2 — status: done (placed at
+  `.specmgr/feat/feat-10-add-artifact-type-tasklist/tsk_reference.md`,
+  mirroring `req`'s own reference-fixture location convention, not
+  `tsk/data/` — see Recent Updates)
+- [x] Task 1.4 (renumbered; was 1.5, folded from former Task 5.1):
   `tests/tsk/models/v1/test_frontmatter.py`, `test_body.py`/`test_task_item.py`
   — structural + validation tests mirroring `tests/req/models/v1/`, with
   explicit coverage of `MarkdownSection1WithComment`'s comment-present/
   comment-absent cases (its first real production consumer — no prior test
   coverage outside `models/md`'s own unit tests) — depends on: Task 1.3 —
-  status: not-started
+  status: done
 
 **Plan correction (2026-08-16, see Decisions Made)**: the former Task 1.3
 ("draft `tsk_schema.json` + register in the schema generator") has moved to
@@ -316,14 +319,11 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-16**: Execution starting. Branch
-`feat-10-add-artifact-type-tasklist` created (renamed from a pre-existing,
-empty `feat-11-...` branch) and fast-forward merged with `dev`. Plan
-finalized: Phase 5 ("Tests") folded into Phases 1–3 so each phase ships with
-its own mirrored tests; Phase 4 absorbs a final cross-cutting ACC
-verification pass. Execution proceeds phase-by-phase, each phase delegated
-to the `implementation-specialist` subagent and committed individually (4
-commits total) once quality-gated.
+**As of 2026-08-16**: Phase 1 (Specification) done and committed
+(`9ace8dd`). `TskFrontmatter`, `Task`/`TaskItem`/`RecentUpdates`/
+`UpdateEntry`, the `tsk_reference.md` fixture, and their tests all exist and
+pass (877 tests total, ruff/vulture clean). Proceeding to Phase 2 (Pydantic
+Models & Parser).
 
 ### Blockers
 
@@ -375,6 +375,37 @@ None.
   subagent.
 - Notes: Still no implementation code written as of this update; this
   entry only records the finalized plan restructuring.
+
+#### 2026-08-16 (further continued)
+
+- Completed: **Phase 1 (Specification)**, committed as `9ace8dd`
+  (`feat(tsk): add tsk (TaskList) frontmatter and body models`).
+  `tsk/models/v1/frontmatter.py` (`TskFrontmatter`), `tsk/models/v1/body.py`
+  (`Task`, `RecentUpdates`, `UpdateEntry`), `tsk/models/v1/task_item.py`
+  (`TaskItem`), the `tsk_reference.md` round-trip fixture (placed at
+  `.specmgr/feat/feat-10-add-artifact-type-tasklist/tsk_reference.md`,
+  mirroring `req`'s established reference-fixture location rather than
+  `tsk/data/`), and their tests (`tests/tsk/models/v1/`) are all in place.
+  877 tests passing total; ruff format/check and vulture clean; `specmgr
+  docs`/`specmgr mcp-docs` regenerated. Delegated to
+  `implementation-specialist`, reviewed and quality-gated by the
+  orchestrator before committing.
+- Also completed: caught and fixed a dependency-ordering bug in the
+  original Task List before starting — schema generation (former Task 1.3)
+  requires the full `TskDocument` model (`XDocument.model_json_schema()`
+  pattern confirmed in `commands/schema.py`), so it was moved to Phase 2 as
+  Task 2.5 (see Decisions Made).
+- Next: Execute Phase 2 (Pydantic Models & Parser) — `TskDocument`,
+  `parse_tsk`, `TskSummary`, field descriptions, `generate_tsk_schema()` +
+  registry entry, and parser round-trip tests against `tsk_reference.md`.
+- Notes: `RecentUpdates.updates` is mandatory (non-`Optional`) per the
+  Design Notes' "may start empty **on creation**" wording, but the
+  underlying `models/md` list-parsing engine will raise if a *persisted*
+  document's `## Recent Updates` section has zero `### ` entries — flagged
+  by the implementation-specialist as consistent with `req.Characteristics`'
+  existing behavior (not a regression), but worth keeping in mind if Phase
+  2's `parse_tsk` round-trip tests need a Recent Updates section with at
+  least one entry.
 
 ### Decisions Made
 
