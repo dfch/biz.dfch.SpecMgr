@@ -189,14 +189,10 @@ version = "x.y.z"
 Move the `[Unreleased]` section in `CHANGELOG.md` into a new dated
 `## [x.y.z] - YYYY-MM-DD` section.
 
-Also update both `version` fields in `server.json` (the top-level one and
-the one under `packages[0]`) to match — the MCP Registry manifest must
-stay in lockstep with `pyproject.toml`.
-
 ### 3. Commit and push to `dev`
 
 ```bash
-git add pyproject.toml CHANGELOG.md server.json
+git add pyproject.toml CHANGELOG.md
 git commit -m "chore: bump version to vx.y.z"
 git push origin dev
 ```
@@ -230,12 +226,6 @@ via `mcp-publisher`/GitHub OIDC. `biz-dfch-specmgr` is live on
 [PyPI](https://pypi.org/project/biz-dfch-specmgr/) and in the
 [MCP Registry](https://registry.modelcontextprotocol.io/?q=io.github.dfch%2Fbiz-dfch-specmgr)
 as of `v0.1.0`._
-
-Then switch back to `dev` to continue work:
-
-```bash
-git checkout dev
-```
 
 ## License
 

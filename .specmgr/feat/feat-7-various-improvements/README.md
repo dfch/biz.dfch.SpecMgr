@@ -234,9 +234,7 @@ progresses (edit, don't duplicate).
 - [ ] Task 0.10: Create a new `general` MCP resource that returns the RFC
   2119\. This is an ad interim solution until we have a filter option in
   ASD-STE100 MCP by source. — depends on: none — status: not-started
-- [ ] Task 0.11: Make "mdformat" CLI command. This command formats a markdown
-  document with or without frontmatter in the same procedure as the SpecMgr
-  formats artifacts (example: consecutive numbering in ordered lists).
+- [ ] Task 0.11: Add CLI command "mdformat". This command formats a Markdown document with or without frontmatter in the same way that the MCP server formats documents when it reads and write artifacts (example: it uses numbering for ordered lists). This command does not perform a content validation.
 
 #### Phase 1: Audit
 
