@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-08-16
+
+### Added
+
+- **Third domain feature (TSK/TaskList tooling)**: implemented task-list document
+  tools and infrastructure:
+  - `models/tsk/v1/`: Pydantic schema (`TskFrontmatter`, `TskBody`, `TaskListItem`,
+    `TskDocument`), parser (`parse_tsk`), renderer (`render_tsk`), re-exported via
+    `models/tsk/__init__.py` and `models/__init__.py`.
+  - `tsk/tools/`: `@mcp.tool()` wrappers for task-list lifecycle (`create_tsk`,
+    `update_tsk`, `parse_tsk`, `set_status_tsk`), plus stub for `delete_tsk`.
+  - `tsk/resources/`: MCP resources for task-list read operations (`specmgr://tsk/list`,
+    `specmgr://tsk/{id}`).
+  - `tsk/prompts/`: `create_tsk` and `update_tsk` prompts for task-list drafting
+    and revision workflows.
+  - Comprehensive test coverage with 70+ passing tests under `tests/models/tsk/`,
+    `tests/tsk/tools/`, `tests/tsk/resources/`, `tests/tsk/prompts/`.
+- **Fourth domain feature (UC/UseCase tooling)**: implemented use-case document
+  tools and infrastructure:
+  - `models/uc/v1/`: Pydantic schema (`UcFrontmatter`, `UcBody`, `UseCase`),
+    parser (`parse_uc`), renderer (`render_uc`), re-exported via `models/uc/__init__.py`
+    and `models/__init__.py`.
+  - `uc/tools/`: `@mcp.tool()` wrappers for use-case lifecycle (`create_uc`,
+    `update_uc`, `parse_uc`, `set_status_uc`), plus stub for `delete_uc`.
+  - `uc/resources/`: MCP resources for use-case read operations (`specmgr://uc/list`,
+    `specmgr://uc/{id}`).
+  - `uc/prompts/`: `create_uc` and `update_uc` prompts for use-case drafting
+    and revision workflows.
+  - Comprehensive test coverage with 75+ passing tests under `tests/models/uc/`,
+    `tests/uc/tools/`, `tests/uc/resources/`, `tests/uc/prompts/`.
+- **ISO/IEC 25010:2023 quality model resource** (`iso25010`): a cross-cutting
+  shared resource providing the ISO/IEC 25010:2023 software product quality
+  characteristics and sub-characteristics, accessible via `specmgr://iso25010/model`.
+
 ### Changed
 
 - Moved the top-level `resources/` package (the `specmgr://version` MCP
@@ -14,6 +48,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   not domain-specific, concern — consistent with `general/tools/`. Updated
   `server.py`'s registration import accordingly (`general` now pulls in its
   own `resources`/`tools` sub-packages).
+
+### Fixed
+
+- Task-list (TSK) examples and error messages clarified for better UX.
 
 ## [0.3.1] - 2026-08-15
 
