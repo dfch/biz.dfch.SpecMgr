@@ -114,17 +114,35 @@ class TestTaskItemsValidation(unittest.TestCase):
     """`Task.items` enforces its `min_length=1` constraint."""
 
     def test_empty_items_raises_validation_error(self) -> None:
+        valid_recent_updates = RecentUpdates.from_text(
+            format_text(
+                """\
+## Recent Updates
+
+### Kickoff
+
+Started.
+"""
+            )
+        )
+
         with self.assertRaises(ValidationError):
-            Task(items=[], recent_updates=RecentUpdates(updates=[]))
+            Task(items=[], recent_updates=valid_recent_updates)
 
 
 class TestRecentUpdatesEmpty(unittest.TestCase):
-    """`RecentUpdates.updates` may start empty on direct construction (no `min_length`)."""
+    """`RecentUpdates.updates` enforces its `min_length=1` constraint (consistent with `Task.items`).
 
-    def test_constructs_with_zero_entries(self) -> None:
-        sut = RecentUpdates(updates=[])
+    `models.md`'s generic list-parsing engine already rejects a `## Recent
+    Updates` heading with zero `### ` entries during `from_text` for any
+    non-`Optional` `list[X]` field; `min_length=1` makes direct Python
+    construction (e.g. `create_tsk`) consistently reject an empty list too,
+    rather than silently allowing `RecentUpdates(updates=[])`.
+    """
 
-        self.assertEqual(sut.updates, [])
+    def test_zero_entries_raises_validation_error(self) -> None:
+        with self.assertRaises(ValidationError):
+            RecentUpdates(updates=[])
 
 
 class TestRecentUpdatesSingleEntry(unittest.TestCase):

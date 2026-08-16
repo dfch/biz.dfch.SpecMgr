@@ -40,9 +40,15 @@ equivalent) -- entries are appended by editing the whole body.
 Parameters
 ----------
 updates:
-    The dynamic collection of `### ` entries, in document order. May
-    start empty on creation (e.g. `RecentUpdates(updates=[])`) -- no
-    `min_length` constraint, unlike `Task.items` below.
+    The dynamic collection of `### ` entries, in document order. Requires
+    at least one entry (``min_length=1``), same as `Task.items` below --
+    `models.md`'s generic list-parsing engine already enforces this
+    during `from_text` for any non-`Optional` `list[X]` field regardless
+    of `min_length`, so this constraint makes direct Python construction
+    (e.g. a future `create_tsk` tool) consistent with parsing instead of
+    silently allowing `RecentUpdates(updates=[])`. A newly created `tsk`
+    document must therefore seed a first entry (e.g. "Created") -- see
+    the feature README's Decisions Made.
 
 **Methods:**
 

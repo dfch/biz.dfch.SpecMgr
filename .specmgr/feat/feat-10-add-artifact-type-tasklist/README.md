@@ -127,8 +127,12 @@ tools/resources shape almost exactly (per GitHub issue #10).
   ```
 
   Order is enforced by the model: title -> optional comment -> items (>=1)
-  -> mandatory `## Recent Updates` heading (its own `updates` list may start
-  empty on creation).
+  -> mandatory `## Recent Updates` heading, whose own `updates` list also
+  requires `>=1` entry (`min_length=1`, corrected during Phase 2 — see
+  Decisions Made: a freshly created `tsk` document must seed a first update
+  entry, e.g. "Created", since the underlying parsing engine already
+  rejected an empty `## Recent Updates` section and direct construction is
+  now made consistent with it rather than silently diverging).
 
 - **`TaskItem`** (new leaf, `tsk/models/v1/task_item.py`, subclass of
   `MarkdownListItem`) parses a literal `- [ ] text` / `- [x] text` marker
@@ -142,7 +146,9 @@ tools/resources shape almost exactly (per GitHub issue #10).
   `## Pros and Cons of the Options` / `AdrOption` collection, but with no
   dedicated per-entry tools (no `option_create`/`option_list` equivalent).
   Entries are appended by editing the whole body and calling
-  `update_tsk(id, content)`.
+  `update_tsk(id, content)`. Requires `>=1` entry at all times (see body
+  shape note above) — Phase 3's `create_tsk`/`get_tsk_template`/
+  `get_tsk_example` must seed a first entry (e.g. "Created").
 
 - **Frontmatter status** — `draft`/`active`/`done`/`cancelled`: a small,
   purpose-fit set matching how a task list is actually used (start it, work
@@ -217,30 +223,32 @@ Phase 2 as Task 2.5 — `generate_req_schema`/`generate_uc_schema`
 not just the body model, so schema generation cannot happen before
 `TskDocument` (Task 2.1) exists.
 
-#### Phase 2: Pydantic Models & Parser (commit 2)
+#### Phase 2: Pydantic Models & Parser (commit 2) — done
 
-- [ ] Task 2.1: `tsk/models/v1/document.py` (`TskDocument(frontmatter, body)`, mirroring `ReqDocument`) — depends on: Task 1.3 — status:
-  not-started
-- [ ] Task 2.2: Implement `parse_tsk(text: str) -> TskDocument` (mirrors
-  `parse_req`/`parse_uc`) — depends on: Task 2.1 — status: not-started
-- [ ] Task 2.3: `tsk/models/v1/summary.py` (`TskSummary`, mirroring
+- [x] Task 2.1: `tsk/models/v1/document.py` (`TskDocument(frontmatter, body)`, mirroring `ReqDocument`) — depends on: Task 1.3 — status:
+  done
+- [x] Task 2.2: Implement `parse_tsk(text: str) -> TskDocument` (mirrors
+  `parse_req`/`parse_uc`) — depends on: Task 2.1 — status: done
+- [x] Task 2.3: `tsk/models/v1/summary.py` (`TskSummary`, mirroring
   `ReqSummary`/`AdrSummary`, for the `specmgr://tsk/list` resource) —
-  depends on: Task 2.1 — status: not-started
-- [ ] Task 2.4: Field-level `Field(description=...)` on every scalar/
+  depends on: Task 2.1 — status: done
+- [x] Task 2.4: Field-level `Field(description=...)` on every scalar/
   optional field (schema-quality parity with REQ's Task 2.4/2.5/2.6) —
-  depends on: Task 2.1 — status: not-started
-- [ ] Task 2.5 (moved from Phase 1's former Task 1.3): Draft `tsk_schema.json`
+  depends on: Task 2.1 — status: done (audited; Phase 1 already met the bar,
+  no gaps found)
+- [x] Task 2.5 (moved from Phase 1's former Task 1.3): Draft `tsk_schema.json`
   via `generate_tsk_schema()` (mirroring `generate_req_schema`/
   `generate_uc_schema` in `commands/schema.py`, calling
   `TskDocument.model_json_schema()`) + register `"tsk"` in the `specmgr
   schema` doc-type generator registry (`_GENERATORS`) — depends on: Task
-  2.1 — status: not-started
-- [ ] Task 2.6 (folded from former Task 5.1): `tests/tsk/models/v1/test_parser.py`
+  2.1 — status: done (`docs/tsk_schema.json` generated, mirroring
+  `docs/req_schema.json`/`docs/uc_schema.json`'s own precedent)
+- [x] Task 2.6 (folded from former Task 5.1): `tests/tsk/models/v1/test_parser.py`
   — mirrors `TestParseReq`'s 8-case shape (minimal doc, full
   reference-doc round-trip, defaults-when-absent, invalid status, malformed
   structure, etc.), plus round-trip coverage of the new
   `RecentUpdates`/`UpdateEntry` dynamic-list combo — depends on: Task 2.2,
-  Task 2.5 — status: not-started
+  Task 2.5 — status: done
 
 #### Phase 3: MCP Surface (commit 3)
 
@@ -319,11 +327,13 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-16**: Phase 1 (Specification) done and committed
-(`9ace8dd`). `TskFrontmatter`, `Task`/`TaskItem`/`RecentUpdates`/
-`UpdateEntry`, the `tsk_reference.md` fixture, and their tests all exist and
-pass (877 tests total, ruff/vulture clean). Proceeding to Phase 2 (Pydantic
-Models & Parser).
+**As of 2026-08-16**: Phases 1-2 done. Phase 1 committed (`9ace8dd`); Phase 2
+(`TskDocument`, `parse_tsk`, `TskSummary`, `generate_tsk_schema()`, parser
+tests) implemented and quality-gated, about to be committed. Along the way,
+corrected `RecentUpdates.updates` to require `min_length=1` (was
+inconsistent — parsing already rejected zero entries, direct construction
+didn't). 885 tests passing, ruff/vulture clean, `docs/tsk_schema.json`
+generated. Proceeding to Phase 3 (MCP Surface).
 
 ### Blockers
 
@@ -407,6 +417,30 @@ None.
   2's `parse_tsk` round-trip tests need a Recent Updates section with at
   least one entry.
 
+#### 2026-08-16 (yet further continued)
+
+- Completed: **Phase 2 (Pydantic Models & Parser)**. `tsk/models/v1/document.py`
+  (`TskDocument`), `parser.py` (`parse_tsk`), `summary.py` (`TskSummary`),
+  `_util.py` (`SCHEMA_COMMENT_VERSION`), `generate_tsk_schema()` +
+  `_GENERATORS["tsk"]` in `commands/schema.py`, and
+  `tests/tsk/models/v1/test_parser.py` (8 tests, mirroring `TestParseReq`)
+  all implemented. `docs/tsk_schema.json` generated, mirroring
+  `docs/req_schema.json`/`docs/uc_schema.json`'s own precedent. Delegated to
+  `implementation-specialist`, reviewed by the orchestrator.
+- Also completed: resolved the `RecentUpdates.updates` empty-list
+  inconsistency flagged as a Phase 1 risk — confirmed empirically that
+  `from_text` parsing already rejected zero entries while direct
+  construction (`RecentUpdates(updates=[])`) silently succeeded. Added
+  `min_length=1` to make both paths consistent (see Decisions Made), and
+  updated the two Phase 1 tests that exercised the old (now-superseded)
+  behavior (`TestRecentUpdatesEmpty`, `TestTaskItemsValidation`) to match.
+- Next: Execute Phase 3 (MCP Surface) — tools, resources, prompts, packaged
+  data, `server.py` wiring, and their tests. Phase 3's `create_tsk`/
+  `get_tsk_template`/`get_tsk_example` must each seed a first Recent Updates
+  entry (e.g. "Created") given the `min_length=1` constraint above.
+- Notes: 885 tests passing (877 + 8 new); ruff format/check and vulture
+  clean.
+
 ### Decisions Made
 
 - **2026-08-16**: Target GitHub issue #10, not #11 — issue #11 does not
@@ -459,6 +493,19 @@ None.
   this as Task 1.3, before `TskDocument` was even defined; corrected before
   starting implementation to avoid building against a broken dependency
   order.
+- **2026-08-16**: Added `min_length=1` to `RecentUpdates.updates`,
+  superseding the original Design Notes wording ("its own `updates` list may
+  start empty on creation"). Rationale: Phase 2 empirically confirmed
+  `models/md`'s generic list-parsing engine already rejects a `## Recent
+  Updates` section with zero `### ` entries during `from_text` for any
+  non-`Optional` `list[X]` field (regardless of `min_length`) — but direct
+  Python construction (`RecentUpdates(updates=[])`) still silently
+  succeeded, an inconsistency that would have surfaced confusingly in
+  Phase 3's `create_tsk`. Making the constraint explicit and consistent
+  means a freshly created `tsk` document must seed a first Recent Updates
+  entry (e.g. "Created") — `create_tsk`/`get_tsk_template`/`get_tsk_example`
+  in Phase 3 must account for this, same as `Task.items`' own `min_length=1`
+  already requires at least one checklist item.
 
 ### Related PRs / Commits
 

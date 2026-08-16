@@ -120,9 +120,13 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.server`](biz.dfch.specmgr.server.md) — MCP server for ``biz-dfch-specmgr``.
 - [`biz.dfch.specmgr.tsk`](biz.dfch.specmgr.tsk.md) — TaskList (TSK) domain -- lightweight task/todo-list specifications.
 - [`biz.dfch.specmgr.tsk.models`](biz.dfch.specmgr.tsk.models.md) — TaskList (TSK) models -- Pydantic schema powered by the generic ``models/md`` engine.
-- [`biz.dfch.specmgr.tsk.models.v1`](biz.dfch.specmgr.tsk.models.v1.md) — TaskList (TSK) models -- Pydantic schema and (in a later phase) parser powered by ``models/md``.
+- [`biz.dfch.specmgr.tsk.models.v1`](biz.dfch.specmgr.tsk.models.v1.md) — TaskList (TSK) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- [`biz.dfch.specmgr.tsk.models.v1._util`](biz.dfch.specmgr.tsk.models.v1._util.md) — Shared, private constants for the ``tsk.models.v1`` subpackage.
 - [`biz.dfch.specmgr.tsk.models.v1.body`](biz.dfch.specmgr.tsk.models.v1.body.md) — TaskList (TSK) body models: whole-section fields under a single H1.
+- [`biz.dfch.specmgr.tsk.models.v1.document`](biz.dfch.specmgr.tsk.models.v1.document.md) — Pydantic model for a full TaskList document (frontmatter + body).
 - [`biz.dfch.specmgr.tsk.models.v1.frontmatter`](biz.dfch.specmgr.tsk.models.v1.frontmatter.md) — TaskList frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
+- [`biz.dfch.specmgr.tsk.models.v1.parser`](biz.dfch.specmgr.tsk.models.v1.parser.md) — Parse raw TaskList ``.md`` text into a :class:`TskDocument` (Phase 2, Task 2.2).
+- [`biz.dfch.specmgr.tsk.models.v1.summary`](biz.dfch.specmgr.tsk.models.v1.summary.md) — Pydantic model for one line of TSK listing output (Phase 2, Task 2.3).
 - [`biz.dfch.specmgr.tsk.models.v1.task_item`](biz.dfch.specmgr.tsk.models.v1.task_item.md) — `TaskItem` -- a single `- [ ] .../- [x] ...` checklist entry.
 - [`biz.dfch.specmgr.uc`](biz.dfch.specmgr.uc.md) — Use Case (UC) domain — Cockburn-based use case specification and validation.
 - [`biz.dfch.specmgr.uc.models`](biz.dfch.specmgr.uc.models.md) — Use Case models — Pydantic schema for Cockburn-based use cases.

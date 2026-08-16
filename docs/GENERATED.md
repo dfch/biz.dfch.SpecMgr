@@ -148,9 +148,13 @@ First-line docstrings from each module, organized by domain:
 
 - `tsk/__init__.py` — TaskList (TSK) domain -- lightweight task/todo-list specifications.
 - `tsk/models/__init__.py` — TaskList (TSK) models -- Pydantic schema powered by the generic ``models/md`` engine.
-- `tsk/models/v1/__init__.py` — TaskList (TSK) models -- Pydantic schema and (in a later phase) parser powered by ``models/md``.
+- `tsk/models/v1/__init__.py` — TaskList (TSK) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- `tsk/models/v1/_util.py` — Shared, private constants for the ``tsk.models.v1`` subpackage.
 - `tsk/models/v1/body.py` — TaskList (TSK) body models: whole-section fields under a single H1.
+- `tsk/models/v1/document.py` — Pydantic model for a full TaskList document (frontmatter + body).
 - `tsk/models/v1/frontmatter.py` — TaskList frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
+- `tsk/models/v1/parser.py` — Parse raw TaskList ``.md`` text into a :class:`TskDocument` (Phase 2, Task 2.2).
+- `tsk/models/v1/summary.py` — Pydantic model for one line of TSK listing output (Phase 2, Task 2.3).
 - `tsk/models/v1/task_item.py` — `TaskItem` -- a single `- [ ] .../- [x] ...` checklist entry.
 
 **uc/**
@@ -201,4 +205,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 128
+**Test files**: 129

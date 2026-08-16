@@ -15,27 +15,30 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""TaskList (TSK) models -- Pydantic schema and (in a later phase) parser powered by ``models/md``.
+"""TaskList (TSK) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
 
-Mirrors the ``req/models/v1`` layout: body classes map directly to heading
-sections in a ``tsk`` markdown file -- see ``body.py``/``task_item.py`` for
-the full hierarchy -- and ``frontmatter.py`` narrows the generic
-``MarkdownFrontmatter`` for the ``tsk`` document type.
-
-Per `.specmgr/feat/feat-10-add-artifact-type-tasklist/README.md` Phase 1
-("Specification"), only the frontmatter and body models exist so far. There is
-no ``TskDocument``/``parse_tsk``/``TskSummary`` yet -- those are Phase 2 -- so,
-unlike ``req.models.v1``, this package does not yet export them.
+Mirrors the ``req/models/v1`` layout: a free-function ``parse_tsk`` entry point,
+document-level ``TskDocument(frontmatter, body)`` wrapper, frontmatter and body
+subclasses under this same package. Body classes map directly to heading sections
+in a ``tsk`` markdown file -- see ``body.py``/``task_item.py`` for the full hierarchy.
 """
 
+from ._util import SCHEMA_COMMENT_VERSION
 from .body import RecentUpdates, Task, UpdateEntry
+from .document import TskDocument
 from .frontmatter import TskFrontmatter
+from .parser import parse_tsk
+from .summary import TskSummary
 from .task_item import TaskItem
 
 __all__ = [
+    "SCHEMA_COMMENT_VERSION",
     "RecentUpdates",
     "Task",
     "TaskItem",
+    "TskDocument",
     "TskFrontmatter",
+    "TskSummary",
     "UpdateEntry",
+    "parse_tsk",
 ]
