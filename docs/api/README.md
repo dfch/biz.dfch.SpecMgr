@@ -128,6 +128,29 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.tsk.models.v1.parser`](biz.dfch.specmgr.tsk.models.v1.parser.md) — Parse raw TaskList ``.md`` text into a :class:`TskDocument` (Phase 2, Task 2.2).
 - [`biz.dfch.specmgr.tsk.models.v1.summary`](biz.dfch.specmgr.tsk.models.v1.summary.md) — Pydantic model for one line of TSK listing output (Phase 2, Task 2.3).
 - [`biz.dfch.specmgr.tsk.models.v1.task_item`](biz.dfch.specmgr.tsk.models.v1.task_item.md) — `TaskItem` -- a single `- [ ] .../- [x] ...` checklist entry.
+- [`biz.dfch.specmgr.tsk.prompts`](biz.dfch.specmgr.tsk.prompts.md) — MCP prompt wrappers for Task Lists (Task 3.13-3.14).
+- [`biz.dfch.specmgr.tsk.prompts.create_task`](biz.dfch.specmgr.tsk.prompts.create_task.md) — ``@mcp.prompt()``: create_task (Task 3.13).
+- [`biz.dfch.specmgr.tsk.prompts.implement_task`](biz.dfch.specmgr.tsk.prompts.implement_task.md) — ``@mcp.prompt()``: implement_task (Task 3.14).
+- [`biz.dfch.specmgr.tsk.prompts.update_task`](biz.dfch.specmgr.tsk.prompts.update_task.md) — ``@mcp.prompt()``: update_task (Task 3.13).
+- [`biz.dfch.specmgr.tsk.resources`](biz.dfch.specmgr.tsk.resources.md) — MCP resource registrations for Task List (TSK) documents (Tasks 3.10-3.11).
+- [`biz.dfch.specmgr.tsk.resources.tsk_example`](biz.dfch.specmgr.tsk.resources.tsk_example.md) — Resource: specmgr://tsk/example (Task 3.11).
+- [`biz.dfch.specmgr.tsk.resources.tsk_list`](biz.dfch.specmgr.tsk.resources.tsk_list.md) — Resource: specmgr://tsk/list (Task 3.10).
+- [`biz.dfch.specmgr.tsk.resources.tsk_schema`](biz.dfch.specmgr.tsk.resources.tsk_schema.md) — Resource: specmgr://tsk/schema (Task 3.10).
+- [`biz.dfch.specmgr.tsk.resources.tsk_template`](biz.dfch.specmgr.tsk.resources.tsk_template.md) — Resource: specmgr://tsk/template (Task 3.11).
+- [`biz.dfch.specmgr.tsk.tools`](biz.dfch.specmgr.tsk.tools.md) — MCP tool wrappers for task lists (mirrors ``req/tools/``'s own shape).
+- [`biz.dfch.specmgr.tsk.tools._io`](biz.dfch.specmgr.tsk.tools._io.md) — Thin file read helpers over ``parse_tsk`` (Task 3.1).
+- [`biz.dfch.specmgr.tsk.tools._lock`](biz.dfch.specmgr.tsk.tools._lock.md) — Per-document in-process lock guarding task list mutations.
+- [`biz.dfch.specmgr.tsk.tools._paths`](biz.dfch.specmgr.tsk.tools._paths.md) — Task list base directory resolution and id -> path lookup (Task 3.1).
+- [`biz.dfch.specmgr.tsk.tools._write`](biz.dfch.specmgr.tsk.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_tsk``/``update_tsk``.
+- [`biz.dfch.specmgr.tsk.tools.create_tsk`](biz.dfch.specmgr.tsk.tools.create_tsk.md) — ``@mcp.tool()`` wrapper: create_tsk (Task 3.3).
+- [`biz.dfch.specmgr.tsk.tools.delete_tsk`](biz.dfch.specmgr.tsk.tools.delete_tsk.md) — ``@mcp.tool()`` wrapper: delete_tsk (Task 3.6).
+- [`biz.dfch.specmgr.tsk.tools.get_tsk`](biz.dfch.specmgr.tsk.tools.get_tsk.md) — ``@mcp.tool()`` wrapper: get_tsk (Task 3.8).
+- [`biz.dfch.specmgr.tsk.tools.get_tsk_example`](biz.dfch.specmgr.tsk.tools.get_tsk_example.md) — ``@mcp.tool()`` wrapper: get_tsk_example (Task 3.9).
+- [`biz.dfch.specmgr.tsk.tools.get_tsk_template`](biz.dfch.specmgr.tsk.tools.get_tsk_template.md) — ``@mcp.tool()`` wrapper: get_tsk_template (Task 3.9).
+- [`biz.dfch.specmgr.tsk.tools.parse_tsk`](biz.dfch.specmgr.tsk.tools.parse_tsk.md) — ``@mcp.tool()`` wrapper: parse_tsk (Task 3.2).
+- [`biz.dfch.specmgr.tsk.tools.set_status_tsk`](biz.dfch.specmgr.tsk.tools.set_status_tsk.md) — ``@mcp.tool()`` wrapper: set_status_tsk (Task 3.5).
+- [`biz.dfch.specmgr.tsk.tools.update_tsk`](biz.dfch.specmgr.tsk.tools.update_tsk.md) — ``@mcp.tool()`` wrapper: update_tsk (Task 3.4).
+- [`biz.dfch.specmgr.tsk.tools.validate_tsk`](biz.dfch.specmgr.tsk.tools.validate_tsk.md) — ``@mcp.tool()`` wrapper: validate_tsk (Task 3.7).
 - [`biz.dfch.specmgr.uc`](biz.dfch.specmgr.uc.md) — Use Case (UC) domain — Cockburn-based use case specification and validation.
 - [`biz.dfch.specmgr.uc.models`](biz.dfch.specmgr.uc.models.md) — Use Case models — Pydantic schema for Cockburn-based use cases.
 - [`biz.dfch.specmgr.uc.models.v1`](biz.dfch.specmgr.uc.models.v1.md) — Use Case models v1 — Pydantic schema for Cockburn-based use cases.

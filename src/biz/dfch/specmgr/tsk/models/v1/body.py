@@ -42,7 +42,7 @@ comment (inherited) -> items (>=1) -> mandatory `## Recent Updates`), since
 in that same order.
 """
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from ....models.md import (
     MarkdownParagraph,
@@ -128,3 +128,32 @@ class Task(MarkdownSection1WithComment):
         description="The flat checklist -- one `- [ ] .../- [x] ...` entry per line; must contain at least one item.",
     )
     recent_updates: RecentUpdates = Field(description="`## Recent Updates` section. Mandatory.")
+
+    @model_validator(mode="after")
+    def _validate_items_eagerly(self) -> "Task":
+        """Force every `TaskItem.checked` computed field to evaluate eagerly, not lazily.
+
+        `TaskItem.checked`/`.description` are `@computed_field`s -- Pydantic
+        only evaluates a computed field's getter on access (e.g. during
+        `model_dump()`/serialization), never during construction/validation
+        of the underlying model itself. Left unchecked, that would mean
+        `Task.from_text(...)` (and therefore `create_tsk`/`update_tsk`/
+        `validate_tsk`) could silently accept a malformed checkbox marker
+        like `"- [z] foo"`, breaking this project's universal "successfully
+        constructing the model *is* the validation" convention -- a caller
+        could write a bad file to disk before the error ever surfaced, if it
+        surfaced at all.
+
+        A `model_validator` on `TaskItem` itself cannot fix this:
+        `MarkdownListItem.from_text` constructs each item via a bare,
+        no-argument `cls()` first and only assigns its parsed text to the
+        private `_value` attribute *afterward* (bypassing Pydantic's own
+        validation pipeline), so a `TaskItem`-level `model_validator` would
+        fire on an empty, not-yet-populated instance. By the time *this*
+        validator runs, `self.items` already holds fully-parsed `TaskItem`
+        instances (each already went through its own `from_text` above), so
+        accessing `.checked` here is safe and forces the check immediately.
+        """
+        for item in self.items:
+            _ = item.checked
+        return self

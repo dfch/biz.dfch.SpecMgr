@@ -131,6 +131,17 @@ jobs:
           exit 1
         }
 
+    - name: Make sure `src/biz/dfch/specmgr/tsk/data/tsk_schema.json` is correct
+      # Packaged copy of the same schema, read by the `specmgr://tsk/schema` MCP resource
+      # via importlib.resources so it works from a real, non-editable install.
+      # Same generator as the `docs/*_schema.json` steps above, just a second --output-dir.
+      if: matrix.python-version == '3.13'
+      run: |
+        uv run --frozen --all-extras --python 3.13.13 specmgr schema --type tsk --output-dir src/biz/dfch/specmgr/tsk/data || {
+          echo "::error::src/biz/dfch/specmgr/tsk/data/tsk_schema.json is out of date -- run 'uv run --frozen --all-extras specmgr schema --type tsk --output-dir src/biz/dfch/specmgr/tsk/data' and commit the result (see AGENTS.md)."
+          exit 1
+        }
+
     - name: Make sure `docs/coverage.svg` is correct
       if: matrix.python-version == '3.13'
       run: |

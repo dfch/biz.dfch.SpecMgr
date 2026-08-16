@@ -130,6 +130,39 @@ Started.
             Task(items=[], recent_updates=valid_recent_updates)
 
 
+class TestTaskItemMarkerValidatedEagerly(unittest.TestCase):
+    """`Task.from_text` rejects a malformed checkbox marker immediately, not lazily.
+
+    Regression test: `TaskItem.checked`/`.description` are `@computed_field`s,
+    which Pydantic only evaluates on access, never during construction. A
+    `Task`-level `model_validator(mode="after")` forces every item's
+    `.checked` to be evaluated right after parsing, so a malformed marker
+    (e.g. `"- [z] foo"`) raises immediately from `Task.from_text` instead of
+    silently parsing and only failing (if ever) whenever something later
+    happens to read `.checked`/`.description` -- which would otherwise let a
+    caller like `create_tsk` write a bad file to disk before any error
+    surfaced.
+    """
+
+    def test_malformed_marker_raises_from_from_text(self) -> None:
+        text = format_text(
+            """\
+# Migrate Widgets
+
+- [z] bad marker
+
+## Recent Updates
+
+### Kickoff
+
+Started.
+"""
+        )
+
+        with self.assertRaises(ValidationError):
+            Task.from_text(text)
+
+
 class TestRecentUpdatesEmpty(unittest.TestCase):
     """`RecentUpdates.updates` enforces its `min_length=1` constraint (consistent with `Task.items`).
 

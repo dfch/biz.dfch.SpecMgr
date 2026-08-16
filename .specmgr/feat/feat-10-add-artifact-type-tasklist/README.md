@@ -250,7 +250,7 @@ not just the body model, so schema generation cannot happen before
   `RecentUpdates`/`UpdateEntry` dynamic-list combo — depends on: Task 2.2,
   Task 2.5 — status: done
 
-#### Phase 3: MCP Surface (commit 3)
+#### Phase 3: MCP Surface (commit 3) — done
 
 **Plan correction (2026-08-16, see Decisions Made)**: REQ-004 explicitly
 lists `parse_tsk` among the 9 required MCP tools, but the Task List below
@@ -260,58 +260,58 @@ Inserted as Task 3.2 below (mirroring `req/tools/parse_req.py`, a thin
 `Path(path).read_text()` -> model-layer `parse_tsk` adapter), renumbering
 every subsequent Phase 3 task by one and updating all cross-references.
 
-- [ ] Task 3.1: `tsk/tools/_paths.py` + `_io.py` + `_write.py` + `_lock.py`,
+- [x] Task 3.1: `tsk/tools/_paths.py` + `_io.py` + `_write.py` + `_lock.py`,
   thin wrappers over `general/tools/_doc_paths.py` (mirrors
   `req/tools/_paths.py` etc. exactly) — depends on: Task 2.2 — status:
-  not-started
-- [ ] Task 3.2 (new): `parse_tsk(path: str) -> TskDocument` tool wrapper
+  done
+- [x] Task 3.2 (new): `parse_tsk(path: str) -> TskDocument` tool wrapper
   (`tsk/tools/parse_tsk.py`, mirroring `req/tools/parse_req.py` — reads a
   filepath from disk, delegates to the model-layer `parse_tsk`) — depends
-  on: Task 3.1 — status: not-started
-- [ ] Task 3.3: `create_tsk(content: str) -> TskDocument` tool (body-only
+  on: Task 3.1 — status: done
+- [x] Task 3.3: `create_tsk(content: str) -> TskDocument` tool (body-only
   content, MCP builds frontmatter: `id`, `type="tsk"`, `status="draft"`,
   `created=updated=now`, `version`) — depends on: Task 3.1 — status:
-  not-started
-- [ ] Task 3.4: `update_tsk(id, content) -> TskDocument` tool (whole-body
+  done
+- [x] Task 3.4: `update_tsk(id, content) -> TskDocument` tool (whole-body
   replace, preserves `id`/`type`/`status`/`created`/`version`, bumps
-  `updated`) — depends on: Task 3.1 — status: not-started
-- [ ] Task 3.5: `set_status_tsk(id, status) -> TskDocument` tool (only path
-  that changes `status`) — depends on: Task 3.1 — status: not-started
-- [ ] Task 3.6: `delete_tsk(id) -> NoReturn` stub tool — depends on: Task
-  3.1 — status: not-started
-- [ ] Task 3.7: `validate_tsk(content, full=False) -> bool` tool — depends
-  on: none — status: not-started
-- [ ] Task 3.8: `get_tsk(id) -> TskDocument` tool (id-based single-document
+  `updated`) — depends on: Task 3.1 — status: done
+- [x] Task 3.5: `set_status_tsk(id, status) -> TskDocument` tool (only path
+  that changes `status`) — depends on: Task 3.1 — status: done
+- [x] Task 3.6: `delete_tsk(id) -> NoReturn` stub tool — depends on: Task
+  3.1 — status: done
+- [x] Task 3.7: `validate_tsk(content, full=False) -> bool` tool — depends
+  on: none — status: done
+- [x] Task 3.8: `get_tsk(id) -> TskDocument` tool (id-based single-document
   read; tool, not resource — matches REQ's revisited Task 3.17 conclusion)
-  — depends on: Task 3.1 — status: not-started
-- [ ] Task 3.9: `get_tsk_example`/`get_tsk_template` tools + packaged data
+  — depends on: Task 3.1 — status: done
+- [x] Task 3.9: `get_tsk_example`/`get_tsk_template` tools + packaged data
   (`tsk/data/tsk_example.md`, `tsk/data/tsk_template.md`) via
   `general/tools/_packaged_data.py` — depends on: Task 1.3 — status:
-  not-started
-- [ ] Task 3.10: `specmgr://tsk/list` and `specmgr://tsk/schema` resources
+  done
+- [x] Task 3.10: `specmgr://tsk/list` and `specmgr://tsk/schema` resources
   (packaged `tsk/data/tsk_schema.json`, mirroring `specmgr://req/schema`) —
-  depends on: Task 3.1, Task 2.5 — status: not-started
-- [ ] Task 3.11: `specmgr://tsk/example` and `specmgr://tsk/template`
-  resources — depends on: Task 3.9 — status: not-started
-- [ ] Task 3.12: `pyproject.toml` package-data entry for
+  depends on: Task 3.1, Task 2.5 — status: done
+- [x] Task 3.11: `specmgr://tsk/example` and `specmgr://tsk/template`
+  resources — depends on: Task 3.9 — status: done
+- [x] Task 3.12: `pyproject.toml` package-data entry for
   `biz.dfch.specmgr.tsk` (`data/*.md`, `data/*.json`), pre-commit hook + CI
   step for the packaged `tsk_schema.json` copy (mirroring
-  `specmgr-schema-req-package`) — depends on: Task 2.5 — status: not-started
-- [ ] Task 3.13: `tsk/prompts/create_task.py` + `update_task.py` — narrate
+  `specmgr-schema-req-package`) — depends on: Task 2.5 — status: done
+- [x] Task 3.13: `tsk/prompts/create_task.py` + `update_task.py` — narrate
   the tool sequence (mirroring `req/prompts/create_req.py`/`update_req.py`)
-  — depends on: Tasks 3.3, 3.4, 3.5, 3.8, 3.10 — status: not-started
-- [ ] Task 3.14: `tsk/prompts/implement_task.py` — reads an existing `tsk`
+  — depends on: Tasks 3.3, 3.4, 3.5, 3.8, 3.10 — status: done
+- [x] Task 3.14: `tsk/prompts/implement_task.py` — reads an existing `tsk`
   document via `get_tsk`, builds a `TodoWrite` list from its `items`, and
   uses the `question` tool to resolve ambiguity for any item before
-  proceeding — depends on: Task 3.8 — status: not-started
-- [ ] Task 3.15: add `tsk` to `server.py`'s domain import line (last-line
+  proceeding — depends on: Task 3.8 — status: done
+- [x] Task 3.15: add `tsk` to `server.py`'s domain import line (last-line
   import convention — easily forgotten, silently means nothing registers)
-  — depends on: Tasks 3.2-3.14 — status: not-started
-- [ ] Task 3.16 (folded from former Tasks 5.2/5.3): `tests/tsk/tools/...`,
+  — depends on: Tasks 3.2-3.14 — status: done
+- [x] Task 3.16 (folded from former Tasks 5.2/5.3): `tests/tsk/tools/...`,
   `tests/tsk/resources/...`, `tests/tsk/prompts/...` mirroring
   `tests/req/tools/`/`tests/req/resources/` layout, plus dedicated tests for
   `implement_task`'s `TodoWrite`/`question`-tool driven behavior — depends
-  on: Tasks 3.1-3.15 — status: not-started
+  on: Tasks 3.1-3.15 — status: done
 
 #### Phase 4: Docs, CI wiring & final verification (commit 4)
 
@@ -339,13 +339,21 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-16**: Phases 1-2 done. Phase 1 committed (`9ace8dd`); Phase 2
-(`TskDocument`, `parse_tsk`, `TskSummary`, `generate_tsk_schema()`, parser
-tests) implemented and quality-gated, about to be committed. Along the way,
-corrected `RecentUpdates.updates` to require `min_length=1` (was
-inconsistent — parsing already rejected zero entries, direct construction
-didn't). 885 tests passing, ruff/vulture clean, `docs/tsk_schema.json`
-generated. Proceeding to Phase 3 (MCP Surface).
+**As of 2026-08-16**: Phases 1-3 done. Phase 1 (`9ace8dd`) and Phase 2
+(`1cb9ffe`) committed. Phase 3 (full MCP surface — 9 tools, 4 resources, 3
+prompts, packaged data, `pyproject.toml`/pre-commit/CI wiring, `server.py`
+registration) implemented and quality-gated, about to be committed. Along
+the way, fixed a real correctness defect found during Phase 3 testing:
+`TaskItem.checked`/`.description` are lazily-evaluated `@computed_field`s,
+so `Task.from_text` alone silently accepted a malformed checkbox marker
+(e.g. `"- [z] foo"`) — `create_tsk`/`update_tsk` could have written a bad
+file to disk before any error surfaced, breaking this project's
+"successful construction is validation" convention. Fixed with a
+`Task`-level `model_validator(mode="after")` that forces eager evaluation
+(a `TaskItem`-level validator doesn't work — `MarkdownListItem.from_text`
+constructs a bare instance first, populating `.text` only afterward via a
+private attribute). 980 tests passing, ruff/vulture clean, `docs/`
+regenerated. Proceeding to Phase 4 (Docs, CI wiring & final verification).
 
 ### Blockers
 
@@ -453,6 +461,56 @@ None.
 - Notes: 885 tests passing (877 + 8 new); ruff format/check and vulture
   clean.
 
+#### 2026-08-16 (yet further continued, 2)
+
+- Completed: caught and fixed a second Phase-3 gap before dispatching
+  implementation — REQ-004 lists `parse_tsk` among the 9 required MCP
+  tools, but the Task List had no task for the tool wrapper itself (only
+  the Phase 2 model-layer function). Inserted as Task 3.2, renumbering the
+  rest of Phase 3 (see Decisions Made).
+- Completed: **Phase 3 (MCP Surface)** — all 9 tools (`parse_tsk`,
+  `create_tsk`, `update_tsk`, `set_status_tsk`, `delete_tsk` stub,
+  `validate_tsk`, `get_tsk`, `get_tsk_example`, `get_tsk_template`), all 4
+  resources (`specmgr://tsk/list`, `/schema`, `/example`, `/template`), all
+  3 prompts (`create_task`, `update_task`, `implement_task` — the last one
+  genuinely new, no `req`/`adr` precedent), packaged data
+  (`tsk/data/tsk_example.md`/`tsk_template.md`/`tsk_schema.json`),
+  `pyproject.toml`/`.pre-commit-config.yaml`/`.github/workflows/ci.yml`
+  wiring, and `server.py` registration, all mirroring `req`'s exact
+  structure file-for-file. 93 new tests under `tests/tsk/{tools,resources,
+  prompts}/`. Delegated to `implementation-specialist` with the full `req`
+  reference implementation embedded in the prompt for precision; reviewed
+  and quality-gated by the orchestrator before committing.
+- Also completed: found and fixed a real correctness defect during review
+  (not caught by the implementation-specialist's own test suite, which
+  passed by construction but didn't probe this specific gap) —
+  `TaskItem.checked`/`.description` are `@computed_field`s, evaluated only
+  on access, never during model construction/validation. This meant
+  `Task.from_text(...)` (and therefore `create_tsk`/`update_tsk`) silently
+  accepted a malformed checkbox marker like `"- [z] foo"`, breaking this
+  project's universal "successfully constructing the model *is* the
+  validation" convention — a caller could have written a bad file to disk
+  before any error surfaced, if it ever did. First attempted fix (a
+  `model_validator(mode="after")` directly on `TaskItem`) broke everything
+  — `MarkdownListItem.from_text` constructs a bare `cls()` first and only
+  assigns the parsed text to a private `_value` attribute *afterward*
+  (bypassing Pydantic's own validation), so a `TaskItem`-level validator
+  fires on an empty, not-yet-populated instance. Fixed correctly instead
+  with a `model_validator(mode="after")` on `Task` itself (`_validate_items_eagerly`),
+  which runs after every `TaskItem` in `self.items` is already fully
+  constructed, forcing each one's `.checked` to evaluate immediately.
+  Added regression tests at both the model layer
+  (`tests/tsk/models/v1/test_body.py::TestTaskItemMarkerValidatedEagerly`)
+  and the tool layer (`tests/tsk/tools/test_create_tsk.py::test_malformed_checkbox_marker_raises_and_writes_nothing`).
+  Whitelisted `_validate_items_eagerly` in `whitelist.py` (same
+  Pydantic-validator category as the other `_validate_*` entries).
+- Next: Execute Phase 4 (Docs, CI wiring & final verification) — confirm
+  `specmgr docs`/`specmgr schema`/`specmgr mcp-docs` all report no drift,
+  confirm CI wiring, and walk every ACC-001..008 to verify.
+- Notes: 980 tests passing total; ruff format/check and vulture clean.
+  `docs/` (API docs, `GENERATED.md`, `MCP.md`) regenerated to reflect the
+  new `tsk` modules/tools/resources/prompts.
+
 ### Decisions Made
 
 - **2026-08-16**: Target GitHub issue #10, not #11 — issue #11 does not
@@ -526,6 +584,23 @@ None.
   Task 2.2) — the thin `@mcp.tool()` adapter over it (mirroring
   `req/tools/parse_req.py`) had no task of its own. Caught before starting
   Phase 3 implementation, same as the earlier schema-sequencing fix.
+- **2026-08-16**: Added `Task._validate_items_eagerly`, a
+  `model_validator(mode="after")` on `Task` (not `TaskItem`) that forces
+  every item's `.checked` computed field to evaluate immediately after
+  parsing. Rationale: `TaskItem.checked`/`.description` are
+  `@computed_field`s, which Pydantic only evaluates on access, never
+  during model construction -- `Task.from_text(...)` alone silently
+  accepted a malformed checkbox marker (e.g. `"- [z] foo"`), breaking this
+  project's "successful construction is validation" convention that every
+  `create_*`/`update_*`/`validate_*` tool's own docstring states literally.
+  A `model_validator` directly on `TaskItem` does not work for this --
+  `MarkdownListItem.from_text` constructs a bare, no-argument `cls()` first
+  and only assigns the parsed text to the private `_value` attribute
+  afterward (bypassing Pydantic's validation pipeline for that
+  assignment), so a `TaskItem`-level validator fires on an empty,
+  not-yet-populated instance. Placing the validator on `Task` instead
+  works because by the time it runs, every `TaskItem` in `self.items` has
+  already completed its own `from_text` construction.
 
 ### Related PRs / Commits
 

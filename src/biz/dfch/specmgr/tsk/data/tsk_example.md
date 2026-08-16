@@ -1,0 +1,28 @@
+---
+created: 2026-08-16
+id: deaddead-face-face-face-deaddeadface
+status: active
+type: tsk
+updated: 2026-08-16
+version: 1.0.0
+---
+
+# Migrate Widgets to the New Registry
+
+<!-- Small task list tracking the widget-registry migration to WidgetRegistryV2. -->
+
+- [x] Inventory existing widgets and their registrations
+
+- [ ] Migrate each widget to WidgetRegistryV2
+
+- [ ] Remove the deprecated WidgetRegistryV1 shim
+
+## Recent Updates
+
+### Kickoff
+
+Started the migration; inventoried 12 widgets currently registered against WidgetRegistryV1.
+
+### Migration in progress
+
+Migrated 5 of 12 widgets so far; no regressions found.

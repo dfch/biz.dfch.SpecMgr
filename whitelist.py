@@ -42,6 +42,7 @@ _callback
 _._default_blank_status_to_draft
 _._optional_blank_to_none
 _._required_non_blank
+_._validate_items_eagerly
 _._validate_partial_title
 _._validate_status
 _._validate_type_non_blank
