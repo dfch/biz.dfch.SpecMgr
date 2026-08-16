@@ -196,22 +196,27 @@ original 5 phases into **4 commits**.
   (`process_list_field`), with `UpdateEntry` a free-form-title H3 leaf via
   `@alias(value=".+", type=AliasType.REGEX)` — not ADR's numbered-option
   pattern — depends on: Task 1.1 — status: not-started
-- [ ] Task 1.3: Draft `tsk_schema.json` via `generate_tsk_schema()` +
-  register `"tsk"` in the `specmgr schema` doc-type generator registry —
-  depends on: Task 1.2 — status: not-started
-- [ ] Task 1.4: Create a reference `tsk` document (`tsk_reference.md`)
-  exercising every field, used as the parser's round-trip test fixture —
-  depends on: Task 1.3 — status: not-started
-- [ ] Task 1.5 (folded from former Task 5.1): `tests/tsk/models/v1/test_frontmatter.py`,
-  `test_body.py`/`test_task_item.py` — structural +
-  validation tests mirroring `tests/req/models/v1/`, with explicit coverage
-  of `MarkdownSection1WithComment`'s comment-present/comment-absent cases
-  (its first real production consumer — no prior test coverage outside
-  `models/md`'s own unit tests) — depends on: Task 1.4 — status: not-started
+- [ ] Task 1.3 (renumbered; was 1.4): Create a reference `tsk` document
+  (`tsk_reference.md`) exercising every field, used as the parser's
+  round-trip test fixture — depends on: Task 1.2 — status: not-started
+- [ ] Task 1.4 (renumbered; was 1.5, folded from former Task 5.1):
+  `tests/tsk/models/v1/test_frontmatter.py`, `test_body.py`/`test_task_item.py`
+  — structural + validation tests mirroring `tests/req/models/v1/`, with
+  explicit coverage of `MarkdownSection1WithComment`'s comment-present/
+  comment-absent cases (its first real production consumer — no prior test
+  coverage outside `models/md`'s own unit tests) — depends on: Task 1.3 —
+  status: not-started
+
+**Plan correction (2026-08-16, see Decisions Made)**: the former Task 1.3
+("draft `tsk_schema.json` + register in the schema generator") has moved to
+Phase 2 as Task 2.5 — `generate_req_schema`/`generate_uc_schema`
+(`commands/schema.py`) both call the full `XDocument.model_json_schema()`,
+not just the body model, so schema generation cannot happen before
+`TskDocument` (Task 2.1) exists.
 
 #### Phase 2: Pydantic Models & Parser (commit 2)
 
-- [ ] Task 2.1: `tsk/models/v1/document.py` (`TskDocument(frontmatter, body)`, mirroring `ReqDocument`) — depends on: Task 1.4 — status:
+- [ ] Task 2.1: `tsk/models/v1/document.py` (`TskDocument(frontmatter, body)`, mirroring `ReqDocument`) — depends on: Task 1.3 — status:
   not-started
 - [ ] Task 2.2: Implement `parse_tsk(text: str) -> TskDocument` (mirrors
   `parse_req`/`parse_uc`) — depends on: Task 2.1 — status: not-started
@@ -221,12 +226,18 @@ original 5 phases into **4 commits**.
 - [ ] Task 2.4: Field-level `Field(description=...)` on every scalar/
   optional field (schema-quality parity with REQ's Task 2.4/2.5/2.6) —
   depends on: Task 2.1 — status: not-started
-- [ ] Task 2.5 (folded from former Task 5.1): `tests/tsk/models/v1/test_parser.py`
+- [ ] Task 2.5 (moved from Phase 1's former Task 1.3): Draft `tsk_schema.json`
+  via `generate_tsk_schema()` (mirroring `generate_req_schema`/
+  `generate_uc_schema` in `commands/schema.py`, calling
+  `TskDocument.model_json_schema()`) + register `"tsk"` in the `specmgr
+  schema` doc-type generator registry (`_GENERATORS`) — depends on: Task
+  2.1 — status: not-started
+- [ ] Task 2.6 (folded from former Task 5.1): `tests/tsk/models/v1/test_parser.py`
   — mirrors `TestParseReq`'s 8-case shape (minimal doc, full
   reference-doc round-trip, defaults-when-absent, invalid status, malformed
   structure, etc.), plus round-trip coverage of the new
-  `RecentUpdates`/`UpdateEntry` dynamic-list combo — depends on: Task 2.2 —
-  status: not-started
+  `RecentUpdates`/`UpdateEntry` dynamic-list combo — depends on: Task 2.2,
+  Task 2.5 — status: not-started
 
 #### Phase 3: MCP Surface (commit 3)
 
@@ -256,13 +267,13 @@ original 5 phases into **4 commits**.
   not-started
 - [ ] Task 3.9: `specmgr://tsk/list` and `specmgr://tsk/schema` resources
   (packaged `tsk/data/tsk_schema.json`, mirroring `specmgr://req/schema`) —
-  depends on: Task 3.1, Task 1.3 — status: not-started
+  depends on: Task 3.1, Task 2.5 — status: not-started
 - [ ] Task 3.10: `specmgr://tsk/example` and `specmgr://tsk/template`
   resources — depends on: Task 3.8 — status: not-started
 - [ ] Task 3.11: `pyproject.toml` package-data entry for
   `biz.dfch.specmgr.tsk` (`data/*.md`, `data/*.json`), pre-commit hook + CI
   step for the packaged `tsk_schema.json` copy (mirroring
-  `specmgr-schema-req-package`) — depends on: Task 1.3 — status: not-started
+  `specmgr-schema-req-package`) — depends on: Task 2.5 — status: not-started
 - [ ] Task 3.12: `tsk/prompts/create_task.py` + `update_task.py` — narrate
   the tool sequence (mirroring `req/prompts/create_req.py`/`update_req.py`)
   — depends on: Tasks 3.2, 3.3, 3.4, 3.7, 3.9 — status: not-started
@@ -408,6 +419,15 @@ None.
   "H2 with dynamic H3 children" shape generically (confirmed by
   exploration), matching how `req`'s own `Requirement` H1 already uses the
   same free-form-title alias mechanism.
+- **2026-08-16**: Moved schema generation (`generate_tsk_schema()` +
+  `specmgr schema` registry entry) from Phase 1 to Phase 2, as Task 2.5.
+  Rationale: verified `commands/schema.py`'s `generate_req_schema`/
+  `generate_uc_schema` both call the full `XDocument.model_json_schema()`
+  (frontmatter + body combined), not the body model alone — so it cannot
+  run before `TskDocument` (Task 2.1) exists. The original Task List had
+  this as Task 1.3, before `TskDocument` was even defined; corrected before
+  starting implementation to avoid building against a broken dependency
+  order.
 
 ### Related PRs / Commits
 
