@@ -2,6 +2,7 @@
   "$comment": "v2",
   "$defs": {
     "Assumptions": {
+      "description": "Conditions taken for granted while writing the use case, which -- if wrong -- would invalidate parts of\nit.\n\nA bullet list of assumptions.",
       "properties": {
         "items": {
           "items": {
@@ -18,6 +19,7 @@
       "type": "object"
     },
     "ChannelsToPrimaryActor": {
+      "description": "The communication channel(s) (e.g. web, phone, in person) through which the primary actor interacts with\nthe system.\n\nA bullet list of channels.",
       "properties": {
         "items": {
           "items": {
@@ -34,6 +36,7 @@
       "type": "object"
     },
     "ChannelsToSecondaryActors": {
+      "description": "The communication channel(s) through which secondary actors interact with the system during this use\ncase.\n\nA bullet list of channels.",
       "properties": {
         "items": {
           "items": {
@@ -50,6 +53,7 @@
       "type": "object"
     },
     "CharacteristicInformation": {
+      "description": "The descriptive metadata that frames a use case before its steps are told -- who wants what, when it\napplies, and how success is judged.\n\nComposed of the sub-sections above (Goal in Context, Scope, Level, Preconditions, ...).",
       "properties": {
         "channels_to_primary_actor": {
           "anyOf": [
@@ -174,6 +178,7 @@
       "type": "object"
     },
     "Extension": {
+      "description": "An alternate flow that branches off a specific main-scenario step when a named condition holds, describing\nhow the use case proceeds differently from that point.\n\nAn ordered list of actions (`items`), headed by a condition naming which step it branches from.",
       "properties": {
         "items": {
           "items": {
@@ -190,6 +195,7 @@
       "type": "object"
     },
     "ExtensionItem": {
+      "description": "One action taken while handling an extension's alternate flow, with any continuation text that clarifies\nit.\n\nA single ordered-list entry, optionally followed by loose continuation paragraphs (`notes`).",
       "properties": {
         "notes": {
           "anyOf": [
@@ -211,6 +217,7 @@
       "type": "object"
     },
     "Extensions": {
+      "description": "All the alternate flows that can branch off the main success scenario, covering exceptional or\nalternative conditions.\n\nAn optional introductory paragraph followed by a list of Extension sections, one per branching condition.",
       "properties": {
         "extensions": {
           "anyOf": [
@@ -243,6 +250,7 @@
       "type": "object"
     },
     "FailedEndCondition": {
+      "description": "Conditions that must hold true if the use case aborts or fails partway through.\n\nA bullet list of conditions.",
       "properties": {
         "items": {
           "items": {
@@ -259,6 +267,7 @@
       "type": "object"
     },
     "Frequency": {
+      "description": "How often this use case is expected to occur, informing performance and capacity decisions.\n\nFree-form prose.",
       "properties": {
         "body": {
           "items": {
@@ -275,6 +284,7 @@
       "type": "object"
     },
     "GoalInContext": {
+      "description": "The goal the primary actor is trying to achieve by carrying out this use case, stated in the context of the\nsurrounding business process.\n\nFree-form prose.",
       "properties": {
         "body": {
           "items": {
@@ -291,6 +301,7 @@
       "type": "object"
     },
     "Level": {
+      "description": "The use case's altitude in Cockburn's goal hierarchy (e.g. user-goal, summary, subfunction), signalling how\nlarge a piece of work it covers.\n\nFree-form prose.",
       "properties": {
         "body": {
           "items": {
@@ -307,6 +318,7 @@
       "type": "object"
     },
     "MainSuccessScenario": {
+      "description": "The primary, everything-goes-right path: the sequence of actor/system interactions that satisfies the\nprimary actor's goal with no exceptions.\n\nAn ordered list of numbered steps.",
       "properties": {
         "steps": {
           "items": {
@@ -335,6 +347,7 @@
       "type": "object"
     },
     "Notes": {
+      "description": "Free-form remarks about the use case that do not fit any other section.\n\nA bullet list of notes.",
       "properties": {
         "items": {
           "items": {
@@ -351,6 +364,7 @@
       "type": "object"
     },
     "OpenIssues": {
+      "description": "Unresolved questions or decisions about the use case that still need to be settled.\n\nA bullet list of open questions.",
       "properties": {
         "items": {
           "items": {
@@ -367,6 +381,7 @@
       "type": "object"
     },
     "PerformanceTarget": {
+      "description": "The response-time or throughput goal the system must meet while executing this use case.\n\nFree-form prose.",
       "properties": {
         "body": {
           "items": {
@@ -383,6 +398,7 @@
       "type": "object"
     },
     "Preconditions": {
+      "description": "Conditions that must already hold true in the world before this use case is allowed to start.\n\nA bullet list of conditions.",
       "properties": {
         "items": {
           "items": {
@@ -399,6 +415,7 @@
       "type": "object"
     },
     "PrimaryActor": {
+      "description": "The actor who initiates the use case and whose goal it exists to satisfy.\n\nFree-form prose naming and describing that actor.",
       "properties": {
         "body": {
           "items": {
@@ -415,6 +432,7 @@
       "type": "object"
     },
     "Priority": {
+      "description": "How important this use case is relative to others, guiding implementation order.\n\nFree-form prose.",
       "properties": {
         "body": {
           "items": {
@@ -431,6 +449,7 @@
       "type": "object"
     },
     "RelatedInformation": {
+      "description": "Supplementary commentary about the use case, kept separate from its behavioral content.\n\nComposed of two optional sub-sections: Notes and Assumptions.",
       "properties": {
         "assumptions": {
           "anyOf": [
@@ -459,6 +478,7 @@
       "type": "object"
     },
     "RelatedUseCases": {
+      "description": "Other use cases that this one depends on, is a variation of, or is otherwise related to.\n\nA bullet list of use case references.",
       "properties": {
         "items": {
           "items": {
@@ -475,6 +495,7 @@
       "type": "object"
     },
     "Scope": {
+      "description": "The boundary of the system or business process being designed -- what falls inside vs. outside this use\ncase's responsibility.\n\nFree-form prose.",
       "properties": {
         "body": {
           "items": {
@@ -491,6 +512,7 @@
       "type": "object"
     },
     "SecondaryActors": {
+      "description": "Actors other than the primary actor who take part in the use case or have a stake in its outcome (e.g.\nexternal systems, other roles).\n\nA bullet list of actors.",
       "properties": {
         "items": {
           "items": {
@@ -507,6 +529,7 @@
       "type": "object"
     },
     "SubVariation": {
+      "description": "A minor variation in how a single main-scenario step is carried out, without branching into a full\nalternate flow.\n\nA bullet list of variant actions for that one step.",
       "properties": {
         "items": {
           "items": {
@@ -523,6 +546,7 @@
       "type": "object"
     },
     "SubVariations": {
+      "description": "Minor, non-branching variations on individual main-scenario steps, collected in one place instead of\ncluttering the main flow.\n\nA list of SubVariation sections, one per varying step.",
       "properties": {
         "sub_variations": {
           "anyOf": [
@@ -544,6 +568,7 @@
       "type": "object"
     },
     "SuccessEndCondition": {
+      "description": "Conditions that must hold true once the use case completes successfully -- the guarantee given to\nstakeholders.\n\nA bullet list of conditions.",
       "properties": {
         "items": {
           "items": {
@@ -560,6 +585,7 @@
       "type": "object"
     },
     "Trigger": {
+      "description": "The event that starts the use case, whether an actor's action, a point in time, or a condition becoming\ntrue.\n\nFree-form prose.",
       "properties": {
         "body": {
           "items": {
@@ -635,6 +661,7 @@
       "type": "object"
     },
     "UseCase": {
+      "description": "A single use case: one actor-facing goal, described end to end from context through its main flow and\nevery alternate/variant path.\n\nComposed of Characteristic Information, the Main Success Scenario, and the optional Extensions,\nSub-Variations, Open Issues, and Related Information sections.",
       "properties": {
         "characteristic_information": {
           "$ref": "#/$defs/CharacteristicInformation"

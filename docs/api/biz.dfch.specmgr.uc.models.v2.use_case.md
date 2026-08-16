@@ -6,10 +6,10 @@ No documentation available.
 
 ### `Assumptions`
 
-Markdown content starting with an h3 heading, no nested headings allowed.
+Conditions taken for granted while writing the use case, which -- if wrong -- would invalidate parts of
+it.
 
-Tokens [0:3] form the opening h3 heading triple (heading_open/inline/heading_close).
-All tokens after index 3 must not contain any heading tags (h1-h6).
+A bullet list of assumptions.
 
 **Methods:**
 
@@ -709,10 +709,10 @@ All tokens after index 3 must not contain any heading tags (h1-h6).
 
 ### `ChannelsToPrimaryActor`
 
-Markdown content starting with an h3 heading, no nested headings allowed.
+The communication channel(s) (e.g. web, phone, in person) through which the primary actor interacts with
+the system.
 
-Tokens [0:3] form the opening h3 heading triple (heading_open/inline/heading_close).
-All tokens after index 3 must not contain any heading tags (h1-h6).
+A bullet list of channels.
 
 **Methods:**
 
@@ -1412,10 +1412,10 @@ All tokens after index 3 must not contain any heading tags (h1-h6).
 
 ### `ChannelsToSecondaryActors`
 
-Markdown content starting with an h3 heading, no nested headings allowed.
+The communication channel(s) through which secondary actors interact with the system during this use
+case.
 
-Tokens [0:3] form the opening h3 heading triple (heading_open/inline/heading_close).
-All tokens after index 3 must not contain any heading tags (h1-h6).
+A bullet list of channels.
 
 **Methods:**
 
@@ -2115,10 +2115,10 @@ All tokens after index 3 must not contain any heading tags (h1-h6).
 
 ### `CharacteristicInformation`
 
-Markdown content starting with an h2 heading, no nested headings allowed.
+The descriptive metadata that frames a use case before its steps are told -- who wants what, when it
+applies, and how success is judged.
 
-Tokens [0:3] form the opening h2 heading triple (heading_open/inline/heading_close).
-All tokens after index 3 must not contain any heading tags (h1-h6).
+Composed of the sub-sections above (Goal in Context, Scope, Level, Preconditions, ...).
 
 **Methods:**
 
@@ -2818,10 +2818,10 @@ All tokens after index 3 must not contain any heading tags (h1-h6).
 
 ### `Extension`
 
-Markdown content starting with an h3 heading, no nested headings allowed.
+An alternate flow that branches off a specific main-scenario step when a named condition holds, describing
+how the use case proceeds differently from that point.
 
-Tokens [0:3] form the opening h3 heading triple (heading_open/inline/heading_close).
-All tokens after index 3 must not contain any heading tags (h1-h6).
+An ordered list of actions (`items`), headed by a condition naming which step it branches from.
 
 **Methods:**
 
@@ -3521,26 +3521,10 @@ All tokens after index 3 must not contain any heading tags (h1-h6).
 
 ### `ExtensionItem`
 
-One item ("li") of a markdown bullet or numbered list.
+One action taken while handling an extension's alternate flow, with any continuation text that clarifies
+it.
 
-Used only as `items: list[MarkdownListItem]` (or `list[MarkdownListItem] |
-None`) on a `MarkdownSection`/`MarkdownParagraph`/`MarkdownListItem` --
-there is no separate list-container class, and a bare item cannot be
-parsed as a top-level/scalar field on its own; every item is assumed to
-start with at least one paragraph (its own lead text).
-
-Leaf (no declared nested fields, the default): `_value` holds the item's
-complete extent verbatim, marker included. Composite (a subclass declares
-fields): `_value` holds only the item's own leading paragraph, marker
-included -- the marker cannot be reconstructed from class metadata alone,
-so it is kept verbatim -- and the remainder is dedented and delegated to
-nested field parsing; `__str__` re-indents the children's rendered output
-by the marker's own width before recombining.
-
-Round-trip note: a tight source list currently round-trips to a
-structurally-equivalent loose list rather than byte-exact (loose lists
-remain byte-exact) -- an accepted, documented exception; see
-`from_text`/`__str__` docstrings below for the full mechanics.
+A single ordered-list entry, optionally followed by loose continuation paragraphs (`notes`).
 
 **Methods:**
 
@@ -4206,10 +4190,10 @@ remain byte-exact) -- an accepted, documented exception; see
 
 ### `Extensions`
 
-Markdown content starting with an h2 heading, no nested headings allowed.
+All the alternate flows that can branch off the main success scenario, covering exceptional or
+alternative conditions.
 
-Tokens [0:3] form the opening h2 heading triple (heading_open/inline/heading_close).
-All tokens after index 3 must not contain any heading tags (h1-h6).
+An optional introductory paragraph followed by a list of Extension sections, one per branching condition.
 
 **Methods:**
 
@@ -4909,10 +4893,9 @@ All tokens after index 3 must not contain any heading tags (h1-h6).
 
 ### `FailedEndCondition`
 
-Markdown content starting with an h3 heading, no nested headings allowed.
+Conditions that must hold true if the use case aborts or fails partway through.
 
-Tokens [0:3] form the opening h3 heading triple (heading_open/inline/heading_close).
-All tokens after index 3 must not contain any heading tags (h1-h6).
+A bullet list of conditions.
 
 **Methods:**
 
@@ -5612,10 +5595,9 @@ All tokens after index 3 must not contain any heading tags (h1-h6).
 
 ### `Frequency`
 
-Markdown content starting with an h3 heading, no nested headings allowed.
+How often this use case is expected to occur, informing performance and capacity decisions.
 
-Tokens [0:3] form the opening h3 heading triple (heading_open/inline/heading_close).
-All tokens after index 3 must not contain any heading tags (h1-h6).
+Free-form prose.
 
 **Methods:**
 
@@ -6315,10 +6297,10 @@ All tokens after index 3 must not contain any heading tags (h1-h6).
 
 ### `GoalInContext`
 
-Markdown content starting with an h3 heading, no nested headings allowed.
+The goal the primary actor is trying to achieve by carrying out this use case, stated in the context of the
+surrounding business process.
 
-Tokens [0:3] form the opening h3 heading triple (heading_open/inline/heading_close).
-All tokens after index 3 must not contain any heading tags (h1-h6).
+Free-form prose.
 
 **Methods:**
 
@@ -7018,10 +7000,10 @@ All tokens after index 3 must not contain any heading tags (h1-h6).
 
 ### `Level`
 
-Markdown content starting with an h3 heading, no nested headings allowed.
+The use case's altitude in Cockburn's goal hierarchy (e.g. user-goal, summary, subfunction), signalling how
+large a piece of work it covers.
 
-Tokens [0:3] form the opening h3 heading triple (heading_open/inline/heading_close).
-All tokens after index 3 must not contain any heading tags (h1-h6).
+Free-form prose.
 
 **Methods:**
 
@@ -7721,10 +7703,10 @@ All tokens after index 3 must not contain any heading tags (h1-h6).
 
 ### `MainSuccessScenario`
 
-Markdown content starting with an h2 heading, no nested headings allowed.
+The primary, everything-goes-right path: the sequence of actor/system interactions that satisfies the
+primary actor's goal with no exceptions.
 
-Tokens [0:3] form the opening h2 heading triple (heading_open/inline/heading_close).
-All tokens after index 3 must not contain any heading tags (h1-h6).
+An ordered list of numbered steps.
 
 **Methods:**
 
@@ -8424,10 +8406,9 @@ All tokens after index 3 must not contain any heading tags (h1-h6).
 
 ### `Notes`
 
-Markdown content starting with an h3 heading, no nested headings allowed.
+Free-form remarks about the use case that do not fit any other section.
 
-Tokens [0:3] form the opening h3 heading triple (heading_open/inline/heading_close).
-All tokens after index 3 must not contain any heading tags (h1-h6).
+A bullet list of notes.
 
 **Methods:**
 
@@ -9127,10 +9108,9 @@ All tokens after index 3 must not contain any heading tags (h1-h6).
 
 ### `OpenIssues`
 
-Markdown content starting with an h2 heading, no nested headings allowed.
+Unresolved questions or decisions about the use case that still need to be settled.
 
-Tokens [0:3] form the opening h2 heading triple (heading_open/inline/heading_close).
-All tokens after index 3 must not contain any heading tags (h1-h6).
+A bullet list of open questions.
 
 **Methods:**
 
@@ -9830,10 +9810,9 @@ All tokens after index 3 must not contain any heading tags (h1-h6).
 
 ### `PerformanceTarget`
 
-Markdown content starting with an h3 heading, no nested headings allowed.
+The response-time or throughput goal the system must meet while executing this use case.
 
-Tokens [0:3] form the opening h3 heading triple (heading_open/inline/heading_close).
-All tokens after index 3 must not contain any heading tags (h1-h6).
+Free-form prose.
 
 **Methods:**
 
@@ -10533,10 +10512,9 @@ All tokens after index 3 must not contain any heading tags (h1-h6).
 
 ### `Preconditions`
 
-Markdown content starting with an h3 heading, no nested headings allowed.
+Conditions that must already hold true in the world before this use case is allowed to start.
 
-Tokens [0:3] form the opening h3 heading triple (heading_open/inline/heading_close).
-All tokens after index 3 must not contain any heading tags (h1-h6).
+A bullet list of conditions.
 
 **Methods:**
 
@@ -11236,10 +11214,9 @@ All tokens after index 3 must not contain any heading tags (h1-h6).
 
 ### `PrimaryActor`
 
-Markdown content starting with an h3 heading, no nested headings allowed.
+The actor who initiates the use case and whose goal it exists to satisfy.
 
-Tokens [0:3] form the opening h3 heading triple (heading_open/inline/heading_close).
-All tokens after index 3 must not contain any heading tags (h1-h6).
+Free-form prose naming and describing that actor.
 
 **Methods:**
 
@@ -11939,10 +11916,9 @@ All tokens after index 3 must not contain any heading tags (h1-h6).
 
 ### `Priority`
 
-Markdown content starting with an h3 heading, no nested headings allowed.
+How important this use case is relative to others, guiding implementation order.
 
-Tokens [0:3] form the opening h3 heading triple (heading_open/inline/heading_close).
-All tokens after index 3 must not contain any heading tags (h1-h6).
+Free-form prose.
 
 **Methods:**
 
@@ -12642,10 +12618,9 @@ All tokens after index 3 must not contain any heading tags (h1-h6).
 
 ### `RelatedInformation`
 
-Markdown content starting with an h2 heading, no nested headings allowed.
+Supplementary commentary about the use case, kept separate from its behavioral content.
 
-Tokens [0:3] form the opening h2 heading triple (heading_open/inline/heading_close).
-All tokens after index 3 must not contain any heading tags (h1-h6).
+Composed of two optional sub-sections: Notes and Assumptions.
 
 **Methods:**
 
@@ -13345,10 +13320,9 @@ All tokens after index 3 must not contain any heading tags (h1-h6).
 
 ### `RelatedUseCases`
 
-Markdown content starting with an h3 heading, no nested headings allowed.
+Other use cases that this one depends on, is a variation of, or is otherwise related to.
 
-Tokens [0:3] form the opening h3 heading triple (heading_open/inline/heading_close).
-All tokens after index 3 must not contain any heading tags (h1-h6).
+A bullet list of use case references.
 
 **Methods:**
 
@@ -14048,10 +14022,10 @@ All tokens after index 3 must not contain any heading tags (h1-h6).
 
 ### `Scope`
 
-Markdown content starting with an h3 heading, no nested headings allowed.
+The boundary of the system or business process being designed -- what falls inside vs. outside this use
+case's responsibility.
 
-Tokens [0:3] form the opening h3 heading triple (heading_open/inline/heading_close).
-All tokens after index 3 must not contain any heading tags (h1-h6).
+Free-form prose.
 
 **Methods:**
 
@@ -14751,10 +14725,10 @@ All tokens after index 3 must not contain any heading tags (h1-h6).
 
 ### `SecondaryActors`
 
-Markdown content starting with an h3 heading, no nested headings allowed.
+Actors other than the primary actor who take part in the use case or have a stake in its outcome (e.g.
+external systems, other roles).
 
-Tokens [0:3] form the opening h3 heading triple (heading_open/inline/heading_close).
-All tokens after index 3 must not contain any heading tags (h1-h6).
+A bullet list of actors.
 
 **Methods:**
 
@@ -15454,10 +15428,10 @@ All tokens after index 3 must not contain any heading tags (h1-h6).
 
 ### `SubVariation`
 
-Markdown content starting with an h3 heading, no nested headings allowed.
+A minor variation in how a single main-scenario step is carried out, without branching into a full
+alternate flow.
 
-Tokens [0:3] form the opening h3 heading triple (heading_open/inline/heading_close).
-All tokens after index 3 must not contain any heading tags (h1-h6).
+A bullet list of variant actions for that one step.
 
 **Methods:**
 
@@ -16157,10 +16131,10 @@ All tokens after index 3 must not contain any heading tags (h1-h6).
 
 ### `SubVariations`
 
-Markdown content starting with an h2 heading, no nested headings allowed.
+Minor, non-branching variations on individual main-scenario steps, collected in one place instead of
+cluttering the main flow.
 
-Tokens [0:3] form the opening h2 heading triple (heading_open/inline/heading_close).
-All tokens after index 3 must not contain any heading tags (h1-h6).
+A list of SubVariation sections, one per varying step.
 
 **Methods:**
 
@@ -16860,10 +16834,10 @@ All tokens after index 3 must not contain any heading tags (h1-h6).
 
 ### `SuccessEndCondition`
 
-Markdown content starting with an h3 heading, no nested headings allowed.
+Conditions that must hold true once the use case completes successfully -- the guarantee given to
+stakeholders.
 
-Tokens [0:3] form the opening h3 heading triple (heading_open/inline/heading_close).
-All tokens after index 3 must not contain any heading tags (h1-h6).
+A bullet list of conditions.
 
 **Methods:**
 
@@ -17563,10 +17537,10 @@ All tokens after index 3 must not contain any heading tags (h1-h6).
 
 ### `Trigger`
 
-Markdown content starting with an h3 heading, no nested headings allowed.
+The event that starts the use case, whether an actor's action, a point in time, or a condition becoming
+true.
 
-Tokens [0:3] form the opening h3 heading triple (heading_open/inline/heading_close).
-All tokens after index 3 must not contain any heading tags (h1-h6).
+Free-form prose.
 
 **Methods:**
 
@@ -18266,10 +18240,11 @@ All tokens after index 3 must not contain any heading tags (h1-h6).
 
 ### `UseCase`
 
-Markdown content starting with an h1 heading, no nested headings allowed.
+A single use case: one actor-facing goal, described end to end from context through its main flow and
+every alternate/variant path.
 
-Tokens [0:3] form the opening h1 heading triple (heading_open/inline/heading_close).
-All tokens after index 3 must not contain any heading tags (h1-h6).
+Composed of Characteristic Information, the Main Success Scenario, and the optional Extensions,
+Sub-Variations, Open Issues, and Related Information sections.
 
 **Methods:**
 

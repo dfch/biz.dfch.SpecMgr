@@ -33,68 +33,157 @@ from biz.dfch.specmgr.models.md import alias, AliasType
 
 @alias(value="Goal in Context", type=AliasType.LITERAL)
 class GoalInContext(MarkdownSection3):
+    """The goal the primary actor is trying to achieve by carrying out this use case, stated in the context of the
+    surrounding business process.
+
+    Free-form prose.
+    """
+
     body: list[MarkdownParagraph]
 
 
 class Scope(MarkdownSection3):
+    """The boundary of the system or business process being designed -- what falls inside vs. outside this use
+    case's responsibility.
+
+    Free-form prose.
+    """
+
     body: list[MarkdownParagraph]
 
 
 class Level(MarkdownSection3):
+    """The use case's altitude in Cockburn's goal hierarchy (e.g. user-goal, summary, subfunction), signalling how
+    large a piece of work it covers.
+
+    Free-form prose.
+    """
+
     body: list[MarkdownParagraph]
 
 
 class Preconditions(MarkdownSection3):
+    """Conditions that must already hold true in the world before this use case is allowed to start.
+
+    A bullet list of conditions.
+    """
+
     items: list[MarkdownListItem]
 
 
 class SuccessEndCondition(MarkdownSection3):
+    """Conditions that must hold true once the use case completes successfully -- the guarantee given to
+    stakeholders.
+
+    A bullet list of conditions.
+    """
+
     items: list[MarkdownListItem]
 
 
 class FailedEndCondition(MarkdownSection3):
+    """Conditions that must hold true if the use case aborts or fails partway through.
+
+    A bullet list of conditions.
+    """
+
     items: list[MarkdownListItem]
 
 
 class PrimaryActor(MarkdownSection3):
+    """The actor who initiates the use case and whose goal it exists to satisfy.
+
+    Free-form prose naming and describing that actor.
+    """
+
     body: list[MarkdownParagraph]
 
 
 class SecondaryActors(MarkdownSection3):
+    """Actors other than the primary actor who take part in the use case or have a stake in its outcome (e.g.
+    external systems, other roles).
+
+    A bullet list of actors.
+    """
+
     items: list[MarkdownListItem]
 
 
 class Trigger(MarkdownSection3):
+    """The event that starts the use case, whether an actor's action, a point in time, or a condition becoming
+    true.
+
+    Free-form prose.
+    """
+
     body: list[MarkdownParagraph]
 
 
 class Frequency(MarkdownSection3):
+    """How often this use case is expected to occur, informing performance and capacity decisions.
+
+    Free-form prose.
+    """
+
     body: list[MarkdownParagraph]
 
 
 class Priority(MarkdownSection3):
+    """How important this use case is relative to others, guiding implementation order.
+
+    Free-form prose.
+    """
+
     body: list[MarkdownParagraph]
 
 
 class PerformanceTarget(MarkdownSection3):
+    """The response-time or throughput goal the system must meet while executing this use case.
+
+    Free-form prose.
+    """
+
     body: list[MarkdownParagraph]
 
 
 @alias(value="Channels to Primary Actor", type=AliasType.LITERAL)
 class ChannelsToPrimaryActor(MarkdownSection3):
+    """The communication channel(s) (e.g. web, phone, in person) through which the primary actor interacts with
+    the system.
+
+    A bullet list of channels.
+    """
+
     items: list[MarkdownListItem]
 
 
 @alias(value="Channels to Secondary Actors", type=AliasType.LITERAL)
 class ChannelsToSecondaryActors(MarkdownSection3):
+    """The communication channel(s) through which secondary actors interact with the system during this use
+    case.
+
+    A bullet list of channels.
+    """
+
     items: list[MarkdownListItem]
 
 
 class RelatedUseCases(MarkdownSection3):
+    """Other use cases that this one depends on, is a variation of, or is otherwise related to.
+
+    A bullet list of use case references.
+    """
+
     items: list[MarkdownListItem]
 
 
 class CharacteristicInformation(MarkdownSection2):
+    """The descriptive metadata that frames a use case before its steps are told -- who wants what, when it
+    applies, and how success is judged.
+
+    Composed of the sub-sections above (Goal in Context, Scope, Level, Preconditions, ...).
+    """
+
     goal_in_context: GoalInContext
     scope: Scope
     level: Level
@@ -116,6 +205,12 @@ class CharacteristicInformation(MarkdownSection2):
 
 
 class MainSuccessScenario(MarkdownSection2):
+    """The primary, everything-goes-right path: the sequence of actor/system interactions that satisfies the
+    primary actor's goal with no exceptions.
+
+    An ordered list of numbered steps.
+    """
+
     steps: list[MarkdownListItem]
 
 
@@ -123,16 +218,34 @@ class MainSuccessScenario(MarkdownSection2):
 
 
 class ExtensionItem(MarkdownListItem):
+    """One action taken while handling an extension's alternate flow, with any continuation text that clarifies
+    it.
+
+    A single ordered-list entry, optionally followed by loose continuation paragraphs (`notes`).
+    """
+
     # The leading paragraph of item is in `.text` property.
     notes: list[MarkdownParagraph] | None = None
 
 
 @alias(value=r"^Extension \d+[a-z]?\. .+$", type=AliasType.REGEX)
 class Extension(MarkdownSection3):
+    """An alternate flow that branches off a specific main-scenario step when a named condition holds, describing
+    how the use case proceeds differently from that point.
+
+    An ordered list of actions (`items`), headed by a condition naming which step it branches from.
+    """
+
     items: list[ExtensionItem]
 
 
 class Extensions(MarkdownSection2):
+    """All the alternate flows that can branch off the main success scenario, covering exceptional or
+    alternative conditions.
+
+    An optional introductory paragraph followed by a list of Extension sections, one per branching condition.
+    """
+
     intro: MarkdownParagraph | None = None
     extensions: list[Extension] | None = None
 
@@ -142,11 +255,23 @@ class Extensions(MarkdownSection2):
 
 @alias(value=r"^Step \d+: .+$", type=AliasType.REGEX)
 class SubVariation(MarkdownSection3):
+    """A minor variation in how a single main-scenario step is carried out, without branching into a full
+    alternate flow.
+
+    A bullet list of variant actions for that one step.
+    """
+
     items: list[MarkdownListItem]
 
 
 @alias(value="Sub-Variations", type=AliasType.LITERAL)
 class SubVariations(MarkdownSection2):
+    """Minor, non-branching variations on individual main-scenario steps, collected in one place instead of
+    cluttering the main flow.
+
+    A list of SubVariation sections, one per varying step.
+    """
+
     sub_variations: list[SubVariation] | None = None
 
 
@@ -154,6 +279,11 @@ class SubVariations(MarkdownSection2):
 
 
 class OpenIssues(MarkdownSection2):
+    """Unresolved questions or decisions about the use case that still need to be settled.
+
+    A bullet list of open questions.
+    """
+
     items: list[MarkdownListItem]
 
 
@@ -161,14 +291,30 @@ class OpenIssues(MarkdownSection2):
 
 
 class Notes(MarkdownSection3):
+    """Free-form remarks about the use case that do not fit any other section.
+
+    A bullet list of notes.
+    """
+
     items: list[MarkdownListItem]
 
 
 class Assumptions(MarkdownSection3):
+    """Conditions taken for granted while writing the use case, which -- if wrong -- would invalidate parts of
+    it.
+
+    A bullet list of assumptions.
+    """
+
     items: list[MarkdownListItem]
 
 
 class RelatedInformation(MarkdownSection2):
+    """Supplementary commentary about the use case, kept separate from its behavioral content.
+
+    Composed of two optional sub-sections: Notes and Assumptions.
+    """
+
     notes: Notes | None = None
     assumptions: Assumptions | None = None
 
@@ -215,6 +361,13 @@ def _validate_unique_and_resolvable(references: list[str], step_count: int, sect
 
 @alias(value=r".+", type=AliasType.REGEX)
 class UseCase(MarkdownSection1):
+    """A single use case: one actor-facing goal, described end to end from context through its main flow and
+    every alternate/variant path.
+
+    Composed of Characteristic Information, the Main Success Scenario, and the optional Extensions,
+    Sub-Variations, Open Issues, and Related Information sections.
+    """
+
     characteristic_information: CharacteristicInformation
     main_success_scenario: MainSuccessScenario
     extensions: Extensions | None = None

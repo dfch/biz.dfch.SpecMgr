@@ -144,8 +144,6 @@ progresses (edit, don't duplicate).
 
 - [x] Task 1.8: Add a `from_text`/parser entry point for `UcDocument` — depends on: Task 1.6 — status: completed (2026-08-12). Added `uc/models/v2/parser.py::parse_uc(text: str) -> UcDocument` as a free function, mirroring `models.adr.v1.parser.parse_adr`'s own split (not a classmethod/`@model_validator` on `UcDocument`) — `frontmatter.loads(text)` + `UcFrontmatter.model_validate(...)` (with the same `_stringify_metadata` YAML-date-coercion fix `parse_adr` needed) for the frontmatter half, `UseCase.from_text(format_text(post.content))` for the body half. Unlike `parse_adr`, there is no dedicated `UcParseError`: a malformed heading/list structure surfaces as the generic `models/md` engine's own `AssertionError`, and field/cross-field validation failures as `pydantic.ValidationError` — both left uncaught, same as `parse_adr`'s two-channel split. Re-exported from `uc/models/v2/__init__.py`. 6 new tests in `tests/uc/models/v2/test_parser.py` (minimal doc, the feature's own `v2/uc_reference.md` full round-trip, absent-frontmatter defaulting, invalid-status/unresolvable-reference/malformed-structure failure modes).
 
-Task 1.5 is now fully done (see Current Status below).
-
 #### Phase 2: PlantUML Diagram Generation
 
 - [x] Task 2.1: Implement UC diagram generator (actors + use case associations) — depends on: Task 1.3B — status: completed. **Note (2026-08-11):** built against the current custom `UseCase` model (`uc/models/v1/usecase.py`); may need rework now that Task 1.5 has landed and the model shape changed (v1 → v2).
@@ -166,13 +164,14 @@ wrapper over Task 1.8's `parse_uc` free function. This is **not** Task 3.1
 (only this one tool exists) — both tasks below remain open for the rest of
 the tool/prompt/resource surface.
 
-- [ ] Task 3.1: Define MCP tools, prompts, and resources (specification) — depends on: Task 2.4 — status: not-started (no separate written spec — same precedent as `parse_uc`'s own note above: 3.1.1-3.1.6 below were implemented directly, without a standalone specification document)
+- [x] Task 3.1: Define MCP tools, prompts, and resources (specification) — depends on: none — status: completed (2026-08-16). **Dependency corrected**: originally listed as depending on Task 2.4 (Phase 2 diagram generation), but the MCP tool/resource/prompt surface (parse/validate/CRUD/schema/example/template/list) has no actual dependency on diagram generation being done first — that was a planning-time error, not a real blocker. No separate written specification document was produced (same precedent as `parse_uc`'s own note above); instead, the tool/resource surface was defined and built directly via Task 3.1.1-3.1.7, which now cover the full scope this task called for (schema/example/template/list resources, the full CRUD+validate tool set, `parse_uc`'s path-based shape confirmed, and class-hierarchy docstrings). Phase 3's remaining tasks (3.2-3.6) are unaffected by this dependency fix.
 - [x] Task 3.1.1: add resource: uc_schema (same behaviour as req_schema, but do NOT reference this in all the doc strings - DRY) — status: completed (2026-08-16). `uc/resources/uc_schema.py` (`specmgr://uc/schema`), code-generated from `UcDocument.model_json_schema()` via a new `generate_uc_schema()` in `commands/schema.py`, packaged at `uc/data/uc_schema.json`, kept in sync by a pre-commit hook/CI step mirroring req's.
 - [x] Task 3.1.2: add resource: uc_example, and tool: get_uc_example (same behaviour as req_example/get_req_example, but do NOT reference this in all the doc strings - DRY) — status: completed (2026-08-16). `uc/resources/uc_example.py` + `uc/tools/get_uc_example.py`, both reading packaged `uc/data/uc_example.md` — a verbatim copy of this feature's own `v2/uc_reference.md` worked example.
 - [x] Task 3.1.3: add resource: uc_template, and tool: get_uc_template (same behaviour as req_template/get_req_template, but do NOT reference this in all the doc strings - DRY) — status: completed (2026-08-16). `uc/resources/uc_template.py` + `uc/tools/get_uc_template.py`, both reading a newly authored packaged `uc/data/uc_template.md` (every section present, placeholder content, structurally parses via `UseCase.from_text`/`parse_uc`).
 - [x] Task 3.1.4: add resource: uc_list (same behaviour as req_list, but do NOT reference this in all the doc strings - DRY) — status: completed (2026-08-16). `uc/resources/uc_list.py` (`specmgr://uc/list`), using the new `UcSummary` model (`uc/models/v2/summary.py`).
 - [x] Task 3.1.5: add CRUD tools: create_uc, get_uc, update_uc, delete_uc (stub), set_status_uc, validate_uc (same behaviour as req's equivalents, but do NOT reference this in all the doc strings - DRY) — status: completed (2026-08-16). New `uc/tools/_paths.py`/`_io.py`/`_lock.py`/`_write.py` (id-based storage layer, mirroring `req/tools/`'s own, on top of the already-generic `general.tools._doc_paths`), plus `create_uc.py`/`get_uc.py`/`update_uc.py`/`delete_uc.py` (stub)/`set_status_uc.py`/`validate_uc.py`.
 - [x] Task 3.1.6: confirm parse_uc stays path-based (`path: str`) — status: completed (2026-08-16). Checked against the actual req code: `parse_req` itself is path-based too (it's the separate `get_req` tool, Task 3.1.5, that is id-based), so `parse_uc` already matched this shape and needed no signature change; `get_uc` (Task 3.1.5) covers the id-lookup use case instead.
+- [x] Task 3.1.7: add brief docstrings to the classes that make up the UseCase class hierarchy. These docstrings must be helpful to an Agent to understand how the uc is structured and what it is for. Do not write docstrings like: "this is a section that derives from xyz as discussed in Task a.b.c." Write the intended purpose of the content of a structural element. — status: completed (2026-08-16). Added a purpose-focused docstring to every one of the ~25 classes in `uc/models/v2/use_case.py` (the file that previously had none): a one-sentence statement of what the section means for a use case, followed by a one-sentence note on its shape (free-form prose vs. bullet list vs. ordered list vs. composed-of-sub-sections) — no task/implementation-history references. `document.py`/`frontmatter.py`/`summary.py` already carried purpose-focused docstrings and needed no changes. `ruff format`/`ruff check`/`vulture` clean, all 856 tests still passing (no behavior change).
 - [ ] Task 3.2: Implement MCP tools per specification (Task 3.1) — depends on: Task 3.1 — status: not-started as its own tracked task, but its actual scope (the full uc tool surface) is now done via Task 3.1.2/3.1.3/3.1.5 above
 - [ ] Task 3.3: Implement MCP prompts per specification (Task 3.1) — depends on: Task 3.2 — status: not-started (genuinely open — no `uc/prompts/` package exists yet)
 - [ ] Task 3.4: Implement MCP resources per specification (Task 3.1) — depends on: Task 3.2 — status: not-started as its own tracked task, but its actual scope (the full uc resource surface) is now done via Task 3.1.1/3.1.2/3.1.3/3.1.4 above
@@ -225,6 +224,41 @@ Phase 2).
 If this section grows too long, move older entries to `history.md` in this
 same folder and leave a pointer here, e.g.:
 `See history.md for updates before YYYY-MM-DD.`
+
+#### 2026-08-16 Task 3.1 closed out; its Task 2.4 dependency corrected
+
+- **Task 3.1 marked COMPLETED**, with its dependency corrected: it previously
+  listed `depends on: Task 2.4` (Phase 2 diagram generation), but that was a
+  planning-time error — defining/implementing the MCP tool/resource/prompt
+  surface has no actual dependency on diagram generation being finished
+  first. Changed to `depends on: none`. No standalone specification document
+  was ever written (as already noted, mirroring `parse_uc`'s own precedent);
+  the task's real scope was instead fulfilled directly via Task
+  3.1.1-3.1.7 (schema/example/template/list resources, full CRUD+validate
+  tool set, `parse_uc`'s path-based shape confirmed, class-hierarchy
+  docstrings). Phase 2 (Task 2.2-2.4) remains not-started and unrelated to
+  this change. Documentation-only edit — no code/test changes.
+
+#### 2026-08-16 Task 3.1.7 completed: docstrings on the UseCase class hierarchy
+
+- **Task 3.1.7 COMPLETED**: Added a brief, purpose-focused docstring to every
+  one of the ~25 classes in `uc/models/v2/use_case.py` (`GoalInContext`,
+  `Scope`, `Level`, `Preconditions`, `SuccessEndCondition`,
+  `FailedEndCondition`, `PrimaryActor`, `SecondaryActors`, `Trigger`,
+  `Frequency`, `Priority`, `PerformanceTarget`, `ChannelsToPrimaryActor`,
+  `ChannelsToSecondaryActors`, `RelatedUseCases`, `CharacteristicInformation`,
+  `MainSuccessScenario`, `ExtensionItem`, `Extension`, `Extensions`,
+  `SubVariation`, `SubVariations`, `OpenIssues`, `Notes`, `Assumptions`,
+  `RelatedInformation`, `UseCase`) — the file previously had none. Each
+  docstring is two sentences: what the section means/is for in a use case,
+  then its shape (free-form prose vs. bullet list vs. ordered list vs.
+  composed-of-sub-sections) — deliberately no reference to task numbers or
+  implementation history, per the task's own instruction. `document.py`
+  (`UcDocument`), `frontmatter.py` (`UcFrontmatter`), and `summary.py`
+  (`UcSummary`) were reviewed too but already carried purpose-focused
+  docstrings and needed no changes.
+- Documentation-only change (no field/behavior changes): `ruff format`/
+  `ruff check`/`vulture` clean, all 856 tests still passing.
 
 #### 2026-08-16 Tasks 3.1.1-3.1.6 completed: full uc MCP tool/resource surface
 
