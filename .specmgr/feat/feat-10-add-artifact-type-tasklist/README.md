@@ -252,54 +252,66 @@ not just the body model, so schema generation cannot happen before
 
 #### Phase 3: MCP Surface (commit 3)
 
+**Plan correction (2026-08-16, see Decisions Made)**: REQ-004 explicitly
+lists `parse_tsk` among the 9 required MCP tools, but the Task List below
+never allocated a task for the `parse_tsk` **tool** wrapper (Phase 2 only
+built the model-layer `parse_tsk(text) -> TskDocument` free function).
+Inserted as Task 3.2 below (mirroring `req/tools/parse_req.py`, a thin
+`Path(path).read_text()` -> model-layer `parse_tsk` adapter), renumbering
+every subsequent Phase 3 task by one and updating all cross-references.
+
 - [ ] Task 3.1: `tsk/tools/_paths.py` + `_io.py` + `_write.py` + `_lock.py`,
   thin wrappers over `general/tools/_doc_paths.py` (mirrors
   `req/tools/_paths.py` etc. exactly) — depends on: Task 2.2 — status:
   not-started
-- [ ] Task 3.2: `create_tsk(content: str) -> TskDocument` tool (body-only
+- [ ] Task 3.2 (new): `parse_tsk(path: str) -> TskDocument` tool wrapper
+  (`tsk/tools/parse_tsk.py`, mirroring `req/tools/parse_req.py` — reads a
+  filepath from disk, delegates to the model-layer `parse_tsk`) — depends
+  on: Task 3.1 — status: not-started
+- [ ] Task 3.3: `create_tsk(content: str) -> TskDocument` tool (body-only
   content, MCP builds frontmatter: `id`, `type="tsk"`, `status="draft"`,
   `created=updated=now`, `version`) — depends on: Task 3.1 — status:
   not-started
-- [ ] Task 3.3: `update_tsk(id, content) -> TskDocument` tool (whole-body
+- [ ] Task 3.4: `update_tsk(id, content) -> TskDocument` tool (whole-body
   replace, preserves `id`/`type`/`status`/`created`/`version`, bumps
   `updated`) — depends on: Task 3.1 — status: not-started
-- [ ] Task 3.4: `set_status_tsk(id, status) -> TskDocument` tool (only path
+- [ ] Task 3.5: `set_status_tsk(id, status) -> TskDocument` tool (only path
   that changes `status`) — depends on: Task 3.1 — status: not-started
-- [ ] Task 3.5: `delete_tsk(id) -> NoReturn` stub tool — depends on: Task
+- [ ] Task 3.6: `delete_tsk(id) -> NoReturn` stub tool — depends on: Task
   3.1 — status: not-started
-- [ ] Task 3.6: `validate_tsk(content, full=False) -> bool` tool — depends
+- [ ] Task 3.7: `validate_tsk(content, full=False) -> bool` tool — depends
   on: none — status: not-started
-- [ ] Task 3.7: `get_tsk(id) -> TskDocument` tool (id-based single-document
+- [ ] Task 3.8: `get_tsk(id) -> TskDocument` tool (id-based single-document
   read; tool, not resource — matches REQ's revisited Task 3.17 conclusion)
   — depends on: Task 3.1 — status: not-started
-- [ ] Task 3.8: `get_tsk_example`/`get_tsk_template` tools + packaged data
+- [ ] Task 3.9: `get_tsk_example`/`get_tsk_template` tools + packaged data
   (`tsk/data/tsk_example.md`, `tsk/data/tsk_template.md`) via
-  `general/tools/_packaged_data.py` — depends on: Task 1.4 — status:
+  `general/tools/_packaged_data.py` — depends on: Task 1.3 — status:
   not-started
-- [ ] Task 3.9: `specmgr://tsk/list` and `specmgr://tsk/schema` resources
+- [ ] Task 3.10: `specmgr://tsk/list` and `specmgr://tsk/schema` resources
   (packaged `tsk/data/tsk_schema.json`, mirroring `specmgr://req/schema`) —
   depends on: Task 3.1, Task 2.5 — status: not-started
-- [ ] Task 3.10: `specmgr://tsk/example` and `specmgr://tsk/template`
-  resources — depends on: Task 3.8 — status: not-started
-- [ ] Task 3.11: `pyproject.toml` package-data entry for
+- [ ] Task 3.11: `specmgr://tsk/example` and `specmgr://tsk/template`
+  resources — depends on: Task 3.9 — status: not-started
+- [ ] Task 3.12: `pyproject.toml` package-data entry for
   `biz.dfch.specmgr.tsk` (`data/*.md`, `data/*.json`), pre-commit hook + CI
   step for the packaged `tsk_schema.json` copy (mirroring
   `specmgr-schema-req-package`) — depends on: Task 2.5 — status: not-started
-- [ ] Task 3.12: `tsk/prompts/create_task.py` + `update_task.py` — narrate
+- [ ] Task 3.13: `tsk/prompts/create_task.py` + `update_task.py` — narrate
   the tool sequence (mirroring `req/prompts/create_req.py`/`update_req.py`)
-  — depends on: Tasks 3.2, 3.3, 3.4, 3.7, 3.9 — status: not-started
-- [ ] Task 3.13: `tsk/prompts/implement_task.py` — reads an existing `tsk`
+  — depends on: Tasks 3.3, 3.4, 3.5, 3.8, 3.10 — status: not-started
+- [ ] Task 3.14: `tsk/prompts/implement_task.py` — reads an existing `tsk`
   document via `get_tsk`, builds a `TodoWrite` list from its `items`, and
   uses the `question` tool to resolve ambiguity for any item before
-  proceeding — depends on: Task 3.7 — status: not-started
-- [ ] Task 3.14: add `tsk` to `server.py`'s domain import line (last-line
+  proceeding — depends on: Task 3.8 — status: not-started
+- [ ] Task 3.15: add `tsk` to `server.py`'s domain import line (last-line
   import convention — easily forgotten, silently means nothing registers)
-  — depends on: Tasks 3.2-3.13 — status: not-started
-- [ ] Task 3.15 (folded from former Tasks 5.2/5.3): `tests/tsk/tools/...`,
+  — depends on: Tasks 3.2-3.14 — status: not-started
+- [ ] Task 3.16 (folded from former Tasks 5.2/5.3): `tests/tsk/tools/...`,
   `tests/tsk/resources/...`, `tests/tsk/prompts/...` mirroring
   `tests/req/tools/`/`tests/req/resources/` layout, plus dedicated tests for
   `implement_task`'s `TodoWrite`/`question`-tool driven behavior — depends
-  on: Tasks 3.1-3.14 — status: not-started
+  on: Tasks 3.1-3.15 — status: not-started
 
 #### Phase 4: Docs, CI wiring & final verification (commit 4)
 
@@ -506,6 +518,14 @@ None.
   entry (e.g. "Created") — `create_tsk`/`get_tsk_template`/`get_tsk_example`
   in Phase 3 must account for this, same as `Task.items`' own `min_length=1`
   already requires at least one checklist item.
+- **2026-08-16**: Inserted a Phase 3 task for the `parse_tsk` **tool**
+  wrapper (renumbered as Task 3.2, shifting every subsequent Phase 3 task
+  by one). Rationale: REQ-004 explicitly lists `parse_tsk` among the 9
+  required MCP tools, but the original Task List only ever planned the
+  model-layer `parse_tsk(text) -> TskDocument` free function (Phase 2,
+  Task 2.2) — the thin `@mcp.tool()` adapter over it (mirroring
+  `req/tools/parse_req.py`) had no task of its own. Caught before starting
+  Phase 3 implementation, same as the earlier schema-sequencing fix.
 
 ### Related PRs / Commits
 
