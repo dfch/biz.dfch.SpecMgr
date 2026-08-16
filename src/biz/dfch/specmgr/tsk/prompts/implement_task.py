@@ -77,8 +77,8 @@ go (one `in_progress` at a time, then `completed` once genuinely done).
 ## 5. Persisting completed work back to the document (separate, deliberate step)
 Completing TodoWrite entries in-session does **not** update the
 underlying `tsk` document -- its checkboxes on disk are left exactly as
-they were read in step 1. If you want the persisted document to reflect
-the work you completed, you must separately call
+they were read in step 1. So, for each entry, you must persist the document
+to reflect the work you completed, you must separately call
 `update_tsk(id, content)` with the updated checklist (`- [x] ...` for
 items you completed) -- a whole-body replace, so carry forward every
 other section unchanged, including at least one `## Recent Updates`
