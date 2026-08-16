@@ -31,7 +31,7 @@ import re
 
 from pydantic import computed_field
 
-from ....models.md import MarkdownListItem
+from ....models.md import MarkdownListItem, MarkdownParagraph
 
 #: Matches a literal `[ ]`/`[x]`/`[X]` checkbox marker at the start of a
 #: `TaskItem`'s own leading-paragraph text (see `MarkdownListItem.text`),
@@ -62,6 +62,8 @@ class TaskItem(MarkdownListItem):
         Computed. The item's own text with the leading checkbox marker
         stripped, e.g. `"Do the thing"` for `"- [ ] Do the thing"`. Raises
         `AssertionError` under the same condition as `checked`.
+    content:
+        An optional list of paragraphs with details content of the task item.
     """
 
     @computed_field  # type: ignore
@@ -96,3 +98,5 @@ class TaskItem(MarkdownListItem):
         match = _MARKER_PATTERN.match(self.text)
         assert match, f"TaskItem: expected a '- [ ]'/'- [x]' checkbox marker, got {self.text!r}"
         return match.group("description").strip()
+
+    content: list[MarkdownParagraph] | None = None

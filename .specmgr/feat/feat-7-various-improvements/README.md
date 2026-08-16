@@ -343,6 +343,15 @@ progresses (edit, don't duplicate).
   `test_get_<type>.py`; verified clean via `ruff format --check`/
   `ruff check`/`vulture src/ whitelist.py --min-confidence 60`/full
   `unittest` suite
+- [x] Task 0.14: MCP tool: WebFetch with BearerToken and URL filter — a
+  general, cross-cutting `webfetch` MCP tool for a Web Server
+  instance (generic bearer-authenticated GET fetch, URL-filtered against a
+  configured base URL). The full implementation plan and its per-task
+  breakdown live in specmgr task list TSK
+  `efb7d049-a222-4730-901f-6d57283b387c` ("Implement `webfetch` MCP Tool
+  (Bearer-Authenticated, URL-Filtered Fetch for Web Server)") — retrieve it
+  via the `get_tsk` MCP tool with id `efb7d049-a222-4730-901f-6d57283b387c`
+  — depends on: none — status: done (2026-08-16)
 
 #### Phase 1: Audit
 
@@ -434,6 +443,35 @@ plus the shared `DocNotFoundError`, and tests assert on the message content.
 
 #### 2026-08-16
 
+- In progress: Task 0.14 (`webfetch` MCP tool for Web Server). Clarified
+  scope with the user (generic bearer-authenticated GET fetch, not
+  Web Server-page-ID-specific; `httpx` over stdlib `urllib`; raw response
+  body returned; custom typed exceptions on misconfiguration/disallowed
+  URL; case-insensitive base-URL prefix match; `general/tools/webfetch.py`,
+  tool name `webfetch`) and created the implementation-plan task list, TSK
+  `efb7d049-a222-4730-901f-6d57283b387c` ("Implement `webfetch` MCP Tool
+  (Bearer-Authenticated, URL-Filtered Fetch for Web Server)", 10 tasks).
+  Task 0.14's own line above updated to remove the original inline
+  instructions and point at this TSK id. Implementation itself has not
+  started yet.
+- Completed: Task 0.14 (`webfetch` MCP tool for Web Server), all 11 tasks
+  from TSK `efb7d049-a222-4730-901f-6d57283b387c`: `httpx` promoted to a
+  direct dependency in the `mcp` extra; `general/tools/webfetch.py` added
+  (`SPECMGR_WEBFETCH_BASE_URL`/`SPECMGR_WEBFETCH_BEARER` env vars,
+  `WebfetchNotConfiguredError`/`WebfetchUrlNotAllowedError`, the `webfetch`
+  MCP tool itself using `httpx.get(..., follow_redirects=True)`); registered
+  in `general/tools/__init__.py` with docstrings updated in
+  `general/__init__.py` and `server.py`; 8 mocked tests added in
+  `tests/general/tools/test_webfetch.py` (URL-filter rejection, case-
+  insensitive base-URL matching on both sides, missing-config errors,
+  successful bearer-header fetch, non-2xx raise); `docs/api/`,
+  `docs/GENERATED.md`, and `docs/MCP.md` regenerated; `README.md`'s
+  Environment Variables section documents the two new env vars; verified
+  clean via `ruff format --check`/`ruff check`/
+  `vulture src/ whitelist.py --min-confidence 60`/full `unittest` suite (988
+  tests). TSK `efb7d049-a222-4730-901f-6d57283b387c` itself updated to
+  `status: done`, and Task 0.14's line above updated to point at it with
+  `status: done`.
 - Completed: Task 0.13 (standardize the not-found error message across
   `get_adr`/`get_req`/`get_uc`/`get_tsk`), all 9 sub-tasks from TSK
   `266eb332-795b-48c4-9bc0-7115eb209378`:
@@ -688,8 +726,7 @@ plus the shared `DocNotFoundError`, and tests assert on the message content.
 - **2026-08-16**: Standardized the not-found error message (Task 0.13) as
   one template applied identically across `AdrNotFoundError`/
   `ReqNotFoundError`/`UcNotFoundError`/`TskNotFoundError`/`DocNotFoundError`:
-  `f"no {noun} found with id {id_!r}. The id must be the bare document
-  UUID, without a domain prefix (use '<uuid>', not '{prefix}-<uuid>')."`,
+  `f"no {noun} found with id {id_!r}. The id must be the bare document UUID, without a domain prefix (use '<uuid>', not '{prefix}-<uuid>')."`,
   with `noun`/`prefix` = ADR/adr, requirement/req, use case/uc, task
   list/tsk; the shared, domain-agnostic `DocNotFoundError` keeps the same
   closing sentence minus the prefix example, since
@@ -699,6 +736,24 @@ plus the shared `DocNotFoundError`, and tests assert on the message content.
   the bare-uuid-no-prefix requirement addresses the actual agent mistake
   (passing `"req-<uuid>"`/`"tsk-<uuid>"` etc. instead of the bare id) this
   task was opened to fix.
+- **2026-08-16**: For Task 0.14's `webfetch` MCP tool: implement it as a
+  *generic* bearer-authenticated GET fetch (caller supplies the full target
+  URL) rather than Web Server-page-ID-specific logic like the existing
+  `Web Server` agent skill; use `httpx` (promoted from a transitive to a
+  direct dependency in the `mcp` extra) rather than stdlib `urllib.request`,
+  since `httpx` is already pulled in transitively by the `mcp` package;
+  return the raw response body text with no HTML-to-markdown/JSON parsing;
+  match the configured `SPECMGR_WEBFETCH_BASE_URL` prefix case-
+  insensitively; raise custom typed exceptions
+  (`WebfetchNotConfiguredError`, `WebfetchUrlNotAllowedError`) on
+  misconfiguration or a disallowed URL, matching this repo's house style of
+  typed exceptions over error-dict returns; place it at
+  `general/tools/webfetch.py` (cross-cutting, not domain-specific),
+  registered as MCP tool `webfetch`. Rationale: keeps the tool minimal and
+  reusable beyond Web Server, avoids adding an HTML-to-markdown dependency,
+  and follows existing conventions (`_paths.py`-style env-var handling,
+  typed exceptions, `general/` for cross-cutting tools) rather than
+  inventing new ones.
 
 ### Related PRs / Commits
 

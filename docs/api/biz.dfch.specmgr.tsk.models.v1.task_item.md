@@ -32,6 +32,8 @@ description:
     Computed. The item's own text with the leading checkbox marker
     stripped, e.g. `"Do the thing"` for `"- [ ] Do the thing"`. Raises
     `AssertionError` under the same condition as `checked`.
+content:
+    An optional list of paragraphs with details content of the task item.
 
 **Methods:**
 

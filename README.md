@@ -21,6 +21,7 @@ At this time, we have these artifact:
 - Architecture Decision Records (ADR)
 - Use Case (UC)
 - Requirement (REQ)
+- Task List (TSK)
 
 See [MCP Server](#mcp-server) and [docs/MCP.md](docs/MCP.md) for details.
 
@@ -102,6 +103,13 @@ tool call, so hand-editing a file between calls is safe.
   configurable via the `SPECMGR_DOCS_DIR` environment variable (default
   `docs`), with each type's own subdirectory appended automatically (e.g.
   `docs/req` for requirements).
+- The `webfetch` tool (bearer-authenticated, URL-filtered HTTP GET, intended
+  primarily for Web Server instances using PAT authentication)
+  requires two environment variables: `SPECMGR_WEBFETCH_BASE_URL` (the base
+  URL requested URLs must case-insensitively start with) and
+  `SPECMGR_WEBFETCH_BEARER` (the bearer token sent as the `Authorization`
+  header). Both must be set or the tool raises an error; there are no
+  defaults.
 
 ### Start the MCP Server
 
@@ -137,7 +145,13 @@ To add the `specmgr` MCP server to your OpenCode configuration:
 "specmgr": {
   "type": "local",
   "enabled": true,
-  "command": ["uvx", "--from", "biz-dfch-specmgr[mcp]", "python", "-m", "biz.dfch.specmgr", "mcp"]
+  "command": [
+    "uvx",
+    "--from",
+    "biz-dfch-specmgr[mcp]",
+    "specmgr",
+    "mcp"
+  ]
 }
 ```
 

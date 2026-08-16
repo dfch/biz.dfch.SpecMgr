@@ -53,6 +53,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general.tools._doc_paths`](biz.dfch.specmgr.general.tools._doc_paths.md) — Generic, doc-type-agnostic base directory resolution, filename slugification,
 - [`biz.dfch.specmgr.general.tools._packaged_data`](biz.dfch.specmgr.general.tools._packaged_data.md) — Generic, doc-type-agnostic access to packaged example/template/schema data
 - [`biz.dfch.specmgr.general.tools.mdformat`](biz.dfch.specmgr.general.tools.mdformat.md) — ``@mcp.tool()`` wrapper: mdformat.
+- [`biz.dfch.specmgr.general.tools.webfetch`](biz.dfch.specmgr.general.tools.webfetch.md) — ``@mcp.tool()`` wrapper: webfetch.
 - [`biz.dfch.specmgr.models`](biz.dfch.specmgr.models.md) — Pydantic models used by the ``biz-dfch-specmgr`` MCP server.
 - [`biz.dfch.specmgr.models.adr`](biz.dfch.specmgr.models.adr.md) — Pydantic models for MADR 4.0.0-based Architecture Decision Records.
 - [`biz.dfch.specmgr.models.adr.v1`](biz.dfch.specmgr.models.adr.v1.md) — ADR schema version 1 (``SCHEMA_MAJOR_VERSION == 1``).

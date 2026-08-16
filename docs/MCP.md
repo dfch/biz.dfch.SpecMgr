@@ -3,7 +3,7 @@
 Auto-generated from the live `biz.dfch.specmgr.server:mcp` registration --
 do not edit by hand, run `specmgr mcp-docs` instead (see `AGENTS.md`).
 
-15 resource(s), 1 resource template(s), 39 tool(s), 9 prompt(s).
+15 resource(s), 1 resource template(s), 40 tool(s), 9 prompt(s).
 
 ## Table of Contents
 
@@ -193,6 +193,7 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`validate_req`](#tool-validate_req) | Disk-free, id-free dry run validating requirement content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
 | [`validate_tsk`](#tool-validate_tsk) | Disk-free, id-free dry run validating task list content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
 | [`validate_uc`](#tool-validate_uc) | Disk-free, id-free dry run validating use case content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
+| [`webfetch`](#tool-webfetch) | Fetch a URL over HTTP GET with a bearer token, but only if the URL matches the configured base URL (case-insensitively). Returns the raw response body text. Intended primarily for Web Server instances using PAT authentication. |
 
 ### Tool: create_adr
 
@@ -580,6 +581,16 @@ Disk-free, id-free dry run validating use case content. `full=False` (default) v
 | --- | --- | --- |
 | `content` | `string` | Yes |
 | `full` | `boolean` | No |
+
+### Tool: webfetch
+
+**Fetch a URL with bearer authentication**
+
+Fetch a URL over HTTP GET with a bearer token, but only if the URL matches the configured base URL (case-insensitively). Returns the raw response body text. Intended primarily for Web Server instances using PAT authentication.
+
+| Parameter | Type | Required |
+| --- | --- | --- |
+| `url` | `string` | Yes |
 
 ## Prompts
 

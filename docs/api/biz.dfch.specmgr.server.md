@@ -58,7 +58,9 @@ Task list tools (``tsk/tools/``): ``parse_tsk``, ``get_tsk``, ``get_tsk_example`
 ``get_tsk_template``, ``create_tsk``, ``update_tsk``, ``set_status_tsk``, ``delete_tsk``
 (stub, not yet implemented), ``validate_tsk``.
 General tools (``general/tools/``): ``mdformat`` -- format markdown files in place,
-preserving YAML frontmatter blocks.
+preserving YAML frontmatter blocks; ``webfetch`` -- fetch a URL over HTTP GET with a
+bearer token, restricted to a configured base URL (``SPECMGR_WEBFETCH_BASE_URL``,
+``SPECMGR_WEBFETCH_BEARER``).
 
 Prompts
 -------

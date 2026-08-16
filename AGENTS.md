@@ -2,73 +2,90 @@
 
 Quick reference for OpenCode agents working on **biz.dfch.SpecMgr** — an artifact manager for system specifications.
 
-## Status: first domain feature (ADR tooling) implemented
+## Status: five domain/cross-cutting packages implemented (ADR, REQ, UC, TSK, general)
 
-The ADR (Architecture Decision Record) feature described in
-`.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md` is now implemented end-to-end and is the only domain
-feature that exists — everything else is still scaffolding. Concretely:
+Four document-type domains plus one cross-cutting package now exist, each
+following the domain-first layout from ADR
+ece4554b-725c-4f76-bc04-5d2b760363d2 ("Organize the codebase by
+document-type domain: domain-first hierarchy for tools/prompts/resources,
+shared versioned models"):
 
-- `models/adr/v1/` — Pydantic schema (`AdrFrontmatter`, `AdrBody`,
-  `AdrOption`, `Adr`), parser (`parse_adr`), renderer (`render_adr`), and
-  pure in-memory mutation functions (`update_section`, `set_status`,
-  `option_*`), re-exported as "current" via `models/adr/__init__.py` and
-  `models/__init__.py`.
-- `adr/tools/` — 11 `@mcp.tool()` wrappers, one module per tool (`get_adr`,
+- **`adr/`** (Architecture Decision Records) — the original, most complete
+  domain. `adr/tools/` has 11 `@mcp.tool()` wrappers (`get_adr`,
   `create_adr`, `update_frontmatter`, `update_section`, `set_status`,
   `option_list`/`option_create`/`option_read`/`option_update`/
-  `option_delete`, `validate_adr`), plus `_paths.py`/`_io.py` for the
-  id → file-path resolution and file I/O (no in-memory cache — the `.md`
-  file on disk is the sole source of truth, re-read on every call).
-- `adr/resources/adr_list.py`/`adr_get.py` — the `specmgr://adr/list` and
-  `specmgr://adr/{id}` MCP resources (read-only counterparts of the above).
-- `adr/prompts/create_adr.py`/`update_adr.py` — two `@mcp.prompt()`s
-   returning instructional text that drives the `adr/tools/` surface above
-   in the right order (draft-a-new-ADR and revise-an-existing-ADR-by-id
-   flows respectively); see `.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md` §11.
-- `adr/prompts/create_adr_test.py`/`update_adr_test.py` — step-gated
-   (`GATE 0`..`GATE N`, explicit exit conditions, "never fabricate a
-   value") experimental variants of the two prompts above, registered
-   under distinct names for side-by-side A/B comparison; neither
-   supersedes the narrated originals. See `.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md` §11.
-- 186 passing tests under `tests/models/adr/`, `tests/adr/tools/`,
-  `tests/adr/resources/`, `tests/adr/prompts/`.
+  `option_delete`, `validate_adr`); `adr/resources/` exposes
+  `specmgr://adr/list` and `specmgr://adr/{id}`; `adr/prompts/` has
+  narrated `create_adr`/`update_adr` prompts plus step-gated
+  `create_adr_test`/`update_adr_test` A/B variants (see
+  `.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md` §11). Its Pydantic
+  schema uniquely lives under the shared top-level `models/adr/` (not
+  `adr/models/`) — see the "models location" note below.
+- **`req/`** (Requirements) — `req/tools/` (`create_req`, `update_req`,
+  `set_status_req`, `parse_req`, `delete_req` stub, `validate_req`);
+  `req/resources/` (`specmgr://req/list`, `specmgr://req/schema`,
+  `specmgr://req/example`, `specmgr://req/template`; no `specmgr://req/{id}`
+  — id-based reads are `get_req`-only, ADR
+  ddfb1109-422d-4507-8dbc-dc5e4bec9614); `req/prompts/`
+  (`create_req`/`update_req`). Its schema lives at `req/models/v1/`, inside
+  the domain package itself, not under top-level `models/`.
+- **`uc/`** (Use Cases) — same tools/resources/prompts shape as `req/` but
+  for use cases (`create_uc`, `update_uc`, `set_status_uc`, `parse_uc`,
+  `get_uc`, `get_uc_example`, `get_uc_template`, `delete_uc` stub,
+  `validate_uc`); no `specmgr://uc/{id}` resource for the same reason as
+  REQ. Schema at `uc/models/v1/` (legacy) and `uc/models/v2/` (current),
+  inside the domain package, not `models/uc/`.
+- **`tsk/`** (Task Lists) — same shape again (`create_tsk`, `update_tsk`,
+  `set_status_tsk`, `parse_tsk`, `get_tsk`, `get_tsk_example`,
+  `get_tsk_template`, `delete_tsk` stub, `validate_tsk`), plus a distinct
+  `implement_task` prompt (reads a task list via `get_tsk`, builds a
+  `TodoWrite` list from its items, and uses the `question` tool to resolve
+  ambiguity). Schema at `tsk/models/v1/`, inside the domain package.
+- **`general/`** — cross-cutting, non-domain-specific package:
+  `general/tools/` (`mdformat`, formats a markdown file in place while
+  preserving YAML frontmatter blocks) and `general/resources/`
+  (`specmgr://version`, `specmgr://iso25010` — the ISO/IEC 25010:2023
+  quality model). No `general/prompts/` yet.
 
-`adr/` (`adr/tools/`, `adr/prompts/`, `adr/resources/`) is a top-level,
-domain-first package — see `.specmgr/feat/feat-9-doc-in-specmgr/refactor-domain.md` for the rationale and
-migration record (ADR ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by document-type domain: domain-first hierarchy for tools/prompts/resources, shared versioned models"). The ADR *schema* layer, `models/adr/`, deliberately stays
-under the shared top-level `models/` package instead of moving into `adr/`,
-since it has no dependency on `mcp`/`tools`/`resources`/`prompts` and is
-meant to stay importable standalone.
+**Models location — a real, intentional divergence, not an oversight**:
+ADR's schema (`AdrFrontmatter`, `AdrBody`, `AdrOption`, `Adr`, `parse_adr`,
+`render_adr`) stays under the shared top-level `models/adr/` package
+because it predates the domain-first refactor and has no dependency on
+`mcp`/`tools`/`resources`/`prompts`. REQ, UC, and TSK were built *after*
+that refactor and each keep their schema inside their own domain package
+(`req/models/`, `uc/models/`, `tsk/models/`) instead — fully domain-first,
+models included. Top-level `models/` therefore only holds `adr/`,
+`iso25010.py`, `md/` (shared cross-domain markdown-section building
+blocks), and `version_info.py` — don't assume any other doc type's schema
+lives there.
 
-A new cross-cutting `general/` domain package now exists:
-- `general/tools/` — 1 `@mcp.tool()` wrapper so far: `mdformat` (format
-  markdown files in place, preserving YAML frontmatter blocks for ADR/UC files).
-- `general/resources/` — the former top-level `resources/` package, moved
-  here since it is itself a cross-cutting (not domain-specific) concern: 1
-  MCP resource so far, `version` (`specmgr://version`). No `prompts`
-  sub-package yet.
-- 10 passing tests under `tests/general/tools/test_mdformat.py`, plus tests
-  under `tests/general/resources/`.
+`server.py`'s own module docstring is the single most authoritative,
+currently-maintained list of every resource/tool/prompt this MCP server
+registers — read it before consulting this file for specifics, and update
+it whenever you add/remove/rename a resource, tool, or prompt.
+`docs/MCP.md` is the auto-generated (via `specmgr mcp-docs`), user-facing
+mirror of that same registration and must never be hand-edited.
 
 Still genuinely missing / not yet done (don't assume otherwise):
-- **`specmgr adr-toc`** — a CLI command that generates a table of contents
-  (`docs/adr/README.md`) listing all ADRs with their titles, frontmatter
-  (id, status, date, decision-makers, consulted, informed), and links to the
-  actual ADR files. Integrated into pre-commit hooks and CI (Python 3.13 only,
-  consistent with `specmgr docs`). (ADR 9c687bb1-8ee7-41c8-84ec-07606356bc73)
-- No `validate_adr` tool runs over the repo's own ADRs yet via pre-commit or CI.
-  (ADR 9c687bb1-8ee7-41c8-84ec-07606356bc73: "Enforce doc generation/lint/tests locally via pre-commit hook, not just CI")
-- No second document type (`req`/`uc`) exists yet, despite `adr/`'s
-   domain-first layout and `models/adr/`'s internal layout being designed to
-   generalize to them (see `.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md` §6, `.specmgr/feat/feat-9-doc-in-specmgr/refactor-domain.md`).
+- No `validate_adr` (or `validate_req`/`validate_uc`/`validate_tsk`) tool
+  runs over the repo's own documents yet via pre-commit or CI. (ADR
+  9c687bb1-8ee7-41c8-84ec-07606356bc73: "Enforce doc generation/lint/tests
+  locally via pre-commit hook, not just CI")
+- `delete_req`/`delete_uc`/`delete_tsk` are stubs, not yet implemented.
+- No `ac` (Acceptance Criteria) domain exists yet, despite `server.py`'s
+  docstring already reserving a spot for it ("... and later `ac`").
+- `req`/`tsk` each register `tools`, `resources`, and `prompts`; `uc`
+  registers `tools` and `resources` only — it has no `prompts` sub-package
+  yet.
 
 `.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md` §10 ("Next steps") tracks per-item done/not-done
-status and should be kept in sync with `src/` as this evolves; treat it as
-current-state tracking, not just a historical design doc. Don't assume any
-other domain package exists beyond `adr`/`general`/`uc` (with their respective
-`tools`/`prompts`/`resources` sub-packages where implemented), or any other
-`models/` sub-package beyond `adr`/`version_info`, or anything in
-`general/resources/` beyond `version` — check first.
+status for the ADR feature specifically and should be kept in sync with
+`src/` as this evolves; treat it as current-state tracking, not just a
+historical design doc. Don't assume any other domain package exists beyond
+`adr`/`general`/`req`/`tsk`/`uc` (with their respective
+`tools`/`prompts`/`resources` sub-packages, per the exceptions noted
+above), or anything in `general/resources/` beyond `version`/`iso25010` —
+check first.
 
 ## Project Shape
 
@@ -196,15 +213,19 @@ consumer of the base library.
 
 ## MCP server (`server.py`)
 
-- Currently just builds an `MCPServer` instance (`mcp` object) and a no-op
-  `_lifespan`. **Nothing calls `mcp.run()` anywhere** — there is no working
-  "start the server" command yet, despite what an entry-point name might
-  suggest. Don't assume `python -m biz.dfch.specmgr` starts an MCP server —
-  it runs the Typer CLI (see above).
-- When adding tools/resources: follow the sibling-project convention of
-  `tools/`/`resources/` sub-packages, importing them as the **last line** of
-  `server.py` so their `@mcp.tool()`/`@mcp.resource()` decorators actually
-  run. Forgetting that import means a new tool silently never registers.
+- Builds the `MCPServer` instance (`mcp` object) and a no-op `_lifespan`,
+  then imports every domain package (`adr`, `general`, `req`, `tsk`, `uc`)
+  as its last line purely for the side effect of running their
+  `@mcp.tool()`/`@mcp.resource()`/`@mcp.prompt()` decorators. When adding a
+  new domain, add its import to that same last line — forgetting it means
+  the new tools/resources/prompts silently never register.
+- **`specmgr mcp`** (`commands/mcp.py`) *does* start the server —
+  `mcp_server.run(transport="stdio")` by default, or
+  `mcp_server.run(transport="sse", host=..., port=...)` via
+  `--transport sse`/`-t sse`. `python -m biz.dfch.specmgr mcp` and
+  `uvx --from "biz-dfch-specmgr[mcp]" specmgr mcp` both work identically
+  (see `README.md`'s "Add to OpenCode" section) — don't assume the server
+  has no working entry point.
 
 ## CI / Release
 

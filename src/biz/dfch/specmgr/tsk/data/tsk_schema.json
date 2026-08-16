@@ -69,8 +69,24 @@
       "type": "object"
     },
     "TaskItem": {
-      "description": "One `- [ ] .../- [x] ...` checklist entry of a `Task`'s flat item list.\n\nA leaf `MarkdownListItem` subclass (declares no nested `MarkdownStr`\nfields of its own, only the two computed properties below), so it parses/\nrenders exactly like the base class -- `checked`/`description` are purely\nderived views over the inherited `.text`, computed lazily rather than\nstored, and therefore never interfere with `MarkdownStr`'s field-based\n`from_text`/`__str__` distribution (see `MarkdownStr._get_field_names`).\n\nParameters\n----------\nchecked:\n    Computed. `True` for a `[x]`/`[X]` marker, `False` for a `[ ]`\n    marker. Raises `AssertionError` if `.text` does not start with a\n    well-formed checkbox marker at all.\ndescription:\n    Computed. The item's own text with the leading checkbox marker\n    stripped, e.g. `\"Do the thing\"` for `\"- [ ] Do the thing\"`. Raises\n    `AssertionError` under the same condition as `checked`.",
-      "properties": {},
+      "description": "One `- [ ] .../- [x] ...` checklist entry of a `Task`'s flat item list.\n\nA leaf `MarkdownListItem` subclass (declares no nested `MarkdownStr`\nfields of its own, only the two computed properties below), so it parses/\nrenders exactly like the base class -- `checked`/`description` are purely\nderived views over the inherited `.text`, computed lazily rather than\nstored, and therefore never interfere with `MarkdownStr`'s field-based\n`from_text`/`__str__` distribution (see `MarkdownStr._get_field_names`).\n\nParameters\n----------\nchecked:\n    Computed. `True` for a `[x]`/`[X]` marker, `False` for a `[ ]`\n    marker. Raises `AssertionError` if `.text` does not start with a\n    well-formed checkbox marker at all.\ndescription:\n    Computed. The item's own text with the leading checkbox marker\n    stripped, e.g. `\"Do the thing\"` for `\"- [ ] Do the thing\"`. Raises\n    `AssertionError` under the same condition as `checked`.\ncontent:\n    An optional list of paragraphs with details content of the task item.",
+      "properties": {
+        "content": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/MarkdownParagraph"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Content"
+        }
+      },
       "title": "TaskItem",
       "type": "object"
     },
