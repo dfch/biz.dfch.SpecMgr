@@ -120,6 +120,9 @@ namespaces = true
     "data/*.md",
     "data/*.json"
 ]
+"biz.dfch.specmgr.general" = [
+    "data/*.md"
+]
 
 [tool.coverage.run]
 source = ["src"]

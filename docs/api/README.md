@@ -47,6 +47,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.commands.version`](biz.dfch.specmgr.commands.version.md) — ``version`` -- print the installed ``biz-dfch-specmgr`` version.
 - [`biz.dfch.specmgr.general`](biz.dfch.specmgr.general.md) — General-purpose (cross-cutting, not domain-specific) tools and resources.
 - [`biz.dfch.specmgr.general.resources`](biz.dfch.specmgr.general.resources.md) — MCP resource registrations that are not specific to any single document
+- [`biz.dfch.specmgr.general.resources.iso25010`](biz.dfch.specmgr.general.resources.iso25010.md) — Resource: specmgr://iso25010 (Task 0.8.3).
 - [`biz.dfch.specmgr.general.resources.version`](biz.dfch.specmgr.general.resources.version.md) — Resource: specmgr://version — MCP server package version number.
 - [`biz.dfch.specmgr.general.tools`](biz.dfch.specmgr.general.tools.md) — MCP tool wrappers for general-purpose utilities (mirrors ``adr/tools/``'s shape).
 - [`biz.dfch.specmgr.general.tools._doc_paths`](biz.dfch.specmgr.general.tools._doc_paths.md) — Generic, doc-type-agnostic base directory resolution, filename slugification,
@@ -64,6 +65,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.models.adr.v1.parser`](biz.dfch.specmgr.models.adr.v1.parser.md) — Parse an on-disk ADR ``.md`` file into an :class:`Adr` (plan §7, §10 item 2).
 - [`biz.dfch.specmgr.models.adr.v1.renderer`](biz.dfch.specmgr.models.adr.v1.renderer.md) — Render an :class:`Adr` back into the canonical on-disk ``.md`` text (plan §7, §10 item 2).
 - [`biz.dfch.specmgr.models.adr.v1.summary`](biz.dfch.specmgr.models.adr.v1.summary.md) — Pydantic model for one line of ADR listing output (plan §8, §9a).
+- [`biz.dfch.specmgr.models.iso25010`](biz.dfch.specmgr.models.iso25010.md) — Pydantic schema and parser for the ISO/IEC 25010:2023 product quality
 - [`biz.dfch.specmgr.models.md`](biz.dfch.specmgr.models.md.md) — Markdown base models.
 - [`biz.dfch.specmgr.models.md._markdown`](biz.dfch.specmgr.models.md._markdown.md) — Markdown shared instance.
 - [`biz.dfch.specmgr.models.md._util`](biz.dfch.specmgr.models.md._util.md) — Shared, private validation helpers for the ``models.md`` subpackage.

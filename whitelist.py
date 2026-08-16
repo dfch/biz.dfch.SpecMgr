@@ -88,6 +88,7 @@ scope
 source
 specmgr
 statement
+sub_characteristics
 success_end_condition
 tags
 trigger

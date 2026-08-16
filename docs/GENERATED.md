@@ -61,6 +61,7 @@ First-line docstrings from each module, organized by domain:
 
 - `general/__init__.py` — General-purpose (cross-cutting, not domain-specific) tools and resources.
 - `general/resources/__init__.py` — MCP resource registrations that are not specific to any single document
+- `general/resources/iso25010.py` — Resource: specmgr://iso25010 (Task 0.8.3).
 - `general/resources/version.py` — Resource: specmgr://version — MCP server package version number.
 - `general/tools/__init__.py` — MCP tool wrappers for general-purpose utilities (mirrors ``adr/tools/``'s shape).
 - `general/tools/_doc_paths.py` — Generic, doc-type-agnostic base directory resolution, filename slugification,
@@ -81,6 +82,7 @@ First-line docstrings from each module, organized by domain:
 - `models/adr/v1/parser.py` — Parse an on-disk ADR ``.md`` file into an :class:`Adr` (plan §7, §10 item 2).
 - `models/adr/v1/renderer.py` — Render an :class:`Adr` back into the canonical on-disk ``.md`` text (plan §7, §10 item 2).
 - `models/adr/v1/summary.py` — Pydantic model for one line of ADR listing output (plan §8, §9a).
+- `models/iso25010.py` — Pydantic schema and parser for the ISO/IEC 25010:2023 product quality
 - `models/md/__init__.py` — Markdown base models.
 - `models/md/_markdown.py` — Markdown shared instance.
 - `models/md/_util.py` — Shared, private validation helpers for the ``models.md`` subpackage.
@@ -171,4 +173,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 107
+**Test files**: 109

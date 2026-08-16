@@ -19,6 +19,8 @@ specmgr://req/example -- A complete, valid sample requirement document as raw ma
 specmgr://req/template -- A requirement template (every field present, placeholder text)
                           as raw markdown.
 specmgr://req/list --   Ids/titles/statuses/refs of every requirement.
+specmgr://iso25010 --   The ISO/IEC 25010:2023 product quality model's nine main
+                        characteristics (and sub-characteristics), each with a description.
 
 REQ has no ``specmgr://req/{id}`` resource, unlike ADR -- id-based reads go
 through the ``get_req`` tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
@@ -52,13 +54,13 @@ with its own ``tools``/``prompts``/``resources`` sub-packages, self-
 registered via the domain package's own ``__init__.py``. ``req`` registers
 ``tools``, ``resources``, and ``prompts``; ``uc`` currently only registers
 ``tools`` -- it has no ``prompts`` sub-package yet. Cross-cutting, non-domain-specific
-tools/resources (e.g.
-``specmgr://version`` resource or ``mdformat`` tool) stay under the
-top-level ``general`` (for tools) or ``resources`` (for resources) packages
-instead. Add a new domain by creating its top-level package and importing
-it at the bottom of this module, next to the existing ``adr``/``general``/
-``req``/``resources``/``uc`` imports, so its ``@mcp.tool()`` / ``@mcp.prompt()`` /
-``@mcp.resource()`` decorators actually run.
+tools/resources (e.g. ``specmgr://version``/``specmgr://iso25010`` resources
+or the ``mdformat`` tool) stay under the top-level ``general`` package
+instead (``general.tools``/``general.resources``). Add a new domain by
+creating its top-level package and importing it at the bottom of this
+module, next to the existing ``adr``/``general``/``req``/``uc`` imports, so
+its ``@mcp.tool()`` / ``@mcp.prompt()`` / ``@mcp.resource()`` decorators
+actually run.
 
 ## Functions
 

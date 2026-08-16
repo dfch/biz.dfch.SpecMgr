@@ -170,9 +170,82 @@ progresses (edit, don't duplicate).
   "Standard Format (Non-Filename Contexts)" section only shows `±HHMM` as
   an example under "With timezone" without mandating it — depends on: none
   — status: not-started
-- [ ] Task 0.8: Create a new `general` MCP resource that returns the main
+- [x] Task 0.8: Create a new `general` MCP resource that returns the main
   characteristics of ISO/IEC 25010:2023 (system/software quality model). Use this as input: `.specmgr/feat/feat-7-various-improvements/product-quality-model.md`. Name of resource: `iso25010`. Location: `src/general/resources`.
-  with a description for each — depends on: none — status: not-started
+  with a description for each — depends on: none — status: done (2026-08-16,
+  all 9 sub-tasks 0.8.1 through 0.8.9 complete)
+  - [x] Task 0.8.1: Rewrite `product-quality-model.md`'s content into a new
+    packaged data file, `general/data/general_iso25010.md` — drop each
+    characteristic heading's leading `N. ` numbering (e.g. `## Functional Suitability`, not `## 1. Functional Suitability`; list order alone
+    conveys the number) and convert every sub-characteristic bullet into
+    its own nested `### ` heading directly under its characteristic's `##`
+    heading (instead of a bullet list), so the generic `models.md` engine
+    can parse names/descriptions as structured headings instead of
+    regex-splitting bullet text. Also convert the trailing copyright/fair-use
+    sentence into a leading HTML comment (`<!-- ... -->`) rather than a plain
+    paragraph, so it maps onto `Iso25010.comment` below. The H1 title and the
+    9-item bullet list of characteristic names are kept as-is (not dropped);
+    the intro paragraph ("The product quality model consists of 9 main
+    characteristics:") that originally sat between the H1 and the bullet
+    list was later hand-edited out of `product-quality-model.md` (user
+    edit, after this task's first pass), dropping `Iso25010.intro`
+    accordingly (see Task 0.8.2) — `product-quality-model.md` itself was
+    already hand-edited into this exact shape ahead of this task, so this
+    step is a straight copy into the new packaged path plus an `mdformat`
+    pass. Add a `"biz.dfch.specmgr.general" = ["data/*.md"]` entry to
+    `pyproject.toml`'s `[tool.setuptools.package-data]` (none exists for
+    `general` yet) — depends on: none — status: done (2026-08-16)
+  - [x] Task 0.8.2: Add `models/iso25010.py` (flat, unversioned — this is
+    static reference data, not a user-edited/versioned document type
+    like ADR/REQ): `SubCharacteristic(MarkdownSection3)` and
+    `Characteristic(MarkdownSection2)`, both
+    `@alias(value=".+", type=AliasType.REGEX)` (free-form heading text,
+    mirroring `req.models.v1.body.Requirement`'s own H1 precedent) with a
+    `description: MarkdownParagraph` field each (plus
+    `sub_characteristics: list[SubCharacteristic]` on `Characteristic`,
+    `min_length=1`). `Iso25010(MarkdownSection1)` as the H1 container
+    (mirroring `req.models.v1.body.Requirement`'s own H1 precedent), with
+    fields in document order: `names: list[MarkdownListItem]`
+    (`min_length=9, max_length=9` — exactly the 9 characteristic names, no
+    lead-in `intro` field: the user hand-edited the source data to drop
+    the intro sentence between the H1 and the bullet list), `comment: MarkdownComment | None` (the copyright/fair-use notice), and
+    `characteristics: list[Characteristic]` (`min_length=9, max_length=9`
+    — exactly the 9 main characteristics); and `parse_iso25010(text) -> Iso25010`, a thin `format_text` + `Iso25010.from_text` wrapper (no
+    frontmatter to split off, unlike `parse_adr`/`parse_req`). Re-export
+    `Iso25010`, `Characteristic`, `SubCharacteristic`, `parse_iso25010`
+    from `models/__init__.py` — depends on: Task 0.8.1 — status:
+    done (2026-08-16)
+  - [x] Task 0.8.3: Add `general/resources/iso25010.py` —
+    `@mcp.resource("specmgr://iso25010", name="iso25010", ..., mime_type="application/json")` wrapping
+    `parse_iso25010(read_packaged_text("general", "iso25010", "md"))`,
+    mirroring `req/resources/req_schema.py`'s packaged-data-read style;
+    register in `general/resources/__init__.py` (import + `__all__`) —
+    depends on: Task 0.8.2 — status: done (2026-08-16)
+  - [x] Task 0.8.4: Update `general/__init__.py`'s and `server.py`'s module
+    docstrings to list `specmgr://iso25010`; while in `server.py`, also
+    fix its stale "top-level `resources` package" line (pre-existing
+    drift left over from Task 0.12's move of `resources/` into
+    `general/resources/`) — depends on: Task 0.8.3 — status: done (2026-08-16)
+  - [x] Task 0.8.5: Add `tests/models/test_iso25010.py` — parse the
+    packaged `general_iso25010.md` end-to-end via `parse_iso25010`,
+    asserting 9 characteristics, spot-checking a couple of
+    characteristic/sub-characteristic names and descriptions, and that
+    the leading HTML comment is captured — depends on: Task 0.8.2 —
+    status: done (2026-08-16)
+  - [x] Task 0.8.6: Add `tests/general/resources/test_iso25010.py`,
+    mirroring `tests/general/resources/test_version.py` — asserts the
+    `iso25010` resource function returns an `Iso25010` instance with the
+    expected characteristic count — depends on: Task 0.8.3 — status:
+    done (2026-08-16)
+  - [x] Task 0.8.7: Regenerate `docs/api/`/`docs/GENERATED.md` (`specmgr docs`) and `docs/MCP.md` (`specmgr mcp-docs`), Python 3.13 — depends
+    on: Task 0.8.4 — status: done (2026-08-16)
+  - [x] Task 0.8.8: Verify — `ruff format --check`, `ruff check`,
+    `vulture src/ whitelist.py --min-confidence 60`, and the full
+    `unittest` suite — depends on: Task 0.8.1 through Task 0.8.7 —
+    status: done (2026-08-16, 791 tests, all passing)
+  - [x] Task 0.8.9: Update this feature's own Decisions Made / Recent
+    Updates logs and mark Task 0.8 (and this sub-list) done — depends
+    on: Task 0.8.1 through Task 0.8.8 — status: done (2026-08-16)
 - [x] Task 0.9: Add an id-based `get_req` MCP **tool** (not just the
   existing `specmgr://req/{id}` resource) — reason: in practice, LLMs and
   agents fail to reliably use `specmgr://req/{id}` (a resource, not a
@@ -299,7 +372,7 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-15**: Feature folder created with the first tracked
+**As of 2026-08-16**: Feature folder created with the first tracked
 concern (MCP list-resource format + prompt optimizations) scoped. Phase 0
 housekeeping (backfilling GitHub issue numbers for `feat-0-*` folders,
 including this one) is complete. The `filename` → `ref` field rename
@@ -316,12 +389,87 @@ tool and the new `specmgr mdformat` CLI command now call. Task 0.12 (move
 `src/resources` to `src/general/resources`) is now complete: the top-level
 `resources` package (the `specmgr://version` resource) was folded into
 `general/` alongside `general/tools/`, since it is itself a cross-cutting,
-not domain-specific, concern.
+not domain-specific, concern. Task 0.8 (`specmgr://iso25010` resource, all
+9 sub-tasks) is now complete: `general/resources/iso25010.py` wraps
+`parse_iso25010(read_packaged_text("general", "iso25010", "md"))`, is
+registered in `general/resources/__init__.py`, and `general/__init__.py`/
+`server.py`'s module docstrings (the latter's stale "top-level `resources`
+package" line also fixed) list it; new tests
+(`tests/models/test_iso25010.py`, `tests/general/resources/test_iso25010.py`)
+and regenerated `docs/api/`/`docs/GENERATED.md`/`docs/MCP.md` are in place.
 
 ### Recent Updates
 
 #### 2026-08-16
 
+- Completed: Task 0.8 (`specmgr://iso25010` resource) end to end, via
+  sub-tasks 0.8.3-0.8.9 (0.8.1/0.8.2 were already done in an earlier
+  session, see below):
+  - Added `general/resources/iso25010.py` (`@mcp.resource("specmgr://iso25010", name="iso25010", ..., mime_type="application/json")`), wrapping
+    `parse_iso25010(read_packaged_text("general", "iso25010", "md"))`,
+    mirroring `req/resources/req_schema.py`'s packaged-data-read style; registered
+    it in `general/resources/__init__.py` (import + `__all__`).
+  - Updated `general/__init__.py`'s module docstring to mention `iso25010`
+    alongside `version`; updated `server.py`'s Resources list with
+    `specmgr://iso25010` and fixed its stale "top-level `resources` package"
+    wording left over from Task 0.12's move of `resources/` into
+    `general/resources/`.
+  - Added `tests/models/test_iso25010.py` (5 tests: instance type, 9
+    names/9 characteristics, leading-comment capture, and two
+    characteristic/sub-characteristic spot-checks — Functional Suitability
+    and Safety) and `tests/general/resources/test_iso25010.py` (2 tests,
+    mirroring `tests/general/resources/test_version.py`).
+  - Regenerated `docs/api/`/`docs/GENERATED.md` (`specmgr docs`) and
+    `docs/MCP.md` (`specmgr mcp-docs`), Python 3.13 — now 7 resources (up
+    from 6).
+  - Verified: `ruff format --check`/`ruff check` (clean), `vulture src/ whitelist.py --min-confidence 60` (clean), and the full `unittest`
+    suite (791 tests, all passing, up from 784).
+- Corrected: User hand-edited both `product-quality-model.md` (dropped the
+  intro sentence "The product quality model consists of 9 main
+  characteristics:" between the H1 and the bullet list) and
+  `models/iso25010.py` (dropped the `intro: MarkdownParagraph` field
+  entirely; changed `names`/`characteristics` from `min_length=1` to
+  `min_length=9, max_length=9`, enforcing the exact expected count) after
+  Task 0.8.1/0.8.2 were first marked done above. Re-synced
+  `general/data/general_iso25010.md` from the updated source (straight
+  copy, `mdformat` reports no change needed) and re-verified end-to-end:
+  `parse_iso25010` still parses 9 characteristics/9 names correctly, the
+  copyright comment is still captured, `ruff format` (the edited model
+  file needed one collapse-to-one-line fix, now clean), `ruff check`,
+  `vulture src/ whitelist.py --min-confidence 60` (clean), and the full
+  `unittest` suite (784 tests, all passing). Task 0.8.1/0.8.2's
+  descriptions above updated in place to match the corrected design.
+- Completed: Task 0.8.2 — added `src/biz/dfch/specmgr/models/iso25010.py`
+  (flat, unversioned): `SubCharacteristic(MarkdownSection3)` and
+  `Characteristic(MarkdownSection2)` (both `@alias(value=".+", type=AliasType.REGEX)`, each with a `description: MarkdownParagraph`
+  field, plus `sub_characteristics: list[SubCharacteristic]` (`min_length=1`)
+  on `Characteristic`); `Iso25010(MarkdownSection1)` as the H1 container
+  with `intro: MarkdownParagraph`, `names: list[MarkdownListItem]`
+  (`min_length=1`), `comment: MarkdownComment | None`, and
+  `characteristics: list[Characteristic]` (`min_length=1`), in document
+  order; and `parse_iso25010(text) -> Iso25010`, a thin `format_text` +
+  `Iso25010.from_text` wrapper. Re-exported `Iso25010`, `Characteristic`,
+  `SubCharacteristic`, `parse_iso25010` from `models/__init__.py`. Added
+  `sub_characteristics` to `whitelist.py` (vulture false positive — a
+  Pydantic field only read via (de)serialization). Verified end-to-end by
+  parsing the packaged `general_iso25010.md` (9 characteristics, 9 names,
+  intro text as expected); `ruff format --check`/`ruff check` (clean),
+  `vulture src/ whitelist.py --min-confidence 60` (clean), and the full
+  `unittest` suite (784 tests, all passing, unchanged — no new tests added
+  yet; that is Task 0.8.5). Per Task 0.8.2's note, pausing here for the
+  user before starting Task 0.8.3 (`general/resources/iso25010.py`).
+- Completed: Task 0.8.1 — copied
+  `.specmgr/feat/feat-7-various-improvements/product-quality-model.md`
+  verbatim to the new packaged data file
+  `src/biz/dfch/specmgr/general/data/general_iso25010.md` (source file was
+  already hand-edited into the target shape ahead of this task: no `N. `
+  numbering on `##` characteristic headings, every sub-characteristic
+  already a nested `###` heading, and the copyright/fair-use sentence
+  already a leading HTML comment) — `diff` confirms byte-for-byte identity
+  and `mdformat` reports no change needed (already canonical). Added a
+  `"biz.dfch.specmgr.general" = ["data/*.md"]` entry to `pyproject.toml`'s
+  `[tool.setuptools.package-data]`. Per Task 0.8.2's note, pausing here for
+  the user before starting `models/iso25010.py`.
 - Completed: Task 0.12 — moved the top-level `resources/` package into
   `general/resources/`.
   - `src/biz/dfch/specmgr/resources/{__init__.py,version.py}` (the
@@ -381,7 +529,7 @@ not domain-specific, concern.
     `docs/MCP.md` (`specmgr mcp-docs`, no diff — tool description text
     unchanged).
 - Next: Phase 1 audit — inventory current list resources and prompt
-  modules; Task 3.1b (pagination) still open; Task 0.6/0.7/0.8/0.10 also
+  modules; Task 3.1b (pagination) still open; Task 0.6/0.7/0.10 also
   still not started.
 
 #### 2026-08-15
