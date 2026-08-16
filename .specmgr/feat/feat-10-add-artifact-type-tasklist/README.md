@@ -1,7 +1,7 @@
 ---
 created: 2026-08-16
 id: feat-10-add-artifact-type-tasklist
-status: in-progress
+status: done
 updated: 2026-08-16
 version: 1.0.0
 ---
@@ -23,53 +23,72 @@ tools/resources shape almost exactly (per GitHub issue #10).
 
 ### Requirements
 
-- [ ] REQ-001: Define the `tsk` markdown schema — frontmatter (`type="tsk"`,
+- [x] REQ-001: Define the `tsk` markdown schema — frontmatter (`type="tsk"`,
   4-value status set: `draft`/`active`/`done`/`cancelled`) and body (H1 title,
   optional leading comment, flat checklist of items, mandatory `## Recent Updates` section holding a dynamic list of H3 update entries)
-- [ ] REQ-002: Pydantic models for `tsk` documents (`tsk/models/v1/` —
+- [x] REQ-002: Pydantic models for `tsk` documents (`tsk/models/v1/` —
   domain-first path, mirroring `req/models/v1/`)
-- [ ] REQ-003: Parse and validate `tsk` documents from markdown
+- [x] REQ-003: Parse and validate `tsk` documents from markdown
   (`parse_tsk`, mirroring `parse_req`)
-- [ ] REQ-004: MCP tools mirroring `req`'s lifecycle surface: `parse_tsk`,
+- [x] REQ-004: MCP tools mirroring `req`'s lifecycle surface: `parse_tsk`,
   `get_tsk_example`, `get_tsk_template`, `create_tsk`, `update_tsk`,
   `set_status_tsk`, `delete_tsk` (stub), `validate_tsk`, `get_tsk`
-- [ ] REQ-005: MCP resources mirroring `req`: `specmgr://tsk/list`,
+- [x] REQ-005: MCP resources mirroring `req`: `specmgr://tsk/list`,
   `/example`, `/schema`, `/template`
-- [ ] REQ-006: MCP prompts — `create_task`, `update_task` (narrated tool
+- [x] REQ-006: MCP prompts — `create_task`, `update_task` (narrated tool
   sequences, mirroring `req/prompts/create_req.py`/`update_req.py`), and a new
   `implement_task` prompt: reads an existing `tsk` document (via `get_tsk`),
   builds an actual `TodoWrite` list from its items, and uses the `question`
   tool to resolve ambiguity before proceeding
-- [ ] REQ-007: Packaged example/template/schema data (`tsk/data/`) via the
+- [x] REQ-007: Packaged example/template/schema data (`tsk/data/`) via the
   existing generic `general/tools/_packaged_data.py`, with the matching
   `pyproject.toml` package-data entry, pre-commit hook, and CI step
-- [ ] REQ-008: Doc generation wiring — `specmgr docs`, `specmgr schema`
+- [x] REQ-008: Doc generation wiring — `specmgr docs`, `specmgr schema`
   (new `tsk` entry in the doc-type registry), `specmgr mcp-docs`, all kept
   drift-free via pre-commit/CI
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: Verifies REQ-001 — schema documented, reference `tsk`
-  document (`tsk_reference.md`) round-trips through the parser
-- [ ] ACC-002: Verifies REQ-002 — Pydantic models validate required/optional
+- [x] ACC-001: Verifies REQ-001 — schema documented (`docs/tsk_schema.json`,
+  `specmgr://tsk/schema`), reference `tsk` document (`tsk_reference.md`)
+  round-trips through the parser (`test_parses_full_reference_document`)
+- [x] ACC-002: Verifies REQ-002 — Pydantic models validate required/optional
   fields correctly, including the `TaskItem` checked/description split
-- [ ] ACC-003: Verifies REQ-003 — parser produces a valid object tree;
+  (`tests/tsk/models/v1/test_task_item.py`, `test_body.py`)
+- [x] ACC-003: Verifies REQ-003 — parser produces a valid object tree;
   malformed input raises (structural `AssertionError` / field-level
   `pydantic.ValidationError`, matching `req`/`uc`'s error-channel convention)
-- [ ] ACC-004: Verifies REQ-004 — every listed tool implemented and
-  registered, with `create_tsk`/`update_tsk` validating body-only content the
-  same way `create_req`/`update_req` do
-- [ ] ACC-005: Verifies REQ-005 — every listed resource implemented and
-  registered
-- [ ] ACC-006: Verifies REQ-006 — `create_task`/`update_task` prompts
-  narrate the correct tool sequence; `implement_task` demonstrably drives a
-  `TodoWrite` list from a real `tsk` document and asks a clarifying question
-  via the `question` tool when an item's intent is ambiguous
-- [ ] ACC-007: Verifies REQ-007 — packaged data resolves correctly from a
-  real, non-editable install (wheel build + scratch venv), mirroring `req`'s
-  own verification (feat-6 Task 5.1)
-- [ ] ACC-008: Verifies REQ-008 — `specmgr docs`/`specmgr schema`/
-  `specmgr mcp-docs` all report no drift after implementation
+  — `tests/tsk/models/v1/test_parser.py`
+- [x] ACC-004: Verifies REQ-004 — every listed tool implemented and
+  registered (confirmed present in regenerated `docs/MCP.md`), with
+  `create_tsk`/`update_tsk` validating body-only content the same way
+  `create_req`/`update_req` do
+- [x] ACC-005: Verifies REQ-005 — every listed resource implemented and
+  registered (confirmed present in regenerated `docs/MCP.md`)
+- [x] ACC-006: Verifies REQ-006 — `create_task`/`update_task` prompts
+  narrate the correct tool sequence (`tests/tsk/prompts/`); `implement_task`
+  demonstrably drives a `TodoWrite` list from a real `tsk` document and asks
+  a clarifying question via the `question` tool when an item's intent is
+  ambiguous — verified live during Phase 4: created a real document via
+  `create_tsk`, called `implement_task(id)`, built an actual `TodoWrite` list
+  from its items, identified the ambiguous item ("Do the thing") per the
+  prompt's own Step 3 guidance, and asked a clarifying question via the
+  `question` tool before completing it
+- [x] ACC-007: Verifies REQ-007 — packaged data resolves correctly from a
+  real, non-editable install, mirroring `req`'s own verification (feat-6
+  Task 5.1) — verified during Phase 4: built a wheel (`uv build --wheel`),
+  confirmed `tsk/data/{tsk_example.md,tsk_template.md,tsk_schema.json}` are
+  packaged inside it, installed into a scratch venv (`biz-dfch-specmgr[mcp]`,
+  non-editable), and confirmed `read_packaged_text`/`get_tsk_example`/
+  `get_tsk_template`/`tsk_schema()` all resolve correctly from a working
+  directory outside the repo (no source-tree fallback possible)
+- [x] ACC-008: Verifies REQ-008 — `specmgr docs`/`specmgr schema`/
+  `specmgr mcp-docs` all report no drift after implementation — verified
+  during Phase 4: all three commands re-run cleanly with zero `git diff`
+  after Phase 3's commit; confirmed the generic (no `--type`) `docs`/
+  `mcp-docs`/`schema` CI steps already cover `tsk` automatically
+  (registry-driven), needing no new per-type step beyond the packaged-copy
+  step Task 3.12 already added
 
 ### Scope
 
@@ -313,23 +332,36 @@ every subsequent Phase 3 task by one and updating all cross-references.
   `implement_task`'s `TodoWrite`/`question`-tool driven behavior — depends
   on: Tasks 3.1-3.15 — status: done
 
-#### Phase 4: Docs, CI wiring & final verification (commit 4)
+#### Phase 4: Docs, CI wiring & final verification (commit 4) — done
 
-- [ ] Task 4.1: `specmgr docs` regeneration (new `tsk` modules picked up) —
-  depends on: Phase 1-3 complete — status: not-started
-- [ ] Task 4.2: `specmgr mcp-docs` regeneration (new tools/resources/
+- [x] Task 4.1: `specmgr docs` regeneration (new `tsk` modules picked up) —
+  depends on: Phase 1-3 complete — status: done (regenerated as part of the
+  Phase 3 commit; re-verified zero drift in Phase 4)
+- [x] Task 4.2: `specmgr mcp-docs` regeneration (new tools/resources/
   prompts appear in `docs/MCP.md`) — depends on: Phase 3 complete — status:
-  not-started
-- [ ] Task 4.3: CI wiring — confirm the Python-3.13-only `specmgr schema`/
+  done (regenerated as part of the Phase 3 commit; re-verified zero drift
+  in Phase 4)
+- [x] Task 4.3: CI wiring — confirm the Python-3.13-only `specmgr schema`/
   `specmgr docs`/`specmgr mcp-docs` steps in `.github/workflows/ci.yml`
   cover `tsk` with no separate per-type step needed (registry-driven,
   mirroring `req`'s own wiring) — depends on: Task 4.1, Task 4.2 — status:
-  not-started
-- [ ] Task 4.4: Final verification pass — walk every ACC-001..008 below and
+  done (confirmed by inspection: the generic, no-`--type` `docs`/
+  `mcp-docs`/`schema` steps already cover every registered type; only the
+  packaged-copy step is per-type and Task 3.12 already added it)
+- [x] Task 4.4: Final verification pass — walk every ACC-001..008 below and
   confirm each is actually satisfied; run the full quality gate (ruff
   format/check, pylint advisory, vulture, unittest, `specmgr docs`,
   `specmgr schema`, `specmgr mcp-docs` drift checks) once more end-to-end —
-  depends on: Tasks 4.1-4.3 — status: not-started
+  depends on: Tasks 4.1-4.3 — status: done. All 8 ACCs re-verified with
+  concrete evidence (see updated Acceptance Criteria section above),
+  including two substantive live demonstrations beyond unit tests: (1)
+  ACC-006 — created a real `tsk` document, drove an actual `TodoWrite` list
+  from `implement_task`'s narrated instructions, and asked a clarifying
+  question via the `question` tool for its ambiguous item; (2) ACC-007 —
+  built a real wheel, installed it non-editably into a scratch venv, and
+  confirmed packaged data resolves correctly outside the source tree. Full
+  quality gate (980 tests, ruff format/check, vulture, pylint 9.72/10
+  advisory) all clean.
 
 **Note:** If a task's scope changes mid-flight, edit its description in
 place; rely on git history (`git log -p` on this file) to recover what was
@@ -353,7 +385,17 @@ file to disk before any error surfaced, breaking this project's
 (a `TaskItem`-level validator doesn't work — `MarkdownListItem.from_text`
 constructs a bare instance first, populating `.text` only afterward via a
 private attribute). 980 tests passing, ruff/vulture clean, `docs/`
-regenerated. Proceeding to Phase 4 (Docs, CI wiring & final verification).
+regenerated.
+
+**Feature complete.** Phase 4 (Docs, CI wiring & final verification) done:
+confirmed no drift in `specmgr docs`/`specmgr schema`/`specmgr mcp-docs`,
+confirmed CI needs no new generic per-type step, and walked every
+ACC-001..008 with concrete evidence, including two live demonstrations
+(ACC-006: `implement_task` driving a real `TodoWrite`+`question`-tool flow
+against a real document; ACC-007: packaged data resolving from a real,
+non-editable wheel install in a scratch venv). All 8 requirements and all
+8 acceptance criteria satisfied. All four commits landed
+(`9ace8dd`/`1cb9ffe`/`cba8799`/pending Phase 4 commit).
 
 ### Blockers
 
@@ -511,6 +553,48 @@ None.
   `docs/` (API docs, `GENERATED.md`, `MCP.md`) regenerated to reflect the
   new `tsk` modules/tools/resources/prompts.
 
+#### 2026-08-16 (final)
+
+- Completed: **Phase 4 (Docs, CI wiring & final verification)** — feature
+  complete. Re-ran `specmgr docs`/`specmgr mcp-docs`/`specmgr schema`
+  (generic and `--type tsk` packaged copy) and confirmed zero drift after
+  Phase 3's commit. Confirmed by inspecting `.github/workflows/ci.yml` that
+  the generic (no `--type`) `docs`/`mcp-docs`/`schema` steps already cover
+  `tsk` automatically (registry-driven) — no new generic CI step needed,
+  only the per-type packaged-copy step Task 3.12 already added.
+- Also completed: two substantive live verifications beyond unit tests,
+  going beyond what the plan strictly required to make the acceptance
+  criteria genuinely convincing rather than just "the tests pass":
+  - **ACC-006**: created a real `tsk` document via `create_tsk` with one
+    checked item, one clear unchecked item, and one deliberately ambiguous
+    item ("Do the thing"); called `implement_task(id)` and confirmed its
+    instructions correctly narrate the `get_tsk` → `TodoWrite`-list-build →
+    `question`-tool-for-ambiguity → separate `update_tsk`-to-persist
+    sequence; then actually drove a real `TodoWrite` list from the parsed
+    items and used the `question` tool to resolve the ambiguous item before
+    marking it complete, exactly as the prompt instructs.
+  - **ACC-007**: ran `uv build --wheel`, confirmed
+    `tsk/data/{tsk_example.md,tsk_template.md,tsk_schema.json}` are present
+    inside the built wheel, installed it non-editably into a scratch venv
+    (`biz-dfch-specmgr[mcp]`), and confirmed `read_packaged_text`/
+    `get_tsk_example`/`get_tsk_template`/`tsk_schema()` all resolve
+    correctly from a working directory outside the repo entirely (no
+    source-tree fallback possible) — mirroring `req`'s own feat-6 Task 5.1
+    verification.
+  - Ran the full quality gate one final time: 980 tests passing, ruff
+    format/check clean, vulture clean, pylint (advisory) 9.72/10 — the
+    handful of pylint findings (`redefined-builtin 'id'`, missing test
+    docstrings, `duplicate-code` across mirrored test files) all match
+    `req`'s own existing, accepted pattern exactly (verified by running
+    pylint against `req`'s own files too), not a `tsk`-specific regression.
+- All 8 requirements (REQ-001..008) and all 8 acceptance criteria
+  (ACC-001..008) checked off with concrete evidence in their respective
+  sections above. Feature status set to `done`.
+- Notes: no `CHANGELOG.md` entry added — confirmed by inspecting `uc`'s own
+  domain-addition commit (`74e271e`) that new-domain features are not
+  logged there; `CHANGELOG.md`'s `[Unreleased]` section is only updated at
+  version-bump time per `AGENTS.md`.
+
 ### Decisions Made
 
 - **2026-08-16**: Target GitHub issue #10, not #11 — issue #11 does not
@@ -604,4 +688,8 @@ None.
 
 ### Related PRs / Commits
 
-None yet.
+No PR opened yet. Implemented across 4 commits on this branch
+(`feat-10-add-artifact-type-tasklist`), one per phase (see Recent Updates
+for details of each): `9ace8dd` (Phase 1: Specification), `1cb9ffe` (Phase
+2: Models & Parser), `cba8799` (Phase 3: MCP Surface), plus a final Phase 4
+(Docs, CI wiring & final verification) commit.
