@@ -154,5 +154,7 @@ def find_tsk_path(base_dir: Path, id_: str) -> Path:
     try:
         result = find_doc_path_by_id(base_dir, id_, parse_tsk, _get_tsk_id)
     except DocNotFoundError as ex:
-        raise TskNotFoundError(f"no task list found with id {id_!r}") from ex
+        raise TskNotFoundError(
+            f"no task list found with id: '{id_!r}'. Make sure, that you only use the 'id' without a prefix."
+        ) from ex
     return result
