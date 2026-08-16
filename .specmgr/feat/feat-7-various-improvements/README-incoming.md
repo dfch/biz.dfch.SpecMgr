@@ -2,7 +2,7 @@
 created: 2026-08-15
 id: feat-7-various-improvements
 status: planning
-updated: 2026-08-16
+updated: 2026-08-15
 version: 1.0.0
 ---
 
@@ -121,18 +121,16 @@ task itself — there is no separate "planned" vs. "executed" list to keep in
 sync; a task's line *is* its current status. Update it in place as work
 progresses (edit, don't duplicate).
 
-#### Phase 0: Housekeeping
+#### Phase 0: Housekeeping — backfill GitHub issue numbers for `feat-0-*` folders
 
 - [x] Task 0.1: Create GitHub issue #7 for this feature and rename
   `feat-0-various-improvements` → `feat-7-various-improvements`, updating
   the frontmatter `id` to match — depends on: none — status: done
   (2026-08-15)
-
-* [x] Task 0.2: Create and immediately close GitHub issue #8
+- [x] Task 0.2: Create and immediately close GitHub issue #8
   (`feat-0-coverage-badge`, already-completed feature) and rename the
   folder → `feat-8-coverage-badge`, updating the frontmatter `id` to match
   — depends on: none — status: done (2026-08-15)
-
 - [x] Task 0.3: Create and immediately close GitHub issue #9
   (`feat-0-doc-in-specmgr`) and rename the folder →
   `feat-9-doc-in-specmgr`, updating the frontmatter `id` to match —
@@ -236,11 +234,6 @@ progresses (edit, don't duplicate).
 - [ ] Task 0.10: Create a new `general` MCP resource that returns the RFC
   2119\. This is an ad interim solution until we have a filter option in
   ASD-STE100 MCP by source. — depends on: none — status: not-started
-- [x] Task 0.11: Add CLI command "mdformat". This command formats a Markdown
-  document with or without frontmatter in the same way that the MCP server
-  formats documents when it reads and write artifacts (example: it uses
-  numbering for ordered lists). This command does not perform a content
-  validation — depends on: none — status: done (2026-08-16)
 
 #### Phase 1: Audit
 
@@ -306,46 +299,9 @@ the rest of Phase 1 (audit) and the pagination question are not started.
 Task 0.9 (`get_req` tool, all 13 sub-tasks) is now complete: `get_req` was
 added, `specmgr://req/{id}` was removed, `specmgr://adr/{id}` was
 deliberately left untouched, and the decision is recorded in ADR
-`ddfb1109-422d-4507-8dbc-dc5e4bec9614`. Task 0.11 (`mdformat` CLI command)
-is now complete: the formatting logic previously inlined in the `mdformat`
-MCP tool was extracted into a shared, disk-free
-`models.md._markdown.format_markdown_document()` helper, which both the MCP
-tool and the new `specmgr mdformat` CLI command now call.
+`ddfb1109-422d-4507-8dbc-dc5e4bec9614`.
 
 ### Recent Updates
-
-#### 2026-08-16
-
-- Completed: Task 0.11 — added the `specmgr mdformat <path>` CLI command.
-  - Extracted the frontmatter-aware formatting logic out of
-    `general/tools/mdformat.py` into a new, pure (disk-free)
-    `format_markdown_document(text) -> tuple[bool, str]` helper in
-    `models/md/_markdown.py` — the single shared implementation now used by
-    both the `mdformat` MCP tool and the new CLI command.
-  - Refactored `general/tools/mdformat.py` to call the shared helper;
-    its own behavior/signature/tests are unchanged.
-  - Added `commands/mdformat.py`: `specmgr mdformat <path>` formats a file
-    in place by default; `--dry-run`/`-d` prints the formatted result via
-    `rich.markdown.Markdown` instead of writing to disk. Both modes compare
-    original vs. formatted content in memory and use the same exit-code
-    contract: `0` = no change (already canonical), `1` = a change was
-    detected (written to disk unless `--dry-run`). No content validation is
-    performed; a missing/unreadable file is not caught and propagates as an
-    uncaught exception (consistent with the MCP tool's own behavior).
-  - Registered the command in `commands/__init__.py` and `cli.py`.
-  - Added `tests/models/md/test__markdown.py` (7 tests) for the new shared
-    helper and `tests/commands/test_mdformat.py` (6 tests) for the CLI
-    command; all pre-existing `tests/general/tools/test_mdformat.py` tests
-    still pass unchanged (behavior preserved).
-  - Verified: `ruff format --check`/`ruff check` (clean),
-    `vulture src/ whitelist.py --min-confidence 60` (clean), full
-    `unittest` suite (784 tests, all passing, up from 771), and
-    regenerated `docs/api/`/`docs/GENERATED.md` (`specmgr docs`) plus
-    `docs/MCP.md` (`specmgr mcp-docs`, no diff — tool description text
-    unchanged).
-- Next: Phase 1 audit — inventory current list resources and prompt
-  modules; Task 3.1b (pagination) still open; Task 0.6/0.7/0.8/0.10 also
-  still not started.
 
 #### 2026-08-15
 

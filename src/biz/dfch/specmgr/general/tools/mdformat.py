@@ -26,9 +26,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import frontmatter
-
-from ...models.md._markdown import format_text
+from ...models.md._markdown import format_markdown_document
 from ...server import mcp
 
 
@@ -82,24 +80,10 @@ def mdformat(path: str) -> bool:
     file_path = Path(path)
     original_text = file_path.read_text(encoding="utf-8")
 
-    # Parse YAML frontmatter if present.
-    post = frontmatter.loads(original_text)
-
-    # Format the body markdown only; preserve frontmatter verbatim.
-    if post.metadata:
-        post.content = format_text(post.content)
-        formatted_text = frontmatter.dumps(post)
-    else:
-        # No frontmatter; format the whole text as markdown.
-        formatted_text = format_text(original_text)
-
-    # Ensure exactly one trailing newline (canonical form).
-    if not formatted_text.endswith("\n"):
-        formatted_text += "\n"
+    changed, formatted_text = format_markdown_document(original_text)
 
     # Only write if content changed.
-    if formatted_text != original_text:
+    if changed:
         file_path.write_text(formatted_text, encoding="utf-8")
-        return True
 
-    return False
+    return changed

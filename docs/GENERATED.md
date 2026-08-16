@@ -51,6 +51,7 @@ First-line docstrings from each module, organized by domain:
 - `commands/docs.py` — ``docs`` -- regenerate ``docs/api/`` and ``docs/GENERATED.md`` from the codebase.
 - `commands/mcp.py` — ``mcp`` -- start the ``biz-dfch-specmgr`` MCP server.
 - `commands/mcp_docs.py` — ``mcp-docs`` -- regenerate docs/MCP.md from the live MCP server registration.
+- `commands/mdformat.py` — ``mdformat`` -- format a markdown file the same way the MCP server does.
 - `commands/req_parse.py` — ``req-parse`` -- parse a REQ markdown file from disk and print it to the terminal.
 - `commands/schema.py` — ``schema`` -- generate JSON Schema (2020-12) for registered document-type models.
 - `commands/unused_code.py` — ``unused-code`` -- report unreferenced Python symbols, or (with ``--test``) test-only ones.
@@ -173,4 +174,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 105
+**Test files**: 107

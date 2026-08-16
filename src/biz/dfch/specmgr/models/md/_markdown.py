@@ -17,6 +17,7 @@
 
 """Markdown shared instance."""
 
+import frontmatter
 import mdformat
 from markdown_it import MarkdownIt
 from markdown_it.token import Token
@@ -71,6 +72,45 @@ def format_text(text: str) -> str:
     """
     assert isinstance(text, str), type(text)
     return mdformat.text(text, options=_MDFORMAT_OPTIONS)
+
+
+def format_markdown_document(text: str) -> tuple[bool, str]:
+    """Normalize a whole markdown document, preserving any leading YAML frontmatter block.
+
+    Parses `text` for a leading YAML frontmatter block (as recognized by the
+    `frontmatter` library). If present, only the body is normalized via
+    `format_text` and the frontmatter is re-serialized (key order may change,
+    value types/quoting may normalize, but content is never altered). If no
+    frontmatter is present, the whole text is normalized via `format_text`.
+    Exactly one trailing newline is then enforced.
+
+    This is the single shared implementation behind both the `mdformat`
+    MCP tool (`general.tools.mdformat`) and the `mdformat` CLI command
+    (`commands.mdformat`); both compare `text` against `formatted_text` to
+    decide whether a file needs to be (re)written.
+
+    Args:
+        text: The complete file content (YAML frontmatter block and markdown
+            body together, or plain markdown with no frontmatter).
+
+    Returns:
+        A `(changed, formatted_text)` pair. `changed` is `True` iff
+        `formatted_text != text`.
+    """
+    assert isinstance(text, str), type(text)
+
+    post = frontmatter.loads(text)
+    if post.metadata:
+        post.content = format_text(post.content)
+        formatted_text = frontmatter.dumps(post)
+    else:
+        formatted_text = format_text(text)
+
+    if not formatted_text.endswith("\n"):
+        formatted_text += "\n"
+
+    changed = formatted_text != text
+    return changed, formatted_text
 
 
 def _assert_no_raw_html(tokens: list[Token]) -> None:

@@ -26,6 +26,7 @@ from .coverage_badge import coverage_badge
 from .docs import docs
 from .mcp import mcp
 from .mcp_docs import mcp_docs
+from .mdformat import mdformat
 from .req_parse import req_parse
 from .schema import schema
 from .unused_code import unused_code
@@ -37,6 +38,7 @@ __all__ = [
     "docs",
     "mcp",
     "mcp_docs",
+    "mdformat",
     "req_parse",
     "schema",
     "unused_code",
