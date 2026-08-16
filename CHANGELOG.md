@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-08-16
+
+### Added
+
+- **`specmgr webfetch` MCP tool**: bearer-token-authenticated HTTP GET utility
+  for fetching URL content with configurable base-URL filtering (case-insensitive
+  matching via `SPECMGR_WEBFETCH_BASE_URL` and `SPECMGR_WEBFETCH_BEARER` environment
+  variables). Includes custom exceptions (`WebfetchNotConfiguredError`,
+  `WebfetchUrlNotAllowedError`) and comprehensive test coverage (45+ tests).
+  Documented in README.md; registered in `general/tools/` with full API
+  documentation auto-generated.
+
+### Changed
+
+- Error messages for not-found exceptions (`AdrNotFoundError`, `ReqNotFoundError`,
+  `UcNotFoundError`, `TskNotFoundError`, `DocNotFoundError`) standardized across
+  all domains for consistent UX when a document cannot be located. Updated all
+  related tool modules (`adr/tools/_paths.py`, `req/tools/_paths.py`, etc.) and
+  extended test coverage in each domain's `test_paths.py` and `test_get_<type>.py`
+  to assert on message content.
+
 ## [0.4.0] - 2026-08-16
 
 ### Added
