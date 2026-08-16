@@ -25,7 +25,7 @@ resources (e.g. ``adr_list``/``adr_get``) live under their own domain
 package instead (``biz.dfch.specmgr.adr.resources``). Import this package
 to load all cross-cutting resources at once::
 
-    from biz.dfch.specmgr import resources  # noqa: F401 (side-effects only)
+    from biz.dfch.specmgr.general import resources  # noqa: F401 (side-effects only)
 """
 
 from . import version  # noqa: F401

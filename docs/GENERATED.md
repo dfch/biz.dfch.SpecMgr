@@ -59,7 +59,9 @@ First-line docstrings from each module, organized by domain:
 
 **general/**
 
-- `general/__init__.py` — General-purpose (cross-cutting, not domain-specific) tools.
+- `general/__init__.py` — General-purpose (cross-cutting, not domain-specific) tools and resources.
+- `general/resources/__init__.py` — MCP resource registrations that are not specific to any single document
+- `general/resources/version.py` — Resource: specmgr://version — MCP server package version number.
 - `general/tools/__init__.py` — MCP tool wrappers for general-purpose utilities (mirrors ``adr/tools/``'s shape).
 - `general/tools/_doc_paths.py` — Generic, doc-type-agnostic base directory resolution, filename slugification,
 - `general/tools/_packaged_data.py` — Generic, doc-type-agnostic access to packaged example/template/schema data
@@ -139,11 +141,6 @@ First-line docstrings from each module, organized by domain:
 - `req/tools/set_status_req.py` — ``@mcp.tool()`` wrapper: set_status_req (Task 3.14).
 - `req/tools/update_req.py` — ``@mcp.tool()`` wrapper: update_req (Task 3.13).
 - `req/tools/validate_req.py` — ``@mcp.tool()`` wrapper: validate_req (Task 3.16).
-
-**resources/**
-
-- `resources/__init__.py` — MCP resource registrations that are not specific to any single document
-- `resources/version.py` — Resource: specmgr://version — MCP server package version number.
 
 **uc/**
 

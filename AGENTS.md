@@ -43,8 +43,12 @@ meant to stay importable standalone.
 A new cross-cutting `general/` domain package now exists:
 - `general/tools/` — 1 `@mcp.tool()` wrapper so far: `mdformat` (format
   markdown files in place, preserving YAML frontmatter blocks for ADR/UC files).
-  Tools-only, no `prompts`/`resources` sub-packages yet.
-- 10 passing tests under `tests/general/tools/test_mdformat.py`.
+- `general/resources/` — the former top-level `resources/` package, moved
+  here since it is itself a cross-cutting (not domain-specific) concern: 1
+  MCP resource so far, `version` (`specmgr://version`). No `prompts`
+  sub-package yet.
+- 10 passing tests under `tests/general/tools/test_mdformat.py`, plus tests
+  under `tests/general/resources/`.
 
 Still genuinely missing / not yet done (don't assume otherwise):
 - **`specmgr adr-toc`** — a CLI command that generates a table of contents
@@ -63,8 +67,8 @@ status and should be kept in sync with `src/` as this evolves; treat it as
 current-state tracking, not just a historical design doc. Don't assume any
 other domain package exists beyond `adr`/`general`/`uc` (with their respective
 `tools`/`prompts`/`resources` sub-packages where implemented), or any other
-`models/` sub-package beyond `adr`/`version_info`, or anything in the top-level
-`resources/` package beyond `version` — check first.
+`models/` sub-package beyond `adr`/`version_info`, or anything in
+`general/resources/` beyond `version` — check first.
 
 ## Project Shape
 

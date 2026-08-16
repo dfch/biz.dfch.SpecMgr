@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Moved the top-level `resources/` package (the `specmgr://version` MCP
+  resource) into `general/resources/`, since it is itself a cross-cutting,
+  not domain-specific, concern — consistent with `general/tools/`. Updated
+  `server.py`'s registration import accordingly (`general` now pulls in its
+  own `resources`/`tools` sub-packages).
+
 ## [0.3.1] - 2026-08-15
 
 ### Added

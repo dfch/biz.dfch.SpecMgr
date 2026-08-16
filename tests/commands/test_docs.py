@@ -161,7 +161,7 @@ class TestGeneratedMdContent(unittest.TestCase):
         self.assertIn("adr", docstrings)
         self.assertIn("commands", docstrings)
         self.assertIn("models", docstrings)
-        self.assertIn("resources", docstrings)
+        self.assertIn("general", docstrings)
 
     def test_module_reference_lists_known_modules(self):
         """Module reference must list first-line docstrings for known modules."""

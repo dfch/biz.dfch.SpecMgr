@@ -171,7 +171,7 @@ progresses (edit, don't duplicate).
   an example under "With timezone" without mandating it — depends on: none
   — status: not-started
 - [ ] Task 0.8: Create a new `general` MCP resource that returns the main
-  characteristics of ISO/IEC 25010:2023 (system/software quality model)
+  characteristics of ISO/IEC 25010:2023 (system/software quality model). Use this as input: `.specmgr/feat/feat-7-various-improvements/product-quality-model.md`. Name of resource: `iso25010`. Location: `src/general/resources`.
   with a description for each — depends on: none — status: not-started
 - [x] Task 0.9: Add an id-based `get_req` MCP **tool** (not just the
   existing `specmgr://req/{id}` resource) — reason: in practice, LLMs and
@@ -241,6 +241,8 @@ progresses (edit, don't duplicate).
   formats documents when it reads and write artifacts (example: it uses
   numbering for ordered lists). This command does not perform a content
   validation — depends on: none — status: done (2026-08-16)
+- [x] Task 0.12: Move src/resources to src/general/resources. Update refs to
+  it — depends on: none — status: done (2026-08-16)
 
 #### Phase 1: Audit
 
@@ -310,12 +312,47 @@ deliberately left untouched, and the decision is recorded in ADR
 is now complete: the formatting logic previously inlined in the `mdformat`
 MCP tool was extracted into a shared, disk-free
 `models.md._markdown.format_markdown_document()` helper, which both the MCP
-tool and the new `specmgr mdformat` CLI command now call.
+tool and the new `specmgr mdformat` CLI command now call. Task 0.12 (move
+`src/resources` to `src/general/resources`) is now complete: the top-level
+`resources` package (the `specmgr://version` resource) was folded into
+`general/` alongside `general/tools/`, since it is itself a cross-cutting,
+not domain-specific, concern.
 
 ### Recent Updates
 
 #### 2026-08-16
 
+- Completed: Task 0.12 — moved the top-level `resources/` package into
+  `general/resources/`.
+  - `src/biz/dfch/specmgr/resources/{__init__.py,version.py}` (the
+    `specmgr://version` resource) moved to
+    `src/biz/dfch/specmgr/general/resources/{__init__.py,version.py}` via
+    `git mv`, since it is itself a cross-cutting, not domain-specific,
+    concern, consistent with `general/tools/`.
+  - `general/resources/version.py`'s relative imports adjusted for the new
+    nesting depth (`..models`/`..server` → `...models`/`...server`).
+  - `general/__init__.py` updated to import/re-export `resources` alongside
+    `tools`, with its module docstring rewritten to describe both.
+  - `server.py`'s registration import simplified from
+    `from . import adr, general, req, resources, uc` to
+    `from . import adr, general, req, uc`, since `general` now pulls in its
+    own `resources` sub-package.
+  - `tests/resources/` moved to `tests/general/resources/`
+    (`test_version.py`'s import updated to
+    `biz.dfch.specmgr.general.resources.version`).
+  - Updated `tests/commands/test_docs.py`'s
+    `test_collect_module_docs_finds_domains` (asserted on the now-gone
+    top-level `"resources"` domain key; now asserts `"general"`, which
+    subsumes it) and `AGENTS.md`'s description of `general/` and its
+    "check first" caveat.
+  - Deleted the now-orphaned `docs/api/biz.dfch.specmgr.resources.md`/
+    `biz.dfch.specmgr.resources.version.md` and regenerated
+    `docs/api/`/`docs/GENERATED.md` (`specmgr docs`) and `docs/MCP.md`
+    (`specmgr mcp-docs`, no diff — tool/resource registration unchanged).
+  - Added a `CHANGELOG.md` entry under `[Unreleased]`.
+  - Verified: `ruff format --check`/`ruff check` (clean),
+    `vulture src/ whitelist.py --min-confidence 60` (clean), and the full
+    `unittest` suite (784 tests, all passing).
 - Completed: Task 0.11 — added the `specmgr mdformat <path>` CLI command.
   - Extracted the frontmatter-aware formatting logic out of
     `general/tools/mdformat.py` into a new, pure (disk-free)

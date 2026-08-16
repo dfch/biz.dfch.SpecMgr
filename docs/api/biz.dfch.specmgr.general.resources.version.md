@@ -1,4 +1,4 @@
-# `biz.dfch.specmgr.resources.version`
+# `biz.dfch.specmgr.general.resources.version`
 
 Resource: specmgr://version — MCP server package version number.
 

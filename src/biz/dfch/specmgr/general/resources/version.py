@@ -21,8 +21,8 @@ from __future__ import annotations
 
 from importlib.metadata import version
 
-from ..models import VersionInfo
-from ..server import mcp
+from ...models import VersionInfo
+from ...server import mcp
 
 
 @mcp.resource(

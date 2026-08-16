@@ -20,8 +20,8 @@
 import unittest
 from importlib.metadata import version
 
+from biz.dfch.specmgr.general.resources.version import version_info
 from biz.dfch.specmgr.models import VersionInfo
-from biz.dfch.specmgr.resources.version import version_info
 
 
 class TestVersionResource(unittest.TestCase):

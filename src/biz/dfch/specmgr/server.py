@@ -98,9 +98,10 @@ mcp = MCPServer(
 
 # ---------------------------------------------------------------------------
 # Resource/tool/prompt registration (side-effect: registers everything on
-# mcp). Every domain package (and the cross-cutting `resources` package)
-# here must be imported for its @mcp.tool()/@mcp.prompt()/@mcp.resource()
+# mcp). Every domain package here (including the cross-cutting `general`
+# package, which in turn imports its own `resources`/`tools` sub-packages)
+# must be imported for its @mcp.tool()/@mcp.prompt()/@mcp.resource()
 # decorators to actually run.
 # ---------------------------------------------------------------------------
 
-from . import adr, general, req, resources, uc  # noqa: E402, F401
+from . import adr, general, req, uc  # noqa: E402, F401
