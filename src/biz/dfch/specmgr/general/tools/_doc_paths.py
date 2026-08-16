@@ -239,4 +239,7 @@ def find_doc_path_by_id(
             continue
         if get_id_fn(doc) == id_:
             return path
-    raise DocNotFoundError(f"no document found with id {id_!r} under {base_dir}")
+    raise DocNotFoundError(
+        f"no document found with id {id_!r} under {base_dir}. The id must be the bare document UUID, without "
+        f"a domain prefix."
+    )

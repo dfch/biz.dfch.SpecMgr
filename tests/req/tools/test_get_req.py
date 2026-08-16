@@ -75,11 +75,14 @@ class TestGetReq(unittest.TestCase):
         self.assertEqual(result.body.text, "Maximum Engine Temperature")
 
     def test_raises_not_found_for_unknown_id(self) -> None:
-        """get_req must raise ReqNotFoundError when no requirement matches the given id."""
+        """get_req must raise ReqNotFoundError, with the standardized message, when no requirement matches."""
         create_req(_MINIMAL_BODY)
 
-        with self.assertRaises(ReqNotFoundError):
+        with self.assertRaises(ReqNotFoundError) as ctx:
             get_req("no-such-id")
+        message = str(ctx.exception)
+        self.assertIn("bare document UUID", message)
+        self.assertIn("without a domain prefix", message)
 
 
 if __name__ == "__main__":

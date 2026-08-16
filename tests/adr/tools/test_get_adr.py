@@ -36,9 +36,12 @@ class TestGetAdr(TempAdrDirTestCase):
         self.assertEqual(result.body.title, "A title")
 
     def test_raises_not_found_for_unknown_id(self):
-        """get_adr must raise AdrNotFoundError for an unknown id."""
-        with self.assertRaises(AdrNotFoundError):
+        """get_adr must raise AdrNotFoundError, with the standardized message, for an unknown id."""
+        with self.assertRaises(AdrNotFoundError) as ctx:
             get_adr("no-such-id")
+        message = str(ctx.exception)
+        self.assertIn("bare document UUID", message)
+        self.assertIn("without a domain prefix", message)
 
 
 if __name__ == "__main__":

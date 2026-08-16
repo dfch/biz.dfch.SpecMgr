@@ -138,4 +138,7 @@ def find_adr_path(base_dir: Path, id_: str) -> Path:
             continue
         if adr.frontmatter.id == id_:
             return path
-    raise AdrNotFoundError(f"no ADR found with id {id_!r}")
+    raise AdrNotFoundError(
+        f"no ADR found with id {id_!r}. The id must be the bare document UUID, without a domain prefix "
+        f"(use '<uuid>', not 'adr-<uuid>')."
+    )

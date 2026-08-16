@@ -135,12 +135,17 @@ class TestFindTskPath(unittest.TestCase):
             self.assertEqual(find_tsk_path(base, "target-id"), path)
 
     def test_raises_not_found_for_unknown_id(self):
-        """An id with no matching file must raise TskNotFoundError."""
+        """An id with no matching file must raise TskNotFoundError with the standardized message."""
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
             (base / "one.md").write_text(_tsk_text("one-id"), encoding="utf-8")
-            with self.assertRaises(TskNotFoundError):
+            with self.assertRaises(TskNotFoundError) as ctx:
                 find_tsk_path(base, "missing-id")
+            message = str(ctx.exception)
+            self.assertIn("no task list found with id 'missing-id'", message)
+            self.assertIn("bare document UUID", message)
+            self.assertIn("without a domain prefix", message)
+            self.assertIn("not 'tsk-<uuid>'", message)
 
     def test_skips_malformed_file_and_still_finds_valid_one(self):
         """A file that fails to parse must not prevent finding a different, valid id."""

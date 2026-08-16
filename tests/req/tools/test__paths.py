@@ -146,12 +146,17 @@ class TestFindReqPath(unittest.TestCase):
             self.assertEqual(find_req_path(base, "target-id"), path)
 
     def test_raises_not_found_for_unknown_id(self):
-        """An id with no matching file must raise ReqNotFoundError."""
+        """An id with no matching file must raise ReqNotFoundError with the standardized message."""
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
             (base / "one.md").write_text(_req_text("one-id"), encoding="utf-8")
-            with self.assertRaises(ReqNotFoundError):
+            with self.assertRaises(ReqNotFoundError) as ctx:
                 find_req_path(base, "missing-id")
+            message = str(ctx.exception)
+            self.assertIn("no requirement found with id 'missing-id'", message)
+            self.assertIn("bare document UUID", message)
+            self.assertIn("without a domain prefix", message)
+            self.assertIn("not 'req-<uuid>'", message)
 
     def test_skips_malformed_file_and_still_finds_valid_one(self):
         """A file that fails to parse must not prevent finding a different, valid id."""

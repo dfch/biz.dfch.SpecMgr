@@ -64,11 +64,14 @@ class TestGetTsk(unittest.TestCase):
         self.assertEqual(result.body.text, "Simple Task List")
 
     def test_raises_not_found_for_unknown_id(self) -> None:
-        """get_tsk must raise TskNotFoundError when no task list matches the given id."""
+        """get_tsk must raise TskNotFoundError, with the standardized message, when no task list matches."""
         create_tsk(_MINIMAL_BODY)
 
-        with self.assertRaises(TskNotFoundError):
+        with self.assertRaises(TskNotFoundError) as ctx:
             get_tsk("no-such-id")
+        message = str(ctx.exception)
+        self.assertIn("bare document UUID", message)
+        self.assertIn("without a domain prefix", message)
 
 
 if __name__ == "__main__":

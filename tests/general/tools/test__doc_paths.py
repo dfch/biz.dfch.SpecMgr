@@ -176,12 +176,16 @@ class TestFindDocPathById(unittest.TestCase):
             self.assertEqual(find_doc_path_by_id(base, "target-id", _parse_fake, _get_id), path)
 
     def test_raises_not_found_for_unknown_id(self):
-        """An id with no matching file must raise DocNotFoundError."""
+        """An id with no matching file must raise DocNotFoundError with the standardized message."""
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
             (base / "one.md").write_text("one-id", encoding="utf-8")
-            with self.assertRaises(DocNotFoundError):
+            with self.assertRaises(DocNotFoundError) as ctx:
                 find_doc_path_by_id(base, "missing-id", _parse_fake, _get_id)
+            message = str(ctx.exception)
+            self.assertIn("no document found with id 'missing-id'", message)
+            self.assertIn("bare document UUID", message)
+            self.assertIn("without a domain prefix", message)
 
     def test_raises_not_found_for_empty_directory(self):
         """An empty base_dir must raise DocNotFoundError, not e.g. StopIteration."""

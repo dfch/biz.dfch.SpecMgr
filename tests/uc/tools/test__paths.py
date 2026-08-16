@@ -162,12 +162,17 @@ class TestFindUcPath(unittest.TestCase):
             self.assertEqual(find_uc_path(base, "target-id"), path)
 
     def test_raises_not_found_for_unknown_id(self):
-        """An id with no matching file must raise UcNotFoundError."""
+        """An id with no matching file must raise UcNotFoundError with the standardized message."""
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
             (base / "one.md").write_text(_uc_text("one-id"), encoding="utf-8")
-            with self.assertRaises(UcNotFoundError):
+            with self.assertRaises(UcNotFoundError) as ctx:
                 find_uc_path(base, "missing-id")
+            message = str(ctx.exception)
+            self.assertIn("no use case found with id 'missing-id'", message)
+            self.assertIn("bare document UUID", message)
+            self.assertIn("without a domain prefix", message)
+            self.assertIn("not 'uc-<uuid>'", message)
 
     def test_skips_malformed_file_and_still_finds_valid_one(self):
         """A file that fails to parse must not prevent finding a different, valid id."""

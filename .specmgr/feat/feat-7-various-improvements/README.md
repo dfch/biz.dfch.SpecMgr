@@ -316,6 +316,33 @@ progresses (edit, don't duplicate).
   validation — depends on: none — status: done (2026-08-16)
 - [x] Task 0.12: Move src/resources to src/general/resources. Update refs to
   it — depends on: none — status: done (2026-08-16)
+- [x] Task 0.13: Make the not-found error message easier to understand for
+  `get_<type>` tools (`get_adr`, `get_req`, `get_uc`, `get_tsk`) — agents
+  frequently pass a prefixed id (e.g. `"req-<uuid>"`) instead of the bare
+  `<uuid>`, since the on-disk filename/slug carries that prefix; the id
+  parameter must be the bare uuid only, with no domain prefix. Each
+  domain's `<domain>/tools/_paths.py` raises its own `*NotFoundError`
+  (`AdrNotFoundError`/`ReqNotFoundError`/`UcNotFoundError`/`TskNotFoundError`)
+  with an `f"no {DOMAIN} found with id {id_!r}"`-style message that does
+  not hint at this; `req`/`uc`/`tsk` funnel through the shared
+  `general/tools/_doc_paths.py`'s `DocNotFoundError` before re-raising
+  their own domain-specific message, while `adr/tools/_paths.py` raises
+  `AdrNotFoundError` inline (no shared-module dependency); `tsk`'s message
+  already carries a first-pass, not-yet-standardized hint ("Make sure,
+  that you only use the 'id' without a prefix.") that needs grammar
+  cleanup and alignment with whatever single wording gets decided. The
+  detailed 9-step implementation breakdown lives in its own specmgr task
+  list, TSK `266eb332-795b-48c4-9bc0-7115eb209378` ("Improve
+  get_adr/get_req/get_uc/get_tsk Not-Found Error Messages") — retrieve it
+  via the `get_tsk` MCP tool with id `266eb332-795b-48c4-9bc0-7115eb209378`
+  — depends on: none — status: done (2026-08-16), all 9 sub-tasks
+  complete: standardized wording decided (see Decisions Made) and applied
+  to `AdrNotFoundError`/`ReqNotFoundError`/`UcNotFoundError`/
+  `TskNotFoundError`/`DocNotFoundError`; tests extended to assert on
+  message content in each domain's `test_paths.py`/`test__paths.py` and
+  `test_get_<type>.py`; verified clean via `ruff format --check`/
+  `ruff check`/`vulture src/ whitelist.py --min-confidence 60`/full
+  `unittest` suite
 
 #### Phase 1: Audit
 
@@ -397,11 +424,38 @@ registered in `general/resources/__init__.py`, and `general/__init__.py`/
 package" line also fixed) list it; new tests
 (`tests/models/test_iso25010.py`, `tests/general/resources/test_iso25010.py`)
 and regenerated `docs/api/`/`docs/GENERATED.md`/`docs/MCP.md` are in place.
+Task 0.13 (standardized not-found error message across `get_adr`/`get_req`/
+`get_uc`/`get_tsk`, all 9 sub-tasks from TSK
+`266eb332-795b-48c4-9bc0-7115eb209378`) is now complete: one wording
+template is applied identically across all four `*NotFoundError` classes
+plus the shared `DocNotFoundError`, and tests assert on the message content.
 
 ### Recent Updates
 
 #### 2026-08-16
 
+- Completed: Task 0.13 (standardize the not-found error message across
+  `get_adr`/`get_req`/`get_uc`/`get_tsk`), all 9 sub-tasks from TSK
+  `266eb332-795b-48c4-9bc0-7115eb209378`:
+  - Decided and recorded the standardized wording template (see Decisions
+    Made) — explicitly tells the caller the id must be the bare document
+    UUID, without a domain prefix, and shows the offending-vs-correct
+    shape via a `'<uuid>'`/`'{prefix}-<uuid>'` example.
+  - Applied it to `adr/tools/_paths.py`'s `AdrNotFoundError`,
+    `req/tools/_paths.py`'s `ReqNotFoundError`,
+    `uc/tools/_paths.py`'s `UcNotFoundError`, and
+    `tsk/tools/_paths.py`'s `TskNotFoundError` (replacing its earlier,
+    grammatically rough first-pass hint), plus the shared
+    `general/tools/_doc_paths.py`'s `DocNotFoundError` for consistency.
+  - Extended `tests/adr/tools/test_paths.py`,
+    `tests/req/tools/test__paths.py`, `tests/uc/tools/test__paths.py`,
+    `tests/tsk/tools/test__paths.py`,
+    `tests/general/tools/test__doc_paths.py`, and each domain's
+    `tests/<domain>/tools/test_get_<type>.py` to assert on the new
+    message content, not just the raised exception type.
+  - Verified: `ruff format --check`/`ruff check` (clean),
+    `vulture src/ whitelist.py --min-confidence 60` (clean), and the full
+    `unittest` suite (all passing).
 - Completed: Task 0.8 (`specmgr://iso25010` resource) end to end, via
   sub-tasks 0.8.3-0.8.9 (0.8.1/0.8.2 were already done in an earlier
   session, see below):
@@ -631,6 +685,20 @@ and regenerated `docs/api/`/`docs/GENERATED.md`/`docs/MCP.md` are in place.
   domains (`uc`/`get_uc`, `ac`/`get_ac`, ...) should follow the REQ
   (tool-only) precedent rather than the older ADR one, absent a specific
   reason to add a resource counterpart.
+- **2026-08-16**: Standardized the not-found error message (Task 0.13) as
+  one template applied identically across `AdrNotFoundError`/
+  `ReqNotFoundError`/`UcNotFoundError`/`TskNotFoundError`/`DocNotFoundError`:
+  `f"no {noun} found with id {id_!r}. The id must be the bare document
+  UUID, without a domain prefix (use '<uuid>', not '{prefix}-<uuid>')."`,
+  with `noun`/`prefix` = ADR/adr, requirement/req, use case/uc, task
+  list/tsk; the shared, domain-agnostic `DocNotFoundError` keeps the same
+  closing sentence minus the prefix example, since
+  `find_doc_path_by_id` has no `type_name` to derive one from. Rationale:
+  a single wording, decided once and reused everywhere, is easier to keep
+  consistent than one bespoke message per domain, and explicitly naming
+  the bare-uuid-no-prefix requirement addresses the actual agent mistake
+  (passing `"req-<uuid>"`/`"tsk-<uuid>"` etc. instead of the bare id) this
+  task was opened to fix.
 
 ### Related PRs / Commits
 

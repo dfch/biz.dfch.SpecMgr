@@ -155,5 +155,8 @@ def find_req_path(base_dir: Path, id_: str) -> Path:
     try:
         result = find_doc_path_by_id(base_dir, id_, parse_req, _get_req_id)
     except DocNotFoundError as ex:
-        raise ReqNotFoundError(f"no requirement found with id {id_!r}") from ex
+        raise ReqNotFoundError(
+            f"no requirement found with id {id_!r}. The id must be the bare document UUID, without a domain "
+            f"prefix (use '<uuid>', not 'req-<uuid>')."
+        ) from ex
     return result

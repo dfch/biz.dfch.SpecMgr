@@ -91,11 +91,14 @@ class TestGetUc(unittest.TestCase):
         self.assertEqual(result.body.text, "Buy Goods")
 
     def test_raises_not_found_for_unknown_id(self) -> None:
-        """get_uc must raise UcNotFoundError when no use case matches the given id."""
+        """get_uc must raise UcNotFoundError, with the standardized message, when no use case matches."""
         create_uc(_MINIMAL_BODY)
 
-        with self.assertRaises(UcNotFoundError):
+        with self.assertRaises(UcNotFoundError) as ctx:
             get_uc("no-such-id")
+        message = str(ctx.exception)
+        self.assertIn("bare document UUID", message)
+        self.assertIn("without a domain prefix", message)
 
 
 if __name__ == "__main__":

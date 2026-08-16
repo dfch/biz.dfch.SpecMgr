@@ -151,5 +151,8 @@ def find_uc_path(base_dir: Path, id_: str) -> Path:
     try:
         result = find_doc_path_by_id(base_dir, id_, parse_uc, _get_uc_id)
     except DocNotFoundError as ex:
-        raise UcNotFoundError(f"no use case found with id {id_!r}") from ex
+        raise UcNotFoundError(
+            f"no use case found with id {id_!r}. The id must be the bare document UUID, without a domain "
+            f"prefix (use '<uuid>', not 'uc-<uuid>')."
+        ) from ex
     return result
