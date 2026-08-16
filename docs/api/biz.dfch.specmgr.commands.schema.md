@@ -47,6 +47,20 @@ output, which is what makes this command's own drift detection (and any
 downstream ``git diff``) meaningful.
 
 
+### `generate_tsk_schema() -> str`
+
+Generate TSK's JSON Schema (2020-12 dialect) from ``TskDocument.model_json_schema()``.
+
+Mirrors :func:`generate_req_schema` exactly, but for ``tsk.models.v1``:
+the ``"$schema"`` key is injected the same way (Pydantic v2 omits it by
+default), and ``"$comment"`` holds ``tsk.models.v1.SCHEMA_COMMENT_VERSION``
+(currently ``"v1"``) instead of REQ's own version token.
+
+Serializes with ``indent=2, sort_keys=True`` plus a trailing newline, for
+the same byte-identical-output/drift-detection reason as
+:func:`generate_req_schema`.
+
+
 ### `generate_uc_schema() -> str`
 
 Generate UC's JSON Schema (2020-12 dialect) from ``UcDocument.model_json_schema()``.

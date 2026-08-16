@@ -144,6 +144,42 @@ First-line docstrings from each module, organized by domain:
 - `req/tools/update_req.py` — ``@mcp.tool()`` wrapper: update_req (Task 3.13).
 - `req/tools/validate_req.py` — ``@mcp.tool()`` wrapper: validate_req (Task 3.16).
 
+**tsk/**
+
+- `tsk/__init__.py` — TaskList (TSK) domain -- lightweight task/todo-list specifications.
+- `tsk/models/__init__.py` — TaskList (TSK) models -- Pydantic schema powered by the generic ``models/md`` engine.
+- `tsk/models/v1/__init__.py` — TaskList (TSK) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- `tsk/models/v1/_util.py` — Shared, private constants for the ``tsk.models.v1`` subpackage.
+- `tsk/models/v1/body.py` — TaskList (TSK) body models: whole-section fields under a single H1.
+- `tsk/models/v1/document.py` — Pydantic model for a full TaskList document (frontmatter + body).
+- `tsk/models/v1/frontmatter.py` — TaskList frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
+- `tsk/models/v1/parser.py` — Parse raw TaskList ``.md`` text into a :class:`TskDocument` (Phase 2, Task 2.2).
+- `tsk/models/v1/summary.py` — Pydantic model for one line of TSK listing output (Phase 2, Task 2.3).
+- `tsk/models/v1/task_item.py` — `TaskItem` -- a single `- [ ] .../- [x] ...` checklist entry.
+- `tsk/prompts/__init__.py` — MCP prompt wrappers for Task Lists (Task 3.13-3.14).
+- `tsk/prompts/create_task.py` — ``@mcp.prompt()``: create_task (Task 3.13).
+- `tsk/prompts/implement_task.py` — ``@mcp.prompt()``: implement_task (Task 3.14).
+- `tsk/prompts/update_task.py` — ``@mcp.prompt()``: update_task (Task 3.13).
+- `tsk/resources/__init__.py` — MCP resource registrations for Task List (TSK) documents (Tasks 3.10-3.11).
+- `tsk/resources/tsk_example.py` — Resource: specmgr://tsk/example (Task 3.11).
+- `tsk/resources/tsk_list.py` — Resource: specmgr://tsk/list (Task 3.10).
+- `tsk/resources/tsk_schema.py` — Resource: specmgr://tsk/schema (Task 3.10).
+- `tsk/resources/tsk_template.py` — Resource: specmgr://tsk/template (Task 3.11).
+- `tsk/tools/__init__.py` — MCP tool wrappers for task lists (mirrors ``req/tools/``'s own shape).
+- `tsk/tools/_io.py` — Thin file read helpers over ``parse_tsk`` (Task 3.1).
+- `tsk/tools/_lock.py` — Per-document in-process lock guarding task list mutations.
+- `tsk/tools/_paths.py` — Task list base directory resolution and id -> path lookup (Task 3.1).
+- `tsk/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_tsk``/``update_tsk``.
+- `tsk/tools/create_tsk.py` — ``@mcp.tool()`` wrapper: create_tsk (Task 3.3).
+- `tsk/tools/delete_tsk.py` — ``@mcp.tool()`` wrapper: delete_tsk (Task 3.6).
+- `tsk/tools/get_tsk.py` — ``@mcp.tool()`` wrapper: get_tsk (Task 3.8).
+- `tsk/tools/get_tsk_example.py` — ``@mcp.tool()`` wrapper: get_tsk_example (Task 3.9).
+- `tsk/tools/get_tsk_template.py` — ``@mcp.tool()`` wrapper: get_tsk_template (Task 3.9).
+- `tsk/tools/parse_tsk.py` — ``@mcp.tool()`` wrapper: parse_tsk (Task 3.2).
+- `tsk/tools/set_status_tsk.py` — ``@mcp.tool()`` wrapper: set_status_tsk (Task 3.5).
+- `tsk/tools/update_tsk.py` — ``@mcp.tool()`` wrapper: update_tsk (Task 3.4).
+- `tsk/tools/validate_tsk.py` — ``@mcp.tool()`` wrapper: validate_tsk (Task 3.7).
+
 **uc/**
 
 - `uc/__init__.py` — Use Case (UC) domain — Cockburn-based use case specification and validation.
@@ -192,4 +228,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 125
+**Test files**: 149

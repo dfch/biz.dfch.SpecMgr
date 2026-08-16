@@ -26,13 +26,22 @@ specmgr://uc/example -- A complete, valid sample use case document as raw markdo
 specmgr://uc/template -- A use-case template (every field present, placeholder text)
                           as raw markdown.
 specmgr://uc/list --    Ids/titles/statuses/refs of every use case.
+specmgr://tsk/schema -- The generated TSK JSON Schema, read from a packaged data copy
+                        (kept in sync with ``docs/tsk_schema.json``) so it works from a
+                        real, non-editable install.
+specmgr://tsk/example -- A complete, valid sample task list document as raw markdown.
+specmgr://tsk/template -- A task list template (every field present, placeholder text)
+                          as raw markdown.
+specmgr://tsk/list --   Ids/titles/statuses/refs of every task list.
 specmgr://iso25010 --   The ISO/IEC 25010:2023 product quality model's nine main
                         characteristics (and sub-characteristics), each with a description.
 
 REQ has no ``specmgr://req/{id}`` resource, unlike ADR -- id-based reads go
 through the ``get_req`` tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
 UC has no ``specmgr://uc/{id}`` resource either, for the same reason -- id-based
-reads go through the ``get_uc`` tool only.
+reads go through the ``get_uc`` tool only. TSK has no ``specmgr://tsk/{id}``
+resource either -- id-based reads go through the ``get_tsk`` tool only, and
+there never was such a resource to remove in the first place.
 
 Tools
 -----
@@ -45,6 +54,9 @@ Use-case tools (``uc/tools/``): ``parse_uc``, ``get_uc``, ``get_uc_example``,
 Requirement tools (``req/tools/``): ``parse_req``, ``get_req``, ``get_req_example``,
 ``get_req_template``, ``create_req``, ``update_req``, ``set_status_req``, ``delete_req``
 (stub, not yet implemented), ``validate_req``.
+Task list tools (``tsk/tools/``): ``parse_tsk``, ``get_tsk``, ``get_tsk_example``,
+``get_tsk_template``, ``create_tsk``, ``update_tsk``, ``set_status_tsk``, ``delete_tsk``
+(stub, not yet implemented), ``validate_tsk``.
 General tools (``general/tools/``): ``mdformat`` -- format markdown files in place,
 preserving YAML frontmatter blocks.
 
@@ -56,22 +68,26 @@ text guiding an LLM through the ADR tool sequence above (``.specmgr/feat/feat-9-
 §11).
 Requirement prompts (``req/prompts/``): ``create_req``, ``update_req`` --
 instructional text guiding an LLM through the REQ tool sequence above (Task 3.19).
+Task list prompts (``tsk/prompts/``): ``create_task``, ``update_task`` -- instructional
+text guiding an LLM through the TSK tool sequence above, plus ``implement_task`` --
+reads an existing task list via ``get_tsk``, builds a ``TodoWrite`` list from its
+items, and uses the ``question`` tool to resolve ambiguity before proceeding.
 
 Modules are grouped domain-first
 (ADR ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by
 document-type domain"): each document
-domain (``adr``, ``uc``, ``req``, and later ``ac``) is a top-level package
+domain (``adr``, ``uc``, ``req``, ``tsk``, and later ``ac``) is a top-level package
 with its own ``tools``/``prompts``/``resources`` sub-packages, self-
 registered via the domain package's own ``__init__.py``. Cross-cutting, non-domain-specific
 tools/resources (e.g. ``specmgr://version``/``specmgr://iso25010`` resources
 or the ``mdformat`` tool) stay under the top-level ``general`` package
 instead (``general.tools``/``general.resources``). Add a new domain by
 creating its top-level package and importing it at the bottom of this
-module, next to the existing ``adr``/``general``/``req``/``uc`` imports, so
-its ``@mcp.tool()`` / ``@mcp.prompt()`` / ``@mcp.resource()`` decorators
-actually run. ``req`` registers ``tools``, ``resources``, and ``prompts``;
-``uc`` registers ``tools`` and ``resources`` -- it has no ``prompts``
-sub-package yet.
+module, next to the existing ``adr``/``general``/``req``/``tsk``/``uc``
+imports, so its ``@mcp.tool()`` / ``@mcp.prompt()`` / ``@mcp.resource()``
+decorators actually run. ``req`` and ``tsk`` each register ``tools``,
+``resources``, and ``prompts``; ``uc`` registers ``tools`` and ``resources``
+-- it has no ``prompts`` sub-package yet.
 
 ## Functions
 
