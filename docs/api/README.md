@@ -137,9 +137,28 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.uc.models.v1.use_case`](biz.dfch.specmgr.uc.models.v1.use_case.md) — Pydantic model for the complete Use Case document.
 - [`biz.dfch.specmgr.uc.models.v1.use_case_frontmatter`](biz.dfch.specmgr.uc.models.v1.use_case_frontmatter.md) — Pydantic model for Use Case YAML frontmatter metadata.
 - [`biz.dfch.specmgr.uc.models.v2`](biz.dfch.specmgr.uc.models.v2.md) — Use Case models v2 -- rebuilt on `feat-5-md-model-parser`'s generic `models/md` engine.
+- [`biz.dfch.specmgr.uc.models.v2._util`](biz.dfch.specmgr.uc.models.v2._util.md) — Shared, private constants for the ``uc.models.v2`` subpackage.
 - [`biz.dfch.specmgr.uc.models.v2.document`](biz.dfch.specmgr.uc.models.v2.document.md) — Pydantic model for a full use-case document (frontmatter + body).
 - [`biz.dfch.specmgr.uc.models.v2.frontmatter`](biz.dfch.specmgr.uc.models.v2.frontmatter.md) — Use-case frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
 - [`biz.dfch.specmgr.uc.models.v2.parser`](biz.dfch.specmgr.uc.models.v2.parser.md) — Parse raw use-case ``.md`` text into a :class:`UcDocument` (Task 1.8).
+- [`biz.dfch.specmgr.uc.models.v2.summary`](biz.dfch.specmgr.uc.models.v2.summary.md) — Pydantic model for one line of UC listing output (Task 3.1.6).
 - [`biz.dfch.specmgr.uc.models.v2.use_case`](biz.dfch.specmgr.uc.models.v2.use_case.md) — No documentation available.
-- [`biz.dfch.specmgr.uc.tools`](biz.dfch.specmgr.uc.tools.md) — MCP tool wrappers for use cases (mirrors ``adr/tools/``'s own shape).
+- [`biz.dfch.specmgr.uc.resources`](biz.dfch.specmgr.uc.resources.md) — MCP resource registrations for Use Case (UC) documents (Task 3.1.4, 3.1.6).
+- [`biz.dfch.specmgr.uc.resources.uc_example`](biz.dfch.specmgr.uc.resources.uc_example.md) — Resource: specmgr://uc/example (Task 3.1.4).
+- [`biz.dfch.specmgr.uc.resources.uc_list`](biz.dfch.specmgr.uc.resources.uc_list.md) — Resource: specmgr://uc/list (Task 3.1.6).
+- [`biz.dfch.specmgr.uc.resources.uc_schema`](biz.dfch.specmgr.uc.resources.uc_schema.md) — Resource: specmgr://uc/schema (Task 3.1.4).
+- [`biz.dfch.specmgr.uc.resources.uc_template`](biz.dfch.specmgr.uc.resources.uc_template.md) — Resource: specmgr://uc/template (Task 3.1.4).
+- [`biz.dfch.specmgr.uc.tools`](biz.dfch.specmgr.uc.tools.md) — MCP tool wrappers for use cases (mirrors ``req/tools/``'s own shape).
+- [`biz.dfch.specmgr.uc.tools._io`](biz.dfch.specmgr.uc.tools._io.md) — Thin file read helpers over ``parse_uc`` (Task 3.1.5).
+- [`biz.dfch.specmgr.uc.tools._lock`](biz.dfch.specmgr.uc.tools._lock.md) — Per-document in-process lock guarding use-case mutations.
+- [`biz.dfch.specmgr.uc.tools._paths`](biz.dfch.specmgr.uc.tools._paths.md) — Use-case base directory resolution and id -> path lookup (Task 3.1.5).
+- [`biz.dfch.specmgr.uc.tools._write`](biz.dfch.specmgr.uc.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_uc``/``update_uc``
+- [`biz.dfch.specmgr.uc.tools.create_uc`](biz.dfch.specmgr.uc.tools.create_uc.md) — ``@mcp.tool()`` wrapper: create_uc (Task 3.1.5).
+- [`biz.dfch.specmgr.uc.tools.delete_uc`](biz.dfch.specmgr.uc.tools.delete_uc.md) — ``@mcp.tool()`` wrapper: delete_uc (Task 3.1.5).
+- [`biz.dfch.specmgr.uc.tools.get_uc`](biz.dfch.specmgr.uc.tools.get_uc.md) — ``@mcp.tool()`` wrapper: get_uc (Task 3.1.5).
+- [`biz.dfch.specmgr.uc.tools.get_uc_example`](biz.dfch.specmgr.uc.tools.get_uc_example.md) — ``@mcp.tool()`` wrapper: get_uc_example (Task 3.1.2).
+- [`biz.dfch.specmgr.uc.tools.get_uc_template`](biz.dfch.specmgr.uc.tools.get_uc_template.md) — ``@mcp.tool()`` wrapper: get_uc_template (Task 3.1.3).
 - [`biz.dfch.specmgr.uc.tools.parse_uc`](biz.dfch.specmgr.uc.tools.parse_uc.md) — ``@mcp.tool()`` wrapper: parse_uc.
+- [`biz.dfch.specmgr.uc.tools.set_status_uc`](biz.dfch.specmgr.uc.tools.set_status_uc.md) — ``@mcp.tool()`` wrapper: set_status_uc (Task 3.1.5).
+- [`biz.dfch.specmgr.uc.tools.update_uc`](biz.dfch.specmgr.uc.tools.update_uc.md) — ``@mcp.tool()`` wrapper: update_uc (Task 3.1.5).
+- [`biz.dfch.specmgr.uc.tools.validate_uc`](biz.dfch.specmgr.uc.tools.validate_uc.md) — ``@mcp.tool()`` wrapper: validate_uc (Task 3.1.5).

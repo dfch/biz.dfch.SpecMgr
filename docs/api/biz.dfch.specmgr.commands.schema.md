@@ -4,9 +4,9 @@
 
 Generic, doc-type-agnostic command: each document type that wants a generated
 JSON Schema artifact registers a ``generate_x() -> str`` function in
-``_GENERATORS`` below, keyed by its short doc-type name (currently just
-``"req"``). ``--type`` restricts generation to one registered type; omitting
-it generates **all** registered types. Each type is written to its own
+``_GENERATORS`` below, keyed by its short doc-type name (``"req"``, ``"uc"``).
+``--type`` restricts generation to one registered type; omitting it generates
+**all** registered types. Each type is written to its own
 ``{output_dir}/{type}_schema.json`` (default ``docs/``).
 
 Unlike ``adr-toc``/``docs``, drift detection is built into this command
@@ -45,6 +45,20 @@ Serializes with ``indent=2, sort_keys=True`` plus a trailing newline so
 repeated generation from unchanged models produces byte-identical
 output, which is what makes this command's own drift detection (and any
 downstream ``git diff``) meaningful.
+
+
+### `generate_uc_schema() -> str`
+
+Generate UC's JSON Schema (2020-12 dialect) from ``UcDocument.model_json_schema()``.
+
+Mirrors :func:`generate_req_schema` exactly, but for ``uc.models.v2``:
+the ``"$schema"`` key is injected the same way (Pydantic v2 omits it by
+default), and ``"$comment"`` holds ``uc.models.v2.SCHEMA_COMMENT_VERSION``
+(currently ``"v2"``) instead of REQ's own version token.
+
+Serializes with ``indent=2, sort_keys=True`` plus a trailing newline, for
+the same byte-identical-output/drift-detection reason as
+:func:`generate_req_schema`.
 
 
 ### `schema(type_: Annotated[str | None, <typer.models.OptionInfo object>] = None, output_dir: Annotated[pathlib.Path, <typer.models.OptionInfo object>] = PosixPath('/docs')) -> None`

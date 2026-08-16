@@ -83,15 +83,15 @@ repos:
         name: specmgr schema
         description: >-
           Regenerate every registered doc-type JSON Schema (docs/{type}_schema.json)
-          -- always runs with no `--type` (all registered types), even though `req`
-          is the only one today. `specmgr schema` itself exits non-zero when the
+          -- always runs with no `--type` (all registered types), currently `req`
+          and `uc`. `specmgr schema` itself exits non-zero when the
           regenerated content differs from what was already on disk, so no separate
           `git diff --exit-code` is needed here, unlike the other `specmgr-*` hooks
           above.
         entry: uv run --frozen specmgr schema
         language: system
         pass_filenames: false
-        files: ^src/biz/dfch/specmgr/(req/models/v1|models/md)/.*\.py$
+        files: ^src/biz/dfch/specmgr/(req/models/v1|uc/models/v2|models/md)/.*\.py$
 
       - id: specmgr-schema-req-package
         name: specmgr schema (req package copy)
@@ -108,4 +108,21 @@ repos:
         entry: uv run --frozen specmgr schema --type req --output-dir src/biz/dfch/specmgr/req/data
         language: system
         pass_filenames: false
-        files: ^src/biz/dfch/specmgr/(req/models/v1|models/md)/.*\.py$
+        files: ^src/biz/dfch/specmgr/(req/models/v1|uc/models/v2|models/md)/.*\.py$
+
+      - id: specmgr-schema-uc-package
+        name: specmgr schema (uc package copy)
+        description: >-
+          Regenerate the packaged copy of UC's JSON Schema
+          (src/biz/dfch/specmgr/uc/data/uc_schema.json), read by the
+          `specmgr://uc/schema` MCP resource via `importlib.resources` so it
+          works from a real, non-editable install (unlike `docs/uc_schema.json`,
+          which only resolves from an editable/source checkout). Same generator
+          as the `specmgr-schema` hook above, just a second `--output-dir` -- no
+          bespoke copy logic exists in `commands/schema.py`. Kept as an
+          independent hook (not chained into `specmgr-schema`) so each artifact's
+          drift check is its own clean gate.
+        entry: uv run --frozen specmgr schema --type uc --output-dir src/biz/dfch/specmgr/uc/data
+        language: system
+        pass_filenames: false
+        files: ^src/biz/dfch/specmgr/(req/models/v1|uc/models/v2|models/md)/.*\.py$

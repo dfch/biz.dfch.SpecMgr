@@ -19,9 +19,9 @@
 
 Generic, doc-type-agnostic command: each document type that wants a generated
 JSON Schema artifact registers a ``generate_x() -> str`` function in
-``_GENERATORS`` below, keyed by its short doc-type name (currently just
-``"req"``). ``--type`` restricts generation to one registered type; omitting
-it generates **all** registered types. Each type is written to its own
+``_GENERATORS`` below, keyed by its short doc-type name (``"req"``, ``"uc"``).
+``--type`` restricts generation to one registered type; omitting it generates
+**all** registered types. Each type is written to its own
 ``{output_dir}/{type}_schema.json`` (default ``docs/``).
 
 Unlike ``adr-toc``/``docs``, drift detection is built into this command
@@ -47,8 +47,10 @@ import typer
 from pydantic.json_schema import GenerateJsonSchema
 
 from .._paths import DOCS_DIR
-from ..req.models.v1 import SCHEMA_COMMENT_VERSION
+from ..req.models.v1 import SCHEMA_COMMENT_VERSION as REQ_SCHEMA_COMMENT_VERSION
 from ..req.models.v1.document import ReqDocument
+from ..uc.models.v2 import SCHEMA_COMMENT_VERSION as UC_SCHEMA_COMMENT_VERSION
+from ..uc.models.v2.document import UcDocument
 
 _DEFAULT_OUTPUT_DIR = DOCS_DIR
 
@@ -75,15 +77,34 @@ def generate_req_schema() -> str:
     """
     schema_dict = ReqDocument.model_json_schema()
     schema_dict["$schema"] = GenerateJsonSchema.schema_dialect
-    schema_dict["$comment"] = SCHEMA_COMMENT_VERSION
+    schema_dict["$comment"] = REQ_SCHEMA_COMMENT_VERSION
+    return json.dumps(schema_dict, indent=2, sort_keys=True) + "\n"
+
+
+def generate_uc_schema() -> str:
+    """Generate UC's JSON Schema (2020-12 dialect) from ``UcDocument.model_json_schema()``.
+
+    Mirrors :func:`generate_req_schema` exactly, but for ``uc.models.v2``:
+    the ``"$schema"`` key is injected the same way (Pydantic v2 omits it by
+    default), and ``"$comment"`` holds ``uc.models.v2.SCHEMA_COMMENT_VERSION``
+    (currently ``"v2"``) instead of REQ's own version token.
+
+    Serializes with ``indent=2, sort_keys=True`` plus a trailing newline, for
+    the same byte-identical-output/drift-detection reason as
+    :func:`generate_req_schema`.
+    """
+    schema_dict = UcDocument.model_json_schema()
+    schema_dict["$schema"] = GenerateJsonSchema.schema_dialect
+    schema_dict["$comment"] = UC_SCHEMA_COMMENT_VERSION
     return json.dumps(schema_dict, indent=2, sort_keys=True) + "\n"
 
 
 #: Registry mapping a doc-type name (as accepted by ``--type``) to its
 #: ``generate_x() -> str`` function. Add an entry here when a new document
-#: type's schema generator is implemented (e.g. ``"adr"``, ``"uc"``).
+#: type's schema generator is implemented (e.g. ``"adr"``).
 _GENERATORS: dict[str, Callable[[], str]] = {
     "req": generate_req_schema,
+    "uc": generate_uc_schema,
 }
 
 

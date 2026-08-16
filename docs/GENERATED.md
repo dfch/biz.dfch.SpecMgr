@@ -165,12 +165,31 @@ First-line docstrings from each module, organized by domain:
 - `uc/models/v1/use_case.py` — Pydantic model for the complete Use Case document.
 - `uc/models/v1/use_case_frontmatter.py` — Pydantic model for Use Case YAML frontmatter metadata.
 - `uc/models/v2/__init__.py` — Use Case models v2 -- rebuilt on `feat-5-md-model-parser`'s generic `models/md` engine.
+- `uc/models/v2/_util.py` — Shared, private constants for the ``uc.models.v2`` subpackage.
 - `uc/models/v2/document.py` — Pydantic model for a full use-case document (frontmatter + body).
 - `uc/models/v2/frontmatter.py` — Use-case frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
 - `uc/models/v2/parser.py` — Parse raw use-case ``.md`` text into a :class:`UcDocument` (Task 1.8).
-- `uc/tools/__init__.py` — MCP tool wrappers for use cases (mirrors ``adr/tools/``'s own shape).
+- `uc/models/v2/summary.py` — Pydantic model for one line of UC listing output (Task 3.1.6).
+- `uc/resources/__init__.py` — MCP resource registrations for Use Case (UC) documents (Task 3.1.4, 3.1.6).
+- `uc/resources/uc_example.py` — Resource: specmgr://uc/example (Task 3.1.4).
+- `uc/resources/uc_list.py` — Resource: specmgr://uc/list (Task 3.1.6).
+- `uc/resources/uc_schema.py` — Resource: specmgr://uc/schema (Task 3.1.4).
+- `uc/resources/uc_template.py` — Resource: specmgr://uc/template (Task 3.1.4).
+- `uc/tools/__init__.py` — MCP tool wrappers for use cases (mirrors ``req/tools/``'s own shape).
+- `uc/tools/_io.py` — Thin file read helpers over ``parse_uc`` (Task 3.1.5).
+- `uc/tools/_lock.py` — Per-document in-process lock guarding use-case mutations.
+- `uc/tools/_paths.py` — Use-case base directory resolution and id -> path lookup (Task 3.1.5).
+- `uc/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_uc``/``update_uc``
+- `uc/tools/create_uc.py` — ``@mcp.tool()`` wrapper: create_uc (Task 3.1.5).
+- `uc/tools/delete_uc.py` — ``@mcp.tool()`` wrapper: delete_uc (Task 3.1.5).
+- `uc/tools/get_uc.py` — ``@mcp.tool()`` wrapper: get_uc (Task 3.1.5).
+- `uc/tools/get_uc_example.py` — ``@mcp.tool()`` wrapper: get_uc_example (Task 3.1.2).
+- `uc/tools/get_uc_template.py` — ``@mcp.tool()`` wrapper: get_uc_template (Task 3.1.3).
 - `uc/tools/parse_uc.py` — ``@mcp.tool()`` wrapper: parse_uc.
+- `uc/tools/set_status_uc.py` — ``@mcp.tool()`` wrapper: set_status_uc (Task 3.1.5).
+- `uc/tools/update_uc.py` — ``@mcp.tool()`` wrapper: update_uc (Task 3.1.5).
+- `uc/tools/validate_uc.py` — ``@mcp.tool()`` wrapper: validate_uc (Task 3.1.5).
 
 ## Test Coverage
 
-**Test files**: 109
+**Test files**: 125

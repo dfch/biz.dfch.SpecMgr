@@ -3,7 +3,10 @@
 ``@mcp.tool()`` wrapper: parse_uc.
 
 Reads a use-case markdown file from disk and parses it into a structured
-:class:`UcDocument`.
+:class:`UcDocument`. Path-based (not id-based) by design -- ``get_uc``
+(``uc.tools.get_uc``) is the id-based read path over the use-case base
+directory (``uc.tools._paths``/``_io``); this tool instead parses any
+markdown file the caller points it at directly.
 
 ## Functions
 

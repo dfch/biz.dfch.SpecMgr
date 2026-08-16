@@ -24,9 +24,11 @@ implementation this package supersedes. `parse_uc` (Task 1.8) is the
 v1 equivalent) has not been ported yet.
 """
 
+from ._util import SCHEMA_COMMENT_VERSION
 from .document import UcDocument
 from .frontmatter import UcFrontmatter
 from .parser import parse_uc
+from .summary import UcSummary
 from .use_case import (
     Assumptions,
     ChannelsToPrimaryActor,
@@ -58,6 +60,7 @@ from .use_case import (
 )
 
 __all__ = [
+    "SCHEMA_COMMENT_VERSION",
     "Assumptions",
     "ChannelsToPrimaryActor",
     "ChannelsToSecondaryActors",
@@ -86,6 +89,7 @@ __all__ = [
     "Trigger",
     "UcDocument",
     "UcFrontmatter",
+    "UcSummary",
     "UseCase",
     "parse_uc",
 ]

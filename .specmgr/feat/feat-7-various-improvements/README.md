@@ -306,9 +306,9 @@ progresses (edit, don't duplicate).
     `vulture src/ whitelist.py --min-confidence 60` (catches the removed
     `req_get` file), and the full `unittest` suite — depends on: Task 0.9.2
     through Task 0.9.9 — status: done (2026-08-15)
-- [ ] Task 0.10: Create a new `general` MCP resource that returns the RFC
+- [x] Task 0.10: Create a new `general` MCP resource that returns the RFC
   2119\. This is an ad interim solution until we have a filter option in
-  ASD-STE100 MCP by source. — depends on: none — status: not-started
+  ASD-STE100 MCP by source. — depends on: none — status: cancelled
 - [x] Task 0.11: Add CLI command "mdformat". This command formats a Markdown
   document with or without frontmatter in the same way that the MCP server
   formats documents when it reads and write artifacts (example: it uses

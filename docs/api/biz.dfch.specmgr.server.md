@@ -19,18 +19,29 @@ specmgr://req/example -- A complete, valid sample requirement document as raw ma
 specmgr://req/template -- A requirement template (every field present, placeholder text)
                           as raw markdown.
 specmgr://req/list --   Ids/titles/statuses/refs of every requirement.
+specmgr://uc/schema --  The generated UC JSON Schema, read from a packaged data copy
+                        (kept in sync with ``docs/uc_schema.json``) so it works from a
+                        real, non-editable install.
+specmgr://uc/example -- A complete, valid sample use case document as raw markdown.
+specmgr://uc/template -- A use-case template (every field present, placeholder text)
+                          as raw markdown.
+specmgr://uc/list --    Ids/titles/statuses/refs of every use case.
 specmgr://iso25010 --   The ISO/IEC 25010:2023 product quality model's nine main
                         characteristics (and sub-characteristics), each with a description.
 
 REQ has no ``specmgr://req/{id}`` resource, unlike ADR -- id-based reads go
 through the ``get_req`` tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
+UC has no ``specmgr://uc/{id}`` resource either, for the same reason -- id-based
+reads go through the ``get_uc`` tool only.
 
 Tools
 -----
 ADR tools (``adr/tools/``): ``get_adr``, ``create_adr``, ``update_frontmatter``,
 ``update_section``, ``set_status``, ``option_list``, ``option_create``,
 ``option_update``, ``option_read``, ``option_delete``, ``validate_adr``.
-Use-case tools (``uc/tools/``): ``parse_uc``.
+Use-case tools (``uc/tools/``): ``parse_uc``, ``get_uc``, ``get_uc_example``,
+``get_uc_template``, ``create_uc``, ``update_uc``, ``set_status_uc``, ``delete_uc``
+(stub, not yet implemented), ``validate_uc``.
 Requirement tools (``req/tools/``): ``parse_req``, ``get_req``, ``get_req_example``,
 ``get_req_template``, ``create_req``, ``update_req``, ``set_status_req``, ``delete_req``
 (stub, not yet implemented), ``validate_req``.
@@ -51,16 +62,16 @@ Modules are grouped domain-first
 document-type domain"): each document
 domain (``adr``, ``uc``, ``req``, and later ``ac``) is a top-level package
 with its own ``tools``/``prompts``/``resources`` sub-packages, self-
-registered via the domain package's own ``__init__.py``. ``req`` registers
-``tools``, ``resources``, and ``prompts``; ``uc`` currently only registers
-``tools`` -- it has no ``prompts`` sub-package yet. Cross-cutting, non-domain-specific
+registered via the domain package's own ``__init__.py``. Cross-cutting, non-domain-specific
 tools/resources (e.g. ``specmgr://version``/``specmgr://iso25010`` resources
 or the ``mdformat`` tool) stay under the top-level ``general`` package
 instead (``general.tools``/``general.resources``). Add a new domain by
 creating its top-level package and importing it at the bottom of this
 module, next to the existing ``adr``/``general``/``req``/``uc`` imports, so
 its ``@mcp.tool()`` / ``@mcp.prompt()`` / ``@mcp.resource()`` decorators
-actually run.
+actually run. ``req`` registers ``tools``, ``resources``, and ``prompts``;
+``uc`` registers ``tools`` and ``resources`` -- it has no ``prompts``
+sub-package yet.
 
 ## Functions
 
