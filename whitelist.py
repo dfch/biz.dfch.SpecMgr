@@ -94,6 +94,9 @@ tags
 trigger
 precondition
 intro
+checked
+recent_updates
+updates
 
 # --- MCP `@mcp.resource(...)`/`@mcp.tool()` entry points -------------------------
 # Invoked by the MCP framework once registered, not called directly in `src/`.

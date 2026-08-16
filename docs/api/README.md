@@ -118,6 +118,12 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.req.tools.update_req`](biz.dfch.specmgr.req.tools.update_req.md) — ``@mcp.tool()`` wrapper: update_req (Task 3.13).
 - [`biz.dfch.specmgr.req.tools.validate_req`](biz.dfch.specmgr.req.tools.validate_req.md) — ``@mcp.tool()`` wrapper: validate_req (Task 3.16).
 - [`biz.dfch.specmgr.server`](biz.dfch.specmgr.server.md) — MCP server for ``biz-dfch-specmgr``.
+- [`biz.dfch.specmgr.tsk`](biz.dfch.specmgr.tsk.md) — TaskList (TSK) domain -- lightweight task/todo-list specifications.
+- [`biz.dfch.specmgr.tsk.models`](biz.dfch.specmgr.tsk.models.md) — TaskList (TSK) models -- Pydantic schema powered by the generic ``models/md`` engine.
+- [`biz.dfch.specmgr.tsk.models.v1`](biz.dfch.specmgr.tsk.models.v1.md) — TaskList (TSK) models -- Pydantic schema and (in a later phase) parser powered by ``models/md``.
+- [`biz.dfch.specmgr.tsk.models.v1.body`](biz.dfch.specmgr.tsk.models.v1.body.md) — TaskList (TSK) body models: whole-section fields under a single H1.
+- [`biz.dfch.specmgr.tsk.models.v1.frontmatter`](biz.dfch.specmgr.tsk.models.v1.frontmatter.md) — TaskList frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
+- [`biz.dfch.specmgr.tsk.models.v1.task_item`](biz.dfch.specmgr.tsk.models.v1.task_item.md) — `TaskItem` -- a single `- [ ] .../- [x] ...` checklist entry.
 - [`biz.dfch.specmgr.uc`](biz.dfch.specmgr.uc.md) — Use Case (UC) domain — Cockburn-based use case specification and validation.
 - [`biz.dfch.specmgr.uc.models`](biz.dfch.specmgr.uc.models.md) — Use Case models — Pydantic schema for Cockburn-based use cases.
 - [`biz.dfch.specmgr.uc.models.v1`](biz.dfch.specmgr.uc.models.v1.md) — Use Case models v1 — Pydantic schema for Cockburn-based use cases.

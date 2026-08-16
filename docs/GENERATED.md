@@ -144,6 +144,15 @@ First-line docstrings from each module, organized by domain:
 - `req/tools/update_req.py` — ``@mcp.tool()`` wrapper: update_req (Task 3.13).
 - `req/tools/validate_req.py` — ``@mcp.tool()`` wrapper: validate_req (Task 3.16).
 
+**tsk/**
+
+- `tsk/__init__.py` — TaskList (TSK) domain -- lightweight task/todo-list specifications.
+- `tsk/models/__init__.py` — TaskList (TSK) models -- Pydantic schema powered by the generic ``models/md`` engine.
+- `tsk/models/v1/__init__.py` — TaskList (TSK) models -- Pydantic schema and (in a later phase) parser powered by ``models/md``.
+- `tsk/models/v1/body.py` — TaskList (TSK) body models: whole-section fields under a single H1.
+- `tsk/models/v1/frontmatter.py` — TaskList frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
+- `tsk/models/v1/task_item.py` — `TaskItem` -- a single `- [ ] .../- [x] ...` checklist entry.
+
 **uc/**
 
 - `uc/__init__.py` — Use Case (UC) domain — Cockburn-based use case specification and validation.
@@ -192,4 +201,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 125
+**Test files**: 128
