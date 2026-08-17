@@ -54,6 +54,7 @@ class Characteristics(MarkdownSection2):
 
     items: list[MarkdownListItem] = Field(
         min_length=1,
+        max_length=9,
         description="Bullet list of ISO 25010:2023 quality attributes; must contain at least one item.",
     )
 

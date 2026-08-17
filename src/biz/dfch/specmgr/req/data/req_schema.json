@@ -28,6 +28,7 @@
           "items": {
             "$ref": "#/$defs/MarkdownListItem"
           },
+          "maxItems": 9,
           "minItems": 1,
           "title": "Items",
           "type": "array"

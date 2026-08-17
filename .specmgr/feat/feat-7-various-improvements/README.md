@@ -358,10 +358,13 @@ progresses (edit, don't duplicate).
 
 - [ ] Task 0.16: MCP tools `<domain>_list` must support filtering — depends on: none — status: not-started
 
-    we have to discuss the design first, before we can implement
+     we have to discuss the design first, before we can implement
 
+- [ ] Task 0.17: Add a `MarkdownListItemWithNotes` class to `markdown_list_item.py` that introduces a `notes: list[MarkdownParagraph] | None = None` field for captured continuation paragraphs inside list items — depends on: none — status: not-started
 
-#### Phase 1: Audit
+    Background: `MarkdownListItem._value` correctly captures the full markdown content of each item (including indented continuation paragraphs after a blank line), but `_value` is a Pydantic private attribute so it does not appear in `model_dump()` / MCP JSON output. `ExtensionItem` solves this with an explicit `notes` field; REQ's `Characteristics.items` has no such field, so the `text` property only returns the leading-paragraph text and everything after the first blank line is dropped on serialization. The new base class adds `notes` to all list-item consumers (REQ characteristics, UC extensions, task lists, etc.) — items with no continuation paragraphs will serialize with `"notes": null` or a missing key; items with continuation paragraphs will carry the captured paragraphs in JSON.
+    
+    Full implementation plan: specmgr TSK `550e8400-e29b-41d4-a716-446655440000`.
 
 - [ ] Task 1.1: Inventory current `specmgr://*/list` resources and diff
   their output shape/behavior (`adr_list` vs. `req_list`) — depends on:
