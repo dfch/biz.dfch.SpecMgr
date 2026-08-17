@@ -352,6 +352,14 @@ progresses (edit, don't duplicate).
   (Bearer-Authenticated, URL-Filtered Fetch for Web Server)") — retrieve it
   via the `get_tsk` MCP tool with id `efb7d049-a222-4730-901f-6d57283b387c`
   — depends on: none — status: done (2026-08-16)
+- [ ] Task 0.15: MCP tools `<domain>_list` must support paging — depends on: none — status: not-started
+
+    we have to discuss the design first, before we can implement
+
+- [ ] Task 0.16: MCP tools `<domain>_list` must support filtering — depends on: none — status: not-started
+
+    we have to discuss the design first, before we can implement
+
 
 #### Phase 1: Audit
 
