@@ -313,8 +313,8 @@ consumer but not the motivating point on its own.
 
 #### Phase 2: Specification
 
-- [ ] Task 2.1: Write a full reference `qa_reference.md` exercising every
-  field — depends on: Phase 1 complete — status: not-started.
+- [x] Task 2.1: Write a full reference `qa_reference.md` exercising every
+  field — depends on: Phase 1 complete — status: done.
 
   **Plan correction (2026-08-18, see Decisions Made):** the former Task
   2.2 ("Draft `qa_schema.json`") has moved to Phase 3 as Task 3.1.1 —
@@ -326,13 +326,13 @@ consumer but not the motivating point on its own.
   intentionally left with a gap at 2.2 rather than renumbering Task 2.3
   or any later task.
 
-- [ ] Task 2.3: Phase-end check — no Pydantic models exist yet in this
+- [x] Task 2.3: Phase-end check — no Pydantic models exist yet in this
   phase, so no unit-test suite applies; instead confirm `qa_reference.md`
   is well-formed (`specmgr mdformat` clean) and run the general
   pre-commit/quality gate (ruff format/check, vulture) over any changed
   files; update this README's Progress section (Current Status, a dated
   Recent Updates entry) noting Phase 2 complete — depends on: Task 2.1 —
-  status: not-started.
+  status: done.
 
 #### Phase 3: Pydantic Models & Parser
 
@@ -436,14 +436,21 @@ consumer but not the motivating point on its own.
 
 ### Current Status
 
-**As of 2026-08-18**: Phase 0 (Cleanup) and Phase 1 (`models/md` engine
-enhancement) complete — Tasks 1.1-1.5 done. `@markdown(...)` now merges
-into inherited `_metadata`, gained an `end_marker` parameter, and
-`MarkdownSection.get_extent` stops at the first depth-0 `end_marker`
-occurrence, verified against a nested-list-and-nested-block-quote edge
-case. Full quality gate green (1026 tests, up from 1008). Commit for this
-phase intentionally left to the orchestrator. Starting Phase 2
-(Specification) next.
+**As of 2026-08-18**: Phase 0 (Cleanup), Phase 1 (`models/md` engine
+enhancement), and Phase 2 (Specification) complete — Tasks 1.1-1.5 and
+2.1/2.3 done. `@markdown(...)` now merges into inherited `_metadata`,
+gained an `end_marker` parameter, and `MarkdownSection.get_extent` stops
+at the first depth-0 `end_marker` occurrence, verified against a
+nested-list-and-nested-block-quote edge case. A full reference
+`qa_reference.md` now exercises every field of the planned `qa` schema
+(General/Introduction/Raw Requirements, all 9 ISO 25010:2023 categories
+with one — `Compatibility` — deliberately left empty, a `More
+Information` section, and both the full-field and minimal `QaSection`
+shapes, including the `end_marker` scenario and nested list/block-quote
+content inside a `Requirement` callout), confirmed `specmgr mdformat`
+clean. Full quality gate green (no `src/`/`tests/` changes this phase).
+Commits for Phase 1 and Phase 2 intentionally left to the orchestrator.
+Starting Phase 3 (Pydantic Models & Parser) next.
 
 ### Blockers
 
@@ -453,6 +460,60 @@ None currently.
 
 Older entries (2026-08-18T11:15:00Z and earlier) are archived in
 [`history.md`](history.md).
+
+#### Update 2026-08-18T17:40:00Z
+
+- Completed: Phase 2 (Specification) — Task 2.1 and Task 2.3.
+  - **Task 2.1**: Wrote
+    `.specmgr/feat/feat-12-qa-artifact/qa_reference.md`, a pure
+    markdown-authoring reference exercising every field of the schema
+    shape pinned down in Design Notes (no Pydantic models exist yet — that
+    is Phase 3's Task 3.1). Read `req_reference.md`, `tsk_reference.md`,
+    and `uc_reference.md` first for style precedent, and reused
+    `tsk_reference.md`'s "Migrate Widgets to the New Registry" theme so
+    this document reads as the requirements-elicitation interview that
+    would plausibly precede that task list. Frontmatter uses
+    `id: deaddead-feed-feed-feed-deaddeadfeed`, `status: active`,
+    `type: qa` (see Decisions Made). Structure: a single H1, then `##
+    General` (H3 `### Introduction` with two body paragraphs, H3 `### Raw
+    Requirements` as opaque prose), then the 9 ISO/IEC 25010:2023
+    characteristic H2s in exact canonical order/wording (verified earlier
+    against the `specmgr://iso25010` resource per the plan's own Design
+    Notes, re-confirmed here against
+    `general/data/general_iso25010.md`'s own H2 order), then `## More
+    Information`. Q&A (H3) coverage across categories: `Functional
+    Suitability` has two H3s — the first exercises all four `QaSection`
+    fields at once (an HTML `comment` immediately after its heading, a
+    `#### Requirement` callout whose own body contains both a nested
+    bullet list *and* a nested block quote inside one of that list's
+    items, mirroring Task 1.3/1.4's own edge-case fixture almost verbatim,
+    immediately followed by its `question` block quote — exercising the
+    exact `end_marker` scenario Phase 1 was built for — then a prose
+    `answer`), the second has only `question`+`answer` (no
+    `comment`/`requirement`), exercising "all four fields fully optional".
+    `Safety` has one more full-combo H3 (`comment` + `Requirement` +
+    immediately-following `question` + `answer`, this one without nested
+    list/quote content, as a second, simpler `end_marker` occurrence).
+    `Performance Efficiency`, `Interaction Capability`, `Reliability`,
+    `Security`, `Maintainability`, and `Flexibility` each get exactly one
+    `question`+`answer`-only H3. `Compatibility` is the one category
+    deliberately left with **no** H3 children at all (empty `items`),
+    per the plan's explicit "pick which one(s) are empty" instruction —
+    rationale (a purely internal migration raising no external
+    interoperability/co-existence concerns yet) is documented both in this
+    entry and inline in the reference doc's own `More Information`
+    section. Ran `uv run --frozen specmgr mdformat
+    .specmgr/feat/feat-12-qa-artifact/qa_reference.md` (exit code `0` —
+    already canonical, no rewrite) and confirmed with `--dry-run` too.
+  - **Task 2.3**: Ran `uv run --frozen ruff format --check` (674 files
+    already formatted), `uv run --frozen ruff check` (all checks passed),
+    and `uv run --frozen vulture src/ whitelist.py --min-confidence 60`
+    (no output, clean) — unaffected, as expected, since this phase only
+    added one markdown file outside `src/`/`tests/`. No unit-test suite
+    applies (no Pydantic models exist yet).
+- Next: Phase 3 (Pydantic Models & Parser) — Task 3.1 (`qa/models/v1/...`).
+- Notes: Phase 2 added no `src/`/`tests/` code and made no commits (left
+  to the orchestrator, per this session's instructions).
 
 #### Update 2026-08-18T16:05:00Z
 
@@ -697,6 +758,25 @@ Older entries (2026-08-18T11:15:00Z and earlier) are archived in
   already pass `type=`/`tag=` as keywords, so nothing broke, and it rules
   out a future positional-argument use that the sentinel-based merge logic
   could not otherwise distinguish from omission.
+- **2026-08-18**: `qa_reference.md`'s frontmatter uses
+  `id: deaddead-feed-feed-feed-deaddeadfeed` and `status: active` —
+  neither was pinned down by the plan itself. `id` follows
+  `req_reference.md`/`tsk_reference.md`'s existing "deaddead-...-dead..."
+  placeholder-UUID convention with a distinct themed hex word (`feed`,
+  valid hex, pairs with `dead`) so it's visually distinguishable from
+  REQ's/TSK's own reference docs at a glance; `status: active` was picked
+  (over `draft`/`done`/`cancelled`) to reflect an interview that has been
+  conducted and answered but not yet formally closed out. Of the 9 ISO
+  25010:2023 categories, `Compatibility` was chosen as the one
+  deliberately left with no Q&A pairs (exercising the "category's `items`
+  may be empty/absent" case) — rationale: the widget-registry migration
+  theme this reference doc reuses from `tsk_reference.md` is purely
+  internal, so external interoperability/co-existence questions were
+  judged the most natural category to have nothing elicited for yet,
+  compared to the other 8 which all have at least one plausible internal
+  question. Both choices are documented inline in the reference doc
+  itself (frontmatter comment-free, but the empty-category rationale is
+  spelled out in its own `More Information` section) as well as here.
 - **2026-08-18**: Phase 1's `get_extent` depth counter for the new
   `end_marker` stop condition (Task 1.3) considers a token "at depth 0"
   when the running depth *going into* it (i.e. before applying that
