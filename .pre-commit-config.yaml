@@ -91,7 +91,7 @@ repos:
         entry: uv run --frozen specmgr schema
         language: system
         pass_filenames: false
-        files: ^src/biz/dfch/specmgr/(req/models/v1|tsk/models/v1|uc/models/v2|models/md)/.*\.py$
+        files: ^src/biz/dfch/specmgr/(qa/models/v1|req/models/v1|tsk/models/v1|uc/models/v2|models/md)/.*\.py$
 
       - id: specmgr-schema-req-package
         name: specmgr schema (req package copy)
@@ -108,7 +108,7 @@ repos:
         entry: uv run --frozen specmgr schema --type req --output-dir src/biz/dfch/specmgr/req/data
         language: system
         pass_filenames: false
-        files: ^src/biz/dfch/specmgr/(req/models/v1|tsk/models/v1|uc/models/v2|models/md)/.*\.py$
+        files: ^src/biz/dfch/specmgr/(qa/models/v1|req/models/v1|tsk/models/v1|uc/models/v2|models/md)/.*\.py$
 
       - id: specmgr-schema-uc-package
         name: specmgr schema (uc package copy)
@@ -125,7 +125,7 @@ repos:
         entry: uv run --frozen specmgr schema --type uc --output-dir src/biz/dfch/specmgr/uc/data
         language: system
         pass_filenames: false
-        files: ^src/biz/dfch/specmgr/(req/models/v1|tsk/models/v1|uc/models/v2|models/md)/.*\.py$
+        files: ^src/biz/dfch/specmgr/(qa/models/v1|req/models/v1|tsk/models/v1|uc/models/v2|models/md)/.*\.py$
 
       - id: specmgr-schema-tsk-package
         name: specmgr schema (tsk package copy)
@@ -142,4 +142,21 @@ repos:
         entry: uv run --frozen specmgr schema --type tsk --output-dir src/biz/dfch/specmgr/tsk/data
         language: system
         pass_filenames: false
-        files: ^src/biz/dfch/specmgr/(req/models/v1|tsk/models/v1|uc/models/v2|models/md)/.*\.py$
+        files: ^src/biz/dfch/specmgr/(qa/models/v1|req/models/v1|tsk/models/v1|uc/models/v2|models/md)/.*\.py$
+
+      - id: specmgr-schema-qa-package
+        name: specmgr schema (qa package copy)
+        description: >-
+          Regenerate the packaged copy of QA's JSON Schema
+          (src/biz/dfch/specmgr/qa/data/qa_schema.json), read by the
+          `specmgr://qa/schema` MCP resource via `importlib.resources` so it
+          works from a real, non-editable install (unlike `docs/qa_schema.json`,
+          which only resolves from an editable/source checkout). Same generator
+          as the `specmgr-schema` hook above, just a second `--output-dir` -- no
+          bespoke copy logic exists in `commands/schema.py`. Kept as an
+          independent hook (not chained into `specmgr-schema`) so each artifact's
+          drift check is its own clean gate.
+        entry: uv run --frozen specmgr schema --type qa --output-dir src/biz/dfch/specmgr/qa/data
+        language: system
+        pass_filenames: false
+        files: ^src/biz/dfch/specmgr/(qa/models/v1|req/models/v1|tsk/models/v1|uc/models/v2|models/md)/.*\.py$

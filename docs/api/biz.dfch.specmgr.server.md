@@ -33,6 +33,14 @@ specmgr://tsk/example -- A complete, valid sample task list document as raw mark
 specmgr://tsk/template -- A task list template (every field present, placeholder text)
                           as raw markdown.
 specmgr://tsk/list --   Ids/titles/statuses/refs of every task list.
+specmgr://qa/schema --  The generated QA JSON Schema, read from a packaged data copy
+                        (kept in sync with ``docs/qa_schema.json``) so it works from a
+                        real, non-editable install.
+specmgr://qa/example -- A complete, valid sample question-and-answer document as raw
+                        markdown.
+specmgr://qa/template -- A question-and-answer template (every field present,
+                          placeholder text) as raw markdown.
+specmgr://qa/list --    Ids/titles/statuses/refs of every question-and-answer document.
 specmgr://iso25010 --   The ISO/IEC 25010:2023 product quality model's nine main
                         characteristics (and sub-characteristics), each with a description.
 
@@ -41,7 +49,9 @@ through the ``get_req`` tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
 UC has no ``specmgr://uc/{id}`` resource either, for the same reason -- id-based
 reads go through the ``get_uc`` tool only. TSK has no ``specmgr://tsk/{id}``
 resource either -- id-based reads go through the ``get_tsk`` tool only, and
-there never was such a resource to remove in the first place.
+there never was such a resource to remove in the first place. QA has no
+``specmgr://qa/{id}`` resource either, for the same reason -- id-based reads go
+through the ``get_qa`` tool only.
 
 Tools
 -----
@@ -57,6 +67,9 @@ Requirement tools (``req/tools/``): ``parse_req``, ``get_req``, ``get_req_exampl
 Task list tools (``tsk/tools/``): ``parse_tsk``, ``get_tsk``, ``get_tsk_example``,
 ``get_tsk_template``, ``create_tsk``, ``update_tsk``, ``set_status_tsk``, ``delete_tsk``
 (stub, not yet implemented), ``validate_tsk``.
+QA tools (``qa/tools/``): ``parse_qa``, ``get_qa``, ``get_qa_example``,
+``get_qa_template``, ``create_qa``, ``update_qa``, ``set_status_qa``, ``delete_qa``
+(stub, not yet implemented), ``validate_qa``.
 General tools (``general/tools/``): ``mdformat`` -- format markdown files in place,
 preserving YAML frontmatter blocks; ``webfetch`` -- fetch a URL over HTTP GET with a
 bearer token, restricted to a configured base URL (``SPECMGR_WEBFETCH_BASE_URL``,
@@ -74,20 +87,21 @@ Task list prompts (``tsk/prompts/``): ``create_task``, ``update_task`` -- instru
 text guiding an LLM through the TSK tool sequence above, plus ``implement_task`` --
 reads an existing task list via ``get_tsk``, builds a ``TodoWrite`` list from its
 items, and uses the ``question`` tool to resolve ambiguity before proceeding.
+QA prompts (``qa/prompts/``): ``create_qa``, ``update_qa``.
 
 Modules are grouped domain-first
 (ADR ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by
 document-type domain"): each document
-domain (``adr``, ``uc``, ``req``, ``tsk``, and later ``ac``) is a top-level package
+domain (``adr``, ``uc``, ``req``, ``tsk``, ``qa``, and later ``ac``) is a top-level package
 with its own ``tools``/``prompts``/``resources`` sub-packages, self-
 registered via the domain package's own ``__init__.py``. Cross-cutting, non-domain-specific
 tools/resources (e.g. ``specmgr://version``/``specmgr://iso25010`` resources
 or the ``mdformat`` tool) stay under the top-level ``general`` package
 instead (``general.tools``/``general.resources``). Add a new domain by
 creating its top-level package and importing it at the bottom of this
-module, next to the existing ``adr``/``general``/``req``/``tsk``/``uc``
+module, next to the existing ``adr``/``general``/``qa``/``req``/``tsk``/``uc``
 imports, so its ``@mcp.tool()`` / ``@mcp.prompt()`` / ``@mcp.resource()``
-decorators actually run. ``req`` and ``tsk`` each register ``tools``,
+decorators actually run. ``req``, ``tsk``, and ``qa`` each register ``tools``,
 ``resources``, and ``prompts``; ``uc`` registers ``tools`` and ``resources``
 -- it has no ``prompts`` sub-package yet.
 

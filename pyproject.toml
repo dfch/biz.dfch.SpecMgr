@@ -117,6 +117,10 @@ namespaces = true
 "biz.dfch.specmgr" = [
     "py.typed"
 ]
+"biz.dfch.specmgr.qa" = [
+    "data/*.md",
+    "data/*.json"
+]
 "biz.dfch.specmgr.req" = [
     "data/*.md",
     "data/*.json"

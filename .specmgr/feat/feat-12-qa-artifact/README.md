@@ -390,9 +390,8 @@ consumer but not the motivating point on its own.
 
 #### Phase 5: Cross-cutting registration
 
-- [ ] Task 5.1: `server.py` — add `qa` to the bottom import line, update
-  the module docstring — depends on: Phase 4 complete — status:
-  not-started.
+- [x] Task 5.1: `server.py` — add `qa` to the bottom import line, update
+  the module docstring — depends on: Phase 4 complete — status: done.
 
   **Plan correction (2026-08-18, see Decisions Made):** the former Task
   5.2 (`generate_qa_schema()` + registry entry) has been folded into
@@ -400,30 +399,31 @@ consumer but not the motivating point on its own.
   mirroring feat-10's own Task 2.5. Task numbering is intentionally left
   with a gap at 5.2 rather than renumbering Tasks 5.3-5.8.
 
-- [ ] Task 5.3: `pyproject.toml` — `"biz.dfch.specmgr.qa" = ["data/*.md", "data/*.json"]` package-data entry — depends on: Task 4.4 — status:
-  not-started.
+- [x] Task 5.3: `pyproject.toml` — `"biz.dfch.specmgr.qa" = ["data/*.md", "data/*.json"]` package-data entry — depends on: Task 4.4 — status:
+  done.
 
-- [ ] Task 5.4: `.pre-commit-config.yaml` — widen the shared schema-hook
+- [x] Task 5.4: `.pre-commit-config.yaml` — widen the shared schema-hook
   glob to include `qa/models/v1`; add a `specmgr-schema-qa-package` hook —
-  depends on: Task 3.1.1 — status: not-started.
+  depends on: Task 3.1.1 — status: done.
 
-- [ ] Task 5.5: `.github/workflows/ci.yml` — add the `docs/qa_schema.json`
+- [x] Task 5.5: `.github/workflows/ci.yml` — add the `docs/qa_schema.json`
   check + packaged-copy check steps — depends on: Task 3.1.1 — status:
-  not-started.
+  done.
 
-- [ ] Task 5.6: `AGENTS.md` — update to six domain/cross-cutting packages
-  — depends on: Phase 5 complete — status: not-started.
+- [x] Task 5.6: `AGENTS.md` — update to six domain/cross-cutting packages
+  — depends on: Phase 5 complete — status: done.
 
-- [ ] Task 5.7: `specmgr docs` / `specmgr mcp-docs` regeneration, `specmgr schema --type qa` — confirm the `qa` domain appears correctly and all
+- [x] Task 5.7: `specmgr docs` / `specmgr mcp-docs` regeneration, `specmgr schema --type qa` — confirm the `qa` domain appears correctly and all
   three commands report zero drift now that registration (Task 3.1.1,
   Tasks 5.1, 5.3-5.6) is complete — depends on: Task 3.1.1, Task 5.1,
-  Tasks 5.3-5.6 — status: not-started.
+  Tasks 5.3-5.6 — status: done.
 
-- [ ] Task 5.8: Phase-end quality gate — run the full pre-commit/quality
+- [x] Task 5.8: Phase-end quality gate — run the full pre-commit/quality
   gate (ruff format/check, vulture, full `unittest` suite); update this
   README's Progress section (Current Status, a dated Recent Updates
   entry, Decisions Made if applicable); commit as one Conventional Commit
-  — depends on: Task 5.7 — status: not-started.
+  — depends on: Task 5.7 — status: done (commit itself left to the
+  orchestrator, per this session's instructions).
 
 #### Phase 6: Final cross-cutting verification
 
@@ -440,35 +440,45 @@ consumer but not the motivating point on its own.
 
 **As of 2026-08-18**: Phase 0 (Cleanup), Phase 1 (`models/md` engine
 enhancement), Phase 2 (Specification), Phase 3 (Pydantic Models & Parser),
-and Phase 4 (MCP Surface) complete — Tasks 1.1-1.5, 2.1/2.3,
-3.1/3.1.1/3.2/3.3, and 4.1-4.6 done. The `qa` domain package's full MCP
-surface now exists, a 1:1 structural port of REQ's own tools/resources/
-prompts: `qa/tools/` (`_paths`, `_io`, `_lock`, `_write`, `parse_qa`,
-`get_qa`, `get_qa_example`, `get_qa_template`, `create_qa`, `update_qa`,
-`set_status_qa`, `delete_qa` stub, `validate_qa`), `qa/resources/`
-(`specmgr://qa/schema`, `/example`, `/template`, `/list` -- no `/{id}`, per
-ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614), `qa/prompts/` (`create_qa`,
-`update_qa`, rewritten to describe QA's own General/9-characteristic/
-More-Information structure instead of REQ's), and `qa/data/`
-(`qa_example.md` -- Phase 2's `qa_reference.md` reused verbatim, mirroring
-REQ's own reference-is-example precedent, verified to round-trip through
-`parse_qa`; `qa_template.md` -- new, structurally complete placeholder
-content that happens to also be fully valid; `qa_schema.json` -- a
-byte-identical packaged copy of `docs/qa_schema.json`). `qa/__init__.py`
-now imports `tools`/`resources`/`prompts` (mirroring `req/__init__.py`'s
-exact shape), though `server.py`'s own bottom-of-file import list still
-does not import `qa` yet -- that registration wiring is Phase 5's Task
-5.1, so `qa`'s tools/resources/prompts are fully built and independently
-tested but not yet live against the MCP server. 83 new unit tests added
-under `tests/qa/{tools,resources,prompts}/` (53/15/15), mirroring
-`tests/req/`'s own layout and depth, using a temporary
-`SPECMGR_DOCS_DIR`-patched directory for filesystem isolation throughout.
-9-category-class-sharing/`QaAnswer` design notes carried over unchanged
-from Phase 3; this phase's own new implementation choices are logged below.
-Full quality gate green (1144 tests total, up from 1061; `specmgr docs`
-regenerated and confirmed idempotent). Commit for Phase 4 intentionally
-left to the orchestrator. Starting Phase 5 (Cross-cutting registration)
-next.
+Phase 4 (MCP Surface), and Phase 5 (Cross-cutting registration) complete —
+Tasks 1.1-1.5, 2.1/2.3, 3.1/3.1.1/3.2/3.3, 4.1-4.6, and 5.1/5.3-5.8 done
+(intentional gap at 5.2, folded into Task 3.1.1 earlier in the plan). The
+`qa` domain is now fully registered end-to-end: `server.py`'s bottom-of-file
+import line reads `from . import adr, general, qa, req, tsk, uc`, and its
+module docstring documents `qa`'s four resources (`specmgr://qa/schema`,
+`/example`, `/template`, `/list`, no `/{id}`), nine tools, and two prompts
+alongside the other domains. `pyproject.toml` packages `qa/data/*.md` and
+`*.json`; `.pre-commit-config.yaml`'s shared schema-hook glob now matches
+`qa/models/v1` and a new `specmgr-schema-qa-package` hook keeps
+`qa/data/qa_schema.json` in sync; `.github/workflows/ci.yml` gained a
+`docs/qa_schema.json` + packaged-copy check pair mirroring REQ/UC's. Note:
+as already established at the end of Phase 4, this registration wiring was
+*functionally* redundant with the transitive import `commands/schema.py`
+already causes via `qa.models.v1` (so `docs/MCP.md` and `docs/GENERATED.md`
+already listed all of `qa`'s tools/resources/prompts before this phase and
+needed no regeneration here beyond `docs/api/biz.dfch.specmgr.server.md`,
+which changed solely due to the docstring edit) -- Task 5.1 was still done
+for documented-convention clarity/correctness, per `AGENTS.md`'s own
+"add its import to that same last line" instruction. `AGENTS.md` now reads
+"six domain/cross-cutting packages implemented (ADR, REQ, UC, TSK, QA,
+general)" with a `qa/` bullet (mirroring REQ's/TSK's bullet shape) inserted
+after the `tsk/` bullet, its "Still genuinely missing" list updated
+(`delete_qa` stub, `validate_qa` omitted from pre-commit/CI enforcement,
+`qa` added to the tools/resources/prompts registration summary), and every
+other domain-enumeration spot in the file (the closing "don't assume any
+other domain package exists" paragraph, and the "MCP server (`server.py`)"
+section's own import-list mention) updated to include `qa` too. Ran
+`specmgr docs`/`specmgr mcp-docs`/`specmgr schema --type qa` (both
+`docs/qa_schema.json` and the packaged `qa/data/qa_schema.json` copy) twice
+each and confirmed the second run of every command reports zero further
+drift (`(unchanged)` for both schema outputs, identical `git diff` for
+`docs/`/`docs/MCP.md` across both runs). Full quality gate green: `ruff
+format --check` (766 files already formatted), `ruff check` (all checks
+passed), `vulture` (no output, clean), and the full `unittest` suite (1144
+tests, OK -- unchanged from Phase 4's count, no regressions, as expected
+since this phase touched no `src/`/`tests/` Python logic). Commit for Phase
+5 intentionally left to the orchestrator. Starting Phase 6 (Final
+cross-cutting verification) next.
 
 ### Blockers
 
@@ -478,6 +488,117 @@ None currently.
 
 Older entries (2026-08-18T11:15:00Z and earlier) are archived in
 [`history.md`](history.md).
+
+#### Update 2026-08-18T22:45:00Z
+
+- Completed: Phase 5 (Cross-cutting registration) — Tasks 5.1, 5.3, 5.4,
+  5.5, 5.6, 5.7, 5.8 (intentional gap at 5.2, folded into Task 3.1.1 earlier
+  in the plan). Read `server.py`, `pyproject.toml`'s
+  `[tool.setuptools.package-data]`, `.pre-commit-config.yaml`,
+  `.github/workflows/ci.yml`, and `AGENTS.md` in full first, per the
+  orchestrator's instructions, confirming the already-established fact
+  that `qa`'s MCP surface was already transitively registered (via
+  `commands/schema.py` importing `qa.models.v1`, which triggers
+  `qa/__init__.py`'s own `tools`/`resources`/`prompts` import) before this
+  phase started, so `docs/MCP.md`/`docs/GENERATED.md` needed no
+  regeneration here.
+  - **Task 5.1**: Changed `server.py`'s bottom import line to
+    `from . import adr, general, qa, req, tsk, uc  # noqa: E402, F401`
+    (alphabetical order). Updated the module docstring: added a
+    `specmgr://qa/schema`/`/example`/`/template`/`/list` resources block
+    (placed after the `tsk` block and before `specmgr://iso25010`, matching
+    the existing chronological-addition-order convention, not strict
+    alphabetical), a sentence extending the existing REQ/UC/TSK
+    no-`/{id}`-resource note to cover QA, a "QA tools (`qa/tools/`): ..."
+    line listing all 9 tools (placed after the Task list tools line, before
+    General tools), a "QA prompts (`qa/prompts/`): `create_qa`,
+    `update_qa`" line (after Task list prompts), and updated the "Modules
+    are grouped domain-first" paragraph's domain list
+    (`adr`, `uc`, `req`, `tsk`, `qa`, and later `ac`), its import-list
+    mention (`adr`/`general`/`qa`/`req`/`tsk`/`uc`, alphabetical), and its
+    closing sentence (`req`, `tsk`, and `qa` each register `tools`,
+    `resources`, and `prompts`; `uc` registers `tools` and `resources`
+    only).
+  - **Task 5.3**: Added `"biz.dfch.specmgr.qa" = ["data/*.md", "data/*.json"]`
+    to `pyproject.toml`'s `[tool.setuptools.package-data]`, placed
+    alphabetically among the domain packages (`qa` before `req`, `req`
+    before `tsk`, `tsk` before `uc`), with `general` kept last as the
+    existing convention already has it (not alphabetical -- `general`
+    would otherwise sort before `qa`/`req`/`tsk`/`uc`).
+  - **Task 5.4**: Widened the shared `files:` glob on all four existing
+    schema hooks (`specmgr-schema`, `specmgr-schema-req-package`,
+    `specmgr-schema-uc-package`, `specmgr-schema-tsk-package`) from
+    `^src/biz/dfch/specmgr/(req/models/v1|tsk/models/v1|uc/models/v2|models/md)/.*\.py$`
+    to
+    `^src/biz/dfch/specmgr/(qa/models/v1|req/models/v1|tsk/models/v1|uc/models/v2|models/md)/.*\.py$`
+    (alphabetical inside the group). Added a new `specmgr-schema-qa-package`
+    hook, a 1:1 mirror of `specmgr-schema-tsk-package`'s shape/wording
+    (`entry: uv run --frozen specmgr schema --type qa --output-dir src/biz/dfch/specmgr/qa/data`,
+    same widened glob).
+  - **Task 5.5**: Added two new CI steps to `.github/workflows/ci.yml`,
+    placed immediately after the existing
+    `src/biz/dfch/specmgr/tsk/data/tsk_schema.json` step and before the
+    `docs/coverage.svg` step: "Make sure `docs/qa_schema.json` is correct"
+    (bare `specmgr schema`, same `if: matrix.python-version == '3.13'`
+    guard and `::error::` failure-message pattern as the existing
+    `docs/req_schema.json`/`docs/uc_schema.json` steps) and "Make sure
+    `src/biz/dfch/specmgr/qa/data/qa_schema.json` is correct"
+    (`specmgr schema --type qa --output-dir src/biz/dfch/specmgr/qa/data`).
+  - **Task 5.6**: Updated `AGENTS.md`'s heading to "six domain/cross-cutting
+    packages implemented (ADR, REQ, UC, TSK, QA, general)" and its lead-in
+    sentence to "Five document-type domains plus one cross-cutting package".
+    Added a `qa/` bullet after the `tsk/` bullet (matching the existing
+    chronological-order convention the other bullets already use, not
+    alphabetical), mirroring REQ's/TSK's own bullet depth (tools list,
+    resources list, prompts list, no-`/{id}`-resource note citing ADR
+    ddfb1109-422d-4507-8dbc-dc5e4bec9614). Updated the "Still genuinely
+    missing" list: added `validate_qa` to the pre-commit/CI enforcement
+    bullet (for consistency -- `qa` has the identical gap REQ/UC/TSK
+    already have), added `delete_qa` to the stubs bullet, and added `qa` to
+    the tools/resources/prompts registration-summary bullet. Updated the
+    closing "don't assume any other domain package exists beyond..."
+    paragraph and, since it also enumerates all five prior domains and
+    would otherwise be factually wrong by omission, the "MCP server
+    (`server.py`)" section's own "imports every domain package (...)"
+    sentence -- the one specific case the hard-rule carve-out ("unless it
+    specifically enumerates the 5 domains and would now be factually wrong
+    by omitting `qa`") applies to; no other section was touched.
+  - **Task 5.7**: Ran `specmgr docs`, `specmgr mcp-docs`, `specmgr schema
+    --type qa`, and `specmgr schema --type qa --output-dir
+    src/biz/dfch/specmgr/qa/data`, each twice. First run: `specmgr docs`
+    regenerated only `docs/api/biz.dfch.specmgr.server.md` (the docstring
+    changes from Task 5.1); `specmgr mcp-docs` produced no `git diff` at
+    all (confirming the orchestrator's stated fact that `docs/MCP.md`
+    already reflected `qa`'s full surface from the Phase-4-era transitive
+    import); both `specmgr schema --type qa` invocations reported
+    `(unchanged)` since Task 3.1.1/4.4 already drafted both files
+    correctly. Second run of every command: identical `(unchanged)`
+    results and an identical `git diff --stat docs/` to the first run --
+    all four commands confirmed idempotent, no further drift introduced by
+    Task 5.1's docstring edit or Task 5.6's `AGENTS.md` edit (which
+    `specmgr docs`/`mcp-docs` don't even read, since `AGENTS.md` isn't a
+    `src/` docstring source).
+  - **Task 5.8**: Ran the full phase-end quality gate:
+    `uv run --frozen ruff format --check` (766 files already formatted),
+    `uv run --frozen ruff check` (all checks passed),
+    `uv run --frozen vulture src/ whitelist.py --min-confidence 60` (no
+    output, clean), and
+    `uv run --frozen python -m unittest discover -v -s tests -t . -p "test_*.py"`
+    (1144 tests, OK -- identical count to Phase 4's end, no regressions, as
+    expected since Phase 5 is pure cross-cutting registration/config with
+    no new `src/`/`tests/` Python logic). Left staging/committing to the
+    orchestrator per this session's instructions; working tree has the
+    edited `server.py`, `pyproject.toml`, `.pre-commit-config.yaml`,
+    `.github/workflows/ci.yml`, `AGENTS.md`, and the regenerated
+    `docs/api/biz.dfch.specmgr.server.md`, all unstaged.
+- Next: Phase 6 (Final cross-cutting verification) — Task 6.1.
+- Notes: `qa` is now identically wired into every cross-cutting mechanism
+  REQ/UC/TSK already have (server registration, packaging, pre-commit
+  schema hooks, CI schema-drift checks, `AGENTS.md`). Phase 6 is a
+  verification-only pass (walk ACC-001..006, run the full quality gate
+  including pylint-advisory/`specmgr docs`/`specmgr mcp-docs`/`specmgr
+  schema --type qa` end-to-end one more time) and setting the feature
+  status to `done` -- no new implementation is expected there.
 
 #### Update 2026-08-18T21:10:00Z
 
@@ -1145,6 +1266,34 @@ Older entries (2026-08-18T11:15:00Z and earlier) are archived in
   the task required (only "structurally complete" was mandated) -- this
   is incidental, not a design goal, since a real template's placeholder
   text is explicitly allowed to fail field-level validation.
+- **2026-08-18 (Phase 5)**: Placement choices left unpinned by the plan
+  text, resolved by following each file's own existing convention rather
+  than defaulting to strict alphabetical order everywhere:
+  `server.py`'s docstring resources/tools/prompts blocks for `qa` were
+  placed after the `tsk` blocks (chronological addition order, matching
+  how `req`/`uc`/`tsk` are already ordered relative to each other, not
+  alphabetically -- `uc` sorts after `req` there too); `AGENTS.md`'s new
+  `qa/` bullet was placed after the `tsk/` bullet for the same reason;
+  `pyproject.toml`'s new `"biz.dfch.specmgr.qa"` package-data entry, by
+  contrast, was placed alphabetically (`qa` before `req`/`tsk`/`uc`) since
+  that table's existing `req`/`tsk`/`uc` ordering already *is* alphabetical
+  (with `general` kept last regardless, as a cross-cutting non-domain
+  entry, not part of that ordering). `.pre-commit-config.yaml`'s widened
+  glob group and the new `specmgr-schema-qa-package` hook's own glob use
+  alphabetical order inside the parenthesized group
+  (`qa/models/v1|req/models/v1|tsk/models/v1|uc/models/v2|models/md`), per
+  the task's own explicit instruction. `.github/workflows/ci.yml`'s two new
+  `qa` steps were placed immediately after the existing `tsk` packaged-copy
+  step and before `docs/coverage.svg`, alongside the other doc-type schema
+  step pairs rather than at the end of the file, matching the task's
+  explicit placement instruction.
+- **2026-08-18 (Phase 5)**: `AGENTS.md`'s pre-commit/CI enforcement gap
+  bullet ("No `validate_adr` (or `validate_req`/.../`validate_tsk`) tool
+  runs...") was extended to also mention `validate_qa`, for consistency --
+  `qa` has the exact same gap (no pre-commit/CI hook runs `validate_qa`
+  over the repo's own `qa` documents) that REQ/UC/TSK already have listed
+  there, so omitting it would have been an inconsistent, arbitrary gap in
+  an otherwise now-six-domain-wide list.
 - **2026-08-18 (Task 4.5)**: `qa`'s tool/resource test suites have no
   `test_raises_validation_error_for_bad_field_value`-equivalent test (the
   one REQ's own `test_create_req.py`/`test_update_req.py`/

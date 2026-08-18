@@ -2,9 +2,9 @@
 
 Quick reference for OpenCode agents working on **biz.dfch.SpecMgr** — an artifact manager for system specifications.
 
-## Status: five domain/cross-cutting packages implemented (ADR, REQ, UC, TSK, general)
+## Status: six domain/cross-cutting packages implemented (ADR, REQ, UC, TSK, QA, general)
 
-Four document-type domains plus one cross-cutting package now exist, each
+Five document-type domains plus one cross-cutting package now exist, each
 following the domain-first layout from ADR
 ece4554b-725c-4f76-bc04-5d2b760363d2 ("Organize the codebase by
 document-type domain: domain-first hierarchy for tools/prompts/resources,
@@ -41,6 +41,15 @@ shared versioned models"):
   `implement_task` prompt (reads a task list via `get_tsk`, builds a
   `TodoWrite` list from its items, and uses the `question` tool to resolve
   ambiguity). Schema at `tsk/models/v1/`, inside the domain package.
+- **`qa/`** (Question and Answer) — same tools/resources/prompts shape as
+  `req/`/`tsk/` but for requirements-elicitation Q&A interviews (`create_qa`,
+  `update_qa`, `set_status_qa`, `parse_qa`, `get_qa`, `get_qa_example`,
+  `get_qa_template`, `delete_qa` stub, `validate_qa`); `qa/resources/`
+  (`specmgr://qa/list`, `specmgr://qa/schema`, `specmgr://qa/example`,
+  `specmgr://qa/template`; no `specmgr://qa/{id}` — id-based reads are
+  `get_qa`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614); `qa/prompts/`
+  (`create_qa`/`update_qa`). Its schema lives at `qa/models/v1/`, inside the
+  domain package itself, not under top-level `models/`.
 - **`general/`** — cross-cutting, non-domain-specific package:
   `general/tools/` (`mdformat`, formats a markdown file in place while
   preserving YAML frontmatter blocks) and `general/resources/`
@@ -67,14 +76,15 @@ it whenever you add/remove/rename a resource, tool, or prompt.
 mirror of that same registration and must never be hand-edited.
 
 Still genuinely missing / not yet done (don't assume otherwise):
-- No `validate_adr` (or `validate_req`/`validate_uc`/`validate_tsk`) tool
-  runs over the repo's own documents yet via pre-commit or CI. (ADR
-  9c687bb1-8ee7-41c8-84ec-07606356bc73: "Enforce doc generation/lint/tests
-  locally via pre-commit hook, not just CI")
-- `delete_req`/`delete_uc`/`delete_tsk` are stubs, not yet implemented.
+- No `validate_adr` (or `validate_req`/`validate_uc`/`validate_tsk`/
+  `validate_qa`) tool runs over the repo's own documents yet via pre-commit
+  or CI. (ADR 9c687bb1-8ee7-41c8-84ec-07606356bc73: "Enforce doc
+  generation/lint/tests locally via pre-commit hook, not just CI")
+- `delete_req`/`delete_uc`/`delete_tsk`/`delete_qa` are stubs, not yet
+  implemented.
 - No `ac` (Acceptance Criteria) domain exists yet, despite `server.py`'s
   docstring already reserving a spot for it ("... and later `ac`").
-- `req`/`tsk` each register `tools`, `resources`, and `prompts`; `uc`
+- `req`/`tsk`/`qa` each register `tools`, `resources`, and `prompts`; `uc`
   registers `tools` and `resources` only — it has no `prompts` sub-package
   yet.
 
@@ -82,7 +92,7 @@ Still genuinely missing / not yet done (don't assume otherwise):
 status for the ADR feature specifically and should be kept in sync with
 `src/` as this evolves; treat it as current-state tracking, not just a
 historical design doc. Don't assume any other domain package exists beyond
-`adr`/`general`/`req`/`tsk`/`uc` (with their respective
+`adr`/`general`/`qa`/`req`/`tsk`/`uc` (with their respective
 `tools`/`prompts`/`resources` sub-packages, per the exceptions noted
 above), or anything in `general/resources/` beyond `version`/`iso25010` —
 check first.
@@ -214,8 +224,8 @@ consumer of the base library.
 ## MCP server (`server.py`)
 
 - Builds the `MCPServer` instance (`mcp` object) and a no-op `_lifespan`,
-  then imports every domain package (`adr`, `general`, `req`, `tsk`, `uc`)
-  as its last line purely for the side effect of running their
+  then imports every domain package (`adr`, `general`, `qa`, `req`, `tsk`,
+  `uc`) as its last line purely for the side effect of running their
   `@mcp.tool()`/`@mcp.resource()`/`@mcp.prompt()` decorators. When adding a
   new domain, add its import to that same last line — forgetting it means
   the new tools/resources/prompts silently never register.
