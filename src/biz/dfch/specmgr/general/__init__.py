@@ -15,25 +15,30 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""General-purpose (cross-cutting, not domain-specific) tools and resources.
+"""General-purpose (cross-cutting, not domain-specific) tools, resources, and
+prompts.
 
-This package provides tools and resources that apply to any markdown file in
-the system, regardless of document type (ADR, use case, etc.), or that are not
-specific to any single document domain at all (e.g. the server version).
-It complements the domain-specific packages (``adr``, ``req``, ``uc``).
+This package provides tools, resources, and prompts that apply to any markdown
+file in the system, regardless of document type (ADR, use case, etc.), or that
+are not specific to any single document domain at all (e.g. the server
+version). It complements the domain-specific packages (``adr``, ``req``,
+``uc``).
 
 ``tools`` (e.g. ``mdformat``, ``webfetch``) operate on raw markdown files or
 external URLs and are registered as ``@mcp.tool()`` functions. ``resources``
 (e.g. ``version``, ``iso25010``) are registered as ``@mcp.resource()``
-functions. Import this package to register all general tools and resources
-against the shared ``mcp`` application instance at once::
+functions. ``prompts`` (e.g. ``compact_history``) return instructional text
+and are registered as ``@mcp.prompt()`` functions. Import this package to
+register all general tools, resources, and prompts against the shared ``mcp``
+application instance at once::
 
     from biz.dfch.specmgr import general  # noqa: F401 (side-effects only)
 """
 
-from . import resources, tools  # noqa: F401
+from . import prompts, resources, tools  # noqa: F401
 
 __all__ = [
+    "prompts",
     "resources",
     "tools",
 ]

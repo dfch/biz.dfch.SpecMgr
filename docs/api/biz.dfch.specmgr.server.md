@@ -91,6 +91,10 @@ QA prompts (``qa/prompts/``): ``create_qa``, ``update_qa``, plus ``refine`` --
 appends a fresh batch of unanswered interview questions (each with an empty
 `_(awaiting response)_` placeholder) to an existing QA document, for one or
 more of the nine ISO/IEC 25010:2023 quality characteristics.
+General prompts (``general/prompts/``): ``compact_history`` -- guides rotating
+older ``### Recent Updates`` entries out of any `.specmgr` feature folder's
+``README.md`` into an optional sibling ``history.md``, per ADR
+e369ee2e-3353-4f92-991c-6367d76d832e.
 
 Modules are grouped domain-first
 (ADR ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by
@@ -98,15 +102,16 @@ document-type domain"): each document
 domain (``adr``, ``uc``, ``req``, ``tsk``, ``qa``, and later ``ac``) is a top-level package
 with its own ``tools``/``prompts``/``resources`` sub-packages, self-
 registered via the domain package's own ``__init__.py``. Cross-cutting, non-domain-specific
-tools/resources (e.g. ``specmgr://version``/``specmgr://iso25010`` resources
-or the ``mdformat`` tool) stay under the top-level ``general`` package
-instead (``general.tools``/``general.resources``). Add a new domain by
+tools/resources/prompts (e.g. ``specmgr://version``/``specmgr://iso25010`` resources,
+the ``mdformat`` tool, or the ``compact_history`` prompt) stay under the top-level
+``general`` package instead (``general.tools``/``general.resources``/``general.prompts``).
+Add a new domain by
 creating its top-level package and importing it at the bottom of this
 module, next to the existing ``adr``/``general``/``qa``/``req``/``tsk``/``uc``
 imports, so its ``@mcp.tool()`` / ``@mcp.prompt()`` / ``@mcp.resource()``
 decorators actually run. ``req``, ``tsk``, and ``qa`` each register ``tools``,
-``resources``, and ``prompts``; ``uc`` registers ``tools`` and ``resources``
--- it has no ``prompts`` sub-package yet.
+``resources``, and ``prompts``; ``general`` now also registers all three; ``uc``
+registers ``tools`` and ``resources`` only -- it has no ``prompts`` sub-package yet.
 
 ## Functions
 

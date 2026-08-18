@@ -137,6 +137,7 @@ progresses (edit, don't duplicate).
   (`feat-0-doc-in-specmgr`) and rename the folder →
   `feat-9-doc-in-specmgr`, updating the frontmatter `id` to match —
   depends on: none — status: done (2026-08-15)
+
 - [x] Task 0.4: Fix all ~20 live cross-references to the old
   `feat-0-doc-in-specmgr` path across `AGENTS.md`, source docstrings
   (`server.py`, `adr/prompts/*.py`, `models/adr/__init__.py`,
@@ -147,11 +148,13 @@ progresses (edit, don't duplicate).
   transcript (`feat-9-doc-in-specmgr/history/session-ses_038f-adr-tool-plan.md`)
   since historical logs are point-in-time records, not live docs — depends
   on: Task 0.3 — status: done (2026-08-15)
+
 - [x] Task 0.5: Regenerate `docs/api/` and `docs/GENERATED.md` via
   `uv run --frozen specmgr docs` (Python 3.13) to pick up the renamed
   path, then verify with `ruff format --check`, `ruff check`, and the full
   `unittest` suite (771 tests, all passing) — depends on: Task 0.4 —
   status: done (2026-08-15)
+
 - [ ] Task 0.6: Review whether repeatedly referencing
   `.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md` (and its section
   numbers) inline in source docstrings (`server.py`, `adr/prompts/*.py`,
@@ -163,6 +166,7 @@ progresses (edit, don't duplicate).
   most, or drop path+section references from docstrings entirely in
   favor of the plan file itself being the single source of truth) and
   apply it — depends on: Task 0.4 — status: not-started
+
 - [ ] Task 0.7: Update ADR 23a14195-339c-48af-99d2-97c9964041ae ("Use ISO
   8601 for all dates and times") to require timezone information on every
   timestamp — either an explicit offset (`±HHMM`) or `Z` for UTC — rather
@@ -170,10 +174,12 @@ progresses (edit, don't duplicate).
   "Standard Format (Non-Filename Contexts)" section only shows `±HHMM` as
   an example under "With timezone" without mandating it — depends on: none
   — status: not-started
+
 - [x] Task 0.8: Create a new `general` MCP resource that returns the main
   characteristics of ISO/IEC 25010:2023 (system/software quality model). Use this as input: `.specmgr/feat/feat-7-various-improvements/product-quality-model.md`. Name of resource: `iso25010`. Location: `src/general/resources`.
   with a description for each — depends on: none — status: done (2026-08-16,
   all 9 sub-tasks 0.8.1 through 0.8.9 complete)
+
   - [x] Task 0.8.1: Rewrite `product-quality-model.md`'s content into a new
     packaged data file, `general/data/general_iso25010.md` — drop each
     characteristic heading's leading `N. ` numbering (e.g. `## Functional Suitability`, not `## 1. Functional Suitability`; list order alone
@@ -246,6 +252,7 @@ progresses (edit, don't duplicate).
   - [x] Task 0.8.9: Update this feature's own Decisions Made / Recent
     Updates logs and mark Task 0.8 (and this sub-list) done — depends
     on: Task 0.8.1 through Task 0.8.8 — status: done (2026-08-16)
+
 - [x] Task 0.9: Add an id-based `get_req` MCP **tool** (not just the
   existing `specmgr://req/{id}` resource) — reason: in practice, LLMs and
   agents fail to reliably use `specmgr://req/{id}` (a resource, not a
@@ -256,6 +263,7 @@ progresses (edit, don't duplicate).
   a resource only"); may also need the equivalent look at `get_adr` (which
   already exists as a tool, unlike REQ) and any future `uc`/`get_uc` for
   consistency — depends on: none — status: done (2026-08-15)
+
   - [x] Task 0.9.1: Write a new ADR recording the decision: add a `get_req`
     tool mirroring `get_adr`; remove `specmgr://req/{id}` (`req_get`)
     entirely so REQ is tool-only for id-based reads; explicitly leave
@@ -306,16 +314,20 @@ progresses (edit, don't duplicate).
     `vulture src/ whitelist.py --min-confidence 60` (catches the removed
     `req_get` file), and the full `unittest` suite — depends on: Task 0.9.2
     through Task 0.9.9 — status: done (2026-08-15)
+
 - [x] Task 0.10: Create a new `general` MCP resource that returns the RFC
   2119\. This is an ad interim solution until we have a filter option in
   ASD-STE100 MCP by source. — depends on: none — status: cancelled
+
 - [x] Task 0.11: Add CLI command "mdformat". This command formats a Markdown
   document with or without frontmatter in the same way that the MCP server
   formats documents when it reads and write artifacts (example: it uses
   numbering for ordered lists). This command does not perform a content
   validation — depends on: none — status: done (2026-08-16)
+
 - [x] Task 0.12: Move src/resources to src/general/resources. Update refs to
   it — depends on: none — status: done (2026-08-16)
+
 - [x] Task 0.13: Make the not-found error message easier to understand for
   `get_<type>` tools (`get_adr`, `get_req`, `get_uc`, `get_tsk`) — agents
   frequently pass a prefixed id (e.g. `"req-<uuid>"`) instead of the bare
@@ -343,6 +355,7 @@ progresses (edit, don't duplicate).
   `test_get_<type>.py`; verified clean via `ruff format --check`/
   `ruff check`/`vulture src/ whitelist.py --min-confidence 60`/full
   `unittest` suite
+
 - [x] Task 0.14: MCP tool: WebFetch with BearerToken and URL filter — a
   general, cross-cutting `webfetch` MCP tool for a Web Server
   instance (generic bearer-authenticated GET fetch, URL-filtered against a
@@ -352,25 +365,26 @@ progresses (edit, don't duplicate).
   (Bearer-Authenticated, URL-Filtered Fetch for Web Server)") — retrieve it
   via the `get_tsk` MCP tool with id `efb7d049-a222-4730-901f-6d57283b387c`
   — depends on: none — status: done (2026-08-16)
+
 - [ ] Task 0.15: MCP tools `<domain>_list` must support paging — depends on: none — status: not-started
 
-    we have to discuss the design first, before we can implement
+  we have to discuss the design first, before we can implement
 
 - [ ] Task 0.16: MCP tools `<domain>_list` must support filtering — depends on: none — status: not-started
 
-     we have to discuss the design first, before we can implement
+  we have to discuss the design first, before we can implement
 
 - [x] Task 0.17: Add a `MarkdownListItemWithNotes` class to `markdown_list_item.py` that introduces a `notes: list[MarkdownParagraph] | None = None` field for captured continuation paragraphs inside list items — depends on: none — status: completed
 
-    Background: `MarkdownListItem._value` correctly captures the full markdown content of each item (including indented continuation paragraphs after a blank line), but `_value` is a Pydantic private attribute so it does not appear in `model_dump()` / MCP JSON output. `ExtensionItem` solves this with an explicit `notes` field; REQ's `Characteristics.items` has no such field, so the `text` property only returns the leading-paragraph text and everything after the first blank line is dropped on serialization. The new base class adds `notes` to all list-item consumers (REQ characteristics, UC extensions, task lists, etc.) — items with no continuation paragraphs will serialize with `"notes": null` or a missing key; items with continuation paragraphs will carry the captured paragraphs in JSON.
-    
-    Full implementation plan: specmgr TSK `f581fb2f-9a82-11f1-9c57-fc4cea71c519`.
+  Background: `MarkdownListItem._value` correctly captures the full markdown content of each item (including indented continuation paragraphs after a blank line), but `_value` is a Pydantic private attribute so it does not appear in `model_dump()` / MCP JSON output. `ExtensionItem` solves this with an explicit `notes` field; REQ's `Characteristics.items` has no such field, so the `text` property only returns the leading-paragraph text and everything after the first blank line is dropped on serialization. The new base class adds `notes` to all list-item consumers (REQ characteristics, UC extensions, task lists, etc.) — items with no continuation paragraphs will serialize with `"notes": null` or a missing key; items with continuation paragraphs will carry the captured paragraphs in JSON.
+
+  Full implementation plan: specmgr TSK `f581fb2f-9a82-11f1-9c57-fc4cea71c519`.
 
 - [x] Task 0.18: Fix `MarkdownListItem.get_extent` for numbered lists — depends on: Task 0.17 — status: completed
 
-    Background: `mdformat` renders loose numbered lists (`1.`, `2.`) differently from bullet lists (`-`): the `list_item_open` token's `.map` only spans the first paragraph, leaving continuation paragraphs as separate tokens outside the list item. This breaks `get_extent` for numbered lists with continuation paragraphs (e.g. REQ's `Characteristics` section). The fix detects single-item ordered lists (where `ordered_list_open.map[1] == list_item_open.map[1]`) and scans for trailing `paragraph_open` tokens after `ordered_list_close` but before the next `ordered_list_open`, extending the extent accordingly.
+  Background: `mdformat` renders loose numbered lists (`1.`, `2.`) differently from bullet lists (`-`): the `list_item_open` token's `.map` only spans the first paragraph, leaving continuation paragraphs as separate tokens outside the list item. This breaks `get_extent` for numbered lists with continuation paragraphs (e.g. REQ's `Characteristics` section). The fix detects single-item ordered lists (where `ordered_list_open.map[1] == list_item_open.map[1]`) and scans for trailing `paragraph_open` tokens after `ordered_list_close` but before the next `ordered_list_open`, extending the extent accordingly.
 
-    Full implementation plan: specmgr TSK `602740af-0445-48d8-bcc3-18df541dad72`.
+  Full implementation plan: specmgr TSK `602740af-0445-48d8-bcc3-18df541dad72`.
 
 - [x] Task 0.19: Add a new `refine` QA prompt (`qa/prompts/refine.py`) that
   appends a batch of new, unanswered interview questions to an existing QA
@@ -385,6 +399,7 @@ progresses (edit, don't duplicate).
   command next. Registered in `qa/prompts/__init__.py` and `server.py`'s
   module docstring; 12 tests added in `tests/qa/prompts/test_refine.py` —
   depends on: none — status: done (2026-08-18)
+
   - [x] Task 0.19.1: Retrofit `refine`'s instructional text out of an
     inline `_INSTRUCTIONS_TEMPLATE` Python string (this codebase's
     universal convention for all 11 other prompt modules at the time) and
@@ -410,6 +425,7 @@ progresses (edit, don't duplicate).
     `ruff format --check`/`ruff check` (clean), `vulture src/ whitelist.py --min-confidence 60` (clean), and the full `unittest` suite — depends
     on: Task 0.19.1 — status: done (2026-08-18, 1158 tests, all passing,
     up from 1156)
+
 - [x] Task 0.20: Apply the packaged-instructions-file pattern established
   by Task 0.19.1 to every remaining inline `_INSTRUCTIONS_TEMPLATE` prompt
   module in the codebase: `adr/prompts/create_adr.py`,
@@ -423,6 +439,7 @@ progresses (edit, don't duplicate).
   `string.Template` needs none. Extend/add each module's test file with
   the same fresh-read/missing-file coverage `refine`'s Task 0.19.1 got —
   depends on: Task 0.19 — status: done (2026-08-18)
+
   - [x] Task 0.20.1 (ADR): `create_adr.py`/`create_adr_test.py`/
     `update_adr.py`/`update_adr_test.py` converted; new `adr/data/`
     package created (didn't exist before) with `adr_create_instructions.md`
@@ -451,11 +468,11 @@ progresses (edit, don't duplicate).
     `qa/data/` — depends on: Task 0.19 — status: done (2026-08-18)
   - [x] Task 0.20.5: Regenerated `docs/api/`/`docs/GENERATED.md`
     (`specmgr docs`) and `docs/MCP.md` (`specmgr mcp-docs`); verified
-    `ruff format --check`/`ruff check` (clean), `vulture src/ whitelist.py
-    --min-confidence 60` (clean), and the full `unittest` suite — depends
+    `ruff format --check`/`ruff check` (clean), `vulture src/ whitelist.py --min-confidence 60` (clean), and the full `unittest` suite — depends
     on: Task 0.20.1, Task 0.20.2, Task 0.20.3, Task 0.20.4 — status: done
     (2026-08-18, 1180 tests, all passing, up from 1158)
-- [ ] Task 0.21: Create a new, general-purpose MCP `@mcp.prompt()` (e.g.
+
+- [x] Task 0.21: Create a new, general-purpose MCP `@mcp.prompt()` (e.g.
   `general/prompts/compact_history.py`, prompt name `compact_history` —
   `general/` currently has `tools`/`resources` but no `prompts`
   sub-package yet, so this also stands up that new sub-package and its
@@ -475,14 +492,62 @@ progresses (edit, don't duplicate).
   trigger/cutoff (entry count, age, line count, ...) is left for the
   prompt's instructions to ask the user about when ambiguous, per the
   ADR's own "Open Questions" note that this is deliberately not
-  prescribed. Running it against this feature folder (890+ lines, no
-  `history.md` yet) is the first real use case, but the prompt itself
-  must not be specific to `feat-7-various-improvements` — depends on:
-  none — status: not-started
+  prescribed. This feature folder's own `Recent Updates` was already
+  manually compacted (2026-08-18, ahead of this task), so no live demo
+  run against it is planned here — coverage is unit tests only, using
+  fixtures rather than re-running the prompt against this folder — but
+  the prompt itself must not be specific to `feat-7-various-improvements`
+  — depends on: none — status: done (2026-08-18), all 5 sub-tasks
+  complete: 1192 tests, all passing, up from 1180
+
+  - [x] Task 0.21.1: Add `general/prompts/__init__.py` and
+    `general/prompts/compact_history.py`
+    (`@mcp.prompt(name="compact_history")`, params `feature_id: str` and
+    optional `cutoff_hint: str | None`), following the `refine` reference
+    pattern exactly: instructional text lives in a packaged data file,
+    `general/data/general_compact_history_instructions.md`, loaded via
+    `read_packaged_text("general", "compact_history_instructions", "md")`
+    - `string.Template` (`$feature_id`/`$cutoff_hint`). The instructions
+      must: locate `.specmgr/feat/$feature_id/README.md` (and sibling
+      `history.md` if present) via the LLM's own file tools; ask the user
+      via the `question` tool for the rotation cutoff when `$cutoff_hint`
+      is absent/ambiguous rather than guessing; move older `Recent Updates`
+      entries verbatim into `history.md` (creating it if absent), preserve
+      remaining entries and the `README.md` pointer line convention exactly
+      as already used in this file; bump frontmatter `updated`; and verify
+      every archived entry appears exactly once in `history.md` and nowhere
+      else, mirroring the manual pass already performed on this folder —
+      depends on: none — status: done (2026-08-18)
+  - [x] Task 0.21.2: Register `compact_history` in
+    `general/prompts/__init__.py`; add `prompts` to
+    `general/__init__.py`'s imports/`__all__`/docstring; update
+    `server.py`'s module docstring (`Prompts` section: add a "General
+    prompts" line; package-shape paragraph: note `general` now also has a
+    `prompts` sub-package) — depends on: Task 0.21.1 — status: done
+    (2026-08-18)
+  - [x] Task 0.21.3: Add `tests/general/prompts/__init__.py` and
+    `tests/general/prompts/test_compact_history.py`, mirroring
+    `tests/qa/prompts/test_refine.py`'s shape: parameter interpolation
+    checks, key-instruction content checks (question tool, history.md,
+    pointer line, frontmatter `updated`), plus the
+    fresh-read-per-call/missing-file `FileNotFoundError` pair via
+    `mock.patch.object(_packaged_data, "packaged_data_path", ...)` — no
+    live run against this feature folder itself (already compacted) —
+    depends on: Task 0.21.1 — status: done (2026-08-18, 12 tests added)
+  - [x] Task 0.21.4: Regenerate `docs/api/`/`docs/GENERATED.md`
+    (`specmgr docs`) and `docs/MCP.md` (`specmgr mcp-docs`), Python 3.13;
+    verify `ruff format --check`/`ruff check` (clean),
+    `vulture src/ whitelist.py --min-confidence 60` (clean), and the full
+    `unittest` suite — depends on: Task 0.21.1, Task 0.21.2, Task 0.21.3
+    — status: done (2026-08-18, 1192 tests, all passing, up from 1180)
+  - [x] Task 0.21.5: Update this feature's own Decisions Made / Recent
+    Updates logs and mark Task 0.21 (and this sub-list) done — depends
+    on: Task 0.21.1 through Task 0.21.4 — status: done (2026-08-18)
 
 - [ ] Task 1.1: Inventory current `specmgr://*/list` resources and diff
   their output shape/behavior (`adr_list` vs. `req_list`) — depends on:
   none — status: not-started
+
 - [ ] Task 1.2: Inventory current MCP prompt modules and their
   structure/length/gating style (`create_adr`, `update_adr`,
   `create_adr_test`, `update_adr_test`, `create_req`, `update_req`) —
@@ -579,10 +644,16 @@ before. This feature folder's own `Recent Updates` section was also
 compacted (manually, ahead of Task 0.21): entries older than 2026-08-18
 now live in a sibling `history.md`, per ADR
 e369ee2e-3353-4f92-991c-6367d76d832e. Task 0.21 (a new, general-purpose
-`compact_history` MCP prompt — the first prompt under `general/`, which
-currently has no `prompts` sub-package — that would automate that same
-compaction for *any* feature folder's `README.md`, rather than the manual
-pass just performed) is not started yet.
+`compact_history` MCP prompt, all 5 sub-tasks) is now complete: `general/`
+gained its first `prompts` sub-package (`general/prompts/`), registered
+alongside its existing `tools`/`resources` in `general/__init__.py` and
+`server.py`'s module docstring; the prompt guides an LLM through rotating
+older `### Recent Updates` entries out of any `.specmgr` feature folder's
+`README.md` into an optional sibling `history.md`, using the LLM's own
+file tools directly (no dedicated specmgr tool exists for feature
+folders) and the `question` tool to resolve an ambiguous rotation cutoff.
+Covered by 12 new unit tests (fixtures only, no live re-run against this
+already-compacted folder).
 
 ### Recent Updates
 
@@ -591,12 +662,54 @@ e369ee2e-3353-4f92-991c-6367d76d832e once this section grew too long).
 
 #### 2026-08-18
 
+- Completed: Task 0.21 (new `compact_history` MCP prompt), all 5
+  sub-tasks:
+
+  - Added `general/prompts/__init__.py` and
+    `general/prompts/compact_history.py`
+    (`@mcp.prompt(name="compact_history")`, params `feature_id: str` and
+    optional `cutoff_hint: str | None`), the first prompt under `general/`
+    (which previously had `tools`/`resources` only). Instructional text
+    lives in a new packaged data file,
+    `general/data/general_compact_history_instructions.md`, loaded via
+    `read_packaged_text("general", "compact_history_instructions", "md")`
+    - `string.Template` (`$feature_id`/`$cutoff_hint`), following the
+      `refine` reference pattern exactly.
+  - The instructions guide the LLM through: locating
+    `.specmgr/feat/<feature_id>/README.md` (and sibling `history.md` if
+    present) via its own file tools (no dedicated specmgr tool exists for
+    feature folders); asking the user via the `question` tool for the
+    rotation cutoff when ambiguous; moving older `#### YYYY-MM-DD` entries
+    verbatim into `history.md` (creating it if absent); updating the
+    `README.md` pointer line (`See \`history.md\` for updates before
+    YYYY-MM-DD.`); bumping frontmatter `updated`; and verifying each moved entry appears exactly once in `history.md\` and nowhere else.
+  - Registered `compact_history` in `general/__init__.py`'s
+    imports/`__all__`/docstring and `server.py`'s module docstring
+    (`Prompts` section plus the package-shape paragraph, now noting
+    `general` registers `tools`/`resources`/`prompts` like `req`/`tsk`/
+    `qa`).
+  - Added `tests/general/prompts/test_compact_history.py` (12 tests),
+    mirroring `tests/qa/prompts/test_refine.py`'s shape: parameter
+    interpolation, key-instruction content checks, and the
+    fresh-read-per-call/missing-file `FileNotFoundError` pair via
+    `mock.patch.object(_packaged_data, "packaged_data_path", ...)`. No
+    live run against this feature folder itself, since it was already
+    manually compacted on 2026-08-18 ahead of this task — there was
+    nothing left to rotate.
+  - Regenerated `docs/api/`/`docs/GENERATED.md`/`docs/MCP.md`; verified
+    `ruff format --check`/`ruff check`/
+    `vulture src/ whitelist.py --min-confidence 60` (all clean) and the
+    full `unittest` suite (1192 tests, all passing, up from 1180).
+
 - Completed: Task 0.18 (Fix `MarkdownListItem.get_extent` for numbered lists), TSK `602740af-0445-48d8-bcc3-18df541dad72`:
+
   - Fixed `MarkdownListItem.get_extent` in `markdown_list_item.py` to correctly handle continuation paragraphs in loose numbered lists by detecting single-item ordered lists (where `ordered_list_open.map[1] == list_item_open.map[1]`) and scanning for `paragraph_open` tokens between `ordered_list_close` and the next `ordered_list_open`.
   - Added 6 new test cases to `tests/models/md/test_markdown_list_item_with_notes.py` covering tight/loose numbered items with 0-2 continuation paragraphs (parsing verification; loose numbered lists don't round-trip byte-exact due to mdformat stripping indentation — documented as accepted limitation).
   - Verified REQ domain integration: `tests/req/tools/test_get_req.py::test_returns_matching_document` passes with original fixture containing numbered list with continuation paragraph.
   - All 1013 tests pass; `ruff format --check`, `ruff check`, `vulture` clean; no regressions in REQ/UC/TSK domains.
+
 - Completed: Task 0.19 (new `refine` QA prompt), both sub-tasks:
+
   - Added `qa/prompts/refine.py` (`@mcp.prompt(name="refine")`): appends a
     requested count of new, unanswered `> {question}` /
     `_(awaiting response)_` Q&A pairs to one or more of the nine ISO/IEC
@@ -630,6 +743,7 @@ e369ee2e-3353-4f92-991c-6367d76d832e once this section grew too long).
   - Added Task 0.20 (not started) to track applying this same
     packaged-instructions-file pattern to the remaining 11 prompt modules
     across `adr`/`req`/`tsk`/`qa`.
+
 - Completed: Compacted this file's own `Recent Updates` history ahead of
   Task 0.21 (manually, since the `compact_history` prompt it will add
   doesn't exist yet): moved the 2026-08-17/2026-08-16/2026-08-15 entries
@@ -639,10 +753,12 @@ e369ee2e-3353-4f92-991c-6367d76d832e once this section grew too long).
   every archived entry appears exactly once in `history.md` and nowhere
   in this file (grep spot-checks on unique fragments); `README.md` shrank
   from 923 to 654 lines.
+
 - Completed: Task 0.20 (packaged-instructions-file retrofit for the
   remaining 11 prompt modules), all five sub-tasks, delegated as four
   parallel per-domain batches (ADR/REQ/TSK/QA) each following the
   `refine`/`qa_refine_instructions.md` reference pattern exactly:
+
   - Task 0.20.1 (ADR): converted `create_adr`/`create_adr_test`/
     `update_adr`/`update_adr_test`; created a brand-new `adr/data/`
     package (ADR previously had none, since its schema lives at
@@ -719,6 +835,19 @@ e369ee2e-3353-4f92-991c-6367d76d832e once this section grew too long).
   and follows existing conventions (`_paths.py`-style env-var handling,
   typed exceptions, `general/` for cross-cutting tools) rather than
   inventing new ones.
+- **2026-08-18**: For Task 0.21's `compact_history` prompt: it operates
+  purely via the LLM's own file read/edit/write tools directly on
+  `README.md`/`history.md`, not through any new specmgr tool, since
+  feature folders (unlike ADR/REQ/UC/TSK/QA) have no dedicated
+  parser/get/update MCP tool of their own and adding one was judged out
+  of scope for this task; the exact rotation trigger/cutoff is resolved
+  at prompt-run time via the `question` tool (per ADR
+  e369ee2e-3353-4f92-991c-6367d76d832e's own "Open Questions" note that
+  this is deliberately not prescribed), not hardcoded into the prompt.
+  Verification for this task is unit tests only (fixtures), not a live
+  re-run against this feature folder, since its own `Recent Updates` was
+  already manually compacted on 2026-08-18 ahead of this task and there
+  was nothing left to rotate.
 
 ### Related PRs / Commits
 

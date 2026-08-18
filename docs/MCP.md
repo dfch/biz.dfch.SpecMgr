@@ -3,7 +3,7 @@
 Auto-generated from the live `biz.dfch.specmgr.server:mcp` registration --
 do not edit by hand, run `specmgr mcp-docs` instead (see `AGENTS.md`).
 
-19 resource(s), 1 resource template(s), 49 tool(s), 12 prompt(s).
+19 resource(s), 1 resource template(s), 49 tool(s), 13 prompt(s).
 
 ## Table of Contents
 
@@ -722,6 +722,7 @@ Fetch a URL over HTTP GET with a bearer token, but only if the URL matches the c
 
 | Name | Description |
 | --- | --- |
+| [`compact_history`](#prompt-compact_history) | Guides the LLM through rotating older 'Recent Updates' entries out of a .specmgr feature folder's README.md and into an optional sibling history.md, leaving a pointer line behind, per ADR e369ee2e-3353-4f92-991c-6367d76d832e. |
 | [`create_adr`](#prompt-create_adr) | Guides the LLM through checking for an existing similar ADR, gathering the required information, and driving create_adr/option_create/set_status/validate_adr to author a new MADR-4.0.0-based Architecture Decision Record. |
 | [`create_adr_test`](#prompt-create_adr_test) | Experimental, strictly step-gated variant of create_adr for A/B comparison: the same MADR-4.0.0 structure and create_adr/option_create/set_status/validate_adr tool sequence, rewritten as hard numbered gates instead of narrated steps. |
 | [`create_qa`](#prompt-create_qa) | Guides the LLM through checking for an existing similar QA document, gathering answers to ISO/IEC 25010:2023 characteristic-relevant questions, and driving create_qa/validate_qa to author a new QA document. |
@@ -734,6 +735,15 @@ Fetch a URL over HTTP GET with a bearer token, but only if the URL matches the c
 | [`update_qa`](#prompt-update_qa) | Guides the LLM through revising an existing QA document by id: reading current state, applying the requested change with the right tool, and validating. |
 | [`update_req`](#prompt-update_req) | Guides the LLM through revising an existing requirement by id: reading current state, applying the requested change with the right tool, and validating. |
 | [`update_task`](#prompt-update_task) | Guides the LLM through revising an existing task list by id: reading current state, applying the requested change with the right tool, and validating. |
+
+### Prompt: compact_history
+
+Guides the LLM through rotating older 'Recent Updates' entries out of a .specmgr feature folder's README.md and into an optional sibling history.md, leaving a pointer line behind, per ADR e369ee2e-3353-4f92-991c-6367d76d832e.
+
+| Argument | Required | Description |
+| --- | --- | --- |
+| `feature_id` | Yes |  |
+| `cutoff_hint` | No |  |
 
 ### Prompt: create_adr
 

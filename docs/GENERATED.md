@@ -59,7 +59,9 @@ First-line docstrings from each module, organized by domain:
 
 **general/**
 
-- `general/__init__.py` — General-purpose (cross-cutting, not domain-specific) tools and resources.
+- `general/__init__.py` — General-purpose (cross-cutting, not domain-specific) tools, resources, and
+- `general/prompts/__init__.py` — MCP prompt registrations that are not specific to any single document
+- `general/prompts/compact_history.py` — ``@mcp.prompt()``: compact_history (Various improvements, Task 0.21).
 - `general/resources/__init__.py` — MCP resource registrations that are not specific to any single document
 - `general/resources/iso25010.py` — Resource: specmgr://iso25010 (Task 0.8.3).
 - `general/resources/version.py` — Resource: specmgr://version — MCP server package version number.
@@ -264,4 +266,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 176
+**Test files**: 177
