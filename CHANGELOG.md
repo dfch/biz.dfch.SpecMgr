@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-08-18
+
+### Fixed
+
+- **`md` models**: `MarkdownListItem.get_extent()` now correctly handles
+  continuation paragraphs in loose numbered lists (e.g., "1. Safety\n\n  Details...").
+  Previously, mdformat rendered numbered lists differently from bullet lists,
+  causing `get_extent()` to only capture the first paragraph and leave
+  continuation paragraphs unparsed. The model's `Characteristics.Items` also
+  changed from `MarkdownListItemWithNotes` back to plain `MarkdownListItem`
+  per domain decision.
+
 ## [0.5.0] - 2026-08-16
 
 ### Added
