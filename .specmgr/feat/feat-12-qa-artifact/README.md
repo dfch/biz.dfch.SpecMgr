@@ -283,32 +283,33 @@ the first time.
 Standalone, reusable addition to the shared engine; `qa` is its first real
 consumer but not the motivating point on its own.
 
-- [ ] Task 1.1: Change `@markdown(...)` to merge into any inherited
+- [x] Task 1.1: Change `@markdown(...)` to merge into any inherited
   `_metadata` rather than fully replacing it — depends on: none — status:
-  not-started.
+  done.
 
-- [ ] Task 1.2: Add `end_marker: type[MarkdownStr] | None = None` parameter
-  to `@markdown` — depends on: Task 1.1 — status: not-started.
+- [x] Task 1.2: Add `end_marker: type[MarkdownStr] | None = None` parameter
+  to `@markdown` — depends on: Task 1.1 — status: done.
 
-- [ ] Task 1.3: `MarkdownSection.get_extent` — add a depth-aware (via
+- [x] Task 1.3: `MarkdownSection.get_extent` — add a depth-aware (via
   `Token.nesting`) stop condition for `cls._metadata.get("end_marker")`'s
   `type`/`tag`, alongside the existing heading-level check; only a depth-0
-  occurrence stops the scan — depends on: Task 1.2 — status: not-started.
+  occurrence stops the scan — depends on: Task 1.2 — status: done.
 
   Note on "depth-0": A real correctness nuance for Phase 1's depth-aware end_marker check. `Token.nesting` itself is already used across `models/md` (see Design Notes), so the primitive is not new — the new part is applying it as a depth counter inside `get_extent`'s stop scan. The plan says "depth-0 occurrence" via Token.nesting, which is correct in principle, but it's worth being explicit now: the depth counter must track every nesting open/close pair in the token stream (list items, other block quotes, etc.), not just the end_marker type's own open/close tokens. Otherwise, e.g., a bullet list legitimately nested inside requirement's own body would throw off the depth count, and a block quote appearing after it could be misjudged as depth-0 when it's actually still nested one level deep — or vice versa. This is exactly the kind of easy-to-get-subtly-wrong logic Task 1.4's edge-case test needs to specifically exercise (a nested list and a nested block quote both inside requirement's own valid content, not just one or the other).
 
-- [ ] Task 1.4: Unit tests — merge-semantics regression (all existing
+- [x] Task 1.4: Unit tests — merge-semantics regression (all existing
   `models/md` classes unaffected), new `end_marker` stop behavior, and the
   nested/legitimate-occurrence edge case (an end-marker-type token
   appearing one level deeper inside otherwise-valid content must not
-  truncate) — depends on: Task 1.3 — status: not-started.
+  truncate) — depends on: Task 1.3 — status: done.
 
-- [ ] Task 1.5: Phase-end quality gate — run the full pre-commit/quality
+- [x] Task 1.5: Phase-end quality gate — run the full pre-commit/quality
   gate (ruff format/check, vulture, full `unittest` suite covering Task
   1.4's new tests plus the full existing suite for regressions); update
   this README's Progress section (Current Status, a dated Recent Updates
   entry, Decisions Made if applicable); commit as one Conventional Commit
-  — depends on: Task 1.4 — status: not-started.
+  — depends on: Task 1.4 — status: done (commit itself left to the
+  orchestrator, per this session's instructions).
 
 #### Phase 2: Specification
 
@@ -435,9 +436,14 @@ consumer but not the motivating point on its own.
 
 ### Current Status
 
-**As of 2026-08-18**: Phase 0 (Cleanup) complete. Schema design, the
-`end_marker` engine enhancement, and the full task breakdown are agreed.
-Starting Phase 1 (`models/md` engine enhancement) next.
+**As of 2026-08-18**: Phase 0 (Cleanup) and Phase 1 (`models/md` engine
+enhancement) complete — Tasks 1.1-1.5 done. `@markdown(...)` now merges
+into inherited `_metadata`, gained an `end_marker` parameter, and
+`MarkdownSection.get_extent` stops at the first depth-0 `end_marker`
+occurrence, verified against a nested-list-and-nested-block-quote edge
+case. Full quality gate green (1026 tests, up from 1008). Commit for this
+phase intentionally left to the orchestrator. Starting Phase 2
+(Specification) next.
 
 ### Blockers
 
@@ -447,6 +453,77 @@ None currently.
 
 Older entries (2026-08-18T11:15:00Z and earlier) are archived in
 [`history.md`](history.md).
+
+#### Update 2026-08-18T16:05:00Z
+
+- Completed: Phase 1 (`models/md` engine enhancement) — Tasks 1.1 through
+  1.5.
+  - **Task 1.1**: `markdown()` in `src/biz/dfch/specmgr/models/md/markdown.py`
+    now merges into `getattr(cls, "_metadata", {})` instead of
+    unconditionally replacing it. `type`/`tag` (and the new `end_marker`,
+    see Task 1.2) became keyword-only parameters defaulting to a private
+    module-level sentinel `_UNSET = object()` rather than `None`, so "this
+    keyword was not passed" (leave any inherited value alone) is
+    distinguishable from "this keyword was explicitly passed as `None`"
+    (a real, honored value that overwrites/clears an inherited entry).
+    Verified 100% backward compatible against all 11 existing
+    `@markdown(...)` call sites (`markdown_section.py`,
+    `markdown_section1.py`-`markdown_section6.py`, `markdown_paragraph.py`,
+    `markdown_code_block.py`, `markdown_block_quote.py`,
+    `markdown_comment.py`) — every one still passes both `type`/`tag`
+    explicitly, so merge-vs-replace is unobservable for them; the
+    `*_with_comment.py` classes were left untouched (they inherit
+    `_metadata`, never re-apply `@markdown`).
+  - **Task 1.2**: Added `end_marker: type[MarkdownStr] | None = _UNSET`
+    to `markdown()`, stored under `_metadata["end_marker"]` via the same
+    merge/sentinel mechanism as `type`/`tag`. Decorator docstring/examples
+    updated accordingly (including a new example showing a subclass
+    re-applying `@markdown` and keeping an inherited `end_marker`).
+  - **Task 1.3**: `MarkdownSection.get_extent`
+    (`src/biz/dfch/specmgr/models/md/markdown_section.py`) now also stops
+    at the first token matching `cls._metadata.get("end_marker")`'s own
+    `type`/`tag`, but only when that token occurs at nesting depth 0. A
+    running `depth` counter is updated by every token's own `Token.nesting`
+    across the *entire* token stream (not just tokens matching the
+    end_marker's type), checked *before* applying that token's own delta —
+    verified by tracing real token streams via `parse()` for a fixture H4
+    section with a nested bullet list, a nested block quote *inside a list
+    item*, and a real depth-0 block quote following: the nested
+    occurrences correctly report depth 2/3 (not 0) and are not mistaken for
+    the end marker, while the real end-marker block quote reports depth 0
+    and stops the scan there.
+  - **Task 1.4**: Added `tests/models/md/test_markdown.py` (11-call-site
+    backward-compatibility regression for Task 1.1, plus new
+    merge/sentinel/`end_marker` unit tests for the decorator itself) and
+    `tests/models/md/test_markdown_section_end_marker.py` (a fixture
+    `_RequirementLikeSection(MarkdownSection4)` declaring
+    `@markdown(end_marker=MarkdownBlockQuote)`, exercising: a depth-0 block
+    quote stopping the scan; no end marker following still reaching the
+    end of the text; and the nested-list-and-nested-block-quote edge case
+    from Task 1.3's note, both `get_extent` and `from_text` verified). 18
+    new tests total.
+  - **Task 1.5**: Ran the full phase-end quality gate:
+    `uv run --frozen ruff format --check` (673 files already formatted),
+    `uv run --frozen ruff check` (all checks passed),
+    `uv run --frozen vulture src/ whitelist.py --min-confidence 60` (no
+    output, clean), and
+    `uv run --frozen python -m unittest discover -v -s tests -t . -p "test_*.py"`
+    (1026 tests, OK — up from 1008 before this phase, i.e. exactly the 18
+    new tests, no regressions). Also ran `uv run --frozen specmgr docs`
+    since Phase 1 changed docstrings inherited by several downstream
+    subclasses (`Characteristic` in `models/iso25010.py`, TSK's `Task`,
+    UC's `Assumptions`) — regenerated `docs/api/*.md` and
+    `docs/GENERATED.md` (test-file count 151 -> 153) to keep them
+    drift-free for the eventual commit; re-ran it a second time to confirm
+    it is now idempotent (no further changes). Left staging/committing to
+    the orchestrator per this session's explicit instructions; working
+    tree has the two modified source files
+    (`models/md/markdown.py`, `models/md/markdown_section.py`), the two
+    new test files, and the regenerated docs, all unstaged.
+- Next: Phase 2 (Specification) — Task 2.1 (write a full reference
+  `qa_reference.md`).
+- Notes: Phase 1 is the first and only `models/md` engine change in this
+  feature; Phase 2 onward builds the `qa` domain itself on top of it.
 
 #### Update 2026-08-18T14:20:00Z
 
@@ -605,6 +682,34 @@ Older entries (2026-08-18T11:15:00Z and earlier) are archived in
   3 as Task 3.1.1 to fix the sequencing bug, then had the former Phase 5
   Task 5.2 generator/registry step folded in — two superseded intermediate
   decisions collapsed here into their final state.)
+- **2026-08-18**: Task 1.1's "keyword-only params defaulting to a sentinel"
+  hint was implemented as a private module-level `_UNSET = object()` in
+  `models/md/markdown.py`, with `type`/`tag`/`end_marker` all becoming
+  keyword-only parameters defaulting to `_UNSET` (never compared for
+  equality, only identity via `is`/`is not`). Rationale: a plain `None`
+  default cannot distinguish "caller omitted this keyword" (leave any
+  inherited `_metadata` value alone) from "caller explicitly passed
+  `None`" (a real value that overwrites/clears an inherited entry) --
+  `None` is itself a legitimate explicit value for all three parameters
+  (e.g. `MarkdownSection`'s own bare `tag`-less declaration, or explicitly
+  clearing an inherited `end_marker`). Making the parameters keyword-only
+  was a deliberate, compatible tightening: all 11 existing call sites
+  already pass `type=`/`tag=` as keywords, so nothing broke, and it rules
+  out a future positional-argument use that the sentinel-based merge logic
+  could not otherwise distinguish from omission.
+- **2026-08-18**: Phase 1's `get_extent` depth counter for the new
+  `end_marker` stop condition (Task 1.3) considers a token "at depth 0"
+  when the running depth *going into* it (i.e. before applying that
+  token's own `Token.nesting` delta) is 0 -- verified against real token
+  streams via `parse()` (see `test_markdown_section_end_marker.py`) rather
+  than assumed, per the plan's explicit instruction not to guess this.
+  The depth counter increments/decrements on *every* token's `.nesting`
+  across the whole stream (list items, other block quotes, the section's
+  own heading triple, ...), not just tokens matching the `end_marker`'s
+  own type -- confirmed necessary by tracing a fixture with a block quote
+  nested *inside* a list item: tracking only the end marker's own
+  open/close pairs would have reported that nested quote as depth 0 (no
+  prior same-type token to offset it), causing a false-positive stop.
 
 ### Related PRs / Commits
 

@@ -50,6 +50,23 @@ class MarkdownSection(MarkdownStr, ABC):
         the extent. If no such heading follows, the extent reaches the end
         of `text`.
 
+        If `cls`'s `@markdown` metadata declares an `end_marker` (a
+        `MarkdownStr` subclass, e.g. `MarkdownBlockQuote`), an occurrence of
+        that class's own `type`/`tag` also stops the scan, alongside the
+        heading-level check above -- but only when it occurs at nesting
+        depth 0 relative to this section's own body, i.e. it is not itself
+        nested inside some other block construct (a list item, another
+        block quote, ...) that legitimately belongs to this section's own
+        content. A depth counter is maintained across *every* token in the
+        stream (incremented/decremented by that token's own `Token.nesting`,
+        not just tokens matching the `end_marker`'s type), since any
+        intervening open/close pair -- not only the `end_marker`'s own --
+        shifts what "depth 0" means for everything that follows it; a token
+        is considered "at depth 0" when the running depth *going into* it
+        (before applying its own nesting delta) is 0, mirroring how the
+        heading check above already treats a stopping heading's own line as
+        outside the extent.
+
         There is only an extent at all if the *first* token parsed from
         `text` is a `heading_open` matching this class's own tag (from the
         `@markdown` decorator's metadata) *and* that heading's own text
@@ -71,7 +88,8 @@ class MarkdownSection(MarkdownStr, ABC):
                 heading's text does not satisfy `cls`'s `@alias` (no extent).
             int > 0: line count (see `MarkdownStr.get_extent`) covered by this
                 heading and its nested content, stopping before the next
-                sibling/ancestor heading or at the end of `text`.
+                sibling/ancestor heading, the next depth-0 `end_marker`
+                occurrence (if declared), or at the end of `text`.
         """
         assert isinstance(text, str), type(text)
         assert text == format_text(text), "text is not in 'mdformat'."
@@ -83,6 +101,15 @@ class MarkdownSection(MarkdownStr, ABC):
         )
         own_level = _HEADING_TAGS.index(own_tag) + 1
 
+        end_marker = cls._metadata.get("end_marker")
+        end_marker_type: str | None = None
+        end_marker_tag: str | None = None
+        if end_marker is not None:
+            assert isinstance(end_marker, type) and issubclass(end_marker, MarkdownStr), type(end_marker)
+            end_marker_metadata = getattr(end_marker, "_metadata", {})
+            end_marker_type = end_marker_metadata.get("type")
+            end_marker_tag = end_marker_metadata.get("tag")
+
         tokens = parse(text)
 
         if not tokens or tokens[0].type != own_type or tokens[0].tag != own_tag:
@@ -92,7 +119,11 @@ class MarkdownSection(MarkdownStr, ABC):
             return 0
 
         result: int = 0
+        depth: int = 0
         for idx, tok in enumerate(tokens):
+            depth_at_entry = depth
+            depth += tok.nesting
+
             m = tok.map
             if not m or len(m) != 2:
                 continue
@@ -100,6 +131,15 @@ class MarkdownSection(MarkdownStr, ABC):
             if idx > 0 and tok.type == own_type and tok.tag in _HEADING_TAGS:
                 if _HEADING_TAGS.index(tok.tag) + 1 <= own_level:
                     return m[0]
+
+            if (
+                idx > 0
+                and end_marker_type is not None
+                and tok.type == end_marker_type
+                and tok.tag == end_marker_tag
+                and depth_at_entry == 0
+            ):
+                return m[0]
 
             result = max(result, m[1])
 

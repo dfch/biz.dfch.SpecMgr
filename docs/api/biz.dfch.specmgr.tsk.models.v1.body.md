@@ -94,6 +94,23 @@ updates:
   the extent. If no such heading follows, the extent reaches the end
   of `text`.
 
+  If `cls`'s `@markdown` metadata declares an `end_marker` (a
+  `MarkdownStr` subclass, e.g. `MarkdownBlockQuote`), an occurrence of
+  that class's own `type`/`tag` also stops the scan, alongside the
+  heading-level check above -- but only when it occurs at nesting
+  depth 0 relative to this section's own body, i.e. it is not itself
+  nested inside some other block construct (a list item, another
+  block quote, ...) that legitimately belongs to this section's own
+  content. A depth counter is maintained across *every* token in the
+  stream (incremented/decremented by that token's own `Token.nesting`,
+  not just tokens matching the `end_marker`'s type), since any
+  intervening open/close pair -- not only the `end_marker`'s own --
+  shifts what "depth 0" means for everything that follows it; a token
+  is considered "at depth 0" when the running depth *going into* it
+  (before applying its own nesting delta) is 0, mirroring how the
+  heading check above already treats a stopping heading's own line as
+  outside the extent.
+
   There is only an extent at all if the *first* token parsed from
   `text` is a `heading_open` matching this class's own tag (from the
   `@markdown` decorator's metadata) *and* that heading's own text
@@ -115,7 +132,8 @@ updates:
           heading's text does not satisfy `cls`'s `@alias` (no extent).
       int > 0: line count (see `MarkdownStr.get_extent`) covered by this
           heading and its nested content, stopping before the next
-          sibling/ancestor heading or at the end of `text`.
+          sibling/ancestor heading, the next depth-0 `end_marker`
+          occurrence (if declared), or at the end of `text`.
 
 - `model_construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
   Creates a new instance of the `Model` class with validated data.
@@ -401,6 +419,23 @@ updates:
   the extent. If no such heading follows, the extent reaches the end
   of `text`.
 
+  If `cls`'s `@markdown` metadata declares an `end_marker` (a
+  `MarkdownStr` subclass, e.g. `MarkdownBlockQuote`), an occurrence of
+  that class's own `type`/`tag` also stops the scan, alongside the
+  heading-level check above -- but only when it occurs at nesting
+  depth 0 relative to this section's own body, i.e. it is not itself
+  nested inside some other block construct (a list item, another
+  block quote, ...) that legitimately belongs to this section's own
+  content. A depth counter is maintained across *every* token in the
+  stream (incremented/decremented by that token's own `Token.nesting`,
+  not just tokens matching the `end_marker`'s type), since any
+  intervening open/close pair -- not only the `end_marker`'s own --
+  shifts what "depth 0" means for everything that follows it; a token
+  is considered "at depth 0" when the running depth *going into* it
+  (before applying its own nesting delta) is 0, mirroring how the
+  heading check above already treats a stopping heading's own line as
+  outside the extent.
+
   There is only an extent at all if the *first* token parsed from
   `text` is a `heading_open` matching this class's own tag (from the
   `@markdown` decorator's metadata) *and* that heading's own text
@@ -422,7 +457,8 @@ updates:
           heading's text does not satisfy `cls`'s `@alias` (no extent).
       int > 0: line count (see `MarkdownStr.get_extent`) covered by this
           heading and its nested content, stopping before the next
-          sibling/ancestor heading or at the end of `text`.
+          sibling/ancestor heading, the next depth-0 `end_marker`
+          occurrence (if declared), or at the end of `text`.
 
 - `json(self, *, include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, by_alias: 'bool' = False, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False, encoder: 'Callable[[Any], Any] | None' = PydanticUndefined, models_as_dict: 'bool' = PydanticUndefined, **dumps_kwargs: 'Any') -> 'str'`
 
@@ -1408,6 +1444,23 @@ content:
   the extent. If no such heading follows, the extent reaches the end
   of `text`.
 
+  If `cls`'s `@markdown` metadata declares an `end_marker` (a
+  `MarkdownStr` subclass, e.g. `MarkdownBlockQuote`), an occurrence of
+  that class's own `type`/`tag` also stops the scan, alongside the
+  heading-level check above -- but only when it occurs at nesting
+  depth 0 relative to this section's own body, i.e. it is not itself
+  nested inside some other block construct (a list item, another
+  block quote, ...) that legitimately belongs to this section's own
+  content. A depth counter is maintained across *every* token in the
+  stream (incremented/decremented by that token's own `Token.nesting`,
+  not just tokens matching the `end_marker`'s type), since any
+  intervening open/close pair -- not only the `end_marker`'s own --
+  shifts what "depth 0" means for everything that follows it; a token
+  is considered "at depth 0" when the running depth *going into* it
+  (before applying its own nesting delta) is 0, mirroring how the
+  heading check above already treats a stopping heading's own line as
+  outside the extent.
+
   There is only an extent at all if the *first* token parsed from
   `text` is a `heading_open` matching this class's own tag (from the
   `@markdown` decorator's metadata) *and* that heading's own text
@@ -1429,7 +1482,8 @@ content:
           heading's text does not satisfy `cls`'s `@alias` (no extent).
       int > 0: line count (see `MarkdownStr.get_extent`) covered by this
           heading and its nested content, stopping before the next
-          sibling/ancestor heading or at the end of `text`.
+          sibling/ancestor heading, the next depth-0 `end_marker`
+          occurrence (if declared), or at the end of `text`.
 
 - `model_construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
   Creates a new instance of the `Model` class with validated data.
@@ -1715,6 +1769,23 @@ content:
   the extent. If no such heading follows, the extent reaches the end
   of `text`.
 
+  If `cls`'s `@markdown` metadata declares an `end_marker` (a
+  `MarkdownStr` subclass, e.g. `MarkdownBlockQuote`), an occurrence of
+  that class's own `type`/`tag` also stops the scan, alongside the
+  heading-level check above -- but only when it occurs at nesting
+  depth 0 relative to this section's own body, i.e. it is not itself
+  nested inside some other block construct (a list item, another
+  block quote, ...) that legitimately belongs to this section's own
+  content. A depth counter is maintained across *every* token in the
+  stream (incremented/decremented by that token's own `Token.nesting`,
+  not just tokens matching the `end_marker`'s type), since any
+  intervening open/close pair -- not only the `end_marker`'s own --
+  shifts what "depth 0" means for everything that follows it; a token
+  is considered "at depth 0" when the running depth *going into* it
+  (before applying its own nesting delta) is 0, mirroring how the
+  heading check above already treats a stopping heading's own line as
+  outside the extent.
+
   There is only an extent at all if the *first* token parsed from
   `text` is a `heading_open` matching this class's own tag (from the
   `@markdown` decorator's metadata) *and* that heading's own text
@@ -1736,7 +1807,8 @@ content:
           heading's text does not satisfy `cls`'s `@alias` (no extent).
       int > 0: line count (see `MarkdownStr.get_extent`) covered by this
           heading and its nested content, stopping before the next
-          sibling/ancestor heading or at the end of `text`.
+          sibling/ancestor heading, the next depth-0 `end_marker`
+          occurrence (if declared), or at the end of `text`.
 
 - `json(self, *, include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, by_alias: 'bool' = False, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False, encoder: 'Callable[[Any], Any] | None' = PydanticUndefined, models_as_dict: 'bool' = PydanticUndefined, **dumps_kwargs: 'Any') -> 'str'`
 
