@@ -112,6 +112,18 @@ First-line docstrings from each module, organized by domain:
 - `models/md/markdown_str.py` — Parse markdown into tokens using shared MarkdownIt instance.
 - `models/version_info.py` — Pydantic model for the ``specmgr://version`` resource.
 
+**qa/**
+
+- `qa/__init__.py` — Question and Answer (QA) domain -- requirements-elicitation interview specifications.
+- `qa/models/__init__.py` — Question and Answer (QA) models -- Pydantic schema powered by the generic ``models/md`` engine.
+- `qa/models/v1/__init__.py` — Question and Answer (QA) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- `qa/models/v1/_util.py` — Shared, private constants for the ``qa.models.v1`` subpackage.
+- `qa/models/v1/body.py` — Question and Answer (QA) body models: whole-section fields under a single H1.
+- `qa/models/v1/document.py` — Pydantic model for a full Question and Answer (QA) document (frontmatter + body).
+- `qa/models/v1/frontmatter.py` — Question and Answer (QA) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
+- `qa/models/v1/parser.py` — Parse raw Question and Answer (QA) ``.md`` text into a :class:`QaDocument`.
+- `qa/models/v1/summary.py` — Pydantic model for one line of QA listing output.
+
 **req/**
 
 - `req/__init__.py` — Requirement (REQ) domain -- requirement specifications.
@@ -229,4 +241,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 153
+**Test files**: 156

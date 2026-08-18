@@ -1,0 +1,521 @@
+{
+  "$comment": "v1",
+  "$defs": {
+    "Compatibility": {
+      "description": "`## Compatibility` -- one of the 9 ISO/IEC 25010:2023 quality characteristics. Always present.",
+      "properties": {
+        "items": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/QaSection"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Repeating Q&A pairs for this category. May be empty/absent.",
+          "title": "Items"
+        }
+      },
+      "title": "Compatibility",
+      "type": "object"
+    },
+    "Flexibility": {
+      "description": "`## Flexibility` -- one of the 9 ISO/IEC 25010:2023 quality characteristics. Always present.",
+      "properties": {
+        "items": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/QaSection"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Repeating Q&A pairs for this category. May be empty/absent.",
+          "title": "Items"
+        }
+      },
+      "title": "Flexibility",
+      "type": "object"
+    },
+    "FunctionalSuitability": {
+      "description": "`## Functional Suitability` -- one of the 9 ISO/IEC 25010:2023 quality characteristics. Always present.",
+      "properties": {
+        "items": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/QaSection"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Repeating Q&A pairs for this category. May be empty/absent.",
+          "title": "Items"
+        }
+      },
+      "title": "FunctionalSuitability",
+      "type": "object"
+    },
+    "General": {
+      "description": "`## General` -- introductory framing for the interview. Mandatory (always present).\n\n`comment` is inherited from `MarkdownSection2WithComment` -- not\nredeclared here.\n\nParameters\n----------\nintroduction:\n    `### Introduction`. Mandatory.\nraw_requirements:\n    `### Raw Requirements`. Mandatory.",
+      "properties": {
+        "comment": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MarkdownComment"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional explanatory HTML comment (`<!-- ... -->`)."
+        },
+        "introduction": {
+          "$ref": "#/$defs/Introduction",
+          "description": "`### Introduction` section. Mandatory."
+        },
+        "raw_requirements": {
+          "$ref": "#/$defs/RawRequirements",
+          "description": "`### Raw Requirements` section. Mandatory."
+        }
+      },
+      "required": [
+        "introduction",
+        "raw_requirements"
+      ],
+      "title": "General",
+      "type": "object"
+    },
+    "InteractionCapability": {
+      "description": "`## Interaction Capability` -- one of the 9 ISO/IEC 25010:2023 quality characteristics. Always present.",
+      "properties": {
+        "items": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/QaSection"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Repeating Q&A pairs for this category. May be empty/absent.",
+          "title": "Items"
+        }
+      },
+      "title": "InteractionCapability",
+      "type": "object"
+    },
+    "Introduction": {
+      "description": "`### Introduction` under `## General` -- free-form prose framing the interview. Mandatory.\n\n`comment` is inherited from `MarkdownSection3WithComment` -- not redeclared\nhere, per this project's established \"inherit rather than redeclare\"\nidiom (see e.g. TSK's `Task`, REQ's `Level`/`Priority`).",
+      "properties": {
+        "body": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/MarkdownParagraph"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Free-form introductory prose paragraphs. Optional.",
+          "title": "Body"
+        },
+        "comment": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MarkdownComment"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional explanatory HTML comment (`<!-- ... -->`)."
+        }
+      },
+      "title": "Introduction",
+      "type": "object"
+    },
+    "Maintainability": {
+      "description": "`## Maintainability` -- one of the 9 ISO/IEC 25010:2023 quality characteristics. Always present.",
+      "properties": {
+        "items": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/QaSection"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Repeating Q&A pairs for this category. May be empty/absent.",
+          "title": "Items"
+        }
+      },
+      "title": "Maintainability",
+      "type": "object"
+    },
+    "MarkdownBlockQuote": {
+      "description": "A markdown block quote (\"blockquote\"), the non-heading, non-leaf-only sibling of `MarkdownSection`.\n\nmarkdown-it already groups every *consecutive* `\">\"` line -- including\ninternal blank `\">\"` continuation lines (a \"loose\" quote with several\nparagraphs) and any more deeply nested quote (`\"> > ...\"`) -- into a\nsingle `blockquote_open`/`blockquote_close` pair whose own `.map`\nalready spans the whole thing; two quotes separated by a real blank\nline (no `\">\"` at all) are two separate pairs. So, unlike\n`MarkdownSection`/`MarkdownParagraph`, `get_extent` needs no\nstop-condition scan -- `tokens[0].map[1]` is already correct, the same\nsituation as `MarkdownListItem`/`MarkdownCodeBlock`. There is no\n`@alias` enforcement, same as `MarkdownParagraph`/`MarkdownListItem` --\nquoted content is free-form, not a title.\n\nUnlike `MarkdownListItem` (which always assumes a leading paragraph), a\nquote's content can start with *any* block type (a heading, a list, a\nnested quote, ...), so `from_text` validates only the `blockquote_open`\ntoken itself (`type`/`tag`/`nesting == 1`), not anything about what\nfollows it.\n\nDeliberately **not leaf-only** (unlike `MarkdownCodeBlock`) -- a\nsubclass may declare nested fields (e.g. `emphasis`/`strong` as future,\nseparate typed objects), same composite capability as\n`MarkdownParagraph`/`MarkdownListItem`. But a quote has no separate\n\"own text\" line the way a heading/paragraph/list item does -- *every*\nline of its extent carries the `\">\"` marker, and the marker is\nunrelated to what block type each line's content actually is. So the\ncomposite split works differently:\n\n- Leaf (no declared fields): `_value` holds the complete extent\n  verbatim, marker included on every line -- nothing else will ever\n  retain it, exactly like any other leaf `MarkdownStr` subclass.\n- Composite (a subclass declares fields): the marker is stripped from\n  *every* line of the extent (`_dedent_quote_lines`), not just a\n  leading line, and the fully-dedented result -- re-normalized with\n  `format_text` -- is delegated whole to `super().from_text()`. Since\n  the entire extent is body this way, there is no \"own text\" left for\n  this instance to keep, so `_value` is set to `\"\"`. `__str__`\n  re-applies the marker to every line of `super().__str__()`'s output\n  (`_indent_quote_lines`), rather than reconstructing a single heading\n  line (`MarkdownSection`) or prepending a marker-free lead sentence\n  (`MarkdownParagraph`).",
+      "properties": {},
+      "title": "MarkdownBlockQuote",
+      "type": "object"
+    },
+    "MarkdownComment": {
+      "description": "A standalone HTML comment block (`\"html_block\"`, e.g. `<!-- some note -->`).\n\nDeliberately leaf-only, like `MarkdownCodeBlock`. Declare an optional\n`comment: MarkdownComment | None` field on any `MarkdownStr` subclass to\nlet a value be preceded by such an explanatory comment without it\nbreaking that class's own structural field matching. See `get_extent`/\n`from_text`/`text` for the full mechanics.",
+      "properties": {},
+      "title": "MarkdownComment",
+      "type": "object"
+    },
+    "MarkdownParagraph": {
+      "description": "A markdown paragraph (\"p\"), the non-heading sibling of `MarkdownSection`.\n\nA paragraph has no level, so there is a single `MarkdownParagraph` class\n(no `MarkdownParagraph1`..`6` spectrum) and no `@alias` check -- a\nparagraph's content is free-form prose, not a title.\n\nLeaf (no declared nested fields): `_value` holds the paragraph's own line\nspan, verbatim. Composite (declares fields): `_value` holds only the\nparagraph's own inline text (e.g. a lead-in sentence); the remaining text\nis delegated to nested field parsing, bounded by the next heading of any\nlevel (a paragraph can never itself contain a heading). See\n`get_extent`/`from_text`/`__str__` docstrings below for the full\nmechanics.",
+      "properties": {},
+      "title": "MarkdownParagraph",
+      "type": "object"
+    },
+    "MoreInformation": {
+      "description": "`## More Information` -- free-form optional supplementary text, no fixed format. Optional.",
+      "properties": {},
+      "title": "MoreInformation",
+      "type": "object"
+    },
+    "PerformanceEfficiency": {
+      "description": "`## Performance Efficiency` -- one of the 9 ISO/IEC 25010:2023 quality characteristics. Always present.",
+      "properties": {
+        "items": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/QaSection"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Repeating Q&A pairs for this category. May be empty/absent.",
+          "title": "Items"
+        }
+      },
+      "title": "PerformanceEfficiency",
+      "type": "object"
+    },
+    "Qa": {
+      "description": "The `qa` body: a single H1 section with the fields below.\n\nThe H1 heading text is free-form.\n\nParameters\n----------\ngeneral:\n    `## General`. Mandatory (always present).\nfunctional_suitability:\n    `## Functional Suitability`. Mandatory (always present; `items` may be empty).\nperformance_efficiency:\n    `## Performance Efficiency`. Mandatory (always present; `items` may be empty).\ncompatibility:\n    `## Compatibility`. Mandatory (always present; `items` may be empty).\ninteraction_capability:\n    `## Interaction Capability`. Mandatory (always present; `items` may be empty).\nreliability:\n    `## Reliability`. Mandatory (always present; `items` may be empty).\nsecurity:\n    `## Security`. Mandatory (always present; `items` may be empty).\nmaintainability:\n    `## Maintainability`. Mandatory (always present; `items` may be empty).\nflexibility:\n    `## Flexibility`. Mandatory (always present; `items` may be empty).\nsafety:\n    `## Safety`. Mandatory (always present; `items` may be empty).\nmore_information:\n    `## More Information`. Optional.",
+      "properties": {
+        "compatibility": {
+          "$ref": "#/$defs/Compatibility",
+          "description": "`## Compatibility` section."
+        },
+        "flexibility": {
+          "$ref": "#/$defs/Flexibility",
+          "description": "`## Flexibility` section."
+        },
+        "functional_suitability": {
+          "$ref": "#/$defs/FunctionalSuitability",
+          "description": "`## Functional Suitability` section."
+        },
+        "general": {
+          "$ref": "#/$defs/General",
+          "description": "`## General` section. Mandatory."
+        },
+        "interaction_capability": {
+          "$ref": "#/$defs/InteractionCapability",
+          "description": "`## Interaction Capability` section."
+        },
+        "maintainability": {
+          "$ref": "#/$defs/Maintainability",
+          "description": "`## Maintainability` section."
+        },
+        "more_information": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MoreInformation"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`## More Information` section. Optional."
+        },
+        "performance_efficiency": {
+          "$ref": "#/$defs/PerformanceEfficiency",
+          "description": "`## Performance Efficiency` section."
+        },
+        "reliability": {
+          "$ref": "#/$defs/Reliability",
+          "description": "`## Reliability` section."
+        },
+        "safety": {
+          "$ref": "#/$defs/Safety",
+          "description": "`## Safety` section."
+        },
+        "security": {
+          "$ref": "#/$defs/Security",
+          "description": "`## Security` section."
+        }
+      },
+      "required": [
+        "general",
+        "functional_suitability",
+        "performance_efficiency",
+        "compatibility",
+        "interaction_capability",
+        "reliability",
+        "security",
+        "maintainability",
+        "flexibility",
+        "safety"
+      ],
+      "title": "Qa",
+      "type": "object"
+    },
+    "QaAnswer": {
+      "description": "One `QaSection`'s free-form prose answer.\n\nDeliberately **not** heading-anchored, unlike `RawRequirements`/\n`MoreInformation` (which each own a fixed `##`/`###` heading of their\nown): in the schema, `answer` is simply the trailing prose that follows\n`question`'s block quote within the same `QaSection`, with no heading of\nits own (verified against `qa_reference.md` -- no `#### Answer`/similar\nheading appears anywhere). A bare `MarkdownStr` subclass with no\n`@markdown` metadata already captures \"everything remaining\" verbatim in\n`_value` via the base class's own `get_extent` (no heading-level stop\ncondition applies), exactly the leaf behavior this field needs.\n\nAdds a `text` computed property (mirroring `MarkdownParagraph.text`/\n`MarkdownSection.text`/`MarkdownCodeBlock.text`'s established pattern) so\nthis otherwise-private `_value` is reachable through `model_dump()`/\n`model_dump_json()` -- the same serialization path an MCP tool's return\nvalue goes through.",
+      "properties": {},
+      "title": "QaAnswer",
+      "type": "object"
+    },
+    "QaFrontmatter": {
+      "description": "Question and Answer (QA) frontmatter: `MarkdownFrontmatter` narrowed for the ``qa`` document type.\n\nParameters\n----------\ntype:\n    Fixed discriminator, always ``\"qa\"``. Narrows the base's mandatory,\n    default-less ``str`` field to a ``Literal[\"qa\"] = \"qa\"``, so a document\n    omitting ``type`` entirely still parses as a Q&A document.\nstatus:\n    One of ``\"draft\"``, ``\"active\"``, ``\"done\"``, ``\"cancelled\"``. Narrows\n    the base's free-form ``str = \"draft\"`` default to this closed\n    four-value set (reused from TSK). Blank/absent still defaults to\n    ``\"draft\"`` (inherited from the base's ``_default_blank_status_to_draft``\n    validator, which runs before this one).\nversion:\n    The ``models.md`` schema major.minor.patch version this document's\n    frontmatter was written with. DO NOT CHANGE!\n\nAll other fields (``id``, ``created``, ``updated``, ``version``) are inherited\nunchanged from :class:`MarkdownFrontmatter`.",
+      "properties": {
+        "created": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Created"
+        },
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Id"
+        },
+        "status": {
+          "default": "draft",
+          "title": "Status",
+          "type": "string"
+        },
+        "type": {
+          "const": "qa",
+          "default": "qa",
+          "title": "Type",
+          "type": "string"
+        },
+        "updated": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Updated"
+        },
+        "version": {
+          "default": "1.0.0",
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "title": "QaFrontmatter",
+      "type": "object"
+    },
+    "QaSection": {
+      "description": "`### {free-form heading}` -- one question/answer pair. Free-form H3 heading.\n\n`comment` is inherited from `MarkdownSection3WithComment` -- not\nredeclared here. All four fields (`comment`, `requirement`, `question`,\n`answer`) are fully optional.\n\nParameters\n----------\nrequirement:\n    `#### Requirement` callout. Optional.\nquestion:\n    The interviewer's question, as a block quote. Optional.\nanswer:\n    The interviewee's free-form prose answer. Optional.",
+      "properties": {
+        "answer": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/QaAnswer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Free-form prose answer. Optional."
+        },
+        "comment": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MarkdownComment"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional explanatory HTML comment (`<!-- ... -->`)."
+        },
+        "question": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MarkdownBlockQuote"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The interviewer's question, as a block quote. Optional."
+        },
+        "requirement": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Requirement"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`#### Requirement` callout. Optional."
+        }
+      },
+      "title": "QaSection",
+      "type": "object"
+    },
+    "RawRequirements": {
+      "description": "`### Raw Requirements` under `## General` -- free-form, pre-existing raw requirement notes.\n\nLeaf class (no declared fields), mirroring `MoreInformation`/`Notes`:\ncaptures whatever markdown text follows the heading verbatim, with no\nfurther structure imposed.",
+      "properties": {},
+      "title": "RawRequirements",
+      "type": "object"
+    },
+    "Reliability": {
+      "description": "`## Reliability` -- one of the 9 ISO/IEC 25010:2023 quality characteristics. Always present.",
+      "properties": {
+        "items": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/QaSection"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Repeating Q&A pairs for this category. May be empty/absent.",
+          "title": "Items"
+        }
+      },
+      "title": "Reliability",
+      "type": "object"
+    },
+    "Requirement": {
+      "description": "`#### Requirement` -- an optional callout promoting a Q&A pair's answer to a concrete requirement.\n\nLeaf class (no declared fields): its content is deliberately\nunspecified/arbitrary agent-authored data, not shaped like REQ's own\n`Requirement` fields (`statement`/`characteristics`/`level`/...) and not\na placeholder for future structure -- see the feature README's Design\nNotes.\n\nThe heading text is fixed (``\"Requirement\"``, matching the implicit\n`AliasType.SPACE_SEPARATED` derivation of this class's own name), not\nfree-form -- confirmed against `qa_reference.md`'s literal ``#### Requirement``\nheading.\n\nDecorated `@markdown(end_marker=MarkdownBlockQuote)` (Phase 1's new\nmechanism, merging into `MarkdownSection4`'s already-inherited\n`_metadata` rather than replacing it -- `type`/`tag` do not need to be\nre-passed here): since `requirement` is declared *before* `question` on\n`QaSection` below, `Requirement.get_extent` must stop at the next\ndepth-0 block quote, not just the next heading, or it would silently\nabsorb `question`'s own block quote into its own content.",
+      "properties": {},
+      "title": "Requirement",
+      "type": "object"
+    },
+    "Safety": {
+      "description": "`## Safety` -- one of the 9 ISO/IEC 25010:2023 quality characteristics. Always present.",
+      "properties": {
+        "items": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/QaSection"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Repeating Q&A pairs for this category. May be empty/absent.",
+          "title": "Items"
+        }
+      },
+      "title": "Safety",
+      "type": "object"
+    },
+    "Security": {
+      "description": "`## Security` -- one of the 9 ISO/IEC 25010:2023 quality characteristics. Always present.",
+      "properties": {
+        "items": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/QaSection"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Repeating Q&A pairs for this category. May be empty/absent.",
+          "title": "Items"
+        }
+      },
+      "title": "Security",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "A full Question and Answer (QA) document: YAML frontmatter and body.\n\nAttributes\n----------\nfrontmatter:\n    The YAML frontmatter block. See :class:`QaFrontmatter`.\nbody:\n    The parsed Q&A sections. See :class:`Qa`.",
+  "properties": {
+    "body": {
+      "$ref": "#/$defs/Qa"
+    },
+    "frontmatter": {
+      "$ref": "#/$defs/QaFrontmatter"
+    }
+  },
+  "required": [
+    "frontmatter",
+    "body"
+  ],
+  "title": "QaDocument",
+  "type": "object"
+}

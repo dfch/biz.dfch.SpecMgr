@@ -98,6 +98,21 @@ intro
 checked
 recent_updates
 updates
+answer
+compatibility
+flexibility
+functional_suitability
+general
+interaction_capability
+introduction
+maintainability
+performance_efficiency
+question
+raw_requirements
+reliability
+requirement
+safety
+security
 
 # --- MCP `@mcp.resource(...)`/`@mcp.tool()` entry points -------------------------
 # Invoked by the MCP framework once registered, not called directly in `src/`.

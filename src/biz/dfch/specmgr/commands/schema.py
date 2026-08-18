@@ -47,6 +47,8 @@ import typer
 from pydantic.json_schema import GenerateJsonSchema
 
 from .._paths import DOCS_DIR
+from ..qa.models.v1 import SCHEMA_COMMENT_VERSION as QA_SCHEMA_COMMENT_VERSION
+from ..qa.models.v1.document import QaDocument
 from ..req.models.v1 import SCHEMA_COMMENT_VERSION as REQ_SCHEMA_COMMENT_VERSION
 from ..req.models.v1.document import ReqDocument
 from ..tsk.models.v1 import SCHEMA_COMMENT_VERSION as TSK_SCHEMA_COMMENT_VERSION
@@ -80,6 +82,24 @@ def generate_req_schema() -> str:
     schema_dict = ReqDocument.model_json_schema()
     schema_dict["$schema"] = GenerateJsonSchema.schema_dialect
     schema_dict["$comment"] = REQ_SCHEMA_COMMENT_VERSION
+    return json.dumps(schema_dict, indent=2, sort_keys=True) + "\n"
+
+
+def generate_qa_schema() -> str:
+    """Generate QA's JSON Schema (2020-12 dialect) from ``QaDocument.model_json_schema()``.
+
+    Mirrors :func:`generate_req_schema` exactly, but for ``qa.models.v1``:
+    the ``"$schema"`` key is injected the same way (Pydantic v2 omits it by
+    default), and ``"$comment"`` holds ``qa.models.v1.SCHEMA_COMMENT_VERSION``
+    (currently ``"v1"``) instead of REQ's own version token.
+
+    Serializes with ``indent=2, sort_keys=True`` plus a trailing newline, for
+    the same byte-identical-output/drift-detection reason as
+    :func:`generate_req_schema`.
+    """
+    schema_dict = QaDocument.model_json_schema()
+    schema_dict["$schema"] = GenerateJsonSchema.schema_dialect
+    schema_dict["$comment"] = QA_SCHEMA_COMMENT_VERSION
     return json.dumps(schema_dict, indent=2, sort_keys=True) + "\n"
 
 
@@ -123,6 +143,7 @@ def generate_tsk_schema() -> str:
 #: ``generate_x() -> str`` function. Add an entry here when a new document
 #: type's schema generator is implemented (e.g. ``"adr"``).
 _GENERATORS: dict[str, Callable[[], str]] = {
+    "qa": generate_qa_schema,
     "req": generate_req_schema,
     "tsk": generate_tsk_schema,
     "uc": generate_uc_schema,

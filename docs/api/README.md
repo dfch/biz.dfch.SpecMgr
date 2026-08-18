@@ -95,6 +95,15 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.models.md.markdown_section6_with_comment`](biz.dfch.specmgr.models.md.markdown_section6_with_comment.md) — Opt-in `MarkdownSection6` variant allowing a leading explanatory comment.
 - [`biz.dfch.specmgr.models.md.markdown_str`](biz.dfch.specmgr.models.md.markdown_str.md) — Parse markdown into tokens using shared MarkdownIt instance.
 - [`biz.dfch.specmgr.models.version_info`](biz.dfch.specmgr.models.version_info.md) — Pydantic model for the ``specmgr://version`` resource.
+- [`biz.dfch.specmgr.qa`](biz.dfch.specmgr.qa.md) — Question and Answer (QA) domain -- requirements-elicitation interview specifications.
+- [`biz.dfch.specmgr.qa.models`](biz.dfch.specmgr.qa.models.md) — Question and Answer (QA) models -- Pydantic schema powered by the generic ``models/md`` engine.
+- [`biz.dfch.specmgr.qa.models.v1`](biz.dfch.specmgr.qa.models.v1.md) — Question and Answer (QA) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- [`biz.dfch.specmgr.qa.models.v1._util`](biz.dfch.specmgr.qa.models.v1._util.md) — Shared, private constants for the ``qa.models.v1`` subpackage.
+- [`biz.dfch.specmgr.qa.models.v1.body`](biz.dfch.specmgr.qa.models.v1.body.md) — Question and Answer (QA) body models: whole-section fields under a single H1.
+- [`biz.dfch.specmgr.qa.models.v1.document`](biz.dfch.specmgr.qa.models.v1.document.md) — Pydantic model for a full Question and Answer (QA) document (frontmatter + body).
+- [`biz.dfch.specmgr.qa.models.v1.frontmatter`](biz.dfch.specmgr.qa.models.v1.frontmatter.md) — Question and Answer (QA) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
+- [`biz.dfch.specmgr.qa.models.v1.parser`](biz.dfch.specmgr.qa.models.v1.parser.md) — Parse raw Question and Answer (QA) ``.md`` text into a :class:`QaDocument`.
+- [`biz.dfch.specmgr.qa.models.v1.summary`](biz.dfch.specmgr.qa.models.v1.summary.md) — Pydantic model for one line of QA listing output.
 - [`biz.dfch.specmgr.req`](biz.dfch.specmgr.req.md) — Requirement (REQ) domain -- requirement specifications.
 - [`biz.dfch.specmgr.req.prompts`](biz.dfch.specmgr.req.prompts.md) — MCP prompt wrappers for Requirements (Task 3.19).
 - [`biz.dfch.specmgr.req.prompts.create_req`](biz.dfch.specmgr.req.prompts.create_req.md) — ``@mcp.prompt()``: create_req (Task 3.19).

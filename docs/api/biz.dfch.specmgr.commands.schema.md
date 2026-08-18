@@ -25,6 +25,20 @@ not ``definitions``) -- see `feat-6-requirement-artifact`'s README
 
 ## Functions
 
+### `generate_qa_schema() -> str`
+
+Generate QA's JSON Schema (2020-12 dialect) from ``QaDocument.model_json_schema()``.
+
+Mirrors :func:`generate_req_schema` exactly, but for ``qa.models.v1``:
+the ``"$schema"`` key is injected the same way (Pydantic v2 omits it by
+default), and ``"$comment"`` holds ``qa.models.v1.SCHEMA_COMMENT_VERSION``
+(currently ``"v1"``) instead of REQ's own version token.
+
+Serializes with ``indent=2, sort_keys=True`` plus a trailing newline, for
+the same byte-identical-output/drift-detection reason as
+:func:`generate_req_schema`.
+
+
 ### `generate_req_schema() -> str`
 
 Generate REQ's JSON Schema (2020-12 dialect) from ``ReqDocument.model_json_schema()``.

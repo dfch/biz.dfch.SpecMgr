@@ -336,12 +336,12 @@ consumer but not the motivating point on its own.
 
 #### Phase 3: Pydantic Models & Parser
 
-- [ ] Task 3.1: `qa/models/v1/{frontmatter,body,document,parser,summary, _util}.py`, including `Requirement`'s `end_marker` wiring (leaf class,
+- [x] Task 3.1: `qa/models/v1/{frontmatter,body,document,parser,summary, _util}.py`, including `Requirement`'s `end_marker` wiring (leaf class,
   deliberately unspecified/arbitrary agent-authored content -- see Design
   Notes) and resolving the 9-category class-sharing question (see Design
-  Notes) — depends on: Task 2.1 — status: not-started.
+  Notes) — depends on: Task 2.1 — status: done.
 
-- [ ] Task 3.1.1 (moved from former Phase 2 Task 2.2, folded together with
+- [x] Task 3.1.1 (moved from former Phase 2 Task 2.2, folded together with
   former Phase 5 Task 5.2, see Decisions Made): Implement
   `generate_qa_schema()` in `commands/schema.py` (mirroring
   `generate_req_schema`/`generate_uc_schema`/`generate_tsk_schema`, via
@@ -350,17 +350,18 @@ consumer but not the motivating point on its own.
   (`_GENERATORS`); draft `docs/qa_schema.json` by running it — mirrors
   feat-10's own Task 2.5 exactly (generator + registry + draft, as one
   task, right after the document model exists) — depends on: Task 3.1 —
-  status: not-started.
+  status: done.
 
-- [ ] Task 3.2: Unit tests + full parser round-trip against
-  `qa_reference.md` — depends on: Task 3.1 — status: not-started.
+- [x] Task 3.2: Unit tests + full parser round-trip against
+  `qa_reference.md` — depends on: Task 3.1 — status: done.
 
-- [ ] Task 3.3: Phase-end quality gate — run the full pre-commit/quality
+- [x] Task 3.3: Phase-end quality gate — run the full pre-commit/quality
   gate (ruff format/check, vulture, full `unittest` suite including Task
   3.2's new tests); update this README's Progress section (Current
   Status, a dated Recent Updates entry, Decisions Made if applicable);
   commit as one Conventional Commit — depends on: Task 3.1.1, Task 3.2 —
-  status: not-started.
+  status: done (commit itself left to the orchestrator, per this
+  session's instructions).
 
 #### Phase 4: MCP Surface
 
@@ -437,20 +438,31 @@ consumer but not the motivating point on its own.
 ### Current Status
 
 **As of 2026-08-18**: Phase 0 (Cleanup), Phase 1 (`models/md` engine
-enhancement), and Phase 2 (Specification) complete — Tasks 1.1-1.5 and
-2.1/2.3 done. `@markdown(...)` now merges into inherited `_metadata`,
-gained an `end_marker` parameter, and `MarkdownSection.get_extent` stops
-at the first depth-0 `end_marker` occurrence, verified against a
-nested-list-and-nested-block-quote edge case. A full reference
-`qa_reference.md` now exercises every field of the planned `qa` schema
-(General/Introduction/Raw Requirements, all 9 ISO 25010:2023 categories
-with one — `Compatibility` — deliberately left empty, a `More
-Information` section, and both the full-field and minimal `QaSection`
-shapes, including the `end_marker` scenario and nested list/block-quote
-content inside a `Requirement` callout), confirmed `specmgr mdformat`
-clean. Full quality gate green (no `src/`/`tests/` changes this phase).
-Commits for Phase 1 and Phase 2 intentionally left to the orchestrator.
-Starting Phase 3 (Pydantic Models & Parser) next.
+enhancement), Phase 2 (Specification), and Phase 3 (Pydantic Models &
+Parser) complete — Tasks 1.1-1.5, 2.1/2.3, and 3.1/3.1.1/3.2/3.3 done. The
+`qa` domain package now exists at `qa/models/v1/` (frontmatter, body,
+document, parser, summary, `_util`), fully mirroring `req`/`tsk`'s
+domain-first layout, plus a top-level `qa/__init__.py` (docstring-only for
+now -- no `tools`/`resources`/`prompts` yet, that's Phase 4). The 9-category
+class-sharing question (deferred from planning) is resolved: all 9
+`<QaCategory>` classes share one private `_QaCategory(MarkdownSection2)`
+intermediate base declaring `items` once, empirically verified not to
+create any heading-alias ambiguity (each final subclass's own `__name__`,
+not the shared base's, is what `@markdown`'s inherited metadata and the
+implicit `AliasType.SPACE_SEPARATED` derivation key off). `Requirement`'s
+`@markdown(end_marker=MarkdownBlockQuote)` wiring is in place and verified
+end-to-end against `qa_reference.md`: its own Q&A pair's `requirement`
+callout does not swallow the immediately-following `question` block quote.
+`generate_qa_schema()` is implemented and registered in `commands/schema.py`'s
+`_GENERATORS`, and `docs/qa_schema.json` has been drafted. 35 new unit
+tests added (`tests/qa/models/v1/{test_frontmatter,test_body,test_parser}.py`),
+covering `QaFrontmatter.status`'s four-value set, required/optional field
+validation across `Qa`/`<QaCategory>`/`QaSection`, all 9 categories'
+distinct heading aliases, and `parse_qa`'s full round-trip against
+`qa_reference.md` plus its structural/validation error paths. Full quality
+gate green (1061 tests total, up from 1026; `specmgr docs` regenerated and
+confirmed idempotent). Commit for Phase 3 intentionally left to the
+orchestrator. Starting Phase 4 (MCP Surface) next.
 
 ### Blockers
 
@@ -460,6 +472,132 @@ None currently.
 
 Older entries (2026-08-18T11:15:00Z and earlier) are archived in
 [`history.md`](history.md).
+
+#### Update 2026-08-18T19:30:00Z
+
+- Completed: Phase 3 (Pydantic Models & Parser) — Tasks 3.1, 3.1.1, 3.2, 3.3.
+  - **Task 3.1**: Created the `qa` domain package:
+    `src/biz/dfch/specmgr/qa/__init__.py` (docstring-only for now, since
+    `tools`/`resources`/`prompts` don't exist until Phase 4 -- it does not
+    import them yet, unlike `req`/`tsk`'s own `__init__.py`), plus
+    `qa/models/__init__.py` and `qa/models/v1/{__init__,_util,frontmatter,
+    body,document,parser,summary}.py`, all inside the domain package per
+    the domain-first layout (ADR ece4554b-725c-4f76-bc04-5d2b760363d2),
+    mirroring `req`/`tsk`'s exact file shapes read directly from disk
+    first. `QaFrontmatter` reuses `TskFrontmatter`'s `_ALLOWED_STATUSES`
+    pattern verbatim (`draft`/`active`/`done`/`cancelled`). `body.py`
+    implements the full schema from Design Notes: `Qa(MarkdownSection1)`,
+    `General(MarkdownSection2WithComment)` with `Introduction
+    (MarkdownSection3WithComment)`/`RawRequirements(MarkdownSection3)`,
+    `QaSection(MarkdownSection3WithComment)` with `requirement`/`question`/
+    `answer`, `Requirement(MarkdownSection4)` decorated
+    `@markdown(end_marker=MarkdownBlockQuote)`, and the 9 ISO/IEC
+    25010:2023 `<QaCategory>` classes. Resolved the plan's deferred
+    9-category class-sharing question by empirically verifying (via a
+    throwaway script, then codified in `tests/qa/models/v1/test_body.py`)
+    that approach (a) -- one shared, private `_QaCategory(MarkdownSection2)`
+    intermediate base declaring `items` once, with 9 final subclasses each
+    relying on implicit `AliasType.SPACE_SEPARATED` alias derivation from
+    their own class names -- carries no heading-detection risk: confirmed
+    that `MarkdownSection.get_extent`/`from_text`'s `match_alias` call
+    always passes the actual runtime subclass (e.g. `FunctionalSuitability`),
+    not the shared base, as `cls`, so `cls.__name__` (not `_QaCategory`'s)
+    is what the implicit alias derivation keys off; also confirmed
+    `_get_field_names()` correctly resolves the inherited `items` field
+    through the extra inheritance level, and that `@markdown`'s
+    `_metadata` (`heading_open`/`h2`) is inherited transparently with no
+    per-subclass re-application needed. Discovered mid-implementation that
+    `QaAnswer` cannot be heading-anchored like `MoreInformation`/
+    `RawRequirements`/`Notes` (all bare `MarkdownSectionN` subclasses) --
+    re-reading `qa_reference.md` closely showed every `answer` is trailing
+    prose immediately after `question`'s block quote with **no heading of
+    its own** anywhere in the document. Implemented `QaAnswer` as a bare
+    `MarkdownStr` subclass instead (no `@markdown` metadata at all), whose
+    inherited `get_extent` already captures "everything remaining" with no
+    heading-level stop condition, plus an explicit `text` computed property
+    (mirroring `MarkdownParagraph.text`/`MarkdownSection.text`/
+    `MarkdownCodeBlock.text`'s established pattern) so `_value` is
+    reachable through `model_dump()`. Verified `Requirement`'s
+    `@markdown(end_marker=MarkdownBlockQuote)` merges into
+    `MarkdownSection4`'s already-inherited `type="heading_open"`/`tag="h4"`
+    without needing to re-pass them, and that its heading text is fixed
+    (`"Requirement"`, matching the implicit `AliasType.SPACE_SEPARATED`
+    derivation), confirmed against `qa_reference.md`'s literal
+    `#### Requirement` heading. Round-tripped the full `qa_reference.md`
+    through the assembled `Qa`/`QaFrontmatter` models via a throwaway
+    script before writing `parser.py`, confirming byte-exact round-trip
+    including the `Compatibility`-is-empty case and the `end_marker`
+    scenario.
+  - **Task 3.1.1**: Read `commands/schema.py` in full, added
+    `generate_qa_schema()` mirroring `generate_req_schema`/
+    `generate_tsk_schema`/`generate_uc_schema` exactly (imports
+    `SCHEMA_COMMENT_VERSION as QA_SCHEMA_COMMENT_VERSION` from
+    `qa.models.v1`, `QaDocument` from `qa.models.v1.document`, injects
+    `$schema`/`$comment`, serializes with `indent=2, sort_keys=True` plus
+    trailing newline), registered `"qa": generate_qa_schema` in
+    `_GENERATORS`, and ran `uv run --frozen specmgr schema --type qa` to
+    draft `docs/qa_schema.json` (`$comment: "v1"`, top-level `$schema`
+    pointing at the 2020-12 dialect, `$defs` holding all 9 category
+    classes plus `Qa`/`QaSection`/`QaAnswer`/`Requirement`/`General`/
+    `Introduction`/`RawRequirements`/`MoreInformation`/`QaFrontmatter`/
+    the shared `models/md` leaf types it references).
+  - **Task 3.2**: Added `tests/qa/{__init__,models/__init__,models/v1/
+    __init__}.py` (empty namespace markers, matching `tests/tsk/`'s exact
+    convention) and `tests/qa/models/v1/{test_frontmatter,test_body,
+    test_parser}.py` (35 tests total), mirroring `tests/tsk/models/v1/`'s
+    style/depth. `test_frontmatter.py` covers `type`/`version`/`status`
+    defaults and rejection of any status outside the four-value set
+    (ACC-003). `test_body.py` covers required-vs-optional field validation
+    on `Qa`/`<QaCategory>`/`QaSection` via direct construction (ACC-003),
+    an explicit "all 9 categories resolve their own, distinct, correct
+    heading alias" regression test for the class-sharing decision above,
+    the `Requirement` `end_marker` wiring (metadata, fixed heading, and a
+    from-text round-trip proving it does not absorb a following block
+    quote), and `QaAnswer`'s heading-free, multi-paragraph-capturing
+    behavior. `test_parser.py` mirrors `tests/tsk/models/v1/test_parser.py`'s
+    exact structure (`_REFERENCE_PATH` pointing at this feature's own
+    `qa_reference.md`): a minimal valid document parses correctly
+    (ACC-004); the full reference document round-trips with specific
+    assertions on `compatibility.items is None`, every other category's
+    item count, and the first `Functional Suitability` Q&A pair's
+    `requirement`/`question`/`answer` content proving the `end_marker`
+    scenario works end-to-end (ACC-002/ACC-004); a missing `## General` or
+    a missing ISO-characteristic H2 (`## Safety`) each raise
+    `AssertionError`; an invalid frontmatter `status` raises
+    `pydantic.ValidationError` (ACC-004). Fixed three initial test
+    failures caused by `QaAnswer.text` retaining a trailing `"\n"` (its
+    `_value` is the verbatim remaining extent, not a stripped paragraph
+    text) by asserting `.strip()` equality/`assertIn` instead of exact
+    equality where appropriate.
+  - **Task 3.3**: Ran the full phase-end quality gate:
+    `uv run --frozen ruff format --check` (698 files already formatted),
+    `uv run --frozen ruff check` (all checks passed),
+    `uv run --frozen vulture src/ whitelist.py --min-confidence 60` --
+    initially flagged 15 new Pydantic field names as unused (`introduction`,
+    `raw_requirements`, `requirement`, `question`, `answer`, and the 9
+    category field names on `Qa` plus `general`), added them to
+    `whitelist.py`'s existing "Pydantic model fields read only via
+    (de)serialization/rendering" section (same rationale as its existing
+    entries: these fields aren't accessed as plain Python attributes
+    anywhere in `src/` yet, only via markdown round-tripping and, later,
+    Phase 4's MCP tools), then re-ran vulture clean. Ran
+    `uv run --frozen python -m unittest discover -v -s tests -t . -p "test_*.py"`
+    (1061 tests, OK -- up from 1026 before this phase, i.e. exactly the 35
+    new `qa` tests, no regressions). Also ran `uv run --frozen specmgr docs`
+    (regenerated `docs/api/*.md` for 9 new `qa` modules plus
+    `docs/GENERATED.md`'s test-file count 153 -> 156) and confirmed a
+    second run produces an identical `git status --short docs/` (idempotent).
+    `docs/qa_schema.json` (drafted in Task 3.1.1) was left as-is, unchanged
+    since Task 3.1.1. Left staging/committing to the orchestrator per this
+    session's instructions; working tree has the new `qa/`/`tests/qa/`
+    trees, the `commands/schema.py`/`whitelist.py` edits, and the
+    regenerated docs, all unstaged.
+- Next: Phase 4 (MCP Surface) — Task 4.1
+  (`qa/tools/{_paths,_io,_lock,_write,parse_qa,get_qa,...}.py`).
+- Notes: `qa`'s own `tools`/`resources`/`prompts` (and therefore
+  `qa/__init__.py`'s eventual `from . import prompts, resources, tools`
+  line) remain Phase 4 work; nothing in Phase 3 registers `qa` against the
+  MCP server yet.
 
 #### Update 2026-08-18T17:40:00Z
 
@@ -790,6 +928,72 @@ Older entries (2026-08-18T11:15:00Z and earlier) are archived in
   nested *inside* a list item: tracking only the end marker's own
   open/close pairs would have reported that nested quote as depth 0 (no
   prior same-type token to offset it), causing a false-positive stop.
+- **2026-08-18 (Task 3.1)**: Resolved the plan's deliberately-deferred
+  9-category class-sharing question in favor of **option (a)**: one
+  private, shared `_QaCategory(MarkdownSection2)` intermediate base
+  declaring `items: list[QaSection] | None = None` exactly once, with all
+  9 final subclasses (`FunctionalSuitability`, ..., `Safety`) as bare,
+  field-free subclasses of it, each relying on the implicit
+  `AliasType.SPACE_SEPARATED` derivation of its *own* class name for its
+  heading match. Rejected option (b) (9 fully independent
+  `MarkdownSection2` subclasses, each redeclaring `items` itself) as pure
+  duplication with no offsetting benefit once (a) was confirmed safe.
+  Verified empirically (via a throwaway script exercising
+  `_metadata`/`_get_field_names()`/`match_alias`/`from_text` directly,
+  later codified into `tests/qa/models/v1/test_body.py`'s
+  `TestQaCategoryAliasesAreDistinct`) that sharing the base introduces no
+  ambiguity: `MarkdownSection.get_extent`/`from_text` always call
+  `match_alias(cls, ...)` with `cls` bound to the actual leaf subclass
+  (e.g. `FunctionalSuitability`), never `_QaCategory`, so
+  `AliasType.SPACE_SEPARATED`'s `cls.__name__`-based derivation resolves
+  correctly and distinctly per category; `@markdown`'s `_metadata`
+  (`type="heading_open"`, `tag="h2"`, inherited from `MarkdownSection2`
+  through the extra `_QaCategory` level) and `_get_field_names()`'s
+  `model_fields` introspection (which already walks the full MRO) are
+  both unaffected by the added inheritance depth. This mirrors the
+  project's own established "`*WithComment` inherit rather than
+  redeclare" idiom (Task 1.1's own Decisions Made entry), just one level
+  deeper and privately scoped (`_QaCategory` is not exported from
+  `qa/models/v1/__init__.py`).
+- **2026-08-18 (Task 3.1)**: `QaAnswer` is a bare `MarkdownStr` subclass
+  (no `@markdown` metadata at all), **not** a heading-anchored
+  `MarkdownSectionN` subclass like `RawRequirements`/`MoreInformation`/
+  `Notes` -- a genuine, plan-unresolved implementation decision, not a
+  simple mirroring of those three. Discovered while wiring up `QaSection`
+  that `qa_reference.md`'s `answer` content is always the free-form prose
+  trailing directly after `question`'s block quote, with **no heading of
+  its own** anywhere in the reference document (no `#### Answer`/similar).
+  A heading-anchored class would therefore never match. The base
+  `MarkdownStr.get_extent`'s own "no heading-level stop condition, consume
+  everything remaining" behavior is exactly what an un-headed trailing
+  field needs, so `QaAnswer(MarkdownStr)` (no decorator) was used
+  directly, with an explicit `text` computed property added (mirroring
+  `MarkdownParagraph.text`/`MarkdownSection.text`/`MarkdownCodeBlock.text`'s
+  established pattern) so its otherwise-private `_value` remains reachable
+  through `model_dump()`/`model_dump_json()`, consistent with every other
+  leaf class in the project.
+- **2026-08-18 (Task 3.1)**: `qa/__init__.py` was created now (Task 3.1),
+  ahead of Task 4.4's own listed `qa/__init__.py` deliverable, as a
+  docstring-only placeholder with no `tools`/`resources`/`prompts` import
+  (none exist yet) -- unlike `req`/`tsk/__init__.py`'s
+  `from . import prompts, resources, tools`. This satisfies the
+  orchestrator's Task 3.1 instruction to create the file now while leaving
+  its eventual MCP-registration import line to Phase 4, when those
+  sub-packages actually exist; Task 4.4 will edit (not recreate) this same
+  file.
+- **2026-08-18 (Task 3.3)**: 15 new Pydantic field names introduced by
+  `qa/models/v1/body.py` (`introduction`, `raw_requirements`,
+  `requirement`, `question`, `answer`, `general`, and the 9 category
+  fields on `Qa`) were added to `whitelist.py`'s existing "Pydantic model
+  fields read only via (de)serialization/rendering" section -- the same
+  category as REQ's/TSK's/UC's own pre-existing entries there, since none
+  of these new field names are accessed as a plain Python attribute
+  anywhere in `src/` yet (only through markdown round-tripping today, and,
+  from Phase 4 onward, through MCP tool/resource code that doesn't exist
+  yet). `items` needed no such entry: it was already kept alive by
+  `tsk/models/v1/body.py`'s `Task._validate_items_eagerly`/
+  `uc/models/v1/use_case.py`'s existing `self.items`/`self.extensions.items`
+  accesses.
 
 ### Related PRs / Commits
 
