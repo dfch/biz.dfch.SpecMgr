@@ -14,11 +14,11 @@ permission:
     "git diff*": allow
     "git log*": allow
     "git show*": allow
-    "git add*": ask
-    "git commit*": ask
+    "git add*": allow
+    "git commit*": allow
     "git push*": deny
     "uv run*": allow
-    "*": ask
+    "*": allow
   task: allow
   webfetch: allow
 ---
