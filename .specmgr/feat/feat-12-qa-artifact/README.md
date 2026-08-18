@@ -365,27 +365,28 @@ consumer but not the motivating point on its own.
 
 #### Phase 4: MCP Surface
 
-- [ ] Task 4.1: `qa/tools/{_paths,_io,_lock,_write,parse_qa,get_qa, get_qa_example,get_qa_template,create_qa,update_qa,set_status_qa, delete_qa,validate_qa}.py` — 1:1 port of REQ's tool plumbing — depends
-  on: Task 3.1 — status: not-started.
+- [x] Task 4.1: `qa/tools/{_paths,_io,_lock,_write,parse_qa,get_qa, get_qa_example,get_qa_template,create_qa,update_qa,set_status_qa, delete_qa,validate_qa}.py` — 1:1 port of REQ's tool plumbing — depends
+  on: Task 3.1 — status: done.
 
-- [ ] Task 4.2: `qa/resources/{qa_schema,qa_example,qa_template, qa_list}.py` — depends on: Task 4.1 — status: not-started.
+- [x] Task 4.2: `qa/resources/{qa_schema,qa_example,qa_template, qa_list}.py` — depends on: Task 4.1 — status: done.
 
-- [ ] Task 4.3: `qa/prompts/{create_qa,update_qa}.py` — depends on: Task
-  4.1 — status: not-started.
+- [x] Task 4.3: `qa/prompts/{create_qa,update_qa}.py` — depends on: Task
+  4.1 — status: done.
 
-- [ ] Task 4.4: `qa/data/{qa_example.md,qa_template.md,qa_schema.json}` +
-  `qa/__init__.py` — depends on: Tasks 4.1-4.3 — status: not-started.
+- [x] Task 4.4: `qa/data/{qa_example.md,qa_template.md,qa_schema.json}` +
+  `qa/__init__.py` — depends on: Tasks 4.1-4.3 — status: done.
 
-- [ ] Task 4.5: `tests/qa/{tools,resources,prompts}/` mirroring
+- [x] Task 4.5: `tests/qa/{tools,resources,prompts}/` mirroring
   `tests/req/{tools,resources,prompts}/`'s layout and coverage — depends
-  on: Tasks 4.1-4.4 — status: not-started.
+  on: Tasks 4.1-4.4 — status: done.
 
-- [ ] Task 4.6: Phase-end quality gate — run the full pre-commit/quality
+- [x] Task 4.6: Phase-end quality gate — run the full pre-commit/quality
   gate (ruff format/check, vulture, full `unittest` suite including Task
   4.5's new tests); update this README's Progress section (Current
   Status, a dated Recent Updates entry, Decisions Made if applicable);
   commit as one Conventional Commit — depends on: Task 4.5 — status:
-  not-started.
+  done (commit itself left to the orchestrator, per this session's
+  instructions).
 
 #### Phase 5: Cross-cutting registration
 
@@ -438,31 +439,36 @@ consumer but not the motivating point on its own.
 ### Current Status
 
 **As of 2026-08-18**: Phase 0 (Cleanup), Phase 1 (`models/md` engine
-enhancement), Phase 2 (Specification), and Phase 3 (Pydantic Models &
-Parser) complete — Tasks 1.1-1.5, 2.1/2.3, and 3.1/3.1.1/3.2/3.3 done. The
-`qa` domain package now exists at `qa/models/v1/` (frontmatter, body,
-document, parser, summary, `_util`), fully mirroring `req`/`tsk`'s
-domain-first layout, plus a top-level `qa/__init__.py` (docstring-only for
-now -- no `tools`/`resources`/`prompts` yet, that's Phase 4). The 9-category
-class-sharing question (deferred from planning) is resolved: all 9
-`<QaCategory>` classes share one private `_QaCategory(MarkdownSection2)`
-intermediate base declaring `items` once, empirically verified not to
-create any heading-alias ambiguity (each final subclass's own `__name__`,
-not the shared base's, is what `@markdown`'s inherited metadata and the
-implicit `AliasType.SPACE_SEPARATED` derivation key off). `Requirement`'s
-`@markdown(end_marker=MarkdownBlockQuote)` wiring is in place and verified
-end-to-end against `qa_reference.md`: its own Q&A pair's `requirement`
-callout does not swallow the immediately-following `question` block quote.
-`generate_qa_schema()` is implemented and registered in `commands/schema.py`'s
-`_GENERATORS`, and `docs/qa_schema.json` has been drafted. 35 new unit
-tests added (`tests/qa/models/v1/{test_frontmatter,test_body,test_parser}.py`),
-covering `QaFrontmatter.status`'s four-value set, required/optional field
-validation across `Qa`/`<QaCategory>`/`QaSection`, all 9 categories'
-distinct heading aliases, and `parse_qa`'s full round-trip against
-`qa_reference.md` plus its structural/validation error paths. Full quality
-gate green (1061 tests total, up from 1026; `specmgr docs` regenerated and
-confirmed idempotent). Commit for Phase 3 intentionally left to the
-orchestrator. Starting Phase 4 (MCP Surface) next.
+enhancement), Phase 2 (Specification), Phase 3 (Pydantic Models & Parser),
+and Phase 4 (MCP Surface) complete — Tasks 1.1-1.5, 2.1/2.3,
+3.1/3.1.1/3.2/3.3, and 4.1-4.6 done. The `qa` domain package's full MCP
+surface now exists, a 1:1 structural port of REQ's own tools/resources/
+prompts: `qa/tools/` (`_paths`, `_io`, `_lock`, `_write`, `parse_qa`,
+`get_qa`, `get_qa_example`, `get_qa_template`, `create_qa`, `update_qa`,
+`set_status_qa`, `delete_qa` stub, `validate_qa`), `qa/resources/`
+(`specmgr://qa/schema`, `/example`, `/template`, `/list` -- no `/{id}`, per
+ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614), `qa/prompts/` (`create_qa`,
+`update_qa`, rewritten to describe QA's own General/9-characteristic/
+More-Information structure instead of REQ's), and `qa/data/`
+(`qa_example.md` -- Phase 2's `qa_reference.md` reused verbatim, mirroring
+REQ's own reference-is-example precedent, verified to round-trip through
+`parse_qa`; `qa_template.md` -- new, structurally complete placeholder
+content that happens to also be fully valid; `qa_schema.json` -- a
+byte-identical packaged copy of `docs/qa_schema.json`). `qa/__init__.py`
+now imports `tools`/`resources`/`prompts` (mirroring `req/__init__.py`'s
+exact shape), though `server.py`'s own bottom-of-file import list still
+does not import `qa` yet -- that registration wiring is Phase 5's Task
+5.1, so `qa`'s tools/resources/prompts are fully built and independently
+tested but not yet live against the MCP server. 83 new unit tests added
+under `tests/qa/{tools,resources,prompts}/` (53/15/15), mirroring
+`tests/req/`'s own layout and depth, using a temporary
+`SPECMGR_DOCS_DIR`-patched directory for filesystem isolation throughout.
+9-category-class-sharing/`QaAnswer` design notes carried over unchanged
+from Phase 3; this phase's own new implementation choices are logged below.
+Full quality gate green (1144 tests total, up from 1061; `specmgr docs`
+regenerated and confirmed idempotent). Commit for Phase 4 intentionally
+left to the orchestrator. Starting Phase 5 (Cross-cutting registration)
+next.
 
 ### Blockers
 
@@ -472,6 +478,125 @@ None currently.
 
 Older entries (2026-08-18T11:15:00Z and earlier) are archived in
 [`history.md`](history.md).
+
+#### Update 2026-08-18T21:10:00Z
+
+- Completed: Phase 4 (MCP Surface) — Tasks 4.1, 4.2, 4.3, 4.4, 4.5, 4.6.
+  Read every REQ file the plan named (`req/tools/*.py`, `req/resources/*.py`,
+  `req/prompts/*.py`, `req/data/*`, `req/__init__.py`,
+  `general/tools/_packaged_data.py`, `general/tools/_doc_paths.py`) plus
+  `qa_reference.md` and `qa/models/v1/*.py` before writing anything, per the
+  orchestrator's instructions.
+  - **Task 4.1**: Created `qa/tools/{__init__,_paths,_io,_lock,_write,
+    parse_qa,get_qa,get_qa_example,get_qa_template,create_qa,update_qa,
+    set_status_qa,delete_qa,validate_qa}.py`, a 1:1 port of every
+    corresponding `req.tools` module with every `Req`/`req` identifier
+    substituted for `Qa`/`qa` (`ReqDocument` -> `QaDocument`,
+    `ReqFrontmatter` -> `QaFrontmatter`, `Requirement` -> `Qa` -- the `qa`
+    domain's own body class, not to be confused with `qa`'s *own*,
+    differently-shaped `Requirement` callout class from Phase 3 --
+    `ReqNotFoundError` -> `QaNotFoundError`, `req_lock`/`req_base_dir` ->
+    `qa_lock`/`qa_base_dir`, `REQ_TYPE_NAME` -> `QA_TYPE_NAME`). Every
+    design-rationale docstring (error-channel split, lock rationale,
+    no-render-just-persist-verbatim design, read-only/write directory
+    split, id -> path skip-on-parse-failure rule) was preserved and
+    reworded for QA, not stripped. `create_qa`'s filename convention is
+    `qa-{id}-{slugify(body.text)}.md`. `set_status_qa` reconstructs
+    `QaFrontmatter` via its own constructor (not `model_copy`) so the
+    four-value closed-set `status` validator (`draft`/`active`/`done`/
+    `cancelled`) actually runs. `delete_qa` is a registered
+    `structured_output=False` stub, always raising `NotImplementedError`.
+    `validate_qa` mirrors `validate_req`'s disk-free/id-free dry-run shape
+    exactly.
+  - **Task 4.2**: Created `qa/resources/{__init__,qa_schema,qa_example,
+    qa_template,qa_list}.py`, 1:1 ports of REQ's four resources at the
+    same four URIs (`specmgr://qa/schema`, `/example`, `/template`,
+    `/list`, no `/{id}`). `qa_list` builds `QaSummary` entries
+    (`id`/`title`=`doc.body.text`/`status`/`ref`=`path.stem`), silently
+    skipping any file that fails to parse
+    (`AssertionError`/`pydantic.ValidationError`), identical to
+    `req_list`'s own skip rule.
+  - **Task 4.3**: Created `qa/prompts/{__init__,create_qa,update_qa}.py`,
+    matching `req/prompts/`'s instructional-text-returning `@mcp.prompt()`
+    shape exactly, but with the instructional content fully rewritten for
+    QA's own schema: the `create_qa` prompt recaps `# {title}`, `##
+    General` (`### Introduction`/`### Raw Requirements`), the nine fixed
+    ISO/IEC 25010:2023 characteristic H2s in their canonical order/wording,
+    the free-form `### {question}` `QaSection` pattern (optional
+    `comment`/`requirement`/`question`/`answer`), and optional `##
+    More Information`; it tells the LLM to check `specmgr://qa/list`
+    first, elicit characteristic-relevant answers per category (noting a
+    category may legitimately stay empty), and reference
+    `specmgr://qa/template`/`/example`/`/schema` before calling
+    `create_qa`/`validate_qa`. The `update_qa` prompt maps body changes to
+    `update_qa(id, content)` (whole-body replace, explicitly warning that
+    all nine fixed category headings must be carried forward even when
+    empty) and status changes to `set_status_qa(id, status)`
+    (draft/active/done/cancelled), mirroring `update_req`'s prompt
+    structure/tone.
+  - **Task 4.4**: Created `qa/data/qa_example.md` by reusing Phase 2's
+    `qa_reference.md` verbatim (mirroring REQ's own reference-is-example
+    precedent named as an explicit option in this task) -- verified via a
+    throwaway `parse_qa(...)` call that it round-trips successfully
+    (`frontmatter.id`, `body.text`, `compatibility.items is None`, and
+    `functional_suitability`'s two Q&A pairs all came back correctly; see
+    Decisions Made for why no TSK-style light adaptation was needed).
+    Created `qa/data/qa_template.md` from scratch (not adapted from
+    `qa_reference.md`) with every fixed H2 present, both `## General`
+    sub-sections, one Q&A pair with all four optional fields filled with
+    short placeholder text (`comment`/`#### Requirement`/`question`/
+    `answer`), and `## More Information` -- verified it happens to parse
+    successfully end-to-end too (a stronger guarantee than the task
+    required, which only asked for structural completeness). Copied
+    `docs/qa_schema.json` byte-for-byte to `qa/data/qa_schema.json`
+    (confirmed via `diff`). Edited (not recreated) `qa/__init__.py`,
+    replacing its Phase-3-only docstring with one mirroring
+    `req/__init__.py`'s exact shape/wording, and added
+    `from . import prompts, resources, tools  # noqa: F401` plus the
+    matching `__all__`; explicitly noted `server.py`'s own import list
+    still excludes `qa` (Phase 5's Task 5.1).
+  - **Task 4.5**: Read every file under `tests/req/{tools,resources,
+    prompts}/` first, then created the mirrored `tests/qa/{tools,
+    resources,prompts}/` suites (`__init__.py` markers plus 19 test
+    files, 83 tests total: 53 in `tools/`, 15 in `resources/`, 15 in
+    `prompts/`), all isolated from the real filesystem via
+    `mock.patch.dict("os.environ", {DOCS_DIR_ENV_VAR: ...})` against a
+    `tempfile.TemporaryDirectory()`, the same pattern `tests/req/` uses.
+    Coverage mirrors REQ's own depth/shape per file (base-dir resolution,
+    id lookup and its skip-on-parse-failure rule, lock serialization,
+    write-and-round-trip, create/update/get/set-status/delete/validate/
+    parse tool behavior including every error channel, packaged-data
+    example/template reads with cache-freshness and missing-file checks,
+    the `qa_list` resource's skip-malformed-file behavior, and prompt
+    content/ordering assertions) -- adapted only where QA's own schema
+    differs from REQ's (see Decisions Made for the one genuine coverage
+    gap this surfaced).
+  - **Task 4.6**: Ran the full phase-end quality gate:
+    `uv run --frozen ruff format --check` (744 files already formatted),
+    `uv run --frozen ruff check` (all checks passed),
+    `uv run --frozen vulture src/ whitelist.py --min-confidence 60` (no
+    output, clean -- no new dead-code flags this phase, unlike Phase 3),
+    and `uv run --frozen python -m unittest discover -v -s tests -t . -p "test_*.py"`
+    (1144 tests, OK -- up from 1061, i.e. exactly the 83 new `qa` tests,
+    no regressions). Also ran `uv run --frozen specmgr docs` (regenerated
+    `docs/api/*.md` for 20 new `qa` modules plus `docs/GENERATED.md`'s
+    test-file count 156 -> 175) and confirmed a second run produces an
+    identical `git status --short docs/` (idempotent). Left
+    staging/committing to the orchestrator per this session's
+    instructions; working tree has the new `qa/{tools,resources,prompts,
+    data}/`/`tests/qa/{tools,resources,prompts}/` trees, the edited
+    `qa/__init__.py`, and the regenerated docs, all unstaged.
+- Next: Phase 5 (Cross-cutting registration) — Task 5.1 (`server.py` --
+  add `qa` to the bottom import line, update the module docstring).
+- Notes: `qa`'s tools/resources/prompts are fully built, importable, and
+  unit-tested standalone (each test imports the specific function directly,
+  e.g. `from biz.dfch.specmgr.qa.tools.create_qa import create_qa`, mirroring
+  how `tests/req/` itself never round-trips through a live MCP server), but
+  are not yet registered against the live MCP server -- `server.py`'s
+  bottom-of-file import list still only imports `adr`, `general`, `req`,
+  `tsk`, `uc`, not `qa`. That wiring, plus `pyproject.toml` package-data,
+  the pre-commit schema-hook glob, and the CI schema-drift check, are all
+  Phase 5 work and were deliberately left untouched this phase.
 
 #### Update 2026-08-18T19:30:00Z
 
@@ -994,6 +1119,46 @@ Older entries (2026-08-18T11:15:00Z and earlier) are archived in
   `tsk/models/v1/body.py`'s `Task._validate_items_eagerly`/
   `uc/models/v1/use_case.py`'s existing `self.items`/`self.extensions.items`
   accesses.
+- **2026-08-18 (Task 4.4)**: `qa/data/qa_example.md` reuses Phase 2's
+  `qa_reference.md` verbatim (byte-identical copy), rather than lightly
+  adapting it the way TSK's `tsk_example.md` differs from
+  `tsk_reference.md`. Rationale: `qa_reference.md` was already written to
+  exercise every field of the schema (both `General` sub-sections, all
+  nine categories including one deliberately empty one, a `Requirement`
+  callout with a nested list/block-quote edge case, and `More
+  Information`) and was already verified, in Phase 3, to round-trip
+  byte-exactly through `parse_qa`/`Qa`/`QaFrontmatter` -- there was no
+  wording/numbering awkwardness of the kind TSK's own adaptation fixed
+  (TSK's reference lacked task numbers a real task list would want), so
+  introducing any divergence between the two documents would only be
+  extra unforced maintenance surface with no benefit. Re-verified the
+  round-trip independently in this phase via a throwaway script before
+  relying on it in `get_qa_example`/`specmgr://qa/example`'s tests.
+- **2026-08-18 (Task 4.4)**: `qa/data/qa_template.md` was written from
+  scratch rather than derived from `qa_reference.md`/`qa_example.md`,
+  since a template's job (short, generic placeholder prose signaling
+  "fill this in") is different in kind from a reference/example's job
+  (a complete, realistic scenario) -- mirrors why `req_template.md`/
+  `tsk_template.md` are also hand-written distinct files, not trimmed
+  copies of their own examples. It happens to also satisfy every
+  `parse_qa` validator (verified), which is a stronger guarantee than
+  the task required (only "structurally complete" was mandated) -- this
+  is incidental, not a design goal, since a real template's placeholder
+  text is explicitly allowed to fail field-level validation.
+- **2026-08-18 (Task 4.5)**: `qa`'s tool/resource test suites have no
+  `test_raises_validation_error_for_bad_field_value`-equivalent test (the
+  one REQ's own `test_create_req.py`/`test_update_req.py`/
+  `test_validate_req.py` each carry, exercising a bad `## Level` value).
+  Unlike REQ's body, `qa`'s body has no caller-controllable field with its
+  own closed-set/pattern validator -- every fixed category heading is a
+  *structural* match (fixed heading text via `AliasType.SPACE_SEPARATED`,
+  raising `AssertionError` on mismatch, not `pydantic.ValidationError`),
+  and every other body field is fully optional free-form prose. The only
+  genuine `pydantic.ValidationError` channel in the whole QA lifecycle
+  surface is `QaFrontmatter.status`'s four-value closed set, already
+  covered by `test_set_status_qa.py`/`test_validate_qa.py`'s "full=True"
+  path -- so this is a real, schema-driven asymmetry versus REQ, not a
+  coverage gap to fill later.
 
 ### Related PRs / Commits
 

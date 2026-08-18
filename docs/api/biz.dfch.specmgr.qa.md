@@ -3,13 +3,23 @@
 Question and Answer (QA) domain -- requirements-elicitation interview specifications.
 
 This is a domain-first package (per ADR ece4554b-725c-4f76-bc04-5d2b760363d2),
-mirroring ``req``'s/``tsk``'s layout, containing models (and, from
-`.specmgr/feat/feat-12-qa-artifact/README.md` Phase 4 onward, tools,
-prompts, and resources) for managing ``qa`` documents.
+mirroring ``req``'s/``tsk``'s layout, containing models, tools, prompts, and
+resources for managing ``qa`` documents.
 
-As of Phase 3 (Pydantic Models & Parser), only ``qa.models.v1`` exists --
-``qa.tools``/``qa.resources``/``qa.prompts`` are Phase 4 work and this
-module deliberately does not import them yet (there is nothing to import).
-Once Phase 4 lands, this module's own import line should mirror
-``tsk/__init__.py``'s ``from . import prompts, resources, tools`` so
-``server.py``'s bottom-of-file import registers ``qa``'s MCP surface too.
+Import this package to register all QA tools/prompts/resources against the
+shared ``mcp`` application instance at once::
+
+    from biz.dfch.specmgr import qa  # noqa: F401 (side-effects only)
+
+``tools`` (``parse_qa``, ``get_qa``, ``get_qa_example``, ``get_qa_template``,
+``create_qa``, ``update_qa``, ``set_status_qa``, ``delete_qa``,
+``validate_qa``), ``resources`` (``specmgr://qa/schema``,
+``specmgr://qa/example``, ``specmgr://qa/template``, ``specmgr://qa/list``),
+and ``prompts`` (``create_qa``, ``update_qa``) all exist. Like REQ, QA has no
+``specmgr://qa/{id}`` resource -- id-based reads go through the ``get_qa``
+tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
+
+Note: as of Phase 4 (MCP Surface), this domain's tools/resources/prompts are
+implemented and importable standalone, but ``server.py``'s own bottom-of-file
+import list does not import ``qa`` yet -- that registration wiring is Phase
+5's Task 5.1.

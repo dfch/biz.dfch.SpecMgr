@@ -123,6 +123,28 @@ First-line docstrings from each module, organized by domain:
 - `qa/models/v1/frontmatter.py` — Question and Answer (QA) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
 - `qa/models/v1/parser.py` — Parse raw Question and Answer (QA) ``.md`` text into a :class:`QaDocument`.
 - `qa/models/v1/summary.py` — Pydantic model for one line of QA listing output.
+- `qa/prompts/__init__.py` — MCP prompt registrations for Question and Answer (QA) documents (Phase 4, Task 4.3).
+- `qa/prompts/create_qa.py` — ``@mcp.prompt()``: create_qa (Phase 4, Task 4.3).
+- `qa/prompts/update_qa.py` — ``@mcp.prompt()``: update_qa (Phase 4, Task 4.3).
+- `qa/resources/__init__.py` — MCP resource registrations for Question and Answer (QA) documents (Phase 4, Task 4.2).
+- `qa/resources/qa_example.py` — Resource: specmgr://qa/example (Phase 4, Task 4.2).
+- `qa/resources/qa_list.py` — Resource: specmgr://qa/list (Phase 4, Task 4.2).
+- `qa/resources/qa_schema.py` — Resource: specmgr://qa/schema (Phase 4, Task 4.2).
+- `qa/resources/qa_template.py` — Resource: specmgr://qa/template (Phase 4, Task 4.2).
+- `qa/tools/__init__.py` — MCP tool wrappers for Question and Answer (QA) documents (mirrors ``req/tools/``'s own shape).
+- `qa/tools/_io.py` — Thin file read helpers over ``parse_qa`` (Phase 4, Task 4.1).
+- `qa/tools/_lock.py` — Per-document in-process lock guarding Question and Answer (QA) mutations.
+- `qa/tools/_paths.py` — Question and Answer (QA) base directory resolution and id -> path lookup (Phase 4, Task 4.1).
+- `qa/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_qa``/``update_qa``
+- `qa/tools/create_qa.py` — ``@mcp.tool()`` wrapper: create_qa (Phase 4, Task 4.1).
+- `qa/tools/delete_qa.py` — ``@mcp.tool()`` wrapper: delete_qa (Phase 4, Task 4.1).
+- `qa/tools/get_qa.py` — ``@mcp.tool()`` wrapper: get_qa (Phase 4, Task 4.1).
+- `qa/tools/get_qa_example.py` — ``@mcp.tool()`` wrapper: get_qa_example (Phase 4, Task 4.1).
+- `qa/tools/get_qa_template.py` — ``@mcp.tool()`` wrapper: get_qa_template (Phase 4, Task 4.1).
+- `qa/tools/parse_qa.py` — ``@mcp.tool()`` wrapper: parse_qa (Phase 4, Task 4.1).
+- `qa/tools/set_status_qa.py` — ``@mcp.tool()`` wrapper: set_status_qa (Phase 4, Task 4.1).
+- `qa/tools/update_qa.py` — ``@mcp.tool()`` wrapper: update_qa (Phase 4, Task 4.1).
+- `qa/tools/validate_qa.py` — ``@mcp.tool()`` wrapper: validate_qa (Phase 4, Task 4.1).
 
 **req/**
 
@@ -241,4 +263,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 156
+**Test files**: 175

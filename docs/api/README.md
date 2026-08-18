@@ -104,6 +104,28 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.qa.models.v1.frontmatter`](biz.dfch.specmgr.qa.models.v1.frontmatter.md) — Question and Answer (QA) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
 - [`biz.dfch.specmgr.qa.models.v1.parser`](biz.dfch.specmgr.qa.models.v1.parser.md) — Parse raw Question and Answer (QA) ``.md`` text into a :class:`QaDocument`.
 - [`biz.dfch.specmgr.qa.models.v1.summary`](biz.dfch.specmgr.qa.models.v1.summary.md) — Pydantic model for one line of QA listing output.
+- [`biz.dfch.specmgr.qa.prompts`](biz.dfch.specmgr.qa.prompts.md) — MCP prompt registrations for Question and Answer (QA) documents (Phase 4, Task 4.3).
+- [`biz.dfch.specmgr.qa.prompts.create_qa`](biz.dfch.specmgr.qa.prompts.create_qa.md) — ``@mcp.prompt()``: create_qa (Phase 4, Task 4.3).
+- [`biz.dfch.specmgr.qa.prompts.update_qa`](biz.dfch.specmgr.qa.prompts.update_qa.md) — ``@mcp.prompt()``: update_qa (Phase 4, Task 4.3).
+- [`biz.dfch.specmgr.qa.resources`](biz.dfch.specmgr.qa.resources.md) — MCP resource registrations for Question and Answer (QA) documents (Phase 4, Task 4.2).
+- [`biz.dfch.specmgr.qa.resources.qa_example`](biz.dfch.specmgr.qa.resources.qa_example.md) — Resource: specmgr://qa/example (Phase 4, Task 4.2).
+- [`biz.dfch.specmgr.qa.resources.qa_list`](biz.dfch.specmgr.qa.resources.qa_list.md) — Resource: specmgr://qa/list (Phase 4, Task 4.2).
+- [`biz.dfch.specmgr.qa.resources.qa_schema`](biz.dfch.specmgr.qa.resources.qa_schema.md) — Resource: specmgr://qa/schema (Phase 4, Task 4.2).
+- [`biz.dfch.specmgr.qa.resources.qa_template`](biz.dfch.specmgr.qa.resources.qa_template.md) — Resource: specmgr://qa/template (Phase 4, Task 4.2).
+- [`biz.dfch.specmgr.qa.tools`](biz.dfch.specmgr.qa.tools.md) — MCP tool wrappers for Question and Answer (QA) documents (mirrors ``req/tools/``'s own shape).
+- [`biz.dfch.specmgr.qa.tools._io`](biz.dfch.specmgr.qa.tools._io.md) — Thin file read helpers over ``parse_qa`` (Phase 4, Task 4.1).
+- [`biz.dfch.specmgr.qa.tools._lock`](biz.dfch.specmgr.qa.tools._lock.md) — Per-document in-process lock guarding Question and Answer (QA) mutations.
+- [`biz.dfch.specmgr.qa.tools._paths`](biz.dfch.specmgr.qa.tools._paths.md) — Question and Answer (QA) base directory resolution and id -> path lookup (Phase 4, Task 4.1).
+- [`biz.dfch.specmgr.qa.tools._write`](biz.dfch.specmgr.qa.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_qa``/``update_qa``
+- [`biz.dfch.specmgr.qa.tools.create_qa`](biz.dfch.specmgr.qa.tools.create_qa.md) — ``@mcp.tool()`` wrapper: create_qa (Phase 4, Task 4.1).
+- [`biz.dfch.specmgr.qa.tools.delete_qa`](biz.dfch.specmgr.qa.tools.delete_qa.md) — ``@mcp.tool()`` wrapper: delete_qa (Phase 4, Task 4.1).
+- [`biz.dfch.specmgr.qa.tools.get_qa`](biz.dfch.specmgr.qa.tools.get_qa.md) — ``@mcp.tool()`` wrapper: get_qa (Phase 4, Task 4.1).
+- [`biz.dfch.specmgr.qa.tools.get_qa_example`](biz.dfch.specmgr.qa.tools.get_qa_example.md) — ``@mcp.tool()`` wrapper: get_qa_example (Phase 4, Task 4.1).
+- [`biz.dfch.specmgr.qa.tools.get_qa_template`](biz.dfch.specmgr.qa.tools.get_qa_template.md) — ``@mcp.tool()`` wrapper: get_qa_template (Phase 4, Task 4.1).
+- [`biz.dfch.specmgr.qa.tools.parse_qa`](biz.dfch.specmgr.qa.tools.parse_qa.md) — ``@mcp.tool()`` wrapper: parse_qa (Phase 4, Task 4.1).
+- [`biz.dfch.specmgr.qa.tools.set_status_qa`](biz.dfch.specmgr.qa.tools.set_status_qa.md) — ``@mcp.tool()`` wrapper: set_status_qa (Phase 4, Task 4.1).
+- [`biz.dfch.specmgr.qa.tools.update_qa`](biz.dfch.specmgr.qa.tools.update_qa.md) — ``@mcp.tool()`` wrapper: update_qa (Phase 4, Task 4.1).
+- [`biz.dfch.specmgr.qa.tools.validate_qa`](biz.dfch.specmgr.qa.tools.validate_qa.md) — ``@mcp.tool()`` wrapper: validate_qa (Phase 4, Task 4.1).
 - [`biz.dfch.specmgr.req`](biz.dfch.specmgr.req.md) — Requirement (REQ) domain -- requirement specifications.
 - [`biz.dfch.specmgr.req.prompts`](biz.dfch.specmgr.req.prompts.md) — MCP prompt wrappers for Requirements (Task 3.19).
 - [`biz.dfch.specmgr.req.prompts.create_req`](biz.dfch.specmgr.req.prompts.create_req.md) — ``@mcp.prompt()``: create_req (Task 3.19).
