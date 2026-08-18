@@ -260,7 +260,7 @@ the first time.
 
 #### Phase 0: Cleanup
 
-- [ ] Task 0.1: Delete stray untracked scaffolding from an earlier session
+- [x] Task 0.1: Delete stray untracked scaffolding from an earlier session
   — `src/qa/` (wrong namespace, missing `biz/dfch/specmgr/` prefix),
   `src/biz/dfch/specmgr/qa/{tools,resources,prompts}/` (empty, no
   `models/`), `tests/qa/` (empty), and `biz/dfch/specmgr/qa/` (top-level,
@@ -271,12 +271,12 @@ the first time.
   (verified) — there is nothing to delete there. Note: `tests/qa/` is
   deliberately deleted here and re-created later by Task 4.5 as the real
   test location (mirroring `tests/req/`); this is intentional, not a
-  contradiction — depends on: none — status: not-started.
+  contradiction — depends on: none — status: done.
 
-- [ ] Task 0.2: Phase-end check (lightweight — no code/tests affected by a
+- [x] Task 0.2: Phase-end check (lightweight — no code/tests affected by a
   pure directory deletion) — confirm `git status` and `git status --ignored` show no residue from the deleted paths; update this README's
   Progress section (Current Status, a dated Recent Updates entry) noting
-  Phase 0 complete — depends on: Task 0.1 — status: not-started.
+  Phase 0 complete — depends on: Task 0.1 — status: done.
 
 #### Phase 1: `models/md` engine enhancement
 
@@ -435,10 +435,9 @@ consumer but not the motivating point on its own.
 
 ### Current Status
 
-**As of 2026-08-18**: Planning complete. Schema design, the `end_marker`
-engine enhancement, and the full task breakdown are agreed. Implementation
-has not started (deliberately deferred per explicit instruction — plan-only
-so far).
+**As of 2026-08-18**: Phase 0 (Cleanup) complete. Schema design, the
+`end_marker` engine enhancement, and the full task breakdown are agreed.
+Starting Phase 1 (`models/md` engine enhancement) next.
 
 ### Blockers
 
@@ -448,6 +447,26 @@ None currently.
 
 Older entries (2026-08-18T11:15:00Z and earlier) are archived in
 [`history.md`](history.md).
+
+#### Update 2026-08-18T14:20:00Z
+
+- Completed: Phase 0 (Cleanup) — Task 0.1 and Task 0.2. Re-verified from
+  the repo root (`ls`, `find . -type d -iname "qa"`, `git status`,
+  `git status --ignored`) that all four previously-flagged stray
+  scaffold paths (`src/qa/`, `src/biz/dfch/specmgr/qa/{tools,resources,
+  prompts}/`, `tests/qa/`, `biz/dfch/specmgr/qa/`) are **already absent**
+  from disk — no directory of any of these four paths exists, and
+  neither `git status` nor `git status --ignored` shows any `qa`-related
+  residue (tracked, untracked, or ignored). No deletion was actually
+  performed as a result — confirming their absence *is* the completion
+  of Task 0.1 (the scaffolding was evidently already removed in an
+  earlier, unrecorded step or never actually landed on this checkout),
+  not a skipped task. Task 0.2's phase-end check (`git status` /
+  `git status --ignored` clean of residue) is satisfied by the same
+  verification. This closes Phase 0.
+- Next: Phase 1 (`models/md` engine enhancement) — Task 1.1 (merge
+  `@markdown(...)` into inherited `_metadata` instead of full replace).
+- Notes: Implementation of Phase 1 onward has not started yet.
 
 #### Update 2026-08-18T13:50:58Z
 
