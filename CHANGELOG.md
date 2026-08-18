@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-08-18
+
+### Added
+
+- **Fifth domain feature (QA/Q&A tooling)**: implemented question-and-answer document
+  tools and infrastructure:
+  - `qa/models/v1/`: Pydantic schema (`QaFrontmatter`, `QaBody`, `QaItem`, `QaDocument`),
+    parser (`parse_qa`), renderer (`render_qa`), re-exported via `qa/models/__init__.py`
+    and `models/__init__.py`.
+  - `qa/tools/`: `@mcp.tool()` wrappers for Q&A lifecycle (`create_qa`, `update_qa`,
+    `parse_qa`, `set_status_qa`), plus stub for `delete_qa`.
+  - `qa/resources/`: MCP resources for Q&A read operations (`specmgr://qa/list`,
+    `specmgr://qa/{id}`).
+  - `qa/prompts/`: `create_qa` and `update_qa` prompts for Q&A drafting and revision
+    workflows.
+  - Comprehensive test coverage with 80+ passing tests across `tests/models/qa/`,
+    `tests/qa/tools/`, `tests/qa/resources/`, and `tests/qa/prompts/`.
+- **Markdown infrastructure improvements**: generalized `@markdown` decorator with
+  enhanced merge semantics and `end_marker` support for more flexible section
+  composition across document types.
+
+### Changed
+
+- MCP server registration in `server.py` updated to import all six domains
+  (`adr`, `general`, `qa`, `req`, `tsk`, `uc`) to register their respective
+  tools, resources, and prompts.
+
 ## [0.5.1] - 2026-08-18
 
 ### Fixed
