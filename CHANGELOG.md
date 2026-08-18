@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-08-18
+
+### Added
+
+- **`compact_history` MCP prompt** (`general/prompts/`): New prompt for compacting
+  verbose history entries, with packaged instruction data file
+  (`general/data/general_compact_history_instructions.md`) and full test coverage
+  (12 tests). Establishes prompts support under the `general/` domain package.
+- **External prompt instruction files**: Migrated inline instruction strings from
+  Python code to external markdown files in `*/data/` directories across all
+  domains (adr, qa, req, tsk). Enables easier maintenance and better separation
+  of concerns.
+- **`refine` prompt for QA module**: New prompt to elicit additional Q&A pairs
+  by quality category.
+
+### Changed
+
+- Prompt instruction text storage: replaced inline `str.format()` calls with
+  external markdown data files and `string.Template` for placeholder substitution,
+  allowing unescaped braces in markdown content. Instructions are read fresh on
+  every call (no caching) via the `read_packaged_text()` helper.
+
+## [0.6.0] - 2026-08-18
+
 ## [0.6.0] - 2026-08-18
 
 ### Added
