@@ -1,7 +1,7 @@
 ---
 created: 2026-08-18
 id: feat-12-qa-artifact
-status: planning
+status: done
 updated: 2026-08-18
 version: 1.0.0
 ---
@@ -427,22 +427,40 @@ consumer but not the motivating point on its own.
 
 #### Phase 6: Final cross-cutting verification
 
-- [ ] Task 6.1: Final verification pass — walk every ACC-001..006 and
+- [x] Task 6.1: Final verification pass — walk every ACC-001..006 and
   confirm each is satisfied with concrete evidence; run the full quality
   gate (ruff format/check, pylint advisory, vulture, unittest, `specmgr docs`, `specmgr mcp-docs`, `specmgr schema --type qa` drift checks) one
   last time end-to-end; update this README's Progress section (Current
   Status, a dated Recent Updates entry) and set feature status to `done`
-  — depends on: Phase 0-5 complete — status: not-started.
+  — depends on: Phase 0-5 complete — status: done.
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-08-18**: Phase 0 (Cleanup), Phase 1 (`models/md` engine
+**As of 2026-08-18**: Feature complete — all 6 phases done, Task 6.1 (Final
+verification pass) confirmed all six acceptance criteria satisfied with
+concrete evidence and the full quality gate green end-to-end. Feature
+status set to `done`. Phase 0 (Cleanup), Phase 1 (`models/md` engine
 enhancement), Phase 2 (Specification), Phase 3 (Pydantic Models & Parser),
-Phase 4 (MCP Surface), and Phase 5 (Cross-cutting registration) complete —
-Tasks 1.1-1.5, 2.1/2.3, 3.1/3.1.1/3.2/3.3, 4.1-4.6, and 5.1/5.3-5.8 done
-(intentional gap at 5.2, folded into Task 3.1.1 earlier in the plan). The
+Phase 4 (MCP Surface), Phase 5 (Cross-cutting registration), and Phase 6
+(Final cross-cutting verification) complete — Tasks 1.1-1.5, 2.1/2.3,
+3.1/3.1.1/3.2/3.3, 4.1-4.6, 5.1/5.3-5.8, and 6.1 done (intentional gap at
+5.2, folded into Task 3.1.1 earlier in the plan). ACC-001 (merge-semantics
+regression + depth-0 `end_marker` stop condition, 18 tests in
+`tests/models/md/test_markdown.py`/`test_markdown_section_end_marker.py`),
+ACC-002 (`qa_reference.md` re-verified to parse successfully via
+`parse_qa` on the current committed state), ACC-003 (35 tests in
+`tests/qa/models/v1/test_frontmatter.py`/`test_body.py` covering
+required/optional field validation and the four-value `status` closed
+set), ACC-004 (`tests/qa/models/v1/test_parser.py` covering a valid
+object tree, `AssertionError` on malformed structure, and
+`pydantic.ValidationError` on invalid field values), ACC-005 (live
+`biz.dfch.specmgr.server.mcp` introspection confirming all 9 tools, 4
+resources, and 2 prompts registered and callable), and ACC-006 (fresh
+`specmgr docs`/`specmgr mcp-docs`/`specmgr schema --type qa` runs, all
+reporting zero drift) were each independently re-verified this phase, not
+just trusted from earlier phase reports. The
 `qa` domain is now fully registered end-to-end: `server.py`'s bottom-of-file
 import line reads `from . import adr, general, qa, req, tsk, uc`, and its
 module docstring documents `qa`'s four resources (`specmgr://qa/schema`,
@@ -477,8 +495,10 @@ format --check` (766 files already formatted), `ruff check` (all checks
 passed), `vulture` (no output, clean), and the full `unittest` suite (1144
 tests, OK -- unchanged from Phase 4's count, no regressions, as expected
 since this phase touched no `src/`/`tests/` Python logic). Commit for Phase
-5 intentionally left to the orchestrator. Starting Phase 6 (Final
-cross-cutting verification) next.
+5 intentionally left to the orchestrator. Phase 6 (Final cross-cutting
+verification) subsequently completed Task 6.1: see the dated Recent
+Updates entry below for the full evidence trail. Commit for Phase 6
+intentionally left to the orchestrator as well. No further phases remain.
 
 ### Blockers
 
@@ -488,6 +508,85 @@ None currently.
 
 Older entries (2026-08-18T11:15:00Z and earlier) are archived in
 [`history.md`](history.md).
+
+#### Update 2026-08-18T23:45:00Z
+
+- Completed: Phase 6 (Final cross-cutting verification) — Task 6.1 (Final
+  verification pass). Re-read the plan's Acceptance Criteria section and
+  Phase 6 verbatim first, per the orchestrator's instructions, then walked
+  every ACC-001..006 independently with fresh, concrete evidence (not
+  trusting earlier phase reports):
+  - **ACC-001**: Ran `tests/models/md/test_markdown.py` (12 tests —
+    merge-semantics regression, including
+    `test_reapplying_with_no_arguments_keeps_every_inherited_key`,
+    `test_explicitly_passing_none_clears_an_inherited_value`,
+    `test_end_marker_is_merged_the_same_way`) and
+    `tests/models/md/test_markdown_section_end_marker.py` (6 tests —
+    depth-0 stop condition, including
+    `test_extent_stops_before_the_first_depth_zero_block_quote` and the
+    nested-list-and-nested-block-quote edge case
+    `test_nested_list_and_nested_block_quote_do_not_truncate`/
+    `test_from_text_retains_the_nested_list_and_quote_but_not_the_end_marker`)
+    — 18/18 passed.
+  - **ACC-002**: Called
+    `parse_qa('.specmgr/feat/feat-12-qa-artifact/qa_reference.md')`
+    directly against the current committed state (not just re-reading a
+    prior phase's claim): confirmed `frontmatter.id`, `frontmatter.status`,
+    `body.text`, `compatibility.items is None`, `functional_suitability`'s
+    2 Q&A pairs, and `more_information` all round-trip correctly.
+  - **ACC-003**: Ran `tests/qa/models/v1/test_frontmatter.py` (9 tests,
+    including `test_accepts_all_four_statuses`/
+    `test_rejects_unknown_status`) and `tests/qa/models/v1/test_body.py`
+    (17 tests, including `TestQaRequiredVsOptionalFields`'s
+    missing-mandatory-field checks) — 26/26 passed.
+  - **ACC-004**: Ran `tests/qa/models/v1/test_parser.py` (6 tests —
+    `test_parses_minimal_document`/`test_parses_full_reference_document`
+    for a valid object tree,
+    `test_missing_general_section_raises_assertion_error`/
+    `test_missing_iso_characteristic_section_raises_assertion_error` for
+    `AssertionError`, `test_invalid_status_raises_validation_error` for
+    `pydantic.ValidationError`) — 6/6 passed.
+  - **ACC-005**: Imported `biz.dfch.specmgr.server` live and introspected
+    `server.mcp` via `list_tools()`/`list_resources()`/`list_prompts()`
+    (async): confirmed all 9 tools (`parse_qa`, `get_qa`, `get_qa_example`,
+    `get_qa_template`, `create_qa`, `update_qa`, `set_status_qa`,
+    `delete_qa`, `validate_qa`), all 4 resources (`specmgr://qa/schema`,
+    `/example`, `/template`, `/list`), and both prompts (`create_qa`,
+    `update_qa`) present among the server's 49 total tools / 19 total
+    resources / 11 total prompts (matching `docs/MCP.md`'s documented
+    counts). Went further than mere registration: actually called
+    `mcp.call_tool('get_qa_template', {})`,
+    `mcp.read_resource('specmgr://qa/schema')`,
+    `mcp.get_prompt('create_qa', {'topic': ...})`, and
+    `mcp.get_prompt('update_qa', {'id': 'x'})` live and confirmed each
+    returns successfully — proving callable, not just registered.
+  - **ACC-006**: Re-ran `specmgr docs`, `specmgr mcp-docs`,
+    `specmgr schema --type qa`, and `specmgr schema --type qa --output-dir
+    src/biz/dfch/specmgr/qa/data` fresh against the current committed
+    state: `specmgr docs`/`specmgr mcp-docs` produced no
+    `git status --short` changes under `docs/`, and both schema commands
+    reported `(unchanged)` — zero drift confirmed independently of Phase
+    5's own claim.
+  - Ran the full quality gate end-to-end: `uv run --frozen ruff format
+    --check` (766 files already formatted), `uv run --frozen ruff check`
+    (all checks passed), `uv run --frozen pylint $(git ls-files '*.py')`
+    (9.01/10, advisory only — the only findings are pre-existing `R0401`
+    cyclic-import warnings following the same domain-package/`server.py`
+    import pattern already present for every other domain (`adr`, `req`,
+    `tsk`, `uc`), not a `qa`-specific regression, so not treated as a
+    blocker), `uv run --frozen vulture src/ whitelist.py
+    --min-confidence 60` (no output, clean), and `uv run --frozen python
+    -m unittest discover -v -s tests -t . -p "test_*.py"` (1144 tests, OK
+    — identical count to Phase 5's end, no regressions, as expected for a
+    verification-only phase). Found no genuine regression or surprise;
+    nothing required fixing.
+- Next: None — feature complete.
+- Notes: Set frontmatter `status: done` (from `planning`); `version`
+  intentionally left at `1.0.0` per the orchestrator's explicit
+  instruction. Left staging/committing to the orchestrator per this
+  session's instructions; no `src/`/`tests/` files were touched this
+  phase (verification-and-documentation only), so the working tree has
+  only this README's edits, unstaged.
 
 #### Update 2026-08-18T22:45:00Z
 
