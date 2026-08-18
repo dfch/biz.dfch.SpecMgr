@@ -17,9 +17,13 @@
 
 """Tests for the ``update_adr_test`` ``@mcp.prompt()`` (.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md §11)."""
 
+import tempfile
 import unittest
+from pathlib import Path
+from unittest import mock
 
 from biz.dfch.specmgr.adr.prompts.update_adr_test import update_adr_test
+from biz.dfch.specmgr.general.tools import _packaged_data
 
 
 class TestUpdateAdrTestPrompt(unittest.TestCase):
@@ -87,6 +91,30 @@ class TestUpdateAdrTestPrompt(unittest.TestCase):
         from biz.dfch.specmgr.adr.prompts.update_adr import update_adr
 
         self.assertNotEqual(update_adr_test("abc-123"), update_adr("abc-123"))
+
+    def test_instructions_loaded_from_packaged_data_file(self):
+        """The instructional text must come from adr/data/adr_update_test_instructions.md,
+        not an inline Python string -- reads fresh on every call, no cache."""
+        with tempfile.TemporaryDirectory() as tmp:
+            instructions_path = Path(tmp) / "adr_update_test_instructions.md"
+            instructions_path.write_text("first $id / $instructions", encoding="utf-8")
+
+            with mock.patch.object(_packaged_data, "packaged_data_path", return_value=instructions_path):
+                first = update_adr_test("abc-123", instructions="Change the status to accepted.")
+                instructions_path.write_text("second $id / $instructions", encoding="utf-8")
+                second = update_adr_test("abc-123", instructions="Change the status to accepted.")
+
+            self.assertEqual(first, "first abc-123 / Change the status to accepted.")
+            self.assertEqual(second, "second abc-123 / Change the status to accepted.")
+
+    def test_raises_file_not_found_when_instructions_missing(self):
+        """A missing packaged instructions file must propagate FileNotFoundError uncaught."""
+        with tempfile.TemporaryDirectory() as tmp:
+            missing_path = Path(tmp) / "does-not-exist.md"
+
+            with mock.patch.object(_packaged_data, "packaged_data_path", return_value=missing_path):
+                with self.assertRaises(FileNotFoundError):
+                    update_adr_test("abc-123")
 
 
 if __name__ == "__main__":

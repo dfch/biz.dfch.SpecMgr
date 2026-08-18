@@ -30,53 +30,23 @@ Unlike ``adr.prompts.update_adr``, there is no ``update_frontmatter``/
 deliberately small -- a whole-body replace (``update_req``) plus a single,
 dedicated status-change path (``set_status_req``) -- so the tool-mapping
 section below is correspondingly shorter.
+
+The actual instructional text lives in its own packaged data file,
+``req/data/req_update_instructions.md``, read fresh on every call via
+``general.tools._packaged_data.read_packaged_text``, rather than as an
+inline Python string constant. Placeholders use ``string.Template``
+(``$id``/``$instructions``), not ``str.format``, precisely so the
+instructions file itself is free to use plain, unescaped ``{...}`` braces
+for markdown headings it narrates to the LLM without those colliding with
+this module's own substitution.
 """
 
 from __future__ import annotations
 
+from string import Template
+
+from ...general.tools._packaged_data import read_packaged_text
 from ...server import mcp
-
-_INSTRUCTIONS_TEMPLATE = """\
-You are revising an existing Requirement (REQ) document, id: {id}
-
-Requested change: {instructions}
-
-Follow this sequence exactly. Do not write raw markdown yourself beyond
-the body content you pass to `update_req` -- every change to the
-document goes through the specmgr MCP tools listed below.
-
-## 1. Read current state first
-Call `get_req(id)` to load the document's current frontmatter and body.
-Never assume prior state -- the on-disk file is always the source of
-truth and may have been hand-edited since you last saw it.
-
-## 2. If no change was specified
-If "Requested change" above says "(not given)", ask the user what they
-want to change before calling any write tool.
-
-## 3. Map the requested change to the right tool
-- A change to the body -- the requirement statement, `description`,
-  `characteristics`, `level`, `priority`, `tags`, `source`,
-  `related_artifacts`, `more_information`, or `notes` -- ->
-  `update_req(id, content)`. `content` is body markdown only (no
-  frontmatter block) and is a **whole-body replace**: read the current
-  body first (step 1) and carry forward every section you are not
-  intentionally changing, or it will be dropped. `id`/`type`/`status`/
-  `created`/`version` are preserved automatically regardless of what you
-  submit; only `updated` changes.
-- A change to `status` -> `set_status_req(id, status)` instead --
-  `update_req` never accepts or changes `status`. `status` must be one
-  of: draft, proposed, accepted, superseded, deprecated, rejected,
-  implemented.
-
-## 4. Check the schema, and validate before writing if useful
-Fetch `specmgr://req/schema` to confirm field names and constraints
-before drafting the replacement body. Optionally call
-`validate_req(content, full=False)` beforehand to dry-run the new body
-without writing anything -- `update_req` already performs the same
-validation internally, so this step is never required, only a
-convenience.
-"""
 
 
 @mcp.prompt(
@@ -105,7 +75,8 @@ def update_req(id: str, instructions: str | None = None) -> str:
         Instructional text (auto-wrapped as a single ``UserMessage`` by
         the MCP SDK), not itself a tool call.
     """
-    return _INSTRUCTIONS_TEMPLATE.format(
+    template = Template(read_packaged_text("req", "update_instructions", "md"))
+    return template.substitute(
         id=id,
         instructions=instructions or "(not given -- ask the user before making any change)",
     )

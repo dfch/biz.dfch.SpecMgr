@@ -3,7 +3,7 @@
 Auto-generated from the live `biz.dfch.specmgr.server:mcp` registration --
 do not edit by hand, run `specmgr mcp-docs` instead (see `AGENTS.md`).
 
-19 resource(s), 1 resource template(s), 49 tool(s), 11 prompt(s).
+19 resource(s), 1 resource template(s), 49 tool(s), 12 prompt(s).
 
 ## Table of Contents
 
@@ -728,6 +728,7 @@ Fetch a URL over HTTP GET with a bearer token, but only if the URL matches the c
 | [`create_req`](#prompt-create_req) | Guides the LLM through checking for an existing similar requirement, gathering the required information, and driving create_req/validate_req to author a new REQ document. |
 | [`create_task`](#prompt-create_task) | Guides the LLM through checking for an existing similar task list, gathering the required information, and driving create_tsk/validate_tsk to author a new TSK document. |
 | [`implement_task`](#prompt-implement_task) | Reads an existing task list by id, builds a TodoWrite list from its items, and uses the question tool to resolve ambiguity before proceeding. |
+| [`refine`](#prompt-refine) | Guides the LLM through appending a batch of new, unanswered interview questions (each with an empty placeholder answer) to an existing QA document, for one or more of the nine ISO/IEC 25010:2023 quality characteristics. |
 | [`update_adr`](#prompt-update_adr) | Guides the LLM through revising an existing ADR by id: reading current state, applying the requested change with the right tool, and validating. |
 | [`update_adr_test`](#prompt-update_adr_test) | Experimental, strictly step-gated variant of update_adr for A/B comparison: the same read-first/map-to-tool/validate-last flow, rewritten as hard numbered gates instead of narrated steps. |
 | [`update_qa`](#prompt-update_qa) | Guides the LLM through revising an existing QA document by id: reading current state, applying the requested change with the right tool, and validating. |
@@ -787,6 +788,15 @@ Reads an existing task list by id, builds a TodoWrite list from its items, and u
 | Argument | Required | Description |
 | --- | --- | --- |
 | `id` | Yes |  |
+
+### Prompt: refine
+
+Guides the LLM through appending a batch of new, unanswered interview questions (each with an empty placeholder answer) to an existing QA document, for one or more of the nine ISO/IEC 25010:2023 quality characteristics.
+
+| Argument | Required | Description |
+| --- | --- | --- |
+| `id_or_name` | Yes |  |
+| `scope` | No |  |
 
 ### Prompt: update_adr
 

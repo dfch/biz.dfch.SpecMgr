@@ -7,7 +7,7 @@ regenerate with `uv run --frozen specmgr docs` and commit the result.
 
 **Models** — schema definitions: adr, md
 
-**ADR domain** — subpackages: prompts, resources, tools
+**ADR domain** — subpackages: data, prompts, resources, tools
   - 11 MCP tools
   - 2 MCP resources
   - 4 prompt modules
@@ -125,6 +125,7 @@ First-line docstrings from each module, organized by domain:
 - `qa/models/v1/summary.py` — Pydantic model for one line of QA listing output.
 - `qa/prompts/__init__.py` — MCP prompt registrations for Question and Answer (QA) documents (Phase 4, Task 4.3).
 - `qa/prompts/create_qa.py` — ``@mcp.prompt()``: create_qa (Phase 4, Task 4.3).
+- `qa/prompts/refine.py` — ``@mcp.prompt()``: refine (Phase 4, Task 4.3).
 - `qa/prompts/update_qa.py` — ``@mcp.prompt()``: update_qa (Phase 4, Task 4.3).
 - `qa/resources/__init__.py` — MCP resource registrations for Question and Answer (QA) documents (Phase 4, Task 4.2).
 - `qa/resources/qa_example.py` — Resource: specmgr://qa/example (Phase 4, Task 4.2).
@@ -263,4 +264,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 175
+**Test files**: 176

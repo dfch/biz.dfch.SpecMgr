@@ -106,6 +106,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.qa.models.v1.summary`](biz.dfch.specmgr.qa.models.v1.summary.md) — Pydantic model for one line of QA listing output.
 - [`biz.dfch.specmgr.qa.prompts`](biz.dfch.specmgr.qa.prompts.md) — MCP prompt registrations for Question and Answer (QA) documents (Phase 4, Task 4.3).
 - [`biz.dfch.specmgr.qa.prompts.create_qa`](biz.dfch.specmgr.qa.prompts.create_qa.md) — ``@mcp.prompt()``: create_qa (Phase 4, Task 4.3).
+- [`biz.dfch.specmgr.qa.prompts.refine`](biz.dfch.specmgr.qa.prompts.refine.md) — ``@mcp.prompt()``: refine (Phase 4, Task 4.3).
 - [`biz.dfch.specmgr.qa.prompts.update_qa`](biz.dfch.specmgr.qa.prompts.update_qa.md) — ``@mcp.prompt()``: update_qa (Phase 4, Task 4.3).
 - [`biz.dfch.specmgr.qa.resources`](biz.dfch.specmgr.qa.resources.md) — MCP resource registrations for Question and Answer (QA) documents (Phase 4, Task 4.2).
 - [`biz.dfch.specmgr.qa.resources.qa_example`](biz.dfch.specmgr.qa.resources.qa_example.md) — Resource: specmgr://qa/example (Phase 4, Task 4.2).

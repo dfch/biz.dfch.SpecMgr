@@ -17,8 +17,12 @@
 
 """Tests for the ``update_task`` ``@mcp.prompt()`` (Task 3.13)."""
 
+import tempfile
 import unittest
+from pathlib import Path
+from unittest import mock
 
+from biz.dfch.specmgr.general.tools import _packaged_data
 from biz.dfch.specmgr.tsk.prompts.update_task import update_task
 
 
@@ -72,6 +76,30 @@ class TestUpdateTaskPrompt(unittest.TestCase):
         """The prompt must point at the implement_task prompt for working the checklist itself."""
         result = update_task("abc-123")
         self.assertIn("implement_task", result)
+
+    def test_instructions_loaded_from_packaged_data_file(self):
+        """The instructional text must come from tsk/data/tsk_update_instructions.md,
+        not an inline Python string -- reads fresh on every call, no cache."""
+        with tempfile.TemporaryDirectory() as tmp:
+            instructions_path = Path(tmp) / "tsk_update_instructions.md"
+            instructions_path.write_text("first $id / $instructions", encoding="utf-8")
+
+            with mock.patch.object(_packaged_data, "packaged_data_path", return_value=instructions_path):
+                first = update_task("abc-123", instructions="Mark the first item as done.")
+                instructions_path.write_text("second $id / $instructions", encoding="utf-8")
+                second = update_task("abc-123", instructions="Mark the first item as done.")
+
+            self.assertEqual(first, "first abc-123 / Mark the first item as done.")
+            self.assertEqual(second, "second abc-123 / Mark the first item as done.")
+
+    def test_raises_file_not_found_when_instructions_missing(self):
+        """A missing packaged instructions file must propagate FileNotFoundError uncaught."""
+        with tempfile.TemporaryDirectory() as tmp:
+            missing_path = Path(tmp) / "does-not-exist.md"
+
+            with mock.patch.object(_packaged_data, "packaged_data_path", return_value=missing_path):
+                with self.assertRaises(FileNotFoundError):
+                    update_task("abc-123")
 
 
 if __name__ == "__main__":

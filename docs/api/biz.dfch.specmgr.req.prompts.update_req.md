@@ -16,6 +16,15 @@ deliberately small -- a whole-body replace (``update_req``) plus a single,
 dedicated status-change path (``set_status_req``) -- so the tool-mapping
 section below is correspondingly shorter.
 
+The actual instructional text lives in its own packaged data file,
+``req/data/req_update_instructions.md``, read fresh on every call via
+``general.tools._packaged_data.read_packaged_text``, rather than as an
+inline Python string constant. Placeholders use ``string.Template``
+(``$id``/``$instructions``), not ``str.format``, precisely so the
+instructions file itself is free to use plain, unescaped ``{...}`` braces
+for markdown headings it narrates to the LLM without those colliding with
+this module's own substitution.
+
 ## Functions
 
 ### `update_req(id: 'str', instructions: 'str | None' = None) -> 'str'`

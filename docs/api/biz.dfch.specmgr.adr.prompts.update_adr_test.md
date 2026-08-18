@@ -15,6 +15,15 @@ stricter phrasing measurably improves compliance (e.g. always reading
 current state first, never guessing at an unspecified change) -- see
 the conversation in .specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md §11 for the rationale.
 
+The actual instructional text lives in its own packaged data file,
+``adr/data/adr_update_test_instructions.md``, read fresh on every call via
+``general.tools._packaged_data.read_packaged_text``, rather than as an
+inline Python string constant. Placeholders use ``string.Template``
+(``$id``/``$instructions``), not ``str.format``, precisely so the
+instructions file itself is free to use plain, unescaped ``{...}`` braces
+for the ``specmgr://adr/{id}`` resource-template placeholder it narrates
+to the LLM without that colliding with this module's own substitution.
+
 ## Functions
 
 ### `update_adr_test(id: 'str', instructions: 'str | None' = None) -> 'str'`

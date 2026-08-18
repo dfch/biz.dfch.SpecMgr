@@ -17,9 +17,13 @@
 
 """Tests for the ``create_adr_test`` ``@mcp.prompt()`` (.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md §11)."""
 
+import tempfile
 import unittest
+from pathlib import Path
+from unittest import mock
 
 from biz.dfch.specmgr.adr.prompts.create_adr_test import create_adr_test
+from biz.dfch.specmgr.general.tools import _packaged_data
 
 
 class TestCreateAdrTestPrompt(unittest.TestCase):
@@ -94,6 +98,30 @@ class TestCreateAdrTestPrompt(unittest.TestCase):
         from biz.dfch.specmgr.adr.prompts.create_adr import create_adr
 
         self.assertNotEqual(create_adr_test("Some topic"), create_adr("Some topic"))
+
+    def test_instructions_loaded_from_packaged_data_file(self):
+        """The instructional text must come from adr/data/adr_create_test_instructions.md,
+        not an inline Python string -- reads fresh on every call, no cache."""
+        with tempfile.TemporaryDirectory() as tmp:
+            instructions_path = Path(tmp) / "adr_create_test_instructions.md"
+            instructions_path.write_text("first $topic / $decision_makers", encoding="utf-8")
+
+            with mock.patch.object(_packaged_data, "packaged_data_path", return_value=instructions_path):
+                first = create_adr_test("Some topic", decision_makers="Platform Team")
+                instructions_path.write_text("second $topic / $decision_makers", encoding="utf-8")
+                second = create_adr_test("Some topic", decision_makers="Platform Team")
+
+            self.assertEqual(first, "first Some topic / Platform Team")
+            self.assertEqual(second, "second Some topic / Platform Team")
+
+    def test_raises_file_not_found_when_instructions_missing(self):
+        """A missing packaged instructions file must propagate FileNotFoundError uncaught."""
+        with tempfile.TemporaryDirectory() as tmp:
+            missing_path = Path(tmp) / "does-not-exist.md"
+
+            with mock.patch.object(_packaged_data, "packaged_data_path", return_value=missing_path):
+                with self.assertRaises(FileNotFoundError):
+                    create_adr_test("Some topic")
 
 
 if __name__ == "__main__":

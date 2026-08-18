@@ -20,6 +20,16 @@ collide with any ``@mcp.tool()`` -- ``adr/tools/`` has no ``create_adr_test``
 tool; the underlying tool sequence driven by this prompt is unchanged
 (``create_adr``, ``option_create``, ``set_status``, ``validate_adr``).
 
+The actual instructional text lives in its own packaged data file,
+``adr/data/adr_create_test_instructions.md``, read fresh on every call via
+``general.tools._packaged_data.read_packaged_text``, rather than as an
+inline Python string constant. Placeholders use ``string.Template``
+(``$topic``/``$decision_makers``/...), not ``str.format``, precisely so
+the instructions file itself is free to use plain, unescaped ``{...}``
+braces for the MADR markdown headings it narrates to the LLM (e.g.
+``# {title}``) without those colliding with this module's own
+substitution.
+
 ## Functions
 
 ### `create_adr_test(topic: 'str', decision_makers: 'str | None' = None, consulted: 'str | None' = None, informed: 'str | None' = None) -> 'str'`

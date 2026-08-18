@@ -102,7 +102,10 @@ Task list prompts (``tsk/prompts/``): ``create_task``, ``update_task`` -- instru
 text guiding an LLM through the TSK tool sequence above, plus ``implement_task`` --
 reads an existing task list via ``get_tsk``, builds a ``TodoWrite`` list from its
 items, and uses the ``question`` tool to resolve ambiguity before proceeding.
-QA prompts (``qa/prompts/``): ``create_qa``, ``update_qa``.
+QA prompts (``qa/prompts/``): ``create_qa``, ``update_qa``, plus ``refine`` --
+appends a fresh batch of unanswered interview questions (each with an empty
+`_(awaiting response)_` placeholder) to an existing QA document, for one or
+more of the nine ISO/IEC 25010:2023 quality characteristics.
 
 Modules are grouped domain-first
 (ADR ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by

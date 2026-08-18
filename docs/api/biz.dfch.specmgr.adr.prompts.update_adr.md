@@ -8,6 +8,15 @@ existing ``adr/tools/`` surface (``get_adr``, ``update_section``,
 ``update_frontmatter``, ``set_status``, ``option_create``/``option_update``/
 ``option_delete``, ``validate_adr``).
 
+The actual instructional text lives in its own packaged data file,
+``adr/data/adr_update_instructions.md``, read fresh on every call via
+``general.tools._packaged_data.read_packaged_text``, rather than as an
+inline Python string constant. Placeholders use ``string.Template``
+(``$id``/``$instructions``), not ``str.format``, precisely so the
+instructions file itself is free to use plain, unescaped ``{...}`` braces
+for the ``specmgr://adr/{id}`` resource-template placeholder it narrates
+to the LLM without that colliding with this module's own substitution.
+
 ## Functions
 
 ### `update_adr(id: 'str', instructions: 'str | None' = None) -> 'str'`

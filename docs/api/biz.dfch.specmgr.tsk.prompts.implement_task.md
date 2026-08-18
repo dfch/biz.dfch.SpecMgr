@@ -21,6 +21,15 @@ is running in, exactly like every other reference to them in this codebase.
 ``implement_task`` itself never calls ``get_tsk``/``TodoWrite``/``question``
 either -- it only returns the text instructing an LLM to do so.
 
+The actual instructional text lives in its own packaged data file,
+``tsk/data/tsk_implement_instructions.md``, read fresh on every call via
+``general.tools._packaged_data.read_packaged_text``, rather than as an
+inline Python string constant. Placeholders use ``string.Template``
+(``$id``), not ``str.format``, precisely so the instructions file itself
+is free to use plain, unescaped ``{...}`` braces for the TSK markdown it
+narrates to the LLM without those colliding with this module's own
+substitution.
+
 ## Functions
 
 ### `implement_task(id: 'str') -> 'str'`

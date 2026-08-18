@@ -23,8 +23,12 @@ assertions on the returned text, not behavioral tests: there is nothing to
 execute beyond the prompt function itself.
 """
 
+import tempfile
 import unittest
+from pathlib import Path
+from unittest import mock
 
+from biz.dfch.specmgr.general.tools import _packaged_data
 from biz.dfch.specmgr.tsk.prompts.implement_task import implement_task
 
 
@@ -63,6 +67,30 @@ class TestImplementTaskPrompt(unittest.TestCase):
         result = implement_task("abc-123")
         self.assertIn("update_tsk(id, content)", result)
         self.assertIn("separate", result)
+
+    def test_instructions_loaded_from_packaged_data_file(self):
+        """The instructional text must come from tsk/data/tsk_implement_instructions.md,
+        not an inline Python string -- reads fresh on every call, no cache."""
+        with tempfile.TemporaryDirectory() as tmp:
+            instructions_path = Path(tmp) / "tsk_implement_instructions.md"
+            instructions_path.write_text("first $id", encoding="utf-8")
+
+            with mock.patch.object(_packaged_data, "packaged_data_path", return_value=instructions_path):
+                first = implement_task("abc-123")
+                instructions_path.write_text("second $id", encoding="utf-8")
+                second = implement_task("abc-123")
+
+            self.assertEqual(first, "first abc-123")
+            self.assertEqual(second, "second abc-123")
+
+    def test_raises_file_not_found_when_instructions_missing(self):
+        """A missing packaged instructions file must propagate FileNotFoundError uncaught."""
+        with tempfile.TemporaryDirectory() as tmp:
+            missing_path = Path(tmp) / "does-not-exist.md"
+
+            with mock.patch.object(_packaged_data, "packaged_data_path", return_value=missing_path):
+                with self.assertRaises(FileNotFoundError):
+                    implement_task("abc-123")
 
 
 if __name__ == "__main__":

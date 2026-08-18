@@ -20,6 +20,15 @@ Naming note: this prompt is named ``update_task`` (the issue's literal
 wording), not ``update_tsk`` -- see ``create_task``'s own docstring for the
 naming rationale.
 
+The actual instructional text lives in its own packaged data file,
+``tsk/data/tsk_update_instructions.md``, read fresh on every call via
+``general.tools._packaged_data.read_packaged_text``, rather than as an
+inline Python string constant. Placeholders use ``string.Template``
+(``$id``/``$instructions``), not ``str.format``, precisely so the
+instructions file itself is free to use plain, unescaped ``{...}`` braces
+for the TSK markdown it narrates to the LLM without those colliding with
+this module's own substitution.
+
 ## Functions
 
 ### `update_task(id: 'str', instructions: 'str | None' = None) -> 'str'`

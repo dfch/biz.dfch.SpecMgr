@@ -17,8 +17,12 @@
 
 """Tests for the ``create_qa`` ``@mcp.prompt()``."""
 
+import tempfile
 import unittest
+from pathlib import Path
+from unittest import mock
 
+from biz.dfch.specmgr.general.tools import _packaged_data
 from biz.dfch.specmgr.qa.prompts.create_qa import create_qa
 
 
@@ -84,6 +88,30 @@ class TestCreateQaPrompt(unittest.TestCase):
         """The prompt must point at the update_qa prompt for later changes."""
         result = create_qa("Some topic")
         self.assertIn("update_qa", result)
+
+    def test_instructions_loaded_from_packaged_data_file(self):
+        """The instructional text must come from qa/data/qa_create_instructions.md,
+        not an inline Python string -- reads fresh on every call, no cache."""
+        with tempfile.TemporaryDirectory() as tmp:
+            instructions_path = Path(tmp) / "qa_create_instructions.md"
+            instructions_path.write_text("first $topic", encoding="utf-8")
+
+            with mock.patch.object(_packaged_data, "packaged_data_path", return_value=instructions_path):
+                first = create_qa("Some topic")
+                instructions_path.write_text("second $topic", encoding="utf-8")
+                second = create_qa("Some topic")
+
+            self.assertEqual(first, "first Some topic")
+            self.assertEqual(second, "second Some topic")
+
+    def test_raises_file_not_found_when_instructions_missing(self):
+        """A missing packaged instructions file must propagate FileNotFoundError uncaught."""
+        with tempfile.TemporaryDirectory() as tmp:
+            missing_path = Path(tmp) / "does-not-exist.md"
+
+            with mock.patch.object(_packaged_data, "packaged_data_path", return_value=missing_path):
+                with self.assertRaises(FileNotFoundError):
+                    create_qa("Some topic")
 
 
 if __name__ == "__main__":

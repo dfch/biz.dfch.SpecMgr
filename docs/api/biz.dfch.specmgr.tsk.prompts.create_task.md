@@ -20,6 +20,15 @@ README's Design Notes. This is not a collision with the ``create_tsk``
 ``@mcp.tool()`` either way -- the MCP protocol keeps prompts and tools in
 separate registries (``prompts/list`` vs. ``tools/list``).
 
+The actual instructional text lives in its own packaged data file,
+``tsk/data/tsk_create_instructions.md``, read fresh on every call via
+``general.tools._packaged_data.read_packaged_text``, rather than as an
+inline Python string constant. Placeholders use ``string.Template``
+(``$topic``), not ``str.format``, precisely so the instructions file
+itself is free to use plain, unescaped ``{...}`` braces for the TSK
+markdown headings it narrates to the LLM (e.g. ``# {title}``) without
+those colliding with this module's own substitution.
+
 ## Functions
 
 ### `create_task(topic: 'str') -> 'str'`
