@@ -195,7 +195,7 @@
       "type": "object"
     },
     "ExtensionItem": {
-      "description": "One action taken while handling an extension's alternate flow, with any continuation text that clarifies\nit.\n\nA single ordered-list entry, optionally followed by loose continuation paragraphs (`notes`).",
+      "description": "One action taken while handling an extension's alternate flow, with any continuation text that clarifies it.",
       "properties": {
         "notes": {
           "anyOf": [

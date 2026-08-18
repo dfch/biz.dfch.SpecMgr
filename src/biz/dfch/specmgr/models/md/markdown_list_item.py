@@ -24,6 +24,7 @@ import re
 from pydantic import computed_field
 
 from .markdown_str import MarkdownStr
+from .markdown_paragraph import MarkdownParagraph
 from ._markdown import format_text, parse
 
 #: The two markdown-it block-container token types a list item can be nested under.
@@ -75,9 +76,18 @@ class MarkdownListItem(MarkdownStr):
         CommonMark cannot represent a lone list item without its wrapper).
         Otherwise this returns `0`, same as the base class's "no extent" case.
 
-        `list_item_open`'s own `.map` already spans the item's *entire*
-        content, including any nested list -- unlike `heading_open`/
-        `paragraph_open`, there is no separate stop-condition scan needed.
+        For bullet lists (`bullet_list_open`), `list_item_open`'s own `.map`
+        already spans the item's *entire* content, including any nested list
+        and continuation paragraphs.
+
+        For numbered lists (`ordered_list_open`), `mdformat` renders loose
+        lists differently: `list_item_open.map` only covers the first
+        paragraph, and continuation paragraphs appear as separate
+        `paragraph_open`/`paragraph_close` tokens *after* `ordered_list_close`
+        but *before* the next `ordered_list_open` (or end of tokens). This
+        method detects that case and extends the extent to include those
+        trailing continuation paragraphs, ensuring consistent parsing for both
+        list types.
 
         Args:
             text: Markdown source, pre-formatted with `mdformat`.
@@ -98,7 +108,39 @@ class MarkdownListItem(MarkdownStr):
         own_map = tokens[1].map
         assert own_map and len(own_map) == 2, f"{cls.__name__}: list_item_open token has no line map"
 
-        return own_map[1]
+        extent = own_map[1]
+
+        # For numbered lists where each item is rendered as its own ordered_list
+        # (detected by ordered_list_open.map ending at the same line as list_item_open.map),
+        # continuation paragraphs appear after ordered_list_close but before the next
+        # ordered_list_open. This happens for top-level lists with continuation paragraphs.
+        if tokens[0].type == "ordered_list_open":
+            list_open_map = tokens[0].map
+            if list_open_map and len(list_open_map) == 2 and list_open_map[1] == own_map[1]:
+                # Single-item ordered list: check if there's another ordered_list_open
+                # after this list's ordered_list_close. If so, continuation paragraphs
+                # may appear between them.
+                ordered_list_close_idx = None
+                for i, tok in enumerate(tokens):
+                    if tok.type == "ordered_list_close":
+                        ordered_list_close_idx = i
+                        break
+
+                if ordered_list_close_idx is not None:
+                    # Check if there's a next ordered_list_open after this close
+                    has_next_list = any(tok.type == "ordered_list_open" for tok in tokens[ordered_list_close_idx + 1 :])
+
+                    if has_next_list:
+                        # Scan for continuation paragraphs between ordered_list_close
+                        # and next ordered_list_open
+                        for i in range(ordered_list_close_idx + 1, len(tokens)):
+                            tok = tokens[i]
+                            if tok.type == "ordered_list_open":
+                                break
+                            if tok.type == "paragraph_open" and tok.map and len(tok.map) == 2:
+                                extent = max(extent, tok.map[1])
+
+        return extent
 
     @classmethod
     def from_text(cls, text: str) -> MarkdownListItem:
@@ -224,3 +266,18 @@ class MarkdownListItem(MarkdownStr):
                 return token.content.strip()
 
         return ""
+
+
+class MarkdownListItemWithNotes(MarkdownListItem):
+    """One list item that captures continuation paragraphs (loose-list notes) via a declared `notes` field.
+
+    Mirrors `ExtensionItem`'s docstring: adds `notes` for captured continuation
+    paragraphs inside a list item, so they appear in ``model_dump()``/JSON output
+    instead of being lost to Pydantic's private-attribute invisibility. Delegates
+    ``get_extent()`` / ``from_text()`` / ``__str__()`` to the inherited
+    ``MarkdownListItem`` (no new extent logic needed; ``MarkdownStr.process_list_field()``
+    iterates items by ``get_extent()`` and the field-distribution loop picks up
+    remaining text).
+    """
+
+    notes: list[MarkdownParagraph] | None = None

@@ -69,9 +69,6 @@ Index of all ADRs in this repository.
   - Id: cb5a2d5f-7020-4c6e-b28d-a38d17b23243
   - Status: accepted
   - Date: 2026-08-05
-- [Choose Othello over Chess as the travel board game](cf1fd02b-fe31-47f9-af79-fe6d57b1aa51-choose-othello-over-chess-as-the-travel-board-game.md)
-  - Id: cf1fd02b-fe31-47f9-af79-fe6d57b1aa51
-  - Status: accepted
 - ["Pros and Cons of the Options" as a derived container with a dedicated Option sub-API](d54abe50-a2c5-44f8-8bfe-11ea634b6f87-pros-and-cons-of-the-options-as-a-derived-container-with-a-d.md)
   - Id: d54abe50-a2c5-44f8-8bfe-11ea634b6f87
   - Status: accepted

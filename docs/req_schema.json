@@ -122,6 +122,28 @@
       "title": "MarkdownListItem",
       "type": "object"
     },
+    "MarkdownListItemWithNotes": {
+      "description": "One list item that captures continuation paragraphs (loose-list notes) via a declared `notes` field.\n\nMirrors `ExtensionItem`'s docstring: adds `notes` for captured continuation\nparagraphs inside a list item, so they appear in ``model_dump()``/JSON output\ninstead of being lost to Pydantic's private-attribute invisibility. Delegates\n``get_extent()`` / ``from_text()`` / ``__str__()`` to the inherited\n``MarkdownListItem`` (no new extent logic needed; ``MarkdownStr.process_list_field()``\niterates items by ``get_extent()`` and the field-distribution loop picks up\nremaining text).",
+      "properties": {
+        "notes": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/MarkdownParagraph"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Notes"
+        }
+      },
+      "title": "MarkdownListItemWithNotes",
+      "type": "object"
+    },
     "MarkdownParagraph": {
       "description": "A markdown paragraph (\"p\"), the non-heading sibling of `MarkdownSection`.\n\nA paragraph has no level, so there is a single `MarkdownParagraph` class\n(no `MarkdownParagraph1`..`6` spectrum) and no `@alias` check -- a\nparagraph's content is free-form prose, not a title.\n\nLeaf (no declared nested fields): `_value` holds the paragraph's own line\nspan, verbatim. Composite (declares fields): `_value` holds only the\nparagraph's own inline text (e.g. a lead-in sentence); the remaining text\nis delegated to nested field parsing, bounded by the next heading of any\nlevel (a paragraph can never itself contain a heading). See\n`get_extent`/`from_text`/`__str__` docstrings below for the full\nmechanics.",
       "properties": {},
@@ -420,7 +442,7 @@
         "items": {
           "description": "Bullet list of free-form labels for grouping/filtering requirements; must contain at least one item.",
           "items": {
-            "$ref": "#/$defs/MarkdownListItem"
+            "$ref": "#/$defs/MarkdownListItemWithNotes"
           },
           "minItems": 1,
           "title": "Items",

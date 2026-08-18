@@ -25,6 +25,7 @@ from biz.dfch.specmgr.models.md import (
     MarkdownSection3,
     MarkdownParagraph,
     MarkdownListItem,
+    MarkdownListItemWithNotes,
 )
 from biz.dfch.specmgr.models.md import alias, AliasType
 
@@ -217,15 +218,8 @@ class MainSuccessScenario(MarkdownSection2):
 # 'Extensions' [required]
 
 
-class ExtensionItem(MarkdownListItem):
-    """One action taken while handling an extension's alternate flow, with any continuation text that clarifies
-    it.
-
-    A single ordered-list entry, optionally followed by loose continuation paragraphs (`notes`).
-    """
-
-    # The leading paragraph of item is in `.text` property.
-    notes: list[MarkdownParagraph] | None = None
+class ExtensionItem(MarkdownListItemWithNotes):
+    """One action taken while handling an extension's alternate flow, with any continuation text that clarifies it."""
 
 
 @alias(value=r"^Extension \d+[a-z]?\. .+$", type=AliasType.REGEX)

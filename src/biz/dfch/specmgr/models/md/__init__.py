@@ -26,7 +26,7 @@ from .markdown_str import MarkdownStr
 from .markdown_block_quote import MarkdownBlockQuote
 from .markdown_code_block import MarkdownCodeBlock
 from .markdown_comment import MarkdownComment
-from .markdown_list_item import MarkdownListItem
+from .markdown_list_item import MarkdownListItem, MarkdownListItemWithNotes
 from .markdown_paragraph import MarkdownParagraph
 from .markdown_section import MarkdownSection
 from .markdown_section1 import MarkdownSection1
@@ -54,6 +54,7 @@ __all__ = [
     "MarkdownCodeBlock",
     "MarkdownComment",
     "MarkdownListItem",
+    "MarkdownListItemWithNotes",
     "MarkdownParagraph",
     "MarkdownSection",
     "MarkdownSection1",

@@ -360,11 +360,17 @@ progresses (edit, don't duplicate).
 
      we have to discuss the design first, before we can implement
 
-- [ ] Task 0.17: Add a `MarkdownListItemWithNotes` class to `markdown_list_item.py` that introduces a `notes: list[MarkdownParagraph] | None = None` field for captured continuation paragraphs inside list items — depends on: none — status: not-started
+- [x] Task 0.17: Add a `MarkdownListItemWithNotes` class to `markdown_list_item.py` that introduces a `notes: list[MarkdownParagraph] | None = None` field for captured continuation paragraphs inside list items — depends on: none — status: completed
 
     Background: `MarkdownListItem._value` correctly captures the full markdown content of each item (including indented continuation paragraphs after a blank line), but `_value` is a Pydantic private attribute so it does not appear in `model_dump()` / MCP JSON output. `ExtensionItem` solves this with an explicit `notes` field; REQ's `Characteristics.items` has no such field, so the `text` property only returns the leading-paragraph text and everything after the first blank line is dropped on serialization. The new base class adds `notes` to all list-item consumers (REQ characteristics, UC extensions, task lists, etc.) — items with no continuation paragraphs will serialize with `"notes": null` or a missing key; items with continuation paragraphs will carry the captured paragraphs in JSON.
     
-    Full implementation plan: specmgr TSK `550e8400-e29b-41d4-a716-446655440000`.
+    Full implementation plan: specmgr TSK `f581fb2f-9a82-11f1-9c57-fc4cea71c519`.
+
+- [x] Task 0.18: Fix `MarkdownListItem.get_extent` for numbered lists — depends on: Task 0.17 — status: completed
+
+    Background: `mdformat` renders loose numbered lists (`1.`, `2.`) differently from bullet lists (`-`): the `list_item_open` token's `.map` only spans the first paragraph, leaving continuation paragraphs as separate tokens outside the list item. This breaks `get_extent` for numbered lists with continuation paragraphs (e.g. REQ's `Characteristics` section). The fix detects single-item ordered lists (where `ordered_list_open.map[1] == list_item_open.map[1]`) and scans for trailing `paragraph_open` tokens after `ordered_list_close` but before the next `ordered_list_open`, extending the extent accordingly.
+
+    Full implementation plan: specmgr TSK `602740af-0445-48d8-bcc3-18df541dad72`.
 
 - [ ] Task 1.1: Inventory current `specmgr://*/list` resources and diff
   their output shape/behavior (`adr_list` vs. `req_list`) — depends on:
@@ -451,6 +457,23 @@ template is applied identically across all four `*NotFoundError` classes
 plus the shared `DocNotFoundError`, and tests assert on the message content.
 
 ### Recent Updates
+
+#### 2026-08-18
+
+- Completed: Task 0.18 (Fix `MarkdownListItem.get_extent` for numbered lists), TSK `602740af-0445-48d8-bcc3-18df541dad72`:
+  - Fixed `MarkdownListItem.get_extent` in `markdown_list_item.py` to correctly handle continuation paragraphs in loose numbered lists by detecting single-item ordered lists (where `ordered_list_open.map[1] == list_item_open.map[1]`) and scanning for `paragraph_open` tokens between `ordered_list_close` and the next `ordered_list_open`.
+  - Added 6 new test cases to `tests/models/md/test_markdown_list_item_with_notes.py` covering tight/loose numbered items with 0-2 continuation paragraphs (parsing verification; loose numbered lists don't round-trip byte-exact due to mdformat stripping indentation — documented as accepted limitation).
+  - Verified REQ domain integration: `tests/req/tools/test_get_req.py::test_returns_matching_document` passes with original fixture containing numbered list with continuation paragraph.
+  - All 1013 tests pass; `ruff format --check`, `ruff check`, `vulture` clean; no regressions in REQ/UC/TSK domains.
+
+#### 2026-08-17
+
+- Completed: Task 0.17 (MarkdownListItemWithNotes for captured continuation paragraphs), TSK `f581fb2f-9a82-11f1-9c57-fc4cea71c519`:
+  - Added `MarkdownListItemWithNotes` class to `markdown_list_item.py` with `notes: list[MarkdownParagraph] | None = None` field; docstring mirrors `ExtensionItem`; delegated `get_extent`/`from_text`/`__str__`.
+  - Updated `req/models/v1/body.py`'s `Characteristics.items` to use `MarkdownListItemWithNotes`; created fixture `docs/req/test-loose-list-with-continuation.md`.
+  - Updated `uc/models/v2/use_case.py`'s `ExtensionItem` to derive from `MarkdownListItemWithNotes` (replacing inline `notes` field with inheritance).
+  - Added `tests/models/md/test_markdown_list_item_with_notes.py` with 16 tests covering parsing, serialization/JSON, round-trips for tight/loose items (0-2 continuation paragraphs), compact items, and REQ-domain `Characteristics.items` integration. All 16 pass; full suite 1004 tests all passing — no regressions in REQ/UC/TSK domains.
+  - Verified clean: ruff format/check (0 issues), vulture (unused code), pre-commit hook schema regen (req+uc schemas updated for new model type).
 
 #### 2026-08-16
 

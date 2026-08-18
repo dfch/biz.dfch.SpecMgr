@@ -79,9 +79,18 @@ content:
   CommonMark cannot represent a lone list item without its wrapper).
   Otherwise this returns `0`, same as the base class's "no extent" case.
 
-  `list_item_open`'s own `.map` already spans the item's *entire*
-  content, including any nested list -- unlike `heading_open`/
-  `paragraph_open`, there is no separate stop-condition scan needed.
+  For bullet lists (`bullet_list_open`), `list_item_open`'s own `.map`
+  already spans the item's *entire* content, including any nested list
+  and continuation paragraphs.
+
+  For numbered lists (`ordered_list_open`), `mdformat` renders loose
+  lists differently: `list_item_open.map` only covers the first
+  paragraph, and continuation paragraphs appear as separate
+  `paragraph_open`/`paragraph_close` tokens *after* `ordered_list_close`
+  but *before* the next `ordered_list_open` (or end of tokens). This
+  method detects that case and extends the extent to include those
+  trailing continuation paragraphs, ensuring consistent parsing for both
+  list types.
 
   Args:
       text: Markdown source, pre-formatted with `mdformat`.
@@ -375,9 +384,18 @@ content:
   CommonMark cannot represent a lone list item without its wrapper).
   Otherwise this returns `0`, same as the base class's "no extent" case.
 
-  `list_item_open`'s own `.map` already spans the item's *entire*
-  content, including any nested list -- unlike `heading_open`/
-  `paragraph_open`, there is no separate stop-condition scan needed.
+  For bullet lists (`bullet_list_open`), `list_item_open`'s own `.map`
+  already spans the item's *entire* content, including any nested list
+  and continuation paragraphs.
+
+  For numbered lists (`ordered_list_open`), `mdformat` renders loose
+  lists differently: `list_item_open.map` only covers the first
+  paragraph, and continuation paragraphs appear as separate
+  `paragraph_open`/`paragraph_close` tokens *after* `ordered_list_close`
+  but *before* the next `ordered_list_open` (or end of tokens). This
+  method detects that case and extends the extent to include those
+  trailing continuation paragraphs, ensuring consistent parsing for both
+  list types.
 
   Args:
       text: Markdown source, pre-formatted with `mdformat`.

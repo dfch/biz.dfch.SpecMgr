@@ -33,6 +33,7 @@ from ....models.md import (
     MarkdownSection3,
     MarkdownParagraph,
     MarkdownListItem,
+    MarkdownListItemWithNotes,
     MarkdownComment,
     alias,
     AliasType,
@@ -135,7 +136,7 @@ class Tags(MarkdownSection2):
     requirements. Optional.
     """
 
-    items: list[MarkdownListItem] = Field(
+    items: list[MarkdownListItemWithNotes] = Field(
         min_length=1,
         description="Bullet list of free-form labels for grouping/filtering requirements; "
         "must contain at least one item.",
