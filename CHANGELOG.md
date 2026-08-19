@@ -55,8 +55,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.6.0] - 2026-08-18
 
-## [0.6.0] - 2026-08-18
-
 ### Added
 
 - **Fifth domain feature (QA/Q&A tooling)**: implemented question-and-answer document
