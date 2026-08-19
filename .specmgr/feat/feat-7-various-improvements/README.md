@@ -544,9 +544,27 @@ progresses (edit, don't duplicate).
     Updates logs and mark Task 0.21 (and this sub-list) done — depends
     on: Task 0.21.1 through Task 0.21.4 — status: done (2026-08-18)
 
+- [ ] Task 0.22: Examine cyclic dependency in `set_status.py` (qa) to server
+   and mcp — depends on: none — status: not-started
+
+- [x] Task 0.23: Add the `mcp` SDK's `streamable-http` transport as a third
+  `specmgr mcp --transport` option, alongside the existing `stdio`/`sse` —
+  `mcp>=2.0.0` (already a dependency) exposes `run_streamable_http_async`
+  symmetrically to the existing `run_sse_async` used for `sse`, so this is
+  purely a transport-wiring change confined to `commands/mcp.py`, with no
+  changes needed to `server.py`, tools, resources, or prompts (MCP
+  transport is orthogonal to the legacy/modern protocol-era negotiation,
+  which the SDK already handles automatically on every transport). `sse`
+  is the legacy/deprecated MCP HTTP transport; `streamable-http` is its
+  spec-current replacement. The detailed implementation breakdown lives in
+  its own specmgr task list, TSK `aaf70093-8a7c-4565-9985-3beaa85e1d3d`
+  ("Add `streamable-http` MCP Transport Option") — retrieve it via the
+  `get_tsk` MCP tool with id `aaf70093-8a7c-4565-9985-3beaa85e1d3d` —
+  depends on: none — status: done (2026-08-19)
+
 - [ ] Task 1.1: Inventory current `specmgr://*/list` resources and diff
-  their output shape/behavior (`adr_list` vs. `req_list`) — depends on:
-  none — status: not-started
+   their output shape/behavior (`adr_list` vs. `req_list`) — depends on:
+   none — status: not-started
 
 - [ ] Task 1.2: Inventory current MCP prompt modules and their
   structure/length/gating style (`create_adr`, `update_adr`,
@@ -659,6 +677,37 @@ already-compacted folder).
 
 See `history.md` for updates before 2026-08-18 (rotated out per ADR
 e369ee2e-3353-4f92-991c-6367d76d832e once this section grew too long).
+
+#### 2026-08-19
+
+- Completed: Task 0.23 (add the `mcp` SDK's `streamable-http` transport as
+  a third `specmgr mcp --transport` option), all 8 sub-tasks from TSK
+  `aaf70093-8a7c-4565-9985-3beaa85e1d3d`:
+
+  - Extended `commands/mcp.py`'s `--transport`/`-t` Typer option (help
+    text, `show_default`, `SPECMGR_MCP_TRANSPORT` envvar description) to
+    accept `"streamable-http"` alongside the existing `"stdio"`/`"sse"`.
+  - Added a `streamable-http` branch in the `mcp()` command function,
+    calling `_warn_on_public_binding(host)` (same as the `sse` branch)
+    then `mcp_server.run(transport="streamable-http", host=host,
+    port=port, stateless_http=True)` — `stateless_http=True` set
+    explicitly to match this server's already-stateless `_lifespan`.
+  - Updated `commands/mcp.py`'s module docstring with a third
+    `streamable-http` bullet and usage example, and `README.md`'s MCP
+    section (`--transport` table row + a short usage example mirroring
+    the existing `sse` one).
+  - Extended `tests/commands/test_mcp.py` with a new `TestMcpCommand`
+    class asserting `mcp_server.run` is called correctly for all three
+    branches (`stdio`, `sse`, `streamable-http`) — no prior test exercised
+    the `mcp()` command function's branches directly, so symmetric
+    coverage was added for all three, not just the new one.
+  - Regenerated `docs/api/`/`docs/GENERATED.md`; verified
+    `ruff format --check`/`ruff check`/
+    `vulture src/ whitelist.py --min-confidence 60` (all clean) and the
+    full `unittest` suite (1195 tests, all passing, up from 1192).
+  - Purely a transport-wiring change confined to `commands/mcp.py` (plus
+    its tests/docs) — no changes to `server.py`, tools, resources, or
+    prompts, since MCP transport is orthogonal to protocol-era/tool logic.
 
 #### 2026-08-18
 
@@ -848,6 +897,13 @@ e369ee2e-3353-4f92-991c-6367d76d832e once this section grew too long).
   re-run against this feature folder, since its own `Recent Updates` was
   already manually compacted on 2026-08-18 ahead of this task and there
   was nothing left to rotate.
+- **2026-08-19**: For Task 0.23's `streamable-http` transport: set
+  `stateless_http=True` explicitly on the new branch's `mcp_server.run(...)`
+  call, rather than leaving it at the SDK's own default — rationale:
+  matches this server's already-stateless `_lifespan` (`server.py`) and
+  aligns with the modern MCP protocol era's stateless-per-request session
+  model, so a caller never accidentally depends on session state that
+  `stdio`/`sse` never provided either.
 
 ### Related PRs / Commits
 

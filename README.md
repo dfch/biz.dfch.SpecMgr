@@ -18,10 +18,17 @@ specification artifacts.
 
 At this time, we have these artifact:
 
-- Architecture Decision Records (ADR)
+- Architecture Decision Record (ADR)
 - Use Case (UC)
+- Question and Answer (QA)
 - Requirement (REQ)
 - Task List (TSK)
+<!-- 
+- Decision (DEC)
+- Goal (GOL)
+- Acceptance Criterium (ACC)
+- Risk (RSK)
+-->
 
 See [MCP Server](#mcp-server) and [docs/MCP.md](docs/MCP.md) for details.
 
@@ -34,6 +41,7 @@ them as "extras" (see [Installation](#installation)).
 - [CLI Usage](#cli-usage)
 - [MCP Server](#mcp-server)
 - [Development](#development)
+- [Testing](#testing)
 - [Make a Release](#make-a-release)
 - [License](#license)
 
@@ -127,11 +135,18 @@ run over SSE/network:
 specmgr mcp --transport sse --host localhost --port 8000
 ```
 
+Or over the spec-current `streamable-http` transport, which replaces the
+legacy/deprecated `sse` transport for HTTP deployments:
+
+```bash
+specmgr mcp --transport streamable-http --host localhost --port 8000
+```
+
 | Option | Env var | Default | Description |
 | -------------------- | ------------------------ | ----------- | -------------------------------- |
-| `--transport` / `-t` | `SPECMGR_MCP_TRANSPORT` | `stdio` | Transport mode: `stdio` or `sse` |
-| `--host` / `-h` | `SPECMGR_MCP_HOST` | `localhost` | Bind address (SSE mode only) |
-| `--port` / `-p` | `SPECMGR_MCP_PORT` | `8000` | TCP port (SSE mode only) |
+| `--transport` / `-t` | `SPECMGR_MCP_TRANSPORT` | `stdio` | Transport mode: `stdio`, `sse`, or `streamable-http` |
+| `--host` / `-h` | `SPECMGR_MCP_HOST` | `localhost` | Bind address (SSE/streamable-http mode only) |
+| `--port` / `-p` | `SPECMGR_MCP_PORT` | `8000` | TCP port (SSE/streamable-http mode only) |
 
 ### Add to OpenCode
 
@@ -139,7 +154,7 @@ To add the `specmgr` MCP server to your OpenCode configuration:
 
 1. Open your OpenCode config file (typically `~/.config/opencode/opencode.json` or `~/.config/opencode/opencode.jsonc`)
 
-1. Add the following configuration to the `mcp` section (and use it via `stdio`):
+2. Add the following configuration to the `mcp` section (and use it via `stdio`):
 
 ```json
 "specmgr": {
@@ -178,6 +193,85 @@ uv run --frozen pylint $(git ls-files '*.py')
 ```bash
 uv run --frozen python -m unittest discover -v -s tests -t . -p "test_*.py"
 ```
+
+## Testing
+
+You can exercise the MCP server directly with the
+[MCP Inspector](https://modelcontextprotocol.io/docs/latest/tools/inspector),
+in either its CLI (scriptable) or TUI (interactive terminal) client.
+
+### Prerequisites
+
+- The `mcp` extra installed (see [Installation](#installation)), so
+  `.venv/bin/specmgr` exists.
+- [`npx`](https://docs.npmjs.com/cli/v10/commands/npx) (ships with Node.js,
+  version 22.19.0 or newer) — no separate Inspector install is required, it
+  runs on demand via `npx @modelcontextprotocol/inspector`.
+
+Point the Inspector at the venv's `specmgr` binary directly (rather than at
+`uv run specmgr mcp`) so none of `uv run`'s own flags (e.g. `--frozen`) are
+mistaken for Inspector flags:
+
+```bash
+npx @modelcontextprotocol/inspector --tui .venv/bin/specmgr mcp
+npx @modelcontextprotocol/inspector --cli .venv/bin/specmgr mcp --method tools/list
+```
+
+### CLI examples
+
+Each CLI invocation connects, runs one request, prints the result, and
+exits — useful for scripting or a quick smoke test.
+
+Get the `specmgr://version` resource:
+
+```bash
+npx @modelcontextprotocol/inspector --cli .venv/bin/specmgr mcp \
+  --method resources/read --uri specmgr://version
+```
+
+List task lists via the `specmgr://tsk/list` resource:
+
+```bash
+npx @modelcontextprotocol/inspector --cli .venv/bin/specmgr mcp \
+  --method resources/read --uri specmgr://tsk/list
+```
+
+Get one task list via the `get_tsk` tool (replace `<id>` with a real task
+list id from the `specmgr://tsk/list` output above):
+
+```bash
+npx @modelcontextprotocol/inspector --cli .venv/bin/specmgr mcp \
+  --method tools/call --tool-name get_tsk --tool-arg id=<id>
+```
+
+Add `--format json` to any of the above to get machine-readable output,
+e.g. piped into `jq`.
+
+### Connecting with the TUI
+
+```bash
+npx @modelcontextprotocol/inspector --tui .venv/bin/specmgr mcp
+```
+
+This launches the server as an ad-hoc stdio target and opens the terminal
+UI with it preselected (unlike the CLI, the TUI has no `--server <name>`
+flag — it lists whichever servers are available and you pick one, though
+with a single ad-hoc target there is nothing else to pick). **Press `c` to
+connect**, then use the tabs to explore:
+
+- `t` — **Tools** tab: browse and call tools (e.g. `get_tsk`) with a
+  form-based input.
+- `r` — **Resources** tab: browse and read resources (e.g.
+  `specmgr://version`, `specmgr://tsk/list`).
+- `m` — **Prompts** tab: list and render prompts.
+- `p` — **Protocol** tab: raw JSON-RPC request/response history, useful
+  for debugging.
+- `o` — **Console** tab: `stderr` from the connected `specmgr mcp`
+  process (tracebacks land here).
+- `c` / `d` — connect / disconnect; `Esc` or `Ctrl+C` — exit.
+
+The TUI requires a real TTY (raw-mode support) and does not run in a
+headless CI job — use the CLI client there instead.
 
 ## Make a Release
 

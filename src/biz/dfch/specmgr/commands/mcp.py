@@ -18,7 +18,7 @@
 """``mcp`` -- start the ``biz-dfch-specmgr`` MCP server.
 
 Additionally requires the ``mcp`` extra
-(``pip install biz-dfch-specmgr[mcp]``). Supports two transport modes:
+(``pip install biz-dfch-specmgr[mcp]``). Supports three transport modes:
 
 * **stdio** (default) — the host process communicates over stdin/stdout;
   suitable for OpenCode and other MCP hosts that launch the server
@@ -33,14 +33,20 @@ Additionally requires the ``mcp`` extra
 
       specmgr mcp --transport sse --host localhost --port 8000
 
+* **streamable-http / network** — the spec-current HTTP transport,
+  replacing the legacy/deprecated ``sse`` transport for HTTP
+  deployments; also binds a TCP port::
+
+      specmgr mcp --transport streamable-http --host localhost --port 8000
+
 Environment variables (all optional, CLI flags take precedence):
 
 ``SPECMGR_MCP_TRANSPORT``
-    ``stdio`` (default) or ``sse``.
+    ``stdio`` (default), ``sse``, or ``streamable-http``.
 ``SPECMGR_MCP_HOST``
-    Bind address for SSE mode (default ``localhost``).
+    Bind address for SSE/streamable-http mode (default ``localhost``).
 ``SPECMGR_MCP_PORT``
-    TCP port for SSE mode (default ``8000``).
+    TCP port for SSE/streamable-http mode (default ``8000``).
 """
 
 import os
@@ -75,7 +81,7 @@ def mcp(
             "--transport",
             "-t",
             envvar="SPECMGR_MCP_TRANSPORT",
-            help="Transport mode: 'stdio' or 'sse'.",
+            help="Transport mode: 'stdio', 'sse', or 'streamable-http'.",
             show_default=True,
         ),
     ] = "stdio",
@@ -85,7 +91,7 @@ def mcp(
             "--host",
             "-h",
             envvar="SPECMGR_MCP_HOST",
-            help="Bind address (SSE mode only).",
+            help="Bind address (SSE/streamable-http mode only).",
             show_default=True,
         ),
     ] = "localhost",
@@ -95,7 +101,7 @@ def mcp(
             "--port",
             "-p",
             envvar="SPECMGR_MCP_PORT",
-            help="TCP port (SSE mode only).",
+            help="TCP port (SSE/streamable-http mode only).",
             show_default=True,
         ),
     ] = 8000,
@@ -110,5 +116,8 @@ def mcp(
     if transport.lower() == "sse":
         _warn_on_public_binding(host)
         mcp_server.run(transport="sse", host=host, port=port)
+    elif transport.lower() == "streamable-http":
+        _warn_on_public_binding(host)
+        mcp_server.run(transport="streamable-http", host=host, port=port, stateless_http=True)
     else:
         mcp_server.run(transport="stdio")

@@ -23,7 +23,31 @@ Requires the ``mcp`` extra (``pip install "biz-dfch-specmgr[mcp]"``).
 import unittest
 from unittest import mock
 
-from biz.dfch.specmgr.commands.mcp import _warn_on_public_binding
+from biz.dfch.specmgr.commands.mcp import _warn_on_public_binding, mcp
+
+
+class TestMcpCommand(unittest.TestCase):
+    """Tests that each ``--transport`` branch calls ``mcp_server.run`` correctly."""
+
+    def test_stdio_calls_run_with_stdio_transport(self):
+        """``--transport stdio`` calls ``run(transport=\"stdio\")`` only."""
+        with mock.patch("biz.dfch.specmgr.server.mcp") as mcp_server:
+            mcp(transport="stdio", host="localhost", port=8000)
+        mcp_server.run.assert_called_once_with(transport="stdio")
+
+    def test_sse_calls_run_with_sse_transport(self):
+        """``--transport sse`` calls ``run`` with ``transport=\"sse\"``, ``host``, and ``port``."""
+        with mock.patch("biz.dfch.specmgr.server.mcp") as mcp_server:
+            mcp(transport="sse", host="localhost", port=8000)
+        mcp_server.run.assert_called_once_with(transport="sse", host="localhost", port=8000)
+
+    def test_streamable_http_calls_run_with_streamable_http_transport(self):
+        """``--transport streamable-http`` calls ``run`` with ``stateless_http=True``."""
+        with mock.patch("biz.dfch.specmgr.server.mcp") as mcp_server:
+            mcp(transport="streamable-http", host="localhost", port=8000)
+        mcp_server.run.assert_called_once_with(
+            transport="streamable-http", host="localhost", port=8000, stateless_http=True
+        )
 
 
 class TestWarnOnPublicBinding(unittest.TestCase):

@@ -168,12 +168,12 @@ If this section grows too long, move older entries to `history.md` in this
 same folder and leave a pointer here, e.g.:
 `See history.md for updates before YYYY-MM-DD.`
 
-#### [YYYY-MM-DD]
+#### Update [YYYY-MM-DDTHH:mm:ssz] (newest)
 - Completed: [what was done]
 - Next: [what comes next]
 - Notes: [any relevant context]
 
-#### [YYYY-MM-DD]
+#### Update [YYYY-MM-DDTHH:mm:ssz] (oldest)
 - Completed: [what was done]
 - Next: [what comes next]
 - Notes: [any relevant context]
