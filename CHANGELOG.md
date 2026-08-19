@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **BREAKING**: Removed the five `specmgr://<domain>/list` MCP resources
+  (`adr`, `req`, `uc`, `tsk`, `qa`); replaced by paged `list_<domain>`
+  `@mcp.tool()`s (`list_adr`, `list_req`, `list_uc`, `list_tsk`, `list_qa`)
+  accepting `max_results`/`offset` and returning a shared `PagedResult`
+  wrapper (`total`, `offset`, `max_results`, `truncated`, `results`).
+  Resources cannot accept parameters, so pagination required the
+  resource→tool conversion (see ADR
+  ec9f5262-9912-49d0-903f-fcfb54f28c13). Callers must switch from
+  `resources/read --uri specmgr://<domain>/list` to `tools/call
+  --tool-name list_<domain>`.
+
+### Added
+
+- Shared `general/models/PagedResult[T]` and `general/tools/_paging`
+  (`normalize_paging`/`paginate`) infrastructure, and a shared
+  `general/models/DocSummary` base for four of the five domains' summary
+  models (`ReqSummary`/`UcSummary`/`TskSummary`/`QaSummary`); `AdrSummary`
+  stays a deliberate, documented outlier (field-identical, not a
+  subclass, since `models/adr` must stay free of the `mcp` extra).
+
 ## [0.7.0] - 2026-08-18
 
 ### Added
