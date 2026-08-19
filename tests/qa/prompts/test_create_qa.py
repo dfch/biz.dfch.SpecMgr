@@ -34,10 +34,10 @@ class TestCreateQaPrompt(unittest.TestCase):
         result = create_qa("Widget registry migration")
         self.assertIn("Widget registry migration", result)
 
-    def test_mentions_duplicate_check_resource(self):
-        """The prompt must instruct the LLM to check specmgr://qa/list first."""
+    def test_mentions_duplicate_check_tool(self):
+        """The prompt must instruct the LLM to check the list_qa tool first."""
         result = create_qa("Some topic")
-        self.assertIn("specmgr://qa/list", result)
+        self.assertIn("list_qa", result)
 
     def test_mentions_starting_point_resources(self):
         """The prompt must point at the template/example/schema resources."""
@@ -47,12 +47,12 @@ class TestCreateQaPrompt(unittest.TestCase):
         self.assertIn("specmgr://qa/schema", result)
 
     def test_mentions_tool_sequence_in_order(self):
-        """The prompt must mention specmgr://qa/list, the template/example
+        """The prompt must mention the list_qa tool, the template/example
         resources, specmgr://qa/schema, and create_qa, in that order,
         matching the intended sequence."""
         result = create_qa("Some topic")
         markers = [
-            "specmgr://qa/list",
+            "list_qa",
             "specmgr://qa/template",
             "specmgr://qa/schema",
             "create_qa(content)",

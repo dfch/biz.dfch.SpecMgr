@@ -34,10 +34,10 @@ class TestRefinePrompt(unittest.TestCase):
         result = refine("abc-123")
         self.assertIn("abc-123", result)
 
-    def test_mentions_qa_list_resource_for_lookup(self):
-        """The prompt must instruct the LLM to resolve id/title via specmgr://qa/list."""
+    def test_mentions_list_qa_tool_for_lookup(self):
+        """The prompt must instruct the LLM to resolve id/title via the list_qa tool."""
         result = refine("abc-123")
-        self.assertIn("specmgr://qa/list", result)
+        self.assertIn("list_qa", result)
 
     def test_mentions_get_qa_before_update_qa(self):
         """get_qa must be called before update_qa."""

@@ -12,7 +12,7 @@ Make a todo list and use the `question` tool whenever this prompt tells
 you to -- do not guess when something is ambiguous.
 
 ## 1. Resolve the target document
-Read the `specmgr://qa/list` resource and find the one entry whose `id`
+Call the `list_qa` tool and find the one entry whose `id`
 equals `$id_or_name` exactly, or -- if none does -- whose `title` best
 matches it. If exactly one match is found, use its `id`. If none, or
 more than one plausible match, is found, ask the user to disambiguate

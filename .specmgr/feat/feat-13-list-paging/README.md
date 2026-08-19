@@ -195,17 +195,21 @@ assertions. All depend only on Phase 1 (parallelizable).
 
 #### Phase 3: Cross-references
 
-- [ ] Task 3.1: Repoint `specmgr://<d>/list` mentions in prompt instruction
+- [x] Task 3.1: Repoint `specmgr://<d>/list` mentions in prompt instruction
   data files (`qa/data/qa_create_instructions.md`,
   `qa/data/qa_refine_instructions.md`, `adr/data/adr_create_instructions.md`,
   `adr/data/adr_create_test_instructions.md`,
   `tsk/data/tsk_create_instructions.md`, `req/data/req_create_instructions.md`)
   and `qa/prompts/refine.py`'s docstring to the new `list_<d>` tool; update
   `tests/qa/prompts/test_refine.py` if it asserts the old resource string —
-  depends on: Phase 2 — status: not-started
-- [ ] Task 3.2: `server.py` module docstring — remove the five
+  depends on: Phase 2 — status: done (also repointed the analogous stale
+  `specmgr://<d>/list` mentions in `req/prompts/create_req.py`,
+  `tsk/prompts/create_task.py`, and `qa/prompts/create_qa.py`'s own module
+  docstrings, and fixed the five sibling prompt tests that broke as a
+  direct consequence — see Recent Updates)
+- [x] Task 3.2: `server.py` module docstring — remove the five
   `specmgr://<d>/list` resource lines, add `list_<d>` to each domain's Tools
-  line — depends on: Phase 2 — status: not-started
+  line — depends on: Phase 2 — status: done
 
 #### Phase 4: Verify & document
 
@@ -232,7 +236,7 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-19**: Phase 1 and Phase 2 are done. `PagedResult`
+**As of 2026-08-19**: Phase 1, Phase 2, and Phase 3 are all done. `PagedResult`
 (`general/models/paged_result.py`), `DocSummary`
 (`general/models/summary.py`), and the `normalize_paging`/`paginate` helpers
 (`general/tools/_paging.py`) all exist, tested, and pass the full quality
@@ -243,13 +247,79 @@ five `<domain>_list` resources (`adr_list`, `req_list`, `uc_list`,
 `@mcp.tool()`s (`adr/tools/list_adr.py`, `req/tools/list_req.py`,
 `uc/tools/list_uc.py`, `tsk/tools/list_tsk.py`, `qa/tools/list_qa.py`),
 each returning `PagedResult[<D>Summary]` and preserving its own
-skip-malformed-file exception tuple exactly (REQ-004). Next: Phase 3
-(cross-references -- repoint `specmgr://<d>/list` mentions in prompt
-instruction data files and `server.py`'s docstring to `list_<d>`).
+skip-malformed-file exception tuple exactly (REQ-004). Every prompt
+instruction data file and prompt module docstring that used to point at a
+retired `specmgr://<d>/list` resource now points at the corresponding
+`list_<d>` tool instead, and `server.py`'s own module docstring reflects
+the same repointing. Next: Phase 4 (verify & document -- regenerate
+`docs/GENERATED.md`/`docs/MCP.md`, run the full quality gate one more
+time, write the short ADR recording the resource→tool + `PagedResult`
+contract decision, and back-update `feat-7-various-improvements`).
 
 ### Recent Updates
 
-#### Update 2026-08-19 (newest)
+#### Update 2026-08-19 (newest, continued)
+
+- Completed: Phase 3 (Cross-references) -- Tasks 3.1-3.2.
+  - Repointed every prompt-instruction-data-file mention of a retired
+    `specmgr://<d>/list` resource to its replacement `list_<d>` tool, with
+    wording reworded from "Read the ... resource" to "Call the ... tool"
+    (or "call the ... tool" in the step-gated ADR variant) to read
+    naturally as a tool call rather than a resource read:
+    `qa/data/qa_create_instructions.md`, `qa/data/qa_refine_instructions.md`,
+    `adr/data/adr_create_instructions.md`,
+    `adr/data/adr_create_test_instructions.md`,
+    `tsk/data/tsk_create_instructions.md`,
+    `req/data/req_create_instructions.md`.
+  - Repointed `qa/prompts/refine.py`'s module docstring and its `refine()`
+    function docstring the same way (`specmgr://qa/list` -> `list_qa`).
+  - Went beyond the plan's explicitly named locations to also fix three
+    analogous stale mentions the plan's own grep pass had missed, since
+    leaving them would have described a resource that no longer exists:
+    `req/prompts/create_req.py`, `tsk/prompts/create_task.py`, and
+    `qa/prompts/create_qa.py`'s own module docstrings each still named
+    `specmgr://<d>/list` as part of the tool/resource surface they
+    describe; repointed each to `list_<d>`.
+  - Updated `server.py`'s module docstring: removed all five
+    `specmgr://adr/list`/`specmgr://req/list`/`specmgr://uc/list`/
+    `specmgr://tsk/list`/`specmgr://qa/list` lines from the "Resources"
+    section, and added `list_adr`/`list_req`/`list_uc`/`list_tsk`/`list_qa`
+    to each domain's "Tools" line, positioned right after the matching
+    `get_<d>` entry.
+  - Fixed the five sibling prompt tests that broke as a direct, expected
+    consequence of the instruction-file repointing (each asserted the old
+    `specmgr://<d>/list` string against the prompt's rendered output;
+    not explicitly named by the plan's task text beyond
+    `tests/qa/prompts/test_refine.py`, but required for a green quality
+    gate): `tests/qa/prompts/test_create_qa.py`,
+    `tests/tsk/prompts/test_create_task.py`,
+    `tests/adr/prompts/test_create_adr.py`,
+    `tests/adr/prompts/test_create_adr_test.py`,
+    `tests/req/prompts/test_create_req.py` -- each renamed its
+    `test_mentions_duplicate_check_resource`/similar test method to
+    `test_mentions_duplicate_check_tool`/`test_mentions_list_qa_tool_for_lookup`
+    and reasserts against the new `list_<d>` tool name instead of the old
+    resource URI.
+  - Initially left `README.md`'s CLI-examples/TUI-tabs sections untouched
+    (not named by this phase's task text), but on reviewer correction
+    fixed all three genuinely broken spots there too, since they demoed a
+    resource that no longer exists (a reader following them verbatim would
+    hit "resource not found"): "List task lists via the `specmgr://tsk/list`
+    resource" + its `--method resources/read --uri specmgr://tsk/list`
+    example -> "List task lists via the `list_tsk` tool" +
+    `--method tools/call --tool-name list_tsk`, matching the `get_tsk`
+    example's own `tools/call` style immediately below it; the `get_tsk`
+    example's own "from the `specmgr://tsk/list` output above" ->
+    "from the `list_tsk` output above"; and the TUI Resources-tab
+    description's `specmgr://tsk/list` example -> `specmgr://iso25010`
+    (a resource that still exists).
+  - Quality gate: `ruff format --check`, `ruff check`,
+    `vulture src/ whitelist.py --min-confidence 60`, and the full
+    `unittest` suite (1276 tests) all pass clean (re-confirmed after the
+    `README.md` fix too, unchanged since `README.md` isn't executed/linted).
+- Next: Phase 4 (verify & document, Tasks 4.1-4.4).
+
+#### Update 2026-08-19 (continued)
 
 - Completed: Phase 2 (Per-domain resource->tool conversion) -- Tasks
   2.1-2.6.

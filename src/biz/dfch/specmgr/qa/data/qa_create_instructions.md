@@ -9,7 +9,7 @@ id/type/status/created/updated/version automatically.
 Make a todo list and use the question tool.
 
 ## 0. Check for an existing QA document on this topic first
-Read the `specmgr://qa/list` resource before creating anything. If a QA
+Call the `list_qa` tool before creating anything. If a QA
 document with a similar title or topic already exists, tell the user
 about it and ask whether they want to revise that one (via the
 `update_qa` prompt) instead of creating a duplicate. Only proceed to

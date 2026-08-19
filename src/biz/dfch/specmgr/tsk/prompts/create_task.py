@@ -19,7 +19,7 @@
 
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through drafting a brand-new Task List (TSK) document using the existing
-``tsk/tools/``/``tsk/resources/`` surface (``specmgr://tsk/list``,
+``tsk/tools/``/``tsk/resources/`` surface (``list_tsk``,
 ``specmgr://tsk/template``/``specmgr://tsk/example``, ``specmgr://tsk/schema``,
 ``create_tsk``, ``validate_tsk``).
 

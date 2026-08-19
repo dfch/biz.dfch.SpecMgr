@@ -14,10 +14,10 @@ place of an answer, for a human to fill in directly in the document
 afterwards.
 
 Like ``update_qa``, this targets an existing document via the ``qa/tools/``
-surface (``get_qa``, ``update_qa``) plus the ``specmgr://qa/list`` resource
-(to resolve a title to an id when no id is given) and the
-``specmgr://iso25010`` resource (to ground each new question in that
-characteristic's actual definition). This prompt deliberately does not
+surface (``get_qa``, ``update_qa``, ``list_qa`` -- the last to resolve a
+title to an id when no id is given) and the ``specmgr://iso25010`` resource
+(to ground each new question in that characteristic's actual definition).
+This prompt deliberately does not
 implement or call any ``/resolve`` follow-up step itself -- it only tells
 the human user, in its final instructions to the LLM, that such a step
 exists and comes next.
@@ -44,7 +44,7 @@ Parameters
 ----------
 id_or_name:
     Either the target document's specmgr-assigned id, or a free-text
-    title/topic to look up via `specmgr://qa/list` when no id is known.
+    title/topic to look up via the `list_qa` tool when no id is known.
 scope:
     Free-text description of which characteristics to target and how
     many questions to add to each, e.g. "5 questions each about

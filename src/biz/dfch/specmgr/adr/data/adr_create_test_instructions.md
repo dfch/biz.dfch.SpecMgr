@@ -13,7 +13,7 @@ markdown yourself -- every change to the document goes through the
 specmgr MCP tools named below.
 
 ## GATE 0 -- Duplicate check
-Action: read the `specmgr://adr/list` resource.
+Action: call the `list_adr` tool.
 Exit condition: EITHER (a) you have confirmed no existing ADR covers this
 topic, OR (b) you found one, told the user about it, offered the
 `update_adr`/`update_adr_test` prompt instead, and the user has explicitly

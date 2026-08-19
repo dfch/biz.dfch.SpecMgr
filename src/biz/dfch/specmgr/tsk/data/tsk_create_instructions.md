@@ -9,7 +9,7 @@ id/type/status/created/updated/version automatically.
 Make a todo list and use the question tool.
 
 ## 0. Check for an existing task list on this topic first
-Read the `specmgr://tsk/list` resource before creating anything. If a
+Call the `list_tsk` tool before creating anything. If a
 task list with a similar title or topic already exists, tell the user
 about it and ask whether they want to revise that one (via the
 `update_task` prompt) instead of creating a duplicate. Only proceed to

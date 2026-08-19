@@ -34,10 +34,10 @@ class TestCreateTaskPrompt(unittest.TestCase):
         result = create_task("Migrate widgets to the new registry")
         self.assertIn("Migrate widgets to the new registry", result)
 
-    def test_mentions_duplicate_check_resource(self):
-        """The prompt must instruct the LLM to check specmgr://tsk/list first."""
+    def test_mentions_duplicate_check_tool(self):
+        """The prompt must instruct the LLM to check the list_tsk tool first."""
         result = create_task("Some topic")
-        self.assertIn("specmgr://tsk/list", result)
+        self.assertIn("list_tsk", result)
 
     def test_mentions_starting_point_resources(self):
         """The prompt must point at the template/example/schema resources."""
@@ -47,12 +47,12 @@ class TestCreateTaskPrompt(unittest.TestCase):
         self.assertIn("specmgr://tsk/schema", result)
 
     def test_mentions_tool_sequence_in_order(self):
-        """The prompt must mention specmgr://tsk/list, the template/example
+        """The prompt must mention the list_tsk tool, the template/example
         resources, specmgr://tsk/schema, and create_tsk, in that order,
         matching the intended sequence."""
         result = create_task("Some topic")
         markers = [
-            "specmgr://tsk/list",
+            "list_tsk",
             "specmgr://tsk/template",
             "specmgr://tsk/schema",
             "create_tsk(content)",

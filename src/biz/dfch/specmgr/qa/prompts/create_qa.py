@@ -19,7 +19,7 @@
 
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through drafting a brand-new Question and Answer (QA) document using the
-existing ``qa/tools/``/``qa/resources/`` surface (``specmgr://qa/list``,
+existing ``qa/tools/``/``qa/resources/`` surface (``list_qa``,
 ``specmgr://qa/template``/``specmgr://qa/example``, ``specmgr://qa/schema``,
 ``create_qa``, ``validate_qa``). Structural shape ported 1:1 from
 ``req.prompts.create_req``, with the instructional content rewritten to

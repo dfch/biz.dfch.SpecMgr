@@ -229,15 +229,15 @@ npx @modelcontextprotocol/inspector --cli .venv/bin/specmgr mcp \
   --method resources/read --uri specmgr://version
 ```
 
-List task lists via the `specmgr://tsk/list` resource:
+List task lists via the `list_tsk` tool:
 
 ```bash
 npx @modelcontextprotocol/inspector --cli .venv/bin/specmgr mcp \
-  --method resources/read --uri specmgr://tsk/list
+  --method tools/call --tool-name list_tsk
 ```
 
 Get one task list via the `get_tsk` tool (replace `<id>` with a real task
-list id from the `specmgr://tsk/list` output above):
+list id from the `list_tsk` output above):
 
 ```bash
 npx @modelcontextprotocol/inspector --cli .venv/bin/specmgr mcp \
@@ -262,7 +262,7 @@ connect**, then use the tabs to explore:
 - `t` — **Tools** tab: browse and call tools (e.g. `get_tsk`) with a
   form-based input.
 - `r` — **Resources** tab: browse and read resources (e.g.
-  `specmgr://version`, `specmgr://tsk/list`).
+  `specmgr://version`, `specmgr://iso25010`).
 - `m` — **Prompts** tab: list and render prompts.
 - `p` — **Protocol** tab: raw JSON-RPC request/response history, useful
   for debugging.

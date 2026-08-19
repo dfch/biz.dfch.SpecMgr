@@ -5,7 +5,7 @@ write raw markdown yourself -- every change to the document goes through
 the specmgr MCP tools listed below.
 
 ## 0. Check for an existing ADR on this topic first
-Read the `specmgr://adr/list` resource before creating anything. If an
+Call the `list_adr` tool before creating anything. If an
 ADR with a similar title or topic already exists, tell the user about it
 and ask whether they want to revise that one (via the `update_adr`
 prompt) instead of creating a duplicate. Only proceed to step 1 if this is

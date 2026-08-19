@@ -34,10 +34,10 @@ class TestCreateAdrTestPrompt(unittest.TestCase):
         result = create_adr_test("Choice of message queue")
         self.assertIn("Choice of message queue", result)
 
-    def test_mentions_duplicate_check_resource(self):
-        """The prompt must instruct the LLM to check specmgr://adr/list first."""
+    def test_mentions_duplicate_check_tool(self):
+        """The prompt must instruct the LLM to check the list_adr tool first."""
         result = create_adr_test("Some topic")
-        self.assertIn("specmgr://adr/list", result)
+        self.assertIn("list_adr", result)
 
     def test_mentions_tool_sequence_in_order(self):
         """The prompt must mention create_adr, option_create, set_status, and

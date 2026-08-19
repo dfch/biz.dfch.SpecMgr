@@ -9,7 +9,7 @@ id/type/status/created/updated/version automatically.
 Make a todo list and use the question tool.
 
 ## 0. Check for an existing requirement on this topic first
-Read the `specmgr://req/list` resource before creating anything. If a
+Call the `list_req` tool before creating anything. If a
 requirement with a similar title or topic already exists, tell the user
 about it and ask whether they want to revise that one (via the
 `update_req` prompt) instead of creating a duplicate. Only proceed to

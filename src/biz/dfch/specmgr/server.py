@@ -24,8 +24,6 @@ Registers the following resources and tools so far (plan §8, §9a):
 Resources
 ---------
 specmgr://version --    Installed version number of the ``biz-dfch-specmgr`` package.
-specmgr://adr/list --   Ids/titles/statuses/refs of every ADR
-                        (``.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md``).
 specmgr://adr/{id} --    Full ADR document for a given id (``.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md``).
 specmgr://req/schema -- The generated REQ JSON Schema, read from a packaged data copy
                         (kept in sync with ``docs/req_schema.json``) so it works from a
@@ -33,21 +31,18 @@ specmgr://req/schema -- The generated REQ JSON Schema, read from a packaged data
 specmgr://req/example -- A complete, valid sample requirement document as raw markdown.
 specmgr://req/template -- A requirement template (every field present, placeholder text)
                           as raw markdown.
-specmgr://req/list --   Ids/titles/statuses/refs of every requirement.
 specmgr://uc/schema --  The generated UC JSON Schema, read from a packaged data copy
                         (kept in sync with ``docs/uc_schema.json``) so it works from a
                         real, non-editable install.
 specmgr://uc/example -- A complete, valid sample use case document as raw markdown.
 specmgr://uc/template -- A use-case template (every field present, placeholder text)
                           as raw markdown.
-specmgr://uc/list --    Ids/titles/statuses/refs of every use case.
 specmgr://tsk/schema -- The generated TSK JSON Schema, read from a packaged data copy
                         (kept in sync with ``docs/tsk_schema.json``) so it works from a
                         real, non-editable install.
 specmgr://tsk/example -- A complete, valid sample task list document as raw markdown.
 specmgr://tsk/template -- A task list template (every field present, placeholder text)
                           as raw markdown.
-specmgr://tsk/list --   Ids/titles/statuses/refs of every task list.
 specmgr://qa/schema --  The generated QA JSON Schema, read from a packaged data copy
                         (kept in sync with ``docs/qa_schema.json``) so it works from a
                         real, non-editable install.
@@ -55,7 +50,6 @@ specmgr://qa/example -- A complete, valid sample question-and-answer document as
                         markdown.
 specmgr://qa/template -- A question-and-answer template (every field present,
                           placeholder text) as raw markdown.
-specmgr://qa/list --    Ids/titles/statuses/refs of every question-and-answer document.
 specmgr://iso25010 --   The ISO/IEC 25010:2023 product quality model's nine main
                         characteristics (and sub-characteristics), each with a description.
 
@@ -70,19 +64,19 @@ through the ``get_qa`` tool only.
 
 Tools
 -----
-ADR tools (``adr/tools/``): ``get_adr``, ``create_adr``, ``update_frontmatter``,
+ADR tools (``adr/tools/``): ``get_adr``, ``list_adr``, ``create_adr``, ``update_frontmatter``,
 ``update_section``, ``set_status``, ``option_list``, ``option_create``,
 ``option_update``, ``option_read``, ``option_delete``, ``validate_adr``.
-Use-case tools (``uc/tools/``): ``parse_uc``, ``get_uc``, ``get_uc_example``,
+Use-case tools (``uc/tools/``): ``parse_uc``, ``get_uc``, ``list_uc``, ``get_uc_example``,
 ``get_uc_template``, ``create_uc``, ``update_uc``, ``set_status_uc``, ``delete_uc``
 (stub, not yet implemented), ``validate_uc``.
-Requirement tools (``req/tools/``): ``parse_req``, ``get_req``, ``get_req_example``,
+Requirement tools (``req/tools/``): ``parse_req``, ``get_req``, ``list_req``, ``get_req_example``,
 ``get_req_template``, ``create_req``, ``update_req``, ``set_status_req``, ``delete_req``
 (stub, not yet implemented), ``validate_req``.
-Task list tools (``tsk/tools/``): ``parse_tsk``, ``get_tsk``, ``get_tsk_example``,
+Task list tools (``tsk/tools/``): ``parse_tsk``, ``get_tsk``, ``list_tsk``, ``get_tsk_example``,
 ``get_tsk_template``, ``create_tsk``, ``update_tsk``, ``set_status_tsk``, ``delete_tsk``
 (stub, not yet implemented), ``validate_tsk``.
-QA tools (``qa/tools/``): ``parse_qa``, ``get_qa``, ``get_qa_example``,
+QA tools (``qa/tools/``): ``parse_qa``, ``get_qa``, ``list_qa``, ``get_qa_example``,
 ``get_qa_template``, ``create_qa``, ``update_qa``, ``set_status_qa``, ``delete_qa``
 (stub, not yet implemented), ``validate_qa``.
 General tools (``general/tools/``): ``mdformat`` -- format markdown files in place,

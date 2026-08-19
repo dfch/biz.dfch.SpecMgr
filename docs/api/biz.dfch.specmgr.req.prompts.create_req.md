@@ -4,7 +4,7 @@
 
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through drafting a brand-new Requirement (REQ) document using the existing
-``req/tools/``/``req/resources/`` surface (``specmgr://req/list``,
+``req/tools/``/``req/resources/`` surface (``list_req``,
 ``specmgr://req/template``/``specmgr://req/example``, ``specmgr://req/schema``,
 ``create_req``, ``validate_req``).
 

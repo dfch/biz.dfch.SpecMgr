@@ -34,10 +34,10 @@ class TestCreateReqPrompt(unittest.TestCase):
         result = create_req("API rate limiting")
         self.assertIn("API rate limiting", result)
 
-    def test_mentions_duplicate_check_resource(self):
-        """The prompt must instruct the LLM to check specmgr://req/list first."""
+    def test_mentions_duplicate_check_tool(self):
+        """The prompt must instruct the LLM to check the list_req tool first."""
         result = create_req("Some topic")
-        self.assertIn("specmgr://req/list", result)
+        self.assertIn("list_req", result)
 
     def test_mentions_starting_point_resources(self):
         """The prompt must point at the template/example/schema resources."""
@@ -47,12 +47,12 @@ class TestCreateReqPrompt(unittest.TestCase):
         self.assertIn("specmgr://req/schema", result)
 
     def test_mentions_tool_sequence_in_order(self):
-        """The prompt must mention specmgr://req/list, the template/example
+        """The prompt must mention the list_req tool, the template/example
         resources, specmgr://req/schema, and create_req, in that order,
         matching the intended sequence."""
         result = create_req("Some topic")
         markers = [
-            "specmgr://req/list",
+            "list_req",
             "specmgr://req/template",
             "specmgr://req/schema",
             "create_req(content)",
