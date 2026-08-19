@@ -11,19 +11,19 @@ document-type domain: domain-first hierarchy for tools/prompts/resources,
 shared versioned models"):
 
 - **`adr/`** (Architecture Decision Records) — the original, most complete
-  domain. `adr/tools/` has 11 `@mcp.tool()` wrappers (`get_adr`,
+  domain. `adr/tools/` has 12 `@mcp.tool()` wrappers (`get_adr`, `list_adr`,
   `create_adr`, `update_frontmatter`, `update_section`, `set_status`,
   `option_list`/`option_create`/`option_read`/`option_update`/
   `option_delete`, `validate_adr`); `adr/resources/` exposes
-  `specmgr://adr/list` and `specmgr://adr/{id}`; `adr/prompts/` has
+  `specmgr://adr/{id}`; `adr/prompts/` has
   narrated `create_adr`/`update_adr` prompts plus step-gated
   `create_adr_test`/`update_adr_test` A/B variants (see
   `.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md` §11). Its Pydantic
   schema uniquely lives under the shared top-level `models/adr/` (not
   `adr/models/`) — see the "models location" note below.
 - **`req/`** (Requirements) — `req/tools/` (`create_req`, `update_req`,
-  `set_status_req`, `parse_req`, `delete_req` stub, `validate_req`);
-  `req/resources/` (`specmgr://req/list`, `specmgr://req/schema`,
+  `set_status_req`, `parse_req`, `list_req`, `delete_req` stub, `validate_req`);
+  `req/resources/` (`specmgr://req/schema`,
   `specmgr://req/example`, `specmgr://req/template`; no `specmgr://req/{id}`
   — id-based reads are `get_req`-only, ADR
   ddfb1109-422d-4507-8dbc-dc5e4bec9614); `req/prompts/`
@@ -31,21 +31,21 @@ shared versioned models"):
   the domain package itself, not under top-level `models/`.
 - **`uc/`** (Use Cases) — same tools/resources/prompts shape as `req/` but
   for use cases (`create_uc`, `update_uc`, `set_status_uc`, `parse_uc`,
-  `get_uc`, `get_uc_example`, `get_uc_template`, `delete_uc` stub,
+  `list_uc`, `get_uc`, `get_uc_example`, `get_uc_template`, `delete_uc` stub,
   `validate_uc`); no `specmgr://uc/{id}` resource for the same reason as
   REQ. Schema at `uc/models/v1/` (legacy) and `uc/models/v2/` (current),
   inside the domain package, not `models/uc/`.
 - **`tsk/`** (Task Lists) — same shape again (`create_tsk`, `update_tsk`,
-  `set_status_tsk`, `parse_tsk`, `get_tsk`, `get_tsk_example`,
+  `set_status_tsk`, `parse_tsk`, `list_tsk`, `get_tsk`, `get_tsk_example`,
   `get_tsk_template`, `delete_tsk` stub, `validate_tsk`), plus a distinct
   `implement_task` prompt (reads a task list via `get_tsk`, builds a
   `TodoWrite` list from its items, and uses the `question` tool to resolve
   ambiguity). Schema at `tsk/models/v1/`, inside the domain package.
 - **`qa/`** (Question and Answer) — same tools/resources/prompts shape as
   `req/`/`tsk/` but for requirements-elicitation Q&A interviews (`create_qa`,
-  `update_qa`, `set_status_qa`, `parse_qa`, `get_qa`, `get_qa_example`,
+  `update_qa`, `set_status_qa`, `parse_qa`, `list_qa`, `get_qa`, `get_qa_example`,
   `get_qa_template`, `delete_qa` stub, `validate_qa`); `qa/resources/`
-  (`specmgr://qa/list`, `specmgr://qa/schema`, `specmgr://qa/example`,
+  (`specmgr://qa/schema`, `specmgr://qa/example`,
   `specmgr://qa/template`; no `specmgr://qa/{id}` — id-based reads are
   `get_qa`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614); `qa/prompts/`
   (`create_qa`/`update_qa`). Its schema lives at `qa/models/v1/`, inside the

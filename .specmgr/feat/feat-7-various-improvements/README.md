@@ -49,11 +49,24 @@ currently exist alongside the narrated originals for A/B comparison.
 
 - [ ] ACC-001: Verifies REQ-001 — `adr_list`/`req_list` (and any future
   `*_list` resource) share a common base summary shape/contract, checked
-  by a shared test or an explicit side-by-side comparison.
-- [ ] ACC-002: Verifies REQ-002 — a decision (ADR or an entry in this
+  by a shared test or an explicit side-by-side comparison. **Partially
+  advanced by `feat-13-list-paging`** (2026-08-19): 4 of 5 domains
+  (`ReqSummary`/`UcSummary`/`TskSummary`/`QaSummary`) now literally
+  subclass the shared `general.models.DocSummary` base; `AdrSummary`
+  shares the identical field set structurally but deliberately does
+  **not** subclass it (dependency-graph reason: `models/adr` must stay
+  free of the `mcp` extra — see feat-13's Decisions Made log and ADR
+  ec9f5262-9912-49d0-903f-fcfb54f28c13), with equivalence enforced by a
+  structural test instead of inheritance. Not marking this `[x]` yet since
+  the contract is shared by convention/test, not uniformly by class
+  hierarchy, across all five domains.
+- [x] ACC-002: Verifies REQ-002 — a decision (ADR or an entry in this
   file's Decisions Made log, per the ADR-vs-feature-log tie-breaker in ADR
   e369ee2e) is recorded on list-resource pagination, with rationale even
-  if the decision is "defer."
+  if the decision is "defer." **Done**: recorded in ADR
+  ec9f5262-9912-49d0-903f-fcfb54f28c13 ("Expose `<domain>_list` as paged
+  MCP tools (`list_<domain>`), not resources"), implemented in full by
+  `feat-13-list-paging`.
 - [ ] ACC-003: Verifies REQ-003 — each prompt module has a recorded
   review outcome (kept as-is / changed / retired) against the documented
   criteria.
@@ -366,13 +379,15 @@ progresses (edit, don't duplicate).
   via the `get_tsk` MCP tool with id `efb7d049-a222-4730-901f-6d57283b387c`
   — depends on: none — status: done (2026-08-16)
 
-- [ ] Task 0.15: MCP tools `<domain>_list` must support paging — depends on:
+- [x] Task 0.15: MCP tools `<domain>_list` must support paging — depends on:
   none — status: split out into `feat-13-list-paging` (GitHub issue #13,
   `.specmgr/feat/feat-13-list-paging/README.md`) on 2026-08-19; design
   agreed (resource→tool `list_<domain>`, `asdste100`-style `PagedResult`
-  wrapper, shared `general/` infra, paging-only). Tracked and executed
-  there; this closes REQ-002/ACC-002 and advances REQ-001/ACC-001 once
-  `feat-13` lands.
+  wrapper, shared `general/` infra, paging-only). **`feat-13-list-paging`
+  is now complete** (all four phases done, decision recorded in ADR
+  ec9f5262-9912-49d0-903f-fcfb54f28c13): closes REQ-002/ACC-002 and
+  advances (but does not fully close) REQ-001/ACC-001 — see those entries
+  below for the remaining ADR-outlier caveat.
 
 - [ ] Task 0.16: MCP tools `<domain>_list` must support filtering — depends on: none — status: not-started
 
@@ -597,10 +612,12 @@ progresses (edit, don't duplicate).
   Task 1.1 — status: in-progress — one piece already decided directly
   (2026-08-15, ahead of the formal audit): the fallback identifier field is
   named `ref`, not `filename`, and holds the extensionless base name, not
-  the raw on-disk filename (see Decisions Made). Pagination is now decided
-  and split into `feat-13-list-paging` (resource→tool `list_<domain>` +
-  `asdste100`-style `PagedResult` wrapper); the shared-base-summary piece is
-  carried into that feature too (ACC-001).
+  the raw on-disk filename (see Decisions Made). Pagination is now
+  **completed** via `feat-13-list-paging` (resource→tool `list_<domain>` +
+  `asdste100`-style `PagedResult` wrapper, recorded in ADR
+  ec9f5262-9912-49d0-903f-fcfb54f28c13); the shared-base-summary piece was
+  also carried into and completed by that feature (`general.models.
+  DocSummary`, subclassed by 4 of 5 domains — see ACC-001).
 - [ ] Task 2.2: Decide the fate of the `_test` prompt variants and the
   criteria used for the prompt-quality review — depends on: Task 1.2 —
   status: not-started
@@ -614,12 +631,13 @@ progresses (edit, don't duplicate).
   stop steering the calling LLM toward reading the file off disk directly
   instead of using `get_adr`/`get_req`/`specmgr://{adr,req}/{id}` — depends
   on: none — status: done (2026-08-15)
-- [ ] Task 3.1b: Apply the remaining piece of the standardized
+- [x] Task 3.1b: Apply the remaining piece of the standardized
   list-resource contract (pagination) to `adr_list`/`req_list` (and
   document the full contract for future `*_list` resources) — depends on:
-  Task 2.1 — status: split out into `feat-13-list-paging` (GitHub issue #13);
-  implemented there as the resource→tool + `PagedResult` conversion across
-  all five domains, not just `adr`/`req`.
+  Task 2.1 — status: **completed via `feat-13-list-paging`** (GitHub issue
+  #13); implemented there as the resource→tool + `PagedResult` conversion
+  across all five domains, not just `adr`/`req` — decision recorded in ADR
+  ec9f5262-9912-49d0-903f-fcfb54f28c13.
 - [ ] Task 3.2: Apply prompt optimizations and the `_test`-variant decision
   — depends on: Task 2.2 — status: not-started
 

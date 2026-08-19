@@ -1,7 +1,7 @@
 ---
 created: 2026-08-19
 id: feat-13-list-paging
-status: planning
+status: done
 updated: 2026-08-19
 version: 1.0.0
 ---
@@ -42,16 +42,61 @@ resource→tool reasoning already applied in feat-7 Task 0.9 (`get_req`).
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: Verifies REQ-001 — all five tools return the same
-  `PagedResult` shape, asserted by tests across every domain.
-- [ ] ACC-002: Verifies REQ-002 — tests cover default page size, cap
+- [x] ACC-001: Verifies REQ-001 — all five tools return the same
+  `PagedResult` shape, asserted by tests across every domain. **Verified**:
+  `tests/adr/tools/test_list_adr.py`, `tests/req/tools/test_list_req.py`,
+  `tests/uc/tools/test_list_uc.py`, `tests/tsk/tools/test_list_tsk.py`,
+  and `tests/qa/tools/test_list_qa.py` each import `PagedResult` and
+  assert `self.assertIsInstance(sut, PagedResult)` on the `list_<d>()`
+  return value.
+- [x] ACC-002: Verifies REQ-002 — tests cover default page size, cap
   clamping, negative-offset flooring, and `offset` past the end returning
-  empty `results` with `truncated == False`.
-- [ ] ACC-003: Verifies REQ-003 — all five Summary models share a common
-  base field set, asserted by a shared/side-by-side test.
-- [ ] ACC-004: Verifies REQ-004 — existing skip-malformed-file and
+  empty `results` with `truncated == False`. **Verified**: unit-level
+  coverage in `tests/general/tools/test_paging.py` (e.g.
+  `test_defaults_both_when_neither_given`,
+  `test_clamps_max_results_above_the_cap`,
+  `test_floors_a_negative_offset_to_zero`,
+  `test_offset_past_the_end_yields_empty_results_and_is_not_truncated`,
+  `test_out_of_range_inputs_are_clamped_not_errored`), plus each of the
+  five `test_list_<d>.py` files independently re-asserting the same
+  behaviors end-to-end through the tool
+  (`test_default_page_size_and_shape`,
+  `test_max_results_limits_page_and_marks_truncated`,
+  `test_offset_selects_the_next_page`,
+  `test_max_results_is_clamped_to_the_cap`,
+  `test_negative_offset_is_floored_to_zero`,
+  `test_truncated_boundary_false_when_page_covers_all_items`,
+  `test_truncated_boundary_true_when_one_item_remains`).
+- [x] ACC-003: Verifies REQ-003 — all five Summary models share a common
+  base field set, asserted by a shared/side-by-side test. **Verified as
+  literally worded** (a common *field set*, not necessarily a common
+  *base class* — that stronger claim belongs to REQ-003/Task 1.3, not this
+  ACC): `tests/general/models/test_summary.py::
+  TestAllFiveSummariesShareTheCommonBaseFieldSet.
+  test_all_five_summaries_declare_the_same_field_names` asserts
+  `[AdrSummary, ReqSummary, UcSummary, TskSummary, QaSummary]` all declare
+  exactly `["id", "title", "status", "ref"]`. Four of the five
+  (`ReqSummary`/`UcSummary`/`TskSummary`/`QaSummary`) achieve this via
+  actual `DocSummary` subclassing (`TestReqSummarySharesDocSummaryBase` et
+  al. assert `issubclass(..., DocSummary)`); `AdrSummary` achieves it via
+  structural equivalence only (`TestAdrSummaryIsStructurallyEquivalent`
+  explicitly asserts `assertFalse(issubclass(AdrSummary, DocSummary))`
+  alongside matching field names/annotations) — the field-set contract
+  this ACC actually asks for holds across all five, the class-hierarchy
+  mechanism does not.
+- [x] ACC-004: Verifies REQ-004 — existing skip-malformed-file and
   empty-directory behavior still holds; per-domain exception tuples
-  unchanged.
+  unchanged. **Verified**: each `<d>/tools/list_<d>.py` preserves its
+  domain's original parse-failure exception tuple exactly — ADR's
+  `except (AdrParseError, ValidationError):` in `list_adr.py` vs. the
+  other four's `except (AssertionError, ValidationError):` in
+  `list_req.py`/`list_uc.py`/`list_tsk.py`/`list_qa.py`. Skip-malformed-
+  file and empty-directory coverage was migrated (not dropped) into each
+  `test_list_<d>.py`'s `test_returns_summaries_and_skips_malformed_file`
+  and `test_empty_result_for_missing_directory` tests, e.g.
+  `tests/adr/tools/test_list_adr.py` writes one valid + one syntactically
+  broken `.md` file and asserts `sut.total == 2` (the broken file is
+  silently skipped, not counted or raised).
 
 ### Scope
 
@@ -118,8 +163,10 @@ What is explicitly out of scope:
   document-type domain (domain-first hierarchy)
 - ddfb1109-422d-4507-8dbc-dc5e4bec9614: `get_req` tool vs. resource
   (precedent for resource→tool for agent reliability)
-- (to be written) short ADR recording the `<domain>_list` resource→tool +
-  `PagedResult` contract decision (Task 4.3)
+- ec9f5262-9912-49d0-903f-fcfb54f28c13: Expose `<domain>_list` as paged
+  MCP tools (`list_<domain>`), not resources (this feature's own decision
+  record, written in Task 4.3; partially supersedes the listing side of
+  ADR 7531106b-074b-4bd8-a83a-e433d01676e2)
 
 ### Task List
 
@@ -213,20 +260,33 @@ assertions. All depend only on Phase 1 (parallelizable).
 
 #### Phase 4: Verify & document
 
-- [ ] Task 4.1: Regenerate `docs/api/`/`docs/GENERATED.md`
+- [x] Task 4.1: Regenerate `docs/api/`/`docs/GENERATED.md`
   (`specmgr docs`) and `docs/MCP.md` (`specmgr mcp-docs`), Python 3.13 —
-  depends on: Task 3.1, Task 3.2 — status: not-started
-- [ ] Task 4.2: Full quality gate — `ruff format --check`, `ruff check`,
+  depends on: Task 3.1, Task 3.2 — status: done (2026-08-19); both
+  commands ran clean with zero resulting diff — Phases 2/3's pre-commit
+  hooks had already kept `docs/api/`/`docs/GENERATED.md`/`docs/MCP.md`
+  in sync, so this step confirmed no drift rather than fixing any
+- [x] Task 4.2: Full quality gate — `ruff format --check`, `ruff check`,
   `vulture src/ whitelist.py --min-confidence 60`, full `unittest` suite —
-  depends on: Task 4.1 — status: not-started
-- [ ] Task 4.3: Write a **short** ADR recording the resource→tool +
+  depends on: Task 4.1 — status: done (2026-08-19), all green (1276
+  tests; see Recent Updates)
+- [x] Task 4.3: Write a **short** ADR recording the resource→tool +
   `PagedResult` contract decision (mirroring ADR `ddfb1109`'s precedent);
   run `specmgr adr-toc`; update `AGENTS.md` if the per-domain
-  resource/tool inventory shifts — depends on: Task 4.2 — status: not-started
-- [ ] Task 4.4: Back-update `feat-7-various-improvements/README.md` — mark
+  resource/tool inventory shifts — depends on: Task 4.2 — status: done
+  (2026-08-19); ADR ec9f5262-9912-49d0-903f-fcfb54f28c13 ("Expose
+  `<domain>_list` as paged MCP tools (`list_<domain>`), not resources")
+  written via the `create_adr` MCP tool, `specmgr adr-toc` regenerated
+  `docs/adr/README.md`, and `AGENTS.md`'s per-domain inventory bullets
+  updated (all five `list_<d>` tools added, all five
+  `specmgr://<d>/list` resource mentions removed)
+- [x] Task 4.4: Back-update `feat-7-various-improvements/README.md` — mark
   Task 0.15 done/split, close REQ-002/ACC-002, advance REQ-001/ACC-001,
-  update Task 2.1/3.1b status lines — depends on: Task 4.3 — status:
-  not-started
+  update Task 2.1/3.1b status lines — depends on: Task 4.3 — status: done
+  (2026-08-19); Task 0.15 marked done, ACC-002 marked done citing the new
+  ADR, ACC-001 left unchecked but annotated with the 4-of-5-subclass /
+  ADR-outlier caveat, Task 2.1's note updated to "completed" (checkbox
+  left as-is pending its own Task 1.1 dependency), Task 3.1b marked done
 
 **Note:** If a task's scope changes mid-flight, edit its description in place;
 rely on git history (`git log -p` on this file) to recover what was
@@ -236,29 +296,94 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-19**: Phase 1, Phase 2, and Phase 3 are all done. `PagedResult`
+**As of 2026-08-19: feature complete (all four phases done).** `PagedResult`
 (`general/models/paged_result.py`), `DocSummary`
 (`general/models/summary.py`), and the `normalize_paging`/`paginate` helpers
 (`general/tools/_paging.py`) all exist, tested, and pass the full quality
 gate. `ReqSummary`/`UcSummary`/`TskSummary`/`QaSummary` now subclass
-`DocSummary`; `AdrSummary` deliberately does not (see Decisions Made). All
-five `<domain>_list` resources (`adr_list`, `req_list`, `uc_list`,
-`tsk_list`, `qa_list`) have been converted into paged `list_<domain>`
-`@mcp.tool()`s (`adr/tools/list_adr.py`, `req/tools/list_req.py`,
-`uc/tools/list_uc.py`, `tsk/tools/list_tsk.py`, `qa/tools/list_qa.py`),
-each returning `PagedResult[<D>Summary]` and preserving its own
-skip-malformed-file exception tuple exactly (REQ-004). Every prompt
-instruction data file and prompt module docstring that used to point at a
-retired `specmgr://<d>/list` resource now points at the corresponding
-`list_<d>` tool instead, and `server.py`'s own module docstring reflects
-the same repointing. Next: Phase 4 (verify & document -- regenerate
-`docs/GENERATED.md`/`docs/MCP.md`, run the full quality gate one more
-time, write the short ADR recording the resource→tool + `PagedResult`
-contract decision, and back-update `feat-7-various-improvements`).
+`DocSummary`; `AdrSummary` deliberately does not, staying field-identical
+but structurally verified instead (the permanent-for-now "ADR outlier" --
+see Decisions Made and the new ADR below). All five `<domain>_list`
+resources (`adr_list`, `req_list`, `uc_list`, `tsk_list`, `qa_list`) have
+been converted into paged `list_<domain>` `@mcp.tool()`s
+(`adr/tools/list_adr.py`, `req/tools/list_req.py`, `uc/tools/list_uc.py`,
+`tsk/tools/list_tsk.py`, `qa/tools/list_qa.py`), each returning
+`PagedResult[<D>Summary]` and preserving its own skip-malformed-file
+exception tuple exactly (REQ-004). Every prompt instruction data file and
+prompt module docstring that used to point at a retired
+`specmgr://<d>/list` resource now points at the corresponding `list_<d>`
+tool instead, and `server.py`'s own module docstring reflects the same
+repointing. `docs/api/`/`docs/GENERATED.md`/`docs/MCP.md` are regenerated
+and drift-free; the full quality gate (`ruff format --check`, `ruff
+check`, `vulture`, 1276 `unittest` tests) is green. The decision is
+recorded in ADR ec9f5262-9912-49d0-903f-fcfb54f28c13 ("Expose
+`<domain>_list` as paged MCP tools (`list_<domain>`), not resources"),
+`docs/adr/README.md` includes it, and `AGENTS.md`'s per-domain inventory
+reflects the five new `list_<d>` tools / five removed
+`specmgr://<d>/list` resources. `feat-7-various-improvements/README.md`
+has been back-updated: Task 0.15 is done, ACC-002/REQ-002 (pagination
+decision) is closed, and ACC-001/REQ-001 (shared list-output contract) is
+advanced but explicitly not closed, since the ADR outlier means the
+contract is shared by convention/test rather than uniformly by class
+hierarchy. Nothing further is planned for this feature folder.
 
 ### Recent Updates
 
-#### Update 2026-08-19 (newest, continued)
+#### Update 2026-08-19 (newest, feature complete)
+
+- Completed: Phase 4 (Verify & document) -- Tasks 4.1-4.4. This closes
+  out `feat-13-list-paging` entirely; frontmatter `status` moved from
+  `planning` to `done`.
+  - Task 4.1: Ran `specmgr docs` and `specmgr mcp-docs` (Python 3.13.13,
+    confirmed via `uv run --frozen python --version`). Both completed with
+    zero resulting `git status` diff -- Phase 2's and Phase 3's own
+    pre-commit hooks had already kept `docs/api/`/`docs/GENERATED.md`/
+    `docs/MCP.md` fully in sync with the `list_<d>` conversion, so this
+    step confirmed no drift remained rather than fixing any.
+  - Task 4.2: Full quality gate re-run one more time --
+    `ruff format --check` (814 files already formatted), `ruff check`
+    (all checks passed), `vulture src/ whitelist.py --min-confidence 60`
+    (no output, i.e. clean), and the full `unittest` suite (1276 tests,
+    OK) -- all green.
+  - Task 4.3: Wrote ADR ec9f5262-9912-49d0-903f-fcfb54f28c13 ("Expose
+    `<domain>_list` as paged MCP tools (`list_<domain>`), not resources"),
+    via the `create_adr` MCP tool (canonical path, available in-session --
+    no manual UUID/slug/file-write fallback needed). Covers: the
+    URI-template limitation that ruled out paginated resources, the
+    `PagedResult`/`asdste100`-shape decision, the `DocSummary`
+    shared-base decision plus the ADR-outlier asymmetry (with its accepted,
+    known-future-redesign framing per the user's explicit guidance), and
+    the feat-7 Task 0.15 split/REQ-002/ACC-002/REQ-001/ACC-001
+    cross-references -- kept short, mirroring ADR `ddfb1109`'s tone rather
+    than restating this whole plan. Ran `specmgr adr-toc`, which
+    regenerated `docs/adr/README.md` to include the new entry. Updated
+    `AGENTS.md`'s per-domain inventory section (the "six domain/
+    cross-cutting packages implemented" list): added `list_adr`/`list_req`/
+    `list_uc`/`list_tsk`/`list_qa` to each domain's tools enumeration, and
+    removed the now-retired `specmgr://adr/list`/`specmgr://req/list`/
+    `specmgr://qa/list` resource mentions (ADR's tool count bullet updated
+    from 11 to 12; UC's and TSK's bullets never explicitly enumerated
+    `specmgr://<d>/list` in the first place, so only their tool lists
+    needed the `list_<d>` addition).
+  - Task 4.4: Back-updated `feat-7-various-improvements/README.md`:
+    Task 0.15 marked `[x]` done, noting `feat-13-list-paging` is complete
+    and citing the new ADR; ACC-002 marked `[x]` done, citing the new ADR
+    as the recorded pagination decision; ACC-001 deliberately left `[ ]`
+    unchecked but annotated with the explicit 4-of-5-domains-subclass /
+    ADR-structural-not-inheritance caveat, since the shared base contract
+    is not uniformly achieved by class hierarchy across all five domains;
+    Task 2.1's status note updated from "split" to "completed" (citing the
+    ADR), checkbox left as `[ ]` since its own stated dependency (Task
+    1.1, the formal inventory audit) is still not-started; Task 3.1b
+    marked `[x]` done, citing the new ADR. Task 3.1a, Task 2.2, Task 3.2,
+    and the `_test` prompt-variant material were left untouched
+    (REQ-003/REQ-004 concerns, out of scope here).
+- Quality gate: all four commands green (see Task 4.2 above); no
+  code under `src/` was touched in this phase (docs/ADR/plan-file changes
+  only), consistent with this phase's constraint.
+- Next: none -- `feat-13-list-paging` is done.
+
+#### Update 2026-08-19 (continued)
 
 - Completed: Phase 3 (Cross-references) -- Tasks 3.1-3.2.
   - Repointed every prompt-instruction-data-file mention of a retired

@@ -94,6 +94,11 @@ Index of all ADRs in this repository.
   - Status: accepted
   - Date: 2026-08-05
   - Decision-makers: dfch
+- [Expose <domain>_list as paged MCP tools (list_<domain>), not resources](ec9f5262-9912-49d0-903f-fcfb54f28c13-expose-domain-list-as-paged-mcp-tools-list-domain-not-resour.md)
+  - Id: ec9f5262-9912-49d0-903f-fcfb54f28c13
+  - Status: accepted
+  - Date: 2026-08-19
+  - Decision-makers: OpenCode agent + user decision
 - [Organize the codebase by document-type domain: domain-first hierarchy for tools/prompts/resources, shared versioned models](ece4554b-725c-4f76-bc04-5d2b760363d2-organize-the-codebase-by-document-type-domain-domain-first-h.md)
   - Id: ece4554b-725c-4f76-bc04-5d2b760363d2
   - Status: accepted
