@@ -10,7 +10,7 @@ onward and links back here.
 
 ## Recent Updates
 
-#### 2026-08-17
+#### 2026-08-17T21:17:58Z
 
 - Completed: Task 0.17 (MarkdownListItemWithNotes for captured continuation paragraphs), TSK `f581fb2f-9a82-11f1-9c57-fc4cea71c519`:
   - Added `MarkdownListItemWithNotes` class to `markdown_list_item.py` with `notes: list[MarkdownParagraph] | None = None` field; docstring mirrors `ExtensionItem`; delegated `get_extent`/`from_text`/`__str__`.
@@ -19,7 +19,7 @@ onward and links back here.
   - Added `tests/models/md/test_markdown_list_item_with_notes.py` with 16 tests covering parsing, serialization/JSON, round-trips for tight/loose items (0-2 continuation paragraphs), compact items, and REQ-domain `Characteristics.items` integration. All 16 pass; full suite 1004 tests all passing — no regressions in REQ/UC/TSK domains.
   - Verified clean: ruff format/check (0 issues), vulture (unused code), pre-commit hook schema regen (req+uc schemas updated for new model type).
 
-#### 2026-08-16
+#### 2026-08-16T21:23:33Z
 
 - In progress: Task 0.14 (`webfetch` MCP tool for Web Server). Clarified
   scope with the user (generic bearer-authenticated GET fetch, not
@@ -202,7 +202,7 @@ onward and links back here.
   modules; Task 3.1b (pagination) still open; Task 0.6/0.7/0.10 also
   still not started.
 
-#### 2026-08-15
+#### 2026-08-15T08:39:25Z
 
 - Completed: Created `feat-0-various-improvements` with initial scope
   (list-resource format standardization + prompt optimizations, including

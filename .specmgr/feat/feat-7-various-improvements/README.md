@@ -548,8 +548,23 @@ progresses (edit, don't duplicate).
     Updates logs and mark Task 0.21 (and this sub-list) done — depends
     on: Task 0.21.1 through Task 0.21.4 — status: done (2026-08-18)
 
-- [ ] Task 0.22: Examine cyclic dependency in `set_status.py` (qa) to server
-  and mcp — depends on: none — status: not-started
+- [x] Task 0.22: Examine cyclic dependency in `set_status.py` (qa) to server
+  and mcp — depends on: none — status: documented (2026-08-19). Confirmed
+  the cycle is real (`specmgr.server -> specmgr.qa -> specmgr.qa.tools -> specmgr.qa.tools.set_status_qa -> specmgr.server`) but architecture-wide,
+  not qa-specific (~80 files across every domain follow the identical
+  `from ...server import mcp` pattern; `pylint` R0401 flags ~90 equivalent
+  warnings, already suppressed via `|| true`). Not currently breaking
+  anything — safe only due to `server.py`'s fragile import-ordering
+  convention (`mcp = MCPServer(...)` textually precedes its bottom-of-file
+  domain imports). Decision recorded in ADR
+  `3bf0326f-065a-424c-a2b9-87e5d5bcfa99` ("Extract MCP Singleton into Its
+  Own Module to Break Domain/Server Cyclic Imports"): extract a new
+  `mcp_instance.py` leaf module owning the `MCPServer` singleton, imported
+  by both `server.py` and every domain file instead of `server.py` directly
+  — implementation deferred to specmgr TSK
+  `699432f5-6f95-498e-a269-8001e4afc0e5` ("Extract `mcp_instance.py` to
+  Break Domain/Server Cyclic Imports"); no code changes made as part of
+  this task
 
 - [x] Task 0.23: Add the `mcp` SDK's `streamable-http` transport as a third
   `specmgr mcp --transport` option, alongside the existing `stdio`/`sse` —
@@ -686,7 +701,39 @@ already-compacted folder).
 See `history.md` for updates before 2026-08-18 (rotated out per ADR
 e369ee2e-3353-4f92-991c-6367d76d832e once this section grew too long).
 
-#### 2026-08-19
+#### Update 2026-08-19T06:49:34Z (Task 0.22)
+
+- Completed (documented only, no code changes): Task 0.22 (examine the
+  `qa/tools/set_status_qa.py` \<-> `server.py` cyclic dependency):
+
+  - Confirmed the import cycle is real: `specmgr.server -> specmgr.qa -> specmgr.qa.tools -> specmgr.qa.tools.set_status_qa -> specmgr.server`,
+    via `qa/tools/set_status_qa.py`'s `from ...server import mcp`. Confirmed
+    via `pylint`'s R0401 check and by tracing `server.py`'s own bottom-of-file
+    `from . import adr, general, qa, req, tsk, uc` registration imports.
+  - Confirmed this is **not** qa-specific: identical
+    `from ...server import mcp` imports exist in ~80 tool/resource/prompt
+    files across every domain (`adr`, `general`, `qa`, `req`, `tsk`, `uc`),
+    all flagged by the same ~90 R0401 warnings, already permanently
+    suppressed in CI via `|| true`.
+  - Confirmed it is not currently breaking anything: the cycle resolves
+    safely today only because `server.py` constructs
+    `mcp = MCPServer(...)` textually before its own domain-package
+    registration imports — a fragile ordering convention, not an enforced
+    invariant.
+  - Wrote ADR `3bf0326f-065a-424c-a2b9-87e5d5bcfa99` ("Extract MCP Singleton
+    into Its Own Module to Break Domain/Server Cyclic Imports"), recording
+    the decision to extract a new `mcp_instance.py` leaf module owning the
+    `MCPServer` singleton, imported by both `server.py` and every domain
+    file instead of reaching into `server.py` directly.
+  - Created specmgr TSK `699432f5-6f95-498e-a269-8001e4afc0e5` ("Extract
+    `mcp_instance.py` to Break Domain/Server Cyclic Imports") with the
+    7-task implementation breakdown for executing the ADR's decision
+    (new module, `server.py`/domain-file import updates, test/docs/lint
+    verification), referenced from both the ADR's "More Information" and
+    this task's line. Implementation deliberately not started as part of
+    this task.
+
+#### Update 2026-08-19T06:24:46Z (Task 0.23)
 
 - Completed: Task 0.23 (add the `mcp` SDK's `streamable-http` transport as
   a third `specmgr mcp --transport` option), all 8 sub-tasks from TSK
@@ -716,7 +763,7 @@ e369ee2e-3353-4f92-991c-6367d76d832e once this section grew too long).
     its tests/docs) — no changes to `server.py`, tools, resources, or
     prompts, since MCP transport is orthogonal to protocol-era/tool logic.
 
-#### 2026-08-18
+#### Update 2026-08-18T21:32:28Z (Task 0.21)
 
 - Completed: Task 0.21 (new `compact_history` MCP prompt), all 5
   sub-tasks:
@@ -911,6 +958,16 @@ e369ee2e-3353-4f92-991c-6367d76d832e once this section grew too long).
   aligns with the modern MCP protocol era's stateless-per-request session
   model, so a caller never accidentally depends on session state that
   `stdio`/`sse` never provided either.
+- **2026-08-19**: For Task 0.22's cyclic-import investigation: the
+  `set_status_qa.py` -> `server.py` cycle is real but universal across every
+  domain, not qa-specific, and currently benign only due to `server.py`'s
+  import ordering; recorded ADR `3bf0326f-065a-424c-a2b9-87e5d5bcfa99`
+  choosing to extract a new `mcp_instance.py` leaf module as the fix
+  (`server.py` and every domain file import the `MCPServer` singleton from
+  there instead of from `server.py`), with the ~80-file mechanical refactor
+  itself deferred to TSK `699432f5-6f95-498e-a269-8001e4afc0e5` rather than
+  performed now — rationale: keeps this housekeeping task small (examine +
+  decide) and lets the refactor be scheduled/executed independently.
 
 ### Related PRs / Commits
 

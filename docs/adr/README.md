@@ -17,6 +17,9 @@ Index of all ADRs in this repository.
   - Id: 33c5ab08-ff58-4c73-8c32-23abaf3838e3
   - Status: accepted
   - Decision-makers: dfch
+- [Extract MCP Singleton into Its Own Module to Break Domain/Server Cyclic Imports](3bf0326f-065a-424c-a2b9-87e5d5bcfa99-extract-mcp-singleton-into-its-own-module-to-break-domain-se.md)
+  - Id: 3bf0326f-065a-424c-a2b9-87e5d5bcfa99
+  - Status: accepted
 - [Parse-validate-render pipeline: library choices, no AST-preserving round-trip](4c6119c9-532f-4629-8977-108e78304f48-parse-validate-render-pipeline-library-choices-no-ast-preser.md)
   - Id: 4c6119c9-532f-4629-8977-108e78304f48
   - Status: accepted
