@@ -169,23 +169,29 @@ updates `<d>/__init__.py`'s module docstring, and moves/rewrites that
 domain's list test to `tests/<d>/tools/test_list_<d>.py` with paging
 assertions. All depend only on Phase 1 (parallelizable).
 
-- [ ] Task 2.1: ADR (`adr/tools/list_adr.py`; delete
+- [x] Task 2.1: ADR (`adr/tools/list_adr.py`; delete
   `adr/resources/adr_list.py`; keep `adr_get` in
   `adr/resources/__init__.py`; uses `iter_adr_paths` + top-level
   `AdrSummary`; exception tuple `(AdrParseError, ValidationError)`) —
-  depends on: Task 1.5 — status: not-started
-- [ ] Task 2.2: REQ (`req/tools/list_req.py`) — depends on: Task 1.5 —
-  status: not-started
-- [ ] Task 2.3: UC (`uc/tools/list_uc.py`; uses `..models.v2` `UcSummary`)
-  — depends on: Task 1.5 — status: not-started
-- [ ] Task 2.4: TSK (`tsk/tools/list_tsk.py`) — depends on: Task 1.5 —
-  status: not-started
-- [ ] Task 2.5: QA (`qa/tools/list_qa.py`) — depends on: Task 1.5 —
-  status: not-started
-- [ ] Task 2.6: Phase gate — `ruff format --check`, `ruff check`,
+  depends on: Task 1.5 — status: done
+- [x] Task 2.2: REQ (`req/tools/list_req.py`) — depends on: Task 1.5 —
+  status: done
+- [x] Task 2.3: UC (`uc/tools/list_uc.py`; uses `..models.v2` `UcSummary`)
+  — depends on: Task 1.5 — status: done
+- [x] Task 2.4: TSK (`tsk/tools/list_tsk.py`) — depends on: Task 1.5 —
+  status: done
+- [x] Task 2.5: QA (`qa/tools/list_qa.py`) — depends on: Task 1.5 —
+  status: done
+- [x] Task 2.6: Phase gate — `ruff format --check`, `ruff check`,
   `vulture src/ whitelist.py --min-confidence 60` (catches the five deleted
   resource modules), full `unittest` suite — depends on: Task 2.1, Task 2.2,
-  Task 2.3, Task 2.4, Task 2.5 — status: not-started
+  Task 2.3, Task 2.4, Task 2.5 — status: done, all green (see Recent
+  Updates); one pre-existing test
+  (`tests/commands/test_docs.py::test_count_mcp_features_matches_known_counts`)
+  needed its hardcoded ADR tool/resource counts updated (11->12 tools,
+  2->1 resources) to reflect the resource->tool conversion -- `docs/
+  GENERATED.md`/`docs/MCP.md` themselves are left stale on purpose,
+  regeneration is Task 4.1
 
 #### Phase 3: Cross-references
 
@@ -226,17 +232,68 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-19**: Phase 1 (Shared infrastructure) is done. `PagedResult`
+**As of 2026-08-19**: Phase 1 and Phase 2 are done. `PagedResult`
 (`general/models/paged_result.py`), `DocSummary`
 (`general/models/summary.py`), and the `normalize_paging`/`paginate` helpers
 (`general/tools/_paging.py`) all exist, tested, and pass the full quality
 gate. `ReqSummary`/`UcSummary`/`TskSummary`/`QaSummary` now subclass
-`DocSummary`; `AdrSummary` deliberately does not (see Decisions Made). Next:
-Phase 2 (per-domain resource→tool conversion).
+`DocSummary`; `AdrSummary` deliberately does not (see Decisions Made). All
+five `<domain>_list` resources (`adr_list`, `req_list`, `uc_list`,
+`tsk_list`, `qa_list`) have been converted into paged `list_<domain>`
+`@mcp.tool()`s (`adr/tools/list_adr.py`, `req/tools/list_req.py`,
+`uc/tools/list_uc.py`, `tsk/tools/list_tsk.py`, `qa/tools/list_qa.py`),
+each returning `PagedResult[<D>Summary]` and preserving its own
+skip-malformed-file exception tuple exactly (REQ-004). Next: Phase 3
+(cross-references -- repoint `specmgr://<d>/list` mentions in prompt
+instruction data files and `server.py`'s docstring to `list_<d>`).
 
 ### Recent Updates
 
 #### Update 2026-08-19 (newest)
+
+- Completed: Phase 2 (Per-domain resource->tool conversion) -- Tasks
+  2.1-2.6.
+  - Added `adr/tools/list_adr.py`, `req/tools/list_req.py`,
+    `uc/tools/list_uc.py`, `tsk/tools/list_tsk.py`, `qa/tools/list_qa.py`
+    -- each an `@mcp.tool(name="list_<d>")` returning
+    `PagedResult[<D>Summary]`; same directory scan and skip-broken-file
+    logic as the retired resource, then
+    `paginate(summaries, *normalize_paging(max_results, offset))`.
+    ADR's `(AdrParseError, ValidationError)` exception tuple and the other
+    four's `(AssertionError, ValidationError)` were both preserved exactly
+    unchanged, per-domain.
+  - Deleted the five retired resource modules: `adr/resources/adr_list.py`,
+    `req/resources/req_list.py`, `uc/resources/uc_list.py`,
+    `tsk/resources/tsk_list.py`, `qa/resources/qa_list.py`.
+  - Updated every `<d>/resources/__init__.py` to drop the `<d>_list`
+    import/`__all__` entry (ADR's `adr_get` stays); updated every
+    `<d>/tools/__init__.py` to register `list_<d>`; updated every
+    `<d>/__init__.py`'s own module docstring where it enumerated
+    tools/resources.
+  - Migrated list tests: `tests/adr/tools/test_list_adr.py` (new; the old
+    `TestAdrListResource` class was removed from
+    `tests/adr/resources/test_adr.py`, leaving `TestAdrGetResource` in
+    place), `tests/req/tools/test_list_req.py`,
+    `tests/uc/tools/test_list_uc.py`, `tests/tsk/tools/test_list_tsk.py`,
+    `tests/qa/tools/test_list_qa.py` (each replaces the deleted
+    `tests/<d>/resources/test_<d>_list.py`). Each migrated
+    skip-malformed-file/empty-directory coverage as-is, plus added: default
+    page size/shape, `max_results` limiting + `truncated`, `offset` paging
+    to a second page, `max_results` clamped to the cap, negative `offset`
+    floored to zero, `truncated` boundary (false when a page exactly covers
+    all items, true when one item remains), and `total` reflecting the full
+    parseable count independent of paging.
+  - Fixed one pre-existing test that broke as a direct, expected
+    consequence of the ADR resource->tool conversion:
+    `tests/commands/test_docs.py::test_count_mcp_features_matches_known_counts`
+    hardcoded ADR's tool/resource counts (11/2); updated to 12/1 now that
+    `list_adr` lives under `adr/tools/` instead of `adr/resources/`.
+    `docs/GENERATED.md`/`docs/MCP.md` themselves are deliberately left
+    stale -- their regeneration is Task 4.1, not Phase 2's job.
+  - Quality gate: `ruff format --check`, `ruff check`,
+    `vulture src/ whitelist.py --min-confidence 60`, and the full
+    `unittest` suite (1276 tests) all pass clean.
+- Next: Phase 3 (cross-references, Tasks 3.1-3.2).
 
 - Completed: Phase 1 (Shared infrastructure) — Tasks 1.1-1.5.
   - Added `general/models/` (new sub-package): `__init__.py`,
@@ -328,6 +385,17 @@ Phase 2 (per-domain resource→tool conversion).
   whether `DocSummary` should instead live somewhere with no `general`/
   `mcp` dependency (e.g. top-level `models/`, alongside `models/adr` and
   `models/iso25010.py`) so `AdrSummary` can subclass it too.
+- **2026-08-19 (Phase 2)**: The ADR resource->tool conversion shifts one
+  module from `adr/resources/` to `adr/tools/`, which changes the
+  hardcoded MCP feature counts a pre-existing test
+  (`tests/commands/test_docs.py::test_count_mcp_features_matches_known_counts`)
+  asserts (11 tools/2 resources -> 12 tools/1 resource). Updated that
+  test's literals in place rather than deferring the fix to Phase 4,
+  since Phase 2's own quality gate requires a green full test suite.
+  `docs/GENERATED.md`/`docs/MCP.md` regeneration (which would otherwise
+  reflect the same shift) stays out of scope here -- that is explicitly
+  Task 4.1's job, run once after every domain's cross-references are
+  repointed in Phase 3.
 
 ### Related PRs / Commits
 

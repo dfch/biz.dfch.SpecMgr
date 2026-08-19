@@ -8,11 +8,13 @@ shared ``mcp`` application instance at once::
 
     from biz.dfch.specmgr import uc  # noqa: F401 (side-effects only)
 
-``tools`` (``parse_uc``, ``get_uc``, ``get_uc_example``, ``get_uc_template``,
-``create_uc``, ``update_uc``, ``set_status_uc``, ``delete_uc``,
-``validate_uc``) and ``resources`` (``specmgr://uc/schema``,
-``specmgr://uc/example``, ``specmgr://uc/template``, ``specmgr://uc/list``)
-exist. There is no ``prompts`` sub-package yet (see
+``tools`` (``parse_uc``, ``get_uc``, ``list_uc``, ``get_uc_example``,
+``get_uc_template``, ``create_uc``, ``update_uc``, ``set_status_uc``,
+``delete_uc``, ``validate_uc``) and ``resources`` (``specmgr://uc/schema``,
+``specmgr://uc/example``, ``specmgr://uc/template``) exist. The former
+``specmgr://uc/list`` resource was replaced by the ``list_uc`` tool, so
+that paging parameters could be accepted (feat-13-list-paging). There is
+no ``prompts`` sub-package yet (see
 ``.specmgr/feat/feat-4-use-cases/README.md`` Phase 3).
 """
 

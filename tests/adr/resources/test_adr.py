@@ -15,16 +15,20 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Tests for the specmgr://adr/list and specmgr://adr/{id} resources."""
+"""Tests for the specmgr://adr/{id} resource.
+
+The former ``specmgr://adr/list`` resource test coverage (``TestAdrListResource``)
+was migrated to ``tests/adr/tools/test_list_adr.py`` when ``adr_list`` was
+converted into the ``list_adr`` tool (feat-13-list-paging Task 2.1).
+"""
 
 import tempfile
 import unittest
 from pathlib import Path
 from unittest import mock
 
-from biz.dfch.specmgr.models.adr import Adr, AdrBody, AdrFrontmatter, AdrSummary, render_adr
+from biz.dfch.specmgr.models.adr import Adr, AdrBody, AdrFrontmatter, render_adr
 from biz.dfch.specmgr.adr.resources.adr_get import adr_get
-from biz.dfch.specmgr.adr.resources.adr_list import adr_list
 from biz.dfch.specmgr.adr.tools._paths import ADR_DIR_ENV_VAR, AdrNotFoundError
 
 
@@ -35,43 +39,6 @@ def _body(title: str) -> AdrBody:
         considered_options="Options.",
         decision_outcome="Outcome.",
     )
-
-
-class TestAdrListResource(unittest.TestCase):
-    """Tests for the `adr_list` resource function (`specmgr://adr/list`)."""
-
-    def test_returns_summaries_and_skips_malformed_file(self):
-        """adr_list must return exactly the valid ADRs, silently skipping a broken file."""
-        with tempfile.TemporaryDirectory() as tmp:
-            base = Path(tmp)
-
-            first = Adr(frontmatter=AdrFrontmatter(id="id-1", status="accepted"), body=_body("First title"))
-            (base / "1.md").write_text(render_adr(first), encoding="utf-8")
-
-            second = Adr(frontmatter=AdrFrontmatter(id="id-2", status="proposed"), body=_body("Second title"))
-            (base / "2.md").write_text(render_adr(second), encoding="utf-8")
-
-            (base / "3-broken.md").write_text("not a valid ADR, no headings at all", encoding="utf-8")
-
-            with mock.patch.dict("os.environ", {ADR_DIR_ENV_VAR: str(base)}):
-                result = adr_list()
-
-            self.assertEqual(len(result), 2)
-            for summary in result:
-                self.assertIsInstance(summary, AdrSummary)
-            titles = {summary.title for summary in result}
-            self.assertEqual(titles, {"First title", "Second title"})
-            refs = {summary.ref for summary in result}
-            self.assertEqual(refs, {"1", "2"})
-            for ref in refs:
-                self.assertNotIn(".md", ref)
-
-    def test_empty_list_for_missing_directory(self):
-        """adr_list must return an empty list when the base directory does not exist."""
-        with tempfile.TemporaryDirectory() as tmp:
-            missing = Path(tmp) / "does-not-exist"
-            with mock.patch.dict("os.environ", {ADR_DIR_ENV_VAR: str(missing)}):
-                self.assertEqual(adr_list(), [])
 
 
 class TestAdrGetResource(unittest.TestCase):

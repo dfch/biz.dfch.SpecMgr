@@ -25,17 +25,22 @@ document with every field present but populated with short placeholder
 data file rather than anything on the caller's filesystem. ``get_tsk``
 reads, parses, and returns a full task list document by id -- the sole
 id-based read path for TSK (there never was a
-``specmgr://tsk/{id}`` resource to begin with). ``create_tsk`` assigns a
-fresh id, builds the frontmatter itself, and writes a new document (body
-markdown only, no frontmatter) under the task list base directory
-(``tsk.tools._paths``/``_io``). ``update_tsk`` replaces an existing
-document's body the same way, preserving every frontmatter field except
-``updated``. ``set_status_tsk`` is the only path that changes ``status``,
-also bumping ``updated``, leaving the body untouched. ``delete_tsk`` is a
-registered stub -- always raises ``NotImplementedError``, reserving the
-name for a future real implementation. ``validate_tsk`` is a disk-free,
-id-free dry run against a submitted ``content`` string, independent of the
-other tools. Import this package to register all task list tools at once::
+``specmgr://tsk/{id}`` resource to begin with). ``list_tsk``
+(feat-13-list-paging Task 2.4) returns one page of id/title/status/ref
+summaries of every task list, replacing the former ``specmgr://tsk/list``
+resource so that ``max_results``/``offset`` paging parameters could be
+accepted (see ``.specmgr/feat/feat-13-list-paging/README.md``).
+``create_tsk`` assigns a fresh id, builds the frontmatter itself, and
+writes a new document (body markdown only, no frontmatter) under the task
+list base directory (``tsk.tools._paths``/``_io``). ``update_tsk`` replaces
+an existing document's body the same way, preserving every frontmatter
+field except ``updated``. ``set_status_tsk`` is the only path that changes
+``status``, also bumping ``updated``, leaving the body untouched.
+``delete_tsk`` is a registered stub -- always raises ``NotImplementedError``,
+reserving the name for a future real implementation. ``validate_tsk`` is a
+disk-free, id-free dry run against a submitted ``content`` string,
+independent of the other tools. Import this package to register all task
+list tools at once::
 
     from biz.dfch.specmgr.tsk import tools  # noqa: F401 (side-effects only)
 """
@@ -45,6 +50,7 @@ from .delete_tsk import delete_tsk
 from .get_tsk import get_tsk
 from .get_tsk_example import get_tsk_example
 from .get_tsk_template import get_tsk_template
+from .list_tsk import list_tsk
 from .parse_tsk import parse_tsk
 from .set_status_tsk import set_status_tsk
 from .update_tsk import update_tsk
@@ -56,6 +62,7 @@ __all__ = [
     "get_tsk",
     "get_tsk_example",
     "get_tsk_template",
+    "list_tsk",
     "parse_tsk",
     "set_status_tsk",
     "update_tsk",

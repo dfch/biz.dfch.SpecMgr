@@ -8,8 +8,8 @@ regenerate with `uv run --frozen specmgr docs` and commit the result.
 **Models** — schema definitions: adr, md
 
 **ADR domain** — subpackages: data, prompts, resources, tools
-  - 11 MCP tools
-  - 2 MCP resources
+  - 12 MCP tools
+  - 1 MCP resources
   - 4 prompt modules
 
 ## Module Reference
@@ -26,13 +26,13 @@ First-line docstrings from each module, organized by domain:
 - `adr/prompts/update_adr_test.py` — ``@mcp.prompt()``: update_adr_test (.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md §11).
 - `adr/resources/__init__.py` — MCP resource registrations for Architecture Decision Records (plan §8, §9a).
 - `adr/resources/adr_get.py` — Resource: specmgr://adr/{id} (plan §8, §9a).
-- `adr/resources/adr_list.py` — Resource: specmgr://adr/list (plan §8, §9a).
 - `adr/tools/__init__.py` — MCP tool wrappers for Architecture Decision Records (plan §6, §8, §10 item 4).
 - `adr/tools/_io.py` — Thin file read/write helpers over ``parse_adr``/``render_adr`` (plan §7, §9a).
 - `adr/tools/_lock.py` — Per-document in-process lock guarding ADR mutations (plan §7, §9a).
 - `adr/tools/_paths.py` — ADR base directory resolution, filename slugification, and id -> path
 - `adr/tools/create_adr.py` — ``@mcp.tool()`` wrapper: create_adr (plan §8, §9a, §10 item 4).
 - `adr/tools/get_adr.py` — ``@mcp.tool()`` wrapper: get_adr (plan §8, §9a, §10 item 4).
+- `adr/tools/list_adr.py` — ``@mcp.tool()`` wrapper: list_adr (feat-13-list-paging Task 2.1).
 - `adr/tools/option_create.py` — ``@mcp.tool()`` wrapper: option_create (plan §5, §8, §9a, §10 item 4).
 - `adr/tools/option_delete.py` — ``@mcp.tool()`` wrapper: option_delete (plan §5, §8, §9a, §10 item 4).
 - `adr/tools/option_list.py` — ``@mcp.tool()`` wrapper: option_list (plan §5, §8, §9a, §10 item 4).
@@ -135,7 +135,6 @@ First-line docstrings from each module, organized by domain:
 - `qa/prompts/update_qa.py` — ``@mcp.prompt()``: update_qa (Phase 4, Task 4.3).
 - `qa/resources/__init__.py` — MCP resource registrations for Question and Answer (QA) documents (Phase 4, Task 4.2).
 - `qa/resources/qa_example.py` — Resource: specmgr://qa/example (Phase 4, Task 4.2).
-- `qa/resources/qa_list.py` — Resource: specmgr://qa/list (Phase 4, Task 4.2).
 - `qa/resources/qa_schema.py` — Resource: specmgr://qa/schema (Phase 4, Task 4.2).
 - `qa/resources/qa_template.py` — Resource: specmgr://qa/template (Phase 4, Task 4.2).
 - `qa/tools/__init__.py` — MCP tool wrappers for Question and Answer (QA) documents (mirrors ``req/tools/``'s own shape).
@@ -148,6 +147,7 @@ First-line docstrings from each module, organized by domain:
 - `qa/tools/get_qa.py` — ``@mcp.tool()`` wrapper: get_qa (Phase 4, Task 4.1).
 - `qa/tools/get_qa_example.py` — ``@mcp.tool()`` wrapper: get_qa_example (Phase 4, Task 4.1).
 - `qa/tools/get_qa_template.py` — ``@mcp.tool()`` wrapper: get_qa_template (Phase 4, Task 4.1).
+- `qa/tools/list_qa.py` — ``@mcp.tool()`` wrapper: list_qa (feat-13-list-paging Task 2.5).
 - `qa/tools/parse_qa.py` — ``@mcp.tool()`` wrapper: parse_qa (Phase 4, Task 4.1).
 - `qa/tools/set_status_qa.py` — ``@mcp.tool()`` wrapper: set_status_qa (Phase 4, Task 4.1).
 - `qa/tools/update_qa.py` — ``@mcp.tool()`` wrapper: update_qa (Phase 4, Task 4.1).
@@ -168,7 +168,6 @@ First-line docstrings from each module, organized by domain:
 - `req/prompts/update_req.py` — ``@mcp.prompt()``: update_req (Task 3.19).
 - `req/resources/__init__.py` — MCP resource registrations for Requirement (REQ) documents (Tasks 3.5-3.7, 3.18).
 - `req/resources/req_example.py` — Resource: specmgr://req/example (Task 3.6).
-- `req/resources/req_list.py` — Resource: specmgr://req/list (Task 3.18).
 - `req/resources/req_schema.py` — Resource: specmgr://req/schema (Task 3.5, packaged data since Task 3.8).
 - `req/resources/req_template.py` — Resource: specmgr://req/template (Task 3.7).
 - `req/tools/__init__.py` — MCP tool wrappers for requirements (mirrors ``uc/tools/``'s own shape).
@@ -181,6 +180,7 @@ First-line docstrings from each module, organized by domain:
 - `req/tools/get_req.py` — ``@mcp.tool()`` wrapper: get_req (feat-7-various-improvements Task 0.9).
 - `req/tools/get_req_example.py` — ``@mcp.tool()`` wrapper: get_req_example (Task 3.6).
 - `req/tools/get_req_template.py` — ``@mcp.tool()`` wrapper: get_req_template (Task 3.7).
+- `req/tools/list_req.py` — ``@mcp.tool()`` wrapper: list_req (feat-13-list-paging Task 2.2).
 - `req/tools/parse_req.py` — ``@mcp.tool()`` wrapper: parse_req.
 - `req/tools/set_status_req.py` — ``@mcp.tool()`` wrapper: set_status_req (Task 3.14).
 - `req/tools/update_req.py` — ``@mcp.tool()`` wrapper: update_req (Task 3.13).
@@ -204,7 +204,6 @@ First-line docstrings from each module, organized by domain:
 - `tsk/prompts/update_task.py` — ``@mcp.prompt()``: update_task (Task 3.13).
 - `tsk/resources/__init__.py` — MCP resource registrations for Task List (TSK) documents (Tasks 3.10-3.11).
 - `tsk/resources/tsk_example.py` — Resource: specmgr://tsk/example (Task 3.11).
-- `tsk/resources/tsk_list.py` — Resource: specmgr://tsk/list (Task 3.10).
 - `tsk/resources/tsk_schema.py` — Resource: specmgr://tsk/schema (Task 3.10).
 - `tsk/resources/tsk_template.py` — Resource: specmgr://tsk/template (Task 3.11).
 - `tsk/tools/__init__.py` — MCP tool wrappers for task lists (mirrors ``req/tools/``'s own shape).
@@ -217,6 +216,7 @@ First-line docstrings from each module, organized by domain:
 - `tsk/tools/get_tsk.py` — ``@mcp.tool()`` wrapper: get_tsk (Task 3.8).
 - `tsk/tools/get_tsk_example.py` — ``@mcp.tool()`` wrapper: get_tsk_example (Task 3.9).
 - `tsk/tools/get_tsk_template.py` — ``@mcp.tool()`` wrapper: get_tsk_template (Task 3.9).
+- `tsk/tools/list_tsk.py` — ``@mcp.tool()`` wrapper: list_tsk (feat-13-list-paging Task 2.4).
 - `tsk/tools/parse_tsk.py` — ``@mcp.tool()`` wrapper: parse_tsk (Task 3.2).
 - `tsk/tools/set_status_tsk.py` — ``@mcp.tool()`` wrapper: set_status_tsk (Task 3.5).
 - `tsk/tools/update_tsk.py` — ``@mcp.tool()`` wrapper: update_tsk (Task 3.4).
@@ -250,7 +250,6 @@ First-line docstrings from each module, organized by domain:
 - `uc/models/v2/summary.py` — Pydantic model for one line of UC listing output (Task 3.1.6).
 - `uc/resources/__init__.py` — MCP resource registrations for Use Case (UC) documents (Task 3.1.4, 3.1.6).
 - `uc/resources/uc_example.py` — Resource: specmgr://uc/example (Task 3.1.4).
-- `uc/resources/uc_list.py` — Resource: specmgr://uc/list (Task 3.1.6).
 - `uc/resources/uc_schema.py` — Resource: specmgr://uc/schema (Task 3.1.4).
 - `uc/resources/uc_template.py` — Resource: specmgr://uc/template (Task 3.1.4).
 - `uc/tools/__init__.py` — MCP tool wrappers for use cases (mirrors ``req/tools/``'s own shape).
@@ -263,6 +262,7 @@ First-line docstrings from each module, organized by domain:
 - `uc/tools/get_uc.py` — ``@mcp.tool()`` wrapper: get_uc (Task 3.1.5).
 - `uc/tools/get_uc_example.py` — ``@mcp.tool()`` wrapper: get_uc_example (Task 3.1.2).
 - `uc/tools/get_uc_template.py` — ``@mcp.tool()`` wrapper: get_uc_template (Task 3.1.3).
+- `uc/tools/list_uc.py` — ``@mcp.tool()`` wrapper: list_uc (feat-13-list-paging Task 2.3).
 - `uc/tools/parse_uc.py` — ``@mcp.tool()`` wrapper: parse_uc.
 - `uc/tools/set_status_uc.py` — ``@mcp.tool()`` wrapper: set_status_uc (Task 3.1.5).
 - `uc/tools/update_uc.py` — ``@mcp.tool()`` wrapper: update_uc (Task 3.1.5).
@@ -270,4 +270,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 180
+**Test files**: 181

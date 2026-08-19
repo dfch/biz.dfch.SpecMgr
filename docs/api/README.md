@@ -17,13 +17,13 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.adr.prompts.update_adr_test`](biz.dfch.specmgr.adr.prompts.update_adr_test.md) — ``@mcp.prompt()``: update_adr_test (.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md §11).
 - [`biz.dfch.specmgr.adr.resources`](biz.dfch.specmgr.adr.resources.md) — MCP resource registrations for Architecture Decision Records (plan §8, §9a).
 - [`biz.dfch.specmgr.adr.resources.adr_get`](biz.dfch.specmgr.adr.resources.adr_get.md) — Resource: specmgr://adr/{id} (plan §8, §9a).
-- [`biz.dfch.specmgr.adr.resources.adr_list`](biz.dfch.specmgr.adr.resources.adr_list.md) — Resource: specmgr://adr/list (plan §8, §9a).
 - [`biz.dfch.specmgr.adr.tools`](biz.dfch.specmgr.adr.tools.md) — MCP tool wrappers for Architecture Decision Records (plan §6, §8, §10 item 4).
 - [`biz.dfch.specmgr.adr.tools._io`](biz.dfch.specmgr.adr.tools._io.md) — Thin file read/write helpers over ``parse_adr``/``render_adr`` (plan §7, §9a).
 - [`biz.dfch.specmgr.adr.tools._lock`](biz.dfch.specmgr.adr.tools._lock.md) — Per-document in-process lock guarding ADR mutations (plan §7, §9a).
 - [`biz.dfch.specmgr.adr.tools._paths`](biz.dfch.specmgr.adr.tools._paths.md) — ADR base directory resolution, filename slugification, and id -> path
 - [`biz.dfch.specmgr.adr.tools.create_adr`](biz.dfch.specmgr.adr.tools.create_adr.md) — ``@mcp.tool()`` wrapper: create_adr (plan §8, §9a, §10 item 4).
 - [`biz.dfch.specmgr.adr.tools.get_adr`](biz.dfch.specmgr.adr.tools.get_adr.md) — ``@mcp.tool()`` wrapper: get_adr (plan §8, §9a, §10 item 4).
+- [`biz.dfch.specmgr.adr.tools.list_adr`](biz.dfch.specmgr.adr.tools.list_adr.md) — ``@mcp.tool()`` wrapper: list_adr (feat-13-list-paging Task 2.1).
 - [`biz.dfch.specmgr.adr.tools.option_create`](biz.dfch.specmgr.adr.tools.option_create.md) — ``@mcp.tool()`` wrapper: option_create (plan §5, §8, §9a, §10 item 4).
 - [`biz.dfch.specmgr.adr.tools.option_delete`](biz.dfch.specmgr.adr.tools.option_delete.md) — ``@mcp.tool()`` wrapper: option_delete (plan §5, §8, §9a, §10 item 4).
 - [`biz.dfch.specmgr.adr.tools.option_list`](biz.dfch.specmgr.adr.tools.option_list.md) — ``@mcp.tool()`` wrapper: option_list (plan §5, §8, §9a, §10 item 4).
@@ -116,7 +116,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.qa.prompts.update_qa`](biz.dfch.specmgr.qa.prompts.update_qa.md) — ``@mcp.prompt()``: update_qa (Phase 4, Task 4.3).
 - [`biz.dfch.specmgr.qa.resources`](biz.dfch.specmgr.qa.resources.md) — MCP resource registrations for Question and Answer (QA) documents (Phase 4, Task 4.2).
 - [`biz.dfch.specmgr.qa.resources.qa_example`](biz.dfch.specmgr.qa.resources.qa_example.md) — Resource: specmgr://qa/example (Phase 4, Task 4.2).
-- [`biz.dfch.specmgr.qa.resources.qa_list`](biz.dfch.specmgr.qa.resources.qa_list.md) — Resource: specmgr://qa/list (Phase 4, Task 4.2).
 - [`biz.dfch.specmgr.qa.resources.qa_schema`](biz.dfch.specmgr.qa.resources.qa_schema.md) — Resource: specmgr://qa/schema (Phase 4, Task 4.2).
 - [`biz.dfch.specmgr.qa.resources.qa_template`](biz.dfch.specmgr.qa.resources.qa_template.md) — Resource: specmgr://qa/template (Phase 4, Task 4.2).
 - [`biz.dfch.specmgr.qa.tools`](biz.dfch.specmgr.qa.tools.md) — MCP tool wrappers for Question and Answer (QA) documents (mirrors ``req/tools/``'s own shape).
@@ -129,6 +128,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.qa.tools.get_qa`](biz.dfch.specmgr.qa.tools.get_qa.md) — ``@mcp.tool()`` wrapper: get_qa (Phase 4, Task 4.1).
 - [`biz.dfch.specmgr.qa.tools.get_qa_example`](biz.dfch.specmgr.qa.tools.get_qa_example.md) — ``@mcp.tool()`` wrapper: get_qa_example (Phase 4, Task 4.1).
 - [`biz.dfch.specmgr.qa.tools.get_qa_template`](biz.dfch.specmgr.qa.tools.get_qa_template.md) — ``@mcp.tool()`` wrapper: get_qa_template (Phase 4, Task 4.1).
+- [`biz.dfch.specmgr.qa.tools.list_qa`](biz.dfch.specmgr.qa.tools.list_qa.md) — ``@mcp.tool()`` wrapper: list_qa (feat-13-list-paging Task 2.5).
 - [`biz.dfch.specmgr.qa.tools.parse_qa`](biz.dfch.specmgr.qa.tools.parse_qa.md) — ``@mcp.tool()`` wrapper: parse_qa (Phase 4, Task 4.1).
 - [`biz.dfch.specmgr.qa.tools.set_status_qa`](biz.dfch.specmgr.qa.tools.set_status_qa.md) — ``@mcp.tool()`` wrapper: set_status_qa (Phase 4, Task 4.1).
 - [`biz.dfch.specmgr.qa.tools.update_qa`](biz.dfch.specmgr.qa.tools.update_qa.md) — ``@mcp.tool()`` wrapper: update_qa (Phase 4, Task 4.1).
@@ -139,7 +139,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.req.prompts.update_req`](biz.dfch.specmgr.req.prompts.update_req.md) — ``@mcp.prompt()``: update_req (Task 3.19).
 - [`biz.dfch.specmgr.req.resources`](biz.dfch.specmgr.req.resources.md) — MCP resource registrations for Requirement (REQ) documents (Tasks 3.5-3.7, 3.18).
 - [`biz.dfch.specmgr.req.resources.req_example`](biz.dfch.specmgr.req.resources.req_example.md) — Resource: specmgr://req/example (Task 3.6).
-- [`biz.dfch.specmgr.req.resources.req_list`](biz.dfch.specmgr.req.resources.req_list.md) — Resource: specmgr://req/list (Task 3.18).
 - [`biz.dfch.specmgr.req.resources.req_schema`](biz.dfch.specmgr.req.resources.req_schema.md) — Resource: specmgr://req/schema (Task 3.5, packaged data since Task 3.8).
 - [`biz.dfch.specmgr.req.resources.req_template`](biz.dfch.specmgr.req.resources.req_template.md) — Resource: specmgr://req/template (Task 3.7).
 - [`biz.dfch.specmgr.req.tools`](biz.dfch.specmgr.req.tools.md) — MCP tool wrappers for requirements (mirrors ``uc/tools/``'s own shape).
@@ -152,6 +151,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.req.tools.get_req`](biz.dfch.specmgr.req.tools.get_req.md) — ``@mcp.tool()`` wrapper: get_req (feat-7-various-improvements Task 0.9).
 - [`biz.dfch.specmgr.req.tools.get_req_example`](biz.dfch.specmgr.req.tools.get_req_example.md) — ``@mcp.tool()`` wrapper: get_req_example (Task 3.6).
 - [`biz.dfch.specmgr.req.tools.get_req_template`](biz.dfch.specmgr.req.tools.get_req_template.md) — ``@mcp.tool()`` wrapper: get_req_template (Task 3.7).
+- [`biz.dfch.specmgr.req.tools.list_req`](biz.dfch.specmgr.req.tools.list_req.md) — ``@mcp.tool()`` wrapper: list_req (feat-13-list-paging Task 2.2).
 - [`biz.dfch.specmgr.req.tools.parse_req`](biz.dfch.specmgr.req.tools.parse_req.md) — ``@mcp.tool()`` wrapper: parse_req.
 - [`biz.dfch.specmgr.req.tools.set_status_req`](biz.dfch.specmgr.req.tools.set_status_req.md) — ``@mcp.tool()`` wrapper: set_status_req (Task 3.14).
 - [`biz.dfch.specmgr.req.tools.update_req`](biz.dfch.specmgr.req.tools.update_req.md) — ``@mcp.tool()`` wrapper: update_req (Task 3.13).
@@ -173,7 +173,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.tsk.prompts.update_task`](biz.dfch.specmgr.tsk.prompts.update_task.md) — ``@mcp.prompt()``: update_task (Task 3.13).
 - [`biz.dfch.specmgr.tsk.resources`](biz.dfch.specmgr.tsk.resources.md) — MCP resource registrations for Task List (TSK) documents (Tasks 3.10-3.11).
 - [`biz.dfch.specmgr.tsk.resources.tsk_example`](biz.dfch.specmgr.tsk.resources.tsk_example.md) — Resource: specmgr://tsk/example (Task 3.11).
-- [`biz.dfch.specmgr.tsk.resources.tsk_list`](biz.dfch.specmgr.tsk.resources.tsk_list.md) — Resource: specmgr://tsk/list (Task 3.10).
 - [`biz.dfch.specmgr.tsk.resources.tsk_schema`](biz.dfch.specmgr.tsk.resources.tsk_schema.md) — Resource: specmgr://tsk/schema (Task 3.10).
 - [`biz.dfch.specmgr.tsk.resources.tsk_template`](biz.dfch.specmgr.tsk.resources.tsk_template.md) — Resource: specmgr://tsk/template (Task 3.11).
 - [`biz.dfch.specmgr.tsk.tools`](biz.dfch.specmgr.tsk.tools.md) — MCP tool wrappers for task lists (mirrors ``req/tools/``'s own shape).
@@ -186,6 +185,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.tsk.tools.get_tsk`](biz.dfch.specmgr.tsk.tools.get_tsk.md) — ``@mcp.tool()`` wrapper: get_tsk (Task 3.8).
 - [`biz.dfch.specmgr.tsk.tools.get_tsk_example`](biz.dfch.specmgr.tsk.tools.get_tsk_example.md) — ``@mcp.tool()`` wrapper: get_tsk_example (Task 3.9).
 - [`biz.dfch.specmgr.tsk.tools.get_tsk_template`](biz.dfch.specmgr.tsk.tools.get_tsk_template.md) — ``@mcp.tool()`` wrapper: get_tsk_template (Task 3.9).
+- [`biz.dfch.specmgr.tsk.tools.list_tsk`](biz.dfch.specmgr.tsk.tools.list_tsk.md) — ``@mcp.tool()`` wrapper: list_tsk (feat-13-list-paging Task 2.4).
 - [`biz.dfch.specmgr.tsk.tools.parse_tsk`](biz.dfch.specmgr.tsk.tools.parse_tsk.md) — ``@mcp.tool()`` wrapper: parse_tsk (Task 3.2).
 - [`biz.dfch.specmgr.tsk.tools.set_status_tsk`](biz.dfch.specmgr.tsk.tools.set_status_tsk.md) — ``@mcp.tool()`` wrapper: set_status_tsk (Task 3.5).
 - [`biz.dfch.specmgr.tsk.tools.update_tsk`](biz.dfch.specmgr.tsk.tools.update_tsk.md) — ``@mcp.tool()`` wrapper: update_tsk (Task 3.4).
@@ -217,7 +217,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.uc.models.v2.use_case`](biz.dfch.specmgr.uc.models.v2.use_case.md) — No documentation available.
 - [`biz.dfch.specmgr.uc.resources`](biz.dfch.specmgr.uc.resources.md) — MCP resource registrations for Use Case (UC) documents (Task 3.1.4, 3.1.6).
 - [`biz.dfch.specmgr.uc.resources.uc_example`](biz.dfch.specmgr.uc.resources.uc_example.md) — Resource: specmgr://uc/example (Task 3.1.4).
-- [`biz.dfch.specmgr.uc.resources.uc_list`](biz.dfch.specmgr.uc.resources.uc_list.md) — Resource: specmgr://uc/list (Task 3.1.6).
 - [`biz.dfch.specmgr.uc.resources.uc_schema`](biz.dfch.specmgr.uc.resources.uc_schema.md) — Resource: specmgr://uc/schema (Task 3.1.4).
 - [`biz.dfch.specmgr.uc.resources.uc_template`](biz.dfch.specmgr.uc.resources.uc_template.md) — Resource: specmgr://uc/template (Task 3.1.4).
 - [`biz.dfch.specmgr.uc.tools`](biz.dfch.specmgr.uc.tools.md) — MCP tool wrappers for use cases (mirrors ``req/tools/``'s own shape).
@@ -230,6 +229,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.uc.tools.get_uc`](biz.dfch.specmgr.uc.tools.get_uc.md) — ``@mcp.tool()`` wrapper: get_uc (Task 3.1.5).
 - [`biz.dfch.specmgr.uc.tools.get_uc_example`](biz.dfch.specmgr.uc.tools.get_uc_example.md) — ``@mcp.tool()`` wrapper: get_uc_example (Task 3.1.2).
 - [`biz.dfch.specmgr.uc.tools.get_uc_template`](biz.dfch.specmgr.uc.tools.get_uc_template.md) — ``@mcp.tool()`` wrapper: get_uc_template (Task 3.1.3).
+- [`biz.dfch.specmgr.uc.tools.list_uc`](biz.dfch.specmgr.uc.tools.list_uc.md) — ``@mcp.tool()`` wrapper: list_uc (feat-13-list-paging Task 2.3).
 - [`biz.dfch.specmgr.uc.tools.parse_uc`](biz.dfch.specmgr.uc.tools.parse_uc.md) — ``@mcp.tool()`` wrapper: parse_uc.
 - [`biz.dfch.specmgr.uc.tools.set_status_uc`](biz.dfch.specmgr.uc.tools.set_status_uc.md) — ``@mcp.tool()`` wrapper: set_status_uc (Task 3.1.5).
 - [`biz.dfch.specmgr.uc.tools.update_uc`](biz.dfch.specmgr.uc.tools.update_uc.md) — ``@mcp.tool()`` wrapper: update_uc (Task 3.1.5).

@@ -150,10 +150,15 @@ class TestGeneratedMdContent(unittest.TestCase):
         self.assertIn("prompts", domains["adr_subpackages"])
 
     def test_count_mcp_features_matches_known_counts(self):
-        """Must count MCP tools/resources under adr/ (11 tools, 2 resources)."""
+        """Must count MCP tools/resources under adr/ (12 tools, 1 resource).
+
+        The former ``specmgr://adr/list`` resource was converted into the
+        ``list_adr`` tool (feat-13-list-paging Task 2.1), shifting one
+        module from ``adr/resources/`` to ``adr/tools/``.
+        """
         features = _count_mcp_features()
-        self.assertEqual(features["tools"], 11)
-        self.assertEqual(features["resources"], 2)
+        self.assertEqual(features["tools"], 12)
+        self.assertEqual(features["resources"], 1)
 
     def test_collect_module_docs_finds_domains(self):
         """Must collect module docstrings organized by domain."""

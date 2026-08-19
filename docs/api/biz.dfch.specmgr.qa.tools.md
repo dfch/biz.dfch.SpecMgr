@@ -9,7 +9,11 @@ field present but populated with short placeholder ("blind text") content
 instead -- both read a packaged, build-guaranteed data file rather than
 anything on the caller's filesystem. ``get_qa`` reads, parses, and returns a
 full QA document by id -- the sole id-based read path for QA, mirroring
-REQ's own choice (see ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614). ``create_qa``
+REQ's own choice (see ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614). ``list_qa``
+(feat-13-list-paging Task 2.5) returns one page of id/title/status/ref
+summaries of every QA document, replacing the former ``specmgr://qa/list``
+resource so that ``max_results``/``offset`` paging parameters could be
+accepted (see ``.specmgr/feat/feat-13-list-paging/README.md``). ``create_qa``
 assigns a fresh id, builds the frontmatter itself, and writes a new document
 (body markdown only, no frontmatter) under the QA base directory
 (``qa.tools._paths``/``_io``). ``update_qa`` replaces an existing document's

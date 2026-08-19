@@ -27,6 +27,7 @@ Import this package to register all ADR tools at once::
 
 from .create_adr import create_adr
 from .get_adr import get_adr
+from .list_adr import list_adr
 from .option_create import option_create
 from .option_delete import option_delete
 from .option_list import option_list
@@ -40,6 +41,7 @@ from .validate_adr import validate_adr
 __all__ = [
     "create_adr",
     "get_adr",
+    "list_adr",
     "option_create",
     "option_delete",
     "option_list",
