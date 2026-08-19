@@ -3,6 +3,8 @@
 Pydantic model for one line of UC listing output (Task 3.1.6).
 
 Mirrors ``biz.dfch.specmgr.req.models.v1.summary.ReqSummary`` field-for-field.
+Subclasses :class:`~biz.dfch.specmgr.general.models.summary.DocSummary` for
+its ``id``/``title``/``status``/``ref`` fields (feat-13 Task 1.3, REQ-003).
 
 ## Classes
 

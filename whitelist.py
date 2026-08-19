@@ -85,6 +85,7 @@ related_artifacts
 related_information
 related_use_cases
 requirements
+results
 scope
 source
 specmgr
@@ -93,6 +94,7 @@ sub_characteristics
 success_end_condition
 tags
 trigger
+truncated
 precondition
 intro
 checked

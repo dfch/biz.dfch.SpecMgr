@@ -1,18 +1,31 @@
-# `biz.dfch.specmgr.qa.models.v1.summary`
+# `biz.dfch.specmgr.general.models.summary`
 
-Pydantic model for one line of QA listing output.
+Common base for every domain's one-line listing summary (feat-13 Task 1.3, REQ-003/ACC-001).
 
-Mirrors :class:`~biz.dfch.specmgr.tsk.models.v1.summary.TskSummary`
-field-for-field, for the (Phase-4, not-yet-built) ``specmgr://qa/list``
-resource. Subclasses
-:class:`~biz.dfch.specmgr.general.models.summary.DocSummary` for its
-``id``/``title``/``status``/``ref`` fields (feat-13 Task 1.3, REQ-003).
+``ReqSummary``, ``UcSummary``, ``TskSummary``, and ``QaSummary`` each
+subclass :class:`DocSummary` instead of independently redeclaring the same
+four fields.
+
+**ADR is a deliberate exception.** ``biz.dfch.specmgr.models.adr.v1.summary.
+AdrSummary`` does *not* subclass :class:`DocSummary`: that module is part of
+the dependency-free base library (``models/adr`` has no dependency on
+``mcp``/``tools``/``resources``/``prompts`` -- see ``AGENTS.md``'s "models
+location" note), whereas this ``general`` package's own ``__init__.py``
+unconditionally imports its ``tools``/``resources``/``prompts``
+sub-packages, which in turn import ``server.mcp`` -- so importing anything
+under ``general`` (this module included) already requires the ``mcp``
+extra to be installed. Making ``AdrSummary`` subclass :class:`DocSummary`
+would therefore silently add a new, previously-absent ``mcp`` dependency to
+the base library. ``AdrSummary`` instead keeps its own, field-identical
+declaration; a structural (not inheritance-based) test asserts the two
+stay in sync. See ``.specmgr/feat/feat-13-list-paging/README.md``'s
+Decisions Made log for the full rationale.
 
 ## Classes
 
-### `QaSummary`
+### `DocSummary`
 
-One line of ``specmgr://qa/list`` output.
+Common ``id``/``title``/``status``/``ref`` fields shared by every domain's summary model.
 
 Parameters
 ----------
@@ -21,17 +34,16 @@ id:
     has not been assigned one yet (e.g. hand-authored without the
     ``id`` frontmatter key).
 title:
-    The Q&A document's ``# {title}`` H1.
+    The document's ``# {title}`` H1.
 status:
-    The Q&A document's ``frontmatter.status`` value, verbatim.
+    The document's ``frontmatter.status`` value, verbatim.
 ref:
     The document's extensionless base name (e.g.
-    ``"qa-<uuid>-a-title"``), deliberately *not* a filename or path --
+    ``"req-<uuid>-a-title"``), deliberately *not* a filename or path --
     callers must not read this off disk themselves, only pass it to
-    ``get_qa`` alongside (or instead of) ``id``. Named ``ref`` rather
-    than ``filename`` precisely to avoid inviting direct filesystem
-    access (mirrors
-    :class:`~biz.dfch.specmgr.tsk.models.v1.summary.TskSummary`).
+    the matching domain's ``get_<domain>`` tool alongside (or instead
+    of) ``id``. Named ``ref`` rather than ``filename`` precisely to
+    avoid inviting direct filesystem access.
 
 **Methods:**
 

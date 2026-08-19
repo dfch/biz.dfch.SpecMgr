@@ -1,37 +1,44 @@
-# `biz.dfch.specmgr.qa.models.v1.summary`
+# `biz.dfch.specmgr.general.models.paged_result`
 
-Pydantic model for one line of QA listing output.
+Generic paged-result wrapper shared by every ``list_<domain>`` MCP tool (feat-13 Task 1.1).
 
-Mirrors :class:`~biz.dfch.specmgr.tsk.models.v1.summary.TskSummary`
-field-for-field, for the (Phase-4, not-yet-built) ``specmgr://qa/list``
-resource. Subclasses
-:class:`~biz.dfch.specmgr.general.models.summary.DocSummary` for its
-``id``/``title``/``status``/``ref`` fields (feat-13 Task 1.3, REQ-003).
+Shape is taken verbatim from this project's ``asdste100`` MCP tools (e.g.
+``word_list``, ``rules_examples``), whose live output is
+``{ total, offset, max_results, truncated, results: [...] }`` -- reused
+rather than invented so the contract stays consistent across d-fens MCP
+servers (see ``.specmgr/feat/feat-13-list-paging/README.md`` Design Notes).
 
 ## Classes
 
-### `QaSummary`
+### `PagedResult`
 
-One line of ``specmgr://qa/list`` output.
+One page of results plus the paging metadata needed to fetch the next page.
+
+Every ``list_<domain>`` MCP tool (``list_adr``, ``list_req``, ``list_uc``,
+``list_tsk``, ``list_qa``) returns this same shape, parameterized by that
+domain's own summary model (e.g. ``PagedResult[ReqSummary]``), so callers
+learn one paging contract instead of five.
 
 Parameters
 ----------
-id:
-    The document's specmgr-assigned identifier, or ``None`` if the file
-    has not been assigned one yet (e.g. hand-authored without the
-    ``id`` frontmatter key).
-title:
-    The Q&A document's ``# {title}`` H1.
-status:
-    The Q&A document's ``frontmatter.status`` value, verbatim.
-ref:
-    The document's extensionless base name (e.g.
-    ``"qa-<uuid>-a-title"``), deliberately *not* a filename or path --
-    callers must not read this off disk themselves, only pass it to
-    ``get_qa`` alongside (or instead of) ``id``. Named ``ref`` rather
-    than ``filename`` precisely to avoid inviting direct filesystem
-    access (mirrors
-    :class:`~biz.dfch.specmgr.tsk.models.v1.summary.TskSummary`).
+total:
+    The total number of items available across all pages (e.g. every
+    parseable document in a domain's directory), independent of
+    ``offset``/``max_results``.
+offset:
+    The zero-based index of the first item included in ``results``, as
+    actually applied (already normalized -- see
+    ``general.tools._paging.normalize_paging``).
+max_results:
+    The maximum number of items requested for this page, as actually
+    applied (already normalized).
+truncated:
+    ``True`` if further items exist beyond this page (i.e.
+    ``offset + max_results < total``); ``False`` otherwise, including
+    when ``offset`` is past the end of the full item list.
+results:
+    The page's items, i.e. ``items[offset : offset + max_results]`` of
+    the full, materialized item list.
 
 **Methods:**
 

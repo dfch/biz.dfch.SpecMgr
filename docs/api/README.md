@@ -46,6 +46,9 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.commands.unused_code`](biz.dfch.specmgr.commands.unused_code.md) — ``unused-code`` -- report unreferenced Python symbols, or (with ``--test``) test-only ones.
 - [`biz.dfch.specmgr.commands.version`](biz.dfch.specmgr.commands.version.md) — ``version`` -- print the installed ``biz-dfch-specmgr`` version.
 - [`biz.dfch.specmgr.general`](biz.dfch.specmgr.general.md) — General-purpose (cross-cutting, not domain-specific) tools, resources, and
+- [`biz.dfch.specmgr.general.models`](biz.dfch.specmgr.general.models.md) — Shared, cross-domain Pydantic models with no document-type-specific content.
+- [`biz.dfch.specmgr.general.models.paged_result`](biz.dfch.specmgr.general.models.paged_result.md) — Generic paged-result wrapper shared by every ``list_<domain>`` MCP tool (feat-13 Task 1.1).
+- [`biz.dfch.specmgr.general.models.summary`](biz.dfch.specmgr.general.models.summary.md) — Common base for every domain's one-line listing summary (feat-13 Task 1.3, REQ-003/ACC-001).
 - [`biz.dfch.specmgr.general.prompts`](biz.dfch.specmgr.general.prompts.md) — MCP prompt registrations that are not specific to any single document
 - [`biz.dfch.specmgr.general.prompts.compact_history`](biz.dfch.specmgr.general.prompts.compact_history.md) — ``@mcp.prompt()``: compact_history (Various improvements, Task 0.21).
 - [`biz.dfch.specmgr.general.resources`](biz.dfch.specmgr.general.resources.md) — MCP resource registrations that are not specific to any single document
@@ -54,6 +57,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general.tools`](biz.dfch.specmgr.general.tools.md) — MCP tool wrappers for general-purpose utilities (mirrors ``adr/tools/``'s shape).
 - [`biz.dfch.specmgr.general.tools._doc_paths`](biz.dfch.specmgr.general.tools._doc_paths.md) — Generic, doc-type-agnostic base directory resolution, filename slugification,
 - [`biz.dfch.specmgr.general.tools._packaged_data`](biz.dfch.specmgr.general.tools._packaged_data.md) — Generic, doc-type-agnostic access to packaged example/template/schema data
+- [`biz.dfch.specmgr.general.tools._paging`](biz.dfch.specmgr.general.tools._paging.md) — Generic, doc-type-agnostic paging helpers (feat-13 Task 1.2).
 - [`biz.dfch.specmgr.general.tools.mdformat`](biz.dfch.specmgr.general.tools.mdformat.md) — ``@mcp.tool()`` wrapper: mdformat.
 - [`biz.dfch.specmgr.general.tools.webfetch`](biz.dfch.specmgr.general.tools.webfetch.md) — ``@mcp.tool()`` wrapper: webfetch.
 - [`biz.dfch.specmgr.models`](biz.dfch.specmgr.models.md) — Pydantic models used by the ``biz-dfch-specmgr`` MCP server.

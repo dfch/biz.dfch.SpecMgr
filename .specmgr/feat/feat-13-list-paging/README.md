@@ -130,29 +130,33 @@ progresses (edit, don't duplicate).
 
 #### Phase 1: Shared infrastructure
 
-- [ ] Task 1.1: Add `general/models/` sub-package (does not exist yet) with
+- [x] Task 1.1: Add `general/models/` sub-package (does not exist yet) with
   `paged_result.py` — `PagedResult(BaseModel, Generic[T])`, fields in order
   `total: int`, `offset: int`, `max_results: int`, `truncated: bool`,
   `results: list[T]`, fully documented per `.specmgr/conventions.md`; export
-  from `general/models/__init__.py` — depends on: none — status: not-started
-- [ ] Task 1.2: Add `general/tools/_paging.py` (no `mcp` dependency, like
+  from `general/models/__init__.py` — depends on: none — status: done
+- [x] Task 1.2: Add `general/tools/_paging.py` (no `mcp` dependency, like
   `_doc_paths.py`): `DEFAULT_MAX_RESULTS = 25`, `MAX_MAX_RESULTS = 100`,
   `normalize_paging(max_results, offset) -> tuple[int, int]` (clamp/floor),
   `paginate(items, offset, max_results) -> PagedResult[T]` (`total = len`,
   slice, `truncated = offset + max_results < total`) — depends on: Task 1.1
-  — status: not-started
-- [ ] Task 1.3: Add `general/models/summary.py::DocSummary(BaseModel)` with
+  — status: done
+- [x] Task 1.3: Add `general/models/summary.py::DocSummary(BaseModel)` with
   the four common fields (`id`, `title`, `status`, `ref`) and make
   `AdrSummary`/`ReqSummary`/`UcSummary`/`TskSummary`/`QaSummary` subclass it
-  (ACC-001/REQ-003) — depends on: none — status: not-started
-- [ ] Task 1.4: Tests — `tests/general/models/test_paged_result.py`,
+  (ACC-001/REQ-003) — depends on: none — status: done, with one deliberate
+  exception: `AdrSummary` does **not** subclass `DocSummary` (see Decisions
+  Made below) — `ReqSummary`/`UcSummary`/`TskSummary`/`QaSummary` do.
+- [x] Task 1.4: Tests — `tests/general/models/test_paged_result.py`,
   `tests/general/tools/test_paging.py` (empty, exact-fit, over-offset,
   `truncated` boundary, clamping, negative offset), and (if 1.3 adopted) a
   shared-base assertion — depends on: Task 1.1, Task 1.2, Task 1.3 —
-  status: not-started
-- [ ] Task 1.5: Phase gate — `ruff format --check`, `ruff check`,
+  status: done (`tests/general/models/test_summary.py` added for the
+  shared-base assertion, including the structural-equivalence check for
+  the `AdrSummary` exception)
+- [x] Task 1.5: Phase gate — `ruff format --check`, `ruff check`,
   `vulture src/ whitelist.py --min-confidence 60`, full `unittest` suite —
-  depends on: Task 1.4 — status: not-started
+  depends on: Task 1.4 — status: done, all green (see Recent Updates)
 
 #### Phase 2: Per-domain resource→tool conversion
 
@@ -222,15 +226,51 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-19**: Feature folder created and scoped (GitHub issue #13).
-Design decisions agreed: resource→tool conversion of all five
-`<domain>_list`, an `asdste100`-style `PagedResult` wrapper, shared
-`general/` infrastructure, paging-only (filtering deferred to feat-7 Task
-0.16). Implementation not started.
+**As of 2026-08-19**: Phase 1 (Shared infrastructure) is done. `PagedResult`
+(`general/models/paged_result.py`), `DocSummary`
+(`general/models/summary.py`), and the `normalize_paging`/`paginate` helpers
+(`general/tools/_paging.py`) all exist, tested, and pass the full quality
+gate. `ReqSummary`/`UcSummary`/`TskSummary`/`QaSummary` now subclass
+`DocSummary`; `AdrSummary` deliberately does not (see Decisions Made). Next:
+Phase 2 (per-domain resource→tool conversion).
 
 ### Recent Updates
 
 #### Update 2026-08-19 (newest)
+
+- Completed: Phase 1 (Shared infrastructure) — Tasks 1.1-1.5.
+  - Added `general/models/` (new sub-package): `__init__.py`,
+    `paged_result.py::PagedResult(BaseModel, Generic[T])`,
+    `summary.py::DocSummary(BaseModel)`.
+  - Added `general/tools/_paging.py`: `DEFAULT_MAX_RESULTS`/
+    `MAX_MAX_RESULTS`/`MIN_MAX_RESULTS`/`MIN_OFFSET` constants,
+    `normalize_paging(max_results, offset) -> tuple[int, int]` (returns
+    `(offset, max_results)`, clamped/floored), `paginate(items, offset,
+    max_results) -> PagedResult[T]`.
+  - Made `ReqSummary`, `UcSummary`, `TskSummary`, `QaSummary` subclass
+    `DocSummary`, dropping their now-duplicated field declarations.
+    `AdrSummary` was deliberately **not** changed to subclass it (see
+    Decisions Made) — a structural-equivalence test covers it instead.
+  - Added tests: `tests/general/models/test_paged_result.py`,
+    `tests/general/models/test_summary.py` (`DocSummary` +
+    shared/side-by-side base-field-set assertion across all five domains),
+    `tests/general/tools/test_paging.py` (empty, exact-fit, over-offset,
+    `truncated` boundary, clamping, negative-offset flooring,
+    `normalize_paging` + `paginate` splat-unpacking integration).
+  - Added `results`/`truncated` to `whitelist.py`'s "Pydantic model fields
+    read only via (de)serialization/rendering" section (flagged by
+    vulture since nothing under `src/` reads them as plain attributes
+    yet -- that lands in Phase 2).
+  - Quality gate: `ruff format --check`, `ruff check`,
+    `vulture src/ whitelist.py --min-confidence 60`, and the full
+    `unittest` suite (1236 tests) all pass clean.
+- Next: Phase 2 (per-domain resource→tool conversion, Tasks 2.1-2.6).
+- Notes: Confirmed via a simulated mcp-import-blocked run that
+  `biz.dfch.specmgr.models.adr`/`AdrSummary` still import successfully
+  without the `mcp` extra installed, preserving the base-library
+  invariant documented in `AGENTS.md`'s "models location" note.
+
+#### Update 2026-08-19
 
 - Completed: Created GitHub issue #13; created this feature folder from
   `.specmgr/_template/v1/README.md` with the full four-phase plan.
@@ -252,6 +292,42 @@ Design decisions agreed: resource→tool conversion of all five
   only.
 - **2026-08-19**: Paging only; filtering stays feat-7 Task 0.16, but the
   contract must remain forward-compatible with it.
+- **2026-08-19**: `normalize_paging` clamping semantics (not fully pinned
+  down by the plan text): a caller-supplied `max_results` out of
+  `[MIN_MAX_RESULTS, MAX_MAX_RESULTS]` is *clamped* to the nearer bound
+  (e.g. `500` -> `100`, `0` -> `1`), not reset to `DEFAULT_MAX_RESULTS`;
+  only an actually-absent (`None`) `max_results`/`offset` gets the default
+  (`DEFAULT_MAX_RESULTS`/`0`). A negative `offset` floors to `0`.
+  `normalize_paging` returns `(offset, max_results)` -- offset first, the
+  reverse of its own parameter order -- specifically so Phase 2 call sites
+  can write `paginate(items, *normalize_paging(max_results, offset))`
+  exactly as sketched in the Phase 2 task description, since `paginate`
+  takes `(items, offset, max_results)`.
+- **2026-08-19 (Task 1.3 implementation note -- flagging for follow-up)**:
+  `AdrSummary` (`models/adr/v1/summary.py`) does **not** subclass the new
+  `general/models/summary.py::DocSummary`, unlike the other four domains.
+  Root cause: `models/adr` is documented (`AGENTS.md`'s "models location"
+  note) as having *no* dependency on `mcp`/`tools`/`resources`/`prompts`,
+  so it stays usable from the dependency-free base library without the
+  `mcp` extra installed. `general/__init__.py`, however, unconditionally
+  imports `general.tools`/`general.resources`/`general.prompts`, which
+  import `server.mcp` -- so importing anything under `general` (including
+  `general.models`) already requires the `mcp` extra, by way of Python
+  needing to run every ancestor package's `__init__.py`. Making
+  `AdrSummary` subclass `DocSummary` would therefore silently add a new,
+  previously-absent `mcp` dependency to `models.adr` -- confirmed by
+  actually blocking `mcp`'s import and re-running
+  `from biz.dfch.specmgr.models.adr import AdrSummary`, which succeeds
+  today and would not once `AdrSummary` imports from `general`. Resolved
+  conservatively: `AdrSummary` keeps its own field-identical declaration;
+  `tests/general/models/test_summary.py` asserts structural (not
+  inheritance-based) equivalence for it, plus a side-by-side field-set
+  assertion across all five Summary classes for ACC-001/ACC-003. **Flagged
+  for a follow-up decision** (candidate for Task 4.3's short ADR, or an
+  `AGENTS.md` update): whether this asymmetry is acceptable long-term, or
+  whether `DocSummary` should instead live somewhere with no `general`/
+  `mcp` dependency (e.g. top-level `models/`, alongside `models/adr` and
+  `models/iso25010.py`) so `AdrSummary` can subclass it too.
 
 ### Related PRs / Commits
 

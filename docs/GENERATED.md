@@ -60,6 +60,9 @@ First-line docstrings from each module, organized by domain:
 **general/**
 
 - `general/__init__.py` — General-purpose (cross-cutting, not domain-specific) tools, resources, and
+- `general/models/__init__.py` — Shared, cross-domain Pydantic models with no document-type-specific content.
+- `general/models/paged_result.py` — Generic paged-result wrapper shared by every ``list_<domain>`` MCP tool (feat-13 Task 1.1).
+- `general/models/summary.py` — Common base for every domain's one-line listing summary (feat-13 Task 1.3, REQ-003/ACC-001).
 - `general/prompts/__init__.py` — MCP prompt registrations that are not specific to any single document
 - `general/prompts/compact_history.py` — ``@mcp.prompt()``: compact_history (Various improvements, Task 0.21).
 - `general/resources/__init__.py` — MCP resource registrations that are not specific to any single document
@@ -68,6 +71,7 @@ First-line docstrings from each module, organized by domain:
 - `general/tools/__init__.py` — MCP tool wrappers for general-purpose utilities (mirrors ``adr/tools/``'s shape).
 - `general/tools/_doc_paths.py` — Generic, doc-type-agnostic base directory resolution, filename slugification,
 - `general/tools/_packaged_data.py` — Generic, doc-type-agnostic access to packaged example/template/schema data
+- `general/tools/_paging.py` — Generic, doc-type-agnostic paging helpers (feat-13 Task 1.2).
 - `general/tools/mdformat.py` — ``@mcp.tool()`` wrapper: mdformat.
 - `general/tools/webfetch.py` — ``@mcp.tool()`` wrapper: webfetch.
 
@@ -266,4 +270,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 177
+**Test files**: 180

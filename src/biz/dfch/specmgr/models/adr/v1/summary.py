@@ -15,7 +15,22 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Pydantic model for one line of ADR listing output (plan §8, §9a)."""
+"""Pydantic model for one line of ADR listing output (plan §8, §9a).
+
+**Deliberately does not subclass**
+:class:`~biz.dfch.specmgr.general.models.summary.DocSummary`, unlike
+``ReqSummary``/``UcSummary``/``TskSummary``/``QaSummary`` (feat-13 Task
+1.3, REQ-003): this module is part of the dependency-free base library
+(``models/adr`` has no dependency on ``mcp``/``tools``/``resources``/
+``prompts``), but importing anything under ``general`` (including
+``general.models``) transitively imports ``general.tools``, which imports
+``server.mcp`` -- an ``mcp``-extra-only dependency. Subclassing would
+therefore silently add a new ``mcp`` dependency to the base library.
+:class:`AdrSummary` keeps its own field-identical declaration instead; see
+``.specmgr/feat/feat-13-list-paging/README.md``'s Decisions Made log and
+``tests/general/models/test_summary.py`` for the structural (not
+inheritance-based) equivalence check.
+"""
 
 from __future__ import annotations
 

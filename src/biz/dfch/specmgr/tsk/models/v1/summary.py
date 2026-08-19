@@ -19,17 +19,19 @@
 
 Mirrors :class:`~biz.dfch.specmgr.req.models.v1.summary.ReqSummary`
 field-for-field, for the (Phase-3, not-yet-built) ``specmgr://tsk/list``
-resource.
+resource. Subclasses
+:class:`~biz.dfch.specmgr.general.models.summary.DocSummary` for its
+``id``/``title``/``status``/``ref`` fields (feat-13 Task 1.3, REQ-003).
 """
 
 from __future__ import annotations
 
-from pydantic import BaseModel
+from ....general.models.summary import DocSummary
 
 __all__ = ["TskSummary"]
 
 
-class TskSummary(BaseModel):
+class TskSummary(DocSummary):
     """One line of ``specmgr://tsk/list`` output.
 
     Parameters
@@ -51,8 +53,3 @@ class TskSummary(BaseModel):
         access (mirrors
         :class:`~biz.dfch.specmgr.req.models.v1.summary.ReqSummary`).
     """
-
-    id: str | None
-    title: str
-    status: str
-    ref: str

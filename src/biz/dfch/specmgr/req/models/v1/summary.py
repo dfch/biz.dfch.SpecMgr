@@ -19,17 +19,19 @@
 
 Mirrors :class:`~biz.dfch.specmgr.models.adr.v1.summary.AdrSummary`
 field-for-field; unfiltered, since characteristics/tags filtering (ACC-002)
-was explicitly deferred during Task 3.9's design discussion.
+was explicitly deferred during Task 3.9's design discussion. Subclasses
+:class:`~biz.dfch.specmgr.general.models.summary.DocSummary` for its
+``id``/``title``/``status``/``ref`` fields (feat-13 Task 1.3, REQ-003).
 """
 
 from __future__ import annotations
 
-from pydantic import BaseModel
+from ....general.models.summary import DocSummary
 
 __all__ = ["ReqSummary"]
 
 
-class ReqSummary(BaseModel):
+class ReqSummary(DocSummary):
     """One line of ``specmgr://req/list`` output (Task 3.18).
 
     Parameters
@@ -51,8 +53,3 @@ class ReqSummary(BaseModel):
         access (mirrors
         :class:`~biz.dfch.specmgr.models.adr.v1.summary.AdrSummary`).
     """
-
-    id: str | None
-    title: str
-    status: str
-    ref: str

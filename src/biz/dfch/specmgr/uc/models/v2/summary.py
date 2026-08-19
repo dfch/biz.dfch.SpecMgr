@@ -18,16 +18,18 @@
 """Pydantic model for one line of UC listing output (Task 3.1.6).
 
 Mirrors ``biz.dfch.specmgr.req.models.v1.summary.ReqSummary`` field-for-field.
+Subclasses :class:`~biz.dfch.specmgr.general.models.summary.DocSummary` for
+its ``id``/``title``/``status``/``ref`` fields (feat-13 Task 1.3, REQ-003).
 """
 
 from __future__ import annotations
 
-from pydantic import BaseModel
+from ....general.models.summary import DocSummary
 
 __all__ = ["UcSummary"]
 
 
-class UcSummary(BaseModel):
+class UcSummary(DocSummary):
     """One line of ``specmgr://uc/list`` output.
 
     Parameters
@@ -48,8 +50,3 @@ class UcSummary(BaseModel):
         than ``filename`` precisely to avoid inviting direct filesystem
         access.
     """
-
-    id: str | None
-    title: str
-    status: str
-    ref: str
