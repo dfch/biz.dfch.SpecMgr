@@ -2,7 +2,7 @@
 created: 2026-08-15
 id: feat-7-various-improvements
 status: planning
-updated: 2026-08-18
+updated: 2026-08-19
 version: 1.0.0
 ---
 
@@ -366,9 +366,13 @@ progresses (edit, don't duplicate).
   via the `get_tsk` MCP tool with id `efb7d049-a222-4730-901f-6d57283b387c`
   — depends on: none — status: done (2026-08-16)
 
-- [ ] Task 0.15: MCP tools `<domain>_list` must support paging — depends on: none — status: not-started
-
-  we have to discuss the design first, before we can implement
+- [ ] Task 0.15: MCP tools `<domain>_list` must support paging — depends on:
+  none — status: split out into `feat-13-list-paging` (GitHub issue #13,
+  `.specmgr/feat/feat-13-list-paging/README.md`) on 2026-08-19; design
+  agreed (resource→tool `list_<domain>`, `asdste100`-style `PagedResult`
+  wrapper, shared `general/` infra, paging-only). Tracked and executed
+  there; this closes REQ-002/ACC-002 and advances REQ-001/ACC-001 once
+  `feat-13` lands.
 
 - [ ] Task 0.16: MCP tools `<domain>_list` must support filtering — depends on: none — status: not-started
 
@@ -545,7 +549,7 @@ progresses (edit, don't duplicate).
     on: Task 0.21.1 through Task 0.21.4 — status: done (2026-08-18)
 
 - [ ] Task 0.22: Examine cyclic dependency in `set_status.py` (qa) to server
-   and mcp — depends on: none — status: not-started
+  and mcp — depends on: none — status: not-started
 
 - [x] Task 0.23: Add the `mcp` SDK's `streamable-http` transport as a third
   `specmgr mcp --transport` option, alongside the existing `stdio`/`sse` —
@@ -563,8 +567,8 @@ progresses (edit, don't duplicate).
   depends on: none — status: done (2026-08-19)
 
 - [ ] Task 1.1: Inventory current `specmgr://*/list` resources and diff
-   their output shape/behavior (`adr_list` vs. `req_list`) — depends on:
-   none — status: not-started
+  their output shape/behavior (`adr_list` vs. `req_list`) — depends on:
+  none — status: not-started
 
 - [ ] Task 1.2: Inventory current MCP prompt modules and their
   structure/length/gating style (`create_adr`, `update_adr`,
@@ -578,8 +582,10 @@ progresses (edit, don't duplicate).
   Task 1.1 — status: in-progress — one piece already decided directly
   (2026-08-15, ahead of the formal audit): the fallback identifier field is
   named `ref`, not `filename`, and holds the extensionless base name, not
-  the raw on-disk filename (see Decisions Made). Pagination is still
-  undecided.
+  the raw on-disk filename (see Decisions Made). Pagination is now decided
+  and split into `feat-13-list-paging` (resource→tool `list_<domain>` +
+  `asdste100`-style `PagedResult` wrapper); the shared-base-summary piece is
+  carried into that feature too (ACC-001).
 - [ ] Task 2.2: Decide the fate of the `_test` prompt variants and the
   criteria used for the prompt-quality review — depends on: Task 1.2 —
   status: not-started
@@ -596,7 +602,9 @@ progresses (edit, don't duplicate).
 - [ ] Task 3.1b: Apply the remaining piece of the standardized
   list-resource contract (pagination) to `adr_list`/`req_list` (and
   document the full contract for future `*_list` resources) — depends on:
-  Task 2.1 — status: not-started
+  Task 2.1 — status: split out into `feat-13-list-paging` (GitHub issue #13);
+  implemented there as the resource→tool + `PagedResult` conversion across
+  all five domains, not just `adr`/`req`.
 - [ ] Task 3.2: Apply prompt optimizations and the `_test`-variant decision
   — depends on: Task 2.2 — status: not-started
 
@@ -689,8 +697,7 @@ e369ee2e-3353-4f92-991c-6367d76d832e once this section grew too long).
     accept `"streamable-http"` alongside the existing `"stdio"`/`"sse"`.
   - Added a `streamable-http` branch in the `mcp()` command function,
     calling `_warn_on_public_binding(host)` (same as the `sse` branch)
-    then `mcp_server.run(transport="streamable-http", host=host,
-    port=port, stateless_http=True)` — `stateless_http=True` set
+    then `mcp_server.run(transport="streamable-http", host=host, port=port, stateless_http=True)` — `stateless_http=True` set
     explicitly to match this server's already-stateless `_lifespan`.
   - Updated `commands/mcp.py`'s module docstring with a third
     `streamable-http` bullet and usage example, and `README.md`'s MCP
