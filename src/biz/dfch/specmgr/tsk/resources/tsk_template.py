@@ -39,7 +39,7 @@ from ...server import mcp
 @mcp.resource(
     "specmgr://tsk/template",
     name="tsk_template",
-    title="TSK Template",
+    title="Task List (TSK) Template",
     description=(
         "A TSK document template -- frontmatter and every body field present, populated with "
         "short placeholder ('blind text') content -- as raw markdown, for use as a starting "

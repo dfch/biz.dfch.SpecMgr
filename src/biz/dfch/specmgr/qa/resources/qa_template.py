@@ -39,7 +39,7 @@ from ...server import mcp
 @mcp.resource(
     "specmgr://qa/template",
     name="qa_template",
-    title="QA Template",
+    title="Question and Answer (QA) Template",
     description=(
         "A QA document template -- frontmatter and every body field present, populated with "
         "short placeholder ('blind text') content -- as raw markdown, for use as a starting "

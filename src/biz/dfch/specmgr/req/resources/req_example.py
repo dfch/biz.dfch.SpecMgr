@@ -40,7 +40,7 @@ from ...server import mcp
 @mcp.resource(
     "specmgr://req/example",
     name="req_example",
-    title="REQ Example",
+    title="Requirement (REQ) Example",
     description=(
         "A complete, valid sample requirement document as raw markdown -- frontmatter and "
         "body -- exercising every section, for use as a learning example."

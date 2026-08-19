@@ -40,7 +40,7 @@ from ...server import mcp
 @mcp.resource(
     "specmgr://req/template",
     name="req_template",
-    title="REQ Template",
+    title="Requirement (REQ) Template",
     description=(
         "A REQ document template -- frontmatter and every body field present, populated with "
         "short placeholder ('blind text') content -- as raw markdown, for use as a starting "

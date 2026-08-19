@@ -39,7 +39,7 @@ from ...server import mcp
 @mcp.resource(
     "specmgr://uc/example",
     name="uc_example",
-    title="UC Example",
+    title="Use Case (UC) Example",
     description=(
         "A complete, valid sample use case document as raw markdown -- frontmatter and "
         "body -- exercising every section, for use as a learning example."

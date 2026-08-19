@@ -39,7 +39,7 @@ from ...server import mcp
 @mcp.resource(
     "specmgr://qa/example",
     name="qa_example",
-    title="QA Example",
+    title="Question and Answer (QA) Example",
     description=(
         "A complete, valid sample QA document as raw markdown -- frontmatter and body -- "
         "exercising every section, for use as a learning example."

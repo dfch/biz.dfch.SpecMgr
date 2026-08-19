@@ -39,7 +39,7 @@ from ...server import mcp
 @mcp.resource(
     "specmgr://tsk/example",
     name="tsk_example",
-    title="TSK Example",
+    title="Task List (TSK) Example",
     description=(
         "A complete, valid sample task list document as raw markdown -- frontmatter and "
         "body -- exercising every section, for use as a learning example."

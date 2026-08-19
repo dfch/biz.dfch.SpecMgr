@@ -39,7 +39,7 @@ from ...server import mcp
 @mcp.resource(
     "specmgr://uc/template",
     name="uc_template",
-    title="UC Template",
+    title="Use Case (UC) Template",
     description=(
         "A UC document template -- frontmatter and every body field present, populated with "
         "short placeholder ('blind text') content -- as raw markdown, for use as a starting "
