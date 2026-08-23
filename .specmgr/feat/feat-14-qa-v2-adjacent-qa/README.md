@@ -352,21 +352,22 @@ test-and-commit discipline
 
 - [x] Task 0.1: Write this feature plan to `.specmgr/feat/feat-14-qa-v2-adjacent-qa/README.md`
   — depends on: none — status: done (2026-08-23).
-- [ ] Task 0.2: Create feature branch `feat/feat-14-qa-v2-adjacent-qa` off
-  `dev` — depends on: Task 0.1 — status: not-started.
+- [x] Task 0.2: Create feature branch `feat/feat-14-qa-v2-adjacent-qa` off
+  `dev` — depends on: Task 0.1 — status: done (2026-08-23).
 
 #### Phase 1: `QaAnswer` + `QaQuestionAnswer`
 
-- [ ] Task 1.1: Implement `qa/models/v2/question_answer.py`: `QaAnswer`
+- [x] Task 1.1: Implement `qa/models/v2/question_answer.py`: `QaAnswer`
   (bounded terminator scan) and `QaQuestionAnswer` (`comment`/`question`/
   `answer`, `get_extent` override) — depends on: Task 0.2 — status:
-  not-started.
-- [ ] Task 1.2: Unit tests — `tests/qa/models/v2/test_question_answer.py`
+  done (2026-08-23).
+- [x] Task 1.2: Unit tests — `tests/qa/models/v2/test_question_answer.py`
   covering every case in ACC-001 — depends on: Task 1.1 — status:
-  not-started.
-- [ ] Task 1.3: Phase-end quality gate (ruff format/check, vulture, full
+  done (2026-08-23).
+- [x] Task 1.3: Phase-end quality gate (ruff format/check, vulture, full
   `unittest` suite); update this README's Progress section; commit as one
-  Conventional Commit (`feat(qa): add v2 QaAnswer/QaQuestionAnswer models`) — depends on: Task 1.2 — status: not-started.
+  Conventional Commit (`feat(qa): add v2 QaAnswer/QaQuestionAnswer models`) — depends on: Task 1.2 — status: done (2026-08-23, quality gate green;
+  commit itself left to the orchestrator).
 
 #### Phase 2: `body.py`
 
@@ -454,9 +455,14 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-23**: Plan drafted and written to disk (Task 0.1 done). No
-implementation has started; the feature branch has not yet been created
-(Task 0.2). All Phase 1-7 tasks are `not-started`.
+**As of 2026-08-23**: Phase 0 (planning + branch creation) and Phase 1
+(`QaAnswer`/`QaQuestionAnswer`) are both done. `qa/models/v2/question_answer.py`
+implements `QaAnswer`'s bounded terminator scan and `QaQuestionAnswer`'s
+composite `get_extent`, both purely local to `qa/models/v2/` with zero
+changes to `models/md/`; `tests/qa/models/v2/test_question_answer.py`
+covers every case in ACC-001 (17 tests, all green). Phase 1's quality gate
+(`ruff format --check`, `ruff check`, `vulture`, full `unittest` suite —
+1293 tests total) is green. Phases 2-7 are `not-started`.
 
 ### Blockers
 
@@ -501,6 +507,37 @@ None currently.
 - Notes: No `src/`/`tests/` code touched — this update only concerns the
   feature folder's identity/naming.
 
+#### Update 2026-08-23T01:00:00Z
+
+- Completed: Task 0.2 (branch `feat-14` created off `dev` by the
+  orchestrator) and Phase 1 (Tasks 1.1-1.3). Added
+  `src/biz/dfch/specmgr/qa/models/v2/question_answer.py` (`QaAnswer`'s
+  bounded terminator scan; `QaQuestionAnswer`'s composite `get_extent`,
+  both local to `qa/models/v2/`, zero changes to `models/md/`) and
+  `src/biz/dfch/specmgr/qa/models/v2/__init__.py` (exporting `QaAnswer`/
+  `QaQuestionAnswer` only, forward-compatible with Phase 2's further
+  exports). Added `tests/qa/models/v2/test_question_answer.py` (17 tests)
+  covering every ACC-001 case: `QaAnswer.get_extent` stopping at each of
+  heading (any level)/block quote/comment independently and running to
+  end-of-text otherwise; `QaQuestionAnswer.get_extent`/`from_text`
+  round-tripping empty, comment-only, question+answer, full triple, a
+  multi-paragraph answer embedding an ordered list (verbatim, opaque),
+  two/three adjacent pairs (via `QaQuestionAnswer.process_list_field`,
+  since `_QaCategory`/`Qa` don't exist until Phase 2), and a trailing
+  dangling comment (both at end-of-text and followed by a heading).
+  Quality gate green: `ruff format --check`, `ruff check`, `vulture src/
+  whitelist.py --min-confidence 60` (no findings), full `unittest discover`
+  (1293 tests, all passing).
+- Next: Phase 2 — implement `qa/models/v2/body.py` (`_QaCategory`,
+  `ElicitationContext`, the 9 ISO/IEC 25010:2023 characteristic subclasses,
+  duplicated `General`/`Introduction`/`RawRequirements`/`MoreInformation`,
+  `Qa`), plus its reference-document round-trip test (ACC-002).
+- Notes: No `src/biz/dfch/specmgr/models/md/` file was read-only-inspected
+  for reference and left completely untouched, per explicit instruction.
+  See Decisions Made below for one non-trivial implementation detail
+  (`QaQuestionAnswer.get_extent`'s exact algorithm) not spelled out at
+  that level of detail in the original plan.
+
 ### Decisions Made
 
 - **2026-08-23**: `answer` stays an opaque, unparsed markdown blob (like
@@ -531,6 +568,30 @@ None currently.
 - **2026-08-23**: A trailing dangling comment (nothing recognizable
   following it within a category section) becomes its own
   `QaQuestionAnswer` with only `comment` set — accepted, not an error.
+- **2026-08-23 (Phase 1)**: `QaQuestionAnswer.get_extent` is implemented as
+  a single continuous depth-0 token scan over the whole given `text` (the
+  same one-`parse()`-call technique `MarkdownSection.get_extent`'s
+  `end_marker` mechanism already uses), tracking `seen_comment`/
+  `seen_question`/`content_seen` state, rather than literally summing each
+  field's own `get_extent` on successively re-normalized substrings. A
+  naive per-field-substring sum was prototyped and rejected: slicing off a
+  matched field's lines and re-normalizing the remainder with `mdformat`
+  silently drops the separating blank line between two fields (the exact
+  class of bug `process_list_field`'s own docstring in `markdown_str.py`
+  already documents for a different case), which under-counts the total
+  extent by one line per internal field boundary. The single continuous
+  scan sidesteps this by construction, since it uses one absolute line
+  numbering throughout and never re-parses a substring. This was verified
+  empirically against the real engine before committing to the design (a
+  naive sum returned 2 for a case that must return 3, absorbing an extra
+  answer paragraph into the *next* pair's own extent). The state machine
+  also had to add a `content_seen` flag beyond the plan's original
+  `seen_comment`/`seen_question` sketch, to correctly stop at a block quote
+  that appears *after* some answer prose has already started (a comment
+  with no question, straight to answer prose, followed later by the next
+  pair's own question) — without it, that later block quote would
+  incorrectly be treated as still belonging to the current pair's own
+  (already-skipped) `question` field.
 
 ### Related PRs / Commits
 
