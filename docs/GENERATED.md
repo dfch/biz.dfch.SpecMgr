@@ -130,6 +130,7 @@ First-line docstrings from each module, organized by domain:
 - `qa/models/v1/parser.py` — Parse raw Question and Answer (QA) ``.md`` text into a :class:`QaDocument`.
 - `qa/models/v1/summary.py` — Pydantic model for one line of QA listing output.
 - `qa/models/v2/__init__.py` — Question and Answer (QA) v2 models -- adjacent question/answer pairs, no per-question heading.
+- `qa/models/v2/body.py` — Question and Answer (QA) v2 body models: whole-section fields under a single H1.
 - `qa/models/v2/question_answer.py` — One adjacent question/answer pair with no heading of its own (QA v2).
 - `qa/prompts/__init__.py` — MCP prompt registrations for Question and Answer (QA) documents (Phase 4, Task 4.3).
 - `qa/prompts/create_qa.py` — ``@mcp.prompt()``: create_qa (Phase 4, Task 4.3).
@@ -272,4 +273,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 182
+**Test files**: 183

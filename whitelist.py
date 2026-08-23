@@ -102,6 +102,7 @@ recent_updates
 updates
 answer
 compatibility
+elicitation_context
 flexibility
 functional_suitability
 general
@@ -110,6 +111,7 @@ introduction
 maintainability
 performance_efficiency
 question
+questions
 raw_requirements
 reliability
 requirement

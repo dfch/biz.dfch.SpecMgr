@@ -371,18 +371,20 @@ test-and-commit discipline
 
 #### Phase 2: `body.py`
 
-- [ ] Task 2.1: Implement `qa/models/v2/body.py`: `_QaCategory`,
+- [x] Task 2.1: Implement `qa/models/v2/body.py`: `_QaCategory`,
   `ElicitationContext`, the 9 ISO/IEC 25010:2023 characteristic subclasses
   (names verified against live `specmgr://iso25010`), duplicated
   `General`/`Introduction`/`RawRequirements`/`MoreInformation`, `Qa` (H1)
-  with the full field order — depends on: Task 1.3 — status: not-started.
-- [ ] Task 2.2: Reference document exercising every field (adapted from
+  with the full field order — depends on: Task 1.3 — status: done
+  (2026-08-23).
+- [x] Task 2.2: Reference document exercising every field (adapted from
   Design Notes' example) + round-trip test in
   `tests/qa/models/v2/test_body.py` (ACC-002) — depends on: Task 2.1 —
-  status: not-started.
-- [ ] Task 2.3: Phase-end quality gate; update Progress section; commit
+  status: done (2026-08-23).
+- [x] Task 2.3: Phase-end quality gate; update Progress section; commit
   (`feat(qa): add v2 QA body schema (Elicitation Context, 9 ISO/IEC 25010 categories, General, More Information)`) — depends on: Task 2.2 —
-  status: not-started.
+  status: done (2026-08-23, quality gate green; commit itself left to the
+  orchestrator).
 
 #### Phase 3: Version gate
 
@@ -455,14 +457,23 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-23**: Phase 0 (planning + branch creation) and Phase 1
-(`QaAnswer`/`QaQuestionAnswer`) are both done. `qa/models/v2/question_answer.py`
-implements `QaAnswer`'s bounded terminator scan and `QaQuestionAnswer`'s
-composite `get_extent`, both purely local to `qa/models/v2/` with zero
-changes to `models/md/`; `tests/qa/models/v2/test_question_answer.py`
-covers every case in ACC-001 (17 tests, all green). Phase 1's quality gate
+**As of 2026-08-23**: Phase 0 (planning + branch creation), Phase 1
+(`QaAnswer`/`QaQuestionAnswer`), and Phase 2 (`body.py`) are all done.
+`qa/models/v2/question_answer.py` implements `QaAnswer`'s bounded
+terminator scan and `QaQuestionAnswer`'s composite `get_extent`, both
+purely local to `qa/models/v2/` with zero changes to `models/md/`;
+`tests/qa/models/v2/test_question_answer.py` covers every case in ACC-001
+(17 tests, all green). `qa/models/v2/body.py` adds `_QaCategory`,
+`ElicitationContext` (a 10th `_QaCategory`-shaped section, not one of the 9
+ISO/IEC 25010:2023 characteristics), the 9 characteristic subclasses (names
+verified against the live `specmgr://iso25010` resource), and
+`General`/`Introduction`/`RawRequirements`/`MoreInformation` duplicated
+verbatim from v1, plus `Qa` (H1) with the full field order (`general` ->
+`elicitation_context` -> the 9 characteristics -> `more_information`);
+`tests/qa/models/v2/test_body.py` covers ACC-002 with the README's own
+reference document (18 tests, all green). Phase 2's quality gate
 (`ruff format --check`, `ruff check`, `vulture`, full `unittest` suite —
-1293 tests total) is green. Phases 2-7 are `not-started`.
+1311 tests total) is green. Phases 3-7 are `not-started`.
 
 ### Blockers
 
@@ -592,6 +603,67 @@ None currently.
   pair's own question) — without it, that later block quote would
   incorrectly be treated as still belonging to the current pair's own
   (already-skipped) `question` field.
+- **2026-08-23 (Phase 2)**: `whitelist.py`'s existing Pydantic-field-name
+  block (already covering `items`/`answer`/`question`/`general`/the 9
+  category field names for v1) was extended with `elicitation_context` and
+  `questions`, alphabetically in place. Vulture flags these two new v2
+  field names as unused because — unlike `items`/`more_information`, which
+  also happen to be accessed as plain attributes elsewhere in `src/`
+  (`tsk`'s `Task.items`, ADR's `body.more_information`) and are therefore
+  already "seen" name-wise — `questions`/`elicitation_context` are only
+  ever accessed as attributes from `tests/`, which vulture's `src/
+  whitelist.py` invocation does not scan. This mirrors the same
+  false-positive class every other whitelisted QA/REQ/UC/TSK field name in
+  that block already documents, not a new category of exception.
+
+#### Update 2026-08-23T02:00:00Z
+
+- Completed: Phase 2 (Tasks 2.1-2.3). Added
+  `src/biz/dfch/specmgr/qa/models/v2/body.py`: the private `_QaCategory`
+  intermediate base (`questions: list[QaQuestionAnswer] | None`, no
+  `@markdown` decorator of its own — inherits `MarkdownSection2`'s
+  `_metadata` through ordinary class-attribute inheritance, exactly
+  mirroring v1's own `_QaCategory`); the new `ElicitationContext` 10th
+  `_QaCategory`-shaped section (verified, via the live `specmgr://iso25010`
+  MCP resource read during this phase, to not be one of the 9 official
+  characteristics); the 9 ISO/IEC 25010:2023 characteristic subclasses
+  (`FunctionalSuitability`, `PerformanceEfficiency`, `Compatibility`,
+  `InteractionCapability`, `Reliability`, `Security`, `Maintainability`,
+  `Flexibility`, `Safety` — names cross-checked verbatim against that same
+  live resource read, confirming v1's own precedent); `General`/
+  `Introduction`/`RawRequirements`/`MoreInformation` duplicated verbatim
+  from `qa/models/v1/body.py` (no import from v1); and `Qa(MarkdownSection1)`
+  with the full field order (`general` -> `elicitation_context` ->
+  `functional_suitability` -> ... -> `safety` -> `more_information`).
+  Extended `src/biz/dfch/specmgr/qa/models/v2/__init__.py` to export all of
+  `body.py`'s public symbols alongside Phase 1's `QaAnswer`/
+  `QaQuestionAnswer` (`_QaCategory` stays un-exported, mirroring v1's own
+  `qa/models/v1/__init__.py`). Added `tests/qa/models/v2/test_body.py` (18
+  tests) covering ACC-002: the 10 category classes' distinct heading
+  aliases and shared `heading_open`/`h2` metadata, empty-category
+  round-trips, `questions` optionality, `General`/`Introduction`/
+  `RawRequirements` parsing, `Qa`'s mandatory-vs-optional field validation
+  (including the new `elicitation_context` mandatory check), and a full
+  reference-document round-trip test using the README's own Design Notes
+  example verbatim (`## Elicitation Context` before `## Functional
+  Suitability`, two adjacent Q&A pairs under `Functional Suitability`
+  including the multi-paragraph/ordered-list answer, and eight categories
+  legitimately empty). Extended `whitelist.py` with `elicitation_context`/
+  `questions` (see Decisions Made). Quality gate green: `ruff format
+  --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`
+  (no findings after the whitelist extension), full `unittest discover`
+  (1311 tests, all passing).
+- Next: Phase 3 — implement the version-gate helper (reads
+  `QaFrontmatter.version`'s major component; raises a clear
+  migration-required error for anything not v2), plus its unit tests
+  (ACC-004).
+- Notes: No `src/biz/dfch/specmgr/models/md/` file was modified; no
+  `qa/models/v1/` file was modified; `qa/models/v2/question_answer.py` was
+  read-only referenced, not modified. `qa/models/v2/body.py`'s 9
+  characteristic names and the confirmation that `Elicitation Context` is
+  not one of them were both verified directly against a live
+  `specmgr://iso25010` MCP resource read performed during this phase (not
+  solely via v1's precedent, though the two independently agree).
 
 ### Related PRs / Commits
 
