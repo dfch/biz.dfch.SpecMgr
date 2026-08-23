@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **BREAKING**: QA (Question and Answer) documents now use a new v2 body
+  schema (`qa/models/v2/`); every QA MCP tool/resource/prompt (`create_qa`,
+  `update_qa`, `set_status_qa`, `parse_qa`, `list_qa`, `get_qa`,
+  `get_qa_example`, `get_qa_template`, `delete_qa` stub, `validate_qa`,
+  `specmgr://qa/schema`/`/example`/`/template`, `create_qa`/`update_qa`/
+  `refine` prompts) is repointed at it. v2 replaces v1's one
+  `### {heading}` H3 sub-section per question/answer pair with many
+  adjacent, un-headed pairs (`<!-- optional comment -->` + `> {question}`
+  block quote + free-form answer prose) directly inside a category
+  section, and adds a new `## Elicitation Context` section (a 10th
+  `_QaCategory`-shaped section, not one of the 9 ISO/IEC 25010:2023
+  characteristics) between `## General` and `## Functional Suitability`.
+  This is a hard cutover with no version gate and no dual v1/v2 read
+  support: a v1-shaped document now fails v2 parsing with a structural
+  `AssertionError`/`pydantic.ValidationError`, not a migration-specific
+  error. `qa/models/v1/` remains on disk purely as historical reference
+  and is no longer reachable from any MCP tool/resource/prompt.
+
 ## [0.8.0] - 2026-08-19
 
 ### Changed

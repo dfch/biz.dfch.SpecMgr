@@ -83,8 +83,9 @@ reads an existing task list via ``get_tsk``, builds a ``TodoWrite`` list from it
 items, and uses the ``question`` tool to resolve ambiguity before proceeding.
 QA prompts (``qa/prompts/``): ``create_qa``, ``update_qa``, plus ``refine`` --
 appends a fresh batch of unanswered interview questions (each with an empty
-`_(awaiting response)_` placeholder) to an existing QA document, for one or
-more of the nine ISO/IEC 25010:2023 quality characteristics.
+`_(awaiting response)_` placeholder) to an existing QA document, for
+``Elicitation Context`` or one or more of the nine ISO/IEC 25010:2023 quality
+characteristics.
 General prompts (``general/prompts/``): ``compact_history`` -- guides rotating
 older ``### Recent Updates`` entries out of any `.specmgr` feature folder's
 ``README.md`` into an optional sibling ``history.md``, per ADR

@@ -1,7 +1,7 @@
 ---
 created: 2026-08-23
 id: feat-14-qa-v2-adjacent-qa
-status: planning
+status: done
 updated: 2026-08-23
 version: 1.0.0
 ---
@@ -98,7 +98,7 @@ Design Notes).
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: Verifies REQ-001 — `QaAnswer.get_extent` stops correctly at
+- [x] ACC-001: Verifies REQ-001 — `QaAnswer.get_extent` stops correctly at
   each of the three terminator kinds (heading/block quote/comment)
   independently and runs to end-of-text when none follow;
   `QaQuestionAnswer.get_extent`/`from_text` round-trip for: empty, comment-
@@ -106,33 +106,33 @@ Design Notes).
   multi-paragraph answer that embeds an ordered list (captured verbatim,
   opaque), two/three adjacent pairs in sequence, and a trailing dangling
   comment (accepted as a comment-only pair, not an error).
-- [ ] ACC-002: Verifies REQ-002 — a full reference document (mirroring the
+- [x] ACC-002: Verifies REQ-002 — a full reference document (mirroring the
   example in Design Notes) with `## Elicitation Context` before `## Functional Suitability`, at least one category with zero pairs, and one
   category with several adjacent pairs, parses and round-trips
   successfully; all 10 `_QaCategory`-shaped fields are mandatory
   (`questions` may be `None`).
-- [ ] ACC-003: Verifies REQ-003 — `qa/models/v2/` imports `QaFrontmatter`
+- [x] ACC-003: Verifies REQ-003 — `qa/models/v2/` imports `QaFrontmatter`
   from `qa/models/v1/` with no duplication; existing frontmatter validation
   behavior (status set, required/optional fields) is unchanged.
-- [ ] ACC-004 (revised 2026-08-23): Verifies REQ-004 — a v2-shaped document
+- [x] ACC-004 (revised 2026-08-23): Verifies REQ-004 — a v2-shaped document
   parses successfully via `qa/models/v2/parser.py::parse_qa`; a v1-shaped
   (or otherwise malformed) document raises a structural
   `AssertionError`/`pydantic.ValidationError` from `Qa.from_text`/
   `QaFrontmatter.model_validate`, with no attempt at v1 parsing and no
   fallback.
-- [ ] ACC-005 (revised 2026-08-23, see Decisions Made): Verifies REQ-005 —
+- [x] ACC-005 (revised 2026-08-23, see Decisions Made): Verifies REQ-005 —
   every listed QA tool is registered, callable, operates against v2
   documents, and surfaces the same structural
   `AssertionError`/`pydantic.ValidationError` `Qa.from_text`/
   `QaFrontmatter.model_validate` raise on their own for a v1-shaped document
   passed to a read path (`get_qa`/`parse_qa`/`validate_qa`), per REQ-004's
   revised (Phase 3) no-gate design.
-- [ ] ACC-006: Verifies REQ-006 — the three QA resources reflect v2's shape
+- [x] ACC-006: Verifies REQ-006 — the three QA resources reflect v2's shape
   (schema/example/template all parse as v2 documents).
-- [ ] ACC-007: Verifies REQ-007 — `create_qa`/`update_qa` prompt content
+- [x] ACC-007: Verifies REQ-007 — `create_qa`/`update_qa` prompt content
   describes the adjacent-pairs structure and `## Elicitation Context`, with
   no remaining reference to per-question H3 headings.
-- [ ] ACC-008: Verifies REQ-008 — `specmgr docs`, `specmgr mcp-docs`, and
+- [x] ACC-008: Verifies REQ-008 — `specmgr docs`, `specmgr mcp-docs`, and
   `specmgr schema --type qa` all run clean with no drift; `AGENTS.md`
   reflects v2 as QA's tool-reachable schema and notes v1 is retained
   on-disk only, unreachable from tools.
@@ -478,18 +478,19 @@ at all). REQ-004/ACC-004 above were revised in place to match.
 
 #### Phase 7: Cross-cutting docs + final verification
 
-- [ ] Task 7.1: `uv run --frozen specmgr docs` (regenerate `docs/api/`,
+- [x] Task 7.1: `uv run --frozen specmgr docs` (regenerate `docs/api/`,
   `docs/GENERATED.md`); update `server.py`'s module docstring; update
   `AGENTS.md`'s QA section (v2 as the tool-reachable schema, v1 retained
   on-disk only, unreachable from tools) — depends on: Task 6.3 — status:
-  not-started.
-- [ ] Task 7.2: Final verification pass — walk every ACC-001..008 with
+  done (2026-08-23).
+- [x] Task 7.2: Final verification pass — walk every ACC-001..008 with
   concrete evidence; run the full quality gate end-to-end (`ruff format/check`, `pylint` advisory, `vulture`, full `unittest`, `specmgr docs`/`specmgr adr-toc` drift checks) — depends on: Task 7.1 — status:
-  not-started.
-- [ ] Task 7.3: Update Progress section (Current Status, dated Recent
+  done (2026-08-23).
+- [x] Task 7.3: Update Progress section (Current Status, dated Recent
   Updates entry); set feature frontmatter `status: done`; commit
   (`docs(qa): regenerate generated docs for QA v2`) — depends on: Task
-  7.2 — status: not-started.
+  7.2 — status: done (2026-08-23, quality gate green; commit itself left
+  to the orchestrator).
 
 **Note:** If a task's scope changes mid-flight, edit its description in
 place; rely on git history (`git log -p` on this file) to recover what was
@@ -660,11 +661,44 @@ phrasing (`"### {question-ish heading}"`) and the old
 gone; `test_create_qa.py` also asserts `#### Requirement` no longer
 appears. A final grep sweep across all three
 `qa_*_instructions.md` files for leftover `### {`/`#### Requirement`
-references found none; every remaining "nine" reference correctly scopes
-to the nine ISO/IEC 25010:2023 characteristics specifically, not the
-overall (now ten) category count. Phase 6's quality gate (`ruff format
---check`, `ruff check`, `vulture`, full `unittest` suite -- 1332 tests
-total) is green. Phase 7 remains `not-started`.
+  references found none; every remaining "nine" reference correctly scopes
+  to the nine ISO/IEC 25010:2023 characteristics specifically, not the
+  overall (now ten) category count. Phase 6's quality gate (`ruff format
+  --check`, `ruff check`, `vulture`, full `unittest` suite -- 1332 tests
+  total) is green.
+
+**Phase 7 is done — the whole feature is complete.** Updated
+`src/biz/dfch/specmgr/server.py`'s module docstring (the `refine` prompt's
+description now says "for `Elicitation Context` or one or more of the nine
+ISO/IEC 25010:2023 quality characteristics" instead of only the nine; a
+full grep of the rest of the docstring found no other QA-schema-shape-
+specific prose needing a change -- the rest of the docstring only lists
+registered tool/resource/prompt *names*, unaffected by the v1->v2 body
+schema change). Updated `AGENTS.md`'s `qa/` bullet to describe the v1
+(legacy, on-disk-only, unreachable from any MCP tool/resource/prompt)
+/v2 (current, every QA tool/resource/prompt repointed at it) split,
+mirroring UC's own v1/v2 phrasing convention, plus a short note on the new
+`## Elicitation Context` 10th section; the "Still genuinely missing"
+bullet list needed no change (nothing there referenced QA's schema
+version). Added a `## [Unreleased]` / `### Changed` entry to
+`CHANGELOG.md` documenting the breaking v1->v2 QA schema cutover,
+mirroring the `## [0.8.0]` entry's `**BREAKING**:` convention. Ran
+`specmgr docs`/`specmgr mcp-docs`/`specmgr adr-toc`/
+`specmgr schema --type qa` (both output dirs) -- all report zero drift
+beyond `docs/api/biz.dfch.specmgr.server.md`'s own regeneration from the
+docstring edit above (confirming every prior phase's own pre-commit hook
+already kept `docs/`/`qa_schema.json` fully in sync). Final quality gate
+green end to end: `ruff format --check` (832 files already formatted),
+`ruff check` (all checks passed), `pylint` (advisory only, pre-existing
+`R0401` cyclic-import findings across every domain package unrelated to
+this feature, 8.95/10), `vulture src/ whitelist.py --min-confidence 60`
+(no findings), full `unittest discover` (1332 tests, all passing). Walked
+every ACC-001..008 against concrete test evidence (see the final Recent
+Updates entry below for the full list) -- all eight confirmed. No file
+under `qa/models/`, `qa/tools/`, `qa/resources/`, `qa/prompts/`, or
+`models/md/` was touched in this phase; only cross-cutting docs
+(`server.py`, `AGENTS.md`, `CHANGELOG.md`, `docs/api/biz.dfch.specmgr.server.md`)
+changed.
 
 ### Blockers
 
@@ -1176,6 +1210,60 @@ Phase 3 is recorded in Decisions Made, not repeated here.)
   their instructions from a packaged `.md` file with no model/schema
   import). No commit was made (left to the orchestrator).
 
+#### Update 2026-08-23T07:00:00Z
+
+- Completed: Phase 7 (Tasks 7.1-7.3) -- the whole feature is now done.
+  Updated `src/biz/dfch/specmgr/server.py`'s module docstring (`refine`
+  prompt description now covers `Elicitation Context` alongside the nine
+  ISO/IEC 25010:2023 characteristics; a full grep found nothing else
+  QA-schema-shape-specific in the docstring). Updated `AGENTS.md`'s `qa/`
+  bullet to describe the v1 (legacy, on-disk-only)/v2 (current,
+  tool-reachable) split and the new `## Elicitation Context` section,
+  mirroring UC's own v1/v2 phrasing; the "Still genuinely missing" list
+  needed no change. Added a `## [Unreleased]` / `### Changed` entry to
+  `CHANGELOG.md` documenting the breaking QA v1->v2 cutover, mirroring the
+  `## [0.8.0]` entry's `**BREAKING**:` convention. Ran
+  `specmgr docs`/`specmgr mcp-docs`/`specmgr adr-toc`/
+  `specmgr schema --type qa` (both output dirs) -- all report zero drift
+  beyond `docs/api/biz.dfch.specmgr.server.md`'s own regeneration from the
+  docstring edit. Ran the full quality gate: `ruff format --check` (832
+  files already formatted), `ruff check` (all checks passed), `pylint`
+  (advisory, pre-existing `R0401` cyclic-import findings across every
+  domain package, unrelated to this feature, 8.95/10), `vulture src/
+  whitelist.py --min-confidence 60` (no findings), full `unittest
+  discover` (1332 tests, all passing). Walked every ACC-001..008 against
+  concrete evidence: ACC-001/ACC-002 -- `tests/qa/models/v2/{test_question_answer,test_body}.py`
+  (17 + 18 tests); ACC-003 -- `tests/qa/models/v2/test_parser.py::test_frontmatter_field_type_is_v1_qa_frontmatter`/
+  `test_frontmatter_field_info_annotation_is_v1_qa_frontmatter`; ACC-004 --
+  `tests/qa/models/v2/test_parser.py::test_parses_full_reference_document`/
+  `test_missing_elicitation_context_raises_the_same_structural_error_from_from_text`;
+  ACC-005 -- `tests/qa/tools/{test_get_qa.py::test_read_path_surfaces_structural_error_for_v1_shaped_document,
+  test__io.py::TestReadQa.test_raises_structural_error_for_v1_shaped_document,
+  test_parse_qa.py::test_raises_structural_error_for_v1_shaped_document,
+  test_validate_qa.py::test_raises_structural_error_for_v1_shaped_{body_only_content,full_document}}`;
+  ACC-006 -- `tests/qa/resources/{test_qa_schema.py::test_reflects_v2_body_shape,
+  test_qa_example.py::test_parses_successfully_as_a_v2_document,
+  test_qa_template.py::test_contains_elicitation_context_section}`; ACC-007
+  -- `tests/qa/prompts/{test_create_qa.py::test_mentions_elicitation_context_section,
+  test_update_qa.py::test_mentions_elicitation_context,
+  test_refine.py::test_mentions_elicitation_context_as_selectable_target}`
+  plus each file's own "no longer mentions" negative assertions; ACC-008 --
+  the zero-drift `specmgr docs`/`specmgr mcp-docs`/`specmgr schema --type qa`
+  command runs above, plus this phase's own `AGENTS.md` edit. Set this
+  README's frontmatter `status` to `done` and marked every ACC-001..008
+  and Task 7.1-7.3 checkbox done in place.
+- Next: None -- feature complete. The orchestrator will independently
+  re-verify and then commit (six commits landed on the `feat-14` branch
+  are expected, one per phase 1-7, per this plan's own per-phase commit
+  discipline).
+- Notes: Confirmed via `git status`/`git diff --stat` that only
+  `AGENTS.md`, `CHANGELOG.md`, `src/biz/dfch/specmgr/server.py`, and
+  `docs/api/biz.dfch.specmgr.server.md` changed in this phase -- no file
+  under `qa/models/`, `qa/tools/`, `qa/resources/`, `qa/prompts/`, or
+  `models/md/` was touched. No commit was made (left to the orchestrator).
+
 ### Related PRs / Commits
 
-None yet.
+None yet (this feature was developed and verified across seven phases on
+the `feat-14` branch; the orchestrator commits each phase separately per
+this plan's own per-phase commit discipline).
