@@ -69,11 +69,21 @@ Design Notes).
   `qa/models/v2/` (frontmatter shape is not versioned by this feature, only
   the body schema is) — its existing `version` field is the dispatch key
   for REQ-004's gate.
-- REQ-004: A version-gate used by the shared QA parsing entry point: reads
-  `QaFrontmatter.version`'s major component and raises a clear, actionable
-  error (naming the unsupported version and stating the document must be
-  migrated) for anything that isn't v2's major. No dual v1/v2 read support
-  — a hard cutover, by explicit instruction.
+- REQ-004 (revised 2026-08-23, see Decisions Made): No
+  `QaFrontmatter.version`-based dispatch is used — `version` is confirmed
+  (via direct testing) to encode the shared `models.md` parsing engine's own
+  schema version (hardcoded to major 1, `models/md/_util.py::SCHEMA_MAJOR_VERSION`),
+  not a per-document-type body-schema version, and can never carry a
+  major-2 value for any document that validates as `QaFrontmatter` at all.
+  Mirroring the established, working precedent in
+  `uc/models/v2/parser.py::parse_uc` (which performs the same v1→v2
+  body-schema cutover with zero runtime version inspection), the QA v2
+  parsing entry point (`qa/models/v2/parser.py::parse_qa`) unconditionally
+  parses via v2's `Qa` body schema; there is no fallback to v1 parsing and
+  no explicit version check. A v1-shaped (or otherwise non-v2-shaped)
+  document fails naturally with whatever structural
+  `AssertionError`/`pydantic.ValidationError` `Qa.from_text`/
+  `QaFrontmatter.model_validate` raises on its own.
 - REQ-005: Repoint every QA MCP tool (`create_qa`, `update_qa`,
   `set_status_qa`, `parse_qa`, `list_qa`, `get_qa`, `get_qa_example`,
   `get_qa_template`, `delete_qa` stub, `validate_qa`) at `qa/models/v2/`,
@@ -104,10 +114,12 @@ Design Notes).
 - [ ] ACC-003: Verifies REQ-003 — `qa/models/v2/` imports `QaFrontmatter`
   from `qa/models/v1/` with no duplication; existing frontmatter validation
   behavior (status set, required/optional fields) is unchanged.
-- [ ] ACC-004: Verifies REQ-004 — a v2-versioned document parses; a
-  v1-versioned (or any non-v2) document raises a clear, actionable error
-  naming the found version and instructing migration, with no attempt at
-  v1 parsing.
+- [ ] ACC-004 (revised 2026-08-23): Verifies REQ-004 — a v2-shaped document
+  parses successfully via `qa/models/v2/parser.py::parse_qa`; a v1-shaped
+  (or otherwise malformed) document raises a structural
+  `AssertionError`/`pydantic.ValidationError` from `Qa.from_text`/
+  `QaFrontmatter.model_validate`, with no attempt at v1 parsing and no
+  fallback.
 - [ ] ACC-005: Verifies REQ-005 — every listed QA tool is registered,
   callable, operates against v2 documents, and surfaces REQ-004's error for
   a v1 document passed to a read path (`get_qa`/`parse_qa`/`validate_qa`).
@@ -388,16 +400,35 @@ test-and-commit discipline
 
 #### Phase 3: Version gate
 
-- [ ] Task 3.1: Implement the version-gate helper (reads
-  `QaFrontmatter.version`'s major component; raises a clear
-  migration-required error for anything not v2) — depends on: Task 2.3 —
-  status: not-started.
-- [ ] Task 3.2: Unit tests — v2 document parses; v1/garbage-versioned
-  document raises the expected error with an actionable message (ACC-004)
-  — depends on: Task 3.1 — status: not-started.
-- [ ] Task 3.3: Phase-end quality gate; update Progress section; commit
-  (`feat(qa): add v2 schema-version gate for QA parsing`) — depends on:
-  Task 3.2 — status: not-started.
+**Revised 2026-08-23** (see Decisions Made): there is no "version-gate
+helper" -- a structural conflict discovered mid-phase (`QaFrontmatter.version`
+can never carry a major-2 value, see Decisions Made) made a
+`QaFrontmatter.version`-based dispatch mechanism impossible; the user
+resolved this by directing that `qa/models/v2/parser.py::parse_qa` instead
+mirror `uc/models/v2/parser.py::parse_uc`'s existing, working
+unconditional-v2-parsing precedent exactly (no runtime version inspection
+at all). REQ-004/ACC-004 above were revised in place to match.
+
+- [x] Task 3.1: Implement `qa/models/v2/parser.py::parse_qa` (no
+  version-gate helper exists; see the revised REQ-004 above and Decisions
+  Made) — depends on: Task 2.3 — status: done (2026-08-23). Also delivered
+  `qa/models/v2/document.py` (`QaDocument`, pairing v2's `Qa` body with
+  `QaFrontmatter` re-exported unchanged from `qa/models/v1/`) as the
+  concrete "shared parsing entry point" REQ-004 refers to, per
+  orchestrator-directed scope clarification.
+- [x] Task 3.2: Unit tests — a v2-shaped document (`version: 1.0.0`
+  frontmatter, the only value `QaFrontmatter.version` ever accepts) parses
+  successfully; a v1-shaped body fails with the same structural
+  `AssertionError`/`ValidationError` `Qa.from_text`/`QaFrontmatter.model_validate`
+  raise on their own, with no fallback to v1 parsing (revised ACC-004); plus
+  an ACC-003 cross-check confirming `QaDocument.frontmatter`'s declared type
+  is `qa.models.v1.frontmatter.QaFrontmatter` itself — depends on: Task 3.1
+  — status: done (2026-08-23, `tests/qa/models/v2/test_parser.py`, 6 tests,
+  all green).
+- [x] Task 3.3: Phase-end quality gate; update Progress section; commit
+  (`feat(qa): add v2 parser (parse_qa/QaDocument), no version gate`) —
+  depends on: Task 3.2 — status: done (2026-08-23, quality gate green;
+  commit itself left to the orchestrator).
 
 #### Phase 4: Rewire `qa/tools/*`
 
@@ -473,11 +504,27 @@ verbatim from v1, plus `Qa` (H1) with the full field order (`general` ->
 `tests/qa/models/v2/test_body.py` covers ACC-002 with the README's own
 reference document (18 tests, all green). Phase 2's quality gate
 (`ruff format --check`, `ruff check`, `vulture`, full `unittest` suite —
-1311 tests total) is green. Phases 3-7 are `not-started`.
+1311 tests total) is green.
+
+**Phase 3 is done.** A mid-phase structural conflict (`QaFrontmatter.version`
+can never carry a major-2 value -- see Decisions Made) was escalated to and
+resolved by the user: `qa/models/v2/parser.py::parse_qa` mirrors
+`uc/models/v2/parser.py::parse_uc`'s existing unconditional-v2-parsing
+precedent instead of a `version`-based gate. REQ-004/ACC-004 were revised
+in place accordingly. `qa/models/v2/document.py` (`QaDocument`) and
+`qa/models/v2/parser.py` (`parse_qa`) are implemented and exported;
+`tests/qa/models/v2/test_parser.py` (6 tests) covers a full v2-shaped
+document parsing successfully, a v1-shaped body failing with the same
+structural error `Qa.from_text` raises on its own (no v1 fallback), an
+invalid-frontmatter `ValidationError` case, and the ACC-003 cross-check.
+Phase 3's quality gate (`ruff format --check`, `ruff check`, `vulture`, full
+`unittest` suite -- 1317 tests total) is green. Phases 4-7 remain
+`not-started`.
 
 ### Blockers
 
-None currently.
+None currently. (The version-gate design conflict found and resolved during
+Phase 3 is recorded in Decisions Made, not repeated here.)
 
 ### Recent Updates
 
@@ -603,6 +650,49 @@ None currently.
   pair's own question) — without it, that later block quote would
   incorrectly be treated as still belonging to the current pair's own
   (already-skipped) `question` field.
+- **2026-08-23 (Phase 3)**: Per the orchestrator's explicit scope
+  clarification (not a unilateral expansion), Phase 3 delivers
+  `qa/models/v2/document.py` (`QaDocument`, pairing v1's unchanged
+  `QaFrontmatter` with v2's own `Qa` body) and `qa/models/v2/parser.py`
+  (`parse_qa`) as the concrete "shared QA parsing entry point" REQ-004
+  refers to -- ACC-004's "a v2 document parses end-to-end" requirement needs
+  more than an isolated unit test against a bare version string.
+- **2026-08-23 (Phase 3, superseded design attempt)**: An initial
+  implementation added a `QaFrontmatter.version`-based gate
+  (`qa/models/v2/_version_gate.py`'s `QaSchemaVersionError`/
+  `check_qa_schema_version`, dispatching on major `2` == "QA v2"). While
+  writing Task 3.2's end-to-end tests, this was discovered to be
+  structurally impossible: `QaFrontmatter.version`'s inherited
+  `models.md`-engine-version validator (`models/md/_util.py::validate_schema_version`)
+  hardcodes acceptance to major `1` only (documented as "the `models.md`
+  schema ... version ... DO NOT CHANGE!" -- i.e. the shared parsing
+  engine's own version, not a per-document-type body-schema version) and
+  raises its own `pydantic.ValidationError` for both `"2.0.0"` and any
+  non-`major.minor.patch` garbage *before* any gate function could run.
+  Verified interactively:
+  `QaFrontmatter.model_validate({"version": "2.0.0", ...})` and
+  `QaFrontmatter.model_validate({"version": "banana", ...})` both raise
+  `ValidationError` from `MarkdownFrontmatter`'s own validator, never
+  reaching the new gate. This was not resolved unilaterally -- every fix
+  candidate touched a file this phase was told to leave unchanged
+  (`qa/models/v1/frontmatter.py`) or was explicitly out of this feature's
+  scope (`models/md/`, see Overview's "zero changes to `models/md/`") -- so
+  it was escalated to the orchestrator, who escalated it to the user.
+- **2026-08-23 (Phase 3, user decision)**: The user resolved the above
+  blocker as **Option 1**: drop the `QaFrontmatter.version`-based gate
+  mechanism entirely (`_version_gate.py` and its isolated tests deleted) and
+  mirror `uc/models/v2/parser.py::parse_uc`'s existing, already-working
+  precedent exactly -- `qa/models/v2/parser.py::parse_qa` parses
+  unconditionally via v2's `Qa` body schema, with zero runtime `version`
+  inspection. A v1-shaped document now fails naturally with whatever
+  structural `AssertionError`/`pydantic.ValidationError`
+  `Qa.from_text`/`QaFrontmatter.model_validate` raises on its own -- the "no
+  fallback to v1 parsing" guarantee still holds, just because there is no
+  v1 code path reachable from `qa/models/v2/parser.py` at all, rather than
+  via an explicit check. REQ-004 and ACC-004 (see Requirements/Acceptance
+  Criteria above) were revised in place to match, per this plan's own
+  "edit task/requirement descriptions in place, rely on git history to
+  recover what was originally planned" policy.
 - **2026-08-23 (Phase 2)**: `whitelist.py`'s existing Pydantic-field-name
   block (already covering `items`/`answer`/`question`/`general`/the 9
   category field names for v1) was extended with `elicitation_context` and
@@ -664,6 +754,45 @@ None currently.
   not one of them were both verified directly against a live
   `specmgr://iso25010` MCP resource read performed during this phase (not
   solely via v1's precedent, though the two independently agree).
+
+#### Update 2026-08-23T03:00:00Z
+
+- Completed: Phase 3 (Tasks 3.1-3.3), after a mid-phase design conflict was
+  escalated to and resolved by the user (see Decisions Made). Added
+  `src/biz/dfch/specmgr/qa/models/v2/document.py` (`QaDocument`, pairing
+  v2's `Qa` body with `QaFrontmatter` re-exported unchanged from
+  `qa/models/v1/`) and `src/biz/dfch/specmgr/qa/models/v2/parser.py`
+  (`parse_qa`, mirroring both `qa/models/v1/parser.py::parse_qa`'s
+  frontmatter-then-body structure and `uc/models/v2/parser.py::parse_uc`'s
+  unconditional-v2-parsing shape -- no runtime `version` inspection/gate).
+  An initial implementation with a `QaFrontmatter.version`-based gate
+  (`_version_gate.py`) was written, found structurally broken (see
+  Decisions Made for the full repro), and deleted per the user's Option 1
+  decision. Extended `src/biz/dfch/specmgr/qa/models/v2/__init__.py` to
+  export `QaDocument`, `QaFrontmatter` (re-export), and `parse_qa`. Added
+  `tests/qa/models/v2/test_parser.py` (6 tests) covering: a full v2-shaped
+  reference document (`version: 1.0.0` frontmatter -- the only value
+  `QaFrontmatter.version` ever accepts) parsing successfully end to end; a
+  v1-shaped body (missing the mandatory `## Elicitation Context` section)
+  raising the same structural `AssertionError` `Qa.from_text` raises on its
+  own, with no fallback to v1 parsing; an invalid-frontmatter-status
+  `ValidationError` case; and the ACC-003 cross-check confirming
+  `QaDocument.frontmatter`'s declared type is
+  `qa.models.v1.frontmatter.QaFrontmatter` itself (via both
+  `typing.get_type_hints` and direct `model_fields` inspection). Revised
+  REQ-004 and ACC-004 in the Requirements/Acceptance Criteria sections
+  above in place to describe the no-gate design. Quality gate green:
+  `ruff format --check`, `ruff check`, `vulture src/ whitelist.py
+  --min-confidence 60` (no findings), full `unittest discover` (1317 tests,
+  all passing).
+- Next: Phase 4 — repoint `qa/tools/*` at `qa/models/v2/`
+  (`qa/tools/*`'s existing "routed through the version gate" wording will
+  need its own in-place revision when that phase starts, since no gate
+  exists to route through anymore).
+- Notes: No `src/biz/dfch/specmgr/models/md/` file was modified; no
+  `qa/models/v1/` file was modified; Phase 1/2's `question_answer.py`/
+  `body.py` were not modified. No commit was made (left to the
+  orchestrator).
 
 ### Related PRs / Commits
 

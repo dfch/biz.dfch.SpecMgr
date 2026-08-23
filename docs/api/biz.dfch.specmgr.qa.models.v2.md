@@ -7,10 +7,23 @@ body where many question/answer pairs can appear directly one after another
 inside a single ISO/IEC 25010:2023 characteristic section -- see
 `.specmgr/feat/feat-14-qa-v2-adjacent-qa/README.md` for the full design.
 
-As of Phase 2, `question_answer.py`'s `QaAnswer`/`QaQuestionAnswer` and
-`body.py`'s `General`/`Introduction`/`RawRequirements`/`MoreInformation`/
-`ElicitationContext`/the 9 ISO/IEC 25010:2023 characteristic subclasses/`Qa`
-are implemented and exported here (`_QaCategory` stays private/un-exported,
-mirroring `qa/models/v1/__init__.py`'s own choice). Later phases extend this
-package (and this `__init__.py`) with the version gate and a `QaFrontmatter`
-re-export (imported unchanged from `qa/models/v1/`).
+As of Phase 3, `question_answer.py`'s `QaAnswer`/`QaQuestionAnswer`, `body.py`'s
+`General`/`Introduction`/`RawRequirements`/`MoreInformation`/
+`ElicitationContext`/the 9 ISO/IEC 25010:2023 characteristic subclasses/`Qa`,
+`document.py`'s `QaDocument` (pairing v2's own `Qa` body with `QaFrontmatter`,
+re-exported here unchanged from `qa/models/v1/`, per REQ-003), and
+`parser.py`'s `parse_qa` -- the shared QA parsing entry point REQ-004 refers
+to -- are all implemented and exported here (`_QaCategory` stays
+private/un-exported, mirroring `qa/models/v1/__init__.py`'s own choice).
+
+**No `version`-based dispatch/gate exists** (REQ-004/ACC-004 revised
+2026-08-23, see the feature README's Decisions Made): `QaFrontmatter.version`
+was found to encode the shared `models.md` parsing engine's own schema
+version (hardcoded to major 1), not a per-document-type body-schema version,
+so no major-2 dispatch is possible. `parse_qa` mirrors
+`uc/models/v2/parser.py::parse_uc`'s unconditional-v2-parsing shape exactly
+instead -- a v1-shaped document simply fails naturally with whatever
+structural error `Qa.from_text`/`QaFrontmatter.model_validate` raises on its
+own.
+
+Later phases (4-7) repoint QA's MCP tools/resources/prompts at this package.
