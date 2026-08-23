@@ -45,6 +45,12 @@ class TestQaTemplateResource(unittest.TestCase):
         """The resource and the tool must return identical content -- same underlying reader."""
         self.assertEqual(qa_template(), get_qa_template())
 
+    def test_contains_elicitation_context_section(self):
+        """Confirms the template was updated for v2 (ACC-006), without over-asserting on placeholder prose."""
+        result = qa_template()
+
+        self.assertIn("## Elicitation Context", result)
+
     def test_reads_fresh_on_every_call(self):
         """No in-memory cache -- a second call must reflect an on-disk change since the first."""
         with tempfile.TemporaryDirectory() as tmp:

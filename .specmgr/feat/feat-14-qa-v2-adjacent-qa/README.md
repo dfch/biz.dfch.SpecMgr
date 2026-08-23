@@ -453,14 +453,15 @@ at all). REQ-004/ACC-004 above were revised in place to match.
 
 #### Phase 5: Rewire `qa/resources/*`
 
-- [ ] Task 5.1: Regenerate `specmgr://qa/schema`, `/example`, `/template`
-  from v2 models/example/template — depends on: Task 4.3 — status:
-  not-started.
-- [ ] Task 5.2: Update/extend `tests/qa/resources/` to assert v2 shape
-  (ACC-006) — depends on: Task 5.1 — status: not-started.
-- [ ] Task 5.3: Phase-end quality gate; update Progress section; commit
+- [x] Task 5.1: Regenerate `specmgr://qa/schema`, `/example`, `/template`
+  from v2 models/example/template — depends on: Task 4.3 — status: done
+  (2026-08-23).
+- [x] Task 5.2: Update/extend `tests/qa/resources/` to assert v2 shape
+  (ACC-006) — depends on: Task 5.1 — status: done (2026-08-23).
+- [x] Task 5.3: Phase-end quality gate; update Progress section; commit
   (`feat(qa): update QA resources (schema/example/template) for v2`) —
-  depends on: Task 5.2 — status: not-started.
+  depends on: Task 5.2 — status: done (2026-08-23, quality gate green;
+  commit itself left to the orchestrator).
 
 #### Phase 6: Rewire `qa/prompts/*`
 
@@ -545,7 +546,75 @@ own, with no silent v1 fallback. REQ-005/ACC-005's own wording was revised
 in place to drop the stale "version gate" reference left over from Phase
 3's blocker resolution (see Decisions Made). Phase 4's quality gate
 (`ruff format --check`, `ruff check`, `vulture`, full `unittest` suite --
-1322 tests total) is green. Phases 5-7 remain `not-started`.
+  1322 tests total) is green. Phases 5-7 remain `not-started`.
+
+**Phase 5 is done.** `specmgr://qa/schema`/`/example`/`/template` now all
+reflect v2's shape (ACC-006). Added `src/biz/dfch/specmgr/qa/models/v2/_util.py`
+(`SCHEMA_COMMENT_VERSION = "v2"`, mirroring `uc/models/v2/_util.py`'s own
+precedent exactly), exported from `qa/models/v2/__init__.py`. Repointed
+`commands/schema.py::generate_qa_schema()`'s imports from
+`qa.models.v1`/`qa.models.v1.document` to `qa.models.v2`/`qa.models.v2.document`
+(docstring corrected from "v1"/`qa.models.v1` to "v2"/`qa.models.v2`) and
+regenerated both `docs/qa_schema.json` and
+`src/biz/dfch/specmgr/qa/data/qa_schema.json` via `specmgr schema --type qa`
+(twice, once per output dir) -- both now carry `"$comment": "v2"` and a
+`$defs`/`properties` shape built from v2's `Qa`/`_QaCategory`/`QaQuestionAnswer`
+(`elicitation_context`, `questions`; no `items`/`Requirement`/`QaSection`).
+Updated `.pre-commit-config.yaml`'s 5 occurrences of the shared
+`specmgr-schema*` hooks' `files:` regex from `qa/models/v1` to `qa/models/v2`
+so future `qa/models/v2/` edits actually re-trigger schema regeneration.
+Grepped `.github/workflows/ci.yml` for `qa/models/v1`/`qa/models` -- no match
+found, so nothing needed changing there (QA's CI drift checks are not
+per-domain-scoped the way the pre-commit hooks are).
+
+Rewrote the packaged `src/biz/dfch/specmgr/qa/data/qa_example.md` into a
+complete, valid v2-shaped document, keeping the same widget-registry-migration
+interview scenario: added a `## Elicitation Context` section (one Q&A pair,
+about who was interviewed/why) between `## General` and
+`## Functional Suitability`; converted every old `### {heading}` Q&A
+sub-section into v2's adjacent shape (optional `<!-- comment -->` + `>
+{question}` + free-form answer, no heading of its own), folding each old
+subsection's own heading text into its question's block quote where it read
+naturally (e.g. "What must happen if a widget fails to migrate cleanly?"
+folded into the existing listener-rollback question) and dropping it
+otherwise (the block quote already fully captured the question); dropped
+both `#### Requirement` callouts entirely, folding their load-bearing content
+(the rollback-scope requirement, the cutover-fallback requirement) into the
+surrounding answer prose so no information was lost; kept `## Compatibility`
+with zero pairs, per instruction; left the frontmatter's `version: 1.0.0`
+untouched (confirmed in Phase 3 to be the shared `models.md` engine's
+version, unrelated to QA's own body-schema version). Verified via a direct
+Python snippet that the rewritten file's body (`frontmatter.loads(text).content`,
+`format_text`-normalized) round-trips byte-for-byte through
+`qa.models.v2.body.Qa.from_text`/`str()`, and that the whole file parses via
+`qa.models.v2.parser.parse_qa` with `elicitation_context.questions` and
+`functional_suitability.questions` both populated. Rewrote
+`src/biz/dfch/specmgr/qa/data/qa_template.md` similarly: added a
+`## Elicitation Context` placeholder pair mirroring `## Functional
+Suitability`'s own placeholder shape, removed the `#### Requirement`
+callout placeholder text (no v2 equivalent), and rewrote `## Functional
+Suitability`'s placeholder prose to describe v2's actual shape (optional
+comment, `>` question block quote, free-form answer, no heading of its own,
+multiple pairs one after another) plus a second adjacent placeholder pair
+demonstrating that directly. Extended `tests/qa/resources/test_qa_schema.py`
+(new `test_reflects_v2_body_shape`, and the existing default-schema test's
+`"$comment"` assertion updated from `"v1"` to `"v2"`),
+`tests/qa/resources/test_qa_example.py` (new
+`test_parses_successfully_as_a_v2_document`, parsing the real packaged
+example via `qa.models.v2.parser.parse_qa` and asserting
+`elicitation_context.questions` is non-empty), and
+`tests/qa/resources/test_qa_template.py` (new
+`test_contains_elicitation_context_section`, a lightweight structural check
+only, per `get_qa_template`'s own "not guaranteed to validate" docstring).
+Grepped the wider test suite for other QA-schema-comment/shape assertions
+that this change could break (`tests/commands/test_schema.py`,
+`tests/general/tools/test__packaged_data.py`) and confirmed both are
+REQ-only, not QA-specific -- no changes needed there. Phase 5's quality gate
+(`ruff format --check`, `ruff check`, `vulture`, full `unittest` suite --
+1325 tests total) is green; both final `specmgr schema --type qa`
+invocations (default `docs/` output dir and
+`src/biz/dfch/specmgr/qa/data`) report `(unchanged)`/exit 0, confirming zero
+drift. Phases 6-7 remain `not-started`.
 
 ### Blockers
 
@@ -746,6 +815,29 @@ Phase 3 is recorded in Decisions Made, not repeated here.)
   for `get_qa`'s own read path, without contradicting the separate,
   legitimate, already-established skip-on-parse-failure behavior of id
   lookup itself.
+- **2026-08-23 (Phase 5)**: When restructuring `qa_example.md`'s old
+  `#### Requirement` callouts into v2's shape, each old H3 sub-section's own
+  heading text was folded into its Q&A pair's block quote wherever that
+  heading text carried a question the existing `>` block quote (if any)
+  didn't already fully capture (e.g. "What must happen if a widget fails to
+  migrate cleanly?" + the existing listener-rollback question were combined
+  into one two-part question), and dropped otherwise (several sub-sections'
+  heading text was already fully redundant with their own existing `>`
+  block quote). No information from either `#### Requirement` callout was
+  discarded -- both were folded into the surrounding answer prose as plain
+  sentences (dropping the original callout's own nested-list/nested-quote
+  formatting, to sidestep the nested-block-quote-inside-a-list edge case in
+  `QaAnswer.get_extent`'s terminator scan, even though such a quote would in
+  fact sit at depth > 0 and not trigger early termination -- simplifying to
+  plain prose was preferred here for readability, not because it was
+  structurally necessary).
+- **2026-08-23 (Phase 5)**: `.github/workflows/ci.yml` was grepped for
+  `qa/models/v1`/`qa/models` and had no matches -- QA's `specmgr
+  schema`/`specmgr docs` drift checks in CI are not scoped to specific
+  `qa/models/vN` paths the way `.pre-commit-config.yaml`'s local hooks are
+  (CI simply re-runs the full command and diffs), so no CI workflow edit
+  was needed for this phase, confirming the task instruction's own
+  "only edit what you actually find" guidance.
 - **2026-08-23 (Phase 2)**: `whitelist.py`'s existing Pydantic-field-name
   block (already covering `items`/`answer`/`question`/`general`/the 9
   category field names for v1) was extended with `elicitation_context` and
@@ -906,6 +998,58 @@ Phase 3 is recorded in Decisions Made, not repeated here.)
   files (`question_answer.py`, `body.py`, `document.py`, `parser.py`,
   `__init__.py`) were not modified. No commit was made (left to the
   orchestrator).
+
+#### Update 2026-08-23T05:00:00Z
+
+- Completed: Phase 5 (Tasks 5.1-5.3). Added
+  `src/biz/dfch/specmgr/qa/models/v2/_util.py` (`SCHEMA_COMMENT_VERSION =
+  "v2"`, mirroring `uc/models/v2/_util.py` exactly), exported from
+  `qa/models/v2/__init__.py`. Repointed `commands/schema.py`'s
+  `generate_qa_schema()` imports from `qa.models.v1`/`qa.models.v1.document`
+  to `qa.models.v2`/`qa.models.v2.document` (docstring corrected to say
+  "v2"/`qa.models.v2`), then regenerated `docs/qa_schema.json` and
+  `src/biz/dfch/specmgr/qa/data/qa_schema.json` via
+  `specmgr schema --type qa` (both output dirs) -- both now carry
+  `"$comment": "v2"` and a `$defs`/`properties` shape built from v2's
+  `Qa`/`_QaCategory`/`QaQuestionAnswer`. Updated all 5 occurrences of the
+  shared `specmgr-schema*` pre-commit hooks' `files:` regex in
+  `.pre-commit-config.yaml` from `qa/models/v1` to `qa/models/v2`. Grepped
+  `.github/workflows/ci.yml` for any `qa/models/v1`/`qa/models` reference --
+  none found, so no CI workflow change was needed. Rewrote
+  `src/biz/dfch/specmgr/qa/data/qa_example.md` into a complete, valid
+  v2-shaped document (new `## Elicitation Context` section, every old `###
+  {heading}` Q&A sub-section converted to v2's adjacent
+  comment/question/answer shape with no heading of its own, both `####
+  Requirement` callouts folded into surrounding answer prose and dropped as
+  a separate structure, `## Compatibility` kept empty, frontmatter
+  `version: 1.0.0` left untouched) and verified it round-trips through
+  `qa.models.v2.body.Qa.from_text`/`str()` and parses end-to-end via
+  `qa.models.v2.parser.parse_qa`. Rewrote
+  `src/biz/dfch/specmgr/qa/data/qa_template.md` similarly (new `##
+  Elicitation Context` placeholder, `#### Requirement` placeholder removed,
+  `## Functional Suitability` placeholder prose rewritten to describe v2's
+  actual adjacent-pairs shape). Extended
+  `tests/qa/resources/{test_qa_schema,test_qa_example,test_qa_template}.py`
+  per ACC-006 (updated `"$comment"` assertion to `"v2"`, added a v2-shape
+  schema assertion, an actual `parse_qa` round-trip assertion against the
+  packaged example, and a lightweight `## Elicitation Context` structural
+  check on the template). Grepped the wider test suite for other
+  QA-schema-comment/shape assertions this change could break
+  (`tests/commands/test_schema.py`, `tests/general/tools/test__packaged_data.py`)
+  and confirmed both are REQ-only -- no changes needed. Quality gate green:
+  `ruff format --check`, `ruff check`, `vulture src/ whitelist.py
+  --min-confidence 60` (no findings), full `unittest discover` (1325 tests,
+  all passing). Both final `specmgr schema --type qa` invocations (default
+  `docs/` and `src/biz/dfch/specmgr/qa/data`) report `(unchanged)`/exit 0.
+- Next: Phase 6 -- update `create_qa`/`update_qa` prompt narration for the
+  adjacent-pairs structure and `## Elicitation Context` (REQ-007/ACC-007).
+- Notes: No `src/biz/dfch/specmgr/models/md/` file was modified; no
+  `qa/models/v1/` file was modified; no `qa/tools/` file was modified;
+  Phases 1-4's already-implemented `qa/models/v2/` files
+  (`question_answer.py`, `body.py`, `document.py`, `parser.py`) were not
+  modified -- only `qa/models/v2/__init__.py` (adding the `SCHEMA_COMMENT_VERSION`
+  export) and the new `qa/models/v2/_util.py` were touched in that package.
+  No commit was made (left to the orchestrator).
 
 ### Related PRs / Commits
 

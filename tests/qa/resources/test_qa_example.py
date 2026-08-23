@@ -23,6 +23,7 @@ from pathlib import Path
 from unittest import mock
 
 from biz.dfch.specmgr.general.tools import _packaged_data
+from biz.dfch.specmgr.qa.models.v2.parser import parse_qa
 from biz.dfch.specmgr.qa.resources.qa_example import qa_example
 from biz.dfch.specmgr.qa.tools.get_qa_example import get_qa_example
 
@@ -44,6 +45,14 @@ class TestQaExampleResource(unittest.TestCase):
     def test_matches_the_get_qa_example_tool(self):
         """The resource and the tool must return identical content -- same underlying reader."""
         self.assertEqual(qa_example(), get_qa_example())
+
+    def test_parses_successfully_as_a_v2_document(self):
+        """The packaged example must actually parse as a v2 document (ACC-006)."""
+        result = parse_qa(qa_example())
+
+        self.assertIsNotNone(result.body.elicitation_context)
+        self.assertIsNotNone(result.body.elicitation_context.questions)
+        self.assertGreaterEqual(len(result.body.elicitation_context.questions), 1)
 
     def test_reads_fresh_on_every_call(self):
         """No in-memory cache -- a second call must reflect an on-disk change since the first."""

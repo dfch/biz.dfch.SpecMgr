@@ -22,21 +22,31 @@ Free-form, pre-existing raw requirement notes (e.g. from a wiki page or an
 earlier document), preserved verbatim for traceability. Mandatory section,
 but may simply note that none existed yet.
 
-## Functional Suitability
-
-### A free-form question heading. Optional per category -- categories may stay empty.
+## Elicitation Context
 
 <!-- An optional HTML comment giving context for this Q&A pair, such as when/by whom it was elicited. -->
-
-#### Requirement
-
-An optional callout: free-form, agent-authored prose promoting this answer
-to a concrete, testable requirement. No fixed shape.
 
 > An optional block quote holding the interviewer's question.
 
 An optional free-form prose answer, immediately following the question's
 block quote, with no heading of its own.
+
+## Functional Suitability
+
+<!-- An optional HTML comment giving context for this Q&A pair, such as when/by whom it was elicited. -->
+
+> An optional block quote holding the interviewer's question. Categories may
+> stay empty (zero pairs), or hold several pairs one after another -- each
+> pair is just an optional comment, a question block quote, and a free-form
+> answer, with no heading of its own.
+
+An optional free-form prose answer, immediately following the question's
+block quote, with no heading of its own.
+
+> A second, adjacent question can follow directly after the first pair's
+> answer prose, with no heading in between.
+
+Its own free-form prose answer.
 
 ## Performance Efficiency
 

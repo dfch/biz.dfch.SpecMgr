@@ -111,6 +111,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.qa.models.v1.parser`](biz.dfch.specmgr.qa.models.v1.parser.md) — Parse raw Question and Answer (QA) ``.md`` text into a :class:`QaDocument`.
 - [`biz.dfch.specmgr.qa.models.v1.summary`](biz.dfch.specmgr.qa.models.v1.summary.md) — Pydantic model for one line of QA listing output.
 - [`biz.dfch.specmgr.qa.models.v2`](biz.dfch.specmgr.qa.models.v2.md) — Question and Answer (QA) v2 models -- adjacent question/answer pairs, no per-question heading.
+- [`biz.dfch.specmgr.qa.models.v2._util`](biz.dfch.specmgr.qa.models.v2._util.md) — Shared, private constants for the ``qa.models.v2`` subpackage.
 - [`biz.dfch.specmgr.qa.models.v2.body`](biz.dfch.specmgr.qa.models.v2.body.md) — Question and Answer (QA) v2 body models: whole-section fields under a single H1.
 - [`biz.dfch.specmgr.qa.models.v2.document`](biz.dfch.specmgr.qa.models.v2.document.md) — Pydantic model for a full Question and Answer (QA) v2 document (frontmatter + body).
 - [`biz.dfch.specmgr.qa.models.v2.parser`](biz.dfch.specmgr.qa.models.v2.parser.md) — Parse raw Question and Answer (QA) ``.md`` text into a :class:`QaDocument` (v2).

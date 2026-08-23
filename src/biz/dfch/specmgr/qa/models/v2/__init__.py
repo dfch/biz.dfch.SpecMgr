@@ -45,6 +45,7 @@ Later phases (4-7) repoint QA's MCP tools/resources/prompts at this package.
 """
 
 from ..v1.frontmatter import QaFrontmatter
+from ._util import SCHEMA_COMMENT_VERSION
 from .body import (
     Compatibility,
     ElicitationContext,
@@ -67,6 +68,7 @@ from .parser import parse_qa
 from .question_answer import QaAnswer, QaQuestionAnswer
 
 __all__ = [
+    "SCHEMA_COMMENT_VERSION",
     "Compatibility",
     "ElicitationContext",
     "Flexibility",

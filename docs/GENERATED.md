@@ -130,6 +130,7 @@ First-line docstrings from each module, organized by domain:
 - `qa/models/v1/parser.py` — Parse raw Question and Answer (QA) ``.md`` text into a :class:`QaDocument`.
 - `qa/models/v1/summary.py` — Pydantic model for one line of QA listing output.
 - `qa/models/v2/__init__.py` — Question and Answer (QA) v2 models -- adjacent question/answer pairs, no per-question heading.
+- `qa/models/v2/_util.py` — Shared, private constants for the ``qa.models.v2`` subpackage.
 - `qa/models/v2/body.py` — Question and Answer (QA) v2 body models: whole-section fields under a single H1.
 - `qa/models/v2/document.py` — Pydantic model for a full Question and Answer (QA) v2 document (frontmatter + body).
 - `qa/models/v2/parser.py` — Parse raw Question and Answer (QA) ``.md`` text into a :class:`QaDocument` (v2).

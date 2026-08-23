@@ -47,8 +47,8 @@ import typer
 from pydantic.json_schema import GenerateJsonSchema
 
 from .._paths import DOCS_DIR
-from ..qa.models.v1 import SCHEMA_COMMENT_VERSION as QA_SCHEMA_COMMENT_VERSION
-from ..qa.models.v1.document import QaDocument
+from ..qa.models.v2 import SCHEMA_COMMENT_VERSION as QA_SCHEMA_COMMENT_VERSION
+from ..qa.models.v2.document import QaDocument
 from ..req.models.v1 import SCHEMA_COMMENT_VERSION as REQ_SCHEMA_COMMENT_VERSION
 from ..req.models.v1.document import ReqDocument
 from ..tsk.models.v1 import SCHEMA_COMMENT_VERSION as TSK_SCHEMA_COMMENT_VERSION
@@ -88,10 +88,10 @@ def generate_req_schema() -> str:
 def generate_qa_schema() -> str:
     """Generate QA's JSON Schema (2020-12 dialect) from ``QaDocument.model_json_schema()``.
 
-    Mirrors :func:`generate_req_schema` exactly, but for ``qa.models.v1``:
+    Mirrors :func:`generate_req_schema` exactly, but for ``qa.models.v2``:
     the ``"$schema"`` key is injected the same way (Pydantic v2 omits it by
-    default), and ``"$comment"`` holds ``qa.models.v1.SCHEMA_COMMENT_VERSION``
-    (currently ``"v1"``) instead of REQ's own version token.
+    default), and ``"$comment"`` holds ``qa.models.v2.SCHEMA_COMMENT_VERSION``
+    (currently ``"v2"``) instead of REQ's own version token.
 
     Serializes with ``indent=2, sort_keys=True`` plus a trailing newline, for
     the same byte-identical-output/drift-detection reason as

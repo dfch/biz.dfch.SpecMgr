@@ -37,10 +37,25 @@ class TestQaSchemaResource(unittest.TestCase):
         result = sut()
 
         self.assertIsInstance(result, dict)
-        self.assertEqual(result["$comment"], "v1")
+        self.assertEqual(result["$comment"], "v2")
         self.assertEqual(result["$schema"], "https://json-schema.org/draft/2020-12/schema")
         self.assertIn("frontmatter", result["properties"])
         self.assertIn("body", result["properties"])
+
+    def test_reflects_v2_body_shape(self):
+        """Confirms the schema is really v2's `Qa`/`_QaCategory` shape (ACC-006), not v1's `QaSection`."""
+        sut = qa_schema
+
+        result = sut()
+        serialized = json.dumps(result)
+        defs = result.get("$defs", {})
+
+        self.assertIn("elicitation_context", serialized)
+        self.assertIn("questions", serialized)
+        self.assertIn("ElicitationContext", defs)
+        self.assertIn("QaQuestionAnswer", defs)
+        self.assertNotIn("QaSection", defs)
+        self.assertNotIn("Requirement", defs)
 
     def test_returns_parsed_dict_for_a_given_file(self):
         """A patched-in schema file's exact content must round-trip through json.loads."""

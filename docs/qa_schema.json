@@ -1,14 +1,14 @@
 {
-  "$comment": "v1",
+  "$comment": "v2",
   "$defs": {
     "Compatibility": {
       "description": "`## Compatibility` -- one of the 9 ISO/IEC 25010:2023 quality characteristics. Always present.",
       "properties": {
-        "items": {
+        "questions": {
           "anyOf": [
             {
               "items": {
-                "$ref": "#/$defs/QaSection"
+                "$ref": "#/$defs/QaQuestionAnswer"
               },
               "type": "array"
             },
@@ -17,21 +17,21 @@
             }
           ],
           "default": null,
-          "description": "Repeating Q&A pairs for this category. May be empty/absent.",
-          "title": "Items"
+          "description": "Repeating adjacent Q&A pairs for this category. May be empty/absent.",
+          "title": "Questions"
         }
       },
       "title": "Compatibility",
       "type": "object"
     },
-    "Flexibility": {
-      "description": "`## Flexibility` -- one of the 9 ISO/IEC 25010:2023 quality characteristics. Always present.",
+    "ElicitationContext": {
+      "description": "`## Elicitation Context` -- a 10th `_QaCategory`-shaped section. Always present.\n\nNot one of the 9 ISO/IEC 25010:2023 characteristics -- it does not\nappear in, and is not derived from, the `specmgr://iso25010` resource;\nit is QA-schema-specific. Positioned between `General` and\n`FunctionalSuitability` in both markdown document order and `Qa`'s field\ndeclaration order.",
       "properties": {
-        "items": {
+        "questions": {
           "anyOf": [
             {
               "items": {
-                "$ref": "#/$defs/QaSection"
+                "$ref": "#/$defs/QaQuestionAnswer"
               },
               "type": "array"
             },
@@ -40,8 +40,31 @@
             }
           ],
           "default": null,
-          "description": "Repeating Q&A pairs for this category. May be empty/absent.",
-          "title": "Items"
+          "description": "Repeating adjacent Q&A pairs for this category. May be empty/absent.",
+          "title": "Questions"
+        }
+      },
+      "title": "ElicitationContext",
+      "type": "object"
+    },
+    "Flexibility": {
+      "description": "`## Flexibility` -- one of the 9 ISO/IEC 25010:2023 quality characteristics. Always present.",
+      "properties": {
+        "questions": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/QaQuestionAnswer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Repeating adjacent Q&A pairs for this category. May be empty/absent.",
+          "title": "Questions"
         }
       },
       "title": "Flexibility",
@@ -50,11 +73,11 @@
     "FunctionalSuitability": {
       "description": "`## Functional Suitability` -- one of the 9 ISO/IEC 25010:2023 quality characteristics. Always present.",
       "properties": {
-        "items": {
+        "questions": {
           "anyOf": [
             {
               "items": {
-                "$ref": "#/$defs/QaSection"
+                "$ref": "#/$defs/QaQuestionAnswer"
               },
               "type": "array"
             },
@@ -63,8 +86,8 @@
             }
           ],
           "default": null,
-          "description": "Repeating Q&A pairs for this category. May be empty/absent.",
-          "title": "Items"
+          "description": "Repeating adjacent Q&A pairs for this category. May be empty/absent.",
+          "title": "Questions"
         }
       },
       "title": "FunctionalSuitability",
@@ -104,11 +127,11 @@
     "InteractionCapability": {
       "description": "`## Interaction Capability` -- one of the 9 ISO/IEC 25010:2023 quality characteristics. Always present.",
       "properties": {
-        "items": {
+        "questions": {
           "anyOf": [
             {
               "items": {
-                "$ref": "#/$defs/QaSection"
+                "$ref": "#/$defs/QaQuestionAnswer"
               },
               "type": "array"
             },
@@ -117,8 +140,8 @@
             }
           ],
           "default": null,
-          "description": "Repeating Q&A pairs for this category. May be empty/absent.",
-          "title": "Items"
+          "description": "Repeating adjacent Q&A pairs for this category. May be empty/absent.",
+          "title": "Questions"
         }
       },
       "title": "InteractionCapability",
@@ -162,11 +185,11 @@
     "Maintainability": {
       "description": "`## Maintainability` -- one of the 9 ISO/IEC 25010:2023 quality characteristics. Always present.",
       "properties": {
-        "items": {
+        "questions": {
           "anyOf": [
             {
               "items": {
-                "$ref": "#/$defs/QaSection"
+                "$ref": "#/$defs/QaQuestionAnswer"
               },
               "type": "array"
             },
@@ -175,8 +198,8 @@
             }
           ],
           "default": null,
-          "description": "Repeating Q&A pairs for this category. May be empty/absent.",
-          "title": "Items"
+          "description": "Repeating adjacent Q&A pairs for this category. May be empty/absent.",
+          "title": "Questions"
         }
       },
       "title": "Maintainability",
@@ -209,11 +232,11 @@
     "PerformanceEfficiency": {
       "description": "`## Performance Efficiency` -- one of the 9 ISO/IEC 25010:2023 quality characteristics. Always present.",
       "properties": {
-        "items": {
+        "questions": {
           "anyOf": [
             {
               "items": {
-                "$ref": "#/$defs/QaSection"
+                "$ref": "#/$defs/QaQuestionAnswer"
               },
               "type": "array"
             },
@@ -222,19 +245,23 @@
             }
           ],
           "default": null,
-          "description": "Repeating Q&A pairs for this category. May be empty/absent.",
-          "title": "Items"
+          "description": "Repeating adjacent Q&A pairs for this category. May be empty/absent.",
+          "title": "Questions"
         }
       },
       "title": "PerformanceEfficiency",
       "type": "object"
     },
     "Qa": {
-      "description": "The `qa` body: a single H1 section with the fields below.\n\nThe H1 heading text is free-form.\n\nParameters\n----------\ngeneral:\n    `## General`. Mandatory (always present).\nfunctional_suitability:\n    `## Functional Suitability`. Mandatory (always present; `items` may be empty).\nperformance_efficiency:\n    `## Performance Efficiency`. Mandatory (always present; `items` may be empty).\ncompatibility:\n    `## Compatibility`. Mandatory (always present; `items` may be empty).\ninteraction_capability:\n    `## Interaction Capability`. Mandatory (always present; `items` may be empty).\nreliability:\n    `## Reliability`. Mandatory (always present; `items` may be empty).\nsecurity:\n    `## Security`. Mandatory (always present; `items` may be empty).\nmaintainability:\n    `## Maintainability`. Mandatory (always present; `items` may be empty).\nflexibility:\n    `## Flexibility`. Mandatory (always present; `items` may be empty).\nsafety:\n    `## Safety`. Mandatory (always present; `items` may be empty).\nmore_information:\n    `## More Information`. Optional.",
+      "description": "The `qa` body: a single H1 section with the fields below.\n\nThe H1 heading text is free-form.\n\nParameters\n----------\ngeneral:\n    `## General`. Mandatory (always present).\nelicitation_context:\n    `## Elicitation Context`. Mandatory (always present; `questions` may be empty).\nfunctional_suitability:\n    `## Functional Suitability`. Mandatory (always present; `questions` may be empty).\nperformance_efficiency:\n    `## Performance Efficiency`. Mandatory (always present; `questions` may be empty).\ncompatibility:\n    `## Compatibility`. Mandatory (always present; `questions` may be empty).\ninteraction_capability:\n    `## Interaction Capability`. Mandatory (always present; `questions` may be empty).\nreliability:\n    `## Reliability`. Mandatory (always present; `questions` may be empty).\nsecurity:\n    `## Security`. Mandatory (always present; `questions` may be empty).\nmaintainability:\n    `## Maintainability`. Mandatory (always present; `questions` may be empty).\nflexibility:\n    `## Flexibility`. Mandatory (always present; `questions` may be empty).\nsafety:\n    `## Safety`. Mandatory (always present; `questions` may be empty).\nmore_information:\n    `## More Information`. Optional.",
       "properties": {
         "compatibility": {
           "$ref": "#/$defs/Compatibility",
           "description": "`## Compatibility` section."
+        },
+        "elicitation_context": {
+          "$ref": "#/$defs/ElicitationContext",
+          "description": "`## Elicitation Context` section. Mandatory."
         },
         "flexibility": {
           "$ref": "#/$defs/Flexibility",
@@ -287,6 +314,7 @@
       },
       "required": [
         "general",
+        "elicitation_context",
         "functional_suitability",
         "performance_efficiency",
         "compatibility",
@@ -301,7 +329,7 @@
       "type": "object"
     },
     "QaAnswer": {
-      "description": "One `QaSection`'s free-form prose answer.\n\nDeliberately **not** heading-anchored, unlike `RawRequirements`/\n`MoreInformation` (which each own a fixed `##`/`###` heading of their\nown): in the schema, `answer` is simply the trailing prose that follows\n`question`'s block quote within the same `QaSection`, with no heading of\nits own (verified against `qa_reference.md` -- no `#### Answer`/similar\nheading appears anywhere). A bare `MarkdownStr` subclass with no\n`@markdown` metadata already captures \"everything remaining\" verbatim in\n`_value` via the base class's own `get_extent` (no heading-level stop\ncondition applies), exactly the leaf behavior this field needs.\n\nAdds a `text` computed property (mirroring `MarkdownParagraph.text`/\n`MarkdownSection.text`/`MarkdownCodeBlock.text`'s established pattern) so\nthis otherwise-private `_value` is reachable through `model_dump()`/\n`model_dump_json()` -- the same serialization path an MCP tool's return\nvalue goes through.",
+      "description": "One `QaQuestionAnswer`'s free-form prose answer -- an opaque, unparsed markdown blob.\n\nDeliberately **not** heading-anchored, mirroring `qa/models/v1/body.py`'s\nown `QaAnswer` shape. Unlike v1 (where `answer` is always the *last*\ndeclared field of a heading-bounded `QaSection`, so the base\n`MarkdownStr.get_extent`'s \"swallow everything remaining\" is correct),\nv2 allows further adjacent Q&A pairs to follow within the same\nenclosing category section -- so this class overrides `get_extent` to\nstop at the first depth-0 occurrence of a heading (any level), a block\nquote, or a comment, and only runs to the end of the given text when\nnone of those follow.\n\nAdds a `text` computed property (mirroring\n`MarkdownParagraph.text`/`MarkdownSection.text`/v1's own `QaAnswer.text`)\nso this otherwise-private `_value` is reachable through `model_dump()`/\n`model_dump_json()`.",
       "properties": {},
       "title": "QaAnswer",
       "type": "object"
@@ -365,8 +393,8 @@
       "title": "QaFrontmatter",
       "type": "object"
     },
-    "QaSection": {
-      "description": "`### {free-form heading}` -- one question/answer pair. Free-form H3 heading.\n\n`comment` is inherited from `MarkdownSection3WithComment` -- not\nredeclared here. All four fields (`comment`, `requirement`, `question`,\n`answer`) are fully optional.\n\nParameters\n----------\nrequirement:\n    `#### Requirement` callout. Optional.\nquestion:\n    The interviewer's question, as a block quote. Optional.\nanswer:\n    The interviewee's free-form prose answer. Optional.",
+    "QaQuestionAnswer": {
+      "description": "One adjacent question/answer pair, with no heading of its own (QA v2).\n\nAll three fields are independently optional. A comment with nothing\nrecognizable following it (end of section, or another heading right\nafter) becomes its own final `QaQuestionAnswer` with only `comment` set\n(`question`/`answer` both `None`) -- accepted, not an error.\n\nNo override of `from_text`/`__str__`/`_get_field_names()` is needed --\nall three fields are plain `Optional[SingleClass]`, which the generic,\nunmodified `MarkdownStr` engine already distributes/renders correctly.\n\nParameters\n----------\ncomment:\n    Optional leading `<!-- ... -->` comment, belonging to the question\n    that follows it.\nquestion:\n    The interviewer's question, as a block quote. Optional.\nanswer:\n    The interviewee's free-form prose answer. Optional.",
       "properties": {
         "answer": {
           "anyOf": [
@@ -390,7 +418,7 @@
             }
           ],
           "default": null,
-          "description": "Optional explanatory HTML comment (`<!-- ... -->`)."
+          "description": "Optional explanatory HTML comment (`<!-- ... -->`), belongs to `question`."
         },
         "question": {
           "anyOf": [
@@ -403,21 +431,9 @@
           ],
           "default": null,
           "description": "The interviewer's question, as a block quote. Optional."
-        },
-        "requirement": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/Requirement"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "`#### Requirement` callout. Optional."
         }
       },
-      "title": "QaSection",
+      "title": "QaQuestionAnswer",
       "type": "object"
     },
     "RawRequirements": {
@@ -429,11 +445,11 @@
     "Reliability": {
       "description": "`## Reliability` -- one of the 9 ISO/IEC 25010:2023 quality characteristics. Always present.",
       "properties": {
-        "items": {
+        "questions": {
           "anyOf": [
             {
               "items": {
-                "$ref": "#/$defs/QaSection"
+                "$ref": "#/$defs/QaQuestionAnswer"
               },
               "type": "array"
             },
@@ -442,27 +458,21 @@
             }
           ],
           "default": null,
-          "description": "Repeating Q&A pairs for this category. May be empty/absent.",
-          "title": "Items"
+          "description": "Repeating adjacent Q&A pairs for this category. May be empty/absent.",
+          "title": "Questions"
         }
       },
       "title": "Reliability",
       "type": "object"
     },
-    "Requirement": {
-      "description": "`#### Requirement` -- an optional callout promoting a Q&A pair's answer to a concrete requirement.\n\nLeaf class (no declared fields): its content is deliberately\nunspecified/arbitrary agent-authored data, not shaped like REQ's own\n`Requirement` fields (`statement`/`characteristics`/`level`/...) and not\na placeholder for future structure -- see the feature README's Design\nNotes.\n\nThe heading text is fixed (``\"Requirement\"``, matching the implicit\n`AliasType.SPACE_SEPARATED` derivation of this class's own name), not\nfree-form -- confirmed against `qa_reference.md`'s literal ``#### Requirement``\nheading.\n\nDecorated `@markdown(end_marker=MarkdownBlockQuote)` (Phase 1's new\nmechanism, merging into `MarkdownSection4`'s already-inherited\n`_metadata` rather than replacing it -- `type`/`tag` do not need to be\nre-passed here): since `requirement` is declared *before* `question` on\n`QaSection` below, `Requirement.get_extent` must stop at the next\ndepth-0 block quote, not just the next heading, or it would silently\nabsorb `question`'s own block quote into its own content.",
-      "properties": {},
-      "title": "Requirement",
-      "type": "object"
-    },
     "Safety": {
       "description": "`## Safety` -- one of the 9 ISO/IEC 25010:2023 quality characteristics. Always present.",
       "properties": {
-        "items": {
+        "questions": {
           "anyOf": [
             {
               "items": {
-                "$ref": "#/$defs/QaSection"
+                "$ref": "#/$defs/QaQuestionAnswer"
               },
               "type": "array"
             },
@@ -471,8 +481,8 @@
             }
           ],
           "default": null,
-          "description": "Repeating Q&A pairs for this category. May be empty/absent.",
-          "title": "Items"
+          "description": "Repeating adjacent Q&A pairs for this category. May be empty/absent.",
+          "title": "Questions"
         }
       },
       "title": "Safety",
@@ -481,11 +491,11 @@
     "Security": {
       "description": "`## Security` -- one of the 9 ISO/IEC 25010:2023 quality characteristics. Always present.",
       "properties": {
-        "items": {
+        "questions": {
           "anyOf": [
             {
               "items": {
-                "$ref": "#/$defs/QaSection"
+                "$ref": "#/$defs/QaQuestionAnswer"
               },
               "type": "array"
             },
@@ -494,8 +504,8 @@
             }
           ],
           "default": null,
-          "description": "Repeating Q&A pairs for this category. May be empty/absent.",
-          "title": "Items"
+          "description": "Repeating adjacent Q&A pairs for this category. May be empty/absent.",
+          "title": "Questions"
         }
       },
       "title": "Security",
@@ -503,7 +513,7 @@
     }
   },
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "description": "A full Question and Answer (QA) document: YAML frontmatter and body.\n\nAttributes\n----------\nfrontmatter:\n    The YAML frontmatter block. See :class:`QaFrontmatter`.\nbody:\n    The parsed Q&A sections. See :class:`Qa`.",
+  "description": "A full Question and Answer (QA) v2 document: YAML frontmatter and body.\n\nAttributes\n----------\nfrontmatter:\n    The YAML frontmatter block. See :class:`~biz.dfch.specmgr.qa.models.v1.frontmatter.QaFrontmatter`\n    (imported unchanged from `qa/models/v1/`, per REQ-003).\nbody:\n    The parsed Q&A sections. See :class:`~biz.dfch.specmgr.qa.models.v2.body.Qa`.",
   "properties": {
     "body": {
       "$ref": "#/$defs/Qa"
