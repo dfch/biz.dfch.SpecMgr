@@ -52,6 +52,8 @@ _MINIMAL_BODY = textwrap.dedent(
 
     Some raw requirements text.
 
+    ## Elicitation Context
+
     ## Functional Suitability
 
     ## Performance Efficiency

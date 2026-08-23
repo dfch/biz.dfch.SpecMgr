@@ -59,6 +59,8 @@ _DOC_TEMPLATE = textwrap.dedent(
 
     Some raw requirements text.
 
+    ## Elicitation Context
+
     ## Functional Suitability
 
     ## Performance Efficiency

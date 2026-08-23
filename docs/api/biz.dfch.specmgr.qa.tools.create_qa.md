@@ -13,7 +13,7 @@ frontmatter+content composition is factored into
 ``qa.tools._write.write_qa_file`` instead, shared with ``update_qa``.
 
 Thin file-I/O adapter; there is no in-memory cache of a parsed
-:class:`~biz.dfch.specmgr.qa.models.v1.QaDocument` -- the ``.md`` file
+:class:`~biz.dfch.specmgr.qa.models.v2.QaDocument` -- the ``.md`` file
 itself is always the source of truth, matching every other tool in this
 codebase.
 
@@ -31,7 +31,7 @@ built by this tool: a fresh id (``uuid.uuid4()``), ``type="qa"``,
 ``version`` set to the current ``models.md`` schema version.
 
 ``content`` is validated by constructing a
-:class:`~biz.dfch.specmgr.qa.models.v1.Qa` from it
+:class:`~biz.dfch.specmgr.qa.models.v2.Qa` from it
 (``Qa.from_text(format_text(content))``); a structural failure raises
 ``AssertionError`` and a field/cross-field failure raises
 ``pydantic.ValidationError``, both uncaught -- nothing is written in

@@ -84,10 +84,10 @@ Design Notes).
   document fails naturally with whatever structural
   `AssertionError`/`pydantic.ValidationError` `Qa.from_text`/
   `QaFrontmatter.model_validate` raises on its own.
-- REQ-005: Repoint every QA MCP tool (`create_qa`, `update_qa`,
-  `set_status_qa`, `parse_qa`, `list_qa`, `get_qa`, `get_qa_example`,
-  `get_qa_template`, `delete_qa` stub, `validate_qa`) at `qa/models/v2/`,
-  routed through REQ-004's version gate.
+- REQ-005 (revised 2026-08-23, see Decisions Made): Repoint every QA MCP
+  tool (`create_qa`, `update_qa`, `set_status_qa`, `parse_qa`, `list_qa`,
+  `get_qa`, `get_qa_example`, `get_qa_template`, `delete_qa` stub,
+  `validate_qa`) at `qa/models/v2/`.
 - REQ-006: Regenerate QA resources (`specmgr://qa/schema`, `/example`,
   `/template`, `/list`) from the v2 models/example/template.
 - REQ-007: Update QA prompts (`create_qa`, `update_qa`) narration for the
@@ -120,9 +120,13 @@ Design Notes).
   `AssertionError`/`pydantic.ValidationError` from `Qa.from_text`/
   `QaFrontmatter.model_validate`, with no attempt at v1 parsing and no
   fallback.
-- [ ] ACC-005: Verifies REQ-005 — every listed QA tool is registered,
-  callable, operates against v2 documents, and surfaces REQ-004's error for
-  a v1 document passed to a read path (`get_qa`/`parse_qa`/`validate_qa`).
+- [ ] ACC-005 (revised 2026-08-23, see Decisions Made): Verifies REQ-005 —
+  every listed QA tool is registered, callable, operates against v2
+  documents, and surfaces the same structural
+  `AssertionError`/`pydantic.ValidationError` `Qa.from_text`/
+  `QaFrontmatter.model_validate` raise on their own for a v1-shaped document
+  passed to a read path (`get_qa`/`parse_qa`/`validate_qa`), per REQ-004's
+  revised (Phase 3) no-gate design.
 - [ ] ACC-006: Verifies REQ-006 — the three QA resources reflect v2's shape
   (schema/example/template all parse as v2 documents).
 - [ ] ACC-007: Verifies REQ-007 — `create_qa`/`update_qa` prompt content
@@ -432,17 +436,20 @@ at all). REQ-004/ACC-004 above were revised in place to match.
 
 #### Phase 4: Rewire `qa/tools/*`
 
-- [ ] Task 4.1: Repoint `create_qa`, `update_qa`, `set_status_qa`,
-  `parse_qa`, `list_qa`, `get_qa`, `get_qa_example`, `get_qa_template`,
-  `delete_qa` (stub), `validate_qa` at `qa/models/v2/`, routed through the
-  version gate — depends on: Task 3.3 — status: not-started.
-- [ ] Task 4.2: Update/extend `tests/qa/tools/` for v2 behavior and the
-  version-gate error path through the actual tool functions (ACC-005) —
-  depends on: Task 4.1 — status: not-started.
-- [ ] Task 4.3: Phase-end quality gate; update Progress section; commit
+- [x] Task 4.1 (revised 2026-08-23, see Decisions Made): Repoint
+  `create_qa`, `update_qa`, `set_status_qa`, `parse_qa`, `list_qa`,
+  `get_qa`, `get_qa_example`, `get_qa_template`, `delete_qa` (stub),
+  `validate_qa` at `qa/models/v2/` -- repointed at v2's schema/parser (no
+  version gate exists -- see Phase 3's revised REQ-004 and Decisions Made)
+  — depends on: Task 3.3 — status: done (2026-08-23).
+- [x] Task 4.2: Update/extend `tests/qa/tools/` for v2 behavior through the
+  actual tool functions (ACC-005) — depends on: Task 4.1 — status: done
+  (2026-08-23).
+- [x] Task 4.3: Phase-end quality gate; update Progress section; commit
   (`feat(qa)!: repoint QA tools at v2 schema`, noting the breaking change
   for v1 documents in the commit body) — depends on: Task 4.2 — status:
-  not-started.
+  done (2026-08-23, quality gate green; commit itself left to the
+  orchestrator).
 
 #### Phase 5: Rewire `qa/resources/*`
 
@@ -518,8 +525,27 @@ document parsing successfully, a v1-shaped body failing with the same
 structural error `Qa.from_text` raises on its own (no v1 fallback), an
 invalid-frontmatter `ValidationError` case, and the ACC-003 cross-check.
 Phase 3's quality gate (`ruff format --check`, `ruff check`, `vulture`, full
-`unittest` suite -- 1317 tests total) is green. Phases 4-7 remain
-`not-started`.
+`unittest` suite -- 1317 tests total) is green.
+
+**Phase 4 is done.** Every one of the ten listed QA tools (`create_qa`,
+`update_qa`, `set_status_qa`, `parse_qa`, `list_qa`, `get_qa`,
+`get_qa_example`, `get_qa_template`, `delete_qa`, `validate_qa`) is
+repointed at `qa/models/v2/` (`QaSummary` deliberately stays imported from
+`qa/models/v1/` in `list_qa.py`, per REQ-002/REQ-003 -- it is a generic,
+body-schema-independent DTO). `tests/qa/tools/` (10 of 14 files needed
+changes; the other 4 -- `test__lock.py`, `test_delete_qa.py`,
+`test_get_qa_example.py`, `test_get_qa_template.py` -- had no v1-shaped
+fixtures or model imports to begin with) now uses v2-shaped fixtures
+(`## Elicitation Context` added, `.items`/`QaSection` usages converted to
+`.questions`/`QaQuestionAnswer`), and every read-path tool (`get_qa`,
+`parse_qa`, `validate_qa`) has an explicit ACC-005 test confirming a
+v1-shaped document fails with the same structural
+`AssertionError`/`pydantic.ValidationError` the v2 parser raises on its
+own, with no silent v1 fallback. REQ-005/ACC-005's own wording was revised
+in place to drop the stale "version gate" reference left over from Phase
+3's blocker resolution (see Decisions Made). Phase 4's quality gate
+(`ruff format --check`, `ruff check`, `vulture`, full `unittest` suite --
+1322 tests total) is green. Phases 5-7 remain `not-started`.
 
 ### Blockers
 
@@ -693,6 +719,33 @@ Phase 3 is recorded in Decisions Made, not repeated here.)
   Criteria above) were revised in place to match, per this plan's own
   "edit task/requirement descriptions in place, rely on git history to
   recover what was originally planned" policy.
+- **2026-08-23 (Phase 4)**: REQ-005/ACC-005's wording (originally written
+  before Phase 3's version-gate blocker was discovered and resolved, see
+  the two Phase 3 entries above) still referenced "the version gate"/
+  "REQ-004's error" as if a dedicated gate mechanism existed. Revised both
+  in place, same edit-in-place-rely-on-git-history policy this plan
+  already uses for REQ-004/ACC-004: REQ-005 drops the
+  ", routed through REQ-004's version gate" clause entirely; ACC-005 now
+  describes the same structural `AssertionError`/`pydantic.ValidationError`
+  `Qa.from_text`/`QaFrontmatter.model_validate` raise on their own for a
+  v1-shaped document, per REQ-004's revised (Phase 3) no-gate design, not
+  a distinct "REQ-004's error".
+- **2026-08-23 (Phase 4)**: `get_qa`'s own id-based lookup
+  (`qa.tools._paths.find_qa_path`) silently skips any file that fails to
+  parse -- a pre-existing, unrelated-to-this-v1/v2-cutover behavior
+  (documented in that module's own docstring, proven by
+  `test__paths.py::test_skips_malformed_file_and_still_finds_valid_one`,
+  which predates this feature). This means a v1-shaped file dropped into
+  the QA base directory can never be *found* by id in the first place --
+  calling `get_qa(some_id)` against it surfaces `QaNotFoundError`, not the
+  structural parse error ACC-005 asks read-path tools to surface. Rather
+  than treat this as a blocker, the ACC-005 test for `get_qa` is written
+  one layer down, directly against `qa.tools._io.read_qa` (the function
+  `get_qa` -> `load_by_id` calls once a path has already been resolved) --
+  the smallest unit that actually demonstrates "no silent v1 fallback"
+  for `get_qa`'s own read path, without contradicting the separate,
+  legitimate, already-established skip-on-parse-failure behavior of id
+  lookup itself.
 - **2026-08-23 (Phase 2)**: `whitelist.py`'s existing Pydantic-field-name
   block (already covering `items`/`answer`/`question`/`general`/the 9
   category field names for v1) was extended with `elicitation_context` and
@@ -792,6 +845,66 @@ Phase 3 is recorded in Decisions Made, not repeated here.)
 - Notes: No `src/biz/dfch/specmgr/models/md/` file was modified; no
   `qa/models/v1/` file was modified; Phase 1/2's `question_answer.py`/
   `body.py` were not modified. No commit was made (left to the
+  orchestrator).
+
+#### Update 2026-08-23T04:00:00Z
+
+- Completed: Phase 4 (Tasks 4.1-4.3). Repointed every QA MCP tool's model
+  imports from `qa/models/v1/` to `qa/models/v2/` in
+  `src/biz/dfch/specmgr/qa/tools/{create_qa,update_qa,set_status_qa,parse_qa,get_qa,validate_qa,_paths,_write,_io}.py`
+  (`Qa`/`QaDocument`/`QaFrontmatter`/`parse_qa`, per file), plus each
+  file's Sphinx `:class:`/prose docstring references. `list_qa.py` keeps
+  `QaSummary` imported from `qa/models/v1/` (confirmed, by reading
+  `qa/models/v1/summary.py`, to be a generic, body-schema-independent DTO
+  with no coupling to `Qa`'s field shape) but had its one `parse_qa`
+  docstring cross-reference updated to `v2`. `get_qa_example.py`,
+  `get_qa_template.py`, and `delete_qa.py` needed no change at all (no
+  model imports, no `qa.models.v*` docstring references) -- confirmed by
+  direct inspection, per the plan's own scope note.
+  `create_qa.py`'s unrelated `CURRENT_SCHEMA_VERSION` import from
+  `...models.md` was left untouched, as instructed. Rewrote
+  `tests/qa/tools/{test_create_qa,test_update_qa,test_set_status_qa,test_parse_qa,test_get_qa,test_list_qa,test_validate_qa,test__io,test__paths,test__write}.py`
+  (10 of the 14 files in the directory) to v2-shaped fixtures: every
+  body-markdown fixture gained a mandatory `## Elicitation Context`
+  section between `## General` and `## Functional Suitability`;
+  `.compatibility.items`/`### {heading}`-per-question assertions were
+  converted to `.compatibility.questions`/adjacent-pair
+  (`> question` + prose, no heading) shape; every `QaDocument`
+  `isinstance`/type-annotated import moved from `models.v1` to `models.v2`
+  (confirmed the two are genuinely distinct classes, not aliases, so a
+  stale `v1` import would silently break `isinstance` checks against what
+  the now-v2-backed tools actually return). `test__write.py` keeps its
+  `QaFrontmatter` import pinned to `models.v1` (the deliberately-shared
+  symbol) while its `parse_qa` round-trip check moved to `models.v2`. The
+  other 4 files (`test__lock.py`, `test_delete_qa.py`,
+  `test_get_qa_example.py`, `test_get_qa_template.py`) needed no change --
+  confirmed by reading each: no v1-shaped fixture, no `.items`/`.questions`
+  access, no `qa.models.v*` import at all (the packaged example/template
+  files they exercise remain v1-shaped on disk, unchanged, since
+  regenerating them is Phase 5/REQ-006's job, not this phase's).
+  Added the explicit ACC-005 test coverage requested for every read-path
+  tool: `test_parse_qa.py::test_raises_structural_error_for_v1_shaped_document`,
+  `test_validate_qa.py::test_raises_structural_error_for_v1_shaped_{body_only_content,full_document}`,
+  and, for `get_qa` (whose own id-based lookup silently *skips* any file
+  that fails to parse, per `qa.tools._paths.find_qa_path`'s pre-existing,
+  unrelated-to-this-cutover design -- so a v1-shaped file can never be
+  *found* by id in the first place), `test_get_qa.py::test_read_path_surfaces_structural_error_for_v1_shaped_document`
+  and `test__io.py::TestReadQa.test_raises_structural_error_for_v1_shaped_document`,
+  both exercising `qa.tools._io.read_qa` directly -- the smallest unit
+  `get_qa` actually delegates to for parsing once a path is resolved (see
+  Decisions Made for the full reasoning behind this design choice).
+  Revised REQ-005/ACC-005 and Task 4.1's own description in place to drop
+  the stale "version gate"/"routed through REQ-004's version gate"
+  wording left over from before Phase 3's blocker resolution. Quality
+  gate green: `ruff format --check`, `ruff check`, `vulture src/
+  whitelist.py --min-confidence 60` (no findings), full `unittest
+  discover` (1322 tests, all passing).
+- Next: Phase 5 — regenerate `specmgr://qa/schema`, `/example`, `/template`
+  from v2 models/example/template (REQ-006/ACC-006).
+- Notes: No `src/biz/dfch/specmgr/models/md/` file was modified; no
+  `qa/models/v1/` file was modified; Phases 1-3's `qa/models/v2/`
+  files (`question_answer.py`, `body.py`, `document.py`, `parser.py`,
+  `__init__.py`) were not modified. No commit was made (left to the
   orchestrator).
 
 ### Related PRs / Commits

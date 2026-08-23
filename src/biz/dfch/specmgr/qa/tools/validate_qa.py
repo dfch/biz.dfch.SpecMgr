@@ -33,7 +33,7 @@ import frontmatter
 
 from ...models.md._markdown import format_text
 from ...server import mcp
-from ..models.v1 import Qa, parse_qa
+from ..models.v2 import Qa, parse_qa
 
 
 @mcp.tool(
@@ -48,9 +48,9 @@ from ..models.v1 import Qa, parse_qa
 def validate_qa(content: str, full: bool = False) -> bool:
     """Validate ``content`` as QA markdown, without reading or writing any file.
 
-    "Validate" means letting :class:`~biz.dfch.specmgr.qa.models.v1.Qa`/
-    :class:`~biz.dfch.specmgr.qa.models.v1.QaFrontmatter`/
-    :class:`~biz.dfch.specmgr.qa.models.v1.QaDocument`'s own Pydantic
+    "Validate" means letting :class:`~biz.dfch.specmgr.qa.models.v2.Qa`/
+    :class:`~biz.dfch.specmgr.qa.models.v2.QaFrontmatter`/
+    :class:`~biz.dfch.specmgr.qa.models.v2.QaDocument`'s own Pydantic
     validators run during parsing -- there is no separate validation pass.
     Successfully constructing the model *is* the validation, so this
     function only ever returns ``True``; any parse/validation failure

@@ -21,11 +21,11 @@
 Deliberately **not** part of ``qa.tools._io`` -- that module's own docstring
 rules out a ``write_qa``/``render_qa`` counterpart to ``read_qa``, since this
 design never renders a body back out from a parsed
-:class:`~biz.dfch.specmgr.qa.models.v1.QaDocument` model (unlike
+:class:`~biz.dfch.specmgr.qa.models.v2.QaDocument` model (unlike
 ``adr.tools._io.write_adr``, which does via ``render_adr``). What
 :func:`write_qa_file` does instead is a strictly narrower thing: combine an
 already-constructed, already-validated
-:class:`~biz.dfch.specmgr.qa.models.v1.QaFrontmatter` with the caller's own
+:class:`~biz.dfch.specmgr.qa.models.v2.QaFrontmatter` with the caller's own
 already-validated *raw* body text (never reformatted/re-rendered) into one
 file. Factored out of ``create_qa.py`` into its own module so
 ``update_qa.py`` does not have to duplicate it. 1:1 port of
@@ -38,7 +38,7 @@ from pathlib import Path
 
 import frontmatter
 
-from ..models.v1 import QaFrontmatter
+from ..models.v2 import QaFrontmatter
 
 __all__ = ["write_qa_file"]
 

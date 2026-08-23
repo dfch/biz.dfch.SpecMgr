@@ -179,7 +179,7 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`option_list`](#tool-option_list) | Full titles of every current 'Option N: ...' sub-section, in document order (plan §5). |
 | [`option_read`](#tool-option_read) | Return the current content of the option named full_title (plan §5). |
 | [`option_update`](#tool-option_update) | Full-content replace of the option named full_title (plan §5), returning the new content. |
-| [`parse_qa`](#tool-parse_qa) | Parse a QA document markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.qa.models.v1.QaDocument`. |
+| [`parse_qa`](#tool-parse_qa) | Parse a QA document markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.qa.models.v2.QaDocument`. |
 | [`parse_req`](#tool-parse_req) | Parse a requirement markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.req.models.v1.ReqDocument`. |
 | [`parse_tsk`](#tool-parse_tsk) | Parse a task list markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.tsk.models.v1.TskDocument`. |
 | [`parse_uc`](#tool-parse_uc) | Parse a use-case markdown file (YAML frontmatter + body) from disk into a structured document. |
@@ -515,7 +515,7 @@ Full-content replace of the option named full_title (plan §5), returning the ne
 
 **Parse QA document**
 
-Parse a QA document markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.qa.models.v1.QaDocument`.
+Parse a QA document markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.qa.models.v2.QaDocument`.
 
 | Parameter | Type | Required |
 | --- | --- | --- |

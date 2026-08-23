@@ -26,10 +26,60 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from biz.dfch.specmgr.qa.models.v1 import QaDocument
+from biz.dfch.specmgr.qa.models.v2 import QaDocument
 from biz.dfch.specmgr.qa.tools.parse_qa import parse_qa
 
 _VALID_DOC = textwrap.dedent(
+    """\
+    ---
+    id: qa-001
+    type: qa
+    status: draft
+    ---
+
+    # Some QA Title
+
+    ## General
+
+    ### Introduction
+
+    Some intro text.
+
+    ### Raw Requirements
+
+    Some raw requirements text.
+
+    ## Elicitation Context
+
+    ## Functional Suitability
+
+    > Is this acceptable?
+
+    Yes, it is acceptable.
+
+    ## Performance Efficiency
+
+    ## Compatibility
+
+    ## Interaction Capability
+
+    ## Reliability
+
+    ## Security
+
+    ## Maintainability
+
+    ## Flexibility
+
+    ## Safety
+
+    ## More Information
+
+    This optional section can contain additional information.
+    """
+)
+
+_V1_SHAPED_DOC = textwrap.dedent(
     """\
     ---
     id: qa-001
@@ -113,7 +163,7 @@ class TestParseQaTool(unittest.TestCase):
     def test_model_dump_surfaces_leaf_section_body_content(self) -> None:
         """Regression test: `model_dump()` must surface the full body prose --
         not just the heading -- for `RawRequirements`/`MoreInformation`/
-        `QaAnswer`, the bare leaf classes in `qa.models.v1.body` that declare
+        `QaAnswer`, the bare leaf classes in `qa.models.v2.body` that declare
         no field of their own to hold their content.
         """
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -126,7 +176,7 @@ class TestParseQaTool(unittest.TestCase):
             body = dump["body"]
             self.assertIn("Some raw requirements text.", body["general"]["raw_requirements"]["text"])
             self.assertIn("additional information", body["more_information"]["text"])
-            item = body["functional_suitability"]["items"][0]
+            item = body["functional_suitability"]["questions"][0]
             self.assertIn("Yes, it is acceptable.", item["answer"]["text"])
             self.assertIn("Is this acceptable?", item["question"]["text"])
 
@@ -156,6 +206,21 @@ class TestParseQaTool(unittest.TestCase):
         """parse_qa must raise FileNotFoundError for a nonexistent path."""
         with self.assertRaises(FileNotFoundError):
             parse_qa("/nonexistent/path/to/file.md")
+
+    def test_raises_structural_error_for_v1_shaped_document(self) -> None:
+        """A v1-shaped document (per-question `### {heading}` sub-sections, no
+        `## Elicitation Context`) must fail with the same structural
+        `AssertionError`/`pydantic.ValidationError` that
+        `qa.models.v2.parser.parse_qa`/`Qa.from_text` raise on their own --
+        there is no version gate and no silent fallback to v1 parsing (ACC-005,
+        REQ-004 revised 2026-08-23).
+        """
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "test.md"
+            path.write_text(_V1_SHAPED_DOC, encoding="utf-8")
+
+            with self.assertRaises(AssertionError):
+                parse_qa(str(path))
 
 
 if __name__ == "__main__":

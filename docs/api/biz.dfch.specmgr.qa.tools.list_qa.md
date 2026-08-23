@@ -21,7 +21,7 @@ Return one page of one-line QA document summaries from the configured base direc
 
 A file that fails to parse (``AssertionError`` or
 ``pydantic.ValidationError`` -- the same two error channels
-:func:`~biz.dfch.specmgr.qa.models.v1.parse_qa` raises) is silently
+:func:`~biz.dfch.specmgr.qa.models.v2.parse_qa` raises) is silently
 skipped -- a single malformed file must not break listing every other
 valid one (mirrors ``qa.tools._paths.find_qa_path``'s own
 skip-on-parse-failure rule). The complete, skip-broken-file-filtered

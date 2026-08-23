@@ -30,7 +30,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from ...server import mcp
-from ..models.v1 import QaDocument, parse_qa as _parse_qa
+from ..models.v2 import QaDocument, parse_qa as _parse_qa
 
 
 @mcp.tool(
@@ -38,7 +38,7 @@ from ..models.v1 import QaDocument, parse_qa as _parse_qa
     title="Parse QA document",
     description=(
         "Parse a QA document markdown file (YAML frontmatter + body) from disk "
-        "into a structured :class:`~biz.dfch.specmgr.qa.models.v1.QaDocument`."
+        "into a structured :class:`~biz.dfch.specmgr.qa.models.v2.QaDocument`."
     ),
 )
 def parse_qa(path: str) -> QaDocument:

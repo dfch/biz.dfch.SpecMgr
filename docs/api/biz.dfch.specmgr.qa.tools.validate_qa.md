@@ -17,9 +17,9 @@ own ``content`` argument, exposed standalone here. 1:1 port of
 
 Validate ``content`` as QA markdown, without reading or writing any file.
 
-"Validate" means letting :class:`~biz.dfch.specmgr.qa.models.v1.Qa`/
-:class:`~biz.dfch.specmgr.qa.models.v1.QaFrontmatter`/
-:class:`~biz.dfch.specmgr.qa.models.v1.QaDocument`'s own Pydantic
+"Validate" means letting :class:`~biz.dfch.specmgr.qa.models.v2.Qa`/
+:class:`~biz.dfch.specmgr.qa.models.v2.QaFrontmatter`/
+:class:`~biz.dfch.specmgr.qa.models.v2.QaDocument`'s own Pydantic
 validators run during parsing -- there is no separate validation pass.
 Successfully constructing the model *is* the validation, so this
 function only ever returns ``True``; any parse/validation failure

@@ -24,7 +24,7 @@ import textwrap
 import unittest
 from pathlib import Path
 
-from biz.dfch.specmgr.qa.models.v1 import QaDocument
+from biz.dfch.specmgr.qa.models.v2 import QaDocument
 from biz.dfch.specmgr.qa.tools._io import load_by_id, read_qa
 from biz.dfch.specmgr.qa.tools._paths import QaNotFoundError
 
@@ -51,7 +51,58 @@ _DOC_TEMPLATE = textwrap.dedent(
 
     Some raw requirements text.
 
+    ## Elicitation Context
+
     ## Functional Suitability
+
+    ## Performance Efficiency
+
+    ## Compatibility
+
+    ## Interaction Capability
+
+    ## Reliability
+
+    ## Security
+
+    ## Maintainability
+
+    ## Flexibility
+
+    ## Safety
+    """
+)
+
+_V1_SHAPED_DOC_TEMPLATE = textwrap.dedent(
+    """\
+    ---
+    id: {id}
+    type: qa
+    version: 1.0.0
+    status: draft
+    created: 2026-08-18
+    updated: 2026-08-18
+    ---
+
+    # Some QA Title
+
+    ## General
+
+    ### Introduction
+
+    Some intro text.
+
+    ### Raw Requirements
+
+    Some raw requirements text.
+
+    ## Functional Suitability
+
+    ### What must happen?
+
+    > Is this acceptable?
+
+    Yes, it is acceptable.
 
     ## Performance Efficiency
 
@@ -77,6 +128,13 @@ def _qa_text(id_: str) -> str:
     return _DOC_TEMPLATE.format(id=id_)
 
 
+def _v1_shaped_qa_text(id_: str) -> str:
+    """Render a v1-shaped (per-question `### {heading}`, no Elicitation Context)
+    document's text for the given id -- no longer parseable by `qa.models.v2`.
+    """
+    return _V1_SHAPED_DOC_TEMPLATE.format(id=id_)
+
+
 class TestReadQa(unittest.TestCase):
     """Tests for read_qa."""
 
@@ -91,6 +149,21 @@ class TestReadQa(unittest.TestCase):
             self.assertIsInstance(document, QaDocument)
             self.assertEqual(document.frontmatter.id, "some-id")
             self.assertEqual(document.body.text, "Some QA Title")
+
+    def test_raises_structural_error_for_v1_shaped_document(self) -> None:
+        """`read_qa` -- the read path `get_qa` calls internally once `load_by_id`
+        has resolved an id to a path -- must fail with the same structural
+        `AssertionError` that `Qa.from_text` raises on its own for a
+        v1-shaped document (per-question `### {heading}` sub-sections, no
+        `## Elicitation Context`); no version gate, no silent fallback to v1
+        parsing (ACC-005, REQ-004 revised 2026-08-23).
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "doc.md"
+            path.write_text(_v1_shaped_qa_text("some-id"), encoding="utf-8")
+
+            with self.assertRaises(AssertionError):
+                read_qa(path)
 
 
 class TestLoadById(unittest.TestCase):

@@ -43,7 +43,7 @@ from ...general.tools._doc_paths import (
     find_doc_path_by_id,
     iter_doc_paths,
 )
-from ..models.v1 import QaDocument, parse_qa
+from ..models.v2 import QaDocument, parse_qa
 
 __all__ = [
     "QA_TYPE_NAME",
@@ -124,7 +124,7 @@ def find_qa_path(base_dir: Path, id_: str) -> Path:
     """Resolve an ``id`` to its on-disk file path under ``base_dir``.
 
     Scans every ``*.md`` file under ``base_dir``, parsing each via
-    :func:`~biz.dfch.specmgr.qa.models.v1.parse_qa` and comparing
+    :func:`~biz.dfch.specmgr.qa.models.v2.parse_qa` and comparing
     ``frontmatter.id`` against ``id_``. A file that fails to parse
     (``AssertionError``/``pydantic.ValidationError``) is silently skipped --
     one broken file must not prevent lookup of a different, valid id.

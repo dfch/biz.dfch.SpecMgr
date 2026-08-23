@@ -11,7 +11,7 @@ settable here -- see the dedicated ``set_status_qa`` tool. 1:1 port of
 
 Thin file-I/O/id-lookup adapter, re-reading and re-parsing the current
 on-disk state before re-writing the full file; there is no in-memory cache
-of a parsed :class:`~biz.dfch.specmgr.qa.models.v1.QaDocument` -- the
+of a parsed :class:`~biz.dfch.specmgr.qa.models.v2.QaDocument` -- the
 ``.md`` file itself is always the source of truth. The whole sequence runs
 under ``qa_lock(id)`` so a concurrent mutation against the same id cannot
 interleave with it and cause a lost update (mirrors every ADR/REQ mutation

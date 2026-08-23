@@ -20,7 +20,7 @@
 The only path that changes a QA document's ``status`` -- mirrors
 ``adr.tools.set_status``/``req.tools.set_status_req``, minus the
 ``superseded_by``-composition special case:
-:class:`~biz.dfch.specmgr.qa.models.v1.QaFrontmatter.status` has no
+:class:`~biz.dfch.specmgr.qa.models.v2.QaFrontmatter.status` has no
 ``"superseded by ..."`` pattern, just the closed four-value set (reused
 from TSK) -- ``draft``/``active``/``done``/``cancelled``. Neither
 ``create_qa`` nor ``update_qa`` accept a ``status`` argument at all -- this
@@ -28,7 +28,7 @@ is the sole entry point.
 
 Thin file-I/O/id-lookup adapter, re-reading and re-parsing the current
 on-disk state before re-writing the full file; there is no in-memory cache
-of a parsed :class:`~biz.dfch.specmgr.qa.models.v1.QaDocument` -- the
+of a parsed :class:`~biz.dfch.specmgr.qa.models.v2.QaDocument` -- the
 ``.md`` file itself is always the source of truth. The whole sequence runs
 under ``qa_lock(id)`` so a concurrent mutation against the same id cannot
 interleave with it and cause a lost update.
@@ -41,7 +41,7 @@ from datetime import datetime
 import frontmatter
 
 from ...server import mcp
-from ..models.v1 import QaDocument, QaFrontmatter
+from ..models.v2 import QaDocument, QaFrontmatter
 from ._io import load_by_id
 from ._lock import qa_lock
 from ._paths import qa_base_dir
@@ -72,7 +72,7 @@ def set_status_qa(id: str, status: str) -> QaDocument:
         The document's specmgr-assigned identifier.
     status:
         The new status. Must be one of the four values
-        :class:`~biz.dfch.specmgr.qa.models.v1.QaFrontmatter.status`
+        :class:`~biz.dfch.specmgr.qa.models.v2.QaFrontmatter.status`
         accepts (``draft``/``active``/``done``/``cancelled``).
 
     Returns

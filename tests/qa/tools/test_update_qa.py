@@ -26,7 +26,7 @@ from pathlib import Path
 from unittest import mock
 
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
-from biz.dfch.specmgr.qa.models.v1 import QaDocument, parse_qa
+from biz.dfch.specmgr.qa.models.v2 import QaDocument, parse_qa
 from biz.dfch.specmgr.qa.tools._paths import QaNotFoundError, ensure_qa_base_dir
 from biz.dfch.specmgr.qa.tools.create_qa import create_qa
 from biz.dfch.specmgr.qa.tools.update_qa import update_qa
@@ -44,6 +44,8 @@ _MINIMAL_BODY = textwrap.dedent(
     ### Raw Requirements
 
     Some raw requirements text.
+
+    ## Elicitation Context
 
     ## Functional Suitability
 

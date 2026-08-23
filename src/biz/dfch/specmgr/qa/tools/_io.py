@@ -33,7 +33,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ..models.v1 import QaDocument, parse_qa
+from ..models.v2 import QaDocument, parse_qa
 from ._paths import find_qa_path
 
 __all__ = ["load_by_id", "read_qa"]

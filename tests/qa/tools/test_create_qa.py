@@ -27,7 +27,7 @@ from unittest import mock
 
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.models.md import CURRENT_SCHEMA_VERSION
-from biz.dfch.specmgr.qa.models.v1 import QaDocument, parse_qa
+from biz.dfch.specmgr.qa.models.v2 import QaDocument, parse_qa
 from biz.dfch.specmgr.qa.tools._paths import qa_base_dir
 from biz.dfch.specmgr.qa.tools.create_qa import create_qa
 
@@ -44,6 +44,8 @@ _MINIMAL_BODY = textwrap.dedent(
     ### Raw Requirements
 
     Some raw requirements text.
+
+    ## Elicitation Context
 
     ## Functional Suitability
 
@@ -109,7 +111,7 @@ class TestCreateQa(TempQaDirTestCase):
         self.assertEqual(on_disk.frontmatter.id, result.frontmatter.id)
         self.assertEqual(on_disk.frontmatter.status, "draft")
         self.assertEqual(on_disk.body.text, "Some QA Title")
-        self.assertIsNone(on_disk.body.compatibility.items)
+        self.assertIsNone(on_disk.body.compatibility.questions)
 
     def test_creates_base_dir_if_missing(self) -> None:
         """create_qa must create the QA base directory if it does not exist yet."""

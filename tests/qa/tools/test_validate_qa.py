@@ -40,6 +40,8 @@ _MINIMAL_BODY = textwrap.dedent(
 
     Some raw requirements text.
 
+    ## Elicitation Context
+
     ## Functional Suitability
 
     ## Performance Efficiency
@@ -61,6 +63,46 @@ _MINIMAL_BODY = textwrap.dedent(
 )
 
 _MALFORMED_BODY = "# Title\n\nJust a paragraph, no recognized QA sections.\n"
+
+_V1_SHAPED_BODY = textwrap.dedent(
+    """\
+    # Some QA Title
+
+    ## General
+
+    ### Introduction
+
+    Some intro text.
+
+    ### Raw Requirements
+
+    Some raw requirements text.
+
+    ## Functional Suitability
+
+    ### What must happen?
+
+    > Is this acceptable?
+
+    Yes, it is acceptable.
+
+    ## Performance Efficiency
+
+    ## Compatibility
+
+    ## Interaction Capability
+
+    ## Reliability
+
+    ## Security
+
+    ## Maintainability
+
+    ## Flexibility
+
+    ## Safety
+    """
+)
 
 _FULL_DOCUMENT = (
     textwrap.dedent(
@@ -111,6 +153,39 @@ class TestValidateQa(unittest.TestCase):
         text = _FULL_DOCUMENT.replace("status: draft", "status: not-a-real-status")
         with self.assertRaises(ValidationError):
             validate_qa(text, full=True)
+
+    def test_raises_structural_error_for_v1_shaped_body_only_content(self) -> None:
+        """A v1-shaped body (per-question `### {heading}` sub-sections, no
+        `## Elicitation Context`) must fail with the same structural
+        `AssertionError` that `Qa.from_text` raises on its own -- no version
+        gate, no silent fallback to v1 parsing (ACC-005, REQ-004 revised
+        2026-08-23).
+        """
+        with self.assertRaises(AssertionError):
+            validate_qa(_V1_SHAPED_BODY)
+
+    def test_raises_structural_error_for_v1_shaped_full_document(self) -> None:
+        """Same as above, but for a complete v1-shaped document (frontmatter +
+        body) via `full=True`, exercising `qa.models.v2.parser.parse_qa`.
+        """
+        full_v1_document = (
+            textwrap.dedent(
+                """\
+            ---
+            id: qa-001
+            type: qa
+            version: 1.0.0
+            status: draft
+            created: 2026-08-18
+            updated: 2026-08-18
+            ---
+
+            """
+            )
+            + _V1_SHAPED_BODY
+        )
+        with self.assertRaises(AssertionError):
+            validate_qa(full_v1_document, full=True)
 
 
 if __name__ == "__main__":

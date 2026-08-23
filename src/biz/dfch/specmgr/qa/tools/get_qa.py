@@ -31,7 +31,7 @@ a tool (get_req), not a resource") for the full rationale.
 from __future__ import annotations
 
 from ...server import mcp
-from ..models.v1 import QaDocument
+from ..models.v2 import QaDocument
 from ._io import load_by_id
 from ._paths import qa_base_dir
 

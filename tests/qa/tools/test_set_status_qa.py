@@ -28,7 +28,7 @@ from unittest import mock
 from pydantic import ValidationError
 
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
-from biz.dfch.specmgr.qa.models.v1 import QaDocument, parse_qa
+from biz.dfch.specmgr.qa.models.v2 import QaDocument, parse_qa
 from biz.dfch.specmgr.qa.tools._paths import QaNotFoundError, ensure_qa_base_dir
 from biz.dfch.specmgr.qa.tools.create_qa import create_qa
 from biz.dfch.specmgr.qa.tools.set_status_qa import set_status_qa
@@ -46,6 +46,8 @@ _MINIMAL_BODY = textwrap.dedent(
     ### Raw Requirements
 
     Some raw requirements text.
+
+    ## Elicitation Context
 
     ## Functional Suitability
 
@@ -109,7 +111,7 @@ class TestSetStatusQa(TempQaDirTestCase):
 
         on_disk = parse_qa(self._find_path(original.frontmatter.id).read_text(encoding="utf-8"))
         self.assertEqual(on_disk.body.text, original.body.text)
-        self.assertIsNone(on_disk.body.compatibility.items)
+        self.assertIsNone(on_disk.body.compatibility.questions)
 
     def test_written_file_round_trips_via_parse_qa(self) -> None:
         """The updated file on disk must parse back with the new status."""

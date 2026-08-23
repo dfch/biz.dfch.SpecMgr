@@ -63,7 +63,7 @@ Path
 Resolve an ``id`` to its on-disk file path under ``base_dir``.
 
 Scans every ``*.md`` file under ``base_dir``, parsing each via
-:func:`~biz.dfch.specmgr.qa.models.v1.parse_qa` and comparing
+:func:`~biz.dfch.specmgr.qa.models.v2.parse_qa` and comparing
 ``frontmatter.id`` against ``id_``. A file that fails to parse
 (``AssertionError``/``pydantic.ValidationError``) is silently skipped --
 one broken file must not prevent lookup of a different, valid id.
