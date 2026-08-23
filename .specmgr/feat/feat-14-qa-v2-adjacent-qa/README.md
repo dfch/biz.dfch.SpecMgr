@@ -1,0 +1,537 @@
+---
+created: 2026-08-23
+id: feat-14-qa-v2-adjacent-qa
+status: planning
+updated: 2026-08-23
+version: 1.0.0
+---
+
+# Feature: QA v2 — adjacent question/answer pairs (no per-question heading)
+
+## Plan
+
+### Overview
+
+`qa/models/v1/`'s `QaSection` models one question/answer pair as its own
+free-form `### {heading}` H3 sub-section (`qa/models/v1/body.py:194-216`).
+This feature introduces a **v2** QA body schema, alongside (not replacing
+on disk) v1, where many question/answer pairs can appear directly one after
+another inside a single ISO/IEC 25010:2023 characteristic section — each
+pair is `<!-- optional comment -->` + `> {question}` (a block quote) +
+free-form answer prose, with **no heading of its own** per pair. The
+enclosing category section can also be entirely empty (zero pairs). A new,
+additional `## Elicitation Context` section (structurally identical to the
+9 ISO/IEC 25010:2023 characteristic sections) is introduced between
+`## General` and the first characteristic (`## Functional Suitability`).
+
+Once v2 is validated, every QA MCP tool/resource/prompt is repointed at it;
+existing v1-shaped documents are **not** auto-migrated — the shared parsing
+path checks `QaFrontmatter.version`'s major component and raises a clear,
+actionable error ("this document must be migrated") for anything that
+isn't v2. `qa/models/v1/` stays on disk (no tool reaches it anymore) as
+historical reference only; full deletion is a separate, later cleanup, out
+of this feature's scope.
+
+**Deliberately minimal footprint on the shared `models/md` engine.** Unlike
+feat-12 (which added a genuinely reusable `@markdown(end_marker=...)`
+mechanism to `MarkdownSection.get_extent`), this feature adds **zero**
+changes to `models/md/` — every new mechanic (the free-form
+"swallow-until-terminator" answer scan, the composite record's own
+`get_extent`) is implemented locally inside `qa/models/v2/`, by design (see
+Design Notes).
+
+### Requirements
+
+- REQ-001: `qa/models/v2/question_answer.py`: `QaAnswer` — an opaque,
+  free-form markdown blob (mirrors v1's own `QaAnswer` shape) whose own
+  `get_extent` stops at the first depth-0 occurrence of: a heading (any
+  level), a block quote, or a comment — otherwise it runs to the end of the
+  given text. `QaQuestionAnswer` — `comment: MarkdownComment | None`,
+  `question: MarkdownBlockQuote | None`, `answer: QaAnswer | None`, all
+  independently optional; its own `get_extent` sums the three fields' own
+  extents sequentially (0 total when nothing matches, which is what lets
+  the enclosing `questions` list — and therefore the whole category section
+  — be legitimately empty).
+- REQ-002: `qa/models/v2/body.py`: `_QaCategory(MarkdownSection2)` — a
+  private intermediate base declaring `questions: list[QaQuestionAnswer] | None` once (mirrors v1's own `_QaCategory` pattern exactly, including its
+  dynamic, non-hardcoded heading-level derivation — see Design Notes).
+  `ElicitationContext(_QaCategory)` (new) plus the 9 ISO/IEC 25010:2023
+  characteristic subclasses (`FunctionalSuitability`, ...,
+  `Safety`) — names verified verbatim against the live `specmgr://iso25010`
+  resource. `General`/`Introduction`/`RawRequirements`/`MoreInformation`
+  duplicated unchanged from v1 (full independence from v1, no imports
+  between the two schema versions). `Qa(MarkdownSection1)` H1 wrapper with
+  field order: `general` → `elicitation_context` →
+  `functional_suitability` → `performance_efficiency` → `compatibility` →
+  `interaction_capability` → `reliability` → `security` →
+  `maintainability` → `flexibility` → `safety` → `more_information`.
+- REQ-003: `QaFrontmatter` is imported unchanged from `qa/models/v1/` into
+  `qa/models/v2/` (frontmatter shape is not versioned by this feature, only
+  the body schema is) — its existing `version` field is the dispatch key
+  for REQ-004's gate.
+- REQ-004: A version-gate used by the shared QA parsing entry point: reads
+  `QaFrontmatter.version`'s major component and raises a clear, actionable
+  error (naming the unsupported version and stating the document must be
+  migrated) for anything that isn't v2's major. No dual v1/v2 read support
+  — a hard cutover, by explicit instruction.
+- REQ-005: Repoint every QA MCP tool (`create_qa`, `update_qa`,
+  `set_status_qa`, `parse_qa`, `list_qa`, `get_qa`, `get_qa_example`,
+  `get_qa_template`, `delete_qa` stub, `validate_qa`) at `qa/models/v2/`,
+  routed through REQ-004's version gate.
+- REQ-006: Regenerate QA resources (`specmgr://qa/schema`, `/example`,
+  `/template`, `/list`) from the v2 models/example/template.
+- REQ-007: Update QA prompts (`create_qa`, `update_qa`) narration for the
+  adjacent-pairs structure (no more "one H3 per question", `## Elicitation Context` called out alongside the 9 characteristics).
+- REQ-008: Cross-cutting doc regeneration (`specmgr docs`, `server.py`
+  module docstring, `AGENTS.md`) reflecting v2 as the QA domain's only
+  tool-reachable schema going forward.
+
+### Acceptance Criteria
+
+- [ ] ACC-001: Verifies REQ-001 — `QaAnswer.get_extent` stops correctly at
+  each of the three terminator kinds (heading/block quote/comment)
+  independently and runs to end-of-text when none follow;
+  `QaQuestionAnswer.get_extent`/`from_text` round-trip for: empty, comment-
+  only, question+answer, full comment+question+answer triple, a
+  multi-paragraph answer that embeds an ordered list (captured verbatim,
+  opaque), two/three adjacent pairs in sequence, and a trailing dangling
+  comment (accepted as a comment-only pair, not an error).
+- [ ] ACC-002: Verifies REQ-002 — a full reference document (mirroring the
+  example in Design Notes) with `## Elicitation Context` before `## Functional Suitability`, at least one category with zero pairs, and one
+  category with several adjacent pairs, parses and round-trips
+  successfully; all 10 `_QaCategory`-shaped fields are mandatory
+  (`questions` may be `None`).
+- [ ] ACC-003: Verifies REQ-003 — `qa/models/v2/` imports `QaFrontmatter`
+  from `qa/models/v1/` with no duplication; existing frontmatter validation
+  behavior (status set, required/optional fields) is unchanged.
+- [ ] ACC-004: Verifies REQ-004 — a v2-versioned document parses; a
+  v1-versioned (or any non-v2) document raises a clear, actionable error
+  naming the found version and instructing migration, with no attempt at
+  v1 parsing.
+- [ ] ACC-005: Verifies REQ-005 — every listed QA tool is registered,
+  callable, operates against v2 documents, and surfaces REQ-004's error for
+  a v1 document passed to a read path (`get_qa`/`parse_qa`/`validate_qa`).
+- [ ] ACC-006: Verifies REQ-006 — the three QA resources reflect v2's shape
+  (schema/example/template all parse as v2 documents).
+- [ ] ACC-007: Verifies REQ-007 — `create_qa`/`update_qa` prompt content
+  describes the adjacent-pairs structure and `## Elicitation Context`, with
+  no remaining reference to per-question H3 headings.
+- [ ] ACC-008: Verifies REQ-008 — `specmgr docs`, `specmgr mcp-docs`, and
+  `specmgr schema --type qa` all run clean with no drift; `AGENTS.md`
+  reflects v2 as QA's tool-reachable schema and notes v1 is retained
+  on-disk only, unreachable from tools.
+
+### Scope
+
+**Included in this feature:**
+
+- `qa/models/v2/` models (`question_answer.py`, `body.py`), fully
+  independent of `qa/models/v1/` except for the shared, unchanged
+  `QaFrontmatter`.
+- The version-gate mechanism and its wiring into every QA tool's parsing
+  path.
+- Full QA tool/resource/prompt rewiring to v2, in this same feature (not
+  deferred to a follow-up).
+- Example/template packaged data files and generated JSON Schema for v2.
+- Full test suite for the new models, the version gate, and the rewired
+  tools/resources/prompts.
+- `docs/`/`AGENTS.md` regeneration reflecting the v2 cutover.
+
+**Explicitly out of scope:**
+
+- Any change to the shared `models/md` engine — by design, every new
+  mechanic here is local to `qa/models/v2/` (see Design Notes).
+- An automated v1 → v2 document migration tool (the version gate only
+  detects and reports; it does not convert).
+- Deleting `qa/models/v1/` from disk (kept as historical reference; a
+  separate, later cleanup).
+- Any new `Requirement`-callout-style structure inside `QaQuestionAnswer`
+  (v1's `#### Requirement` callout has no v2 equivalent — not requested).
+- Cross-document validation or search over QA documents.
+
+### Dependencies
+
+- Depends on: ADR ece4554b-725c-4f76-bc04-5d2b760363d2 (domain-first
+  hierarchy), ADR e369ee2e-3353-4f92-991c-6367d76d832e (`.specmgr`
+  structure), ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614 (tool-only id-based
+  reads); the existing, unmodified `models/md` engine (`MarkdownStr`,
+  `MarkdownSection`, `MarkdownSection2`, `MarkdownSection2WithComment`,
+  `MarkdownBlockQuote`, `MarkdownComment`, `MarkdownParagraph`); the
+  existing `qa/models/v1/` package (referenced for shape/precedent only,
+  not imported, except `QaFrontmatter`); the live `specmgr://iso25010`
+  resource as the canonical source for the 9 characteristic names.
+- Blocks: None identified yet.
+
+### Design Notes
+
+**Schema:**
+
+```
+QaFrontmatter (imported unchanged from qa/models/v1/)
+
+Qa(MarkdownSection1)                              # H1, free-form title (alias ".+")
+├── general: General                              # always present
+├── elicitation_context: ElicitationContext        # always present, questions may be empty — NEW
+├── functional_suitability: <QaCategory>           # always present, questions may be empty
+├── performance_efficiency: <QaCategory>
+├── compatibility: <QaCategory>
+├── interaction_capability: <QaCategory>
+├── reliability: <QaCategory>
+├── security: <QaCategory>
+├── maintainability: <QaCategory>
+├── flexibility: <QaCategory>
+├── safety: <QaCategory>
+└── more_information: MoreInformation | None       # leaf, opaque raw text (unchanged from v1)
+
+General(MarkdownSection2WithComment)               # unchanged from v1
+├── introduction: Introduction
+└── raw_requirements: RawRequirements
+
+_QaCategory(MarkdownSection2)                      # private intermediate base, NEW shape
+└── questions: list[QaQuestionAnswer] | None       # repeating adjacent Q&A pairs; category may be empty
+
+QaQuestionAnswer(MarkdownStr)                      # one Q&A pair, NO heading of its own — NEW
+├── comment: MarkdownComment | None                # belongs to the question that follows it
+├── question: MarkdownBlockQuote | None
+└── answer: QaAnswer | None                        # opaque free-form blob, bounded scan (see below)
+```
+
+**Why `QaAnswer`/`QaQuestionAnswer` need local, non-reflective overrides
+(and why no `models/md` change is needed):** `models/md`'s generic
+`MarkdownStr.from_text`/`get_extent` machinery already distributes text
+among declared fields via each field type's own `get_extent`
+(`markdown_str.py:287-386`), and `process_list_field` already handles
+`list[QaQuestionAnswer]` generically once `QaQuestionAnswer.get_extent`
+correctly reports one pair's own extent. Two gaps existed relative to that
+generic machinery, both closed locally:
+
+1. `MarkdownStr`'s base `get_extent` (`markdown_str.py:60-97`) is "swallow
+   everything remaining" — correct for v1's `QaAnswer` (declared *last* in
+   a heading-bounded section) but wrong for v2, where more pairs can follow
+   within the same section. `QaAnswer`'s local override generalizes the
+   *existing* depth-0 scan pattern already used by
+   `MarkdownSection.get_extent`'s `end_marker` mechanism
+   (`markdown_section.py:121-146`, introduced by feat-12) from "stop at one
+   declared marker type" to "stop at the first of: heading (any level),
+   block quote, or comment" — copied and adapted locally, not exported to
+   `models/md`.
+2. No class in the codebase computes a composite's own extent as the sum
+   of its declared fields' extents (every existing composite is either
+   heading-bounded or a single pre-grouped markdown-it token — verified
+   against `MarkdownSection`, `MarkdownBlockQuote`, `MarkdownListItem`,
+   `MarkdownCodeBlock`, `MarkdownComment`). `QaQuestionAnswer.get_extent`
+   supplies this locally: mechanically the same per-field walk
+   `MarkdownStr.from_text`'s loop already performs
+   (`markdown_str.py:345-382`), just totaling extents instead of
+   instantiating.
+
+`QaQuestionAnswer`'s `from_text`/`__str__`/`_get_field_names()` need **no**
+override — all three fields are plain `Optional[SingleClass]` (no lists, no
+unions), which the generic, unmodified engine already handles correctly.
+
+**`_QaCategory`'s heading-level stop condition is dynamic, not
+hardcoded.** `_QaCategory(MarkdownSection2)` applies no `@markdown`
+decorator of its own; it inherits `_metadata = {"type": "heading_open", "tag": "h2"}` from `MarkdownSection2` through ordinary Python class-
+attribute inheritance. `MarkdownSection.get_extent` derives its stop level
+at runtime via `own_level = _HEADING_TAGS.index(own_tag) + 1`
+(`markdown_section.py:102`) — there is no literal level number anywhere in
+this path. If `_QaCategory` were ever changed to inherit from a different
+`MarkdownSectionN`, the stop level would follow automatically. This is
+identical to, and already proven by, v1's own `_QaCategory(MarkdownSection2)`.
+
+**`## Elicitation Context` is a 10th `_QaCategory`-shaped section, not one
+of the 9 ISO/IEC 25010:2023 characteristics** — it will not appear in (and
+is not derived from) the `specmgr://iso25010` resource; it is QA-schema-
+specific. It sits between `General` and `FunctionalSuitability` in both
+markdown document order and `Qa`'s field declaration order.
+
+**Trailing dangling comment:** a comment with nothing recognizable
+following it (end of section, or followed by another heading) becomes its
+own final `QaQuestionAnswer` with only `comment` set (`question`/`answer`
+both `None`) — accepted, not an error, by explicit instruction.
+
+**Hard version-gate cutover, no dual-read support:** by explicit
+instruction, the rewired tools do not attempt to parse v1-shaped documents
+at all — `QaFrontmatter.version`'s major component is checked and a clear
+migration-required error is raised for anything that isn't v2. This is
+simpler than, and a deliberate deviation from, ADR's own `version`-field
+dispatch-to-multiple-parsers pattern referenced in `AGENTS.md`.
+
+**Reference example** (cross-checked and confirmed during planning):
+
+```markdown
+# Widget Frobnicator Q&A
+
+## General
+
+### Introduction
+
+<!-- filled in during the kickoff interview -->
+
+This document captures the requirements interview for the Widget Frobnicator.
+
+### Raw Requirements
+
+The frobnicator must handle at least 500 widgets/minute.
+
+## Elicitation Context
+
+> Who are the primary stakeholders for this system?
+
+Product management and the on-call SRE team.
+
+## Functional Suitability
+
+<!-- comment belongs to the question right after it -->
+
+> What happens when the input queue is empty?
+
+The frobnicator idles and polls every 100ms.
+
+That polling interval is configurable via `poll_interval_ms`.
+
+> How should malformed widgets be handled?
+
+Malformed widgets are rejected and logged. The rejection flow is:
+
+1. Validate the widget schema.
+2. Log the failure with the widget's id.
+3. Increment the `rejected_total` counter.
+
+No retry is attempted for malformed input.
+
+## Performance Efficiency
+
+## Compatibility
+
+## Interaction Capability
+
+## Reliability
+
+## Security
+
+## Maintainability
+
+## Flexibility
+
+## Safety
+
+## More Information
+
+See the original ticket for background on throughput targets.
+```
+
+### Related ADRs
+
+- ece4554b-725c-4f76-bc04-5d2b760363d2: Organize the codebase by
+  document-type domain (domain-first hierarchy)
+- e369ee2e-3353-4f92-991c-6367d76d832e: Organize development artifacts in
+  `.specmgr` with feature-driven work units
+- ddfb1109-422d-4507-8dbc-dc5e4bec9614: (tool-only id-based reads, no
+  `specmgr://{type}/{id}` resource)
+
+### Task List
+
+Single, canonical breakdown of work phases and tasks. Status lives on the
+task itself — there is no separate "planned" vs. "executed" list to keep in
+sync; a task's line *is* its current status. Update it in place as work
+progresses (edit, don't duplicate).
+
+**Execution approach:** implementation happens on a dedicated feature
+branch, `feat/feat-14-qa-v2-adjacent-qa`, branched off `dev`, created only
+once this plan is approved (not yet created as of this writing). Each phase
+below ends with a mandatory phase-end task — extend/run that phase's unit
+tests, run the full pre-commit/quality gate (`ruff format --check`, `ruff check`, `vulture`, full `unittest` suite), and update this README's
+Progress section (Current Status, a dated Recent Updates entry, Decisions
+Made if applicable) — before the phase is considered done. Each phase is
+committed as one Conventional Commit, mirroring feat-12's own per-phase
+test-and-commit discipline
+(`.specmgr/feat/feat-12-qa-artifact/README.md`).
+
+#### Phase 0: Planning artifact
+
+- [x] Task 0.1: Write this feature plan to `.specmgr/feat/feat-14-qa-v2-adjacent-qa/README.md`
+  — depends on: none — status: done (2026-08-23).
+- [ ] Task 0.2: Create feature branch `feat/feat-14-qa-v2-adjacent-qa` off
+  `dev` — depends on: Task 0.1 — status: not-started.
+
+#### Phase 1: `QaAnswer` + `QaQuestionAnswer`
+
+- [ ] Task 1.1: Implement `qa/models/v2/question_answer.py`: `QaAnswer`
+  (bounded terminator scan) and `QaQuestionAnswer` (`comment`/`question`/
+  `answer`, `get_extent` override) — depends on: Task 0.2 — status:
+  not-started.
+- [ ] Task 1.2: Unit tests — `tests/qa/models/v2/test_question_answer.py`
+  covering every case in ACC-001 — depends on: Task 1.1 — status:
+  not-started.
+- [ ] Task 1.3: Phase-end quality gate (ruff format/check, vulture, full
+  `unittest` suite); update this README's Progress section; commit as one
+  Conventional Commit (`feat(qa): add v2 QaAnswer/QaQuestionAnswer models`) — depends on: Task 1.2 — status: not-started.
+
+#### Phase 2: `body.py`
+
+- [ ] Task 2.1: Implement `qa/models/v2/body.py`: `_QaCategory`,
+  `ElicitationContext`, the 9 ISO/IEC 25010:2023 characteristic subclasses
+  (names verified against live `specmgr://iso25010`), duplicated
+  `General`/`Introduction`/`RawRequirements`/`MoreInformation`, `Qa` (H1)
+  with the full field order — depends on: Task 1.3 — status: not-started.
+- [ ] Task 2.2: Reference document exercising every field (adapted from
+  Design Notes' example) + round-trip test in
+  `tests/qa/models/v2/test_body.py` (ACC-002) — depends on: Task 2.1 —
+  status: not-started.
+- [ ] Task 2.3: Phase-end quality gate; update Progress section; commit
+  (`feat(qa): add v2 QA body schema (Elicitation Context, 9 ISO/IEC 25010 categories, General, More Information)`) — depends on: Task 2.2 —
+  status: not-started.
+
+#### Phase 3: Version gate
+
+- [ ] Task 3.1: Implement the version-gate helper (reads
+  `QaFrontmatter.version`'s major component; raises a clear
+  migration-required error for anything not v2) — depends on: Task 2.3 —
+  status: not-started.
+- [ ] Task 3.2: Unit tests — v2 document parses; v1/garbage-versioned
+  document raises the expected error with an actionable message (ACC-004)
+  — depends on: Task 3.1 — status: not-started.
+- [ ] Task 3.3: Phase-end quality gate; update Progress section; commit
+  (`feat(qa): add v2 schema-version gate for QA parsing`) — depends on:
+  Task 3.2 — status: not-started.
+
+#### Phase 4: Rewire `qa/tools/*`
+
+- [ ] Task 4.1: Repoint `create_qa`, `update_qa`, `set_status_qa`,
+  `parse_qa`, `list_qa`, `get_qa`, `get_qa_example`, `get_qa_template`,
+  `delete_qa` (stub), `validate_qa` at `qa/models/v2/`, routed through the
+  version gate — depends on: Task 3.3 — status: not-started.
+- [ ] Task 4.2: Update/extend `tests/qa/tools/` for v2 behavior and the
+  version-gate error path through the actual tool functions (ACC-005) —
+  depends on: Task 4.1 — status: not-started.
+- [ ] Task 4.3: Phase-end quality gate; update Progress section; commit
+  (`feat(qa)!: repoint QA tools at v2 schema`, noting the breaking change
+  for v1 documents in the commit body) — depends on: Task 4.2 — status:
+  not-started.
+
+#### Phase 5: Rewire `qa/resources/*`
+
+- [ ] Task 5.1: Regenerate `specmgr://qa/schema`, `/example`, `/template`
+  from v2 models/example/template — depends on: Task 4.3 — status:
+  not-started.
+- [ ] Task 5.2: Update/extend `tests/qa/resources/` to assert v2 shape
+  (ACC-006) — depends on: Task 5.1 — status: not-started.
+- [ ] Task 5.3: Phase-end quality gate; update Progress section; commit
+  (`feat(qa): update QA resources (schema/example/template) for v2`) —
+  depends on: Task 5.2 — status: not-started.
+
+#### Phase 6: Rewire `qa/prompts/*`
+
+- [ ] Task 6.1: Update `create_qa`/`update_qa` prompt narration for the
+  adjacent-pairs structure and `## Elicitation Context` — depends on: Task
+  5.3 — status: not-started.
+- [ ] Task 6.2: Update/extend `tests/qa/prompts/` (ACC-007) — depends on:
+  Task 6.1 — status: not-started.
+- [ ] Task 6.3: Phase-end quality gate; update Progress section; commit
+  (`feat(qa): update QA prompts for v2 adjacent question/answer structure`) — depends on: Task 6.2 — status: not-started.
+
+#### Phase 7: Cross-cutting docs + final verification
+
+- [ ] Task 7.1: `uv run --frozen specmgr docs` (regenerate `docs/api/`,
+  `docs/GENERATED.md`); update `server.py`'s module docstring; update
+  `AGENTS.md`'s QA section (v2 as the tool-reachable schema, v1 retained
+  on-disk only, unreachable from tools) — depends on: Task 6.3 — status:
+  not-started.
+- [ ] Task 7.2: Final verification pass — walk every ACC-001..008 with
+  concrete evidence; run the full quality gate end-to-end (`ruff format/check`, `pylint` advisory, `vulture`, full `unittest`, `specmgr docs`/`specmgr adr-toc` drift checks) — depends on: Task 7.1 — status:
+  not-started.
+- [ ] Task 7.3: Update Progress section (Current Status, dated Recent
+  Updates entry); set feature frontmatter `status: done`; commit
+  (`docs(qa): regenerate generated docs for QA v2`) — depends on: Task
+  7.2 — status: not-started.
+
+**Note:** If a task's scope changes mid-flight, edit its description in
+place; rely on git history (`git log -p` on this file) to recover what was
+originally planned, rather than keeping a second copy of the task around.
+
+## Progress
+
+### Current Status
+
+**As of 2026-08-23**: Plan drafted and written to disk (Task 0.1 done). No
+implementation has started; the feature branch has not yet been created
+(Task 0.2). All Phase 1-7 tasks are `not-started`.
+
+### Blockers
+
+None currently.
+
+### Recent Updates
+
+#### Update 2026-08-23T00:00:00Z
+
+- Completed: Task 0.1 — full design discussion (feasibility exploration of
+  a class structure supporting adjacent question/answer pairs without a
+  per-question heading), converging on: local (non-`models/md`) `QaAnswer`/
+  `QaQuestionAnswer` overrides; `_QaCategory`'s dynamic (non-hardcoded)
+  heading-level derivation confirmed already correct via direct source
+  inspection (`markdown_section.py:97-102`, `markdown_section2.py:28-29`);
+  a new `## Elicitation Context` 10th `_QaCategory`-shaped section (not one
+  of the 9 ISO/IEC 25010:2023 characteristics, verified against the live
+  `specmgr://iso25010` resource); full duplication of v2's body schema
+  from v1 for independence; a hard version-gate cutover (no dual v1/v2
+  read support); full tool/resource/prompt rewiring bundled into this same
+  feature (not deferred); a phased, test-and-commit-per-phase execution
+  plan on a dedicated feature branch. Wrote this README capturing the full
+  plan.
+- Next: Task 0.2 — create the `feat/feat-14-qa-v2-adjacent-qa` branch off
+  `dev`, then begin Phase 1.
+- Notes: No code has been written yet, per explicit instruction to write
+  only the plan at this stage.
+
+#### Update 2026-08-23T00:30:00Z
+
+- Completed: Created GitHub issue
+  [#14](https://github.com/dfch/biz.dfch.SpecMgr/issues/14) ("QA v2:
+  adjacent question/answer pairs (no per-question heading)"), using this
+  README's Overview section verbatim as the issue body. Renamed the
+  feature folder and every internal reference (frontmatter `id`, feature
+  branch name, task descriptions) from `feat-0-qa-v2-adjacent-qa` to
+  `feat-14-qa-v2-adjacent-qa`, per the `feat-NNN-slug` convention (`0`
+  meant "no issue yet"; `14` is the real issue number now that one
+  exists).
+- Next: Task 0.2 — create the `feat/feat-14-qa-v2-adjacent-qa` branch off
+  `dev`, then begin Phase 1.
+- Notes: No `src/`/`tests/` code touched — this update only concerns the
+  feature folder's identity/naming.
+
+### Decisions Made
+
+- **2026-08-23**: `answer` stays an opaque, unparsed markdown blob (like
+  v1's `QaAnswer`), not a structured list of typed paragraph/list-item
+  sub-objects — matches the "any MarkdownStr(s), free-form" requirement
+  with the smallest implementation, and mirrors v1's own established
+  precedent.
+- **2026-08-23**: No changes to the shared `models/md` engine — every new
+  mechanic (`QaAnswer`'s bounded terminator scan, `QaQuestionAnswer`'s
+  composite `get_extent`) is implemented locally inside `qa/models/v2/`,
+  by explicit instruction to keep this QA-only and minimal.
+- **2026-08-23**: `## Elicitation Context` is an additional section (not a
+  replacement for `## General`), positioned between `## General` and `## Functional Suitability`, structurally identical to the 9 ISO/IEC
+  25010:2023 characteristic sections (`_QaCategory`-shaped) but not one of
+  them.
+- **2026-08-23**: Hard version-gate cutover — the rewired tools read
+  `QaFrontmatter.version`'s major component and raise a clear
+  migration-required error for anything that isn't v2; no dual v1/v2
+  parsing support is implemented.
+- **2026-08-23**: v2's `General`/`Introduction`/`RawRequirements`/
+  `MoreInformation`/`Qa` classes are fully duplicated into
+  `qa/models/v2/body.py` rather than imported from v1 (except
+  `QaFrontmatter`, which is shared), so v1 can eventually be deleted with
+  no lingering dependency from v2.
+- **2026-08-23**: Full QA tool/resource/prompt rewiring is bundled into
+  this same feature (Phases 4-7), rather than deferred to a follow-up
+  feature, by explicit instruction.
+- **2026-08-23**: A trailing dangling comment (nothing recognizable
+  following it within a category section) becomes its own
+  `QaQuestionAnswer` with only `comment` set — accepted, not an error.
+
+### Related PRs / Commits
+
+None yet.
