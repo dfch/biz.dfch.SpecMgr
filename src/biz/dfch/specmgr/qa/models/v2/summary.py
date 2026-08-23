@@ -18,10 +18,14 @@
 """Pydantic model for one line of QA listing output.
 
 Mirrors :class:`~biz.dfch.specmgr.tsk.models.v1.summary.TskSummary`
-field-for-field, for the (Phase-4, not-yet-built) ``specmgr://qa/list``
-resource. Subclasses
+field-for-field, for the ``list_qa`` tool. Subclasses
 :class:`~biz.dfch.specmgr.general.models.summary.DocSummary` for its
 ``id``/``title``/``status``/``ref`` fields (feat-13 Task 1.3, REQ-003).
+
+Lives directly in `qa/models/v2/` alongside `QaFrontmatter` -- both are
+body-schema-independent DTOs, so neither needs its own `v1`/`v2` split
+(feat-14 Phase 8: `qa/models/v1/` was removed once v2 became the domain's
+only tool-reachable schema).
 """
 
 from __future__ import annotations

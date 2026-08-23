@@ -48,20 +48,22 @@ shared versioned models"):
   (`specmgr://qa/schema`, `specmgr://qa/example`,
   `specmgr://qa/template`; no `specmgr://qa/{id}` — id-based reads are
   `get_qa`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614); `qa/prompts/`
-  (`create_qa`/`update_qa`, plus `refine`). Schema at `qa/models/v1/`
-  (legacy, retained on disk purely as historical reference, unreachable
-  from any MCP tool/resource/prompt) and `qa/models/v2/` (current — every
-  QA tool/resource/prompt is repointed at it as of feat-14), inside the
-  domain package, not `models/qa/`. v2 replaces v1's one `### {heading}`
-  H3 per question/answer pair with many adjacent, un-headed pairs
-  (`<!-- optional comment -->` + `> {question}` block quote + free-form
-  answer prose) directly inside a category section, and adds a new,
-  10th `## Elicitation Context` section (structurally identical to, but
-  not one of, the 9 ISO/IEC 25010:2023 characteristic sections) between
-  `## General` and `## Functional Suitability`. There is no version-gate
-  or dual v1/v2 read support: a v1-shaped document now fails v2 parsing
-  with a structural `AssertionError`/`pydantic.ValidationError`, not a
-  migration-specific error.
+  (`create_qa`/`update_qa`, plus `refine`). Schema at `qa/models/v2/`,
+  inside the domain package, not `models/qa/` — QA is a single-schema
+  (v2-only) domain: every question/answer category holds zero or more
+  adjacent, un-headed pairs (`<!-- optional comment -->` + `> {question}`
+  block quote + free-form answer prose) directly inside a category section,
+  no heading of its own per pair, plus a `## Elicitation Context` section
+  (structurally identical to, but not one of, the 9 ISO/IEC 25010:2023
+  characteristic sections) between `## General` and
+  `## Functional Suitability`. An earlier `qa/models/v1/` schema (one
+  `### {heading}` H3 per question/answer pair) existed alongside v2 during
+  feat-14 and was removed entirely once every QA MCP tool/resource/prompt
+  was repointed at v2 (feat-14 Phase 8) — there is no version-gate or
+  dual-schema read support: a document shaped for the removed v1 schema
+  fails v2 parsing with a structural
+  `AssertionError`/`pydantic.ValidationError`, not a migration-specific
+  error.
 - **`general/`** — cross-cutting, non-domain-specific package:
   `general/tools/` (`mdformat`, formats a markdown file in place while
   preserving YAML frontmatter blocks) and `general/resources/`

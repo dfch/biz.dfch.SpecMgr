@@ -1,30 +1,41 @@
-# `biz.dfch.specmgr.qa.models.v1.document`
+# `biz.dfch.specmgr.qa.models.v2.summary`
 
-Pydantic model for a full Question and Answer (QA) document (frontmatter + body).
+Pydantic model for one line of QA listing output.
 
-Mirrors `tsk.models.v1.document.TskDocument`'s own frontmatter+body pairing.
-``QaDocument`` holds no file/id/path information itself -- that lives on
-``frontmatter.id``, same convention as ``TskFrontmatter.id``.
+Mirrors :class:`~biz.dfch.specmgr.tsk.models.v1.summary.TskSummary`
+field-for-field, for the ``list_qa`` tool. Subclasses
+:class:`~biz.dfch.specmgr.general.models.summary.DocSummary` for its
+``id``/``title``/``status``/``ref`` fields (feat-13 Task 1.3, REQ-003).
 
-Frontmatter *stripping* is deliberately not this module's responsibility:
-a caller splits a raw ``.md`` file's ``---...---`` block from its body via
-``python-frontmatter`` (``frontmatter.loads(text)``), validates ``.metadata`` as
-``QaFrontmatter`` and ``.content`` as ``Qa.from_text(...)`` separately, then
-constructs a ``QaDocument`` from the two already-parsed pieces -- there is no
-``QaDocument.from_text``/parser function here.
+Lives directly in `qa/models/v2/` alongside `QaFrontmatter` -- both are
+body-schema-independent DTOs, so neither needs its own `v1`/`v2` split
+(feat-14 Phase 8: `qa/models/v1/` was removed once v2 became the domain's
+only tool-reachable schema).
 
 ## Classes
 
-### `QaDocument`
+### `QaSummary`
 
-A full Question and Answer (QA) document: YAML frontmatter and body.
+One line of ``specmgr://qa/list`` output.
 
-Attributes
+Parameters
 ----------
-frontmatter:
-    The YAML frontmatter block. See :class:`QaFrontmatter`.
-body:
-    The parsed Q&A sections. See :class:`Qa`.
+id:
+    The document's specmgr-assigned identifier, or ``None`` if the file
+    has not been assigned one yet (e.g. hand-authored without the
+    ``id`` frontmatter key).
+title:
+    The Q&A document's ``# {title}`` H1.
+status:
+    The Q&A document's ``frontmatter.status`` value, verbatim.
+ref:
+    The document's extensionless base name (e.g.
+    ``"qa-<uuid>-a-title"``), deliberately *not* a filename or path --
+    callers must not read this off disk themselves, only pass it to
+    ``get_qa`` alongside (or instead of) ``id``. Named ``ref`` rather
+    than ``filename`` precisely to avoid inviting direct filesystem
+    access (mirrors
+    :class:`~biz.dfch.specmgr.tsk.models.v1.summary.TskSummary`).
 
 **Methods:**
 

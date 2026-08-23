@@ -103,19 +103,14 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.models.version_info`](biz.dfch.specmgr.models.version_info.md) — Pydantic model for the ``specmgr://version`` resource.
 - [`biz.dfch.specmgr.qa`](biz.dfch.specmgr.qa.md) — Question and Answer (QA) domain -- requirements-elicitation interview specifications.
 - [`biz.dfch.specmgr.qa.models`](biz.dfch.specmgr.qa.models.md) — Question and Answer (QA) models -- Pydantic schema powered by the generic ``models/md`` engine.
-- [`biz.dfch.specmgr.qa.models.v1`](biz.dfch.specmgr.qa.models.v1.md) — Question and Answer (QA) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
-- [`biz.dfch.specmgr.qa.models.v1._util`](biz.dfch.specmgr.qa.models.v1._util.md) — Shared, private constants for the ``qa.models.v1`` subpackage.
-- [`biz.dfch.specmgr.qa.models.v1.body`](biz.dfch.specmgr.qa.models.v1.body.md) — Question and Answer (QA) body models: whole-section fields under a single H1.
-- [`biz.dfch.specmgr.qa.models.v1.document`](biz.dfch.specmgr.qa.models.v1.document.md) — Pydantic model for a full Question and Answer (QA) document (frontmatter + body).
-- [`biz.dfch.specmgr.qa.models.v1.frontmatter`](biz.dfch.specmgr.qa.models.v1.frontmatter.md) — Question and Answer (QA) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
-- [`biz.dfch.specmgr.qa.models.v1.parser`](biz.dfch.specmgr.qa.models.v1.parser.md) — Parse raw Question and Answer (QA) ``.md`` text into a :class:`QaDocument`.
-- [`biz.dfch.specmgr.qa.models.v1.summary`](biz.dfch.specmgr.qa.models.v1.summary.md) — Pydantic model for one line of QA listing output.
 - [`biz.dfch.specmgr.qa.models.v2`](biz.dfch.specmgr.qa.models.v2.md) — Question and Answer (QA) v2 models -- adjacent question/answer pairs, no per-question heading.
 - [`biz.dfch.specmgr.qa.models.v2._util`](biz.dfch.specmgr.qa.models.v2._util.md) — Shared, private constants for the ``qa.models.v2`` subpackage.
 - [`biz.dfch.specmgr.qa.models.v2.body`](biz.dfch.specmgr.qa.models.v2.body.md) — Question and Answer (QA) v2 body models: whole-section fields under a single H1.
 - [`biz.dfch.specmgr.qa.models.v2.document`](biz.dfch.specmgr.qa.models.v2.document.md) — Pydantic model for a full Question and Answer (QA) v2 document (frontmatter + body).
+- [`biz.dfch.specmgr.qa.models.v2.frontmatter`](biz.dfch.specmgr.qa.models.v2.frontmatter.md) — Question and Answer (QA) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
 - [`biz.dfch.specmgr.qa.models.v2.parser`](biz.dfch.specmgr.qa.models.v2.parser.md) — Parse raw Question and Answer (QA) ``.md`` text into a :class:`QaDocument` (v2).
 - [`biz.dfch.specmgr.qa.models.v2.question_answer`](biz.dfch.specmgr.qa.models.v2.question_answer.md) — One adjacent question/answer pair with no heading of its own (QA v2).
+- [`biz.dfch.specmgr.qa.models.v2.summary`](biz.dfch.specmgr.qa.models.v2.summary.md) — Pydantic model for one line of QA listing output.
 - [`biz.dfch.specmgr.qa.prompts`](biz.dfch.specmgr.qa.prompts.md) — MCP prompt registrations for Question and Answer (QA) documents (Phase 4, Task 4.3).
 - [`biz.dfch.specmgr.qa.prompts.create_qa`](biz.dfch.specmgr.qa.prompts.create_qa.md) — ``@mcp.prompt()``: create_qa (Phase 4, Task 4.3).
 - [`biz.dfch.specmgr.qa.prompts.refine`](biz.dfch.specmgr.qa.prompts.refine.md) — ``@mcp.prompt()``: refine (Phase 4, Task 4.3).

@@ -22,10 +22,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `_QaCategory`-shaped section, not one of the 9 ISO/IEC 25010:2023
   characteristics) between `## General` and `## Functional Suitability`.
   This is a hard cutover with no version gate and no dual v1/v2 read
-  support: a v1-shaped document now fails v2 parsing with a structural
-  `AssertionError`/`pydantic.ValidationError`, not a migration-specific
-  error. `qa/models/v1/` remains on disk purely as historical reference
-  and is no longer reachable from any MCP tool/resource/prompt.
+  support: a document shaped for the former v1 schema fails v2 parsing
+  with a structural `AssertionError`/`pydantic.ValidationError`, not a
+  migration-specific error. `qa/models/v1/` has since been removed from
+  disk entirely (`QaFrontmatter`/`QaSummary` moved into `qa/models/v2/`);
+  QA is once again a single-schema (v2-only) domain.
 
 ## [0.8.0] - 2026-08-19
 

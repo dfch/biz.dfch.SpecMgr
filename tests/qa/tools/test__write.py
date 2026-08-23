@@ -24,8 +24,7 @@ import textwrap
 import unittest
 from pathlib import Path
 
-from biz.dfch.specmgr.qa.models.v1 import QaFrontmatter
-from biz.dfch.specmgr.qa.models.v2 import parse_qa
+from biz.dfch.specmgr.qa.models.v2 import QaFrontmatter, parse_qa
 from biz.dfch.specmgr.qa.tools._write import write_qa_file
 
 _BODY = textwrap.dedent(

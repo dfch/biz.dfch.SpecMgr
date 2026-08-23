@@ -15,13 +15,22 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Tests for the QaFrontmatter Pydantic model."""
+"""Tests for the QaFrontmatter Pydantic model.
+
+Ported from the now-removed `tests/qa/models/v1/test_frontmatter.py`
+(feat-14 Phase 8: `QaFrontmatter` moved from `qa/models/v1/` into
+`qa/models/v2/` directly, so this unit-level coverage moved with it) --
+`tests/qa/models/v2/test_parser.py` only exercises `QaFrontmatter` indirectly
+through full-document parsing, so this file's standalone field-level
+coverage (status set, version major-component gate, defaults) has no other
+home in the v2 suite.
+"""
 
 import unittest
 
 from pydantic import ValidationError
 
-from biz.dfch.specmgr.qa.models.v1.frontmatter import QaFrontmatter
+from biz.dfch.specmgr.qa.models.v2.frontmatter import QaFrontmatter
 
 
 class TestQaFrontmatter(unittest.TestCase):

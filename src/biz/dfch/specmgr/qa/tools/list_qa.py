@@ -36,7 +36,7 @@ from pydantic import ValidationError
 from ...general.models import PagedResult
 from ...general.tools._paging import normalize_paging, paginate
 from ...server import mcp
-from ..models.v1 import QaSummary
+from ..models.v2 import QaSummary
 from ._io import read_qa
 from ._paths import iter_qa_paths
 

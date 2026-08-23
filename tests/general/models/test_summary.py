@@ -32,7 +32,7 @@ import unittest
 
 from biz.dfch.specmgr.general.models.summary import DocSummary
 from biz.dfch.specmgr.models.adr.v1.summary import AdrSummary
-from biz.dfch.specmgr.qa.models.v1.summary import QaSummary
+from biz.dfch.specmgr.qa.models.v2.summary import QaSummary
 from biz.dfch.specmgr.req.models.v1.summary import ReqSummary
 from biz.dfch.specmgr.tsk.models.v1.summary import TskSummary
 from biz.dfch.specmgr.uc.models.v2.summary import UcSummary

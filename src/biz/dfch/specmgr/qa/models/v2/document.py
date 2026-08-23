@@ -17,32 +17,28 @@
 
 """Pydantic model for a full Question and Answer (QA) v2 document (frontmatter + body).
 
-Mirrors `qa.models.v1.document.QaDocument`'s own frontmatter+body pairing,
-adjusted for v2's body schema. `QaDocument` holds no file/id/path information
-itself -- that lives on `frontmatter.id`, same convention as
-`qa.models.v1.document.QaDocument`.
+Pairs `frontmatter.py`'s `QaFrontmatter` with `body.py`'s `Qa`. `QaDocument`
+holds no file/id/path information itself -- that lives on `frontmatter.id`.
 
-`frontmatter` is `QaFrontmatter`, imported unchanged from `qa/models/v1/`
-(REQ-003 -- frontmatter shape is not versioned by this feature, only the body
-schema is; do NOT duplicate `QaFrontmatter` here). `body` is v2's own `Qa`
-from `qa/models/v2/body.py`.
+`frontmatter` is `QaFrontmatter` (QA's frontmatter shape has never been
+versioned independently of the body schema, so it lives directly in
+`qa/models/v2/` alongside the rest of the schema, not under its own `v1`/`v2`
+split). `body` is `Qa` from `qa/models/v2/body.py`.
 
 Frontmatter *stripping* is deliberately not this module's responsibility: a
 caller splits a raw ``.md`` file's ``---...---`` block from its body via
 ``python-frontmatter`` (``frontmatter.loads(text)``), validates ``.metadata``
 as `QaFrontmatter` and ``.content`` as `Qa.from_text(...)` separately, then
 constructs a `QaDocument` from the two already-parsed pieces -- see
-`qa/models/v2/parser.py::parse_qa` for that glue, which parses
-unconditionally via v2's `Qa` schema (no version gate -- see REQ-004's
-revised wording in the feature README's Decisions Made).
+`qa/models/v2/parser.py::parse_qa` for that glue.
 """
 
 from __future__ import annotations
 
 from pydantic import BaseModel
 
-from ..v1.frontmatter import QaFrontmatter
 from .body import Qa
+from .frontmatter import QaFrontmatter
 
 __all__ = ["QaDocument"]
 
@@ -53,8 +49,7 @@ class QaDocument(BaseModel):
     Attributes
     ----------
     frontmatter:
-        The YAML frontmatter block. See :class:`~biz.dfch.specmgr.qa.models.v1.frontmatter.QaFrontmatter`
-        (imported unchanged from `qa/models/v1/`, per REQ-003).
+        The YAML frontmatter block. See :class:`~biz.dfch.specmgr.qa.models.v2.frontmatter.QaFrontmatter`.
     body:
         The parsed Q&A sections. See :class:`~biz.dfch.specmgr.qa.models.v2.body.Qa`.
     """

@@ -122,19 +122,14 @@ First-line docstrings from each module, organized by domain:
 
 - `qa/__init__.py` — Question and Answer (QA) domain -- requirements-elicitation interview specifications.
 - `qa/models/__init__.py` — Question and Answer (QA) models -- Pydantic schema powered by the generic ``models/md`` engine.
-- `qa/models/v1/__init__.py` — Question and Answer (QA) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
-- `qa/models/v1/_util.py` — Shared, private constants for the ``qa.models.v1`` subpackage.
-- `qa/models/v1/body.py` — Question and Answer (QA) body models: whole-section fields under a single H1.
-- `qa/models/v1/document.py` — Pydantic model for a full Question and Answer (QA) document (frontmatter + body).
-- `qa/models/v1/frontmatter.py` — Question and Answer (QA) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
-- `qa/models/v1/parser.py` — Parse raw Question and Answer (QA) ``.md`` text into a :class:`QaDocument`.
-- `qa/models/v1/summary.py` — Pydantic model for one line of QA listing output.
 - `qa/models/v2/__init__.py` — Question and Answer (QA) v2 models -- adjacent question/answer pairs, no per-question heading.
 - `qa/models/v2/_util.py` — Shared, private constants for the ``qa.models.v2`` subpackage.
 - `qa/models/v2/body.py` — Question and Answer (QA) v2 body models: whole-section fields under a single H1.
 - `qa/models/v2/document.py` — Pydantic model for a full Question and Answer (QA) v2 document (frontmatter + body).
+- `qa/models/v2/frontmatter.py` — Question and Answer (QA) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
 - `qa/models/v2/parser.py` — Parse raw Question and Answer (QA) ``.md`` text into a :class:`QaDocument` (v2).
 - `qa/models/v2/question_answer.py` — One adjacent question/answer pair with no heading of its own (QA v2).
+- `qa/models/v2/summary.py` — Pydantic model for one line of QA listing output.
 - `qa/prompts/__init__.py` — MCP prompt registrations for Question and Answer (QA) documents (Phase 4, Task 4.3).
 - `qa/prompts/create_qa.py` — ``@mcp.prompt()``: create_qa (Phase 4, Task 4.3).
 - `qa/prompts/refine.py` — ``@mcp.prompt()``: refine (Phase 4, Task 4.3).
@@ -276,4 +271,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 184
+**Test files**: 182

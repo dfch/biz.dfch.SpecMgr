@@ -1,37 +1,44 @@
-# `biz.dfch.specmgr.qa.models.v1.summary`
+# `biz.dfch.specmgr.qa.models.v2.frontmatter`
 
-Pydantic model for one line of QA listing output.
+Question and Answer (QA) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
 
-Mirrors :class:`~biz.dfch.specmgr.tsk.models.v1.summary.TskSummary`
-field-for-field, for the (Phase-4, not-yet-built) ``specmgr://qa/list``
-resource. Subclasses
-:class:`~biz.dfch.specmgr.general.models.summary.DocSummary` for its
-``id``/``title``/``status``/``ref`` fields (feat-13 Task 1.3, REQ-003).
+Mirrors the pattern established by `tsk/models/v1/frontmatter.py::TskFrontmatter`:
+a subtype of `MarkdownFrontmatter` that restricts `type` to a fixed
+``Literal["qa"]`` and narrows the free-form ``status`` to TSK's own closed
+vocabulary (reused verbatim -- a Q&A document's lifecycle doesn't map
+naturally to REQ's larger, ADR-like proposed/accepted/rejected/implemented
+set, see the feature README's Design Notes/Decisions Made).
+
+Lives directly in `qa/models/v2/` -- QA's frontmatter shape has never been
+versioned independently of the body schema, so it sits alongside the rest
+of the (now single-schema, v2-only) QA models rather than under its own
+`v1`/`v2` split (feat-14 Phase 8: `qa/models/v1/` was removed once v2 became
+the domain's only tool-reachable schema).
 
 ## Classes
 
-### `QaSummary`
+### `QaFrontmatter`
 
-One line of ``specmgr://qa/list`` output.
+Question and Answer (QA) frontmatter: `MarkdownFrontmatter` narrowed for the ``qa`` document type.
 
 Parameters
 ----------
-id:
-    The document's specmgr-assigned identifier, or ``None`` if the file
-    has not been assigned one yet (e.g. hand-authored without the
-    ``id`` frontmatter key).
-title:
-    The Q&A document's ``# {title}`` H1.
+type:
+    Fixed discriminator, always ``"qa"``. Narrows the base's mandatory,
+    default-less ``str`` field to a ``Literal["qa"] = "qa"``, so a document
+    omitting ``type`` entirely still parses as a Q&A document.
 status:
-    The Q&A document's ``frontmatter.status`` value, verbatim.
-ref:
-    The document's extensionless base name (e.g.
-    ``"qa-<uuid>-a-title"``), deliberately *not* a filename or path --
-    callers must not read this off disk themselves, only pass it to
-    ``get_qa`` alongside (or instead of) ``id``. Named ``ref`` rather
-    than ``filename`` precisely to avoid inviting direct filesystem
-    access (mirrors
-    :class:`~biz.dfch.specmgr.tsk.models.v1.summary.TskSummary`).
+    One of ``"draft"``, ``"active"``, ``"done"``, ``"cancelled"``. Narrows
+    the base's free-form ``str = "draft"`` default to this closed
+    four-value set (reused from TSK). Blank/absent still defaults to
+    ``"draft"`` (inherited from the base's ``_default_blank_status_to_draft``
+    validator, which runs before this one).
+version:
+    The ``models.md`` schema major.minor.patch version this document's
+    frontmatter was written with. DO NOT CHANGE!
+
+All other fields (``id``, ``created``, ``updated``, ``version``) are inherited
+unchanged from :class:`MarkdownFrontmatter`.
 
 **Methods:**
 

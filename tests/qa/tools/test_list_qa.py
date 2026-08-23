@@ -33,7 +33,7 @@ from unittest import mock
 from biz.dfch.specmgr.general.models import PagedResult
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.general.tools._paging import DEFAULT_MAX_RESULTS, MAX_MAX_RESULTS
-from biz.dfch.specmgr.qa.models.v1 import QaSummary
+from biz.dfch.specmgr.qa.models.v2 import QaSummary
 from biz.dfch.specmgr.qa.tools._paths import ensure_qa_base_dir
 from biz.dfch.specmgr.qa.tools.create_qa import create_qa
 from biz.dfch.specmgr.qa.tools.list_qa import list_qa

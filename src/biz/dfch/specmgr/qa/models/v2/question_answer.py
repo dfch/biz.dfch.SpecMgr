@@ -17,9 +17,8 @@
 
 """One adjacent question/answer pair with no heading of its own (QA v2).
 
-Unlike `qa/models/v1/body.py`'s `QaSection` (one `### {free-form heading}`
-per Q&A pair), v2 allows many Q&A pairs to appear directly one after another
-inside a single ISO/IEC 25010:2023 characteristic section, each shaped as
+Many Q&A pairs can appear directly one after another inside a single
+ISO/IEC 25010:2023 characteristic section, each shaped as
 `<!-- optional comment -->` + `> {question}` (a block quote) + free-form
 answer prose -- with **no heading of its own** per pair:
 
@@ -83,20 +82,17 @@ def _is_comment(tok: Token) -> bool:
 class QaAnswer(MarkdownStr):
     """One `QaQuestionAnswer`'s free-form prose answer -- an opaque, unparsed markdown blob.
 
-    Deliberately **not** heading-anchored, mirroring `qa/models/v1/body.py`'s
-    own `QaAnswer` shape. Unlike v1 (where `answer` is always the *last*
-    declared field of a heading-bounded `QaSection`, so the base
-    `MarkdownStr.get_extent`'s "swallow everything remaining" is correct),
-    v2 allows further adjacent Q&A pairs to follow within the same
-    enclosing category section -- so this class overrides `get_extent` to
-    stop at the first depth-0 occurrence of a heading (any level), a block
-    quote, or a comment, and only runs to the end of the given text when
-    none of those follow.
+    Deliberately **not** heading-anchored: since further adjacent Q&A pairs
+    can follow within the same enclosing category section, the base
+    `MarkdownStr.get_extent`'s "swallow everything remaining" (correct for a
+    field declared *last* in a heading-bounded section) would be wrong here
+    -- so this class overrides `get_extent` to stop at the first depth-0
+    occurrence of a heading (any level), a block quote, or a comment, and
+    only runs to the end of the given text when none of those follow.
 
     Adds a `text` computed property (mirroring
-    `MarkdownParagraph.text`/`MarkdownSection.text`/v1's own `QaAnswer.text`)
-    so this otherwise-private `_value` is reachable through `model_dump()`/
-    `model_dump_json()`.
+    `MarkdownParagraph.text`/`MarkdownSection.text`) so this otherwise-private
+    `_value` is reachable through `model_dump()`/`model_dump_json()`.
     """
 
     @classmethod

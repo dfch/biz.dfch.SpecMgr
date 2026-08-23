@@ -17,8 +17,8 @@ extra's import graph), nor regenerate the file on the fly -- this is a
 plain, read-only read of a build-time-guaranteed file. 1:1 port of
 ``req.resources.req_schema``.
 
-The resource's URI is deliberately unversioned (no ``/v1``) even though the
-file it reads is a ``qa/models/v1``-derived artifact -- see
+The resource's URI is deliberately unversioned (no ``/v2``) even though the
+file it reads is a ``qa/models/v2``-derived artifact -- see
 `.specmgr/feat/feat-6-requirement-artifact/README.md`'s Decisions Made for
 the original rationale, reused verbatim here.
 

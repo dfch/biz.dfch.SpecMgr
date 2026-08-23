@@ -4,10 +4,10 @@ Question and Answer (QA) v2 body models: whole-section fields under a single H1.
 
 Built on the generic `models.md` `MarkdownSection1`/`MarkdownSection2`/
 `MarkdownSection2WithComment`/`MarkdownSection3`/`MarkdownSection3WithComment`
-engine, mirroring `qa/models/v1/body.py`'s "one class per heading" shape --
-with `questions: list[QaQuestionAnswer] | None` (adjacent Q&A pairs, no
-heading of their own) replacing v1's `items: list[QaSection] | None`
-(one `### {free-form heading}` per pair). `Qa` is the top-level H1 container:
+engine, applying a "one class per heading" shape, with
+`questions: list[QaQuestionAnswer] | None` letting many adjacent Q&A pairs
+(no heading of their own) appear directly one after another inside a single
+category section. `Qa` is the top-level H1 container:
 
 ```
 # {H1 title}                                   Qa (free-form title)
@@ -50,12 +50,6 @@ their canonical order -> `more_information`), since `models.md`'s
 `MarkdownStr.from_text` distributes text among declared fields in that same
 order.
 
-**`General`/`Introduction`/`RawRequirements`/`MoreInformation` are duplicated
-verbatim from `qa/models/v1/body.py`**, not imported -- v2 has zero
-dependency on v1 beyond the shared, unchanged `QaFrontmatter` (see the
-feature README's Design Notes/Decisions Made), so v1 can eventually be
-deleted with no lingering dependency from v2.
-
 **`## Elicitation Context` is a 10th `_QaCategory`-shaped section, not one of
 the 9 ISO/IEC 25010:2023 characteristics** -- it will not appear in, and is
 not derived from, the `specmgr://iso25010` resource; it is QA-schema-
@@ -65,12 +59,12 @@ markdown document order and `Qa`'s field declaration order.
 **The 10 `_QaCategory`-shaped classes (`ElicitationContext`,
 `FunctionalSuitability`, ..., `Safety`) share one private intermediate base,
 `_QaCategory`**, declaring `questions` once, rather than each independently
-redeclaring it -- mirrors v1's own `_QaCategory` pattern exactly (see the
-feature README's Design Notes for the empirically-verified rationale: each
-final subclass's own `__name__`, not `_QaCategory`'s, is what `@markdown`'s
-inherited `_metadata` and the implicit `AliasType.SPACE_SEPARATED` alias
-derivation key off, so sharing the base does not risk any heading-detection
-ambiguity between the siblings).
+redeclaring it (see the feature README's Design Notes for the
+empirically-verified rationale: each final subclass's own `__name__`, not
+`_QaCategory`'s, is what `@markdown`'s inherited `_metadata` and the
+implicit `AliasType.SPACE_SEPARATED` alias derivation key off, so sharing
+the base does not risk any heading-detection ambiguity between the
+siblings).
 
 ## Classes
 
@@ -10886,9 +10880,8 @@ heading match, with no field redeclaration and no per-subclass
 `@alias`/`@markdown` re-application needed -- `@markdown`'s
 `heading_open`/`h2` metadata and `_get_field_names()`'s field
 introspection are both inherited correctly through this extra level
-(empirically verified by v1's own `_QaCategory`; see the feature
-README's Design Notes for the "dynamic, not hardcoded" heading-level
-stop-condition rationale).
+(empirically verified; see the feature README's Design Notes for the
+"dynamic, not hardcoded" heading-level stop-condition rationale).
 
 Applies no `@markdown` decorator of its own: it inherits
 `_metadata = {"type": "heading_open", "tag": "h2"}` from

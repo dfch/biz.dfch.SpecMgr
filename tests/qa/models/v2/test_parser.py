@@ -33,7 +33,9 @@ Covers:
   `Qa.from_text` raises on its own -- with no fallback to v1 parsing (there
   is no v1 code path reachable here at all).
 - ACC-003 cross-check: `QaDocument.frontmatter`'s declared type really is
-  `qa.models.v1.frontmatter.QaFrontmatter`, not a lookalike duplicate.
+  `qa.models.v2.frontmatter.QaFrontmatter` itself, not a lookalike duplicate
+  (feat-14 Phase 8: `QaFrontmatter` moved from the now-removed `qa/models/v1/`
+  into `qa/models/v2/` directly).
 """
 
 from __future__ import annotations
@@ -45,8 +47,8 @@ import unittest
 from pydantic import ValidationError
 
 from biz.dfch.specmgr.models.md._markdown import format_text
-from biz.dfch.specmgr.qa.models.v1.frontmatter import QaFrontmatter as QaFrontmatterV1
 from biz.dfch.specmgr.qa.models.v2.document import QaDocument
+from biz.dfch.specmgr.qa.models.v2.frontmatter import QaFrontmatter
 from biz.dfch.specmgr.qa.models.v2.parser import parse_qa
 
 # The reference example from the feature README's Design Notes (also used by
@@ -213,18 +215,18 @@ class TestParseQaRejectsV1ShapedBody(unittest.TestCase):
             parse_qa(text)
 
 
-class TestQaDocumentFrontmatterIsV1Frontmatter(unittest.TestCase):
-    """ACC-003: `QaDocument.frontmatter`'s declared type is `qa.models.v1.frontmatter.QaFrontmatter` itself."""
+class TestQaDocumentFrontmatterIsSharedQaFrontmatter(unittest.TestCase):
+    """ACC-003: `QaDocument.frontmatter`'s declared type is `qa.models.v2.frontmatter.QaFrontmatter` itself."""
 
-    def test_frontmatter_field_type_is_v1_qa_frontmatter(self) -> None:
+    def test_frontmatter_field_type_is_qa_frontmatter(self) -> None:
         hints = typing.get_type_hints(QaDocument)
 
-        self.assertIs(hints["frontmatter"], QaFrontmatterV1)
+        self.assertIs(hints["frontmatter"], QaFrontmatter)
 
-    def test_frontmatter_field_info_annotation_is_v1_qa_frontmatter(self) -> None:
+    def test_frontmatter_field_info_annotation_is_qa_frontmatter(self) -> None:
         field_info = QaDocument.model_fields["frontmatter"]
 
-        self.assertIs(field_info.annotation, QaFrontmatterV1)
+        self.assertIs(field_info.annotation, QaFrontmatter)
 
 
 if __name__ == "__main__":

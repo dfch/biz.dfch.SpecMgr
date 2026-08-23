@@ -503,49 +503,73 @@ same plan rather than open a new feature/issue for it (see the Scope
 section's revised "Explicitly out of scope" bullet). Not yet started --
 none of Phase 8's tasks have been executed.
 
-- [ ] Task 8.1: Grep the whole repo for `qa.models.v1`/`qa\.models\.v1`
-  (`src/`, `tests/`, `docs/`, config files) to enumerate every remaining
-  reference before deleting anything -- do not assume the known set below
-  (`qa/models/v2/document.py`, `qa/models/v2/parser.py`,
-  `qa/models/v2/__init__.py`, `qa/tools/_write.py`) is exhaustive. Then, as
-  a distinct sub-step (the one non-trivial part of an otherwise mechanical
-  deletion): **move** `qa/models/v1/frontmatter.py` (`QaFrontmatter`) out
-  of `qa/models/v1/` and into `qa/models/v2/` itself (or another clearly-
-  named shared location, e.g. a new `qa/models/_shared/`), update every
-  import found by the grep sweep away from `..v1.frontmatter`/
-  `qa.models.v1.frontmatter` to the new location, and update
-  `qa/models/v2/__init__.py`'s re-export accordingly. Only once every
-  import is repointed, delete the rest of `qa/models/v1/` entirely
-  (`__init__.py`, `_util.py`, `body.py`, `document.py`, `parser.py`,
-  `summary.py` -- `QaSummary` is imported from `qa/models/v1/` by
-  `qa/tools/list_qa.py` per Phase 4's Decisions Made, so confirm via the
-  grep sweep whether `summary.py` needs the same move-not-delete treatment
-  as `frontmatter.py`, rather than assuming it doesn't) -- depends on:
-  Task 7.3 -- status: not-started.
-- [ ] Task 8.2: Delete `tests/qa/models/v1/` entirely, and remove/rewrite
-  any remaining test elsewhere in the suite that imports from
-  `qa.models.v1` (confirm via the same grep sweep as Task 8.1 rather than
-  assuming Phases 4-6's own rewiring already left none) -- depends on:
-  Task 8.1 -- status: not-started.
-- [ ] Task 8.3: Update `AGENTS.md`'s `qa/` bullet to remove its current
-  description of `qa/models/v1/` as "legacy, retained on disk purely as
-  historical reference" entirely, since it no longer exists on disk at
-  all -- QA becomes a single-schema (v2-only) domain again, matching how
-  the bullet would read had v1 never existed, while keeping the wording
-  that is still accurate (the `## Elicitation Context`/adjacent-pairs
-  description, the tool/resource/prompt lists) -- depends on: Task 8.2 --
-  status: not-started.
-- [ ] Task 8.4: Phase-end quality gate (`ruff format --check`, `ruff check`,
-  `vulture src/ whitelist.py --min-confidence 60`, full `unittest discover`
-  suite, `specmgr docs`/`specmgr mcp-docs` drift checks -- `qa/models/v1/`'s
-  module docstrings currently appear in `docs/GENERATED.md`/`docs/api/` and
-  must drop out cleanly); update this README's Progress section (Current
-  Status, a dated Recent Updates entry); commit as one Conventional Commit
-  (suggest: `chore(qa)!: remove qa/models/v1 (superseded by v2)`, noting in
-  the commit body that this is a breaking change for anyone still importing
-  `qa.models.v1` directly, even though no MCP tool/resource/prompt has
-  referenced it since Phase 4) -- depends on: Task 8.3 -- status:
-  not-started.
+- [x] Task 8.1: Grepped the whole repo for `qa.models.v1`/`qa/models/v1`
+  (`src/`, `tests/`, `AGENTS.md`) and confirmed the known 8-import blast
+  radius (see the orchestrator's task delegation) was exhaustive. Moved
+  `qa/models/v1/frontmatter.py` (`QaFrontmatter`) and `qa/models/v1/summary.py`
+  (`QaSummary`) -- both -- into `qa/models/v2/` as sibling modules
+  (`qa/models/v2/frontmatter.py`, `qa/models/v2/summary.py`), confirming via
+  the grep sweep that `summary.py` did in fact need the same move-not-delete
+  treatment as `frontmatter.py` (it was imported from `qa/models/v1/` by
+  `qa/tools/list_qa.py` and `tests/general/models/test_summary.py`).
+  Repointed all 8 live imports (`qa/models/v2/{parser,document,__init__}.py`,
+  `qa/tools/list_qa.py`, `tests/general/models/test_summary.py`,
+  `tests/qa/models/v2/test_parser.py`, `tests/qa/tools/{test__write,test_list_qa}.py`)
+  at the new `qa/models/v2/frontmatter`/`qa/models/v2/summary` modules (or
+  `qa/models/v2`'s own re-export, matching each file's existing import
+  style), and re-exported `QaSummary` from `qa/models/v2/__init__.py`
+  alongside `QaFrontmatter` (it was not previously exported there). Deleted
+  the rest of `qa/models/v1/` entirely (`__init__.py`, `_util.py`, `body.py`,
+  `document.py`, `parser.py`) -- depends on: Task 7.3 -- status: done
+  (2026-08-23).
+- [x] Task 8.2: Deleted `tests/qa/models/v1/` entirely (`__init__.py`,
+  `test_body.py`, `test_frontmatter.py`, `test_parser.py`). Before deleting,
+  checked for genuinely-unique coverage that would otherwise be lost:
+  `test_body.py`/`test_parser.py` exercised only v1's own removed body shape
+  (`QaSection`, `.items`, `.requirement`) and are fully superseded by
+  `tests/qa/models/v2/test_{body,parser}.py`, safe to drop outright.
+  `test_frontmatter.py`'s 9 field-level `QaFrontmatter` cases (type default,
+  version major-gate accept/reject, all-four-statuses accept/reject, blank-
+  status default, optional-fields-default) are **not** duplicated anywhere
+  in `tests/qa/models/v2/` (that suite only exercises `QaFrontmatter`
+  indirectly through full-document parsing) or in
+  `tests/general/models/test_summary.py` (structural-only, no behavior
+  coverage) -- ported verbatim into a new `tests/qa/models/v2/test_frontmatter.py`,
+  updating only the import path (`qa.models.v1.frontmatter` ->
+  `qa.models.v2.frontmatter`). No other test elsewhere in the suite imported
+  from `qa.models.v1` beyond the 3 already covered by Task 8.1's repoints --
+  depends on: Task 8.1 -- status: done (2026-08-23).
+- [x] Task 8.3: Updated `AGENTS.md`'s `qa/` bullet to remove the "legacy,
+  retained on disk purely as historical reference, unreachable from any MCP
+  tool/resource/prompt" framing entirely (v1 no longer exists on disk at
+  all), matching how the bullet would read had v1 never existed, while
+  keeping the `## Elicitation Context`/adjacent-pairs structural
+  description, the tool/resource/prompt lists, and a brief one-line
+  historical note that an earlier v1 schema (one `### {heading}` H3 per
+  pair) existed and was superseded -- depends on: Task 8.2 -- status: done
+  (2026-08-23).
+- [x] Task 8.4: Phase-end quality gate green: `ruff format --check` (827
+  files already formatted), `ruff check` (all checks passed),
+  `vulture src/ whitelist.py --min-confidence 60` (no findings), full
+  `unittest discover` (1306 tests, all passing, down from 1332 -- net of
+  removing `tests/qa/models/v1/`'s 3 files and adding
+  `tests/qa/models/v2/test_frontmatter.py`). `specmgr docs`/`specmgr adr-toc`
+  regenerated cleanly; every `qa.models.v1.*` module docstring dropped out
+  of `docs/GENERATED.md`/`docs/api/README.md` as expected, but the 7 stale
+  per-module `docs/api/biz.dfch.specmgr.qa.models.v1.*.md` files themselves
+  were not auto-deleted by `specmgr docs` (that command only ever writes
+  files for currently-importable modules, never prunes orphans for deleted
+  ones -- a pre-existing tool gap, out of this task's scope to fix) and were
+  removed by hand instead (see Decisions Made). `specmgr schema --type qa`
+  (both `docs/` and `src/biz/dfch/specmgr/qa/data` output dirs) reported
+  `(changed)`, not `(unchanged)` -- confirmed via `git diff` to be a
+  `$defs.*.description` text-only diff from Step 4's docstring rewording
+  (Task 8.1's move + Step 4's rewording touched class docstrings that get
+  embedded verbatim into the generated JSON Schema), not a `$defs`/
+  `properties`/`$comment` shape change (see Decisions Made); updated this
+  README's Progress section (Current Status, this dated Recent Updates
+  entry) -- depends on: Task 8.3 -- status: done (2026-08-23, commit left to
+  the orchestrator).
 
 **Note:** If a task's scope changes mid-flight, edit its description in
 place; rely on git history (`git log -p` on this file) to recover what was
@@ -766,6 +790,48 @@ full tool/resource/prompt rewiring, cross-cutting docs) remain complete
 and merged-ready; the feature frontmatter `status` stays `done`
 accordingly, with Phase 8 tracked as an explicitly-scoped followup
 cleanup rather than a reason to revert to `in-progress`.
+
+**Phase 8 is done.** `qa/models/v1/` no longer exists on disk. Its two
+still-needed, body-schema-independent pieces --
+`frontmatter.py` (`QaFrontmatter`) and `summary.py` (`QaSummary`) -- were
+moved into `qa/models/v2/` as sibling modules first (not duplicated,
+content unchanged except docstring path references), with
+`qa/models/v2/__init__.py` updated to import both locally and re-export
+`QaSummary` alongside `QaFrontmatter` (previously un-exported). All 8 live
+imports that pointed at `qa/models/v1/` (3 in `qa/models/v2/` itself:
+`parser.py`, `document.py`, `__init__.py`; 1 in `qa/tools/list_qa.py`; 4 in
+tests: `tests/general/models/test_summary.py`,
+`tests/qa/models/v2/test_parser.py`, `tests/qa/tools/{test__write,test_list_qa}.py`)
+were repointed at the new `qa/models/v2/` locations. The rest of
+`qa/models/v1/` (`__init__.py`, `_util.py`, `body.py`, `document.py`,
+`parser.py`) and the whole `tests/qa/models/v1/` directory (`__init__.py`,
+`test_body.py`, `test_frontmatter.py`, `test_parser.py`) were then deleted.
+`test_frontmatter.py`'s 9 `QaFrontmatter` field-level cases were the one
+piece of genuinely-unique coverage found during the deletion sweep (not
+duplicated anywhere in `tests/qa/models/v2/` or
+`tests/general/models/test_summary.py`) and were ported verbatim into a new
+`tests/qa/models/v2/test_frontmatter.py`, import path updated only.
+`test_body.py`/`test_parser.py` exercised only v1's removed body shape and
+were dropped outright, fully superseded by the existing
+`tests/qa/models/v2/test_{body,parser}.py`. Module docstrings across
+`qa/models/v2/{__init__,body,document,parser,question_answer}.py` and
+`qa/resources/qa_schema.py` were reworded to describe QA as a single-schema
+(v2-only) domain, dropping stale "duplicated from/imported unchanged from
+v1" phrasing while keeping the still-useful "why" context (e.g. why
+`_QaCategory` shares one private base, why `QaAnswer` needs a bounded
+`get_extent`) rephrased to stand on its own without v1 as a reference
+point. `AGENTS.md`'s `qa/` bullet and `CHANGELOG.md`'s `[Unreleased]` entry
+were both updated to drop the now-false "v1 remains on disk"/"unreachable
+from tools" framing, keeping a brief one-line historical note that v1
+existed and was superseded. Regenerated `docs/api/`, `docs/GENERATED.md`,
+`docs/qa_schema.json`, and `src/biz/dfch/specmgr/qa/data/qa_schema.json`;
+manually removed the 7 orphaned `docs/api/biz.dfch.specmgr.qa.models.v1.*.md`
+files that `specmgr docs` does not auto-prune for deleted modules (see
+Decisions Made). Final quality gate green end to end: `ruff format --check`
+(827 files already formatted), `ruff check` (all checks passed),
+`vulture src/ whitelist.py --min-confidence 60` (no findings), full
+`unittest discover` (1306 tests, all passing, down from Phase 7's 1332 --
+net of removing 3 v1 test files and adding 1 new v2 one).
 
 ### Blockers
 
@@ -1020,6 +1086,62 @@ Phase 3 is recorded in Decisions Made, not repeated here.)
   scope extension instead, per this plan's own precedent of recording
   such calls in Decisions Made rather than silently expanding a
   requirement's text.
+- **2026-08-23 (Phase 8)**: `QaFrontmatter`/`QaSummary` were moved directly
+  into `qa/models/v2/` as ordinary sibling modules (`frontmatter.py`,
+  `summary.py`) rather than into a new shared, version-neutral location
+  (e.g. a hypothetical `qa/models/_shared/`) -- the plan's Task 8.1
+  explicitly floated both options. Direct-into-`v2` was chosen because,
+  once `qa/models/v1/` is gone, QA reverts to being a single-schema domain
+  with no `v1`/`v2` split left to be "shared" between -- introducing a new
+  `_shared/` package would manufacture a distinction (versioned schema vs.
+  version-neutral DTO) that no longer has two versions to distinguish
+  from, and would deviate from the sibling-module precedent
+  `qa/models/v2/_util.py` (Phase 5) already established for exactly this
+  kind of small, body-schema-independent helper module.
+- **2026-08-23 (Phase 8)**: `tests/qa/models/v1/test_frontmatter.py`'s 9
+  field-level `QaFrontmatter` cases (type/version/status defaults,
+  version's major-component gate, all-four-statuses accept/reject) were
+  ported verbatim into a new `tests/qa/models/v2/test_frontmatter.py`
+  rather than silently dropped -- confirmed, before deleting, that no
+  existing v2 test exercises `QaFrontmatter` this directly (`test_parser.py`
+  only reaches it through full-document parsing, and
+  `tests/general/models/test_summary.py` is structural-only). `test_body.py`/
+  `test_parser.py` (the other two `tests/qa/models/v1/` files) needed no
+  such treatment: both exercised only v1's own removed body shape
+  (`QaSection`, `.items`, `.requirement`), fully superseded by
+  `tests/qa/models/v2/test_{body,parser}.py`.
+- **2026-08-23 (Phase 8)**: `specmgr docs` does not delete stale per-module
+  `docs/api/*.md` files for modules removed from `src/` -- it only ever
+  writes files for currently-importable modules (confirmed by reading
+  `commands/docs.py`: no directory-clearing or orphan-pruning step exists).
+  This had never surfaced before for any other domain's `vN` split, because
+  no other domain had actually *deleted* a `vN` package from disk yet (UC's
+  own `v1` still exists, unlike QA's now-removed one). The 7 orphaned
+  `docs/api/biz.dfch.specmgr.qa.models.v1.*.md` files were deleted by hand
+  as part of this phase, confirmed via a second `specmgr docs` run that
+  regenerating from the current tree does not recreate them. Fixing
+  `commands/docs.py` itself to prune orphans automatically was judged out
+  of this mechanical cleanup's scope -- flagged here for a future,
+  separately-scoped fix rather than folded into Phase 8 silently.
+- **2026-08-23 (Phase 8)**: `specmgr schema --type qa` (both output dirs)
+  reported `(changed)`, not the plan's anticipated `(unchanged)`, because
+  Step 4's docstring rewording (removing/rephrasing stale "duplicated from
+  v1"/"imported unchanged from v1" prose in `qa/models/v2/{body,document,
+  question_answer}.py`) touches class docstrings that the JSON Schema
+  generator embeds verbatim into each `$defs.*.description` field. Verified
+  via `git diff` that only `description` string values changed -- no
+  `$defs`/`properties`/`$comment` key was added, removed, or restructured,
+  so QA's actual schema *shape* is unchanged, matching the plan's intent;
+  only the generated schema's prose commentary drifted, as an unavoidable
+  side effect of Step 4's explicitly-requested docstring cleanup.
+- **2026-08-23 (Phase 8)**: `CHANGELOG.md`'s `[Unreleased]` / `### Changed`
+  entry (added in Phase 7) stated `qa/models/v1/` "remains on disk purely
+  as historical reference" -- now false. Updated that still-mutable
+  (not-yet-released) entry in place to describe the Phase 8 removal, even
+  though `CHANGELOG.md` was not one of Step 4's explicitly-enumerated
+  files, on the reasoning that an `[Unreleased]` entry is a living
+  document describing what will ship, not a historical record of a past
+  release, so leaving it stale would ship inaccurate release notes.
 
 #### Update 2026-08-23T02:00:00Z
 
@@ -1348,9 +1470,45 @@ Phase 3 is recorded in Decisions Made, not repeated here.)
 - Notes: Feature frontmatter `status` stays `done` (Phases 0-7's actual QA
   v2 feature is complete); this addition does not reopen that scope.
 
+#### Update 2026-08-23T09:00:00Z
+
+- Completed: Phase 8 (Tasks 8.1-8.4) -- `qa/models/v1/` is gone. Moved
+  `frontmatter.py`/`summary.py` into `qa/models/v2/` as sibling modules
+  (`QaFrontmatter`/`QaSummary`, content unchanged except docstrings);
+  repointed all 8 live imports found by the grep sweep
+  (`qa/models/v2/{parser,document,__init__}.py`, `qa/tools/list_qa.py`,
+  `tests/general/models/test_summary.py`, `tests/qa/models/v2/test_parser.py`,
+  `tests/qa/tools/{test__write,test_list_qa}.py`); `qa/models/v2/__init__.py`
+  now re-exports `QaSummary` alongside `QaFrontmatter` (previously
+  un-exported from that package). Deleted the rest of `qa/models/v1/`
+  (`__init__.py`, `_util.py`, `body.py`, `document.py`, `parser.py`) and the
+  whole `tests/qa/models/v1/` directory. Ported `test_frontmatter.py`'s 9
+  genuinely-unique `QaFrontmatter` field-level cases into a new
+  `tests/qa/models/v2/test_frontmatter.py` (import path updated only);
+  `test_body.py`/`test_parser.py` were dropped outright as fully superseded
+  by the existing v2 test suite. Reworded module docstrings in
+  `qa/models/v2/{__init__,body,document,parser,question_answer}.py` and
+  `qa/resources/qa_schema.py` to describe QA as a single-schema (v2-only)
+  domain; updated `AGENTS.md`'s `qa/` bullet and `CHANGELOG.md`'s
+  `[Unreleased]` entry the same way. Regenerated `docs/api/`,
+  `docs/GENERATED.md`, and both `qa_schema.json` copies; manually deleted 7
+  orphaned `docs/api/biz.dfch.specmgr.qa.models.v1.*.md` files `specmgr
+  docs` does not auto-prune (see Decisions Made). Final quality gate green:
+  `ruff format --check`, `ruff check`, `vulture src/ whitelist.py
+  --min-confidence 60` (no findings), full `unittest discover` (1306 tests,
+  all passing).
+- Next: None -- Phase 8, and this feature's full scope including its
+  tracked followup cleanup, is complete. Commit left to the orchestrator.
+- Notes: A final `grep -rn "qa\.models\.v1\|qa/models/v1" src/ tests/ AGENTS.md`
+  confirms zero remaining functional references -- every surviving hit is a
+  historical "was removed"/"was moved from" docstring/comment describing
+  this same Phase 8 cleanup, not a live import.
+
 ### Related PRs / Commits
 
 None yet (this feature was developed and verified across seven phases on
 the `feat-14` branch; the orchestrator commits each phase separately per
 this plan's own per-phase commit discipline). Phase 8 (cleanup) has been
-added to the plan but not yet executed or committed.
+executed and verified; its own commit (`chore(qa)!: remove qa/models/v1
+(superseded by v2)`) is left to the orchestrator, same per-phase discipline
+as Phases 1-7.

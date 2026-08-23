@@ -329,7 +329,7 @@
       "type": "object"
     },
     "QaAnswer": {
-      "description": "One `QaQuestionAnswer`'s free-form prose answer -- an opaque, unparsed markdown blob.\n\nDeliberately **not** heading-anchored, mirroring `qa/models/v1/body.py`'s\nown `QaAnswer` shape. Unlike v1 (where `answer` is always the *last*\ndeclared field of a heading-bounded `QaSection`, so the base\n`MarkdownStr.get_extent`'s \"swallow everything remaining\" is correct),\nv2 allows further adjacent Q&A pairs to follow within the same\nenclosing category section -- so this class overrides `get_extent` to\nstop at the first depth-0 occurrence of a heading (any level), a block\nquote, or a comment, and only runs to the end of the given text when\nnone of those follow.\n\nAdds a `text` computed property (mirroring\n`MarkdownParagraph.text`/`MarkdownSection.text`/v1's own `QaAnswer.text`)\nso this otherwise-private `_value` is reachable through `model_dump()`/\n`model_dump_json()`.",
+      "description": "One `QaQuestionAnswer`'s free-form prose answer -- an opaque, unparsed markdown blob.\n\nDeliberately **not** heading-anchored: since further adjacent Q&A pairs\ncan follow within the same enclosing category section, the base\n`MarkdownStr.get_extent`'s \"swallow everything remaining\" (correct for a\nfield declared *last* in a heading-bounded section) would be wrong here\n-- so this class overrides `get_extent` to stop at the first depth-0\noccurrence of a heading (any level), a block quote, or a comment, and\nonly runs to the end of the given text when none of those follow.\n\nAdds a `text` computed property (mirroring\n`MarkdownParagraph.text`/`MarkdownSection.text`) so this otherwise-private\n`_value` is reachable through `model_dump()`/`model_dump_json()`.",
       "properties": {},
       "title": "QaAnswer",
       "type": "object"
@@ -513,7 +513,7 @@
     }
   },
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "description": "A full Question and Answer (QA) v2 document: YAML frontmatter and body.\n\nAttributes\n----------\nfrontmatter:\n    The YAML frontmatter block. See :class:`~biz.dfch.specmgr.qa.models.v1.frontmatter.QaFrontmatter`\n    (imported unchanged from `qa/models/v1/`, per REQ-003).\nbody:\n    The parsed Q&A sections. See :class:`~biz.dfch.specmgr.qa.models.v2.body.Qa`.",
+  "description": "A full Question and Answer (QA) v2 document: YAML frontmatter and body.\n\nAttributes\n----------\nfrontmatter:\n    The YAML frontmatter block. See :class:`~biz.dfch.specmgr.qa.models.v2.frontmatter.QaFrontmatter`.\nbody:\n    The parsed Q&A sections. See :class:`~biz.dfch.specmgr.qa.models.v2.body.Qa`.",
   "properties": {
     "body": {
       "$ref": "#/$defs/Qa"
