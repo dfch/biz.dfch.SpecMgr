@@ -465,13 +465,16 @@ at all). REQ-004/ACC-004 above were revised in place to match.
 
 #### Phase 6: Rewire `qa/prompts/*`
 
-- [ ] Task 6.1: Update `create_qa`/`update_qa` prompt narration for the
+- [x] Task 6.1: Update `create_qa`/`update_qa` prompt narration for the
   adjacent-pairs structure and `## Elicitation Context` — depends on: Task
-  5.3 — status: not-started.
-- [ ] Task 6.2: Update/extend `tests/qa/prompts/` (ACC-007) — depends on:
-  Task 6.1 — status: not-started.
-- [ ] Task 6.3: Phase-end quality gate; update Progress section; commit
-  (`feat(qa): update QA prompts for v2 adjacent question/answer structure`) — depends on: Task 6.2 — status: not-started.
+  5.3 — status: done (2026-08-23). Also updated the packaged `refine`
+  instructions file for the same v1→v2 shape change, per orchestrator
+  scope note (see Decisions Made).
+- [x] Task 6.2: Update/extend `tests/qa/prompts/` (ACC-007) — depends on:
+  Task 6.1 — status: done (2026-08-23).
+- [x] Task 6.3: Phase-end quality gate; update Progress section; commit
+  (`feat(qa): update QA prompts for v2 adjacent question/answer structure`) — depends on: Task 6.2 — status: done (2026-08-23, quality gate green;
+  commit itself left to the orchestrator).
 
 #### Phase 7: Cross-cutting docs + final verification
 
@@ -614,7 +617,54 @@ REQ-only, not QA-specific -- no changes needed there. Phase 5's quality gate
 1325 tests total) is green; both final `specmgr schema --type qa`
 invocations (default `docs/` output dir and
 `src/biz/dfch/specmgr/qa/data`) report `(unchanged)`/exit 0, confirming zero
-drift. Phases 6-7 remain `not-started`.
+drift.
+
+**Phase 6 is done.** Rewrote the narration in all three of QA's packaged
+prompt-instructions files (no `qa/prompts/*.py` code changed -- all three
+prompts are already version-agnostic `string.Template` substitutions over
+a packaged `.md` file):
+`src/biz/dfch/specmgr/qa/data/qa_create_instructions.md`'s "Structure
+recap" now describes ten fixed `##` category headings (`## Elicitation
+Context` first, explicitly called out as QA-schema-specific and *not* one
+of the nine ISO/IEC 25010:2023 characteristics, followed by the nine
+characteristics themselves), each holding zero or more adjacent
+comment/question/answer pairs with no heading of their own (dropped every
+"`### {question-ish heading}`"/"a free-form H3 per pair" reference and the
+`#### Requirement` callout entirely, per this feature's own explicit scope
+exclusion); step 2's gather-information guidance and step 3's
+template/example/schema reference guidance were updated to match (nine ->
+ten headings, `Elicitation Context` gathered first).
+`qa_update_instructions.md`'s step 3 tool-mapping bullet now lists
+`Elicitation Context` alongside (and explicitly distinct from) the nine
+ISO/IEC 25010:2023 category sections, drops `requirement` from a Q&A
+pair's field list (now `comment`/`question`/`answer` only), and updates
+"nine fixed category headings" to "ten" in the whole-body-replace caveat.
+`qa_refine_instructions.md`'s step 2 now offers `Elicitation Context` as a
+tenth selectable target alongside the nine characteristics (with an "all
+ten" shortcut replacing "all nine"); step 3 explicitly calls out skipping
+the `specmgr://iso25010` lookup for `Elicitation Context` (QA-schema-
+specific, no ISO/IEC 25010:2023 definition to fetch) and drafting
+context-gathering questions directly instead; step 4 now describes
+appending new pairs in v2's adjacent shape (`> {question}` immediately
+followed by the literal `_(awaiting response)_` placeholder, no heading of
+its own) directly after any existing pairs in the targeted category,
+keeping the existing "no comment, no requirement callout on new pairs"
+instruction (dropping only the now-nonexistent "requirement callout"
+half, since v2 has no such callout at all); step 5's "nine fixed category
+headings" became "ten". Extended
+`tests/qa/prompts/{test_create_qa,test_update_qa,test_refine}.py` (ACC-007)
+with assertions that `## Elicitation Context`/`Elicitation Context` is
+mentioned in each prompt's output and that the old v1 per-pair-heading
+phrasing (`"### {question-ish heading}"`) and the old
+`"comment`/`requirement`/`question`/`answer"` field-list phrasing are both
+gone; `test_create_qa.py` also asserts `#### Requirement` no longer
+appears. A final grep sweep across all three
+`qa_*_instructions.md` files for leftover `### {`/`#### Requirement`
+references found none; every remaining "nine" reference correctly scopes
+to the nine ISO/IEC 25010:2023 characteristics specifically, not the
+overall (now ten) category count. Phase 6's quality gate (`ruff format
+--check`, `ruff check`, `vulture`, full `unittest` suite -- 1332 tests
+total) is green. Phase 7 remains `not-started`.
 
 ### Blockers
 
@@ -850,6 +900,25 @@ Phase 3 is recorded in Decisions Made, not repeated here.)
   whitelist.py` invocation does not scan. This mirrors the same
   false-positive class every other whitelisted QA/REQ/UC/TSK field name in
   that block already documents, not a new category of exception.
+- **2026-08-23 (Phase 6)**: REQ-007/ACC-007's literal wording only names
+  `create_qa`/`update_qa`, but Phase 6 also rewrote
+  `qa_refine_instructions.md` (the packaged instructions backing the
+  separate, already-registered `refine` prompt), extending REQ-007/
+  ACC-007's *practical* scope without editing their wording. Rationale:
+  `refine`'s pre-existing instructions told the LLM to append new
+  v1-shaped `### {question-ish heading}` Q&A pairs, a structure
+  `qa/tools/update_qa` (repointed at v2 in Phase 4) now rejects outright --
+  leaving it stale would make `refine` actively harmful (guaranteed to
+  produce a document `update_qa` cannot write). Fixing it was judged
+  squarely necessary to avoid shipping a broken prompt as part of this same
+  v1->v2 cutover, even though the plan's own README did not anticipate
+  this third prompt's staleness when REQ-007/ACC-007 were originally
+  written. REQ-007/ACC-007's own wording was left as-is rather than
+  amended, since amending it retroactively to claim it always covered
+  `refine` would misrepresent the original plan; this entry documents the
+  scope extension instead, per this plan's own precedent of recording
+  such calls in Decisions Made rather than silently expanding a
+  requirement's text.
 
 #### Update 2026-08-23T02:00:00Z
 
@@ -1050,6 +1119,62 @@ Phase 3 is recorded in Decisions Made, not repeated here.)
   modified -- only `qa/models/v2/__init__.py` (adding the `SCHEMA_COMMENT_VERSION`
   export) and the new `qa/models/v2/_util.py` were touched in that package.
   No commit was made (left to the orchestrator).
+
+#### Update 2026-08-23T06:00:00Z
+
+- Completed: Phase 6 (Tasks 6.1-6.3). Rewrote the narration in all three of
+  QA's packaged prompt-instructions files -- no `qa/prompts/*.py` code
+  changed (all three prompts are already version-agnostic
+  `string.Template` substitutions over a packaged `.md` file):
+  `src/biz/dfch/specmgr/qa/data/qa_create_instructions.md`'s "Structure
+  recap" now describes ten fixed `##` category headings (`## Elicitation
+  Context` first, explicitly called out as QA-schema-specific and not one
+  of the nine ISO/IEC 25010:2023 characteristics, followed by the nine
+  characteristics), each holding zero or more adjacent
+  comment/question/answer pairs with no heading of their own (dropped
+  every "`### {question-ish heading}`" reference and the `#### Requirement`
+  callout entirely); steps 2/3 updated to match (nine -> ten headings,
+  `Elicitation Context` gathered first).
+  `src/biz/dfch/specmgr/qa/data/qa_update_instructions.md`'s step 3
+  tool-mapping bullet now lists `Elicitation Context` alongside (and
+  explicitly distinct from) the nine ISO/IEC 25010:2023 category sections,
+  drops `requirement` from a Q&A pair's field list (now
+  `comment`/`question`/`answer` only), and updates "nine fixed category
+  headings" to "ten".
+  `src/biz/dfch/specmgr/qa/data/qa_refine_instructions.md`'s step 2 now
+  offers `Elicitation Context` as a tenth selectable target alongside the
+  nine characteristics (with an "all ten" shortcut replacing "all nine");
+  step 3 explicitly calls out skipping the `specmgr://iso25010` lookup for
+  `Elicitation Context` and drafting context-gathering questions directly
+  instead; step 4 now describes appending new pairs in v2's adjacent shape
+  (`> {question}` immediately followed by the literal
+  `_(awaiting response)_` placeholder, no heading of its own) directly
+  after any existing pairs in the targeted category; step 5's "nine fixed
+  category headings" became "ten". This third file's update was not
+  explicitly named by REQ-007/ACC-007 but was treated as in-scope for this
+  phase (see Decisions Made) because its pre-existing instructions
+  described a structure `update_qa` (already v2-only since Phase 4) would
+  reject outright. Extended
+  `tests/qa/prompts/{test_create_qa,test_update_qa,test_refine}.py`
+  (ACC-007) with assertions that `Elicitation Context` is mentioned in
+  each prompt's output and that the old v1 per-pair-heading phrasing
+  (`"### {question-ish heading}"`) and old field-list phrasing
+  (`` "comment`/`requirement`/`question`/`answer" ``) are both gone;
+  `test_create_qa.py` also asserts `#### Requirement` no longer appears. A
+  final grep sweep across all three `qa_*_instructions.md` files for
+  leftover `### {`/`#### Requirement` references found none; every
+  remaining "nine" reference correctly scopes to the nine ISO/IEC
+  25010:2023 characteristics specifically. Quality gate green:
+  `ruff format --check`, `ruff check`, `vulture src/ whitelist.py
+  --min-confidence 60` (no findings), full `unittest discover` (1332
+  tests, all passing).
+- Next: Phase 7 -- `specmgr docs` regeneration, `server.py`/`AGENTS.md`
+  updates, and final ACC-001..008 verification.
+- Notes: No `src/biz/dfch/specmgr/models/md/` file was modified; no
+  `qa/models/`, `qa/tools/`, or `qa/resources/` file was modified; no
+  `qa/prompts/*.py` file needed any change (all three prompts already read
+  their instructions from a packaged `.md` file with no model/schema
+  import). No commit was made (left to the orchestrator).
 
 ### Related PRs / Commits
 

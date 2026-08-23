@@ -73,6 +73,16 @@ class TestUpdateQaPrompt(unittest.TestCase):
         for status in ("draft", "active", "done", "cancelled"):
             self.assertIn(status, result)
 
+    def test_mentions_elicitation_context(self):
+        """The v2 `Elicitation Context` category must be mentioned."""
+        result = update_qa("abc-123")
+        self.assertIn("Elicitation Context", result)
+
+    def test_no_longer_lists_requirement_as_a_pair_field(self):
+        """v1's `requirement` field has no v2 equivalent on a Q&A pair."""
+        result = update_qa("abc-123")
+        self.assertNotIn("comment`/`requirement`/`question`/`answer`", result)
+
     def test_instructions_loaded_from_packaged_data_file(self):
         """The instructional text must come from qa/data/qa_update_instructions.md,
         not an inline Python string -- reads fresh on every call, no cache."""

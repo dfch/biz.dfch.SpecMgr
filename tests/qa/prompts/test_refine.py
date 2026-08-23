@@ -102,6 +102,18 @@ class TestRefinePrompt(unittest.TestCase):
         result = refine("abc-123")
         self.assertIn("Never touch", result)
 
+    def test_mentions_elicitation_context_as_selectable_target(self):
+        """The v2 `Elicitation Context` category must be offered as a
+        tenth selectable target alongside the nine characteristics."""
+        result = refine("abc-123")
+        self.assertIn("`Elicitation Context`", result)
+
+    def test_no_longer_mentions_per_pair_h3_heading(self):
+        """v1's per-question H3 heading phrasing must be gone in v2's
+        adjacent-pairs structure."""
+        result = refine("abc-123")
+        self.assertNotIn("### {question-ish heading}", result)
+
     def test_instructions_loaded_from_packaged_data_file(self):
         """The instructional text must come from qa/data/qa_refine_instructions.md,
         not an inline Python string -- reads fresh on every call, no cache."""

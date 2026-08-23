@@ -31,44 +31,52 @@ saw it.
 If the count, or the set of characteristics, is missing, unclear, or
 says "(not given)", use the `question` tool to ask the user explicitly
 for:
-- how many new questions to add per characteristic (a number), and
-- which of the nine ISO/IEC 25010:2023 characteristics to target --
-  offer each of `Functional Suitability`, `Performance Efficiency`,
-  `Compatibility`, `Interaction Capability`, `Reliability`, `Security`,
-  `Maintainability`, `Flexibility`, `Safety` as its own selectable
-  option (multi-select), plus an "all nine" shortcut.
+- how many new questions to add per category (a number), and
+- which categories to target -- offer `Elicitation Context` (QA-schema-
+  specific, not one of the ISO/IEC 25010:2023 characteristics) alongside
+  each of the nine ISO/IEC 25010:2023 characteristics
+  (`Functional Suitability`, `Performance Efficiency`, `Compatibility`,
+  `Interaction Capability`, `Reliability`, `Security`, `Maintainability`,
+  `Flexibility`, `Safety`) as its own selectable option (multi-select),
+  plus an "all ten" shortcut.
 Do not proceed to step 3 until both are unambiguous.
 
 ## 3. Look up each targeted characteristic's definition first
-For every characteristic you are about to add questions to, fetch the
-`specmgr://iso25010` resource and read that characteristic's (and,
-where useful, its sub-characteristics') description before drafting any
-question -- this keeps every question grounded in the actual ISO/IEC
-25010:2023 definition rather than an assumed one. Do not invent
-characteristic names beyond the nine returned by that resource, and do
-not rename or reorder the document's own nine fixed `##` category
+For every ISO/IEC 25010:2023 characteristic you are about to add
+questions to, fetch the `specmgr://iso25010` resource and read that
+characteristic's (and, where useful, its sub-characteristics')
+description before drafting any question -- this keeps every question
+grounded in the actual ISO/IEC 25010:2023 definition rather than an
+assumed one. For `Elicitation Context`, skip the `specmgr://iso25010`
+lookup -- it is QA-schema-specific, not one of the nine characteristics,
+and has no ISO/IEC 25010:2023 definition to fetch; draft context-
+gathering questions directly instead (e.g. about stakeholders, scope, or
+why the interview is happening). Do not invent characteristic names
+beyond the nine returned by that resource plus `Elicitation Context`, and
+do not rename or reorder the document's own ten fixed `##` category
 headings.
 
 ## 4. Draft the new questions
-For each targeted characteristic, append the requested number of new
-`### {question-ish heading}` Q&A pairs under that category's existing
-`## {Characteristic}` heading (a free-form H3 per pair, phrased as a
-genuine open question relevant to that characteristic's definition from
-step 3). Each new pair consists of exactly:
+For each targeted category, append the requested number of new adjacent
+question/answer pairs directly after any existing pairs already under
+that category's existing `## {Category}` heading (or as the first pair,
+if the category was empty), phrased as a genuine open question relevant
+to that category (grounded in its ISO/IEC 25010:2023 definition from step
+3, where applicable). Each new pair has **no heading of its own** and
+consists of exactly:
 - `> {the question}` as a block quote, and
 - immediately below it, on its own line, the literal placeholder text
   `_(awaiting response)_` -- nothing else.
 This placeholder is not the interviewee's answer -- it only marks where
 a human will later type their actual answer directly into the document.
-Do not add an HTML comment or a `#### Requirement` callout to these new
-pairs: those are only ever added later, once an answer has actually been
-given and a requirement can genuinely be derived from it. Never touch
-any existing Q&A pair (question, comment, requirement, or answer) --
-only append new pairs under the requested categories.
+Do not add an HTML comment to these new pairs: that is only ever added
+later, once an answer has actually been given. Never touch any existing
+Q&A pair (question, comment, or answer) -- only append new pairs under
+the requested categories.
 
 ## 5. Whole-body replace
 `update_qa` is a whole-body replace: carry forward every section of the
-document exactly as read in step 1 (including all nine fixed category
+document exactly as read in step 1 (including all ten fixed category
 headings, even ones you are not adding questions to this time, and every
 existing Q&A pair within a category you *are* adding to), and only
 append the new placeholder pairs from step 4. Call `update_qa(id,

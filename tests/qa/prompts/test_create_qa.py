@@ -84,6 +84,22 @@ class TestCreateQaPrompt(unittest.TestCase):
         self.assertIn("### Raw Requirements", result)
         self.assertIn("## More Information", result)
 
+    def test_mentions_elicitation_context_section(self):
+        """The v2 `## Elicitation Context` section must be named."""
+        result = create_qa("Some topic")
+        self.assertIn("## Elicitation Context", result)
+
+    def test_no_longer_mentions_per_pair_h3_heading(self):
+        """v1's per-question H3 heading phrasing must be gone in v2's
+        adjacent-pairs structure."""
+        result = create_qa("Some topic")
+        self.assertNotIn("### {question-ish heading}", result)
+
+    def test_no_longer_mentions_requirement_callout(self):
+        """v1's `#### Requirement` callout has no v2 equivalent."""
+        result = create_qa("Some topic")
+        self.assertNotIn("#### Requirement", result)
+
     def test_mentions_update_qa_for_later_revisions(self):
         """The prompt must point at the update_qa prompt for later changes."""
         result = create_qa("Some topic")

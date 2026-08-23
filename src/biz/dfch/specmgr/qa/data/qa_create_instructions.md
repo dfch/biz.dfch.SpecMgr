@@ -23,45 +23,46 @@ step 1 if this is genuinely a new interview.
   - `### Raw Requirements` -- mandatory. Free-form, pre-existing raw
     requirement notes (e.g. from a wiki page), preserved verbatim for
     traceability. May simply note there were none.
-- Nine fixed `##` category headings, each always present, in this exact
-  order and exact wording (ISO/IEC 25010:2023 quality characteristics):
-  `Functional Suitability`, `Performance Efficiency`, `Compatibility`,
-  `Interaction Capability`, `Reliability`, `Security`,
-  `Maintainability`, `Flexibility`, `Safety`. Do not rename, reorder, or
-  omit any of these nine headings -- a category with nothing to ask yet
-  is still written as an empty heading with no `###` children under it.
-  Under each category heading, add zero or more `### {question-ish
-  heading}` Q&A pairs (a free-form H3 per pair). Each pair may
-  optionally include, in this order:
-  - an HTML comment (`<!-- ... -->`) directly under the H3, giving
-    context (e.g. when/by whom this was elicited);
-  - a `#### Requirement` callout: free-form, agent-authored prose
-    promoting this answer to a concrete, testable requirement, only
-    when you judge the answer implies one -- there is no fixed shape
-    for this callout's content;
+- Ten fixed `##` category headings, each always present, in this exact
+  order and exact wording: `## Elicitation Context` first, then the nine
+  ISO/IEC 25010:2023 quality characteristics: `Functional Suitability`,
+  `Performance Efficiency`, `Compatibility`, `Interaction Capability`,
+  `Reliability`, `Security`, `Maintainability`, `Flexibility`, `Safety`.
+  `## Elicitation Context` is QA-schema-specific -- unlike the other nine, it
+  is **not** one of the ISO/IEC 25010:2023 quality characteristics; it
+  captures context about the interview itself (stakeholders, scope, why
+  it is happening) rather than a product-quality characteristic. Do not
+  rename, reorder, or omit any of these ten headings -- a category with
+  nothing to ask yet is still written as an empty heading with nothing
+  under it.
+  Under each category heading, add zero or more adjacent question/answer
+  pairs, one directly after another, with **no heading of its own** for
+  any pair. Each pair may optionally include, in this order:
+  - an HTML comment (`<!-- ... -->`), giving context (e.g. when/by whom
+    this was elicited) for the question that immediately follows it;
   - `> {the interviewer's question}` as a block quote;
   - the interviewee's free-form prose answer, as plain paragraphs
-    immediately after the block quote (no heading of its own).
-  All four of comment/requirement/question/answer are optional on every
-  Q&A pair -- include whichever apply.
+    immediately after the block quote.
+  All three of comment/question/answer are optional on every Q&A pair --
+  include whichever apply.
 - `## More Information` -- optional freeform supplementary text (e.g.
   noting which category was deliberately left empty, and why).
 
 ## 2. Gather information before calling any tool
 Elicit (asking the user if not already given) the introduction/context,
-any pre-existing raw requirements, and then work through the nine
-ISO/IEC 25010:2023 categories one at a time, asking plausible
+any pre-existing raw requirements, then work through `Elicitation
+Context` (general context about the interview itself) followed by the
+nine ISO/IEC 25010:2023 categories one at a time, asking plausible
 characteristic-relevant questions and recording the answers. Not every
 category needs a question -- an internal-only change, for example, may
-legitimately leave `Compatibility` empty. Only add a `#### Requirement`
-callout when an answer clearly implies a concrete, testable requirement.
+legitimately leave `Compatibility` empty.
 
 ## 3. Use the template/example/schema as references
 Fetch `specmgr://qa/template` or `specmgr://qa/example` as a starting
 point/style reference, then check `specmgr://qa/schema` (the generated
 JSON Schema) to confirm field names and constraints before drafting the
 body. Do not invent field names or section headings that are not present
-there, and do not rename or reorder the nine fixed category headings.
+there, and do not rename or reorder the ten fixed category headings.
 
 ## 4. Tool call sequence
 1. Draft the body-only markdown per the structure above.
