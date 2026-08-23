@@ -159,8 +159,11 @@ Design Notes).
   mechanic here is local to `qa/models/v2/` (see Design Notes).
 - An automated v1 → v2 document migration tool (the version gate only
   detects and reports; it does not convert).
-- Deleting `qa/models/v1/` from disk (kept as historical reference; a
-  separate, later cleanup).
+- Deleting `qa/models/v1/` from disk (kept as historical reference).
+  **Update 2026-08-23**: this cleanup is no longer an unscheduled "separate,
+  later" item — it is now tracked explicitly as Phase 8 of this same plan
+  (see Task List below), per the user's direct request to add it here
+  rather than open a new feature/issue for it.
 - Any new `Requirement`-callout-style structure inside `QaQuestionAnswer`
   (v1's `#### Requirement` callout has no v2 equivalent — not requested).
 - Cross-document validation or search over QA documents.
@@ -492,6 +495,58 @@ at all). REQ-004/ACC-004 above were revised in place to match.
   7.2 — status: done (2026-08-23, quality gate green; commit itself left
   to the orchestrator).
 
+#### Phase 8: Cleanup -- remove qa/models/v1/
+
+**Added 2026-08-23**, after Phases 0-7 were already complete, per the
+user's explicit request to track this follow-up cleanup directly in this
+same plan rather than open a new feature/issue for it (see the Scope
+section's revised "Explicitly out of scope" bullet). Not yet started --
+none of Phase 8's tasks have been executed.
+
+- [ ] Task 8.1: Grep the whole repo for `qa.models.v1`/`qa\.models\.v1`
+  (`src/`, `tests/`, `docs/`, config files) to enumerate every remaining
+  reference before deleting anything -- do not assume the known set below
+  (`qa/models/v2/document.py`, `qa/models/v2/parser.py`,
+  `qa/models/v2/__init__.py`, `qa/tools/_write.py`) is exhaustive. Then, as
+  a distinct sub-step (the one non-trivial part of an otherwise mechanical
+  deletion): **move** `qa/models/v1/frontmatter.py` (`QaFrontmatter`) out
+  of `qa/models/v1/` and into `qa/models/v2/` itself (or another clearly-
+  named shared location, e.g. a new `qa/models/_shared/`), update every
+  import found by the grep sweep away from `..v1.frontmatter`/
+  `qa.models.v1.frontmatter` to the new location, and update
+  `qa/models/v2/__init__.py`'s re-export accordingly. Only once every
+  import is repointed, delete the rest of `qa/models/v1/` entirely
+  (`__init__.py`, `_util.py`, `body.py`, `document.py`, `parser.py`,
+  `summary.py` -- `QaSummary` is imported from `qa/models/v1/` by
+  `qa/tools/list_qa.py` per Phase 4's Decisions Made, so confirm via the
+  grep sweep whether `summary.py` needs the same move-not-delete treatment
+  as `frontmatter.py`, rather than assuming it doesn't) -- depends on:
+  Task 7.3 -- status: not-started.
+- [ ] Task 8.2: Delete `tests/qa/models/v1/` entirely, and remove/rewrite
+  any remaining test elsewhere in the suite that imports from
+  `qa.models.v1` (confirm via the same grep sweep as Task 8.1 rather than
+  assuming Phases 4-6's own rewiring already left none) -- depends on:
+  Task 8.1 -- status: not-started.
+- [ ] Task 8.3: Update `AGENTS.md`'s `qa/` bullet to remove its current
+  description of `qa/models/v1/` as "legacy, retained on disk purely as
+  historical reference" entirely, since it no longer exists on disk at
+  all -- QA becomes a single-schema (v2-only) domain again, matching how
+  the bullet would read had v1 never existed, while keeping the wording
+  that is still accurate (the `## Elicitation Context`/adjacent-pairs
+  description, the tool/resource/prompt lists) -- depends on: Task 8.2 --
+  status: not-started.
+- [ ] Task 8.4: Phase-end quality gate (`ruff format --check`, `ruff check`,
+  `vulture src/ whitelist.py --min-confidence 60`, full `unittest discover`
+  suite, `specmgr docs`/`specmgr mcp-docs` drift checks -- `qa/models/v1/`'s
+  module docstrings currently appear in `docs/GENERATED.md`/`docs/api/` and
+  must drop out cleanly); update this README's Progress section (Current
+  Status, a dated Recent Updates entry); commit as one Conventional Commit
+  (suggest: `chore(qa)!: remove qa/models/v1 (superseded by v2)`, noting in
+  the commit body that this is a breaking change for anyone still importing
+  `qa.models.v1` directly, even though no MCP tool/resource/prompt has
+  referenced it since Phase 4) -- depends on: Task 8.3 -- status:
+  not-started.
+
 **Note:** If a task's scope changes mid-flight, edit its description in
 place; rely on git history (`git log -p` on this file) to recover what was
 originally planned, rather than keeping a second copy of the task around.
@@ -699,6 +754,18 @@ under `qa/models/`, `qa/tools/`, `qa/resources/`, `qa/prompts/`, or
 `models/md/` was touched in this phase; only cross-cutting docs
 (`server.py`, `AGENTS.md`, `CHANGELOG.md`, `docs/api/biz.dfch.specmgr.server.md`)
 changed.
+
+**Followup added 2026-08-23 (plan-only, no code changed):** Phase 8
+("Cleanup -- remove `qa/models/v1/`") has been added to the Task List
+above, at the user's direct request, to track the deletion of
+`qa/models/v1/` that Phases 0-7 deliberately deferred (see the Scope
+section). Phase 8 is **not-started** -- none of its tasks have been
+executed. This does not reopen the feature's main scope: Phases 0-7 (the
+actual QA v2 feature -- new adjacent-pairs schema, hard version cutover,
+full tool/resource/prompt rewiring, cross-cutting docs) remain complete
+and merged-ready; the feature frontmatter `status` stays `done`
+accordingly, with Phase 8 tracked as an explicitly-scoped followup
+cleanup rather than a reason to revert to `in-progress`.
 
 ### Blockers
 
@@ -1262,8 +1329,28 @@ Phase 3 is recorded in Decisions Made, not repeated here.)
   under `qa/models/`, `qa/tools/`, `qa/resources/`, `qa/prompts/`, or
   `models/md/` was touched. No commit was made (left to the orchestrator).
 
+#### Update 2026-08-23T08:00:00Z
+
+- Completed: Plan-only addition of Phase 8 ("Cleanup -- remove
+  `qa/models/v1/`", Tasks 8.1-8.4) to the Task List, requested directly by
+  the user in conversation (not from a new GitHub issue) to track the
+  `qa/models/v1/` deletion that Phases 0-7 deliberately deferred (see the
+  Overview and the Scope section's "Explicitly out of scope" bullet, now
+  updated to point at Phase 8 instead of an unscheduled "separate, later
+  cleanup"). Updated this README's Current Status note to record that
+  Phase 8 exists and is not-started, while Phases 0-7 remain complete and
+  merged-ready. No `src/`/`tests/` file was touched, no code was run, and
+  no task in Phase 8 was executed -- this update is this plan document
+  only.
+- Next: Phase 8, Task 8.1 -- grep the repo for `qa.models.v1` references
+  and move `QaFrontmatter` out of `qa/models/v1/frontmatter.py` before any
+  deletion.
+- Notes: Feature frontmatter `status` stays `done` (Phases 0-7's actual QA
+  v2 feature is complete); this addition does not reopen that scope.
+
 ### Related PRs / Commits
 
 None yet (this feature was developed and verified across seven phases on
 the `feat-14` branch; the orchestrator commits each phase separately per
-this plan's own per-phase commit discipline).
+this plan's own per-phase commit discipline). Phase 8 (cleanup) has been
+added to the plan but not yet executed or committed.
