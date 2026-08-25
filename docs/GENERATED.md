@@ -75,6 +75,12 @@ First-line docstrings from each module, organized by domain:
 - `general/tools/mdformat.py` — ``@mcp.tool()`` wrapper: mdformat.
 - `general/tools/webfetch.py` — ``@mcp.tool()`` wrapper: webfetch.
 
+**gol/**
+
+- `gol/models/v1/__init__.py` — Goal (GOL) models -- Pydantic schema powered by the generic ``models/md`` engine.
+- `gol/models/v1/body.py` — Goal (GOL) models: whole-section fields under a single H1.
+- `gol/models/v1/frontmatter.py` — Goal (GOL) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
+
 **models/**
 
 - `models/__init__.py` — Pydantic models used by the ``biz-dfch-specmgr`` MCP server.
@@ -305,4 +311,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 205
+**Test files**: 207

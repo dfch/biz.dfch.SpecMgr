@@ -1,7 +1,7 @@
 ---
 created: 2026-08-25
 id: feat-18-goal
-status: planning
+status: in-progress
 updated: 2026-08-25
 version: 1.0.0
 ---
@@ -333,36 +333,36 @@ sessions.
 
 #### Phase 1: Specification
 
-- [ ] Task 1.1: Write a full reference `gol_reference.md`
+- [x] Task 1.1: Write a full reference `gol_reference.md`
   (`.specmgr/feat/feat-18-goal/gol_reference.md`) exercising every field
   (`statement`, `Source`, plus all optional sections present:
   `Description`/`Priority`/`Tags`/`Related Artifacts` with all four
   sub-lists/`More Information`/`Notes`) — depends on: none — status:
-  not-started
-- [ ] Task 1.2: Define `gol` frontmatter (`gol/models/v1/frontmatter.py` —
+  completed
+- [x] Task 1.2: Define `gol` frontmatter (`gol/models/v1/frontmatter.py` —
   `GolFrontmatter` subclass of `MarkdownFrontmatter`, `type=Literal["gol"]`,
   7-value status set identical to `ReqFrontmatter`'s) — depends on: none —
-  status: not-started
-- [ ] Task 1.3: Define `gol` body structure (`gol/models/v1/body.py`) —
+  status: completed
+- [x] Task 1.3: Define `gol` body structure (`gol/models/v1/body.py`) —
   `Goal(MarkdownSection1)` with `@alias(value=".+", type=AliasType.REGEX)`,
   mandatory `statement: MarkdownParagraph` + `source: Source`, optional
   `description`/`priority`/`tags`/`related_artifacts`/`more_information`/
   `notes`; `Priority` re-declares REQ's `MarkdownSection2WithComment` +
   `field_validator` pattern (0–99); `RelatedArtifacts(MarkdownSection2)`
   with four optional `MarkdownSection3` sub-lists (see Design Notes) —
-  depends on: Task 1.2 — status: not-started
-- [ ] Task 1.4: `tests/gol/models/v1/test_frontmatter.py`, `test_body.py` —
+  depends on: Task 1.2 — status: completed
+- [x] Task 1.4: `tests/gol/models/v1/test_frontmatter.py`, `test_body.py` —
   structural + validation tests mirroring `tests/req/models/v1/`/
   `tests/prb/models/v1/`, explicit coverage of mandatory-vs-optional field
   combinations (each optional section individually absent/present; each of
-  the four `Related Artifacts` sub-lists individually absent/present) —
-  depends on: Task 1.3 — status: not-started
-- [ ] Task 1.5: Phase-end quality gate — run the full pre-commit/quality
+  the   four `Related Artifacts` sub-lists individually absent/present) —
+  depends on: Task 1.3 — status: completed
+- [x] Task 1.5: Phase-end quality gate — run the full pre-commit/quality
   gate (ruff format/check, vulture, full `unittest` suite); confirm
   `gol_reference.md` is `specmgr mdformat`-clean; add any new
   vulture-invisible Pydantic field names to `whitelist.py` if needed;
   update this README's Progress section — depends on: Task 1.1, Task 1.4 —
-  status: not-started
+  status: completed
 
 #### Phase 2: Pydantic Models, Parser & Schema
 
@@ -493,16 +493,78 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-25**: Planning complete; implementation not started.
-GitHub issue #18 ("Add artifact type Goal (GOL)") is filed and open; all
-schema/surface decisions were made in the planning session and are logged
-below. Phase 1 (Specification) is next.
+**As of 2026-08-25**: Phase 1 (Specification) complete — `gol_reference.md`
+written and verified mdformat-clean and byte-exact round-trippable,
+`GolFrontmatter`/`Goal` models defined with structural tests, full quality
+gate green (1495 tests). GitHub issue #18 ("Add artifact type Goal (GOL)")
+is filed and open. Phase 2 (Pydantic Models, Parser & Schema) is next.
 
 ### Blockers
 
 None.
 
 ### Recent Updates
+
+#### Update 2026-08-25 (Phase 1)
+
+- Completed: Phase 1 (Specification), Tasks 1.1–1.5.
+  - Task 1.1: `gol_reference.md` written — `GOL-0007: Competitive Engines in
+    Consumer Vehicles` (the exact goal `req_example.md`'s `### Goals`
+    sub-list cross-references), exercising every field: `statement`,
+    `Source`, and all optional sections present (`Description`/`Priority`
+    with comment/`Tags`/`Related Artifacts` with all four sub-lists/
+    `More Information`/`Notes`). Verified `specmgr mdformat`-clean (exit 0,
+    idempotent) and byte-exact round-trippable through the models.
+  - Task 1.2: `GolFrontmatter` (`gol/models/v1/frontmatter.py`) —
+    `MarkdownFrontmatter` subtype, `type=Literal["gol"]`, REQ's exact
+    7-value status set with its own `_ALLOWED_STATUSES` frozenset and
+    validator.
+  - Task 1.3: `Goal` body (`gol/models/v1/body.py`) — REQ's body minus
+    `Characteristics`/minus `Level`; mandatory `statement` + `source`,
+    six optional sections; `Priority` re-declares REQ's
+    `MarkdownSection2WithComment` + `field_validator` pattern (0–99, no
+    leading zeros); `RelatedArtifacts` with four optional
+    `SPACE_SEPARATED`-derived `MarkdownSection3` sub-lists; `Goal`'s H1 is
+    free-form (`@alias ".+"` REGEX).
+  - Task 1.4: `tests/gol/models/v1/test_frontmatter.py` (9 tests) +
+    `test_body.py` (32 tests) — structural + validation coverage including
+    each optional section individually absent/present, each of the four
+    sub-lists individually absent/present, mandatory-field
+    `ValidationError` (direct construction) and `AssertionError`
+    (`from_text`) channels, `Priority` range/leading-zero validation, and
+    the reference document's byte-exact round-trip.
+  - Task 1.5: quality gate green — `ruff format --check` (933 files),
+    `ruff check`, `vulture` (exit 0, no output, no new whitelist entries
+    needed — every `gol` field name already exists in REQ's models), full
+    unittest suite (1495 tests, baseline was 1454), `specmgr mdformat` on
+    the reference doc (exit 0 twice).
+- Next: Phase 2 (Pydantic Models, Parser & Schema) — `GolDocument`,
+  `parse_gol`, `GolSummary`, `Field(description=...)` parity, `specmgr
+  schema` wiring + `docs/gol_schema.json`, parser tests.
+- Notes:
+  - The body's `description` field (`Goal.description`) is declared with
+    `default=None` — a deliberate deviation from REQ's own line, where
+    `description: Description | None` carries no default and is therefore
+    pydantic-*required* (REQ's `Requirement.from_text` fails on a document
+    without a `## Description` section — verified). The plan makes
+    `Description` optional for `gol`, so the default is mandatory here.
+    REQ's quirk is out of scope for this feature (see Decisions Made).
+  - Engine quirk documented for later phases: multi-item
+    `list[MarkdownListItem]` fields round-trip tight → loose (each item's
+    stored extent ends with `\n` and the `__str__` join adds another), so
+    the reference doc's multi-item lists (`Tags`, the `### Goals`
+    sub-list) are authored loose; single-item lists are unaffected. Loose
+    lists remain byte-exact (the engine's documented exception).
+  - Package-init state: `gol/models/v1/__init__.py` exists with the
+    Phase-1 export set (frontmatter + body classes; `__all__` kept
+    alphabetical) and must be extended in Phase 2 with `GolDocument`,
+    `parse_gol`, `GolSummary`, `SCHEMA_COMMENT_VERSION` to match REQ's
+    full `__init__`. `gol/__init__.py` is intentionally *not* created yet
+    (Task 3.16 owns it, and its `from . import prompts, resources, tools`
+    line would fail while those sub-packages don't exist); `gol/models/`
+    has no `__init__.py`, mirroring REQ's exact file shape. `gol` is a
+    namespace package until Task 3.16 — imports and setuptools'
+    `namespaces = true` packaging both work.
 
 #### Update 2026-08-25 (planning)
 
@@ -565,6 +627,45 @@ None.
 - **2026-08-25**: Folder name `feat-18-goal` (issue #18) — GitHub number
   17 was already consumed by the merged feat-16 PR, so the convention's
   `feat-NNN-slug` ↔ issue-number tie lands on 18.
+- **2026-08-25**: Body `Description` is declared
+  `description: Description | None = Field(default=None, ...)` — a
+  deliberate deviation from a 1:1 copy of REQ's line, where `description`
+  has *no* default and is therefore pydantic-required (REQ's
+  `Requirement.from_text` demonstrably fails on a document without a
+  `## Description` section; REQ's own docstring for that section says
+  "Mandatory"). The plan makes `Description` optional for `gol` ("a
+  freshly created `gol` document may have zero optional sections"), so the
+  default is mandatory here. Fixing REQ's own quirk is out of scope for
+  this feature.
+- **2026-08-25**: `gol_reference.md` frontmatter values:
+  `id: deaddead-goal-goal-goal-deaddeadgoal` (prb_reference's
+  `deaddead-cafe-cafe-cafe-deaddeadcafe` dead-UUID pattern, `goal` in
+  place of `cafe`), `status: accepted` (a non-default status, so the
+  packaged example demonstrates the closed set in action; the goal is an
+  agreed, pursued business goal), `created`/`updated: 2026-08-25`
+  (prb_reference's plain-`YYYY-MM-DD` style, not req_example's
+  full-timestamp style).
+- **2026-08-25**: Multi-item bullet lists in `gol_reference.md` (`Tags`'s
+  three items, the `### Goals` sub-list's two items) are authored *loose*
+  (blank line between items). Engine behavior (documented in
+  `MarkdownListItem`'s docstring): a `list[MarkdownListItem]` field
+  round-trips tight → loose, while loose lists remain byte-exact. Since
+  ACC-001/Task 1.4 require the reference doc to round-trip byte-exactly,
+  it is authored in the engine's own canonical output form. Single-item
+  lists (the other three sub-lists) are unaffected by tight/loose and are
+  authored tight, matching `req_example.md`'s look.
+- **2026-08-25**: Package-init split for Phase 1 — `gol/models/v1/__init__.py`
+  is created now with the Phase-1 export set (frontmatter + body classes,
+  `__all__` alphabetical, mirroring `req/models/v1/__init__.py`'s shape)
+  and is extended in Phase 2 (`GolDocument`, `parse_gol`, `GolSummary`,
+  `SCHEMA_COMMENT_VERSION`); `gol/models/__init__.py` is *not* created
+  (mirrors REQ's exact file shape — REQ has none; PRB's docstring-only
+  one is not the pattern the plan points at); `gol/__init__.py` is *not*
+  created (Task 3.16 owns it, and its `from . import prompts, resources,
+  tools` line would fail while those sub-packages don't exist). `gol` is
+  therefore an implicit namespace package until Phase 3 — imports work
+  today and setuptools' `namespaces = true` keeps wheel packaging
+  correct.
 
 ### Related PRs / Commits
 
