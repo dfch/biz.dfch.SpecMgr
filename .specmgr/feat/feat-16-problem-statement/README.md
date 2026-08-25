@@ -1,7 +1,7 @@
 ---
 created: 2026-08-25
 id: feat-16-problem-statement
-status: in-progress
+status: done
 updated: 2026-08-25
 version: 1.0.0
 ---
@@ -80,25 +80,48 @@ Two new prompts (`create_prb`/`update_prb`) narrate an interactive,
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: Verifies REQ-001 — schema documented (`docs/prb_schema.json`,
+- [x] ACC-001: Verifies REQ-001 — schema documented (`docs/prb_schema.json`,
   `specmgr://prb/schema`); a reference `prb_reference.md` exercising every
   field (all 7 questions answered, `Impact`/`References`/
-  `More Information` all present) round-trips through the parser.
-- [ ] ACC-002: Verifies REQ-002 — Pydantic models validate required
+  `More Information` all present) round-trips through the parser. **PASS**
+  — `docs/prb_schema.json` exists (2020-12 JSON Schema, `$comment: "v1"`,
+  `title: PrbDocument`), `specmgr://prb/schema` resolves the packaged copy
+  and returns the same 8 top-level keys; `.specmgr/feat/feat-16-problem-statement/prb_reference.md`
+  round-trips via `tests/prb/models/v1/test_parser.py::TestParsePrb::test_parses_full_reference_document`.
+- [x] ACC-002: Verifies REQ-002 — Pydantic models validate required
   (`Summary`, `Gap`, `Future State`) vs. optional (7 questions, `Impact`,
   `References`, `More Information`) fields correctly; `PrbFrontmatter.status`
-  rejects any value outside the four-value set.
-- [ ] ACC-003: Verifies REQ-003 — parser produces a valid object tree for a
+  rejects any value outside the four-value set. **PASS** —
+  `tests/prb/models/v1/test_body.py`/`test_frontmatter.py` (32 tests)
+  cover each field's mandatory/optional behavior individually;
+  `test_parser.py::test_invalid_status_raises_validation_error` confirms
+  the closed 4-value status set.
+- [x] ACC-003: Verifies REQ-003 — parser produces a valid object tree for a
   well-formed document; missing a mandatory section raises
   `AssertionError`; an invalid field value raises `pydantic.ValidationError`.
-- [ ] ACC-004: Verifies REQ-004 — every listed tool is implemented,
+  **PASS** — `test_parser.py`'s 9 tests, re-run live: minimal/full-reference
+  parses OK; `test_missing_current_state_section_raises_assertion_error`,
+  `test_missing_gap_section_raises_assertion_error`,
+  `test_missing_future_state_section_raises_assertion_error`,
+  `test_missing_summary_raises_assertion_error` (all `AssertionError`);
+  `test_invalid_status_raises_validation_error` (`pydantic.ValidationError`).
+- [x] ACC-004: Verifies REQ-004 — every listed tool is implemented,
   registered, and callable; `list_prb` returns a `PagedResult[PrbSummary]`
   with default page size 25 / cap 100, mirroring the other five domains'
   `list_<d>` tools exactly (no resource-first-then-converted history for
-  this domain).
-- [ ] ACC-005: Verifies REQ-005 — every listed resource is implemented and
-  registered.
-- [ ] ACC-006: Verifies REQ-006 — `create_prb`/`update_prb` prompts
+  this domain). **PASS** — live `mcp.list_tools()` call confirms all 10:
+  `create_prb`, `delete_prb`, `get_prb`, `get_prb_example`,
+  `get_prb_template`, `list_prb`, `parse_prb`, `set_status_prb`,
+  `update_prb`, `validate_prb`; `general/tools/_paging.py`'s
+  `DEFAULT_MAX_RESULTS = 25`/`MAX_MAX_RESULTS = 100` confirmed used by
+  `list_prb`; live integration test
+  (`tests/prb/tools/test_integration.py`) exercises the full
+  create→update→set_status→get→list→delete(stub) lifecycle end to end.
+- [x] ACC-005: Verifies REQ-005 — every listed resource is implemented and
+  registered. **PASS** — live `mcp.list_resources()` call confirms all 3:
+  `specmgr://prb/example`, `specmgr://prb/schema`, `specmgr://prb/template`
+  (no `/{id}`, no `/list`, as designed).
+- [x] ACC-006: Verifies REQ-006 — `create_prb`/`update_prb` prompts
   narrate: (a) a duplicate/similar-document check via `list_prb` first,
   (b) building a `TodoWrite` list covering the `Summary` + all 7 questions
   - `Gap` + `Impact` + `Future State`, (c) using the `question` tool to
@@ -108,13 +131,47 @@ Two new prompts (`create_prb`/`update_prb`) narrate an interactive,
     confirming it with the user via the `question` tool before finalizing,
     (f) calling `create_prb`/`update_prb` (whole-body) at the end — verified
     live by actually running through both prompts end to end against a real
-    document, not just asserting their static text.
-- [ ] ACC-007: Verifies REQ-007 — packaged data resolves correctly from a
+    document, not just asserting their static text. **PASS** — read both
+    packaged instruction files (`prb_create_instructions.md`/
+    `prb_update_instructions.md`) in full and manually walked their
+    narrated 10-step/9-step flows end to end against a real document via
+    `tests/prb/tools/test_integration.py`, simulating every `question`-tool
+    answer myself: (0) `list_prb` dedup check narrated first in
+    `create_prb`; (1)-(2) `TodoWrite` list + per-question `question`-tool
+    elicitation, explicit skip allowance; (3) `Summary` synthesis; (4)
+    `Gap` draft + `question`-tool confirmation before finalizing; (5)-(7)
+    optional `Impact`/mandatory `Future State`/optional
+    `References`/`More Information`; (8)-(9) template/example/schema
+    reference then `create_prb(content)`. Confirmed the resulting document
+    (`test_create_update_set_status_get_list_delete_roundtrip`) actually
+    carries a `Summary`, `Question3` (`Where Is the Problem Observed?`),
+    `Impact`, `Gap`, `Future State` exactly as narrated.
+    `prb_update_instructions.md`'s symmetric flow (`get_prb` first, show
+    answered/unanswered questions, full `Summary` re-synthesis not append,
+    `Gap` re-confirmation, `set_status_prb` as a separate optional
+    follow-up) was walked the same way via the test's `update_prb`/
+    `set_status_prb` steps.
+- [x] ACC-007: Verifies REQ-007 — packaged data resolves correctly from a
   real, non-editable install (`uv build --wheel` + scratch-venv install),
-  mirroring TSK's own feat-10 Task 5.1-equivalent verification.
-- [ ] ACC-008: Verifies REQ-008 — `specmgr docs`/`specmgr schema`/
+  mirroring TSK's own feat-10 Task 5.1-equivalent verification. **PASS** —
+  `uv build --wheel` produced `dist/biz_dfch_specmgr-0.9.0-py3-none-any.whl`
+  containing all 5 `prb/data/*` files; installed non-editably
+  (`pip install "...[mcp]"`) into a scratch venv under `/tmp/opencode/`
+  (outside the repo entirely); confirmed `get_prb_example()`/
+  `get_prb_template()`/`prb_schema()` all resolved real, non-empty content
+  from `.../scratch-venv/lib/.../site-packages/biz/dfch/specmgr/prb/...`
+  (verified via `inspect.getfile`), not the source checkout. Wheel/venv
+  cleaned up afterward; `dist/`/`build/` left empty (gitignored).
+- [x] ACC-008: Verifies REQ-008 — `specmgr docs`/`specmgr schema`/
   `specmgr mcp-docs` all report no drift after implementation; `AGENTS.md`
-  reflects seven domain/cross-cutting packages.
+  reflects seven domain/cross-cutting packages. **PASS** — `specmgr docs`/
+  `specmgr mcp-docs`/`specmgr adr-toc`/`specmgr schema` (generic + `--type
+  prb --output-dir src/biz/dfch/specmgr/prb/data`) all re-run: every
+  generated file reported "unchanged" except `docs/GENERATED.md`'s test
+  file count (204 → 205, expected from this phase's new
+  `tests/prb/tools/test_integration.py`); `AGENTS.md`'s heading already
+  reads "seven domain/cross-cutting packages implemented (ADR, REQ, UC,
+  TSK, QA, PRB, general)" from Phase 4.
 
 ### Scope
 
@@ -472,13 +529,13 @@ multiple sessions.
 
 #### Phase 5: Final cross-cutting verification
 
-- [ ] Task 5.1: Final verification pass — walk every ACC-001..008 and
+- [x] Task 5.1: Final verification pass — walk every ACC-001..008 and
   confirm each is satisfied with concrete evidence (including a live
   `create_prb`→`update_prb`→`set_status_prb` run, not just unit tests);
   run the full quality gate (ruff format/check, pylint advisory, vulture,
   unittest, `specmgr docs`/`specmgr mcp-docs`/`specmgr schema` drift
   checks) end to end; set feature status to `done` — depends on: Phase
-  1-4 complete — status: not-started
+  1-4 complete — status: done
 
 **Note:** If a task's scope changes mid-flight, edit its description in
 place; rely on git history (`git log -p` on this file) to recover what was
@@ -488,17 +545,30 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-25**: Phase 4 (Cross-cutting registration) complete.
-`AGENTS.md` now documents seven domain/cross-cutting packages (ADR, REQ,
-UC, TSK, QA, PRB, general), with a full `prb/` bullet (chronological,
-after `qa/`), updated "Still genuinely missing" list (`validate_prb`,
-`delete_prb` stub), and every closing domain-enumeration paragraph/
-`server.py` import-line mention updated to include `prb`. `specmgr
-docs`/`specmgr mcp-docs`/`specmgr schema` (including both
-`docs/prb_schema.json` and the packaged
-`src/biz/dfch/specmgr/prb/data/prb_schema.json` copy) all re-confirmed
-zero drift. A fresh-context session should pick up at Phase 5 (Final
-cross-cutting verification), Task 5.1.
+**Feature complete, as of 2026-08-25.** All 5 phases done. `prb` (Problem
+Statement) is a fully implemented seventh domain/cross-cutting
+package (ADR, REQ, UC, TSK, QA, PRB, general), with a domain-first
+`prb/models/v1/` schema (frontmatter, body — mandatory `Summary`/`Gap`/
+`Future State`, 7 optional 5W2H questions, optional `Impact`/`References`/
+`More Information`), a full MCP surface (10 tools including `list_prb` as
+a paged tool from day one per ADR ec9f5262, 3 resources, 2 narrated
+prompts, packaged data), and `AGENTS.md`/`specmgr docs`/`specmgr mcp-docs`/
+`specmgr schema` all up to date and drift-free. Phase 5's final
+verification pass walked every ACC-001..008 with concrete evidence
+(see the Acceptance Criteria section above for the per-ACC verdicts),
+including a live, non-mocked `create_prb`→`update_prb`→`set_status_prb`→
+`get_prb`→`list_prb`→`delete_prb`(stub) lifecycle exercise
+(`tests/prb/tools/test_integration.py`, isolated to a temp docs
+directory), a manual walk-through of both prompts' narrated interview
+flows against that same live document, and a real `uv build --wheel` +
+scratch-venv, non-editable install confirming packaged data resolves
+correctly outside the source tree. Full quality gate green: 1454 tests
+(up from 1452), ruff format/check clean, vulture clean, pylint 8.96/10
+advisory (pre-existing `redefined-builtin 'id'`/missing-test-docstring/
+duplicate-code findings only, no regressions), zero drift in
+`specmgr docs`/`specmgr mcp-docs`/`specmgr adr-toc`/`specmgr schema`
+(both `docs/prb_schema.json` and the packaged copy) beyond
+`docs/GENERATED.md`'s expected test-file-count bump (204 → 205).
 Note: this feature folder uses the `feat-16-problem-statement` placeholder
 id/slug (no GitHub issue filed yet, per `AGENTS.md`'s convention) — expect
 it to be renamed to `feat-NNN-problem-statement` (frontmatter `id` updated
@@ -510,6 +580,81 @@ permanent.
 None.
 
 ### Recent Updates
+
+#### Update 2026-08-25 (Phase 5: Final cross-cutting verification — feature complete)
+
+- Completed Task 5.1, the final task of the feature. Walked every
+  ACC-001..008 with concrete evidence (recorded inline in the Acceptance
+  Criteria section above, each now checked `[x]`):
+  - ACC-001/002/003 (schema/models/parser): confirmed via
+    `docs/prb_schema.json`/`specmgr://prb/schema`, `prb_reference.md`'s
+    round-trip, and the existing `tests/prb/models/v1/` suite (structural
+    `AssertionError`s for each missing mandatory section, `Validation
+    Error` for invalid `status`).
+  - ACC-004/005 (tools/resources): live `mcp.list_tools()`/
+    `list_resources()` calls against the actual `server.mcp` instance
+    confirmed all 10 tools and all 3 resources are registered and
+    callable; confirmed `list_prb` uses `general/tools/_paging.py`'s
+    `DEFAULT_MAX_RESULTS = 25`/`MAX_MAX_RESULTS = 100`.
+  - ACC-006 (prompts): read both packaged instruction files in full and
+    manually walked their narrated flows end to end against a real
+    document (see below), rather than only asserting narration text
+    contains the right tool names.
+  - ACC-007 (packaged data from a real install): built a real wheel
+    (`uv build --wheel`), confirmed all 5 `prb/data/*` files are packaged
+    inside it, installed it non-editably into a scratch venv under
+    `/tmp/opencode/` (`pip install "biz_dfch_specmgr-...-py3-none-any.whl[mcp]"`),
+    and confirmed `get_prb_example()`/`get_prb_template()`/`prb_schema()`
+    resolve real content from that venv's `site-packages`, not the source
+    checkout (`inspect.getfile` confirmed the module path). Wheel and
+    scratch venv cleaned up afterward (`dist/`/`build/` removed; both are
+    gitignored anyway).
+  - ACC-008 (doc generation drift): re-ran `specmgr docs`/
+    `specmgr mcp-docs`/`specmgr adr-toc`/`specmgr schema` (generic + the
+    `--type prb --output-dir src/biz/dfch/specmgr/prb/data` packaged-copy
+    invocation) — every generated file reported unchanged except
+    `docs/GENERATED.md`'s test-file count (204 → 205, expected from this
+    phase's own new test file); `AGENTS.md` already reflects seven
+    domains from Phase 4.
+- Added `tests/prb/tools/test_integration.py` (2 tests): a live,
+  non-mocked lifecycle exercise —
+  `create_prb`→`update_prb`→`set_status_prb`→`get_prb`→`list_prb`→
+  `delete_prb` (confirms the stub still raises `NotImplementedError`
+  without touching the filesystem) — plus a packaged
+  example/template round-trip-via-`parse_prb` test. Isolated via the same
+  `SPECMGR_DOCS_DIR`-pointed-at-a-`tempfile.TemporaryDirectory()` pattern
+  already used by `test_create_prb.py`'s `TempPrbDirTestCase`, so nothing
+  was ever written to the real, developer-configured `prb` base directory.
+  This test doubles as the concrete evidence for ACC-004's "`list_prb`
+  reflects the changes" and ACC-006's "verified live" requirements.
+- Ran the full quality gate one final time: `ruff format --check`/
+  `ruff check` (both clean), `pylint` (advisory, 8.96/10 — the pre-existing
+  `redefined-builtin 'id'` (5 `prb` tools/prompts taking an `id` parameter,
+  matching every other domain's own convention), missing-test-docstring,
+  and `duplicate-code`-across-mirrored-test-files findings only; nothing
+  new introduced by this phase's test file), `vulture src/ whitelist.py
+  --min-confidence 60` (no findings), full `unittest` suite (**1454
+  tests**, up from 1452, all green).
+- Set this README's own frontmatter `status: planning` → `status: done`
+  (top of file) as Task 5.1's own required action; every phase and every
+  acceptance criterion is now checked off.
+- Next: None — feature complete. A follow-up feature would be needed to
+  (a) file a real GitHub issue and rename this folder from its `feat-16`
+  placeholder if desired, (b) implement `delete_prb` for real, or (c)
+  wire `validate_prb` (and its five siblings) into pre-commit/CI per
+  ADR 9c687bb1-8ee7-41c8-84ec-07606356bc73 — none of that is in this
+  feature's scope.
+- Notes: No new design decisions required this phase — purely
+  verification, exactly as scoped. One clarification for future readers:
+  ACC-006's "live" verification, per this phase's own task instructions,
+  necessarily means manually executing the narrated flow using the real
+  tool functions and self-simulated `question`-tool answers (there is no
+  live human user or live MCP client in this environment) — both prompts
+  themselves only ever return narration strings, by hard MCP-SDK contract,
+  and never call `TodoWrite`/`question`/`list_prb`/`create_prb`/
+  `update_prb` themselves; this was already true by design (see Phase 3's
+  Decisions Made) and is not a limitation introduced by this
+  verification pass.
 
 #### Update 2026-08-25 (Phase 4: Cross-cutting registration)
 
@@ -761,4 +906,19 @@ None.
 
 ### Related PRs / Commits
 
-None yet — planning only.
+No PR opened yet (no GitHub issue filed, per the `feat-16` placeholder
+note above). Commits landed on the `feat-16-problem-statement` branch so
+far (oldest first):
+
+- `cef8719` — feat(prb): add feat-16 "Problem Statement" (prb) with design
+  and plan
+- `d41e05f` — feat(prb): add PRB frontmatter/body models and reference doc
+  (Phase 1)
+- `0b90429` — feat(prb): add PrbDocument, parse_prb, PrbSummary, and
+  schema generation (Phase 2)
+- `d01ea82` — feat(prb): add full MCP surface — tools, resources,
+  prompts, packaged data (Phase 3)
+- `1f87745` — docs(prb): update AGENTS.md for seven domain/cross-cutting
+  packages (Phase 4)
+- Phase 5 (this final verification pass) is not yet committed as of this
+  writing — left for the orchestrator to review and commit.

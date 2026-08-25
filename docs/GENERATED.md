@@ -305,4 +305,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 204
+**Test files**: 205
