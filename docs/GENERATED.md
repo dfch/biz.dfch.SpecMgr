@@ -77,9 +77,13 @@ First-line docstrings from each module, organized by domain:
 
 **gol/**
 
-- `gol/models/v1/__init__.py` — Goal (GOL) models -- Pydantic schema powered by the generic ``models/md`` engine.
+- `gol/models/v1/__init__.py` — Goal (GOL) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- `gol/models/v1/_util.py` — Shared, private constants for the ``gol.models.v1`` subpackage.
 - `gol/models/v1/body.py` — Goal (GOL) models: whole-section fields under a single H1.
+- `gol/models/v1/document.py` — Pydantic model for a full goal document (frontmatter + body).
 - `gol/models/v1/frontmatter.py` — Goal (GOL) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
+- `gol/models/v1/parser.py` — Parse raw goal (GOL) ``.md`` text into a :class:`GolDocument` (Phase 2, Task 2.2).
+- `gol/models/v1/summary.py` — Pydantic model for one line of GOL listing output (Phase 2, Task 2.3).
 
 **models/**
 
@@ -311,4 +315,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 207
+**Test files**: 208

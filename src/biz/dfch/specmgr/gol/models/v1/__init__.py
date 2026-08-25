@@ -15,16 +15,16 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Goal (GOL) models -- Pydantic schema powered by the generic ``models/md`` engine.
+"""Goal (GOL) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
 
-Mirrors the ``req/models/v1`` layout: frontmatter and body classes under this
-same package; the document-level ``GolDocument`` wrapper, the free-function
-``parse_gol`` entry point, and the ``GolSummary`` listing model join in a
-later phase (see the feature README's Task List, Phase 2). Body classes map
-directly to heading sections in a goal markdown file -- see ``body.py`` for
-the full hierarchy.
+Mirrors the ``req/models/v1`` layout: a free-function ``parse_gol`` entry point,
+document-level ``GolDocument(frontmatter, body)`` wrapper, frontmatter and body
+subclasses under this same package, and the ``GolSummary`` listing model for
+the (Phase-3) ``list_gol`` tool. Body classes map directly to heading sections
+in a goal markdown file -- see ``body.py`` for the full hierarchy.
 """
 
+from ._util import SCHEMA_COMMENT_VERSION
 from .body import (
     AcceptanceCriteria,
     Decisions,
@@ -39,15 +39,21 @@ from .body import (
     Source,
     Tags,
 )
+from .document import GolDocument
 from .frontmatter import GolFrontmatter
+from .parser import parse_gol
+from .summary import GolSummary
 
 __all__ = [
+    "SCHEMA_COMMENT_VERSION",
     "AcceptanceCriteria",
     "Decisions",
     "Description",
     "Goal",
     "Goals",
+    "GolDocument",
     "GolFrontmatter",
+    "GolSummary",
     "MoreInformation",
     "Notes",
     "Priority",
@@ -55,4 +61,5 @@ __all__ = [
     "Requirements",
     "Source",
     "Tags",
+    "parse_gol",
 ]

@@ -354,8 +354,8 @@ sessions.
 - [x] Task 1.4: `tests/gol/models/v1/test_frontmatter.py`, `test_body.py` —
   structural + validation tests mirroring `tests/req/models/v1/`/
   `tests/prb/models/v1/`, explicit coverage of mandatory-vs-optional field
-  combinations (each optional section individually absent/present; each of
-  the   four `Related Artifacts` sub-lists individually absent/present) —
+   combinations (each optional section individually absent/present; each of
+   the four `Related Artifacts` sub-lists individually absent/present) —
   depends on: Task 1.3 — status: completed
 - [x] Task 1.5: Phase-end quality gate — run the full pre-commit/quality
   gate (ruff format/check, vulture, full `unittest` suite); confirm
@@ -366,31 +366,31 @@ sessions.
 
 #### Phase 2: Pydantic Models, Parser & Schema
 
-- [ ] Task 2.1: `gol/models/v1/document.py` (`GolDocument(frontmatter, body)`, mirroring `ReqDocument`) — depends on: Task 1.3 — status:
-  not-started
-- [ ] Task 2.2: Implement `parse_gol(text: str) -> GolDocument` (model-layer
+- [x] Task 2.1: `gol/models/v1/document.py` (`GolDocument(frontmatter, body)`, mirroring `ReqDocument`) — depends on: Task 1.3 — status:
+  completed
+- [x] Task 2.2: Implement `parse_gol(text: str) -> GolDocument` (model-layer
   function, mirrors `parse_req`) — depends on: Task 2.1 — status:
-  not-started
-- [ ] Task 2.3: `gol/models/v1/summary.py` (`GolSummary(DocSummary)`,
+  completed
+- [x] Task 2.3: `gol/models/v1/summary.py` (`GolSummary(DocSummary)`,
   subclassing `general/models/summary.py::DocSummary`, for `list_gol`) —
-  depends on: Task 2.1 — status: not-started
-- [ ] Task 2.4: Field-level `Field(description=...)` on every scalar/
+  depends on: Task 2.1 — status: completed
+- [x] Task 2.4: Field-level `Field(description=...)` on every scalar/
   optional field (schema-quality parity with REQ/PRB) — depends on:
-  Task 2.1 — status: not-started
-- [ ] Task 2.5: Implement `generate_gol_schema()` in `commands/schema.py`
+  Task 2.1 — status: completed
+- [x] Task 2.5: Implement `generate_gol_schema()` in `commands/schema.py`
   (mirroring `generate_req_schema`, via `GolDocument.model_json_schema()`),
   and register `"gol"` in the `specmgr schema` doc-type generator registry
   (`_GENERATORS`); draft `docs/gol_schema.json` — depends on: Task 2.1 —
-  status: not-started
-- [ ] Task 2.6: `tests/gol/models/v1/test_parser.py` — mirrors
+  status: completed
+- [x] Task 2.6: `tests/gol/models/v1/test_parser.py` — mirrors
   `TestParseReq`'s shape (minimal doc, full reference-doc round-trip,
   defaults-when-absent, invalid status, missing-mandatory-field
   `AssertionError` cases (`statement`, `Source`), invalid-field
   `ValidationError` (e.g. `Priority` out of 0–99 range, invalid `type`
-  field)) — depends on: Task 2.2, Task 2.5 — status: not-started
-- [ ] Task 2.7: Phase-end quality gate — full pre-commit/quality gate
+  field)) — depends on: Task 2.2, Task 2.5 — status: completed
+- [x] Task 2.7: Phase-end quality gate — full pre-commit/quality gate
   including Task 2.6's new tests; update this README's Progress section —
-  depends on: Task 2.5, Task 2.6 — status: not-started
+  depends on: Task 2.5, Task 2.6 — status: completed
 
 #### Phase 3: MCP Surface
 
@@ -493,17 +493,100 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-25**: Phase 1 (Specification) complete — `gol_reference.md`
-written and verified mdformat-clean and byte-exact round-trippable,
-`GolFrontmatter`/`Goal` models defined with structural tests, full quality
-gate green (1495 tests). GitHub issue #18 ("Add artifact type Goal (GOL)")
-is filed and open. Phase 2 (Pydantic Models, Parser & Schema) is next.
+**As of 2026-08-25**: Phase 2 (Pydantic Models, Parser & Schema) complete —
+`GolDocument`/`parse_gol`/`GolSummary`/`SCHEMA_COMMENT_VERSION` added,
+`generate_gol_schema()` registered in `specmgr schema` (six doc types,
+`docs/gol_schema.json` drafted, zero drift), parser tests mirroring
+`TestParseReq`, full quality gate green (1505 tests). GitHub issue #18
+("Add artifact type Goal (GOL)") is filed and open. Phase 3 (MCP Surface)
+is next.
 
 ### Blockers
 
 None.
 
 ### Recent Updates
+
+#### Update 2026-08-25 (Phase 2)
+
+- Completed: Phase 2 (Pydantic Models, Parser & Schema), Tasks 2.1–2.7.
+  - Task 2.1: `GolDocument` (`gol/models/v1/document.py`) — `BaseModel`
+    wrapper pairing `GolFrontmatter` + `Goal`; holds no file/id/path
+    information itself (`frontmatter.id` carries it, same convention as
+    `ReqDocument`).
+  - Task 2.2: `parse_gol(text) -> GolDocument` (`gol/models/v1/parser.py`)
+    — free function mirroring `parse_req`/`parse_prb`: `python-frontmatter`
+    split, `_stringify_metadata` helper (PyYAML's unquoted dates parse as
+    `datetime.date` → coerced back to `str`), then `Goal.from_text` on the
+    `format_text`-normalized body. Two error channels (`AssertionError`
+    structural / `pydantic.ValidationError` field-level). New
+    `gol/models/v1/_util.py` with `SCHEMA_COMMENT_VERSION = "v1"`.
+    `gol/models/v1/__init__.py` extended to the full REQ-shaped export set
+    (`SCHEMA_COMMENT_VERSION` first, `parse_gol` last, class names
+    alphabetical in between).
+  - Task 2.3: `GolSummary` (`gol/models/v1/summary.py`) — `DocSummary`
+    subclass (`id`/`title`/`status`/`ref`, base untouched), docstring notes
+    `list_gol` is a paged **tool** (no `specmgr://gol/list` resource, ADR
+    ec9f5262), `title` = body H1.
+  - Task 2.4: `Field(description=...)` parity audit — every field of
+    `Goal`/`RelatedArtifacts`/`Priority`/`Tags`/`Source` and the four
+    sub-lists already carries a description (Phase 1).
+    `GolDocument.frontmatter`/`body`, `GolFrontmatter.type`, and `GolSummary`
+    (inherited `DocSummary` fields) are bare — which *is* parity, since
+    `ReqDocument`/`ReqFrontmatter`/`ReqSummary` are bare too. Zero new
+    descriptions added.
+  - Task 2.5: `generate_gol_schema()` in `commands/schema.py` (mirrors
+    `generate_req_schema`: `$schema` from `GenerateJsonSchema.schema_dialect`,
+    `$comment` = `"v1"`, `indent=2, sort_keys=True` + trailing newline) and
+    `"gol"` registered **first** in `_GENERATORS` (alphabetical). First
+    `specmgr schema` run exited 1 (the new-file drift signal; file written
+    regardless); re-run exits 0, all six schemas byte-identical. Sanity:
+    `GolDocument` top-level (`required: [frontmatter, body]`), `Goal`
+    requires only `[statement, source]`, no `Characteristics`/`Level`
+    sections, fields, or RFC 2119 values in the schema structure (see
+    Notes). `docs/api/biz.dfch.specmgr.commands.schema.md` regenerated for
+    the new generator (expected churn from the mandated `specmgr docs` run).
+  - Task 2.6: `tests/gol/models/v1/test_parser.py` — `TestParseGol`, 10
+    tests mirroring `TestParseReq`: minimal zero-optional-sections doc (the
+    end-to-end proof of the optional `default=None` fields), full reference-
+    doc parse with byte-exact `str(doc.body)` round-trip of the on-disk
+    `gol_reference.md`, frontmatter defaults when the block is absent,
+    invalid `status`/`type` `ValidationError`, `Priority` 100/-1/007
+    `ValidationError` (99 accepted), missing-`statement` and
+    missing-`## Source` `AssertionError`, and an out-of-order-sections
+    `AssertionError` (`## Source` before `## Tags` → the engine's "text
+    left over after processing all fields").
+  - Task 2.7: quality gate green — `ruff format --check` (938 files),
+    `ruff check`, `vulture` (exit 0, no output, no `whitelist.py` change —
+    see Notes), full unittest suite (1505 tests, up from 1495), `specmgr
+    coverage-badge` (98%, `docs/coverage.svg` byte-unchanged), `specmgr
+    docs` (only `docs/GENERATED.md` + the `schema.py` API page changed,
+    `docs/gol_schema.json` new), `specmgr mcp-docs` (no `docs/MCP.md`
+    drift — gol registers no MCP surface until Phase 3), `specmgr schema`
+    (exit 0, zero drift), `specmgr adr-toc` (no change).
+- Next: Phase 3 (MCP Surface) — `gol/tools/` (incl. the `list_gol` paged
+  tool consuming `GolSummary`), `gol/resources/`, `gol/prompts/`, packaged
+  `gol/data/`, `gol/__init__.py` + `server.py` registration.
+- Notes:
+  - Vulture: the new Phase-2 names needed **no** `whitelist.py` entry —
+    `GolDocument`/`parse_gol`/`GolSummary` are import-visible via
+    `gol/models/v1/__init__.py`, and `SCHEMA_COMMENT_VERSION` additionally
+    via `commands/schema.py`. This mirrors REQ/PRB exactly (their
+    `parse_req`/`ReqSummary`/`parse_prb`/`PrbSummary` are likewise absent
+    from the whitelist). `whitelist.py` is unchanged this phase.
+  - `docs/gol_schema.json` carries the words "Characteristics"/"Level"
+    only inside the `$defs.Goal.description` prose (the `Goal` class
+    docstring documents the deliberate omissions: "Mirrors `Requirement`
+    (REQ) minus `Characteristics` and minus `Level`"). The schema *
+    structure* itself contains no such sections, fields, or RFC 2119
+    values — that is what the plan's sanity check targets. Rewording the
+    Phase-1 `body.py` docstring would be an edit outside this phase's
+    allowed file surface, so it was left as-is.
+  - ACC-001/ACC-002/ACC-003 (this phase's acceptance criteria) are covered
+    by the reference-doc round-trip + minimal-doc + invalid-field tests in
+    `test_parser.py` (on top of Phase 1's `test_frontmatter.py`/
+    `test_body.py`); `docs/gol_schema.json` is the ACC-001 schema artifact
+    (the `specmgr://gol/schema` resource that serves it is Phase 3).
 
 #### Update 2026-08-25 (Phase 1)
 
@@ -666,6 +749,21 @@ None.
   therefore an implicit namespace package until Phase 3 — imports work
   today and setuptools' `namespaces = true` keeps wheel packaging
   correct.
+- **2026-08-25**: No `whitelist.py` entry for the Phase-2 `gol` names —
+  vulture sees `GolDocument`/`parse_gol`/`GolSummary` through their imports
+  in `gol/models/v1/__init__.py` and `SCHEMA_COMMENT_VERSION` additionally
+  through `commands/schema.py`; mirroring REQ/PRB, whose `parse_req`/
+  `ReqSummary`/`parse_prb`/`PrbSummary` are also not whitelisted. The
+  extended `__all__` order follows the REQ/PRB shape: `SCHEMA_COMMENT_VERSION`
+  first, class names alphabetical, `parse_gol` last.
+- **2026-08-25**: `docs/gol_schema.json`'s `$defs.Goal.description` prose
+  contains the words "Characteristics"/"Level" (verbatim from the `Goal`
+  class docstring, which documents the deliberate omissions); the schema
+  structure itself has no such sections, fields, or RFC 2119 values. The
+  Phase-1 `body.py` docstring was not reworded (outside this phase's file
+  surface) — if a character-level absence is ever required, that is a
+  one-line docstring edit to make together with its `specmgr docs`
+  regeneration.
 
 ### Related PRs / Commits
 
