@@ -2,7 +2,7 @@
 
 **Session ID:** ses_fc5c43a45ffeBvefUFAadyQ5ZA
 **Created:** 8/25/2026, 8:43:10 PM
-**Updated:** 8/25/2026, 9:05:02 PM
+**Updated:** 8/25/2026, 9:18:46 PM
 
 ---
 
@@ -3985,6 +3985,1468 @@ Done. Summary:
 - No new ADRs anticipated; the issue-numbering twist is logged in Decisions Made
 
 File is `specmgr mdformat`-clean (verified idempotent). Phase 1 (Specification) is the next step whenever you want to start implementation.
+
+---
+
+## User
+
+anything else to add before we wrap up this session?
+
+---
+
+## Assistant (Build · qwen3.8-27b-bf16-896k · 49.2s)
+
+_Thinking:_
+
+The user is asking whether there's anything else to add before wrapping up this session. Now we're in build mode, so file modifications are permitted. Let me think about what's still missing or worth doing:
+
+1. **The README itself** — done, mdformat clean.
+2. **`git status`** — the new file is untracked. Should I stage it? Per instructions, don't commit unless explicitly asked. But staging might be useful… actually the user didn't ask for a commit. Leave it untracked but mention it.
+3. **Consistency check on the issue body** — done.
+4. **Things that could be added to the feature folder**:
+   - `gol_reference.md` — no, that's a Phase 1 task.
+   - `history.md` — not needed yet.
+5. **Cross-references to update right now?**
+   - AGENTS.md — no, that's Phase 4.
+   - feat-7's task list (Task 0.24 was about fixing stale wording in AGENTS.md) — out of scope.
+   - What about the "Existing feature folders" list in AGENTS.md? It says "Existing feature folders: `.specmgr/feat/feat-9-doc-in-specmgr/`, `.specmgr/feat/feat-4-use-cases/`, `.specmgr/feat/feat-5-md-model-parser/`" — this list is already stale (feat-10, feat-12, feat-13, feat-14, feat-16 exist but aren't listed). That's a pre-existing issue, and feat-16 didn't update it either. Out of scope, but worth mentioning as an observation.
+
+6. **Things worth verifying before wrap-up**:
+   - Check the final README content once more (read it back) to make sure mdformat didn't break any code blocks or structure. Let me skim through the whole file.
+   - Verify the frontmatter fields are correct.
+   - Check the issue body renders correctly.
+   - Should I run a quick validation of the feature README against the template's expected structure? There's no such tool.
+   
+7. **One gap in the plan I noticed**: in Design Notes I wrote that `list_gol`'s title is the body's H1 text — consistent with `list_req` (which uses `doc.body.text`). No problem.
+
+8. **Another gap**: ACC-003 mentions `AssertionError` when `statement` or `Source` is missing — consistent.
+
+9. **Paging/whitelist**: the vulture whitelist note is already in Task 1.5.
+
+10. **Should the "Existing feature folders" list in AGENTS.md or the conventions doc be updated?** No — out of scope for this session (and it's already stale anyway).
+
+11. **Git**: the file is untracked. The pre-commit hook doesn't run until commit. I won't commit unless asked. But I should mention that it's ready to be committed, or offer to commit. The user said "before wrapping up this session" — it's their call. I'll mention it.
+
+12. **One more useful thing**: the issue body says "Plan: `.specmgr/feat/feat-18-goal/README.md`" — good.
+
+13. **Verify the README renders correctly** — let me read back the sections that mdformat changed to make sure nothing is broken (e.g., code fences inside the schema block, list continuation).
+
+To do:
+- Read back the entire README (at least skim through it).
+- Run git status.
+- Then answer: essentially nothing more needed; mention (a) the file is untracked/commit-ready, (b) the pre-existing stale "Existing feature folders" list in AGENTS.md (not something we should fix in this session), (c) optionally I could have added a "Technical Debt" section per issue #2, but… wait — issue #2 is "docs: add a Technical Debt section to the feature template". That's an open issue about the template itself, and our template version is v1 without that. Not our concern.
+
+Actually, one more thing to consider: should I double-check that the feature README's structure matches the template's required sections? Let me diff the headings against the template. Template headings:
+- # Feature: [title]
+- ## Plan
+- ### Overview / Requirements / Acceptance Criteria / Scope / Dependencies / Design Notes / Related ADRs / Task List
+- ## Progress
+- ### Current Status / Blockers / Recent Updates / Decisions Made / Related PRs / Commits
+
+Mine has all of these. The template's "### Scope" is a single section with "What is included" / "What is explicitly out of scope" — I used bold paragraphs "**Included in this feature:**" / "**Explicitly out of scope:**" same as feat-16. Consistent with the reference. Good.
+
+Let me read the file back and check git status.
+
+
+
+
+Let me do a final review pass before wrapping up — read back the mdformatted README to make sure nothing broke, and check git state.
+
+
+
+
+**Tool: read**
+
+**Input:**
+```json
+{
+  "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-18-goal/README.md",
+  "limit": 120
+}
+```
+
+**Output:**
+```
+<path>/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-18-goal/README.md</path>
+<type>file</type>
+<content>
+1: ---
+2: created: 2026-08-25
+3: id: feat-18-goal
+4: status: planning
+5: updated: 2026-08-25
+6: version: 1.0.0
+7: ---
+8: 
+9: # Feature: Add artifact type Goal (gol)
+10: 
+11: ## Plan
+12: 
+13: ### Overview
+14: 
+15: Add a new markdown artifact type, `Goal` (abbreviation `gol`), for capturing
+16: high-level business goals — the strategic "what the organization wants to
+17: achieve" level that sits above individual requirements. `gol` follows the
+18: domain-first hierarchy and MCP surface already established by `req`/`prb`
+19: (ADR ece4554b-725c-4f76-bc04-5d2b760363d2) and mirrors `req`'s body schema
+20: with exactly two deliberate omissions: no `## Characteristics` section (ISO
+21: 25010:2023 quality characteristics are a requirement-level attribute — a
+22: business goal stays deliberately free of them) and no `## Level` section
+23: (RFC 2119 obligation strength is implicit — a goal is always a MUST). `req`
+24: already anticipates this artifact type: its `## Related Artifacts` →
+25: `### Goals` cross-reference sub-list (exercised in `req_example.md` as
+26: `GOL-0007: Competitive Engines in Consumer Vehicles`) points at documents
+27: of exactly this shape, and `gol_example.md` will be that very goal so the
+28: two packaged examples read coherently side by side. `gol` reuses `req`'s
+29: whole-body update convention (not ADR's granular `update_section`
+30: mechanism) and `req`'s 7-value frontmatter status set.
+31: 
+32: ### Requirements
+33: 
+34: - REQ-001: Define the `gol` markdown schema — frontmatter (`type="gol"`,
+35:   7-value status set `draft`/`proposed`/`accepted`/`superseded`/
+36:   `deprecated`/`rejected`/`implemented`, `req`'s exact set) and body (H1
+37:   title, mandatory `statement` lead paragraph, optional `## Description`,
+38:   optional `## Priority`, optional `## Tags`, mandatory `## Source`,
+39:   optional `## Related Artifacts` holding four optional, fixed-heading
+40:   `### ` cross-reference sub-lists — `Requirements`/`Decisions`/`Goals`/
+41:   `Acceptance Criteria` — optional `## More Information`, optional
+42:   `## Notes`). No `## Characteristics` and no `## Level` (see Design
+43:   Notes).
+44: - REQ-002: Pydantic models under `gol/models/v1/` (frontmatter, body,
+45:   document, parser, summary), domain-first, mirroring `req`/`prb`'s exact
+46:   file shapes. No `models/md` engine changes are needed — every field is
+47:   buildable with the existing declarative heading-mapped parser.
+48: - REQ-003: Parse/validate `gol` documents from markdown, mirroring
+49:   `parse_req`/`parse_prb`'s two-error-channel convention
+50:   (`AssertionError` for structural problems, `pydantic.ValidationError`
+51:   for field-level problems).
+52: - REQ-004: MCP tools mirroring REQ/PRB's lifecycle surface, **plus**
+53:   `list_gol` as a paged tool from day one (per ADR
+54:   ec9f5262-9912-49d0-903f-fcfb54f28c13 — new domains must not add a
+55:   `specmgr://gol/list` resource and convert it later): `parse_gol`,
+56:   `create_gol`, `update_gol`, `set_status_gol`, `delete_gol` (stub),
+57:   `validate_gol`, `get_gol`, `get_gol_example`, `get_gol_template`,
+58:   `list_gol`.
+59: - REQ-005: MCP resources: `specmgr://gol/schema`, `/example`, `/template`
+60:   (no `/list` — REQ-004 covers listing as a tool; no `/{id}` — id-based
+61:   reads are `get_gol`-only, per ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
+62: - REQ-006: MCP prompts `create_gol`/`update_gol` — narrated,
+63:   `TodoWrite` + `question`-tool-driven interview flows reusing the
+64:   dedup-check-first pattern from `req/prompts/create_req.py` and the
+65:   `TodoWrite`/`question`-tool narration pattern from
+66:   `tsk/prompts/implement_task.py`/`prb/prompts/create_prb.py`. Both use
+67:   their own packaged instructions data file (`gol/data/gol_create_ instructions.md`/`gol_update_instructions.md`), not an inline string.
+68: - REQ-007: Packaged example/template/schema data (`gol/data/`) via the
+69:   existing generic `general/tools/_packaged_data.py`, with the matching
+70:   `pyproject.toml` package-data entry, pre-commit hook, and CI step.
+71: - REQ-008: Doc generation wiring — `specmgr docs`, `specmgr schema` (new
+72:   `gol` entry in the doc-type registry, `commands/schema.py`),
+73:   `specmgr mcp-docs`, all kept drift-free via pre-commit/CI; `AGENTS.md`
+74:   updated to eight domain/cross-cutting packages.
+75: 
+76: ### Acceptance Criteria
+77: 
+78: - [ ] ACC-001: Verifies REQ-001 — schema documented (`docs/gol_schema.json`,
+79:   `specmgr://gol/schema`); a reference `gol_reference.md` exercising every
+80:   field (`statement`, `Source` plus all optional sections present,
+81:   `Related Artifacts` with all four sub-lists) round-trips through the
+82:   parser.
+83: - [ ] ACC-002: Verifies REQ-002 — Pydantic models validate mandatory
+84:   (`statement`, `Source`) vs. optional (`Description`, `Priority`, `Tags`,
+85:   `Related Artifacts` and each of its four sub-lists, `More Information`,
+86:   `Notes`) fields correctly; `GolFrontmatter.status` rejects any value
+87:   outside the seven-value set.
+88: - [ ] ACC-003: Verifies REQ-003 — parser produces a valid object tree for a
+89:   well-formed document; missing the `statement` lead paragraph or the
+90:   `Source` section raises `AssertionError`; an invalid field value (e.g. a
+91:   `Priority` outside 0–99, an out-of-set `status`) raises
+92:   `pydantic.ValidationError`.
+93: - [ ] ACC-004: Verifies REQ-004 — every listed tool is implemented,
+94:   registered, and callable; `list_gol` returns a `PagedResult[GolSummary]`
+95:   with default page size 25 / cap 100, mirroring the other five domains'
+96:   `list_<d>` tools exactly (no resource-first-then-converted history for
+97:   this domain).
+98: - [ ] ACC-005: Verifies REQ-005 — every listed resource is implemented and
+99:   registered (no `/{id}`, no `/list`, as designed).
+100: - [ ] ACC-006: Verifies REQ-006 — `create_gol`/`update_gol` prompts narrate:
+101:   (a) a duplicate/similar-document check via `list_gol` first, (b) building
+102:   a `TodoWrite` list covering `statement` + `Source` + each optional
+103:   section, (c) using the `question` tool to elicit each field (explicitly
+104:   allowing skip for optional ones), (d) calling `create_gol(content)`/
+105:   `update_gol(id, content)` (whole-body) at the end — verified live by
+106:   reading both packaged instruction files in full and manually walking the
+107:   narrated flows end to end against a real document, not just asserting
+108:   their static text.
+109: - [ ] ACC-007: Verifies REQ-007 — packaged data resolves correctly from a
+110:   real, non-editable install (`uv build --wheel` + scratch-venv install),
+111:   mirroring feat-16's ACC-007 verification.
+112: - [ ] ACC-008: Verifies REQ-008 — `specmgr docs`/`specmgr schema`/
+113:   `specmgr mcp-docs` all report no drift after implementation; `AGENTS.md`
+114:   reflects eight domain/cross-cutting packages.
+115: 
+116: ### Scope
+117: 
+118: **Included in this feature:**
+119: 
+120: - The `gol` markdown schema, Pydantic models, parser, and summary under
+
+(Showing lines 1-120 of 571. Use offset=121 to continue.)
+</content>
+```
+
+**Tool: bash**
+
+**Input:**
+```json
+{
+  "command": "git status --short && git diff --stat"
+}
+```
+
+**Output:**
+```
+(no output)
+```
+
+---
+
+## Assistant (Build · qwen3.8-27b-bf16-896k · 47.9s)
+
+_Thinking:_
+
+Found one bug introduced by mdformat: line 67 — `` (`gol/data/gol_create_ instructions.md`/`gol_update_instructions.md`) `` — mdformat split a long line and inserted a space inside the code span: `gol_create_ instructions.md`. This is wrong; the filename is broken. I originally wrote it like this:
+
+```
+  their own packaged instructions data file (`gol/data/gol_create_
+  instructions.md`/`gol_update_instructions.md`), not an inline string.
+```
+
+Wait, did I actually write it that way originally? Let me check what I originally wrote: "Both use their own packaged instructions data file (`gol/data/gol_create_instructions.md`/`gol_update_instructions.md`), not an inline string." Hmm, in the original write it was on a single line:
+
+```
+- REQ-006: MCP prompts `create_gol`/`update_gol` — narrated,
+  `TodoWrite` + `question`-tool-driven interview flows reusing the
+  dedup-check-first pattern from `req/prompts/create_req.py` and the
+  `TodoWrite`/`question`-tool narration pattern from
+  `tsk/prompts/implement_task.py`/`prb/prompts/create_prb.py`. Both use
+  their own packaged instructions data file (`gol/data/gol_create_
+  instructions.md`/`gol_update_instructions.md`), not an inline string.
+```
+
+No wait. Looking at the original write, line by line:
+
+```
+- REQ-006: MCP prompts `create_gol`/`update_gol` — narrated,
+  `TodoWrite` + `question`-tool-driven interview flows reusing the
+  dedup-check-first pattern from `req/prompts/create_req.py` and the
+  `TodoWrite`/`question`-tool narration pattern from
+  `tsk/prompts/implement_task.py`/`prb/prompts/create_prb.py`. Both use
+  their own packaged instructions data file (`gol/data/gol_create_
+  instructions.md`/`gol_update_instructions.md`), not an inline string.
+```
+
+Hmm, in the content I wrote I had: "Both use their own packaged instructions data file (`gol/data/gol_create_instructions.md`/`gol_update_instructions.md`), not an inline string." — I think I wrote the full filename on a single line, and that line was too long (over 120 chars?), and mdformat wrapped it by inserting a newline + space inside the code span. Actually, mdformat should normally wrap prose but shouldn't split inline code spans... but looking at the result, it's been split with a space. This is a known mdformat behavior when it re-wraps lines that exceed the width and the code span happens to be at the wrap point — it shouldn't do that... but the evidence (line 67) shows `gol_create_ instructions.md` with a space, and the backtick pair is still intact (a single code span containing the space).
+
+So mdformat corrupted the filename. I need to fix this. Best fix: restructure so that the long code span isn't at a wrap boundary — e.g., shorten the sentence, or split into two separate backtick spans on separate lines.
+
+Also `git status --short` returned no output at all?? That's strange — a new untracked file `.specmgr/feat/feat-18-goal/README.md` should show as `??`. Wait, the bash output was "(no output)" for the whole command. Maybe `.specmgr/` is gitignored? No — AGENTS.md says the `.specmgr/` folder is committed. Hmm, but `git status --short` showed nothing, and `git diff --stat` also showed nothing. Let me check: maybe there's a .gitignore entry? Or the file is... let me re-run git status explicitly.
+
+Actually wait — maybe the command output got swallowed. Let me re-run `git status` and check .gitignore.
+
+Also, I need to scan the rest of the file (lines 120–571) for similar mdformat corruption (other long code spans). Let me read the rest of the file.
+
+
+
+
+Two things need checking: line 67 shows mdformat split a code span mid-filename (`gol_create_ instructions.md`), and `git status` came back suspiciously empty. Let me review the rest of the file and git state.
+
+
+
+
+**Tool: read**
+
+**Input:**
+```json
+{
+  "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-18-goal/README.md",
+  "offset": 120
+}
+```
+
+**Output:**
+```
+<path>/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-18-goal/README.md</path>
+<type>file</type>
+<content>
+120: - The `gol` markdown schema, Pydantic models, parser, and summary under
+121:   `gol/models/v1/`.
+122: - Full MCP surface (tools/resources/prompts/packaged data), including
+123:   `list_gol` as a tool (not a resource) from the start.
+124: - The interactive `create_gol`/`update_gol` prompt behavior (`TodoWrite` +
+125:   `question`-tool-driven interview).
+126: - Tests mirroring `tests/req/`/`tests/prb/`'s layout and coverage depth.
+127: - Cross-cutting registration (`server.py`, `pyproject.toml`,
+128:   `.pre-commit-config.yaml`, CI, `commands/schema.py`, `AGENTS.md`).
+129: 
+130: **Explicitly out of scope:**
+131: 
+132: - A `## Characteristics` section (ISO 25010:2023 quality attributes).
+133:   Quality characteristics are a requirement-level attribute — a business
+134:   goal states *what* to achieve, not *which quality dimension* it loads
+135:   (user decision, planning session 2026-08-25).
+136: - A `## Level` section (RFC 2119 obligation strength). A goal is
+137:   implicitly always a MUST — obligation grading applies to requirements
+138:   below it, not to the goal itself (user decision, planning session
+139:   2026-08-25).
+140: - Structured cross-referencing/validation of the `Related Artifacts`
+141:   sub-lists (typed id validation, `GOL-NNNN:`-style format checks,
+142:   existence checks against the other domains' base directories) — v1 keeps
+143:   all four sub-lists as opaque free text, matching `req`'s own precedent.
+144:   Revisit only if a concrete need emerges.
+145: - ADR-style granular `update_section`/option-style per-field mutation
+146:   tools — `update_gol` is a single whole-body replace tool, like
+147:   `update_req`/`update_prb`. Individual sections stay addressable by their
+148:   fixed heading text within the markdown body itself, not via a dedicated
+149:   tool per section.
+150: - Real implementation of `delete_gol` — a stub raising
+151:   `NotImplementedError`, matching the other five domains' `delete_*` stubs
+152:   (a shared, cross-domain decision deferred to future work).
+153: - Any changes to `req`'s schema, data, or tools — REQ's existing
+154:   `### Goals` cross-reference sub-list already anticipates this artifact
+155:   type and needs no modification.
+156: - A `specmgr gol-toc`-equivalent generation command or dedicated CI/
+157:   pre-commit drift check beyond what `specmgr docs`/`specmgr mcp-docs`/
+158:   `specmgr schema` already provide generically.
+159: 
+160: ### Dependencies
+161: 
+162: - Depends on: ADR ece4554b-725c-4f76-bc04-5d2b760363d2 (domain-first
+163:   hierarchy), ADR bc5e18ad-6bbf-4265-bae4-3e34984a2d29 (generic
+164:   `MarkdownFrontmatter` base), ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614
+165:   (tool-only id-based reads, no `specmgr://gol/{id}` resource), ADR
+166:   ec9f5262-9912-49d0-903f-fcfb54f28c13 (`list_<domain>` as a paged tool,
+167:   not a resource — `list_gol` must follow this from day one), the existing
+168:   `general/tools/_doc_paths.py`/`_packaged_data.py`/`_paging.py` and
+169:   `general/models/{DocSummary,PagedResult}` infrastructure, and the
+170:   existing `models/md` engine (`MarkdownSection1`, `MarkdownSection2`,
+171:   `MarkdownSection2WithComment`, `MarkdownSection3`, `MarkdownParagraph`,
+172:   `MarkdownListItem`, `@alias`) — reused as-is, no engine changes
+173:   anticipated.
+174: - Blocks: None identified yet.
+175: - Related, but explicitly out of scope here: issue #15 "Add artifact type
+176:   Risk" (open) — a sibling domain that will follow the same pattern
+177:   independently.
+178: 
+179: ### Design Notes
+180: 
+181: **Schema:**
+182: 
+183: ```
+184: GolFrontmatter(MarkdownFrontmatter): type: Literal["gol"];
+185:   status in {draft, proposed, accepted, superseded, deprecated, rejected, implemented}
+186:   (req's exact 7-value set -- goals are business-level requirements, so
+187:    requirement-lifecycle semantics apply)
+188: 
+189: Goal(MarkdownSection1)                          # H1, free-form title (@alias ".+" REGEX)
+190: ├── statement: MarkdownParagraph                # mandatory lead paragraph (the goal statement itself)
+191: ├── description: Description | None             # optional H2 "Description", opaque free text leaf
+192: ├── priority: Priority | None                   # optional H2 "Priority", 0-99 single-line value + optional comment
+193: ├── tags: Tags | None                           # optional H2 "Tags", bullet list
+194: ├── source: Source                              # mandatory H2 "Source", single-line value
+195: ├── related_artifacts: RelatedArtifacts | None  # optional H2 "Related Artifacts"
+196: │   ├── requirements: Requirements | None       # optional H3, bullet list of cross-refs (e.g. "REQ-9687: ...")
+197: │   ├── decisions: Decisions | None             # optional H3, bullet list of cross-refs (e.g. "DEC-2703: ...")
+198: │   ├── goals: Goals | None                     # optional H3, bullet list of cross-refs (e.g. "GOL-0007: ...")
+199: │   └── acceptance_criteria: AcceptanceCriteria | None  # optional H3, bullet list (e.g. "ACC-1234: ...")
+200: ├── more_information: MoreInformation | None    # optional H2 "More Information", opaque free text leaf
+201: └── notes: Notes | None                         # optional H2 "Notes", opaque free text leaf
+202: ```
+203: 
+204: **No `Characteristics`, no `Level`** (see Scope: Explicitly out of scope) —
+205: both are deliberate, domain-driven omissions, not oversights: ISO 25010
+206: quality characteristics grade *requirements*, and RFC 2119 obligation
+207: strength is implicit (a goal is always a MUST). Consequently the only
+208: mandatory body fields are `statement` and `Source`; a freshly created
+209: `gol` document may have zero optional sections yet (all deferred to a later
+210: `update_gol` call) but must always carry the goal statement and its source.
+211: 
+212: **`Priority` keeps `req`'s `MarkdownSection2WithComment` +
+213: `field_validator`-on-`value.text` pattern** (0–99, no leading zeros other
+214: than "0" itself), re-declared in `gol/models/v1/body.py` — domain packages
+215: never import model classes from each other (verified: no cross-domain
+216: imports exist in `src/`), so `req`'s `Priority`/`Level` classes are
+217: *pattern* precedents, not shared code. `Description`/`Source`/
+218: `MoreInformation`/`Notes` are bare opaque leaf subclasses with no further
+219: declared fields — the same pattern verified for REQ's `MoreInformation`/
+220: `Notes` and PRB's leaves.
+221: 
+222: **The four `RelatedArtifacts` sub-lists are 1:1 re-declarations of REQ's
+223: own four classes**: `MarkdownSection3` with
+224: `items: list[MarkdownListItem] = Field(min_length=1)`; heading text
+225: ("Requirements"/"Decisions"/"Goals"/"Acceptance Criteria") derives
+226: implicitly via the `AliasType.SPACE_SEPARATED` convention (multi-word
+227: `AcceptanceCriteria` → "Acceptance Criteria"), so no explicit `@alias` is
+228: needed — exactly as in `req/models/v1/body.py`. All four sub-lists are
+229: optional, as is `Related Artifacts` as a whole, and no consistency check
+230: is enforced between them (REQ precedent). Cross-reference id formats
+231: (`GOL-0007:`, `REQ-9687:`, `DEC-2703:`, `ACC-1234:`) are conventional text
+232: only — not validated in v1. The `### Goals` sub-list includes goals for
+233: cross-referencing peer/superseding goals (self-referencing is allowed; the
+234: parser does not special-case a document's own id).
+235: 
+236: **Update mechanism: whole-body `update_gol(id, content)`**, not an
+237: ADR-style `update_section`. The generic `adr/tools/update_section.py`
+238: mechanism (ADR 71fd95d7-07f2-466f-81aa-d29b7e3ef34c) is currently
+239: ADR-specific code, not a shared cross-domain component — the same decision
+240: as feat-16's for `prb`. Individual sections stay addressable by grepping/
+241: editing their fixed heading text within the whole-body markdown.
+242: 
+243: **`list_gol` is a paged tool from day one** (`@mcp.tool(name="list_gol")`
+244: returning `PagedResult[GolSummary]`, via `general/tools/_paging.py`'s
+245: `paginate`/`normalize_paging`, default page size 25 / cap 100), not a
+246: `specmgr://gol/list` resource — GOL is a new domain built *after* ADR
+247: ec9f5262 was accepted, so it must not repeat the resource-then-convert
+248: history of REQ/UC/TSK/QA/PRB (feat-13). `GolSummary` subclasses
+249: `general/models/summary.py::DocSummary` (`id`/`title`/`status`/`ref`),
+250: like `ReqSummary`/`PrbSummary`; `title` is the body's H1 text.
+251: 
+252: **Prompts are narrated instructions only** (return a string, auto-wrapped
+253: as a `UserMessage` by the MCP SDK) — `create_gol`/`update_gol` never call
+254: `TodoWrite`/`question`/`get_gol`/`create_gol`/`update_gol` themselves; they
+255: only narrate that the calling LLM should. This is the same contract every
+256: existing prompt in this codebase already follows
+257: (`tsk/prompts/implement_task.py`, `req/prompts/create_req.py`).
+258: 
+259: - `create_gol(topic: str) -> str`: instructs the LLM to (1) call `list_gol`
+260:   first to check for an existing, similar goal (mirrors `create_req`'s
+261:   dedup-check pattern) and ask the user via `question` if a near-duplicate
+262:   is found; (2) build a `TodoWrite` list with one entry per `statement` +
+263:   `Source` + each optional section (`Description`/`Priority`/`Tags`/
+264:   `Related Artifacts`/`More Information`/`Notes`); (3) use the `question`
+265:   tool to elicit the goal statement (mandatory) and the source (mandatory)
+266:   plus each optional field in turn, explicitly allowing the user to skip
+267:   any optional one; (4) reference the packaged
+268:   `specmgr://gol/template`/`specmgr://gol/example`/`specmgr://gol/schema`
+269:   for the fixed structure; (5) assemble the full body markdown per the
+270:   schema above and call `create_gol(content)`.
+271: - `update_gol(id: str) -> str`: instructs the LLM to (1) call
+272:   `get_gol(id)` first (never assume prior state); (2) show the user which
+273:   sections are already present and which are empty, and ask via
+274:   `question` which ones (if any) they want to add or revise; (3) for each
+275:   selected section, elicit the new/revised text via `question`; (4) call
+276:   `update_gol(id, content)` (whole-body replace, carrying forward every
+277:   unchanged section); (5) mention `set_status_gol` as a separate, optional
+278:   follow-up (e.g. `implemented` once the goal has genuinely been reached,
+279:   `rejected`/`superseded` if abandoned or replaced).
+280: 
+281: Both prompts' instructional text lives in packaged data files
+282: (`gol/data/gol_create_instructions.md`/`gol_update_instructions.md`, read
+283: via `general.tools._packaged_data.read_packaged_text`, `string.Template`
+284: substitution), matching `req_create_instructions.md`/
+285: `prb_create_instructions.md`'s precedent — not an inline Python string.
+286: 
+287: **Frontmatter status** is REQ's exact 7-value closed set
+288: (`draft`/`proposed`/`accepted`/`superseded`/`deprecated`/`rejected`/
+289: `implemented`), re-declared as `GolFrontmatter`'s own `_ALLOWED_STATUSES`
+290: frozenset (each domain declares its own set — `ReqFrontmatter`,
+291: `TskFrontmatter`, `PrbFrontmatter` all do), with goal-specific semantics:
+292: `draft` = still being written; `proposed` = under consideration;
+293: `accepted` = agreed to be pursued; `implemented` = the goal has genuinely
+294: been reached; `superseded` = replaced by another goal; `deprecated` = no
+295: longer pursued, kept for reference; `rejected` = considered and not
+296: pursued.
+297: 
+298: **Example/template documents:** `gol_example.md` is drafted as
+299: `GOL-0007: Competitive Engines in Consumer Vehicles` — the exact goal
+300: `req_example.md`'s `### Goals` sub-list already cross-references — so the
+301: two packaged examples read coherently side by side; it reuses
+302: `gol_reference.md`'s content verbatim (feat-16's own precedent:
+303: `prb_example.md` reuses `prb_reference.md`). `gol_template.md` mirrors
+304: `req_template.md` minus the `Characteristics` and `Level` sections, with
+305: goal-oriented placeholder prose.
+306: 
+307: ### Related ADRs
+308: 
+309: - ece4554b-725c-4f76-bc04-5d2b760363d2: Organize the codebase by
+310:   document-type domain (domain-first hierarchy)
+311: - bc5e18ad-6bbf-4265-bae4-3e34984a2d29: Generic base frontmatter model for
+312:   markdown document types
+313: - ddfb1109-422d-4507-8dbc-dc5e4bec9614: Expose id-based reads as a tool
+314:   (`get_gol`), not a resource
+315: - ec9f5262-9912-49d0-903f-fcfb54f28c13: Expose `<domain>_list` as a paged
+316:   MCP tool (`list_gol`), not a resource — must be followed from the start
+317:   for this new domain, not retrofitted later
+318: - 71fd95d7-07f2-466f-81aa-d29b7e3ef34c: Generic `update_section` — reviewed
+319:   and explicitly *not* reused for `gol` (see Design Notes)
+320: 
+321: No new ADR is anticipated for this feature — every schema/tooling decision
+322: either follows an existing ADR's precedent directly or is scoped enough to
+323: log only in this file's own Decisions Made.
+324: 
+325: ### Task List
+326: 
+327: Single, canonical breakdown of work phases and tasks. Status lives on the
+328: task itself. Each phase ends with a mandatory phase-end task (tests, full
+329: quality gate, README Progress update), mirroring feat-16's per-phase
+330: commit discipline, since implementation is likely to span multiple
+331: sessions.
+332: 
+333: #### Phase 1: Specification
+334: 
+335: - [ ] Task 1.1: Write a full reference `gol_reference.md`
+336:   (`.specmgr/feat/feat-18-goal/gol_reference.md`) exercising every field
+337:   (`statement`, `Source`, plus all optional sections present:
+338:   `Description`/`Priority`/`Tags`/`Related Artifacts` with all four
+339:   sub-lists/`More Information`/`Notes`) — depends on: none — status:
+340:   not-started
+341: - [ ] Task 1.2: Define `gol` frontmatter (`gol/models/v1/frontmatter.py` —
+342:   `GolFrontmatter` subclass of `MarkdownFrontmatter`, `type=Literal["gol"]`,
+343:   7-value status set identical to `ReqFrontmatter`'s) — depends on: none —
+344:   status: not-started
+345: - [ ] Task 1.3: Define `gol` body structure (`gol/models/v1/body.py`) —
+346:   `Goal(MarkdownSection1)` with `@alias(value=".+", type=AliasType.REGEX)`,
+347:   mandatory `statement: MarkdownParagraph` + `source: Source`, optional
+348:   `description`/`priority`/`tags`/`related_artifacts`/`more_information`/
+349:   `notes`; `Priority` re-declares REQ's `MarkdownSection2WithComment` +
+350:   `field_validator` pattern (0–99); `RelatedArtifacts(MarkdownSection2)`
+351:   with four optional `MarkdownSection3` sub-lists (see Design Notes) —
+352:   depends on: Task 1.2 — status: not-started
+353: - [ ] Task 1.4: `tests/gol/models/v1/test_frontmatter.py`, `test_body.py` —
+354:   structural + validation tests mirroring `tests/req/models/v1/`/
+355:   `tests/prb/models/v1/`, explicit coverage of mandatory-vs-optional field
+356:   combinations (each optional section individually absent/present; each of
+357:   the four `Related Artifacts` sub-lists individually absent/present) —
+358:   depends on: Task 1.3 — status: not-started
+359: - [ ] Task 1.5: Phase-end quality gate — run the full pre-commit/quality
+360:   gate (ruff format/check, vulture, full `unittest` suite); confirm
+361:   `gol_reference.md` is `specmgr mdformat`-clean; add any new
+362:   vulture-invisible Pydantic field names to `whitelist.py` if needed;
+363:   update this README's Progress section — depends on: Task 1.1, Task 1.4 —
+364:   status: not-started
+365: 
+366: #### Phase 2: Pydantic Models, Parser & Schema
+367: 
+368: - [ ] Task 2.1: `gol/models/v1/document.py` (`GolDocument(frontmatter, body)`, mirroring `ReqDocument`) — depends on: Task 1.3 — status:
+369:   not-started
+370: - [ ] Task 2.2: Implement `parse_gol(text: str) -> GolDocument` (model-layer
+371:   function, mirrors `parse_req`) — depends on: Task 2.1 — status:
+372:   not-started
+373: - [ ] Task 2.3: `gol/models/v1/summary.py` (`GolSummary(DocSummary)`,
+374:   subclassing `general/models/summary.py::DocSummary`, for `list_gol`) —
+375:   depends on: Task 2.1 — status: not-started
+376: - [ ] Task 2.4: Field-level `Field(description=...)` on every scalar/
+377:   optional field (schema-quality parity with REQ/PRB) — depends on:
+378:   Task 2.1 — status: not-started
+379: - [ ] Task 2.5: Implement `generate_gol_schema()` in `commands/schema.py`
+380:   (mirroring `generate_req_schema`, via `GolDocument.model_json_schema()`)
+381:   - register `"gol"` in the `specmgr schema` doc-type generator registry
+382:     (`_GENERATORS`); draft `docs/gol_schema.json` — depends on: Task 2.1 —
+383:     status: not-started
+384: - [ ] Task 2.6: `tests/gol/models/v1/test_parser.py` — mirrors
+385:   `TestParseReq`'s shape (minimal doc, full reference-doc round-trip,
+386:   defaults-when-absent, invalid status, missing-mandatory-field
+387:   `AssertionError` cases (`statement`, `Source`), invalid-field
+388:   `ValidationError` (e.g. `Priority` out of 0–99 range, invalid `type`
+389:   field)) — depends on: Task 2.2, Task 2.5 — status: not-started
+390: - [ ] Task 2.7: Phase-end quality gate — full pre-commit/quality gate
+391:   including Task 2.6's new tests; update this README's Progress section —
+392:   depends on: Task 2.5, Task 2.6 — status: not-started
+393: 
+394: #### Phase 3: MCP Surface
+395: 
+396: - [ ] Task 3.1: `gol/tools/_paths.py`/`_io.py`/`_write.py`/`_lock.py`, thin
+397:   wrappers over `general/tools/_doc_paths.py` (mirrors `req/tools/`/
+398:   `prb/tools/` exactly) — depends on: Task 2.2 — status: not-started
+399: - [ ] Task 3.2: `parse_gol(path: str) -> GolDocument` tool wrapper
+400:   (`gol/tools/parse_gol.py`) — depends on: Task 3.1 — status: not-started
+401: - [ ] Task 3.3: `create_gol(content: str) -> GolDocument` tool (body-only
+402:   content; MCP builds frontmatter: `id`, `type="gol"`, `status="draft"`,
+403:   `created=updated=now`, `version`) — depends on: Task 3.1 — status:
+404:   not-started
+405: - [ ] Task 3.4: `update_gol(id, content) -> GolDocument` tool (whole-body
+406:   replace, preserves `id`/`type`/`status`/`created`/`version`, bumps
+407:   `updated`) — depends on: Task 3.1 — status: not-started
+408: - [ ] Task 3.5: `set_status_gol(id, status) -> GolDocument` tool (only path
+409:   that changes `status`; reconstructs `GolFrontmatter` via its own
+410:   constructor so the 7-value validator runs, mirroring `set_status_req`) —
+411:   depends on: Task 3.1 — status: not-started
+412: - [ ] Task 3.6: `delete_gol(id) -> NoReturn` stub tool — depends on: Task
+413:   3.1 — status: not-started
+414: - [ ] Task 3.7: `validate_gol(content, full=False) -> bool` tool — depends
+415:   on: none — status: not-started
+416: - [ ] Task 3.8: `get_gol(id) -> GolDocument` tool (id-based single-document
+417:   read; tool, not resource) — depends on: Task 3.1 — status: not-started
+418: - [ ] Task 3.9: `list_gol(max_results=None, offset=None) -> PagedResult[GolSummary]`
+419:   tool, via `general/tools/_paging.py`'s `paginate`/`normalize_paging`
+420:   (default page size 25, cap 100), preserving the standard skip-malformed-
+421:   file scan behavior — depends on: Task 2.3, Task 3.1 — status: not-started
+422: - [ ] Task 3.10: `get_gol_example`/`get_gol_template` tools + packaged data
+423:   (`gol/data/gol_example.md` — drafted as `GOL-0007: Competitive Engines in Consumer Vehicles` per Design Notes, `gol/data/gol_template.md` —
+424:   `req_template.md` mirrored minus `Characteristics`/`Level`) via
+425:   `general/tools/_packaged_data.py` — depends on: Task 1.1 — status:
+426:   not-started
+427: - [ ] Task 3.11: `gol/resources/{gol_schema,gol_example,gol_template}.py`
+428:   — `specmgr://gol/schema` (packaged `gol/data/gol_schema.json`, mirroring
+429:   `specmgr://req/schema`), `specmgr://gol/example`, `specmgr://gol/template`
+430:   (no `/list`, no `/{id}`) — depends on: Task 2.5, Task 3.10 — status:
+431:   not-started
+432: - [ ] Task 3.12: `pyproject.toml` package-data entry for
+433:   `biz.dfch.specmgr.gol` (`data/*.md`, `data/*.json`); `.pre-commit-config.yaml`
+434:   — widen the shared schema-hook glob to include `gol/models/v1`, add a
+435:   `specmgr-schema-gol-package` hook — depends on: Task 2.5 — status:
+436:   not-started
+437: - [ ] Task 3.13: `.github/workflows/ci.yml` — add the `docs/gol_schema.json`
+438:   check + packaged-copy check steps — depends on: Task 2.5 — status:
+439:   not-started
+440: - [ ] Task 3.14: `gol/data/gol_create_instructions.md` +
+441:   `gol/prompts/create_gol.py` (`@mcp.prompt()`, `string.Template`
+442:   substitution, narrates the full interview flow — see Design Notes) —
+443:   depends on: Tasks 3.3, 3.9 — status: not-started
+444: - [ ] Task 3.15: `gol/data/gol_update_instructions.md` +
+445:   `gol/prompts/update_gol.py` — depends on: Tasks 3.4, 3.5, 3.8 — status:
+446:   not-started
+447: - [ ] Task 3.16: `gol/__init__.py` (docstring + `from . import prompts, resources, tools`), add `gol` to `server.py`'s bottom-of-file domain
+448:   import line (alphabetical: `adr, general, gol, prb, qa, req, tsk, uc`)
+449:   and update its module docstring (Tools/Resources/Prompts sections) —
+450:   depends on: Tasks 3.2-3.15 — status: not-started
+451: - [ ] Task 3.17: `tests/gol/tools/...`, `tests/gol/resources/...`,
+452:   `tests/gol/prompts/...` mirroring `tests/req/`/`tests/prb/`'s layout,
+453:   including live end-to-end coverage of `create_gol`/`update_gol`'s
+454:   narrated `TodoWrite`/`question`-tool flow (ACC-006) and `list_gol`'s
+455:   paging behavior (default page size, `max_results` clamping, `offset`
+456:   paging, `truncated` boundary) — depends on: Tasks 3.1-3.16 — status:
+457:   not-started
+458: - [ ] Task 3.18: Phase-end quality gate — full pre-commit/quality gate
+459:   including Task 3.17's new tests; update this README's Progress section —
+460:   depends on: Task 3.17 — status: not-started
+461: 
+462: #### Phase 4: Cross-cutting registration
+463: 
+464: - [ ] Task 4.1: `AGENTS.md` — update heading to "eight domain/cross-cutting
+465:   packages implemented (ADR, REQ, UC, TSK, QA, PRB, GOL, general)"; add a
+466:   `gol/` bullet (chronological order, after `prb/`); update the "Still
+467:   genuinely missing" list (`validate_gol` not enforced via pre-commit/CI,
+468:   `delete_gol` stub) and the closing domain-enumeration paragraphs —
+469:   depends on: Phase 3 complete — status: not-started
+470: - [ ] Task 4.2: `specmgr docs` / `specmgr mcp-docs` / `specmgr schema`
+471:   regeneration — confirm `gol` appears correctly and all three commands
+472:   report zero drift — depends on: Task 4.1 — status: not-started
+473: - [ ] Task 4.3: Phase-end quality gate — full pre-commit/quality gate;
+474:   update this README's Progress section — depends on: Task 4.2 — status:
+475:   not-started
+476: 
+477: #### Phase 5: Final cross-cutting verification
+478: 
+479: - [ ] Task 5.1: Final verification pass — walk every ACC-001..008 and
+480:   confirm each is satisfied with concrete evidence (including a live
+481:   `create_gol`→`update_gol`→`set_status_gol` run, not just unit tests);
+482:   run the full quality gate (ruff format/check, pylint advisory, vulture,
+483:   unittest, `specmgr docs`/`specmgr mcp-docs`/`specmgr schema` drift
+484:   checks) end to end; set feature status to `done` — depends on: Phase
+485:   1-4 complete — status: not-started
+486: 
+487: **Note:** If a task's scope changes mid-flight, edit its description in
+488: place; rely on git history (`git log -p` on this file) to recover what was
+489: originally planned, rather than keeping a second copy of the task around.
+490: 
+491: ## Progress
+492: 
+493: ### Current Status
+494: 
+495: **As of 2026-08-25**: Planning complete; implementation not started.
+496: GitHub issue #18 ("Add artifact type Goal (GOL)") is filed and open; all
+497: schema/surface decisions were made in the planning session and are logged
+498: below. Phase 1 (Specification) is next.
+499: 
+500: ### Blockers
+501: 
+502: None.
+503: 
+504: ### Recent Updates
+505: 
+506: #### Update 2026-08-25 (planning)
+507: 
+508: - Completed: GitHub issue #18 filed ("Add artifact type Goal (GOL)") with a
+509:   short overview description. Full design/planning discussion — schema
+510:   shape (REQ mirrored minus `Characteristics` and minus `Level`; mandatory
+511:   `statement` + `Source` only), status set (REQ's 7-value set), related-
+512:   artifact sub-lists (all four, identical to REQ), update mechanism
+513:   (whole-body replace), prompt behavior, and MCP surface (10 tools / 3
+514:   resources / 2 prompts) all decided; this README written from that
+515:   discussion.
+516: - Next: Phase 1 (Specification) — write `gol_reference.md`, define
+517:   frontmatter/body models.
+518: - Notes: Planning-only session per explicit user instruction (no
+519:   implementation attempted). Issue numbering note: GitHub number 17 was
+520:   already consumed by the merged feat-16 PR, so this feature's issue is
+521:   #18 and the folder is `feat-18-goal` accordingly (the `feat-NNN-slug`
+522:   convention ties the folder name to the issue number).
+523: 
+524: ### Decisions Made
+525: 
+526: - **2026-08-25**: Type abbreviation `gol`, domain-first layout
+527:   (`gol/models/v1/`, `gol/tools/`, `gol/resources/`, `gol/prompts/`,
+528:   `gol/data/`) — matches REQ/PRB precedent (schema lives inside the domain
+529:   package, not top-level `models/`), since GOL is a new domain built after
+530:   the domain-first refactor.
+531: - **2026-08-25**: Body mirrors REQ minus `## Characteristics` — ISO 25010
+532:   quality characteristics are a requirement-level attribute; a business
+533:   goal states *what* to achieve, not *which quality dimension* it loads
+534:   (user decision).
+535: - **2026-08-25**: No `## Level` section — a goal is implicitly always a
+536:   MUST; RFC 2119 obligation strength is a requirement-level attribute
+537:   (user decision). Consequently the only mandatory body fields are
+538:   `statement` and `Source`, and `gol/models/v1/body.py` declares no
+539:   `Level` class or RFC 2119 validator.
+540: - **2026-08-25**: Status set = REQ's exact 7-value set
+541:   `draft`/`proposed`/`accepted`/`superseded`/`deprecated`/`rejected`/
+542:   `implemented` — goals are business-level requirements, so
+543:   requirement-lifecycle semantics apply (user decision), with goal-specific
+544:   meanings for `implemented` (= goal reached) and `superseded` (= replaced
+545:   by another goal) as spelled out in Design Notes.
+546: - **2026-08-25**: `Related Artifacts` carries all four sub-lists, identical
+547:   to REQ (`Requirements`/`Decisions`/`Goals`/`Acceptance Criteria`), each
+548:   optional and opaque free text — the `### Goals` sub-list cross-
+549:   references peer/superseding goals (user decision).
+550: - **2026-08-25**: `update_gol` is a single whole-body replace tool
+551:   (REQ/PRB convention), not an ADR-style `update_section`/option-style
+552:   granular tool — the latter is currently ADR-specific code (ADR
+553:   71fd95d7), same decision as feat-16's for `prb`. Individual sections
+554:   remain addressable by their fixed heading text within the whole-body
+555:   markdown.
+556: - **2026-08-25**: `list_gol` is a paged tool from day one per ADR
+557:   ec9f5262 — no `specmgr://gol/list` resource, no resource-then-convert
+558:   history.
+559: - **2026-08-25**: `gol_example.md` is drafted as `GOL-0007: Competitive Engines in Consumer Vehicles` — the exact goal `req_example.md`'s
+560:   `### Goals` sub-list already cross-references — so the two packaged
+561:   examples read coherently side by side; it reuses `gol_reference.md`'s
+562:   content verbatim (feat-16's own `prb_example.md`/`prb_reference.md`
+563:   precedent).
+564: - **2026-08-25**: Folder name `feat-18-goal` (issue #18) — GitHub number
+565:   17 was already consumed by the merged feat-16 PR, so the convention's
+566:   `feat-NNN-slug` ↔ issue-number tie lands on 18.
+567: 
+568: ### Related PRs / Commits
+569: 
+570: - [Issue #18](https://github.com/dfch/biz.dfch.SpecMgr/issues/18): Add
+571:   artifact type Goal (GOL) — the issue this feature implements.
+
+(End of file - total 571 lines)
+</content>
+```
+
+**Tool: bash**
+
+**Input:**
+```json
+{
+  "command": "git status; echo \"=== gitignore check ===\"; git check-ignore -v .specmgr/feat/feat-18-goal/README.md; echo \"exit: $?\""
+}
+```
+
+**Output:**
+```
+On branch dev
+Your branch is up to date with 'origin/dev'.
+
+nothing to commit, working tree clean
+=== gitignore check ===
+exit: 1
+
+```
+
+---
+
+## Assistant (Build · qwen3.8-27b-bf16-896k · 150.4s)
+
+_Thinking:_
+
+Two issues:
+
+1. **`git status` shows "nothing to commit, working tree clean"** — but `.specmgr/feat/feat-18-goal/README.md` exists on disk, is not gitignored (`git check-ignore` exit 1 = not ignored), and should be shown as untracked `??`. "Working tree clean" with no untracked files is... wait, if the file were untracked, `git status` should show "Untracked files: .specmgr/feat/feat-18-goal/". It's showing nothing. So one of the following:
+   - The file is already tracked and committed?? No, I just created it.
+   - A `.gitignore` covers it — check-ignore says no (exit 1).
+   - `git status` is being run in a different worktree? No, cwd is the repo.
+   
+   Hmm wait, let me double-check: `git check-ignore -v` returned exit 1 with no output → not ignored. And `git status` says clean. So either the file isn't actually at that path relative to the repo root, or... let me verify the file exists and check `git status` more carefully. Actually — wait. Could it be that the whole `.specmgr/feat/` is tracked, and my `write` actually... no, that's not it. Anyway, let me run `ls -la .specmgr/feat/feat-18-goal/` and `git status --porcelain` and `git ls-files .specmgr/feat/feat-18-goal`.
+
+   Oh! Could there be a nested git repo or something? Or is the `git status` output being truncated? It said "nothing to commit, working tree clean". Bizarre. Let me investigate.
+
+2. **mdformat corrupted several code spans** (wrapping at bad positions):
+   - Line 67: `gol_create_ instructions.md` (space inside code span) — wait, looking at the actual line 67: "their own packaged instructions data file (`gol/data/gol_create_ instructions.md`/`gol_update_instructions.md`), not an inline string." — hmm wait, is there a line break before that? In the read result, line 67 is one long line: "  instructions.md`/`gol_update_instructions.md`), not an inline string." Let me re-read lines 66–67:
+     ```
+     66:   `tsk/prompts/implement_task.py`/`prb/prompts/create_prb.py`. Both use
+     67:   their own packaged instructions data file (`gol/data/gol_create_ instructions.md`/`gol_update_instructions.md`), not an inline string.
+     ```
+     So mdformat joined lines 66–67 of my original text (I had a line break inside the code span: "`gol/data/gol_create_\n  instructions.md`") and produced a space inside the code span. My original text had an ugly wrap:
+     ```
+     their own packaged instructions data file (`gol/data/gol_create_
+     instructions.md`/`gol_update_instructions.md`), not an inline string.
+     ```
+     Wait, did I write that? In my original write, the text of REQ-006 was:
+     ```
+     - REQ-006: MCP prompts `create_gol`/`update_gol` — narrated,
+       `TodoWrite` + `question`-tool-driven interview flows reusing the
+       dedup-check-first pattern from `req/prompts/create_req.py` and the
+       `TodoWrite`/`question`-tool narration pattern from
+       `tsk/prompts/implement_task.py`/`prb/prompts/create_prb.py`. Both use
+       their own packaged instructions data file (`gol/data/gol_create_
+       instructions.md`/`gol_update_instructions.md`), not an inline string.
+     ```
+     Yes — I wrapped a code span across a line break in the source (bad practice; mdformat then joined with a space). Result: `gol_create_ instructions.md` — a corrupted filename. Must fix.
+
+   - Line 381: "- register `"gol"` in the `specmgr schema` doc-type generator registry" — originally I had "+ register" but mdformat changed the `+` to `-`? Let me check the original: "   + register `"gol"` in the `specmgr schema` doc-type generator registry". In the read result, line 381 shows "   - register `"gol"`...". Hmm wait, this is inside Task 2.5:
+     ```
+     379: - [ ] Task 2.5: Implement `generate_gol_schema()` in `commands/schema.py`
+     380:   (mirroring `generate_req_schema`, via `GolDocument.model_json_schema()`)
+     381:   - register `"gol"` in the `specmgr schema` doc-type generator registry
+     382:     (`_GENERATORS`); draft `docs/gol_schema.json` — depends on: Task 2.1 —
+     383:     status: not-started
+     ```
+     So mdformat re-indented the continuation: originally it was "  + register ... \n   (`_GENERATORS`)..." — the `+` became `-`?? No wait — mdformat shouldn't change `+` to `-`. Let me check the original text I wrote for Task 2.5:
+     ```
+     - [ ] Task 2.5: Implement `generate_gol_schema()` in `commands/schema.py`
+       (mirroring `generate_req_schema`, via `GolDocument.model_json_schema()`)
+       + register `"gol"` in the `specmgr schema` doc-type generator registry
+       (`_GENERATORS`); draft `docs/gol_schema.json` — depends on: Task 2.1 —
+       status: not-started
+     ```
+     In the current file it shows "- register" — so the `+` was replaced with `-`? That doesn't seem like mdformat's behavior... actually, hmm, it might be: in the original, the line "       + register ..." — mdformat sees a paragraph with lines starting with 2 spaces and "+ register"... the `+` at the start of a line after indentation could be interpreted as... no, that's not it.
+
+     Wait, let me look more carefully. Current line 381: "   - register `"gol"` in the `specmgr schema` doc-type generator registry". And line 382 has extra indentation "     (`_GENERATORS`)..." — so mdformat interpreted "- register" as a list item? Because... if the source line had been "       + register", hmm, in some markdown flavors `+` is a bullet. Does mdformat (python-markdown) treat `+ register` as an ordered/unordered list bullet? In python-markdown, `+` at the start of a line is a valid bullet marker for an unordered list! So "+ register ..." inside a 2-space-indented paragraph (a lazy continuation of the list item above?) got parsed as a new list item with the `+` bullet, and mdformat normalized the bullet to `-`. That's the corruption: Task 2.5's description is now broken — "- register" became a nested list item, and the line was re-indented.
+
+     I need to fix that too.
+
+   - Line 423: "(`gol/data/gol_example.md` — drafted as `GOL-0007: Competitive Engines in Consumer Vehicles` per Design Notes, `gol/data/gol_template.md` —" — this is a long line (exceeds 120?), but it's intact (no space inserted inside code spans). Let me count: "   (`gol/data/gol_example.md` — drafted as `GOL-0007: Competitive Engines in Consumer Vehicles` per Design Notes, `gol/data/gol_template.md` —" — that's about 140 characters. mdformat's default line width is 80, but this project probably configures mdformat with a different width? Actually specmgr's mdformat might have its own width setting. Line 423 is long and not wrapped — meaning mdformat's width here is ≥ 120? But then why did it wrap other lines at about 78? Hmm, line 67 is also very long (about 140 characters) and not wrapped.
+
+     Wait, I'm confused. Let me re-check: did mdformat actually wrap at 80? Looking at the file: most lines are under 80 characters. Lines 67 and 423 exceed that. So mdformat wrapped at 80, but couldn't wrap lines 67/423 at word boundaries that didn't produce over-80... no, if it's 80-width wrapping, every line should be ≤80. Line 67: "  their own packaged instructions data file (`gol/data/gol_create_ instructions.md`/`gol_update_instructions.md`), not an inline string." — that's about 135 characters. So it's not 80-width.
+
+     Actually, specmgr_mdformat might use width 120. Line 67 is about 135 characters > 120 — but can't be split at a space without splitting a code span? There are spaces: "their own packaged instructions data file (`gol/data/gol_create_ instructions.md`/`gol_update_instructions.md`), not an inline string." Splitting at the space after "file" would put the code span on the next line — legal. So why did mdformat leave it over 120? Because the code span "(`gol/data/gol_create_ instructions.md`/`gol_update_instructions.md`)" is a single unbreakable "word" of about 66 characters, and the preceding "their own packaged instructions data file " is 43 characters → 43+66 = 109, and the next word ")," fits... hmm 109+2=111 <120. So it should have wrapped after "file". Unless mdformat considers the whole thing... actually, python-markdown's wrapping: it wraps at word boundaries, and "words" include inline code as a single token. "(`gol/data/gol_create_" is one token (44 chars with the paren+space), then "instructions.md`/`gol_update_instructions.md`)," is another token (about 50). 44+1+50 = 95+indentation 2 = 97. That would fit in 120...
+
+     I'm going too deep. The real problem: line 67 has a space inside a code span → the filename is corrupted. That must be fixed. And line 423 is long but content-intact (just a long line; mdformat left it — probably because splitting would... whatever, it's intact).
+
+     Also line 368: "- [ ] Task 2.1: `gol/models/v1/document.py` (`GolDocument(frontmatter, body)`, mirroring `ReqDocument`) — depends on: Task 1.3 — status:" followed by "   not-started" — this is an intentional wrap (I wrote it that way to avoid a line exceeding 120? I wrote:
+     ```
+     - [ ] Task 2.1: `gol/models/v1/document.py` (`GolDocument(frontmatter, body)`, mirroring `ReqDocument`) — depends on: Task 1.3 —
+       status: not-started
+     ```
+     Hmm, in the original I had it wrapped as "— depends on: Task 1.3 —\n   status: not-started". Currently it shows "status:" at the end of line 368 and "not-started" on line 369. So mdformat re-wrapped it. Content is intact, no problem.
+
+     And line 447: "import line (alphabetical: `adr, general, gol, prb, qa, req, tsk, uc`)" — originally I had "domain\n  import line" (a wrap between "domain" and "import" — legal, no code-span split). Currently line 447 is "  `gol/__init__.py` (docstring + `from . import prompts, resources, tools`), add `gol` to `server.py`'s bottom-of-file domain" (about 120 characters) — intact.
+
+     Line 559: "  `### Goals` sub-list already cross-references — so the two packaged" — wait, originally I wrote:
+     ```
+     - **2026-08-25**: `gol_example.md` is drafted as `GOL-0007: Competitive
+       Engines in Consumer Vehicles` — the exact goal `req_example.md`'s
+     ```
+     (wrap inside the code span "GOL-0007: Competitive\nEngines..." → becomes "GOL-0007: Competitive Engines in Consumer Vehicles" when joined — legal since it's a space, no corruption, and line 559 is long (about 118?). Let me check: "   **2026-08-25**: `gol_example.md` is drafted as `GOL-0007: Competitive Engines in Consumer Vehicles` — the exact goal `req_example.md`'s" ≈ 135 characters. Intact but long. Hmm wait — actually, mdformat joined my two lines into one. Content is intact (space was the boundary). OK.
+
+So the actual corruption from mdformat is:
+1. **Line 67**: `gol_create_ instructions.md` — space inside code span (corrupted filename).
+2. **Lines 380–383 (Task 2.5)**: `+ register` got parsed as a list bullet → became `- register` with a nested re-indentation, corrupting the task's sentence.
+
+Everything else is either intact or merely re-wrapped.
+
+Also, lines that are long but intact (67, 423, 559, and maybe others) — if I fix the file, I should rerun mdformat to check idempotency. But if mdformat produces lines exceeding 120, that's its own behavior (probably width=80 but can't split long tokens). feat-16's README — let me check if it has lines exceeding 120... for example, feat-16's line 512: "   `prb_update_instructions.md`'s symmetric flow (`get_prb` first, show" — short. But feat-16's line 143: "     narrated 10-step/9-step flows end to end against a real document via" — all short. Hmm, but feat-16's README passed their mdformat check. If specmgr_mdformat uses width 80, my file should have every line ≤ 80 after mdformat... but line 67 is 135 and line 423 is 140. So mdformat couldn't wrap them — meaning the width must be larger (e.g., 120), and these lines exceed 120 because they contain unbreakable tokens longer than the remaining width? No wait — if the width is 120 and a line is 135, there must have been a wrap point that mdformat missed... or mdformat only wraps prose and these lines were originally written by me as long single lines, and mdformat doesn't re-wrap lines that were already ≤... no, mdformat always re-wraps.
+
+Hmm, actually, maybe specmgr's mdformat width is 120 and my lines 67/423/559 were originally written as long single lines? Let me check the original:
+- Original REQ-006 line: "  their own packaged instructions data file (`gol/data/gol_create_" + newline + "  instructions.md`/`gol_update_instructions.md`), not an inline string." — the original first line was about 118 characters? "  their own packaged instructions data file (`gol/data/gol_create_" = 66 chars. No.
+
+OK, let me stop the archaeology. The pragmatic approach: fix the two corruptions by editing, restructure so mdformat won't break them again (avoid code spans at wrap boundaries — put long code spans on their own lines, or rephrase), rerun specmgr_mdformat, verify idempotency and content integrity, and confirm that lines like 67 stay intact.
+
+For line 67, the simplest thing: rephrase REQ-006 to avoid the long inline code span:
+```
+- REQ-006: MCP prompts `create_gol`/`update_gol` — narrated,
+  `TodoWrite` + `question`-tool-driven interview flows reusing the
+  dedup-check-first pattern from `req/prompts/create_req.py` and the
+  `TodoWrite`/`question`-tool narration pattern from
+  `tsk/prompts/implement_task.py`/`prb/prompts/create_prb.py`. Both use
+  their own packaged instructions data file (`gol_create_instructions.md`/
+  `gol_update_instructions.md` under `gol/data/`), not an inline string.
+```
+This splits the code span into two shorter ones. "(`gol_create_instructions.md`/\n`gol_update_instructions.md` under `gol/data/`)" — the first token "(`gol_create_instructions.md`/" is about 30 chars — wraps cleanly.
+
+For Task 2.5, rephrase to avoid the leading "+":
+```
+- [ ] Task 2.5: Implement `generate_gol_schema()` in `commands/schema.py`
+  (mirroring `generate_req_schema`, via `GolDocument.model_json_schema()`),
+  and register `"gol"` in the `specmgr schema` doc-type generator registry
+  (`_GENERATORS`); draft `docs/gol_schema.json` — depends on: Task 2.1 —
+  status: not-started
+```
+Using "and register" instead of "+ register" completely avoids the bullet-parsing issue.
+
+Wait — but how did the `+` become a bullet? In python-markdown, "+ register" at the start of a line (after 2-space indentation) — in a context where the previous line is a continuation of a list item (2-space indent), a `+` at the start of a line could be treated as the start of a nested list. mdformat normalized the `+` → `-` bullet and re-indented. Yes. So avoid a leading `+`.
+
+Now, the git mystery: `git status` says the working tree is clean, yet there's a new file on disk that isn't ignored. That can't be, unless... let me think. `git check-ignore -v` exit 1 = not ignored. `git status` = clean, no untracked.
+
+Ah, wait. Maybe the file was already committed?? No. Or... `core.excludesFile`? check-ignore would have caught it. Or the repo's index already contains this path as identical? If the path were tracked with the same content, `git status` would show nothing — but I just created it. Unless a previous session... no, the folder is new.
+
+Hmm, could `git status` have run in a different directory? The bash tool runs in cwd = /home/user/src/biz.dfch.SpecMgr. git remote was shown, so we're in the repo.
+
+Let me debug: `git ls-files .specmgr/feat/ | head`, `ls -la .specmgr/feat/feat-18-goal/`, `git status --porcelain=v1`, `git rev-parse --show-toplevel`.
+
+Actually — wait a moment. Could there be a global git config, or `.git/info/exclude` containing `.specmgr/`? `git check-ignore` checks all ignore sources including info/exclude — it said not ignored (exit 1). Hmm.
+
+Another possibility: `git status` output was "nothing to commit, working tree clean" — if the file were untracked, it should show "Untracked files". Unless `status.showUntrackedFiles=no` is set in the config! That's a real git setting. If the repo/user has `status.showUntrackedFiles = no`, untracked files won't appear in git status, and it would say "working tree clean". That would explain it. Let me check `git config status.showUntrackedFiles`.
+
+That would mean the file just isn't staged — no problem. Let me verify with `git status --untracked-files=all`.
+
+So my action plan:
+1. Debug git untracked visibility (check the config).
+2. Fix the two mdformat corruptions with the edit tool.
+3. Rerun specmgr_mdformat; verify idempotency; re-check the fixed spots.
+4. Report a summary to the user: yes — found and fixed two mdformat re-wrap corruptions; the file is untracked and commit-ready (ask/suggest committing — the user said "wrap up this session"; commit convention: only when explicitly requested. They asked "anything else to add before we wrap up this session?" — that's a question, not a commit request. Fix the file, verify git state, and suggest committing (or, since we're wrapping up, maybe the user expects a commit? No — "only commit when explicitly asked". I'll suggest it).
+
+Also: should I double-check whether mdformat corrupted other lines I missed? Let me systematically scan the file for suspicious content: code spans containing internal spaces that look like filenames with underscores: grep for patterns like "_ [a-z]" inside backticks... more simply: after fixing, rerun mdformat and diff. And grep for "  - " nested bullets inside the Task List to catch other `+`→`-` conversions. Original uses of "+" in prose: I used "+" in "(`TodoWrite` + `question`..." — mid-line, no problem. "create_gol/update_gol" is also fine. Only the leading `+ register` at the start of a line was a problem. Let me grep the current file for lines starting with whitespace + "-" inside the task section to find nested bullets.
+
+Let me run the checks.
+
+
+
+
+The file is mdformat-formatted but I found **2 actual corruptions** where mdformat re-wrapped lines badly:
+
+1. **Line 67** — code span split mid-filename: `` `gol_create_ instructions.md` `` (space inside the filename)
+2. **Task 2.5 (lines 380-383)** — my `+ register` continuation was parsed as a list bullet, becoming a nested `- register` item with re-indented text
+
+Also `git status` shows clean, which is suspicious for a brand-new file. Let me investigate both:
+
+
+
+
+**Tool: bash**
+
+**Input:**
+```json
+{
+  "command": "git config --get status.showUntrackedFiles; git status --untracked-files=all --porcelain; echo \"---\"; git ls-files .specmgr/feat/ | tail -5"
+}
+```
+
+**Output:**
+```
+---
+.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md
+.specmgr/feat/feat-9-doc-in-specmgr/create-adr.md
+.specmgr/feat/feat-9-doc-in-specmgr/docs-generator-cleanup-plan.md
+.specmgr/feat/feat-9-doc-in-specmgr/history/session-ses_038f-adr-tool-plan.md
+.specmgr/feat/feat-9-doc-in-specmgr/history/test.md
+
+```
+
+**Tool: bash**
+
+**Input:**
+```json
+{
+  "command": "grep -n \"^   - \\|^    - \\|^  - [a-z]\" .specmgr/feat/feat-18-goal/README.md | grep -v \"^\\(3[3-9][0-9]\\|4[0-9][0-9]\\|5[0-7][0-9]\\): - \" | head; echo \"=== nested bullets in task lines ===\"; awk '/^#### Phase/,/^## Progress/' .specmgr/feat/feat-18-goal/README.md | grep -n \"^   - [a-z]\" "
+}
+```
+
+**Output:**
+```
+381:  - register `"gol"` in the `specmgr schema` doc-type generator registry
+=== nested bullets in task lines ===
+
+```
+
+---
+
+## Assistant (Build · qwen3.8-27b-bf16-896k · 43.2s)
+
+_Thinking:_
+
+1. Git: `git status --untracked-files=all --porcelain` didn't output anything about feat-18-goal! And the `status.showUntrackedFiles` config isn't set either. But the file exists on disk... wait, does it really exist? Let me check with `ls`. The read tool was able to read it without any problem just a moment ago. Hmm, `git status --untracked-files=all --porcelain` should display `?? .specmgr/feat/feat-18-goal/`.
+
+Wait a sec, the porcelain output is completely empty — not even the "nothing to commit" text (that's normal with --porcelain). So according to git, there are no untracked files in the entire repository. But `ls`... let me check whether the file actually exists on disk. The read tool read it, and grep just found a line in it — so it exists (grep was run against it).
+
+Could it be... that the file is being ignored via some mechanism that check-ignore missed? check-ignore exited with 1 (not ignored). Hmm, wait — actually, let me double-check: earlier I ran `git check-ignore -v .specmgr/feat/feat-18-goal/README.md; echo "exit: $?"` and got "exit: 1" — that's not ignored.
+
+Then why doesn't git status show it? Ah, wait. I think it's because of **sparse-checkout**, or the file being inside a path excluded from the index... or... hmm, another thought: `git status` in a repo with `core.untrackedCache`... no, that's not it.
+
+Actually — wait. Isn't `.specmgr/feat/feat-18-goal` being shown as `??` but my porcelain command was... no, the output was empty.
+
+Let me test directly: `ls -la .specmgr/feat/feat-18-goal/` and `git status .specmgr/feat/feat-18-goal/` and `git check-ignore -v --no-index .specmgr/feat/feat-18-goal/README.md`.
+
+Hmm, or maybe there's a nested .git directory or something. Or the file is on an overlay filesystem and git's stat is... anyway, let me just run the diagnostics.
+
+2. Confirmed that the nested bullet on line 381 is the only corruption of that kind. Good.
+
+
+
+
+Only one nested-bullet corruption (line 381, as suspected). But git still doesn't see the file — let me dig deeper:
+
+
+
+**Tool: bash**
+
+**Input:**
+```json
+{
+  "command": "ls -la .specmgr/feat/feat-18-goal/ && git status .specmgr/feat/feat-18-goal/ ; echo \"check-ignore: $(git check-ignore .specmgr/feat/feat-18-goal/README.md; echo exit=$?)\"; git config --list --local | grep -i \"sparse\\|untracked\" ; cat .git/info/exclude 2>/dev/null | grep -v \"^#\""
+}
+```
+
+**Output:**
+```
+total 304
+drwxrwxr-x  2 user user   4096 Aug 25 21:06 .
+drwxrwxr-x 14 user user   4096 Aug 25 21:03 ..
+-rw-rw-r--  1 user user  32583 Aug 25 21:03 README.md
+-rw-rw-r--  1 user user 268935 Aug 25 21:06 session-ses_fc5c-feat-18-00.md
+On branch dev
+Your branch is up to date with 'origin/dev'.
+
+nothing to commit, working tree clean
+check-ignore: exit=1
+
+```
+
+---
+
+## Assistant (Build · qwen3.8-27b-bf16-896k · 43.7s)
+
+_Thinking:_
+
+Interesting! There's a second file in the folder: `session-ses_fc5c-feat-18-00.md` (268KB, created at 21:06 — just now). This is a session file, and it seems something (an opencode session logger?) is writing session records into the feature folder. Wait — feat-16's folder had similar files: `session-ses_fc80-test-prb.md`, `session-ses_fc85-feat-16-01.md`, `session-ses_fc87-feat-16-00.md`. So this repo's workflow is to save session logs to the feature folder. But this session file appeared without me creating it — probably opencode or some hook is automatically saving the session. Hmm, or maybe it's from a previous session named ses_fc5c... Actually, the timestamp 21:06 = just now (the directory mtime is also 21:06). Something is writing to it right now. Probably a session recorder tied to this session ID (ses_fc5c-feat-18-00).
+
+Wait, but git status shows the whole folder as "clean"?! Even with a 32KB untracked README.md and a 268KB untracked session file present? Both are untracked, yet `git status <folder>` says "nothing to commit, working tree clean". And `git check-ignore` says they're not ignored. This is really strange.
+
+However... it's different if git's stat cache / index has them. Let me check `git ls-files --others --exclude-standard .specmgr/feat/feat-18-goal/` and `git ls-files .specmgr/feat/feat-18-goal/`.
+
+Hmm wait, maybe there's a bug in git's untracked cache (untrackedCache) that's hiding new untracked files? That's possible, but it's rare for it to be this complete.
+
+Or — is the working tree on a filesystem where git's lstat returns weird results? The file is clearly there (ls shows it).
+
+Let me run: `git ls-files --others --directory .specmgr/feat/` and `git status --ignored .specmgr/feat/feat-18-goal/ | head`.
+
+
+
+
+A 268 KB `session-ses_fc5c-feat-18-00.md` has appeared in the folder (the session recorder is writing the session log there, following the feat-16 pattern). However, git is still claiming that the folder is clean, which is odd. Let's check:
+
+
+
+**Tool: bash**
+
+**Input:**
+```json
+{
+  "command": "git ls-files --others --directory .specmgr/feat/ ; echo \"=== all untracked (top) ===\"; git ls-files --others --exclude-standard | head -20; echo \"=== ignored? ===\"; git status --ignored=matching .specmgr/feat/feat-18-goal/ 2>&1 | head; echo \"=== untrackedCache ===\"; git config --get core.untrackedCache; git version"
+}
+```
+
+**Output:**
+```
+=== all untracked (top) ===
+=== ignored? ===
+On branch dev
+Your branch is up to date with 'origin/dev'.
+
+nothing to commit, working tree clean
+=== untrackedCache ===
+git version 2.34.1
+
+```
+
+---
+
+## Assistant (Build · qwen3.8-27b-bf16-896k · 37.6s)
+
+_Thinking:_
+
+`git ls-files --others` returns nothing across the entire repo. And yet, a file that is neither ignored nor tracked exists on disk. Git 2.34.1. No untrackedCache setting.
+
+Hypotheses:
+1. Filesystem-level issue: git's `lstat`/`readdir` against `.specmgr/feat/feat-18-goal/` is failing silently? Unlikely — ls works.
+2. **Sparse checkout**: if a sparse-checkout cone is excluding that path... but sparse checkout affects tracked files, and untracked files within a sparse-excluded area are — actually, in sparse checkout, untracked files inside excluded directories are not shown by git status (they're treated as if they don't exist). I checked `git config --list --local | grep -i sparse` — it returned nothing. But the sparse config might be in a different form. `git sparse-checkout list` would tell us.
+3. `status.relativePaths`? No.
+4. Some global git config like `status.showUntrackedFiles=no`? I only checked local with --local earlier... actually, the first command `git config --get status.showUntrackedFiles` (without --local) checks all scopes — nothing was output. So no.
+
+Let me test: `git add -n .specmgr/feat/feat-18-goal/README.md` (dry run) — if git recognizes it, it should show "add '.specmgr/...'" and not say "did not match any files". Also `git sparse-checkout list`.
+
+
+**Tool: bash**
+
+**Input:**
+```json
+{
+  "command": "git add -n .specmgr/feat/feat-18-goal/README.md; echo \"rc=$?\"; git sparse-checkout list 2>&1; echo \"=== global configs ===\"; git config --global --list 2>/dev/null | head -20"
+}
+```
+
+**Output:**
+```
+rc=0
+warning: this worktree is not sparse (sparse-checkout file may not exist)
+=== global configs ===
+credential.https://github.com.helper=
+credential.https://github.com.helper=!/usr/bin/gh auth git-credential
+user.email=dfch@users.noreply.github.com
+user.name=Ronald Rink
+
+```
+
+---
+
+## Assistant (Build · qwen3.8-27b-bf16-896k · 33.2s)
+
+_Thinking:_
+
+Interesting: `git add -n` (dry run) succeeded with rc=0, but no "add '...'" line was output at all. Hmm, in newer git, `git add -n` (without `-v`) doesn't output anything on success — in fact, `git add --dry-run` only outputs when combined with `--verbose`. So rc=0 just means it ran normally.
+
+Let me try `git add -nv` to see what gets added. No wait, a better approach: create a test file in a different location, e.g. `/tmp` — no, inside the repo: `touch .specmgr/feat/test-untracked.txt` and check `git status --porcelain`. That will let me isolate whether it's a per-path issue or a repo-wide issue.
+
+
+**Tool: bash**
+
+**Input:**
+```json
+{
+  "command": "touch .specmgr/feat/__probe_untracked.txt && git status --porcelain; echo \"---\"; rm .specmgr/feat/__probe_untracked.txt"
+}
+```
+
+**Output:**
+```
+?? .specmgr/feat/__probe_untracked.txt
+---
+
+```
+
+---
+
+## Assistant (Build · qwen3.8-27b-bf16-896k · 36.8s)
+
+_Thinking:_
+
+The probe file is shown as untracked (`??`). So git is working correctly for new untracked files in `.specmgr/feat/`. But `.specmgr/feat/feat-18-goal/README.md` isn't shown!
+
+So something specific to that path is… Wait. What if that path is tracked in the index? If the index already contains `.specmgr/feat/feat-18-goal/README.md` (e.g., from a previous commit or a staging operation), and the on-disk content matches the index, then git status would show nothing! Let me check: `git ls-files -s .specmgr/feat/feat-18-goal/` and `git ls-tree HEAD .specmgr/feat/feat-18-goal/`.
+
+Hmm, how could it end up tracked? Did I run `git add` myself? No. Did the session recorder do it? Or… wait — actually, what if the index has that file because someone (a previous opencode session in this worktree, or a hook) staged it? Let me check.
+
+
+
+
+Probe file shows as untracked — so git works fine for that directory. That means `feat-18-goal/README.md` must already be **in the index**. Checking:
+
+
+
+**Tool: bash**
+
+**Input:**
+```json
+{
+  "command": "git ls-files -s .specmgr/feat/feat-18-goal/; echo \"=== in HEAD? ===\"; git ls-tree HEAD .specmgr/feat/feat-18-goal/ 2>&1; echo \"=== log for path ===\"; git log --oneline -3 -- .specmgr/feat/feat-18-goal/ 2>&1"
+}
+```
+
+**Output:**
+```
+100644 08ccf0d0db083d6939a2754cf60cca90150851b4 0	.specmgr/feat/feat-18-goal/README.md
+100644 a7583b5a9a6cb12ef7de610e3ad5c5a5f3bd1766 0	.specmgr/feat/feat-18-goal/session-ses_fc5c-feat-18-00.md
+=== in HEAD? ===
+100644 blob 08ccf0d0db083d6939a2754cf60cca90150851b4	.specmgr/feat/feat-18-goal/README.md
+100644 blob a7583b5a9a6cb12ef7de610e3ad5c5a5f3bd1766	.specmgr/feat/feat-18-goal/session-ses_fc5c-feat-18-00.md
+=== log for path ===
+916e672 feat(gol): add design and plan
+
+```
+
+---
+
+## Assistant (Build · qwen3.8-27b-bf16-896k · 55.6s)
+
+_Thinking:_
+
+The file has already been committed! There's a commit `916e672 feat(gol): add design and plan` that includes both `README.md` and the session file. But wait — the README on disk is 32583 bytes, and the mtime is 21:03 (after my write around 21:00?). And in the index there's blob 08ccf0d for the README — does that match the current disk content? git status says "working tree clean", so yes, the on-disk content == index == HEAD blob.
+
+Hold on — when was that commit made? I didn't commit. Let me check: `git log -1 --format=fuller 916e672` and `git log --oneline -5`. Also, is 916e672 the tip of dev? "Your branch is up to date with 'origin/dev'" — hmm, that message comes from git status comparing against the upstream. If 916e672 is local-only, the status should say "ahead of origin/dev by 1 commit". It says "up to date" — meaning 916e672 is already on origin/dev?? That would mean someone/something pushed it.
+
+Wait, that's weird. Let me look at the git log and check whether HEAD == origin/dev.
+
+Possibilities: an opencode session hook / git agent (a "ccm" agent? no...) — or the user committed from another terminal during the session. The commit message "feat(gol): add design and plan" is in conventional-commit style (this repo uses Conventional Commits per ADR cb5a2d5f). The user (Ronald Rink / dfch) may have committed themselves while I was working — and the 21:06 session file was also included in that commit, but the session file keeps growing... no wait, if the session file on disk kept growing after the commit, git status should show it as modified. It says clean — so the session file on disk matches the committed blob exactly (268935 bytes). The directory mtime is 21:06, the file mtime is also 21:06 — perhaps the commit happened around 21:06 and captured the file at that moment, and the session recorder hasn't written anything since (or the file just stopped).
+
+Hmm wait, actually there's a subtle point: git status's "working tree clean" compares disk against index. If the session file grew after the commit, status should show ` M`. It shows nothing. So disk == index.
+
+But hold on — my mdformat run (around 21:03?) — the README mtime is 21:03 — that was my mdformat edit. If the commit captured that version, then the committed README = the current (broken) version. Let me verify: `git show 916e672 --stat`, and compare the committed README against disk: `git diff HEAD -- .specmgr/feat/feat-18-goal/` (should be empty).
+
+So what happened: the user (or an automated process) committed my file at 21:06 with the message "feat(gol): add design and plan". Probably the user did it from their own terminal during our session.
+
+Now, my pending work: fix the 2 mdformat-induced corruptions in the README (line 67 `gol_create_ instructions.md` and task 2.5's `+ register` → nested bullet). After the fix, the file will differ from HEAD → will show as modified. Then I should tell the user about it. Should I commit the fix? Only if explicitly requested — the user asked "is there anything else I should add before wrapping up this session?" — I can fix the file and ask whether to commit (or they'll commit themselves, as they apparently just did).
+
+Wait, actually — let me reconsider. Is it possible that an automated hook in this environment commits? The commit includes a session log file (`session-ses_fc5c-feat-18-00.md`) — this is the current session (the "feat-18-00" naming matches feat-16's `session-ses_fc87-feat-16-00.md` pattern). It's plausible the user's workflow auto-saves session transcripts to the feature folder, and the user commits periodically. The commit message style "feat(gol): add design and plan" is exactly Conventional Commits.
+
+Let me check the commit's author/timestamp and position relative to origin/dev.
+
+
+
+
+The file has already been **committed** — commit `916e672 feat(gol): add design and plan` includes both the README and the session log. Let me check who/when, and whether it has been pushed:
+
+
+
+**Tool: bash**
+
+**Input:**
+```json
+{
+  "command": "git log -1 --format=\"%H%n%an <%ae>%n%ad%n%s\" 916e672; echo \"=== HEAD vs origin ===\"; git log --oneline -3; git rev-parse HEAD origin/dev 2>&1; echo \"=== diff disk vs HEAD ===\"; git diff HEAD --stat"
+}
+```
+
+**Output:**
+```
+916e672696335c392cffff91c4f9c5e095b64154
+Ronald Rink <dfch@users.noreply.github.com>
+Tue Aug 25 21:07:01 2026 +0200
+feat(gol): add design and plan
+=== HEAD vs origin ===
+916e672 feat(gol): add design and plan
+72cf70a chore(prb): add example transcript and resulting problem statement
+331d901 chore(release): set version to v0.10.0
+916e672696335c392cffff91c4f9c5e095b64154
+916e672696335c392cffff91c4f9c5e095b64154
+=== diff disk vs HEAD ===
+
+```
+
+---
+
+## Assistant (Build · qwen3.8-27b-bf16-896k · 61.6s)
+
+_Thinking:_
+
+In other words, the user (Ronald Rink) committed at 21:07:01 — "feat(gol): add design and plan" — and it's already been pushed (HEAD == origin/dev). The committed version is the mdformat-applied version (with the two small breakages that I found).
+
+So the remaining task before wrapping up is: fix the two breakages in the README. The user is committing on their own, so I'll fix the file and leave the commit to them (or ask). Given that they're actively committing, I'll fix it, re-verify mdformat idempotency, and tell them the file needs a follow-up commit (I'll propose one).
+
+Fix 1 — lines 66-67 (REQ-006):
+Current:
+```
+  `tsk/prompts/implement_task.py`/`prb/prompts/create_prb.py`. Both use
+  their own packaged instructions data file (`gol/data/gol_create_ instructions.md`/`gol_update_instructions.md`), not an inline string.
+```
+Replace with a rewording that keeps the code spans short:
+```
+  `tsk/prompts/implement_task.py`/`prb/prompts/create_prb.py`. Both use
+  their own packaged instructions data file (`gol_create_instructions.md`/
+  `gol_update_instructions.md` under `gol/data/`), not an inline string.
+```
+Hmm wait — I need to be careful about how mdformat re-wraps this. "(`gol_create_instructions.md`/" — a token of about 31 chars; then "`gol_update_instructions.md`" 27; then "under" "gol/data/" ")," — all fine, no token straddles a wrap point.
+
+Fix 2 — task 2.5 (lines 379-383):
+Current:
+```
+- [ ] Task 2.5: Implement `generate_gol_schema()` in `commands/schema.py`
+  (mirroring `generate_req_schema`, via `GolDocument.model_json_schema()`)
+  - register `"gol"` in the `specmgr schema` doc-type generator registry
+    (`_GENERATORS`); draft `docs/gol_schema.json` — depends on: Task 2.1 —
+    status: not-started
+```
+Replace with the following (avoiding a leading "+"):
+```
+- [ ] Task 2.5: Implement `generate_gol_schema()` in `commands/schema.py`
+  (mirroring `generate_req_schema`, via `GolDocument.model_json_schema()`),
+  and register `"gol"` in the `specmgr schema` doc-type generator registry
+  (`_GENERATORS`); draft `docs/gol_schema.json` — depends on: Task 2.1 —
+  status: not-started
+```
+All tokens are short. Good.
+
+After that, re-run specmgr_mdformat and confirm it returns false (no changes) — if mdformat reformats it again in a different way, check idempotency once more and inspect the result.
+
+Also, bump the frontmatter `updated` date? Per the convention, "updated is bumped on every substantive edit." Today is still 2026-08-25, so no change needed. Good.
+
+Should I also add a "Recent Updates" entry noting the fix? This fix is a trivial correction to the planning document made in the same session before the implementation phase starts, so it's not a substantive planning change, and the existing planning entry covers the writing of the README. I'll skip adding an entry (keep it lean) — hmm, but the "Decisions Made"/updates discipline… this fix isn't a decision. Skip. Actually, wait — the user committed the broken version, so a one-line note might be useful for the git history narrative, but the user can write their own commit message. I'll skip editing the Progress section; the file diff itself is self-evident.
+
+Now let me apply the edits.
+
+
+
+
+The user (Ronald Rink) has already committed and pushed the README at 21:07 as `916e672 feat(gol): add design and plan` — meaning the two mdformat corruptions I found have made it into the pushed commit. Before we wrap up, I'll fix them in the file:
+
+
+
+
+**Tool: edit**
+
+**Input:**
+```json
+{
+  "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-18-goal/README.md",
+  "oldString": "  `tsk/prompts/implement_task.py`/`prb/prompts/create_prb.py`. Both use\n  their own packaged instructions data file (`gol/data/gol_create_ instructions.md`/`gol_update_instructions.md`), not an inline string.",
+  "newString": "  `tsk/prompts/implement_task.py`/`prb/prompts/create_prb.py`. Both use\n  their own packaged instructions data file (`gol_create_instructions.md`/\n  `gol_update_instructions.md` under `gol/data/`), not an inline string."
+}
+```
+
+**Output:**
+```
+Edit applied successfully.
+```
+
+**Tool: edit**
+
+**Input:**
+```json
+{
+  "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-18-goal/README.md",
+  "oldString": "- [ ] Task 2.5: Implement `generate_gol_schema()` in `commands/schema.py`\n  (mirroring `generate_req_schema`, via `GolDocument.model_json_schema()`)\n  - register `\"gol\"` in the `specmgr schema` doc-type generator registry\n    (`_GENERATORS`); draft `docs/gol_schema.json` — depends on: Task 2.1 —\n    status: not-started",
+  "newString": "- [ ] Task 2.5: Implement `generate_gol_schema()` in `commands/schema.py`\n  (mirroring `generate_req_schema`, via `GolDocument.model_json_schema()`),\n  and register `\"gol\"` in the `specmgr schema` doc-type generator registry\n  (`_GENERATORS`); draft `docs/gol_schema.json` — depends on: Task 2.1 —\n  status: not-started"
+}
+```
+
+**Output:**
+```
+Edit applied successfully.
+```
+
+---
+
+## Assistant (Build · qwen3.8-27b-bf16-896k · 31.6s)
+
+_Thinking:_
+
+Next, I'll re-run specmgr_mdformat to confirm idempotency (making sure no re-wrapping that would break things again occurs), and verify that the two fixed spots remain intact.
+
+
+
+
+Re-running mdformat to confirm the fixes are stable (no re-wrap regression), then verifying the two spots:
+
+
+
+**Tool: specmgr_mdformat**
+
+**Input:**
+```json
+{
+  "path": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-18-goal/README.md"
+}
+```
+
+**Output:**
+```
+false
+```
+
+---
+
+## Assistant (Build · qwen3.8-27b-bf16-896k · 33.9s)
+
+_Thinking:_
+
+No changes — the file is in a clean state under mdformat, and my fix is preserved as-is (mdformat returns false = already formatted, meaning that the current layout is stable under its own rules and won't get re-broken on re-execution).
+
+Wait, that's a bit surprising: if I run mdformat on the "fixed" content, nothing should change — but would it re-break it? If the fixed line wraps cleanly at token boundaries, then it's stable. `false` means no changes were made to the current file.
+
+Let me check the two fixed spots and check git diff.
+
+
+**Tool: bash**
+
+**Input:**
+```json
+{
+  "command": "sed -n '62,68p;376,383p' .specmgr/feat/feat-18-goal/README.md; echo \"=== diff vs HEAD ===\"; git diff HEAD --stat; git diff HEAD | head -40"
+}
+```
+
+**Output:**
+```
+- REQ-006: MCP prompts `create_gol`/`update_gol` — narrated,
+  `TodoWrite` + `question`-tool-driven interview flows reusing the
+  dedup-check-first pattern from `req/prompts/create_req.py` and the
+  `TodoWrite`/`question`-tool narration pattern from
+  `tsk/prompts/implement_task.py`/`prb/prompts/create_prb.py`. Both use
+  their own packaged instructions data file (`gol_create_instructions.md`/
+  `gol_update_instructions.md` under `gol/data/`), not an inline string.
+  depends on: Task 2.1 — status: not-started
+- [ ] Task 2.4: Field-level `Field(description=...)` on every scalar/
+  optional field (schema-quality parity with REQ/PRB) — depends on:
+  Task 2.1 — status: not-started
+- [ ] Task 2.5: Implement `generate_gol_schema()` in `commands/schema.py`
+  (mirroring `generate_req_schema`, via `GolDocument.model_json_schema()`),
+  and register `"gol"` in the `specmgr schema` doc-type generator registry
+  (`_GENERATORS`); draft `docs/gol_schema.json` — depends on: Task 2.1 —
+=== diff vs HEAD ===
+ .specmgr/feat/feat-18-goal/README.md | 11 ++++++-----
+ 1 file changed, 6 insertions(+), 5 deletions(-)
+diff --git a/.specmgr/feat/feat-18-goal/README.md b/.specmgr/feat/feat-18-goal/README.md
+index 08ccf0d..8eacc12 100644
+--- a/.specmgr/feat/feat-18-goal/README.md
++++ b/.specmgr/feat/feat-18-goal/README.md
+@@ -64,7 +64,8 @@ mechanism) and `req`'s 7-value frontmatter status set.
+   dedup-check-first pattern from `req/prompts/create_req.py` and the
+   `TodoWrite`/`question`-tool narration pattern from
+   `tsk/prompts/implement_task.py`/`prb/prompts/create_prb.py`. Both use
+-  their own packaged instructions data file (`gol/data/gol_create_ instructions.md`/`gol_update_instructions.md`), not an inline string.
++  their own packaged instructions data file (`gol_create_instructions.md`/
++  `gol_update_instructions.md` under `gol/data/`), not an inline string.
+ - REQ-007: Packaged example/template/schema data (`gol/data/`) via the
+   existing generic `general/tools/_packaged_data.py`, with the matching
+   `pyproject.toml` package-data entry, pre-commit hook, and CI step.
+@@ -377,10 +378,10 @@ sessions.
+   optional field (schema-quality parity with REQ/PRB) — depends on:
+   Task 2.1 — status: not-started
+ - [ ] Task 2.5: Implement `generate_gol_schema()` in `commands/schema.py`
+-  (mirroring `generate_req_schema`, via `GolDocument.model_json_schema()`)
+-  - register `"gol"` in the `specmgr schema` doc-type generator registry
+-    (`_GENERATORS`); draft `docs/gol_schema.json` — depends on: Task 2.1 —
+-    status: not-started
++  (mirroring `generate_req_schema`, via `GolDocument.model_json_schema()`),
++  and register `"gol"` in the `specmgr schema` doc-type generator registry
++  (`_GENERATORS`); draft `docs/gol_schema.json` — depends on: Task 2.1 —
++  status: not-started
+ - [ ] Task 2.6: `tests/gol/models/v1/test_parser.py` — mirrors
+   `TestParseReq`'s shape (minimal doc, full reference-doc round-trip,
+   defaults-when-absent, invalid status, missing-mandatory-field
+
+```
+
+---
+
+## Assistant (Build · qwen3.8-27b-bf16-896k · 47.3s)
+
+_Thinking:_
+
+Both fixes are complete, the diff is minimal and clean, and the file is mdformat-stable.
+
+Alright, to answer the user's question "Is there anything else I should add before wrapping up this session?" — let me summarize the findings and remaining items:
+
+1. ✅ Discovered and fixed 2 mdformat corruptions (the pushed commit 916e672 contains the corrupted version, so a small follow-up commit is needed).
+2. The session file `session-ses_fc5c-feat-18-00.md` is still being appended to (the session recorder writes to it) — it was committed at 21:06/21:07 and will keep growing for the rest of this session. Since the user's own commit included it, the established workflow is clearly to commit the session transcript as well (feat-16 had 3 session files). So no action needed — just worth mentioning that it will show up as modified again after the commit.
+3. Optional additions considered but not made (deliberately):
+   - AGENTS.md update → explicitly Phase 4, don't do it now.
+   - `gol_reference.md` → Phase 1 task, don't do it now.
+   - The "Existing feature folders" list in AGENTS.md is stale (doesn't even list feat-10/12/13/14/16) — pre-existing issue, and it's noted as feat-7 Task 0.24-ish housekeeping. Not doing it.
+
+So: the only actual gap was the 2 corruptions, which have now been fixed. Suggest a follow-up commit (or, since the user themselves committed the first one, the user can commit it).
+
+Keep the reply concise.
+
+
+
+
+Both fixes are in, the diff is minimal (6 insertions, 5 deletions), and the file is mdformat-stable. Here's the wrap-up:
+
+**Found and fixed** — the pushed commit `916e672` contains the README right after my `specmgr mdformat` run, which had silently corrupted two spots:
+1. REQ-006: code span split mid-filename → `gol_create_ instructions.md` (now reworded so the spans can't be split)
+2. Task 2.5: my `+ register` line continuation was parsed as a nested list bullet, mangling the task (now plain prose: `...), and register "gol" ...`)
+
+**Nothing else to add** — I considered and deliberately deferred:
+- `AGENTS.md` / `server.py` / schema-registry updates → Phase 3–4 tasks
+- `gol_reference.md` → Phase 1 Task 1.1
+- The stale "Existing feature folders" list in AGENTS.md (missing feat-10/12/13/14/16) → pre-existing, already tracked under feat-7's housekeeping
+
+**One heads-up**: your commit captured `session-ses_fc5c-feat-18-00.md` (269 KB session transcript, same pattern as feat-16's session files) — it keeps growing until this session ends, so the follow-up commit for the two README fixes will include that file's growth too.
+
+The fix is uncommitted on disk, ready for you to commit (or say the word and I'll commit it as `docs(gol): fix two mdformat re-wrap corruptions in feat-18 plan`).
 
 ---
 

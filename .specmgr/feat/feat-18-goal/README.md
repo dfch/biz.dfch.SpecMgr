@@ -64,7 +64,8 @@ mechanism) and `req`'s 7-value frontmatter status set.
   dedup-check-first pattern from `req/prompts/create_req.py` and the
   `TodoWrite`/`question`-tool narration pattern from
   `tsk/prompts/implement_task.py`/`prb/prompts/create_prb.py`. Both use
-  their own packaged instructions data file (`gol/data/gol_create_ instructions.md`/`gol_update_instructions.md`), not an inline string.
+  their own packaged instructions data file (`gol_create_instructions.md`/
+  `gol_update_instructions.md` under `gol/data/`), not an inline string.
 - REQ-007: Packaged example/template/schema data (`gol/data/`) via the
   existing generic `general/tools/_packaged_data.py`, with the matching
   `pyproject.toml` package-data entry, pre-commit hook, and CI step.
@@ -377,10 +378,10 @@ sessions.
   optional field (schema-quality parity with REQ/PRB) — depends on:
   Task 2.1 — status: not-started
 - [ ] Task 2.5: Implement `generate_gol_schema()` in `commands/schema.py`
-  (mirroring `generate_req_schema`, via `GolDocument.model_json_schema()`)
-  - register `"gol"` in the `specmgr schema` doc-type generator registry
-    (`_GENERATORS`); draft `docs/gol_schema.json` — depends on: Task 2.1 —
-    status: not-started
+  (mirroring `generate_req_schema`, via `GolDocument.model_json_schema()`),
+  and register `"gol"` in the `specmgr schema` doc-type generator registry
+  (`_GENERATORS`); draft `docs/gol_schema.json` — depends on: Task 2.1 —
+  status: not-started
 - [ ] Task 2.6: `tests/gol/models/v1/test_parser.py` — mirrors
   `TestParseReq`'s shape (minimal doc, full reference-doc round-trip,
   defaults-when-absent, invalid status, missing-mandatory-field
