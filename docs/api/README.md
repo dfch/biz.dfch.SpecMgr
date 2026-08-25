@@ -101,6 +101,15 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.models.md.markdown_section6_with_comment`](biz.dfch.specmgr.models.md.markdown_section6_with_comment.md) — Opt-in `MarkdownSection6` variant allowing a leading explanatory comment.
 - [`biz.dfch.specmgr.models.md.markdown_str`](biz.dfch.specmgr.models.md.markdown_str.md) — Parse markdown into tokens using shared MarkdownIt instance.
 - [`biz.dfch.specmgr.models.version_info`](biz.dfch.specmgr.models.version_info.md) — Pydantic model for the ``specmgr://version`` resource.
+- [`biz.dfch.specmgr.prb`](biz.dfch.specmgr.prb.md) — Problem Statement (PRB) domain -- Six-Sigma-style problem statement specifications.
+- [`biz.dfch.specmgr.prb.models`](biz.dfch.specmgr.prb.models.md) — Problem Statement (PRB) models -- Pydantic schema powered by the generic ``models/md`` engine.
+- [`biz.dfch.specmgr.prb.models.v1`](biz.dfch.specmgr.prb.models.v1.md) — Problem Statement (PRB) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- [`biz.dfch.specmgr.prb.models.v1._util`](biz.dfch.specmgr.prb.models.v1._util.md) — Shared, private constants for the ``prb.models.v1`` subpackage.
+- [`biz.dfch.specmgr.prb.models.v1.body`](biz.dfch.specmgr.prb.models.v1.body.md) — Problem Statement (PRB) body models: whole-section fields under a single H1.
+- [`biz.dfch.specmgr.prb.models.v1.document`](biz.dfch.specmgr.prb.models.v1.document.md) — Pydantic model for a full Problem Statement (PRB) document (frontmatter + body).
+- [`biz.dfch.specmgr.prb.models.v1.frontmatter`](biz.dfch.specmgr.prb.models.v1.frontmatter.md) — Problem Statement (PRB) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
+- [`biz.dfch.specmgr.prb.models.v1.parser`](biz.dfch.specmgr.prb.models.v1.parser.md) — Parse raw Problem Statement (PRB) ``.md`` text into a :class:`PrbDocument` (Phase 2, Task 2.2).
+- [`biz.dfch.specmgr.prb.models.v1.summary`](biz.dfch.specmgr.prb.models.v1.summary.md) — Pydantic model for one line of PRB listing output (Phase 2, Task 2.3).
 - [`biz.dfch.specmgr.qa`](biz.dfch.specmgr.qa.md) — Question and Answer (QA) domain -- requirements-elicitation interview specifications.
 - [`biz.dfch.specmgr.qa.models`](biz.dfch.specmgr.qa.models.md) — Question and Answer (QA) models -- Pydantic schema powered by the generic ``models/md`` engine.
 - [`biz.dfch.specmgr.qa.models.v2`](biz.dfch.specmgr.qa.models.v2.md) — Question and Answer (QA) v2 models -- adjacent question/answer pairs, no per-question heading.

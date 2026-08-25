@@ -1,0 +1,334 @@
+{
+  "$comment": "v1",
+  "$defs": {
+    "CurrentState": {
+      "description": "`## Current State` -- the factual, evidence-led description of the current state. Mandatory.\n\nStructured around the classic 5W2H (\"What/Why/Where/Who/When/How/How\nOften\") interview questions, each under its own fixed, optional H3\nheading, plus a mandatory `### Summary` synthesizing whichever answers\nare actually present.\n\nParameters\n----------\nsummary:\n    `### Summary`. Mandatory -- a freshly created `prb` document may\n    have zero questions answered yet, but must always carry *some*\n    `Summary` text.\nquestion_1:\n    `### What Is the Problem?`. Optional.\nquestion_2:\n    `### Why Is It a Problem?`. Optional.\nquestion_3:\n    `### Where Is the Problem Observed?`. Optional.\nquestion_4:\n    `### Who Is Impacted?`. Optional.\nquestion_5:\n    `### When Was the Problem First Observed?`. Optional.\nquestion_6:\n    `### How Is the Problem Observed?`. Optional.\nquestion_7:\n    `### How Often Is the Problem Observed?`. Optional.",
+      "properties": {
+        "question_1": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Question1"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### What Is the Problem?` section. Optional."
+        },
+        "question_2": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Question2"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### Why Is It a Problem?` section. Optional."
+        },
+        "question_3": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Question3"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### Where Is the Problem Observed?` section. Optional."
+        },
+        "question_4": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Question4"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### Who Is Impacted?` section. Optional."
+        },
+        "question_5": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Question5"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### When Was the Problem First Observed?` section. Optional."
+        },
+        "question_6": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Question6"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### How Is the Problem Observed?` section. Optional."
+        },
+        "question_7": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Question7"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### How Often Is the Problem Observed?` section. Optional."
+        },
+        "summary": {
+          "$ref": "#/$defs/Summary",
+          "description": "`### Summary` section. Mandatory."
+        }
+      },
+      "required": [
+        "summary"
+      ],
+      "title": "CurrentState",
+      "type": "object"
+    },
+    "FutureState": {
+      "description": "`## Future State` -- the desired/target condition once the problem is resolved. Mandatory.\n\nLeaf class (no declared fields) -- captures the text verbatim.",
+      "properties": {},
+      "title": "FutureState",
+      "type": "object"
+    },
+    "Gap": {
+      "description": "`## Gap` -- the measurable, actual-vs-expected difference between current and future state. Mandatory.\n\nLeaf class (no declared fields), mirroring `MoreInformation`/`Notes`:\ncaptures whatever markdown text follows the heading verbatim, with no\nfurther structure imposed. Kept a pure measurement, deliberately not\nconflated with `Impact` (the consequence of the gap).",
+      "properties": {},
+      "title": "Gap",
+      "type": "object"
+    },
+    "Impact": {
+      "description": "`## Impact` -- the business/cost/safety consequence of the gap. Optional.\n\nLeaf class (no declared fields) -- captures the text verbatim. Placed\nbetween `Gap` and `Future State` (current state -> gap -> why it\nmatters -> target state).",
+      "properties": {},
+      "title": "Impact",
+      "type": "object"
+    },
+    "MarkdownComment": {
+      "description": "A standalone HTML comment block (`\"html_block\"`, e.g. `<!-- some note -->`).\n\nDeliberately leaf-only, like `MarkdownCodeBlock`. Declare an optional\n`comment: MarkdownComment | None` field on any `MarkdownStr` subclass to\nlet a value be preceded by such an explanatory comment without it\nbreaking that class's own structural field matching. See `get_extent`/\n`from_text`/`text` for the full mechanics.",
+      "properties": {},
+      "title": "MarkdownComment",
+      "type": "object"
+    },
+    "MoreInformation": {
+      "description": "`## More Information` -- free-form optional supplementary text, no fixed format. Optional.",
+      "properties": {},
+      "title": "MoreInformation",
+      "type": "object"
+    },
+    "Prb": {
+      "description": "The `prb` body: a single H1 section with the fields below.\n\nThe H1 heading text is free-form. `comment` is inherited from\n`MarkdownSection1WithComment` (see its own docstring) -- not\nredeclared here.\n\nParameters\n----------\ncomment:\n    Optional explanatory HTML comment (`<!-- ... -->`) preceding\n    `current_state`. Inherited from `MarkdownSection1WithComment`.\ncurrent_state:\n    `## Current State`. Mandatory.\ngap:\n    `## Gap`. Mandatory.\nimpact:\n    `## Impact`. Optional.\nfuture_state:\n    `## Future State`. Mandatory.\nreferences:\n    `## References`. Optional.\nmore_information:\n    `## More Information`. Optional.",
+      "properties": {
+        "comment": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MarkdownComment"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional explanatory HTML comment (`<!-- ... -->`)."
+        },
+        "current_state": {
+          "$ref": "#/$defs/CurrentState",
+          "description": "`## Current State` section. Mandatory."
+        },
+        "future_state": {
+          "$ref": "#/$defs/FutureState",
+          "description": "`## Future State` section. Mandatory."
+        },
+        "gap": {
+          "$ref": "#/$defs/Gap",
+          "description": "`## Gap` section. Mandatory."
+        },
+        "impact": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Impact"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`## Impact` section. Optional."
+        },
+        "more_information": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MoreInformation"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`## More Information` section. Optional."
+        },
+        "references": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/References"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`## References` section. Optional."
+        }
+      },
+      "required": [
+        "current_state",
+        "gap",
+        "future_state"
+      ],
+      "title": "Prb",
+      "type": "object"
+    },
+    "PrbFrontmatter": {
+      "description": "Problem Statement (PRB) frontmatter: `MarkdownFrontmatter` narrowed for the ``prb`` document type.\n\nParameters\n----------\ntype:\n    Fixed discriminator, always ``\"prb\"``. Narrows the base's mandatory,\n    default-less ``str`` field to a ``Literal[\"prb\"] = \"prb\"``, so a document\n    omitting ``type`` entirely still parses as a problem statement document.\nstatus:\n    One of ``\"draft\"``, ``\"active\"``, ``\"resolved\"``, ``\"cancelled\"``.\n    Narrows the base's free-form ``str = \"draft\"`` default to this\n    closed four-value set. Blank/absent still defaults to ``\"draft\"``\n    (inherited from the base's ``_default_blank_status_to_draft``\n    validator, which runs before this one).\nversion:\n    The ``models.md`` schema major.minor.patch version this document's\n    frontmatter was written with. DO NOT CHANGE!\n\nAll other fields (``id``, ``created``, ``updated``, ``version``) are inherited\nunchanged from :class:`MarkdownFrontmatter`.",
+      "properties": {
+        "created": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Created"
+        },
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Id"
+        },
+        "status": {
+          "default": "draft",
+          "title": "Status",
+          "type": "string"
+        },
+        "type": {
+          "const": "prb",
+          "default": "prb",
+          "title": "Type",
+          "type": "string"
+        },
+        "updated": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Updated"
+        },
+        "version": {
+          "default": "1.0.0",
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "title": "PrbFrontmatter",
+      "type": "object"
+    },
+    "Question1": {
+      "description": "`### What Is the Problem?` under `## Current State` -- the 1st 5W2H question. Optional.\n\nLeaf class (no declared fields) -- captures the answer text verbatim.",
+      "properties": {},
+      "title": "Question1",
+      "type": "object"
+    },
+    "Question2": {
+      "description": "`### Why Is It a Problem?` under `## Current State` -- the 2nd 5W2H question. Optional.\n\nLeaf class (no declared fields) -- captures the answer text verbatim.",
+      "properties": {},
+      "title": "Question2",
+      "type": "object"
+    },
+    "Question3": {
+      "description": "`### Where Is the Problem Observed?` under `## Current State` -- the 3rd 5W2H question. Optional.\n\nLeaf class (no declared fields) -- captures the answer text verbatim.",
+      "properties": {},
+      "title": "Question3",
+      "type": "object"
+    },
+    "Question4": {
+      "description": "`### Who Is Impacted?` under `## Current State` -- the 4th 5W2H question. Optional.\n\nLeaf class (no declared fields) -- captures the answer text verbatim.",
+      "properties": {},
+      "title": "Question4",
+      "type": "object"
+    },
+    "Question5": {
+      "description": "`### When Was the Problem First Observed?` under `## Current State` -- the 5th 5W2H question. Optional.\n\nLeaf class (no declared fields) -- captures the answer text verbatim.",
+      "properties": {},
+      "title": "Question5",
+      "type": "object"
+    },
+    "Question6": {
+      "description": "`### How Is the Problem Observed?` under `## Current State` -- the 6th 5W2H question. Optional.\n\nLeaf class (no declared fields) -- captures the answer text verbatim.",
+      "properties": {},
+      "title": "Question6",
+      "type": "object"
+    },
+    "Question7": {
+      "description": "`### How Often Is the Problem Observed?` under `## Current State` -- the 7th 5W2H question. Optional.\n\nLeaf class (no declared fields) -- captures the answer text verbatim.",
+      "properties": {},
+      "title": "Question7",
+      "type": "object"
+    },
+    "References": {
+      "description": "`## References` -- free-form cross-references to other artifacts/tickets. Optional.\n\nLeaf class (no declared fields) -- opaque free text for v1, matching\n`MoreInformation`/`Notes` elsewhere (no structured cross-referencing,\nsee the feature README's Scope).",
+      "properties": {},
+      "title": "References",
+      "type": "object"
+    },
+    "Summary": {
+      "description": "`### Summary` under `## Current State` -- free-form synthesis of the current state. Mandatory.\n\nLeaf class (no declared fields), mirroring `MoreInformation`/`Notes`:\ncaptures whatever markdown text follows the heading verbatim, with no\nfurther structure imposed. Must always carry *some* text (even a short\nplaceholder at creation time), even if all 7 5W2H questions below are\nstill unanswered.",
+      "properties": {},
+      "title": "Summary",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "A full Problem Statement (PRB) document: YAML frontmatter and body.\n\nAttributes\n----------\nfrontmatter:\n    The YAML frontmatter block. See :class:`PrbFrontmatter`.\nbody:\n    The parsed problem statement sections. See :class:`Prb`.",
+  "properties": {
+    "body": {
+      "$ref": "#/$defs/Prb"
+    },
+    "frontmatter": {
+      "$ref": "#/$defs/PrbFrontmatter"
+    }
+  },
+  "required": [
+    "frontmatter",
+    "body"
+  ],
+  "title": "PrbDocument",
+  "type": "object"
+}

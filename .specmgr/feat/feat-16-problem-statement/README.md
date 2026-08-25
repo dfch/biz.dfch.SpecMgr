@@ -362,30 +362,30 @@ multiple sessions.
 
 #### Phase 2: Pydantic Models, Parser & Schema
 
-- [ ] Task 2.1: `prb/models/v1/document.py` (`PrbDocument(frontmatter, body)`, mirroring `TskDocument`/`QaDocument`) — depends on: Task 1.3 —
-  status: not-started
-- [ ] Task 2.2: Implement `parse_prb(text: str) -> PrbDocument` (model-layer
+- [x] Task 2.1: `prb/models/v1/document.py` (`PrbDocument(frontmatter, body)`, mirroring `TskDocument`/`QaDocument`) — depends on: Task 1.3 —
+  status: done
+- [x] Task 2.2: Implement `parse_prb(text: str) -> PrbDocument` (model-layer
   function, mirrors `parse_tsk`/`parse_qa`) — depends on: Task 2.1 —
-  status: not-started
-- [ ] Task 2.3: `prb/models/v1/summary.py` (`PrbSummary(DocSummary)`,
+  status: done
+- [x] Task 2.3: `prb/models/v1/summary.py` (`PrbSummary(DocSummary)`,
   subclassing `general/models/summary.py::DocSummary`, for `list_prb`) —
-  depends on: Task 2.1 — status: not-started
-- [ ] Task 2.4: Field-level `Field(description=...)` on every scalar/
+  depends on: Task 2.1 — status: done
+- [x] Task 2.4: Field-level `Field(description=...)` on every scalar/
   optional field (schema-quality parity with REQ/TSK/QA) — depends on:
-  Task 2.1 — status: not-started
-- [ ] Task 2.5: Implement `generate_prb_schema()` in `commands/schema.py`
+  Task 2.1 — status: done
+- [x] Task 2.5: Implement `generate_prb_schema()` in `commands/schema.py`
   (mirroring `generate_tsk_schema`/`generate_qa_schema`, via
   `PrbDocument.model_json_schema()`) + register `"prb"` in the
   `specmgr schema` doc-type generator registry (`_GENERATORS`); draft
-  `docs/prb_schema.json` — depends on: Task 2.1 — status: not-started
-- [ ] Task 2.6: `tests/prb/models/v1/test_parser.py` — mirrors
+  `docs/prb_schema.json` — depends on: Task 2.1 — status: done
+- [x] Task 2.6: `tests/prb/models/v1/test_parser.py` — mirrors
   `TestParseTsk`/`TestParseQa`'s shape (minimal doc, full reference-doc
   round-trip, defaults-when-absent, invalid status, missing-mandatory-
   section `AssertionError`, invalid-field `ValidationError`) — depends on:
-  Task 2.2, Task 2.5 — status: not-started
-- [ ] Task 2.7: Phase-end quality gate — full pre-commit/quality gate
+  Task 2.2, Task 2.5 — status: done
+- [x] Task 2.7: Phase-end quality gate — full pre-commit/quality gate
   including Task 2.6's new tests; update this README's Progress section —
-  depends on: Task 2.5, Task 2.6 — status: not-started
+  depends on: Task 2.5, Task 2.6 — status: done
 
 #### Phase 3: MCP Surface
 
@@ -488,21 +488,55 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-25**: Phase 1 (Specification) complete. `prb` frontmatter
-and body Pydantic models exist and are fully tested; a full reference
-document exercising every field parses and round-trips. A fresh-context
-session should pick up at Phase 2 (Pydantic Models, Parser & Schema), Task
-2.1. Note: this feature folder uses the `feat-16-problem-statement`
-placeholder id/slug (no GitHub issue filed yet, per `AGENTS.md`'s
-convention) — expect it to be renamed to `feat-NNN-problem-statement`
-(frontmatter `id` updated to match) once an issue number is assigned; do
-not treat `feat-0` as permanent.
+**As of 2026-08-25**: Phase 2 (Pydantic Models, Parser & Schema) complete.
+`PrbDocument`, `parse_prb`, `PrbSummary`, and `generate_prb_schema()` all
+exist and are fully tested; `docs/prb_schema.json` is generated via
+`specmgr schema` (not hand-written) and drift-free on a second run. A
+fresh-context session should pick up at Phase 3 (MCP Surface), Task 3.1.
+Note: this feature folder uses the `feat-16-problem-statement` placeholder
+id/slug (no GitHub issue filed yet, per `AGENTS.md`'s convention) — expect
+it to be renamed to `feat-NNN-problem-statement` (frontmatter `id` updated
+to match) once an issue number is assigned; do not treat `feat-0` as
+permanent.
 
 ### Blockers
 
 None.
 
 ### Recent Updates
+
+#### Update 2026-08-25 (Phase 2: Pydantic Models, Parser & Schema)
+
+- Completed: Task 2.1 (`prb/models/v1/document.py::PrbDocument`, mirroring
+  `TskDocument`/`QaDocument` exactly); Task 2.2
+  (`prb/models/v1/parser.py::parse_prb`, mirroring `parse_tsk`/`parse_qa`'s
+  frontmatter/body split via `python-frontmatter` and the same two-error-
+  channel convention); Task 2.3 (`prb/models/v1/summary.py::PrbSummary`,
+  subclassing `general/models/summary.py::DocSummary`); Task 2.4 (verified
+  Phase 1's `body.py` already carries `Field(description=...)` on every
+  scalar/optional field, matching REQ/TSK/QA precedent for
+  schema-quality parity — no changes needed since Phase 1 already covered
+  this; `frontmatter.py` deliberately has no `Field(description=...)`,
+  matching `TskFrontmatter`/`QaFrontmatter`'s own precedent of relying on
+  the class docstring instead); Task 2.5 (`generate_prb_schema()` added to
+  `commands/schema.py`, registered as `"prb"` in `_GENERATORS`,
+  `docs/prb_schema.json` generated via `uv run --frozen specmgr schema`
+  — confirmed byte-identical/unchanged on a second run); Task 2.6
+  (`tests/prb/models/v1/test_parser.py`, 9 tests: minimal doc, full
+  reference-doc round-trip, defaults-when-absent, invalid status,
+  3 missing-mandatory-section `AssertionError` cases (`Current State`,
+  `Gap`, `Future State`, plus missing `Summary` within `Current State`),
+  invalid-`type`-field `ValidationError`); Task 2.7 (phase-end quality
+  gate — ruff format/check, vulture, full `unittest` suite (1347 tests, up
+  from 1338, all green), `specmgr docs`/`specmgr mcp-docs` confirmed no
+  unexpected drift beyond the new `prb` entries).
+- Also added `SCHEMA_COMMENT_VERSION` via a new
+  `prb/models/v1/_util.py`, mirroring `tsk/models/v1/_util.py` exactly,
+  and re-exported it (plus `PrbDocument`/`parse_prb`/`PrbSummary`) from
+  `prb/models/v1/__init__.py`.
+- Next: Phase 3 (MCP Surface) — tools, resources, prompts, packaged data.
+- Notes: No design decisions required beyond following the plan's Design
+  Notes and the TSK/QA precedent files verbatim.
 
 #### Update 2026-08-25 (Phase 1: Specification)
 

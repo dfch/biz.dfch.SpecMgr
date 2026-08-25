@@ -17,14 +17,14 @@
 
 """Problem Statement (PRB) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
 
-Mirrors the ``tsk/models/v1``/``qa/models/v2`` layout: frontmatter and body
-classes live directly in this package. ``PrbDocument``/``parse_prb``/
-``PrbSummary`` are added in a later phase (Phase 2: Pydantic Models, Parser
-& Schema) -- see `.specmgr/feat/feat-16-problem-statement/README.md`. Body
-classes map directly to heading sections in a ``prb`` markdown file -- see
-``body.py`` for the full hierarchy.
+Mirrors the ``tsk/models/v1``/``qa/models/v2`` layout: a free-function
+``parse_prb`` entry point, document-level ``PrbDocument(frontmatter, body)``
+wrapper, frontmatter and body classes all live directly in this package.
+Body classes map directly to heading sections in a ``prb`` markdown file --
+see ``body.py`` for the full hierarchy.
 """
 
+from ._util import SCHEMA_COMMENT_VERSION
 from .body import (
     CurrentState,
     FutureState,
@@ -42,16 +42,22 @@ from .body import (
     References,
     Summary,
 )
+from .document import PrbDocument
 from .frontmatter import PrbFrontmatter
+from .parser import parse_prb
+from .summary import PrbSummary
 
 __all__ = [
+    "SCHEMA_COMMENT_VERSION",
     "CurrentState",
     "FutureState",
     "Gap",
     "Impact",
     "MoreInformation",
     "Prb",
+    "PrbDocument",
     "PrbFrontmatter",
+    "PrbSummary",
     "Question1",
     "Question2",
     "Question3",
@@ -61,4 +67,5 @@ __all__ = [
     "Question7",
     "References",
     "Summary",
+    "parse_prb",
 ]

@@ -118,6 +118,18 @@ First-line docstrings from each module, organized by domain:
 - `models/md/markdown_str.py` — Parse markdown into tokens using shared MarkdownIt instance.
 - `models/version_info.py` — Pydantic model for the ``specmgr://version`` resource.
 
+**prb/**
+
+- `prb/__init__.py` — Problem Statement (PRB) domain -- Six-Sigma-style problem statement specifications.
+- `prb/models/__init__.py` — Problem Statement (PRB) models -- Pydantic schema powered by the generic ``models/md`` engine.
+- `prb/models/v1/__init__.py` — Problem Statement (PRB) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- `prb/models/v1/_util.py` — Shared, private constants for the ``prb.models.v1`` subpackage.
+- `prb/models/v1/body.py` — Problem Statement (PRB) body models: whole-section fields under a single H1.
+- `prb/models/v1/document.py` — Pydantic model for a full Problem Statement (PRB) document (frontmatter + body).
+- `prb/models/v1/frontmatter.py` — Problem Statement (PRB) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
+- `prb/models/v1/parser.py` — Parse raw Problem Statement (PRB) ``.md`` text into a :class:`PrbDocument` (Phase 2, Task 2.2).
+- `prb/models/v1/summary.py` — Pydantic model for one line of PRB listing output (Phase 2, Task 2.3).
+
 **qa/**
 
 - `qa/__init__.py` — Question and Answer (QA) domain -- requirements-elicitation interview specifications.
@@ -271,4 +283,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 182
+**Test files**: 185
