@@ -1,9 +1,9 @@
 ---
 id: feat-15-add-artifact-type-risk
 version: 1.0.0
-status: planning
+status: done
 created: 2026-08-24
-updated: 2026-08-25
+updated: 2026-08-26
 ---
 
 # Feature: Add artifact type Risk (rsk)
@@ -26,7 +26,7 @@ almost exactly (per GitHub issue #15).
 
 ### Requirements
 
-- [ ] REQ-001: Define the `rsk` markdown schema — frontmatter (`type="rsk"`,
+- [x] REQ-001: Define the `rsk` markdown schema — frontmatter (`type="rsk"`,
   6-value status set: `open`/`mitigating`/`accepted`/`occurred`/`closed`/`dropped`,
   default `open`) and body (H1 title, optional leading comment, mandatory
   `## Cause`, mandatory `## Trigger`, mandatory `## Consequence`, mandatory
@@ -37,71 +37,80 @@ almost exactly (per GitHub issue #15).
   `avoid`), mandatory `## Mitigation`, mandatory `## Residual Assessment`
   (5x5, same shape as initial), optional `## Owner`, optional `## Tags`
   list, optional `## More Information`)
-- [ ] REQ-002: Pydantic models for `rsk` documents (`rsk/models/v1/` —
+- [x] REQ-002: Pydantic models for `rsk` documents (`rsk/models/v1/` —
   domain-first path, mirroring `tsk/models/v1/` and `req/models/v1/`)
-- [ ] REQ-003: Parse and validate `rsk` documents from markdown
+- [x] REQ-003: Parse and validate `rsk` documents from markdown
   (`parse_rsk`, mirroring `parse_tsk`/`parse_req`)
-- [ ] REQ-004: MCP tools mirroring `req`'s lifecycle surface plus the
+- [x] REQ-004: MCP tools mirroring `req`'s lifecycle surface plus the
   feat-13 listing contract: `parse_rsk`, `get_rsk_example`,
   `get_rsk_template`, `create_rsk`, `update_rsk`, `set_status_rsk`,
   `delete_rsk` (stub), `validate_rsk`, `get_rsk`, and the paged `list_rsk`
   tool (`max_results`/`offset`, `PagedResult[RskSummary]`, skip-and-
   continue on unparseable files — mirroring `tsk/tools/list_tsk.py` and
   feat-13's shared paging contract)
-- [ ] REQ-005: MCP resources: `specmgr://rsk/example`, `/schema`,
+- [x] REQ-005: MCP resources: `specmgr://rsk/example`, `/schema`,
   `/template` (no `/list` — listing is the paged `list_rsk` tool per
   feat-13 / ADR ec9f5262-9912-49d0-903f-fcfb54f28c13), plus two new static
   domain-knowledge resources: `specmgr://rsk/tara` (what TARA is, the four
   valid strategy words, when and how to apply each) and
   `specmgr://rsk/risk-matrix` (the 5x5 matrix: scale anchors, zone table,
   product thresholds — what 'high risk' and 'low risk' mean)
-- [ ] REQ-006: MCP prompts — `create_risk`, `update_risk` (narrated tool
+- [x] REQ-006: MCP prompts — `create_risk`, `update_risk` (narrated tool
   sequences, mirroring `req/prompts/create_req.py`/`update_req.py` and
   `tsk/prompts/create_task.py`/`update_task.py`)
-- [ ] REQ-007: Packaged example/template/schema data plus the two
+- [x] REQ-007: Packaged example/template/schema data plus the two
   domain-knowledge documents (`rsk/data/`: `rsk_example.md`,
   `rsk_template.md`, `rsk_schema.json`, `rsk_tara.md`,
   `rsk_risk_matrix.md`) via the existing generic
   `general/tools/_packaged_data.py`, with the matching `pyproject.toml`
   package-data entry, pre-commit hook, and CI step
-- [ ] REQ-008: Doc generation wiring — `specmgr docs`, `specmgr schema`
+- [x] REQ-008: Doc generation wiring — `specmgr docs`, `specmgr schema`
   (new `rsk` entry in the doc-type registry), `specmgr mcp-docs`, all kept
   drift-free via pre-commit/CI
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: Verifies REQ-001 — schema documented (`docs/rsk_schema.json`,
+- [x] ACC-001: Verifies REQ-001 — schema documented (`docs/rsk_schema.json`,
   `specmgr://rsk/schema`), reference `rsk` document (`rsk_reference.md`)
   round-trips through the parser (`test_parses_full_reference_document`),
   including both 5x5 assessments (probability/impact bounded 1..5, derived
   level zone correct)
-- [ ] ACC-002: Verifies REQ-002 — Pydantic models validate required/optional
+- [x] ACC-002: Verifies REQ-002 — Pydantic models validate required/optional
   fields correctly, including the `Assessment` probability/impact/derived-level
   split, the TARA closed set, `Scope` (>=1) and the `Tags`/`Owner`/
   `More Information` absent-vs-present cases (`tests/rsk/models/v1/`)
-- [ ] ACC-003: Verifies REQ-003 — parser produces a valid object tree;
+- [x] ACC-003: Verifies REQ-003 — parser produces a valid object tree;
   malformed input raises (structural `AssertionError` / field-level
   `pydantic.ValidationError`, matching `req`/`tsk`'s error-channel convention)
   — `tests/rsk/models/v1/test_parser.py`
-- [ ] ACC-004: Verifies REQ-004 — every listed tool implemented and
+- [x] ACC-004: Verifies REQ-004 — every listed tool implemented and
   registered (confirmed present in regenerated `docs/MCP.md`), with
   `create_rsk`/`update_rsk` validating body-only content the same way
   `create_req`/`update_req`/`create_tsk`/`update_tsk` do, and `list_rsk`
   returning one-line `RskSummary` entries that include the residual-risk
   fields (`residual_probability`/`residual_impact`/`residual_product`)
   with correct paging/clamping per the feat-13 contract
-- [ ] ACC-005: Verifies REQ-005 — every listed resource implemented and
+- [x] ACC-005: Verifies REQ-005 — every listed resource implemented and
   registered (confirmed present in regenerated `docs/MCP.md`), with
   `specmgr://rsk/tara` documenting exactly the four valid TARA words and
   `specmgr://rsk/risk-matrix`'s zone table matching the model's
   derived-`level` mapping (threshold test)
-- [ ] ACC-006: Verifies REQ-006 — `create_risk`/`update_risk` prompts narrate
+- [x] ACC-006: Verifies REQ-006 — `create_risk`/`update_risk` prompts narrate
   the correct tool sequence (`tests/rsk/prompts/`)
-- [ ] ACC-007: Verifies REQ-007 — packaged data resolves correctly from a
+- [x] ACC-007: Verifies REQ-007 — packaged data resolves correctly from a
   real, non-editable install, mirroring `req`'s (feat-6 Task 5.1) and `tsk`'s
-  (feat-10 ACC-007) own verification
-- [ ] ACC-008: Verifies REQ-008 — `specmgr docs`/`specmgr schema`/
-  `specmgr mcp-docs` all report no drift after implementation
+  (feat-10 ACC-007) own verification — verified live in Phase 4: built a
+  real wheel (`uv build --wheel`), installed it non-editably into a scratch
+  venv (`biz-dfch-specmgr[mcp]`), and confirmed all 7 packaged `rsk/data/`
+  files resolve via `packaged_data_path("rsk", ...)` outside the source
+  tree and the packaged `rsk_example.md` parses from the installed location
+  (initial 4x3 -> `high`, residual 2x3 -> `medium`) — full command/output
+  trail on Task 4.4
+- [x] ACC-008: Verifies REQ-008 — `specmgr docs`/`specmgr schema`/
+  `specmgr mcp-docs` all report no drift after implementation — re-verified
+  in Phase 4: all three (plus the packaged-copy `specmgr schema --type rsk`
+  step and `specmgr coverage-badge`) re-ran with zero drift after the Phase
+  3 commit (working tree stayed clean)
 
 ### Scope
 
@@ -546,23 +555,67 @@ phase's changes.
   same tree; 116 new tests, matching tsk's own coverage shape) — depends
   on: Tasks 3.1-3.17 — status: done
 
-#### Phase 4: Docs, CI wiring & final verification (commit 4)
+#### Phase 4: Docs, CI wiring & final verification (commit 4) — done
 
-- [ ] Task 4.1: `specmgr docs` regeneration (new `rsk` modules picked up) —
-  depends on: Phase 1-3 complete — status: not-started
-- [ ] Task 4.2: `specmgr mcp-docs` regeneration (new tools/resources/
+- [x] Task 4.1: `specmgr docs` regeneration (new `rsk` modules picked up) —
+  depends on: Phase 1-3 complete — status: done (regenerated as part of the
+  Phase 3 commit; re-verified zero drift in Phase 4 — `specmgr docs` rewrote
+  the 263 `docs/api/` module files + `docs/GENERATED.md`, working tree clean
+  afterward)
+- [x] Task 4.2: `specmgr mcp-docs` regeneration (new tools/resources/
   prompts appear in `docs/MCP.md`) — depends on: Phase 3 complete — status:
-  not-started
-- [ ] Task 4.3: CI wiring — confirm the Python-3.13-only `specmgr schema`/
+  done (regenerated as part of the Phase 3 commit; re-verified zero drift in
+  Phase 4 — `specmgr mcp-docs` rewrote `docs/MCP.md`, working tree clean
+  afterward; `docs/MCP.md` carries all 5 rsk resources, all 10 rsk tools,
+  and both rsk prompts)
+- [x] Task 4.3: CI wiring — confirm the Python-3.13-only `specmgr schema`/
   `specmgr docs`/`specmgr mcp-docs` steps in `.github/workflows/ci.yml`
   cover `rsk` with no separate per-type step needed (registry-driven,
   mirroring `req`/`tsk`'s own wiring) — depends on: Task 4.1, Task 4.2 —
-  status: not-started
-- [ ] Task 4.4: Final verification pass — walk every ACC-001..008 below and
+  status: done (confirmed by inspection of `.github/workflows/ci.yml`:
+  (a) the generic no-`--type` `specmgr schema` steps — the
+  `docs/req_schema.json` step (L88-98), the `docs/uc_schema.json` step
+  (L111-121), and the `docs/qa_schema.json` step (L156-166) — each
+  regenerate and exit-code-check every registered `docs/*_schema.json`,
+  incl. `docs/rsk_schema.json`; per-type `docs/` steps are NOT the
+  convention (`docs/tsk_schema.json` has none either — only the
+  packaged-copy steps are per-type); (b) the dedicated packaged-copy step
+  "Make sure `src/biz/dfch/specmgr/rsk/data/rsk_schema.json` is correct"
+  (L145-154, `specmgr schema --type rsk --output-dir
+  src/biz/dfch/specmgr/rsk/data`) exists, added in Task 3.12; (c) the
+  registry-driven `specmgr docs` (L56-68), `specmgr adr-toc` (L70-77),
+  `specmgr mcp-docs` (L79-86), and `specmgr coverage-badge` (L179-186)
+  steps cover `rsk` automatically — no `ci.yml` change needed)
+- [x] Task 4.4: Final verification pass — walk every ACC-001..008 below and
   confirm each is actually satisfied; run the full quality gate (ruff
   format/check, pylint advisory, vulture, unittest, `specmgr docs`,
   `specmgr schema`, `specmgr mcp-docs` drift checks) once more end-to-end —
-  depends on: Tasks 4.1-4.3 — status: not-started
+  depends on: Tasks 4.1-4.3 — status: done. All 8 ACCs re-verified with
+  concrete evidence (checkboxes + notes in the Acceptance Criteria section
+  above; 174 `tests/rsk` tests re-run, all OK; `docs/MCP.md` entries: 5
+  resources at L26-30, 10 tools at L192/197/207-209/219/230/236/242/249, 2
+  prompts at L896/904; packaged `rsk_tara.md` documents exactly the four
+  TARA words; the packaged `rsk_risk_matrix.md` zone-table/thresholds drift
+  guards pass), including the ACC-007 live demonstration: built
+  `biz_dfch_specmgr-0.9.0-py3-none-any.whl` (`uv build --wheel -o
+  /tmp/opencode/rsk-wheel`), confirmed all 7 `rsk/data/` files inside it,
+  installed it non-editably into a scratch venv (`uv venv
+  /tmp/opencode/rsk-venv`, CPython 3.13.13; `uv pip install
+  "<wheel>[mcp]"` — the `[mcp]` extra mirrors feat-10's own ACC-007 install,
+  since the base deps alone cannot import `general` due to the package
+  `__init__` chain reaching `server` -> `mcp`), and from THAT venv (cwd
+  `/tmp/opencode`, outside the repo) resolved all 7 packaged files via
+  `packaged_data_path("rsk", ...)` (all under the venv's `site-packages`,
+  none under the source tree — asserted) and `parse_rsk`-parsed the
+  installed `rsk_example.md`: title "Untrusted File Uploads Parsed by an
+  Unmaintained Parser Library", initial 4x3 -> `high`, residual 2x3 ->
+  `medium` (scratch artifacts left in `/tmp/opencode/`, see Recent
+  Updates). Full quality gate end-to-end: 1480 tests OK, ruff format/check
+  clean (932 files), vulture clean, pylint advisory 8.97/10 (findings are
+  the pre-existing `cyclic-import` whitelist pattern across all domains),
+  `specmgr docs`/`specmgr mcp-docs`/`specmgr schema` (generic + `--type
+  rsk` packaged copy)/`specmgr coverage-badge` all zero drift (working tree
+  clean), `docs/coverage.svg` unchanged at 98% (every `rsk` module at 100%)
 
 **Note:** If a task's scope changes mid-flight, edit its description in
 place; rely on git history (`git log -p` on this file) to recover what was
@@ -615,7 +668,23 @@ the documented product thresholds and all 25 zone-table cells of the
 packaged `rsk_risk_matrix.md`). Also corrected two zone-table cells in the
 Phase 1 `rsk_risk_matrix.md` draft (and this plan's own Design Notes
 table) that contradicted the documented product thresholds — see Decisions
-Made. Next: Phase 4 (Docs, CI wiring & final verification).
+Made.
+
+**Feature complete.** Phase 4 (Docs, CI wiring & final verification) done:
+re-ran `specmgr docs`/`specmgr mcp-docs`/`specmgr schema` (generic, all
+five registered types incl. `docs/rsk_schema.json`) and the packaged-copy
+`specmgr schema --type rsk` step and confirmed zero drift after Phase 3's
+commit, confirmed by inspection of `.github/workflows/ci.yml` that the
+registry-driven CI steps need no per-type change (only the packaged-copy
+step is per-type, and Task 3.12 already added the `rsk` one), walked every
+ACC-001..008 with concrete evidence — including a live ACC-007
+demonstration (real wheel, non-editable install into a scratch venv,
+packaged data resolving outside the source tree) — and ran the full quality
+gate end-to-end (1480 tests OK, ruff format/check clean, vulture clean,
+pylint 8.97/10 advisory, coverage 98% with every `rsk` module at 100%).
+All 8 requirements and all 8 acceptance criteria satisfied. All four
+commits landed (`397ff74` Phase 1, `2a8b2af` Phase 2, `7b17984` Phase 3,
+commit 4 Phase 4).
 
 ### Blockers
 
@@ -623,7 +692,85 @@ None.
 
 ### Recent Updates
 
-#### 2026-08-25T20:55:00+02:00 (newest)
+#### 2026-08-26T00:37:18+02:00 (newest)
+
+- Completed: Phase 4 (Docs, CI wiring & final verification), per Task
+  4.1-4.4 — (4.1/4.2) `specmgr docs` and `specmgr mcp-docs` regenerated as
+  part of the Phase 3 commit were re-verified with zero drift here (`specmgr
+  docs`: 263 `docs/api/` module files + `docs/GENERATED.md`; `specmgr
+  mcp-docs`: `docs/MCP.md` — working tree clean after each run); `specmgr
+  schema` reported `(unchanged)` for all five registered types (incl.
+  `docs/rsk_schema.json`) and the packaged-copy step `specmgr schema
+  --type rsk --output-dir src/biz/dfch/specmgr/rsk/data` reported
+  `(unchanged)`; (4.3) confirmed by inspection of
+  `.github/workflows/ci.yml` that the Python-3.13-only generic, no-`--type`
+  `specmgr schema` steps (the `docs/req_schema.json` step L88-98, the
+  `docs/uc_schema.json` step L111-121, the `docs/qa_schema.json` step
+  L156-166) each regenerate and exit-code-check every registered
+  `docs/*_schema.json`, incl. `docs/rsk_schema.json` — per-type `docs/`
+  steps are not the convention (`docs/tsk_schema.json` has none either;
+  only the packaged-copy steps are per-type, and the dedicated
+  `src/biz/dfch/specmgr/rsk/data/rsk_schema.json` step exists at L145-154,
+  added in Task 3.12) — and the registry-driven `specmgr docs` (L56-68),
+  `specmgr adr-toc` (L70-77), `specmgr mcp-docs` (L79-86), and
+  `specmgr coverage-badge` (L179-186) steps cover `rsk` automatically: no
+  `ci.yml` change needed; (4.4) walked every ACC-001..008 with concrete
+  evidence (all 16 checkboxes checked in the Plan section): ACC-001
+  (`docs/rsk_schema.json` present; `specmgr://rsk/schema` at `docs/MCP.md`
+  L28; `test_parser.py::test_parses_full_reference_document` asserts both
+  5x5 assessments' bounded values and derived zones — initial 4x3 -> `high`,
+  residual 2x3 -> `medium` — plus re-round-trip stability); ACC-002/003
+  (58 model/parser/summary tests in `tests/rsk/models/v1/`: status set,
+  5x5 bounds + all four zone boundaries, TARA closed set, `Scope` >=1,
+  optionals absent-vs-present, structural `AssertionError` / field-level
+  `pydantic.ValidationError` error channels); ACC-004 (10 tools in
+  `docs/MCP.md` at L192/197/207-209/219/230/236/242/249; `create_rsk`/
+  `update_rsk` body-only validation tests; `test_list_rsk.py`'s 12 tests
+  covering the feat-13 paging contract, clamping, skip-on-broken-file, and
+  `residual_probability`/`residual_impact`/`residual_product` presence +
+  zone-mapping consistency); ACC-005 (5 resources at `docs/MCP.md` L26-30;
+  packaged `rsk_tara.md` documents exactly the four TARA words —
+  cross-checked against the model's own validator; `test_risk_matrix.py`'s
+  ACC-005 drift guards parse the documented product thresholds and all 25
+  zone-table cells out of the PACKAGED file and assert them against
+  `level_from_product`); ACC-006 (20 prompt tests in
+  `tests/rsk/prompts/`: `create_risk`/`update_risk` narrate the correct
+  tool sequence in order); ACC-007 (live demonstration — built
+  `biz_dfch_specmgr-0.9.0-py3-none-any.whl` via `uv build --wheel -o
+  /tmp/opencode/rsk-wheel`, confirmed all 7 `rsk/data/` files inside it,
+  installed it non-editably into a scratch venv (`uv venv
+  /tmp/opencode/rsk-venv`, CPython 3.13.13; `uv pip install "<wheel>[mcp]"`
+  — the `[mcp]` extra mirrors feat-10's own ACC-007 install, since the base
+  deps alone cannot import `general` because the package `__init__` chain
+  reaches `server` -> `mcp`), and from THAT venv with cwd `/tmp/opencode`
+  (outside the repo) ran `acc007_check.py`: all 7 packaged files resolved
+  via `packaged_data_path("rsk", ...)` under the venv's `site-packages`
+  (asserted NOT under the source tree) and `parse_rsk` parsed the installed
+  `rsk_example.md` — title "Untrusted File Uploads Parsed by an
+  Unmaintained Parser Library", status `open`, initial 4x3 -> `high`,
+  residual 2x3 -> `medium`); ACC-008 (the Task 4.1/4.2 zero-drift runs).
+  Full quality gate end-to-end: `uv run --frozen ruff format --check`
+  (932 files, clean), `uv run --frozen ruff check` (clean),
+  `uv run --frozen vulture src/ whitelist.py --min-confidence 60` (clean),
+  `uv run --frozen python -m unittest discover -s tests -t . -p "test_*.py"`
+  (1480 tests OK), `uv run --frozen pylint $(git ls-files '*.py')` (advisory
+  8.97/10 — findings are the pre-existing `cyclic-import` whitelist pattern
+  across all domains, not rsk-specific), the four `specmgr`
+  regeneration no-drift confirmations, `uv run --frozen python -m coverage
+  run -m unittest ...` + `uv run --frozen specmgr coverage-badge`
+  (`docs/coverage.svg` unchanged at 98%; every `rsk` module 100% covered)
+- Next: none — feature complete; branch `feat-15-add-artifact-type-risk`
+  is ready for the PR flow (4 commits: `397ff74` Phase 1, `2a8b2af` Phase
+  2, `7b17984` Phase 3, plus this Phase 4 commit)
+- Notes: the Task 4.3 CI-coverage reasoning is recorded on the task line
+  itself (feat-10 precedent), so no new Decisions Made entry; the ACC-007
+  scratch artifacts (`/tmp/opencode/rsk-wheel/`, `/tmp/opencode/rsk-venv/`,
+  `/tmp/opencode/acc007_check.py`) may be left in place — `/tmp/opencode`
+  is scratch space; no `CHANGELOG.md` entry (feat-10 precedent: new-domain
+  features are not logged there — `[Unreleased]` is updated at
+  version-bump time per `AGENTS.md`)
+
+#### 2026-08-25T20:55:00+02:00
 
 - Completed: Phase 3 (MCP Surface), per Task 3.1-3.18 — (3.1)
   `rsk/tools/_paths.py`/`_io.py`/`_write.py`/`_lock.py`: thin
@@ -1111,5 +1258,8 @@ None.
 
 ### Related PRs / Commits
 
-No PR opened yet. Work happens on branch `feat-15-add-artifact-type-risk`
-(from `dev`), one Conventional Commit per phase (see Execution approach).
+No PR opened yet. Implemented across 4 commits on this branch
+(`feat-15-add-artifact-type-risk`), one per phase (see Recent Updates for
+details of each): `397ff74` (Phase 1: Specification), `2a8b2af` (Phase 2:
+Pydantic Models & Parser), `7b17984` (Phase 3: MCP Surface), plus a final
+Phase 4 (Docs, CI wiring & final verification) commit.
