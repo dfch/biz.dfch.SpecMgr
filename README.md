@@ -23,11 +23,13 @@ At this time, we have these artifact:
 - Question and Answer (QA)
 - Requirement (REQ)
 - Task List (TSK)
+- Problem Statement (PRB)
 <!-- 
-- Decision (DEC)
-- Goal (GOL)
-- Acceptance Criterium (ACC)
 - Risk (RSK)
+- Goal (GOL)
+- Decision (DEC)
+- Acceptance Criterium (ACC)
+- Feature (FTR)
 -->
 
 See [MCP Server](#mcp-server) and [docs/MCP.md](docs/MCP.md) for details.

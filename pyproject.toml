@@ -120,6 +120,10 @@ namespaces = true
 "biz.dfch.specmgr.adr" = [
     "data/*.md"
 ]
+"biz.dfch.specmgr.prb" = [
+    "data/*.md",
+    "data/*.json"
+]
 "biz.dfch.specmgr.qa" = [
     "data/*.md",
     "data/*.json"
