@@ -232,13 +232,13 @@ almost exactly (per GitHub issue #15).
   the digit as a computed `value: int`; the H2 `Assessment` derives the
   zone `level` from the product of the two values (probability x impact):
 
-  | p \ i | 1      | 2      | 3      | 4        | 5         |
-  |-------|--------|--------|--------|----------|-----------|
-  | 5     | medium | high   | high   | very high| very high |
-  | 4     | low    | medium | high   | high     | very high |
-  | 3     | low    | medium | medium | high     | very high |
-  | 2     | low    | low    | medium | medium   | high      |
-  | 1     | low    | low    | low    | low      | medium    |
+   | p \ i | 1        | 2        | 3         | 4         | 5         |
+   |-------|----------|----------|-----------|-----------|-----------|
+   | 5     | medium   | high     | very high | very high | very high |
+   | 4     | low      | medium   | high      | very high | very high |
+   | 3     | low      | medium   | medium    | high      | very high |
+   | 2     | low      | low      | medium    | medium    | high      |
+   | 1     | low      | low      | low       | low       | medium    |
 
   Zone thresholds on the product: 1-4 `low`, 5-9 `medium`, 10-14 `high`,
   15-25 `very high`.
@@ -463,67 +463,73 @@ phase's changes.
 
 #### Phase 3: MCP Surface (commit 3)
 
-- [ ] Task 3.1: `rsk/tools/_paths.py` + `_io.py` + `_write.py` + `_lock.py`,
+- [x] Task 3.1: `rsk/tools/_paths.py` + `_io.py` + `_write.py` + `_lock.py`,
   thin wrappers over `general/tools/_doc_paths.py` (mirrors
   `tsk/tools/_paths.py` etc. exactly; no new env-var/base-dir wiring needed
   — `doc_base_dir("rsk")` resolves to `{SPECMGR_DOCS_DIR or docs}/rsk`
-  generically, verified) — depends on: Task 2.2 — status: not-started
-- [ ] Task 3.2: `parse_rsk(path: str) -> RskDocument` tool wrapper
+  generically, verified) — depends on: Task 2.2 — status: done
+- [x] Task 3.2: `parse_rsk(path: str) -> RskDocument` tool wrapper
   (`rsk/tools/parse_rsk.py`, mirroring `tsk/tools/parse_tsk.py` — reads a
   filepath from disk, delegates to the model-layer `parse_rsk`) — depends
-  on: Task 3.1 — status: not-started
-- [ ] Task 3.3: `create_rsk(content: str) -> RskDocument` tool (body-only
+  on: Task 3.1 — status: done
+- [x] Task 3.3: `create_rsk(content: str) -> RskDocument` tool (body-only
   content, MCP builds frontmatter: `id`, `type="rsk"`, `status="open"`,
-  `created=updated=now`, `version`) — depends on: Task 3.1 — status:
-  not-started
-- [ ] Task 3.4: `update_rsk(id, content) -> RskDocument` tool (whole-body
+  `created=updated=now`, `version`) — depends on: Task 3.1 — status: done
+- [x] Task 3.4: `update_rsk(id, content) -> RskDocument` tool (whole-body
   replace, preserves `id`/`type`/`status`/`created`/`version`, bumps
-  `updated`) — depends on: Task 3.1 — status: not-started
-- [ ] Task 3.5: `set_status_rsk(id, status) -> RskDocument` tool (only path
-  that changes `status`) — depends on: Task 3.1 — status: not-started
-- [ ] Task 3.6: `delete_rsk(id) -> NoReturn` stub tool — depends on: Task
-  3.1 — status: not-started
-- [ ] Task 3.7: `validate_rsk(content, full=False) -> bool` tool — depends
-  on: none — status: not-started
-- [ ] Task 3.8: `get_rsk(id) -> RskDocument` tool (id-based single-document
+  `updated`) — depends on: Task 3.1 — status: done
+- [x] Task 3.5: `set_status_rsk(id, status) -> RskDocument` tool (only path
+  that changes `status`) — depends on: Task 3.1 — status: done
+- [x] Task 3.6: `delete_rsk(id) -> NoReturn` stub tool — depends on: Task
+  3.1 — status: done
+- [x] Task 3.7: `validate_rsk(content, full=False) -> bool` tool — depends
+  on: none — status: done
+- [x] Task 3.8: `get_rsk(id) -> RskDocument` tool (id-based single-document
   read; tool, not resource — per ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614)
-  — depends on: Task 3.1 — status: not-started
-- [ ] Task 3.9: `get_rsk_example`/`get_rsk_template` tools + packaged data
-  (`rsk/data/rsk_example.md`, `rsk/data/rsk_template.md`) via
-  `general/tools/_packaged_data.py` — depends on: Task 1.3 — status:
-  not-started
-- [ ] Task 3.10: `specmgr://rsk/schema` resource (packaged
+  — depends on: Task 3.1 — status: done
+- [x] Task 3.9: `get_rsk_example`/`get_rsk_template` tools + packaged data
+  (`rsk/data/rsk_example.md` — a copy of Phase 1's `rsk_reference.md`,
+  `rsk/data/rsk_template.md` — a valid, fully-parseable skeleton with a
+  deadbeef-style id that round-trips through `parse_rsk` (tested)) via
+  `general/tools/_packaged_data.py` — depends on: Task 1.3 — status: done
+- [x] Task 3.10: `specmgr://rsk/schema` resource (packaged
   `rsk/data/rsk_schema.json`, mirroring `specmgr://req/schema`; no `/list`
   resource — listing is the `list_rsk` tool, Task 3.14) — depends on:
-  Task 3.1, Task 2.5 — status: not-started
-- [ ] Task 3.11: `specmgr://rsk/example` and `specmgr://rsk/template`
-  resources — depends on: Task 3.9 — status: not-started
-- [ ] Task 3.12: `pyproject.toml` package-data entry for
+  Task 3.1, Task 2.5 — status: done
+- [x] Task 3.11: `specmgr://rsk/example` and `specmgr://rsk/template`
+  resources — depends on: Task 3.9 — status: done
+- [x] Task 3.12: `pyproject.toml` package-data entry for
   `biz.dfch.specmgr.rsk` (`data/*.md`, `data/*.json`), pre-commit hook +
   CI step for the packaged `rsk_schema.json` copy (mirroring
-  `specmgr-schema-tsk-package`) — depends on: Task 2.5 — status:
-  not-started
-- [ ] Task 3.13: `rsk/prompts/create_risk.py` + `update_risk.py` — narrate
-  the tool sequence (mirroring `req/prompts/create_req.py`/`update_req.py`)
-  — depends on: Tasks 3.3, 3.4, 3.5, 3.8, 3.10 — status: not-started
-- [ ] Task 3.14: `rsk/tools/list_rsk.py` — the paged `list_rsk` tool
+  `specmgr-schema-tsk-package`; `rsk/models/v1` also added to the `files:`
+  trigger of all five existing `specmgr-schema*` hooks, and the stale
+  generic-hook description fixed) — depends on: Task 2.5 — status: done
+- [x] Task 3.13: `rsk/prompts/create_risk.py` + `update_risk.py` — narrate
+  the tool sequence (mirroring `req/prompts/create_req.py`/`update_req.py`,
+  instruction text in packaged `rsk_create_instructions.md`/
+  `rsk_update_instructions.md`) — depends on: Tasks 3.3, 3.4, 3.5, 3.8,
+  3.10 — status: done
+- [x] Task 3.14: `rsk/tools/list_rsk.py` — the paged `list_rsk` tool
   (`max_results`/`offset` -> `PagedResult[RskSummary]`, mirroring
   `tsk/tools/list_tsk.py` + feat-13's shared paging contract, with the
   residual-risk fields from Task 2.3) — depends on: Tasks 3.1, 2.3 —
-  status: not-started
-- [ ] Task 3.15: `specmgr://rsk/tara` + `specmgr://rsk/risk-matrix`
+  status: done
+- [x] Task 3.15: `specmgr://rsk/tara` + `specmgr://rsk/risk-matrix`
   resources (`rsk/resources/tara.py`, `rsk/resources/risk_matrix.py` — raw
   packaged markdown via `read_packaged_text`, mirroring
   `tsk/resources/tsk_example.py`) + packaged copies `rsk/data/
-  rsk_tara.md`/`rsk_risk_matrix.md` from the Phase 1 drafts (Task 1.5) —
-  depends on: Tasks 1.5, 3.1 — status: not-started
-- [ ] Task 3.16: `tests/rsk/tools/test_list_rsk.py` (paging contract,
+  rsk_tara.md`/`rsk_risk_matrix.md` from the Phase 1 drafts (Task 1.5),
+  with two zone-table cells corrected to match the documented product
+  thresholds (see Decisions Made) — depends on: Tasks 1.5, 3.1 — status:
+  done
+- [x] Task 3.16: `tests/rsk/tools/test_list_rsk.py` (paging contract,
   clamping, skip-on-broken-file, residual fields present and correct) +
   `tests/rsk/resources/test_tara.py`/`test_risk_matrix.py` (registered,
   packaged content resolves from the source tree, `rsk_risk_matrix.md`'s
-  documented zone thresholds match the model's derived-`level` mapping) —
-  depends on: Tasks 3.14, 3.15 — status: not-started
-- [ ] Task 3.17: add `rsk` to `server.py`'s domain import line (last-line
+  documented zone thresholds — and all 25 zone-table cells — parsed out of
+  the PACKAGED file and asserted against `level_from_product`) — depends
+  on: Tasks 3.14, 3.15 — status: done
+- [x] Task 3.17: add `rsk` to `server.py`'s domain import line (last-line
   import convention — easily forgotten, silently means nothing registers)
   AND update `server.py`'s module docstring (AGENTS.md: it is the
   authoritative, currently-maintained registration list) — the 5 resources
@@ -533,11 +539,12 @@ phase's changes.
   `set_status_rsk`, `delete_rsk` stub, `validate_rsk`), the 2 prompts
   (`create_risk`, `update_risk`), plus the "RSK has no
   `specmgr://rsk/{id}` resource" note in the docstring's existing
-  per-domain pattern — depends on: Tasks 3.2-3.16 — status: not-started
-- [ ] Task 3.18: `tests/rsk/tools/...`, `tests/rsk/resources/...`,
+  per-domain pattern — depends on: Tasks 3.2-3.16 — status: done
+- [x] Task 3.18: `tests/rsk/tools/...`, `tests/rsk/resources/...`,
   `tests/rsk/prompts/...` mirroring `tests/tsk/tools/`/`tests/tsk/
   resources/`/`tests/tsk/prompts/` layout (Task 3.16's tests live under the
-  same tree) — depends on: Tasks 3.1-3.17 — status: not-started
+  same tree; 116 new tests, matching tsk's own coverage shape) — depends
+  on: Tasks 3.1-3.17 — status: done
 
 #### Phase 4: Docs, CI wiring & final verification (commit 4)
 
@@ -565,7 +572,7 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-25**: Phases 1-2 complete. GitHub issue #15 opened, feature
+**As of 2026-08-25**: Phases 1-3 complete. GitHub issue #15 opened, feature
 folder created from `.specmgr/_template/v1/README.md`. Full schema and MCP
 surface proposed (see Design Notes and Task List), mirroring `feat-10`
 (tsk)'s 4-phase/4-commit shape; revised 2026-08-24 per user feedback (TARA
@@ -588,7 +595,27 @@ levels, TARA word, first scope entry, and residual-risk coordinates, built
 by a `from_document` factory), `_util.py::SCHEMA_COMMENT_VERSION`,
 `rsk_schema.json` (registered in `specmgr schema`'s `_GENERATORS`), and
 the parser/summary test suites (15 new tests, all green — 1364 total; all
-`rsk` modules at 100% coverage). Next: Phase 3 (MCP Surface).
+`rsk` modules at 100% coverage). Phase 3 (commit 3) delivered: the full
+MCP surface mirroring `tsk` — the ten `@mcp.tool()`s (`parse_rsk`,
+`get_rsk`, the paged `list_rsk` returning `PagedResult[RskSummary]` via the
+`from_document` factory, `get_rsk_example`/`get_rsk_template`,
+`create_rsk`/`update_rsk`/`set_status_rsk`/`delete_rsk` stub/
+`validate_rsk`), the five `@mcp.resource()`s (`specmgr://rsk/schema`,
+`/example`, `/template`, plus the two domain-knowledge resources `/tara`
+and `/risk-matrix`), the two `@mcp.prompt()`s (`create_risk`/
+`update_risk`), the packaged `rsk/data/` (7 files, incl. the generated
+`rsk_schema.json`), `server.py` registration (last-line import + docstring)
+and `rsk/__init__.py` sub-package imports, the `pyproject.toml`
+package-data entry, the new `specmgr-schema-rsk-package` pre-commit hook
+(+ `rsk/models/v1` added to all five existing schema hooks' `files:`
+triggers), and the Python-3.13-only CI step for the packaged schema copy —
+plus the mirrored test trees (116 new tests, all green — 1480 total; all
+`rsk` modules at 100% coverage; the ACC-005 drift guard now covers both
+the documented product thresholds and all 25 zone-table cells of the
+packaged `rsk_risk_matrix.md`). Also corrected two zone-table cells in the
+Phase 1 `rsk_risk_matrix.md` draft (and this plan's own Design Notes
+table) that contradicted the documented product thresholds — see Decisions
+Made. Next: Phase 4 (Docs, CI wiring & final verification).
 
 ### Blockers
 
@@ -596,7 +623,93 @@ None.
 
 ### Recent Updates
 
-#### 2026-08-25T09:47:03+02:00 (newest)
+#### 2026-08-25T20:55:00+02:00 (newest)
+
+- Completed: Phase 3 (MCP Surface), per Task 3.1-3.18 — (3.1)
+  `rsk/tools/_paths.py`/`_io.py`/`_write.py`/`_lock.py`: thin
+  risk-specific wrappers over `general.tools._doc_paths` (mirrors
+  `tsk/tools/` file-for-file; no base-dir wiring — `doc_base_dir("rsk")`
+  resolves generically); (3.2-3.9, 3.14) the ten `@mcp.tool()`s:
+  `parse_rsk` (read path -> model-layer `parse_rsk`), `create_rsk`
+  (body-only content; MCP builds the entire frontmatter, `status="open"`
+  default), `update_rsk` (whole-body replace, preserves
+  id/type/status/created/version, bumps `updated`), `set_status_rsk`
+  (sole status path, bumps `updated`, body re-persisted verbatim),
+  `delete_rsk` (registered stub, `structured_output=False`),
+  `validate_rsk` (disk-free/id-free dry run, `full` flag), `get_rsk`
+  (id-based read; tool, not resource, per ADR ddfb1109-422d-4507-8dbc-
+  dc5e4bec9614), `get_rsk_example`/`get_rsk_template` (packaged data via
+  `read_packaged_text`), and the paged `list_rsk`
+  (`PagedResult[RskSummary]`, the `RskSummary.from_document(doc,
+  ref=path.stem)` construction site from Task 2.3, skip-and-continue on
+  `AssertionError`/`pydantic.ValidationError`, feat-13 paging contract);
+  (3.10, 3.11, 3.15) the five `@mcp.resource()`s:
+  `specmgr://rsk/schema` (packaged `rsk/data/rsk_schema.json` via
+  `importlib.resources`, `application/json`, deliberately not importing
+  `commands.schema` to avoid leaking the cli extra), `/example` +
+  `/template` (raw packaged markdown), and the two domain-knowledge
+  resources `specmgr://rsk/tara` + `specmgr://rsk/risk-matrix` (raw
+  packaged markdown, `text/markdown`; functions named `tara`/
+  `risk_matrix` with `name="rsk_tara"`/`name="rsk_risk_matrix"` — see
+  Decisions Made); (3.13) the two `@mcp.prompt()`s `create_risk`/
+  `update_risk` (the issue's literal wording, not `rsk`-prefixed),
+  instructional text in packaged `rsk_create_instructions.md`/
+  `rsk_update_instructions.md` via `string.Template` (`$topic`;
+  `$id`/`$instructions`); (3.9, 3.15) `rsk/data/` packaged, 7 files:
+  `rsk_example.md` (copy of Phase 1's `rsk_reference.md`),
+  `rsk_template.md` (valid, fully-parseable skeleton, deadbeef-style id,
+  every section incl. both 5x5 assessments + a TARA word; round-trips
+  through `parse_rsk` — tested), `rsk_schema.json` (generated via
+  `specmgr schema --type rsk --output-dir
+  src/biz/dfch/specmgr/rsk/data` — same generator as `docs/`),
+  `rsk_tara.md`/`rsk_risk_matrix.md` (copies of the Phase 1 drafts, zone-
+  table cells corrected — see Decisions Made), and the two instructions
+  files; (3.12) `pyproject.toml` package-data entry (`data/*.md`,
+  `data/*.json`), new `specmgr-schema-rsk-package` pre-commit hook +
+  `rsk/models/v1` added to the `files:` trigger of all five existing
+  `specmgr-schema*` hooks (feat-10 precedent) + the stale generic-hook
+  description fixed ("currently `req` and `uc`" -> the actual five
+  registered types), and the Python-3.13.13-pinned CI step "Make sure
+  `src/biz/dfch/specmgr/rsk/data/rsk_schema.json` is correct" (placed
+  after the tsk step; no redundant `docs/rsk_schema.json` step — the
+  full-`specmgr schema` steps already regenerate it, Task 4.3 confirms
+  coverage); (3.16, 3.18) `tests/rsk/{tools,resources,prompts}/`
+  mirroring `tests/tsk/`'s layout and coverage shape, 116 new tests: 70
+  tools (incl. `test_list_rsk.py`'s paging contract/clamping/skip-on-
+  broken-file + the residual fields' presence and correctness, and the
+  `test_get_rsk_template.py` round-trip), 26 resources (incl.
+  `test_tara.py` — exactly the four TARA words documented, cross-checked
+  against `Strategy`'s own validator — and `test_risk_matrix.py`, the
+  ACC-005 drift guard: the documented product thresholds and all 25 zone-
+  table cells are parsed out of the PACKAGED file and asserted against
+  `level_from_product`), 20 prompts; (3.17) `server.py`'s last-line
+  domain import gained `rsk` (between `req` and `tsk`) and its module
+  docstring's registration list gained the 5 resources/10 tools/2
+  prompts + the "RSK has no `specmgr://rsk/{id}` resource" note;
+  `rsk/__init__.py` now imports `prompts`/`resources`/`tools` for their
+  registration side effects (mirrors `tsk/__init__.py`, docstring
+  updated). Quality gate: ruff format/check clean (932 files), vulture
+  clean, 1480 tests OK (1364 + 116 new; all `rsk` modules 100% covered),
+  `specmgr docs` regenerated (26 new `docs/api/` module files +
+  `GENERATED.md`/`docs/api/README.md` updated, plus a new
+  `PagedResult[RskSummary]` section in the `paged_result` module docs),
+  `specmgr mcp-docs` regenerated (`docs/MCP.md` gained the 5 rsk
+  resources, 10 rsk tools, and 2 rsk prompts), `specmgr schema` all
+  five types `(unchanged)` + the packaged `rsk_schema.json` copy
+  `(unchanged)` on the re-run, `specmgr coverage-badge` regenerated
+  (`docs/coverage.svg` still 98%, content unchanged)
+- Next: Phase 4 (Docs, CI wiring & final verification) — Task 4.1-4.4
+  walk-through (docs/mcp-docs/schema regeneration confirmation, CI
+  coverage check, final ACC-001..008 pass)
+- Notes: see the three new Decisions Made entries below (zone-table cell
+  correction in the Phase 1 draft and this plan's own Design Notes table,
+  the `tara`/`risk_matrix` resource function naming, and the
+  `whitelist.py` `_.from_document` entry removal); also, the vulture
+  whitelist needed no new entries — `rsk/tools/__init__.py`'s own
+  imports/`__all__` keep the ten tool names out of vulture's findings the
+  same way `tsk`'s do (verified: vulture clean)
+
+#### 2026-08-25T09:47:03+02:00
 
 - Completed: Phase 2 (Pydantic Models & Parser), per Task 2.1-2.6 —
   (2.1) `rsk/models/v1/document.py::RskDocument(frontmatter, body)`:
@@ -961,11 +1074,40 @@ None.
   (`RskSummary.from_document(doc, ref=path.stem)`, mirroring the
   inline-construction shape `list_tsk`/`list_req` use for the base four
   fields). The factory's `ref` parameter (the file path's `stem`) is taken
-  as an argument rather than read from the document, matching how the
-  other domains' listing tools pass it. The five derived-only field names
-  plus `_.from_document` are vulture-whitelisted (their only caller is
-  the Phase 3 tool — Phase 1's own precedent for not-yet-consumed model
-  members).
+   as an argument rather than read from the document, matching how the
+   other domains' listing tools pass it. The five derived-only field names
+   plus `_.from_document` are vulture-whitelisted (their only caller is
+   the Phase 3 tool — Phase 1's own precedent for not-yet-consumed model
+   members).
+- **2026-08-25** (Phase 3): the Phase 1 draft `rsk_risk_matrix.md`'s zone
+  table — and this plan's own Design Notes table — carried two cells that
+  contradicted the documented product thresholds: (p=5, i=3) and (p=4, i=4)
+  (products 15 and 16, both in the 15-25 `very high` band) read `high` —
+  corrected to `very high` in the packaged `rsk/data/rsk_risk_matrix.md`,
+  the feature-folder original, and this plan's Design Notes table (content
+  correction, in place, no renumbering) — rationale: the Task 3.16
+  ACC-005 drift guard parses the packaged table and asserts all 25 cells
+  against `level_from_product`, which surfaced the discrepancy; the model
+  (`level_from_product` and the 1-4/5-9/10-14/15-25 threshold statement)
+  was correct all along, so only the prose table was wrong.
+- **2026-08-25** (Phase 3): the `specmgr://rsk/tara`/
+  `specmgr://rsk/risk-matrix` resource functions are named `tara`/
+  `risk_matrix` (matching their Task 3.15 module names
+  `rsk/resources/tara.py`/`risk_matrix.py`) with the MCP-registry
+  `name=` parameters `rsk_tara`/`rsk_risk_matrix` — rationale: the
+  `tsk_example`/`iso25010` convention is function-name == module-name
+  (which is what `rsk/resources/__init__.py`'s own `from . import ...`
+  references for vulture), whereas `general/resources/version.py`'s
+  divergent `version_info` function required a `whitelist.py` entry;
+  keeping function == module keeps the two new resources vulture-clean
+  with no whitelist change, while the `name=` parameters keep the MCP
+  registry names domain-qualified.
+- **2026-08-25** (Phase 3): removed the `whitelist.py` `_.from_document`
+  entry (added in Phase 2) — rationale: its stated reason ("its only
+  caller is a Phase 3 MCP tool (not yet built)") is realized:
+  `rsk/tools/list_rsk.py` now calls `RskSummary.from_document` in `src/`,
+  so vulture sees the reference directly (verified: vulture clean after
+  removal).
 
 ### Related PRs / Commits
 

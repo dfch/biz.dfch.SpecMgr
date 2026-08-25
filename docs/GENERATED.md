@@ -199,6 +199,30 @@ First-line docstrings from each module, organized by domain:
 - `rsk/models/v1/frontmatter.py` — Risk (RSK) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
 - `rsk/models/v1/parser.py` — Parse raw Risk ``.md`` text into a :class:`RskDocument` (Phase 2, Task 2.2).
 - `rsk/models/v1/summary.py` — Pydantic model for one line of RSK listing output (Phase 2, Task 2.3).
+- `rsk/prompts/__init__.py` — MCP prompt wrappers for Risks (Task 3.13).
+- `rsk/prompts/create_risk.py` — ``@mcp.prompt()``: create_risk (Task 3.13).
+- `rsk/prompts/update_risk.py` — ``@mcp.prompt()``: update_risk (Task 3.13).
+- `rsk/resources/__init__.py` — MCP resource registrations for Risk (RSK) documents (Tasks 3.10-3.11, 3.15).
+- `rsk/resources/risk_matrix.py` — Resource: specmgr://rsk/risk-matrix (Task 3.15).
+- `rsk/resources/rsk_example.py` — Resource: specmgr://rsk/example (Task 3.11).
+- `rsk/resources/rsk_schema.py` — Resource: specmgr://rsk/schema (Task 3.10).
+- `rsk/resources/rsk_template.py` — Resource: specmgr://rsk/template (Task 3.11).
+- `rsk/resources/tara.py` — Resource: specmgr://rsk/tara (Task 3.15).
+- `rsk/tools/__init__.py` — MCP tool wrappers for risks (mirrors ``tsk/tools/``'s own shape).
+- `rsk/tools/_io.py` — Thin file read helpers over ``parse_rsk`` (Task 3.1).
+- `rsk/tools/_lock.py` — Per-document in-process lock guarding risk mutations.
+- `rsk/tools/_paths.py` — Risk base directory resolution and id -> path lookup (Task 3.1).
+- `rsk/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_rsk``/``update_rsk``.
+- `rsk/tools/create_rsk.py` — ``@mcp.tool()`` wrapper: create_rsk (Task 3.3).
+- `rsk/tools/delete_rsk.py` — ``@mcp.tool()`` wrapper: delete_rsk (Task 3.6).
+- `rsk/tools/get_rsk.py` — ``@mcp.tool()`` wrapper: get_rsk (Task 3.8).
+- `rsk/tools/get_rsk_example.py` — ``@mcp.tool()`` wrapper: get_rsk_example (Task 3.9).
+- `rsk/tools/get_rsk_template.py` — ``@mcp.tool()`` wrapper: get_rsk_template (Task 3.9).
+- `rsk/tools/list_rsk.py` — ``@mcp.tool()`` wrapper: list_rsk (Task 3.14).
+- `rsk/tools/parse_rsk.py` — ``@mcp.tool()`` wrapper: parse_rsk (Task 3.2).
+- `rsk/tools/set_status_rsk.py` — ``@mcp.tool()`` wrapper: set_status_rsk (Task 3.5).
+- `rsk/tools/update_rsk.py` — ``@mcp.tool()`` wrapper: update_rsk (Task 3.4).
+- `rsk/tools/validate_rsk.py` — ``@mcp.tool()`` wrapper: validate_rsk (Task 3.7).
 
 **tsk/**
 
@@ -284,4 +308,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 187
+**Test files**: 208
