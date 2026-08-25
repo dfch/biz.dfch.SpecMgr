@@ -190,11 +190,15 @@ First-line docstrings from each module, organized by domain:
 **rsk/**
 
 - `rsk/__init__.py` — Risk (RSK) domain -- risk registers for system specifications.
-- `rsk/models/__init__.py` — Risk (RSK) models -- Pydantic schema powered by the generic ``models/md`` engine.
-- `rsk/models/v1/__init__.py` — Risk (RSK) models -- Pydantic schema and (in a later phase) parser powered by the generic ``models/md`` engine.
+- `rsk/models/__init__.py` — Risk (RSK) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- `rsk/models/v1/__init__.py` — Risk (RSK) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- `rsk/models/v1/_util.py` — Shared, private constants for the ``rsk.models.v1`` subpackage.
 - `rsk/models/v1/assessment.py` — The 5x5 risk-matrix assessment models: probability/impact H3 leaves and the H2 assessment section.
 - `rsk/models/v1/body.py` — Risk (RSK) body models: whole-section fields under a single H1.
+- `rsk/models/v1/document.py` — Pydantic model for a full Risk document (frontmatter + body).
 - `rsk/models/v1/frontmatter.py` — Risk (RSK) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
+- `rsk/models/v1/parser.py` — Parse raw Risk ``.md`` text into a :class:`RskDocument` (Phase 2, Task 2.2).
+- `rsk/models/v1/summary.py` — Pydantic model for one line of RSK listing output (Phase 2, Task 2.3).
 
 **tsk/**
 
@@ -280,4 +284,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 185
+**Test files**: 187

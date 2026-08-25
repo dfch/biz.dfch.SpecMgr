@@ -158,11 +158,15 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.req.tools.update_req`](biz.dfch.specmgr.req.tools.update_req.md) — ``@mcp.tool()`` wrapper: update_req (Task 3.13).
 - [`biz.dfch.specmgr.req.tools.validate_req`](biz.dfch.specmgr.req.tools.validate_req.md) — ``@mcp.tool()`` wrapper: validate_req (Task 3.16).
 - [`biz.dfch.specmgr.rsk`](biz.dfch.specmgr.rsk.md) — Risk (RSK) domain -- risk registers for system specifications.
-- [`biz.dfch.specmgr.rsk.models`](biz.dfch.specmgr.rsk.models.md) — Risk (RSK) models -- Pydantic schema powered by the generic ``models/md`` engine.
-- [`biz.dfch.specmgr.rsk.models.v1`](biz.dfch.specmgr.rsk.models.v1.md) — Risk (RSK) models -- Pydantic schema and (in a later phase) parser powered by the generic ``models/md`` engine.
+- [`biz.dfch.specmgr.rsk.models`](biz.dfch.specmgr.rsk.models.md) — Risk (RSK) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- [`biz.dfch.specmgr.rsk.models.v1`](biz.dfch.specmgr.rsk.models.v1.md) — Risk (RSK) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- [`biz.dfch.specmgr.rsk.models.v1._util`](biz.dfch.specmgr.rsk.models.v1._util.md) — Shared, private constants for the ``rsk.models.v1`` subpackage.
 - [`biz.dfch.specmgr.rsk.models.v1.assessment`](biz.dfch.specmgr.rsk.models.v1.assessment.md) — The 5x5 risk-matrix assessment models: probability/impact H3 leaves and the H2 assessment section.
 - [`biz.dfch.specmgr.rsk.models.v1.body`](biz.dfch.specmgr.rsk.models.v1.body.md) — Risk (RSK) body models: whole-section fields under a single H1.
+- [`biz.dfch.specmgr.rsk.models.v1.document`](biz.dfch.specmgr.rsk.models.v1.document.md) — Pydantic model for a full Risk document (frontmatter + body).
 - [`biz.dfch.specmgr.rsk.models.v1.frontmatter`](biz.dfch.specmgr.rsk.models.v1.frontmatter.md) — Risk (RSK) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
+- [`biz.dfch.specmgr.rsk.models.v1.parser`](biz.dfch.specmgr.rsk.models.v1.parser.md) — Parse raw Risk ``.md`` text into a :class:`RskDocument` (Phase 2, Task 2.2).
+- [`biz.dfch.specmgr.rsk.models.v1.summary`](biz.dfch.specmgr.rsk.models.v1.summary.md) — Pydantic model for one line of RSK listing output (Phase 2, Task 2.3).
 - [`biz.dfch.specmgr.server`](biz.dfch.specmgr.server.md) — MCP server for ``biz-dfch-specmgr``.
 - [`biz.dfch.specmgr.tsk`](biz.dfch.specmgr.tsk.md) — TaskList (TSK) domain -- lightweight task/todo-list specifications.
 - [`biz.dfch.specmgr.tsk.models`](biz.dfch.specmgr.tsk.models.md) — TaskList (TSK) models -- Pydantic schema powered by the generic ``models/md`` engine.

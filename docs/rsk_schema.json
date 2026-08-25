@@ -1,0 +1,341 @@
+{
+  "$comment": "v1",
+  "$defs": {
+    "Cause": {
+      "description": "`## Cause` -- why the risk exists (the root condition). Mandatory, free-form prose.",
+      "properties": {},
+      "title": "Cause",
+      "type": "object"
+    },
+    "Consequence": {
+      "description": "`## Consequence` -- what happens if the risk event occurs. Mandatory, free-form prose.",
+      "properties": {},
+      "title": "Consequence",
+      "type": "object"
+    },
+    "Impact": {
+      "description": "`### Impact {1..5}` under `## Initial/Residual Assessment` -- the impact coordinate of the 5x5 matrix.\n\nA leaf H3 section: the value lives in the heading itself (e.g.\n`### Impact 3`), constrained by the regex `@alias` above and enforced by\n`match_alias` (`re.fullmatch`) at parse time -- a missing value digit\n(`### Impact`), an out-of-range digit (`### Impact 6`), or a misspelled\nheading word all fail the parse eagerly. Any body text under the heading\nis absorbed into the leaf like every other leaf `MarkdownSection` (it is\nnot part of the value).\n\nParameters\n----------\nvalue:\n    Computed. The 1..5 impact value carried by the heading (e.g. `3`\n    for `### Impact 3`). Never stored separately -- derived from the\n    retained heading text.",
+      "properties": {},
+      "title": "Impact",
+      "type": "object"
+    },
+    "InitialAssessment": {
+      "description": "`## Initial Assessment` -- the 5x5 assessment BEFORE mitigation.\n\nA thin `Assessment` subclass pinning the H2 heading to `Initial\nAssessment` (LITERAL `@alias`), so `Risk`'s field order (initial before\nresidual) is enforced at parse time: a document carrying the two\nassessment sections in the wrong order fails `match_alias` instead of\nbeing silently swapped.",
+      "properties": {
+        "impact": {
+          "$ref": "#/$defs/Impact",
+          "description": "`### Impact {1..5}` leaf section (value in the heading). Mandatory."
+        },
+        "probability": {
+          "$ref": "#/$defs/Probability",
+          "description": "`### Probability {1..5}` leaf section (value in the heading). Mandatory."
+        }
+      },
+      "required": [
+        "probability",
+        "impact"
+      ],
+      "title": "InitialAssessment",
+      "type": "object"
+    },
+    "MarkdownComment": {
+      "description": "A standalone HTML comment block (`\"html_block\"`, e.g. `<!-- some note -->`).\n\nDeliberately leaf-only, like `MarkdownCodeBlock`. Declare an optional\n`comment: MarkdownComment | None` field on any `MarkdownStr` subclass to\nlet a value be preceded by such an explanatory comment without it\nbreaking that class's own structural field matching. See `get_extent`/\n`from_text`/`text` for the full mechanics.",
+      "properties": {},
+      "title": "MarkdownComment",
+      "type": "object"
+    },
+    "MarkdownListItem": {
+      "description": "One item (\"li\") of a markdown bullet or numbered list.\n\nUsed only as `items: list[MarkdownListItem]` (or `list[MarkdownListItem] |\nNone`) on a `MarkdownSection`/`MarkdownParagraph`/`MarkdownListItem` --\nthere is no separate list-container class, and a bare item cannot be\nparsed as a top-level/scalar field on its own; every item is assumed to\nstart with at least one paragraph (its own lead text).\n\nLeaf (no declared nested fields, the default): `_value` holds the item's\ncomplete extent verbatim, marker included. Composite (a subclass declares\nfields): `_value` holds only the item's own leading paragraph, marker\nincluded -- the marker cannot be reconstructed from class metadata alone,\nso it is kept verbatim -- and the remainder is dedented and delegated to\nnested field parsing; `__str__` re-indents the children's rendered output\nby the marker's own width before recombining.\n\nRound-trip note: a tight source list currently round-trips to a\nstructurally-equivalent loose list rather than byte-exact (loose lists\nremain byte-exact) -- an accepted, documented exception; see\n`from_text`/`__str__` docstrings below for the full mechanics.",
+      "properties": {},
+      "title": "MarkdownListItem",
+      "type": "object"
+    },
+    "MarkdownParagraph": {
+      "description": "A markdown paragraph (\"p\"), the non-heading sibling of `MarkdownSection`.\n\nA paragraph has no level, so there is a single `MarkdownParagraph` class\n(no `MarkdownParagraph1`..`6` spectrum) and no `@alias` check -- a\nparagraph's content is free-form prose, not a title.\n\nLeaf (no declared nested fields): `_value` holds the paragraph's own line\nspan, verbatim. Composite (declares fields): `_value` holds only the\nparagraph's own inline text (e.g. a lead-in sentence); the remaining text\nis delegated to nested field parsing, bounded by the next heading of any\nlevel (a paragraph can never itself contain a heading). See\n`get_extent`/`from_text`/`__str__` docstrings below for the full\nmechanics.",
+      "properties": {},
+      "title": "MarkdownParagraph",
+      "type": "object"
+    },
+    "Mitigation": {
+      "description": "`## Mitigation` -- the treatment measures bridging the two assessments. Mandatory, free-form prose.\n\n`\"none\"` is a valid value when the strategy is `accept` (no measures\ntaken).",
+      "properties": {},
+      "title": "Mitigation",
+      "type": "object"
+    },
+    "MoreInformation": {
+      "description": "`## More Information` -- free-form optional supplementary text, no fixed format. Optional.",
+      "properties": {},
+      "title": "MoreInformation",
+      "type": "object"
+    },
+    "Owner": {
+      "description": "`## Owner` -- single-line value naming the responsible person/role. Optional.",
+      "properties": {
+        "value": {
+          "$ref": "#/$defs/MarkdownParagraph",
+          "description": "Single-line value naming the responsible person or role."
+        }
+      },
+      "required": [
+        "value"
+      ],
+      "title": "Owner",
+      "type": "object"
+    },
+    "Probability": {
+      "description": "`### Probability {1..5}` under `## Initial/Residual Assessment` -- the probability coordinate of the 5x5 matrix.\n\nA leaf H3 section: the value lives in the heading itself (e.g.\n`### Probability 4`), constrained by the regex `@alias` above and\nenforced by `match_alias` (`re.fullmatch`) at parse time -- a missing\nvalue digit (`### Probability`), an out-of-range digit\n(`### Probability 6`), or a misspelled heading word all fail the parse\neagerly. Any body text under the heading is absorbed into the leaf like\nevery other leaf `MarkdownSection` (it is not part of the value).\n\nParameters\n----------\nvalue:\n    Computed. The 1..5 probability value carried by the heading (e.g.\n    `4` for `### Probability 4`). Never stored separately -- derived\n    from the retained heading text.",
+      "properties": {},
+      "title": "Probability",
+      "type": "object"
+    },
+    "ResidualAssessment": {
+      "description": "`## Residual Assessment` -- the 5x5 assessment AFTER mitigation.\n\nA thin `Assessment` subclass pinning the H2 heading to `Residual\nAssessment` (LITERAL `@alias`); see `InitialAssessment` for the\norder-enforcement rationale.",
+      "properties": {
+        "impact": {
+          "$ref": "#/$defs/Impact",
+          "description": "`### Impact {1..5}` leaf section (value in the heading). Mandatory."
+        },
+        "probability": {
+          "$ref": "#/$defs/Probability",
+          "description": "`### Probability {1..5}` leaf section (value in the heading). Mandatory."
+        }
+      },
+      "required": [
+        "probability",
+        "impact"
+      ],
+      "title": "ResidualAssessment",
+      "type": "object"
+    },
+    "Risk": {
+      "description": "The `rsk` body: a single H1 section with the fields below.\n\nThe H1 heading text is free-form. `comment` is inherited from\n`MarkdownSection1WithComment` (see its own docstring) -- not redeclared\nhere.\n\nParameters\n----------\ncomment:\n    Optional explanatory HTML comment (`<!-- ... -->`) preceding `cause`.\n    Inherited from `MarkdownSection1WithComment`.\ncause:\n    `## Cause`. Mandatory.\ntrigger:\n    `## Trigger`. Mandatory.\nconsequence:\n    `## Consequence`. Mandatory.\nscope:\n    `## Scope`. Mandatory, at least one entry.\ninitial_assessment:\n    `## Initial Assessment` (5x5, before mitigation). Mandatory.\nstrategy:\n    `## Strategy` (TARA 4-value closed set). Mandatory.\nmitigation:\n    `## Mitigation`. Mandatory.\nresidual_assessment:\n    `## Residual Assessment` (5x5, after mitigation). Mandatory.\nowner:\n    `## Owner`. Optional.\ntags:\n    `## Tags`. Optional.\nmore_information:\n    `## More Information`. Optional.",
+      "properties": {
+        "cause": {
+          "$ref": "#/$defs/Cause",
+          "description": "`## Cause` section. Mandatory."
+        },
+        "comment": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MarkdownComment"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional explanatory HTML comment (`<!-- ... -->`)."
+        },
+        "consequence": {
+          "$ref": "#/$defs/Consequence",
+          "description": "`## Consequence` section. Mandatory."
+        },
+        "initial_assessment": {
+          "$ref": "#/$defs/InitialAssessment",
+          "description": "`## Initial Assessment` section (5x5, before mitigation). Mandatory."
+        },
+        "mitigation": {
+          "$ref": "#/$defs/Mitigation",
+          "description": "`## Mitigation` section. Mandatory."
+        },
+        "more_information": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MoreInformation"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`## More Information` section. Optional."
+        },
+        "owner": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Owner"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`## Owner` section. Optional."
+        },
+        "residual_assessment": {
+          "$ref": "#/$defs/ResidualAssessment",
+          "description": "`## Residual Assessment` section (5x5, after mitigation). Mandatory."
+        },
+        "scope": {
+          "$ref": "#/$defs/Scope",
+          "description": "`## Scope` section (>=1 affected system/component). Mandatory."
+        },
+        "strategy": {
+          "$ref": "#/$defs/Strategy",
+          "description": "`## Strategy` section (TARA 4-value closed set). Mandatory."
+        },
+        "tags": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Tags"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`## Tags` section. Optional."
+        },
+        "trigger": {
+          "$ref": "#/$defs/Trigger",
+          "description": "`## Trigger` section. Mandatory."
+        }
+      },
+      "required": [
+        "cause",
+        "trigger",
+        "consequence",
+        "scope",
+        "initial_assessment",
+        "strategy",
+        "mitigation",
+        "residual_assessment"
+      ],
+      "title": "Risk",
+      "type": "object"
+    },
+    "RskFrontmatter": {
+      "description": "Risk frontmatter: `MarkdownFrontmatter` narrowed for the ``rsk`` document type.\n\nParameters\n----------\ntype:\n    Fixed discriminator, always ``\"rsk\"``. Narrows the base's mandatory,\n    default-less ``str`` field to a ``Literal[\"rsk\"] = \"rsk\"``, so a document\n    omitting ``type`` entirely still parses as a risk document.\nstatus:\n    One of ``\"open\"``, ``\"mitigating\"``, ``\"accepted\"``, ``\"occurred\"``,\n    ``\"closed\"``, ``\"dropped\"``. Narrows the base's free-form ``str``\n    field to this closed six-value set; absent/blank defaults to\n    ``\"open\"`` (``_default_blank_status_to_open`` below, which runs\n    before the base's ``_default_blank_status_to_draft``).\nversion:\n    The ``models.md`` schema major.minor.patch version this document's\n    frontmatter was written with. DO NOT CHANGE!\n\nAll other fields (``id``, ``created``, ``updated``, ``version``) are inherited\nunchanged from :class:`MarkdownFrontmatter`.",
+      "properties": {
+        "created": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Created"
+        },
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Id"
+        },
+        "status": {
+          "default": "open",
+          "title": "Status",
+          "type": "string"
+        },
+        "type": {
+          "const": "rsk",
+          "default": "rsk",
+          "title": "Type",
+          "type": "string"
+        },
+        "updated": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Updated"
+        },
+        "version": {
+          "default": "1.0.0",
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "title": "RskFrontmatter",
+      "type": "object"
+    },
+    "Scope": {
+      "description": "`## Scope` -- bullet list of affected systems/components. Mandatory, at least one entry.",
+      "properties": {
+        "items": {
+          "description": "Bullet list of affected systems/components; must contain at least one item.",
+          "items": {
+            "$ref": "#/$defs/MarkdownListItem"
+          },
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "Scope",
+      "type": "object"
+    },
+    "Strategy": {
+      "description": "`## Strategy` -- single-line TARA response strategy. Mandatory.\n\nOne of the four TARA words: `transfer`, `accept`, `reduce`, `avoid`.",
+      "properties": {
+        "value": {
+          "$ref": "#/$defs/MarkdownParagraph",
+          "description": "Single-line TARA response strategy. One of `transfer`, `accept`, `reduce`, `avoid`."
+        }
+      },
+      "required": [
+        "value"
+      ],
+      "title": "Strategy",
+      "type": "object"
+    },
+    "Tags": {
+      "description": "`## Tags` -- bullet list of free-form labels for grouping/filtering risks. Optional.",
+      "properties": {
+        "items": {
+          "description": "Bullet list of free-form labels for grouping/filtering risks; must contain at least one item.",
+          "items": {
+            "$ref": "#/$defs/MarkdownListItem"
+          },
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "Tags",
+      "type": "object"
+    },
+    "Trigger": {
+      "description": "`## Trigger` -- what sets the risk event in motion. Mandatory, free-form prose.",
+      "properties": {},
+      "title": "Trigger",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "A full Risk document: YAML frontmatter and body.\n\nAttributes\n----------\nfrontmatter:\n    The YAML frontmatter block. See :class:`RskFrontmatter`.\nbody:\n    The parsed risk sections. See :class:`Risk`.",
+  "properties": {
+    "body": {
+      "$ref": "#/$defs/Risk"
+    },
+    "frontmatter": {
+      "$ref": "#/$defs/RskFrontmatter"
+    }
+  },
+  "required": [
+    "frontmatter",
+    "body"
+  ],
+  "title": "RskDocument",
+  "type": "object"
+}

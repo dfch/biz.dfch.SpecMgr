@@ -57,6 +57,11 @@ _.validate_status
 _.validate_step_references_resolve_and_are_unique
 _.validate_steps_numbered_contiguously
 
+# --- Pydantic model classmethod factories ---------------------------------------
+# Public factory classmethods whose only caller is a Phase-3 MCP tool (not yet
+# built); vulture cannot see the future call site.
+_.from_document
+
 # --- Pydantic `model_config = ConfigDict(...)` class attribute -------------------
 # Read by Pydantic's metaclass, never accessed directly from our code.
 model_config
@@ -104,6 +109,11 @@ updates
 cause
 consequence
 initial_assessment
+initial_level
+residual_level
+residual_probability
+residual_impact
+residual_product
 strategy
 mitigation
 residual_assessment

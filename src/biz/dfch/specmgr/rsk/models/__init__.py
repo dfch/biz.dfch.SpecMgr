@@ -15,11 +15,11 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Risk (RSK) models -- Pydantic schema powered by the generic ``models/md`` engine.
+"""Risk (RSK) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
 
 Mirrors ``tsk/models``'s layout: a versioned sub-package (``v1``, ...) holding
-the frontmatter/body classes and (in a later phase) the document wrapper and
-parser for ``rsk`` documents.
+the frontmatter/body classes, the document wrapper and parser for ``rsk``
+documents, and the one-line ``RskSummary`` for the paged ``list_rsk`` tool.
 """
 
 from .v1 import (
@@ -27,6 +27,7 @@ from .v1 import (
     LEVEL_LOW,
     LEVEL_MEDIUM,
     LEVEL_VERY_HIGH,
+    SCHEMA_COMMENT_VERSION,
     Assessment,
     Cause,
     Consequence,
@@ -38,12 +39,15 @@ from .v1 import (
     Probability,
     ResidualAssessment,
     Risk,
+    RskDocument,
     RskFrontmatter,
+    RskSummary,
     Scope,
     Strategy,
     Tags,
     Trigger,
     level_from_product,
+    parse_rsk,
 )
 
 __all__ = [
@@ -51,6 +55,7 @@ __all__ = [
     "LEVEL_LOW",
     "LEVEL_MEDIUM",
     "LEVEL_VERY_HIGH",
+    "SCHEMA_COMMENT_VERSION",
     "Assessment",
     "Cause",
     "Consequence",
@@ -62,10 +67,13 @@ __all__ = [
     "Probability",
     "ResidualAssessment",
     "Risk",
+    "RskDocument",
     "RskFrontmatter",
+    "RskSummary",
     "Scope",
     "Strategy",
     "Tags",
     "Trigger",
     "level_from_product",
+    "parse_rsk",
 ]

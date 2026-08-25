@@ -3,7 +3,7 @@ id: feat-15-add-artifact-type-risk
 version: 1.0.0
 status: planning
 created: 2026-08-24
-updated: 2026-08-24
+updated: 2026-08-25
 ---
 
 # Feature: Add artifact type Risk (rsk)
@@ -428,30 +428,38 @@ phase's changes.
 
 #### Phase 2: Pydantic Models & Parser (commit 2)
 
-- [ ] Task 2.1: `rsk/models/v1/document.py` (`RskDocument(frontmatter,
-  body)`, mirroring `TskDocument`) — depends on: Task 1.3 — status:
-  not-started
-- [ ] Task 2.2: Implement `parse_rsk(text: str) -> RskDocument` (mirrors
-  `parse_tsk`/`parse_req`) — depends on: Task 2.1 — status: not-started
-- [ ] Task 2.3: `rsk/models/v1/summary.py` (`RskSummary`, a subclass of
+- [x] Task 2.1: `rsk/models/v1/document.py` (`RskDocument(frontmatter,
+  body)`, mirroring `TskDocument`) — depends on: Task 1.3 — status: done
+- [x] Task 2.2: Implement `parse_rsk(text: str) -> RskDocument` (mirrors
+  `parse_tsk`/`parse_req`) — depends on: Task 2.1 — status: done
+- [x] Task 2.3: `rsk/models/v1/summary.py` (`RskSummary`, a subclass of
   `general/models/summary.py::DocSummary` mirroring `TskSummary`, with
   `initial_level`/`residual_level`/`strategy`/first `scope` entry plus the
   residual-risk coordinates `residual_probability`/`residual_impact`/
-  `residual_product` (risk product), for the `list_rsk` tool) — depends on:
-  Task 2.1 — status: not-started
-- [ ] Task 2.4: Field-level `Field(description=...)` on every scalar/
+  `residual_product` (risk product), for the `list_rsk` tool — carried by
+  a `from_document(document, ref)` classmethod factory that derives every
+  risk-specific field from the parsed assessments' computed
+  `level`/`value` fields) — depends on: Task 2.1 — status: done
+- [x] Task 2.4: Field-level `Field(description=...)` on every scalar/
   optional field (schema-quality parity with REQ/TSK's own Task 2.4
-  audits) — depends on: Task 2.1 — status: not-started
-- [ ] Task 2.5: Draft `rsk_schema.json` via `generate_rsk_schema()`
+  audits — audited, no gaps found: Phase 1's body/assessment fields and
+  the new `RskSummary` fields carry descriptions; `RskDocument`'s
+  `frontmatter`/`body` and `RskFrontmatter`'s inherited fields are bare,
+  exactly like REQ/TSK's audited state) — depends on: Task 2.1 — status:
+  done
+- [x] Task 2.5: Draft `rsk_schema.json` via `generate_rsk_schema()`
   (mirroring `generate_req_schema`/`generate_tsk_schema` in
   `commands/schema.py`, calling `RskDocument.model_json_schema()`) +
   register `"rsk"` in the `specmgr schema` doc-type generator registry
-  (`_GENERATORS`) — depends on: Task 2.1 — status: not-started
-- [ ] Task 2.6: `tests/rsk/models/v1/test_parser.py` — mirrors
+  (`_GENERATORS`) — depends on: Task 2.1 — status: done
+- [x] Task 2.6: `tests/rsk/models/v1/test_parser.py` — mirrors
   `TestParseTsk`'s case shape (minimal doc, full reference-doc round-trip,
   defaults-when-absent, invalid status, malformed structure, out-of-range
   or missing assessment heading value, invalid TARA word, missing Scope
-  entry) — depends on: Task 2.2, Task 2.5 — status: not-started
+  entry) — plus `tests/rsk/models/v1/test_summary.py` covering
+  `RskSummary`'s `DocSummary` inheritance, its `from_document` factory,
+  and the coordinate bounds — depends on: Task 2.2, Task 2.5 — status:
+  done
 
 #### Phase 3: MCP Surface (commit 3)
 
@@ -557,22 +565,30 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-24**: Phase 1 (Specification) complete. GitHub issue #15
-opened, feature folder created from `.specmgr/_template/v1/README.md`. Full
-schema and MCP surface proposed (see Design Notes and Task List), mirroring
-`feat-10` (tsk)'s 4-phase/4-commit shape; revised 2026-08-24 per user
-feedback (TARA instead of TARRA, cause/trigger/consequence split into
-separate sections, assessment values moved from list items to H3 headings
-with regex `@alias` constraints, execution pinned to the
-Orchestrator/Phase-Implementer pattern, two domain-knowledge resources
-`specmgr://rsk/tara` + `specmgr://rsk/risk-matrix` added, `list_rsk`
-summary lines carry the residual-risk coordinates, and listing corrected to
-the paged `list_rsk` tool per feat-13). Phase 1 (commit 1) delivered:
-`RskFrontmatter` (6-value status, `open` default), the `Risk`/`Assessment`
-body models (5x5 H3-heading assessments, TARA-closed `## Strategy`), the
-`rsk_reference.md` round-trip fixture, the mirrored test suite (43 tests,
-all green — 1349 total), and the two domain-knowledge drafts (`rsk_tara.md`,
-`rsk_risk_matrix.md`). Next: Phase 2 (Pydantic Models & Parser).
+**As of 2026-08-25**: Phases 1-2 complete. GitHub issue #15 opened, feature
+folder created from `.specmgr/_template/v1/README.md`. Full schema and MCP
+surface proposed (see Design Notes and Task List), mirroring `feat-10`
+(tsk)'s 4-phase/4-commit shape; revised 2026-08-24 per user feedback (TARA
+instead of TARRA, cause/trigger/consequence split into separate sections,
+assessment values moved from list items to H3 headings with regex `@alias`
+constraints, execution pinned to the Orchestrator/Phase-Implementer
+pattern, two domain-knowledge resources `specmgr://rsk/tara` +
+`specmgr://rsk/risk-matrix` added, `list_rsk` summary lines carry the
+residual-risk coordinates, and listing corrected to the paged `list_rsk`
+tool per feat-13). Phase 1 (commit 1) delivered: `RskFrontmatter`
+(6-value status, `open` default), the `Risk`/`Assessment` body models (5x5
+H3-heading assessments, TARA-closed `## Strategy`), the `rsk_reference.md`
+round-trip fixture, the mirrored test suite (43 tests, all green — 1349
+total), and the two domain-knowledge drafts (`rsk_tara.md`,
+`rsk_risk_matrix.md`). Phase 2 (commit 2) delivered: `RskDocument` +
+`parse_rsk` (mirroring `TskDocument`/`parse_tsk`, two error channels:
+structural `AssertionError` / field-level `pydantic.ValidationError`),
+`RskSummary` (a `DocSummary` subclass with the initial/residual zone
+levels, TARA word, first scope entry, and residual-risk coordinates, built
+by a `from_document` factory), `_util.py::SCHEMA_COMMENT_VERSION`,
+`rsk_schema.json` (registered in `specmgr schema`'s `_GENERATORS`), and
+the parser/summary test suites (15 new tests, all green — 1364 total; all
+`rsk` modules at 100% coverage). Next: Phase 3 (MCP Surface).
 
 ### Blockers
 
@@ -580,7 +596,69 @@ None.
 
 ### Recent Updates
 
-#### 2026-08-24T19:59:00+02:00 (newest)
+#### 2026-08-25T09:47:03+02:00 (newest)
+
+- Completed: Phase 2 (Pydantic Models & Parser), per Task 2.1-2.6 —
+  (2.1) `rsk/models/v1/document.py::RskDocument(frontmatter, body)`:
+  mirrors `TskDocument`/`ReqDocument`'s own frontmatter+body pairing
+  (`RskFrontmatter` + `Risk`); (2.2) `rsk/models/v1/parser.py::parse_rsk`:
+  mirrors `parse_tsk`/`parse_req` exactly (python-frontmatter split, own
+  `_stringify_metadata` copy, `Risk.from_text(format_text(post.content))`,
+  two error channels — structural `AssertionError` / field-level
+  `pydantic.ValidationError`, both uncaught); (2.3)
+  `rsk/models/v1/summary.py::RskSummary(DocSummary)`: base's
+  `id`/`title`/`status`/`ref` first, then `initial_level`/`residual_level`
+  (from the assessments' computed `level`), `strategy` (verbatim TARA
+  word), `scope` (first `## Scope` entry), and the residual-risk
+  coordinates `residual_probability`/`residual_impact` (1..5,
+  `ge`/`le`-constrained) / `residual_product` (1..25, the risk product) —
+  all derived by a new `from_document(document, ref)` classmethod factory
+  (never re-implementing the 5x5 zone mapping), which is also the Phase 3
+  `list_rsk` tool's construction site (see Decisions Made); (2.4)
+  description audit: no gaps found — Phase 1's body/assessment fields and
+  the new `RskSummary` fields carry `Field(description=...)`, while
+  `RskDocument`'s `frontmatter`/`body` and `RskFrontmatter`'s
+  inherited/base fields are bare exactly like REQ/TSK's own audited state
+  (verified against `docs/req_schema.json`/`tsk_schema.json`); (2.5)
+  `rsk/models/v1/_util.py::SCHEMA_COMMENT_VERSION = "v1"` (mirrors
+  `tsk`'s) + `commands/schema.py`: `generate_rsk_schema()` (injects
+  `$schema` + `$comment`, `indent=2, sort_keys=True` + trailing newline)
+  and the `"rsk"` `_GENERATORS` entry — `specmgr schema` newly writes
+  `docs/rsk_schema.json` (JSON Schema 2020-12, title `RskDocument`), all
+  four other `docs/*_schema.json` files byte-identical; (2.6)
+  `tests/rsk/models/v1/test_parser.py` (10 tests, mirroring
+  `TestParseTsk`'s case shape: minimal doc incl. both assessments'
+  `value`/`level`, full `rsk_reference.md` round-trip incl. frontmatter
+  date stringification and re-round-trip stability, frontmatter
+  defaults-when-absent (`status` -> `open`), invalid status
+  (`draft` + unknown word -> `ValidationError`), missing mandatory
+  section + wrong assessment order (`AssertionError`),
+  `### Probability 6` / `### Probability` (`AssertionError`),
+  `## Strategy` = `tolerate` (`ValidationError`), zero-entry `## Scope`
+  (`AssertionError`)) + `tests/rsk/models/v1/test_summary.py` (5 tests:
+  `DocSummary` subclass/field order, `from_document` on the minimal and
+  reference documents, coordinate-bounds rejection). Package exports
+  updated (`rsk/models/__init__.py` + `rsk/models/v1/__init__.py`
+  docstrings/imports/`__all__`: `RskDocument`, `parse_rsk`, `RskSummary`,
+  `SCHEMA_COMMENT_VERSION`); vulture whitelist gained `_.from_document`
+  (framework-bound: its only caller is the Phase 3 `list_rsk` tool —
+  Phase 1 precedent) and the five `RskSummary`-only field names. Quality
+  gate: ruff format/check clean (854 files), vulture clean, 1364 tests OK
+  (1349 + 15 new; all `rsk` modules 100% covered), `specmgr docs`
+  regenerated (4 new `docs/api/` module files + `GENERATED.md`/
+  `docs/api/README.md` updated), `specmgr mcp-docs` no change
+  (`docs/MCP.md` untouched — nothing MCP-registered yet),
+  `specmgr schema` stable on re-run (exit 0), `specmgr coverage-badge`
+  regenerated (`docs/coverage.svg` still 98%, content unchanged)
+- Next: Phase 3 (MCP Surface) — `rsk/tools/` (incl. the paged `list_rsk`
+  consuming `RskSummary.from_document`), `rsk/resources/` (incl.
+  `specmgr://rsk/tara` + `/risk-matrix`), `rsk/prompts/`, `rsk/data/`
+  packaging, `server.py` registration
+- Notes: see the new Decisions Made entry below (`RskSummary.from_document`
+  factory mechanism); also, the frontmatter `updated` date was bumped to
+  2026-08-25 (execution crossed midnight since Phase 1's 2026-08-24 entry)
+
+#### 2026-08-24T19:59:00+02:00
 
 - Completed: Phase 1 (Specification), per Task 1.1-1.5 — (1.1)
   `rsk/models/v1/frontmatter.py::RskFrontmatter`: `type=Literal["rsk"]`,
@@ -870,6 +948,24 @@ None.
   pair (no factors <= 5), so the 14/15 zone boundary the plan requires
   tested can only be exercised through the mapping itself; it also gives
   the ACC-005 documented-thresholds test (Phase 3) a single target.
+- **2026-08-25** (Phase 2): `RskSummary` (unlike `TskSummary`/`ReqSummary`,
+  which add no fields and are built inline in their domains' listing
+  tools) carries a `from_document(document, ref)` classmethod factory —
+  rationale: its six risk-specific fields (the zone levels, the TARA word,
+  the first scope entry, and the residual-risk coordinates incl. the risk
+  product) are all *derived* from the parsed document's computed
+  `level`/`value` fields; a model-layer factory keeps that derivation in
+  one place (testable in Phase 2, zone-mapping drift surfaces in
+  `tests/rsk/models/v1/test_summary.py`), never re-implements the 5x5
+  mapping, and leaves the Phase 3 `list_rsk` tool a one-liner
+  (`RskSummary.from_document(doc, ref=path.stem)`, mirroring the
+  inline-construction shape `list_tsk`/`list_req` use for the base four
+  fields). The factory's `ref` parameter (the file path's `stem`) is taken
+  as an argument rather than read from the document, matching how the
+  other domains' listing tools pass it. The five derived-only field names
+  plus `_.from_document` are vulture-whitelisted (their only caller is
+  the Phase 3 tool — Phase 1's own precedent for not-yet-consumed model
+  members).
 
 ### Related PRs / Commits
 

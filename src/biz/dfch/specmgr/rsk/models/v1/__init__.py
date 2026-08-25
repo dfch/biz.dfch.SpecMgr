@@ -15,19 +15,17 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Risk (RSK) models -- Pydantic schema and (in a later phase) parser powered by the generic ``models/md`` engine.
+"""Risk (RSK) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
 
-Mirrors the ``tsk/models/v1`` layout: body classes map directly to heading
+Mirrors the ``tsk/models/v1`` layout: a free-function ``parse_rsk`` entry
+point, document-level ``RskDocument(frontmatter, body)`` wrapper, and a
+one-line ``RskSummary`` for the paged ``list_rsk`` tool, with frontmatter and
+body subclasses under this same package. Body classes map directly to heading
 sections in an ``rsk`` markdown file -- see ``body.py``/``assessment.py`` for
-the full hierarchy -- and ``frontmatter.py`` narrows the generic
-``MarkdownFrontmatter`` for the ``rsk`` document type.
-
-Per `.specmgr/feat/feat-15-add-artifact-type-risk/README.md` Phase 1
-("Specification"), only the frontmatter and body models exist so far. There is
-no ``RskDocument``/``parse_rsk``/``RskSummary`` yet -- those are Phase 2 -- so,
-unlike ``tsk.models.v1``, this package does not yet export them.
+the full hierarchy.
 """
 
+from ._util import SCHEMA_COMMENT_VERSION
 from .assessment import (
     LEVEL_HIGH,
     LEVEL_LOW,
@@ -52,13 +50,17 @@ from .body import (
     Tags,
     Trigger,
 )
+from .document import RskDocument
 from .frontmatter import RskFrontmatter
+from .parser import parse_rsk
+from .summary import RskSummary
 
 __all__ = [
     "LEVEL_HIGH",
     "LEVEL_LOW",
     "LEVEL_MEDIUM",
     "LEVEL_VERY_HIGH",
+    "SCHEMA_COMMENT_VERSION",
     "Assessment",
     "Cause",
     "Consequence",
@@ -70,10 +72,13 @@ __all__ = [
     "Probability",
     "ResidualAssessment",
     "Risk",
+    "RskDocument",
     "RskFrontmatter",
+    "RskSummary",
     "Scope",
     "Strategy",
     "Tags",
     "Trigger",
     "level_from_product",
+    "parse_rsk",
 ]
