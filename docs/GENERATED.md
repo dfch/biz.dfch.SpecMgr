@@ -187,6 +187,15 @@ First-line docstrings from each module, organized by domain:
 - `req/tools/update_req.py` — ``@mcp.tool()`` wrapper: update_req (Task 3.13).
 - `req/tools/validate_req.py` — ``@mcp.tool()`` wrapper: validate_req (Task 3.16).
 
+**rsk/**
+
+- `rsk/__init__.py` — Risk (RSK) domain -- risk registers for system specifications.
+- `rsk/models/__init__.py` — Risk (RSK) models -- Pydantic schema powered by the generic ``models/md`` engine.
+- `rsk/models/v1/__init__.py` — Risk (RSK) models -- Pydantic schema and (in a later phase) parser powered by the generic ``models/md`` engine.
+- `rsk/models/v1/assessment.py` — The 5x5 risk-matrix assessment models: probability/impact H3 leaves and the H2 assessment section.
+- `rsk/models/v1/body.py` — Risk (RSK) body models: whole-section fields under a single H1.
+- `rsk/models/v1/frontmatter.py` — Risk (RSK) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
+
 **tsk/**
 
 - `tsk/__init__.py` — TaskList (TSK) domain -- lightweight task/todo-list specifications.
@@ -271,4 +280,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 182
+**Test files**: 185

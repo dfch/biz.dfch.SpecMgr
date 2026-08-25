@@ -40,6 +40,7 @@ _callback
 # Invoked by Pydantic's validation machinery on model construction, not by any
 # direct call in this codebase.
 _._default_blank_status_to_draft
+_._default_blank_status_to_open
 _._optional_blank_to_none
 _._required_non_blank
 _._validate_items_eagerly
@@ -100,6 +101,13 @@ intro
 checked
 recent_updates
 updates
+cause
+consequence
+initial_assessment
+strategy
+mitigation
+residual_assessment
+owner
 answer
 compatibility
 elicitation_context

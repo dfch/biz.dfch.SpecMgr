@@ -4900,6 +4900,7 @@ So the user's proposal maps cleanly onto the engine:
 @alias(value=r"^Probability [1-5]$", type=AliasType.REGEX)
 class AssessmentProbability(MarkdownSection3):
     """### Probability {1..5} — leaf H3, value in the heading."""
+
     @computed_field
     @property
     def value(self) -> int: ...  # int(self.text.split()[1])
@@ -4930,7 +4931,7 @@ And the parent H2 `Assessment(MarkdownSection2)` declares:
 ```python
 class Assessment(MarkdownSection2):
     probability: Probability3  # ### Probability {1..5}
-    impact: Impact3             # ### Impact {1..5}
+    impact: Impact3  # ### Impact {1..5}
 ```
 The field names don't need to be `probability`/`impact` as section classes. And each leaf H3 gets a computed `value: int`.
 

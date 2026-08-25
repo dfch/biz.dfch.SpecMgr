@@ -388,11 +388,11 @@ phase's changes.
 
 #### Phase 1: Specification (commit 1)
 
-- [ ] Task 1.1: Define `rsk` frontmatter (`rsk/models/v1/frontmatter.py` —
+- [x] Task 1.1: Define `rsk` frontmatter (`rsk/models/v1/frontmatter.py` —
   `RskFrontmatter` subclass of `MarkdownFrontmatter`, `type=Literal["rsk"]`,
   6-value status set `open`/`mitigating`/`accepted`/`occurred`/`closed`/
-  `dropped`) — depends on: none — status: not-started
-- [ ] Task 1.2: Define `rsk` body structure (`rsk/models/v1/body.py`,
+  `dropped`) — depends on: none — status: done
+- [x] Task 1.2: Define `rsk` body structure (`rsk/models/v1/body.py`,
   `rsk/models/v1/assessment.py`) — `Risk(MarkdownSection1WithComment)` with
   `cause`/`trigger`/`consequence`/`scope`/`initial_assessment`/`strategy`/
   `mitigation`/`residual_assessment`/`owner`/`tags`/`more_information`;
@@ -401,30 +401,30 @@ phase's changes.
   `^Probability [1-5]$`/`^Impact [1-5]$` — value in the heading, enforced
   eagerly by `match_alias` at parse time; computed `value: int` per leaf;
   derived `level` computed field on `Assessment` from the product zones) —
-  depends on: Task 1.1 — status: not-started
-- [ ] Task 1.3: Create a reference `rsk` document (`rsk_reference.md`)
+  depends on: Task 1.1 — status: done
+- [x] Task 1.3: Create a reference `rsk` document (`rsk_reference.md`)
   exercising every field (cause/trigger/consequence, full initial +
   residual 5x5 pair, all mandatory and optional sections), used as the
-  parser's round-trip test fixture — depends on: Task 1.2 — status:
-  not-started (placed at
+  parser's round-trip fixture — depends on: Task 1.2 — status:
+  done (placed at
   `.specmgr/feat/feat-15-add-artifact-type-risk/rsk_reference.md`, mirroring
   `tsk_reference.md`'s own location convention, not `rsk/data/`)
-- [ ] Task 1.4: `tests/rsk/models/v1/test_frontmatter.py`,
+- [x] Task 1.4: `tests/rsk/models/v1/test_frontmatter.py`,
   `test_body.py`/`test_assessment.py` — structural + validation tests
   mirroring `tests/tsk/models/v1/`: status set, 5x5 heading-value bounds
   (`### Probability 0`/`6` rejected) and derived-level zones (all four zone
   boundaries: 4/5, 9/10, 14/15), missing heading value and wrong H3-order
   rejection, TARA closed   set, `Scope` >=1, `Tags`/`Owner`/`More
   Information` absent-vs-present —
-  depends on: Task 1.3 — status: not-started
-- [ ] Task 1.5: Draft the two packaged domain-knowledge documents
+  depends on: Task 1.3 — status: done
+- [x] Task 1.5: Draft the two packaged domain-knowledge documents
   (`rsk_tara.md`, `rsk_risk_matrix.md`) from this plan's Design Notes —
   TARA: what/when/how for each of the four valid words, interaction with
   `## Mitigation`/`status`; risk matrix: scale anchors, zone table,
   product thresholds, initial/residual reading rule — placed in this
   feature folder until Phase 3 packages them into `rsk/data/` (mirroring
   the `rsk_reference.md` location convention) — depends on: Task 1.2 —
-  status: not-started
+  status: done
 
 #### Phase 2: Pydantic Models & Parser (commit 2)
 
@@ -557,17 +557,22 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-24**: Planning. GitHub issue #15 opened, feature folder
-created from `.specmgr/_template/v1/README.md`. Full schema and MCP surface
-proposed (see Design Notes and Task List), mirroring `feat-10` (tsk)'s
-4-phase/4-commit shape; revised 2026-08-24 per user feedback (TARA instead
-of TARRA, cause/trigger/consequence split into separate sections,
-assessment values moved from list items to H3 headings with regex `@alias`
-constraints, execution pinned to the Orchestrator/Phase-Implementer
-pattern, two domain-knowledge resources `specmgr://rsk/tara` +
-`specmgr://rsk/risk-matrix` added, `list_rsk` summary lines carry the
-residual-risk coordinates, and listing corrected to the paged `list_rsk`
-tool per feat-13). Awaiting final review before Phase 1 starts.
+**As of 2026-08-24**: Phase 1 (Specification) complete. GitHub issue #15
+opened, feature folder created from `.specmgr/_template/v1/README.md`. Full
+schema and MCP surface proposed (see Design Notes and Task List), mirroring
+`feat-10` (tsk)'s 4-phase/4-commit shape; revised 2026-08-24 per user
+feedback (TARA instead of TARRA, cause/trigger/consequence split into
+separate sections, assessment values moved from list items to H3 headings
+with regex `@alias` constraints, execution pinned to the
+Orchestrator/Phase-Implementer pattern, two domain-knowledge resources
+`specmgr://rsk/tara` + `specmgr://rsk/risk-matrix` added, `list_rsk`
+summary lines carry the residual-risk coordinates, and listing corrected to
+the paged `list_rsk` tool per feat-13). Phase 1 (commit 1) delivered:
+`RskFrontmatter` (6-value status, `open` default), the `Risk`/`Assessment`
+body models (5x5 H3-heading assessments, TARA-closed `## Strategy`), the
+`rsk_reference.md` round-trip fixture, the mirrored test suite (43 tests,
+all green — 1349 total), and the two domain-knowledge drafts (`rsk_tara.md`,
+`rsk_risk_matrix.md`). Next: Phase 2 (Pydantic Models & Parser).
 
 ### Blockers
 
@@ -575,7 +580,55 @@ None.
 
 ### Recent Updates
 
-#### 2026-08-24T15:04:31+02:00 (newest)
+#### 2026-08-24T19:59:00+02:00 (newest)
+
+- Completed: Phase 1 (Specification), per Task 1.1-1.5 — (1.1)
+  `rsk/models/v1/frontmatter.py::RskFrontmatter`: `type=Literal["rsk"]`,
+  6-value status set `open`/`mitigating`/`accepted`/`occurred`/`closed`/
+  `dropped`, `open` default via redeclared `status` field + own
+  `mode="before"` validator (runs before the base's
+  `_default_blank_status_to_draft`, verified against Pydantic 2.13.4);
+  (1.2) `rsk/models/v1/assessment.py`: `Probability`/`Impact` leaf H3
+  sections with regex `@alias` `^Probability [1-5]$`/`^Impact [1-5]$`
+  (value in the heading, computed `value: int` per leaf) and
+  `Assessment(MarkdownSection2)` with mandatory `probability`/`impact`
+  fields and computed `level` from the product zones (1-4 low, 5-9
+  medium, 10-14 high, 15-25 very high) via public `level_from_product`;
+  `InitialAssessment`/`ResidualAssessment` thin LITERAL-aliased subclasses
+  pin each H2 heading and enforce the initial-before-residual order;
+  `rsk/models/v1/body.py`: `Risk(MarkdownSection1WithComment)` with the
+  full section order — leaf `Cause`/`Trigger`/`Consequence`/`Mitigation`,
+  `Scope` (`list[MarkdownListItem]`, min 1), `Strategy` (`value:
+  MarkdownParagraph` validated against the TARA 4-value set, mirroring
+  `req`'s `Level`/`Priority`), optional `Owner`/`Tags`/`More Information`;
+  (1.3) `rsk_reference.md`: complete mdformat-stable reference document
+  (frontmatter + body exercising every field; the plan's worked example —
+  initial 4x3=12 `high` -> residual 2x3=6 `medium`) reserved as Phase 2's
+  parser round-trip fixture; (1.4) `tests/rsk/models/v1/` (43 tests):
+  frontmatter status set/defaults, 5x5 heading-value bounds and all four
+  zone boundaries (4/5, 9/10, 14/15), missing-value/wrong-H3-order/
+  wrong-H2-order rejection, TARA closed set, `Scope` >=1, optional
+  sections absent-vs-present, reference-document body round-trip; (1.5)
+  domain-knowledge drafts `rsk_tara.md`/`rsk_risk_matrix.md` in this
+  feature folder (Phase 3 packages them into `rsk/data/`). Package shape
+  mirrors feat-10's Phase 1 (`rsk/__init__.py` docstring-only;
+  `rsk/models/` + `rsk/models/v1/` re-export the public names with
+  `__all__`); vulture whitelist gained the new Pydantic fields/validator
+  (feat-10 precedent). Quality gate: ruff format/check clean, vulture
+  clean, 1349 tests OK, `specmgr docs` + `specmgr mcp-docs` +
+  `specmgr coverage-badge` regenerated with no drift (new rsk modules at
+  100% coverage; `docs/MCP.md`/`docs/coverage.svg` unchanged in content)
+- Next: Phase 2 (Pydantic Models & Parser) — `RskDocument`, `parse_rsk`,
+  `RskSummary`, `rsk_schema.json` + `specmgr schema` registry entry, and
+  `tests/rsk/models/v1/test_parser.py` (round-tripping `rsk_reference.md`)
+- Notes: see the three new Decisions Made entries below (Phase-1
+  micro-decisions); also, the pre-existing 543KB session transcript in
+  this feature folder was left unformatted at branch HEAD (committed in
+  the session-transcript commit after the baseline plan commit) — applied
+  the project's own `ruff format` to it (2-line, formatting-only diff) so
+  the mandatory whole-tree `ruff format --check` gate passes
+
+#### 2026-08-24T15:04:31+02:00
 
 - Completed: pre-implementation audit (user request) — verified
   non-gaps: `general/tools/_doc_paths.py` is fully generic (no
@@ -791,6 +844,32 @@ None.
   `docs(feat-15): plan risk (RSK) artifact type feature` before Phase 1 —
   rationale: `feat-10` precedent (`5985a1d`); keeps each phase's commit
   containing only that phase's changes (user-approved, 2026-08-24).
+- **2026-08-24** (Phase 1): `Assessment` (the shared `MarkdownSection2`
+  base, regex `@alias` `^(Initial|Residual) Assessment$`) is instantiated
+  on `Risk` through two thin LITERAL-aliased subclasses —
+  `InitialAssessment` and `ResidualAssessment` — rather than a single
+  shared field type — rationale: with one class whose regex alias accepts
+  both H2 headings, a document carrying the two assessment sections in the
+  wrong order would parse successfully with the contents silently swapped;
+  the LITERAL-pinned subclasses make `match_alias` reject the swapped order
+  at parse time (verified), keeping the plan's single `Assessment` class
+  as the shared base (fields, computed `level`, direct-construction
+  tests).
+- **2026-08-24** (Phase 1): `RskFrontmatter` redeclares `status` with its
+  own `"open"` default plus a child-class `mode="before"` validator
+  (`_default_blank_status_to_open`, via `models/md`'s `default_if_blank`)
+  — rationale: the base's `"draft"` default is not part of rsk's closed
+  six-value set, so absent/blank `status` must default to `"open"`;
+  verified against Pydantic 2.13.4 that child-class before-validators run
+  before the base's `_default_blank_status_to_draft`, which then sees
+  `"open"` and passes it through — no base-model change needed.
+- **2026-08-24** (Phase 1): the product→zone mapping is exposed as a
+  public `level_from_product(product: int)` helper in `assessment.py`
+  (used by `Assessment.level`, exported in `rsk.models.v1`'s `__all__`) —
+  rationale: product 14 is unattainable by any 1..5 probability/impact
+  pair (no factors <= 5), so the 14/15 zone boundary the plan requires
+  tested can only be exercised through the mapping itself; it also gives
+  the ACC-005 documented-thresholds test (Phase 3) a single target.
 
 ### Related PRs / Commits
 
