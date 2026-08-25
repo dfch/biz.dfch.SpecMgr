@@ -117,6 +117,18 @@ reliability
 requirement
 safety
 security
+current_state
+future_state
+gap
+impact
+question_1
+question_2
+question_3
+question_4
+question_5
+question_6
+question_7
+summary
 
 # --- MCP `@mcp.resource(...)`/`@mcp.tool()` entry points -------------------------
 # Invoked by the MCP framework once registered, not called directly in `src/`.

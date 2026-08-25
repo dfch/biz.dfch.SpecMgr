@@ -1,7 +1,7 @@
 ---
 created: 2026-08-25
 id: feat-16-problem-statement
-status: planning
+status: in-progress
 updated: 2026-08-25
 version: 1.0.0
 ---
@@ -332,33 +332,33 @@ multiple sessions.
 
 #### Phase 1: Specification
 
-- [ ] Task 1.1: Write a full reference `prb_reference.md`
+- [x] Task 1.1: Write a full reference `prb_reference.md`
   (`.specmgr/feat/feat-16-problem-statement/prb_reference.md`) exercising
   every field (all 7 questions answered, `Impact`/`References`/
-  `More Information` all present) — depends on: none — status: not-started
-- [ ] Task 1.2: Define `prb` frontmatter (`prb/models/v1/frontmatter.py` —
+  `More Information` all present) — depends on: none — status: done
+- [x] Task 1.2: Define `prb` frontmatter (`prb/models/v1/frontmatter.py` —
   `PrbFrontmatter` subclass of `MarkdownFrontmatter`, `type=Literal["prb"]`,
   4-value status set `draft`/`active`/`resolved`/`cancelled`, mirroring
   `TskFrontmatter`'s `_ALLOWED_STATUSES` pattern) — depends on: none —
-  status: not-started
-- [ ] Task 1.3: Define `prb` body structure
+  status: done
+- [x] Task 1.3: Define `prb` body structure
   (`prb/models/v1/body.py`) — `Prb(MarkdownSection1WithComment)`,
   `CurrentState(MarkdownSection2)` with mandatory `summary: Summary` and
   optional `question_1..question_7: Question{N} | None` (each with an
   explicit `@alias(...)` matching the exact 5W2H wording — see Design
   Notes), `Gap`/`FutureState` (mandatory leaves), `Impact`/`References`/
   `MoreInformation` (optional leaves) — depends on: Task 1.2 — status:
-  not-started
-- [ ] Task 1.4: `tests/prb/models/v1/test_frontmatter.py`, `test_body.py`
+  done
+- [x] Task 1.4: `tests/prb/models/v1/test_frontmatter.py`, `test_body.py`
   — structural + validation tests mirroring `tests/tsk/models/v1/`/
   `tests/qa/models/v1/`, explicit coverage of mandatory-vs-optional field
   combinations (each of the 7 questions individually absent/present;
   `Impact`/`References`/`More Information` absent/present) — depends on:
-  Task 1.3 — status: not-started
-- [ ] Task 1.5: Phase-end quality gate — run the full pre-commit/quality
+  Task 1.3 — status: done
+- [x] Task 1.5: Phase-end quality gate — run the full pre-commit/quality
   gate (ruff format/check, vulture, full `unittest` suite); confirm
   `prb_reference.md` is `specmgr mdformat`-clean; update this README's
-  Progress section — depends on: Task 1.1, Task 1.4 — status: not-started
+  Progress section — depends on: Task 1.1, Task 1.4 — status: done
 
 #### Phase 2: Pydantic Models, Parser & Schema
 
@@ -488,14 +488,15 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-25**: Planning complete. This plan was designed
-collaboratively (user + agent) in a dedicated planning session before any
-implementation; no code has been written yet. A fresh-context session
-should pick up at Phase 1, Task 1.1. Note: this feature folder uses the
-`feat-16-problem-statement` placeholder id/slug (no GitHub issue filed yet,
-per `AGENTS.md`'s convention) — expect it to be renamed to
-`feat-NNN-problem-statement` (frontmatter `id` updated to match) once an
-issue number is assigned; do not treat `feat-0` as permanent.
+**As of 2026-08-25**: Phase 1 (Specification) complete. `prb` frontmatter
+and body Pydantic models exist and are fully tested; a full reference
+document exercising every field parses and round-trips. A fresh-context
+session should pick up at Phase 2 (Pydantic Models, Parser & Schema), Task
+2.1. Note: this feature folder uses the `feat-16-problem-statement`
+placeholder id/slug (no GitHub issue filed yet, per `AGENTS.md`'s
+convention) — expect it to be renamed to `feat-NNN-problem-statement`
+(frontmatter `id` updated to match) once an issue number is assigned; do
+not treat `feat-0` as permanent.
 
 ### Blockers
 
@@ -503,7 +504,36 @@ None.
 
 ### Recent Updates
 
-#### Update 2026-08-25
+#### Update 2026-08-25 (Phase 1: Specification)
+
+- Completed: Task 1.1 (`prb_reference.md`, exercising all 7 5W2H questions
+  plus `Impact`/`References`/`More Information`); Task 1.2
+  (`prb/models/v1/frontmatter.py::PrbFrontmatter`, 4-value status set);
+  Task 1.3 (`prb/models/v1/body.py` — `Prb`, `CurrentState`,
+  `Question1`..`Question7` with explicit regex `@alias`es matching the
+  exact 5W2H wording, `Gap`/`FutureState`/`Impact`/`References`/
+  `MoreInformation` leaves); Task 1.4 (`tests/prb/models/v1/`
+  `test_frontmatter.py`/`test_body.py`, 32 tests total, covering each of
+  the 7 questions and `Impact`/`References`/`More Information` both
+  absent/present individually, plus the full reference document's
+  round-trip); Task 1.5 (phase-end quality gate — ruff format/check,
+  vulture, full `unittest` suite (1338 tests, all green),
+  `prb_reference.md` confirmed `specmgr mdformat`-clean).
+- Also created the supporting domain-package skeleton needed for the
+  models to be importable ahead of Phase 3: `prb/__init__.py` (docstring
+  only, no `prompts`/`resources`/`tools` imports yet — those don't exist
+  until Phase 3 Task 3.16), `prb/models/__init__.py`,
+  `prb/models/v1/__init__.py` (aggregating `PrbFrontmatter` + body
+  classes; `PrbDocument`/`parse_prb`/`PrbSummary` are added in Phase 2).
+  Added `current_state`/`gap`/`impact`/`future_state`/`summary`/
+  `question_1`..`question_7` to `whitelist.py` (new Pydantic field names
+  vulture cannot otherwise see as used).
+- Next: Phase 2 (Pydantic Models, Parser & Schema) — `PrbDocument`,
+  `parse_prb`, `PrbSummary`, `generate_prb_schema()`, parser tests.
+- Notes: Followed the plan's Design Notes schema verbatim; no ambiguity
+  encountered requiring a design decision beyond what's already logged.
+
+#### Update 2026-08-25 (planning)
 
 - Completed: Full design/planning discussion — schema shape (5W2H
   questions under `Current State`, `Gap`/`Impact`/`Future State`/
@@ -567,6 +597,22 @@ None.
   drift (found during this planning session) is fixed under
   `feat-7-various-improvements` Task 0.24, not here — out of scope for
   this feature.
+- **2026-08-25** (Phase 1): Each `Question{N}`'s `@alias` uses
+  `AliasType.REGEX` (e.g. `@alias(value=r"What Is the Problem\?",
+  type=AliasType.REGEX)`), not `AliasType.LITERAL` — the plan's own Design
+  Notes ASCII diagram already showed the wording with a backslash-escaped
+  `?` (`"What Is the Problem\\?"`), which is regex-escaping syntax, not
+  needed for a `LITERAL` exact-string match; `REGEX` was chosen to follow
+  that notation literally.
+- **2026-08-25** (Phase 1): `prb/__init__.py`/`prb/models/__init__.py`/
+  `prb/models/v1/__init__.py` were created now (Phase 1), ahead of their
+  explicit task mentions (Task 3.16 for `prb/__init__.py`), purely as the
+  minimal package skeleton needed for `prb.models.v1.frontmatter`/`.body`
+  to be importable at all — mirroring `tsk`/`qa`'s per-level `__init__.py`
+  convention (unlike `req`, which lacks a `req/models/__init__.py`).
+  `prb/__init__.py` deliberately does not yet import `prompts`/
+  `resources`/`tools` (none exist yet); Task 3.16 will extend it, not
+  replace it.
 
 ### Related PRs / Commits
 
