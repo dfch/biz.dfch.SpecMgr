@@ -129,6 +129,28 @@ First-line docstrings from each module, organized by domain:
 - `prb/models/v1/frontmatter.py` — Problem Statement (PRB) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
 - `prb/models/v1/parser.py` — Parse raw Problem Statement (PRB) ``.md`` text into a :class:`PrbDocument` (Phase 2, Task 2.2).
 - `prb/models/v1/summary.py` — Pydantic model for one line of PRB listing output (Phase 2, Task 2.3).
+- `prb/prompts/__init__.py` — MCP prompt wrappers for Problem Statements (Tasks 3.14-3.15).
+- `prb/prompts/create_prb.py` — ``@mcp.prompt()``: create_prb (Task 3.14).
+- `prb/prompts/update_prb.py` — ``@mcp.prompt()``: update_prb (Task 3.15).
+- `prb/resources/__init__.py` — MCP resource registrations for Problem Statement (PRB) documents (Task 3.11).
+- `prb/resources/prb_example.py` — Resource: specmgr://prb/example (Task 3.11).
+- `prb/resources/prb_schema.py` — Resource: specmgr://prb/schema (Task 3.11).
+- `prb/resources/prb_template.py` — Resource: specmgr://prb/template (Task 3.11).
+- `prb/tools/__init__.py` — MCP tool wrappers for problem statements (mirrors ``tsk/tools/``'s own shape).
+- `prb/tools/_io.py` — Thin file read helpers over ``parse_prb`` (Task 3.1).
+- `prb/tools/_lock.py` — Per-document in-process lock guarding problem statement mutations.
+- `prb/tools/_paths.py` — Problem statement base directory resolution and id -> path lookup (Task 3.1).
+- `prb/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_prb``/``update_prb``.
+- `prb/tools/create_prb.py` — ``@mcp.tool()`` wrapper: create_prb (Task 3.3).
+- `prb/tools/delete_prb.py` — ``@mcp.tool()`` wrapper: delete_prb (Task 3.6).
+- `prb/tools/get_prb.py` — ``@mcp.tool()`` wrapper: get_prb (Task 3.8).
+- `prb/tools/get_prb_example.py` — ``@mcp.tool()`` wrapper: get_prb_example (Task 3.10).
+- `prb/tools/get_prb_template.py` — ``@mcp.tool()`` wrapper: get_prb_template (Task 3.10).
+- `prb/tools/list_prb.py` — ``@mcp.tool()`` wrapper: list_prb (Task 3.9).
+- `prb/tools/parse_prb.py` — ``@mcp.tool()`` wrapper: parse_prb (Task 3.2).
+- `prb/tools/set_status_prb.py` — ``@mcp.tool()`` wrapper: set_status_prb (Task 3.5).
+- `prb/tools/update_prb.py` — ``@mcp.tool()`` wrapper: update_prb (Task 3.4).
+- `prb/tools/validate_prb.py` — ``@mcp.tool()`` wrapper: validate_prb (Task 3.7).
 
 **qa/**
 
@@ -283,4 +305,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 185
+**Test files**: 204

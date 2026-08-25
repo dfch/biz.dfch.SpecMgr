@@ -389,71 +389,71 @@ multiple sessions.
 
 #### Phase 3: MCP Surface
 
-- [ ] Task 3.1: `prb/tools/_paths.py`/`_io.py`/`_write.py`/`_lock.py`, thin
+- [x] Task 3.1: `prb/tools/_paths.py`/`_io.py`/`_write.py`/`_lock.py`, thin
   wrappers over `general/tools/_doc_paths.py` (mirrors `tsk/tools/`/
-  `qa/tools/` exactly) — depends on: Task 2.2 — status: not-started
-- [ ] Task 3.2: `parse_prb(path: str) -> PrbDocument` tool wrapper
-  (`prb/tools/parse_prb.py`) — depends on: Task 3.1 — status: not-started
-- [ ] Task 3.3: `create_prb(content: str) -> PrbDocument` tool (body-only
+  `qa/tools/` exactly) — depends on: Task 2.2 — status: done
+- [x] Task 3.2: `parse_prb(path: str) -> PrbDocument` tool wrapper
+  (`prb/tools/parse_prb.py`) — depends on: Task 3.1 — status: done
+- [x] Task 3.3: `create_prb(content: str) -> PrbDocument` tool (body-only
   content; MCP builds frontmatter: `id`, `type="prb"`, `status="draft"`,
   `created=updated=now`, `version`) — depends on: Task 3.1 — status:
-  not-started
-- [ ] Task 3.4: `update_prb(id, content) -> PrbDocument` tool (whole-body
+  done
+- [x] Task 3.4: `update_prb(id, content) -> PrbDocument` tool (whole-body
   replace, preserves `id`/`type`/`status`/`created`/`version`, bumps
-  `updated`) — depends on: Task 3.1 — status: not-started
-- [ ] Task 3.5: `set_status_prb(id, status) -> PrbDocument` tool (only path
+  `updated`) — depends on: Task 3.1 — status: done
+- [x] Task 3.5: `set_status_prb(id, status) -> PrbDocument` tool (only path
   that changes `status`; reconstructs `PrbFrontmatter` via its own
   constructor so the 4-value validator runs, mirroring `set_status_tsk`/
-  `set_status_qa`) — depends on: Task 3.1 — status: not-started
-- [ ] Task 3.6: `delete_prb(id) -> NoReturn` stub tool — depends on: Task
-  3.1 — status: not-started
-- [ ] Task 3.7: `validate_prb(content, full=False) -> bool` tool — depends
-  on: none — status: not-started
-- [ ] Task 3.8: `get_prb(id) -> PrbDocument` tool (id-based single-document
-  read; tool, not resource) — depends on: Task 3.1 — status: not-started
-- [ ] Task 3.9: `list_prb(max_results=None, offset=None) -> PagedResult[PrbSummary]`
+  `set_status_qa`) — depends on: Task 3.1 — status: done
+- [x] Task 3.6: `delete_prb(id) -> NoReturn` stub tool — depends on: Task
+  3.1 — status: done
+- [x] Task 3.7: `validate_prb(content, full=False) -> bool` tool — depends
+  on: none — status: done
+- [x] Task 3.8: `get_prb(id) -> PrbDocument` tool (id-based single-document
+  read; tool, not resource) — depends on: Task 3.1 — status: done
+- [x] Task 3.9: `list_prb(max_results=None, offset=None) -> PagedResult[PrbSummary]`
   tool, via `general/tools/_paging.py`'s `paginate`/`normalize_paging`
   (default page size 25, cap 100), preserving the standard skip-malformed-
   file scan behavior — depends on: Task 2.3, Task 3.1 — status:
-  not-started
-- [ ] Task 3.10: `get_prb_example`/`get_prb_template` tools + packaged data
+  done
+- [x] Task 3.10: `get_prb_example`/`get_prb_template` tools + packaged data
   (`prb/data/prb_example.md`, `prb/data/prb_template.md`) via
   `general/tools/_packaged_data.py` — depends on: Task 1.1 — status:
-  not-started
-- [ ] Task 3.11: `prb/resources/{prb_schema,prb_example,prb_template}.py`
+  done
+- [x] Task 3.11: `prb/resources/{prb_schema,prb_example,prb_template}.py`
   — `specmgr://prb/schema` (packaged `prb/data/prb_schema.json`, mirroring
   `specmgr://tsk/schema`), `specmgr://prb/example`, `specmgr://prb/template`
   (no `/list`, no `/{id}`) — depends on: Task 2.5, Task 3.10 — status:
-  not-started
-- [ ] Task 3.12: `pyproject.toml` package-data entry for
+  done
+- [x] Task 3.12: `pyproject.toml` package-data entry for
   `biz.dfch.specmgr.prb` (`data/*.md`, `data/*.json`); `.pre-commit-config.yaml`
   — widen the shared schema-hook glob to include `prb/models/v1`, add a
   `specmgr-schema-prb-package` hook — depends on: Task 2.5 — status:
-  not-started
-- [ ] Task 3.13: `.github/workflows/ci.yml` — add the `docs/prb_schema.json`
+  done
+- [x] Task 3.13: `.github/workflows/ci.yml` — add the `docs/prb_schema.json`
   check + packaged-copy check steps — depends on: Task 2.5 — status:
-  not-started
-- [ ] Task 3.14: `prb/data/prb_create_instructions.md` +
+  done
+- [x] Task 3.14: `prb/data/prb_create_instructions.md` +
   `prb/prompts/create_prb.py` (`@mcp.prompt()`, `string.Template`
   substitution, narrates the full interview flow — see Design Notes) —
-  depends on: Tasks 3.3, 3.9 — status: not-started
-- [ ] Task 3.15: `prb/data/prb_update_instructions.md` +
+  depends on: Tasks 3.3, 3.9 — status: done
+- [x] Task 3.15: `prb/data/prb_update_instructions.md` +
   `prb/prompts/update_prb.py` — depends on: Tasks 3.4, 3.5, 3.8 — status:
-  not-started
-- [ ] Task 3.16: `prb/__init__.py` (docstring + `from . import prompts, resources, tools`), add `prb` to `server.py`'s bottom-of-file domain
+  done
+- [x] Task 3.16: `prb/__init__.py` (docstring + `from . import prompts, resources, tools`), add `prb` to `server.py`'s bottom-of-file domain
   import line (alphabetical: `adr, general, prb, qa, req, tsk, uc`) and
   update its module docstring (Tools/Resources/Prompts sections) — depends
-  on: Tasks 3.2-3.15 — status: not-started
-- [ ] Task 3.17: `tests/prb/tools/...`, `tests/prb/resources/...`,
+  on: Tasks 3.2-3.15 — status: done
+- [x] Task 3.17: `tests/prb/tools/...`, `tests/prb/resources/...`,
   `tests/prb/prompts/...` mirroring `tests/tsk/`/`tests/qa/`'s layout,
   including live end-to-end coverage of `create_prb`/`update_prb`'s
   narrated `TodoWrite`/`question`-tool flow (ACC-006) and `list_prb`'s
   paging behavior (default page size, `max_results` clamping, `offset`
   paging, `truncated` boundary) — depends on: Tasks 3.1-3.16 — status:
-  not-started
-- [ ] Task 3.18: Phase-end quality gate — full pre-commit/quality gate
+  done
+- [x] Task 3.18: Phase-end quality gate — full pre-commit/quality gate
   including Task 3.17's new tests; update this README's Progress section
-  — depends on: Task 3.17 — status: not-started
+  — depends on: Task 3.17 — status: done
 
 #### Phase 4: Cross-cutting registration
 
@@ -488,11 +488,16 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-25**: Phase 2 (Pydantic Models, Parser & Schema) complete.
-`PrbDocument`, `parse_prb`, `PrbSummary`, and `generate_prb_schema()` all
-exist and are fully tested; `docs/prb_schema.json` is generated via
-`specmgr schema` (not hand-written) and drift-free on a second run. A
-fresh-context session should pick up at Phase 3 (MCP Surface), Task 3.1.
+**As of 2026-08-25**: Phase 3 (MCP Surface) complete. The full `prb`
+domain package now exists under `src/biz/dfch/specmgr/prb/`
+(`tools`/`resources`/`prompts`/`data`), registered in `server.py`
+alongside `adr`/`general`/`qa`/`req`/`tsk`/`uc`. Every REQ-004/REQ-005/
+REQ-006/REQ-007 tool, resource, and prompt listed in the plan exists,
+is registered, and is covered by tests (146 new tests under
+`tests/prb/`); `specmgr schema`/`specmgr docs`/`specmgr mcp-docs` all
+report the expected new `prb` entries with no unexpected drift. A
+fresh-context session should pick up at Phase 4 (Cross-cutting
+registration), Task 4.1 (`AGENTS.md`).
 Note: this feature folder uses the `feat-16-problem-statement` placeholder
 id/slug (no GitHub issue filed yet, per `AGENTS.md`'s convention) — expect
 it to be renamed to `feat-NNN-problem-statement` (frontmatter `id` updated
@@ -504,6 +509,76 @@ permanent.
 None.
 
 ### Recent Updates
+
+#### Update 2026-08-25 (Phase 3: MCP Surface)
+
+- Completed all of Tasks 3.1-3.18. New `src/biz/dfch/specmgr/prb/`
+  sub-packages: `tools/` (`_paths.py`/`_io.py`/`_write.py`/`_lock.py`
+  plumbing plus `parse_prb`, `create_prb`, `update_prb`, `set_status_prb`,
+  `delete_prb` stub, `validate_prb`, `get_prb`, `list_prb`,
+  `get_prb_example`, `get_prb_template` -- each a 1:1 port of the
+  matching `tsk.tools`/`qa.tools` module, adapted for PRB's 4-value
+  status set and mandatory `Gap`/`Future State` fields); `resources/`
+  (`specmgr://prb/schema`/`/example`/`/template`, no `/list`, no
+  `/{id}`); `prompts/` (`create_prb`/`update_prb`, each reading its own
+  packaged instructions file via `string.Template`); `data/`
+  (`prb_example.md` -- reused from `prb_reference.md` verbatim,
+  `prb_template.md`, `prb_schema.json` -- the packaged copy generated by
+  `specmgr schema --type prb --output-dir src/biz/dfch/specmgr/prb/data`,
+  `prb_create_instructions.md`, `prb_update_instructions.md`).
+  `prb/__init__.py` now imports `prompts`/`resources`/`tools`; `server.py`
+  imports `prb` alphabetically (`adr, general, prb, qa, req, tsk, uc`)
+  and its module docstring lists every new `prb` resource/tool/prompt.
+- `create_prb`'s narrated instructions cover the full 9-step interview
+  flow from the plan's Design Notes verbatim: (0) `list_prb` dedup check;
+  (1) structure recap; (2) `TodoWrite`-list + `question`-tool-driven 5W2H
+  interview, explicitly allowing skip; (3) `Summary` synthesis; (4) `Gap`
+  drafting + `question`-tool confirmation; (5) optional `Impact`; (6)
+  `Future State`; (7) optional `References`/`More Information`; (8)
+  template/example/schema references; (9) the `create_prb(content)` tool
+  call sequence. `update_prb`'s instructions cover the symmetric 8-step
+  revision flow (read via `get_prb` first, show which of the 7 questions
+  are answered, elicit revisions, full re-synthesis of `Summary` -- not
+  an append, re-draft/confirm `Gap`, optional revisions to
+  `Impact`/`Future State`/`References`/`More Information`,
+  `update_prb(id, content)` whole-body replace, `set_status_prb` as a
+  separate optional follow-up). Both prompts only ever return narration
+  strings -- neither calls `TodoWrite`/`question`/`list_prb`/`get_prb`/
+  `create_prb`/`update_prb` itself, matching every existing prompt's
+  contract in this codebase.
+- `pyproject.toml` gained a `biz.dfch.specmgr.prb` package-data entry
+  (`data/*.md`, `data/*.json`); `.pre-commit-config.yaml`'s shared
+  schema-hook glob now includes `prb/models/v1`, plus a new
+  `specmgr-schema-prb-package` hook; `.github/workflows/ci.yml` gained
+  the matching `docs/prb_schema.json` + packaged-copy check steps,
+  mirroring the existing `tsk`/`qa` steps exactly.
+- Added `tests/prb/tools/` (14 test modules mirroring `tests/tsk/tools/`
+  file-for-file), `tests/prb/resources/` (3 test modules), and
+  `tests/prb/prompts/` (2 test modules, ACC-006: asserting every
+  narrated step/tool-call marker is present and, where sequence matters,
+  in the correct relative order) -- 146 new tests, all green.
+- Verified end to end, live (not just via tests): `create_prb` ->
+  `update_prb` -> `set_status_prb` -> `get_prb` -> `list_prb` ->
+  `delete_prb` (stub) against a real temp docs directory, plus
+  `get_prb_example`/`get_prb_template` returning real, non-empty,
+  parseable packaged markdown.
+- Phase-end quality gate: `ruff format --check`/`ruff check` (both
+  clean), `vulture src/ whitelist.py --min-confidence 60` (no findings
+  -- no whitelist additions were needed), full `unittest` suite (1452
+  tests, up from 1347, all green), `specmgr schema` (all five doc types,
+  including `prb`, unchanged/drift-free), `specmgr docs` (regenerated
+  `docs/api/`/`docs/GENERATED.md` with the new `prb` module docs),
+  `specmgr mcp-docs` (regenerated `docs/MCP.md` with every new `prb`
+  resource/tool/prompt).
+- Next: Phase 4 (Cross-cutting registration) -- `AGENTS.md` update,
+  final `specmgr docs`/`specmgr schema`/`specmgr mcp-docs` drift
+  re-check.
+- Notes: No design decisions required beyond following the plan's Design
+  Notes and the TSK/QA precedent files verbatim; one deliberate,
+  in-scope deviation from a literal reading of Task 3.10 -- `prb_example.md`
+  reuses `prb_reference.md`'s exact content (including its id) rather than
+  a freshly drafted document, following QA's own precedent
+  (`qa_example.md`/`qa_reference.md` share the same id and content too).
 
 #### Update 2026-08-25 (Phase 2: Pydantic Models, Parser & Schema)
 
