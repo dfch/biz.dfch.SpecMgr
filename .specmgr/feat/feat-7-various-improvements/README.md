@@ -2,7 +2,7 @@
 created: 2026-08-15
 id: feat-7-various-improvements
 status: planning
-updated: 2026-08-19
+updated: 2026-08-25
 version: 1.0.0
 ---
 
@@ -596,6 +596,21 @@ progresses (edit, don't duplicate).
   `get_tsk` MCP tool with id `aaf70093-8a7c-4565-9985-3beaa85e1d3d` —
   depends on: none — status: done (2026-08-19)
 
+- [ ] Task 0.24: Clean up `AGENTS.md`'s stale `specmgr://<d>/list` resource
+  mentions left over from `feat-13-list-paging`'s resource→tool conversion
+  (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13) — `AGENTS.md`'s per-domain
+  bullets (at least `req`/`tsk`/`qa`, confirm `uc`/`adr` too) still
+  describe `specmgr://req/list`/`specmgr://tsk/list`/`specmgr://qa/list`
+  as resources instead of the `list_req`/`list_tsk`/`list_qa` tools they
+  actually are today; found and flagged during
+  `.specmgr/feat/feat-16-problem-statement/README.md`'s planning session
+  (2026-08-25) while designing that new domain's own `list_prb` tool
+  against the *current* code/ADR state rather than `AGENTS.md`'s
+  (out-of-date) wording. Fix every affected domain bullet, plus any other
+  live `specmgr://<d>/list` mention in `AGENTS.md` (e.g. the "MCP server
+  (`server.py`)" section's own domain-surface description, if it lists
+  resources per domain) — depends on: none — status: not-started
+
 - [ ] Task 1.1: Inventory current `specmgr://*/list` resources and diff
   their output shape/behavior (`adr_list` vs. `req_list`) — depends on:
   none — status: not-started
@@ -616,8 +631,7 @@ progresses (edit, don't duplicate).
   **completed** via `feat-13-list-paging` (resource→tool `list_<domain>` +
   `asdste100`-style `PagedResult` wrapper, recorded in ADR
   ec9f5262-9912-49d0-903f-fcfb54f28c13); the shared-base-summary piece was
-  also carried into and completed by that feature (`general.models.
-  DocSummary`, subclassed by 4 of 5 domains — see ACC-001).
+  also carried into and completed by that feature (`general.models. DocSummary`, subclassed by 4 of 5 domains — see ACC-001).
 - [ ] Task 2.2: Decide the fate of the `_test` prompt variants and the
   criteria used for the prompt-quality review — depends on: Task 1.2 —
   status: not-started
