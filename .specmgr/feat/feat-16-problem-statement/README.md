@@ -457,18 +457,18 @@ multiple sessions.
 
 #### Phase 4: Cross-cutting registration
 
-- [ ] Task 4.1: `AGENTS.md` — update heading to "seven domain/cross-cutting
+- [x] Task 4.1: `AGENTS.md` — update heading to "seven domain/cross-cutting
   packages implemented (ADR, REQ, UC, TSK, QA, PRB, general)"; add a
   `prb/` bullet (chronological order, after `qa/`); update the "Still
   genuinely missing" list (`validate_prb` not enforced via pre-commit/CI,
   `delete_prb` stub) and the closing domain-enumeration paragraphs —
-  depends on: Phase 3 complete — status: not-started
-- [ ] Task 4.2: `specmgr docs` / `specmgr mcp-docs` / `specmgr schema`
+  depends on: Phase 3 complete — status: done
+- [x] Task 4.2: `specmgr docs` / `specmgr mcp-docs` / `specmgr schema`
   regeneration — confirm `prb` appears correctly and all three commands
-  report zero drift — depends on: Task 4.1 — status: not-started
-- [ ] Task 4.3: Phase-end quality gate — full pre-commit/quality gate;
+  report zero drift — depends on: Task 4.1 — status: done
+- [x] Task 4.3: Phase-end quality gate — full pre-commit/quality gate;
   update this README's Progress section — depends on: Task 4.2 — status:
-  not-started
+  done
 
 #### Phase 5: Final cross-cutting verification
 
@@ -488,16 +488,17 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-25**: Phase 3 (MCP Surface) complete. The full `prb`
-domain package now exists under `src/biz/dfch/specmgr/prb/`
-(`tools`/`resources`/`prompts`/`data`), registered in `server.py`
-alongside `adr`/`general`/`qa`/`req`/`tsk`/`uc`. Every REQ-004/REQ-005/
-REQ-006/REQ-007 tool, resource, and prompt listed in the plan exists,
-is registered, and is covered by tests (146 new tests under
-`tests/prb/`); `specmgr schema`/`specmgr docs`/`specmgr mcp-docs` all
-report the expected new `prb` entries with no unexpected drift. A
-fresh-context session should pick up at Phase 4 (Cross-cutting
-registration), Task 4.1 (`AGENTS.md`).
+**As of 2026-08-25**: Phase 4 (Cross-cutting registration) complete.
+`AGENTS.md` now documents seven domain/cross-cutting packages (ADR, REQ,
+UC, TSK, QA, PRB, general), with a full `prb/` bullet (chronological,
+after `qa/`), updated "Still genuinely missing" list (`validate_prb`,
+`delete_prb` stub), and every closing domain-enumeration paragraph/
+`server.py` import-line mention updated to include `prb`. `specmgr
+docs`/`specmgr mcp-docs`/`specmgr schema` (including both
+`docs/prb_schema.json` and the packaged
+`src/biz/dfch/specmgr/prb/data/prb_schema.json` copy) all re-confirmed
+zero drift. A fresh-context session should pick up at Phase 5 (Final
+cross-cutting verification), Task 5.1.
 Note: this feature folder uses the `feat-16-problem-statement` placeholder
 id/slug (no GitHub issue filed yet, per `AGENTS.md`'s convention) — expect
 it to be renamed to `feat-NNN-problem-statement` (frontmatter `id` updated
@@ -509,6 +510,41 @@ permanent.
 None.
 
 ### Recent Updates
+
+#### Update 2026-08-25 (Phase 4: Cross-cutting registration)
+
+- Completed Tasks 4.1-4.3. `AGENTS.md`: heading changed to "seven
+  domain/cross-cutting packages implemented (ADR, REQ, UC, TSK, QA, PRB,
+  general)"; added a `prb/` bullet (chronological, right after `qa/`)
+  describing its domain-first `prb/models/v1/` location, its full tool
+  list, its three resources (`specmgr://prb/schema`/`/example`/
+  `/template`, no `/{id}`, no `/list`), and its two prompts
+  (`create_prb`/`update_prb`); updated the "Still genuinely missing" list
+  to add `validate_prb` (alongside the other `validate_*` tools not yet
+  enforced via pre-commit/CI) and `delete_prb` (alongside the other
+  `delete_*` stubs); updated both closing domain-enumeration paragraphs
+  (`Don't assume any other domain package exists beyond ...` and the
+  `server.py` bottom-of-file import line description) to include `prb` in
+  alphabetical position; updated the "`req`/`tsk`/`qa` each register
+  tools, resources, and prompts; `uc` ..." sentence to
+  "`req`/`tsk`/`qa`/`prb` each register tools, resources, and prompts;
+  `uc` ...".
+- Re-ran `specmgr schema` (all five doc types, including a separate
+  `--type prb --output-dir src/biz/dfch/specmgr/prb/data` invocation for
+  the packaged copy), `specmgr docs`, and `specmgr mcp-docs` — all three
+  reported zero drift (only `AGENTS.md` shows as modified in `git
+  status`; no generated file changed).
+- Phase-end quality gate: `ruff format --check`/`ruff check` (both
+  clean), `vulture src/ whitelist.py --min-confidence 60` (no findings),
+  full `unittest` suite (1452 tests, unchanged from Phase 3, all green —
+  expected, since this phase touched only `AGENTS.md`).
+- Next: Phase 5 (Final cross-cutting verification) — walk every
+  ACC-001..008 with concrete evidence including a live
+  `create_prb`→`update_prb`→`set_status_prb` run, full quality gate end
+  to end, set feature status to `done`.
+- Notes: No design decisions required; this phase was purely
+  documentation (AGENTS.md) plus re-confirming Phase 3's drift-free
+  state, exactly as scoped.
 
 #### Update 2026-08-25 (Phase 3: MCP Surface)
 
