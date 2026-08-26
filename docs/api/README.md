@@ -60,6 +60,29 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general.tools._paging`](biz.dfch.specmgr.general.tools._paging.md) — Generic, doc-type-agnostic paging helpers (feat-13 Task 1.2).
 - [`biz.dfch.specmgr.general.tools.mdformat`](biz.dfch.specmgr.general.tools.mdformat.md) — ``@mcp.tool()`` wrapper: mdformat.
 - [`biz.dfch.specmgr.general.tools.webfetch`](biz.dfch.specmgr.general.tools.webfetch.md) — ``@mcp.tool()`` wrapper: webfetch.
+- [`biz.dfch.specmgr.gol`](biz.dfch.specmgr.gol.md) — Goal (GOL) domain -- high-level business goal specifications.
+- [`biz.dfch.specmgr.gol.prompts`](biz.dfch.specmgr.gol.prompts.md) — MCP prompt wrappers for Goals (Tasks 3.14-3.15).
+- [`biz.dfch.specmgr.gol.prompts.create_gol`](biz.dfch.specmgr.gol.prompts.create_gol.md) — ``@mcp.prompt()``: create_gol (Task 3.14).
+- [`biz.dfch.specmgr.gol.prompts.update_gol`](biz.dfch.specmgr.gol.prompts.update_gol.md) — ``@mcp.prompt()``: update_gol (Task 3.15).
+- [`biz.dfch.specmgr.gol.resources`](biz.dfch.specmgr.gol.resources.md) — MCP resource registrations for Goal (GOL) documents (Task 3.11).
+- [`biz.dfch.specmgr.gol.resources.gol_example`](biz.dfch.specmgr.gol.resources.gol_example.md) — Resource: specmgr://gol/example (Task 3.11).
+- [`biz.dfch.specmgr.gol.resources.gol_schema`](biz.dfch.specmgr.gol.resources.gol_schema.md) — Resource: specmgr://gol/schema (Task 3.11, packaged data).
+- [`biz.dfch.specmgr.gol.resources.gol_template`](biz.dfch.specmgr.gol.resources.gol_template.md) — Resource: specmgr://gol/template (Task 3.11).
+- [`biz.dfch.specmgr.gol.tools`](biz.dfch.specmgr.gol.tools.md) — MCP tool wrappers for goals (mirrors ``prb/tools/``'s own shape).
+- [`biz.dfch.specmgr.gol.tools._io`](biz.dfch.specmgr.gol.tools._io.md) — Thin file read helpers over ``parse_gol`` (Task 3.1).
+- [`biz.dfch.specmgr.gol.tools._lock`](biz.dfch.specmgr.gol.tools._lock.md) — Per-document in-process lock guarding goal mutations.
+- [`biz.dfch.specmgr.gol.tools._paths`](biz.dfch.specmgr.gol.tools._paths.md) — Goal base directory resolution and id -> path lookup (Task 3.1).
+- [`biz.dfch.specmgr.gol.tools._write`](biz.dfch.specmgr.gol.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_gol``/``update_gol``.
+- [`biz.dfch.specmgr.gol.tools.create_gol`](biz.dfch.specmgr.gol.tools.create_gol.md) — ``@mcp.tool()`` wrapper: create_gol (Task 3.3).
+- [`biz.dfch.specmgr.gol.tools.delete_gol`](biz.dfch.specmgr.gol.tools.delete_gol.md) — ``@mcp.tool()`` wrapper: delete_gol (Task 3.6).
+- [`biz.dfch.specmgr.gol.tools.get_gol`](biz.dfch.specmgr.gol.tools.get_gol.md) — ``@mcp.tool()`` wrapper: get_gol (Task 3.8).
+- [`biz.dfch.specmgr.gol.tools.get_gol_example`](biz.dfch.specmgr.gol.tools.get_gol_example.md) — ``@mcp.tool()`` wrapper: get_gol_example (Task 3.10).
+- [`biz.dfch.specmgr.gol.tools.get_gol_template`](biz.dfch.specmgr.gol.tools.get_gol_template.md) — ``@mcp.tool()`` wrapper: get_gol_template (Task 3.10).
+- [`biz.dfch.specmgr.gol.tools.list_gol`](biz.dfch.specmgr.gol.tools.list_gol.md) — ``@mcp.tool()`` wrapper: list_gol (Task 3.9).
+- [`biz.dfch.specmgr.gol.tools.parse_gol`](biz.dfch.specmgr.gol.tools.parse_gol.md) — ``@mcp.tool()`` wrapper: parse_gol (Task 3.2).
+- [`biz.dfch.specmgr.gol.tools.set_status_gol`](biz.dfch.specmgr.gol.tools.set_status_gol.md) — ``@mcp.tool()`` wrapper: set_status_gol (Task 3.5).
+- [`biz.dfch.specmgr.gol.tools.update_gol`](biz.dfch.specmgr.gol.tools.update_gol.md) — ``@mcp.tool()`` wrapper: update_gol (Task 3.4).
+- [`biz.dfch.specmgr.gol.tools.validate_gol`](biz.dfch.specmgr.gol.tools.validate_gol.md) — ``@mcp.tool()`` wrapper: validate_gol (Task 3.7).
 - [`biz.dfch.specmgr.models`](biz.dfch.specmgr.models.md) — Pydantic models used by the ``biz-dfch-specmgr`` MCP server.
 - [`biz.dfch.specmgr.models.adr`](biz.dfch.specmgr.models.adr.md) — Pydantic models for MADR 4.0.0-based Architecture Decision Records.
 - [`biz.dfch.specmgr.models.adr.v1`](biz.dfch.specmgr.models.adr.v1.md) — ADR schema version 1 (``SCHEMA_MAJOR_VERSION == 1``).

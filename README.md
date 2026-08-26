@@ -19,14 +19,14 @@ specification artifacts.
 At this time, we have these artifact:
 
 - Architecture Decision Record (ADR)
-- Use Case (UC)
+- Goal (GOL)
+- Problem Statement (PRB)
 - Question and Answer (QA)
 - Requirement (REQ)
 - Task List (TSK)
-- Problem Statement (PRB)
+- Use Case (UC)
 <!-- 
 - Risk (RSK)
-- Goal (GOL)
 - Decision (DEC)
 - Acceptance Criterium (ACC)
 - Feature (FTR)
