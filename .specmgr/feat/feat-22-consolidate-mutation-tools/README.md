@@ -1,8 +1,8 @@
 ---
 created: 2026-08-26
 id: feat-22-consolidate-mutation-tools
-status: planning
-updated: 2026-08-26
+status: in-progress
+updated: 2026-08-27
 version: 1.0.0
 ---
 
@@ -420,7 +420,7 @@ phase-orchestrator commits each accepted phase as one Conventional Commit.
 
 #### Phase 1: ADR
 
-- [ ] Task 1.1: Create the feature's ADR with the `specmgr_create_adr` MCP
+- [x] Task 1.1: Create the feature's ADR with the `specmgr_create_adr` MCP
   tool (never hand-write the file — ADR 898bfcd0), status `accepted`, title
   "Consolidate whole-body update and status-change tools into generic type-
   dispatched tools": Context (15 near-duplicate mutation tools; LLM clients
@@ -440,18 +440,17 @@ phase-orchestrator commits each accepted phase as one Conventional Commit.
   frontmatter never addressable; `get_<d>(raw=True)` as the line-number
   source — tool-first per ADR ddfb1109, re-introducing `specmgr://<d>/{id}`
   resources was considered and rejected; future domains add one dispatch
-  entry per generic tool, not new tools) — depends on: none — status: not-
-  started
-- [ ] Task 1.2: Validate the new ADR with `specmgr_validate_adr`; run `uv run
+  entry per generic tool, not new tools) — depends on: none — status: done
+- [x] Task 1.2: Validate the new ADR with `specmgr_validate_adr`; run `uv run
   --frozen specmgr adr-toc` and confirm the ADR appears in
-  `docs/adr/README.md` — depends on: Task 1.1 — status: not-started
-- [ ] Task 1.3: Phase-end quality gate — full gate (ruff format --check, ruff
+  `docs/adr/README.md` — depends on: Task 1.1 — status: done
+- [x] Task 1.3: Phase-end quality gate — full gate (ruff format --check, ruff
   check, vulture, full unittest suite; no `src/` changes are expected, so
   `docs/` drift checks cover `specmgr adr-toc` output only); set this
   README's frontmatter `status: planning` → `status: in-progress`; add a
   dated entry to the Recent Updates section, update Current Status, flip the
   phase's task lines to done in place; record the new ADR's id — depends on:
-  Task 1.2 — status: not-started
+  Task 1.2 — status: done
 
 #### Phase 2: Generic `update` tool + `raw` read parameter
 
@@ -749,17 +748,35 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-26**: Planned. This README was drafted in the planning
-session (all decisions in "Decisions Made" below are locked); all seven
-phases are not started. Execution is handed to the phase-orchestrator via
-`/implement-feature feat-22-consolidate-mutation-tools` (one phase-
-implementer per phase, one Conventional Commit per accepted phase).
+**As of 2026-08-27**: Phase 1 (ADR) complete — the feature's ADR
+36905d5b-8057-4294-8665-c7eed5534db0 ("Consolidate whole-body update and
+status-change tools into generic type-dispatched tools") was created via
+`specmgr_create_adr`, validated with `specmgr_validate_adr`, and listed in
+`docs/adr/README.md` (regenerated with zero drift); the phase-end quality
+gate is green. Phases 2–7 are not started.
 
 ### Blockers
 
 None.
 
 ### Recent Updates
+
+#### Update 2026-08-27 (Phase 1: ADR)
+
+- Completed: Phase 1 (Tasks 1.1–1.3). Created the feature's ADR via
+  `specmgr_create_adr` (never hand-written — ADR 898bfcd0): id
+  36905d5b-8057-4294-8665-c7eed5534db0, title "Consolidate whole-body update
+  and status-change tools into generic type-dispatched tools", status
+  `accepted`, date 2026-08-27, on disk at
+  `docs/adr/36905d5b-8057-4294-8665-c7eed5534db0-consolidate-whole-body-
+  update-and-status-change-tools-into-g.md`. `specmgr_validate_adr` passed;
+  `specmgr adr-toc` regenerated `docs/adr/README.md` with the ADR row
+  listed, and repeat runs are byte-identical no-ops (zero drift).
+- Quality gate (green): `ruff format --check` (1131 files already
+  formatted), `ruff check` (all checks passed), `vulture src/ whitelist.py
+  --min-confidence 60` (clean), full unittest suite (Ran 1783 tests, OK).
+  No `src/` changes in this phase.
+- Next: Phase 2 (Generic `update` tool + `raw` read parameter).
 
 #### Update 2026-08-26 (planning session)
 
@@ -808,6 +825,13 @@ None.
   `specmgr://<d>/{id}` resources — ADR ddfb1109's empirical finding that
   agents invoke tools more reliably than parameterized resources, plus the
   maintenance cost of seven new resource templates, decided it.
+- **2026-08-27**: The Phase-1 ADR was created with id
+  36905d5b-8057-4294-8665-c7eed5534db0 ("Consolidate whole-body update and
+  status-change tools into generic type-dispatched tools", status
+  `accepted`) — it records the explicit-`type` dispatch convention (uuid-
+  only resolution rejected), ADR's exclusion from `update` / inclusion in
+  `set_status` with the `superseded_by` special case, the `update` line-
+  range contract, and the `get_<d>(raw=True)` decision.
 
 ### Related PRs / Commits
 

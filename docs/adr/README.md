@@ -17,6 +17,11 @@ Index of all ADRs in this repository.
   - Id: 33c5ab08-ff58-4c73-8c32-23abaf3838e3
   - Status: accepted
   - Decision-makers: dfch
+- [Consolidate whole-body update and status-change tools into generic type-dispatched tools](36905d5b-8057-4294-8665-c7eed5534db0-consolidate-whole-body-update-and-status-change-tools-into-g.md)
+  - Id: 36905d5b-8057-4294-8665-c7eed5534db0
+  - Status: accepted
+  - Date: 2026-08-27
+  - Decision-makers: OpenCode agent + user decision
 - [Extract MCP Singleton into Its Own Module to Break Domain/Server Cyclic Imports](3bf0326f-065a-424c-a2b9-87e5d5bcfa99-extract-mcp-singleton-into-its-own-module-to-break-domain-se.md)
   - Id: 3bf0326f-065a-424c-a2b9-87e5d5bcfa99
   - Status: accepted
