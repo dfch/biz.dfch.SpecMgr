@@ -2,9 +2,9 @@
 
 Quick reference for OpenCode agents working on **biz.dfch.SpecMgr** — an artifact manager for system specifications.
 
-## Status: seven domain/cross-cutting packages implemented (ADR, REQ, UC, TSK, QA, PRB, general)
+## Status: eight domain/cross-cutting packages implemented (ADR, REQ, UC, TSK, QA, PRB, GOL, general)
 
-Six document-type domains plus one cross-cutting package now exist, each
+Seven document-type domains plus one cross-cutting package now exist, each
 following the domain-first layout from ADR
 ece4554b-725c-4f76-bc04-5d2b760363d2 ("Organize the codebase by
 document-type domain: domain-first hierarchy for tools/prompts/resources,
@@ -78,6 +78,27 @@ shared versioned models"):
   `prb/models/v1/`, inside the domain package, not top-level `models/` —
   PRB is a new domain built after the domain-first refactor, same as
   REQ/UC/TSK/QA.
+- **`gol/`** (Goal) — same tools/resources/prompts shape as
+  `req/`/`prb/` but for high-level business goals (the strategic
+  "what the organization wants to achieve" level that sits above
+  individual requirements) (`create_gol`, `update_gol`,
+  `set_status_gol`, `parse_gol`, `list_gol`, `get_gol`,
+  `get_gol_example`, `get_gol_template`, `delete_gol` stub,
+  `validate_gol`); `gol/resources/` (`specmgr://gol/schema`,
+  `specmgr://gol/example`, `specmgr://gol/template`; no
+  `specmgr://gol/{id}` — id-based reads are `get_gol`-only, ADR
+  ddfb1109-422d-4507-8dbc-dc5e4bec9614; no `specmgr://gol/list` —
+  `list_gol` ships as a paged tool from day one, ADR
+  ec9f5262-9912-49d0-903f-fcfb54f28c13); `gol/prompts/`
+  (`create_gol`/`update_gol`, narrated `TodoWrite` +
+  `question`-tool-driven interview flows; `create_gol` first checks
+  `list_gol` for a near-duplicate goal). Its schema lives at
+  `gol/models/v1/`, inside the domain package, not top-level `models/` —
+  GOL is a new domain built after the domain-first refactor, same as
+  REQ/UC/TSK/QA/PRB. The body mirrors REQ minus the `## Characteristics`
+  and `## Level` sections (see `.specmgr/feat/feat-18-goal/README.md`),
+  and `update_gol` is a single whole-body replace, like
+  `update_req`/`update_prb`.
 - **`general/`** — cross-cutting, non-domain-specific package:
   `general/tools/` (`mdformat`, formats a markdown file in place while
   preserving YAML frontmatter blocks) and `general/resources/`
@@ -105,14 +126,15 @@ mirror of that same registration and must never be hand-edited.
 
 Still genuinely missing / not yet done (don't assume otherwise):
 - No `validate_adr` (or `validate_req`/`validate_uc`/`validate_tsk`/
-  `validate_qa`/`validate_prb`) tool runs over the repo's own documents yet
-  via pre-commit or CI. (ADR 9c687bb1-8ee7-41c8-84ec-07606356bc73: "Enforce
-  doc generation/lint/tests locally via pre-commit hook, not just CI")
-- `delete_req`/`delete_uc`/`delete_tsk`/`delete_qa`/`delete_prb` are
-  stubs, not yet implemented.
+  `validate_qa`/`validate_prb`/`validate_gol`) tool runs over the repo's
+  own documents yet via pre-commit or CI. (ADR
+  9c687bb1-8ee7-41c8-84ec-07606356bc73: "Enforce doc generation/lint/tests
+  locally via pre-commit hook, not just CI")
+- `delete_req`/`delete_uc`/`delete_tsk`/`delete_qa`/`delete_prb`/
+  `delete_gol` are stubs, not yet implemented.
 - No `ac` (Acceptance Criteria) domain exists yet, despite `server.py`'s
   docstring already reserving a spot for it ("... and later `ac`").
-- `req`/`tsk`/`qa`/`prb` each register `tools`, `resources`, and
+- `req`/`tsk`/`qa`/`prb`/`gol` each register `tools`, `resources`, and
   `prompts`; `uc` registers `tools` and `resources` only — it has no
   `prompts` sub-package yet.
 
@@ -120,7 +142,7 @@ Still genuinely missing / not yet done (don't assume otherwise):
 status for the ADR feature specifically and should be kept in sync with
 `src/` as this evolves; treat it as current-state tracking, not just a
 historical design doc. Don't assume any other domain package exists beyond
-`adr`/`general`/`prb`/`qa`/`req`/`tsk`/`uc` (with their respective
+`adr`/`general`/`gol`/`prb`/`qa`/`req`/`tsk`/`uc` (with their respective
 `tools`/`prompts`/`resources` sub-packages, per the exceptions noted
 above), or anything in `general/resources/` beyond `version`/`iso25010` —
 check first.
@@ -252,11 +274,12 @@ consumer of the base library.
 ## MCP server (`server.py`)
 
 - Builds the `MCPServer` instance (`mcp` object) and a no-op `_lifespan`,
-  then imports every domain package (`adr`, `general`, `prb`, `qa`, `req`,
-  `tsk`, `uc`) as its last line purely for the side effect of running their
-  `@mcp.tool()`/`@mcp.resource()`/`@mcp.prompt()` decorators. When adding a
-  new domain, add its import to that same last line — forgetting it means
-  the new tools/resources/prompts silently never register.
+  then imports every domain package (`adr`, `general`, `gol`, `prb`, `qa`,
+  `req`, `tsk`, `uc`) as its last line purely for the side effect of
+  running their `@mcp.tool()`/`@mcp.resource()`/`@mcp.prompt()` decorators.
+  When adding a new domain, add its import to that same last line —
+  forgetting it means the new tools/resources/prompts silently never
+  register.
 - **`specmgr mcp`** (`commands/mcp.py`) *does* start the server —
   `mcp_server.run(transport="stdio")` by default, or
   `mcp_server.run(transport="sse", host=..., port=...)` via

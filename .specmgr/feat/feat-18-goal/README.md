@@ -461,18 +461,18 @@ sessions.
 
 #### Phase 4: Cross-cutting registration
 
-- [ ] Task 4.1: `AGENTS.md` — update heading to "eight domain/cross-cutting
+- [x] Task 4.1: `AGENTS.md` — update heading to "eight domain/cross-cutting
   packages implemented (ADR, REQ, UC, TSK, QA, PRB, GOL, general)"; add a
   `gol/` bullet (chronological order, after `prb/`); update the "Still
   genuinely missing" list (`validate_gol` not enforced via pre-commit/CI,
   `delete_gol` stub) and the closing domain-enumeration paragraphs —
-  depends on: Phase 3 complete — status: not-started
-- [ ] Task 4.2: `specmgr docs` / `specmgr mcp-docs` / `specmgr schema`
+  depends on: Phase 3 complete — status: completed
+- [x] Task 4.2: `specmgr docs` / `specmgr mcp-docs` / `specmgr schema`
   regeneration — confirm `gol` appears correctly and all three commands
-  report zero drift — depends on: Task 4.1 — status: not-started
-- [ ] Task 4.3: Phase-end quality gate — full pre-commit/quality gate;
+  report zero drift — depends on: Task 4.1 — status: completed
+- [x] Task 4.3: Phase-end quality gate — full pre-commit/quality gate;
   update this README's Progress section — depends on: Task 4.2 — status:
-  not-started
+  completed
 
 #### Phase 5: Final cross-cutting verification
 
@@ -492,26 +492,94 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-26**: Phase 3 (MCP Surface) complete — full `gol` MCP
-surface registered and live: 10 tools (`parse_gol`/`create_gol`/
-`update_gol`/`set_status_gol`/`delete_gol` stub/`validate_gol`/`get_gol`/
-`get_gol_example`/`get_gol_template`/`list_gol` paged from day one), 3
-resources (`specmgr://gol/schema|example|template`), 2 narrated prompts
-(`create_gol`/`update_gol`), packaged `gol/data/` (example =
-`gol_reference.md` verbatim, template, schema, both instruction files),
-`gol/__init__.py` + `server.py` registration, `pyproject.toml`
-package-data, widened pre-commit schema hooks + new
-`specmgr-schema-gol-package` hook, two new CI schema steps; 104 new tests
-(live lifecycle integration incl.), full quality gate green (1609 tests,
-coverage 98%, `docs/` + `docs/MCP.md` regenerated, fixed point). GitHub
-issue #18 ("Add artifact type Goal (GOL)") is filed and open. Phase 4
-(Cross-cutting registration — `AGENTS.md`) is next.
+**As of 2026-08-26**: Phase 4 (Cross-cutting registration) complete —
+`AGENTS.md` updated to eight domain/cross-cutting packages (heading,
+opening count, new `gol/` bullet after `prb/`, "Still genuinely missing"
+list, closing domain enumeration, server-import enumeration); all three
+doc-generation commands re-run and confirmed zero drift (`gol` appears
+correctly in `docs/MCP.md`, `docs/GENERATED.md`, `docs/api/`, and
+`docs/gol_schema.json`); full quality gate green (1609 tests, coverage
+98%). GitHub issue #18 ("Add artifact type Goal (GOL)") is filed and
+open. Phase 5 (Final cross-cutting verification — ACC-001..008 walk,
+live lifecycle run, status → `done`) is next.
 
 ### Blockers
 
 None.
 
 ### Recent Updates
+
+#### Update 2026-08-26 (Phase 4)
+
+- Completed: Phase 4 (Cross-cutting registration), Tasks 4.1–4.3.
+  - Task 4.1: `AGENTS.md` updated, scoped exactly to the plan — heading
+    "seven → eight domain/cross-cutting packages implemented (ADR, REQ,
+    UC, TSK, QA, PRB, GOL, general)"; opening sentence "Six → Seven
+    document-type domains plus one cross-cutting package"; new
+    `**gol/**` (Goal) bullet in chronological position (after `prb/`,
+    before `general/`) mirroring the `prb/` bullet's shape and density
+    (all ten tools with the `delete_gol` stub noted, the three resources
+    with the no-`specmgr://gol/{id}` (ADR ddfb1109) / no-
+    `specmgr://gol/list` (`list_gol` paged tool from day one, ADR
+    ec9f5262) references, the narrated `TodoWrite` + `question`-tool
+    prompts with the `create_gol` dedup-check-first note, schema at
+    `gol/models/v1/` inside the domain package, the REQ-mirrored-minus-
+    `Characteristics`/`Level` body note, whole-body `update_gol`); "Still
+    genuinely missing" list gains `validate_gol` (first bullet's
+    parenthetical) and `delete_gol` (stubs bullet); the closing
+    "Don't assume any other domain package exists beyond …" enumeration
+    gains `gol` (alphabetical, between `general` and `prb`). Two further
+    domain-set enumerations updated per the task's item-5 rule (see
+    Decisions Made): the "Still genuinely missing" bullet that lists
+    which domains register `tools`/`resources`/`prompts`
+    (`req`/`tsk`/`qa`/`prb` → `req`/`tsk`/`qa`/`prb`/`gol`), and the
+    "MCP server (`server.py`)" section's list of the domain packages
+    `server.py`'s bottom import line pulls in (now includes `gol`,
+    matching the actual line since Phase 3). Left untouched, deliberately:
+    the "Models location" paragraph's historical "REQ, UC, and TSK were
+    built *after* that refactor" enumeration (already stale pre-GOL — it
+    omits QA/PRB; fixing it is a pre-existing-staleness edit outside this
+    task, reported to the orchestrator) and the "Existing feature
+    folders" paragraph (explicitly out of scope per the task).
+  - Task 4.2: zero-drift confirmation — `specmgr docs` (exit 0;
+    `git diff --exit-code -- docs/` exit 0 — no changes), `specmgr
+    mcp-docs` (exit 0; `git diff --exit-code -- docs/MCP.md` exit 0),
+    `specmgr schema` (exit 0; all six types "unchanged"). `gol` appears
+    correctly: `docs/MCP.md` header line `20 resource(s), 1 resource
+    template(s), 74 tool(s), 17 prompt(s)` with exactly 10 `### Tool:
+    *gol` entries, 3 `### Resource: gol_*` entries, 2 `### Prompt: *gol`
+    entries; `docs/GENERATED.md` carries the full 30-line `gol/` module
+    section (package + `models/v1` 7 + prompts 3 + resources 4 + tools
+    15); `docs/api/` holds 23 `biz.dfch.specmgr.gol*` pages (the package
+    page `biz.dfch.specmgr.gol.md` + the 22 sub-module pages: 15 tools
+    incl. `tools.md`, 4 resources incl. `resources.md`, 3 prompts incl.
+    `prompts.md`); `docs/gol_schema.json` present with
+    `$comment: "v1"`, 2020-12 dialect, top-level
+    `required: ["frontmatter", "body"]`.
+  - Task 4.3: quality gate green — see below.
+- Next: Phase 5 (Final cross-cutting verification) — walk every
+  ACC-001..008 with concrete evidence (incl. the live
+  `create_gol`→`update_gol`→`set_status_gol` run and ACC-007's
+  scratch-venv install), full quality gate end to end, set feature
+  status to `done`.
+- Notes:
+  - Quality gate: `ruff format --check` (1011 files already formatted),
+    `ruff check` (all passed), `pylint` (advisory; exit 30, 8.92/10 —
+    identical to the Phase-3 baseline by construction: this phase
+    changes no `.py` file, and `git status` confirms only `AGENTS.md` +
+    this README are modified; 112 of the pre-existing findings reference
+    committed `gol` files, e.g. `tests/gol/models/v1/test_body.py`,
+    none introduced here), `vulture` (exit 0, no output), full unittest
+    suite (1609 tests, all OK, 55s), `specmgr coverage-badge` (98%,
+    `docs/coverage.svg` byte-unchanged), `specmgr adr-toc` (no change to
+    `docs/adr/README.md`), `specmgr docs`/`mcp-docs`/`schema` (zero
+    drift, per Task 4.2 above). Final `git status`: only `AGENTS.md` and
+    `.specmgr/feat/feat-18-goal/README.md` modified.
+  - ACC-008 (this phase's acceptance criterion) is satisfied by the
+    Task 4.2 zero-drift evidence plus the `AGENTS.md` update: `specmgr
+    docs`/`schema`/`mcp-docs` all report no drift after implementation,
+    and `AGENTS.md` now reflects eight domain/cross-cutting packages.
+    The final ACC walk over all of ACC-001..008 is Phase 5's Task 5.1.
 
 #### Update 2026-08-26 (Phase 3)
 
@@ -917,6 +985,30 @@ None.
   full-timestamp dates. Both styles parse identically (`_stringify_metadata`
   coerces either); the choice keeps the packaged gol data internally
   consistent.
+- **2026-08-26**: Two `AGENTS.md` domain-set enumerations beyond the four
+  the task explicitly lists were updated, per the task's item-5 rule
+  ("update those too IF the enumeration is about the domain set"): (a)
+  the "Still genuinely missing" bullet "`req`/`tsk`/`qa`/`prb` each
+  register `tools`, `resources`, and `prompts`" gained `/`gol`` (GOL
+  registers all three, verified in Phase 3 — without it the bullet
+  understates the domain set); (b) the "MCP server (`server.py`)"
+  section's parenthetical list of the domain packages imported by
+  `server.py`'s bottom line gained `gol` (that line has included `gol`
+  since Phase 3, so the list was factually stale). Both are minimal
+  in-place insertions, no reflow.
+- **2026-08-26**: The "Models location" paragraph's sentence "REQ, UC,
+  and TSK were built *after* that refactor and each keep their schema
+  inside their own domain package (`req/models/`, `uc/models/`,
+  `tsk/models/`) instead" was deliberately **not** touched: it is
+  already stale *before* this feature (it omits QA and PRB, both of
+  which keep their schemas in-domain — the `prb/` bullet itself says
+  "PRB is a new domain built after the domain-first refactor, same as
+  REQ/UC/TSK/QA"), so making it complete would mean fixing pre-existing
+  staleness for three domains at once, which is outside Task 4.1's
+  scope ("do not rewrite or reflow anything else in the file"). The new
+  `gol/` bullet carries GOL's own models-location statement, so nothing
+  GOL-specific is left unrecorded. Flagged for the orchestrator to
+  decide separately.
 - **2026-08-26**: No `whitelist.py` entry for any Phase-3 `gol` name —
   every `@mcp.tool()`/`@mcp.resource()`/`@mcp.prompt()` function is
   import-referenced by its sub-package's `__init__.py`
