@@ -617,7 +617,7 @@ progresses (edit, don't duplicate).
   instruction (2026-08-26), extending the task's originally AGENTS.md-only
   scope — depends on: none — status: done (2026-08-26)
 
-- [ ] Task 0.25: Update `AGENTS.md`'s "Models location" section so it
+- [x] Task 0.25: Update `AGENTS.md`'s "Models location" section so it
   states the *rule* instead of enumerating the post-refactor domains: ADR
   is the only document type whose schema is not in its own domain
   package (`models/adr/` at top level, because ADR predates the
@@ -634,8 +634,8 @@ progresses (edit, don't duplicate).
   AGENTS.md's Status heading (count + domain list) and its closing
   "Don't assume any other domain package exists beyond …" paragraph —
   reword those as rules too where feasible, or keep them enumerated and
-  record that decision in this file's Decisions Made — depends on: none —
-  status: not-started
+   record that decision in this file's Decisions Made — depends on: none —
+   status: done (2026-08-26)
 
   Background: Found during feat-18-goal's (the new `gol` domain) Phase 4
   AGENTS.md update (2026-08-26): AGENTS.md's "Models location — a real,
@@ -805,6 +805,45 @@ already-compacted folder).
 
 See `history.md` for updates before 2026-08-18 (rotated out per ADR
 e369ee2e-3353-4f92-991c-6367d76d832e once this section grew too long).
+
+#### Update 2026-08-26T17:51:33Z (Task 0.25)
+
+- Completed: Task 0.25 (AGENTS.md now states the rule instead of
+  enumerating the post-refactor domains in its "Models location"
+  section), including the secondary rewording decided at implementation
+  time (see Decisions Made):
+
+  - Rewrote the "Models location" paragraph rule-first: every document
+    type keeps its schema in its own domain package
+    (`<domain>/models/vN/`), ADR is the single exception (top-level
+    `models/adr/`, predates the domain-first refactor, no `mcp`
+    dependency), and building a new document type requires no edit to
+    the paragraph. The sentence enumerating what top-level `models/`
+    holds (`adr/` + shared cross-domain modules `iso25010.py`/`md/`/
+    `version_info.py`) is kept — it lists shared modules, not doc
+    types.
+  - Trimmed the now-redundant "X is a new domain built after the
+    domain-first refactor, same as REQ/UC/TSK/QA[...]" tails from the
+    `prb`/`gol`/`rsk` bullets; each bullet's domain-specific
+    schema-location fact (e.g. `qa/models/v2/`-only) is untouched.
+  - Reworded the Status heading (dropped the "nine … (ADR, REQ, …)"
+    count+list duplicate — the per-domain bullets are now named as the
+    live enumeration) and the closing "Don't assume any other domain
+    package exists beyond …" paragraph (now points at the bullets
+    instead of carrying a second copy of the list).
+  - Incidental one-line fix: the `general/` bullet's stale "No
+    `general/prompts/` yet." (left behind by Task 0.21, which added
+    `general/prompts/` + `compact_history`) now lists
+    `general/prompts/` (`compact_history`), since the reworded closing
+    paragraph points at the bullets as the exceptions list.
+  - Deliberately left enumerated (recorded in Decisions Made): the
+    `MCP server (server.py)` paragraph's domain-import list (it
+    documents the actual code line a new domain must touch) and the
+    "Still genuinely missing / not yet done" list (a dynamic gap
+    tracker, not a package inventory).
+  - Pure doc edit (AGENTS.md + this file): no code, test, or generated
+    doc changes; grep confirmed nothing in `tests/`/`src/` asserts on
+    AGENTS.md content.
 
 #### Update 2026-08-26T17:06:30Z (Task 0.24)
 
@@ -1120,8 +1159,25 @@ e369ee2e-3353-4f92-991c-6367d76d832e once this section grew too long).
   stop agents from assuming a `specmgr://<d>/list` resource exists, and
   "not mentioned" is weaker than "explicitly noted absent" for that
   purpose (the false flag itself shows how easily the assumption creeps
-  back). The three model-docstring stragglers were fixed in the same pass
-  (user instruction, 2026-08-26) rather than filed as a follow-up task.
+   back). The three model-docstring stragglers were fixed in the same pass
+   (user instruction, 2026-08-26) rather than filed as a follow-up task.
+- **2026-08-26**: For Task 0.25, reworded AGENTS.md's remaining per-type
+  enumerations as rules instead of keeping them: the "Models location"
+  paragraph now states the rule (every doc type's schema lives in
+  `<domain>/models/vN/`; ADR is the single exception at top-level
+  `models/adr/`), the Status heading drops its count+domain-list
+  duplicate, and the closing "Don't assume …" paragraph points at the
+  per-domain bullets instead of carrying a second copy of the list —
+  rationale: the per-domain bullets are the one enumeration that must
+  exist anyway (each carries domain-specific facts: tool/resource/prompt
+  names, schema version, sub-package exceptions), so the other three
+  lists were pure duplicates, and their drift cost is what feat-18
+  Phase 4 just demonstrated (~6 AGENTS.md edits for `gol` alone). Two
+  spots deliberately left enumerated: the `MCP server (server.py)`
+  paragraph's domain-import list (it documents the actual code line a
+  new domain must touch — its "drift" is the instruction itself) and
+  the "Still genuinely missing / not yet done" list (a dynamic gap
+  tracker, not a package inventory).
 
 ### Related PRs / Commits
 

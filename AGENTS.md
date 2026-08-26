@@ -2,13 +2,13 @@
 
 Quick reference for OpenCode agents working on **biz.dfch.SpecMgr** — an artifact manager for system specifications.
 
-## Status: nine domain/cross-cutting packages implemented (ADR, REQ, UC, TSK, QA, PRB, GOL, RSK, general)
+## Status: domain packages implemented (the per-domain bullets below are the live enumeration)
 
-Seven document-type domains plus one cross-cutting package now exist, each
-following the domain-first layout from ADR
+Each package below follows the domain-first layout from ADR
 ece4554b-725c-4f76-bc04-5d2b760363d2 ("Organize the codebase by
 document-type domain: domain-first hierarchy for tools/prompts/resources,
-shared versioned models"):
+shared versioned models") — one bullet per implemented package, document
+type or cross-cutting:
 
 - **`adr/`** (Architecture Decision Records) — the original, most complete
   domain. `adr/tools/` has 12 `@mcp.tool()` wrappers (`get_adr`, `list_adr`,
@@ -85,11 +85,10 @@ shared versioned models"):
   `specmgr://prb/{id}` — id-based reads are `get_prb`-only, ADR
   ddfb1109-422d-4507-8dbc-dc5e4bec9614; no `specmgr://prb/list` — listing
   is the `list_prb` tool, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13);
-  `prb/prompts/` (`create_prb`/`update_prb`, narrated `TodoWrite` +
-  `question`-tool-driven 5W2H interview flows). Schema at
-  `prb/models/v1/`, inside the domain package, not top-level `models/` —
-  PRB is a new domain built after the domain-first refactor, same as
-  REQ/UC/TSK/QA.
+   `prb/prompts/` (`create_prb`/`update_prb`, narrated `TodoWrite` +
+   `question`-tool-driven 5W2H interview flows). Schema at
+   `prb/models/v1/`, inside the domain package, not top-level
+   `models/`.
 - **`gol/`** (Goal) — same tools/resources/prompts shape as
   `req/`/`prb/` but for high-level business goals (the strategic
   "what the organization wants to achieve" level that sits above
@@ -104,10 +103,9 @@ shared versioned models"):
   ec9f5262-9912-49d0-903f-fcfb54f28c13); `gol/prompts/`
   (`create_gol`/`update_gol`, narrated `TodoWrite` +
   `question`-tool-driven interview flows; `create_gol` first checks
-  `list_gol` for a near-duplicate goal). Its schema lives at
-  `gol/models/v1/`, inside the domain package, not top-level `models/` —
-  GOL is a new domain built after the domain-first refactor, same as
-  REQ/UC/TSK/QA/PRB. The body mirrors REQ minus the `## Characteristics`
+   `list_gol` for a near-duplicate goal). Its schema lives at
+   `gol/models/v1/`, inside the domain package, not top-level
+   `models/`. The body mirrors REQ minus the `## Characteristics`
   and `## Level` sections (see `.specmgr/feat/feat-18-goal/README.md`),
   and `update_gol` is a single whole-body replace, like
   `update_req`/`update_prb`.
@@ -133,28 +131,29 @@ shared versioned models"):
   ADR ec9f5262-9912-49d0-903f-fcfb54f28c13, and its `RskSummary` lines
   carry the residual-risk coordinates so a register-wide risk-matrix view
   can be built from the listing alone); `rsk/prompts/`
-  (`create_risk`/`update_risk` — the issue's literal wording, not the
-  `rsk`-prefixed convention the tools/resources use). Its schema lives at
-  `rsk/models/v1/`, inside the domain package, not top-level `models/` —
-  RSK is a new domain built after the domain-first refactor, same as
-  REQ/UC/TSK/QA/PRB/GOL.
-- **`general/`** — cross-cutting, non-domain-specific package:
-  `general/tools/` (`mdformat`, formats a markdown file in place while
-  preserving YAML frontmatter blocks) and `general/resources/`
-  (`specmgr://version`, `specmgr://iso25010` — the ISO/IEC 25010:2023
-  quality model). No `general/prompts/` yet.
+   (`create_risk`/`update_risk` — the issue's literal wording, not the
+   `rsk`-prefixed convention the tools/resources use). Its schema lives at
+   `rsk/models/v1/`, inside the domain package, not top-level
+   `models/`.
+ - **`general/`** — cross-cutting, non-domain-specific package:
+   `general/tools/` (`mdformat`, formats a markdown file in place while
+   preserving YAML frontmatter blocks), `general/resources/`
+   (`specmgr://version`, `specmgr://iso25010` — the ISO/IEC 25010:2023
+   quality model), and `general/prompts/` (`compact_history` — rotates
+   older `Recent Updates` entries out of any feature folder's `README.md`
+   into a sibling `history.md`).
 
 **Models location — a real, intentional divergence, not an oversight**:
-ADR's schema (`AdrFrontmatter`, `AdrBody`, `AdrOption`, `Adr`, `parse_adr`,
+the rule is domain-first — every document type keeps its schema inside
+its own domain package (`<domain>/models/vN/`); building a new document
+type requires no edit to this paragraph. The single exception is ADR:
+its schema (`AdrFrontmatter`, `AdrBody`, `AdrOption`, `Adr`, `parse_adr`,
 `render_adr`) stays under the shared top-level `models/adr/` package
 because it predates the domain-first refactor and has no dependency on
-`mcp`/`tools`/`resources`/`prompts`. REQ, UC, and TSK were built *after*
-that refactor and each keep their schema inside their own domain package
-(`req/models/`, `uc/models/`, `tsk/models/`) instead — fully domain-first,
-models included. Top-level `models/` therefore only holds `adr/`,
-`iso25010.py`, `md/` (shared cross-domain markdown-section building
-blocks), and `version_info.py` — don't assume any other doc type's schema
-lives there.
+`mcp`/`tools`/`resources`/`prompts`. Top-level `models/` therefore holds
+`adr/` (the exception) plus only shared cross-domain modules —
+`iso25010.py`, `md/` (markdown-section building blocks), and
+`version_info.py` — don't assume any other doc type's schema lives there.
 
 `server.py`'s own module docstring is the single most authoritative,
 currently-maintained list of every resource/tool/prompt this MCP server
@@ -181,10 +180,10 @@ Still genuinely missing / not yet done (don't assume otherwise):
 `.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md` §10 ("Next steps") tracks per-item done/not-done
 status for the ADR feature specifically and should be kept in sync with
 `src/` as this evolves; treat it as current-state tracking, not just a
-historical design doc. Don't assume any other domain package exists beyond
-`adr`/`general`/`gol`/`prb`/`qa`/`req`/`rsk`/`tsk`/`uc` (with their respective
+historical design doc. Don't assume any domain package exists beyond the
+per-domain bullets in the Status section above (each with its respective
 `tools`/`prompts`/`resources` sub-packages, per the exceptions noted
-above), or anything in `general/resources/` beyond `version`/`iso25010` —
+there), or anything in `general/resources/` beyond `version`/`iso25010` —
 check first.
 
 ## Project Shape
