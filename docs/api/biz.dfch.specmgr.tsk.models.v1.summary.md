@@ -3,8 +3,9 @@
 Pydantic model for one line of TSK listing output (Phase 2, Task 2.3).
 
 Mirrors :class:`~biz.dfch.specmgr.req.models.v1.summary.ReqSummary`
-field-for-field, for the (Phase-3, not-yet-built) ``specmgr://tsk/list``
-resource. Subclasses
+field-for-field, for the ``list_tsk`` tool's output (written for the
+then-unbuilt ``specmgr://tsk/list`` resource, which feat-13 converted
+into the paged ``list_tsk`` tool). Subclasses
 :class:`~biz.dfch.specmgr.general.models.summary.DocSummary` for its
 ``id``/``title``/``status``/``ref`` fields (feat-13 Task 1.3, REQ-003).
 
@@ -12,7 +13,7 @@ resource. Subclasses
 
 ### `TskSummary`
 
-One line of ``specmgr://tsk/list`` output.
+One line of ``list_tsk`` tool output.
 
 Parameters
 ----------

@@ -2,7 +2,7 @@
 created: 2026-08-25
 id: feat-16-problem-statement
 status: done
-updated: 2026-08-25
+updated: 2026-08-26
 version: 1.0.0
 ---
 
@@ -229,7 +229,11 @@ Two new prompts (`create_prb`/`update_prb`) narrate an interactive,
 - Related, but explicitly out of scope here: `feat-7-various-improvements`
   Task 0.24 (cleaning up `AGENTS.md`'s stale `specmgr://<d>/list`
   resource-vs-tool wording for TSK/QA, found during this feature's own
-  planning session but not this feature's concern to fix).
+  planning session but not this feature's concern to fix). **Closed
+  2026-08-26** — verification found the flagged wording was already
+  removed from `AGENTS.md` by feat-13's close-out commit `452e125`
+  (2026-08-19, before this flag); the older-domain bullets were
+  normalized to the explicit no-list-resource convention.
 
 ### Design Notes
 
@@ -886,7 +890,10 @@ None.
 - **2026-08-25**: `AGENTS.md`'s pre-existing TSK/QA `specmgr://<d>/list`
   drift (found during this planning session) is fixed under
   `feat-7-various-improvements` Task 0.24, not here — out of scope for
-  this feature.
+  this feature. (Task 0.24 closed 2026-08-26: the drift was found already
+  resolved by feat-13's close-out commit `452e125`, which pre-dates this
+  flag; the older-domain bullets were normalized to the explicit
+  no-list-resource convention.)
 - **2026-08-25** (Phase 1): Each `Question{N}`'s `@alias` uses
   `AliasType.REGEX` (e.g. `@alias(value=r"What Is the Problem\?",
   type=AliasType.REGEX)`), not `AliasType.LITERAL` — the plan's own Design

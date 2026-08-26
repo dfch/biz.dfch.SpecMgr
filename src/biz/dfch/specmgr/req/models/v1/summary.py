@@ -32,7 +32,7 @@ __all__ = ["ReqSummary"]
 
 
 class ReqSummary(DocSummary):
-    """One line of ``specmgr://req/list`` output (Task 3.18).
+    """One line of ``list_req`` tool output (Task 3.18).
 
     Parameters
     ----------

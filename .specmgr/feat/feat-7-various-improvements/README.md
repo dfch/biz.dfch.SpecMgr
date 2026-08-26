@@ -596,20 +596,26 @@ progresses (edit, don't duplicate).
   `get_tsk` MCP tool with id `aaf70093-8a7c-4565-9985-3beaa85e1d3d` —
   depends on: none — status: done (2026-08-19)
 
-- [ ] Task 0.24: Clean up `AGENTS.md`'s stale `specmgr://<d>/list` resource
+- [x] Task 0.24: Clean up `AGENTS.md`'s stale `specmgr://<d>/list` resource
   mentions left over from `feat-13-list-paging`'s resource→tool conversion
-  (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13) — `AGENTS.md`'s per-domain
-  bullets (at least `req`/`tsk`/`qa`, confirm `uc`/`adr` too) still
-  describe `specmgr://req/list`/`specmgr://tsk/list`/`specmgr://qa/list`
-  as resources instead of the `list_req`/`list_tsk`/`list_qa` tools they
-  actually are today; found and flagged during
+  (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13) — found and flagged during
   `.specmgr/feat/feat-16-problem-statement/README.md`'s planning session
   (2026-08-25) while designing that new domain's own `list_prb` tool
   against the *current* code/ADR state rather than `AGENTS.md`'s
-  (out-of-date) wording. Fix every affected domain bullet, plus any other
-  live `specmgr://<d>/list` mention in `AGENTS.md` (e.g. the "MCP server
-  (`server.py`)" section's own domain-surface description, if it lists
-  resources per domain) — depends on: none — status: not-started
+  (out-of-date) wording. Verification (2026-08-26) found the flagged drift
+  already removed from `AGENTS.md` upstream — the
+  `specmgr://req/list`/`specmgr://qa/list`/`specmgr://adr/list` strings
+  were all gone as of feat-13's close-out commit `452e125` (2026-08-19,
+  six days before the flag), and `specmgr://tsk/list` never appeared there
+  at all — but still normalized every affected domain bullet (the five
+  older ones, `adr`/`req`/`uc`/`tsk`/`qa`, now carry the explicit "no
+  `specmgr://<d>/list` — listing is the `list_<d>` tool" note the newer
+  `prb`/`gol`/`rsk` bullets already had), plus any other live
+  `specmgr://<d>/list` mention: three model docstrings
+  (`req/models/v1/summary.py`, `models/adr/v1/summary.py`,
+  `tsk/models/v1/summary.py`) were fixed in the same pass per user
+  instruction (2026-08-26), extending the task's originally AGENTS.md-only
+  scope — depends on: none — status: done (2026-08-26)
 
 - [ ] Task 0.25: Update `AGENTS.md`'s "Models location" section so it
   states the *rule* instead of enumerating the post-refactor domains: ADR
@@ -799,6 +805,43 @@ already-compacted folder).
 
 See `history.md` for updates before 2026-08-18 (rotated out per ADR
 e369ee2e-3353-4f92-991c-6367d76d832e once this section grew too long).
+
+#### Update 2026-08-26T17:06:30Z (Task 0.24)
+
+- Completed: Task 0.24 (clean up `AGENTS.md`'s stale `specmgr://<d>/list`
+  resource mentions), with a verification-first outcome and a small scope
+  extension:
+
+  - Verification found the flagged drift no longer present in
+    `AGENTS.md`: git pickaxe (`git log -S`) shows the
+    `specmgr://req/list`/`specmgr://qa/list`/`specmgr://adr/list` strings
+    were all removed by feat-13's close-out commit `452e125` (2026-08-19)
+    — six days before the feat-16 planning session flagged them on
+    2026-08-25 — and `specmgr://tsk/list` never appeared in `AGENTS.md`
+    at all. Cross-checked against the live MCP surface: `server.py`'s
+    module docstring (no `*_list` resources; all eight `list_<d>` tools
+    under Tools), the code (no `resources/*list*.py` in any domain; eight
+    `tools/list_<d>.py`), `docs/MCP.md`, and the packaged data files
+    (incl. the `refine` prompt's instructions) — no stale mentions
+    anywhere.
+  - Normalized the five older-domain bullets (`adr`/`req`/`uc`/`tsk`/
+    `qa`) to carry the explicit "no `specmgr://<d>/list` — listing is the
+    `list_<d>` tool, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13" note that
+    the `prb`/`gol`/`rsk` bullets already had, so the ambiguity that
+    caused the false flag can't silently recur.
+  - Fixed the same stale names in three model docstrings (scope
+    extension, per user instruction): `req/models/v1/summary.py`
+    (`specmgr://req/list` → `list_req`), `models/adr/v1/summary.py`
+    (`list_adrs`/`specmgr://adr/list` → `list_adr`), and
+    `tsk/models/v1/summary.py` (module + class docstring,
+    `specmgr://tsk/list` → `list_tsk`, incl. the stale "(Phase-3,
+    not-yet-built)" clause).
+  - Annotated the two `feat-16-problem-statement` README references to
+    this task as closed (append-only pointers, no history rewritten).
+  - Regenerated `docs/api/`/`docs/GENERATED.md` (`specmgr docs`);
+    `specmgr schema` reports no drift; `ruff format --check`/`ruff
+    check`/`vulture src/ whitelist.py --min-confidence 60` clean; full
+    `unittest` suite passing (1783 tests).
 
 #### Update 2026-08-19T06:49:34Z (Task 0.22)
 
@@ -1067,6 +1110,18 @@ e369ee2e-3353-4f92-991c-6367d76d832e once this section grew too long).
   itself deferred to TSK `699432f5-6f95-498e-a269-8001e4afc0e5` rather than
   performed now — rationale: keeps this housekeeping task small (examine +
   decide) and lets the refactor be scheduled/executed independently.
+- **2026-08-26**: For Task 0.24, close with verification + normalization
+  rather than as a no-op: the flagged `AGENTS.md` drift was found already
+  removed upstream (feat-13's close-out commit `452e125`, 2026-08-19 —
+  before the 2026-08-25 flag), but the five older-domain bullets were
+  normalized to the explicit "no `specmgr://<d>/list` — listing is the
+  `list_<d>` tool" convention the newer `prb`/`gol`/`rsk` bullets already
+  carry — rationale: `AGENTS.md` is a quick-reference doc whose job is to
+  stop agents from assuming a `specmgr://<d>/list` resource exists, and
+  "not mentioned" is weaker than "explicitly noted absent" for that
+  purpose (the false flag itself shows how easily the assumption creeps
+  back). The three model-docstring stragglers were fixed in the same pass
+  (user instruction, 2026-08-26) rather than filed as a follow-up task.
 
 ### Related PRs / Commits
 

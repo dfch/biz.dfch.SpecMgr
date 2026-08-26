@@ -20,7 +20,7 @@ inheritance-based) equivalence check.
 
 ### `AdrSummary`
 
-One line of ``list_adrs``/``specmgr://adr/list`` output (plan §8, §9a).
+One line of ``list_adr`` tool output (plan §8, §9a).
 
 Parameters
 ----------

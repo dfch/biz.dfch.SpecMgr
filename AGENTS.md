@@ -15,7 +15,9 @@ shared versioned models"):
   `create_adr`, `update_frontmatter`, `update_section`, `set_status`,
   `option_list`/`option_create`/`option_read`/`option_update`/
   `option_delete`, `validate_adr`); `adr/resources/` exposes
-  `specmgr://adr/{id}`; `adr/prompts/` has
+  `specmgr://adr/{id}` only — no `specmgr://adr/list` (listing is the
+  `list_adr` tool, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13);
+  `adr/prompts/` has
   narrated `create_adr`/`update_adr` prompts plus step-gated
   `create_adr_test`/`update_adr_test` A/B variants (see
   `.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md` §11). Its Pydantic
@@ -26,28 +28,38 @@ shared versioned models"):
   `req/resources/` (`specmgr://req/schema`,
   `specmgr://req/example`, `specmgr://req/template`; no `specmgr://req/{id}`
   — id-based reads are `get_req`-only, ADR
-  ddfb1109-422d-4507-8dbc-dc5e4bec9614); `req/prompts/`
+  ddfb1109-422d-4507-8dbc-dc5e4bec9614; no `specmgr://req/list` —
+  listing is the `list_req` tool, ADR
+  ec9f5262-9912-49d0-903f-fcfb54f28c13); `req/prompts/`
   (`create_req`/`update_req`). Its schema lives at `req/models/v1/`, inside
   the domain package itself, not under top-level `models/`.
 - **`uc/`** (Use Cases) — same tools/resources/prompts shape as `req/` but
   for use cases (`create_uc`, `update_uc`, `set_status_uc`, `parse_uc`,
   `list_uc`, `get_uc`, `get_uc_example`, `get_uc_template`, `delete_uc` stub,
   `validate_uc`); no `specmgr://uc/{id}` resource for the same reason as
-  REQ. Schema at `uc/models/v1/` (legacy) and `uc/models/v2/` (current),
+  REQ, and no `specmgr://uc/list` resource either — listing is the
+  `list_uc` tool (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13). Schema at
+  `uc/models/v1/` (legacy) and `uc/models/v2/` (current),
   inside the domain package, not `models/uc/`.
 - **`tsk/`** (Task Lists) — same shape again (`create_tsk`, `update_tsk`,
   `set_status_tsk`, `parse_tsk`, `list_tsk`, `get_tsk`, `get_tsk_example`,
   `get_tsk_template`, `delete_tsk` stub, `validate_tsk`), plus a distinct
   `implement_task` prompt (reads a task list via `get_tsk`, builds a
   `TodoWrite` list from its items, and uses the `question` tool to resolve
-  ambiguity). Schema at `tsk/models/v1/`, inside the domain package.
+  ambiguity). Its resources are the usual `specmgr://tsk/schema`/
+  `specmgr://tsk/example`/`specmgr://tsk/template` only — no
+  `specmgr://tsk/{id}` and no `specmgr://tsk/list` resource (listing is
+  the `list_tsk` tool, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13). Schema
+  at `tsk/models/v1/`, inside the domain package.
 - **`qa/`** (Question and Answer) — same tools/resources/prompts shape as
   `req/`/`tsk/` but for requirements-elicitation Q&A interviews (`create_qa`,
   `update_qa`, `set_status_qa`, `parse_qa`, `list_qa`, `get_qa`, `get_qa_example`,
   `get_qa_template`, `delete_qa` stub, `validate_qa`); `qa/resources/`
   (`specmgr://qa/schema`, `specmgr://qa/example`,
   `specmgr://qa/template`; no `specmgr://qa/{id}` — id-based reads are
-  `get_qa`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614); `qa/prompts/`
+  `get_qa`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
+  `specmgr://qa/list` — listing is the `list_qa` tool, ADR
+  ec9f5262-9912-49d0-903f-fcfb54f28c13); `qa/prompts/`
   (`create_qa`/`update_qa`, plus `refine`). Schema at `qa/models/v2/`,
   inside the domain package, not `models/qa/` — QA is a single-schema
   (v2-only) domain: every question/answer category holds zero or more
