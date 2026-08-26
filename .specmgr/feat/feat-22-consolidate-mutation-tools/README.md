@@ -1,0 +1,815 @@
+---
+created: 2026-08-26
+id: feat-22-consolidate-mutation-tools
+status: planning
+updated: 2026-08-26
+version: 1.0.0
+---
+
+# Feature: Consolidate update and set_status tools into generic type-dispatched tools
+
+## Plan
+
+### Overview
+
+Replace the 15 near-duplicate per-domain mutation MCP tools with two generic,
+cross-cutting tools that live in `general/tools/`: `update(id, type, content,
+begin, end)` for whole-body (and now line-range) document replacement across
+the seven whole-body domains (`req`, `uc`, `tsk`, `qa`, `prb`, `gol`, `rsk`),
+and `set_status(id, type, status, superseded_by)` for status changes across
+all eight domains including `adr`. The per-domain tools
+(`update_req`/`update_uc`/`update_tsk`/`update_qa`/`update_prb`/`update_gol`/
+`update_rsk`, `set_status_req`/`set_status_uc`/`set_status_tsk`/`set_status_qa`/
+`set_status_prb`/`set_status_gol`/`set_status_rsk`, and ADR's own `set_status`)
+are deleted outright (breaking; the package is 0.x and the MCP tool list is the
+only contract). The generic `update` gains optional 1-based, inclusive
+`begin`/`end` body-line parameters so a client can replace a line range
+without re-sending the whole body — spliced into the current on-disk body and
+validated as a *whole* document before anything is written (the
+filesystem-is-source-of-truth and validate-before-write invariants are
+untouched). To make line targeting reliable, the seven `get_<d>` tools gain an
+optional `raw: bool = False` parameter returning the frontmatter-stripped body
+text verbatim — the exact text `begin`/`end` index into (tool-first per ADR
+ddfb1109; re-introducing `specmgr://<d>/{id}` resources was considered and
+rejected). ADR keeps its section-level mutation surface
+(`update_frontmatter`/`update_section`/`option_*`) unchanged — ADR is
+deliberately *excluded* from `update` because it has no whole-body replace by
+design (MADR contract), but is *included* in `set_status` with its
+`superseded_by`-composition special case. A short ADR records the new
+conventions so future domains (e.g. `ac`) add one dispatch entry instead of a
+new tool. Expected end state: **71 tools / 25 resources / 19 prompts**
+(today 84/25/19: −15 +2).
+
+### Requirements
+
+- REQ-001: A generic `update(id, type, content)` MCP tool in
+  `general/tools/update.py` covering the seven whole-body domains
+  (`type: Literal["req","uc","tsk","qa","prb","gol","rsk"]`), preserving each
+  domain's existing whole-body semantics 1:1: body-only `content` (no
+  frontmatter block) validated via the domain's own
+  `X.from_text(format_text(content))` two-channel contract
+  (`AssertionError` structural / `pydantic.ValidationError` field-level,
+  nothing written on failure); under the domain's own lock, `load_by_id`,
+  every frontmatter field preserved except `updated` (bumped to the current
+  microsecond timestamp); `status` never settable through `update`; the
+  caller's raw `content` persisted verbatim via the domain's `write_X_file`;
+  unknown id raises the domain's own `XNotFoundError`.
+- REQ-002: Optional `begin: int | None` / `end: int | None` parameters on
+  `update`. When both are absent, behavior is exactly REQ-001 (backward-
+  compatible default). When both are given, `content` is a replacement
+  *fragment* for the current body's 1-based, inclusive line range
+  `begin..end`, where `N` = number of lines of the current frontmatter-
+  stripped body and `N+1` is a virtual position past the last line
+  (`begin = end = N+1` → append at end of body; `end = N+1` → range extends
+  through end of body). Misuse (exactly one of the two given, `begin < 1`,
+  `begin > end`, `end > N+1`) raises `ValueError` with a clear message and
+  writes nothing. The spliced *result* is validated as a whole body (REQ-001's
+  validation contract) before writing; unchanged regions of the on-disk body
+  remain byte-identical. An empty `content` fragment deletes the range (legal
+  iff the result still validates). The YAML frontmatter is never addressable
+  (coordinates are body-relative by construction).
+- REQ-003: The seven `get_<d>` tools (`get_req`, `get_uc`, `get_tsk`,
+  `get_qa`, `get_prb`, `get_gol`, `get_rsk`) gain an optional
+  `raw: bool = False` parameter. `raw=False` (default) behaves exactly as
+  today (returns the parsed `XDocument`). `raw=True` returns the
+  frontmatter-stripped body text of the document verbatim as a plain string —
+  produced by the *same* body-extraction helper the REQ-002 splice uses, so
+  the text a client counts lines in is byte-for-byte the text the server
+  splices against. Unknown id raises the domain's `XNotFoundError` in both
+  modes. No `get_adr` change (ADR is not a `update` type).
+- REQ-004: A generic `set_status(id, type, status, superseded_by=None)` MCP
+  tool in `general/tools/set_status.py` covering all eight domains
+  (`type: Literal["req","uc","tsk","qa","prb","gol","rsk","adr"]`). For the
+  seven whole-body domains, semantics are preserved 1:1 from the deleted
+  `set_status_<d>` tools: under the domain lock, `load_by_id`, the raw body
+  re-read and re-persisted verbatim (body never touched), the frontmatter
+  reconstructed through the domain's own `XFrontmatter` constructor so each
+  domain's closed status vocabulary validates (invalid `status` →
+  `pydantic.ValidationError`, nothing written), `updated` bumped, unknown id →
+  domain `XNotFoundError`. For `type="adr"`, semantics are preserved 1:1 from
+  the deleted ADR `set_status` tool: delegates to
+  `models.adr.v1.mutations.set_status(adr, status, superseded_by)` (which
+  composes `status` as `"superseded by {superseded_by}"` when
+  `superseded_by` is given), `write_adr` render round-trip, `adr_lock`,
+  `AdrNotFoundError`. `superseded_by` given with any `type` other than
+  `"adr"` raises `ValueError` and writes nothing.
+- REQ-005: The 15 superseded tools are removed from source and from MCP
+  registration: `update_req`, `update_uc`, `update_tsk`, `update_qa`,
+  `update_prb`, `update_gol`, `update_rsk`, `set_status_req`,
+  `set_status_uc`, `set_status_tsk`, `set_status_qa`, `set_status_prb`,
+  `set_status_gol`, `set_status_rsk`, and ADR `set_status`. No deprecated
+  wrappers are kept (user decision; 0.x breaking change, recorded in
+  `CHANGELOG.md`).
+- REQ-006: All prompt narration referencing the superseded tools is rewritten
+  to the generic tools with correct signatures: the six domain
+  `<d>_update_instructions.md` files (req, tsk, qa, rsk, prb, gol — `uc` has
+  no prompts sub-package), `qa/data/qa_refine_instructions.md`, and the four
+  ADR instruction files (`adr_create_instructions.md`,
+  `adr_create_test_instructions.md`, `adr_update_instructions.md`,
+  `adr_update_test_instructions.md` — their `set_status(id, …)` call sites
+  gain `type="adr"`). The six domain update-instruction files additionally
+  teach the REQ-002 range-update flow. Prompt Python module docstrings that
+  name the superseded tools are corrected (6 domain `prompts/update_<d>.py`
+  modules + 4 ADR prompt modules whose surface mentions become inaccurate).
+  The 10 corresponding prompt test files (6 domain + 4 ADR) are updated to
+  match the rewritten narration.
+- REQ-007: Documentation and registration consistency: `server.py` module
+  docstring (the authoritative tool/resource/prompt list) updated in the same
+  phase that changes the surface it describes; `docs/MCP.md`, `docs/api/`,
+  `docs/adr/README.md` regenerated with zero drift at every phase gate;
+  `AGENTS.md` per-domain bullets and the `general/` bullet updated;
+  `CHANGELOG.md` `[Unreleased]` carries the breaking-change and
+  addition entries; a short ADR (Phase 1) records the conventions (explicit
+  `type` over uuid-only resolution; ADR excluded from `update` but included
+  in `set_status`; the REQ-002 range contract; the REQ-003 raw-read-over-
+  resource decision; "future domains add one dispatch entry, not a new
+  tool").
+
+### Acceptance Criteria
+
+- [ ] ACC-001: Verifies REQ-001 — for every one of the seven types, `update`
+  in whole-body mode (no `begin`/`end`) replaces the body, preserves
+  `id`/`type`/`status`/`created`/`version`, bumps `updated` (microsecond
+  timestamp), never sets `status`, propagates structural `AssertionError` /
+  field `pydantic.ValidationError` with the file left byte-identical on disk,
+  and raises the domain's own `XNotFoundError` for an unknown id.
+- [ ] ACC-002: Verifies REQ-002 — for every one of the seven types: a middle-
+  range replace leaves all out-of-range body lines byte-identical and inserts
+  the fragment at the range; `begin = end = N+1` appends at end of body;
+  `end = N+1` replaces through end of body; empty `content` deletes the range
+  (verified with an optional-section deletion that yields a still-valid
+  document); `begin = 1`, `end = N` produces the same file as whole-body mode
+  with the identical text; each misuse case (one parameter only, `begin < 1`,
+  `begin > end`, `end > N+1`, range deleting the H1, range producing an
+  out-of-vocabulary field value) raises (`ValueError` / `AssertionError` /
+  `ValidationError`) with the file left byte-identical on disk.
+- [ ] ACC-003: Verifies REQ-003 — for all seven domains, `get_<d>(id,
+  raw=True)` returns the frontmatter-stripped body text byte-identical to the
+  on-disk body (the text whose lines `begin`/`end` address — proven by a test
+  that reads `raw`, picks a line range, calls `update` with that range, and
+  confirms the splice landed exactly there); `get_<d>(id)` (`raw=False`)
+  returns the parsed document exactly as before (regression); unknown id
+  raises the domain `XNotFoundError` in both modes.
+- [ ] ACC-004: Verifies REQ-004 — for all eight types, `set_status` changes
+  `status`, bumps `updated`, and leaves the body untouched (seven domains: raw
+  body byte-identical; ADR: re-render round-trip equal apart from
+  status/updated); each domain's closed vocabulary is enforced (out-of-set
+  value → `pydantic.ValidationError`, nothing written — including domain-
+  distinct sets: `uc` 5-value, `tsk`/`qa` 4-value, `prb` 4-value, `rsk`
+  6-value); ADR `superseded_by` composes `"superseded by X"`; `superseded_by`
+  with a non-`adr` type raises `ValueError`, nothing written; unknown id
+  raises the domain `XNotFoundError` / `AdrNotFoundError`.
+- [ ] ACC-005: Verifies REQ-005 — the 15 superseded tools are absent from
+  `src/` and from the live MCP registration; a grep over `src/` and `tests/`
+  finds no code references to the removed tool names (any residual mention
+  before Phase 5 is limited to the Phase-5-owned prompt narration files, and
+  zero afterwards); `vulture` is clean.
+- [ ] ACC-006: Verifies REQ-006 — all 11 instruction data files reference the
+  generic tools with the correct signatures (`update(id, type="<d>", content
+  [,...])`, `set_status(id, type=..., status[, superseded_by])`); the six
+  domain update-instruction files teach the range-update flow (`get_<d>(id,
+  raw=True)` → identify the 1-based range → `update(..., begin, end)`; whole-
+  body for multi-section or uncertain changes); the 10 prompt test files pass
+  against the rewritten narration.
+- [ ] ACC-007: Verifies REQ-007 — `specmgr docs`, `specmgr mcp-docs`,
+  `specmgr adr-toc`, and `specmgr schema` all report zero drift;
+  `docs/MCP.md` shows the two new general tools (with `type` rendered as a 7-
+  / 8-value enum) and none of the 15 removed tools; `server.py`'s docstring
+  lists exactly the post-feature surface; `AGENTS.md` and `CHANGELOG.md` are
+  updated per REQ-007.
+- [ ] ACC-008: Verifies REQ-001/002/004/005 — the Phase-1 ADR exists in
+  `docs/adr/` with status `accepted` and is listed in `docs/adr/README.md`; a
+  live, un-mocked end-to-end run in a temporary `SPECMGR_DOCS_DIR` passes for
+  `req`, `rsk`, and `uc`: `create_<d>` → `get_<d>(id, raw=True)` →
+  `update(id, type, content, begin, end)` (one middle-range replace, one
+  `N+1` append) → `get_<d>` (content verified) → `set_status(id, type,
+  status)` (domain-valid value) → `get_<d>` (status verified); for ADR:
+  `create_adr` → `set_status(id, type="adr", status="superseded",
+  superseded_by=…)` → status reads `"superseded by …"`;
+  `asyncio.run(mcp.list_tools()/list_resources()/list_prompts())` on the real
+  `server.mcp` instance reports **71 tools / 25 resources / 19 prompts**; a
+  fresh subprocess import of `biz.dfch.specmgr.server` succeeds.
+
+### Scope
+
+**Included in this feature:**
+
+- `general/tools/update.py`, `general/tools/set_status.py`, and the shared
+  body-text/splice helpers (private module under `general/tools/`), plus
+  their registration in `general/tools/__init__.py`.
+- The `raw` parameter on the seven `get_<d>` tools.
+- Deletion of the 15 superseded tool modules, their test files, and all
+  code/docstring references outside Phase-5-owned narration.
+- The narration rewrite (11 instruction data files, prompt module
+  docstrings, 10 prompt test files).
+- The Phase-1 ADR, `AGENTS.md`, `CHANGELOG.md`, and all generated docs.
+
+**Explicitly out of scope:**
+
+- Any change to ADR's section-level mutation tools (`update_frontmatter`,
+  `update_section`, `option_*`) or to ADR's `specmgr://adr/{id}` resource —
+  ADR has no whole-body replace by design and is therefore not a `update`
+  type; its `set_status` behavior moves to the generic tool unchanged.
+- Re-introducing `specmgr://<d>/{id}` resources for the seven domains —
+  rejected in the planning session on ADR ddfb1109's empirical reliability
+  finding (agents invoke tools more reliably than parameterized resources);
+  `get_<d>(raw=True)` serves the same need (recorded in the Phase-1 ADR).
+- Consolidation of `create_*`, `get_*` (beyond the `raw` parameter),
+  `list_*`, `validate_*`, `parse_*`, or the `delete_*` stubs.
+- Any schema/model change: the per-domain status vocabularies, body schemas,
+  and `specmgr schema` outputs are untouched.
+- A version bump of `pyproject.toml` (release-time concern per `AGENTS.md`;
+  the breaking change lands in `[Unreleased]`).
+- The `ac` domain (does not exist yet) — but its *convention* is fixed by the
+  ADR: it will add one dispatch entry to the two generic tools, not new
+  tools.
+- The pre-existing, already-documented AGENTS.md staleness items (e.g. the
+  historical "REQ, UC, and TSK were built after that refactor" enumeration) —
+  fixing unrelated stale text is not part of this feature.
+
+### Dependencies
+
+- Depends on: ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614 (id-based reads are
+  tool-first — the basis for `raw` on `get_<d>` instead of `/{id}`
+  resources); ADR ece4554b-725c-4f76-bc04-5d2b760363d2 (domain-first
+  hierarchy — the generic tools live in the cross-cutting `general/`
+  package, reusing each domain's private helpers); ADR
+  3bf0326f-065a-424c-a2b9-87e5d5bcfa99 (the `mcp` singleton lives in
+  `server.py` — import-order consideration, see Design Notes); ADR
+  71fd95d7-07f2-466f-81aa-d29b7e3ef34c (ADR's `update_section` contract —
+  what `update` deliberately does *not* extend to ADR); ADR
+  898bfcd0-85f9-462f-93a8-747bda4166c8 (ADRs are authored/edited only
+  through the MCP structured tools — Phase 1 must use `specmgr_create_adr`);
+  ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3 (filesystem is the sole source of
+  truth — the splice re-reads the on-disk body and the validate-before-write
+  invariant is preserved); the existing `general/tools/_doc_paths.py`/
+  `_packaged_data.py` infrastructure and each domain's `_paths`/`_io`/
+  `_write`/`_lock` private helpers (reused as-is, not modified).
+- Blocks: none. Future domain work (e.g. `ac`) must follow the ADR's
+  dispatch-entry convention.
+
+### Design Notes
+
+**Dispatch architecture.** Each of the two generic tools is a thin MCP
+wrapper around a dispatch table `dict[str, Callable]` mapping the `type`
+value to a private adapter function (`_update_<d>` / `_set_status_<d>`). Each
+adapter is a **verbatim port** of the corresponding deleted tool's function
+body (same lock, same `load_by_id`, same frontmatter carry-over / `updated`
+bump, same `write_X_file`, same domain `XNotFoundError`) — for `update`, plus
+the REQ-002 range branch; for `set_status`, the ADR adapter ports
+`adr/tools/set_status.py` including its delegation to
+`models.adr.v1.mutations.set_status`. Domain private helpers (`_paths`,
+`_io`, `_write`, `_lock`) and domain models are **not modified** —
+`create_*`/`get_*`/`validate_*`/`list_*` keep using them exactly as today,
+and the new adapters import them the same way the old tools did. The adapters
+and table live in `general/tools/` because the tools are cross-cutting (the
+`general/` package is the documented home for non-domain-specific tools, per
+`AGENTS.md`); no new shared *code* is added to the domain packages.
+
+**`update` signature and return type.**
+
+    @mcp.tool(
+        name="update",
+        title="Update document",
+        description=(...),  # whole-body or line-range replace; type = domain;
+    )                       # begin/end optional 1-based inclusive body-line range
+    def update(
+        id: str,
+        type: Literal["req", "uc", "tsk", "qa", "prb", "gol", "rsk"],
+        content: str,
+        begin: int | None = None,
+        end: int | None = None,
+    ) -> ReqDocument | UcDocument | TskDocument | QaDocument | PrbDocument | GolDocument | RskDocument:
+
+The parameter is named `type` (matches the frontmatter field vocabulary the
+client already knows; ruff's enabled rule set E/F/W has no builtin-shadowing
+rule). The 7-way union return type is annotation-only — the MCP input schema
+is built from the parameters, and the SDK serializes whichever concrete
+document is returned. The `type` value must render as a 7-entry JSON-schema
+`enum` in `docs/MCP.md` (verify in the Phase 2 gate).
+
+**Range contract (REQ-002), precisely.** Let `N` be the number of lines of
+the current frontmatter-stripped body (`len(body_text.splitlines())`).
+Coordinates are 1-based and inclusive. `N+1` is a virtual position past the
+last line:
+
+- `begin = end = k` (1 ≤ k ≤ N) → replace line `k` only.
+- `begin = k`, `end = m` (k ≤ m ≤ N) → replace lines `k..m`.
+- `end = N+1` → the range extends through the last line (`k..N`).
+- `begin = end = N+1` → the range is empty at end-of-body: pure append.
+- `begin = 1`, `end = N` → whole-body replace, file-identical to whole-body
+  mode with the same text (test this equivalence).
+- Empty `content` → the range is deleted (legal iff the result validates).
+
+Misuse → `ValueError` (client-controlled input, **not** `assert` — per
+`.specmgr/conventions.md` Rule 3): exactly one of `begin`/`end` given;
+`begin < 1`; `begin > end`; `end > N + 1`. The error message names the
+offending value(s) and the allowed range. Splice algorithm: take the on-disk
+body lines, drop lines `begin..min(end, N)`, insert `content.splitlines()` at
+position `begin - 1`, rejoin with `"\n"` plus a single trailing `"\n"`. The
+**result** is validated exactly like whole-body mode (`X.from_text(
+format_text(spliced))`) and the spliced text (not the fragment) is persisted
+verbatim via the domain `write_X_file` — so out-of-range regions are
+byte-identical to disk and no renderer ever touches them. Frontmatter
+addressing is impossible by construction: the body text is extracted with the
+frontmatter block removed, and coordinates are defined relative to that text
+only.
+
+**Shared body extraction + `raw` invariant (REQ-003).** One private helper
+(live in a new `general/tools/_splice.py` alongside the splice function, no
+`mcp` dependency — plain file I/O, mirroring `_doc_paths.py`'s placement)
+returns the frontmatter-stripped body text of a file using the established
+`frontmatter.loads(path.read_text(encoding="utf-8")).content` mechanism (the
+same one all seven `set_status_<d>` tools use today). Both the REQ-002 splice
+and each `get_<d>(raw=True)` call go through this one helper, which *is* the
+"what the client counts is what the server splices" invariant of ACC-003.
+`get_<d>` with `raw=True` stays read-only: no lock, no directory creation —
+matching every existing `get_<d>`.
+
+**`set_status` signature and the `superseded_by` guard (REQ-004).**
+
+    @mcp.tool(
+        name="set_status",
+        title="Set document status",
+        description=(...),  # type = domain (8 values, incl. adr);
+    )                       # superseded_by: adr only
+    def set_status(
+        id: str,
+        type: Literal["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "adr"],
+        status: str,
+        superseded_by: str | None = None,
+    ) -> ReqDocument | UcDocument | TskDocument | QaDocument | PrbDocument | GolDocument | RskDocument | Adr:
+
+Per-domain closed status vocabularies (authoritative source: each domain's
+`_ALLOWED_STATUSES` in `models/<v>/frontmatter.py` — re-read them when
+implementing; the table below reflects 2026-08-26): `req` and `gol`:
+`draft`/`proposed`/`accepted`/`superseded`/`deprecated`/`rejected`/
+`implemented` (7); `uc`: `draft`/`proposed`/`accepted`/`deprecated`/
+`superseded` (5); `tsk` and `qa`: `draft`/`active`/`done`/`cancelled` (4);
+`prb`: `draft`/`active`/`resolved`/`cancelled` (4); `rsk`: `open`/
+`mitigating`/`accepted`/`occurred`/`closed`/`dropped` (6); `adr`: 6 values
+(`draft`/`proposed`/`rejected`/`accepted`/`deprecated`/`superseded`) plus the
+`"superseded by X"` pattern. The guard `superseded_by is not None and type !=
+"adr"` → `ValueError` runs **before** any file access.
+
+**Import-order consideration.** `server.py` imports the domain packages in
+one bottom-of-file line, with `general` second (`from . import adr, general,
+gol, prb, qa, req, rsk, tsk, uc`). Once `general/tools/__init__.py` registers
+the new tools, importing `general` pulls in **all** seven domain `tools` (and
+`prompts`) packages earlier than today. This is safe by construction: every
+domain tool module already does `from ...server import mcp` while
+`server.py` is still executing its import line (the `mcp` name is bound at
+`server.py:197`, before the import line at `server.py:211`), and every
+`general.tools._packaged_data` import in domain prompts/resources uses the
+submodule form (`from ...general.tools._packaged_data import read_packaged_
+text`), which is safe mid-initialization. The Phase 2 gate's fresh-subprocess
+import smoke test (ACC-008) proves it rather than assuming it.
+
+**Docs discipline.** `server.py`'s module docstring is updated *inside* each
+phase that changes the surface it describes (Phase 2 adds both tools' lines
+as they are added; Phase 3 removes the `update_<d>` lines; Phase 4 removes
+the `set_status_<d>` + ADR `set_status` lines). `docs/MCP.md` and
+`docs/api/` are regenerated in every phase gate and must be drift-free
+(`git diff --exit-code -- docs/`) at every phase commit — the pre-commit
+hooks enforce this for any commit touching `src/`.
+
+**Name-collision constraint.** ADR's existing tool is already named
+`set_status`. Registering the generic `set_status` while `adr/tools/
+set_status.py` still exists would double-register the name, which is why
+Phase 4 adds the generic tool and deletes all eight old status tools in one
+phase. (No such constraint exists for `update` — Phase 2 is purely additive,
+Phase 3 deletes the seven `update_<d>` tools.)
+
+**Phase-end quality gate (every phase).** Unless a phase task says otherwise:
+`uv run --frozen ruff format --check`, `uv run --frozen ruff check`, `uv run
+--frozen vulture src/ whitelist.py --min-confidence 60`, `uv run --frozen
+python -m unittest discover -v -s tests -t . -p "test_*.py"`, plus the
+`specmgr docs` / `specmgr mcp-docs` / `specmgr adr-toc` / `specmgr schema`
+regenerations the phase touches, then `git diff --exit-code -- docs/`. Fix
+failures and re-run until green — a phase is not done with a red gate. Then
+update this README: a dated entry in the **Recent Updates** section, Current
+Status, and the phase's task lines flipped to done in place.
+
+### Related ADRs
+
+- ddfb1109-422d-4507-8dbc-dc5e4bec9614: Expose id-based document reads as a
+  tool (`get_<d>`), not a resource — the basis for `get_<d>(raw=True)`
+  instead of re-introducing `specmgr://<d>/{id}` resources
+- ece4554b-725c-4f76-bc04-5d2b760363d2: Organize the codebase by document-
+  type domain — the generic tools live in the cross-cutting `general/`
+  package, reusing domain-private helpers
+- 3bf0326f-065a-424c-a2b9-87e5d5bcfa99: Extract the `mcp` singleton into its
+  own module — the import-order consideration in Design Notes
+- 71fd95d7-07f2-466f-81aa-d29b7e3ef34c: Generic `update_section` (ADR
+  domain) — the section-level contract that `update` deliberately does not
+  extend to ADR
+- 898bfcd0-85f9-462f-93a8-747bda4166c8: Author and edit ADRs only through MCP
+  structured tools — Phase 1 must use `specmgr_create_adr`, never a hand-
+  written file
+- 33c5ab08-ff58-4c73-8c32-23abaf3838e3: Filesystem is the sole source of
+  truth — the splice re-reads the on-disk body; validate-before-write
+- (Phase 1 creates the feature's own short ADR; its id is recorded in
+  Decisions Made once created)
+
+### Task List
+
+Single, canonical breakdown of work phases and tasks. Status lives on the
+task itself. Each phase ends with a mandatory phase-end quality-gate task
+(full gate per Design Notes + this README's Progress update), and the
+phase-orchestrator commits each accepted phase as one Conventional Commit.
+
+#### Phase 1: ADR
+
+- [ ] Task 1.1: Create the feature's ADR with the `specmgr_create_adr` MCP
+  tool (never hand-write the file — ADR 898bfcd0), status `accepted`, title
+  "Consolidate whole-body update and status-change tools into generic type-
+  dispatched tools": Context (15 near-duplicate mutation tools; LLM clients
+  see 15 entries for 2 conceptual operations; each new domain would add
+  more); Decision Drivers (simpler tool surface; no all-directories write-
+  path scan and no per-domain v4-UUID-collision ambiguity — uuid-only
+  resolution was rejected; the client already knows the domain; preserve the
+  filesystem-source-of-truth and validate-before-write invariants);
+  Considered Options (1: generic tools with explicit `type` — chosen; 2:
+  uuid-only id resolution scanning all domain directories; 3: keep per-
+  domain tools); Decision Outcome (Option 1) with Consequences (breaking: 14
+  per-domain tools removed and ADR `set_status`'s signature gains a required
+  `type`; ADR is excluded from `update` — its section-level MADR contract
+  has no whole-body replace — but included in `set_status` with the
+  `superseded_by` special case; the `update` line-range contract: 1-based
+  inclusive `begin`/`end`, `N+1` EOF sentinel, splice-then-validate-whole,
+  frontmatter never addressable; `get_<d>(raw=True)` as the line-number
+  source — tool-first per ADR ddfb1109, re-introducing `specmgr://<d>/{id}`
+  resources was considered and rejected; future domains add one dispatch
+  entry per generic tool, not new tools) — depends on: none — status: not-
+  started
+- [ ] Task 1.2: Validate the new ADR with `specmgr_validate_adr`; run `uv run
+  --frozen specmgr adr-toc` and confirm the ADR appears in
+  `docs/adr/README.md` — depends on: Task 1.1 — status: not-started
+- [ ] Task 1.3: Phase-end quality gate — full gate (ruff format --check, ruff
+  check, vulture, full unittest suite; no `src/` changes are expected, so
+  `docs/` drift checks cover `specmgr adr-toc` output only); set this
+  README's frontmatter `status: planning` → `status: in-progress`; add a
+  dated entry to the Recent Updates section, update Current Status, flip the
+  phase's task lines to done in place; record the new ADR's id — depends on:
+  Task 1.2 — status: not-started
+
+#### Phase 2: Generic `update` tool + `raw` read parameter
+
+- [ ] Task 2.1: Create `general/tools/_splice.py` (no `mcp` dependency, plain
+  file I/O + text manipulation, module docstring explaining the raw/splice
+  invariant): `body_text(path: Path) -> str` (frontmatter-stripped body text
+  via the established `frontmatter.loads(...).content` mechanism) and
+  `splice_body(current_body: str, begin: int, end: int, content: str) -> str`
+  (implements the Design-Notes range contract exactly: `N` = `len(
+  current_body.splitlines())`; `ValueError` with a clear message for `begin <
+  1`, `begin > end`, `end > N + 1`; drop lines `begin..min(end, N)`; insert
+  `content.splitlines()` at position `begin - 1`; rejoin `"\n"` + single
+  trailing `"\n"`; empty `content` = deletion) — depends on: none — status:
+  not-started
+- [ ] Task 2.2: Create `general/tools/update.py`: seven private adapter
+  functions `_update_<d>(id_, content, begin, end)` — verbatim ports of the
+  current `update_<d>` function bodies (same `X_lock`, `load_by_id`,
+  frontmatter carry-over + microsecond `updated` bump, `write_X_file`,
+  domain `XNotFoundError`) with the range branch added (no `begin`/`end` →
+  today's behavior: validate `X.from_text(format_text(content))`, persist
+  `content` verbatim; both given → `body_text` + `splice_body`, validate the
+  *result* via `X.from_text(format_text(spliced))`, persist the *spliced*
+  text verbatim; the both-or-neither `ValueError` guard runs before any file
+  access); a dispatch table; and `@mcp.tool(name="update", ...)` `def
+  update(id: str, type: Literal["req","uc","tsk","qa","prb","gol","rsk"],
+  content: str, begin: int | None = None, end: int | None = None) ->
+  ReqDocument | UcDocument | TskDocument | QaDocument | PrbDocument |
+  GolDocument | RskDocument` with a full numpy-style docstring (including
+  the range contract and the error types) — depends on: Task 2.1 — status:
+  not-started
+- [ ] Task 2.3: Register `update` in `general/tools/__init__.py` (import,
+  `__all__`, module docstring) — depends on: Task 2.2 — status: not-started
+- [ ] Task 2.4: Add the `raw: bool = False` parameter to the seven `get_<d>`
+  tools (`req/tools/get_req.py`, `uc/tools/get_uc.py`, `tsk/tools/get_tsk.py`,
+  `qa/tools/get_qa.py`, `prb/tools/get_prb.py`, `gol/tools/get_gol.py`,
+  `rsk/tools/get_rsk.py`): signature `get_<d>(id: str, raw: bool = False) ->
+  XDocument | str`; `raw=True` resolves the id as today (no lock — read-only)
+  and returns `body_text(path)` (the same helper the splice uses, per the
+  Design-Notes invariant); `raw=False` returns the parsed document exactly as
+  today; update each tool's `@mcp.tool` description and docstring Returns
+  section — depends on: Task 2.1 — status: not-started
+- [ ] Task 2.5: Update `server.py`'s module docstring: add `update` to the
+  General-tools lines (one line describing whole-body *and* line-range
+  replace, the 7-value `type`, optional `begin`/`end`); note the `raw`
+  parameter where the seven `get_<d>` tools are enumerated — depends on:
+  Task 2.2, Task 2.4 — status: not-started
+- [ ] Task 2.6: `tests/general/tools/test_update.py` — parameterized over all
+  seven types (seed a document per type, e.g. via the domain `create_<d>`
+  tool in a temp `SPECMGR_DOCS_DIR`, mirroring the fixture strategy of the
+  `tests/<d>/tools/test_update_<d>.py` files still on disk at this phase):
+  whole-body mode (ACC-001 cases: body replaced; id/type/status/created/
+  version preserved; `updated` bumped; status not settable; structural
+  `AssertionError` and field `ValidationError` each leave the file
+  byte-identical; unknown id → domain `XNotFoundError`); range mode (ACC-002
+  cases: middle-range replace with out-of-range lines byte-identical; `N+1`
+  append; `end=N+1` replace-through-EOF; empty-fragment deletion of an
+  optional section yielding a valid document; `begin=1`/`end=N` ≡ whole-body;
+  every `ValueError` misuse case; range deleting the H1 → `AssertionError`,
+  file untouched; range producing an out-of-vocabulary field value →
+  `ValidationError`, file untouched) — depends on: Task 2.2 — status: not-
+  started
+- [ ] Task 2.7: Extend each domain's existing `tests/<d>/tools/test_get_<d>.py`
+  (seven files) with `raw` coverage (ACC-003 cases): `raw=True` returns the
+  body text byte-identical to the on-disk frontmatter-stripped body; the
+  coordinate invariant (read `raw`, pick a real line range, `update` with it,
+  assert the splice landed exactly there); `raw=False` regression (parsed
+  document as before); unknown id → `XNotFoundError` in both modes — depends
+  on: Task 2.4, Task 2.2 — status: not-started
+- [ ] Task 2.8: Registration smoke test: a unittest asserting
+  `asyncio.run(mcp.list_tools())` contains `update` with `type` rendered as a
+  7-value `enum` and optional integer `begin`/`end` in the input schema, plus
+  a fresh-subprocess `uv run --frozen python -c "import biz.dfch.specmgr.
+  server"` check run inside the phase gate (import-order proof, Design Notes)
+  — depends on: Task 2.3 — status: not-started
+- [ ] Task 2.9: Phase-end quality gate — full gate including Tasks 2.6–2.8's
+  new tests; `uv run --frozen specmgr mcp-docs` and `uv run --frozen specmgr
+  docs` regeneration, then `git diff --exit-code -- docs/` zero drift;
+  confirm `docs/MCP.md` shows the `update` entry (enum) and the `raw` note on
+  the `get_<d>` entries; add a dated entry to the Recent Updates section,
+  update Current Status, flip the phase's task lines to done in place —
+  depends on: Tasks 2.3, 2.5, 2.8 — status: not-started
+
+#### Phase 3: Retire the per-domain `update_*` tools
+
+- [ ] Task 3.1: Delete the seven tool modules: `req/tools/update_req.py`,
+  `uc/tools/update_uc.py`, `tsk/tools/update_tsk.py`, `qa/tools/update_qa.py`,
+  `prb/tools/update_prb.py`, `gol/tools/update_gol.py`,
+  `rsk/tools/update_rsk.py` — depends on: Phase 2 complete — status: not-
+  started
+- [ ] Task 3.2: Delete the seven test files: `tests/req/tools/
+  test_update_req.py`, `tests/uc/tools/test_update_uc.py`, `tests/tsk/tools/
+  test_update_tsk.py`, `tests/qa/tools/test_update_qa.py`, `tests/prb/tools/
+  test_update_prb.py`, `tests/gol/tools/test_update_gol.py`, `tests/rsk/
+  tools/test_update_rsk.py` — depends on: Task 3.1 — status: not-started
+- [ ] Task 3.3: Update the seven domain `tools/__init__.py` files (remove the
+  `update_<d>` import, `__all__` entry, and the module-docstring tool-list
+  mention) and the seven domain `__init__.py` files (remove `update_<d>` from
+  the docstring tool enumeration; note that whole-body updates go through the
+  generic `update` tool in `general/tools/`) — depends on: Task 3.1 — status:
+  not-started
+- [ ] Task 3.4: Update `server.py`'s module docstring: remove `update_<d>`
+  from the seven per-domain Tools lines (the `set_status_<d>` entries stay
+  until Phase 4) — depends on: Task 3.1 — status: not-started
+- [ ] Task 3.5: Grep verification: `grep -rn "update_req\|update_uc\|
+  update_tsk\|update_qa\|update_prb\|update_gol\|update_rsk" src/ tests/`
+  must return only prompt-narration matches (the six `prompts/update_<d>.py`
+  module docstrings and their `data/*.md` files — Phase 5's ownership) and
+  nothing in `tools/`, `models/`, or `general/`; record the residual match
+  list in the Progress entry — depends on: Tasks 3.2, 3.3, 3.4 — status: not-
+  started
+- [ ] Task 3.6: Phase-end quality gate — full gate; `specmgr mcp-docs` +
+  `specmgr docs` regeneration, then `git diff --exit-code -- docs/` zero
+  drift (`docs/MCP.md` loses the seven `update_<d>` entries; `docs/api/`
+  loses the seven module pages); add a dated entry to the Recent Updates
+  section, update Current Status, flip the phase's task lines to done in
+  place — depends on: Task 3.5 — status: not-started
+
+#### Phase 4: Generic `set_status` + retire the eight old status tools
+
+- [ ] Task 4.1: Create `general/tools/set_status.py`: eight private adapters
+  `_set_status_<d>` — seven verbatim ports of the `set_status_<d>` bodies
+  (lock, `load_by_id`, raw body re-read via the established
+  `frontmatter.loads(...).content` mechanism, frontmatter reconstructed
+  through the domain `XFrontmatter` constructor so the closed vocabulary
+  validates, `updated` bump, body persisted verbatim, domain
+  `XNotFoundError`) plus the ADR port (lock, `load_by_id`, delegation to
+  `models.adr.v1.mutations.set_status(adr, status, superseded_by)`,
+  `write_adr` render round-trip, `AdrNotFoundError`); the guard (`
+  superseded_by is not None` and `type != "adr"` → `ValueError`, before any
+  file access); a dispatch table; and `@mcp.tool(name="set_status", ...)`
+  `def set_status(id: str, type: Literal["req","uc","tsk","qa","prb","gol",
+  "rsk","adr"], status: str, superseded_by: str | None = None) ->
+  ReqDocument | UcDocument | TskDocument | QaDocument | PrbDocument |
+  GolDocument | RskDocument | Adr` with a full numpy-style docstring —
+  depends on: Phase 3 complete (the `set_status` tool name must be free
+  before this tool registers — see Design Notes, Name-collision constraint) —
+  status: not-started
+- [ ] Task 4.2: Delete the eight superseded modules: `adr/tools/set_status.py`,
+  `req/tools/set_status_req.py`, `uc/tools/set_status_uc.py`,
+  `tsk/tools/set_status_tsk.py`, `qa/tools/set_status_qa.py`,
+  `prb/tools/set_status_prb.py`, `gol/tools/set_status_gol.py`,
+  `rsk/tools/set_status_rsk.py` — depends on: Task 4.1 — status: not-started
+- [ ] Task 4.3: Delete the eight test files: `tests/adr/tools/
+  test_set_status.py`, `tests/req/tools/test_set_status_req.py`,
+  `tests/uc/tools/test_set_status_uc.py`, `tests/tsk/tools/
+  test_set_status_tsk.py`, `tests/qa/tools/test_set_status_qa.py`,
+  `tests/prb/tools/test_set_status_prb.py`, `tests/gol/tools/
+  test_set_status_gol.py`, `tests/rsk/tools/test_set_status_rsk.py` — depends
+  on: Task 4.1 — status: not-started
+- [ ] Task 4.4: Register `set_status` in `general/tools/__init__.py` (import,
+  `__all__`, module docstring); update `adr/tools/__init__.py` and the seven
+  domain `tools/__init__.py` files (remove the `set_status*` imports,
+  `__all__` entries, and docstring mentions; note status changes go through
+  the generic `set_status` in `general/tools/`); update the eight domain
+  `__init__.py` docstring enumerations likewise — depends on: Tasks 4.2, 4.3 —
+  status: not-started
+- [ ] Task 4.5: Update `server.py`'s module docstring: remove `set_status`
+  from the ADR tools line and `set_status_<d>` from the seven per-domain
+  lines; add `set_status` to the General-tools lines (8-value `type`;
+  `superseded_by` is ADR-only) — depends on: Tasks 4.1, 4.4 — status: not-
+  started
+- [ ] Task 4.6: `tests/general/tools/test_set_status.py` — parameterized over
+  all eight types (ACC-004 cases): status changed + `updated` bumped + body
+  untouched (seven domains: raw body byte-identical; ADR: re-parsed document
+  equal apart from status/updated); closed-vocabulary enforcement per domain
+  (positive value from the domain's own set; negative value — re-read each
+  domain's `_ALLOWED_STATUSES` and pick a value valid in one domain but
+  invalid in the tested one, e.g. `implemented` against `rsk`/`uc`/`tsk`/`qa`/
+  `prb`, `open` against `req` — each → `pydantic.ValidationError`, file
+  untouched); ADR `superseded_by` composes `"superseded by X"` in the file;
+  ADR plain `status` values work with `superseded_by=None`; `superseded_by`
+  with any non-`adr` type → `ValueError`, file untouched; unknown id →
+  domain `XNotFoundError` / `AdrNotFoundError` — depends on: Task 4.1 —
+  status: not-started
+- [ ] Task 4.7: Phase-end quality gate — full gate including Task 4.6's new
+  tests; `specmgr mcp-docs` + `specmgr docs` regeneration, then `git diff
+  --exit-code -- docs/` zero drift; add a dated entry to the Recent Updates
+  section, update Current Status, flip the phase's task lines to done in
+  place — depends on: Tasks 4.5, 4.6 — status: not-started
+
+#### Phase 5: Narration rewrite (prompts + instruction data)
+
+- [ ] Task 5.1: Grep-driven rewrite of every instruction data file naming a
+  superseded tool (`grep -rn "update_req\|update_uc\|update_tsk\|update_qa\|
+  update_prb\|update_gol\|update_rsk\|set_status_" src/biz/dfch/specmgr/
+  */data/` plus bare `set_status(` in the ADR data files). Eleven files
+  expected: the six `<d>_update_instructions.md` (req, tsk, qa, rsk, prb,
+  gol — `uc` has no prompts sub-package): `update_<d>(id, content)` →
+  `update(id, type="<d>", content)`; `set_status_<d>(id, status)` →
+  `set_status(id, type="<d>", status)`; **add a range-update passage** — for
+  a localized change (one paragraph/field/section), first call
+  `get_<d>(id, raw=True)` to see the exact body text, identify the 1-based
+  line range (the `N+1` position is end-of-body), and call
+  `update(id, type="<d>", content, begin=…, end=…)` passing only the
+  replacement lines; for multi-section or uncertain changes, use the whole-
+  body replace (no `begin`/`end`); correct each file's status-vocabulary
+  prose where it differs per the Design-Notes table. `qa/data/
+  qa_refine_instructions.md`: its `update_qa` call sites → `update(id,
+  type="qa", …)` (refine appends — use the `N+1` append range for a clean
+  append, else whole-body; keep the existing carry-forward guidance for the
+  whole-body path). The four ADR instruction files: `set_status(id, status[,
+  superseded_by])` → `set_status(id, type="adr", status[, superseded_by])` —
+  depends on: Phase 4 complete — status: not-started
+- [ ] Task 5.2: Correct prompt Python module docstrings that name superseded
+  tools: the six `prompts/update_<d>.py` modules (rsk's is `update_risk.py`,
+  tsk's is `update_task.py`) — their module docstrings narrate the
+  `update_<d>` / `set_status_<d>` surface; the four ADR prompt modules
+  (`create_adr.py`, `create_adr_test.py`, `update_adr.py`,
+  `update_adr_test.py`) — their surface mentions of `set_status` stay true
+  (the tool still exists, now generic) but are made precise where they imply
+  the old ADR-only signature. No behavioral change to any prompt function —
+  depends on: Task 5.1 — status: not-started
+- [ ] Task 5.3: Update the ten prompt test files to assert the rewritten
+  narration: `tests/req/prompts/test_update_req.py`, `tests/tsk/prompts/
+  test_update_task.py`, `tests/qa/prompts/test_update_qa.py`, `tests/rsk/
+  prompts/test_update_risk.py`, `tests/prb/prompts/test_update_prb.py`,
+  `tests/gol/prompts/test_update_gol.py`, `tests/adr/prompts/
+  test_create_adr.py`, `tests/adr/prompts/test_create_adr_test.py`,
+  `tests/adr/prompts/test_update_adr.py`, `tests/adr/prompts/
+  test_update_adr_test.py` — assertions must confirm the generic call shapes
+  (and, for the six domain update prompts, the range-update passage) —
+  depends on: Tasks 5.1, 5.2 — status: not-started
+- [ ] Task 5.4: Phase-end quality gate — full gate (the prompt data files are
+  package data; `specmgr docs` regeneration covers Task 5.2's docstring
+  changes), then `git diff --exit-code -- docs/` zero drift; add a dated
+  entry to the Recent Updates section, update Current Status, flip the
+  phase's task lines to done in place — depends on: Task 5.3 — status: not-
+  started
+
+#### Phase 6: Cross-cutting documentation and release notes
+
+- [ ] Task 6.1: Update `AGENTS.md`: the seven per-domain bullets — remove
+  `update_<d>`/`set_status_<d>` from each tool enumeration and note that
+  whole-body/line-range updates go through the generic `update` tool and
+  status changes through the generic `set_status` tool (both in
+  `general/tools/`); the ADR bullet — remove `set_status` from its 12-wrapper
+  enumeration (11 remain); the `general/` bullet — add `update` (7-type;
+  optional `begin`/`end` range with the `N+1` sentinel) and `set_status`
+  (8-type; ADR-only `superseded_by`), and note the `raw` parameter on the
+  seven `get_<d>` tools; the "Still genuinely missing / not yet done" list —
+  add the convention note that future domains (e.g. `ac`) add one dispatch
+  entry to the two generic tools (plus a `raw` getter parameter) instead of
+  new `update_<d>`/`set_status_<d>` tools, citing the Phase-1 ADR id —
+  depends on: Phase 5 complete — status: not-started
+- [ ] Task 6.2: Update `CHANGELOG.md`'s `[Unreleased]` section: **Breaking** —
+  removed 14 MCP tools (`update_req`, `update_uc`, `update_tsk`,
+  `update_qa`, `update_prb`, `update_gol`, `update_rsk`, `set_status_req`,
+  `set_status_uc`, `set_status_tsk`, `set_status_qa`, `set_status_prb`,
+  `set_status_gol`, `set_status_rsk`) and ADR `set_status`'s signature
+  changes from `(id, status, superseded_by)` to `(id, type, status,
+  superseded_by)` with `type="adr"` now required; **Added** — generic
+  `update(id, type, content, begin, end)` (7 types; optional 1-based
+  inclusive body-line range, `N+1` EOF sentinel, splice-then-validate-whole)
+  and generic `set_status(id, type, status, superseded_by)` (8 types);
+  optional `raw: bool = False` on the seven `get_<d>` tools (returns the
+  frontmatter-stripped body text verbatim — the text `begin`/`end` index
+  into); cite the Phase-1 ADR id — depends on: Phase 5 complete — status:
+  not-started
+- [ ] Task 6.3: Final regeneration: `uv run --frozen specmgr docs`, `uv run
+  --frozen specmgr mcp-docs`, `uv run --frozen specmgr adr-toc`, `uv run
+  --frozen specmgr schema` (models are untouched — expect no schema
+  changes); confirm `git diff --exit-code -- docs/` exits zero — depends on:
+  Task 6.1, Task 6.2 — status: not-started
+- [ ] Task 6.4: Phase-end quality gate — full gate; add a dated entry to the
+  Recent Updates section, update Current Status, flip the phase's task lines
+  to done in place — depends on: Task 6.3 — status: not-started
+
+#### Phase 7: Final cross-cutting verification
+
+- [ ] Task 7.1: Walk ACC-001…ACC-008 and confirm each with concrete evidence,
+  annotating the Acceptance Criteria section inline in the style of
+  feat-18-goal: live, un-mocked end-to-end in a temporary
+  `SPECMGR_DOCS_DIR` — for `req`, `rsk`, and `uc`: `create_<d>` →
+  `get_<d>(id, raw=True)` → `update(id, type, content, begin, end)` (one
+  middle-range replace verified byte-exact, one `N+1` append) → `get_<d>`
+  (content verified) → `set_status(id, type, status)` (domain-valid value
+  from the Design-Notes table) → `get_<d>` (status verified); for ADR:
+  `create_adr` → `set_status(id, type="adr", status="superseded",
+  superseded_by=…)` → status reads `"superseded by …"`; confirm
+  `asyncio.run(mcp.list_tools()/list_resources()/list_prompts())` on the
+  real `server.mcp` instance reports 71 tools / 25 resources / 19 prompts;
+  fresh-subprocess import check; full quality gate (ruff format/check, pylint
+  advisory, vulture, unittest, `specmgr docs`/`mcp-docs`/`adr-toc`/`schema`
+  zero drift); remove the temporary docs directory and confirm `git status`
+  shows no residue — depends on: Phases 1–6 complete — status: not-started
+- [ ] Task 7.2: Set this README's frontmatter `status: in-progress` →
+  `status: done`; final Recent Updates entry and Current Status summary —
+  depends on: Task 7.1 — status: not-started
+
+**Note:** If a task's scope changes mid-flight, edit its description in
+place; rely on git history (`git log -p` on this file) to recover what was
+originally planned, rather than keeping a second copy of the task around.
+
+## Progress
+
+### Current Status
+
+**As of 2026-08-26**: Planned. This README was drafted in the planning
+session (all decisions in "Decisions Made" below are locked); all seven
+phases are not started. Execution is handed to the phase-orchestrator via
+`/implement-feature feat-22-consolidate-mutation-tools` (one phase-
+implementer per phase, one Conventional Commit per accepted phase).
+
+### Blockers
+
+None.
+
+### Recent Updates
+
+#### Update 2026-08-26 (planning session)
+
+- Completed: Feature planned end to end with the user. Design locked:
+  generic `update(id, type, content, begin, end)` for the seven whole-body
+  domains (line-range contract with the `N+1` EOF sentinel, splice-then-
+  validate-whole), generic `set_status(id, type, status, superseded_by)` for
+  all eight domains (ADR-only `superseded_by`), `get_<d>(raw=True)` body-text
+  read, outright deletion of the 15 superseded tools, per-domain prompts
+  kept with rewritten narration, and a short ADR (Phase 1).
+- Next: Phase 1 (ADR) via `/implement-feature feat-22-consolidate-mutation-
+  tools`.
+- Notes: Phase 4 is deliberately atomic (add generic `set_status` + delete
+  all eight old status tools) because ADR's existing tool already occupies
+  the `set_status` name. Target end state: 71 tools / 25 resources / 19
+  prompts (from 84/25/19).
+
+### Decisions Made
+
+- **2026-08-26**: Explicit `type` parameter on both generic tools rather
+  than bare-uuid resolution — per-domain v4 UUIDs are not *guaranteed*
+  unique, uuid-only would force an all-domains directory scan (parsing every
+  file) on the write path with cost growing per domain, and the calling
+  client always already knows the domain.
+- **2026-08-26**: ADR is excluded from `update` (its section-level MADR
+  contract — `update_frontmatter`/`update_section`/`option_*` — has no
+  whole-body replace by design) but included in `set_status` with the
+  `superseded_by` special case.
+- **2026-08-26**: The 15 superseded tools are deleted outright — no
+  deprecated wrapper release; the package is 0.x and the MCP tool list is
+  the only contract (breaking change recorded in `CHANGELOG.md`).
+- **2026-08-26**: The per-domain `update_*` prompts are kept (domain-
+  tailored interview guidance) and their narration text rewritten to the
+  generic tools — rather than consolidating seven near-duplicate prompts
+  into one generic prompt and losing domain-specific section names.
+- **2026-08-26**: The decision is recorded as a short ADR (Phase 1) rather
+  than README-only — it fixes a repo-wide convention future domains must
+  follow (per AGENTS.md's "when in doubt, write the ADR").
+- **2026-08-26**: `update` gains optional 1-based, inclusive `begin`/`end`
+  body-line coordinates with an `N+1` EOF sentinel (append/through-EOF); the
+  spliced result is always validated as a whole document before writing, and
+  unchanged regions stay byte-identical to disk (user request: smaller,
+  faster, safer targeted updates).
+- **2026-08-26**: Line numbers are served by `get_<d>(raw=True)` (shared
+  body-extraction helper with the splice) rather than re-introducing
+  `specmgr://<d>/{id}` resources — ADR ddfb1109's empirical finding that
+  agents invoke tools more reliably than parameterized resources, plus the
+  maintenance cost of seven new resource templates, decided it.
+
+### Related PRs / Commits
+
+None yet (one Conventional Commit per accepted phase, created by the phase-
+orchestrator with user confirmation).
