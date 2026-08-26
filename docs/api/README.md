@@ -60,6 +60,29 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general.tools._paging`](biz.dfch.specmgr.general.tools._paging.md) — Generic, doc-type-agnostic paging helpers (feat-13 Task 1.2).
 - [`biz.dfch.specmgr.general.tools.mdformat`](biz.dfch.specmgr.general.tools.mdformat.md) — ``@mcp.tool()`` wrapper: mdformat.
 - [`biz.dfch.specmgr.general.tools.webfetch`](biz.dfch.specmgr.general.tools.webfetch.md) — ``@mcp.tool()`` wrapper: webfetch.
+- [`biz.dfch.specmgr.gol`](biz.dfch.specmgr.gol.md) — Goal (GOL) domain -- high-level business goal specifications.
+- [`biz.dfch.specmgr.gol.prompts`](biz.dfch.specmgr.gol.prompts.md) — MCP prompt wrappers for Goals (Tasks 3.14-3.15).
+- [`biz.dfch.specmgr.gol.prompts.create_gol`](biz.dfch.specmgr.gol.prompts.create_gol.md) — ``@mcp.prompt()``: create_gol (Task 3.14).
+- [`biz.dfch.specmgr.gol.prompts.update_gol`](biz.dfch.specmgr.gol.prompts.update_gol.md) — ``@mcp.prompt()``: update_gol (Task 3.15).
+- [`biz.dfch.specmgr.gol.resources`](biz.dfch.specmgr.gol.resources.md) — MCP resource registrations for Goal (GOL) documents (Task 3.11).
+- [`biz.dfch.specmgr.gol.resources.gol_example`](biz.dfch.specmgr.gol.resources.gol_example.md) — Resource: specmgr://gol/example (Task 3.11).
+- [`biz.dfch.specmgr.gol.resources.gol_schema`](biz.dfch.specmgr.gol.resources.gol_schema.md) — Resource: specmgr://gol/schema (Task 3.11, packaged data).
+- [`biz.dfch.specmgr.gol.resources.gol_template`](biz.dfch.specmgr.gol.resources.gol_template.md) — Resource: specmgr://gol/template (Task 3.11).
+- [`biz.dfch.specmgr.gol.tools`](biz.dfch.specmgr.gol.tools.md) — MCP tool wrappers for goals (mirrors ``prb/tools/``'s own shape).
+- [`biz.dfch.specmgr.gol.tools._io`](biz.dfch.specmgr.gol.tools._io.md) — Thin file read helpers over ``parse_gol`` (Task 3.1).
+- [`biz.dfch.specmgr.gol.tools._lock`](biz.dfch.specmgr.gol.tools._lock.md) — Per-document in-process lock guarding goal mutations.
+- [`biz.dfch.specmgr.gol.tools._paths`](biz.dfch.specmgr.gol.tools._paths.md) — Goal base directory resolution and id -> path lookup (Task 3.1).
+- [`biz.dfch.specmgr.gol.tools._write`](biz.dfch.specmgr.gol.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_gol``/``update_gol``.
+- [`biz.dfch.specmgr.gol.tools.create_gol`](biz.dfch.specmgr.gol.tools.create_gol.md) — ``@mcp.tool()`` wrapper: create_gol (Task 3.3).
+- [`biz.dfch.specmgr.gol.tools.delete_gol`](biz.dfch.specmgr.gol.tools.delete_gol.md) — ``@mcp.tool()`` wrapper: delete_gol (Task 3.6).
+- [`biz.dfch.specmgr.gol.tools.get_gol`](biz.dfch.specmgr.gol.tools.get_gol.md) — ``@mcp.tool()`` wrapper: get_gol (Task 3.8).
+- [`biz.dfch.specmgr.gol.tools.get_gol_example`](biz.dfch.specmgr.gol.tools.get_gol_example.md) — ``@mcp.tool()`` wrapper: get_gol_example (Task 3.10).
+- [`biz.dfch.specmgr.gol.tools.get_gol_template`](biz.dfch.specmgr.gol.tools.get_gol_template.md) — ``@mcp.tool()`` wrapper: get_gol_template (Task 3.10).
+- [`biz.dfch.specmgr.gol.tools.list_gol`](biz.dfch.specmgr.gol.tools.list_gol.md) — ``@mcp.tool()`` wrapper: list_gol (Task 3.9).
+- [`biz.dfch.specmgr.gol.tools.parse_gol`](biz.dfch.specmgr.gol.tools.parse_gol.md) — ``@mcp.tool()`` wrapper: parse_gol (Task 3.2).
+- [`biz.dfch.specmgr.gol.tools.set_status_gol`](biz.dfch.specmgr.gol.tools.set_status_gol.md) — ``@mcp.tool()`` wrapper: set_status_gol (Task 3.5).
+- [`biz.dfch.specmgr.gol.tools.update_gol`](biz.dfch.specmgr.gol.tools.update_gol.md) — ``@mcp.tool()`` wrapper: update_gol (Task 3.4).
+- [`biz.dfch.specmgr.gol.tools.validate_gol`](biz.dfch.specmgr.gol.tools.validate_gol.md) — ``@mcp.tool()`` wrapper: validate_gol (Task 3.7).
 - [`biz.dfch.specmgr.models`](biz.dfch.specmgr.models.md) — Pydantic models used by the ``biz-dfch-specmgr`` MCP server.
 - [`biz.dfch.specmgr.models.adr`](biz.dfch.specmgr.models.adr.md) — Pydantic models for MADR 4.0.0-based Architecture Decision Records.
 - [`biz.dfch.specmgr.models.adr.v1`](biz.dfch.specmgr.models.adr.v1.md) — ADR schema version 1 (``SCHEMA_MAJOR_VERSION == 1``).
@@ -101,6 +124,37 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.models.md.markdown_section6_with_comment`](biz.dfch.specmgr.models.md.markdown_section6_with_comment.md) — Opt-in `MarkdownSection6` variant allowing a leading explanatory comment.
 - [`biz.dfch.specmgr.models.md.markdown_str`](biz.dfch.specmgr.models.md.markdown_str.md) — Parse markdown into tokens using shared MarkdownIt instance.
 - [`biz.dfch.specmgr.models.version_info`](biz.dfch.specmgr.models.version_info.md) — Pydantic model for the ``specmgr://version`` resource.
+- [`biz.dfch.specmgr.prb`](biz.dfch.specmgr.prb.md) — Problem Statement (PRB) domain -- Six-Sigma-style problem statement specifications.
+- [`biz.dfch.specmgr.prb.models`](biz.dfch.specmgr.prb.models.md) — Problem Statement (PRB) models -- Pydantic schema powered by the generic ``models/md`` engine.
+- [`biz.dfch.specmgr.prb.models.v1`](biz.dfch.specmgr.prb.models.v1.md) — Problem Statement (PRB) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- [`biz.dfch.specmgr.prb.models.v1._util`](biz.dfch.specmgr.prb.models.v1._util.md) — Shared, private constants for the ``prb.models.v1`` subpackage.
+- [`biz.dfch.specmgr.prb.models.v1.body`](biz.dfch.specmgr.prb.models.v1.body.md) — Problem Statement (PRB) body models: whole-section fields under a single H1.
+- [`biz.dfch.specmgr.prb.models.v1.document`](biz.dfch.specmgr.prb.models.v1.document.md) — Pydantic model for a full Problem Statement (PRB) document (frontmatter + body).
+- [`biz.dfch.specmgr.prb.models.v1.frontmatter`](biz.dfch.specmgr.prb.models.v1.frontmatter.md) — Problem Statement (PRB) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
+- [`biz.dfch.specmgr.prb.models.v1.parser`](biz.dfch.specmgr.prb.models.v1.parser.md) — Parse raw Problem Statement (PRB) ``.md`` text into a :class:`PrbDocument` (Phase 2, Task 2.2).
+- [`biz.dfch.specmgr.prb.models.v1.summary`](biz.dfch.specmgr.prb.models.v1.summary.md) — Pydantic model for one line of PRB listing output (Phase 2, Task 2.3).
+- [`biz.dfch.specmgr.prb.prompts`](biz.dfch.specmgr.prb.prompts.md) — MCP prompt wrappers for Problem Statements (Tasks 3.14-3.15).
+- [`biz.dfch.specmgr.prb.prompts.create_prb`](biz.dfch.specmgr.prb.prompts.create_prb.md) — ``@mcp.prompt()``: create_prb (Task 3.14).
+- [`biz.dfch.specmgr.prb.prompts.update_prb`](biz.dfch.specmgr.prb.prompts.update_prb.md) — ``@mcp.prompt()``: update_prb (Task 3.15).
+- [`biz.dfch.specmgr.prb.resources`](biz.dfch.specmgr.prb.resources.md) — MCP resource registrations for Problem Statement (PRB) documents (Task 3.11).
+- [`biz.dfch.specmgr.prb.resources.prb_example`](biz.dfch.specmgr.prb.resources.prb_example.md) — Resource: specmgr://prb/example (Task 3.11).
+- [`biz.dfch.specmgr.prb.resources.prb_schema`](biz.dfch.specmgr.prb.resources.prb_schema.md) — Resource: specmgr://prb/schema (Task 3.11).
+- [`biz.dfch.specmgr.prb.resources.prb_template`](biz.dfch.specmgr.prb.resources.prb_template.md) — Resource: specmgr://prb/template (Task 3.11).
+- [`biz.dfch.specmgr.prb.tools`](biz.dfch.specmgr.prb.tools.md) — MCP tool wrappers for problem statements (mirrors ``tsk/tools/``'s own shape).
+- [`biz.dfch.specmgr.prb.tools._io`](biz.dfch.specmgr.prb.tools._io.md) — Thin file read helpers over ``parse_prb`` (Task 3.1).
+- [`biz.dfch.specmgr.prb.tools._lock`](biz.dfch.specmgr.prb.tools._lock.md) — Per-document in-process lock guarding problem statement mutations.
+- [`biz.dfch.specmgr.prb.tools._paths`](biz.dfch.specmgr.prb.tools._paths.md) — Problem statement base directory resolution and id -> path lookup (Task 3.1).
+- [`biz.dfch.specmgr.prb.tools._write`](biz.dfch.specmgr.prb.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_prb``/``update_prb``.
+- [`biz.dfch.specmgr.prb.tools.create_prb`](biz.dfch.specmgr.prb.tools.create_prb.md) — ``@mcp.tool()`` wrapper: create_prb (Task 3.3).
+- [`biz.dfch.specmgr.prb.tools.delete_prb`](biz.dfch.specmgr.prb.tools.delete_prb.md) — ``@mcp.tool()`` wrapper: delete_prb (Task 3.6).
+- [`biz.dfch.specmgr.prb.tools.get_prb`](biz.dfch.specmgr.prb.tools.get_prb.md) — ``@mcp.tool()`` wrapper: get_prb (Task 3.8).
+- [`biz.dfch.specmgr.prb.tools.get_prb_example`](biz.dfch.specmgr.prb.tools.get_prb_example.md) — ``@mcp.tool()`` wrapper: get_prb_example (Task 3.10).
+- [`biz.dfch.specmgr.prb.tools.get_prb_template`](biz.dfch.specmgr.prb.tools.get_prb_template.md) — ``@mcp.tool()`` wrapper: get_prb_template (Task 3.10).
+- [`biz.dfch.specmgr.prb.tools.list_prb`](biz.dfch.specmgr.prb.tools.list_prb.md) — ``@mcp.tool()`` wrapper: list_prb (Task 3.9).
+- [`biz.dfch.specmgr.prb.tools.parse_prb`](biz.dfch.specmgr.prb.tools.parse_prb.md) — ``@mcp.tool()`` wrapper: parse_prb (Task 3.2).
+- [`biz.dfch.specmgr.prb.tools.set_status_prb`](biz.dfch.specmgr.prb.tools.set_status_prb.md) — ``@mcp.tool()`` wrapper: set_status_prb (Task 3.5).
+- [`biz.dfch.specmgr.prb.tools.update_prb`](biz.dfch.specmgr.prb.tools.update_prb.md) — ``@mcp.tool()`` wrapper: update_prb (Task 3.4).
+- [`biz.dfch.specmgr.prb.tools.validate_prb`](biz.dfch.specmgr.prb.tools.validate_prb.md) — ``@mcp.tool()`` wrapper: validate_prb (Task 3.7).
 - [`biz.dfch.specmgr.qa`](biz.dfch.specmgr.qa.md) — Question and Answer (QA) domain -- requirements-elicitation interview specifications.
 - [`biz.dfch.specmgr.qa.models`](biz.dfch.specmgr.qa.models.md) — Question and Answer (QA) models -- Pydantic schema powered by the generic ``models/md`` engine.
 - [`biz.dfch.specmgr.qa.models.v2`](biz.dfch.specmgr.qa.models.v2.md) — Question and Answer (QA) v2 models -- adjacent question/answer pairs, no per-question heading.

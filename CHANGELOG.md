@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-08-25
+
+### Added
+
+- **Seventh domain feature (PRB/Problem Statement tooling)**: implemented
+  Six-Sigma-style problem-statement document tools and infrastructure:
+  - `prb/models/v1/`: Pydantic schema (`PrbFrontmatter`, `PrbBody`,
+    `PrbDocument`), parser (`parse_prb`), `PrbSummary`, and JSON schema
+    generation, inside the domain package itself (not top-level `models/`).
+  - `prb/tools/`: `@mcp.tool()` wrappers for the PRB lifecycle
+    (`create_prb`, `update_prb`, `set_status_prb`, `parse_prb`, `list_prb`,
+    `get_prb`, `get_prb_example`, `get_prb_template`, `validate_prb`),
+    plus a stub for `delete_prb`.
+  - `prb/resources/`: `specmgr://prb/schema`, `specmgr://prb/example`,
+    `specmgr://prb/template` (no `specmgr://prb/{id}` or
+    `specmgr://prb/list`, consistent with REQ/UC/TSK/QA).
+  - `prb/prompts/`: narrated `create_prb`/`update_prb` prompts driving a
+    `TodoWrite` + `question`-tool 5W2H interview flow.
+  - `server.py` updated to import the new `prb` domain package; `AGENTS.md`
+    updated for seven domain/cross-cutting packages; README.md documents
+    the new Problem Statement (PRB) artifact type.
+  - Comprehensive test coverage across `tests/prb/models/`, `tests/prb/tools/`,
+    `tests/prb/resources/`, and `tests/prb/prompts/`, including a live
+    lifecycle integration test.
+
 ## [0.9.0] - 2026-08-23
 
 ### Changed

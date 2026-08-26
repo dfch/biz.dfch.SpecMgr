@@ -2,7 +2,7 @@
 created: 2026-08-15
 id: feat-7-various-improvements
 status: planning
-updated: 2026-08-19
+updated: 2026-08-26
 version: 1.0.0
 ---
 
@@ -596,6 +596,88 @@ progresses (edit, don't duplicate).
   `get_tsk` MCP tool with id `aaf70093-8a7c-4565-9985-3beaa85e1d3d` —
   depends on: none — status: done (2026-08-19)
 
+- [ ] Task 0.24: Clean up `AGENTS.md`'s stale `specmgr://<d>/list` resource
+  mentions left over from `feat-13-list-paging`'s resource→tool conversion
+  (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13) — `AGENTS.md`'s per-domain
+  bullets (at least `req`/`tsk`/`qa`, confirm `uc`/`adr` too) still
+  describe `specmgr://req/list`/`specmgr://tsk/list`/`specmgr://qa/list`
+  as resources instead of the `list_req`/`list_tsk`/`list_qa` tools they
+  actually are today; found and flagged during
+  `.specmgr/feat/feat-16-problem-statement/README.md`'s planning session
+  (2026-08-25) while designing that new domain's own `list_prb` tool
+  against the *current* code/ADR state rather than `AGENTS.md`'s
+  (out-of-date) wording. Fix every affected domain bullet, plus any other
+  live `specmgr://<d>/list` mention in `AGENTS.md` (e.g. the "MCP server
+  (`server.py`)" section's own domain-surface description, if it lists
+  resources per domain) — depends on: none — status: not-started
+
+- [ ] Task 0.25: Update `AGENTS.md`'s "Models location" section so it
+  states the *rule* instead of enumerating the post-refactor domains: ADR
+  is the only document type whose schema is not in its own domain
+  package (`models/adr/` at top level, because ADR predates the
+  domain-first refactor); every other document type (`req`, `uc`, `tsk`,
+  `qa`, `prb`, `gol`, and any future type) keeps its schema inside its
+  own domain package (`<domain>/models/vN/`). This resolves the standing
+  contradiction — the section currently names only "REQ, UC, and TSK" as
+  built after the refactor, while AGENTS.md's own per-domain bullets name
+  more (the `prb/` bullet says "same as REQ/UC/TSK/QA") — and
+  future-proofs the section: building a new document type no longer
+  requires editing AGENTS.md's "Models location" paragraph (as
+  feat-18-goal Phase 4 had to do for `gol`). Secondary, decide at
+  implementation time: the same per-type enumeration fragility exists in
+  AGENTS.md's Status heading (count + domain list) and its closing
+  "Don't assume any other domain package exists beyond …" paragraph —
+  reword those as rules too where feasible, or keep them enumerated and
+  record that decision in this file's Decisions Made — depends on: none —
+  status: not-started
+
+  Background: Found during feat-18-goal's (the new `gol` domain) Phase 4
+  AGENTS.md update (2026-08-26): AGENTS.md's "Models location — a real,
+  intentional divergence, not an oversight" paragraph (lines 108–116)
+  reads "REQ, UC, and TSK were built *after* that refactor and each keep
+  their schema inside their own domain package" — but `qa`
+  (`qa/models/v2/`), `prb` (`prb/models/v1/`), and `gol` (`gol/models/v1/`)
+  were also built after the domain-first refactor and likewise keep their
+  schemas in their own domain packages, and the file's own `prb/` bullet
+  already says "same as REQ/UC/TSK/QA" — the two sections contradict each
+  other. The sentence also had to be extended for every new type (feat-18
+  Phase 4 touched AGENTS.md in ~6 places for `gol` alone) even though the
+  underlying fact is stable: ADR's schema is the single exception at
+  top-level `models/adr/`. Stating the rule instead of enumerating the
+  domains removes both the contradiction and the per-type maintenance.
+  Note: the line numbers cited refer to AGENTS.md as of 2026-08-26 and
+   will drift — locate the section by its heading when implementing.
+
+- [ ] Task 0.26: Document the one-time pre-commit hook install in
+  `README.md`'s "Development" section for developers who want to develop
+  this application — after `uv sync --all-extras` the hooks are still
+  inactive, because `uv sync` only installs Python dependencies into the
+  venv and never writes anything into `.git/hooks/`; the developer must
+  additionally run `uv run --frozen pre-commit install` once per clone
+  (this is already noted in `AGENTS.md`'s "Developer Commands" section,
+  but not in the user-facing `README.md`). Add a short subsection there
+  with the command and a one-line explanation of why `uv sync` alone is
+  not enough — depends on: none — status: not-started
+
+- [ ] Task 0.27: Clean up the schema drift checks in `.github/workflows/ci.yml`
+  and `.pre-commit-config.yaml` — (a) consolidate the five duplicated plain
+  `specmgr schema` CI steps ("Make sure `docs/{req,uc,qa,prb,gol}_schema.json`
+  is correct") into a single step: each invocation already regenerates/checks
+  **all** registered types' `docs/*_schema.json` copies (no `--type` → full
+  set, `commands/schema.py`), so one run covers req/uc/qa/prb/gol **and**
+  `tsk`, which currently has no dedicated `docs/tsk_schema.json` step at all
+  (its docs copy is only checked incidentally via the other five runs);
+  keep the six per-domain packaged-copy steps
+  (`--type <t> --output-dir src/biz/dfch/specmgr/<t>/data`) unchanged —
+  those are genuinely one artifact per step, matching the six independent
+  `specmgr-schema-*-package` pre-commit hooks; (b) fix the stale
+  `specmgr-schema` hook description in `.pre-commit-config.yaml`
+  ("currently `req` and `uc`" — predates tsk/qa/prb/gol; the `files:`
+  patterns were updated when those domains landed, the prose was not);
+  (c) verify the consolidated CI step locally (`uv run --frozen specmgr
+  schema` exits 0 on a clean tree, 1 after deliberately drifting one file)
+  — depends on: none — status: not-started
+
 - [ ] Task 1.1: Inventory current `specmgr://*/list` resources and diff
   their output shape/behavior (`adr_list` vs. `req_list`) — depends on:
   none — status: not-started
@@ -616,8 +698,7 @@ progresses (edit, don't duplicate).
   **completed** via `feat-13-list-paging` (resource→tool `list_<domain>` +
   `asdste100`-style `PagedResult` wrapper, recorded in ADR
   ec9f5262-9912-49d0-903f-fcfb54f28c13); the shared-base-summary piece was
-  also carried into and completed by that feature (`general.models.
-  DocSummary`, subclassed by 4 of 5 domains — see ACC-001).
+  also carried into and completed by that feature (`general.models. DocSummary`, subclassed by 4 of 5 domains — see ACC-001).
 - [ ] Task 2.2: Decide the fate of the `_test` prompt variants and the
   criteria used for the prompt-quality review — depends on: Task 1.2 —
   status: not-started

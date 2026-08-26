@@ -75,6 +75,39 @@ First-line docstrings from each module, organized by domain:
 - `general/tools/mdformat.py` — ``@mcp.tool()`` wrapper: mdformat.
 - `general/tools/webfetch.py` — ``@mcp.tool()`` wrapper: webfetch.
 
+**gol/**
+
+- `gol/__init__.py` — Goal (GOL) domain -- high-level business goal specifications.
+- `gol/models/v1/__init__.py` — Goal (GOL) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- `gol/models/v1/_util.py` — Shared, private constants for the ``gol.models.v1`` subpackage.
+- `gol/models/v1/body.py` — Goal (GOL) models: whole-section fields under a single H1.
+- `gol/models/v1/document.py` — Pydantic model for a full goal document (frontmatter + body).
+- `gol/models/v1/frontmatter.py` — Goal (GOL) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
+- `gol/models/v1/parser.py` — Parse raw goal (GOL) ``.md`` text into a :class:`GolDocument` (Phase 2, Task 2.2).
+- `gol/models/v1/summary.py` — Pydantic model for one line of GOL listing output (Phase 2, Task 2.3).
+- `gol/prompts/__init__.py` — MCP prompt wrappers for Goals (Tasks 3.14-3.15).
+- `gol/prompts/create_gol.py` — ``@mcp.prompt()``: create_gol (Task 3.14).
+- `gol/prompts/update_gol.py` — ``@mcp.prompt()``: update_gol (Task 3.15).
+- `gol/resources/__init__.py` — MCP resource registrations for Goal (GOL) documents (Task 3.11).
+- `gol/resources/gol_example.py` — Resource: specmgr://gol/example (Task 3.11).
+- `gol/resources/gol_schema.py` — Resource: specmgr://gol/schema (Task 3.11, packaged data).
+- `gol/resources/gol_template.py` — Resource: specmgr://gol/template (Task 3.11).
+- `gol/tools/__init__.py` — MCP tool wrappers for goals (mirrors ``prb/tools/``'s own shape).
+- `gol/tools/_io.py` — Thin file read helpers over ``parse_gol`` (Task 3.1).
+- `gol/tools/_lock.py` — Per-document in-process lock guarding goal mutations.
+- `gol/tools/_paths.py` — Goal base directory resolution and id -> path lookup (Task 3.1).
+- `gol/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_gol``/``update_gol``.
+- `gol/tools/create_gol.py` — ``@mcp.tool()`` wrapper: create_gol (Task 3.3).
+- `gol/tools/delete_gol.py` — ``@mcp.tool()`` wrapper: delete_gol (Task 3.6).
+- `gol/tools/get_gol.py` — ``@mcp.tool()`` wrapper: get_gol (Task 3.8).
+- `gol/tools/get_gol_example.py` — ``@mcp.tool()`` wrapper: get_gol_example (Task 3.10).
+- `gol/tools/get_gol_template.py` — ``@mcp.tool()`` wrapper: get_gol_template (Task 3.10).
+- `gol/tools/list_gol.py` — ``@mcp.tool()`` wrapper: list_gol (Task 3.9).
+- `gol/tools/parse_gol.py` — ``@mcp.tool()`` wrapper: parse_gol (Task 3.2).
+- `gol/tools/set_status_gol.py` — ``@mcp.tool()`` wrapper: set_status_gol (Task 3.5).
+- `gol/tools/update_gol.py` — ``@mcp.tool()`` wrapper: update_gol (Task 3.4).
+- `gol/tools/validate_gol.py` — ``@mcp.tool()`` wrapper: validate_gol (Task 3.7).
+
 **models/**
 
 - `models/__init__.py` — Pydantic models used by the ``biz-dfch-specmgr`` MCP server.
@@ -117,6 +150,40 @@ First-line docstrings from each module, organized by domain:
 - `models/md/markdown_section6_with_comment.py` — Opt-in `MarkdownSection6` variant allowing a leading explanatory comment.
 - `models/md/markdown_str.py` — Parse markdown into tokens using shared MarkdownIt instance.
 - `models/version_info.py` — Pydantic model for the ``specmgr://version`` resource.
+
+**prb/**
+
+- `prb/__init__.py` — Problem Statement (PRB) domain -- Six-Sigma-style problem statement specifications.
+- `prb/models/__init__.py` — Problem Statement (PRB) models -- Pydantic schema powered by the generic ``models/md`` engine.
+- `prb/models/v1/__init__.py` — Problem Statement (PRB) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- `prb/models/v1/_util.py` — Shared, private constants for the ``prb.models.v1`` subpackage.
+- `prb/models/v1/body.py` — Problem Statement (PRB) body models: whole-section fields under a single H1.
+- `prb/models/v1/document.py` — Pydantic model for a full Problem Statement (PRB) document (frontmatter + body).
+- `prb/models/v1/frontmatter.py` — Problem Statement (PRB) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
+- `prb/models/v1/parser.py` — Parse raw Problem Statement (PRB) ``.md`` text into a :class:`PrbDocument` (Phase 2, Task 2.2).
+- `prb/models/v1/summary.py` — Pydantic model for one line of PRB listing output (Phase 2, Task 2.3).
+- `prb/prompts/__init__.py` — MCP prompt wrappers for Problem Statements (Tasks 3.14-3.15).
+- `prb/prompts/create_prb.py` — ``@mcp.prompt()``: create_prb (Task 3.14).
+- `prb/prompts/update_prb.py` — ``@mcp.prompt()``: update_prb (Task 3.15).
+- `prb/resources/__init__.py` — MCP resource registrations for Problem Statement (PRB) documents (Task 3.11).
+- `prb/resources/prb_example.py` — Resource: specmgr://prb/example (Task 3.11).
+- `prb/resources/prb_schema.py` — Resource: specmgr://prb/schema (Task 3.11).
+- `prb/resources/prb_template.py` — Resource: specmgr://prb/template (Task 3.11).
+- `prb/tools/__init__.py` — MCP tool wrappers for problem statements (mirrors ``tsk/tools/``'s own shape).
+- `prb/tools/_io.py` — Thin file read helpers over ``parse_prb`` (Task 3.1).
+- `prb/tools/_lock.py` — Per-document in-process lock guarding problem statement mutations.
+- `prb/tools/_paths.py` — Problem statement base directory resolution and id -> path lookup (Task 3.1).
+- `prb/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_prb``/``update_prb``.
+- `prb/tools/create_prb.py` — ``@mcp.tool()`` wrapper: create_prb (Task 3.3).
+- `prb/tools/delete_prb.py` — ``@mcp.tool()`` wrapper: delete_prb (Task 3.6).
+- `prb/tools/get_prb.py` — ``@mcp.tool()`` wrapper: get_prb (Task 3.8).
+- `prb/tools/get_prb_example.py` — ``@mcp.tool()`` wrapper: get_prb_example (Task 3.10).
+- `prb/tools/get_prb_template.py` — ``@mcp.tool()`` wrapper: get_prb_template (Task 3.10).
+- `prb/tools/list_prb.py` — ``@mcp.tool()`` wrapper: list_prb (Task 3.9).
+- `prb/tools/parse_prb.py` — ``@mcp.tool()`` wrapper: parse_prb (Task 3.2).
+- `prb/tools/set_status_prb.py` — ``@mcp.tool()`` wrapper: set_status_prb (Task 3.5).
+- `prb/tools/update_prb.py` — ``@mcp.tool()`` wrapper: update_prb (Task 3.4).
+- `prb/tools/validate_prb.py` — ``@mcp.tool()`` wrapper: validate_prb (Task 3.7).
 
 **qa/**
 
@@ -308,4 +375,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 208
+**Test files**: 254

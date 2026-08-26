@@ -19,15 +19,17 @@ specification artifacts.
 At this time, we have these artifact:
 
 - Architecture Decision Record (ADR)
-- Use Case (UC)
+- Goal (GOL)
+- Problem Statement (PRB)
 - Question and Answer (QA)
 - Requirement (REQ)
 - Task List (TSK)
+- Use Case (UC)
 <!-- 
-- Decision (DEC)
-- Goal (GOL)
-- Acceptance Criterium (ACC)
 - Risk (RSK)
+- Decision (DEC)
+- Acceptance Criterium (ACC)
+- Feature (FTR)
 -->
 
 See [MCP Server](#mcp-server) and [docs/MCP.md](docs/MCP.md) for details.
