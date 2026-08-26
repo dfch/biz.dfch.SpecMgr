@@ -1,7 +1,7 @@
 ---
 created: 2026-08-25
 id: feat-18-goal
-status: in-progress
+status: done
 updated: 2026-08-26
 version: 1.0.0
 ---
@@ -76,29 +76,90 @@ mechanism) and `req`'s 7-value frontmatter status set.
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: Verifies REQ-001 — schema documented (`docs/gol_schema.json`,
+- [x] ACC-001: Verifies REQ-001 — schema documented (`docs/gol_schema.json`,
   `specmgr://gol/schema`); a reference `gol_reference.md` exercising every
   field (`statement`, `Source` plus all optional sections present,
   `Related Artifacts` with all four sub-lists) round-trips through the
-  parser.
-- [ ] ACC-002: Verifies REQ-002 — Pydantic models validate mandatory
+  parser. **PASS** — `docs/gol_schema.json` exists with `"$comment": "v1"`
+  (line 2) and `"$schema": "https://json-schema.org/draft/2020-12/schema"`
+  (line 403); `specmgr://gol/schema` is registered — live
+  `asyncio.run(mcp.list_resources())` on the real `server.mcp` instance
+  returns it among exactly 3 gol resources, and `docs/MCP.md` carries it
+  (resource table line 20, detail section line 49). Live round-trip:
+  `uv run --frozen python` reads
+  `.specmgr/feat/feat-18-goal/gol_reference.md`, calls `parse_gol`, and
+  asserts `str(doc.body)` equals the file's body (frontmatter stripped,
+  `format_text`-normalized) byte-exact — 2030 == 2030 bytes (id
+  `deaddead-goal-goal-goal-deaddeadgoal`, status `accepted`); the committed
+  test `tests/gol/models/v1/test_parser.py` (10 tests, incl.
+  `test_parses_full_reference_document`'s own byte-exact assertion) re-run
+  live: OK.
+- [x] ACC-002: Verifies REQ-002 — Pydantic models validate mandatory
   (`statement`, `Source`) vs. optional (`Description`, `Priority`, `Tags`,
   `Related Artifacts` and each of its four sub-lists, `More Information`,
   `Notes`) fields correctly; `GolFrontmatter.status` rejects any value
-  outside the seven-value set.
-- [ ] ACC-003: Verifies REQ-003 — parser produces a valid object tree for a
+  outside the seven-value set. **PASS** —
+  `tests/gol/models/v1/test_frontmatter.py` + `test_body.py` re-run live:
+  41 tests OK (each optional section and each of the four `Related
+  Artifacts` sub-lists covered individually absent/present); a live minimal
+  doc (H1 + statement + `## Source`, zero optional sections) parses with
+  all six optional fields `None` (`description`/`priority`/`tags`/
+  `related_artifacts`/`more_information`/`notes`);
+  `GolFrontmatter(status="pending")` raises `pydantic.ValidationError`
+  naming the seven allowed values — "status must be one of ['accepted',
+  'deprecated', 'draft', 'implemented', 'proposed', 'rejected',
+  'superseded'], got 'pending'" — and the same at parse level for a
+  `status: pending` frontmatter block (loc `('status',)`).
+- [x] ACC-003: Verifies REQ-003 — parser produces a valid object tree for a
   well-formed document; missing the `statement` lead paragraph or the
   `Source` section raises `AssertionError`; an invalid field value (e.g. a
   `Priority` outside 0–99, an out-of-set `status`) raises
-  `pydantic.ValidationError`.
-- [ ] ACC-004: Verifies REQ-004 — every listed tool is implemented,
+  `pydantic.ValidationError`. **PASS** —
+  `tests/gol/models/v1/test_parser.py` re-run live: 10 tests OK, with the
+  `AssertionError` tests (`test_missing_statement_raises_assertion_error`,
+  `test_missing_source_raises_assertion_error`,
+  `test_out_of_order_sections_raise_assertion_error`) and the
+  `ValidationError` tests (`test_invalid_status_raises_validation_error`,
+  `test_invalid_type_raises_validation_error`,
+  `test_priority_out_of_range_raises_validation_error` over 100/-1/007,
+  plus `test_priority_upper_bound_is_accepted` for 99) all green; live
+  demos: a doc without `## Source` raises `AssertionError` ("Goal.source:
+  expected Source, found no match; remaining text (0 line(s)) starts
+  with:") and `## Priority` value `100` raises
+  `pydantic.ValidationError` (loc `('value',)`, "value must match pattern
+  '^(0|[1-9][0-9]?)$', got '100'").
+- [x] ACC-004: Verifies REQ-004 — every listed tool is implemented,
   registered, and callable; `list_gol` returns a `PagedResult[GolSummary]`
   with default page size 25 / cap 100, mirroring the other five domains'
   `list_<d>` tools exactly (no resource-first-then-converted history for
-  this domain).
-- [ ] ACC-005: Verifies REQ-005 — every listed resource is implemented and
-  registered (no `/{id}`, no `/list`, as designed).
-- [ ] ACC-006: Verifies REQ-006 — `create_gol`/`update_gol` prompts narrate:
+  this domain). **PASS** — `docs/MCP.md` carries all 10 `### Tool:` gol
+  entries (`create_gol`, `delete_gol`, `get_gol`, `get_gol_example`,
+  `get_gol_template`, `list_gol`, `parse_gol`, `set_status_gol`,
+  `update_gol`, `validate_gol`) under the header line 6: `20 resource(s), 1
+  resource template(s), 74 tool(s), 17 prompt(s)`; live
+  `asyncio.run(mcp.list_tools()/list_resources()/list_prompts())` on the
+  real `server.mcp` instance confirms the 74/20/17 totals with exactly
+  those 10 gol tools present; `tests/gol/tools/test_list_gol.py` re-run
+  live: 11 tests OK (default page size with 26 docs, `max_results` clamped
+  to the 100 cap, `offset` paging without overlap, `truncated` boundary
+  incl. offset exactly at the end, negative-offset flooring,
+  skip-malformed-file); live paging in a temp `SPECMGR_DOCS_DIR` with 26
+  `create_gol`-ed docs: `list_gol()` → total=26, max_results=25,
+  truncated=True, 25 items; `list_gol(max_results=100)` → 26 items,
+  truncated=False; `list_gol(offset=25)` → 1 item, truncated=False.
+- [x] ACC-005: Verifies REQ-005 — every listed resource is implemented and
+  registered (no `/{id}`, no `/list`, as designed). **PASS** — `docs/MCP.md`
+  carries exactly three `specmgr://gol/...` rows (`/example` line 19,
+  `/schema` line 20, `/template` line 21; detail sections lines 40–56), and
+  a grep of both `docs/MCP.md` and `src/biz/dfch/specmgr/gol/resources/`
+  finds no `specmgr://gol/{id}`-style dynamic resource and no
+  `specmgr://gol/list` (the package holds exactly `gol_example.py`,
+  `gol_schema.py`, `gol_template.py`, one `@mcp.resource()` each); live:
+  `gol_schema()` returns the parsed dict (`$comment` `v1`, 2020-12
+  `$schema`, top-level `required: ['frontmatter', 'body']`),
+  `gol_example()` 2162 chars, `gol_template()` 1201 chars;
+  `tests/gol/resources/` re-run live: 13 tests OK.
+- [x] ACC-006: Verifies REQ-006 — `create_gol`/`update_gol` prompts narrate:
   (a) a duplicate/similar-document check via `list_gol` first, (b) building
   a `TodoWrite` list covering `statement` + `Source` + each optional
   section, (c) using the `question` tool to elicit each field (explicitly
@@ -106,13 +167,68 @@ mechanism) and `req`'s 7-value frontmatter status set.
   `update_gol(id, content)` (whole-body) at the end — verified live by
   reading both packaged instruction files in full and manually walking the
   narrated flows end to end against a real document, not just asserting
-  their static text.
-- [ ] ACC-007: Verifies REQ-007 — packaged data resolves correctly from a
+  their static text. **PASS** — both instruction files read in full, step
+  headers quoted: `gol_create_instructions.md` — `## 0. Check for an
+  existing goal on this topic first` (`list_gol` dedup check,
+  `question`-tool follow-up on a near-duplicate), `## 1. Structure recap`
+  (incl. the explicit no-`Characteristics`/no-`Level` note), `## 2. Build a
+  todo list, then gather the information one at a time` (TodoWrite per
+  `statement` + `Source` + each optional section; `question`-tool
+  interview, mandatory fields first, explicit skip allowance), `## 3. Use
+  the template/example/schema as references`, `## 4. Tool call sequence`
+  (`create_gol(content)`, optional `validate_gol` dry-run), `## 5. Later
+  revisions`; `gol_update_instructions.md` — `## 1. Read current state
+  first` (`get_gol(id)`, never assume prior state), `## 2. Show which
+  sections are present and which are empty`, `## 3. Elicit the
+  new/revised text`, `## 4. Map the requested change to the right tool`
+  (whole-body `update_gol(id, content)` carrying forward every unchanged
+  section; `set_status_gol` as a separate, optional follow-up naming the
+  7-value set), `## 5. Check the schema, and validate before writing if
+  useful`. Then the narrated flows were walked end to end against a real
+  document in a temp `SPECMGR_DOCS_DIR` (self-simulated `question`-tool
+  answers): `list_gol()` empty → no near-duplicate; `create_gol(content)`
+  (statement + `Source` + one optional `## Description`) → id
+  `07331e39-993d-4c17-b6b6-35bd83f11dab`, status `draft`; `get_gol(id)`;
+  `update_gol(id, content)` adding the absent `## Notes` while carrying
+  forward every unchanged section (id/status/created preserved, `updated`
+  bumped); `set_status_gol(id, "accepted")`; final `get_gol(id)`/
+  `list_gol()` show status `accepted`. Both prompt functions also resolved
+  their packaged narration live (`$topic`/`$id` substituted: 3554 / 2567
+  chars). `tests/gol/prompts/` re-run live: 22 tests OK;
+  `tests/gol/tools/test_integration.py` re-run live: 2 tests OK (full
+  create→update→set_status→get→list→delete(stub) lifecycle, the stub
+  raising `NotImplementedError` without touching the file).
+- [x] ACC-007: Verifies REQ-007 — packaged data resolves correctly from a
   real, non-editable install (`uv build --wheel` + scratch-venv install),
-  mirroring feat-16's ACC-007 verification.
-- [ ] ACC-008: Verifies REQ-008 — `specmgr docs`/`specmgr schema`/
+  mirroring feat-16's ACC-007 verification. **PASS** — `uv build --wheel`
+  produced `dist/biz_dfch_specmgr-0.10.0-py3-none-any.whl`; `unzip -l`
+  confirms all five `gol/data/*` files (`gol_example.md`, `gol_schema.json`,
+  `gol_template.md`, `gol_create_instructions.md`,
+  `gol_update_instructions.md`) plus every gol module (35 wheel entries
+  under `biz/dfch/specmgr/gol/`); installed non-editably with the mcp extra
+  into a scratch venv under `/tmp/opencode/` (`uv venv --python 3.13` +
+  `uv pip install "…whl[mcp]"` — the system `python3` is 3.10, below the
+  project's `>=3.11` floor, so `uv`'s managed CPython 3.13.13 was used); in
+  that venv, `inspect.getfile` proves the module loads from
+  `…/gol-scratch-venv/lib/python3.13/site-packages/biz/dfch/specmgr/gol/…`,
+  not the source checkout, and `get_gol_example()` (2162 chars),
+  `get_gol_template()` (1201 chars), and `gol_schema()` (`$comment` `v1`,
+  2020-12 dialect, `title` `GolDocument`) all resolve real packaged
+  content. Scratch venv and `dist/`/`build/` removed afterward; `git
+  status` shows no residue (both gitignored).
+- [x] ACC-008: Verifies REQ-008 — `specmgr docs`/`specmgr schema`/
   `specmgr mcp-docs` all report no drift after implementation; `AGENTS.md`
-  reflects eight domain/cross-cutting packages.
+  reflects eight domain/cross-cutting packages. **PASS** — re-run end to
+  end in Phase 5: `specmgr docs` (exit 0), `specmgr mcp-docs` (exit 0),
+  `specmgr schema` (exit 0, all six doc types "unchanged"), `specmgr schema
+  --type gol --output-dir src/biz/dfch/specmgr/gol/data` (exit 0, packaged
+  copy "unchanged"), `specmgr adr-toc` (exit 0), `specmgr coverage-badge`
+  (exit 0, 98%, `docs/coverage.svg` unchanged); `git diff --exit-code --
+  docs/` exits 0 — zero drift on disk, and `docs/GENERATED.md`'s test-file
+  count is unchanged (Phase 5 adds no test files). `AGENTS.md` line 5
+  reads `## Status: eight domain/cross-cutting packages implemented (ADR,
+  REQ, UC, TSK, QA, PRB, GOL, general)` with the `gol/` bullet at line 81
+  (Phase 4 work).
 
 ### Scope
 
@@ -476,13 +592,13 @@ sessions.
 
 #### Phase 5: Final cross-cutting verification
 
-- [ ] Task 5.1: Final verification pass — walk every ACC-001..008 and
+- [x] Task 5.1: Final verification pass — walk every ACC-001..008 and
   confirm each is satisfied with concrete evidence (including a live
   `create_gol`→`update_gol`→`set_status_gol` run, not just unit tests);
   run the full quality gate (ruff format/check, pylint advisory, vulture,
   unittest, `specmgr docs`/`specmgr mcp-docs`/`specmgr schema` drift
   checks) end to end; set feature status to `done` — depends on: Phase
-  1-4 complete — status: not-started
+  1-4 complete — status: completed
 
 **Note:** If a task's scope changes mid-flight, edit its description in
 place; rely on git history (`git log -p` on this file) to recover what was
@@ -492,22 +608,112 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-26**: Phase 4 (Cross-cutting registration) complete —
-`AGENTS.md` updated to eight domain/cross-cutting packages (heading,
-opening count, new `gol/` bullet after `prb/`, "Still genuinely missing"
-list, closing domain enumeration, server-import enumeration); all three
-doc-generation commands re-run and confirmed zero drift (`gol` appears
-correctly in `docs/MCP.md`, `docs/GENERATED.md`, `docs/api/`, and
-`docs/gol_schema.json`); full quality gate green (1609 tests, coverage
-98%). GitHub issue #18 ("Add artifact type Goal (GOL)") is filed and
-open. Phase 5 (Final cross-cutting verification — ACC-001..008 walk,
-live lifecycle run, status → `done`) is next.
+**As of 2026-08-26**: Feature complete — all five phases done, all eight
+acceptance criteria verified PASS (see annotated Acceptance Criteria
+above), full quality gate green (1609 tests, coverage 98%, ruff
+format/check clean, vulture clean, pylint 8.92/10 advisory — identical to
+the Phase-4 baseline, no regressions). Phase 5's final verification walk
+included a live, non-mocked `create_gol`→`get_gol`→`update_gol`→
+`set_status_gol`→`get_gol`→`list_gol` run against a temp docs directory
+(not just unit tests), `list_gol` paging confirmed live with 26 documents
+(default 25 / cap 100 / `truncated` boundary), the MCP registration counts
+(74 tools / 20 resources / 17 prompts) confirmed on the real `server.mcp`
+instance, and ACC-007's real `uv build --wheel` + non-editable
+scratch-venv install (scratch venv, `dist/`, and `build/` removed
+afterward — `git status` shows no residue). GitHub issue #18 ("Add
+artifact type Goal (GOL)") is filed and open; the feature is ready for
+review/merge and the issue can be closed when the PR merges.
 
 ### Blockers
 
 None.
 
 ### Recent Updates
+
+#### Update 2026-08-26 (Phase 5: Final cross-cutting verification — feature complete)
+
+- Completed Task 5.1, the final task of the feature. Walked every
+  ACC-001..008 with concrete evidence (recorded inline in the Acceptance
+  Criteria section above, each now checked `[x]`). This phase modified no
+  source/test/doc/config/data file — the only write is this README
+  (frontmatter `status: done`, the ACC annotations, the Task 5.1 flip, and
+  these Progress updates).
+  - ACC-001/002/003 (schema/models/parser): `docs/gol_schema.json`'s
+    `"$comment": "v1"` (line 2) and 2020-12 `"$schema"` (line 403)
+    confirmed; live byte-exact round-trip of `gol_reference.md` through
+    `parse_gol` (2030 == 2030 body bytes); live minimal-doc (all six
+    optionals `None`) and closed-set (`status: pending` →
+    `ValidationError` naming the seven allowed values, model- and
+    parse-level) demos; `test_parser.py` (10 tests),
+    `test_frontmatter.py` + `test_body.py` (41 tests) re-run green.
+  - ACC-004/005 (tools/resources): live `mcp.list_tools()/
+    list_resources()/list_prompts()` on the real `server.mcp` instance —
+    74/20/17 totals, exactly 10 gol tools / 3 gol resources / 2 gol
+    prompts; `docs/MCP.md` citations match (header line 6, 10 `### Tool:`
+    entries, 3 resource rows, no `/{id}`, no `/list`); `test_list_gol.py`
+    (11 tests) re-run green and paging re-confirmed live with 26 docs in a
+    temp `SPECMGR_DOCS_DIR` (`total=26`/default `max_results=25`/
+    `truncated=True`; `max_results=100` → 26 items/`False`; `offset=25` →
+    1 item/`False`, no page overlap); the three gol resources resolved
+    live (`schema` dict with top-level `required: ['frontmatter',
+    'body']`, example 2162 chars, template 1201 chars),
+    `tests/gol/resources/` (13 tests) green.
+  - ACC-006 (prompts): both packaged instruction files read in full (step
+    headers quoted in the annotation); the narrated `create_gol`/
+    `update_gol` flows walked end to end with the real tool functions in a
+    temp `SPECMGR_DOCS_DIR` — `list_gol` empty (no near-duplicate) →
+    `create_gol` (draft, id `07331e39-…`) → `get_gol` → `update_gol` (adds
+    the absent `## Notes`, carries forward every unchanged section,
+    `updated` bumped) → `set_status_gol(…, "accepted")` → final
+    `get_gol`/`list_gol` show `accepted`; both prompt functions resolved
+    their packaged narration live with `$topic`/`$id` substituted (3554 /
+    2567 chars); `tests/gol/prompts/` (22 tests) and
+    `tests/gol/tools/test_integration.py` (2 tests) re-run green.
+  - ACC-007 (packaged data from a real install): `uv build --wheel` →
+    `dist/biz_dfch_specmgr-0.10.0-py3-none-any.whl`; `unzip -l` confirms
+    all five `gol/data/*` files + every gol module (35 entries under
+    `biz/dfch/specmgr/gol/`); non-editable install with the mcp extra into
+    a scratch venv under `/tmp/opencode/`; `inspect.getfile` proves the
+    module loads from the venv's `site-packages`, and
+    `get_gol_example()`/`get_gol_template()`/`gol_schema()` resolve real
+    packaged content from there (see Notes for the venv specifics).
+  - ACC-008 (doc generation drift): `specmgr docs`/`mcp-docs`/`schema`
+    (generic + `--type gol --output-dir …/gol/data`)/`adr-toc`/
+    `coverage-badge` all re-run exit 0, every generated file reported
+    "unchanged", `git diff --exit-code -- docs/` clean (no test files
+    added this phase, so `docs/GENERATED.md`'s test-file count is
+    unchanged); `AGENTS.md`'s eight-package heading (line 5) + `gol/`
+    bullet (line 81) confirmed from Phase 4.
+- Ran the full quality gate one final time: `ruff format --check` (1011
+  files already formatted), `ruff check` (all passed), `pylint` (advisory;
+  8.92/10 — "previous run: 8.92/10, +0.00", identical to the Phase-4
+  baseline; no `.py` file changed this phase), `vulture src/ whitelist.py
+  --min-confidence 60` (exit 0, no output), full suite via `coverage run`
+  (**1609 tests**, 54.6s, OK) followed by `specmgr coverage-badge` (98%,
+  `docs/coverage.svg` byte-unchanged).
+- Set this README's own frontmatter `status: in-progress` → `status: done`
+  as Task 5.1's own required action; every phase and every acceptance
+  criterion is now checked off.
+- Next: Feature complete — ready for review/merge; issue #18 can be closed
+  when the PR merges.
+- Notes:
+  - ACC-007 venv specifics: the system `python3` is 3.10.12, below the
+    project's `requires-python = ">=3.11"`, so the scratch venv was
+    created with `uv venv --python 3.13` (uv-managed CPython 3.13.13) and
+    the wheel installed with `uv pip install --python
+    /tmp/opencode/gol-scratch-venv/bin/python "dist/biz_dfch_specmgr-
+    0.10.0-py3-none-any.whl[mcp]"` (network to PyPI was available; the
+    full mcp dependency tree installed). Cleanup confirmed: `rm -rf
+    /tmp/opencode/gol-scratch-venv dist/*` plus removal of the
+    `uv build`-created `build/` artifact dir (`build/lib` copies of the
+    source tree); `git status` shows zero entries afterward (both `dist/`
+    and `build/` are gitignored, `.gitignore` lines 11/13).
+  - The full-suite run's merged log carries a few lines of stray stdout
+    after the `OK` summary (a test-spawned subprocess flushing late); the
+    process exit code is 0 and the summary reads `Ran 1609 tests in
+    54.648s / OK` — no test failures.
+  - No new design decisions required this phase — purely verification,
+    exactly as scoped.
 
 #### Update 2026-08-26 (Phase 4)
 
