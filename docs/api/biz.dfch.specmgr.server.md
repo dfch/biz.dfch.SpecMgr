@@ -36,12 +36,18 @@ specmgr://qa/example -- A complete, valid sample question-and-answer document as
 specmgr://qa/template -- A question-and-answer template (every field present,
                           placeholder text) as raw markdown.
 specmgr://prb/schema -- The generated PRB JSON Schema, read from a packaged data copy
-                        (kept in sync with ``docs/prb_schema.json``) so it works from a
-                        real, non-editable install.
+                         (kept in sync with ``docs/prb_schema.json``) so it works from a
+                         real, non-editable install.
 specmgr://prb/example -- A complete, valid sample problem statement document as raw
-                        markdown.
+                         markdown.
 specmgr://prb/template -- A problem statement template (every field present,
-                          placeholder text) as raw markdown.
+                           placeholder text) as raw markdown.
+specmgr://gol/schema -- The generated GOL JSON Schema, read from a packaged data copy
+                         (kept in sync with ``docs/gol_schema.json``) so it works from a
+                         real, non-editable install.
+specmgr://gol/example -- A complete, valid sample goal document as raw markdown.
+specmgr://gol/template -- A goal template (every field present,
+                           placeholder text) as raw markdown.
 specmgr://iso25010 --   The ISO/IEC 25010:2023 product quality model's nine main
                         characteristics (and sub-characteristics), each with a description.
 
@@ -56,6 +62,10 @@ through the ``get_qa`` tool only. PRB has no ``specmgr://prb/{id}`` resource
 either, for the same reason -- id-based reads go through the ``get_prb`` tool
 only, and there is also no ``specmgr://prb/list`` resource -- ``list_prb``
 ships as a paged tool from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
+GOL has no ``specmgr://gol/{id}`` resource either, for the same reason --
+id-based reads go through the ``get_gol`` tool only, and there is also no
+``specmgr://gol/list`` resource -- ``list_gol`` ships as a paged tool from
+day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
 
 Tools
 -----
@@ -77,6 +87,9 @@ QA tools (``qa/tools/``): ``parse_qa``, ``get_qa``, ``list_qa``, ``get_qa_exampl
 Problem statement tools (``prb/tools/``): ``parse_prb``, ``get_prb``, ``list_prb``,
 ``get_prb_example``, ``get_prb_template``, ``create_prb``, ``update_prb``,
 ``set_status_prb``, ``delete_prb`` (stub, not yet implemented), ``validate_prb``.
+Goal tools (``gol/tools/``): ``parse_gol``, ``get_gol``, ``list_gol``,
+``get_gol_example``, ``get_gol_template``, ``create_gol``, ``update_gol``,
+``set_status_gol``, ``delete_gol`` (stub, not yet implemented), ``validate_gol``.
 General tools (``general/tools/``): ``mdformat`` -- format markdown files in place,
 preserving YAML frontmatter blocks; ``webfetch`` -- fetch a URL over HTTP GET with a
 bearer token, restricted to a configured base URL (``SPECMGR_WEBFETCH_BASE_URL``,
@@ -103,6 +116,10 @@ Problem statement prompts (``prb/prompts/``): ``create_prb``, ``update_prb`` --
 instructional text guiding an LLM through a ``TodoWrite`` + ``question``-tool-
 driven 5W2H interview flow, including agent-synthesized ``Summary``/``Gap``
 text.
+Goal prompts (``gol/prompts/``): ``create_gol``, ``update_gol`` --
+instructional text guiding an LLM through a ``TodoWrite`` +
+``question``-tool-driven interview flow over the goal's mandatory
+``statement``/``Source`` fields and its optional sections.
 General prompts (``general/prompts/``): ``compact_history`` -- guides rotating
 older ``### Recent Updates`` entries out of any `.specmgr` feature folder's
 ``README.md`` into an optional sibling ``history.md``, per ADR
@@ -111,7 +128,7 @@ e369ee2e-3353-4f92-991c-6367d76d832e.
 Modules are grouped domain-first
 (ADR ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by
 document-type domain"): each document
-domain (``adr``, ``uc``, ``req``, ``tsk``, ``qa``, ``prb``, and later ``ac``) is a
+domain (``adr``, ``uc``, ``req``, ``tsk``, ``qa``, ``prb``, ``gol``, and later ``ac``) is a
 top-level package with its own ``tools``/``prompts``/``resources`` sub-packages,
 self-registered via the domain package's own ``__init__.py``. Cross-cutting, non-domain-specific
 tools/resources/prompts (e.g. ``specmgr://version``/``specmgr://iso25010`` resources,
@@ -119,11 +136,12 @@ the ``mdformat`` tool, or the ``compact_history`` prompt) stay under the top-lev
 ``general`` package instead (``general.tools``/``general.resources``/``general.prompts``).
 Add a new domain by
 creating its top-level package and importing it at the bottom of this
-module, next to the existing ``adr``/``general``/``prb``/``qa``/``req``/``tsk``/``uc``
+module, next to the existing ``adr``/``general``/``gol``/``prb``/``qa``/``req``/``tsk``/``uc``
 imports, so its ``@mcp.tool()`` / ``@mcp.prompt()`` / ``@mcp.resource()``
-decorators actually run. ``req``, ``tsk``, ``qa``, and ``prb`` each register ``tools``,
-``resources``, and ``prompts``; ``general`` now also registers all three; ``uc``
-registers ``tools`` and ``resources`` only -- it has no ``prompts`` sub-package yet.
+decorators actually run. ``req``, ``tsk``, ``qa``, ``prb``, and ``gol`` each
+register ``tools``, ``resources``, and ``prompts``; ``general`` now also
+registers all three; ``uc`` registers ``tools`` and ``resources`` only -- it
+has no ``prompts`` sub-package yet.
 
 ## Functions
 

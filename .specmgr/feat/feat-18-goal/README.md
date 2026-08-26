@@ -2,7 +2,7 @@
 created: 2026-08-25
 id: feat-18-goal
 status: in-progress
-updated: 2026-08-25
+updated: 2026-08-26
 version: 1.0.0
 ---
 
@@ -394,71 +394,70 @@ sessions.
 
 #### Phase 3: MCP Surface
 
-- [ ] Task 3.1: `gol/tools/_paths.py`/`_io.py`/`_write.py`/`_lock.py`, thin
+- [x] Task 3.1: `gol/tools/_paths.py`/`_io.py`/`_write.py`/`_lock.py`, thin
   wrappers over `general/tools/_doc_paths.py` (mirrors `req/tools/`/
-  `prb/tools/` exactly) — depends on: Task 2.2 — status: not-started
-- [ ] Task 3.2: `parse_gol(path: str) -> GolDocument` tool wrapper
-  (`gol/tools/parse_gol.py`) — depends on: Task 3.1 — status: not-started
-- [ ] Task 3.3: `create_gol(content: str) -> GolDocument` tool (body-only
+  `prb/tools/` exactly) — depends on: Task 2.2 — status: completed
+- [x] Task 3.2: `parse_gol(path: str) -> GolDocument` tool wrapper
+  (`gol/tools/parse_gol.py`) — depends on: Task 3.1 — status: completed
+- [x] Task 3.3: `create_gol(content: str) -> GolDocument` tool (body-only
   content; MCP builds frontmatter: `id`, `type="gol"`, `status="draft"`,
   `created=updated=now`, `version`) — depends on: Task 3.1 — status:
-  not-started
-- [ ] Task 3.4: `update_gol(id, content) -> GolDocument` tool (whole-body
+  completed
+- [x] Task 3.4: `update_gol(id, content) -> GolDocument` tool (whole-body
   replace, preserves `id`/`type`/`status`/`created`/`version`, bumps
-  `updated`) — depends on: Task 3.1 — status: not-started
-- [ ] Task 3.5: `set_status_gol(id, status) -> GolDocument` tool (only path
+  `updated`) — depends on: Task 3.1 — status: completed
+- [x] Task 3.5: `set_status_gol(id, status) -> GolDocument` tool (only path
   that changes `status`; reconstructs `GolFrontmatter` via its own
   constructor so the 7-value validator runs, mirroring `set_status_req`) —
-  depends on: Task 3.1 — status: not-started
-- [ ] Task 3.6: `delete_gol(id) -> NoReturn` stub tool — depends on: Task
-  3.1 — status: not-started
-- [ ] Task 3.7: `validate_gol(content, full=False) -> bool` tool — depends
-  on: none — status: not-started
-- [ ] Task 3.8: `get_gol(id) -> GolDocument` tool (id-based single-document
-  read; tool, not resource) — depends on: Task 3.1 — status: not-started
-- [ ] Task 3.9: `list_gol(max_results=None, offset=None) -> PagedResult[GolSummary]`
+  depends on: Task 3.1 — status: completed
+- [x] Task 3.6: `delete_gol(id) -> NoReturn` stub tool — depends on: Task
+  3.1 — status: completed
+- [x] Task 3.7: `validate_gol(content, full=False) -> bool` tool — depends
+  on: none — status: completed
+- [x] Task 3.8: `get_gol(id) -> GolDocument` tool (id-based single-document
+  read; tool, not resource) — depends on: Task 3.1 — status: completed
+- [x] Task 3.9: `list_gol(max_results=None, offset=None) -> PagedResult[GolSummary]`
   tool, via `general/tools/_paging.py`'s `paginate`/`normalize_paging`
   (default page size 25, cap 100), preserving the standard skip-malformed-
-  file scan behavior — depends on: Task 2.3, Task 3.1 — status: not-started
-- [ ] Task 3.10: `get_gol_example`/`get_gol_template` tools + packaged data
+  file scan behavior — depends on: Task 2.3, Task 3.1 — status: completed
+- [x] Task 3.10: `get_gol_example`/`get_gol_template` tools + packaged data
   (`gol/data/gol_example.md` — drafted as `GOL-0007: Competitive Engines in Consumer Vehicles` per Design Notes, `gol/data/gol_template.md` —
   `req_template.md` mirrored minus `Characteristics`/`Level`) via
   `general/tools/_packaged_data.py` — depends on: Task 1.1 — status:
-  not-started
-- [ ] Task 3.11: `gol/resources/{gol_schema,gol_example,gol_template}.py`
+  completed
+- [x] Task 3.11: `gol/resources/{gol_schema,gol_example,gol_template}.py`
   — `specmgr://gol/schema` (packaged `gol/data/gol_schema.json`, mirroring
   `specmgr://req/schema`), `specmgr://gol/example`, `specmgr://gol/template`
   (no `/list`, no `/{id}`) — depends on: Task 2.5, Task 3.10 — status:
-  not-started
-- [ ] Task 3.12: `pyproject.toml` package-data entry for
+  completed
+- [x] Task 3.12: `pyproject.toml` package-data entry for
   `biz.dfch.specmgr.gol` (`data/*.md`, `data/*.json`); `.pre-commit-config.yaml`
   — widen the shared schema-hook glob to include `gol/models/v1`, add a
-  `specmgr-schema-gol-package` hook — depends on: Task 2.5 — status:
-  not-started
-- [ ] Task 3.13: `.github/workflows/ci.yml` — add the `docs/gol_schema.json`
+  `specmgr-schema-gol-package` hook — depends on: Task 2.5 — status: completed
+- [x] Task 3.13: `.github/workflows/ci.yml` — add the `docs/gol_schema.json`
   check + packaged-copy check steps — depends on: Task 2.5 — status:
-  not-started
-- [ ] Task 3.14: `gol/data/gol_create_instructions.md` +
+  completed
+- [x] Task 3.14: `gol/data/gol_create_instructions.md` +
   `gol/prompts/create_gol.py` (`@mcp.prompt()`, `string.Template`
   substitution, narrates the full interview flow — see Design Notes) —
-  depends on: Tasks 3.3, 3.9 — status: not-started
-- [ ] Task 3.15: `gol/data/gol_update_instructions.md` +
+  depends on: Tasks 3.3, 3.9 — status: completed
+- [x] Task 3.15: `gol/data/gol_update_instructions.md` +
   `gol/prompts/update_gol.py` — depends on: Tasks 3.4, 3.5, 3.8 — status:
-  not-started
-- [ ] Task 3.16: `gol/__init__.py` (docstring + `from . import prompts, resources, tools`), add `gol` to `server.py`'s bottom-of-file domain
+  completed
+- [x] Task 3.16: `gol/__init__.py` (docstring + `from . import prompts, resources, tools`), add `gol` to `server.py`'s bottom-of-file domain
   import line (alphabetical: `adr, general, gol, prb, qa, req, tsk, uc`)
   and update its module docstring (Tools/Resources/Prompts sections) —
-  depends on: Tasks 3.2-3.15 — status: not-started
-- [ ] Task 3.17: `tests/gol/tools/...`, `tests/gol/resources/...`,
+  depends on: Tasks 3.2-3.15 — status: completed
+- [x] Task 3.17: `tests/gol/tools/...`, `tests/gol/resources/...`,
   `tests/gol/prompts/...` mirroring `tests/req/`/`tests/prb/`'s layout,
   including live end-to-end coverage of `create_gol`/`update_gol`'s
   narrated `TodoWrite`/`question`-tool flow (ACC-006) and `list_gol`'s
   paging behavior (default page size, `max_results` clamping, `offset`
   paging, `truncated` boundary) — depends on: Tasks 3.1-3.16 — status:
-  not-started
-- [ ] Task 3.18: Phase-end quality gate — full pre-commit/quality gate
+  completed
+- [x] Task 3.18: Phase-end quality gate — full pre-commit/quality gate
   including Task 3.17's new tests; update this README's Progress section —
-  depends on: Task 3.17 — status: not-started
+  depends on: Task 3.17 — status: completed
 
 #### Phase 4: Cross-cutting registration
 
@@ -493,19 +492,154 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-25**: Phase 2 (Pydantic Models, Parser & Schema) complete —
-`GolDocument`/`parse_gol`/`GolSummary`/`SCHEMA_COMMENT_VERSION` added,
-`generate_gol_schema()` registered in `specmgr schema` (six doc types,
-`docs/gol_schema.json` drafted, zero drift), parser tests mirroring
-`TestParseReq`, full quality gate green (1505 tests). GitHub issue #18
-("Add artifact type Goal (GOL)") is filed and open. Phase 3 (MCP Surface)
-is next.
+**As of 2026-08-26**: Phase 3 (MCP Surface) complete — full `gol` MCP
+surface registered and live: 10 tools (`parse_gol`/`create_gol`/
+`update_gol`/`set_status_gol`/`delete_gol` stub/`validate_gol`/`get_gol`/
+`get_gol_example`/`get_gol_template`/`list_gol` paged from day one), 3
+resources (`specmgr://gol/schema|example|template`), 2 narrated prompts
+(`create_gol`/`update_gol`), packaged `gol/data/` (example =
+`gol_reference.md` verbatim, template, schema, both instruction files),
+`gol/__init__.py` + `server.py` registration, `pyproject.toml`
+package-data, widened pre-commit schema hooks + new
+`specmgr-schema-gol-package` hook, two new CI schema steps; 104 new tests
+(live lifecycle integration incl.), full quality gate green (1609 tests,
+coverage 98%, `docs/` + `docs/MCP.md` regenerated, fixed point). GitHub
+issue #18 ("Add artifact type Goal (GOL)") is filed and open. Phase 4
+(Cross-cutting registration — `AGENTS.md`) is next.
 
 ### Blockers
 
 None.
 
 ### Recent Updates
+
+#### Update 2026-08-26 (Phase 3)
+
+- Completed: Phase 3 (MCP Surface), Tasks 3.1–3.18.
+  - Task 3.1: `gol/tools/_paths.py` (`gol_base_dir`/
+    `ensure_gol_base_dir`/`iter_gol_paths`/`find_gol_path`/
+    `GolNotFoundError`/`GOL_TYPE_NAME`), `_io.py` (`read_gol`/
+    `load_by_id`), `_write.py` (`write_gol_file`), `_lock.py`
+    (`gol_lock`) — thin wrappers over `general/tools/_doc_paths.py`,
+    mirroring `prb/tools/` file-for-file (REQ's same shape).
+  - Tasks 3.2–3.9: all eight lifecycle tools — `parse_gol` (path-based
+    disk read), `create_gol` (body-only content; tool builds the full
+    `GolFrontmatter`: fresh `uuid4` id, `type="gol"`, `status="draft"`,
+    `created=updated=now` with `timespec="microseconds"`,
+    `version=CURRENT_SCHEMA_VERSION`; filename
+    `gol-<uuid>-<slug>.md`), `update_gol` (whole-body replace, preserves
+    `id`/`type`/`status`/`created`/`version`, bumps `updated`),
+    `set_status_gol` (sole status path; reconstructs `GolFrontmatter` via
+    its own constructor so the 7-value validator runs), `delete_gol`
+    (stub, `structured_output=False`), `validate_gol` (disk-free dry run,
+    `full` flag with symmetric `ValueError`s), `get_gol` (tool-only id
+    read, ADR ddfb1109), `list_gol` (`PagedResult[GolSummary]` via
+    `paginate`/`normalize_paging`, skip-malformed-file scan, `title` =
+    body H1, ADR ec9f5262 paged-from-day-one wording).
+  - Task 3.10: `get_gol_example`/`get_gol_template` tools + packaged data —
+    `gol_example.md` is a **byte-identical copy of `gol_reference.md`**
+    (`diff` empty, verified); `gol_template.md` = `req_template.md` minus
+    `## Characteristics`/`## Level` with goal-oriented placeholders
+    (dead-UUID `id: deaddead-goal-goal-goal-deaddeadgoal`, plain
+    `2026-08-26` dates) — verified parseable by `parse_gol` (same
+    guarantee `tests/prb/tools/test_integration.py` gives PRB's
+    template); `gol_schema.json` generated via `specmgr schema --type gol
+    --output-dir src/biz/dfch/specmgr/gol/data` (byte-identical to
+    `docs/gol_schema.json`, generator exits 0).
+  - Task 3.11: `gol/resources/` — `specmgr://gol/schema` (reads the
+    packaged JSON via `read_packaged_text`, mirroring `req_schema.py`),
+    `specmgr://gol/example`, `specmgr://gol/template`; no `/list`, no
+    `/{id}`.
+  - Tasks 3.12/3.13: `pyproject.toml` package-data entry for
+    `biz.dfch.specmgr.gol` (`data/*.md`, `data/*.json`, alphabetical
+    position between `adr` and `prb`); `.pre-commit-config.yaml` — all six
+    existing schema-hook `files:` globs widened to include
+    `gol/models/v1`, plus a new `specmgr-schema-gol-package` hook
+    (mirrors the prb one); `ci.yml` — two new 3.13-pinned steps
+    (`docs/gol_schema.json` all-types check + packaged-copy check) after
+    the prb pair, before the coverage-badge step.
+  - Tasks 3.14/3.15: `gol/data/gol_create_instructions.md` +
+    `gol/prompts/create_gol.py` (`topic: str` only; narrates
+    dedup-check-first via `list_gol` → `TodoWrite` list over `statement` +
+    `Source` + each optional section → `question`-tool interview with
+    explicit skip-allowed for optionals → `specmgr://gol/template|example|
+    schema` references → `create_gol(content)` → `update_gol` for later
+    revisions; also narrates the deliberate `Characteristics`/`Level`
+    omissions) and `gol/data/gol_update_instructions.md` +
+    `gol/prompts/update_gol.py` (`id: str` only — see Decisions Made;
+    narrates `get_gol(id)` first → present-vs-empty section overview +
+    `question` → per-section elicitation → `update_gol(id, content)`
+    whole-body replace → `set_status_gol` as separate optional follow-up
+    with `implemented`/`rejected`/`superseded` semantics). Both load
+    packaged data via `read_packaged_text` + `string.Template` and let
+    `FileNotFoundError` propagate uncaught.
+  - Task 3.16: `gol/__init__.py` (docstring + `from . import prompts,
+    resources, tools`); `server.py` bottom import line is now
+    `from . import adr, general, gol, prb, qa, req, tsk, uc` and its
+    module docstring lists the 10 gol tools, 3 gol resources, 2 gol
+    prompts, the no-`/{id}`-no-`/list` paragraph, and the updated
+    domain enumeration. Live registration verified: `list_tools` 64→74,
+    `list_resources` 17→20, `list_prompts` 15→17.
+  - Task 3.17: `tests/gol/tools/` (16 files: per-tool + `_paths`/`_io`/
+    `_write`/`_lock` + `test_integration.py`), `tests/gol/resources/`
+    (3 files), `tests/gol/prompts/` (2 files) — 104 new tests mirroring
+    `tests/req/`/`tests/prb/` (temp-`SPECMGR_DOCS_DIR` isolation,
+    `packaged_data_path` patching, `FileNotFoundError` propagation).
+    `test_list_gol.py` covers the plan-mandated paging contract: default
+    page size 25 with 26 docs (`total=26`/`max_results=25`/
+    `truncated=True`), `max_results` clamped to the 100 cap, `offset`
+    paging with no page overlap, the `truncated` boundary (offset
+    exactly at/past the end → `False`), negative-offset flooring, and
+    skip-malformed-file (`total` reflects parseable count only).
+    `test_integration.py` walks the live sequence `list_gol` (empty) →
+    `create_gol` → `get_gol` → `list_gol` (1) → `update_gol` →
+    `set_status_gol` → `get_gol` (status reflected) → `list_gol` (status
+    reflected) → `delete_gol` (stub raises, doc untouched) — the
+    ACC-004/ACC-006 "verified live" evidence for this phase.
+  - Task 3.18: quality gate green — see below.
+- Next: Phase 4 (Cross-cutting registration) — `AGENTS.md` (heading to
+  "eight domain/cross-cutting packages", `gol/` bullet after `prb/`,
+  "Still genuinely missing" list, closing enumeration), then the
+  `specmgr docs`/`mcp-docs`/`schema` zero-drift re-confirmation.
+- Notes:
+  - Quality gate: `ruff format --check` (all files formatted), `ruff
+    check` (all passed), `vulture` (exit 0, no output — **no**
+    `whitelist.py` change needed: every gol tool/resource/prompt function
+    is import-referenced by its sub-package `__init__.py`, the same
+    visibility REQ/PRB's own MCP entry points have; only
+    `version_info` carries a whitelist entry in that section), full
+    unittest suite (1609 tests, up from 1505, all OK, 54s), `specmgr
+    coverage-badge` (98%, `docs/coverage.svg` byte-unchanged — all 22 new
+    `gol` src modules at 100% coverage), `specmgr docs` (19 new
+    `docs/api/biz.dfch.specmgr.gol*.md` pages + `docs/api/README.md` index
+    + `docs/GENERATED.md` (test files 208→228, 22 new gol module lines) +
+    `docs/api/biz.dfch.specmgr.server.md` (docstring) +
+    `docs/api/biz.dfch.specmgr.general.models.paged_result.md` (new
+    `PagedResult[GolSummary]` alias section) — second run a fixed point),
+    `specmgr mcp-docs` (`docs/MCP.md`: +3 resources/+10 tools/+2 prompts
+    in alphabetical positions, header count line 17/64/15 → 20/74/17,
+    second run a fixed point), `specmgr schema` (exit 0, all six docs
+    schemas unchanged) + `specmgr schema --type gol --output-dir
+    src/biz/dfch/specmgr/gol/data` (exit 0, packaged copy unchanged),
+    `specmgr adr-toc` (no change to `docs/adr/README.md`), smoke: `import
+    biz.dfch.specmgr.server` OK and `uv build --wheel` wheel contains all
+    five `gol/data/*` files plus every gol module (scratch-venv install
+    is Phase 5's ACC-007 evidence), pre-commit: `specmgr-schema-gol-package
+    --all-files` and the widened `specmgr-schema --all-files` both
+    **Passed**.
+  - `docs/api/` gained 19 gol pages, not ~20: `gol/models/` has no
+    `__init__.py` (mirrors `req/models/`'s exact file shape per the
+    Phase-1 decision), so `pkgutil.walk_packages` — which drives the
+    per-module api pages — does not descend into it, exactly as it doesn't
+    for `req/models/` (zero committed `req.models` api pages).
+    `docs/GENERATED.md`'s static source-tree scan does list the
+    `gol/models/v1/*` first lines regardless.
+  - ACC-004/ACC-005/ACC-006 (this phase's acceptance criteria): covered by
+    the per-tool/resource/prompt tests + the live integration test + the
+    string-content/ordering prompt assertions. ACC-006's "manually walking
+    the narrated flows end to end against a real document" transcript
+    evidence is Phase 5's territory (Task 5.1); the concrete in-repo
+    evidence landed here is `test_integration.py` plus the prompt tests.
 
 #### Update 2026-08-25 (Phase 2)
 
@@ -764,6 +898,33 @@ None.
   surface) — if a character-level absence is ever required, that is a
   one-line docstring edit to make together with its `specmgr docs`
   regeneration.
+- **2026-08-26**: `gol`'s `update_gol` **prompt** takes `id: str` only —
+  no `instructions: str | None = None` parameter, deliberately diverging
+  from the `update_req`/`update_prb` prompt signatures. The plan settles
+  this in two independent places (Design Notes' bullet
+  "`update_gol(id: str) -> str`" and the Task 3.15 guidance repeating the
+  same signature), and its narrated flow discovers the requested change
+  *during* the interview (step 2 shows the user which sections are present
+  vs. empty and asks via `question`), so a pre-filled "requested change"
+  argument would be redundant. `gol/prompts/update_gol.py`'s own docstring
+  calls out the divergence explicitly. The `update_gol` **tool** is
+  unaffected (`(id, content)` exactly like `update_req`).
+- **2026-08-26**: `gol_template.md`'s frontmatter uses the domain's
+  dead-UUID `id: deaddead-goal-goal-goal-deaddeadgoal` (gol_reference's own
+  pattern, like prb_template's `deaddead-b00b-...`) with plain
+  `2026-08-26` dates (gol_reference's plain-date style), rather than
+  req_template's generic `deaddead-dead-dead-dead-deaddeaddead` id and
+  full-timestamp dates. Both styles parse identically (`_stringify_metadata`
+  coerces either); the choice keeps the packaged gol data internally
+  consistent.
+- **2026-08-26**: No `whitelist.py` entry for any Phase-3 `gol` name —
+  every `@mcp.tool()`/`@mcp.resource()`/`@mcp.prompt()` function is
+  import-referenced by its sub-package's `__init__.py`
+  (`gol/tools/__init__.py` imports all ten tools by name;
+  `gol/resources/__init__.py` and `gol/prompts/__init__.py` likewise),
+  which vulture sees, exactly as REQ's/PRB's own MCP entry points are seen
+  (the MCP section of `whitelist.py` holds only `version_info`). Vulture
+  ran clean (exit 0, no output) with the new tree in place.
 
 ### Related PRs / Commits
 

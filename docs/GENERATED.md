@@ -77,6 +77,7 @@ First-line docstrings from each module, organized by domain:
 
 **gol/**
 
+- `gol/__init__.py` — Goal (GOL) domain -- high-level business goal specifications.
 - `gol/models/v1/__init__.py` — Goal (GOL) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
 - `gol/models/v1/_util.py` — Shared, private constants for the ``gol.models.v1`` subpackage.
 - `gol/models/v1/body.py` — Goal (GOL) models: whole-section fields under a single H1.
@@ -84,6 +85,28 @@ First-line docstrings from each module, organized by domain:
 - `gol/models/v1/frontmatter.py` — Goal (GOL) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
 - `gol/models/v1/parser.py` — Parse raw goal (GOL) ``.md`` text into a :class:`GolDocument` (Phase 2, Task 2.2).
 - `gol/models/v1/summary.py` — Pydantic model for one line of GOL listing output (Phase 2, Task 2.3).
+- `gol/prompts/__init__.py` — MCP prompt wrappers for Goals (Tasks 3.14-3.15).
+- `gol/prompts/create_gol.py` — ``@mcp.prompt()``: create_gol (Task 3.14).
+- `gol/prompts/update_gol.py` — ``@mcp.prompt()``: update_gol (Task 3.15).
+- `gol/resources/__init__.py` — MCP resource registrations for Goal (GOL) documents (Task 3.11).
+- `gol/resources/gol_example.py` — Resource: specmgr://gol/example (Task 3.11).
+- `gol/resources/gol_schema.py` — Resource: specmgr://gol/schema (Task 3.11, packaged data).
+- `gol/resources/gol_template.py` — Resource: specmgr://gol/template (Task 3.11).
+- `gol/tools/__init__.py` — MCP tool wrappers for goals (mirrors ``prb/tools/``'s own shape).
+- `gol/tools/_io.py` — Thin file read helpers over ``parse_gol`` (Task 3.1).
+- `gol/tools/_lock.py` — Per-document in-process lock guarding goal mutations.
+- `gol/tools/_paths.py` — Goal base directory resolution and id -> path lookup (Task 3.1).
+- `gol/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_gol``/``update_gol``.
+- `gol/tools/create_gol.py` — ``@mcp.tool()`` wrapper: create_gol (Task 3.3).
+- `gol/tools/delete_gol.py` — ``@mcp.tool()`` wrapper: delete_gol (Task 3.6).
+- `gol/tools/get_gol.py` — ``@mcp.tool()`` wrapper: get_gol (Task 3.8).
+- `gol/tools/get_gol_example.py` — ``@mcp.tool()`` wrapper: get_gol_example (Task 3.10).
+- `gol/tools/get_gol_template.py` — ``@mcp.tool()`` wrapper: get_gol_template (Task 3.10).
+- `gol/tools/list_gol.py` — ``@mcp.tool()`` wrapper: list_gol (Task 3.9).
+- `gol/tools/parse_gol.py` — ``@mcp.tool()`` wrapper: parse_gol (Task 3.2).
+- `gol/tools/set_status_gol.py` — ``@mcp.tool()`` wrapper: set_status_gol (Task 3.5).
+- `gol/tools/update_gol.py` — ``@mcp.tool()`` wrapper: update_gol (Task 3.4).
+- `gol/tools/validate_gol.py` — ``@mcp.tool()`` wrapper: validate_gol (Task 3.7).
 
 **models/**
 
@@ -315,4 +338,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 208
+**Test files**: 228
