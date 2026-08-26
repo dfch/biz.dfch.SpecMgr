@@ -2,7 +2,7 @@
 created: 2026-08-15
 id: feat-7-various-improvements
 status: planning
-updated: 2026-08-25
+updated: 2026-08-26
 version: 1.0.0
 ---
 
@@ -610,6 +610,43 @@ progresses (edit, don't duplicate).
   live `specmgr://<d>/list` mention in `AGENTS.md` (e.g. the "MCP server
   (`server.py`)" section's own domain-surface description, if it lists
   resources per domain) — depends on: none — status: not-started
+
+- [ ] Task 0.25: Update `AGENTS.md`'s "Models location" section so it
+  states the *rule* instead of enumerating the post-refactor domains: ADR
+  is the only document type whose schema is not in its own domain
+  package (`models/adr/` at top level, because ADR predates the
+  domain-first refactor); every other document type (`req`, `uc`, `tsk`,
+  `qa`, `prb`, `gol`, and any future type) keeps its schema inside its
+  own domain package (`<domain>/models/vN/`). This resolves the standing
+  contradiction — the section currently names only "REQ, UC, and TSK" as
+  built after the refactor, while AGENTS.md's own per-domain bullets name
+  more (the `prb/` bullet says "same as REQ/UC/TSK/QA") — and
+  future-proofs the section: building a new document type no longer
+  requires editing AGENTS.md's "Models location" paragraph (as
+  feat-18-goal Phase 4 had to do for `gol`). Secondary, decide at
+  implementation time: the same per-type enumeration fragility exists in
+  AGENTS.md's Status heading (count + domain list) and its closing
+  "Don't assume any other domain package exists beyond …" paragraph —
+  reword those as rules too where feasible, or keep them enumerated and
+  record that decision in this file's Decisions Made — depends on: none —
+  status: not-started
+
+  Background: Found during feat-18-goal's (the new `gol` domain) Phase 4
+  AGENTS.md update (2026-08-26): AGENTS.md's "Models location — a real,
+  intentional divergence, not an oversight" paragraph (lines 108–116)
+  reads "REQ, UC, and TSK were built *after* that refactor and each keep
+  their schema inside their own domain package" — but `qa`
+  (`qa/models/v2/`), `prb` (`prb/models/v1/`), and `gol` (`gol/models/v1/`)
+  were also built after the domain-first refactor and likewise keep their
+  schemas in their own domain packages, and the file's own `prb/` bullet
+  already says "same as REQ/UC/TSK/QA" — the two sections contradict each
+  other. The sentence also had to be extended for every new type (feat-18
+  Phase 4 touched AGENTS.md in ~6 places for `gol` alone) even though the
+  underlying fact is stable: ADR's schema is the single exception at
+  top-level `models/adr/`. Stating the rule instead of enumerating the
+  domains removes both the contradiction and the per-type maintenance.
+  Note: the line numbers cited refer to AGENTS.md as of 2026-08-26 and
+  will drift — locate the section by its heading when implementing.
 
 - [ ] Task 1.1: Inventory current `specmgr://*/list` resources and diff
   their output shape/behavior (`adr_list` vs. `req_list`) — depends on:
