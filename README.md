@@ -182,6 +182,16 @@ To add the `specmgr` MCP server to your OpenCode configuration:
 uv sync --all-extras
 ```
 
+### Install pre-commit hooks (one-time)
+
+```bash
+uv run --frozen pre-commit install
+```
+
+`uv sync` only installs Python dependencies into the venv — it never
+registers the hooks from `.pre-commit-config.yaml` with git, so run
+this once per clone before your first commit.
+
 ### Run linters
 
 ```bash
