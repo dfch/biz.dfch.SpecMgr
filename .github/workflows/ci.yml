@@ -142,6 +142,17 @@ jobs:
           exit 1
         }
 
+    - name: Make sure `src/biz/dfch/specmgr/rsk/data/rsk_schema.json` is correct
+      # Packaged copy of the same schema, read by the `specmgr://rsk/schema` MCP resource
+      # via importlib.resources so it works from a real, non-editable install.
+      # Same generator as the `docs/*_schema.json` steps above, just a second --output-dir.
+      if: matrix.python-version == '3.13'
+      run: |
+        uv run --frozen --all-extras --python 3.13.13 specmgr schema --type rsk --output-dir src/biz/dfch/specmgr/rsk/data || {
+          echo "::error::src/biz/dfch/specmgr/rsk/data/rsk_schema.json is out of date -- run 'uv run --frozen --all-extras specmgr schema --type rsk --output-dir src/biz/dfch/specmgr/rsk/data' and commit the result (see AGENTS.md)."
+          exit 1
+        }
+
     - name: Make sure `docs/qa_schema.json` is correct
       # `specmgr schema` itself exits 1 when the regenerated content differs from what
       # was already on disk (or the file didn't exist yet), so no separate

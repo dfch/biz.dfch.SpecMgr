@@ -136,6 +136,10 @@ namespaces = true
     "data/*.md",
     "data/*.json"
 ]
+"biz.dfch.specmgr.rsk" = [
+    "data/*.md",
+    "data/*.json"
+]
 "biz.dfch.specmgr.tsk" = [
     "data/*.md",
     "data/*.json"

@@ -1,0 +1,86 @@
+# Copyright (C) 2026 Ronald Rink, d-fens GmbH, http://d-fens.ch
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+"""Tests for the `specmgr://rsk/template` resource (`rsk.resources.rsk_template.rsk_template`)."""
+
+import tempfile
+import unittest
+from pathlib import Path
+from unittest import mock
+
+from biz.dfch.specmgr.general.tools import _packaged_data
+from biz.dfch.specmgr.rsk.models.v1 import parse_rsk
+from biz.dfch.specmgr.rsk.resources.rsk_template import rsk_template
+from biz.dfch.specmgr.rsk.tools.get_rsk_template import get_rsk_template
+
+
+class TestRskTemplateResource(unittest.TestCase):
+    """Tests for the rsk_template resource function."""
+
+    def test_returns_real_packaged_template(self):
+        """Against the real, committed packaged data file, without any patching."""
+        sut = rsk_template
+
+        result = sut()
+
+        self.assertIsInstance(result, str)
+        self.assertTrue(result.startswith("---\n"))
+        self.assertIn("type: rsk", result)
+        self.assertIn("# Level 1 Heading is the Title of the Risk", result)
+
+    def test_matches_the_get_rsk_template_tool(self):
+        """The resource and the tool must return identical content -- same underlying reader."""
+        self.assertEqual(rsk_template(), get_rsk_template())
+
+    def test_reads_fresh_on_every_call(self):
+        """No in-memory cache -- a second call must reflect an on-disk change since the first."""
+        with tempfile.TemporaryDirectory() as tmp:
+            template_path = Path(tmp) / "rsk_template.md"
+            template_path.write_text("first", encoding="utf-8")
+
+            with mock.patch.object(_packaged_data, "packaged_data_path", return_value=template_path):
+                sut = rsk_template
+
+                first = sut()
+                template_path.write_text("second", encoding="utf-8")
+                second = sut()
+
+            self.assertEqual(first, "first")
+            self.assertEqual(second, "second")
+
+    def test_raises_file_not_found_when_template_missing(self):
+        """A missing packaged template file must propagate FileNotFoundError uncaught."""
+        with tempfile.TemporaryDirectory() as tmp:
+            missing_path = Path(tmp) / "does-not-exist.md"
+
+            with mock.patch.object(_packaged_data, "packaged_data_path", return_value=missing_path):
+                sut = rsk_template
+
+                with self.assertRaises(FileNotFoundError):
+                    sut()
+
+    def test_packaged_template_round_trips_through_parse_rsk(self):
+        """The committed template must be a fully-parseable risk document."""
+        document = parse_rsk(rsk_template())
+
+        self.assertEqual(document.frontmatter.id, "deadbeef-dead-dead-dead-deadbeefdead")
+        self.assertEqual(document.body.initial_assessment.level, "medium")  # 3 x 3 = 9
+        self.assertEqual(document.body.residual_assessment.level, "medium")  # 2 x 3 = 6
+
+
+if __name__ == "__main__":
+    unittest.main()

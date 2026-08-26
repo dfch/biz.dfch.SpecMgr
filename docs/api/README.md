@@ -211,6 +211,40 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.req.tools.set_status_req`](biz.dfch.specmgr.req.tools.set_status_req.md) — ``@mcp.tool()`` wrapper: set_status_req (Task 3.14).
 - [`biz.dfch.specmgr.req.tools.update_req`](biz.dfch.specmgr.req.tools.update_req.md) — ``@mcp.tool()`` wrapper: update_req (Task 3.13).
 - [`biz.dfch.specmgr.req.tools.validate_req`](biz.dfch.specmgr.req.tools.validate_req.md) — ``@mcp.tool()`` wrapper: validate_req (Task 3.16).
+- [`biz.dfch.specmgr.rsk`](biz.dfch.specmgr.rsk.md) — Risk (RSK) domain -- risk registers for system specifications.
+- [`biz.dfch.specmgr.rsk.models`](biz.dfch.specmgr.rsk.models.md) — Risk (RSK) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- [`biz.dfch.specmgr.rsk.models.v1`](biz.dfch.specmgr.rsk.models.v1.md) — Risk (RSK) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- [`biz.dfch.specmgr.rsk.models.v1._util`](biz.dfch.specmgr.rsk.models.v1._util.md) — Shared, private constants for the ``rsk.models.v1`` subpackage.
+- [`biz.dfch.specmgr.rsk.models.v1.assessment`](biz.dfch.specmgr.rsk.models.v1.assessment.md) — The 5x5 risk-matrix assessment models: probability/impact H3 leaves and the H2 assessment section.
+- [`biz.dfch.specmgr.rsk.models.v1.body`](biz.dfch.specmgr.rsk.models.v1.body.md) — Risk (RSK) body models: whole-section fields under a single H1.
+- [`biz.dfch.specmgr.rsk.models.v1.document`](biz.dfch.specmgr.rsk.models.v1.document.md) — Pydantic model for a full Risk document (frontmatter + body).
+- [`biz.dfch.specmgr.rsk.models.v1.frontmatter`](biz.dfch.specmgr.rsk.models.v1.frontmatter.md) — Risk (RSK) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
+- [`biz.dfch.specmgr.rsk.models.v1.parser`](biz.dfch.specmgr.rsk.models.v1.parser.md) — Parse raw Risk ``.md`` text into a :class:`RskDocument` (Phase 2, Task 2.2).
+- [`biz.dfch.specmgr.rsk.models.v1.summary`](biz.dfch.specmgr.rsk.models.v1.summary.md) — Pydantic model for one line of RSK listing output (Phase 2, Task 2.3).
+- [`biz.dfch.specmgr.rsk.prompts`](biz.dfch.specmgr.rsk.prompts.md) — MCP prompt wrappers for Risks (Task 3.13).
+- [`biz.dfch.specmgr.rsk.prompts.create_risk`](biz.dfch.specmgr.rsk.prompts.create_risk.md) — ``@mcp.prompt()``: create_risk (Task 3.13).
+- [`biz.dfch.specmgr.rsk.prompts.update_risk`](biz.dfch.specmgr.rsk.prompts.update_risk.md) — ``@mcp.prompt()``: update_risk (Task 3.13).
+- [`biz.dfch.specmgr.rsk.resources`](biz.dfch.specmgr.rsk.resources.md) — MCP resource registrations for Risk (RSK) documents (Tasks 3.10-3.11, 3.15).
+- [`biz.dfch.specmgr.rsk.resources.risk_matrix`](biz.dfch.specmgr.rsk.resources.risk_matrix.md) — Resource: specmgr://rsk/risk-matrix (Task 3.15).
+- [`biz.dfch.specmgr.rsk.resources.rsk_example`](biz.dfch.specmgr.rsk.resources.rsk_example.md) — Resource: specmgr://rsk/example (Task 3.11).
+- [`biz.dfch.specmgr.rsk.resources.rsk_schema`](biz.dfch.specmgr.rsk.resources.rsk_schema.md) — Resource: specmgr://rsk/schema (Task 3.10).
+- [`biz.dfch.specmgr.rsk.resources.rsk_template`](biz.dfch.specmgr.rsk.resources.rsk_template.md) — Resource: specmgr://rsk/template (Task 3.11).
+- [`biz.dfch.specmgr.rsk.resources.tara`](biz.dfch.specmgr.rsk.resources.tara.md) — Resource: specmgr://rsk/tara (Task 3.15).
+- [`biz.dfch.specmgr.rsk.tools`](biz.dfch.specmgr.rsk.tools.md) — MCP tool wrappers for risks (mirrors ``tsk/tools/``'s own shape).
+- [`biz.dfch.specmgr.rsk.tools._io`](biz.dfch.specmgr.rsk.tools._io.md) — Thin file read helpers over ``parse_rsk`` (Task 3.1).
+- [`biz.dfch.specmgr.rsk.tools._lock`](biz.dfch.specmgr.rsk.tools._lock.md) — Per-document in-process lock guarding risk mutations.
+- [`biz.dfch.specmgr.rsk.tools._paths`](biz.dfch.specmgr.rsk.tools._paths.md) — Risk base directory resolution and id -> path lookup (Task 3.1).
+- [`biz.dfch.specmgr.rsk.tools._write`](biz.dfch.specmgr.rsk.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_rsk``/``update_rsk``.
+- [`biz.dfch.specmgr.rsk.tools.create_rsk`](biz.dfch.specmgr.rsk.tools.create_rsk.md) — ``@mcp.tool()`` wrapper: create_rsk (Task 3.3).
+- [`biz.dfch.specmgr.rsk.tools.delete_rsk`](biz.dfch.specmgr.rsk.tools.delete_rsk.md) — ``@mcp.tool()`` wrapper: delete_rsk (Task 3.6).
+- [`biz.dfch.specmgr.rsk.tools.get_rsk`](biz.dfch.specmgr.rsk.tools.get_rsk.md) — ``@mcp.tool()`` wrapper: get_rsk (Task 3.8).
+- [`biz.dfch.specmgr.rsk.tools.get_rsk_example`](biz.dfch.specmgr.rsk.tools.get_rsk_example.md) — ``@mcp.tool()`` wrapper: get_rsk_example (Task 3.9).
+- [`biz.dfch.specmgr.rsk.tools.get_rsk_template`](biz.dfch.specmgr.rsk.tools.get_rsk_template.md) — ``@mcp.tool()`` wrapper: get_rsk_template (Task 3.9).
+- [`biz.dfch.specmgr.rsk.tools.list_rsk`](biz.dfch.specmgr.rsk.tools.list_rsk.md) — ``@mcp.tool()`` wrapper: list_rsk (Task 3.14).
+- [`biz.dfch.specmgr.rsk.tools.parse_rsk`](biz.dfch.specmgr.rsk.tools.parse_rsk.md) — ``@mcp.tool()`` wrapper: parse_rsk (Task 3.2).
+- [`biz.dfch.specmgr.rsk.tools.set_status_rsk`](biz.dfch.specmgr.rsk.tools.set_status_rsk.md) — ``@mcp.tool()`` wrapper: set_status_rsk (Task 3.5).
+- [`biz.dfch.specmgr.rsk.tools.update_rsk`](biz.dfch.specmgr.rsk.tools.update_rsk.md) — ``@mcp.tool()`` wrapper: update_rsk (Task 3.4).
+- [`biz.dfch.specmgr.rsk.tools.validate_rsk`](biz.dfch.specmgr.rsk.tools.validate_rsk.md) — ``@mcp.tool()`` wrapper: validate_rsk (Task 3.7).
 - [`biz.dfch.specmgr.server`](biz.dfch.specmgr.server.md) — MCP server for ``biz-dfch-specmgr``.
 - [`biz.dfch.specmgr.tsk`](biz.dfch.specmgr.tsk.md) — TaskList (TSK) domain -- lightweight task/todo-list specifications.
 - [`biz.dfch.specmgr.tsk.models`](biz.dfch.specmgr.tsk.models.md) — TaskList (TSK) models -- Pydantic schema powered by the generic ``models/md`` engine.
