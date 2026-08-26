@@ -7,6 +7,78 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.0-rc1] - 2026-08-26
+
+### Added
+
+- **Eighth domain feature (GOL/Goal tooling)**: implemented high-level
+  business-goal document tools and infrastructure (the strategic
+  "what the organization wants to achieve" level that sits above
+  individual requirements):
+  - `gol/models/v1/`: Pydantic schema (`GolFrontmatter` with REQ's exact
+    7-value status set, `Goal` body mirroring `Requirement` with exactly
+    two deliberate omissions — no `## Characteristics`, no `## Level`, so
+    the only mandatory body fields are statement + Source, plus optional
+    Description/Priority/Tags/Related Artifacts/More Information/Notes),
+    parser (`parse_gol`), `GolSummary`, and JSON schema generation, inside
+    the domain package itself (not top-level `models/`).
+  - `gol/tools/`: `@mcp.tool()` wrappers for the GOL lifecycle
+    (`create_gol`, `update_gol`, `set_status_gol`, `parse_gol`, `list_gol`,
+    `get_gol`, `get_gol_example`, `get_gol_template`, `validate_gol`),
+    plus a stub for `delete_gol`. `list_gol` ships as a paged tool from day
+    one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
+  - `gol/resources/`: `specmgr://gol/schema`, `specmgr://gol/example`,
+    `specmgr://gol/template` (no `specmgr://gol/{id}` — id-based reads are
+    `get_gol`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
+    `specmgr://gol/list` — listing is the `list_gol` tool, ADR
+    ec9f5262-9912-49d0-903f-fcfb54f28c13).
+  - `gol/prompts/`: narrated `create_gol`/`update_gol` prompts driving a
+    `TodoWrite` + `question`-tool interview flow; `create_gol` first checks
+    `list_gol` for a near-duplicate goal.
+  - `server.py` updated to import the new `gol` domain package; `AGENTS.md`
+    updated for eight domain/cross-cutting packages.
+  - Comprehensive test coverage across `tests/gol/models/`,
+    `tests/gol/tools/`, `tests/gol/resources/`, and `tests/gol/prompts/`,
+    including a live lifecycle integration test.
+
+- **Ninth domain feature (RSK/Risk tooling)**: implemented risk-register
+  entry document tools and infrastructure (the scenario decomposed into
+  `## Cause`/`## Trigger`/`## Consequence`, a 5x5 probability/impact
+  assessment before mitigation (`## Initial Assessment`) and the same 5x5
+  after mitigation (`## Residual Assessment`) with the value in the H3
+  heading itself, and a TARA response strategy `## Strategy` — closed
+  4-value set `transfer`/`accept`/`reduce`/`avoid`):
+  - `rsk/models/v1/`: Pydantic schema (`RskFrontmatter` with 6-value status
+    set `open`/`mitigating`/`accepted`/`occurred`/`closed`/`dropped`,
+    `Risk` body with computed probability/impact values and a derived risk
+    `level` always computed from the 5x5 product), parser (`parse_rsk`),
+    `RskSummary`, and JSON schema generation, inside the domain package
+    itself (not top-level `models/`).
+  - `rsk/tools/`: `@mcp.tool()` wrappers for the RSK lifecycle
+    (`create_rsk`, `update_rsk`, `set_status_rsk`, `parse_rsk`, `list_rsk`,
+    `get_rsk`, `get_rsk_example`, `get_rsk_template`, `validate_rsk`),
+    plus a stub for `delete_rsk`. `list_rsk` ships as a paged tool from day
+    one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13), and its `RskSummary`
+    lines carry the residual-risk coordinates so a register-wide
+    risk-matrix view can be built from the listing alone.
+  - `rsk/resources/`: `specmgr://rsk/schema`, `specmgr://rsk/example`,
+    `specmgr://rsk/template`, plus two static domain-knowledge resources
+    `specmgr://rsk/tara` (what TARA is and when/how to apply each of the
+    four words) and `specmgr://rsk/risk-matrix` (the 5x5 scale anchors,
+    zone table, and product thresholds) (no `specmgr://rsk/{id}` —
+    id-based reads are `get_rsk`-only, ADR
+    ddfb1109-422d-4507-8dbc-dc5e4bec9614; no `specmgr://rsk/list` — listing
+    is the `list_rsk` tool, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
+  - `rsk/prompts/`: `create_risk`/`update_risk` prompts (the issue's
+    literal wording, not the `rsk`-prefixed convention the tools/resources
+    use) driving a narrated `TodoWrite` + `question`-tool interview flow.
+  - `server.py` updated to import the new `rsk` domain package; `AGENTS.md`
+    updated for nine domain/cross-cutting packages.
+  - Comprehensive test coverage across `tests/rsk/models/`,
+    `tests/rsk/tools/`, `tests/rsk/resources/`, and `tests/rsk/prompts/`,
+    including guards that keep the packaged TARA/risk-matrix domain
+    knowledge consistent with the model's derived-level zone mapping.
+
 ## [0.10.0] - 2026-08-25
 
 ### Added
