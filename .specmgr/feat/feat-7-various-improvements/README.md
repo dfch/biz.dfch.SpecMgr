@@ -646,7 +646,18 @@ progresses (edit, don't duplicate).
   top-level `models/adr/`. Stating the rule instead of enumerating the
   domains removes both the contradiction and the per-type maintenance.
   Note: the line numbers cited refer to AGENTS.md as of 2026-08-26 and
-  will drift — locate the section by its heading when implementing.
+   will drift — locate the section by its heading when implementing.
+
+- [ ] Task 0.26: Document the one-time pre-commit hook install in
+  `README.md`'s "Development" section for developers who want to develop
+  this application — after `uv sync --all-extras` the hooks are still
+  inactive, because `uv sync` only installs Python dependencies into the
+  venv and never writes anything into `.git/hooks/`; the developer must
+  additionally run `uv run --frozen pre-commit install` once per clone
+  (this is already noted in `AGENTS.md`'s "Developer Commands" section,
+  but not in the user-facing `README.md`). Add a short subsection there
+  with the command and a one-line explanation of why `uv sync` alone is
+  not enough — depends on: none — status: not-started
 
 - [ ] Task 1.1: Inventory current `specmgr://*/list` resources and diff
   their output shape/behavior (`adr_list` vs. `req_list`) — depends on:
