@@ -146,8 +146,8 @@ sync; a task's line *is* its current status. Update it in place as work
 progresses (edit, don't duplicate).
 
 #### Phase 0: Scaffolding
-- [ ] Task 0.1: Package skeleton — `dec/__init__.py` (`from . import prompts, resources, tools` + registration docstring), empty `dec/models/v1/`, `dec/tools/`, `dec/resources/`, `dec/prompts/`, `dec/data/` packages, and `tests/dec/` skeleton mirroring `tests/gol/` (`models/v1/`, `tools/`, `prompts/`, `resources/` + `__init__.py` files) — depends on: none — status: not-started
-- [ ] Task 0.2: Commit Phase 0 + comment the commit hash on issue #21 — depends on: Task 0.1 — status: not-started
+- [x] Task 0.1: Package skeleton — `dec/__init__.py` (`from . import prompts, resources, tools` + registration docstring), empty `dec/models/v1/`, `dec/tools/`, `dec/resources/`, `dec/prompts/`, `dec/data/` packages, and `tests/dec/` skeleton mirroring `tests/gol/` (`models/v1/`, `tools/`, `prompts/`, `resources/` + `__init__.py` files) — depends on: none — status: completed
+- [x] Task 0.2: Commit Phase 0 + comment the commit hash on issue #21 — depends on: Task 0.1 — status: in-progress (gate run; commit + issue #21 comment performed by orchestrator after verification)
 
 #### Phase 1: Models + parser (`dec/models/v1/`)
 - [ ] Task 1.1: `_util.py` (`SCHEMA_COMMENT_VERSION = "v1"`) — depends on: Task 0.1 — status: not-started

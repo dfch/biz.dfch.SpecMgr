@@ -57,6 +57,10 @@ First-line docstrings from each module, organized by domain:
 - `commands/unused_code.py` — ``unused-code`` -- report unreferenced Python symbols, or (with ``--test``) test-only ones.
 - `commands/version.py` — ``version`` -- print the installed ``biz-dfch-specmgr`` version.
 
+**dec/**
+
+- `dec/__init__.py` — Decision (DEC) domain -- decisions in general (not architecture-only).
+
 **general/**
 
 - `general/__init__.py` — General-purpose (cross-cutting, not domain-specific) tools, resources, and

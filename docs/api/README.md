@@ -45,6 +45,10 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.commands.schema`](biz.dfch.specmgr.commands.schema.md) — ``schema`` -- generate JSON Schema (2020-12) for registered document-type models.
 - [`biz.dfch.specmgr.commands.unused_code`](biz.dfch.specmgr.commands.unused_code.md) — ``unused-code`` -- report unreferenced Python symbols, or (with ``--test``) test-only ones.
 - [`biz.dfch.specmgr.commands.version`](biz.dfch.specmgr.commands.version.md) — ``version`` -- print the installed ``biz-dfch-specmgr`` version.
+- [`biz.dfch.specmgr.dec`](biz.dfch.specmgr.dec.md) — Decision (DEC) domain -- decisions in general (not architecture-only).
+- [`biz.dfch.specmgr.dec.prompts`](biz.dfch.specmgr.dec.prompts.md) — No documentation available.
+- [`biz.dfch.specmgr.dec.resources`](biz.dfch.specmgr.dec.resources.md) — No documentation available.
+- [`biz.dfch.specmgr.dec.tools`](biz.dfch.specmgr.dec.tools.md) — No documentation available.
 - [`biz.dfch.specmgr.general`](biz.dfch.specmgr.general.md) — General-purpose (cross-cutting, not domain-specific) tools, resources, and
 - [`biz.dfch.specmgr.general.models`](biz.dfch.specmgr.general.models.md) — Shared, cross-domain Pydantic models with no document-type-specific content.
 - [`biz.dfch.specmgr.general.models.paged_result`](biz.dfch.specmgr.general.models.paged_result.md) — Generic paged-result wrapper shared by every ``list_<domain>`` MCP tool (feat-13 Task 1.1).
