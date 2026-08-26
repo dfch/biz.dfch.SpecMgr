@@ -85,15 +85,19 @@ jobs:
           exit 1
         }
 
-    - name: Make sure `docs/req_schema.json` is correct
-      # `specmgr schema` itself exits 1 when the regenerated content differs from what
-      # was already on disk (or the file didn't exist yet), so no separate
-      # `git diff --exit-code` step is needed here, unlike the `docs/`/`docs/adr/README.md`
-      # checks above.
+    - name: Make sure `docs/*_schema.json` is correct
+      # `specmgr schema` without --type regenerates/checks ALL registered doc types
+      # (gol, prb, qa, req, rsk, tsk, uc) in a single run, and the command itself
+      # exits 1 when the regenerated content differs from what was already on disk
+      # (or the file didn't exist yet), so no separate `git diff --exit-code` step
+      # is needed here, unlike the `docs/`/`docs/adr/README.md` checks above.
+      # One step covers every `docs/<type>_schema.json` -- including `tsk` and
+      # `rsk`, which never got their own dedicated step (their docs copies are
+      # checked incidentally via this run).
       if: matrix.python-version == '3.13'
       run: |
         uv run --frozen --all-extras --python 3.13.13 specmgr schema || {
-          echo "::error::docs/req_schema.json is out of date -- run 'uv run --frozen --all-extras specmgr schema' and commit the result (see AGENTS.md)."
+          echo "::error::docs/*_schema.json is out of date -- run 'uv run --frozen --all-extras specmgr schema' and commit the result (see AGENTS.md)."
           exit 1
         }
 
@@ -105,18 +109,6 @@ jobs:
       run: |
         uv run --frozen --all-extras --python 3.13.13 specmgr schema --type req --output-dir src/biz/dfch/specmgr/req/data || {
           echo "::error::src/biz/dfch/specmgr/req/data/req_schema.json is out of date -- run 'uv run --frozen --all-extras specmgr schema --type req --output-dir src/biz/dfch/specmgr/req/data' and commit the result (see AGENTS.md)."
-          exit 1
-        }
-
-    - name: Make sure `docs/uc_schema.json` is correct
-      # `specmgr schema` itself exits 1 when the regenerated content differs from what
-      # was already on disk (or the file didn't exist yet), so no separate
-      # `git diff --exit-code` step is needed here, unlike the `docs/`/`docs/adr/README.md`
-      # checks above.
-      if: matrix.python-version == '3.13'
-      run: |
-        uv run --frozen --all-extras --python 3.13.13 specmgr schema || {
-          echo "::error::docs/uc_schema.json is out of date -- run 'uv run --frozen --all-extras specmgr schema' and commit the result (see AGENTS.md)."
           exit 1
         }
 
@@ -153,18 +145,6 @@ jobs:
           exit 1
         }
 
-    - name: Make sure `docs/qa_schema.json` is correct
-      # `specmgr schema` itself exits 1 when the regenerated content differs from what
-      # was already on disk (or the file didn't exist yet), so no separate
-      # `git diff --exit-code` step is needed here, unlike the `docs/`/`docs/adr/README.md`
-      # checks above.
-      if: matrix.python-version == '3.13'
-      run: |
-        uv run --frozen --all-extras --python 3.13.13 specmgr schema || {
-          echo "::error::docs/qa_schema.json is out of date -- run 'uv run --frozen --all-extras specmgr schema' and commit the result (see AGENTS.md)."
-          exit 1
-        }
-
     - name: Make sure `src/biz/dfch/specmgr/qa/data/qa_schema.json` is correct
       # Packaged copy of the same schema, read by the `specmgr://qa/schema` MCP resource
       # via importlib.resources so it works from a real, non-editable install.
@@ -176,18 +156,6 @@ jobs:
           exit 1
         }
 
-    - name: Make sure `docs/prb_schema.json` is correct
-      # `specmgr schema` itself exits 1 when the regenerated content differs from what
-      # was already on disk (or the file didn't exist yet), so no separate
-      # `git diff --exit-code` step is needed here, unlike the `docs/`/`docs/adr/README.md`
-      # checks above.
-      if: matrix.python-version == '3.13'
-      run: |
-        uv run --frozen --all-extras --python 3.13.13 specmgr schema || {
-          echo "::error::docs/prb_schema.json is out of date -- run 'uv run --frozen --all-extras specmgr schema' and commit the result (see AGENTS.md)."
-          exit 1
-        }
-
     - name: Make sure `src/biz/dfch/specmgr/prb/data/prb_schema.json` is correct
       # Packaged copy of the same schema, read by the `specmgr://prb/schema` MCP resource
       # via importlib.resources so it works from a real, non-editable install.
@@ -196,18 +164,6 @@ jobs:
       run: |
         uv run --frozen --all-extras --python 3.13.13 specmgr schema --type prb --output-dir src/biz/dfch/specmgr/prb/data || {
           echo "::error::src/biz/dfch/specmgr/prb/data/prb_schema.json is out of date -- run 'uv run --frozen --all-extras specmgr schema --type prb --output-dir src/biz/dfch/specmgr/prb/data' and commit the result (see AGENTS.md)."
-          exit 1
-        }
-
-    - name: Make sure `docs/gol_schema.json` is correct
-      # `specmgr schema` itself exits 1 when the regenerated content differs from what
-      # was already on disk (or the file didn't exist yet), so no separate
-      # `git diff --exit-code` step is needed here, unlike the `docs/`/`docs/adr/README.md`
-      # checks above.
-      if: matrix.python-version == '3.13'
-      run: |
-        uv run --frozen --all-extras --python 3.13.13 specmgr schema || {
-          echo "::error::docs/gol_schema.json is out of date -- run 'uv run --frozen --all-extras specmgr schema' and commit the result (see AGENTS.md)."
           exit 1
         }
 

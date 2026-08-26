@@ -665,24 +665,27 @@ progresses (edit, don't duplicate).
   with the command and a one-line explanation of why `uv sync` alone is
   not enough — depends on: none — status: done (2026-08-26)
 
-- [ ] Task 0.27: Clean up the schema drift checks in `.github/workflows/ci.yml`
+- [x] Task 0.27: Clean up the schema drift checks in `.github/workflows/ci.yml`
   and `.pre-commit-config.yaml` — (a) consolidate the five duplicated plain
   `specmgr schema` CI steps ("Make sure `docs/{req,uc,qa,prb,gol}_schema.json`
   is correct") into a single step: each invocation already regenerates/checks
   **all** registered types' `docs/*_schema.json` copies (no `--type` → full
   set, `commands/schema.py`), so one run covers req/uc/qa/prb/gol **and**
-  `tsk`, which currently has no dedicated `docs/tsk_schema.json` step at all
-  (its docs copy is only checked incidentally via the other five runs);
-  keep the six per-domain packaged-copy steps
+  `tsk`/`rsk`, which currently have no dedicated `docs/<t>_schema.json`
+  step at all (their docs copies are only checked incidentally via the
+  other five runs);
+  keep the seven per-domain packaged-copy steps
   (`--type <t> --output-dir src/biz/dfch/specmgr/<t>/data`) unchanged —
-  those are genuinely one artifact per step, matching the six independent
-  `specmgr-schema-*-package` pre-commit hooks; (b) fix the stale
-  `specmgr-schema` hook description in `.pre-commit-config.yaml`
-  ("currently `req` and `uc`" — predates tsk/qa/prb/gol; the `files:`
-  patterns were updated when those domains landed, the prose was not);
+  those are genuinely one artifact per step, matching the seven independent
+  `specmgr-schema-*-package` pre-commit hooks; (b) confirm the
+  `specmgr-schema` hook description in `.pre-commit-config.yaml` is current —
+  it was stale ("currently `req` and `uc`" — predates tsk/qa/prb/gol; the
+  `files:` patterns were updated when those domains landed, the prose was
+  not) but was already fixed by feat-15's RSK work (Task 3.12) and now lists
+  all seven registered types, so no change was needed;
   (c) verify the consolidated CI step locally (`uv run --frozen specmgr
   schema` exits 0 on a clean tree, 1 after deliberately drifting one file)
-  — depends on: none — status: not-started
+  — depends on: none — status: done (2026-08-26)
 
 - [ ] Task 1.1: Inventory current `specmgr://*/list` resources and diff
   their output shape/behavior (`adr_list` vs. `req_list`) — depends on:
