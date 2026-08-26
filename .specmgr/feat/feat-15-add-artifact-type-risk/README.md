@@ -683,7 +683,7 @@ packaged data resolving outside the source tree) — and ran the full quality
 gate end-to-end (1480 tests OK, ruff format/check clean, vulture clean,
 pylint 8.97/10 advisory, coverage 98% with every `rsk` module at 100%).
 All 8 requirements and all 8 acceptance criteria satisfied. All four
-commits landed (`397ff74` Phase 1, `2a8b2af` Phase 2, `7b17984` Phase 3,
+commits landed (`1739b35` Phase 1, `ee38d8d` Phase 2, `a49f18c` Phase 3,
 commit 4 Phase 4).
 
 ### Blockers
@@ -760,8 +760,8 @@ None.
   run -m unittest ...` + `uv run --frozen specmgr coverage-badge`
   (`docs/coverage.svg` unchanged at 98%; every `rsk` module 100% covered)
 - Next: none — feature complete; branch `feat-15-add-artifact-type-risk`
-  is ready for the PR flow (4 commits: `397ff74` Phase 1, `2a8b2af` Phase
-  2, `7b17984` Phase 3, plus this Phase 4 commit)
+  is ready for the PR flow (4 commits: `1739b35` Phase 1, `ee38d8d` Phase
+  2, `a49f18c` Phase 3, plus this Phase 4 commit)
 - Notes: the Task 4.3 CI-coverage reasoning is recorded on the task line
   itself (feat-10 precedent), so no new Decisions Made entry; the ACC-007
   scratch artifacts (`/tmp/opencode/rsk-wheel/`, `/tmp/opencode/rsk-venv/`,
@@ -1260,6 +1260,6 @@ None.
 
 No PR opened yet. Implemented across 4 commits on this branch
 (`feat-15-add-artifact-type-risk`), one per phase (see Recent Updates for
-details of each): `397ff74` (Phase 1: Specification), `2a8b2af` (Phase 2:
-Pydantic Models & Parser), `7b17984` (Phase 3: MCP Surface), plus a final
+details of each): `1739b35` (Phase 1: Specification), `ee38d8d` (Phase 2:
+Pydantic Models & Parser), `a49f18c` (Phase 3: MCP Surface), plus a final
 Phase 4 (Docs, CI wiring & final verification) commit.

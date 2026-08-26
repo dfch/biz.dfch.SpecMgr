@@ -4,7 +4,7 @@
 **Created:** 8/24/2026, 11:04:05 AM
 **Updated:** 8/24/2026, 3:25:52 PM
 
----
+______________________________________________________________________
 
 ## User
 
@@ -19,14 +19,14 @@ I want a scope (which system is affected)?
 I want a list of tags
 I want a "More Information" section (optional)
 
-
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 39.3s)
 
 _Thinking:_
 
 The user wants to create a new feature for a new artifact type: "risk" (RSK). The user's requests are as follows:
+
 1. A typical risk attribute
 2. A 5x5 risk matrix (impact/probability) for both BEFORE mitigation and AFTER mitigation (residual risk)
 3. A risk strategy attribute: TARRA principle (Tolerate, Assign, Reduce, Recover, Avoid)
@@ -36,12 +36,14 @@ The user wants to create a new feature for a new artifact type: "risk" (RSK). Th
 7. "More Information" section (optional)
 
 The user mentions feat-10 as a similar feature. Let me explore the codebase:
+
 - `.specmgr/feat/` folder structure
 - feat-10 (probably the feature that added the QA artifact type)
 - ADR regarding how work units are created with features
 - Template at `.specmgr/_template/v1/README.md`
 
 Let me start exploring. I should look at the following:
+
 1. The template README
 2. The feat-10 folder (to see what was done when the artifact type was added)
 3. ADRs regarding work units (probably e369ee2e-3353-4f92-991c-6367d76d832e)
@@ -51,10 +53,10 @@ The user is asking me to "propose typical risk attributes" — so the deliverabl
 
 First, let me explore the filesystem.
 
-
 **Tool: bash**
 
 **Input:**
+
 ```json
 {
   "command": "ls /home/user/src/biz.dfch.SpecMgr/.specmgr/feat/ && ls /home/user/src/biz.dfch.SpecMgr/.specmgr/_template/v1/"
@@ -62,6 +64,7 @@ First, let me explore the filesystem.
 ```
 
 **Output:**
+
 ```
 feat-10-add-artifact-type-tasklist
 feat-12-qa-artifact
@@ -80,11 +83,13 @@ README.md
 **Tool: specmgr_list_adr**
 
 **Input:**
+
 ```json
 {}
 ```
 
 **Output:**
+
 ```
 {
   "total": 24,
@@ -240,22 +245,23 @@ README.md
 }
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 29.2s)
 
 _Thinking:_
 
 The user mentioned feat-10 as a similar feature. feat-10 is "add-artifact-type-tasklist" (TSK). Let's take a look at it as a model. I'll also check the template and related ADRs. Let's read the following:
+
 1. `.specmgr/feat/feat-10-add-artifact-type-tasklist/README.md`
 2. `.specmgr/_template/v1/README.md`
 
 Let's do these in parallel.
 
-
 **Tool: read**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-10-add-artifact-type-tasklist/README.md"
@@ -263,7 +269,8 @@ Let's do these in parallel.
 ```
 
 **Output:**
-```
+
+````
 <path>/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-10-add-artifact-type-tasklist/README.md</path>
 <type>file</type>
 <content>
@@ -867,11 +874,12 @@ Let's do these in parallel.
 
 (End of file - total 597 lines)
 </content>
-```
+````
 
 **Tool: read**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/_template/v1/README.md"
@@ -879,6 +887,7 @@ Let's do these in parallel.
 ```
 
 **Output:**
+
 ```
 <path>/home/user/src/biz.dfch.SpecMgr/.specmgr/_template/v1/README.md</path>
 <type>file</type>
@@ -998,17 +1007,19 @@ Let's do these in parallel.
 </content>
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 62.8s)
 
 _Thinking:_
 
 Okay, so now I understand the structure of feat-10 and the template. What the user is asking for is:
+
 1. A new feature "Add artifact type 'risk' (RSK)" — similar to feat-10
 2. A proposal of typical attributes for "risk"
 
 Requested attributes:
+
 - 5x5 risk matrix (impact/probability) for both pre-mitigation and post-mitigation (residual risk)
 - Risk strategy: TARRA principle (Tolerate, Assign, Reduce, Recover, Avoid)
 - Risk status
@@ -1019,6 +1030,7 @@ Requested attributes:
 On top of that, I should also propose typical attributes (e.g., title, description, cause, owner, date, mitigation, etc.) and create a feature folder.
 
 Let me check a few more things:
+
 1. The feat-12 QA feature README (as another example of an artifact type)
 2. Check whether there's a GitHub issue number — the user said "add artifact type 'risk' (RSK)". The feat folder numbers are: 10, 12, 13, 14, 4, 5, 6, 7, 8, 9. So the next number might be 15? Let me check the repo's GitHub issues. I can't check GitHub directly, but let me check whether gh is available or whether there's a remote.
 
@@ -1027,23 +1039,19 @@ Let me check git remote, and if possible, check the issues too.
 Also, let me check what the model structure looks like for the existing artifact (e.g., req/models/v1) so I can design the schema for the risk attributes. Additionally, I'll check the existing models to see what building blocks exist (e.g., MarkdownSection1WithComment, MarkdownSection2, etc.).
 
 Let me explore:
+
 - src/biz/dfch/specmgr/req/models/v1/
 - src/biz/dfch/specmgr/models/md/
 - git remote / gh issues
 
 Let me run these in parallel.
 
-
-
-
 Now let me look at the existing model building blocks and check the GitHub issue numbering.
-
-
-
 
 **Tool: bash**
 
 **Input:**
+
 ```json
 {
   "command": "ls /home/user/src/biz.dfch.SpecMgr/src/biz/dfch/specmgr/req/models/v1/ /home/user/src/biz.dfch.SpecMgr/src/biz/dfch/specmgr/models/md/ /home/user/src/biz.dfch.SpecMgr/src/biz/dfch/specmgr/tsk/models/v1/"
@@ -1051,6 +1059,7 @@ Now let me look at the existing model building blocks and check the GitHub issue
 ```
 
 **Output:**
+
 ```
 /home/user/src/biz.dfch.SpecMgr/src/biz/dfch/specmgr/models/md/:
 __init__.py
@@ -1108,6 +1117,7 @@ task_item.py
 **Tool: bash**
 
 **Input:**
+
 ```json
 {
   "command": "gh issue list --repo $(git remote get-url origin | sed 's@.*github.com/@@') --state open --limit 20 2>&1 | head -30; git branch --show-current",
@@ -1116,13 +1126,14 @@ task_item.py
 ```
 
 **Output:**
+
 ```
 GraphQL: Could not resolve to a Repository with the name 'dfch/biz.dfch.SpecMgr.git'. (repository)
 dev
 
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 40.3s)
 
@@ -1131,10 +1142,10 @@ _Thinking:_
 The remote URL has a .git suffix. Let me fix it:
 `git remote get-url origin | sed 's@.*github.com/@@' | sed 's@\.git$@@'`
 
-
 **Tool: bash**
 
 **Input:**
+
 ```json
 {
   "command": "git remote get-url origin; gh issue list --state open --limit 30 2>&1 | head -40",
@@ -1143,6 +1154,7 @@ The remote URL has a .git suffix. Let me fix it:
 ```
 
 **Output:**
+
 ```
 https://github.com/dfch/biz.dfch.SpecMgr.git
 14	OPEN	QA v2: adjacent question/answer pairs (no per-question heading)		2026-08-23T08:41:54Z
@@ -1155,6 +1167,7 @@ https://github.com/dfch/biz.dfch.SpecMgr.git
 **Tool: read**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/src/biz/dfch/specmgr/req/models/v1/frontmatter.py"
@@ -1162,6 +1175,7 @@ https://github.com/dfch/biz.dfch.SpecMgr.git
 ```
 
 **Output:**
+
 ```
 <path>/home/user/src/biz.dfch.SpecMgr/src/biz/dfch/specmgr/req/models/v1/frontmatter.py</path>
 <type>file</type>
@@ -1249,7 +1263,7 @@ https://github.com/dfch/biz.dfch.SpecMgr.git
 </content>
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 324.2s)
 
@@ -1260,15 +1274,18 @@ Open issues: #14 (QA v2, probably done/being worked on in feat-14), #7, #2, #1. 
 The user says they want to "create a new feature to create a new artifact type similar to feat-10, i.e., 'add artifact type risk (RSK)'."
 
 Per the convention in AGENTS.md:
+
 - `feat-NNN-slug`, where NNN is the GitHub issue number. Work that is being started without an issue yet uses `feat-0-slug` (issue number `0`) until/unless an issue is later opened for that work.
 
 So, I should first ask the user whether to open a GitHub issue (which would make it something like feat-15-add-artifact-type-risk), or use feat-0-slug. Actually, looking at the decisions in feat-10: the reason issue #10 was chosen was because it already existed. For the risk artifact type, no issue exists yet. Options:
+
 1. Open a new GitHub issue (probably #15) and name it feat-15-add-artifact-type-risk
 2. Start as feat-0-add-artifact-type-risk and later create the issue.
 
 Hmm, but I shouldn't just open a GitHub issue without being asked. Let me check the user's intent: "I want to create a new feature to create a new artifact type similar to the other features feat-10 and feat-10: 'add artifact type risk (RSK)'."
 
 So what's being asked is:
+
 1. Create a feature folder (following the template)
 2. Propose typical risk attributes (this is the main creative part — they want my proposal, including the explicitly requested attributes)
 
@@ -1279,6 +1296,7 @@ Wait — the abbreviation. TSK = TaskList → "tsk". For risk, the natural abbre
 Now, let me design the risk schema. What the user is asking for:
 
 1. **Typical risk attributes** — I should propose standard risk attributes from ISO 31000 / common risk management practice:
+
    - Title (H1)
    - Risk description / statement (what can happen, the scenario: cause → event → consequence)
    - Risk owner
@@ -1288,6 +1306,7 @@ Now, let me design the risk schema. What the user is asking for:
    - Monitoring
 
 2. **Before/after mitigation 5x5 risk matrix**:
+
    - Probability (1-5) and Impact (1-5) for the initial risk
    - Probability (1-5) and Impact (1-5) for the residual risk (after mitigation)
    - The risk level is derived: probably a 5x5 matrix that maps (probability, impact) → low/medium/high/critical. The user is asking for "a separate 5x5 risk matrix of impact/probability for before and after mitigation." So two (probability, impact) pairs, each on a 5x5 scale. Should I derive the risk class (low/medium/high/very high) from the product or a matrix? Let me propose: `initial_probability: int 1..5`, `initial_impact: int 1..5`, `residual_probability: int 1..5`, `residual_impact: int 1..5`, and a derived `risk_class` computed from the matrix (e.g., product-based: 1-4 low, 5-9 medium, 10-14 high, 15-25 very high — or a standard matrix). Should I make the derived class a computed field? That's a design decision — could be an option.
@@ -1295,6 +1314,7 @@ Now, let me design the risk schema. What the user is asking for:
 3. **Risk strategy: TARRA** — Tolerate, Assign, Reduce, Recover, Avoid. So `strategy: Literal["tolerate", "assign", "reduce", "recover", "avoid"]`. Should there also be an optional strategy rationale? The user said "I want an attribute for risk strategy: TARRA principle". I'll propose a closed 5-value vocabulary. Should strategy be required or optional? Typically a risk without a mitigation has a strategy of "tolerate". Probably required (every risk needs a disposition). Hmm — or optional with default "tolerate". Let me propose required with a value, or… let me think: in risk registers, every risk gets a response strategy. I'll propose `strategy` as required (closed set of 5 values). Though "tolerate" is the natural default. I could make it `strategy: Literal[...] = "tolerate"`. Let me propose this as a design decision in the README.
 
 4. **Risk status** — frontmatter status. What's a good vocabulary for risk lifecycle? E.g.: `open` (identified, active), `mitigated`/`in-treatment`, `accepted` (tolerated), `closed` (resolved/retired), `occurred` (the risk materialized — it became an issue), `cancelled`/`retired`? Common risk statuses:
+
    - `identified`/`open` — active risk under monitoring
    - `mitigating` — treatment in progress
    - `accepted` — residual risk accepted (tolerated)
@@ -1311,10 +1331,12 @@ Now, let me design the risk schema. What the user is asking for:
 7. **"More Information" section (optional)** — free-form H2 section, optional. ADR has `## More Information` (optional). So `more_information: str | None`.
 
 Additional typical attributes to propose:
+
 - **Risk description / scenario**: `## Description` — the core of the document. Cause, event, consequence (the "If X, then Y, with consequence Z" formulation).
 - **Risk owner**: `## Owner` or frontmatter? Owner is a person/role responsible for the risk. Could be frontmatter `owner: str` or body section. Hmm. Let me think about which fields go into frontmatter vs. body. Looking at the pattern: frontmatter = type, id, status, created, updated, version. Body = H1 title + sections. So owner, date identified, etc. → body sections.
 
 Typical risk register fields (ISO 31000, ISO/IEC 27005):
+
 - ID (already in frontmatter)
 - Title (H1)
 - Description / scenario (what/why)
@@ -1346,11 +1368,13 @@ Let me design the body schema:
 ```
 
 Wait — how do I represent the 5x5 matrix in markdown? Options:
+
 1. Scalar fields: `## Assessment` section with fields like `Probability: 3`, `Impact: 4`… but the models/md engine is heading-based, mapping each H2/H3 section to a field. Scalar inline fields within a section — is there precedent? Let me check how existing documents represent structured scalar data within sections. ADR uses free-form text. Let me check models/md for supported field types: `list[MarkdownStr]` (process_list_field), `MarkdownSection2`/`WithComment`, free-form title + content H3 entries. Are there `str` sections? Yes — e.g., in ADR body, whole-section fields like `context_and_problem_statement` are H2 sections holding a markdown blob.
 
 So the 5x5 values could be represented as:
 
 Option A: two H2 sections:
+
 ```
 ## Initial Risk
 Probability: 4
@@ -1360,18 +1384,22 @@ Impact: 3
 Probability: 2
 Impact: 3
 ```
+
 This needs a new leaf type that parses key-value lines — a `MarkdownListItem`-like custom parser (similar to TaskItem parsing `- [ ]` markers). Feasible: a `RiskMatrix` section with two int fields.
 
 Option B: make the risk matrix part of the frontmatter! E.g., frontmatter fields:
+
 ```yaml
 initial_probability: 4
 initial_impact: 3
 residual_probability: 2
 residual_impact: 3
 ```
+
 Frontmatter is YAML, so integers are trivially parseable, and they'd appear in the list summary (`specmgr://rsk/list`) — great for building a risk matrix overview view! And they're stable machine-readable data. Hmm, but is this the pattern of this project? The base frontmatter (MarkdownFrontmatter) has id, type, status, created, updated, version. Domain frontmatters so far have only added type/status narrowing (Req, Uc, Tsk, Qa?). Let me check whether any domain has added extra frontmatter fields… I don't think so — the frontmatter extension fields ADR is about specmgr-specific `id`/`version` (bbf412a7). All domain content lives in the body.
 
 Option C: a markdown table in the body:
+
 ```
 ## Risk Assessment
 |          | Initial | Residual |
@@ -1379,6 +1407,7 @@ Option C: a markdown table in the body:
 | Probability | 4     | 2        |
 | Impact        | 3     | 3        |
 ```
+
 Parsing GFM tables — the parser is MarkdownIt commonmark without a table plugin, so this would require custom parsing.
 
 I think Option A with custom parsing (key-value list items) is the cleanest and most in line with the project's pattern (TaskItem did exactly this for checkboxes: parse a non-standard marker into a computed field). E.g.:
@@ -1396,9 +1425,10 @@ I think Option A with custom parsing (key-value list items) is the cleanest and 
 Each section is an `Assessment(MarkdownSection2)` with `probability: int (1..5)` and `impact: int (1..5)` parsed from list items `- Probability: N`. Plus a derived `level` (low/medium/high/very high) computed from the 5x5 matrix.
 
 Actually wait — the user said "a separate 5x5 risk matrix of impact/probability for before and after mitigation (residual risk)". So they want both an initial (before mitigation) matrix and a residual (after mitigation) matrix, each 5x5. The derived risk class per matrix cell: standard 5x5 color matrix:
+
 - Rows = probability (1 low → 5 high), columns = impact (1 low → 5 high)
 - Cell class typically: product-based or zone-based:
-  - Zone 1 (low): p*i <= 4
+  - Zone 1 (low): p\*i \<= 4
   - Zone 2 (medium): 5..9
   - Zone 3 (high): 10..14
   - Zone 4 (very high): 15..25
@@ -1455,6 +1485,7 @@ Should I include other typical attributes as well? The user said "propose typica
 9. **More Information** — `## More Information` optional: free-form (user's request, mirrors ADR's optional more_information)
 
 Frontmatter: type="rsk", status vocabulary (my proposal: `open`, `mitigating`, `accepted`, `occurred`, `closed`, `dropped` — or simpler `open`/`mitigating`/`accepted`/`occurred`/`closed`? Let me think about the lifecycle:
+
 - `open`: identified, being actively monitored
 - `mitigating`: treatment in progress
 - `accepted`: residual risk formally accepted (strategy=tolerate, or decided to keep)
@@ -1467,6 +1498,7 @@ I'll propose all 6 values, default `open`.
 Should I also propose `owner` and `review_date`? The user didn't ask. "Propose typical risk attributes" — owner is very typical in a risk register. Hmm, but every extra field expands the schema. Let me consider what's most defensible: the user gave a specific list and asked for "typical risk attributes" as a starting point. I'll include a complete set, but can mark `owner` as optional in the proposal. Actually, let me reconsider: keeping the schema lean and purpose-fit (like tsk's design notes) is a project convention. Owner is quite central to risk management (every risk has an owner). I'll propose it as an optional `## Owner` section. Hmm, but is it worth it? The user said "propose typical risk attributes for 'risk'" — so I'll propose and let them trim. I'll present the core set (the user's 6 requests + title/description/mitigation as the "typical" glue) and explicitly mark owner as an optional addition.
 
 Now, where to create the feature folder:
+
 - Numbering: existing feat folders: 4, 5, 6, 7, 8, 9, 10, 12, 13, 14. Open issues: 1, 2, 7, 14. Next issue to open would be #15. Per convention: "work that is being started without an issue yet uses feat-0-slug (issue number 0) until/unless an issue is later opened for that work."
 
 Options for the user:
@@ -1488,23 +1520,19 @@ Let me quickly check feat-12's README for the shape of a recent feature, particu
 Actually, I have enough info. Let me also quickly peek at tsk's body model to understand the section structure convention, and check `MarkdownFrontmatter` to see which fields exist (id, type, status, created, updated, version).
 
 Let me quickly read the tsk body + document to check naming, and also check whether there's a "list" summary resource pattern. Actually — I shouldn't over-explore. Key design decisions to validate against the codebase:
+
 1. H2 sections mapping to `list[MarkdownStr]` fields (scope, tags) — supported via `process_list_field` (per tsk's design notes, used for RecentUpdates updates… actually used for MarkdownListItem). Tags as plain `- item` list: does the engine support `list[MarkdownStr]`? TSK's design notes say the updates list is "built on the generic `list[MarkdownStr]` engine (process_list_field) in models/md". OK, so `list[MarkdownStr]` for tags/scope is supported.
 2. Scalar int fields parsed from list-item text ("- Probability: 4") — needs a custom leaf like TaskItem (a `MarkdownListItem` subclass with computed fields). Supported (TaskItem precedent).
 3. Optional H2 sections — supported (ADR's more_information is optional; uc/qa have optional sections).
 
 Good. Let me confirm that MarkdownFrontmatter has exactly id/type/status/created/updated/version. Quick read.
 
-
-
-
 Let me quickly verify the frontmatter base and an H2 list-section precedent before drafting.
-
-
-
 
 **Tool: read**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/src/biz/dfch/specmgr/models/md/frontmatter.py"
@@ -1512,6 +1540,7 @@ Let me quickly verify the frontmatter base and an H2 list-section precedent befo
 ```
 
 **Output:**
+
 ```
 <path>/home/user/src/biz.dfch.SpecMgr/src/biz/dfch/specmgr/models/md/frontmatter.py</path>
 <type>file</type>
@@ -1648,6 +1677,7 @@ Let me quickly verify the frontmatter base and an H2 list-section precedent befo
 **Tool: bash**
 
 **Input:**
+
 ```json
 {
   "command": "git log --oneline -5 --all --grep=\"feat-12\" ; git branch -a | head -20",
@@ -1656,6 +1686,7 @@ Let me quickly verify the frontmatter base and an H2 list-section precedent befo
 ```
 
 **Output:**
+
 ```
 4f8024f docs(feat-12): add session record of qa artifact work
 74ee817 chore(feat-12-qa-artifact): final verification pass, mark feature done
@@ -1674,7 +1705,7 @@ c993e6e feat(qa): add MCP tool/resource/prompt surface for qa documents
 
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 229.9s)
 
@@ -1687,17 +1718,20 @@ Now I have the full picture:
 - GitHub issue numbers: the next new issue would be #15 (open issues: 1, 2, 7, 14; #14 is "QA v2" = feat-14, probably done or in progress)
 
 Now, decisions to confirm with the user before creating the feature folder:
+
 1. **Feature number / GitHub issue**: open issue #15 "Add artifact type Risk" now → `feat-15-add-artifact-type-risk`, or start as `feat-0-add-artifact-type-risk`?
 2. **Status vocabulary**: my proposal
 3. **Schema details** (derived risk level? owner? mitigation required?)
 
 The user's request: "Please suggest typical attributes for 'risk'." — the main deliverable is a proposed attribute set. They want to create a feature like feat-10. So I'll do the following:
+
 1. Ask the issue/numbering question (and possibly the branch question too)
 2. Create the feature folder containing the plan README with the proposed schema
 
 No wait, let me reconsider — should I ask, or just make reasonable choices? The feature number is genuinely ambiguous (the issue doesn't exist). AGENTS.md convention says use feat-0 until an issue is opened. Opening a GitHub issue is a visible external side effect that the user hasn't explicitly requested. Let me ask via the question tool — it's a legitimate decision point with persistent impact (folder name, branch name, frontmatter id). I'll also include the design questions there.
 
 What I'll ask:
+
 1. Feature numbering: open GitHub issue #15 now (feat-15-add-artifact-type-risk, new branch), or start as feat-0 (feat-0-add-artifact-type-risk) and open the issue later?
 2. Schema-related decisions:
    a. Status vocabulary: `open`/`mitigating`/`accepted`/`occurred`/`closed`/`dropped` (6 values) — or a smaller set?
@@ -1708,6 +1742,7 @@ What I'll ask:
 Too many questions. Let me narrow it down: the numbering question is the most important. For the schema, I can present the proposal within the feature plan and let them review. The user said "please suggest typical attributes" — meaning they want me to propose, and they'll review. So:
 
 Plan:
+
 1. Ask the numbering/branch question (1 question, 2–3 options)
 2. Create the feature folder with the complete proposed schema in the Design Notes
 3. Present the proposed attributes concisely in chat
@@ -1717,6 +1752,7 @@ Actually, I could also ask about the status vocabulary. That's a core attribute 
 No wait — let me reconsider asking at all. The user's message is a work instruction: "I want to create a new feature…". The blocking decision is the folder name (feat-0 vs feat-15). If I guess wrong, the folder + branch will need to be renamed. The precedent in feat-10's Decisions Made shows exactly this issue was faced ("target is GitHub issue #10, not #11 — issue #11 does not exist"). So asking is justified. One compact question.
 
 Also, should the feature include opening the issue? If I choose to open it, I'd run `gh issue create`. Let me present the options:
+
 - "Open GitHub issue #15 now, use feat-15-add-artifact-type-risk (recommended)" — matches the convention (issue number in the id)
 - "Start as feat-0-add-artifact-type-risk, open issue later"
 - Also mention branch creation.
@@ -1732,6 +1768,7 @@ One more thing: should I ask about branch creation? If the user chooses, I'll cr
 Next, the schema proposal. Let me finalize the attributes:
 
 **Frontmatter** (per the established pattern):
+
 - `type: "rsk"` (Literal)
 - `status`: closed set — proposed values: `open`, `mitigating`, `accepted`, `occurred`, `closed`, `dropped`
   - `open`: identified, under monitoring (default on creation)
@@ -1743,6 +1780,7 @@ Next, the schema proposal. Let me finalize the attributes:
 - id/created/updated/version inherited
 
 **Body**:
+
 ```
 # {Risk title}
 <!-- optional leading comment -->
@@ -1762,6 +1800,7 @@ Next, the schema proposal. Let me finalize the attributes:
 ```
 
 Derived level from the 5x5 product (standard zoning):
+
 - 1–4: low
 - 5–9: medium
 - 10–14: high
@@ -1784,6 +1823,7 @@ Hmm wait — one design question: should probability/impact be `int` (1-5) or a 
 The list summary (`RskSummary`) will include: id, title, status, scope (or first item?), initial level, residual level, strategy — perfect for building a risk-matrix overview. That's a nice bonus; I'll mention it in the Design Notes (fields available in the `specmgr://rsk/list` summary).
 
 Now, the structure of the feature README (following the template + feat-10's shape):
+
 - Frontmatter: id, version 1.0.0, status: planning, created/updated: 2026-08-24 (today per env)
 - # Feature: Add artifact type Risk (rsk)
 - ## Plan: Overview, Requirements (REQ-001..), Acceptance Criteria (ACC-001..), Scope, Dependencies, Design Notes, Related ADRs, Task List (phases)
@@ -1792,6 +1832,7 @@ Now, the structure of the feature README (following the template + feat-10's sha
 For requirements, I'll mirror feat-10's REQ-001..008 shape (schema, model, parser, MCP tools, resources, prompts, package data, doc wiring). For RSK, which prompts? feat-10 had create_task/update_task/implement_task. For RSK: `create_risk`/`update_risk`? tsk used the issue's literal wording for prompt naming (create_task/update_task). For RSK, `create_risk`/`update_risk` seems reasonable. There's no tsk-like "implement" prompt specific to RSK… unless there's a `review_risk` or something? I won't over-invent; I'll stick with create/update. I can note in the plan that additional prompts can be considered later.
 
 Let me write the task list phases mirroring feat-10's 4 phases:
+
 - Phase 1: Specification (frontmatter, body model, assessment leaf, reference doc, model tests)
 - Phase 2: Models & Parser (document, parse_rsk, summary, Field descriptions, schema.json + registry, parser tests)
 - Phase 3: MCP Surface (paths/io/write/lock, parse_rsk tool, create/update/set_status/delete stub/validate/get_rsk, examples/templates + package data, resources list/schema/example/template, pyproject package-data + pre-commit + CI, prompts create_risk/update_risk, server.py registration, tool tests)
@@ -1810,23 +1851,23 @@ Then I'll ask the numbering question, create the folder + branch, and write the 
 No wait — the order of operations. The question tool interrupts the user. I should gather everything and ask just one consolidated question with the key decisions. Let me limit to at most 2 questions:
 
 Q1: Feature ID / issue — options:
-  a. "feat-0 now, issue later (recommended)" — follows the AGENTS.md convention for work without an issue; rename once the issue is opened (precedent from feat-10's Decisions Made)
-  b. "Open issue #15 now → feat-15" — I'll create the GitHub issue + branch + folder all at once
-  c. Type my own answer is available automatically (custom enabled).
+a. "feat-0 now, issue later (recommended)" — follows the AGENTS.md convention for work without an issue; rename once the issue is opened (precedent from feat-10's Decisions Made)
+b. "Open issue #15 now → feat-15" — I'll create the GitHub issue + branch + folder all at once
+c. Type my own answer is available automatically (custom enabled).
 
 Q2: Status vocabulary — options:
-  a. "open, mitigating, accepted, occurred, closed, dropped (recommended)"
-  b. "open, accepted, occurred, closed (leaner)"
-  Hmm. Is this worth asking? The user explicitly asked for status but didn't specify values. This is a core attribute where the values matter. I'll ask — it's cheap and prevents rework. Or I could just propose it in the plan and let them review the plan. The plan is a living document (status: planning); the user will review it anyway. But asking consolidates the decisions in one shot. Let me ask both questions in a single question tool call (the tool supports multiple questions).
+a. "open, mitigating, accepted, occurred, closed, dropped (recommended)"
+b. "open, accepted, occurred, closed (leaner)"
+Hmm. Is this worth asking? The user explicitly asked for status but didn't specify values. This is a core attribute where the values matter. I'll ask — it's cheap and prevents rework. Or I could just propose it in the plan and let them review the plan. The plan is a living document (status: planning); the user will review it anyway. But asking consolidates the decisions in one shot. Let me ask both questions in a single question tool call (the tool supports multiple questions).
 
 Should I also ask about derived level (computed low/medium/high/very_high)? I could fold it into Q2… no, let me keep it to 2 questions. I'll include the derived level as part of the schema in the Design Notes — it's a natural part of "a 5x5 matrix" (matrix = zone). The user asked for "a separate 5x5 risk matrix for impact/probability" — the matrix itself implies zones. I'll include the derived `level` in the proposal and mention it in chat so they can veto.
 
 Let me first do a quick grep for "risk" in src/.
 
-
 **Tool: bash**
 
 **Input:**
+
 ```json
 {
   "command": "rg -il \"risk\" src/ docs/ .specmgr/feat/ 2>/dev/null | head; rg -n \"later \\`ac\\`|import.*general.*qa.*req\" src/biz/dfch/specmgr/server.py | head -5",
@@ -1835,12 +1876,13 @@ Let me first do a quick grep for "risk" in src/.
 ```
 
 **Output:**
+
 ```
 /bin/bash: line 1: rg: command not found
 
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 49.9s)
 
@@ -1848,10 +1890,10 @@ _Thinking:_
 
 rg is not available. Use the grep tool instead.
 
-
 **Tool: grep**
 
 **Input:**
+
 ```json
 {
   "path": "/home/user/src/biz.dfch.SpecMgr/src/biz/dfch/specmgr",
@@ -1860,6 +1902,7 @@ rg is not available. Use the grep tool instead.
 ```
 
 **Output:**
+
 ```
 Found 3 matches
 /home/user/src/biz.dfch.SpecMgr/src/biz/dfch/specmgr/general/data/general_iso25010.md:
@@ -1876,6 +1919,7 @@ Found 3 matches
 **Tool: grep**
 
 **Input:**
+
 ```json
 {
   "path": "/home/user/src/biz.dfch.SpecMgr/src/biz/dfch/specmgr/server.py",
@@ -1884,6 +1928,7 @@ Found 3 matches
 ```
 
 **Output:**
+
 ```
 Found 1 matches
 /home/user/src/biz.dfch.SpecMgr/src/biz/dfch/specmgr/server.py:
@@ -1891,7 +1936,7 @@ Found 1 matches
 
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 367.3s)
 
@@ -1901,16 +1946,12 @@ Alright — there's no existing "risk" domain. The import line at server.py:155 
 
 Next, let me confirm with the user about the two decisions (feature numbering + status vocabulary).
 
-
-
-
 No existing `risk`/`rsk` artifacts in the codebase — clean slate. Two decisions affect the folder/branch naming, so let me confirm before creating the feature:
-
-
 
 **Tool: question**
 
 **Input:**
+
 ```json
 {
   "questions": [
@@ -1947,21 +1988,24 @@ No existing `risk`/`rsk` artifacts in the codebase — clean slate. Two decision
 ```
 
 **Output:**
+
 ```
 User has answered your questions: "No GitHub issue exists for 'Add artifact type Risk' yet (open issues are #1, #2, #7, #14; next would be #15). Per AGENTS.md, work started without an issue uses feat-0-slug until an issue is opened. How should this feature be numbered?"="Open issue #15 now", "You asked for a risk status. Which frontmatter status vocabulary should the plan propose?"="6-value: open, mitigating, accepted, occurred, closed, dropped (Recommended)". You can now continue with the user's answers in mind.
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 58.5s)
 
 _Thinking:_
 
 User's choices:
+
 1. Open Issue #15 now → `feat-15-add-artifact-type-risk`
 2. 6-value status: open, mitigating, accepted, occurred, closed, dropped
 
 So next:
+
 1. Create GitHub issue #15 "Add artifact type Risk (rsk)" — following the style of other issues. To match the title format, let me check how the previous issues were worded. Issue #10 was "Add artifact type TaskList". Issue #14 was "QA v2: adjacent question/answer pairs (no per-question heading)". To follow convention, let me look at the issue body. I'll try `gh issue view 10`.
 
 2. Create a branch `feat-15-add-artifact-type-risk` from dev.
@@ -1970,10 +2014,10 @@ So next:
 
 First let me check the body of issue #10 and follow convention.
 
-
 **Tool: bash**
 
 **Input:**
+
 ```json
 {
   "command": "gh issue view 10 --json title,body -q '.title + \"\\n---\\n\" + .body' 2>&1",
@@ -1982,6 +2026,7 @@ First let me check the body of issue #10 and follow convention.
 ```
 
 **Output:**
+
 ```
 Add artifact type TaskList
 ---
@@ -1997,7 +2042,7 @@ This artifact is needed for specifications of task or todo lists. Whenever, an a
 
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 327.7s)
 
@@ -2105,38 +2150,50 @@ Add a new markdown artifact type `Risk` (abbreviation `rsk`) for maintaining a r
 - **Body shape** — `Risk` (the body H1 class) subclasses `MarkdownSection1WithComment`...:
 
 ```
+
 # {H1 title}
+
 <!-- optional leading comment -->          comment: MarkdownComment | None
 
-## Description                             description: MarkdownStr  (mandatory)
+## Description description: MarkdownStr (mandatory)
+
 {Risk scenario: cause, trigger, consequence}
 
-## Scope                                   scope: list[MarkdownStr]  (>=1)
+## Scope scope: list[MarkdownStr] (>=1)
+
 - {Affected system/component}
 - {Another affected system}
 
-## Initial Assessment                      initial_assessment: Assessment
+## Initial Assessment initial_assessment: Assessment
+
 - Probability: {1..5}
 - Impact: {1..5}
 
-## Strategy                                strategy: str  (TARRA closed 5-value set)
+## Strategy strategy: str (TARRA closed 5-value set)
+
 {tolerate | assign | reduce | recover | avoid}
 
-## Mitigation                              mitigation: MarkdownStr  (mandatory)
+## Mitigation mitigation: MarkdownStr (mandatory)
+
 {Treatment actions taken ("none" if strategy is tolerate)}
 
-## Residual Assessment                      residual_assessment: Assessment
+## Residual Assessment residual_assessment: Assessment
+
 - Probability: {1..5}
 - Impact: {1..5}
 
-## Owner                                   owner: MarkdownStr | None
+## Owner owner: MarkdownStr | None
+
 {Responsible person/role}
 
-## Tags                                    tags: list[MarkdownStr] | None
+## Tags tags: list[MarkdownStr] | None
+
 - {tag}
 
-## More Information                        more_information: MarkdownStr | None
+## More Information more_information: MarkdownStr | None
+
 {Free form}
+
 ```
 
 - **5x5 matrix** — `Assessment` is a new `MarkdownSection2` leaf holding `probability: int` (1..5) and `impact: int` (1..5), parsed from the list items `- Probability: N`/`- Impact: N` (a `MarkdownListItem` subclass with computed fields, following the `tsk.TaskItem` precedent of parsing a non-standard marker, and the same eager-validation `model_validator` on the parent section to force computed-field evaluation). Each assessment derives `level: Literal["low","medium","high","very_high"]` from the product zones: 1–4 low, 5–9 medium, 10–14 high, 15–25 very high. Having two independent assessments (initial = before mitigation, residual = after mitigation) side by side makes the mitigation effect auditable: a sound `reduce` strategy should show residual < initial.
@@ -2238,7 +2295,8 @@ Another design question I should make explicit: should `strategy` be required? Y
 
 On `Assessment` parsing: list items `- Probability: 4` and `- Impact: 3`. Both required, each exactly one. Custom `MarkdownListItem` subclass `AssessmentValue` with a computed int field? Or two separate items, each `MarkdownListItem` with key/value. Simplest: an `Assessment` section with `probability: int` and `impact: int` fields, each parsed from a list item via the `process_list_field`-style mechanism... actually the engine's `process_list_field` handles `list[X]` fields. For two separate scalar fields, I might need two `list[X]` fields each with `max_length=1`... hmm, the exact mechanics are for implementation time (Phase 1/2). In the plan, I'll describe it at the right level: "parsed from the list items `- Probability: N`/`- Impact: N` (a `MarkdownListItem` subclass with computed fields, following the `tsk.TaskItem` precedent...)" — that's accurate enough and consistent with how feat-10 described TaskItem.
 
-I'll also decide on the `level` zone thresholds. The classic 5x5 heat map often uses zones where the product p*i gives:
+I'll also decide on the `level` zone thresholds. The classic 5x5 heat map often uses zones where the product p\*i gives:
+
 ```
 I1 I2 I3 I4 I5
 P1: 1  2  3  4  5
@@ -2247,6 +2305,7 @@ P3: 3  6  9 12 15
 P4: 4  8 12 16 20
 P5: 5 10 15 20 25
 ```
+
 Zones by product: ≤4 low, 5–9 medium, 10–14 high, ≥15 very high. This is a common simple mapping. I'll use this and document it.
 
 Next, the issue body. Keep it in #10's style:
@@ -2278,6 +2337,7 @@ This artifact is needed for risk registers within system specs: risks with an ex
 ```
 
 Good. Next, the steps:
+
 1. `gh issue create --title "Add artifact type Risk" --body ...` → get the number (should be 15).
 2. `git switch -c feat-15-add-artifact-type-risk` (confirm the issue number first! If the number turns out to be different, name the branch accordingly).
 3. `mkdir .specmgr/feat/feat-15-add-artifact-type-risk/` + write the README.
@@ -2288,16 +2348,12 @@ Actually one thought on the title: issue #10 was "Add artifact type TaskList" (n
 
 For the issue body I'll use a heredoc. Use `--body-file` with a temp file, or use $'...' quoting. Simpler: write the body to /tmp with the write tool? The write tool writes files — /tmp/opencode is pre-approved. I'll write to /tmp/opencode/rsk-issue.md and then `gh issue create --title ... --body-file ...`. That avoids the quoting hassle.
 
-
-
-
 Both decisions confirmed. Now I'll create the issue, then the branch and feature plan.
-
-
 
 **Tool: write**
 
 **Input:**
+
 ```json
 {
   "filePath": "/tmp/opencode/rsk-issue-body.md",
@@ -2306,11 +2362,12 @@ Both decisions confirmed. Now I'll create the issue, then the branch and feature
 ```
 
 **Output:**
+
 ```
 Wrote file successfully.
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 56.1s)
 
@@ -2318,10 +2375,10 @@ _Thinking:_
 
 Alright, let's try creating the issue.
 
-
 **Tool: bash**
 
 **Input:**
+
 ```json
 {
   "command": "gh issue create --title \"Add artifact type Risk\" --body-file /tmp/opencode/rsk-issue-body.md",
@@ -2330,33 +2387,31 @@ Alright, let's try creating the issue.
 ```
 
 **Output:**
+
 ```
 https://github.com/dfch/biz.dfch.SpecMgr/issues/15
 
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 57.7s)
 
 _Thinking:_
 
 Issue #15 has been created. Next:
+
 1. Create branch `feat-15-add-artifact-type-risk` from dev
 2. Create the feature folder and README
 
 First, get the current timestamp, then write the README.
 
-
-
-
 Issue #15 created. Now the branch and feature folder:
-
-
 
 **Tool: bash**
 
 **Input:**
+
 ```json
 {
   "command": "git switch -c feat-15-add-artifact-type-risk && date +%Y-%m-%dT%H:%M:%S%:z",
@@ -2365,13 +2420,14 @@ Issue #15 created. Now the branch and feature folder:
 ```
 
 **Output:**
+
 ```
 Switched to a new branch 'feat-15-add-artifact-type-risk'
 2026-08-24T11:31:28+02:00
 
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 283.8s)
 
@@ -2379,23 +2435,24 @@ _Thinking:_
 
 Alright, I'll create the feature README. I'll carefully write it out while following the template structure and the shape of feat-10.
 
-
 **Tool: write**
 
 **Input:**
-```json
+
+````json
 {
   "content": "---\nid: feat-15-add-artifact-type-risk\nversion: 1.0.0\nstatus: planning\ncreated: 2026-08-24\nupdated: 2026-08-24\n---\n\n# Feature: Add artifact type Risk (rsk)\n\n## Plan\n\n### Overview\n\nAdd a new markdown artifact type, `Risk` (abbreviation `rsk`), for maintaining risk\nregisters in system specifications. Every risk carries a 5x5 probability/impact\nassessment BEFORE mitigation (`## Initial Assessment`) and the same 5x5 assessment\nAFTER mitigation (`## Residual Assessment`), a TARRA response strategy\n(`## Strategy`: tolerate / assign / reduce / recover / avoid), the treatment\nmeasures bridging the two (`## Mitigation`), and the affected scope\n(`## Scope`). `rsk` follows the domain-first hierarchy and MCP surface already\nestablished by `req`/`tsk` (ADR ece4554b-725c-4f76-bc04-5d2b760363d2), reusing\ntheir tools/resources shape almost exactly (per GitHub issue #15).\n\n### Requirements\n\n- [ ] REQ-001: Define the `rsk` markdown schema — frontmatter (`type=\"rsk\"`,\n  6-value status set: `open`/`mitigating`/`accepted`/`occurred`/`closed`/`dropped`,\n  default `open`) and body (H1 title, optional leading comment, mandatory\n  `## Description`, mandatory `## Scope` list (>=1 affected\n  system/component), mandatory `## Initial Assessment` (5x5: probability 1..5,\n  impact 1..5, derived level), mandatory `## Strategy` (TARRA 5-value closed\n  set), mandatory `## Mitigation`, mandatory `## Residual Assessment` (5x5,\n  same shape as initial), optional `## Owner`, optional `## Tags` list,\n  optional `## More Information`)\n- [ ] REQ-002: Pydantic models for `rsk` documents (`rsk/models/v1/` —\n  domain-first path, mirroring `tsk/models/v1/` and `req/models/v1/`)\n- [ ] REQ-003: Parse and validate `rsk` documents from markdown\n  (`parse_rsk`, mirroring `parse_tsk`/`parse_req`)\n- [ ] REQ-004: MCP tools mirroring `req`'s lifecycle surface: `parse_rsk`,\n  `get_rsk_example`, `get_rsk_template`, `create_rsk`, `update_rsk`,\n  `set_status_rsk`, `delete_rsk` (stub), `validate_rsk`, `get_rsk`\n- [ ] REQ-005: MCP resources mirroring `req`: `specmgr://rsk/list`,\n  `/example`, `/schema`, `/template`\n- [ ] REQ-006: MCP prompts — `create_risk`, `update_risk` (narrated tool\n  sequences, mirroring `req/prompts/create_req.py`/`update_req.py` and\n  `tsk/prompts/create_task.py`/`update_task.py`)\n- [ ] REQ-007: Packaged example/template/schema data (`rsk/data/`) via the\n  existing generic `general/tools/_packaged_data.py`, with the matching\n  `pyproject.toml` package-data entry, pre-commit hook, and CI step\n- [ ] REQ-008: Doc generation wiring — `specmgr docs`, `specmgr schema`\n  (new `rsk` entry in the doc-type registry), `specmgr mcp-docs`, all kept\n  drift-free via pre-commit/CI\n\n### Acceptance Criteria\n\n- [ ] ACC-001: Verifies REQ-001 — schema documented (`docs/rsk_schema.json`,\n  `specmgr://rsk/schema`), reference `rsk` document (`rsk_reference.md`)\n  round-trips through the parser (`test_parses_full_reference_document`),\n  including both 5x5 assessments (probability/impact bounded 1..5, derived\n  level zone correct)\n- [ ] ACC-002: Verifies REQ-002 — Pydantic models validate required/optional\n  fields correctly, including the `Assessment` probability/impact/derived-level\n  split, the TARRA closed set, `Scope` (>=1) and the `Tags`/`Owner`/\n  `More Information` absent-vs-present cases (`tests/rsk/models/v1/`)\n- [ ] ACC-003: Verifies REQ-003 — parser produces a valid object tree;\n  malformed input raises (structural `AssertionError` / field-level\n  `pydantic.ValidationError`, matching `req`/`tsk`'s error-channel convention)\n  — `tests/rsk/models/v1/test_parser.py`\n- [ ] ACC-004: Verifies REQ-004 — every listed tool implemented and\n  registered (confirmed present in regenerated `docs/MCP.md`), with\n  `create_rsk`/`update_rsk` validating body-only content the same way\n  `create_req`/`update_req`/`create_tsk`/`update_tsk` do\n- [ ] ACC-005: Verifies REQ-005 — every listed resource implemented and\n  registered (confirmed present in regenerated `docs/MCP.md`)\n- [ ] ACC-006: Verifies REQ-006 — `create_risk`/`update_risk` prompts narrate\n  the correct tool sequence (`tests/rsk/prompts/`)\n- [ ] ACC-007: Verifies REQ-007 — packaged data resolves correctly from a\n  real, non-editable install, mirroring `req`'s (feat-6 Task 5.1) and `tsk`'s\n  (feat-10 ACC-007) own verification\n- [ ] ACC-008: Verifies REQ-008 — `specmgr docs`/`specmgr schema`/\n  `specmgr mcp-docs` all report no drift after implementation\n\n### Scope\n\n**Included in this feature:**\n\n- Specification of the `rsk` markdown schema (frontmatter + body), including\n  the 5x5 initial/residual assessment, the TARRA strategy set, and the\n  before/after-mitigation structure\n- Pydantic models, parser, and schema generation under `rsk/models/v1/`\n- Full MCP surface (tools/resources/prompts/packaged data) mirroring\n  `req`/`tsk`\n- Tests mirroring `tests/req/`'s and `tests/tsk/`'s layout and coverage\n\n**Explicitly out of scope:**\n\n- Aggregated, register-wide views (e.g. a combined risk-matrix chart across\n  all `rsk` documents) — `RskSummary` (see `specmgr://rsk/list`) carries\n  `initial_level`/`residual_level`/`strategy` per document precisely so such a\n  view can be built later without reading each document\n- Cross-referencing/linking `rsk` documents to other artifact types\n  (REQ/UC/ADR) — not part of this feature\n- Risk relationships (dependency, correlation, common-cause analysis)\n- A `specmgr rsk-toc`-equivalent generation command or its own CI/pre-commit\n  drift check beyond what `specmgr docs`/`specmgr mcp-docs`/`specmgr schema`\n  already provide generically\n\n### Dependencies\n\n- Depends on: ADR ece4554b-725c-4f76-bc04-5d2b760363d2 (domain-first\n  hierarchy), ADR bc5e18ad-6bbf-4265-bae4-3e34984a2d29 (generic\n  `MarkdownFrontmatter` base), ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614\n  (id-based reads as a tool, not a resource), `general/tools/_doc_paths.py`\n  and `_packaged_data.py`, the existing `models/md` engine — in particular\n  `MarkdownSection1WithComment`, `MarkdownSection2`, the generic\n  `list[MarkdownStr]` engine (`process_list_field`), and `tsk`'s\n  `TaskItem` custom-list-item-leaf precedent (parsing a non-standard marker\n  into computed fields with parent-level eager validation)\n- Blocks: None identified yet\n\n### Design Notes\n\n- **Body shape** — `Risk` (the body's H1 class) subclasses the existing\n  `MarkdownSection1WithComment` mixin (`models/md/`), reusing it as-is (no\n  new mixin needed):\n\n  ```\n  # {H1 title}\n  <!-- optional leading comment -->            comment: MarkdownComment | None\n\n  ## Description                               description: MarkdownStr  (mandatory)\n  {Risk scenario: cause, trigger, consequence}\n\n  ## Scope                                     scope: list[MarkdownStr]  (>=1)\n  - {Affected system / component}\n  - {Another affected system / component}\n\n  ## Initial Assessment                        initial_assessment: Assessment\n  - Probability: {1..5}\n  - Impact: {1..5}\n\n  ## Strategy                                  strategy: str  (TARRA closed 5-value set)\n  {tolerate | assign | reduce | recover | avoid}\n\n  ## Mitigation                                mitigation: MarkdownStr  (mandatory)\n  {Treatment measures; \"none\" if strategy is tolerate}\n\n  ## Residual Assessment                       residual_assessment: Assessment\n  - Probability: {1..5}\n  - Impact: {1..5}\n\n  ## Owner                                     owner: MarkdownStr | None\n  {Responsible person / role}\n\n  ## Tags                                      tags: list[MarkdownStr] | None\n  - {tag}\n\n  ## More Information                          more_information: MarkdownStr | None\n  {Free-form}\n  ```\n\n  Order is enforced by the model: title -> optional comment -> Description\n  -> Scope -> Initial Assessment -> Strategy -> Mitigation -> Residual\n  Assessment -> optional Owner -> optional Tags -> optional More Information.\n  The before/after pair (Initial Assessment ... Residual Assessment) is\n  separated by exactly the sections that explain the delta: `Strategy`\n  (chosen TARRA response) and `Mitigation` (the measures taken).\n\n- **5x5 matrix** — `Assessment` is a new `MarkdownSection2` leaf\n  (`rsk/models/v1/assessment.py`) holding `probability: int` (1..5) and\n  `impact: int` (1..5), parsed from the literal list items\n  `- Probability: N` / `- Impact: N` (a `MarkdownListItem` subclass with\n  computed fields, on the exact `tsk.TaskItem` precedent — including a\n  parent-level `model_validator(mode=\"after\")` forcing eager evaluation,\n  since computed fields are never validated at construction otherwise).\n  Each assessment derives `level:\n  Literal[\"low\", \"medium\", \"high\", \"very_high\"]` as a computed field from\n  the probability x impact product zones: 1-4 low, 5-9 medium, 10-14 high,\n  15-25 very high. `level` is never stored in the markdown (no stale\n  derived value on round-trip, same convention as `TaskItem.checked`).\n\n- **Strategy (TARRA)** — `## Strategy` is a single-line H2 section whose\n  content is validated against the closed 5-value set `tolerate`/`assign`/\n  `reduce`/`recover`/`avoid` (same narrowing approach `ReqFrontmatter`\n  applies to its `status` field, at body-section level). Mandatory: every\n  risk in a register has a disposition.\n\n- **Frontmatter status** — `open`/`mitigating`/`accepted`/`occurred`/\n  `closed`/`dropped`, default `open`: a purpose-fit risk lifecycle (user-\n  selected 2026-08-24) rather than reusing REQ's 7-value ADR-like set —\n  `open` = identified and monitored; `mitigating` = treatment in progress;\n  `accepted` = residual risk formally accepted; `occurred` = the risk event\n  materialized (tracked as incident); `closed` = resolved/expired; `dropped`\n  = removed from the register (not a real risk, duplicate, or out of scope).\n\n- **List summary** — `RskSummary` (for `specmgr://rsk/list`) carries\n  `id`/`title`/`status` plus `initial_level`, `residual_level`, `strategy`,\n  and the first `scope` entry, so a register-wide risk-matrix view can be\n  built from the listing alone.\n\n- **Prompt naming** — `create_risk`/`update_risk` follow the\n  `tsk`-prompt precedent of the issue's literal wording (issue #15 names\n  both), not the `rsk`-prefixed convention the tools/resources use.\n\n### Related ADRs\n\n- ece4554b-725c-4f76-bc04-5d2b760363d2: Organize the codebase by\n  document-type domain (domain-first hierarchy)\n- bc5e18ad-6bbf-4265-bae4-3e34984a2d29: Generic base frontmatter model for\n  markdown document types\n- ddfb1109-422d-4507-8dbc-dc5e4bec9614: Expose id-based document reads as a\n  tool (get_rsk), not a resource\n\nNo new ADR is anticipated for this feature — the `Assessment` 5x5 parsing\napproach, the TARRA closed set, and the 6-value status set are scoped enough\nto log only in this file's own Decisions Made, not a full ADR.\n\n### Task List\n\nSingle, canonical breakdown of work phases and tasks. Status lives on the\ntask itself — there is no separate \"planned\" vs. \"executed\" list to keep in\nsync; a task's line *is* its current status. Update it in place as work\nprogresses (edit, don't duplicate).\n\n**Execution approach** (to confirm at Phase 1 start, see Decisions Made):\neach phase below is delegated to the `implementation-specialist` subagent as\none unit (implementation + its own mirrored tests together, not a separate\nlater test phase), reviewed and quality-gated (ruff format/check, vulture,\nfull `unittest` suite) by the orchestrator, then committed as one\nConventional Commit per phase — the `feat-10` (tsk) 4-phase/4-commit shape.\n\n#### Phase 1: Specification (commit 1)\n\n- [ ] Task 1.1: Define `rsk` frontmatter (`rsk/models/v1/frontmatter.py` —\n  `RskFrontmatter` subclass of `MarkdownFrontmatter`, `type=Literal[\"rsk\"]`,\n  6-value status set `open`/`mitigating`/`accepted`/`occurred`/`closed`/\n  `dropped`) — depends on: none — status: not-started\n- [ ] Task 1.2: Define `rsk` body structure (`rsk/models/v1/body.py`,\n  `rsk/models/v1/assessment.py`) — `Risk(MarkdownSection1WithComment)` with\n  `description`/`scope`/`initial_assessment`/`strategy`/`mitigation`/\n  `residual_assessment`/`owner`/`tags`/`more_information`; `Assessment`\n  (new `MarkdownSection2` leaf: `probability`/`impact` int 1..5 parsed from\n  `- Probability: N`/`- Impact: N` list items via a `MarkdownListItem`\n  subclass with computed fields, derived `level` computed field, parent-\n  level eager-validation `model_validator` on the `Risk` H1 per the\n  `TaskItem` precedent) — depends on: Task 1.1 — status: not-started\n- [ ] Task 1.3: Create a reference `rsk` document (`rsk_reference.md`)\n  exercising every field (full initial + residual 5x5 pair, all mandatory\n  and optional sections), used as the parser's round-trip test fixture —\n  depends on: Task 1.2 — status: not-started (placed at\n  `.specmgr/feat/feat-15-add-artifact-type-risk/rsk_reference.md`, mirroring\n  `tsk_reference.md`'s own location convention, not `rsk/data/`)\n- [ ] Task 1.4: `tests/rsk/models/v1/test_frontmatter.py`,\n  `test_body.py`/`test_assessment.py` — structural + validation tests\n  mirroring `tests/tsk/models/v1/`: status set, 5x5 bounds and derived-\n  level zones (all four zone boundaries: 4/5, 9/10, 14/15), TARRA closed\n  set, `Scope` >=1, `Tags`/`Owner`/`More Information` absent-vs-present —\n  depends on: Task 1.3 — status: not-started\n\n#### Phase 2: Pydantic Models & Parser (commit 2)\n\n- [ ] Task 2.1: `rsk/models/v1/document.py` (`RskDocument(frontmatter,\n  body)`, mirroring `TskDocument`) — depends on: Task 1.3 — status:\n  not-started\n- [ ] Task 2.2: Implement `parse_rsk(text: str) -> RskDocument` (mirrors\n  `parse_tsk`/`parse_req`) — depends on: Task 2.1 — status: not-started\n- [ ] Task 2.3: `rsk/models/v1/summary.py` (`RskSummary` with\n  `initial_level`/`residual_level`/`strategy`/first `scope` entry, for the\n  `specmgr://rsk/list` resource) — depends on: Task 2.1 — status:\n  not-started\n- [ ] Task 2.4: Field-level `Field(description=...)` on every scalar/\n  optional field (schema-quality parity with REQ/TSK's own Task 2.4\n  audits) — depends on: Task 2.1 — status: not-started\n- [ ] Task 2.5: Draft `rsk_schema.json` via `generate_rsk_schema()`\n  (mirroring `generate_req_schema`/`generate_tsk_schema` in\n  `commands/schema.py`, calling `RskDocument.model_json_schema()`) +\n  register `\"rsk\"` in the `specmgr schema` doc-type generator registry\n  (`_GENERATORS`) — depends on: Task 2.1 — status: not-started\n- [ ] Task 2.6: `tests/rsk/models/v1/test_parser.py` — mirrors\n  `TestParseTsk`'s case shape (minimal doc, full reference-doc round-trip,\n  defaults-when-absent, invalid status, malformed structure, out-of-range\n  probability/impact, invalid TARRA word, missing Scope entry) — depends\n  on: Task 2.2, Task 2.5 — status: not-started\n\n#### Phase 3: MCP Surface (commit 3)\n\n- [ ] Task 3.1: `rsk/tools/_paths.py` + `_io.py` + `_write.py` + `_lock.py`,\n  thin wrappers over `general/tools/_doc_paths.py` (mirrors\n  `tsk/tools/_paths.py` etc. exactly) — depends on: Task 2.2 — status:\n  not-started\n- [ ] Task 3.2: `parse_rsk(path: str) -> RskDocument` tool wrapper\n  (`rsk/tools/parse_rsk.py`, mirroring `tsk/tools/parse_tsk.py` — reads a\n  filepath from disk, delegates to the model-layer `parse_rsk`) — depends\n  on: Task 3.1 — status: not-started\n- [ ] Task 3.3: `create_rsk(content: str) -> RskDocument` tool (body-only\n  content, MCP builds frontmatter: `id`, `type=\"rsk\"`, `status=\"open\"`,\n  `created=updated=now`, `version`) — depends on: Task 3.1 — status:\n  not-started\n- [ ] Task 3.4: `update_rsk(id, content) -> RskDocument` tool (whole-body\n  replace, preserves `id`/`type`/`status`/`created`/`version`, bumps\n  `updated`) — depends on: Task 3.1 — status: not-started\n- [ ] Task 3.5: `set_status_rsk(id, status) -> RskDocument` tool (only path\n  that changes `status`) — depends on: Task 3.1 — status: not-started\n- [ ] Task 3.6: `delete_rsk(id) -> NoReturn` stub tool — depends on: Task\n  3.1 — status: not-started\n- [ ] Task 3.7: `validate_rsk(content, full=False) -> bool` tool — depends\n  on: none — status: not-started\n- [ ] Task 3.8: `get_rsk(id) -> RskDocument` tool (id-based single-document\n  read; tool, not resource — per ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614)\n  — depends on: Task 3.1 — status: not-started\n- [ ] Task 3.9: `get_rsk_example`/`get_rsk_template` tools + packaged data\n  (`rsk/data/rsk_example.md`, `rsk/data/rsk_template.md`) via\n  `general/tools/_packaged_data.py` — depends on: Task 1.3 — status:\n  not-started\n- [ ] Task 3.10: `specmgr://rsk/list` and `specmgr://rsk/schema` resources\n  (packaged `rsk/data/rsk_schema.json`, mirroring `specmgr://req/schema`) —\n  depends on: Task 3.1, Task 2.5 — status: not-started\n- [ ] Task 3.11: `specmgr://rsk/example` and `specmgr://rsk/template`\n  resources — depends on: Task 3.9 — status: not-started\n- [ ] Task 3.12: `pyproject.toml` package-data entry for\n  `biz.dfch.specmgr.rsk` (`data/*.md`, `data/*.json`), pre-commit hook +\n  CI step for the packaged `rsk_schema.json` copy (mirroring\n  `specmgr-schema-tsk-package`) — depends on: Task 2.5 — status:\n  not-started\n- [ ] Task 3.13: `rsk/prompts/create_risk.py` + `update_risk.py` — narrate\n  the tool sequence (mirroring `req/prompts/create_req.py`/`update_req.py`)\n  — depends on: Tasks 3.3, 3.4, 3.5, 3.8, 3.10 — status: not-started\n- [ ] Task 3.14: add `rsk` to `server.py`'s domain import line (last-line\n  import convention — easily forgotten, silently means nothing registers) —\n  depends on: Tasks 3.2-3.13 — status: not-started\n- [ ] Task 3.15: `tests/rsk/tools/...`, `tests/rsk/resources/...`,\n  `tests/rsk/prompts/...` mirroring `tests/tsk/tools/`/`tests/tsk/\n  resources/`/`tests/tsk/prompts/` layout — depends on: Tasks 3.1-3.14 —\n  status: not-started\n\n#### Phase 4: Docs, CI wiring & final verification (commit 4)\n\n- [ ] Task 4.1: `specmgr docs` regeneration (new `rsk` modules picked up) —\n  depends on: Phase 1-3 complete — status: not-started\n- [ ] Task 4.2: `specmgr mcp-docs` regeneration (new tools/resources/\n  prompts appear in `docs/MCP.md`) — depends on: Phase 3 complete — status:\n  not-started\n- [ ] Task 4.3: CI wiring — confirm the Python-3.13-only `specmgr schema`/\n  `specmgr docs`/`specmgr mcp-docs` steps in `.github/workflows/ci.yml`\n  cover `rsk` with no separate per-type step needed (registry-driven,\n  mirroring `req`/`tsk`'s own wiring) — depends on: Task 4.1, Task 4.2 —\n  status: not-started\n- [ ] Task 4.4: Final verification pass — walk every ACC-001..008 below and\n  confirm each is actually satisfied; run the full quality gate (ruff\n  format/check, pylint advisory, vulture, unittest, `specmgr docs`,\n  `specmgr schema`, `specmgr mcp-docs` drift checks) once more end-to-end —\n  depends on: Tasks 4.1-4.3 — status: not-started\n\n**Note:** If a task's scope changes mid-flight, edit its description in\nplace; rely on git history (`git log -p` on this file) to recover what was\noriginally planned, rather than keeping a second copy of the task around.\n\n## Progress\n\n### Current Status\n\n**As of 2026-08-24**: Planning. GitHub issue #15 opened, feature folder\ncreated from `.specmgr/_template/v1/README.md`. Full schema and MCP surface\nproposed (see Design Notes and Task List), mirroring `feat-10` (tsk)'s\n4-phase/4-commit shape. Awaiting review/confirmation of the proposed\nattribute set before Phase 1 starts.\n\n### Blockers\n\nNone.\n\n### Recent Updates\n\n#### 2026-08-24T11:31:28+02:00 (newest)\n\n- Completed: opened GitHub issue #15 (\"Add artifact type Risk\"); created\n  branch `feat-15-add-artifact-type-risk` from `dev`; drafted this feature\n  plan (schema with 5x5 initial/residual assessment, TARRA strategy,\n  6-value status, scope/tags/owner/more-information) modeled on\n  `feat-10-add-artifact-type-tasklist`\n- Next: user review of the proposed attribute set (Design Notes); then\n  Phase 1 (Specification)\n- Notes: `Assessment` parsing reuses `tsk.TaskItem`'s custom-list-item-leaf +\n  eager-validation precedent; no new ADR anticipated\n\n### Decisions Made\n\n- **2026-08-24**: Target GitHub issue #15, opened up front (no earlier issue\n  describes this feature) — rationale: the `feat-NNN-slug` convention\n  embeds the issue number; opening it first avoids the branch/folder rename\n  pass `feat-10` did when its local branch predated its issue number.\n- **2026-08-24**: Frontmatter `status` is the 6-value set `open`/\n  `mitigating`/`accepted`/`occurred`/`closed`/`dropped`, default `open` —\n  rationale: user-selected (question, 2026-08-24); purpose-fit to a risk\n  lifecycle rather than reusing REQ's 7-value ADR-like set or tsk's 4-value\n  todo set.\n- **2026-08-24**: Before/after mitigation is modeled as two separate\n  `Assessment` sections (`## Initial Assessment` and `## Residual\n  Assessment`), each 5x5 (probability 1..5, impact 1..5), with `## Strategy`\n  and `## Mitigation` between them — rationale: user requirement for \"a\n  separate risk matrix impact/probability of 5x5 for BEFORE and AFTER\n  mitigation (residual risk)\"; the juxtaposition makes the mitigation\n  effect directly auditable (a sensible `reduce` strategy shows\n  residual < initial).\n- **2026-08-24**: The derived risk `level` (`low`/`medium`/`high`/`very_\n  high`) is a computed field from the probability x impact product zones\n  (1-4 low, 5-9 medium, 10-14 high, 15-25 very high), never stored in the\n  markdown — rationale: keeps the 5x5 mapping in one place and avoids stale\n  derived values on round-trip, following `tsk.TaskItem.checked`'s\n  computed-field convention.\n- **2026-08-24**: `## Strategy` is the TARRA closed 5-value set `tolerate`/\n  `assign`/`reduce`/`recover`/`avoid`, mandatory, single-line validated —\n  rationale: user requirement; same narrowing approach `ReqFrontmatter`\n  uses for its `status` field.\n- **2026-08-24**: `## Scope` is mandatory with >=1 list entry (affected\n  system/component); `## Owner`, `## Tags`, `## More Information` are\n  optional — rationale: scope answers \"which system is affected\" and is\n  central to a risk (user requirement); the remaining three follow ADR's\n  optional `more_information` precedent and keep the schema lean.\n\n### Related PRs / Commits\n\nNo PR opened yet. Work happens on branch `feat-15-add-artifact-type-risk`\n(from `dev`), one Conventional Commit per phase (see Execution approach).\n",
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md"
 }
-```
+````
 
 **Output:**
+
 ```
 Wrote file successfully.
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 68.1s)
 
@@ -2408,16 +2465,12 @@ Let's verify the file we created and check git status. Also, I want to double-ch
 
 Let me check .pre-commit-config.yaml.
 
-
-
-
 Let me verify the pre-commit hook naming I referenced in Task 3.12 matches the actual config:
-
-
 
 **Tool: grep**
 
 **Input:**
+
 ```json
 {
   "include": ".pre-commit-config.yaml",
@@ -2427,6 +2480,7 @@ Let me verify the pre-commit hook naming I referenced in Task 3.12 matches the a
 ```
 
 **Output:**
+
 ```
 Found 12 matches
 /home/user/src/biz.dfch.SpecMgr/.pre-commit-config.yaml:
@@ -2456,7 +2510,7 @@ Found 12 matches
 
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 97.7s)
 
@@ -2473,12 +2527,10 @@ Next, check git status to confirm that the new files are visible, and do a final
 
 Keep the response concise (under 4 lines is ideal, but here a short structured summary is reasonable — the user is asking for the proposed attributes, and that's in the plan. I should briefly indicate the main points). Per the system prompt, unless details are requested, keep responses to under 4 lines. The user asked me to "propose typical attributes for 'risk'" — the proposal is inside the feature plan. In the chat, I should concisely summarize the proposed attribute set. Let me make it a compact list.
 
-
-
-
 Hook ID convention confirmed (`specmgr-schema-tsk-package` matches). Feature is set up:
 
 **Created:**
+
 - GitHub issue #15: https://github.com/dfch/biz.dfch.SpecMgr/issues/15
 - Branch `feat-15-add-artifact-type-risk` (from `dev`)
 - Plan: `.specmgr/feat/feat-15-add-artifact-type-risk/README.md` (modeled on feat-10's 4-phase/4-commit shape)
@@ -2498,13 +2550,14 @@ Hook ID convention confirmed (`specmgr-schema-tsk-package` matches). Feature is 
 | `## More Information` | no | free-form (mirrors ADR's) |
 
 Design notes worth flagging:
+
 - **Derived risk level** is a computed field from the product zones (1–4 low, 5–9 medium, 10–14 high, 15–25 very high) — never stored in the markdown, same convention as `tsk`'s `TaskItem.checked`. This is what makes each 5x5 pair a true matrix cell, and `RskSummary` will expose `initial_level`/`residual_level`/`strategy` in `specmgr://rsk/list` for a register-wide matrix view.
 - **Parsing**: `Assessment` reuses `tsk.TaskItem`'s precedent (custom list-item leaf + parent-level eager validation) for the `- Probability: N` markers.
 - **Out of scope**: cross-referencing to REQ/UC/ADR, risk relationships, aggregated charts.
 
 Review the plan — once you confirm the attribute set, Phase 1 (Specification) can start.
 
----
+______________________________________________________________________
 
 ## User
 
@@ -2512,18 +2565,20 @@ Review the plan — once you confirm the attribute set, Phase 1 (Specification) 
 - cause, trigger, consequence shall be separate sections (level 2)
 - explain the structure of the initial/resdiual assessment, give an example
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 127.4s)
 
 _Thinking:_
 
 User feedback on the plan:
+
 1. TARRA → TARA framework (Transfer, Accept, Reduce, Avoid) — see https://www.consuunt.com/tara-framework/ — allow only valid TARA words
 2. cause, trigger, consequence should be separate H2 sections (not one "Description" section containing all three)
 3. Explain the structure of the initial/residual assessment, with examples
 
 So what I should do is:
+
 1. Fetch the consuunt TARA page and confirm the exact wording/definitions (good for citing in the plan).
 2. Update the feature README:
    - Replace TARRA with TARA: strategy closed set = `transfer`/`accept`/`reduce`/`avoid` (4 words). Also update the issue body! Issue #15 currently says TARRA with 5 words. Should update the GitHub issue too — `gh issue edit 15`.
@@ -2535,6 +2590,7 @@ So what I should do is:
 Let me fetch the page first.
 
 Then edit the README. There are multiple spots to update:
+
 - Overview: "TARRA response strategy (tolerate / assign / reduce / recover / avoid)" → "TARA response strategy (transfer / accept / reduce / avoid)"
 - REQ-001: body list — replace `## Description` with `## Cause`, `## Trigger`, `## Consequence`; TARRA 5-value closed set → TARA 4-value closed set
 - ACC-002: "TARRA closed set" → "TARA closed set"
@@ -2556,6 +2612,7 @@ On the assessment example — let me make a concrete one:
 - Probability: 4
 - Impact: 3
 ```
+
 → product 12 → level `high`
 
 ```
@@ -2567,12 +2624,13 @@ to a whitelist of allowed formats.
 - Probability: 2
 - Impact: 3
 ```
+
 → product 6 → level `medium`
 
 This nicely demonstrates the before/after auditability: high → medium.
 
 Zone table:
-| p \ i | 1 | 2 | 3 | 4 | 5 |
+| p \\ i | 1 | 2 | 3 | 4 | 5 |
 |---|---|---|---|---|---|
 | 1 | low (1) | low (2) | low (3) | low (4) | medium (5) |
 | 2 | low (2) | low (4) | medium (6) | medium (8) | high (10) |
@@ -2581,13 +2639,14 @@ Zone table:
 | 5 | medium (5) | high (10) | high (15) | very high (20) | very high (25) |
 
 Verify zones: 1–4 low; 5–9 medium; 10–14 high; 15–25 very high.
+
 - (1,5)=5 medium ✓
 - (2,5)=10 high ✓
 - (3,5)=15 very high ✓
 - (4,3)=12 high ✓
 - (5,3)=15 very high ✓
 - (4,4)=16 very high ✓
-Good.
+  Good.
 
 Should I include the full 5x5 zone matrix table in the plan? It would be a nice concrete artifact — yes, I'll include it in a Design Notes "Assessment structure" entry.
 
@@ -2598,10 +2657,10 @@ title → optional comment → Cause → Trigger → Consequence → Scope → I
 
 Now let me fetch the TARA page and confirm the wording/definitions.
 
-
 **Tool: webfetch**
 
 **Input:**
+
 ```json
 {
   "url": "https://www.consuunt.com/tara-framework/",
@@ -2610,6 +2669,7 @@ Now let me fetch the TARA page and confirm the wording/definitions.
 ```
 
 **Output:**
+
 ```
           TARA Framework explained in a Practical way with Examples.                                          
 
@@ -3422,7 +3482,7 @@ The tool call succeeded but the output was truncated. Full output saved to: /hom
 Use the Task tool to have explore agent process this file with Grep and Read (with offset/limit). Do NOT read the full file yourself - delegate to save context.
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 216.7s)
 
@@ -3431,8 +3491,11 @@ _Thinking:_
 TARA confirmed: **Transfer, Accept, Reduce, Avoid** — four strategies. (Not TARRA which includes "Tolerate/Recover".)
 
 Next, I need to update the following:
+
 1. The body of GitHub issue #15 (TARRA → TARA, Description → Cause/Trigger/Consequence)
+
 2. The feature README:
+
    - Overview: TARRA → TARA
    - REQ-001: Replace `## Description` with `## Cause`, `## Trigger`, `## Consequence` (each a mandatory H2); "TARRA closed 5-value set" → "TARA closed 4-value set"
    - ACC-002: "TARRA closed set" → "TARA closed set"
@@ -3447,8 +3510,8 @@ Next, I need to update the following:
    - Current status: no problem ("TARRA strategy" — check: does "TARRA response strategy" appear? In Current Status: "Full schema and MCP surface proposed (see Design Notes and Task List)" — no mention of TARRA. Overview has it. Check each occurrence.)
    - Recent updates: add a new entry at the top (newest), documenting the revision (TARA correction, C/T/C split, assessment example)
    - Decisions Made: update the TARRA bullet (2026-08-24) — actually, better: add a new dated decision bullet for the revision. And either fix the old TARRA bullet to reference the correction, or add a new bullet and leave the old one (Decisions Made is a log — feat-10's log retains old decisions and adds new ones; superseded decisions are noted explicitly). Cleanest is: leave the old bullet and add a new bullet marked as superseding it. Or just edit the old bullet to TARA. Per convention: "if a decision reverses/supersedes a prior ADR" that's for ADRs; for feature logs, feat-10 had a "superseded the original Design Notes wording" bullet. I'll add a new decision bullet: "**2026-08-24**: `## Strategy` is the TARA closed 4-value set `transfer`/`accept`/`reduce`/`avoid` (supersedes the earlier TARRA 5-value proposal) — rationale: user correction with reference to the TARA framework (https://www.consuunt.com/tara-framework/); the valid strategy words are Transfer, Accept, Reduce, Avoid."
-   And a bullet: "**2026-08-24**: risk scenario split into three separate H2 sections `## Cause`, `## Trigger`, `## Consequence` (supersedes the single `## Description` proposal) — rationale: user requirement; each aspect of the scenario gets its own validated section instead of one mixed free-text blob."
-   
+     And a bullet: "**2026-08-24**: risk scenario split into three separate H2 sections `## Cause`, `## Trigger`, `## Consequence` (supersedes the single `## Description` proposal) — rationale: user requirement; each aspect of the scenario gets its own validated section instead of one mixed free-text blob."
+
    Should I delete the old TARRA bullet or keep it with a note? To keep the log clean I'd edit the old TARRA bullet to mark it as superseded... Actually, the simplest and most honest approach: leave the old bullet as-is (as a historical log entry) and add the superseding bullet. feat-10's log shows both the original decisions and the later "superseded the original Design Notes wording" decision. I'll follow that pattern.
 
    Hmm, but the body-shape and REQ/ACC/Design Notes sections must reflect the current design (those are "current state", not logs). Only Decisions Made / Recent Updates are append-only logs.
@@ -3505,50 +3568,59 @@ Assessment structure design note with example:
   (1 = negligible ... 5 = severe), written as two list items under the
   H2 section heading:
 
-  ```
-  ## Initial Assessment
-  - Probability: 4
-  - Impact: 3
-  ```
+```
 
-  The model derives the zone `level` from the product of the two
-  coordinates (probability x impact):
+## Initial Assessment
 
-  | p \ i | 1    | 2    | 3    | 4    | 5         |
-  |-------|------|------|------|------|-----------|
-  | 1     | low  | low  | low  | low  | medium    |
-  | 2     | low  | low  | medium | medium | high     |
-  | 3     | low  | medium | medium | high | very high |
-  | 4     | low  | medium | high | high | very high |
-  | 5     | medium | high | high | very high | very high |
+- Probability: 4
+- Impact: 3
 
-  Zones: 1-4 `low`, 5-9 `medium`, 10-14 `high`, 15-25 `very high`.
+```
 
-  **Example** (risk: untrusted file upload parsed by an old parser
-  library):
+The model derives the zone `level` from the product of the two
+coordinates (probability x impact):
 
-  ```
-  ## Initial Assessment
-  - Probability: 4
-  - Impact: 3        ->  4 x 3 = 12  =>  level `high`
+| p \ i | 1    | 2    | 3    | 4    | 5         |
+|-------|------|------|------|------|-----------|
+| 1     | low  | low  | low  | low  | medium    |
+| 2     | low  | low  | medium | medium | high     |
+| 3     | low  | medium | medium | high | very high |
+| 4     | low  | medium | high | high | very high |
+| 5     | medium | high | high | very high | very high |
 
-  ## Strategy
-  reduce
+Zones: 1-4 `low`, 5-9 `medium`, 10-14 `high`, 15-25 `very high`.
 
-  ## Mitigation
-  Replace the parser with a maintained library and limit uploads to
-  a format whitelist.
+**Example** (risk: untrusted file upload parsed by an old parser
+library):
 
-  ## Residual Assessment
-  - Probability: 2
-  - Impact: 3        ->  2 x 3 = 6   =>  level `medium`
-  ```
+```
 
-  The before/after pair shows the mitigation moved the risk one zone
-  down (`high` -> `medium`) — the register's audit trail. (Comment
-  annotations like "-> 4 x 3 = 12" are shown here for readability only;
-  the actual document stores just the two list items and the level is
-  computed.)
+## Initial Assessment
+
+- Probability: 4
+- Impact: 3 -> 4 x 3 = 12 => level `high`
+
+## Strategy
+
+reduce
+
+## Mitigation
+
+Replace the parser with a maintained library and limit uploads to
+a format whitelist.
+
+## Residual Assessment
+
+- Probability: 2
+- Impact: 3 -> 2 x 3 = 6 => level `medium`
+
+```
+
+The before/after pair shows the mitigation moved the risk one zone
+down (`high` -> `medium`) — the register's audit trail. (Comment
+annotations like "-> 4 x 3 = 12" are shown here for readability only;
+the actual document stores just the two list items and the level is
+computed.)
 ```
 
 Hmm wait, should I include scale anchors for probability (1=rare...5=almost certain)? That's useful. But keep it brief in the plan. I'll include a one-line anchor for each.
@@ -3572,6 +3644,7 @@ Task 2.6: "invalid TARRA word" → "invalid TARA word".
 Current status: "Full schema and MCP surface proposed (see Design Notes and Task List)" — no issue, no TARRA. Check: "**As of 2026-08-24**: Planning. GitHub issue #15 opened, feature folder created... Full schema and MCP surface proposed..." OK.
 
 Recent updates: new top entry:
+
 ```
 #### 2026-08-24T... (newest)
 - Completed: plan revised per user feedback — (1) strategy set corrected from
@@ -3600,16 +3673,12 @@ After that, `gh issue edit 15 --body-file` with the updated body.
 
 Let me get the timestamp first.
 
-
-
-
 TARA confirmed: **Transfer, Accept, Reduce, Avoid** (4 words). Updating the plan (full rewrite of the README), the issue body, and the decision log:
-
-
 
 **Tool: bash**
 
 **Input:**
+
 ```json
 {
   "command": "date +%Y-%m-%dT%H:%M:%S%:z"
@@ -3617,12 +3686,13 @@ TARA confirmed: **Transfer, Accept, Reduce, Avoid** (4 words). Updating the plan
 ```
 
 **Output:**
+
 ```
 2026-08-24T11:55:11+02:00
 
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 334.1s)
 
@@ -3630,23 +3700,24 @@ _Thinking:_
 
 Alright, let's rewrite the README reflecting all the changes. Let me carefully create the updated version.
 
-
 **Tool: write**
 
 **Input:**
-```json
+
+````json
 {
   "content": "---\nid: feat-15-add-artifact-type-risk\nversion: 1.0.0\nstatus: planning\ncreated: 2026-08-24\nupdated: 2026-08-24\n---\n\n# Feature: Add artifact type Risk (rsk)\n\n## Plan\n\n### Overview\n\nAdd a new markdown artifact type, `Risk` (abbreviation `rsk`), for maintaining risk\nregisters in system specifications. Every risk decomposes its scenario into\nseparate `## Cause`, `## Trigger`, and `## Consequence` sections, carries a 5x5\nprobability/impact assessment BEFORE mitigation (`## Initial Assessment`) and\nthe same 5x5 assessment AFTER mitigation (`## Residual Assessment`), a TARA\nresponse strategy (`## Strategy`: transfer / accept / reduce / avoid), and the\ntreatment measures bridging the two (`## Mitigation`), scoped to the affected\nsystem(s) (`## Scope`). `rsk` follows the domain-first hierarchy and MCP\nsurface already established by `req`/`tsk` (ADR\nece4554b-725c-4f76-bc04-5d2b760363d2), reusing their tools/resources shape\nalmost exactly (per GitHub issue #15).\n\n### Requirements\n\n- [ ] REQ-001: Define the `rsk` markdown schema — frontmatter (`type=\"rsk\"`,\n  6-value status set: `open`/`mitigating`/`accepted`/`occurred`/`closed`/`dropped`,\n  default `open`) and body (H1 title, optional leading comment, mandatory\n  `## Cause`, mandatory `## Trigger`, mandatory `## Consequence`, mandatory\n  `## Scope` list (>=1 affected system/component), mandatory `## Initial\n  Assessment` (5x5: probability 1..5, impact 1..5, derived level), mandatory\n  `## Strategy` (TARA 4-value closed set: `transfer`/`accept`/`reduce`/\n  `avoid`), mandatory `## Mitigation`, mandatory `## Residual Assessment`\n  (5x5, same shape as initial), optional `## Owner`, optional `## Tags`\n  list, optional `## More Information`)\n- [ ] REQ-002: Pydantic models for `rsk` documents (`rsk/models/v1/` —\n  domain-first path, mirroring `tsk/models/v1/` and `req/models/v1/`)\n- [ ] REQ-003: Parse and validate `rsk` documents from markdown\n  (`parse_rsk`, mirroring `parse_tsk`/`parse_req`)\n- [ ] REQ-004: MCP tools mirroring `req`'s lifecycle surface: `parse_rsk`,\n  `get_rsk_example`, `get_rsk_template`, `create_rsk`, `update_rsk`,\n  `set_status_rsk`, `delete_rsk` (stub), `validate_rsk`, `get_rsk`\n- [ ] REQ-005: MCP resources mirroring `req`: `specmgr://rsk/list`,\n  `/example`, `/schema`, `/template`\n- [ ] REQ-006: MCP prompts — `create_risk`, `update_risk` (narrated tool\n  sequences, mirroring `req/prompts/create_req.py`/`update_req.py` and\n  `tsk/prompts/create_task.py`/`update_task.py`)\n- [ ] REQ-007: Packaged example/template/schema data (`rsk/data/`) via the\n  existing generic `general/tools/_packaged_data.py`, with the matching\n  `pyproject.toml` package-data entry, pre-commit hook, and CI step\n- [ ] REQ-008: Doc generation wiring — `specmgr docs`, `specmgr schema`\n  (new `rsk` entry in the doc-type registry), `specmgr mcp-docs`, all kept\n  drift-free via pre-commit/CI\n\n### Acceptance Criteria\n\n- [ ] ACC-001: Verifies REQ-001 — schema documented (`docs/rsk_schema.json`,\n  `specmgr://rsk/schema`), reference `rsk` document (`rsk_reference.md`)\n  round-trips through the parser (`test_parses_full_reference_document`),\n  including both 5x5 assessments (probability/impact bounded 1..5, derived\n  level zone correct)\n- [ ] ACC-002: Verifies REQ-002 — Pydantic models validate required/optional\n  fields correctly, including the `Assessment` probability/impact/derived-level\n  split, the TARA closed set, `Scope` (>=1) and the `Tags`/`Owner`/\n  `More Information` absent-vs-present cases (`tests/rsk/models/v1/`)\n- [ ] ACC-003: Verifies REQ-003 — parser produces a valid object tree;\n  malformed input raises (structural `AssertionError` / field-level\n  `pydantic.ValidationError`, matching `req`/`tsk`'s error-channel convention)\n  — `tests/rsk/models/v1/test_parser.py`\n- [ ] ACC-004: Verifies REQ-004 — every listed tool implemented and\n  registered (confirmed present in regenerated `docs/MCP.md`), with\n  `create_rsk`/`update_rsk` validating body-only content the same way\n  `create_req`/`update_req`/`create_tsk`/`update_tsk` do\n- [ ] ACC-005: Verifies REQ-005 — every listed resource implemented and\n  registered (confirmed present in regenerated `docs/MCP.md`)\n- [ ] ACC-006: Verifies REQ-006 — `create_risk`/`update_risk` prompts narrate\n  the correct tool sequence (`tests/rsk/prompts/`)\n- [ ] ACC-007: Verifies REQ-007 — packaged data resolves correctly from a\n  real, non-editable install, mirroring `req`'s (feat-6 Task 5.1) and `tsk`'s\n  (feat-10 ACC-007) own verification\n- [ ] ACC-008: Verifies REQ-008 — `specmgr docs`/`specmgr schema`/\n  `specmgr mcp-docs` all report no drift after implementation\n\n### Scope\n\n**Included in this feature:**\n\n- Specification of the `rsk` markdown schema (frontmatter + body), including\n  the cause/trigger/consequence scenario split, the 5x5 initial/residual\n  assessment, the TARA strategy set, and the before/after-mitigation\n  structure\n- Pydantic models, parser, and schema generation under `rsk/models/v1/`\n- Full MCP surface (tools/resources/prompts/packaged data) mirroring\n  `req`/`tsk`\n- Tests mirroring `tests/req/`'s and `tests/tsk/`'s layout and coverage\n\n**Explicitly out of scope:**\n\n- Aggregated, register-wide views (e.g. a combined risk-matrix chart across\n  all `rsk` documents) — `RskSummary` (see `specmgr://rsk/list`) carries\n  `initial_level`/`residual_level`/`strategy` per document precisely so such a\n  view can be built later without reading each document\n- Cross-referencing/linking `rsk` documents to other artifact types\n  (REQ/UC/ADR) — not part of this feature\n- Risk relationships (dependency, correlation, common-cause analysis)\n- A `specmgr rsk-toc`-equivalent generation command or its own CI/pre-commit\n  drift check beyond what `specmgr docs`/`specmgr mcp-docs`/`specmgr schema`\n  already provide generically\n\n### Dependencies\n\n- Depends on: ADR ece4554b-725c-4f76-bc04-5d2b760363d2 (domain-first\n  hierarchy), ADR bc5e18ad-6bbf-4265-bae4-3e34984a2d29 (generic\n  `MarkdownFrontmatter` base), ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614\n  (id-based reads as a tool, not a resource), `general/tools/_doc_paths.py`\n  and `_packaged_data.py`, the existing `models/md` engine — in particular\n  `MarkdownSection1WithComment`, `MarkdownSection2`, the generic\n  `list[MarkdownStr]` engine (`process_list_field`), and `tsk`'s\n  `TaskItem` custom-list-item-leaf precedent (parsing a non-standard marker\n  into computed fields with parent-level eager validation)\n- Blocks: None identified yet\n\n### Design Notes\n\n- **Body shape** — `Risk` (the body's H1 class) subclasses the existing\n  `MarkdownSection1WithComment` mixin (`models/md/`), reusing it as-is (no\n  new mixin needed):\n\n  ```\n  # {H1 title}\n  <!-- optional leading comment -->            comment: MarkdownComment | None\n\n  ## Cause                                     cause: MarkdownStr  (mandatory)\n  {Why the risk exists — the root condition}\n\n  ## Trigger                                   trigger: MarkdownStr  (mandatory)\n  {What sets the risk event in motion}\n\n  ## Consequence                                consequence: MarkdownStr  (mandatory)\n  {What happens if the risk event occurs}\n\n  ## Scope                                     scope: list[MarkdownStr]  (>=1)\n  - {Affected system / component}\n  - {Another affected system / component}\n\n  ## Initial Assessment                        initial_assessment: Assessment\n  - Probability: {1..5}\n  - Impact: {1..5}\n\n  ## Strategy                                  strategy: str  (TARA closed 4-value set)\n  {transfer | accept | reduce | avoid}\n\n  ## Mitigation                                mitigation: MarkdownStr  (mandatory)\n  {Treatment measures; \"none\" if strategy is accept}\n\n  ## Residual Assessment                       residual_assessment: Assessment\n  - Probability: {1..5}\n  - Impact: {1..5}\n\n  ## Owner                                     owner: MarkdownStr | None\n  {Responsible person / role}\n\n  ## Tags                                      tags: list[MarkdownStr] | None\n  - {tag}\n\n  ## More Information                          more_information: MarkdownStr | None\n  {Free-form}\n  ```\n\n  Order is enforced by the model: title -> optional comment -> Cause ->\n  Trigger -> Consequence -> Scope -> Initial Assessment -> Strategy ->\n  Mitigation -> Residual Assessment -> optional Owner -> optional Tags ->\n  optional More Information. The scenario sections (Cause/Trigger/\n  Consequence) lead the document; the before/after pair (Initial Assessment\n  ... Residual Assessment) is separated by exactly the sections that explain\n  the delta: `Strategy` (chosen TARA response) and `Mitigation` (the\n  measures taken).\n\n- **Assessment structure (initial/residual)** — each assessment is one cell\n  of a 5x5 risk matrix: two integer coordinates, `probability` (1..5;\n  1 = rare ... 5 = almost certain) and `impact` (1..5; 1 = negligible ...\n  5 = severe), written as exactly two list items under the H2 heading:\n\n  ```\n  ## Initial Assessment\n  - Probability: 4\n  - Impact: 3\n  ```\n\n  The model derives the zone `level` from the product of the two\n  coordinates (probability x impact):\n\n  | p \\ i | 1      | 2      | 3      | 4        | 5         |\n  |-------|--------|--------|--------|----------|-----------|\n  | 1     | low    | low    | low    | low      | medium    |\n  | 2     | low    | low    | medium | medium   | high      |\n  | 3     | low    | medium | medium | high     | very high |\n  | 4     | low    | medium | high   | high     | very high |\n  | 5     | medium | high   | high   | very high| very high |\n\n  Zone thresholds on the product: 1-4 `low`, 5-9 `medium`, 10-14 `high`,\n  15-25 `very high`.\n\n  **Worked example** (risk: untrusted file uploads parsed by an unmaintained\n  parser library, affecting the document-processing subsystem):\n\n  ```\n  ## Cause\n  The parser library has no security updates since 2021.\n\n  ## Trigger\n  An uploaded file exploits a known format flaw.\n\n  ## Consequence\n  Remote code execution in the document-processing subsystem; other\n  subsystems unaffected (isolated network zone).\n\n  ## Scope\n  - document-processing subsystem\n\n  ## Initial Assessment\n  - Probability: 4\n  - Impact: 3\n\n  ## Strategy\n  reduce\n\n  ## Mitigation\n  Replace the parser with a maintained library; restrict uploads to a\n  format whitelist.\n\n  ## Residual Assessment\n  - Probability: 2\n  - Impact: 3\n  ```\n\n  Initial cell 4 x 3 = 12 -> `high`; residual cell 2 x 3 = 6 -> `medium`:\n  the mitigation moved the risk one zone down. That before/after pair is the\n  register's audit trail — a sensible `reduce` strategy must show\n  residual < initial (the example's annotations are for readability only;\n  the document stores the two list items, and `level` is always computed,\n  never written).\n\n- **Strategy (TARA)** — `## Strategy` is a single-line H2 section whose\n  content is validated against the closed 4-value set `transfer`/`accept`/\n  `reduce`/`avoid` — the TARA framework's risk-response strategies\n  (Transfer, Accept, Reduce, Avoid; cf.\n  https://www.consuunt.com/tara-framework/) — same narrowing approach\n  `ReqFrontmatter` applies to its `status` field, at body-section level.\n  Mandatory: every risk in a register has a disposition. Only the four valid\n  TARA words are accepted; anything else (e.g. the TARRA-era words\n  `tolerate`/`assign`/`recover`) is a validation error.\n\n- **Frontmatter status** — `open`/`mitigating`/`accepted`/`occurred`/\n  `closed`/`dropped`, default `open`: a purpose-fit risk lifecycle (user-\n  selected 2026-08-24) rather than reusing REQ's 7-value ADR-like set —\n  `open` = identified and monitored; `mitigating` = treatment in progress;\n  `accepted` = residual risk formally accepted; `occurred` = the risk event\n  materialized (tracked as incident); `closed` = resolved/expired; `dropped`\n  = removed from the register (not a real risk, duplicate, or out of scope).\n\n- **List summary** — `RskSummary` (for `specmgr://rsk/list`) carries\n  `id`/`title`/`status` plus `initial_level`, `residual_level`, `strategy`,\n  and the first `scope` entry, so a register-wide risk-matrix view can be\n  built from the listing alone.\n\n- **Prompt naming** — `create_risk`/`update_risk` follow the\n  `tsk`-prompt precedent of the issue's literal wording (issue #15 names\n  both), not the `rsk`-prefixed convention the tools/resources use.\n\n### Related ADRs\n\n- ece4554b-725c-4f76-bc04-5d2b760363d2: Organize the codebase by\n  document-type domain (domain-first hierarchy)\n- bc5e18ad-6bbf-4265-bae4-3e34984a2d29: Generic base frontmatter model for\n  markdown document types\n- ddfb1109-422d-4507-8dbc-dc5e4bec9614: Expose id-based document reads as a\n  tool (get_rsk), not a resource\n\nNo new ADR is anticipated for this feature — the `Assessment` 5x5 parsing\napproach, the TARA closed set, and the 6-value status set are scoped enough\nto log only in this file's own Decisions Made, not a full ADR.\n\n### Task List\n\nSingle, canonical breakdown of work phases and tasks. Status lives on the\ntask itself — there is no separate \"planned\" vs. \"executed\" list to keep in\nsync; a task's line *is* its current status. Update it in place as work\nprogresses (edit, don't duplicate).\n\n**Execution approach** (to confirm at Phase 1 start, see Decisions Made):\neach phase below is delegated to the `implementation-specialist` subagent as\none unit (implementation + its own mirrored tests together, not a separate\nlater test phase), reviewed and quality-gated (ruff format/check, vulture,\nfull `unittest` suite) by the orchestrator, then committed as one\nConventional Commit per phase — the `feat-10` (tsk) 4-phase/4-commit shape.\n\n#### Phase 1: Specification (commit 1)\n\n- [ ] Task 1.1: Define `rsk` frontmatter (`rsk/models/v1/frontmatter.py` —\n  `RskFrontmatter` subclass of `MarkdownFrontmatter`, `type=Literal[\"rsk\"]`,\n  6-value status set `open`/`mitigating`/`accepted`/`occurred`/`closed`/\n  `dropped`) — depends on: none — status: not-started\n- [ ] Task 1.2: Define `rsk` body structure (`rsk/models/v1/body.py`,\n  `rsk/models/v1/assessment.py`) — `Risk(MarkdownSection1WithComment)` with\n  `cause`/`trigger`/`consequence`/`scope`/`initial_assessment`/`strategy`/\n  `mitigation`/`residual_assessment`/`owner`/`tags`/`more_information`;\n  `Assessment` (new `MarkdownSection2` leaf: `probability`/`impact` int 1..5\n  parsed from `- Probability: N`/`- Impact: N` list items via a\n  `MarkdownListItem` subclass with computed fields, derived `level` computed\n  field from the product zones, parent-level eager-validation\n  `model_validator` on the `Risk` H1 per the `TaskItem` precedent) —\n  depends on: Task 1.1 — status: not-started\n- [ ] Task 1.3: Create a reference `rsk` document (`rsk_reference.md`)\n  exercising every field (cause/trigger/consequence, full initial +\n  residual 5x5 pair, all mandatory and optional sections), used as the\n  parser's round-trip test fixture — depends on: Task 1.2 — status:\n  not-started (placed at\n  `.specmgr/feat/feat-15-add-artifact-type-risk/rsk_reference.md`, mirroring\n  `tsk_reference.md`'s own location convention, not `rsk/data/`)\n- [ ] Task 1.4: `tests/rsk/models/v1/test_frontmatter.py`,\n  `test_body.py`/`test_assessment.py` — structural + validation tests\n  mirroring `tests/tsk/models/v1/`: status set, 5x5 bounds and derived-\n  level zones (all four zone boundaries: 4/5, 9/10, 14/15), TARA closed\n  set, `Scope` >=1, `Tags`/`Owner`/`More Information` absent-vs-present —\n  depends on: Task 1.3 — status: not-started\n\n#### Phase 2: Pydantic Models & Parser (commit 2)\n\n- [ ] Task 2.1: `rsk/models/v1/document.py` (`RskDocument(frontmatter,\n  body)`, mirroring `TskDocument`) — depends on: Task 1.3 — status:\n  not-started\n- [ ] Task 2.2: Implement `parse_rsk(text: str) -> RskDocument` (mirrors\n  `parse_tsk`/`parse_req`) — depends on: Task 2.1 — status: not-started\n- [ ] Task 2.3: `rsk/models/v1/summary.py` (`RskSummary` with\n  `initial_level`/`residual_level`/`strategy`/first `scope` entry, for the\n  `specmgr://rsk/list` resource) — depends on: Task 2.1 — status:\n  not-started\n- [ ] Task 2.4: Field-level `Field(description=...)` on every scalar/\n  optional field (schema-quality parity with REQ/TSK's own Task 2.4\n  audits) — depends on: Task 2.1 — status: not-started\n- [ ] Task 2.5: Draft `rsk_schema.json` via `generate_rsk_schema()`\n  (mirroring `generate_req_schema`/`generate_tsk_schema` in\n  `commands/schema.py`, calling `RskDocument.model_json_schema()`) +\n  register `\"rsk\"` in the `specmgr schema` doc-type generator registry\n  (`_GENERATORS`) — depends on: Task 2.1 — status: not-started\n- [ ] Task 2.6: `tests/rsk/models/v1/test_parser.py` — mirrors\n  `TestParseTsk`'s case shape (minimal doc, full reference-doc round-trip,\n  defaults-when-absent, invalid status, malformed structure, out-of-range\n  probability/impact, invalid TARA word, missing Scope entry) — depends on:\n  Task 2.2, Task 2.5 — status: not-started\n\n#### Phase 3: MCP Surface (commit 3)\n\n- [ ] Task 3.1: `rsk/tools/_paths.py` + `_io.py` + `_write.py` + `_lock.py`,\n  thin wrappers over `general/tools/_doc_paths.py` (mirrors\n  `tsk/tools/_paths.py` etc. exactly) — depends on: Task 2.2 — status:\n  not-started\n- [ ] Task 3.2: `parse_rsk(path: str) -> RskDocument` tool wrapper\n  (`rsk/tools/parse_rsk.py`, mirroring `tsk/tools/parse_tsk.py` — reads a\n  filepath from disk, delegates to the model-layer `parse_rsk`) — depends\n  on: Task 3.1 — status: not-started\n- [ ] Task 3.3: `create_rsk(content: str) -> RskDocument` tool (body-only\n  content, MCP builds frontmatter: `id`, `type=\"rsk\"`, `status=\"open\"`,\n  `created=updated=now`, `version`) — depends on: Task 3.1 — status:\n  not-started\n- [ ] Task 3.4: `update_rsk(id, content) -> RskDocument` tool (whole-body\n  replace, preserves `id`/`type`/`status`/`created`/`version`, bumps\n  `updated`) — depends on: Task 3.1 — status: not-started\n- [ ] Task 3.5: `set_status_rsk(id, status) -> RskDocument` tool (only path\n  that changes `status`) — depends on: Task 3.1 — status: not-started\n- [ ] Task 3.6: `delete_rsk(id) -> NoReturn` stub tool — depends on: Task\n  3.1 — status: not-started\n- [ ] Task 3.7: `validate_rsk(content, full=False) -> bool` tool — depends\n  on: none — status: not-started\n- [ ] Task 3.8: `get_rsk(id) -> RskDocument` tool (id-based single-document\n  read; tool, not resource — per ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614)\n  — depends on: Task 3.1 — status: not-started\n- [ ] Task 3.9: `get_rsk_example`/`get_rsk_template` tools + packaged data\n  (`rsk/data/rsk_example.md`, `rsk/data/rsk_template.md`) via\n  `general/tools/_packaged_data.py` — depends on: Task 1.3 — status:\n  not-started\n- [ ] Task 3.10: `specmgr://rsk/list` and `specmgr://rsk/schema` resources\n  (packaged `rsk/data/rsk_schema.json`, mirroring `specmgr://req/schema`) —\n  depends on: Task 3.1, Task 2.5 — status: not-started\n- [ ] Task 3.11: `specmgr://rsk/example` and `specmgr://rsk/template`\n  resources — depends on: Task 3.9 — status: not-started\n- [ ] Task 3.12: `pyproject.toml` package-data entry for\n  `biz.dfch.specmgr.rsk` (`data/*.md`, `data/*.json`), pre-commit hook +\n  CI step for the packaged `rsk_schema.json` copy (mirroring\n  `specmgr-schema-tsk-package`) — depends on: Task 2.5 — status:\n  not-started\n- [ ] Task 3.13: `rsk/prompts/create_risk.py` + `update_risk.py` — narrate\n  the tool sequence (mirroring `req/prompts/create_req.py`/`update_req.py`)\n  — depends on: Tasks 3.3, 3.4, 3.5, 3.8, 3.10 — status: not-started\n- [ ] Task 3.14: add `rsk` to `server.py`'s domain import line (last-line\n  import convention — easily forgotten, silently means nothing registers) —\n  depends on: Tasks 3.2-3.13 — status: not-started\n- [ ] Task 3.15: `tests/rsk/tools/...`, `tests/rsk/resources/...`,\n  `tests/rsk/prompts/...` mirroring `tests/tsk/tools/`/`tests/tsk/\n  resources/`/`tests/tsk/prompts/` layout — depends on: Tasks 3.1-3.14 —\n  status: not-started\n\n#### Phase 4: Docs, CI wiring & final verification (commit 4)\n\n- [ ] Task 4.1: `specmgr docs` regeneration (new `rsk` modules picked up) —\n  depends on: Phase 1-3 complete — status: not-started\n- [ ] Task 4.2: `specmgr mcp-docs` regeneration (new tools/resources/\n  prompts appear in `docs/MCP.md`) — depends on: Phase 3 complete — status:\n  not-started\n- [ ] Task 4.3: CI wiring — confirm the Python-3.13-only `specmgr schema`/\n  `specmgr docs`/`specmgr mcp-docs` steps in `.github/workflows/ci.yml`\n  cover `rsk` with no separate per-type step needed (registry-driven,\n  mirroring `req`/`tsk`'s own wiring) — depends on: Task 4.1, Task 4.2 —\n  status: not-started\n- [ ] Task 4.4: Final verification pass — walk every ACC-001..008 below and\n  confirm each is actually satisfied; run the full quality gate (ruff\n  format/check, pylint advisory, vulture, unittest, `specmgr docs`,\n  `specmgr schema`, `specmgr mcp-docs` drift checks) once more end-to-end —\n  depends on: Tasks 4.1-4.3 — status: not-started\n\n**Note:** If a task's scope changes mid-flight, edit its description in\nplace; rely on git history (`git log -p` on this file) to recover what was\noriginally planned, rather than keeping a second copy of the task around.\n\n## Progress\n\n### Current Status\n\n**As of 2026-08-24**: Planning. GitHub issue #15 opened, feature folder\ncreated from `.specmgr/_template/v1/README.md`. Full schema and MCP surface\nproposed (see Design Notes and Task List), mirroring `feat-10` (tsk)'s\n4-phase/4-commit shape; revised 2026-08-24 per user feedback (TARA instead\nof TARRA, cause/trigger/consequence split into separate sections, assessment\nstructure documented with a worked example). Awaiting final review before\nPhase 1 starts.\n\n### Blockers\n\nNone.\n\n### Recent Updates\n\n#### 2026-08-24T11:55:11+02:00 (newest)\n\n- Completed: revised the plan per user feedback — (1) `## Strategy`\n  corrected from the TARRA 5-value set to the TARA 4-value closed set\n  `transfer`/`accept`/`reduce`/`avoid` (the valid TARA words, per the TARA\n  framework, https://www.consuunt.com/tara-framework/); only those four\n  words are accepted; (2) the single `## Description` section replaced by\n  three separate mandatory H2 sections `## Cause`, `## Trigger`,\n  `## Consequence`; (3) added a Design Notes entry explaining the\n  initial/residual assessment structure (5x5 zone table with product\n  thresholds) plus a worked example showing a `reduce` strategy moving the\n  risk from `high` (4x3=12) to `medium` (2x3=6); GitHub issue #15's body\n  updated to match\n- Next: user review; then Phase 1 (Specification)\n- Notes: see the two new Decisions Made entries below (supersede the\n  earlier TARRA and single-`Description` decisions)\n\n#### 2026-08-24T11:31:28+02:00\n\n- Completed: opened GitHub issue #15 (\"Add artifact type Risk\"); created\n  branch `feat-15-add-artifact-type-risk` from `dev`; drafted this feature\n  plan (schema with 5x5 initial/residual assessment, TARA strategy,\n  6-value status, scope/tags/owner/more-information) modeled on\n  `feat-10-add-artifact-type-tasklist`\n- Next: user review of the proposed attribute set (Design Notes); then\n  Phase 1 (Specification)\n- Notes: `Assessment` parsing reuses `tsk.TaskItem`'s custom-list-item-leaf +\n  eager-validation precedent; no new ADR anticipated\n\n### Decisions Made\n\n- **2026-08-24**: Target GitHub issue #15, opened up front (no earlier issue\n  describes this feature) — rationale: the `feat-NNN-slug` convention\n  embeds the issue number; opening it first avoids the branch/folder rename\n  pass `feat-10` did when its local branch predated its issue number.\n- **2026-08-24**: Frontmatter `status` is the 6-value set `open`/\n  `mitigating`/`accepted`/`occurred`/`closed`/`dropped`, default `open` —\n  rationale: user-selected (question, 2026-08-24); purpose-fit to a risk\n  lifecycle rather than reusing REQ's 7-value ADR-like set or tsk's 4-value\n  todo set.\n- **2026-08-24**: Before/after mitigation is modeled as two separate\n  `Assessment` sections (`## Initial Assessment` and `## Residual\n  Assessment`), each 5x5 (probability 1..5, impact 1..5), with `## Strategy`\n  and `## Mitigation` between them — rationale: user requirement for \"a\n  separate risk matrix impact/probability of 5x5 for BEFORE and AFTER\n  mitigation (residual risk)\"; the juxtaposition makes the mitigation\n  effect directly auditable (a sensible `reduce` strategy shows\n  residual < initial).\n- **2026-08-24**: The derived risk `level` (`low`/`medium`/`high`/`very_\n  high`) is a computed field from the probability x impact product zones\n  (1-4 low, 5-9 medium, 10-14 high, 15-25 very high), never stored in the\n  markdown — rationale: keeps the 5x5 mapping in one place and avoids stale\n  derived values on round-trip, following `tsk.TaskItem.checked`'s\n  computed-field convention.\n- **2026-08-24** (superseded): `## Strategy` was initially proposed as the\n  TARRA 5-value set `tolerate`/`assign`/`reduce`/`recover`/`avoid`, and the\n  risk scenario was initially a single `## Description` section — superseded\n  by the two decisions below.\n- **2026-08-24**: `## Strategy` is the TARA 4-value closed set\n  `transfer`/`accept`/`reduce`/`avoid` (Transfer, Accept, Reduce, Avoid —\n  the TARA framework, https://www.consuunt.com/tara-framework/), mandatory,\n  single-line validated; only those four valid TARA words are accepted —\n  rationale: user correction with reference (the initially proposed \"TARRA\"\n  set was the wrong acronym); same narrowing approach `ReqFrontmatter` uses\n  for its `status` field.\n- **2026-08-24**: The risk scenario is split into three separate mandatory\n  H2 sections `## Cause` (root condition), `## Trigger` (what sets the event\n  in motion), `## Consequence` (what happens if it occurs) — rationale:\n  user requirement; each scenario aspect gets its own validated section\n  instead of one mixed free-text blob, keeping cause/trigger/consequence\n  mechanically checkable (all three present and non-blank).\n- **2026-08-24**: `## Scope` is mandatory with >=1 list entry (affected\n  system/component); `## Owner`, `## Tags`, `## More Information` are\n  optional — rationale: scope answers \"which system is affected\" and is\n  central to a risk (user requirement); the remaining three follow ADR's\n  optional `more_information` precedent and keep the schema lean.\n\n### Related PRs / Commits\n\nNo PR opened yet. Work happens on branch `feat-15-add-artifact-type-risk`\n(from `dev`), one Conventional Commit per phase (see Execution approach).\n",
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md"
 }
-```
+````
 
 **Output:**
+
 ```
 Wrote file successfully.
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 147.6s)
 
@@ -3692,17 +3763,12 @@ response strategy, managed as first-class artifacts alongside requirements and u
 
 Write to /tmp/opencode/rsk-issue-body.md (overwrite), then `gh issue edit 15 --body-file`.
 
-
-
-
 Now fix the historical accuracy of the first Recent Updates entry (it originally proposed TARRA), and update issue #15's body:
-
-
-
 
 **Tool: edit**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md",
@@ -3712,6 +3778,7 @@ Now fix the historical accuracy of the first Recent Updates entry (it originally
 ```
 
 **Output:**
+
 ```
 Edit applied successfully.
 ```
@@ -3719,6 +3786,7 @@ Edit applied successfully.
 **Tool: write**
 
 **Input:**
+
 ```json
 {
   "content": "We create a new artifact type `Risk`:\n\n* abbreviation `rsk`\n* sub-folder as `req`/`tsk`\n* resources: same as `req`\n* tools: same as `req`\n* prompts: `create_risk` and `update_risk`\n\nAttributes:\n\n* frontmatter `status`: `open` / `mitigating` / `accepted` / `occurred` / `closed` / `dropped` (default `open`)\n* H1 title, optional leading comment\n* `## Cause` (mandatory): root condition — why the risk exists\n* `## Trigger` (mandatory): what sets the risk event in motion\n* `## Consequence` (mandatory): what happens if the risk event occurs\n* `## Scope` (mandatory, list): which system/component is affected\n* `## Initial Assessment` (mandatory): 5x5 risk matrix BEFORE mitigation — probability 1..5 and impact 1..5 (derived level: low / medium / high / very high)\n* `## Strategy` (mandatory): TARA — `transfer` / `accept` / `reduce` / `avoid`\n* `## Mitigation` (mandatory): treatment measures (\"none\" if strategy is `accept`)\n* `## Residual Assessment` (mandatory): 5x5 risk matrix AFTER mitigation (residual risk)\n* `## Owner` (optional): responsible person/role\n* `## Tags` (optional, list): free-form tags\n* `## More Information` (optional): free-form\n\nThis artifact is needed for risk registers in system specifications: risks with an\nexplicit before/after mitigation 5x5 assessment (residual risk) and a TARA response\nstrategy, kept as first-class managed artifacts alongside requirements and use cases.\n",
@@ -3727,11 +3795,12 @@ Edit applied successfully.
 ```
 
 **Output:**
+
 ```
 Wrote file successfully.
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 111.0s)
 
@@ -3747,10 +3816,10 @@ This is fine.
 
 Now, let's update the issue body.
 
-
 **Tool: bash**
 
 **Input:**
+
 ```json
 {
   "command": "gh issue edit 15 --body-file /tmp/opencode/rsk-issue-body.md && git status --short",
@@ -3759,13 +3828,14 @@ Now, let's update the issue body.
 ```
 
 **Output:**
+
 ```
 https://github.com/dfch/biz.dfch.SpecMgr/issues/15
 ?? .specmgr/feat/feat-15-add-artifact-type-risk/
 
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 103.4s)
 
@@ -3775,10 +3845,10 @@ Updated the issue. The new feature folder is untracked (as expected — I haven'
 
 Let me do a final check of the README to see if it renders correctly and is internally consistent — in particular, the new "Assessment Structure" design note with the table and worked example, and confirming that no "TARRA" remains except in the intentionally historical spot (the superseded decision entry).
 
-
 **Tool: grep**
 
 **Input:**
+
 ```json
 {
   "include": "README.md",
@@ -3788,6 +3858,7 @@ Let me do a final check of the README to see if it renders correctly and is inte
 ```
 
 **Output:**
+
 ```
 Found 8 matches
 /home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md:
@@ -3809,7 +3880,7 @@ Found 8 matches
 
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 119.9s)
 
@@ -3826,9 +3897,6 @@ The plan has been fully updated. Summary for the user:
 
 Keeping the reply short.
 
-
-
-
 Plan revised and issue #15 updated. Changes:
 
 1. **TARA**: `## Strategy` is now the closed 4-value set `transfer` / `accept` / `reduce` / `avoid` — only valid TARA words accepted (TARRA-era words like `tolerate`/`assign`/`recover` are validation errors). The old TARRA decision is logged as *superseded* in Decisions Made.
@@ -3840,13 +3908,13 @@ Plan revised and issue #15 updated. Changes:
 
 REQ-001/ACC-002/task-list references updated to match. Ready for your final review — then Phase 1 (Specification) can start.
 
----
+______________________________________________________________________
 
 ## User
 
-regarding "probability" and "impact": we cannot enforce a string on a bullet list item, but we can on a MarkdownSectionN. We dont we use level 3 sections "### Probability 3" and "### Impact 4" with a regex similar to this: "^Proability \d$". With it we can enforce the heading and a number. Your opinion?
+regarding "probability" and "impact": we cannot enforce a string on a bullet list item, but we can on a MarkdownSectionN. We dont we use level 3 sections "### Probability 3" and "### Impact 4" with a regex similar to this: "^Proability \\d$". With it we can enforce the heading and a number. Your opinion?
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 176.5s)
 
@@ -3855,21 +3923,24 @@ _Thinking:_
 The user is proposing a structural change to the representation of `Assessment`:
 
 Instead of this:
+
 ```
 ## Initial Assessment
 - Probability: 4
 - Impact: 3
 ```
+
 (parsed as a custom `MarkdownListItem` subclass, like `TaskItem`)
 
 Use H3 subsections with regex headings:
+
 ```
 ## Initial Assessment
 ### Probability 4
 ### Impact 3
 ```
 
-The heading itself encodes the value: `^Probability \d$` (the user wrote "Proability" with a typo, but the intent is clear). The user says: "You can't enforce a string on a bullet list item, but you can on a MarkdownSectionN. Why not use level 3 sections '### Probability 3' and '### Impact 4' with a regex like this: '^Proability \d$'. Then we can enforce the heading and the number. What do you think?"
+The heading itself encodes the value: `^Probability \d$` (the user wrote "Proability" with a typo, but the intent is clear). The user says: "You can't enforce a string on a bullet list item, but you can on a MarkdownSectionN. Why not use level 3 sections '### Probability 3' and '### Impact 4' with a regex like this: '^Proability \\d$'. Then we can enforce the heading and the number. What do you think?"
 
 Interesting — they're referencing an existing mechanism: a regex alias on a heading. The feat-10 design notes say: `UpdateEntry` was a free-form-title H3 leaf via `@alias(value=".+", type=AliasType.REGEX)`. In other words, the `models/md` engine supports heading aliases with `AliasType.REGEX` — the heading text is matched against a regex. This is exactly what the user is suggesting: a `MarkdownSection3` subclass with a regex-constrained heading like `^Probability \d$`…
 
@@ -3890,16 +3961,19 @@ Let me read these. I should form a real opinion, not just agree.
 Considerations for the opinion:
 
 **Arguments in favor of the H3 approach:**
+
 - The heading itself enforces structure: a malformed `### Probability 7` or `### Probability` fails the regex at parse time — "successful parsing is validation," matching the project's convention.
 - No custom `MarkdownListItem` subclass needed (the TaskItem-style leaf is a workaround for a parser that has no GFM plugin — but here the H3 regex alias is a *first-class* mechanism of the engine).
 - The feat-10 precedent used exactly this mechanism for `UpdateEntry` (`@alias(value=".+", type=AliasType.REGEX)`), so this is idiomatic in this codebase.
 
 **Arguments against / things to verify:**
+
 - Does the regex alias mechanism support *capture groups* and mapping them to fields? Or does it only do matching, with the value coming from the section content? If the value has to come from the content (empty H3 with a body), then `### Probability\n4\n` is… hmm.
 - The H3 section's content: what goes in it? If the value is in the heading, the H3's content is empty. Does the engine allow an empty H3 section? (ADR options have content; tsk's `UpdateEntry` has content = update text.)
 - Semantics: "### Probability 4" as a heading is a bit unusual as a document — but for machine-generated, machine-managed documents it's actually fine, and unambiguous for both parser and reader.
 
 Let me check the code to see what's supported. Files to read:
+
 - `src/biz/dfch/specmgr/models/md/alias.py`
 - `src/biz/dfch/specmgr/models/md/alias_match.py`
 - `src/biz/dfch/specmgr/models/md/alias_type.py`
@@ -3909,17 +3983,12 @@ Let me check the code to see what's supported. Files to read:
 
 Let me start exploring.
 
-
-
-
 Good question — let me check what the `models/md` heading-alias engine actually supports before opining, since the feasibility hinges on whether regex aliases can capture the value or only match it.
-
-
-
 
 **Tool: read**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/src/biz/dfch/specmgr/models/md/alias.py"
@@ -3927,6 +3996,7 @@ Good question — let me check what the `models/md` heading-alias engine actuall
 ```
 
 **Output:**
+
 ```
 <path>/home/user/src/biz.dfch.SpecMgr/src/biz/dfch/specmgr/models/md/alias.py</path>
 <type>file</type>
@@ -4023,6 +4093,7 @@ Good question — let me check what the `models/md` heading-alias engine actuall
 **Tool: read**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/src/biz/dfch/specmgr/models/md/alias_match.py"
@@ -4030,6 +4101,7 @@ Good question — let me check what the `models/md` heading-alias engine actuall
 ```
 
 **Output:**
+
 ```
 <path>/home/user/src/biz.dfch.SpecMgr/src/biz/dfch/specmgr/models/md/alias_match.py</path>
 <type>file</type>
@@ -4159,7 +4231,7 @@ Good question — let me check what the `models/md` heading-alias engine actuall
 </content>
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 114.9s)
 
@@ -4169,16 +4241,12 @@ Key findings: `match_alias` in the REGEX case uses `re.fullmatch(alias_value, he
 
 So then, how does a `MarkdownSection` expose its heading text as data? In the case of `UpdateEntry` (tsk) and H1 title, the heading text itself becomes the data (the "title" computed field of the section). Let me check `MarkdownSection.from_text` and `markdown_section.py` to see how the heading text is stored — for example, whether the section exposes the raw heading text as an attribute (like `title` on H1).
 
-
-
-
 The REGEX alias is match-only (`re.fullmatch`, no capture groups). Now let me see how a section exposes its own heading text as data:
-
-
 
 **Tool: read**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/src/biz/dfch/specmgr/models/md/markdown_section.py"
@@ -4186,6 +4254,7 @@ The REGEX alias is match-only (`re.fullmatch`, no capture groups). Now let me se
 ```
 
 **Output:**
+
 ```
 <path>/home/user/src/biz.dfch.SpecMgr/src/biz/dfch/specmgr/models/md/markdown_section.py</path>
 <type>file</type>
@@ -4530,47 +4599,46 @@ The REGEX alias is match-only (`re.fullmatch`, no capture groups). Now let me se
 </content>
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 163.9s)
 
 _Thinking:_
 
 This is an important discovery. `MarkdownSection.from_text`:
+
 - Verifies that the heading text matches `@alias` (via `match_alias` — regex uses `re.fullmatch`, matching only).
 - For composite sections, sets `instance._value = heading_text` — the heading's inline content is stored in `_value`.
 - The `text` computed property (composite case) returns the heading text alone.
 
 So a `MarkdownSection3` subclass with `@alias(value=r"^Probability [1-5]$", type=AliasType.REGEX)` will:
+
 1. **Enforce** that the heading is `Probability <n>` where n is a single digit (we can refine to `[1-5]` so out-of-range fails immediately — better than the user's `\d`, which would also accept 0/6-9… well, the user said "a regex similar to `^Proability \d$`" — we should refine to `[1-5]` so the 5x5 range is enforced at the heading level itself!).
 2. **Store** the entire heading text in `_value`, and expose it via the `.text` computed field.
 
 Therefore, the value is recoverable: parse `n` from `.text` (or via a computed `value: int` property that does `int(self.text.split()[1])`). The regex alias enforces the format, and the computed field extracts the digit. This is exactly the same pattern as the `TaskItem`/`UpdateEntry` computed fields — the engine natively supports it, no custom list item parsing needed.
 
 So the user's idea works well and is arguably better than my list item approach:
+
 - The heading itself is a first-class, validated structure (match_alias's `re.fullmatch`).
 - Range can be enforced in the regex: `^Probability [1-5]$` — `### Probability 6` immediately fails parse.
 - No dependence on the quirks of `MarkdownListItem` marker parsing (the `TaskItem` workaround existed because the parser had no GFM plugin; the H3 regex alias is a designed-in feature of the engine — feat-10's own design notes confirm `@alias(value=".+", type=AliasType.REGEX)` is a standard mechanism for H3 leaves).
 - Eager validation: `from_text` asserts the alias before construction — no lazy-computed-field gap like the one feat-10 had to fix with `_validate_items_eagerly`. The regex check happens at parse time, in `from_text`/`get_extent`.
 
-Let me check how the `MarkdownSection3` class is defined, and look at `UpdateEntry` (tsk) to confirm the exact pattern for an H3 leaf. Also, confirm how a parent section (H2 `Assessment`) declares two named H3 child fields (`probability`, `impact`) — the heading→field mapping is presumably done by matching each declared field class's alias against the heading text, in document order. Let me read tsk's body.py (UpdateEntry) and the section2/section3 base classes, and probably the field processing machinery (`process_field`/`process_list_field` in _markdown.py or markdown_str.py).
+Let me check how the `MarkdownSection3` class is defined, and look at `UpdateEntry` (tsk) to confirm the exact pattern for an H3 leaf. Also, confirm how a parent section (H2 `Assessment`) declares two named H3 child fields (`probability`, `impact`) — the heading→field mapping is presumably done by matching each declared field class's alias against the heading text, in document order. Let me read tsk's body.py (UpdateEntry) and the section2/section3 base classes, and probably the field processing machinery (`process_field`/`process_list_field` in \_markdown.py or markdown_str.py).
 
 Let me read:
+
 - `models/md/markdown_section2.py`, `markdown_section3.py` (probably thin wrappers)
 - tsk's `body.py` (RecentUpdates/UpdateEntry)
 - `models/md/markdown_str.py` (from_text's field handling — how a composite section's fields are populated in order)
 
-
-
-
 `_value` retains the heading text, and `match_alias` performs enforcement at parse time via `re.fullmatch`. Let's check the H3 leaf precedent (tsk's `UpdateEntry`) and how composite sections map child fields:
-
-
-
 
 **Tool: read**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/src/biz/dfch/specmgr/tsk/models/v1/body.py"
@@ -4578,7 +4646,8 @@ Let me read:
 ```
 
 **Output:**
-```
+
+````
 <path>/home/user/src/biz.dfch.SpecMgr/src/biz/dfch/specmgr/tsk/models/v1/body.py</path>
 <type>file</type>
 <content>
@@ -4744,11 +4813,12 @@ Let me read:
 
 (End of file - total 159 lines)
 </content>
-```
+````
 
 **Tool: read**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/src/biz/dfch/specmgr/models/md/markdown_str.py",
@@ -4757,6 +4827,7 @@ Let me read:
 ```
 
 **Output:**
+
 ```
 <path>/home/user/src/biz.dfch.SpecMgr/src/biz/dfch/specmgr/models/md/markdown_str.py</path>
 <type>file</type>
@@ -4886,7 +4957,7 @@ Let me read:
 </content>
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 479.7s)
 
@@ -4915,6 +4986,7 @@ Hmm, so for a leaf H3 with no body (just the heading), `.text` returns the whole
 Composite case: `.text` = heading inline content only (no # prefix): "Probability 4".
 
 This distinction matters for the value-extraction computed field:
+
 - Leaf: `text` = "### Probability 4" → extract via regex on the raw line
 - Composite: `text` = "Probability 4" → `split()[1]`
 
@@ -4923,16 +4995,19 @@ Alternatively, the leaf section could just hold its own value… Let me think ab
 Actually wait — there's another subtlety in the leaf case. `get_extent` on a leaf: `MarkdownSection.get_extent` returns the extent spanning up to the next same-or-shallower heading. For `### Probability 4` followed by `### Impact 3`, the Probability leaf's extent is just that one line. OK.
 
 But hmm — for a leaf section, `from_text` asserts that the heading matches the alias. For `@alias(value=r"^Probability [1-5]$")`:
+
 - `### Probability 4` → match ✓
 - `### Probability 6` → AssertionError at parse time ✗ (exactly the eager enforcement the user wants)
 - `### Probability` (no digit) → AssertionError ✗
 
 And the parent H2 `Assessment(MarkdownSection2)` declares:
+
 ```python
 class Assessment(MarkdownSection2):
     probability: Probability3  # ### Probability {1..5}
     impact: Impact3  # ### Impact {1..5}
 ```
+
 The field names don't need to be `probability`/`impact` as section classes. And each leaf H3 gets a computed `value: int`.
 
 Then the parent `Risk` derives `initial_level`/`residual_level` from the two computed values.
@@ -4948,6 +5023,7 @@ But wait — there's a subtlety about the extent of an empty-body leaf: `get_ext
 OK — so, my opinion. The user's proposal is good, and better than my list-item approach. Points:
 
 **In favor (agree with user):**
+
 1. It's the engine's *native* mechanism — `match_alias`'s `re.fullmatch` against the declared `@alias` REGEX. `UpdateEntry` (tsk) and ADR's `Option N:` already use regex aliases. My `- Probability: N` list-item leaf was a workaround born of the missing GFM task-list plugin. The H3 approach doesn't need any such workaround.
 2. Eager enforcement at parse time: `from_text` asserts the alias before construction — `### Probability 6`, `### Probability`, `### probability 4` all fail immediately. No need for the `TaskItem`-style `_validate_items_eagerly` fix (which was a real bug that came out of the list-item approach in feat-10).
 3. We can enforce the 5x5 range *inside the regex itself*: `^Probability [1-5]$` — better than the user's `\d` (which accepts 0, 6–9, and "Probability 12" fails but "Probability 0" slips through).
@@ -4955,6 +5031,7 @@ OK — so, my opinion. The user's proposal is good, and better than my list-item
 5. Self-describing document: `### Probability 4` reads as data even without a parser.
 
 **Caveats / refinements to flag:**
+
 1. Use `[1-5]` instead of `\d` (range enforcement at the heading level).
 2. Leaf H3 sections have no body — so the value lives *only* in the heading, and `.text` (leaf branch) returns the full line verbatim including `### `. The `value` computed field needs to parse from that (trivial regex/strip). A little awkward compared to the composite `.text` (heading only) — but fine.
 3. Rendering: `__str__` re-emits the heading from `_value` — round-trips verbatim. ✓
@@ -4965,7 +5042,7 @@ Hmm wait, one more thing to double-check: how does the parent's `from_text` know
 
 Also worth noting: since the H3 heading text is data, the regex alias pattern `^Probability [1-5]$` is the schema — the field type name is separate.
 
-OK — the user is asking "your view?" so I give a concise opinion: agree, with two refinements ([1-5] instead of \d; note that it's a body-less leaf and value extraction is via computed field). And update the plan (Design Notes, REQ-001, tasks, decisions, worked example) and the issue body? The issue body says "probability 1..5 and impact 1..5" — the issue doesn't specify the list-item vs H3 shape, so the issue body is still accurate. Only the README's Design Notes (body shape block, assessment structure, Task 1.2 wording, Decisions Made) need updating.
+OK — the user is asking "your view?" so I give a concise opinion: agree, with two refinements ([1-5] instead of \\d; note that it's a body-less leaf and value extraction is via computed field). And update the plan (Design Notes, REQ-001, tasks, decisions, worked example) and the issue body? The issue body says "probability 1..5 and impact 1..5" — the issue doesn't specify the list-item vs H3 shape, so the issue body is still accurate. Only the README's Design Notes (body shape block, assessment structure, Task 1.2 wording, Decisions Made) need updating.
 
 Let me draft the updated design-notes body shape:
 
@@ -5032,17 +5109,21 @@ OK let me do the edits. Multiple targeted `edit` calls:
 1. REQ-001: "mandatory `## Initial Assessment` (5x5: probability 1..5, impact 1..5, derived level), mandatory `## Strategy` ... mandatory `## Residual Assessment` (5x5, same shape as initial)" → change the assessment description to mention H3-in-heading values.
 
 2. Design note body-shape block:
+
 ```
   ## Initial Assessment                        initial_assessment: Assessment
   - Probability: {1..5}
   - Impact: {1..5}
 ```
+
 →
+
 ```
   ## Initial Assessment                        initial_assessment: Assessment
   ### Probability {1..5}                       probability: Probability (H3 leaf)
   ### Impact {1..5}                            impact: Impact (H3 leaf)
 ```
+
 And the residual block similarly.
 
 3. "Assessment structure (initial/residual)" note — rewrite the opening paragraph + example + add the "why H3 not list items" rationale.
@@ -5067,14 +5148,17 @@ Current text of the assessment structure note (from my write):
   1 = rare ... 5 = almost certain) and `impact` (1..5; 1 = negligible ...
   5 = severe), written as exactly two list items under the H2 heading:
 
-  ```
-  ## Initial Assessment
-  - Probability: 4
-  - Impact: 3
-  ```
+```
 
-  The model derives the zone `level` from the product of the two
-  coordinates (probability x impact):
+## Initial Assessment
+
+- Probability: 4
+- Impact: 3
+
+```
+
+The model derives the zone `level` from the product of the two
+coordinates (probability x impact):
 ```
 
 And the example:
@@ -5112,8 +5196,8 @@ OK, let me make the edits. I'll do them in a batch of edit calls (all against th
 Actually, for safety against overlapping matches, all my oldStrings are unique and disjoint. Let me batch them.
 
 Edit 1 — REQ-001:
-old: "mandatory `## Scope` list (>=1 affected system/component), mandatory `## Initial\n  Assessment` (5x5: probability 1..5, impact 1..5, derived level), mandatory `## Strategy` (TARA 4-value closed set: `transfer`/`accept`/`reduce`/\n  `avoid`), mandatory `## Mitigation`, mandatory `## Residual Assessment`\n  (5x5, same shape as initial)"
-new: "mandatory `## Scope` list (>=1 affected system/component), mandatory `## Initial\n  Assessment` (5x5: H3 headings `### Probability {1..5}` / `### Impact {1..5}`,\n  value in the heading, derived level), mandatory `## Strategy` (TARA 4-value\n  closed set: `transfer`/`accept`/`reduce`/`avoid`), mandatory `## Mitigation`,\n  mandatory `## Residual Assessment` (5x5, same shape as initial)"
+old: "mandatory `## Scope` list (>=1 affected system/component), mandatory `## Initial\n  Assessment` (5x5: probability 1..5, impact 1..5, derived level), mandatory `## Strategy` (TARA 4-value closed set: `transfer`/`accept`/`reduce`/\\n `avoid`), mandatory `## Mitigation`, mandatory `## Residual Assessment`\\n (5x5, same shape as initial)"
+new: "mandatory `## Scope` list (>=1 affected system/component), mandatory `## Initial\n  Assessment` (5x5: H3 headings `### Probability {1..5}` / `### Impact {1..5}`,\\n value in the heading, derived level), mandatory `## Strategy` (TARA 4-value\\n closed set: `transfer`/`accept`/`reduce`/`avoid`), mandatory `## Mitigation`,\\n mandatory `## Residual Assessment` (5x5, same shape as initial)"
 
 Hmm, let me be careful to match the exact text I wrote. From the write:
 
@@ -5132,152 +5216,165 @@ newString:
 
 Edit 2 — body-shape initial block:
 old:
-"  ## Initial Assessment                        initial_assessment: Assessment
-  - Probability: {1..5}
-  - Impact: {1..5}"
-new:
-"  ## Initial Assessment                        initial_assessment: Assessment
-  ### Probability {1..5}                       probability: leaf H3 (value in heading)
-  ### Impact {1..5}                            impact: leaf H3 (value in heading)"
+" ## Initial Assessment initial_assessment: Assessment
+
+- Probability: {1..5}
+- Impact: {1..5}"
+  new:
+  " ## Initial Assessment initial_assessment: Assessment
+
+### Probability {1..5} probability: leaf H3 (value in heading)
+
+### Impact {1..5} impact: leaf H3 (value in heading)"
 
 Edit 3 — body-shape residual block:
 old:
-"  ## Residual Assessment                       residual_assessment: Assessment
-  - Probability: {1..5}
-  - Impact: {1..5}"
-new:
-"  ## Residual Assessment                       residual_assessment: Assessment
-  ### Probability {1..5}                       probability: leaf H3 (value in heading)
-  ### Impact {1..5}                            impact: leaf H3 (value in heading)"
+" ## Residual Assessment residual_assessment: Assessment
+
+- Probability: {1..5}
+- Impact: {1..5}"
+  new:
+  " ## Residual Assessment residual_assessment: Assessment
+
+### Probability {1..5} probability: leaf H3 (value in heading)
+
+### Impact {1..5} impact: leaf H3 (value in heading)"
 
 Edit 4 — assessment structure note opening:
 old:
 "- **Assessment structure (initial/residual)** — each assessment is one cell
-  of a 5x5 risk matrix: two integer coordinates, `probability` (1..5;
-  1 = rare ... 5 = almost certain) and `impact` (1..5; 1 = negligible ...
-  5 = severe), written as exactly two list items under the H2 heading:
+of a 5x5 risk matrix: two integer coordinates, `probability` (1..5;
+1 = rare ... 5 = almost certain) and `impact` (1..5; 1 = negligible ...
+5 = severe), written as exactly two list items under the H2 heading:
 
-  ```
-  ## Initial Assessment
-  - Probability: 4
-  - Impact: 3
-  ```
+```
+## Initial Assessment
+- Probability: 4
+- Impact: 3
+```
 
-  The model derives the zone `level` from the product of the two
-  coordinates (probability x impact):"
+The model derives the zone `level` from the product of the two
+coordinates (probability x impact):"
 new:
 "- **Assessment structure (initial/residual)** — each assessment is one cell
-  of a 5x5 risk matrix: two integer coordinates, `probability` (1..5;
-  1 = rare ... 5 = almost certain) and `impact` (1..5; 1 = negligible ...
-  5 = severe), carried by exactly two leaf H3 sections under the H2
-  heading, with the value *in the heading itself*:
+of a 5x5 risk matrix: two integer coordinates, `probability` (1..5;
+1 = rare ... 5 = almost certain) and `impact` (1..5; 1 = negligible ...
+5 = severe), carried by exactly two leaf H3 sections under the H2
+heading, with the value *in the heading itself*:
 
-  ```
-  ## Initial Assessment
-  ### Probability 4
-  ### Impact 3
-  ```
+```
+## Initial Assessment
+### Probability 4
+### Impact 3
+```
 
-  Each H3 is a `MarkdownSection3` leaf with a regex `@alias` —
-  `^Probability [1-5]$` / `^Impact [1-5]$` — enforced by `match_alias`
-  (`re.fullmatch`) at parse time, the engine's own first-class heading-
-  constraint mechanism (same family as `tsk`'s free-form `### `
-  `UpdateEntry` and ADR's numbered `### Option N:` headings). The range is
-  baked into the regex itself: `### Probability 6`, `### Probability`
-  (missing value), or `### Impact` before `### Probability` (wrong order)
-  all fail the parse eagerly — no `TaskItem`-style lazy-computed-field gap
-  and no custom list-item marker parsing (the parser is MarkdownIt
-  commonmark without a GFM plugin, which is exactly why `tsk` needed a
-  `TaskItem` workaround for checkboxes — not needed here). Each leaf
-  exposes the heading's digit as a computed `value: int`; the H2 `Assessment`
-  derives the zone `level` from the product of the two values
-  (probability x impact):"
+Each H3 is a `MarkdownSection3` leaf with a regex `@alias` —
+`^Probability [1-5]$` / `^Impact [1-5]$` — enforced by `match_alias`
+(`re.fullmatch`) at parse time, the engine's own first-class heading-
+constraint mechanism (same family as `tsk`'s free-form `### `
+`UpdateEntry` and ADR's numbered `### Option N:` headings). The range is
+baked into the regex itself: `### Probability 6`, `### Probability`
+(missing value), or `### Impact` before `### Probability` (wrong order)
+all fail the parse eagerly — no `TaskItem`-style lazy-computed-field gap
+and no custom list-item marker parsing (the parser is MarkdownIt
+commonmark without a GFM plugin, which is exactly why `tsk` needed a
+`TaskItem` workaround for checkboxes — not needed here). Each leaf
+exposes the heading's digit as a computed `value: int`; the H2 `Assessment`
+derives the zone `level` from the product of the two values
+(probability x impact):"
 
 Edit 5 — worked example assessment lines:
 old:
-"  ## Initial Assessment
-  - Probability: 4
-  - Impact: 3
+" ## Initial Assessment
 
-  ## Strategy
-  reduce"
+- Probability: 4
+- Impact: 3
+
+## Strategy
+
+reduce"
 new:
-"  ## Initial Assessment
-  ### Probability 4
-  ### Impact 3
+" ## Initial Assessment
 
-  ## Strategy
-  reduce"
+### Probability 4
+
+### Impact 3
+
+## Strategy
+
+reduce"
 
 Edit 6 — worked example residual lines:
 old:
-"  ## Residual Assessment
-  - Probability: 2
-  - Impact: 3
-  ```"
+" ## Residual Assessment
+
+- Probability: 2
+- Impact: 3
+
+````"
 new:
 "  ## Residual Assessment
-  ### Probability 2
-  ### Impact 3
-  ```"
+### Probability 2
+### Impact 3
+```"
 
 Edit 7 — worked example closing:
 old:
 "  Initial cell 4 x 3 = 12 -> `high`; residual cell 2 x 3 = 6 -> `medium`:
-  the mitigation moved the risk one zone down. That before/after pair is the
-  register's audit trail — a sensible `reduce` strategy must show
-  residual < initial (the example's annotations are for readability only;
-  the document stores the two list items, and `level` is always computed,
-  never written)."
+the mitigation moved the risk one zone down. That before/after pair is the
+register's audit trail — a sensible `reduce` strategy must show
+residual < initial (the example's annotations are for readability only;
+the document stores the two list items, and `level` is always computed,
+never written)."
 new:
 "  Initial cell 4 x 3 = 12 -> `high`; residual cell 2 x 3 = 6 -> `medium`:
-  the mitigation moved the risk one zone down. That before/after pair is the
-  register's audit trail — a sensible `reduce` strategy must show
-  residual < initial (the example's annotations are for readability only;
-  the document stores the two H3 heading values, and `level` is always
-  computed, never written)."
+the mitigation moved the risk one zone down. That before/after pair is the
+register's audit trail — a sensible `reduce` strategy must show
+residual < initial (the example's annotations are for readability only;
+the document stores the two H3 heading values, and `level` is always
+computed, never written)."
 
 Edit 8 — Task 1.2:
 old:
 "  `cause`/`trigger`/`consequence`/`scope`/`initial_assessment`/`strategy`/
-  `mitigation`/`residual_assessment`/`owner`/`tags`/`more_information`;
-  `Assessment` (new `MarkdownSection2` leaf: `probability`/`impact` int 1..5
-  parsed from `- Probability: N`/`- Impact: N` list items via a
-  `MarkdownListItem` subclass with computed fields, derived `level` computed
-  field from the product zones, parent-level eager-validation
-  `model_validator` on the `Risk` H1 per the `TaskItem` precedent) —
-  depends on: Task 1.1 — status: not-started"
+`mitigation`/`residual_assessment`/`owner`/`tags`/`more_information`;
+`Assessment` (new `MarkdownSection2` leaf: `probability`/`impact` int 1..5
+parsed from `- Probability: N`/`- Impact: N` list items via a
+`MarkdownListItem` subclass with computed fields, derived `level` computed
+field from the product zones, parent-level eager-validation
+`model_validator` on the `Risk` H1 per the `TaskItem` precedent) —
+depends on: Task 1.1 — status: not-started"
 new:
 "  `cause`/`trigger`/`consequence`/`scope`/`initial_assessment`/`strategy`/
-  `mitigation`/`residual_assessment`/`owner`/`tags`/`more_information`;
-  `Assessment` (new `MarkdownSection2`: two mandatory leaf-H3 children
-  `Probability`/`Impact`, each a `MarkdownSection3` with regex `@alias`
-  `^Probability [1-5]$`/`^Impact [1-5]$` — value in the heading, enforced
-  eagerly by `match_alias` at parse time; computed `value: int` per leaf,
-  derived `level` computed field on `Assessment` from the product zones) —
-  depends on: Task 1.1 — status: not-started"
+`mitigation`/`residual_assessment`/`owner`/`tags`/`more_information`;
+`Assessment` (new `MarkdownSection2`: two mandatory leaf-H3 children
+`Probability`/`Impact`, each a `MarkdownSection3` with regex `@alias`
+`^Probability [1-5]$`/`^Impact [1-5]$` — value in the heading, enforced
+eagerly by `match_alias` at parse time; computed `value: int` per leaf,
+derived `level` computed field on `Assessment` from the product zones) —
+depends on: Task 1.1 — status: not-started"
 
 Edit 9 — Task 1.4:
 old:
 "  mirroring `tests/tsk/models/v1/`: status set, 5x5 bounds and derived-
-  level zones (all four zone boundaries: 4/5, 9/10, 14/15), TARA closed
-  set, `Scope` >=1, `Tags`/`Owner`/`More Information` absent-vs-present —"
+level zones (all four zone boundaries: 4/5, 9/10, 14/15), TARA closed
+set, `Scope` >=1, `Tags`/`Owner`/`More Information` absent-vs-present —"
 new:
 "  mirroring `tests/tsk/models/v1/`: status set, 5x5 heading-value bounds
-  (`### Probability 0`/`6` rejected, zone boundaries 4/5, 9/10, 14/15),
-  missing-heading-value and wrong H3-order rejection, TARA closed set,
-  `Scope` >=1, `Tags`/`Owner`/`More Information` absent-vs-present —"
+(`### Probability 0`/`6` rejected, zone boundaries 4/5, 9/10, 14/15),
+missing-heading-value and wrong H3-order rejection, TARA closed set,
+`Scope` >=1, `Tags`/`Owner`/`More Information` absent-vs-present —"
 
 Edit 10 — Task 2.6:
 old:
 "  `TestParseTsk`'s case shape (minimal doc, full reference-doc round-trip,
-  defaults-when-absent, invalid status, malformed structure, out-of-range
-  probability/impact, invalid TARA word, missing Scope entry) — depends on:"
+defaults-when-absent, invalid status, malformed structure, out-of-range
+probability/impact, invalid TARA word, missing Scope entry) — depends on:"
 new:
 "  `TestParseTsk`'s case shape (minimal doc, full reference-doc round-trip,
-  defaults-when-absent, invalid status, malformed structure, out-of-range
-  or missing assessment heading value, invalid TARA word, missing Scope
-  entry) — depends on:"
+defaults-when-absent, invalid status, malformed structure, out-of-range
+or missing assessment heading value, invalid TARA word, missing Scope
+entry) — depends on:"
 
 Edit 11 — Recent Updates new entry (insert above the 11:55 entry… no wait, this will be even newer, so at the very top):
 old:
@@ -5290,16 +5387,16 @@ new:
 #### 2026-08-24T{now} (newest)
 
 - Completed: revised the `Assessment` structure per user proposal —
-  probability/impact are no longer list items (`- Probability: N`) under
-  the H2 but leaf H3 sections with the value in the heading
-  (`### Probability 4` / `### Impact 3`), each a `MarkdownSection3` with a
-  regex `@alias` (`^Probability [1-5]$` / `^Impact [1-5]$`) enforced by
-  `match_alias` (`re.fullmatch`) at parse time. Rationale: the regex alias
-  is the engine's first-class heading-constraint mechanism (same family as
-  `tsk`'s `UpdateEntry`), enforces the heading *and* the digit *and* the
-  1..5 range eagerly at parse time — replacing the planned `TaskItem`-style
-  custom list-item leaf (which needed a lazy-computed-field workaround and
-  depends on a parser that has no GFM list-marker structure)
+probability/impact are no longer list items (`- Probability: N`) under
+the H2 but leaf H3 sections with the value in the heading
+(`### Probability 4` / `### Impact 3`), each a `MarkdownSection3` with a
+regex `@alias` (`^Probability [1-5]$` / `^Impact [1-5]$`) enforced by
+`match_alias` (`re.fullmatch`) at parse time. Rationale: the regex alias
+is the engine's first-class heading-constraint mechanism (same family as
+`tsk`'s `UpdateEntry`), enforces the heading *and* the digit *and* the
+1..5 range eagerly at parse time — replacing the planned `TaskItem`-style
+custom list-item leaf (which needed a lazy-computed-field workaround and
+depends on a parser that has no GFM list-marker structure)
 - Next: user review; then Phase 1 (Specification)
 - Notes: see the new Decisions Made entry below
 
@@ -5309,25 +5406,25 @@ Edit 12 — Decisions Made new entry (after the superseded TARRA/Description ent
 
 old (end of file):
 "- **2026-08-24**: `## Scope` is mandatory with >=1 list entry (affected
-  system/component); `## Owner`, `## Tags`, `## More Information` are
-  optional — rationale: scope answers "which system is affected" and is
-  central to a risk (user requirement); the remaining three follow ADR's
-  optional `more_information` precedent and keep the schema lean."
+system/component); `## Owner`, `## Tags`, `## More Information` are
+optional — rationale: scope answers "which system is affected" and is
+central to a risk (user requirement); the remaining three follow ADR's
+optional `more_information` precedent and keep the schema lean."
 new: same + append:
 
 "- **2026-08-24**: `Assessment`'s probability/impact are leaf H3 sections
-  with the value in the heading (`### Probability {1..5}`, `### Impact
-  {1..5}`), each constrained by a regex `@alias` (`^Probability [1-5]$` /
-  `^Impact [1-5]$`) and enforced eagerly by `match_alias` at parse time —
-  rationale: user proposal; this is the `models/md` engine's first-class
-  heading-constraint mechanism (same family as `tsk`'s free-form-`### `
-  `UpdateEntry` and ADR's numbered `Option N:` headings), it validates the
-  heading word, the digit, and the 1..5 range in one check at parse time,
-  and it replaces the originally planned `- Probability: N` list-item leaf
-  (a `TaskItem`-style workaround for the parser's missing GFM list-marker
-  support, with its own lazy-computed-field eager-validation history)
-  (supersedes the assessment-shape detail in the earlier
-  before/after-mitigation decision, which stands otherwise)."
+with the value in the heading (`### Probability {1..5}`, `### Impact
+{1..5}`), each constrained by a regex `@alias` (`^Probability [1-5]$` /
+`^Impact [1-5]$`) and enforced eagerly by `match_alias` at parse time —
+rationale: user proposal; this is the `models/md` engine's first-class
+heading-constraint mechanism (same family as `tsk`'s free-form-`### `
+`UpdateEntry` and ADR's numbered `Option N:` headings), it validates the
+heading word, the digit, and the 1..5 range in one check at parse time,
+and it replaces the originally planned `- Probability: N` list-item leaf
+(a `TaskItem`-style workaround for the parser's missing GFM list-marker
+support, with its own lazy-computed-field eager-validation history)
+(supersedes the assessment-shape detail in the earlier
+before/after-mitigation decision, which stands otherwise)."
 
 Also, I should update the "(newest)" marker on the 11:55 entry — in my new top entry I dropped the "(newest)" from the 11:55 header, but the 11:55 entry still says "(newest)". Let me check what I wrote: "#### 2026-08-24T11:55:11+02:00 (newest)" — after inserting the new entry above, I need to change that header to drop "(newest)". My Edit 11 oldString ends with "#### 2026-08-24T11:55:11+02:00" and the newString also ends with that (without "(newest)"), so the old "(newest)" suffix is… wait, my oldString is "#### 2026-08-24T11:55:11+02:00 (newest)" and the newString ends with "#### 2026-08-24T11:55:11+02:00" — that removes the "(newest)". Good.
 
@@ -5374,17 +5471,18 @@ Updating the plan accordingly:
 **Input:**
 ```json
 {
-  "command": "date +%Y-%m-%dT%H:%M:%S%:z"
+"command": "date +%Y-%m-%dT%H:%M:%S%:z"
 }
-```
+````
 
 **Output:**
+
 ```
 2026-08-24T13:07:31+02:00
 
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 176.6s)
 
@@ -5392,10 +5490,10 @@ _Thinking:_
 
 Okay, so I'll batch all the edits. They're all in separate regions, so they can be executed in parallel.
 
-
 **Tool: edit**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md",
@@ -5405,6 +5503,7 @@ Okay, so I'll batch all the edits. They're all in separate regions, so they can 
 ```
 
 **Output:**
+
 ```
 Edit applied successfully.
 ```
@@ -5412,6 +5511,7 @@ Edit applied successfully.
 **Tool: edit**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md",
@@ -5421,6 +5521,7 @@ Edit applied successfully.
 ```
 
 **Output:**
+
 ```
 Edit applied successfully.
 ```
@@ -5428,6 +5529,7 @@ Edit applied successfully.
 **Tool: edit**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md",
@@ -5437,6 +5539,7 @@ Edit applied successfully.
 ```
 
 **Output:**
+
 ```
 Edit applied successfully.
 ```
@@ -5444,15 +5547,17 @@ Edit applied successfully.
 **Tool: edit**
 
 **Input:**
-```json
+
+````json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md",
   "oldString": "- **Assessment structure (initial/residual)** — each assessment is one cell\n  of a 5x5 risk matrix: two integer coordinates, `probability` (1..5;\n  1 = rare ... 5 = almost certain) and `impact` (1..5; 1 = negligible ...\n  5 = severe), written as exactly two list items under the H2 heading:\n\n  ```\n  ## Initial Assessment\n  - Probability: 4\n  - Impact: 3\n  ```\n\n  The model derives the zone `level` from the product of the two\n  coordinates (probability x impact):",
   "newString": "- **Assessment structure (initial/residual)** — each assessment is one cell\n  of a 5x5 risk matrix: two integer coordinates, `probability` (1..5;\n  1 = rare ... 5 = almost certain) and `impact` (1..5; 1 = negligible ...\n  5 = severe), carried by exactly two leaf H3 sections under the H2\n  heading, with the value *in the heading itself*:\n\n  ```\n  ## Initial Assessment\n  ### Probability 4\n  ### Impact 3\n  ```\n\n  Each H3 is a `MarkdownSection3` leaf with a regex `@alias` —\n  `^Probability [1-5]$` / `^Impact [1-5]$` — enforced by `match_alias`\n  (`re.fullmatch`) at parse time: the engine's first-class\n  heading-constraint mechanism (same family as `tsk`'s free-form `### `\n  `UpdateEntry` and ADR's numbered `### Option N:` headings). The range is\n  baked into the regex itself, so `### Probability 6`, `### Probability`\n  (missing value), and `### Impact` before `### Probability` (wrong order)\n  all fail the parse eagerly — no `TaskItem`-style lazy-computed-field gap\n  and no custom list-item marker parsing (the parser is MarkdownIt\n  commonmark without a GFM plugin, which is exactly why `tsk` needed its\n  `TaskItem` workaround for checkboxes — not needed here). The heading\n  text is retained by the engine (`_value`/`.text`), so each leaf exposes\n  the digit as a computed `value: int`; the H2 `Assessment` derives the\n  zone `level` from the product of the two values (probability x impact):"
 }
-```
+````
 
 **Output:**
+
 ```
 Edit applied successfully.
 ```
@@ -5460,6 +5565,7 @@ Edit applied successfully.
 **Tool: edit**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md",
@@ -5469,6 +5575,7 @@ Edit applied successfully.
 ```
 
 **Output:**
+
 ```
 Edit applied successfully.
 ```
@@ -5476,15 +5583,17 @@ Edit applied successfully.
 **Tool: edit**
 
 **Input:**
-```json
+
+````json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md",
   "oldString": "  ## Residual Assessment\n  - Probability: 2\n  - Impact: 3\n  ```",
   "newString": "  ## Residual Assessment\n  ### Probability 2\n  ### Impact 3\n  ```"
 }
-```
+````
 
 **Output:**
+
 ```
 Edit applied successfully.
 ```
@@ -5492,6 +5601,7 @@ Edit applied successfully.
 **Tool: edit**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md",
@@ -5501,11 +5611,12 @@ Edit applied successfully.
 ```
 
 **Output:**
+
 ```
 Edit applied successfully.
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 185.6s)
 
@@ -5513,10 +5624,10 @@ _Thinking:_
 
 Next, I'll do edits to the task list, recent updates, and decisions made.
 
-
 **Tool: edit**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md",
@@ -5526,6 +5637,7 @@ Next, I'll do edits to the task list, recent updates, and decisions made.
 ```
 
 **Output:**
+
 ```
 Edit applied successfully.
 ```
@@ -5533,6 +5645,7 @@ Edit applied successfully.
 **Tool: edit**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md",
@@ -5542,6 +5655,7 @@ Edit applied successfully.
 ```
 
 **Output:**
+
 ```
 Edit applied successfully.
 ```
@@ -5549,6 +5663,7 @@ Edit applied successfully.
 **Tool: edit**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md",
@@ -5558,6 +5673,7 @@ Edit applied successfully.
 ```
 
 **Output:**
+
 ```
 Edit applied successfully.
 ```
@@ -5565,6 +5681,7 @@ Edit applied successfully.
 **Tool: edit**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md",
@@ -5574,6 +5691,7 @@ Edit applied successfully.
 ```
 
 **Output:**
+
 ```
 Edit applied successfully.
 ```
@@ -5581,6 +5699,7 @@ Edit applied successfully.
 **Tool: edit**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md",
@@ -5590,11 +5709,12 @@ Edit applied successfully.
 ```
 
 **Output:**
+
 ```
 Edit applied successfully.
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 138.6s)
 
@@ -5602,16 +5722,12 @@ _Thinking:_
 
 All edits have been applied. Let's verify consistency — grep for any remaining references to "- Probability:" list items and check the sections of the updated file.
 
-
-
-
 Verifying no stale list-item references remain:
-
-
 
 **Tool: grep**
 
 **Input:**
+
 ```json
 {
   "include": "README.md",
@@ -5621,6 +5737,7 @@ Verifying no stale list-item references remain:
 ```
 
 **Output:**
+
 ```
 Found 6 matches
 /home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md:
@@ -5638,7 +5755,7 @@ Found 6 matches
 
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 187.0s)
 
@@ -5652,14 +5769,14 @@ Lines 203, 466, 474, 567 are all new intentional mentions (explaining why we don
 
 Fix for line 123:
 Old:
-"  `list[MarkdownStr]` engine (`process_list_field`), and `tsk`'s
-  `TaskItem` custom list item leaf precedent (parsing non-standard markers
-  into computed fields with parent-level eager verification)"
+" `list[MarkdownStr]` engine (`process_list_field`), and `tsk`'s
+`TaskItem` custom list item leaf precedent (parsing non-standard markers
+into computed fields with parent-level eager verification)"
 New:
-"  `list[MarkdownStr]` engine (`process_list_field`), the engine's regex
-  `@alias` heading constraint mechanism (`AliasType.REGEX` + `match_alias`
-  `re.fullmatch`; precedents: `tsk`'s free-form `### ` `UpdateEntry`, ADR's
-  numbered `### Option N:` heading), and `tsk`'s computed field convention"
+" `list[MarkdownStr]` engine (`process_list_field`), the engine's regex
+`@alias` heading constraint mechanism (`AliasType.REGEX` + `match_alias`
+`re.fullmatch`; precedents: `tsk`'s free-form `### ` `UpdateEntry`, ADR's
+numbered `### Option N:` heading), and `tsk`'s computed field convention"
 
 Hmm, let me get the exact current text around line 123. From the original write:
 
@@ -5677,6 +5794,7 @@ Hmm, let me get the exact current text around line 123. From the original write:
 ```
 
 New:
+
 ```
 - Depends on: ADR ece4554b-725c-4f76-bc04-5d2b760363d2 (domain-first
   hierarchy), ADR bc5e18ad-6bbf-4265-bae4-3e34984a2d29 (generic
@@ -5693,16 +5811,12 @@ New:
 
 This is the only fix needed.
 
-
-
-
 Line 508 is fine (it's a historical log entry describing the initial draft, and has already been replaced by the new 13:07 entry). However, the Dependencies section still lists the `TaskItem` precedent as a dependency — let me fix that:
-
-
 
 **Tool: edit**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md",
@@ -5712,11 +5826,12 @@ Line 508 is fine (it's a historical log entry describing the initial draft, and 
 ```
 
 **Output:**
+
 ```
 Edit applied successfully.
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 166.1s)
 
@@ -5725,14 +5840,11 @@ _Thinking:_
 The plan has been fully updated. My opinion to the user — concise:
 
 1. Agree — this is the engine's first-class mechanism, and it's strictly better than the list item approach I had planned.
-2. Verified against the source: match_alias's re.fullmatch is enforced at parse time (before construction), the heading text is preserved in _value/.text, and the computed value: int works.
+2. Verified against the source: match_alias's re.fullmatch is enforced at parse time (before construction), the heading text is preserved in \_value/.text, and the computed value: int works.
 3. Two improvements I incorporated: the regex is `^Probability [1-5]$` (not `\d` — it bakes in the range), and a note about bodyless leaf H3s (value extraction from the heading).
 4. Updated the plan: REQ-001, Design Notes (body shape + structure of the Assessment with examples), dependencies, tasks 1.2/1.4/2.6, new Recent Updates + Decisions Made entries. No changes to the Issue body (it doesn't specify the representation format).
 
 Keep it short.
-
-
-
 
 Agreed — it's strictly better than the list-item approach I planned. Verified against the engine source:
 
@@ -5747,19 +5859,20 @@ Two refinements folded into the plan:
 
 Plan updated: REQ-001, Design Notes (body shape + the worked example now shows `### Probability 4` / `### Impact 3`, initial 4×3=12 `high` → residual 2×3=6 `medium`), Dependencies (regex-`@alias` mechanism replaces the `TaskItem` precedent), Tasks 1.2/1.4/2.6 (new rejection cases: out-of-range digit, missing digit, wrong H3 order), plus new Decisions Made + Recent Updates entries. Issue #15's body needed no change (it doesn't specify the representation).
 
----
+______________________________________________________________________
 
 ## User
 
 I intend to implement this via the ORchestrator/Phase-Implementer pattern. That means, that at the end of each phase the Phase-Implementer does a full test, and the after every phase the Orchestrator verifies the results, but does not change anything. Do we have the same setup here?
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 283.8s)
 
 _Thinking:_
 
 The user is asking about the Orchestrator/Phase-Implementer pattern. They're saying they intend to implement it using this pattern, and the points are as follows:
+
 1. At the end of each phase, the Phase-Implementer runs full tests
 2. After every phase, the Orchestrator validates the results but makes no changes
 
@@ -5770,6 +5883,7 @@ This is a question about the available agent types. Let me check the task tool d
 - `phase-implementer`: "Implement one phase of the `.specmgr/feat/<id>/README.md` plan from start to finish — code, tests, phase-end quality gates, and updating the Progress section of the plan — and then stop and report. Driven by `phase-orchestrator`. Not intended for direct selection."
 
 In other words, the `phase-implementer` agent does exist. It says "driven by `phase-orchestrator`", but `phase-orchestrator` is **not** listed among the available agent types. The list of available agent types is as follows:
+
 - architect-designer
 - ccm
 - explore
@@ -5790,6 +5904,7 @@ Interesting point: it's "not intended for direct selection" — meaning it's ass
 Also, a note about my task tool usage policy: "Once work has been delegated to an agent, do not duplicate that work yourself." And the phase-implementer performs quality gates at the end of the phase (full tests), and I (the orchestrator) validate the results after each phase without making changes — this is exactly the pattern the user described.
 
 So the answer is:
+
 - Yes, almost: `phase-implementer` exists as a dedicated subagent type, and it does exactly this: one phase of the `.specmgr/feat/<id>/README.md` plan end-to-end (code + tests + phase-end quality gates + Progress section update), then stop and report.
 - The `phase-orchestrator` agent type does not exist in this environment — the orchestrator role falls to me (the main session): I dispatch phase by phase, and after each report I run/confirm the quality gates (ruff format/check, vulture, full unittest, drift check) and validate without making changes. If anything fails, I report back and have the phase-implementer fix it (rather than fixing it myself), preserving the "orchestrator doesn't change anything" rule.
 
@@ -5804,6 +5919,7 @@ Let me re-read the current plan's Execution approach:
 I should update this to name the phase-implementer/orchestrator pattern. Plus a Decisions Made entry, and a Recent Updates entry.
 
 So my reply is:
+
 1. Direct answer: Yes — with one caveat. `phase-implementer` exists (built for exactly this: one phase of `.specmgr/feat/<id>/README.md` end-to-end, with phase-end quality gates, updating Progress, stopping and reporting). There is no separate `phase-orchestrator` agent type in this environment, so I (the main session) act as orchestrator: I dispatch each phase, validate the results (running the quality gates, reviewing) without making changes, and on failure I re-dispatch to the phase-implementer rather than fixing it myself.
 2. The plan currently says `implementation-specialist` (copied from feat-10). Update the Execution approach + Decisions Made + Recent Updates to pin down the pattern.
 
@@ -5844,22 +5960,19 @@ Get a new timestamp.
 Also, the 13:07 entry's "Next: user review; then Phase 1 (Specification)" — still accurate.
 
 Now the reply: a concise answer:
+
 - Yes — with one caveat. `phase-implementer` exists as a subagent type, purpose-built for exactly this (one phase of `.specmgr/feat/<id>/README.md` end-to-end: code, tests, phase-end quality gates, plan's Progress update, stop and report).
 - There is no `phase-orchestrator` agent type registered here — I (the main session) act as orchestrator: I dispatch each phase and validate results (independent quality-gate rerun + diff review) without changing anything. On failure I re-delegate to the phase-implementer with the findings.
 - The plan previously named `implementation-specialist` (copied from feat-10) — I've now updated the Execution approach / Decisions Made / Recent Updates to pin down the pattern.
 
 Keep it concise.
 
-
-
-
 Let me check what's registered here before answering, and note the plan currently names a different subagent:
-
-
 
 **Tool: bash**
 
 **Input:**
+
 ```json
 {
   "command": "date +%Y-%m-%dT%H:%M:%S%:z"
@@ -5867,12 +5980,13 @@ Let me check what's registered here before answering, and note the plan currentl
 ```
 
 **Output:**
+
 ```
 2026-08-24T13:40:33+02:00
 
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 210.0s)
 
@@ -5884,9 +5998,6 @@ In other words, `phase-implementer` exists, but `phase-orchestrator` does not. T
 
 Alright, let me update the plan with three edits.
 
-
-
-
 **Yes, with one caveat** — and the plan needs a correction, because it currently names `implementation-specialist` (copied over from feat-10). Here's what exists in this environment:
 
 - **`phase-implementer`**: a dedicated sub-agent type, built precisely for this — it implements *exactly one phase* of the `.specmgr/feat/<id>/README.md` plan end-to-end (code, its own tests, quality gate at phase end, updating the plan's Progress section), then stops and reports. It's described as "driven by `phase-orchestrator`" and is not intended for direct selection.
@@ -5894,14 +6005,10 @@ Alright, let me update the plan with three edits.
 
 This matches your setup 1:1. Pinning it down in the plan now:
 
-
-
-
-
-
 **Tool: edit**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md",
@@ -5911,6 +6018,7 @@ This matches your setup 1:1. Pinning it down in the plan now:
 ```
 
 **Output:**
+
 ```
 Edit applied successfully.
 ```
@@ -5918,6 +6026,7 @@ Edit applied successfully.
 **Tool: edit**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md",
@@ -5927,6 +6036,7 @@ Edit applied successfully.
 ```
 
 **Output:**
+
 ```
 Edit applied successfully.
 ```
@@ -5934,6 +6044,7 @@ Edit applied successfully.
 **Tool: edit**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md",
@@ -5943,6 +6054,7 @@ Edit applied successfully.
 ```
 
 **Output:**
+
 ```
 Edit applied successfully.
 ```
@@ -5950,6 +6062,7 @@ Edit applied successfully.
 **Tool: edit**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md",
@@ -5959,11 +6072,12 @@ Edit applied successfully.
 ```
 
 **Output:**
+
 ```
 Edit applied successfully.
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 166.4s)
 
@@ -5973,9 +6087,6 @@ All edits have been applied. Now for the final answer — the user's question wa
 
 The main body has already been conveyed in the previous message, so keep the final wrap-up short.
 
-
-
-
 Plan pinned to the pattern. What's now in the README:
 
 - **Execution approach**: `phase-implementer` per phase (end-to-end: code, tests, phase-end quality gate, this plan's Progress-section update, stop and report) → orchestrator verifies independently, changes nothing → re-delegate on failure → one Conventional Commit per verified phase.
@@ -5984,14 +6095,14 @@ Plan pinned to the pattern. What's now in the README:
 
 One nuance to align expectations: the `phase-implementer`'s own contract includes updating this plan's Progress section as part of the phase (task checkboxes + status lines) — that's the only file it touches besides code/tests. Verification (quality-gate re-run, diff review, ACC evidence check) is mine, read-only on the implementation. When you give the go-ahead, I'll dispatch Phase 1.
 
----
+______________________________________________________________________
 
 ## User
 
-We need to add a task: Create a TARA and RiskMatrix resource. This resource shall help the agent to understand what, when and how to use TARA. And what a "high risk" and "low risk" is. 
+We need to add a task: Create a TARA and RiskMatrix resource. This resource shall help the agent to understand what, when and how to use TARA. And what a "high risk" and "low risk" is.
 In addition, the list_risk resource shall return these additional fields: impact, probability, risk product for the residual risk
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 339.2s)
 
@@ -6000,6 +6111,7 @@ _Thinking:_
 The user is requesting two things:
 
 1. **New task: Creation of TARA and RiskMatrix resources** — MCP resources (something like `specmgr://rsk/tara` and `specmgr://rsk/risk-matrix`, or perhaps a single resource?). The content should be as follows:
+
    - Assist the agent in understanding what TARA is, when and how to use it
    - Define what "high risk" and "low risk" are (i.e., the 5x5 matrix / zone definitions)
 
@@ -6016,6 +6128,7 @@ Regarding the second request: "impact, probability, and risk product of the resi
 Hmm, wait — should the product be a stored/computed value? It's computed: probability × impact. In the summary it's a computed value. No problem.
 
 Regarding the new resources: "TARA and RiskMatrix resources" — two resources:
+
 - `specmgr://rsk/tara` (or `specmgr://rsk/strategy-tara`?) — packaged content explaining TARA: what it is, the four strategies (transfer/accept/reduce/avoid), when and how to use each strategy, and mapping to `## Strategy` section values + `status` vocabulary + `## Mitigation` guidance.
 - `specmgr://rsk/risk-matrix` — packaged content explaining the 5x5 matrix: probability/impact scales with anchors (1=rare…5=almost certain; 1=negligible…5=severe), the zone table, product thresholds (1-4 low, 5-9 medium, 10-14 high, 15-25 very high) — i.e., what "high risk" and "low risk" mean, plus the derived-level semantics and how the initial/residual pair works (residual < initial under reduce).
 
@@ -6026,46 +6139,52 @@ Actually, let me check how `iso25010` is handled to mirror it precisely. Let me 
 Also, the naming: the user says "TARA and RiskMatrix resources". Resource URIs: `specmgr://rsk/tara` and `specmgr://rsk/risk-matrix`.
 
 Plan changes:
+
 1. REQ-005: add the two new resources: `specmgr://rsk/list`, `/example`, `/schema`, `/template`, **`/tara`**, **`/risk-matrix`**.
+
 2. ACC-005: mention that they are registered and their content is verified (tara: the four valid words and usage guidance; risk-matrix: zone table matching the model's derived-level mapping).
+
 3. REQ-007 / package data: add `rsk/data/rsk_tara.md` + `rsk/data/rsk_risk_matrix.md` (the glob `data/*.md` already covers them — mention it).
+
 4. Task 2.3 (`RskSummary`): add `residual_probability`, `residual_impact`, `residual_product` (computed value) fields for residual risk.
+
 5. New tasks in phase 3: `rsk/resources/tara.py` + `rsk/resources/risk_matrix.py` reading the packaged data (mirroring `general/resources/iso25010.py`), plus the content documents themselves. Content writing — part of phase 3 (package data task 3.9 is about example/template; the tara/risk-matrix documents are content so they could go in phase 1 (spec) or phase 3. In feat-10, the reference documents were phase 1. The TARA/risk-matrix documents are spec content — put the drafting in phase 1 (task 1.x) and the resource wiring in phase 3. Hmm, or simpler: a single new task in phase 3 that creates the content + resource. Let me think: phase 1 = spec (schema + reference documents + tests). The TARA/risk-matrix documents are part of the spec (what "high risk" is = part of the schema semantics). Draft in phase 1 (new task 1.5? or extend 1.3), resource implementation in phase 3 (new task). Let me renumber carefully — the note in the plan says edit in place / git history; renumbering shifts cross-references. Cleaner: add task 1.5 (draft `rsk_tara.md` + `rsk_risk_matrix.md` content documents in this feature folder, or… where? The packaged data goes in `rsk/data/`. But the reference documents are placed in the feature folder. The content documents must end up in `rsk/data/` (package data). The phase 3 task (package data) copies/writes them into `rsk/data/`. In feat-10: `tsk/data/tsk_example.md`/`tsk_template.md` were created in phase 3 task 3.9. The reference document (test fixture) was placed in the feature folder in phase 1.
 
    Simplest, most consistent plan:
+
    - Task 1.5 (new, phase 1): draft the packaged content documents `rsk_tara.md` (TARA: what/when/how for each of the four strategies, mapping to `## Strategy` values, interaction with status/mitigation) and `rsk_risk_matrix.md` (probability/impact scale anchors, 5x5 zone table, product thresholds, definition of high/medium/low/very-high, before/after residual semantics) — content must match the model's zone mapping; place drafts in this feature folder, mirroring the `rsk_reference.md` convention; depends on task 1.2.
    - Task 3.x (new, phase 3): `specmgr://rsk/tara` + `specmgr://rsk/risk-matrix` resources + packaged copies `rsk/data/rsk_tara.md`/`rsk_risk_matrix.md` via `_packaged_data.py`, mirroring `general/resources/iso25010.py`; add tests asserting that the documented zone thresholds in `rsk_risk_matrix.md` match `Assessment.level`'s computed mapping (drift guard); depends on task 1.5 + task 3.1 (or 3.9).
 
    Renumbering: insert as task 3.12, and shift 3.12→3.13, 3.13→3.14, 3.14→3.15, 3.15→3.16? Ugh, renumbering touches cross-references (task 3.13 depends on "tasks 3.3, 3.4, 3.5, 3.8, 3.10"; task 3.14 depends on "tasks 3.2-3.13"; task 3.15 depends on "tasks 3.1-3.14"). The plan's note says edit in place; but shifting is fine as long as cross-references are updated. Or append at the end as tasks 3.16/3.17 without renumbering (dependency: the package data entry task 3.12 already covers `data/*.md`). Appending avoids renumbering:
+
    - Task 3.16 (new): content documents → packaged data + resources `specmgr://rsk/tara`, `specmgr://rsk/risk-matrix` — depends on task 1.5, task 3.12.
    - Task 3.17: tests for the two resources (registered in MCP.md; content drift guard) — depends on task 3.16.
-   And task 3.14 (server.py import) depends on "tasks 3.2-3.13" — should now be 3.2-3.17. Task 3.15 (tests) depends on "tasks 3.1-3.14" → 3.1-3.16/3.17… let me update those dependency ranges.
+     And task 3.14 (server.py import) depends on "tasks 3.2-3.13" — should now be 3.2-3.17. Task 3.15 (tests) depends on "tasks 3.1-3.14" → 3.1-3.16/3.17… let me update those dependency ranges.
 
    Hmm, wait, actually — phase 1's task 1.5: the content documents are spec content, but the risk-matrix document's thresholds must match task 1.2's model zone mapping. Order: 1.2 (model) → 1.3 (reference doc) → 1.4 (tests) → 1.5 (tara/matrix content doc, depending on 1.2). No problem.
 
 6. Update the Design Notes "List summary" bullet: add the residual fields.
+
 7. REQ-007: the package data description mentions "package data example/template/schema" — add the TARA/risk-matrix documents.
+
 8. Current Status + Recent Updates + Decisions Made entries.
-9. Also — the issue body? The issue lists attributes, and resources are "same as req". The new resources are an addition beyond that — should issue #15 also be updated? The issue says "resources: same as `req`" — now there are two more (tara, risk-matrix). Minor point: update the issue body line to "* resources: same as `req`, plus `specmgr://rsk/tara` and `specmgr://rsk/risk-matrix` (domain-knowledge documents for the agent)". And the RskSummary fields… the issue body doesn't mention the list's fields, so no problem. Let me update the issue body line — keep the issue as the canonical requirements statement.
+
+9. Also — the issue body? The issue lists attributes, and resources are "same as req". The new resources are an addition beyond that — should issue #15 also be updated? The issue says "resources: same as `req`" — now there are two more (tara, risk-matrix). Minor point: update the issue body line to "\* resources: same as `req`, plus `specmgr://rsk/tara` and `specmgr://rsk/risk-matrix` (domain-knowledge documents for the agent)". And the RskSummary fields… the issue body doesn't mention the list's fields, so no problem. Let me update the issue body line — keep the issue as the canonical requirements statement.
 
 Also, the user says "the list_risk resource" — to make sure I'm naming it correctly in the plan, let me check the actual naming in the code (is it `list_rsk`? or `specmgr://rsk/list`?). Let me look at tsk's resources and summary. Quick exploration:
+
 - `src/biz/dfch/specmgr/tsk/resources/`
 - `src/biz/dfch/specmgr/tsk/models/v1/summary.py`
 - `src/biz/dfch/specmgr/general/resources/iso25010.py` (precedent for domain-knowledge resources)
 
 Let me read these in parallel.
 
-
-
-
 Let me check the existing list-resource and a domain-knowledge resource precedent (`iso25010`) so the new tasks mirror real names:
-
-
-
 
 **Tool: bash**
 
 **Input:**
+
 ```json
 {
   "command": "ls src/biz/dfch/specmgr/tsk/resources/ src/biz/dfch/specmgr/general/resources/ src/biz/dfch/specmgr/general/data/",
@@ -6074,6 +6193,7 @@ Let me check the existing list-resource and a domain-knowledge resource preceden
 ```
 
 **Output:**
+
 ```
 src/biz/dfch/specmgr/general/data/:
 general_compact_history_instructions.md
@@ -6097,6 +6217,7 @@ tsk_template.py
 **Tool: read**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/src/biz/dfch/specmgr/tsk/models/v1/summary.py"
@@ -6104,6 +6225,7 @@ tsk_template.py
 ```
 
 **Output:**
+
 ```
 <path>/home/user/src/biz.dfch.SpecMgr/src/biz/dfch/specmgr/tsk/models/v1/summary.py</path>
 <type>file</type>
@@ -6168,7 +6290,7 @@ tsk_template.py
 </content>
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 174.8s)
 
@@ -6178,16 +6300,12 @@ Interesting — `tsk/resources/` only has tsk_example, tsk_schema, and tsk_templ
 
 The user is saying "the list_risk resource shall return these additional fields" — hmm, they call this a resource. But if feat-13 converted listing into a paged tool `list_rsk`… the user might be using "resource" loosely, or maybe the list resource still exists alongside the paged tool. Let me check what feat-13 did: look at tsk/tools and the feat-13 README, and search for "list_tsk".
 
-
-
-
 I found that `tsk/resources/` doesn't have a list resource — feat-13 (list paging) likely converted listings into paged tools. Let me check how listings are currently exposed:
-
-
 
 **Tool: bash**
 
 **Input:**
+
 ```json
 {
   "command": "ls src/biz/dfch/specmgr/tsk/tools/ src/biz/dfch/specmgr/general/tools/ | head -40; rg -l \"list_tsk|list_req\" src/ tests/ 2>/dev/null || true",
@@ -6196,6 +6314,7 @@ I found that `tsk/resources/` doesn't have a list resource — feat-13 (list pag
 ```
 
 **Output:**
+
 ```
 src/biz/dfch/specmgr/general/tools/:
 __init__.py
@@ -6226,7 +6345,7 @@ validate_tsk.py
 
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 192.0s)
 
@@ -6235,11 +6354,13 @@ _Thinking:_
 In other words, feat-13 added a paged `list_tsk` **tool** (`tsk/tools/list_tsk.py`), and the list resource was removed (per ADR ec9f5262: "Expose <domain>_list as a paged MCP tool (list_<domain>), not as a resource"). My rg for "list_tsk" against src/tests returned nothing — weird, `rg -l` returned nothing? Actually, rg's output shows nothing after the ls output... wait, the command was `rg -l ... || true` — no output means no matches?? But `list_tsk.py` exists. Oh — maybe rg isn't installed either (just like before, `rg: command not found` got swallowed by `|| true`). Right, rg is not available in this environment. Use the grep tool instead.
 
 So the current situation is:
+
 - `specmgr://tsk/list` resource: gone (feat-13)
 - `list_tsk` paged tool: exists
 - `TskSummary`: one line of the listing output
 
 Now the user's request: "the list_risk resource shall return these additional fields" — they're calling it a resource, but the actual vehicle is the `list_rsk` paged tool (ADR ec9f5262). My plan (written before this detail) states REQ-005 as: "MCP resources mirroring `req`: `specmgr://rsk/list`, `/example`, `/schema`, `/template`" — this is stale with respect to feat-13! feat-10 included `specmgr://tsk/list` as a resource, but feat-13 later removed it and replaced it with the paged `list_tsk` tool. Therefore my rsk plan must be corrected as follows:
+
 - Resources: `specmgr://rsk/example`, `/schema`, `/template` (no `/list`)
 - Tools: add the paged `list_rsk` tool (using `RskSummary` + `general/tools/_paging.py`)
 
@@ -6248,14 +6369,15 @@ To mirror this accurately, let me check what feat-13's list_tsk looks like (sign
 Then the user's request "the list_risk resource shall return these additional fields: impact, probability, risk product for the residual risk" → this means the `list_rsk` paged tool / `RskSummary` must include `residual_impact`, `residual_probability`, `residual_product` (risk product = p×i).
 
 To read:
+
 - tsk/tools/list_tsk.py
 - .specmgr/feat/feat-13-list-paging/README.md (skim: what was removed/added, resources vs tools)
 - general/resources/iso25010.py (precedent for domain-knowledge resources — for the new TARA/RiskMatrix resources)
 
-
 **Tool: read**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/src/biz/dfch/specmgr/tsk/tools/list_tsk.py"
@@ -6263,6 +6385,7 @@ To read:
 ```
 
 **Output:**
+
 ```
 <path>/home/user/src/biz.dfch.SpecMgr/src/biz/dfch/specmgr/tsk/tools/list_tsk.py</path>
 <type>file</type>
@@ -6376,6 +6499,7 @@ To read:
 **Tool: read**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/src/biz/dfch/specmgr/general/resources/iso25010.py"
@@ -6383,6 +6507,7 @@ To read:
 ```
 
 **Output:**
+
 ```
 <path>/home/user/src/biz.dfch.SpecMgr/src/biz/dfch/specmgr/general/resources/iso25010.py</path>
 <type>file</type>
@@ -6458,7 +6583,7 @@ To read:
 </content>
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 564.5s)
 
@@ -6471,19 +6596,22 @@ Now everything is clear:
    Note: `req` still has… no wait, feat-13 probably converted all domains (req, uc, tsk, qa, adr?) into `list_<domain>` tools. The tool description I can see in my MCP toolset has `specmgr_list_tsk`? Looking at the available specmgr tools in my function list: `specmgr_list_adr`, `specmgr_list_qa`, `specmgr_list_req`, `specmgr_list_tsk`, `specmgr_list_uc` — yes! All domains have a `list_*` paged tool, and none of them have a list resource. Confirmed.
 
    So the user's "list_risk resource" = the **`list_rsk` paged tool** (the one-line `RskSummary` entries). The plan must be corrected as follows:
+
    - REQ-004 tools: add `list_rsk` (paged, feat-13 contract: `max_results`/`offset`, `PagedResult[RskSummary]`, skip malformed files, default 25 / cap 100)
    - REQ-005 resources: `specmgr://rsk/example`, `/schema`, `/template` only (no `/list`) — plus two new ones: `specmgr://rsk/tara`, `specmgr://rsk/risk-matrix`
    - Task 2.3 RskSummary: in addition to the existing ones, add `residual_probability`, `residual_impact`, `residual_product` (the risk product)
    - New phase-3 tasks: the `list_rsk` tool (mirroring `tsk/tools/list_tsk.py` + the paging contract in feat-13's README), and the two content resources.
 
 2. **iso25010 is a direct precedent for the new resources**: a static packaged markdown read via `read_packaged_text(domain, name, "md")`, parsed into a structured model and returned as JSON (mime_type application/json). For TARA and RiskMatrix:
+
    - Option A (mirror iso25010 exactly): a structured Pydantic model + parser (`parse_tara`, `parse_risk_matrix`) — heavier.
    - Option B: return the markdown text as-is (mime_type text/markdown) — simpler. Does any existing resource return raw text? `req_schema.py` — "mirrors the packaged-data-read style of req/resources/req_schema.py" — let me think about what req_schema returns… probably JSON of the schema. tsk_template/example returns raw markdown text (read_packaged_text). So there is a precedent for raw-text resources (`specmgr://tsk/example`).
 
    For "helping the agent understand what, when, and how to use TARA," raw markdown prose is exactly what an LLM agent wants to read (like the example/template resources). Parsing into a structured model would be overkill and would impose a rigid structure on prose. Proposal: `specmgr://rsk/tara` and `specmgr://rsk/risk-matrix` return packaged markdown text (mime_type `text/markdown`), mirroring `tsk_example`/`tsk_template`, with content written as agent-facing guidance:
+
    - `rsk_tara.md`: what TARA is (Transfer/Accept/Reduce/Avoid), the four valid words (exactly the values allowed in `## Strategy`), when and how to apply each strategy (mapping to the consuunt scenarios: low probability/high impact → transfer; high/high → avoid; high probability/low impact → reduce; low/low → accept), and how strategy interacts with `## Mitigation` and frontmatter status.
    - `rsk_risk_matrix.md`: the 5x5 matrix — anchors of the probability scale (1=rare…5=almost certain), anchors of the impact scale (1=negligible…5=severe), the zone table, product thresholds (1–4 low, 5–9 medium, 10–14 high, 15–25 very high) — what "high risk"/"low risk" means; how to read initial and residual, and the rule that `reduce` implies residual < initial.
-   
+
    Drift guard: the thresholds documented in `rsk_risk_matrix.md` must match the `Assessment.level` computed mapping — a test asserts that the model's zone boundaries agree with the constants documented in the packaged document (e.g., parse the thresholds from the document, or more simply: the test hardcodes the same boundaries and asserts against the model; the real guard is that both are written from the plan). Simplest, most honest statement: "a test asserts the model's derived-level zone mapping against the four threshold boundaries, and the packaged document is written from the same table in the plan's Design Notes; ACC-005 verifies the documented zones agree with the model's mapping."
 
 3. The user's exact words: "the list_risk resource shall return these additional fields: impact, probability, risk product for the residual risk." → `RskSummary` gets `residual_impact: int`, `residual_probability: int`, `residual_product: int` (the product). (Plus, per the earlier design, `initial_level`/`residual_level`/`strategy`/first `scope` are retained.) The tool name is `list_rsk` (naming convention `list_<domain>` — the user said "list_risk," but the convention is `list_rsk`, just as tsk is "list_tsk" and not "list_task". I'll name it `list_rsk` and note this.)
@@ -6524,6 +6652,7 @@ New phase-1 task (content documents): add as Task 1.5:
 "- [ ] Task 1.5: Draft the two packaged domain-knowledge documents (`rsk_tara.md`, `rsk_risk_matrix.md`) from this plan's Design Notes (TARA: what/when/how for each of the four valid words + interaction with `## Mitigation`/`status`; risk matrix: scale anchors, zone table, product thresholds, initial/residual reading rule) — placed in this feature folder until Phase 3 packages them into `rsk/data/` (mirroring the `rsk_reference.md` convention) — depends on: Task 1.2 — status: not-started"
 
 Phase 3: add tasks for the `list_rsk` tool and the two resources. Current phase-3 tasks go up to 3.15. Insert `list_rsk` as Task 3.9 and shift?? Renumbering again… alternative: append:
+
 - Task 3.16: `list_rsk` paged tool — depends on Task 2.3, Task 3.1
 - Task 3.17: `specmgr://rsk/tara` + `specmgr://rsk/risk-matrix` resources + packaged copies `rsk/data/rsk_tara.md`/`rsk_risk_matrix.md` (via `read_packaged_text`, mirroring `tsk/resources/tsk_example.py`) — depends on Task 1.5, Task 3.1
 - Task 3.18: tests for `list_rsk` (paging contract, residual fields present) and the two resources (registered, content present, zone-table/mapping agreement test) — depends on Tasks 3.16, 3.17
@@ -6531,6 +6660,7 @@ Phase 3: add tasks for the `list_rsk` tool and the two resources. Current phase-
 And update Task 3.14 (server.py import): "depends on: Tasks 3.2-3.13" → "Tasks 3.2-3.18"? Wait, 3.14 currently depends on 3.2-3.13; with 3.16-3.18 appended after it, the server.py import line needs to be re-verified after those… actually, the server.py import registers the whole domain package; in feat-10 task 3.15 (server.py) depended on 3.2-3.14. In my plan, task 3.14 = server.py import, depends on "Tasks 3.2-3.13" — but now there are tasks 3.16-3.18 after it that also add tools/resources, so the server.py task should really depend on everything, or at least be re-verified at the end. Cleanest: update 3.14's dependency to "Tasks 3.2-3.13, 3.16-3.18" and task 3.15's (tests) dependency to "Tasks 3.1-3.14, 3.16-3.18". Hmm, but that's a little odd ordering-wise (tests before the new tasks' tests). Alternatively, renumber and insert 3.16-3.18 before server.py/tests… renumbering 3.14→3.16, 3.15→3.17 and inserting list_rsk as 3.14, resources as 3.15? That shifts two tasks and their cross-references (3.13 depends on 3.3,3.4,3.5,3.8,3.10 — unaffected; 3.14(server) depends on 3.2-3.13; 3.15(tests) depends on 3.1-3.14).
 
 Simplest, correct order-preserving approach: renumber so the new tasks slot in logically before the server.py registration and the tests:
+
 - Current 3.14 (server.py import) → becomes 3.17
 - Current 3.15 (tests) → becomes 3.18
 - New 3.14: `list_rsk` tool (depends on 2.3, 3.1)
@@ -6538,6 +6668,7 @@ Simplest, correct order-preserving approach: renumber so the new tasks slot in l
 - New 3.16: tests for list_rsk + the two resources (depends on 3.14, 3.15)
 
 And update dependencies:
+
 - 3.17 (server.py): depends on Tasks 3.2-3.16
 - 3.18 (tests, mirroring tsk): depends on Tasks 3.1-3.17 — hmm, the current 3.15's text is "depends on: Tasks 3.1-3.14". New 3.18: "depends on: Tasks 3.1-3.17".
 
@@ -6547,21 +6678,23 @@ Renumbering affects: task 3.13's dependencies (3.3, 3.4, 3.5, 3.8, 3.10 — no c
 
 Also **Phase 4 / REQ-008**: no change (registry-driven, mcp-docs picks up new tools/resources).
 
-**Issue #15 body**: update — add a line for the new resources and the list fields. The issue body has "* resources: same as `req`". Update to:
-"* resources: same as `req` (no `/list` — listing is the paged `list_rsk` tool per feat-13), plus `specmgr://rsk/tara` and `specmgr://rsk/risk-matrix` (static domain-knowledge documents: when/how to use TARA; what 'high'/'low' risk means on the 5x5 matrix)"
+**Issue #15 body**: update — add a line for the new resources and the list fields. The issue body has "\* resources: same as `req`". Update to:
+"\* resources: same as `req` (no `/list` — listing is the paged `list_rsk` tool per feat-13), plus `specmgr://rsk/tara` and `specmgr://rsk/risk-matrix` (static domain-knowledge documents: when/how to use TARA; what 'high'/'low' risk means on the 5x5 matrix)"
 And add under Attributes:
-"* `list_rsk` summary fields: … impact, probability, and risk product (probability x impact) of the residual risk"
+"\* `list_rsk` summary fields: … impact, probability, and risk product (probability x impact) of the residual risk"
 Hmm, the attributes list is about document attributes; the list fields are about the tool. I'll add a short "Listing" bullet. Let me just append two bullets after the attributes list:
 
-"* listing (`list_rsk` tool, paged): each summary line additionally carries the residual risk's `impact`, `probability`, and risk product (`probability x impact`)"
+"\* listing (`list_rsk` tool, paged): each summary line additionally carries the residual risk's `impact`, `probability`, and risk product (`probability x impact`)"
 
 **Frontmatter updated date**: same day, no change.
 
 **Recent Updates**: new entry (13:5x? get the timestamp):
+
 - Completed: added two requirements per user feedback — (1) new static domain-knowledge resources `specmgr://rsk/tara` (what/when/how of the four valid TARA words) and `specmgr://rsk/risk-matrix` (5x5 scale anchors, zone table, product thresholds — the definition of 'high'/'low' risk), content drafted in Phase 1 and served as packaged markdown; (2) the `list_rsk` summary lines now carry the residual risk's `residual_probability`/`residual_impact`/`residual_product` (risk product). Also corrected the plan against feat-13 (listing is the paged `list_<domain>` tool, not a `specmgr://rsk/list` resource). New tasks 1.5, 3.14-3.16; renumbered old 3.14/3.15 to 3.17/3.18. Issue #15 updated.
 - Next: user review; then Phase 1
 
 **Decisions Made**: new entry:
+
 - **2026-08-24**: Two static domain-knowledge resources (`specmgr://rsk/tara`, `specmgr://rsk/risk-matrix`) are served as raw packaged markdown rather than structured models — rationale: user requirement (the resources should help the agent understand when/how to use TARA and what 'high'/'low' risk means); the audience is an LLM agent reading guidance, and raw prose mirrors the `specmgr://tsk/example`/`/template` text resources, while `iso25010`'s structured parse is for machine data. Content is drafted in Phase 1 from the plan's Design Notes so the zone table and TARA words have a single source of truth; a test guards the documented zone thresholds against the model's derived-`level` mapping.
 - **2026-08-24**: The `RskSummary` lines (paged `list_rsk` tool) carry the residual risk's `residual_probability`/`residual_impact`/`residual_product` in addition to `initial_level`/`residual_level`/`strategy`/first `scope` — rationale: user requirement ("impact, probability, risk product for the residual risk"); `residual_product` (probability x impact) is the matrix coordinate that determines the residual zone, so a register-wide matrix view can be built from the listing alone. Also corrected the plan's REQ-005 against feat-13: no `specmgr://rsk/list` resource exists — listing is the paged `list_rsk` tool (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
 
@@ -6578,7 +6711,7 @@ Also the **Scope Included** bullet: "Full MCP surface (tools/resources/prompts/p
 
 Also **Dependencies**: add ADR ec9f5262 (paging) + `general/tools/_paging.py`, `general/models.summary.DocSummary`. And iso25010 as the domain-knowledge-resource precedent? iso25010 is structured, but I chose raw text like tsk_example. I'll cite `tsk/resources/tsk_example.py` as the raw-text precedent.
 
-**ACC-007** (packaged data from an install): mentions `rsk/data/{...}` — the glob already covers *.md. Fine.
+**ACC-007** (packaged data from an install): mentions `rsk/data/{...}` — the glob already covers \*.md. Fine.
 
 Task 3.12 (package-data entry `data/*.md`, `data/*.json`) — the glob already covers the two new .md documents. Good, no change needed; maybe add a note.
 
@@ -6587,86 +6720,87 @@ Now let me get a timestamp and do all the edits. It's a lot of edits; I'll be ca
 E1. REQ-004 line.
 Current (from the last write):
 "- [ ] REQ-004: MCP tools mirroring `req`'s lifecycle surface: `parse_rsk`,
-  `get_rsk_example`, `get_rsk_template`, `create_rsk`, `update_rsk`,
-  `set_status_rsk`, `delete_rsk` (stub), `validate_rsk`, `get_rsk`"
+`get_rsk_example`, `get_rsk_template`, `create_rsk`, `update_rsk`,
+`set_status_rsk`, `delete_rsk` (stub), `validate_rsk`, `get_rsk`"
 New:
 "- [ ] REQ-004: MCP tools mirroring `req`'s lifecycle surface plus the
-  feat-13 listing contract: `parse_rsk`, `get_rsk_example`,
-  `get_rsk_template`, `create_rsk`, `update_rsk`, `set_status_rsk`,
-  `delete_rsk` (stub), `validate_rsk`, `get_rsk`, and the paged `list_rsk`
-  tool (`max_results`/`offset`, `PagedResult[RskSummary]`, skip-and-
-  continue on unparseable files — mirroring `tsk/tools/list_tsk.py` and
-  feat-13's shared paging contract)"
+feat-13 listing contract: `parse_rsk`, `get_rsk_example`,
+`get_rsk_template`, `create_rsk`, `update_rsk`, `set_status_rsk`,
+`delete_rsk` (stub), `validate_rsk`, `get_rsk`, and the paged `list_rsk`
+tool (`max_results`/`offset`, `PagedResult[RskSummary]`, skip-and-
+continue on unparseable files — mirroring `tsk/tools/list_tsk.py` and
+feat-13's shared paging contract)"
 
 E2. REQ-005 line.
 Current:
 "- [ ] REQ-005: MCP resources mirroring `req`: `specmgr://rsk/list`,
-  `/example`, `/schema`, `/template`"
+`/example`, `/schema`, `/template`"
 New:
 "- [ ] REQ-005: MCP resources: `specmgr://rsk/example`, `/schema`,
-  `/template` (no `/list` — listing is the paged `list_rsk` tool per
-  feat-13 / ADR ec9f5262-9912-49d0-903f-fcfb54f28c13), plus two new static
-  domain-knowledge resources: `specmgr://rsk/tara` (what TARA is, the four
-  valid strategy words, when and how to apply each) and
-  `specmgr://rsk/risk-matrix` (the 5x5 matrix: scale anchors, zone table,
-  product thresholds — what 'high risk' and 'low risk' mean)"
+`/template` (no `/list` — listing is the paged `list_rsk` tool per
+feat-13 / ADR ec9f5262-9912-49d0-903f-fcfb54f28c13), plus two new static
+domain-knowledge resources: `specmgr://rsk/tara` (what TARA is, the four
+valid strategy words, when and how to apply each) and
+`specmgr://rsk/risk-matrix` (the 5x5 matrix: scale anchors, zone table,
+product thresholds — what 'high risk' and 'low risk' mean)"
 
 E3. ACC-004.
 Current:
 "- [ ] ACC-004: Verifies REQ-004 — every listed tool implemented and
-  registered (confirmed present in regenerated `docs/MCP.md`), with
-  `create_rsk`/`update_rsk` validating body-only content the same way
-  `create_req`/`update_req`/`create_tsk`/`update_tsk` do"
+registered (confirmed present in regenerated `docs/MCP.md`), with
+`create_rsk`/`update_rsk` validating body-only content the same way
+`create_req`/`update_req`/`create_tsk`/`update_tsk` do"
 New:
 "- [ ] ACC-004: Verifies REQ-004 — every listed tool implemented and
-  registered (confirmed present in regenerated `docs/MCP.md`), with
-  `create_rsk`/`update_risk`... " — no wait, keep "update_rsk". Add: ", and `list_rsk` returning one-line `RskSummary` entries that include the residual-risk fields (`residual_probability`/`residual_impact`/`residual_product`) with correct paging/clamping per the feat-13 contract"
+registered (confirmed present in regenerated `docs/MCP.md`), with
+`create_rsk`/`update_risk`... " — no wait, keep "update_rsk". Add: ", and `list_rsk` returning one-line `RskSummary` entries that include the residual-risk fields (`residual_probability`/`residual_impact`/`residual_product`) with correct paging/clamping per the feat-13 contract"
 
 E4. ACC-005.
 Current:
 "- [ ] ACC-005: Verifies REQ-005 — every listed resource implemented and
-  registered (confirmed present in regenerated `docs/MCP.md`)"
+registered (confirmed present in regenerated `docs/MCP.md`)"
 New:
 "- [ ] ACC-005: Verifies REQ-005 — every listed resource implemented and
-  registered (confirmed present in regenerated `docs/MCP.md`), with
-  `specmgr://rsk/tara` documenting exactly the four valid TARA words and
-  `specmgr://rsk/risk-matrix`'s zone table matching the model's
-  derived-`level` mapping (threshold test)"
+registered (confirmed present in regenerated `docs/MCP.md`), with
+`specmgr://rsk/tara` documenting exactly the four valid TARA words and
+`specmgr://rsk/risk-matrix`'s zone table matching the model's
+derived-`level` mapping (threshold test)"
 
 E5. Scope Out-of-scope bullet:
 Current:
 "- Aggregated, register-wide views (e.g. a combined risk-matrix chart across
-  all `rsk` documents) — `RskSummary` (see `specmgr://rsk/list`) carries
-  `initial_level`/`residual_level`/`strategy` per document precisely so such a
-  view can be built later without reading each document"
+all `rsk` documents) — `RskSummary` (see `specmgr://rsk/list`) carries
+`initial_level`/`residual_level`/`strategy` per document precisely so such a
+view can be built later without reading each document"
 New:
 "- Aggregated, register-wide views (e.g. a combined risk-matrix chart across
-  all `rsk` documents) — `RskSummary` (one line of the paged `list_rsk`
-  tool) carries `initial_level`/`residual_level`/`strategy` plus the
-  residual-risk coordinates per document precisely so such a view can be
-  built later without reading each document"
+all `rsk` documents) — `RskSummary` (one line of the paged `list_rsk`
+tool) carries `initial_level`/`residual_level`/`strategy` plus the
+residual-risk coordinates per document precisely so such a view can be
+built later without reading each document"
 
 E6. Scope Included bullet:
 Current:
 "- Full MCP surface (tools/resources/prompts/packaged data) mirroring
-  `req`/`tsk`"
+`req`/`tsk`"
 New:
 "- Full MCP surface (tools/resources/prompts/packaged data) mirroring
-  `req`/`tsk`, including the feat-13 paged `list_rsk` tool and the two new
-  domain-knowledge resources (`specmgr://rsk/tara`,
-  `specmgr://rsk/risk-matrix`)"
+`req`/`tsk`, including the feat-13 paged `list_rsk` tool and the two new
+domain-knowledge resources (`specmgr://rsk/tara`,
+`specmgr://rsk/risk-matrix`)"
 
 E7. Dependencies:
 Current tail:
-"  and `_packaged_data.py`, the existing `models/md` engine — in particular
-  `MarkdownSection1WithComment`, `MarkdownSection2`, `MarkdownSection3`,
-  the generic `list[MarkdownStr]` engine (`process_list_field`), and the
-  regex `@alias` heading-constraint mechanism (`AliasType.REGEX` +
-  `match_alias`'s `re.fullmatch`; precedents: `tsk`'s free-form `### `
-  `UpdateEntry`, ADR's numbered `### Option N:` headings)
+" and `_packaged_data.py`, the existing `models/md` engine — in particular
+`MarkdownSection1WithComment`, `MarkdownSection2`, `MarkdownSection3`,
+the generic `list[MarkdownStr]` engine (`process_list_field`), and the
+regex `@alias` heading-constraint mechanism (`AliasType.REGEX` +
+`match_alias`'s `re.fullmatch`; precedents: `tsk`'s free-form `### `
+`UpdateEntry`, ADR's numbered `### Option N:` headings)
+
 - Blocks: None identified yet"
-New:
-"  and `_packaged_data.py`, the feat-13 paging machinery
+  New:
+  " and `_packaged_data.py`, the feat-13 paging machinery
   (`general/tools/_paging.py`, `general/models/summary.py::DocSummary`,
   `general/models/__init__.py::PagedResult`, ADR
   ec9f5262-9912-49d0-903f-fcfb54f28c13), the existing `models/md` engine —
@@ -6683,29 +6817,31 @@ E8. Design Notes — List summary bullet (as drafted above).
 E9. Design Notes — new Domain-knowledge resources bullet (insert after the List summary bullet, before the Prompt naming bullet).
 
 E10. Phase 1 — add Task 1.5 after the Task 1.4 line.
-Task 1.4's current text ends with: "  depends on: Task 1.3 — status: not-started", followed by "#### Phase 2: Pydantic Models & Parser (commit 2)". Insert the new task in between.
+Task 1.4's current text ends with: " depends on: Task 1.3 — status: not-started", followed by "#### Phase 2: Pydantic Models & Parser (commit 2)". Insert the new task in between.
 
 E11. Phase 2 Task 2.3 (residual fields + "for the `list_rsk` tool").
 
 E12. Phase 3 renumbering + new tasks:
+
 - Current 3.14 (server.py) → renumber to 3.17 and update dependency "Tasks 3.2-3.13" → "Tasks 3.2-3.16"
 - Current 3.15 (tests) → renumber to 3.18, "Tasks 3.1-3.14" → "Tasks 3.1-3.17"
 - Insert new 3.14 (list_rsk), 3.15 (tara/risk-matrix resources), 3.16 (their tests) after the current 3.13.
 
 The current 3.13/3.14/3.15 text:
 "- [ ] Task 3.13: `rsk/prompts/create_risk.py` + `update_risk.py` — narrate
-  the tool sequence (mirroring `req/prompts/create_req.py`/`update_req.py`)
-  — depends on: Tasks 3.3, 3.4, 3.5, 3.8, 3.10 — status: not-started
+the tool sequence (mirroring `req/prompts/create_req.py`/`update_req.py`)
+— depends on: Tasks 3.3, 3.4, 3.5, 3.8, 3.10 — status: not-started
+
 - [ ] Task 3.14: add `rsk` to `server.py`'s domain import line (last-line
   import convention — easily forgotten, silently means nothing registers) —
   depends on: Tasks 3.2-3.13 — status: not-started
 - [ ] Task 3.15: `tests/rsk/tools/...`, `tests/rsk/resources/...`,
-  `tests/rsk/prompts/...` mirroring `tests/tsk/tools/`/`tests/tsk/
-  resources/`/`tests/tsk/prompts/` layout — depends on: Tasks 3.1-3.14 —
+  `tests/rsk/prompts/...` mirroring `tests/tsk/tools/`/`tests/tsk/ resources/`/`tests/tsk/prompts/` layout — depends on: Tasks 3.1-3.14 —
   status: not-started"
 
 New:
 "- [ ] Task 3.13: ... (unchanged)
+
 - [ ] Task 3.14: `rsk/tools/list_rsk.py` — the paged `list_rsk` tool
   (`max_results`/`offset` -> `PagedResult[RskSummary]`, mirroring
   `tsk/tools/list_tsk.py` + feat-13's shared paging contract, with the
@@ -6713,8 +6849,7 @@ New:
 - [ ] Task 3.15: `specmgr://rsk/tara` + `specmgr://rsk/risk-matrix`
   resources (`rsk/resources/tara.py`, `rsk/resources/risk_matrix.py` — raw
   packaged markdown via `read_packaged_text`, mirroring
-  `tsk/resources/tsk_example.py`) + packaged copies `rsk/data/
-  rsk_tara.md`/`rsk_risk_matrix.md` from the Phase 1 drafts (Task 1.5) —
+  `tsk/resources/tsk_example.py`) + packaged copies `rsk/data/ rsk_tara.md`/`rsk_risk_matrix.md` from the Phase 1 drafts (Task 1.5) —
   depends on: Tasks 1.5, 3.1 — status: not-started
 - [ ] Task 3.16: `tests/rsk/tools/test_list_rsk.py` (paging contract,
   clamping, skip-on-broken-file, residual fields present and correct) +
@@ -6726,8 +6861,7 @@ New:
   import convention — easily forgotten, silently means nothing registers) —
   depends on: Tasks 3.2-3.16 — status: not-started
 - [ ] Task 3.18: `tests/rsk/tools/...`, `tests/rsk/resources/...`,
-  `tests/rsk/prompts/...` mirroring `tests/tsk/tools/`/`tests/tsk/
-  resources/`/`tests/tsk/prompts/` layout (Task 3.16's tests live under the
+  `tests/rsk/prompts/...` mirroring `tests/tsk/tools/`/`tests/tsk/ resources/`/`tests/tsk/prompts/` layout (Task 3.16's tests live under the
   same tree) — depends on: Tasks 3.1-3.17 — status: not-started"
 
 Wait — task numbering: the old 3.14's text is "Task 3.14: add `rsk` to server.py..." and I'm replacing the whole 3.13-3.15 block with the new 3.13 (unchanged prefix)… I'll replace the block from "- [ ] Task 3.14: add `rsk`" through the end of the old 3.15 with the new tasks 3.14-3.18. oldString = the entire old 3.14 + 3.15 text. newString = new 3.14, 3.15, 3.16, 3.17, 3.18.
@@ -6737,15 +6871,15 @@ Also, ACC-004 mentions "every listed tool" — fine.
 E13. REQ-007:
 Current:
 "- [ ] REQ-007: Packaged example/template/schema data (`rsk/data/`) via the
-  existing generic `general/tools/_packaged_data.py`, with the matching
-  `pyproject.toml` package-data entry, pre-commit hook, and CI step"
+existing generic `general/tools/_packaged_data.py`, with the matching
+`pyproject.toml` package-data entry, pre-commit hook, and CI step"
 New:
 "- [ ] REQ-007: Packaged example/template/schema data plus the two
-  domain-knowledge documents (`rsk/data/`: `rsk_example.md`,
-  `rsk_template.md`, `rsk_schema.json`, `rsk_tara.md`,
-  `rsk_risk_matrix.md`) via the existing generic
-  `general/tools/_packaged_data.py`, with the matching `pyproject.toml`
-  package-data entry, pre-commit hook, and CI step"
+domain-knowledge documents (`rsk/data/`: `rsk_example.md`,
+`rsk_template.md`, `rsk_schema.json`, `rsk_tara.md`,
+`rsk_risk_matrix.md`) via the existing generic
+`general/tools/_packaged_data.py`, with the matching `pyproject.toml`
+package-data entry, pre-commit hook, and CI step"
 
 E14. Current Status — extend the revision list.
 Current:
@@ -6780,16 +6914,12 @@ One more check — the user's wording "list_risk resource": I'll note in my repl
 
 OK, let me run all the edits in a parallel batch (disjoint regions). First, get the timestamp.
 
-
-
-
 I've checked both precedents — and this also reveals a stale part of my plan: **feat-13 removed the `specmgr://<domain>/list` resource and replaced it with a paginated `list_<domain>` tool** (ADR ec9f5262). Therefore, the "list_risk resource" actually becomes a paginated `list_rsk` tool (following the naming convention of `list_tsk`). And `iso25010` gives us a precedent for domain knowledge resources. I'll now update the plan:
-
-
 
 **Tool: bash**
 
 **Input:**
+
 ```json
 {
   "command": "date +%Y-%m-%dT%H:%M:%S%:z"
@@ -6797,12 +6927,13 @@ I've checked both precedents — and this also reveals a stale part of my plan: 
 ```
 
 **Output:**
+
 ```
 2026-08-24T14:09:54+02:00
 
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 228.4s)
 
@@ -6810,10 +6941,10 @@ _Thinking:_
 
 Alright, let's do all the edits. Batch 1: REQ-004, REQ-005, REQ-007, ACC-004, ACC-005, Scope bullets (2 items).
 
-
 **Tool: edit**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md",
@@ -6823,6 +6954,7 @@ Alright, let's do all the edits. Batch 1: REQ-004, REQ-005, REQ-007, ACC-004, AC
 ```
 
 **Output:**
+
 ```
 Edit applied successfully.
 ```
@@ -6830,6 +6962,7 @@ Edit applied successfully.
 **Tool: edit**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md",
@@ -6839,6 +6972,7 @@ Edit applied successfully.
 ```
 
 **Output:**
+
 ```
 Edit applied successfully.
 ```
@@ -6846,6 +6980,7 @@ Edit applied successfully.
 **Tool: edit**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md",
@@ -6855,6 +6990,7 @@ Edit applied successfully.
 ```
 
 **Output:**
+
 ```
 Edit applied successfully.
 ```
@@ -6862,6 +6998,7 @@ Edit applied successfully.
 **Tool: edit**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md",
@@ -6871,6 +7008,7 @@ Edit applied successfully.
 ```
 
 **Output:**
+
 ```
 Edit applied successfully.
 ```
@@ -6878,6 +7016,7 @@ Edit applied successfully.
 **Tool: edit**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md",
@@ -6887,6 +7026,7 @@ Edit applied successfully.
 ```
 
 **Output:**
+
 ```
 Edit applied successfully.
 ```
@@ -6894,6 +7034,7 @@ Edit applied successfully.
 **Tool: edit**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md",
@@ -6903,6 +7044,7 @@ Edit applied successfully.
 ```
 
 **Output:**
+
 ```
 Edit applied successfully.
 ```
@@ -6910,6 +7052,7 @@ Edit applied successfully.
 **Tool: edit**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md",
@@ -6919,11 +7062,12 @@ Edit applied successfully.
 ```
 
 **Output:**
+
 ```
 Edit applied successfully.
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 251.2s)
 
@@ -6931,10 +7075,10 @@ _Thinking:_
 
 Batch 2: Dependencies, Design Notes (list summary items + new domain knowledge items), Phase 1 Task 1.5, Phase 2 Task 2.3, Phase 3 renumbering + new tasks.
 
-
 **Tool: edit**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md",
@@ -6944,6 +7088,7 @@ Batch 2: Dependencies, Design Notes (list summary items + new domain knowledge i
 ```
 
 **Output:**
+
 ```
 Edit applied successfully.
 ```
@@ -6951,6 +7096,7 @@ Edit applied successfully.
 **Tool: edit**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md",
@@ -6960,6 +7106,7 @@ Edit applied successfully.
 ```
 
 **Output:**
+
 ```
 Edit applied successfully.
 ```
@@ -6967,6 +7114,7 @@ Edit applied successfully.
 **Tool: edit**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md",
@@ -6976,6 +7124,7 @@ Edit applied successfully.
 ```
 
 **Output:**
+
 ```
 Edit applied successfully.
 ```
@@ -6983,6 +7132,7 @@ Edit applied successfully.
 **Tool: edit**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md",
@@ -6992,6 +7142,7 @@ Edit applied successfully.
 ```
 
 **Output:**
+
 ```
 Edit applied successfully.
 ```
@@ -6999,6 +7150,7 @@ Edit applied successfully.
 **Tool: edit**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md",
@@ -7008,11 +7160,12 @@ Edit applied successfully.
 ```
 
 **Output:**
+
 ```
 Edit applied successfully.
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 233.8s)
 
@@ -7020,10 +7173,10 @@ _Thinking:_
 
 Batch 3: current status, recent updates (new entry), decisions made (new entry). Also, update the issue body.
 
-
 **Tool: edit**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md",
@@ -7033,6 +7186,7 @@ Batch 3: current status, recent updates (new entry), decisions made (new entry).
 ```
 
 **Output:**
+
 ```
 Edit applied successfully.
 ```
@@ -7040,6 +7194,7 @@ Edit applied successfully.
 **Tool: edit**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md",
@@ -7049,6 +7204,7 @@ Edit applied successfully.
 ```
 
 **Output:**
+
 ```
 Edit applied successfully.
 ```
@@ -7056,6 +7212,7 @@ Edit applied successfully.
 **Tool: edit**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md",
@@ -7065,11 +7222,12 @@ Edit applied successfully.
 ```
 
 **Output:**
+
 ```
 Edit applied successfully.
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 204.6s)
 
@@ -7077,16 +7235,12 @@ _Thinking:_
 
 Next, I'll update the body of GitHub issue #15 to match the new resource and the list fields. I'll update the "resources" line and add notes regarding the list summary.
 
-
-
-
 Now sync issue #15 with the additions:
-
-
 
 **Tool: write**
 
 **Input:**
+
 ```json
 {
   "content": "We create a new artifact type `Risk`:\n\n* abbreviation `rsk`\n* sub-folder as `req`/`tsk`\n* resources: same as `req` — but no `/list` (listing is the paged `list_rsk` tool, per feat-13 / ADR ec9f5262), plus two static domain-knowledge resources: `specmgr://rsk/tara` (what TARA is, the four valid strategy words, when and how to apply each) and `specmgr://rsk/risk-matrix` (the 5x5 matrix: scale anchors, zone table, product thresholds — what 'high risk' and 'low risk' mean)\n* tools: same as `req`, plus the paged `list_rsk` tool (feat-13 listing contract) — each summary line additionally carries the residual risk's `impact`, `probability`, and risk product (`probability x impact`)\n* prompts: `create_risk` and `update_risk`\n\nAttributes:\n\n* frontmatter `status`: `open` / `mitigating` / `accepted` / `occurred` / `closed` / `dropped` (default `open`)\n* H1 title, optional leading comment\n* `## Cause` (mandatory): root condition — why the risk exists\n* `## Trigger` (mandatory): what sets the risk event in motion\n* `## Consequence` (mandatory): what happens if the risk event occurs\n* `## Scope` (mandatory, list): which system/component is affected\n* `## Initial Assessment` (mandatory): 5x5 risk matrix BEFORE mitigation — probability 1..5 and impact 1..5 as H3 headings (`### Probability 4`, `### Impact 3`), derived level: low / medium / high / very high\n* `## Strategy` (mandatory): TARA — `transfer` / `accept` / `reduce` / `avoid`\n* `## Mitigation` (mandatory): treatment measures (\"none\" if strategy is `accept`)\n* `## Residual Assessment` (mandatory): 5x5 risk matrix AFTER mitigation (residual risk)\n* `## Owner` (optional): responsible person/role\n* `## Tags` (optional, list): free-form tags\n* `## More Information` (optional): free-form\n\nThis artifact is needed for risk registers in system specifications: risks with an\nexplicit before/after mitigation 5x5 assessment (residual risk) and a TARA response\nstrategy, kept as first-class managed artifacts alongside requirements and use cases.\n",
@@ -7095,11 +7249,12 @@ Now sync issue #15 with the additions:
 ```
 
 **Output:**
+
 ```
 Wrote file successfully.
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 194.3s)
 
@@ -7109,10 +7264,10 @@ Wait — regarding the H3 heading details I added to the issue body: this is con
 
 Alright, let me apply the issue edit and do a final consistency check: grep the README for any remaining old references (specmgr://rsk/list, old task numbers 3.14/3.15 within cross-references, "list_risk").
 
-
 **Tool: bash**
 
 **Input:**
+
 ```json
 {
   "command": "gh issue edit 15 --body-file /tmp/opencode/rsk-issue-body.md",
@@ -7121,6 +7276,7 @@ Alright, let me apply the issue edit and do a final consistency check: grep the 
 ```
 
 **Output:**
+
 ```
 https://github.com/dfch/biz.dfch.SpecMgr/issues/15
 
@@ -7129,6 +7285,7 @@ https://github.com/dfch/biz.dfch.SpecMgr/issues/15
 **Tool: grep**
 
 **Input:**
+
 ```json
 {
   "include": "README.md",
@@ -7138,6 +7295,7 @@ https://github.com/dfch/biz.dfch.SpecMgr/issues/15
 ```
 
 **Output:**
+
 ```
 Found 4 matches
 /home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md:
@@ -7151,7 +7309,7 @@ Found 4 matches
 
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 210.4s)
 
@@ -7160,14 +7318,14 @@ _Thinking:_
 Line 471 is an actual oversight: Task 3.10 still lists the `specmgr://rsk/list` resource. This needs to be fixed — the current Task 3.10:
 
 "- [ ] Task 3.10: `specmgr://rsk/list` and `specmgr://rsk/schema` resources
-  (packaged `rsk/data/rsk_schema.json`, mirroring `specmgr://req/schema`) —
-  depends on: Task 3.1, Task 2.5 — status: not-started"
+(packaged `rsk/data/rsk_schema.json`, mirroring `specmgr://req/schema`) —
+depends on: Task 3.1, Task 2.5 — status: not-started"
 
 → Should be as follows:
 "- [ ] Task 3.10: `specmgr://rsk/schema` resource
-  (packaged `rsk/data/rsk_schema.json`, mirroring `specmgr://req/schema`;
-  no `/list` resource — listing is the `list_rsk` tool, Task 3.14) —
-  depends on: Task 3.1, Task 2.5 — status: not-started"
+(packaged `rsk/data/rsk_schema.json`, mirroring `specmgr://req/schema`;
+no `/list` resource — listing is the `list_rsk` tool, Task 3.14) —
+depends on: Task 3.1, Task 2.5 — status: not-started"
 
 The other 3 lines (305, 565, 731) are intentional correction references (stating that no such resource exists). No problem there.
 
@@ -7177,16 +7335,12 @@ Also checking ACC-005/REQ-005: currently there's no /list — good. And Task 3.1
 
 Fix Task 3.10.
 
-
-
-
 One real straggler — Task 3.10 still lists the removed `/list` resource (the other three matches are the intentional "no such resource" corrections):
-
-
 
 **Tool: edit**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md",
@@ -7196,11 +7350,12 @@ One real straggler — Task 3.10 still lists the removed `/list` resource (the o
 ```
 
 **Output:**
+
 ```
 Edit applied successfully.
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 223.6s)
 
@@ -7218,31 +7373,31 @@ Task list changes: new 1.5, new 3.14–3.16, renumbered old 3.14/3.15 → 3.17/3
 
 Keep the reply concise.
 
-
-
-
 Done. Both requirements are in the plan, plus one correction I found along the way:
 
 **New: domain-knowledge resources**
+
 - `specmgr://rsk/tara` — what TARA is, the four valid words verbatim, when/how to apply each (low p / high i → transfer, high/high → avoid, high p / low i → reduce, low/low → accept), interaction with `## Mitigation` and `status`.
 - `specmgr://rsk/risk-matrix` — scale anchors (1 = rare … 5 = almost certain; 1 = negligible … 5 = severe), the 5x5 zone table, product thresholds (1–4 low, 5–9 medium, 10–14 high, 15–25 very high), and the initial/residual reading rule.
 - Served as **raw packaged markdown** (`text/markdown`, like `tsk/example`) rather than a structured parse — the audience is an LLM agent reading guidance. Content is drafted in Phase 1 (new Task 1.5) from the plan's Design Notes so the TARA words and zone table have a single source of truth; a test (Task 3.16) guards the documented thresholds against the model's derived-`level` mapping.
 
 **`list_rsk` summary fields**
+
 - `RskSummary` gains `residual_probability`, `residual_impact`, `residual_product` (the risk product, probability × impact) alongside the existing `initial_level`/`residual_level`/`strategy`/first-scope (Task 2.3, ACC-004).
 
 **Correction: it's a tool, not a resource**
+
 - feat-13 (ADR ec9f5262) already removed `specmgr://<domain>/list` resources in favor of paged `list_<domain>` **tools** — MCP resources can't take `max_results`/`offset` parameters. So the "list_risk resource" becomes the paged `list_rsk` tool (new Task 3.14, mirroring `tsk/tools/list_tsk.py`). My plan's REQ-005 still mirrored the pre-feat-13 `req` surface; now fixed, including Task 3.10 which listed the removed `/list` resource. Old Tasks 3.14/3.15 renumbered to 3.17/3.18.
 
 Issue #15 updated to match. Task list is now: 1.1–1.5, 2.1–2.6, 3.1–3.18, 4.1–4.4.
 
----
+______________________________________________________________________
 
 ## User
 
 anything else, before we can implement?
 
----
+______________________________________________________________________
 
 ## Assistant (Plan · qwen3.8:27b-nvfp4-896k · 319.5s)
 
@@ -7252,23 +7407,23 @@ The user is asking, "Before we can start implementation, is there anything else?
 
 Let me think about what's still unresolved or worth verifying (all read-only checks):
 
-1. **Base directory for RSK documents** — where do `rsk` documents get placed? `general/tools/_doc_paths.py` — each domain has a configured base directory (environment variable?). For example, `SPECMGR_ADR_DIR`, `SPECMGR_REQ_DIR`, `SPECMGR_TSK_DIR`, `SPECMGR_QA_DIR`, `SPECMGR_UC_DIR`? I need to check `_doc_paths.py` to see how the base directory is configured (env vars via python-dotenv?), and record that `rsk` requires a base directory config (env var + default + `.env.example`?). This is a real gap that should be verified — feat-10/feat-13 tasks reference `general/tools/_doc_paths.py` as already generalized. Let me check what's in there and whether an environment variable for the rsk directory is needed.
+01. **Base directory for RSK documents** — where do `rsk` documents get placed? `general/tools/_doc_paths.py` — each domain has a configured base directory (environment variable?). For example, `SPECMGR_ADR_DIR`, `SPECMGR_REQ_DIR`, `SPECMGR_TSK_DIR`, `SPECMGR_QA_DIR`, `SPECMGR_UC_DIR`? I need to check `_doc_paths.py` to see how the base directory is configured (env vars via python-dotenv?), and record that `rsk` requires a base directory config (env var + default + `.env.example`?). This is a real gap that should be verified — feat-10/feat-13 tasks reference `general/tools/_doc_paths.py` as already generalized. Let me check what's in there and whether an environment variable for the rsk directory is needed.
 
-2. **`server.py` docstring** — per AGENTS.md, the docstring of server.py is the authoritative list of all resources/tools/prompts and must be updated when adding/removing/renaming. My task list doesn't explicitly include updating the server.py docstring! Task 3.17 (currently 3.17) is only "add `rsk` to the domain import line in `server.py`". The docstring update should be part of that task or a separate task. Let me check whether the feat-10/feat-13 plans included it… Actually, docs/MCP.md is auto-generated, and the docstring is hand-maintained. Task 3.17 should be amended to include the docstring update. Worth pointing out.
+02. **`server.py` docstring** — per AGENTS.md, the docstring of server.py is the authoritative list of all resources/tools/prompts and must be updated when adding/removing/renaming. My task list doesn't explicitly include updating the server.py docstring! Task 3.17 (currently 3.17) is only "add `rsk` to the domain import line in `server.py`". The docstring update should be part of that task or a separate task. Let me check whether the feat-10/feat-13 plans included it… Actually, docs/MCP.md is auto-generated, and the docstring is hand-maintained. Task 3.17 should be amended to include the docstring update. Worth pointing out.
 
-3. **`_doc_paths.py`/`_paths.py` for rsk** — Task 3.1 covers `rsk/tools/_paths.py` etc. as a thin wrapper over `general/tools/_doc_paths.py`. But does `general/tools/_doc_paths.py` need a new entry for the rsk base directory (function `rsk_base_dir()` or env var `SPECMGR_RSK_DIR`)? Let me read `_doc_paths.py` to check the shape.
+03. **`_doc_paths.py`/`_paths.py` for rsk** — Task 3.1 covers `rsk/tools/_paths.py` etc. as a thin wrapper over `general/tools/_doc_paths.py`. But does `general/tools/_doc_paths.py` need a new entry for the rsk base directory (function `rsk_base_dir()` or env var `SPECMGR_RSK_DIR`)? Let me read `_doc_paths.py` to check the shape.
 
-4. **Environment configuration** — the project uses `python-dotenv`. There may be a `.env.example` or documentation about the base directory. Check.
+04. **Environment configuration** — the project uses `python-dotenv`. There may be a `.env.example` or documentation about the base directory. Check.
 
-5. **`whitelist.py` for vulture** — if I add a `_validate_*` method, a whitelist entry is needed. For rsk, the assessment no longer uses the TaskItem pattern (value-in-heading is enforced by parse-time match_alias — is an eager validator even needed in the first place? The computed `value: int` field is still lazy! `match_alias` enforces the *format* of the heading at parse time, and the computed `value` field is only evaluated on access. But since the format is enforced at parse time, `value` cannot be invalid — the digit always exists and is in range. So the TaskItem-style eager validation problem doesn't apply: the heading constraint guarantees the validity of the computed field. But wait — direct Python construction (e.g., `Assessment(probability=Probability())`)? The same concern as feat-10's `RecentUpdates(updates=[])` (direct construction bypassing from_text) applies. `create_rsk`/`update_rsk` always go through parse (from_text), so it's fine. Still, a `model_validator` may be needed on `Risk` to force evaluation of `level` (product of two computed values) — `level` is a computed field on `Assessment` derived from the computed `value` fields; if the values are valid (format-enforced at parse time), level is always computable. Direct construction of `Assessment` with invalid leaves — the leaves are sections, and constructing them directly without `_value` would… `.text` returns "" and `value` extraction would fail at dump time, not at construction time. Hmm — is a model-level validator still prudent? The feat-10 lesson was about the "successful construction is validation" convention for tools. For rsk, tools always parse from text, so the alias check happens at parse time. Direct Python construction isn't a tool path. I think we can record this as a design consideration: a `model_validator(mode="after")` on `Assessment` that forces `.value` on both children (cheap, consistent with convention). It's not a blocker; can be decided in Phase 1. Worth mentioning as an open micro-decision? Maybe I can fold it into the task notes. Let me mention it briefly.
+05. **`whitelist.py` for vulture** — if I add a `_validate_*` method, a whitelist entry is needed. For rsk, the assessment no longer uses the TaskItem pattern (value-in-heading is enforced by parse-time match_alias — is an eager validator even needed in the first place? The computed `value: int` field is still lazy! `match_alias` enforces the *format* of the heading at parse time, and the computed `value` field is only evaluated on access. But since the format is enforced at parse time, `value` cannot be invalid — the digit always exists and is in range. So the TaskItem-style eager validation problem doesn't apply: the heading constraint guarantees the validity of the computed field. But wait — direct Python construction (e.g., `Assessment(probability=Probability())`)? The same concern as feat-10's `RecentUpdates(updates=[])` (direct construction bypassing from_text) applies. `create_rsk`/`update_rsk` always go through parse (from_text), so it's fine. Still, a `model_validator` may be needed on `Risk` to force evaluation of `level` (product of two computed values) — `level` is a computed field on `Assessment` derived from the computed `value` fields; if the values are valid (format-enforced at parse time), level is always computable. Direct construction of `Assessment` with invalid leaves — the leaves are sections, and constructing them directly without `_value` would… `.text` returns "" and `value` extraction would fail at dump time, not at construction time. Hmm — is a model-level validator still prudent? The feat-10 lesson was about the "successful construction is validation" convention for tools. For rsk, tools always parse from text, so the alias check happens at parse time. Direct Python construction isn't a tool path. I think we can record this as a design consideration: a `model_validator(mode="after")` on `Assessment` that forces `.value` on both children (cheap, consistent with convention). It's not a blocker; can be decided in Phase 1. Worth mentioning as an open micro-decision? Maybe I can fold it into the task notes. Let me mention it briefly.
 
-6. **Package data glob in pyproject** — Task 3.12 covers it. The glob for `rsk`'s `data/*.md` covers tara/risk-matrix. Good.
+06. **Package data glob in pyproject** — Task 3.12 covers it. The glob for `rsk`'s `data/*.md` covers tara/risk-matrix. Good.
 
-7. **`specmgr schema` registry + pre-commit/CI** — covered in Task 2.5/3.12.
+07. **`specmgr schema` registry + pre-commit/CI** — covered in Task 2.5/3.12.
 
-8. **Branch/worktree state** — currently on `feat-15-add-artifact-type-risk` (from dev). Untracked feature folder. Working tree clean otherwise? `git status` showed only untracked feature folders. Also: the plan file is untracked — per AGENTS.md, pylint only sees tracked files, but the README is markdown, not Python. Pre-commit hooks scope to changes in src/tests; no issue. Should the feature folder be committed before Phase 1? feat-10's Phase 1 commit included the reference document… The plan is the work unit; committing the plan first is good practice (the feat-10 branch had plan commits). My "one Conventional Commit per phase" — Phase 1's commit would include the plan file if it's uncommitted. Better: commit the plan (docs commit) now as baseline, so phase commits are clean. Point to raise: propose a `docs(feat-15): add risk artifact type feature plan` commit before Phase 1. But plan mode — I can't commit now; I'll just note it.
+08. **Branch/worktree state** — currently on `feat-15-add-artifact-type-risk` (from dev). Untracked feature folder. Working tree clean otherwise? `git status` showed only untracked feature folders. Also: the plan file is untracked — per AGENTS.md, pylint only sees tracked files, but the README is markdown, not Python. Pre-commit hooks scope to changes in src/tests; no issue. Should the feature folder be committed before Phase 1? feat-10's Phase 1 commit included the reference document… The plan is the work unit; committing the plan first is good practice (the feat-10 branch had plan commits). My "one Conventional Commit per phase" — Phase 1's commit would include the plan file if it's uncommitted. Better: commit the plan (docs commit) now as baseline, so phase commits are clean. Point to raise: propose a `docs(feat-15): add risk artifact type feature plan` commit before Phase 1. But plan mode — I can't commit now; I'll just note it.
 
-9. **GitHub issue #15** — open, linked. Good.
+09. **GitHub issue #15** — open, linked. Good.
 
 10. **`docs/adr/README.md` TOC / ADR** — no new ADR is planned. Fine.
 
@@ -7281,28 +7436,25 @@ Let me think about what's still unresolved or worth verifying (all read-only che
 14. **`implement_task`-equivalent prompt** — not needed for rsk (issue only specifies create_risk/update_risk). Fine.
 
 15. **`question`/clarification** — the plan says "user review; then Phase 1" — the user is effectively reviewing now. Remaining open questions to the user:
+
     - Confirm commit of the plan baseline before Phase 1 (conventional? feat-10 committed the plan within a phase commit? Actually feat-10: "Phase 1 (9ace8dd) and Phase 2 (1cb9ffe) committed" — the plan file itself was probably included in the Phase 1 commit or committed earlier. Let me quickly check git log for when the feat-10 README was committed… I can read the git log (read-only). Check: `git log --oneline -- .specmgr/feat/feat-10-add-artifact-type-tasklist/README.md | tail -3` to see the first commit.
     - Anything about the rsk base directory (env var naming, e.g., `SPECMGR_RSK_DIR`).
 
 Let me do read-only checks:
+
 - Read `general/tools/_doc_paths.py`
-- Check `.env` / dotenv usage: grep for "SPECMGR_" env vars in src and .env.example
+- Check `.env` / dotenv usage: grep for "SPECMGR\_" env vars in src and .env.example
 - git log for when the feat-10 README first appeared (to learn the plan commit convention)
 - Check the tail of the server.py docstring for the registration list convention (to confirm docstring update is needed — I already know from AGENTS.md, but confirm it's the docstring, e.g., "the docstring of server.py is the single most authoritative…").
 
 Let me run these in parallel.
 
-
-
-
 Good moment to audit the plan for gaps before implementation. Let me check a few things read-only: how base directories are configured per domain (a likely missing task), the plan-commit convention, and the `server.py` docstring requirement:
-
-
-
 
 **Tool: read**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/src/biz/dfch/specmgr/general/tools/_doc_paths.py"
@@ -7310,6 +7462,7 @@ Good moment to audit the plan for gaps before implementation. Let me check a few
 ```
 
 **Output:**
+
 ```
 <path>/home/user/src/biz.dfch.SpecMgr/src/biz/dfch/specmgr/general/tools/_doc_paths.py</path>
 <type>file</type>
@@ -7567,6 +7720,7 @@ Good moment to audit the plan for gaps before implementation. Let me check a few
 **Tool: bash**
 
 **Input:**
+
 ```json
 {
   "command": "git log --oneline --follow --reverse -- .specmgr/feat/feat-10-add-artifact-type-tasklist/README.md | head -3; echo ---; grep -rn \"SPECMGR_\" .env.example .env* 2>/dev/null | head; echo ---; grep -rln \"os.getenv\\|getenv(\" src/biz/dfch/specmgr/general/ | head",
@@ -7575,6 +7729,7 @@ Good moment to audit the plan for gaps before implementation. Let me check a few
 ```
 
 **Output:**
+
 ```
 5985a1d docs(feat-10): plan tsk (TaskList) artifact type feature
 c27328b docs(feat-10): fix schema-generation task sequencing
@@ -7584,7 +7739,7 @@ afb1c96 docs(feat-10): mark Phase 1 done, log progress
 
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Plan · qwen3.8:27b-nvfp4-896k · 359.0s)
 
@@ -7596,51 +7751,49 @@ Plan-commit convention: `docs(feat-10): plan tsk (TaskList) artifact type featur
 
 Other gaps to consider:
 
-1. **server.py docstring** — AGENTS.md: "the module docstring of server.py itself is the single most authoritative, currently maintained list of every resource/tool/prompt this MCP server registers — read it before referencing this file for details, and update it every time you add/remove/rename a resource, tool, or prompt." My Task 3.17 only says "add `rsk` to the domain import line of `server.py`". It has to also include updating the docstring. This is a real gap in the task wording. Let me quickly check the shape of the server.py docstring (read the first ~60 lines) to be precise.
+01. **server.py docstring** — AGENTS.md: "the module docstring of server.py itself is the single most authoritative, currently maintained list of every resource/tool/prompt this MCP server registers — read it before referencing this file for details, and update it every time you add/remove/rename a resource, tool, or prompt." My Task 3.17 only says "add `rsk` to the domain import line of `server.py`". It has to also include updating the docstring. This is a real gap in the task wording. Let me quickly check the shape of the server.py docstring (read the first ~60 lines) to be precise.
 
-2. **`whitelist.py` (vulture)** — if I add private `_validate_*` helpers or module-level functions referenced only from Pydantic decorators, I need whitelist entries. In rsk, the alias-enforced headings mostly eliminate the need for custom validators; still, a new `_ALLOWED_TARA_STRATEGIES` constant etc. may get flagged? No — vulture with --min-confidence 60 against src/ with whitelist.py; constants used in a validator are used. Only dead code gets flagged. The phase-implementer + quality gate (vulture) catches it. No task needed; mention it? The phase gate runs vulture. OK.
+02. **`whitelist.py` (vulture)** — if I add private `_validate_*` helpers or module-level functions referenced only from Pydantic decorators, I need whitelist entries. In rsk, the alias-enforced headings mostly eliminate the need for custom validators; still, a new `_ALLOWED_TARA_STRATEGIES` constant etc. may get flagged? No — vulture with --min-confidence 60 against src/ with whitelist.py; constants used in a validator are used. Only dead code gets flagged. The phase-implementer + quality gate (vulture) catches it. No task needed; mention it? The phase gate runs vulture. OK.
 
-3. **`RskSummary` subclasses `DocSummary`** — Task 2.3 should state that (mirror `TskSummary`). Minor wording; the implementer mirrors tsk anyway. Could add to the task wording: "(subclass of `DocSummary` like `TskSummary`)".
+03. **`RskSummary` subclasses `DocSummary`** — Task 2.3 should state that (mirror `TskSummary`). Minor wording; the implementer mirrors tsk anyway. Could add to the task wording: "(subclass of `DocSummary` like `TskSummary`)".
 
-4. **Commit order / baseline commit** — add an explicit "before Phase 1" step: commit the plan as `docs(feat-15): plan risk (RSK) artifact type feature` (feat-10 convention: 5985a1d). Also, subsequent phase progress updates: the phase-implementer updates the Progress section as part of the phase (its contract); per feat-10, a separate docs commit for progress? In feat-10: "afb1c96 docs(feat-10): mark Phase 1 done, log progress" — a docs commit after the Phase 1 implementation commit (9ace8dd). So the pattern per phase is: (a) phase-implementer implements + quality gate + updates plan progress; (b) orchestrator verifies; (c) implementation commit (feat(rsk): ...) + docs commit for plan progress? Or combined? feat-10 shows separate commits. My Execution approach says "one Conventional Commit per verified phase" — but the evidence shows an implementation commit and a docs commit. Hmm: let me actually check the sequence: 9ace8dd (Phase 1: Specification), 1cb9ffe (Phase 2), cba8799 (Phase 3) + a Phase 4 commit. And the docs(feat-10) commits — 5985a1d is before 9ace8dd (the plan), afb1c96 is "mark Phase 1 done, log progress" — where does it sit relative to 9ace8dd? `git log --oneline -10` on that branch… let me not dig too deep; I'll note in the plan that the baseline plan commit goes first, and per feat-10 precedent, progress updates may be separate docs commits (leave the details to execution). Actually, to keep the plan clean: add one line to the Execution approach: "Before Phase 1, the current plan state is committed as a `docs(feat-15):` baseline (feat-10 precedent: `5985a1d`), so each phase's commit contains only that phase's changes."
+04. **Commit order / baseline commit** — add an explicit "before Phase 1" step: commit the plan as `docs(feat-15): plan risk (RSK) artifact type feature` (feat-10 convention: 5985a1d). Also, subsequent phase progress updates: the phase-implementer updates the Progress section as part of the phase (its contract); per feat-10, a separate docs commit for progress? In feat-10: "afb1c96 docs(feat-10): mark Phase 1 done, log progress" — a docs commit after the Phase 1 implementation commit (9ace8dd). So the pattern per phase is: (a) phase-implementer implements + quality gate + updates plan progress; (b) orchestrator verifies; (c) implementation commit (feat(rsk): ...) + docs commit for plan progress? Or combined? feat-10 shows separate commits. My Execution approach says "one Conventional Commit per verified phase" — but the evidence shows an implementation commit and a docs commit. Hmm: let me actually check the sequence: 9ace8dd (Phase 1: Specification), 1cb9ffe (Phase 2), cba8799 (Phase 3) + a Phase 4 commit. And the docs(feat-10) commits — 5985a1d is before 9ace8dd (the plan), afb1c96 is "mark Phase 1 done, log progress" — where does it sit relative to 9ace8dd? `git log --oneline -10` on that branch… let me not dig too deep; I'll note in the plan that the baseline plan commit goes first, and per feat-10 precedent, progress updates may be separate docs commits (leave the details to execution). Actually, to keep the plan clean: add one line to the Execution approach: "Before Phase 1, the current plan state is committed as a `docs(feat-15):` baseline (feat-10 precedent: `5985a1d`), so each phase's commit contains only that phase's changes."
 
-5. **`docs/` drift**: Phase 4 covers it.
+05. **`docs/` drift**: Phase 4 covers it.
 
-6. **Untracked files / working tree**: the feature folder is untracked; everything else is clean. Good.
+06. **Untracked files / working tree**: the feature folder is untracked; everything else is clean. Good.
 
-7. **Issue #15 labels?** Other issues have labels (enhancement, etc.). #10 had none? `gh issue view 10` — I didn't check labels. #14 had none; #7 has "enhancement"; #1/#2 have labels. Not important.
+07. **Issue #15 labels?** Other issues have labels (enhancement, etc.). #10 had none? `gh issue view 10` — I didn't check labels. #14 had none; #7 has "enhancement"; #1/#2 have labels. Not important.
 
-8. **Python version note**: the implementer uses `uv run --frozen` per AGENTS.md. The phase-implementer prompt should include the exact quality-gate commands from AGENTS.md (ruff format --check, ruff check, vulture, unittest). My Execution approach lists the gates. The phase-implementer sub-agent knows the repo (it reads AGENTS.md itself). OK.
+08. **Python version note**: the implementer uses `uv run --frozen` per AGENTS.md. The phase-implementer prompt should include the exact quality-gate commands from AGENTS.md (ruff format --check, ruff check, vulture, unittest). My Execution approach lists the gates. The phase-implementer sub-agent knows the repo (it reads AGENTS.md itself). OK.
 
-9. **One more schema consideration**: `## Scope` as `list[MarkdownStr]` — "which system is affected" — fine. Tags are optional. Fine.
+09. **One more schema consideration**: `## Scope` as `list[MarkdownStr]` — "which system is affected" — fine. Tags are optional. Fine.
 
 10. **`rsk_reference.md` + example/template docs**: Tasks 1.3 and 3.9. Example/template must be consistent with the schema (TARA words, H3 assessment). The Phase 3 implementer writes from the reference. Fine.
 
 11. **ACC-007 (wheel install check)** — covered.
 
 So the remaining items:
+
 - (a) Task 3.17 wording: also update the server.py module docstring (AGENTS.md requirement).
 - (b) Execution approach: baseline `docs(feat-15):` plan commit before Phase 1 (feat-10 precedent).
 - (c) Task 2.3: note that `RskSummary` subclasses `DocSummary` (mirror `TskSummary`).
 - (d) Possibly an explicit note: no new base-directory/env-var task is needed — `doc_base_dir("rsk")` is generic (`{SPECMGR_DOCS_DIR or docs}/rsk`) — verified; add to Dependencies or Design Notes? This is a verified non-gap; a one-liner in Design Notes prevents the implementer from worrying about it. Add to Task 3.1 wording: "(`doc_base_dir("rsk")` — no new env var; the generic `{SPECMGR_DOCS_DIR or docs}/rsk`)".
 
 Any remaining questions for the user?
+
 - Do you want me to commit the baseline plan commit now? Plan mode → can't commit now. The user said "before we can implement" — so once we exit plan mode, the first action is that commit. I could ask: commit the baseline plan now (as soon as plan mode is lifted) — or should the plan ride along with the Phase 1 commit? Per convention (5985a1d), it's a separate docs commit. I'll present it as the recommended first step and ask for a go-ahead (the go-ahead is implicit in "before we can implement" — they want a list of remaining items).
 
 - Also: any open design items? The only micro-decision I flagged earlier: whether `Assessment` needs an eager `model_validator` given the alias-enforced headings (I argued it's not needed for the tool path; direct construction isn't a supported path). Let me check how `create_tsk`/`update_tsk` handle validation — they parse via the model-layer parse function; direct construction only happens via the tool through parsing. In tsk, the TaskItem problem existed because the computed field (checkbox parsing) could be invalid even with a valid parse… no wait — the reason the TaskItem problem existed was that a malformed marker `- [z] foo` "passed" parsing (the marker is free-form text in commonmark) and the computed field failed silently. In rsk, a malformed heading fails `match_alias` at parse time → so no silent gap. A `model_validator` to force `.level` evaluation would only guard direct Python construction (e.g., `RskDocument(...)` built without parsing), but no tool does that. `create_rsk` builds frontmatter + parses body. So: not needed. But for consistency with the "successful construction is validation" convention (if someone hand-constructs in the future), an after-validator forcing `.value`/`.level` is cheap. I'll mention it as an optional micro-decision for Phase 1, defaulting to "add it, mirroring the TaskItem precedent" — no wait, that contradicts… Let me think about what's cleanest for the plan: record the decision: "No eager-validation `model_validator` is needed on `Assessment`/`Risk` for the tool path, because heading-format violations fail at parse time (`match_alias` assertion in `from_text`) — unlike `TaskItem`, whose marker was free text. (The Phase 1 implementer may still add a low-cost after-validator if the direct-construction path proves to be a concern; the plan's default: no.)" Hmm — this is a design detail; better to keep the plan decisive: "not needed" with rationale. Add as a note in Design Notes (Assessment structure bullet).
 
 Anything else? Let me quickly check the server.py docstring to confirm what needs updating (read the top of server.py).
 
-
-
-
 I've verified `_doc_paths.py` — it's completely generic (`doc_base_dir("rsk")` → `{SPECMGR_DOCS_DIR or docs}/rsk`), so **no base directory / environment variable tasks are needed**. And feat-10's git history shows the plan commit convention (`docs(feat-10): plan tsk...` before implementation). Let me check one more thing — the registration list in the `server.py` docstring that AGENTS.md says must be kept in sync:
-
-
 
 **Tool: read**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/src/biz/dfch/specmgr/server.py",
@@ -7649,6 +7802,7 @@ I've verified `_doc_paths.py` — it's completely generic (`doc_base_dir("rsk")`
 ```
 
 **Output:**
+
 ```
 <path>/home/user/src/biz.dfch.SpecMgr/src/biz/dfch/specmgr/server.py</path>
 <type>file</type>
@@ -7738,7 +7892,7 @@ I've verified `_doc_paths.py` — it's completely generic (`doc_base_dir("rsk")`
 </content>
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Plan · qwen3.8:27b-nvfp4-896k · 358.7s)
 
@@ -7749,12 +7903,14 @@ Confirmed — the docstring in server.py lists all resources and tools (and prob
 So here's my audit summary. Remaining items before implementation:
 
 **Gaps found (should be fixed in the plan):**
+
 1. **Task 3.17 is missing the docstring update for server.py** — AGENTS.md mandates keeping the module docstring in sync (the authoritative list of resources/tools/prompts). For rsk: 5 resources (schema/example/template/tara/risk-matrix), 10 tools (parse_rsk, get_rsk, list_rsk, get_rsk_example, get_rsk_template, create_rsk, update_rsk, set_status_rsk, delete_rsk stub, validate_rsk), 2 prompts (create_risk, update_risk), plus a note in the "no {id} resource" section.
 2. **Baseline commit of the plan before Phase 1** — feat-10's convention: a `docs(feat-10): plan tsk (TaskList) artifact type feature` commit before any implementation commit. Add this to the execution approach.
 3. **Task 2.3 wording**: `RskSummary` subclasses `DocSummary` (mirroring `TskSummary`) — explicit.
 4. **Task 3.1 wording**: note that no new env var/base-dir wiring is needed — `doc_base_dir("rsk")` is generic (`{SPECMGR_DOCS_DIR or docs}/rsk`) — verified.
 
 **Verified non-gaps:**
+
 - Base dir: generic, no new task needed ✓
 - Package data glob `data/*.md` already covers tara/risk-matrix ✓ (Task 3.12)
 - Registry-driven docs/mcp-docs/schema CI steps cover rsk ✓ (Phase 4 Task 4.3)
@@ -7764,6 +7920,7 @@ So here's my audit summary. Remaining items before implementation:
 - Working tree: only the untracked feature folder; branch feat-15-add-artifact-type-risk is ready; issue #15 is open ✓
 
 **Questions for the user (minor):**
+
 - Do you approve the two micro-decisions: (a) no eager-validation validator on Assessment (parse-time alias check is sufficient), (b) baseline docs commit of the plan before Phase 1? Or should I just state them as recommendations and have the user confirm? Plan mode says to ask when weighing tradeoffs. These are trivial; present as recommendations baked into the plan fix.
 
 Since plan mode is read-only, I cannot apply these edits right now. I'll present: audit result + the 4 concrete plan fixes I'm about to make (upon plan mode release) + the 2 recommendations to confirm. Actually — should I ask about the validator decision? It's a substantive design choice. Present it clearly as a recommendation with rationale and ask for confirmation along with the baseline commit. Use the question tool? The user asked "is there anything else before we can implement?" — they're asking for a list. Present the list and ask for confirmation on the 2 judgment items. Use the question tool for the 2 items (multi-question). Hmm, the question tool is good here: (1) eager-validation validator: not needed (recommended) / add it anyway for consistency with tsk; (2) baseline plan commit before Phase 1: yes (recommended) / include it in Phase 1's commit.
@@ -7778,9 +7935,6 @@ Actually, let me reconsider (2): is it even a question to begin with? The feat-1
 
 Keep it concise.
 
-
-
-
 The audit found the plan is nearly implementation-ready. Four concrete fixes and two recommendations:
 
 **Fixes I'll apply to the plan (read-only now, applied on exit from plan mode):**
@@ -7794,11 +7948,10 @@ The audit found the plan is nearly implementation-ready. Four concrete fixes and
 
 **Two recommendations for your sign-off:**
 
-
-
 **Tool: question**
 
 **Input:**
+
 ```json
 {
   "questions": [
@@ -7835,11 +7988,12 @@ The audit found the plan is nearly implementation-ready. Four concrete fixes and
 ```
 
 **Output:**
+
 ```
 User has answered your questions: "Does Assessment need tsk's _validate_items_eagerly model_validator?"="Not needed for rsk (Recommended)", "Commit the plan baseline before Phase 1 starts?"="Yes, separate docs commit (Recommended)". You can now continue with the user's answers in mind.
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Plan · qwen3.8:27b-nvfp4-896k · 256.2s)
 
@@ -7852,6 +8006,7 @@ So, should I now apply the 4 fixes to the plan? No — plan mode is strictly rea
 Hmm, wait. Let me think about what "plan mode" means in this workflow: "the user indicated they don't yet want you to execute." My job now is to present a well-considered plan and resolve open items before implementation starts. The user's question was "is there anything else before we can implement?" — I did the audit, found the gaps, got approval on the 2 judgment items.
 
 So the correct action is: present the final pre-implementation checklist — i.e., what will happen the moment plan mode is lifted:
+
 1. Apply the 4 plan fixes + record the 2 approved decisions (validator decision, baseline commit convention) in the README (edit)
 2. Commit the baseline: `docs(feat-15): plan risk (RSK) artifact type feature`
 3. Dispatch Phase 1 to phase-implementer
@@ -7861,12 +8016,10 @@ And confirm: nothing else is pending. I should be concise. Don't make any more t
 Actually — one nuance: the plan fixes are edits to the plan file, and in this workflow that is itself part of "planning" (plan documents are editable as plans, not as system implementation). But the system reminder is absolute: "any and all file edits, modifications" are forbidden, with zero exceptions. So, no. I'll enumerate them precisely so they can be applied immediately upon release.
 
 Keep the reply compact:
+
 - Both approved → recorded as decisions.
 - Final pre-implementation sequence (3 steps) with exact contents.
 - Statement that nothing else is pending.
-
-
-
 
 Both sign-offs recorded. That closes the audit — **nothing else is pending**. The moment plan mode lifts, the sequence is:
 
@@ -7881,7 +8034,7 @@ Both sign-offs recorded. That closes the audit — **nothing else is pending**. 
 
 Ready when you are.
 
----
+______________________________________________________________________
 
 ## User
 
@@ -7889,13 +8042,14 @@ Ready when you are.
 2. Commit the baseline plan
 3. DO NOT dispatch Phase 1
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 346.5s)
 
 _Thinking:_
 
 Plan mode has been lifted. What the user is asking me to do is:
+
 1. Apply the plan modifications (4 modifications + 2 approved decisions)
 2. Commit the baseline plan
 3. Do not dispatch Phase 1
@@ -7903,12 +8057,15 @@ Plan mode has been lifted. What the user is asking me to do is:
 Let me apply the edits to the README:
 
 **Modification 1 — Task 3.17** (server.py import line): Currently:
+
 ```
 - [ ] Task 3.17: add `rsk` to `server.py`'s domain import line (last-line
   import convention — easily forgotten, silently means nothing registers) —
   depends on: Tasks 3.2-3.16 — status: not-started
 ```
+
 → Add docstring update:
+
 ```
 - [ ] Task 3.17: add `rsk` to `server.py`'s domain import line (last-line
   import convention — easily forgotten, silently means nothing registers)
@@ -7924,6 +8081,7 @@ Let me apply the edits to the README:
 ```
 
 **Modification 2 — execution approach**: Add a sentence about the baseline commit. Currently ends with:
+
 ```
 nothing: a failing verification re-delegates the phase to `phase-implementer`
 with the findings, it is not patched by the orchestrator. One Conventional
@@ -7931,7 +8089,9 @@ Commit per verified phase — the `feat-10` (tsk) 4-phase/4-commit shape, with
 `phase-implementer` replacing the `implementation-specialist` that feature
 used.
 ```
+
 → Add:
+
 ```
 Before Phase 1, the current plan state is committed on its own as
 `docs(feat-15): plan risk (RSK) artifact type feature` (the `feat-10`
@@ -7940,6 +8100,7 @@ phase's changes.
 ```
 
 **Modification 3 — Task 2.3**: Currently:
+
 ```
 - [ ] Task 2.3: `rsk/models/v1/summary.py` (`RskSummary` with
   `initial_level`/`residual_level`/`strategy`/first `scope` entry plus the
@@ -7947,7 +8108,9 @@ phase's changes.
   `residual_product` (risk product), for the `list_rsk` tool) — depends on:
   Task 2.1 — status: not-started
 ```
+
 → Add "subclass of `DocSummary` (mirroring `TskSummary`)":
+
 ```
 - [ ] Task 2.3: `rsk/models/v1/summary.py` (`RskSummary`, a subclass of
   `general/models/summary.py::DocSummary` mirroring `TskSummary`, with
@@ -7958,13 +8121,16 @@ phase's changes.
 ```
 
 **Modification 4 — Task 3.1**: Currently:
+
 ```
 - [ ] Task 3.1: `rsk/tools/_paths.py` + `_io.py` + `_write.py` + `_lock.py`,
   thin wrappers over `general/tools/_doc_paths.py` (mirrors
   `tsk/tools/_paths.py` etc. exactly) — depends on: Task 2.2 — status:
   not-started
 ```
+
 → Add a note:
+
 ```
 - [ ] Task 3.1: `rsk/tools/_paths.py` + `_io.py` + `_write.py` + `_lock.py`,
   thin wrappers over `general/tools/_doc_paths.py` (mirrors
@@ -7975,10 +8141,13 @@ phase's changes.
 
 **Modification 5 — Design notes**: Add a note to the Assessment structure bullet that no eager validator is needed (or as an independent bullet / as a Design Notes item). Best location: end of the Assessment structure bullet, or as an independent bullet. Add a sentence to the Assessment structure bullet:
 Current tail:
+
 ```
   computed, never written).
 ```
+
 Add after that… actually the bullet is long; I'll add a short independent Design Notes item after the Assessment structure bullet:
+
 ```
 - **No eager-validation `model_validator` needed for `Assessment`** (in
   contrast to `tsk.Task`'s `_validate_items_eagerly`) — rationale: a
@@ -7994,6 +8163,7 @@ Add after that… actually the bullet is long; I'll add a short independent Desi
 **Modification 6 — Decisions Made**: Add 2 entries (approved) + record the plan modification itself in a Recent Updates entry.
 
 Decisions Made entries:
+
 ```
 - **2026-08-24**: `Assessment` does *not* get a `tsk.Task`-style
   `_validate_items_eagerly` `model_validator` — rationale: heading-format
@@ -8008,6 +8178,7 @@ Decisions Made entries:
 ```
 
 **Modification 7 — Recent Updates**: A new top entry recording the pre-implementation audit + modifications + 2 approvals:
+
 ```
 #### 2026-08-24T{ts} (newest)
 
@@ -8036,6 +8207,7 @@ And the "(newest)" marker moves from the 14:09:54 entry to the new entry.
 Wait — the user said step 2 is "commit the baseline plan" — and I've just now added the audit modifications. So the baseline commit includes the modified plan. Good — that's what the user asked: first apply modifications, then commit.
 
 After editing:
+
 - Get the timestamp
 - `git add .specmgr/feat/feat-15-add-artifact-type-risk/README.md` — wait, the whole folder (currently only README.md). `git add .specmgr/feat/feat-15-add-artifact-type-risk/`
 - Check git status/diff before committing (per my instructions: inspect git status, git diff, git log)
@@ -8045,7 +8217,7 @@ Conventional commit format: type `docs`, scope `feat-15`. feat-10 used `docs(fea
 
 Check repo commit style: feat-10 commits: `docs(feat-10): plan tsk...`, `feat(qa): ...`, `chore(feat-12-qa-artifact): ...`. No problem.
 
-Important: the pre-commit hook runs on commit (ruff format/check scoped to src/tests changes — this commit only touches .specmgr, so the hook's scope filter should skip the code hook; the unittest hook is scoped to src/**/*.py/tests/**/*.py changes; the specmgr docs hook is scoped to src/**/*.py changes; the adr-toc hook is scoped to docs/adr changes). So a markdown-only commit under .specmgr should pass cleanly. But is pre-commit even installed in the first place? `uv run --frozen pre-commit install` is a one-time setup — it might not be installed in this environment. If the hook isn't installed, the commit just proceeds. Either way, no problem.
+Important: the pre-commit hook runs on commit (ruff format/check scoped to src/tests changes — this commit only touches .specmgr, so the hook's scope filter should skip the code hook; the unittest hook is scoped to src/**/\*.py/tests/**/*.py changes; the specmgr docs hook is scoped to src/\*\*/*.py changes; the adr-toc hook is scoped to docs/adr changes). So a markdown-only commit under .specmgr should pass cleanly. But is pre-commit even installed in the first place? `uv run --frozen pre-commit install` is a one-time setup — it might not be installed in this environment. If the hook isn't installed, the commit just proceeds. Either way, no problem.
 
 Also: should I verify the README renders correctly after the edits? I'll do a quick sanity grep.
 
@@ -8060,14 +8232,17 @@ Let me get the timestamp and do all the edits in one go. Current top Recent Upda
 Edit A: insert the new entry before the 14:09:54 header, and remove "(newest)" from that header.
 
 Edit B: tail of the Assessment structure bullet → append the "No eager-validation" item. The bullet ends with:
+
 ```
   computed, never written).
 
 - **Strategy (TARA)** — `## Strategy` is a single-line H2 section whose
 ```
+
 I'll insert the new item between them.
 
 Edit C: execution approach — append the baseline commit sentence. Current tail:
+
 ```
 nothing: a failing verification re-delegates the phase to `phase-implementer`
 with the findings, it is not patched by the orchestrator. One Conventional
@@ -8075,7 +8250,9 @@ Commit per verified phase — the `feat-10` (tsk) 4-phase/4-commit shape, with
 `phase-implementer` replacing the `implementation-specialist` that feature
 used.
 ```
+
 Wait, I need the exact current text. From my previous edit:
+
 ```
 **Execution approach** (confirmed 2026-08-24, see Decisions Made): the
 Orchestrator/Phase-Implementer pattern. Each phase below is delegated to the
@@ -8091,7 +8268,9 @@ Commit per verified phase — the `feat-10` (tsk) 4-phase/4-commit shape, with
 `phase-implementer` replacing the `implementation-specialist` that feature
 used.
 ```
+
 Append:
+
 ```
  Before Phase 1, the current plan state is committed on its own as
 `docs(feat-15): plan risk (RSK) artifact type feature` (the `feat-10`
@@ -8105,16 +8284,12 @@ Then commit.
 
 Let me first get the timestamp, then batch the edits (all independent regions — in parallel), then git.
 
-
-
-
 Plan mode is off — applying the fixes now.
-
-
 
 **Tool: bash**
 
 **Input:**
+
 ```json
 {
   "command": "date +%Y-%m-%dT%H:%M:%S%:z"
@@ -8122,12 +8297,13 @@ Plan mode is off — applying the fixes now.
 ```
 
 **Output:**
+
 ```
 2026-08-24T15:04:31+02:00
 
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 305.1s)
 
@@ -8135,10 +8311,10 @@ _Thinking:_
 
 Alright, applying all the edits in parallel (disjoint regions):
 
-
 **Tool: edit**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md",
@@ -8148,6 +8324,7 @@ Alright, applying all the edits in parallel (disjoint regions):
 ```
 
 **Output:**
+
 ```
 Edit applied successfully.
 ```
@@ -8155,6 +8332,7 @@ Edit applied successfully.
 **Tool: edit**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md",
@@ -8164,6 +8342,7 @@ Edit applied successfully.
 ```
 
 **Output:**
+
 ```
 Edit applied successfully.
 ```
@@ -8171,6 +8350,7 @@ Edit applied successfully.
 **Tool: edit**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md",
@@ -8180,6 +8360,7 @@ Edit applied successfully.
 ```
 
 **Output:**
+
 ```
 Edit applied successfully.
 ```
@@ -8187,6 +8368,7 @@ Edit applied successfully.
 **Tool: edit**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md",
@@ -8196,6 +8378,7 @@ Edit applied successfully.
 ```
 
 **Output:**
+
 ```
 Edit applied successfully.
 ```
@@ -8203,6 +8386,7 @@ Edit applied successfully.
 **Tool: edit**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md",
@@ -8212,6 +8396,7 @@ Edit applied successfully.
 ```
 
 **Output:**
+
 ```
 Edit applied successfully.
 ```
@@ -8219,6 +8404,7 @@ Edit applied successfully.
 **Tool: edit**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md",
@@ -8228,6 +8414,7 @@ Edit applied successfully.
 ```
 
 **Output:**
+
 ```
 Edit applied successfully.
 ```
@@ -8235,6 +8422,7 @@ Edit applied successfully.
 **Tool: edit**
 
 **Input:**
+
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-15-add-artifact-type-risk/README.md",
@@ -8244,11 +8432,12 @@ Edit applied successfully.
 ```
 
 **Output:**
+
 ```
 Edit applied successfully.
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 229.0s)
 
@@ -8260,16 +8449,12 @@ Following my git instructions: first check `git status`, `git diff`, and `git lo
 
 Let me check status and the recent log style.
 
-
-
-
 Fixes applied. Now the baseline commit — inspecting state first:
-
-
 
 **Tool: bash**
 
 **Input:**
+
 ```json
 {
   "command": "git status --short && echo --- && git log --oneline -6",
@@ -8278,6 +8463,7 @@ Fixes applied. Now the baseline commit — inspecting state first:
 ```
 
 **Output:**
+
 ```
 AM .specmgr/feat/feat-15-add-artifact-type-risk/README.md
 ---
@@ -8290,7 +8476,7 @@ acd8bc5 docs(qa): regenerate generated docs for QA v2
 
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 266.0s)
 
@@ -8304,16 +8490,12 @@ Ah — could the user (outside the session) have staged it? Or a previous tool c
 
 First, let me check the feat-14 plan commit convention (doc vs docs) and then decide on the message. I'll check the feat-14/12/13 commit types.
 
-
-
-
 The file is partially staged (looks like you pre-staged it) — I'll re-stage the latest content. Also, I'm checking the repo's plan commit type conventions (`doc` vs `docs`):
-
-
 
 **Tool: bash**
 
 **Input:**
+
 ```json
 {
   "command": "git log --oneline --all --grep=\"feat-14\" | tail -5; echo ---; git log --oneline --all --grep=\"plan\" --grep=\"feat-\" --all-match | tail -8",
@@ -8322,6 +8504,7 @@ The file is partially staged (looks like you pre-staged it) — I'll re-stage th
 ```
 
 **Output:**
+
 ```
 f0fb7f8 feat(qa)!: repoint QA tools at v2 schema
 8ecb4b8 feat(qa): add v2 parser (parse_qa/QaDocument), no version gate
@@ -8340,13 +8523,14 @@ c8a9d90 Add markdown model parser and unused-code detection
 
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 242.2s)
 
 _Thinking:_
 
 Mixed conventions can be observed:
+
 - `docs(feat-10): plan tsk (TaskList) artifact type feature` (5985a1d)
 - `feat(qa): add plan for feat-14 qa v2` (07643a7)
 - `docs: add feature planning and supporting infrastructure for feat-12` (69c3ffc)
@@ -8354,6 +8538,7 @@ Mixed conventions can be observed:
 The feat-10 precedent (the one I explicitly referenced in the plan, and the one the user approved with the exact message `docs(feat-15): plan risk (RSK) artifact type feature`) is the most directly analogous case (plan for a new artifact type). I'll use this one.
 
 Next, stage and commit:
+
 1. `git add .specmgr/feat/feat-15-add-artifact-type-risk/README.md`
 2. `git commit -m "docs(feat-15): plan risk (RSK) artifact type feature"`
 
@@ -8361,16 +8546,12 @@ The pre-commit hook might run (if installed) — for a markdown-only change unde
 
 After committing, I'll confirm with `git status` and `git log --oneline -2`. And that's it — I won't dispatch Phase 1 (per user instructions).
 
-
-
-
 `docs(feat-10): plan tsk (TaskList) artifact type feature` is the direct precedent — using the approved message:
-
-
 
 **Tool: bash**
 
 **Input:**
+
 ```json
 {
   "command": "git add .specmgr/feat/feat-15-add-artifact-type-risk/README.md && git commit -m \"docs(feat-15): plan risk (RSK) artifact type feature\" && echo --- && git status --short && git log --oneline -2",
@@ -8379,6 +8560,7 @@ After committing, I'll confirm with `git status` and `git log --oneline -2`. And
 ```
 
 **Output:**
+
 ```
 ruff format..........................................(no files to check)Skipped
 ruff check...........................................(no files to check)Skipped
@@ -8402,7 +8584,7 @@ specmgr schema (qa package copy).....................(no files to check)Skipped
 
 ```
 
----
+______________________________________________________________________
 
 ## Assistant (Build · qwen3.8:27b-nvfp4-896k · 238.4s)
 
@@ -8412,14 +8594,10 @@ Committed: `4aa183b docs(feat-15): plan risk (RSK) artifact type feature` — 1 
 
 Phase 1 has not been dispatched, as per instructions. Done — a concise summary.
 
-
-
-
 Done.
 
 1. **Plan fixes applied** — Task 3.17 (`server.py` docstring: 5 resources, 10 tools, 2 prompts, no-`{id}` note), Task 2.3 (`RskSummary` subclasses `DocSummary`), Task 3.1 (no base-dir wiring needed), Design Notes (no eager-validator for `Assessment`), Execution approach (baseline commit), plus two user-approved Decisions Made and the audit's Recent Updates entry.
 2. **Baseline committed** — `4aa183b docs(feat-15): plan risk (RSK) artifact type feature` (798 lines, working tree clean, pre-commit hooks skipped as expected for a markdown-only change).
 3. **Phase 1 not dispatched** — the plan is at "Awaiting go-ahead", branch `feat-15-add-artifact-type-risk` ready.
 
----
-
+______________________________________________________________________
