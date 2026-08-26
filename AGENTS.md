@@ -2,7 +2,7 @@
 
 Quick reference for OpenCode agents working on **biz.dfch.SpecMgr** — an artifact manager for system specifications.
 
-## Status: eight domain/cross-cutting packages implemented (ADR, REQ, UC, TSK, QA, PRB, GOL, general)
+## Status: nine domain/cross-cutting packages implemented (ADR, REQ, UC, TSK, QA, PRB, GOL, RSK, general)
 
 Seven document-type domains plus one cross-cutting package now exist, each
 following the domain-first layout from ADR
@@ -99,6 +99,33 @@ shared versioned models"):
   and `## Level` sections (see `.specmgr/feat/feat-18-goal/README.md`),
   and `update_gol` is a single whole-body replace, like
   `update_req`/`update_prb`.
+- **`rsk/`** (Risk) — same tools/resources/prompts shape as
+  `req/`/`prb/` but for risk-register entries (the scenario decomposed
+  into `## Cause`/`## Trigger`/`## Consequence`, a 5x5 probability/impact
+  assessment BEFORE mitigation (`## Initial Assessment`) and the same 5x5
+  AFTER mitigation (`## Residual Assessment`) with the value in the H3
+  heading itself (`### Probability {1..5}` / `### Impact {1..5}`, regex
+  `@alias`-constrained, derived zone `level` always computed from the
+  product), and a TARA response strategy `## Strategy` (closed 4-value set
+  `transfer`/`accept`/`reduce`/`avoid`))
+  (`parse_rsk`, `get_rsk`, `list_rsk`, `get_rsk_example`,
+  `get_rsk_template`, `create_rsk`, `update_rsk`, `set_status_rsk`,
+  `delete_rsk` stub, `validate_rsk`); `rsk/resources/`
+  (`specmgr://rsk/schema`, `specmgr://rsk/example`,
+  `specmgr://rsk/template`, plus two static domain-knowledge resources
+  `specmgr://rsk/tara` — what TARA is and when/how to apply each of the
+  four words — and `specmgr://rsk/risk-matrix` — the 5x5 scale anchors,
+  zone table, and product thresholds; no `specmgr://rsk/{id}` — id-based
+  reads are `get_rsk`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
+  `specmgr://rsk/list` — `list_rsk` ships as a paged tool from day one,
+  ADR ec9f5262-9912-49d0-903f-fcfb54f28c13, and its `RskSummary` lines
+  carry the residual-risk coordinates so a register-wide risk-matrix view
+  can be built from the listing alone); `rsk/prompts/`
+  (`create_risk`/`update_risk` — the issue's literal wording, not the
+  `rsk`-prefixed convention the tools/resources use). Its schema lives at
+  `rsk/models/v1/`, inside the domain package, not top-level `models/` —
+  RSK is a new domain built after the domain-first refactor, same as
+  REQ/UC/TSK/QA/PRB/GOL.
 - **`general/`** — cross-cutting, non-domain-specific package:
   `general/tools/` (`mdformat`, formats a markdown file in place while
   preserving YAML frontmatter blocks) and `general/resources/`
@@ -126,15 +153,16 @@ mirror of that same registration and must never be hand-edited.
 
 Still genuinely missing / not yet done (don't assume otherwise):
 - No `validate_adr` (or `validate_req`/`validate_uc`/`validate_tsk`/
-  `validate_qa`/`validate_prb`/`validate_gol`) tool runs over the repo's
+  `validate_qa`/`validate_prb`/`validate_gol`/`validate_rsk`) tool runs
+  over the repo's
   own documents yet via pre-commit or CI. (ADR
   9c687bb1-8ee7-41c8-84ec-07606356bc73: "Enforce doc generation/lint/tests
   locally via pre-commit hook, not just CI")
 - `delete_req`/`delete_uc`/`delete_tsk`/`delete_qa`/`delete_prb`/
-  `delete_gol` are stubs, not yet implemented.
+  `delete_gol`/`delete_rsk` are stubs, not yet implemented.
 - No `ac` (Acceptance Criteria) domain exists yet, despite `server.py`'s
   docstring already reserving a spot for it ("... and later `ac`").
-- `req`/`tsk`/`qa`/`prb`/`gol` each register `tools`, `resources`, and
+- `req`/`tsk`/`qa`/`prb`/`gol`/`rsk` each register `tools`, `resources`, and
   `prompts`; `uc` registers `tools` and `resources` only — it has no
   `prompts` sub-package yet.
 
@@ -142,7 +170,7 @@ Still genuinely missing / not yet done (don't assume otherwise):
 status for the ADR feature specifically and should be kept in sync with
 `src/` as this evolves; treat it as current-state tracking, not just a
 historical design doc. Don't assume any other domain package exists beyond
-`adr`/`general`/`gol`/`prb`/`qa`/`req`/`tsk`/`uc` (with their respective
+`adr`/`general`/`gol`/`prb`/`qa`/`req`/`rsk`/`tsk`/`uc` (with their respective
 `tools`/`prompts`/`resources` sub-packages, per the exceptions noted
 above), or anything in `general/resources/` beyond `version`/`iso25010` —
 check first.
@@ -275,7 +303,7 @@ consumer of the base library.
 
 - Builds the `MCPServer` instance (`mcp` object) and a no-op `_lifespan`,
   then imports every domain package (`adr`, `general`, `gol`, `prb`, `qa`,
-  `req`, `tsk`, `uc`) as its last line purely for the side effect of
+  `req`, `rsk`, `tsk`, `uc`) as its last line purely for the side effect of
   running their `@mcp.tool()`/`@mcp.resource()`/`@mcp.prompt()` decorators.
   When adding a new domain, add its import to that same last line —
   forgetting it means the new tools/resources/prompts silently never
