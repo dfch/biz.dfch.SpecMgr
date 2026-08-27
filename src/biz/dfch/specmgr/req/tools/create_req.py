@@ -25,7 +25,7 @@ small frontmatter YAML block is code-generated and prepended (Task 3.9's
 design). There is therefore no ``write_req``/``render_req`` in
 ``req.tools._io`` for this tool to call -- the frontmatter+content
 composition is factored into ``req.tools._write.write_req_file`` instead,
-shared with ``update_req`` (Task 3.13).
+shared with the generic ``update`` tool in ``general.tools``.
 
 Thin file-I/O adapter; there is no in-memory cache of a parsed
 :class:`~biz.dfch.specmgr.req.models.v1.ReqDocument` -- the ``.md`` file

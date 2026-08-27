@@ -3,7 +3,7 @@
 Auto-generated from the live `biz.dfch.specmgr.server:mcp` registration --
 do not edit by hand, run `specmgr mcp-docs` instead (see `AGENTS.md`).
 
-25 resource(s), 1 resource template(s), 85 tool(s), 19 prompt(s).
+25 resource(s), 1 resource template(s), 78 tool(s), 19 prompt(s).
 
 ## Table of Contents
 
@@ -302,14 +302,7 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`set_status_uc`](#tool-set_status_uc) | The only path that changes a use case's status. Also bumps `updated`. |
 | [`update`](#tool-update) | Whole-body or line-range replace of an existing document's content across the seven whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk), preserving its id/type/status/created/version; only `updated` changes. With no `begin`/`end`, `content` is the full replacement body (body markdown only, no frontmatter block). With both, `content` replaces the 1-based inclusive body-line range `begin`..`end` of the current on-disk body (`N+1` = end-of-body sentinel: append after the last line, or replace through end of body); the spliced result is validated as a whole document before anything is written. `status` is never settable -- use the `set_status_*` tools. |
 | [`update_frontmatter`](#tool-update_frontmatter) | Whole-object replace of an ADR's frontmatter (plan §3), preserving its existing id. |
-| [`update_gol`](#tool-update_gol) | Whole-body replace of an existing goal's content, preserving its id/type/status/created/version; only `updated` changes. Use `set_status_gol` to change status instead. |
-| [`update_prb`](#tool-update_prb) | Whole-body replace of an existing problem statement's content, preserving its id/type/status/created/version; only `updated` changes. Use `set_status_prb` to change status instead. |
-| [`update_qa`](#tool-update_qa) | Whole-body replace of an existing QA document's content, preserving its id/type/status/created/version; only `updated` changes. Use `set_status_qa` to change status instead. |
-| [`update_req`](#tool-update_req) | Whole-body replace of an existing requirement's content, preserving its id/type/status/created/version; only `updated` changes. Use `set_status_req` to change status instead. |
-| [`update_rsk`](#tool-update_rsk) | Whole-body replace of an existing risk's content, preserving its id/type/status/created/version; only `updated` changes. Use `set_status_rsk` to change status instead. |
 | [`update_section`](#tool-update_section) | Whole-section replace/delete of one AdrBody field (plan §4). |
-| [`update_tsk`](#tool-update_tsk) | Whole-body replace of an existing task list's content, preserving its id/type/status/created/version; only `updated` changes. Use `set_status_tsk` to change status instead. |
-| [`update_uc`](#tool-update_uc) | Whole-body replace of an existing use case's content, preserving its id/type/status/created/version; only `updated` changes. Use `set_status_uc` to change status instead. |
 | [`validate_adr`](#tool-validate_adr) | Re-read and re-parse an ADR by id, letting the models' own Pydantic validators run. |
 | [`validate_gol`](#tool-validate_gol) | Disk-free, id-free dry run validating goal content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
 | [`validate_prb`](#tool-validate_prb) | Disk-free, id-free dry run validating problem statement content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
@@ -980,61 +973,6 @@ Whole-object replace of an ADR's frontmatter (plan §3), preserving its existing
 | `id` | `string` | Yes |
 | `frontmatter` | `AdrFrontmatter` | Yes |
 
-### Tool: update_gol
-
-**Update goal**
-
-Whole-body replace of an existing goal's content, preserving its id/type/status/created/version; only `updated` changes. Use `set_status_gol` to change status instead.
-
-| Parameter | Type | Required |
-| --- | --- | --- |
-| `id` | `string` | Yes |
-| `content` | `string` | Yes |
-
-### Tool: update_prb
-
-**Update problem statement**
-
-Whole-body replace of an existing problem statement's content, preserving its id/type/status/created/version; only `updated` changes. Use `set_status_prb` to change status instead.
-
-| Parameter | Type | Required |
-| --- | --- | --- |
-| `id` | `string` | Yes |
-| `content` | `string` | Yes |
-
-### Tool: update_qa
-
-**Update QA document**
-
-Whole-body replace of an existing QA document's content, preserving its id/type/status/created/version; only `updated` changes. Use `set_status_qa` to change status instead.
-
-| Parameter | Type | Required |
-| --- | --- | --- |
-| `id` | `string` | Yes |
-| `content` | `string` | Yes |
-
-### Tool: update_req
-
-**Update requirement**
-
-Whole-body replace of an existing requirement's content, preserving its id/type/status/created/version; only `updated` changes. Use `set_status_req` to change status instead.
-
-| Parameter | Type | Required |
-| --- | --- | --- |
-| `id` | `string` | Yes |
-| `content` | `string` | Yes |
-
-### Tool: update_rsk
-
-**Update risk**
-
-Whole-body replace of an existing risk's content, preserving its id/type/status/created/version; only `updated` changes. Use `set_status_rsk` to change status instead.
-
-| Parameter | Type | Required |
-| --- | --- | --- |
-| `id` | `string` | Yes |
-| `content` | `string` | Yes |
-
 ### Tool: update_section
 
 **Update ADR Section**
@@ -1046,28 +984,6 @@ Whole-section replace/delete of one AdrBody field (plan §4).
 | `id` | `string` | Yes |
 | `key` | `string` | Yes |
 | `value` | `string` | Yes |
-
-### Tool: update_tsk
-
-**Update task list**
-
-Whole-body replace of an existing task list's content, preserving its id/type/status/created/version; only `updated` changes. Use `set_status_tsk` to change status instead.
-
-| Parameter | Type | Required |
-| --- | --- | --- |
-| `id` | `string` | Yes |
-| `content` | `string` | Yes |
-
-### Tool: update_uc
-
-**Update use case**
-
-Whole-body replace of an existing use case's content, preserving its id/type/status/created/version; only `updated` changes. Use `set_status_uc` to change status instead.
-
-| Parameter | Type | Required |
-| --- | --- | --- |
-| `id` | `string` | Yes |
-| `content` | `string` | Yes |
 
 ### Tool: validate_adr
 

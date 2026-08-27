@@ -18,11 +18,11 @@
 """Thin file read helpers over ``parse_qa`` (Phase 4, Task 4.1).
 
 Read-only, unlike ``adr.tools._io``'s ``read_adr``/``write_adr`` pair: there
-is no ``write_qa``/``render_qa`` counterpart here, since ``create_qa``/
-``update_qa`` persist the caller's already-validated body markdown
-byte-for-byte rather than rendering it back out from a parsed model -- no
-renderer is needed for that shape, so none is added speculatively here. 1:1
-port of ``req.tools._io``.
+is no ``write_qa``/``render_qa`` counterpart here, since ``create_qa`` and
+the generic ``update`` tool in ``general.tools`` persist the caller's
+already-validated body markdown byte-for-byte rather than rendering it back
+out from a parsed model -- no renderer is needed for that shape, so none is
+added speculatively here. 1:1 port of ``req.tools._io``.
 
 No ``mcp`` dependency here either -- these are plain file-I/O adapters, kept
 separate from any future ``@mcp.tool()``-decorated function so they stay

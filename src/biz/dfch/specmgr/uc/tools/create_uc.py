@@ -23,7 +23,7 @@ persisted byte-for-byte, and only the small frontmatter YAML block is
 code-generated and prepended. There is therefore no ``write_uc``/``render_uc``
 in ``uc.tools._io`` for this tool to call -- the frontmatter+content
 composition is factored into ``uc.tools._write.write_uc_file`` instead,
-shared with ``update_uc``.
+shared with the generic ``update`` tool in ``general.tools``.
 
 Thin file-I/O adapter; there is no in-memory cache of a parsed
 :class:`~biz.dfch.specmgr.uc.models.v2.UcDocument` -- the ``.md`` file

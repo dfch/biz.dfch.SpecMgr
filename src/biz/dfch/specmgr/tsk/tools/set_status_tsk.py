@@ -23,8 +23,8 @@ The only path that changes a task list's ``status`` -- mirrors
 four-value set (``draft``/``active``/``done``/``cancelled``), a small,
 purpose-fit set matching how a task list is actually used (start it, work
 it, finish it, or drop it) rather than REQ's larger, ADR-like set. Neither
-``create_tsk`` nor ``update_tsk`` accept a ``status`` argument at all --
-this is the sole entry point.
+``create_tsk`` nor the generic ``update`` tool in ``general.tools`` accepts
+a ``status`` argument at all -- this is the sole entry point.
 
 Thin file-I/O/id-lookup adapter, re-reading and re-parsing the current
 on-disk state before re-writing the full file; there is no in-memory cache

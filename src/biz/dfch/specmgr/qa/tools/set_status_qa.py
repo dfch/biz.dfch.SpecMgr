@@ -23,8 +23,8 @@ The only path that changes a QA document's ``status`` -- mirrors
 :class:`~biz.dfch.specmgr.qa.models.v2.QaFrontmatter.status` has no
 ``"superseded by ..."`` pattern, just the closed four-value set (reused
 from TSK) -- ``draft``/``active``/``done``/``cancelled``. Neither
-``create_qa`` nor ``update_qa`` accept a ``status`` argument at all -- this
-is the sole entry point.
+``create_qa`` nor the generic ``update`` tool in ``general.tools`` accepts
+a ``status`` argument at all -- this is the sole entry point.
 
 Thin file-I/O/id-lookup adapter, re-reading and re-parsing the current
 on-disk state before re-writing the full file; there is no in-memory cache

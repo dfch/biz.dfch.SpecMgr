@@ -15,19 +15,21 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Shared frontmatter+body composition/write helper for ``create_prb``/``update_prb``.
+"""Shared frontmatter+body composition/write helper for ``create_prb`` and
+the generic ``update`` tool in ``general.tools`` (``type="prb"``).
 
 Deliberately **not** part of ``prb.tools._io`` -- that module's own docstring
 rules out a ``write_prb``/``render_prb`` counterpart to ``read_prb``, since
-neither ``create_prb`` nor ``update_prb`` ever render a body back out from a
+neither ``create_prb`` nor the generic ``update`` tool in ``general.tools``
+ever render a body back out from a
 parsed :class:`~biz.dfch.specmgr.prb.models.v1.PrbDocument` model. What
 :func:`write_prb_file` does instead is a strictly narrower thing: combine an
 already-constructed, already-validated
 :class:`~biz.dfch.specmgr.prb.models.v1.PrbFrontmatter` with the caller's own
 already-validated *raw* body text (never reformatted/re-rendered) into one
-file. Factored out of ``create_prb.py`` into its own module so
-``update_prb.py``/``set_status_prb.py`` do not have to duplicate it. Mirrors
-``tsk.tools._write`` file-for-file.
+file. Factored out of ``create_prb.py`` into its own module so the generic
+``update`` tool in ``general.tools`` and ``set_status_prb.py`` do not have
+to duplicate it. Mirrors ``tsk.tools._write`` file-for-file.
 """
 
 from __future__ import annotations

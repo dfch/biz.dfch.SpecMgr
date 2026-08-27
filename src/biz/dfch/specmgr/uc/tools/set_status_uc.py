@@ -21,9 +21,9 @@ The only path that changes a use case's ``status`` -- mirrors
 ``req.tools.set_status_req``, except
 :class:`~biz.dfch.specmgr.uc.models.v2.UcFrontmatter.status` has its own
 closed five-value set (``draft``/``proposed``/``accepted``/``deprecated``/
-``superseded``), not REQ's seven-value set. Neither ``create_uc`` nor
-``update_uc`` accept a ``status`` argument at all -- this is the sole entry
-point.
+``superseded``), not REQ's seven-value set. Neither ``create_uc`` nor the
+generic ``update`` tool in ``general.tools`` accepts a ``status`` argument
+at all -- this is the sole entry point.
 
 Thin file-I/O/id-lookup adapter, re-reading and re-parsing the current
 on-disk state before re-writing the full file; there is no in-memory cache

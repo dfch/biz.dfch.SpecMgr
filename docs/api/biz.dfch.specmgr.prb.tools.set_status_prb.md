@@ -6,8 +6,8 @@ The only path that changes a problem statement's ``status`` -- mirrors
 ``tsk.tools.set_status_tsk``/``qa.tools.set_status_qa``:
 :class:`~biz.dfch.specmgr.prb.models.v1.PrbFrontmatter.status` has a closed
 four-value set (``draft``/``active``/``resolved``/``cancelled``). Neither
-``create_prb`` nor ``update_prb`` accept a ``status`` argument at all --
-this is the sole entry point.
+``create_prb`` nor the generic ``update`` tool in ``general.tools`` accepts
+a ``status`` argument at all -- this is the sole entry point.
 
 Thin file-I/O/id-lookup adapter, re-reading and re-parsing the current
 on-disk state before re-writing the full file; there is no in-memory cache

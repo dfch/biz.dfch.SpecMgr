@@ -15,8 +15,8 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Shared frontmatter+body composition/write helper for ``create_uc``/``update_uc``
-(Task 3.1.5).
+"""Shared frontmatter+body composition/write helper for ``create_uc`` and
+the generic ``update`` tool in ``general.tools`` (``type="uc"``).
 
 Deliberately **not** part of ``uc.tools._io`` -- mirrors ``req.tools._write``:
 that module's own docstring rules out a ``write_uc``/``render_uc`` counterpart
@@ -26,8 +26,8 @@ from a parsed :class:`~biz.dfch.specmgr.uc.models.v2.UseCase` model. What
 already-constructed, already-validated
 :class:`~biz.dfch.specmgr.uc.models.v2.UcFrontmatter` with the caller's own
 already-validated *raw* body text (never reformatted/re-rendered) into one
-file. Factored out of ``create_uc.py`` into its own module so ``update_uc.py``
-does not have to duplicate it.
+file. Factored out of ``create_uc.py`` into its own module so the generic
+``update`` tool in ``general.tools`` does not have to duplicate it.
 """
 
 from __future__ import annotations

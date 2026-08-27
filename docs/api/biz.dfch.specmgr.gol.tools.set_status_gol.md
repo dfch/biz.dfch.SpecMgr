@@ -9,9 +9,9 @@ The only path that changes a goal's ``status`` -- mirrors
 (``draft``/``proposed``/``accepted``/``superseded``/``deprecated``/
 ``rejected``/``implemented`` -- REQ's exact set, with goal-specific meanings
 for ``implemented`` = the goal has genuinely been reached and
-``superseded`` = replaced by another goal). Neither ``create_gol`` nor
-``update_gol`` accept a ``status`` argument at all -- this is the sole entry
-point.
+``superseded`` = replaced by another goal). Neither ``create_gol`` nor the
+generic ``update`` tool in ``general.tools`` accepts a ``status`` argument
+at all -- this is the sole entry point.
 
 Thin file-I/O/id-lookup adapter, re-reading and re-parsing the current
 on-disk state before re-writing the full file; there is no in-memory cache

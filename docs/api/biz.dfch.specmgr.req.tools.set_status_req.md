@@ -7,8 +7,9 @@ The only path that changes a requirement's ``status`` -- mirrors
 case: :class:`~biz.dfch.specmgr.req.models.v1.ReqFrontmatter.status` has no
 ``"superseded by ..."`` pattern, just the closed seven-value set
 (``draft``/``proposed``/``accepted``/``superseded``/``deprecated``/
-``rejected``/``implemented``). Neither ``create_req`` nor ``update_req``
-accept a ``status`` argument at all -- this is the sole entry point.
+``rejected``/``implemented``). Neither ``create_req`` nor the generic
+``update`` tool in ``general.tools`` accepts a ``status`` argument at all --
+this is the sole entry point.
 
 Thin file-I/O/id-lookup adapter, re-reading and re-parsing the current
 on-disk state before re-writing the full file; there is no in-memory cache

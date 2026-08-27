@@ -98,7 +98,7 @@ First-line docstrings from each module, organized by domain:
 - `gol/tools/_io.py` — Thin file read helpers over ``parse_gol`` (Task 3.1).
 - `gol/tools/_lock.py` — Per-document in-process lock guarding goal mutations.
 - `gol/tools/_paths.py` — Goal base directory resolution and id -> path lookup (Task 3.1).
-- `gol/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_gol``/``update_gol``.
+- `gol/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_gol`` and
 - `gol/tools/create_gol.py` — ``@mcp.tool()`` wrapper: create_gol (Task 3.3).
 - `gol/tools/delete_gol.py` — ``@mcp.tool()`` wrapper: delete_gol (Task 3.6).
 - `gol/tools/get_gol.py` — ``@mcp.tool()`` wrapper: get_gol (Task 3.8).
@@ -107,7 +107,6 @@ First-line docstrings from each module, organized by domain:
 - `gol/tools/list_gol.py` — ``@mcp.tool()`` wrapper: list_gol (Task 3.9).
 - `gol/tools/parse_gol.py` — ``@mcp.tool()`` wrapper: parse_gol (Task 3.2).
 - `gol/tools/set_status_gol.py` — ``@mcp.tool()`` wrapper: set_status_gol (Task 3.5).
-- `gol/tools/update_gol.py` — ``@mcp.tool()`` wrapper: update_gol (Task 3.4).
 - `gol/tools/validate_gol.py` — ``@mcp.tool()`` wrapper: validate_gol (Task 3.7).
 
 **models/**
@@ -175,7 +174,7 @@ First-line docstrings from each module, organized by domain:
 - `prb/tools/_io.py` — Thin file read helpers over ``parse_prb`` (Task 3.1).
 - `prb/tools/_lock.py` — Per-document in-process lock guarding problem statement mutations.
 - `prb/tools/_paths.py` — Problem statement base directory resolution and id -> path lookup (Task 3.1).
-- `prb/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_prb``/``update_prb``.
+- `prb/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_prb`` and
 - `prb/tools/create_prb.py` — ``@mcp.tool()`` wrapper: create_prb (Task 3.3).
 - `prb/tools/delete_prb.py` — ``@mcp.tool()`` wrapper: delete_prb (Task 3.6).
 - `prb/tools/get_prb.py` — ``@mcp.tool()`` wrapper: get_prb (Task 3.8).
@@ -184,7 +183,6 @@ First-line docstrings from each module, organized by domain:
 - `prb/tools/list_prb.py` — ``@mcp.tool()`` wrapper: list_prb (Task 3.9).
 - `prb/tools/parse_prb.py` — ``@mcp.tool()`` wrapper: parse_prb (Task 3.2).
 - `prb/tools/set_status_prb.py` — ``@mcp.tool()`` wrapper: set_status_prb (Task 3.5).
-- `prb/tools/update_prb.py` — ``@mcp.tool()`` wrapper: update_prb (Task 3.4).
 - `prb/tools/validate_prb.py` — ``@mcp.tool()`` wrapper: validate_prb (Task 3.7).
 
 **qa/**
@@ -211,7 +209,7 @@ First-line docstrings from each module, organized by domain:
 - `qa/tools/_io.py` — Thin file read helpers over ``parse_qa`` (Phase 4, Task 4.1).
 - `qa/tools/_lock.py` — Per-document in-process lock guarding Question and Answer (QA) mutations.
 - `qa/tools/_paths.py` — Question and Answer (QA) base directory resolution and id -> path lookup (Phase 4, Task 4.1).
-- `qa/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_qa``/``update_qa``
+- `qa/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_qa`` and
 - `qa/tools/create_qa.py` — ``@mcp.tool()`` wrapper: create_qa (Phase 4, Task 4.1).
 - `qa/tools/delete_qa.py` — ``@mcp.tool()`` wrapper: delete_qa (Phase 4, Task 4.1).
 - `qa/tools/get_qa.py` — ``@mcp.tool()`` wrapper: get_qa (Phase 4, Task 4.1).
@@ -220,7 +218,6 @@ First-line docstrings from each module, organized by domain:
 - `qa/tools/list_qa.py` — ``@mcp.tool()`` wrapper: list_qa (feat-13-list-paging Task 2.5).
 - `qa/tools/parse_qa.py` — ``@mcp.tool()`` wrapper: parse_qa (Phase 4, Task 4.1).
 - `qa/tools/set_status_qa.py` — ``@mcp.tool()`` wrapper: set_status_qa (Phase 4, Task 4.1).
-- `qa/tools/update_qa.py` — ``@mcp.tool()`` wrapper: update_qa (Phase 4, Task 4.1).
 - `qa/tools/validate_qa.py` — ``@mcp.tool()`` wrapper: validate_qa (Phase 4, Task 4.1).
 
 **req/**
@@ -244,7 +241,7 @@ First-line docstrings from each module, organized by domain:
 - `req/tools/_io.py` — Thin file read helpers over ``parse_req`` (Task 3.11).
 - `req/tools/_lock.py` — Per-document in-process lock guarding requirement mutations.
 - `req/tools/_paths.py` — Requirement base directory resolution and id -> path lookup (Task 3.11).
-- `req/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_req``/``update_req``
+- `req/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_req`` and
 - `req/tools/create_req.py` — ``@mcp.tool()`` wrapper: create_req (Task 3.12).
 - `req/tools/delete_req.py` — ``@mcp.tool()`` wrapper: delete_req (Task 3.15).
 - `req/tools/get_req.py` — ``@mcp.tool()`` wrapper: get_req (feat-7-various-improvements Task 0.9).
@@ -253,7 +250,6 @@ First-line docstrings from each module, organized by domain:
 - `req/tools/list_req.py` — ``@mcp.tool()`` wrapper: list_req (feat-13-list-paging Task 2.2).
 - `req/tools/parse_req.py` — ``@mcp.tool()`` wrapper: parse_req.
 - `req/tools/set_status_req.py` — ``@mcp.tool()`` wrapper: set_status_req (Task 3.14).
-- `req/tools/update_req.py` — ``@mcp.tool()`` wrapper: update_req (Task 3.13).
 - `req/tools/validate_req.py` — ``@mcp.tool()`` wrapper: validate_req (Task 3.16).
 
 **rsk/**
@@ -281,7 +277,7 @@ First-line docstrings from each module, organized by domain:
 - `rsk/tools/_io.py` — Thin file read helpers over ``parse_rsk`` (Task 3.1).
 - `rsk/tools/_lock.py` — Per-document in-process lock guarding risk mutations.
 - `rsk/tools/_paths.py` — Risk base directory resolution and id -> path lookup (Task 3.1).
-- `rsk/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_rsk``/``update_rsk``.
+- `rsk/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_rsk`` and
 - `rsk/tools/create_rsk.py` — ``@mcp.tool()`` wrapper: create_rsk (Task 3.3).
 - `rsk/tools/delete_rsk.py` — ``@mcp.tool()`` wrapper: delete_rsk (Task 3.6).
 - `rsk/tools/get_rsk.py` — ``@mcp.tool()`` wrapper: get_rsk (Task 3.8).
@@ -290,7 +286,6 @@ First-line docstrings from each module, organized by domain:
 - `rsk/tools/list_rsk.py` — ``@mcp.tool()`` wrapper: list_rsk (Task 3.14).
 - `rsk/tools/parse_rsk.py` — ``@mcp.tool()`` wrapper: parse_rsk (Task 3.2).
 - `rsk/tools/set_status_rsk.py` — ``@mcp.tool()`` wrapper: set_status_rsk (Task 3.5).
-- `rsk/tools/update_rsk.py` — ``@mcp.tool()`` wrapper: update_rsk (Task 3.4).
 - `rsk/tools/validate_rsk.py` — ``@mcp.tool()`` wrapper: validate_rsk (Task 3.7).
 
 **tsk/**
@@ -317,7 +312,7 @@ First-line docstrings from each module, organized by domain:
 - `tsk/tools/_io.py` — Thin file read helpers over ``parse_tsk`` (Task 3.1).
 - `tsk/tools/_lock.py` — Per-document in-process lock guarding task list mutations.
 - `tsk/tools/_paths.py` — Task list base directory resolution and id -> path lookup (Task 3.1).
-- `tsk/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_tsk``/``update_tsk``.
+- `tsk/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_tsk`` and
 - `tsk/tools/create_tsk.py` — ``@mcp.tool()`` wrapper: create_tsk (Task 3.3).
 - `tsk/tools/delete_tsk.py` — ``@mcp.tool()`` wrapper: delete_tsk (Task 3.6).
 - `tsk/tools/get_tsk.py` — ``@mcp.tool()`` wrapper: get_tsk (Task 3.8).
@@ -326,7 +321,6 @@ First-line docstrings from each module, organized by domain:
 - `tsk/tools/list_tsk.py` — ``@mcp.tool()`` wrapper: list_tsk (feat-13-list-paging Task 2.4).
 - `tsk/tools/parse_tsk.py` — ``@mcp.tool()`` wrapper: parse_tsk (Task 3.2).
 - `tsk/tools/set_status_tsk.py` — ``@mcp.tool()`` wrapper: set_status_tsk (Task 3.5).
-- `tsk/tools/update_tsk.py` — ``@mcp.tool()`` wrapper: update_tsk (Task 3.4).
 - `tsk/tools/validate_tsk.py` — ``@mcp.tool()`` wrapper: validate_tsk (Task 3.7).
 
 **uc/**
@@ -363,7 +357,7 @@ First-line docstrings from each module, organized by domain:
 - `uc/tools/_io.py` — Thin file read helpers over ``parse_uc`` (Task 3.1.5).
 - `uc/tools/_lock.py` — Per-document in-process lock guarding use-case mutations.
 - `uc/tools/_paths.py` — Use-case base directory resolution and id -> path lookup (Task 3.1.5).
-- `uc/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_uc``/``update_uc``
+- `uc/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_uc`` and
 - `uc/tools/create_uc.py` — ``@mcp.tool()`` wrapper: create_uc (Task 3.1.5).
 - `uc/tools/delete_uc.py` — ``@mcp.tool()`` wrapper: delete_uc (Task 3.1.5).
 - `uc/tools/get_uc.py` — ``@mcp.tool()`` wrapper: get_uc (Task 3.1.5).
@@ -372,9 +366,8 @@ First-line docstrings from each module, organized by domain:
 - `uc/tools/list_uc.py` — ``@mcp.tool()`` wrapper: list_uc (feat-13-list-paging Task 2.3).
 - `uc/tools/parse_uc.py` — ``@mcp.tool()`` wrapper: parse_uc.
 - `uc/tools/set_status_uc.py` — ``@mcp.tool()`` wrapper: set_status_uc (Task 3.1.5).
-- `uc/tools/update_uc.py` — ``@mcp.tool()`` wrapper: update_uc (Task 3.1.5).
 - `uc/tools/validate_uc.py` — ``@mcp.tool()`` wrapper: validate_uc (Task 3.1.5).
 
 ## Test Coverage
 
-**Test files**: 255
+**Test files**: 248

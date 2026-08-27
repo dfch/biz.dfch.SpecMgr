@@ -16,8 +16,9 @@ resource so that ``max_results``/``offset`` paging parameters could be
 accepted (see ``.specmgr/feat/feat-13-list-paging/README.md``). ``create_qa``
 assigns a fresh id, builds the frontmatter itself, and writes a new document
 (body markdown only, no frontmatter) under the QA base directory
-(``qa.tools._paths``/``_io``). ``update_qa`` replaces an existing document's
-body the same way, preserving every frontmatter field except ``updated``.
+(``qa.tools._paths``/``_io``). Whole-body and line-range updates of an
+existing document go through the generic ``update`` tool in ``general.tools``
+(``type="qa"``), preserving every frontmatter field except ``updated``.
 ``set_status_qa`` is the only path that changes ``status``, also bumping
 ``updated``, leaving the body untouched. ``delete_qa`` is a registered stub
 -- always raises ``NotImplementedError``, reserving the name for a future

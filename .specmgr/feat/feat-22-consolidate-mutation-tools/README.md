@@ -534,38 +534,36 @@ phase-orchestrator commits each accepted phase as one Conventional Commit.
 
 #### Phase 3: Retire the per-domain `update_*` tools
 
-- [ ] Task 3.1: Delete the seven tool modules: `req/tools/update_req.py`,
+- [x] Task 3.1: Delete the seven tool modules: `req/tools/update_req.py`,
   `uc/tools/update_uc.py`, `tsk/tools/update_tsk.py`, `qa/tools/update_qa.py`,
   `prb/tools/update_prb.py`, `gol/tools/update_gol.py`,
-  `rsk/tools/update_rsk.py` — depends on: Phase 2 complete — status: not-
-  started
-- [ ] Task 3.2: Delete the seven test files: `tests/req/tools/
+  `rsk/tools/update_rsk.py` — depends on: Phase 2 complete — status: done
+- [x] Task 3.2: Delete the seven test files: `tests/req/tools/
   test_update_req.py`, `tests/uc/tools/test_update_uc.py`, `tests/tsk/tools/
   test_update_tsk.py`, `tests/qa/tools/test_update_qa.py`, `tests/prb/tools/
   test_update_prb.py`, `tests/gol/tools/test_update_gol.py`, `tests/rsk/
-  tools/test_update_rsk.py` — depends on: Task 3.1 — status: not-started
-- [ ] Task 3.3: Update the seven domain `tools/__init__.py` files (remove the
+  tools/test_update_rsk.py` — depends on: Task 3.1 — status: done
+- [x] Task 3.3: Update the seven domain `tools/__init__.py` files (remove the
   `update_<d>` import, `__all__` entry, and the module-docstring tool-list
   mention) and the seven domain `__init__.py` files (remove `update_<d>` from
   the docstring tool enumeration; note that whole-body updates go through the
   generic `update` tool in `general/tools/`) — depends on: Task 3.1 — status:
-  not-started
-- [ ] Task 3.4: Update `server.py`'s module docstring: remove `update_<d>`
+  done
+- [x] Task 3.4: Update `server.py`'s module docstring: remove `update_<d>`
   from the seven per-domain Tools lines (the `set_status_<d>` entries stay
-  until Phase 4) — depends on: Task 3.1 — status: not-started
-- [ ] Task 3.5: Grep verification: `grep -rn "update_req\|update_uc\|
+  until Phase 4) — depends on: Task 3.1 — status: done
+- [x] Task 3.5: Grep verification: `grep -rn "update_req\|update_uc\|
   update_tsk\|update_qa\|update_prb\|update_gol\|update_rsk" src/ tests/`
   must return only prompt-narration matches (the six `prompts/update_<d>.py`
   module docstrings and their `data/*.md` files — Phase 5's ownership) and
   nothing in `tools/`, `models/`, or `general/`; record the residual match
-  list in the Progress entry — depends on: Tasks 3.2, 3.3, 3.4 — status: not-
-  started
-- [ ] Task 3.6: Phase-end quality gate — full gate; `specmgr mcp-docs` +
+  list in the Progress entry — depends on: Tasks 3.2, 3.3, 3.4 — status: done
+- [x] Task 3.6: Phase-end quality gate — full gate; `specmgr mcp-docs` +
   `specmgr docs` regeneration, then `git diff --exit-code -- docs/` zero
   drift (`docs/MCP.md` loses the seven `update_<d>` entries; `docs/api/`
   loses the seven module pages); add a dated entry to the Recent Updates
   section, update Current Status, flip the phase's task lines to done in
-  place — depends on: Task 3.5 — status: not-started
+  place — depends on: Task 3.5 — status: done
 
 #### Phase 4: Generic `set_status` + retire the eight old status tools
 
@@ -747,27 +745,136 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-27**: Phase 2 (Generic `update` tool + `raw` read
-parameter) complete — the generic `update(id, type, content, begin, end)`
-tool (the seven whole-body domains; verbatim-ported private adapters;
-whole-body mode plus the splice-then-validate-whole range mode with the
-`N+1` EOF sentinel) is registered in `general/tools/` alongside the new
-`general/tools/_splice.py` shared body-text/splice helpers, and all seven
-`get_<d>` tools gained `raw: bool = False` (frontmatter-stripped body text
-via the same helper the splice uses — REQ-003's invariant). Purely
-additive: the seven `update_<d>` tools and their tests are untouched
-(Phase 3 deletes them), no `set_status*` tool changed (Phase 4), and
-nothing under any `models/` package changed. The phase-end quality gate is
-green (1830 tests OK, zero `docs/` drift, fresh-subprocess import OK);
-live registration is 85 tools / 25 resources / 19 prompts (baseline
-84/25/19). Phases 3–7 are not started. (Phase 1 — the feature's ADR
-36905d5b-8057-4294-8665-c7eed5534db0 — completed on 2026-08-27.)
+**As of 2026-08-27**: Phase 3 (Retire the per-domain `update_*` tools)
+complete — the seven `update_<d>` tool modules, their seven test files
+(34 tests), and every non-narration code/docstring reference to the
+deleted tools are gone: whole-body *and* line-range updates now go only
+through the generic `update` tool in `general/tools/` (Phase 2), with the
+re-pointed `gol`/`prb` integration tests exercising it live. No
+`set_status*` tool changed (Phase 4 deletes all eight), and no schema
+changed (only `tsk/models/v1/body.py`'s docstring was reworded). The
+phase-end quality gate is green (1796 tests OK, zero `docs/` drift,
+fresh-subprocess import OK); live registration is 78 tools / 25 resources
+/ 19 prompts (baseline 85/25/19: −7). Phases 4–7 are not started.
+(Phase 1 — the feature's ADR 36905d5b-8057-4294-8665-c7eed5534db0 — and
+Phase 2 — the generic `update` tool + `raw` reads — completed on
+2026-08-27.)
 
 ### Blockers
 
 None.
 
 ### Recent Updates
+
+#### Update 2026-08-27 (Phase 3: Retire the per-domain `update_*` tools)
+
+- Completed: Phase 3 (Tasks 3.1–3.6). The seven `update_<d>` tools are
+  deleted from source and from MCP registration; whole-body *and*
+  line-range updates now go only through the generic `update` tool in
+  `general/tools/` (Phase 2). Every non-narration code/docstring
+  reference to the deleted tools was re-pointed:
+  - Deleted (7 tool modules):
+    `src/biz/dfch/specmgr/{req,uc,tsk,qa,prb,gol,rsk}/tools/update_<d>.py`;
+    deleted (7 test files, 34 tests):
+    `tests/{req,uc,tsk,qa,prb,gol,rsk}/tools/test_update_<d>.py`.
+  - Seven domain `tools/__init__.py`: `update_<d>` import + `__all__`
+    entry removed; the narrating sentence rewritten to say whole-body and
+    line-range updates go through the generic `update` tool in
+    `general.tools` (`type="<d>"`).
+  - Seven domain `__init__.py`: `update_<d>` removed from the docstring
+    tool enumeration, same generic-`update` pointer added. The prompt
+    enumerations in `req`/`qa`/`prb`/`gol`'s `__init__.py` keep the
+    prompt names `update_<d>` (the plan keeps the prompts).
+  - `server.py`: `update_<d>` removed from the seven per-domain Tools
+    lines; the `set_status_<d>` entries (Phase 4) and the per-domain
+    prompt enumerations (kept prompt names) stay.
+  - `general/tools/update.py`: the seven adapter docstrings reworded to
+    name the historical port without the deleted tool names ("Verbatim
+    port of the previous per-domain … update tool's function body … that
+    per-domain tool was retired in feat-22 Phase 3"). The private
+    adapter *function names* `_update_<d>` stay — they are this module's
+    own names per the Design Notes' dispatch convention (Phase 4 mirrors
+    it with `_set_status_<d>`), not references to the deleted tools.
+  - Seven `_io.py`/`_lock.py`/`_write.py` helper pairs: docstrings
+    re-pointed at the generic `update` tool; the live `set_status_<d>`
+    mentions in the `_lock.py` modules kept.
+  - `req/tools/create_req.py`, `uc/tools/create_uc.py`,
+    `qa/tools/create_qa.py`: "shared with `update_<d>`" reworded to the
+    generic `update` tool.
+  - Seven `validate_<d>.py` and seven `set_status_<d>.py`: docstring
+    mentions of the deleted tools reworded (the `set_status_<d>` modules
+    themselves stay — Phase 4 deletes them).
+  - `tsk/models/v1/body.py`: the `_validate_items_eagerly` docstring's
+    `create_tsk`/`update_tsk`/`validate_tsk` mention reworded.
+  - `tests/gol/tools/test_integration.py` +
+    `tests/prb/tools/test_integration.py`: re-pointed from
+    `update_gol`/`update_prb` to
+    `from biz.dfch.specmgr.general.tools.update import update` and
+    `update(<d>_id, "<d>", _REVISED_BODY)` (whole-body mode); docstring/
+    step text updated; both still pass live.
+- Task 3.5 residual match list — full
+  `git grep -n "update_req\|update_uc\|update_tsk\|update_qa\|update_prb\|
+  update_gol\|update_rsk" -- src/ tests/` after Tasks 3.1–3.5 (43 files,
+  251 match lines), grouped:
+  - Phase-5 prompt-narration files (left for Phase 5, per the plan's
+    ownership): the prompt modules `req/prompts/update_req.py` (5),
+    `qa/prompts/update_qa.py` (6), `qa/prompts/refine.py` (3),
+    `prb/prompts/update_prb.py` (9), `gol/prompts/update_gol.py` (10),
+    `tsk/prompts/update_task.py` (4), `rsk/prompts/update_risk.py` (3);
+    the prompt `__init__.py` files `req/prompts/__init__.py` (2),
+    `qa/prompts/__init__.py` (3), `prb/prompts/__init__.py` (3),
+    `gol/prompts/__init__.py` (2) — tsk/rsk's `prompts/__init__.py`
+    match nothing (their prompt functions are named `update_task`/
+    `update_risk`); the 14 `*/data/*.md` instruction files
+    (`req_create` 3, `req_update` 4, `tsk_create` 1, `tsk_implement` 1,
+    `tsk_update` 4, `qa_create` 3, `qa_refine` 4, `qa_update` 4,
+    `prb_create` 2, `prb_update` 4, `gol_create` 3, `gol_update` 4,
+    `rsk_create` 1, `rsk_update` 4); and the 12 prompt test files under
+    `tests/*/prompts/` (`test_update_req` 21, `test_update_qa` 24,
+    `test_update_prb` 27, `test_update_gol` 24, `test_update_task` 8,
+    `test_update_risk` 8, `test_create_req` 3, `test_create_qa` 3,
+    `test_create_prb` 3, `test_create_gol` 3, `test_refine` 4,
+    `test_implement_task` 3).
+  - Kept-by-design prompt-name enumerations (not tool references — the
+    plan keeps the prompt names): `server.py`'s four per-domain PROMPT
+    enumeration lines (155/161/166/170: req, qa, prb, gol — tsk/rsk's
+    prompt lines name `update_task`/`update_risk` and match nothing),
+    and the prompt-enumeration sentence in `req/__init__.py`,
+    `qa/__init__.py`, `prb/__init__.py`, `gol/__init__.py` (one match
+    each).
+  - Substring-only matches on the generic tool's own private adapter
+    names (not references to deleted tools; see the adapter-name note
+    above): `general/tools/update.py` (20 — the seven
+    `def _update_<d>` lines, the six `:func:`_update_req``
+    cross-references, and the seven dispatch-table entries).
+  - Everything else: zero matches — in particular, no per-domain
+    `tools/` file and no `models/` file names a deleted tool anymore
+    (Task 3.5's plan wording anticipated nothing in `general/` either;
+    the 20 adapter-name matches above are the single, documented
+    exception — flagging for the orchestrator's confirmation).
+- Quality gate (green): `ruff format --check` (1122 files already
+  formatted, down from 1136 — the 14 deleted files), `ruff check` (all
+  checks passed), `vulture src/ whitelist.py --min-confidence 60` (clean,
+  exit 0), full unittest suite (**Ran 1796 tests, OK** — down from 1830:
+  −34, the seven deleted `test_update_<d>.py` files; the two re-pointed
+  `gol`/`prb` integration tests still pass live). Regenerations:
+  `specmgr coverage-badge` (98% — unchanged rounded value, badge
+  byte-identical, no diff), `specmgr mcp-docs` (header now "78 tool(s)";
+  the seven `update_<d>` tool table rows and `### Tool:` sections gone;
+  the generic `update` entry and all eight `set_status*` entries intact;
+  the `update_<d>` prompt rows untouched), `specmgr docs` (54 other
+  `docs/api/` pages + `docs/api/README.md` + `docs/GENERATED.md`
+  regenerated from the reworded docstrings; the seven
+  `docs/api/biz.dfch.specmgr.<d>.tools.update_<d>.md` module pages
+  deleted — the generator writes pages for existing modules but never
+  deletes stale ones, so they were removed manually). Zero-drift proof:
+  all three generators re-run and the whole `docs/` tree came back
+  byte-identical (sha256 manifest diff empty). Fresh-subprocess
+  `uv run --frozen python -c "import biz.dfch.specmgr.server"`: exit 0.
+  Live registration confirmed at **78 tools / 25 resources / 19
+  prompts** (−7 vs Phase 2's 85/25/19).
+- Next: Phase 4 (Generic `set_status` + retire the eight old status
+  tools).
 
 #### Update 2026-08-27 (Phase 2: Generic `update` tool + `raw` read parameter)
 

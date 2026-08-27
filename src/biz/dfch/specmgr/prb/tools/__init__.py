@@ -31,8 +31,9 @@ paged tool from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
 ``create_prb`` assigns a fresh id, builds the frontmatter itself, and
 writes a new document (body markdown only, no frontmatter) under the
 problem statement base directory (``prb.tools._paths``/``_io``).
-``update_prb`` replaces an existing document's body the same way,
-preserving every frontmatter field except ``updated``. ``set_status_prb``
+Whole-body and line-range updates of an existing document go through the
+generic ``update`` tool in ``general.tools`` (``type="prb"``), preserving
+every frontmatter field except ``updated``. ``set_status_prb``
 is the only path that changes ``status``, also bumping ``updated``, leaving
 the body untouched. ``delete_prb`` is a registered stub -- always raises
 ``NotImplementedError``, reserving the name for a future real
@@ -51,7 +52,6 @@ from .get_prb_template import get_prb_template
 from .list_prb import list_prb
 from .parse_prb import parse_prb
 from .set_status_prb import set_status_prb
-from .update_prb import update_prb
 from .validate_prb import validate_prb
 
 __all__ = [
@@ -63,6 +63,5 @@ __all__ = [
     "list_prb",
     "parse_prb",
     "set_status_prb",
-    "update_prb",
     "validate_prb",
 ]

@@ -137,9 +137,10 @@ class Task(MarkdownSection1WithComment):
         only evaluates a computed field's getter on access (e.g. during
         `model_dump()`/serialization), never during construction/validation
         of the underlying model itself. Left unchecked, that would mean
-        `Task.from_text(...)` (and therefore `create_tsk`/`update_tsk`/
-        `validate_tsk`) could silently accept a malformed checkbox marker
-        like `"- [z] foo"`, breaking this project's universal "successfully
+        `Task.from_text(...)` (and therefore `create_tsk`, the generic
+        `update` tool in `general.tools`, and `validate_tsk`) could
+        silently accept a malformed checkbox marker like `"- [z] foo"`,
+        breaking this project's universal "successfully
         constructing the model *is* the validation" convention -- a caller
         could write a bad file to disk before the error ever surfaced, if it
         surfaced at all.

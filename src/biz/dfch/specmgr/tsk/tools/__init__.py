@@ -32,9 +32,11 @@ resource so that ``max_results``/``offset`` paging parameters could be
 accepted (see ``.specmgr/feat/feat-13-list-paging/README.md``).
 ``create_tsk`` assigns a fresh id, builds the frontmatter itself, and
 writes a new document (body markdown only, no frontmatter) under the task
-list base directory (``tsk.tools._paths``/``_io``). ``update_tsk`` replaces
-an existing document's body the same way, preserving every frontmatter
-field except ``updated``. ``set_status_tsk`` is the only path that changes
+list base directory (``tsk.tools._paths``/``_io``). Whole-body and
+line-range updates of an existing document go through the generic
+``update`` tool in ``general.tools`` (``type="tsk"``), preserving every
+frontmatter field except ``updated``. ``set_status_tsk`` is the only path
+that changes
 ``status``, also bumping ``updated``, leaving the body untouched.
 ``delete_tsk`` is a registered stub -- always raises ``NotImplementedError``,
 reserving the name for a future real implementation. ``validate_tsk`` is a
@@ -53,7 +55,6 @@ from .get_tsk_template import get_tsk_template
 from .list_tsk import list_tsk
 from .parse_tsk import parse_tsk
 from .set_status_tsk import set_status_tsk
-from .update_tsk import update_tsk
 from .validate_tsk import validate_tsk
 
 __all__ = [
@@ -65,6 +66,5 @@ __all__ = [
     "list_tsk",
     "parse_tsk",
     "set_status_tsk",
-    "update_tsk",
     "validate_tsk",
 ]

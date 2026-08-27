@@ -15,8 +15,8 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Shared frontmatter+body composition/write helper for ``create_req``/``update_req``
-(Tasks 3.12/3.13).
+"""Shared frontmatter+body composition/write helper for ``create_req`` and
+the generic ``update`` tool in ``general.tools`` (``type="req"``).
 
 Deliberately **not** part of ``req.tools._io`` -- that module's own docstring
 rules out a ``write_req``/``render_req`` counterpart to ``read_req``, since
@@ -27,8 +27,8 @@ Task 3.9's design never renders a body back out from a parsed
 already-constructed, already-validated
 :class:`~biz.dfch.specmgr.req.models.v1.ReqFrontmatter` with the caller's own
 already-validated *raw* body text (never reformatted/re-rendered) into one
-file. Factored out of ``create_req.py`` into its own module so
-``update_req.py`` (Task 3.13) does not have to duplicate it.
+file. Factored out of ``create_req.py`` into its own module so the generic
+``update`` tool in ``general.tools`` does not have to duplicate it.
 """
 
 from __future__ import annotations

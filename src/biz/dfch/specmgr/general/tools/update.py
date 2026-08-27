@@ -95,10 +95,11 @@ _UpdateDocument = ReqDocument | UcDocument | TskDocument | QaDocument | PrbDocum
 def _update_req(id_: str, content: str, begin: int | None, end: int | None) -> ReqDocument:
     """Replace the body of the requirement identified by ``id_`` (whole-body or line-range mode).
 
-    Verbatim port of ``req.tools.update_req.update_req``'s function body
-    (same ``req_lock``, ``load_by_id``, frontmatter carry-over with only
-    ``updated`` bumped, ``write_req_file``, ``ReqNotFoundError``), plus the
-    REQ-002 range branch: with ``begin``/``end`` given (both-or-neither is
+    Verbatim port of the previous per-domain requirement update tool's
+    function body (same ``req_lock``, ``load_by_id``, frontmatter carry-over
+    with only ``updated`` bumped, ``write_req_file``, ``ReqNotFoundError``;
+    that per-domain tool was retired in feat-22 Phase 3), plus the REQ-002
+    range branch: with ``begin``/``end`` given (both-or-neither is
     enforced by the public :func:`update` before dispatch), the on-disk
     body is re-read via :func:`body_text`, spliced via
     :func:`splice_body`, and the *spliced result* is validated and
@@ -137,10 +138,11 @@ def _update_req(id_: str, content: str, begin: int | None, end: int | None) -> R
 def _update_uc(id_: str, content: str, begin: int | None, end: int | None) -> UcDocument:
     """Replace the body of the use case identified by ``id_`` (whole-body or line-range mode).
 
-    Verbatim port of ``uc.tools.update_uc.update_uc``'s function body (same
-    ``uc_lock``, ``load_by_id``, frontmatter carry-over with only
-    ``updated`` bumped, ``write_uc_file``, ``UcNotFoundError``), plus the
-    REQ-002 range branch (see :func:`_update_req`).
+    Verbatim port of the previous per-domain use-case update tool's function
+    body (same ``uc_lock``, ``load_by_id``, frontmatter carry-over with only
+    ``updated`` bumped, ``write_uc_file``, ``UcNotFoundError``; that
+    per-domain tool was retired in feat-22 Phase 3), plus the REQ-002 range
+    branch (see :func:`_update_req`).
     """
     if begin is not None or end is not None:
         assert begin is not None and end is not None, "the public `update` guard enforces both-or-neither"
@@ -175,10 +177,11 @@ def _update_uc(id_: str, content: str, begin: int | None, end: int | None) -> Uc
 def _update_tsk(id_: str, content: str, begin: int | None, end: int | None) -> TskDocument:
     """Replace the body of the task list identified by ``id_`` (whole-body or line-range mode).
 
-    Verbatim port of ``tsk.tools.update_tsk.update_tsk``'s function body
-    (same ``tsk_lock``, ``load_by_id``, frontmatter carry-over with only
-    ``updated`` bumped, ``write_tsk_file``, ``TskNotFoundError``), plus the
-    REQ-002 range branch (see :func:`_update_req`).
+    Verbatim port of the previous per-domain task list update tool's
+    function body (same ``tsk_lock``, ``load_by_id``, frontmatter carry-over
+    with only ``updated`` bumped, ``write_tsk_file``, ``TskNotFoundError``;
+    that per-domain tool was retired in feat-22 Phase 3), plus the REQ-002
+    range branch (see :func:`_update_req`).
     """
     if begin is not None or end is not None:
         assert begin is not None and end is not None, "the public `update` guard enforces both-or-neither"
@@ -213,10 +216,11 @@ def _update_tsk(id_: str, content: str, begin: int | None, end: int | None) -> T
 def _update_qa(id_: str, content: str, begin: int | None, end: int | None) -> QaDocument:
     """Replace the body of the QA document identified by ``id_`` (whole-body or line-range mode).
 
-    Verbatim port of ``qa.tools.update_qa.update_qa``'s function body (same
-    ``qa_lock``, ``load_by_id``, frontmatter carry-over with only
-    ``updated`` bumped, ``write_qa_file``, ``QaNotFoundError``), plus the
-    REQ-002 range branch (see :func:`_update_req`).
+    Verbatim port of the previous per-domain QA document update tool's
+    function body (same ``qa_lock``, ``load_by_id``, frontmatter carry-over
+    with only ``updated`` bumped, ``write_qa_file``, ``QaNotFoundError``;
+    that per-domain tool was retired in feat-22 Phase 3), plus the REQ-002
+    range branch (see :func:`_update_req`).
     """
     if begin is not None or end is not None:
         assert begin is not None and end is not None, "the public `update` guard enforces both-or-neither"
@@ -251,10 +255,11 @@ def _update_qa(id_: str, content: str, begin: int | None, end: int | None) -> Qa
 def _update_prb(id_: str, content: str, begin: int | None, end: int | None) -> PrbDocument:
     """Replace the body of the problem statement identified by ``id_`` (whole-body or line-range mode).
 
-    Verbatim port of ``prb.tools.update_prb.update_prb``'s function body
-    (same ``prb_lock``, ``load_by_id``, frontmatter carry-over with only
-    ``updated`` bumped, ``write_prb_file``, ``PrbNotFoundError``), plus the
-    REQ-002 range branch (see :func:`_update_req`).
+    Verbatim port of the previous per-domain problem statement update
+    tool's function body (same ``prb_lock``, ``load_by_id``, frontmatter
+    carry-over with only ``updated`` bumped, ``write_prb_file``,
+    ``PrbNotFoundError``; that per-domain tool was retired in feat-22
+    Phase 3), plus the REQ-002 range branch (see :func:`_update_req`).
     """
     if begin is not None or end is not None:
         assert begin is not None and end is not None, "the public `update` guard enforces both-or-neither"
@@ -289,10 +294,11 @@ def _update_prb(id_: str, content: str, begin: int | None, end: int | None) -> P
 def _update_gol(id_: str, content: str, begin: int | None, end: int | None) -> GolDocument:
     """Replace the body of the goal identified by ``id_`` (whole-body or line-range mode).
 
-    Verbatim port of ``gol.tools.update_gol.update_gol``'s function body
-    (same ``gol_lock``, ``load_by_id``, frontmatter carry-over with only
-    ``updated`` bumped, ``write_gol_file``, ``GolNotFoundError``), plus the
-    REQ-002 range branch (see :func:`_update_req`).
+    Verbatim port of the previous per-domain goal update tool's function
+    body (same ``gol_lock``, ``load_by_id``, frontmatter carry-over with
+    only ``updated`` bumped, ``write_gol_file``, ``GolNotFoundError``; that
+    per-domain tool was retired in feat-22 Phase 3), plus the REQ-002 range
+    branch (see :func:`_update_req`).
     """
     if begin is not None or end is not None:
         assert begin is not None and end is not None, "the public `update` guard enforces both-or-neither"
@@ -327,10 +333,11 @@ def _update_gol(id_: str, content: str, begin: int | None, end: int | None) -> G
 def _update_rsk(id_: str, content: str, begin: int | None, end: int | None) -> RskDocument:
     """Replace the body of the risk identified by ``id_`` (whole-body or line-range mode).
 
-    Verbatim port of ``rsk.tools.update_rsk.update_rsk``'s function body
-    (same ``rsk_lock``, ``load_by_id``, frontmatter carry-over with only
-    ``updated`` bumped, ``write_rsk_file``, ``RskNotFoundError``), plus the
-    REQ-002 range branch (see :func:`_update_req`).
+    Verbatim port of the previous per-domain risk update tool's function
+    body (same ``rsk_lock``, ``load_by_id``, frontmatter carry-over with
+    only ``updated`` bumped, ``write_rsk_file``, ``RskNotFoundError``; that
+    per-domain tool was retired in feat-22 Phase 3), plus the REQ-002 range
+    branch (see :func:`_update_req`).
     """
     if begin is not None or end is not None:
         assert begin is not None and end is not None, "the public `update` guard enforces both-or-neither"

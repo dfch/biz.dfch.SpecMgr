@@ -9,8 +9,9 @@ six-value set (``open``/``mitigating``/``accepted``/``occurred``/``closed``/
 ``dropped``), a purpose-fit risk lifecycle (identified/monitored, treatment
 in progress, residual risk accepted, event materialized, resolved/expired,
 or dropped from the register) rather than reusing REQ's larger, ADR-like
-set. Neither ``create_rsk`` nor ``update_rsk`` accept a ``status`` argument
-at all -- this is the sole entry point.
+set. Neither ``create_rsk`` nor the generic ``update`` tool in
+``general.tools`` accepts a ``status`` argument at all -- this is the sole
+entry point.
 
 Thin file-I/O/id-lookup adapter, re-reading and re-parsing the current
 on-disk state before re-writing the full file; there is no in-memory cache

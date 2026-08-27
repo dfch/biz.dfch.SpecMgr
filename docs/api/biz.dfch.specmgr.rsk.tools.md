@@ -18,7 +18,8 @@ residual-risk coordinates (``RskSummary``), so that ``max_results``/
 ec9f5262-9912-49d0-903f-fcfb54f28c13). ``create_rsk`` assigns a fresh id,
 builds the frontmatter itself, and writes a new document (body markdown
 only, no frontmatter) under the risk base directory (``rsk.tools._paths``/
-``_io``). ``update_rsk`` replaces an existing document's body the same way,
+``_io``). Whole-body and line-range updates of an existing document go
+through the generic ``update`` tool in ``general.tools`` (``type="rsk"``),
 preserving every frontmatter field except ``updated``. ``set_status_rsk``
 is the only path that changes ``status``, also bumping ``updated``, leaving
 the body untouched. ``delete_rsk`` is a registered stub -- always raises

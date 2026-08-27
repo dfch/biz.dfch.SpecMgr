@@ -19,7 +19,7 @@
 
 Unlike the per-tool unit tests elsewhere under ``tests/prb/tools/``, this
 module drives the actual tool functions in a single realistic sequence --
-``create_prb`` -> ``update_prb`` -> ``set_status_prb`` -> ``get_prb`` ->
+``create_prb`` -> ``update`` -> ``set_status_prb`` -> ``get_prb`` ->
 ``list_prb`` -> ``delete_prb`` (stub) -- against a real temporary docs
 directory, confirming ACC-004/ACC-006's "verified live, not just asserted"
 requirement with concrete evidence beyond the isolated per-tool tests.
@@ -39,6 +39,7 @@ from pathlib import Path
 from unittest import mock
 
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
+from biz.dfch.specmgr.general.tools.update import update
 from biz.dfch.specmgr.prb.models.v1 import PrbDocument, parse_prb
 from biz.dfch.specmgr.prb.tools.create_prb import create_prb
 from biz.dfch.specmgr.prb.tools.delete_prb import delete_prb
@@ -47,7 +48,6 @@ from biz.dfch.specmgr.prb.tools.get_prb_example import get_prb_example
 from biz.dfch.specmgr.prb.tools.get_prb_template import get_prb_template
 from biz.dfch.specmgr.prb.tools.list_prb import list_prb
 from biz.dfch.specmgr.prb.tools.set_status_prb import set_status_prb
-from biz.dfch.specmgr.prb.tools.update_prb import update_prb
 
 _INITIAL_BODY = textwrap.dedent(
     """\
@@ -123,7 +123,7 @@ class TestPrbLifecycleIntegration(TempPrbDirTestCase):
     """Live, end-to-end lifecycle exercise, isolated to a temp docs directory."""
 
     def test_create_update_set_status_get_list_delete_roundtrip(self) -> None:
-        """create_prb -> update_prb -> set_status_prb -> get_prb -> list_prb -> delete_prb, live."""
+        """create_prb -> update -> set_status_prb -> get_prb -> list_prb -> delete_prb, live."""
         # 1. create_prb: a freshly created document must be a PrbDocument in status "draft".
         created = create_prb(_INITIAL_BODY)
         self.assertIsInstance(created, PrbDocument)
@@ -134,8 +134,8 @@ class TestPrbLifecycleIntegration(TempPrbDirTestCase):
         prb_id = created.frontmatter.id
         assert prb_id is not None
 
-        # 2. update_prb: whole-body replace must preserve id/type/created, bump updated.
-        updated = update_prb(prb_id, _REVISED_BODY)
+        # 2. update: whole-body replace must preserve id/type/created, bump updated.
+        updated = update(prb_id, "prb", _REVISED_BODY)
         self.assertEqual(updated.frontmatter.id, created.frontmatter.id)
         self.assertEqual(updated.frontmatter.type, created.frontmatter.type)
         self.assertEqual(updated.frontmatter.created, created.frontmatter.created)

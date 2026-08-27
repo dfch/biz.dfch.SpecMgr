@@ -3,10 +3,11 @@
 Thin file read helpers over ``parse_tsk`` (Task 3.1).
 
 Read-only, unlike ``adr.tools._io``'s ``read_adr``/``write_adr`` pair: there
-is no ``write_tsk``/``render_tsk`` counterpart here, since ``create_tsk``/
-``update_tsk`` persist the caller's already-validated body markdown
-byte-for-byte rather than rendering it back out from a parsed model -- no
-renderer is needed for that shape, so none is added speculatively here.
+is no ``write_tsk``/``render_tsk`` counterpart here, since ``create_tsk``
+and the generic ``update`` tool in ``general.tools`` persist the caller's
+already-validated body markdown byte-for-byte rather than rendering it back
+out from a parsed model -- no renderer is needed for that shape, so none is
+added speculatively here.
 Mirrors ``req.tools._io`` file-for-file.
 
 No ``mcp`` dependency here either -- these are plain file-I/O adapters, kept
