@@ -7,6 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-08-27
+
+### Added
+
+- **Tenth domain feature (DEC/Decision tooling)**: implemented tooling for
+  decisions in general (not architecture-only), keeping the ADR's general
+  structure (MADR-style headings, an `Options` collection) but built on the
+  generic `models/md` engine with the simple surface used by GOL/RSK/QA —
+  no fine-grained ADR mutation tools, no `specmgr://dec/{id}` resource, no
+  renderer (writes persist the caller's raw validated body byte-for-byte):
+  - `dec/models/v1/`: Pydantic schema (`DecFrontmatter` with a closed
+    6-value status set `draft`/`proposed`/`accepted`/`rejected`/
+    `deprecated`/`superseded`, `Decision` body with `## Context and Problem
+    Statement`/`## Decision Outcome` mandatory, optional `## Decision
+    Drivers`/`## Considered Options`/`## Related Artifacts`/`## Pros and
+    Cons`/`## More Information`/`## Updates`, `### Consequences`/
+    `### Confirmation` under Decision Outcome, and `### Option N: {name}`
+    entries with computed `number`/`name` fields and a duplicate-number
+    guard), parser (`parse_dec`), `DecSummary`, and JSON schema generation,
+    inside the domain package itself (not top-level `models/`).
+  - `dec/tools/`: `@mcp.tool()` wrappers for the DEC lifecycle
+    (`create_dec`, `update_dec`, `set_status_dec`, `parse_dec`, `list_dec`,
+    `get_dec`, `get_dec_example`, `get_dec_template`, `validate_dec`),
+    plus a stub for `delete_dec`. `list_dec` ships as a paged tool from day
+    one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
+  - `dec/resources/`: `specmgr://dec/schema`, `specmgr://dec/example`,
+    `specmgr://dec/template` (no `specmgr://dec/{id}` — id-based reads are
+    `get_dec`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
+    `specmgr://dec/list` — listing is the `list_dec` tool, ADR
+    ec9f5262-9912-49d0-903f-fcfb54f28c13).
+  - `dec/prompts/`: `create_dec(topic)`/`update_dec(id, instructions?)`
+    prompts reading packaged instruction data.
+  - `server.py` updated to import the new `dec` domain package; `AGENTS.md`
+    updated for ten domain/cross-cutting packages; root `README.md`
+    updated with the new `Decision (DEC)` artifact type.
+  - Comprehensive test coverage across `tests/dec/models/`,
+    `tests/dec/tools/`, `tests/dec/resources/`, and `tests/dec/prompts/`,
+    including a live lifecycle integration test.
+
 ## [0.11.0] - 2026-08-26
 
 ### Added
