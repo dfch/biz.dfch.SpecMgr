@@ -55,7 +55,10 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.dec.models.v1.parser`](biz.dfch.specmgr.dec.models.v1.parser.md) — Parse raw decision (DEC) ``.md`` text into a :class:`DecDocument`.
 - [`biz.dfch.specmgr.dec.models.v1.summary`](biz.dfch.specmgr.dec.models.v1.summary.md) — Pydantic model for one line of DEC listing output (Phase 2, Task 2.3).
 - [`biz.dfch.specmgr.dec.prompts`](biz.dfch.specmgr.dec.prompts.md) — No documentation available.
-- [`biz.dfch.specmgr.dec.resources`](biz.dfch.specmgr.dec.resources.md) — No documentation available.
+- [`biz.dfch.specmgr.dec.resources`](biz.dfch.specmgr.dec.resources.md) — MCP resource registrations for Decision (DEC) documents (feat-21 Task 3.4).
+- [`biz.dfch.specmgr.dec.resources.dec_example`](biz.dfch.specmgr.dec.resources.dec_example.md) — Resource: specmgr://dec/example (feat-21 Task 3.4).
+- [`biz.dfch.specmgr.dec.resources.dec_schema`](biz.dfch.specmgr.dec.resources.dec_schema.md) — Resource: specmgr://dec/schema (feat-21 Task 3.4, packaged data).
+- [`biz.dfch.specmgr.dec.resources.dec_template`](biz.dfch.specmgr.dec.resources.dec_template.md) — Resource: specmgr://dec/template (feat-21 Task 3.4).
 - [`biz.dfch.specmgr.dec.tools`](biz.dfch.specmgr.dec.tools.md) — MCP tool wrappers for decisions (mirrors ``gol/tools/``'s own shape).
 - [`biz.dfch.specmgr.dec.tools._io`](biz.dfch.specmgr.dec.tools._io.md) — Thin file read helpers over ``parse_dec`` (Task 2.1).
 - [`biz.dfch.specmgr.dec.tools._lock`](biz.dfch.specmgr.dec.tools._lock.md) — Per-document in-process lock guarding decision mutations.

@@ -15,50 +15,80 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Tests for the ``get_dec_template`` ``@mcp.tool()`` wrapper (Task 2.2, real packaged data from Task 3.2)."""
-
-from __future__ import annotations
+"""Tests for the `specmgr://dec/template` resource (`dec.resources.dec_template.dec_template`)."""
 
 import tempfile
 import unittest
 from pathlib import Path
 from unittest import mock
 
+from biz.dfch.specmgr.dec.models.v1 import parse_dec
+from biz.dfch.specmgr.dec.resources.dec_template import dec_template
 from biz.dfch.specmgr.dec.tools.get_dec_template import get_dec_template
 from biz.dfch.specmgr.general.tools import _packaged_data
 
+_TEMPLATE_STATUS = "draft"
 
-class TestGetDecTemplateTool(unittest.TestCase):
-    """Tests for the get_dec_template tool."""
 
-    def test_returns_real_packaged_template(self) -> None:
+class TestDecTemplateResource(unittest.TestCase):
+    """Tests for the dec_template resource function."""
+
+    def test_returns_real_packaged_template(self):
         """Against the real, committed packaged data file, without any patching."""
-        result = get_dec_template()
+        sut = dec_template
+
+        result = sut()
 
         self.assertIsInstance(result, str)
         self.assertTrue(result.startswith("---\n"))
         self.assertIn("type: dec", result)
         self.assertIn("# Level 1 Heading is the Title of the Decision", result)
 
-    def test_delegates_to_shared_data_reader(self) -> None:
-        """The tool must return whatever general.tools._packaged_data.read_packaged_text() returns."""
+    def test_matches_packaged_file_byte_for_byte(self):
+        """ACC-004: the resource must equal the packaged dec_template.md byte-for-byte."""
+        sut = dec_template
+
+        result = sut()
+
+        packaged = _packaged_data.packaged_data_path("dec", "template").read_text(encoding="utf-8")
+        self.assertEqual(result, packaged)
+
+    def test_matches_the_get_dec_template_tool(self):
+        """The resource and the tool must return identical content -- same underlying reader."""
+        self.assertEqual(dec_template(), get_dec_template())
+
+    def test_packaged_template_round_trips_through_parse_dec(self):
+        """The committed template must be a fully-parseable decision document (RSK precedent)."""
+        document = parse_dec(dec_template())
+
+        self.assertEqual(document.frontmatter.status, _TEMPLATE_STATUS)
+
+    def test_reads_fresh_on_every_call(self):
+        """No in-memory cache -- a second call must reflect an on-disk change since the first."""
         with tempfile.TemporaryDirectory() as tmp:
             template_path = Path(tmp) / "dec_template.md"
-            template_path.write_text("---\ntype: dec\n---\n\n# Title\n", encoding="utf-8")
+            template_path.write_text("first", encoding="utf-8")
 
             with mock.patch.object(_packaged_data, "packaged_data_path", return_value=template_path):
-                result = get_dec_template()
+                sut = dec_template
 
-            self.assertEqual(result, "---\ntype: dec\n---\n\n# Title\n")
+                first = sut()
+                template_path.write_text("second", encoding="utf-8")
+                second = sut()
 
-    def test_raises_file_not_found_when_template_missing(self) -> None:
+            self.assertEqual(first, "first")
+            self.assertEqual(second, "second")
+
+    def test_raises_file_not_found_when_template_missing(self):
         """A missing packaged template file must propagate FileNotFoundError uncaught."""
         with tempfile.TemporaryDirectory() as tmp:
             missing_path = Path(tmp) / "does-not-exist.md"
 
             with mock.patch.object(_packaged_data, "packaged_data_path", return_value=missing_path):
+                sut = dec_template
+
                 with self.assertRaises(FileNotFoundError):
-                    get_dec_template()
+                    sut()
 
 
 if __name__ == "__main__":

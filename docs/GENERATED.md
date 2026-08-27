@@ -68,6 +68,10 @@ First-line docstrings from each module, organized by domain:
 - `dec/models/v1/frontmatter.py` — Decision (DEC) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
 - `dec/models/v1/parser.py` — Parse raw decision (DEC) ``.md`` text into a :class:`DecDocument`.
 - `dec/models/v1/summary.py` — Pydantic model for one line of DEC listing output (Phase 2, Task 2.3).
+- `dec/resources/__init__.py` — MCP resource registrations for Decision (DEC) documents (feat-21 Task 3.4).
+- `dec/resources/dec_example.py` — Resource: specmgr://dec/example (feat-21 Task 3.4).
+- `dec/resources/dec_schema.py` — Resource: specmgr://dec/schema (feat-21 Task 3.4, packaged data).
+- `dec/resources/dec_template.py` — Resource: specmgr://dec/template (feat-21 Task 3.4).
 - `dec/tools/__init__.py` — MCP tool wrappers for decisions (mirrors ``gol/tools/``'s own shape).
 - `dec/tools/_io.py` — Thin file read helpers over ``parse_dec`` (Task 2.1).
 - `dec/tools/_lock.py` — Per-document in-process lock guarding decision mutations.
@@ -402,4 +406,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 272
+**Test files**: 275

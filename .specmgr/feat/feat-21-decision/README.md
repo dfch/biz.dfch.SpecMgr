@@ -161,16 +161,16 @@ progresses (edit, don't duplicate).
 - [x] Task 2.1: Private helpers `_paths.py` (`DEC_TYPE_NAME="dec"`, `DecNotFoundError`, wrappers over `general.tools._doc_paths`), `_io.py` (`read_dec`, `load_by_id`), `_lock.py` (`dec_lock`), `_write.py` (`write_dec_file`) — mirror GOL — depends on: Task 1.6 — status: completed
 - [x] Task 2.2: The 10 tool modules + `tools/__init__.py` per Design Notes (`create_dec` fixes `status="draft"`, filename `dec-{id}-{slug}.md`; `delete_dec` stub `structured_output=False`) — depends on: Task 2.1 — status: completed
 - [x] Task 2.3: Tests `tests/dec/tools/` — one module per tool + helper tests + `test_integration.py` (ACC-003) — depends on: Task 2.2 — status: completed
-- [x] Task 2.4: Phase-end quality gate + commit + comment the commit hash on issue #21 — depends on: Task 2.3 — status: in-progress (gate run; commit + issue #21 comment performed by orchestrator after verification)
+- [x] Task 2.4: Phase-end quality gate + commit + comment the commit hash on issue #21 — depends on: Task 2.3 — status: completed (commit ff277a9, issue #21 comment posted by orchestrator)
 
 #### Phase 3: Resources + packaged data + schema
-- [ ] Task 3.1: `dec/data/dec_example.md` — non-architectural worked decision exercising every section (Design Notes); must parse — depends on: Task 2.4 — status: not-started
-- [ ] Task 3.2: `dec/data/dec_template.md` — all-sections placeholder skeleton, `status: draft`; must round-trip through `parse_dec` — depends on: Task 2.4 — status: not-started
-- [ ] Task 3.3: `dec/data/dec_create_instructions.md` + `dec_update_instructions.md` (narrated flows, `$topic`/`$id`/`$instructions` placeholders) — depends on: Task 2.4 — status: not-started
-- [ ] Task 3.4: `dec/resources/` — `dec_schema.py` (`specmgr://dec/schema`, JSON from packaged copy), `dec_example.py`, `dec_template.py`, `__init__.py` — depends on: Task 3.5 — status: not-started
-- [ ] Task 3.5: `commands/schema.py` — `generate_dec_schema()` + `_GENERATORS["dec"]` (mirror `generate_gol_schema`); run `specmgr schema --type dec` (writes `docs/dec_schema.json`) and `specmgr schema --type dec --output-dir src/biz/dfch/specmgr/dec/data` (packaged copy) — depends on: Task 1.6 — status: not-started
-- [ ] Task 3.6: Tests `tests/dec/resources/` (ACC-004) — depends on: Task 3.4 — status: not-started
-- [ ] Task 3.7: Phase-end quality gate + commit + comment the commit hash on issue #21 — depends on: Task 3.6 — status: not-started
+- [x] Task 3.1: `dec/data/dec_example.md` — non-architectural worked decision exercising every section (Design Notes); must parse — depends on: Task 2.4 — status: completed
+- [x] Task 3.2: `dec/data/dec_template.md` — all-sections placeholder skeleton, `status: draft`; must round-trip through `parse_dec` — depends on: Task 2.4 — status: completed
+- [x] Task 3.3: `dec/data/dec_create_instructions.md` + `dec_update_instructions.md` (narrated flows, `$topic`/`$id`/`$instructions` placeholders) — depends on: Task 2.4 — status: completed
+- [x] Task 3.4: `dec/resources/` — `dec_schema.py` (`specmgr://dec/schema`, JSON from packaged copy), `dec_example.py`, `dec_template.py`, `__init__.py` — depends on: Task 3.5 — status: completed
+- [x] Task 3.5: `commands/schema.py` — `generate_dec_schema()` + `_GENERATORS["dec"]` (mirror `generate_gol_schema`); run `specmgr schema --type dec` (writes `docs/dec_schema.json`) and `specmgr schema --type dec --output-dir src/biz/dfch/specmgr/dec/data` (packaged copy) — depends on: Task 1.6 — status: completed
+- [x] Task 3.6: Tests `tests/dec/resources/` (ACC-004) — depends on: Task 3.4 — status: completed
+- [x] Task 3.7: Phase-end quality gate + commit + comment the commit hash on issue #21 — depends on: Task 3.6 — status: in-progress (gate run; commit + issue #21 comment performed by orchestrator after verification)
 
 #### Phase 4: Prompts
 - [ ] Task 4.1: `dec/prompts/` — `create_dec.py` (`create_dec(topic)`), `update_dec.py` (`update_dec(id, instructions=None)` with standard fallback), `__init__.py` — depends on: Task 3.3 — status: not-started

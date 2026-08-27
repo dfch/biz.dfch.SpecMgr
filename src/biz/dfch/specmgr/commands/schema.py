@@ -47,6 +47,8 @@ import typer
 from pydantic.json_schema import GenerateJsonSchema
 
 from .._paths import DOCS_DIR
+from ..dec.models.v1 import SCHEMA_COMMENT_VERSION as DEC_SCHEMA_COMMENT_VERSION
+from ..dec.models.v1.document import DecDocument
 from ..gol.models.v1 import SCHEMA_COMMENT_VERSION as GOL_SCHEMA_COMMENT_VERSION
 from ..gol.models.v1.document import GolDocument
 from ..prb.models.v1 import SCHEMA_COMMENT_VERSION as PRB_SCHEMA_COMMENT_VERSION
@@ -199,10 +201,29 @@ def generate_rsk_schema() -> str:
     return json.dumps(schema_dict, indent=2, sort_keys=True) + "\n"
 
 
+def generate_dec_schema() -> str:
+    """Generate DEC's JSON Schema (2020-12 dialect) from ``DecDocument.model_json_schema()``.
+
+    Mirrors :func:`generate_req_schema` exactly, but for ``dec.models.v1``:
+    the ``"$schema"`` key is injected the same way (Pydantic v2 omits it by
+    default), and ``"$comment"`` holds ``dec.models.v1.SCHEMA_COMMENT_VERSION``
+    (currently ``"v1"``) instead of REQ's own version token.
+
+    Serializes with ``indent=2, sort_keys=True`` plus a trailing newline, for
+    the same byte-identical-output/drift-detection reason as
+    :func:`generate_req_schema`.
+    """
+    schema_dict = DecDocument.model_json_schema()
+    schema_dict["$schema"] = GenerateJsonSchema.schema_dialect
+    schema_dict["$comment"] = DEC_SCHEMA_COMMENT_VERSION
+    return json.dumps(schema_dict, indent=2, sort_keys=True) + "\n"
+
+
 #: Registry mapping a doc-type name (as accepted by ``--type``) to its
 #: ``generate_x() -> str`` function. Add an entry here when a new document
 #: type's schema generator is implemented (e.g. ``"adr"``).
 _GENERATORS: dict[str, Callable[[], str]] = {
+    "dec": generate_dec_schema,
     "gol": generate_gol_schema,
     "prb": generate_prb_schema,
     "qa": generate_qa_schema,

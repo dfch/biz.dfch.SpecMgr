@@ -15,13 +15,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Tests for the ``get_dec_example`` ``@mcp.tool()`` wrapper (Task 2.2).
-
-Only the patch-based tests are here in Phase 2 -- the packaged data file
-``dec/data/dec_example.md`` does not exist yet; the real-packaged-data
-assertion (the "against the real, committed packaged data file" test) is
-added in Phase 3 (feat-21 Task 3.1/3.2 + 3.6).
-"""
+"""Tests for the ``get_dec_example`` ``@mcp.tool()`` wrapper (Task 2.2, real packaged data from Task 3.1)."""
 
 from __future__ import annotations
 
@@ -36,6 +30,15 @@ from biz.dfch.specmgr.general.tools import _packaged_data
 
 class TestGetDecExampleTool(unittest.TestCase):
     """Tests for the get_dec_example tool."""
+
+    def test_returns_real_packaged_example(self) -> None:
+        """Against the real, committed packaged data file, without any patching."""
+        result = get_dec_example()
+
+        self.assertIsInstance(result, str)
+        self.assertTrue(result.startswith("---\n"))
+        self.assertIn("type: dec", result)
+        self.assertIn("# Hybrid Working Arrangement for the Engineering Organization", result)
 
     def test_delegates_to_shared_data_reader(self) -> None:
         """The tool must return whatever general.tools._packaged_data.read_packaged_text() returns."""
