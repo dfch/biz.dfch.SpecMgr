@@ -101,48 +101,52 @@ id-based reads go through the ``get_gol`` tool only, and there is also no
 Tools
 -----
 ADR tools (``adr/tools/``): ``get_adr``, ``list_adr``, ``create_adr``, ``update_frontmatter``,
-``update_section``, ``set_status``, ``option_list``, ``option_create``,
+``update_section``, ``option_list``, ``option_create``,
 ``option_update``, ``option_read``, ``option_delete``, ``validate_adr``.
 Use-case tools (``uc/tools/``): ``parse_uc``, ``get_uc`` (``raw=True`` returns the
 frontmatter-stripped body text verbatim instead of the parsed document), ``list_uc``,
 ``get_uc_example``,
-``get_uc_template``, ``create_uc``, ``set_status_uc``, ``delete_uc``
+``get_uc_template``, ``create_uc``, ``delete_uc``
 (stub, not yet implemented), ``validate_uc``.
 Requirement tools (``req/tools/``): ``parse_req``, ``get_req`` (``raw=True`` returns the
 frontmatter-stripped body text verbatim instead of the parsed document), ``list_req``,
 ``get_req_example``,
-``get_req_template``, ``create_req``, ``set_status_req``, ``delete_req``
+``get_req_template``, ``create_req``, ``delete_req``
 (stub, not yet implemented), ``validate_req``.
 Task list tools (``tsk/tools/``): ``parse_tsk``, ``get_tsk`` (``raw=True`` returns the
 frontmatter-stripped body text verbatim instead of the parsed document), ``list_tsk``,
 ``get_tsk_example``,
-``get_tsk_template``, ``create_tsk``, ``set_status_tsk``, ``delete_tsk``
+``get_tsk_template``, ``create_tsk``, ``delete_tsk``
 (stub, not yet implemented), ``validate_tsk``.
 QA tools (``qa/tools/``): ``parse_qa``, ``get_qa`` (``raw=True`` returns the
 frontmatter-stripped body text verbatim instead of the parsed document), ``list_qa``,
 ``get_qa_example``,
-``get_qa_template``, ``create_qa``, ``set_status_qa``, ``delete_qa``
+``get_qa_template``, ``create_qa``, ``delete_qa``
 (stub, not yet implemented), ``validate_qa``.
 Problem statement tools (``prb/tools/``): ``parse_prb``, ``get_prb`` (``raw=True`` returns
 the frontmatter-stripped body text verbatim instead of the parsed document), ``list_prb``,
 ``get_prb_example``, ``get_prb_template``, ``create_prb``,
-``set_status_prb``, ``delete_prb`` (stub, not yet implemented), ``validate_prb``.
+``delete_prb`` (stub, not yet implemented), ``validate_prb``.
 Goal tools (``gol/tools/``): ``parse_gol``, ``get_gol`` (``raw=True`` returns the
 frontmatter-stripped body text verbatim instead of the parsed document), ``list_gol``,
 ``get_gol_example``, ``get_gol_template``, ``create_gol``,
- ``set_status_gol``, ``delete_gol`` (stub, not yet implemented), ``validate_gol``.
+ ``delete_gol`` (stub, not yet implemented), ``validate_gol``.
  Risk tools (``rsk/tools/``): ``parse_rsk``, ``get_rsk`` (``raw=True`` returns the
 frontmatter-stripped body text verbatim instead of the parsed document), ``list_rsk``,
  ``get_rsk_example``,
- ``get_rsk_template``, ``create_rsk``, ``set_status_rsk``, ``delete_rsk``
+ ``get_rsk_template``, ``create_rsk``, ``delete_rsk``
  (stub, not yet implemented), ``validate_rsk``.
  General tools (``general/tools/``): ``mdformat`` -- format markdown files in place,
 preserving YAML frontmatter blocks; ``update`` -- whole-body or line-range replace of an
 existing document's content across the seven whole-body domains (``type`` is one of
 ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``; optional 1-based inclusive
 ``begin``/``end`` body-line range with the ``N+1`` end-of-body sentinel; the spliced
-result is validated as a whole document before anything is written); ``webfetch`` --
-fetch a URL over HTTP GET with a
+result is validated as a whole document before anything is written); ``set_status`` --
+replace an existing document's status across all eight domains (``type`` is one of
+``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``adr``), also bumping ``updated``
+(the seven whole-body domains) and leaving the body untouched; ``superseded_by`` is
+``adr``-only (it composes the status as ``"superseded by {superseded_by}"``);
+``webfetch`` -- fetch a URL over HTTP GET with a
 bearer token, restricted to a configured base URL (``SPECMGR_WEBFETCH_BASE_URL``,
 ``SPECMGR_WEBFETCH_BEARER``).
 

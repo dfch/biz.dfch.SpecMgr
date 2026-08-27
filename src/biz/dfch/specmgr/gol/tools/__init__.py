@@ -33,8 +33,9 @@ new document (body markdown only, no frontmatter) under the goal base
 directory (``gol.tools._paths``/``_io``). Whole-body and line-range updates
 of an existing document go through the generic ``update`` tool in
 ``general.tools`` (``type="gol"``), preserving every frontmatter field
-except ``updated``. ``set_status_gol`` (Task 3.5) is the only path that
-changes ``status``, also bumping ``updated``, leaving the body untouched.
+except ``updated``. Status changes of an existing document go through the
+generic ``set_status`` tool in ``general.tools`` (``type="gol"``), also
+bumping ``updated``, leaving the body untouched.
 ``delete_gol`` (Task 3.6) is a registered stub -- always raises
 ``NotImplementedError``, reserving the name for a future real
 implementation. ``validate_gol`` (Task 3.7) is a disk-free, id-free dry run
@@ -51,7 +52,6 @@ from .get_gol_example import get_gol_example
 from .get_gol_template import get_gol_template
 from .list_gol import list_gol
 from .parse_gol import parse_gol
-from .set_status_gol import set_status_gol
 from .validate_gol import validate_gol
 
 __all__ = [
@@ -62,6 +62,5 @@ __all__ = [
     "get_gol_template",
     "list_gol",
     "parse_gol",
-    "set_status_gol",
     "validate_gol",
 ]

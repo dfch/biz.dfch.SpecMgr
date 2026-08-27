@@ -145,8 +145,8 @@ construction.
 In both modes the existing file's frontmatter is carried over with
 every field preserved except ``updated`` (bumped to the current
 microsecond timestamp); ``status`` in particular is never settable
-through this tool -- the per-domain ``set_status_<d>`` tools are the
-only status-change path.
+through this tool -- the generic ``set_status`` tool in
+``general.tools`` is the only status-change path.
 
 Parameters
 ----------

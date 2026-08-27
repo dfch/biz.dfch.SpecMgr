@@ -18,9 +18,10 @@ writes a new document (body markdown only, no frontmatter) under the
 problem statement base directory (``prb.tools._paths``/``_io``).
 Whole-body and line-range updates of an existing document go through the
 generic ``update`` tool in ``general.tools`` (``type="prb"``), preserving
-every frontmatter field except ``updated``. ``set_status_prb``
-is the only path that changes ``status``, also bumping ``updated``, leaving
-the body untouched. ``delete_prb`` is a registered stub -- always raises
+every frontmatter field except ``updated``. Status changes of an existing
+document go through the generic ``set_status`` tool in ``general.tools``
+(``type="prb"``), also bumping ``updated``, leaving the body untouched.
+``delete_prb`` is a registered stub -- always raises
 ``NotImplementedError``, reserving the name for a future real
 implementation. ``validate_prb`` is a disk-free, id-free dry run against a
 submitted ``content`` string, independent of the other tools. Import this

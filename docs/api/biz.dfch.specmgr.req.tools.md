@@ -21,8 +21,9 @@ assigns a fresh id, builds the frontmatter itself, and writes a new document
 (``req.tools._paths``/``_io``). Whole-body and line-range updates of an
 existing document go through the generic ``update`` tool in ``general.tools``
 (``type="req"``), preserving every frontmatter field except ``updated``.
-``set_status_req`` (Task 3.14) is the only path that
-changes ``status``, also bumping ``updated``, leaving the body untouched.
+Status changes of an existing document go through the generic
+``set_status`` tool in ``general.tools`` (``type="req"``), also bumping
+``updated``, leaving the body untouched.
 ``delete_req`` (Task 3.15) is a registered stub -- always raises
 ``NotImplementedError``, reserving the name for a future real
 implementation. ``validate_req`` (Task 3.16) is a disk-free, id-free dry

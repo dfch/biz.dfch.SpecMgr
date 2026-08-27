@@ -3,8 +3,10 @@
 Per-document in-process lock guarding ADR mutations (plan §7, §9a).
 
 Every mutating tool in this package (``update_section``,
-``update_frontmatter``, ``set_status``, ``option_create``, ``option_update``,
-``option_delete``) follows the same read-modify-write shape: ``load_by_id``
+``update_frontmatter``, ``option_create``, ``option_update``,
+``option_delete`` -- plus the generic ``set_status`` tool in
+``general.tools`` with ``type="adr"``) follows the same read-modify-write
+shape: ``load_by_id``
 (re-read/re-parse the file), mutate the in-memory :class:`~..models.adr.Adr`,
 then ``write_adr`` (re-render/re-write the file). There is deliberately no
 in-memory cache (plan §7, §9a) -- the ``.md`` file is the sole source of

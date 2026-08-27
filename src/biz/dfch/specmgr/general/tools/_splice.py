@@ -23,7 +23,8 @@ tool's range mode and the seven ``get_<d>`` tools' ``raw=True`` reads:
 
 - :func:`body_text` extracts a document file's frontmatter-stripped body text
   using the established ``frontmatter.loads(path.read_text(encoding="utf-8")).
-  content`` mechanism -- the same one every ``set_status_<d>`` tool uses.
+  content`` mechanism -- the same frontmatter-stripping mechanism the
+  domain write paths use.
 - :func:`splice_body` replaces a 1-based, inclusive body-line range of that
   text with a replacement fragment, implementing the plan's range contract
   (the ``N+1`` end-of-body sentinel, splice-then-validate-whole).
@@ -55,8 +56,9 @@ def body_text(path: Path) -> str:
     """Return the frontmatter-stripped body text of the document at ``path``.
 
     Uses the established ``frontmatter.loads(path.read_text(encoding=
-    "utf-8")).content`` mechanism (the same one every ``set_status_<d>``
-    tool uses to re-read the raw body): the YAML frontmatter block is
+    "utf-8")).content`` mechanism (the same frontmatter-stripping
+    mechanism the domain write paths use to re-read the raw body): the
+    YAML frontmatter block is
     removed, and the remaining body markdown is returned verbatim -- never
     reformatted, re-rendered, or otherwise touched. The returned text is
     exactly the text whose 1-based lines the generic ``update`` tool's

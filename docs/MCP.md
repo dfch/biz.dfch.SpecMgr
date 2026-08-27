@@ -3,7 +3,7 @@
 Auto-generated from the live `biz.dfch.specmgr.server:mcp` registration --
 do not edit by hand, run `specmgr mcp-docs` instead (see `AGENTS.md`).
 
-25 resource(s), 1 resource template(s), 78 tool(s), 19 prompt(s).
+25 resource(s), 1 resource template(s), 71 tool(s), 19 prompt(s).
 
 ## Table of Contents
 
@@ -292,15 +292,8 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`parse_rsk`](#tool-parse_rsk) | Parse a risk markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.rsk.models.v1.RskDocument`. |
 | [`parse_tsk`](#tool-parse_tsk) | Parse a task list markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.tsk.models.v1.TskDocument`. |
 | [`parse_uc`](#tool-parse_uc) | Parse a use-case markdown file (YAML frontmatter + body) from disk into a structured document. |
-| [`set_status`](#tool-set_status) | Narrow convenience wrapper over a frontmatter update for the common status-change case. |
-| [`set_status_gol`](#tool-set_status_gol) | The only path that changes a goal's status. Also bumps `updated`. |
-| [`set_status_prb`](#tool-set_status_prb) | The only path that changes a problem statement's status. Also bumps `updated`. |
-| [`set_status_qa`](#tool-set_status_qa) | The only path that changes a QA document's status. Also bumps `updated`. |
-| [`set_status_req`](#tool-set_status_req) | The only path that changes a requirement's status. Also bumps `updated`. |
-| [`set_status_rsk`](#tool-set_status_rsk) | The only path that changes a risk's status. Also bumps `updated`. |
-| [`set_status_tsk`](#tool-set_status_tsk) | The only path that changes a task list's status. Also bumps `updated`. |
-| [`set_status_uc`](#tool-set_status_uc) | The only path that changes a use case's status. Also bumps `updated`. |
-| [`update`](#tool-update) | Whole-body or line-range replace of an existing document's content across the seven whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk), preserving its id/type/status/created/version; only `updated` changes. With no `begin`/`end`, `content` is the full replacement body (body markdown only, no frontmatter block). With both, `content` replaces the 1-based inclusive body-line range `begin`..`end` of the current on-disk body (`N+1` = end-of-body sentinel: append after the last line, or replace through end of body); the spliced result is validated as a whole document before anything is written. `status` is never settable -- use the `set_status_*` tools. |
+| [`set_status`](#tool-set_status) | Replace the status of an existing document across all eight domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, adr), also bumping `updated` (the seven whole-body domains) and leaving the body untouched. The new `status` must be one of the domain's own closed vocabulary values (see the domain's `XFrontmatter.status` field); anything else raises `pydantic.ValidationError` and writes nothing. `superseded_by` is accepted only for `type="adr"` -- it composes the status as "superseded by {superseded_by}"; with any other `type` it is a `ValueError`. Neither `create_*` nor the generic `update` tool accepts a `status` argument at all -- this is the sole status-change entry point. |
+| [`update`](#tool-update) | Whole-body or line-range replace of an existing document's content across the seven whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk), preserving its id/type/status/created/version; only `updated` changes. With no `begin`/`end`, `content` is the full replacement body (body markdown only, no frontmatter block). With both, `content` replaces the 1-based inclusive body-line range `begin`..`end` of the current on-disk body (`N+1` = end-of-body sentinel: append after the last line, or replace through end of body); the spliced result is validated as a whole document before anything is written. `status` is never settable -- use the generic `set_status` tool. |
 | [`update_frontmatter`](#tool-update_frontmatter) | Whole-object replace of an ADR's frontmatter (plan §3), preserving its existing id. |
 | [`update_section`](#tool-update_section) | Whole-section replace/delete of one AdrBody field (plan §4). |
 | [`validate_adr`](#tool-validate_adr) | Re-read and re-parse an ADR by id, letting the models' own Pydantic validators run. |
@@ -861,98 +854,22 @@ Parse a use-case markdown file (YAML frontmatter + body) from disk into a struct
 
 ### Tool: set_status
 
-**Set ADR Status**
+**Set document status**
 
-Narrow convenience wrapper over a frontmatter update for the common status-change case.
+Replace the status of an existing document across all eight domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, adr), also bumping `updated` (the seven whole-body domains) and leaving the body untouched. The new `status` must be one of the domain's own closed vocabulary values (see the domain's `XFrontmatter.status` field); anything else raises `pydantic.ValidationError` and writes nothing. `superseded_by` is accepted only for `type="adr"` -- it composes the status as "superseded by {superseded_by}"; with any other `type` it is a `ValueError`. Neither `create_*` nor the generic `update` tool accepts a `status` argument at all -- this is the sole status-change entry point.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
 | `id` | `string` | Yes |
+| `type` | `string (enum: req, uc, tsk, qa, prb, gol, rsk, adr)` | Yes |
 | `status` | `string` | Yes |
 | `superseded_by` | `string | None` | No |
-
-### Tool: set_status_gol
-
-**Set goal status**
-
-The only path that changes a goal's status. Also bumps `updated`.
-
-| Parameter | Type | Required |
-| --- | --- | --- |
-| `id` | `string` | Yes |
-| `status` | `string` | Yes |
-
-### Tool: set_status_prb
-
-**Set problem statement status**
-
-The only path that changes a problem statement's status. Also bumps `updated`.
-
-| Parameter | Type | Required |
-| --- | --- | --- |
-| `id` | `string` | Yes |
-| `status` | `string` | Yes |
-
-### Tool: set_status_qa
-
-**Set QA document status**
-
-The only path that changes a QA document's status. Also bumps `updated`.
-
-| Parameter | Type | Required |
-| --- | --- | --- |
-| `id` | `string` | Yes |
-| `status` | `string` | Yes |
-
-### Tool: set_status_req
-
-**Set requirement status**
-
-The only path that changes a requirement's status. Also bumps `updated`.
-
-| Parameter | Type | Required |
-| --- | --- | --- |
-| `id` | `string` | Yes |
-| `status` | `string` | Yes |
-
-### Tool: set_status_rsk
-
-**Set risk status**
-
-The only path that changes a risk's status. Also bumps `updated`.
-
-| Parameter | Type | Required |
-| --- | --- | --- |
-| `id` | `string` | Yes |
-| `status` | `string` | Yes |
-
-### Tool: set_status_tsk
-
-**Set task list status**
-
-The only path that changes a task list's status. Also bumps `updated`.
-
-| Parameter | Type | Required |
-| --- | --- | --- |
-| `id` | `string` | Yes |
-| `status` | `string` | Yes |
-
-### Tool: set_status_uc
-
-**Set use case status**
-
-The only path that changes a use case's status. Also bumps `updated`.
-
-| Parameter | Type | Required |
-| --- | --- | --- |
-| `id` | `string` | Yes |
-| `status` | `string` | Yes |
 
 ### Tool: update
 
 **Update document**
 
-Whole-body or line-range replace of an existing document's content across the seven whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk), preserving its id/type/status/created/version; only `updated` changes. With no `begin`/`end`, `content` is the full replacement body (body markdown only, no frontmatter block). With both, `content` replaces the 1-based inclusive body-line range `begin`..`end` of the current on-disk body (`N+1` = end-of-body sentinel: append after the last line, or replace through end of body); the spliced result is validated as a whole document before anything is written. `status` is never settable -- use the `set_status_*` tools.
+Whole-body or line-range replace of an existing document's content across the seven whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk), preserving its id/type/status/created/version; only `updated` changes. With no `begin`/`end`, `content` is the full replacement body (body markdown only, no frontmatter block). With both, `content` replaces the 1-based inclusive body-line range `begin`..`end` of the current on-disk body (`N+1` = end-of-body sentinel: append after the last line, or replace through end of body); the spliced result is validated as a whole document before anything is written. `status` is never settable -- use the generic `set_status` tool.
 
 | Parameter | Type | Required |
 | --- | --- | --- |

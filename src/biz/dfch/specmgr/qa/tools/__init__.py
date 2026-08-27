@@ -34,7 +34,8 @@ assigns a fresh id, builds the frontmatter itself, and writes a new document
 (``qa.tools._paths``/``_io``). Whole-body and line-range updates of an
 existing document go through the generic ``update`` tool in ``general.tools``
 (``type="qa"``), preserving every frontmatter field except ``updated``.
-``set_status_qa`` is the only path that changes ``status``, also bumping
+Status changes of an existing document go through the generic
+``set_status`` tool in ``general.tools`` (``type="qa"``), also bumping
 ``updated``, leaving the body untouched. ``delete_qa`` is a registered stub
 -- always raises ``NotImplementedError``, reserving the name for a future
 real implementation. ``validate_qa`` is a disk-free, id-free dry run against
@@ -51,7 +52,6 @@ from .get_qa_example import get_qa_example
 from .get_qa_template import get_qa_template
 from .list_qa import list_qa
 from .parse_qa import parse_qa
-from .set_status_qa import set_status_qa
 from .validate_qa import validate_qa
 
 __all__ = [
@@ -62,6 +62,5 @@ __all__ = [
     "get_qa_template",
     "list_qa",
     "parse_qa",
-    "set_status_qa",
     "validate_qa",
 ]

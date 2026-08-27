@@ -567,7 +567,7 @@ phase-orchestrator commits each accepted phase as one Conventional Commit.
 
 #### Phase 4: Generic `set_status` + retire the eight old status tools
 
-- [ ] Task 4.1: Create `general/tools/set_status.py`: eight private adapters
+- [x] Task 4.1: Create `general/tools/set_status.py`: eight private adapters
   `_set_status_<d>` — seven verbatim ports of the `set_status_<d>` bodies
   (lock, `load_by_id`, raw body re-read via the established
   `frontmatter.loads(...).content` mechanism, frontmatter reconstructed
@@ -582,34 +582,33 @@ phase-orchestrator commits each accepted phase as one Conventional Commit.
   "rsk","adr"], status: str, superseded_by: str | None = None) ->
   ReqDocument | UcDocument | TskDocument | QaDocument | PrbDocument |
   GolDocument | RskDocument | Adr` with a full numpy-style docstring —
-  depends on: Phase 3 complete (the `set_status` tool name must be free
-  before this tool registers — see Design Notes, Name-collision constraint) —
-  status: not-started
-- [ ] Task 4.2: Delete the eight superseded modules: `adr/tools/set_status.py`,
+   depends on: Phase 3 complete (the `set_status` tool name must be free
+   before this tool registers — see Design Notes, Name-collision constraint) —
+   status: done
+- [x] Task 4.2: Delete the eight superseded modules: `adr/tools/set_status.py`,
   `req/tools/set_status_req.py`, `uc/tools/set_status_uc.py`,
   `tsk/tools/set_status_tsk.py`, `qa/tools/set_status_qa.py`,
-  `prb/tools/set_status_prb.py`, `gol/tools/set_status_gol.py`,
-  `rsk/tools/set_status_rsk.py` — depends on: Task 4.1 — status: not-started
-- [ ] Task 4.3: Delete the eight test files: `tests/adr/tools/
+   `prb/tools/set_status_prb.py`, `gol/tools/set_status_gol.py`,
+   `rsk/tools/set_status_rsk.py` — depends on: Task 4.1 — status: done
+- [x] Task 4.3: Delete the eight test files: `tests/adr/tools/
   test_set_status.py`, `tests/req/tools/test_set_status_req.py`,
   `tests/uc/tools/test_set_status_uc.py`, `tests/tsk/tools/
   test_set_status_tsk.py`, `tests/qa/tools/test_set_status_qa.py`,
-  `tests/prb/tools/test_set_status_prb.py`, `tests/gol/tools/
-  test_set_status_gol.py`, `tests/rsk/tools/test_set_status_rsk.py` — depends
-  on: Task 4.1 — status: not-started
-- [ ] Task 4.4: Register `set_status` in `general/tools/__init__.py` (import,
+   `tests/prb/tools/test_set_status_prb.py`, `tests/gol/tools/
+   test_set_status_gol.py`, `tests/rsk/tools/test_set_status_rsk.py` — depends
+   on: Task 4.1 — status: done
+- [x] Task 4.4: Register `set_status` in `general/tools/__init__.py` (import,
   `__all__`, module docstring); update `adr/tools/__init__.py` and the seven
   domain `tools/__init__.py` files (remove the `set_status*` imports,
   `__all__` entries, and docstring mentions; note status changes go through
   the generic `set_status` in `general/tools/`); update the eight domain
-  `__init__.py` docstring enumerations likewise — depends on: Tasks 4.2, 4.3 —
-  status: not-started
-- [ ] Task 4.5: Update `server.py`'s module docstring: remove `set_status`
+   `__init__.py` docstring enumerations likewise — depends on: Tasks 4.2, 4.3 —
+   status: done
+- [x] Task 4.5: Update `server.py`'s module docstring: remove `set_status`
   from the ADR tools line and `set_status_<d>` from the seven per-domain
   lines; add `set_status` to the General-tools lines (8-value `type`;
-  `superseded_by` is ADR-only) — depends on: Tasks 4.1, 4.4 — status: not-
-  started
-- [ ] Task 4.6: `tests/general/tools/test_set_status.py` — parameterized over
+   `superseded_by` is ADR-only) — depends on: Tasks 4.1, 4.4 — status: done
+- [x] Task 4.6: `tests/general/tools/test_set_status.py` — parameterized over
   all eight types (ACC-004 cases): status changed + `updated` bumped + body
   untouched (seven domains: raw body byte-identical; ADR: re-parsed document
   equal apart from status/updated); closed-vocabulary enforcement per domain
@@ -620,13 +619,13 @@ phase-orchestrator commits each accepted phase as one Conventional Commit.
   untouched); ADR `superseded_by` composes `"superseded by X"` in the file;
   ADR plain `status` values work with `superseded_by=None`; `superseded_by`
   with any non-`adr` type → `ValueError`, file untouched; unknown id →
-  domain `XNotFoundError` / `AdrNotFoundError` — depends on: Task 4.1 —
-  status: not-started
-- [ ] Task 4.7: Phase-end quality gate — full gate including Task 4.6's new
+   domain `XNotFoundError` / `AdrNotFoundError` — depends on: Task 4.1 —
+   status: done
+- [x] Task 4.7: Phase-end quality gate — full gate including Task 4.6's new
   tests; `specmgr mcp-docs` + `specmgr docs` regeneration, then `git diff
   --exit-code -- docs/` zero drift; add a dated entry to the Recent Updates
   section, update Current Status, flip the phase's task lines to done in
-  place — depends on: Tasks 4.5, 4.6 — status: not-started
+   place — depends on: Tasks 4.5, 4.6 — status: done
 
 #### Phase 5: Narration rewrite (prompts + instruction data)
 
@@ -745,26 +744,170 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-27**: Phase 3 (Retire the per-domain `update_*` tools)
-complete — the seven `update_<d>` tool modules, their seven test files
-(34 tests), and every non-narration code/docstring reference to the
-deleted tools are gone: whole-body *and* line-range updates now go only
-through the generic `update` tool in `general/tools/` (Phase 2), with the
-re-pointed `gol`/`prb` integration tests exercising it live. No
-`set_status*` tool changed (Phase 4 deletes all eight), and no schema
-changed (only `tsk/models/v1/body.py`'s docstring was reworded). The
-phase-end quality gate is green (1796 tests OK, zero `docs/` drift,
-fresh-subprocess import OK); live registration is 78 tools / 25 resources
-/ 19 prompts (baseline 85/25/19: −7). Phases 4–7 are not started.
-(Phase 1 — the feature's ADR 36905d5b-8057-4294-8665-c7eed5534db0 — and
-Phase 2 — the generic `update` tool + `raw` reads — completed on
-2026-08-27.)
+**As of 2026-08-27**: Phase 4 (Generic `set_status` + retire the eight
+old status tools) complete — the generic `set_status` tool now lives in
+`general/tools/` (8-value `type` incl. `adr`; ADR-only `superseded_by`,
+guard running before any file access), and all eight old status tools
+(seven `set_status_<d>` + ADR's own `set_status`, whose MCP name the
+generic tool takes over) plus their eight test files (38 tests) are gone
+from source and from MCP registration. This was the phase where the
+plan's Name-collision constraint was honored atomically: adding the
+generic tool and deleting all eight old status tools landed in one tree
+state, so the MCP name `set_status` is never double-registered (verified:
+exactly one `set_status` in the live tool list). Every non-narration
+code/docstring reference to the deleted tools was re-pointed (the
+`gol`/`prb` integration tests exercise the generic tool live; the
+`adr`/domain `_lock` helpers and `gol`/`prb` `_write` helpers name it;
+the `update.py`/`_splice.py` pointers were reworded). The ADR mutation
+model's `set_status` *function* (`models/adr/v1/mutations.py`) stays —
+it is ported, not removed. No schema changed. The phase-end quality gate
+is green (1768 tests OK, zero `docs/` drift, fresh-subprocess import
+OK); live registration is **71 tools / 25 resources / 19 prompts — the
+feature's target end state** (baseline 85/25/19: −14). Phases 5–7 are
+not started. (Phase 1 — the feature's ADR
+36905d5b-8057-4294-8665-c7eed5534db0 — Phase 2 — the generic `update`
+tool + `raw` reads — and Phase 3 — retiring the seven `update_<d>` tools
+— completed on 2026-08-27.)
 
 ### Blockers
 
 None.
 
 ### Recent Updates
+
+#### Update 2026-08-27 (Phase 4: Generic `set_status` + retire the eight old status tools)
+
+- Completed: Phase 4 (Tasks 4.1–4.7). The eight per-domain status tools
+  (seven `set_status_<d>` + ADR's own `set_status`) are deleted from
+  source and from MCP registration; status changes now go only through
+  the generic `set_status` tool in `general/tools/`. **This is the
+  phase where the plan's Name-collision constraint was honored
+  atomically**: the generic tool (whose MCP name `set_status` was
+  occupied by ADR's old tool) and the deletion of all eight old status
+  tools landed in the same tree state, so the name `set_status` is never
+  double-registered (verified: exactly one `set_status` in the live tool
+  list). No schema changed.
+  - New: `src/biz/dfch/specmgr/general/tools/set_status.py` —
+    `@mcp.tool(name="set_status", title="Set document status")`
+    `set_status(id, type, status, superseded_by=None)` over an 8-entry
+    `dict[str, Callable]` dispatch table. The seven whole-body-domain
+    adapters `_set_status_<d>` are verbatim ports of the deleted
+    `set_status_<d>` bodies (same lock, `load_by_id`, raw body re-read
+    via the established `frontmatter.loads(...).content` mechanism and
+    re-persisted verbatim, frontmatter reconstructed through the
+    domain's own `XFrontmatter` constructor so the closed vocabulary
+    validates, microsecond `updated` bump, domain `XNotFoundError`);
+    `_set_status_adr` ports ADR's old tool (same `adr_lock`,
+    `load_by_id`, `write_adr` render round-trip, `AdrNotFoundError`)
+    including its delegation to `models.adr.v1.mutations.set_status`
+    (the model-layer *function* — kept by design, it is not an MCP
+    tool). The `superseded_by` guard (`superseded_by is not None and
+    type != "adr"` → `ValueError`) runs in the public function before
+    any file access, mirroring `update.py`'s both-or-neither guard
+    placement.
+  - Deleted (8 tool modules): `adr/tools/set_status.py` and
+    `{req,uc,tsk,qa,prb,gol,rsk}/tools/set_status_<d>.py`; deleted (8
+    test files, 38 tests): `tests/adr/tools/test_set_status.py` (3) and
+    `tests/{req,uc,tsk,qa,prb,gol,rsk}/tools/test_set_status_<d>.py`
+    (5 each).
+  - Registration: `general/tools/__init__.py` (import + `__all__` +
+    docstring, next to `update`); `adr/tools/__init__.py` and the seven
+    domain `tools/__init__.py` (removed the `set_status*` import /
+    `__all__` entry / docstring mention; the narrating sentence
+    rewritten to say status changes go through the generic `set_status`
+    tool in `general.tools` (`type="<d>"`)); the seven domain
+    `__init__.py` docstring tool enumerations likewise (`adr/__init__.py`
+    names no tool and is unchanged).
+  - `server.py`: `set_status` removed from the ADR tools line,
+    `set_status_<d>` removed from the seven per-domain Tools lines;
+    `set_status` added to the General-tools lines (8-value `type`;
+    `superseded_by` ADR-only, composing `"superseded by X"`).
+  - Re-pointed references (the orchestrator-verified residual set):
+    `general/tools/update.py` (both status-path mentions → the generic
+    `set_status` tool), `general/tools/_splice.py` (the two
+    `set_status_<d>` mentions → "the same frontmatter-stripping
+    mechanism the domain write paths use"), the seven domain
+    `tools/_lock.py` + `adr/tools/_lock.py` (mutating-tool
+    enumerations → the generic `set_status` tool), `gol/tools/_write.py`
+    + `prb/tools/_write.py` (factor-out rationale),
+    `tests/gol/tools/test_integration.py` +
+    `tests/prb/tools/test_integration.py` (now
+    `from biz.dfch.specmgr.general.tools.set_status import set_status`
+    and `set_status(<d>_id, "<d>", ...)`; both still pass live).
+  - `tests/commands/test_docs.py`: the `_count_mcp_features` known-count
+    assertion for `adr/tools/` updated 12 → 11 modules (the ADR
+    `set_status` module moved to `general/tools/`) — a direct
+    consequence of Task 4.2's deletion, flagged here as the one test
+    outside the phase's named scope that the deletion broke.
+  - `docs/api/`: the eight `set_status*` module pages removed manually
+    (the generator writes pages for existing modules but never deletes
+    stale ones, as in Phase 3).
+- Status-vocabulary source-of-truth check: re-read every domain's
+  `_ALLOWED_STATUSES` (`req`/`tsk`/`prb`/`rsk` in `models/v1`,
+  `uc`/`qa` in `models/v2`, ADR's `_FIXED_STATUSES` in
+  `models/adr/v1/frontmatter.py`) — all match the Design-Notes table
+  (req/gol 7, uc 5, tsk/qa 4, prb 4, rsk 6, adr 6 + the
+  `"superseded by X"` pattern). The new tests import those private sets
+  and assert the per-type valid/invalid pairs against them.
+- New tests: `tests/general/tools/test_set_status.py` (10 tests,
+  parameterized over all eight types — ACC-004): status changed +
+  `updated` bumped (microsecond timestamp) + body untouched (seven
+  domains: raw body byte-identical via the
+  `frontmatter.loads(...).content` mechanism; ADR: re-parsed render
+  round-trip equal apart from status — ADR has no `updated` field);
+  closed-vocabulary enforcement per domain (positive value from the
+  domain's own set; negative cross-domain values — `implemented`
+  against uc/tsk/qa/prb/rsk, `open` against req/gol, `implemented`
+  against adr — → `pydantic.ValidationError`, file byte-identical);
+  ADR `superseded_by` composes `"superseded by X"` in the file (and
+  plain values work with `superseded_by=None`); `superseded_by` with
+  any non-`adr` type → `ValueError`, file untouched — including with an
+  unknown id, proving the guard fires before file access (`ValueError`,
+  not the domain not-found); unknown id → the domain's own
+  `XNotFoundError` / `AdrNotFoundError`.
+- ACC-005 grep (final, post-cleanup):
+  `git grep -nE "\b(set_status_req|set_status_uc|set_status_tsk|
+  set_status_qa|set_status_prb|set_status_gol|set_status_rsk)\b" -- src/
+  tests/` matches only the Phase-5-owned prompt narration files
+  (`*/data/*.md`, `*/prompts/*.py`, `tests/*/prompts/*`) — zero in
+  `tools/`, `models/`, `general/`, or any `__init__.py`.
+  `git grep -n "set_status" -- src/ tests/` otherwise matches only: the
+  new `general/tools/set_status.py` + its registration in
+  `general/tools/__init__.py`, the re-pointed references listed above,
+  the ADR mutation model (`models/adr/v1/mutations.py` defines the
+  model-layer **function** `set_status`, re-exported by
+  `models/adr/__init__.py`/`models/adr/v1/__init__.py` and exercised by
+  `tests/models/adr/v1/test_mutations.py` — kept by design, not a tool
+  reference), and the Phase-5 ADR narration files.
+- Quality gate (green): `ruff format` (initial write run changed nothing;
+  `ruff format --check`: 1094 files already formatted — ruff 0.16
+  formats md too, so the count moved 1101 → 1094 exactly by the 8
+  deleted `docs/api/` `set_status*` pages minus the 1 new one),
+  `ruff check` (all checks passed), `vulture src/ whitelist.py
+  --min-confidence 60` (clean, exit 0), full unittest suite (**Ran 1768
+  tests, OK** — down from 1796: −38, the eight deleted
+  `test_set_status*.py` files (3 + 7×5); +10, the new
+  `tests/general/tools/test_set_status.py`; the two re-pointed
+  `gol`/`prb` integration tests still pass live). Regenerations:
+  `coverage run -m unittest discover -s tests -t . -p "test_*.py"`
+  (pre-commit's exact command, refreshed `.coverage`), `specmgr
+  coverage-badge` (98% — unchanged rounded value, badge byte-identical,
+  no diff), `specmgr mcp-docs` (header now "**71 tool(s)**"; the seven
+  `set_status_<d>` entries and ADR's old `set_status` entry are gone;
+  the new general `set_status` entry renders `type` as the 8-value enum
+  `string (enum: req, uc, tsk, qa, prb, gol, rsk, adr)` with optional
+  `string | None` `superseded_by`; the generic `update` entry intact),
+  `specmgr docs` (305 module pages; new
+  `docs/api/biz.dfch.specmgr.general.tools.set_status.md`; the eight
+  old `set_status*` pages removed manually). Zero-drift proof: all three
+  generators re-run and the whole `docs/` tree came back byte-identical
+  (sha256 manifest diff empty). Fresh-subprocess
+  `uv run --frozen python -c "import biz.dfch.specmgr.server"`: exit 0.
+  Live registration confirmed at **71 tools / 25 resources / 19
+  prompts** — the feature's target end state (−8 vs Phase 3's
+  78/25/19: the eight old status tools out, the generic `set_status`
+  in).
+- Next: Phase 5 (Narration rewrite — prompts + instruction data).
 
 #### Update 2026-08-27 (Phase 3: Retire the per-domain `update_*` tools)
 

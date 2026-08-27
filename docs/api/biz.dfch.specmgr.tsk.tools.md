@@ -20,9 +20,9 @@ writes a new document (body markdown only, no frontmatter) under the task
 list base directory (``tsk.tools._paths``/``_io``). Whole-body and
 line-range updates of an existing document go through the generic
 ``update`` tool in ``general.tools`` (``type="tsk"``), preserving every
-frontmatter field except ``updated``. ``set_status_tsk`` is the only path
-that changes
-``status``, also bumping ``updated``, leaving the body untouched.
+frontmatter field except ``updated``. Status changes of an existing
+document go through the generic ``set_status`` tool in ``general.tools``
+(``type="tsk"``), also bumping ``updated``, leaving the body untouched.
 ``delete_tsk`` is a registered stub -- always raises ``NotImplementedError``,
 reserving the name for a future real implementation. ``validate_tsk`` is a
 disk-free, id-free dry run against a submitted ``content`` string,

@@ -27,12 +27,14 @@ resources against the shared ``mcp`` application instance at once::
     from biz.dfch.specmgr import gol  # noqa: F401 (side-effects only)
 
 ``tools`` (``parse_gol``, ``get_gol``, ``list_gol``, ``get_gol_example``,
-``get_gol_template``, ``create_gol``, ``set_status_gol``,
+``get_gol_template``, ``create_gol``,
 ``delete_gol``, ``validate_gol``), ``resources`` (``specmgr://gol/schema``,
 ``specmgr://gol/example``, ``specmgr://gol/template``), and ``prompts``
 (``create_gol``, ``update_gol``) all exist; whole-body and line-range
 updates of an existing document go through the generic ``update`` tool in
-``general.tools`` (``type="gol"``). Like REQ/PRB/TSK/QA, GOL has no
+``general.tools`` (``type="gol"``), and status changes go through the
+generic ``set_status`` tool in ``general.tools`` (``type="gol"``). Like
+REQ/PRB/TSK/QA, GOL has no
 ``specmgr://gol/{id}`` resource -- id-based reads go through the ``get_gol``
 tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614). Likewise, there is no
 ``specmgr://gol/list`` resource -- ``list_gol`` ships as a paged

@@ -8,7 +8,7 @@ regenerate with `uv run --frozen specmgr docs` and commit the result.
 **Models** — schema definitions: adr, md
 
 **ADR domain** — subpackages: data, prompts, resources, tools
-  - 12 MCP tools
+  - 11 MCP tools
   - 1 MCP resources
   - 4 prompt modules
 
@@ -38,7 +38,6 @@ First-line docstrings from each module, organized by domain:
 - `adr/tools/option_list.py` — ``@mcp.tool()`` wrapper: option_list (plan §5, §8, §9a, §10 item 4).
 - `adr/tools/option_read.py` — ``@mcp.tool()`` wrapper: option_read (plan §5, §8, §9a, §10 item 4).
 - `adr/tools/option_update.py` — ``@mcp.tool()`` wrapper: option_update (plan §5, §8, §9a, §10 item 4).
-- `adr/tools/set_status.py` — ``@mcp.tool()`` wrapper: set_status (plan §8, §9a, §10 item 4).
 - `adr/tools/update_frontmatter.py` — ``@mcp.tool()`` wrapper: update_frontmatter (plan §8, §9a, §10 item 4).
 - `adr/tools/update_section.py` — ``@mcp.tool()`` wrapper: update_section (plan §4, §8, §9a, §10 item 4).
 - `adr/tools/validate_adr.py` — ``@mcp.tool()`` wrapper: validate_adr (plan §7, §8, §9a, §10 item 4).
@@ -74,6 +73,7 @@ First-line docstrings from each module, organized by domain:
 - `general/tools/_paging.py` — Generic, doc-type-agnostic paging helpers (feat-13 Task 1.2).
 - `general/tools/_splice.py` — Frontmatter-stripped body extraction and body-line splicing for the generic
 - `general/tools/mdformat.py` — ``@mcp.tool()`` wrapper: mdformat.
+- `general/tools/set_status.py` — ``@mcp.tool()`` wrapper: set_status (feat-22-consolidate-mutation-tools, Phase 4).
 - `general/tools/update.py` — ``@mcp.tool()`` wrapper: update (feat-22-consolidate-mutation-tools, Phase 2).
 - `general/tools/webfetch.py` — ``@mcp.tool()`` wrapper: webfetch.
 
@@ -106,7 +106,6 @@ First-line docstrings from each module, organized by domain:
 - `gol/tools/get_gol_template.py` — ``@mcp.tool()`` wrapper: get_gol_template (Task 3.10).
 - `gol/tools/list_gol.py` — ``@mcp.tool()`` wrapper: list_gol (Task 3.9).
 - `gol/tools/parse_gol.py` — ``@mcp.tool()`` wrapper: parse_gol (Task 3.2).
-- `gol/tools/set_status_gol.py` — ``@mcp.tool()`` wrapper: set_status_gol (Task 3.5).
 - `gol/tools/validate_gol.py` — ``@mcp.tool()`` wrapper: validate_gol (Task 3.7).
 
 **models/**
@@ -182,7 +181,6 @@ First-line docstrings from each module, organized by domain:
 - `prb/tools/get_prb_template.py` — ``@mcp.tool()`` wrapper: get_prb_template (Task 3.10).
 - `prb/tools/list_prb.py` — ``@mcp.tool()`` wrapper: list_prb (Task 3.9).
 - `prb/tools/parse_prb.py` — ``@mcp.tool()`` wrapper: parse_prb (Task 3.2).
-- `prb/tools/set_status_prb.py` — ``@mcp.tool()`` wrapper: set_status_prb (Task 3.5).
 - `prb/tools/validate_prb.py` — ``@mcp.tool()`` wrapper: validate_prb (Task 3.7).
 
 **qa/**
@@ -217,7 +215,6 @@ First-line docstrings from each module, organized by domain:
 - `qa/tools/get_qa_template.py` — ``@mcp.tool()`` wrapper: get_qa_template (Phase 4, Task 4.1).
 - `qa/tools/list_qa.py` — ``@mcp.tool()`` wrapper: list_qa (feat-13-list-paging Task 2.5).
 - `qa/tools/parse_qa.py` — ``@mcp.tool()`` wrapper: parse_qa (Phase 4, Task 4.1).
-- `qa/tools/set_status_qa.py` — ``@mcp.tool()`` wrapper: set_status_qa (Phase 4, Task 4.1).
 - `qa/tools/validate_qa.py` — ``@mcp.tool()`` wrapper: validate_qa (Phase 4, Task 4.1).
 
 **req/**
@@ -249,7 +246,6 @@ First-line docstrings from each module, organized by domain:
 - `req/tools/get_req_template.py` — ``@mcp.tool()`` wrapper: get_req_template (Task 3.7).
 - `req/tools/list_req.py` — ``@mcp.tool()`` wrapper: list_req (feat-13-list-paging Task 2.2).
 - `req/tools/parse_req.py` — ``@mcp.tool()`` wrapper: parse_req.
-- `req/tools/set_status_req.py` — ``@mcp.tool()`` wrapper: set_status_req (Task 3.14).
 - `req/tools/validate_req.py` — ``@mcp.tool()`` wrapper: validate_req (Task 3.16).
 
 **rsk/**
@@ -285,7 +281,6 @@ First-line docstrings from each module, organized by domain:
 - `rsk/tools/get_rsk_template.py` — ``@mcp.tool()`` wrapper: get_rsk_template (Task 3.9).
 - `rsk/tools/list_rsk.py` — ``@mcp.tool()`` wrapper: list_rsk (Task 3.14).
 - `rsk/tools/parse_rsk.py` — ``@mcp.tool()`` wrapper: parse_rsk (Task 3.2).
-- `rsk/tools/set_status_rsk.py` — ``@mcp.tool()`` wrapper: set_status_rsk (Task 3.5).
 - `rsk/tools/validate_rsk.py` — ``@mcp.tool()`` wrapper: validate_rsk (Task 3.7).
 
 **tsk/**
@@ -320,7 +315,6 @@ First-line docstrings from each module, organized by domain:
 - `tsk/tools/get_tsk_template.py` — ``@mcp.tool()`` wrapper: get_tsk_template (Task 3.9).
 - `tsk/tools/list_tsk.py` — ``@mcp.tool()`` wrapper: list_tsk (feat-13-list-paging Task 2.4).
 - `tsk/tools/parse_tsk.py` — ``@mcp.tool()`` wrapper: parse_tsk (Task 3.2).
-- `tsk/tools/set_status_tsk.py` — ``@mcp.tool()`` wrapper: set_status_tsk (Task 3.5).
 - `tsk/tools/validate_tsk.py` — ``@mcp.tool()`` wrapper: validate_tsk (Task 3.7).
 
 **uc/**
@@ -365,9 +359,8 @@ First-line docstrings from each module, organized by domain:
 - `uc/tools/get_uc_template.py` — ``@mcp.tool()`` wrapper: get_uc_template (Task 3.1.3).
 - `uc/tools/list_uc.py` — ``@mcp.tool()`` wrapper: list_uc (feat-13-list-paging Task 2.3).
 - `uc/tools/parse_uc.py` — ``@mcp.tool()`` wrapper: parse_uc.
-- `uc/tools/set_status_uc.py` — ``@mcp.tool()`` wrapper: set_status_uc (Task 3.1.5).
 - `uc/tools/validate_uc.py` — ``@mcp.tool()`` wrapper: validate_uc (Task 3.1.5).
 
 ## Test Coverage
 
-**Test files**: 248
+**Test files**: 241

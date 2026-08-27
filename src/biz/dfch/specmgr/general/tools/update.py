@@ -392,7 +392,7 @@ _ADAPTERS: dict[str, Callable[[str, str, int | None, int | None], _UpdateDocumen
         "`content` replaces the 1-based inclusive body-line range `begin`..`end` of the current "
         "on-disk body (`N+1` = end-of-body sentinel: append after the last line, or replace "
         "through end of body); the spliced result is validated as a whole document before "
-        "anything is written. `status` is never settable -- use the `set_status_*` tools."
+        "anything is written. `status` is never settable -- use the generic `set_status` tool."
     ),
 )
 def update(
@@ -437,8 +437,8 @@ def update(
     In both modes the existing file's frontmatter is carried over with
     every field preserved except ``updated`` (bumped to the current
     microsecond timestamp); ``status`` in particular is never settable
-    through this tool -- the per-domain ``set_status_<d>`` tools are the
-    only status-change path.
+    through this tool -- the generic ``set_status`` tool in
+    ``general.tools`` is the only status-change path.
 
     Parameters
     ----------

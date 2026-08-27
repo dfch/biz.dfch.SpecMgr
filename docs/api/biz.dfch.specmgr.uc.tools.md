@@ -20,8 +20,9 @@ assigns a fresh id, builds the frontmatter itself, and writes a new document
 (``uc.tools._paths``/``_io``). Whole-body and line-range updates of an
 existing document go through the generic ``update`` tool in ``general.tools``
 (``type="uc"``), preserving every frontmatter field except ``updated``.
-``set_status_uc`` (Task 3.1.5) is the only path that
-changes ``status``, also bumping ``updated``, leaving the body untouched.
+Status changes of an existing document go through the generic
+``set_status`` tool in ``general.tools`` (``type="uc"``), also bumping
+``updated``, leaving the body untouched.
 ``delete_uc`` (Task 3.1.5) is a registered stub -- always raises
 ``NotImplementedError``, reserving the name for a future real
 implementation. ``validate_uc`` (Task 3.1.5) is a disk-free, id-free dry

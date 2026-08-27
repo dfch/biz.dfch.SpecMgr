@@ -35,9 +35,9 @@ writes a new document (body markdown only, no frontmatter) under the task
 list base directory (``tsk.tools._paths``/``_io``). Whole-body and
 line-range updates of an existing document go through the generic
 ``update`` tool in ``general.tools`` (``type="tsk"``), preserving every
-frontmatter field except ``updated``. ``set_status_tsk`` is the only path
-that changes
-``status``, also bumping ``updated``, leaving the body untouched.
+frontmatter field except ``updated``. Status changes of an existing
+document go through the generic ``set_status`` tool in ``general.tools``
+(``type="tsk"``), also bumping ``updated``, leaving the body untouched.
 ``delete_tsk`` is a registered stub -- always raises ``NotImplementedError``,
 reserving the name for a future real implementation. ``validate_tsk`` is a
 disk-free, id-free dry run against a submitted ``content`` string,
@@ -54,7 +54,6 @@ from .get_tsk_example import get_tsk_example
 from .get_tsk_template import get_tsk_template
 from .list_tsk import list_tsk
 from .parse_tsk import parse_tsk
-from .set_status_tsk import set_status_tsk
 from .validate_tsk import validate_tsk
 
 __all__ = [
@@ -65,6 +64,5 @@ __all__ = [
     "get_tsk_template",
     "list_tsk",
     "parse_tsk",
-    "set_status_tsk",
     "validate_tsk",
 ]

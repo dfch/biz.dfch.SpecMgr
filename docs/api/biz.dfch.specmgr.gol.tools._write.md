@@ -13,8 +13,8 @@ already-constructed, already-validated
 :class:`~biz.dfch.specmgr.gol.models.v1.GolFrontmatter` with the caller's own
 already-validated *raw* body text (never reformatted/re-rendered) into one
 file. Factored out of ``create_gol.py`` into its own module so the generic
-``update`` tool in ``general.tools`` and ``set_status_gol.py`` do not have
-to duplicate it. Mirrors ``prb.tools._write`` file-for-file.
+``update`` and ``set_status`` tools in ``general.tools`` (``type="gol"``)
+do not have to duplicate it. Mirrors ``prb.tools._write`` file-for-file.
 
 ## Functions
 

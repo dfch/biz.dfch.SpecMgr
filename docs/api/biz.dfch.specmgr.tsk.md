@@ -12,12 +12,14 @@ against the shared ``mcp`` application instance at once::
     from biz.dfch.specmgr import tsk  # noqa: F401 (side-effects only)
 
 ``tools`` (``parse_tsk``, ``get_tsk``, ``list_tsk``, ``get_tsk_example``,
-``get_tsk_template``, ``create_tsk``, ``set_status_tsk``,
+``get_tsk_template``, ``create_tsk``,
 ``delete_tsk``, ``validate_tsk``), ``resources`` (``specmgr://tsk/schema``,
 ``specmgr://tsk/example``, ``specmgr://tsk/template``), and ``prompts``
 (``create_task``, ``update_task``, ``implement_task``) all exist; whole-body
 and line-range updates of an existing document go through the generic
-``update`` tool in ``general.tools`` (``type="tsk"``). Like REQ,
+``update`` tool in ``general.tools`` (``type="tsk"``), and status changes
+go through the generic ``set_status`` tool in ``general.tools``
+(``type="tsk"``). Like REQ,
 TSK has no ``specmgr://tsk/{id}`` resource -- id-based reads go through the
 ``get_tsk`` tool only (same rationale as ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614,
 "Expose id-based REQ document reads as a tool (get_req), not a resource" --

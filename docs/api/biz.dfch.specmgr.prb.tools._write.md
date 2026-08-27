@@ -13,8 +13,8 @@ already-constructed, already-validated
 :class:`~biz.dfch.specmgr.prb.models.v1.PrbFrontmatter` with the caller's own
 already-validated *raw* body text (never reformatted/re-rendered) into one
 file. Factored out of ``create_prb.py`` into its own module so the generic
-``update`` tool in ``general.tools`` and ``set_status_prb.py`` do not have
-to duplicate it. Mirrors ``tsk.tools._write`` file-for-file.
+``update`` and ``set_status`` tools in ``general.tools`` (``type="prb"``)
+do not have to duplicate it. Mirrors ``tsk.tools._write`` file-for-file.
 
 ## Functions
 

@@ -22,8 +22,9 @@ unchanged except for naming -- see that module's own docstring for the full
 rationale (the read-modify-write race a mutating tool's ``load_by_id`` ->
 mutate -> write sequence is exposed to when an MCP host dispatches two
 overlapping calls against the same id). The generic ``update`` tool in
-``general.tools`` (``type="qa"``) and any future QA mutation tool
-(``set_status_qa``) wrap their whole sequence in ``with qa_lock(id):``.
+``general.tools`` (``type="qa"``) and the generic ``set_status`` tool in
+``general.tools`` (``type="qa"``) wrap their whole sequence in
+``with qa_lock(id):``.
 
 Not generalized into ``general.tools`` alongside ``_doc_paths.py`` -- the id
 -> path lookup plumbing was generalized because it was already shared,

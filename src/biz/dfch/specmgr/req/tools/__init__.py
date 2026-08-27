@@ -36,8 +36,9 @@ assigns a fresh id, builds the frontmatter itself, and writes a new document
 (``req.tools._paths``/``_io``). Whole-body and line-range updates of an
 existing document go through the generic ``update`` tool in ``general.tools``
 (``type="req"``), preserving every frontmatter field except ``updated``.
-``set_status_req`` (Task 3.14) is the only path that
-changes ``status``, also bumping ``updated``, leaving the body untouched.
+Status changes of an existing document go through the generic
+``set_status`` tool in ``general.tools`` (``type="req"``), also bumping
+``updated``, leaving the body untouched.
 ``delete_req`` (Task 3.15) is a registered stub -- always raises
 ``NotImplementedError``, reserving the name for a future real
 implementation. ``validate_req`` (Task 3.16) is a disk-free, id-free dry
@@ -54,7 +55,6 @@ from .get_req_example import get_req_example
 from .get_req_template import get_req_template
 from .list_req import list_req
 from .parse_req import parse_req
-from .set_status_req import set_status_req
 from .validate_req import validate_req
 
 __all__ = [
@@ -65,6 +65,5 @@ __all__ = [
     "get_req_template",
     "list_req",
     "parse_req",
-    "set_status_req",
     "validate_req",
 ]
