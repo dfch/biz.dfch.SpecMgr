@@ -58,7 +58,9 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general.tools._doc_paths`](biz.dfch.specmgr.general.tools._doc_paths.md) — Generic, doc-type-agnostic base directory resolution, filename slugification,
 - [`biz.dfch.specmgr.general.tools._packaged_data`](biz.dfch.specmgr.general.tools._packaged_data.md) — Generic, doc-type-agnostic access to packaged example/template/schema data
 - [`biz.dfch.specmgr.general.tools._paging`](biz.dfch.specmgr.general.tools._paging.md) — Generic, doc-type-agnostic paging helpers (feat-13 Task 1.2).
+- [`biz.dfch.specmgr.general.tools._splice`](biz.dfch.specmgr.general.tools._splice.md) — Frontmatter-stripped body extraction and body-line splicing for the generic
 - [`biz.dfch.specmgr.general.tools.mdformat`](biz.dfch.specmgr.general.tools.mdformat.md) — ``@mcp.tool()`` wrapper: mdformat.
+- [`biz.dfch.specmgr.general.tools.update`](biz.dfch.specmgr.general.tools.update.md) — ``@mcp.tool()`` wrapper: update (feat-22-consolidate-mutation-tools, Phase 2).
 - [`biz.dfch.specmgr.general.tools.webfetch`](biz.dfch.specmgr.general.tools.webfetch.md) — ``@mcp.tool()`` wrapper: webfetch.
 - [`biz.dfch.specmgr.gol`](biz.dfch.specmgr.gol.md) — Goal (GOL) domain -- high-level business goal specifications.
 - [`biz.dfch.specmgr.gol.prompts`](biz.dfch.specmgr.gol.prompts.md) — MCP prompt wrappers for Goals (Tasks 3.14-3.15).

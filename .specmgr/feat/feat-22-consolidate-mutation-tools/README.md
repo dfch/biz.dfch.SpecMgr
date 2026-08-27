@@ -454,7 +454,7 @@ phase-orchestrator commits each accepted phase as one Conventional Commit.
 
 #### Phase 2: Generic `update` tool + `raw` read parameter
 
-- [ ] Task 2.1: Create `general/tools/_splice.py` (no `mcp` dependency, plain
+- [x] Task 2.1: Create `general/tools/_splice.py` (no `mcp` dependency, plain
   file I/O + text manipulation, module docstring explaining the raw/splice
   invariant): `body_text(path: Path) -> str` (frontmatter-stripped body text
   via the established `frontmatter.loads(...).content` mechanism) and
@@ -464,8 +464,8 @@ phase-orchestrator commits each accepted phase as one Conventional Commit.
   1`, `begin > end`, `end > N + 1`; drop lines `begin..min(end, N)`; insert
   `content.splitlines()` at position `begin - 1`; rejoin `"\n"` + single
   trailing `"\n"`; empty `content` = deletion) — depends on: none — status:
-  not-started
-- [ ] Task 2.2: Create `general/tools/update.py`: seven private adapter
+  done
+- [x] Task 2.2: Create `general/tools/update.py`: seven private adapter
   functions `_update_<d>(id_, content, begin, end)` — verbatim ports of the
   current `update_<d>` function bodies (same `X_lock`, `load_by_id`,
   frontmatter carry-over + microsecond `updated` bump, `write_X_file`,
@@ -480,10 +480,10 @@ phase-orchestrator commits each accepted phase as one Conventional Commit.
   ReqDocument | UcDocument | TskDocument | QaDocument | PrbDocument |
   GolDocument | RskDocument` with a full numpy-style docstring (including
   the range contract and the error types) — depends on: Task 2.1 — status:
-  not-started
-- [ ] Task 2.3: Register `update` in `general/tools/__init__.py` (import,
-  `__all__`, module docstring) — depends on: Task 2.2 — status: not-started
-- [ ] Task 2.4: Add the `raw: bool = False` parameter to the seven `get_<d>`
+  done
+- [x] Task 2.3: Register `update` in `general/tools/__init__.py` (import,
+  `__all__`, module docstring) — depends on: Task 2.2 — status: done
+- [x] Task 2.4: Add the `raw: bool = False` parameter to the seven `get_<d>`
   tools (`req/tools/get_req.py`, `uc/tools/get_uc.py`, `tsk/tools/get_tsk.py`,
   `qa/tools/get_qa.py`, `prb/tools/get_prb.py`, `gol/tools/get_gol.py`,
   `rsk/tools/get_rsk.py`): signature `get_<d>(id: str, raw: bool = False) ->
@@ -491,13 +491,13 @@ phase-orchestrator commits each accepted phase as one Conventional Commit.
   and returns `body_text(path)` (the same helper the splice uses, per the
   Design-Notes invariant); `raw=False` returns the parsed document exactly as
   today; update each tool's `@mcp.tool` description and docstring Returns
-  section — depends on: Task 2.1 — status: not-started
-- [ ] Task 2.5: Update `server.py`'s module docstring: add `update` to the
+  section — depends on: Task 2.1 — status: done
+- [x] Task 2.5: Update `server.py`'s module docstring: add `update` to the
   General-tools lines (one line describing whole-body *and* line-range
   replace, the 7-value `type`, optional `begin`/`end`); note the `raw`
   parameter where the seven `get_<d>` tools are enumerated — depends on:
-  Task 2.2, Task 2.4 — status: not-started
-- [ ] Task 2.6: `tests/general/tools/test_update.py` — parameterized over all
+  Task 2.2, Task 2.4 — status: done
+- [x] Task 2.6: `tests/general/tools/test_update.py` — parameterized over all
   seven types (seed a document per type, e.g. via the domain `create_<d>`
   tool in a temp `SPECMGR_DOCS_DIR`, mirroring the fixture strategy of the
   `tests/<d>/tools/test_update_<d>.py` files still on disk at this phase):
@@ -510,28 +510,27 @@ phase-orchestrator commits each accepted phase as one Conventional Commit.
   optional section yielding a valid document; `begin=1`/`end=N` ≡ whole-body;
   every `ValueError` misuse case; range deleting the H1 → `AssertionError`,
   file untouched; range producing an out-of-vocabulary field value →
-  `ValidationError`, file untouched) — depends on: Task 2.2 — status: not-
-  started
-- [ ] Task 2.7: Extend each domain's existing `tests/<d>/tools/test_get_<d>.py`
+  `ValidationError`, file untouched) — depends on: Task 2.2 — status: done
+- [x] Task 2.7: Extend each domain's existing `tests/<d>/tools/test_get_<d>.py`
   (seven files) with `raw` coverage (ACC-003 cases): `raw=True` returns the
   body text byte-identical to the on-disk frontmatter-stripped body; the
   coordinate invariant (read `raw`, pick a real line range, `update` with it,
   assert the splice landed exactly there); `raw=False` regression (parsed
   document as before); unknown id → `XNotFoundError` in both modes — depends
-  on: Task 2.4, Task 2.2 — status: not-started
-- [ ] Task 2.8: Registration smoke test: a unittest asserting
+  on: Task 2.4, Task 2.2 — status: done
+- [x] Task 2.8: Registration smoke test: a unittest asserting
   `asyncio.run(mcp.list_tools())` contains `update` with `type` rendered as a
   7-value `enum` and optional integer `begin`/`end` in the input schema, plus
   a fresh-subprocess `uv run --frozen python -c "import biz.dfch.specmgr.
   server"` check run inside the phase gate (import-order proof, Design Notes)
-  — depends on: Task 2.3 — status: not-started
-- [ ] Task 2.9: Phase-end quality gate — full gate including Tasks 2.6–2.8's
+  — depends on: Task 2.3 — status: done
+- [x] Task 2.9: Phase-end quality gate — full gate including Tasks 2.6–2.8's
   new tests; `uv run --frozen specmgr mcp-docs` and `uv run --frozen specmgr
   docs` regeneration, then `git diff --exit-code -- docs/` zero drift;
   confirm `docs/MCP.md` shows the `update` entry (enum) and the `raw` note on
   the `get_<d>` entries; add a dated entry to the Recent Updates section,
   update Current Status, flip the phase's task lines to done in place —
-  depends on: Tasks 2.3, 2.5, 2.8 — status: not-started
+  depends on: Tasks 2.3, 2.5, 2.8 — status: done
 
 #### Phase 3: Retire the per-domain `update_*` tools
 
@@ -748,18 +747,115 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-27**: Phase 1 (ADR) complete — the feature's ADR
-36905d5b-8057-4294-8665-c7eed5534db0 ("Consolidate whole-body update and
-status-change tools into generic type-dispatched tools") was created via
-`specmgr_create_adr`, validated with `specmgr_validate_adr`, and listed in
-`docs/adr/README.md` (regenerated with zero drift); the phase-end quality
-gate is green. Phases 2–7 are not started.
+**As of 2026-08-27**: Phase 2 (Generic `update` tool + `raw` read
+parameter) complete — the generic `update(id, type, content, begin, end)`
+tool (the seven whole-body domains; verbatim-ported private adapters;
+whole-body mode plus the splice-then-validate-whole range mode with the
+`N+1` EOF sentinel) is registered in `general/tools/` alongside the new
+`general/tools/_splice.py` shared body-text/splice helpers, and all seven
+`get_<d>` tools gained `raw: bool = False` (frontmatter-stripped body text
+via the same helper the splice uses — REQ-003's invariant). Purely
+additive: the seven `update_<d>` tools and their tests are untouched
+(Phase 3 deletes them), no `set_status*` tool changed (Phase 4), and
+nothing under any `models/` package changed. The phase-end quality gate is
+green (1830 tests OK, zero `docs/` drift, fresh-subprocess import OK);
+live registration is 85 tools / 25 resources / 19 prompts (baseline
+84/25/19). Phases 3–7 are not started. (Phase 1 — the feature's ADR
+36905d5b-8057-4294-8665-c7eed5534db0 — completed on 2026-08-27.)
 
 ### Blockers
 
 None.
 
 ### Recent Updates
+
+#### Update 2026-08-27 (Phase 2: Generic `update` tool + `raw` read parameter)
+
+- Completed: Phase 2 (Tasks 2.1–2.9). Purely additive — the seven
+  `update_<d>` tools, all `set_status*` tools, and every `models/` package
+  are untouched:
+  - `general/tools/_splice.py` (no `mcp` dependency): `body_text(path)` —
+    the single frontmatter-stripped body extraction via
+    `frontmatter.loads(path.read_text(encoding="utf-8")).content` (the same
+    mechanism every `set_status_<d>` tool uses) — and
+    `splice_body(current_body, begin, end, content)` implementing the
+    Design-Notes range contract exactly (`N` = line count; `ValueError` for
+    `begin < 1` / `begin > end` / `end > N+1`, each message naming the
+    offending value(s) and the allowed range; drop lines
+    `begin..min(end, N)`, insert `content.splitlines()` at `begin - 1`,
+    rejoin `"\n"` + one trailing `"\n"`; empty `content` = deletion; the
+    `N+1` EOF sentinel falls out — `begin = end = N+1` is a pure append,
+    `end = N+1` extends the range through the last line).
+  - `general/tools/update.py`: `@mcp.tool(name="update")`
+    `update(id, type, content, begin=None, end=None)` with a
+    `dict[str, Callable]` dispatch table over seven private adapters
+    `_update_<d>` — verbatim ports of the `update_<d>` function bodies
+    (same `X_lock`, same `load_by_id`, same frontmatter carry-over with
+    only `updated` bumped to the current microsecond timestamp, `status`
+    never settable, same verbatim `write_X_file` persistence, same domain
+    `XNotFoundError`) plus the range branch (no `begin`/`end` → today's
+    behavior; both given → `body_text` + `splice_body`, validate the
+    *spliced result* as a whole via `X.from_text(format_text(spliced))`,
+    persist the *spliced* text verbatim; the both-or-neither `ValueError`
+    guard runs in the public `update` before dispatch, i.e. before any file
+    access). The parameter is intentionally named `type` (7-value
+    `Literal` → 7-entry JSON-schema `enum` in the input schema); the
+    7-way union return type is annotation-only.
+  - `raw: bool = False` on the seven `get_<d>` tools: `raw=True` resolves
+    the id as today (no lock — read-only) and returns `body_text(path)` —
+    the *same* helper the splice uses (REQ-003's "what the client counts is
+    what the server splices" invariant); `raw=False` behaves exactly as
+    today (parsed `XDocument`). Each tool's `@mcp.tool` description and
+    docstring updated.
+  - Registration in `general/tools/__init__.py` (import, `__all__`, module
+    docstring); `server.py`'s module docstring updated (`update` added to
+    the General-tools lines; the `raw` parameter noted on each of the seven
+    per-domain `get_<d>` lines).
+- Deviation (additive renderer extension, recorded here per the plan's
+  docs-discipline note): `docs/MCP.md` could not show the 7-value `type`
+  enum — `commands/mcp_docs.py`'s `_schema_type_str` collapsed
+  `{"type": "string", "enum": [...]}` to bare `string`. Added an enum
+  branch rendering `string (enum: req, uc, tsk, qa, prb, gol, rsk)` (it
+  fires only for properties declaring `enum` — no other current tool has
+  one, so no pre-existing `docs/MCP.md` row changed) plus a
+  `TestSchemaTypeStr` case. The Design Notes require the enum to be
+  rendered in `docs/MCP.md` and verified in this phase's gate, which the
+  untouched renderer could not satisfy.
+- Test note (per-type out-of-vocabulary field-value cases): `req`/`uc`/
+  `tsk`/`gol`/`rsk` each have a genuine body-level
+  `pydantic.ValidationError` path (closed vocabularies or cross-field
+  validators), but `qa`/`prb` bodies are free-form text with no closed
+  vocabulary and no field constraint — their out-of-vocabulary input (an
+  unrecognized section heading) fails structurally with `AssertionError`
+  instead. The ACC-002 invariant (invalid input via a range → the file
+  left byte-identical on disk) is verified for both error types, per type;
+  the case data in `tests/general/tools/test_update.py` flags which each
+  type raises.
+- Quality gate (green): `ruff format` (initial run normalized the new
+  files; subsequent `ruff format --check`: 1136 files already formatted),
+  `ruff check` (all checks passed), `vulture src/ whitelist.py
+  --min-confidence 60` (clean, exit 0), full unittest suite (**Ran 1830
+  tests, OK** — up from 1783: +18 `tests/general/tools/test_update.py`
+  (whole-body ACC-001, range ACC-002, and Task-2.8 registration, each
+  parameterized over all seven types), +28 `raw`-coverage tests across the
+  seven `tests/<d>/tools/test_get_<d>.py`, +1 `TestSchemaTypeStr` enum
+  case); the seven pre-existing `update_<d>` test files (34 tests) still
+  pass unchanged. Regenerations: `specmgr coverage-badge` (98% — the same
+  rounded value as before, so the badge is byte-identical and left no
+  diff), `specmgr mcp-docs` (header now "85 tool(s)"; `update` entry with
+  the 7-value `type` enum and optional `integer | None` `begin`/`end`;
+  `raw` note on all seven `get_<d>` entries), `specmgr docs` (new
+  `docs/api/biz.dfch.specmgr.general.tools.update.md` / `._splice.md`
+  pages; the seven `get_<d>` pages changed; `docs/api/README.md` +
+  `docs/GENERATED.md` updated). Zero-drift proof: all three generators
+  re-run and the whole `docs/` tree came back byte-identical (sha256
+  manifest diff empty). `specmgr schema` re-run: all seven schemas
+  unchanged (models untouched). Fresh-subprocess
+  `uv run --frozen python -c "import biz.dfch.specmgr.server"`: exit 0
+  (the import-order proof — `general` now pulls all seven domain tool
+  packages earlier than before and still imports cleanly). Live
+  registration confirmed at **85 tools / 25 resources / 19 prompts**.
+- Next: Phase 3 (Retire the per-domain `update_*` tools).
 
 #### Update 2026-08-27 (Phase 1: ADR)
 

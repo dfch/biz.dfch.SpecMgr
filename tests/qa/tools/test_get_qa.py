@@ -26,6 +26,8 @@ from pathlib import Path
 from unittest import mock
 
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
+from biz.dfch.specmgr.general.tools._splice import body_text
+from biz.dfch.specmgr.general.tools.update import update
 from biz.dfch.specmgr.qa.models.v2 import QaDocument
 from biz.dfch.specmgr.qa.tools import _io
 from biz.dfch.specmgr.qa.tools._paths import QaNotFoundError
@@ -141,6 +143,55 @@ class TestGetQa(unittest.TestCase):
         message = str(ctx.exception)
         self.assertIn("bare document UUID", message)
         self.assertIn("without a domain prefix", message)
+
+    def _doc_path(self) -> Path:
+        """The single on-disk document file seeded for this test."""
+        matches = list((self.docs_root / "qa").glob("*.md"))
+        self.assertEqual(len(matches), 1)
+        result = matches[0]
+        return result
+
+    def test_raw_returns_body_text_via_shared_helper(self) -> None:
+        """raw=True must return the frontmatter-stripped body text, byte-identical to the shared body_text helper's output."""
+        created = create_qa(_MINIMAL_BODY)
+
+        result = get_qa(created.frontmatter.id, raw=True)
+
+        self.assertIsInstance(result, str)
+        self.assertEqual(result, body_text(self._doc_path()))
+
+    def test_raw_line_coordinates_index_into_the_splice_target(self) -> None:
+        """The line numbers from a raw read must index byte-for-byte into the text the update splice targets (ACC-003)."""
+        created = create_qa(_MINIMAL_BODY)
+        lines = get_qa(created.frontmatter.id, raw=True).splitlines()
+        k = lines.index("Some intro text.") + 1
+        replacement = "Updated intro text."
+
+        update(id=created.frontmatter.id, type="qa", content=replacement, begin=k, end=k)
+
+        new_lines = get_qa(created.frontmatter.id, raw=True).splitlines()
+        self.assertEqual(new_lines[k - 1], replacement)
+        self.assertEqual(new_lines[: k - 1] + new_lines[k:], lines[: k - 1] + lines[k:])
+        self.assertEqual(len(new_lines), len(lines))
+
+    def test_raw_false_returns_parsed_document_as_before(self) -> None:
+        """raw=False (explicit) must return the parsed document, exactly as the default call does."""
+        created = create_qa(_MINIMAL_BODY)
+
+        result = get_qa(created.frontmatter.id, raw=False)
+        default = get_qa(created.frontmatter.id)
+
+        self.assertIsInstance(result, QaDocument)
+        self.assertEqual(result, default)
+
+    def test_raw_unknown_id_raises_not_found_in_both_modes(self) -> None:
+        """raw=True and raw=False must both raise QaNotFoundError for an unknown id."""
+        create_qa(_MINIMAL_BODY)
+
+        with self.assertRaises(QaNotFoundError):
+            get_qa("no-such-id", raw=True)
+        with self.assertRaises(QaNotFoundError):
+            get_qa("no-such-id", raw=False)
 
     def test_read_path_surfaces_structural_error_for_v1_shaped_document(self) -> None:
         """`get_qa`'s own read path (`qa.tools._io.read_qa`, which `load_by_id`

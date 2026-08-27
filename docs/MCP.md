@@ -3,7 +3,7 @@
 Auto-generated from the live `biz.dfch.specmgr.server:mcp` registration --
 do not edit by hand, run `specmgr mcp-docs` instead (see `AGENTS.md`).
 
-25 resource(s), 1 resource template(s), 84 tool(s), 19 prompt(s).
+25 resource(s), 1 resource template(s), 85 tool(s), 19 prompt(s).
 
 ## Table of Contents
 
@@ -250,25 +250,25 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`delete_tsk`](#tool-delete_tsk) | Stub only -- always raises NotImplementedError. Reserves the name for a future implementation. |
 | [`delete_uc`](#tool-delete_uc) | Stub only -- always raises NotImplementedError. Reserves the name for a future implementation. |
 | [`get_adr`](#tool-get_adr) | Read, parse, and return a full ADR document (frontmatter and body) by its id. |
-| [`get_gol`](#tool-get_gol) | Read, parse, and return a full goal document (frontmatter and body) by its id. |
+| [`get_gol`](#tool-get_gol) | Read, parse, and return a full goal document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. |
 | [`get_gol_example`](#tool-get_gol_example) | Return a complete, valid sample goal document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example. |
 | [`get_gol_template`](#tool-get_gol_template) | Return a GOL document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new goal. |
-| [`get_prb`](#tool-get_prb) | Read, parse, and return a full problem statement document (frontmatter and body) by its id. |
+| [`get_prb`](#tool-get_prb) | Read, parse, and return a full problem statement document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. |
 | [`get_prb_example`](#tool-get_prb_example) | Return a complete, valid sample problem statement document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example. |
 | [`get_prb_template`](#tool-get_prb_template) | Return a PRB document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new problem statement. |
-| [`get_qa`](#tool-get_qa) | Read, parse, and return a full QA document (frontmatter and body) by its id. |
+| [`get_qa`](#tool-get_qa) | Read, parse, and return a full QA document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. |
 | [`get_qa_example`](#tool-get_qa_example) | Return a complete, valid sample QA document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example. |
 | [`get_qa_template`](#tool-get_qa_template) | Return a QA document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new QA document. |
-| [`get_req`](#tool-get_req) | Read, parse, and return a full requirement document (frontmatter and body) by its id. |
+| [`get_req`](#tool-get_req) | Read, parse, and return a full requirement document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. |
 | [`get_req_example`](#tool-get_req_example) | Return a complete, valid sample requirement document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example. |
 | [`get_req_template`](#tool-get_req_template) | Return a REQ document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new requirement. |
-| [`get_rsk`](#tool-get_rsk) | Read, parse, and return a full risk document (frontmatter and body) by its id. |
+| [`get_rsk`](#tool-get_rsk) | Read, parse, and return a full risk document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. |
 | [`get_rsk_example`](#tool-get_rsk_example) | Return a complete, valid sample risk document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example. |
 | [`get_rsk_template`](#tool-get_rsk_template) | Return a risk document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new risk. |
-| [`get_tsk`](#tool-get_tsk) | Read, parse, and return a full task list document (frontmatter and body) by its id. |
+| [`get_tsk`](#tool-get_tsk) | Read, parse, and return a full task list document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. |
 | [`get_tsk_example`](#tool-get_tsk_example) | Return a complete, valid sample task list document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example. |
 | [`get_tsk_template`](#tool-get_tsk_template) | Return a TSK document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new task list. |
-| [`get_uc`](#tool-get_uc) | Read, parse, and return a full use-case document (frontmatter and body) by its id. |
+| [`get_uc`](#tool-get_uc) | Read, parse, and return a full use-case document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. |
 | [`get_uc_example`](#tool-get_uc_example) | Return a complete, valid sample use case document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example. |
 | [`get_uc_template`](#tool-get_uc_template) | Return a UC document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new use case. |
 | [`list_adr`](#tool-list_adr) | Ids, titles, statuses, and refs of ADRs in the configured ADR base directory (SPECMGR_ADR_DIR), one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use get_adr with it instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
@@ -300,6 +300,7 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`set_status_rsk`](#tool-set_status_rsk) | The only path that changes a risk's status. Also bumps `updated`. |
 | [`set_status_tsk`](#tool-set_status_tsk) | The only path that changes a task list's status. Also bumps `updated`. |
 | [`set_status_uc`](#tool-set_status_uc) | The only path that changes a use case's status. Also bumps `updated`. |
+| [`update`](#tool-update) | Whole-body or line-range replace of an existing document's content across the seven whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk), preserving its id/type/status/created/version; only `updated` changes. With no `begin`/`end`, `content` is the full replacement body (body markdown only, no frontmatter block). With both, `content` replaces the 1-based inclusive body-line range `begin`..`end` of the current on-disk body (`N+1` = end-of-body sentinel: append after the last line, or replace through end of body); the spliced result is validated as a whole document before anything is written. `status` is never settable -- use the `set_status_*` tools. |
 | [`update_frontmatter`](#tool-update_frontmatter) | Whole-object replace of an ADR's frontmatter (plan §3), preserving its existing id. |
 | [`update_gol`](#tool-update_gol) | Whole-body replace of an existing goal's content, preserving its id/type/status/created/version; only `updated` changes. Use `set_status_gol` to change status instead. |
 | [`update_prb`](#tool-update_prb) | Whole-body replace of an existing problem statement's content, preserving its id/type/status/created/version; only `updated` changes. Use `set_status_prb` to change status instead. |
@@ -484,11 +485,12 @@ Read, parse, and return a full ADR document (frontmatter and body) by its id.
 
 **Get goal**
 
-Read, parse, and return a full goal document (frontmatter and body) by its id.
+Read, parse, and return a full goal document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
 | `id` | `string` | Yes |
+| `raw` | `boolean` | No |
 
 ### Tool: get_gol_example
 
@@ -506,11 +508,12 @@ Return a GOL document template -- frontmatter and every body field present, popu
 
 **Get problem statement**
 
-Read, parse, and return a full problem statement document (frontmatter and body) by its id.
+Read, parse, and return a full problem statement document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
 | `id` | `string` | Yes |
+| `raw` | `boolean` | No |
 
 ### Tool: get_prb_example
 
@@ -528,11 +531,12 @@ Return a PRB document template -- frontmatter and every body field present, popu
 
 **Get QA document**
 
-Read, parse, and return a full QA document (frontmatter and body) by its id.
+Read, parse, and return a full QA document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
 | `id` | `string` | Yes |
+| `raw` | `boolean` | No |
 
 ### Tool: get_qa_example
 
@@ -550,11 +554,12 @@ Return a QA document template -- frontmatter and every body field present, popul
 
 **Get requirement**
 
-Read, parse, and return a full requirement document (frontmatter and body) by its id.
+Read, parse, and return a full requirement document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
 | `id` | `string` | Yes |
+| `raw` | `boolean` | No |
 
 ### Tool: get_req_example
 
@@ -572,11 +577,12 @@ Return a REQ document template -- frontmatter and every body field present, popu
 
 **Get risk**
 
-Read, parse, and return a full risk document (frontmatter and body) by its id.
+Read, parse, and return a full risk document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
 | `id` | `string` | Yes |
+| `raw` | `boolean` | No |
 
 ### Tool: get_rsk_example
 
@@ -594,11 +600,12 @@ Return a risk document template -- frontmatter and every body field present, pop
 
 **Get task list**
 
-Read, parse, and return a full task list document (frontmatter and body) by its id.
+Read, parse, and return a full task list document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
 | `id` | `string` | Yes |
+| `raw` | `boolean` | No |
 
 ### Tool: get_tsk_example
 
@@ -616,11 +623,12 @@ Return a TSK document template -- frontmatter and every body field present, popu
 
 **Get use case**
 
-Read, parse, and return a full use-case document (frontmatter and body) by its id.
+Read, parse, and return a full use-case document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
 | `id` | `string` | Yes |
+| `raw` | `boolean` | No |
 
 ### Tool: get_uc_example
 
@@ -946,6 +954,20 @@ The only path that changes a use case's status. Also bumps `updated`.
 | --- | --- | --- |
 | `id` | `string` | Yes |
 | `status` | `string` | Yes |
+
+### Tool: update
+
+**Update document**
+
+Whole-body or line-range replace of an existing document's content across the seven whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk), preserving its id/type/status/created/version; only `updated` changes. With no `begin`/`end`, `content` is the full replacement body (body markdown only, no frontmatter block). With both, `content` replaces the 1-based inclusive body-line range `begin`..`end` of the current on-disk body (`N+1` = end-of-body sentinel: append after the last line, or replace through end of body); the spliced result is validated as a whole document before anything is written. `status` is never settable -- use the `set_status_*` tools.
+
+| Parameter | Type | Required |
+| --- | --- | --- |
+| `id` | `string` | Yes |
+| `type` | `string (enum: req, uc, tsk, qa, prb, gol, rsk)` | Yes |
+| `content` | `string` | Yes |
+| `begin` | `integer | None` | No |
+| `end` | `integer | None` | No |
 
 ### Tool: update_frontmatter
 
