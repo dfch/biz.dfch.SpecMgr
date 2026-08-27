@@ -78,7 +78,7 @@ First-line docstrings from each module, organized by domain:
 - `dec/tools/_io.py` — Thin file read helpers over ``parse_dec`` (Task 2.1).
 - `dec/tools/_lock.py` — Per-document in-process lock guarding decision mutations.
 - `dec/tools/_paths.py` — Decision base directory resolution and id -> path lookup (Task 2.1).
-- `dec/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_dec``/``update_dec``.
+- `dec/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_dec`` and
 - `dec/tools/create_dec.py` — ``@mcp.tool()`` wrapper: create_dec (Task 2.2).
 - `dec/tools/delete_dec.py` — ``@mcp.tool()`` wrapper: delete_dec (Task 2.2).
 - `dec/tools/get_dec.py` — ``@mcp.tool()`` wrapper: get_dec (Task 2.2).
@@ -86,8 +86,6 @@ First-line docstrings from each module, organized by domain:
 - `dec/tools/get_dec_template.py` — ``@mcp.tool()`` wrapper: get_dec_template (Task 2.2).
 - `dec/tools/list_dec.py` — ``@mcp.tool()`` wrapper: list_dec (Task 2.2).
 - `dec/tools/parse_dec.py` — ``@mcp.tool()`` wrapper: parse_dec (Task 2.2).
-- `dec/tools/set_status_dec.py` — ``@mcp.tool()`` wrapper: set_status_dec (Task 2.2).
-- `dec/tools/update_dec.py` — ``@mcp.tool()`` wrapper: update_dec (Task 2.2).
 - `dec/tools/validate_dec.py` — ``@mcp.tool()`` wrapper: validate_dec (Task 2.2).
 
 **general/**
@@ -397,4 +395,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 264
+**Test files**: 262

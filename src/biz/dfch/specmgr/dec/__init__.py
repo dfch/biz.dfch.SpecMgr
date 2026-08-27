@@ -29,11 +29,15 @@ resources against the shared ``mcp`` application instance at once::
 
     from biz.dfch.specmgr import dec  # noqa: F401 (side-effects only)
 
-``tools`` (``create_dec``, ``update_dec``, ``set_status_dec``, ``parse_dec``,
+``tools`` (``create_dec``, ``parse_dec``,
 ``list_dec``, ``get_dec``, ``get_dec_example``, ``get_dec_template``,
 ``delete_dec``, ``validate_dec``), ``resources`` (``specmgr://dec/schema``,
 ``specmgr://dec/example``, ``specmgr://dec/template``), and ``prompts``
-(``create_dec``, ``update_dec``) all exist. Like GOL, DEC has no
+(``create_dec``, ``update_dec``) all exist; whole-body and line-range
+updates of an existing document go through the generic ``update`` tool in
+``general.tools`` (``type="dec"``), and status changes go through the
+generic ``set_status`` tool in ``general.tools`` (``type="dec"``). Like
+GOL, DEC has no
 ``specmgr://dec/{id}`` resource -- id-based reads go through the ``get_dec``
 tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614). Likewise, there is no
 ``specmgr://dec/list`` resource -- ``list_dec`` ships as a paged

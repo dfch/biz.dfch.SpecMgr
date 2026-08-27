@@ -17,13 +17,13 @@
 
 """Tests for the generic ``set_status`` ``@mcp.tool()`` wrapper (feat-22-consolidate-mutation-tools, Phase 4).
 
-Parameterized over all eight document types (ACC-004); seeds a real,
-persisted document per type -- the seven whole-body domains via the
+Parameterized over all nine document types (ACC-004); seeds a real,
+persisted document per type -- the eight whole-body domains via the
 domain's own ``create_<d>`` tool in a temp ``SPECMGR_DOCS_DIR`` (mirroring
 the fixture strategy of ``tests/general/tools/test_update.py``), the ADR
 by rendering a minimal valid model into a temp ``SPECMGR_ADR_DIR`` -- and
 covers: status changed + ``updated`` bumped (microsecond timestamp) + body
-untouched (seven domains: raw body byte-identical; ADR: re-render round-
+untouched (eight domains: raw body byte-identical; ADR: re-render round-
 trip equal apart from status); each domain's closed-vocabulary
 enforcement (positive value from the domain's own ``_ALLOWED_STATUSES``;
 negative value valid in one domain but invalid in the tested one -- each a
@@ -54,6 +54,9 @@ import frontmatter
 from pydantic import ValidationError
 
 from biz.dfch.specmgr.adr.tools._paths import ADR_DIR_ENV_VAR, AdrNotFoundError
+from biz.dfch.specmgr.dec.models.v1.frontmatter import _ALLOWED_STATUSES as _DEC_ALLOWED_STATUSES
+from biz.dfch.specmgr.dec.tools._paths import DecNotFoundError
+from biz.dfch.specmgr.dec.tools.create_dec import create_dec
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.general.tools._splice import body_text
 from biz.dfch.specmgr.general.tools.set_status import set_status
@@ -274,10 +277,24 @@ _RSK_MINIMAL_BODY = textwrap.dedent(
     """
 )
 
+_DEC_MINIMAL_BODY = textwrap.dedent(
+    """\
+    # Title of the Decision
+
+    ## Context and Problem Statement
+
+    Something is wrong with the status quo.
+
+    ## Decision Outcome
+
+    We chose the structured arrangement.
+    """
+)
+
 
 @dataclass(frozen=True)
 class _Case:
-    """Per-type test data for the seven whole-body document types."""
+    """Per-type test data for the eight whole-body document types."""
 
     doc_type: str
     create: Callable[[str], Any]
@@ -356,6 +373,15 @@ _CASES: list[_Case] = [
         invalid_status="implemented",
         allowed_statuses=_RSK_ALLOWED_STATUSES,
     ),
+    _Case(
+        doc_type="dec",
+        create=create_dec,
+        not_found_error=DecNotFoundError,
+        minimal_body=_DEC_MINIMAL_BODY,
+        valid_status="accepted",
+        invalid_status="implemented",
+        allowed_statuses=_DEC_ALLOWED_STATUSES,
+    ),
 ]
 
 _ADR_ID = "adr-test-id"
@@ -401,7 +427,7 @@ class TempDocsDirTestCase(unittest.TestCase):
 
 
 class TestSetStatusWholeBodyDomains(TempDocsDirTestCase):
-    """ACC-004: the seven whole-body domains -- status changed, ``updated`` bumped, body untouched."""
+    """ACC-004: the eight whole-body domains -- status changed, ``updated`` bumped, body untouched."""
 
     def test_case_data_matches_the_domains_own_closed_sets(self) -> None:
         """Each ``valid_status``/``invalid_status`` pair must be exactly as claimed against the domain's own set."""

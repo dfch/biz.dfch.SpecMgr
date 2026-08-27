@@ -17,9 +17,9 @@
 
 """``@mcp.tool()`` wrapper: set_status (feat-22-consolidate-mutation-tools, Phase 4).
 
-The generic, cross-domain status-change tool for all eight document types
-(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``adr``). It
-dispatches on the explicit ``type`` parameter to a private per-domain
+The generic, cross-domain status-change tool for all nine document types
+(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``adr``).
+It dispatches on the explicit ``type`` parameter to a private per-domain
 adapter (``_set_status_<d>``), each a **verbatim port** of the
 corresponding per-domain status tool's function body (same domain lock,
 same ``load_by_id``, same raw-body re-read and verbatim re-persistence,
@@ -35,7 +35,7 @@ previous per-domain ADR status tool's function body (same ``adr_lock``,
 
 The parameter is intentionally named ``type`` (it matches the frontmatter
 field vocabulary the client already knows); no enabled ruff rule objects
-to the builtin shadow. The 8-way union return type is annotation-only --
+to the builtin shadow. The 9-way union return type is annotation-only --
 the MCP input schema is built from the parameters, and the SDK
 serializes whichever concrete document is returned.
 
@@ -66,6 +66,11 @@ from ...adr.tools._io import load_by_id as load_adr_by_id
 from ...adr.tools._io import write_adr
 from ...adr.tools._lock import adr_lock
 from ...adr.tools._paths import adr_base_dir
+from ...dec.models.v1 import DecDocument, DecFrontmatter
+from ...dec.tools._io import load_by_id as load_dec_by_id
+from ...dec.tools._lock import dec_lock
+from ...dec.tools._paths import dec_base_dir
+from ...dec.tools._write import write_dec_file
 from ...gol.models.v1 import GolDocument, GolFrontmatter
 from ...gol.tools._io import load_by_id as load_gol_by_id
 from ...gol.tools._lock import gol_lock
@@ -111,8 +116,10 @@ __all__ = ["set_status"]
 #: (the ``"superseded by X"`` pattern is ADR-specific).
 _TYPE_ADR = "adr"
 
-#: The generic tool's 8-way return union -- annotation-only (see module docstring).
-_SetStatusDocument = ReqDocument | UcDocument | TskDocument | QaDocument | PrbDocument | GolDocument | RskDocument | Adr
+#: The generic tool's 9-way return union -- annotation-only (see module docstring).
+_SetStatusDocument = (
+    ReqDocument | UcDocument | TskDocument | QaDocument | PrbDocument | GolDocument | RskDocument | DecDocument | Adr
+)
 
 
 def _set_status_req(id_: str, status: str, superseded_by: str | None) -> ReqDocument:
@@ -296,6 +303,33 @@ def _set_status_rsk(id_: str, status: str, superseded_by: str | None) -> RskDocu
     return new_doc
 
 
+def _set_status_dec(id_: str, status: str, superseded_by: str | None) -> DecDocument:
+    """Replace the status of the decision identified by ``id_``.
+
+    Verbatim port of the previous per-domain decision status tool's
+    function body (same ``dec_lock``, ``load_by_id``, ``write_dec_file``,
+    ``DecNotFoundError``; that per-domain tool was retired in feat-22
+    Phase 8, when the DEC domain -- merged from dev while still on the
+    old per-domain mechanism -- was converted to the generic tools) --
+    see :func:`_set_status_req` for the full semantics.
+    """
+    assert superseded_by is None, "the public `set_status` guard rejects superseded_by for non-adr types"
+
+    base_dir = dec_base_dir()
+    with dec_lock(id_):
+        path, existing = load_dec_by_id(base_dir, id_)
+        raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
+
+        now = datetime.now().isoformat(timespec="microseconds")
+        fm_data = existing.frontmatter.model_dump()
+        fm_data["status"] = status
+        fm_data["updated"] = now
+        new_frontmatter = DecFrontmatter(**fm_data)
+        new_doc = DecDocument(frontmatter=new_frontmatter, body=existing.body)
+        write_dec_file(path, new_frontmatter, raw_body)
+    return new_doc
+
+
 def _set_status_adr(id_: str, status: str, superseded_by: str | None) -> Adr:
     """Replace the status of the ADR identified by ``id_``.
 
@@ -323,6 +357,7 @@ _ADAPTERS: dict[str, Callable[[str, str, str | None], _SetStatusDocument]] = {
     "prb": _set_status_prb,
     "gol": _set_status_gol,
     "rsk": _set_status_rsk,
+    "dec": _set_status_dec,
     _TYPE_ADR: _set_status_adr,
 }
 
@@ -331,8 +366,8 @@ _ADAPTERS: dict[str, Callable[[str, str, str | None], _SetStatusDocument]] = {
     name="set_status",
     title="Set document status",
     description=(
-        "Replace the status of an existing document across all eight domains (`type` is one of "
-        "req, uc, tsk, qa, prb, gol, rsk, adr), also bumping `updated` (the seven whole-body "
+        "Replace the status of an existing document across all nine domains (`type` is one of "
+        "req, uc, tsk, qa, prb, gol, rsk, dec, adr), also bumping `updated` (the eight whole-body "
         "domains) and leaving the body untouched. The new `status` must be one of the domain's "
         "own closed vocabulary values (see the domain's `XFrontmatter.status` field); anything "
         "else raises `pydantic.ValidationError` and writes nothing. `superseded_by` is accepted "
@@ -344,18 +379,18 @@ _ADAPTERS: dict[str, Callable[[str, str, str | None], _SetStatusDocument]] = {
 )
 def set_status(
     id: str,
-    type: Literal["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "adr"],
+    type: Literal["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "adr"],
     status: str,
     superseded_by: str | None = None,
 ) -> _SetStatusDocument:
-    """Replace the status of an existing document, across all eight domains.
+    """Replace the status of an existing document, across all nine domains.
 
     Cross-domain generic for every document type
-    (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``adr``);
+    (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``adr``);
     dispatches on ``type`` to the domain's own ported adapter (same lock,
     same id resolution, same body handling, same domain not-found error).
 
-    For the seven whole-body domains the existing file's frontmatter is
+    For the eight whole-body domains the existing file's frontmatter is
     carried over with every field preserved except ``status`` (replaced)
     and ``updated`` (bumped to the current microsecond timestamp); the
     body is never touched -- its raw, on-disk markdown (not a render of
@@ -369,7 +404,7 @@ def set_status(
     frontmatter is reconstructed through the domain's own
     ``XFrontmatter`` constructor, so the domain's own validator enforces
     its set. Where that set lives is documented per domain -- see each
-    ``XFrontmatter.status`` field (the seven whole-body domains'
+    ``XFrontmatter.status`` field (the eight whole-body domains'
     ``models/<v>/frontmatter.py`` and ``models/adr/v1/frontmatter.py``)
     rather than any list in this docstring.
 
@@ -379,7 +414,7 @@ def set_status(
         The document's specmgr-assigned identifier.
     type:
         The document type / domain: one of ``req``, ``uc``, ``tsk``,
-        ``qa``, ``prb``, ``gol``, ``rsk``, ``adr``.
+        ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``adr``.
     status:
         The new status. Must be one of the dispatched domain's own
         accepted values (see its ``XFrontmatter.status`` field). For
@@ -391,7 +426,8 @@ def set_status(
 
     Returns
     -------
-    ReqDocument | UcDocument | TskDocument | QaDocument | PrbDocument | GolDocument | RskDocument | Adr
+    ReqDocument | UcDocument | TskDocument | QaDocument | PrbDocument |
+    GolDocument | RskDocument | DecDocument | Adr
         The updated document of the dispatched domain type.
 
     Raises
@@ -404,7 +440,8 @@ def set_status(
         (for ``adr``: not one of its six values and not a
         ``"superseded by ..."`` string). Nothing is written.
     ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
-    PrbNotFoundError / GolNotFoundError / RskNotFoundError / AdrNotFoundError
+    PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
+    AdrNotFoundError
         No document of the dispatched ``type`` has this id -- the
         domain's own not-found error, unchanged from the per-domain tools.
     """

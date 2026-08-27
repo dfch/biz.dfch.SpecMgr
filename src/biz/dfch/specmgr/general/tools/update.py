@@ -18,8 +18,8 @@
 """``@mcp.tool()`` wrapper: update (feat-22-consolidate-mutation-tools, Phase 2).
 
 The generic, cross-domain whole-body *and* line-range replace tool for the
-seven whole-body document types (``req``/``uc``/``tsk``/``qa``/``prb``/
-``gol``/``rsk``). It dispatches on the explicit ``type`` parameter to a
+eight whole-body document types (``req``/``uc``/``tsk``/``qa``/``prb``/
+``gol``/``rsk``/``dec``). It dispatches on the explicit ``type`` parameter to a
 private per-domain adapter (``_update_<d>``), each a **verbatim port** of
 the corresponding per-domain ``update_<d>`` tool's function body (same
 domain lock, same ``load_by_id``, same frontmatter carry-over with only
@@ -32,7 +32,7 @@ verbatim instead of the raw fragment.
 
 The parameter is intentionally named ``type`` (it matches the frontmatter
 field vocabulary the client already knows); no enabled ruff rule objects to
-the builtin shadow. The 7-way union return type is annotation-only -- the
+the builtin shadow. The 8-way union return type is annotation-only -- the
 MCP input schema is built from the parameters, and the SDK serializes
 whichever concrete document is returned.
 
@@ -47,6 +47,11 @@ from collections.abc import Callable
 from datetime import datetime
 from typing import Literal
 
+from ...dec.models.v1 import DecDocument, DecFrontmatter, Decision
+from ...dec.tools._io import load_by_id as load_dec_by_id
+from ...dec.tools._lock import dec_lock
+from ...dec.tools._paths import dec_base_dir
+from ...dec.tools._write import write_dec_file
 from ...gol.models.v1 import GolDocument, GolFrontmatter, Goal
 from ...gol.tools._io import load_by_id as load_gol_by_id
 from ...gol.tools._lock import gol_lock
@@ -88,8 +93,10 @@ from ._splice import body_text, splice_body
 
 __all__ = ["update"]
 
-#: The generic tool's 7-way return union -- annotation-only (see module docstring).
-_UpdateDocument = ReqDocument | UcDocument | TskDocument | QaDocument | PrbDocument | GolDocument | RskDocument
+#: The generic tool's 8-way return union -- annotation-only (see module docstring).
+_UpdateDocument = (
+    ReqDocument | UcDocument | TskDocument | QaDocument | PrbDocument | GolDocument | RskDocument | DecDocument
+)
 
 
 def _update_req(id_: str, content: str, begin: int | None, end: int | None) -> ReqDocument:
@@ -369,6 +376,47 @@ def _update_rsk(id_: str, content: str, begin: int | None, end: int | None) -> R
     return new_doc
 
 
+def _update_dec(id_: str, content: str, begin: int | None, end: int | None) -> DecDocument:
+    """Replace the body of the decision identified by ``id_`` (whole-body or line-range mode).
+
+    Verbatim port of the previous per-domain decision update tool's
+    function body (same ``dec_lock``, ``load_by_id``, frontmatter carry-over
+    with only ``updated`` bumped, ``write_dec_file``, ``DecNotFoundError``;
+    that per-domain tool was retired in feat-22 Phase 8, when the DEC
+    domain -- merged from dev while still on the old per-domain mechanism
+    -- was converted to the generic tools), plus the REQ-002 range branch
+    (see :func:`_update_req`).
+    """
+    if begin is not None or end is not None:
+        assert begin is not None and end is not None, "the public `update` guard enforces both-or-neither"
+
+        base_dir = dec_base_dir()
+        with dec_lock(id_):
+            path, existing = load_dec_by_id(base_dir, id_)
+            spliced = splice_body(body_text(path), begin, end, content)
+            body = Decision.from_text(format_text(spliced))
+            now = datetime.now().isoformat(timespec="microseconds")
+            fm_data = existing.frontmatter.model_dump()
+            fm_data["updated"] = now
+            new_frontmatter = DecFrontmatter(**fm_data)
+            new_doc = DecDocument(frontmatter=new_frontmatter, body=body)
+            write_dec_file(path, new_frontmatter, spliced)
+        return new_doc
+
+    body = Decision.from_text(format_text(content))
+
+    base_dir = dec_base_dir()
+    with dec_lock(id_):
+        path, existing = load_dec_by_id(base_dir, id_)
+        now = datetime.now().isoformat(timespec="microseconds")
+        fm_data = existing.frontmatter.model_dump()
+        fm_data["updated"] = now
+        new_frontmatter = DecFrontmatter(**fm_data)
+        new_doc = DecDocument(frontmatter=new_frontmatter, body=body)
+        write_dec_file(path, new_frontmatter, content)
+    return new_doc
+
+
 #: Dispatch table mapping the ``type`` value to its private adapter.
 _ADAPTERS: dict[str, Callable[[str, str, int | None, int | None], _UpdateDocument]] = {
     "req": _update_req,
@@ -378,6 +426,7 @@ _ADAPTERS: dict[str, Callable[[str, str, int | None, int | None], _UpdateDocumen
     "prb": _update_prb,
     "gol": _update_gol,
     "rsk": _update_rsk,
+    "dec": _update_dec,
 }
 
 
@@ -385,8 +434,8 @@ _ADAPTERS: dict[str, Callable[[str, str, int | None, int | None], _UpdateDocumen
     name="update",
     title="Update document",
     description=(
-        "Whole-body or line-range replace of an existing document's content across the seven "
-        "whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk), preserving its "
+        "Whole-body or line-range replace of an existing document's content across the eight "
+        "whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec), preserving its "
         "id/type/status/created/version; only `updated` changes. With no `begin`/`end`, `content` "
         "is the full replacement body (body markdown only, no frontmatter block). With both, "
         "`content` replaces the 1-based inclusive body-line range `begin`..`end` of the current "
@@ -397,18 +446,18 @@ _ADAPTERS: dict[str, Callable[[str, str, int | None, int | None], _UpdateDocumen
 )
 def update(
     id: str,
-    type: Literal["req", "uc", "tsk", "qa", "prb", "gol", "rsk"],
+    type: Literal["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec"],
     content: str,
     begin: int | None = None,
     end: int | None = None,
 ) -> _UpdateDocument:
     """Replace the body of an existing document, in whole-body or line-range mode.
 
-    Cross-domain generic for the seven whole-body document types
-    (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``); dispatches on
-    ``type`` to the domain's own ported adapter (same lock, same id
-    resolution, same frontmatter carry-over, same verbatim persistence,
-    same domain not-found error).
+    Cross-domain generic for the eight whole-body document types
+    (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``);
+    dispatches on ``type`` to the domain's own ported adapter (same lock,
+    same id resolution, same frontmatter carry-over, same verbatim
+    persistence, same domain not-found error).
 
     **Whole-body mode** (no ``begin``/``end``): ``content`` is body
     markdown only, with no YAML frontmatter block -- the same shape the
@@ -446,7 +495,7 @@ def update(
         The document's specmgr-assigned identifier.
     type:
         The document type / domain: one of ``req``, ``uc``, ``tsk``,
-        ``qa``, ``prb``, ``gol``, ``rsk``.
+        ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``.
     content:
         Whole-body mode: the replacement body markdown, with no
         frontmatter block. Range mode: the replacement fragment for lines
@@ -461,7 +510,8 @@ def update(
 
     Returns
     -------
-    ReqDocument | UcDocument | TskDocument | QaDocument | PrbDocument | GolDocument | RskDocument
+    ReqDocument | UcDocument | TskDocument | QaDocument | PrbDocument |
+    GolDocument | RskDocument | DecDocument
         The updated document of the dispatched domain type.
 
     Raises
@@ -479,7 +529,7 @@ def update(
         A field/cross-field validation failure in the (spliced) body (e.g.
         a range producing an out-of-vocabulary value). Nothing is written.
     ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
-    PrbNotFoundError / GolNotFoundError / RskNotFoundError
+    PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError
         No document of the dispatched ``type`` has this id -- the
         domain's own not-found error, unchanged from the per-domain tools.
     """

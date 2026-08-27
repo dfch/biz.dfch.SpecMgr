@@ -146,20 +146,22 @@ frontmatter-stripped body text verbatim instead of the parsed document), ``list_
  ``get_rsk_example``,
  ``get_rsk_template``, ``create_rsk``, ``delete_rsk``
  (stub, not yet implemented), ``validate_rsk``.
- Decision tools (``dec/tools/``): ``parse_dec``, ``get_dec``, ``list_dec``,
- ``get_dec_example``, ``get_dec_template``, ``create_dec``, ``update_dec``,
- ``set_status_dec``, ``delete_dec`` (stub, not yet implemented),
- ``validate_dec``.
- General tools (``general/tools/``): ``mdformat`` -- format markdown files in place,
+  Decision tools (``dec/tools/``): ``parse_dec``, ``get_dec`` (``raw=True`` returns the
+frontmatter-stripped body text verbatim instead of the parsed document), ``list_dec``,
+  ``get_dec_example``,
+  ``get_dec_template``, ``create_dec``, ``delete_dec``
+  (stub, not yet implemented), ``validate_dec``.
+  General tools (``general/tools/``): ``mdformat`` -- format markdown files in place,
 preserving YAML frontmatter blocks; ``update`` -- whole-body or line-range replace of an
-existing document's content across the seven whole-body domains (``type`` is one of
-``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``; optional 1-based inclusive
+existing document's content across the eight whole-body domains (``type`` is one of
+``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``; optional 1-based inclusive
 ``begin``/``end`` body-line range with the ``N+1`` end-of-body sentinel; the spliced
 result is validated as a whole document before anything is written); ``set_status`` --
-replace an existing document's status across all eight domains (``type`` is one of
-``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``adr``), also bumping ``updated``
-(the seven whole-body domains) and leaving the body untouched; ``superseded_by`` is
-``adr``-only (it composes the status as ``"superseded by {superseded_by}"``);
+replace an existing document's status across all nine domains (``type`` is one of
+``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``adr``), also bumping
+``updated`` (the eight whole-body domains) and leaving the body untouched;
+``superseded_by`` is ``adr``-only (it composes the status as
+``"superseded by {superseded_by}"``);
 ``webfetch`` -- fetch a URL over HTTP GET with a
 bearer token, restricted to a configured base URL (``SPECMGR_WEBFETCH_BASE_URL``,
 ``SPECMGR_WEBFETCH_BEARER``).
@@ -167,7 +169,6 @@ bearer token, restricted to a configured base URL (``SPECMGR_WEBFETCH_BASE_URL``
 Prompts
 -------
 ADR prompts (``adr/prompts/``): ``create_adr``, ``update_adr`` -- instructional
-text guiding an LLM through the ADR tool sequence above (``.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md``
 text guiding an LLM through the ADR tool sequence above (``.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md``
 §11).
 Requirement prompts (``req/prompts/``): ``create_req``, ``update_req`` --

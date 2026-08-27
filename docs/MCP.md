@@ -3,7 +3,7 @@
 Auto-generated from the live `biz.dfch.specmgr.server:mcp` registration --
 do not edit by hand, run `specmgr mcp-docs` instead (see `AGENTS.md`).
 
-28 resource(s), 1 resource template(s), 81 tool(s), 21 prompt(s).
+28 resource(s), 1 resource template(s), 79 tool(s), 21 prompt(s).
 
 ## Table of Contents
 
@@ -276,7 +276,7 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`delete_tsk`](#tool-delete_tsk) | Stub only -- always raises NotImplementedError. Reserves the name for a future implementation. |
 | [`delete_uc`](#tool-delete_uc) | Stub only -- always raises NotImplementedError. Reserves the name for a future implementation. |
 | [`get_adr`](#tool-get_adr) | Read, parse, and return a full ADR document (frontmatter and body) by its id. |
-| [`get_dec`](#tool-get_dec) | Read, parse, and return a full decision document (frontmatter and body) by its id. |
+| [`get_dec`](#tool-get_dec) | Read, parse, and return a full decision document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. |
 | [`get_dec_example`](#tool-get_dec_example) | Return a complete, valid sample decision document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example. |
 | [`get_dec_template`](#tool-get_dec_template) | Return a DEC document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new decision. |
 | [`get_gol`](#tool-get_gol) | Read, parse, and return a full goal document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. |
@@ -323,10 +323,8 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`parse_rsk`](#tool-parse_rsk) | Parse a risk markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.rsk.models.v1.RskDocument`. |
 | [`parse_tsk`](#tool-parse_tsk) | Parse a task list markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.tsk.models.v1.TskDocument`. |
 | [`parse_uc`](#tool-parse_uc) | Parse a use-case markdown file (YAML frontmatter + body) from disk into a structured document. |
-| [`set_status`](#tool-set_status) | Replace the status of an existing document across all eight domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, adr), also bumping `updated` (the seven whole-body domains) and leaving the body untouched. The new `status` must be one of the domain's own closed vocabulary values (see the domain's `XFrontmatter.status` field); anything else raises `pydantic.ValidationError` and writes nothing. `superseded_by` is accepted only for `type="adr"` -- it composes the status as "superseded by {superseded_by}"; with any other `type` it is a `ValueError`. Neither `create_*` nor the generic `update` tool accepts a `status` argument at all -- this is the sole status-change entry point. |
-| [`set_status_dec`](#tool-set_status_dec) | The only path that changes a decision's status. Also bumps `updated`. |
-| [`update`](#tool-update) | Whole-body or line-range replace of an existing document's content across the seven whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk), preserving its id/type/status/created/version; only `updated` changes. With no `begin`/`end`, `content` is the full replacement body (body markdown only, no frontmatter block). With both, `content` replaces the 1-based inclusive body-line range `begin`..`end` of the current on-disk body (`N+1` = end-of-body sentinel: append after the last line, or replace through end of body); the spliced result is validated as a whole document before anything is written. `status` is never settable -- use the generic `set_status` tool. |
-| [`update_dec`](#tool-update_dec) | Whole-body replace of an existing decision's content, preserving its id/type/status/created/version; only `updated` changes. Use `set_status_dec` to change status instead. |
+| [`set_status`](#tool-set_status) | Replace the status of an existing document across all nine domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, adr), also bumping `updated` (the eight whole-body domains) and leaving the body untouched. The new `status` must be one of the domain's own closed vocabulary values (see the domain's `XFrontmatter.status` field); anything else raises `pydantic.ValidationError` and writes nothing. `superseded_by` is accepted only for `type="adr"` -- it composes the status as "superseded by {superseded_by}"; with any other `type` it is a `ValueError`. Neither `create_*` nor the generic `update` tool accepts a `status` argument at all -- this is the sole status-change entry point. |
+| [`update`](#tool-update) | Whole-body or line-range replace of an existing document's content across the eight whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec), preserving its id/type/status/created/version; only `updated` changes. With no `begin`/`end`, `content` is the full replacement body (body markdown only, no frontmatter block). With both, `content` replaces the 1-based inclusive body-line range `begin`..`end` of the current on-disk body (`N+1` = end-of-body sentinel: append after the last line, or replace through end of body); the spliced result is validated as a whole document before anything is written. `status` is never settable -- use the generic `set_status` tool. |
 | [`update_frontmatter`](#tool-update_frontmatter) | Whole-object replace of an ADR's frontmatter (plan §3), preserving its existing id. |
 | [`update_section`](#tool-update_section) | Whole-section replace/delete of one AdrBody field (plan §4). |
 | [`validate_adr`](#tool-validate_adr) | Re-read and re-parse an ADR by id, letting the models' own Pydantic validators run. |
@@ -525,11 +523,12 @@ Read, parse, and return a full ADR document (frontmatter and body) by its id.
 
 **Get decision**
 
-Read, parse, and return a full decision document (frontmatter and body) by its id.
+Read, parse, and return a full decision document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
 | `id` | `string` | Yes |
+| `raw` | `boolean` | No |
 
 ### Tool: get_dec_example
 
@@ -953,50 +952,28 @@ Parse a use-case markdown file (YAML frontmatter + body) from disk into a struct
 
 **Set document status**
 
-Replace the status of an existing document across all eight domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, adr), also bumping `updated` (the seven whole-body domains) and leaving the body untouched. The new `status` must be one of the domain's own closed vocabulary values (see the domain's `XFrontmatter.status` field); anything else raises `pydantic.ValidationError` and writes nothing. `superseded_by` is accepted only for `type="adr"` -- it composes the status as "superseded by {superseded_by}"; with any other `type` it is a `ValueError`. Neither `create_*` nor the generic `update` tool accepts a `status` argument at all -- this is the sole status-change entry point.
+Replace the status of an existing document across all nine domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, adr), also bumping `updated` (the eight whole-body domains) and leaving the body untouched. The new `status` must be one of the domain's own closed vocabulary values (see the domain's `XFrontmatter.status` field); anything else raises `pydantic.ValidationError` and writes nothing. `superseded_by` is accepted only for `type="adr"` -- it composes the status as "superseded by {superseded_by}"; with any other `type` it is a `ValueError`. Neither `create_*` nor the generic `update` tool accepts a `status` argument at all -- this is the sole status-change entry point.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
 | `id` | `string` | Yes |
-| `type` | `string (enum: req, uc, tsk, qa, prb, gol, rsk, adr)` | Yes |
+| `type` | `string (enum: req, uc, tsk, qa, prb, gol, rsk, dec, adr)` | Yes |
 | `status` | `string` | Yes |
 | `superseded_by` | `string | None` | No |
-
-### Tool: set_status_dec
-
-**Set decision status**
-
-The only path that changes a decision's status. Also bumps `updated`.
-
-| Parameter | Type | Required |
-| --- | --- | --- |
-| `id` | `string` | Yes |
-| `status` | `string` | Yes |
 
 ### Tool: update
 
 **Update document**
 
-Whole-body or line-range replace of an existing document's content across the seven whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk), preserving its id/type/status/created/version; only `updated` changes. With no `begin`/`end`, `content` is the full replacement body (body markdown only, no frontmatter block). With both, `content` replaces the 1-based inclusive body-line range `begin`..`end` of the current on-disk body (`N+1` = end-of-body sentinel: append after the last line, or replace through end of body); the spliced result is validated as a whole document before anything is written. `status` is never settable -- use the generic `set_status` tool.
+Whole-body or line-range replace of an existing document's content across the eight whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec), preserving its id/type/status/created/version; only `updated` changes. With no `begin`/`end`, `content` is the full replacement body (body markdown only, no frontmatter block). With both, `content` replaces the 1-based inclusive body-line range `begin`..`end` of the current on-disk body (`N+1` = end-of-body sentinel: append after the last line, or replace through end of body); the spliced result is validated as a whole document before anything is written. `status` is never settable -- use the generic `set_status` tool.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
 | `id` | `string` | Yes |
-| `type` | `string (enum: req, uc, tsk, qa, prb, gol, rsk)` | Yes |
+| `type` | `string (enum: req, uc, tsk, qa, prb, gol, rsk, dec)` | Yes |
 | `content` | `string` | Yes |
 | `begin` | `integer | None` | No |
 | `end` | `integer | None` | No |
-
-### Tool: update_dec
-
-**Update decision**
-
-Whole-body replace of an existing decision's content, preserving its id/type/status/created/version; only `updated` changes. Use `set_status_dec` to change status instead.
-
-| Parameter | Type | Required |
-| --- | --- | --- |
-| `id` | `string` | Yes |
-| `content` | `string` | Yes |
 
 ### Tool: update_frontmatter
 

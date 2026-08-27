@@ -30,15 +30,17 @@ id/title/status/ref summaries of every decision, shipped as a paged tool
 from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13). ``create_dec``
 assigns a fresh id, builds the frontmatter itself, and writes a new document
 (body markdown only, no frontmatter) under the decision base directory
-(``dec.tools._paths``/``_io``). ``update_dec`` replaces an existing
-document's body the same way, preserving every frontmatter field except
-``updated``. ``set_status_dec`` is the only path that changes ``status``,
-also bumping ``updated``, leaving the body untouched. ``delete_dec`` is a
-registered stub -- always raises ``NotImplementedError``, reserving the name
-for a future real implementation. ``validate_dec`` is a disk-free, id-free
-dry run against a submitted ``content`` string, independent of the other
-tools (all ten tool modules: Task 2.2). Import this package to register all
-decision tools at once::
+(``dec.tools._paths``/``_io``). Whole-body and line-range updates of an
+existing document go through the generic ``update`` tool in
+``general.tools`` (``type="dec"``), preserving every frontmatter field
+except ``updated``. Status changes of an existing document go through the
+generic ``set_status`` tool in ``general.tools`` (``type="dec"``), also
+bumping ``updated``, leaving the body untouched.
+``delete_dec`` is a registered stub -- always raises
+``NotImplementedError``, reserving the name for a future real
+implementation. ``validate_dec`` is a disk-free, id-free dry run against a
+submitted ``content`` string, independent of the other tools. Import this
+package to register all decision tools at once::
 
     from biz.dfch.specmgr.dec import tools  # noqa: F401 (side-effects only)
 """
@@ -50,8 +52,6 @@ from .get_dec_example import get_dec_example
 from .get_dec_template import get_dec_template
 from .list_dec import list_dec
 from .parse_dec import parse_dec
-from .set_status_dec import set_status_dec
-from .update_dec import update_dec
 from .validate_dec import validate_dec
 
 __all__ = [
@@ -62,7 +62,5 @@ __all__ = [
     "get_dec_template",
     "list_dec",
     "parse_dec",
-    "set_status_dec",
-    "update_dec",
     "validate_dec",
 ]

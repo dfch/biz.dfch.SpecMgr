@@ -17,7 +17,7 @@
 
 """Tests for the generic ``update`` ``@mcp.tool()`` wrapper (feat-22-consolidate-mutation-tools, Phase 2).
 
-Parameterized over all seven whole-body document types; seeds a real,
+Parameterized over all eight whole-body document types; seeds a real,
 persisted document per type in a temp ``SPECMGR_DOCS_DIR`` via the domain's
 own ``create_<d>`` tool (mirroring the fixture strategy of the per-domain
 ``tests/<d>/tools/test_update_<d>.py`` files still on disk at this phase).
@@ -25,13 +25,14 @@ Covers ACC-001 (whole-body mode) and ACC-002 (range mode) plus the
 registration smoke test of Task 2.8.
 
 Note on the per-type out-of-vocabulary field-value cases: ``req``, ``uc``,
-``tsk``, ``gol``, and ``rsk`` each have a genuine field-level
+``tsk``, ``gol``, ``rsk``, and ``dec`` each have a genuine field-level
 ``pydantic.ValidationError`` path in their body schema (closed vocabularies
-or cross-field validators), while ``qa`` and ``prb`` bodies are free-form
-text only -- no closed vocabulary, no field constraint -- so their
-out-of-vocabulary input (an unrecognized section heading) fails
-structurally with ``AssertionError`` instead. Each type's case data flags
-which of the two its field-error input raises.
+or cross-field validators -- for ``dec``, a duplicated ``### Option``
+number), while ``qa`` and ``prb`` bodies are free-form text only -- no
+closed vocabulary, no field constraint -- so their out-of-vocabulary input
+(an unrecognized section heading) fails structurally with ``AssertionError``
+instead. Each type's case data flags which of the two its field-error input
+raises.
 """
 
 from __future__ import annotations
@@ -50,6 +51,8 @@ from unittest import mock
 
 from pydantic import ValidationError
 
+from biz.dfch.specmgr.dec.tools._paths import DecNotFoundError
+from biz.dfch.specmgr.dec.tools.create_dec import create_dec
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.general.tools._splice import body_text
 from biz.dfch.specmgr.gol.tools._paths import GolNotFoundError
@@ -432,6 +435,34 @@ _RSK_UPDATED_BODY = textwrap.dedent(
     """
 )
 
+_DEC_MINIMAL_BODY = textwrap.dedent(
+    """\
+    # Title of the Decision
+
+    ## Context and Problem Statement
+
+    Something is wrong with the status quo.
+
+    ## Decision Outcome
+
+    We chose the structured arrangement.
+    """
+)
+
+_DEC_UPDATED_BODY = textwrap.dedent(
+    """\
+    # Title of the Decision
+
+    ## Context and Problem Statement
+
+    Something is very wrong with the status quo.
+
+    ## Decision Outcome
+
+    We chose the revised arrangement.
+    """
+)
+
 _MALFORMED_BODY = "# Title\n\nJust a paragraph, no recognized sections.\n"
 
 
@@ -446,7 +477,7 @@ class _FixedDatetime(datetime):
 
 @dataclass(frozen=True)
 class _Case:
-    """Per-type test data for the seven whole-body document types."""
+    """Per-type test data for the eight whole-body document types."""
 
     doc_type: str
     create: Callable[[str], Any]
@@ -601,6 +632,29 @@ _CASES: list[_Case] = [
         field_error_is_append=False,
         field_error_is_validation=True,
     ),
+    _Case(
+        doc_type="dec",
+        create=create_dec,
+        not_found_error=DecNotFoundError,
+        minimal_body=_DEC_MINIMAL_BODY,
+        updated_body=_DEC_UPDATED_BODY,
+        middle_marker="Something is wrong with the status quo.",
+        middle_replacement="Something is very wrong with the status quo.",
+        append_fragment="\n## More Information\n\nSome notes.\n",
+        eof_marker="## Decision Outcome",
+        eof_fragment="## Decision Outcome\n\nWe chose the revised arrangement.\n",
+        deletable_suffix="\n## More Information\n\nSome notes.\n",
+        field_error_marker="## Decision Outcome",
+        field_error_fragment=(
+            "\n## Pros and Cons\n"
+            "\n### Option 1: First option\n"
+            "\nThe first option text.\n"
+            "\n### Option 1: Duplicate option\n"
+            "\nThe duplicate option text.\n"
+        ),
+        field_error_is_append=True,
+        field_error_is_validation=True,
+    ),
 ]
 
 
@@ -643,7 +697,7 @@ class TempDocsDirTestCase(unittest.TestCase):
 
 
 class TestUpdateWholeBody(TempDocsDirTestCase):
-    """ACC-001: whole-body mode (no ``begin``/``end``) across all seven types."""
+    """ACC-001: whole-body mode (no ``begin``/``end``) across all eight types."""
 
     def test_replaces_body_preserving_id_type_status_created_version(self) -> None:
         """Whole-body mode must replace the body but preserve every frontmatter field but ``updated``."""
@@ -718,7 +772,7 @@ class TestUpdateWholeBody(TempDocsDirTestCase):
 
 
 class TestUpdateRange(TempDocsDirTestCase):
-    """ACC-002: range mode (``begin``/``end``) across all seven types."""
+    """ACC-002: range mode (``begin``/``end``) across all eight types."""
 
     def test_middle_range_replace_leaves_out_of_range_lines_byte_identical(self) -> None:
         """A single middle-line replace must change only that line, leaving every other line identical."""
@@ -905,7 +959,7 @@ class TestUpdateRange(TempDocsDirTestCase):
 
 
 class TestUpdateRegistration(unittest.TestCase):
-    """Task 2.8: the live ``mcp`` registration carries ``update`` with the 7-value ``type`` enum and
+    """Task 2.8: the live ``mcp`` registration carries ``update`` with the 8-value ``type`` enum and
     optional integer ``begin``/``end`` in its input schema."""
 
     @classmethod
@@ -915,13 +969,13 @@ class TestUpdateRegistration(unittest.TestCase):
         cls._tools = asyncio.run(mcp.list_tools())
 
     def test_update_registered_with_type_enum_and_optional_range(self) -> None:
-        """``update`` must be registered exactly once, with the 7-value ``type`` enum and optional int ``begin``/``end``."""
+        """``update`` must be registered exactly once, with the 8-value ``type`` enum and optional int ``begin``/``end``."""
         matching = [t for t in self._tools if t.name == "update"]
         self.assertEqual(len(matching), 1)
 
         schema = matching[0].input_schema
         type_prop = schema["properties"]["type"]
-        self.assertEqual(type_prop["enum"], ["req", "uc", "tsk", "qa", "prb", "gol", "rsk"])
+        self.assertEqual(type_prop["enum"], ["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec"])
         self.assertEqual(type_prop["type"], "string")
         for name in ("begin", "end"):
             prop = schema["properties"][name]

@@ -80,6 +80,6 @@ there.
 
 ## 5. Later revisions
 
-Any later change to this decision should go through the `update_dec`
-prompt (or directly through `update_dec`/`set_status_dec`), not by
-re-running this prompt.
+Any later change to this decision should go through the `update_dec` prompt
+(or directly through the generic `update(id, type="dec", content)` and
+`set_status(id, type="dec", status)` tools), not by re-running this prompt.

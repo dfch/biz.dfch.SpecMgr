@@ -3,8 +3,8 @@
 ``@mcp.tool()`` wrapper: update (feat-22-consolidate-mutation-tools, Phase 2).
 
 The generic, cross-domain whole-body *and* line-range replace tool for the
-seven whole-body document types (``req``/``uc``/``tsk``/``qa``/``prb``/
-``gol``/``rsk``). It dispatches on the explicit ``type`` parameter to a
+eight whole-body document types (``req``/``uc``/``tsk``/``qa``/``prb``/
+``gol``/``rsk``/``dec``). It dispatches on the explicit ``type`` parameter to a
 private per-domain adapter (``_update_<d>``), each a **verbatim port** of
 the corresponding per-domain ``update_<d>`` tool's function body (same
 domain lock, same ``load_by_id``, same frontmatter carry-over with only
@@ -17,7 +17,7 @@ verbatim instead of the raw fragment.
 
 The parameter is intentionally named ``type`` (it matches the frontmatter
 field vocabulary the client already knows); no enabled ruff rule objects to
-the builtin shadow. The 7-way union return type is annotation-only -- the
+the builtin shadow. The 8-way union return type is annotation-only -- the
 MCP input schema is built from the parameters, and the SDK serializes
 whichever concrete document is returned.
 
@@ -26,6 +26,19 @@ contract (``update_frontmatter``/``update_section``/``option_*``) has no
 whole-body replace by design.
 
 ## Functions
+
+### `_update_dec(id_: 'str', content: 'str', begin: 'int | None', end: 'int | None') -> 'DecDocument'`
+
+Replace the body of the decision identified by ``id_`` (whole-body or line-range mode).
+
+Verbatim port of the previous per-domain decision update tool's
+function body (same ``dec_lock``, ``load_by_id``, frontmatter carry-over
+with only ``updated`` bumped, ``write_dec_file``, ``DecNotFoundError``;
+that per-domain tool was retired in feat-22 Phase 8, when the DEC
+domain -- merged from dev while still on the old per-domain mechanism
+-- was converted to the generic tools), plus the REQ-002 range branch
+(see :func:`_update_req`).
+
 
 ### `_update_gol(id_: 'str', content: 'str', begin: 'int | None', end: 'int | None') -> 'GolDocument'`
 
@@ -108,15 +121,15 @@ per-domain tool was retired in feat-22 Phase 3), plus the REQ-002 range
 branch (see :func:`_update_req`).
 
 
-### `update(id: 'str', type: "Literal['req', 'uc', 'tsk', 'qa', 'prb', 'gol', 'rsk']", content: 'str', begin: 'int | None' = None, end: 'int | None' = None) -> '_UpdateDocument'`
+### `update(id: 'str', type: "Literal['req', 'uc', 'tsk', 'qa', 'prb', 'gol', 'rsk', 'dec']", content: 'str', begin: 'int | None' = None, end: 'int | None' = None) -> '_UpdateDocument'`
 
 Replace the body of an existing document, in whole-body or line-range mode.
 
-Cross-domain generic for the seven whole-body document types
-(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``); dispatches on
-``type`` to the domain's own ported adapter (same lock, same id
-resolution, same frontmatter carry-over, same verbatim persistence,
-same domain not-found error).
+Cross-domain generic for the eight whole-body document types
+(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``);
+dispatches on ``type`` to the domain's own ported adapter (same lock,
+same id resolution, same frontmatter carry-over, same verbatim
+persistence, same domain not-found error).
 
 **Whole-body mode** (no ``begin``/``end``): ``content`` is body
 markdown only, with no YAML frontmatter block -- the same shape the
@@ -154,7 +167,7 @@ id:
     The document's specmgr-assigned identifier.
 type:
     The document type / domain: one of ``req``, ``uc``, ``tsk``,
-    ``qa``, ``prb``, ``gol``, ``rsk``.
+    ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``.
 content:
     Whole-body mode: the replacement body markdown, with no
     frontmatter block. Range mode: the replacement fragment for lines
@@ -169,7 +182,8 @@ end:
 
 Returns
 -------
-ReqDocument | UcDocument | TskDocument | QaDocument | PrbDocument | GolDocument | RskDocument
+ReqDocument | UcDocument | TskDocument | QaDocument | PrbDocument |
+GolDocument | RskDocument | DecDocument
     The updated document of the dispatched domain type.
 
 Raises
@@ -187,7 +201,7 @@ pydantic.ValidationError
     A field/cross-field validation failure in the (spliced) body (e.g.
     a range producing an out-of-vocabulary value). Nothing is written.
 ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
-PrbNotFoundError / GolNotFoundError / RskNotFoundError
+PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError
     No document of the dispatched ``type`` has this id -- the
     domain's own not-found error, unchanged from the per-domain tools.
 

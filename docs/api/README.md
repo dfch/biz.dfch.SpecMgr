@@ -64,7 +64,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.dec.tools._io`](biz.dfch.specmgr.dec.tools._io.md) — Thin file read helpers over ``parse_dec`` (Task 2.1).
 - [`biz.dfch.specmgr.dec.tools._lock`](biz.dfch.specmgr.dec.tools._lock.md) — Per-document in-process lock guarding decision mutations.
 - [`biz.dfch.specmgr.dec.tools._paths`](biz.dfch.specmgr.dec.tools._paths.md) — Decision base directory resolution and id -> path lookup (Task 2.1).
-- [`biz.dfch.specmgr.dec.tools._write`](biz.dfch.specmgr.dec.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_dec``/``update_dec``.
+- [`biz.dfch.specmgr.dec.tools._write`](biz.dfch.specmgr.dec.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_dec`` and
 - [`biz.dfch.specmgr.dec.tools.create_dec`](biz.dfch.specmgr.dec.tools.create_dec.md) — ``@mcp.tool()`` wrapper: create_dec (Task 2.2).
 - [`biz.dfch.specmgr.dec.tools.delete_dec`](biz.dfch.specmgr.dec.tools.delete_dec.md) — ``@mcp.tool()`` wrapper: delete_dec (Task 2.2).
 - [`biz.dfch.specmgr.dec.tools.get_dec`](biz.dfch.specmgr.dec.tools.get_dec.md) — ``@mcp.tool()`` wrapper: get_dec (Task 2.2).
@@ -72,8 +72,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.dec.tools.get_dec_template`](biz.dfch.specmgr.dec.tools.get_dec_template.md) — ``@mcp.tool()`` wrapper: get_dec_template (Task 2.2).
 - [`biz.dfch.specmgr.dec.tools.list_dec`](biz.dfch.specmgr.dec.tools.list_dec.md) — ``@mcp.tool()`` wrapper: list_dec (Task 2.2).
 - [`biz.dfch.specmgr.dec.tools.parse_dec`](biz.dfch.specmgr.dec.tools.parse_dec.md) — ``@mcp.tool()`` wrapper: parse_dec (Task 2.2).
-- [`biz.dfch.specmgr.dec.tools.set_status_dec`](biz.dfch.specmgr.dec.tools.set_status_dec.md) — ``@mcp.tool()`` wrapper: set_status_dec (Task 2.2).
-- [`biz.dfch.specmgr.dec.tools.update_dec`](biz.dfch.specmgr.dec.tools.update_dec.md) — ``@mcp.tool()`` wrapper: update_dec (Task 2.2).
 - [`biz.dfch.specmgr.dec.tools.validate_dec`](biz.dfch.specmgr.dec.tools.validate_dec.md) — ``@mcp.tool()`` wrapper: validate_dec (Task 2.2).
 - [`biz.dfch.specmgr.general`](biz.dfch.specmgr.general.md) — General-purpose (cross-cutting, not domain-specific) tools, resources, and
 - [`biz.dfch.specmgr.general.models`](biz.dfch.specmgr.general.models.md) — Shared, cross-domain Pydantic models with no document-type-specific content.

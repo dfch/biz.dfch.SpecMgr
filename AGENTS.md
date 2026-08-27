@@ -169,9 +169,14 @@ type or cross-cutting:
    `models/`.
 - **`dec/`** (Decision) — same tools/resources/prompts shape as
   `req/`/`prb/` but for decisions in general (not architecture-only)
-  (`create_dec`, `update_dec`, `set_status_dec`, `parse_dec`,
-  `list_dec`, `get_dec`, `get_dec_example`, `get_dec_template`,
-  `delete_dec` stub, `validate_dec`); `dec/resources/`
+  (`parse_dec`, `get_dec`, `list_dec`, `get_dec_example`,
+  `get_dec_template`, `create_dec`, `delete_dec` stub,
+  `validate_dec`); whole-body and line-range updates go through the
+  generic `update` tool in `general/tools/` (`type="dec"`), status
+  changes through the generic `set_status` tool (`type="dec"`), and
+  the `get_dec` tool takes `raw: bool = False` — `raw=True` returns
+  the frontmatter-stripped body text as-is (the text `update`'s
+  `begin`/`end` index into); `dec/resources/`
   (`specmgr://dec/schema`, `specmgr://dec/example`,
   `specmgr://dec/template`; no `specmgr://dec/{id}` — id-based reads
   are `get_dec`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
@@ -184,25 +189,24 @@ type or cross-cutting:
   `models/`. A DEC keeps the ADR's general structure (MADR-style
   headings, `Options` collection) but is built on the generic
   `models/md` parser with the GOL/RSK/QA simple surface — no
-  fine-grained mutation tools, no renderer: `update_dec` is a single
-  whole-body replace that persists the caller's raw validated body
-  byte-for-byte.
- - **`general/`** — cross-cutting, non-domain-specific package:
-   `general/tools/` (`mdformat`, formats a markdown file in place while
-   preserving YAML frontmatter blocks; `update`, the generic whole-body
-   *and* line-range replace for the seven whole-body domains — `type` is
-   one of req/uc/tsk/qa/prb/gol/rsk, optional 1-based inclusive body-line
-   `begin`/`end` with the `N+1` end-of-body sentinel, splice-then-
-   validate-whole; `set_status`, the generic status change for all eight
-   domains incl. adr — `superseded_by` is ADR-only, composing
-   `"superseded by X"`), `general/resources/`
+  fine-grained mutation tools, no renderer: writes persist the
+  caller's raw validated body byte-for-byte.
+  - **`general/`** — cross-cutting, non-domain-specific package:
+    `general/tools/` (`mdformat`, formats a markdown file in place while
+    preserving YAML frontmatter blocks; `update`, the generic whole-body
+    *and* line-range replace for the eight whole-body domains — `type` is
+    one of req/uc/tsk/qa/prb/gol/rsk/dec, optional 1-based inclusive body-line
+    `begin`/`end` with the `N+1` end-of-body sentinel, splice-then-
+    validate-whole; `set_status`, the generic status change for all nine
+    domains incl. adr — `superseded_by` is ADR-only, composing
+    `"superseded by X"`), `general/resources/`
    (`specmgr://version`, `specmgr://iso25010` — the ISO/IEC 25010:2023
    quality model), and `general/prompts/` (`compact_history` — rotates
-   older `Recent Updates` entries out of any feature folder's `README.md`
-   into a sibling `history.md`). The seven `get_<d>` tools additionally
-   take a `raw: bool = False` parameter — `raw=True` returns the
-   frontmatter-stripped body text as-is (the text `update`'s `begin`/`end`
-   index into).
+    older `Recent Updates` entries out of any feature folder's `README.md`
+    into a sibling `history.md`). The eight `get_<d>` tools additionally
+    take a `raw: bool = False` parameter — `raw=True` returns the
+    frontmatter-stripped body text as-is (the text `update`'s `begin`/`end`
+    index into).
 
 **Models location — a real, intentional divergence, not an oversight**:
 the rule is domain-first — every document type keeps its schema inside
