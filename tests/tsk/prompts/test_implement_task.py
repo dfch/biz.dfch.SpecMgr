@@ -62,10 +62,11 @@ class TestImplementTaskPrompt(unittest.TestCase):
         result = implement_task("abc-123")
         self.assertLess(result.index("get_tsk(id)"), result.index("TodoWrite"))
 
-    def test_mentions_update_tsk_as_separate_persistence_step(self):
-        """The prompt must clarify that persisting completed work is a separate update_tsk call."""
+    def test_mentions_update_as_separate_persistence_step(self):
+        """The prompt must clarify that persisting completed work is a separate
+        generic `update` (type="tsk") call."""
         result = implement_task("abc-123")
-        self.assertIn("update_tsk(id, content)", result)
+        self.assertIn('update(id, type="tsk", content)', result)
         self.assertIn("separate", result)
 
     def test_instructions_loaded_from_packaged_data_file(self):

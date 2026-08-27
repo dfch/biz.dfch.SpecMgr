@@ -54,6 +54,12 @@ class TestUpdateAdrTestPrompt(unittest.TestCase):
         ):
             self.assertIn(tool, result)
 
+    def test_mentions_generic_set_status_with_type_adr(self):
+        """The set_status call site must show the generic call shape,
+        always with type="adr" for an ADR."""
+        result = update_adr_test("abc-123")
+        self.assertIn('set_status(id, type="adr", status, superseded_by=...)', result)
+
     def test_instructions_interpolated_when_given(self):
         """A given instructions string must appear verbatim in the returned text."""
         result = update_adr_test("abc-123", instructions="Change the status to accepted.")

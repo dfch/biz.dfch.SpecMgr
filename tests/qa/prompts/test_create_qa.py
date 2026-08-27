@@ -101,9 +101,12 @@ class TestCreateQaPrompt(unittest.TestCase):
         self.assertNotIn("#### Requirement", result)
 
     def test_mentions_update_qa_for_later_revisions(self):
-        """The prompt must point at the update_qa prompt for later changes."""
+        """The prompt must point at the update_qa prompt for later changes,
+        with the generic update/set_status tools as the direct alternative."""
         result = create_qa("Some topic")
-        self.assertIn("update_qa", result)
+        self.assertIn("`update_qa` prompt", result)
+        self.assertIn('update(id, type="qa", content)', result)
+        self.assertIn('set_status(id, type="qa", status)', result)
 
     def test_instructions_loaded_from_packaged_data_file(self):
         """The instructional text must come from qa/data/qa_create_instructions.md,

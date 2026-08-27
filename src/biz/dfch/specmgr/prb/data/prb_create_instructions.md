@@ -115,5 +115,6 @@ there.
 ## 10. Later revisions
 
 Any later change to this problem statement should go through the
-`update_prb` prompt (or directly through `update_prb`/`set_status_prb`),
-not by re-running this prompt.
+`update_prb` prompt (or directly through the generic
+`update(id, type="prb", content)` and `set_status(id, type="prb", status)`
+tools), not by re-running this prompt.

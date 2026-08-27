@@ -19,8 +19,10 @@
 
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through revising an existing Question and Answer (QA) document by id, using
-the existing ``qa/tools/`` surface (``get_qa``, ``update_qa``,
-``set_status_qa``, ``validate_qa``). Structural shape ported 1:1 from
+the existing ``qa/tools/`` surface (``get_qa``, ``validate_qa``) plus the
+generic ``update``/``set_status`` tools in ``general/tools/`` (called
+with ``type="qa"``; ``get_qa``'s ``raw=True`` parameter serves the
+line-range flow's line numbers). Structural shape ported 1:1 from
 ``req.prompts.update_req``, with the instructional content rewritten to
 describe QA's own schema and lifecycle instead of REQ's. Like ``get_req``,
 step 1 points at the ``get_qa`` tool, not a ``specmgr://qa/{id}`` resource
@@ -28,8 +30,9 @@ step 1 points at the ``get_qa`` tool, not a ``specmgr://qa/{id}`` resource
 
 Unlike ``adr.prompts.update_adr``, there is no ``update_frontmatter``/
 ``option_*`` equivalent here: QA's lifecycle surface is deliberately small
--- a whole-body replace (``update_qa``) plus a single, dedicated
-status-change path (``set_status_qa``) -- so the tool-mapping section below
+-- a whole-body or line-range replace (the generic ``update`` tool with
+``type="qa"``) plus a single, dedicated status-change path (the generic
+``set_status`` tool with ``type="qa"``) -- so the tool-mapping section below
 is correspondingly shorter.
 
 The actual instructional text lives in its own packaged data file,

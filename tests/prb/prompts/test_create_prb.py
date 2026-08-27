@@ -124,9 +124,12 @@ class TestCreatePrbPrompt(unittest.TestCase):
         self.assertEqual(positions, sorted(positions))
 
     def test_mentions_update_prb_for_later_revisions(self):
-        """The prompt must point at the update_prb prompt for later changes."""
+        """The prompt must point at the update_prb prompt for later changes,
+        with the generic update/set_status tools as the direct alternative."""
         result = create_prb("Some topic")
-        self.assertIn("update_prb", result)
+        self.assertIn("`update_prb` prompt", result)
+        self.assertIn('update(id, type="prb", content)', result)
+        self.assertIn('set_status(id, type="prb", status)', result)
 
     def test_instructions_loaded_from_packaged_data_file(self):
         """The instructional text must come from prb/data/prb_create_instructions.md,

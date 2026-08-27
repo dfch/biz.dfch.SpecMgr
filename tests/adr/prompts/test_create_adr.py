@@ -47,6 +47,12 @@ class TestCreateAdrPrompt(unittest.TestCase):
         positions = [result.index(tool) for tool in tools]
         self.assertEqual(positions, sorted(positions))
 
+    def test_mentions_generic_set_status_with_type_adr(self):
+        """The set_status call site must show the generic call shape,
+        always with type="adr" for an ADR."""
+        result = create_adr("Some topic")
+        self.assertIn('set_status(id, type="adr", status="accepted")', result)
+
     def test_mentions_mandatory_sections(self):
         """The mandatory MADR sections must all be named in the recap."""
         result = create_adr("Some topic")

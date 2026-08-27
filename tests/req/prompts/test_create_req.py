@@ -71,9 +71,12 @@ class TestCreateReqPrompt(unittest.TestCase):
             self.assertIn(heading, result)
 
     def test_mentions_update_req_for_later_revisions(self):
-        """The prompt must point at the update_req prompt for later changes."""
+        """The prompt must point at the update_req prompt for later changes,
+        with the generic update/set_status tools as the direct alternative."""
         result = create_req("Some topic")
-        self.assertIn("update_req", result)
+        self.assertIn("`update_req` prompt", result)
+        self.assertIn('update(id, type="req", content)', result)
+        self.assertIn('set_status(id, type="req", status)', result)
 
     def test_instructions_loaded_from_packaged_data_file(self):
         """The instructional text must come from req/data/req_create_instructions.md,

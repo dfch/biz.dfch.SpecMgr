@@ -4,8 +4,9 @@
 
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through drafting a brand-new MADR 4.0.0-based ADR using the existing
-``adr/tools/`` surface (``create_adr``, ``option_create``, ``set_status``,
-``validate_adr``).
+``adr/tools/`` surface (``create_adr``, ``option_create``,
+``validate_adr``) plus the generic ``set_status`` tool in
+``general/tools/`` (always called with ``type="adr"`` for an ADR).
 
 Naming note: this prompt is named ``create_adr``, the same name as the
 ``@mcp.tool()`` in ``adr/tools/create_adr.py``. This is not a collision --

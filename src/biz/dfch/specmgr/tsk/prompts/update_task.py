@@ -19,16 +19,19 @@
 
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through revising an existing Task List (TSK) document by id, using the
-existing ``tsk/tools/`` surface (``get_tsk``, ``update_tsk``,
-``set_status_tsk``, ``validate_tsk``). There is no
+existing ``tsk/tools/`` surface (``get_tsk``, ``validate_tsk``) plus the
+generic ``update``/``set_status`` tools in ``general/tools/`` (called
+with ``type="tsk"``; ``get_tsk``'s ``raw=True`` parameter serves the
+line-range flow's line numbers). There is no
 ``specmgr://tsk/{id}`` resource to point at -- id-based reads always went
 through the ``get_tsk`` tool only (there was no earlier resource to remove,
 unlike REQ's own history -- ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
 
 Unlike ``adr.prompts.update_adr``, there is no ``update_frontmatter``/
 ``option_*`` equivalent here: TSK's lifecycle surface is deliberately small
--- a whole-body replace (``update_tsk``) plus a single, dedicated
-status-change path (``set_status_tsk``) -- so the tool-mapping section
+-- a whole-body or line-range replace (the generic ``update`` tool with
+``type="tsk"``) plus a single, dedicated status-change path (the generic
+``set_status`` tool with ``type="tsk"``) -- so the tool-mapping section
 below is correspondingly short, mirroring ``req.prompts.update_req``.
 
 Naming note: this prompt is named ``update_task`` (the issue's literal

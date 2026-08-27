@@ -19,14 +19,17 @@
 
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through revising an existing Goal (GOL) document by id, using the existing
-``gol/tools/`` surface (``get_gol``, ``update_gol``, ``set_status_gol``,
-``validate_gol``). There is no ``specmgr://gol/{id}`` resource to point at
+``gol/tools/`` surface (``get_gol``, ``validate_gol``) plus the generic
+``update``/``set_status`` tools in ``general/tools/`` (called with
+``type="gol"``; ``get_gol``'s ``raw=True`` parameter serves the line-range
+flow's line numbers). There is no ``specmgr://gol/{id}`` resource to point at
 -- id-based reads always go through the ``get_gol`` tool only.
 
 Unlike ``adr.prompts.update_adr``, there is no ``update_frontmatter``/
 ``option_*`` equivalent here: GOL's lifecycle surface is deliberately small
--- a whole-body replace (``update_gol``) plus a single, dedicated
-status-change path (``set_status_gol``) -- mirroring
+-- a whole-body or line-range replace (the generic ``update`` tool with
+``type="gol"``) plus a single, dedicated status-change path (the generic
+``set_status`` tool with ``type="gol"``) -- mirroring
 ``req.prompts.update_req``/``prb.prompts.update_prb``.
 
 Unlike ``req.prompts.update_req``/``prb.prompts.update_prb`` (which also
@@ -39,10 +42,11 @@ ones to change).
 
 This prompt only ever *narrates* the revision flow (reading current state
 via `get_gol`, showing which sections are present vs. empty, eliciting
-revisions via the `question` tool, then calling `update_gol`, with
-`set_status_gol` mentioned as a separate, optional follow-up) -- it never
-calls ``get_gol``/``question``/``update_gol``/``set_status_gol`` itself,
-exactly like every other prompt in this codebase.
+revisions via the `question` tool, then calling the generic `update` tool
+with `type="gol"`, with the generic `set_status` tool with `type="gol"`
+mentioned as a separate, optional follow-up) -- it never calls
+``get_gol``/``question``/``update``/``set_status`` itself, exactly like
+every other prompt in this codebase.
 
 The actual instructional text lives in its own packaged data file,
 ``gol/data/gol_update_instructions.md``, read fresh on every call via
@@ -84,8 +88,8 @@ def update_gol(id: str) -> str:
     str
         Instructional text (auto-wrapped as a single ``UserMessage`` by
         the MCP SDK), not itself a tool call. This function never calls
-        ``get_gol``, ``question``, ``update_gol``, or ``set_status_gol``
-        itself -- it only narrates that sequence for the LLM to carry out.
+        ``get_gol``, ``question``, ``update``, or ``set_status`` itself
+        -- it only narrates that sequence for the LLM to carry out.
     """
     template = Template(read_packaged_text("gol", "update_instructions", "md"))
     return template.substitute(id=id)

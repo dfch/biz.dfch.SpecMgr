@@ -3,8 +3,8 @@ You are revising an existing Task List (TSK) document, id: $id
 Requested change: $instructions
 
 Follow this sequence exactly. Do not write raw markdown yourself beyond
-the body content you pass to `update_tsk` -- every change to the
-document goes through the specmgr MCP tools listed below.
+the body content you pass to `update` -- every change to the document
+goes through the specmgr MCP tools listed below.
 
 ## 1. Read current state first
 Call `get_tsk(id)` to load the document's current frontmatter and body.
@@ -17,25 +17,40 @@ want to change before calling any write tool.
 
 ## 3. Map the requested change to the right tool
 - A change to the body -- the checklist items, the leading comment, or
-  adding a new `## Recent Updates` entry -- -> `update_tsk(id, content)`.
-  `content` is body markdown only (no frontmatter block) and is a
-  **whole-body replace**: read the current body first (step 1) and carry
-  forward every section you are not intentionally changing, or it will
-  be dropped. `id`/`type`/`status`/`created`/`version` are preserved
-  automatically regardless of what you submit; only `updated` changes.
-  In particular, `## Recent Updates` requires at least one entry at all
-  times -- if you are not adding a new one, carry forward every existing
-  entry; removing the last remaining entry would fail validation
-  (`RecentUpdates.updates` requires `min_length>=1`).
-- A change to `status` -> `set_status_tsk(id, status)` instead --
-  `update_tsk` never accepts or changes `status`. `status` must be one
+  adding a new `## Recent Updates` entry -- -> the generic `update`
+  tool called with `type="tsk"`, either as a **line-range replace** for
+  a localized change or a **whole-body replace** otherwise. `content`
+  is body markdown only (no frontmatter block) in both cases.
+  - **Line-range replace** (a localized change -- one paragraph, field,
+    or section): first call `get_tsk(id, raw=True)` to see the exact
+    body text, identify the 1-based, inclusive line range to replace --
+    the `N+1` position is end-of-body: `begin = end = N+1` appends after
+    the last line, `end = N+1` extends the range through the last line
+    -- and call `update(id, type="tsk", content, begin=..., end=...)`
+    passing only the replacement lines. The server splices the fragment
+    into the current on-disk body and validates the result as a whole
+    document before writing anything, so every out-of-range line stays
+    byte-identical.
+  - **Whole-body replace** (a multi-section change, or whenever you are
+    uncertain about the line range): call `update(id, type="tsk", content)`
+    with no `begin`/`end` -- `content` is then the full replacement body:
+    read the current body first (step 1) and carry forward every section
+    you are not intentionally changing, or it will be dropped.
+    `id`/`type`/`status`/`created`/`version` are preserved automatically
+    regardless of what you submit; only `updated` changes. In
+    particular, `## Recent Updates` requires at least one entry at all
+    times -- if you are not adding a new one, carry forward every
+    existing entry; removing the last remaining entry would fail
+    validation (`RecentUpdates.updates` requires `min_length>=1`).
+- A change to `status` -> `set_status(id, type="tsk", status)` instead
+  -- `update` never accepts or changes `status`. `status` must be one
   of: draft, active, done, cancelled.
 
 ## 4. Check the schema, and validate before writing if useful
 Fetch `specmgr://tsk/schema` to confirm field names and constraints
 before drafting the replacement body. Optionally call
 `validate_tsk(content, full=False)` beforehand to dry-run the new body
-without writing anything -- `update_tsk` already performs the same
+without writing anything -- `update` already performs the same
 validation internally, so this step is never required, only a
 convenience.
 

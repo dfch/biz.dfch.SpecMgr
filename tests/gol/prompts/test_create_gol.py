@@ -115,9 +115,12 @@ class TestCreateGolPrompt(unittest.TestCase):
         self.assertIn("then each optional field in turn", result)
 
     def test_mentions_update_gol_for_later_revisions(self):
-        """The prompt must point at the update_gol prompt for later changes."""
+        """The prompt must point at the update_gol prompt for later changes,
+        with the generic update/set_status tools as the direct alternative."""
         result = create_gol("Some topic")
-        self.assertIn("update_gol", result)
+        self.assertIn("`update_gol` prompt", result)
+        self.assertIn('update(id, type="gol", content)', result)
+        self.assertIn('set_status(id, type="gol", status)', result)
 
     def test_instructions_loaded_from_packaged_data_file(self):
         """The instructional text must come from gol/data/gol_create_instructions.md,

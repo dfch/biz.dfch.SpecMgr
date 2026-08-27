@@ -37,9 +37,11 @@ broader set of tools than the confirmed change actually implicates:
   error for a *mandatory* one (`title`/`context_and_problem_statement`/
   `considered_options`/`decision_outcome`).
 - A change to `status` (e.g. accepting/rejecting/deprecating the
-  decision, or marking it superseded) -> `set_status(id, status,
-  superseded_by=...)`. Never use `update_frontmatter` for a status-only
-  change.
+  decision, or marking it superseded) -> the generic status-change tool:
+  `set_status(id, type="adr", status, superseded_by=...)`, always called
+  with `type="adr"` for an ADR (`superseded_by` composes the status as
+  `"superseded by {superseded_by}"`). Never use `update_frontmatter`
+  for a status-only change.
 - Any other frontmatter change (`date`, `decision_makers`, `consulted`,
   `informed`) -> `update_frontmatter(id, frontmatter)`. This is a
   **whole-object replace**: you MUST carry forward every field from

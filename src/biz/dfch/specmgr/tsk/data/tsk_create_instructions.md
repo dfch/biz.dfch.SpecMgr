@@ -55,6 +55,7 @@ there.
 
 ## 5. Later revisions
 Any later change to this task list should go through the `update_task`
-prompt (or directly through `update_tsk`/`set_status_tsk`), not by
-re-running this prompt. To work through the checklist itself, use the
-`implement_task` prompt instead.
+prompt (or directly through the generic `update(id, type="tsk", content)`
+and `set_status(id, type="tsk", status)` tools), not by re-running this
+prompt. To work through the checklist itself, use the `implement_task`
+prompt instead.

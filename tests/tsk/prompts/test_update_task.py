@@ -36,16 +36,35 @@ class TestUpdateTaskPrompt(unittest.TestCase):
 
     def test_mentions_get_tsk_tool_first(self):
         """The prompt must instruct the LLM to call get_tsk first,
-        before the update_tsk write tool."""
+        before the generic `update` write call."""
         result = update_task("abc-123")
         self.assertIn("get_tsk(id)", result)
-        self.assertLess(result.index("get_tsk(id)"), result.index("update_tsk(id, content)"))
+        self.assertLess(result.index("get_tsk(id)"), result.index('update(id, type="tsk", content)'))
 
-    def test_mentions_both_mutation_tools(self):
-        """Both update_tsk and set_status_tsk must be named."""
+    def test_mentions_both_generic_mutation_tools(self):
+        """Both the generic `update` (type="tsk") and `set_status`
+        (type="tsk") call shapes must be named."""
         result = update_task("abc-123")
-        for tool in ("update_tsk", "set_status_tsk"):
+        for tool in ('update(id, type="tsk", content)', 'set_status(id, type="tsk", status)'):
             self.assertIn(tool, result)
+
+    def test_mentions_range_update_flow(self):
+        """The prompt must teach the line-range flow: read the exact body
+        via get_tsk(id, raw=True), identify the 1-based inclusive range
+        (N+1 is end-of-body), call `update` with begin/end passing only
+        the replacement lines; whole-body for multi-section or uncertain
+        changes."""
+        result = update_task("abc-123")
+        self.assertIn("get_tsk(id, raw=True)", result)
+        self.assertIn("1-based, inclusive line range", result)
+        self.assertIn("begin = end = N+1", result)
+        self.assertIn('update(id, type="tsk", content, begin=..., end=...)', result)
+        self.assertIn("multi-section change, or whenever you are", result)
+        self.assertIn("byte-identical", result)
+        self.assertLess(
+            result.index("get_tsk(id, raw=True)"),
+            result.index('update(id, type="tsk", content, begin=..., end=...)'),
+        )
 
     def test_instructions_interpolated_when_given(self):
         """A given instructions string must appear verbatim in the returned text."""
@@ -58,14 +77,14 @@ class TestUpdateTaskPrompt(unittest.TestCase):
         self.assertIn("ask the user", result)
 
     def test_mentions_whole_body_replace_warning(self):
-        """The whole-body-replace caveat for update_tsk must be present."""
+        """The whole-body-replace caveat for the generic `update` tool must be present."""
         result = update_task("abc-123")
         self.assertIn("whole-body replace", result)
 
-    def test_mentions_status_never_via_update_tsk(self):
-        """The prompt must clarify that update_tsk never changes status."""
+    def test_mentions_status_never_via_update(self):
+        """The prompt must clarify that the generic `update` tool never changes status."""
         result = update_task("abc-123")
-        self.assertIn("update_tsk` never accepts or changes `status`", result)
+        self.assertIn("`update` never accepts or changes `status`", result)
 
     def test_mentions_recent_updates_min_length_constraint(self):
         """The prompt must call out the min_length=1 Recent Updates constraint."""

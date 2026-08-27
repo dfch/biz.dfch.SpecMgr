@@ -629,7 +629,7 @@ phase-orchestrator commits each accepted phase as one Conventional Commit.
 
 #### Phase 5: Narration rewrite (prompts + instruction data)
 
-- [ ] Task 5.1: Grep-driven rewrite of every instruction data file naming a
+- [x] Task 5.1: Grep-driven rewrite of every instruction data file naming a
   superseded tool (`grep -rn "update_req\|update_uc\|update_tsk\|update_qa\|
   update_prb\|update_gol\|update_rsk\|set_status_" src/biz/dfch/specmgr/
   */data/` plus bare `set_status(` in the ADR data files). Eleven files
@@ -649,8 +649,8 @@ phase-orchestrator commits each accepted phase as one Conventional Commit.
   append, else whole-body; keep the existing carry-forward guidance for the
   whole-body path). The four ADR instruction files: `set_status(id, status[,
   superseded_by])` → `set_status(id, type="adr", status[, superseded_by])` —
-  depends on: Phase 4 complete — status: not-started
-- [ ] Task 5.2: Correct prompt Python module docstrings that name superseded
+   depends on: Phase 4 complete — status: done
+- [x] Task 5.2: Correct prompt Python module docstrings that name superseded
   tools: the six `prompts/update_<d>.py` modules (rsk's is `update_risk.py`,
   tsk's is `update_task.py`) — their module docstrings narrate the
   `update_<d>` / `set_status_<d>` surface; the four ADR prompt modules
@@ -658,8 +658,8 @@ phase-orchestrator commits each accepted phase as one Conventional Commit.
   `update_adr_test.py`) — their surface mentions of `set_status` stay true
   (the tool still exists, now generic) but are made precise where they imply
   the old ADR-only signature. No behavioral change to any prompt function —
-  depends on: Task 5.1 — status: not-started
-- [ ] Task 5.3: Update the ten prompt test files to assert the rewritten
+  depends on: Task 5.1 — status: done
+- [x] Task 5.3: Update the ten prompt test files to assert the rewritten
   narration: `tests/req/prompts/test_update_req.py`, `tests/tsk/prompts/
   test_update_task.py`, `tests/qa/prompts/test_update_qa.py`, `tests/rsk/
   prompts/test_update_risk.py`, `tests/prb/prompts/test_update_prb.py`,
@@ -667,14 +667,13 @@ phase-orchestrator commits each accepted phase as one Conventional Commit.
   test_create_adr.py`, `tests/adr/prompts/test_create_adr_test.py`,
   `tests/adr/prompts/test_update_adr.py`, `tests/adr/prompts/
   test_update_adr_test.py` — assertions must confirm the generic call shapes
-  (and, for the six domain update prompts, the range-update passage) —
-  depends on: Tasks 5.1, 5.2 — status: not-started
-- [ ] Task 5.4: Phase-end quality gate — full gate (the prompt data files are
+   (and, for the six domain update prompts, the range-update passage) —
+   depends on: Tasks 5.1, 5.2 — status: done
+- [x] Task 5.4: Phase-end quality gate — full gate (the prompt data files are
   package data; `specmgr docs` regeneration covers Task 5.2's docstring
   changes), then `git diff --exit-code -- docs/` zero drift; add a dated
-  entry to the Recent Updates section, update Current Status, flip the
-  phase's task lines to done in place — depends on: Task 5.3 — status: not-
-  started
+   entry to the Recent Updates section, update Current Status, flip the
+   phase's task lines to done in place — depends on: Task 5.3 — status: done
 
 #### Phase 6: Cross-cutting documentation and release notes
 
@@ -744,36 +743,171 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-27**: Phase 4 (Generic `set_status` + retire the eight
-old status tools) complete — the generic `set_status` tool now lives in
-`general/tools/` (8-value `type` incl. `adr`; ADR-only `superseded_by`,
-guard running before any file access), and all eight old status tools
-(seven `set_status_<d>` + ADR's own `set_status`, whose MCP name the
-generic tool takes over) plus their eight test files (38 tests) are gone
-from source and from MCP registration. This was the phase where the
-plan's Name-collision constraint was honored atomically: adding the
-generic tool and deleting all eight old status tools landed in one tree
-state, so the MCP name `set_status` is never double-registered (verified:
-exactly one `set_status` in the live tool list). Every non-narration
-code/docstring reference to the deleted tools was re-pointed (the
-`gol`/`prb` integration tests exercise the generic tool live; the
-`adr`/domain `_lock` helpers and `gol`/`prb` `_write` helpers name it;
-the `update.py`/`_splice.py` pointers were reworded). The ADR mutation
-model's `set_status` *function* (`models/adr/v1/mutations.py`) stays —
-it is ported, not removed. No schema changed. The phase-end quality gate
-is green (1768 tests OK, zero `docs/` drift, fresh-subprocess import
-OK); live registration is **71 tools / 25 resources / 19 prompts — the
-feature's target end state** (baseline 85/25/19: −14). Phases 5–7 are
-not started. (Phase 1 — the feature's ADR
-36905d5b-8057-4294-8665-c7eed5534db0 — Phase 2 — the generic `update`
-tool + `raw` reads — and Phase 3 — retiring the seven `update_<d>` tools
-— completed on 2026-08-27.)
+**As of 2026-08-27**: Phase 5 (Narration rewrite — prompts +
+instruction data) complete — every instruction data file and prompt
+module docstring that named a superseded tool now narrates the two
+generic tools with their exact call shapes: `update(id, type="<d>",
+content)` (whole-body), `update(id, type="<d>", content, begin=…, end=…)`
+(line-range — the six domain update-instruction files each teach the
+REQ-002 flow: `get_<d>(id, raw=True)` → 1-based inclusive range, `N+1`
+end-of-body sentinel, replacement lines only; multi-section or
+uncertain → whole-body), and `set_status(id, type="<d>", status)` —
+`type="adr"` in the four ADR files, with `superseded_by` composing
+`"superseded by X"`. No prompt function signature or behavior changed
+anywhere (docstring-only edits, AST-verified); the 16 prompt test files
+assert the new narration (+11 tests); the final ACC-005 grep over
+`src/`/`tests/` leaves only kept-by-design matches — prompt function
+names in the prompt modules/`__init__` files/tests, the `server.py`
+PROMPT enumerations + the four domain `__init__.py` prompt sentences,
+and the data files' "Later revisions" prompt-name references — with
+zero matches in `tools/`/`models/`/`general/` code and zero tool
+references in `data/*.md`. The phase's quality audit fixed a stale
+`prb/prompts/__init__.py` sentence and a list-indentation artifact in
+the two ADR create-instruction files; everything else from the
+partially completed previous session was verified correct as-is.
+Phase-end gate green (1779 tests OK, zero `docs/` drift, fresh-
+subprocess import OK); live registration unchanged at **71 tools / 25
+resources / 19 prompts** (narration-only phase — the feature's target
+end state, reached in Phase 4). Phases 6–7 are not started. (Phase 1 —
+the feature's ADR 36905d5b-8057-4294-8665-c7eed5534db0 — Phase 2 — the
+generic `update` tool + `raw` reads — Phase 3 — retiring the seven
+`update_<d>` tools — and Phase 4 — the generic `set_status` tool +
+retiring the eight old status tools — completed on 2026-08-27.)
 
 ### Blockers
 
 None.
 
 ### Recent Updates
+
+#### Update 2026-08-27 (Phase 5: Narration rewrite — prompts + instruction data)
+
+- Completed: Phase 5 (Tasks 5.1–5.4). All prompt narration now names
+  the generic tools with their exact call shapes — `update(id,
+  type="<d>", content)` (whole-body), `update(id, type="<d>", content,
+  begin=…, end=…)` (line-range), `set_status(id, type="<d>", status)`,
+  and `set_status(id, type="adr", status[, superseded_by])` in the ADR
+  files (`superseded_by` composing `"superseded by X"`). No prompt
+  function signature or behavior changed anywhere — an AST comparison
+  of HEAD vs. working tree confirms docstring-only edits in all
+  touched prompt modules.
+  - 18 instruction data files rewritten (the 11 files named by
+    REQ-006, plus the six `*_create_instructions.md` and
+    `tsk_implement_instructions.md` files whose "Later revisions" /
+    persistence paragraphs also named the old tools): the six
+    `<d>_update_instructions.md` (req, tsk, qa, rsk, prb, gol — `uc`
+    has no prompts sub-package), `qa_refine_instructions.md`, the four
+    ADR files, and `{req,tsk,qa,prb,gol,rsk}_create_instructions.md` +
+    `tsk_implement_instructions.md`.
+  - Range-update passage added to the six domain
+    update-instruction files (REQ-002 flow, one passage per domain):
+    for a localized change (one paragraph/field/section), first
+    `get_<d>(id, raw=True)` to see the exact body text, identify the
+    1-based, inclusive line range — `N+1` is end-of-body:
+    `begin = end = N+1` appends after the last line, `end = N+1`
+    extends the range through the last line — then
+    `update(id, type="<d>", content, begin=…, end=…)` passing only the
+    replacement lines (the server splices the fragment into the current
+    on-disk body and validates the result as a whole document, so every
+    out-of-range line stays byte-identical); for a multi-section
+    change, or whenever uncertain about the line range, whole-body
+    replace (no `begin`/`end`) with the carry-forward warning.
+  - `qa_refine_instructions.md`: section 5 reworked from "Whole-body
+    replace" to "Persist the appended questions" — the clean-append
+    path uses the `N+1` append range (`get_qa(id, raw=True)` to count
+    the body's lines, `update(id, type="qa", content, begin=N+1,
+    end=N+1)` passing only the new pairs) when the new pairs all go at
+    the very end of the body; otherwise the whole-body replace carries
+    forward every section exactly as read (the existing carry-forward
+    guidance, kept).
+  - Status-vocabulary prose: all six update files verified against each
+    domain's closed `_ALLOWED_STATUSES` in `models/<v>/frontmatter.py`
+    (req/gol 7 values, tsk/qa 4, prb 4, rsk 6 — `uc`'s 5-value set has
+    no narration; the ADR files carry the 6-value + `"superseded by X"`
+    composition notes) — all match the Design-Notes table.
+  - 11 prompt Python modules, docstrings only: the six domain
+    `update_<d>.py` (tsk's `update_task.py`, rsk's `update_risk.py`)
+    re-pointed from the `update_<d>`/`set_status_<d>` surface to the
+    generic tools (with `get_<d>`'s `raw=True` noted as the line-range
+    flow's line-number source); `qa/prompts/refine.py` likewise; three
+    of the four ADR modules (`create_adr.py`, `create_adr_test.py`,
+    `update_adr.py`) now name the generic `set_status` "always called
+    with `type="adr"`" — `update_adr_test.py` needed no change (its
+    surface mentions stay true).
+  - `prb/prompts/__init__.py`: the stale "(the tool-name convention,
+    like REQ/QA)" parenthetical — narrating the OLD tool-name origin,
+    inaccurate once the `update_prb` tool was retired — reworded to
+    "(the per-domain tool-name convention, like REQ/QA -- the prompt
+    keeps its name, while the update/status tools are now the generic
+    ``update``/``set_status`` in ``general/tools/``)".
+    `qa/prompts/__init__.py`'s "``create_qa`` guides drafting…
+    ``update_qa`` guides…" sentence kept: it describes the prompts
+    (which keep their names by design), not the tools.
+  - 16 prompt test files updated to assert the new narration (+11 new
+    tests): the six `test_update_*.py` files switched to the generic
+    call shapes and each gained `test_mentions_range_update_flow`
+    (raw read → 1-based inclusive range → `N+1` sentinel →
+    `begin=…/end=…` call → whole-body fallback → byte-identical); the
+    four ADR `test_*.py` files each gained
+    `test_mentions_generic_set_status_with_type_adr`; the four
+    `test_create_{req,qa,prb,gol}.py` files assert the generic tool
+    call shapes in "Later revisions"; `test_refine.py` gained
+    `test_mentions_n_plus_one_append_range`; `test_implement_task.py`
+    switched to `update(id, type="tsk", content)`.
+- Quality-audit fixes to the previous (partially completed) session's
+  work:
+  - `prb/prompts/__init__.py`: stale tool-name-origin parenthetical
+    (quoted above) — reworded.
+  - `adr/data/adr_create_instructions.md` + `adr/data/
+    adr_create_test_instructions.md`: the rewritten step-3 list item
+    had gained a stray leading space (` 3.` with 5-space
+    continuations), inconsistent with the surrounding column-0 items —
+    restored to `3.` with 3-space continuations.
+  - Everything else in the previous session's 54-file diff verified
+    correct as-is (call shapes, range passages, vocabularies, ADR
+    `type="adr"` sites, docstring-only prompt edits, test assertions).
+- Final ACC-005 grep (`git grep -nE "\b(update_req|update_uc|update_
+  tsk|update_qa|update_prb|update_gol|update_rsk|set_status_req|…|
+  set_status_rsk)\b" -- src/ tests/`): 121 match lines in 28 files,
+  every one kept by design:
+  - (a) prompt function names — imports/`__all__`/
+    `@mcp.prompt(name=…)`/`def`/module titles/cross-prompt references:
+    `req/prompts/` (`update_req.py` 3, `__init__.py` 2), `qa/prompts/`
+    (`update_qa.py` 4, `refine.py` 2, `__init__.py` 3), `prb/prompts/`
+    (`update_prb.py` 4, `__init__.py` 3), `gol/prompts/`
+    (`update_gol.py` 5, `__init__.py` 2), `tsk/prompts/update_task.py`
+    2, `rsk/prompts/update_risk.py` 1 — 31 lines;
+  - (b) `server.py`'s four per-domain PROMPT enumeration lines (159/
+    165/170/174) + the prompt-enumeration sentences in `req`/`qa`/
+    `prb`/`gol` `__init__.py` (1 each) — 8 lines;
+  - (c) the four `*_create_instructions.md` files' "Later revisions" /
+    duplicate-check prompt-name references (`the update_<d> prompt`) —
+    8 lines;
+  - (d) the 16 prompt test files (imports + prompt-function calls) —
+    74 lines.
+  - Zero `set_status_<d>` matches anywhere in `src/` or `tests/`; zero
+    matches in `tools/`, `models/`, or `general/` code; **zero tool
+    references in any `data/*.md`** (the only data-file matches are
+    the class-(c) prompt names).
+- Quality gate (green): `ruff format` (write run: 1094 files left
+  unchanged — the previous session's formatting was already stable),
+  `ruff format --check` (1094 files already formatted), `ruff check`
+  (all checks passed), `vulture src/ whitelist.py --min-confidence 60`
+  (clean, exit 0), full unittest suite (**Ran 1779 tests, OK** — up
+  from 1768: +11 new narration tests). Regenerations: `coverage run -m
+  unittest discover -s tests -t . -p "test_*.py"` (refreshed
+  `.coverage`), `specmgr coverage-badge` (98% — unchanged rounded
+  value, badge byte-identical, no diff), `specmgr docs` (305 module
+  pages; 11 pages changed: the ten reworded prompt-module API pages +
+  `docs/api/biz.dfch.specmgr.prb.prompts.md` for the `__init__`
+  docstring fix), `specmgr mcp-docs` (no `docs/MCP.md` change — no MCP
+  surface changed in this narration-only phase). Zero-drift proof: all
+  three generators re-run; the second run was a byte-identical no-op
+  (sha256 manifest diff empty). Fresh-subprocess `uv run --frozen
+  python -c "import biz.dfch.specmgr.server"`: exit 0. Live
+  registration unchanged at **71 tools / 25 resources / 19 prompts**
+  (the feature's target end state, unchanged by this phase).
+- Next: Phase 6 (Cross-cutting documentation and release notes).
 
 #### Update 2026-08-27 (Phase 4: Generic `set_status` + retire the eight old status tools)
 

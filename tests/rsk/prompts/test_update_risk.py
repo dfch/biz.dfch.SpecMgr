@@ -36,16 +36,35 @@ class TestUpdateRiskPrompt(unittest.TestCase):
 
     def test_mentions_get_rsk_tool_first(self):
         """The prompt must instruct the LLM to call get_rsk first,
-        before the update_rsk write tool."""
+        before the generic `update` write call."""
         result = update_risk("abc-123")
         self.assertIn("get_rsk(id)", result)
-        self.assertLess(result.index("get_rsk(id)"), result.index("update_rsk(id, content)"))
+        self.assertLess(result.index("get_rsk(id)"), result.index('update(id, type="rsk", content)'))
 
-    def test_mentions_both_mutation_tools(self):
-        """Both update_rsk and set_status_rsk must be named."""
+    def test_mentions_both_generic_mutation_tools(self):
+        """Both the generic `update` (type="rsk") and `set_status`
+        (type="rsk") call shapes must be named."""
         result = update_risk("abc-123")
-        for tool in ("update_rsk", "set_status_rsk"):
+        for tool in ('update(id, type="rsk", content)', 'set_status(id, type="rsk", status)'):
             self.assertIn(tool, result)
+
+    def test_mentions_range_update_flow(self):
+        """The prompt must teach the line-range flow: read the exact body
+        via get_rsk(id, raw=True), identify the 1-based inclusive range
+        (N+1 is end-of-body), call `update` with begin/end passing only
+        the replacement lines; whole-body for multi-section or uncertain
+        changes."""
+        result = update_risk("abc-123")
+        self.assertIn("get_rsk(id, raw=True)", result)
+        self.assertIn("1-based, inclusive line range", result)
+        self.assertIn("begin = end = N+1", result)
+        self.assertIn('update(id, type="rsk", content, begin=..., end=...)', result)
+        self.assertIn("multi-section change, or whenever you are", result)
+        self.assertIn("byte-identical", result)
+        self.assertLess(
+            result.index("get_rsk(id, raw=True)"),
+            result.index('update(id, type="rsk", content, begin=..., end=...)'),
+        )
 
     def test_instructions_interpolated_when_given(self):
         """A given instructions string must appear verbatim in the returned text."""
@@ -58,14 +77,14 @@ class TestUpdateRiskPrompt(unittest.TestCase):
         self.assertIn("ask the user", result)
 
     def test_mentions_whole_body_replace_warning(self):
-        """The whole-body-replace caveat for update_rsk must be present."""
+        """The whole-body-replace caveat for the generic `update` tool must be present."""
         result = update_risk("abc-123")
         self.assertIn("whole-body replace", result)
 
-    def test_mentions_status_never_via_update_rsk(self):
-        """The prompt must clarify that update_rsk never changes status."""
+    def test_mentions_status_never_via_update(self):
+        """The prompt must clarify that the generic `update` tool never changes status."""
         result = update_risk("abc-123")
-        self.assertIn("update_rsk` never accepts or changes `status`", result)
+        self.assertIn("`update` never accepts or changes `status`", result)
 
     def test_mentions_status_vocabulary(self):
         """The six accepted risk statuses must all be named."""

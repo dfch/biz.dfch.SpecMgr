@@ -73,7 +73,9 @@ until this gate is passed.
    and is never renumbered.
 3. If, and only if, the user explicitly asked you to finalize the
    decision now rather than leave it as a draft, call
-   `set_status(id, "accepted")` (or `"rejected"`, or `"proposed"`).
+   `set_status(id, type="adr", status="accepted")` (or
+   `status="rejected"`, or `status="proposed"`) -- the generic
+   status-change tool, always called with `type="adr"` for an ADR.
 4. Mandatory, always last: call `validate_adr(id)` to self-correct before
    reporting success back to the user.
 Exit condition: `create_adr` succeeded, every considered option worth

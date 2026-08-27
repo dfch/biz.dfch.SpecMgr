@@ -25,9 +25,12 @@ want to change before calling any write tool.
   `decision_outcome`).
 - A change to `title` -> also `update_section(id, "title", value)`.
 - A change to `status` (e.g. accepting/rejecting/deprecating the
-  decision, or marking it superseded) -> `set_status(id, status,
-  superseded_by=...)`, the narrow convenience wrapper -- prefer this over
-  `update_frontmatter` for status-only changes.
+  decision, or marking it superseded) -> the generic status-change tool:
+  `set_status(id, type="adr", status, superseded_by=...)`, always called
+  with `type="adr"` for an ADR (`superseded_by` is accepted only for
+  `type="adr"`, composing the status as `"superseded by
+  {superseded_by}"`) -- prefer it over `update_frontmatter` for
+  status-only changes.
 - Any other frontmatter change (`date`, `decision_makers`, `consulted`,
   `informed`) -> `update_frontmatter(id, frontmatter)`. This is a
   **whole-object replace**: read the current frontmatter first (step 1)
