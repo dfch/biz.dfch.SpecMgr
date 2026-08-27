@@ -6880,7 +6880,10 @@ Command: `uv run --frozen --all-extras python -c` async script calling the insta
 
 ```python
 from biz.dfch.specmgr.server import mcp
-tools = await mcp.list_tools(); resources = await mcp.list_resources(); prompts = await mcp.list_prompts()
+
+tools = await mcp.list_tools()
+resources = await mcp.list_resources()
+prompts = await mcp.list_prompts()
 ```
 
 Output:
