@@ -1,7 +1,7 @@
 ---
 created: 2026-08-26
 id: feat-22-consolidate-mutation-tools
-status: in-progress
+status: done
 updated: 2026-08-27
 version: 1.0.0
 ---
@@ -127,13 +127,29 @@ new tool. Expected end state: **71 tools / 25 resources / 19 prompts**
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: Verifies REQ-001 — for every one of the seven types, `update`
+- [x] ACC-001: Verifies REQ-001 — for every one of the seven types, `update`
   in whole-body mode (no `begin`/`end`) replaces the body, preserves
   `id`/`type`/`status`/`created`/`version`, bumps `updated` (microsecond
   timestamp), never sets `status`, propagates structural `AssertionError` /
   field `pydantic.ValidationError` with the file left byte-identical on disk,
-  and raises the domain's own `XNotFoundError` for an unknown id.
-- [ ] ACC-002: Verifies REQ-002 — for every one of the seven types: a middle-
+  and raises the domain's own `XNotFoundError` for an unknown id. **PASS** —
+  `tests/general/tools/test_update.py`'s `TestUpdateWholeBody` (5 test
+  methods, each subTest-parameterized over all seven types, seeding a real,
+  persisted document per type via the domain's own `create_<d>` tool in a
+  temp `SPECMGR_DOCS_DIR`): `test_replaces_body_preserving_id_type_status_
+  created_version` (body replaced; id/type/status/created/version
+  preserved; `updated` bumped and matching the microsecond-timestamp shape),
+  `test_status_not_settable_through_update` (a YAML frontmatter block
+  smuggled into `content` → `AssertionError`, file untouched),
+  `test_structural_failure_raises_and_leaves_file_byte_identical` (malformed
+  body → `AssertionError`, file byte-identical),
+  `test_field_validation_failure_raises_and_leaves_file_byte_identical`
+  (out-of-vocabulary field value → `ValidationError` for req/uc/tsk/gol/rsk,
+  structural `AssertionError` for qa/prb, file byte-identical in every case),
+  and `test_raises_domain_not_found_for_unknown_id` (the domain's own
+  `XNotFoundError`). Re-run live in the Phase-7 gate as part of **Ran 1779
+  tests, OK**.
+- [x] ACC-002: Verifies REQ-002 — for every one of the seven types: a middle-
   range replace leaves all out-of-range body lines byte-identical and inserts
   the fragment at the range; `begin = end = N+1` appends at end of body;
   `end = N+1` replaces through end of body; empty `content` deletes the range
@@ -142,15 +158,55 @@ new tool. Expected end state: **71 tools / 25 resources / 19 prompts**
   with the identical text; each misuse case (one parameter only, `begin < 1`,
   `begin > end`, `end > N+1`, range deleting the H1, range producing an
   out-of-vocabulary field value) raises (`ValueError` / `AssertionError` /
-  `ValidationError`) with the file left byte-identical on disk.
-- [ ] ACC-003: Verifies REQ-003 — for all seven domains, `get_<d>(id,
+  `ValidationError`) with the file left byte-identical on disk. **PASS** —
+  the same file's `TestUpdateRange` (12 test methods, each subTest-
+  parameterized over all seven types):
+  `test_middle_range_replace_leaves_out_of_range_lines_byte_identical`,
+  `test_n_plus_one_appends_at_end_of_body`,
+  `test_end_n_plus_one_replaces_through_end_of_body`,
+  `test_empty_content_deletes_an_optional_section` (deleting the appended
+  optional section yields a still-valid document byte-equal to the minimal
+  seed), `test_begin_one_end_n_equals_whole_body_mode` (byte-identical file
+  to whole-body mode with the identical text, under a frozen microsecond
+  clock), the four `ValueError` misuse tests —
+  `test_exactly_one_of_begin_end_raises_value_error_before_file_access`
+  (raised even for an unknown id, i.e. before any file access),
+  `test_begin_below_one_raises_value_error_file_untouched`,
+  `test_begin_above_end_raises_value_error_file_untouched`, and
+  `test_end_above_n_plus_one_raises_value_error_file_untouched` (each error
+  message names the offending value(s) and the allowed range; file
+  byte-identical in every case) — plus
+  `test_range_deleting_the_h1_raises_and_leaves_file_untouched`
+  (`AssertionError`),
+  `test_range_producing_out_of_vocabulary_value_raises_and_leaves_file_
+  untouched` (per-type error: `ValidationError` for req/uc/tsk/gol/rsk,
+  structural `AssertionError` for qa/prb — the documented nuance in the
+  module docstring, lines 27–34: qa/prb bodies have no field-level
+  validation), and `test_range_mode_raises_domain_not_found_for_unknown_id`.
+  Re-run live in the Phase-7 gate as part of **Ran 1779 tests, OK**.
+- [x] ACC-003: Verifies REQ-003 — for all seven domains, `get_<d>(id,
   raw=True)` returns the frontmatter-stripped body text byte-identical to the
   on-disk body (the text whose lines `begin`/`end` address — proven by a test
   that reads `raw`, picks a line range, calls `update` with that range, and
   confirms the splice landed exactly there); `get_<d>(id)` (`raw=False`)
   returns the parsed document exactly as before (regression); unknown id
-  raises the domain `XNotFoundError` in both modes.
-- [ ] ACC-004: Verifies REQ-004 — for all eight types, `set_status` changes
+  raises the domain `XNotFoundError` in both modes. **PASS** — each of the
+  seven `tests/<d>/tools/test_get_<d>.py` files carries the same 4-test raw
+  group (28 tests total): `test_raw_returns_body_text_via_shared_helper`
+  (`raw=True` byte-identical to the on-disk body via the shared helper),
+  `test_raw_line_coordinates_index_into_the_splice_target` (the coordinate
+  invariant: read `raw`, pick the real line `k` of a marker, call `update`
+  with `begin=k, end=k`, and confirm the splice landed exactly there with
+  every other line unchanged), `test_raw_false_returns_parsed_document_as_
+  before` (explicit `raw=False` equals the default parsed document —
+  regression), and `test_raw_unknown_id_raises_not_found_in_both_modes` (the
+  domain `XNotFoundError` in both modes). The shared body-extraction helper
+  `body_text` lives in `general/tools/_splice.py` (line 55, no `mcp`
+  dependency) — the single helper both the `update` splice and every
+  `get_<d>(raw=True)` call go through, which *is* the "what the client
+  counts is what the server splices" invariant. Re-run live in the Phase-7
+  gate as part of **Ran 1779 tests, OK**.
+- [x] ACC-004: Verifies REQ-004 — for all eight types, `set_status` changes
   `status`, bumps `updated`, and leaves the body untouched (seven domains: raw
   body byte-identical; ADR: re-render round-trip equal apart from
   status/updated); each domain's closed vocabulary is enforced (out-of-set
@@ -158,26 +214,104 @@ new tool. Expected end state: **71 tools / 25 resources / 19 prompts**
   distinct sets: `uc` 5-value, `tsk`/`qa` 4-value, `prb` 4-value, `rsk`
   6-value); ADR `superseded_by` composes `"superseded by X"`; `superseded_by`
   with a non-`adr` type raises `ValueError`, nothing written; unknown id
-  raises the domain `XNotFoundError` / `AdrNotFoundError`.
-- [ ] ACC-005: Verifies REQ-005 — the 15 superseded tools are absent from
+  raises the domain `XNotFoundError` / `AdrNotFoundError`. **PASS** —
+  `tests/general/tools/test_set_status.py` (10 test methods covering all
+  eight types — the seven whole-body domains subTest-parameterized, the ADR
+  directly): `TestSetStatusWholeBodyDomains` —
+  `test_changes_status_bumps_updated_leaves_body_untouched` (status changed
+  on disk, `updated` bumped to the microsecond shape, id/type/created/
+  version preserved, raw body byte-identical via the
+  `frontmatter.loads(...).content` mechanism),
+  `test_out_of_vocabulary_status_raises_validation_error_file_untouched`
+  (cross-domain negative values — `open` against req/gol, `implemented`
+  against uc/tsk/qa/prb/rsk — each a `pydantic.ValidationError` with the
+  file byte-identical), `test_superseded_by_with_non_adr_type_raises_value_
+  error_file_untouched` (the error names the offending type),
+  `test_unknown_id_raises_domain_not_found` (the domain's own
+  `XNotFoundError`), and `test_case_data_matches_the_domains_own_closed_sets`
+  (the per-type valid/invalid pairs asserted against each domain's own
+  imported `_ALLOWED_STATUSES`, so the distinct set sizes — req/gol 7, uc 5,
+  tsk/qa 4, prb 4, rsk 6 — are verified, not trusted); `TestSetStatusAdr` —
+  plain status with `superseded_by=None` (re-parsed render round-trip equal
+  apart from status; ADR has no `updated` field), `superseded_by` composing
+  `"superseded by X"` in the file, `implemented` → `ValidationError` with the
+  file byte-identical, and unknown id → `AdrNotFoundError`; and
+  `TestSetStatusSupersededByGuard` — the guard fires before any file access:
+  `ValueError`, not the domain not-found, even for an unknown id. Re-run
+  live in the Phase-7 gate as part of **Ran 1779 tests, OK**.
+- [x] ACC-005: Verifies REQ-005 — the 15 superseded tools are absent from
   `src/` and from the live MCP registration; a grep over `src/` and `tests/`
   finds no code references to the removed tool names (any residual mention
   before Phase 5 is limited to the Phase-5-owned prompt narration files, and
-  zero afterwards); `vulture` is clean.
-- [ ] ACC-006: Verifies REQ-006 — all 11 instruction data files reference the
+  zero afterwards); `vulture` is clean. **PASS** — fresh Phase-7 run of
+  `git grep -nE` over `src/` and `tests/` for all 15 removed tool names
+  (word-boundary alternation of the seven `update_<d>` and the seven
+  `set_status_<d>` names): 121 match lines in 28 files, every one kept by
+  design — (a) 31 lines of prompt *function* names (the six domain
+  `prompts/update_<d>.py` modules — tsk's is `update_task.py`, rsk's is
+  `update_risk.py` — plus the four prompts `__init__.py` files and
+  `qa/prompts/refine.py`), (b) 8 lines of kept prompt-name enumerations
+  (`server.py`'s four per-domain PROMPT lines and one each in the
+  `req`/`qa`/`prb`/`gol` package `__init__.py` files), (c) 8 lines in the
+  four `*_create_instructions.md` data files (the "the `update_<d>` prompt"
+  references — prompt names, not tool references), and (d) 74 lines in the
+  16 prompt test files. Zero matches in any `tools/`, `models/`, or
+  `general/` code; zero `set_status_<d>` matches anywhere; zero tool
+  references in any `data/*.md`. Live registration: none of the 15 names is
+  among the 71 tools returned by `asyncio.run(mcp.list_tools())`;
+  `docs/MCP.md` carries none of the 15 removed `### Tool:` entries (0 of 15)
+  and 71 `### Tool:` entries in total (the generic `set_status` at line 855,
+  `update` at line 868). `vulture src/ whitelist.py --min-confidence 60`:
+  clean, exit 0.
+- [x] ACC-006: Verifies REQ-006 — all 11 instruction data files reference the
   generic tools with the correct signatures (`update(id, type="<d>", content
   [,...])`, `set_status(id, type=..., status[, superseded_by])`); the six
   domain update-instruction files teach the range-update flow (`get_<d>(id,
   raw=True)` → identify the 1-based range → `update(..., begin, end)`; whole-
   body for multi-section or uncertain changes); the 10 prompt test files pass
-  against the rewritten narration.
-- [ ] ACC-007: Verifies REQ-007 — `specmgr docs`, `specmgr mcp-docs`,
+  against the rewritten narration. **PASS** — fresh Phase-7 greps over
+  `src/biz/dfch/specmgr/*/data/*.md`: 18 data files carry the generic call
+  shapes with zero superseded-tool call sites — `update(id, type="<d>",
+  content[, begin=..., end=...])` in the 14 domain instruction files and
+  `set_status(id, type="...", status[, superseded_by])` in the 16 domain +
+  ADR files (the four ADR files use `set_status(id, type="adr", ...)`). Each
+  of the six domain `<d>_update_instructions.md` files (req, tsk, qa, rsk,
+  prb, gol) contains the range-update flow passage — verified in all six:
+  `get_<d>(id, raw=True)` to see the exact body text → identify the 1-based,
+  inclusive line range (`N+1` = end-of-body: `begin = end = N+1` appends
+  after the last line, `end = N+1` extends the range through the last line)
+  → `update(id, type="<d>", content, begin=..., end=...)` passing only the
+  replacement lines (the server splices the fragment into the current on-
+  disk body and validates the result as a whole document, so every out-of-
+  range line stays byte-identical) → whole-body replace (no `begin`/`end`)
+  for a multi-section change or whenever uncertain. The 16 prompt test files
+  (6 domain update + 4 ADR + 4 domain create + `test_refine` +
+  `test_implement_task`) re-run live in the Phase-7 gate: **Ran 186 tests,
+  OK**.
+- [x] ACC-007: Verifies REQ-007 — `specmgr docs`, `specmgr mcp-docs`,
   `specmgr adr-toc`, and `specmgr schema` all report zero drift;
   `docs/MCP.md` shows the two new general tools (with `type` rendered as a 7-
   / 8-value enum) and none of the 15 removed tools; `server.py`'s docstring
   lists exactly the post-feature surface; `AGENTS.md` and `CHANGELOG.md` are
-  updated per REQ-007.
-- [ ] ACC-008: Verifies REQ-001/002/004/005 — the Phase-1 ADR exists in
+  updated per REQ-007. **PASS** — fresh Phase-7 runs: `specmgr docs` (305
+  module pages + `docs/GENERATED.md`), `specmgr mcp-docs` (`docs/MCP.md`),
+  `specmgr adr-toc` (`docs/adr/README.md`), and `specmgr schema` (all seven
+  domain schemas reported "unchanged") — all four byte-identical no-ops, and
+  `git diff --exit-code -- docs/` exits 0. `docs/MCP.md` shows the two
+  generic tools with `type` rendered as the enum — `update` (entry at line
+  868): `| `type` | `string (enum: req, uc, tsk, qa, prb, gol, rsk)` | Yes
+  |` and `set_status` (entry at line 855): `| `type` | `string (enum: req,
+  uc, tsk, qa, prb, gol, rsk, adr)` | Yes |` — and none of the 15 removed
+  tools. `server.py`'s module docstring lists exactly the post-feature
+  surface: the General-tools lines name `update` (7-value `type`, optional
+  1-based inclusive `begin`/`end` body-line range with the `N+1` end-of-body
+  sentinel, the spliced result validated as a whole document) and
+  `set_status` (8-value `type`, `superseded_by` ADR-only, composing
+  `"superseded by {superseded_by}"`); the ADR-tools line carries the 11
+  wrappers (no `set_status`); each per-domain line names its `get_<d>` with
+  the `raw=True` note and no `update_<d>`/`set_status_<d>`. `AGENTS.md` and
+  `CHANGELOG.md` were updated per REQ-007 in the Phase-6 commit `c82abeb`.
+- [x] ACC-008: Verifies REQ-001/002/004/005 — the Phase-1 ADR exists in
   `docs/adr/` with status `accepted` and is listed in `docs/adr/README.md`; a
   live, un-mocked end-to-end run in a temporary `SPECMGR_DOCS_DIR` passes for
   `req`, `rsk`, and `uc`: `create_<d>` → `get_<d>(id, raw=True)` →
@@ -188,7 +322,34 @@ new tool. Expected end state: **71 tools / 25 resources / 19 prompts**
   superseded_by=…)` → status reads `"superseded by …"`;
   `asyncio.run(mcp.list_tools()/list_resources()/list_prompts())` on the real
   `server.mcp` instance reports **71 tools / 25 resources / 19 prompts**; a
-  fresh subprocess import of `biz.dfch.specmgr.server` succeeds.
+  fresh subprocess import of `biz.dfch.specmgr.server` succeeds. **PASS** —
+  (a) the Phase-1 ADR exists at `docs/adr/36905d5b-8057-4294-
+  8665-c7eed5534db0-consolidate-whole-body-update-and-status-change-tools-
+  into-g.md` with `status: accepted` and is listed in `docs/adr/README.md`
+  (line 20: "Consolidate whole-body update and status-change tools into
+  generic type-dispatched tools", with "- Id: 36905d5b-8057-
+  4294-8665-c7eed5534db0" and "- Status: accepted" beneath it). (b) the
+  live, un-mocked end-to-end run (throwaway script `/tmp/opencode/feat22_
+  e2e.py` against a temp `SPECMGR_DOCS_DIR` + `SPECMGR_ADR_DIR`, driving the
+  real tool functions; printed `E2E-OK`, exit 0) passed for all three whole-
+  body domains and ADR — per domain: `create_<d>` → `get_<d>(id, raw=True)`
+  (req N=20, rsk N=37, uc N=36 body lines) → one middle-range replace
+  (changed line exactly the fragment, every out-of-range line byte-identical)
+  → one `N+1` append (prior lines unchanged, new last lines exactly the
+  fragment) → parsed `get_<d>` reflecting both edits (req `description` +
+  `notes`, rsk `cause` + `owner`, uc `goal_in_context` + `open_issues`) →
+  `set_status` with a domain-valid value (req `accepted`, rsk `mitigating`,
+  uc `proposed`) → parsed status verified and `updated` bumped; for ADR:
+  `create_adr` (initial status `proposed`) → `set_status(id, type="adr",
+  status="superseded", superseded_by="00000000-0000-4000-8000-000000000000")`
+  → `get_adr`'s frontmatter status reads exactly "superseded by
+  00000000-0000-4000-8000-000000000000"; the temp dir was removed afterwards
+  and `git status --short` shows no residue. (c)
+  `asyncio.run(mcp.list_tools()/list_resources()/list_prompts())` on the
+  real `server.mcp` instance: "tools=71 resources=25 prompts=19" — none of
+  the 15 removed tool names present, both generic tools present. (d) fresh-
+  subprocess `uv run --frozen python -c "import biz.dfch.specmgr.server"`:
+  exit 0.
 
 ### Scope
 
@@ -715,7 +876,7 @@ phase-orchestrator commits each accepted phase as one Conventional Commit.
 
 #### Phase 7: Final cross-cutting verification
 
-- [ ] Task 7.1: Walk ACC-001…ACC-008 and confirm each with concrete evidence,
+- [x] Task 7.1: Walk ACC-001…ACC-008 and confirm each with concrete evidence,
   annotating the Acceptance Criteria section inline in the style of
   feat-18-goal: live, un-mocked end-to-end in a temporary
   `SPECMGR_DOCS_DIR` — for `req`, `rsk`, and `uc`: `create_<d>` →
@@ -730,10 +891,10 @@ phase-orchestrator commits each accepted phase as one Conventional Commit.
   fresh-subprocess import check; full quality gate (ruff format/check, pylint
   advisory, vulture, unittest, `specmgr docs`/`mcp-docs`/`adr-toc`/`schema`
   zero drift); remove the temporary docs directory and confirm `git status`
-  shows no residue — depends on: Phases 1–6 complete — status: not-started
-- [ ] Task 7.2: Set this README's frontmatter `status: in-progress` →
+  shows no residue — depends on: Phases 1–6 complete — status: done
+- [x] Task 7.2: Set this README's frontmatter `status: in-progress` →
   `status: done`; final Recent Updates entry and Current Status summary —
-  depends on: Task 7.1 — status: not-started
+  depends on: Task 7.1 — status: done
 
 **Note:** If a task's scope changes mid-flight, edit its description in
 place; rely on git history (`git log -p` on this file) to recover what was
@@ -743,45 +904,99 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-27**: Phase 6 (Cross-cutting documentation and release
-notes) complete — `AGENTS.md` and `CHANGELOG.md` now narrate the
-consolidated mutation surface; no code change in this phase.
-`AGENTS.md`: the seven per-domain bullets no longer enumerate
-`update_<d>`/`set_status_<d>` — each says whole-body/line-range updates
-go through the generic `update` tool and status changes through the
-generic `set_status` tool (both in `general/tools/`, `type="<d>"`), and
-the six bullets that enumerate `get_<d>` note its `raw: bool = False`
-parameter (frontmatter-stripped body text as-is — the text `begin`/`end`
-index into); the ADR bullet's wrapper count is 12 → 11, ADR status
-changes re-pointed at the generic `set_status` (`type="adr"`, ADR-only
-`superseded_by`); the `general/` bullet gains `update` (7-type;
-`begin`/`end` range with the `N+1` end-of-body sentinel; splice-then-
-validate-whole), `set_status` (8-type incl. adr), and the `raw` note on
-the seven `get_<d>` tools; the "Still genuinely missing" list carries
-the future-domain dispatch-entry convention citing ADR
-36905d5b-8057-4294-8665-c7eed5534db0. `CHANGELOG.md` `[Unreleased]`
-gains the breaking `Removed` entries (14 per-domain tools deleted
-outright; ADR `set_status` signature `(id, status, superseded_by)` →
-`(id, type, status, superseded_by)`, `type="adr"` now required) and the
-`Added` entries (generic `update`, generic `set_status`, `raw` on the
-seven `get_<d>` tools), also citing the ADR. All four generators are
-byte-identical no-ops (`specmgr docs`/`mcp-docs`/`adr-toc`/`schema` —
-every schema "unchanged"; `git diff --exit-code -- docs/` exits 0).
-Phase-end gate green (`ruff format --check` 1094 files, `ruff check`,
-vulture clean, **Ran 1779 tests, OK**). Live registration unchanged at
-**71 tools / 25 resources / 19 prompts** (the feature's target end
-state, reached in Phase 4). Phase 7 is not started. (Phase 1 — the
-feature's ADR 36905d5b-8057-4294-8665-c7eed5534db0 — Phase 2 — the
-generic `update` tool + `raw` reads — Phase 3 — retiring the seven
-`update_<d>` tools — Phase 4 — the generic `set_status` tool + retiring
-the eight old status tools — and Phase 5 — the narration rewrite —
-completed on 2026-08-27.)
+**As of 2026-08-27**: Feature complete — all seven phases done. The 15
+near-duplicate per-domain mutation tools are replaced by two generic,
+type-dispatched tools in `general/tools/` — `update` (whole-body and
+line-range replace over the seven whole-body domains; optional 1-based
+inclusive `begin`/`end` body-line range with the `N+1` end-of-body
+sentinel; splice-then-validate-whole) and `set_status` (status change
+over all eight domains; ADR-only `superseded_by` composing `"superseded
+by X"`) — plus the `raw: bool = False` parameter on the seven `get_<d>`
+tools (frontmatter-stripped body text as-is — the text `begin`/`end`
+index into). All prompt narration, `server.py`'s docstring, `AGENTS.md`,
+`CHANGELOG.md`, and the generated docs carry the post-feature surface.
+Live registration: **71 tools / 25 resources / 19 prompts** — the
+plan's target end state (from 84/25/19: −15 +2). Phase-7 final
+verification: all eight acceptance criteria confirmed with fresh
+evidence and annotated inline (`**PASS**`) in the Acceptance Criteria
+section; the live, un-mocked end-to-end run passed for `req`, `rsk`, and
+`uc` (create → raw read → middle-range replace → `N+1` append → parsed
+verification → `set_status` → status verified) and for ADR
+(`create_adr` → `set_status` with `superseded_by` → status reads
+"superseded by …"); the full quality gate is green (ruff format/check,
+vulture clean, **Ran 1779 tests, OK**, pylint advisory 8.94/10 with
+zero messages in any file this feature touched, all four generators
+no-ops with `git diff --exit-code -- docs/` exit 0). The feature's ADR
+is 36905d5b-8057-4294-8665-c7eed5534db0 (accepted); the six phase
+commits are listed under Related PRs / Commits.
 
 ### Blockers
 
 None.
 
 ### Recent Updates
+
+#### Update 2026-08-27 (Phase 7: Final verification)
+
+- Completed: Phase 7 (Tasks 7.1–7.2). Final cross-cutting verification —
+  all eight acceptance criteria walked with fresh evidence and annotated
+  inline (`**PASS**`) in the Acceptance Criteria section; frontmatter
+  status `in-progress` → `done`; this Progress update closes the feature.
+- Live, un-mocked end-to-end (throwaway script `/tmp/opencode/feat22_
+  e2e.py`, temp `SPECMGR_DOCS_DIR` + `SPECMGR_ADR_DIR`, driving the real
+  tool functions; printed `E2E-OK`, exit 0):
+  - `req`: created id `594cd34e-5358-40f2-9a0b-e2b1f6f8d5a6` (raw body
+    N=20) → middle-range replace line 7 (`begin=end=7`, the Description
+    paragraph → "E2E-replaced description line."; the 19 out-of-range
+    lines byte-identical) → `N+1` append (`begin=end=21`, `## Notes`
+    section; the prior 20 lines unchanged) → parsed `get_req` reflecting
+    both edits (`body.description`, `body.notes`) →
+    `set_status(id, "req", "accepted")` → status verified, `updated`
+    bumped `2026-08-27T15:21:16.920820` →
+    `2026-08-27T15:21:17.376827`.
+  - `rsk`: created id `7c70cc5e-1ce0-4cf1-a105-6ea45a40a248` (N=37) →
+    middle-range replace line 5 (`## Cause` paragraph → "E2E-replaced
+    root condition."; the 36 out-of-range lines byte-identical) → `N+1`
+    append (`begin=end=38`, `## Owner` section) → parsed `get_rsk`
+    reflecting both edits (`body.cause`, `body.owner`) →
+    `set_status(id, "rsk", "mitigating")` → status verified, `updated`
+    bumped.
+  - `uc`: created id `151e0a6b-69f4-4fbe-ad08-c7b2e91b2a96` (N=36) →
+    middle-range replace line 7 (`### Goal in Context` paragraph →
+    "E2E-replaced goal-in-context line."; the 35 out-of-range lines byte-
+    identical) → `N+1` append (`begin=end=37`, `## Open Issues` section)
+    → parsed `get_uc` reflecting both edits
+    (`body.characteristic_information.goal_in_context`,
+    `body.open_issues`) → `set_status(id, "uc", "proposed")` → status
+    verified, `updated` bumped.
+  - `adr`: `create_adr` (id `6bd17f45-0c1a-43ac-84a3-104e08e58d95`,
+    initial status `proposed`) → `set_status(id, "adr", "superseded",
+    superseded_by="00000000-0000-4000-8000-000000000000")` →
+    `get_adr`'s frontmatter status reads exactly "superseded by
+    00000000-0000-4000-8000-000000000000".
+  - Temp dir removed after the run (`exists=False`); `git status
+    --short` in the repo shows no residue from the e2e.
+- Live registration on the real `server.mcp` instance
+  (`asyncio.run(mcp.list_tools()/list_resources()/list_prompts())`):
+  **tools=71 resources=25 prompts=19** — none of the 15 removed tool
+  names present, both generic tools present. Fresh-subprocess `uv run
+  --frozen python -c "import biz.dfch.specmgr.server"`: exit 0.
+- Quality gate (green): `ruff format --check` (1094 files already
+  formatted), `ruff check` (all checks passed), `vulture src/
+  whitelist.py --min-confidence 60` (clean, exit 0), full unittest suite
+  (**Ran 1779 tests in 46.6s, OK**), pylint advisory (**8.94/10** — the
+  105 E messages are all pre-existing false positives in the
+  `req`/`gol`/`uc`/`rsk` `models/` packages and `models/md/`; zero in any
+  file this feature touched and none in `general/tools/` or `server.py`),
+  the four generators (`specmgr docs` — 305 module pages +
+  `docs/GENERATED.md`, `specmgr mcp-docs`, `specmgr adr-toc`, `specmgr
+  schema` — all seven domain schemas "unchanged") all byte-identical
+  no-ops with `git diff --exit-code -- docs/` exit 0, the 16 prompt test
+  files re-run live (**Ran 186 tests, OK**), and the ACC-005/006 greps
+  re-run fresh (121 kept-by-design residual lines in 28 files; 18 data
+  files carry the generic call shapes; zero superseded-tool call sites).
+- Feature complete: all seven phases done; the eight acceptance criteria
+  are checked and annotated in place; no code change in this phase.
 
 #### Update 2026-08-27 (Phase 6: Cross-cutting documentation and release notes)
 
@@ -1374,5 +1589,17 @@ None.
 
 ### Related PRs / Commits
 
-None yet (one Conventional Commit per accepted phase, created by the phase-
-orchestrator with user confirmation).
+- `2647649` — Phase 1: ADR (the feature's accepted ADR,
+  36905d5b-8057-4294-8665-c7eed5534db0)
+- `fc76490` — Phase 2: generic `update` tool + `raw` read parameter
+- `971998f` — Phase 3: retire the seven per-domain `update_<d>` tools
+- `d9f7a28` — Phase 4: generic `set_status` tool + retire the eight old
+  status tools
+- `db0fec5` — Phase 5: narration rewrite (prompts + instruction data)
+- `c82abeb` — Phase 6: cross-cutting documentation and release notes
+  (`AGENTS.md`, `CHANGELOG.md`)
+
+One Conventional Commit per accepted phase, created by the phase-
+orchestrator. This list covers Phases 1–6; Phase 7's own commit does not
+exist yet (the orchestrator commits it after this entry) and is
+deliberately not listed.
