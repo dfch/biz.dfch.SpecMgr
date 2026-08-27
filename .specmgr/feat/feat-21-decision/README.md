@@ -170,12 +170,12 @@ progresses (edit, don't duplicate).
 - [x] Task 3.4: `dec/resources/` — `dec_schema.py` (`specmgr://dec/schema`, JSON from packaged copy), `dec_example.py`, `dec_template.py`, `__init__.py` — depends on: Task 3.5 — status: completed
 - [x] Task 3.5: `commands/schema.py` — `generate_dec_schema()` + `_GENERATORS["dec"]` (mirror `generate_gol_schema`); run `specmgr schema --type dec` (writes `docs/dec_schema.json`) and `specmgr schema --type dec --output-dir src/biz/dfch/specmgr/dec/data` (packaged copy) — depends on: Task 1.6 — status: completed
 - [x] Task 3.6: Tests `tests/dec/resources/` (ACC-004) — depends on: Task 3.4 — status: completed
-- [x] Task 3.7: Phase-end quality gate + commit + comment the commit hash on issue #21 — depends on: Task 3.6 — status: in-progress (gate run; commit + issue #21 comment performed by orchestrator after verification)
+- [x] Task 3.7: Phase-end quality gate + commit + comment the commit hash on issue #21 — depends on: Task 3.6 — status: completed (commit f8ba8b4, issue #21 comment posted by orchestrator)
 
 #### Phase 4: Prompts
-- [ ] Task 4.1: `dec/prompts/` — `create_dec.py` (`create_dec(topic)`), `update_dec.py` (`update_dec(id, instructions=None)` with standard fallback), `__init__.py` — depends on: Task 3.3 — status: not-started
-- [ ] Task 4.2: Tests `tests/dec/prompts/` (ACC-005) — depends on: Task 4.1 — status: not-started
-- [ ] Task 4.3: Phase-end quality gate + commit + comment the commit hash on issue #21 — depends on: Task 4.2 — status: not-started
+- [x] Task 4.1: `dec/prompts/` — `create_dec.py` (`create_dec(topic)`), `update_dec.py` (`update_dec(id, instructions=None)` with standard fallback), `__init__.py` — depends on: Task 3.3 — status: completed
+- [x] Task 4.2: Tests `tests/dec/prompts/` (ACC-005) — depends on: Task 4.1 — status: completed
+- [x] Task 4.3: Phase-end quality gate + commit + comment the commit hash on issue #21 — depends on: Task 4.2 — status: in-progress (gate run; commit + issue #21 comment performed by orchestrator after verification)
 
 #### Phase 5: Cross-cutting registration
 - [ ] Task 5.1: `server.py` — add `dec` to the final import line (`adr, dec, general, gol, prb, qa, req, rsk, tsk, uc`) + module docstring (3 resources, 10 tools, 2 prompts, domain summary) — depends on: Task 4.3 — status: not-started

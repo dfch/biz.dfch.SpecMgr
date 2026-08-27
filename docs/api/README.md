@@ -54,7 +54,9 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.dec.models.v1.frontmatter`](biz.dfch.specmgr.dec.models.v1.frontmatter.md) — Decision (DEC) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
 - [`biz.dfch.specmgr.dec.models.v1.parser`](biz.dfch.specmgr.dec.models.v1.parser.md) — Parse raw decision (DEC) ``.md`` text into a :class:`DecDocument`.
 - [`biz.dfch.specmgr.dec.models.v1.summary`](biz.dfch.specmgr.dec.models.v1.summary.md) — Pydantic model for one line of DEC listing output (Phase 2, Task 2.3).
-- [`biz.dfch.specmgr.dec.prompts`](biz.dfch.specmgr.dec.prompts.md) — No documentation available.
+- [`biz.dfch.specmgr.dec.prompts`](biz.dfch.specmgr.dec.prompts.md) — MCP prompt wrappers for Decisions (Task 4.1).
+- [`biz.dfch.specmgr.dec.prompts.create_dec`](biz.dfch.specmgr.dec.prompts.create_dec.md) — ``@mcp.prompt()``: create_dec (Task 4.1).
+- [`biz.dfch.specmgr.dec.prompts.update_dec`](biz.dfch.specmgr.dec.prompts.update_dec.md) — ``@mcp.prompt()``: update_dec (Task 4.1).
 - [`biz.dfch.specmgr.dec.resources`](biz.dfch.specmgr.dec.resources.md) — MCP resource registrations for Decision (DEC) documents (feat-21 Task 3.4).
 - [`biz.dfch.specmgr.dec.resources.dec_example`](biz.dfch.specmgr.dec.resources.dec_example.md) — Resource: specmgr://dec/example (feat-21 Task 3.4).
 - [`biz.dfch.specmgr.dec.resources.dec_schema`](biz.dfch.specmgr.dec.resources.dec_schema.md) — Resource: specmgr://dec/schema (feat-21 Task 3.4, packaged data).

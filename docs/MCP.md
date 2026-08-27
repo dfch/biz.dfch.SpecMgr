@@ -3,7 +3,7 @@
 Auto-generated from the live `biz.dfch.specmgr.server:mcp` registration --
 do not edit by hand, run `specmgr mcp-docs` instead (see `AGENTS.md`).
 
-28 resource(s), 1 resource template(s), 94 tool(s), 19 prompt(s).
+28 resource(s), 1 resource template(s), 94 tool(s), 21 prompt(s).
 
 ## Table of Contents
 
@@ -1281,6 +1281,7 @@ Fetch a URL over HTTP GET with a bearer token, but only if the URL matches the c
 | [`compact_history`](#prompt-compact_history) | Guides the LLM through rotating older 'Recent Updates' entries out of a .specmgr feature folder's README.md and into an optional sibling history.md, leaving a pointer line behind, per ADR e369ee2e-3353-4f92-991c-6367d76d832e. |
 | [`create_adr`](#prompt-create_adr) | Guides the LLM through checking for an existing similar ADR, gathering the required information, and driving create_adr/option_create/set_status/validate_adr to author a new MADR-4.0.0-based Architecture Decision Record. |
 | [`create_adr_test`](#prompt-create_adr_test) | Experimental, strictly step-gated variant of create_adr for A/B comparison: the same MADR-4.0.0 structure and create_adr/option_create/set_status/validate_adr tool sequence, rewritten as hard numbered gates instead of narrated steps. |
+| [`create_dec`](#prompt-create_dec) | Guides the LLM through checking for an existing similar decision, gathering the required information, and driving create_dec/validate_dec to author a new DEC document. |
 | [`create_gol`](#prompt-create_gol) | Guides the LLM through checking for an existing similar goal, gathering the required information, and driving create_gol/validate_gol to author a new GOL document. |
 | [`create_prb`](#prompt-create_prb) | Guides the LLM through checking for an existing similar problem statement, interviewing the user for the 5W2H current-state questions, synthesizing the Summary and Gap, and driving create_prb/validate_prb to author a new PRB document. |
 | [`create_qa`](#prompt-create_qa) | Guides the LLM through checking for an existing similar QA document, gathering answers to ISO/IEC 25010:2023 characteristic-relevant questions, and driving create_qa/validate_qa to author a new QA document. |
@@ -1291,6 +1292,7 @@ Fetch a URL over HTTP GET with a bearer token, but only if the URL matches the c
 | [`refine`](#prompt-refine) | Guides the LLM through appending a batch of new, unanswered interview questions (each with an empty placeholder answer) to an existing QA document, for one or more of the nine ISO/IEC 25010:2023 quality characteristics. |
 | [`update_adr`](#prompt-update_adr) | Guides the LLM through revising an existing ADR by id: reading current state, applying the requested change with the right tool, and validating. |
 | [`update_adr_test`](#prompt-update_adr_test) | Experimental, strictly step-gated variant of update_adr for A/B comparison: the same read-first/map-to-tool/validate-last flow, rewritten as hard numbered gates instead of narrated steps. |
+| [`update_dec`](#prompt-update_dec) | Guides the LLM through revising an existing decision by id: reading current state, applying the requested change with the right tool, and validating. |
 | [`update_gol`](#prompt-update_gol) | Guides the LLM through revising an existing goal by id: reading current state, showing which sections are present vs. empty, eliciting revisions, applying the change with the right tool, and validating. |
 | [`update_prb`](#prompt-update_prb) | Guides the LLM through revising an existing problem statement by id: reading current state, showing which of the 7 5W2H questions are answered, eliciting revisions, re-synthesizing Summary/Gap, applying the change with the right tool, and validating. |
 | [`update_qa`](#prompt-update_qa) | Guides the LLM through revising an existing QA document by id: reading current state, applying the requested change with the right tool, and validating. |
@@ -1328,6 +1330,14 @@ Experimental, strictly step-gated variant of create_adr for A/B comparison: the 
 | `decision_makers` | No |  |
 | `consulted` | No |  |
 | `informed` | No |  |
+
+### Prompt: create_dec
+
+Guides the LLM through checking for an existing similar decision, gathering the required information, and driving create_dec/validate_dec to author a new DEC document.
+
+| Argument | Required | Description |
+| --- | --- | --- |
+| `topic` | Yes |  |
 
 ### Prompt: create_gol
 
@@ -1406,6 +1416,15 @@ Guides the LLM through revising an existing ADR by id: reading current state, ap
 ### Prompt: update_adr_test
 
 Experimental, strictly step-gated variant of update_adr for A/B comparison: the same read-first/map-to-tool/validate-last flow, rewritten as hard numbered gates instead of narrated steps.
+
+| Argument | Required | Description |
+| --- | --- | --- |
+| `id` | Yes |  |
+| `instructions` | No |  |
+
+### Prompt: update_dec
+
+Guides the LLM through revising an existing decision by id: reading current state, applying the requested change with the right tool, and validating.
 
 | Argument | Required | Description |
 | --- | --- | --- |
