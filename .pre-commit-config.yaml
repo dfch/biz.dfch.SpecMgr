@@ -3,6 +3,11 @@ repos:
     rev: v0.16.1
     hooks:
       - id: ruff-format
+        # ruff format also formats Python code blocks embedded in Markdown files,
+        # and CI's `ruff format --check` scans the whole repo -- but the upstream
+        # hook only selects [python, pyi, jupyter], so .md files (e.g. the
+        # .specmgr/feat/ session transcripts) passed pre-commit while failing CI.
+        types_or: [python, pyi, jupyter, markdown]
       - id: ruff-check
         args: [--fix]
 
