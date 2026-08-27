@@ -2863,7 +2863,9 @@ Alternatively, keep it simple: annotate as `-> object`, or use a union. I'll pro
 **Dispatch implementation:** A new module `general/tools/update.py` (the cross-cutting home per AGENTS.md), holding a per-domain descriptor table:
 
 ```python
-_UPDATERS: dict[str, callable]  # or a small dataclass: validate(content)->body, frontmatter class, write helper, lock, base_dir, error type
+_UPDATERS: dict[
+    str, callable
+]  # or a small dataclass: validate(content)->body, frontmatter class, write helper, lock, base_dir, error type
 ```
 
 Each entry wires up the existing per-domain private helpers (`load_by_id`, `write_X_file`, `X_lock`, `X.from_text`, `XFrontmatter`). The 7 `update_X` tool modules get deleted; each domain's `tools/__init__.py` drops the import; `set_status_X` and the rest of the domain tools keep using the same private helpers (no change).
@@ -3437,9 +3439,9 @@ Actually, one more consideration regarding `update`'s dispatch table: each domai
 @dataclass(frozen=True)
 class _Updater:
     type_name: str
-    body_cls: type          # .from_text for validation
-    frontmatter_cls: type   # reconstruction
-    document_cls: type      # return value
+    body_cls: type  # .from_text for validation
+    frontmatter_cls: type  # reconstruction
+    document_cls: type  # return value
     base_dir_fn: Callable[[], Path]
     load_by_id: Callable[[Path, str], tuple[Path, Any]]
     write_fn: Callable[[Path, Any, str], None]
@@ -3452,7 +3454,11 @@ For `set_status`, the per-domain operation differs subtly: the domain version wr
 
 ```python
 def _update_req(id_: str, content: str) -> ReqDocument: ...  # same body as today's update_req, minus the decorator
+
+
 ...
+
+
 def update(id: str, type: DocType, content: str) -> Union:
     return _DISPATCH[type](id, content)
 ```
