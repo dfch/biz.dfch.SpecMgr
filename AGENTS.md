@@ -167,6 +167,26 @@ type or cross-cutting:
    `rsk`-prefixed convention the tools/resources use). Its schema lives at
    `rsk/models/v1/`, inside the domain package, not top-level
    `models/`.
+- **`dec/`** (Decision) — same tools/resources/prompts shape as
+  `req/`/`prb/` but for decisions in general (not architecture-only)
+  (`create_dec`, `update_dec`, `set_status_dec`, `parse_dec`,
+  `list_dec`, `get_dec`, `get_dec_example`, `get_dec_template`,
+  `delete_dec` stub, `validate_dec`); `dec/resources/`
+  (`specmgr://dec/schema`, `specmgr://dec/example`,
+  `specmgr://dec/template`; no `specmgr://dec/{id}` — id-based reads
+  are `get_dec`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
+  `specmgr://dec/list` — `list_dec` ships as a paged tool from day
+  one, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13); `dec/prompts/`
+  (`create_dec`/`update_dec`, narrated `TodoWrite` +
+  `question`-tool-driven interview flows; `create_dec` first checks
+  `list_dec` for a near-duplicate decision). Its schema lives at
+  `dec/models/v1/`, inside the domain package, not top-level
+  `models/`. A DEC keeps the ADR's general structure (MADR-style
+  headings, `Options` collection) but is built on the generic
+  `models/md` parser with the GOL/RSK/QA simple surface — no
+  fine-grained mutation tools, no renderer: `update_dec` is a single
+  whole-body replace that persists the caller's raw validated body
+  byte-for-byte.
  - **`general/`** — cross-cutting, non-domain-specific package:
    `general/tools/` (`mdformat`, formats a markdown file in place while
    preserving YAML frontmatter blocks; `update`, the generic whole-body
@@ -205,13 +225,14 @@ mirror of that same registration and must never be hand-edited.
 
 Still genuinely missing / not yet done (don't assume otherwise):
 - No `validate_adr` (or `validate_req`/`validate_uc`/`validate_tsk`/
-  `validate_qa`/`validate_prb`/`validate_gol`/`validate_rsk`) tool runs
+  `validate_qa`/`validate_prb`/`validate_gol`/`validate_rsk`/
+  `validate_dec`) tool runs
   over the repo's
   own documents yet via pre-commit or CI. (ADR
   9c687bb1-8ee7-41c8-84ec-07606356bc73: "Enforce doc generation/lint/tests
   locally via pre-commit hook, not just CI")
 - `delete_req`/`delete_uc`/`delete_tsk`/`delete_qa`/`delete_prb`/
-  `delete_gol`/`delete_rsk` are stubs, not yet implemented.
+  `delete_gol`/`delete_rsk`/`delete_dec` are stubs, not yet implemented.
 - No `ac` (Acceptance Criteria) domain exists yet, despite `server.py`'s
   docstring already reserving a spot for it ("... and later `ac`") — the
   convention for adding it (or any future domain) is fixed by ADR
@@ -219,9 +240,9 @@ Still genuinely missing / not yet done (don't assume otherwise):
   two generic tools in `general/tools/` (`update`'s `type`,
   `set_status`'s `type`) plus a `raw` parameter on the new `get_<d>` tool
   — not new `update_<d>`/`set_status_<d>` tools.
-- `req`/`tsk`/`qa`/`prb`/`gol`/`rsk` each register `tools`, `resources`, and
-  `prompts`; `uc` registers `tools` and `resources` only — it has no
-  `prompts` sub-package yet.
+- `req`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec` each register `tools`,
+  `resources`, and `prompts`; `uc` registers `tools` and `resources`
+  only — it has no `prompts` sub-package yet.
 
 `.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md` §10 ("Next steps") tracks per-item done/not-done
 status for the ADR feature specifically and should be kept in sync with
@@ -359,8 +380,9 @@ consumer of the base library.
 ## MCP server (`server.py`)
 
 - Builds the `MCPServer` instance (`mcp` object) and a no-op `_lifespan`,
-  then imports every domain package (`adr`, `general`, `gol`, `prb`, `qa`,
-  `req`, `rsk`, `tsk`, `uc`) as its last line purely for the side effect of
+  then imports every domain package (`adr`, `dec`, `general`, `gol`,
+  `prb`, `qa`, `req`, `rsk`, `tsk`, `uc`) as its last line purely for the
+  side effect of
   running their `@mcp.tool()`/`@mcp.resource()`/`@mcp.prompt()` decorators.
   When adding a new domain, add its import to that same last line —
   forgetting it means the new tools/resources/prompts silently never

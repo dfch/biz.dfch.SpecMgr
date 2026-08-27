@@ -44,6 +44,37 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.commands.schema`](biz.dfch.specmgr.commands.schema.md) — ``schema`` -- generate JSON Schema (2020-12) for registered document-type models.
 - [`biz.dfch.specmgr.commands.unused_code`](biz.dfch.specmgr.commands.unused_code.md) — ``unused-code`` -- report unreferenced Python symbols, or (with ``--test``) test-only ones.
 - [`biz.dfch.specmgr.commands.version`](biz.dfch.specmgr.commands.version.md) — ``version`` -- print the installed ``biz-dfch-specmgr`` version.
+- [`biz.dfch.specmgr.dec`](biz.dfch.specmgr.dec.md) — Decision (DEC) domain -- decisions in general (not architecture-only).
+- [`biz.dfch.specmgr.dec.models`](biz.dfch.specmgr.dec.models.md) — Decision (DEC) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- [`biz.dfch.specmgr.dec.models.v1`](biz.dfch.specmgr.dec.models.v1.md) — Decision (DEC) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- [`biz.dfch.specmgr.dec.models.v1._util`](biz.dfch.specmgr.dec.models.v1._util.md) — Shared, private constants for the ``dec.models.v1`` subpackage.
+- [`biz.dfch.specmgr.dec.models.v1.body`](biz.dfch.specmgr.dec.models.v1.body.md) — Decision (DEC) body models: whole-section fields under a single H1.
+- [`biz.dfch.specmgr.dec.models.v1.document`](biz.dfch.specmgr.dec.models.v1.document.md) — Pydantic model for a full decision document (frontmatter + body).
+- [`biz.dfch.specmgr.dec.models.v1.frontmatter`](biz.dfch.specmgr.dec.models.v1.frontmatter.md) — Decision (DEC) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
+- [`biz.dfch.specmgr.dec.models.v1.parser`](biz.dfch.specmgr.dec.models.v1.parser.md) — Parse raw decision (DEC) ``.md`` text into a :class:`DecDocument`.
+- [`biz.dfch.specmgr.dec.models.v1.summary`](biz.dfch.specmgr.dec.models.v1.summary.md) — Pydantic model for one line of DEC listing output (Phase 2, Task 2.3).
+- [`biz.dfch.specmgr.dec.prompts`](biz.dfch.specmgr.dec.prompts.md) — MCP prompt wrappers for Decisions (Task 4.1).
+- [`biz.dfch.specmgr.dec.prompts.create_dec`](biz.dfch.specmgr.dec.prompts.create_dec.md) — ``@mcp.prompt()``: create_dec (Task 4.1).
+- [`biz.dfch.specmgr.dec.prompts.update_dec`](biz.dfch.specmgr.dec.prompts.update_dec.md) — ``@mcp.prompt()``: update_dec (Task 4.1).
+- [`biz.dfch.specmgr.dec.resources`](biz.dfch.specmgr.dec.resources.md) — MCP resource registrations for Decision (DEC) documents (feat-21 Task 3.4).
+- [`biz.dfch.specmgr.dec.resources.dec_example`](biz.dfch.specmgr.dec.resources.dec_example.md) — Resource: specmgr://dec/example (feat-21 Task 3.4).
+- [`biz.dfch.specmgr.dec.resources.dec_schema`](biz.dfch.specmgr.dec.resources.dec_schema.md) — Resource: specmgr://dec/schema (feat-21 Task 3.4, packaged data).
+- [`biz.dfch.specmgr.dec.resources.dec_template`](biz.dfch.specmgr.dec.resources.dec_template.md) — Resource: specmgr://dec/template (feat-21 Task 3.4).
+- [`biz.dfch.specmgr.dec.tools`](biz.dfch.specmgr.dec.tools.md) — MCP tool wrappers for decisions (mirrors ``gol/tools/``'s own shape).
+- [`biz.dfch.specmgr.dec.tools._io`](biz.dfch.specmgr.dec.tools._io.md) — Thin file read helpers over ``parse_dec`` (Task 2.1).
+- [`biz.dfch.specmgr.dec.tools._lock`](biz.dfch.specmgr.dec.tools._lock.md) — Per-document in-process lock guarding decision mutations.
+- [`biz.dfch.specmgr.dec.tools._paths`](biz.dfch.specmgr.dec.tools._paths.md) — Decision base directory resolution and id -> path lookup (Task 2.1).
+- [`biz.dfch.specmgr.dec.tools._write`](biz.dfch.specmgr.dec.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_dec``/``update_dec``.
+- [`biz.dfch.specmgr.dec.tools.create_dec`](biz.dfch.specmgr.dec.tools.create_dec.md) — ``@mcp.tool()`` wrapper: create_dec (Task 2.2).
+- [`biz.dfch.specmgr.dec.tools.delete_dec`](biz.dfch.specmgr.dec.tools.delete_dec.md) — ``@mcp.tool()`` wrapper: delete_dec (Task 2.2).
+- [`biz.dfch.specmgr.dec.tools.get_dec`](biz.dfch.specmgr.dec.tools.get_dec.md) — ``@mcp.tool()`` wrapper: get_dec (Task 2.2).
+- [`biz.dfch.specmgr.dec.tools.get_dec_example`](biz.dfch.specmgr.dec.tools.get_dec_example.md) — ``@mcp.tool()`` wrapper: get_dec_example (Task 2.2).
+- [`biz.dfch.specmgr.dec.tools.get_dec_template`](biz.dfch.specmgr.dec.tools.get_dec_template.md) — ``@mcp.tool()`` wrapper: get_dec_template (Task 2.2).
+- [`biz.dfch.specmgr.dec.tools.list_dec`](biz.dfch.specmgr.dec.tools.list_dec.md) — ``@mcp.tool()`` wrapper: list_dec (Task 2.2).
+- [`biz.dfch.specmgr.dec.tools.parse_dec`](biz.dfch.specmgr.dec.tools.parse_dec.md) — ``@mcp.tool()`` wrapper: parse_dec (Task 2.2).
+- [`biz.dfch.specmgr.dec.tools.set_status_dec`](biz.dfch.specmgr.dec.tools.set_status_dec.md) — ``@mcp.tool()`` wrapper: set_status_dec (Task 2.2).
+- [`biz.dfch.specmgr.dec.tools.update_dec`](biz.dfch.specmgr.dec.tools.update_dec.md) — ``@mcp.tool()`` wrapper: update_dec (Task 2.2).
+- [`biz.dfch.specmgr.dec.tools.validate_dec`](biz.dfch.specmgr.dec.tools.validate_dec.md) — ``@mcp.tool()`` wrapper: validate_dec (Task 2.2).
 - [`biz.dfch.specmgr.general`](biz.dfch.specmgr.general.md) — General-purpose (cross-cutting, not domain-specific) tools, resources, and
 - [`biz.dfch.specmgr.general.models`](biz.dfch.specmgr.general.models.md) — Shared, cross-domain Pydantic models with no document-type-specific content.
 - [`biz.dfch.specmgr.general.models.paged_result`](biz.dfch.specmgr.general.models.paged_result.md) — Generic paged-result wrapper shared by every ``list_<domain>`` MCP tool (feat-13 Task 1.1).

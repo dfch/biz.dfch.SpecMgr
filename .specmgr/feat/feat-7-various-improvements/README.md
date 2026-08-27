@@ -2,7 +2,7 @@
 created: 2026-08-15
 id: feat-7-various-improvements
 status: planning
-updated: 2026-08-26
+updated: 2026-08-27
 version: 1.0.0
 ---
 
@@ -687,6 +687,30 @@ progresses (edit, don't duplicate).
   schema` exits 0 on a clean tree, 1 after deliberately drifting one file)
   — depends on: none — status: done (2026-08-26)
 
+- [ ] Task 0.28: Clean up two pre-existing doc enumerations found while
+  implementing feat-21-decision (the DEC domain, 2026-08-27) and
+  deliberately left untouched there as out-of-scope: (a) the root
+  `README.md`'s "At this time, we have these artifact:" list — promote the
+  implemented `Risk (RSK)` domain into the active list (alphabetical slot
+  between `- Requirement (REQ)` and `- Task List (TSK)`) and remove it from
+  the commented-out future block below the list (the
+  `feat-15-add-artifact-type-risk` work never promoted it; feat-18/feat-21
+  each promoted their own entries); (b) `AGENTS.md`'s "Existing feature
+  folders:" list (in the "Development Artifacts (`.specmgr/`)" section),
+  which names only `feat-9-doc-in-specmgr/`/`feat-4-use-cases/`/
+  `feat-5-md-model-parser/` while 14 feature folders now exist — either
+  refresh the enumeration or reword it as a rule (per Task 0.25's
+  precedent of stating the rule instead of enumerating), deciding at
+  implementation time and recording the choice in this file's Decisions
+  Made — depends on: none — status: not-started
+
+  Background: Found during feat-21's Phase 5 (cross-cutting registration)
+  when its AGENTS.md/root-README enumeration pass was scoped to DEC only;
+  both items predate feat-21 (RSK's promotion gap dates to feat-15's
+  close-out; the feature-folders list to the feat-9 migration era) and
+  were flagged rather than fixed to keep feat-21's diff on-scope. No code
+  impact — documentation-only staleness.
+
 - [ ] Task 1.1: Inventory current `specmgr://*/list` resources and diff
   their output shape/behavior (`adr_list` vs. `req_list`) — depends on:
   none — status: not-started
@@ -808,6 +832,14 @@ already-compacted folder).
 
 See `history.md` for updates before 2026-08-18 (rotated out per ADR
 e369ee2e-3353-4f92-991c-6367d76d832e once this section grew too long).
+
+#### Update 2026-08-27 (Task 0.28 recorded)
+
+- Recorded: Task 0.28 (two pre-existing documentation enumerations found
+  during feat-21's DEC implementation — the root `README.md`'s missing
+  `Risk (RSK)` promotion, and `AGENTS.md`'s stale "Existing feature
+  folders" list); documentation-only, no code changes, task is
+  not-started.
 
 #### Update 2026-08-26T17:51:33Z (Task 0.25)
 
