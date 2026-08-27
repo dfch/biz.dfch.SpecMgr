@@ -1042,11 +1042,12 @@ None.
   tests on `get_dec`), and `AGENTS.md`/`CHANGELOG.md`/`server.py`/
   regenerated docs updated. Live registration: **79 tools / 28
   resources / 21 prompts**. Final quality gate green: ruff format/check
-  clean, vulture clean, **Ran 2007 tests, OK**, pylint advisory with no
+  clean, vulture   clean, **Ran 2007 tests, OK**, pylint advisory with no
   new messages vs. the merge commit (cyclic-import −2, duplicate-code
   −2), `specmgr docs`/`mcp-docs`/`adr-toc`/`schema` all no-ops
   (`git diff --exit-code -- docs/` exit 0).
-- Next: push `feat-22` to origin and open the PR to `dev`.
+- Done: pushed `feat-22` to origin and opened the PR to `dev`:
+  https://github.com/dfch/biz.dfch.SpecMgr/pull/26.
 
 #### Update 2026-08-27 (Phase 7: Final verification)
 
@@ -1719,3 +1720,8 @@ None.
 One Conventional Commit per accepted phase, created by the phase-
 orchestrator; Phase 8's two commits (merge + conversion) were created
 directly when integrating the already-merged feat-21 branch from `dev`.
+
+### Pull Request
+
+- https://github.com/dfch/biz.dfch.SpecMgr/pull/26 — feat-22 → dev
+  (includes the Phase-8 dev merge and DEC conversion).
