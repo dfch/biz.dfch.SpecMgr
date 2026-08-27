@@ -44,6 +44,7 @@ _._default_blank_status_to_open
 _._optional_blank_to_none
 _._required_non_blank
 _._validate_items_eagerly
+_._validate_option_numbers_unique
 _._validate_partial_title
 _._validate_status
 _._validate_type_non_blank
@@ -142,6 +143,12 @@ question_5
 question_6
 question_7
 summary
+# dec (feat-21 Phase 1): `Decision` fields read only via (de)serialization;
+# nothing in `src/` accesses them as plain attributes yet.
+context
+drivers
+considered
+outcome
 
 # --- MCP `@mcp.resource(...)`/`@mcp.tool()` entry points -------------------------
 # Invoked by the MCP framework once registered, not called directly in `src/`.

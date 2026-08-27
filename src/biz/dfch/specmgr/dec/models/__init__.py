@@ -17,21 +17,22 @@
 
 """Decision (DEC) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
 
-Mirrors the ``gol/models/v1`` layout: a free-function ``parse_dec`` entry
-point, document-level ``DecDocument(frontmatter, body)`` wrapper,
-frontmatter and body subclasses under this same package, and the
-``DecSummary`` listing model for the (Phase-2) ``list_dec`` tool. Body
-classes map directly to heading sections in a decision markdown file --
-see ``body.py`` for the full hierarchy.
+Mirrors ``rsk/models``'s layout: a versioned sub-package (``v1``, ...)
+holding the frontmatter/body classes, the document wrapper and parser for
+``dec`` documents, and the one-line ``DecSummary`` for the paged
+``list_dec`` tool.
 """
 
-from ._util import SCHEMA_COMMENT_VERSION
-from .body import (
+from .v1 import (
+    SCHEMA_COMMENT_VERSION,
     AcceptanceCriteria,
     Confirmation,
     Consequences,
     ConsideredOptions,
     Context,
+    DecDocument,
+    DecFrontmatter,
+    DecSummary,
     Decision,
     DecisionDrivers,
     DecisionOutcome,
@@ -44,11 +45,8 @@ from .body import (
     Requirements,
     UpdateEntry,
     Updates,
+    parse_dec,
 )
-from .document import DecDocument
-from .frontmatter import DecFrontmatter
-from .parser import parse_dec
-from .summary import DecSummary
 
 __all__ = [
     "SCHEMA_COMMENT_VERSION",

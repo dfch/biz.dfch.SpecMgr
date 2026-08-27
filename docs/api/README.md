@@ -46,6 +46,14 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.commands.unused_code`](biz.dfch.specmgr.commands.unused_code.md) — ``unused-code`` -- report unreferenced Python symbols, or (with ``--test``) test-only ones.
 - [`biz.dfch.specmgr.commands.version`](biz.dfch.specmgr.commands.version.md) — ``version`` -- print the installed ``biz-dfch-specmgr`` version.
 - [`biz.dfch.specmgr.dec`](biz.dfch.specmgr.dec.md) — Decision (DEC) domain -- decisions in general (not architecture-only).
+- [`biz.dfch.specmgr.dec.models`](biz.dfch.specmgr.dec.models.md) — Decision (DEC) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- [`biz.dfch.specmgr.dec.models.v1`](biz.dfch.specmgr.dec.models.v1.md) — Decision (DEC) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- [`biz.dfch.specmgr.dec.models.v1._util`](biz.dfch.specmgr.dec.models.v1._util.md) — Shared, private constants for the ``dec.models.v1`` subpackage.
+- [`biz.dfch.specmgr.dec.models.v1.body`](biz.dfch.specmgr.dec.models.v1.body.md) — Decision (DEC) body models: whole-section fields under a single H1.
+- [`biz.dfch.specmgr.dec.models.v1.document`](biz.dfch.specmgr.dec.models.v1.document.md) — Pydantic model for a full decision document (frontmatter + body).
+- [`biz.dfch.specmgr.dec.models.v1.frontmatter`](biz.dfch.specmgr.dec.models.v1.frontmatter.md) — Decision (DEC) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
+- [`biz.dfch.specmgr.dec.models.v1.parser`](biz.dfch.specmgr.dec.models.v1.parser.md) — Parse raw decision (DEC) ``.md`` text into a :class:`DecDocument`.
+- [`biz.dfch.specmgr.dec.models.v1.summary`](biz.dfch.specmgr.dec.models.v1.summary.md) — Pydantic model for one line of DEC listing output (Phase 2, Task 2.3).
 - [`biz.dfch.specmgr.dec.prompts`](biz.dfch.specmgr.dec.prompts.md) — No documentation available.
 - [`biz.dfch.specmgr.dec.resources`](biz.dfch.specmgr.dec.resources.md) — No documentation available.
 - [`biz.dfch.specmgr.dec.tools`](biz.dfch.specmgr.dec.tools.md) — No documentation available.

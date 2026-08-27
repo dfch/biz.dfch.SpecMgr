@@ -60,6 +60,14 @@ First-line docstrings from each module, organized by domain:
 **dec/**
 
 - `dec/__init__.py` — Decision (DEC) domain -- decisions in general (not architecture-only).
+- `dec/models/__init__.py` — Decision (DEC) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- `dec/models/v1/__init__.py` — Decision (DEC) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- `dec/models/v1/_util.py` — Shared, private constants for the ``dec.models.v1`` subpackage.
+- `dec/models/v1/body.py` — Decision (DEC) body models: whole-section fields under a single H1.
+- `dec/models/v1/document.py` — Pydantic model for a full decision document (frontmatter + body).
+- `dec/models/v1/frontmatter.py` — Decision (DEC) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
+- `dec/models/v1/parser.py` — Parse raw decision (DEC) ``.md`` text into a :class:`DecDocument`.
+- `dec/models/v1/summary.py` — Pydantic model for one line of DEC listing output (Phase 2, Task 2.3).
 
 **general/**
 
@@ -379,4 +387,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 254
+**Test files**: 257
