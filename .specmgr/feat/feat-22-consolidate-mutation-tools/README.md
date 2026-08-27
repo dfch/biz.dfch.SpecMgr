@@ -677,7 +677,7 @@ phase-orchestrator commits each accepted phase as one Conventional Commit.
 
 #### Phase 6: Cross-cutting documentation and release notes
 
-- [ ] Task 6.1: Update `AGENTS.md`: the seven per-domain bullets — remove
+- [x] Task 6.1: Update `AGENTS.md`: the seven per-domain bullets — remove
   `update_<d>`/`set_status_<d>` from each tool enumeration and note that
   whole-body/line-range updates go through the generic `update` tool and
   status changes through the generic `set_status` tool (both in
@@ -689,8 +689,8 @@ phase-orchestrator commits each accepted phase as one Conventional Commit.
   add the convention note that future domains (e.g. `ac`) add one dispatch
   entry to the two generic tools (plus a `raw` getter parameter) instead of
   new `update_<d>`/`set_status_<d>` tools, citing the Phase-1 ADR id —
-  depends on: Phase 5 complete — status: not-started
-- [ ] Task 6.2: Update `CHANGELOG.md`'s `[Unreleased]` section: **Breaking** —
+  depends on: Phase 5 complete — status: done
+- [x] Task 6.2: Update `CHANGELOG.md`'s `[Unreleased]` section: **Breaking** —
   removed 14 MCP tools (`update_req`, `update_uc`, `update_tsk`,
   `update_qa`, `update_prb`, `update_gol`, `update_rsk`, `set_status_req`,
   `set_status_uc`, `set_status_tsk`, `set_status_qa`, `set_status_prb`,
@@ -703,15 +703,15 @@ phase-orchestrator commits each accepted phase as one Conventional Commit.
   optional `raw: bool = False` on the seven `get_<d>` tools (returns the
   frontmatter-stripped body text verbatim — the text `begin`/`end` index
   into); cite the Phase-1 ADR id — depends on: Phase 5 complete — status:
-  not-started
-- [ ] Task 6.3: Final regeneration: `uv run --frozen specmgr docs`, `uv run
+  done
+- [x] Task 6.3: Final regeneration: `uv run --frozen specmgr docs`, `uv run
   --frozen specmgr mcp-docs`, `uv run --frozen specmgr adr-toc`, `uv run
   --frozen specmgr schema` (models are untouched — expect no schema
   changes); confirm `git diff --exit-code -- docs/` exits zero — depends on:
-  Task 6.1, Task 6.2 — status: not-started
-- [ ] Task 6.4: Phase-end quality gate — full gate; add a dated entry to the
+  Task 6.1, Task 6.2 — status: done
+- [x] Task 6.4: Phase-end quality gate — full gate; add a dated entry to the
   Recent Updates section, update Current Status, flip the phase's task lines
-  to done in place — depends on: Task 6.3 — status: not-started
+  to done in place — depends on: Task 6.3 — status: done
 
 #### Phase 7: Final cross-cutting verification
 
@@ -743,42 +743,101 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-27**: Phase 5 (Narration rewrite — prompts +
-instruction data) complete — every instruction data file and prompt
-module docstring that named a superseded tool now narrates the two
-generic tools with their exact call shapes: `update(id, type="<d>",
-content)` (whole-body), `update(id, type="<d>", content, begin=…, end=…)`
-(line-range — the six domain update-instruction files each teach the
-REQ-002 flow: `get_<d>(id, raw=True)` → 1-based inclusive range, `N+1`
-end-of-body sentinel, replacement lines only; multi-section or
-uncertain → whole-body), and `set_status(id, type="<d>", status)` —
-`type="adr"` in the four ADR files, with `superseded_by` composing
-`"superseded by X"`. No prompt function signature or behavior changed
-anywhere (docstring-only edits, AST-verified); the 16 prompt test files
-assert the new narration (+11 tests); the final ACC-005 grep over
-`src/`/`tests/` leaves only kept-by-design matches — prompt function
-names in the prompt modules/`__init__` files/tests, the `server.py`
-PROMPT enumerations + the four domain `__init__.py` prompt sentences,
-and the data files' "Later revisions" prompt-name references — with
-zero matches in `tools/`/`models/`/`general/` code and zero tool
-references in `data/*.md`. The phase's quality audit fixed a stale
-`prb/prompts/__init__.py` sentence and a list-indentation artifact in
-the two ADR create-instruction files; everything else from the
-partially completed previous session was verified correct as-is.
-Phase-end gate green (1779 tests OK, zero `docs/` drift, fresh-
-subprocess import OK); live registration unchanged at **71 tools / 25
-resources / 19 prompts** (narration-only phase — the feature's target
-end state, reached in Phase 4). Phases 6–7 are not started. (Phase 1 —
-the feature's ADR 36905d5b-8057-4294-8665-c7eed5534db0 — Phase 2 — the
+**As of 2026-08-27**: Phase 6 (Cross-cutting documentation and release
+notes) complete — `AGENTS.md` and `CHANGELOG.md` now narrate the
+consolidated mutation surface; no code change in this phase.
+`AGENTS.md`: the seven per-domain bullets no longer enumerate
+`update_<d>`/`set_status_<d>` — each says whole-body/line-range updates
+go through the generic `update` tool and status changes through the
+generic `set_status` tool (both in `general/tools/`, `type="<d>"`), and
+the six bullets that enumerate `get_<d>` note its `raw: bool = False`
+parameter (frontmatter-stripped body text as-is — the text `begin`/`end`
+index into); the ADR bullet's wrapper count is 12 → 11, ADR status
+changes re-pointed at the generic `set_status` (`type="adr"`, ADR-only
+`superseded_by`); the `general/` bullet gains `update` (7-type;
+`begin`/`end` range with the `N+1` end-of-body sentinel; splice-then-
+validate-whole), `set_status` (8-type incl. adr), and the `raw` note on
+the seven `get_<d>` tools; the "Still genuinely missing" list carries
+the future-domain dispatch-entry convention citing ADR
+36905d5b-8057-4294-8665-c7eed5534db0. `CHANGELOG.md` `[Unreleased]`
+gains the breaking `Removed` entries (14 per-domain tools deleted
+outright; ADR `set_status` signature `(id, status, superseded_by)` →
+`(id, type, status, superseded_by)`, `type="adr"` now required) and the
+`Added` entries (generic `update`, generic `set_status`, `raw` on the
+seven `get_<d>` tools), also citing the ADR. All four generators are
+byte-identical no-ops (`specmgr docs`/`mcp-docs`/`adr-toc`/`schema` —
+every schema "unchanged"; `git diff --exit-code -- docs/` exits 0).
+Phase-end gate green (`ruff format --check` 1094 files, `ruff check`,
+vulture clean, **Ran 1779 tests, OK**). Live registration unchanged at
+**71 tools / 25 resources / 19 prompts** (the feature's target end
+state, reached in Phase 4). Phase 7 is not started. (Phase 1 — the
+feature's ADR 36905d5b-8057-4294-8665-c7eed5534db0 — Phase 2 — the
 generic `update` tool + `raw` reads — Phase 3 — retiring the seven
-`update_<d>` tools — and Phase 4 — the generic `set_status` tool +
-retiring the eight old status tools — completed on 2026-08-27.)
+`update_<d>` tools — Phase 4 — the generic `set_status` tool + retiring
+the eight old status tools — and Phase 5 — the narration rewrite —
+completed on 2026-08-27.)
 
 ### Blockers
 
 None.
 
 ### Recent Updates
+
+#### Update 2026-08-27 (Phase 6: Cross-cutting documentation and release notes)
+
+- Completed: Phase 6 (Tasks 6.1–6.4). Cross-cutting documentation and
+  release notes for the consolidated mutation surface — `AGENTS.md`,
+  `CHANGELOG.md`, the four final regenerations (all no-ops), and this
+  Progress update. No code change in this phase.
+  - `AGENTS.md` (Task 6.1): the seven per-domain bullets no longer
+    enumerate `update_<d>`/`set_status_<d>` — each now says whole-body
+    and line-range updates go through the generic `update` tool and
+    status changes through the generic `set_status` tool (both in
+    `general/tools/`, `type="<d>"`); the six bullets that enumerate
+    `get_<d>` note its `raw: bool = False` parameter (`raw=True` returns
+    the frontmatter-stripped body text as-is — the text `update`'s
+    `begin`/`end` index into). The ADR bullet's `@mcp.tool()` wrapper
+    count is 12 → 11 (`set_status` removed from the enumeration; ADR
+    status changes go through the generic `set_status` tool in
+    `general/tools/`, called with `type="adr"`, ADR-only
+    `superseded_by`). The `general/` bullet adds `update` (the generic
+    whole-body *and* line-range replace for the seven whole-body domains
+    — 7-value `type`, optional 1-based inclusive `begin`/`end` with the
+    `N+1` end-of-body sentinel, splice-then-validate-whole) and
+    `set_status` (the generic status change for all eight domains incl.
+    adr — ADR-only `superseded_by` composing `"superseded by X"`) to
+    `general/tools/`, plus the `raw: bool = False` parameter on the
+    seven `get_<d>` tools. The "Still genuinely missing / not yet done"
+    list gains the future-domain convention: one dispatch entry to each
+    of the two generic tools (`update`'s `type`, `set_status`'s `type`)
+    plus a `raw` parameter on the new `get_<d>` tool — not new
+    `update_<d>`/`set_status_<d>` tools — citing ADR
+    36905d5b-8057-4294-8665-c7eed5534db0 (full UUID).
+  - `CHANGELOG.md` (Task 6.2): `[Unreleased]` gains `### Removed`
+    (**BREAKING**: the 14 per-domain mutation tools —
+    `update_{req,uc,tsk,qa,prb,gol,rsk}` + `set_status_{req,uc,tsk,qa,
+    prb,gol,rsk}` — deleted outright, no deprecated wrappers; ADR's own
+    `set_status` removed, its signature changing from
+    `(id, status, superseded_by)` to `(id, type, status,
+    superseded_by)` with `type="adr"` now required) and `### Added`
+    (generic `update(id, type, content, begin=None, end=None)` — 7
+    types, 1-based inclusive body-line range, `N+1` EOF sentinel,
+    splice-then-validate-whole; generic `set_status(id, type, status,
+    superseded_by=None)` — 8 types, ADR-only `superseded_by`; optional
+    `raw: bool = False` on the seven `get_<d>` tools) — citing ADR
+    36905d5b-8057-4294-8665-c7eed5534db0. No `pyproject.toml` version
+    bump (release-time concern — explicitly out of scope per the plan).
+  - Task 6.3 (final regeneration): `specmgr docs` (305 module pages +
+    `docs/GENERATED.md`), `specmgr mcp-docs` (`docs/MCP.md`), `specmgr
+    adr-toc` (`docs/adr/README.md`), `specmgr schema` (all seven domain
+    schemas reported "unchanged" — models untouched, clean exit) — all
+    four byte-identical no-ops: `git diff --exit-code -- docs/` exits 0.
+- Quality gate (green): `ruff format --check` (1094 files already
+  formatted), `ruff check` (all checks passed), `vulture src/
+  whitelist.py --min-confidence 60` (clean, exit 0), full unittest suite
+  (**Ran 1779 tests, OK** — unchanged count: no code or tests touched
+  in this phase).
+- Next: Phase 7 (Final cross-cutting verification).
 
 #### Update 2026-08-27 (Phase 5: Narration rewrite — prompts + instruction data)
 
