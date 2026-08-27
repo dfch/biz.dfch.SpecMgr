@@ -4389,6 +4389,7 @@ Both precedents confirmed:
 class UpdateEntry(MarkdownSection3):
     content: MarkdownParagraph  # required lead paragraph
 
+
 class RecentUpdates(MarkdownSection2):
     updates: list[UpdateEntry] = Field(min_length=1)
 ```
@@ -4414,8 +4415,9 @@ OK, so let me finalize the three adjustments:
 **2. `## Updates`** — recommend mirroring TSK's `RecentUpdates` mechanism:
 
 ```python
-class Updates(MarkdownSection2):          # implicit alias → "Updates" ✓
+class Updates(MarkdownSection2):  # implicit alias → "Updates" ✓
     updates: list[UpdateEntry] = Field(min_length=1)
+
 
 @alias(value=".+", type=AliasType.REGEX)
 class UpdateEntry(MarkdownSection3):
@@ -4454,14 +4456,14 @@ Updated Decision fields:
 ```python
 @alias(value=".+", type=AliasType.REGEX)
 class Decision(MarkdownSection1):
-    context: Context                                        # required
+    context: Context  # required
     drivers: DecisionDrivers | None = None
     considered: ConsideredOptions | None = None
-    outcome: DecisionOutcome                                # required
+    outcome: DecisionOutcome  # required
     related_artifacts: RelatedArtifacts | None = None
-    pros_and_cons: ProsAndCons | None = None                # LITERAL "Pros and Cons"
+    pros_and_cons: ProsAndCons | None = None  # LITERAL "Pros and Cons"
     more_information: MoreInformation | None = None
-    updates: Updates | None = None                          # last
+    updates: Updates | None = None  # last
     # + model_validator(mode="after") for duplicate option numbers
 ```
 
