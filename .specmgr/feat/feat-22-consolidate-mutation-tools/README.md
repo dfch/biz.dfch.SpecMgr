@@ -896,6 +896,71 @@ phase-orchestrator commits each accepted phase as one Conventional Commit.
   `status: done`; final Recent Updates entry and Current Status summary —
   depends on: Task 7.1 — status: done
 
+#### Phase 8: dev integration — DEC domain conversion
+
+The feature closed at Phase 7 against a pre-feat-21 `dev`. feat-21
+(artifact type "Decision", DEC) was then completed, pushed, and merged
+into `dev` (released as v0.12.0) while still on the old per-domain
+mechanism — per-domain `update_dec`/`set_status_dec` tools, `get_dec`
+without `raw`. Integrating feat-22 with `dev` therefore requires
+converting the DEC domain to this feature's mechanism first, exactly as
+the ADR's convention prescribes ("future domains add one dispatch entry
+per generic tool (plus a `raw` getter parameter), not new tools").
+
+- [x] Task 8.1: `git merge origin/dev` into `feat-22` (8 commits ahead of
+  the merge-base `f9586e6`); resolve the 7 conflicting files — `AGENTS.md`,
+  `CHANGELOG.md`, `src/biz/dfch/specmgr/server.py` (manual: dev's dec
+  lines + our generic-tool lines, dec kept on its old-mechanism wording
+  for the pure-union merge commit) and `docs/MCP.md`, `docs/GENERATED.md`,
+  `docs/api/README.md`, `docs/api/biz.dfch.specmgr.server.md` (resolved by
+  re-running `specmgr docs` + `specmgr mcp-docs`); verify the merge commit
+  is green (full test suite + linters + generator idempotency) —
+  status: done (merge commit `097b502`)
+- [x] Task 8.2: Wire `dec` into the generic tools — `_update_dec`
+  (verbatim port of the retired `update_dec` body plus the REQ-002 range
+  branch) and `_set_status_dec` (verbatim port) in `general/tools/`,
+  `"dec"` in both `_ADAPTERS` dispatch tables and `Literal` unions, both
+  return unions, and the "seven/eight" → "eight/nine" count wording in
+  module/tool/function docstrings — status: done
+- [x] Task 8.3: Retire `dec/tools/update_dec.py` and
+  `dec/tools/set_status_dec.py` (and their exports in
+  `dec/tools/__init__.py`); add `raw: bool = False` to `get_dec`
+  (shared `body_text` helper with the splice, mirroring `get_gol`);
+  re-point the DEC package and private-helper docstrings
+  (`dec/__init__.py`, `_io`, `_lock`, `_write`, `validate_dec`,
+  `dec/tools/__init__.py`) and the `server.py` docstring (dec tools line,
+  generic-tool counts, plus removal of a pre-existing duplicated
+  ADR-prompts line) at the generic tools — status: done
+- [x] Task 8.4: Narration rewrite — `dec/prompts/update_dec.py` module
+  and function docstrings (mirroring the Phase-5 `update_gol` rewrite,
+  dropping the now-obsolete tool-name-collision note),
+  `dec/data/dec_update_instructions.md` (generic `update(id,
+  type="dec", …)` incl. the new line-range subsection and
+  `set_status(id, type="dec", status)`), `dec/data/dec_create_instructions.md`
+  ("Later revisions" pointer) — status: done
+- [x] Task 8.5: Tests — delete `tests/dec/tools/test_update_dec.py` and
+  `test_set_status_dec.py`; add the dec `_Case` to
+  `tests/general/tools/test_update.py` (duplicate `### Option 1:` heading
+  appended at `N+1` as the field-level `ValidationError` trigger) and to
+  `tests/general/tools/test_set_status.py` (`accepted` in / `implemented`
+  out of dec's closed six-set, tied to `DecFrontmatter._ALLOWED_STATUSES`);
+  the four `raw` tests in `tests/dec/tools/test_get_dec.py` (mirroring
+  `test_get_gol`); `tests/dec/tools/test_integration.py` and
+  `tests/dec/prompts/test_update_dec.py`/`test_create_dec.py` re-pointed
+  at the generic call shapes (plus the new line-range-flow assertions) —
+  status: done
+- [x] Task 8.6: Regenerate `docs/` (`specmgr docs`, `specmgr mcp-docs`,
+  `specmgr adr-toc`; delete the two stale API pages for the retired
+  tools); update `AGENTS.md` (dec bullet on the generic wording, general
+  counts eight/nine) and `CHANGELOG.md` (`[Unreleased]`: 16 removed
+  per-domain tools incl. the v0.12.0-shipped `update_dec`/`set_status_dec`
+  pair, generic tools cover the eight/nine domains, eight `raw` getters)
+  — status: done
+- [x] Task 8.7: Final quality gate (ruff format/check, vulture, pylint
+  advisory — no new messages vs. the merge commit, full unittest, all
+  four generators zero drift), push `feat-22`, open the PR to `dev` —
+  status: done
+
 **Note:** If a task's scope changes mid-flight, edit its description in
 place; rely on git history (`git log -p` on this file) to recover what was
 originally planned, rather than keeping a second copy of the task around.
@@ -930,11 +995,58 @@ no-ops with `git diff --exit-code -- docs/` exit 0). The feature's ADR
 is 36905d5b-8057-4294-8665-c7eed5534db0 (accepted); the six phase
 commits are listed under Related PRs / Commits.
 
+**As of 2026-08-27 (Phase 8, post-merge with dev)**: feat-21 (the DEC
+domain, released on dev as v0.12.0) merged into `feat-22` still on the
+old per-domain mechanism and was converted to this feature's mechanism
+per the ADR's convention for new domains. The two per-domain DEC
+mutation tools (`update_dec`/`set_status_dec`) are gone; the generic
+`update` and `set_status` tools now cover eight whole-body domains
+(`type="dec"` added) and all nine domains respectively, and `get_dec`
+gained `raw`. The plan/overview/acceptance-criteria text above describes
+the feature as planned (seven whole-body domains, 71/25/19 end state —
+correct at planning time, before DEC existed); the ADR is deliberately
+left as the historical record of that planning state. Live registration
+after the conversion: **79 tools / 28 resources / 21 prompts**
+(71/25/19 from Phase 7 + feat-21's 10 dec tools / 3 dec resources / 2
+dec prompts − the 2 converted dec tools). Phase-8 verification: full
+quality gate green (ruff format/check, vulture clean, **Ran 2007 tests,
+OK**, pylint advisory with no new messages vs. the merge commit —
+cyclic-import −2, duplicate-code −2 — all four generators no-ops with
+`git diff --exit-code -- docs/` exit 0).
+
 ### Blockers
 
 None.
 
 ### Recent Updates
+
+#### Update 2026-08-27 (Phase 8: dev integration and DEC conversion)
+
+- Completed: Phase 8 (Tasks 8.1–8.7). `origin/dev` had moved on while
+  this feature was in flight: feat-21 (artifact type "Decision", DEC —
+  the tenth domain) was merged into `dev` (PR #23) and released as
+  v0.12.0, still on the old per-domain mechanism (`update_dec` /
+  `set_status_dec`, `get_dec` without `raw`). Merged `origin/dev` into
+  `feat-22` (merge commit `097b502`; 7 conflicting files — `AGENTS.md`,
+  `CHANGELOG.md`, `server.py` resolved manually, the four `docs/`
+  files by regeneration) and converted the DEC domain to this
+  feature's mechanism per ADR 36905d5b's convention for new domains
+  (commit `5a7ddf3`): `_update_dec`/`_set_status_dec` adapters in the
+  generic tools (`type="dec"`), the two per-domain tools deleted,
+  `raw=True` on `get_dec`, DEC narration (prompt docstrings +
+  `dec_update_instructions.md` incl. the new line-range flow,
+  `dec_create_instructions.md`) re-pointed, tests re-pointed (dec cases
+  added to the generic `update`/`set_status` parameterized suites —
+  duplicate `### Option 1:` as the field-level failure trigger,
+  `implemented` as the out-of-vocabulary status — plus the four `raw`
+  tests on `get_dec`), and `AGENTS.md`/`CHANGELOG.md`/`server.py`/
+  regenerated docs updated. Live registration: **79 tools / 28
+  resources / 21 prompts**. Final quality gate green: ruff format/check
+  clean, vulture clean, **Ran 2007 tests, OK**, pylint advisory with no
+  new messages vs. the merge commit (cyclic-import −2, duplicate-code
+  −2), `specmgr docs`/`mcp-docs`/`adr-toc`/`schema` all no-ops
+  (`git diff --exit-code -- docs/` exit 0).
+- Next: push `feat-22` to origin and open the PR to `dev`.
 
 #### Update 2026-08-27 (Phase 7: Final verification)
 
@@ -1598,8 +1710,12 @@ None.
 - `db0fec5` — Phase 5: narration rewrite (prompts + instruction data)
 - `c82abeb` — Phase 6: cross-cutting documentation and release notes
   (`AGENTS.md`, `CHANGELOG.md`)
+- `097b502` — Phase 8: merge of `origin/dev` (feat-21 / DEC domain,
+  v0.12.0) into `feat-22`
+- `5a7ddf3` — Phase 8: convert the DEC domain to the generic
+  `update`/`set_status` tools (code, narration, tests, `AGENTS.md`,
+  `CHANGELOG.md`, regenerated docs)
 
 One Conventional Commit per accepted phase, created by the phase-
-orchestrator. This list covers Phases 1–6; Phase 7's own commit does not
-exist yet (the orchestrator commits it after this entry) and is
-deliberately not listed.
+orchestrator; Phase 8's two commits (merge + conversion) were created
+directly when integrating the already-merged feat-21 branch from `dev`.
