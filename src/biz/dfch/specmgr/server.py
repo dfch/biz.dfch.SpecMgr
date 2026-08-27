@@ -76,6 +76,12 @@ specmgr://rsk/tara --     The TARA risk-response framework: what TARA is (Transf
 specmgr://rsk/risk-matrix -- The 5x5 risk matrix: probability/impact scale anchors, the
                            zone table, and the product thresholds (what 'high risk' and
                            'low risk' mean) -- raw markdown domain-knowledge guidance.
+specmgr://dec/schema -- The generated DEC JSON Schema, read from a packaged data copy
+                        (kept in sync with ``docs/dec_schema.json``) so it works from a
+                        real, non-editable install.
+specmgr://dec/example -- A complete, valid sample decision document as raw markdown.
+specmgr://dec/template -- A decision template (every field present, placeholder text)
+                          as raw markdown.
 specmgr://iso25010 --   The ISO/IEC 25010:2023 product quality model's nine main
                         characteristics (and sub-characteristics), each with a description.
 
@@ -96,7 +102,11 @@ id-based reads go through the ``get_gol`` tool only, and there is also no
  day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13). RSK has no
  ``specmgr://rsk/{id}`` resource either, for the same reason -- id-based reads go
  through the ``get_rsk`` tool only, and there never was such a resource to
- remove in the first place.
+ remove in the first place. DEC has no
+ ``specmgr://dec/{id}`` resource either, for the same reason -- id-based reads go
+ through the ``get_dec`` tool only, and there is also no
+ ``specmgr://dec/list`` resource -- ``list_dec`` ships as a paged tool from
+ day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
 
 Tools
 -----
@@ -124,6 +134,10 @@ Goal tools (``gol/tools/``): ``parse_gol``, ``get_gol``, ``list_gol``,
  Risk tools (``rsk/tools/``): ``parse_rsk``, ``get_rsk``, ``list_rsk``, ``get_rsk_example``,
  ``get_rsk_template``, ``create_rsk``, ``update_rsk``, ``set_status_rsk``, ``delete_rsk``
  (stub, not yet implemented), ``validate_rsk``.
+ Decision tools (``dec/tools/``): ``parse_dec``, ``get_dec``, ``list_dec``,
+ ``get_dec_example``, ``get_dec_template``, ``create_dec``, ``update_dec``,
+ ``set_status_dec``, ``delete_dec`` (stub, not yet implemented),
+ ``validate_dec``.
  General tools (``general/tools/``): ``mdformat`` -- format markdown files in place,
 preserving YAML frontmatter blocks; ``webfetch`` -- fetch a URL over HTTP GET with a
 bearer token, restricted to a configured base URL (``SPECMGR_WEBFETCH_BASE_URL``,
@@ -156,6 +170,10 @@ instructional text guiding an LLM through a ``TodoWrite`` +
 ``statement``/``Source`` fields and its optional sections.
 Risk prompts (``rsk/prompts/``): ``create_risk``, ``update_risk`` -- instructional
 text guiding an LLM through the RSK tool sequence above.
+Decision prompts (``dec/prompts/``): ``create_dec``, ``update_dec`` --
+instructional text guiding an LLM through a ``TodoWrite`` +
+``question``-tool-driven interview flow; ``create_dec`` first checks
+``list_dec`` for a near-duplicate decision.
 General prompts (``general/prompts/``): ``compact_history`` -- guides rotating
 older ``### Recent Updates`` entries out of any `.specmgr` feature folder's
 ``README.md`` into an optional sibling ``history.md``, per ADR
@@ -164,7 +182,7 @@ e369ee2e-3353-4f92-991c-6367d76d832e.
 Modules are grouped domain-first
 (ADR ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by
 document-type domain"): each document
-domain (``adr``, ``uc``, ``req``, ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, and later ``ac``) is a
+domain (``adr``, ``uc``, ``req``, ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, and later ``ac``) is a
 top-level package with its own ``tools``/``prompts``/``resources`` sub-packages,
 self-registered via the domain package's own ``__init__.py``. Cross-cutting, non-domain-specific
 tools/resources/prompts (e.g. ``specmgr://version``/``specmgr://iso25010`` resources,
@@ -172,10 +190,10 @@ the ``mdformat`` tool, or the ``compact_history`` prompt) stay under the top-lev
 ``general`` package instead (``general.tools``/``general.resources``/``general.prompts``).
 Add a new domain by
 creating its top-level package and importing it at the bottom of this
-module, next to the existing ``adr``/``general``/``gol``/``prb``/``qa``/``req``/``rsk``/``tsk``/``uc``
+module, next to the existing ``adr``/``dec``/``general``/``gol``/``prb``/``qa``/``req``/``rsk``/``tsk``/``uc``
 imports, so its ``@mcp.tool()`` / ``@mcp.prompt()`` / ``@mcp.resource()``
-decorators actually run. ``req``, ``tsk``, ``qa``, ``prb``, ``gol``, and ``rsk`` each
-register ``tools``, ``resources``, and ``prompts``; ``general`` now also
+decorators actually run. ``req``, ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, and ``dec``
+each register ``tools``, ``resources``, and ``prompts``; ``general`` now also
 registers all three; ``uc`` registers ``tools`` and ``resources`` only -- it
 has no ``prompts`` sub-package yet.
 """
@@ -208,4 +226,4 @@ mcp = MCPServer(
 # decorators to actually run.
 # ---------------------------------------------------------------------------
 
-from . import adr, general, gol, prb, qa, req, rsk, tsk, uc  # noqa: E402, F401
+from . import adr, dec, general, gol, prb, qa, req, rsk, tsk, uc  # noqa: E402, F401

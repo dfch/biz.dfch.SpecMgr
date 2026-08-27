@@ -87,7 +87,7 @@ jobs:
 
     - name: Make sure `docs/*_schema.json` is correct
       # `specmgr schema` without --type regenerates/checks ALL registered doc types
-      # (gol, prb, qa, req, rsk, tsk, uc) in a single run, and the command itself
+      # (dec, gol, prb, qa, req, rsk, tsk, uc) in a single run, and the command itself
       # exits 1 when the regenerated content differs from what was already on disk
       # (or the file didn't exist yet), so no separate `git diff --exit-code` step
       # is needed here, unlike the `docs/`/`docs/adr/README.md` checks above.
@@ -175,6 +175,17 @@ jobs:
       run: |
         uv run --frozen --all-extras --python 3.13.13 specmgr schema --type gol --output-dir src/biz/dfch/specmgr/gol/data || {
           echo "::error::src/biz/dfch/specmgr/gol/data/gol_schema.json is out of date -- run 'uv run --frozen --all-extras specmgr schema --type gol --output-dir src/biz/dfch/specmgr/gol/data' and commit the result (see AGENTS.md)."
+          exit 1
+        }
+
+    - name: Make sure `src/biz/dfch/specmgr/dec/data/dec_schema.json` is correct
+      # Packaged copy of the same schema, read by the `specmgr://dec/schema` MCP resource
+      # via importlib.resources so it works from a real, non-editable install.
+      # Same generator as the `docs/*_schema.json` steps above, just a second --output-dir.
+      if: matrix.python-version == '3.13'
+      run: |
+        uv run --frozen --all-extras --python 3.13.13 specmgr schema --type dec --output-dir src/biz/dfch/specmgr/dec/data || {
+          echo "::error::src/biz/dfch/specmgr/dec/data/dec_schema.json is out of date -- run 'uv run --frozen --all-extras specmgr schema --type dec --output-dir src/biz/dfch/specmgr/dec/data' and commit the result (see AGENTS.md)."
           exit 1
         }
 
