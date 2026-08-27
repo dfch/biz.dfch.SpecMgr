@@ -32,10 +32,12 @@ replacing the former ``specmgr://uc/list`` resource so that
 ``.specmgr/feat/feat-13-list-paging/README.md``). ``create_uc`` (Task 3.1.5)
 assigns a fresh id, builds the frontmatter itself, and writes a new document
 (body markdown only, no frontmatter) under the use-case base directory
-(``uc.tools._paths``/``_io``). ``update_uc`` (Task 3.1.5) replaces an
-existing document's body the same way, preserving every frontmatter field
-except ``updated``. ``set_status_uc`` (Task 3.1.5) is the only path that
-changes ``status``, also bumping ``updated``, leaving the body untouched.
+(``uc.tools._paths``/``_io``). Whole-body and line-range updates of an
+existing document go through the generic ``update`` tool in ``general.tools``
+(``type="uc"``), preserving every frontmatter field except ``updated``.
+Status changes of an existing document go through the generic
+``set_status`` tool in ``general.tools`` (``type="uc"``), also bumping
+``updated``, leaving the body untouched.
 ``delete_uc`` (Task 3.1.5) is a registered stub -- always raises
 ``NotImplementedError``, reserving the name for a future real
 implementation. ``validate_uc`` (Task 3.1.5) is a disk-free, id-free dry
@@ -52,8 +54,6 @@ from .get_uc_example import get_uc_example
 from .get_uc_template import get_uc_template
 from .list_uc import list_uc
 from .parse_uc import parse_uc
-from .set_status_uc import set_status_uc
-from .update_uc import update_uc
 from .validate_uc import validate_uc
 
 __all__ = [
@@ -64,7 +64,5 @@ __all__ = [
     "get_uc_template",
     "list_uc",
     "parse_uc",
-    "set_status_uc",
-    "update_uc",
     "validate_uc",
 ]

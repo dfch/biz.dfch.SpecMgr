@@ -1,18 +1,20 @@
 # `biz.dfch.specmgr.gol.tools._write`
 
-Shared frontmatter+body composition/write helper for ``create_gol``/``update_gol``.
+Shared frontmatter+body composition/write helper for ``create_gol`` and
+the generic ``update`` tool in ``general.tools`` (``type="gol"``).
 
 Deliberately **not** part of ``gol.tools._io`` -- that module's own docstring
 rules out a ``write_gol``/``render_gol`` counterpart to ``read_gol``, since
-neither ``create_gol`` nor ``update_gol`` ever render a body back out from a
+neither ``create_gol`` nor the generic ``update`` tool in ``general.tools``
+ever render a body back out from a
 parsed :class:`~biz.dfch.specmgr.gol.models.v1.GolDocument` model. What
 :func:`write_gol_file` does instead is a strictly narrower thing: combine an
 already-constructed, already-validated
 :class:`~biz.dfch.specmgr.gol.models.v1.GolFrontmatter` with the caller's own
 already-validated *raw* body text (never reformatted/re-rendered) into one
-file. Factored out of ``create_gol.py`` into its own module so
-``update_gol.py``/``set_status_gol.py`` do not have to duplicate it. Mirrors
-``prb.tools._write`` file-for-file.
+file. Factored out of ``create_gol.py`` into its own module so the generic
+``update`` and ``set_status`` tools in ``general.tools`` (``type="gol"``)
+do not have to duplicate it. Mirrors ``prb.tools._write`` file-for-file.
 
 ## Functions
 

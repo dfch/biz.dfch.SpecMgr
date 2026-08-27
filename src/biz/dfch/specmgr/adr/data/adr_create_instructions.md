@@ -48,8 +48,10 @@ consulted/informed.
    bullets. Option numbering is assigned automatically, is never reused,
    and is never renumbered.
 3. If the decision is being finalized now rather than left as a draft,
-   call `set_status(id, "accepted")` (or `"rejected"`, or
-   `"proposed"`, as appropriate).
+   call `set_status(id, type="adr", status="accepted")` (or
+   `status="rejected"`, or `status="proposed"`, as appropriate) -- the
+   generic status-change tool, always called with `type="adr"` for an
+   ADR.
 4. Always finish by calling `validate_adr(id)` to self-correct before
    reporting success back to the user.
 

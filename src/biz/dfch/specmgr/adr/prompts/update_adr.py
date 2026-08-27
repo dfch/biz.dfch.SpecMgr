@@ -20,8 +20,9 @@
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through revising an existing MADR 4.0.0-based ADR by id, using the
 existing ``adr/tools/`` surface (``get_adr``, ``update_section``,
-``update_frontmatter``, ``set_status``, ``option_create``/``option_update``/
-``option_delete``, ``validate_adr``).
+``update_frontmatter``, ``option_create``/``option_update``/
+``option_delete``, ``validate_adr``) plus the generic ``set_status`` tool
+in ``general/tools/`` (always called with ``type="adr"`` for an ADR).
 
 The actual instructional text lives in its own packaged data file,
 ``adr/data/adr_update_instructions.md``, read fresh on every call via

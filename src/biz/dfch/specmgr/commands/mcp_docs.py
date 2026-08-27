@@ -57,10 +57,13 @@ def _schema_type_str(prop_schema: dict[str, Any]) -> str:
 
     Resolves ``$ref`` to the referenced definition's bare name (e.g.
     ``#/$defs/AdrBody`` -> ``AdrBody``), collapses ``anyOf`` (typically an
-    optional field's ``[T, null]`` union) into ``T | None``, and renders
-    ``array`` as ``list[T]``. Falls back to ``"any"`` when no recognizable
-    shape is present -- this is a best-effort summary for documentation, not
-    a full schema renderer.
+    optional field's ``[T, null]`` union) into ``T | None``, renders
+    ``array`` as ``list[T]``, and surfaces a closed ``enum`` (e.g. the
+    generic ``update`` tool's 7-value ``type``) as
+    ``T (enum: v1, v2, ...)`` -- the enum's values are part of the
+    contract, not an implementation detail. Falls back to ``"any"`` when
+    no recognizable shape is present -- this is a best-effort summary for
+    documentation, not a full schema renderer.
     """
     if "$ref" in prop_schema:
         return str(prop_schema["$ref"]).rsplit("/", maxsplit=1)[-1]
@@ -78,6 +81,10 @@ def _schema_type_str(prop_schema: dict[str, Any]) -> str:
     if schema_type == "null":
         return "None"
     if isinstance(schema_type, str):
+        enum_values = prop_schema.get("enum")
+        if enum_values is not None:
+            values = ", ".join(str(value) for value in enum_values)
+            return f"{schema_type} (enum: {values})"
         return schema_type
 
     return "any"

@@ -18,10 +18,11 @@
 """Thin file read helpers over ``parse_uc`` (Task 3.1.5).
 
 Read-only, mirroring ``req.tools._io`` exactly: there is no
-``write_uc``/``render_uc`` counterpart here, since ``create_uc``/``update_uc``
-persist the caller's already-validated body markdown byte-for-byte rather
-than rendering it back out from a parsed model -- no renderer is needed for
-that shape, so none is added speculatively here.
+``write_uc``/``render_uc`` counterpart here, since ``create_uc`` and the
+generic ``update`` tool in ``general.tools`` persist the caller's
+already-validated body markdown byte-for-byte rather than rendering it back
+out from a parsed model -- no renderer is needed for that shape, so none is
+added speculatively here.
 
 No ``mcp`` dependency here either -- these are plain file-I/O adapters, kept
 separate from any future ``@mcp.tool()``-decorated function so they stay

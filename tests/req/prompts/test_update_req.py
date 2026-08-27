@@ -36,16 +36,35 @@ class TestUpdateReqPrompt(unittest.TestCase):
 
     def test_mentions_get_req_tool_first(self):
         """The prompt must instruct the LLM to call get_req first,
-        before the update_req write tool."""
+        before the generic `update` write call."""
         result = update_req("abc-123")
         self.assertIn("get_req(id)", result)
-        self.assertLess(result.index("get_req(id)"), result.index("update_req(id, content)"))
+        self.assertLess(result.index("get_req(id)"), result.index('update(id, type="req", content)'))
 
-    def test_mentions_both_mutation_tools(self):
-        """Both update_req and set_status_req must be named."""
+    def test_mentions_both_generic_mutation_tools(self):
+        """Both the generic `update` (type="req") and `set_status`
+        (type="req") call shapes must be named."""
         result = update_req("abc-123")
-        for tool in ("update_req", "set_status_req"):
+        for tool in ('update(id, type="req", content)', 'set_status(id, type="req", status)'):
             self.assertIn(tool, result)
+
+    def test_mentions_range_update_flow(self):
+        """The prompt must teach the line-range flow: read the exact body
+        via get_req(id, raw=True), identify the 1-based inclusive range
+        (N+1 is end-of-body), call `update` with begin/end passing only
+        the replacement lines; whole-body for multi-section or uncertain
+        changes."""
+        result = update_req("abc-123")
+        self.assertIn("get_req(id, raw=True)", result)
+        self.assertIn("1-based, inclusive line range", result)
+        self.assertIn("begin = end = N+1", result)
+        self.assertIn('update(id, type="req", content, begin=..., end=...)', result)
+        self.assertIn("multi-section change, or whenever you are", result)
+        self.assertIn("byte-identical", result)
+        self.assertLess(
+            result.index("get_req(id, raw=True)"),
+            result.index('update(id, type="req", content, begin=..., end=...)'),
+        )
 
     def test_instructions_interpolated_when_given(self):
         """A given instructions string must appear verbatim in the returned text."""
@@ -58,14 +77,14 @@ class TestUpdateReqPrompt(unittest.TestCase):
         self.assertIn("ask the user", result)
 
     def test_mentions_whole_body_replace_warning(self):
-        """The whole-body-replace caveat for update_req must be present."""
+        """The whole-body-replace caveat for the generic `update` tool must be present."""
         result = update_req("abc-123")
         self.assertIn("whole-body replace", result)
 
-    def test_mentions_status_never_via_update_req(self):
-        """The prompt must clarify that update_req never changes status."""
+    def test_mentions_status_never_via_update(self):
+        """The prompt must clarify that the generic `update` tool never changes status."""
         result = update_req("abc-123")
-        self.assertIn("update_req` never accepts or changes `status`", result)
+        self.assertIn("`update` never accepts or changes `status`", result)
 
     def test_instructions_loaded_from_packaged_data_file(self):
         """The instructional text must come from req/data/req_update_instructions.md,

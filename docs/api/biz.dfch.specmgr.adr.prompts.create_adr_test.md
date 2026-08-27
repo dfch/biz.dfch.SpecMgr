@@ -18,7 +18,8 @@ skipped duplicate checks) -- see the conversation in
 Naming note: like ``create_adr`` itself, this prompt's name does not
 collide with any ``@mcp.tool()`` -- ``adr/tools/`` has no ``create_adr_test``
 tool; the underlying tool sequence driven by this prompt is unchanged
-(``create_adr``, ``option_create``, ``set_status``, ``validate_adr``).
+(``create_adr``, ``option_create``, the generic ``set_status`` tool called
+with ``type="adr"``, ``validate_adr``).
 
 The actual instructional text lives in its own packaged data file,
 ``adr/data/adr_create_test_instructions.md``, read fresh on every call via

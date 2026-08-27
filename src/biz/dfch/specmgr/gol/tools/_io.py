@@ -18,10 +18,11 @@
 """Thin file read helpers over ``parse_gol`` (Task 3.1).
 
 Read-only, unlike ``adr.tools._io``'s ``read_adr``/``write_adr`` pair: there
-is no ``write_gol``/``render_gol`` counterpart here, since ``create_gol``/
-``update_gol`` persist the caller's own already-validated body markdown
-byte-for-byte rather than rendering it back out from a parsed model -- no
-renderer is needed for that shape, so none is added speculatively here.
+is no ``write_gol``/``render_gol`` counterpart here, since ``create_gol``
+and the generic ``update`` tool in ``general.tools`` persist the caller's
+own already-validated body markdown byte-for-byte rather than rendering it
+back out from a parsed model -- no renderer is needed for that shape, so
+none is added speculatively here.
 Mirrors ``prb.tools._io`` file-for-file.
 
 No ``mcp`` dependency here either -- these are plain file-I/O adapters, kept

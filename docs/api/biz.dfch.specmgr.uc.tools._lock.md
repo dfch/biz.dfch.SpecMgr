@@ -6,8 +6,8 @@ Ported from ``req.tools._lock.req_lock`` unchanged except for naming -- see
 that module's own docstring for the full rationale (the read-modify-write
 race a mutating tool's ``load_by_id`` -> mutate -> write sequence is exposed
 to when an MCP host dispatches two overlapping calls against the same id).
-``update_uc`` and any future use-case mutation tool (``set_status_uc``) wrap
-their whole sequence in ``with uc_lock(id):``.
+The generic ``update`` and ``set_status`` tools in ``general.tools``
+(``type="uc"``) wrap their whole sequence in ``with uc_lock(id):``.
 
 ## Functions
 

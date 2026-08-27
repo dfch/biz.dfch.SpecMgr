@@ -6,8 +6,9 @@ Ported from ``adr.tools._lock.adr_lock``/``req.tools._lock.req_lock``
 unchanged except for naming -- see that module's own docstring for the full
 rationale (the read-modify-write race a mutating tool's ``load_by_id`` ->
 mutate -> write sequence is exposed to when an MCP host dispatches two
-overlapping calls against the same id). ``update_qa`` and any future QA
-mutation tool (``set_status_qa``) wrap their whole sequence in
+overlapping calls against the same id). The generic ``update`` tool in
+``general.tools`` (``type="qa"``) and the generic ``set_status`` tool in
+``general.tools`` (``type="qa"``) wrap their whole sequence in
 ``with qa_lock(id):``.
 
 Not generalized into ``general.tools`` alongside ``_doc_paths.py`` -- the id

@@ -19,15 +19,18 @@
 
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through revising an existing Decision (DEC) document by id, using the
-existing ``dec/tools/`` surface (``get_dec``, ``update_dec``,
-``set_status_dec``, ``validate_dec``). There is no ``specmgr://dec/{id}``
-resource to point at -- id-based reads always go through the ``get_dec``
-tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
+existing ``dec/tools/`` surface (``get_dec``, ``validate_dec``) plus the
+generic ``update``/``set_status`` tools in ``general/tools/`` (called with
+``type="dec"``; ``get_dec``'s ``raw=True`` parameter serves the line-range
+flow's line numbers). There is no ``specmgr://dec/{id}`` resource to point
+at -- id-based reads always go through the ``get_dec`` tool only (ADR
+ddfb1109-422d-4507-8dbc-dc5e4bec9614).
 
 Unlike ``adr.prompts.update_adr``, there is no ``update_frontmatter``/
 ``option_*`` equivalent here: DEC's lifecycle surface is deliberately
-small -- a whole-body replace (``update_dec``) plus a single, dedicated
-status-change path (``set_status_dec``) -- mirroring
+small -- a whole-body or line-range replace (the generic ``update`` tool
+with ``type="dec"``) plus a single, dedicated status-change path (the
+generic ``set_status`` tool with ``type="dec"``) -- mirroring
 ``req.prompts.update_req``/``rsk.prompts.update_risk``.
 
 Like ``req.prompts.update_req``/``rsk.prompts.update_risk`` (and unlike
@@ -36,19 +39,13 @@ prompt also accepts an optional ``instructions`` argument pre-filled with
 the requested change; when absent, the substituted fallback tells the LLM
 to ask the user before making any change rather than guessing.
 
-Naming note: this prompt is named ``update_dec``, the same name as the
-``@mcp.tool()`` in ``dec/tools/update_dec.py``. This is not a collision --
-the MCP protocol keeps prompts and tools in separate registries
-(``prompts/list`` vs. ``tools/list``) -- but is called out here explicitly
-so the two are not mistaken for the same registration (same precedent as
-``gol.prompts.update_gol``/``req.prompts.update_req``).
-
 This prompt only ever *narrates* the revision flow (reading current state
-via ``get_dec``, showing which sections are present vs. empty, eliciting
-revisions via the ``question`` tool, then calling ``update_dec``, with
-``set_status_dec`` mentioned as a separate, optional follow-up) -- it never
-calls ``get_dec``/``question``/``update_dec``/``set_status_dec`` itself,
-exactly like every other prompt in this codebase.
+via `get_dec`, showing which sections are present vs. empty, eliciting
+revisions via the `question` tool, then calling the generic `update` tool
+with `type="dec"`, with the generic `set_status` tool with `type="dec"`
+mentioned as a separate, optional follow-up) -- it never calls
+``get_dec``/``question``/``update``/``set_status`` itself, exactly like
+every other prompt in this codebase.
 
 The actual instructional text lives in its own packaged data file,
 ``dec/data/dec_update_instructions.md``, read fresh on every call via
@@ -92,7 +89,9 @@ def update_dec(id: str, instructions: str | None = None) -> str:
     -------
     str
         Instructional text (auto-wrapped as a single ``UserMessage`` by
-        the MCP SDK), not itself a tool call.
+        the MCP SDK), not itself a tool call. This function never calls
+        ``get_dec``, ``question``, ``update``, or ``set_status`` itself
+        -- it only narrates that sequence for the LLM to carry out.
     """
     template = Template(read_packaged_text("dec", "update_instructions", "md"))
     return template.substitute(

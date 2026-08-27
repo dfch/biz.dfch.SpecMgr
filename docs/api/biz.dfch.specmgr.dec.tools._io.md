@@ -3,9 +3,10 @@
 Thin file read helpers over ``parse_dec`` (Task 2.1).
 
 Read-only, unlike ``adr.tools._io``'s ``read_adr``/``write_adr`` pair: there
-is no ``write_dec``/``render_dec`` counterpart here, since ``create_dec``/
-``update_dec`` persist the caller's own already-validated body markdown
-byte-for-byte rather than rendering it back out from a parsed model -- no
+is no ``write_dec``/``render_dec`` counterpart here, since ``create_dec``
+and the generic ``update`` tool in ``general.tools`` persist the caller's
+own already-validated body markdown byte-for-byte rather than rendering it
+back out from a parsed model -- no
 renderer is needed for that shape, so none is added speculatively here.
 Mirrors ``gol.tools._io`` file-for-file.
 

@@ -20,7 +20,7 @@
 Unlike the per-tool unit tests elsewhere under ``tests/gol/tools/``, this
 module drives the actual tool functions in a single realistic sequence --
 ``list_gol`` (empty) -> ``create_gol`` -> ``get_gol`` -> ``list_gol`` (1) ->
-``update_gol`` -> ``set_status_gol`` -> ``get_gol`` (status changed) ->
+``update`` -> ``set_status`` (``type="gol"``) -> ``get_gol`` (status changed) ->
 ``list_gol`` (status reflected) -> ``delete_gol`` (stub) -- against a real
 temporary docs directory, confirming ACC-004/ACC-006's "verified live, not
 just asserted" requirement with concrete evidence beyond the isolated
@@ -41,6 +41,8 @@ from pathlib import Path
 from unittest import mock
 
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
+from biz.dfch.specmgr.general.tools.set_status import set_status
+from biz.dfch.specmgr.general.tools.update import update
 from biz.dfch.specmgr.gol.models.v1 import GolDocument, parse_gol
 from biz.dfch.specmgr.gol.tools.create_gol import create_gol
 from biz.dfch.specmgr.gol.tools.delete_gol import delete_gol
@@ -48,8 +50,6 @@ from biz.dfch.specmgr.gol.tools.get_gol import get_gol
 from biz.dfch.specmgr.gol.tools.get_gol_example import get_gol_example
 from biz.dfch.specmgr.gol.tools.get_gol_template import get_gol_template
 from biz.dfch.specmgr.gol.tools.list_gol import list_gol
-from biz.dfch.specmgr.gol.tools.set_status_gol import set_status_gol
-from biz.dfch.specmgr.gol.tools.update_gol import update_gol
 
 _INITIAL_BODY = textwrap.dedent(
     """\
@@ -92,7 +92,7 @@ class TestGolLifecycleIntegration(TempGolDirTestCase):
     """Live, end-to-end lifecycle exercise, isolated to a temp docs directory."""
 
     def test_list_create_get_list_update_set_status_get_list_delete_roundtrip(self) -> None:
-        """list_gol -> create_gol -> get_gol -> list_gol -> update_gol -> set_status_gol -> get_gol ->
+        """list_gol -> create_gol -> get_gol -> list_gol -> update -> set_status -> get_gol ->
         list_gol -> delete_gol, live."""
         # 0. list_gol: an empty base directory must list nothing.
         initial_page = list_gol()
@@ -123,8 +123,8 @@ class TestGolLifecycleIntegration(TempGolDirTestCase):
         self.assertEqual(page.results[0].status, "draft")
         self.assertEqual(page.results[0].title, "Competitive Engines in Consumer Vehicles")
 
-        # 4. update_gol: whole-body replace must preserve id/type/created, bump updated.
-        updated = update_gol(gol_id, _REVISED_BODY)
+        # 4. update: whole-body replace must preserve id/type/created, bump updated.
+        updated = update(gol_id, "gol", _REVISED_BODY)
         self.assertEqual(updated.frontmatter.id, created.frontmatter.id)
         self.assertEqual(updated.frontmatter.type, created.frontmatter.type)
         self.assertEqual(updated.frontmatter.created, created.frontmatter.created)
@@ -132,8 +132,8 @@ class TestGolLifecycleIntegration(TempGolDirTestCase):
         self.assertNotEqual(updated.frontmatter.updated, created.frontmatter.updated)
         self.assertIsNotNone(updated.body.description)
 
-        # 5. set_status_gol: only status/updated may change.
-        accepted = set_status_gol(gol_id, "accepted")
+        # 5. set_status (type="gol"): only status/updated may change.
+        accepted = set_status(gol_id, "gol", "accepted")
         self.assertEqual(accepted.frontmatter.status, "accepted")
         self.assertEqual(accepted.frontmatter.id, updated.frontmatter.id)
         self.assertEqual(accepted.frontmatter.created, updated.frontmatter.created)

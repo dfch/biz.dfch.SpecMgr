@@ -11,10 +11,12 @@ shared versioned models") — one bullet per implemented package, document
 type or cross-cutting:
 
 - **`adr/`** (Architecture Decision Records) — the original, most complete
-  domain. `adr/tools/` has 12 `@mcp.tool()` wrappers (`get_adr`, `list_adr`,
-  `create_adr`, `update_frontmatter`, `update_section`, `set_status`,
+  domain. `adr/tools/` has 11 `@mcp.tool()` wrappers (`get_adr`, `list_adr`,
+  `create_adr`, `update_frontmatter`, `update_section`,
   `option_list`/`option_create`/`option_read`/`option_update`/
-  `option_delete`, `validate_adr`); `adr/resources/` exposes
+  `option_delete`, `validate_adr`); ADR status changes go through the
+  generic `set_status` tool in `general/tools/` (called with
+  `type="adr"`, ADR-only `superseded_by`); `adr/resources/` exposes
   `specmgr://adr/{id}` only — no `specmgr://adr/list` (listing is the
   `list_adr` tool, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13);
   `adr/prompts/` has
@@ -23,9 +25,11 @@ type or cross-cutting:
   `.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md` §11). Its Pydantic
   schema uniquely lives under the shared top-level `models/adr/` (not
   `adr/models/`) — see the "models location" note below.
-- **`req/`** (Requirements) — `req/tools/` (`create_req`, `update_req`,
-  `set_status_req`, `parse_req`, `list_req`, `delete_req` stub, `validate_req`);
-  `req/resources/` (`specmgr://req/schema`,
+- **`req/`** (Requirements) — `req/tools/` (`create_req`, `parse_req`,
+  `list_req`, `delete_req` stub, `validate_req`); whole-body and line-range
+  updates go through the generic `update` tool in `general/tools/`
+  (`type="req"`), status changes through the generic `set_status` tool
+  (`type="req"`); `req/resources/` (`specmgr://req/schema`,
   `specmgr://req/example`, `specmgr://req/template`; no `specmgr://req/{id}`
   — id-based reads are `get_req`-only, ADR
   ddfb1109-422d-4507-8dbc-dc5e4bec9614; no `specmgr://req/list` —
@@ -34,16 +38,26 @@ type or cross-cutting:
   (`create_req`/`update_req`). Its schema lives at `req/models/v1/`, inside
   the domain package itself, not under top-level `models/`.
 - **`uc/`** (Use Cases) — same tools/resources/prompts shape as `req/` but
-  for use cases (`create_uc`, `update_uc`, `set_status_uc`, `parse_uc`,
+  for use cases (`create_uc`, `parse_uc`,
   `list_uc`, `get_uc`, `get_uc_example`, `get_uc_template`, `delete_uc` stub,
-  `validate_uc`); no `specmgr://uc/{id}` resource for the same reason as
+  `validate_uc`); whole-body and line-range updates go through the generic
+  `update` tool in `general/tools/` (`type="uc"`), status changes through
+  the generic `set_status` tool (`type="uc"`), and the `get_uc` tool takes
+  `raw: bool = False` — `raw=True` returns the frontmatter-stripped body
+  text as-is (the text `update`'s `begin`/`end` index into); no
+  `specmgr://uc/{id}` resource for the same reason as
   REQ, and no `specmgr://uc/list` resource either — listing is the
   `list_uc` tool (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13). Schema at
   `uc/models/v1/` (legacy) and `uc/models/v2/` (current),
   inside the domain package, not `models/uc/`.
-- **`tsk/`** (Task Lists) — same shape again (`create_tsk`, `update_tsk`,
-  `set_status_tsk`, `parse_tsk`, `list_tsk`, `get_tsk`, `get_tsk_example`,
-  `get_tsk_template`, `delete_tsk` stub, `validate_tsk`), plus a distinct
+- **`tsk/`** (Task Lists) — same shape again (`create_tsk`,
+  `parse_tsk`, `list_tsk`, `get_tsk`, `get_tsk_example`,
+  `get_tsk_template`, `delete_tsk` stub, `validate_tsk`); whole-body and
+  line-range updates go through the generic `update` tool in
+  `general/tools/` (`type="tsk"`), status changes through the generic
+  `set_status` tool (`type="tsk"`), and the `get_tsk` tool takes
+  `raw: bool = False` — `raw=True` returns the frontmatter-stripped body
+  text as-is (the text `update`'s `begin`/`end` index into); plus a distinct
   `implement_task` prompt (reads a task list via `get_tsk`, builds a
   `TodoWrite` list from its items, and uses the `question` tool to resolve
   ambiguity). Its resources are the usual `specmgr://tsk/schema`/
@@ -53,8 +67,13 @@ type or cross-cutting:
   at `tsk/models/v1/`, inside the domain package.
 - **`qa/`** (Question and Answer) — same tools/resources/prompts shape as
   `req/`/`tsk/` but for requirements-elicitation Q&A interviews (`create_qa`,
-  `update_qa`, `set_status_qa`, `parse_qa`, `list_qa`, `get_qa`, `get_qa_example`,
-  `get_qa_template`, `delete_qa` stub, `validate_qa`); `qa/resources/`
+  `parse_qa`, `list_qa`, `get_qa`, `get_qa_example`,
+  `get_qa_template`, `delete_qa` stub, `validate_qa`); whole-body and
+  line-range updates go through the generic `update` tool in
+  `general/tools/` (`type="qa"`), status changes through the generic
+  `set_status` tool (`type="qa"`), and the `get_qa` tool takes
+  `raw: bool = False` — `raw=True` returns the frontmatter-stripped body
+  text as-is (the text `update`'s `begin`/`end` index into); `qa/resources/`
   (`specmgr://qa/schema`, `specmgr://qa/example`,
   `specmgr://qa/template`; no `specmgr://qa/{id}` — id-based reads are
   `get_qa`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
@@ -78,9 +97,14 @@ type or cross-cutting:
   error.
 - **`prb/`** (Problem Statement) — same tools/resources/prompts shape as
   `req/`/`tsk`/`qa` but for Six-Sigma-style problem statements
-  (`create_prb`, `update_prb`, `set_status_prb`, `parse_prb`, `list_prb`,
+  (`create_prb`, `parse_prb`, `list_prb`,
   `get_prb`, `get_prb_example`, `get_prb_template`, `delete_prb` stub,
-  `validate_prb`); `prb/resources/` (`specmgr://prb/schema`,
+  `validate_prb`); whole-body and line-range updates go through the generic
+  `update` tool in `general/tools/` (`type="prb"`), status changes through
+  the generic `set_status` tool (`type="prb"`), and the `get_prb` tool
+  takes `raw: bool = False` — `raw=True` returns the frontmatter-stripped
+  body text as-is (the text `update`'s `begin`/`end` index into);
+  `prb/resources/` (`specmgr://prb/schema`,
   `specmgr://prb/example`, `specmgr://prb/template`; no
   `specmgr://prb/{id}` — id-based reads are `get_prb`-only, ADR
   ddfb1109-422d-4507-8dbc-dc5e4bec9614; no `specmgr://prb/list` — listing
@@ -92,10 +116,15 @@ type or cross-cutting:
 - **`gol/`** (Goal) — same tools/resources/prompts shape as
   `req/`/`prb/` but for high-level business goals (the strategic
   "what the organization wants to achieve" level that sits above
-  individual requirements) (`create_gol`, `update_gol`,
-  `set_status_gol`, `parse_gol`, `list_gol`, `get_gol`,
+  individual requirements) (`create_gol`,
+  `parse_gol`, `list_gol`, `get_gol`,
   `get_gol_example`, `get_gol_template`, `delete_gol` stub,
-  `validate_gol`); `gol/resources/` (`specmgr://gol/schema`,
+  `validate_gol`); whole-body and line-range updates go through the generic
+  `update` tool in `general/tools/` (`type="gol"`), status changes through
+  the generic `set_status` tool (`type="gol"`), and the `get_gol` tool
+  takes `raw: bool = False` — `raw=True` returns the frontmatter-stripped
+  body text as-is (the text `update`'s `begin`/`end` index into);
+  `gol/resources/` (`specmgr://gol/schema`,
   `specmgr://gol/example`, `specmgr://gol/template`; no
   `specmgr://gol/{id}` — id-based reads are `get_gol`-only, ADR
   ddfb1109-422d-4507-8dbc-dc5e4bec9614; no `specmgr://gol/list` —
@@ -106,9 +135,7 @@ type or cross-cutting:
    `list_gol` for a near-duplicate goal). Its schema lives at
    `gol/models/v1/`, inside the domain package, not top-level
    `models/`. The body mirrors REQ minus the `## Characteristics`
-  and `## Level` sections (see `.specmgr/feat/feat-18-goal/README.md`),
-  and `update_gol` is a single whole-body replace, like
-  `update_req`/`update_prb`.
+  and `## Level` sections (see `.specmgr/feat/feat-18-goal/README.md`).
 - **`rsk/`** (Risk) — same tools/resources/prompts shape as
   `req/`/`prb/` but for risk-register entries (the scenario decomposed
   into `## Cause`/`## Trigger`/`## Consequence`, a 5x5 probability/impact
@@ -119,8 +146,13 @@ type or cross-cutting:
   product), and a TARA response strategy `## Strategy` (closed 4-value set
   `transfer`/`accept`/`reduce`/`avoid`))
   (`parse_rsk`, `get_rsk`, `list_rsk`, `get_rsk_example`,
-  `get_rsk_template`, `create_rsk`, `update_rsk`, `set_status_rsk`,
-  `delete_rsk` stub, `validate_rsk`); `rsk/resources/`
+  `get_rsk_template`, `create_rsk`,
+  `delete_rsk` stub, `validate_rsk`); whole-body and line-range updates
+  go through the generic `update` tool in `general/tools/`
+  (`type="rsk"`), status changes through the generic `set_status` tool
+  (`type="rsk"`), and the `get_rsk` tool takes `raw: bool = False` —
+  `raw=True` returns the frontmatter-stripped body text as-is (the text
+  `update`'s `begin`/`end` index into); `rsk/resources/`
   (`specmgr://rsk/schema`, `specmgr://rsk/example`,
   `specmgr://rsk/template`, plus two static domain-knowledge resources
   `specmgr://rsk/tara` — what TARA is and when/how to apply each of the
@@ -137,9 +169,14 @@ type or cross-cutting:
    `models/`.
 - **`dec/`** (Decision) — same tools/resources/prompts shape as
   `req/`/`prb/` but for decisions in general (not architecture-only)
-  (`create_dec`, `update_dec`, `set_status_dec`, `parse_dec`,
-  `list_dec`, `get_dec`, `get_dec_example`, `get_dec_template`,
-  `delete_dec` stub, `validate_dec`); `dec/resources/`
+  (`parse_dec`, `get_dec`, `list_dec`, `get_dec_example`,
+  `get_dec_template`, `create_dec`, `delete_dec` stub,
+  `validate_dec`); whole-body and line-range updates go through the
+  generic `update` tool in `general/tools/` (`type="dec"`), status
+  changes through the generic `set_status` tool (`type="dec"`), and
+  the `get_dec` tool takes `raw: bool = False` — `raw=True` returns
+  the frontmatter-stripped body text as-is (the text `update`'s
+  `begin`/`end` index into); `dec/resources/`
   (`specmgr://dec/schema`, `specmgr://dec/example`,
   `specmgr://dec/template`; no `specmgr://dec/{id}` — id-based reads
   are `get_dec`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
@@ -152,16 +189,24 @@ type or cross-cutting:
   `models/`. A DEC keeps the ADR's general structure (MADR-style
   headings, `Options` collection) but is built on the generic
   `models/md` parser with the GOL/RSK/QA simple surface — no
-  fine-grained mutation tools, no renderer: `update_dec` is a single
-  whole-body replace that persists the caller's raw validated body
-  byte-for-byte.
- - **`general/`** — cross-cutting, non-domain-specific package:
-   `general/tools/` (`mdformat`, formats a markdown file in place while
-   preserving YAML frontmatter blocks), `general/resources/`
+  fine-grained mutation tools, no renderer: writes persist the
+  caller's raw validated body byte-for-byte.
+  - **`general/`** — cross-cutting, non-domain-specific package:
+    `general/tools/` (`mdformat`, formats a markdown file in place while
+    preserving YAML frontmatter blocks; `update`, the generic whole-body
+    *and* line-range replace for the eight whole-body domains — `type` is
+    one of req/uc/tsk/qa/prb/gol/rsk/dec, optional 1-based inclusive body-line
+    `begin`/`end` with the `N+1` end-of-body sentinel, splice-then-
+    validate-whole; `set_status`, the generic status change for all nine
+    domains incl. adr — `superseded_by` is ADR-only, composing
+    `"superseded by X"`), `general/resources/`
    (`specmgr://version`, `specmgr://iso25010` — the ISO/IEC 25010:2023
    quality model), and `general/prompts/` (`compact_history` — rotates
-   older `Recent Updates` entries out of any feature folder's `README.md`
-   into a sibling `history.md`).
+    older `Recent Updates` entries out of any feature folder's `README.md`
+    into a sibling `history.md`). The eight `get_<d>` tools additionally
+    take a `raw: bool = False` parameter — `raw=True` returns the
+    frontmatter-stripped body text as-is (the text `update`'s `begin`/`end`
+    index into).
 
 **Models location — a real, intentional divergence, not an oversight**:
 the rule is domain-first — every document type keeps its schema inside
@@ -193,7 +238,12 @@ Still genuinely missing / not yet done (don't assume otherwise):
 - `delete_req`/`delete_uc`/`delete_tsk`/`delete_qa`/`delete_prb`/
   `delete_gol`/`delete_rsk`/`delete_dec` are stubs, not yet implemented.
 - No `ac` (Acceptance Criteria) domain exists yet, despite `server.py`'s
-  docstring already reserving a spot for it ("... and later `ac`").
+  docstring already reserving a spot for it ("... and later `ac`") — the
+  convention for adding it (or any future domain) is fixed by ADR
+  36905d5b-8057-4294-8665-c7eed5534db0: one dispatch entry to each of the
+  two generic tools in `general/tools/` (`update`'s `type`,
+  `set_status`'s `type`) plus a `raw` parameter on the new `get_<d>` tool
+  — not new `update_<d>`/`set_status_<d>` tools.
 - `req`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec` each register `tools`,
   `resources`, and `prompts`; `uc` registers `tools` and `resources`
   only — it has no `prompts` sub-package yet.

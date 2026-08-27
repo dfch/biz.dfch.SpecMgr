@@ -3,8 +3,8 @@ You are revising an existing Problem Statement (PRB) document, id: $id
 Requested change: $instructions
 
 Follow this sequence exactly. Do not write raw markdown yourself beyond
-the body content you pass to `update_prb` -- every change to the
-document goes through the specmgr MCP tools listed below.
+the body content you pass to `update` -- every change to the document
+goes through the specmgr MCP tools listed below.
 
 ## 1. Read current state first
 
@@ -56,25 +56,41 @@ step 1.
 
 ## 8. Map the requested change to the right tool
 
-- A change to the body -- any of the above -- -> `update_prb(id, content)`.
-  `content` is body markdown only (no frontmatter block) and is a
-  **whole-body replace**: read the current body first (step 1) and carry
-  forward every section you are not intentionally changing, or it will
-  be dropped. `id`/`type`/`status`/`created`/`version` are preserved
-  automatically regardless of what you submit; only `updated` changes.
-- A change to `status` -> `set_status_prb(id, status)` instead --
-  `update_prb` never accepts or changes `status`. `status` must be one
+- A change to the body -- any of the above -- -> the generic `update`
+  tool called with `type="prb"`, either as a **line-range replace** for
+  a localized change or a **whole-body replace** otherwise. `content`
+  is body markdown only (no frontmatter block) in both cases.
+  - **Line-range replace** (a localized change -- one paragraph, field,
+    or section): first call `get_prb(id, raw=True)` to see the exact
+    body text, identify the 1-based, inclusive line range to replace --
+    the `N+1` position is end-of-body: `begin = end = N+1` appends after
+    the last line, `end = N+1` extends the range through the last line
+    -- and call `update(id, type="prb", content, begin=..., end=...)`
+    passing only the replacement lines. The server splices the fragment
+    into the current on-disk body and validates the result as a whole
+    document before writing anything, so every out-of-range line stays
+    byte-identical.
+  - **Whole-body replace** (a multi-section change, or whenever you are
+    uncertain about the line range): call `update(id, type="prb", content)`
+    with no `begin`/`end` -- `content` is then the full replacement body:
+    read the current body first (step 1) and carry forward every section
+    you are not intentionally changing, or it will be dropped.
+    `id`/`type`/`status`/`created`/`version` are preserved automatically
+    regardless of what you submit; only `updated` changes.
+- A change to `status` -> `set_status(id, type="prb", status)` instead
+  -- `update` never accepts or changes `status`. `status` must be one
   of: draft, active, resolved, cancelled. Mention this as a
   separate, optional follow-up once `Future State` has genuinely been
-  reached (`resolved`) or the problem statement is abandoned
-  (`cancelled`) -- do not call `set_status_prb` unless the user actually
-  asks for a status change.
+  reached
+  (`resolved`) or the problem statement is abandoned (`cancelled`) -- do
+  not call `set_status` unless the user actually asks for a status
+  change.
 
 ## 9. Check the schema, and validate before writing if useful
 
 Fetch `specmgr://prb/schema` to confirm field names and constraints
 before drafting the replacement body. Optionally call
 `validate_prb(content, full=False)` beforehand to dry-run the new body
-without writing anything -- `update_prb` already performs the same
+without writing anything -- `update` already performs the same
 validation internally, so this step is never required, only a
 convenience.

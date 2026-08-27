@@ -5,7 +5,7 @@ $id_or_name
 Requested scope: $scope
 
 Follow this sequence exactly. Do not write raw markdown yourself beyond
-the body content you pass to `update_qa` -- every change to the document
+the body content you pass to `update` -- every change to the document
 goes through the specmgr MCP tools listed below.
 
 Make a todo list and use the `question` tool whenever this prompt tells
@@ -74,16 +74,25 @@ later, once an answer has actually been given. Never touch any existing
 Q&A pair (question, comment, or answer) -- only append new pairs under
 the requested categories.
 
-## 5. Whole-body replace
-`update_qa` is a whole-body replace: carry forward every section of the
-document exactly as read in step 1 (including all ten fixed category
-headings, even ones you are not adding questions to this time, and every
-existing Q&A pair within a category you *are* adding to), and only
-append the new placeholder pairs from step 4. Call `update_qa(id,
-content)` with the full resulting body markdown (no frontmatter block).
+## 5. Persist the appended questions
+The generic `update` tool is a whole-body replace unless you give it a
+line range:
+- **Clean append (the `N+1` range)**: when the new pairs all go at the
+  very end of the body (every targeted category is the document's last
+  `##` section), call `get_qa(id, raw=True)` to count the body's lines
+  (`N`) and call `update(id, type="qa", content, begin=N+1, end=N+1)`
+  passing only the new pairs -- the `N+1` position is end-of-body, so
+  this appends without touching any existing line.
+- **Otherwise (whole-body replace)**: carry forward every section of
+  the document exactly as read in step 1 (including all ten fixed
+  category headings, even ones you are not adding questions to this
+  time, and every existing Q&A pair within a category you *are* adding
+  to), append the new placeholder pairs from step 4 under their targeted
+  category headings, and call `update(id, type="qa", content)` with the
+  full resulting body markdown (no frontmatter block).
 
 ## 6. Report back, and point at the next step
-Once `update_qa` succeeds, tell the user:
+Once `update` succeeds, tell the user:
 - exactly how many questions you added, and to which characteristic(s);
 - that they should now open the document and answer each new question
   by replacing its `_(awaiting response)_` placeholder with their own

@@ -18,10 +18,10 @@
 """Tests for the ``update_gol`` ``@mcp.prompt()`` (Task 3.15, ACC-006).
 
 ``update_gol`` (the prompt) only ever returns instructional text -- it never
-calls ``get_gol``/``question``/``update_gol``/``set_status_gol`` (the tools)
-itself -- so these are string-content/ordering assertions on the narrated
-text confirming every required step from the feature README's Design Notes
-is actually present, in the right order.
+calls ``get_gol``/``question``/``update``/``set_status`` (the tools) itself
+-- so these are string-content/ordering assertions on the narrated text
+confirming every required step from the feature README's Design Notes is
+actually present, in the right order.
 """
 
 import tempfile
@@ -43,16 +43,35 @@ class TestUpdateGolPrompt(unittest.TestCase):
 
     def test_mentions_get_gol_tool_first(self):
         """The prompt must instruct the LLM to call get_gol first,
-        before the update_gol write tool."""
+        before the generic `update` write call."""
         result = update_gol("abc-123")
         self.assertIn("get_gol(id)", result)
-        self.assertLess(result.index("get_gol(id)"), result.index("update_gol(id, content)"))
+        self.assertLess(result.index("get_gol(id)"), result.index('update(id, type="gol", content)'))
 
-    def test_mentions_both_mutation_tools(self):
-        """Both update_gol and set_status_gol must be named."""
+    def test_mentions_both_generic_mutation_tools(self):
+        """Both the generic `update` (type="gol") and `set_status`
+        (type="gol") call shapes must be named."""
         result = update_gol("abc-123")
-        for tool in ("update_gol", "set_status_gol"):
+        for tool in ('update(id, type="gol", content)', 'set_status(id, type="gol", status)'):
             self.assertIn(tool, result)
+
+    def test_mentions_range_update_flow(self):
+        """The prompt must teach the line-range flow: read the exact body
+        via get_gol(id, raw=True), identify the 1-based inclusive range
+        (N+1 is end-of-body), call `update` with begin/end passing only
+        the replacement lines; whole-body for multi-section or uncertain
+        changes."""
+        result = update_gol("abc-123")
+        self.assertIn("get_gol(id, raw=True)", result)
+        self.assertIn("1-based, inclusive line range", result)
+        self.assertIn("begin = end = N+1", result)
+        self.assertIn('update(id, type="gol", content, begin=..., end=...)', result)
+        self.assertIn("multi-section change, or whenever you are", result)
+        self.assertIn("byte-identical", result)
+        self.assertLess(
+            result.index("get_gol(id, raw=True)"),
+            result.index('update(id, type="gol", content, begin=..., end=...)'),
+        )
 
     def test_mentions_showing_which_sections_are_present(self):
         """The prompt must instruct showing which sections are already present
@@ -75,18 +94,19 @@ class TestUpdateGolPrompt(unittest.TestCase):
         self.assertIn("question", result)
 
     def test_mentions_whole_body_replace_warning(self):
-        """The whole-body-replace caveat for update_gol must be present."""
+        """The whole-body-replace caveat for the generic `update` tool must be present."""
         result = update_gol("abc-123")
         self.assertIn("whole-body replace", result)
 
-    def test_mentions_status_never_via_update_gol(self):
-        """The prompt must clarify that update_gol never changes status."""
+    def test_mentions_status_never_via_update(self):
+        """The prompt must clarify that the generic `update` tool never changes status."""
         result = update_gol("abc-123")
-        self.assertIn("update_gol` never accepts or changes `status`", result)
+        self.assertIn("`update` never accepts or changes `status`", result)
 
-    def test_mentions_set_status_gol_as_separate_optional_followup(self):
-        """set_status_gol must be framed as a separate, optional follow-up, with the
-        goal-specific `implemented`/`rejected`/`superseded` semantics."""
+    def test_mentions_set_status_as_separate_optional_followup(self):
+        """The generic `set_status` tool (type="gol") must be framed as a separate,
+        optional follow-up, with the goal-specific `implemented`/`rejected`/
+        `superseded` semantics."""
         result = update_gol("abc-123")
         self.assertIn("separate, optional", result)
         self.assertIn("implemented", result)

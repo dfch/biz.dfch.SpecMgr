@@ -3,8 +3,8 @@ You are revising an existing Decision (DEC) document, id: $id
 Requested change: $instructions
 
 Follow this sequence exactly. Do not write raw markdown yourself beyond
-the body content you pass to `update_dec` -- every change to the
-document goes through the specmgr MCP tools listed below.
+the body content you pass to `update` -- every change to the document
+goes through the specmgr MCP tools listed below.
 
 ## 1. Read current state first
 
@@ -32,19 +32,34 @@ revise.
 - A change to the body -- the `context`, `drivers`, `considered`,
   `outcome` (lead paragraph, `### Consequences`, `### Confirmation`),
   `related_artifacts`, `pros_and_cons` options, `more_information`, or
-  `updates` entries -- -> `update_dec(id, content)`. `content` is body
-  markdown only (no frontmatter block) and is a **whole-body replace**:
-  read the current body first (step 1) and carry forward every section
-  you are not intentionally changing, or it will be dropped.
-  `id`/`type`/`status`/`created`/`version` are preserved automatically
-  regardless of what you submit; only `updated` changes.
-- A change to `status` -> `set_status_dec(id, status)` instead --
-  `update_dec` never accepts or changes `status`. `status` must be one
+  `updates` entries -- -> the generic `update` tool called with
+  `type="dec"`: a **line-range replace** for a localized change, or a
+  **whole-body replace** otherwise. `content` is body markdown only (no
+  frontmatter block) in both cases.
+  - **Line-range replace** (a localized change -- one paragraph, field,
+    or section): first call `get_dec(id, raw=True)` to see the exact
+    body text, identify the 1-based, inclusive line range to replace --
+    the `N+1` position is end-of-body: `begin = end = N+1` appends after
+    the last line, `end = N+1` extends the range through the last line
+    -- and call `update(id, type="dec", content, begin=..., end=...)`
+    passing only the replacement lines. The server splices the fragment
+    into the current on-disk body and validates the result as a whole
+    document before writing anything, so every out-of-range line stays
+    byte-identical.
+  - **Whole-body replace** (a multi-section change, or whenever you are
+    uncertain about the line range): call `update(id, type="dec", content)`
+    with no `begin`/`end` -- `content` is then the full replacement body:
+    read the current body first (step 1) and carry forward every section
+    you are not intentionally changing, or it will be dropped.
+    `id`/`type`/`status`/`created`/`version` are preserved automatically
+    regardless of what you submit; only `updated` changes.
+- A change to `status` -> `set_status(id, type="dec", status)` instead
+  -- `update` never accepts or changes `status`. `status` must be one
   of: draft, proposed, accepted, rejected, superseded, deprecated.
   Mention this as a separate, optional follow-up -- e.g. `accepted`
   once the decision has genuinely been agreed to, `rejected` or
   `superseded` if the decision was not adopted or is replaced by
-  another one -- do not call `set_status_dec` unless the user actually
+  another one -- do not call `set_status` unless the user actually
   asks for a status change.
 
 ## 5. Check the schema, and validate before writing if useful
@@ -52,6 +67,6 @@ revise.
 Fetch `specmgr://dec/schema` to confirm field names and constraints
 before drafting the replacement body. Optionally call
 `validate_dec(content, full=False)` beforehand to dry-run the new body
-without writing anything -- `update_dec` already performs the same
+without writing anything -- `update` already performs the same
 validation internally, so this step is never required, only a
 convenience.

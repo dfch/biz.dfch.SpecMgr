@@ -1,8 +1,8 @@
 ---
 created: 2026-08-26
 id: feat-22-consolidate-mutation-tools
-status: planning
-updated: 2026-08-26
+status: done
+updated: 2026-08-27
 version: 1.0.0
 ---
 
@@ -127,13 +127,29 @@ new tool. Expected end state: **71 tools / 25 resources / 19 prompts**
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: Verifies REQ-001 — for every one of the seven types, `update`
+- [x] ACC-001: Verifies REQ-001 — for every one of the seven types, `update`
   in whole-body mode (no `begin`/`end`) replaces the body, preserves
   `id`/`type`/`status`/`created`/`version`, bumps `updated` (microsecond
   timestamp), never sets `status`, propagates structural `AssertionError` /
   field `pydantic.ValidationError` with the file left byte-identical on disk,
-  and raises the domain's own `XNotFoundError` for an unknown id.
-- [ ] ACC-002: Verifies REQ-002 — for every one of the seven types: a middle-
+  and raises the domain's own `XNotFoundError` for an unknown id. **PASS** —
+  `tests/general/tools/test_update.py`'s `TestUpdateWholeBody` (5 test
+  methods, each subTest-parameterized over all seven types, seeding a real,
+  persisted document per type via the domain's own `create_<d>` tool in a
+  temp `SPECMGR_DOCS_DIR`): `test_replaces_body_preserving_id_type_status_
+  created_version` (body replaced; id/type/status/created/version
+  preserved; `updated` bumped and matching the microsecond-timestamp shape),
+  `test_status_not_settable_through_update` (a YAML frontmatter block
+  smuggled into `content` → `AssertionError`, file untouched),
+  `test_structural_failure_raises_and_leaves_file_byte_identical` (malformed
+  body → `AssertionError`, file byte-identical),
+  `test_field_validation_failure_raises_and_leaves_file_byte_identical`
+  (out-of-vocabulary field value → `ValidationError` for req/uc/tsk/gol/rsk,
+  structural `AssertionError` for qa/prb, file byte-identical in every case),
+  and `test_raises_domain_not_found_for_unknown_id` (the domain's own
+  `XNotFoundError`). Re-run live in the Phase-7 gate as part of **Ran 1779
+  tests, OK**.
+- [x] ACC-002: Verifies REQ-002 — for every one of the seven types: a middle-
   range replace leaves all out-of-range body lines byte-identical and inserts
   the fragment at the range; `begin = end = N+1` appends at end of body;
   `end = N+1` replaces through end of body; empty `content` deletes the range
@@ -142,15 +158,55 @@ new tool. Expected end state: **71 tools / 25 resources / 19 prompts**
   with the identical text; each misuse case (one parameter only, `begin < 1`,
   `begin > end`, `end > N+1`, range deleting the H1, range producing an
   out-of-vocabulary field value) raises (`ValueError` / `AssertionError` /
-  `ValidationError`) with the file left byte-identical on disk.
-- [ ] ACC-003: Verifies REQ-003 — for all seven domains, `get_<d>(id,
+  `ValidationError`) with the file left byte-identical on disk. **PASS** —
+  the same file's `TestUpdateRange` (12 test methods, each subTest-
+  parameterized over all seven types):
+  `test_middle_range_replace_leaves_out_of_range_lines_byte_identical`,
+  `test_n_plus_one_appends_at_end_of_body`,
+  `test_end_n_plus_one_replaces_through_end_of_body`,
+  `test_empty_content_deletes_an_optional_section` (deleting the appended
+  optional section yields a still-valid document byte-equal to the minimal
+  seed), `test_begin_one_end_n_equals_whole_body_mode` (byte-identical file
+  to whole-body mode with the identical text, under a frozen microsecond
+  clock), the four `ValueError` misuse tests —
+  `test_exactly_one_of_begin_end_raises_value_error_before_file_access`
+  (raised even for an unknown id, i.e. before any file access),
+  `test_begin_below_one_raises_value_error_file_untouched`,
+  `test_begin_above_end_raises_value_error_file_untouched`, and
+  `test_end_above_n_plus_one_raises_value_error_file_untouched` (each error
+  message names the offending value(s) and the allowed range; file
+  byte-identical in every case) — plus
+  `test_range_deleting_the_h1_raises_and_leaves_file_untouched`
+  (`AssertionError`),
+  `test_range_producing_out_of_vocabulary_value_raises_and_leaves_file_
+  untouched` (per-type error: `ValidationError` for req/uc/tsk/gol/rsk,
+  structural `AssertionError` for qa/prb — the documented nuance in the
+  module docstring, lines 27–34: qa/prb bodies have no field-level
+  validation), and `test_range_mode_raises_domain_not_found_for_unknown_id`.
+  Re-run live in the Phase-7 gate as part of **Ran 1779 tests, OK**.
+- [x] ACC-003: Verifies REQ-003 — for all seven domains, `get_<d>(id,
   raw=True)` returns the frontmatter-stripped body text byte-identical to the
   on-disk body (the text whose lines `begin`/`end` address — proven by a test
   that reads `raw`, picks a line range, calls `update` with that range, and
   confirms the splice landed exactly there); `get_<d>(id)` (`raw=False`)
   returns the parsed document exactly as before (regression); unknown id
-  raises the domain `XNotFoundError` in both modes.
-- [ ] ACC-004: Verifies REQ-004 — for all eight types, `set_status` changes
+  raises the domain `XNotFoundError` in both modes. **PASS** — each of the
+  seven `tests/<d>/tools/test_get_<d>.py` files carries the same 4-test raw
+  group (28 tests total): `test_raw_returns_body_text_via_shared_helper`
+  (`raw=True` byte-identical to the on-disk body via the shared helper),
+  `test_raw_line_coordinates_index_into_the_splice_target` (the coordinate
+  invariant: read `raw`, pick the real line `k` of a marker, call `update`
+  with `begin=k, end=k`, and confirm the splice landed exactly there with
+  every other line unchanged), `test_raw_false_returns_parsed_document_as_
+  before` (explicit `raw=False` equals the default parsed document —
+  regression), and `test_raw_unknown_id_raises_not_found_in_both_modes` (the
+  domain `XNotFoundError` in both modes). The shared body-extraction helper
+  `body_text` lives in `general/tools/_splice.py` (line 55, no `mcp`
+  dependency) — the single helper both the `update` splice and every
+  `get_<d>(raw=True)` call go through, which *is* the "what the client
+  counts is what the server splices" invariant. Re-run live in the Phase-7
+  gate as part of **Ran 1779 tests, OK**.
+- [x] ACC-004: Verifies REQ-004 — for all eight types, `set_status` changes
   `status`, bumps `updated`, and leaves the body untouched (seven domains: raw
   body byte-identical; ADR: re-render round-trip equal apart from
   status/updated); each domain's closed vocabulary is enforced (out-of-set
@@ -158,26 +214,104 @@ new tool. Expected end state: **71 tools / 25 resources / 19 prompts**
   distinct sets: `uc` 5-value, `tsk`/`qa` 4-value, `prb` 4-value, `rsk`
   6-value); ADR `superseded_by` composes `"superseded by X"`; `superseded_by`
   with a non-`adr` type raises `ValueError`, nothing written; unknown id
-  raises the domain `XNotFoundError` / `AdrNotFoundError`.
-- [ ] ACC-005: Verifies REQ-005 — the 15 superseded tools are absent from
+  raises the domain `XNotFoundError` / `AdrNotFoundError`. **PASS** —
+  `tests/general/tools/test_set_status.py` (10 test methods covering all
+  eight types — the seven whole-body domains subTest-parameterized, the ADR
+  directly): `TestSetStatusWholeBodyDomains` —
+  `test_changes_status_bumps_updated_leaves_body_untouched` (status changed
+  on disk, `updated` bumped to the microsecond shape, id/type/created/
+  version preserved, raw body byte-identical via the
+  `frontmatter.loads(...).content` mechanism),
+  `test_out_of_vocabulary_status_raises_validation_error_file_untouched`
+  (cross-domain negative values — `open` against req/gol, `implemented`
+  against uc/tsk/qa/prb/rsk — each a `pydantic.ValidationError` with the
+  file byte-identical), `test_superseded_by_with_non_adr_type_raises_value_
+  error_file_untouched` (the error names the offending type),
+  `test_unknown_id_raises_domain_not_found` (the domain's own
+  `XNotFoundError`), and `test_case_data_matches_the_domains_own_closed_sets`
+  (the per-type valid/invalid pairs asserted against each domain's own
+  imported `_ALLOWED_STATUSES`, so the distinct set sizes — req/gol 7, uc 5,
+  tsk/qa 4, prb 4, rsk 6 — are verified, not trusted); `TestSetStatusAdr` —
+  plain status with `superseded_by=None` (re-parsed render round-trip equal
+  apart from status; ADR has no `updated` field), `superseded_by` composing
+  `"superseded by X"` in the file, `implemented` → `ValidationError` with the
+  file byte-identical, and unknown id → `AdrNotFoundError`; and
+  `TestSetStatusSupersededByGuard` — the guard fires before any file access:
+  `ValueError`, not the domain not-found, even for an unknown id. Re-run
+  live in the Phase-7 gate as part of **Ran 1779 tests, OK**.
+- [x] ACC-005: Verifies REQ-005 — the 15 superseded tools are absent from
   `src/` and from the live MCP registration; a grep over `src/` and `tests/`
   finds no code references to the removed tool names (any residual mention
   before Phase 5 is limited to the Phase-5-owned prompt narration files, and
-  zero afterwards); `vulture` is clean.
-- [ ] ACC-006: Verifies REQ-006 — all 11 instruction data files reference the
+  zero afterwards); `vulture` is clean. **PASS** — fresh Phase-7 run of
+  `git grep -nE` over `src/` and `tests/` for all 15 removed tool names
+  (word-boundary alternation of the seven `update_<d>` and the seven
+  `set_status_<d>` names): 121 match lines in 28 files, every one kept by
+  design — (a) 31 lines of prompt *function* names (the six domain
+  `prompts/update_<d>.py` modules — tsk's is `update_task.py`, rsk's is
+  `update_risk.py` — plus the four prompts `__init__.py` files and
+  `qa/prompts/refine.py`), (b) 8 lines of kept prompt-name enumerations
+  (`server.py`'s four per-domain PROMPT lines and one each in the
+  `req`/`qa`/`prb`/`gol` package `__init__.py` files), (c) 8 lines in the
+  four `*_create_instructions.md` data files (the "the `update_<d>` prompt"
+  references — prompt names, not tool references), and (d) 74 lines in the
+  16 prompt test files. Zero matches in any `tools/`, `models/`, or
+  `general/` code; zero `set_status_<d>` matches anywhere; zero tool
+  references in any `data/*.md`. Live registration: none of the 15 names is
+  among the 71 tools returned by `asyncio.run(mcp.list_tools())`;
+  `docs/MCP.md` carries none of the 15 removed `### Tool:` entries (0 of 15)
+  and 71 `### Tool:` entries in total (the generic `set_status` at line 855,
+  `update` at line 868). `vulture src/ whitelist.py --min-confidence 60`:
+  clean, exit 0.
+- [x] ACC-006: Verifies REQ-006 — all 11 instruction data files reference the
   generic tools with the correct signatures (`update(id, type="<d>", content
   [,...])`, `set_status(id, type=..., status[, superseded_by])`); the six
   domain update-instruction files teach the range-update flow (`get_<d>(id,
   raw=True)` → identify the 1-based range → `update(..., begin, end)`; whole-
   body for multi-section or uncertain changes); the 10 prompt test files pass
-  against the rewritten narration.
-- [ ] ACC-007: Verifies REQ-007 — `specmgr docs`, `specmgr mcp-docs`,
+  against the rewritten narration. **PASS** — fresh Phase-7 greps over
+  `src/biz/dfch/specmgr/*/data/*.md`: 18 data files carry the generic call
+  shapes with zero superseded-tool call sites — `update(id, type="<d>",
+  content[, begin=..., end=...])` in the 14 domain instruction files and
+  `set_status(id, type="...", status[, superseded_by])` in the 16 domain +
+  ADR files (the four ADR files use `set_status(id, type="adr", ...)`). Each
+  of the six domain `<d>_update_instructions.md` files (req, tsk, qa, rsk,
+  prb, gol) contains the range-update flow passage — verified in all six:
+  `get_<d>(id, raw=True)` to see the exact body text → identify the 1-based,
+  inclusive line range (`N+1` = end-of-body: `begin = end = N+1` appends
+  after the last line, `end = N+1` extends the range through the last line)
+  → `update(id, type="<d>", content, begin=..., end=...)` passing only the
+  replacement lines (the server splices the fragment into the current on-
+  disk body and validates the result as a whole document, so every out-of-
+  range line stays byte-identical) → whole-body replace (no `begin`/`end`)
+  for a multi-section change or whenever uncertain. The 16 prompt test files
+  (6 domain update + 4 ADR + 4 domain create + `test_refine` +
+  `test_implement_task`) re-run live in the Phase-7 gate: **Ran 186 tests,
+  OK**.
+- [x] ACC-007: Verifies REQ-007 — `specmgr docs`, `specmgr mcp-docs`,
   `specmgr adr-toc`, and `specmgr schema` all report zero drift;
   `docs/MCP.md` shows the two new general tools (with `type` rendered as a 7-
   / 8-value enum) and none of the 15 removed tools; `server.py`'s docstring
   lists exactly the post-feature surface; `AGENTS.md` and `CHANGELOG.md` are
-  updated per REQ-007.
-- [ ] ACC-008: Verifies REQ-001/002/004/005 — the Phase-1 ADR exists in
+  updated per REQ-007. **PASS** — fresh Phase-7 runs: `specmgr docs` (305
+  module pages + `docs/GENERATED.md`), `specmgr mcp-docs` (`docs/MCP.md`),
+  `specmgr adr-toc` (`docs/adr/README.md`), and `specmgr schema` (all seven
+  domain schemas reported "unchanged") — all four byte-identical no-ops, and
+  `git diff --exit-code -- docs/` exits 0. `docs/MCP.md` shows the two
+  generic tools with `type` rendered as the enum — `update` (entry at line
+  868): `| `type` | `string (enum: req, uc, tsk, qa, prb, gol, rsk)` | Yes
+  |` and `set_status` (entry at line 855): `| `type` | `string (enum: req,
+  uc, tsk, qa, prb, gol, rsk, adr)` | Yes |` — and none of the 15 removed
+  tools. `server.py`'s module docstring lists exactly the post-feature
+  surface: the General-tools lines name `update` (7-value `type`, optional
+  1-based inclusive `begin`/`end` body-line range with the `N+1` end-of-body
+  sentinel, the spliced result validated as a whole document) and
+  `set_status` (8-value `type`, `superseded_by` ADR-only, composing
+  `"superseded by {superseded_by}"`); the ADR-tools line carries the 11
+  wrappers (no `set_status`); each per-domain line names its `get_<d>` with
+  the `raw=True` note and no `update_<d>`/`set_status_<d>`. `AGENTS.md` and
+  `CHANGELOG.md` were updated per REQ-007 in the Phase-6 commit `c82abeb`.
+- [x] ACC-008: Verifies REQ-001/002/004/005 — the Phase-1 ADR exists in
   `docs/adr/` with status `accepted` and is listed in `docs/adr/README.md`; a
   live, un-mocked end-to-end run in a temporary `SPECMGR_DOCS_DIR` passes for
   `req`, `rsk`, and `uc`: `create_<d>` → `get_<d>(id, raw=True)` →
@@ -188,7 +322,34 @@ new tool. Expected end state: **71 tools / 25 resources / 19 prompts**
   superseded_by=…)` → status reads `"superseded by …"`;
   `asyncio.run(mcp.list_tools()/list_resources()/list_prompts())` on the real
   `server.mcp` instance reports **71 tools / 25 resources / 19 prompts**; a
-  fresh subprocess import of `biz.dfch.specmgr.server` succeeds.
+  fresh subprocess import of `biz.dfch.specmgr.server` succeeds. **PASS** —
+  (a) the Phase-1 ADR exists at `docs/adr/36905d5b-8057-4294-
+  8665-c7eed5534db0-consolidate-whole-body-update-and-status-change-tools-
+  into-g.md` with `status: accepted` and is listed in `docs/adr/README.md`
+  (line 20: "Consolidate whole-body update and status-change tools into
+  generic type-dispatched tools", with "- Id: 36905d5b-8057-
+  4294-8665-c7eed5534db0" and "- Status: accepted" beneath it). (b) the
+  live, un-mocked end-to-end run (throwaway script `/tmp/opencode/feat22_
+  e2e.py` against a temp `SPECMGR_DOCS_DIR` + `SPECMGR_ADR_DIR`, driving the
+  real tool functions; printed `E2E-OK`, exit 0) passed for all three whole-
+  body domains and ADR — per domain: `create_<d>` → `get_<d>(id, raw=True)`
+  (req N=20, rsk N=37, uc N=36 body lines) → one middle-range replace
+  (changed line exactly the fragment, every out-of-range line byte-identical)
+  → one `N+1` append (prior lines unchanged, new last lines exactly the
+  fragment) → parsed `get_<d>` reflecting both edits (req `description` +
+  `notes`, rsk `cause` + `owner`, uc `goal_in_context` + `open_issues`) →
+  `set_status` with a domain-valid value (req `accepted`, rsk `mitigating`,
+  uc `proposed`) → parsed status verified and `updated` bumped; for ADR:
+  `create_adr` (initial status `proposed`) → `set_status(id, type="adr",
+  status="superseded", superseded_by="00000000-0000-4000-8000-000000000000")`
+  → `get_adr`'s frontmatter status reads exactly "superseded by
+  00000000-0000-4000-8000-000000000000"; the temp dir was removed afterwards
+  and `git status --short` shows no residue. (c)
+  `asyncio.run(mcp.list_tools()/list_resources()/list_prompts())` on the
+  real `server.mcp` instance: "tools=71 resources=25 prompts=19" — none of
+  the 15 removed tool names present, both generic tools present. (d) fresh-
+  subprocess `uv run --frozen python -c "import biz.dfch.specmgr.server"`:
+  exit 0.
 
 ### Scope
 
@@ -420,7 +581,7 @@ phase-orchestrator commits each accepted phase as one Conventional Commit.
 
 #### Phase 1: ADR
 
-- [ ] Task 1.1: Create the feature's ADR with the `specmgr_create_adr` MCP
+- [x] Task 1.1: Create the feature's ADR with the `specmgr_create_adr` MCP
   tool (never hand-write the file — ADR 898bfcd0), status `accepted`, title
   "Consolidate whole-body update and status-change tools into generic type-
   dispatched tools": Context (15 near-duplicate mutation tools; LLM clients
@@ -440,22 +601,21 @@ phase-orchestrator commits each accepted phase as one Conventional Commit.
   frontmatter never addressable; `get_<d>(raw=True)` as the line-number
   source — tool-first per ADR ddfb1109, re-introducing `specmgr://<d>/{id}`
   resources was considered and rejected; future domains add one dispatch
-  entry per generic tool, not new tools) — depends on: none — status: not-
-  started
-- [ ] Task 1.2: Validate the new ADR with `specmgr_validate_adr`; run `uv run
+  entry per generic tool, not new tools) — depends on: none — status: done
+- [x] Task 1.2: Validate the new ADR with `specmgr_validate_adr`; run `uv run
   --frozen specmgr adr-toc` and confirm the ADR appears in
-  `docs/adr/README.md` — depends on: Task 1.1 — status: not-started
-- [ ] Task 1.3: Phase-end quality gate — full gate (ruff format --check, ruff
+  `docs/adr/README.md` — depends on: Task 1.1 — status: done
+- [x] Task 1.3: Phase-end quality gate — full gate (ruff format --check, ruff
   check, vulture, full unittest suite; no `src/` changes are expected, so
   `docs/` drift checks cover `specmgr adr-toc` output only); set this
   README's frontmatter `status: planning` → `status: in-progress`; add a
   dated entry to the Recent Updates section, update Current Status, flip the
   phase's task lines to done in place; record the new ADR's id — depends on:
-  Task 1.2 — status: not-started
+  Task 1.2 — status: done
 
 #### Phase 2: Generic `update` tool + `raw` read parameter
 
-- [ ] Task 2.1: Create `general/tools/_splice.py` (no `mcp` dependency, plain
+- [x] Task 2.1: Create `general/tools/_splice.py` (no `mcp` dependency, plain
   file I/O + text manipulation, module docstring explaining the raw/splice
   invariant): `body_text(path: Path) -> str` (frontmatter-stripped body text
   via the established `frontmatter.loads(...).content` mechanism) and
@@ -465,8 +625,8 @@ phase-orchestrator commits each accepted phase as one Conventional Commit.
   1`, `begin > end`, `end > N + 1`; drop lines `begin..min(end, N)`; insert
   `content.splitlines()` at position `begin - 1`; rejoin `"\n"` + single
   trailing `"\n"`; empty `content` = deletion) — depends on: none — status:
-  not-started
-- [ ] Task 2.2: Create `general/tools/update.py`: seven private adapter
+  done
+- [x] Task 2.2: Create `general/tools/update.py`: seven private adapter
   functions `_update_<d>(id_, content, begin, end)` — verbatim ports of the
   current `update_<d>` function bodies (same `X_lock`, `load_by_id`,
   frontmatter carry-over + microsecond `updated` bump, `write_X_file`,
@@ -481,10 +641,10 @@ phase-orchestrator commits each accepted phase as one Conventional Commit.
   ReqDocument | UcDocument | TskDocument | QaDocument | PrbDocument |
   GolDocument | RskDocument` with a full numpy-style docstring (including
   the range contract and the error types) — depends on: Task 2.1 — status:
-  not-started
-- [ ] Task 2.3: Register `update` in `general/tools/__init__.py` (import,
-  `__all__`, module docstring) — depends on: Task 2.2 — status: not-started
-- [ ] Task 2.4: Add the `raw: bool = False` parameter to the seven `get_<d>`
+  done
+- [x] Task 2.3: Register `update` in `general/tools/__init__.py` (import,
+  `__all__`, module docstring) — depends on: Task 2.2 — status: done
+- [x] Task 2.4: Add the `raw: bool = False` parameter to the seven `get_<d>`
   tools (`req/tools/get_req.py`, `uc/tools/get_uc.py`, `tsk/tools/get_tsk.py`,
   `qa/tools/get_qa.py`, `prb/tools/get_prb.py`, `gol/tools/get_gol.py`,
   `rsk/tools/get_rsk.py`): signature `get_<d>(id: str, raw: bool = False) ->
@@ -492,13 +652,13 @@ phase-orchestrator commits each accepted phase as one Conventional Commit.
   and returns `body_text(path)` (the same helper the splice uses, per the
   Design-Notes invariant); `raw=False` returns the parsed document exactly as
   today; update each tool's `@mcp.tool` description and docstring Returns
-  section — depends on: Task 2.1 — status: not-started
-- [ ] Task 2.5: Update `server.py`'s module docstring: add `update` to the
+  section — depends on: Task 2.1 — status: done
+- [x] Task 2.5: Update `server.py`'s module docstring: add `update` to the
   General-tools lines (one line describing whole-body *and* line-range
   replace, the 7-value `type`, optional `begin`/`end`); note the `raw`
   parameter where the seven `get_<d>` tools are enumerated — depends on:
-  Task 2.2, Task 2.4 — status: not-started
-- [ ] Task 2.6: `tests/general/tools/test_update.py` — parameterized over all
+  Task 2.2, Task 2.4 — status: done
+- [x] Task 2.6: `tests/general/tools/test_update.py` — parameterized over all
   seven types (seed a document per type, e.g. via the domain `create_<d>`
   tool in a temp `SPECMGR_DOCS_DIR`, mirroring the fixture strategy of the
   `tests/<d>/tools/test_update_<d>.py` files still on disk at this phase):
@@ -511,67 +671,64 @@ phase-orchestrator commits each accepted phase as one Conventional Commit.
   optional section yielding a valid document; `begin=1`/`end=N` ≡ whole-body;
   every `ValueError` misuse case; range deleting the H1 → `AssertionError`,
   file untouched; range producing an out-of-vocabulary field value →
-  `ValidationError`, file untouched) — depends on: Task 2.2 — status: not-
-  started
-- [ ] Task 2.7: Extend each domain's existing `tests/<d>/tools/test_get_<d>.py`
+  `ValidationError`, file untouched) — depends on: Task 2.2 — status: done
+- [x] Task 2.7: Extend each domain's existing `tests/<d>/tools/test_get_<d>.py`
   (seven files) with `raw` coverage (ACC-003 cases): `raw=True` returns the
   body text byte-identical to the on-disk frontmatter-stripped body; the
   coordinate invariant (read `raw`, pick a real line range, `update` with it,
   assert the splice landed exactly there); `raw=False` regression (parsed
   document as before); unknown id → `XNotFoundError` in both modes — depends
-  on: Task 2.4, Task 2.2 — status: not-started
-- [ ] Task 2.8: Registration smoke test: a unittest asserting
+  on: Task 2.4, Task 2.2 — status: done
+- [x] Task 2.8: Registration smoke test: a unittest asserting
   `asyncio.run(mcp.list_tools())` contains `update` with `type` rendered as a
   7-value `enum` and optional integer `begin`/`end` in the input schema, plus
   a fresh-subprocess `uv run --frozen python -c "import biz.dfch.specmgr.
   server"` check run inside the phase gate (import-order proof, Design Notes)
-  — depends on: Task 2.3 — status: not-started
-- [ ] Task 2.9: Phase-end quality gate — full gate including Tasks 2.6–2.8's
+  — depends on: Task 2.3 — status: done
+- [x] Task 2.9: Phase-end quality gate — full gate including Tasks 2.6–2.8's
   new tests; `uv run --frozen specmgr mcp-docs` and `uv run --frozen specmgr
   docs` regeneration, then `git diff --exit-code -- docs/` zero drift;
   confirm `docs/MCP.md` shows the `update` entry (enum) and the `raw` note on
   the `get_<d>` entries; add a dated entry to the Recent Updates section,
   update Current Status, flip the phase's task lines to done in place —
-  depends on: Tasks 2.3, 2.5, 2.8 — status: not-started
+  depends on: Tasks 2.3, 2.5, 2.8 — status: done
 
 #### Phase 3: Retire the per-domain `update_*` tools
 
-- [ ] Task 3.1: Delete the seven tool modules: `req/tools/update_req.py`,
+- [x] Task 3.1: Delete the seven tool modules: `req/tools/update_req.py`,
   `uc/tools/update_uc.py`, `tsk/tools/update_tsk.py`, `qa/tools/update_qa.py`,
   `prb/tools/update_prb.py`, `gol/tools/update_gol.py`,
-  `rsk/tools/update_rsk.py` — depends on: Phase 2 complete — status: not-
-  started
-- [ ] Task 3.2: Delete the seven test files: `tests/req/tools/
+  `rsk/tools/update_rsk.py` — depends on: Phase 2 complete — status: done
+- [x] Task 3.2: Delete the seven test files: `tests/req/tools/
   test_update_req.py`, `tests/uc/tools/test_update_uc.py`, `tests/tsk/tools/
   test_update_tsk.py`, `tests/qa/tools/test_update_qa.py`, `tests/prb/tools/
   test_update_prb.py`, `tests/gol/tools/test_update_gol.py`, `tests/rsk/
-  tools/test_update_rsk.py` — depends on: Task 3.1 — status: not-started
-- [ ] Task 3.3: Update the seven domain `tools/__init__.py` files (remove the
+  tools/test_update_rsk.py` — depends on: Task 3.1 — status: done
+- [x] Task 3.3: Update the seven domain `tools/__init__.py` files (remove the
   `update_<d>` import, `__all__` entry, and the module-docstring tool-list
   mention) and the seven domain `__init__.py` files (remove `update_<d>` from
   the docstring tool enumeration; note that whole-body updates go through the
   generic `update` tool in `general/tools/`) — depends on: Task 3.1 — status:
-  not-started
-- [ ] Task 3.4: Update `server.py`'s module docstring: remove `update_<d>`
+  done
+- [x] Task 3.4: Update `server.py`'s module docstring: remove `update_<d>`
   from the seven per-domain Tools lines (the `set_status_<d>` entries stay
-  until Phase 4) — depends on: Task 3.1 — status: not-started
-- [ ] Task 3.5: Grep verification: `grep -rn "update_req\|update_uc\|
+  until Phase 4) — depends on: Task 3.1 — status: done
+- [x] Task 3.5: Grep verification: `grep -rn "update_req\|update_uc\|
   update_tsk\|update_qa\|update_prb\|update_gol\|update_rsk" src/ tests/`
   must return only prompt-narration matches (the six `prompts/update_<d>.py`
   module docstrings and their `data/*.md` files — Phase 5's ownership) and
   nothing in `tools/`, `models/`, or `general/`; record the residual match
-  list in the Progress entry — depends on: Tasks 3.2, 3.3, 3.4 — status: not-
-  started
-- [ ] Task 3.6: Phase-end quality gate — full gate; `specmgr mcp-docs` +
+  list in the Progress entry — depends on: Tasks 3.2, 3.3, 3.4 — status: done
+- [x] Task 3.6: Phase-end quality gate — full gate; `specmgr mcp-docs` +
   `specmgr docs` regeneration, then `git diff --exit-code -- docs/` zero
   drift (`docs/MCP.md` loses the seven `update_<d>` entries; `docs/api/`
   loses the seven module pages); add a dated entry to the Recent Updates
   section, update Current Status, flip the phase's task lines to done in
-  place — depends on: Task 3.5 — status: not-started
+  place — depends on: Task 3.5 — status: done
 
 #### Phase 4: Generic `set_status` + retire the eight old status tools
 
-- [ ] Task 4.1: Create `general/tools/set_status.py`: eight private adapters
+- [x] Task 4.1: Create `general/tools/set_status.py`: eight private adapters
   `_set_status_<d>` — seven verbatim ports of the `set_status_<d>` bodies
   (lock, `load_by_id`, raw body re-read via the established
   `frontmatter.loads(...).content` mechanism, frontmatter reconstructed
@@ -586,34 +743,33 @@ phase-orchestrator commits each accepted phase as one Conventional Commit.
   "rsk","adr"], status: str, superseded_by: str | None = None) ->
   ReqDocument | UcDocument | TskDocument | QaDocument | PrbDocument |
   GolDocument | RskDocument | Adr` with a full numpy-style docstring —
-  depends on: Phase 3 complete (the `set_status` tool name must be free
-  before this tool registers — see Design Notes, Name-collision constraint) —
-  status: not-started
-- [ ] Task 4.2: Delete the eight superseded modules: `adr/tools/set_status.py`,
+   depends on: Phase 3 complete (the `set_status` tool name must be free
+   before this tool registers — see Design Notes, Name-collision constraint) —
+   status: done
+- [x] Task 4.2: Delete the eight superseded modules: `adr/tools/set_status.py`,
   `req/tools/set_status_req.py`, `uc/tools/set_status_uc.py`,
   `tsk/tools/set_status_tsk.py`, `qa/tools/set_status_qa.py`,
-  `prb/tools/set_status_prb.py`, `gol/tools/set_status_gol.py`,
-  `rsk/tools/set_status_rsk.py` — depends on: Task 4.1 — status: not-started
-- [ ] Task 4.3: Delete the eight test files: `tests/adr/tools/
+   `prb/tools/set_status_prb.py`, `gol/tools/set_status_gol.py`,
+   `rsk/tools/set_status_rsk.py` — depends on: Task 4.1 — status: done
+- [x] Task 4.3: Delete the eight test files: `tests/adr/tools/
   test_set_status.py`, `tests/req/tools/test_set_status_req.py`,
   `tests/uc/tools/test_set_status_uc.py`, `tests/tsk/tools/
   test_set_status_tsk.py`, `tests/qa/tools/test_set_status_qa.py`,
-  `tests/prb/tools/test_set_status_prb.py`, `tests/gol/tools/
-  test_set_status_gol.py`, `tests/rsk/tools/test_set_status_rsk.py` — depends
-  on: Task 4.1 — status: not-started
-- [ ] Task 4.4: Register `set_status` in `general/tools/__init__.py` (import,
+   `tests/prb/tools/test_set_status_prb.py`, `tests/gol/tools/
+   test_set_status_gol.py`, `tests/rsk/tools/test_set_status_rsk.py` — depends
+   on: Task 4.1 — status: done
+- [x] Task 4.4: Register `set_status` in `general/tools/__init__.py` (import,
   `__all__`, module docstring); update `adr/tools/__init__.py` and the seven
   domain `tools/__init__.py` files (remove the `set_status*` imports,
   `__all__` entries, and docstring mentions; note status changes go through
   the generic `set_status` in `general/tools/`); update the eight domain
-  `__init__.py` docstring enumerations likewise — depends on: Tasks 4.2, 4.3 —
-  status: not-started
-- [ ] Task 4.5: Update `server.py`'s module docstring: remove `set_status`
+   `__init__.py` docstring enumerations likewise — depends on: Tasks 4.2, 4.3 —
+   status: done
+- [x] Task 4.5: Update `server.py`'s module docstring: remove `set_status`
   from the ADR tools line and `set_status_<d>` from the seven per-domain
   lines; add `set_status` to the General-tools lines (8-value `type`;
-  `superseded_by` is ADR-only) — depends on: Tasks 4.1, 4.4 — status: not-
-  started
-- [ ] Task 4.6: `tests/general/tools/test_set_status.py` — parameterized over
+   `superseded_by` is ADR-only) — depends on: Tasks 4.1, 4.4 — status: done
+- [x] Task 4.6: `tests/general/tools/test_set_status.py` — parameterized over
   all eight types (ACC-004 cases): status changed + `updated` bumped + body
   untouched (seven domains: raw body byte-identical; ADR: re-parsed document
   equal apart from status/updated); closed-vocabulary enforcement per domain
@@ -624,17 +780,17 @@ phase-orchestrator commits each accepted phase as one Conventional Commit.
   untouched); ADR `superseded_by` composes `"superseded by X"` in the file;
   ADR plain `status` values work with `superseded_by=None`; `superseded_by`
   with any non-`adr` type → `ValueError`, file untouched; unknown id →
-  domain `XNotFoundError` / `AdrNotFoundError` — depends on: Task 4.1 —
-  status: not-started
-- [ ] Task 4.7: Phase-end quality gate — full gate including Task 4.6's new
+   domain `XNotFoundError` / `AdrNotFoundError` — depends on: Task 4.1 —
+   status: done
+- [x] Task 4.7: Phase-end quality gate — full gate including Task 4.6's new
   tests; `specmgr mcp-docs` + `specmgr docs` regeneration, then `git diff
   --exit-code -- docs/` zero drift; add a dated entry to the Recent Updates
   section, update Current Status, flip the phase's task lines to done in
-  place — depends on: Tasks 4.5, 4.6 — status: not-started
+   place — depends on: Tasks 4.5, 4.6 — status: done
 
 #### Phase 5: Narration rewrite (prompts + instruction data)
 
-- [ ] Task 5.1: Grep-driven rewrite of every instruction data file naming a
+- [x] Task 5.1: Grep-driven rewrite of every instruction data file naming a
   superseded tool (`grep -rn "update_req\|update_uc\|update_tsk\|update_qa\|
   update_prb\|update_gol\|update_rsk\|set_status_" src/biz/dfch/specmgr/
   */data/` plus bare `set_status(` in the ADR data files). Eleven files
@@ -654,8 +810,8 @@ phase-orchestrator commits each accepted phase as one Conventional Commit.
   append, else whole-body; keep the existing carry-forward guidance for the
   whole-body path). The four ADR instruction files: `set_status(id, status[,
   superseded_by])` → `set_status(id, type="adr", status[, superseded_by])` —
-  depends on: Phase 4 complete — status: not-started
-- [ ] Task 5.2: Correct prompt Python module docstrings that name superseded
+   depends on: Phase 4 complete — status: done
+- [x] Task 5.2: Correct prompt Python module docstrings that name superseded
   tools: the six `prompts/update_<d>.py` modules (rsk's is `update_risk.py`,
   tsk's is `update_task.py`) — their module docstrings narrate the
   `update_<d>` / `set_status_<d>` surface; the four ADR prompt modules
@@ -663,8 +819,8 @@ phase-orchestrator commits each accepted phase as one Conventional Commit.
   `update_adr_test.py`) — their surface mentions of `set_status` stay true
   (the tool still exists, now generic) but are made precise where they imply
   the old ADR-only signature. No behavioral change to any prompt function —
-  depends on: Task 5.1 — status: not-started
-- [ ] Task 5.3: Update the ten prompt test files to assert the rewritten
+  depends on: Task 5.1 — status: done
+- [x] Task 5.3: Update the ten prompt test files to assert the rewritten
   narration: `tests/req/prompts/test_update_req.py`, `tests/tsk/prompts/
   test_update_task.py`, `tests/qa/prompts/test_update_qa.py`, `tests/rsk/
   prompts/test_update_risk.py`, `tests/prb/prompts/test_update_prb.py`,
@@ -672,18 +828,17 @@ phase-orchestrator commits each accepted phase as one Conventional Commit.
   test_create_adr.py`, `tests/adr/prompts/test_create_adr_test.py`,
   `tests/adr/prompts/test_update_adr.py`, `tests/adr/prompts/
   test_update_adr_test.py` — assertions must confirm the generic call shapes
-  (and, for the six domain update prompts, the range-update passage) —
-  depends on: Tasks 5.1, 5.2 — status: not-started
-- [ ] Task 5.4: Phase-end quality gate — full gate (the prompt data files are
+   (and, for the six domain update prompts, the range-update passage) —
+   depends on: Tasks 5.1, 5.2 — status: done
+- [x] Task 5.4: Phase-end quality gate — full gate (the prompt data files are
   package data; `specmgr docs` regeneration covers Task 5.2's docstring
   changes), then `git diff --exit-code -- docs/` zero drift; add a dated
-  entry to the Recent Updates section, update Current Status, flip the
-  phase's task lines to done in place — depends on: Task 5.3 — status: not-
-  started
+   entry to the Recent Updates section, update Current Status, flip the
+   phase's task lines to done in place — depends on: Task 5.3 — status: done
 
 #### Phase 6: Cross-cutting documentation and release notes
 
-- [ ] Task 6.1: Update `AGENTS.md`: the seven per-domain bullets — remove
+- [x] Task 6.1: Update `AGENTS.md`: the seven per-domain bullets — remove
   `update_<d>`/`set_status_<d>` from each tool enumeration and note that
   whole-body/line-range updates go through the generic `update` tool and
   status changes through the generic `set_status` tool (both in
@@ -695,8 +850,8 @@ phase-orchestrator commits each accepted phase as one Conventional Commit.
   add the convention note that future domains (e.g. `ac`) add one dispatch
   entry to the two generic tools (plus a `raw` getter parameter) instead of
   new `update_<d>`/`set_status_<d>` tools, citing the Phase-1 ADR id —
-  depends on: Phase 5 complete — status: not-started
-- [ ] Task 6.2: Update `CHANGELOG.md`'s `[Unreleased]` section: **Breaking** —
+  depends on: Phase 5 complete — status: done
+- [x] Task 6.2: Update `CHANGELOG.md`'s `[Unreleased]` section: **Breaking** —
   removed 14 MCP tools (`update_req`, `update_uc`, `update_tsk`,
   `update_qa`, `update_prb`, `update_gol`, `update_rsk`, `set_status_req`,
   `set_status_uc`, `set_status_tsk`, `set_status_qa`, `set_status_prb`,
@@ -709,19 +864,19 @@ phase-orchestrator commits each accepted phase as one Conventional Commit.
   optional `raw: bool = False` on the seven `get_<d>` tools (returns the
   frontmatter-stripped body text verbatim — the text `begin`/`end` index
   into); cite the Phase-1 ADR id — depends on: Phase 5 complete — status:
-  not-started
-- [ ] Task 6.3: Final regeneration: `uv run --frozen specmgr docs`, `uv run
+  done
+- [x] Task 6.3: Final regeneration: `uv run --frozen specmgr docs`, `uv run
   --frozen specmgr mcp-docs`, `uv run --frozen specmgr adr-toc`, `uv run
   --frozen specmgr schema` (models are untouched — expect no schema
   changes); confirm `git diff --exit-code -- docs/` exits zero — depends on:
-  Task 6.1, Task 6.2 — status: not-started
-- [ ] Task 6.4: Phase-end quality gate — full gate; add a dated entry to the
+  Task 6.1, Task 6.2 — status: done
+- [x] Task 6.4: Phase-end quality gate — full gate; add a dated entry to the
   Recent Updates section, update Current Status, flip the phase's task lines
-  to done in place — depends on: Task 6.3 — status: not-started
+  to done in place — depends on: Task 6.3 — status: done
 
 #### Phase 7: Final cross-cutting verification
 
-- [ ] Task 7.1: Walk ACC-001…ACC-008 and confirm each with concrete evidence,
+- [x] Task 7.1: Walk ACC-001…ACC-008 and confirm each with concrete evidence,
   annotating the Acceptance Criteria section inline in the style of
   feat-18-goal: live, un-mocked end-to-end in a temporary
   `SPECMGR_DOCS_DIR` — for `req`, `rsk`, and `uc`: `create_<d>` →
@@ -736,10 +891,75 @@ phase-orchestrator commits each accepted phase as one Conventional Commit.
   fresh-subprocess import check; full quality gate (ruff format/check, pylint
   advisory, vulture, unittest, `specmgr docs`/`mcp-docs`/`adr-toc`/`schema`
   zero drift); remove the temporary docs directory and confirm `git status`
-  shows no residue — depends on: Phases 1–6 complete — status: not-started
-- [ ] Task 7.2: Set this README's frontmatter `status: in-progress` →
+  shows no residue — depends on: Phases 1–6 complete — status: done
+- [x] Task 7.2: Set this README's frontmatter `status: in-progress` →
   `status: done`; final Recent Updates entry and Current Status summary —
-  depends on: Task 7.1 — status: not-started
+  depends on: Task 7.1 — status: done
+
+#### Phase 8: dev integration — DEC domain conversion
+
+The feature closed at Phase 7 against a pre-feat-21 `dev`. feat-21
+(artifact type "Decision", DEC) was then completed, pushed, and merged
+into `dev` (released as v0.12.0) while still on the old per-domain
+mechanism — per-domain `update_dec`/`set_status_dec` tools, `get_dec`
+without `raw`. Integrating feat-22 with `dev` therefore requires
+converting the DEC domain to this feature's mechanism first, exactly as
+the ADR's convention prescribes ("future domains add one dispatch entry
+per generic tool (plus a `raw` getter parameter), not new tools").
+
+- [x] Task 8.1: `git merge origin/dev` into `feat-22` (8 commits ahead of
+  the merge-base `f9586e6`); resolve the 7 conflicting files — `AGENTS.md`,
+  `CHANGELOG.md`, `src/biz/dfch/specmgr/server.py` (manual: dev's dec
+  lines + our generic-tool lines, dec kept on its old-mechanism wording
+  for the pure-union merge commit) and `docs/MCP.md`, `docs/GENERATED.md`,
+  `docs/api/README.md`, `docs/api/biz.dfch.specmgr.server.md` (resolved by
+  re-running `specmgr docs` + `specmgr mcp-docs`); verify the merge commit
+  is green (full test suite + linters + generator idempotency) —
+  status: done (merge commit `097b502`)
+- [x] Task 8.2: Wire `dec` into the generic tools — `_update_dec`
+  (verbatim port of the retired `update_dec` body plus the REQ-002 range
+  branch) and `_set_status_dec` (verbatim port) in `general/tools/`,
+  `"dec"` in both `_ADAPTERS` dispatch tables and `Literal` unions, both
+  return unions, and the "seven/eight" → "eight/nine" count wording in
+  module/tool/function docstrings — status: done
+- [x] Task 8.3: Retire `dec/tools/update_dec.py` and
+  `dec/tools/set_status_dec.py` (and their exports in
+  `dec/tools/__init__.py`); add `raw: bool = False` to `get_dec`
+  (shared `body_text` helper with the splice, mirroring `get_gol`);
+  re-point the DEC package and private-helper docstrings
+  (`dec/__init__.py`, `_io`, `_lock`, `_write`, `validate_dec`,
+  `dec/tools/__init__.py`) and the `server.py` docstring (dec tools line,
+  generic-tool counts, plus removal of a pre-existing duplicated
+  ADR-prompts line) at the generic tools — status: done
+- [x] Task 8.4: Narration rewrite — `dec/prompts/update_dec.py` module
+  and function docstrings (mirroring the Phase-5 `update_gol` rewrite,
+  dropping the now-obsolete tool-name-collision note),
+  `dec/data/dec_update_instructions.md` (generic `update(id,
+  type="dec", …)` incl. the new line-range subsection and
+  `set_status(id, type="dec", status)`), `dec/data/dec_create_instructions.md`
+  ("Later revisions" pointer) — status: done
+- [x] Task 8.5: Tests — delete `tests/dec/tools/test_update_dec.py` and
+  `test_set_status_dec.py`; add the dec `_Case` to
+  `tests/general/tools/test_update.py` (duplicate `### Option 1:` heading
+  appended at `N+1` as the field-level `ValidationError` trigger) and to
+  `tests/general/tools/test_set_status.py` (`accepted` in / `implemented`
+  out of dec's closed six-set, tied to `DecFrontmatter._ALLOWED_STATUSES`);
+  the four `raw` tests in `tests/dec/tools/test_get_dec.py` (mirroring
+  `test_get_gol`); `tests/dec/tools/test_integration.py` and
+  `tests/dec/prompts/test_update_dec.py`/`test_create_dec.py` re-pointed
+  at the generic call shapes (plus the new line-range-flow assertions) —
+  status: done
+- [x] Task 8.6: Regenerate `docs/` (`specmgr docs`, `specmgr mcp-docs`,
+  `specmgr adr-toc`; delete the two stale API pages for the retired
+  tools); update `AGENTS.md` (dec bullet on the generic wording, general
+  counts eight/nine) and `CHANGELOG.md` (`[Unreleased]`: 16 removed
+  per-domain tools incl. the v0.12.0-shipped `update_dec`/`set_status_dec`
+  pair, generic tools cover the eight/nine domains, eight `raw` getters)
+  — status: done
+- [x] Task 8.7: Final quality gate (ruff format/check, vulture, pylint
+  advisory — no new messages vs. the merge commit, full unittest, all
+  four generators zero drift), push `feat-22`, open the PR to `dev` —
+  status: done
 
 **Note:** If a task's scope changes mid-flight, edit its description in
 place; rely on git history (`git log -p` on this file) to recover what was
@@ -749,17 +969,681 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-26**: Planned. This README was drafted in the planning
-session (all decisions in "Decisions Made" below are locked); all seven
-phases are not started. Execution is handed to the phase-orchestrator via
-`/implement-feature feat-22-consolidate-mutation-tools` (one phase-
-implementer per phase, one Conventional Commit per accepted phase).
+**As of 2026-08-27**: Feature complete — all seven phases done. The 15
+near-duplicate per-domain mutation tools are replaced by two generic,
+type-dispatched tools in `general/tools/` — `update` (whole-body and
+line-range replace over the seven whole-body domains; optional 1-based
+inclusive `begin`/`end` body-line range with the `N+1` end-of-body
+sentinel; splice-then-validate-whole) and `set_status` (status change
+over all eight domains; ADR-only `superseded_by` composing `"superseded
+by X"`) — plus the `raw: bool = False` parameter on the seven `get_<d>`
+tools (frontmatter-stripped body text as-is — the text `begin`/`end`
+index into). All prompt narration, `server.py`'s docstring, `AGENTS.md`,
+`CHANGELOG.md`, and the generated docs carry the post-feature surface.
+Live registration: **71 tools / 25 resources / 19 prompts** — the
+plan's target end state (from 84/25/19: −15 +2). Phase-7 final
+verification: all eight acceptance criteria confirmed with fresh
+evidence and annotated inline (`**PASS**`) in the Acceptance Criteria
+section; the live, un-mocked end-to-end run passed for `req`, `rsk`, and
+`uc` (create → raw read → middle-range replace → `N+1` append → parsed
+verification → `set_status` → status verified) and for ADR
+(`create_adr` → `set_status` with `superseded_by` → status reads
+"superseded by …"); the full quality gate is green (ruff format/check,
+vulture clean, **Ran 1779 tests, OK**, pylint advisory 8.94/10 with
+zero messages in any file this feature touched, all four generators
+no-ops with `git diff --exit-code -- docs/` exit 0). The feature's ADR
+is 36905d5b-8057-4294-8665-c7eed5534db0 (accepted); the six phase
+commits are listed under Related PRs / Commits.
+
+**As of 2026-08-27 (Phase 8, post-merge with dev)**: feat-21 (the DEC
+domain, released on dev as v0.12.0) merged into `feat-22` still on the
+old per-domain mechanism and was converted to this feature's mechanism
+per the ADR's convention for new domains. The two per-domain DEC
+mutation tools (`update_dec`/`set_status_dec`) are gone; the generic
+`update` and `set_status` tools now cover eight whole-body domains
+(`type="dec"` added) and all nine domains respectively, and `get_dec`
+gained `raw`. The plan/overview/acceptance-criteria text above describes
+the feature as planned (seven whole-body domains, 71/25/19 end state —
+correct at planning time, before DEC existed); the ADR is deliberately
+left as the historical record of that planning state. Live registration
+after the conversion: **79 tools / 28 resources / 21 prompts**
+(71/25/19 from Phase 7 + feat-21's 10 dec tools / 3 dec resources / 2
+dec prompts − the 2 converted dec tools). Phase-8 verification: full
+quality gate green (ruff format/check, vulture clean, **Ran 2007 tests,
+OK**, pylint advisory with no new messages vs. the merge commit —
+cyclic-import −2, duplicate-code −2 — all four generators no-ops with
+`git diff --exit-code -- docs/` exit 0).
 
 ### Blockers
 
 None.
 
 ### Recent Updates
+
+#### Update 2026-08-27 (Phase 8: dev integration and DEC conversion)
+
+- Completed: Phase 8 (Tasks 8.1–8.7). `origin/dev` had moved on while
+  this feature was in flight: feat-21 (artifact type "Decision", DEC —
+  the tenth domain) was merged into `dev` (PR #23) and released as
+  v0.12.0, still on the old per-domain mechanism (`update_dec` /
+  `set_status_dec`, `get_dec` without `raw`). Merged `origin/dev` into
+  `feat-22` (merge commit `097b502`; 7 conflicting files — `AGENTS.md`,
+  `CHANGELOG.md`, `server.py` resolved manually, the four `docs/`
+  files by regeneration) and converted the DEC domain to this
+  feature's mechanism per ADR 36905d5b's convention for new domains
+  (commit `5a7ddf3`): `_update_dec`/`_set_status_dec` adapters in the
+  generic tools (`type="dec"`), the two per-domain tools deleted,
+  `raw=True` on `get_dec`, DEC narration (prompt docstrings +
+  `dec_update_instructions.md` incl. the new line-range flow,
+  `dec_create_instructions.md`) re-pointed, tests re-pointed (dec cases
+  added to the generic `update`/`set_status` parameterized suites —
+  duplicate `### Option 1:` as the field-level failure trigger,
+  `implemented` as the out-of-vocabulary status — plus the four `raw`
+  tests on `get_dec`), and `AGENTS.md`/`CHANGELOG.md`/`server.py`/
+  regenerated docs updated. Live registration: **79 tools / 28
+  resources / 21 prompts**. Final quality gate green: ruff format/check
+  clean, vulture   clean, **Ran 2007 tests, OK**, pylint advisory with no
+  new messages vs. the merge commit (cyclic-import −2, duplicate-code
+  −2), `specmgr docs`/`mcp-docs`/`adr-toc`/`schema` all no-ops
+  (`git diff --exit-code -- docs/` exit 0).
+- Done: pushed `feat-22` to origin and opened the PR to `dev`:
+  https://github.com/dfch/biz.dfch.SpecMgr/pull/26.
+
+#### Update 2026-08-27 (Phase 7: Final verification)
+
+- Completed: Phase 7 (Tasks 7.1–7.2). Final cross-cutting verification —
+  all eight acceptance criteria walked with fresh evidence and annotated
+  inline (`**PASS**`) in the Acceptance Criteria section; frontmatter
+  status `in-progress` → `done`; this Progress update closes the feature.
+- Live, un-mocked end-to-end (throwaway script `/tmp/opencode/feat22_
+  e2e.py`, temp `SPECMGR_DOCS_DIR` + `SPECMGR_ADR_DIR`, driving the real
+  tool functions; printed `E2E-OK`, exit 0):
+  - `req`: created id `594cd34e-5358-40f2-9a0b-e2b1f6f8d5a6` (raw body
+    N=20) → middle-range replace line 7 (`begin=end=7`, the Description
+    paragraph → "E2E-replaced description line."; the 19 out-of-range
+    lines byte-identical) → `N+1` append (`begin=end=21`, `## Notes`
+    section; the prior 20 lines unchanged) → parsed `get_req` reflecting
+    both edits (`body.description`, `body.notes`) →
+    `set_status(id, "req", "accepted")` → status verified, `updated`
+    bumped `2026-08-27T15:21:16.920820` →
+    `2026-08-27T15:21:17.376827`.
+  - `rsk`: created id `7c70cc5e-1ce0-4cf1-a105-6ea45a40a248` (N=37) →
+    middle-range replace line 5 (`## Cause` paragraph → "E2E-replaced
+    root condition."; the 36 out-of-range lines byte-identical) → `N+1`
+    append (`begin=end=38`, `## Owner` section) → parsed `get_rsk`
+    reflecting both edits (`body.cause`, `body.owner`) →
+    `set_status(id, "rsk", "mitigating")` → status verified, `updated`
+    bumped.
+  - `uc`: created id `151e0a6b-69f4-4fbe-ad08-c7b2e91b2a96` (N=36) →
+    middle-range replace line 7 (`### Goal in Context` paragraph →
+    "E2E-replaced goal-in-context line."; the 35 out-of-range lines byte-
+    identical) → `N+1` append (`begin=end=37`, `## Open Issues` section)
+    → parsed `get_uc` reflecting both edits
+    (`body.characteristic_information.goal_in_context`,
+    `body.open_issues`) → `set_status(id, "uc", "proposed")` → status
+    verified, `updated` bumped.
+  - `adr`: `create_adr` (id `6bd17f45-0c1a-43ac-84a3-104e08e58d95`,
+    initial status `proposed`) → `set_status(id, "adr", "superseded",
+    superseded_by="00000000-0000-4000-8000-000000000000")` →
+    `get_adr`'s frontmatter status reads exactly "superseded by
+    00000000-0000-4000-8000-000000000000".
+  - Temp dir removed after the run (`exists=False`); `git status
+    --short` in the repo shows no residue from the e2e.
+- Live registration on the real `server.mcp` instance
+  (`asyncio.run(mcp.list_tools()/list_resources()/list_prompts())`):
+  **tools=71 resources=25 prompts=19** — none of the 15 removed tool
+  names present, both generic tools present. Fresh-subprocess `uv run
+  --frozen python -c "import biz.dfch.specmgr.server"`: exit 0.
+- Quality gate (green): `ruff format --check` (1094 files already
+  formatted), `ruff check` (all checks passed), `vulture src/
+  whitelist.py --min-confidence 60` (clean, exit 0), full unittest suite
+  (**Ran 1779 tests in 46.6s, OK**), pylint advisory (**8.94/10** — the
+  105 E messages are all pre-existing false positives in the
+  `req`/`gol`/`uc`/`rsk` `models/` packages and `models/md/`; zero in any
+  file this feature touched and none in `general/tools/` or `server.py`),
+  the four generators (`specmgr docs` — 305 module pages +
+  `docs/GENERATED.md`, `specmgr mcp-docs`, `specmgr adr-toc`, `specmgr
+  schema` — all seven domain schemas "unchanged") all byte-identical
+  no-ops with `git diff --exit-code -- docs/` exit 0, the 16 prompt test
+  files re-run live (**Ran 186 tests, OK**), and the ACC-005/006 greps
+  re-run fresh (121 kept-by-design residual lines in 28 files; 18 data
+  files carry the generic call shapes; zero superseded-tool call sites).
+- Feature complete: all seven phases done; the eight acceptance criteria
+  are checked and annotated in place; no code change in this phase.
+
+#### Update 2026-08-27 (Phase 6: Cross-cutting documentation and release notes)
+
+- Completed: Phase 6 (Tasks 6.1–6.4). Cross-cutting documentation and
+  release notes for the consolidated mutation surface — `AGENTS.md`,
+  `CHANGELOG.md`, the four final regenerations (all no-ops), and this
+  Progress update. No code change in this phase.
+  - `AGENTS.md` (Task 6.1): the seven per-domain bullets no longer
+    enumerate `update_<d>`/`set_status_<d>` — each now says whole-body
+    and line-range updates go through the generic `update` tool and
+    status changes through the generic `set_status` tool (both in
+    `general/tools/`, `type="<d>"`); the six bullets that enumerate
+    `get_<d>` note its `raw: bool = False` parameter (`raw=True` returns
+    the frontmatter-stripped body text as-is — the text `update`'s
+    `begin`/`end` index into). The ADR bullet's `@mcp.tool()` wrapper
+    count is 12 → 11 (`set_status` removed from the enumeration; ADR
+    status changes go through the generic `set_status` tool in
+    `general/tools/`, called with `type="adr"`, ADR-only
+    `superseded_by`). The `general/` bullet adds `update` (the generic
+    whole-body *and* line-range replace for the seven whole-body domains
+    — 7-value `type`, optional 1-based inclusive `begin`/`end` with the
+    `N+1` end-of-body sentinel, splice-then-validate-whole) and
+    `set_status` (the generic status change for all eight domains incl.
+    adr — ADR-only `superseded_by` composing `"superseded by X"`) to
+    `general/tools/`, plus the `raw: bool = False` parameter on the
+    seven `get_<d>` tools. The "Still genuinely missing / not yet done"
+    list gains the future-domain convention: one dispatch entry to each
+    of the two generic tools (`update`'s `type`, `set_status`'s `type`)
+    plus a `raw` parameter on the new `get_<d>` tool — not new
+    `update_<d>`/`set_status_<d>` tools — citing ADR
+    36905d5b-8057-4294-8665-c7eed5534db0 (full UUID).
+  - `CHANGELOG.md` (Task 6.2): `[Unreleased]` gains `### Removed`
+    (**BREAKING**: the 14 per-domain mutation tools —
+    `update_{req,uc,tsk,qa,prb,gol,rsk}` + `set_status_{req,uc,tsk,qa,
+    prb,gol,rsk}` — deleted outright, no deprecated wrappers; ADR's own
+    `set_status` removed, its signature changing from
+    `(id, status, superseded_by)` to `(id, type, status,
+    superseded_by)` with `type="adr"` now required) and `### Added`
+    (generic `update(id, type, content, begin=None, end=None)` — 7
+    types, 1-based inclusive body-line range, `N+1` EOF sentinel,
+    splice-then-validate-whole; generic `set_status(id, type, status,
+    superseded_by=None)` — 8 types, ADR-only `superseded_by`; optional
+    `raw: bool = False` on the seven `get_<d>` tools) — citing ADR
+    36905d5b-8057-4294-8665-c7eed5534db0. No `pyproject.toml` version
+    bump (release-time concern — explicitly out of scope per the plan).
+  - Task 6.3 (final regeneration): `specmgr docs` (305 module pages +
+    `docs/GENERATED.md`), `specmgr mcp-docs` (`docs/MCP.md`), `specmgr
+    adr-toc` (`docs/adr/README.md`), `specmgr schema` (all seven domain
+    schemas reported "unchanged" — models untouched, clean exit) — all
+    four byte-identical no-ops: `git diff --exit-code -- docs/` exits 0.
+- Quality gate (green): `ruff format --check` (1094 files already
+  formatted), `ruff check` (all checks passed), `vulture src/
+  whitelist.py --min-confidence 60` (clean, exit 0), full unittest suite
+  (**Ran 1779 tests, OK** — unchanged count: no code or tests touched
+  in this phase).
+- Next: Phase 7 (Final cross-cutting verification).
+
+#### Update 2026-08-27 (Phase 5: Narration rewrite — prompts + instruction data)
+
+- Completed: Phase 5 (Tasks 5.1–5.4). All prompt narration now names
+  the generic tools with their exact call shapes — `update(id,
+  type="<d>", content)` (whole-body), `update(id, type="<d>", content,
+  begin=…, end=…)` (line-range), `set_status(id, type="<d>", status)`,
+  and `set_status(id, type="adr", status[, superseded_by])` in the ADR
+  files (`superseded_by` composing `"superseded by X"`). No prompt
+  function signature or behavior changed anywhere — an AST comparison
+  of HEAD vs. working tree confirms docstring-only edits in all
+  touched prompt modules.
+  - 18 instruction data files rewritten (the 11 files named by
+    REQ-006, plus the six `*_create_instructions.md` and
+    `tsk_implement_instructions.md` files whose "Later revisions" /
+    persistence paragraphs also named the old tools): the six
+    `<d>_update_instructions.md` (req, tsk, qa, rsk, prb, gol — `uc`
+    has no prompts sub-package), `qa_refine_instructions.md`, the four
+    ADR files, and `{req,tsk,qa,prb,gol,rsk}_create_instructions.md` +
+    `tsk_implement_instructions.md`.
+  - Range-update passage added to the six domain
+    update-instruction files (REQ-002 flow, one passage per domain):
+    for a localized change (one paragraph/field/section), first
+    `get_<d>(id, raw=True)` to see the exact body text, identify the
+    1-based, inclusive line range — `N+1` is end-of-body:
+    `begin = end = N+1` appends after the last line, `end = N+1`
+    extends the range through the last line — then
+    `update(id, type="<d>", content, begin=…, end=…)` passing only the
+    replacement lines (the server splices the fragment into the current
+    on-disk body and validates the result as a whole document, so every
+    out-of-range line stays byte-identical); for a multi-section
+    change, or whenever uncertain about the line range, whole-body
+    replace (no `begin`/`end`) with the carry-forward warning.
+  - `qa_refine_instructions.md`: section 5 reworked from "Whole-body
+    replace" to "Persist the appended questions" — the clean-append
+    path uses the `N+1` append range (`get_qa(id, raw=True)` to count
+    the body's lines, `update(id, type="qa", content, begin=N+1,
+    end=N+1)` passing only the new pairs) when the new pairs all go at
+    the very end of the body; otherwise the whole-body replace carries
+    forward every section exactly as read (the existing carry-forward
+    guidance, kept).
+  - Status-vocabulary prose: all six update files verified against each
+    domain's closed `_ALLOWED_STATUSES` in `models/<v>/frontmatter.py`
+    (req/gol 7 values, tsk/qa 4, prb 4, rsk 6 — `uc`'s 5-value set has
+    no narration; the ADR files carry the 6-value + `"superseded by X"`
+    composition notes) — all match the Design-Notes table.
+  - 11 prompt Python modules, docstrings only: the six domain
+    `update_<d>.py` (tsk's `update_task.py`, rsk's `update_risk.py`)
+    re-pointed from the `update_<d>`/`set_status_<d>` surface to the
+    generic tools (with `get_<d>`'s `raw=True` noted as the line-range
+    flow's line-number source); `qa/prompts/refine.py` likewise; three
+    of the four ADR modules (`create_adr.py`, `create_adr_test.py`,
+    `update_adr.py`) now name the generic `set_status` "always called
+    with `type="adr"`" — `update_adr_test.py` needed no change (its
+    surface mentions stay true).
+  - `prb/prompts/__init__.py`: the stale "(the tool-name convention,
+    like REQ/QA)" parenthetical — narrating the OLD tool-name origin,
+    inaccurate once the `update_prb` tool was retired — reworded to
+    "(the per-domain tool-name convention, like REQ/QA -- the prompt
+    keeps its name, while the update/status tools are now the generic
+    ``update``/``set_status`` in ``general/tools/``)".
+    `qa/prompts/__init__.py`'s "``create_qa`` guides drafting…
+    ``update_qa`` guides…" sentence kept: it describes the prompts
+    (which keep their names by design), not the tools.
+  - 16 prompt test files updated to assert the new narration (+11 new
+    tests): the six `test_update_*.py` files switched to the generic
+    call shapes and each gained `test_mentions_range_update_flow`
+    (raw read → 1-based inclusive range → `N+1` sentinel →
+    `begin=…/end=…` call → whole-body fallback → byte-identical); the
+    four ADR `test_*.py` files each gained
+    `test_mentions_generic_set_status_with_type_adr`; the four
+    `test_create_{req,qa,prb,gol}.py` files assert the generic tool
+    call shapes in "Later revisions"; `test_refine.py` gained
+    `test_mentions_n_plus_one_append_range`; `test_implement_task.py`
+    switched to `update(id, type="tsk", content)`.
+- Quality-audit fixes to the previous (partially completed) session's
+  work:
+  - `prb/prompts/__init__.py`: stale tool-name-origin parenthetical
+    (quoted above) — reworded.
+  - `adr/data/adr_create_instructions.md` + `adr/data/
+    adr_create_test_instructions.md`: the rewritten step-3 list item
+    had gained a stray leading space (` 3.` with 5-space
+    continuations), inconsistent with the surrounding column-0 items —
+    restored to `3.` with 3-space continuations.
+  - Everything else in the previous session's 54-file diff verified
+    correct as-is (call shapes, range passages, vocabularies, ADR
+    `type="adr"` sites, docstring-only prompt edits, test assertions).
+- Final ACC-005 grep (`git grep -nE "\b(update_req|update_uc|update_
+  tsk|update_qa|update_prb|update_gol|update_rsk|set_status_req|…|
+  set_status_rsk)\b" -- src/ tests/`): 121 match lines in 28 files,
+  every one kept by design:
+  - (a) prompt function names — imports/`__all__`/
+    `@mcp.prompt(name=…)`/`def`/module titles/cross-prompt references:
+    `req/prompts/` (`update_req.py` 3, `__init__.py` 2), `qa/prompts/`
+    (`update_qa.py` 4, `refine.py` 2, `__init__.py` 3), `prb/prompts/`
+    (`update_prb.py` 4, `__init__.py` 3), `gol/prompts/`
+    (`update_gol.py` 5, `__init__.py` 2), `tsk/prompts/update_task.py`
+    2, `rsk/prompts/update_risk.py` 1 — 31 lines;
+  - (b) `server.py`'s four per-domain PROMPT enumeration lines (159/
+    165/170/174) + the prompt-enumeration sentences in `req`/`qa`/
+    `prb`/`gol` `__init__.py` (1 each) — 8 lines;
+  - (c) the four `*_create_instructions.md` files' "Later revisions" /
+    duplicate-check prompt-name references (`the update_<d> prompt`) —
+    8 lines;
+  - (d) the 16 prompt test files (imports + prompt-function calls) —
+    74 lines.
+  - Zero `set_status_<d>` matches anywhere in `src/` or `tests/`; zero
+    matches in `tools/`, `models/`, or `general/` code; **zero tool
+    references in any `data/*.md`** (the only data-file matches are
+    the class-(c) prompt names).
+- Quality gate (green): `ruff format` (write run: 1094 files left
+  unchanged — the previous session's formatting was already stable),
+  `ruff format --check` (1094 files already formatted), `ruff check`
+  (all checks passed), `vulture src/ whitelist.py --min-confidence 60`
+  (clean, exit 0), full unittest suite (**Ran 1779 tests, OK** — up
+  from 1768: +11 new narration tests). Regenerations: `coverage run -m
+  unittest discover -s tests -t . -p "test_*.py"` (refreshed
+  `.coverage`), `specmgr coverage-badge` (98% — unchanged rounded
+  value, badge byte-identical, no diff), `specmgr docs` (305 module
+  pages; 11 pages changed: the ten reworded prompt-module API pages +
+  `docs/api/biz.dfch.specmgr.prb.prompts.md` for the `__init__`
+  docstring fix), `specmgr mcp-docs` (no `docs/MCP.md` change — no MCP
+  surface changed in this narration-only phase). Zero-drift proof: all
+  three generators re-run; the second run was a byte-identical no-op
+  (sha256 manifest diff empty). Fresh-subprocess `uv run --frozen
+  python -c "import biz.dfch.specmgr.server"`: exit 0. Live
+  registration unchanged at **71 tools / 25 resources / 19 prompts**
+  (the feature's target end state, unchanged by this phase).
+- Next: Phase 6 (Cross-cutting documentation and release notes).
+
+#### Update 2026-08-27 (Phase 4: Generic `set_status` + retire the eight old status tools)
+
+- Completed: Phase 4 (Tasks 4.1–4.7). The eight per-domain status tools
+  (seven `set_status_<d>` + ADR's own `set_status`) are deleted from
+  source and from MCP registration; status changes now go only through
+  the generic `set_status` tool in `general/tools/`. **This is the
+  phase where the plan's Name-collision constraint was honored
+  atomically**: the generic tool (whose MCP name `set_status` was
+  occupied by ADR's old tool) and the deletion of all eight old status
+  tools landed in the same tree state, so the name `set_status` is never
+  double-registered (verified: exactly one `set_status` in the live tool
+  list). No schema changed.
+  - New: `src/biz/dfch/specmgr/general/tools/set_status.py` —
+    `@mcp.tool(name="set_status", title="Set document status")`
+    `set_status(id, type, status, superseded_by=None)` over an 8-entry
+    `dict[str, Callable]` dispatch table. The seven whole-body-domain
+    adapters `_set_status_<d>` are verbatim ports of the deleted
+    `set_status_<d>` bodies (same lock, `load_by_id`, raw body re-read
+    via the established `frontmatter.loads(...).content` mechanism and
+    re-persisted verbatim, frontmatter reconstructed through the
+    domain's own `XFrontmatter` constructor so the closed vocabulary
+    validates, microsecond `updated` bump, domain `XNotFoundError`);
+    `_set_status_adr` ports ADR's old tool (same `adr_lock`,
+    `load_by_id`, `write_adr` render round-trip, `AdrNotFoundError`)
+    including its delegation to `models.adr.v1.mutations.set_status`
+    (the model-layer *function* — kept by design, it is not an MCP
+    tool). The `superseded_by` guard (`superseded_by is not None and
+    type != "adr"` → `ValueError`) runs in the public function before
+    any file access, mirroring `update.py`'s both-or-neither guard
+    placement.
+  - Deleted (8 tool modules): `adr/tools/set_status.py` and
+    `{req,uc,tsk,qa,prb,gol,rsk}/tools/set_status_<d>.py`; deleted (8
+    test files, 38 tests): `tests/adr/tools/test_set_status.py` (3) and
+    `tests/{req,uc,tsk,qa,prb,gol,rsk}/tools/test_set_status_<d>.py`
+    (5 each).
+  - Registration: `general/tools/__init__.py` (import + `__all__` +
+    docstring, next to `update`); `adr/tools/__init__.py` and the seven
+    domain `tools/__init__.py` (removed the `set_status*` import /
+    `__all__` entry / docstring mention; the narrating sentence
+    rewritten to say status changes go through the generic `set_status`
+    tool in `general.tools` (`type="<d>"`)); the seven domain
+    `__init__.py` docstring tool enumerations likewise (`adr/__init__.py`
+    names no tool and is unchanged).
+  - `server.py`: `set_status` removed from the ADR tools line,
+    `set_status_<d>` removed from the seven per-domain Tools lines;
+    `set_status` added to the General-tools lines (8-value `type`;
+    `superseded_by` ADR-only, composing `"superseded by X"`).
+  - Re-pointed references (the orchestrator-verified residual set):
+    `general/tools/update.py` (both status-path mentions → the generic
+    `set_status` tool), `general/tools/_splice.py` (the two
+    `set_status_<d>` mentions → "the same frontmatter-stripping
+    mechanism the domain write paths use"), the seven domain
+    `tools/_lock.py` + `adr/tools/_lock.py` (mutating-tool
+    enumerations → the generic `set_status` tool), `gol/tools/_write.py`
+    + `prb/tools/_write.py` (factor-out rationale),
+    `tests/gol/tools/test_integration.py` +
+    `tests/prb/tools/test_integration.py` (now
+    `from biz.dfch.specmgr.general.tools.set_status import set_status`
+    and `set_status(<d>_id, "<d>", ...)`; both still pass live).
+  - `tests/commands/test_docs.py`: the `_count_mcp_features` known-count
+    assertion for `adr/tools/` updated 12 → 11 modules (the ADR
+    `set_status` module moved to `general/tools/`) — a direct
+    consequence of Task 4.2's deletion, flagged here as the one test
+    outside the phase's named scope that the deletion broke.
+  - `docs/api/`: the eight `set_status*` module pages removed manually
+    (the generator writes pages for existing modules but never deletes
+    stale ones, as in Phase 3).
+- Status-vocabulary source-of-truth check: re-read every domain's
+  `_ALLOWED_STATUSES` (`req`/`tsk`/`prb`/`rsk` in `models/v1`,
+  `uc`/`qa` in `models/v2`, ADR's `_FIXED_STATUSES` in
+  `models/adr/v1/frontmatter.py`) — all match the Design-Notes table
+  (req/gol 7, uc 5, tsk/qa 4, prb 4, rsk 6, adr 6 + the
+  `"superseded by X"` pattern). The new tests import those private sets
+  and assert the per-type valid/invalid pairs against them.
+- New tests: `tests/general/tools/test_set_status.py` (10 tests,
+  parameterized over all eight types — ACC-004): status changed +
+  `updated` bumped (microsecond timestamp) + body untouched (seven
+  domains: raw body byte-identical via the
+  `frontmatter.loads(...).content` mechanism; ADR: re-parsed render
+  round-trip equal apart from status — ADR has no `updated` field);
+  closed-vocabulary enforcement per domain (positive value from the
+  domain's own set; negative cross-domain values — `implemented`
+  against uc/tsk/qa/prb/rsk, `open` against req/gol, `implemented`
+  against adr — → `pydantic.ValidationError`, file byte-identical);
+  ADR `superseded_by` composes `"superseded by X"` in the file (and
+  plain values work with `superseded_by=None`); `superseded_by` with
+  any non-`adr` type → `ValueError`, file untouched — including with an
+  unknown id, proving the guard fires before file access (`ValueError`,
+  not the domain not-found); unknown id → the domain's own
+  `XNotFoundError` / `AdrNotFoundError`.
+- ACC-005 grep (final, post-cleanup):
+  `git grep -nE "\b(set_status_req|set_status_uc|set_status_tsk|
+  set_status_qa|set_status_prb|set_status_gol|set_status_rsk)\b" -- src/
+  tests/` matches only the Phase-5-owned prompt narration files
+  (`*/data/*.md`, `*/prompts/*.py`, `tests/*/prompts/*`) — zero in
+  `tools/`, `models/`, `general/`, or any `__init__.py`.
+  `git grep -n "set_status" -- src/ tests/` otherwise matches only: the
+  new `general/tools/set_status.py` + its registration in
+  `general/tools/__init__.py`, the re-pointed references listed above,
+  the ADR mutation model (`models/adr/v1/mutations.py` defines the
+  model-layer **function** `set_status`, re-exported by
+  `models/adr/__init__.py`/`models/adr/v1/__init__.py` and exercised by
+  `tests/models/adr/v1/test_mutations.py` — kept by design, not a tool
+  reference), and the Phase-5 ADR narration files.
+- Quality gate (green): `ruff format` (initial write run changed nothing;
+  `ruff format --check`: 1094 files already formatted — ruff 0.16
+  formats md too, so the count moved 1101 → 1094 exactly by the 8
+  deleted `docs/api/` `set_status*` pages minus the 1 new one),
+  `ruff check` (all checks passed), `vulture src/ whitelist.py
+  --min-confidence 60` (clean, exit 0), full unittest suite (**Ran 1768
+  tests, OK** — down from 1796: −38, the eight deleted
+  `test_set_status*.py` files (3 + 7×5); +10, the new
+  `tests/general/tools/test_set_status.py`; the two re-pointed
+  `gol`/`prb` integration tests still pass live). Regenerations:
+  `coverage run -m unittest discover -s tests -t . -p "test_*.py"`
+  (pre-commit's exact command, refreshed `.coverage`), `specmgr
+  coverage-badge` (98% — unchanged rounded value, badge byte-identical,
+  no diff), `specmgr mcp-docs` (header now "**71 tool(s)**"; the seven
+  `set_status_<d>` entries and ADR's old `set_status` entry are gone;
+  the new general `set_status` entry renders `type` as the 8-value enum
+  `string (enum: req, uc, tsk, qa, prb, gol, rsk, adr)` with optional
+  `string | None` `superseded_by`; the generic `update` entry intact),
+  `specmgr docs` (305 module pages; new
+  `docs/api/biz.dfch.specmgr.general.tools.set_status.md`; the eight
+  old `set_status*` pages removed manually). Zero-drift proof: all three
+  generators re-run and the whole `docs/` tree came back byte-identical
+  (sha256 manifest diff empty). Fresh-subprocess
+  `uv run --frozen python -c "import biz.dfch.specmgr.server"`: exit 0.
+  Live registration confirmed at **71 tools / 25 resources / 19
+  prompts** — the feature's target end state (−8 vs Phase 3's
+  78/25/19: the eight old status tools out, the generic `set_status`
+  in).
+- Next: Phase 5 (Narration rewrite — prompts + instruction data).
+
+#### Update 2026-08-27 (Phase 3: Retire the per-domain `update_*` tools)
+
+- Completed: Phase 3 (Tasks 3.1–3.6). The seven `update_<d>` tools are
+  deleted from source and from MCP registration; whole-body *and*
+  line-range updates now go only through the generic `update` tool in
+  `general/tools/` (Phase 2). Every non-narration code/docstring
+  reference to the deleted tools was re-pointed:
+  - Deleted (7 tool modules):
+    `src/biz/dfch/specmgr/{req,uc,tsk,qa,prb,gol,rsk}/tools/update_<d>.py`;
+    deleted (7 test files, 34 tests):
+    `tests/{req,uc,tsk,qa,prb,gol,rsk}/tools/test_update_<d>.py`.
+  - Seven domain `tools/__init__.py`: `update_<d>` import + `__all__`
+    entry removed; the narrating sentence rewritten to say whole-body and
+    line-range updates go through the generic `update` tool in
+    `general.tools` (`type="<d>"`).
+  - Seven domain `__init__.py`: `update_<d>` removed from the docstring
+    tool enumeration, same generic-`update` pointer added. The prompt
+    enumerations in `req`/`qa`/`prb`/`gol`'s `__init__.py` keep the
+    prompt names `update_<d>` (the plan keeps the prompts).
+  - `server.py`: `update_<d>` removed from the seven per-domain Tools
+    lines; the `set_status_<d>` entries (Phase 4) and the per-domain
+    prompt enumerations (kept prompt names) stay.
+  - `general/tools/update.py`: the seven adapter docstrings reworded to
+    name the historical port without the deleted tool names ("Verbatim
+    port of the previous per-domain … update tool's function body … that
+    per-domain tool was retired in feat-22 Phase 3"). The private
+    adapter *function names* `_update_<d>` stay — they are this module's
+    own names per the Design Notes' dispatch convention (Phase 4 mirrors
+    it with `_set_status_<d>`), not references to the deleted tools.
+  - Seven `_io.py`/`_lock.py`/`_write.py` helper pairs: docstrings
+    re-pointed at the generic `update` tool; the live `set_status_<d>`
+    mentions in the `_lock.py` modules kept.
+  - `req/tools/create_req.py`, `uc/tools/create_uc.py`,
+    `qa/tools/create_qa.py`: "shared with `update_<d>`" reworded to the
+    generic `update` tool.
+  - Seven `validate_<d>.py` and seven `set_status_<d>.py`: docstring
+    mentions of the deleted tools reworded (the `set_status_<d>` modules
+    themselves stay — Phase 4 deletes them).
+  - `tsk/models/v1/body.py`: the `_validate_items_eagerly` docstring's
+    `create_tsk`/`update_tsk`/`validate_tsk` mention reworded.
+  - `tests/gol/tools/test_integration.py` +
+    `tests/prb/tools/test_integration.py`: re-pointed from
+    `update_gol`/`update_prb` to
+    `from biz.dfch.specmgr.general.tools.update import update` and
+    `update(<d>_id, "<d>", _REVISED_BODY)` (whole-body mode); docstring/
+    step text updated; both still pass live.
+- Task 3.5 residual match list — full
+  `git grep -n "update_req\|update_uc\|update_tsk\|update_qa\|update_prb\|
+  update_gol\|update_rsk" -- src/ tests/` after Tasks 3.1–3.5 (43 files,
+  251 match lines), grouped:
+  - Phase-5 prompt-narration files (left for Phase 5, per the plan's
+    ownership): the prompt modules `req/prompts/update_req.py` (5),
+    `qa/prompts/update_qa.py` (6), `qa/prompts/refine.py` (3),
+    `prb/prompts/update_prb.py` (9), `gol/prompts/update_gol.py` (10),
+    `tsk/prompts/update_task.py` (4), `rsk/prompts/update_risk.py` (3);
+    the prompt `__init__.py` files `req/prompts/__init__.py` (2),
+    `qa/prompts/__init__.py` (3), `prb/prompts/__init__.py` (3),
+    `gol/prompts/__init__.py` (2) — tsk/rsk's `prompts/__init__.py`
+    match nothing (their prompt functions are named `update_task`/
+    `update_risk`); the 14 `*/data/*.md` instruction files
+    (`req_create` 3, `req_update` 4, `tsk_create` 1, `tsk_implement` 1,
+    `tsk_update` 4, `qa_create` 3, `qa_refine` 4, `qa_update` 4,
+    `prb_create` 2, `prb_update` 4, `gol_create` 3, `gol_update` 4,
+    `rsk_create` 1, `rsk_update` 4); and the 12 prompt test files under
+    `tests/*/prompts/` (`test_update_req` 21, `test_update_qa` 24,
+    `test_update_prb` 27, `test_update_gol` 24, `test_update_task` 8,
+    `test_update_risk` 8, `test_create_req` 3, `test_create_qa` 3,
+    `test_create_prb` 3, `test_create_gol` 3, `test_refine` 4,
+    `test_implement_task` 3).
+  - Kept-by-design prompt-name enumerations (not tool references — the
+    plan keeps the prompt names): `server.py`'s four per-domain PROMPT
+    enumeration lines (155/161/166/170: req, qa, prb, gol — tsk/rsk's
+    prompt lines name `update_task`/`update_risk` and match nothing),
+    and the prompt-enumeration sentence in `req/__init__.py`,
+    `qa/__init__.py`, `prb/__init__.py`, `gol/__init__.py` (one match
+    each).
+  - Substring-only matches on the generic tool's own private adapter
+    names (not references to deleted tools; see the adapter-name note
+    above): `general/tools/update.py` (20 — the seven
+    `def _update_<d>` lines, the six `:func:`_update_req``
+    cross-references, and the seven dispatch-table entries).
+  - Everything else: zero matches — in particular, no per-domain
+    `tools/` file and no `models/` file names a deleted tool anymore
+    (Task 3.5's plan wording anticipated nothing in `general/` either;
+    the 20 adapter-name matches above are the single, documented
+    exception — flagging for the orchestrator's confirmation).
+- Quality gate (green): `ruff format --check` (1122 files already
+  formatted, down from 1136 — the 14 deleted files), `ruff check` (all
+  checks passed), `vulture src/ whitelist.py --min-confidence 60` (clean,
+  exit 0), full unittest suite (**Ran 1796 tests, OK** — down from 1830:
+  −34, the seven deleted `test_update_<d>.py` files; the two re-pointed
+  `gol`/`prb` integration tests still pass live). Regenerations:
+  `specmgr coverage-badge` (98% — unchanged rounded value, badge
+  byte-identical, no diff), `specmgr mcp-docs` (header now "78 tool(s)";
+  the seven `update_<d>` tool table rows and `### Tool:` sections gone;
+  the generic `update` entry and all eight `set_status*` entries intact;
+  the `update_<d>` prompt rows untouched), `specmgr docs` (54 other
+  `docs/api/` pages + `docs/api/README.md` + `docs/GENERATED.md`
+  regenerated from the reworded docstrings; the seven
+  `docs/api/biz.dfch.specmgr.<d>.tools.update_<d>.md` module pages
+  deleted — the generator writes pages for existing modules but never
+  deletes stale ones, so they were removed manually). Zero-drift proof:
+  all three generators re-run and the whole `docs/` tree came back
+  byte-identical (sha256 manifest diff empty). Fresh-subprocess
+  `uv run --frozen python -c "import biz.dfch.specmgr.server"`: exit 0.
+  Live registration confirmed at **78 tools / 25 resources / 19
+  prompts** (−7 vs Phase 2's 85/25/19).
+- Next: Phase 4 (Generic `set_status` + retire the eight old status
+  tools).
+
+#### Update 2026-08-27 (Phase 2: Generic `update` tool + `raw` read parameter)
+
+- Completed: Phase 2 (Tasks 2.1–2.9). Purely additive — the seven
+  `update_<d>` tools, all `set_status*` tools, and every `models/` package
+  are untouched:
+  - `general/tools/_splice.py` (no `mcp` dependency): `body_text(path)` —
+    the single frontmatter-stripped body extraction via
+    `frontmatter.loads(path.read_text(encoding="utf-8")).content` (the same
+    mechanism every `set_status_<d>` tool uses) — and
+    `splice_body(current_body, begin, end, content)` implementing the
+    Design-Notes range contract exactly (`N` = line count; `ValueError` for
+    `begin < 1` / `begin > end` / `end > N+1`, each message naming the
+    offending value(s) and the allowed range; drop lines
+    `begin..min(end, N)`, insert `content.splitlines()` at `begin - 1`,
+    rejoin `"\n"` + one trailing `"\n"`; empty `content` = deletion; the
+    `N+1` EOF sentinel falls out — `begin = end = N+1` is a pure append,
+    `end = N+1` extends the range through the last line).
+  - `general/tools/update.py`: `@mcp.tool(name="update")`
+    `update(id, type, content, begin=None, end=None)` with a
+    `dict[str, Callable]` dispatch table over seven private adapters
+    `_update_<d>` — verbatim ports of the `update_<d>` function bodies
+    (same `X_lock`, same `load_by_id`, same frontmatter carry-over with
+    only `updated` bumped to the current microsecond timestamp, `status`
+    never settable, same verbatim `write_X_file` persistence, same domain
+    `XNotFoundError`) plus the range branch (no `begin`/`end` → today's
+    behavior; both given → `body_text` + `splice_body`, validate the
+    *spliced result* as a whole via `X.from_text(format_text(spliced))`,
+    persist the *spliced* text verbatim; the both-or-neither `ValueError`
+    guard runs in the public `update` before dispatch, i.e. before any file
+    access). The parameter is intentionally named `type` (7-value
+    `Literal` → 7-entry JSON-schema `enum` in the input schema); the
+    7-way union return type is annotation-only.
+  - `raw: bool = False` on the seven `get_<d>` tools: `raw=True` resolves
+    the id as today (no lock — read-only) and returns `body_text(path)` —
+    the *same* helper the splice uses (REQ-003's "what the client counts is
+    what the server splices" invariant); `raw=False` behaves exactly as
+    today (parsed `XDocument`). Each tool's `@mcp.tool` description and
+    docstring updated.
+  - Registration in `general/tools/__init__.py` (import, `__all__`, module
+    docstring); `server.py`'s module docstring updated (`update` added to
+    the General-tools lines; the `raw` parameter noted on each of the seven
+    per-domain `get_<d>` lines).
+- Deviation (additive renderer extension, recorded here per the plan's
+  docs-discipline note): `docs/MCP.md` could not show the 7-value `type`
+  enum — `commands/mcp_docs.py`'s `_schema_type_str` collapsed
+  `{"type": "string", "enum": [...]}` to bare `string`. Added an enum
+  branch rendering `string (enum: req, uc, tsk, qa, prb, gol, rsk)` (it
+  fires only for properties declaring `enum` — no other current tool has
+  one, so no pre-existing `docs/MCP.md` row changed) plus a
+  `TestSchemaTypeStr` case. The Design Notes require the enum to be
+  rendered in `docs/MCP.md` and verified in this phase's gate, which the
+  untouched renderer could not satisfy.
+- Test note (per-type out-of-vocabulary field-value cases): `req`/`uc`/
+  `tsk`/`gol`/`rsk` each have a genuine body-level
+  `pydantic.ValidationError` path (closed vocabularies or cross-field
+  validators), but `qa`/`prb` bodies are free-form text with no closed
+  vocabulary and no field constraint — their out-of-vocabulary input (an
+  unrecognized section heading) fails structurally with `AssertionError`
+  instead. The ACC-002 invariant (invalid input via a range → the file
+  left byte-identical on disk) is verified for both error types, per type;
+  the case data in `tests/general/tools/test_update.py` flags which each
+  type raises.
+- Quality gate (green): `ruff format` (initial run normalized the new
+  files; subsequent `ruff format --check`: 1136 files already formatted),
+  `ruff check` (all checks passed), `vulture src/ whitelist.py
+  --min-confidence 60` (clean, exit 0), full unittest suite (**Ran 1830
+  tests, OK** — up from 1783: +18 `tests/general/tools/test_update.py`
+  (whole-body ACC-001, range ACC-002, and Task-2.8 registration, each
+  parameterized over all seven types), +28 `raw`-coverage tests across the
+  seven `tests/<d>/tools/test_get_<d>.py`, +1 `TestSchemaTypeStr` enum
+  case); the seven pre-existing `update_<d>` test files (34 tests) still
+  pass unchanged. Regenerations: `specmgr coverage-badge` (98% — the same
+  rounded value as before, so the badge is byte-identical and left no
+  diff), `specmgr mcp-docs` (header now "85 tool(s)"; `update` entry with
+  the 7-value `type` enum and optional `integer | None` `begin`/`end`;
+  `raw` note on all seven `get_<d>` entries), `specmgr docs` (new
+  `docs/api/biz.dfch.specmgr.general.tools.update.md` / `._splice.md`
+  pages; the seven `get_<d>` pages changed; `docs/api/README.md` +
+  `docs/GENERATED.md` updated). Zero-drift proof: all three generators
+  re-run and the whole `docs/` tree came back byte-identical (sha256
+  manifest diff empty). `specmgr schema` re-run: all seven schemas
+  unchanged (models untouched). Fresh-subprocess
+  `uv run --frozen python -c "import biz.dfch.specmgr.server"`: exit 0
+  (the import-order proof — `general` now pulls all seven domain tool
+  packages earlier than before and still imports cleanly). Live
+  registration confirmed at **85 tools / 25 resources / 19 prompts**.
+- Next: Phase 3 (Retire the per-domain `update_*` tools).
+
+#### Update 2026-08-27 (Phase 1: ADR)
+
+- Completed: Phase 1 (Tasks 1.1–1.3). Created the feature's ADR via
+  `specmgr_create_adr` (never hand-written — ADR 898bfcd0): id
+  36905d5b-8057-4294-8665-c7eed5534db0, title "Consolidate whole-body update
+  and status-change tools into generic type-dispatched tools", status
+  `accepted`, date 2026-08-27, on disk at
+  `docs/adr/36905d5b-8057-4294-8665-c7eed5534db0-consolidate-whole-body-
+  update-and-status-change-tools-into-g.md`. `specmgr_validate_adr` passed;
+  `specmgr adr-toc` regenerated `docs/adr/README.md` with the ADR row
+  listed, and repeat runs are byte-identical no-ops (zero drift).
+- Quality gate (green): `ruff format --check` (1131 files already
+  formatted), `ruff check` (all checks passed), `vulture src/ whitelist.py
+  --min-confidence 60` (clean), full unittest suite (Ran 1783 tests, OK).
+  No `src/` changes in this phase.
+- Next: Phase 2 (Generic `update` tool + `raw` read parameter).
 
 #### Update 2026-08-26 (planning session)
 
@@ -808,8 +1692,36 @@ None.
   `specmgr://<d>/{id}` resources — ADR ddfb1109's empirical finding that
   agents invoke tools more reliably than parameterized resources, plus the
   maintenance cost of seven new resource templates, decided it.
+- **2026-08-27**: The Phase-1 ADR was created with id
+  36905d5b-8057-4294-8665-c7eed5534db0 ("Consolidate whole-body update and
+  status-change tools into generic type-dispatched tools", status
+  `accepted`) — it records the explicit-`type` dispatch convention (uuid-
+  only resolution rejected), ADR's exclusion from `update` / inclusion in
+  `set_status` with the `superseded_by` special case, the `update` line-
+  range contract, and the `get_<d>(raw=True)` decision.
 
 ### Related PRs / Commits
 
-None yet (one Conventional Commit per accepted phase, created by the phase-
-orchestrator with user confirmation).
+- `2647649` — Phase 1: ADR (the feature's accepted ADR,
+  36905d5b-8057-4294-8665-c7eed5534db0)
+- `fc76490` — Phase 2: generic `update` tool + `raw` read parameter
+- `971998f` — Phase 3: retire the seven per-domain `update_<d>` tools
+- `d9f7a28` — Phase 4: generic `set_status` tool + retire the eight old
+  status tools
+- `db0fec5` — Phase 5: narration rewrite (prompts + instruction data)
+- `c82abeb` — Phase 6: cross-cutting documentation and release notes
+  (`AGENTS.md`, `CHANGELOG.md`)
+- `097b502` — Phase 8: merge of `origin/dev` (feat-21 / DEC domain,
+  v0.12.0) into `feat-22`
+- `5a7ddf3` — Phase 8: convert the DEC domain to the generic
+  `update`/`set_status` tools (code, narration, tests, `AGENTS.md`,
+  `CHANGELOG.md`, regenerated docs)
+
+One Conventional Commit per accepted phase, created by the phase-
+orchestrator; Phase 8's two commits (merge + conversion) were created
+directly when integrating the already-merged feat-21 branch from `dev`.
+
+### Pull Request
+
+- https://github.com/dfch/biz.dfch.SpecMgr/pull/26 — feat-22 → dev
+  (includes the Phase-8 dev merge and DEC conversion).

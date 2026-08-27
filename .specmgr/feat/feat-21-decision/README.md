@@ -209,6 +209,18 @@ for review/merge, issue to be closed when the PR merges.
 
 ### Recent Updates
 
+#### Update 2026-08-27 (post-merge note — tool-surface conversion by feat-22)
+
+- This feature shipped on `dev` (v0.12.0) with per-domain `update_dec` /
+  `set_status_dec` tools and a `get_dec` without `raw`. feat-22
+  (consolidate mutation tools, ADR 36905d5b-8057-4294-8665-c7eed5534db0)
+  merged `dev` into its branch and converted the DEC domain to the
+  generic `update` / `set_status` tools (`type="dec"`) plus
+  `get_dec(raw=True)`, retiring the two per-domain tools — see
+  `.specmgr/feat/feat-22-consolidate-mutation-tools/README.md` Phase 8.
+  The task lines above remain the historical record of this feature's
+  own scope, which completed as planned at the time.
+
 #### Update 2026-08-27 (Phase 5: Cross-cutting registration — feature complete)
 
 - Completed Tasks 5.1–5.9, the final phase of the feature.

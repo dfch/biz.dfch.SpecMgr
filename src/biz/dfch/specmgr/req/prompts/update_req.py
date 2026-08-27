@@ -19,17 +19,20 @@
 
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through revising an existing Requirement (REQ) document by id, using the
-existing ``req/tools/`` surface (``get_req``, ``update_req``,
-``set_status_req``, ``validate_req``). Unlike an earlier revision of this
-prompt, step 1 no longer points at a ``specmgr://req/{id}`` resource -- that
-resource was removed in favor of the ``get_req`` tool (feat-7-various-
-improvements Task 0.9, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
+existing ``req/tools/`` surface (``get_req``, ``validate_req``) plus the
+generic ``update``/``set_status`` tools in ``general/tools/`` (called with
+``type="req"``). Unlike an earlier revision of this prompt, step 1 no
+longer points at a ``specmgr://req/{id}`` resource -- that resource was
+removed in favor of the ``get_req`` tool (feat-7-various-improvements
+Task 0.9, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614); ``get_req``'s
+``raw=True`` parameter serves the line-range flow's line numbers.
 
 Unlike ``adr.prompts.update_adr``, there is no ``update_frontmatter``/
 ``option_*`` equivalent here: REQ's lifecycle surface (Task 3.9's design) is
-deliberately small -- a whole-body replace (``update_req``) plus a single,
-dedicated status-change path (``set_status_req``) -- so the tool-mapping
-section below is correspondingly shorter.
+deliberately small -- a whole-body or line-range replace (the generic
+``update`` tool with ``type="req"``) plus a single, dedicated
+status-change path (the generic ``set_status`` tool with ``type="req"``)
+-- so the tool-mapping section below is correspondingly shorter.
 
 The actual instructional text lives in its own packaged data file,
 ``req/data/req_update_instructions.md``, read fresh on every call via

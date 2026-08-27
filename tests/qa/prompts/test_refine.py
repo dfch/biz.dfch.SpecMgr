@@ -39,11 +39,22 @@ class TestRefinePrompt(unittest.TestCase):
         result = refine("abc-123")
         self.assertIn("list_qa", result)
 
-    def test_mentions_get_qa_before_update_qa(self):
-        """get_qa must be called before update_qa."""
+    def test_mentions_get_qa_before_update(self):
+        """get_qa must be called before the generic `update` write call."""
         result = refine("abc-123")
         self.assertIn("get_qa(id)", result)
-        self.assertLess(result.index("get_qa(id)"), result.index("update_qa(id,"))
+        self.assertLess(result.index("get_qa(id)"), result.index('update(id, type="qa",'))
+
+    def test_mentions_n_plus_one_append_range(self):
+        """The clean-append path must read the exact body via
+        get_qa(id, raw=True) and use the N+1 end-of-body append range."""
+        result = refine("abc-123")
+        self.assertIn("get_qa(id, raw=True)", result)
+        self.assertIn('update(id, type="qa", content, begin=N+1, end=N+1)', result)
+        self.assertLess(
+            result.index("get_qa(id, raw=True)"),
+            result.index('update(id, type="qa", content, begin=N+1, end=N+1)'),
+        )
 
     def test_mentions_iso25010_resource(self):
         """The prompt must instruct the LLM to look up characteristic definitions."""
@@ -87,7 +98,7 @@ class TestRefinePrompt(unittest.TestCase):
         self.assertIn("`question` tool", result)
 
     def test_mentions_whole_body_replace_warning(self):
-        """The whole-body-replace caveat for update_qa must be present."""
+        """The whole-body-replace caveat for the generic `update` tool must be present."""
         result = refine("abc-123")
         self.assertIn("whole-body replace", result)
 

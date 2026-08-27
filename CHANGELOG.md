@@ -7,6 +7,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- **BREAKING**: the 16 per-domain mutation MCP tools are deleted outright
+  (no deprecated wrappers): `update_req`, `update_uc`, `update_tsk`,
+  `update_qa`, `update_prb`, `update_gol`, `update_rsk`, `update_dec`,
+  `set_status_req`, `set_status_uc`, `set_status_tsk`, `set_status_qa`,
+  `set_status_prb`, `set_status_gol`, `set_status_rsk`, `set_status_dec`
+  (the two `dec` tools were shipped in v0.12.0). Whole-body and line-range
+  updates now go through the generic `update` tool and status changes
+  through the generic `set_status` tool in `general/tools/` (see "Added"
+  below).
+- **BREAKING**: ADR's own `set_status` tool is removed; the surviving
+  `set_status` tool is the generic one, whose signature changes from
+  `(id, status, superseded_by)` to `(id, type, status, superseded_by)` —
+  `type="adr"` is now required (and the tool is accepted for all nine
+  domains).
+
+### Added
+
+- Generic `update(id, type, content, begin=None, end=None)` MCP tool in
+  `general/tools/`: whole-body and line-range replace of an existing
+  document across the eight whole-body domains (`type` is one of
+  `req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`). With no `begin`/`end`,
+  `content` is the full replacement body; with both, it replaces the
+  1-based, inclusive body-line range `begin`..`end` of the current on-disk
+  body (`N+1` = end-of-body sentinel: append after the last line, or
+  replace through end of body). The spliced result is validated as a whole
+  document before anything is written; unchanged regions stay
+  byte-identical.
+- Generic `set_status(id, type, status, superseded_by=None)` MCP tool in
+  `general/tools/`: the status change for all nine domains (`type` is one
+  of `req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`adr`), enforcing each
+  domain's closed status vocabulary. `superseded_by` is accepted only for
+  `type="adr"` (composing the status as `"superseded by {superseded_by}"`)
+  and raises `ValueError` with any other `type`.
+- Optional `raw: bool = False` parameter on the eight `get_<d>` tools
+  (`get_req`, `get_uc`, `get_tsk`, `get_qa`, `get_prb`, `get_gol`,
+  `get_rsk`, `get_dec`): `raw=True` returns the frontmatter-stripped body
+  text verbatim — the text `update`'s `begin`/`end` index into;
+  `raw=False` (the default) behaves exactly as before.
+- The consolidation above is recorded in ADR
+  36905d5b-8057-4294-8665-c7eed5534db0 ("Consolidate whole-body update and
+  status-change tools into generic type-dispatched tools"), whose
+  convention for new domains (one dispatch entry per generic tool plus a
+  `raw` getter parameter) was applied to the DEC domain when it was
+  integrated from dev.
+
 ## [0.12.0] - 2026-08-27
 
 ### Added

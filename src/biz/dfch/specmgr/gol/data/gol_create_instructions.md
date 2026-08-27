@@ -72,5 +72,6 @@ there.
 ## 5. Later revisions
 
 Any later change to this goal should go through the `update_gol` prompt
-(or directly through `update_gol`/`set_status_gol`), not by re-running
-this prompt.
+(or directly through the generic `update(id, type="gol", content)` and
+`set_status(id, type="gol", status)` tools), not by re-running this
+prompt.

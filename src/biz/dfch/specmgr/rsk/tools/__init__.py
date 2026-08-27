@@ -33,10 +33,12 @@ residual-risk coordinates (``RskSummary``), so that ``max_results``/
 ec9f5262-9912-49d0-903f-fcfb54f28c13). ``create_rsk`` assigns a fresh id,
 builds the frontmatter itself, and writes a new document (body markdown
 only, no frontmatter) under the risk base directory (``rsk.tools._paths``/
-``_io``). ``update_rsk`` replaces an existing document's body the same way,
-preserving every frontmatter field except ``updated``. ``set_status_rsk``
-is the only path that changes ``status``, also bumping ``updated``, leaving
-the body untouched. ``delete_rsk`` is a registered stub -- always raises
+``_io``). Whole-body and line-range updates of an existing document go
+through the generic ``update`` tool in ``general.tools`` (``type="rsk"``),
+preserving every frontmatter field except ``updated``. Status changes of an
+existing document go through the generic ``set_status`` tool in
+``general.tools`` (``type="rsk"``), also bumping ``updated``, leaving the
+body untouched. ``delete_rsk`` is a registered stub -- always raises
 ``NotImplementedError``, reserving the name for a future real
 implementation. ``validate_rsk`` is a disk-free, id-free dry run against a
 submitted ``content`` string, independent of the other tools. Import this
@@ -52,8 +54,6 @@ from .get_rsk_example import get_rsk_example
 from .get_rsk_template import get_rsk_template
 from .list_rsk import list_rsk
 from .parse_rsk import parse_rsk
-from .set_status_rsk import set_status_rsk
-from .update_rsk import update_rsk
 from .validate_rsk import validate_rsk
 
 __all__ = [
@@ -64,7 +64,5 @@ __all__ = [
     "get_rsk_template",
     "list_rsk",
     "parse_rsk",
-    "set_status_rsk",
-    "update_rsk",
     "validate_rsk",
 ]

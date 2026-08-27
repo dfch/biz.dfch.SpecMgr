@@ -19,10 +19,10 @@
 
 Read-only, unlike ``adr.tools._io``'s ``read_adr``/``write_adr`` pair: there
 is no ``write_req``/``render_req`` counterpart here, since Task 3.9's design
-settled on ``create_req``/``update_req`` (Tasks 3.12/3.13) persisting the
-caller's already-validated body markdown byte-for-byte rather than rendering
-it back out from a parsed model -- no renderer is needed for that shape, so
-none is added speculatively here.
+settled on ``create_req`` and the generic ``update`` tool in ``general.tools``
+persisting the caller's already-validated body markdown byte-for-byte rather
+than rendering it back out from a parsed model -- no renderer is needed for
+that shape, so none is added speculatively here.
 
 No ``mcp`` dependency here either -- these are plain file-I/O adapters, kept
 separate from any future ``@mcp.tool()``-decorated function so they stay

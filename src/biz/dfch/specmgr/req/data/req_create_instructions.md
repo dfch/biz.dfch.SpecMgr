@@ -60,6 +60,6 @@ there.
    required, only a convenience.
 
 ## 5. Later revisions
-Any later change to this requirement should go through the `update_req`
-prompt (or directly through `update_req`/`set_status_req`), not by
-re-running this prompt.
+Any later change to this requirement should go through the `update_req` prompt
+(or directly through the generic `update(id, type="req", content)` and
+`set_status(id, type="req", status)` tools), not by re-running this prompt.

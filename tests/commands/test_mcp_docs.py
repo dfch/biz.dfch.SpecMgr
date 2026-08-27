@@ -146,6 +146,14 @@ class TestSchemaTypeStr(unittest.TestCase):
         """An empty/unrecognized schema shape falls back to ``"any"`` rather than raising."""
         self.assertEqual(_schema_type_str({}), "any")
 
+    def test_enum_renders_base_type_plus_values(self):
+        """A closed ``enum`` property renders as ``T (enum: v1, v2, ...)`` -- the values are contract."""
+        schema = {
+            "type": "string",
+            "enum": ["req", "uc", "tsk", "qa", "prb", "gol", "rsk"],
+        }
+        self.assertEqual(_schema_type_str(schema), "string (enum: req, uc, tsk, qa, prb, gol, rsk)")
+
 
 class TestToolParameters(unittest.TestCase):
     """Tests for the ``_tool_parameters`` top-level input-schema extractor."""

@@ -29,7 +29,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.adr.tools.option_list`](biz.dfch.specmgr.adr.tools.option_list.md) — ``@mcp.tool()`` wrapper: option_list (plan §5, §8, §9a, §10 item 4).
 - [`biz.dfch.specmgr.adr.tools.option_read`](biz.dfch.specmgr.adr.tools.option_read.md) — ``@mcp.tool()`` wrapper: option_read (plan §5, §8, §9a, §10 item 4).
 - [`biz.dfch.specmgr.adr.tools.option_update`](biz.dfch.specmgr.adr.tools.option_update.md) — ``@mcp.tool()`` wrapper: option_update (plan §5, §8, §9a, §10 item 4).
-- [`biz.dfch.specmgr.adr.tools.set_status`](biz.dfch.specmgr.adr.tools.set_status.md) — ``@mcp.tool()`` wrapper: set_status (plan §8, §9a, §10 item 4).
 - [`biz.dfch.specmgr.adr.tools.update_frontmatter`](biz.dfch.specmgr.adr.tools.update_frontmatter.md) — ``@mcp.tool()`` wrapper: update_frontmatter (plan §8, §9a, §10 item 4).
 - [`biz.dfch.specmgr.adr.tools.update_section`](biz.dfch.specmgr.adr.tools.update_section.md) — ``@mcp.tool()`` wrapper: update_section (plan §4, §8, §9a, §10 item 4).
 - [`biz.dfch.specmgr.adr.tools.validate_adr`](biz.dfch.specmgr.adr.tools.validate_adr.md) — ``@mcp.tool()`` wrapper: validate_adr (plan §7, §8, §9a, §10 item 4).
@@ -65,7 +64,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.dec.tools._io`](biz.dfch.specmgr.dec.tools._io.md) — Thin file read helpers over ``parse_dec`` (Task 2.1).
 - [`biz.dfch.specmgr.dec.tools._lock`](biz.dfch.specmgr.dec.tools._lock.md) — Per-document in-process lock guarding decision mutations.
 - [`biz.dfch.specmgr.dec.tools._paths`](biz.dfch.specmgr.dec.tools._paths.md) — Decision base directory resolution and id -> path lookup (Task 2.1).
-- [`biz.dfch.specmgr.dec.tools._write`](biz.dfch.specmgr.dec.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_dec``/``update_dec``.
+- [`biz.dfch.specmgr.dec.tools._write`](biz.dfch.specmgr.dec.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_dec`` and
 - [`biz.dfch.specmgr.dec.tools.create_dec`](biz.dfch.specmgr.dec.tools.create_dec.md) — ``@mcp.tool()`` wrapper: create_dec (Task 2.2).
 - [`biz.dfch.specmgr.dec.tools.delete_dec`](biz.dfch.specmgr.dec.tools.delete_dec.md) — ``@mcp.tool()`` wrapper: delete_dec (Task 2.2).
 - [`biz.dfch.specmgr.dec.tools.get_dec`](biz.dfch.specmgr.dec.tools.get_dec.md) — ``@mcp.tool()`` wrapper: get_dec (Task 2.2).
@@ -73,8 +72,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.dec.tools.get_dec_template`](biz.dfch.specmgr.dec.tools.get_dec_template.md) — ``@mcp.tool()`` wrapper: get_dec_template (Task 2.2).
 - [`biz.dfch.specmgr.dec.tools.list_dec`](biz.dfch.specmgr.dec.tools.list_dec.md) — ``@mcp.tool()`` wrapper: list_dec (Task 2.2).
 - [`biz.dfch.specmgr.dec.tools.parse_dec`](biz.dfch.specmgr.dec.tools.parse_dec.md) — ``@mcp.tool()`` wrapper: parse_dec (Task 2.2).
-- [`biz.dfch.specmgr.dec.tools.set_status_dec`](biz.dfch.specmgr.dec.tools.set_status_dec.md) — ``@mcp.tool()`` wrapper: set_status_dec (Task 2.2).
-- [`biz.dfch.specmgr.dec.tools.update_dec`](biz.dfch.specmgr.dec.tools.update_dec.md) — ``@mcp.tool()`` wrapper: update_dec (Task 2.2).
 - [`biz.dfch.specmgr.dec.tools.validate_dec`](biz.dfch.specmgr.dec.tools.validate_dec.md) — ``@mcp.tool()`` wrapper: validate_dec (Task 2.2).
 - [`biz.dfch.specmgr.general`](biz.dfch.specmgr.general.md) — General-purpose (cross-cutting, not domain-specific) tools, resources, and
 - [`biz.dfch.specmgr.general.models`](biz.dfch.specmgr.general.models.md) — Shared, cross-domain Pydantic models with no document-type-specific content.
@@ -89,7 +86,10 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general.tools._doc_paths`](biz.dfch.specmgr.general.tools._doc_paths.md) — Generic, doc-type-agnostic base directory resolution, filename slugification,
 - [`biz.dfch.specmgr.general.tools._packaged_data`](biz.dfch.specmgr.general.tools._packaged_data.md) — Generic, doc-type-agnostic access to packaged example/template/schema data
 - [`biz.dfch.specmgr.general.tools._paging`](biz.dfch.specmgr.general.tools._paging.md) — Generic, doc-type-agnostic paging helpers (feat-13 Task 1.2).
+- [`biz.dfch.specmgr.general.tools._splice`](biz.dfch.specmgr.general.tools._splice.md) — Frontmatter-stripped body extraction and body-line splicing for the generic
 - [`biz.dfch.specmgr.general.tools.mdformat`](biz.dfch.specmgr.general.tools.mdformat.md) — ``@mcp.tool()`` wrapper: mdformat.
+- [`biz.dfch.specmgr.general.tools.set_status`](biz.dfch.specmgr.general.tools.set_status.md) — ``@mcp.tool()`` wrapper: set_status (feat-22-consolidate-mutation-tools, Phase 4).
+- [`biz.dfch.specmgr.general.tools.update`](biz.dfch.specmgr.general.tools.update.md) — ``@mcp.tool()`` wrapper: update (feat-22-consolidate-mutation-tools, Phase 2).
 - [`biz.dfch.specmgr.general.tools.webfetch`](biz.dfch.specmgr.general.tools.webfetch.md) — ``@mcp.tool()`` wrapper: webfetch.
 - [`biz.dfch.specmgr.gol`](biz.dfch.specmgr.gol.md) — Goal (GOL) domain -- high-level business goal specifications.
 - [`biz.dfch.specmgr.gol.prompts`](biz.dfch.specmgr.gol.prompts.md) — MCP prompt wrappers for Goals (Tasks 3.14-3.15).
@@ -103,7 +103,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.gol.tools._io`](biz.dfch.specmgr.gol.tools._io.md) — Thin file read helpers over ``parse_gol`` (Task 3.1).
 - [`biz.dfch.specmgr.gol.tools._lock`](biz.dfch.specmgr.gol.tools._lock.md) — Per-document in-process lock guarding goal mutations.
 - [`biz.dfch.specmgr.gol.tools._paths`](biz.dfch.specmgr.gol.tools._paths.md) — Goal base directory resolution and id -> path lookup (Task 3.1).
-- [`biz.dfch.specmgr.gol.tools._write`](biz.dfch.specmgr.gol.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_gol``/``update_gol``.
+- [`biz.dfch.specmgr.gol.tools._write`](biz.dfch.specmgr.gol.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_gol`` and
 - [`biz.dfch.specmgr.gol.tools.create_gol`](biz.dfch.specmgr.gol.tools.create_gol.md) — ``@mcp.tool()`` wrapper: create_gol (Task 3.3).
 - [`biz.dfch.specmgr.gol.tools.delete_gol`](biz.dfch.specmgr.gol.tools.delete_gol.md) — ``@mcp.tool()`` wrapper: delete_gol (Task 3.6).
 - [`biz.dfch.specmgr.gol.tools.get_gol`](biz.dfch.specmgr.gol.tools.get_gol.md) — ``@mcp.tool()`` wrapper: get_gol (Task 3.8).
@@ -111,8 +111,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.gol.tools.get_gol_template`](biz.dfch.specmgr.gol.tools.get_gol_template.md) — ``@mcp.tool()`` wrapper: get_gol_template (Task 3.10).
 - [`biz.dfch.specmgr.gol.tools.list_gol`](biz.dfch.specmgr.gol.tools.list_gol.md) — ``@mcp.tool()`` wrapper: list_gol (Task 3.9).
 - [`biz.dfch.specmgr.gol.tools.parse_gol`](biz.dfch.specmgr.gol.tools.parse_gol.md) — ``@mcp.tool()`` wrapper: parse_gol (Task 3.2).
-- [`biz.dfch.specmgr.gol.tools.set_status_gol`](biz.dfch.specmgr.gol.tools.set_status_gol.md) — ``@mcp.tool()`` wrapper: set_status_gol (Task 3.5).
-- [`biz.dfch.specmgr.gol.tools.update_gol`](biz.dfch.specmgr.gol.tools.update_gol.md) — ``@mcp.tool()`` wrapper: update_gol (Task 3.4).
 - [`biz.dfch.specmgr.gol.tools.validate_gol`](biz.dfch.specmgr.gol.tools.validate_gol.md) — ``@mcp.tool()`` wrapper: validate_gol (Task 3.7).
 - [`biz.dfch.specmgr.models`](biz.dfch.specmgr.models.md) — Pydantic models used by the ``biz-dfch-specmgr`` MCP server.
 - [`biz.dfch.specmgr.models.adr`](biz.dfch.specmgr.models.adr.md) — Pydantic models for MADR 4.0.0-based Architecture Decision Records.
@@ -175,7 +173,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.prb.tools._io`](biz.dfch.specmgr.prb.tools._io.md) — Thin file read helpers over ``parse_prb`` (Task 3.1).
 - [`biz.dfch.specmgr.prb.tools._lock`](biz.dfch.specmgr.prb.tools._lock.md) — Per-document in-process lock guarding problem statement mutations.
 - [`biz.dfch.specmgr.prb.tools._paths`](biz.dfch.specmgr.prb.tools._paths.md) — Problem statement base directory resolution and id -> path lookup (Task 3.1).
-- [`biz.dfch.specmgr.prb.tools._write`](biz.dfch.specmgr.prb.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_prb``/``update_prb``.
+- [`biz.dfch.specmgr.prb.tools._write`](biz.dfch.specmgr.prb.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_prb`` and
 - [`biz.dfch.specmgr.prb.tools.create_prb`](biz.dfch.specmgr.prb.tools.create_prb.md) — ``@mcp.tool()`` wrapper: create_prb (Task 3.3).
 - [`biz.dfch.specmgr.prb.tools.delete_prb`](biz.dfch.specmgr.prb.tools.delete_prb.md) — ``@mcp.tool()`` wrapper: delete_prb (Task 3.6).
 - [`biz.dfch.specmgr.prb.tools.get_prb`](biz.dfch.specmgr.prb.tools.get_prb.md) — ``@mcp.tool()`` wrapper: get_prb (Task 3.8).
@@ -183,8 +181,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.prb.tools.get_prb_template`](biz.dfch.specmgr.prb.tools.get_prb_template.md) — ``@mcp.tool()`` wrapper: get_prb_template (Task 3.10).
 - [`biz.dfch.specmgr.prb.tools.list_prb`](biz.dfch.specmgr.prb.tools.list_prb.md) — ``@mcp.tool()`` wrapper: list_prb (Task 3.9).
 - [`biz.dfch.specmgr.prb.tools.parse_prb`](biz.dfch.specmgr.prb.tools.parse_prb.md) — ``@mcp.tool()`` wrapper: parse_prb (Task 3.2).
-- [`biz.dfch.specmgr.prb.tools.set_status_prb`](biz.dfch.specmgr.prb.tools.set_status_prb.md) — ``@mcp.tool()`` wrapper: set_status_prb (Task 3.5).
-- [`biz.dfch.specmgr.prb.tools.update_prb`](biz.dfch.specmgr.prb.tools.update_prb.md) — ``@mcp.tool()`` wrapper: update_prb (Task 3.4).
 - [`biz.dfch.specmgr.prb.tools.validate_prb`](biz.dfch.specmgr.prb.tools.validate_prb.md) — ``@mcp.tool()`` wrapper: validate_prb (Task 3.7).
 - [`biz.dfch.specmgr.qa`](biz.dfch.specmgr.qa.md) — Question and Answer (QA) domain -- requirements-elicitation interview specifications.
 - [`biz.dfch.specmgr.qa.models`](biz.dfch.specmgr.qa.models.md) — Question and Answer (QA) models -- Pydantic schema powered by the generic ``models/md`` engine.
@@ -208,7 +204,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.qa.tools._io`](biz.dfch.specmgr.qa.tools._io.md) — Thin file read helpers over ``parse_qa`` (Phase 4, Task 4.1).
 - [`biz.dfch.specmgr.qa.tools._lock`](biz.dfch.specmgr.qa.tools._lock.md) — Per-document in-process lock guarding Question and Answer (QA) mutations.
 - [`biz.dfch.specmgr.qa.tools._paths`](biz.dfch.specmgr.qa.tools._paths.md) — Question and Answer (QA) base directory resolution and id -> path lookup (Phase 4, Task 4.1).
-- [`biz.dfch.specmgr.qa.tools._write`](biz.dfch.specmgr.qa.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_qa``/``update_qa``
+- [`biz.dfch.specmgr.qa.tools._write`](biz.dfch.specmgr.qa.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_qa`` and
 - [`biz.dfch.specmgr.qa.tools.create_qa`](biz.dfch.specmgr.qa.tools.create_qa.md) — ``@mcp.tool()`` wrapper: create_qa (Phase 4, Task 4.1).
 - [`biz.dfch.specmgr.qa.tools.delete_qa`](biz.dfch.specmgr.qa.tools.delete_qa.md) — ``@mcp.tool()`` wrapper: delete_qa (Phase 4, Task 4.1).
 - [`biz.dfch.specmgr.qa.tools.get_qa`](biz.dfch.specmgr.qa.tools.get_qa.md) — ``@mcp.tool()`` wrapper: get_qa (Phase 4, Task 4.1).
@@ -216,8 +212,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.qa.tools.get_qa_template`](biz.dfch.specmgr.qa.tools.get_qa_template.md) — ``@mcp.tool()`` wrapper: get_qa_template (Phase 4, Task 4.1).
 - [`biz.dfch.specmgr.qa.tools.list_qa`](biz.dfch.specmgr.qa.tools.list_qa.md) — ``@mcp.tool()`` wrapper: list_qa (feat-13-list-paging Task 2.5).
 - [`biz.dfch.specmgr.qa.tools.parse_qa`](biz.dfch.specmgr.qa.tools.parse_qa.md) — ``@mcp.tool()`` wrapper: parse_qa (Phase 4, Task 4.1).
-- [`biz.dfch.specmgr.qa.tools.set_status_qa`](biz.dfch.specmgr.qa.tools.set_status_qa.md) — ``@mcp.tool()`` wrapper: set_status_qa (Phase 4, Task 4.1).
-- [`biz.dfch.specmgr.qa.tools.update_qa`](biz.dfch.specmgr.qa.tools.update_qa.md) — ``@mcp.tool()`` wrapper: update_qa (Phase 4, Task 4.1).
 - [`biz.dfch.specmgr.qa.tools.validate_qa`](biz.dfch.specmgr.qa.tools.validate_qa.md) — ``@mcp.tool()`` wrapper: validate_qa (Phase 4, Task 4.1).
 - [`biz.dfch.specmgr.req`](biz.dfch.specmgr.req.md) — Requirement (REQ) domain -- requirement specifications.
 - [`biz.dfch.specmgr.req.prompts`](biz.dfch.specmgr.req.prompts.md) — MCP prompt wrappers for Requirements (Task 3.19).
@@ -231,7 +225,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.req.tools._io`](biz.dfch.specmgr.req.tools._io.md) — Thin file read helpers over ``parse_req`` (Task 3.11).
 - [`biz.dfch.specmgr.req.tools._lock`](biz.dfch.specmgr.req.tools._lock.md) — Per-document in-process lock guarding requirement mutations.
 - [`biz.dfch.specmgr.req.tools._paths`](biz.dfch.specmgr.req.tools._paths.md) — Requirement base directory resolution and id -> path lookup (Task 3.11).
-- [`biz.dfch.specmgr.req.tools._write`](biz.dfch.specmgr.req.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_req``/``update_req``
+- [`biz.dfch.specmgr.req.tools._write`](biz.dfch.specmgr.req.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_req`` and
 - [`biz.dfch.specmgr.req.tools.create_req`](biz.dfch.specmgr.req.tools.create_req.md) — ``@mcp.tool()`` wrapper: create_req (Task 3.12).
 - [`biz.dfch.specmgr.req.tools.delete_req`](biz.dfch.specmgr.req.tools.delete_req.md) — ``@mcp.tool()`` wrapper: delete_req (Task 3.15).
 - [`biz.dfch.specmgr.req.tools.get_req`](biz.dfch.specmgr.req.tools.get_req.md) — ``@mcp.tool()`` wrapper: get_req (feat-7-various-improvements Task 0.9).
@@ -239,8 +233,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.req.tools.get_req_template`](biz.dfch.specmgr.req.tools.get_req_template.md) — ``@mcp.tool()`` wrapper: get_req_template (Task 3.7).
 - [`biz.dfch.specmgr.req.tools.list_req`](biz.dfch.specmgr.req.tools.list_req.md) — ``@mcp.tool()`` wrapper: list_req (feat-13-list-paging Task 2.2).
 - [`biz.dfch.specmgr.req.tools.parse_req`](biz.dfch.specmgr.req.tools.parse_req.md) — ``@mcp.tool()`` wrapper: parse_req.
-- [`biz.dfch.specmgr.req.tools.set_status_req`](biz.dfch.specmgr.req.tools.set_status_req.md) — ``@mcp.tool()`` wrapper: set_status_req (Task 3.14).
-- [`biz.dfch.specmgr.req.tools.update_req`](biz.dfch.specmgr.req.tools.update_req.md) — ``@mcp.tool()`` wrapper: update_req (Task 3.13).
 - [`biz.dfch.specmgr.req.tools.validate_req`](biz.dfch.specmgr.req.tools.validate_req.md) — ``@mcp.tool()`` wrapper: validate_req (Task 3.16).
 - [`biz.dfch.specmgr.rsk`](biz.dfch.specmgr.rsk.md) — Risk (RSK) domain -- risk registers for system specifications.
 - [`biz.dfch.specmgr.rsk.models`](biz.dfch.specmgr.rsk.models.md) — Risk (RSK) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
@@ -265,7 +257,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.rsk.tools._io`](biz.dfch.specmgr.rsk.tools._io.md) — Thin file read helpers over ``parse_rsk`` (Task 3.1).
 - [`biz.dfch.specmgr.rsk.tools._lock`](biz.dfch.specmgr.rsk.tools._lock.md) — Per-document in-process lock guarding risk mutations.
 - [`biz.dfch.specmgr.rsk.tools._paths`](biz.dfch.specmgr.rsk.tools._paths.md) — Risk base directory resolution and id -> path lookup (Task 3.1).
-- [`biz.dfch.specmgr.rsk.tools._write`](biz.dfch.specmgr.rsk.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_rsk``/``update_rsk``.
+- [`biz.dfch.specmgr.rsk.tools._write`](biz.dfch.specmgr.rsk.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_rsk`` and
 - [`biz.dfch.specmgr.rsk.tools.create_rsk`](biz.dfch.specmgr.rsk.tools.create_rsk.md) — ``@mcp.tool()`` wrapper: create_rsk (Task 3.3).
 - [`biz.dfch.specmgr.rsk.tools.delete_rsk`](biz.dfch.specmgr.rsk.tools.delete_rsk.md) — ``@mcp.tool()`` wrapper: delete_rsk (Task 3.6).
 - [`biz.dfch.specmgr.rsk.tools.get_rsk`](biz.dfch.specmgr.rsk.tools.get_rsk.md) — ``@mcp.tool()`` wrapper: get_rsk (Task 3.8).
@@ -273,8 +265,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.rsk.tools.get_rsk_template`](biz.dfch.specmgr.rsk.tools.get_rsk_template.md) — ``@mcp.tool()`` wrapper: get_rsk_template (Task 3.9).
 - [`biz.dfch.specmgr.rsk.tools.list_rsk`](biz.dfch.specmgr.rsk.tools.list_rsk.md) — ``@mcp.tool()`` wrapper: list_rsk (Task 3.14).
 - [`biz.dfch.specmgr.rsk.tools.parse_rsk`](biz.dfch.specmgr.rsk.tools.parse_rsk.md) — ``@mcp.tool()`` wrapper: parse_rsk (Task 3.2).
-- [`biz.dfch.specmgr.rsk.tools.set_status_rsk`](biz.dfch.specmgr.rsk.tools.set_status_rsk.md) — ``@mcp.tool()`` wrapper: set_status_rsk (Task 3.5).
-- [`biz.dfch.specmgr.rsk.tools.update_rsk`](biz.dfch.specmgr.rsk.tools.update_rsk.md) — ``@mcp.tool()`` wrapper: update_rsk (Task 3.4).
 - [`biz.dfch.specmgr.rsk.tools.validate_rsk`](biz.dfch.specmgr.rsk.tools.validate_rsk.md) — ``@mcp.tool()`` wrapper: validate_rsk (Task 3.7).
 - [`biz.dfch.specmgr.server`](biz.dfch.specmgr.server.md) — MCP server for ``biz-dfch-specmgr``.
 - [`biz.dfch.specmgr.tsk`](biz.dfch.specmgr.tsk.md) — TaskList (TSK) domain -- lightweight task/todo-list specifications.
@@ -299,7 +289,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.tsk.tools._io`](biz.dfch.specmgr.tsk.tools._io.md) — Thin file read helpers over ``parse_tsk`` (Task 3.1).
 - [`biz.dfch.specmgr.tsk.tools._lock`](biz.dfch.specmgr.tsk.tools._lock.md) — Per-document in-process lock guarding task list mutations.
 - [`biz.dfch.specmgr.tsk.tools._paths`](biz.dfch.specmgr.tsk.tools._paths.md) — Task list base directory resolution and id -> path lookup (Task 3.1).
-- [`biz.dfch.specmgr.tsk.tools._write`](biz.dfch.specmgr.tsk.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_tsk``/``update_tsk``.
+- [`biz.dfch.specmgr.tsk.tools._write`](biz.dfch.specmgr.tsk.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_tsk`` and
 - [`biz.dfch.specmgr.tsk.tools.create_tsk`](biz.dfch.specmgr.tsk.tools.create_tsk.md) — ``@mcp.tool()`` wrapper: create_tsk (Task 3.3).
 - [`biz.dfch.specmgr.tsk.tools.delete_tsk`](biz.dfch.specmgr.tsk.tools.delete_tsk.md) — ``@mcp.tool()`` wrapper: delete_tsk (Task 3.6).
 - [`biz.dfch.specmgr.tsk.tools.get_tsk`](biz.dfch.specmgr.tsk.tools.get_tsk.md) — ``@mcp.tool()`` wrapper: get_tsk (Task 3.8).
@@ -307,8 +297,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.tsk.tools.get_tsk_template`](biz.dfch.specmgr.tsk.tools.get_tsk_template.md) — ``@mcp.tool()`` wrapper: get_tsk_template (Task 3.9).
 - [`biz.dfch.specmgr.tsk.tools.list_tsk`](biz.dfch.specmgr.tsk.tools.list_tsk.md) — ``@mcp.tool()`` wrapper: list_tsk (feat-13-list-paging Task 2.4).
 - [`biz.dfch.specmgr.tsk.tools.parse_tsk`](biz.dfch.specmgr.tsk.tools.parse_tsk.md) — ``@mcp.tool()`` wrapper: parse_tsk (Task 3.2).
-- [`biz.dfch.specmgr.tsk.tools.set_status_tsk`](biz.dfch.specmgr.tsk.tools.set_status_tsk.md) — ``@mcp.tool()`` wrapper: set_status_tsk (Task 3.5).
-- [`biz.dfch.specmgr.tsk.tools.update_tsk`](biz.dfch.specmgr.tsk.tools.update_tsk.md) — ``@mcp.tool()`` wrapper: update_tsk (Task 3.4).
 - [`biz.dfch.specmgr.tsk.tools.validate_tsk`](biz.dfch.specmgr.tsk.tools.validate_tsk.md) — ``@mcp.tool()`` wrapper: validate_tsk (Task 3.7).
 - [`biz.dfch.specmgr.uc`](biz.dfch.specmgr.uc.md) — Use Case (UC) domain — Cockburn-based use case specification and validation.
 - [`biz.dfch.specmgr.uc.models`](biz.dfch.specmgr.uc.models.md) — Use Case models — Pydantic schema for Cockburn-based use cases.
@@ -343,7 +331,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.uc.tools._io`](biz.dfch.specmgr.uc.tools._io.md) — Thin file read helpers over ``parse_uc`` (Task 3.1.5).
 - [`biz.dfch.specmgr.uc.tools._lock`](biz.dfch.specmgr.uc.tools._lock.md) — Per-document in-process lock guarding use-case mutations.
 - [`biz.dfch.specmgr.uc.tools._paths`](biz.dfch.specmgr.uc.tools._paths.md) — Use-case base directory resolution and id -> path lookup (Task 3.1.5).
-- [`biz.dfch.specmgr.uc.tools._write`](biz.dfch.specmgr.uc.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_uc``/``update_uc``
+- [`biz.dfch.specmgr.uc.tools._write`](biz.dfch.specmgr.uc.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_uc`` and
 - [`biz.dfch.specmgr.uc.tools.create_uc`](biz.dfch.specmgr.uc.tools.create_uc.md) — ``@mcp.tool()`` wrapper: create_uc (Task 3.1.5).
 - [`biz.dfch.specmgr.uc.tools.delete_uc`](biz.dfch.specmgr.uc.tools.delete_uc.md) — ``@mcp.tool()`` wrapper: delete_uc (Task 3.1.5).
 - [`biz.dfch.specmgr.uc.tools.get_uc`](biz.dfch.specmgr.uc.tools.get_uc.md) — ``@mcp.tool()`` wrapper: get_uc (Task 3.1.5).
@@ -351,6 +339,4 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.uc.tools.get_uc_template`](biz.dfch.specmgr.uc.tools.get_uc_template.md) — ``@mcp.tool()`` wrapper: get_uc_template (Task 3.1.3).
 - [`biz.dfch.specmgr.uc.tools.list_uc`](biz.dfch.specmgr.uc.tools.list_uc.md) — ``@mcp.tool()`` wrapper: list_uc (feat-13-list-paging Task 2.3).
 - [`biz.dfch.specmgr.uc.tools.parse_uc`](biz.dfch.specmgr.uc.tools.parse_uc.md) — ``@mcp.tool()`` wrapper: parse_uc.
-- [`biz.dfch.specmgr.uc.tools.set_status_uc`](biz.dfch.specmgr.uc.tools.set_status_uc.md) — ``@mcp.tool()`` wrapper: set_status_uc (Task 3.1.5).
-- [`biz.dfch.specmgr.uc.tools.update_uc`](biz.dfch.specmgr.uc.tools.update_uc.md) — ``@mcp.tool()`` wrapper: update_uc (Task 3.1.5).
 - [`biz.dfch.specmgr.uc.tools.validate_uc`](biz.dfch.specmgr.uc.tools.validate_uc.md) — ``@mcp.tool()`` wrapper: validate_uc (Task 3.1.5).

@@ -21,9 +21,10 @@ Unlike ``validate_adr`` (which is id-based and re-reads a file from disk),
 ``validate_dec`` is a **disk-free, id-free dry run**: it validates a
 submitted ``content`` string directly, without ever touching the decision
 base directory or resolving an id. This lets a caller check a draft before
-ever calling ``create_dec``/``update_dec`` (or independently of either), and
-is exactly the same check both of those tools already run internally on
-their own ``content`` argument, exposed standalone here.
+ever calling ``create_dec`` or the generic ``update`` tool in
+``general.tools`` (or independently of either), and is exactly the same
+check both of those tools already run internally on their own ``content``
+argument, exposed standalone here.
 """
 
 from __future__ import annotations
@@ -54,7 +55,7 @@ def validate_dec(content: str, full: bool = False) -> bool:
     Successfully constructing the model *is* the validation, so this
     function only ever returns ``True``; any parse/validation failure
     instead propagates as ``AssertionError``/``pydantic.ValidationError``,
-    exactly as ``create_dec``/``update_dec`` themselves do.
+    exactly as ``create_dec`` and the generic ``update`` tool do.
 
     Whether ``content`` carries a YAML frontmatter block is detected via
     ``frontmatter.loads(content).metadata`` (non-empty means "has
@@ -68,7 +69,8 @@ def validate_dec(content: str, full: bool = False) -> bool:
         The decision markdown to validate.
     full:
         ``False`` (default): ``content`` must be body markdown only (the
-        shape ``create_dec``/``update_dec`` accept) -- raises ``ValueError``
+        shape ``create_dec`` and the generic ``update`` tool accept) --
+        raises ``ValueError``
         if a frontmatter block is found instead. ``True``: ``content`` must
         be a complete document, frontmatter and body together (the shape
         ``parse_dec`` expects for an on-disk file) -- raises the symmetric

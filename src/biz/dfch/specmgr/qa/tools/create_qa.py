@@ -25,7 +25,8 @@ small frontmatter YAML block is code-generated and prepended (mirrors
 ``req.tools.create_req``'s design exactly). There is therefore no
 ``write_qa``/``render_qa`` in ``qa.tools._io`` for this tool to call -- the
 frontmatter+content composition is factored into
-``qa.tools._write.write_qa_file`` instead, shared with ``update_qa``.
+``qa.tools._write.write_qa_file`` instead, shared with the generic
+``update`` tool in ``general.tools``.
 
 Thin file-I/O adapter; there is no in-memory cache of a parsed
 :class:`~biz.dfch.specmgr.qa.models.v2.QaDocument` -- the ``.md`` file

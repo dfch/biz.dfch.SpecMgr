@@ -28,10 +28,13 @@ question is appended with an empty ``_(awaiting response)_`` placeholder in
 place of an answer, for a human to fill in directly in the document
 afterwards.
 
-Like ``update_qa``, this targets an existing document via the ``qa/tools/``
-surface (``get_qa``, ``update_qa``, ``list_qa`` -- the last to resolve a
-title to an id when no id is given) and the ``specmgr://iso25010`` resource
-(to ground each new question in that characteristic's actual definition).
+Like the ``update_qa`` prompt, this targets an existing document via the
+``qa/tools/`` surface (``get_qa``, ``list_qa`` -- the last to resolve a
+title to an id when no id is given), the generic ``update`` tool in
+``general/tools/`` (``type="qa"`` -- the ``N+1`` range appends the new
+pairs, the whole-body path carries the document forward), and the
+``specmgr://iso25010`` resource (to ground each new question in that
+characteristic's actual definition).
 This prompt deliberately does not
 implement or call any ``/resolve`` follow-up step itself -- it only tells
 the human user, in its final instructions to the LLM, that such a step

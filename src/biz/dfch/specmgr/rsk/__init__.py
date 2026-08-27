@@ -27,11 +27,15 @@ against the shared ``mcp`` application instance at once::
     from biz.dfch.specmgr import rsk  # noqa: F401 (side-effects only)
 
 ``tools`` (``parse_rsk``, ``get_rsk``, ``list_rsk``, ``get_rsk_example``,
-``get_rsk_template``, ``create_rsk``, ``update_rsk``, ``set_status_rsk``,
+``get_rsk_template``, ``create_rsk``,
 ``delete_rsk``, ``validate_rsk``), ``resources`` (``specmgr://rsk/schema``,
 ``specmgr://rsk/example``, ``specmgr://rsk/template``,
 ``specmgr://rsk/tara``, ``specmgr://rsk/risk-matrix``), and ``prompts``
-(``create_risk``, ``update_risk``) all exist. Like REQ/TSK, RSK has no
+(``create_risk``, ``update_risk``) all exist; whole-body and line-range
+updates of an existing document go through the generic ``update`` tool in
+``general.tools`` (``type="rsk"``), and status changes go through the
+generic ``set_status`` tool in ``general.tools`` (``type="rsk"``). Like
+REQ/TSK, RSK has no
 ``specmgr://rsk/{id}`` resource -- id-based reads go through the
 ``get_rsk`` tool only (same rationale as ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614,
 "Expose id-based document reads as a tool, not a resource" -- RSK never had

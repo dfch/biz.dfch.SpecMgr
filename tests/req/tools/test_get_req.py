@@ -26,6 +26,8 @@ from pathlib import Path
 from unittest import mock
 
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
+from biz.dfch.specmgr.general.tools._splice import body_text
+from biz.dfch.specmgr.general.tools.update import update
 from biz.dfch.specmgr.req.models.v1 import ReqDocument
 from biz.dfch.specmgr.req.tools._paths import ReqNotFoundError
 from biz.dfch.specmgr.req.tools.create_req import create_req
@@ -83,6 +85,55 @@ class TestGetReq(unittest.TestCase):
         message = str(ctx.exception)
         self.assertIn("bare document UUID", message)
         self.assertIn("without a domain prefix", message)
+
+    def _doc_path(self) -> Path:
+        """The single on-disk document file seeded for this test."""
+        matches = list((self.docs_root / "req").glob("*.md"))
+        self.assertEqual(len(matches), 1)
+        result = matches[0]
+        return result
+
+    def test_raw_returns_body_text_via_shared_helper(self) -> None:
+        """raw=True must return the frontmatter-stripped body text, byte-identical to the shared body_text helper's output."""
+        created = create_req(_MINIMAL_BODY)
+
+        result = get_req(created.frontmatter.id, raw=True)
+
+        self.assertIsInstance(result, str)
+        self.assertEqual(result, body_text(self._doc_path()))
+
+    def test_raw_line_coordinates_index_into_the_splice_target(self) -> None:
+        """The line numbers from a raw read must index byte-for-byte into the text the update splice targets (ACC-003)."""
+        created = create_req(_MINIMAL_BODY)
+        lines = get_req(created.frontmatter.id, raw=True).splitlines()
+        k = lines.index("If the engine becomes too hot, the lifetime of the system decreases.") + 1
+        replacement = "Updated description text."
+
+        update(id=created.frontmatter.id, type="req", content=replacement, begin=k, end=k)
+
+        new_lines = get_req(created.frontmatter.id, raw=True).splitlines()
+        self.assertEqual(new_lines[k - 1], replacement)
+        self.assertEqual(new_lines[: k - 1] + new_lines[k:], lines[: k - 1] + lines[k:])
+        self.assertEqual(len(new_lines), len(lines))
+
+    def test_raw_false_returns_parsed_document_as_before(self) -> None:
+        """raw=False (explicit) must return the parsed document, exactly as the default call does."""
+        created = create_req(_MINIMAL_BODY)
+
+        result = get_req(created.frontmatter.id, raw=False)
+        default = get_req(created.frontmatter.id)
+
+        self.assertIsInstance(result, ReqDocument)
+        self.assertEqual(result, default)
+
+    def test_raw_unknown_id_raises_not_found_in_both_modes(self) -> None:
+        """raw=True and raw=False must both raise ReqNotFoundError for an unknown id."""
+        create_req(_MINIMAL_BODY)
+
+        with self.assertRaises(ReqNotFoundError):
+            get_req("no-such-id", raw=True)
+        with self.assertRaises(ReqNotFoundError):
+            get_req("no-such-id", raw=False)
 
 
 if __name__ == "__main__":

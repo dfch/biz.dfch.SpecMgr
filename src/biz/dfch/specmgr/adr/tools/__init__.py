@@ -20,7 +20,9 @@
 Thin file-I/O/id-lookup adapters over ``models/adr/v1/mutations.py`` plus
 ``parse_adr``/``render_adr``, exposed as ``@mcp.tool()``-decorated functions
 against the shared ``mcp`` application instance -- one module per tool.
-Import this package to register all ADR tools at once::
+Status changes of an existing ADR go through the generic ``set_status``
+tool in ``general.tools`` (``type="adr"``). Import this package to register
+all ADR tools at once::
 
     from biz.dfch.specmgr.adr import tools  # noqa: F401 (side-effects only)
 """
@@ -33,7 +35,6 @@ from .option_delete import option_delete
 from .option_list import option_list
 from .option_read import option_read
 from .option_update import option_update
-from .set_status import set_status
 from .update_frontmatter import update_frontmatter
 from .update_section import update_section
 from .validate_adr import validate_adr
@@ -47,7 +48,6 @@ __all__ = [
     "option_list",
     "option_read",
     "option_update",
-    "set_status",
     "update_frontmatter",
     "update_section",
     "validate_adr",

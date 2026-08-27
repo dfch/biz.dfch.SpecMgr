@@ -6,8 +6,8 @@ Ported from ``tsk.tools._lock.tsk_lock`` unchanged except for naming -- see
 that module's own docstring for the full rationale (the read-modify-write
 race a mutating tool's ``load_by_id`` -> mutate -> write sequence is exposed
 to when an MCP host dispatches two overlapping calls against the same id).
-``update_rsk`` and any future risk mutation tool (``set_status_rsk``)
-wrap their whole sequence in ``with rsk_lock(id):``.
+The generic ``update`` and ``set_status`` tools in ``general.tools``
+(``type="rsk"``) wrap their whole sequence in ``with rsk_lock(id):``.
 
 Not generalized into ``general.tools`` alongside ``_doc_paths.py`` -- the id
 -> path lookup plumbing was generalized because it was already shared,

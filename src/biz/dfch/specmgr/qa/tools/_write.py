@@ -15,8 +15,8 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Shared frontmatter+body composition/write helper for ``create_qa``/``update_qa``
-(Phase 4, Task 4.1).
+"""Shared frontmatter+body composition/write helper for ``create_qa`` and
+the generic ``update`` tool in ``general.tools`` (``type="qa"``).
 
 Deliberately **not** part of ``qa.tools._io`` -- that module's own docstring
 rules out a ``write_qa``/``render_qa`` counterpart to ``read_qa``, since this
@@ -27,9 +27,9 @@ design never renders a body back out from a parsed
 already-constructed, already-validated
 :class:`~biz.dfch.specmgr.qa.models.v2.QaFrontmatter` with the caller's own
 already-validated *raw* body text (never reformatted/re-rendered) into one
-file. Factored out of ``create_qa.py`` into its own module so
-``update_qa.py`` does not have to duplicate it. 1:1 port of
-``req.tools._write``.
+file. Factored out of ``create_qa.py`` into its own module so the generic
+``update`` tool in ``general.tools`` does not have to duplicate it. 1:1
+port of ``req.tools._write``.
 """
 
 from __future__ import annotations

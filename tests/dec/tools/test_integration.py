@@ -20,9 +20,9 @@
 Unlike the per-tool unit tests elsewhere under ``tests/dec/tools/``, this
 module drives the actual tool functions in a single realistic sequence --
 ``list_dec`` (empty) -> ``create_dec`` -> ``get_dec`` -> ``list_dec`` (1) ->
-``update_dec`` -> ``set_status_dec`` -> ``get_dec`` (status changed) ->
-``list_dec`` (status reflected) -> ``validate_dec`` -> ``delete_dec`` (stub)
--- against a real temporary docs directory, confirming ACC-003's
+``update`` -> ``set_status`` (``type="dec"``) -> ``get_dec`` (status changed)
+-> ``list_dec`` (status reflected) -> ``validate_dec`` -> ``delete_dec``
+(stub) -- against a real temporary docs directory, confirming ACC-003's
 create->get->list->update->set_status->validate round-trip requirement with
 concrete evidence beyond the isolated per-tool tests.
 
@@ -53,10 +53,10 @@ from biz.dfch.specmgr.dec.tools.create_dec import create_dec
 from biz.dfch.specmgr.dec.tools.delete_dec import delete_dec
 from biz.dfch.specmgr.dec.tools.get_dec import get_dec
 from biz.dfch.specmgr.dec.tools.list_dec import list_dec
-from biz.dfch.specmgr.dec.tools.set_status_dec import set_status_dec
-from biz.dfch.specmgr.dec.tools.update_dec import update_dec
 from biz.dfch.specmgr.dec.tools.validate_dec import validate_dec
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
+from biz.dfch.specmgr.general.tools.set_status import set_status
+from biz.dfch.specmgr.general.tools.update import update
 
 _INITIAL_BODY = textwrap.dedent(
     """\
@@ -103,7 +103,7 @@ class TestDecLifecycleIntegration(TempDecDirTestCase):
     """Live, end-to-end lifecycle exercise, isolated to a temp docs directory (ACC-003)."""
 
     def test_list_create_get_list_update_set_status_get_list_validate_delete_roundtrip(self) -> None:
-        """list_dec -> create_dec -> get_dec -> list_dec -> update_dec -> set_status_dec -> get_dec ->
+        """list_dec -> create_dec -> get_dec -> list_dec -> update -> set_status -> get_dec ->
         list_dec -> validate_dec -> delete_dec, live."""
         # 0. list_dec: an empty base directory must list nothing.
         initial_page = list_dec()
@@ -138,9 +138,9 @@ class TestDecLifecycleIntegration(TempDecDirTestCase):
         self.assertEqual(page.results[0].status, "draft")
         self.assertEqual(page.results[0].title, "Choose a Document Store")
 
-        # 4. update_dec: whole-body replace must bump only `updated` and preserve
+        # 4. update (type="dec"): whole-body replace must bump only `updated` and preserve
         #    id/type/status/created/version (ACC-003).
-        updated = update_dec(dec_id, _REVISED_BODY)
+        updated = update(dec_id, "dec", _REVISED_BODY)
         self.assertEqual(updated.frontmatter.id, created.frontmatter.id)
         self.assertEqual(updated.frontmatter.type, created.frontmatter.type)
         self.assertEqual(updated.frontmatter.created, created.frontmatter.created)
@@ -149,8 +149,8 @@ class TestDecLifecycleIntegration(TempDecDirTestCase):
         self.assertNotEqual(updated.frontmatter.updated, created.frontmatter.updated)
         self.assertIsNotNone(updated.body.drivers)
 
-        # 5. set_status_dec: only status/updated may change.
-        accepted = set_status_dec(dec_id, "accepted")
+        # 5. set_status (type="dec"): only status/updated may change.
+        accepted = set_status(dec_id, "dec", "accepted")
         self.assertEqual(accepted.frontmatter.status, "accepted")
         self.assertEqual(accepted.frontmatter.id, updated.frontmatter.id)
         self.assertEqual(accepted.frontmatter.created, updated.frontmatter.created)
@@ -184,13 +184,13 @@ class TestDecLifecycleIntegration(TempDecDirTestCase):
         self.assertEqual(get_dec(dec_id).frontmatter.id, dec_id)
 
     def test_set_status_rejects_gol_only_implemented_status(self) -> None:
-        """ACC-003: set_status_dec must reject `implemented` (GOL's seventh value, outside DEC's closed six-set)."""
+        """ACC-003: set_status (type="dec") must reject `implemented` (GOL's seventh value, outside DEC's closed six-set)."""
         created = create_dec(_INITIAL_BODY)
         expected_path = dec_base_dir() / f"dec-{created.frontmatter.id}-choose-a-document-store.md"
         before = expected_path.read_text(encoding="utf-8")
 
         with self.assertRaises(ValidationError):
-            set_status_dec(created.frontmatter.id, "implemented")
+            set_status(created.frontmatter.id, "dec", "implemented")
 
         self.assertEqual(expected_path.read_text(encoding="utf-8"), before)
 

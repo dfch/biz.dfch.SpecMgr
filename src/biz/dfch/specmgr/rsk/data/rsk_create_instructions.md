@@ -70,5 +70,6 @@ thresholds), read `specmgr://rsk/risk-matrix`.
 
 ## 5. Later revisions
 Any later change to this risk should go through the `update_risk`
-prompt (or directly through `update_rsk`/`set_status_rsk`), not by
-re-running this prompt.
+prompt (or directly through the generic `update(id, type="rsk", content)`
+and `set_status(id, type="rsk", status)` tools), not by re-running this
+prompt.

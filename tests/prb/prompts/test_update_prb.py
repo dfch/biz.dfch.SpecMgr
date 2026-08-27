@@ -18,10 +18,10 @@
 """Tests for the ``update_prb`` ``@mcp.prompt()`` (Task 3.15, ACC-006).
 
 ``update_prb`` (the prompt) only ever returns instructional text -- it never
-calls ``get_prb``/``question``/``update_prb``/``set_status_prb`` (the tools)
-itself -- so these are string-content/ordering assertions on the narrated
-text confirming every required step from the feature README's Design Notes
-is actually present, in the right order.
+calls ``get_prb``/``question``/``update``/``set_status`` (the tools) itself
+-- so these are string-content/ordering assertions on the narrated text
+confirming every required step from the feature README's Design Notes is
+actually present, in the right order.
 """
 
 import tempfile
@@ -43,16 +43,35 @@ class TestUpdatePrbPrompt(unittest.TestCase):
 
     def test_mentions_get_prb_tool_first(self):
         """The prompt must instruct the LLM to call get_prb first,
-        before the update_prb write tool."""
+        before the generic `update` write call."""
         result = update_prb("abc-123")
         self.assertIn("get_prb(id)", result)
-        self.assertLess(result.index("get_prb(id)"), result.index("update_prb(id, content)"))
+        self.assertLess(result.index("get_prb(id)"), result.index('update(id, type="prb", content)'))
 
-    def test_mentions_both_mutation_tools(self):
-        """Both update_prb and set_status_prb must be named."""
+    def test_mentions_both_generic_mutation_tools(self):
+        """Both the generic `update` (type="prb") and `set_status`
+        (type="prb") call shapes must be named."""
         result = update_prb("abc-123")
-        for tool in ("update_prb", "set_status_prb"):
+        for tool in ('update(id, type="prb", content)', 'set_status(id, type="prb", status)'):
             self.assertIn(tool, result)
+
+    def test_mentions_range_update_flow(self):
+        """The prompt must teach the line-range flow: read the exact body
+        via get_prb(id, raw=True), identify the 1-based inclusive range
+        (N+1 is end-of-body), call `update` with begin/end passing only
+        the replacement lines; whole-body for multi-section or uncertain
+        changes."""
+        result = update_prb("abc-123")
+        self.assertIn("get_prb(id, raw=True)", result)
+        self.assertIn("1-based, inclusive line range", result)
+        self.assertIn("begin = end = N+1", result)
+        self.assertIn('update(id, type="prb", content, begin=..., end=...)', result)
+        self.assertIn("multi-section change, or whenever you are", result)
+        self.assertIn("byte-identical", result)
+        self.assertLess(
+            result.index("get_prb(id, raw=True)"),
+            result.index('update(id, type="prb", content, begin=..., end=...)'),
+        )
 
     def test_mentions_showing_which_questions_are_answered(self):
         """The prompt must instruct showing which of the 7 questions are already answered."""
@@ -92,17 +111,18 @@ class TestUpdatePrbPrompt(unittest.TestCase):
         self.assertIn("ask the user", result)
 
     def test_mentions_whole_body_replace_warning(self):
-        """The whole-body-replace caveat for update_prb must be present."""
+        """The whole-body-replace caveat for the generic `update` tool must be present."""
         result = update_prb("abc-123")
         self.assertIn("whole-body replace", result)
 
-    def test_mentions_status_never_via_update_prb(self):
-        """The prompt must clarify that update_prb never changes status."""
+    def test_mentions_status_never_via_update(self):
+        """The prompt must clarify that the generic `update` tool never changes status."""
         result = update_prb("abc-123")
-        self.assertIn("update_prb` never accepts or changes `status`", result)
+        self.assertIn("`update` never accepts or changes `status`", result)
 
-    def test_mentions_set_status_prb_as_separate_optional_followup(self):
-        """set_status_prb must be framed as a separate, optional follow-up."""
+    def test_mentions_set_status_as_separate_optional_followup(self):
+        """The generic `set_status` tool (type="prb") must be framed as a
+        separate, optional follow-up."""
         result = update_prb("abc-123")
         self.assertIn("separate, optional", result)
 

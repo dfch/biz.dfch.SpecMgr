@@ -15,10 +15,12 @@ page of id/title/status/ref summaries of every goal, shipped as a paged tool
 from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13). ``create_gol``
 (Task 3.3) assigns a fresh id, builds the frontmatter itself, and writes a
 new document (body markdown only, no frontmatter) under the goal base
-directory (``gol.tools._paths``/``_io``). ``update_gol`` (Task 3.4) replaces
-an existing document's body the same way, preserving every frontmatter field
-except ``updated``. ``set_status_gol`` (Task 3.5) is the only path that
-changes ``status``, also bumping ``updated``, leaving the body untouched.
+directory (``gol.tools._paths``/``_io``). Whole-body and line-range updates
+of an existing document go through the generic ``update`` tool in
+``general.tools`` (``type="gol"``), preserving every frontmatter field
+except ``updated``. Status changes of an existing document go through the
+generic ``set_status`` tool in ``general.tools`` (``type="gol"``), also
+bumping ``updated``, leaving the body untouched.
 ``delete_gol`` (Task 3.6) is a registered stub -- always raises
 ``NotImplementedError``, reserving the name for a future real
 implementation. ``validate_gol`` (Task 3.7) is a disk-free, id-free dry run

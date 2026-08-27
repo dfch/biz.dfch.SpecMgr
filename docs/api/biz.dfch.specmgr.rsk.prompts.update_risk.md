@@ -4,16 +4,19 @@
 
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through revising an existing Risk (RSK) document by id, using the existing
-``rsk/tools/`` surface (``get_rsk``, ``update_rsk``, ``set_status_rsk``,
-``validate_rsk``). There is no ``specmgr://rsk/{id}`` resource to point at
+``rsk/tools/`` surface (``get_rsk``, ``validate_rsk``) plus the generic
+``update``/``set_status`` tools in ``general/tools/`` (called with
+``type="rsk"``; ``get_rsk``'s ``raw=True`` parameter serves the line-range
+flow's line numbers). There is no ``specmgr://rsk/{id}`` resource to point at
 -- id-based reads always go through the ``get_rsk`` tool only (there was no
 earlier resource to remove, unlike REQ's own history -- ADR
 ddfb1109-422d-4507-8dbc-dc5e4bec9614).
 
 Unlike ``adr.prompts.update_adr``, there is no ``update_frontmatter``/
 ``option_*`` equivalent here: RSK's lifecycle surface is deliberately small
--- a whole-body replace (``update_rsk``) plus a single, dedicated
-status-change path (``set_status_rsk``) -- so the tool-mapping section
+-- a whole-body or line-range replace (the generic ``update`` tool with
+``type="rsk"``) plus a single, dedicated status-change path (the generic
+``set_status`` tool with ``type="rsk"``) -- so the tool-mapping section
 below is correspondingly short, mirroring ``tsk.prompts.update_task``.
 
 Naming note: this prompt is named ``update_risk`` (the issue's literal

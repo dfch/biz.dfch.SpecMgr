@@ -7,9 +7,17 @@ re-reads and re-parses the current on-disk state on every call; there is no
 in-memory cache of a parsed :class:`UcDocument`: the ``.md`` file itself is
 always the source of truth. The sole id-based read path for UC.
 
+``raw=True`` (feat-22-consolidate-mutation-tools, Phase 2) returns the
+frontmatter-stripped body text verbatim instead of the parsed document --
+produced by the same
+:func:`~biz.dfch.specmgr.general.tools._splice.body_text` helper the
+generic ``update`` tool's range splice uses, so the line numbers a client
+counts in a raw read index byte-for-byte into the text the server splices
+against.
+
 ## Functions
 
-### `get_uc(id: 'str') -> 'UcDocument'`
+### `get_uc(id: 'str', raw: 'bool' = False) -> 'UcDocument | str'`
 
 Read and return the use case identified by ``id``.
 
@@ -17,10 +25,17 @@ Parameters
 ----------
 id:
     The document's specmgr-assigned identifier.
+raw:
+    With ``False`` (the default), return the parsed document, exactly
+    as before. With ``True``, return the frontmatter-stripped body
+    text verbatim as a plain string -- the same text whose 1-based
+    lines the generic ``update`` tool's ``begin``/``end`` coordinates
+    address (shared body-extraction helper with the splice).
 
 Returns
 -------
-UcDocument
-    The current on-disk document, freshly re-read and re-parsed.
+UcDocument | str
+    With ``raw=False``: the current on-disk document, freshly re-read
+    and re-parsed. With ``raw=True``: the body text as a plain string.
     Raises :class:`._paths.UcNotFoundError` if no use case has this id.
 
