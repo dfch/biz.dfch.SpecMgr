@@ -373,10 +373,7 @@ class TestGetExtent(unittest.TestCase):
         text = mdformat.text("# Title\nParagraph on line 2.\n\n\n## *More* `heading`")
         lines = text.splitlines()
         expected = len(lines)
-        print("")
         lines = text.splitlines()
-        for i, line in enumerate(lines):
-            print(f"[{i}] {line}")
         result = MarkdownStr.get_extent(text)
         self.assertEqual(result, expected)
 
