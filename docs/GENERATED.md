@@ -68,6 +68,21 @@ First-line docstrings from each module, organized by domain:
 - `dec/models/v1/frontmatter.py` — Decision (DEC) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
 - `dec/models/v1/parser.py` — Parse raw decision (DEC) ``.md`` text into a :class:`DecDocument`.
 - `dec/models/v1/summary.py` — Pydantic model for one line of DEC listing output (Phase 2, Task 2.3).
+- `dec/tools/__init__.py` — MCP tool wrappers for decisions (mirrors ``gol/tools/``'s own shape).
+- `dec/tools/_io.py` — Thin file read helpers over ``parse_dec`` (Task 2.1).
+- `dec/tools/_lock.py` — Per-document in-process lock guarding decision mutations.
+- `dec/tools/_paths.py` — Decision base directory resolution and id -> path lookup (Task 2.1).
+- `dec/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_dec``/``update_dec``.
+- `dec/tools/create_dec.py` — ``@mcp.tool()`` wrapper: create_dec (Task 2.2).
+- `dec/tools/delete_dec.py` — ``@mcp.tool()`` wrapper: delete_dec (Task 2.2).
+- `dec/tools/get_dec.py` — ``@mcp.tool()`` wrapper: get_dec (Task 2.2).
+- `dec/tools/get_dec_example.py` — ``@mcp.tool()`` wrapper: get_dec_example (Task 2.2).
+- `dec/tools/get_dec_template.py` — ``@mcp.tool()`` wrapper: get_dec_template (Task 2.2).
+- `dec/tools/list_dec.py` — ``@mcp.tool()`` wrapper: list_dec (Task 2.2).
+- `dec/tools/parse_dec.py` — ``@mcp.tool()`` wrapper: parse_dec (Task 2.2).
+- `dec/tools/set_status_dec.py` — ``@mcp.tool()`` wrapper: set_status_dec (Task 2.2).
+- `dec/tools/update_dec.py` — ``@mcp.tool()`` wrapper: update_dec (Task 2.2).
+- `dec/tools/validate_dec.py` — ``@mcp.tool()`` wrapper: validate_dec (Task 2.2).
 
 **general/**
 
@@ -387,4 +402,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 257
+**Test files**: 272

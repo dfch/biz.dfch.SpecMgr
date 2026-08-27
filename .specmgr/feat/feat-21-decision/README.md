@@ -155,13 +155,13 @@ progresses (edit, don't duplicate).
 - [x] Task 1.3: `body.py` — all section classes per Design Notes: `Decision` (root + duplicate-option-number after-validator), `Context` (LITERAL), `DecisionDrivers`, `ConsideredOptions`, `MoreInformation` (leaves), `DecisionOutcome` + `Consequences` + `Confirmation` (composite), `RelatedArtifacts` + 4 H3 list children (GOL shape), `ProsAndCons` (LITERAL "Pros and Cons") + `Option` (REGEX `^Option \d+: .+$`, computed `number`/`name`), `Updates` + `UpdateEntry` (TSK shape) — depends on: Task 1.2 — status: completed
 - [x] Task 1.4: `document.py` (`DecDocument`), `parser.py` (`parse_dec` glue + `_stringify_metadata`), `summary.py` (`DecSummary`), `models/v1/__init__.py` + `models/__init__.py` exports — depends on: Task 1.3 — status: completed
 - [x] Task 1.5: Tests `tests/dec/models/v1/` — `test_frontmatter.py`, `test_body.py` (alias acceptance/rejection, option regex incl. leading-zero acceptance + title-required rejection, number uniqueness, composite outcome, container-with-zero-options, Related Artifacts sub-list independence, Updates entry shape, misordering), `test_parser.py` (ACC-001/ACC-002 matrix + round-trip) — depends on: Task 1.4 — status: completed
-- [x] Task 1.6: Phase-end quality gate (ruff format/check, vulture, full unittest) + commit + comment the commit hash on issue #21 — depends on: Task 1.5 — status: in-progress (gate run; commit + issue #21 comment performed by orchestrator after verification)
+- [x] Task 1.6: Phase-end quality gate (ruff format/check, vulture, full unittest) + commit + comment the commit hash on issue #21 — depends on: Task 1.5 — status: completed (commit b889e4a, issue #21 comment posted by orchestrator)
 
 #### Phase 2: Tools (`dec/tools/`)
-- [ ] Task 2.1: Private helpers `_paths.py` (`DEC_TYPE_NAME="dec"`, `DecNotFoundError`, wrappers over `general.tools._doc_paths`), `_io.py` (`read_dec`, `load_by_id`), `_lock.py` (`dec_lock`), `_write.py` (`write_dec_file`) — mirror GOL — depends on: Task 1.6 — status: not-started
-- [ ] Task 2.2: The 10 tool modules + `tools/__init__.py` per Design Notes (`create_dec` fixes `status="draft"`, filename `dec-{id}-{slug}.md`; `delete_dec` stub `structured_output=False`) — depends on: Task 2.1 — status: not-started
-- [ ] Task 2.3: Tests `tests/dec/tools/` — one module per tool + helper tests + `test_integration.py` (ACC-003) — depends on: Task 2.2 — status: not-started
-- [ ] Task 2.4: Phase-end quality gate + commit + comment the commit hash on issue #21 — depends on: Task 2.3 — status: not-started
+- [x] Task 2.1: Private helpers `_paths.py` (`DEC_TYPE_NAME="dec"`, `DecNotFoundError`, wrappers over `general.tools._doc_paths`), `_io.py` (`read_dec`, `load_by_id`), `_lock.py` (`dec_lock`), `_write.py` (`write_dec_file`) — mirror GOL — depends on: Task 1.6 — status: completed
+- [x] Task 2.2: The 10 tool modules + `tools/__init__.py` per Design Notes (`create_dec` fixes `status="draft"`, filename `dec-{id}-{slug}.md`; `delete_dec` stub `structured_output=False`) — depends on: Task 2.1 — status: completed
+- [x] Task 2.3: Tests `tests/dec/tools/` — one module per tool + helper tests + `test_integration.py` (ACC-003) — depends on: Task 2.2 — status: completed
+- [x] Task 2.4: Phase-end quality gate + commit + comment the commit hash on issue #21 — depends on: Task 2.3 — status: in-progress (gate run; commit + issue #21 comment performed by orchestrator after verification)
 
 #### Phase 3: Resources + packaged data + schema
 - [ ] Task 3.1: `dec/data/dec_example.md` — non-architectural worked decision exercising every section (Design Notes); must parse — depends on: Task 2.4 — status: not-started
