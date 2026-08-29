@@ -2,7 +2,7 @@
 created: 2026-08-15
 id: feat-7-various-improvements
 status: planning
-updated: 2026-08-27
+updated: 2026-08-29
 version: 1.0.0
 ---
 
@@ -711,6 +711,71 @@ progresses (edit, don't duplicate).
   were flagged rather than fixed to keep feat-21's diff on-scope. No code
   impact — documentation-only staleness.
 
+- [ ] Task 0.29: Fix silent/unhelpful validation failures when a
+  `MarkdownParagraph`-typed field's prose wraps onto a line starting with
+  `+`, `-`, or `*` — depends on: none — status: not-started
+
+  Background: Found while closing out the "Finish persisting the OpenCode
+  + MCP PlantUML sequence diagram" task list (TSK
+  `952d39e5-3b79-4389-bc71-a4fe8ca85cd3`, 2026-08-29). A `Recent Updates`
+  entry's paragraph in a TSK document wrapped onto a line starting with
+  `+ group-block style as final...`; both the generic `update` tool
+  (`general/tools/update.py`) and the domain `validate_tsk` tool
+  (`tsk/tools/validate_tsk.py`) failed with an opaque, generic
+  MCP-SDK-generated `"Error executing tool <name>: ..."` message that gave
+  no actionable hint about the cause. Root-caused via investigation:
+
+  - `models/md/_markdown.py`'s `format_text()` (mdformat/markdown-it,
+    CommonMark) correctly-but-surprisingly treats a `+`/`-`/`*`-prefixed
+    line following a paragraph as the start of a NEW bullet list, not lazy
+    paragraph continuation — splitting one logical paragraph into two
+    separate token blocks (`paragraph_open`/... plus
+    `bullet_list_open`/...).
+  - `models/md/markdown_paragraph.py`'s `MarkdownParagraph.get_extent`
+    (leaf case) only captures the first `paragraph_open`'s own line span,
+    so the resulting stray bullet-list block is never absorbed into the
+    field's extent.
+  - `models/md/markdown_str.py:382`'s generic `MarkdownStr.from_text`
+    "text left over after processing all fields" `AssertionError` fires
+    because no other declared field consumes the leftover bullet-list
+    text — reproduced concretely against `tsk/models/v1/body.py`'s
+    `UpdateEntry.content: MarkdownParagraph` field, but the exposure is
+    generic to `models/md` (`MarkdownParagraph` is used the same way by
+    every other whole-body domain: req/uc/qa/prb/gol/rsk/dec), not
+    TSK-specific.
+  - The generic "Error executing tool X: {e}" wording is produced by the
+    third-party `mcp` SDK (`mcp/server/mcpserver/tools/base.py`/
+    `server.py`), not by this repo's own code — the underlying
+    `AssertionError`/`ValidationError` message IS interpolated into `{e}`
+    server-side; any further truncation to a bare "Error executing tool X"
+    happens client-side (outside this repo's control). This repo could
+    still make the underlying message clearer/more actionable on its own
+    side (see below).
+  - Confirmed test gap: no test in `tests/models/md/` or any domain's
+    tests covers a paragraph continuation line starting with `+`/`-`/`*`.
+
+  Candidate fix directions to evaluate at implementation time (not decided
+  yet):
+
+  1. In `models/md/_markdown.py`/`markdown_paragraph.py`: teach
+     `MarkdownParagraph` (or `format_text`) to absorb an immediately-
+     following stray `bullet_list`/`ordered_list` block back into a leaf
+     paragraph's extent, OR pre-escape non-list-intended leading
+     `+`/`-`/`*` characters before formatting.
+  2. In `general/tools/update.py` and each domain's `validate_<d>.py`
+     (currently zero exception handling anywhere in the tool layer, by
+     design — see their docstrings): add a
+     `try/except (AssertionError, pydantic.ValidationError)` wrapper that
+     re-raises a `ValueError` with a clearer, targeted message when this
+     specific "text left over" pattern is detected, so the SDK's `{e}`
+     interpolation carries a genuinely actionable hint instead of a raw
+     assertion string.
+  3. Add regression tests: `tests/models/md/test_markdown_paragraph.py` (a
+     paragraph whose second line starts with `+`/`-`/`*`) and at least one
+     domain-level test (e.g. `tests/tsk/models/v1/test_body.py` or
+     `tests/tsk/tools/test_validate_tsk.py`) reproducing the exact failure
+     end-to-end.
+
 - [ ] Task 1.1: Inventory current `specmgr://*/list` resources and diff
   their output shape/behavior (`adr_list` vs. `req_list`) — depends on:
   none — status: not-started
@@ -832,6 +897,18 @@ already-compacted folder).
 
 See `history.md` for updates before 2026-08-18 (rotated out per ADR
 e369ee2e-3353-4f92-991c-6367d76d832e once this section grew too long).
+
+#### Update 2026-08-29 (Task 0.29 recorded)
+
+- Recorded: Task 0.29 (silent/unhelpful validation failures when a
+  `MarkdownParagraph`-typed field's prose wraps onto a line starting with
+  `+`, `-`, or `*` — found while closing out TSK
+  `952d39e5-3b79-4389-bc71-a4fe8ca85cd3`). Root cause investigated and
+  documented (mdformat/CommonMark list-splitting, `MarkdownParagraph`'s
+  leaf-extent logic, and the generic `"text left over"` assertion in
+  `models/md/markdown_str.py`, confirmed generic to every whole-body
+  domain, not TSK-specific); candidate fix directions recorded but not
+  implemented. Task is not-started.
 
 #### Update 2026-08-27 (Task 0.28 recorded)
 
