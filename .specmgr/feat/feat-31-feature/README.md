@@ -3,7 +3,7 @@ created: 2026-08-30
 id: feat-31-feature
 status: in-progress
 updated: 2026-08-30
-version: 1.6.0
+version: 1.7.0
 ---
 
 # Feature: Formalize the Feature artifact type ("feat")
@@ -568,12 +568,12 @@ discipline.
 
 #### Phase 1: Models + parser (`feat/models/v1/`)
 
-- [ ] Task 1.1: `_util.py` (`SCHEMA_COMMENT_VERSION = "v1"`) — depends on:
-  Task 0.2 — status: not-started
-- [ ] Task 1.2: `frontmatter.py` — `FeatFrontmatter(MarkdownFrontmatter)`:
+- [x] Task 1.1: `_util.py` (`SCHEMA_COMMENT_VERSION = "v1"`) — depends on:
+  Task 0.2 — status: completed (2026-08-30)
+- [x] Task 1.2: `frontmatter.py` — `FeatFrontmatter(MarkdownFrontmatter)`:
   `type: Literal["feat"] = "feat"`, closed 4-set status validator, default
-  `"planning"` — depends on: Task 1.1 — status: not-started
-- [ ] Task 1.3: `body.py` — all section classes per Design Notes:
+  `"planning"` — depends on: Task 1.1 — status: completed (2026-08-30)
+- [x] Task 1.3: `body.py` — all section classes per Design Notes:
   `Feature` (root), `Plan` + its 8 children (`Overview`/`DesignNotes`/
   `RelatedDecisions` leaves; `Requirements`/`RequirementItem`,
   `AcceptanceCriteria`/`AcceptanceCriterionItem` regex-validated lists;
@@ -583,15 +583,21 @@ discipline.
   `tsk.TaskItem`), `Progress` + its 6 children (`CurrentStatus`/`Blockers`/
   `RelatedPrsCommits`/`MoreInformation` leaves; `Updates`/`UpdateEntry`,
   `DecisionsMade`/`DecisionEntry` dynamic-list composites) — depends on:
-  Task 1.2 — status: not-started
-- [ ] Task 1.4: `document.py` (`FeatDocument`), `parser.py` (`parse_feat`
+  Task 1.2 — status: completed (2026-08-30). Added one judgment call not
+  spelled out verbatim in Design Notes: `Requirements`/`AcceptanceCriteria`/
+  `Phase` each gained their own eager-computed-field-validation
+  `model_validator`, mirroring `tsk.models.v1.body.Task._validate_items_eagerly`
+  exactly, so a malformed `REQ-\d{3}: .../ACC-\d{3}: .../- [z] ...` item
+  raises immediately at parse time instead of only whenever something
+  later happens to read the offending computed field — see Decisions Made.
+- [x] Task 1.4: `document.py` (`FeatDocument`), `parser.py` (`parse_feat`
   glue), `summary.py` (`FeatSummary(DocSummary)` — adds one extra field,
   `path: str`, beyond the inherited `id`/`title`/`status`/`ref`; see
   Design Notes' Addressing section and Decisions Made for why `feat`
   needs this and every other domain's summary deliberately doesn't),
   `models/v1/__init__.py` - `models/__init__.py` exports — depends on:
-  Task 1.3 — status: not-started
-- [ ] Task 1.5: Reference fixture `feat_reference.md`, **seeded from this
+  Task 1.3 — status: completed (2026-08-30)
+- [x] Task 1.5: Reference fixture `feat_reference.md`, **seeded from this
   feature's own `.specmgr/feat/feat-31-feature/example.md`** (the
   canonical, engine-verified example — see Current Status/Decisions Made;
   do not re-derive the schema from scratch or restart from
@@ -600,14 +606,29 @@ discipline.
   `### Decisions Made` entries in newest-first order, ≥2 `#### Phase N`
   entries each with ≥1 task item), all well-formed, exercising the
   ISO8601 regex on both `Updates` and `Decisions Made` — depends on: Task
-  1.3 — status: not-started
-- [ ] Task 1.6: Tests `tests/feat/models/v1/` — `test_frontmatter.py`
+  1.3 — status: completed (2026-08-30), at
+  `tests/feat/models/v1/data/feat_reference.md` (mirroring the
+  `tests/models/adr/v1/examples/` file-fixture-on-disk convention, since
+  `tests/dec/models/v1/` itself keeps its reference text inline in
+  `test_body.py`/`test_parser.py`, not as a separate file — see Decisions
+  Made). Two small, content-preserving adjustments were needed beyond
+  "seeded from `example.md`": every bullet/checklist list gained a blank
+  line between items (a loose list) to sidestep `MarkdownListItem`'s own
+  documented tight-list round-trip quirk (`dec`'s own reference text
+  already uses the same loose-list workaround), and Task 0.1's item text
+  had its trailing `— status: completed (2026-08-30)` suffix dropped so
+  the item stays on one physical line (`TaskItem`'s marker regex does not
+  span embedded newlines) — see Decisions Made.
+- [x] Task 1.6: Tests `tests/feat/models/v1/` — `test_frontmatter.py`
   (4-set status incl. rejection), `test_body.py` (alias acceptance/
   rejection incl. the `### Updates` ISO8601 regex, mandatory-vs-optional
   field combinations), `test_parser.py` (ACC-001 matrix + round-trip) —
-  depends on: Task 1.4, Task 1.5 — status: not-started
-- [ ] Task 1.7: Phase-end quality gate + commit + comment on issue #31 —
-  depends on: Task 1.6 — status: not-started
+  depends on: Task 1.4, Task 1.5 — status: completed (2026-08-30), 99 new
+  tests (11 `test_frontmatter.py` + 70 `test_body.py` + 18 `test_parser.py`).
+- [x] Task 1.7: Phase-end quality gate + commit + comment on issue #31 —
+  depends on: Task 1.6 — status: completed (2026-08-30) — quality gate
+  green; **commit and issue comment left to the orchestrator**, per this
+  phase's own task instructions (implementer runs the gate only).
 
 #### Phase 2: Tools (`feat/tools/`) — bespoke addressing
 
@@ -747,6 +768,24 @@ here without touching any `src`/`tests` code; Phase 0's committed
 scaffold (`31c5c30`, `164182e`) stays exactly as-is, untouched, ready
 for whichever agent picks up Task 1.1 next.
 
+**As of 2026-08-30 (Phase 1 complete)**: `feat/models/v1/` is fully
+implemented per Design Notes — `_util.py`, `frontmatter.py`
+(`FeatFrontmatter`), `body.py` (`Feature`/`Plan`/`Progress` and every
+child section class), `document.py` (`FeatDocument`), `parser.py`
+(`parse_feat`), `summary.py` (`FeatSummary`), plus `models/v1/__init__.py`/
+`models/__init__.py` exports. Reference fixture
+`tests/feat/models/v1/data/feat_reference.md` seeded from `example.md`
+(two small, content-preserving adjustments — loose lists, one shortened
+task item — see Task 1.5/Decisions Made). 99 new tests
+(`test_frontmatter.py`/`test_body.py`/`test_parser.py`) all green. Full
+quality gate green: `ruff format --check`/`ruff check` clean, `vulture
+src/ whitelist.py --min-confidence 60` clean (after adding the new
+`feat`-only field names and `_validate_newest_first`/
+`_default_blank_status_to_planning` to `whitelist.py`, same pattern as
+every other domain's pydantic-field/validator false positives),
+`specmgr unused-code` clean, full `unittest` suite green (2106 tests).
+Phase 2 (`feat/tools/`) is next.
+
 ### Blockers
 
 - [x] Design review — resolved 2026-08-30. Reviewed across five rounds
@@ -760,6 +799,53 @@ for whichever agent picks up Task 1.1 next.
   as part of this design-review conversation).
 
 ### Recent Updates
+
+#### Update 2026-08-30 (Phase 1 complete — models + parser)
+
+- Implemented `feat/models/v1/` in full: `_util.py`
+  (`SCHEMA_COMMENT_VERSION = "v1"`), `frontmatter.py` (`FeatFrontmatter`,
+  closed 4-set status, `"planning"` default overriding the base's
+  `"draft"`, mirroring `rsk.RskFrontmatter`'s `_default_blank_status_to_open`
+  pattern), `body.py` (`Feature`/`Plan`/`Progress` and all 20 child section
+  classes per Design Notes, including the `RequirementItem`/
+  `AcceptanceCriterionItem` computed-field regexes, `Phase`'s
+  `number`/`title` computed fields, `UpdateEntry`/`DecisionEntry`'s shared
+  ISO8601 `timestamp`/`title` computed fields and `@alias` regex, and the
+  newest-first `@model_validator` on `Updates`/`DecisionsMade`),
+  `document.py` (`FeatDocument`), `parser.py` (`parse_feat`), `summary.py`
+  (`FeatSummary(DocSummary)` + `path: str`), and the `models/v1/__init__.py`/
+  `models/__init__.py` exports.
+- Verified, live, that the "no `LITERAL` needed" claims in Design Notes for
+  `Plan`/`Progress`/`RelatedDecisions`/`ExplicitlyOutOfScope`/`DependsOn`
+  all hold against the real `space_separated_name()` engine function before
+  writing any code — only `RelatedPrsCommits` needed the documented
+  `LITERAL` override.
+- Seeded `tests/feat/models/v1/data/feat_reference.md` from
+  `.specmgr/feat/feat-31-feature/example.md` per Task 1.5, with two small,
+  content-preserving adjustments needed to satisfy the generic `models/md`
+  engine's own existing constraints (both recorded as Decisions Made
+  entries below, not schema changes): every bullet/checklist list became a
+  loose list (blank line between items), and Task 0.1's item text dropped
+  its wrapped `— status: completed (2026-08-30)` suffix.
+- Added one design decision beyond Design Notes' literal text:
+  `Requirements`/`AcceptanceCriteria`/`Phase` each gained an eager-
+  computed-field-validation `@model_validator`, mirroring
+  `tsk.models.v1.body.Task._validate_items_eagerly` exactly, so a malformed
+  item raises immediately at parse time (see Decisions Made).
+- Wrote 99 new tests across `test_frontmatter.py` (11)/`test_body.py`
+  (70)/`test_parser.py` (18); all green.
+- Quality gate: `ruff format --check` (clean), `ruff check` (clean),
+  `vulture src/ whitelist.py --min-confidence 60` (clean, after adding
+  `feat`'s new pydantic-field/validator names to `whitelist.py`, same
+  false-positive pattern already documented there for every other
+  domain), `specmgr unused-code` (clean), full `unittest` suite (2106
+  tests, green).
+- Per this phase's own task instructions, **no commit was made and no
+  comment was posted to issue #31** — that is the phase orchestrator's
+  responsibility, not the implementing agent's, for this run.
+- Next: Phase 2 (`feat/tools/`) — bespoke addressing (`_paths.py`,
+  `_lock.py`, `_io.py`, `_write.py`), the 8 MCP tool modules, and the
+  generic `update`/`set_status` dispatch adapters.
 
 #### Update 2026-08-30 (design review complete — Blocker resolved, Phase 1 authorized)
 
@@ -1167,6 +1253,55 @@ for whichever agent picks up Task 1.1 next.
   user-directed: this design-review conversation closes here without
   touching any `src`/`tests` code, so the next agent picks up cleanly at
   Task 1.1 against Phase 0's untouched committed scaffold.
+- **2026-08-30 (Phase 1)**: `Requirements`/`AcceptanceCriteria`/`Phase`
+  each gained their own eager-computed-field-validation
+  `@model_validator`, mirroring `tsk.models.v1.body.Task._validate_items_eagerly`
+  exactly, even though Design Notes' text for these three classes only
+  says the computed field itself "raises `AssertionError` on a malformed
+  item" without spelling out *when* that check fires. Without an eager
+  validator, `RequirementItem.description`/`AcceptanceCriterionItem.
+  criterion_description`/`TaskItem.checked` (all `@computed_field`s) would
+  only be evaluated lazily, on first access (e.g. during `model_dump()`),
+  matching `tsk.TaskItem`'s own well-documented gap before `Task` gained
+  its eager validator — letting a malformed item parse silently and only
+  fail (if ever) later, which would contradict ACC-001's stated
+  requirement that a malformed list item raise immediately. Chosen to
+  keep `feat` consistent with the one other domain (`tsk`) that already
+  faced this exact tradeoff, rather than leaving `feat` as a second,
+  inconsistent instance of the same gap.
+- **2026-08-30 (Phase 1)**: `feat_reference.md` needed two small,
+  content-preserving adjustments beyond "seeded from `example.md`",
+  neither a schema change: (1) every bullet/checklist list in the fixture
+  became a loose list (blank line between items) to avoid
+  `MarkdownListItem`'s own documented "a tight source list currently
+  round-trips to a structurally-equivalent loose list rather than
+  byte-exact" limitation — `dec`'s own `_REFERENCE_TEXT` already uses this
+  same loose-list workaround, so this isn't a new pattern. (2) Task 0.1's
+  item text (`"Create branch and package skeleton — status: completed
+  (2026-08-30)"` in `example.md`) had its trailing `— status: completed
+  (2026-08-30)` suffix dropped, since that text wraps across two physical
+  lines after `mdformat` normalization and `TaskItem`'s marker regex
+  (`^\[( |x|X)\]\s*(?P<description>.*)$`, no `re.DOTALL`/`re.MULTILINE`)
+  does not span an embedded newline — the same reason `tsk`'s own shipped
+  `tsk_example.md` keeps every task item to a single physical line. Both
+  adjustments are fixture-only; no schema/model code changed to
+  accommodate them.
+- **2026-08-30 (Phase 1)**: `feat_reference.md` lives at
+  `tests/feat/models/v1/data/feat_reference.md` (a real file on disk), not
+  inlined as a `format_text("""...""")` string constant the way `tests/dec/
+  models/v1/test_body.py`'s own `_REFERENCE_TEXT`/`test_parser.py`'s
+  `_FULL_DOC` are. Task 1.5 explicitly named this path, and `tests/dec/
+  models/v1/` genuinely has no separate fixture file to "match exactly"
+  (checked first, per the task's own instruction) — but
+  `tests/models/adr/v1/examples/*.md` (loaded via
+  `Path(__file__).parent / "examples"` in `test_examples.py`/
+  `test_renderer.py`) and `tests/fixtures/req/test-loose-list-with-
+  continuation.md` both establish that file-based markdown fixtures are
+  an existing, precedented pattern in this codebase, just not one `dec`
+  happens to use. `test_body.py`/`test_parser.py` both load the same file
+  (`Path(__file__).parent / "data" / "feat_reference.md"`, mirroring the
+  ADR examples' own path-resolution shape) rather than duplicating the
+  reference text as two separate inline constants.
 
 ### Related PRs / Commits
 

@@ -76,6 +76,12 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.feat`](biz.dfch.specmgr.feat.md) — Feature (FEAT) domain -- formalizes the ``.specmgr/feat/<id>/README.md`` convention.
 - [`biz.dfch.specmgr.feat.models`](biz.dfch.specmgr.feat.models.md) — Feature (FEAT) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
 - [`biz.dfch.specmgr.feat.models.v1`](biz.dfch.specmgr.feat.models.v1.md) — Feature (FEAT) v1 schema -- frontmatter, body, document, parser, summary.
+- [`biz.dfch.specmgr.feat.models.v1._util`](biz.dfch.specmgr.feat.models.v1._util.md) — Shared, private constants for the ``feat.models.v1`` subpackage.
+- [`biz.dfch.specmgr.feat.models.v1.body`](biz.dfch.specmgr.feat.models.v1.body.md) — Feature (FEAT) body models: whole-section fields under a single H1.
+- [`biz.dfch.specmgr.feat.models.v1.document`](biz.dfch.specmgr.feat.models.v1.document.md) — Pydantic model for a full feature document (frontmatter + body).
+- [`biz.dfch.specmgr.feat.models.v1.frontmatter`](biz.dfch.specmgr.feat.models.v1.frontmatter.md) — Feature (FEAT) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
+- [`biz.dfch.specmgr.feat.models.v1.parser`](biz.dfch.specmgr.feat.models.v1.parser.md) — Parse raw feature (FEAT) ``.md`` text into a :class:`FeatDocument`.
+- [`biz.dfch.specmgr.feat.models.v1.summary`](biz.dfch.specmgr.feat.models.v1.summary.md) — Pydantic model for one line of FEAT listing output (Phase 2, ``list_feat``).
 - [`biz.dfch.specmgr.feat.prompts`](biz.dfch.specmgr.feat.prompts.md) — Feature (FEAT) MCP prompts.
 - [`biz.dfch.specmgr.feat.resources`](biz.dfch.specmgr.feat.resources.md) — Feature (FEAT) MCP resources.
 - [`biz.dfch.specmgr.feat.tools`](biz.dfch.specmgr.feat.tools.md) — Feature (FEAT) MCP tools.

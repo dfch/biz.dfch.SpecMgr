@@ -17,13 +17,78 @@
 
 """Feature (FEAT) v1 schema -- frontmatter, body, document, parser, summary.
 
-**Phase 0 scaffolding only.** Populated in Phase 1 of
-``.specmgr/feat/feat-31-feature/README.md``: ``_util.py``
-(``SCHEMA_COMMENT_VERSION``), ``frontmatter.py`` (``FeatFrontmatter``),
-``body.py`` (``Feature``, ``Plan``, ``Progress``, ``Updates``,
-``UpdateEntry``, and the opaque leaf sections), ``document.py``
-(``FeatDocument``), ``parser.py`` (``parse_feat``), ``summary.py``
-(``FeatSummary``).
+Mirrors the ``dec/models/v1`` layout: a free-function ``parse_feat`` entry
+point, document-level ``FeatDocument(frontmatter, body)`` wrapper,
+frontmatter and body subclasses under this same package, and the
+``FeatSummary`` listing model for the (Phase-2) ``list_feat`` tool. Body
+classes map directly to heading sections in a feature markdown file -- see
+``body.py`` for the full hierarchy.
 """
 
-__all__: list[str] = []
+from ._util import SCHEMA_COMMENT_VERSION
+from .body import (
+    AcceptanceCriteria,
+    AcceptanceCriterionItem,
+    Blockers,
+    Blocks,
+    CurrentStatus,
+    DecisionEntry,
+    DecisionsMade,
+    Dependencies,
+    DependsOn,
+    DesignNotes,
+    ExplicitlyOutOfScope,
+    Feature,
+    Included,
+    MoreInformation,
+    Overview,
+    Phase,
+    Plan,
+    Progress,
+    RelatedDecisions,
+    RelatedPrsCommits,
+    RequirementItem,
+    Requirements,
+    Scope,
+    TaskList,
+    UpdateEntry,
+    Updates,
+)
+from .document import FeatDocument
+from .frontmatter import FeatFrontmatter
+from .parser import parse_feat
+from .summary import FeatSummary
+
+__all__ = [
+    "SCHEMA_COMMENT_VERSION",
+    "AcceptanceCriteria",
+    "AcceptanceCriterionItem",
+    "Blockers",
+    "Blocks",
+    "CurrentStatus",
+    "DecisionEntry",
+    "DecisionsMade",
+    "Dependencies",
+    "DependsOn",
+    "DesignNotes",
+    "ExplicitlyOutOfScope",
+    "FeatDocument",
+    "FeatFrontmatter",
+    "FeatSummary",
+    "Feature",
+    "Included",
+    "MoreInformation",
+    "Overview",
+    "Phase",
+    "Plan",
+    "Progress",
+    "RelatedDecisions",
+    "RelatedPrsCommits",
+    "RequirementItem",
+    "Requirements",
+    "Scope",
+    "TaskList",
+    "UpdateEntry",
+    "Updates",
+    "parse_feat",
+]

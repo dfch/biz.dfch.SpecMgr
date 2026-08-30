@@ -93,6 +93,12 @@ First-line docstrings from each module, organized by domain:
 - `feat/__init__.py` — Feature (FEAT) domain -- formalizes the ``.specmgr/feat/<id>/README.md`` convention.
 - `feat/models/__init__.py` — Feature (FEAT) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
 - `feat/models/v1/__init__.py` — Feature (FEAT) v1 schema -- frontmatter, body, document, parser, summary.
+- `feat/models/v1/_util.py` — Shared, private constants for the ``feat.models.v1`` subpackage.
+- `feat/models/v1/body.py` — Feature (FEAT) body models: whole-section fields under a single H1.
+- `feat/models/v1/document.py` — Pydantic model for a full feature document (frontmatter + body).
+- `feat/models/v1/frontmatter.py` — Feature (FEAT) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
+- `feat/models/v1/parser.py` — Parse raw feature (FEAT) ``.md`` text into a :class:`FeatDocument`.
+- `feat/models/v1/summary.py` — Pydantic model for one line of FEAT listing output (Phase 2, ``list_feat``).
 - `feat/prompts/__init__.py` — Feature (FEAT) MCP prompts.
 - `feat/resources/__init__.py` — Feature (FEAT) MCP resources.
 - `feat/tools/__init__.py` — Feature (FEAT) MCP tools.
@@ -404,4 +410,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 262
+**Test files**: 265

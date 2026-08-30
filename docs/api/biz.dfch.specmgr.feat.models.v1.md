@@ -2,10 +2,9 @@
 
 Feature (FEAT) v1 schema -- frontmatter, body, document, parser, summary.
 
-**Phase 0 scaffolding only.** Populated in Phase 1 of
-``.specmgr/feat/feat-31-feature/README.md``: ``_util.py``
-(``SCHEMA_COMMENT_VERSION``), ``frontmatter.py`` (``FeatFrontmatter``),
-``body.py`` (``Feature``, ``Plan``, ``Progress``, ``Updates``,
-``UpdateEntry``, and the opaque leaf sections), ``document.py``
-(``FeatDocument``), ``parser.py`` (``parse_feat``), ``summary.py``
-(``FeatSummary``).
+Mirrors the ``dec/models/v1`` layout: a free-function ``parse_feat`` entry
+point, document-level ``FeatDocument(frontmatter, body)`` wrapper,
+frontmatter and body subclasses under this same package, and the
+``FeatSummary`` listing model for the (Phase-2) ``list_feat`` tool. Body
+classes map directly to heading sections in a feature markdown file -- see
+``body.py`` for the full hierarchy.
