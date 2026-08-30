@@ -267,6 +267,12 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.rsk.tools.parse_rsk`](biz.dfch.specmgr.rsk.tools.parse_rsk.md) — ``@mcp.tool()`` wrapper: parse_rsk (Task 3.2).
 - [`biz.dfch.specmgr.rsk.tools.validate_rsk`](biz.dfch.specmgr.rsk.tools.validate_rsk.md) — ``@mcp.tool()`` wrapper: validate_rsk (Task 3.7).
 - [`biz.dfch.specmgr.server`](biz.dfch.specmgr.server.md) — MCP server for ``biz-dfch-specmgr``.
+- [`biz.dfch.specmgr.sop`](biz.dfch.specmgr.sop.md) — Standard Operating Procedure (SOP) domain -- structured, step-by-step
+- [`biz.dfch.specmgr.sop.models`](biz.dfch.specmgr.sop.models.md) — No documentation available.
+- [`biz.dfch.specmgr.sop.models.v1`](biz.dfch.specmgr.sop.models.v1.md) — No documentation available.
+- [`biz.dfch.specmgr.sop.prompts`](biz.dfch.specmgr.sop.prompts.md) — No documentation available.
+- [`biz.dfch.specmgr.sop.resources`](biz.dfch.specmgr.sop.resources.md) — No documentation available.
+- [`biz.dfch.specmgr.sop.tools`](biz.dfch.specmgr.sop.tools.md) — No documentation available.
 - [`biz.dfch.specmgr.tsk`](biz.dfch.specmgr.tsk.md) — TaskList (TSK) domain -- lightweight task/todo-list specifications.
 - [`biz.dfch.specmgr.tsk.models`](biz.dfch.specmgr.tsk.models.md) — TaskList (TSK) models -- Pydantic schema powered by the generic ``models/md`` engine.
 - [`biz.dfch.specmgr.tsk.models.v1`](biz.dfch.specmgr.tsk.models.v1.md) — TaskList (TSK) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.

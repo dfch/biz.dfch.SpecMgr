@@ -315,6 +315,10 @@ First-line docstrings from each module, organized by domain:
 - `rsk/tools/parse_rsk.py` — ``@mcp.tool()`` wrapper: parse_rsk (Task 3.2).
 - `rsk/tools/validate_rsk.py` — ``@mcp.tool()`` wrapper: validate_rsk (Task 3.7).
 
+**sop/**
+
+- `sop/__init__.py` — Standard Operating Procedure (SOP) domain -- structured, step-by-step
+
 **tsk/**
 
 - `tsk/__init__.py` — TaskList (TSK) domain -- lightweight task/todo-list specifications.

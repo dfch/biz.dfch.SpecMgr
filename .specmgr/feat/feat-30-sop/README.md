@@ -504,11 +504,11 @@ quality gate, README Progress update).
 
 #### Phase 0: Scaffolding
 
-- [ ] Task 0.1: Package skeleton — `sop/__init__.py` (`from . import prompts, resources, tools` + registration docstring), empty
+- [x] Task 0.1: Package skeleton — `sop/__init__.py` (`from . import prompts, resources, tools` + registration docstring), empty
   `sop/models/v1/`, `sop/tools/`, `sop/resources/`, `sop/prompts/`,
   `sop/data/` packages, and `tests/sop/` skeleton mirroring `tests/dec/`
   (`models/v1/`, `tools/`, `prompts/`, `resources/` + `__init__.py`
-  files) — depends on: none — status: not-started
+  files) — depends on: none — status: done
 - [ ] Task 0.2: Commit Phase 0 — depends on: Task 0.1 — status:
   not-started
 
@@ -701,19 +701,58 @@ around.
 
 ### Current Status
 
+**As of 2026-08-30**: Phase 0 (scaffolding) complete. The `sop` domain
+package skeleton and the matching `tests/sop/` skeleton have been created
+under `src/biz/dfch/specmgr/sop/` and `tests/sop/`, mirroring `dec`'s
+layout exactly. `sop/__init__.py` carries the AGPL copyright header, a
+module docstring describing the SOP domain, and
+`from . import prompts, resources, tools`; all sub-package `__init__.py`
+files are empty markers pending later phases. The full quality gate (ruff
+format/check, vulture, 2007-test unittest suite, fresh `sop` import) is
+green. Task 0.2 (commit) is pending the orchestrator. Next: Phase 1
+(models + parser).
+
 **As of 2026-08-29**: Planning complete. Every schema/design decision was
 resolved interactively before any code was written (see Decisions Made
 below), including a live, read-only, in-memory verification against the
 actual `models/md` engine confirming the "optional heading that MAY be
 present with zero list items" shape (used by `Support`/`Consulted`/
-`Informed`) parses correctly with no engine changes needed. Implementation
-has not started (Phase 0 not yet begun).
+`Informed`) parses correctly with no engine changes needed.
 
 ### Blockers
 
 None.
 
 ### Recent Updates
+
+#### Update 2026-08-30T02:00:00Z (Phase 0 scaffolding)
+
+- Completed: Task 0.1 — created the `sop` domain package skeleton under
+  `src/biz/dfch/specmgr/sop/` and the matching test skeleton under
+  `tests/sop/`, both mirroring `dec`'s layout exactly. `sop/__init__.py`
+  carries the AGPL copyright header, a module docstring describing the
+  SOP domain (Standard Operating Procedures; 3 resources, 8 tools, 2
+  prompts; first domain with no per-domain `update_sop`/`set_status_sop`
+  tools, dispatching straight into the generic `update`/`set_status` tools
+  per ADR 36905d5b), and `from . import prompts, resources, tools` +
+  `__all__`. The sub-package `__init__.py` files (`models/`, `models/v1/`,
+  `tools/`, `resources/`, `prompts/`) are empty markers pending later
+  phases (exports come in Phase 1-4); `sop/data/` exists with a `.gitkeep`
+  placeholder pending Phase 3's packaged data files (matching `dec/data/`'s
+  no-`__init__.py` convention). All six `tests/sop/**/__init__.py` files
+  are empty markers (no `test_*.py` files yet). `server.py` was NOT touched
+  (Phase 5 Task 5.1); `specmgr://rasci` cross-reference was NOT added to
+  `sop/__init__.py` (Task 3.5).
+- Quality gate green: `ruff format --check` (1204 files formatted), `ruff
+  check` (all checks passed), `vulture src/ whitelist.py --min-confidence
+  60` (clean), full unittest suite (2007 tests, OK), and a fresh
+  `from biz.dfch.specmgr import sop` import all pass.
+- Note: `sop/data/` uses a `.gitkeep` placeholder (the plan permitted "an
+  empty placeholder or just the directory") so the empty directory is
+  git-trackable until Phase 3 adds real `.md`/`.json` data files;
+  `dec/data/` has no such placeholder because it already ships real data
+  files.
+- Next: Phase 1 (models + parser).
 
 #### Update 2026-08-30T01:00:00Z (RASCI resource promoted to general)
 
