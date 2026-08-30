@@ -959,7 +959,7 @@ class TestUpdateRange(TempDocsDirTestCase):
 
 
 class TestUpdateRegistration(unittest.TestCase):
-    """Task 2.8: the live ``mcp`` registration carries ``update`` with the 8-value ``type`` enum and
+    """Task 2.8: the live ``mcp`` registration carries ``update`` with the 9-value ``type`` enum and
     optional integer ``begin``/``end`` in its input schema."""
 
     @classmethod
@@ -969,13 +969,13 @@ class TestUpdateRegistration(unittest.TestCase):
         cls._tools = asyncio.run(mcp.list_tools())
 
     def test_update_registered_with_type_enum_and_optional_range(self) -> None:
-        """``update`` must be registered exactly once, with the 8-value ``type`` enum and optional int ``begin``/``end``."""
+        """``update`` must be registered exactly once, with the 9-value ``type`` enum and optional int ``begin``/``end``."""
         matching = [t for t in self._tools if t.name == "update"]
         self.assertEqual(len(matching), 1)
 
         schema = matching[0].input_schema
         type_prop = schema["properties"]["type"]
-        self.assertEqual(type_prop["enum"], ["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec"])
+        self.assertEqual(type_prop["enum"], ["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "feat"])
         self.assertEqual(type_prop["type"], "string")
         for name in ("begin", "end"):
             prop = schema["properties"][name]

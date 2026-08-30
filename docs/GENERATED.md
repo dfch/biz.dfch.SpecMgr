@@ -101,7 +101,19 @@ First-line docstrings from each module, organized by domain:
 - `feat/models/v1/summary.py` — Pydantic model for one line of FEAT listing output (Phase 2, ``list_feat``).
 - `feat/prompts/__init__.py` — Feature (FEAT) MCP prompts.
 - `feat/resources/__init__.py` — Feature (FEAT) MCP resources.
-- `feat/tools/__init__.py` — Feature (FEAT) MCP tools.
+- `feat/tools/__init__.py` — MCP tool wrappers for features (mirrors ``dec/tools/``'s own shape).
+- `feat/tools/_io.py` — Thin file read helpers over ``parse_feat`` (Task 2.2).
+- `feat/tools/_lock.py` — Per-document and global in-process locks guarding feature mutations (Task 2.2).
+- `feat/tools/_paths.py` — Feature (FEAT) base directory resolution and id -> path lookup (Task 2.1).
+- `feat/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_feat`` and
+- `feat/tools/create_feat.py` — ``@mcp.tool()`` wrapper: create_feat (Task 2.3).
+- `feat/tools/delete_feat.py` — ``@mcp.tool()`` wrapper: delete_feat (Task 2.3).
+- `feat/tools/get_feat.py` — ``@mcp.tool()`` wrapper: get_feat (Task 2.3).
+- `feat/tools/get_feat_example.py` — ``@mcp.tool()`` wrapper: get_feat_example (Task 2.3).
+- `feat/tools/get_feat_template.py` — ``@mcp.tool()`` wrapper: get_feat_template (Task 2.3).
+- `feat/tools/list_feat.py` — ``@mcp.tool()`` wrapper: list_feat (Task 2.3).
+- `feat/tools/parse_feat.py` — ``@mcp.tool()`` wrapper: parse_feat (Task 2.3).
+- `feat/tools/validate_feat.py` — ``@mcp.tool()`` wrapper: validate_feat (Task 2.3).
 
 **general/**
 
@@ -410,4 +422,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 265
+**Test files**: 278

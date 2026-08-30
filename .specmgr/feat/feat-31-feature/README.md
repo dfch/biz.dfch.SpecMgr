@@ -3,7 +3,7 @@ created: 2026-08-30
 id: feat-31-feature
 status: in-progress
 updated: 2026-08-30
-version: 1.7.0
+version: 1.8.0
 ---
 
 # Feature: Formalize the Feature artifact type ("feat")
@@ -632,30 +632,53 @@ discipline.
 
 #### Phase 2: Tools (`feat/tools/`) — bespoke addressing
 
-- [ ] Task 2.1: `_paths.py` (`feat_base_dir`, `iter_feat_paths`,
+- [x] Task 2.1: `_paths.py` (`feat_base_dir`, `iter_feat_paths`,
   `find_feat_path_by_id`, `FeatNotFoundError`, `FEAT_TYPE_NAME = "feat"`,
   `slugify` reuse) per Design Notes' Addressing section — depends on: Task
-  1.4 — status: not-started
-- [ ] Task 2.2: `_lock.py` (per-id `feat_lock(id_)` + global
+  1.4 — status: completed (2026-08-30). Also added `feature_title()` (strips
+  the literal `"Feature: "` prefix off `Feature.text`, see Decisions Made)
+  and `FEAT_FOLDER_PATTERN`/`README_FILENAME` constants, none spelled out
+  verbatim in the task but needed by `create_feat`/`list_feat` in Task 2.3.
+- [x] Task 2.2: `_lock.py` (per-id `feat_lock(id_)` + global
   `feat_create_lock()`), `_io.py` (`read_feat`, `load_by_id`), `_write.py`
   (`write_feat_file`, creates the `<id>/` folder if missing) — depends on:
-  Task 2.1 — status: not-started
-- [ ] Task 2.3: The 8 tool modules + `tools/__init__.py`: `create_feat`
+  Task 2.1 — status: completed (2026-08-30). Both locks are in-process
+  `threading.Lock` instances (see Decisions Made — the plan's own prose
+  mentioning "a single lock file at `<base>/.create.lock`" was not
+  followed, for consistency with every other domain's precedent).
+- [x] Task 2.3: The 8 tool modules + `tools/__init__.py`: `create_feat`
   (next-`NNN` derivation under the global lock), `parse_feat`, `list_feat`
   (`PagedResult[FeatSummary]`), `get_feat(id, raw=False)`,
   `get_feat_example`/`get_feat_template`, `delete_feat` (stub,
   `structured_output=False`), `validate_feat` — depends on: Task 2.2 —
-  status: not-started
-- [ ] Task 2.4: `general/tools/update.py`/`set_status.py` — add
+  status: completed (2026-08-30). `get_feat_example`/`get_feat_template`
+  are wired to `read_packaged_text("feat", "example"/"template")` exactly
+  like every other domain, but the packaged files themselves don't exist
+  until Phase 3 (Task 3.1/3.2) — both tools currently raise
+  `FileNotFoundError` when actually called; see Decisions Made.
+- [x] Task 2.4: `general/tools/update.py`/`set_status.py` — add
   `_update_feat`/`_set_status_feat` adapters + `"feat"` dispatch table
   entries, built on Task 2.1/2.2's helpers — depends on: Task 2.2 —
-  status: not-started
-- [ ] Task 2.5: Tests `tests/feat/tools/` — one module per tool + helper
+  status: completed (2026-08-30). Both adapters bump `updated` to a plain
+  `YYYY-MM-DD` date (`datetime.now().date().isoformat()`), not the other
+  eight/nine domains' microsecond timestamp, matching `create_feat`'s own
+  frontmatter convention. Also updated one pre-existing test
+  (`tests/general/tools/test_update.py::TestUpdateRegistration`) whose
+  hardcoded 8-value `type` enum assertion needed `"feat"` added, now that
+  the live `update` tool's registered schema carries 9 values.
+- [x] Task 2.5: Tests `tests/feat/tools/` — one module per tool + helper
   tests + `test_integration.py` (ACC-003/ACC-004, incl. concurrent-create
   `NNN`-collision simulation) — depends on: Task 2.3, Task 2.4 — status:
-  not-started
-- [ ] Task 2.6: Phase-end quality gate + commit + comment on issue #31 —
-  depends on: Task 2.5 — status: not-started
+  completed (2026-08-30), 73 new tests (`test__paths.py`/`test__lock.py`/
+  `test__io.py`/`test__write.py`/`test_create_feat.py`/`test_get_feat.py`/
+  `test_list_feat.py`/`test_parse_feat.py`/`test_validate_feat.py`/
+  `test_delete_feat.py`/`test_get_feat_example.py`/
+  `test_get_feat_template.py`/`test_integration.py`), plus the one
+  pre-existing test file updated in Task 2.4.
+- [x] Task 2.6: Phase-end quality gate + commit + comment on issue #31 —
+  depends on: Task 2.5 — status: completed (2026-08-30) — quality gate
+  green; **commit and issue comment left to the orchestrator**, per this
+  phase's own task instructions (implementer runs the gate only).
 
 #### Phase 3: Resources + packaged data + schema
 
@@ -778,13 +801,44 @@ child section class), `document.py` (`FeatDocument`), `parser.py`
 (two small, content-preserving adjustments — loose lists, one shortened
 task item — see Task 1.5/Decisions Made). 99 new tests
 (`test_frontmatter.py`/`test_body.py`/`test_parser.py`) all green. Full
-quality gate green: `ruff format --check`/`ruff check` clean, `vulture
-src/ whitelist.py --min-confidence 60` clean (after adding the new
+quality gate green: `ruff format --check`/`ruff check` clean, `vulture src/ whitelist.py --min-confidence 60` clean (after adding the new
 `feat`-only field names and `_validate_newest_first`/
 `_default_blank_status_to_planning` to `whitelist.py`, same pattern as
 every other domain's pydantic-field/validator false positives),
 `specmgr unused-code` clean, full `unittest` suite green (2106 tests).
 Phase 2 (`feat/tools/`) is next.
+
+**As of 2026-08-30 (Phase 2 complete)**: `feat/tools/` is fully
+implemented — hand-rolled `_paths.py` (`feat_base_dir`/`ensure_feat_base_dir`,
+`iter_feat_paths`, `find_feat_path_by_id`'s no-scan shortcut,
+`FeatNotFoundError`, `feature_title()`, `FEAT_FOLDER_PATTERN`), `_lock.py`
+(per-id `feat_lock` + global `feat_create_lock`), `_io.py` (`read_feat`,
+`load_by_id`), `_write.py` (`write_feat_file`, folder-creating), and all 8
+lifecycle tools (`create_feat`, `parse_feat`, `list_feat`, `get_feat`,
+`get_feat_example`, `get_feat_template`, `delete_feat` stub, `validate_feat`)
+plus `tools/__init__.py`. `general/tools/update.py`/`set_status.py` gained
+`_update_feat`/`_set_status_feat` adapters and `"feat"` dispatch entries
+(REQ-006) — `feat` is now a 9th `update` domain and a 10th `set_status`
+domain, both with the same plain-date `updated` divergence `create_feat`
+established. A full live create→get→list→update(whole-body)→
+update(line-range)→set_status→get→list→validate→delete(stub) round-trip and
+a 20-thread concurrent-create collision test both pass
+(`tests/feat/tools/test_integration.py`). 73 new tests across
+`tests/feat/tools/` (all green), plus one pre-existing test
+(`tests/general/tools/test_update.py::TestUpdateRegistration`) updated for
+the now-9-value `type` enum. Full quality gate green: `ruff format --check`/
+`ruff check` clean, `vulture src/ whitelist.py --min-confidence 60` clean
+(no new whitelist entries needed — every new tool function is reachable via
+its domain's own `tools/__init__.py` `__all__` export, same as every other
+domain), `specmgr unused-code` clean, full `unittest` suite green (2179
+tests, up from 2106 after Phase 1). Phase 3 (resources + packaged data +
+schema) is next — in
+particular, `feat/data/feat_example.md`/`feat_template.md` (Task 3.1/3.2),
+which `get_feat_example`/`get_feat_template` are already wired to read but
+which don't exist on disk yet (both currently raise `FileNotFoundError`
+when actually called; `tests/feat/tools/test_get_feat_example.py`/
+`test_get_feat_template.py` document this explicitly and should be revisited
+once Phase 3 ships those files).
 
 ### Blockers
 
@@ -799,6 +853,68 @@ Phase 2 (`feat/tools/`) is next.
   as part of this design-review conversation).
 
 ### Recent Updates
+
+#### Update 2026-08-30 (Phase 2 complete — tools, bespoke addressing)
+
+- Implemented `feat/tools/` in full per Design Notes' Addressing section:
+  - `_paths.py` — hand-rolled, ADR-style (not built on
+    `general/tools/_doc_paths.py`): `feat_base_dir()`/`ensure_feat_base_dir()`
+    (`SPECMGR_FEAT_DIR`, falling back to `.specmgr/feat`), `iter_feat_paths(base_dir)` (globs `<base>/*/README.md`), `find_feat_path_by_id(base_dir, id_)` (the no-scan `<base>/<id_>/README.md` shortcut — no partial-id
+    matching), `FeatNotFoundError`, plus `feature_title()` (strips the
+    literal `"Feature: "` prefix off `Feature.text`, needed because
+    `Feature` declares no `title` computed field of its own, unlike
+    `Phase`/`UpdateEntry`/`DecisionEntry`) and `FEAT_FOLDER_PATTERN`.
+  - `_lock.py` — per-id `feat_lock(id_)` (identical shape to
+    `dec_lock`/`adr_lock`) plus the new **global** `feat_create_lock()`
+    (a single module-level `threading.Lock`, no per-id registry needed).
+  - `_io.py`/`_write.py` — `read_feat`/`load_by_id` (mirrors `dec.tools._io`
+    file-for-file) and `write_feat_file` (mirrors `dec.tools._write`, plus
+    `path.parent.mkdir(parents=True, exist_ok=True)` since `feat` is
+    folder-per-document).
+  - The 8 lifecycle tools + `tools/__init__.py`: `create_feat` (derives
+    `feat-NNN-slug` under the global create lock, plain-date
+    `created`/`updated`), `parse_feat`, `list_feat`
+    (`PagedResult[FeatSummary]`, `path`/`ref` populated from the real
+    resolved path), `get_feat(id, raw=False)`, `get_feat_example`/
+    `get_feat_template` (wired to the shared packaged-data reader, though
+    the packaged files themselves are Phase 3's job), `delete_feat` (stub),
+    `validate_feat`.
+- `general/tools/update.py`/`set_status.py` gained `_update_feat`/
+  `_set_status_feat` adapters and `"feat"` dispatch table entries (REQ-006)
+  — `feat` is now included in both tools' `type` `Literal`/dispatch table,
+  with the same plain-`YYYY-MM-DD`-date `updated` divergence `create_feat`
+  established (not the other domains' microsecond timestamp). Updated both
+  modules' module-level docstrings' domain-count prose (8→9 for `update`,
+  9→10 for `set_status`).
+- Updated one pre-existing test,
+  `tests/general/tools/test_update.py::TestUpdateRegistration`, whose
+  hardcoded 8-value `type` enum assertion against the live `mcp` tool
+  registration needed `"feat"` added (now 9 values).
+- Wrote 73 new tests across `tests/feat/tools/` (`test__paths.py`,
+  `test__lock.py`, `test__io.py`, `test__write.py`, `test_create_feat.py`,
+  `test_get_feat.py`, `test_list_feat.py`, `test_parse_feat.py`,
+  `test_validate_feat.py`, `test_delete_feat.py`,
+  `test_get_feat_example.py`, `test_get_feat_template.py`,
+  `test_integration.py`) — all green, including a live full
+  create→get→list→update(whole-body)→update(line-range)→set_status→get→
+  list→validate→delete(stub) round-trip and a 20-thread concurrent-`create_feat` collision test (ACC-002/ACC-003/ACC-004).
+- Quality gate: `ruff format --check` (clean), `ruff check` (clean),
+  `vulture src/ whitelist.py --min-confidence 60` (clean, no new entries
+  needed), `specmgr unused-code` (clean), full `unittest` suite (2179
+  tests, green, up from 2106 after Phase 1).
+- Per this phase's own task instructions, **no commit was made and no
+  comment was posted to issue #31** — that is the phase orchestrator's
+  responsibility, not the implementing agent's, for this run.
+- Next: Phase 3 (`feat/resources/` + `feat/data/` + schema command) —
+  `feat_example.md`/`feat_template.md` (byte-identical copy of
+  `feat_reference.md` / all-sections placeholder skeleton),
+  `feat_create_instructions.md`/`feat_update_instructions.md`,
+  `generate_feat_schema()`, and the three `specmgr://feat/*` resources.
+  `get_feat_example`/`get_feat_template` are already wired to read the
+  packaged files that Phase 3 ships — no further tool-layer changes needed
+  once those files exist, only the two currently-deferred tests
+  (`test_get_feat_example.py`/`test_get_feat_template.py`) need their
+  "real packaged file" happy-path test added back in.
 
 #### Update 2026-08-30 (Phase 1 complete — models + parser)
 
@@ -1259,8 +1375,7 @@ Phase 2 (`feat/tools/`) is next.
   exactly, even though Design Notes' text for these three classes only
   says the computed field itself "raises `AssertionError` on a malformed
   item" without spelling out *when* that check fires. Without an eager
-  validator, `RequirementItem.description`/`AcceptanceCriterionItem.
-  criterion_description`/`TaskItem.checked` (all `@computed_field`s) would
+  validator, `RequirementItem.description`/`AcceptanceCriterionItem. criterion_description`/`TaskItem.checked` (all `@computed_field`s) would
   only be evaluated lazily, on first access (e.g. during `model_dump()`),
   matching `tsk.TaskItem`'s own well-documented gap before `Task` gained
   its eager validator — letting a malformed item parse silently and only
@@ -1277,9 +1392,7 @@ Phase 2 (`feat/tools/`) is next.
   round-trips to a structurally-equivalent loose list rather than
   byte-exact" limitation — `dec`'s own `_REFERENCE_TEXT` already uses this
   same loose-list workaround, so this isn't a new pattern. (2) Task 0.1's
-  item text (`"Create branch and package skeleton — status: completed
-  (2026-08-30)"` in `example.md`) had its trailing `— status: completed
-  (2026-08-30)` suffix dropped, since that text wraps across two physical
+  item text (`"Create branch and package skeleton — status: completed (2026-08-30)"` in `example.md`) had its trailing `— status: completed (2026-08-30)` suffix dropped, since that text wraps across two physical
   lines after `mdformat` normalization and `TaskItem`'s marker regex
   (`^\[( |x|X)\]\s*(?P<description>.*)$`, no `re.DOTALL`/`re.MULTILINE`)
   does not span an embedded newline — the same reason `tsk`'s own shipped
@@ -1288,20 +1401,78 @@ Phase 2 (`feat/tools/`) is next.
   accommodate them.
 - **2026-08-30 (Phase 1)**: `feat_reference.md` lives at
   `tests/feat/models/v1/data/feat_reference.md` (a real file on disk), not
-  inlined as a `format_text("""...""")` string constant the way `tests/dec/
-  models/v1/test_body.py`'s own `_REFERENCE_TEXT`/`test_parser.py`'s
-  `_FULL_DOC` are. Task 1.5 explicitly named this path, and `tests/dec/
-  models/v1/` genuinely has no separate fixture file to "match exactly"
+  inlined as a `format_text("""...""")` string constant the way `tests/dec/ models/v1/test_body.py`'s own `_REFERENCE_TEXT`/`test_parser.py`'s
+  `_FULL_DOC` are. Task 1.5 explicitly named this path, and `tests/dec/ models/v1/` genuinely has no separate fixture file to "match exactly"
   (checked first, per the task's own instruction) — but
   `tests/models/adr/v1/examples/*.md` (loaded via
   `Path(__file__).parent / "examples"` in `test_examples.py`/
-  `test_renderer.py`) and `tests/fixtures/req/test-loose-list-with-
-  continuation.md` both establish that file-based markdown fixtures are
+  `test_renderer.py`) and `tests/fixtures/req/test-loose-list-with- continuation.md` both establish that file-based markdown fixtures are
   an existing, precedented pattern in this codebase, just not one `dec`
   happens to use. `test_body.py`/`test_parser.py` both load the same file
   (`Path(__file__).parent / "data" / "feat_reference.md"`, mirroring the
   ADR examples' own path-resolution shape) rather than duplicating the
   reference text as two separate inline constants.
+- **2026-08-30 (Phase 2)**: `feat_create_lock()` is an in-process
+  `threading.Lock` (a single module-level instance, mirroring `adr_lock`'s/
+  `dec_lock`'s own per-id primitive but with no per-id registry, since
+  there is exactly one such shared resource — the base directory's own
+  folder listing), **not** an on-disk lock file at `<base>/.create.lock` —
+  a deliberate deviation from this plan's own Design Notes prose (Addressing
+  section), which literally suggested "a single lock file". Checked the
+  actual codebase precedent first (`adr.tools._lock.adr_lock`,
+  `dec.tools._lock.dec_lock`, and every other domain's own per-id lock):
+  every one of them is in-process only, none uses a real lock file: `feat`
+  follows that established precedent for consistency, rather than
+  introducing a new on-disk-lock-file mechanism this codebase has never
+  used before. This is still process-local only (does not protect against
+  a second OS process or a human editor writing concurrently), matching
+  every other domain's own stated threat model.
+- **2026-08-30 (Phase 2)**: `find_feat_path_by_id`'s shortcut read treats a
+  parse failure on the single target file (`AssertionError`/
+  `pydantic.ValidationError`) the same as the file not existing at all --
+  both raise `FeatNotFoundError`, distinguished only by message text ("does
+  not exist" vs. "could not be parsed" vs. "does not match the containing
+  folder"). Every other domain's `find_*_path` *scans* multiple files and
+  *skips* one that fails to parse so a single broken file never blocks
+  finding a different, valid id -- but `feat`'s shortcut only ever reads one
+  path, so there is no "different file" to fall back to; a parse failure
+  here is exactly as unresolvable as a missing file. Chosen so
+  `load_by_id`/`get_feat`/every mutating tool built on this module has one
+  single, consistent not-found-shaped error to handle, without needing to
+  separately catch `AssertionError`/`ValidationError` themselves --
+  verified via `tests/feat/tools/test__paths.py`'s own
+  `test_raises_not_found_for_unparseable_folder`/
+  `test_raises_not_found_for_id_folder_mismatch` cases.
+- **2026-08-30 (Phase 2)**: Added `feature_title()` to `_paths.py` (not
+  spelled out in Design Notes) to strip the literal `"Feature: "` prefix
+  off `Feature.text` before slugifying (`create_feat`) or populating
+  `FeatSummary.title` (`list_feat`) -- `Feature.text` (the heading text a
+  composite `MarkdownSection` exposes) always includes the literal prefix,
+  since `Feature`'s own `@alias` regex (`"^Feature: .+$"`) matches the
+  *whole* heading line and `Feature` declares no `title` computed field of
+  its own (unlike `Phase`/`UpdateEntry`/`DecisionEntry`, each of which do).
+  Without this, every created folder's slug would carry a redundant
+  `feature-` prefix (e.g. `feat-1-feature-example-widget` instead of
+  `feat-1-example-widget`), and `FeatSummary.title` would carry the
+  `"Feature: "` prefix twice over conceptually — once in the field's own
+  intent ("the free-form title") and once literally in the string, per
+  `feat/models/v1/summary.py`'s own docstring wording ("the free-form title
+  after the `"Feature: "` prefix, i.e. `Feature.text`"), which this
+  resolves literally rather than leaving as an unresolved discrepancy
+  between that docstring and the model's actual runtime behavior.
+- **2026-08-30 (Phase 2)**: `get_feat_example`/`get_feat_template` are
+  wired to `read_packaged_text("feat", "example"/"template")` exactly like
+  every other domain's equivalent tool, even though `feat/data/ feat_example.md`/`feat_template.md` don't exist until Phase 3 (Task
+  3.1/3.2) -- so both tools currently raise `FileNotFoundError` when
+  actually called. Chose to write the tools now (per Task 2.3's own
+  instruction) rather than defer them entirely, and to defer only their
+  "returns the real packaged file" happy-path *test* to Phase 3
+  (`tests/feat/tools/test_get_feat_example.py`/
+  `test_get_feat_template.py` document this explicitly and assert the
+  current, honest `FileNotFoundError` behavior instead) -- this keeps the
+  tool surface complete and registrable in Phase 2 while being transparent
+  that its two data-backed tools are not yet fully functional until Phase
+  3 ships their packaged files.
 
 ### Related PRs / Commits
 

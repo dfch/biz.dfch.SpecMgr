@@ -3,7 +3,7 @@
 Auto-generated from the live `biz.dfch.specmgr.server:mcp` registration --
 do not edit by hand, run `specmgr mcp-docs` instead (see `AGENTS.md`).
 
-28 resource(s), 1 resource template(s), 79 tool(s), 21 prompt(s).
+28 resource(s), 1 resource template(s), 87 tool(s), 21 prompt(s).
 
 ## Table of Contents
 
@@ -260,6 +260,7 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | --- | --- |
 | [`create_adr`](#tool-create_adr) | Create a new ADR: assigns a fresh id, derives a filename from the title, validates, renders, and writes the new document to the ADR base directory. |
 | [`create_dec`](#tool-create_dec) | Create a new decision: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the decision base directory. |
+| [`create_feat`](#tool-create_feat) | Create a new feature: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the feature base directory. |
 | [`create_gol`](#tool-create_gol) | Create a new goal: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the goal base directory. |
 | [`create_prb`](#tool-create_prb) | Create a new Problem Statement: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the problem statement base directory. |
 | [`create_qa`](#tool-create_qa) | Create a new Question and Answer (QA) document: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the QA base directory. |
@@ -268,6 +269,7 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`create_tsk`](#tool-create_tsk) | Create a new task list: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the task list base directory. |
 | [`create_uc`](#tool-create_uc) | Create a new use case: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the use-case base directory. |
 | [`delete_dec`](#tool-delete_dec) | Stub only -- always raises NotImplementedError. Reserves the name for a future implementation. |
+| [`delete_feat`](#tool-delete_feat) | Stub only -- always raises NotImplementedError. Reserves the name for a future implementation. |
 | [`delete_gol`](#tool-delete_gol) | Stub only -- always raises NotImplementedError. Reserves the name for a future implementation. |
 | [`delete_prb`](#tool-delete_prb) | Stub only -- always raises NotImplementedError. Reserves the name for a future implementation. |
 | [`delete_qa`](#tool-delete_qa) | Stub only -- always raises NotImplementedError. Reserves the name for a future implementation. |
@@ -279,6 +281,9 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`get_dec`](#tool-get_dec) | Read, parse, and return a full decision document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. |
 | [`get_dec_example`](#tool-get_dec_example) | Return a complete, valid sample decision document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example. |
 | [`get_dec_template`](#tool-get_dec_template) | Return a DEC document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new decision. |
+| [`get_feat`](#tool-get_feat) | Read, parse, and return a full feature document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. |
+| [`get_feat_example`](#tool-get_feat_example) | Return a complete, valid sample feature document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example. |
+| [`get_feat_template`](#tool-get_feat_template) | Return a FEAT document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new feature. |
 | [`get_gol`](#tool-get_gol) | Read, parse, and return a full goal document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. |
 | [`get_gol_example`](#tool-get_gol_example) | Return a complete, valid sample goal document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example. |
 | [`get_gol_template`](#tool-get_gol_template) | Return a GOL document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new goal. |
@@ -302,6 +307,7 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`get_uc_template`](#tool-get_uc_template) | Return a UC document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new use case. |
 | [`list_adr`](#tool-list_adr) | Ids, titles, statuses, and refs of ADRs in the configured ADR base directory (SPECMGR_ADR_DIR), one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use get_adr with it instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
 | [`list_dec`](#tool-list_dec) | Ids, titles, statuses, and refs of decisions in the configured decision base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_dec tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
+| [`list_feat`](#tool-list_feat) | Ids, titles, statuses, and refs of features in the configured feature base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_feat tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
 | [`list_gol`](#tool-list_gol) | Ids, titles, statuses, and refs of goals in the configured goal base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_gol tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
 | [`list_prb`](#tool-list_prb) | Ids, titles, statuses, and refs of problem statements in the configured problem statement base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_prb tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
 | [`list_qa`](#tool-list_qa) | Ids, titles, statuses, and refs of QA documents in the configured QA base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_qa tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
@@ -316,6 +322,7 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`option_read`](#tool-option_read) | Return the current content of the option named full_title (plan §5). |
 | [`option_update`](#tool-option_update) | Full-content replace of the option named full_title (plan §5), returning the new content. |
 | [`parse_dec`](#tool-parse_dec) | Parse a decision markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.dec.models.v1.DecDocument`. |
+| [`parse_feat`](#tool-parse_feat) | Parse a feature markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.feat.models.v1.FeatDocument`. |
 | [`parse_gol`](#tool-parse_gol) | Parse a goal markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.gol.models.v1.GolDocument`. |
 | [`parse_prb`](#tool-parse_prb) | Parse a problem statement markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.prb.models.v1.PrbDocument`. |
 | [`parse_qa`](#tool-parse_qa) | Parse a QA document markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.qa.models.v2.QaDocument`. |
@@ -323,12 +330,13 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`parse_rsk`](#tool-parse_rsk) | Parse a risk markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.rsk.models.v1.RskDocument`. |
 | [`parse_tsk`](#tool-parse_tsk) | Parse a task list markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.tsk.models.v1.TskDocument`. |
 | [`parse_uc`](#tool-parse_uc) | Parse a use-case markdown file (YAML frontmatter + body) from disk into a structured document. |
-| [`set_status`](#tool-set_status) | Replace the status of an existing document across all nine domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, adr), also bumping `updated` (the eight whole-body domains) and leaving the body untouched. The new `status` must be one of the domain's own closed vocabulary values (see the domain's `XFrontmatter.status` field); anything else raises `pydantic.ValidationError` and writes nothing. `superseded_by` is accepted only for `type="adr"` -- it composes the status as "superseded by {superseded_by}"; with any other `type` it is a `ValueError`. Neither `create_*` nor the generic `update` tool accepts a `status` argument at all -- this is the sole status-change entry point. |
-| [`update`](#tool-update) | Whole-body or line-range replace of an existing document's content across the eight whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec), preserving its id/type/status/created/version; only `updated` changes. With no `begin`/`end`, `content` is the full replacement body (body markdown only, no frontmatter block). With both, `content` replaces the 1-based inclusive body-line range `begin`..`end` of the current on-disk body (`N+1` = end-of-body sentinel: append after the last line, or replace through end of body); the spliced result is validated as a whole document before anything is written. `status` is never settable -- use the generic `set_status` tool. |
+| [`set_status`](#tool-set_status) | Replace the status of an existing document across all ten domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, feat, adr), also bumping `updated` (the nine whole-body domains) and leaving the body untouched. The new `status` must be one of the domain's own closed vocabulary values (see the domain's `XFrontmatter.status` field); anything else raises `pydantic.ValidationError` and writes nothing. `superseded_by` is accepted only for `type="adr"` -- it composes the status as "superseded by {superseded_by}"; with any other `type` it is a `ValueError`. Neither `create_*` nor the generic `update` tool accepts a `status` argument at all -- this is the sole status-change entry point. |
+| [`update`](#tool-update) | Whole-body or line-range replace of an existing document's content across the nine whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, feat), preserving its id/type/status/created/version; only `updated` changes. With no `begin`/`end`, `content` is the full replacement body (body markdown only, no frontmatter block). With both, `content` replaces the 1-based inclusive body-line range `begin`..`end` of the current on-disk body (`N+1` = end-of-body sentinel: append after the last line, or replace through end of body); the spliced result is validated as a whole document before anything is written. `status` is never settable -- use the generic `set_status` tool. |
 | [`update_frontmatter`](#tool-update_frontmatter) | Whole-object replace of an ADR's frontmatter (plan §3), preserving its existing id. |
 | [`update_section`](#tool-update_section) | Whole-section replace/delete of one AdrBody field (plan §4). |
 | [`validate_adr`](#tool-validate_adr) | Re-read and re-parse an ADR by id, letting the models' own Pydantic validators run. |
 | [`validate_dec`](#tool-validate_dec) | Disk-free, id-free dry run validating decision content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
+| [`validate_feat`](#tool-validate_feat) | Disk-free, id-free dry run validating feature content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
 | [`validate_gol`](#tool-validate_gol) | Disk-free, id-free dry run validating goal content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
 | [`validate_prb`](#tool-validate_prb) | Disk-free, id-free dry run validating problem statement content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
 | [`validate_qa`](#tool-validate_qa) | Disk-free, id-free dry run validating QA document content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
@@ -354,6 +362,16 @@ Create a new ADR: assigns a fresh id, derives a filename from the title, validat
 **Create decision**
 
 Create a new decision: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the decision base directory.
+
+| Parameter | Type | Required |
+| --- | --- | --- |
+| `content` | `string` | Yes |
+
+### Tool: create_feat
+
+**Create feature**
+
+Create a new feature: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the feature base directory.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
@@ -432,6 +450,16 @@ Create a new use case: assigns a fresh id, derives a filename from the body's H1
 ### Tool: delete_dec
 
 **Delete decision (not yet implemented)**
+
+Stub only -- always raises NotImplementedError. Reserves the name for a future implementation.
+
+| Parameter | Type | Required |
+| --- | --- | --- |
+| `id` | `string` | Yes |
+
+### Tool: delete_feat
+
+**Delete feature (not yet implemented)**
 
 Stub only -- always raises NotImplementedError. Reserves the name for a future implementation.
 
@@ -541,6 +569,29 @@ Return a complete, valid sample decision document as raw markdown -- frontmatter
 **Get DEC template**
 
 Return a DEC document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new decision.
+
+### Tool: get_feat
+
+**Get feature**
+
+Read, parse, and return a full feature document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead.
+
+| Parameter | Type | Required |
+| --- | --- | --- |
+| `id` | `string` | Yes |
+| `raw` | `boolean` | No |
+
+### Tool: get_feat_example
+
+**Get FEAT example**
+
+Return a complete, valid sample feature document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example.
+
+### Tool: get_feat_template
+
+**Get FEAT template**
+
+Return a FEAT document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new feature.
 
 ### Tool: get_gol
 
@@ -725,6 +776,17 @@ Ids, titles, statuses, and refs of decisions in the configured decision base dir
 | `max_results` | `integer | None` | No |
 | `offset` | `integer | None` | No |
 
+### Tool: list_feat
+
+**List features**
+
+Ids, titles, statuses, and refs of features in the configured feature base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_feat tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored.
+
+| Parameter | Type | Required |
+| --- | --- | --- |
+| `max_results` | `integer | None` | No |
+| `offset` | `integer | None` | No |
+
 ### Tool: list_gol
 
 **List goals**
@@ -878,6 +940,16 @@ Parse a decision markdown file (YAML frontmatter + body) from disk into a struct
 | --- | --- | --- |
 | `path` | `string` | Yes |
 
+### Tool: parse_feat
+
+**Parse feature**
+
+Parse a feature markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.feat.models.v1.FeatDocument`.
+
+| Parameter | Type | Required |
+| --- | --- | --- |
+| `path` | `string` | Yes |
+
 ### Tool: parse_gol
 
 **Parse goal**
@@ -952,12 +1024,12 @@ Parse a use-case markdown file (YAML frontmatter + body) from disk into a struct
 
 **Set document status**
 
-Replace the status of an existing document across all nine domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, adr), also bumping `updated` (the eight whole-body domains) and leaving the body untouched. The new `status` must be one of the domain's own closed vocabulary values (see the domain's `XFrontmatter.status` field); anything else raises `pydantic.ValidationError` and writes nothing. `superseded_by` is accepted only for `type="adr"` -- it composes the status as "superseded by {superseded_by}"; with any other `type` it is a `ValueError`. Neither `create_*` nor the generic `update` tool accepts a `status` argument at all -- this is the sole status-change entry point.
+Replace the status of an existing document across all ten domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, feat, adr), also bumping `updated` (the nine whole-body domains) and leaving the body untouched. The new `status` must be one of the domain's own closed vocabulary values (see the domain's `XFrontmatter.status` field); anything else raises `pydantic.ValidationError` and writes nothing. `superseded_by` is accepted only for `type="adr"` -- it composes the status as "superseded by {superseded_by}"; with any other `type` it is a `ValueError`. Neither `create_*` nor the generic `update` tool accepts a `status` argument at all -- this is the sole status-change entry point.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
 | `id` | `string` | Yes |
-| `type` | `string (enum: req, uc, tsk, qa, prb, gol, rsk, dec, adr)` | Yes |
+| `type` | `string (enum: req, uc, tsk, qa, prb, gol, rsk, dec, feat, adr)` | Yes |
 | `status` | `string` | Yes |
 | `superseded_by` | `string | None` | No |
 
@@ -965,12 +1037,12 @@ Replace the status of an existing document across all nine domains (`type` is on
 
 **Update document**
 
-Whole-body or line-range replace of an existing document's content across the eight whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec), preserving its id/type/status/created/version; only `updated` changes. With no `begin`/`end`, `content` is the full replacement body (body markdown only, no frontmatter block). With both, `content` replaces the 1-based inclusive body-line range `begin`..`end` of the current on-disk body (`N+1` = end-of-body sentinel: append after the last line, or replace through end of body); the spliced result is validated as a whole document before anything is written. `status` is never settable -- use the generic `set_status` tool.
+Whole-body or line-range replace of an existing document's content across the nine whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, feat), preserving its id/type/status/created/version; only `updated` changes. With no `begin`/`end`, `content` is the full replacement body (body markdown only, no frontmatter block). With both, `content` replaces the 1-based inclusive body-line range `begin`..`end` of the current on-disk body (`N+1` = end-of-body sentinel: append after the last line, or replace through end of body); the spliced result is validated as a whole document before anything is written. `status` is never settable -- use the generic `set_status` tool.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
 | `id` | `string` | Yes |
-| `type` | `string (enum: req, uc, tsk, qa, prb, gol, rsk, dec)` | Yes |
+| `type` | `string (enum: req, uc, tsk, qa, prb, gol, rsk, dec, feat)` | Yes |
 | `content` | `string` | Yes |
 | `begin` | `integer | None` | No |
 | `end` | `integer | None` | No |
@@ -1013,6 +1085,17 @@ Re-read and re-parse an ADR by id, letting the models' own Pydantic validators r
 **Validate decision content**
 
 Disk-free, id-free dry run validating decision content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body).
+
+| Parameter | Type | Required |
+| --- | --- | --- |
+| `content` | `string` | Yes |
+| `full` | `boolean` | No |
+
+### Tool: validate_feat
+
+**Validate feature content**
+
+Disk-free, id-free dry run validating feature content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body).
 
 | Parameter | Type | Required |
 | --- | --- | --- |

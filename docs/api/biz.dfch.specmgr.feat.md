@@ -14,16 +14,15 @@ under the base directory -- see ``feat/tools/_paths.py`` (added in Phase 2)
 for the bespoke addressing this requires, in contrast to every other
 domain's shared ``general/tools/_doc_paths.py``.
 
-**Current status: Phase 0 scaffolding only.** ``models``, ``tools``,
-``resources``, and ``prompts`` are present as empty sub-packages; the
-schema, tools, resources, and prompts themselves are built out across
-Phases 1-4 of the linked feature plan. Once complete, ``feat`` will follow
-the ``sop``-style generic-dispatch MCP surface (ADR
-36905d5b-8057-4294-8665-c7eed5534db0): ``create_feat``, ``parse_feat``,
-``list_feat``, ``get_feat``, ``get_feat_example``, ``get_feat_template``,
-``delete_feat`` (stub), ``validate_feat``, plus ``type="feat"`` entries in
-the generic ``update``/``set_status`` tools -- no ``update_feat``/
-``set_status_feat`` of its own.
+**Current status: Phase 2 (tools) complete.** ``models/v1/`` (Phase 1) and
+``tools/`` (Phase 2) are fully implemented; ``resources`` and ``prompts``
+remain empty sub-packages, built out in Phases 3-4 of the linked feature
+plan. ``feat`` already follows the ``sop``-style generic-dispatch MCP
+surface (ADR 36905d5b-8057-4294-8665-c7eed5534db0): ``create_feat``,
+``parse_feat``, ``list_feat``, ``get_feat``, ``get_feat_example``,
+``get_feat_template``, ``delete_feat`` (stub), ``validate_feat``, plus
+``type="feat"`` entries in the generic ``update``/``set_status`` tools --
+no ``update_feat``/``set_status_feat`` of its own.
 
 Import this package to register every feature tool/prompt/resource against
 the shared ``mcp`` application instance at once::
