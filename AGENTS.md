@@ -191,19 +191,58 @@ type or cross-cutting:
   `models/md` parser with the GOL/RSK/QA simple surface — no
   fine-grained mutation tools, no renderer: writes persist the
   caller's raw validated body byte-for-byte.
+- **`feat/`** (Feature) — formalizes the ad hoc `.specmgr/feat/<id>/
+  README.md` convention (ADR e369ee2e-3353-4f92-991c-6367d76d832e) into a
+  real, schema-backed domain, and is the one domain in this codebase whose
+  own addressing genuinely deviates from every other domain's precedent
+  (ADR 8cf940c5-3100-485c-a12d-14b59b631712): `id` is a chosen
+  `feat-NNN-slug` — the containing folder's own name, not a
+  server-generated UUID — and documents live one-per-folder as
+  `<base>/<id>/README.md` (a fixed filename), not flat files directly
+  under the base directory. This bespoke, folder-per-document addressing
+  is hand-rolled in `feat/tools/_paths.py` (ADR-style, like `adr/tools/
+  _paths.py`), **not** built on the shared flat-file
+  `general/tools/_doc_paths.py` every other whole-body domain uses;
+  `SPECMGR_FEAT_DIR` overrides the base directory (mandatory-in-spirit
+  test-isolation env var, same as every other domain's own equivalent).
+  All 8 tools (`create_feat`, `parse_feat`, `list_feat`, `get_feat`,
+  `get_feat_example`, `get_feat_template`, `delete_feat` stub,
+  `validate_feat`); whole-body and line-range updates go through the
+  generic `update` tool in `general/tools/` (`type="feat"`), status
+  changes through the generic `set_status` tool (`type="feat"`) — no
+  `update_feat`/`set_status_feat` of its own — and the `get_feat` tool
+  takes `raw: bool = False` — `raw=True` returns the frontmatter-stripped
+  body text as-is (the text `update`'s `begin`/`end` index into);
+  `feat/resources/` (`specmgr://feat/schema`, `specmgr://feat/example`,
+  `specmgr://feat/template`; no `specmgr://feat/{id}` — id-based reads
+  are `get_feat`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
+  `specmgr://feat/list` — `list_feat` ships as a paged tool from day
+  one, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13); `feat/prompts/`
+  (`create_feat`/`update_feat`, narrated instruction flows; `create_feat`
+  first checks `list_feat` for a near-duplicate feature). Its schema
+  lives at `feat/models/v1/`, inside the domain package, not top-level
+  `models/`. `FeatSummary` adds one extra field beyond every other
+  domain's summary, `path: str` (the real filesystem path to the
+  document's `README.md`) — a deliberate divergence, since direct
+  hand/agent editing of `.specmgr/feat/<id>/README.md` remains the
+  domain's own normal, sanctioned workflow even after its MCP tools
+  exist, unlike every other domain's summary, whose `ref` field is
+  deliberately *not* a path. See
+  `.specmgr/feat/feat-31-feature/README.md` for the full design.
   - **`general/`** — cross-cutting, non-domain-specific package:
     `general/tools/` (`mdformat`, formats a markdown file in place while
     preserving YAML frontmatter blocks; `update`, the generic whole-body
-    *and* line-range replace for the eight whole-body domains — `type` is
-    one of req/uc/tsk/qa/prb/gol/rsk/dec, optional 1-based inclusive body-line
+    *and* line-range replace for the nine whole-body domains — `type` is
+    one of req/uc/tsk/qa/prb/gol/rsk/dec/feat, optional 1-based inclusive
+    body-line
     `begin`/`end` with the `N+1` end-of-body sentinel, splice-then-
-    validate-whole; `set_status`, the generic status change for all nine
+    validate-whole; `set_status`, the generic status change for all ten
     domains incl. adr — `superseded_by` is ADR-only, composing
     `"superseded by X"`), `general/resources/`
    (`specmgr://version`, `specmgr://iso25010` — the ISO/IEC 25010:2023
    quality model), and `general/prompts/` (`compact_history` — rotates
     older `Recent Updates` entries out of any feature folder's `README.md`
-    into a sibling `history.md`). The eight `get_<d>` tools additionally
+    into a sibling `history.md`). The nine `get_<d>` tools additionally
     take a `raw: bool = False` parameter — `raw=True` returns the
     frontmatter-stripped body text as-is (the text `update`'s `begin`/`end`
     index into).
@@ -230,13 +269,14 @@ mirror of that same registration and must never be hand-edited.
 Still genuinely missing / not yet done (don't assume otherwise):
 - No `validate_adr` (or `validate_req`/`validate_uc`/`validate_tsk`/
   `validate_qa`/`validate_prb`/`validate_gol`/`validate_rsk`/
-  `validate_dec`) tool runs
+  `validate_dec`/`validate_feat`) tool runs
   over the repo's
   own documents yet via pre-commit or CI. (ADR
   9c687bb1-8ee7-41c8-84ec-07606356bc73: "Enforce doc generation/lint/tests
   locally via pre-commit hook, not just CI")
 - `delete_req`/`delete_uc`/`delete_tsk`/`delete_qa`/`delete_prb`/
-  `delete_gol`/`delete_rsk`/`delete_dec` are stubs, not yet implemented.
+  `delete_gol`/`delete_rsk`/`delete_dec`/`delete_feat` are stubs, not yet
+  implemented.
 - No `ac` (Acceptance Criteria) domain exists yet, despite `server.py`'s
   docstring already reserving a spot for it ("... and later `ac`") — the
   convention for adding it (or any future domain) is fixed by ADR
@@ -244,7 +284,7 @@ Still genuinely missing / not yet done (don't assume otherwise):
   two generic tools in `general/tools/` (`update`'s `type`,
   `set_status`'s `type`) plus a `raw` parameter on the new `get_<d>` tool
   — not new `update_<d>`/`set_status_<d>` tools.
-- `req`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec` each register `tools`,
+- `req`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`feat` each register `tools`,
   `resources`, and `prompts`; `uc` registers `tools` and `resources`
   only — it has no `prompts` sub-package yet.
 
@@ -384,9 +424,9 @@ consumer of the base library.
 ## MCP server (`server.py`)
 
 - Builds the `MCPServer` instance (`mcp` object) and a no-op `_lifespan`,
-  then imports every domain package (`adr`, `dec`, `general`, `gol`,
-  `prb`, `qa`, `req`, `rsk`, `tsk`, `uc`) as its last line purely for the
-  side effect of
+  then imports every domain package (`adr`, `dec`, `feat`, `general`,
+  `gol`, `prb`, `qa`, `req`, `rsk`, `tsk`, `uc`) as its last line purely for
+  the side effect of
   running their `@mcp.tool()`/`@mcp.resource()`/`@mcp.prompt()` decorators.
   When adding a new domain, add its import to that same last line —
   forgetting it means the new tools/resources/prompts silently never

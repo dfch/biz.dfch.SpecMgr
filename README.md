@@ -20,16 +20,16 @@ At this time, we have these artifact:
 
 - Architecture Decision Record (ADR)
 - Decision (DEC)
+- Feature (FEAT)
 - Goal (GOL)
 - Problem Statement (PRB)
 - Question and Answer (QA)
 - Requirement (REQ)
+- Risk (RSK)
 - Task List (TSK)
 - Use Case (UC)
 <!-- 
-- Risk (RSK)
 - Acceptance Criterium (ACC)
-- Feature (FTR)
 -->
 
 See [MCP Server](#mcp-server) and [docs/MCP.md](docs/MCP.md) for details.

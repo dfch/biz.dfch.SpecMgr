@@ -1,9 +1,9 @@
 ---
 created: 2026-08-30
 id: feat-31-feature
-status: in-progress
+status: done
 updated: 2026-08-30
-version: 1.10.0
+version: 1.11.0
 ---
 
 # Feature: Formalize the Feature artifact type ("feat")
@@ -129,7 +129,7 @@ artifact type" feature's own branch-per-feature convention (e.g.
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: Verifies REQ-001/002 — schema documented
+- [x] ACC-001: Verifies REQ-001/002 — schema documented
   (`docs/feat_schema.json`, `specmgr://feat/schema`); a reference
   `feat_reference.md` exercising every field (all mandatory + optional
   sections present, ≥2 `### Updates` entries in newest-first order, ≥2
@@ -142,35 +142,35 @@ artifact type" feature's own branch-per-feature convention (e.g.
   (not newest-first) entry in either `Updates` or `Decisions Made` raises
   `AssertionError`; a malformed `REQ-\d{3}: ...`/`- [ ] ACC-\d{3}: ...`
   list item raises `AssertionError`.
-- [ ] ACC-002: Verifies REQ-003/004 — a document whose frontmatter `id`
+- [x] ACC-002: Verifies REQ-003/004 — a document whose frontmatter `id`
   doesn't match its containing folder's name is rejected by the tool layer
   (not the model layer); `find_feat_path_by_id` resolves via the direct
   `<base>/<id>/README.md` shortcut, not a directory scan; `create_feat`
   correctly derives the next `NNN` under concurrent-create simulation (global
   lock prevents two callers from picking the same `NNN`).
-- [ ] ACC-003: Verifies REQ-005 — every listed tool is implemented,
+- [x] ACC-003: Verifies REQ-005 — every listed tool is implemented,
   registered, and callable; a create→get→list→delete(stub)→validate
   round-trip against a temp `SPECMGR_FEAT_DIR` succeeds; `list_feat` returns
   `PagedResult[FeatSummary]` with default page size 25 / cap 100.
-- [ ] ACC-004: Verifies REQ-006 — `update(type="feat", ...)` and
+- [x] ACC-004: Verifies REQ-006 — `update(type="feat", ...)` and
   `set_status(type="feat", ...)` both work end to end (whole-body, line-range,
   and status-change modes), preserving `id`/`type`/`created`/`version` and
   bumping only `updated`/`status` as appropriate.
-- [ ] ACC-005: Verifies REQ-007 — every listed resource is implemented and
+- [x] ACC-005: Verifies REQ-007 — every listed resource is implemented and
   registered (no `/{id}`, no `/list`).
-- [ ] ACC-006: Verifies REQ-008 — both prompts narrate the full
+- [x] ACC-006: Verifies REQ-008 — both prompts narrate the full
   dedup-check → `TodoWrite` → `question`-tool → tool-call-sequence flow,
   verified by walking both packaged instruction files end to end against a
   real document, not just asserting their static text.
-- [ ] ACC-007: Verifies REQ-009 — `specmgr schema --type feat` and the
+- [x] ACC-007: Verifies REQ-009 — `specmgr schema --type feat` and the
   generic `specmgr schema` both produce an identical, packaged-copy-matching
   `feat_schema.json`.
-- [ ] ACC-008: Verifies REQ-010 — `specmgr docs`/`specmgr mcp-docs`/
+- [x] ACC-008: Verifies REQ-010 — `specmgr docs`/`specmgr mcp-docs`/
   `specmgr schema` all report zero drift after implementation; `AGENTS.md`
   reflects the new domain; `feat-7-various-improvements` carries the new
   Task 0.31 and Task 0.30's background note is extended to mention `feat` as
   a fourth divergent `Updates`/`Recent Updates` shape.
-- [ ] ACC-009: Verifies REQ-011 — full unittest suite green; ruff
+- [x] ACC-009: Verifies REQ-011 — full unittest suite green; ruff
   format/check and vulture clean; `specmgr unused-code` clean.
 
 ### Scope
@@ -735,25 +735,83 @@ discipline.
 
 #### Phase 5: Cross-cutting registration
 
-- [ ] Task 5.1: `server.py` — add `feat` to the domain import line +
-  module docstring — depends on: Task 4.3 — status: not-started
-- [ ] Task 5.2: `pyproject.toml` package-data entry; `.pre-commit-config.yaml`
+- [x] Task 5.1: `server.py` — add `feat` to the domain import line +
+  module docstring — depends on: Task 4.3 — status: completed
+  (2026-08-30). Alphabetical import order (`adr, dec, feat, general, gol,
+  prb, qa, req, rsk, tsk, uc`); the module docstring gained a
+  `specmgr://feat/schema`/`/example`/`/template` Resources block (same
+  position as `dec`'s own block, right before it in the file), a "FEAT has
+  no `specmgr://feat/{id}` ... no `specmgr://feat/list`" sentence appended
+  to the "DEC has no ..." paragraph, a new "Feature tools (`feat/tools/`)"
+  paragraph in Tools (mirroring "Decision tools", plus one extra sentence
+  noting `feat`'s bespoke addressing and its lack of
+  `update_feat`/`set_status_feat` of its own), the `update`/`set_status`
+  paragraphs' domain counts bumped from eight/nine to nine/ten
+  whole-body/total domains (matching `general/tools/update.py`'s/
+  `set_status.py`'s own docstrings, both already updated in Phase 2), a
+  new "Feature prompts (`feat/prompts/`)" paragraph in Prompts (mirroring
+  "Decision prompts"), and `feat` inserted into both domain-enumeration
+  sentences ("Modules are grouped domain-first ..." and "Add a new domain
+  by ...") plus the final "each register `tools`, `resources`, and
+  `prompts`" sentence.
+- [x] Task 5.2: `pyproject.toml` package-data entry; `.pre-commit-config.yaml`
   (`feat/models/v1` added to schema-hook globs + new
   `specmgr-schema-feat-package` hook); `.github/workflows/ci.yml` (new
-  packaged-copy drift step) — depends on: Task 3.4 — status: not-started
-- [ ] Task 5.3: `AGENTS.md` — new `feat/` bullet documenting the addressing
+  packaged-copy drift step) — depends on: Task 3.4 — status: completed
+  (2026-08-30). `"biz.dfch.specmgr.feat" = ["data/*.md", "data/*.json"]`
+  added alphabetically between `dec` and `gol`. `feat/models/v1` added to
+  the one shared `files:` regex glob in all 9 pre-existing occurrences
+  (verified 9 before, 9 after) plus a new 10th occurrence in the new
+  `specmgr-schema-feat-package` hook itself (mirroring
+  `specmgr-schema-dec-package` verbatim, placed last, matching this
+  file's insertion-order — not alphabetical — convention for per-domain
+  hooks). CI gained a `` `src/biz/dfch/specmgr/feat/data/feat_schema.json` ``
+  drift step, same `if: matrix.python-version == '3.13'` guard and error-
+  message format as the `dec` step, placed immediately after it.
+- [x] Task 5.3: `AGENTS.md` — new `feat/` bullet documenting the addressing
   deviation explicitly (non-UUID id, folder-per-document, bespoke
   `_paths.py`); update the domain-enumeration sentences; decide (and note)
   whether root `README.md`'s artifact list gains `Feature (FEAT)` — depends
-  on: Task 5.1 — status: not-started
-- [ ] Task 5.4: Regenerate `docs/MCP.md`/`docs/GENERATED.md`/`docs/api/`/
+  on: Task 5.1 — status: completed (2026-08-30). New `feat/` bullet added
+  between the `dec/` and `general/` bullets, same depth/style as `dec/`'s
+  own; the `general/` bullet's domain counts bumped eight→nine/nine→ten;
+  `delete_*`/`validate_*` enumeration lists, the domain-register-all-three
+  sentence, and the `server.py`-description sentence in "MCP server
+  (server.py)" all gained `feat`/`delete_feat`/`validate_feat`. Root
+  `README.md`: added `Feature (FEAT)` to the active bulleted list
+  (alphabetically between `Decision (DEC)` and `Goal (GOL)`), removed
+  `Feature (FTR)` from the commented-out placeholder (wrong abbreviation
+  besides being redundant now), and moved `Risk (RSK)` — already a fully
+  implemented domain per `AGENTS.md`'s own `rsk/` bullet — from the
+  placeholder into the active list as a drive-by fix, leaving only
+  `Acceptance Criterium (ACC)` (not yet implemented) commented out. See
+  Decisions Made for the full reasoning.
+- [x] Task 5.4: Regenerate `docs/MCP.md`/`docs/GENERATED.md`/`docs/api/`/
   `docs/feat_schema.json`; confirm all idempotent on a second run — depends
-  on: Task 5.1, Task 5.2 — status: not-started
-- [ ] Task 5.5: Final verification pass — walk every ACC-001..009 with
+  on: Task 5.1, Task 5.2 — status: completed (2026-08-30). `specmgr docs`
+  changed only `docs/api/biz.dfch.specmgr.server.md` (the Task 5.1
+  docstring changes); `specmgr mcp-docs` produced no diff at all (FEAT's
+  tools/resources/prompts were already fully registered before this
+  phase, so `docs/MCP.md` was already current); `specmgr schema` (all
+  types) and `specmgr schema --type feat --output-dir
+  src/biz/dfch/specmgr/feat/data` both reported every file "unchanged".
+  Every one of the four commands was run a second time immediately after
+  and produced byte-identical output/no further `git diff` — confirmed
+  idempotent.
+- [x] Task 5.5: Final verification pass — walk every ACC-001..009 with
   concrete evidence; full quality gate end to end; set feature status to
-  `done` — depends on: Phase 0-4 complete, Task 5.4 — status: not-started
-- [ ] Task 5.6: Final commit + comment on issue #31; update this README's
-  Progress section — depends on: Task 5.5 — status: not-started
+  `done` — depends on: Phase 0-4 complete, Task 5.4 — status: completed
+  (2026-08-30). Full quality gate green: `ruff format --check` (1286
+  files already formatted), `ruff check` (all checks passed), `vulture
+  src/ whitelist.py --min-confidence 60` (clean), full `unittest` suite
+  (2228 tests, OK; 221 of them under `tests/feat/` specifically), `specmgr
+  unused-code` (no unused code found). See Recent Updates for the
+  ACC-by-ACC evidence walkthrough. Frontmatter `status` set to `done`.
+- [x] Task 5.6: Final commit + comment on issue #31; update this README's
+  Progress section — depends on: Task 5.5 — status: **README Progress
+  section updated by the implementing agent (2026-08-30); commit and
+  issue #31 comment intentionally left to the orchestrator**, per this
+  task's own instructions to the implementing agent.
 
 **Note:** If a task's scope changes mid-flight, edit its description in
 place; rely on git history (`git log -p` on this file) to recover what was
@@ -922,6 +980,37 @@ needed), `specmgr unused-code` clean, full `unittest` suite green (2228
 tests, up from 2199 after Phase 3). Phase 5 (cross-cutting registration)
 is next.
 
+**As of 2026-08-30 (Phase 5 complete — feature done)**: Cross-cutting
+registration is complete and this feature is **done**. `server.py` gained
+`feat` in the domain import line and a full set of module-docstring
+updates (Resources block, "no `/{id}`/no `/list`" sentence, Tools
+paragraph, Prompts paragraph, both `update`/`set_status` count bumps,
+both domain-enumeration sentences). `pyproject.toml`/
+`.pre-commit-config.yaml`/`.github/workflows/ci.yml` all gained their
+`feat` entries (package-data, schema-hook globs + new
+`specmgr-schema-feat-package` hook, CI drift step). `AGENTS.md` gained a
+new `feat/` bullet plus every other domain-enumeration sentence updated;
+root `README.md` gained `Feature (FEAT)` in its active artifact list and
+(drive-by fix) `Risk (RSK)` moved out of the commented-out placeholder
+alongside it, leaving only the not-yet-implemented `Acceptance Criterium
+(ACC)` commented out (see Decisions Made). `specmgr docs`/`specmgr
+mcp-docs`/`specmgr schema` (both invocations) were each run twice in a
+row and confirmed idempotent — only `docs/api/biz.dfch.specmgr.server.md`
+changed (from the `server.py` docstring edits themselves); `docs/MCP.md`
+had zero diff, since every FEAT tool/resource/prompt was already fully
+registered before this phase. Every ACC-001..009 was walked with concrete
+evidence (tests, generated docs, live command output — see this update's
+own detail below) and all nine are satisfied. Full quality gate green:
+`ruff format --check` (1286 files already formatted), `ruff check` (all
+checks passed), `vulture src/ whitelist.py --min-confidence 60` (clean),
+full `unittest` suite (2228 tests, OK, unchanged from Phase 4 — Phase 5
+touched no `src/biz/dfch/specmgr/feat/` or `tests/feat/` code, only
+cross-cutting registration files), `specmgr unused-code` (clean).
+Frontmatter `status` set to `done`. **Per this phase's own task
+instructions, no commit was made and no comment was posted to issue
+#31** — that is the orchestrator's responsibility for this run, not the
+implementing agent's.
+
 ### Blockers
 
 - [x] Design review — resolved 2026-08-30. Reviewed across five rounds
@@ -935,6 +1024,147 @@ is next.
   as part of this design-review conversation).
 
 ### Recent Updates
+
+#### Update 2026-08-30 (Phase 5 complete — cross-cutting registration; feature done)
+
+- **`server.py` (Task 5.1)**: added `feat` to the domain import line
+  (alphabetical: `adr, dec, feat, general, gol, prb, qa, req, rsk, tsk,
+  uc`). Module docstring gained: a `specmgr://feat/schema`/`/example`/
+  `/template` Resources block placed right after the `dec` block (same
+  relative position `feat` occupies in the domain-enumeration
+  elsewhere); a "FEAT has no `specmgr://feat/{id}` ... no
+  `specmgr://feat/list`" sentence appended to the "DEC has no ..."
+  paragraph; a new "Feature tools (`feat/tools/`)" paragraph in Tools
+  mirroring "Decision tools" (verified `get_feat` does take
+  `raw: bool = False`, matching every other domain, before writing this
+  paragraph — checked `feat/tools/get_feat.py` directly per this task's
+  own instruction), plus one extra sentence noting `feat`'s bespoke
+  `_paths.py` addressing and its lack of `update_feat`/`set_status_feat`
+  tools of its own; the `update`/`set_status` paragraphs' domain counts
+  bumped from eight/nine to nine/ten whole-body/total domains (both
+  `general/tools/update.py` and `set_status.py` had already made this
+  exact bump to their own docstrings back in Phase 2, so this brought
+  `server.py` in line with code that was already correct); a new
+  "Feature prompts (`feat/prompts/`)" paragraph in Prompts mirroring
+  "Decision prompts"; and `feat` inserted into both domain-enumeration
+  sentences ("Modules are grouped domain-first ..." and "Add a new
+  domain by ...") plus the final "each register `tools`, `resources`,
+  and `prompts`" sentence.
+- **Cross-cutting config (Task 5.2)**: `pyproject.toml` gained
+  `"biz.dfch.specmgr.feat" = ["data/*.md", "data/*.json"]` alphabetically
+  between `dec` and `gol`. `.pre-commit-config.yaml`'s one shared
+  `files:` regex glob (`^src/biz/dfch/specmgr/(dec/models/v1|gol/
+  models/v1|...)/.*\.py$`) gained `feat/models/v1` between `dec/models/v1`
+  and `gol/models/v1` in all 9 pre-existing occurrences (counted 9 before
+  the edit, 9 after — a global find/replace, not a manual per-occurrence
+  edit, so the count check was mostly a sanity confirmation) plus a new
+  10th occurrence in the brand-new `specmgr-schema-feat-package` hook
+  itself, which mirrors `specmgr-schema-dec-package` verbatim (id/name/
+  description/entry/language/pass_filenames/files) and is placed last,
+  matching this file's own insertion-order (not alphabetical) convention
+  for per-domain schema-package hooks: `req, uc, tsk, rsk, qa, prb, gol,
+  dec, feat`. `.github/workflows/ci.yml` gained a new
+  `` `src/biz/dfch/specmgr/feat/data/feat_schema.json` `` drift-check
+  step, same `if: matrix.python-version == '3.13'` guard and
+  `::error::...` message format as the existing `dec` step, placed
+  immediately after it; the `docs/*_schema.json` step's own comment
+  prose and the `specmgr-schema` pre-commit hook's description were both
+  updated to name `feat` among the registered types.
+- **`AGENTS.md`/root `README.md` (Task 5.3)**: added a new `**`feat/`**`
+  bullet to `AGENTS.md`'s per-domain enumeration (between `dec/` and
+  `general/`), at the same depth/style as `dec/`'s own, spelling out the
+  addressing deviation explicitly (non-UUID `id`, folder-per-document,
+  bespoke `feat/tools/_paths.py`, mandatory `SPECMGR_FEAT_DIR`, all 8
+  tools, generic `update`/`set_status` dispatch, resources, prompts,
+  `FeatSummary.path`). Updated every other domain-enumeration sentence in
+  `AGENTS.md` that listed all current domains: the `general/` bullet's
+  own whole-body/total domain counts (eight→nine, nine→ten) and `type`
+  enumeration; the "Still genuinely missing" section's `validate_*`/
+  `delete_*` lists and the register-all-three sentence; the "MCP server
+  (server.py)" section's own domain-import-line description. Root
+  `README.md`: added `Feature (FEAT)` to the active bulleted artifact
+  list (alphabetically between `Decision (DEC)` and `Goal (GOL)`),
+  removed the `Feature (FTR)` line from the commented-out placeholder
+  block (the abbreviation was wrong there too — "FTR", not the actually-
+  implemented "FEAT" — on top of being redundant now that FEAT is
+  active), and, as a drive-by fix, moved `Risk (RSK)` out of the same
+  placeholder into the active list since `AGENTS.md`'s own `rsk/` bullet
+  confirms RSK has been a fully implemented, schema-backed domain for
+  some time — only the not-yet-implemented `Acceptance Criterium (ACC)`
+  stays commented out. Recorded as a new Decisions Made entry below.
+- **Regeneration (Task 5.4)**: ran `specmgr docs`, `specmgr mcp-docs`,
+  `specmgr schema`, and `specmgr schema --type feat --output-dir
+  src/biz/dfch/specmgr/feat/data`, each twice in a row. `specmgr docs`
+  changed only `docs/api/biz.dfch.specmgr.server.md` (reflecting the
+  Task 5.1 docstring edits) on the first run and produced zero further
+  diff on the second. `specmgr mcp-docs` produced no diff on either
+  run — every FEAT tool/resource/prompt was already fully registered
+  against the live `mcp` instance before this phase (Phases 2-4), so
+  `docs/MCP.md` was already current; this phase's `server.py` docstring
+  changes only affect `docs/api/`, not `docs/MCP.md`, which is generated
+  from the actual tool/resource/prompt registrations, not the module
+  docstring. `specmgr schema` (all 9 registered types) and the `feat`-
+  only packaged-copy invocation both reported every file "(unchanged)"
+  on both runs. Confirmed idempotent across the board.
+- **Final verification (Task 5.5)** — ACC-001..009 walked with concrete
+  evidence:
+  - ACC-001: `tests/feat/models/v1/test_parser.py` exercises the full
+    matrix (`TestParseFeatValueViolations`/`TestParseFeatStructuralViolations`)
+    — malformed status/hyphenated status/wrong `type`, malformed
+    `REQ-\d{3}`/`ACC-\d{3}` items, out-of-order `Updates` entries,
+    unknown H2, missing `Requirements`, malformed `Phase`/`UpdateEntry`
+    headings, zero-phase/zero-entry composites, leading content before
+    H1, a second H1 — all raise, all covered. `docs/feat_schema.json`/
+    `specmgr://feat/schema` (via `feat/resources/feat_schema.py`) both
+    exist and are exercised by `tests/feat/resources/test_feat_schema.py`.
+  - ACC-002: `tests/feat/tools/test__paths.py::TestFindFeatPathById`
+    covers the direct-shortcut resolution, the id/folder-name-mismatch
+    rejection (tool-layer, not model-layer), and the no-partial-match
+    behavior; `tests/feat/tools/test_integration.py::
+    TestCreateFeatConcurrencyIntegration::test_many_concurrent_create_feat_calls_never_collide`
+    proves the global create-lock prevents two callers picking the same
+    `NNN`.
+  - ACC-003: all 8 tools exist, are registered (confirmed live in
+    `docs/MCP.md`'s Tools section), and are exercised by
+    `tests/feat/tools/test_integration.py::TestFeatLifecycleIntegration::
+    test_full_lifecycle_roundtrip` (create→get→list→...→delete-stub→
+    validate against a temp `SPECMGR_FEAT_DIR`); `list_feat` returns
+    `PagedResult[FeatSummary]` per `tests/feat/tools/test_list_feat.py`.
+  - ACC-004: the same integration test drives `update(type="feat", ...)`
+    in both whole-body and line-range modes and `set_status(type="feat",
+    ...)`, asserting `id`/`type`/`created`/`version` are preserved and
+    only `updated`/`status` change.
+  - ACC-005: `docs/MCP.md`'s Resources section lists exactly
+    `specmgr://feat/schema`/`/example`/`/template`, no `/{id}`, no
+    `/list`; `tests/feat/resources/` exercises all three live.
+  - ACC-006: `tests/feat/prompts/test_create_feat.py::
+    TestCreateFeatInstructionsWalkthrough`/`test_update_feat.py::
+    TestUpdateFeatInstructionsWalkthrough` drive the real tools following
+    the packaged instructions' own narrated steps end to end (not just
+    static-text assertions), per this ACC's explicit requirement.
+  - ACC-007: `diff`-verified byte-identical `docs/feat_schema.json` and
+    `src/biz/dfch/specmgr/feat/data/feat_schema.json` (both freshly
+    regenerated this phase); `tests/feat/resources/test_feat_schema.py::
+    test_matches_fresh_generate_feat_schema_output` covers the same
+    invariant at the test-suite level.
+  - ACC-008: `specmgr docs`/`specmgr mcp-docs`/`specmgr schema` all
+    report zero drift (see Task 5.4 above); `AGENTS.md` reflects the new
+    domain (this update); `feat-7-various-improvements` already carries
+    Task 0.31 and its Task 0.30 background note already names `feat` as
+    a fourth divergent variant (done in Phase 0, verified still present).
+  - ACC-009: full `unittest` suite green (2228 tests, 221 of them under
+    `tests/feat/`); `ruff format --check`/`ruff check` clean; `vulture
+    src/ whitelist.py --min-confidence 60` clean; `specmgr unused-code`
+    clean.
+  Full quality gate re-run end to end, all green (see this update's own
+  Current Status entry for exact command output). Frontmatter `status`
+  set from `in-progress` to `done`.
+- Per this phase's own task instructions, **no commit was made and no
+  comment was posted to issue #31** — that is the phase orchestrator's
+  responsibility, not the implementing agent's, for this run.
+- **This feature is now complete.** All 5 phases and all 11 requirements
+  (REQ-001..011) are implemented, tested, and cross-registered; all 9
+  acceptance criteria (ACC-001..009) are verified with concrete evidence.
 
 #### Update 2026-08-30 (Phase 4 complete — prompts)
 
@@ -1724,6 +1954,27 @@ is next.
   just plausible text -- new test depth introduced specifically for
   `feat`, not a retroactive change to `dec`'s own test suite (out of
   scope here).
+- **2026-08-30 (Phase 5)**: Root `README.md`'s artifact list gains
+  `Feature (FEAT)` -- added to the active bulleted list, alphabetically
+  between `Decision (DEC)` and `Goal (GOL)` -- because, as of this
+  feature's completion, `feat` is a fully schema-backed,
+  MCP-tool-addressable artifact type exactly like every other one already
+  in that list (8 MCP tools, 3 resources, 2 prompts, a JSON Schema, a
+  packaged example/template), not a purely internal/meta concept the way
+  the pre-existing placeholder comment implied. The placeholder's
+  `Feature (FTR)` line is removed entirely (both because it is now
+  redundant with the new active entry, and because "FTR" was never the
+  abbreviation actually used anywhere in code/docs -- every tool,
+  resource, and this very plan itself use "FEAT"). As a drive-by fix,
+  `Risk (RSK)` -- also sitting in that same commented-out placeholder --
+  is moved into the active list alongside `Feature (FEAT)`, since
+  `AGENTS.md`'s own `rsk/` bullet confirms RSK has been a complete,
+  shipped domain (tools/resources/prompts/schema) since `feat-15-add-
+  artifact-type-risk`, well before this feature started; leaving it
+  commented out any longer would have been stale documentation, not a
+  deliberate scoping choice. `Acceptance Criterium (ACC)` stays commented
+  out -- `AGENTS.md`'s "Still genuinely missing" section confirms no `ac`
+  domain exists yet.
 
 ### Related PRs / Commits
 

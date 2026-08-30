@@ -124,6 +124,10 @@ namespaces = true
     "data/*.md",
     "data/*.json"
 ]
+"biz.dfch.specmgr.feat" = [
+    "data/*.md",
+    "data/*.json"
+]
 "biz.dfch.specmgr.gol" = [
     "data/*.md",
     "data/*.json"
