@@ -1,9 +1,9 @@
 ---
 created: 2026-08-30
 id: feat-31-feature
-status: planning
+status: in-progress
 updated: 2026-08-30
-version: 1.0.0
+version: 1.6.0
 ---
 
 # Feature: Formalize the Feature artifact type ("feat")
@@ -42,13 +42,22 @@ artifact type" feature's own branch-per-feature convention (e.g.
 - REQ-001: Define the `feat` markdown schema — frontmatter (`type="feat"`,
   closed 4-value status set `planning`/`progress`/`review`/`done` with no
   hyphens in any value, default `planning`) and body (H1 `# Feature: {title}`,
-  `## Plan` composite with mandatory leaf `### Overview`/`### Requirements`/
-  `### Acceptance Criteria`/`### Scope`, optional leaf `### Dependencies`/
-  `### Design Notes`/`### Related ADRs`, mandatory leaf `### Task List`;
-  `## Progress` composite with mandatory leaf `### Current Status`, optional
-  leaf `### Blockers`, mandatory composite `### Updates` (ISO8601-timestamped
-  `#### {timestamp} — {title}` entries, ≥1), optional leaf
-  `### Decisions Made`/`### Related PRs / Commits`).
+  `## Plan` composite with mandatory leaf `### Overview`; mandatory
+  regex-validated `### Requirements`/`### Acceptance Criteria` lists (≥1 item
+  each, `REQ-\d{3}: ...`/`- [ ] ACC-\d{3}: ...`); mandatory composite
+  `### Scope` (mandatory `#### Included`/`#### Explicitly Out Of Scope`
+  leaves); optional composite `### Dependencies` (optional
+  `#### Depends On`/`#### Blocks` leaves); optional leaf `### Design Notes`/
+  `### Related Decisions`; mandatory composite `### Task List` (no own text, only
+  `#### Phase N: ...` entries, ≥1, each a regex-validated heading holding its
+  own `- [ ] .../- [x] ...` checklist, ≥1 item); `## Progress` composite
+  with mandatory leaf `### Current Status`, optional leaf `### Blockers`,
+  mandatory composite `### Updates` (optional leading comment,
+  ISO8601-timestamped `#### {timestamp} — {title}` entries, ≥1,
+  newest-first order enforced), optional composite `### Decisions Made`
+  (same shape as `### Updates` — optional leading comment, ISO8601
+  timestamps, newest-first order enforced), optional leaf
+  `### Related PRs / Commits`, optional leaf `### More Information`).
 - REQ-002: Pydantic models under `feat/models/v1/` (frontmatter, body,
   document, parser, summary, `_util.py` with `SCHEMA_COMMENT_VERSION = "v1"`),
   domain-first, mirroring `dec`/`gol`'s exact file shapes. `Updates`/
@@ -69,15 +78,25 @@ artifact type" feature's own branch-per-feature convention (e.g.
   pure-text model-layer parser signature.
 - REQ-004: Bespoke, folder-per-document addressing (`feat/tools/_paths.py`,
   hand-rolled like ADR's own `adr/tools/_paths.py`, **not** the shared
-  flat-file `general/tools/_doc_paths.py`): base directory `.specmgr/feat`
-  (overridable via `SPECMGR_FEAT_DIR` for test isolation), documents at
-  `<base>/<id>/README.md`. Since `id` is the folder name by convention,
+  flat-file `general/tools/_doc_paths.py`): base directory `.specmgr/feat`,
+  documents at `<base>/<id>/README.md`. **`SPECMGR_FEAT_DIR` (mandatory,
+  not optional)** overrides the base directory — this is not a `feat`-only
+  nicety: every existing domain has an equivalent env var
+  (`SPECMGR_ADR_DIR` in `adr/tools/_paths.py`; the shared `SPECMGR_DOCS_DIR`
+  in `general/tools/_doc_paths.py`, used by `req`/`uc`/`tsk`/`qa`/`prb`/
+  `gol`/`rsk`/`dec`), specifically so tests never read/write the real
+  base directory (for `feat`, that would mean the real `.specmgr/feat/`
+  — the very folder this plan file itself lives in). Omitting it would
+  make `feat` the only domain in the codebase without test isolation for
+  its base directory. Since `id` is the folder name by convention,
   `find_feat_path_by_id` shortcuts straight to `<base>/<id>/README.md` and
   verifies the frontmatter `id` matches (raising `FeatNotFoundError`
   otherwise) instead of a full directory scan. `create_feat` derives the next
   `NNN` by scanning existing `feat-*` folder names under a **global**
   create-lock (distinct from every other domain's per-id lock, since the id
-  doesn't exist yet when the lock must be taken).
+  doesn't exist yet when the lock must be taken). No partial-id-match
+  support (e.g. resolving a bare `"feat-31"` to `"feat-31-feature"`) —
+  considered and rejected, see Decisions Made.
 - REQ-005: 8 MCP tools, sop-style generic dispatch (**no**
   `update_feat`/`set_status_feat` — see Overview): `create_feat`,
   `parse_feat`, `list_feat` (paged tool from day one, ADR
@@ -113,10 +132,16 @@ artifact type" feature's own branch-per-feature convention (e.g.
 - [ ] ACC-001: Verifies REQ-001/002 — schema documented
   (`docs/feat_schema.json`, `specmgr://feat/schema`); a reference
   `feat_reference.md` exercising every field (all mandatory + optional
-  sections present, ≥2 `### Updates` entries) round-trips through
-  `parse_feat` byte-exact; `FeatFrontmatter.status` rejects any value outside
-  the 4-set; malformed `#### {timestamp} — {title}` headings raise
-  `AssertionError`.
+  sections present, ≥2 `### Updates` entries in newest-first order, ≥2
+  `### Decisions Made` entries in newest-first order, ≥2 `#### Phase N`
+  entries each with ≥1 task item) round-trips through `parse_feat`
+  byte-exact; `FeatFrontmatter.status` rejects any value outside the
+  4-set; malformed `#### {timestamp} — {title}` headings (both `Updates`
+  and `Decisions Made` — identical format) and `#### Phase N: ...`
+  (`Task List`) headings all raise `AssertionError`; an out-of-order
+  (not newest-first) entry in either `Updates` or `Decisions Made` raises
+  `AssertionError`; a malformed `REQ-\d{3}: ...`/`- [ ] ACC-\d{3}: ...`
+  list item raises `AssertionError`.
 - [ ] ACC-002: Verifies REQ-003/004 — a document whose frontmatter `id`
   doesn't match its containing folder's name is rejected by the tool layer
   (not the model layer); `find_feat_path_by_id` resolves via the direct
@@ -181,10 +206,14 @@ Explicitly out of scope:
   existing `feat-7-various-improvements` Task 0.30, whose background note
   this feature extends to mention `feat` as a fourth variant. No new task,
   no consolidation performed here.
-- Structured modeling of Task List `#### Phase N` / task-checklist content —
-  stays a single opaque leaf section, like `### Design Notes`/
-  `### Dependencies`; individual task-checkbox edits are expected to go
-  through the generic `update` tool's line-range mode, not a dedicated tool.
+- Structured modeling of the free-form metadata *inside* each Task List
+  checklist item (`depends on:`/`status:`/`ETA` annotations) — `#### Phase N`
+  headings and their flat `- [ ] .../- [x] ...` item lists are now
+  structurally modeled (see Design Notes), but each item's own text stays an
+  unparsed `TaskItem` description; per-task metadata edits are still expected
+  to go through the generic `update` tool's line-range mode, not a dedicated
+  tool. (Supersedes the earlier "Task List stays a single opaque leaf"
+  decision — see Decisions Made.)
 - ADR-style granular `update_section`/option-style per-field mutation tools —
   `feat` uses only the generic whole-body/line-range `update` tool.
 - Real implementation of `delete_feat` — a stub raising
@@ -233,21 +262,34 @@ version: 1.0.0
 # Feature: {Free-form title}                  H1, @alias REGEX "^Feature: .+$"
 ## Plan                                        REQUIRED (LITERAL alias, composite)
   ### Overview                                 REQUIRED (leaf)
-  ### Requirements                             REQUIRED (leaf)
-  ### Acceptance Criteria                      REQUIRED (leaf)
-  ### Scope                                    REQUIRED (leaf)
-  ### Dependencies                             OPTIONAL (leaf)
+  ### Requirements                             REQUIRED (regex list, ≥1 item)
+    - REQ-NNN: {text}                          item @regex "^REQ-\d{3}: .+$"
+  ### Acceptance Criteria                      REQUIRED (regex checklist, ≥1 item)
+    - [ ] ACC-NNN: {text}                       item description @regex "^ACC-\d{3}: .+$"
+  ### Scope                                    REQUIRED (composite, no own text)
+    #### Included                               REQUIRED (leaf)
+    #### Explicitly Out Of Scope                REQUIRED (leaf)
+  ### Dependencies                             OPTIONAL (composite, no own text)
+    #### Depends On                             OPTIONAL (leaf)
+    #### Blocks                                 OPTIONAL (leaf)
   ### Design Notes                             OPTIONAL (leaf)
-  ### Related ADRs                             OPTIONAL (leaf)
-  ### Task List                                REQUIRED (leaf, opaque)
+  ### Related Decisions                        OPTIONAL (leaf)
+  ### Task List                                REQUIRED (composite, no own text)
+    #### Phase N: {title}                      ≥1, @regex "^Phase \d+: .+$"
+    - [ ] Task N.M: {text}                      ≥1 item per phase, opaque TaskItem
 ## Progress                                    REQUIRED (LITERAL alias, composite)
   ### Current Status                           REQUIRED (leaf)
   ### Blockers                                 OPTIONAL (leaf)
-  ### Updates                                  REQUIRED (composite, ISO8601)
-    #### {yyyy-MM-dd HH:mm:ss.fff±HH:mm} — {title}
+  ### Updates                                  REQUIRED (composite, opt. comment, ISO8601, newest-first enforced)
+    <!-- optional comment, e.g. ordering hint -->
+    #### {yyyy-MM-dd HH:mm:ss.fff±HH:mm} — {title}   ≥1, newest entry first
     {entry prose}
-  ### Decisions Made                           OPTIONAL (leaf)
+  ### Decisions Made                           OPTIONAL (composite, opt. comment, ISO8601, newest-first enforced)
+    <!-- optional comment, e.g. ordering hint -->
+    #### {yyyy-MM-dd HH:mm:ss.fff±HH:mm} — {title}   ≥1 (if section present), newest entry first
+    {entry prose}
   ### Related PRs / Commits                    OPTIONAL (leaf)
+  ### More Information                         OPTIONAL (leaf)
 ```
 
 **Model classes** (all in `feat/models/v1/body.py`, one
@@ -257,27 +299,78 @@ subclass per heading; implicit SPACE_SEPARATED aliases unless noted):
 - `Feature(MarkdownSection1)` — `@alias(value="^Feature: .+$", type=AliasType.REGEX)`; fields in order: `plan`, `progress`.
 - `Plan(MarkdownSection2)` — implicit alias "Plan"; fields in order:
   `overview`, `requirements`, `acceptance_criteria`, `scope`,
-  `dependencies | None`, `design_notes | None`, `related_adrs | None`,
+  `dependencies | None`, `design_notes | None`, `related_decisions | None`,
   `task_list`.
-- `Overview`, `Requirements`, `AcceptanceCriteria`, `Scope`, `Dependencies`,
-  `DesignNotes`, `RelatedAdrs`, `TaskList` — bare opaque leaves
+- `Overview`, `DesignNotes`, `RelatedDecisions` — bare opaque leaves
   (`MarkdownSection3`), implicit SPACE_SEPARATED aliases (RSK's
-  `Cause`/`Trigger`/GOL's `Description` precedent). `TaskList` deliberately
-  stays a leaf — the highly variable inline `depends on:`/`status:`/`ETA`
-  annotations inside `#### Phase N` sections are not worth structurally
-  modeling (see Scope).
+  `Cause`/`Trigger`/GOL's `Description` precedent).
+  `space_separated_name("RelatedDecisions")` derives exactly `"Related Decisions"`, so no `LITERAL` override is needed here (unlike the
+  `RelatedAdrs`/`"Related ADRs"` name this replaces, which *did* need
+  one — see Decisions Made). Renamed from "Related ADRs" to "Related
+  Decisions" per explicit user direction: this codebase intends to phase
+  out ADR terminology in favor of `dec` over time, so `feat`'s own new
+  schema adopts the forward-looking name rather than perpetuating "ADR"
+  in a brand-new document type; entries may still reference either an
+  ADR id or a `dec` id (or any other decision record) — the field stays a
+  free-form cross-reference list, not restricted to one domain's id
+  format.
+- `RequirementItem(MarkdownListItem)` — `TaskItem`-style: no declared nested
+  fields (leaf), a `@computed_field description: str` re-matching
+  `^REQ-\d{3}: (?P<description>.+)$` against `.text` and raising
+  `AssertionError` on a malformed item (mirrors `tsk`'s own `TaskItem`
+  regex-on-`.text` pattern, just without a checkbox marker).
+  `Requirements(MarkdownSection3)` — implicit alias "Requirements";
+  `items: list[RequirementItem] = Field(min_length=1)`.
+- `AcceptanceCriterionItem(TaskItem)` — reuses `tsk.TaskItem`'s
+  `checked`/`description`-from-checkbox split as-is, adding one more
+  computed field, `criterion_description: str`, that re-matches
+  `^ACC-\d{3}: (?P<description>.+)$` against the inherited `description`
+  and raises `AssertionError` on a malformed item.
+  `AcceptanceCriteria(MarkdownSection3)` — implicit alias "Acceptance
+  Criteria"; `items: list[AcceptanceCriterionItem] = Field(min_length=1)`.
+- `Included`, `ExplicitlyOutOfScope` — bare opaque leaves
+  (`MarkdownSection4`), implicit SPACE_SEPARATED aliases.
+  `space_separated_name("ExplicitlyOutOfScope")` derives exactly
+  `"Explicitly Out Of Scope"` — every word capitalized ("Start Case"),
+  matching this codebase's own existing multi-word heading style
+  ("Acceptance Criteria", "Design Notes"), so no `LITERAL` override is
+  needed (the earlier `"Explicitly out of scope"` sentence-case spelling
+  — this plan's own pre-existing ad hoc `### Scope` convention — is
+  dropped in favor of this, per explicit user direction to minimize
+  `LITERAL` use where it doesn't change the meaning). `Scope (MarkdownSection3)` — implicit alias "Scope", no own text; fields in
+  order: `included`, `explicitly_out_of_scope` (both mandatory — a
+  feature must always state both what is included and what is explicitly
+  excluded).
+- `Blocks`, `DependsOn` — bare opaque leaves (`MarkdownSection4`),
+  implicit SPACE_SEPARATED aliases. `space_separated_name("DependsOn")`
+  derives exactly `"Depends On"` (capitalized "On"), so no `LITERAL`
+  override is needed (the earlier `"Depends on"` sentence-case spelling
+  is dropped in favor of this, same rationale as `ExplicitlyOutOfScope`
+  above; reusing the parent's own name, `"Dependencies"`, for this child
+  heading was considered and rejected — it would read as a confusing
+  tautology, `### Dependencies` containing `#### Dependencies`, and the
+  Python field would awkwardly become `Dependencies.dependencies`).
+  `Dependencies(MarkdownSection3)` — implicit alias "Dependencies", no
+  own text; fields in order: `depends_on | None`, `blocks | None` (both
+  optional — a feature may have no dependencies and block nothing else,
+  matching `Dependencies` itself already being optional overall).
+- `Phase(MarkdownSection4)` — `@alias(value=r"^Phase \d+: .+$", type=AliasType.REGEX)` (unpadded phase numbers, matching this very plan's
+  own "Phase 0".."Phase 5" headings); computed fields `number: int`/
+  `title: str` extracted from the heading via `^Phase (?P<number>\d+): (?P<title>.+)$` (`UpdateEntry` precedent); `items: list[TaskItem] = Field(min_length=1)` reusing `tsk.models.v1.task_item.TaskItem` as-is for
+  each phase's own flat `- [ ] .../- [x] ...` checklist — per-item metadata
+  (`depends on:`/`status:`/`ETA`) stays unparsed free text inside each
+  item's description (see Scope). `TaskList(MarkdownSection3)` — implicit
+  alias "Task List", no own text; `phases: list[Phase] = Field(min_length=1)`.
 - `Progress(MarkdownSection2)` — implicit alias "Progress"; fields in order:
   `current_status`, `blockers | None`, `updates`, `decisions_made | None`,
-  `related_prs_commits | None`.
-- `CurrentStatus`, `Blockers`, `DecisionsMade`, `RelatedPrsCommits` — bare
+  `related_prs_commits | None`, `more_information | None`.
+- `CurrentStatus`, `Blockers`, `RelatedPrsCommits`, `MoreInformation` — bare
   opaque leaves (`MarkdownSection3`), implicit SPACE_SEPARATED aliases
   (`RelatedPrsCommits` → "Related PRs / Commits" needs an explicit
   `@alias(value="Related PRs / Commits", type=AliasType.LITERAL)` — the
   slash/mixed-case breaks the plain SPACE_SEPARATED convention, same
-  reasoning as SOP's `SafetyAndPrecautions`).
-- `Updates(MarkdownSection3)` — implicit alias "Updates"; `updates: list[UpdateEntry] = Field(min_length=1)`. One heading level deeper than
-  `feat-30-sop`'s planned `## Updates` (`MarkdownSection2`), otherwise
-  identical shape.
+  reasoning as SOP's `SafetyAndPrecautions`; `MoreInformation` mirrors
+  `req`'s/ADR's own `## More Information`, one heading level deeper).
 - `UpdateEntry(MarkdownSection4)` — `@alias(value=r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2}) — .+$", type=AliasType.REGEX)`; `content: MarkdownParagraph` (mandatory lead
   paragraph, TSK/DEC shape); computed fields `timestamp: str`/`title: str`
   extracted from the heading via `^(?P<timestamp>...) — (?P<title>.+)$`
@@ -288,6 +381,43 @@ subclass per heading; implicit SPACE_SEPARATED aliases unless noted):
   stated rationale (this format is scoped to `### Updates` entry headings
   only, hand/LLM-authored body content, not tool-generated frontmatter).
   Malformed headings raise `AssertionError`.
+- `DecisionEntry(MarkdownSection4)` — identical shape to `UpdateEntry`
+  (same alias regex, same `timestamp`/`title` computed-field extraction,
+  same `content: MarkdownParagraph`) — full ISO8601 timestamp, not
+  date-only, so same-day entries stay strictly orderable (see the
+  ordering validator below).
+- `Updates(MarkdownSection3WithComment)` — implicit alias "Updates";
+  inherits an optional `comment: MarkdownComment | None` field (`req`'s
+  `Level`/`Priority` precedent) meant to hold a machine-readable ordering
+  hint (`feat_template.md`/`feat_example.md` populate it with e.g.
+  `<!-- Newest entry first -- prepend new entries directly below this comment. -->`); `updates: list[UpdateEntry] = Field(min_length=1)`. One
+  heading level deeper than `feat-30-sop`'s planned `## Updates`
+  (`MarkdownSection2`), otherwise identical shape.
+- `DecisionsMade(MarkdownSection3WithComment)` — implicit alias "Decisions
+  Made", same optional `comment` field as `Updates`; `decisions: list[DecisionEntry] = Field(min_length=1)`, same "non-`Optional`
+  `list[X]` implies ≥1 once the section exists" convention as
+  `Updates.updates`/`TaskList.phases` (`RecentUpdates` precedent).
+  Optionality lives one level up instead: `Progress.decisions_made: DecisionsMade | None = None` — a brand-new feature has no `### Decisions Made` section at all, rather than an empty one.
+- **Newest-first ordering, enforced, on both `Updates` and
+  `DecisionsMade`**: a `@model_validator(mode="after")` on each class
+  asserts consecutive entries' parsed `datetime.fromisoformat(entry. timestamp)` values are non-increasing (each entry's timestamp \<= the
+  previous entry's), raising `AssertionError` on the first out-of-order
+  pair — extending the existing eager-computed-field-validation pattern
+  (`tsk.models.v1.body.Task._validate_items_eagerly`) to a genuine
+  cross-item ordering guarantee, not just a documented convention.
+  Newest-first (not oldest-first/append) was chosen to match the
+  *existing*, already-tool-supported convention for the ad hoc
+  `### Recent Updates` this feature formalizes:
+  `general/data/general_compact_history_instructions.md` (the
+  `compact_history` prompt) already assumes/states "newest first" for
+  that section, and prepending new entries at the top keeps the
+  always-cut-from-the-bottom rotation-into-`history.md` rule simple.
+  (`tsk_example.md`'s own shipped example already happens to be
+  newest-first; `dec_example.md`'s is oldest-first — that pre-existing
+  cross-domain inconsistency is out of scope here, tracked by
+  `feat-7-various-improvements` Task 0.30; `feat`'s own two sections
+  define and enforce their own explicit convention instead of inheriting
+  the ambiguity.)
 
 **Frontmatter**: `FeatFrontmatter(MarkdownFrontmatter)` — `type: Literal["feat"] = "feat"`; closed status set `frozenset({"planning", "progress", "review", "done"})` (GOL/SOP error-message pattern), default
 `"planning"` (overriding the base's `"draft"` default). No hyphens in any
@@ -326,6 +456,35 @@ timestamp convention.
   `_io.py`/`_lock.py` (per-id lock keyed on the full `id`, e.g. a lock file
   at `<base>/<id>/.lock`) /`_write.py` mirroring the shape (not the
   implementation) of `dec`'s/`gol`'s equivalents.
+- No partial-id-match support in `find_feat_path_by_id` — e.g. a bare
+  `"feat-31"` does **not** resolve to `"feat-31-feature"`. Considered and
+  explicitly rejected (see Decisions Made): an agent that only has a bare
+  `"feat-31"` can already resolve the real id for free by calling
+  `list_feat` (whose `FeatSummary` entries carry the real `id`) and
+  matching the prefix itself, then calling `get_feat` with the resolved
+  id — the same "list, then resolve, then act" pattern already used
+  elsewhere in this codebase (e.g. `create_dec`/`create_gol`'s own
+  dedup-check-first prompts), rather than adding boundary-matching regex,
+  a new ambiguous-match error type, and a scan fallback to
+  `find_feat_path_by_id` for a need the existing tools already cover.
+- `FeatSummary(DocSummary)` adds one extra field beyond the inherited
+  `id`/`title`/`status`/`ref`: **`path: str`**, the real filesystem path
+  to the document's `README.md` (e.g.
+  `.specmgr/feat/feat-31-feature/README.md`; the containing folder is
+  trivially `Path(path).parent` for a caller that wants to look at
+  sibling files). This is a deliberate divergence from every other
+  domain's summary: `DocSummary.ref`'s own docstring states callers "must
+  not read this off disk themselves, only pass it to the matching
+  domain's `get_<domain>` tool" — `AdrSummary` enforces the identical
+  policy, backed by ADR "author and edit ADRs only through MCP structured
+  tools, never raw markdown." `feat` is the opposite case: ADR
+  e369ee2e's whole governing convention *is* direct hand/agent markdown
+  editing of `.specmgr/feat/<id>/README.md`, which remains normal and
+  sanctioned even after `feat`'s own MCP tools exist — so hiding the path
+  behind `ref` alone would work against the domain's own intended
+  workflow. `id`/`ref` stay on `FeatSummary` too (still useful for
+  `get_feat`/`update`/`set_status` lookups) — `path` is additive, not a
+  replacement.
 
 **Prompts are narrated instructions only** (return a string, auto-wrapped as
 a `UserMessage`), same contract as every existing prompt — `create_feat`/
@@ -389,11 +548,11 @@ commit), mirroring `feat-21-decision`'s/`feat-30-sop`'s per-phase commit
 discipline.
 
 #### Phase 0: Scaffolding
+
 - [x] Task 0.1: File GitHub issue #31, create branch `feat-31-feature` off
   `dev`, write this plan file — depends on: none — status: completed
   (2026-08-30)
-- [x] Task 0.2: Package skeleton — `feat/__init__.py` (`from . import
-  prompts, resources, tools` + registration docstring), empty
+- [x] Task 0.2: Package skeleton — `feat/__init__.py` (`from . import prompts, resources, tools` + registration docstring), empty
   `feat/models/v1/`, `feat/tools/`, `feat/resources/`, `feat/prompts/`
   packages, and `tests/feat/` skeleton mirroring `tests/dec/` — depends on:
   Task 0.1 — status: completed (2026-08-30). `feat/data/` deferred to
@@ -415,16 +574,32 @@ discipline.
   `type: Literal["feat"] = "feat"`, closed 4-set status validator, default
   `"planning"` — depends on: Task 1.1 — status: not-started
 - [ ] Task 1.3: `body.py` — all section classes per Design Notes:
-  `Feature` (root), `Plan` + its 8 children (7 leaves + `TaskList` leaf),
-  `Progress` + its 5 children (`Updates` composite + `UpdateEntry`, 4
-  leaves) — depends on: Task 1.2 — status: not-started
+  `Feature` (root), `Plan` + its 8 children (`Overview`/`DesignNotes`/
+  `RelatedDecisions` leaves; `Requirements`/`RequirementItem`,
+  `AcceptanceCriteria`/`AcceptanceCriterionItem` regex-validated lists;
+  `Scope`/`Included`/`ExplicitlyOutOfScope`, `Dependencies`/`DependsOn`/
+  `Blocks` composites (all four implicit-alias, no `LITERAL` needed);
+  `TaskList`/`Phase` dynamic-list composite reusing
+  `tsk.TaskItem`), `Progress` + its 6 children (`CurrentStatus`/`Blockers`/
+  `RelatedPrsCommits`/`MoreInformation` leaves; `Updates`/`UpdateEntry`,
+  `DecisionsMade`/`DecisionEntry` dynamic-list composites) — depends on:
+  Task 1.2 — status: not-started
 - [ ] Task 1.4: `document.py` (`FeatDocument`), `parser.py` (`parse_feat`
-  glue), `summary.py` (`FeatSummary(DocSummary)`), `models/v1/__init__.py`
-  - `models/__init__.py` exports — depends on: Task 1.3 — status:
-    not-started
-- [ ] Task 1.5: Reference fixture `feat_reference.md` exercising every
-  field (all optional sections present, ≥2 `### Updates` entries with
-  well-formed and it must exercise the ISO8601 regex) — depends on: Task
+  glue), `summary.py` (`FeatSummary(DocSummary)` — adds one extra field,
+  `path: str`, beyond the inherited `id`/`title`/`status`/`ref`; see
+  Design Notes' Addressing section and Decisions Made for why `feat`
+  needs this and every other domain's summary deliberately doesn't),
+  `models/v1/__init__.py` - `models/__init__.py` exports — depends on:
+  Task 1.3 — status: not-started
+- [ ] Task 1.5: Reference fixture `feat_reference.md`, **seeded from this
+  feature's own `.specmgr/feat/feat-31-feature/example.md`** (the
+  canonical, engine-verified example — see Current Status/Decisions Made;
+  do not re-derive the schema from scratch or restart from
+  `feat_template.md`) — adjusted only as needed to exercise every field
+  (all optional sections present, ≥2 `### Updates` entries and ≥2
+  `### Decisions Made` entries in newest-first order, ≥2 `#### Phase N`
+  entries each with ≥1 task item), all well-formed, exercising the
+  ISO8601 regex on both `Updates` and `Decisions Made` — depends on: Task
   1.3 — status: not-started
 - [ ] Task 1.6: Tests `tests/feat/models/v1/` — `test_frontmatter.py`
   (4-set status incl. rejection), `test_body.py` (alias acceptance/
@@ -530,8 +705,7 @@ reviewed with the user across several rounds (body-modeling depth,
 addressing scheme, frontmatter `version` semantics, status vocabulary,
 `Updates` shape/naming, MCP surface scope, no-migration decision, branch
 naming, feat-7 backlog entry); package skeleton
-(`feat/{models/v1,tools,resources,prompts}`, `tests/feat/{models/v1,
-tools,resources,prompts}`) in place; `feat-7-various-improvements` Task 0.31
+(`feat/{models/v1,tools,resources,prompts}`, `tests/feat/{models/v1, tools,resources,prompts}`) in place; `feat-7-various-improvements` Task 0.31
 added and Task 0.30 extended. Full quality gate green (2007 tests, ruff
 format/check clean, vulture clean). Committed as 31c5c30/164182e. **Paused
 here, deliberately**: implementation was not what was asked for at this
@@ -539,16 +713,217 @@ point — the design (schema, addressing scheme, MCP surface) needs a review
 pass by the user first, who may request adjustments, before Phase 1 (or any
 further phase) starts. See Blockers.
 
+A second design-review round produced a full worked example of the
+proposed document structure, refined through two further review rounds
+(ordering/comment/hyperlink questions; LITERAL-alias elimination) into
+`.specmgr/feat/feat-31-feature/example.md` — not consumed by any code.
+That round's resolved questions are folded into this plan's Design
+Notes/Decisions Made above; the Blocker below still applies (no
+`src`/`tests` code yet, but the Design Notes themselves have now had
+four review passes).
+
+**`.specmgr/feat/feat-31-feature/example.md` is the canonical,
+implementation-ready worked example** — every design decision through the
+fourth review round is reflected in it, and it has been cross-checked
+against the live `models/md` engine (not just eyeballed): every implicit
+`SPACE_SEPARATED` heading alias in the design was run through
+`space_separated_name()` directly, which is what caught the three
+`RelatedAdrs`/`ExplicitlyOutOfScope`/`DependsOn` issues recorded in
+Decisions Made above. **Task 1.5 in the Task List explicitly instructs
+the implementing agent to seed `feat_reference.md` from this file** —
+this is a load-bearing pointer, not just narrative context, since Task
+1.5 is what an agent executing Phase 1 actually follows. The two
+superseded review-process drafts (`example-initial.md`,
+`example-revised.md`) have been removed — this is now the only example
+file in this feature's own folder.
+
+**Design review is complete, as of 2026-08-30, after five review
+rounds.** The Blocker below is resolved — Phase 1 is authorized to
+start. Frontmatter `status` moved from `planning` to `in-progress`
+accordingly. **Implementation itself is explicitly deferred to a
+separate session/agent (e.g. a Phase-Orchestrator-style agent driving
+the Task List phase by phase)** — this design-review session closes
+here without touching any `src`/`tests` code; Phase 0's committed
+scaffold (`31c5c30`, `164182e`) stays exactly as-is, untouched, ready
+for whichever agent picks up Task 1.1 next.
+
 ### Blockers
 
-- [ ] Design review pending — do not start Phase 1 (or touch any further
-  `src`/`tests` code) until the user has reviewed this plan's Design Notes
-  (schema, addressing scheme, frontmatter semantics, MCP surface) and
-  either confirms it as-is or requests adjustments. Phase 0's committed
-  scaffold (`31c5c30`, `164182e`) stays as-is for now — no revert/rebase/
-  rewrite of any kind unless and until explicitly instructed.
+- [x] Design review — resolved 2026-08-30. Reviewed across five rounds
+  (body-modeling depth; Task List/Scope/Dependencies/Decisions Made
+  structure; ordering/comment/hyperlink questions; LITERAL-alias
+  elimination; partial-id-match/env-var/FeatSummary-path questions).
+  Approved as final; see Decisions Made for the complete decision log.
+  Phase 0's committed scaffold (`31c5c30`, `164182e`) stays as-is — no
+  revert/rebase/rewrite performed or needed. No blockers remain; Phase 1
+  is authorized to start (by a separate implementing agent/session, not
+  as part of this design-review conversation).
 
 ### Recent Updates
+
+#### Update 2026-08-30 (design review complete — Blocker resolved, Phase 1 authorized)
+
+- **Design review declared complete** after five rounds spanning
+  body-modeling depth, addressing scheme, frontmatter semantics, MCP
+  surface scope, ordering/comment/hyperlink questions, LITERAL-alias
+  elimination, and partial-match/env-var/FeatSummary-path questions — no
+  open questions remain in Design Notes.
+- Frontmatter `status` changed from `planning` to `in-progress`; version
+  bumped to `1.6.0`.
+- Blockers: "Design review pending" marked resolved (`[x]`), recording
+  the five-round history and confirming Phase 0's committed scaffold
+  (`31c5c30`, `164182e`) stays untouched.
+- Recorded as a new Decisions Made entry.
+- **Implementation was explicitly not started in this session** —
+  user-directed: Phase 1 (and every later phase) is to be carried out by
+  a separate implementing session/agent (e.g. a Phase-Orchestrator-style
+  agent working through the Task List), not as a continuation of this
+  design-review conversation. Nothing under `src`/`tests` was touched.
+- Next: a separate agent starts at Task 1.1 (`feat/models/v1/_util.py`).
+
+#### Update 2026-08-30 (fifth design-review round — partial-match rejected, env var confirmed mandatory, FeatSummary gains path)
+
+- Resolved three more follow-up questions and updated Design Notes/Task
+  List/Decisions Made accordingly:
+  - **Partial-id matching rejected**: verified an agent can already
+    resolve a bare `"feat-31"` to the real id via `list_feat` +
+    `get_feat` composition, so no boundary-matching/ambiguous-match/scan
+    logic is being added to `find_feat_path_by_id`.
+  - **`SPECMGR_FEAT_DIR` confirmed mandatory**: checked the actual
+    precedent (`adr/tools/_paths.py`'s `SPECMGR_ADR_DIR`,
+    `general/tools/_doc_paths.py`'s shared `SPECMGR_DOCS_DIR`) — every
+    existing domain has an equivalent env var for test isolation; `feat`
+    keeps its own, made explicit in REQ-004/Design Notes rather than
+    just a parenthetical.
+  - **`FeatSummary` gains `path: str`**: checked `general/models/ summary.py`'s `DocSummary` and confirmed its `ref` field is
+    deliberately *not* a path, specifically to discourage direct file
+    access (same policy `AdrSummary` enforces, backed by an ADR requiring
+    ADRs be edited only through MCP tools). `feat` is the opposite case
+    by design — direct hand/agent editing of `.specmgr/feat/<id>/ README.md` is the intended, sanctioned workflow — so `FeatSummary`
+    adds a real `path` field alongside the inherited `id`/`ref`, not in
+    place of them.
+- Nothing under `src`/`tests` was touched.
+
+#### Update 2026-08-30 (removed superseded example drafts; closed the "does Phase 1 know to use it" gap)
+
+- Removed `.specmgr/feat/feat-31-feature/example-initial.md` and
+  `example-revised.md` — both superseded review-process drafts, now that
+  `example.md` has absorbed everything useful from them across four
+  review rounds. `example.md` is the only example file left in this
+  feature's folder.
+- Caught and fixed a real gap: `example.md` had only ever been marked
+  "canonical" in narrative Current Status/Decisions Made/Recent Updates
+  text — Task 1.5 (the actionable Task List item an implementing agent
+  actually follows in Phase 1) never mentioned it at all. Updated Task
+  1.5 to explicitly instruct seeding `feat_reference.md` from
+  `example.md`, and updated Current Status to reflect the same.
+- Nothing under `src`/`tests` was touched.
+
+#### Update 2026-08-30 (fourth design-review round — eliminated all remaining LITERAL aliases except one)
+
+- Per explicit user direction to minimize `LITERAL` alias use, replaced
+  three headings with spellings that match the implicit `SPACE_SEPARATED`
+  derivation exactly, eliminating the need for a `LITERAL` override on
+  each (verified against the live engine, same as the previous round):
+  - `"Related ADRs"` → **`"Related Decisions"`** (`RelatedAdrs` →
+    `RelatedDecisions`) — also a deliberate terminology change: phases
+    out "ADR" in favor of "Decision"/`dec`, per user direction, since
+    this codebase intends to retire ADR terminology over time. Entries
+    may still reference either an ADR id or a `dec` id.
+  - `"Explicitly out of scope"` → **`"Explicitly Out Of Scope"`**
+    (`ExplicitlyOutOfScope` unchanged) — accepted as consistent with this
+    codebase's existing Start-Case multi-word headings.
+  - `"Depends on"` → **`"Depends On"`** (`DependsOn` unchanged) — reusing
+    the parent's own name "Dependencies" for this child was considered
+    and rejected (confusing tautology, awkward `Dependencies.dependencies`
+    field name).
+  - `RelatedPrsCommits`/`"Related PRs / Commits"` keeps its `LITERAL`
+    alias — no casing-only fix exists for a heading containing a slash.
+- Updated the ASCII diagram, Model classes prose, REQ-001, and Task 1.3
+  in Design Notes; recorded as a new Decisions Made entry. `example.md`
+  needed no content changes beyond the "Related ADRs" → "Related
+  Decisions" heading rename itself.
+- Nothing under `src`/`tests` was touched.
+
+#### Update 2026-08-30 (example.md verified and marked canonical)
+
+- Cross-checked every implicit `SPACE_SEPARATED` heading alias in the
+  design against the live engine (`models.md.alias_match. space_separated_name`) instead of assuming the derivation matched the
+  intended heading text. Found and fixed 3 real bugs that would have
+  broken `parse_feat` in Phase 1: `RelatedAdrs` (pre-existing since round
+  1), `ExplicitlyOutOfScope`, `DependsOn` — all three now get an explicit
+  `@alias(..., type=AliasType.LITERAL)`, added to Design Notes and
+  recorded as a new Decisions Made entry. `example.md` itself needed no
+  changes (its heading text was already the intended natural-English
+  form); only the model-class documentation was wrong.
+- Marked `.specmgr/feat/feat-31-feature/example.md` as the canonical,
+  implementation-ready worked example in Current Status above.
+  `example-initial.md`/`example-revised.md` are superseded review-process
+  artifacts — flagged as safe to remove, not yet deleted (awaiting
+  explicit confirmation).
+- Nothing under `src`/`tests` was touched. Next: remove the two
+  superseded example files once confirmed, then this feature is ready to
+  come off the design-review Blocker and resume at Phase 1.
+
+#### Update 2026-08-30 (third design-review round — ordering/comment/hyperlink questions)
+
+- Resolved three follow-up design questions and updated the Design Notes/
+  Decisions Made accordingly:
+  - `### Related PRs / Commits`: confirmed it stays free-form, not
+    regex-enforced as hyperlinks (the existing "no PR yet" placeholder
+    idiom would otherwise break).
+  - `### Updates`/`### Decisions Made` both gain an optional `comment`
+    field (`MarkdownSection3WithComment`, `req`'s `Level`/`Priority`
+    precedent) to host a machine-readable ordering hint in
+    `feat_template.md`/`feat_example.md`, rather than a bare editorial
+    comment.
+  - `### Decisions Made` entries switch to the same full ISO8601
+    timestamp as `### Updates` (not date-only), and both sections gain a
+    real `@model_validator`-enforced newest-first ordering invariant —
+    discovered along the way that `tsk_example.md` (newest-first) and
+    `dec_example.md` (oldest-first) already disagree on direction with no
+    enforcement either way; confirmed via
+    `general/data/general_compact_history_instructions.md` that
+    "newest first" is the existing, already-tool-supported convention for
+    the ad hoc `### Recent Updates` this feature formalizes, so that's
+    what both new sections enforce.
+- Nothing under `src`/`tests` was touched. Next: continue design review,
+  or unblock and resume Phase 1 once the user confirms the design is
+  final.
+
+#### Update 2026-08-30 (second design-review round — Task List/Scope/Dependencies/Decisions Made structure)
+
+- The user drafted `example-revised.md` (annotated with review comments/
+  open questions) building on the first `example.md`. Resolved every open
+  question raised in it:
+  - `### Requirements`/`### Acceptance Criteria` become regex-validated
+    lists (`REQ-\d{3}: ...`/checkbox `ACC-\d{3}: ...`), not opaque leaves.
+  - `### Scope` becomes a composite with mandatory `#### Included`/
+    `#### Explicitly out of scope` leaves (both required).
+  - `### Dependencies` becomes a composite with optional `#### Depends on`/
+    `#### Blocks` leaves (both optional).
+  - `### Task List` becomes a composite of `#### Phase N: ...` entries
+    (regex-validated heading, unpadded numbering), each phase reusing
+    `tsk.TaskItem` for its own flat checklist — a partial reversal of the
+    original "Task List stays opaque" decision (per-item metadata still
+    stays unparsed).
+  - `### Decisions Made` becomes a composite of dated
+    `#### {yyyy-MM-dd} — {title}` entries, chosen over a formalized-flat-
+    list alternative for consistency with `### Updates`.
+  - A new optional `### More Information` leaf is added under
+    `## Progress`.
+  - Recorded all of the above as a new Decisions Made entry, explicitly
+    superseding the earlier "mostly opaque leaves"/"Task List stays a
+    single opaque leaf" decisions.
+- Updated this plan's REQ-001, the Design Notes' ASCII structure diagram
+  and "Model classes" prose, Task 1.3, ACC-001, and the Scope section's
+  "explicitly out of scope" bullet on Task List to match.
+- Nothing under `src`/`tests` was touched — the Blocker (design review
+  pending before Phase 1) still applies; this round only revised the
+  design itself, per explicit user instruction not to remove/change
+  anything else yet.
+- Next: continue the design review (any further structural questions),
+  then unblock and resume at Phase 1 once the user confirms.
 
 #### Update 2026-08-30 (paused for design review after Phase 0)
 
@@ -571,13 +946,11 @@ further phase) starts. See Blockers.
 #### Update 2026-08-30 (Phase 0: Scaffolding — complete)
 
 - Completed Tasks 0.1–0.4, the final tasks of Phase 0.
-  - Task 0.2: package skeleton — `feat/__init__.py` (docstring + `from .
-    import prompts, resources, tools`), empty `feat/models/__init__.py` +
+  - Task 0.2: package skeleton — `feat/__init__.py` (docstring + `from . import prompts, resources, tools`), empty `feat/models/__init__.py` +
     `feat/models/v1/__init__.py`, `feat/tools/__init__.py`,
     `feat/resources/__init__.py`, `feat/prompts/__init__.py` (each with a
     docstring pointing at the phase that populates it), and the matching
-    `tests/feat/{__init__,models/__init__,models/v1/__init__,tools/__init__,
-    resources/__init__,prompts/__init__}.py` (all empty, mirroring
+    `tests/feat/{__init__,models/__init__,models/v1/__init__,tools/__init__, resources/__init__,prompts/__init__}.py` (all empty, mirroring
     `tests/dec/`'s exact convention). `feat/data/` deferred to Phase 3.
   - Task 0.3: added Task 0.31 to `feat-7-various-improvements`'s Phase 0
     task list (migrate the 17 existing feature folders once this schema
@@ -590,8 +963,7 @@ further phase) starts. See Blockers.
     `unittest` suite 2007 tests OK); committed as `31c5c30` ("docs(feat):
     plan the Feature (feat) artifact type feature"); commit hash posted to
     issue #31.
-- Next: Phase 1 (models + parser) — `feat/models/v1/{_util,frontmatter,
-  body,document,parser,summary}.py`, `feat_reference.md`, and
+- Next: Phase 1 (models + parser) — `feat/models/v1/{_util,frontmatter, body,document,parser,summary}.py`, `feat_reference.md`, and
   `tests/feat/models/v1/`.
 - Notes: `sop` (feat-30) is still unimplemented (planning only, no
   `src/biz/dfch/specmgr/sop/` package exists yet) — this feature's
@@ -617,7 +989,7 @@ further phase) starts. See Blockers.
   existing files → explicitly out of scope, tracked as a new
   `feat-7-various-improvements` backlog task instead; implementation
   branch → `feat-31-feature`).
-- Filed GitHub issue #31 ("Formalize the Feature artifact type (\"feat\")"),
+- Filed GitHub issue #31 ("Formalize the Feature artifact type ("feat")"),
   created branch `feat-31-feature` off `dev`, wrote this plan file.
 - Next: Phase 0 — package skeleton (`feat/__init__.py` + empty
   `models/v1`/`tools`/`resources`/`prompts`/`data` packages + `tests/feat/`
@@ -642,15 +1014,70 @@ further phase) starts. See Blockers.
 - **2026-08-30**: Closed 4-value status set with **no hyphens** —
   `planning`/`progress`/`review`/`done` (user explicitly rejected
   `in-progress` in favor of `progress`).
-- **2026-08-30**: Body sections stay mostly opaque leaves (Overview,
+- **2026-08-30**: ~~Body sections stay mostly opaque leaves (Overview,
   Requirements, Acceptance Criteria, Scope, Dependencies, Design Notes,
   Related ADRs, Task List, Current Status, Blockers, Decisions Made,
   Related PRs/Commits) — only `### Updates` gets real structure (H4 dynamic
-  list, ISO8601-enforced heading).
+  list, ISO8601-enforced heading).~~ **Superseded 2026-08-30** (see the
+  entry directly below) — a second design-review round asked for real
+  structure on several more sections.
+- **2026-08-30**: Second design-review round — supersedes the "mostly
+  opaque leaves"/"Task List stays a single opaque leaf" decisions above,
+  based on a revised example the user drafted directly
+  (`example-revised.md`): `### Requirements`/`### Acceptance Criteria`
+  become regex-validated lists (`REQ-\d{3}: ...`/checkbox
+  `ACC-\d{3}: ...`, `TaskItem`-style, zero-padded 3-digit ids matching this
+  plan's own numbering); `### Scope` becomes a composite of mandatory
+  `#### Included`/`#### Explicitly out of scope` leaves (both required —
+  every feature must state both); `### Dependencies` becomes a composite of
+  optional `#### Depends on`/`#### Blocks` leaves (both optional, matching
+  `Dependencies` itself already being optional); `### Task List` becomes a
+  composite holding only `#### Phase N: ...` entries (regex
+  `^Phase \d+: .+$`, unpadded, matching this plan's own "Phase 0".."Phase
+  5" headings), each phase reusing `tsk.TaskItem` for its own flat
+  checklist — per-item metadata (`depends on:`/`status:`/`ETA`) stays
+  unparsed free text, so this is a partial, not full, reversal of the
+  original "don't structurally model Task List" stance; `### Decisions Made` becomes a composite of dated `#### {...} — {title}` entries
+  (format finalized in the entry directly below — chosen over a
+  formalized-flat-list alternative for consistency with `### Updates`'s
+  own shape); a new optional `### More Information` leaf is added under
+  `## Progress`, mirroring `req`'s/ADR's own section one heading level
+  deeper. `Overview`/`Design Notes`/`Related ADRs`/`Current Status`/
+  `Blockers`/`Related PRs / Commits` remain opaque leaves, unchanged.
 - **2026-08-30**: `### Updates` (not `### Recent Updates`), ISO8601-enforced
   `#### {yyyy-MM-dd HH:mm:ss.fff±HH:mm} — {title}` heading regex, copied
   from `feat-30-sop`'s plan one heading level deeper (H3/H4 instead of
   H2/H3, since it sits under `## Progress` not directly under the H1).
+- **2026-08-30**: Third design-review round — three follow-up questions
+  resolved: (1) `### Related PRs / Commits` list items stay free-form, not
+  regex-enforced as hyperlinks — the section's own current content
+  (`- (Phase 0 baseline commit not yet made)`) is a legitimate non-link
+  placeholder idiom that a strict link-only regex would break. (2)
+  Confirmed the "comments only belong in an example if they populate a
+  real schema-declared field" rule from the entry above by giving it a
+  concrete use: `### Updates`/`### Decisions Made` both change from
+  `MarkdownSection3` to `MarkdownSection3WithComment`, adding an optional
+  `comment: MarkdownComment | None` field (`req`'s `Level`/`Priority`
+  precedent) that `feat_template.md`/`feat_example.md` populate with a
+  machine-readable ordering hint. (3) `### Decisions Made` entries switch
+  from date-only `#### {yyyy-MM-dd} — {title}` (the shape recorded two
+  entries above) to the *same* full ISO8601 timestamp format as
+  `### Updates` — necessary because a same-day pair of decisions is
+  otherwise indistinguishable for ordering purposes; and both
+  `### Updates` and `### Decisions Made` gain a real, enforced ordering
+  invariant (a `@model_validator` asserting newest-first, i.e. each
+  entry's timestamp \<= the previous entry's, raising `AssertionError`
+  otherwise) rather than relying on undocumented convention — newest-first
+  was chosen (not oldest-first/append) because it matches the *existing*
+  `compact_history` prompt's own "newest first" assumption for the ad hoc
+  `### Recent Updates` this feature formalizes, and keeps history-rotation
+  a simple cut-from-the-bottom operation. This directly resolves a
+  concrete, pre-existing gap noticed during this round: `tsk_example.md`'s
+  shipped example is newest-first while `dec_example.md`'s is
+  oldest-first, with neither domain's model code enforcing (or even
+  documenting) either direction — an ambiguity `feat`'s own two sections
+  now avoid inheriting (the cross-domain inconsistency itself stays out of
+  scope, tracked by `feat-7-various-improvements` Task 0.30).
 - **2026-08-30**: The 17 existing feature folders are **not** migrated by
   this feature — tracked as a new `feat-7-various-improvements` Task 0.31
   instead (user-directed).
@@ -666,6 +1093,80 @@ further phase) starts. See Blockers.
   `delete_feat` stub/`validate_feat` + `type="feat"` in the generic
   `update`/`set_status` tools) — no `update_feat`/`set_status_feat` of its
   own (user chose the "full lifecycle, sop-style generic dispatch" option).
+- **2026-08-30**: Fixed three implicit-alias bugs found by actually running
+  `space_separated_name()` from `models/md/alias_match.py` against every
+  implicit-`SPACE_SEPARATED`-alias class name in this design, rather than
+  assuming the derivation matched the intended heading text:
+  `RelatedAdrs` (would derive `"Related Adrs"`, not `"Related ADRs"` — a
+  bug present since round 1, undetected through two subsequent review
+  rounds), `ExplicitlyOutOfScope` (would derive `"Explicitly Out Of Scope"`, not `"Explicitly out of scope"`), and `DependsOn` (would
+  derive `"Depends On"`, not `"Depends on"`). All three now get an
+  explicit `@alias(value=..., type=AliasType.LITERAL)`, the same fix
+  already used for `RelatedPrsCommits`. `example.md`'s own heading text
+  needed no changes — it already used the intended natural-English
+  headings; only the Design Notes' model-class documentation was wrong.
+  This verification pass is what qualifies `example.md` as the canonical,
+  implementation-ready example (see Current Status) rather than just a
+  visually-plausible one.
+- **2026-08-30**: Fourth design-review round — eliminated all three
+  `LITERAL` aliases added in the entry directly above, per explicit user
+  direction to minimize `LITERAL` use wherever a different, still-clear
+  spelling makes the implicit `SPACE_SEPARATED` derivation match exactly:
+  `RelatedAdrs`/`"Related ADRs"` → `RelatedDecisions`/`"Related Decisions"` (`space_separated_name("RelatedDecisions")` derives this
+  exactly) — also a deliberate terminology change, not just a casing fix:
+  this codebase intends to phase out ADR in favor of `dec` over time, so
+  a brand-new schema adopts the forward-looking name; entries may still
+  reference an ADR id, a `dec` id, or any other decision record.
+  `ExplicitlyOutOfScope`/`"Explicitly out of scope"` →
+  `"Explicitly Out Of Scope"` (matches the derivation exactly; accepted
+  as consistent with this codebase's own existing Start-Case multi-word
+  headings, e.g. "Acceptance Criteria"). `DependsOn`/`"Depends on"` →
+  `"Depends On"` (matches the derivation exactly; reusing the parent's
+  own name "Dependencies" for this child was considered and rejected as
+  a confusing tautology). `RelatedPrsCommits` keeps its `LITERAL` alias
+  — the slash in "Related PRs / Commits" has no casing-only fix, unlike
+  the three eliminated here. Updated Design Notes' ASCII diagram, Model
+  classes prose, REQ-001, and Task 1.3 to match; `example.md` needs no
+  further heading changes since it always used the intended spelling
+  (only the `Design Notes` heading text itself and `## Related ADRs`
+  cross-reference label conceptually rename to "Related Decisions" — no
+  content change needed in the example beyond that heading).
+- **2026-08-30**: Fifth design-review round — three more questions
+  resolved: (1) **No partial-id-match support** in `find_feat_path_by_id`
+  — considered and rejected; an agent that only has a bare `"feat-31"`
+  can already resolve the real id for free via `list_feat` (whose
+  `FeatSummary` entries carry the real `id`) followed by `get_feat` with
+  the resolved id, so adding boundary-matching regex/an ambiguous-match
+  error/a scan fallback to the addressing layer would solve a need the
+  existing tools already cover. (2) **Confirmed `SPECMGR_FEAT_DIR` is
+  mandatory, not optional** — every existing domain has an equivalent env
+  var (`SPECMGR_ADR_DIR`, the shared `SPECMGR_DOCS_DIR`), specifically for
+  test isolation; omitting it would make `feat` the only domain without
+  test isolation for its base directory (and `feat`'s real base directory
+  is `.specmgr/feat/`, the very folder this plan file lives in). (3)
+  **`FeatSummary(DocSummary)` gains one extra field, `path: str`** (the
+  real filesystem path to the document's `README.md`) — a deliberate,
+  explained divergence from every other domain's summary, whose `ref`
+  field is deliberately *not* a path specifically to discourage direct
+  file access; `feat` is the opposite case, since ADR e369ee2e's whole
+  governing convention for `.specmgr/feat/` *is* direct hand/agent
+  markdown editing, which stays normal and sanctioned even after `feat`'s
+  own MCP tools exist. `id`/`ref` stay on `FeatSummary` — `path` is
+  additive, not a replacement. Updated REQ-004, the Addressing section,
+  and Task 1.4 to match.
+- **2026-08-30**: **Design review declared complete** after five rounds —
+  no open questions remain in Design Notes (the one documented
+  contingency, a possible future ADR for the addressing deviation "if it
+  turns out to have implications beyond this one domain," is an
+  intentional deferred-not-blocking note, not an open review item).
+  Frontmatter `status` moves from `planning` to `in-progress`; the
+  Blockers section's "Design review pending" item is marked resolved.
+  Phase 1 is authorized to start. **Implementation itself is explicitly
+  deferred to a separate implementing session/agent** (e.g. a
+  Phase-Orchestrator-style agent driving the Task List phase by phase) —
+  user-directed: this design-review conversation closes here without
+  touching any `src`/`tests` code, so the next agent picks up cleanly at
+  Task 1.1 against Phase 0's untouched committed scaffold.
 
 ### Related PRs / Commits
 
