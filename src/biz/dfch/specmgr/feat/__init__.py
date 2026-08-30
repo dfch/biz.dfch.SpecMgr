@@ -29,18 +29,19 @@ under the base directory -- see ``feat/tools/_paths.py`` (added in Phase 2)
 for the bespoke addressing this requires, in contrast to every other
 domain's shared ``general/tools/_doc_paths.py``.
 
-**Current status: Phase 3 (resources + packaged data + schema) complete.**
+**Current status: Phase 4 (prompts) complete.**
 ``models/v1/`` (Phase 1), ``tools/`` (Phase 2), ``data/`` and ``resources``
-(Phase 3) are fully implemented; ``prompts`` remains an empty sub-package,
-built out in Phase 4 of the linked feature plan. ``feat`` already follows
-the ``sop``-style generic-dispatch MCP surface (ADR
+(Phase 3), and ``prompts`` (Phase 4) are all fully implemented; only Phase 5
+(cross-cutting registration) of the linked feature plan remains. ``feat``
+already follows the ``sop``-style generic-dispatch MCP surface (ADR
 36905d5b-8057-4294-8665-c7eed5534db0): ``create_feat``, ``parse_feat``,
 ``list_feat``, ``get_feat``, ``get_feat_example``, ``get_feat_template``,
 ``delete_feat`` (stub), ``validate_feat``, plus ``type="feat"`` entries in
 the generic ``update``/``set_status`` tools -- no ``update_feat``/
 ``set_status_feat`` of its own. Resources: ``specmgr://feat/schema``,
 ``specmgr://feat/example``, ``specmgr://feat/template`` (no ``/{id}``, no
-``/list``).
+``/list``). Prompts: ``create_feat(topic)``/``update_feat(id, instructions=None)`` -- narrated instruction flows only,
+reading packaged instructions data from ``feat/data/``.
 
 Import this package to register every feature tool/prompt/resource against
 the shared ``mcp`` application instance at once::

@@ -99,7 +99,9 @@ First-line docstrings from each module, organized by domain:
 - `feat/models/v1/frontmatter.py` — Feature (FEAT) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
 - `feat/models/v1/parser.py` — Parse raw feature (FEAT) ``.md`` text into a :class:`FeatDocument`.
 - `feat/models/v1/summary.py` — Pydantic model for one line of FEAT listing output (Phase 2, ``list_feat``).
-- `feat/prompts/__init__.py` — Feature (FEAT) MCP prompts.
+- `feat/prompts/__init__.py` — MCP prompt wrappers for Features (Task 4.1).
+- `feat/prompts/create_feat.py` — ``@mcp.prompt()``: create_feat (Task 4.1).
+- `feat/prompts/update_feat.py` — ``@mcp.prompt()``: update_feat (Task 4.1).
 - `feat/resources/__init__.py` — MCP resource registrations for Feature (FEAT) documents (feat-31 Task 3.5).
 - `feat/resources/feat_example.py` — Resource: specmgr://feat/example (feat-31 Task 3.5).
 - `feat/resources/feat_schema.py` — Resource: specmgr://feat/schema (feat-31 Task 3.5, packaged data).
@@ -425,4 +427,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 281
+**Test files**: 283

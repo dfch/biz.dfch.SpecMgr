@@ -82,7 +82,9 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.feat.models.v1.frontmatter`](biz.dfch.specmgr.feat.models.v1.frontmatter.md) — Feature (FEAT) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
 - [`biz.dfch.specmgr.feat.models.v1.parser`](biz.dfch.specmgr.feat.models.v1.parser.md) — Parse raw feature (FEAT) ``.md`` text into a :class:`FeatDocument`.
 - [`biz.dfch.specmgr.feat.models.v1.summary`](biz.dfch.specmgr.feat.models.v1.summary.md) — Pydantic model for one line of FEAT listing output (Phase 2, ``list_feat``).
-- [`biz.dfch.specmgr.feat.prompts`](biz.dfch.specmgr.feat.prompts.md) — Feature (FEAT) MCP prompts.
+- [`biz.dfch.specmgr.feat.prompts`](biz.dfch.specmgr.feat.prompts.md) — MCP prompt wrappers for Features (Task 4.1).
+- [`biz.dfch.specmgr.feat.prompts.create_feat`](biz.dfch.specmgr.feat.prompts.create_feat.md) — ``@mcp.prompt()``: create_feat (Task 4.1).
+- [`biz.dfch.specmgr.feat.prompts.update_feat`](biz.dfch.specmgr.feat.prompts.update_feat.md) — ``@mcp.prompt()``: update_feat (Task 4.1).
 - [`biz.dfch.specmgr.feat.resources`](biz.dfch.specmgr.feat.resources.md) — MCP resource registrations for Feature (FEAT) documents (feat-31 Task 3.5).
 - [`biz.dfch.specmgr.feat.resources.feat_example`](biz.dfch.specmgr.feat.resources.feat_example.md) — Resource: specmgr://feat/example (feat-31 Task 3.5).
 - [`biz.dfch.specmgr.feat.resources.feat_schema`](biz.dfch.specmgr.feat.resources.feat_schema.md) — Resource: specmgr://feat/schema (feat-31 Task 3.5, packaged data).

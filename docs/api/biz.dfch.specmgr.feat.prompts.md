@@ -1,9 +1,12 @@
 # `biz.dfch.specmgr.feat.prompts`
 
-Feature (FEAT) MCP prompts.
+MCP prompt wrappers for Features (Task 4.1).
 
-**Phase 0 scaffolding only.** Populated in Phase 4 of
-``.specmgr/feat/feat-31-feature/README.md``: ``create_feat(topic)`` and
-``update_feat(id, instructions=None)`` -- narrated instruction flows only
-(no tool calls of their own), reading packaged instructions data from
-``feat/data/``.
+Each returns plain instructional text (auto-wrapped as a single
+``UserMessage`` by the SDK) that guides an LLM through driving the
+existing ``feat/tools/``/``feat/resources/`` surface in the right order --
+one module per prompt, mirroring ``dec/prompts/``'s own one-module-per-
+prompt split. Import this package to register all feature prompts at
+once::
+
+    from biz.dfch.specmgr.feat import prompts  # noqa: F401 (side-effects only)

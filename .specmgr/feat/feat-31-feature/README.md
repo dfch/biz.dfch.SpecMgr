@@ -3,7 +3,7 @@ created: 2026-08-30
 id: feat-31-feature
 status: in-progress
 updated: 2026-08-30
-version: 1.9.0
+version: 1.10.0
 ---
 
 # Feature: Formalize the Feature artifact type ("feat")
@@ -715,13 +715,23 @@ discipline.
 
 #### Phase 4: Prompts
 
-- [ ] Task 4.1: `feat/prompts/` — `create_feat.py` (`create_feat(topic)`),
+- [x] Task 4.1: `feat/prompts/` — `create_feat.py` (`create_feat(topic)`),
   `update_feat.py` (`update_feat(id, instructions=None)`), `__init__.py`
-  — depends on: Task 3.3 — status: not-started
-- [ ] Task 4.2: Tests `tests/feat/prompts/` (ACC-006) — depends on: Task
-  4.1 — status: not-started
-- [ ] Task 4.3: Phase-end quality gate + commit + comment on issue #31 —
-  depends on: Task 4.2 — status: not-started
+  — depends on: Task 3.3 — status: completed (2026-08-30). Both are thin
+  `string.Template` wrappers around the Phase-3 packaged instructions
+  files, 1:1 mirrors of `dec.prompts.create_dec`/`update_dec` — neither
+  calls `TodoWrite`/`question`/`list_feat`/`get_feat`/`create_feat`/
+  `update`/`set_status` itself.
+- [x] Task 4.2: Tests `tests/feat/prompts/` (ACC-006) — depends on: Task
+  4.1 — status: completed (2026-08-30), 29 new tests
+  (`test_create_feat.py`/`test_update_feat.py`), including a real
+  "walk the instructions end to end" test per prompt (ACC-006) against a
+  temporary `SPECMGR_FEAT_DIR` — see Decisions Made for the fallback
+  string judgment call.
+- [x] Task 4.3: Phase-end quality gate + commit + comment on issue #31 —
+  depends on: Task 4.2 — status: completed (2026-08-30) — quality gate
+  green; **commit and issue comment left to the orchestrator**, per this
+  phase's own task instructions (implementer runs the gate only).
 
 #### Phase 5: Cross-cutting registration
 
@@ -877,6 +887,41 @@ gate green: `ruff format --check`/`ruff check` clean, `vulture src/ whitelist.py
 `specmgr unused-code` clean, full `unittest` suite green (2199 tests, up
 from 2179 after Phase 2). Phase 4 (`feat/prompts/`) is next.
 
+**As of 2026-08-30 (Phase 4 complete)**: `feat/prompts/` is fully
+implemented — `create_feat.py` (`create_feat(topic)`), `update_feat.py`
+(`update_feat(id, instructions=None)`), `__init__.py`, each a 1:1 mirror
+of `dec.prompts.create_dec`/`update_dec`: thin `string.Template` wrappers
+that read the already-existing Phase-3 packaged instructions files
+(`feat_create_instructions.md`/`feat_update_instructions.md`) and
+substitute `$topic` / `$id`+`$instructions`, never calling
+`TodoWrite`/`question`/`list_feat`/`get_feat`/`create_feat`/`update`/
+`set_status` themselves. `update_feat`'s missing-`instructions` fallback
+is the literal string `"(not given)"` (not DEC's longer
+`"(not given -- ask the user before making any change)"`), matching
+`feat_update_instructions.md`'s own step 2 check verbatim (`If "Requested
+change" above says "(not given)"...`). 29 new tests across
+`tests/feat/prompts/` (`test_create_feat.py`/`test_update_feat.py`), all
+green: static string-content/ordering assertions mirroring
+`tests/dec/prompts/`'s own depth, plus one "walk the instructions end to
+end" test per prompt (ACC-006) that drives the real
+`create_feat`/`get_feat`/`list_feat`/`update`/`set_status` tools against
+a temporary `SPECMGR_FEAT_DIR` — `TestCreateFeatInstructionsWalkthrough`
+follows step 0 (dedup check via `list_feat`) and step 4 (`create_feat`)
+literally; `TestUpdateFeatInstructionsWalkthrough` creates a real
+document, then follows `get_feat` → line-range `update` → whole-body
+`update` → `set_status` exactly as the packaged update instructions
+narrate, asserting the end state (status `progress`, 2 Requirements
+items, id/created preserved). `tests/dec/prompts/` itself does not do
+this deeper walk-through (static-text assertions only), so this is new
+depth introduced for `feat` specifically, per ACC-006's explicit
+requirement. `feat/__init__.py`'s module docstring updated to reflect
+Phase 4 completion (only Phase 5 cross-cutting registration remains).
+Full quality gate green: `ruff format --check`/`ruff check` clean,
+`vulture src/ whitelist.py --min-confidence 60` clean (no new entries
+needed), `specmgr unused-code` clean, full `unittest` suite green (2228
+tests, up from 2199 after Phase 3). Phase 5 (cross-cutting registration)
+is next.
+
 ### Blockers
 
 - [x] Design review — resolved 2026-08-30. Reviewed across five rounds
@@ -890,6 +935,58 @@ from 2179 after Phase 2). Phase 4 (`feat/prompts/`) is next.
   as part of this design-review conversation).
 
 ### Recent Updates
+
+#### Update 2026-08-30 (Phase 4 complete — prompts)
+
+- Implemented `feat/prompts/` in full: `create_feat.py`
+  (`create_feat(topic)`), `update_feat.py`
+  (`update_feat(id, instructions=None)`), `__init__.py` — each a 1:1
+  mirror of `dec.prompts.create_dec`/`update_dec`: thin `string.Template`
+  wrappers around `general.tools._packaged_data.read_packaged_text`
+  reading the already-existing Phase-3 packaged instructions files
+  (`feat_create_instructions.md`/`feat_update_instructions.md`),
+  substituting `$topic` (create) and `$id`/`$instructions` (update).
+  Neither calls `TodoWrite`/`question`/`list_feat`/`get_feat`/
+  `create_feat`/`update`/`set_status` themselves — they only narrate that
+  sequence, matching every other prompt in this codebase.
+- Judgment call: `update_feat`'s fallback for a missing `instructions`
+  argument is the literal string `"(not given)"`, not DEC's own longer
+  `"(not given -- ask the user before making any change)"` — verified
+  `feat_update_instructions.md`'s step 2 checks for the literal substring
+  `"(not given)"` (`If "Requested change" above says "(not given)", ask
+  the user...`), so the fallback matches that check exactly rather than
+  reusing DEC's wording verbatim.
+- Updated `feat/prompts/__init__.py` to import and export both prompts
+  (mirroring `dec/prompts/__init__.py`'s one-module-per-prompt shape) and
+  `feat/__init__.py`'s module docstring to reflect Phase 4 completion
+  (only Phase 5 cross-cutting registration remains).
+- Wrote 29 new tests across `tests/feat/prompts/`
+  (`test_create_feat.py`/`test_update_feat.py`) — all green: static
+  string-content/ordering assertions mirroring `tests/dec/prompts/`'s own
+  depth (topic/id/instructions substitution, packaged-file provenance,
+  tool-call-sequence ordering, missing-file propagation), plus, per
+  ACC-006's explicit requirement, one "walk the instructions end to end"
+  test per prompt driving the real `create_feat`/`get_feat`/`list_feat`/
+  `update`/`set_status` tools against a temporary `SPECMGR_FEAT_DIR`:
+  `TestCreateFeatInstructionsWalkthrough` follows step 0 (dedup check via
+  `list_feat`) and step 4 (`create_feat`) literally;
+  `TestUpdateFeatInstructionsWalkthrough` creates a real document, then
+  follows `get_feat` → line-range `update` → whole-body `update` →
+  `set_status` exactly as the packaged update instructions narrate,
+  asserting the end state. Checked `tests/dec/prompts/` first per this
+  phase's own instructions — it only does static-text assertions, so this
+  deeper walk-through is new depth introduced specifically for `feat`.
+- Quality gate: `ruff format --check` (clean), `ruff check` (clean),
+  `vulture src/ whitelist.py --min-confidence 60` (clean, no new entries
+  needed), `specmgr unused-code` (clean), full `unittest` suite (2228
+  tests, green, up from 2199 after Phase 3).
+- Per this phase's own task instructions, **no commit was made and no
+  comment was posted to issue #31** — that is the phase orchestrator's
+  responsibility, not the implementing agent's, for this run.
+- Next: Phase 5 (cross-cutting registration) — `server.py` domain import,
+  `pyproject.toml`/`.pre-commit-config.yaml`/CI wiring, `AGENTS.md`
+  updates, regenerated docs, final verification pass, and setting the
+  feature status to `done`.
 
 #### Update 2026-08-30 (Phase 3 complete — resources, packaged data, schema)
 
@@ -1595,6 +1692,38 @@ from 2179 after Phase 2). Phase 4 (`feat/prompts/`) is next.
   already does; a single entry per dynamic list is enough to prove the
   section round-trips through `parse_feat` while keeping the template
   short, matching DEC's/GOL's own single-entry template precedent.
+- **2026-08-30 (Phase 4)**: `update_feat`'s missing-`instructions`
+  fallback string is exactly `"(not given)"`, not DEC's own longer
+  `"(not given -- ask the user before making any change)"` -- checked
+  `feat_update_instructions.md`'s own step 2 wording first (`If "Requested
+  change" above says "(not given)", ask the user what they want to
+  change before calling any write tool`), which checks for the literal
+  substring `"(not given)"`, not DEC's longer phrase. Using DEC's own
+  fallback text verbatim would still satisfy that literal check (it
+  contains `"(not given"` as a prefix but not the closing `")"`
+  immediately after -- DEC's phrase is `"(not given -- ..."`, which does
+  **not** contain the exact substring `"(not given)"` with a closing
+  paren right after "given"), so DEC's wording would silently fail
+  `feat_update_instructions.md`'s own literal check. Chose to match what
+  the packaged instructions file actually expects, per this phase's own
+  task instructions, rather than blindly copying DEC's prose.
+- **2026-08-30 (Phase 4)**: `tests/feat/prompts/` adds a genuine "walk the
+  instructions end to end" test per prompt (ACC-006's explicit
+  requirement), going beyond `tests/dec/prompts/`'s own static-text-only
+  depth -- checked `tests/dec/prompts/test_create_dec.py`/
+  `test_update_dec.py` first (per this phase's own task instructions) and
+  confirmed neither does this: both are entirely string-content/ordering
+  assertions on the returned instructional text, never driving the actual
+  `create_dec`/`get_dec`/`update`/`set_status` tools. `feat`'s own
+  `TestCreateFeatInstructionsWalkthrough`/
+  `TestUpdateFeatInstructionsWalkthrough` instead drive the real tool
+  functions (`create_feat`, `get_feat`, `list_feat`, the generic `update`/
+  `set_status` with `type="feat"`) against a temporary `SPECMGR_FEAT_DIR`,
+  following the packaged instructions' own narrated steps literally, to
+  prove the narration is an actually-followable, correct sequence and not
+  just plausible text -- new test depth introduced specifically for
+  `feat`, not a retroactive change to `dec`'s own test suite (out of
+  scope here).
 
 ### Related PRs / Commits
 
