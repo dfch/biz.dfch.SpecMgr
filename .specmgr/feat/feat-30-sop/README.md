@@ -623,7 +623,7 @@ quality gate, README Progress update).
   `server.py` docstring) — depends on: Task 3.4 — status: not-started
 - [ ] Task 3.6: `commands/schema.py` — `generate_sop_schema()` +
   `_GENERATORS["sop"]` (mirror `generate_dec_schema`); run `specmgr schema --type sop` (writes `docs/sop_schema.json`) and `specmgr schema --type sop --output-dir src/biz/dfch/specmgr/sop/data` (packaged copy)
-  — depends on: Task 1.6 — status: not-started
+  — depends on: Task 2.5 — status: not-started
 - [ ] Task 3.7: `sop/resources/` — `sop_schema.py` (`specmgr://sop/schema`,
   JSON from packaged copy), `sop_example.py`, `sop_template.py`,
   `__init__.py` — still exactly three `sop` resources, no `rasci.py` here
