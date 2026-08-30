@@ -88,6 +88,15 @@ First-line docstrings from each module, organized by domain:
 - `dec/tools/parse_dec.py` — ``@mcp.tool()`` wrapper: parse_dec (Task 2.2).
 - `dec/tools/validate_dec.py` — ``@mcp.tool()`` wrapper: validate_dec (Task 2.2).
 
+**feat/**
+
+- `feat/__init__.py` — Feature (FEAT) domain -- formalizes the ``.specmgr/feat/<id>/README.md`` convention.
+- `feat/models/__init__.py` — Feature (FEAT) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- `feat/models/v1/__init__.py` — Feature (FEAT) v1 schema -- frontmatter, body, document, parser, summary.
+- `feat/prompts/__init__.py` — Feature (FEAT) MCP prompts.
+- `feat/resources/__init__.py` — Feature (FEAT) MCP resources.
+- `feat/tools/__init__.py` — Feature (FEAT) MCP tools.
+
 **general/**
 
 - `general/__init__.py` — General-purpose (cross-cutting, not domain-specific) tools, resources, and

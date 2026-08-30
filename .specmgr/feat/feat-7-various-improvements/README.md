@@ -790,27 +790,48 @@ progresses (edit, don't duplicate).
   `Updates`/`## Updates` with a structurally-enforced ISO8601 timestamp +
   " — " + title heading regex
   (`^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2}) — .+$`)
-  — a stricter shape than either `tsk` or `dec` currently has. None of
-  `req`/`uc`/`qa`/`prb`/`gol`/`rsk` have any such section at all today.
-  Decide: (a) whether a single canonical heading name/shape
-  (`## Updates` vs `## Recent Updates`, timestamp format enforced or not)
-  should be retrofitted across every domain that has one, or whether the
-  divergence is intentional/acceptable per-domain; (b) if consolidating,
-  whether this warrants a shared `models/md` mixin/base class (e.g. a
-  generic `UpdatesSection`/`UpdateEntry` pair domains can subclass) rather
-  than each domain hand-rolling its own `Updates`/`UpdateEntry` pair; (c)
-  whether `sop`'s new ISO8601-with-offset timestamp format for `## Updates`
-  entry headings should become the new cross-domain standard (superseding
+  — a stricter shape than either `tsk` or `dec` currently has. `feat`
+  (feat-31, formalizing the `.specmgr/feat/` artifact type itself, also not
+  yet implemented) adds a **fourth** variant: the same ISO8601-enforced
+  `Updates`/`UpdateEntry` shape as `sop`, but one heading level deeper
+  (`### Updates`/`#### {timestamp} — {title}`, since it sits under
+  `## Progress` rather than directly under the document's H1) — copied
+  from `sop`'s planned shape rather than `sop`'s code (which does not exist
+  yet). None of `req`/`uc`/`qa`/`prb`/`gol`/`rsk` have any such section at
+  all today. Decide: (a) whether a single canonical heading name/shape
+  (`## Updates` vs `## Recent Updates`, timestamp format enforced or not,
+  and at which heading depth) should be retrofitted across every domain
+  that has one, or whether the divergence is intentional/acceptable
+  per-domain; (b) if consolidating, whether this warrants a shared
+  `models/md` mixin/base class (e.g. a generic `UpdatesSection`/
+  `UpdateEntry` pair domains can subclass) rather than each domain
+  hand-rolling its own `Updates`/`UpdateEntry` pair; (c) whether `sop`'s/
+  `feat`'s ISO8601-with-offset timestamp format for `Updates` entry
+  headings should become the new cross-domain standard (superseding
   `tsk`'s free-form heading and `dec`'s implicit-alias heading), be
-  retrofitted onto `tsk`/`dec`, or stay `sop`-only as a deliberate
+  retrofitted onto `tsk`/`dec`, or stay `sop`/`feat`-only as a deliberate
   divergence; record whichever decision is made, with rationale, in this
   file's Decisions Made log (or a full ADR if it turns out to affect the
   parser engine itself, per the ADR-vs-feature-log tie-breaker in ADR
-  e369ee2e-3353-4f92-991c-6367d76d832e). Out of scope for `feat-30-sop`
-  itself — that feature proceeds with its own `## Updates` shape as
-  designed; this task is only about whether a later, separate
-  consolidation pass should retrofit `tsk`/`dec` (and any future domain)
-  onto one shared shape.
+  e369ee2e-3353-4f92-991c-6367d76d832e). Out of scope for `feat-30-sop`/
+  `feat-31-feature` themselves — both features proceed with their own
+  `Updates` shape as designed; this task is only about whether a later,
+  separate consolidation pass should retrofit `tsk`/`dec` (and any future
+  domain) onto one shared shape.
+
+- [ ] Task 0.31: Migrate the 17 pre-existing `.specmgr/feat/*/README.md`
+  files into the new `feat` artifact-type schema (`type: feat` frontmatter
+  field, closed 4-set `status` with no hyphens, `### Updates`
+  restructuring per whatever Task 0.30 decides) — depends on:
+  `feat-31-feature` (the `feat` artifact type feature) being implemented
+  and merged, Task 0.30 (consolidation decision) — status: not-started
+
+  Background: `feat-31-feature` (formalizing the Feature artifact type)
+  deliberately does **not** migrate existing feature folders — they stay
+  unparseable by `parse_feat`/`get_feat` (silently skipped by `list_feat`)
+  until this follow-up task migrates them by hand/script once the schema
+  and its `### Updates` shape are both settled (user-directed decision,
+  recorded in `feat-31-feature`'s own Decisions Made log).
 
 - [ ] Task 1.1: Inventory current `specmgr://*/list` resources and diff
   their output shape/behavior (`adr_list` vs. `req_list`) — depends on:
@@ -933,6 +954,19 @@ already-compacted folder).
 
 See `history.md` for updates before 2026-08-18 (rotated out per ADR
 e369ee2e-3353-4f92-991c-6367d76d832e once this section grew too long).
+
+#### Update 2026-08-30 (Task 0.31 recorded; Task 0.30 extended)
+
+- Recorded: Task 0.31 (migrate the 17 pre-existing `.specmgr/feat/*/
+  README.md` files into the new `feat` artifact-type schema once
+  `feat-31-feature` ships and Task 0.30's consolidation decision is made)
+  — found while planning `feat-31-feature` (formalizing the Feature
+  artifact type itself), which deliberately excludes this migration from
+  its own scope per user direction.
+- Extended: Task 0.30's background note now also cites `feat-31-feature`'s
+  planned `### Updates`/`UpdateEntry` shape (same ISO8601 regex as `sop`,
+  one heading level deeper) as a fourth divergent variant, alongside
+  `tsk`/`dec`/`sop`.
 
 #### Update 2026-08-30 (Task 0.30 recorded)
 
