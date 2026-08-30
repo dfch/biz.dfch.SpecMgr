@@ -34,12 +34,14 @@ previous per-domain ADR status tool's function body (same ``adr_lock``,
 ``"superseded by {superseded_by}"`` when ``superseded_by`` is given.
 
 The ``feat`` adapter (``_set_status_feat``) diverges from the other eight
-whole-body domains' identical shape in the same two ways ``_update_feat``
-(in ``update.py``) does: it bumps ``updated`` to a plain ``YYYY-MM-DD``
-date, not the others' microsecond timestamp; and it resolves ``id`` via
+whole-body domains' identical shape in the same way ``_update_feat``
+(in ``update.py``) does: it resolves ``id`` via
 ``feat.tools._paths``'s bespoke folder-per-document shortcut, not a
 flat-file directory scan (see
-``.specmgr/feat/feat-31-feature/README.md`` Design Notes).
+``.specmgr/feat/feat-31-feature/README.md`` Design Notes). It bumps
+``updated`` to the same microsecond timestamp as every other domain --
+an earlier, deliberate divergence (a plain ``YYYY-MM-DD`` date) was
+reversed for cross-domain consistency; see that feature's Decisions Made.
 
 The parameter is intentionally named ``type`` (it matches the frontmatter
 field vocabulary the client already knows); no enabled ruff rule objects
@@ -357,12 +359,11 @@ def _set_status_feat(id_: str, status: str, superseded_by: str | None) -> FeatDo
 
     Mirrors :func:`_set_status_dec`'s shape (same ``feat_lock``,
     ``load_by_id``, ``write_feat_file``, ``FeatNotFoundError``) -- see
-    :func:`_set_status_req` for the full semantics -- with the same two
-    feat-only divergences ``_update_feat`` (in ``update.py``) documents:
+    :func:`_set_status_req` for the full semantics -- with the same
+    feat-only divergence ``_update_feat`` (in ``update.py``) documents:
     ``id_`` resolves via ``feat.tools._paths``'s bespoke folder-per-document
-    shortcut, not a flat-file directory scan; and ``updated`` is bumped to
-    a plain ``YYYY-MM-DD`` date (``datetime.now().date().isoformat()``),
-    not the other eight domains' microsecond timestamp.
+    shortcut, not a flat-file directory scan. ``updated`` is bumped to the
+    same microsecond timestamp as every other domain.
     """
     assert superseded_by is None, "the public `set_status` guard rejects superseded_by for non-adr types"
 
@@ -371,10 +372,10 @@ def _set_status_feat(id_: str, status: str, superseded_by: str | None) -> FeatDo
         path, existing = load_feat_by_id(base_dir, id_)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
-        today = datetime.now().date().isoformat()
+        now = datetime.now().isoformat(timespec="microseconds")
         fm_data = existing.frontmatter.model_dump()
         fm_data["status"] = status
-        fm_data["updated"] = today
+        fm_data["updated"] = now
         new_frontmatter = FeatFrontmatter(**fm_data)
         new_doc = FeatDocument(frontmatter=new_frontmatter, body=existing.body)
         write_feat_file(path, new_frontmatter, raw_body)
@@ -444,10 +445,9 @@ def set_status(
 
     For the nine whole-body domains the existing file's frontmatter is
     carried over with every field preserved except ``status`` (replaced)
-    and ``updated`` (bumped to the current timestamp -- a plain
-    ``YYYY-MM-DD`` date for ``feat``, a microsecond timestamp for the other
-    eight); the body is never touched -- its raw, on-disk markdown (not a
-    render of the parsed model) is re-read and re-persisted verbatim. For
+    and ``updated`` (bumped to the current microsecond timestamp); the
+    body is never touched -- its raw, on-disk markdown (not a render of
+    the parsed model) is re-read and re-persisted verbatim. For
     ``type="adr"`` the change delegates to
     ``models.adr.v1.mutations.set_status`` (which composes ``status`` as
     ``"superseded by {superseded_by}"`` when ``superseded_by`` is given)

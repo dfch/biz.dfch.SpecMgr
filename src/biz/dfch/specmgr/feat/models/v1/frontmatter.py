@@ -27,9 +27,9 @@ the base's ``"draft"`` (a `feat` document starts life ``"planning"``, not
 
 `created`/`updated` are inherited unchanged from `MarkdownFrontmatter` as
 plain, unvalidated ``str | None`` -- the base model performs no format
-validation on either field for any domain (the specific ``YYYY-MM-DD``
-convention `feat` uses, versus other domains' microsecond timestamp, is a
-tool-layer/`_write.py` concern for Phase 2, not a model-layer one).
+validation on either field for any domain (the specific microsecond
+timestamp convention every domain, including `feat`, uses is a
+tool-layer/`_write.py` concern, not a model-layer one).
 """
 
 from __future__ import annotations

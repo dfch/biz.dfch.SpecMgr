@@ -124,7 +124,7 @@ class TestCreateFeat(TempFeatDirTestCase):
         self.assertEqual(result.frontmatter.status, "planning")
         self.assertIsNotNone(result.frontmatter.created)
         self.assertEqual(result.frontmatter.created, result.frontmatter.updated)
-        self.assertRegex(result.frontmatter.created or "", r"^\d{4}-\d{2}-\d{2}$")
+        self.assertRegex(result.frontmatter.created or "", r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}$")
         self.assertEqual(result.frontmatter.version, CURRENT_SCHEMA_VERSION)
         self.assertEqual(result.body.text, "Feature: Example Widget")
 

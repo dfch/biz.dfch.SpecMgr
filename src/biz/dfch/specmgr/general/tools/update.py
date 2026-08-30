@@ -37,14 +37,15 @@ the builtin shadow. The 9-way union return type is annotation-only -- the
 MCP input schema is built from the parameters, and the SDK serializes
 whichever concrete document is returned.
 
-``feat`` is the one domain whose adapter (``_update_feat``) diverges in two
-ways from the other eight's identical shape: it bumps ``updated`` to a
-plain ``YYYY-MM-DD`` date (``datetime.now().date().isoformat()``), not the
-others' microsecond timestamp, matching ``create_feat``'s own frontmatter
-convention (see ``.specmgr/feat/feat-31-feature/README.md`` Design Notes,
-"Frontmatter"); and it resolves ``id`` via ``feat.tools._paths``'s bespoke
-folder-per-document shortcut, not a flat-file directory scan (see that
-feature's Design Notes, "Addressing").
+``feat`` is the one domain whose adapter (``_update_feat``) diverges from
+the other eight's identical shape in how it resolves ``id``: via
+``feat.tools._paths``'s bespoke folder-per-document shortcut, not a
+flat-file directory scan (see
+``.specmgr/feat/feat-31-feature/README.md`` Design Notes, "Addressing").
+It bumps ``updated`` to the same microsecond timestamp as every other
+domain -- an earlier, deliberate divergence (a plain ``YYYY-MM-DD`` date)
+was reversed for cross-domain consistency; see that feature's Decisions
+Made.
 
 ADR is deliberately *not* a ``type`` here: its section-level MADR mutation
 contract (``update_frontmatter``/``update_section``/``option_*``) has no
@@ -444,14 +445,12 @@ def _update_feat(id_: str, content: str, begin: int | None, end: int | None) -> 
     """Replace the body of the feature identified by ``id_`` (whole-body or line-range mode).
 
     Mirrors :func:`_update_dec`'s shape (same ``feat_lock``, ``load_by_id``,
-    ``write_feat_file``, ``FeatNotFoundError``) with two feat-only
-    divergences (see the module docstring): ``id_`` resolves via
+    ``write_feat_file``, ``FeatNotFoundError``) with one feat-only
+    divergence (see the module docstring): ``id_`` resolves via
     ``feat.tools._paths``'s bespoke folder-per-document shortcut (through
-    ``load_by_id``/``feat_base_dir``), not a flat-file directory scan; and
-    ``updated`` is bumped to a plain ``YYYY-MM-DD`` date
-    (``datetime.now().date().isoformat()``), not the other eight domains'
-    microsecond timestamp, matching ``create_feat``'s own frontmatter
-    convention.
+    ``load_by_id``/``feat_base_dir``), not a flat-file directory scan.
+    ``updated`` is bumped to the same microsecond timestamp as every other
+    domain.
     """
     if begin is not None or end is not None:
         assert begin is not None and end is not None, "the public `update` guard enforces both-or-neither"
@@ -461,9 +460,9 @@ def _update_feat(id_: str, content: str, begin: int | None, end: int | None) -> 
             path, existing = load_feat_by_id(base_dir, id_)
             spliced = splice_body(body_text(path), begin, end, content)
             body = Feature.from_text(format_text(spliced))
-            today = datetime.now().date().isoformat()
+            now = datetime.now().isoformat(timespec="microseconds")
             fm_data = existing.frontmatter.model_dump()
-            fm_data["updated"] = today
+            fm_data["updated"] = now
             new_frontmatter = FeatFrontmatter(**fm_data)
             new_doc = FeatDocument(frontmatter=new_frontmatter, body=body)
             write_feat_file(path, new_frontmatter, spliced)
@@ -474,9 +473,9 @@ def _update_feat(id_: str, content: str, begin: int | None, end: int | None) -> 
     base_dir = feat_base_dir()
     with feat_lock(id_):
         path, existing = load_feat_by_id(base_dir, id_)
-        today = datetime.now().date().isoformat()
+        now = datetime.now().isoformat(timespec="microseconds")
         fm_data = existing.frontmatter.model_dump()
-        fm_data["updated"] = today
+        fm_data["updated"] = now
         new_frontmatter = FeatFrontmatter(**fm_data)
         new_doc = FeatDocument(frontmatter=new_frontmatter, body=body)
         write_feat_file(path, new_frontmatter, content)

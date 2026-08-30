@@ -28,14 +28,13 @@ as ``create_dec``/``create_gol``: the caller's own already-validated body is
 persisted byte-for-byte, and only the small, code-constructed frontmatter
 YAML block is (re)generated.
 
-**Timestamp format is a deliberate ``feat``-only divergence.** Every other
-domain's ``create_<d>`` sets ``created``/``updated`` to
-``datetime.now().isoformat(timespec="microseconds")``; `feat`'s own
-frontmatter keeps plain ``YYYY-MM-DD`` dates instead
-(``datetime.now().date().isoformat()``), matching every one of the 17
-pre-existing hand-authored feature files and ADR
-e369ee2e-3353-4f92-991c-6367d76d832e's own template -- see
-``.specmgr/feat/feat-31-feature/README.md`` Design Notes ("Frontmatter").
+``created``/``updated`` use the same microsecond ISO timestamp format
+(``datetime.now().isoformat(timespec="microseconds")``) as every other
+whole-body domain's ``create_<d>`` -- an earlier, deliberate ``feat``-only
+divergence (plain ``YYYY-MM-DD`` dates, matching the 17 pre-existing
+hand-authored feature files) was reversed for cross-domain consistency; see
+``.specmgr/feat/feat-31-feature/README.md`` Design Notes ("Frontmatter") and
+Decisions Made.
 """
 
 from __future__ import annotations
@@ -69,8 +68,8 @@ def create_feat(content: str) -> FeatDocument:
     built by this tool: a fresh ``feat-NNN-slug`` id (see this module's
     docstring), ``type="feat"``, ``status="planning"`` (always, never
     caller-supplied on create -- `feat`'s own default lifecycle state),
-    ``created``/``updated`` both set to today's plain ``YYYY-MM-DD`` date,
-    and ``version`` set to the current ``models.md`` schema version.
+    ``created``/``updated`` both set to the current timestamp, and
+    ``version`` set to the current ``models.md`` schema version.
 
     ``content`` is validated by constructing a
     :class:`~biz.dfch.specmgr.feat.models.v1.Feature` from it
@@ -102,13 +101,13 @@ def create_feat(content: str) -> FeatDocument:
         base_dir = ensure_feat_base_dir()
         new_id = f"feat-{_next_feat_number(base_dir)}-{slug}"
 
-        today = datetime.now().date().isoformat()
+        now = datetime.now().isoformat(timespec="microseconds")
         new_frontmatter = FeatFrontmatter(
             id=new_id,
             type="feat",
             status="planning",
-            created=today,
-            updated=today,
+            created=now,
+            updated=now,
             version=CURRENT_SCHEMA_VERSION,
         )
         new_doc = FeatDocument(frontmatter=new_frontmatter, body=body)

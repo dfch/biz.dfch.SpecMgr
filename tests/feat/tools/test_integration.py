@@ -213,8 +213,8 @@ class TestFeatLifecycleIntegration(TempFeatDirTestCase):
         self.assertEqual(page.results[0].title, "Example Widget")
         self.assertEqual(page.results[0].path, str(expected_path))
 
-        # 4. update (type="feat", whole-body): must bump only `updated` (a plain
-        #    YYYY-MM-DD date, not the other domains' microsecond timestamp) and preserve
+        # 4. update (type="feat", whole-body): must bump only `updated` (the same
+        #    microsecond timestamp format every other domain uses) and preserve
         #    id/type/status/created/version (ACC-004).
         updated = update(feat_id, "feat", _REVISED_BODY)
         self.assertEqual(updated.frontmatter.id, created.frontmatter.id)
@@ -222,7 +222,7 @@ class TestFeatLifecycleIntegration(TempFeatDirTestCase):
         self.assertEqual(updated.frontmatter.created, created.frontmatter.created)
         self.assertEqual(updated.frontmatter.status, "planning")
         self.assertEqual(updated.frontmatter.version, created.frontmatter.version)
-        self.assertRegex(updated.frontmatter.updated or "", r"^\d{4}-\d{2}-\d{2}$")
+        self.assertRegex(updated.frontmatter.updated or "", r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}$")
         self.assertEqual(len(updated.body.plan.requirements.items), 2)
 
         # 4b. update (type="feat", line-range): a single-line splice must round-trip
@@ -240,7 +240,7 @@ class TestFeatLifecycleIntegration(TempFeatDirTestCase):
         self.assertEqual(in_progress.frontmatter.status, "progress")
         self.assertEqual(in_progress.frontmatter.id, updated.frontmatter.id)
         self.assertEqual(in_progress.frontmatter.created, updated.frontmatter.created)
-        self.assertRegex(in_progress.frontmatter.updated or "", r"^\d{4}-\d{2}-\d{2}$")
+        self.assertRegex(in_progress.frontmatter.updated or "", r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}$")
         self.assertEqual(len(in_progress.body.plan.requirements.items), 2)
 
         # 6. get_feat: must reflect the latest on-disk state.

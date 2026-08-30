@@ -61,9 +61,8 @@ revise.
     read the current body first (step 1) and carry forward every section
     you are not intentionally changing, or it will be dropped.
     `id`/`type`/`created`/`version` are preserved automatically
-    regardless of what you submit; only `updated` changes (a plain
-    `YYYY-MM-DD` date, not the microsecond timestamp most other domains
-    use).
+    regardless of what you submit; only `updated` changes (the current
+    microsecond timestamp, same as every other domain).
 - A change to `status` -> `set_status(id, type="feat", status)` instead
   -- `update` never accepts or changes `status`. `status` must be one
   of: planning, progress, review, done (no hyphens -- `progress`, not

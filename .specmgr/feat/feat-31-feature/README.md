@@ -1,9 +1,9 @@
 ---
 created: 2026-08-30
 id: feat-31-feature
-status: in-progress
+status: done
 updated: 2026-08-30
-version: 1.12.0
+version: 1.13.0
 ---
 
 # Feature: Formalize the Feature artifact type ("feat")
@@ -427,11 +427,16 @@ machine-managed) — the historical hand-bumped "plan revision" meaning
 (`feat-4-use-cases` reaching `1.7.0`, `feat-5-md-model-parser` reaching
 `1.16.4` by hand) is retired for documents created under this schema;
 revision history is tracked via `created`/`updated` plus git history
-instead, per user direction. `created`/`updated` stay plain `YYYY-MM-DD`
-(not the other domains' microsecond `T`-separator timestamp) — matching
-every one of the 17 existing feature files and ADR e369ee2e's own template,
-a deliberate divergence from the rest of the codebase's frontmatter
-timestamp convention.
+instead, per user direction. `created`/`updated` use the same
+microsecond ISO timestamp (`datetime.now().isoformat(timespec="microseconds")`)
+as every other whole-body domain — **this reverses an earlier, deliberate
+divergence** (plain `YYYY-MM-DD` dates, matching every one of the 17
+pre-existing hand-authored feature files and ADR e369ee2e's own
+template), reversed as a Phase 6 follow-up for cross-domain consistency;
+see Decisions Made for the rationale. The 17 pre-existing feature files
+themselves remain out of scope/unaffected by this change (see Scope) —
+this only affects documents created/updated via the `feat` MCP tools
+going forward.
 
 **Addressing** (the genuinely novel part — see REQ-004):
 
@@ -815,7 +820,7 @@ discipline.
 
 #### Phase 6: Frontmatter timestamp format fix
 
-- [ ] Task 6.1: Change `feat` frontmatter's `created`/`updated` fields
+- [x] Task 6.1: Change `feat` frontmatter's `created`/`updated` fields
   from plain `YYYY-MM-DD` dates to microsecond timestamps
   (`datetime.now().isoformat(timespec="microseconds")`), matching every
   other whole-body domain's own convention (`req`/`uc`/`tsk`/`qa`/`prb`/
@@ -827,10 +832,24 @@ discipline.
   format (`tests/feat/tools/test_create_feat.py`,
   `tests/feat/tools/test_integration.py`, `tests/general/tools/`
   equivalents if any). This reverses this feature's own earlier
-  deliberate design decision (see Decisions Made) — reversing it needs
-  the same care as the original decision: update the Decisions Made log
+  deliberate design decision (see Decisions Made): update the Decisions Made log
   with a new entry explaining why, not just silently change the code —
-  depends on: Phase 5 complete — status: not-started
+  depends on: Phase 5 complete — status: completed (2026-08-30). Beyond
+  the three enumerated `src` files, also corrected four stale docstring/
+  data-file mentions of the old plain-date behavior that would otherwise
+  have been left inaccurate: `feat/models/v1/frontmatter.py`'s module
+  docstring, `feat/models/v1/body.py`'s `UpdateEntry` docstring (its
+  contrast with frontmatter's format, not the body-level ISO8601
+  `### Updates`/`### Decisions Made` heading format itself, which is
+  unchanged and stays deliberately different), `feat/prompts/create_feat.py`'s
+  module docstring, and the packaged `feat/data/feat_create_instructions.md`/
+  `feat_update_instructions.md` narrated-instruction text read by the
+  `create_feat`/`update_feat` prompts. `docs/feat_schema.json` and the
+  packaged `feat/data/feat_schema.json` copy were regenerated
+  (`specmgr schema --type feat` both ways) since they embed the changed
+  `UpdateEntry` docstring text verbatim; `specmgr docs`/`specmgr mcp-docs`
+  were also re-run and confirmed to only touch the expected six
+  `docs/api/*.md` files (no further drift).
 
 **Note:** If a task's scope changes mid-flight, edit its description in
 place; rely on git history (`git log -p` on this file) to recover what was
@@ -839,6 +858,34 @@ originally planned, rather than keeping a second copy of the task around.
 ## Progress
 
 ### Current Status
+
+**As of 2026-08-30 (Phase 6 complete — frontmatter timestamp format fix
+implemented; feature done again)**: Task 6.1 is implemented and this
+feature is **done** again. `feat` frontmatter's `created`/`updated`
+fields now use the same microsecond ISO timestamp
+(`datetime.now().isoformat(timespec="microseconds")`) as every other
+whole-body domain (`req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`),
+reversing this feature's own earlier deliberate plain-`YYYY-MM-DD`-date
+divergence. Changed: `feat/tools/create_feat.py` (frontmatter
+construction), `general/tools/update.py`'s `_update_feat` adapter,
+`general/tools/set_status.py`'s `_set_status_feat` adapter, plus four
+stale docstring/data-file mentions of the old format
+(`feat/models/v1/frontmatter.py`, `feat/models/v1/body.py`'s
+`UpdateEntry` docstring, `feat/prompts/create_feat.py`, and the packaged
+`feat_create_instructions.md`/`feat_update_instructions.md`). Two
+existing tests updated to assert the new format
+(`tests/feat/tools/test_create_feat.py`,
+`tests/feat/tools/test_integration.py`) — no new tests added, per this
+phase's own no-new-functionality scope. `docs/feat_schema.json` and the
+packaged `feat/data/feat_schema.json` copy regenerated (embed the
+changed `UpdateEntry` docstring); `specmgr docs`/`specmgr mcp-docs`
+re-run, touching only the expected `docs/api/*.md` files for the six
+changed `src` modules. Full quality gate green: `ruff format --check`
+(1286 files already formatted), `ruff check` (all checks passed),
+`vulture src/ whitelist.py --min-confidence 60` (clean), full `unittest`
+suite (2228 tests, OK, unchanged from Phase 5 — no new tests added),
+`specmgr unused-code` (clean). Frontmatter `status` set back to `done`;
+`version` bumped from `1.12.0` to `1.13.0`.
 
 **As of 2026-08-30 (Phase 6 recorded, not started)**: A new `#### Phase
 6: Frontmatter timestamp format fix` has been added to the Task List
@@ -1053,6 +1100,99 @@ implementing agent's.
   as part of this design-review conversation).
 
 ### Recent Updates
+
+#### Update 2026-08-30 (Phase 6 complete — frontmatter timestamp format fix implemented)
+
+- **Implemented Task 6.1**: `feat` frontmatter's `created`/`updated`
+  fields now use `datetime.now().isoformat(timespec="microseconds")`,
+  the same microsecond ISO timestamp format every other whole-body
+  domain (`req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`) already uses —
+  reversing this feature's own earlier, deliberate plain-`YYYY-MM-DD`
+  divergence.
+- **3 `src` files enumerated by the task**, each edited at both the code
+  and docstring level:
+  - `feat/tools/create_feat.py`: the local `today = datetime.now().date().isoformat()` variable became `now = datetime.now().isoformat(timespec="microseconds")`
+    (renamed to match `dec`/`gol`'s own `create_<d>.py` local-variable
+    naming, checked first per the task's own instruction), used for both
+    `created`/`updated` in the constructed `FeatFrontmatter`. Module
+    docstring's "Timestamp format is a deliberate `feat`-only divergence"
+    paragraph and the `create_feat()` docstring's "today's plain
+    `YYYY-MM-DD` date" line both rewritten to describe the now-matching
+    behavior.
+  - `general/tools/update.py`'s `_update_feat` adapter: both the
+    whole-body and line-range branches' `today = datetime.now().date().isoformat()` became `now = datetime.now().isoformat(timespec="microseconds")`,
+    mirroring `_update_dec`'s exact pattern/variable naming. Module
+    docstring and `_update_feat()`'s own docstring rewritten so `feat`'s
+    only remaining stated divergence is addressing resolution (the
+    bespoke `feat.tools._paths` folder-per-document shortcut), not
+    timestamp format.
+  - `general/tools/set_status.py`'s `_set_status_feat` adapter: same
+    `today` → `now`/microsecond-timestamp change, mirroring
+    `_set_status_dec`. Module docstring, `_set_status_feat()`'s own
+    docstring, and the public `set_status()` docstring's "a plain
+    `YYYY-MM-DD` date for `feat`, a microsecond timestamp for the other
+    eight" sentence all rewritten to state every domain now shares one
+    format.
+- **Design Notes' "Frontmatter" section** (`.specmgr/feat/feat-31-feature/README.md`,
+  this file) updated: the "`created`/`updated` stay plain `YYYY-MM-DD`
+  ... a deliberate divergence" sentence now states `created`/`updated`
+  use the same microsecond timestamp as every other domain, reversing
+  the earlier stated divergence, with a pointer to this update's own new
+  Decisions Made entry for the rationale — the historical context about
+  the 17 pre-existing hand-authored feature files (still out of scope,
+  unaffected by this change) is preserved, not deleted.
+- **New Decisions Made entry added** (see below), explicit that this is
+  a reversal of the earlier "`feat` frontmatter timestamps stay plain
+  `YYYY-MM-DD`" decision, made as a follow-up after the feature initially
+  shipped `done`, not part of the original five design-review rounds.
+- **Beyond the task's own enumerated files**, also found and corrected
+  four stale docstring/data-file mentions of the old plain-date behavior
+  via the task's own suggested final grep
+  (`grep -rn "date().isoformat\|YYYY-MM-DD" ...`), none of which were
+  explicitly named in Task 6.1 but would otherwise have been left
+  factually wrong: `feat/models/v1/frontmatter.py`'s module docstring
+  ("the specific `YYYY-MM-DD` convention `feat` uses" → "the specific
+  microsecond timestamp convention every domain, including `feat`,
+  uses"); `feat/models/v1/body.py`'s `UpdateEntry` class docstring,
+  which contrasts the body-level `### Updates`/`### Decisions Made`
+  entry-heading ISO8601 format against frontmatter's format (updated the
+  frontmatter-format description only — the body-level format itself is
+  unchanged and stays deliberately different, per Design Notes); the
+  `feat/prompts/create_feat.py` module docstring; and the packaged
+  `feat/data/feat_create_instructions.md`/`feat_update_instructions.md`
+  narrated-instruction text the `create_feat`/`update_feat` MCP prompts
+  read verbatim (these are user/LLM-facing text, not just internal
+  comments, so leaving them stale would have actively misled a caller
+  following the prompts).
+- **Regenerated `docs/feat_schema.json` and the packaged
+  `feat/data/feat_schema.json` copy** (`specmgr schema --type feat` both
+  ways, confirmed byte-identical via `diff`) since both embed the
+  changed `UpdateEntry` docstring text verbatim. Re-ran `specmgr docs`
+  (touched exactly the 6 expected `docs/api/*.md` files for the 6
+  changed `src` modules, nothing else) and `specmgr mcp-docs` (zero
+  further diff — no tool/resource/prompt registration text changed,
+  only docstrings already reflected by the Task 5.1-era MCP.md).
+- **2 existing tests updated, no new tests added** (per this phase's own
+  "format fix, no new functionality" scope):
+  `tests/feat/tools/test_create_feat.py`'s
+  `test_builds_frontmatter_and_returns_document` regex assertion changed
+  from `r"^\d{4}-\d{2}-\d{2}$"` to
+  `r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}$"`;
+  `tests/feat/tools/test_integration.py`'s two equivalent `updated`-field
+  regex assertions (whole-body `update` and `set_status` steps) updated
+  the same way, plus the explanatory comment above the `update` step
+  that referenced "a plain YYYY-MM-DD date, not the other domains'
+  microsecond timestamp".
+- Full quality gate green: `ruff format --check` (1286 files already
+  formatted), `ruff check` (all checks passed), `vulture src/ whitelist.py --min-confidence 60` (clean), full `unittest` suite (2228 tests,
+  OK — unchanged from Phase 5, since no new tests were added, only
+  existing assertions changed), `specmgr unused-code` (clean, no unused
+  code found).
+- Frontmatter `status` set back to `done` (this was the only remaining
+  not-done work); `version` bumped from `1.12.0` to `1.13.0`.
+- Per this phase's own task instructions (implementer runs the gate
+  only), **no commit was made** — that is the orchestrator's
+  responsibility for this run.
 
 #### Update 2026-08-30 (Phase 6 recorded — frontmatter timestamp format fix)
 
@@ -2028,6 +2168,25 @@ implementing agent's.
   deliberate scoping choice. `Acceptance Criterium (ACC)` stays commented
   out -- `AGENTS.md`'s "Still genuinely missing" section confirms no `ac`
   domain exists yet.
+- **2026-08-30 (Phase 6)**: **Reversed** the earlier "`feat` frontmatter
+  timestamps stay plain `YYYY-MM-DD`, matching the 17 hand-authored
+  files" decision (recorded in Design Notes' "Frontmatter" section and
+  implicit in the "Frontmatter `version` becomes schema-version-only"
+  entry's era, above). `feat`'s `created`/`updated` now use the same
+  microsecond ISO timestamp format
+  (`datetime.now().isoformat(timespec="microseconds")`) as every other
+  whole-body domain (`req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`), for
+  consistency across the codebase. This was a follow-up decision made
+  after the feature initially shipped `done` (Phase 5) -- not part of
+  the original five design-review rounds -- prompted by the divergence
+  proving more disruptive in practice than anticipated (every generic
+  cross-domain tool/adapter and every piece of `feat`-facing narration
+  had to carry an explicit "except `feat`, which uses a plain date"
+  caveat). The 17 pre-existing hand-authored feature files this
+  divergence originally matched remain untouched and out of scope (see
+  Scope) -- this reversal only affects documents created/updated via the
+  `feat` MCP tools (`create_feat`, the generic `update`/`set_status`
+  with `type="feat"`) going forward, not any file already on disk.
 
 ### Related PRs / Commits
 
