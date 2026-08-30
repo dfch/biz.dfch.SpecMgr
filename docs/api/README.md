@@ -277,7 +277,9 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.sop.models.v1.frontmatter`](biz.dfch.specmgr.sop.models.v1.frontmatter.md) — Standard Operating Procedure (SOP) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
 - [`biz.dfch.specmgr.sop.models.v1.parser`](biz.dfch.specmgr.sop.models.v1.parser.md) — Parse raw Standard Operating Procedure (SOP) ``.md`` text into a :class:`SopDocument`.
 - [`biz.dfch.specmgr.sop.models.v1.summary`](biz.dfch.specmgr.sop.models.v1.summary.md) — Pydantic model for one line of SOP listing output (Phase 2, Task 2.2).
-- [`biz.dfch.specmgr.sop.prompts`](biz.dfch.specmgr.sop.prompts.md) — No documentation available.
+- [`biz.dfch.specmgr.sop.prompts`](biz.dfch.specmgr.sop.prompts.md) — MCP prompt wrappers for Standard Operating Procedures (Task 4.1).
+- [`biz.dfch.specmgr.sop.prompts.create_sop`](biz.dfch.specmgr.sop.prompts.create_sop.md) — ``@mcp.prompt()``: create_sop (Task 4.1).
+- [`biz.dfch.specmgr.sop.prompts.update_sop`](biz.dfch.specmgr.sop.prompts.update_sop.md) — ``@mcp.prompt()``: update_sop (Task 4.1).
 - [`biz.dfch.specmgr.sop.resources`](biz.dfch.specmgr.sop.resources.md) — MCP resource registrations for Standard Operating Procedure (SOP) documents (feat-30 Task 3.7).
 - [`biz.dfch.specmgr.sop.resources.sop_example`](biz.dfch.specmgr.sop.resources.sop_example.md) — Resource: specmgr://sop/example (feat-30 Task 3.7).
 - [`biz.dfch.specmgr.sop.resources.sop_schema`](biz.dfch.specmgr.sop.resources.sop_schema.md) — Resource: specmgr://sop/schema (feat-30 Task 3.7, packaged data).

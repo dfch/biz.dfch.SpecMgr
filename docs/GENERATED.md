@@ -327,6 +327,9 @@ First-line docstrings from each module, organized by domain:
 - `sop/models/v1/frontmatter.py` — Standard Operating Procedure (SOP) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
 - `sop/models/v1/parser.py` — Parse raw Standard Operating Procedure (SOP) ``.md`` text into a :class:`SopDocument`.
 - `sop/models/v1/summary.py` — Pydantic model for one line of SOP listing output (Phase 2, Task 2.2).
+- `sop/prompts/__init__.py` — MCP prompt wrappers for Standard Operating Procedures (Task 4.1).
+- `sop/prompts/create_sop.py` — ``@mcp.prompt()``: create_sop (Task 4.1).
+- `sop/prompts/update_sop.py` — ``@mcp.prompt()``: update_sop (Task 4.1).
 - `sop/resources/__init__.py` — MCP resource registrations for Standard Operating Procedure (SOP) documents (feat-30 Task 3.7).
 - `sop/resources/sop_example.py` — Resource: specmgr://sop/example (feat-30 Task 3.7).
 - `sop/resources/sop_schema.py` — Resource: specmgr://sop/schema (feat-30 Task 3.7, packaged data).
@@ -425,4 +428,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 282
+**Test files**: 284

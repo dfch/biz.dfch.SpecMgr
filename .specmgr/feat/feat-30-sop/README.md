@@ -641,11 +641,11 @@ quality gate, README Progress update).
 
 #### Phase 4: Prompts
 
-- [ ] Task 4.1: `sop/prompts/` — `create_sop.py` (`create_sop(topic)`),
+- [x] Task 4.1: `sop/prompts/` — `create_sop.py` (`create_sop(topic)`),
   `update_sop.py` (`update_sop(id, instructions=None)` with standard
-  fallback), `__init__.py` — depends on: Task 3.3 — status: not-started
-- [ ] Task 4.2: Tests `tests/sop/prompts/` (ACC-005) — depends on: Task
-  4.1 — status: not-started
+  fallback), `__init__.py` — depends on: Task 3.3 — status: done
+- [x] Task 4.2: Tests `tests/sop/prompts/` (ACC-005) — depends on: Task
+  4.1 — status: done
 - [ ] Task 4.3: Phase-end quality gate + commit; update this README's
   Progress section — depends on: Task 4.2 — status: not-started
 
@@ -700,6 +700,42 @@ around.
 ## Progress
 
 ### Current Status
+
+**As of 2026-08-30**: Phase 4 (prompts) complete. The `sop` domain now
+ships its 2 MCP prompts under `sop/prompts/` (`create_sop.py`/
+`update_sop.py`/`__init__.py`, mirroring `dec/prompts/` file-for-file --
+the Phase-0 empty `prompts/__init__.py` marker was overwritten with the
+real side-effect-registration imports). `create_sop(topic)` reads the
+packaged `sop/data/sop_create_instructions.md` via `string.Template`
+(`$topic` placeholder) and returns narrated instructional text covering
+the `list_sop` dedup-check-first step, the `specmgr://rasci` read-first
+step before `## Roles and Responsibilities`, the
+`specmgr://sop/template`/`/example`/`/schema` starting-point resources,
+the `TodoWrite`/`question`-tool interview flow, and the
+`create_sop(content)`/`validate_sop(content, full=False)` tool calls --
+it never calls those tools itself. `update_sop(id, instructions=None)`
+reads `sop/data/sop_update_instructions.md` via `string.Template`
+(`$id`/`$instructions` placeholders, standard
+"(not given -- ask the user before making any change)" fallback) and
+names the GENERIC `update(id, type="sop", content)`/
+`set_status(id, type="sop", status)` tools (both whole-body and
+line-range via `get_sop(id, raw=True)`), plus `get_sop(id)`/`validate_sop`
+and the `specmgr://rasci` read-first step -- never a per-domain
+`update_sop(...)`/`set_status_sop(...)` call shape (`sop` is
+dispatch-only, ADR 36905d5b). The 2 prompts are NOT yet registered with
+the MCP server -- `server.py` does not import `sop` until Phase 5.
+
+Tests: 22 new tests across `tests/sop/prompts/test_create_sop.py` (11)
+and `tests/sop/prompts/test_update_sop.py` (11), mirroring
+`tests/dec/prompts/`'s shape -- string-content/ordering assertions on
+the narrated text (the prompts only return text, never call tools),
+plus the packaged-data-file fresh-read-per-call and `FileNotFoundError`
+behavioral tests. The full quality gate is green: ruff format/check,
+vulture (clean, no whitelist changes -- the prompt functions are
+imported by `sop/prompts/__init__.py`, referenced within `src/`),
+`specmgr unused-code` (clean), and the 2259-test unittest suite. Task
+4.3 (commit) is pending the orchestrator. Next: Phase 5 (cross-cutting
+registration).
 
 **As of 2026-08-30**: Phase 3 (resources + packaged data + schema)
 complete. The `sop` domain now ships its 3 MCP resources under
@@ -832,6 +868,88 @@ present with zero list items" shape (used by `Support`/`Consulted`/
 None.
 
 ### Recent Updates
+
+#### Update 2026-08-30T20:00:00Z (Phase 4 prompts)
+
+- Completed: Tasks 4.1-4.2 -- implemented the `sop/prompts/` MCP prompt
+  surface and the matching tests. Created `sop/prompts/create_sop.py`
+  (`@mcp.prompt(name="create_sop", title="Create a standard operating
+  procedure", ...)`, `def create_sop(topic: str) -> str:`, body reads
+  `sop/data/sop_create_instructions.md` via `string.Template` with the
+  `$topic` placeholder), `sop/prompts/update_sop.py`
+  (`@mcp.prompt(name="update_sop", title="Update a standard operating
+  procedure", ...)`, `def update_sop(id: str, instructions: str | None =
+  None) -> str:` with the standard
+  "(not given -- ask the user before making any change)" fallback, body
+  reads `sop/data/sop_update_instructions.md` via `string.Template` with
+  the `$id`/`$instructions` placeholders), and overwrote the Phase-0
+  empty `prompts/__init__.py` marker with the real
+  `from .create_sop import create_sop` / `from .update_sop import
+  update_sop` + `__all__` + module docstring (mirroring
+  `dec/prompts/__init__.py`).
+- Both prompts mirror `dec/prompts/` file-for-file, adapted to `sop`'s
+  dispatch-only surface: `create_sop`'s docstring notes the narration
+  covers `list_sop` (dedup check), `specmgr://sop/template`/`/example`/
+  `/schema`, `specmgr://rasci` (read before Roles and Responsibilities),
+  `create_sop`, `validate_sop`, and that it never calls those tools
+  itself. `update_sop`'s docstring notes that `sop` has NO per-domain
+  `update_sop`/`set_status_sop` tools -- the narration names the GENERIC
+  `update`/`set_status` tools with `type="sop"`, plus
+  `get_sop(id)`/`get_sop(id, raw=True)` and `validate_sop`, and the
+  `specmgr://rasci` read-first step.
+- Tests: 22 new tests. `tests/sop/prompts/test_create_sop.py` (11):
+  `test_returns_substituted_instruction_text`,
+  `test_instructions_match_packaged_file`,
+  `test_mentions_duplicate_check_tool` (`list_sop` -- ACC-005),
+  `test_mentions_todowrite_list`, `test_mentions_question_tool`,
+  `test_mentions_sop_sections` (`## Purpose`/`## Procedure`/`## Roles and
+  Responsibilities`/`## Updates`),
+  `test_mentions_rasci_read_first` (`specmgr://rasci` -- REQ-011),
+  `test_mentions_starting_point_resources`
+  (`specmgr://sop/template`/`/example`/`/schema`),
+  `test_mentions_create_and_validate_tools` (`create_sop(content)`/
+  `validate_sop(content, full=False)`),
+  `test_instructions_loaded_from_packaged_data_file`,
+  `test_raises_file_not_found_when_instructions_missing`.
+  `tests/sop/prompts/test_update_sop.py` (11):
+  `test_returns_substituted_id`,
+  `test_instructions_interpolated_when_given`,
+  `test_prompts_for_input_when_instructions_absent`,
+  `test_instructions_match_packaged_file`,
+  `test_mentions_get_sop_tool_first` (ordering: `get_sop(id)` before
+  `update(id, type="sop", content)`),
+  `test_mentions_both_generic_mutation_tools`
+  (`update(id, type="sop", content)` + `set_status(id, type="sop",
+  status)`),
+  `test_mentions_range_update_flow` (`get_sop(id, raw=True)`,
+  1-based inclusive line range, `begin = end = N+1`, `update(id,
+  type="sop", content, begin=..., end=...)`, ordering),
+  `test_mentions_rasci_read_first`,
+  `test_does_not_narrate_per_domain_mutation_tools` (`update_sop(`/
+  `set_status_sop(` must NOT appear),
+  `test_instructions_loaded_from_packaged_data_file`,
+  `test_raises_file_not_found_when_instructions_missing`. All assertion
+  phrases verified against the actual Phase-3 instruction files
+  (`sop/data/sop_create_instructions.md`/`sop_update_instructions.md`)
+  before writing -- the instructions' exact wording is the source of
+  truth.
+- Whitelist: no changes. Vulture and `specmgr unused-code` both clean;
+  the prompt functions are imported by `sop/prompts/__init__.py`
+  (referenced within `src/`), so no new false positives arose.
+- Quality gate green: `ruff format --check` (1283 files), `ruff check`
+  (all passed), `vulture src/ whitelist.py --min-confidence 60` (clean),
+  `specmgr unused-code` (No unused code found), full unittest suite (2259
+  tests, OK), and the fresh `from biz.dfch.specmgr.sop.prompts import
+  create_sop, update_sop` smoke test confirming: `list_sop` in
+  create-output = True, `specmgr://rasci` in create-output = True,
+  `type="sop"` in update-output = True, `specmgr://rasci` in update-output
+  = True, `$id` not in update-output = True, `update_sop(` not in
+  update-output = True.
+- The 2 `sop` prompts are NOT yet registered with the MCP server --
+  `server.py` does not import `sop` until Phase 5 (Task 5.1). That is
+  expected; `specmgr mcp-docs` will not show them in `docs/MCP.md` until
+  then.
+- Next: Phase 5 (cross-cutting registration).
 
 #### Update 2026-08-30T18:00:00Z (Phase 3 resources + data + schema)
 

@@ -3,7 +3,7 @@
 Auto-generated from the live `biz.dfch.specmgr.server:mcp` registration --
 do not edit by hand, run `specmgr mcp-docs` instead (see `AGENTS.md`).
 
-32 resource(s), 1 resource template(s), 87 tool(s), 21 prompt(s).
+32 resource(s), 1 resource template(s), 87 tool(s), 23 prompt(s).
 
 ## Table of Contents
 
@@ -1234,6 +1234,7 @@ Fetch a URL over HTTP GET with a bearer token, but only if the URL matches the c
 | [`create_qa`](#prompt-create_qa) | Guides the LLM through checking for an existing similar QA document, gathering answers to ISO/IEC 25010:2023 characteristic-relevant questions, and driving create_qa/validate_qa to author a new QA document. |
 | [`create_req`](#prompt-create_req) | Guides the LLM through checking for an existing similar requirement, gathering the required information, and driving create_req/validate_req to author a new REQ document. |
 | [`create_risk`](#prompt-create_risk) | Guides the LLM through checking for an existing similar risk, gathering the required information, and driving create_rsk/validate_rsk to author a new RSK document. |
+| [`create_sop`](#prompt-create_sop) | Guides the LLM through checking for an existing similar SOP, gathering the required information, and driving create_sop/validate_sop to author a new SOP document. |
 | [`create_task`](#prompt-create_task) | Guides the LLM through checking for an existing similar task list, gathering the required information, and driving create_tsk/validate_tsk to author a new TSK document. |
 | [`implement_task`](#prompt-implement_task) | Reads an existing task list by id, builds a TodoWrite list from its items, and uses the question tool to resolve ambiguity before proceeding. |
 | [`refine`](#prompt-refine) | Guides the LLM through appending a batch of new, unanswered interview questions (each with an empty placeholder answer) to an existing QA document, for one or more of the nine ISO/IEC 25010:2023 quality characteristics. |
@@ -1245,6 +1246,7 @@ Fetch a URL over HTTP GET with a bearer token, but only if the URL matches the c
 | [`update_qa`](#prompt-update_qa) | Guides the LLM through revising an existing QA document by id: reading current state, applying the requested change with the right tool, and validating. |
 | [`update_req`](#prompt-update_req) | Guides the LLM through revising an existing requirement by id: reading current state, applying the requested change with the right tool, and validating. |
 | [`update_risk`](#prompt-update_risk) | Guides the LLM through revising an existing risk by id: reading current state, applying the requested change with the right tool, and validating. |
+| [`update_sop`](#prompt-update_sop) | Guides the LLM through revising an existing SOP by id: reading current state, applying the requested change with the right tool, and validating. |
 | [`update_task`](#prompt-update_task) | Guides the LLM through revising an existing task list by id: reading current state, applying the requested change with the right tool, and validating. |
 
 ### Prompt: compact_history
@@ -1321,6 +1323,14 @@ Guides the LLM through checking for an existing similar requirement, gathering t
 ### Prompt: create_risk
 
 Guides the LLM through checking for an existing similar risk, gathering the required information, and driving create_rsk/validate_rsk to author a new RSK document.
+
+| Argument | Required | Description |
+| --- | --- | --- |
+| `topic` | Yes |  |
+
+### Prompt: create_sop
+
+Guides the LLM through checking for an existing similar SOP, gathering the required information, and driving create_sop/validate_sop to author a new SOP document.
 
 | Argument | Required | Description |
 | --- | --- | --- |
@@ -1416,6 +1426,15 @@ Guides the LLM through revising an existing requirement by id: reading current s
 ### Prompt: update_risk
 
 Guides the LLM through revising an existing risk by id: reading current state, applying the requested change with the right tool, and validating.
+
+| Argument | Required | Description |
+| --- | --- | --- |
+| `id` | Yes |  |
+| `instructions` | No |  |
+
+### Prompt: update_sop
+
+Guides the LLM through revising an existing SOP by id: reading current state, applying the requested change with the right tool, and validating.
 
 | Argument | Required | Description |
 | --- | --- | --- |
