@@ -3,7 +3,7 @@ created: 2026-08-30
 id: feat-31-feature
 status: in-progress
 updated: 2026-08-30
-version: 1.8.0
+version: 1.9.0
 ---
 
 # Feature: Formalize the Feature artifact type ("feat")
@@ -682,26 +682,36 @@ discipline.
 
 #### Phase 3: Resources + packaged data + schema
 
-- [ ] Task 3.1: `feat/data/feat_example.md` (byte-identical copy of
+- [x] Task 3.1: `feat/data/feat_example.md` (byte-identical copy of
   `feat_reference.md`, DEC/GOL precedent) — depends on: Task 2.6 — status:
-  not-started
-- [ ] Task 3.2: `feat/data/feat_template.md` — all-sections placeholder
+  completed (2026-08-30)
+- [x] Task 3.2: `feat/data/feat_template.md` — all-sections placeholder
   skeleton, `status: planning`; must round-trip through `parse_feat` —
-  depends on: Task 2.6 — status: not-started
-- [ ] Task 3.3: `feat/data/feat_create_instructions.md` +
+  depends on: Task 2.6 — status: completed (2026-08-30)
+- [x] Task 3.3: `feat/data/feat_create_instructions.md` +
   `feat_update_instructions.md` — depends on: Task 2.6 — status:
-  not-started
-- [ ] Task 3.4: `commands/schema.py` — `generate_feat_schema()` +
+  completed (2026-08-30)
+- [x] Task 3.4: `commands/schema.py` — `generate_feat_schema()` +
   `_GENERATORS["feat"]`; run `specmgr schema --type feat` (writes
   `docs/feat_schema.json`) and the packaged-copy variant — depends on:
-  Task 1.4 — status: not-started
-- [ ] Task 3.5: `feat/resources/` — `feat_schema.py`, `feat_example.py`,
+  Task 1.4 — status: completed (2026-08-30), `_GENERATORS` entry inserted
+  alphabetically (`dec`, `feat`, `gol`, ...); both invocations produce
+  byte-identical output, confirmed via `diff`.
+- [x] Task 3.5: `feat/resources/` — `feat_schema.py`, `feat_example.py`,
   `feat_template.py`, `__init__.py` — depends on: Task 3.1, Task 3.2, Task
-  3.4 — status: not-started
-- [ ] Task 3.6: Tests `tests/feat/resources/` (ACC-005/ACC-007) — depends
-  on: Task 3.5 — status: not-started
-- [ ] Task 3.7: Phase-end quality gate + commit + comment on issue #31 —
-  depends on: Task 3.6 — status: not-started
+  3.4 — status: completed (2026-08-30)
+- [x] Task 3.6: Tests `tests/feat/resources/` (ACC-005/ACC-007) — depends
+  on: Task 3.5 — status: completed (2026-08-30), 20 new tests
+  (`test_feat_schema.py`/`test_feat_example.py`/`test_feat_template.py`);
+  also replaced the two Phase-2-deferred `FileNotFoundError`-only tests
+  (`tests/feat/tools/test_get_feat_example.py`/
+  `test_get_feat_template.py`) with real "returns the packaged file"
+  happy-path assertions, mirroring `test_get_dec_example.py`/
+  `test_get_dec_template.py`.
+- [x] Task 3.7: Phase-end quality gate + commit + comment on issue #31 —
+  depends on: Task 3.6 — status: completed (2026-08-30) — quality gate
+  green; **commit and issue comment left to the orchestrator**, per this
+  phase's own task instructions (implementer runs the gate only).
 
 #### Phase 4: Prompts
 
@@ -840,6 +850,33 @@ when actually called; `tests/feat/tools/test_get_feat_example.py`/
 `test_get_feat_template.py` document this explicitly and should be revisited
 once Phase 3 ships those files).
 
+**As of 2026-08-30 (Phase 3 complete)**: `feat/data/` and `feat/resources/`
+are fully implemented — `feat_example.md` (byte-identical copy of
+`tests/feat/models/v1/data/feat_reference.md`), `feat_template.md`
+(all-sections placeholder skeleton, `status: planning`, round-trips
+through `parse_feat`), `feat_create_instructions.md`/
+`feat_update_instructions.md` (narrated instruction bodies for the
+Phase-4 prompts, tailored to `feat`'s own schema/status set/no-
+`update_feat`-of-its-own MCP surface), and `feat_schema.json` (both
+`docs/feat_schema.json` and the packaged `feat/data/feat_schema.json`
+copy, byte-identical, confirmed via `diff`). `commands/schema.py` gained
+`generate_feat_schema()` and a `"feat"` entry in `_GENERATORS` (inserted
+alphabetically between `"dec"` and `"gol"`). `feat/resources/` gained
+`feat_schema.py`/`feat_example.py`/`feat_template.py`/`__init__.py`,
+registering `specmgr://feat/schema`/`specmgr://feat/example`/
+`specmgr://feat/template` (no `/{id}`, no `/list`), each a 1:1 mirror of
+`dec.resources`' own three modules. The two Phase-2-deferred tool tests
+(`tests/feat/tools/test_get_feat_example.py`/
+`test_get_feat_template.py`) were updated to assert the real packaged-file
+happy path instead of `FileNotFoundError`, now that the packaged files
+exist. 20 new tests across `tests/feat/resources/` (all green), including
+a byte-exact match between `specmgr://feat/example`'s output and the
+Phase-1 reference fixture, a fresh-`generate_feat_schema()` parity check,
+and a `parse_feat` structural round-trip for the template. Full quality
+gate green: `ruff format --check`/`ruff check` clean, `vulture src/ whitelist.py --min-confidence 60` clean (no new whitelist entries needed),
+`specmgr unused-code` clean, full `unittest` suite green (2199 tests, up
+from 2179 after Phase 2). Phase 4 (`feat/prompts/`) is next.
+
 ### Blockers
 
 - [x] Design review — resolved 2026-08-30. Reviewed across five rounds
@@ -853,6 +890,63 @@ once Phase 3 ships those files).
   as part of this design-review conversation).
 
 ### Recent Updates
+
+#### Update 2026-08-30 (Phase 3 complete — resources, packaged data, schema)
+
+- Implemented `feat/data/` in full: `feat_example.md` (a byte-identical
+  copy of `tests/feat/models/v1/data/feat_reference.md`, confirmed via
+  `diff`), `feat_template.md` (all-sections placeholder skeleton --
+  `Dependencies` with both `Depends On`/`Blocks`, `Design Notes`,
+  `Related Decisions`, `Blockers`, `Decisions Made`, `Related PRs /
+  Commits`, `More Information` all present -- `status: planning`,
+  round-trips through `parse_feat`), `feat_create_instructions.md`/
+  `feat_update_instructions.md` (narrated instruction bodies mirroring
+  `dec`'s/`gol`'s own two files, tailored to `feat`'s actual schema, its
+  four-value hyphen-free status set, and its no-`update_feat`/
+  `set_status_feat`-of-its-own generic-dispatch MCP surface), and
+  `feat_schema.json` (both `docs/feat_schema.json` and the packaged
+  `feat/data/feat_schema.json` copy, generated via `specmgr schema --type feat` and `specmgr schema --type feat --output-dir src/biz/dfch/specmgr/feat/data`, confirmed byte-identical via
+  `diff`).
+- `commands/schema.py` gained `generate_feat_schema()` (mirroring
+  `generate_dec_schema()` exactly) and a `"feat"` entry in `_GENERATORS`,
+  inserted alphabetically between the existing `"dec"` and `"gol"` keys.
+- Implemented `feat/resources/`: `feat_schema.py`/`feat_example.py`/
+  `feat_template.py`/`__init__.py`, each a 1:1 mirror of
+  `dec.resources`' own three modules plus its `__init__.py`, registering
+  `specmgr://feat/schema`/`specmgr://feat/example`/
+  `specmgr://feat/template` (no `/{id}` -- id-based reads are
+  `get_feat`-only; no `/list` -- listing is the `list_feat` tool).
+  Updated `feat/__init__.py`'s module docstring to reflect Phase 3
+  completion (data/resources populated, only `prompts` still empty).
+- Replaced the two Phase-2-deferred tests
+  (`tests/feat/tools/test_get_feat_example.py`/
+  `test_get_feat_template.py`) with real "returns the packaged file"
+  happy-path assertions (mirroring `test_get_dec_example.py`/
+  `test_get_dec_template.py`), now that the packaged files they read
+  actually exist on disk.
+- Wrote 20 new tests across `tests/feat/resources/`
+  (`test_feat_schema.py`/`test_feat_example.py`/`test_feat_template.py`)
+  -- all green, including: `feat_schema` matches a fresh
+  `generate_feat_schema()` output; `feat_example` is byte-identical to
+  both the packaged file and the Phase-1 reference fixture, and
+  round-trips through `parse_feat` byte-exact (re-verifying ACC-001 at
+  this layer too, per this phase's own instructions) while exercising
+  every optional section (`Dependencies` with both children,
+  `Design Notes`, `Related Decisions`, `Blockers`, `Decisions Made`,
+  `Related PRs / Commits`, `More Information`); `feat_template`
+  successfully parses via `parse_feat` (structurally valid, `status: planning`) while exercising the same set of optional sections, without
+  being required to be a "realistic" document.
+- Quality gate: `ruff format --check` (clean), `ruff check` (clean),
+  `vulture src/ whitelist.py --min-confidence 60` (clean, no new entries
+  needed), `specmgr unused-code` (clean), full `unittest` suite (2199
+  tests, green, up from 2179 after Phase 2).
+- Per this phase's own task instructions, **no commit was made and no
+  comment was posted to issue #31** -- that is the phase orchestrator's
+  responsibility, not the implementing agent's, for this run.
+- Next: Phase 4 (`feat/prompts/`) -- `create_feat.py`
+  (`create_feat(topic)`), `update_feat.py`
+  (`update_feat(id, instructions=None)`), `__init__.py`, and
+  `tests/feat/prompts/` (ACC-006).
 
 #### Update 2026-08-30 (Phase 2 complete — tools, bespoke addressing)
 
@@ -1473,6 +1567,34 @@ once Phase 3 ships those files).
   tool surface complete and registrable in Phase 2 while being transparent
   that its two data-backed tools are not yet fully functional until Phase
   3 ships their packaged files.
+- **2026-08-30 (Phase 3)**: `feat_template.md`'s placeholder frontmatter
+  `id` is `feat-0-template` (a `feat-NNN-slug`-shaped placeholder, `NNN=0`
+  since real ids start at `1` per `create_feat`'s own derivation), not a
+  UUID-shaped placeholder like GOL's `deaddead-goal-goal-goal-deaddeadgoal`
+  or DEC's `deadbeef-dead-dead-dead-deadbeefdead` -- `feat`'s own id
+  convention is the folder name, not a UUID (REQ-004), so a UUID-shaped
+  placeholder would be actively misleading here; `parse_feat` performs no
+  path/folder-name check at the model layer (that invariant is
+  tool-layer-only, per REQ-003), so this placeholder id parses without
+  needing a matching `feat-0-template/` folder to exist anywhere.
+- **2026-08-30 (Phase 3)**: `generate_feat_schema()`'s `_GENERATORS` entry
+  was inserted alphabetically between the pre-existing `"dec"` and
+  `"gol"` keys (`dec`, `feat`, `gol`, `prb`, `qa`, `req`, `rsk`, `tsk`,
+  `uc`) -- confirmed the dict's existing order was alphabetical by
+  doc-type name before inserting, rather than assuming insertion-order
+  (e.g. "in Task-List/registration order") was the convention.
+- **2026-08-30 (Phase 3)**: `feat_template.md` exercises every optional
+  section listed in Task 3.2 (`Dependencies` with both `Depends On`/
+  `Blocks`, `Design Notes`, `Related Decisions`, `Blockers`,
+  `Decisions Made`, `Related PRs / Commits`, `More Information`) with one
+  entry each for `Updates`/`Decisions Made` (not two, unlike
+  `feat_example.md`/`feat_reference.md`) -- the template's job (per this
+  phase's own task description) is to be a structurally-valid, every-
+  section-present starting skeleton, not to additionally exercise
+  multi-entry newest-first ordering the way the reference fixture/example
+  already does; a single entry per dynamic list is enough to prove the
+  section round-trips through `parse_feat` while keeping the template
+  short, matching DEC's/GOL's own single-entry template precedent.
 
 ### Related PRs / Commits
 

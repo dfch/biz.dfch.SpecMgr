@@ -1,0 +1,580 @@
+{
+  "$comment": "v1",
+  "$defs": {
+    "AcceptanceCriteria": {
+      "description": "`### Acceptance Criteria` -- checklist of `- [ ]/[x] ACC-NNN: {text}` entries. Mandatory. At least one item.\n\nParameters\n----------\nitems:\n    The `ACC-NNN: {text}` checklist entries, in document order. At\n    least one item.",
+      "properties": {
+        "items": {
+          "description": "Checklist of `- [ ]/[x] ACC-NNN: {text}` entries, in document order. Must contain at least one item.",
+          "items": {
+            "$ref": "#/$defs/AcceptanceCriterionItem"
+          },
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "AcceptanceCriteria",
+      "type": "object"
+    },
+    "AcceptanceCriterionItem": {
+      "description": "`- [ ] ACC-NNN: {text}` -- one checklist acceptance-criterion entry under `### Acceptance Criteria`.\n\nReuses `tsk.TaskItem`'s `checked`/`description`-from-checkbox split\nas-is, adding one more computed field re-matching the `ACC-NNN: ` prefix\nagainst the inherited `description`.\n\nParameters\n----------\ncriterion_description:\n    Computed. `.description` (already checkbox-stripped) with the\n    `ACC-NNN: ` prefix further stripped. Raises `AssertionError` if\n    `.description` does not match `ACC-\\d{3}: .+`.",
+      "properties": {
+        "content": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/MarkdownParagraph"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Content"
+        }
+      },
+      "title": "AcceptanceCriterionItem",
+      "type": "object"
+    },
+    "Blockers": {
+      "description": "`### Blockers` -- free-form list of open blockers. Optional.",
+      "properties": {},
+      "title": "Blockers",
+      "type": "object"
+    },
+    "Blocks": {
+      "description": "`#### Blocks` under `### Dependencies` -- free-form list of things that cannot start until this\nfeature ships. Optional.",
+      "properties": {},
+      "title": "Blocks",
+      "type": "object"
+    },
+    "CurrentStatus": {
+      "description": "`### Current Status` -- free-form narrative of where things stand. Mandatory.",
+      "properties": {},
+      "title": "CurrentStatus",
+      "type": "object"
+    },
+    "DecisionEntry": {
+      "description": "`#### {timestamp} \u2014 {title}` under `### Decisions Made` -- one decision entry.\n\nIdentical shape to `UpdateEntry` (same alias regex, same `timestamp`/\n`title` computed-field extraction, same `content: MarkdownParagraph`) --\na distinct class since it belongs to a semantically distinct section.\n\nParameters\n----------\ncontent:\n    The lead paragraph right after the H4 heading -- this entry's own\n    decision text. Mandatory.\ntimestamp:\n    Computed. The entry's ISO8601 timestamp, verbatim from the heading.\n    Never stored separately -- derived from the retained heading text.\ntitle:\n    Computed. The entry's title (the heading text after `\" \u2014 \"`). Never\n    stored separately -- derived from the retained heading text.",
+      "properties": {
+        "content": {
+          "$ref": "#/$defs/MarkdownParagraph",
+          "description": "The lead paragraph directly under the H4 heading -- this entry's own decision text. Mandatory."
+        }
+      },
+      "required": [
+        "content"
+      ],
+      "title": "DecisionEntry",
+      "type": "object"
+    },
+    "DecisionsMade": {
+      "description": "`### Decisions Made` -- a dynamic, newest-first list of ISO8601-timestamped `#### ` decision entries.\nOptional as a whole; at least one entry once present. May be preceded by an explanatory HTML comment\n(e.g. an ordering hint).\n\nOptionality lives one level up (`Progress.decisions_made: DecisionsMade\n| None = None`) -- a brand-new feature has no `### Decisions Made`\nsection at all, rather than an empty one, same \"non-`Optional` `list[X]`\nimplies >=1 once the section exists\" convention as `Updates.updates`/\n`TaskList.phases`.\n\nParameters\n----------\ncomment:\n    Optional explanatory HTML comment (`<!-- ... -->`). Inherited from\n    `MarkdownSection3WithComment`.\ndecisions:\n    The `#### {timestamp} \u2014 {title}` entries, in document order,\n    newest-first (enforced, see `_validate_newest_first`). At least\n    one entry.",
+      "properties": {
+        "comment": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MarkdownComment"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional explanatory HTML comment (`<!-- ... -->`)."
+        },
+        "decisions": {
+          "description": "Dynamic collection of `#### {timestamp} \u2014 {title}` entries, in document order, newest-first. Must contain at least one entry.",
+          "items": {
+            "$ref": "#/$defs/DecisionEntry"
+          },
+          "minItems": 1,
+          "title": "Decisions",
+          "type": "array"
+        }
+      },
+      "required": [
+        "decisions"
+      ],
+      "title": "DecisionsMade",
+      "type": "object"
+    },
+    "Dependencies": {
+      "description": "`### Dependencies` -- container for the two independently optional Depends On/Blocks leaves. No own text.\n\nOptional as a whole; a feature may have no dependencies and block\nnothing else.\n\nParameters\n----------\ndepends_on:\n    `#### Depends On`. Optional.\nblocks:\n    `#### Blocks`. Optional.",
+      "properties": {
+        "blocks": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Blocks"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`#### Blocks` section. Optional."
+        },
+        "depends_on": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DependsOn"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`#### Depends On` section. Optional."
+        }
+      },
+      "title": "Dependencies",
+      "type": "object"
+    },
+    "DependsOn": {
+      "description": "`#### Depends On` under `### Dependencies` -- free-form list of things this feature needs first.\nOptional.",
+      "properties": {},
+      "title": "DependsOn",
+      "type": "object"
+    },
+    "DesignNotes": {
+      "description": "`### Design Notes` -- free-form design rationale, schema sketches, etc. Optional.",
+      "properties": {},
+      "title": "DesignNotes",
+      "type": "object"
+    },
+    "ExplicitlyOutOfScope": {
+      "description": "`#### Explicitly Out Of Scope` under `### Scope` -- free-form bullet list of what this feature\ndeliberately does not cover. Mandatory.",
+      "properties": {},
+      "title": "ExplicitlyOutOfScope",
+      "type": "object"
+    },
+    "FeatFrontmatter": {
+      "description": "Feature (FEAT) frontmatter: `MarkdownFrontmatter` narrowed for the ``feat`` document type.\n\nParameters\n----------\ntype:\n    Fixed discriminator, always ``\"feat\"``. Narrows the base's mandatory,\n    default-less ``str`` field to a ``Literal[\"feat\"] = \"feat\"``, so a document\n    omitting ``type`` entirely still parses as a feature document.\nstatus:\n    One of ``\"planning\"``, ``\"progress\"``, ``\"review\"``, ``\"done\"``.\n    Narrows the base's free-form ``str`` field to this closed four-value\n    set; absent/blank defaults to ``\"planning\"``\n    (``_default_blank_status_to_planning`` below, which runs before the\n    base's inherited ``_default_blank_status_to_draft``).\nversion:\n    The ``models.md`` schema major.minor.patch version this document's\n    frontmatter was written with. DO NOT CHANGE!\n\nAll other fields (``id``, ``created``, ``updated``, ``version``) are inherited\nunchanged from :class:`MarkdownFrontmatter`.",
+      "properties": {
+        "created": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Created"
+        },
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Id"
+        },
+        "status": {
+          "default": "planning",
+          "title": "Status",
+          "type": "string"
+        },
+        "type": {
+          "const": "feat",
+          "default": "feat",
+          "title": "Type",
+          "type": "string"
+        },
+        "updated": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Updated"
+        },
+        "version": {
+          "default": "1.0.0",
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "title": "FeatFrontmatter",
+      "type": "object"
+    },
+    "Feature": {
+      "description": "The `feat` body: a single H1 section (`# Feature: {title}`) with the fields below.\n\nParameters\n----------\nplan:\n    `## Plan`. Mandatory.\nprogress:\n    `## Progress`. Mandatory.",
+      "properties": {
+        "plan": {
+          "$ref": "#/$defs/Plan",
+          "description": "`## Plan` section. Mandatory."
+        },
+        "progress": {
+          "$ref": "#/$defs/Progress",
+          "description": "`## Progress` section. Mandatory."
+        }
+      },
+      "required": [
+        "plan",
+        "progress"
+      ],
+      "title": "Feature",
+      "type": "object"
+    },
+    "Included": {
+      "description": "`#### Included` under `### Scope` -- free-form bullet list of what this feature covers. Mandatory.",
+      "properties": {},
+      "title": "Included",
+      "type": "object"
+    },
+    "MarkdownComment": {
+      "description": "A standalone HTML comment block (`\"html_block\"`, e.g. `<!-- some note -->`).\n\nDeliberately leaf-only, like `MarkdownCodeBlock`. Declare an optional\n`comment: MarkdownComment | None` field on any `MarkdownStr` subclass to\nlet a value be preceded by such an explanatory comment without it\nbreaking that class's own structural field matching. See `get_extent`/\n`from_text`/`text` for the full mechanics.",
+      "properties": {},
+      "title": "MarkdownComment",
+      "type": "object"
+    },
+    "MarkdownParagraph": {
+      "description": "A markdown paragraph (\"p\"), the non-heading sibling of `MarkdownSection`.\n\nA paragraph has no level, so there is a single `MarkdownParagraph` class\n(no `MarkdownParagraph1`..`6` spectrum) and no `@alias` check -- a\nparagraph's content is free-form prose, not a title.\n\nLeaf (no declared nested fields): `_value` holds the paragraph's own line\nspan, verbatim. Composite (declares fields): `_value` holds only the\nparagraph's own inline text (e.g. a lead-in sentence); the remaining text\nis delegated to nested field parsing, bounded by the next heading of any\nlevel (a paragraph can never itself contain a heading). See\n`get_extent`/`from_text`/`__str__` docstrings below for the full\nmechanics.",
+      "properties": {},
+      "title": "MarkdownParagraph",
+      "type": "object"
+    },
+    "MoreInformation": {
+      "description": "`### More Information` -- free-form optional supplementary text, no fixed format. Optional.",
+      "properties": {},
+      "title": "MoreInformation",
+      "type": "object"
+    },
+    "Overview": {
+      "description": "`### Overview` -- free-form prose describing what this feature is and\nwhy it exists. Mandatory.",
+      "properties": {},
+      "title": "Overview",
+      "type": "object"
+    },
+    "Phase": {
+      "description": "`#### Phase N: {title}` under `### Task List` -- one phase's own flat checklist.\n\nUnpadded phase numbers (matching this very plan's own \"Phase 0\"..\"Phase\n5\" headings). Per-item metadata (`depends on:`/`status:`/`ETA`) stays\nunparsed free text inside each item's own description.\n\nParameters\n----------\nitems:\n    The flat `- [ ] .../- [x] ...` checklist for this phase, reusing\n    `tsk.models.v1.task_item.TaskItem` as-is. At least one item.\nnumber:\n    Computed. The phase's number (e.g. `1` for `#### Phase 1: X`).\n    Never stored separately -- derived from the retained heading text.\ntitle:\n    Computed. The phase's title (the heading text after `\": \"`). Never\n    stored separately -- derived from the retained heading text.",
+      "properties": {
+        "items": {
+          "description": "The flat `- [ ] .../- [x] ...` checklist for this phase, in document order. Must contain at least one item.",
+          "items": {
+            "$ref": "#/$defs/TaskItem"
+          },
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "Phase",
+      "type": "object"
+    },
+    "Plan": {
+      "description": "`## Plan` -- container for the feature's plan-side sections. No own text. Mandatory.\n\nParameters\n----------\noverview:\n    `### Overview`. Mandatory.\nrequirements:\n    `### Requirements`. Mandatory.\nacceptance_criteria:\n    `### Acceptance Criteria`. Mandatory.\nscope:\n    `### Scope`. Mandatory.\ndependencies:\n    `### Dependencies`. Optional.\ndesign_notes:\n    `### Design Notes`. Optional.\nrelated_decisions:\n    `### Related Decisions`. Optional.\ntask_list:\n    `### Task List`. Mandatory.",
+      "properties": {
+        "acceptance_criteria": {
+          "$ref": "#/$defs/AcceptanceCriteria",
+          "description": "`### Acceptance Criteria` section. Mandatory."
+        },
+        "dependencies": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Dependencies"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### Dependencies` section. Optional."
+        },
+        "design_notes": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DesignNotes"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### Design Notes` section. Optional."
+        },
+        "overview": {
+          "$ref": "#/$defs/Overview",
+          "description": "`### Overview` section. Mandatory."
+        },
+        "related_decisions": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RelatedDecisions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### Related Decisions` section. Optional."
+        },
+        "requirements": {
+          "$ref": "#/$defs/Requirements",
+          "description": "`### Requirements` section. Mandatory."
+        },
+        "scope": {
+          "$ref": "#/$defs/Scope",
+          "description": "`### Scope` section. Mandatory."
+        },
+        "task_list": {
+          "$ref": "#/$defs/TaskList",
+          "description": "`### Task List` section. Mandatory."
+        }
+      },
+      "required": [
+        "overview",
+        "requirements",
+        "acceptance_criteria",
+        "scope",
+        "task_list"
+      ],
+      "title": "Plan",
+      "type": "object"
+    },
+    "Progress": {
+      "description": "`## Progress` -- container for the feature's progress-side sections. No own text. Mandatory.\n\nParameters\n----------\ncurrent_status:\n    `### Current Status`. Mandatory.\nblockers:\n    `### Blockers`. Optional.\nupdates:\n    `### Updates`. Mandatory.\ndecisions_made:\n    `### Decisions Made`. Optional.\nrelated_prs_commits:\n    `### Related PRs / Commits`. Optional.\nmore_information:\n    `### More Information`. Optional.",
+      "properties": {
+        "blockers": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Blockers"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### Blockers` section. Optional."
+        },
+        "current_status": {
+          "$ref": "#/$defs/CurrentStatus",
+          "description": "`### Current Status` section. Mandatory."
+        },
+        "decisions_made": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DecisionsMade"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### Decisions Made` section. Optional."
+        },
+        "more_information": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MoreInformation"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### More Information` section. Optional."
+        },
+        "related_prs_commits": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RelatedPrsCommits"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### Related PRs / Commits` section. Optional."
+        },
+        "updates": {
+          "$ref": "#/$defs/Updates",
+          "description": "`### Updates` section. Mandatory."
+        }
+      },
+      "required": [
+        "current_status",
+        "updates"
+      ],
+      "title": "Progress",
+      "type": "object"
+    },
+    "RelatedDecisions": {
+      "description": "`### Related Decisions` -- free-form cross-reference list; entries may reference either an ADR id or a\n`dec` id (or any other decision record). Optional.",
+      "properties": {},
+      "title": "RelatedDecisions",
+      "type": "object"
+    },
+    "RelatedPrsCommits": {
+      "description": "`### Related PRs / Commits` -- free-form list of related pull requests/commits. Optional.\n\nThe slash/mixed-case wording breaks the plain `SPACE_SEPARATED`\nconvention, so the heading is pinned `LITERAL`.",
+      "properties": {},
+      "title": "RelatedPrsCommits",
+      "type": "object"
+    },
+    "RequirementItem": {
+      "description": "`- REQ-NNN: {text}` -- one bullet-list requirement entry under `### Requirements`.\n\nA leaf `MarkdownListItem` subclass (no checkbox marker, unlike `TaskItem`):\nthe requirement number and its description both live in the item's own\ntext (e.g. `\"REQ-001: The widget must render within 200ms.\"`), recovered\nby the `@computed_field` below.\n\nParameters\n----------\ndescription:\n    Computed. This item's own text with the `REQ-NNN: ` prefix stripped.\n    Raises `AssertionError` if `.text` does not match `REQ-\\d{3}: .+`.",
+      "properties": {},
+      "title": "RequirementItem",
+      "type": "object"
+    },
+    "Requirements": {
+      "description": "`### Requirements` -- bullet list of `REQ-NNN: {text}` entries. Mandatory. At least one item.\n\nParameters\n----------\nitems:\n    The `REQ-NNN: {text}` entries, in document order. At least one item.",
+      "properties": {
+        "items": {
+          "description": "Bullet list of `REQ-NNN: {text}` entries, in document order. Must contain at least one item.",
+          "items": {
+            "$ref": "#/$defs/RequirementItem"
+          },
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "Requirements",
+      "type": "object"
+    },
+    "Scope": {
+      "description": "`### Scope` -- container for the two mandatory Included/Explicitly Out Of Scope leaves. No own text.\n\nParameters\n----------\nincluded:\n    `#### Included`. Mandatory.\nexplicitly_out_of_scope:\n    `#### Explicitly Out Of Scope`. Mandatory.",
+      "properties": {
+        "explicitly_out_of_scope": {
+          "$ref": "#/$defs/ExplicitlyOutOfScope",
+          "description": "`#### Explicitly Out Of Scope` section. Mandatory."
+        },
+        "included": {
+          "$ref": "#/$defs/Included",
+          "description": "`#### Included` section. Mandatory."
+        }
+      },
+      "required": [
+        "included",
+        "explicitly_out_of_scope"
+      ],
+      "title": "Scope",
+      "type": "object"
+    },
+    "TaskItem": {
+      "description": "One `- [ ] .../- [x] ...` checklist entry of a `Task`'s flat item list.\n\nA leaf `MarkdownListItem` subclass (declares no nested `MarkdownStr`\nfields of its own, only the two computed properties below), so it parses/\nrenders exactly like the base class -- `checked`/`description` are purely\nderived views over the inherited `.text`, computed lazily rather than\nstored, and therefore never interfere with `MarkdownStr`'s field-based\n`from_text`/`__str__` distribution (see `MarkdownStr._get_field_names`).\n\nParameters\n----------\nchecked:\n    Computed. `True` for a `[x]`/`[X]` marker, `False` for a `[ ]`\n    marker. Raises `AssertionError` if `.text` does not start with a\n    well-formed checkbox marker at all.\ndescription:\n    Computed. The item's own text with the leading checkbox marker\n    stripped, e.g. `\"Do the thing\"` for `\"- [ ] Do the thing\"`. Raises\n    `AssertionError` under the same condition as `checked`.\ncontent:\n    An optional list of paragraphs with details content of the task item.",
+      "properties": {
+        "content": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/MarkdownParagraph"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Content"
+        }
+      },
+      "title": "TaskItem",
+      "type": "object"
+    },
+    "TaskList": {
+      "description": "`### Task List` -- container for the `#### Phase N: ...` entries. No own text. Mandatory. At least\none phase.\n\nParameters\n----------\nphases:\n    The `#### Phase N: {title}` entries, in document order. At least\n    one phase.",
+      "properties": {
+        "phases": {
+          "description": "The `#### Phase N: {title}` entries, in document order. Must contain at least one phase.",
+          "items": {
+            "$ref": "#/$defs/Phase"
+          },
+          "minItems": 1,
+          "title": "Phases",
+          "type": "array"
+        }
+      },
+      "required": [
+        "phases"
+      ],
+      "title": "TaskList",
+      "type": "object"
+    },
+    "UpdateEntry": {
+      "description": "`#### {timestamp} \u2014 {title}` under `### Updates` -- one update entry.\n\nThe timestamp format is deliberately not the same format as frontmatter\n`created`/`updated` (plain `YYYY-MM-DD`) -- this format is scoped to\n`### Updates`/`### Decisions Made` entry headings only, hand/LLM-authored\nbody content, not tool-generated frontmatter.\n\nParameters\n----------\ncontent:\n    The lead paragraph right after the H4 heading -- this entry's own\n    update text. Mandatory.\ntimestamp:\n    Computed. The entry's ISO8601 timestamp, verbatim from the heading.\n    Never stored separately -- derived from the retained heading text.\ntitle:\n    Computed. The entry's title (the heading text after `\" \u2014 \"`). Never\n    stored separately -- derived from the retained heading text.",
+      "properties": {
+        "content": {
+          "$ref": "#/$defs/MarkdownParagraph",
+          "description": "The lead paragraph directly under the H4 heading -- this entry's own update text. Mandatory."
+        }
+      },
+      "required": [
+        "content"
+      ],
+      "title": "UpdateEntry",
+      "type": "object"
+    },
+    "Updates": {
+      "description": "`### Updates` -- a dynamic, newest-first list of ISO8601-timestamped `#### ` update entries. Mandatory.\nAt least one entry. May be preceded by an explanatory HTML comment (e.g. an ordering hint).\n\nParameters\n----------\ncomment:\n    Optional explanatory HTML comment (`<!-- ... -->`), e.g.\n    `<!-- Newest entry first -- prepend new entries directly below\n    this comment. -->`. Inherited from `MarkdownSection3WithComment`.\nupdates:\n    The `#### {timestamp} \u2014 {title}` entries, in document order,\n    newest-first (enforced, see `_validate_newest_first`). At least\n    one entry.",
+      "properties": {
+        "comment": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MarkdownComment"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional explanatory HTML comment (`<!-- ... -->`)."
+        },
+        "updates": {
+          "description": "Dynamic collection of `#### {timestamp} \u2014 {title}` entries, in document order, newest-first. Must contain at least one entry.",
+          "items": {
+            "$ref": "#/$defs/UpdateEntry"
+          },
+          "minItems": 1,
+          "title": "Updates",
+          "type": "array"
+        }
+      },
+      "required": [
+        "updates"
+      ],
+      "title": "Updates",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "A full feature document: YAML frontmatter and body.\n\nAttributes\n----------\nfrontmatter:\n    The YAML frontmatter block. See :class:`FeatFrontmatter`.\nbody:\n    The parsed feature sections. See :class:`Feature`.",
+  "properties": {
+    "body": {
+      "$ref": "#/$defs/Feature"
+    },
+    "frontmatter": {
+      "$ref": "#/$defs/FeatFrontmatter"
+    }
+  },
+  "required": [
+    "frontmatter",
+    "body"
+  ],
+  "title": "FeatDocument",
+  "type": "object"
+}

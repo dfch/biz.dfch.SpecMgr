@@ -15,24 +15,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Tests for the ``get_feat_example`` ``@mcp.tool()`` wrapper (Task 2.3).
-
-**Deferred to Phase 3** (Task 3.1): the packaged ``feat/data/feat_example.md``
-file itself does not exist yet -- this domain's ``get_feat_example``/
-``get_feat_template`` are the only two tools whose "real packaged file"
-happy-path test cannot be written honestly in this phase (every other
-domain's equivalent test, e.g. ``test_get_dec_example.py``, exercises the
-real, committed packaged data file directly). Until Phase 3 ships that
-file, this module only tests the tool's delegation to
-``general.tools._packaged_data.read_packaged_text`` (via mocking, so it
-needs no real file) and confirms the current, honest state of the world:
-calling ``get_feat_example()`` for real today raises ``FileNotFoundError``,
-exactly like a broken installation would for any other domain. Once Phase 3
-adds the packaged file, replace
-``test_raises_file_not_found_until_phase_3_ships_the_packaged_file`` below
-with a real "returns the packaged example" test mirroring
-``test_get_dec_example.py``'s own -- do not just delete it silently.
-"""
+"""Tests for the ``get_feat_example`` ``@mcp.tool()`` wrapper (Task 2.3, real packaged data from Task 3.1)."""
 
 from __future__ import annotations
 
@@ -48,10 +31,14 @@ from biz.dfch.specmgr.general.tools import _packaged_data
 class TestGetFeatExampleTool(unittest.TestCase):
     """Tests for the get_feat_example tool."""
 
-    def test_raises_file_not_found_until_phase_3_ships_the_packaged_file(self) -> None:
-        """As of Phase 2, feat/data/feat_example.md does not exist yet -- see this module's docstring."""
-        with self.assertRaises(FileNotFoundError):
-            get_feat_example()
+    def test_returns_real_packaged_example(self) -> None:
+        """Against the real, committed packaged data file, without any patching."""
+        result = get_feat_example()
+
+        self.assertIsInstance(result, str)
+        self.assertTrue(result.startswith("---\n"))
+        self.assertIn("type: feat", result)
+        self.assertIn("# Feature: Example Widget", result)
 
     def test_delegates_to_shared_data_reader(self) -> None:
         """The tool must return whatever general.tools._packaged_data.read_packaged_text() returns."""

@@ -15,12 +15,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Tests for the ``get_feat_template`` ``@mcp.tool()`` wrapper (Task 2.3).
-
-**Deferred to Phase 3** (Task 3.2) -- see ``test_get_feat_example.py``'s own
-module docstring for the full rationale; this module mirrors it exactly for
-the template, not the example.
-"""
+"""Tests for the ``get_feat_template`` ``@mcp.tool()`` wrapper (Task 2.3, real packaged data from Task 3.2)."""
 
 from __future__ import annotations
 
@@ -36,10 +31,14 @@ from biz.dfch.specmgr.general.tools import _packaged_data
 class TestGetFeatTemplateTool(unittest.TestCase):
     """Tests for the get_feat_template tool."""
 
-    def test_raises_file_not_found_until_phase_3_ships_the_packaged_file(self) -> None:
-        """As of Phase 2, feat/data/feat_template.md does not exist yet -- see this module's docstring."""
-        with self.assertRaises(FileNotFoundError):
-            get_feat_template()
+    def test_returns_real_packaged_template(self) -> None:
+        """Against the real, committed packaged data file, without any patching."""
+        result = get_feat_template()
+
+        self.assertIsInstance(result, str)
+        self.assertTrue(result.startswith("---\n"))
+        self.assertIn("type: feat", result)
+        self.assertIn("# Feature: Level 1 Heading is the Title of the Feature", result)
 
     def test_delegates_to_shared_data_reader(self) -> None:
         """The tool must return whatever general.tools._packaged_data.read_packaged_text() returns."""

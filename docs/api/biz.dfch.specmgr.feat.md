@@ -14,15 +14,18 @@ under the base directory -- see ``feat/tools/_paths.py`` (added in Phase 2)
 for the bespoke addressing this requires, in contrast to every other
 domain's shared ``general/tools/_doc_paths.py``.
 
-**Current status: Phase 2 (tools) complete.** ``models/v1/`` (Phase 1) and
-``tools/`` (Phase 2) are fully implemented; ``resources`` and ``prompts``
-remain empty sub-packages, built out in Phases 3-4 of the linked feature
-plan. ``feat`` already follows the ``sop``-style generic-dispatch MCP
-surface (ADR 36905d5b-8057-4294-8665-c7eed5534db0): ``create_feat``,
-``parse_feat``, ``list_feat``, ``get_feat``, ``get_feat_example``,
-``get_feat_template``, ``delete_feat`` (stub), ``validate_feat``, plus
-``type="feat"`` entries in the generic ``update``/``set_status`` tools --
-no ``update_feat``/``set_status_feat`` of its own.
+**Current status: Phase 3 (resources + packaged data + schema) complete.**
+``models/v1/`` (Phase 1), ``tools/`` (Phase 2), ``data/`` and ``resources``
+(Phase 3) are fully implemented; ``prompts`` remains an empty sub-package,
+built out in Phase 4 of the linked feature plan. ``feat`` already follows
+the ``sop``-style generic-dispatch MCP surface (ADR
+36905d5b-8057-4294-8665-c7eed5534db0): ``create_feat``, ``parse_feat``,
+``list_feat``, ``get_feat``, ``get_feat_example``, ``get_feat_template``,
+``delete_feat`` (stub), ``validate_feat``, plus ``type="feat"`` entries in
+the generic ``update``/``set_status`` tools -- no ``update_feat``/
+``set_status_feat`` of its own. Resources: ``specmgr://feat/schema``,
+``specmgr://feat/example``, ``specmgr://feat/template`` (no ``/{id}``, no
+``/list``).
 
 Import this package to register every feature tool/prompt/resource against
 the shared ``mcp`` application instance at once::

@@ -100,7 +100,10 @@ First-line docstrings from each module, organized by domain:
 - `feat/models/v1/parser.py` — Parse raw feature (FEAT) ``.md`` text into a :class:`FeatDocument`.
 - `feat/models/v1/summary.py` — Pydantic model for one line of FEAT listing output (Phase 2, ``list_feat``).
 - `feat/prompts/__init__.py` — Feature (FEAT) MCP prompts.
-- `feat/resources/__init__.py` — Feature (FEAT) MCP resources.
+- `feat/resources/__init__.py` — MCP resource registrations for Feature (FEAT) documents (feat-31 Task 3.5).
+- `feat/resources/feat_example.py` — Resource: specmgr://feat/example (feat-31 Task 3.5).
+- `feat/resources/feat_schema.py` — Resource: specmgr://feat/schema (feat-31 Task 3.5, packaged data).
+- `feat/resources/feat_template.py` — Resource: specmgr://feat/template (feat-31 Task 3.5).
 - `feat/tools/__init__.py` — MCP tool wrappers for features (mirrors ``dec/tools/``'s own shape).
 - `feat/tools/_io.py` — Thin file read helpers over ``parse_feat`` (Task 2.2).
 - `feat/tools/_lock.py` — Per-document and global in-process locks guarding feature mutations (Task 2.2).
@@ -422,4 +425,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 278
+**Test files**: 281
