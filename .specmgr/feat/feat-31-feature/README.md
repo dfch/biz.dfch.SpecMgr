@@ -1,9 +1,9 @@
 ---
 created: 2026-08-30
 id: feat-31-feature
-status: done
+status: in-progress
 updated: 2026-08-30
-version: 1.11.0
+version: 1.12.0
 ---
 
 # Feature: Formalize the Feature artifact type ("feat")
@@ -813,6 +813,25 @@ discipline.
   issue #31 comment intentionally left to the orchestrator**, per this
   task's own instructions to the implementing agent.
 
+#### Phase 6: Frontmatter timestamp format fix
+
+- [ ] Task 6.1: Change `feat` frontmatter's `created`/`updated` fields
+  from plain `YYYY-MM-DD` dates to microsecond timestamps
+  (`datetime.now().isoformat(timespec="microseconds")`), matching every
+  other whole-body domain's own convention (`req`/`uc`/`tsk`/`qa`/`prb`/
+  `gol`/`rsk`/`dec`). Affects `feat/tools/create_feat.py` (frontmatter
+  construction), `general/tools/update.py`'s `_update_feat` adapter,
+  `general/tools/set_status.py`'s `_set_status_feat` adapter, the Design
+  Notes' "Frontmatter" section (which currently documents the plain-date
+  divergence as deliberate), and any tests asserting the plain-date
+  format (`tests/feat/tools/test_create_feat.py`,
+  `tests/feat/tools/test_integration.py`, `tests/general/tools/`
+  equivalents if any). This reverses this feature's own earlier
+  deliberate design decision (see Decisions Made) — reversing it needs
+  the same care as the original decision: update the Decisions Made log
+  with a new entry explaining why, not just silently change the code —
+  depends on: Phase 5 complete — status: not-started
+
 **Note:** If a task's scope changes mid-flight, edit its description in
 place; rely on git history (`git log -p` on this file) to recover what was
 originally planned, rather than keeping a second copy of the task around.
@@ -820,6 +839,16 @@ originally planned, rather than keeping a second copy of the task around.
 ## Progress
 
 ### Current Status
+
+**As of 2026-08-30 (Phase 6 recorded, not started)**: A new `#### Phase
+6: Frontmatter timestamp format fix` has been added to the Task List
+(Task 6.1, not-started) to reverse this feature's own earlier deliberate
+divergence and switch `feat` frontmatter's `created`/`updated` fields
+from plain `YYYY-MM-DD` dates to microsecond timestamps, matching every
+other whole-body domain. This is planning/recording only — no
+`src`/`tests` code has been touched. The feature's frontmatter `status`
+has reverted from `done` to `in-progress` to reflect this new,
+not-yet-started follow-up work.
 
 **As of 2026-08-30**: Phase 0 (Scaffolding) committed — GitHub issue #31
 filed, branch `feat-31-feature` created off `dev`, this plan written and
@@ -1024,6 +1053,30 @@ implementing agent's.
   as part of this design-review conversation).
 
 ### Recent Updates
+
+#### Update 2026-08-30 (Phase 6 recorded — frontmatter timestamp format fix)
+
+- Added a new `#### Phase 6: Frontmatter timestamp format fix` to the
+  Task List, with one new task, **Task 6.1** (not-started): change
+  `feat` frontmatter's `created`/`updated` fields from plain
+  `YYYY-MM-DD` dates to microsecond timestamps
+  (`datetime.now().isoformat(timespec="microseconds")`), matching every
+  other whole-body domain (`req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/
+  `dec`) already in use — reversing this feature's own earlier
+  deliberate divergence documented in Design Notes' "Frontmatter"
+  section and in Decisions Made. The task calls out the affected files
+  (`feat/tools/create_feat.py`, `general/tools/update.py`'s
+  `_update_feat` adapter, `general/tools/set_status.py`'s
+  `_set_status_feat` adapter, the Design Notes prose, and the tests
+  asserting the plain-date format) and requires a new Decisions Made
+  entry when the reversal is actually implemented, not a silent code
+  change.
+- Frontmatter `status` reverted from `done` to `in-progress` and
+  `version` bumped from `1.11.0` to `1.12.0` to reflect this new,
+  not-yet-started follow-up item.
+- **This is planning/recording only — no `src`/`tests` code was
+  touched.** Task 6.1 remains not-started; implementation is deferred to
+  a future session.
 
 #### Update 2026-08-30 (Phase 5 complete — cross-cutting registration; feature done)
 
