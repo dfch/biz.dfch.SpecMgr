@@ -2,7 +2,7 @@
 created: 2026-08-15
 id: feat-7-various-improvements
 status: planning
-updated: 2026-08-29
+updated: 2026-08-30
 version: 1.0.0
 ---
 
@@ -776,6 +776,42 @@ progresses (edit, don't duplicate).
      `tests/tsk/tools/test_validate_tsk.py`) reproducing the exact failure
      end-to-end.
 
+- [ ] Task 0.30: Consolidate "Recent Updates" and "Updates" across
+  artifact types — depends on: none — status: not-started
+
+  Background: Found while planning `feat-30-sop` (2026-08-30). Different
+  document-type domains use different heading text and different section
+  shapes for their own "what changed over time" section: `tsk`'s
+  `RecentUpdates`/`## Recent Updates` (free-form `@alias(value=".+",
+  type=AliasType.REGEX)` H3 heading, mandatory lead `MarkdownParagraph`
+  content, no timestamp format enforced structurally); `dec`'s
+  `Updates`/`## Updates` (implicit-alias heading, `UpdateEntry` H3s). `sop`
+  (feat-30, not yet implemented) is about to add a **third** variant,
+  `Updates`/`## Updates` with a structurally-enforced ISO8601 timestamp +
+  " — " + title heading regex
+  (`^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2}) — .+$`)
+  — a stricter shape than either `tsk` or `dec` currently has. None of
+  `req`/`uc`/`qa`/`prb`/`gol`/`rsk` have any such section at all today.
+  Decide: (a) whether a single canonical heading name/shape
+  (`## Updates` vs `## Recent Updates`, timestamp format enforced or not)
+  should be retrofitted across every domain that has one, or whether the
+  divergence is intentional/acceptable per-domain; (b) if consolidating,
+  whether this warrants a shared `models/md` mixin/base class (e.g. a
+  generic `UpdatesSection`/`UpdateEntry` pair domains can subclass) rather
+  than each domain hand-rolling its own `Updates`/`UpdateEntry` pair; (c)
+  whether `sop`'s new ISO8601-with-offset timestamp format for `## Updates`
+  entry headings should become the new cross-domain standard (superseding
+  `tsk`'s free-form heading and `dec`'s implicit-alias heading), be
+  retrofitted onto `tsk`/`dec`, or stay `sop`-only as a deliberate
+  divergence; record whichever decision is made, with rationale, in this
+  file's Decisions Made log (or a full ADR if it turns out to affect the
+  parser engine itself, per the ADR-vs-feature-log tie-breaker in ADR
+  e369ee2e-3353-4f92-991c-6367d76d832e). Out of scope for `feat-30-sop`
+  itself — that feature proceeds with its own `## Updates` shape as
+  designed; this task is only about whether a later, separate
+  consolidation pass should retrofit `tsk`/`dec` (and any future domain)
+  onto one shared shape.
+
 - [ ] Task 1.1: Inventory current `specmgr://*/list` resources and diff
   their output shape/behavior (`adr_list` vs. `req_list`) — depends on:
   none — status: not-started
@@ -897,6 +933,14 @@ already-compacted folder).
 
 See `history.md` for updates before 2026-08-18 (rotated out per ADR
 e369ee2e-3353-4f92-991c-6367d76d832e once this section grew too long).
+
+#### Update 2026-08-30 (Task 0.30 recorded)
+
+- Recorded: Task 0.30 (consolidate "Recent Updates"/"Updates" across
+  artifact types — found while planning `feat-30-sop`, which is about to
+  introduce a third divergent `## Updates` shape alongside `tsk`'s
+  `## Recent Updates` and `dec`'s `## Updates`). Decision deferred; task
+  is not-started.
 
 #### Update 2026-08-29 (Task 0.29 recorded)
 
