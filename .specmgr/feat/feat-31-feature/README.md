@@ -524,7 +524,7 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-30**: Phase 0 (Scaffolding) complete — GitHub issue #31
+**As of 2026-08-30**: Phase 0 (Scaffolding) committed — GitHub issue #31
 filed, branch `feat-31-feature` created off `dev`, this plan written and
 reviewed with the user across several rounds (body-modeling depth,
 addressing scheme, frontmatter `version` semantics, status vocabulary,
@@ -533,14 +533,40 @@ naming, feat-7 backlog entry); package skeleton
 (`feat/{models/v1,tools,resources,prompts}`, `tests/feat/{models/v1,
 tools,resources,prompts}`) in place; `feat-7-various-improvements` Task 0.31
 added and Task 0.30 extended. Full quality gate green (2007 tests, ruff
-format/check clean, vulture clean). Committed as 31c5c30. Next: Phase 1
-(models + parser).
+format/check clean, vulture clean). Committed as 31c5c30/164182e. **Paused
+here, deliberately**: implementation was not what was asked for at this
+point — the design (schema, addressing scheme, MCP surface) needs a review
+pass by the user first, who may request adjustments, before Phase 1 (or any
+further phase) starts. See Blockers.
 
 ### Blockers
 
-None.
+- [ ] Design review pending — do not start Phase 1 (or touch any further
+  `src`/`tests` code) until the user has reviewed this plan's Design Notes
+  (schema, addressing scheme, frontmatter semantics, MCP surface) and
+  either confirms it as-is or requests adjustments. Phase 0's committed
+  scaffold (`31c5c30`, `164182e`) stays as-is for now — no revert/rebase/
+  rewrite of any kind unless and until explicitly instructed.
 
 ### Recent Updates
+
+#### Update 2026-08-30 (paused for design review after Phase 0)
+
+- Corrected: implementing Phase 0's package skeleton was premature — the
+  user had asked for the design to be planned and reviewed, not for
+  implementation to start. Nothing from Phase 0 is reverted (both commits,
+  `31c5c30` and `164182e`, stay on the branch as-is); instead, this feature
+  is explicitly paused here, recorded as a Blocker above, until the user
+  completes a review pass over this plan's Design Notes and either confirms
+  it or requests adjustments.
+- Also noted and resolved as a non-issue: an earlier "fyi, `sop` is still
+  in development and not pushed yet" flag from the user turned out not to
+  affect this branch — `git fetch origin dev` confirmed the `feat(sop): …`
+  commits this branch's base (`c8f8a87`) sits on are already present on
+  `origin/dev`, so `feat-31-feature`'s branch point is clean; no rebase
+  needed.
+- Next: wait for the user's design review/adjustments before touching any
+  further code or advancing the Task List.
 
 #### Update 2026-08-30 (Phase 0: Scaffolding — complete)
 
