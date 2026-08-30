@@ -389,22 +389,23 @@ commit), mirroring `feat-21-decision`'s/`feat-30-sop`'s per-phase commit
 discipline.
 
 #### Phase 0: Scaffolding
-
 - [x] Task 0.1: File GitHub issue #31, create branch `feat-31-feature` off
   `dev`, write this plan file — depends on: none — status: completed
   (2026-08-30)
-- [ ] Task 0.2: Package skeleton — `feat/__init__.py` (`from . import prompts, resources, tools` + registration docstring), empty
-  `feat/models/v1/`, `feat/tools/`, `feat/resources/`, `feat/prompts/`,
-  `feat/data/` packages, and `tests/feat/` skeleton mirroring `tests/dec/`
-  — depends on: Task 0.1 — status: not-started
-- [ ] Task 0.3: Add Task 0.31 to `feat-7-various-improvements` (migrate
+- [x] Task 0.2: Package skeleton — `feat/__init__.py` (`from . import
+  prompts, resources, tools` + registration docstring), empty
+  `feat/models/v1/`, `feat/tools/`, `feat/resources/`, `feat/prompts/`
+  packages, and `tests/feat/` skeleton mirroring `tests/dec/` — depends on:
+  Task 0.1 — status: completed (2026-08-30). `feat/data/` deferred to
+  Phase 3, which is the first phase that writes anything into it.
+- [x] Task 0.3: Add Task 0.31 to `feat-7-various-improvements` (migrate
   existing feature folders once this schema ships) and extend that
   feature's Task 0.30 background note to mention `feat`'s `### Updates`
   shape as a fourth divergent variant — depends on: none — status:
-  not-started
-- [ ] Task 0.4: Phase-end quality gate + baseline commit + comment the
+  completed (2026-08-30)
+- [x] Task 0.4: Phase-end quality gate + baseline commit + comment the
   commit hash on issue #31 — depends on: Task 0.2, Task 0.3 — status:
-  not-started
+  completed (2026-08-30, commit 31c5c30, issue #31 comment posted)
 
 #### Phase 1: Models + parser (`feat/models/v1/`)
 
@@ -523,18 +524,54 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-08-30**: Planning complete. GitHub issue #31 filed, branch
-`feat-31-feature` created off `dev`, this plan written and reviewed with the
-user across several rounds (body-modeling depth, addressing scheme, frontmatter
-`version` semantics, status vocabulary, `Updates` shape/naming, MCP surface
-scope, no-migration decision, branch naming, feat-7 backlog entry). Phase 0
-scaffolding (package skeleton, feat-7 backlog task) not yet started.
+**As of 2026-08-30**: Phase 0 (Scaffolding) complete — GitHub issue #31
+filed, branch `feat-31-feature` created off `dev`, this plan written and
+reviewed with the user across several rounds (body-modeling depth,
+addressing scheme, frontmatter `version` semantics, status vocabulary,
+`Updates` shape/naming, MCP surface scope, no-migration decision, branch
+naming, feat-7 backlog entry); package skeleton
+(`feat/{models/v1,tools,resources,prompts}`, `tests/feat/{models/v1,
+tools,resources,prompts}`) in place; `feat-7-various-improvements` Task 0.31
+added and Task 0.30 extended. Full quality gate green (2007 tests, ruff
+format/check clean, vulture clean). Committed as 31c5c30. Next: Phase 1
+(models + parser).
 
 ### Blockers
 
 None.
 
 ### Recent Updates
+
+#### Update 2026-08-30 (Phase 0: Scaffolding — complete)
+
+- Completed Tasks 0.1–0.4, the final tasks of Phase 0.
+  - Task 0.2: package skeleton — `feat/__init__.py` (docstring + `from .
+    import prompts, resources, tools`), empty `feat/models/__init__.py` +
+    `feat/models/v1/__init__.py`, `feat/tools/__init__.py`,
+    `feat/resources/__init__.py`, `feat/prompts/__init__.py` (each with a
+    docstring pointing at the phase that populates it), and the matching
+    `tests/feat/{__init__,models/__init__,models/v1/__init__,tools/__init__,
+    resources/__init__,prompts/__init__}.py` (all empty, mirroring
+    `tests/dec/`'s exact convention). `feat/data/` deferred to Phase 3.
+  - Task 0.3: added Task 0.31 to `feat-7-various-improvements`'s Phase 0
+    task list (migrate the 17 existing feature folders once this schema
+    ships and Task 0.30's consolidation decision is made) plus a matching
+    Recent Updates entry; extended Task 0.30's own background note to name
+    `feat`'s planned `### Updates`/`#### {timestamp} — {title}` shape as a
+    fourth divergent variant alongside `tsk`/`dec`/`sop`.
+  - Task 0.4: full quality gate green (`ruff format --check`/`ruff check`
+    clean, `vulture src/ whitelist.py --min-confidence 60` clean, full
+    `unittest` suite 2007 tests OK); committed as `31c5c30` ("docs(feat):
+    plan the Feature (feat) artifact type feature"); commit hash posted to
+    issue #31.
+- Next: Phase 1 (models + parser) — `feat/models/v1/{_util,frontmatter,
+  body,document,parser,summary}.py`, `feat_reference.md`, and
+  `tests/feat/models/v1/`.
+- Notes: `sop` (feat-30) is still unimplemented (planning only, no
+  `src/biz/dfch/specmgr/sop/` package exists yet) — this feature's
+  `Updates`/`UpdateEntry` design cites `feat-30-sop`'s **plan**, not its
+  code, as precedent. `git status` after Task 0.4's commit shows a clean
+  tree on branch `feat-31-feature`.
 
 #### Update 2026-08-30 (planning)
 
@@ -554,7 +591,7 @@ None.
   existing files → explicitly out of scope, tracked as a new
   `feat-7-various-improvements` backlog task instead; implementation
   branch → `feat-31-feature`).
-- Filed GitHub issue #31 ("Formalize the Feature artifact type ("feat")"),
+- Filed GitHub issue #31 ("Formalize the Feature artifact type (\"feat\")"),
   created branch `feat-31-feature` off `dev`, wrote this plan file.
 - Next: Phase 0 — package skeleton (`feat/__init__.py` + empty
   `models/v1`/`tools`/`resources`/`prompts`/`data` packages + `tests/feat/`
