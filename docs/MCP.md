@@ -3,7 +3,7 @@
 Auto-generated from the live `biz.dfch.specmgr.server:mcp` registration --
 do not edit by hand, run `specmgr mcp-docs` instead (see `AGENTS.md`).
 
-28 resource(s), 1 resource template(s), 79 tool(s), 21 prompt(s).
+28 resource(s), 1 resource template(s), 87 tool(s), 21 prompt(s).
 
 ## Table of Contents
 
@@ -265,6 +265,7 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`create_qa`](#tool-create_qa) | Create a new Question and Answer (QA) document: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the QA base directory. |
 | [`create_req`](#tool-create_req) | Create a new requirement: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the requirement base directory. |
 | [`create_rsk`](#tool-create_rsk) | Create a new risk: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the risk base directory. |
+| [`create_sop`](#tool-create_sop) | Create a new Standard Operating Procedure: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the SOP base directory. |
 | [`create_tsk`](#tool-create_tsk) | Create a new task list: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the task list base directory. |
 | [`create_uc`](#tool-create_uc) | Create a new use case: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the use-case base directory. |
 | [`delete_dec`](#tool-delete_dec) | Stub only -- always raises NotImplementedError. Reserves the name for a future implementation. |
@@ -273,6 +274,7 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`delete_qa`](#tool-delete_qa) | Stub only -- always raises NotImplementedError. Reserves the name for a future implementation. |
 | [`delete_req`](#tool-delete_req) | Stub only -- always raises NotImplementedError. Reserves the name for a future implementation. |
 | [`delete_rsk`](#tool-delete_rsk) | Stub only -- always raises NotImplementedError. Reserves the name for a future implementation. |
+| [`delete_sop`](#tool-delete_sop) | Stub only -- always raises NotImplementedError. Reserves the name for a future implementation. |
 | [`delete_tsk`](#tool-delete_tsk) | Stub only -- always raises NotImplementedError. Reserves the name for a future implementation. |
 | [`delete_uc`](#tool-delete_uc) | Stub only -- always raises NotImplementedError. Reserves the name for a future implementation. |
 | [`get_adr`](#tool-get_adr) | Read, parse, and return a full ADR document (frontmatter and body) by its id. |
@@ -294,6 +296,9 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`get_rsk`](#tool-get_rsk) | Read, parse, and return a full risk document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. |
 | [`get_rsk_example`](#tool-get_rsk_example) | Return a complete, valid sample risk document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example. |
 | [`get_rsk_template`](#tool-get_rsk_template) | Return a risk document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new risk. |
+| [`get_sop`](#tool-get_sop) | Read, parse, and return a full SOP document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. |
+| [`get_sop_example`](#tool-get_sop_example) | Return a complete, valid sample Standard Operating Procedure document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example. |
+| [`get_sop_template`](#tool-get_sop_template) | Return a SOP document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new Standard Operating Procedure. |
 | [`get_tsk`](#tool-get_tsk) | Read, parse, and return a full task list document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. |
 | [`get_tsk_example`](#tool-get_tsk_example) | Return a complete, valid sample task list document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example. |
 | [`get_tsk_template`](#tool-get_tsk_template) | Return a TSK document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new task list. |
@@ -307,6 +312,7 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`list_qa`](#tool-list_qa) | Ids, titles, statuses, and refs of QA documents in the configured QA base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_qa tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
 | [`list_req`](#tool-list_req) | Ids, titles, statuses, and refs of requirements in the configured requirement base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_req tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
 | [`list_rsk`](#tool-list_rsk) | Ids, titles, statuses, and refs of risks in the configured risk base directory, one page at a time, for context before addressing one by id. Each line also carries the initial/residual 5x5 zone levels, the TARA strategy word, the first `## Scope` entry, and the residual-risk coordinates (residual_probability/residual_impact/residual_product). 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_rsk tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
+| [`list_sop`](#tool-list_sop) | Ids, titles, statuses, and refs of Standard Operating Procedures in the configured SOP base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_sop tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
 | [`list_tsk`](#tool-list_tsk) | Ids, titles, statuses, and refs of task lists in the configured task list base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_tsk tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
 | [`list_uc`](#tool-list_uc) | Ids, titles, statuses, and refs of use cases in the configured use-case base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_uc tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
 | [`mdformat`](#tool-mdformat) | Format a markdown file in place, preserving any YAML frontmatter. Returns True if the file was changed, False if already formatted. |
@@ -321,10 +327,11 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`parse_qa`](#tool-parse_qa) | Parse a QA document markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.qa.models.v2.QaDocument`. |
 | [`parse_req`](#tool-parse_req) | Parse a requirement markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.req.models.v1.ReqDocument`. |
 | [`parse_rsk`](#tool-parse_rsk) | Parse a risk markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.rsk.models.v1.RskDocument`. |
+| [`parse_sop`](#tool-parse_sop) | Parse a Standard Operating Procedure markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.sop.models.v1.SopDocument`. |
 | [`parse_tsk`](#tool-parse_tsk) | Parse a task list markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.tsk.models.v1.TskDocument`. |
 | [`parse_uc`](#tool-parse_uc) | Parse a use-case markdown file (YAML frontmatter + body) from disk into a structured document. |
-| [`set_status`](#tool-set_status) | Replace the status of an existing document across all nine domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, adr), also bumping `updated` (the eight whole-body domains) and leaving the body untouched. The new `status` must be one of the domain's own closed vocabulary values (see the domain's `XFrontmatter.status` field); anything else raises `pydantic.ValidationError` and writes nothing. `superseded_by` is accepted only for `type="adr"` -- it composes the status as "superseded by {superseded_by}"; with any other `type` it is a `ValueError`. Neither `create_*` nor the generic `update` tool accepts a `status` argument at all -- this is the sole status-change entry point. |
-| [`update`](#tool-update) | Whole-body or line-range replace of an existing document's content across the eight whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec), preserving its id/type/status/created/version; only `updated` changes. With no `begin`/`end`, `content` is the full replacement body (body markdown only, no frontmatter block). With both, `content` replaces the 1-based inclusive body-line range `begin`..`end` of the current on-disk body (`N+1` = end-of-body sentinel: append after the last line, or replace through end of body); the spliced result is validated as a whole document before anything is written. `status` is never settable -- use the generic `set_status` tool. |
+| [`set_status`](#tool-set_status) | Replace the status of an existing document across all ten domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, adr), also bumping `updated` (the nine whole-body domains) and leaving the body untouched. The new `status` must be one of the domain's own closed vocabulary values (see the domain's `XFrontmatter.status` field); anything else raises `pydantic.ValidationError` and writes nothing. `superseded_by` is accepted only for `type="adr"` -- it composes the status as "superseded by {superseded_by}"; with any other `type` it is a `ValueError`. Neither `create_*` nor the generic `update` tool accepts a `status` argument at all -- this is the sole status-change entry point. |
+| [`update`](#tool-update) | Whole-body or line-range replace of an existing document's content across the nine whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop), preserving its id/type/status/created/version; only `updated` changes. With no `begin`/`end`, `content` is the full replacement body (body markdown only, no frontmatter block). With both, `content` replaces the 1-based inclusive body-line range `begin`..`end` of the current on-disk body (`N+1` = end-of-body sentinel: append after the last line, or replace through end of body); the spliced result is validated as a whole document before anything is written. `status` is never settable -- use the generic `set_status` tool. |
 | [`update_frontmatter`](#tool-update_frontmatter) | Whole-object replace of an ADR's frontmatter (plan §3), preserving its existing id. |
 | [`update_section`](#tool-update_section) | Whole-section replace/delete of one AdrBody field (plan §4). |
 | [`validate_adr`](#tool-validate_adr) | Re-read and re-parse an ADR by id, letting the models' own Pydantic validators run. |
@@ -334,6 +341,7 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`validate_qa`](#tool-validate_qa) | Disk-free, id-free dry run validating QA document content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
 | [`validate_req`](#tool-validate_req) | Disk-free, id-free dry run validating requirement content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
 | [`validate_rsk`](#tool-validate_rsk) | Disk-free, id-free dry run validating risk content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
+| [`validate_sop`](#tool-validate_sop) | Disk-free, id-free dry run validating SOP content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
 | [`validate_tsk`](#tool-validate_tsk) | Disk-free, id-free dry run validating task list content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
 | [`validate_uc`](#tool-validate_uc) | Disk-free, id-free dry run validating use case content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
 | [`webfetch`](#tool-webfetch) | Fetch a URL over HTTP GET with a bearer token, but only if the URL matches the configured base URL (case-insensitively). Returns the raw response body text. Intended primarily for Web Server instances using PAT authentication. |
@@ -404,6 +412,16 @@ Create a new requirement: assigns a fresh id, derives a filename from the body's
 **Create risk**
 
 Create a new risk: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the risk base directory.
+
+| Parameter | Type | Required |
+| --- | --- | --- |
+| `content` | `string` | Yes |
+
+### Tool: create_sop
+
+**Create Standard Operating Procedure**
+
+Create a new Standard Operating Procedure: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the SOP base directory.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
@@ -482,6 +500,16 @@ Stub only -- always raises NotImplementedError. Reserves the name for a future i
 ### Tool: delete_rsk
 
 **Delete risk (not yet implemented)**
+
+Stub only -- always raises NotImplementedError. Reserves the name for a future implementation.
+
+| Parameter | Type | Required |
+| --- | --- | --- |
+| `id` | `string` | Yes |
+
+### Tool: delete_sop
+
+**Delete Standard Operating Procedure (not yet implemented)**
 
 Stub only -- always raises NotImplementedError. Reserves the name for a future implementation.
 
@@ -657,6 +685,29 @@ Return a complete, valid sample risk document as raw markdown -- frontmatter and
 
 Return a risk document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new risk.
 
+### Tool: get_sop
+
+**Get Standard Operating Procedure**
+
+Read, parse, and return a full SOP document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead.
+
+| Parameter | Type | Required |
+| --- | --- | --- |
+| `id` | `string` | Yes |
+| `raw` | `boolean` | No |
+
+### Tool: get_sop_example
+
+**Get SOP example**
+
+Return a complete, valid sample Standard Operating Procedure document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example.
+
+### Tool: get_sop_template
+
+**Get SOP template**
+
+Return a SOP document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new Standard Operating Procedure.
+
 ### Tool: get_tsk
 
 **Get task list**
@@ -774,6 +825,17 @@ Ids, titles, statuses, and refs of requirements in the configured requirement ba
 **List risks**
 
 Ids, titles, statuses, and refs of risks in the configured risk base directory, one page at a time, for context before addressing one by id. Each line also carries the initial/residual 5x5 zone levels, the TARA strategy word, the first `## Scope` entry, and the residual-risk coordinates (residual_probability/residual_impact/residual_product). 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_rsk tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored.
+
+| Parameter | Type | Required |
+| --- | --- | --- |
+| `max_results` | `integer | None` | No |
+| `offset` | `integer | None` | No |
+
+### Tool: list_sop
+
+**List Standard Operating Procedures**
+
+Ids, titles, statuses, and refs of Standard Operating Procedures in the configured SOP base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_sop tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
@@ -928,6 +990,16 @@ Parse a risk markdown file (YAML frontmatter + body) from disk into a structured
 | --- | --- | --- |
 | `path` | `string` | Yes |
 
+### Tool: parse_sop
+
+**Parse Standard Operating Procedure**
+
+Parse a Standard Operating Procedure markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.sop.models.v1.SopDocument`.
+
+| Parameter | Type | Required |
+| --- | --- | --- |
+| `path` | `string` | Yes |
+
 ### Tool: parse_tsk
 
 **Parse task list**
@@ -952,12 +1024,12 @@ Parse a use-case markdown file (YAML frontmatter + body) from disk into a struct
 
 **Set document status**
 
-Replace the status of an existing document across all nine domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, adr), also bumping `updated` (the eight whole-body domains) and leaving the body untouched. The new `status` must be one of the domain's own closed vocabulary values (see the domain's `XFrontmatter.status` field); anything else raises `pydantic.ValidationError` and writes nothing. `superseded_by` is accepted only for `type="adr"` -- it composes the status as "superseded by {superseded_by}"; with any other `type` it is a `ValueError`. Neither `create_*` nor the generic `update` tool accepts a `status` argument at all -- this is the sole status-change entry point.
+Replace the status of an existing document across all ten domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, adr), also bumping `updated` (the nine whole-body domains) and leaving the body untouched. The new `status` must be one of the domain's own closed vocabulary values (see the domain's `XFrontmatter.status` field); anything else raises `pydantic.ValidationError` and writes nothing. `superseded_by` is accepted only for `type="adr"` -- it composes the status as "superseded by {superseded_by}"; with any other `type` it is a `ValueError`. Neither `create_*` nor the generic `update` tool accepts a `status` argument at all -- this is the sole status-change entry point.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
 | `id` | `string` | Yes |
-| `type` | `string (enum: req, uc, tsk, qa, prb, gol, rsk, dec, adr)` | Yes |
+| `type` | `string (enum: req, uc, tsk, qa, prb, gol, rsk, dec, sop, adr)` | Yes |
 | `status` | `string` | Yes |
 | `superseded_by` | `string | None` | No |
 
@@ -965,12 +1037,12 @@ Replace the status of an existing document across all nine domains (`type` is on
 
 **Update document**
 
-Whole-body or line-range replace of an existing document's content across the eight whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec), preserving its id/type/status/created/version; only `updated` changes. With no `begin`/`end`, `content` is the full replacement body (body markdown only, no frontmatter block). With both, `content` replaces the 1-based inclusive body-line range `begin`..`end` of the current on-disk body (`N+1` = end-of-body sentinel: append after the last line, or replace through end of body); the spliced result is validated as a whole document before anything is written. `status` is never settable -- use the generic `set_status` tool.
+Whole-body or line-range replace of an existing document's content across the nine whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop), preserving its id/type/status/created/version; only `updated` changes. With no `begin`/`end`, `content` is the full replacement body (body markdown only, no frontmatter block). With both, `content` replaces the 1-based inclusive body-line range `begin`..`end` of the current on-disk body (`N+1` = end-of-body sentinel: append after the last line, or replace through end of body); the spliced result is validated as a whole document before anything is written. `status` is never settable -- use the generic `set_status` tool.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
 | `id` | `string` | Yes |
-| `type` | `string (enum: req, uc, tsk, qa, prb, gol, rsk, dec)` | Yes |
+| `type` | `string (enum: req, uc, tsk, qa, prb, gol, rsk, dec, sop)` | Yes |
 | `content` | `string` | Yes |
 | `begin` | `integer | None` | No |
 | `end` | `integer | None` | No |
@@ -1068,6 +1140,17 @@ Disk-free, id-free dry run validating requirement content. `full=False` (default
 **Validate risk content**
 
 Disk-free, id-free dry run validating risk content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body).
+
+| Parameter | Type | Required |
+| --- | --- | --- |
+| `content` | `string` | Yes |
+| `full` | `boolean` | No |
+
+### Tool: validate_sop
+
+**Validate SOP content**
+
+Disk-free, id-free dry run validating SOP content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body).
 
 | Parameter | Type | Required |
 | --- | --- | --- |

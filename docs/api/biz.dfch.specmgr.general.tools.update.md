@@ -3,8 +3,8 @@
 ``@mcp.tool()`` wrapper: update (feat-22-consolidate-mutation-tools, Phase 2).
 
 The generic, cross-domain whole-body *and* line-range replace tool for the
-eight whole-body document types (``req``/``uc``/``tsk``/``qa``/``prb``/
-``gol``/``rsk``/``dec``). It dispatches on the explicit ``type`` parameter to a
+nine whole-body document types (``req``/``uc``/``tsk``/``qa``/``prb``/
+``gol``/``rsk``/``dec``/``sop``). It dispatches on the explicit ``type`` parameter to a
 private per-domain adapter (``_update_<d>``), each a **verbatim port** of
 the corresponding per-domain ``update_<d>`` tool's function body (same
 domain lock, same ``load_by_id``, same frontmatter carry-over with only
@@ -13,11 +13,14 @@ domain lock, same ``load_by_id``, same frontmatter carry-over with only
 branch: with ``begin``/``end`` given, the on-disk body is re-read via
 :func:`._splice.body_text`, spliced via :func:`._splice.splice_body`, and
 the *spliced result* is validated as a whole document and persisted
-verbatim instead of the raw fragment.
+verbatim instead of the raw fragment. ``sop`` is the first domain built
+dispatch-only from day one (ADR 36905d5b): its ``_update_sop`` adapter was
+written directly in this shape rather than ported from a retired
+per-domain tool.
 
 The parameter is intentionally named ``type`` (it matches the frontmatter
 field vocabulary the client already knows); no enabled ruff rule objects to
-the builtin shadow. The 8-way union return type is annotation-only -- the
+the builtin shadow. The 9-way union return type is annotation-only -- the
 MCP input schema is built from the parameters, and the SDK serializes
 whichever concrete document is returned.
 
@@ -99,6 +102,19 @@ per-domain tool was retired in feat-22 Phase 3), plus the REQ-002 range
 branch (see :func:`_update_req`).
 
 
+### `_update_sop(id_: 'str', content: 'str', begin: 'int | None', end: 'int | None') -> 'SopDocument'`
+
+Replace the body of the SOP identified by ``id_`` (whole-body or line-range mode).
+
+Verbatim-shape port of :func:`_update_dec` (same ``sop_lock``,
+``load_by_id``, frontmatter carry-over with only ``updated`` bumped,
+``write_sop_file``, ``SopNotFoundError``; ``sop`` is the first domain
+built dispatch-only from day one per ADR 36905d5b, so there was never a
+per-domain ``update_sop`` tool to port -- this adapter was written
+directly in this shape), plus the REQ-002 range branch
+(see :func:`_update_req`).
+
+
 ### `_update_tsk(id_: 'str', content: 'str', begin: 'int | None', end: 'int | None') -> 'TskDocument'`
 
 Replace the body of the task list identified by ``id_`` (whole-body or line-range mode).
@@ -121,12 +137,12 @@ per-domain tool was retired in feat-22 Phase 3), plus the REQ-002 range
 branch (see :func:`_update_req`).
 
 
-### `update(id: 'str', type: "Literal['req', 'uc', 'tsk', 'qa', 'prb', 'gol', 'rsk', 'dec']", content: 'str', begin: 'int | None' = None, end: 'int | None' = None) -> '_UpdateDocument'`
+### `update(id: 'str', type: "Literal['req', 'uc', 'tsk', 'qa', 'prb', 'gol', 'rsk', 'dec', 'sop']", content: 'str', begin: 'int | None' = None, end: 'int | None' = None) -> '_UpdateDocument'`
 
 Replace the body of an existing document, in whole-body or line-range mode.
 
-Cross-domain generic for the eight whole-body document types
-(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``);
+Cross-domain generic for the nine whole-body document types
+(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``);
 dispatches on ``type`` to the domain's own ported adapter (same lock,
 same id resolution, same frontmatter carry-over, same verbatim
 persistence, same domain not-found error).
@@ -167,7 +183,7 @@ id:
     The document's specmgr-assigned identifier.
 type:
     The document type / domain: one of ``req``, ``uc``, ``tsk``,
-    ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``.
+    ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``.
 content:
     Whole-body mode: the replacement body markdown, with no
     frontmatter block. Range mode: the replacement fragment for lines
@@ -183,7 +199,7 @@ end:
 Returns
 -------
 ReqDocument | UcDocument | TskDocument | QaDocument | PrbDocument |
-GolDocument | RskDocument | DecDocument
+GolDocument | RskDocument | DecDocument | SopDocument
     The updated document of the dispatched domain type.
 
 Raises
@@ -201,7 +217,8 @@ pydantic.ValidationError
     A field/cross-field validation failure in the (spliced) body (e.g.
     a range producing an out-of-vocabulary value). Nothing is written.
 ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
-PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError
+PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
+SopNotFoundError
     No document of the dispatched ``type`` has this id -- the
     domain's own not-found error, unchanged from the per-domain tools.
 

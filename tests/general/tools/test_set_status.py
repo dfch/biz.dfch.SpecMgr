@@ -77,6 +77,9 @@ from biz.dfch.specmgr.req.tools.create_req import create_req
 from biz.dfch.specmgr.rsk.models.v1.frontmatter import _ALLOWED_STATUSES as _RSK_ALLOWED_STATUSES
 from biz.dfch.specmgr.rsk.tools._paths import RskNotFoundError
 from biz.dfch.specmgr.rsk.tools.create_rsk import create_rsk
+from biz.dfch.specmgr.sop.models.v1.frontmatter import _ALLOWED_STATUSES as _SOP_ALLOWED_STATUSES
+from biz.dfch.specmgr.sop.tools._paths import SopNotFoundError
+from biz.dfch.specmgr.sop.tools.create_sop import create_sop
 from biz.dfch.specmgr.tsk.models.v1.frontmatter import _ALLOWED_STATUSES as _TSK_ALLOWED_STATUSES
 from biz.dfch.specmgr.tsk.tools._paths import TskNotFoundError
 from biz.dfch.specmgr.tsk.tools.create_tsk import create_tsk
@@ -291,6 +294,22 @@ _DEC_MINIMAL_BODY = textwrap.dedent(
     """
 )
 
+_SOP_MINIMAL_BODY = textwrap.dedent(
+    """\
+    # New Employee IT Account Provisioning
+
+    ## Purpose
+
+    Provision accounts for new hires.
+
+    ## Procedure
+
+    ### Step 1: Submit request
+
+    HR submits the request.
+    """
+)
+
 
 @dataclass(frozen=True)
 class _Case:
@@ -381,6 +400,15 @@ _CASES: list[_Case] = [
         valid_status="accepted",
         invalid_status="implemented",
         allowed_statuses=_DEC_ALLOWED_STATUSES,
+    ),
+    _Case(
+        doc_type="sop",
+        create=create_sop,
+        not_found_error=SopNotFoundError,
+        minimal_body=_SOP_MINIMAL_BODY,
+        valid_status="active",
+        invalid_status="implemented",
+        allowed_statuses=_SOP_ALLOWED_STATUSES,
     ),
 ]
 

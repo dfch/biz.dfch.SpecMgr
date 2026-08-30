@@ -2,8 +2,8 @@
 
 ``@mcp.tool()`` wrapper: set_status (feat-22-consolidate-mutation-tools, Phase 4).
 
-The generic, cross-domain status-change tool for all nine document types
-(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``adr``).
+The generic, cross-domain status-change tool for all ten document types
+(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``adr``).
 It dispatches on the explicit ``type`` parameter to a private per-domain
 adapter (``_set_status_<d>``), each a **verbatim port** of the
 corresponding per-domain status tool's function body (same domain lock,
@@ -17,10 +17,13 @@ previous per-domain ADR status tool's function body (same ``adr_lock``,
 ``AdrNotFoundError``) including its delegation to
 ``models.adr.v1.mutations.set_status``, which composes ``status`` as
 ``"superseded by {superseded_by}"`` when ``superseded_by`` is given.
+``sop`` is the first domain built dispatch-only from day one (ADR
+36905d5b): its ``_set_status_sop`` adapter was written directly in this
+shape rather than ported from a retired per-domain tool.
 
 The parameter is intentionally named ``type`` (it matches the frontmatter
 field vocabulary the client already knows); no enabled ruff rule objects
-to the builtin shadow. The 9-way union return type is annotation-only --
+to the builtin shadow. The 10-way union return type is annotation-only --
 the MCP input schema is built from the parameters, and the SDK
 serializes whichever concrete document is returned.
 
@@ -120,6 +123,18 @@ body (same ``rsk_lock``, ``load_by_id``, ``write_rsk_file``,
 Phase 4) -- see :func:`_set_status_req` for the full semantics.
 
 
+### `_set_status_sop(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'SopDocument'`
+
+Replace the status of the SOP identified by ``id_``.
+
+Verbatim-shape port of :func:`_set_status_dec` (same ``sop_lock``,
+``load_by_id``, ``write_sop_file``, ``SopNotFoundError``; ``sop`` is the
+first domain built dispatch-only from day one per ADR 36905d5b, so there
+was never a per-domain ``set_status_sop`` tool to port -- this adapter
+was written directly in this shape) -- see :func:`_set_status_req` for
+the full semantics.
+
+
 ### `_set_status_tsk(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'TskDocument'`
 
 Replace the status of the task list identified by ``id_``.
@@ -140,16 +155,16 @@ function body (same ``uc_lock``, ``load_by_id``, ``write_uc_file``,
 Phase 4) -- see :func:`_set_status_req` for the full semantics.
 
 
-### `set_status(id: 'str', type: "Literal['req', 'uc', 'tsk', 'qa', 'prb', 'gol', 'rsk', 'dec', 'adr']", status: 'str', superseded_by: 'str | None' = None) -> '_SetStatusDocument'`
+### `set_status(id: 'str', type: "Literal['req', 'uc', 'tsk', 'qa', 'prb', 'gol', 'rsk', 'dec', 'sop', 'adr']", status: 'str', superseded_by: 'str | None' = None) -> '_SetStatusDocument'`
 
-Replace the status of an existing document, across all nine domains.
+Replace the status of an existing document, across all ten domains.
 
 Cross-domain generic for every document type
-(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``adr``);
+(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``adr``);
 dispatches on ``type`` to the domain's own ported adapter (same lock,
 same id resolution, same body handling, same domain not-found error).
 
-For the eight whole-body domains the existing file's frontmatter is
+For the nine whole-body domains the existing file's frontmatter is
 carried over with every field preserved except ``status`` (replaced)
 and ``updated`` (bumped to the current microsecond timestamp); the
 body is never touched -- its raw, on-disk markdown (not a render of
@@ -163,7 +178,7 @@ The new ``status`` must be in the domain's own closed vocabulary: the
 frontmatter is reconstructed through the domain's own
 ``XFrontmatter`` constructor, so the domain's own validator enforces
 its set. Where that set lives is documented per domain -- see each
-``XFrontmatter.status`` field (the eight whole-body domains'
+``XFrontmatter.status`` field (the nine whole-body domains'
 ``models/<v>/frontmatter.py`` and ``models/adr/v1/frontmatter.py``)
 rather than any list in this docstring.
 
@@ -173,7 +188,7 @@ id:
     The document's specmgr-assigned identifier.
 type:
     The document type / domain: one of ``req``, ``uc``, ``tsk``,
-    ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``adr``.
+    ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``adr``.
 status:
     The new status. Must be one of the dispatched domain's own
     accepted values (see its ``XFrontmatter.status`` field). For
@@ -186,7 +201,7 @@ superseded_by:
 Returns
 -------
 ReqDocument | UcDocument | TskDocument | QaDocument | PrbDocument |
-GolDocument | RskDocument | DecDocument | Adr
+GolDocument | RskDocument | DecDocument | SopDocument | Adr
     The updated document of the dispatched domain type.
 
 Raises
@@ -200,7 +215,7 @@ pydantic.ValidationError
     ``"superseded by ..."`` string). Nothing is written.
 ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
 PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
-AdrNotFoundError
+SopNotFoundError / AdrNotFoundError
     No document of the dispatched ``type`` has this id -- the
     domain's own not-found error, unchanged from the per-domain tools.
 

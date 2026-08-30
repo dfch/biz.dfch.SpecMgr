@@ -561,26 +561,26 @@ quality gate, README Progress update).
 
 #### Phase 2: Tools (`sop/tools/`) + generic-tool dispatch
 
-- [ ] Task 2.1: Private helpers `_paths.py` (`SOP_TYPE_NAME="sop"`,
+- [x] Task 2.1: Private helpers `_paths.py` (`SOP_TYPE_NAME="sop"`,
   `SopNotFoundError`, wrappers over `general.tools._doc_paths`),
   `_io.py` (`read_sop`, `load_by_id`), `_lock.py` (`sop_lock`),
   `_write.py` (`write_sop_file`) — mirror GOL/DEC — depends on: Task 1.6
-  — status: not-started
-- [ ] Task 2.2: The 8 tool modules + `tools/__init__.py` per Design Notes
+  — status: done
+- [x] Task 2.2: The 8 tool modules + `tools/__init__.py` per Design Notes
   (`create_sop` fixes `status="draft"`, filename `sop-{id}-{slug}.md`;
   `delete_sop` stub `structured_output=False`) — depends on: Task 2.1 —
-  status: not-started
-- [ ] Task 2.3: `general/tools/update.py` — add `_update_sop` adapter
+  status: done
+- [x] Task 2.3: `general/tools/update.py` — add `_update_sop` adapter
   (verbatim-shape port of `_update_dec`) + `"sop"` in `_ADAPTERS` +
   `"sop"` in the `type` `Literal[...]` + import wiring; same for
   `general/tools/set_status.py` (`_set_status_sop`) — depends on: Task
-  2.1 — status: not-started
-- [ ] Task 2.4: Tests `tests/sop/tools/` — one module per tool + helper
+  2.1 — status: done
+- [x] Task 2.4: Tests `tests/sop/tools/` — one module per tool + helper
   tests + `test_integration.py` (ACC-003, using the generic `update`/
   `set_status` tools with `type="sop"`, not per-domain tools); new test
   cases in `tests/general/tools/test_update.py`/`test_set_status.py`
   covering `type="sop"` (ACC-006) — depends on: Task 2.2, Task 2.3 —
-  status: not-started
+  status: done
 - [ ] Task 2.5: Phase-end quality gate + commit; update this README's
   Progress section — depends on: Task 2.4 — status: not-started
 
@@ -701,6 +701,34 @@ around.
 
 ### Current Status
 
+**As of 2026-08-30**: Phase 2 (tools + generic-tool dispatch) complete.
+The `sop` domain now ships its full 8-tool MCP surface under
+`sop/tools/` (`create_sop`, `parse_sop`, `list_sop` (paged from day one),
+`get_sop(id, raw=False)`, `get_sop_example`, `get_sop_template`,
+`delete_sop` (stub, `structured_output=False`), `validate_sop`) plus the
+private `_paths`/`_io`/`_lock`/`_write` helpers, all mirroring `dec/tools/`
+file-for-file. `sop` is the first domain built **dispatch-only** from day
+one (ADR 36905d5b): it has no per-domain `update_sop`/`set_status_sop`
+tools -- whole-body/line-range updates and status changes go through the
+generic `update`/`set_status` tools in `general/tools/` with `type="sop"`.
+Both generic tools gained a `_update_sop`/`_set_status_sop` adapter (verbatim
+shape ports of `_update_dec`/`_set_status_dec`), a `"sop"` entry in their
+`_ADAPTERS` dispatch tables, and `"sop"` in their `type: Literal[...]`
+unions (`update` is now `Literal[...rsk, dec, sop]`; `set_status` is now
+`Literal[...rsk, dec, sop, adr]`). The 62-test `tests/sop/tools/` suite
+mirrors `tests/dec/tools/` file-for-file (including the ACC-003
+`test_integration.py` round-trip that drives the GENERIC `update`/
+`set_status` tools with `type="sop"`, both whole-body and line-range), plus
+new `type="sop"` cases added to `tests/general/tools/test_update.py`/
+`test_set_status.py` (ACC-006). `get_sop_example`/`get_sop_template` are
+mock-tested only this phase (the real packaged data files arrive in Phase 3
+Task 3.1/3.2, so their `test_returns_real_packaged_*` tests are deferred to
+Phase 3). The full quality gate is green: ruff format/check, vulture (clean,
+no whitelist changes -- the Phase-1 `# sop` whitelist section still applies),
+`specmgr unused-code` (clean), the 2213-test unittest suite, and the fresh
+`sop`-tools/dispatch import smoke test. Task 2.5 (commit) is pending the
+orchestrator. Next: Phase 3 (resources + packaged data + schema).
+
 **As of 2026-08-30**: Phase 1 (models + parser) complete. The full `sop`
 Pydantic schema now lives under `src/biz/dfch/specmgr/sop/models/v1/`
 (`_util.py`, `frontmatter.py`, `body.py`, `document.py`, `parser.py`,
@@ -747,6 +775,68 @@ present with zero list items" shape (used by `Support`/`Consulted`/
 None.
 
 ### Recent Updates
+
+#### Update 2026-08-30T16:00:00Z (Phase 2 tools + dispatch)
+
+- Completed: Tasks 2.1-2.4 -- implemented the `sop/tools/` MCP tool surface
+  and the generic-tool dispatch wiring. Created the 4 private helpers
+  (`_paths.py` with `SOP_TYPE_NAME="sop"`/`SopNotFoundError`/base-dir +
+  id-lookup wrappers over `general.tools._doc_paths`, `_io.py`
+  (`read_sop`/`load_by_id`), `_lock.py` (`sop_lock`),
+  `_write.py` (`write_sop_file`)), all mirroring `dec/tools/` file-for-file;
+  the 8 tool modules (`create_sop` fixing `status="draft"` and writing
+  `sop-{id}-{slug}.md`, `parse_sop`, `list_sop` (paged, inline `SopSummary`,
+  skip-on-parse-failure), `get_sop(id, raw=False)`, `get_sop_example`,
+  `get_sop_template`, `delete_sop` (stub, `structured_output=False`),
+  `validate_sop`); and overwrote the Phase-0 empty `tools/__init__.py` with
+  the real side-effect-registration imports. NO `update_sop`/
+  `set_status_sop` per-domain tools -- `sop` is dispatch-only (ADR
+  36905d5b).
+- Dispatch wiring: `general/tools/update.py` gained `_update_sop` (verbatim
+  shape port of `_update_dec` incl. the range branch), a `"sop"` entry in
+  `_ADAPTERS`, `"sop"` in the `type` Literal, `SopDocument` in the
+  `_UpdateDocument` union, and the `sop.*` import block; module/function
+  docstrings updated eight->nine whole-body. `general/tools/set_status.py`
+  gained `_set_status_sop` (incl. the `assert superseded_by is None` guard),
+  a `"sop"` entry in `_ADAPTERS` (after `dec`, before `adr`), `"sop"` in the
+  `type` Literal, `SopDocument` in the `_SetStatusDocument` union, and the
+  `sop.*` import block; docstrings updated nine->ten domains. Final
+  Literals: `update` = `Literal["req","uc","tsk","qa","prb","gol","rsk",
+  "dec","sop"]`; `set_status` = `Literal["req","uc","tsk","qa","prb","gol",
+  "rsk","dec","sop","adr"]`.
+- Tests: 62 new tests across `tests/sop/tools/` (helper tests + one module
+  per tool + `test_integration.py`), mirroring `tests/dec/tools/`
+  file-for-file. `test_integration.py` (ACC-003) drives the GENERIC
+  `update`/`set_status` tools with `type="sop"` (both whole-body and
+  line-range `begin`/`end`), confirming `create_sop`->`get_sop`->`list_sop`
+  ->`update`->`set_status`->`validate_sop`->`delete_sop` round-trip,
+  `status="draft"` fixed on create, `sop-{id}-{slug}.md` filename, `updated`
+  bumps, `status` changes persist, body carried verbatim through
+  `set_status`, and `set_status` rejects `superseded_by` for `type="sop"`.
+  New `type="sop"` cases added to `tests/general/tools/test_update.py`
+  (whole-body + range + field-error via duplicate `### Step 1` number ->
+  `ValidationError`; `TestUpdateRegistration` enum assertion updated to the
+  9-value list) and `tests/general/tools/test_set_status.py` (valid/invalid
+  status against SOP's closed five-set, `superseded_by` rejection,
+  `SopNotFoundError`) -- ACC-006.
+- Deferred to Phase 3: `get_sop_example`/`get_sop_template` real-content
+  tests (`test_returns_real_packaged_*`) -- the packaged data files
+  (`sop/data/sop_example.md`, `sop/data/sop_template.md`) do not exist yet
+  (Phase 3 Task 3.1/3.2). Only the two mock-based methods per tool are
+  written this phase (delegation to the shared packaged-data reader +
+  `FileNotFoundError` on a missing file), exactly mirroring `dec`'s own
+  build history.
+- Whitelist: no changes. Vulture and `specmgr unused-code` both clean; the
+  Phase-1 `# sop (feat-30 Phase 1)` whitelist section still applies (the
+  tools/dispatch deal with `SopDocument`/raw text, not body fields as plain
+  attributes).
+- Quality gate green: `ruff format --check` (1250 files), `ruff check` (all
+  passed), `vulture src/ whitelist.py --min-confidence 60` (clean),
+  `specmgr unused-code` (No unused code found), full unittest suite (2213
+  tests, OK), and the fresh `from biz.dfch.specmgr.sop import tools` +
+  `_ADAPTERS`/`SS` `sop`-membership smoke test (`sop tools import OK`,
+  `True`, `True`).
+- Next: Phase 3 (resources + packaged data + schema).
 
 #### Update 2026-08-30T03:30:00Z (Phase 1 models + parser)
 

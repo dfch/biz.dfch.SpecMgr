@@ -326,6 +326,19 @@ First-line docstrings from each module, organized by domain:
 - `sop/models/v1/frontmatter.py` — Standard Operating Procedure (SOP) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
 - `sop/models/v1/parser.py` — Parse raw Standard Operating Procedure (SOP) ``.md`` text into a :class:`SopDocument`.
 - `sop/models/v1/summary.py` — Pydantic model for one line of SOP listing output (Phase 2, Task 2.2).
+- `sop/tools/__init__.py` — MCP tool wrappers for Standard Operating Procedures (mirrors ``dec/tools/``'s own shape).
+- `sop/tools/_io.py` — Thin file read helpers over ``parse_sop`` (Task 2.1).
+- `sop/tools/_lock.py` — Per-document in-process lock guarding SOP mutations.
+- `sop/tools/_paths.py` — SOP base directory resolution and id -> path lookup (Task 2.1).
+- `sop/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_sop`` and
+- `sop/tools/create_sop.py` — ``@mcp.tool()`` wrapper: create_sop (Task 2.2).
+- `sop/tools/delete_sop.py` — ``@mcp.tool()`` wrapper: delete_sop (Task 2.2).
+- `sop/tools/get_sop.py` — ``@mcp.tool()`` wrapper: get_sop (Task 2.2).
+- `sop/tools/get_sop_example.py` — ``@mcp.tool()`` wrapper: get_sop_example (Task 2.2).
+- `sop/tools/get_sop_template.py` — ``@mcp.tool()`` wrapper: get_sop_template (Task 2.2).
+- `sop/tools/list_sop.py` — ``@mcp.tool()`` wrapper: list_sop (Task 2.2).
+- `sop/tools/parse_sop.py` — ``@mcp.tool()`` wrapper: parse_sop (Task 2.2).
+- `sop/tools/validate_sop.py` — ``@mcp.tool()`` wrapper: validate_sop (Task 2.2).
 
 **tsk/**
 
@@ -407,4 +420,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 265
+**Test files**: 278
