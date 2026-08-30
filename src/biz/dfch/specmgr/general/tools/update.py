@@ -18,9 +18,10 @@
 """``@mcp.tool()`` wrapper: update (feat-22-consolidate-mutation-tools, Phase 2).
 
 The generic, cross-domain whole-body *and* line-range replace tool for the
-eight whole-body document types (``req``/``uc``/``tsk``/``qa``/``prb``/
-``gol``/``rsk``/``dec``). It dispatches on the explicit ``type`` parameter to a
-private per-domain adapter (``_update_<d>``), each a **verbatim port** of
+nine whole-body document types (``req``/``uc``/``tsk``/``qa``/``prb``/
+``gol``/``rsk``/``dec``/``feat``). It dispatches on the explicit ``type``
+parameter to
+a private per-domain adapter (``_update_<d>``), each a **verbatim port** of
 the corresponding per-domain ``update_<d>`` tool's function body (same
 domain lock, same ``load_by_id``, same frontmatter carry-over with only
 ``updated`` bumped, same verbatim persistence via the domain's own
@@ -32,9 +33,19 @@ verbatim instead of the raw fragment.
 
 The parameter is intentionally named ``type`` (it matches the frontmatter
 field vocabulary the client already knows); no enabled ruff rule objects to
-the builtin shadow. The 8-way union return type is annotation-only -- the
+the builtin shadow. The 9-way union return type is annotation-only -- the
 MCP input schema is built from the parameters, and the SDK serializes
 whichever concrete document is returned.
+
+``feat`` is the one domain whose adapter (``_update_feat``) diverges from
+the other eight's identical shape in how it resolves ``id``: via
+``feat.tools._paths``'s bespoke folder-per-document shortcut, not a
+flat-file directory scan (see
+``.specmgr/feat/feat-31-feature/README.md`` Design Notes, "Addressing").
+It bumps ``updated`` to the same microsecond timestamp as every other
+domain -- an earlier, deliberate divergence (a plain ``YYYY-MM-DD`` date)
+was reversed for cross-domain consistency; see that feature's Decisions
+Made.
 
 ADR is deliberately *not* a ``type`` here: its section-level MADR mutation
 contract (``update_frontmatter``/``update_section``/``option_*``) has no
@@ -52,6 +63,11 @@ from ...dec.tools._io import load_by_id as load_dec_by_id
 from ...dec.tools._lock import dec_lock
 from ...dec.tools._paths import dec_base_dir
 from ...dec.tools._write import write_dec_file
+from ...feat.models.v1 import FeatDocument, FeatFrontmatter, Feature
+from ...feat.tools._io import load_by_id as load_feat_by_id
+from ...feat.tools._lock import feat_lock
+from ...feat.tools._paths import feat_base_dir
+from ...feat.tools._write import write_feat_file
 from ...gol.models.v1 import GolDocument, GolFrontmatter, Goal
 from ...gol.tools._io import load_by_id as load_gol_by_id
 from ...gol.tools._lock import gol_lock
@@ -93,9 +109,17 @@ from ._splice import body_text, splice_body
 
 __all__ = ["update"]
 
-#: The generic tool's 8-way return union -- annotation-only (see module docstring).
+#: The generic tool's 9-way return union -- annotation-only (see module docstring).
 _UpdateDocument = (
-    ReqDocument | UcDocument | TskDocument | QaDocument | PrbDocument | GolDocument | RskDocument | DecDocument
+    ReqDocument
+    | UcDocument
+    | TskDocument
+    | QaDocument
+    | PrbDocument
+    | GolDocument
+    | RskDocument
+    | DecDocument
+    | FeatDocument
 )
 
 
@@ -417,6 +441,47 @@ def _update_dec(id_: str, content: str, begin: int | None, end: int | None) -> D
     return new_doc
 
 
+def _update_feat(id_: str, content: str, begin: int | None, end: int | None) -> FeatDocument:
+    """Replace the body of the feature identified by ``id_`` (whole-body or line-range mode).
+
+    Mirrors :func:`_update_dec`'s shape (same ``feat_lock``, ``load_by_id``,
+    ``write_feat_file``, ``FeatNotFoundError``) with one feat-only
+    divergence (see the module docstring): ``id_`` resolves via
+    ``feat.tools._paths``'s bespoke folder-per-document shortcut (through
+    ``load_by_id``/``feat_base_dir``), not a flat-file directory scan.
+    ``updated`` is bumped to the same microsecond timestamp as every other
+    domain.
+    """
+    if begin is not None or end is not None:
+        assert begin is not None and end is not None, "the public `update` guard enforces both-or-neither"
+
+        base_dir = feat_base_dir()
+        with feat_lock(id_):
+            path, existing = load_feat_by_id(base_dir, id_)
+            spliced = splice_body(body_text(path), begin, end, content)
+            body = Feature.from_text(format_text(spliced))
+            now = datetime.now().isoformat(timespec="microseconds")
+            fm_data = existing.frontmatter.model_dump()
+            fm_data["updated"] = now
+            new_frontmatter = FeatFrontmatter(**fm_data)
+            new_doc = FeatDocument(frontmatter=new_frontmatter, body=body)
+            write_feat_file(path, new_frontmatter, spliced)
+        return new_doc
+
+    body = Feature.from_text(format_text(content))
+
+    base_dir = feat_base_dir()
+    with feat_lock(id_):
+        path, existing = load_feat_by_id(base_dir, id_)
+        now = datetime.now().isoformat(timespec="microseconds")
+        fm_data = existing.frontmatter.model_dump()
+        fm_data["updated"] = now
+        new_frontmatter = FeatFrontmatter(**fm_data)
+        new_doc = FeatDocument(frontmatter=new_frontmatter, body=body)
+        write_feat_file(path, new_frontmatter, content)
+    return new_doc
+
+
 #: Dispatch table mapping the ``type`` value to its private adapter.
 _ADAPTERS: dict[str, Callable[[str, str, int | None, int | None], _UpdateDocument]] = {
     "req": _update_req,
@@ -427,6 +492,7 @@ _ADAPTERS: dict[str, Callable[[str, str, int | None, int | None], _UpdateDocumen
     "gol": _update_gol,
     "rsk": _update_rsk,
     "dec": _update_dec,
+    "feat": _update_feat,
 }
 
 
@@ -434,9 +500,9 @@ _ADAPTERS: dict[str, Callable[[str, str, int | None, int | None], _UpdateDocumen
     name="update",
     title="Update document",
     description=(
-        "Whole-body or line-range replace of an existing document's content across the eight "
-        "whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec), preserving its "
-        "id/type/status/created/version; only `updated` changes. With no `begin`/`end`, `content` "
+        "Whole-body or line-range replace of an existing document's content across the nine "
+        "whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, feat), preserving "
+        "its id/type/status/created/version; only `updated` changes. With no `begin`/`end`, `content` "
         "is the full replacement body (body markdown only, no frontmatter block). With both, "
         "`content` replaces the 1-based inclusive body-line range `begin`..`end` of the current "
         "on-disk body (`N+1` = end-of-body sentinel: append after the last line, or replace "
@@ -446,15 +512,15 @@ _ADAPTERS: dict[str, Callable[[str, str, int | None, int | None], _UpdateDocumen
 )
 def update(
     id: str,
-    type: Literal["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec"],
+    type: Literal["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "feat"],
     content: str,
     begin: int | None = None,
     end: int | None = None,
 ) -> _UpdateDocument:
     """Replace the body of an existing document, in whole-body or line-range mode.
 
-    Cross-domain generic for the eight whole-body document types
-    (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``);
+    Cross-domain generic for the nine whole-body document types
+    (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``feat``);
     dispatches on ``type`` to the domain's own ported adapter (same lock,
     same id resolution, same frontmatter carry-over, same verbatim
     persistence, same domain not-found error).
@@ -495,7 +561,7 @@ def update(
         The document's specmgr-assigned identifier.
     type:
         The document type / domain: one of ``req``, ``uc``, ``tsk``,
-        ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``.
+        ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``feat``.
     content:
         Whole-body mode: the replacement body markdown, with no
         frontmatter block. Range mode: the replacement fragment for lines
@@ -511,7 +577,7 @@ def update(
     Returns
     -------
     ReqDocument | UcDocument | TskDocument | QaDocument | PrbDocument |
-    GolDocument | RskDocument | DecDocument
+    GolDocument | RskDocument | DecDocument | FeatDocument
         The updated document of the dispatched domain type.
 
     Raises
@@ -529,7 +595,8 @@ def update(
         A field/cross-field validation failure in the (spliced) body (e.g.
         a range producing an out-of-vocabulary value). Nothing is written.
     ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
-    PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError
+    PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
+    FeatNotFoundError
         No document of the dispatched ``type`` has this id -- the
         domain's own not-found error, unchanged from the per-domain tools.
     """
