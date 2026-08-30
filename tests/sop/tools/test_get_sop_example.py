@@ -15,17 +15,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Tests for the ``get_sop_example`` ``@mcp.tool()`` wrapper (Task 2.2, real packaged data from Task 3.1).
-
-Mock-based only in Phase 2: the real packaged example data file
-(``sop/data/sop_example.md``) is created in Phase 3 (Task 3.1), so a
-``test_returns_real_packaged_example``-style test against the committed data
-file is deliberately deferred to Phase 3 -- it would raise
-``FileNotFoundError`` here. The two mock-based methods below verify the
-tool's delegation to the shared packaged-data reader and its
-let-it-raise behaviour on a missing file, without requiring the real data
-file to exist yet.
-"""
+"""Tests for the ``get_sop_example`` ``@mcp.tool()`` wrapper (Task 2.2, real packaged data from Task 3.1)."""
 
 from __future__ import annotations
 
@@ -40,6 +30,15 @@ from biz.dfch.specmgr.sop.tools.get_sop_example import get_sop_example
 
 class TestGetSopExampleTool(unittest.TestCase):
     """Tests for the get_sop_example tool."""
+
+    def test_returns_real_packaged_example(self) -> None:
+        """Against the real, committed packaged data file, without any patching."""
+        result = get_sop_example()
+
+        self.assertIsInstance(result, str)
+        self.assertTrue(result.startswith("---\n"))
+        self.assertIn("type: sop", result)
+        self.assertIn("# New Employee IT Account Provisioning", result)
 
     def test_delegates_to_shared_data_reader(self) -> None:
         """The tool must return whatever general.tools._packaged_data.read_packaged_text() returns."""

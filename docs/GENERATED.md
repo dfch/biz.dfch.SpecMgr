@@ -98,6 +98,7 @@ First-line docstrings from each module, organized by domain:
 - `general/prompts/compact_history.py` — ``@mcp.prompt()``: compact_history (Various improvements, Task 0.21).
 - `general/resources/__init__.py` — MCP resource registrations that are not specific to any single document
 - `general/resources/iso25010.py` — Resource: specmgr://iso25010 (Task 0.8.3).
+- `general/resources/rasci.py` — Resource: specmgr://rasci (feat-30 Task 3.5, REQ-011).
 - `general/resources/version.py` — Resource: specmgr://version — MCP server package version number.
 - `general/tools/__init__.py` — MCP tool wrappers for general-purpose utilities (mirrors ``adr/tools/``'s shape).
 - `general/tools/_doc_paths.py` — Generic, doc-type-agnostic base directory resolution, filename slugification,
@@ -326,6 +327,10 @@ First-line docstrings from each module, organized by domain:
 - `sop/models/v1/frontmatter.py` — Standard Operating Procedure (SOP) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
 - `sop/models/v1/parser.py` — Parse raw Standard Operating Procedure (SOP) ``.md`` text into a :class:`SopDocument`.
 - `sop/models/v1/summary.py` — Pydantic model for one line of SOP listing output (Phase 2, Task 2.2).
+- `sop/resources/__init__.py` — MCP resource registrations for Standard Operating Procedure (SOP) documents (feat-30 Task 3.7).
+- `sop/resources/sop_example.py` — Resource: specmgr://sop/example (feat-30 Task 3.7).
+- `sop/resources/sop_schema.py` — Resource: specmgr://sop/schema (feat-30 Task 3.7, packaged data).
+- `sop/resources/sop_template.py` — Resource: specmgr://sop/template (feat-30 Task 3.7).
 - `sop/tools/__init__.py` — MCP tool wrappers for Standard Operating Procedures (mirrors ``dec/tools/``'s own shape).
 - `sop/tools/_io.py` — Thin file read helpers over ``parse_sop`` (Task 2.1).
 - `sop/tools/_lock.py` — Per-document in-process lock guarding SOP mutations.
@@ -420,4 +425,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 278
+**Test files**: 282

@@ -586,13 +586,13 @@ quality gate, README Progress update).
 
 #### Phase 3: Resources + packaged data + schema
 
-- [ ] Task 3.1: `sop/data/sop_example.md` — worked "New Employee IT
+- [x] Task 3.1: `sop/data/sop_example.md` — worked "New Employee IT
   Account Provisioning" procedure exercising every section per Design
-  Notes; must parse — depends on: Task 2.5 — status: not-started
-- [ ] Task 3.2: `sop/data/sop_template.md` — all-sections placeholder
+  Notes; must parse — depends on: Task 2.5 — status: done
+- [x] Task 3.2: `sop/data/sop_template.md` — all-sections placeholder
   skeleton, `status: draft`; must round-trip through `parse_sop` —
-  depends on: Task 2.5 — status: not-started
-- [ ] Task 3.3: `sop/data/sop_create_instructions.md` +
+  depends on: Task 2.5 — status: done
+- [x] Task 3.3: `sop/data/sop_create_instructions.md` +
   `sop_update_instructions.md` (narrated flows, `$topic`/`$id`/
   `$instructions` placeholders; `update` flow explicitly names the
   generic `update`/`set_status` tools with `type="sop"`); both must
@@ -600,14 +600,14 @@ quality gate, README Progress update).
   `## Roles and Responsibilities`, telling the caller to read
   `specmgr://rasci` for the generic role definitions (REQ-011's
   discoverability requirement) — depends on: Task 2.5 — status:
-  not-started
-- [ ] Task 3.4: `general/data/general_rasci.md` — new packaged data file,
+  done
+- [x] Task 3.4: `general/data/general_rasci.md` — new packaged data file,
   generic RASCI (Responsible/Accountable/Support/Consulted/Informed)
   guidance: what RASCI is, the five roles' standard definitions, RASCI vs.
   plain RACI. Deliberately **no** `sop`-specific heading names or
   cardinality rules (those stay in `sop`'s own schema/instructions, see
-  Task 1.3/Task 3.3) — depends on: Task 2.5 — status: not-started
-- [ ] Task 3.5: `general/resources/rasci.py` — new cross-cutting resource
+  Task 1.3/Task 3.3) — depends on: Task 2.5 — status: done
+- [x] Task 3.5: `general/resources/rasci.py` — new cross-cutting resource
   (REQ-011), mirroring `rsk/resources/tara.py`'s shape exactly:
   `@mcp.resource("specmgr://rasci", name="rasci", title="RASCI
   Responsibility Assignment Guidance", ..., mime_type="text/markdown")`
@@ -620,22 +620,22 @@ quality gate, README Progress update).
   role definitions, not a domain-local one) — the fourth and last of
   REQ-011's discoverability touchpoints (the other three: Task 1.3's
   body-model docstrings, Task 3.3's packaged instructions, Task 5.1's
-  `server.py` docstring) — depends on: Task 3.4 — status: not-started
-- [ ] Task 3.6: `commands/schema.py` — `generate_sop_schema()` +
+  `server.py` docstring) — depends on: Task 3.4 — status: done
+- [x] Task 3.6: `commands/schema.py` — `generate_sop_schema()` +
   `_GENERATORS["sop"]` (mirror `generate_dec_schema`); run `specmgr schema --type sop` (writes `docs/sop_schema.json`) and `specmgr schema --type sop --output-dir src/biz/dfch/specmgr/sop/data` (packaged copy)
-  — depends on: Task 2.5 — status: not-started
-- [ ] Task 3.7: `sop/resources/` — `sop_schema.py` (`specmgr://sop/schema`,
+  — depends on: Task 2.5 — status: done
+- [x] Task 3.7: `sop/resources/` — `sop_schema.py` (`specmgr://sop/schema`,
   JSON from packaged copy), `sop_example.py`, `sop_template.py`,
   `__init__.py` — still exactly three `sop` resources, no `rasci.py` here
   (see Task 3.5) — depends on: Task 3.1, Task 3.2, Task 3.6 — status:
-  not-started
-- [ ] Task 3.8: `tests/general/resources/test_rasci.py` (ACC-010) —
+  done
+- [x] Task 3.8: `tests/general/resources/test_rasci.py` (ACC-010) —
   mirroring `tests/rsk/resources/test_tara.py`'s shape minus the
   drift-guard test (real-content assertions, fresh-read-per-call,
   `FileNotFoundError` on a missing packaged file) — depends on: Task 3.5
-  — status: not-started
-- [ ] Task 3.9: Tests `tests/sop/resources/` (ACC-004) — depends on:
-  Task 3.7 — status: not-started
+  — status: done
+- [x] Task 3.9: Tests `tests/sop/resources/` (ACC-004) — depends on:
+  Task 3.7 — status: done
 - [ ] Task 3.10: Phase-end quality gate + commit; update this README's
   Progress section — depends on: Task 3.8, Task 3.9 — status: not-started
 
@@ -700,6 +700,63 @@ around.
 ## Progress
 
 ### Current Status
+
+**As of 2026-08-30**: Phase 3 (resources + packaged data + schema)
+complete. The `sop` domain now ships its 3 MCP resources under
+`sop/resources/` (`sop_schema.py`/`sop_example.py`/`sop_template.py`,
+mirroring `dec/resources/` file-for-file -- `specmgr://sop/schema`
+reads the packaged JSON, `specmgr://sop/example` and
+`specmgr://sop/template` are raw-markdown passthroughs; no `/{id}`, no
+`/list`) and its four packaged data files under `sop/data/`
+(`sop_example.md` -- a worked "New Employee IT Account Provisioning"
+procedure exercising every section, including a deliberately-empty
+`### Support` to demonstrate the present-with-zero-items shape, 5
+`### Step N` entries, all 5 `## Related Artifacts` sub-lists incl.
+`### Sops`, and one ISO8601-timestamped `## Updates` entry with the
+em-dash separator; `sop_template.md` -- an all-sections placeholder
+skeleton, `status: draft`, every RASCI sub-list populated so it
+round-trips through `parse_sop`; `sop_create_instructions.md`/
+`sop_update_instructions.md` -- narrated `string.Template` flows with
+the `$topic`/`$id`/`$instructions` placeholders, the `list_sop`
+dedup-check-first step, the explicit `specmgr://rasci` read-first step
+before `## Roles and Responsibilities`, and the generic
+`update`/`set_status` tools named with `type="sop"`). Both
+`sop_example.md` and `sop_template.md` parse via `parse_sop`.
+`commands/schema.py` gained `generate_sop_schema()` (mirror of
+`generate_dec_schema`) and a `"sop"` entry in `_GENERATORS`; both
+`docs/sop_schema.json` and the packaged
+`sop/data/sop_schema.json` were generated and are byte-identical. The
+Phase-0 `sop/data/.gitkeep` was removed (real data files now exist).
+
+REQ-011's cross-cutting `specmgr://rasci` resource is now **live**:
+`general/data/general_rasci.md` (generic RASCI role definitions --
+deliberately no `sop`-specific headings/cardinality, verified by a
+genericness assertion) and `general/resources/rasci.py` (raw-markdown
+passthrough mirroring `rsk/resources/tara.py`) are registered via
+`general/resources/__init__.py` (which `server.py` already imports), so
+`specmgr://rasci` is reachable now even though `server.py` does not yet
+import `sop` (Phase 5). The fourth and last REQ-011 discoverability
+touchpoint -- the one-line cross-reference in `sop/__init__.py`'s module
+docstring -- is in place (the other three: the six body-model
+docstrings from Phase 1, the create/update instructions from Task 3.3,
+and `server.py`'s docstring in Phase 5). `general/__init__.py`'s
+resources enumeration now lists `rasci` alongside `version`/`iso25010`.
+
+Tests: 24 new tests across `tests/general/resources/test_rasci.py`
+(ACC-010: real-content assertions, a dedicated genericness assertion,
+fresh-read-per-call, `FileNotFoundError`) and `tests/sop/resources/`
+(`test_sop_schema.py`/`test_sop_example.py`/`test_sop_template.py`,
+ACC-004: schema equals fresh `generate_sop_schema()`, example/template
+equal the packaged files byte-for-byte, example parses and exercises
+every section incl. the empty `### Support`, template round-trips
+through `parse_sop`), plus the two deferred real-content tool tests
+(`test_returns_real_packaged_example`/`test_returns_real_packaged_template`
+in `tests/sop/tools/test_get_sop_example.py`/`test_get_sop_template.py`,
+deferred from Phase 2 now that the packaged data files exist). The full
+quality gate is green: ruff format/check, vulture (clean, no whitelist
+changes), `specmgr unused-code` (clean), and the 2237-test unittest
+suite. Task 3.10 (commit) is pending the orchestrator. Next: Phase 4
+(prompts).
 
 **As of 2026-08-30**: Phase 2 (tools + generic-tool dispatch) complete.
 The `sop` domain now ships its full 8-tool MCP surface under
@@ -775,6 +832,80 @@ present with zero list items" shape (used by `Support`/`Consulted`/
 None.
 
 ### Recent Updates
+
+#### Update 2026-08-30T18:00:00Z (Phase 3 resources + data + schema)
+
+- Completed: Tasks 3.1-3.9 -- implemented the `sop` MCP resources, the
+  packaged data files, the `generate_sop_schema()` generator, the
+  cross-cutting `specmgr://rasci` resource (REQ-011), and the matching
+  tests. Created `sop/data/sop_example.md` (worked "New Employee IT
+  Account Provisioning" SOP exercising every section, with a
+  deliberately-empty `### Support` for the present-with-zero-items shape,
+  5 `### Step N` entries, all 5 `## Related Artifacts` sub-lists incl.
+  `### Sops`, one ISO8601-em-dash `## Updates` entry; parses via
+  `parse_sop`), `sop/data/sop_template.md` (all-sections placeholder
+  skeleton, `status: draft`, all RASCI sub-lists populated so it
+  round-trips through `parse_sop`), and
+  `sop/data/sop_create_instructions.md`/`sop_update_instructions.md`
+  (narrated `string.Template` flows with `$topic`/`$id`/`$instructions`,
+  the `list_sop` dedup-check-first step, the explicit `specmgr://rasci`
+  read-first step before `## Roles and Responsibilities`, and the
+  generic `update`/`set_status` tools named with `type="sop"` -- `sop`
+  has no per-domain mutation tools).
+- REQ-011 (cross-cutting RASCI): created
+  `general/data/general_rasci.md` (generic RASCI role definitions --
+  what RASCI is, the five roles' standard definitions, RASCI vs. plain
+  RACI; deliberately no `sop`-specific heading names or cardinality
+  rules, verified by a dedicated genericness assertion) and
+  `general/resources/rasci.py` (`specmgr://rasci`, raw-markdown
+  passthrough mirroring `rsk/resources/tara.py`). Registered in
+  `general/resources/__init__.py` (import/`__all__`/docstring) and
+  `general/__init__.py`'s resources enumeration. Added the one-line
+  cross-reference to `sop/__init__.py`'s module docstring (the fourth and
+  last REQ-011 discoverability touchpoint). `specmgr://rasci` is now
+  **live** via `general` (which `server.py` already imports), even
+  though `server.py` does not yet import `sop` (Phase 5).
+- Schema: `commands/schema.py` gained `generate_sop_schema()` (mirror of
+  `generate_dec_schema`) and a `"sop"` entry in `_GENERATORS` (after
+  `"rsk"`, before `"tsk"`, alphabetical), plus the `sop.models.v1`
+  imports. Ran `specmgr schema --type sop` (writes `docs/sop_schema.json`)
+  and `... --output-dir src/biz/dfch/specmgr/sop/data` (packaged copy);
+  the two files are byte-identical (`diff` empty). Removed the Phase-0
+  `sop/data/.gitkeep` (real data files now exist).
+- Resources: `sop/resources/` now carries `sop_schema.py`
+  (`specmgr://sop/schema`, JSON from packaged copy),
+  `sop_example.py` (`specmgr://sop/example`), `sop_template.py`
+  (`specmgr://sop/template`), and `__init__.py` -- exactly 3 `sop`
+  resources, no `rasci.py` here (that lives in `general/resources/`).
+  The 3 `sop` resources are NOT yet registered with the MCP server --
+  `server.py` does not import `sop` until Phase 5.
+- Tests: 24 new tests. `tests/general/resources/test_rasci.py` (ACC-010:
+  real-content assertions incl. all five role names + "RACI", a
+  dedicated `test_content_is_generic_no_sop_specific_rules` method
+  asserting no `sop`-specific structural headings, fresh-read-per-call,
+  `FileNotFoundError`; no drift-guard test since no Pydantic field
+  validates the RASCI vocabulary). `tests/sop/resources/`
+  (`test_sop_schema.py`/`test_sop_example.py`/`test_sop_template.py`,
+  ACC-004: schema equals fresh `generate_sop_schema()`, example/template
+  equal the packaged files byte-for-byte, example parses and exercises
+  every section incl. the empty `### Support`, template round-trips
+  through `parse_sop`, fresh-read-per-call, `FileNotFoundError`). Plus
+  the two deferred real-content tool tests
+  (`test_returns_real_packaged_example`/`test_returns_real_packaged_template`)
+  added to `tests/sop/tools/test_get_sop_example.py`/
+  `test_get_sop_template.py` (deferred from Phase 2 -- the packaged data
+  files now exist).
+- Whitelist: no changes. Vulture and `specmgr unused-code` both clean;
+  the new resource functions are imported by their `__init__.py`
+  (referenced within `src/`), and the Phase-1 `# sop (feat-30 Phase 1)`
+  whitelist section still applies.
+- Quality gate green: `ruff format --check` (1275 files), `ruff check`
+  (all passed), `vulture src/ whitelist.py --min-confidence 60` (clean),
+  `specmgr unused-code` (No unused code found), full unittest suite (2237
+  tests, OK), example+template parse via `parse_sop` confirmed,
+  `docs/sop_schema.json`/`sop/data/sop_schema.json` byte-identical, and
+  the `rasci` + 3 `sop` resources import smoke test.
+- Next: Phase 4 (prompts).
 
 #### Update 2026-08-30T16:00:00Z (Phase 2 tools + dispatch)
 

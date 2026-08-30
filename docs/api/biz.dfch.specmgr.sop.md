@@ -33,6 +33,15 @@ updates of an existing document go through the generic ``update`` tool in
 generic ``set_status`` tool in ``general.tools`` (``type="sop"``). Like
 DEC, SOP has no ``specmgr://sop/{id}`` resource -- id-based reads go
 through the ``get_sop`` tool only (ADR
-ddfb1109-422d-4507-8dbc-dc5e4bec9614). Likewise, there is no
+ddf1109-422d-4507-8dbc-dc5e4bec9614). Likewise, there is no
 ``specmgr://sop/list`` resource -- ``list_sop`` ships as a paged
 ``@mcp.tool()`` from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
+
+SOP relies on the cross-cutting ``specmgr://rasci`` resource
+(``general.resources.rasci``, REQ-011) for the generic RASCI
+(Responsible/Accountable/Support/Consulted/Informed) role definitions,
+not a domain-local one -- RASCI is a well-known external framework, so
+its definitions live under ``general/`` and are reached via
+cross-references in the six RASCI-family class docstrings, the
+``create_sop``/``update_sop`` packaged instructions, this docstring, and
+``server.py``'s docstring.

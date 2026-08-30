@@ -81,6 +81,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general.prompts.compact_history`](biz.dfch.specmgr.general.prompts.compact_history.md) — ``@mcp.prompt()``: compact_history (Various improvements, Task 0.21).
 - [`biz.dfch.specmgr.general.resources`](biz.dfch.specmgr.general.resources.md) — MCP resource registrations that are not specific to any single document
 - [`biz.dfch.specmgr.general.resources.iso25010`](biz.dfch.specmgr.general.resources.iso25010.md) — Resource: specmgr://iso25010 (Task 0.8.3).
+- [`biz.dfch.specmgr.general.resources.rasci`](biz.dfch.specmgr.general.resources.rasci.md) — Resource: specmgr://rasci (feat-30 Task 3.5, REQ-011).
 - [`biz.dfch.specmgr.general.resources.version`](biz.dfch.specmgr.general.resources.version.md) — Resource: specmgr://version — MCP server package version number.
 - [`biz.dfch.specmgr.general.tools`](biz.dfch.specmgr.general.tools.md) — MCP tool wrappers for general-purpose utilities (mirrors ``adr/tools/``'s shape).
 - [`biz.dfch.specmgr.general.tools._doc_paths`](biz.dfch.specmgr.general.tools._doc_paths.md) — Generic, doc-type-agnostic base directory resolution, filename slugification,
@@ -277,7 +278,10 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.sop.models.v1.parser`](biz.dfch.specmgr.sop.models.v1.parser.md) — Parse raw Standard Operating Procedure (SOP) ``.md`` text into a :class:`SopDocument`.
 - [`biz.dfch.specmgr.sop.models.v1.summary`](biz.dfch.specmgr.sop.models.v1.summary.md) — Pydantic model for one line of SOP listing output (Phase 2, Task 2.2).
 - [`biz.dfch.specmgr.sop.prompts`](biz.dfch.specmgr.sop.prompts.md) — No documentation available.
-- [`biz.dfch.specmgr.sop.resources`](biz.dfch.specmgr.sop.resources.md) — No documentation available.
+- [`biz.dfch.specmgr.sop.resources`](biz.dfch.specmgr.sop.resources.md) — MCP resource registrations for Standard Operating Procedure (SOP) documents (feat-30 Task 3.7).
+- [`biz.dfch.specmgr.sop.resources.sop_example`](biz.dfch.specmgr.sop.resources.sop_example.md) — Resource: specmgr://sop/example (feat-30 Task 3.7).
+- [`biz.dfch.specmgr.sop.resources.sop_schema`](biz.dfch.specmgr.sop.resources.sop_schema.md) — Resource: specmgr://sop/schema (feat-30 Task 3.7, packaged data).
+- [`biz.dfch.specmgr.sop.resources.sop_template`](biz.dfch.specmgr.sop.resources.sop_template.md) — Resource: specmgr://sop/template (feat-30 Task 3.7).
 - [`biz.dfch.specmgr.sop.tools`](biz.dfch.specmgr.sop.tools.md) — MCP tool wrappers for Standard Operating Procedures (mirrors ``dec/tools/``'s own shape).
 - [`biz.dfch.specmgr.sop.tools._io`](biz.dfch.specmgr.sop.tools._io.md) — Thin file read helpers over ``parse_sop`` (Task 2.1).
 - [`biz.dfch.specmgr.sop.tools._lock`](biz.dfch.specmgr.sop.tools._lock.md) — Per-document in-process lock guarding SOP mutations.

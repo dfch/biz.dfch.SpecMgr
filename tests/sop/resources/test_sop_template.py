@@ -15,9 +15,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Tests for the ``get_sop_template`` ``@mcp.tool()`` wrapper (Task 2.2, real packaged data from Task 3.2)."""
-
-from __future__ import annotations
+"""Tests for the `specmgr://sop/template` resource (`sop.resources.sop_template.sop_template`)."""
 
 import tempfile
 import unittest
@@ -25,40 +23,72 @@ from pathlib import Path
 from unittest import mock
 
 from biz.dfch.specmgr.general.tools import _packaged_data
+from biz.dfch.specmgr.sop.models.v1 import parse_sop
+from biz.dfch.specmgr.sop.resources.sop_template import sop_template
 from biz.dfch.specmgr.sop.tools.get_sop_template import get_sop_template
 
+_TEMPLATE_STATUS = "draft"
 
-class TestGetSopTemplateTool(unittest.TestCase):
-    """Tests for the get_sop_template tool."""
 
-    def test_returns_real_packaged_template(self) -> None:
+class TestSopTemplateResource(unittest.TestCase):
+    """Tests for the sop_template resource function."""
+
+    def test_returns_real_packaged_template(self):
         """Against the real, committed packaged data file, without any patching."""
-        result = get_sop_template()
+        sut = sop_template
+
+        result = sut()
 
         self.assertIsInstance(result, str)
         self.assertTrue(result.startswith("---\n"))
         self.assertIn("type: sop", result)
         self.assertIn("# Level 1 Heading is the Title of the Standard Operating Procedure", result)
 
-    def test_delegates_to_shared_data_reader(self) -> None:
-        """The tool must return whatever general.tools._packaged_data.read_packaged_text() returns."""
+    def test_matches_packaged_file_byte_for_byte(self):
+        """ACC-004: the resource must equal the packaged sop_template.md byte-for-byte."""
+        sut = sop_template
+
+        result = sut()
+
+        packaged = _packaged_data.packaged_data_path("sop", "template").read_text(encoding="utf-8")
+        self.assertEqual(result, packaged)
+
+    def test_matches_the_get_sop_template_tool(self):
+        """The resource and the tool must return identical content -- same underlying reader."""
+        self.assertEqual(sop_template(), get_sop_template())
+
+    def test_packaged_template_round_trips_through_parse_sop(self):
+        """The committed template must be a fully-parseable SOP document (RSK/DEC precedent)."""
+        document = parse_sop(sop_template())
+
+        self.assertEqual(document.frontmatter.status, _TEMPLATE_STATUS)
+
+    def test_reads_fresh_on_every_call(self):
+        """No in-memory cache -- a second call must reflect an on-disk change since the first."""
         with tempfile.TemporaryDirectory() as tmp:
             template_path = Path(tmp) / "sop_template.md"
-            template_path.write_text("---\ntype: sop\n---\n\n# Title\n", encoding="utf-8")
+            template_path.write_text("first", encoding="utf-8")
 
             with mock.patch.object(_packaged_data, "packaged_data_path", return_value=template_path):
-                result = get_sop_template()
+                sut = sop_template
 
-            self.assertEqual(result, "---\ntype: sop\n---\n\n# Title\n")
+                first = sut()
+                template_path.write_text("second", encoding="utf-8")
+                second = sut()
 
-    def test_raises_file_not_found_when_template_missing(self) -> None:
+            self.assertEqual(first, "first")
+            self.assertEqual(second, "second")
+
+    def test_raises_file_not_found_when_template_missing(self):
         """A missing packaged template file must propagate FileNotFoundError uncaught."""
         with tempfile.TemporaryDirectory() as tmp:
             missing_path = Path(tmp) / "does-not-exist.md"
 
             with mock.patch.object(_packaged_data, "packaged_data_path", return_value=missing_path):
+                sut = sop_template
+
                 with self.assertRaises(FileNotFoundError):
-                    get_sop_template()
+                    sut()
 
 
 if __name__ == "__main__":
