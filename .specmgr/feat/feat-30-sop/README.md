@@ -514,12 +514,12 @@ quality gate, README Progress update).
 
 #### Phase 1: Models + parser (`sop/models/v1/`)
 
-- [ ] Task 1.1: `_util.py` (`SCHEMA_COMMENT_VERSION = "v1"`) — depends
-  on: Task 0.1 — status: not-started
-- [ ] Task 1.2: `frontmatter.py` — `SopFrontmatter(MarkdownFrontmatter)`:
+- [x] Task 1.1: `_util.py` (`SCHEMA_COMMENT_VERSION = "v1"`) — depends
+  on: Task 0.1 — status: done
+- [x] Task 1.2: `frontmatter.py` — `SopFrontmatter(MarkdownFrontmatter)`:
   `type: Literal["sop"] = "sop"`, closed 5-set status validator — depends
-  on: Task 1.1 — status: not-started
-- [ ] Task 1.3: `body.py` — all section classes per Design Notes:
+  on: Task 1.1 — status: done
+- [x] Task 1.3: `body.py` — all section classes per Design Notes:
   `Sop` (root + duplicate-step-number after-validator), `Purpose`,
   `Scope`, `Definitions`, `MoreInformation` (leaves),
   `SafetyAndPrecautions` (LITERAL alias leaf), `RolesAndResponsibilities`
@@ -538,13 +538,13 @@ quality gate, README Progress update).
     resource for RASCI role definitions.") — this is the primary
     `sop`-domain discoverability path for REQ-011's new
     `specmgr://rasci` resource, since these docstrings flow directly into
-    `specmgr://sop/schema`'s generated JSON field descriptions — depends
-    on: Task 1.2 — status: not-started
-- [ ] Task 1.4: `document.py` (`SopDocument`), `parser.py` (`parse_sop`
+  `specmgr://sop/schema`'s generated JSON field descriptions — depends
+  on: Task 1.2 — status: done
+- [x] Task 1.4: `document.py` (`SopDocument`), `parser.py` (`parse_sop`
   glue + `_stringify_metadata`), `summary.py` (`SopSummary`),
   `models/v1/__init__.py` + `models/__init__.py` exports — depends on:
-  Task 1.3 — status: not-started
-- [ ] Task 1.5: Tests `tests/sop/models/v1/` — `test_frontmatter.py`,
+  Task 1.3 — status: done
+- [x] Task 1.5: Tests `tests/sop/models/v1/` — `test_frontmatter.py`,
   `test_body.py` (alias acceptance/rejection, RASCI mandatory-vs-optional
   matrix incl. the three-way `Support`/`Consulted`/`Informed` states
   (absent / present-empty / present-with-N-items), `Accountable` rejects
@@ -554,7 +554,7 @@ quality gate, README Progress update).
   sub-list independence incl. `Sops`, `UpdateEntry` heading regex
   acceptance/rejection matrix, misordering), `test_parser.py` (ACC-001/
   ACC-002 matrix + round-trip) — depends on: Task 1.4 — status:
-  not-started
+  done
 - [ ] Task 1.6: Phase-end quality gate (ruff format/check, vulture, full
   unittest) + commit; update this README's Progress section — depends
   on: Task 1.5 — status: not-started
@@ -701,6 +701,29 @@ around.
 
 ### Current Status
 
+**As of 2026-08-30**: Phase 1 (models + parser) complete. The full `sop`
+Pydantic schema now lives under `src/biz/dfch/specmgr/sop/models/v1/`
+(`_util.py`, `frontmatter.py`, `body.py`, `document.py`, `parser.py`,
+`summary.py` + the two `__init__.py` export modules), mirroring `dec`'s file
+shapes exactly. `SopFrontmatter` narrows `type` to `Literal["sop"]` and
+`status` to the closed five-value approval/effectivity set
+(`draft`/`review`/`approved`/`active`/`retired`); `Sop` carries the binding
+section order (Purpose -> Scope -> Definitions -> Roles and Responsibilities
+-> Safety and Precautions -> Procedure -> Related Artifacts -> More
+Information -> Updates), the RASCI composite (mandatory `Accountable`/
+`Responsible`, optional `Support`/`Consulted`/`Informed` with the
+present-with-zero-items shape), the regex-aliased `Step`/`UpdateEntry`
+computed fields (`number`/`name`, `timestamp`/`title`), the `Sops`
+self-cross-reference sub-list, and the duplicate-step-number after-validator.
+All six RASCI-family class docstrings carry the `specmgr://rasci`
+discoverability pointer (REQ-011). The 144-test `tests/sop/models/v1/` suite
+(`test_frontmatter.py`/`test_body.py`/`test_parser.py`) covers the full
+ACC-001/ACC-002 matrix. The full quality gate is green: ruff format/check,
+vulture (clean after adding a `# sop (feat-30 Phase 1)` whitelist section for
+10 Pydantic-field/validator false positives), and the 2151-test unittest
+suite. Task 1.6 (commit) is pending the orchestrator. Next: Phase 2 (tools +
+generic-tool dispatch).
+
 **As of 2026-08-30**: Phase 0 (scaffolding) complete. The `sop` domain
 package skeleton and the matching `tests/sop/` skeleton have been created
 under `src/biz/dfch/specmgr/sop/` and `tests/sop/`, mirroring `dec`'s
@@ -724,6 +747,57 @@ present with zero list items" shape (used by `Support`/`Consulted`/
 None.
 
 ### Recent Updates
+
+#### Update 2026-08-30T03:30:00Z (Phase 1 models + parser)
+
+- Completed: Tasks 1.1-1.5 — implemented the `sop/models/v1/` Pydantic
+  schema + parser and the `tests/sop/models/v1/` test suite. Created
+  `_util.py` (`SCHEMA_COMMENT_VERSION = "v1"`), `frontmatter.py`
+  (`SopFrontmatter` with the closed five-value status set), `body.py` (all
+  section classes: `Sop` root + duplicate-step-number after-validator,
+  `Purpose`/`Scope`/`Definitions`/`MoreInformation`/`SafetyAndPrecautions`
+  leaves, the RASCI `RolesAndResponsibilities` composite with mandatory
+  `Accountable`/`Responsible` and optional present-with-zero-items
+  `Support`/`Consulted`/`Informed`, `Procedure`/`Step` with computed
+  `number`/`name`, `RelatedArtifacts` + 5 H3 sub-lists incl. the new `Sops`
+  self-cross-reference, `Updates`/`UpdateEntry` with the ISO8601-regex
+  heading and computed `timestamp`/`title`), `document.py` (`SopDocument`),
+  `parser.py` (`parse_sop` + `_stringify_metadata`), `summary.py`
+  (`SopSummary`), and overwrote the Phase-0 empty `models/v1/__init__.py` +
+  `models/__init__.py` markers with full copyright/docstring/exports
+  mirroring `dec`. The six RASCI-family class docstrings each carry the
+  `specmgr://rasci` discoverability pointer (REQ-011).
+- Tests: 144 new tests across `test_frontmatter.py` (5-value status set,
+  `type` discriminator, defaults), `test_body.py` (alias
+  acceptance/rejection for every heading class; RASCI mandatory-vs-optional
+  matrix incl. the three-way `Support`/`Consulted`/`Informed` states
+  tested mid-section and at end-of-section, alone and combined;
+  `Accountable`-rejects-bullet-list; `Responsible`-rejects-empty; `Step`
+  regex incl. leading-zero acceptance, title-required rejection, gaps, and
+  the duplicate-number `ValidationError`; `Procedure` zero-step rejection;
+  `RelatedArtifacts` 5-sub-list independence incl. `Sops`;
+  `UpdateEntry` ISO8601 heading acceptance/rejection matrix + computed
+  `timestamp`/`title`; misordering; second H1; leading content before H1;
+  full reference-document round-trip), and `test_parser.py` (ACC-001/
+  ACC-002 matrix through `parse_sop` + round-trip + frontmatter-defaults).
+- Whitelist: added `_._validate_step_numbers_unique` to the Pydantic
+  validator-method section and a new `# sop (feat-30 Phase 1)` section
+  listing 9 names (`accountable`/`responsible`/`support`/`sops`/
+  `timestamp`/`purpose`/`definitions`/`roles_and_responsibilities`/
+  `safety_and_precautions`) — all Pydantic model fields / `@computed_field`s
+  read only via (de)serialization, the exact `dec` feat-21 Phase 1
+  precedent; the `sop` tools that will access them come in Phase 2.
+- Quality gate green: `ruff format --check` (1219 files), `ruff check`
+  (all passed), `vulture src/ whitelist.py --min-confidence 60` (clean),
+  full unittest suite (2151 tests, OK), and a fresh
+  `from biz.dfch.specmgr.sop.models.v1 import SopDocument, parse_sop, Sop,
+  SopFrontmatter` import all pass.
+- Empirically re-confirmed the Design Notes' pre-verification: the
+  `Support`/`Consulted`/`Informed` present-with-zero-items shape parses to
+  `items=None` both mid-section and at end-of-section with no engine
+  changes, and the `Responsible` mandatory-list empty body raises
+  `AssertionError` — exactly as the 2026-08-30 re-verification claimed.
+- Next: Phase 2 (tools + generic-tool dispatch).
 
 #### Update 2026-08-30T02:00:00Z (Phase 0 scaffolding)
 

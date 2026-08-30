@@ -268,8 +268,14 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.rsk.tools.validate_rsk`](biz.dfch.specmgr.rsk.tools.validate_rsk.md) — ``@mcp.tool()`` wrapper: validate_rsk (Task 3.7).
 - [`biz.dfch.specmgr.server`](biz.dfch.specmgr.server.md) — MCP server for ``biz-dfch-specmgr``.
 - [`biz.dfch.specmgr.sop`](biz.dfch.specmgr.sop.md) — Standard Operating Procedure (SOP) domain -- structured, step-by-step
-- [`biz.dfch.specmgr.sop.models`](biz.dfch.specmgr.sop.models.md) — No documentation available.
-- [`biz.dfch.specmgr.sop.models.v1`](biz.dfch.specmgr.sop.models.v1.md) — No documentation available.
+- [`biz.dfch.specmgr.sop.models`](biz.dfch.specmgr.sop.models.md) — Standard Operating Procedure (SOP) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- [`biz.dfch.specmgr.sop.models.v1`](biz.dfch.specmgr.sop.models.v1.md) — Standard Operating Procedure (SOP) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- [`biz.dfch.specmgr.sop.models.v1._util`](biz.dfch.specmgr.sop.models.v1._util.md) — Shared, private constants for the ``sop.models.v1`` subpackage.
+- [`biz.dfch.specmgr.sop.models.v1.body`](biz.dfch.specmgr.sop.models.v1.body.md) — Standard Operating Procedure (SOP) body models: whole-section fields under a single H1.
+- [`biz.dfch.specmgr.sop.models.v1.document`](biz.dfch.specmgr.sop.models.v1.document.md) — Pydantic model for a full Standard Operating Procedure document (frontmatter + body).
+- [`biz.dfch.specmgr.sop.models.v1.frontmatter`](biz.dfch.specmgr.sop.models.v1.frontmatter.md) — Standard Operating Procedure (SOP) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
+- [`biz.dfch.specmgr.sop.models.v1.parser`](biz.dfch.specmgr.sop.models.v1.parser.md) — Parse raw Standard Operating Procedure (SOP) ``.md`` text into a :class:`SopDocument`.
+- [`biz.dfch.specmgr.sop.models.v1.summary`](biz.dfch.specmgr.sop.models.v1.summary.md) — Pydantic model for one line of SOP listing output (Phase 2, Task 2.2).
 - [`biz.dfch.specmgr.sop.prompts`](biz.dfch.specmgr.sop.prompts.md) — No documentation available.
 - [`biz.dfch.specmgr.sop.resources`](biz.dfch.specmgr.sop.resources.md) — No documentation available.
 - [`biz.dfch.specmgr.sop.tools`](biz.dfch.specmgr.sop.tools.md) — No documentation available.

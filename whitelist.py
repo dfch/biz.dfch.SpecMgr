@@ -45,6 +45,7 @@ _._optional_blank_to_none
 _._required_non_blank
 _._validate_items_eagerly
 _._validate_option_numbers_unique
+_._validate_step_numbers_unique
 _._validate_partial_title
 _._validate_status
 _._validate_type_non_blank
@@ -149,6 +150,20 @@ context
 drivers
 considered
 outcome
+# sop (feat-30 Phase 1): `Sop`/`RolesAndResponsibilities`/`RelatedArtifacts`/
+# `UpdateEntry` fields (and the `UpdateEntry.timestamp` `@computed_field`) read
+# only via (de)serialization; nothing in `src/` accesses them as plain
+# attributes yet (the `sop` tools come in Phase 2). `timestamp` is a
+# `@computed_field` evaluated only on access/serialization, like `Option.number`.
+accountable
+responsible
+support
+sops
+timestamp
+purpose
+definitions
+roles_and_responsibilities
+safety_and_precautions
 
 # --- MCP `@mcp.resource(...)`/`@mcp.tool()` entry points -------------------------
 # Invoked by the MCP framework once registered, not called directly in `src/`.
