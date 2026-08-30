@@ -2,7 +2,7 @@
 created: 2026-08-29
 id: feat-30-sop
 status: planning
-updated: 2026-08-29
+updated: 2026-08-30
 version: 1.0.0
 ---
 
@@ -74,6 +74,23 @@ one, per the convention `AGENTS.md` already reserves for future domains.
 - REQ-010: Full test coverage mirroring `tests/dec/`'s layout, plus new
   test coverage in `tests/general/tools/test_update.py`/
   `test_set_status.py` for the `"sop"` dispatch entries (REQ-007).
+- REQ-011: Add a cross-cutting, general MCP resource `specmgr://rasci`
+  (`general/resources/rasci.py`, packaged `general/data/general_rasci.md`)
+  defining the generic RASCI (Responsible/Accountable/Support/Consulted/
+  Informed) responsibility-assignment framework — **not** `sop`-specific,
+  mirroring `specmgr://iso25010`'s cross-cutting placement rationale (a
+  well-known external framework, not coupled to any one domain's schema),
+  rather than `rsk/tara`'s domain-scoped placement (whose content is
+  tightly coupled to RSK's own closed vocabulary). Content is limited to
+  the five roles' generic definitions — no `sop`-specific heading names or
+  cardinality rules. `sop`-domain discoverability is handled via explicit
+  cross-references, not duplication: `RolesAndResponsibilities`/
+  `Accountable`/`Responsible`/`Support`/`Consulted`/`Informed` class
+  docstrings (which flow into `specmgr://sop/schema`'s generated JSON
+  field descriptions), `sop/__init__.py`'s module docstring, the
+  `create_sop`/`update_sop` packaged instructions (an explicit "read
+  `specmgr://rasci` first" step), and `server.py`'s module docstring
+  (both the `general` resources paragraph and the `sop` paragraph).
 
 ### Acceptance Criteria
 
@@ -129,6 +146,19 @@ one, per the convention `AGENTS.md` already reserves for future domains.
   no per-domain update/set_status tools" note.
 - [ ] ACC-009: Verifies REQ-010 — full unittest suite green; ruff
   format/check and vulture clean; `specmgr unused-code` clean.
+- [ ] ACC-010: Verifies REQ-011 — `specmgr://rasci` is implemented,
+  registered under `general/resources/`, and returns the packaged
+  `general_rasci.md` content verbatim; the content is genuinely generic
+  (no `sop`-specific structural rule — heading names, mandatory/optional
+  status, cardinality — leaked into it); all four discoverability
+  cross-references are present (the six `sop` body-model docstrings,
+  `sop/__init__.py`, the create/update instructions, `server.py`'s
+  docstring in both the `general` and `sop` paragraphs);
+  `tests/general/resources/test_rasci.py` covers real-content assertions,
+  fresh-read-per-call, and `FileNotFoundError` on a missing packaged file,
+  mirroring `tests/rsk/resources/test_tara.py`'s non-drift-guard tests
+  (no drift-guard test needed here, since no Pydantic field independently
+  validates against the RASCI role vocabulary).
 
 ### Scope
 
@@ -147,6 +177,10 @@ Included:
 - `"sop"` dispatch entries in the generic `update`/`set_status` tools
   (`general/tools/`) — the first domain to be built dispatch-only from
   day one.
+- A new cross-cutting `general/resources/rasci.py` (`specmgr://rasci`)
+  resource defining the generic RASCI framework, motivated by but not
+  scoped to `sop` — discoverable from `sop` via cross-references only
+  (see REQ-011).
 - Cross-cutting registration (`server.py`, `pyproject.toml`,
   `.pre-commit-config.yaml`, CI, `commands/schema.py`, `AGENTS.md`, root
   `README.md`).
@@ -293,6 +327,29 @@ list renders and round-trips (subject to the engine's pre-existing,
 documented tight-to-loose list normalization, unrelated to this feature).
 No `models/md` engine changes are required.
 
+**Independently re-verified 2026-08-30** (read-only, in-memory, no files
+written, no repo changes) against the live engine, confirming the above
+claims hold and are safe to build on directly — a future agent
+implementing Task 1.3 does **not** need to re-run this check:
+
+- A 3-optional-field `RolesAndResponsibilities`-shaped container
+  (`support`/`consulted`/`informed`, each `Optional[X]` where
+  `X.items: list[MarkdownListItem] | None = None`) parses correctly in
+  every combination tested: heading absent entirely (`X is None`);
+  heading present with zero items, both mid-section (immediately followed
+  by a sibling H3) and at end-of-section (`X is not None`,
+  `X.items is None` — the two states are distinguishable); heading
+  present with N items (`X.items` populated); and multiple optional H3s
+  independently in any of these three states within the same container in
+  one document.
+- The mandatory-once-container-is-present shape
+  (`Responsible.items: list[MarkdownListItem] = Field(min_length=1)`)
+  raises `AssertionError` on an empty body, as expected, with no custom
+  validator needed.
+- No `models/md` engine changes were required to exercise any of the
+  above; the shape works with plain `MarkdownSection2`/`MarkdownSection3`
+  subclasses exactly as this Design Notes section describes.
+
 **Frontmatter**: `SopFrontmatter(MarkdownFrontmatter)` — `type: Literal["sop"] = "sop"`; closed status set `frozenset({"draft", "review", "approved", "active", "retired"})`, default `"draft"`, GOL/DEC's
 error-message pattern. Semantics: `draft` = being written; `review` =
 under review by the responsible authority; `approved` = signed off;
@@ -334,7 +391,26 @@ equivalents of the `dec.*` imports they already have for `dec`.
 **Resources**: `specmgr://sop/schema` (JSON from packaged
 `sop/data/sop_schema.json`), `specmgr://sop/example`,
 `specmgr://sop/template` — identical to GOL/DEC's three; no `/{id}`, no
-`/list`.
+`/list`. `sop`'s own resource count stays at three — RASCI guidance is
+**not** a fourth `sop` resource (see REQ-011): `specmgr://rasci` lives
+under `general/resources/` instead, since RASCI (like ISO/IEC 25010) is a
+well-known external framework, not coupled to any one domain's schema,
+following `specmgr://iso25010`'s cross-cutting placement precedent rather
+than `rsk/tara`'s domain-scoped one (whose guidance text is inseparable
+from RSK's own `## Strategy`/`## Mitigation` vocabulary). The split is
+deliberately non-duplicative: `general/data/general_rasci.md` holds only
+the five roles' generic definitions; every `sop`-specific structural rule
+(which heading maps to which role, `Accountable`'s single-paragraph
+shape, `Support`/`Consulted`/`Informed`'s present-but-possibly-empty
+cardinality) stays exclusively in `sop`'s own schema field docstrings
+(surfaced via `specmgr://sop/schema`) and packaged instructions — never
+copied into `general_rasci.md`. Discoverability from `sop` is by
+cross-reference only, at four points: the six `RolesAndResponsibilities`-
+family class docstrings in `sop/models/v1/body.py` (Task 1.3),
+`create_sop`/`update_sop`'s packaged instructions (Task 3.3),
+`sop/__init__.py`'s own module docstring (Task 3.5), and `server.py`'s
+module docstring, in both its `general` resources paragraph and its
+`sop` paragraph (Task 5.1).
 
 **Prompts**: `create_sop(topic)` and `update_sop(id, instructions=None)`
 reading packaged `sop/data/sop_{create,update}_instructions.md` via
@@ -356,7 +432,13 @@ precedent).
 
 - `server.py`: add `sop` to the final import line (`from . import adr, dec, general, gol, prb, qa, req, rsk, sop, tsk, uc`) + module docstring
   (3 resources, 8 tools, 2 prompts, domain summary, explicit note that
-  `sop` has no per-domain mutation tools).
+  `sop` has no per-domain mutation tools); also list the new cross-cutting
+  `specmgr://rasci` resource under `general` and cross-reference it from
+  the `sop` paragraph (REQ-011).
+- `general/`: new `general/resources/rasci.py` (`specmgr://rasci`) +
+  packaged `general/data/general_rasci.md` (REQ-011) — motivated by
+  `sop` but not scoped to it; see Design Notes' Resources section for the
+  full generic/domain-specific split rationale.
 - `commands/schema.py`: `generate_sop_schema()` (mirror
   `generate_dec_schema`) + `_GENERATORS["sop"]`.
 - `pyproject.toml`: `"biz.dfch.specmgr.sop" = ["data/*.md", "data/*.json"]` under `[tool.setuptools.package-data]`.
@@ -446,7 +528,18 @@ quality gate, README Progress update).
     lists), `Procedure` + `Step` (REGEX heading, computed `number`/`name`),
     `RelatedArtifacts` + 5 H3 list children (GOL shape + `Sops`),
     `Updates` + `UpdateEntry` (ISO8601 REGEX heading, computed
-    `timestamp`/`title`) — depends on: Task 1.2 — status: not-started
+    `timestamp`/`title`) — the `Support`/`Consulted`/`Informed`
+    present-with-zero-items shape is pre-verified live against the engine
+    (see Design Notes' 2026-08-30 re-verification); no exploratory
+    re-check needed before implementing, proceed directly to writing the
+    classes. `RolesAndResponsibilities`, `Accountable`, `Responsible`,
+    `Support`, `Consulted`, and `Informed`'s class docstrings must each
+    include a one-line pointer ("See the general `specmgr://rasci`
+    resource for RASCI role definitions.") — this is the primary
+    `sop`-domain discoverability path for REQ-011's new
+    `specmgr://rasci` resource, since these docstrings flow directly into
+    `specmgr://sop/schema`'s generated JSON field descriptions — depends
+    on: Task 1.2 — status: not-started
 - [ ] Task 1.4: `document.py` (`SopDocument`), `parser.py` (`parse_sop`
   glue + `_stringify_metadata`), `summary.py` (`SopSummary`),
   `models/v1/__init__.py` + `models/__init__.py` exports — depends on:
@@ -502,19 +595,49 @@ quality gate, README Progress update).
 - [ ] Task 3.3: `sop/data/sop_create_instructions.md` +
   `sop_update_instructions.md` (narrated flows, `$topic`/`$id`/
   `$instructions` placeholders; `update` flow explicitly names the
-  generic `update`/`set_status` tools with `type="sop"`) — depends on:
-  Task 2.5 — status: not-started
-- [ ] Task 3.4: `commands/schema.py` — `generate_sop_schema()` +
+  generic `update`/`set_status` tools with `type="sop"`); both must
+  include an explicit step, before filling in
+  `## Roles and Responsibilities`, telling the caller to read
+  `specmgr://rasci` for the generic role definitions (REQ-011's
+  discoverability requirement) — depends on: Task 2.5 — status:
+  not-started
+- [ ] Task 3.4: `general/data/general_rasci.md` — new packaged data file,
+  generic RASCI (Responsible/Accountable/Support/Consulted/Informed)
+  guidance: what RASCI is, the five roles' standard definitions, RASCI vs.
+  plain RACI. Deliberately **no** `sop`-specific heading names or
+  cardinality rules (those stay in `sop`'s own schema/instructions, see
+  Task 1.3/Task 3.3) — depends on: Task 2.5 — status: not-started
+- [ ] Task 3.5: `general/resources/rasci.py` — new cross-cutting resource
+  (REQ-011), mirroring `rsk/resources/tara.py`'s shape exactly:
+  `@mcp.resource("specmgr://rasci", name="rasci", title="RASCI
+  Responsibility Assignment Guidance", ..., mime_type="text/markdown")`
+  returning `read_packaged_text("general", "rasci")` verbatim (raw
+  passthrough, not structurally parsed like `iso25010`); register in
+  `general/resources/__init__.py` (import/`__all__`/docstring) and
+  `general/__init__.py`'s module docstring. Also add a one-line
+  cross-reference note to `sop/__init__.py`'s own module docstring
+  (`sop` relies on the cross-cutting `specmgr://rasci` resource for
+  role definitions, not a domain-local one) — the fourth and last of
+  REQ-011's discoverability touchpoints (the other three: Task 1.3's
+  body-model docstrings, Task 3.3's packaged instructions, Task 5.1's
+  `server.py` docstring) — depends on: Task 3.4 — status: not-started
+- [ ] Task 3.6: `commands/schema.py` — `generate_sop_schema()` +
   `_GENERATORS["sop"]` (mirror `generate_dec_schema`); run `specmgr schema --type sop` (writes `docs/sop_schema.json`) and `specmgr schema --type sop --output-dir src/biz/dfch/specmgr/sop/data` (packaged copy)
   — depends on: Task 1.6 — status: not-started
-- [ ] Task 3.5: `sop/resources/` — `sop_schema.py` (`specmgr://sop/schema`,
+- [ ] Task 3.7: `sop/resources/` — `sop_schema.py` (`specmgr://sop/schema`,
   JSON from packaged copy), `sop_example.py`, `sop_template.py`,
-  `__init__.py` — depends on: Task 3.1, Task 3.2, Task 3.4 — status:
+  `__init__.py` — still exactly three `sop` resources, no `rasci.py` here
+  (see Task 3.5) — depends on: Task 3.1, Task 3.2, Task 3.6 — status:
   not-started
-- [ ] Task 3.6: Tests `tests/sop/resources/` (ACC-004) — depends on:
-  Task 3.5 — status: not-started
-- [ ] Task 3.7: Phase-end quality gate + commit; update this README's
-  Progress section — depends on: Task 3.6 — status: not-started
+- [ ] Task 3.8: `tests/general/resources/test_rasci.py` (ACC-010) —
+  mirroring `tests/rsk/resources/test_tara.py`'s shape minus the
+  drift-guard test (real-content assertions, fresh-read-per-call,
+  `FileNotFoundError` on a missing packaged file) — depends on: Task 3.5
+  — status: not-started
+- [ ] Task 3.9: Tests `tests/sop/resources/` (ACC-004) — depends on:
+  Task 3.7 — status: not-started
+- [ ] Task 3.10: Phase-end quality gate + commit; update this README's
+  Progress section — depends on: Task 3.8, Task 3.9 — status: not-started
 
 #### Phase 4: Prompts
 
@@ -531,15 +654,23 @@ quality gate, README Progress update).
 - [ ] Task 5.1: `server.py` — add `sop` to the final import line
   (`adr, dec, general, gol, prb, qa, req, rsk, sop, tsk, uc`) + module
   docstring (3 resources, 8 tools, 2 prompts, domain summary, no
-  per-domain mutation tools note) — depends on: Task 4.3 — status:
-  not-started
-- [ ] Task 5.2: `pyproject.toml` — `"biz.dfch.specmgr.sop" = ["data/*.md", "data/*.json"]` package-data entry — depends on: Task 3.7
+  per-domain mutation tools note). Also insert `sop` into the docstring's
+  existing `ac`-reservation enumeration sentence ("... adr, uc, req, tsk,
+  qa, prb, gol, rsk, dec, and later ac" → add `sop` before "and later
+  ac") — confirmed via exploration (2026-08-30) to be the one enumeration
+  sentence this task would otherwise leave stale. Also (REQ-011): list
+  `specmgr://rasci` once under the `general` resources paragraph, and add
+  a one-line cross-reference to it in the `sop` paragraph itself ("role
+  definitions: see general `specmgr://rasci`") so an agent scanning only
+  the `sop` paragraph still finds it — depends on: Task 4.3, Task 3.10 —
+  status: not-started
+- [ ] Task 5.2: `pyproject.toml` — `"biz.dfch.specmgr.sop" = ["data/*.md", "data/*.json"]` package-data entry — depends on: Task 3.10
   — status: not-started
 - [ ] Task 5.3: `.pre-commit-config.yaml` — add `sop/models/v1` to the 9
   existing `files:` globs + new `specmgr-schema-sop-package` hook —
-  depends on: Task 3.4 — status: not-started
+  depends on: Task 3.6 — status: not-started
 - [ ] Task 5.4: `.github/workflows/ci.yml` — new packaged-copy drift
-  step for `sop/data/sop_schema.json` — depends on: Task 3.4 — status:
+  step for `sop/data/sop_schema.json` — depends on: Task 3.6 — status:
   not-started
 - [ ] Task 5.5: `AGENTS.md` — `sop/` bullet in Status (after `dec/`);
   `sop` added to the tools/resources/prompts enumeration and the
@@ -555,7 +686,7 @@ quality gate, README Progress update).
 - [ ] Task 5.8: Final quality gate (ruff format/check, vulture, full
   unittest, `specmgr unused-code`) + commit — depends on: Task 5.7 —
   status: not-started
-- [ ] Task 5.9: Final verification pass — walk every ACC-001..009 with
+- [ ] Task 5.9: Final verification pass — walk every ACC-001..010 with
   concrete evidence (including a live `create_sop`→`get_sop`→
   `list_sop`→`update`(type=sop)→`set_status`(type=sop)→`validate_sop`
   run, not just unit tests); update this README's Progress section; set
@@ -583,6 +714,68 @@ has not started (Phase 0 not yet begun).
 None.
 
 ### Recent Updates
+
+#### Update 2026-08-30T01:00:00Z (RASCI resource promoted to general)
+
+- Decided and planned: the RASCI role-definitions guidance is now a
+  cross-cutting `specmgr://rasci` resource (`general/resources/rasci.py`,
+  packaged `general/data/general_rasci.md`) — new REQ-011/ACC-010 —
+  rather than a `sop`-scoped `specmgr://sop/rasci` resource as first
+  proposed. Rationale: RASCI, like ISO/IEC 25010, is a well-known
+  external framework, not coupled to any one domain's schema, so it
+  follows `specmgr://iso25010`'s cross-cutting placement rather than
+  `rsk/tara`'s domain-scoped one. `sop`'s own resource count is
+  unaffected (stays at three: `schema`/`example`/`template`).
+- Split content deliberately, non-duplicatively: `general_rasci.md` holds
+  only the five roles' generic definitions; every `sop`-specific
+  structural rule (heading names, `Accountable`'s single-paragraph
+  shape, the present-but-possibly-empty `Support`/`Consulted`/`Informed`
+  cardinality) stays exclusively in `sop`'s own schema field docstrings
+  and packaged instructions.
+- Planned four discoverability touchpoints so an agent working the `sop`
+  domain reliably finds the resource despite it living outside `sop/`:
+  (1) the six `RolesAndResponsibilities`-family class docstrings in
+  `sop/models/v1/body.py` (Task 1.3, flows into `specmgr://sop/schema`'s
+  generated field descriptions), (2) `create_sop`/`update_sop`'s packaged
+  instructions (Task 3.3, explicit "read `specmgr://rasci` first" step),
+  (3) `sop/__init__.py`'s own module docstring (Task 3.5), and (4)
+  `server.py`'s module docstring in both its `general` and `sop`
+  paragraphs (Task 5.1).
+- Renumbered Phase 3's task list to insert the two new tasks (Task 3.4
+  `general_rasci.md`, Task 3.5 `general/resources/rasci.py`) and their
+  test task (Task 3.8); fixed the three downstream dependency references
+  to the old Task 3.4 (`commands/schema.py`, now Task 3.6) in Task 5.2/
+  5.3/5.4.
+
+#### Update 2026-08-30T00:00:00Z (pre-implementation plan review)
+
+- Completed: Independent plan-review pass before starting Phase 0 —
+  cross-checked every precedent this plan cites (`dec`/`gol` directory
+  shapes, `Option` regex-computed-field pattern, `general/tools/update.py`/
+  `set_status.py` `_ADAPTERS` dispatch shape, `commands/schema.py`
+  `_GENERATORS` pattern, `.pre-commit-config.yaml` hook globs,
+  `pyproject.toml` package-data format, `server.py`'s import line) against
+  the actual current code — all matched exactly, no discrepancies found
+  beyond the two below.
+- Completed: Live, in-memory, read-only re-verification (no files written)
+  of the `Support`/`Consulted`/`Informed` "present-with-zero-items"
+  optional-list shape against the real `models/md` engine, since it has no
+  precedent elsewhere in the codebase — every tested combination (heading
+  absent / present-empty mid-section / present-empty end-of-section /
+  present-with-N-items, plus the mandatory `Responsible` empty-body
+  rejection) passed exactly as Design Notes claims. Result recorded
+  directly in Design Notes so Task 1.3 does not need to repeat this check.
+- Found and fixed: `server.py`'s module docstring already carries an
+  `"... and later ac"` domain-enumeration sentence that Task 5.1's original
+  wording would not have updated for `sop` — Task 5.1 now explicitly calls
+  this out.
+- Filed: a new cross-cutting follow-up, `feat-7-various-improvements` Task
+  0.30 ("Consolidate 'Recent Updates' and 'Updates' across artifact
+  types"), since `sop`'s new ISO8601-enforced `## Updates` heading shape
+  is a third divergent variant alongside `tsk`'s `## Recent Updates` and
+  `dec`'s `## Updates` — explicitly out of scope for this feature, which
+  proceeds with its own designed shape as planned.
+- Next: Phase 0 (package scaffolding).
 
 #### Update 2026-08-29T00:00:00Z (planning)
 
@@ -654,6 +847,19 @@ None.
   directly into the generic `update`/`set_status` tools from its
   initial build, per ADR 36905d5b (user decision, following the
   convention `AGENTS.md` already reserves for future domains).
+- **2026-08-30**: The RASCI role-definitions guidance is a cross-cutting
+  `specmgr://rasci` resource under `general/resources/` (REQ-011), not a
+  `sop`-scoped `specmgr://sop/rasci` resource — RASCI is treated as a
+  well-known external framework analogous to ISO/IEC 25010 (cross-cutting
+  precedent: `specmgr://iso25010`), not as domain-coupled guidance like
+  `rsk/tara`/`risk-matrix` (whose content is inseparable from RSK's own
+  `## Strategy`/`## Mitigation` vocabulary). Content is split
+  non-duplicatively — generic role definitions only in
+  `general_rasci.md`; every `sop`-specific structural rule stays in
+  `sop`'s own schema/instructions — with `sop`-domain discoverability
+  handled by four explicit cross-references rather than by moving or
+  copying content (user decision, after an explicit pros/cons comparison
+  of sop-scoped vs. general placement).
 
 ### Related PRs / Commits
 
