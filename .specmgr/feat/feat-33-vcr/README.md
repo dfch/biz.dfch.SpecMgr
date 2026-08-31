@@ -209,6 +209,11 @@ has no Plan/Progress split -- same reasoning `sysrs` used for its own
 - [ ] Task 0.1: Draft `example.md`/`template.md` bodies exercising every
   section and validate against the `models/md` engine (mirroring `sop`'s/
   `sysrs`'s discipline) before writing any Pydantic model code.
+  - [x] `example.md` drafted (discussion draft only -- not yet validated
+    against `models/md`, since no `vcr` model code exists yet; see Task
+    1.1-1.3).
+  - [ ] `template.md` (blind-text placeholder, mirrors
+    `get_feat_template`'s shape) still to be drafted.
 - [ ] Task 0.2: Confirm the `### AC-NNN (Method): ...` heading regex and
   duplicate-number `model_validator` behave as expected on hand-written
   fixtures.
@@ -253,7 +258,9 @@ has no Plan/Progress split -- same reasoning `sysrs` used for its own
 
 **As of 2026-08-31**: Planning complete -- design agreed interactively
 (see Design Notes); GitHub issue #33 opened; dedicated branch/worktree
-`feat-33-vcr` created off `origin/dev`. No code written yet.
+`feat-33-vcr` created off `origin/dev`; a discussion-draft `example.md`
+added for review (Task 0.1, partial -- `template.md` still open). No
+model/tool/resource code written yet.
 
 ### Blockers
 
@@ -262,6 +269,19 @@ has no Plan/Progress split -- same reasoning `sysrs` used for its own
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-08-31T07:52:00.000000 — Added discussion-draft example.md
+
+Added `example.md` (API key revocation latency scenario, thematically
+continuing `feat-32-sysrs/example.v4.md`'s partner-API-key story) for
+user review -- illustrates `## Verifies`/`## Coverage`/
+`## Acceptance Criteria` (all four DTAIC methods, with and without
+optional `#### Test Steps`)/`## More Information`/`## Updates`. Not yet
+validated against `models/md` (no `vcr` model code exists). Also
+corrected the `## Updates` entry nesting in this README's own candidate
+body outline (Design Notes) from `####` to `###`, matching `sysrs`'s own
+"no Plan/Progress split -> one level shallower than `feat`" reasoning,
+which applies identically to `vcr`.
 
 #### 2026-08-31T07:25:24.241609 — Created
 
