@@ -494,10 +494,10 @@ has no Plan/Progress split -- same reasoning `sysrs` used for its own
 
 #### Phase 2: Tools
 
-- [ ] Task 2.1: `create_vcr`, `parse_vcr`, `list_vcr`, `get_vcr` (with
+- [x] Task 2.1: `create_vcr`, `parse_vcr`, `list_vcr`, `get_vcr` (with
   `raw` param), `get_vcr_example`, `get_vcr_template`, `delete_vcr` stub,
   `validate_vcr`.
-- [ ] Task 2.2: Generic `update`/`set_status` dispatch entries
+- [x] Task 2.2: Generic `update`/`set_status` dispatch entries
   (`type="vcr"`) in `general/tools/`.
 
 #### Phase 3: Resources and prompts
@@ -523,7 +523,36 @@ has no Plan/Progress split -- same reasoning `sysrs` used for its own
 
 ### Current Status
 
-**As of 2026-08-31**: Phase 1 (Models and parser) complete. `vcr/models/v1/`
+**As of 2026-08-31**: Phase 2 (Tools) complete. `vcr/tools/` now exists in
+full, mirroring `dec/tools/` file-for-file: `_paths.py`/`_lock.py`/`_io.py`/
+`_write.py` plumbing, and the 8 standard tools (`create_vcr`, `parse_vcr`,
+`get_vcr` with `raw`, `get_vcr_example`, `get_vcr_template`, `list_vcr`,
+`delete_vcr` stub, `validate_vcr`). Packaged data
+(`vcr/data/vcr_example.md`/`vcr_template.md`, copied byte-for-byte from
+this feature's finalized planning drafts) backs `get_vcr_example`/
+`get_vcr_template`, declared in `pyproject.toml`'s
+`[tool.setuptools.package-data]`. The generic `update`/`set_status` tools
+in `general/tools/` now dispatch `type="vcr"` to `_update_vcr`/
+`_set_status_vcr`, ported verbatim from `_update_dec`/`_set_status_dec`.
+64 new unit tests (`tests/vcr/tools/`, bringing the full suite from 2336 to
+2400) plus new `vcr` cases in
+`tests/general/tools/test_update.py`/`test_set_status.py` cover the full
+create->get->list->update->set_status->validate->delete lifecycle. Neither
+`server.py` nor `vcr/__init__.py` was touched -- `vcr/__init__.py`
+deliberately still does not import `tools`/`resources`/`prompts` (that
+domain-registration wiring, plus `vcr/resources`/`vcr/prompts` themselves,
+is Phase 3/4's job). One noted, non-blocking fragility: running
+`tests/vcr/tools/` in isolation (before Phase 4 wires `vcr/__init__.py`'s
+own `tools` import) can hit a circular-import `ImportError` in
+`test__io.py`/similar files that import `vcr.models.v1` directly, since
+`general.tools.update`/`set_status` now import `vcr.tools._io` etc. at
+module load time and `vcr.tools`'s own `__init__.py` eagerly imports
+`list_vcr` (which needs `VcrSummary`) -- resolved automatically once Phase
+4 makes `vcr/__init__.py` bootstrap `tools` first (mirroring every other
+domain's own `__init__.py`); the full repo-wide test suite (the specified
+quality gate) is unaffected and passes cleanly (2400 tests, `OK`).
+
+**As of 2026-08-31 (earlier)**: Phase 1 (Models and parser) complete. `vcr/models/v1/`
 now exists in full: `frontmatter.py` (`VcrFrontmatter`, closed
 draft/progress/complete/approved status set), `body.py` (`Verifies`,
 `Coverage`, `TestSteps`, `AcceptanceCriterion`/`AcceptanceCriteria`,
@@ -550,6 +579,67 @@ is Phase 2/3/4's job.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-08-31T12:30:00.000000 — Phase 2 complete: `vcr/tools/` implemented, generic `update`/`set_status` dispatch wired for `type="vcr"`
+
+Implemented the full `vcr/tools/` package, mirroring `dec/tools/` file-for-
+file: `_paths.py` (`VCR_TYPE_NAME`, `VcrNotFoundError`, `vcr_base_dir`/
+`ensure_vcr_base_dir`/`iter_vcr_paths`/`find_vcr_path`, built on the shared
+`general.tools._doc_paths` helpers, not a new dependency), `_lock.py`
+(`vcr_lock`), `_io.py` (`read_vcr`/`load_by_id`), `_write.py`
+(`write_vcr_file`), and the 8 standard `@mcp.tool()` wrappers: `create_vcr`
+(fresh `uuid.uuid4()` id, `type="vcr"`, `status="draft"` always on create,
+filename `vcr-{id}-{slug}.md`), `parse_vcr`, `get_vcr` (with `raw: bool =
+False`), `get_vcr_example`/`get_vcr_template` (reading new packaged data),
+`list_vcr` (paged from day one, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13),
+`delete_vcr` (stub, always `NotImplementedError`), and `validate_vcr`
+(disk-free/id-free dry run, `full: bool = False`). Copied the
+already-finalized `example.md`/`template.md` planning drafts byte-for-byte
+into `vcr/data/vcr_example.md`/`vcr_template.md`
+(confirmed via `diff`: zero output) and declared the new
+`"biz.dfch.specmgr.vcr"` package-data entry in `pyproject.toml`, inserted
+after `"biz.dfch.specmgr.uc"` and before `"biz.dfch.specmgr.general"`,
+matching every other domain's two-pattern (`data/*.md`, `data/*.json`)
+shape even though no `vcr_schema.json` exists yet (Phase 3's job). Added
+`vcr` as a tenth entry to the generic `update` tool's `_ADAPTERS` (new
+`_update_vcr`, ported verbatim from `_update_dec`, appended last after
+`feat`) and as an eleventh entry to `set_status`'s `_ADAPTERS` (new
+`_set_status_vcr`, ported verbatim from `_set_status_dec` including the
+`assert superseded_by is None` guard, inserted right after `feat` and
+before the always-last `adr`), updating both tools' `Literal[...]`
+parameter types, module/tool docstrings, and domain-count language
+("nine"/"ten" -> "ten"/"eleven" as appropriate) throughout. Added 64 new
+unit tests under `tests/vcr/tools/` (mirroring `tests/dec/tools/`'s 13
+files file-for-file, using a minimal valid VCR body fixture: `## Verifies`
++ `## Coverage` + one `### AC-001 (Test): ...` entry, matching Phase 1's
+own `test_parser.py` fixture shape) plus new `vcr` cases appended to the
+table-driven `_CASES` lists in `tests/general/tools/test_update.py` (a
+genuine duplicate-`### AC-001` `pydantic.ValidationError` field-error case,
+mirroring DEC's own duplicate-`### Option` case) and
+`test_set_status.py` (`valid_status="progress"`, `invalid_status="accepted"`
+-- confirmed against `VcrFrontmatter`'s actual closed
+`draft`/`progress`/`complete`/`approved` set before use), and updated both
+files' registration/domain-count docstring language and the
+`type` enum assertion in `test_update.py`'s
+`test_update_registered_with_type_enum_and_optional_range`. Did not touch
+`server.py`, did not create `vcr/resources`/`vcr/prompts`, and did not add
+`vcr` to `server.py`'s import line -- all reserved for Phase 3/4;
+`vcr/__init__.py` also stays untouched (still no `tools`/`resources`/
+`prompts` import). Noted one non-blocking fragility for a future
+implementer: since `vcr/__init__.py` does not yet bootstrap `vcr.tools`
+(unlike every other already-registered domain's own `__init__.py`, which
+bootstraps its `tools` package before anything else can reach its models
+mid-import), running `tests/vcr/tools/` in isolation can hit a circular
+import `ImportError` in files that import `vcr.models.v1` directly before
+anything else has loaded `general.tools` (which now imports
+`vcr.tools._io` et al., transitively re-entering `vcr.models.v1` while
+it's still mid-import) -- resolved automatically once Phase 4 wires
+`vcr/__init__.py` to import `tools`/`resources`/`prompts` the same way
+`dec/__init__.py` already does; the full repo-wide suite (the specified
+quality gate) is unaffected.
+Quality gate green: `ruff format --check`, `ruff check`, `vulture` (no new
+whitelist entries needed), and the full `unittest` suite (2400 tests,
+`OK`, up from 2336) all pass.
 
 #### 2026-08-31T11:15:00.000000 — Phase 1 correction: `AcceptanceCriterion.description` added; `example.md`/`template.md` now empirically validate end to end
 

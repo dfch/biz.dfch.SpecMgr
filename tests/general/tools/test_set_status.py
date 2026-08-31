@@ -17,13 +17,13 @@
 
 """Tests for the generic ``set_status`` ``@mcp.tool()`` wrapper (feat-22-consolidate-mutation-tools, Phase 4).
 
-Parameterized over all nine document types (ACC-004); seeds a real,
-persisted document per type -- the eight whole-body domains via the
+Parameterized over all eleven document types (ACC-004); seeds a real,
+persisted document per type -- the ten whole-body domains via the
 domain's own ``create_<d>`` tool in a temp ``SPECMGR_DOCS_DIR`` (mirroring
 the fixture strategy of ``tests/general/tools/test_update.py``), the ADR
 by rendering a minimal valid model into a temp ``SPECMGR_ADR_DIR`` -- and
 covers: status changed + ``updated`` bumped (microsecond timestamp) + body
-untouched (eight domains: raw body byte-identical; ADR: re-render round-
+untouched (ten domains: raw body byte-identical; ADR: re-render round-
 trip equal apart from status); each domain's closed-vocabulary
 enforcement (positive value from the domain's own ``_ALLOWED_STATUSES``;
 negative value valid in one domain but invalid in the tested one -- each a
@@ -83,6 +83,9 @@ from biz.dfch.specmgr.tsk.tools.create_tsk import create_tsk
 from biz.dfch.specmgr.uc.models.v2.frontmatter import _ALLOWED_STATUSES as _UC_ALLOWED_STATUSES
 from biz.dfch.specmgr.uc.tools._paths import UcNotFoundError
 from biz.dfch.specmgr.uc.tools.create_uc import create_uc
+from biz.dfch.specmgr.vcr.models.v1.frontmatter import _ALLOWED_STATUSES as _VCR_ALLOWED_STATUSES
+from biz.dfch.specmgr.vcr.tools._paths import VcrNotFoundError
+from biz.dfch.specmgr.vcr.tools.create_vcr import create_vcr
 
 #: ISO-8601 microsecond timestamp shape (the ``updated`` bump precision).
 _MICROSECOND_TIMESTAMP = r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}"
@@ -291,10 +294,30 @@ _DEC_MINIMAL_BODY = textwrap.dedent(
     """
 )
 
+_VCR_MINIMAL_BODY = textwrap.dedent(
+    """\
+    # Sample Verification Case
+
+    ## Verifies
+
+    REQ 4f2a1b3c-8d5e-4a91-9c72-1e6f8a2b3c4d: Sample requirement title
+
+    Confirms that the sample requirement is met.
+
+    ## Coverage
+
+    partial
+
+    ## Acceptance Criteria
+
+    ### AC-001 (Test): The sample criterion passes
+    """
+)
+
 
 @dataclass(frozen=True)
 class _Case:
-    """Per-type test data for the eight whole-body document types."""
+    """Per-type test data for the ten whole-body document types."""
 
     doc_type: str
     create: Callable[[str], Any]
@@ -382,6 +405,15 @@ _CASES: list[_Case] = [
         invalid_status="implemented",
         allowed_statuses=_DEC_ALLOWED_STATUSES,
     ),
+    _Case(
+        doc_type="vcr",
+        create=create_vcr,
+        not_found_error=VcrNotFoundError,
+        minimal_body=_VCR_MINIMAL_BODY,
+        valid_status="progress",
+        invalid_status="accepted",
+        allowed_statuses=_VCR_ALLOWED_STATUSES,
+    ),
 ]
 
 _ADR_ID = "adr-test-id"
@@ -427,7 +459,7 @@ class TempDocsDirTestCase(unittest.TestCase):
 
 
 class TestSetStatusWholeBodyDomains(TempDocsDirTestCase):
-    """ACC-004: the eight whole-body domains -- status changed, ``updated`` bumped, body untouched."""
+    """ACC-004: the ten whole-body domains -- status changed, ``updated`` bumped, body untouched."""
 
     def test_case_data_matches_the_domains_own_closed_sets(self) -> None:
         """Each ``valid_status``/``invalid_status`` pair must be exactly as claimed against the domain's own set."""

@@ -17,7 +17,7 @@
 
 """Tests for the generic ``update`` ``@mcp.tool()`` wrapper (feat-22-consolidate-mutation-tools, Phase 2).
 
-Parameterized over all eight whole-body document types; seeds a real,
+Parameterized over all nine whole-body document types; seeds a real,
 persisted document per type in a temp ``SPECMGR_DOCS_DIR`` via the domain's
 own ``create_<d>`` tool (mirroring the fixture strategy of the per-domain
 ``tests/<d>/tools/test_update_<d>.py`` files still on disk at this phase).
@@ -25,14 +25,14 @@ Covers ACC-001 (whole-body mode) and ACC-002 (range mode) plus the
 registration smoke test of Task 2.8.
 
 Note on the per-type out-of-vocabulary field-value cases: ``req``, ``uc``,
-``tsk``, ``gol``, ``rsk``, and ``dec`` each have a genuine field-level
-``pydantic.ValidationError`` path in their body schema (closed vocabularies
-or cross-field validators -- for ``dec``, a duplicated ``### Option``
-number), while ``qa`` and ``prb`` bodies are free-form text only -- no
-closed vocabulary, no field constraint -- so their out-of-vocabulary input
-(an unrecognized section heading) fails structurally with ``AssertionError``
-instead. Each type's case data flags which of the two its field-error input
-raises.
+``tsk``, ``gol``, ``rsk``, ``dec``, and ``vcr`` each have a genuine
+field-level ``pydantic.ValidationError`` path in their body schema (closed
+vocabularies or cross-field validators -- for ``dec``/``vcr``, a duplicated
+``### Option``/``### AC-NNN`` number), while ``qa`` and ``prb`` bodies are
+free-form text only -- no closed vocabulary, no field constraint -- so their
+out-of-vocabulary input (an unrecognized section heading) fails structurally
+with ``AssertionError`` instead. Each type's case data flags which of the
+two its field-error input raises.
 """
 
 from __future__ import annotations
@@ -69,6 +69,8 @@ from biz.dfch.specmgr.tsk.tools._paths import TskNotFoundError
 from biz.dfch.specmgr.tsk.tools.create_tsk import create_tsk
 from biz.dfch.specmgr.uc.tools._paths import UcNotFoundError
 from biz.dfch.specmgr.uc.tools.create_uc import create_uc
+from biz.dfch.specmgr.vcr.tools._paths import VcrNotFoundError
+from biz.dfch.specmgr.vcr.tools.create_vcr import create_vcr
 
 update_module = importlib.import_module("biz.dfch.specmgr.general.tools.update")
 update = update_module.update
@@ -463,6 +465,46 @@ _DEC_UPDATED_BODY = textwrap.dedent(
     """
 )
 
+_VCR_MINIMAL_BODY = textwrap.dedent(
+    """\
+    # Sample Verification Case
+
+    ## Verifies
+
+    REQ 4f2a1b3c-8d5e-4a91-9c72-1e6f8a2b3c4d: Sample requirement title
+
+    Confirms that the sample requirement is met.
+
+    ## Coverage
+
+    partial
+
+    ## Acceptance Criteria
+
+    ### AC-001 (Test): The sample criterion passes
+    """
+)
+
+_VCR_UPDATED_BODY = textwrap.dedent(
+    """\
+    # Sample Verification Case
+
+    ## Verifies
+
+    REQ 4f2a1b3c-8d5e-4a91-9c72-1e6f8a2b3c4d: Sample requirement title
+
+    Confirms that the sample requirement is fully met.
+
+    ## Coverage
+
+    full
+
+    ## Acceptance Criteria
+
+    ### AC-001 (Test): The sample criterion passes
+    """
+)
+
 _MALFORMED_BODY = "# Title\n\nJust a paragraph, no recognized sections.\n"
 
 
@@ -652,6 +694,23 @@ _CASES: list[_Case] = [
             "\n### Option 1: Duplicate option\n"
             "\nThe duplicate option text.\n"
         ),
+        field_error_is_append=True,
+        field_error_is_validation=True,
+    ),
+    _Case(
+        doc_type="vcr",
+        create=create_vcr,
+        not_found_error=VcrNotFoundError,
+        minimal_body=_VCR_MINIMAL_BODY,
+        updated_body=_VCR_UPDATED_BODY,
+        middle_marker="Confirms that the sample requirement is met.",
+        middle_replacement="Confirms that the sample requirement is thoroughly met.",
+        append_fragment="\n## More Information\n\nAdditional verification context.\n",
+        eof_marker="## Acceptance Criteria",
+        eof_fragment="## Acceptance Criteria\n\n### AC-001 (Test): The sample criterion passes, revised\n",
+        deletable_suffix="\n## More Information\n\nAdditional verification context.\n",
+        field_error_marker="### AC-001 (Test): The sample criterion passes",
+        field_error_fragment="\n### AC-001 (Analysis): Duplicate AC number\n",
         field_error_is_append=True,
         field_error_is_validation=True,
     ),
@@ -975,7 +1034,7 @@ class TestUpdateRegistration(unittest.TestCase):
 
         schema = matching[0].input_schema
         type_prop = schema["properties"]["type"]
-        self.assertEqual(type_prop["enum"], ["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "feat"])
+        self.assertEqual(type_prop["enum"], ["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "feat", "vcr"])
         self.assertEqual(type_prop["type"], "string")
         for name in ("begin", "end"):
             prop = schema["properties"][name]

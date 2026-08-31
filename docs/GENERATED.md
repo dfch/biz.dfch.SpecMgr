@@ -436,7 +436,20 @@ First-line docstrings from each module, organized by domain:
 - `vcr/models/v1/frontmatter.py` — Verification Case Record (VCR) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
 - `vcr/models/v1/parser.py` — Parse raw verification case record (VCR) ``.md`` text into a :class:`VcrDocument`.
 - `vcr/models/v1/summary.py` — Pydantic model for one line of VCR listing output (Phase 2, ``list_vcr``).
+- `vcr/tools/__init__.py` — MCP tool wrappers for verification case records (mirrors ``dec/tools/``'s own shape).
+- `vcr/tools/_io.py` — Thin file read helpers over ``parse_vcr`` (Task 2.1).
+- `vcr/tools/_lock.py` — Per-document in-process lock guarding verification case record mutations.
+- `vcr/tools/_paths.py` — Verification case record base directory resolution and id -> path lookup (Task 2.1).
+- `vcr/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_vcr`` and
+- `vcr/tools/create_vcr.py` — ``@mcp.tool()`` wrapper: create_vcr (Task 2.1).
+- `vcr/tools/delete_vcr.py` — ``@mcp.tool()`` wrapper: delete_vcr (Task 2.1).
+- `vcr/tools/get_vcr.py` — ``@mcp.tool()`` wrapper: get_vcr (Task 2.1).
+- `vcr/tools/get_vcr_example.py` — ``@mcp.tool()`` wrapper: get_vcr_example (Task 2.1).
+- `vcr/tools/get_vcr_template.py` — ``@mcp.tool()`` wrapper: get_vcr_template (Task 2.1).
+- `vcr/tools/list_vcr.py` — ``@mcp.tool()`` wrapper: list_vcr (Task 2.1).
+- `vcr/tools/parse_vcr.py` — ``@mcp.tool()`` wrapper: parse_vcr (Task 2.1).
+- `vcr/tools/validate_vcr.py` — ``@mcp.tool()`` wrapper: validate_vcr (Task 2.1).
 
 ## Test Coverage
 
-**Test files**: 286
+**Test files**: 299

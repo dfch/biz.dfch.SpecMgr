@@ -17,8 +17,8 @@
 
 """``@mcp.tool()`` wrapper: set_status (feat-22-consolidate-mutation-tools, Phase 4).
 
-The generic, cross-domain status-change tool for all ten document types
-(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``feat``/``adr``).
+The generic, cross-domain status-change tool for all eleven document types
+(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``feat``/``vcr``/``adr``).
 It dispatches on the explicit ``type`` parameter to a private per-domain
 adapter (``_set_status_<d>``), each a **verbatim port** of the
 corresponding per-domain status tool's function body (same domain lock,
@@ -33,7 +33,7 @@ previous per-domain ADR status tool's function body (same ``adr_lock``,
 ``models.adr.v1.mutations.set_status``, which composes ``status`` as
 ``"superseded by {superseded_by}"`` when ``superseded_by`` is given.
 
-The ``feat`` adapter (``_set_status_feat``) diverges from the other eight
+The ``feat`` adapter (``_set_status_feat``) diverges from the other nine
 whole-body domains' identical shape in the same way ``_update_feat``
 (in ``update.py``) does: it resolves ``id`` via
 ``feat.tools._paths``'s bespoke folder-per-document shortcut, not a
@@ -45,7 +45,7 @@ reversed for cross-domain consistency; see that feature's Decisions Made.
 
 The parameter is intentionally named ``type`` (it matches the frontmatter
 field vocabulary the client already knows); no enabled ruff rule objects
-to the builtin shadow. The 10-way union return type is annotation-only --
+to the builtin shadow. The 11-way union return type is annotation-only --
 the MCP input schema is built from the parameters, and the SDK
 serializes whichever concrete document is returned.
 
@@ -124,6 +124,11 @@ from ...uc.tools._io import load_by_id as load_uc_by_id
 from ...uc.tools._lock import uc_lock
 from ...uc.tools._paths import uc_base_dir
 from ...uc.tools._write import write_uc_file
+from ...vcr.models.v1 import VcrDocument, VcrFrontmatter
+from ...vcr.tools._io import load_by_id as load_vcr_by_id
+from ...vcr.tools._lock import vcr_lock
+from ...vcr.tools._paths import vcr_base_dir
+from ...vcr.tools._write import write_vcr_file
 
 __all__ = ["set_status"]
 
@@ -131,7 +136,7 @@ __all__ = ["set_status"]
 #: (the ``"superseded by X"`` pattern is ADR-specific).
 _TYPE_ADR = "adr"
 
-#: The generic tool's 10-way return union -- annotation-only (see module docstring).
+#: The generic tool's 11-way return union -- annotation-only (see module docstring).
 _SetStatusDocument = (
     ReqDocument
     | UcDocument
@@ -142,6 +147,7 @@ _SetStatusDocument = (
     | RskDocument
     | DecDocument
     | FeatDocument
+    | VcrDocument
     | Adr
 )
 
@@ -382,6 +388,31 @@ def _set_status_feat(id_: str, status: str, superseded_by: str | None) -> FeatDo
     return new_doc
 
 
+def _set_status_vcr(id_: str, status: str, superseded_by: str | None) -> VcrDocument:
+    """Replace the status of the verification case record identified by ``id_``.
+
+    Mirrors :func:`_set_status_dec`'s shape (same ``vcr_lock``,
+    ``load_by_id``, ``write_vcr_file``, ``VcrNotFoundError``) -- see
+    :func:`_set_status_req` for the full semantics. ``vcr`` is not
+    ``adr``, so ``superseded_by`` must never be given.
+    """
+    assert superseded_by is None, "the public `set_status` guard rejects superseded_by for non-adr types"
+
+    base_dir = vcr_base_dir()
+    with vcr_lock(id_):
+        path, existing = load_vcr_by_id(base_dir, id_)
+        raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
+
+        now = datetime.now().isoformat(timespec="microseconds")
+        fm_data = existing.frontmatter.model_dump()
+        fm_data["status"] = status
+        fm_data["updated"] = now
+        new_frontmatter = VcrFrontmatter(**fm_data)
+        new_doc = VcrDocument(frontmatter=new_frontmatter, body=existing.body)
+        write_vcr_file(path, new_frontmatter, raw_body)
+    return new_doc
+
+
 def _set_status_adr(id_: str, status: str, superseded_by: str | None) -> Adr:
     """Replace the status of the ADR identified by ``id_``.
 
@@ -411,6 +442,7 @@ _ADAPTERS: dict[str, Callable[[str, str, str | None], _SetStatusDocument]] = {
     "rsk": _set_status_rsk,
     "dec": _set_status_dec,
     "feat": _set_status_feat,
+    "vcr": _set_status_vcr,
     _TYPE_ADR: _set_status_adr,
 }
 
@@ -419,8 +451,8 @@ _ADAPTERS: dict[str, Callable[[str, str, str | None], _SetStatusDocument]] = {
     name="set_status",
     title="Set document status",
     description=(
-        "Replace the status of an existing document across all ten domains (`type` is one of "
-        "req, uc, tsk, qa, prb, gol, rsk, dec, feat, adr), also bumping `updated` (the nine "
+        "Replace the status of an existing document across all eleven domains (`type` is one of "
+        "req, uc, tsk, qa, prb, gol, rsk, dec, feat, vcr, adr), also bumping `updated` (the ten "
         "whole-body domains) and leaving the body untouched. The new `status` must be one of the "
         "domain's own closed vocabulary values (see the domain's `XFrontmatter.status` field); "
         "anything else raises `pydantic.ValidationError` and writes nothing. `superseded_by` is "
@@ -432,18 +464,18 @@ _ADAPTERS: dict[str, Callable[[str, str, str | None], _SetStatusDocument]] = {
 )
 def set_status(
     id: str,
-    type: Literal["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "feat", "adr"],
+    type: Literal["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "feat", "vcr", "adr"],
     status: str,
     superseded_by: str | None = None,
 ) -> _SetStatusDocument:
-    """Replace the status of an existing document, across all ten domains.
+    """Replace the status of an existing document, across all eleven domains.
 
     Cross-domain generic for every document type
-    (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``feat``/``adr``);
+    (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``feat``/``vcr``/``adr``);
     dispatches on ``type`` to the domain's own ported adapter (same lock,
     same id resolution, same body handling, same domain not-found error).
 
-    For the nine whole-body domains the existing file's frontmatter is
+    For the ten whole-body domains the existing file's frontmatter is
     carried over with every field preserved except ``status`` (replaced)
     and ``updated`` (bumped to the current microsecond timestamp); the
     body is never touched -- its raw, on-disk markdown (not a render of
@@ -457,7 +489,7 @@ def set_status(
     frontmatter is reconstructed through the domain's own
     ``XFrontmatter`` constructor, so the domain's own validator enforces
     its set. Where that set lives is documented per domain -- see each
-    ``XFrontmatter.status`` field (the nine whole-body domains'
+    ``XFrontmatter.status`` field (the ten whole-body domains'
     ``models/<v>/frontmatter.py`` and ``models/adr/v1/frontmatter.py``)
     rather than any list in this docstring.
 
@@ -467,7 +499,7 @@ def set_status(
         The document's specmgr-assigned identifier.
     type:
         The document type / domain: one of ``req``, ``uc``, ``tsk``,
-        ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``feat``, ``adr``.
+        ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``feat``, ``vcr``, ``adr``.
     status:
         The new status. Must be one of the dispatched domain's own
         accepted values (see its ``XFrontmatter.status`` field). For
@@ -480,7 +512,7 @@ def set_status(
     Returns
     -------
     ReqDocument | UcDocument | TskDocument | QaDocument | PrbDocument |
-    GolDocument | RskDocument | DecDocument | FeatDocument | Adr
+    GolDocument | RskDocument | DecDocument | FeatDocument | VcrDocument | Adr
         The updated document of the dispatched domain type.
 
     Raises
@@ -494,7 +526,7 @@ def set_status(
         ``"superseded by ..."`` string). Nothing is written.
     ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
     PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
-    FeatNotFoundError / AdrNotFoundError
+    FeatNotFoundError / VcrNotFoundError / AdrNotFoundError
         No document of the dispatched ``type`` has this id -- the
         domain's own not-found error, unchanged from the per-domain tools.
     """

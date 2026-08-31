@@ -18,8 +18,8 @@
 """``@mcp.tool()`` wrapper: update (feat-22-consolidate-mutation-tools, Phase 2).
 
 The generic, cross-domain whole-body *and* line-range replace tool for the
-nine whole-body document types (``req``/``uc``/``tsk``/``qa``/``prb``/
-``gol``/``rsk``/``dec``/``feat``). It dispatches on the explicit ``type``
+ten whole-body document types (``req``/``uc``/``tsk``/``qa``/``prb``/
+``gol``/``rsk``/``dec``/``feat``/``vcr``). It dispatches on the explicit ``type``
 parameter to
 a private per-domain adapter (``_update_<d>``), each a **verbatim port** of
 the corresponding per-domain ``update_<d>`` tool's function body (same
@@ -33,7 +33,7 @@ verbatim instead of the raw fragment.
 
 The parameter is intentionally named ``type`` (it matches the frontmatter
 field vocabulary the client already knows); no enabled ruff rule objects to
-the builtin shadow. The 9-way union return type is annotation-only -- the
+the builtin shadow. The 10-way union return type is annotation-only -- the
 MCP input schema is built from the parameters, and the SDK serializes
 whichever concrete document is returned.
 
@@ -105,11 +105,16 @@ from ...uc.tools._io import load_by_id as load_uc_by_id
 from ...uc.tools._lock import uc_lock
 from ...uc.tools._paths import uc_base_dir
 from ...uc.tools._write import write_uc_file
+from ...vcr.models.v1 import Vcr, VcrDocument, VcrFrontmatter
+from ...vcr.tools._io import load_by_id as load_vcr_by_id
+from ...vcr.tools._lock import vcr_lock
+from ...vcr.tools._paths import vcr_base_dir
+from ...vcr.tools._write import write_vcr_file
 from ._splice import body_text, splice_body
 
 __all__ = ["update"]
 
-#: The generic tool's 9-way return union -- annotation-only (see module docstring).
+#: The generic tool's 10-way return union -- annotation-only (see module docstring).
 _UpdateDocument = (
     ReqDocument
     | UcDocument
@@ -120,6 +125,7 @@ _UpdateDocument = (
     | RskDocument
     | DecDocument
     | FeatDocument
+    | VcrDocument
 )
 
 
@@ -482,6 +488,44 @@ def _update_feat(id_: str, content: str, begin: int | None, end: int | None) -> 
     return new_doc
 
 
+def _update_vcr(id_: str, content: str, begin: int | None, end: int | None) -> VcrDocument:
+    """Replace the body of the verification case record identified by ``id_`` (whole-body or line-range mode).
+
+    Mirrors :func:`_update_dec`'s shape (same ``vcr_lock``, ``load_by_id``,
+    frontmatter carry-over with only ``updated`` bumped, ``write_vcr_file``,
+    ``VcrNotFoundError``), plus the REQ-002 range branch (see
+    :func:`_update_req`).
+    """
+    if begin is not None or end is not None:
+        assert begin is not None and end is not None, "the public `update` guard enforces both-or-neither"
+
+        base_dir = vcr_base_dir()
+        with vcr_lock(id_):
+            path, existing = load_vcr_by_id(base_dir, id_)
+            spliced = splice_body(body_text(path), begin, end, content)
+            body = Vcr.from_text(format_text(spliced))
+            now = datetime.now().isoformat(timespec="microseconds")
+            fm_data = existing.frontmatter.model_dump()
+            fm_data["updated"] = now
+            new_frontmatter = VcrFrontmatter(**fm_data)
+            new_doc = VcrDocument(frontmatter=new_frontmatter, body=body)
+            write_vcr_file(path, new_frontmatter, spliced)
+        return new_doc
+
+    body = Vcr.from_text(format_text(content))
+
+    base_dir = vcr_base_dir()
+    with vcr_lock(id_):
+        path, existing = load_vcr_by_id(base_dir, id_)
+        now = datetime.now().isoformat(timespec="microseconds")
+        fm_data = existing.frontmatter.model_dump()
+        fm_data["updated"] = now
+        new_frontmatter = VcrFrontmatter(**fm_data)
+        new_doc = VcrDocument(frontmatter=new_frontmatter, body=body)
+        write_vcr_file(path, new_frontmatter, content)
+    return new_doc
+
+
 #: Dispatch table mapping the ``type`` value to its private adapter.
 _ADAPTERS: dict[str, Callable[[str, str, int | None, int | None], _UpdateDocument]] = {
     "req": _update_req,
@@ -493,6 +537,7 @@ _ADAPTERS: dict[str, Callable[[str, str, int | None, int | None], _UpdateDocumen
     "rsk": _update_rsk,
     "dec": _update_dec,
     "feat": _update_feat,
+    "vcr": _update_vcr,
 }
 
 
@@ -500,10 +545,10 @@ _ADAPTERS: dict[str, Callable[[str, str, int | None, int | None], _UpdateDocumen
     name="update",
     title="Update document",
     description=(
-        "Whole-body or line-range replace of an existing document's content across the nine "
-        "whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, feat), preserving "
-        "its id/type/status/created/version; only `updated` changes. With no `begin`/`end`, `content` "
-        "is the full replacement body (body markdown only, no frontmatter block). With both, "
+        "Whole-body or line-range replace of an existing document's content across the ten "
+        "whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, feat, vcr), "
+        "preserving its id/type/status/created/version; only `updated` changes. With no `begin`/`end`, "
+        "`content` is the full replacement body (body markdown only, no frontmatter block). With both, "
         "`content` replaces the 1-based inclusive body-line range `begin`..`end` of the current "
         "on-disk body (`N+1` = end-of-body sentinel: append after the last line, or replace "
         "through end of body); the spliced result is validated as a whole document before "
@@ -512,15 +557,15 @@ _ADAPTERS: dict[str, Callable[[str, str, int | None, int | None], _UpdateDocumen
 )
 def update(
     id: str,
-    type: Literal["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "feat"],
+    type: Literal["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "feat", "vcr"],
     content: str,
     begin: int | None = None,
     end: int | None = None,
 ) -> _UpdateDocument:
     """Replace the body of an existing document, in whole-body or line-range mode.
 
-    Cross-domain generic for the nine whole-body document types
-    (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``feat``);
+    Cross-domain generic for the ten whole-body document types
+    (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``feat``/``vcr``);
     dispatches on ``type`` to the domain's own ported adapter (same lock,
     same id resolution, same frontmatter carry-over, same verbatim
     persistence, same domain not-found error).
@@ -561,7 +606,7 @@ def update(
         The document's specmgr-assigned identifier.
     type:
         The document type / domain: one of ``req``, ``uc``, ``tsk``,
-        ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``feat``.
+        ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``feat``, ``vcr``.
     content:
         Whole-body mode: the replacement body markdown, with no
         frontmatter block. Range mode: the replacement fragment for lines
@@ -577,7 +622,7 @@ def update(
     Returns
     -------
     ReqDocument | UcDocument | TskDocument | QaDocument | PrbDocument |
-    GolDocument | RskDocument | DecDocument | FeatDocument
+    GolDocument | RskDocument | DecDocument | FeatDocument | VcrDocument
         The updated document of the dispatched domain type.
 
     Raises
@@ -596,7 +641,7 @@ def update(
         a range producing an out-of-vocabulary value). Nothing is written.
     ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
     PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
-    FeatNotFoundError
+    FeatNotFoundError / VcrNotFoundError
         No document of the dispatched ``type`` has this id -- the
         domain's own not-found error, unchanged from the per-domain tools.
     """

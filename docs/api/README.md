@@ -378,3 +378,16 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.vcr.models.v1.frontmatter`](biz.dfch.specmgr.vcr.models.v1.frontmatter.md) — Verification Case Record (VCR) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
 - [`biz.dfch.specmgr.vcr.models.v1.parser`](biz.dfch.specmgr.vcr.models.v1.parser.md) — Parse raw verification case record (VCR) ``.md`` text into a :class:`VcrDocument`.
 - [`biz.dfch.specmgr.vcr.models.v1.summary`](biz.dfch.specmgr.vcr.models.v1.summary.md) — Pydantic model for one line of VCR listing output (Phase 2, ``list_vcr``).
+- [`biz.dfch.specmgr.vcr.tools`](biz.dfch.specmgr.vcr.tools.md) — MCP tool wrappers for verification case records (mirrors ``dec/tools/``'s own shape).
+- [`biz.dfch.specmgr.vcr.tools._io`](biz.dfch.specmgr.vcr.tools._io.md) — Thin file read helpers over ``parse_vcr`` (Task 2.1).
+- [`biz.dfch.specmgr.vcr.tools._lock`](biz.dfch.specmgr.vcr.tools._lock.md) — Per-document in-process lock guarding verification case record mutations.
+- [`biz.dfch.specmgr.vcr.tools._paths`](biz.dfch.specmgr.vcr.tools._paths.md) — Verification case record base directory resolution and id -> path lookup (Task 2.1).
+- [`biz.dfch.specmgr.vcr.tools._write`](biz.dfch.specmgr.vcr.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_vcr`` and
+- [`biz.dfch.specmgr.vcr.tools.create_vcr`](biz.dfch.specmgr.vcr.tools.create_vcr.md) — ``@mcp.tool()`` wrapper: create_vcr (Task 2.1).
+- [`biz.dfch.specmgr.vcr.tools.delete_vcr`](biz.dfch.specmgr.vcr.tools.delete_vcr.md) — ``@mcp.tool()`` wrapper: delete_vcr (Task 2.1).
+- [`biz.dfch.specmgr.vcr.tools.get_vcr`](biz.dfch.specmgr.vcr.tools.get_vcr.md) — ``@mcp.tool()`` wrapper: get_vcr (Task 2.1).
+- [`biz.dfch.specmgr.vcr.tools.get_vcr_example`](biz.dfch.specmgr.vcr.tools.get_vcr_example.md) — ``@mcp.tool()`` wrapper: get_vcr_example (Task 2.1).
+- [`biz.dfch.specmgr.vcr.tools.get_vcr_template`](biz.dfch.specmgr.vcr.tools.get_vcr_template.md) — ``@mcp.tool()`` wrapper: get_vcr_template (Task 2.1).
+- [`biz.dfch.specmgr.vcr.tools.list_vcr`](biz.dfch.specmgr.vcr.tools.list_vcr.md) — ``@mcp.tool()`` wrapper: list_vcr (Task 2.1).
+- [`biz.dfch.specmgr.vcr.tools.parse_vcr`](biz.dfch.specmgr.vcr.tools.parse_vcr.md) — ``@mcp.tool()`` wrapper: parse_vcr (Task 2.1).
+- [`biz.dfch.specmgr.vcr.tools.validate_vcr`](biz.dfch.specmgr.vcr.tools.validate_vcr.md) — ``@mcp.tool()`` wrapper: validate_vcr (Task 2.1).

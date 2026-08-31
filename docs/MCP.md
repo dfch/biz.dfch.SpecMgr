@@ -3,7 +3,7 @@
 Auto-generated from the live `biz.dfch.specmgr.server:mcp` registration --
 do not edit by hand, run `specmgr mcp-docs` instead (see `AGENTS.md`).
 
-31 resource(s), 1 resource template(s), 87 tool(s), 23 prompt(s).
+31 resource(s), 1 resource template(s), 95 tool(s), 23 prompt(s).
 
 ## Table of Contents
 
@@ -292,6 +292,7 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`create_rsk`](#tool-create_rsk) | Create a new risk: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the risk base directory. |
 | [`create_tsk`](#tool-create_tsk) | Create a new task list: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the task list base directory. |
 | [`create_uc`](#tool-create_uc) | Create a new use case: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the use-case base directory. |
+| [`create_vcr`](#tool-create_vcr) | Create a new verification case record: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the verification case record base directory. |
 | [`delete_dec`](#tool-delete_dec) | Stub only -- always raises NotImplementedError. Reserves the name for a future implementation. |
 | [`delete_feat`](#tool-delete_feat) | Stub only -- always raises NotImplementedError. Reserves the name for a future implementation. |
 | [`delete_gol`](#tool-delete_gol) | Stub only -- always raises NotImplementedError. Reserves the name for a future implementation. |
@@ -301,6 +302,7 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`delete_rsk`](#tool-delete_rsk) | Stub only -- always raises NotImplementedError. Reserves the name for a future implementation. |
 | [`delete_tsk`](#tool-delete_tsk) | Stub only -- always raises NotImplementedError. Reserves the name for a future implementation. |
 | [`delete_uc`](#tool-delete_uc) | Stub only -- always raises NotImplementedError. Reserves the name for a future implementation. |
+| [`delete_vcr`](#tool-delete_vcr) | Stub only -- always raises NotImplementedError. Reserves the name for a future implementation. |
 | [`get_adr`](#tool-get_adr) | Read, parse, and return a full ADR document (frontmatter and body) by its id. |
 | [`get_dec`](#tool-get_dec) | Read, parse, and return a full decision document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. |
 | [`get_dec_example`](#tool-get_dec_example) | Return a complete, valid sample decision document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example. |
@@ -329,6 +331,9 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`get_uc`](#tool-get_uc) | Read, parse, and return a full use-case document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. |
 | [`get_uc_example`](#tool-get_uc_example) | Return a complete, valid sample use case document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example. |
 | [`get_uc_template`](#tool-get_uc_template) | Return a UC document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new use case. |
+| [`get_vcr`](#tool-get_vcr) | Read, parse, and return a full verification case record document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. |
+| [`get_vcr_example`](#tool-get_vcr_example) | Return a complete, valid sample verification case record document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example. |
+| [`get_vcr_template`](#tool-get_vcr_template) | Return a VCR document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new verification case record. |
 | [`list_adr`](#tool-list_adr) | Ids, titles, statuses, and refs of ADRs in the configured ADR base directory (SPECMGR_ADR_DIR), one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use get_adr with it instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
 | [`list_dec`](#tool-list_dec) | Ids, titles, statuses, and refs of decisions in the configured decision base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_dec tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
 | [`list_feat`](#tool-list_feat) | Ids, titles, statuses, and refs of features in the configured feature base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_feat tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
@@ -339,6 +344,7 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`list_rsk`](#tool-list_rsk) | Ids, titles, statuses, and refs of risks in the configured risk base directory, one page at a time, for context before addressing one by id. Each line also carries the initial/residual 5x5 zone levels, the TARA strategy word, the first `## Scope` entry, and the residual-risk coordinates (residual_probability/residual_impact/residual_product). 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_rsk tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
 | [`list_tsk`](#tool-list_tsk) | Ids, titles, statuses, and refs of task lists in the configured task list base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_tsk tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
 | [`list_uc`](#tool-list_uc) | Ids, titles, statuses, and refs of use cases in the configured use-case base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_uc tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
+| [`list_vcr`](#tool-list_vcr) | Ids, titles, statuses, and refs of verification case records in the configured verification case record base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_vcr tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
 | [`mdformat`](#tool-mdformat) | Format a markdown file in place, preserving any YAML frontmatter. Returns True if the file was changed, False if already formatted. |
 | [`option_create`](#tool-option_create) | Append a new 'Option N: ...' sub-section (plan §5), returning its assigned full title. |
 | [`option_delete`](#tool-option_delete) | Remove the option named full_title (plan §5), returning the remaining full titles. |
@@ -354,8 +360,9 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`parse_rsk`](#tool-parse_rsk) | Parse a risk markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.rsk.models.v1.RskDocument`. |
 | [`parse_tsk`](#tool-parse_tsk) | Parse a task list markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.tsk.models.v1.TskDocument`. |
 | [`parse_uc`](#tool-parse_uc) | Parse a use-case markdown file (YAML frontmatter + body) from disk into a structured document. |
-| [`set_status`](#tool-set_status) | Replace the status of an existing document across all ten domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, feat, adr), also bumping `updated` (the nine whole-body domains) and leaving the body untouched. The new `status` must be one of the domain's own closed vocabulary values (see the domain's `XFrontmatter.status` field); anything else raises `pydantic.ValidationError` and writes nothing. `superseded_by` is accepted only for `type="adr"` -- it composes the status as "superseded by {superseded_by}"; with any other `type` it is a `ValueError`. Neither `create_*` nor the generic `update` tool accepts a `status` argument at all -- this is the sole status-change entry point. |
-| [`update`](#tool-update) | Whole-body or line-range replace of an existing document's content across the nine whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, feat), preserving its id/type/status/created/version; only `updated` changes. With no `begin`/`end`, `content` is the full replacement body (body markdown only, no frontmatter block). With both, `content` replaces the 1-based inclusive body-line range `begin`..`end` of the current on-disk body (`N+1` = end-of-body sentinel: append after the last line, or replace through end of body); the spliced result is validated as a whole document before anything is written. `status` is never settable -- use the generic `set_status` tool. |
+| [`parse_vcr`](#tool-parse_vcr) | Parse a verification case record markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.vcr.models.v1.VcrDocument`. |
+| [`set_status`](#tool-set_status) | Replace the status of an existing document across all eleven domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, feat, vcr, adr), also bumping `updated` (the ten whole-body domains) and leaving the body untouched. The new `status` must be one of the domain's own closed vocabulary values (see the domain's `XFrontmatter.status` field); anything else raises `pydantic.ValidationError` and writes nothing. `superseded_by` is accepted only for `type="adr"` -- it composes the status as "superseded by {superseded_by}"; with any other `type` it is a `ValueError`. Neither `create_*` nor the generic `update` tool accepts a `status` argument at all -- this is the sole status-change entry point. |
+| [`update`](#tool-update) | Whole-body or line-range replace of an existing document's content across the ten whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, feat, vcr), preserving its id/type/status/created/version; only `updated` changes. With no `begin`/`end`, `content` is the full replacement body (body markdown only, no frontmatter block). With both, `content` replaces the 1-based inclusive body-line range `begin`..`end` of the current on-disk body (`N+1` = end-of-body sentinel: append after the last line, or replace through end of body); the spliced result is validated as a whole document before anything is written. `status` is never settable -- use the generic `set_status` tool. |
 | [`update_frontmatter`](#tool-update_frontmatter) | Whole-object replace of an ADR's frontmatter (plan §3), preserving its existing id. |
 | [`update_section`](#tool-update_section) | Whole-section replace/delete of one AdrBody field (plan §4). |
 | [`validate_adr`](#tool-validate_adr) | Re-read and re-parse an ADR by id, letting the models' own Pydantic validators run. |
@@ -368,6 +375,7 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`validate_rsk`](#tool-validate_rsk) | Disk-free, id-free dry run validating risk content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
 | [`validate_tsk`](#tool-validate_tsk) | Disk-free, id-free dry run validating task list content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
 | [`validate_uc`](#tool-validate_uc) | Disk-free, id-free dry run validating use case content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
+| [`validate_vcr`](#tool-validate_vcr) | Disk-free, id-free dry run validating verification case record content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
 | [`webfetch`](#tool-webfetch) | Fetch a URL over HTTP GET with a bearer token, but only if the URL matches the configured base URL (case-insensitively). Returns the raw response body text. Intended primarily for Web Server instances using PAT authentication. |
 
 ### Tool: create_adr
@@ -471,6 +479,16 @@ Create a new use case: assigns a fresh id, derives a filename from the body's H1
 | --- | --- | --- |
 | `content` | `string` | Yes |
 
+### Tool: create_vcr
+
+**Create verification case record**
+
+Create a new verification case record: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the verification case record base directory.
+
+| Parameter | Type | Required |
+| --- | --- | --- |
+| `content` | `string` | Yes |
+
 ### Tool: delete_dec
 
 **Delete decision (not yet implemented)**
@@ -554,6 +572,16 @@ Stub only -- always raises NotImplementedError. Reserves the name for a future i
 ### Tool: delete_uc
 
 **Delete use case (not yet implemented)**
+
+Stub only -- always raises NotImplementedError. Reserves the name for a future implementation.
+
+| Parameter | Type | Required |
+| --- | --- | --- |
+| `id` | `string` | Yes |
+
+### Tool: delete_vcr
+
+**Delete verification case record (not yet implemented)**
 
 Stub only -- always raises NotImplementedError. Reserves the name for a future implementation.
 
@@ -778,6 +806,29 @@ Return a complete, valid sample use case document as raw markdown -- frontmatter
 
 Return a UC document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new use case.
 
+### Tool: get_vcr
+
+**Get verification case record**
+
+Read, parse, and return a full verification case record document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead.
+
+| Parameter | Type | Required |
+| --- | --- | --- |
+| `id` | `string` | Yes |
+| `raw` | `boolean` | No |
+
+### Tool: get_vcr_example
+
+**Get VCR example**
+
+Return a complete, valid sample verification case record document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example.
+
+### Tool: get_vcr_template
+
+**Get VCR template**
+
+Return a VCR document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new verification case record.
+
 ### Tool: list_adr
 
 **List ADRs**
@@ -882,6 +933,17 @@ Ids, titles, statuses, and refs of task lists in the configured task list base d
 **List use cases**
 
 Ids, titles, statuses, and refs of use cases in the configured use-case base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_uc tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored.
+
+| Parameter | Type | Required |
+| --- | --- | --- |
+| `max_results` | `integer | None` | No |
+| `offset` | `integer | None` | No |
+
+### Tool: list_vcr
+
+**List verification case records**
+
+Ids, titles, statuses, and refs of verification case records in the configured verification case record base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_vcr tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
@@ -1044,16 +1106,26 @@ Parse a use-case markdown file (YAML frontmatter + body) from disk into a struct
 | --- | --- | --- |
 | `path` | `string` | Yes |
 
+### Tool: parse_vcr
+
+**Parse verification case record**
+
+Parse a verification case record markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.vcr.models.v1.VcrDocument`.
+
+| Parameter | Type | Required |
+| --- | --- | --- |
+| `path` | `string` | Yes |
+
 ### Tool: set_status
 
 **Set document status**
 
-Replace the status of an existing document across all ten domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, feat, adr), also bumping `updated` (the nine whole-body domains) and leaving the body untouched. The new `status` must be one of the domain's own closed vocabulary values (see the domain's `XFrontmatter.status` field); anything else raises `pydantic.ValidationError` and writes nothing. `superseded_by` is accepted only for `type="adr"` -- it composes the status as "superseded by {superseded_by}"; with any other `type` it is a `ValueError`. Neither `create_*` nor the generic `update` tool accepts a `status` argument at all -- this is the sole status-change entry point.
+Replace the status of an existing document across all eleven domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, feat, vcr, adr), also bumping `updated` (the ten whole-body domains) and leaving the body untouched. The new `status` must be one of the domain's own closed vocabulary values (see the domain's `XFrontmatter.status` field); anything else raises `pydantic.ValidationError` and writes nothing. `superseded_by` is accepted only for `type="adr"` -- it composes the status as "superseded by {superseded_by}"; with any other `type` it is a `ValueError`. Neither `create_*` nor the generic `update` tool accepts a `status` argument at all -- this is the sole status-change entry point.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
 | `id` | `string` | Yes |
-| `type` | `string (enum: req, uc, tsk, qa, prb, gol, rsk, dec, feat, adr)` | Yes |
+| `type` | `string (enum: req, uc, tsk, qa, prb, gol, rsk, dec, feat, vcr, adr)` | Yes |
 | `status` | `string` | Yes |
 | `superseded_by` | `string | None` | No |
 
@@ -1061,12 +1133,12 @@ Replace the status of an existing document across all ten domains (`type` is one
 
 **Update document**
 
-Whole-body or line-range replace of an existing document's content across the nine whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, feat), preserving its id/type/status/created/version; only `updated` changes. With no `begin`/`end`, `content` is the full replacement body (body markdown only, no frontmatter block). With both, `content` replaces the 1-based inclusive body-line range `begin`..`end` of the current on-disk body (`N+1` = end-of-body sentinel: append after the last line, or replace through end of body); the spliced result is validated as a whole document before anything is written. `status` is never settable -- use the generic `set_status` tool.
+Whole-body or line-range replace of an existing document's content across the ten whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, feat, vcr), preserving its id/type/status/created/version; only `updated` changes. With no `begin`/`end`, `content` is the full replacement body (body markdown only, no frontmatter block). With both, `content` replaces the 1-based inclusive body-line range `begin`..`end` of the current on-disk body (`N+1` = end-of-body sentinel: append after the last line, or replace through end of body); the spliced result is validated as a whole document before anything is written. `status` is never settable -- use the generic `set_status` tool.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
 | `id` | `string` | Yes |
-| `type` | `string (enum: req, uc, tsk, qa, prb, gol, rsk, dec, feat)` | Yes |
+| `type` | `string (enum: req, uc, tsk, qa, prb, gol, rsk, dec, feat, vcr)` | Yes |
 | `content` | `string` | Yes |
 | `begin` | `integer | None` | No |
 | `end` | `integer | None` | No |
@@ -1197,6 +1269,17 @@ Disk-free, id-free dry run validating task list content. `full=False` (default) 
 **Validate use case content**
 
 Disk-free, id-free dry run validating use case content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body).
+
+| Parameter | Type | Required |
+| --- | --- | --- |
+| `content` | `string` | Yes |
+| `full` | `boolean` | No |
+
+### Tool: validate_vcr
+
+**Validate verification case record content**
+
+Disk-free, id-free dry run validating verification case record content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body).
 
 | Parameter | Type | Required |
 | --- | --- | --- |

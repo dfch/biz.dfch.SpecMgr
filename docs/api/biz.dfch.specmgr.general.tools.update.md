@@ -3,8 +3,8 @@
 ``@mcp.tool()`` wrapper: update (feat-22-consolidate-mutation-tools, Phase 2).
 
 The generic, cross-domain whole-body *and* line-range replace tool for the
-nine whole-body document types (``req``/``uc``/``tsk``/``qa``/``prb``/
-``gol``/``rsk``/``dec``/``feat``). It dispatches on the explicit ``type``
+ten whole-body document types (``req``/``uc``/``tsk``/``qa``/``prb``/
+``gol``/``rsk``/``dec``/``feat``/``vcr``). It dispatches on the explicit ``type``
 parameter to
 a private per-domain adapter (``_update_<d>``), each a **verbatim port** of
 the corresponding per-domain ``update_<d>`` tool's function body (same
@@ -18,7 +18,7 @@ verbatim instead of the raw fragment.
 
 The parameter is intentionally named ``type`` (it matches the frontmatter
 field vocabulary the client already knows); no enabled ruff rule objects to
-the builtin shadow. The 9-way union return type is annotation-only -- the
+the builtin shadow. The 10-way union return type is annotation-only -- the
 MCP input schema is built from the parameters, and the SDK serializes
 whichever concrete document is returned.
 
@@ -145,12 +145,22 @@ per-domain tool was retired in feat-22 Phase 3), plus the REQ-002 range
 branch (see :func:`_update_req`).
 
 
-### `update(id: 'str', type: "Literal['req', 'uc', 'tsk', 'qa', 'prb', 'gol', 'rsk', 'dec', 'feat']", content: 'str', begin: 'int | None' = None, end: 'int | None' = None) -> '_UpdateDocument'`
+### `_update_vcr(id_: 'str', content: 'str', begin: 'int | None', end: 'int | None') -> 'VcrDocument'`
+
+Replace the body of the verification case record identified by ``id_`` (whole-body or line-range mode).
+
+Mirrors :func:`_update_dec`'s shape (same ``vcr_lock``, ``load_by_id``,
+frontmatter carry-over with only ``updated`` bumped, ``write_vcr_file``,
+``VcrNotFoundError``), plus the REQ-002 range branch (see
+:func:`_update_req`).
+
+
+### `update(id: 'str', type: "Literal['req', 'uc', 'tsk', 'qa', 'prb', 'gol', 'rsk', 'dec', 'feat', 'vcr']", content: 'str', begin: 'int | None' = None, end: 'int | None' = None) -> '_UpdateDocument'`
 
 Replace the body of an existing document, in whole-body or line-range mode.
 
-Cross-domain generic for the nine whole-body document types
-(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``feat``);
+Cross-domain generic for the ten whole-body document types
+(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``feat``/``vcr``);
 dispatches on ``type`` to the domain's own ported adapter (same lock,
 same id resolution, same frontmatter carry-over, same verbatim
 persistence, same domain not-found error).
@@ -191,7 +201,7 @@ id:
     The document's specmgr-assigned identifier.
 type:
     The document type / domain: one of ``req``, ``uc``, ``tsk``,
-    ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``feat``.
+    ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``feat``, ``vcr``.
 content:
     Whole-body mode: the replacement body markdown, with no
     frontmatter block. Range mode: the replacement fragment for lines
@@ -207,7 +217,7 @@ end:
 Returns
 -------
 ReqDocument | UcDocument | TskDocument | QaDocument | PrbDocument |
-GolDocument | RskDocument | DecDocument | FeatDocument
+GolDocument | RskDocument | DecDocument | FeatDocument | VcrDocument
     The updated document of the dispatched domain type.
 
 Raises
@@ -226,7 +236,7 @@ pydantic.ValidationError
     a range producing an out-of-vocabulary value). Nothing is written.
 ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
 PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
-FeatNotFoundError
+FeatNotFoundError / VcrNotFoundError
     No document of the dispatched ``type`` has this id -- the
     domain's own not-found error, unchanged from the per-domain tools.
 
