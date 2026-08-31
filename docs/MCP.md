@@ -3,7 +3,7 @@
 Auto-generated from the live `biz.dfch.specmgr.server:mcp` registration --
 do not edit by hand, run `specmgr mcp-docs` instead (see `AGENTS.md`).
 
-39 resource(s), 1 resource template(s), 103 tool(s), 27 prompt(s).
+39 resource(s), 1 resource template(s), 104 tool(s), 27 prompt(s).
 
 ## Table of Contents
 
@@ -358,6 +358,7 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`create_tsk`](#tool-create_tsk) | Create a new task list: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the task list base directory. |
 | [`create_uc`](#tool-create_uc) | Create a new use case: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the use-case base directory. |
 | [`create_vcr`](#tool-create_vcr) | Create a new verification case record: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the verification case record base directory. |
+| [`delete`](#tool-delete) | Permanently delete an existing document from disk across the eleven whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr; `adr` is not supported). Resolves the document by `id`, takes the domain lock, and removes it: the single `*.md` file for the ten flat domains, or the entire `<base>/<id>/` folder for `feat`. Returns the deleted path as a string. An invalid `id` (path-injection attempt or wrong format) is a `ValueError` raised before any file access; a missing document is the domain's own `XNotFoundError`; an I/O failure is a `DeleteError`. This is the sole delete entry point -- the former per-domain `delete_<d>` tools are removed. |
 | [`delete_dec`](#tool-delete_dec) | Stub only -- always raises NotImplementedError. Reserves the name for a future implementation. |
 | [`delete_feat`](#tool-delete_feat) | Stub only -- always raises NotImplementedError. Reserves the name for a future implementation. |
 | [`delete_gol`](#tool-delete_gol) | Stub only -- always raises NotImplementedError. Reserves the name for a future implementation. |
@@ -570,6 +571,17 @@ Create a new verification case record: assigns a fresh id, derives a filename fr
 | Parameter | Type | Required |
 | --- | --- | --- |
 | `content` | `string` | Yes |
+
+### Tool: delete
+
+**Delete document**
+
+Permanently delete an existing document from disk across the eleven whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr; `adr` is not supported). Resolves the document by `id`, takes the domain lock, and removes it: the single `*.md` file for the ten flat domains, or the entire `<base>/<id>/` folder for `feat`. Returns the deleted path as a string. An invalid `id` (path-injection attempt or wrong format) is a `ValueError` raised before any file access; a missing document is the domain's own `XNotFoundError`; an I/O failure is a `DeleteError`. This is the sole delete entry point -- the former per-domain `delete_<d>` tools are removed.
+
+| Parameter | Type | Required |
+| --- | --- | --- |
+| `id` | `string` | Yes |
+| `type` | `string (enum: req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr)` | Yes |
 
 ### Tool: delete_dec
 

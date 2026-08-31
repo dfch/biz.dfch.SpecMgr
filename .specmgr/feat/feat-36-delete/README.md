@@ -3,7 +3,7 @@ created: 2026-08-31 15:37:40.000000
 id: feat-36-delete
 status: planning
 type: feat
-updated: 2026-08-31 19:09:41.000000
+updated: 2026-08-31 20:21:21.000000
 version: 1.0.0
 ---
 
@@ -433,8 +433,8 @@ no replacement per-domain delete tests are added — coverage moves entirely to
 
 #### Phase 2: The generic delete tool (Phase-Orchestrator)
 
-- [ ] Task 2.1: Add `general/tools/delete.py` per Design Notes §2–§6 (`DeleteError`, eleven `_delete_<d>` adapters, `_ADAPTERS`, `@mcp.tool(name="delete")` public function calling `validate_id` then dispatching) and register it in `general/tools/__init__.py` (`from .delete import delete`, the `__all__` entry, and a sentence in the module docstring — the server registers tools purely via this package's import side effect) — depends on: Task 1.1 — status: not-started.
-- [ ] Task 2.2: Add `tests/general/tools/test_delete.py` per Design Notes §9 — depends on: Task 2.1 — status: not-started.
+- [x] Task 2.1: Add `general/tools/delete.py` per Design Notes §2–§6 (`DeleteError`, eleven `_delete_<d>` adapters, `_ADAPTERS`, `@mcp.tool(name="delete")` public function calling `validate_id` then dispatching) and register it in `general/tools/__init__.py` (`from .delete import delete`, the `__all__` entry, and a sentence in the module docstring — the server registers tools purely via this package's import side effect) — depends on: Task 1.1 — status: done (2026-08-31).
+- [x] Task 2.2: Add `tests/general/tools/test_delete.py` per Design Notes §9 — depends on: Task 2.1 — status: done (2026-08-31).
 
 #### Phase 3: Retire the eleven delete stubs (Phase-Orchestrator)
 
@@ -459,15 +459,26 @@ no replacement per-domain delete tests are added — coverage moves entirely to
 
 ### Current Status
 
-**As of 2026-08-31 (Phase 1 complete)**: Phase 0 (design, including Task 0.3) and
-Phase 1 (reusable path-safety module) are complete. `general/tools/_path_safety.py`
-now exists with the five pinned, pure, non-I/O assertions (`assert_no_traversal`,
-`assert_uuid`, `assert_feat_id`, `validate_id`, `assert_within`), all raising
-`ValueError` with a message naming the offending value; `DeleteError` deliberately
-lives in the future `delete.py` (Phase 2), not here. `tests/general/tools/test__path_safety.py`
-covers every Design Notes §9 case (23 tests). Quality gate is green: full `unittest`
-suite OK (2727 tests = 2704 baseline + 23 new), `ruff format --check` (1490 files),
-`ruff check`, and `vulture` all clean. **Phase 2 (the generic `delete` tool) is next.**
+**As of 2026-08-31 (Phase 2 complete)**: Phase 0 (design, including Task 0.3),
+Phase 1 (reusable path-safety module), and Phase 2 (the generic `delete` tool) are
+complete. `general/tools/_path_safety.py` provides the five pinned, pure, non-I/O
+assertions, and `general/tools/delete.py` now registers the single generic
+`delete(id, type)` MCP tool for the eleven whole-body domains (ADR excluded):
+`validate_id` before any filesystem access (REQ-003), per-domain private adapters
+that resolve via the domain's own `load_by_id` under the domain's own per-id lock
+(REQ-004), `assert_within` containment, and a hard delete via `Path.unlink()` (the
+ten flat domains) or `shutil.rmtree` on the whole `<base>/<id>/` folder (`feat`);
+the domain's own `XNotFoundError` propagates unchanged and an I/O failure surfaces
+as `DeleteError` (an `OSError` subclass, REQ-005). The eleven `delete_<d>` stub
+tools are still registered — they are retired in Phase 3.
+`tests/general/tools/test_delete.py` covers every Design Notes §9 case (8 test
+methods parameterized over all eleven types, plus a live-registration smoke test).
+Quality gate is green: full `unittest` suite OK (2735 tests = 2704 baseline + 23
+path-safety + 8 delete), `ruff format --check` (1493 files), `ruff check`
+(All checks passed), `vulture src/ whitelist.py --min-confidence 60` clean (no
+whitelist change needed), and `import biz.dfch.specmgr.server` OK (104 tools
+registered, `delete` exactly once). **Phase 3 (retire the eleven delete stubs,
+Tasks 3.1–3.3) is next.**
 
 ### Blockers
 
@@ -476,6 +487,10 @@ suite OK (2727 tests = 2704 baseline + 23 new), `ruff format --check` (1490 file
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-08-31 20:21:21.000Z — Phase 2 complete: generic delete tool
+
+Implemented Tasks 2.1–2.2 strictly per Design Notes §2–§6/§9. Added `src/biz/dfch/specmgr/general/tools/delete.py`, the generic `delete` MCP tool: `@mcp.tool(name="delete", title="Delete document")` with the pinned `def delete(id: str, type: Literal[...eleven values...]) -> str` body (`validate_id(type, id)` before any filesystem access per REQ-003, then `_ADAPTERS[type](id)` and return the result); `DeleteError(OSError)` per REQ-005; `_DELETE_TYPES` with the pinned comment; and the eleven private `_delete_<d>` adapters — the ten flat domains in the canonical pinned form (`<d>_base_dir()` → `<d>_lock(id_)` → `load_<d>_by_id(base_dir, id_)` with the parsed document discarded → `assert_within(base_dir, path)` → `path.unlink()` in a try/except re-raising `DeleteError(f"failed to delete {path}: {ex}") from ex` → `return str(path)` after the lock) and the `feat` adapter diverging exactly per §3 (`folder = path.parent`, `assert_within(base_dir, folder)`, `shutil.rmtree(folder)` in the same try/except, `return str(folder)`); the domain's own `XNotFoundError` propagates unchanged from `load_by_id`, and `shutil` is the only new stdlib import. Each adapter follows `set_status.py`'s qualified per-domain import pattern (`<d>_lock`, `load_by_id as load_<d>_by_id`, `<d>_base_dir`), and the tool is registered in `general/tools/__init__.py` (`from .delete import delete`, the `__all__` entry, and a module-docstring sentence). Added `tests/general/tools/test_delete.py` — 8 test methods parameterized over all eleven types, mirroring `test_set_status.py`'s fixture strategy (seeding a real document per type via the domain's own `create_<d>` into temp `SPECMGR_DOCS_DIR`/`SPECMGR_FEAT_DIR`): success (the returned `str` is the deleted file path for the flat domains / the deleted folder path for `feat`, the file/folder is gone, a follow-up `load_by_id` raises the domain's `XNotFoundError`); the `feat` folder-per-document delete including a seeded `history.md`; every pinned injection shape (`../x`, `a/b`, `a\b`, `..`) plus each type's wrong-format id raising `ValueError` with the seeded document left intact; a well-formed unknown id raising the domain's `XNotFoundError`; a mocked `Path.unlink` (ten flat domains) / `shutil.rmtree` (`feat`) `OSError` surfacing as `DeleteError` (an `OSError`, the exact instance as `__cause__`, the path in the message, target left in place); the domain's own per-id lock entered around the delete for all eleven types (an event-ordered spy wrapping each `<d>_lock`); and a registration smoke test (mirroring `test_update.py`'s) verifying the live `mcp` registration carries `delete` exactly once with the 11-value `type` enum and required `id`/`type`. Phase-end quality gate all green: `ruff format --check` (1493 files), `ruff check` (All checks passed), and `vulture src/ whitelist.py --min-confidence 60` clean (no whitelist change needed — `_DELETE_TYPES` is a private module constant, which vulture ignores by name convention); target test module OK (8 tests); full `unittest` suite OK (2735 tests = 2727 baseline + 8 new, ~114 s); `import biz.dfch.specmgr.server` OK (104 tools registered; `delete` present exactly once; the eleven `delete_<d>` stubs still registered, as expected — Phase 3 retires them). Phase 3 (retire the eleven delete stubs, Tasks 3.1–3.3) is next.
 
 #### 2026-08-31 19:09:41.000Z — Phase 1 complete: reusable path-safety module
 
