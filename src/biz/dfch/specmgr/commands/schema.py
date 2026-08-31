@@ -65,6 +65,8 @@ from ..tsk.models.v1 import SCHEMA_COMMENT_VERSION as TSK_SCHEMA_COMMENT_VERSION
 from ..tsk.models.v1.document import TskDocument
 from ..uc.models.v2 import SCHEMA_COMMENT_VERSION as UC_SCHEMA_COMMENT_VERSION
 from ..uc.models.v2.document import UcDocument
+from ..vcr.models.v1 import SCHEMA_COMMENT_VERSION as VCR_SCHEMA_COMMENT_VERSION
+from ..vcr.models.v1.document import VcrDocument
 
 _DEFAULT_OUTPUT_DIR = DOCS_DIR
 
@@ -239,6 +241,24 @@ def generate_feat_schema() -> str:
     return json.dumps(schema_dict, indent=2, sort_keys=True) + "\n"
 
 
+def generate_vcr_schema() -> str:
+    """Generate VCR's JSON Schema (2020-12 dialect) from ``VcrDocument.model_json_schema()``.
+
+    Mirrors :func:`generate_req_schema` exactly, but for ``vcr.models.v1``:
+    the ``"$schema"`` key is injected the same way (Pydantic v2 omits it by
+    default), and ``"$comment"`` holds ``vcr.models.v1.SCHEMA_COMMENT_VERSION``
+    (currently ``"v1"``) instead of REQ's own version token.
+
+    Serializes with ``indent=2, sort_keys=True`` plus a trailing newline, for
+    the same byte-identical-output/drift-detection reason as
+    :func:`generate_req_schema`.
+    """
+    schema_dict = VcrDocument.model_json_schema()
+    schema_dict["$schema"] = GenerateJsonSchema.schema_dialect
+    schema_dict["$comment"] = VCR_SCHEMA_COMMENT_VERSION
+    return json.dumps(schema_dict, indent=2, sort_keys=True) + "\n"
+
+
 #: Registry mapping a doc-type name (as accepted by ``--type``) to its
 #: ``generate_x() -> str`` function. Add an entry here when a new document
 #: type's schema generator is implemented (e.g. ``"adr"``).
@@ -252,6 +272,7 @@ _GENERATORS: dict[str, Callable[[], str]] = {
     "rsk": generate_rsk_schema,
     "tsk": generate_tsk_schema,
     "uc": generate_uc_schema,
+    "vcr": generate_vcr_schema,
 }
 
 

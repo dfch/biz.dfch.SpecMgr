@@ -502,10 +502,10 @@ has no Plan/Progress split -- same reasoning `sysrs` used for its own
 
 #### Phase 3: Resources and prompts
 
-- [ ] Task 3.1: `specmgr://vcr/schema`, `.../example`, `.../template`
+- [x] Task 3.1: `specmgr://vcr/schema`, `.../example`, `.../template`
   resources.
-- [ ] Task 3.2: `create_vcr`/`update_vcr` prompts.
-- [ ] Task 3.3: `general/data/general_dtais.md` content (fill in the
+- [x] Task 3.2: `create_vcr`/`update_vcr` prompts.
+- [x] Task 3.3: `general/data/general_dtais.md` content (fill in the
   draft outline persisted in Design Notes), `general/resources/dtais.py`
   (`specmgr://dtais`), registered in `general/resources/__init__.py`;
   unit tests.
@@ -523,7 +523,28 @@ has no Plan/Progress split -- same reasoning `sysrs` used for its own
 
 ### Current Status
 
-**As of 2026-08-31**: Phase 2 (Tools) complete. `vcr/tools/` now exists in
+**As of 2026-08-31 (latest)**: Phase 3 (Resources and prompts) complete.
+`vcr/resources/` (`vcr_schema`/`vcr_example`/`vcr_template`, mirroring
+`dec/resources/` file-for-file) and `vcr/prompts/` (`create_vcr`/
+`update_vcr`, mirroring `dec/prompts/` file-for-file, plus their packaged
+`vcr_create_instructions.md`/`vcr_update_instructions.md`) now exist.
+`commands/schema.py` gained `generate_vcr_schema`/a `"vcr"` `_GENERATORS`
+entry, and both `docs/vcr_schema.json` and the packaged
+`vcr/data/vcr_schema.json` copy are generated and drift-free. The
+cross-cutting `specmgr://dtais` resource (REQ-006) now exists:
+`general/data/general_dtais.md` (the five DTAIS method words, a "When to
+apply each method" section, and a "Relationship to `## Coverage`"
+section illustrating the `partial`-coverage/pending-`Special`-
+certification scenario from `example.md`), `general/resources/dtais.py`,
+registered in `general/resources/__init__.py`. 52 new unit tests
+(`tests/vcr/resources/`, `tests/vcr/prompts/`,
+`tests/general/resources/test_dtais.py`, bringing the full suite from
+2400 to 2452). Neither `server.py` nor `vcr/__init__.py` was touched --
+`vcr/__init__.py` deliberately still does not import
+`tools`/`resources`/`prompts` (that domain-registration wiring is Phase
+4's job).
+
+**As of 2026-08-31 (earlier)**: Phase 2 (Tools) complete. `vcr/tools/` now exists in
 full, mirroring `dec/tools/` file-for-file: `_paths.py`/`_lock.py`/`_io.py`/
 `_write.py` plumbing, and the 8 standard tools (`create_vcr`, `parse_vcr`,
 `get_vcr` with `raw`, `get_vcr_example`, `get_vcr_template`, `list_vcr`,
@@ -579,6 +600,92 @@ is Phase 2/3/4's job.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-08-31T14:00:00.000000 — Phase 3 complete: `vcr/resources/`, `vcr/prompts/`, and the cross-cutting `specmgr://dtais` resource implemented
+
+Implemented Task 3.1 (`vcr/resources/`): `vcr_schema.py`/`vcr_example.py`/
+`vcr_template.py`, mirroring `dec/resources/`'s three files exactly
+(rename `Dec`/`dec` -> `Vcr`/`vcr`, same URIs
+`specmgr://vcr/schema`/`.../example`/`.../template`, same
+`read_packaged_text` plumbing), plus `vcr/resources/__init__.py`. The
+schema resource needed generator plumbing first: added
+`generate_vcr_schema()` to `commands/schema.py` (mirroring
+`generate_dec_schema` exactly) and a `"vcr"` entry to `_GENERATORS`
+(alphabetically last, after `"uc"`), then ran
+`specmgr schema --type vcr` (writes `docs/vcr_schema.json`) and
+`specmgr schema --type vcr --output-dir src/biz/dfch/specmgr/vcr/data`
+(writes the packaged copy `vcr/data/vcr_schema.json`) -- both exited 1
+on first generation (new file) and 0 (unchanged) on every subsequent run,
+confirmed once more at the very end of the phase.
+
+Implemented Task 3.2 (`vcr/prompts/`): `create_vcr.py`/`update_vcr.py`,
+mirroring `dec/prompts/create_dec.py`/`update_dec.py` exactly (same
+`string.Template`/`$topic`/`$id`/`$instructions` substitution shape,
+`raw=True` for `update_vcr`'s line-range line numbers, narration-only
+contract -- never calls `TodoWrite`/`question`/`list_vcr`/`create_vcr`/
+`get_vcr`/`update`/`set_status` itself), plus `vcr/prompts/__init__.py`.
+Their packaged instructions
+(`vcr/data/vcr_create_instructions.md`/`vcr_update_instructions.md`)
+adapt `dec`'s exact structure/tone to VCR's own schema (`## Verifies` ->
+`## Coverage` -> `## Acceptance Criteria` -> `## More Information` ->
+`## Updates` section recap, the closed DTAIS method vocabulary spelled
+out verbatim, VCR's own four-value `draft`/`progress`/`complete`/
+`approved` status set instead of DEC's six-value set, and references to
+the new `specmgr://dtais` resource for method-word guidance) -- including
+DEC's own step-0 "check `list_vcr` for a near-duplicate first" convention
+and the same tool-call-sequence ending in `create_vcr(content)`/optional
+`validate_vcr(content, full=False)`.
+
+Implemented Task 3.3 (the cross-cutting `specmgr://dtais` resource,
+REQ-006): `general/data/general_dtais.md` filled in every placeholder
+from the Design Notes' persisted draft outline -- a closed-vocabulary
+bullet list of the five DTAIS words (verbatim, in the same order as
+`vcr.models.v1.body`'s `_AC_HEADING_PATTERN` method group, confirmed by a
+new test), a "## When to apply each method" section with concrete
+per-method guidance (informed by well-established V&V domain knowledge:
+`Demonstration` for observable behavior without a quantitative
+threshold, `Test` for a quantitative/measured threshold, `Analysis` for
+calculation/modeling/simulation or pre-existence-of-system verification,
+`Inspection` for artifact/source examination without operating the
+system, and this feature's own addition `Special` for external
+certification/compliance/supplier-conformance sign-off), and a
+"## Relationship to `## Coverage`" section explaining that `## Coverage`
+is a roll-up of every acceptance criterion's verification status (not an
+independent field), concretely illustrated with `example.md`'s own
+AC-004-pending-`Special`-certification `partial`-coverage scenario.
+`general/resources/dtais.py` copies the plan's persisted sketch verbatim
+(only the `..tools`/`...server` relative-import order was corrected to
+match this codebase's actual isort convention, confirmed against
+`general/resources/iso25010.py`'s own ordering), and
+`general/resources/__init__.py` now imports/exports `dtais` alongside
+`iso25010`/`version` (alphabetical).
+
+Added 52 new unit tests across `tests/vcr/resources/`
+(`test_vcr_schema.py`/`test_vcr_example.py`/`test_vcr_template.py`,
+mirroring `tests/dec/resources/`'s three files), `tests/vcr/prompts/`
+(`test_create_vcr.py`/`test_update_vcr.py`, mirroring
+`tests/dec/prompts/`'s two files), and
+`tests/general/resources/test_dtais.py` (mirroring
+`tests/rsk/resources/test_tara.py`'s structure: a regex asserting the
+five documented method-word bullets exactly match the model's closed
+DTAIS set in order, a per-word round-trip through
+`AcceptanceCriterion.from_text` confirming every documented word is
+genuinely accepted end to end, and a rejected-word case using
+`"Certification"` -- VCR's own retired 5th-method name -- which raises
+`AssertionError` (an `AcceptanceCriterion` alias mismatch, not
+`pydantic.ValidationError`, unlike RSK's `Strategy`-based rejected-word
+test) since `AcceptanceCriterion` is a regex-`@alias`-matched heading
+class, not a `field_validator`-checked value). Quality gate green: `ruff
+format --check`, `ruff check`, `vulture` (no new whitelist entries
+needed), and the full `unittest` suite (2452 tests, `OK`, up from 2400)
+all pass. Did not touch `server.py`, `AGENTS.md`, top-level `README.md`,
+or `.pre-commit-config.yaml` -- all reserved for Phase 4; `vcr/__init__.py`
+also stays untouched (still no `tools`/`resources`/`prompts` import), so
+the same non-blocking circular-import fragility noted in the Phase 2
+Updates entry (isolated `vcr.models.v1` imports before `general` has
+fully loaded) still applies identically to the new `vcr/resources`/
+`vcr/prompts` modules in isolation -- unaffected in the full repo-wide
+suite, which is the specified quality gate.
 
 #### 2026-08-31T12:30:00.000000 — Phase 2 complete: `vcr/tools/` implemented, generic `update`/`set_status` dispatch wired for `type="vcr"`
 

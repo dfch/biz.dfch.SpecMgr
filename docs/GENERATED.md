@@ -129,6 +129,7 @@ First-line docstrings from each module, organized by domain:
 - `general/prompts/__init__.py` — MCP prompt registrations that are not specific to any single document
 - `general/prompts/compact_history.py` — ``@mcp.prompt()``: compact_history (Various improvements, Task 0.21).
 - `general/resources/__init__.py` — MCP resource registrations that are not specific to any single document
+- `general/resources/dtais.py` — Resource: specmgr://dtais -- the DTAIS verification-method vocabulary (feat-33-vcr Task 3.3).
 - `general/resources/iso25010.py` — Resource: specmgr://iso25010 (Task 0.8.3).
 - `general/resources/version.py` — Resource: specmgr://version — MCP server package version number.
 - `general/tools/__init__.py` — MCP tool wrappers for general-purpose utilities (mirrors ``adr/tools/``'s shape).
@@ -436,6 +437,13 @@ First-line docstrings from each module, organized by domain:
 - `vcr/models/v1/frontmatter.py` — Verification Case Record (VCR) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
 - `vcr/models/v1/parser.py` — Parse raw verification case record (VCR) ``.md`` text into a :class:`VcrDocument`.
 - `vcr/models/v1/summary.py` — Pydantic model for one line of VCR listing output (Phase 2, ``list_vcr``).
+- `vcr/prompts/__init__.py` — MCP prompt wrappers for Verification Case Records (Task 3.2).
+- `vcr/prompts/create_vcr.py` — ``@mcp.prompt()``: create_vcr (Task 3.2).
+- `vcr/prompts/update_vcr.py` — ``@mcp.prompt()``: update_vcr (Task 3.2).
+- `vcr/resources/__init__.py` — MCP resource registrations for Verification Case Record (VCR) documents (Task 3.1).
+- `vcr/resources/vcr_example.py` — Resource: specmgr://vcr/example (Task 3.1).
+- `vcr/resources/vcr_schema.py` — Resource: specmgr://vcr/schema (Task 3.1, packaged data).
+- `vcr/resources/vcr_template.py` — Resource: specmgr://vcr/template (Task 3.1).
 - `vcr/tools/__init__.py` — MCP tool wrappers for verification case records (mirrors ``dec/tools/``'s own shape).
 - `vcr/tools/_io.py` — Thin file read helpers over ``parse_vcr`` (Task 2.1).
 - `vcr/tools/_lock.py` — Per-document in-process lock guarding verification case record mutations.
@@ -452,4 +460,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 299
+**Test files**: 305

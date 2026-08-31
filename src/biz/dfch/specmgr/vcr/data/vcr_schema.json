@@ -1,0 +1,323 @@
+{
+  "$comment": "v1",
+  "$defs": {
+    "AcceptanceCriteria": {
+      "description": "`## Acceptance Criteria` -- the dynamic `### AC-NNN (Method): ...` collection. Mandatory.\n\nRequires at least one entry (``min_length=1``, REQ-003) -- an H2 with\nzero criteria is a structural error.\n\nParameters\n----------\ncriteria:\n    The `### AC-NNN (Method): <criterion text>` entries, in document\n    order. Must contain at least one entry.",
+      "properties": {
+        "criteria": {
+          "description": "Dynamic collection of `### AC-NNN (Method): <criterion text>` entries, in document order. Must contain at least one entry.",
+          "items": {
+            "$ref": "#/$defs/AcceptanceCriterion"
+          },
+          "minItems": 1,
+          "title": "Criteria",
+          "type": "array"
+        }
+      },
+      "required": [
+        "criteria"
+      ],
+      "title": "AcceptanceCriteria",
+      "type": "object"
+    },
+    "AcceptanceCriterion": {
+      "description": "`### AC-NNN (Method): <criterion text>` under `## Acceptance Criteria` -- one verification criterion.\n\nThe number, method, and criterion text all live in the heading itself\n(e.g. `### AC-001 (Test): The revoke endpoint returns 204 within 1s`),\nconstrained by the regex `@alias` above and enforced by `match_alias`\n(`re.fullmatch`) at parse time -- a missing/out-of-range/malformed\nnumber, an unknown method word, or a title-less heading all fail the\nparse eagerly (REQ-003). AC numbers need not be contiguous (gaps are\nallowed, numbers are never renumbered); duplicates are rejected by\n`Vcr`'s own after-validator (the `ValidationError` channel, mirroring\nDEC's `Decision._validate_option_numbers_unique`).\n\nUnlike DEC's `Option`/RSK's `Probability`/`Impact` (all *leaf* sections\nwith zero other declared fields, so their own `.text` computed property\nreturns the *complete* extent verbatim, heading marker and any body\ntext both included), this class declares two other fields\n(`description`, `test_steps`), making it a *composite* section: its own\n`.text` therefore returns only the heading's own inline content (marker\nstripped, body text excluded -- see `MarkdownSection.text`'s composite\nbranch). `number`/`method` below are matched against that heading-only\n`.text` directly, not `.text.splitlines()[0]` -- the DEC/RSK idiom's\nexact mechanics don't apply verbatim here because of this leaf/composite\ndifference, even though the underlying idea (compute a value from the\nretained heading text via a private module-level compiled regex) is the\nsame. A consequence: an `AcceptanceCriterion`'s body may contain nothing\nbesides an optional free-form `description` paragraph followed by an\noptional `#### Test Steps` -- both independently optional (e.g. one\ncriterion may carry only a description, another only `Test Steps`,\nanother both, another neither), in that fixed declaration order.\n\nParameters\n----------\ndescription:\n    The lead paragraph directly under the heading -- free-form prose\n    elaborating on the criterion beyond what fits in the heading\n    itself (mirrors `MoreInformation`'s \"free-form, no fixed format\"\n    tone). Optional; independent of `test_steps`.\ntest_steps:\n    `#### Test Steps` sub-section (a numbered verification procedure).\n    Optional; independent of `description`.\nnumber:\n    Computed. The criterion's 3-digit number (e.g. `1` for\n    `### AC-001 (Test): ...`). Never stored separately -- derived from\n    the retained heading text.\nmethod:\n    Computed. The closed DTAIS method word carried by the heading\n    (e.g. `\"Test\"` for `### AC-001 (Test): ...`), exactly as written\n    (not lowercased/normalized). Never stored separately -- derived\n    from the retained heading text.",
+      "properties": {
+        "description": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MarkdownParagraph"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The lead paragraph directly under the heading -- free-form prose elaborating on the criterion. Optional; independent of `test_steps`."
+        },
+        "test_steps": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TestSteps"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`#### Test Steps` sub-section. Optional; independent of `description`."
+        }
+      },
+      "title": "AcceptanceCriterion",
+      "type": "object"
+    },
+    "Coverage": {
+      "description": "`## Coverage` -- single-line closed-vocabulary coverage assessment. Mandatory.\n\nOne of the three closed values: `full`, `partial`, `none`. There is no\nseparate pass/fail/waived outcome field anywhere in this domain --\n`## Coverage` is the only outcome signal (REQ-002).",
+      "properties": {
+        "value": {
+          "$ref": "#/$defs/MarkdownParagraph",
+          "description": "Single-line coverage assessment. One of `full`, `partial`, `none`."
+        }
+      },
+      "required": [
+        "value"
+      ],
+      "title": "Coverage",
+      "type": "object"
+    },
+    "MarkdownComment": {
+      "description": "A standalone HTML comment block (`\"html_block\"`, e.g. `<!-- some note -->`).\n\nDeliberately leaf-only, like `MarkdownCodeBlock`. Declare an optional\n`comment: MarkdownComment | None` field on any `MarkdownStr` subclass to\nlet a value be preceded by such an explanatory comment without it\nbreaking that class's own structural field matching. See `get_extent`/\n`from_text`/`text` for the full mechanics.",
+      "properties": {},
+      "title": "MarkdownComment",
+      "type": "object"
+    },
+    "MarkdownListItem": {
+      "description": "One item (\"li\") of a markdown bullet or numbered list.\n\nUsed only as `items: list[MarkdownListItem]` (or `list[MarkdownListItem] |\nNone`) on a `MarkdownSection`/`MarkdownParagraph`/`MarkdownListItem` --\nthere is no separate list-container class, and a bare item cannot be\nparsed as a top-level/scalar field on its own; every item is assumed to\nstart with at least one paragraph (its own lead text).\n\nLeaf (no declared nested fields, the default): `_value` holds the item's\ncomplete extent verbatim, marker included. Composite (a subclass declares\nfields): `_value` holds only the item's own leading paragraph, marker\nincluded -- the marker cannot be reconstructed from class metadata alone,\nso it is kept verbatim -- and the remainder is dedented and delegated to\nnested field parsing; `__str__` re-indents the children's rendered output\nby the marker's own width before recombining.\n\nRound-trip note: a tight source list currently round-trips to a\nstructurally-equivalent loose list rather than byte-exact (loose lists\nremain byte-exact) -- an accepted, documented exception; see\n`from_text`/`__str__` docstrings below for the full mechanics.",
+      "properties": {},
+      "title": "MarkdownListItem",
+      "type": "object"
+    },
+    "MarkdownParagraph": {
+      "description": "A markdown paragraph (\"p\"), the non-heading sibling of `MarkdownSection`.\n\nA paragraph has no level, so there is a single `MarkdownParagraph` class\n(no `MarkdownParagraph1`..`6` spectrum) and no `@alias` check -- a\nparagraph's content is free-form prose, not a title.\n\nLeaf (no declared nested fields): `_value` holds the paragraph's own line\nspan, verbatim. Composite (declares fields): `_value` holds only the\nparagraph's own inline text (e.g. a lead-in sentence); the remaining text\nis delegated to nested field parsing, bounded by the next heading of any\nlevel (a paragraph can never itself contain a heading). See\n`get_extent`/`from_text`/`__str__` docstrings below for the full\nmechanics.",
+      "properties": {},
+      "title": "MarkdownParagraph",
+      "type": "object"
+    },
+    "MoreInformation": {
+      "description": "`## More Information` -- free-form optional supplementary text, no fixed format. Optional.",
+      "properties": {},
+      "title": "MoreInformation",
+      "type": "object"
+    },
+    "TestSteps": {
+      "description": "`#### Test Steps` under an `AcceptanceCriterion` -- numbered verification procedure. Optional.\n\nThe class name's implicit `AliasType.SPACE_SEPARATED` derivation\n(\"Test Steps\") already matches this heading's own wording, so no\nexplicit `@alias` is declared (same as DEC's `Confirmation`/\n`Consequences`).\n\nParameters\n----------\nitems:\n    The numbered procedure list, in document order. Must contain at\n    least one item (``min_length=1``) -- an H4 with zero steps is a\n    structural error.",
+      "properties": {
+        "items": {
+          "description": "Numbered procedure list, in document order. Must contain at least one item.",
+          "items": {
+            "$ref": "#/$defs/MarkdownListItem"
+          },
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "TestSteps",
+      "type": "object"
+    },
+    "UpdateEntry": {
+      "description": "`### {free-form title}` under `## Updates` -- one update entry.\n\nThe H3 heading text is free-form (date-led titles like\n`2026-08-31 \u2014 Created` are convention, not enforced). Mirrors DEC's\n`UpdateEntry` shape.\n\nParameters\n----------\ncontent:\n    The lead paragraph right after the H3 heading -- this entry's own\n    update text. Mandatory.",
+      "properties": {
+        "content": {
+          "$ref": "#/$defs/MarkdownParagraph",
+          "description": "The lead paragraph directly under the H3 heading -- this entry's own update text. Mandatory."
+        }
+      },
+      "required": [
+        "content"
+      ],
+      "title": "UpdateEntry",
+      "type": "object"
+    },
+    "Updates": {
+      "description": "`## Updates` -- a dynamic list of free-form-titled `### ` update entries. Optional as a whole, and the\nlast section of the document if present.\n\nUnlike DEC's own `Updates` (a plain `MarkdownSection2`, since\n`dec_example.md` carries no comment there), VCR's own `example.md`/\n`template.md` (Phase 0) both demonstrate a permanent \"newest first\"\nordering-hint HTML comment directly under this heading -- the same\nstructural-anchor role `feat`'s `Updates(MarkdownSection3WithComment)`\nalready gives its own comment (not authoring guidance, see\n`.specmgr/feat/feat-33-vcr/README.md` Design Notes' \"clean-example\nconvention\" bullet), so this is `MarkdownSection2WithComment` instead.\nNo dedicated per-entry tools -- entries are appended by editing the\nwhole body.\n\nParameters\n----------\ncomment:\n    Optional explanatory HTML comment (`<!-- ... -->`), e.g.\n    `<!-- Newest entry first -- prepend new entries directly below\n    this comment. -->`. Inherited from `MarkdownSection2WithComment`.\nupdates:\n    The dynamic collection of `### ` entries, in document order. Requires\n    at least one entry (``min_length=1``) -- an H2 with zero entries is\n    a structural error.",
+      "properties": {
+        "comment": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MarkdownComment"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional explanatory HTML comment (`<!-- ... -->`)."
+        },
+        "updates": {
+          "description": "Dynamic collection of `### {free-form title}` entries, in document order. Must contain at least one entry.",
+          "items": {
+            "$ref": "#/$defs/UpdateEntry"
+          },
+          "minItems": 1,
+          "title": "Updates",
+          "type": "array"
+        }
+      },
+      "required": [
+        "updates"
+      ],
+      "title": "Updates",
+      "type": "object"
+    },
+    "Vcr": {
+      "description": "The `vcr` body: a single H1 section with the fields below.\n\nThe H1 heading text is free-form. `comment` is inherited from\n`MarkdownSection1WithComment` (see its own docstring) -- not redeclared\nhere.\n\nParameters\n----------\ncomment:\n    Optional explanatory HTML comment (`<!-- ... -->`) preceding\n    `verifies`. Inherited from `MarkdownSection1WithComment`.\nverifies:\n    `## Verifies` (exactly one REQ/UC cross-reference). Mandatory.\ncoverage:\n    `## Coverage` (closed 3-value set). Mandatory.\nacceptance_criteria:\n    `## Acceptance Criteria` (>=1 `### AC-NNN (Method): ...` entry).\n    Mandatory.\nmore_information:\n    `## More Information`. Optional.\nupdates:\n    `## Updates`. Optional; last section.",
+      "properties": {
+        "acceptance_criteria": {
+          "$ref": "#/$defs/AcceptanceCriteria",
+          "description": "`## Acceptance Criteria` section (>=1 entry). Mandatory."
+        },
+        "comment": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MarkdownComment"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional explanatory HTML comment (`<!-- ... -->`)."
+        },
+        "coverage": {
+          "$ref": "#/$defs/Coverage",
+          "description": "`## Coverage` section. Mandatory."
+        },
+        "more_information": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MoreInformation"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`## More Information` section. Optional."
+        },
+        "updates": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Updates"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`## Updates` section. Optional; last."
+        },
+        "verifies": {
+          "$ref": "#/$defs/Verifies",
+          "description": "`## Verifies` section. Mandatory."
+        }
+      },
+      "required": [
+        "verifies",
+        "coverage",
+        "acceptance_criteria"
+      ],
+      "title": "Vcr",
+      "type": "object"
+    },
+    "VcrFrontmatter": {
+      "description": "Verification Case Record (VCR) frontmatter: `MarkdownFrontmatter` narrowed for the ``vcr`` document type.\n\nParameters\n----------\ntype:\n    Fixed discriminator, always ``\"vcr\"``. Narrows the base's mandatory,\n    default-less ``str`` field to a ``Literal[\"vcr\"] = \"vcr\"``, so a document\n    omitting ``type`` entirely still parses as a verification case record.\nstatus:\n    One of ``\"draft\"``, ``\"progress\"``, ``\"complete\"``, ``\"approved\"``.\n    Narrows the base's free-form ``str = \"draft\"`` default to this closed\n    four-value set. Blank/absent still defaults to ``\"draft\"`` (inherited\n    from the base's ``_default_blank_status_to_draft`` validator, which\n    runs before this one).\nversion:\n    The ``models.md`` schema major.minor.patch version this document's\n    frontmatter was written with. DO NOT CHANGE!\n\nAll other fields (``id``, ``created``, ``updated``, ``version``) are inherited\nunchanged from :class:`MarkdownFrontmatter`.",
+      "properties": {
+        "created": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Created"
+        },
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Id"
+        },
+        "status": {
+          "default": "draft",
+          "title": "Status",
+          "type": "string"
+        },
+        "type": {
+          "const": "vcr",
+          "default": "vcr",
+          "title": "Type",
+          "type": "string"
+        },
+        "updated": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Updated"
+        },
+        "version": {
+          "default": "1.0.0",
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "title": "VcrFrontmatter",
+      "type": "object"
+    },
+    "Verifies": {
+      "description": "`## Verifies` -- exactly one REQ or UC cross-reference. Mandatory.\n\nModeled as a single non-list value field (SOP's `Accountable` / RSK's\n`Strategy`&`Owner` / REQ&GOL's `Source` precedent), not a bullet list\n-- a single-value field is structurally incapable of holding more than\none reference, so no cardinality `model_validator` is needed. `value`\nand `notes` are two mandatory fields in fixed declaration order,\nmirroring RSK's `Assessment.probability`/`.impact` two-mandatory-\nfields-in-sequence idiom (just `MarkdownParagraph` instead of\n`Probability`/`Impact`).\n\nParameters\n----------\ncomment:\n    Optional explanatory HTML comment (`<!-- ... -->`). Inherited from\n    `MarkdownSection2WithComment`.\nvalue:\n    Single-line `\"REQ|UC <uuid>: <title>\"`. Mandatory.\n    `field_validator`-regex-checked against `_VERIFIES_PATTERN`\n    (standard 8-4-4-4-12 hex UUID shape -- no UUID-format precedent\n    existed elsewhere in the codebase to reuse, so this introduces\n    one).\nnotes:\n    One-paragraph paraphrase of why this REQ/UC is verified here.\n    Mandatory (unlike `MarkdownListItemWithNotes.notes`, which is\n    optional).",
+      "properties": {
+        "comment": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MarkdownComment"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional explanatory HTML comment (`<!-- ... -->`)."
+        },
+        "notes": {
+          "$ref": "#/$defs/MarkdownParagraph",
+          "description": "Mandatory one-paragraph paraphrase."
+        },
+        "value": {
+          "$ref": "#/$defs/MarkdownParagraph",
+          "description": "Single-line value: \"REQ|UC <uuid>: <title>\"."
+        }
+      },
+      "required": [
+        "value",
+        "notes"
+      ],
+      "title": "Verifies",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "A full verification case record document: YAML frontmatter and body.\n\nAttributes\n----------\nfrontmatter:\n    The YAML frontmatter block. See :class:`VcrFrontmatter`.\nbody:\n    The parsed verification case record sections. See :class:`Vcr`.",
+  "properties": {
+    "body": {
+      "$ref": "#/$defs/Vcr"
+    },
+    "frontmatter": {
+      "$ref": "#/$defs/VcrFrontmatter"
+    }
+  },
+  "required": [
+    "frontmatter",
+    "body"
+  ],
+  "title": "VcrDocument",
+  "type": "object"
+}
