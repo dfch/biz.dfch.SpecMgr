@@ -1,9 +1,9 @@
 ---
 created: '2026-08-31T15:24:14.582592'
 id: 98537416-0e6e-4a02-925f-974a17bfa10a
-status: draft
+status: active
 type: sop
-updated: '2026-08-31T16:30:30.599226'
+updated: '2026-08-31T18:27:40.271756'
 version: 1.0.0
 ---
 
@@ -36,6 +36,25 @@ hotfix/backport path (no such path is defined yet — should one ever be
 needed, it is an exception to this SOP and must be recorded in its
 `Updates`); and the internals of the `publish.yml` workflow (OIDC trusted
 publishing, `server.json` generation).
+
+This procedure assumes a working checkout of this repository on the `dev`
+branch with `git`, `uv`, `jq`, and an authenticated `gh` CLI on the
+`PATH`. The staged script is written against the old `gh` 2.4.0 that this
+environment ships, so it avoids `gh` conveniences that newer releases
+added (`gh run list --commit`, `gh run view --json jobs`, `gh release
+edit`, `--ff`-style merge flags) — see Safety and Precautions. The gates
+themselves do not depend on the `gh` version.
+
+The nine procedure steps map one-to-one onto the stages of
+`scripts/release.sh`, which execute in this order: `resolve` → `precheck`
+→ *(step 3 — the agent's, not a stage)* → `bump` → `changelog` →
+`commit-push` → `pr-create` → *(the merge gate — the maintainer's, not a
+stage)* → `pr-merge` → `tag-push` → `publish-wait` → `release-notes`.
+Every stage is idempotent: a stage that has already completed reports
+success and exits, so a failed release is resumed by re-running the
+failed stage — never by restarting from `resolve`.
+`scripts/release.sh status <X.Y.Z>` shows where the release stands at any
+point.
 
 ## Definitions
 
@@ -110,8 +129,12 @@ gate (Step 6), and adjudicate any exception.
 - **Merge fast-forward only.** Never create a merge commit or squash-merge
   when merging `dev` into `main` — a commit unique to `main` breaks the
   fast-forward invariant and poisons every later release. The script
-  enforces this with `gh pr merge --ff-only`; manual mode uses
-  `git merge --ff-only dev`.
+  enforces this in three places: it asserts `origin/main` is an ancestor
+  of `origin/dev` *before* merging, it merges the pull request with the
+  plain merge method (GitHub fast-forwards an up-to-date branch instead
+  of creating a merge commit), and it re-asserts
+  `origin/main == origin/dev` *after* the merge, failing the stage if a
+  merge commit appeared. Manual mode uses `git merge --ff-only dev`.
 - **Never double-bump.** If `pyproject.toml` already carries the target
   version, the `bump` stage refuses to run. If a stage failed mid-release,
   resume from the failed stage — every stage is idempotent, and
@@ -128,6 +151,15 @@ gate (Step 6), and adjudicate any exception.
 - **CI failures stop the release.** A red build on `dev` or on the release
   pull request is never force-merged or skipped: diagnose, fix on `dev`,
   and resume from the failed stage.
+- **The script targets the old `gh` in this environment.** The environment
+  ships `gh` 2.4.0, which predates `gh run list --commit`,
+  `gh run view --json jobs`, `gh release view --json`, `gh release edit`,
+  and any `--ff`-style merge flag. The script therefore finds the
+  publication run by workflow *name* ("Publish to PyPI") plus the tag's
+  commit SHA (filtered with `jq`), lists that run's jobs from the plain
+  `gh run view` output, and reads and updates the GitHub Release through
+  `gh api`. Upgrading `gh` is optional; if you do, keep the stages' gates
+  identical when modernizing these call sites.
 
 ## Procedure
 
@@ -221,8 +253,11 @@ the pull request body, waits until the pull request's checks are green
 (30 s polling), and prints the pull request URL and head SHA — without
 merging. The agent then presents the pull request and the changelog
 section to the maintainer and asks for the merge gate. Once approved,
-`scripts/release.sh pr-merge <X.Y.Z>` performs
-`gh pr merge --ff-only`.
+`scripts/release.sh pr-merge <X.Y.Z>` re-checks the green checks, asserts
+the fast-forward invariant (`origin/main` an ancestor of `origin/dev`),
+merges the pull request with the plain merge method (GitHub fast-forwards
+an up-to-date branch — no merge commit), and re-asserts that
+`origin/main` equals `origin/dev`.
 
 **Manual fallback:** `gh pr create --base main --head dev` (body: the new
 changelog section); wait for green checks; present to the maintainer; on
@@ -245,10 +280,14 @@ release is irreversible from here.
 ### Step 8: Wait for the publication jobs
 
 **Automated:** `scripts/release.sh publish-wait <X.Y.Z>` waits for the
-`publish.yml` run triggered by the tag — *Publish to TestPyPI* →
-*Publish to PyPI* → *Make GitHub Release* (attaches the sdist and wheel)
-→ *Publish to MCP Registry* (updates `server.json`'s version and
-publishes via OIDC) — polling every 30 s until all four jobs complete.
+publication run triggered by the tag — the workflow *file* is
+`.github/workflows/publish.yml`, but its *name* (the `name:` key) is
+"Publish to PyPI", and the script locates the run by that name plus the
+tag's commit SHA, since `gh run list --workflow` filters by name —
+*Publish to TestPyPI* → *Publish to PyPI* → *Make GitHub Release*
+(attaches the sdist and wheel) → *Publish to MCP Registry* (updates
+`server.json`'s version and publishes via OIDC) — polling every 30 s
+until all four jobs complete.
 
 **Manual fallback:** watch the `publish.yml` Actions run for the tag until
 all four jobs are green.
@@ -280,6 +319,15 @@ SOP wins and the script/command must be corrected. Stages are named to
 mirror the step order so that drift between the document and its
 implementations stays visible.
 
+The first release executed under this SOP (v0.15.0, 2026-08-31) surfaced
+two script defects against `gh` 2.4.0: `pr-merge` passed a `--ff-only`
+flag that no `gh` release provides, and `publish-wait`/`status`/
+`release-notes` used call sites old `gh` does not support (`gh run list
+--commit`, the workflow *file* name in `--workflow`, `gh release view
+--json`, `gh release edit`). The script was rewritten to
+version-independent equivalents (see Safety and Precautions) and this SOP
+was corrected to describe the merge mechanism the script actually uses.
+
 The `sop` tooling that manages this document (the `specmgr-test` MCP
 server) runs against this repository's own dev tree; until the first
 release ships the `sop` domain to PyPI, this SOP is created and validated
@@ -299,3 +347,17 @@ strategy that keeps `main` a strict ancestor of `dev`. Status is
 `draft`; the SOP is activated once the first release executed under it
 succeeds end to end (expected to be v0.15.0, the first release to carry
 the `sop` domain itself).
+
+### 2026-08-31 18:27:40.000+02:00 — v0.15.0 released under this SOP; script compatibility fixes; activated
+
+The first release executed end to end under this SOP (v0.15.0): PR #37
+merged fast-forward into `main`, tag `v0.15.0` published to TestPyPI,
+PyPI, the GitHub Release (notes set from the changelog section), and the
+MCP Registry (publication run
+https://github.com/dfch/biz.dfch.SpecMgr/actions/runs/33410331930, all
+four jobs green). During the run, `scripts/release.sh` was found to rely
+on `gh` features that do not exist in this environment's `gh` 2.4.0 and
+was fixed (see More Information); this SOP was corrected to match (the
+actual fast-forward-only enforcement, the publication workflow's name,
+the old-`gh` constraints) and simplified (stage-to-step mapping up
+front, prerequisites in Scope). Status changed from `draft` to `active`.

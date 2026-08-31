@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The release SOP (now `active` — its status was `draft` until the first
+  release executed under it succeeded end to end, v0.15.0) was clarified:
+  tool prerequisites and the stage-to-step execution map up front in
+  Scope, the fast-forward-only merge mechanism the script actually uses
+  (pre- and post-merge SHA assertions around the plain merge method,
+  replacing the description of a nonexistent `gh pr merge --ff-only`),
+  the publication workflow's name ("Publish to PyPI") vs. file
+  (`.github/workflows/publish.yml`) distinction, and a dedicated
+  precaution about the old `gh` 2.4.0 the script targets.
+
 ### Fixed
 
 - `scripts/release.sh`: the `pr-merge`, `publish-wait`, `status`, and
