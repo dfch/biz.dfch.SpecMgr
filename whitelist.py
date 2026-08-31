@@ -41,9 +41,11 @@ _callback
 # direct call in this codebase.
 _._default_blank_status_to_draft
 _._default_blank_status_to_open
+_._default_blank_status_to_planning
 _._optional_blank_to_none
 _._required_non_blank
 _._validate_items_eagerly
+_._validate_newest_first
 _._validate_option_numbers_unique
 _._validate_step_numbers_unique
 _._validate_partial_title
@@ -164,6 +166,23 @@ purpose
 definitions
 roles_and_responsibilities
 safety_and_precautions
+# feat (feat-31 Phase 1): `Feature`/`Plan`/`Progress` fields read only via
+# (de)serialization; nothing in `src/` accesses them as plain attributes yet.
+plan
+progress
+overview
+dependencies
+design_notes
+related_decisions
+task_list
+included
+explicitly_out_of_scope
+depends_on
+phases
+current_status
+blockers
+decisions_made
+related_prs_commits
 
 # --- MCP `@mcp.resource(...)`/`@mcp.tool()` entry points -------------------------
 # Invoked by the MCP framework once registered, not called directly in `src/`.

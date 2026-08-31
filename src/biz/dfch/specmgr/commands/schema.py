@@ -49,6 +49,8 @@ from pydantic.json_schema import GenerateJsonSchema
 from .._paths import DOCS_DIR
 from ..dec.models.v1 import SCHEMA_COMMENT_VERSION as DEC_SCHEMA_COMMENT_VERSION
 from ..dec.models.v1.document import DecDocument
+from ..feat.models.v1 import SCHEMA_COMMENT_VERSION as FEAT_SCHEMA_COMMENT_VERSION
+from ..feat.models.v1.document import FeatDocument
 from ..gol.models.v1 import SCHEMA_COMMENT_VERSION as GOL_SCHEMA_COMMENT_VERSION
 from ..gol.models.v1.document import GolDocument
 from ..prb.models.v1 import SCHEMA_COMMENT_VERSION as PRB_SCHEMA_COMMENT_VERSION
@@ -221,6 +223,24 @@ def generate_dec_schema() -> str:
     return json.dumps(schema_dict, indent=2, sort_keys=True) + "\n"
 
 
+def generate_feat_schema() -> str:
+    """Generate FEAT's JSON Schema (2020-12 dialect) from ``FeatDocument.model_json_schema()``.
+
+    Mirrors :func:`generate_req_schema` exactly, but for ``feat.models.v1``:
+    the ``"$schema"`` key is injected the same way (Pydantic v2 omits it by
+    default), and ``"$comment"`` holds ``feat.models.v1.SCHEMA_COMMENT_VERSION``
+    (currently ``"v1"``) instead of REQ's own version token.
+
+    Serializes with ``indent=2, sort_keys=True`` plus a trailing newline, for
+    the same byte-identical-output/drift-detection reason as
+    :func:`generate_req_schema`.
+    """
+    schema_dict = FeatDocument.model_json_schema()
+    schema_dict["$schema"] = GenerateJsonSchema.schema_dialect
+    schema_dict["$comment"] = FEAT_SCHEMA_COMMENT_VERSION
+    return json.dumps(schema_dict, indent=2, sort_keys=True) + "\n"
+
+
 def generate_sop_schema() -> str:
     """Generate SOP's JSON Schema (2020-12 dialect) from ``SopDocument.model_json_schema()``.
 
@@ -244,6 +264,7 @@ def generate_sop_schema() -> str:
 #: type's schema generator is implemented (e.g. ``"adr"``).
 _GENERATORS: dict[str, Callable[[], str]] = {
     "dec": generate_dec_schema,
+    "feat": generate_feat_schema,
     "gol": generate_gol_schema,
     "prb": generate_prb_schema,
     "qa": generate_qa_schema,

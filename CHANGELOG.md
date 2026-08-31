@@ -7,6 +7,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-08-30
+
+### Added
+
+- **Eleventh domain feature (FEAT/Feature tooling)**: formalized the ad hoc
+  `.specmgr/feat/<id>/README.md` convention (ADR e369ee2e-3353-4f92-991c-6367d76d832e)
+  into a real, schema-backed `feat` document-type domain, with full MCP tool surface,
+  resources, prompts, and cross-cutting registration. Deliberately special among domains:
+  uses non-UUID `feat-NNN-slug` ids (chosen by user, derived from H1 title) and
+  folder-per-document addressing (`.specmgr/feat/<id>/README.md`), deviating from ADR
+  8cf940c5's flat-file UUID precedent. Mirrors GOL/RSK/DEC's simple surface (no
+  fine-grained mutation tools, no renderer — writes persist raw validated body
+  byte-for-byte) and uses the post-feat-22 generic `update`/`set_status` dispatch
+  from day one:
+  - `feat/models/v1/`: Pydantic schema (`FeatFrontmatter` with a closed 4-value
+    status set `planning`/`progress`/`review`/`done`, `Feature` body with mandatory
+    `## Plan`/`## Progress` composites containing structured `### Requirements`
+    (regex-validated list), `### Acceptance Criteria` (checked list), `### Scope`
+    (mandatory `#### Included`/`#### Explicitly Out Of Scope`), optional `### Dependencies`
+    (`#### Depends On`/`#### Blocks`), `### Task List` (`#### Phase N` entries each with
+    `- [ ] ...` checklist), `### Updates`/`### Decisions Made` (ISO8601-enforced
+    `#### {timestamp} — {title}` entries, newest-first ordered), and optional leaves),
+    parser (`parse_feat`), `FeatSummary` (adds `path: str` field — the only document
+    type where direct hand/agent markdown editing remains the sanctioned workflow),
+    and JSON schema generation, inside the domain package itself.
+  - `feat/tools/`: `@mcp.tool()` wrappers for the FEAT lifecycle (`create_feat`,
+    `parse_feat`, `list_feat`, `get_feat`, `get_feat_example`, `get_feat_template`,
+    `validate_feat`), plus a stub for `delete_feat`. Bespoke `_paths.py` (hand-rolled
+    like ADR's own, not the shared flat-file pattern): `feat_base_dir()`/
+    `find_feat_path_by_id()` (no-scan shortcut + folder-name-mismatch rejection at
+    tool layer), global `feat_create_lock()` (since id doesn't exist until scanning
+    completes). `list_feat` ships as a paged tool from day one.
+  - Generic `update(type="feat", ...)`/`set_status(type="feat", ...)` dispatch
+    adapters in `general/tools/update.py`/`set_status.py`, using `feat.tools._paths`
+    bespoke addressing (only remaining divergence from other domains).
+  - `feat/resources/`: `specmgr://feat/schema`, `specmgr://feat/example`,
+    `specmgr://feat/template` (no `specmgr://feat/{id}` — id-based reads are
+    `get_feat`-only; no `specmgr://feat/list` — listing is the `list_feat` tool).
+  - `feat/prompts/`: `create_feat(topic)`/`update_feat(id, instructions?)`
+    prompts reading packaged instruction data, following the post-feat-22 generic
+    dispatch pattern.
+  - `server.py` updated to import the new `feat` domain package; `pyproject.toml`,
+    `.pre-commit-config.yaml`, `.github/workflows/ci.yml`, `AGENTS.md`, and root
+    `README.md` all updated for the eleventh domain. `specmgr schema --type feat`
+    generates `docs/feat_schema.json` and the packaged copy.
+  - Comprehensive test coverage across `tests/feat/models/`, `tests/feat/tools/`,
+    `tests/feat/resources/`, and `tests/feat/prompts/` (221 new tests total,
+    including live lifecycle and concurrent-create collision tests).
+  - **Phase 6 follow-up (part of v0.14.0)**: reversed an earlier deliberate
+    divergence — `feat` frontmatter's `created`/`updated` fields now use the same
+    microsecond ISO timestamp format (`datetime.now().isoformat(timespec="microseconds")`)
+    as every other whole-body domain, for cross-domain consistency. The 17 pre-existing
+    hand-authored feature files remain untouched and out of scope — this only affects
+    documents created/updated via the `feat` MCP tools going forward.
+
 ## [0.13.0] - 2026-08-27
 
 ### Removed

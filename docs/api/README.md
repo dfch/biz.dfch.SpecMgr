@@ -73,6 +73,35 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.dec.tools.list_dec`](biz.dfch.specmgr.dec.tools.list_dec.md) — ``@mcp.tool()`` wrapper: list_dec (Task 2.2).
 - [`biz.dfch.specmgr.dec.tools.parse_dec`](biz.dfch.specmgr.dec.tools.parse_dec.md) — ``@mcp.tool()`` wrapper: parse_dec (Task 2.2).
 - [`biz.dfch.specmgr.dec.tools.validate_dec`](biz.dfch.specmgr.dec.tools.validate_dec.md) — ``@mcp.tool()`` wrapper: validate_dec (Task 2.2).
+- [`biz.dfch.specmgr.feat`](biz.dfch.specmgr.feat.md) — Feature (FEAT) domain -- formalizes the ``.specmgr/feat/<id>/README.md`` convention.
+- [`biz.dfch.specmgr.feat.models`](biz.dfch.specmgr.feat.models.md) — Feature (FEAT) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- [`biz.dfch.specmgr.feat.models.v1`](biz.dfch.specmgr.feat.models.v1.md) — Feature (FEAT) v1 schema -- frontmatter, body, document, parser, summary.
+- [`biz.dfch.specmgr.feat.models.v1._util`](biz.dfch.specmgr.feat.models.v1._util.md) — Shared, private constants for the ``feat.models.v1`` subpackage.
+- [`biz.dfch.specmgr.feat.models.v1.body`](biz.dfch.specmgr.feat.models.v1.body.md) — Feature (FEAT) body models: whole-section fields under a single H1.
+- [`biz.dfch.specmgr.feat.models.v1.document`](biz.dfch.specmgr.feat.models.v1.document.md) — Pydantic model for a full feature document (frontmatter + body).
+- [`biz.dfch.specmgr.feat.models.v1.frontmatter`](biz.dfch.specmgr.feat.models.v1.frontmatter.md) — Feature (FEAT) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
+- [`biz.dfch.specmgr.feat.models.v1.parser`](biz.dfch.specmgr.feat.models.v1.parser.md) — Parse raw feature (FEAT) ``.md`` text into a :class:`FeatDocument`.
+- [`biz.dfch.specmgr.feat.models.v1.summary`](biz.dfch.specmgr.feat.models.v1.summary.md) — Pydantic model for one line of FEAT listing output (Phase 2, ``list_feat``).
+- [`biz.dfch.specmgr.feat.prompts`](biz.dfch.specmgr.feat.prompts.md) — MCP prompt wrappers for Features (Task 4.1).
+- [`biz.dfch.specmgr.feat.prompts.create_feat`](biz.dfch.specmgr.feat.prompts.create_feat.md) — ``@mcp.prompt()``: create_feat (Task 4.1).
+- [`biz.dfch.specmgr.feat.prompts.update_feat`](biz.dfch.specmgr.feat.prompts.update_feat.md) — ``@mcp.prompt()``: update_feat (Task 4.1).
+- [`biz.dfch.specmgr.feat.resources`](biz.dfch.specmgr.feat.resources.md) — MCP resource registrations for Feature (FEAT) documents (feat-31 Task 3.5).
+- [`biz.dfch.specmgr.feat.resources.feat_example`](biz.dfch.specmgr.feat.resources.feat_example.md) — Resource: specmgr://feat/example (feat-31 Task 3.5).
+- [`biz.dfch.specmgr.feat.resources.feat_schema`](biz.dfch.specmgr.feat.resources.feat_schema.md) — Resource: specmgr://feat/schema (feat-31 Task 3.5, packaged data).
+- [`biz.dfch.specmgr.feat.resources.feat_template`](biz.dfch.specmgr.feat.resources.feat_template.md) — Resource: specmgr://feat/template (feat-31 Task 3.5).
+- [`biz.dfch.specmgr.feat.tools`](biz.dfch.specmgr.feat.tools.md) — MCP tool wrappers for features (mirrors ``dec/tools/``'s own shape).
+- [`biz.dfch.specmgr.feat.tools._io`](biz.dfch.specmgr.feat.tools._io.md) — Thin file read helpers over ``parse_feat`` (Task 2.2).
+- [`biz.dfch.specmgr.feat.tools._lock`](biz.dfch.specmgr.feat.tools._lock.md) — Per-document and global in-process locks guarding feature mutations (Task 2.2).
+- [`biz.dfch.specmgr.feat.tools._paths`](biz.dfch.specmgr.feat.tools._paths.md) — Feature (FEAT) base directory resolution and id -> path lookup (Task 2.1).
+- [`biz.dfch.specmgr.feat.tools._write`](biz.dfch.specmgr.feat.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_feat`` and
+- [`biz.dfch.specmgr.feat.tools.create_feat`](biz.dfch.specmgr.feat.tools.create_feat.md) — ``@mcp.tool()`` wrapper: create_feat (Task 2.3).
+- [`biz.dfch.specmgr.feat.tools.delete_feat`](biz.dfch.specmgr.feat.tools.delete_feat.md) — ``@mcp.tool()`` wrapper: delete_feat (Task 2.3).
+- [`biz.dfch.specmgr.feat.tools.get_feat`](biz.dfch.specmgr.feat.tools.get_feat.md) — ``@mcp.tool()`` wrapper: get_feat (Task 2.3).
+- [`biz.dfch.specmgr.feat.tools.get_feat_example`](biz.dfch.specmgr.feat.tools.get_feat_example.md) — ``@mcp.tool()`` wrapper: get_feat_example (Task 2.3).
+- [`biz.dfch.specmgr.feat.tools.get_feat_template`](biz.dfch.specmgr.feat.tools.get_feat_template.md) — ``@mcp.tool()`` wrapper: get_feat_template (Task 2.3).
+- [`biz.dfch.specmgr.feat.tools.list_feat`](biz.dfch.specmgr.feat.tools.list_feat.md) — ``@mcp.tool()`` wrapper: list_feat (Task 2.3).
+- [`biz.dfch.specmgr.feat.tools.parse_feat`](biz.dfch.specmgr.feat.tools.parse_feat.md) — ``@mcp.tool()`` wrapper: parse_feat (Task 2.3).
+- [`biz.dfch.specmgr.feat.tools.validate_feat`](biz.dfch.specmgr.feat.tools.validate_feat.md) — ``@mcp.tool()`` wrapper: validate_feat (Task 2.3).
 - [`biz.dfch.specmgr.general`](biz.dfch.specmgr.general.md) — General-purpose (cross-cutting, not domain-specific) tools, resources, and
 - [`biz.dfch.specmgr.general.models`](biz.dfch.specmgr.general.models.md) — Shared, cross-domain Pydantic models with no document-type-specific content.
 - [`biz.dfch.specmgr.general.models.paged_result`](biz.dfch.specmgr.general.models.paged_result.md) — Generic paged-result wrapper shared by every ``list_<domain>`` MCP tool (feat-13 Task 1.1).

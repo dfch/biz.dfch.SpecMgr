@@ -39,6 +39,20 @@ the same byte-identical-output/drift-detection reason as
 :func:`generate_req_schema`.
 
 
+### `generate_feat_schema() -> str`
+
+Generate FEAT's JSON Schema (2020-12 dialect) from ``FeatDocument.model_json_schema()``.
+
+Mirrors :func:`generate_req_schema` exactly, but for ``feat.models.v1``:
+the ``"$schema"`` key is injected the same way (Pydantic v2 omits it by
+default), and ``"$comment"`` holds ``feat.models.v1.SCHEMA_COMMENT_VERSION``
+(currently ``"v1"``) instead of REQ's own version token.
+
+Serializes with ``indent=2, sort_keys=True`` plus a trailing newline, for
+the same byte-identical-output/drift-detection reason as
+:func:`generate_req_schema`.
+
+
 ### `generate_gol_schema() -> str`
 
 Generate GOL's JSON Schema (2020-12 dialect) from ``GolDocument.model_json_schema()``.
