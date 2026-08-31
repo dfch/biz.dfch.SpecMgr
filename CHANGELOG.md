@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `scripts/release.sh`: the `pr-merge`, `publish-wait`, `status`, and
+  `release-notes` stages no longer rely on `gh` CLI features that do not
+  exist in this environment's `gh` 2.4.0 — a nonexistent `--ff-only`
+  merge flag, `gh run list --commit`, `gh run view --json jobs`, and
+  `gh release view --json`/`gh release edit`. Fast-forward-only merging
+  is now enforced by pre-merge and post-merge SHA assertions around the
+  plain merge method; the publication run is located by workflow name
+  ("Publish to PyPI") plus the tag's commit SHA (filtered with `jq`);
+  the GitHub Release is read and its notes set through `gh api`.
+
 ## [0.15.0] - 2026-08-31
 
 ### Added

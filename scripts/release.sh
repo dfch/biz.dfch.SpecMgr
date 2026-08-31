@@ -27,11 +27,23 @@
 #
 # Only `resolve` and `all` accept bump keywords; all other stages take the
 # full resolved version.
+#
+# Written against the old `gh` (2.4.0) this environment ships: no
+# `gh run list --commit`, no `gh run view --json jobs`, no `gh release
+# edit`, no `--ff`-style merge flag. The publication run is located by
+# workflow NAME ("Publish to PyPI") plus the tag's commit SHA (filtered
+# with `jq`); the release notes are set via `gh api`; ff-only merging is
+# enforced by pre- and post-merge SHA assertions around the plain merge
+# method. The SOP's "Safety and Precautions" documents the same
+# constraints.
 
 set -euo pipefail
 
 SOP_ID="98537416-0e6e-4a02-925f-974a17bfa10a"
 REPO_ROOT="biz-dfch-specmgr"
+# Workflow NAME (the `name:` key) of .github/workflows/publish.yml —
+# `gh run list --workflow` filters by name, not by file name.
+PUBLISH_WORKFLOW="Publish to PyPI"
 POLL_INTERVAL=30
 DEV_CI_TIMEOUT_MIN=40
 PUBLISH_TIMEOUT_MIN=45
@@ -44,7 +56,7 @@ die() { printf 'release: ERROR: %s\n' "$*" >&2; exit 1; }
 is_tty() { [ -t 0 ]; }
 
 usage() {
-  sed -n '2,30p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '2,38p' "$0" | sed 's/^# \{0,1\}//'
   exit 2
 }
 
@@ -59,6 +71,7 @@ require_tools() {
   command -v git >/dev/null || die "git not found"
   command -v uv >/dev/null || die "uv not found"
   command -v gh >/dev/null || die "gh not found"
+  command -v jq >/dev/null || die "jq not found"
   gh auth status >/dev/null 2>&1 || die "gh is not authenticated (gh auth status)"
 }
 
@@ -466,14 +479,24 @@ stage_pr_merge() {
   out=$(gh pr checks "$pr_num" 2>&1) && rc=0 || rc=$?
   [ "$rc" -eq 0 ] || { printf '%s\n' "$out" >&2; die "PR #$pr_num checks are not all green — do not merge"; }
 
+  # Fast-forward-only, enforced three ways (old `gh` has no --ff-only flag):
+  # assert the invariant before, merge with the plain merge method
+  # (GitHub fast-forwards an up-to-date branch instead of creating a
+  # merge commit), and re-assert the SHAs after.
+  if git merge-base --is-ancestor origin/main origin/dev; then
+    info "fast-forward invariant holds (main is an ancestor of dev)"
+  else
+    die "origin/main is not an ancestor of origin/dev — the merge could not fast-forward; resolve before merging"
+  fi
+
   if [ "$DRY_RUN" -eq 1 ]; then
-    info "[dry-run] would run: gh pr merge $pr_num --ff-only"
+    info "[dry-run] would run: gh pr merge $pr_num --merge (fast-forward enforced by the assertions above and below)"
     return 0
   fi
 
-  gh pr merge "$pr_num" --ff-only
+  gh pr merge "$pr_num" --merge
   git fetch origin main --quiet
-  [ "$(git rev-parse origin/main)" = "$(git rev-parse origin/dev)" ] || die "after merge, origin/main != origin/dev — investigate before tagging"
+  [ "$(git rev-parse origin/main)" = "$(git rev-parse origin/dev)" ] || die "after merge, origin/main != origin/dev — a merge commit was created (the invariant is broken); investigate before tagging"
   info "pr-merge: done (fast-forward; the invariant holds)"
 }
 
@@ -519,16 +542,21 @@ stage_publish_wait() {
   local tag_sha
   tag_sha=$(git rev-parse --verify "refs/tags/v$v^{commit}")
 
-  local line rid polls
+  local line runs rid polls jobs
   polls=0
   while :; do
-    line=$(gh run list --commit "$tag_sha" --workflow publish.yml --limit 1 --json databaseId,status --jq '.[0] | @tsv' 2>/dev/null || true)
+    # `gh run list --commit` does not exist in old `gh`; filter by the tag's
+    # commit SHA (headSha) with jq instead.
+    runs=$(gh run list --workflow "$PUBLISH_WORKFLOW" --limit 30 --json databaseId,headSha,status 2>/dev/null || true)
+    line=$(jq -r --arg sha "$tag_sha" '[.[] | select(.headSha == $sha)] | .[0] // empty | [.databaseId, .status] | @tsv' <<<"$runs" 2>/dev/null || true)
     if [ -n "$line" ]; then
       rid="${line%%$'\t'*}"
       wait_for_run "$rid" "publish (v$v)" "$PUBLISH_TIMEOUT_MIN"
-      local jobs
-      jobs=$(gh run view "$rid" --json jobs --jq '[.jobs[] | .name] | join(", ")')
-      info "publish-wait: done — jobs: $jobs"
+      # `gh run view --json jobs` does not exist in old `gh`; parse the
+      # plain `gh run view` output (a run only completes "success" when
+      # every job succeeded).
+      jobs=$(gh run view "$rid" 2>/dev/null | sed -n '/^JOBS$/,/^ANNOTATIONS$/p' | grep -E '^[✓✗] ' | sed -E 's/^[✓✗] //; s/ in [0-9]+(m[0-9]+s|s|ms)? \(ID [0-9]+\)$//' | paste -sd, - | sed 's/,/, /g') || jobs=""
+      info "publish-wait: done — jobs: ${jobs:-all succeeded (run conclusion: success)}"
       return 0
     fi
     polls=$((polls + 1))
@@ -546,9 +574,13 @@ stage_release_notes() {
   require_repo_root
   require_tools
 
-  local url assets
-  url=$(gh release view "v$v" --json url --jq .url 2>/dev/null) || die "GitHub Release v$v not found — the publish run's 'Make GitHub Release' job may have failed; check it before proceeding"
-  assets=$(gh release view "v$v" --json assets --jq '.assets | length')
+  # `gh release view --json` and `gh release edit` do not exist in old `gh`;
+  # read and update the release through `gh api` instead.
+  local rel url assets
+  rel=$(gh api repos/{owner}/{repo}/releases/tags/v$v 2>/dev/null) || die "GitHub Release v$v not found — the publish run's 'Make GitHub Release' job may have failed; check it before proceeding"
+  url=$(jq -r '.html_url // empty' <<<"$rel" 2>/dev/null || true)
+  [ -n "$url" ] || die "cannot read the GitHub Release v$v URL from the API response"
+  assets=$(jq '.assets | length' <<<"$rel" 2>/dev/null || echo 0)
   [ "$assets" -ge 2 ] || die "GitHub Release v$v has only $assets asset(s); expected sdist + wheel"
 
   local section
@@ -556,16 +588,17 @@ stage_release_notes() {
   [ -n "$section" ] || die "no changelog section for v$v in CHANGELOG.md"
 
   local current_notes
-  current_notes=$(gh release view "v$v" --json body --jq -r .body)
+  current_notes=$(jq -r '.body // ""' <<<"$rel" 2>/dev/null || true)
   if [ "$current_notes" = "$section" ]; then
     info "release-notes: already set — nothing to do"
   elif [ "$DRY_RUN" -eq 1 ]; then
     info "[dry-run] would set the release notes of $url to the v$v changelog section"
   else
-    local notes_file
+    local notes_file rel_id
     notes_file=$(mktemp)
     printf '%s\n' "$section" >"$notes_file"
-    gh release edit "v$v" --notes-file "$notes_file"
+    rel_id=$(jq -r '.id' <<<"$rel")
+    gh api --method PATCH repos/{owner}/{repo}/releases/"$rel_id" -F "body=@$notes_file" >/dev/null
     rm -f "$notes_file"
     info "release-notes: set"
   fi
@@ -639,22 +672,24 @@ stage_status() {
   printf '  [%s] tag           %s\n' "$mark" "$detail"
 
   # 6. publish
-  local tag_sha pub_line
+  local tag_sha pub_line runs
   tag_sha=""
   if git rev-parse --verify --quiet "refs/tags/v$v" >/dev/null; then
     tag_sha=$(git rev-parse --verify "refs/tags/v$v^{commit}")
   fi
   if [ -n "$tag_sha" ]; then
-    pub_line=$(gh run list --commit "$tag_sha" --workflow publish.yml --limit 1 --json status,conclusion --jq '.[0] | @tsv' 2>/dev/null || true)
+    runs=$(gh run list --workflow "$PUBLISH_WORKFLOW" --limit 30 --json headSha,status,conclusion 2>/dev/null || true)
+    pub_line=$(jq -r --arg sha "$tag_sha" '[.[] | select(.headSha == $sha)] | .[0] // empty | [.status, (.conclusion // "-")] | @tsv' <<<"$runs" 2>/dev/null || true)
     if [ -n "$pub_line" ]; then mark="x"; detail="run: $pub_line"; else mark="!"; detail="tag exists, no publish run found yet"; fi
   else mark=" "; detail="no publish run (no tag)"; fi
   printf '  [%s] publish       %s\n' "$mark" "$detail"
 
-  # 7. release notes
-  if gh release view "v$v" --json url >/dev/null 2>&1; then
-    local assets notes_ok
-    assets=$(gh release view "v$v" --json assets --jq '.assets | length')
-    notes_ok=$(gh release view "v$v" --json body --jq -r .body)
+  # 7. release notes (via `gh api`; old `gh` has no `gh release view --json`)
+  local rel assets notes_ok
+  rel=$(gh api repos/{owner}/{repo}/releases/tags/v$v 2>/dev/null) || rel=""
+  if [ -n "$rel" ]; then
+    assets=$(jq '.assets | length' <<<"$rel" 2>/dev/null || echo 0)
+    notes_ok=$(jq -r '.body // ""' <<<"$rel" 2>/dev/null || true)
     if [ "$notes_ok" = "$(extract_changelog_section "$v")" ]; then mark="x"; detail="release exists ($assets assets), notes set"; else mark="!"; detail="release exists ($assets assets), notes NOT yet set"; fi
   else
     mark=" "; detail="no GitHub Release yet"
