@@ -25,18 +25,22 @@ registers the ISO/IEC 25010:2023 product quality model resource. ``dtais``
 registers the DTAIS verification-method vocabulary resource
 (``specmgr://dtais``, feat-33-vcr REQ-006) -- cross-cutting domain
 knowledge for ``vcr``'s ``## Acceptance Criteria`` method vocabulary, not
-owned by ``vcr``'s own schema. Domain-specific resources (e.g.
-``adr_list``/``adr_get``) live under their own domain package instead
-(``biz.dfch.specmgr.adr.resources``). Import this package to load all
-cross-cutting resources at once::
+owned by ``vcr``'s own schema. ``rasci`` registers the generic RASCI
+responsibility-assignment guidance resource (``specmgr://rasci``,
+REQ-011) -- motivated by the ``sop`` domain but not scoped to it, mirroring
+``iso25010``'s cross-cutting placement rather than ``rsk/tara``'s
+domain-scoped one. Domain-specific resources (e.g. ``adr_list``/``adr_get``)
+live under their own domain package instead (``biz.dfch.specmgr.adr.resources``).
+Import this package to load all cross-cutting resources at once::
 
     from biz.dfch.specmgr.general import resources  # noqa: F401 (side-effects only)
 """
 
-from . import dtais, iso25010, version  # noqa: F401
+from . import dtais, iso25010, rasci, version  # noqa: F401
 
 __all__ = [
     "dtais",
     "iso25010",
+    "rasci",
     "version",
 ]

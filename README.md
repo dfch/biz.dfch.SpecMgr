@@ -26,6 +26,7 @@ At this time, we have these artifact:
 - Question and Answer (QA)
 - Requirement (REQ)
 - Risk (RSK)
+- Standard Operating Procedure (SOP)
 - Task List (TSK)
 - Use Case (UC)
 - Verification Case Record (VCR)

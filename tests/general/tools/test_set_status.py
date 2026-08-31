@@ -17,13 +17,13 @@
 
 """Tests for the generic ``set_status`` ``@mcp.tool()`` wrapper (feat-22-consolidate-mutation-tools, Phase 4).
 
-Parameterized over all eleven document types (ACC-004); seeds a real,
-persisted document per type -- the ten whole-body domains via the
+Parameterized over all twelve document types (ACC-004); seeds a real,
+persisted document per type -- the eleven whole-body domains via the
 domain's own ``create_<d>`` tool in a temp ``SPECMGR_DOCS_DIR`` (mirroring
 the fixture strategy of ``tests/general/tools/test_update.py``), the ADR
 by rendering a minimal valid model into a temp ``SPECMGR_ADR_DIR`` -- and
 covers: status changed + ``updated`` bumped (microsecond timestamp) + body
-untouched (ten domains: raw body byte-identical; ADR: re-render round-
+untouched (eleven domains: raw body byte-identical; ADR: re-render round-
 trip equal apart from status); each domain's closed-vocabulary
 enforcement (positive value from the domain's own ``_ALLOWED_STATUSES``;
 negative value valid in one domain but invalid in the tested one -- each a
@@ -77,6 +77,9 @@ from biz.dfch.specmgr.req.tools.create_req import create_req
 from biz.dfch.specmgr.rsk.models.v1.frontmatter import _ALLOWED_STATUSES as _RSK_ALLOWED_STATUSES
 from biz.dfch.specmgr.rsk.tools._paths import RskNotFoundError
 from biz.dfch.specmgr.rsk.tools.create_rsk import create_rsk
+from biz.dfch.specmgr.sop.models.v1.frontmatter import _ALLOWED_STATUSES as _SOP_ALLOWED_STATUSES
+from biz.dfch.specmgr.sop.tools._paths import SopNotFoundError
+from biz.dfch.specmgr.sop.tools.create_sop import create_sop
 from biz.dfch.specmgr.tsk.models.v1.frontmatter import _ALLOWED_STATUSES as _TSK_ALLOWED_STATUSES
 from biz.dfch.specmgr.tsk.tools._paths import TskNotFoundError
 from biz.dfch.specmgr.tsk.tools.create_tsk import create_tsk
@@ -294,6 +297,22 @@ _DEC_MINIMAL_BODY = textwrap.dedent(
     """
 )
 
+_SOP_MINIMAL_BODY = textwrap.dedent(
+    """\
+    # New Employee IT Account Provisioning
+
+    ## Purpose
+
+    Provision accounts for new hires.
+
+    ## Procedure
+
+    ### Step 1: Submit request
+
+    HR submits the request.
+    """
+)
+
 _VCR_MINIMAL_BODY = textwrap.dedent(
     """\
     # Sample Verification Case
@@ -317,7 +336,7 @@ _VCR_MINIMAL_BODY = textwrap.dedent(
 
 @dataclass(frozen=True)
 class _Case:
-    """Per-type test data for the ten whole-body document types."""
+    """Per-type test data for the eleven whole-body document types."""
 
     doc_type: str
     create: Callable[[str], Any]
@@ -406,6 +425,15 @@ _CASES: list[_Case] = [
         allowed_statuses=_DEC_ALLOWED_STATUSES,
     ),
     _Case(
+        doc_type="sop",
+        create=create_sop,
+        not_found_error=SopNotFoundError,
+        minimal_body=_SOP_MINIMAL_BODY,
+        valid_status="active",
+        invalid_status="implemented",
+        allowed_statuses=_SOP_ALLOWED_STATUSES,
+    ),
+    _Case(
         doc_type="vcr",
         create=create_vcr,
         not_found_error=VcrNotFoundError,
@@ -459,7 +487,7 @@ class TempDocsDirTestCase(unittest.TestCase):
 
 
 class TestSetStatusWholeBodyDomains(TempDocsDirTestCase):
-    """ACC-004: the ten whole-body domains -- status changed, ``updated`` bumped, body untouched."""
+    """ACC-004: the eleven whole-body domains -- status changed, ``updated`` bumped, body untouched."""
 
     def test_case_data_matches_the_domains_own_closed_sets(self) -> None:
         """Each ``valid_status``/``invalid_status`` pair must be exactly as claimed against the domain's own set."""

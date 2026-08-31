@@ -11,10 +11,10 @@ version). It complements the domain-specific packages (``adr``, ``req``,
 
 ``tools`` (e.g. ``mdformat``, ``webfetch``) operate on raw markdown files or
 external URLs and are registered as ``@mcp.tool()`` functions. ``resources``
-(e.g. ``version``, ``iso25010``) are registered as ``@mcp.resource()``
-functions. ``prompts`` (e.g. ``compact_history``) return instructional text
-and are registered as ``@mcp.prompt()`` functions. Import this package to
-register all general tools, resources, and prompts against the shared ``mcp``
-application instance at once::
+(e.g. ``version``, ``iso25010``, ``rasci``) are registered as
+``@mcp.resource()`` functions. ``prompts`` (e.g. ``compact_history``) return
+instructional text and are registered as ``@mcp.prompt()`` functions. Import
+this package to register all general tools, resources, and prompts against
+the shared ``mcp`` application instance at once::
 
     from biz.dfch.specmgr import general  # noqa: F401 (side-effects only)

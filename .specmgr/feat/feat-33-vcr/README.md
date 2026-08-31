@@ -3,8 +3,8 @@ created: 2026-08-31 07:25:24.241609
 id: feat-33-vcr
 status: done
 type: feat
-updated: 2026-08-31 15:30:00
-version: 1.1.0
+updated: 2026-08-31 16:26:00
+version: 1.2.0
 ---
 
 # Feature: Add artifact type "Verification Case Record" (VCR)
@@ -541,7 +541,18 @@ has no Plan/Progress split -- same reasoning `sysrs` used for its own
 
 ### Current Status
 
-**As of 2026-08-31 (latest)**: Feature complete end to end. Phase 4
+**As of 2026-08-31 (post-merge, latest)**: Merged current `dev` into this
+branch (PR #34 / `feat-30-sop`, which added the `sop` domain and the
+cross-cutting `specmgr://rasci` resource, plus chore `03260fe`). Every
+conflict was additive (`sop` and `vcr` register into the same generic
+dispatch points) and was resolved by combining both sides; a missing
+`vcr` packaged-schema CI step was added for parity with `sop`. All
+generated artifacts were regenerated from the merged source and verified
+drift-free; full gate green (2704 tests `OK`). The branch is now PR-ready
+against `dev`. See the newest Updates entry below for the per-file
+resolution log.
+
+**As of 2026-08-31 (pre-merge)**: Feature complete end to end. Phase 4
 (Cross-cutting registration) wired `vcr/__init__.py` (now imports
 `prompts`/`resources`/`tools`, mirroring `dec/__init__.py` exactly),
 added `vcr` to `server.py`'s bottom import line and its full module
@@ -654,6 +665,73 @@ is Phase 2/3/4's job.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-08-31T16:26:00.000000 — Merged current `dev` (incl. PR #34 / SOP) into `feat-33-vcr`; resolved all conflicts additively; branch PR-ready
+
+`origin/dev` had advanced past this branch's merge base (`4c7d976`) by PR
+#34 ("feat(30): Add artifact type \"Standard Operating Procedure\" (SOP) —
+complete", `ec3d644`) -- the new `sop` domain plus the cross-cutting
+`specmgr://rasci` resource -- and by chore `03260fe` (a feat-7 README
+backlog note; no file overlap). `git merge origin/dev` conflicted in 14
+files; every conflict was additive (both `sop` and `vcr` register into the
+same generic dispatch points) and was resolved by combining both sides:
+
+- `general/tools/update.py`: eleven whole-body domains
+  (`req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr`),
+  both `_update_sop` and `_update_vcr` adapters, 11-way return union,
+  11-value `type` enum; the `update` docstring was re-normalized to the
+  base indentation the `sop` side had re-indented.
+- `general/tools/set_status.py`: twelve domains incl. `adr`, both
+  adapters, 12-way union, 12-value enum; same docstring normalization.
+- `server.py`: module docstring gains both domains' resource lines,
+  "no `{id}`/no `list`" sentences, tools/prompt paragraphs, and the count
+  bumps (eleven whole-body / twelve incl. `adr`); the bottom import line
+  is now `adr, dec, feat, general, gol, prb, qa, req, rsk, sop, tsk, uc,
+  vcr`.
+- `general/resources/__init__.py`: imports/`__all__`/docstring carry
+  `dtais`, `iso25010`, `rasci`, and `version`.
+- `commands/schema.py`: both `generate_sop_schema` and
+  `generate_vcr_schema` plus both `_GENERATORS` entries (the registry
+  itself auto-merged).
+- `.pre-commit-config.yaml`: all 11 `files:` regexes carry
+  `sop/models/v1` and `vcr/models/v1`; both `specmgr-schema-sop-package`
+  and `specmgr-schema-vcr-package` hooks present (12 schema hooks total).
+- `tests/general/tools/test_update.py` / `test_set_status.py`: both
+  per-domain cases and fixtures (after the `dec` case, `sop` then
+  `vcr`); `update`'s registration assertion now expects the 11-value
+  enum; docstring counts updated to eleven/twelve -- the `sop` side had
+  left `test_set_status`'s docstring stale at nine/eight, fixed as part
+  of the union; `test_update`'s field-error note now names
+  `dec`/`sop`/`vcr` (duplicated `### Option`/`### Step`/`### AC-NNN`
+  numbers).
+- `AGENTS.md`: both `sop/` and `vcr/` Status bullets; `general/`
+  paragraph unioned (eleven whole-body domains, twelve incl. `adr`,
+  resources `version`/`iso25010`/`dtais`/`rasci`, eleven `get_<d>`
+  tools); the "still missing" `validate_*`/`delete_*` lists, the
+  registration summary, and the MCP-server import list all gain both.
+- `README.md` / `pyproject.toml`: auto-merged cleanly (SOP line after
+  RSK, VCR line after UC; both `package-data` entries).
+- `.github/workflows/ci.yml`: an audit against the pre-commit hooks
+  found all 11 packaged schema copies covered by hooks but only 10 by
+  CI steps (`vcr` missing -- this branch had added the pre-commit hook
+  but no CI step, unlike the `sop` PR). Added the
+  `src/biz/dfch/specmgr/vcr/data/vcr_schema.json` packaged-copy drift
+  step (after the `feat` step, before `docs/coverage.svg`) and added
+  `vcr` to the all-types comment.
+- Generated artifacts (`docs/GENERATED.md`, `docs/api/**`,
+  `docs/MCP.md`, `docs/*_schema.json`, packaged schema copies,
+  `docs/adr/README.md`): conflict markers were dropped in favor of a
+  full regeneration from the merged source -- `specmgr docs`,
+  `specmgr mcp-docs`, `specmgr schema` (all 11 types `unchanged`),
+  `specmgr schema --type {sop,vcr} --output-dir src/.../{sop,vcr}/data`
+  (both `unchanged`), `specmgr adr-toc` -- then re-run as a fixed-point
+  check with zero drift.
+
+Quality gate after the merge: `ruff format --check` (1481 files),
+`ruff check` (all passed), `vulture` (clean, no new whitelist entries
+needed), full `unittest` suite (2704 tests, `OK`), `coverage run` +
+`specmgr coverage-badge` (99%, `docs/coverage.svg` byte-unchanged),
+advisory `pylint` (8.87/10, no new messages from the merge).
 
 #### 2026-08-31T15:30:00.000000 — Phase 4 complete: cross-cutting registration; feature fully implemented end to end
 

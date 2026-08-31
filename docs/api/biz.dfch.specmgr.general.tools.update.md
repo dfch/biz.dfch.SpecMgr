@@ -3,10 +3,10 @@
 ``@mcp.tool()`` wrapper: update (feat-22-consolidate-mutation-tools, Phase 2).
 
 The generic, cross-domain whole-body *and* line-range replace tool for the
-ten whole-body document types (``req``/``uc``/``tsk``/``qa``/``prb``/
-``gol``/``rsk``/``dec``/``feat``/``vcr``). It dispatches on the explicit ``type``
-parameter to
-a private per-domain adapter (``_update_<d>``), each a **verbatim port** of
+eleven whole-body document types (``req``/``uc``/``tsk``/``qa``/``prb``/
+``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``). It dispatches on the
+explicit ``type`` parameter to a private per-domain adapter (``_update_<d>``),
+each a **verbatim port** of
 the corresponding per-domain ``update_<d>`` tool's function body (same
 domain lock, same ``load_by_id``, same frontmatter carry-over with only
 ``updated`` bumped, same verbatim persistence via the domain's own
@@ -14,16 +14,19 @@ domain lock, same ``load_by_id``, same frontmatter carry-over with only
 branch: with ``begin``/``end`` given, the on-disk body is re-read via
 :func:`._splice.body_text`, spliced via :func:`._splice.splice_body`, and
 the *spliced result* is validated as a whole document and persisted
-verbatim instead of the raw fragment.
+verbatim instead of the raw fragment. ``sop`` is the first domain built
+dispatch-only from day one (ADR 36905d5b): its ``_update_sop`` adapter was
+written directly in this shape rather than ported from a retired
+per-domain tool.
 
 The parameter is intentionally named ``type`` (it matches the frontmatter
 field vocabulary the client already knows); no enabled ruff rule objects to
-the builtin shadow. The 10-way union return type is annotation-only -- the
+the builtin shadow. The 11-way union return type is annotation-only -- the
 MCP input schema is built from the parameters, and the SDK serializes
 whichever concrete document is returned.
 
 ``feat`` is the one domain whose adapter (``_update_feat``) diverges from
-the other eight's identical shape in how it resolves ``id``: via
+the other ten's identical shape in how it resolves ``id``: via
 ``feat.tools._paths``'s bespoke folder-per-document shortcut, not a
 flat-file directory scan (see
 ``.specmgr/feat/feat-31-feature/README.md`` Design Notes, "Addressing").
@@ -123,6 +126,19 @@ per-domain tool was retired in feat-22 Phase 3), plus the REQ-002 range
 branch (see :func:`_update_req`).
 
 
+### `_update_sop(id_: 'str', content: 'str', begin: 'int | None', end: 'int | None') -> 'SopDocument'`
+
+Replace the body of the SOP identified by ``id_`` (whole-body or line-range mode).
+
+Verbatim-shape port of :func:`_update_dec` (same ``sop_lock``,
+``load_by_id``, frontmatter carry-over with only ``updated`` bumped,
+``write_sop_file``, ``SopNotFoundError``; ``sop`` is the first domain
+built dispatch-only from day one per ADR 36905d5b, so there was never a
+per-domain ``update_sop`` tool to port -- this adapter was written
+directly in this shape), plus the REQ-002 range branch
+(see :func:`_update_req`).
+
+
 ### `_update_tsk(id_: 'str', content: 'str', begin: 'int | None', end: 'int | None') -> 'TskDocument'`
 
 Replace the body of the task list identified by ``id_`` (whole-body or line-range mode).
@@ -155,12 +171,12 @@ frontmatter carry-over with only ``updated`` bumped, ``write_vcr_file``,
 :func:`_update_req`).
 
 
-### `update(id: 'str', type: "Literal['req', 'uc', 'tsk', 'qa', 'prb', 'gol', 'rsk', 'dec', 'feat', 'vcr']", content: 'str', begin: 'int | None' = None, end: 'int | None' = None) -> '_UpdateDocument'`
+### `update(id: 'str', type: "Literal['req', 'uc', 'tsk', 'qa', 'prb', 'gol', 'rsk', 'dec', 'sop', 'feat', 'vcr']", content: 'str', begin: 'int | None' = None, end: 'int | None' = None) -> '_UpdateDocument'`
 
 Replace the body of an existing document, in whole-body or line-range mode.
 
-Cross-domain generic for the ten whole-body document types
-(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``feat``/``vcr``);
+Cross-domain generic for the eleven whole-body document types
+(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``);
 dispatches on ``type`` to the domain's own ported adapter (same lock,
 same id resolution, same frontmatter carry-over, same verbatim
 persistence, same domain not-found error).
@@ -177,7 +193,7 @@ either case.
 replacement *fragment* for the current on-disk body's 1-based,
 inclusive line range ``begin..end``, where ``N`` is the number of lines
 of the current frontmatter-stripped body (the text ``get_<d>(id,
-raw=True)`` returns) and ``N+1`` is a virtual position past the last
+raw=True`` returns) and ``N+1`` is a virtual position past the last
 line (``begin = end = N+1`` appends at end of body; ``end = N+1``
 extends the range through the last line). The on-disk body is re-read
 under the domain lock, spliced (drop lines ``begin..min(end, N)``,
@@ -201,7 +217,8 @@ id:
     The document's specmgr-assigned identifier.
 type:
     The document type / domain: one of ``req``, ``uc``, ``tsk``,
-    ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``feat``, ``vcr``.
+    ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
+    ``vcr``.
 content:
     Whole-body mode: the replacement body markdown, with no
     frontmatter block. Range mode: the replacement fragment for lines
@@ -217,7 +234,8 @@ end:
 Returns
 -------
 ReqDocument | UcDocument | TskDocument | QaDocument | PrbDocument |
-GolDocument | RskDocument | DecDocument | FeatDocument | VcrDocument
+GolDocument | RskDocument | DecDocument | FeatDocument | SopDocument |
+VcrDocument
     The updated document of the dispatched domain type.
 
 Raises
@@ -236,7 +254,7 @@ pydantic.ValidationError
     a range producing an out-of-vocabulary value). Nothing is written.
 ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
 PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
-FeatNotFoundError / VcrNotFoundError
+FeatNotFoundError / SopNotFoundError / VcrNotFoundError
     No document of the dispatched ``type`` has this id -- the
     domain's own not-found error, unchanged from the per-domain tools.
 

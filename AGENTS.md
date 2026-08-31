@@ -191,6 +191,37 @@ type or cross-cutting:
   `models/md` parser with the GOL/RSK/QA simple surface — no
   fine-grained mutation tools, no renderer: writes persist the
   caller's raw validated body byte-for-byte.
+- **`sop/`** (Standard Operating Procedure) — same tools/resources/prompts
+  shape as `dec/` but for structured, step-by-step operational documents
+  with a RASCI-style responsibility assignment and a closed
+  approval/effectivity lifecycle (`create_sop`, `parse_sop`, `list_sop`,
+  `get_sop`, `get_sop_example`, `get_sop_template`, `delete_sop` stub,
+  `validate_sop`); `sop` is the **first domain built dispatch-only from day
+  one** (ADR 36905d5b-8057-4294-8665-c7eed5534db0) — it has NO per-domain
+  `update_sop`/`set_status_sop` tools at all, so whole-body and line-range
+  updates go through the generic `update` tool in `general/tools/`
+  (`type="sop"`) and status changes through the generic `set_status` tool
+  (`type="sop"`), and the `get_sop` tool takes `raw: bool = False` —
+  `raw=True` returns the frontmatter-stripped body text as-is (the text
+  `update`'s `begin`/`end` index into); `sop/resources/`
+  (`specmgr://sop/schema`, `specmgr://sop/example`,
+  `specmgr://sop/template`; no `specmgr://sop/{id}` — id-based reads
+  are `get_sop`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
+  `specmgr://sop/list` — `list_sop` ships as a paged tool from day
+  one, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13); `sop/prompts/`
+  (`create_sop`/`update_sop`, narrated `TodoWrite` +
+  `question`-tool-driven interview flows; `create_sop` first checks
+  `list_sop` for a near-duplicate SOP; both prompts include an explicit
+  `specmgr://rasci` read-first step before `## Roles and Responsibilities`,
+  and `update_sop` names the GENERIC `update`/`set_status` tools with
+  `type="sop"`). Its schema lives at `sop/models/v1/`, inside the domain
+  package, not top-level `models/`. An SOP is built on the generic
+  `models/md` parser with the GOL/RSK/QA/DEC simple surface — no
+  fine-grained mutation tools, no renderer: writes persist the
+  caller's raw validated body byte-for-byte. `sop` relies on the
+  cross-cutting `specmgr://rasci` resource (REQ-011, see `general/`
+  below) for the generic RASCI role definitions used by its
+  `## Roles and Responsibilities` section, not a domain-local one.
 - **`feat/`** (Feature) — formalizes the ad hoc `.specmgr/feat/<id>/
   README.md` convention (ADR e369ee2e-3353-4f92-991c-6367d76d832e) into a
   real, schema-backed domain, and is the one domain in this codebase whose
@@ -268,21 +299,23 @@ type or cross-cutting:
   - **`general/`** — cross-cutting, non-domain-specific package:
     `general/tools/` (`mdformat`, formats a markdown file in place while
     preserving YAML frontmatter blocks; `update`, the generic whole-body
-    *and* line-range replace for the ten whole-body domains — `type` is
-    one of req/uc/tsk/qa/prb/gol/rsk/dec/feat/vcr, optional 1-based inclusive
+    *and* line-range replace for the eleven whole-body domains — `type` is
+    one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr, optional 1-based inclusive
     body-line
     `begin`/`end` with the `N+1` end-of-body sentinel, splice-then-
-    validate-whole; `set_status`, the generic status change for all eleven
+    validate-whole; `set_status`, the generic status change for all twelve
     domains incl. adr — `superseded_by` is ADR-only, composing
     `"superseded by X"`), `general/resources/`
    (`specmgr://version`, `specmgr://iso25010` — the ISO/IEC 25010:2023
    quality model, `specmgr://dtais` — the DTAIS verification-method
    vocabulary VCR's `## Acceptance Criteria` depends on, kept here rather
    than under `vcr/resources/` since it is domain-knowledge other document
-   types may also want to reference), and `general/prompts/` (`compact_history` — rotates
-    older `Recent Updates` entries out of any feature folder's `README.md`
-    into a sibling `history.md`). The ten `get_<d>` tools additionally
-    take a `raw: bool = False` parameter — `raw=True` returns the
+   types may also want to reference, and `specmgr://rasci` — the generic
+   RASCI responsibility-assignment framework, REQ-011; motivated by `sop`
+   but not scoped to it), and `general/prompts/` (`compact_history` — rotates
+     older `Recent Updates` entries out of any feature folder's `README.md`
+     into a sibling `history.md`). The eleven `get_<d>` tools additionally
+     take a `raw: bool = False` parameter — `raw=True` returns the
     frontmatter-stripped body text as-is (the text `update`'s `begin`/`end`
     index into).
 
@@ -308,14 +341,14 @@ mirror of that same registration and must never be hand-edited.
 Still genuinely missing / not yet done (don't assume otherwise):
 - No `validate_adr` (or `validate_req`/`validate_uc`/`validate_tsk`/
   `validate_qa`/`validate_prb`/`validate_gol`/`validate_rsk`/
-  `validate_dec`/`validate_feat`/`validate_vcr`) tool runs
+  `validate_dec`/`validate_sop`/`validate_feat`/`validate_vcr`) tool runs
   over the repo's
   own documents yet via pre-commit or CI. (ADR
   9c687bb1-8ee7-41c8-84ec-07606356bc73: "Enforce doc generation/lint/tests
   locally via pre-commit hook, not just CI")
 - `delete_req`/`delete_uc`/`delete_tsk`/`delete_qa`/`delete_prb`/
-  `delete_gol`/`delete_rsk`/`delete_dec`/`delete_feat`/`delete_vcr` are
-  stubs, not yet implemented.
+  `delete_gol`/`delete_rsk`/`delete_dec`/`delete_sop`/`delete_feat`/
+  `delete_vcr` are stubs, not yet implemented.
 - No `ac` (Acceptance Criteria) domain exists yet, despite `server.py`'s
   docstring already reserving a spot for it ("... and later `ac`") — the
   convention for adding it (or any future domain) is fixed by ADR
@@ -323,7 +356,7 @@ Still genuinely missing / not yet done (don't assume otherwise):
   two generic tools in `general/tools/` (`update`'s `type`,
   `set_status`'s `type`) plus a `raw` parameter on the new `get_<d>` tool
   — not new `update_<d>`/`set_status_<d>` tools.
-- `req`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`feat`/`vcr` each register
+- `req`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr` each register
   `tools`, `resources`, and `prompts`; `uc` registers `tools` and
   `resources` only — it has no `prompts` sub-package yet.
 
@@ -464,8 +497,8 @@ consumer of the base library.
 
 - Builds the `MCPServer` instance (`mcp` object) and a no-op `_lifespan`,
   then imports every domain package (`adr`, `dec`, `feat`, `general`,
-  `gol`, `prb`, `qa`, `req`, `rsk`, `tsk`, `uc`, `vcr`) as its last line
-  purely for the side effect of
+  `gol`, `prb`, `qa`, `req`, `rsk`, `sop`, `tsk`, `uc`, `vcr`) as its last line purely
+  for the side effect of
   running their `@mcp.tool()`/`@mcp.resource()`/`@mcp.prompt()` decorators.
   When adding a new domain, add its import to that same last line —
   forgetting it means the new tools/resources/prompts silently never

@@ -17,7 +17,7 @@
 
 """Tests for the generic ``update`` ``@mcp.tool()`` wrapper (feat-22-consolidate-mutation-tools, Phase 2).
 
-Parameterized over all nine whole-body document types; seeds a real,
+Parameterized over all ten whole-body document types; seeds a real,
 persisted document per type in a temp ``SPECMGR_DOCS_DIR`` via the domain's
 own ``create_<d>`` tool (mirroring the fixture strategy of the per-domain
 ``tests/<d>/tools/test_update_<d>.py`` files still on disk at this phase).
@@ -25,10 +25,11 @@ Covers ACC-001 (whole-body mode) and ACC-002 (range mode) plus the
 registration smoke test of Task 2.8.
 
 Note on the per-type out-of-vocabulary field-value cases: ``req``, ``uc``,
-``tsk``, ``gol``, ``rsk``, ``dec``, and ``vcr`` each have a genuine
+``tsk``, ``gol``, ``rsk``, ``dec``, ``sop``, and ``vcr`` each have a genuine
 field-level ``pydantic.ValidationError`` path in their body schema (closed
-vocabularies or cross-field validators -- for ``dec``/``vcr``, a duplicated
-``### Option``/``### AC-NNN`` number), while ``qa`` and ``prb`` bodies are
+vocabularies or cross-field validators -- for ``dec``/``sop``/``vcr``, a
+duplicated ``### Option``/``### Step``/``### AC-NNN`` number), while ``qa``
+and ``prb`` bodies are
 free-form text only -- no closed vocabulary, no field constraint -- so their
 out-of-vocabulary input (an unrecognized section heading) fails structurally
 with ``AssertionError`` instead. Each type's case data flags which of the
@@ -65,6 +66,8 @@ from biz.dfch.specmgr.req.tools._paths import ReqNotFoundError
 from biz.dfch.specmgr.req.tools.create_req import create_req
 from biz.dfch.specmgr.rsk.tools._paths import RskNotFoundError
 from biz.dfch.specmgr.rsk.tools.create_rsk import create_rsk
+from biz.dfch.specmgr.sop.tools._paths import SopNotFoundError
+from biz.dfch.specmgr.sop.tools.create_sop import create_sop
 from biz.dfch.specmgr.tsk.tools._paths import TskNotFoundError
 from biz.dfch.specmgr.tsk.tools.create_tsk import create_tsk
 from biz.dfch.specmgr.uc.tools._paths import UcNotFoundError
@@ -465,6 +468,42 @@ _DEC_UPDATED_BODY = textwrap.dedent(
     """
 )
 
+_SOP_MINIMAL_BODY = textwrap.dedent(
+    """\
+    # New Employee IT Account Provisioning
+
+    ## Purpose
+
+    Provision accounts for new hires.
+
+    ## Procedure
+
+    ### Step 1: Submit request
+
+    HR submits the request.
+    """
+)
+
+_SOP_UPDATED_BODY = textwrap.dedent(
+    """\
+    # New Employee IT Account Provisioning
+
+    ## Purpose
+
+    Provision accounts for all new hires.
+
+    ## Scope
+
+    All new hires in the engineering organization.
+
+    ## Procedure
+
+    ### Step 1: Submit request
+
+    HR submits the request.
+    """
+)
+
 _VCR_MINIMAL_BODY = textwrap.dedent(
     """\
     # Sample Verification Case
@@ -694,6 +733,23 @@ _CASES: list[_Case] = [
             "\n### Option 1: Duplicate option\n"
             "\nThe duplicate option text.\n"
         ),
+        field_error_is_append=True,
+        field_error_is_validation=True,
+    ),
+    _Case(
+        doc_type="sop",
+        create=create_sop,
+        not_found_error=SopNotFoundError,
+        minimal_body=_SOP_MINIMAL_BODY,
+        updated_body=_SOP_UPDATED_BODY,
+        middle_marker="Provision accounts for new hires.",
+        middle_replacement="Provision accounts for all new hires.",
+        append_fragment="\n## More Information\n\nSome notes.\n",
+        eof_marker="## Procedure",
+        eof_fragment="## Procedure\n\n### Step 1: Submit request\n\nHR submits the revised request.\n",
+        deletable_suffix="\n## More Information\n\nSome notes.\n",
+        field_error_marker="### Step 1: Submit request",
+        field_error_fragment=("\n### Step 1: Duplicate step\n\nDuplicate step text.\n"),
         field_error_is_append=True,
         field_error_is_validation=True,
     ),
@@ -1018,7 +1074,7 @@ class TestUpdateRange(TempDocsDirTestCase):
 
 
 class TestUpdateRegistration(unittest.TestCase):
-    """Task 2.8: the live ``mcp`` registration carries ``update`` with the 9-value ``type`` enum and
+    """Task 2.8: the live ``mcp`` registration carries ``update`` with the 11-value ``type`` enum and
     optional integer ``begin``/``end`` in its input schema."""
 
     @classmethod
@@ -1028,13 +1084,15 @@ class TestUpdateRegistration(unittest.TestCase):
         cls._tools = asyncio.run(mcp.list_tools())
 
     def test_update_registered_with_type_enum_and_optional_range(self) -> None:
-        """``update`` must be registered exactly once, with the 9-value ``type`` enum and optional int ``begin``/``end``."""
+        """``update`` must be registered exactly once, with the 11-value ``type`` enum and optional int ``begin``/``end``."""
         matching = [t for t in self._tools if t.name == "update"]
         self.assertEqual(len(matching), 1)
 
         schema = matching[0].input_schema
         type_prop = schema["properties"]["type"]
-        self.assertEqual(type_prop["enum"], ["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "feat", "vcr"])
+        self.assertEqual(
+            type_prop["enum"], ["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "feat", "vcr"]
+        )
         self.assertEqual(type_prop["type"], "string")
         for name in ("begin", "end"):
             prop = schema["properties"][name]

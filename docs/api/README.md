@@ -111,6 +111,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general.resources`](biz.dfch.specmgr.general.resources.md) — MCP resource registrations that are not specific to any single document
 - [`biz.dfch.specmgr.general.resources.dtais`](biz.dfch.specmgr.general.resources.dtais.md) — Resource: specmgr://dtais -- the DTAIS verification-method vocabulary (feat-33-vcr Task 3.3).
 - [`biz.dfch.specmgr.general.resources.iso25010`](biz.dfch.specmgr.general.resources.iso25010.md) — Resource: specmgr://iso25010 (Task 0.8.3).
+- [`biz.dfch.specmgr.general.resources.rasci`](biz.dfch.specmgr.general.resources.rasci.md) — Resource: specmgr://rasci (feat-30 Task 3.5, REQ-011).
 - [`biz.dfch.specmgr.general.resources.version`](biz.dfch.specmgr.general.resources.version.md) — Resource: specmgr://version — MCP server package version number.
 - [`biz.dfch.specmgr.general.tools`](biz.dfch.specmgr.general.tools.md) — MCP tool wrappers for general-purpose utilities (mirrors ``adr/tools/``'s shape).
 - [`biz.dfch.specmgr.general.tools._doc_paths`](biz.dfch.specmgr.general.tools._doc_paths.md) — Generic, doc-type-agnostic base directory resolution, filename slugification,
@@ -297,6 +298,35 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.rsk.tools.parse_rsk`](biz.dfch.specmgr.rsk.tools.parse_rsk.md) — ``@mcp.tool()`` wrapper: parse_rsk (Task 3.2).
 - [`biz.dfch.specmgr.rsk.tools.validate_rsk`](biz.dfch.specmgr.rsk.tools.validate_rsk.md) — ``@mcp.tool()`` wrapper: validate_rsk (Task 3.7).
 - [`biz.dfch.specmgr.server`](biz.dfch.specmgr.server.md) — MCP server for ``biz-dfch-specmgr``.
+- [`biz.dfch.specmgr.sop`](biz.dfch.specmgr.sop.md) — Standard Operating Procedure (SOP) domain -- structured, step-by-step
+- [`biz.dfch.specmgr.sop.models`](biz.dfch.specmgr.sop.models.md) — Standard Operating Procedure (SOP) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- [`biz.dfch.specmgr.sop.models.v1`](biz.dfch.specmgr.sop.models.v1.md) — Standard Operating Procedure (SOP) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- [`biz.dfch.specmgr.sop.models.v1._util`](biz.dfch.specmgr.sop.models.v1._util.md) — Shared, private constants for the ``sop.models.v1`` subpackage.
+- [`biz.dfch.specmgr.sop.models.v1.body`](biz.dfch.specmgr.sop.models.v1.body.md) — Standard Operating Procedure (SOP) body models: whole-section fields under a single H1.
+- [`biz.dfch.specmgr.sop.models.v1.document`](biz.dfch.specmgr.sop.models.v1.document.md) — Pydantic model for a full Standard Operating Procedure document (frontmatter + body).
+- [`biz.dfch.specmgr.sop.models.v1.frontmatter`](biz.dfch.specmgr.sop.models.v1.frontmatter.md) — Standard Operating Procedure (SOP) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
+- [`biz.dfch.specmgr.sop.models.v1.parser`](biz.dfch.specmgr.sop.models.v1.parser.md) — Parse raw Standard Operating Procedure (SOP) ``.md`` text into a :class:`SopDocument`.
+- [`biz.dfch.specmgr.sop.models.v1.summary`](biz.dfch.specmgr.sop.models.v1.summary.md) — Pydantic model for one line of SOP listing output (Phase 2, Task 2.2).
+- [`biz.dfch.specmgr.sop.prompts`](biz.dfch.specmgr.sop.prompts.md) — MCP prompt wrappers for Standard Operating Procedures (Task 4.1).
+- [`biz.dfch.specmgr.sop.prompts.create_sop`](biz.dfch.specmgr.sop.prompts.create_sop.md) — ``@mcp.prompt()``: create_sop (Task 4.1).
+- [`biz.dfch.specmgr.sop.prompts.update_sop`](biz.dfch.specmgr.sop.prompts.update_sop.md) — ``@mcp.prompt()``: update_sop (Task 4.1).
+- [`biz.dfch.specmgr.sop.resources`](biz.dfch.specmgr.sop.resources.md) — MCP resource registrations for Standard Operating Procedure (SOP) documents (feat-30 Task 3.7).
+- [`biz.dfch.specmgr.sop.resources.sop_example`](biz.dfch.specmgr.sop.resources.sop_example.md) — Resource: specmgr://sop/example (feat-30 Task 3.7).
+- [`biz.dfch.specmgr.sop.resources.sop_schema`](biz.dfch.specmgr.sop.resources.sop_schema.md) — Resource: specmgr://sop/schema (feat-30 Task 3.7, packaged data).
+- [`biz.dfch.specmgr.sop.resources.sop_template`](biz.dfch.specmgr.sop.resources.sop_template.md) — Resource: specmgr://sop/template (feat-30 Task 3.7).
+- [`biz.dfch.specmgr.sop.tools`](biz.dfch.specmgr.sop.tools.md) — MCP tool wrappers for Standard Operating Procedures (mirrors ``dec/tools/``'s own shape).
+- [`biz.dfch.specmgr.sop.tools._io`](biz.dfch.specmgr.sop.tools._io.md) — Thin file read helpers over ``parse_sop`` (Task 2.1).
+- [`biz.dfch.specmgr.sop.tools._lock`](biz.dfch.specmgr.sop.tools._lock.md) — Per-document in-process lock guarding SOP mutations.
+- [`biz.dfch.specmgr.sop.tools._paths`](biz.dfch.specmgr.sop.tools._paths.md) — SOP base directory resolution and id -> path lookup (Task 2.1).
+- [`biz.dfch.specmgr.sop.tools._write`](biz.dfch.specmgr.sop.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_sop`` and
+- [`biz.dfch.specmgr.sop.tools.create_sop`](biz.dfch.specmgr.sop.tools.create_sop.md) — ``@mcp.tool()`` wrapper: create_sop (Task 2.2).
+- [`biz.dfch.specmgr.sop.tools.delete_sop`](biz.dfch.specmgr.sop.tools.delete_sop.md) — ``@mcp.tool()`` wrapper: delete_sop (Task 2.2).
+- [`biz.dfch.specmgr.sop.tools.get_sop`](biz.dfch.specmgr.sop.tools.get_sop.md) — ``@mcp.tool()`` wrapper: get_sop (Task 2.2).
+- [`biz.dfch.specmgr.sop.tools.get_sop_example`](biz.dfch.specmgr.sop.tools.get_sop_example.md) — ``@mcp.tool()`` wrapper: get_sop_example (Task 2.2).
+- [`biz.dfch.specmgr.sop.tools.get_sop_template`](biz.dfch.specmgr.sop.tools.get_sop_template.md) — ``@mcp.tool()`` wrapper: get_sop_template (Task 2.2).
+- [`biz.dfch.specmgr.sop.tools.list_sop`](biz.dfch.specmgr.sop.tools.list_sop.md) — ``@mcp.tool()`` wrapper: list_sop (Task 2.2).
+- [`biz.dfch.specmgr.sop.tools.parse_sop`](biz.dfch.specmgr.sop.tools.parse_sop.md) — ``@mcp.tool()`` wrapper: parse_sop (Task 2.2).
+- [`biz.dfch.specmgr.sop.tools.validate_sop`](biz.dfch.specmgr.sop.tools.validate_sop.md) — ``@mcp.tool()`` wrapper: validate_sop (Task 2.2).
 - [`biz.dfch.specmgr.tsk`](biz.dfch.specmgr.tsk.md) — TaskList (TSK) domain -- lightweight task/todo-list specifications.
 - [`biz.dfch.specmgr.tsk.models`](biz.dfch.specmgr.tsk.models.md) — TaskList (TSK) models -- Pydantic schema powered by the generic ``models/md`` engine.
 - [`biz.dfch.specmgr.tsk.models.v1`](biz.dfch.specmgr.tsk.models.v1.md) — TaskList (TSK) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.

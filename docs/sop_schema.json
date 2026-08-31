@@ -1,0 +1,602 @@
+{
+  "$comment": "v1",
+  "$defs": {
+    "AcceptanceCriteria": {
+      "description": "`### Acceptance Criteria` under Related Artifacts -- bullet list of\ncross-references to acceptance criteria, one per line\n(e.g. \"ACC-1234: <title>\").",
+      "properties": {
+        "items": {
+          "description": "Bullet list of cross-references to acceptance criteria, one per line (e.g. \"ACC-1234: <title>\"); must contain at least one item.",
+          "items": {
+            "$ref": "#/$defs/MarkdownListItem"
+          },
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "AcceptanceCriteria",
+      "type": "object"
+    },
+    "Accountable": {
+      "description": "`### Accountable` under `## Roles and Responsibilities` -- the single\nowner who is ultimately answerable for the SOP.\n\nA single mandatory paragraph (never a bullet list): exactly one owner,\nstructurally discouraging multiple owners. See the general\n`specmgr://rasci` resource for RASCI role definitions.\n\nParameters\n----------\nvalue:\n    The single paragraph naming the accountable party. Mandatory.",
+      "properties": {
+        "value": {
+          "$ref": "#/$defs/MarkdownParagraph",
+          "description": "The single paragraph naming the accountable party. Mandatory; never a bullet list."
+        }
+      },
+      "required": [
+        "value"
+      ],
+      "title": "Accountable",
+      "type": "object"
+    },
+    "Consulted": {
+      "description": "`### Consulted` under `## Roles and Responsibilities` -- those whose\nopinions are sought before or during the work.\n\nAn optional bullet list that MAY be present with zero list items (an\nintentional \"considered, currently empty\" placeholder distinct from\nomitting the heading entirely). See the general `specmgr://rasci` resource\nfor RASCI role definitions.\n\nParameters\n----------\nitems:\n    Bullet list naming the consulted parties, or ``None`` when the heading\n    is present with no items. Optional as a whole.",
+      "properties": {
+        "items": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/MarkdownListItem"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Bullet list naming the consulted parties, or ``None`` when the heading is present with no items. Optional; the heading MAY appear with zero items.",
+          "title": "Items"
+        }
+      },
+      "title": "Consulted",
+      "type": "object"
+    },
+    "Decisions": {
+      "description": "`### Decisions` under Related Artifacts -- bullet list of\ncross-references to decisions, one per line (e.g. \"DEC-2703: <title>\").",
+      "properties": {
+        "items": {
+          "description": "Bullet list of cross-references to decisions, one per line (e.g. \"DEC-2703: <title>\"); must contain at least one item.",
+          "items": {
+            "$ref": "#/$defs/MarkdownListItem"
+          },
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "Decisions",
+      "type": "object"
+    },
+    "Definitions": {
+      "description": "`## Definitions` -- terms-of-art used by this SOP, defined for the\nreader. Optional, free-form prose.",
+      "properties": {},
+      "title": "Definitions",
+      "type": "object"
+    },
+    "Goals": {
+      "description": "`### Goals` under Related Artifacts -- bullet list of cross-references\nto goals, one per line (e.g. \"GOL-0007: <title>\").",
+      "properties": {
+        "items": {
+          "description": "Bullet list of cross-references to goals, one per line (e.g. \"GOL-0007: <title>\"); must contain at least one item.",
+          "items": {
+            "$ref": "#/$defs/MarkdownListItem"
+          },
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "Goals",
+      "type": "object"
+    },
+    "Informed": {
+      "description": "`### Informed` under `## Roles and Responsibilities` -- those who are\nkept up to date on progress or outcomes.\n\nAn optional bullet list that MAY be present with zero list items (an\nintentional \"considered, currently empty\" placeholder distinct from\nomitting the heading entirely). See the general `specmgr://rasci` resource\nfor RASCI role definitions.\n\nParameters\n----------\nitems:\n    Bullet list naming the informed parties, or ``None`` when the heading\n    is present with no items. Optional as a whole.",
+      "properties": {
+        "items": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/MarkdownListItem"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Bullet list naming the informed parties, or ``None`` when the heading is present with no items. Optional; the heading MAY appear with zero items.",
+          "title": "Items"
+        }
+      },
+      "title": "Informed",
+      "type": "object"
+    },
+    "MarkdownListItem": {
+      "description": "One item (\"li\") of a markdown bullet or numbered list.\n\nUsed only as `items: list[MarkdownListItem]` (or `list[MarkdownListItem] |\nNone`) on a `MarkdownSection`/`MarkdownParagraph`/`MarkdownListItem` --\nthere is no separate list-container class, and a bare item cannot be\nparsed as a top-level/scalar field on its own; every item is assumed to\nstart with at least one paragraph (its own lead text).\n\nLeaf (no declared nested fields, the default): `_value` holds the item's\ncomplete extent verbatim, marker included. Composite (a subclass declares\nfields): `_value` holds only the item's own leading paragraph, marker\nincluded -- the marker cannot be reconstructed from class metadata alone,\nso it is kept verbatim -- and the remainder is dedented and delegated to\nnested field parsing; `__str__` re-indents the children's rendered output\nby the marker's own width before recombining.\n\nRound-trip note: a tight source list currently round-trips to a\nstructurally-equivalent loose list rather than byte-exact (loose lists\nremain byte-exact) -- an accepted, documented exception; see\n`from_text`/`__str__` docstrings below for the full mechanics.",
+      "properties": {},
+      "title": "MarkdownListItem",
+      "type": "object"
+    },
+    "MarkdownParagraph": {
+      "description": "A markdown paragraph (\"p\"), the non-heading sibling of `MarkdownSection`.\n\nA paragraph has no level, so there is a single `MarkdownParagraph` class\n(no `MarkdownParagraph1`..`6` spectrum) and no `@alias` check -- a\nparagraph's content is free-form prose, not a title.\n\nLeaf (no declared nested fields): `_value` holds the paragraph's own line\nspan, verbatim. Composite (declares fields): `_value` holds only the\nparagraph's own inline text (e.g. a lead-in sentence); the remaining text\nis delegated to nested field parsing, bounded by the next heading of any\nlevel (a paragraph can never itself contain a heading). See\n`get_extent`/`from_text`/`__str__` docstrings below for the full\nmechanics.",
+      "properties": {},
+      "title": "MarkdownParagraph",
+      "type": "object"
+    },
+    "MoreInformation": {
+      "description": "`## More Information` -- free-form optional supplementary text, no\nfixed format. Optional.",
+      "properties": {},
+      "title": "MoreInformation",
+      "type": "object"
+    },
+    "Procedure": {
+      "description": "`## Procedure` -- the structured, ordered set of steps a reader follows.\nMandatory; present only if it carries at least one `### Step {N}: {name}`\nentry (``min_length=1``) -- an H2 with zero steps is a structural error.\n\nParameters\n----------\nsteps:\n    The `### Step {N}: {name}` entries, in document order. Requires at\n    least one step.",
+      "properties": {
+        "steps": {
+          "description": "Dynamic collection of `### Step {N}: {name}` entries, in document order. Must contain at least one step.",
+          "items": {
+            "$ref": "#/$defs/Step"
+          },
+          "minItems": 1,
+          "title": "Steps",
+          "type": "array"
+        }
+      },
+      "required": [
+        "steps"
+      ],
+      "title": "Procedure",
+      "type": "object"
+    },
+    "Purpose": {
+      "description": "`## Purpose` -- why this SOP exists and the outcome it produces.\nMandatory, free-form prose (DEC's `Context` precedent: opaque free text,\nno declared nested fields).",
+      "properties": {},
+      "title": "Purpose",
+      "type": "object"
+    },
+    "RelatedArtifacts": {
+      "description": "`## Related Artifacts` -- container for five independent, all-optional\n`### ` cross-reference lists (requirements/decisions/goals/acceptance\ncriteria/sops). Optional as a whole; no consistency check is enforced\nbetween the sub-lists. The `### Sops` sub-list is a self-cross-reference\n(a `sop` document may reference other, related/superseding SOPs).",
+      "properties": {
+        "acceptance_criteria": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AcceptanceCriteria"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### Acceptance Criteria` sub-section. Optional."
+        },
+        "decisions": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Decisions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### Decisions` sub-section. Optional."
+        },
+        "goals": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Goals"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### Goals` sub-section. Optional."
+        },
+        "requirements": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Requirements"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### Requirements` sub-section. Optional."
+        },
+        "sops": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Sops"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### Sops` sub-section (self-cross-reference). Optional."
+        }
+      },
+      "title": "RelatedArtifacts",
+      "type": "object"
+    },
+    "Requirements": {
+      "description": "`### Requirements` under Related Artifacts -- bullet list of\ncross-references to requirements, one per line\n(e.g. \"REQ-9687: <title>\").",
+      "properties": {
+        "items": {
+          "description": "Bullet list of cross-references to requirements, one per line (e.g. \"REQ-9687: <title>\"); must contain at least one item.",
+          "items": {
+            "$ref": "#/$defs/MarkdownListItem"
+          },
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "Requirements",
+      "type": "object"
+    },
+    "Responsible": {
+      "description": "`### Responsible` under `## Roles and Responsibilities` -- those who do\nthe work the SOP describes.\n\nA mandatory bullet list (>=1 entry). See the general `specmgr://rasci`\nresource for RASCI role definitions.\n\nParameters\n----------\nitems:\n    Bullet list naming the responsible parties; must contain at least one\n    item.",
+      "properties": {
+        "items": {
+          "description": "Bullet list naming the responsible parties; must contain at least one item.",
+          "items": {
+            "$ref": "#/$defs/MarkdownListItem"
+          },
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "Responsible",
+      "type": "object"
+    },
+    "RolesAndResponsibilities": {
+      "description": "`## Roles and Responsibilities` -- the RASCI responsibility assignment\nfor this SOP. Optional as a whole; once present, `### Accountable` and\n`### Responsible` are both mandatory (strict-RACI \"always has an owner and\na doer\"), while `### Support`/`### Consulted`/`### Informed` stay\nindependently optional and MAY each be present with zero list items. See\nthe general `specmgr://rasci` resource for RASCI role definitions.\n\nParameters\n----------\naccountable:\n    `### Accountable` sub-section (single paragraph). Mandatory once this\n    container is present.\nresponsible:\n    `### Responsible` sub-section (bullet list, >=1 item). Mandatory once\n    this container is present.\nsupport:\n    `### Support` sub-section (bullet list, MAY be empty). Optional.\nconsulted:\n    `### Consulted` sub-section (bullet list, MAY be empty). Optional.\ninformed:\n    `### Informed` sub-section (bullet list, MAY be empty). Optional.",
+      "properties": {
+        "accountable": {
+          "$ref": "#/$defs/Accountable",
+          "description": "`### Accountable` sub-section (single paragraph). Mandatory once this container is present."
+        },
+        "consulted": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Consulted"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### Consulted` sub-section. Optional; MAY be empty."
+        },
+        "informed": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Informed"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### Informed` sub-section. Optional; MAY be empty."
+        },
+        "responsible": {
+          "$ref": "#/$defs/Responsible",
+          "description": "`### Responsible` sub-section (bullet list, >=1 item). Mandatory once this container is present."
+        },
+        "support": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Support"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### Support` sub-section. Optional; MAY be empty."
+        }
+      },
+      "required": [
+        "accountable",
+        "responsible"
+      ],
+      "title": "RolesAndResponsibilities",
+      "type": "object"
+    },
+    "SafetyAndPrecautions": {
+      "description": "`## Safety and Precautions` -- warnings and precautions to read before\nfollowing the procedure. Optional, free-form prose.\n\nThe class name `SafetyAndPrecautions` does not match the heading's wording\n(\"Safety and Precautions\"), so the alias is pinned LITERAL (the implicit\n`SPACE_SEPARATED` alias would expect \"Safety And Precautions\").",
+      "properties": {},
+      "title": "SafetyAndPrecautions",
+      "type": "object"
+    },
+    "Scope": {
+      "description": "`## Scope` -- what this SOP covers (and, optionally, what it does not).\nOptional, free-form prose.",
+      "properties": {},
+      "title": "Scope",
+      "type": "object"
+    },
+    "Sop": {
+      "description": "The `sop` body: a single H1 section with the fields below.\n\nThe H1 heading text is free-form. Built on the generic `models.md` engine\nwith the simple surface used by GOL/RSK/QA/DEC -- see the module\ndocstring.\n\nParameters\n----------\npurpose:\n    `## Purpose`. Mandatory.\nscope:\n    `## Scope`. Optional.\ndefinitions:\n    `## Definitions`. Optional.\nroles_and_responsibilities:\n    `## Roles and Responsibilities` (RASCI composite). Optional.\nsafety_and_precautions:\n    `## Safety and Precautions`. Optional.\nprocedure:\n    `## Procedure` (`### Step {N}: {name}` entries, >=1). Mandatory.\nrelated_artifacts:\n    `## Related Artifacts` (five all-optional H3 bullet lists). Optional.\nmore_information:\n    `## More Information`. Optional.\nupdates:\n    `## Updates` (>=1 entry if present). Optional; last section.",
+      "properties": {
+        "definitions": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Definitions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`## Definitions` section. Optional."
+        },
+        "more_information": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MoreInformation"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`## More Information` section. Optional."
+        },
+        "procedure": {
+          "$ref": "#/$defs/Procedure",
+          "description": "`## Procedure` section (>=1 step). Mandatory."
+        },
+        "purpose": {
+          "$ref": "#/$defs/Purpose",
+          "description": "`## Purpose` section. Mandatory."
+        },
+        "related_artifacts": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RelatedArtifacts"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`## Related Artifacts` section. Optional."
+        },
+        "roles_and_responsibilities": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RolesAndResponsibilities"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`## Roles and Responsibilities` section (RASCI composite). Optional."
+        },
+        "safety_and_precautions": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SafetyAndPrecautions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`## Safety and Precautions` section. Optional."
+        },
+        "scope": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Scope"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`## Scope` section. Optional."
+        },
+        "updates": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Updates"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`## Updates` section. Optional; last."
+        }
+      },
+      "required": [
+        "purpose",
+        "procedure"
+      ],
+      "title": "Sop",
+      "type": "object"
+    },
+    "SopFrontmatter": {
+      "description": "Standard Operating Procedure (SOP) frontmatter: `MarkdownFrontmatter` narrowed for the ``sop`` document type.\n\nParameters\n----------\ntype:\n    Fixed discriminator, always ``\"sop\"``. Narrows the base's mandatory,\n    default-less ``str`` field to a ``Literal[\"sop\"] = \"sop\"``, so a document\n    omitting ``type`` entirely still parses as an SOP document.\nstatus:\n    One of ``\"draft\"``, ``\"review\"``, ``\"approved\"``, ``\"active\"``,\n    ``\"retired\"``. Narrows the base's free-form ``str = \"draft\"`` default\n    to this closed five-value set. Blank/absent still defaults to\n    ``\"draft\"`` (inherited from the base's ``_default_blank_status_to_draft``\n    validator, which runs before this one). ``approved`` (signed off) and\n    ``active`` (currently in force) are distinct: the transition between\n    them is a manual ``set_status`` call, not automatic.\nversion:\n    The ``models.md`` schema major.minor.patch version this document's\n    frontmatter was written with. DO NOT CHANGE!\n\nAll other fields (``id``, ``created``, ``updated``, ``version``) are inherited\nunchanged from :class:`MarkdownFrontmatter`.",
+      "properties": {
+        "created": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Created"
+        },
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Id"
+        },
+        "status": {
+          "default": "draft",
+          "title": "Status",
+          "type": "string"
+        },
+        "type": {
+          "const": "sop",
+          "default": "sop",
+          "title": "Type",
+          "type": "string"
+        },
+        "updated": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Updated"
+        },
+        "version": {
+          "default": "1.0.0",
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "title": "SopFrontmatter",
+      "type": "object"
+    },
+    "Sops": {
+      "description": "`### Sops` under Related Artifacts -- bullet list of cross-references to\nother, related/superseding SOPs, one per line (e.g. \"SOP-0042: <title>\").\nA self-cross-reference sub-list (GOL's self-referencing `Goals` sub-list\nprecedent).",
+      "properties": {
+        "items": {
+          "description": "Bullet list of cross-references to other SOPs, one per line (e.g. \"SOP-0042: <title>\"); must contain at least one item.",
+          "items": {
+            "$ref": "#/$defs/MarkdownListItem"
+          },
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "Sops",
+      "type": "object"
+    },
+    "Step": {
+      "description": "`### Step {N}: {name}` under `## Procedure` -- one step of the procedure.\n\nA leaf H3 section: the number and the name both live in the heading\nitself (e.g. `### Step 1: Provision the account`), constrained by the\nregex `@alias` above and enforced by `match_alias` (`re.fullmatch`) at\nparse time -- a missing colon/title (`### Step 1`), a non-numeric number\n(`### Step one: X`), or a title-less heading (`### Step 1:`) all fail the\nparse eagerly. The number may carry leading zeros (`### Step 01: X`); it\nis normalized to an integer by the computed `number` below. Step numbers\nneed not be contiguous (gaps are allowed, numbers are never renumbered);\nduplicates are rejected by `Sop`'s own after-validator (the\n`ValidationError` channel). Any body text under the heading is absorbed\ninto the leaf like every other leaf `MarkdownSection`.\n\nParameters\n----------\nnumber:\n    Computed. The step's number (e.g. `1` for `### Step 1: X`, also `1`\n    for `### Step 01: X`). Never stored separately -- derived from the\n    retained heading text.\nname:\n    Computed. The step's name (the heading text after `\": \"`). Never\n    stored separately -- derived from the retained heading text.",
+      "properties": {},
+      "title": "Step",
+      "type": "object"
+    },
+    "Support": {
+      "description": "`### Support` under `## Roles and Responsibilities` -- those who\nprovide resources or assistance to the responsible parties.\n\nAn optional bullet list that MAY be present with zero list items (an\nintentional \"considered, currently empty\" placeholder distinct from\nomitting the heading entirely). See the general `specmgr://rasci` resource\nfor RASCI role definitions.\n\nParameters\n----------\nitems:\n    Bullet list naming the support parties, or ``None`` when the heading\n    is present with no items. Optional as a whole.",
+      "properties": {
+        "items": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/MarkdownListItem"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Bullet list naming the support parties, or ``None`` when the heading is present with no items. Optional; the heading MAY appear with zero items.",
+          "title": "Items"
+        }
+      },
+      "title": "Support",
+      "type": "object"
+    },
+    "UpdateEntry": {
+      "description": "`### {ISO8601 timestamp} \u2014 {title}` under `## Updates` -- one update entry.\n\nThe H3 heading text carries an ISO8601 timestamp and a title, joined by\n``\" \u2014 \"`` (space, em-dash, space): e.g.\n`### 2026-08-30 14:30:00.000+02:00 \u2014 Approved`. The format is\n``yyyy-MM-dd HH:mm:ss.fff`` with an explicit UTC offset (``+02:00``,\n``-05:00``) or ``Z`` for UTC -- deliberately **not** the same format as\nfrontmatter ``created``/``updated`` (which keep the shared generic tools'\nformat); this format is scoped to `## Updates` entry headings only, which\nare hand/LLM-authored body content. Constrained by the regex `@alias`\nabove and enforced by `match_alias` (`re.fullmatch`) at parse time -- a\nwrong timestamp format, a missing offset, or a missing `` \u2014 title`` all\nfail the parse eagerly.\n\nParameters\n----------\ncontent:\n    The lead paragraph right after the H3 heading -- this entry's own\n    update text. Mandatory.\ntimestamp:\n    Computed. The ISO8601 timestamp carried by the heading. Never stored\n    separately -- derived from the retained heading text.\ntitle:\n    Computed. The title carried by the heading (the text after\n    ``\" \u2014 \"``). Never stored separately -- derived from the retained\n    heading text.\n\nRaises:\n    AssertionError: the retained heading text does not match\n        `UpdateEntry`'s declared `@alias` (unreachable via the engine:\n        `match_alias` already enforced it at parse time).",
+      "properties": {
+        "content": {
+          "$ref": "#/$defs/MarkdownParagraph",
+          "description": "The lead paragraph directly under the H3 heading -- this entry's own update text. Mandatory."
+        }
+      },
+      "required": [
+        "content"
+      ],
+      "title": "UpdateEntry",
+      "type": "object"
+    },
+    "Updates": {
+      "description": "`## Updates` -- a dynamic list of ISO8601-timestamped `### ` update\nentries. Optional as a whole, and the last section of the document if\npresent.\n\nMirrors `tsk`/`dec`'s `Updates`/`RecentUpdates` container shape: no\ndedicated per-entry tools (no `option_create`/`option_list` equivalent)\n-- entries are appended by editing the whole body.\n\nParameters\n----------\nupdates:\n    The dynamic collection of `### ` entries, in document order. Requires\n    at least one entry (``min_length=1``) -- an H2 with zero entries is\n    a structural error.",
+      "properties": {
+        "updates": {
+          "description": "Dynamic collection of `### {ISO8601 timestamp} \u2014 {title}` entries, in document order. Must contain at least one entry.",
+          "items": {
+            "$ref": "#/$defs/UpdateEntry"
+          },
+          "minItems": 1,
+          "title": "Updates",
+          "type": "array"
+        }
+      },
+      "required": [
+        "updates"
+      ],
+      "title": "Updates",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "A full Standard Operating Procedure document: YAML frontmatter and body.\n\nAttributes\n----------\nfrontmatter:\n    The YAML frontmatter block. See :class:`SopFrontmatter`.\nbody:\n    The parsed SOP sections. See :class:`Sop`.",
+  "properties": {
+    "body": {
+      "$ref": "#/$defs/Sop"
+    },
+    "frontmatter": {
+      "$ref": "#/$defs/SopFrontmatter"
+    }
+  },
+  "required": [
+    "frontmatter",
+    "body"
+  ],
+  "title": "SopDocument",
+  "type": "object"
+}
