@@ -751,11 +751,18 @@ progresses (edit, don't duplicate).
     happens client-side (outside this repo's control). This repo could
     still make the underlying message clearer/more actionable on its own
     side (see below).
-  - Confirmed test gap: no test in `tests/models/md/` or any domain's
-    tests covers a paragraph continuation line starting with `+`/`-`/`*`.
+   - Confirmed test gap: no test in `tests/models/md/` or any domain's
+     tests covers a paragraph continuation line starting with `+`/`-`/`*`.
 
-  Candidate fix directions to evaluate at implementation time (not decided
-  yet):
+   Sibling trigger (GitHub issue #27, 2026-08-27): a bare `<word>`-style
+   token in prose (e.g. `<domain>` — not backticked, not inside an HTML
+   comment) is parsed as a raw HTML tag by markdown-it and reaches the
+   same "text left over" assertion with the same opaque
+   "Error executing tool <name>" surface — same failure class and fix
+   scope, different repro.
+
+   Candidate fix directions to evaluate at implementation time (not decided
+   yet):
 
   1. In `models/md/_markdown.py`/`markdown_paragraph.py`: teach
      `MarkdownParagraph` (or `format_text`) to absorb an immediately-
@@ -997,6 +1004,14 @@ already-compacted folder).
 
 See `history.md` for updates before 2026-08-18 (rotated out per ADR
 e369ee2e-3353-4f92-991c-6367d76d832e once this section grew too long).
+
+#### Update 2026-08-31 (Task 0.29 extended)
+
+- Extended: Task 0.29's background now also covers GitHub issue #27's
+  bare `<word>`-style token repro (parsed as a raw HTML tag by
+  markdown-it) as a sibling trigger of the same failure class — same
+  "text left over" assertion, same opaque "Error executing tool <name>"
+  surface. Noted on issue #27 itself.
 
 #### Update 2026-08-31 (Tasks 0.32, 0.33 recorded)
 
