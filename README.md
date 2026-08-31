@@ -24,6 +24,7 @@ At this time, we have these artifact:
 - Problem Statement (PRB)
 - Question and Answer (QA)
 - Requirement (REQ)
+- Standard Operating Procedure (SOP)
 - Task List (TSK)
 - Use Case (UC)
 <!-- 

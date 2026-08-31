@@ -82,8 +82,17 @@ specmgr://dec/schema -- The generated DEC JSON Schema, read from a packaged data
 specmgr://dec/example -- A complete, valid sample decision document as raw markdown.
 specmgr://dec/template -- A decision template (every field present, placeholder text)
                           as raw markdown.
+specmgr://sop/schema -- The generated SOP JSON Schema, read from a packaged data copy
+                        (kept in sync with ``docs/sop_schema.json``) so it works from a
+                        real, non-editable install.
+specmgr://sop/example -- A complete, valid sample standard operating procedure document as
+                         raw markdown.
+specmgr://sop/template -- A standard operating procedure template (every field present,
+                          placeholder text) as raw markdown.
 specmgr://iso25010 --   The ISO/IEC 25010:2023 product quality model's nine main
                         characteristics (and sub-characteristics), each with a description.
+specmgr://rasci --      The generic RASCI (Responsible/Accountable/Support/Consulted/
+                        Informed) responsibility-assignment framework, as raw markdown.
 
 REQ has no ``specmgr://req/{id}`` resource, unlike ADR -- id-based reads go
 through the ``get_req`` tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
@@ -106,6 +115,10 @@ id-based reads go through the ``get_gol`` tool only, and there is also no
  ``specmgr://dec/{id}`` resource either, for the same reason -- id-based reads go
  through the ``get_dec`` tool only, and there is also no
  ``specmgr://dec/list`` resource -- ``list_dec`` ships as a paged tool from
+ day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13). SOP has no
+ ``specmgr://sop/{id}`` resource either, for the same reason -- id-based reads go
+ through the ``get_sop`` tool only, and there is also no
+ ``specmgr://sop/list`` resource -- ``list_sop`` ships as a paged tool from
  day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
 
 Tools
@@ -146,20 +159,33 @@ frontmatter-stripped body text verbatim instead of the parsed document), ``list_
  ``get_rsk_example``,
  ``get_rsk_template``, ``create_rsk``, ``delete_rsk``
  (stub, not yet implemented), ``validate_rsk``.
-  Decision tools (``dec/tools/``): ``parse_dec``, ``get_dec`` (``raw=True`` returns the
+   Decision tools (``dec/tools/``): ``parse_dec``, ``get_dec`` (``raw=True`` returns the
 frontmatter-stripped body text verbatim instead of the parsed document), ``list_dec``,
-  ``get_dec_example``,
-  ``get_dec_template``, ``create_dec``, ``delete_dec``
-  (stub, not yet implemented), ``validate_dec``.
-  General tools (``general/tools/``): ``mdformat`` -- format markdown files in place,
+   ``get_dec_example``,
+   ``get_dec_template``, ``create_dec``, ``delete_dec``
+   (stub, not yet implemented), ``validate_dec``.
+   SOP tools (``sop/tools/``): ``parse_sop``, ``get_sop`` (``raw=True`` returns the
+frontmatter-stripped body text verbatim instead of the parsed document), ``list_sop``,
+   ``get_sop_example``,
+   ``get_sop_template``, ``create_sop``, ``delete_sop``
+   (stub, not yet implemented), ``validate_sop``. SOP is the first domain with NO
+   per-domain ``update_sop``/``set_status_sop`` tools at all -- whole-body and line-range
+   updates go through the generic ``update`` tool in ``general/tools/`` (``type="sop"``)
+   and status changes through the generic ``set_status`` tool (``type="sop"``), per ADR
+   36905d5b-8057-4294-8665-c7eed5534db0 (the dispatch-only convention every future domain
+   follows). SOP relies on the cross-cutting ``specmgr://rasci`` resource (see the
+   ``general`` resources paragraph above) for the generic RASCI role definitions used by
+   its ``## Roles and Responsibilities`` section -- role definitions: see general
+   ``specmgr://rasci``.
+   General tools (``general/tools/``): ``mdformat`` -- format markdown files in place,
 preserving YAML frontmatter blocks; ``update`` -- whole-body or line-range replace of an
-existing document's content across the eight whole-body domains (``type`` is one of
-``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``; optional 1-based inclusive
+existing document's content across the nine whole-body domains (``type`` is one of
+``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``; optional 1-based inclusive
 ``begin``/``end`` body-line range with the ``N+1`` end-of-body sentinel; the spliced
 result is validated as a whole document before anything is written); ``set_status`` --
-replace an existing document's status across all nine domains (``type`` is one of
-``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``adr``), also bumping
-``updated`` (the eight whole-body domains) and leaving the body untouched;
+replace an existing document's status across all ten domains (``type`` is one of
+``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``adr``), also bumping
+``updated`` (the nine whole-body domains) and leaving the body untouched;
 ``superseded_by`` is ``adr``-only (it composes the status as
 ``"superseded by {superseded_by}"``);
 ``webfetch`` -- fetch a URL over HTTP GET with a
@@ -196,6 +222,16 @@ Decision prompts (``dec/prompts/``): ``create_dec``, ``update_dec`` --
 instructional text guiding an LLM through a ``TodoWrite`` +
 ``question``-tool-driven interview flow; ``create_dec`` first checks
 ``list_dec`` for a near-duplicate decision.
+SOP prompts (``sop/prompts/``): ``create_sop``, ``update_sop`` --
+instructional text guiding an LLM through a ``TodoWrite`` +
+``question``-tool-driven interview flow over the SOP surface (the
+``specmgr://sop/template``/``/example``/``/schema`` starting-point resources,
+the ``specmgr://rasci`` read-first step before ``## Roles and Responsibilities``,
+and the ``create_sop``/``validate_sop`` tool calls); ``create_sop`` first checks
+``list_sop`` for a near-duplicate SOP. ``update_sop`` names the GENERIC
+``update``/``set_status`` tools with ``type="sop"`` (both whole-body and line-range
+via ``get_sop(id, raw=True)``) -- ``sop`` has no per-domain ``update_sop``/
+``set_status_sop`` tools (ADR 36905d5b-8057-4294-8665-c7eed5534db0).
 General prompts (``general/prompts/``): ``compact_history`` -- guides rotating
 older ``### Recent Updates`` entries out of any `.specmgr` feature folder's
 ``README.md`` into an optional sibling ``history.md``, per ADR
@@ -204,7 +240,7 @@ e369ee2e-3353-4f92-991c-6367d76d832e.
 Modules are grouped domain-first
 (ADR ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by
 document-type domain"): each document
-domain (``adr``, ``uc``, ``req``, ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, and later ``ac``) is a
+ domain (``adr``, ``uc``, ``req``, ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, and later ``ac``) is a
 top-level package with its own ``tools``/``prompts``/``resources`` sub-packages,
 self-registered via the domain package's own ``__init__.py``. Cross-cutting, non-domain-specific
 tools/resources/prompts (e.g. ``specmgr://version``/``specmgr://iso25010`` resources,
@@ -212,9 +248,9 @@ the ``mdformat`` tool, or the ``compact_history`` prompt) stay under the top-lev
 ``general`` package instead (``general.tools``/``general.resources``/``general.prompts``).
 Add a new domain by
 creating its top-level package and importing it at the bottom of this
-module, next to the existing ``adr``/``dec``/``general``/``gol``/``prb``/``qa``/``req``/``rsk``/``tsk``/``uc``
+module, next to the existing ``adr``/``dec``/``general``/``gol``/``prb``/``qa``/``req``/``rsk``/``sop``/``tsk``/``uc``
 imports, so its ``@mcp.tool()`` / ``@mcp.prompt()`` / ``@mcp.resource()``
-decorators actually run. ``req``, ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, and ``dec``
+decorators actually run. ``req``, ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, and ``sop``
 each register ``tools``, ``resources``, and ``prompts``; ``general`` now also
 registers all three; ``uc`` registers ``tools`` and ``resources`` only -- it
 has no ``prompts`` sub-package yet.
@@ -248,4 +284,4 @@ mcp = MCPServer(
 # decorators to actually run.
 # ---------------------------------------------------------------------------
 
-from . import adr, dec, general, gol, prb, qa, req, rsk, tsk, uc  # noqa: E402, F401
+from . import adr, dec, general, gol, prb, qa, req, rsk, sop, tsk, uc  # noqa: E402, F401

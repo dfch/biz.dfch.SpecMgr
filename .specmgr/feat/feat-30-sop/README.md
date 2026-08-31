@@ -1,7 +1,7 @@
 ---
 created: 2026-08-29
 id: feat-30-sop
-status: planning
+status: done
 updated: 2026-08-30
 version: 1.0.0
 ---
@@ -651,7 +651,7 @@ quality gate, README Progress update).
 
 #### Phase 5: Cross-cutting registration
 
-- [ ] Task 5.1: `server.py` — add `sop` to the final import line
+- [x] Task 5.1: `server.py` — add `sop` to the final import line
   (`adr, dec, general, gol, prb, qa, req, rsk, sop, tsk, uc`) + module
   docstring (3 resources, 8 tools, 2 prompts, domain summary, no
   per-domain mutation tools note). Also insert `sop` into the docstring's
@@ -663,34 +663,34 @@ quality gate, README Progress update).
   a one-line cross-reference to it in the `sop` paragraph itself ("role
   definitions: see general `specmgr://rasci`") so an agent scanning only
   the `sop` paragraph still finds it — depends on: Task 4.3, Task 3.10 —
-  status: not-started
-- [ ] Task 5.2: `pyproject.toml` — `"biz.dfch.specmgr.sop" = ["data/*.md", "data/*.json"]` package-data entry — depends on: Task 3.10
-  — status: not-started
-- [ ] Task 5.3: `.pre-commit-config.yaml` — add `sop/models/v1` to the 9
+  status: done
+- [x] Task 5.2: `pyproject.toml` — `"biz.dfch.specmgr.sop" = ["data/*.md", "data/*.json"]` package-data entry — depends on: Task 3.10
+  — status: done
+- [x] Task 5.3: `.pre-commit-config.yaml` — add `sop/models/v1` to the 9
   existing `files:` globs + new `specmgr-schema-sop-package` hook —
-  depends on: Task 3.6 — status: not-started
-- [ ] Task 5.4: `.github/workflows/ci.yml` — new packaged-copy drift
+  depends on: Task 3.6 — status: done
+- [x] Task 5.4: `.github/workflows/ci.yml` — new packaged-copy drift
   step for `sop/data/sop_schema.json` — depends on: Task 3.6 — status:
-  not-started
-- [ ] Task 5.5: `AGENTS.md` — `sop/` bullet in Status (after `dec/`);
+  done
+- [x] Task 5.5: `AGENTS.md` — `sop/` bullet in Status (after `dec/`);
   `sop` added to the tools/resources/prompts enumeration and the
   `delete_*` stub list; note on `sop`'s dispatch-only tool surface;
   verify no other enumeration goes stale — depends on: Task 5.1 —
-  status: not-started
-- [ ] Task 5.6: Root `README.md` — add `Standard Operating Procedure (SOP)` to the "At this time, we have these artifact:" list — depends
-  on: Task 5.1 — status: not-started
-- [ ] Task 5.7: Regenerate `docs/MCP.md` (`specmgr mcp-docs`),
+  status: done
+- [x] Task 5.6: Root `README.md` — add `Standard Operating Procedure (SOP)` to the "At this time, we have these artifact:" list — depends
+  on: Task 5.1 — status: done
+- [x] Task 5.7: Regenerate `docs/MCP.md` (`specmgr mcp-docs`),
   `docs/GENERATED.md` + `docs/api/` (`specmgr docs`); verify all
   idempotent on a second run (ACC-008) — depends on: Task 5.1, Task 5.2
-  — status: not-started
-- [ ] Task 5.8: Final quality gate (ruff format/check, vulture, full
+  — status: done
+- [x] Task 5.8: Final quality gate (ruff format/check, vulture, full
   unittest, `specmgr unused-code`) + commit — depends on: Task 5.7 —
-  status: not-started
-- [ ] Task 5.9: Final verification pass — walk every ACC-001..010 with
+  status: done
+- [x] Task 5.9: Final verification pass — walk every ACC-001..010 with
   concrete evidence (including a live `create_sop`→`get_sop`→
   `list_sop`→`update`(type=sop)→`set_status`(type=sop)→`validate_sop`
   run, not just unit tests); update this README's Progress section; set
-  feature status to `done` — depends on: Task 5.8 — status: not-started
+  feature status to `done` — depends on: Task 5.8 — status: done
 
 **Note:** If a task's scope changes mid-flight, edit its description in
 place; rely on git history (`git log -p` on this file) to recover what
@@ -700,6 +700,23 @@ around.
 ## Progress
 
 ### Current Status
+
+**As of 2026-08-31**: Feature complete — all phases done. Every
+ACC-001..010 verified with concrete evidence. Phase 5 (cross-cutting
+registration) wired `sop` into `server.py` (import line + full module
+docstring: 3 resources, 8 tools, 2 prompts, dispatch-only note, REQ-011
+`specmgr://rasci` cross-reference), `pyproject.toml` (package-data
+entry), `.pre-commit-config.yaml` (9 glob updates + new
+`specmgr-schema-sop-package` hook), `.github/workflows/ci.yml` (new
+packaged-schema-copy drift step), `AGENTS.md` (`sop/` bullet +
+enumerations), and root `README.md` (artifact list). All doc generation
+is drift-free and idempotent (`specmgr mcp-docs`/`docs`/`schema`/
+`adr-toc` all no-op on second run). Full quality gate green: ruff
+format/check, vulture, `specmgr unused-code`, 2259-test unittest suite,
+server import. ACC-003 live round-trip
+(`create_sop`→`get_sop`→`list_sop`→`update(type="sop")`→
+`set_status(type="sop")`→`validate_sop`→`delete_sop`) and ACC-007
+non-editable wheel install both pass. Feature status set to `done`.
 
 **As of 2026-08-30**: Phase 4 (prompts) complete. The `sop` domain now
 ships its 2 MCP prompts under `sop/prompts/` (`create_sop.py`/
@@ -868,6 +885,127 @@ present with zero list items" shape (used by `Support`/`Consulted`/
 None.
 
 ### Recent Updates
+
+#### Update 2026-08-31T10:00:00Z (Phase 5 cross-cutting registration + final verification)
+
+- Completed: Tasks 5.1-5.9 -- cross-cutting registration of the `sop`
+  domain and final ACC-001..010 verification walk-through. This was the
+  final phase; the feature status is now `done`.
+- Task 5.1 (`server.py`): added `sop` to the final import line
+  (`from . import adr, dec, general, gol, prb, qa, req, rsk, sop, tsk, uc`)
+  and updated the module docstring's every domain enumeration
+  consistently: (1) Resources section -- added `specmgr://sop/schema`,
+  `specmgr://sop/example`, `specmgr://sop/template` entries (mirroring
+  DEC's style) and added `specmgr://rasci` under the `general` resources
+  (REQ-011); (2) "no /{id} resource" paragraph -- added the SOP sentence
+  mirroring DEC's (no `/{id}`, no `/list`, `list_sop` paged tool from day
+  one, ADR ec9f5262); (3) Tools section -- added the SOP tools sentence
+  (8 tools: `parse_sop`, `get_sop` with `raw=True`, `list_sop`,
+  `get_sop_example`, `get_sop_template`, `create_sop`, `delete_sop` stub,
+  `validate_sop`) plus the explicit dispatch-only note (NO per-domain
+  `update_sop`/`set_status_sop` tools -- generic `update`/`set_status`
+  with `type="sop"`, ADR 36905d5b) and the `specmgr://rasci` cross-
+  reference; (4) `update` tool description -- "eight" -> "nine whole-body
+  domains" + `sop` added to the literal list; (5) `set_status` tool
+  description -- "nine" -> "ten domains" + `sop` added before `adr`; (6)
+  Prompts section -- added the SOP prompts sentence (`create_sop`/
+  `update_sop`, narrated `TodoWrite` + `question`-tool flow, `list_sop`
+  dedup check, `specmgr://rasci` read-first step, generic `update`/
+  `set_status` with `type="sop"`); (7) `ac`-reservation enumeration
+  sentence -- `sop` added before "and later ac"; (8) "existing imports"
+  sentence -- `sop` added (alphabetical); (9) "each register tools,
+  resources, and prompts" sentence -- `sop` added.
+- Task 5.2 (`pyproject.toml`): added
+  `"biz.dfch.specmgr.sop" = ["data/*.md", "data/*.json"]` under
+  `[tool.setuptools.package-data]`, alphabetically after `rsk` and before
+  `tsk`, mirroring the `dec` entry exactly. `general`'s entry
+  (`["data/*.md"]` only) was NOT changed -- it already covers
+  `general_rasci.md`.
+- Task 5.3 (`.pre-commit-config.yaml`): added `sop/models/v1` to the
+  `files:` glob of all 9 existing schema hooks (`specmgr-schema` + 8
+  `specmgr-schema-*-package` hooks) via `replaceAll`, and added a new
+  `specmgr-schema-sop-package` hook mirroring the `dec` package hook
+  (`--type sop --output-dir src/biz/dfch/specmgr/sop/data`). Also
+  updated the `specmgr-schema` hook's description to list `sop` among the
+  registered types.
+- Task 5.4 (`.github/workflows/ci.yml`): added a new
+  `Make sure src/biz/dfch/specmgr/sop/data/sop_schema.json is correct`
+  step mirroring the `dec` step, placed after it, with the matching
+  `::error::` message and `if: matrix.python-version == '3.13'`.
+- Task 5.5 (`AGENTS.md`): added the `sop/` bullet in the Status section
+  (after `dec/`, before `general/`) describing `sop/tools/` (8 tools,
+  dispatch-only via generic `update`/`set_status` with `type="sop"`),
+  `sop/resources/` (3 resources, no `/{id}`/`/list`), `sop/prompts/`
+  (`create_sop`/`update_sop`), `sop/models/v1/`, the explicit dispatch-
+  only note (ADR 36905d5b), and the `specmgr://rasci` cross-reference
+  (REQ-011). Updated the `general/` bullet's domain counts (eight -> nine
+  whole-body, nine -> ten domains, eight -> nine `get_<d>` tools) and
+  added `specmgr://rasci` to its resources list. Added `sop` to the
+  `validate_*` list, `delete_*` stub list, "each register" enumeration,
+  and the MCP server domain-import enumeration. Verified no other
+  enumeration went stale (grepped every `dec` occurrence).
+- Task 5.6 (root `README.md`): added `Standard Operating Procedure (SOP)`
+  to the "At this time, we have these artifact:" list, alphabetically
+  after `Requirement (REQ)` and before `Task List (TSK)`.
+- Task 5.7 (doc regeneration + idempotency, ACC-008): ran
+  `specmgr mcp-docs`, `specmgr docs`, `specmgr schema`, `specmgr adr-toc`.
+  First run changed only `docs/api/biz.dfch.specmgr.server.md` (reflecting
+  `server.py`'s updated docstring); `docs/MCP.md` was already up-to-date
+  with `sop` entries from prior phase commits (confirmed: 38 `sop`
+  occurrences at HEAD, regeneration produced no diff). `docs/GENERATED.md`
+  unchanged (no new modules). Second run of all four commands produced no
+  further changes -- idempotent.
+- Task 5.8 (final quality gate): all green.
+  - `ruff format --check`: 1285 files already formatted, exit 0.
+  - `ruff check`: All checks passed!, exit 0.
+  - `vulture src/ whitelist.py --min-confidence 60`: clean, exit 0.
+  - `specmgr unused-code`: No unused code found, exit 0.
+  - `python -m unittest discover -s tests -t . -p "test_*.py"`: Ran 2259
+    tests in 59.544s, OK.
+  - `python -c "import biz.dfch.specmgr.server"`: server imports OK; sop
+    registered, exit 0.
+- Task 5.9 (ACC-001..010 walk-through): every ACC verified with concrete
+  evidence (see the full table in the report back to the orchestrator):
+  - ACC-001/002: 144 tests in `tests/sop/models/` (structural
+    `AssertionError` + value `pydantic.ValidationError` matrices), OK.
+  - ACC-003: live round-trip against a temp `SPECMGR_DOCS_DIR`:
+    `create_sop` (id, `status="draft"`, `sop-{id}-{slug}.md` filename) ->
+    `get_sop` -> `get_sop(raw=True)` (frontmatter-stripped body) ->
+    `list_sop` (1 doc) -> `update(type="sop")` (whole-body, `updated`
+    bumped, Scope added) -> `set_status(type="sop", "active")` (status
+    changed, `updated` bumped, body unchanged) -> `set_status` rejects
+    `superseded_by` for `type="sop"` (`ValueError`) -> `validate_sop`
+    (True) -> `delete_sop` (`NotImplementedError`). Plus 64 tests in
+    `tests/sop/tools/`, OK.
+  - ACC-004: 18 tests in `tests/sop/resources/`, OK. `specmgr://sop/schema`
+    == fresh `generate_sop_schema()` (True). Example/template resources ==
+    packaged files byte-for-byte (True, True).
+  - ACC-005: 22 tests in `tests/sop/prompts/`, OK.
+  - ACC-006: 28 tests in `tests/general/tools/test_update` +
+    `test_set_status`, OK. `set_status` rejects `superseded_by` for
+    `type="sop"` (confirmed in live round-trip).
+  - ACC-007: `uv build --wheel` succeeded; wheel contains all 6 sop data
+    files + `general_rasci.md`. Scratch-venv non-editable install
+    (`uv pip install ... [mcp]`) + `read_packaged_text('sop','example')`/
+    `('general','rasci')`/`('sop','template')` all resolved correctly
+    from the installed (non-editable) package.
+  - ACC-008: no drift + idempotent (Task 5.7 evidence above).
+  - ACC-009: full gate green (Task 5.8 evidence above).
+  - ACC-010: 4 tests in `tests/general/resources/test_rasci`, OK.
+    `specmgr://rasci` returns `general_rasci.md` verbatim (True). Content
+    is generic (no sop-specific headings -- grep for Step/Procedure/
+    Purpose/SOP/Safety/Roles/Accountable/Responsible/Support/Consulted/
+    Informed returned no matches). All four discoverability cross-
+    references confirmed via grep: (1) six body-model docstrings in
+    `sop/models/v1/body.py` (lines 78/95/117/140/163/187); (2)
+    `sop/__init__.py` docstring (line 55); (3) `sop_create_instructions.md`
+    (line 81) + `sop_update_instructions.md` (line 38); (4) `server.py`
+    docstring in both the general resources paragraph (line 94) and the
+    sop paragraph (lines 176/179/229).
+- Whitelist: no changes. Vulture and `specmgr unused-code` both clean;
+  this phase only touched registration/doc files (no new Python symbols).
+- Did NOT commit (the orchestrator owns the commit per the phase
+  instructions).
 
 #### Update 2026-08-30T20:00:00Z (Phase 4 prompts)
 
