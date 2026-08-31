@@ -3,7 +3,7 @@ created: 2026-08-31 15:37:40.000000
 id: feat-36-delete
 status: planning
 type: feat
-updated: 2026-08-31 18:10:22.000000
+updated: 2026-08-31 18:28:48.000000
 version: 1.0.0
 ---
 
@@ -433,18 +433,18 @@ no replacement per-domain delete tests are added — coverage moves entirely to
 
 #### Phase 2: The generic delete tool (Phase-Orchestrator)
 
-- [ ] Task 2.1: Add `general/tools/delete.py` per Design Notes §2–§6 (`DeleteError`, eleven `_delete_<d>` adapters, `_ADAPTERS`, `@mcp.tool(name="delete")` public function calling `validate_id` then dispatching) — depends on: Task 1.1 — status: not-started.
+- [ ] Task 2.1: Add `general/tools/delete.py` per Design Notes §2–§6 (`DeleteError`, eleven `_delete_<d>` adapters, `_ADAPTERS`, `@mcp.tool(name="delete")` public function calling `validate_id` then dispatching) and register it in `general/tools/__init__.py` (`from .delete import delete`, the `__all__` entry, and a sentence in the module docstring — the server registers tools purely via this package's import side effect) — depends on: Task 1.1 — status: not-started.
 - [ ] Task 2.2: Add `tests/general/tools/test_delete.py` per Design Notes §9 — depends on: Task 2.1 — status: not-started.
 
 #### Phase 3: Retire the eleven delete stubs (Phase-Orchestrator)
 
 - [ ] Task 3.1: Delete the eleven `src/biz/dfch/specmgr/<d>/tools/delete_<d>.py` files — depends on: Task 2.1 — status: not-started.
-- [ ] Task 3.2: In each of the eleven `<d>/tools/__init__.py`, remove the `from .delete_<d> import delete_<d>` line, the `delete_<d>` `__all__` entry, and the stub mention in the module docstring — depends on: Task 3.1 — status: not-started.
+- [ ] Task 3.2: In each of the eleven `<d>/tools/__init__.py`, remove the `from .delete_<d> import delete_<d>` line, the `delete_<d>` `__all__` entry, and the stub mention in the module docstring; **additionally** in each of the eleven domain-level `<d>/__init__.py` package docstrings, drop `delete_<d>` from the tool enumeration (required by ACC-002: `grep -r "delete_<d>"` over all of `src/` must return nothing) — depends on: Task 3.1 — status: not-started.
 - [ ] Task 3.3: Delete the eleven `tests/<d>/tools/test_delete_<d>.py` stub-test files — depends on: Task 3.2 — status: not-started.
 
 #### Phase 4: Decision and documentation propagation (Phase-Orchestrator)
 
-- [ ] Task 4.1: Create the new ADR via the `create_adr` MCP tool per Design Notes §7, set it `accepted`, and run `specmgr adr-toc` — depends on: Task 3.3 — status: not-started.
+- [ ] Task 4.1: Create the new ADR via the `create_adr` MCP tool per Design Notes §7 (requester-confirmed: the enabled specmgr MCP server resolves `docs/adr` relative to its CWD, i.e. this worktree — sanity-check with `git status` right after creation), set it `accepted`, run `specmgr adr-toc`, and ensure the new ADR file plus the regenerated `docs/adr/README.md` are `git add`ed into the Phase 4 commit — depends on: Task 3.3 — status: not-started.
 - [ ] Task 4.2: Update `AGENTS.md` per Design Notes §8 — depends on: Task 3.3 — status: not-started.
 - [ ] Task 4.3: Update `server.py`'s module docstring per Design Notes §8 — depends on: Task 3.3 — status: not-started.
 - [ ] Task 4.4: Add the `CHANGELOG.md` `[Unreleased]` entry per Design Notes §8 — depends on: Task 3.3 — status: not-started.
@@ -459,14 +459,16 @@ no replacement per-domain delete tests are added — coverage moves entirely to
 
 ### Current Status
 
-**As of 2026-08-31**: Design complete (Phase 0). The `feat-36-delete` worktree/branch
-was cut from `dev` and this README captures the full, implementer-ready design: the
-generic `delete` tool, the reusable `_path_safety` module, the eleven stub removals,
-the locking/error contract, the new ADR, and the documentation propagation. No source
-code has been written yet — implementation (Phases 1–5) is delegated to the
-Phase-Orchestrator. All three open design questions were resolved with the requester:
-ADR is excluded (eleven whole-body domains only), `feat` deletes its whole folder, and
-the tool returns the deleted path as a `str`.
+**As of 2026-08-31 (session handover)**: Design complete (Phase 0, including
+Task 0.3). The `feat-36-delete` worktree/branch was cut from `dev` and this README
+captures the full, implementer-ready design: the generic `delete` tool, the reusable
+`_path_safety` module, the eleven stub removals, the locking/error contract, the new
+ADR, and the documentation propagation. No feature source code has been written yet —
+implementation (Phases 1–5) is delegated to the Phase-Orchestrator in a **fresh
+session**; see the handover entry in Updates below for the agreed execution model,
+commit policy, plan refinements, and environment caveats. Baseline is green: full
+`unittest` suite OK (2704 tests), `ruff format --check` / `ruff check` / `vulture`
+all clean.
 
 ### Blockers
 
@@ -475,6 +477,57 @@ the tool returns the deleted path as a `str`.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-08-31 18:28:48.000Z — Session handover: Phase 0 complete, Phase 1 ready for a fresh session
+
+The design session ended with Phase 0 complete. Implementation of Phases 1–5 resumes
+in a **fresh session**, orchestrated from this README.
+
+**Execution model (agreed with the requester):**
+
+- Phase-by-phase: the main agent acts as Phase-Orchestrator and launches the
+  `phase-implementer` subagent **once per phase** (1, then 2, …, 5). Each
+  subagent implements its phase end-to-end (code, tests, phase-end quality gate,
+  task-line status updates in this README) and reports back; the orchestrator
+  verifies the gate results and commits before starting the next phase.
+- Commit policy: **one commit per phase** on `feat-36-delete`. The orchestrator
+  commits without asking for permission but does **NOT push**. The orchestrator
+  stops and asks only when it needs a user decision or hits a wall.
+- ADR (Task 4.1): the enabled specmgr MCP server (`uvx biz-dfch-specmgr[mcp]`)
+  resolves `docs/adr` relative to its CWD — the requester confirmed `create_adr`
+  lands the file in this worktree. The new ADR file must be committed together
+  with the other Phase 4 files. Do NOT enable the disabled `specmgr-test` MCP
+  server (it points at the main repo). Do NOT run `git pull` on this branch
+  (no upstream tracking is set).
+
+**Plan refinements agreed this session** (folded into the Task List above):
+
+- Task 2.1 additionally registers `delete` in `general/tools/__init__.py`
+  (import / `__all__` / docstring) — without it the tool would silently never
+  register.
+- Task 3.2 additionally drops `delete_<d>` from the eleven domain-level
+  `<d>/__init__.py` package docstrings — otherwise ACC-002's grep-over-`src/`
+  criterion would fail.
+
+**Repo state at handover:**
+
+- Worktree `/home/user/src/biz.dfch.SpecMgr.worktrees/feat-36-delete`, branch
+  `feat-36-delete`, working tree clean; tip is the Task 0.3 debug-print cleanup
+  commit.
+- Main repo on `dev` (`/home/user/src/biz.dfch.SpecMgr`) carries the byte-exact
+  same cleanup commit (`9eb7e8a`); the maintainer pushes `dev`.
+- Baseline verified green: full `unittest` suite (2704 tests, OK, noise-free
+  output), `ruff format --check` (1487 files), `ruff check`, and `vulture` all
+  clean.
+- Pre-commit hooks are active in both checkouts. Known UX: when a hook (e.g.
+  `ruff-format`) modifies a staged file, the first commit attempt fails with
+  "Files were modified by this hook" — re-`git add` the file and commit again.
+  The `unittest` hook (full suite, ~2 min) and `specmgr-coverage-badge` run on
+  any `src`/`tests` change; the `specmgr docs`/`mcp-docs`/`adr-toc`/`schema`
+  hooks are scoped to `src/` / `docs/adr` changes and will fire on the Phase
+  3/4 commits.
+
+**Next action:** launch `phase-implementer` for **Phase 1** (Tasks 1.1–1.2).
 
 #### 2026-08-31 18:10:22.000Z — Leftover debug prints stripped from the md model tests (Task 0.3)
 
