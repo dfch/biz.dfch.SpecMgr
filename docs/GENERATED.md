@@ -425,6 +425,18 @@ First-line docstrings from each module, organized by domain:
 - `uc/tools/parse_uc.py` — ``@mcp.tool()`` wrapper: parse_uc.
 - `uc/tools/validate_uc.py` — ``@mcp.tool()`` wrapper: validate_uc (Task 3.1.5).
 
+**vcr/**
+
+- `vcr/__init__.py` — Verification Case Record (VCR) domain -- how a REQ/UC is verified.
+- `vcr/models/__init__.py` — Verification Case Record (VCR) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- `vcr/models/v1/__init__.py` — Verification Case Record (VCR) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- `vcr/models/v1/_util.py` — Shared, private constants for the ``vcr.models.v1`` subpackage.
+- `vcr/models/v1/body.py` — Verification Case Record (VCR) body models: whole-section fields under a single H1.
+- `vcr/models/v1/document.py` — Pydantic model for a full verification case record document (frontmatter + body).
+- `vcr/models/v1/frontmatter.py` — Verification Case Record (VCR) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
+- `vcr/models/v1/parser.py` — Parse raw verification case record (VCR) ``.md`` text into a :class:`VcrDocument`.
+- `vcr/models/v1/summary.py` — Pydantic model for one line of VCR listing output (Phase 2, ``list_vcr``).
+
 ## Test Coverage
 
-**Test files**: 283
+**Test files**: 286

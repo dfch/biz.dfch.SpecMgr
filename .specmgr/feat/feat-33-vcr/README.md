@@ -3,7 +3,7 @@ created: 2026-08-31 07:25:24.241609
 id: feat-33-vcr
 status: planning
 type: feat
-updated: 2026-08-31 08:50:00
+updated: 2026-08-31 10:30:00
 version: 1.0.0
 ---
 
@@ -483,14 +483,14 @@ has no Plan/Progress split -- same reasoning `sysrs` used for its own
 
 #### Phase 1: Models and parser
 
-- [ ] Task 1.1: `vcr/models/v1/frontmatter.py` (`VcrFrontmatter`, closed
+- [x] Task 1.1: `vcr/models/v1/frontmatter.py` (`VcrFrontmatter`, closed
   `status` vocabulary).
-- [ ] Task 1.2: `vcr/models/v1/body.py` (`Verifies`, `Coverage`,
+- [x] Task 1.2: `vcr/models/v1/body.py` (`Verifies`, `Coverage`,
   `AcceptanceCriterion`/`AcceptanceCriteria`, `MoreInformation`, reused
   `Updates`).
-- [ ] Task 1.3: `vcr/models/v1/document.py`, `parser.py`, `summary.py`,
+- [x] Task 1.3: `vcr/models/v1/document.py`, `parser.py`, `summary.py`,
   `_util.py`, `__init__.py`.
-- [ ] Task 1.4: Unit tests for every model class and the parser.
+- [x] Task 1.4: Unit tests for every model class and the parser.
 
 #### Phase 2: Tools
 
@@ -523,24 +523,25 @@ has no Plan/Progress split -- same reasoning `sysrs` used for its own
 
 ### Current Status
 
-**As of 2026-08-31**: Phase 0 (Empirical schema validation) complete.
-`example.md` finalized as the **sole** draft (the intermediate
-`example.v2.md`/`example.v3.md` iterations were merged into it and
-deleted -- real frontmatter, single-value-field `## Verifies`,
-DTAIS/`Special` terminology, and every instructional comment stripped per
-the clean-example convention); `template.md` now drafted alongside it
-(blind-text placeholders, instructional comments restored, mirroring
-`dec`/`rsk`/`prb`/`req`/`uc`'s shipped `*_template.md` files); the
-`### AC-NNN (Method): ...` heading regex and a duplicate-AC-number
-`model_validator` idea (modeled on `dec`'s `Option`/
-`_validate_option_numbers_unique` precedent) both confirmed against
-hand-written fixtures via a throwaway `/tmp` scratch script (Task 0.2).
-The `Verifies` class sketch and the `specmgr://dtais` resource sketch
-(REQ-006) remain persisted in Design Notes for Phases 1/3. Still no
-`vcr` model/tool/resource code written -- neither `example.md` nor
-`template.md` has been validated against the actual `models/md` engine
-yet, since that engine doesn't have a `vcr` schema to validate against
-until Phase 1 exists.
+**As of 2026-08-31**: Phase 1 (Models and parser) complete. `vcr/models/v1/`
+now exists in full: `frontmatter.py` (`VcrFrontmatter`, closed
+draft/progress/complete/approved status set), `body.py` (`Verifies`,
+`Coverage`, `TestSteps`, `AcceptanceCriterion`/`AcceptanceCriteria`,
+`MoreInformation`, `UpdateEntry`/`Updates`, and the top-level `Vcr` H1
+container with its duplicate-AC-number `model_validator`), plus
+`document.py`/`parser.py`/`summary.py`/`_util.py`/`__init__.py` mirroring
+`dec/models/v1`'s shape exactly. 103 new unit tests (`tests/vcr/models/v1/`)
+cover every heading alias, `Verifies`'/`Coverage`'s regex-enforced values,
+the `AC-NNN (Method): ...` heading regex and computed `number`/`method`
+fields, `TestSteps` presence/absence, mandatory/optional-section behavior,
+misordering, the duplicate-AC-number after-validator, and full-document
+round-trips through `parse_vcr`. REQ-001..004 (and their corresponding
+ACC-001..004 schema-level acceptance criteria) are now implemented and
+unit-tested end to end; ACC checkboxes themselves are left for sign-off
+per this feature's own discipline. No `vcr` tool/resource/prompt code
+exists yet, and `vcr/__init__.py` deliberately stays empty (no
+`tools`/`resources`/`prompts` import) -- that domain-registration wiring
+is Phase 2/3/4's job.
 
 ### Blockers
 
@@ -549,6 +550,108 @@ until Phase 1 exists.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-08-31T11:15:00.000000 — Phase 1 correction: `AcceptanceCriterion.description` added; `example.md`/`template.md` now empirically validate end to end
+
+Fixed a real specification error (not a genuine open design question) in
+the schema landed by the previous Phase 1 entry: `AcceptanceCriterion` had
+no field for the free-form descriptive paragraph that already-finalized
+`example.md` demonstrates under 3 of its 4 `### AC-NNN (Method): ...`
+headings (AC-001/002/004 each carry prose before/without `#### Test
+Steps`; AC-003 has none). Added `description: MarkdownParagraph | None =
+None` to `AcceptanceCriterion` in `vcr/models/v1/body.py`, declared before
+`test_steps` (document order: heading -> optional description -> optional
+`Test Steps`), both independently optional. While empirically re-validating
+via a throwaway `/tmp` scratch script (per instruction) that called
+`parse_vcr`/`Vcr.from_text` directly against `example.md`'s and
+`template.md`'s actual body text, surfaced one more, closely-related gap
+in scope of the same fix: `## Updates` in both drafts carries a permanent
+leading "newest first" anchor `<!-- ... -->` comment (already noted as a
+first-class, non-authoring-guidance structural anchor in this feature's
+own Design Notes and clean-example-convention discussion), but `Updates`
+was declared as a plain `MarkdownSection2` (DEC's own shape, whose
+`dec_example.md` carries no such comment) instead of
+`MarkdownSection2WithComment`. Changed `Updates` to
+`MarkdownSection2WithComment` (mirroring `feat`'s own
+`Updates(MarkdownSection3WithComment)` precedent) so this validates too.
+After both fixes, the scratch script confirmed **both** `example.md` and
+`template.md` now parse successfully end to end via `parse_vcr` (every
+frontmatter field, `Verifies`, `Coverage`, all `AcceptanceCriterion`
+entries' `description`/`test_steps` combinations, `More Information`, and
+`Updates` with its comment) -- the only discrepancy from a byte-exact
+round-trip is the pre-existing, already-documented `MarkdownListItem`
+"tight numbered list renders as loose" quirk (unrelated to VCR, confirmed
+via `difflib` diff: only blank lines inserted between numbered `Test
+Steps` items), not a schema defect. The scratch script was deleted after
+the run, never committed. Added 9 new `test_body.py` tests (all four
+`description`/`test_steps` combinations plus `Updates`' leading comment)
+and adjusted the reference-document fixtures in `test_body.py`/
+`test_parser.py` to exercise AC-001 (both fields), AC-003 (description
+only), and a new AC-004 (neither) -- mirroring `example.md`'s own shape --
+plus the `Updates` comment. Quality gate re-run clean: `ruff format
+--check`, `ruff check`, `vulture` (no new whitelist entries needed --
+`description` is already a ubiquitous field/kwarg name used throughout the
+codebase), and the full `unittest` suite (2336 tests, `OK`).
+
+#### 2026-08-31T10:30:00.000000 — Phase 1 complete: `vcr/models/v1/` implemented and unit-tested
+
+Implemented the full `vcr/models/v1/` schema and parser, mirroring `dec`'s
+`models/v1` layout file-for-file (`frontmatter.py`, `body.py`,
+`document.py`, `parser.py`, `summary.py`, `_util.py`, `__init__.py`, plus
+`vcr/models/__init__.py` and an empty `vcr/__init__.py`). `VcrFrontmatter`
+narrows `status` to the closed `draft`/`progress`/`complete`/`approved`
+set (REQ-004). `body.py` implements `Verifies` verbatim from the Design
+Notes' persisted class sketch (`MarkdownSection2WithComment`, regex-checked
+`value`, mandatory `notes`), `Coverage` (RSK `Strategy`-style closed
+3-value `full`/`partial`/`none` paragraph, REQ-002), `TestSteps` (`####
+Test Steps`, a numbered procedure list, `min_length=1`), `AcceptanceCriterion`
+(a regex-aliased `### AC-NNN (Method): <text>` heading with `number`/`method`
+`@computed_field`s and an optional `test_steps` child), `AcceptanceCriteria`
+(`>=1` entries), reused `MoreInformation`/`UpdateEntry`/`Updates` (DEC's
+exact shape), and the top-level `Vcr` H1 container with a
+`_validate_ac_numbers_unique` `model_validator` mirroring DEC's
+`Decision._validate_option_numbers_unique` (mandatory `acceptance_criteria`,
+so no `is not None` guard needed). `VcrSummary` is a plain `DocSummary`
+subclass with no extra fields (DEC precedent, not RSK's enriched one).
+Confirmed via a quick interactive sanity check before writing tests that
+`AcceptanceCriterion` needed a different computed-field extraction
+mechanic than DEC's `Option`/RSK's `Probability`/`Impact`: those are *leaf*
+sections (zero other declared fields), so their own `.text` returns the
+*complete* extent (heading marker + body) verbatim; `AcceptanceCriterion`
+declares one other field (`test_steps`), making it *composite*, so its
+`.text` returns only the heading's own inline content (marker already
+stripped) -- the `number`/`method` regex therefore matches against
+`self.text` directly, not `self.text.splitlines()[0]`. A consequence: an
+`AcceptanceCriterion`'s body may contain nothing besides an optional
+`#### Test Steps` -- there is no separate free-form description/notes
+paragraph field, matching UC's `Extension`/`SubVariation` precedent
+(condition/title info lives entirely in the heading, the declared field(s)
+are the *only* body content) rather than DEC's leaf `Option` (which
+absorbs arbitrary body prose since it declares no other field at all).
+This means the already-finalized `example.md`'s AC-001/002/004 descriptive
+paragraphs (prose directly under the heading, before/without `Test Steps`)
+do **not** validate against this Phase 1 schema as literally written --
+a known, deliberate gap flagged for Phase 3 (packaging `example.md`/
+`template.md` as real package data) to resolve, either by revising
+`example.md` or by reconsidering the schema then; Task 0.1 already noted
+neither draft had been validated against `models/md` yet, and this phase's
+own test fixtures (inline `textwrap.dedent`, per instructions) do not
+depend on either draft file. Wrote 103 new tests across
+`tests/vcr/models/v1/test_frontmatter.py`/`test_body.py`/`test_parser.py`,
+covering every heading alias (including all 5 DTAIS method words and the
+`AC-NNN` 3-digit/gap-allowed/duplicate-rejected number shape), `Verifies`'/
+`Coverage`'s regex value validation, `TestSteps` presence/absence,
+mandatory-vs-optional section behavior, misordering, and full-document
+round-trips through `parse_vcr`. Added a `whitelist.py` entry
+(`_validate_ac_numbers_unique`, `verifies`, `test_steps`) for three genuine
+Pydantic-framework vulture false positives (mirroring the existing `dec
+(feat-21 Phase 1)`/`_validate_option_numbers_unique` precedent exactly).
+Quality gate green: `ruff format --check`, `ruff check`, `vulture` (with
+the new whitelist entries), and the full `unittest` suite (2331 tests,
+`OK`) all pass. Did not touch `server.py`, did not create
+`vcr/tools`/`vcr/resources`/`vcr/prompts`, and `vcr/__init__.py` stays
+empty (module docstring only, no `tools`/`resources`/`prompts` import) --
+all reserved for Phase 2/3/4.
 
 #### 2026-08-31T09:10:00.000000 — Phase 0 complete: drafted template.md, confirmed AC-NNN regex/duplicate check
 
@@ -695,6 +798,48 @@ description; branch/worktree `feat-33-vcr` created off `origin/dev`.
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-08-31T11:15:00.000000 — Corrected: `AcceptanceCriterion.description` added; `Updates` needs `WithComment`
+
+Supersedes the decision immediately below (2026-08-31T10:30:00, "no
+free-form description field"), which was a genuine specification error,
+not a resolved design question: the plan's own Phase 0 discipline requires
+the schema to match `example.md`'s empirically-validated content, and that
+draft demonstrates a descriptive paragraph under 3 of its 4
+`### AC-NNN (Method): ...` headings. Added `description: MarkdownParagraph
+| None = None` to `AcceptanceCriterion`, declared before `test_steps`
+(document order), both independently optional -- the composite-vs-leaf
+reasoning in the superseded entry below still holds (that's *why* a
+declared field, not absorbed body prose, was the right fix), it was just
+missing the field itself. Also changed `Updates` from a plain
+`MarkdownSection2` (DEC's shape) to `MarkdownSection2WithComment`
+(`feat`'s shape) after the same empirical re-validation surfaced that
+`example.md`/`template.md`'s permanent "newest first" anchor comment under
+`## Updates` had no schema support either. Both `example.md` and
+`template.md` now parse successfully end to end via `parse_vcr`,
+confirmed via a throwaway, uncommitted `/tmp` scratch script (deleted
+after the run).
+
+#### 2026-08-31T10:30:00.000000 — `AcceptanceCriterion` carries no free-form description field; body is heading + optional `Test Steps` only
+
+Phase 1's exact schema (declared `test_steps: TestSteps | None` plus
+computed `number`/`method`) makes `AcceptanceCriterion` a *composite*
+`MarkdownSection3` (it has one other declared field), unlike DEC's `Option`/
+RSK's `Probability`/`Impact`, which are *leaf* sections with zero other
+declared fields. A composite section's body must be fully consumed by its
+declared field(s) (`MarkdownStr.from_text` asserts no text is left over),
+so an `AcceptanceCriterion` with only `test_steps` declared cannot also
+carry a free-form descriptive paragraph the way DEC's leaf `Option`
+absorbs arbitrary body prose verbatim. Implemented per the phase's literal
+instructions (no description/notes field), matching UC's `Extension`/
+`SubVariation` precedent (heading carries all title/condition info, the
+declared field(s) are the *only* body content) instead of DEC's `Option`.
+Consequence: the already-finalized `example.md`'s AC-001/002/004
+descriptive paragraphs do not validate against this schema as written --
+left as a known, flagged gap for Phase 3 (packaging) to resolve (either by
+revising `example.md`, or by adding a description field then), rather than
+guessed at now, since Phase 1's instructions were explicit and this
+phase's own tests deliberately do not depend on either draft file.
 
 #### 2026-08-31T08:50:00.000000 — `example.md` is the sole draft; instructional comments removed
 

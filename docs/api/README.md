@@ -369,3 +369,12 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.uc.tools.list_uc`](biz.dfch.specmgr.uc.tools.list_uc.md) — ``@mcp.tool()`` wrapper: list_uc (feat-13-list-paging Task 2.3).
 - [`biz.dfch.specmgr.uc.tools.parse_uc`](biz.dfch.specmgr.uc.tools.parse_uc.md) — ``@mcp.tool()`` wrapper: parse_uc.
 - [`biz.dfch.specmgr.uc.tools.validate_uc`](biz.dfch.specmgr.uc.tools.validate_uc.md) — ``@mcp.tool()`` wrapper: validate_uc (Task 3.1.5).
+- [`biz.dfch.specmgr.vcr`](biz.dfch.specmgr.vcr.md) — Verification Case Record (VCR) domain -- how a REQ/UC is verified.
+- [`biz.dfch.specmgr.vcr.models`](biz.dfch.specmgr.vcr.models.md) — Verification Case Record (VCR) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- [`biz.dfch.specmgr.vcr.models.v1`](biz.dfch.specmgr.vcr.models.v1.md) — Verification Case Record (VCR) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- [`biz.dfch.specmgr.vcr.models.v1._util`](biz.dfch.specmgr.vcr.models.v1._util.md) — Shared, private constants for the ``vcr.models.v1`` subpackage.
+- [`biz.dfch.specmgr.vcr.models.v1.body`](biz.dfch.specmgr.vcr.models.v1.body.md) — Verification Case Record (VCR) body models: whole-section fields under a single H1.
+- [`biz.dfch.specmgr.vcr.models.v1.document`](biz.dfch.specmgr.vcr.models.v1.document.md) — Pydantic model for a full verification case record document (frontmatter + body).
+- [`biz.dfch.specmgr.vcr.models.v1.frontmatter`](biz.dfch.specmgr.vcr.models.v1.frontmatter.md) — Verification Case Record (VCR) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
+- [`biz.dfch.specmgr.vcr.models.v1.parser`](biz.dfch.specmgr.vcr.models.v1.parser.md) — Parse raw verification case record (VCR) ``.md`` text into a :class:`VcrDocument`.
+- [`biz.dfch.specmgr.vcr.models.v1.summary`](biz.dfch.specmgr.vcr.models.v1.summary.md) — Pydantic model for one line of VCR listing output (Phase 2, ``list_vcr``).
