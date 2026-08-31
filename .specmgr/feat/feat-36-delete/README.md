@@ -3,7 +3,7 @@ created: 2026-08-31 15:37:40.000000
 id: feat-36-delete
 status: planning
 type: feat
-updated: 2026-08-31 18:28:48.000000
+updated: 2026-08-31 19:09:41.000000
 version: 1.0.0
 ---
 
@@ -428,8 +428,8 @@ no replacement per-domain delete tests are added — coverage moves entirely to
 
 #### Phase 1: Reusable path-safety module (Phase-Orchestrator)
 
-- [ ] Task 1.1: Add `general/tools/_path_safety.py` exactly per Design Notes §1 (`assert_no_traversal`, `assert_uuid`, `assert_feat_id`, `validate_id`, `assert_within`; `ValueError` on failure; no I/O) — depends on: Task 0.2 — status: not-started.
-- [ ] Task 1.2: Add `tests/general/tools/test__path_safety.py` per Design Notes §9 — depends on: Task 1.1 — status: not-started.
+- [x] Task 1.1: Add `general/tools/_path_safety.py` exactly per Design Notes §1 (`assert_no_traversal`, `assert_uuid`, `assert_feat_id`, `validate_id`, `assert_within`; `ValueError` on failure; no I/O) — depends on: Task 0.2 — status: done (2026-08-31).
+- [x] Task 1.2: Add `tests/general/tools/test__path_safety.py` per Design Notes §9 — depends on: Task 1.1 — status: done (2026-08-31).
 
 #### Phase 2: The generic delete tool (Phase-Orchestrator)
 
@@ -459,16 +459,15 @@ no replacement per-domain delete tests are added — coverage moves entirely to
 
 ### Current Status
 
-**As of 2026-08-31 (session handover)**: Design complete (Phase 0, including
-Task 0.3). The `feat-36-delete` worktree/branch was cut from `dev` and this README
-captures the full, implementer-ready design: the generic `delete` tool, the reusable
-`_path_safety` module, the eleven stub removals, the locking/error contract, the new
-ADR, and the documentation propagation. No feature source code has been written yet —
-implementation (Phases 1–5) is delegated to the Phase-Orchestrator in a **fresh
-session**; see the handover entry in Updates below for the agreed execution model,
-commit policy, plan refinements, and environment caveats. Baseline is green: full
-`unittest` suite OK (2704 tests), `ruff format --check` / `ruff check` / `vulture`
-all clean.
+**As of 2026-08-31 (Phase 1 complete)**: Phase 0 (design, including Task 0.3) and
+Phase 1 (reusable path-safety module) are complete. `general/tools/_path_safety.py`
+now exists with the five pinned, pure, non-I/O assertions (`assert_no_traversal`,
+`assert_uuid`, `assert_feat_id`, `validate_id`, `assert_within`), all raising
+`ValueError` with a message naming the offending value; `DeleteError` deliberately
+lives in the future `delete.py` (Phase 2), not here. `tests/general/tools/test__path_safety.py`
+covers every Design Notes §9 case (23 tests). Quality gate is green: full `unittest`
+suite OK (2727 tests = 2704 baseline + 23 new), `ruff format --check` (1490 files),
+`ruff check`, and `vulture` all clean. **Phase 2 (the generic `delete` tool) is next.**
 
 ### Blockers
 
@@ -477,6 +476,10 @@ all clean.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-08-31 19:09:41.000Z — Phase 1 complete: reusable path-safety module
+
+Implemented Tasks 1.1–1.2 strictly per Design Notes §1/§9. Added `src/biz/dfch/specmgr/general/tools/_path_safety.py`, the reusable, doc-type-agnostic path-safety module: `__all__` with the five public functions (`assert_no_traversal`, `assert_uuid`, `assert_feat_id`, `validate_id`, `assert_within`), `_UUID_TYPES` (the ten UUID domains), the canonical 8-4-4-4-12 lowercase-hex `_UUID_PATTERN`, the `_FEAT_ID_PATTERN` (`^feat-[0-9]+-[a-z0-9-]+$`), and comparison constants for the `feat` type name, the path separators, and the `..` sequence; no `mcp` dependency, no filesystem mutation (the sanctioned touch is `assert_within`'s read-only `Path.resolve()` calls), no `DeleteError` (it lives in the Phase 2 `delete.py`, per §1's reusability contract); every function starts with the standard input guards and raises `ValueError` with a message naming the offending value, and `validate_id` is the single before-filesystem-access entry point (rejecting unknown `type_` values). Added `tests/general/tools/test__path_safety.py` with 23 pure unit tests covering every §9 case (the six pinned `assert_no_traversal` rejection shapes; the `assert_uuid` and `assert_feat_id` accept/reject sets; `validate_id` over all ten UUID domains, `feat`, an unknown type, and a traversal id; `assert_within` child/base/sibling/ancestor containment). Phase-end quality gate all green: `ruff format --check` (1490 files), `ruff check`, and `vulture src/ whitelist.py --min-confidence 60` clean; target test module OK (23 tests); full `unittest` suite OK (2727 tests = 2704 baseline + 23 new, ~105 s). Phase 2 (the generic `delete` tool, Tasks 2.1–2.2) is next.
 
 #### 2026-08-31 18:28:48.000Z — Session handover: Phase 0 complete, Phase 1 ready for a fresh session
 

@@ -137,6 +137,7 @@ First-line docstrings from each module, organized by domain:
 - `general/tools/_doc_paths.py` — Generic, doc-type-agnostic base directory resolution, filename slugification,
 - `general/tools/_packaged_data.py` — Generic, doc-type-agnostic access to packaged example/template/schema data
 - `general/tools/_paging.py` — Generic, doc-type-agnostic paging helpers (feat-13 Task 1.2).
+- `general/tools/_path_safety.py` — Reusable, doc-type-agnostic path-safety assertions for document ids and
 - `general/tools/_splice.py` — Frontmatter-stripped body extraction and body-line splicing for the generic
 - `general/tools/mdformat.py` — ``@mcp.tool()`` wrapper: mdformat.
 - `general/tools/set_status.py` — ``@mcp.tool()`` wrapper: set_status (feat-22-consolidate-mutation-tools, Phase 4).
@@ -493,4 +494,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 327
+**Test files**: 328
