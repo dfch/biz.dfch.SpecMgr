@@ -428,7 +428,7 @@ First-line docstrings from each module, organized by domain:
 
 **vcr/**
 
-- `vcr/__init__.py` — Verification Case Record (VCR) domain -- how a REQ/UC is verified.
+- `vcr/__init__.py` — Verification Case Record (VCR) domain -- how a single REQ/UC is verified.
 - `vcr/models/__init__.py` — Verification Case Record (VCR) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
 - `vcr/models/v1/__init__.py` — Verification Case Record (VCR) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
 - `vcr/models/v1/_util.py` — Shared, private constants for the ``vcr.models.v1`` subpackage.

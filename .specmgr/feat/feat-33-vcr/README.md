@@ -1,10 +1,10 @@
 ---
 created: 2026-08-31 07:25:24.241609
 id: feat-33-vcr
-status: planning
+status: done
 type: feat
-updated: 2026-08-31 10:30:00
-version: 1.0.0
+updated: 2026-08-31 15:30:00
+version: 1.1.0
 ---
 
 # Feature: Add artifact type "Verification Case Record" (VCR)
@@ -85,22 +85,40 @@ Domain key: `vcr`.
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: Verifies REQ-001 -- an `example.md`/draft body demonstrates
-  the `## Verifies` shape and validates against the `models/md` engine
-  (mirroring `sop`'s/`sysrs`'s pre-implementation empirical-verification
-  discipline) before Phase 1 starts.
-- [ ] ACC-002: Verifies REQ-002 -- `## Coverage`'s closed vocabulary is
-  validated the same way.
-- [ ] ACC-003: Verifies REQ-003 -- the `### AC-NNN (Method): ...` heading
-  regex, DTAIS closed vocabulary, and duplicate-number rejection are
-  validated against the `models/md` engine.
-- [ ] ACC-004: Verifies REQ-004 -- the frontmatter `status` closed
-  vocabulary is implemented and unit-tested.
-- [ ] ACC-005: Verifies REQ-005 -- full domain implementation, once
-  REQ-001..004 are locked, following `sop`'s task-list shape.
-- [ ] ACC-006: Verifies REQ-006 -- `specmgr://dtais` exists, is registered
-  in `general/resources/__init__.py` and `server.py`'s docstring, and its
-  content is reviewed against the persisted Design Notes sketch.
+- [x] ACC-001: Verifies REQ-001 -- `Verifies` (`vcr/models/v1/body.py`) is
+  implemented exactly per the persisted class sketch (mandatory `value`
+  regex-checked against `_VERIFIES_PATTERN`, mandatory `notes`, optional
+  `comment`) and unit-tested end to end, including full-document
+  round-trips, in `tests/vcr/models/v1/test_body.py`/`test_parser.py`.
+- [x] ACC-002: Verifies REQ-002 -- `Coverage`'s closed
+  `full`/`partial`/`none` vocabulary is implemented and unit-tested in
+  `tests/vcr/models/v1/test_body.py`.
+- [x] ACC-003: Verifies REQ-003 -- the `### AC-NNN (Method): ...` heading
+  regex, closed DTAIS vocabulary (all 5 words), and the duplicate-`AC-NNN`-
+  number `model_validator` are implemented in
+  `vcr/models/v1/body.py`/`document.py` and unit-tested in
+  `tests/vcr/models/v1/test_body.py`.
+- [x] ACC-004: Verifies REQ-004 -- `VcrFrontmatter`'s closed
+  `draft`/`progress`/`complete`/`approved` status vocabulary is
+  implemented in `vcr/models/v1/frontmatter.py` and unit-tested in
+  `tests/vcr/models/v1/test_frontmatter.py`.
+- [x] ACC-005: Verifies REQ-005 -- the full domain now exists end to end:
+  `vcr/models/v1/`, 8 tools (`vcr/tools/`), 3 resources (`vcr/resources/`),
+  2 prompts (`vcr/prompts/`), generic `update`/`set_status` dispatch
+  (`type="vcr"` in `general/tools/`), packaged data (`vcr/data/`), and
+  cross-cutting registration (`server.py`, `AGENTS.md`, `README.md`,
+  `.pre-commit-config.yaml`), all covered by `tests/vcr/` (models, tools,
+  resources, prompts) plus the new `vcr` cases in
+  `tests/general/tools/test_update.py`/`test_set_status.py`; the full
+  suite passes (2452 tests, `OK`).
+- [x] ACC-006: Verifies REQ-006 -- `specmgr://dtais` exists
+  (`general/resources/dtais.py`), is registered in
+  `general/resources/__init__.py` and `server.py`'s docstring, is
+  documented in `docs/MCP.md` (confirmed in the generated output), and its
+  content (`general/data/general_dtais.md`) matches the persisted Design
+  Notes sketch, with `tests/general/resources/test_dtais.py` confirming
+  every documented method word round-trips through
+  `AcceptanceCriterion.from_text`.
 
 ### Scope
 
@@ -512,18 +530,54 @@ has no Plan/Progress split -- same reasoning `sysrs` used for its own
 
 #### Phase 4: Cross-cutting registration
 
-- [ ] Task 4.1: `server.py` import line.
-- [ ] Task 4.2: `AGENTS.md` Status section bullet (mirroring the
+- [x] Task 4.1: `server.py` import line.
+- [x] Task 4.2: `AGENTS.md` Status section bullet (mirroring the
   `sop`/`feat` bullets).
-- [ ] Task 4.3: `README.md`, CI/pre-commit updates as needed.
-- [ ] Task 4.4: `specmgr docs`/`specmgr adr-toc` regeneration, full test
+- [x] Task 4.3: `README.md`, CI/pre-commit updates as needed.
+- [x] Task 4.4: `specmgr docs`/`specmgr adr-toc` regeneration, full test
   suite, ruff/vulture gates.
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-08-31 (latest)**: Phase 3 (Resources and prompts) complete.
+**As of 2026-08-31 (latest)**: Feature complete end to end. Phase 4
+(Cross-cutting registration) wired `vcr/__init__.py` (now imports
+`prompts`/`resources`/`tools`, mirroring `dec/__init__.py` exactly),
+added `vcr` to `server.py`'s bottom import line and its full module
+docstring (resources, the "no `{id}`/no `list`" paragraph, tools,
+prompts, and the closing domain-enumeration paragraph -- all
+domain-count language bumped from nine/ten to ten/eleven where it now
+includes `vcr`), added a new `vcr/` bullet to `AGENTS.md`'s Status
+section (positioned after `feat/`, before `general/`, mirroring `dec/`'s
+shape) plus every other domain-enumeration spot in that file (`general/`'s
+own resource list gains `specmgr://dtais`; the "still missing"
+`validate_*`/`delete_*` lists gain `validate_vcr`/`delete_vcr`; the
+tools/resources/prompts registration summary and the MCP-server-import
+summary both gain `vcr`), added "Verification Case Record (VCR)" to root
+`README.md`'s artifact list (alphabetically last, after "Use Case (UC)"),
+added a `specmgr-schema-vcr-package` pre-commit hook (mirroring
+`specmgr-schema-feat-package`) and inserted `vcr/models/v1` into every one
+of the 10 existing `files:` regexes (the shared `specmgr-schema` hook plus
+9 per-package hooks) and the `specmgr-schema` hook's own description, and
+added a `CHANGELOG.md` `[Unreleased]` entry ("Twelfth domain feature").
+Regenerated `docs/GENERATED.md`, `docs/api/`, `docs/MCP.md`,
+`docs/adr/README.md` (no change -- confirmed empty diff, as expected since
+this feature never touches `docs/adr/`), every `docs/*_schema.json`, and
+the packaged `vcr/data/vcr_schema.json` copy -- each regeneration command
+was run a second time afterward and confirmed stable (`unchanged`/
+identical output, no further drift). Manually confirmed in the generated
+`docs/MCP.md` that all 8 VCR tools, all 3 VCR resources, both VCR prompts,
+and the standalone `specmgr://dtais` resource appear with correct
+descriptions. Quality gate green: `ruff format --check` (1386 files
+already formatted), `ruff check` (all checks passed), `vulture` (no
+output, no new whitelist entries needed), and the full `unittest` suite
+(2452 tests, `OK`, unchanged from Phase 3 -- Phase 4 added no new test
+files, only cross-cutting registration/docs). All ACC-001..006 confirmed
+and checked off. This feature is now fully implemented end to end,
+matching every other already-shipped domain's registration shape.
+
+**As of 2026-08-31 (earlier)**: Phase 3 (Resources and prompts) complete.
 `vcr/resources/` (`vcr_schema`/`vcr_example`/`vcr_template`, mirroring
 `dec/resources/` file-for-file) and `vcr/prompts/` (`create_vcr`/
 `update_vcr`, mirroring `dec/prompts/` file-for-file, plus their packaged
@@ -600,6 +654,105 @@ is Phase 2/3/4's job.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-08-31T15:30:00.000000 — Phase 4 complete: cross-cutting registration; feature fully implemented end to end
+
+Implemented Task 4.0 (the implicit prerequisite): wired `vcr/__init__.py`
+to `from . import prompts, resources, tools`, mirroring `dec/__init__.py`
+file-for-file (module docstring adapted to VCR's actual schema/tools/
+resources/prompts, including the `specmgr://dtais` cross-reference). This
+resolves the non-blocking circular-import fragility noted in the Phase
+2/3 Updates entries (`tests/vcr/tools/`/`tests/vcr/resources/`/
+`tests/vcr/prompts/` now import cleanly in isolation too, not just as
+part of the full suite).
+
+Implemented Task 4.1: added `vcr` to `server.py`'s bottom import line
+(alphabetical position, after `uc`) and updated its module docstring in
+full -- three new `specmgr://vcr/schema`/`.../example`/`.../template`
+resource lines (after `feat`'s, before `iso25010`), a new
+`specmgr://dtais` resource line (between `feat/template` and
+`iso25010`), a new VCR sentence in the "no `{id}`/no `list`" paragraph, a
+new "Verification case record tools (`vcr/tools/`)" paragraph (before
+"General tools"), a new "Verification case record prompts
+(`vcr/prompts/`)" paragraph (before "General prompts"), the `general`
+tools paragraph's domain-count language bumped (`update`: nine -> ten
+whole-body domains, list gains `vcr`; `set_status`: "all ten domains" ->
+"all eleven domains", list gains `vcr` right before `adr`), and the
+closing "Modules are grouped domain-first" paragraph's three
+domain-enumeration spots (the domain list, the import-list sentence, and
+the tools/resources/prompts registration sentence) all gain `vcr`. Re-read
+the entire docstring end to end afterward to confirm every VCR mention is
+internally consistent with what Phases 1-3 actually built.
+
+Implemented Task 4.2: added a new `vcr/` bullet to `AGENTS.md`'s Status
+section, positioned after `feat/` and before `general/` (mirroring
+`dec/`'s bullet shape/depth), describing VCR's actual schema (`##
+Verifies` single-value cross-reference, `## Coverage` closed vocabulary,
+`## Acceptance Criteria` DTAIS-classified `### AC-NNN` entries), its 8
+tools, 3 resources, 2 prompts, generic `update`/`set_status` dispatch, and
+the cross-cutting `specmgr://dtais` resource. Also updated every other
+domain-enumeration spot in the same file: the `general/` bullet's own
+resource list (`specmgr://version`, `specmgr://iso25010` -> gains
+`specmgr://dtais` with a one-line description), the `general/tools/`
+`update` sub-bullet's domain count/list (nine -> ten, gains `vcr`), the
+`set_status` sub-bullet's domain count (ten -> eleven), the "The nine
+`get_<d>` tools" sentence (-> "The ten `get_<d>` tools"), the "Still
+genuinely missing" bullets (`validate_vcr` added to the `validate_*` list,
+`delete_vcr` added to the `delete_*` list), the "each register `tools`,
+`resources`, and `prompts`" summary bullet (gains `vcr`), and the MCP
+server section's "imports every domain package" sentence (gains `vcr`).
+Did not touch the "Models location" paragraph (VCR has no exception to
+document) or any unrelated `.specmgr/feat/` references.
+
+Implemented Task 4.3: added "Verification Case Record (VCR)" to root
+`README.md`'s artifact list (alphabetically last, after "Use Case (UC)"),
+following the same precedent `feat-31-feature`'s own Phase 5 used to add
+"Feature (FEAT)" to that same list -- confirmed the "Environment
+Variables" section itself needed no change (it is already fully generic,
+`SPECMGR_DOCS_DIR`-based, with no per-domain enumeration). Updated
+`.pre-commit-config.yaml`: inserted `vcr/models/v1` into all 10 existing
+occurrences of the shared `files:` regex (the `specmgr-schema` hook plus
+the 9 per-package `specmgr-schema-<domain>-package` hooks), right after
+`uc/models/v2` and before the always-last `models/md`, added a new
+`specmgr-schema-vcr-package` hook block (appended after
+`specmgr-schema-feat-package`, VCR-ified: `vcr/data/vcr_schema.json`,
+`specmgr://vcr/schema`, `docs/vcr_schema.json`, `--type vcr
+--output-dir src/biz/dfch/specmgr/vcr/data`) with the same updated regex,
+and updated the `specmgr-schema` hook's own description text to list
+`vcr` last. Added a `CHANGELOG.md` `[Unreleased]` `### Added` entry
+("Twelfth domain feature (VCR/Verification Case Record tooling)"),
+mirroring the FEAT entry's structure/depth (models, tools, resources +
+prompts, the cross-cutting `specmgr://dtais` resource, cross-cutting
+registration, test coverage).
+
+Implemented Task 4.4: ran `specmgr docs`, `specmgr mcp-docs`,
+`specmgr adr-toc`, `specmgr schema`, and
+`specmgr schema --type vcr --output-dir src/biz/dfch/specmgr/vcr/data`,
+each exactly twice -- the first run wrote real changes (`docs/GENERATED.md`,
+`docs/api/README.md`, `docs/api/biz.dfch.specmgr.server.md`,
+`docs/api/biz.dfch.specmgr.vcr.md`, `docs/MCP.md`, `docs/adr/README.md`
+regenerated with no diff, every `docs/*_schema.json` and the packaged
+`vcr/data/vcr_schema.json` copy reported "unchanged"), the second run
+confirmed byte-identical output (`md5sum` comparison before/after for the
+docs-generation commands; "unchanged"/no-diff for every schema and the
+adr-toc command) -- no residual drift from this phase's own edits.
+Manually read the generated `docs/MCP.md` and confirmed all 8 VCR tools
+(`create_vcr`, `parse_vcr`, `list_vcr`, `get_vcr`, `get_vcr_example`,
+`get_vcr_template`, `delete_vcr`, `validate_vcr`), all 3 VCR resources
+(`specmgr://vcr/schema`/`.../example`/`.../template`), both VCR prompts
+(`create_vcr`, `update_vcr`), and the standalone `specmgr://dtais`
+resource appear with sensible, accurate descriptions. Quality gate green:
+`ruff format --check` (1386 files already formatted), `ruff check` (all
+checks passed), `vulture src/ whitelist.py --min-confidence 60` (no
+output, no new whitelist entries needed), and the full `unittest` suite
+(2452 tests, `OK` -- unchanged from Phase 3's count, since Phase 4 added
+no new test files, only cross-cutting registration/docs). Updated the
+Task List's Phase 4 checkboxes, walked every ACC-001..006 item and marked
+all six `[x]` with a concrete justification citing the specific test
+file/resource/tool proving each, and updated Current Status to reflect
+the feature is now fully implemented end to end. Bumped this README's own
+frontmatter `status` from `planning` to `done` and `version` from `1.0.0`
+to `1.1.0`.
 
 #### 2026-08-31T14:00:00.000000 — Phase 3 complete: `vcr/resources/`, `vcr/prompts/`, and the cross-cutting `specmgr://dtais` resource implemented
 

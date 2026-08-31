@@ -229,20 +229,59 @@ type or cross-cutting:
   exist, unlike every other domain's summary, whose `ref` field is
   deliberately *not* a path. See
   `.specmgr/feat/feat-31-feature/README.md` for the full design.
+- **`vcr/`** (Verification Case Record) — same tools/resources/prompts
+  shape as `req/`/`prb/`/`dec/` but for how a single REQ/UC is verified: a
+  `## Verifies` single-value cross-reference (exactly one mandatory
+  `REQ|UC <uuid>: <title>` line plus a mandatory `notes` paraphrase, not a
+  bullet list — a single-value field is structurally incapable of holding
+  more than one reference), a `## Coverage` closed-vocabulary outcome
+  signal (`full`/`partial`/`none`, mirroring RSK's `## Strategy` idiom),
+  and a `## Acceptance Criteria` collection of `### AC-NNN (Method): ...`
+  entries (3-digit zero-padded number, DEC-`Option`-style numbered H3, no
+  per-AC mutation tools; `Method` is a closed **DTAIS** vocabulary —
+  Demonstration, Test, Analysis, Inspection, Special — parsed from the
+  heading itself via regex, RSK `Probability`/`Impact`-style; each entry
+  optionally carries a free-form `description` paragraph and/or a
+  `#### Test Steps` numbered procedure; a `model_validator` rejects
+  duplicate `AC-NNN` numbers), plus optional `## More Information`/
+  `## Updates` (`create_vcr`, `parse_vcr`, `list_vcr`, `get_vcr`,
+  `get_vcr_example`, `get_vcr_template`, `delete_vcr` stub,
+  `validate_vcr`); whole-body and line-range updates go through the
+  generic `update` tool in `general/tools/` (`type="vcr"`), status
+  changes through the generic `set_status` tool (`type="vcr"`), and the
+  `get_vcr` tool takes `raw: bool = False` — `raw=True` returns the
+  frontmatter-stripped body text as-is (the text `update`'s `begin`/`end`
+  index into); `vcr/resources/` (`specmgr://vcr/schema`,
+  `specmgr://vcr/example`, `specmgr://vcr/template`; no
+  `specmgr://vcr/{id}` — id-based reads are `get_vcr`-only, ADR
+  ddfb1109-422d-4507-8dbc-dc5e4bec9614; no `specmgr://vcr/list` —
+  `list_vcr` ships as a paged tool from day one, ADR
+  ec9f5262-9912-49d0-903f-fcfb54f28c13); `vcr/prompts/`
+  (`create_vcr`/`update_vcr`). Its schema lives at `vcr/models/v1/`,
+  inside the domain package, not top-level `models/`. The closed DTAIS
+  method vocabulary its `## Acceptance Criteria` depends on is documented
+  by the cross-cutting `specmgr://dtais` resource, which lives in
+  `general/resources/`, not `vcr/resources/`, since it is domain-knowledge
+  other document types may also want to reference (mirroring RSK's
+  `specmgr://rsk/tara` shape). See `.specmgr/feat/feat-33-vcr/README.md`
+  for the full design.
   - **`general/`** — cross-cutting, non-domain-specific package:
     `general/tools/` (`mdformat`, formats a markdown file in place while
     preserving YAML frontmatter blocks; `update`, the generic whole-body
-    *and* line-range replace for the nine whole-body domains — `type` is
-    one of req/uc/tsk/qa/prb/gol/rsk/dec/feat, optional 1-based inclusive
+    *and* line-range replace for the ten whole-body domains — `type` is
+    one of req/uc/tsk/qa/prb/gol/rsk/dec/feat/vcr, optional 1-based inclusive
     body-line
     `begin`/`end` with the `N+1` end-of-body sentinel, splice-then-
-    validate-whole; `set_status`, the generic status change for all ten
+    validate-whole; `set_status`, the generic status change for all eleven
     domains incl. adr — `superseded_by` is ADR-only, composing
     `"superseded by X"`), `general/resources/`
    (`specmgr://version`, `specmgr://iso25010` — the ISO/IEC 25010:2023
-   quality model), and `general/prompts/` (`compact_history` — rotates
+   quality model, `specmgr://dtais` — the DTAIS verification-method
+   vocabulary VCR's `## Acceptance Criteria` depends on, kept here rather
+   than under `vcr/resources/` since it is domain-knowledge other document
+   types may also want to reference), and `general/prompts/` (`compact_history` — rotates
     older `Recent Updates` entries out of any feature folder's `README.md`
-    into a sibling `history.md`). The nine `get_<d>` tools additionally
+    into a sibling `history.md`). The ten `get_<d>` tools additionally
     take a `raw: bool = False` parameter — `raw=True` returns the
     frontmatter-stripped body text as-is (the text `update`'s `begin`/`end`
     index into).
@@ -269,14 +308,14 @@ mirror of that same registration and must never be hand-edited.
 Still genuinely missing / not yet done (don't assume otherwise):
 - No `validate_adr` (or `validate_req`/`validate_uc`/`validate_tsk`/
   `validate_qa`/`validate_prb`/`validate_gol`/`validate_rsk`/
-  `validate_dec`/`validate_feat`) tool runs
+  `validate_dec`/`validate_feat`/`validate_vcr`) tool runs
   over the repo's
   own documents yet via pre-commit or CI. (ADR
   9c687bb1-8ee7-41c8-84ec-07606356bc73: "Enforce doc generation/lint/tests
   locally via pre-commit hook, not just CI")
 - `delete_req`/`delete_uc`/`delete_tsk`/`delete_qa`/`delete_prb`/
-  `delete_gol`/`delete_rsk`/`delete_dec`/`delete_feat` are stubs, not yet
-  implemented.
+  `delete_gol`/`delete_rsk`/`delete_dec`/`delete_feat`/`delete_vcr` are
+  stubs, not yet implemented.
 - No `ac` (Acceptance Criteria) domain exists yet, despite `server.py`'s
   docstring already reserving a spot for it ("... and later `ac`") — the
   convention for adding it (or any future domain) is fixed by ADR
@@ -284,9 +323,9 @@ Still genuinely missing / not yet done (don't assume otherwise):
   two generic tools in `general/tools/` (`update`'s `type`,
   `set_status`'s `type`) plus a `raw` parameter on the new `get_<d>` tool
   — not new `update_<d>`/`set_status_<d>` tools.
-- `req`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`feat` each register `tools`,
-  `resources`, and `prompts`; `uc` registers `tools` and `resources`
-  only — it has no `prompts` sub-package yet.
+- `req`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`feat`/`vcr` each register
+  `tools`, `resources`, and `prompts`; `uc` registers `tools` and
+  `resources` only — it has no `prompts` sub-package yet.
 
 `.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md` §10 ("Next steps") tracks per-item done/not-done
 status for the ADR feature specifically and should be kept in sync with
@@ -425,8 +464,8 @@ consumer of the base library.
 
 - Builds the `MCPServer` instance (`mcp` object) and a no-op `_lifespan`,
   then imports every domain package (`adr`, `dec`, `feat`, `general`,
-  `gol`, `prb`, `qa`, `req`, `rsk`, `tsk`, `uc`) as its last line purely for
-  the side effect of
+  `gol`, `prb`, `qa`, `req`, `rsk`, `tsk`, `uc`, `vcr`) as its last line
+  purely for the side effect of
   running their `@mcp.tool()`/`@mcp.resource()`/`@mcp.prompt()` decorators.
   When adding a new domain, add its import to that same last line —
   forgetting it means the new tools/resources/prompts silently never

@@ -28,6 +28,7 @@ At this time, we have these artifact:
 - Risk (RSK)
 - Task List (TSK)
 - Use Case (UC)
+- Verification Case Record (VCR)
 <!-- 
 - Acceptance Criterium (ACC)
 -->
