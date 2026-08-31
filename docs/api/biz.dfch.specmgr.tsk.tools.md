@@ -23,8 +23,8 @@ line-range updates of an existing document go through the generic
 frontmatter field except ``updated``. Status changes of an existing
 document go through the generic ``set_status`` tool in ``general.tools``
 (``type="tsk"``), also bumping ``updated``, leaving the body untouched.
-``delete_tsk`` is a registered stub -- always raises ``NotImplementedError``,
-reserving the name for a future real implementation. ``validate_tsk`` is a
+Deletion of ``tsk`` documents goes through the generic ``delete`` tool in
+``general.tools`` (``type="tsk"``). ``validate_tsk`` is a
 disk-free, id-free dry run against a submitted ``content`` string,
 independent of the other tools. Import this package to register all task
 list tools at once::

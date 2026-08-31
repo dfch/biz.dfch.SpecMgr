@@ -5,7 +5,7 @@ MCP tool wrappers for features (mirrors ``dec/tools/``'s own shape).
 Bespoke, folder-per-document addressing (``_paths.py``, ``_io.py``,
 ``_lock.py``, ``_write.py`` -- *not* built on
 ``general/tools/_doc_paths.py``, since ``feat`` documents live one per
-folder at ``<base>/<id>/README.md`` with a non-UUID id) underpins the eight
+folder at ``<base>/<id>/README.md`` with a non-UUID id) underpins the seven
 lifecycle tools below.
 
 ``parse_feat`` reads a raw filepath, parses, and validates it into a
@@ -15,6 +15,7 @@ document with every field present but populated with short placeholder
 ("blind text") content instead -- both read a packaged, build-guaranteed
 data file rather than anything on the caller's filesystem (the packaged
 files themselves are Phase 3's job -- see each tool's own module docstring).
+
 ``get_feat`` reads, parses, and returns a full feature document by id -- the
 sole id-based read path for FEAT (there is no ``specmgr://feat/{id}``
 resource, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614). ``list_feat`` returns
@@ -29,11 +30,10 @@ existing document go through the generic ``update`` tool in
 except ``updated``. Status changes of an existing document go through the
 generic ``set_status`` tool in ``general.tools`` (``type="feat"``), also
 bumping ``updated``, leaving the body untouched. There is no
-``update_feat``/``set_status_feat`` tool of ``feat``'s own.
-``delete_feat`` is a registered stub -- always raises
-``NotImplementedError``, reserving the name for a future real
-implementation. ``validate_feat`` is a disk-free, id-free dry run against a
-submitted ``content`` string, independent of the other tools. Import this
-package to register all feature tools at once::
+``update_feat``/``set_status_feat`` tool of ``feat``'s own. Deletion of
+``feat`` documents goes through the generic ``delete`` tool in
+``general.tools`` (``type="feat"``). ``validate_feat`` is a disk-free,
+id-free dry run against a submitted ``content`` string, independent of the
+other tools. Import this package to register all feature tools at once::
 
     from biz.dfch.specmgr.feat import tools  # noqa: F401 (side-effects only)

@@ -3,7 +3,7 @@ created: 2026-08-31 15:37:40.000000
 id: feat-36-delete
 status: planning
 type: feat
-updated: 2026-08-31 20:21:21.000000
+updated: 2026-08-31 22:26:26.000000
 version: 1.0.0
 ---
 
@@ -438,9 +438,9 @@ no replacement per-domain delete tests are added — coverage moves entirely to
 
 #### Phase 3: Retire the eleven delete stubs (Phase-Orchestrator)
 
-- [ ] Task 3.1: Delete the eleven `src/biz/dfch/specmgr/<d>/tools/delete_<d>.py` files — depends on: Task 2.1 — status: not-started.
-- [ ] Task 3.2: In each of the eleven `<d>/tools/__init__.py`, remove the `from .delete_<d> import delete_<d>` line, the `delete_<d>` `__all__` entry, and the stub mention in the module docstring; **additionally** in each of the eleven domain-level `<d>/__init__.py` package docstrings, drop `delete_<d>` from the tool enumeration (required by ACC-002: `grep -r "delete_<d>"` over all of `src/` must return nothing) — depends on: Task 3.1 — status: not-started.
-- [ ] Task 3.3: Delete the eleven `tests/<d>/tools/test_delete_<d>.py` stub-test files — depends on: Task 3.2 — status: not-started.
+- [x] Task 3.1: Delete the eleven `src/biz/dfch/specmgr/<d>/tools/delete_<d>.py` files — depends on: Task 2.1 — status: done (2026-08-31).
+- [x] Task 3.2: In each of the eleven `<d>/tools/__init__.py`, remove the `from .delete_<d> import delete_<d>` line, the `delete_<d>` `__all__` entry, and the stub mention in the module docstring; **additionally** in each of the eleven domain-level `<d>/__init__.py` package docstrings, drop `delete_<d>` from the tool enumeration (required by ACC-002: `grep -r "delete_<d>"` over all of `src/` must return nothing) — depends on: Task 3.1 — status: done (2026-08-31).
+- [x] Task 3.3: Delete the eleven `tests/<d>/tools/test_delete_<d>.py` stub-test files — depends on: Task 3.2 — status: done (2026-08-31).
 
 #### Phase 4: Decision and documentation propagation (Phase-Orchestrator)
 
@@ -459,26 +459,41 @@ no replacement per-domain delete tests are added — coverage moves entirely to
 
 ### Current Status
 
-**As of 2026-08-31 (Phase 2 complete)**: Phase 0 (design, including Task 0.3),
-Phase 1 (reusable path-safety module), and Phase 2 (the generic `delete` tool) are
-complete. `general/tools/_path_safety.py` provides the five pinned, pure, non-I/O
-assertions, and `general/tools/delete.py` now registers the single generic
-`delete(id, type)` MCP tool for the eleven whole-body domains (ADR excluded):
-`validate_id` before any filesystem access (REQ-003), per-domain private adapters
-that resolve via the domain's own `load_by_id` under the domain's own per-id lock
-(REQ-004), `assert_within` containment, and a hard delete via `Path.unlink()` (the
-ten flat domains) or `shutil.rmtree` on the whole `<base>/<id>/` folder (`feat`);
-the domain's own `XNotFoundError` propagates unchanged and an I/O failure surfaces
-as `DeleteError` (an `OSError` subclass, REQ-005). The eleven `delete_<d>` stub
-tools are still registered — they are retired in Phase 3.
-`tests/general/tools/test_delete.py` covers every Design Notes §9 case (8 test
-methods parameterized over all eleven types, plus a live-registration smoke test).
-Quality gate is green: full `unittest` suite OK (2735 tests = 2704 baseline + 23
-path-safety + 8 delete), `ruff format --check` (1493 files), `ruff check`
-(All checks passed), `vulture src/ whitelist.py --min-confidence 60` clean (no
-whitelist change needed), and `import biz.dfch.specmgr.server` OK (104 tools
-registered, `delete` exactly once). **Phase 3 (retire the eleven delete stubs,
-Tasks 3.1–3.3) is next.**
+**As of 2026-08-31 (Phase 3 complete)**: Phase 0 (design, including Task 0.3),
+Phase 1 (reusable path-safety module), Phase 2 (the generic `delete` tool),
+and Phase 3 (retire the eleven delete stubs) are complete. `general/tools/
+_path_safety.py` provides the five pinned, pure, non-I/O assertions, and
+`general/tools/delete.py` registers the single generic `delete(id, type)` MCP
+tool for the eleven whole-body domains (ADR excluded): `validate_id` before
+any filesystem access (REQ-003), per-domain private adapters that resolve via
+the domain's own `load_by_id` under the domain's own per-id lock (REQ-004),
+`assert_within` containment, and a hard delete via `Path.unlink()` (the ten
+flat domains) or `shutil.rmtree` on the whole `<base>/<id>/` folder (`feat`);
+the domain's own `XNotFoundError` propagates unchanged and an I/O failure
+surfaces as `DeleteError` (an `OSError` subclass, REQ-005). The eleven
+`delete_<d>` stub tools are now fully retired: the eleven
+`src/biz/dfch/specmgr/<d>/tools/delete_<d>.py` modules and the eleven
+`tests/<d>/tools/test_delete_<d>.py` stub-test files are deleted, every
+`__init__.py` reference (import, `__all__` entry, docstring mention) is
+removed — with a pointer line to the generic `delete` tool in each
+`<d>/tools/__init__.py` — and the generic `delete(id, type)` tool is the sole
+delete entry point. The six integration-test modules that previously
+exercised the stubs (`tests/{dec,feat,gol,prb,sop,vcr}/tools/test_integration.py`)
+now end their lifecycle with a real generic delete (returned-path assertion,
+file/folder-gone assertion, follow-up `get_<d>` raising the domain's own
+`XNotFoundError`). Quality gate is green: full `unittest` suite OK (2713
+tests = 2735 Phase-2 baseline − 22 removed stub tests), `ruff format --check`
+(1472 files already formatted), `ruff check` (All checks passed), `vulture
+src/ whitelist.py --min-confidence 60` clean (no whitelist change needed),
+ACC-002 grep (`grep -rnE 'delete_(req|uc|tsk|qa|prb|gol|rsk|dec|sop|feat|
+vcr)' src/ tests/`) returns nothing under `tests/` and under `src/` only the
+two hard-constraint-protected files — `server.py`'s module docstring (Task
+4.3's job) and `general/tools/delete.py`'s private `_delete_<d>` adapter
+names (Phase 2 work, internal function names, not tools) — `import
+biz.dfch.specmgr.<d>.tools` succeeds for every domain, and `mcp.list_tools()`
+after importing `server` shows `delete` exactly once with zero `delete_<d>`
+tools (93 total = 104 − 11). **Phase 4 (decision and documentation
+propagation, Tasks 4.1–4.5) is next.**
 
 ### Blockers
 
@@ -487,6 +502,47 @@ Tasks 3.1–3.3) is next.**
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-08-31 21:32:55.000Z — Phase 3 complete: eleven delete stubs retired
+
+Implemented Tasks 3.1–3.3 per the plan, plus the orchestrator-resolved plan gap. Deleted the eleven
+`src/biz/dfch/specmgr/<d>/tools/delete_<d>.py` stub modules, the eleven
+`tests/<d>/tools/test_delete_<d>.py` stub-test files (22 files, `git rm`), and — after the
+orchestrator's post-phase `specmgr docs` regeneration, which rewrites existing pages but does not prune
+stale ones — the eleven now-stale `docs/api/biz.dfch.specmgr.<d>.tools.delete_<d>.md` stub-API pages the
+same way (11 more `git rm`'s); in each of the eleven `<d>/tools/__init__.py` removed the `from
+.delete_<d> import delete_<d>` line, the `__all__` entry, and the stub sentence from the module
+docstring — replaced, where the sentence structure allowed, with a single pointer line ("Deletion of
+`<d>` documents goes through the generic ``delete`` tool in ``general.tools`` (``type="<d>"``)", with
+`sop`'s pointer living inside its existing generic-dispatch paragraph, `feat`'s "eight lifecycle tools"
+count corrected to "seven", and the other ten domains taking the pointer in the standard position) — and
+in each of the eleven domain-level `<d>/__init__.py` dropped `delete_<d>` from the tool enumeration
+(`sop`'s "(8 tools, …)" count corrected to "(7 tools, …)", and `feat`'s generic-surface sentence now
+reading "the generic ``update``/``set_status``/``delete`` tools"). Per the orchestrator's resolution of
+the plan gap, the six integration-test modules that used to end their lifecycle by asserting the stub
+raises `NotImplementedError` (`tests/{dec,feat,gol,prb,sop,vcr}/tools/test_integration.py`) now perform
+a REAL delete through the generic tool: `delete(<id>, type="<d>")`, asserting the returned `str` is the
+seeded path (the `*.md` file path for the flat domains — resolved via the domain's own `find_<d>_path`
+where the test previously tracked no path (`gol`/`prb`) — and the `<base>/<id>/` folder path for
+`feat`), that the file/folder no longer exists, and that a follow-up `get_<d>` raises the domain's own
+`XNotFoundError` (`DecNotFoundError`, `FeatNotFoundError`, `GolNotFoundError`, `PrbNotFoundError`,
+`SopNotFoundError`, `VcrNotFoundError`); the module and method docstring lifecycle descriptions were
+updated accordingly, no other test structure or earlier lifecycle step was changed. Phase-end quality
+gate all green: `ruff format --check` (1472 files already formatted), `ruff check` (All checks passed),
+and `vulture src/ whitelist.py --min-confidence 60` clean (no whitelist change needed); the ACC-002 grep
+(`grep -rnE 'delete_(req|uc|tsk|qa|prb|gol|rsk|dec|sop|feat|vcr)' src/ tests/`) returns nothing under
+`tests/` and, under `src/`, only the two hard-constraint-protected files — `server.py`'s module
+docstring (Task 4.3's job) and `general/tools/delete.py`'s private `_delete_<d>` adapter functions
+(Phase 2 work; internal dispatch-table names, not tools — plus a gitignored `egg-info` build artifact) —
+and, after the pruning, the same grep over `docs/` returns no per-domain stub mentions outside those two
+protected content mirrors (`docs/api/biz.dfch.specmgr.general.tools.delete.md`'s private `_delete_<d>`
+adapter headings, and `docs/api/biz.dfch.specmgr.server.md`, which still mirrors `server.py`'s
+Task-4.3-pending docstring; `docs/MCP.md` carries zero matches) — and `import
+biz.dfch.specmgr.<d>.tools` succeeds for every domain (`IMPORTS OK`, including `server`); after
+importing `server`, `mcp.list_tools()` shows `delete` exactly once and zero `delete_<d>` tools (93 total
+= 104 − 11); the six updated integration modules pass (18 tests OK, ~15 s); full `unittest` suite OK
+(2713 tests = 2735 Phase-2 baseline − 22 removed stub tests, ~119 s). Phase 4 (decision and
+documentation propagation, Tasks 4.1–4.5) is next.
 
 #### 2026-08-31 20:21:21.000Z — Phase 2 complete: generic delete tool
 

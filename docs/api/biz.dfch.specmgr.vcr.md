@@ -20,7 +20,7 @@ resources against the shared ``mcp`` application instance at once::
 
 ``tools`` (``create_vcr``, ``parse_vcr``,
 ``list_vcr``, ``get_vcr``, ``get_vcr_example``, ``get_vcr_template``,
-``delete_vcr``, ``validate_vcr``), ``resources`` (``specmgr://vcr/schema``,
+``validate_vcr``), ``resources`` (``specmgr://vcr/schema``,
 ``specmgr://vcr/example``, ``specmgr://vcr/template``), and ``prompts``
 (``create_vcr``, ``update_vcr``) all exist; whole-body and line-range
 updates of an existing document go through the generic ``update`` tool in

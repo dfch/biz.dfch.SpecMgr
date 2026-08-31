@@ -13,7 +13,7 @@ resources against the shared ``mcp`` application instance at once::
 
 ``tools`` (``parse_gol``, ``get_gol``, ``list_gol``, ``get_gol_example``,
 ``get_gol_template``, ``create_gol``,
-``delete_gol``, ``validate_gol``), ``resources`` (``specmgr://gol/schema``,
+``validate_gol``), ``resources`` (``specmgr://gol/schema``,
 ``specmgr://gol/example``, ``specmgr://gol/template``), and ``prompts``
 (``create_gol``, ``update_gol``) all exist; whole-body and line-range
 updates of an existing document go through the generic ``update`` tool in

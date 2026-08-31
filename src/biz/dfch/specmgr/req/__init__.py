@@ -10,7 +10,7 @@ the shared ``mcp`` application instance at once::
 
 ``tools`` (``parse_req``, ``get_req``, ``list_req``, ``get_req_example``,
 ``get_req_template``, ``create_req``,
-``delete_req``, ``validate_req``), ``resources`` (``specmgr://req/schema``,
+``validate_req``), ``resources`` (``specmgr://req/schema``,
 ``specmgr://req/example``, ``specmgr://req/template``), and ``prompts``
 (``create_req``, ``update_req``) all exist; whole-body and line-range
 updates of an existing document go through the generic ``update`` tool in

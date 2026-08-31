@@ -21,11 +21,10 @@ existing document go through the generic ``update`` tool in
 ``general.tools`` (``type="vcr"``), preserving every frontmatter field
 except ``updated``. Status changes of an existing document go through the
 generic ``set_status`` tool in ``general.tools`` (``type="vcr"``), also
-bumping ``updated``, leaving the body untouched.
-``delete_vcr`` is a registered stub -- always raises
-``NotImplementedError``, reserving the name for a future real
-implementation. ``validate_vcr`` is a disk-free, id-free dry run against a
-submitted ``content`` string, independent of the other tools. Import this
+bumping ``updated``, leaving the body untouched. Deletion of ``vcr``
+documents goes through the generic ``delete`` tool in ``general.tools``
+(``type="vcr"``). ``validate_vcr`` is a disk-free, id-free dry run against
+a submitted ``content`` string, independent of the other tools. Import this
 package to register all verification case record tools at once::
 
     from biz.dfch.specmgr.vcr import tools  # noqa: F401 (side-effects only)

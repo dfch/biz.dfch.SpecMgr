@@ -19,13 +19,13 @@
 
 Unlike the per-tool unit tests elsewhere under ``tests/sop/tools/``, this
 module drives the actual tool functions in a single realistic sequence --
-``list_sop`` (empty) -> ``create_sop`` -> ``get_sop`` -> ``list_sop`` (1) ->
-``update`` (generic, ``type="sop"``) -> ``set_status`` (generic,
-``type="sop"``) -> ``get_sop`` (status changed) -> ``list_sop`` (status
-reflected) -> ``validate_sop`` -> ``delete_sop`` (stub) -- against a real
-temporary docs directory, confirming ACC-003's
-create->get->list->update->set_status->validate round-trip requirement with
-concrete evidence beyond the isolated per-tool tests.
+ ``list_sop`` (empty) -> ``create_sop`` -> ``get_sop`` -> ``list_sop`` (1) ->
+ ``update`` (generic, ``type="sop"``) -> ``set_status`` (generic,
+ ``type="sop"``) -> ``get_sop`` (status changed) -> ``list_sop`` (status
+ reflected) -> ``validate_sop`` -> ``delete`` (generic, ``type="sop"``) --
+ against a real temporary docs directory, confirming ACC-003's
+ create->get->list->update->set_status->validate round-trip requirement
+ with concrete evidence beyond the isolated per-tool tests.
 
 ``sop`` is the first domain built dispatch-only from day one (ADR
 36905d5b): it has **no** per-domain ``update_sop``/``set_status_sop``
@@ -56,12 +56,12 @@ import frontmatter
 from pydantic import ValidationError
 
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
+from biz.dfch.specmgr.general.tools.delete import delete
 from biz.dfch.specmgr.general.tools.set_status import set_status
 from biz.dfch.specmgr.general.tools.update import update
 from biz.dfch.specmgr.sop.models.v1 import SopDocument
-from biz.dfch.specmgr.sop.tools._paths import sop_base_dir
+from biz.dfch.specmgr.sop.tools._paths import SopNotFoundError, sop_base_dir
 from biz.dfch.specmgr.sop.tools.create_sop import create_sop
-from biz.dfch.specmgr.sop.tools.delete_sop import delete_sop
 from biz.dfch.specmgr.sop.tools.get_sop import get_sop
 from biz.dfch.specmgr.sop.tools.list_sop import list_sop
 from biz.dfch.specmgr.sop.tools.validate_sop import validate_sop
@@ -116,8 +116,8 @@ class TestSopLifecycleIntegration(TempSopDirTestCase):
 
     def test_list_create_get_list_update_set_status_get_list_validate_delete_roundtrip(self) -> None:
         """list_sop -> create_sop -> get_sop -> list_sop -> update -> set_status -> get_sop ->
-        list_sop -> validate_sop -> delete_sop, live -- using the GENERIC update/set_status tools
-        with type="sop" (no per-domain mutation tools exist)."""
+        list_sop -> validate_sop -> delete (generic, type="sop"), live -- using the GENERIC
+        update/set_status/delete tools (no per-domain mutation tools exist)."""
         # 0. list_sop: an empty base directory must list nothing.
         initial_page = list_sop()
         self.assertEqual(initial_page.total, 0)
@@ -199,11 +199,14 @@ class TestSopLifecycleIntegration(TempSopDirTestCase):
         body_only = frontmatter.loads(on_disk_text).content  # type: ignore[union-attr]
         self.assertIs(validate_sop(body_only), True)
 
-        # 9. delete_sop: stub must always raise NotImplementedError, unconditionally.
-        with self.assertRaises(NotImplementedError):
-            delete_sop(sop_id)
-        # The document must still exist afterward -- the stub must not touch the filesystem.
-        self.assertEqual(get_sop(sop_id).frontmatter.id, sop_id)
+        # 9. delete (generic, type="sop"): a real hard delete via the generic tool -- the
+        #    returned str must be the seeded file path, the file must be gone, and a
+        #    follow-up get_sop must raise SopNotFoundError.
+        deleted_path = delete(sop_id, type="sop")
+        self.assertEqual(deleted_path, str(expected_path))
+        self.assertFalse(expected_path.exists())
+        with self.assertRaises(SopNotFoundError):
+            get_sop(sop_id)
 
     def test_set_status_rejects_gol_only_implemented_status(self) -> None:
         """ACC-003: set_status (type="sop") must reject `implemented` (GOL's value, outside SOP's closed five-set)."""

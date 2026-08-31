@@ -38,10 +38,9 @@ existing document go through the generic ``update`` tool in ``general.tools``
 (``type="req"``), preserving every frontmatter field except ``updated``.
 Status changes of an existing document go through the generic
 ``set_status`` tool in ``general.tools`` (``type="req"``), also bumping
-``updated``, leaving the body untouched.
-``delete_req`` (Task 3.15) is a registered stub -- always raises
-``NotImplementedError``, reserving the name for a future real
-implementation. ``validate_req`` (Task 3.16) is a disk-free, id-free dry
+``updated``, leaving the body untouched. Deletion of ``req`` documents
+goes through the generic ``delete`` tool in ``general.tools``
+(``type="req"``). ``validate_req`` (Task 3.16) is a disk-free, id-free dry
 run against a submitted ``content`` string, independent of the other
 tools. Import this package to register all requirement tools at once::
 
@@ -49,7 +48,6 @@ tools. Import this package to register all requirement tools at once::
 """
 
 from .create_req import create_req
-from .delete_req import delete_req
 from .get_req import get_req
 from .get_req_example import get_req_example
 from .get_req_template import get_req_template
@@ -59,7 +57,6 @@ from .validate_req import validate_req
 
 __all__ = [
     "create_req",
-    "delete_req",
     "get_req",
     "get_req_example",
     "get_req_template",
