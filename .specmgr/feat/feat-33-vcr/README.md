@@ -424,7 +424,7 @@ has no Plan/Progress split -- same reasoning `sysrs` used for its own
 
 #### Phase 0: Empirical schema validation
 
-- [ ] Task 0.1: Draft `example.md`/`template.md` bodies exercising every
+- [x] Task 0.1: Draft `example.md`/`template.md` bodies exercising every
   section and validate against the `models/md` engine (mirroring `sop`'s/
   `sysrs`'s discipline) before writing any Pydantic model code.
   - [x] `example.md` finalized as the **sole** draft (earlier
@@ -438,13 +438,48 @@ has no Plan/Progress split -- same reasoning `sysrs` used for its own
     annotation exercising `Verifies`' optional `comment` field. Still not
     yet validated against `models/md`, since no `vcr` model code exists
     yet; see Task 1.1-1.3.
-  - [ ] `template.md` (blind-text placeholder, mirrors
-    `get_feat_template`'s shape, and the natural home for the
-    instructional comments stripped from `example.md`) still to be
-    drafted.
-- [ ] Task 0.2: Confirm the `### AC-NNN (Method): ...` heading regex and
+  - [x] `template.md` drafted (blind-text placeholder, mirroring
+    `dec`/`rsk`/`prb`/`req`/`uc`'s shipped `*_template.md` shape): exercises
+    the same section shape as `example.md` (frontmatter, `## Verifies`
+    with optional `comment` + mandatory `value` + mandatory `notes`,
+    `## Coverage`, `## Acceptance Criteria` with two `### AC-NNN (Method):
+    ...` entries -- one with `#### Test Steps`, one without --,
+    `## More Information`, `## Updates`), with placeholder ("blind text")
+    content and a real-looking placeholder UUID
+    (`deaddead-face-face-face-deaddeadface` for the frontmatter `id`,
+    `c0ffeec0-ffee-ffee-ffee-c0ffeec0ffee` for the `## Verifies`
+    cross-reference). Restores the instructional guidance stripped from
+    `example.md` per the clean-example convention, but only as an actual
+    HTML comment where `example.md` itself already shows one is
+    structurally valid (`## Verifies`' single leading-comment slot, and
+    `## Updates`' permanent anchor) -- `## Coverage`, `## Acceptance
+    Criteria`, and `#### Test Steps` carry no comment in the already-
+    finalized `example.md` either (mirroring their precedent classes'
+    lack of a `WithComment` variant: `rsk.Strategy`, `dec.ProsAndCons`,
+    `dec.Option`, none of which support a leading comment), so adding one
+    there would silently commit `template.md` to a schema shape Phase 1
+    has not decided and `example.md` already contradicts. Their guidance
+    (Coverage's closed vocabulary; Method's closed DTAIS set; the `>= 1`/
+    unique-number rule; Test Steps' optionality) is instead folded into
+    the free-form AC body prose as a trailing sentence, mirroring
+    `prb_template.md`/`uc_template.md`'s established precedent of
+    appending "Mandatory."/"Optional." notes directly into blind-text
+    paragraph/list content rather than a comment; `## Coverage` itself
+    (an exact-match `full`/`partial`/`none` value with no other content
+    allowed, `re.fullmatch`-enforced) carries no note at all, matching
+    `rsk_template.md`'s identical bare-value `## Strategy` precedent.
+    `## More Information` uses the exact `dec_template.md`/
+    `feat_template.md` boilerplate sentence instead of a comment, for the
+    same reason. Still not yet validated against `models/md`, since no
+    `vcr` model code exists yet; see Task 1.1-1.3.
+- [x] Task 0.2: Confirm the `### AC-NNN (Method): ...` heading regex and
   duplicate-number `model_validator` behave as expected on hand-written
-  fixtures.
+  fixtures. Done via a throwaway `/tmp` scratch script (not committed, not
+  a permanent test file), modeled on `dec`'s
+  `_OPTION_HEADING_PATTERN`/`_validate_option_numbers_unique` precedent;
+  see the new Updates entry below for the exact pattern, fixtures, and
+  outcomes (all passed after fixing one bug in the first draft pattern --
+  missing literal escaped parentheses around the method group).
 
 #### Phase 1: Models and parser
 
@@ -488,17 +523,24 @@ has no Plan/Progress split -- same reasoning `sysrs` used for its own
 
 ### Current Status
 
-**As of 2026-08-31**: Planning complete -- design agreed interactively
-(see Design Notes); GitHub issue #33 opened; dedicated branch/worktree
-`feat-33-vcr` created off `origin/dev`; `example.md` finalized as the
-**sole** draft (the intermediate `example.v2.md`/`example.v3.md`
-iterations were merged into it and deleted -- real frontmatter,
-single-value-field `## Verifies`, DTAIS/`Special` terminology, and every
-instructional comment stripped per the clean-example convention); the
-`Verifies` class sketch and the `specmgr://dtais` resource sketch
-(REQ-006) both persisted in Design Notes for Phases 1/3 (Task 0.1,
-partial -- `template.md` still open). No model/tool/resource code written
-yet.
+**As of 2026-08-31**: Phase 0 (Empirical schema validation) complete.
+`example.md` finalized as the **sole** draft (the intermediate
+`example.v2.md`/`example.v3.md` iterations were merged into it and
+deleted -- real frontmatter, single-value-field `## Verifies`,
+DTAIS/`Special` terminology, and every instructional comment stripped per
+the clean-example convention); `template.md` now drafted alongside it
+(blind-text placeholders, instructional comments restored, mirroring
+`dec`/`rsk`/`prb`/`req`/`uc`'s shipped `*_template.md` files); the
+`### AC-NNN (Method): ...` heading regex and a duplicate-AC-number
+`model_validator` idea (modeled on `dec`'s `Option`/
+`_validate_option_numbers_unique` precedent) both confirmed against
+hand-written fixtures via a throwaway `/tmp` scratch script (Task 0.2).
+The `Verifies` class sketch and the `specmgr://dtais` resource sketch
+(REQ-006) remain persisted in Design Notes for Phases 1/3. Still no
+`vcr` model/tool/resource code written -- neither `example.md` nor
+`template.md` has been validated against the actual `models/md` engine
+yet, since that engine doesn't have a `vcr` schema to validate against
+until Phase 1 exists.
 
 ### Blockers
 
@@ -507,6 +549,67 @@ yet.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-08-31T09:10:00.000000 — Phase 0 complete: drafted template.md, confirmed AC-NNN regex/duplicate check
+
+Drafted `template.md` (Task 0.1's remaining sub-bullet), reading
+`example.md` plus `dec_template.md`/`rsk_template.md`/`prb_template.md`/
+`req_template.md`/`uc_template.md` (`src/biz/dfch/specmgr/<domain>/data/`)
+first to confirm the codebase's actual `*_template.md` conventions: short
+"blind text" placeholder prose (`prb`/`uc` precedent), an HTML comment
+restoring authoring/enforcement guidance on fields whose precedent class
+is a `*WithComment` variant (`req_template.md`'s `## Level`/`## Priority`),
+and appending "Mandatory."/"Optional."/cardinality notes as trailing prose
+directly inside free-form blind-text content otherwise (`prb_template.md`/
+`uc_template.md`). Cross-checked every comment placement against the
+already-finalized `example.md` before adding one: `## Verifies` is the
+document's *only* comment-bearing section (`Verifies` is sketched as
+`MarkdownSection2WithComment` in Design Notes, and `example.md` itself
+already exercises the slot) plus `## Updates`' permanent anchor;
+`## Coverage`, `## Acceptance Criteria`, and `#### Test Steps` show no
+comment in `example.md` either, matching their precedent classes'
+lack of comment support (`rsk.Strategy`, `dec.ProsAndCons`, `dec.Option`)
+-- adding one there would have committed `template.md` to a schema shape
+Phase 1 hasn't decided and `example.md` already contradicts. So
+`template.md` exercises every section from `example.md`'s shape
+(frontmatter with placeholder id `deaddead-face-face-face-deaddeadface`;
+`## Verifies` with one leading comment bundling both the "optional
+context" convention and the enforced value/notes shape, a placeholder
+`REQ <uuid>: <title>` value using a second, distinct placeholder UUID
+`c0ffeec0-ffee-ffee-ffee-c0ffeec0ffee`, and a mandatory `notes`
+paraphrase; a bare `## Coverage` value with no note at all, matching
+`rsk_template.md`'s identical `## Strategy` precedent (an exact-match
+`re.fullmatch` value has no room for trailing text either); `## Acceptance
+Criteria` with two `### AC-NNN (Method): ...` entries -- the first
+carrying the `>= 1`/DTAIS-closed-set/unique-number guidance as a trailing
+prose sentence in its own free-form body paragraph, and an optional
+`#### Test Steps` list; the second with no `#### Test Steps`, and a
+trailing note explaining why -- `## More Information` using the exact
+`dec_template.md`/`feat_template.md` boilerplate sentence instead of a
+comment; `## Updates` with its permanent "newest first" anchor). Then ran
+Task 0.2: a throwaway `/tmp/vcr_scratch_task02.py` script (deleted after
+the run, never committed) tested `_AC_HEADING_PATTERN = re.compile(r"###
+AC-(\d{3}) \((Demonstration|Test|Analysis|Inspection|Special)\): (.+)")`
+against 6 valid headings (all 5 DTAIS words plus a 3-digit boundary case
+`AC-999`) and 8 invalid headings (2-digit/4-digit number, an unknown
+method word `Certification`, missing parentheses, missing colon, missing
+criterion text, a non-digit number, and wrong case) via `re.fullmatch`,
+and a `dec`-`_validate_option_numbers_unique`-style seen-set duplicate
+check against 6 number-list fixtures (no duplicates, two different
+allowed-gap cases, an exact duplicate, a duplicate at opposite ends of the
+list, and a single-entry list). First draft of the pattern omitted the
+literal escaped parentheses around the method group, which the script
+caught immediately (valid cases wrongly failed to match, and the
+"missing parentheses" invalid case wrongly matched); fixed and re-ran --
+all 14 heading cases and all 6 duplicate-check cases passed on the second
+run. Confirmed the corrected pattern also matches all four real
+`### AC-NNN (Method): ...` headings in the already-finalized
+`example.md` verbatim. `example.md` itself was read-only throughout --
+left byte-for-byte unchanged (`git status`/`git diff` confirm no
+modification). Updated Task 0.1/0.2 checkboxes and Current Status
+accordingly; no Decisions Made entry needed (no open design question was
+settled here, just an empirical confirmation of already-decided
+REQ-003/Design Notes text).
 
 #### 2026-08-31T08:50:00.000000 — Merged example.v2.md/example.v3.md into a single, cleaned example.md
 
