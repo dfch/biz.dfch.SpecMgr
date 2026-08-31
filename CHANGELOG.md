@@ -7,8 +7,80 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-08-31
+
 ### Added
 
+- **Tenth domain feature (SOP/Standard Operating Procedure tooling)**: new
+  document-type domain, `sop`, for structured, step-by-step operational
+  documents with a RASCI-style responsibility assignment and a closed
+  five-value approval/effectivity lifecycle (`draft` → `review` → `approved`
+  → `active` → `retired` — status changes only via a manual `set_status`
+  call, never automatic). Built on the generic `models.md` parser with the
+  GOL/RSK/QA/DEC simple surface (no fine-grained mutation tools, no
+  renderer — writes persist the caller's raw validated body byte-for-byte)
+  and the first domain built dispatch-only from day one (ADR
+  36905d5b-8057-4294-8665-c7eed5534db0) — no per-domain
+  `update_sop`/`set_status_sop` tools: whole-body and line-range updates go
+  through the generic `update` tool (`type="sop"`), status changes through
+  the generic `set_status` tool (`type="sop"`, asserting `superseded_by` is
+  `None` for SOPs):
+  - `sop/models/v1/`: Pydantic schema (`SopFrontmatter` narrowing `type`
+    to `Literal["sop"]` and `status` to the five-value lifecycle, default
+    `draft`; `Sop` body with mandatory `## Purpose` and `## Procedure` — the
+    latter carrying at least one `### Step {N}: {name}` entry,
+    regex-`@alias`-constrained with number/name computed from the heading
+    and duplicate step numbers rejected — plus optional `## Scope`,
+    `## Definitions`, `## Safety and Precautions`, a RASCI
+    `## Roles and Responsibilities` composite (mandatory `### Accountable`
+    single paragraph + `### Responsible` list once present, optional
+    `### Support`/`### Consulted`/`### Informed` that MAY be present with
+    zero items), `## Related Artifacts` with five all-optional
+    cross-reference lists (requirements/decisions/goals/acceptance
+    criteria/sops), and `## More Information`/`## Updates`
+    (ISO8601-timestamped `###` entries, last section if present)), parser,
+    `SopSummary`, and JSON schema generation, inside the domain package
+    itself.
+  - `sop/tools/`: `@mcp.tool()` wrappers for the SOP lifecycle
+    (`create_sop` — fixes `status: draft`, writes `sop-{id}-{slug}.md`,
+    `parse_sop`, `list_sop` (paged, default 25/cap 100), `get_sop` with
+    `raw`, `get_sop_example`, `get_sop_template`, `validate_sop`), plus a
+    `delete_sop` stub.
+  - `sop/resources/` (`specmgr://sop/schema`, `specmgr://sop/example`,
+    `specmgr://sop/template` — no `specmgr://sop/{id}`, no
+    `specmgr://sop/list`) and `sop/prompts/` (`create_sop`/`update_sop`,
+    each with an explicit `specmgr://rasci` read-first step before
+    `## Roles and Responsibilities`; `create_sop` first checks `list_sop`
+    for a near-duplicate SOP).
+  - A cross-cutting `specmgr://rasci` resource (`general/resources/`,
+    REQ-011) — the generic RASCI role definitions used by the SOP's
+    `## Roles and Responsibilities` section, kept in `general/` rather than
+    under `sop/resources/` since it is domain-knowledge other document
+    types may also want to reference (mirroring RSK's
+    `specmgr://rsk/tara` shape).
+  - A new shared `PagedResult` model (`general/models/paged_result.py`)
+    backing paged list summaries, plus `specmgr schema --type sop`
+    generating `docs/sop_schema.json` and the packaged copy;
+    `.pre-commit-config.yaml` and the CI schema-drift hooks extended for
+    the new domain.
+  - `server.py` updated to import the new `sop` domain package;
+    `.pre-commit-config.yaml`, `AGENTS.md`, and root `README.md` updated
+    for the tenth domain.
+- **Staged release automation, the `/release` command, and the release
+  SOP**: new `scripts/release.sh` — a deterministic, idempotent stage
+  projection of the new normative SOP "Perform a release of
+  biz.dfch.SpecMgr" (draft, `docs/sop/`): `resolve`, `precheck`, `bump`,
+  `changelog`, `commit-push`, `pr-create`, `pr-merge`, `tag-push`,
+  `publish-wait`, `release-notes`, plus read-only `status` and interactive
+  `all`. It enforces the fast-forward-only `dev`→`main` merge invariant,
+  the exactly-three-file release commit (`pyproject.toml`, `uv.lock`,
+  `CHANGELOG.md`), and green-CI gates before every irreversible step (the
+  tag push starts TestPyPI → PyPI → GitHub Release → MCP Registry
+  publication), leaving the maintainer merge gate to a human. Alongside it,
+  the new `/release` OpenCode command (`.opencode/command/release.md`) that
+  drives the stages and performs the agent-judgment steps (version
+  confirmation, changelog curation, merge gate, failure triage); the README
+  "Make a Release" section is rewritten around the SOP-based flow.
 - **Twelfth domain feature (VCR/Verification Case Record tooling)**: new
   document-type domain, `vcr`, capturing how a single REQ/UC is verified --
   a coverage assessment plus a list of DTAIS-classified acceptance
