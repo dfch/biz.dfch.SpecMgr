@@ -830,8 +830,51 @@ progresses (edit, don't duplicate).
   deliberately does **not** migrate existing feature folders — they stay
   unparseable by `parse_feat`/`get_feat` (silently skipped by `list_feat`)
   until this follow-up task migrates them by hand/script once the schema
-  and its `### Updates` shape are both settled (user-directed decision,
-  recorded in `feat-31-feature`'s own Decisions Made log).
+   and its `### Updates` shape are both settled (user-directed decision,
+   recorded in `feat-31-feature`'s own Decisions Made log).
+
+- [ ] Task 0.32: Per GitHub issue #28 ("specmgr_get and specmgr_update
+   must both support offset and limit"): change the generic `update`
+   tool's (`general/tools/update.py`) 1-based inclusive `begin`/`end`
+   body-line range to `offset`/`limit` (matching the `read` tool's
+   parameter names), and add `offset`/`limit` paging to the ten
+   `get_<d>` tools (alongside their existing `raw` parameter) so a
+   caller can read a body window without fetching the whole document —
+   depends on: none — status: not-started
+
+   Background: Both requests date from 2026-08-27, before/around
+   feat-22's consolidation, when the tools were still named
+   `specmgr_get`/`specmgr_update`; they now map to the generic `update`
+   tool (which kept `begin`/`end`) and the per-domain `get_<d>` tools
+   (which have `raw` only — verified on `dev`, 2026-08-31). Note the
+   semantic difference to resolve at implementation time: `update`'s
+   `begin`/`end` is a *splice range* (replace lines begin..end with
+   `content`), whereas `read`'s `offset`/`limit` is a *read window* —
+   the rename must decide whether `update` keeps splice semantics under
+   the new names (e.g. "start at offset, replace up to limit lines") or
+   whether the issue intended something else. The issue explicitly asked
+   for this to be tracked here; it was never recorded in this task list
+   (found during the 2026-08-31 stale-issue review).
+
+- [ ] Task 0.33: Per GitHub issue #29 ("Artifact type 'Decision' (DEC)
+   need additional attributes from ADR frontmatter"): extend
+   `DecFrontmatter` (`dec/models/v1/frontmatter.py`) with the ADR-style
+   attributes a decision in general is missing, e.g. `source` or
+   `owner` — depends on: none — status: not-started
+
+   Background: `DecFrontmatter` currently narrows only `type`
+   (`Literal["dec"]`) and `status` (closed six-value set) on top of the
+   generic `MarkdownFrontmatter` (`id`/`created`/`updated`/`version`),
+   verified on `dev` (2026-08-31) — no `source`/`owner` or other
+   ADR-style fields exist yet. The exact attribute set to add is open:
+   the issue names `source` and `owner` as examples, but the ADR
+   frontmatter (`AdrFrontmatter`) itself defines `date`/`decision-makers`/
+   `consulted`/`informed` beyond the shared base, so decide at
+   implementation time which of these (plus any DEC-specific ones like
+   `source`/`owner`) `DecFrontmatter` should gain, and keep the
+   whole-object-replace frontmatter contract. The issue explicitly asked
+   for this to be tracked here; it was never recorded in this task list
+   (found during the 2026-08-31 stale-issue review).
 
 - [ ] Task 1.1: Inventory current `specmgr://*/list` resources and diff
   their output shape/behavior (`adr_list` vs. `req_list`) — depends on:
@@ -954,6 +997,18 @@ already-compacted folder).
 
 See `history.md` for updates before 2026-08-18 (rotated out per ADR
 e369ee2e-3353-4f92-991c-6367d76d832e once this section grew too long).
+
+#### Update 2026-08-31 (Tasks 0.32, 0.33 recorded)
+
+- Recorded: Task 0.32 (GitHub issue #28 — rename the generic `update`
+  tool's `begin`/`end` splice range to `offset`/`limit` and add
+  `offset`/`limit` paging to the `get_<d>` tools) and Task 0.33 (GitHub
+  issue #29 — extend `DecFrontmatter` with ADR-style attributes such as
+  `source`/`owner`). Both issues explicitly asked to be tracked as
+  feat-7 tasks but were never recorded in this task list; found during
+  the 2026-08-31 stale-issue review (which also closed stale issues
+  #31 and #1, per TSK `75beb26c-89ab-4b82-be96-e5e522a07e90`). Both
+  tasks are not-started.
 
 #### Update 2026-08-30 (Task 0.31 recorded; Task 0.30 extended)
 
