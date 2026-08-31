@@ -186,10 +186,15 @@ full
 
 <!-- Newest entry first -->
 
-#### <timestamp> — Created
+### <timestamp> — Created
 
 ...
 ```
+
+(Note: `### {timestamp} — {title}`, one level shallower than `feat`'s own
+`## Progress` → `### Updates` → `#### {timestamp} — {title}`, since `vcr`
+has no Plan/Progress split -- same reasoning `sysrs` used for its own
+`## Updates` section.)
 
 ### Related Decisions
 
