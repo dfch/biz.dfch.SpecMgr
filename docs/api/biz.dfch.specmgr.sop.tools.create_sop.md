@@ -1,0 +1,51 @@
+# `biz.dfch.specmgr.sop.tools.create_sop`
+
+``@mcp.tool()`` wrapper: create_sop (Task 2.2).
+
+Unlike ``adr.tools.create_adr`` (which accepts a full ``frontmatter``/``body``
+pair and renders the body back out via ``render_adr``), ``create_sop`` accepts
+**body markdown only** and never renders anything: the caller's own
+already-validated ``content`` text is persisted byte-for-byte, and only the
+small frontmatter YAML block is code-generated and prepended -- mirrors
+``dec.tools.create_dec`` file-for-file.
+
+Thin file-I/O adapter; there is no in-memory cache of a parsed
+:class:`~biz.dfch.specmgr.sop.models.v1.SopDocument` -- the ``.md`` file
+itself is always the source of truth, matching every other tool in this
+codebase.
+
+## Functions
+
+### `create_sop(content: 'str') -> 'SopDocument'`
+
+Create and write a new SOP document.
+
+``content`` is body markdown only (the ``Sop`` H1 and its sections)
+-- it must not carry a YAML frontmatter block. The entire frontmatter is
+built by this tool: a fresh id (``uuid.uuid4()``), ``type="sop"``,
+``status="draft"`` (always, never caller-supplied on create),
+``created``/``updated`` both set to the current timestamp, and
+``version`` set to the current ``models.md`` schema version.
+
+``content`` is validated by constructing a
+:class:`~biz.dfch.specmgr.sop.models.v1.Sop` from it
+(``Sop.from_text(format_text(content))``); a structural failure
+raises ``AssertionError`` and a field/cross-field failure raises
+``pydantic.ValidationError``, both uncaught -- nothing is written in
+either case.
+
+No body rendering is ever needed: the caller's own already-validated
+``content`` is persisted byte-for-byte, exactly as submitted; only the
+small, code-constructed frontmatter YAML block is (re)generated.
+
+Parameters
+----------
+content:
+    The new document's body markdown, with no frontmatter block.
+
+Returns
+-------
+SopDocument
+    The newly created document, with its assigned id in
+    ``frontmatter.id``.
+

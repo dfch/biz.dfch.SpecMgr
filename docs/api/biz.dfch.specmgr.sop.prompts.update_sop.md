@@ -1,0 +1,71 @@
+# `biz.dfch.specmgr.sop.prompts.update_sop`
+
+``@mcp.prompt()``: update_sop (Task 4.1).
+
+Returns instructional text -- not itself a tool call -- that guides an LLM
+through revising an existing Standard Operating Procedure (SOP) document
+by id, using the existing ``sop/tools/`` surface (``get_sop``,
+``validate_sop``) plus the generic ``update``/``set_status`` tools in
+``general/tools/`` (called with ``type="sop"``; ``get_sop``'s ``raw=True``
+parameter serves the line-range flow's line numbers). There is no
+``specmgr://sop/{id}`` resource to point at -- id-based reads always go
+through the ``get_sop`` tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
+
+SOP is the first domain built with **no** per-domain mutation tools at
+all: there is no ``update_sop``/``set_status_sop`` tool -- every body
+change goes through the generic ``update`` tool with ``type="sop"``
+(whole-body or line-range), and every status change goes through the
+generic ``set_status`` tool with ``type="sop"`` (ADR
+36905d5b-8057-4294-8665-c7eed5534db0). The narration names those generic
+tools explicitly, never a per-domain ``update_sop(...)``/
+``set_status_sop(...)`` call shape. The cross-cutting ``specmgr://rasci``
+resource is read first when the change touches ``## Roles and
+Responsibilities``.
+
+Like ``dec.prompts.update_dec``/``rsk.prompts.update_risk`` (and unlike
+``gol.prompts.update_gol``, which takes only the document ``id``), this
+prompt also accepts an optional ``instructions`` argument pre-filled with
+the requested change; when absent, the substituted fallback tells the LLM
+to ask the user before making any change rather than guessing.
+
+This prompt only ever *narrates* the revision flow (reading current state
+via ``get_sop``, showing which sections are present vs. empty, reading
+``specmgr://rasci`` when the roles section is touched, eliciting revisions
+via the ``question`` tool, then calling the generic ``update`` tool with
+``type="sop"``, with the generic ``set_status`` tool with ``type="sop"``
+mentioned as a separate, optional follow-up) -- it never calls
+``get_sop``/``question``/``update``/``set_status`` itself, exactly like
+every other prompt in this codebase.
+
+The actual instructional text lives in its own packaged data file,
+``sop/data/sop_update_instructions.md``, read fresh on every call via
+``general.tools._packaged_data.read_packaged_text``, rather than as an
+inline Python string constant. Placeholders use ``string.Template``
+(``$id``/``$instructions``), not ``str.format``, precisely so the
+instructions file itself is free to use plain, unescaped ``{...}`` braces
+for the SOP markdown it narrates to the LLM without those colliding with
+this module's own substitution.
+
+## Functions
+
+### `update_sop(id: 'str', instructions: 'str | None' = None) -> 'str'`
+
+Return instructional text for revising the SOP identified by ``id``.
+
+Parameters
+----------
+id:
+    The existing document's specmgr-assigned identifier.
+instructions:
+    Free-text description of the requested change. When absent, the
+    returned instructions tell the LLM to ask the user first rather
+    than guessing.
+
+Returns
+-------
+str
+    Instructional text (auto-wrapped as a single ``UserMessage`` by
+    the MCP SDK), not itself a tool call. This function never calls
+    ``get_sop``, ``question``, ``update``, or ``set_status`` itself
+    -- it only narrates that sequence for the LLM to carry out.
+
