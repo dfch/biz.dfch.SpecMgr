@@ -29,6 +29,7 @@ At this time, we have these artifact:
 - Standard Operating Procedure (SOP)
 - Task List (TSK)
 - Use Case (UC)
+- Verification Case Record (VCR)
 <!-- 
 - Acceptance Criterium (ACC)
 -->

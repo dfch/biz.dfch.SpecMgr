@@ -89,7 +89,7 @@ repos:
         description: >-
           Regenerate every registered doc-type JSON Schema (docs/{type}_schema.json)
           -- always runs with no `--type` (all registered types), currently `dec`,
-          `feat`, `gol`, `prb`, `qa`, `req`, `rsk`, `sop`, `tsk`, and `uc`. `specmgr schema` itself exits
+          `feat`, `gol`, `prb`, `qa`, `req`, `rsk`, `sop`, `tsk`, `uc`, and `vcr`. `specmgr schema` itself exits
           non-zero when the
           regenerated content differs from what was already on disk, so no separate
           `git diff --exit-code` is needed here, unlike the other `specmgr-*` hooks
@@ -97,7 +97,7 @@ repos:
         entry: uv run --frozen specmgr schema
         language: system
         pass_filenames: false
-        files: ^src/biz/dfch/specmgr/(dec/models/v1|feat/models/v1|gol/models/v1|prb/models/v1|qa/models/v2|req/models/v1|rsk/models/v1|sop/models/v1|tsk/models/v1|uc/models/v2|models/md)/.*\.py$
+        files: ^src/biz/dfch/specmgr/(dec/models/v1|feat/models/v1|gol/models/v1|prb/models/v1|qa/models/v2|req/models/v1|rsk/models/v1|sop/models/v1|tsk/models/v1|uc/models/v2|vcr/models/v1|models/md)/.*\.py$
 
       - id: specmgr-schema-req-package
         name: specmgr schema (req package copy)
@@ -114,7 +114,7 @@ repos:
         entry: uv run --frozen specmgr schema --type req --output-dir src/biz/dfch/specmgr/req/data
         language: system
         pass_filenames: false
-        files: ^src/biz/dfch/specmgr/(dec/models/v1|feat/models/v1|gol/models/v1|prb/models/v1|qa/models/v2|req/models/v1|rsk/models/v1|sop/models/v1|tsk/models/v1|uc/models/v2|models/md)/.*\.py$
+        files: ^src/biz/dfch/specmgr/(dec/models/v1|feat/models/v1|gol/models/v1|prb/models/v1|qa/models/v2|req/models/v1|rsk/models/v1|sop/models/v1|tsk/models/v1|uc/models/v2|vcr/models/v1|models/md)/.*\.py$
 
       - id: specmgr-schema-uc-package
         name: specmgr schema (uc package copy)
@@ -131,7 +131,7 @@ repos:
         entry: uv run --frozen specmgr schema --type uc --output-dir src/biz/dfch/specmgr/uc/data
         language: system
         pass_filenames: false
-        files: ^src/biz/dfch/specmgr/(dec/models/v1|feat/models/v1|gol/models/v1|prb/models/v1|qa/models/v2|req/models/v1|rsk/models/v1|sop/models/v1|tsk/models/v1|uc/models/v2|models/md)/.*\.py$
+        files: ^src/biz/dfch/specmgr/(dec/models/v1|feat/models/v1|gol/models/v1|prb/models/v1|qa/models/v2|req/models/v1|rsk/models/v1|sop/models/v1|tsk/models/v1|uc/models/v2|vcr/models/v1|models/md)/.*\.py$
 
       - id: specmgr-schema-tsk-package
         name: specmgr schema (tsk package copy)
@@ -148,7 +148,7 @@ repos:
         entry: uv run --frozen specmgr schema --type tsk --output-dir src/biz/dfch/specmgr/tsk/data
         language: system
         pass_filenames: false
-        files: ^src/biz/dfch/specmgr/(dec/models/v1|feat/models/v1|gol/models/v1|prb/models/v1|qa/models/v2|req/models/v1|rsk/models/v1|sop/models/v1|tsk/models/v1|uc/models/v2|models/md)/.*\.py$
+        files: ^src/biz/dfch/specmgr/(dec/models/v1|feat/models/v1|gol/models/v1|prb/models/v1|qa/models/v2|req/models/v1|rsk/models/v1|sop/models/v1|tsk/models/v1|uc/models/v2|vcr/models/v1|models/md)/.*\.py$
 
       - id: specmgr-schema-rsk-package
         name: specmgr schema (rsk package copy)
@@ -165,7 +165,7 @@ repos:
         entry: uv run --frozen specmgr schema --type rsk --output-dir src/biz/dfch/specmgr/rsk/data
         language: system
         pass_filenames: false
-        files: ^src/biz/dfch/specmgr/(dec/models/v1|feat/models/v1|gol/models/v1|prb/models/v1|qa/models/v2|req/models/v1|rsk/models/v1|sop/models/v1|tsk/models/v1|uc/models/v2|models/md)/.*\.py$
+        files: ^src/biz/dfch/specmgr/(dec/models/v1|feat/models/v1|gol/models/v1|prb/models/v1|qa/models/v2|req/models/v1|rsk/models/v1|sop/models/v1|tsk/models/v1|uc/models/v2|vcr/models/v1|models/md)/.*\.py$
 
       - id: specmgr-schema-qa-package
         name: specmgr schema (qa package copy)
@@ -182,7 +182,7 @@ repos:
         entry: uv run --frozen specmgr schema --type qa --output-dir src/biz/dfch/specmgr/qa/data
         language: system
         pass_filenames: false
-        files: ^src/biz/dfch/specmgr/(dec/models/v1|feat/models/v1|gol/models/v1|prb/models/v1|qa/models/v2|req/models/v1|rsk/models/v1|sop/models/v1|tsk/models/v1|uc/models/v2|models/md)/.*\.py$
+        files: ^src/biz/dfch/specmgr/(dec/models/v1|feat/models/v1|gol/models/v1|prb/models/v1|qa/models/v2|req/models/v1|rsk/models/v1|sop/models/v1|tsk/models/v1|uc/models/v2|vcr/models/v1|models/md)/.*\.py$
 
       - id: specmgr-schema-prb-package
         name: specmgr schema (prb package copy)
@@ -199,7 +199,7 @@ repos:
         entry: uv run --frozen specmgr schema --type prb --output-dir src/biz/dfch/specmgr/prb/data
         language: system
         pass_filenames: false
-        files: ^src/biz/dfch/specmgr/(dec/models/v1|feat/models/v1|gol/models/v1|prb/models/v1|qa/models/v2|req/models/v1|rsk/models/v1|sop/models/v1|tsk/models/v1|uc/models/v2|models/md)/.*\.py$
+        files: ^src/biz/dfch/specmgr/(dec/models/v1|feat/models/v1|gol/models/v1|prb/models/v1|qa/models/v2|req/models/v1|rsk/models/v1|sop/models/v1|tsk/models/v1|uc/models/v2|vcr/models/v1|models/md)/.*\.py$
       - id: specmgr-schema-gol-package
         name: specmgr schema (gol package copy)
         description: >-
@@ -215,7 +215,7 @@ repos:
         entry: uv run --frozen specmgr schema --type gol --output-dir src/biz/dfch/specmgr/gol/data
         language: system
         pass_filenames: false
-        files: ^src/biz/dfch/specmgr/(dec/models/v1|feat/models/v1|gol/models/v1|prb/models/v1|qa/models/v2|req/models/v1|rsk/models/v1|sop/models/v1|tsk/models/v1|uc/models/v2|models/md)/.*\.py$
+        files: ^src/biz/dfch/specmgr/(dec/models/v1|feat/models/v1|gol/models/v1|prb/models/v1|qa/models/v2|req/models/v1|rsk/models/v1|sop/models/v1|tsk/models/v1|uc/models/v2|vcr/models/v1|models/md)/.*\.py$
 
       - id: specmgr-schema-dec-package
         name: specmgr schema (dec package copy)
@@ -232,7 +232,7 @@ repos:
         entry: uv run --frozen specmgr schema --type dec --output-dir src/biz/dfch/specmgr/dec/data
         language: system
         pass_filenames: false
-        files: ^src/biz/dfch/specmgr/(dec/models/v1|feat/models/v1|gol/models/v1|prb/models/v1|qa/models/v2|req/models/v1|rsk/models/v1|sop/models/v1|tsk/models/v1|uc/models/v2|models/md)/.*\.py$
+        files: ^src/biz/dfch/specmgr/(dec/models/v1|feat/models/v1|gol/models/v1|prb/models/v1|qa/models/v2|req/models/v1|rsk/models/v1|sop/models/v1|tsk/models/v1|uc/models/v2|vcr/models/v1|models/md)/.*\.py$
 
       - id: specmgr-schema-sop-package
         name: specmgr schema (sop package copy)
@@ -249,7 +249,7 @@ repos:
         entry: uv run --frozen specmgr schema --type sop --output-dir src/biz/dfch/specmgr/sop/data
         language: system
         pass_filenames: false
-        files: ^src/biz/dfch/specmgr/(dec/models/v1|feat/models/v1|gol/models/v1|prb/models/v1|qa/models/v2|req/models/v1|rsk/models/v1|sop/models/v1|tsk/models/v1|uc/models/v2|models/md)/.*\.py$
+        files: ^src/biz/dfch/specmgr/(dec/models/v1|feat/models/v1|gol/models/v1|prb/models/v1|qa/models/v2|req/models/v1|rsk/models/v1|sop/models/v1|tsk/models/v1|uc/models/v2|vcr/models/v1|models/md)/.*\.py$
 
       - id: specmgr-schema-feat-package
         name: specmgr schema (feat package copy)
@@ -266,4 +266,20 @@ repos:
         entry: uv run --frozen specmgr schema --type feat --output-dir src/biz/dfch/specmgr/feat/data
         language: system
         pass_filenames: false
-        files: ^src/biz/dfch/specmgr/(dec/models/v1|feat/models/v1|gol/models/v1|prb/models/v1|qa/models/v2|req/models/v1|rsk/models/v1|sop/models/v1|tsk/models/v1|uc/models/v2|models/md)/.*\.py$
+        files: ^src/biz/dfch/specmgr/(dec/models/v1|feat/models/v1|gol/models/v1|prb/models/v1|qa/models/v2|req/models/v1|rsk/models/v1|sop/models/v1|tsk/models/v1|uc/models/v2|vcr/models/v1|models/md)/.*\.py$
+      - id: specmgr-schema-vcr-package
+        name: specmgr schema (vcr package copy)
+        description: >-
+          Regenerate the packaged copy of VCR's JSON Schema
+          (src/biz/dfch/specmgr/vcr/data/vcr_schema.json), read by the
+          `specmgr://vcr/schema` MCP resource via `importlib.resources` so it
+          works from a real, non-editable install (unlike `docs/vcr_schema.json`,
+          which only resolves from an editable/source checkout). Same generator
+          as the `specmgr-schema` hook above, just a second `--output-dir` -- no
+          bespoke copy logic exists in `commands/schema.py`. Kept as an
+          independent hook (not chained into `specmgr-schema`) so each artifact's
+          drift check is its own clean gate.
+        entry: uv run --frozen specmgr schema --type vcr --output-dir src/biz/dfch/specmgr/vcr/data
+        language: system
+        pass_filenames: false
+        files: ^src/biz/dfch/specmgr/(dec/models/v1|feat/models/v1|gol/models/v1|prb/models/v1|qa/models/v2|req/models/v1|rsk/models/v1|sop/models/v1|tsk/models/v1|uc/models/v2|vcr/models/v1|models/md)/.*\.py$

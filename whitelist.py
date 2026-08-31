@@ -46,6 +46,7 @@ _._optional_blank_to_none
 _._required_non_blank
 _._validate_items_eagerly
 _._validate_newest_first
+_._validate_ac_numbers_unique
 _._validate_option_numbers_unique
 _._validate_step_numbers_unique
 _._validate_partial_title
@@ -183,6 +184,10 @@ current_status
 blockers
 decisions_made
 related_prs_commits
+# vcr (feat-33 Phase 1): `Vcr`/`AcceptanceCriterion` fields read only via
+# (de)serialization; nothing in `src/` accesses them as plain attributes yet.
+verifies
+test_steps
 
 # --- MCP `@mcp.resource(...)`/`@mcp.tool()` entry points -------------------------
 # Invoked by the MCP framework once registered, not called directly in `src/`.

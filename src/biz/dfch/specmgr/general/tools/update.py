@@ -18,10 +18,10 @@
 """``@mcp.tool()`` wrapper: update (feat-22-consolidate-mutation-tools, Phase 2).
 
 The generic, cross-domain whole-body *and* line-range replace tool for the
-ten whole-body document types (``req``/``uc``/``tsk``/``qa``/``prb``/
-``gol``/``rsk``/``dec``/``sop``/``feat``). It dispatches on the explicit
-``type`` parameter to a private per-domain adapter (``_update_<d>``), each
-a **verbatim port** of
+eleven whole-body document types (``req``/``uc``/``tsk``/``qa``/``prb``/
+``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``). It dispatches on the
+explicit ``type`` parameter to a private per-domain adapter (``_update_<d>``),
+each a **verbatim port** of
 the corresponding per-domain ``update_<d>`` tool's function body (same
 domain lock, same ``load_by_id``, same frontmatter carry-over with only
 ``updated`` bumped, same verbatim persistence via the domain's own
@@ -36,12 +36,12 @@ per-domain tool.
 
 The parameter is intentionally named ``type`` (it matches the frontmatter
 field vocabulary the client already knows); no enabled ruff rule objects to
-the builtin shadow. The 10-way union return type is annotation-only -- the
+the builtin shadow. The 11-way union return type is annotation-only -- the
 MCP input schema is built from the parameters, and the SDK serializes
 whichever concrete document is returned.
 
 ``feat`` is the one domain whose adapter (``_update_feat``) diverges from
-the other nine's identical shape in how it resolves ``id``: via
+the other ten's identical shape in how it resolves ``id``: via
 ``feat.tools._paths``'s bespoke folder-per-document shortcut, not a
 flat-file directory scan (see
 ``.specmgr/feat/feat-31-feature/README.md`` Design Notes, "Addressing").
@@ -113,11 +113,16 @@ from ...uc.tools._io import load_by_id as load_uc_by_id
 from ...uc.tools._lock import uc_lock
 from ...uc.tools._paths import uc_base_dir
 from ...uc.tools._write import write_uc_file
+from ...vcr.models.v1 import Vcr, VcrDocument, VcrFrontmatter
+from ...vcr.tools._io import load_by_id as load_vcr_by_id
+from ...vcr.tools._lock import vcr_lock
+from ...vcr.tools._paths import vcr_base_dir
+from ...vcr.tools._write import write_vcr_file
 from ._splice import body_text, splice_body
 
 __all__ = ["update"]
 
-#: The generic tool's 10-way return union -- annotation-only (see module docstring).
+#: The generic tool's 11-way return union -- annotation-only (see module docstring).
 _UpdateDocument = (
     ReqDocument
     | UcDocument
@@ -129,6 +134,7 @@ _UpdateDocument = (
     | DecDocument
     | FeatDocument
     | SopDocument
+    | VcrDocument
 )
 
 
@@ -532,6 +538,44 @@ def _update_sop(id_: str, content: str, begin: int | None, end: int | None) -> S
     return new_doc
 
 
+def _update_vcr(id_: str, content: str, begin: int | None, end: int | None) -> VcrDocument:
+    """Replace the body of the verification case record identified by ``id_`` (whole-body or line-range mode).
+
+    Mirrors :func:`_update_dec`'s shape (same ``vcr_lock``, ``load_by_id``,
+    frontmatter carry-over with only ``updated`` bumped, ``write_vcr_file``,
+    ``VcrNotFoundError``), plus the REQ-002 range branch (see
+    :func:`_update_req`).
+    """
+    if begin is not None or end is not None:
+        assert begin is not None and end is not None, "the public `update` guard enforces both-or-neither"
+
+        base_dir = vcr_base_dir()
+        with vcr_lock(id_):
+            path, existing = load_vcr_by_id(base_dir, id_)
+            spliced = splice_body(body_text(path), begin, end, content)
+            body = Vcr.from_text(format_text(spliced))
+            now = datetime.now().isoformat(timespec="microseconds")
+            fm_data = existing.frontmatter.model_dump()
+            fm_data["updated"] = now
+            new_frontmatter = VcrFrontmatter(**fm_data)
+            new_doc = VcrDocument(frontmatter=new_frontmatter, body=body)
+            write_vcr_file(path, new_frontmatter, spliced)
+        return new_doc
+
+    body = Vcr.from_text(format_text(content))
+
+    base_dir = vcr_base_dir()
+    with vcr_lock(id_):
+        path, existing = load_vcr_by_id(base_dir, id_)
+        now = datetime.now().isoformat(timespec="microseconds")
+        fm_data = existing.frontmatter.model_dump()
+        fm_data["updated"] = now
+        new_frontmatter = VcrFrontmatter(**fm_data)
+        new_doc = VcrDocument(frontmatter=new_frontmatter, body=body)
+        write_vcr_file(path, new_frontmatter, content)
+    return new_doc
+
+
 #: Dispatch table mapping the ``type`` value to its private adapter.
 _ADAPTERS: dict[str, Callable[[str, str, int | None, int | None], _UpdateDocument]] = {
     "req": _update_req,
@@ -544,6 +588,7 @@ _ADAPTERS: dict[str, Callable[[str, str, int | None, int | None], _UpdateDocumen
     "dec": _update_dec,
     "feat": _update_feat,
     "sop": _update_sop,
+    "vcr": _update_vcr,
 }
 
 
@@ -551,11 +596,10 @@ _ADAPTERS: dict[str, Callable[[str, str, int | None, int | None], _UpdateDocumen
     name="update",
     title="Update document",
     description=(
-        "Whole-body or line-range replace of an existing document's content across the ten "
-        "whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat), "
-        "preserving its id/type/status/created/version; only `updated` changes. With no "
-        "`begin`/`end`, `content` "
-        "is the full replacement body (body markdown only, no frontmatter block). With both, "
+        "Whole-body or line-range replace of an existing document's content across the eleven "
+        "whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr), "
+        "preserving its id/type/status/created/version; only `updated` changes. With no `begin`/`end`, "
+        "`content` is the full replacement body (body markdown only, no frontmatter block). With both, "
         "`content` replaces the 1-based inclusive body-line range `begin`..`end` of the current "
         "on-disk body (`N+1` = end-of-body sentinel: append after the last line, or replace "
         "through end of body); the spliced result is validated as a whole document before "
@@ -564,93 +608,95 @@ _ADAPTERS: dict[str, Callable[[str, str, int | None, int | None], _UpdateDocumen
 )
 def update(
     id: str,
-    type: Literal["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "feat"],
+    type: Literal["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "feat", "vcr"],
     content: str,
     begin: int | None = None,
     end: int | None = None,
 ) -> _UpdateDocument:
     """Replace the body of an existing document, in whole-body or line-range mode.
 
-    Cross-domain generic for the ten whole-body document types
-    (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``);
-        dispatches on ``type`` to the domain's own ported adapter (same lock,
-        same id resolution, same frontmatter carry-over, same verbatim
-        persistence, same domain not-found error).
+    Cross-domain generic for the eleven whole-body document types
+    (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``);
+    dispatches on ``type`` to the domain's own ported adapter (same lock,
+    same id resolution, same frontmatter carry-over, same verbatim
+    persistence, same domain not-found error).
 
-        **Whole-body mode** (no ``begin``/``end``): ``content`` is body
-        markdown only, with no YAML frontmatter block -- the same shape the
-        per-domain ``update_<d>`` tools accept. Validated the same way: the
-        domain body model's ``from_text(format_text(content))``, letting
-        ``AssertionError`` (structural failure) or ``pydantic.ValidationError``
-        (field/cross-field failure) propagate uncaught, with nothing written in
-        either case.
+    **Whole-body mode** (no ``begin``/``end``): ``content`` is body
+    markdown only, with no YAML frontmatter block -- the same shape the
+    per-domain ``update_<d>`` tools accept. Validated the same way: the
+    domain body model's ``from_text(format_text(content))``, letting
+    ``AssertionError`` (structural failure) or ``pydantic.ValidationError``
+    (field/cross-field failure) propagate uncaught, with nothing written in
+    either case.
 
-        **Range mode** (both ``begin`` and ``end`` given): ``content`` is a
-        replacement *fragment* for the current on-disk body's 1-based,
-        inclusive line range ``begin..end``, where ``N`` is the number of lines
-        of the current frontmatter-stripped body (the text ``get_<d>(id,
-        raw=True)`` returns) and ``N+1`` is a virtual position past the last
-        line (``begin = end = N+1`` appends at end of body; ``end = N+1``
-        extends the range through the last line). The on-disk body is re-read
-        under the domain lock, spliced (drop lines ``begin..min(end, N)``,
-        insert the fragment's lines at position ``begin - 1``), and the
-        *spliced result* -- not the fragment -- is validated as a whole body
-        exactly like whole-body mode and then persisted verbatim, so unchanged
-        regions of the on-disk body stay byte-identical. An empty ``content``
-        deletes the range (legal iff the result still validates). The YAML
-        frontmatter is never addressable: coordinates are body-relative by
-        construction.
+    **Range mode** (both ``begin`` and ``end`` given): ``content`` is a
+    replacement *fragment* for the current on-disk body's 1-based,
+    inclusive line range ``begin..end``, where ``N`` is the number of lines
+    of the current frontmatter-stripped body (the text ``get_<d>(id,
+    raw=True`` returns) and ``N+1`` is a virtual position past the last
+    line (``begin = end = N+1`` appends at end of body; ``end = N+1``
+    extends the range through the last line). The on-disk body is re-read
+    under the domain lock, spliced (drop lines ``begin..min(end, N)``,
+    insert the fragment's lines at position ``begin - 1``), and the
+    *spliced result* -- not the fragment -- is validated as a whole body
+    exactly like whole-body mode and then persisted verbatim, so unchanged
+    regions of the on-disk body stay byte-identical. An empty ``content``
+    deletes the range (legal iff the result still validates). The YAML
+    frontmatter is never addressable: coordinates are body-relative by
+    construction.
 
-        In both modes the existing file's frontmatter is carried over with
-        every field preserved except ``updated`` (bumped to the current
-        microsecond timestamp); ``status`` in particular is never settable
-        through this tool -- the generic ``set_status`` tool in
-        ``general.tools`` is the only status-change path.
+    In both modes the existing file's frontmatter is carried over with
+    every field preserved except ``updated`` (bumped to the current
+    microsecond timestamp); ``status`` in particular is never settable
+    through this tool -- the generic ``set_status`` tool in
+    ``general.tools`` is the only status-change path.
 
-        Parameters
-        ----------
-        id:
-            The document's specmgr-assigned identifier.
-        type:
+    Parameters
+    ----------
+    id:
+        The document's specmgr-assigned identifier.
+    type:
         The document type / domain: one of ``req``, ``uc``, ``tsk``,
-        ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``.
-        content:
-            Whole-body mode: the replacement body markdown, with no
-            frontmatter block. Range mode: the replacement fragment for lines
-            ``begin..end`` (may be empty to delete the range).
-        begin:
-            Optional 1-based first line of the range to replace. Must be given
-            together with ``end`` (exactly one of the two is a ``ValueError``).
-        end:
-            Optional 1-based last line of the range to replace (inclusive);
-            ``N+1`` (one past the last body line) extends the range through
-            end of body. Must be given together with ``begin``.
+        ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
+        ``vcr``.
+    content:
+        Whole-body mode: the replacement body markdown, with no
+        frontmatter block. Range mode: the replacement fragment for lines
+        ``begin..end`` (may be empty to delete the range).
+    begin:
+        Optional 1-based first line of the range to replace. Must be given
+        together with ``end`` (exactly one of the two is a ``ValueError``).
+    end:
+        Optional 1-based last line of the range to replace (inclusive);
+        ``N+1`` (one past the last body line) extends the range through
+        end of body. Must be given together with ``begin``.
 
-        Returns
-        -------
+    Returns
+    -------
     ReqDocument | UcDocument | TskDocument | QaDocument | PrbDocument |
-    GolDocument | RskDocument | DecDocument | FeatDocument | SopDocument
-            The updated document of the dispatched domain type.
+    GolDocument | RskDocument | DecDocument | FeatDocument | SopDocument |
+    VcrDocument
+        The updated document of the dispatched domain type.
 
-        Raises
-        ------
-        ValueError
-            Misused range coordinates: exactly one of ``begin``/``end`` given
-            (raised before any file access), or ``begin < 1``, ``begin > end``,
-            or ``end > N + 1`` (raised after the on-disk body is read; the
-            message names the offending value(s) and the allowed range).
-            Nothing is written in any of these cases.
-        AssertionError
-            The (spliced) body is structurally invalid (e.g. a range that
-            deletes the H1). Nothing is written.
-        pydantic.ValidationError
-            A field/cross-field validation failure in the (spliced) body (e.g.
-            a range producing an out-of-vocabulary value). Nothing is written.
-        ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
+    Raises
+    ------
+    ValueError
+        Misused range coordinates: exactly one of ``begin``/``end`` given
+        (raised before any file access), or ``begin < 1``, ``begin > end``,
+        or ``end > N + 1`` (raised after the on-disk body is read; the
+        message names the offending value(s) and the allowed range).
+        Nothing is written in any of these cases.
+    AssertionError
+        The (spliced) body is structurally invalid (e.g. a range that
+        deletes the H1). Nothing is written.
+    pydantic.ValidationError
+        A field/cross-field validation failure in the (spliced) body (e.g.
+        a range producing an out-of-vocabulary value). Nothing is written.
+    ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
     PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
-    FeatNotFoundError / SopNotFoundError
-            No document of the dispatched ``type`` has this id -- the
-            domain's own not-found error, unchanged from the per-domain tools.
+    FeatNotFoundError / SopNotFoundError / VcrNotFoundError
+        No document of the dispatched ``type`` has this id -- the
+        domain's own not-found error, unchanged from the per-domain tools.
     """
     if (begin is None) != (end is None):
         raise ValueError(f"begin and end must be given together (both or neither), got begin={begin!r}, end={end!r}")

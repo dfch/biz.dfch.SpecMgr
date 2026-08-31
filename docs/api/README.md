@@ -109,6 +109,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general.prompts`](biz.dfch.specmgr.general.prompts.md) — MCP prompt registrations that are not specific to any single document
 - [`biz.dfch.specmgr.general.prompts.compact_history`](biz.dfch.specmgr.general.prompts.compact_history.md) — ``@mcp.prompt()``: compact_history (Various improvements, Task 0.21).
 - [`biz.dfch.specmgr.general.resources`](biz.dfch.specmgr.general.resources.md) — MCP resource registrations that are not specific to any single document
+- [`biz.dfch.specmgr.general.resources.dtais`](biz.dfch.specmgr.general.resources.dtais.md) — Resource: specmgr://dtais -- the DTAIS verification-method vocabulary (feat-33-vcr Task 3.3).
 - [`biz.dfch.specmgr.general.resources.iso25010`](biz.dfch.specmgr.general.resources.iso25010.md) — Resource: specmgr://iso25010 (Task 0.8.3).
 - [`biz.dfch.specmgr.general.resources.rasci`](biz.dfch.specmgr.general.resources.rasci.md) — Resource: specmgr://rasci (feat-30 Task 3.5, REQ-011).
 - [`biz.dfch.specmgr.general.resources.version`](biz.dfch.specmgr.general.resources.version.md) — Resource: specmgr://version — MCP server package version number.
@@ -399,3 +400,32 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.uc.tools.list_uc`](biz.dfch.specmgr.uc.tools.list_uc.md) — ``@mcp.tool()`` wrapper: list_uc (feat-13-list-paging Task 2.3).
 - [`biz.dfch.specmgr.uc.tools.parse_uc`](biz.dfch.specmgr.uc.tools.parse_uc.md) — ``@mcp.tool()`` wrapper: parse_uc.
 - [`biz.dfch.specmgr.uc.tools.validate_uc`](biz.dfch.specmgr.uc.tools.validate_uc.md) — ``@mcp.tool()`` wrapper: validate_uc (Task 3.1.5).
+- [`biz.dfch.specmgr.vcr`](biz.dfch.specmgr.vcr.md) — Verification Case Record (VCR) domain -- how a single REQ/UC is verified.
+- [`biz.dfch.specmgr.vcr.models`](biz.dfch.specmgr.vcr.models.md) — Verification Case Record (VCR) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- [`biz.dfch.specmgr.vcr.models.v1`](biz.dfch.specmgr.vcr.models.v1.md) — Verification Case Record (VCR) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- [`biz.dfch.specmgr.vcr.models.v1._util`](biz.dfch.specmgr.vcr.models.v1._util.md) — Shared, private constants for the ``vcr.models.v1`` subpackage.
+- [`biz.dfch.specmgr.vcr.models.v1.body`](biz.dfch.specmgr.vcr.models.v1.body.md) — Verification Case Record (VCR) body models: whole-section fields under a single H1.
+- [`biz.dfch.specmgr.vcr.models.v1.document`](biz.dfch.specmgr.vcr.models.v1.document.md) — Pydantic model for a full verification case record document (frontmatter + body).
+- [`biz.dfch.specmgr.vcr.models.v1.frontmatter`](biz.dfch.specmgr.vcr.models.v1.frontmatter.md) — Verification Case Record (VCR) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
+- [`biz.dfch.specmgr.vcr.models.v1.parser`](biz.dfch.specmgr.vcr.models.v1.parser.md) — Parse raw verification case record (VCR) ``.md`` text into a :class:`VcrDocument`.
+- [`biz.dfch.specmgr.vcr.models.v1.summary`](biz.dfch.specmgr.vcr.models.v1.summary.md) — Pydantic model for one line of VCR listing output (Phase 2, ``list_vcr``).
+- [`biz.dfch.specmgr.vcr.prompts`](biz.dfch.specmgr.vcr.prompts.md) — MCP prompt wrappers for Verification Case Records (Task 3.2).
+- [`biz.dfch.specmgr.vcr.prompts.create_vcr`](biz.dfch.specmgr.vcr.prompts.create_vcr.md) — ``@mcp.prompt()``: create_vcr (Task 3.2).
+- [`biz.dfch.specmgr.vcr.prompts.update_vcr`](biz.dfch.specmgr.vcr.prompts.update_vcr.md) — ``@mcp.prompt()``: update_vcr (Task 3.2).
+- [`biz.dfch.specmgr.vcr.resources`](biz.dfch.specmgr.vcr.resources.md) — MCP resource registrations for Verification Case Record (VCR) documents (Task 3.1).
+- [`biz.dfch.specmgr.vcr.resources.vcr_example`](biz.dfch.specmgr.vcr.resources.vcr_example.md) — Resource: specmgr://vcr/example (Task 3.1).
+- [`biz.dfch.specmgr.vcr.resources.vcr_schema`](biz.dfch.specmgr.vcr.resources.vcr_schema.md) — Resource: specmgr://vcr/schema (Task 3.1, packaged data).
+- [`biz.dfch.specmgr.vcr.resources.vcr_template`](biz.dfch.specmgr.vcr.resources.vcr_template.md) — Resource: specmgr://vcr/template (Task 3.1).
+- [`biz.dfch.specmgr.vcr.tools`](biz.dfch.specmgr.vcr.tools.md) — MCP tool wrappers for verification case records (mirrors ``dec/tools/``'s own shape).
+- [`biz.dfch.specmgr.vcr.tools._io`](biz.dfch.specmgr.vcr.tools._io.md) — Thin file read helpers over ``parse_vcr`` (Task 2.1).
+- [`biz.dfch.specmgr.vcr.tools._lock`](biz.dfch.specmgr.vcr.tools._lock.md) — Per-document in-process lock guarding verification case record mutations.
+- [`biz.dfch.specmgr.vcr.tools._paths`](biz.dfch.specmgr.vcr.tools._paths.md) — Verification case record base directory resolution and id -> path lookup (Task 2.1).
+- [`biz.dfch.specmgr.vcr.tools._write`](biz.dfch.specmgr.vcr.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_vcr`` and
+- [`biz.dfch.specmgr.vcr.tools.create_vcr`](biz.dfch.specmgr.vcr.tools.create_vcr.md) — ``@mcp.tool()`` wrapper: create_vcr (Task 2.1).
+- [`biz.dfch.specmgr.vcr.tools.delete_vcr`](biz.dfch.specmgr.vcr.tools.delete_vcr.md) — ``@mcp.tool()`` wrapper: delete_vcr (Task 2.1).
+- [`biz.dfch.specmgr.vcr.tools.get_vcr`](biz.dfch.specmgr.vcr.tools.get_vcr.md) — ``@mcp.tool()`` wrapper: get_vcr (Task 2.1).
+- [`biz.dfch.specmgr.vcr.tools.get_vcr_example`](biz.dfch.specmgr.vcr.tools.get_vcr_example.md) — ``@mcp.tool()`` wrapper: get_vcr_example (Task 2.1).
+- [`biz.dfch.specmgr.vcr.tools.get_vcr_template`](biz.dfch.specmgr.vcr.tools.get_vcr_template.md) — ``@mcp.tool()`` wrapper: get_vcr_template (Task 2.1).
+- [`biz.dfch.specmgr.vcr.tools.list_vcr`](biz.dfch.specmgr.vcr.tools.list_vcr.md) — ``@mcp.tool()`` wrapper: list_vcr (Task 2.1).
+- [`biz.dfch.specmgr.vcr.tools.parse_vcr`](biz.dfch.specmgr.vcr.tools.parse_vcr.md) — ``@mcp.tool()`` wrapper: parse_vcr (Task 2.1).
+- [`biz.dfch.specmgr.vcr.tools.validate_vcr`](biz.dfch.specmgr.vcr.tools.validate_vcr.md) — ``@mcp.tool()`` wrapper: validate_vcr (Task 2.1).

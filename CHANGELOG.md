@@ -7,6 +7,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Twelfth domain feature (VCR/Verification Case Record tooling)**: new
+  document-type domain, `vcr`, capturing how a single REQ/UC is verified --
+  a coverage assessment plus a list of DTAIS-classified acceptance
+  criteria. Fills a gap identified during `feat-32-sysrs` planning (no
+  existing domain modeled ISO/IEC/IEEE 29148's/MITRE SE Guide's
+  "Verification / Test and Evaluation" concept). Follows the domain-first
+  hierarchy (ADR ece4554b-725c-4f76-bc04-5d2b760363d2) and lands on the
+  "simple surface" from day one (ADR 36905d5b-8057-4294-8665-c7eed5534db0
+  -- no per-domain mutation tools, including no per-AC create/read/update/
+  delete tools):
+  - `vcr/models/v1/`: Pydantic schema (`VcrFrontmatter` with a closed
+    4-value status set `draft`/`progress`/`complete`/`approved`, `Vcr` body
+    with a mandatory `## Verifies` single-value cross-reference (exactly
+    one `REQ|UC <uuid>: <title>` line plus a mandatory `notes` paraphrase --
+    not a bullet list), a mandatory `## Coverage` closed-vocabulary outcome
+    signal (`full`/`partial`/`none`), a mandatory `## Acceptance Criteria`
+    collection of `### AC-NNN (Method): ...` entries (3-digit zero-padded
+    number, closed **DTAIS** method vocabulary parsed from the heading via
+    regex, optional `description` paragraph and/or `#### Test Steps`
+    numbered procedure, duplicate-number rejection via `model_validator`),
+    and optional `## More Information`/`## Updates`), parser (`parse_vcr`),
+    `VcrSummary`, and JSON schema generation, inside the domain package
+    itself.
+  - `vcr/tools/`: `@mcp.tool()` wrappers for the VCR lifecycle (`create_vcr`,
+    `parse_vcr`, `list_vcr`, `get_vcr` with `raw`, `get_vcr_example`,
+    `get_vcr_template`, `validate_vcr`), plus a stub for `delete_vcr`.
+    Generic `update(type="vcr", ...)`/`set_status(type="vcr", ...)` dispatch
+    adapters in `general/tools/update.py`/`set_status.py`.
+  - `vcr/resources/` (`specmgr://vcr/schema`, `specmgr://vcr/example`,
+    `specmgr://vcr/template` -- no `specmgr://vcr/{id}`, no
+    `specmgr://vcr/list`) and `vcr/prompts/` (`create_vcr`/`update_vcr`
+    narrated instruction flows; `create_vcr` first checks `list_vcr` for a
+    near-duplicate verification case record).
+  - A cross-cutting `specmgr://dtais` resource (`general/resources/dtais.py`
+    + `general/data/general_dtais.md`), explaining the DTAIS
+    verification-method vocabulary (Demonstration, Test, Analysis,
+    Inspection, Special) that VCR's `## Acceptance Criteria` depends on --
+    kept in `general/` rather than `vcr/`, since it is domain-knowledge
+    other document types may also want to reference, mirroring RSK's
+    `specmgr://rsk/tara`/`specmgr://rsk/risk-matrix` resources.
+  - `server.py` updated to import the new `vcr` domain package;
+    `.pre-commit-config.yaml`, `AGENTS.md`, and root `README.md` all
+    updated for the twelfth domain. `specmgr schema --type vcr` generates
+    `docs/vcr_schema.json` and the packaged copy.
+  - Comprehensive test coverage across `tests/vcr/models/`,
+    `tests/vcr/tools/`, `tests/vcr/resources/`, `tests/vcr/prompts/`, and
+    `tests/general/resources/test_dtais.py`.
+
 ## [0.14.0] - 2026-08-30
 
 ### Added

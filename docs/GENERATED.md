@@ -129,6 +129,7 @@ First-line docstrings from each module, organized by domain:
 - `general/prompts/__init__.py` — MCP prompt registrations that are not specific to any single document
 - `general/prompts/compact_history.py` — ``@mcp.prompt()``: compact_history (Various improvements, Task 0.21).
 - `general/resources/__init__.py` — MCP resource registrations that are not specific to any single document
+- `general/resources/dtais.py` — Resource: specmgr://dtais -- the DTAIS verification-method vocabulary (feat-33-vcr Task 3.3).
 - `general/resources/iso25010.py` — Resource: specmgr://iso25010 (Task 0.8.3).
 - `general/resources/rasci.py` — Resource: specmgr://rasci (feat-30 Task 3.5, REQ-011).
 - `general/resources/version.py` — Resource: specmgr://version — MCP server package version number.
@@ -458,6 +459,38 @@ First-line docstrings from each module, organized by domain:
 - `uc/tools/parse_uc.py` — ``@mcp.tool()`` wrapper: parse_uc.
 - `uc/tools/validate_uc.py` — ``@mcp.tool()`` wrapper: validate_uc (Task 3.1.5).
 
+**vcr/**
+
+- `vcr/__init__.py` — Verification Case Record (VCR) domain -- how a single REQ/UC is verified.
+- `vcr/models/__init__.py` — Verification Case Record (VCR) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- `vcr/models/v1/__init__.py` — Verification Case Record (VCR) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- `vcr/models/v1/_util.py` — Shared, private constants for the ``vcr.models.v1`` subpackage.
+- `vcr/models/v1/body.py` — Verification Case Record (VCR) body models: whole-section fields under a single H1.
+- `vcr/models/v1/document.py` — Pydantic model for a full verification case record document (frontmatter + body).
+- `vcr/models/v1/frontmatter.py` — Verification Case Record (VCR) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
+- `vcr/models/v1/parser.py` — Parse raw verification case record (VCR) ``.md`` text into a :class:`VcrDocument`.
+- `vcr/models/v1/summary.py` — Pydantic model for one line of VCR listing output (Phase 2, ``list_vcr``).
+- `vcr/prompts/__init__.py` — MCP prompt wrappers for Verification Case Records (Task 3.2).
+- `vcr/prompts/create_vcr.py` — ``@mcp.prompt()``: create_vcr (Task 3.2).
+- `vcr/prompts/update_vcr.py` — ``@mcp.prompt()``: update_vcr (Task 3.2).
+- `vcr/resources/__init__.py` — MCP resource registrations for Verification Case Record (VCR) documents (Task 3.1).
+- `vcr/resources/vcr_example.py` — Resource: specmgr://vcr/example (Task 3.1).
+- `vcr/resources/vcr_schema.py` — Resource: specmgr://vcr/schema (Task 3.1, packaged data).
+- `vcr/resources/vcr_template.py` — Resource: specmgr://vcr/template (Task 3.1).
+- `vcr/tools/__init__.py` — MCP tool wrappers for verification case records (mirrors ``dec/tools/``'s own shape).
+- `vcr/tools/_io.py` — Thin file read helpers over ``parse_vcr`` (Task 2.1).
+- `vcr/tools/_lock.py` — Per-document in-process lock guarding verification case record mutations.
+- `vcr/tools/_paths.py` — Verification case record base directory resolution and id -> path lookup (Task 2.1).
+- `vcr/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_vcr`` and
+- `vcr/tools/create_vcr.py` — ``@mcp.tool()`` wrapper: create_vcr (Task 2.1).
+- `vcr/tools/delete_vcr.py` — ``@mcp.tool()`` wrapper: delete_vcr (Task 2.1).
+- `vcr/tools/get_vcr.py` — ``@mcp.tool()`` wrapper: get_vcr (Task 2.1).
+- `vcr/tools/get_vcr_example.py` — ``@mcp.tool()`` wrapper: get_vcr_example (Task 2.1).
+- `vcr/tools/get_vcr_template.py` — ``@mcp.tool()`` wrapper: get_vcr_template (Task 2.1).
+- `vcr/tools/list_vcr.py` — ``@mcp.tool()`` wrapper: list_vcr (Task 2.1).
+- `vcr/tools/parse_vcr.py` — ``@mcp.tool()`` wrapper: parse_vcr (Task 2.1).
+- `vcr/tools/validate_vcr.py` — ``@mcp.tool()`` wrapper: validate_vcr (Task 2.1).
+
 ## Test Coverage
 
-**Test files**: 305
+**Test files**: 327

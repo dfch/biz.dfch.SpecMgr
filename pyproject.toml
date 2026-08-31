@@ -160,6 +160,10 @@ namespaces = true
     "data/*.md",
     "data/*.json"
 ]
+"biz.dfch.specmgr.vcr" = [
+    "data/*.md",
+    "data/*.json"
+]
 "biz.dfch.specmgr.general" = [
     "data/*.md"
 ]
