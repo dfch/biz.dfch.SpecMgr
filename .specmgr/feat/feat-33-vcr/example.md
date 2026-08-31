@@ -1,33 +1,23 @@
-<!--
-DISCUSSION DRAFT — illustrative only, not a schema, not wired into any
-tool/resource/model yet (no `vcr/models/v1/` code exists -- see this
-feature's README.md, Task List, Phase 0). For the user to review before
-Phase 1 (models/parser) starts, mirroring the empirical-draft-first
-discipline `sysrs`/`sop` used for their own domains.
-
-Thematically continues `feat-32-sysrs/example.v4.md`'s partner-API-key
-scenario ("system shall support revoking a key within 1s of agent
-action") to show how a future `sysrs` document's currently-unmodeled
-"## Verification and Test Planning" section could instead cross-reference
-a `vcr` document like this one. The `REQ`/`UC` id below is a fresh,
-fictitious full UUID (not the truncated placeholder ids `sysrs`'s own
-examples use), since this file is meant to double as a concrete look at
-the real id shape `## Verifies` will carry.
-
-No YAML frontmatter block -- body-only, same convention as
-`feat-32-sysrs`'s own `example*.md` discussion drafts.
--->
+---
+created: 2026-08-31 08:50:00
+id: 5e9c1a2b-3d4f-4b6a-8e91-7c2f5a1d9b3e
+status: progress
+type: vcr
+updated: 2026-08-31 08:50:00
+version: 1.0.0
+---
 
 # API Key Revocation Latency Verification
 
 ## Verifies
 
-- REQ 4f2a1b3c-8d5e-4a91-9c72-1e6f8a2b3c4d: Revoke API key within 1s of
-  agent action
+<!-- Cross-referenced during the feat-32-sysrs gap-analysis review. -->
 
-  Confirms that a support agent revoking a compromised partner API key
-  closes the exposure window fast enough to meet the 1-second
-  performance requirement.
+REQ 4f2a1b3c-8d5e-4a91-9c72-1e6f8a2b3c4d: Revoke API key within 1s of agent action
+
+Confirms that a support agent revoking a compromised partner API key
+closes the exposure window fast enough to meet the 1-second
+performance requirement.
 
 ## Coverage
 
@@ -63,7 +53,7 @@ margin under expected load, without needing a dedicated test run.
 2. Confirm the returned error body matches the documented error
    contract (`code`, `message`, `request_id`).
 
-### AC-004 (Certification): The revocation audit-log format is compliance-certified
+### AC-004 (Special): The revocation audit-log format is compliance-certified
 
 Sign-off from the internal Security Compliance review board that the
 audit-log entries written on revocation satisfy the retention/format
