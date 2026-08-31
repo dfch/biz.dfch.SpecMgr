@@ -3,7 +3,7 @@ created: '2026-08-31T15:24:14.582592'
 id: 98537416-0e6e-4a02-925f-974a17bfa10a
 status: draft
 type: sop
-updated: '2026-08-31T15:24:14.582592'
+updated: '2026-08-31T16:30:30.599226'
 version: 1.0.0
 ---
 
@@ -161,7 +161,7 @@ a diagnostic.
 
 **Manual fallback:** run the checks individually: `git status`;
 `git fetch && git merge-base --is-ancestor origin/main origin/dev`;
-`gh run list --branch dev --limit 1`; `git tag -l vX.Y.Z` and
+`gh run list --limit 30 --json databaseId,headSha,headBranch,status,conclusion --jq '[.[] | select(.headBranch == "dev")] | .[0]'` (this `gh` version has no `--branch` flag); `git tag -l vX.Y.Z` and
 `git ls-remote --tags origin vX.Y.Z`; `uv lock --check`;
 `gh auth status`.
 
