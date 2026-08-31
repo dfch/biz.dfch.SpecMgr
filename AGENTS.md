@@ -406,6 +406,7 @@ uv run --frozen ruff format --check && uv run --frozen ruff check      # lint (e
 uv run --frozen pylint $(git ls-files '*.py')                          # lint (advisory only; CI runs it with `|| true`)
 uv run --frozen vulture src/ whitelist.py --min-confidence 60          # dead-code check (enforced)
 uv run --frozen python -m unittest discover -v -s tests -t . -p "test_*.py"  # tests
+scripts/release.sh help                                            # staged release automation (SOP 98537416; README "Make a Release")
 uv run --frozen specmgr docs                                           # regenerate docs/api/ + docs/GENERATED.md
 uv run --frozen specmgr adr-toc                                        # regenerate docs/adr/README.md (ADR table of contents)
 uv run --frozen specmgr unused-code                                    # report unused code in src/ (same check as the vulture hook)

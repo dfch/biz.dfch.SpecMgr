@@ -288,52 +288,59 @@ headless CI job — use the CLI client there instead.
 
 ## Make a Release
 
-### 1. Make sure all tests pass
+The normative release procedure is the SOP
+[Perform a release of biz.dfch.SpecMgr](docs/sop/sop-98537416-0e6e-4a02-925f-974a17bfa10a-perform-a-release-of-biz-dfch-specmgr.md)
+(SOP `98537416`). Where this section, the script, or the command ever
+disagree with the SOP, the SOP wins.
 
-Before releasing, make sure the CI pipeline is green on the `dev` branch:
+### Using the OpenCode command (recommended)
+
+```
+/release [X.Y.Z | patch | minor | major] [--dry-run]
+```
+
+The command drives the staged script and performs the SOP's agent-judgment
+steps: it confirms the resolved version with you, curates the changelog's
+`[Unreleased]` section, pauses at the merge gate before `dev` is merged
+into `main`, and triages failures without ever auto-retrying.
+
+### Using the script directly
+
+Each SOP step maps to a deterministic, idempotent stage (the SOP carries
+a manual fallback command for every step):
 
 ```bash
-uv run --frozen ruff format --check
-uv run --frozen ruff check
-uv run --frozen pylint $(git ls-files '*.py')
-uv run --frozen python -m unittest discover -v -s tests -t . -p "test_*.py"
+scripts/release.sh resolve minor         # print the target version (e.g. 0.15.0); no mutation
+scripts/release.sh precheck 0.15.0       # fail-fast pre-release checks
+scripts/release.sh bump 0.15.0           # pyproject.toml + uv.lock
+scripts/release.sh changelog 0.15.0      # [Unreleased] -> dated section
+scripts/release.sh commit-push 0.15.0    # 3-file release commit, push dev, wait for CI
+scripts/release.sh pr-create 0.15.0      # dev->main release PR, wait for checks (no merge)
+scripts/release.sh pr-merge 0.15.0       # ff-only merge (after maintainer go-ahead)
+scripts/release.sh tag-push 0.15.0       # tag on main, push the tag, back to dev
+scripts/release.sh publish-wait 0.15.0   # the four publish.yml jobs
+scripts/release.sh release-notes 0.15.0  # verify the release + set the GH release notes
+scripts/release.sh status 0.15.0         # where does this release stand?
+scripts/release.sh all 0.15.0            # the whole chain, TTY only (interactive merge gate)
 ```
 
-### 2. Increase the version
+Changelog *curation* (SOP step 3) is an agent or manual step: the
+`changelog` stage only moves the already-curated `[Unreleased]` section
+into its dated form.
 
-Update the version in `pyproject.toml`:
+### Manual fallback
 
-```toml
-version = "x.y.z"
-```
-
-Move the `[Unreleased]` section in `CHANGELOG.md` into a new dated
-`## [x.y.z] - YYYY-MM-DD` section.
-
-### 3. Commit and push to `dev`
-
-```bash
-git add pyproject.toml CHANGELOG.md
-git commit -m "chore: bump version to vx.y.z"
-git push origin dev
-```
-
-### 4. Merge `dev` into `main`
-
-```bash
-git checkout main
-git merge dev
-git push origin main
-```
-
-### 5. Create and push a version tag
-
-```bash
-export VERSION=x.y.z
-git tag v${VERSION}
-git push origin v${VERSION}
-git checkout dev
-```
+Follow the SOP step by step — each step carries a *Manual fallback*
+paragraph. The essentials: bump the `version` in `pyproject.toml` and
+move the `[Unreleased]` section of `CHANGELOG.md` into a new dated
+`## [x.y.z] - YYYY-MM-DD` section; `uv lock`; commit exactly
+`pyproject.toml` + `uv.lock` + `CHANGELOG.md` as
+`chore(release): bump version to vX.Y.Z` and push to `dev`; once CI is
+green, open the `dev` → `main` pull request and merge it
+**fast-forward-only** (`git merge --ff-only dev` — never a merge commit or
+squash: `main` must stay a strict ancestor of `dev`); then create
+`git tag vX.Y.Z` on `main`, push the tag, and wait for the publish
+workflow.
 
 _Note: `.github/workflows/publish.yml` handles the rest of the release
 automatically once the tag above is pushed — it builds and publishes the
