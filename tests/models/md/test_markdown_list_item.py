@@ -297,21 +297,12 @@ This is the outro of the document.
 
         sut = Document.from_text(text)
 
-        print("'sut'")
-        print(f"'{sut}'")
-
         assert isinstance(sut, Document), type(Document)
 
-        print("'sut.intro")
-        print(f"'{sut.intro}")
         item_text = mdformat.text("1. ~Another~ item", options={"number": True})
         item = Document.ComplexListItem.from_text(item_text)
         assert isinstance(item, Document.ComplexListItem), type(item)
         sut.items.append(item)
-
-        result = mdformat.text(str(sut), options={"number": True})
-        print("'result'")
-        print(f"'{result}'")
 
 
 if __name__ == "__main__":

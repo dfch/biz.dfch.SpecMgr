@@ -51,26 +51,20 @@ class TestMarkdownSectionGetExtent(unittest.TestCase):
     def test_no_extent_when_first_token_is_not_own_heading(self) -> None:
         """A text not starting with this class's own heading tag has no extent."""
         text = mdformat.text("## Not h3\ncontent\n")
-        lines = text.splitlines()
         result = _AnyHeadingLeafSection.get_extent(text)
         self.assertEqual(result, 0)
-        print(lines[0:result])
 
     def test_extends_to_end_of_input_when_no_stopping_heading(self) -> None:
         """With no sibling/ancestor heading following, the extent reaches the end."""
         text = mdformat.text("### Sec3 only\ncontent\nmore content\n")
-        lines = text.splitlines()
         result = _AnyHeadingLeafSection.get_extent(text)
         self.assertEqual(result, len(text.splitlines()))
-        print(lines[0:result])
 
     def test_nested_deeper_heading_is_included(self) -> None:
         """A deeper heading (h4) is nested content and does not stop the extent."""
         text = mdformat.text("### Sec3\ncontent\n\n#### Sec4 nested\nnested content\n")
-        lines = text.splitlines()
         result = _AnyHeadingLeafSection.get_extent(text)
         self.assertEqual(result, len(text.splitlines()))
-        print(lines[0:result])
 
     def test_sibling_heading_stops_extent(self) -> None:
         """A sibling heading (same level, h3) stops the extent."""
@@ -79,7 +73,6 @@ class TestMarkdownSectionGetExtent(unittest.TestCase):
         stop_line = next(i for i, line in enumerate(lines) if line.startswith("### Sibling"))
         result = _AnyHeadingLeafSection.get_extent(text)
         self.assertEqual(result, stop_line)
-        print(lines[0:result])
 
     def test_ancestor_heading_stops_extent(self) -> None:
         """An ancestor heading (shallower level, h1 or h2) stops the extent."""
@@ -88,7 +81,6 @@ class TestMarkdownSectionGetExtent(unittest.TestCase):
         stop_line = next(i for i, line in enumerate(lines) if line.startswith("## Sec2"))
         result = _AnyHeadingLeafSection.get_extent(text)
         self.assertEqual(result, stop_line)
-        print(lines[0:result])
 
     def test_h1_and_h2_and_h3_stop_the_extent(self) -> None:
         """Any next heading of level 1, 2, or 3 (own level or shallower) stops the extent."""
@@ -99,17 +91,14 @@ class TestMarkdownSectionGetExtent(unittest.TestCase):
                 stop_line = next(i for i, line in enumerate(lines) if line.startswith(f"{marker} Next"))
                 result = _AnyHeadingLeafSection.get_extent(text)
                 self.assertEqual(result, stop_line)
-                print(lines[0:result])
 
     def test_h4_and_h5_and_h6_do_not_stop_the_extent(self) -> None:
         """Any next heading of level 4, 5, or 6 (deeper than own level) is nested content."""
         for level, marker in ((4, "####"), (5, "#####"), (6, "######")):
             with self.subTest(level=level):
                 text = mdformat.text(f"### Sec3\ncontent\n\n{marker} Nested\nmore\n")
-                lines = text.splitlines()
                 result = _AnyHeadingLeafSection.get_extent(text)
                 self.assertEqual(result, len(text.splitlines()))
-                print(lines[0:result])
 
     def test_no_extent_when_heading_text_does_not_match_declared_alias(self) -> None:
         """A same-level heading that does NOT satisfy the class's own @alias has

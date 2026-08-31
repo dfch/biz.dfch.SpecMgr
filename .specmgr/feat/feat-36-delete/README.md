@@ -3,7 +3,7 @@ created: 2026-08-31 15:37:40.000000
 id: feat-36-delete
 status: planning
 type: feat
-updated: 2026-08-31 15:37:40.000000
+updated: 2026-08-31 18:10:22.000000
 version: 1.0.0
 ---
 
@@ -424,6 +424,7 @@ no replacement per-domain delete tests are added — coverage moves entirely to
 
 - [x] Task 0.1: Create the `feat-36-delete` git worktree/branch from `dev` at `/home/user/src/biz.dfch.SpecMgr.worktrees/feat-36-delete` (`dev` left untouched) — status: done (2026-08-31).
 - [x] Task 0.2: Author this feature README (the full design) — status: done (2026-08-31).
+- [x] Task 0.3: Strip leftover debug `print()` calls (and the assignments/loops that become dead with them) from `tests/models/md/test_markdown_section.py`, `tests/models/md/test_markdown_str.py`, and `tests/models/md/test_markdown_list_item.py` — applied byte-exact to `dev` (separate commit there, pushed by the maintainer) and to this branch so the later feature merge stays conflict-free; makes the `unittest` output (and the pre-commit hook's) noise-free — depends on: Task 0.2 — status: done (2026-08-31).
 
 #### Phase 1: Reusable path-safety module (Phase-Orchestrator)
 
@@ -474,6 +475,18 @@ the tool returns the deleted path as a `str`.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-08-31 18:10:22.000Z — Leftover debug prints stripped from the md model tests (Task 0.3)
+
+Removed 17 debug `print()` calls — plus the `lines = ...`/`result = ...`
+assignments and one loop that became dead with them — from
+`tests/models/md/test_markdown_section.py` (`TestAnyHeadingLeafSectionExtent`),
+`tests/models/md/test_markdown_str.py` (`TestGetExtent`), and
+`tests/models/md/test_markdown_list_item.py` (`test_nested_list`). The
+byte-exact change was committed to `dev` (maintainer pushes) and to this
+branch separately, so the feature's later merge into `dev` is
+conflict-free. No behavior change: the three test modules pass (64 tests),
+`ruff` is clean, and the `unittest` output is noise-free again.
 
 #### 2026-08-31 15:37:40.000Z — Feature designed; worktree and plan authored (Phase 0 complete)
 
