@@ -35,18 +35,16 @@ existing document go through the generic ``update`` tool in
 ``general.tools`` (``type="dec"``), preserving every frontmatter field
 except ``updated``. Status changes of an existing document go through the
 generic ``set_status`` tool in ``general.tools`` (``type="dec"``), also
-bumping ``updated``, leaving the body untouched.
-``delete_dec`` is a registered stub -- always raises
-``NotImplementedError``, reserving the name for a future real
-implementation. ``validate_dec`` is a disk-free, id-free dry run against a
-submitted ``content`` string, independent of the other tools. Import this
+bumping ``updated``, leaving the body untouched. Deletion of ``dec``
+documents goes through the generic ``delete`` tool in ``general.tools``
+(``type="dec"``). ``validate_dec`` is a disk-free, id-free dry run against
+a submitted ``content`` string, independent of the other tools. Import this
 package to register all decision tools at once::
 
     from biz.dfch.specmgr.dec import tools  # noqa: F401 (side-effects only)
 """
 
 from .create_dec import create_dec
-from .delete_dec import delete_dec
 from .get_dec import get_dec
 from .get_dec_example import get_dec_example
 from .get_dec_template import get_dec_template
@@ -56,7 +54,6 @@ from .validate_dec import validate_dec
 
 __all__ = [
     "create_dec",
-    "delete_dec",
     "get_dec",
     "get_dec_example",
     "get_dec_template",

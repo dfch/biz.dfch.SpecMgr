@@ -13,7 +13,7 @@ shared ``mcp`` application instance at once::
 
 ``tools`` (``parse_qa``, ``get_qa``, ``list_qa``, ``get_qa_example``,
 ``get_qa_template``, ``create_qa``,
-``delete_qa``, ``validate_qa``), ``resources`` (``specmgr://qa/schema``,
+``validate_qa``), ``resources`` (``specmgr://qa/schema``,
 ``specmgr://qa/example``, ``specmgr://qa/template``), and ``prompts``
 (``create_qa``, ``update_qa``) all exist; whole-body and line-range updates
 of an existing document go through the generic ``update`` tool in

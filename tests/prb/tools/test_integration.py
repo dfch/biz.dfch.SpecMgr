@@ -18,11 +18,12 @@
 """Live, end-to-end lifecycle exercise for the ``prb`` MCP tool surface (feat-16 Phase 5, Task 5.1).
 
 Unlike the per-tool unit tests elsewhere under ``tests/prb/tools/``, this
-module drives the actual tool functions in a single realistic sequence --
-``create_prb`` -> ``update`` -> ``set_status`` (``type="prb"``) -> ``get_prb`` ->
-``list_prb`` -> ``delete_prb`` (stub) -- against a real temporary docs
-directory, confirming ACC-004/ACC-006's "verified live, not just asserted"
-requirement with concrete evidence beyond the isolated per-tool tests.
+ module drives the actual tool functions in a single realistic sequence --
+ ``create_prb`` -> ``update`` -> ``set_status`` (``type="prb"``) -> ``get_prb`` ->
+ ``list_prb`` -> ``delete`` (generic, ``type="prb"``) -- against a real
+ temporary docs directory, confirming ACC-004/ACC-006's "verified live, not
+ just asserted" requirement with concrete evidence beyond the isolated
+ per-tool tests.
 
 Isolation follows the exact same pattern as ``test_create_prb.py``'s
 ``TempPrbDirTestCase``: a fresh ``tempfile.TemporaryDirectory()`` is pointed
@@ -39,11 +40,12 @@ from pathlib import Path
 from unittest import mock
 
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
+from biz.dfch.specmgr.general.tools.delete import delete
 from biz.dfch.specmgr.general.tools.set_status import set_status
 from biz.dfch.specmgr.general.tools.update import update
 from biz.dfch.specmgr.prb.models.v1 import PrbDocument, parse_prb
+from biz.dfch.specmgr.prb.tools._paths import PrbNotFoundError, find_prb_path, prb_base_dir
 from biz.dfch.specmgr.prb.tools.create_prb import create_prb
-from biz.dfch.specmgr.prb.tools.delete_prb import delete_prb
 from biz.dfch.specmgr.prb.tools.get_prb import get_prb
 from biz.dfch.specmgr.prb.tools.get_prb_example import get_prb_example
 from biz.dfch.specmgr.prb.tools.get_prb_template import get_prb_template
@@ -123,7 +125,7 @@ class TestPrbLifecycleIntegration(TempPrbDirTestCase):
     """Live, end-to-end lifecycle exercise, isolated to a temp docs directory."""
 
     def test_create_update_set_status_get_list_delete_roundtrip(self) -> None:
-        """create_prb -> update -> set_status -> get_prb -> list_prb -> delete_prb, live."""
+        """create_prb -> update -> set_status -> get_prb -> list_prb -> delete (generic, type="prb"), live."""
         # 1. create_prb: a freshly created document must be a PrbDocument in status "draft".
         created = create_prb(_INITIAL_BODY)
         self.assertIsInstance(created, PrbDocument)
@@ -165,11 +167,15 @@ class TestPrbLifecycleIntegration(TempPrbDirTestCase):
         self.assertEqual(matches[0].status, "active")
         self.assertEqual(matches[0].title, "Checkout Errors Spike on Mobile")
 
-        # 6. delete_prb: stub must always raise NotImplementedError, unconditionally.
-        with self.assertRaises(NotImplementedError):
-            delete_prb(prb_id)
-        # The document must still exist afterward -- the stub must not touch the filesystem.
-        self.assertEqual(get_prb(prb_id).frontmatter.id, prb_id)
+        # 6. delete (generic, type="prb"): a real hard delete via the generic tool -- the
+        #    returned str must be the seeded file path, the file must be gone, and a
+        #    follow-up get_prb must raise PrbNotFoundError.
+        prb_path = find_prb_path(prb_base_dir(), prb_id)
+        deleted_path = delete(prb_id, type="prb")
+        self.assertEqual(deleted_path, str(prb_path))
+        self.assertFalse(prb_path.exists())
+        with self.assertRaises(PrbNotFoundError):
+            get_prb(prb_id)
 
     def test_get_prb_example_and_template_are_real_parseable_content(self) -> None:
         """Packaged example/template content must be real, non-empty, parseable markdown."""

@@ -22,10 +22,9 @@ existing document go through the generic ``update`` tool in ``general.tools``
 (``type="uc"``), preserving every frontmatter field except ``updated``.
 Status changes of an existing document go through the generic
 ``set_status`` tool in ``general.tools`` (``type="uc"``), also bumping
-``updated``, leaving the body untouched.
-``delete_uc`` (Task 3.1.5) is a registered stub -- always raises
-``NotImplementedError``, reserving the name for a future real
-implementation. ``validate_uc`` (Task 3.1.5) is a disk-free, id-free dry
+``updated``, leaving the body untouched. Deletion of ``uc`` documents
+goes through the generic ``delete`` tool in ``general.tools``
+(``type="uc"``). ``validate_uc`` (Task 3.1.5) is a disk-free, id-free dry
 run against a submitted ``content`` string, independent of the other
 tools. Import this package to register all use-case tools at once::
 

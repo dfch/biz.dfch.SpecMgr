@@ -23,10 +23,10 @@ through the generic ``update`` tool in ``general.tools`` (``type="rsk"``),
 preserving every frontmatter field except ``updated``. Status changes of an
 existing document go through the generic ``set_status`` tool in
 ``general.tools`` (``type="rsk"``), also bumping ``updated``, leaving the
-body untouched. ``delete_rsk`` is a registered stub -- always raises
-``NotImplementedError``, reserving the name for a future real
-implementation. ``validate_rsk`` is a disk-free, id-free dry run against a
-submitted ``content`` string, independent of the other tools. Import this
-package to register all risk tools at once::
+body untouched. Deletion of ``rsk`` documents goes through the generic
+``delete`` tool in ``general.tools`` (``type="rsk"``). ``validate_rsk`` is
+a disk-free, id-free dry run against a submitted ``content`` string,
+independent of the other tools. Import this package to register all risk
+tools at once::
 
     from biz.dfch.specmgr.rsk import tools  # noqa: F401 (side-effects only)

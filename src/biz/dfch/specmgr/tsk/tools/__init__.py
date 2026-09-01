@@ -38,8 +38,8 @@ line-range updates of an existing document go through the generic
 frontmatter field except ``updated``. Status changes of an existing
 document go through the generic ``set_status`` tool in ``general.tools``
 (``type="tsk"``), also bumping ``updated``, leaving the body untouched.
-``delete_tsk`` is a registered stub -- always raises ``NotImplementedError``,
-reserving the name for a future real implementation. ``validate_tsk`` is a
+Deletion of ``tsk`` documents goes through the generic ``delete`` tool in
+``general.tools`` (``type="tsk"``). ``validate_tsk`` is a
 disk-free, id-free dry run against a submitted ``content`` string,
 independent of the other tools. Import this package to register all task
 list tools at once::
@@ -48,7 +48,6 @@ list tools at once::
 """
 
 from .create_tsk import create_tsk
-from .delete_tsk import delete_tsk
 from .get_tsk import get_tsk
 from .get_tsk_example import get_tsk_example
 from .get_tsk_template import get_tsk_template
@@ -58,7 +57,6 @@ from .validate_tsk import validate_tsk
 
 __all__ = [
     "create_tsk",
-    "delete_tsk",
     "get_tsk",
     "get_tsk_example",
     "get_tsk_template",

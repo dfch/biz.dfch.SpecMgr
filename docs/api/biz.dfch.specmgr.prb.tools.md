@@ -21,10 +21,10 @@ generic ``update`` tool in ``general.tools`` (``type="prb"``), preserving
 every frontmatter field except ``updated``. Status changes of an existing
 document go through the generic ``set_status`` tool in ``general.tools``
 (``type="prb"``), also bumping ``updated``, leaving the body untouched.
-``delete_prb`` is a registered stub -- always raises
-``NotImplementedError``, reserving the name for a future real
-implementation. ``validate_prb`` is a disk-free, id-free dry run against a
-submitted ``content`` string, independent of the other tools. Import this
-package to register all problem statement tools at once::
+Deletion of ``prb`` documents goes through the generic ``delete`` tool in
+``general.tools`` (``type="prb"``). ``validate_prb`` is a disk-free,
+id-free dry run against a submitted ``content`` string, independent of the
+other tools. Import this package to register all problem statement tools at
+once::
 
     from biz.dfch.specmgr.prb import tools  # noqa: F401 (side-effects only)

@@ -3,7 +3,7 @@ created: '2026-08-31T15:24:14.582592'
 id: 98537416-0e6e-4a02-925f-974a17bfa10a
 status: active
 type: sop
-updated: '2026-08-31T18:27:40.271756'
+updated: '2026-09-01T10:07:30.000000'
 version: 1.0.0
 ---
 
@@ -130,11 +130,21 @@ gate (Step 6), and adjudicate any exception.
   when merging `dev` into `main` — a commit unique to `main` breaks the
   fast-forward invariant and poisons every later release. The script
   enforces this in three places: it asserts `origin/main` is an ancestor
-  of `origin/dev` *before* merging, it merges the pull request with the
-  plain merge method (GitHub fast-forwards an up-to-date branch instead
-  of creating a merge commit), and it re-asserts
-  `origin/main == origin/dev` *after* the merge, failing the stage if a
-  merge commit appeared. Manual mode uses `git merge --ff-only dev`.
+  of `origin/dev` *before* merging, it performs the merge *locally* —
+  `git merge --ff-only` of `origin/dev` on `main`, pushed directly, with
+  the pull request (which has served as the CI check gate) closed
+  afterwards — and it re-asserts `origin/main == origin/dev` *after* the
+  merge. The local `--ff-only` merge is the only deterministic
+  fast-forward available here: the plain `gh pr merge --merge` method
+  cannot be relied on to fast-forward (during the v0.16.0 release it
+  created a merge commit on `main` although the invariant held), and this
+  environment's `gh` 2.4.0 ships no `--ff`-style flag. `pr-merge` also
+  *polls* for green checks rather than fail-fasting on pending ones:
+  `ci.yml` triggers on both `push` and `pull_request`, so the release PR
+  starts a second CI run of the same commit whose check-runs can register
+  only after `pr-create` was already satisfied by the first (push) run's
+  green jobs (v0.16.0 incident). Manual mode uses the same
+  `git merge --ff-only dev`.
 - **Never double-bump.** If `pyproject.toml` already carries the target
   version, the `bump` stage refuses to run. If a stage failed mid-release,
   resume from the failed stage — every stage is idempotent, and
@@ -253,11 +263,15 @@ the pull request body, waits until the pull request's checks are green
 (30 s polling), and prints the pull request URL and head SHA — without
 merging. The agent then presents the pull request and the changelog
 section to the maintainer and asks for the merge gate. Once approved,
-`scripts/release.sh pr-merge <X.Y.Z>` re-checks the green checks, asserts
-the fast-forward invariant (`origin/main` an ancestor of `origin/dev`),
-merges the pull request with the plain merge method (GitHub fast-forwards
-an up-to-date branch — no merge commit), and re-asserts that
-`origin/main` equals `origin/dev`.
+`scripts/release.sh pr-merge <X.Y.Z>` waits until the pull request's
+checks are green (30 s polling, like `pr-create` — a single re-check
+fail-fasts on the pending second CI run from the `pull_request` trigger;
+see Safety and Precautions), asserts the fast-forward invariant
+(`origin/main` an ancestor of `origin/dev`), merges *locally* with
+`git merge --ff-only` of `origin/dev` on `main` and pushes `main`
+directly (closing the pull request, which has served as the CI check
+gate — the plain `gh pr merge --merge` method cannot be relied on to
+fast-forward), and re-asserts that `origin/main` equals `origin/dev`.
 
 **Manual fallback:** `gh pr create --base main --head dev` (body: the new
 changelog section); wait for green checks; present to the maintainer; on
@@ -328,6 +342,21 @@ flag that no `gh` release provides, and `publish-wait`/`status`/
 version-independent equivalents (see Safety and Precautions) and this SOP
 was corrected to describe the merge mechanism the script actually uses.
 
+The v0.16.0 release (2026-09-01) surfaced two further `pr-merge`
+defects, both fixed in the script and documented in Safety and
+Precautions: it fail-fasted on a *pending* check suite (the
+`pull_request` trigger's second run of the release commit registering
+its check-runs only after `pr-create` had been satisfied by the `push`
+run's green jobs), and the plain `gh pr merge --merge` method created a
+merge commit on `main` although the fast-forward invariant held — caught
+by the post-merge SHA assertion before anything was tagged or published.
+The invariant was repaired by a `--force-with-lease` push of `main` back
+to the release commit, after which the release completed (tag `v0.16.0`,
+publication run
+https://github.com/dfch/biz.dfch.SpecMgr/actions/runs/33484265428, all
+four jobs green). The merge is now a local `git merge --ff-only` plus a
+direct push of `main`, with the pull request closed afterwards.
+
 The `sop` tooling that manages this document (the `specmgr-test` MCP
 server) runs against this repository's own dev tree; until the first
 release ships the `sop` domain to PyPI, this SOP is created and validated
@@ -361,3 +390,27 @@ was fixed (see More Information); this SOP was corrected to match (the
 actual fast-forward-only enforcement, the publication workflow's name,
 the old-`gh` constraints) and simplified (stage-to-step mapping up
 front, prerequisites in Scope). Status changed from `draft` to `active`.
+
+### 2026-09-01 10:07:30.000+02:00 — v0.16.0 released under this SOP; pr-merge made deterministic (two incidents fixed)
+
+The second release executed end to end under this SOP (v0.16.0, the
+generic `delete` tool). During it, `pr-merge` tripped twice. (1) It
+fail-fasted on a *pending* check suite: `ci.yml` triggers on both
+`push` and `pull_request`, so the release PR started a second CI run of
+the release commit whose check-runs registered only after `pr-create`'s
+polling had been satisfied by the push run's green jobs — nothing was
+red. (2) After the checks were green, the plain `gh pr merge --merge`
+method created a merge commit on `main` although the fast-forward
+invariant held; the post-merge SHA assertion caught it and stopped the
+stage before tagging (nothing was published). `main` was repaired with a
+`--force-with-lease` push back to the release commit, and the release
+then completed: tag `v0.16.0`, publication run
+https://github.com/dfch/biz.dfch.SpecMgr/actions/runs/33484265428 (all
+four jobs green), GitHub Release notes set. The script was corrected:
+`pr-merge` now polls for green checks like `pr-create` and performs the
+merge locally with `git merge --ff-only` plus a direct push of `main`,
+closing the pull request afterwards — the only fast-forward guarantee
+this environment's `gh` 2.4.0 offers (v0.15.0's plain-method merge
+happened to fast-forward; v0.16.0's did not). Safety and Precautions
+and Step 6 were corrected to describe the mechanism the script actually
+uses.
