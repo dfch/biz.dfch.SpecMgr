@@ -124,6 +124,12 @@
       "title": "Informed",
       "type": "object"
     },
+    "MarkdownComment": {
+      "description": "A standalone HTML comment block (`\"html_block\"`, e.g. `<!-- some note -->`).\n\nDeliberately leaf-only, like `MarkdownCodeBlock`. Declare an optional\n`comment: MarkdownComment | None` field on any `MarkdownStr` subclass to\nlet a value be preceded by such an explanatory comment without it\nbreaking that class's own structural field matching. See `get_extent`/\n`from_text`/`text` for the full mechanics.",
+      "properties": {},
+      "title": "MarkdownComment",
+      "type": "object"
+    },
     "MarkdownListItem": {
       "description": "One item (\"li\") of a markdown bullet or numbered list.\n\nUsed only as `items: list[MarkdownListItem]` (or `list[MarkdownListItem] |\nNone`) on a `MarkdownSection`/`MarkdownParagraph`/`MarkdownListItem` --\nthere is no separate list-container class, and a bare item cannot be\nparsed as a top-level/scalar field on its own; every item is assumed to\nstart with at least one paragraph (its own lead text).\n\nLeaf (no declared nested fields, the default): `_value` holds the item's\ncomplete extent verbatim, marker included. Composite (a subclass declares\nfields): `_value` holds only the item's own leading paragraph, marker\nincluded -- the marker cannot be reconstructed from class metadata alone,\nso it is kept verbatim -- and the remainder is dedented and delegated to\nnested field parsing; `__str__` re-indents the children's rendered output\nby the marker's own width before recombining.\n\nRound-trip note: a tight source list currently round-trips to a\nstructurally-equivalent loose list rather than byte-exact (loose lists\nremain byte-exact) -- an accepted, documented exception; see\n`from_text`/`__str__` docstrings below for the full mechanics.",
       "properties": {},
@@ -564,10 +570,22 @@
       "type": "object"
     },
     "Updates": {
-      "description": "`## Updates` -- a dynamic list of ISO8601-timestamped `### ` update\nentries. Optional as a whole, and the last section of the document if\npresent.\n\nMirrors `tsk`/`dec`'s `Updates`/`RecentUpdates` container shape: no\ndedicated per-entry tools (no `option_create`/`option_list` equivalent)\n-- entries are appended by editing the whole body.\n\nParameters\n----------\nupdates:\n    The dynamic collection of `### ` entries, in document order. Requires\n    at least one entry (``min_length=1``) -- an H2 with zero entries is\n    a structural error.",
+      "description": "`## Updates` -- a dynamic, newest-first list of ISO8601-timestamped `### ` update\nentries. Optional as a whole, and the last section of the document if\npresent. May be preceded by an explanatory HTML comment (e.g. an\nordering hint).\n\nMirrors `tsk`/`dec`'s `Updates`/`RecentUpdates` container shape: no\ndedicated per-entry tools (no `option_create`/`option_list` equivalent)\n-- entries are prepended (newest-first) by editing the whole body.\n\nParameters\n----------\ncomment:\n    Optional explanatory HTML comment (`<!-- ... -->`), e.g.\n    `<!-- Newest entry first -- prepend new entries directly below\n    this comment. -->`. Inherited from `MarkdownSection2WithComment`.\nupdates:\n    The dynamic collection of `### ` entries, in document order,\n    newest-first (enforced, see `_validate_newest_first`). Requires\n    at least one entry (``min_length=1``) -- an H2 with zero entries is\n    a structural error.",
       "properties": {
+        "comment": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MarkdownComment"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional explanatory HTML comment (`<!-- ... -->`)."
+        },
         "updates": {
-          "description": "Dynamic collection of `### {ISO8601 timestamp} ( - | : ) {title}` entries, in document order. Must contain at least one entry.",
+          "description": "Dynamic collection of `### {ISO8601 timestamp} ( - | : ) {title}` entries, in document order, newest-first. Must contain at least one entry.",
           "items": {
             "$ref": "#/$defs/UpdateEntry"
           },

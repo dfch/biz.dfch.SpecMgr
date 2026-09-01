@@ -190,6 +190,7 @@ First-line docstrings from each module, organized by domain:
 - `models/iso25010.py` — Pydantic schema and parser for the ISO/IEC 25010:2023 product quality
 - `models/md/__init__.py` — Markdown base models.
 - `models/md/_markdown.py` — Markdown shared instance.
+- `models/md/_ordering.py` — Shared, private newest-first ordering validation helper for `models.md` domain body models.
 - `models/md/_util.py` — Shared, private validation helpers for the ``models.md`` subpackage.
 - `models/md/alias.py` — Alias decorator for MarkdownStr class name transformation.
 - `models/md/alias_match.py` — Match a parsed heading's actual text against a class's declared `@alias`.
@@ -484,4 +485,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 318
+**Test files**: 319

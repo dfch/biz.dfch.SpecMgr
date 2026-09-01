@@ -46,10 +46,12 @@ from ....models.md import (
     MarkdownParagraph,
     MarkdownSection1,
     MarkdownSection2,
+    MarkdownSection2WithComment,
     MarkdownSection3,
     alias,
     AliasType,
 )
+from ....models.md._ordering import validate_newest_first
 
 
 class Purpose(MarkdownSection2):
@@ -500,19 +502,25 @@ class UpdateEntry(MarkdownSection3):
         return result
 
 
-class Updates(MarkdownSection2):
-    """`## Updates` -- a dynamic list of ISO8601-timestamped `### ` update
+class Updates(MarkdownSection2WithComment):
+    """`## Updates` -- a dynamic, newest-first list of ISO8601-timestamped `### ` update
     entries. Optional as a whole, and the last section of the document if
-    present.
+    present. May be preceded by an explanatory HTML comment (e.g. an
+    ordering hint).
 
     Mirrors `tsk`/`dec`'s `Updates`/`RecentUpdates` container shape: no
     dedicated per-entry tools (no `option_create`/`option_list` equivalent)
-    -- entries are appended by editing the whole body.
+    -- entries are prepended (newest-first) by editing the whole body.
 
     Parameters
     ----------
+    comment:
+        Optional explanatory HTML comment (`<!-- ... -->`), e.g.
+        `<!-- Newest entry first -- prepend new entries directly below
+        this comment. -->`. Inherited from `MarkdownSection2WithComment`.
     updates:
-        The dynamic collection of `### ` entries, in document order. Requires
+        The dynamic collection of `### ` entries, in document order,
+        newest-first (enforced, see `_validate_newest_first`). Requires
         at least one entry (``min_length=1``) -- an H2 with zero entries is
         a structural error.
     """
@@ -520,8 +528,20 @@ class Updates(MarkdownSection2):
     updates: list[UpdateEntry] = Field(
         min_length=1,
         description="Dynamic collection of `### {ISO8601 timestamp} ( - | : ) {title}` entries, in document "
-        "order. Must contain at least one entry.",
+        "order, newest-first. Must contain at least one entry.",
     )
+
+    @model_validator(mode="after")
+    def _validate_newest_first(self) -> Updates:
+        """Reject entries that are not in newest-first order.
+
+        Delegates to the shared `models.md._ordering.validate_newest_first`
+        helper (mixed date-only/date+time day-granularity rule, equal
+        values allowed) -- mirrors `feat.models.v1.body.Updates._validate_newest_first`
+        without duplicating its logic. Raises on the first out-of-order pair.
+        """
+        validate_newest_first([update.timestamp for update in self.updates], "Updates")
+        return self
 
 
 @alias(value=".+", type=AliasType.REGEX)

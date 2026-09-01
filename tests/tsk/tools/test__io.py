@@ -45,7 +45,7 @@ _DOC_TEMPLATE = textwrap.dedent(
 
     ## Recent Updates
 
-    ### Kickoff
+    ### 2026-08-19 - Kickoff
 
     Started the task list.
     """

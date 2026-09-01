@@ -131,13 +131,13 @@ _FULL_DOC = textwrap.dedent(
 
     ## Updates
 
-    ### 2026-08-26 - Created
-
-    Initial decision record drafted.
-
     ### 2026-08-27 : Confirmed
 
     Load test passed.
+
+    ### 2026-08-26 - Created
+
+    Initial decision record drafted.
     """
 )
 
@@ -209,8 +209,8 @@ class TestParseDec(unittest.TestCase):
         updates = document.body.updates
         self.assertIsNotNone(updates)
         self.assertEqual(len(updates.updates), 2)
-        self.assertEqual(updates.updates[0].content.text, "Initial decision record drafted.")
-        self.assertEqual(updates.updates[1].content.text, "Load test passed.")
+        self.assertEqual(updates.updates[0].content.text, "Load test passed.")
+        self.assertEqual(updates.updates[1].content.text, "Initial decision record drafted.")
 
     def test_full_document_round_trips(self) -> None:
         """The body of the full document round-trips byte-exact through `parse_dec`."""

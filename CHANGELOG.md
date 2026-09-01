@@ -9,6 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **BREAKING**: SOP `## Updates`, DEC `## Updates`, VCR `## Updates`, and
+  TSK `## Recent Updates` now enforce newest-first ordering at parse
+  time — an entry whose timestamp precedes (is older than) the entry
+  above it fails to parse (`AssertionError`/`ValidationError`), eagerly,
+  at construction time. Consecutive entries are compared with an aware
+  `datetime` comparison; when either side is a bare date (no time
+  component) the comparison happens at day granularity, so a date-only
+  entry and a same-day date+time entry are treated as equal, and equal
+  timestamps are always allowed (non-strict "newest-first"). DEC/VCR/TSK
+  update-entry headings, previously free-form, are now themselves
+  timestamp-led: `### {yyyy-MM-dd or yyyy-MM-dd HH:mm:ss.fff±HH:mm/Z}
+  ( - | : ) {title}`, mirroring SOP/FEAT's existing shape — a heading
+  that does not start with a valid date fails to parse. The SOP/DEC/TSK
+  update containers gained leading-HTML-comment support (promoted from
+  `MarkdownSection2` to `MarkdownSection2WithComment`; VCR already had
+  it), so all four now carry a `<!-- Newest entry first -- prepend new
+  entries directly below this comment. -->` ordering hint in their
+  packaged templates, and the create/update instructions of all four
+  domains now direct prepending new entries instead of appending them.
+  Existing out-of-order or non-timestamp-led SOP/DEC/VCR/TSK documents
+  must be migrated to the newest-first, timestamp-led shape before they
+  will parse again (GitHub issue #39, Phase 2 of
+  feat-38-39-41-43-44).
+
 - **BREAKING**: update-entry headings no longer accept an em-dash (`—`)
   separator between the timestamp and the title. SOP `## Updates`
   (`### {timestamp} - {title}`/`### {timestamp} : {title}`) and FEAT

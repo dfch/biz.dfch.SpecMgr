@@ -127,13 +127,13 @@ _FULL_DOC = textwrap.dedent(
 
     ## Updates
 
-    ### 2026-08-26 - Created
-
-    Initial verification case drafted.
-
     ### 2026-08-27 : Confirmed
 
     AC-001 and AC-003 executed against staging.
+
+    ### 2026-08-26 - Created
+
+    Initial verification case drafted.
     """
 )
 
@@ -190,8 +190,8 @@ class TestParseVcr(unittest.TestCase):
         updates = document.body.updates
         self.assertIsNotNone(updates)
         self.assertEqual(len(updates.updates), 2)
-        self.assertEqual(updates.updates[0].content.text, "Initial verification case drafted.")
-        self.assertEqual(updates.updates[1].content.text, "AC-001 and AC-003 executed against staging.")
+        self.assertEqual(updates.updates[0].content.text, "AC-001 and AC-003 executed against staging.")
+        self.assertEqual(updates.updates[1].content.text, "Initial verification case drafted.")
 
     def test_full_document_round_trips(self) -> None:
         """The body of the full document round-trips byte-exact through `parse_vcr`."""

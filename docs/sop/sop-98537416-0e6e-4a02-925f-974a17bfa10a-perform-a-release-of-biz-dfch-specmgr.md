@@ -382,32 +382,45 @@ directly against the local checkout.
 
 ## Updates
 
-### 2026-08-31 15:19:05.000+02:00 - Created
+<!-- Newest entry first -- prepend new entries directly below this comment. -->
 
-Created as the normative procedure for releasing `biz-dfch-specmgr`,
-consolidating the previously hand-run README "Make a Release" steps
-(direct merge plus tag) with the new automation: the staged
-`scripts/release.sh`, the `/release` OpenCode command with its
-agent-judgment steps (version confirmation, changelog curation, merge
-gate, failure triage), and the pull-request-plus-fast-forward-only merge
-strategy that keeps `main` a strict ancestor of `dev`. Status is
-`draft`; the SOP is activated once the first release executed under it
-succeeds end to end (expected to be v0.15.0, the first release to carry
-the `sop` domain itself).
+### 2026-09-01 12:37:17.000+02:00 - Release name format refined (version prefix required); script and command aligned
 
-### 2026-08-31 18:27:40.000+02:00 - v0.15.0 released under this SOP; script compatibility fixes; activated
+The name set for v0.16.0 under the previous entry's rule ("Generic
+delete tool") dropped the version; the maintainer wants the name to
+identify the release at a glance. The `Release name` is now of the
+form `vX.Y.Z - <text>` (version matching the tag, space-dash-space,
+then the changelog-derived headline), and the two owed corrections
+were made: the `release-notes` stage takes the name text as a second
+positional argument and composes and sets the full name alongside the
+notes (the non-agent `all` path passes no text, leaves the name as-is,
+and says so in its output), and the `/release` command derives the
+text from the curated section before calling the stage. The stage's
+idempotency check was fixed along the way: GitHub returns the stored
+release body with CRLF line endings (confirmed for v0.15.0 and
+v0.16.0), so the comparison strips CRs — without that the stage would
+re-PATCH forever and never report "already set". The v0.16.0 release
+was renamed to "v0.16.0 - Generic delete tool".
 
-The first release executed end to end under this SOP (v0.15.0): PR #37
-merged fast-forward into `main`, tag `v0.15.0` published to TestPyPI,
-PyPI, the GitHub Release (notes set from the changelog section), and the
-MCP Registry (publication run
-https://github.com/dfch/biz.dfch.SpecMgr/actions/runs/33410331930, all
-four jobs green). During the run, `scripts/release.sh` was found to rely
-on `gh` features that do not exist in this environment's `gh` 2.4.0 and
-was fixed (see More Information); this SOP was corrected to match (the
-actual fast-forward-only enforcement, the publication workflow's name,
-the old-`gh` constraints) and simplified (stage-to-step mapping up
-front, prerequisites in Scope). Status changed from `draft` to `active`.
+### 2026-09-01 11:37:37.000+02:00 - Gap closed: the release name is derived from the changelog and set in Step 9
+
+A gap surfaced after the v0.16.0 release: the `release-notes` stage only
+ever set the GitHub Release *body* from the dated changelog section, so
+the release *name* stayed the bare version string that the publish
+workflow's "Make GitHub Release" job passes as `--title` — and the
+workflow cannot do better, since a name derived from the changelog
+section's content is agent judgment, like the Step 3 curation. Step 9
+now requires the agent to derive the release name from the dated
+changelog section's content (a concise title-case headline of the
+section's most significant user-visible change, never the bare version
+string) and to pass it to `release-notes`, which sets name and notes
+together; a `Release name` definition was added, Step 8 now states that
+the workflow creates the release with the bare version as its name, and
+Step 9's description of the mechanism was corrected to `gh api` (this
+environment's `gh` 2.4.0 has no `gh release edit`, as Safety and
+Precautions already states). The script's `release-notes` stage and the
+`/release` command must be corrected to match (where the two disagree,
+the SOP wins); as of this entry they still set the body only.
 
 ### 2026-09-01 10:07:30.000+02:00 - v0.16.0 released under this SOP; pr-merge made deterministic (two incidents fixed)
 
@@ -433,40 +446,29 @@ happened to fast-forward; v0.16.0's did not). Safety and Precautions
 and Step 6 were corrected to describe the mechanism the script actually
 uses.
 
-### 2026-09-01 11:37:37.000+02:00 - Gap closed: the release name is derived from the changelog and set in Step 9
+### 2026-08-31 18:27:40.000+02:00 - v0.15.0 released under this SOP; script compatibility fixes; activated
 
-A gap surfaced after the v0.16.0 release: the `release-notes` stage only
-ever set the GitHub Release *body* from the dated changelog section, so
-the release *name* stayed the bare version string that the publish
-workflow's "Make GitHub Release" job passes as `--title` — and the
-workflow cannot do better, since a name derived from the changelog
-section's content is agent judgment, like the Step 3 curation. Step 9
-now requires the agent to derive the release name from the dated
-changelog section's content (a concise title-case headline of the
-section's most significant user-visible change, never the bare version
-string) and to pass it to `release-notes`, which sets name and notes
-together; a `Release name` definition was added, Step 8 now states that
-the workflow creates the release with the bare version as its name, and
-Step 9's description of the mechanism was corrected to `gh api` (this
-environment's `gh` 2.4.0 has no `gh release edit`, as Safety and
-Precautions already states). The script's `release-notes` stage and the
-`/release` command must be corrected to match (where the two disagree,
-the SOP wins); as of this entry they still set the body only.
+The first release executed end to end under this SOP (v0.15.0): PR #37
+merged fast-forward into `main`, tag `v0.15.0` published to TestPyPI,
+PyPI, the GitHub Release (notes set from the changelog section), and the
+MCP Registry (publication run
+https://github.com/dfch/biz.dfch.SpecMgr/actions/runs/33410331930, all
+four jobs green). During the run, `scripts/release.sh` was found to rely
+on `gh` features that do not exist in this environment's `gh` 2.4.0 and
+was fixed (see More Information); this SOP was corrected to match (the
+actual fast-forward-only enforcement, the publication workflow's name,
+the old-`gh` constraints) and simplified (stage-to-step mapping up
+front, prerequisites in Scope). Status changed from `draft` to `active`.
 
-### 2026-09-01 12:37:17.000+02:00 - Release name format refined (version prefix required); script and command aligned
+### 2026-08-31 15:19:05.000+02:00 - Created
 
-The name set for v0.16.0 under the previous entry's rule ("Generic
-delete tool") dropped the version; the maintainer wants the name to
-identify the release at a glance. The `Release name` is now of the
-form `vX.Y.Z - <text>` (version matching the tag, space-dash-space,
-then the changelog-derived headline), and the two owed corrections
-were made: the `release-notes` stage takes the name text as a second
-positional argument and composes and sets the full name alongside the
-notes (the non-agent `all` path passes no text, leaves the name as-is,
-and says so in its output), and the `/release` command derives the
-text from the curated section before calling the stage. The stage's
-idempotency check was fixed along the way: GitHub returns the stored
-release body with CRLF line endings (confirmed for v0.15.0 and
-v0.16.0), so the comparison strips CRs — without that the stage would
-re-PATCH forever and never report "already set". The v0.16.0 release
-was renamed to "v0.16.0 - Generic delete tool".
+Created as the normative procedure for releasing `biz-dfch-specmgr`,
+consolidating the previously hand-run README "Make a Release" steps
+(direct merge plus tag) with the new automation: the staged
+`scripts/release.sh`, the `/release` OpenCode command with its
+agent-judgment steps (version confirmation, changelog curation, merge
+gate, failure triage), and the pull-request-plus-fast-forward-only merge
+strategy that keeps `main` a strict ancestor of `dev`. Status is
+`draft`; the SOP is activated once the first release executed under it
+succeeds end to end (expected to be v0.15.0, the first release to carry
+the `sop` domain itself).

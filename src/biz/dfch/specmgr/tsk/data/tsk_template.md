@@ -17,7 +17,9 @@ version: 1.0.0
 
 ## Recent Updates
 
-### 2026-08-15 05:42 - Created
+<!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+### 2026-08-15 - Created
 
 A short blind-text entry describing why this task list was created. Every task
 list must have at least one entry here, even a freshly created one.

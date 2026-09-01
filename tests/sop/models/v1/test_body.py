@@ -904,20 +904,58 @@ class TestUpdatesContainer(unittest.TestCase):
     def test_parses_multiple_entries_in_document_order(self) -> None:
         text = format_text(
             "## Updates\n\n"
+            "### 2026-08-27 10:00:00.000+02:00 - Confirmed\n\n"
+            "Second entry text.\n\n"
+            "### 2026-08-26 09:00:00.000+02:00 - Created\n\n"
+            "First entry text.\n"
+        )
+
+        sut = Updates.from_text(text)
+
+        self.assertEqual(len(sut.updates), 2)
+        self.assertEqual(sut.updates[0].content.text, "Second entry text.")
+        self.assertEqual(sut.updates[0].title, "Confirmed")
+        self.assertEqual(sut.updates[1].content.text, "First entry text.")
+        self.assertEqual(sut.updates[1].title, "Created")
+        self.assertEqual(str(sut), text)
+
+    def test_out_of_order_entries_raise_validation_error(self) -> None:
+        text = format_text(
+            "## Updates\n\n"
             "### 2026-08-26 09:00:00.000+02:00 - Created\n\n"
             "First entry text.\n\n"
             "### 2026-08-27 10:00:00.000+02:00 - Confirmed\n\n"
             "Second entry text.\n"
         )
 
+        with self.assertRaises(ValidationError):
+            Updates.from_text(text)
+
+    def test_equal_timestamps_are_allowed(self) -> None:
+        text = format_text(
+            "## Updates\n\n"
+            "### 2026-08-27 10:00:00.000+02:00 - First\n\n"
+            "First entry text.\n\n"
+            "### 2026-08-27 10:00:00.000+02:00 - Second\n\n"
+            "Second entry text.\n"
+        )
+
         sut = Updates.from_text(text)
 
         self.assertEqual(len(sut.updates), 2)
-        self.assertEqual(sut.updates[0].content.text, "First entry text.")
-        self.assertEqual(sut.updates[0].title, "Created")
-        self.assertEqual(sut.updates[1].content.text, "Second entry text.")
-        self.assertEqual(sut.updates[1].title, "Confirmed")
-        self.assertEqual(str(sut), text)
+
+    def test_comment_is_optional(self) -> None:
+        text = format_text(
+            "## Updates\n\n"
+            "<!-- Newest entry first -- prepend new entries directly below this comment. -->\n\n"
+            "### 2026-08-27 10:00:00.000+02:00 - Confirmed\n\n"
+            "Some update text.\n"
+        )
+
+        sut = Updates.from_text(text)
+
+        self.assertIsNotNone(sut.comment)
+        self.assertEqual(len(sut.updates), 1)
 
     def test_updates_with_zero_entries_raises_assertion_error(self) -> None:
         with self.assertRaises(AssertionError):

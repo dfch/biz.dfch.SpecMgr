@@ -3,7 +3,7 @@ created: '2026-09-01T15:14:00.000000'
 id: feat-38-39-41-43-44
 status: progress
 type: feat
-updated: '2026-09-01T17:45:00.000000'
+updated: '2026-09-01T19:20:00.000000'
 version: 1.0.0
 ---
 
@@ -109,12 +109,12 @@ Each phase ends gate-green: `ruff format --check` + `ruff check`, `vulture src/ 
 
 #### Phase 2: Newest-first ordering enforced in SOP/DEC/VCR/TSK (issue 39)
 
-- [ ] Task 2.1: Shared `models/md/_ordering.py` helper + unit tests (aware comparison, day-granularity rule, equals allowed) - depends on: Phase 1 - status: not-started
-- [ ] Task 2.2: SOP `Updates._validate_newest_first` (delegates to the helper) + out-of-order parse tests - depends on: Task 2.1 - status: not-started
-- [ ] Task 2.3: DEC/VCR/TSK timestamp-led `UpdateEntry` alias + `timestamp` computed field + section validators + tests - depends on: Task 2.1 - status: not-started
-- [ ] Task 2.4: Promote SOP/DEC/TSK containers to `MarkdownSection2WithComment`; ordering-hint comments in templates; reword all four domains' create/update instructions to prepend - depends on: Tasks 2.2-2.3 - status: not-started
-- [ ] Task 2.5: Re-order the docs/sop entries newest-first; verify the docs/tsk entries against the new alias - depends on: Tasks 2.2-2.3 - status: not-started
-- [ ] Task 2.6: Phase gate (regens, suite, pylint, CHANGELOG BREAKING entry, this README's Updates) - depends on: Tasks 2.4-2.5 - status: not-started
+- [x] Task 2.1: Shared `models/md/_ordering.py` helper + unit tests (aware comparison, day-granularity rule, equals allowed) - depends on: Phase 1 - status: done
+- [x] Task 2.2: SOP `Updates._validate_newest_first` (delegates to the helper) + out-of-order parse tests - depends on: Task 2.1 - status: done
+- [x] Task 2.3: DEC/VCR/TSK timestamp-led `UpdateEntry` alias + `timestamp` computed field + section validators + tests - depends on: Task 2.1 - status: done
+- [x] Task 2.4: Promote SOP/DEC/TSK containers to `MarkdownSection2WithComment`; ordering-hint comments in templates; reword all four domains' create/update instructions to prepend - depends on: Tasks 2.2-2.3 - status: done
+- [x] Task 2.5: Re-order the docs/sop entries newest-first; verify the docs/tsk entries against the new alias - depends on: Tasks 2.2-2.3 - status: done
+- [x] Task 2.6: Phase gate (regens, suite, pylint, CHANGELOG BREAKING entry, this README's Updates) - depends on: Tasks 2.4-2.5 - status: done
 
 #### Phase 3: Unified timestamp format (issue 44)
 
@@ -146,11 +146,15 @@ Each phase ends gate-green: `ruff format --check` + `ruff check`, `vulture src/ 
 
 ### Current Status
 
-As of 2026-09-01: Phase 1 (issue #38) is complete. The SOP/FEAT `UpdateEntry`/`DecisionEntry` heading regexes now accept only ` - `/` : ` and reject the em-dash `—`, eagerly, at parse time; the SOP/FEAT/DEC/VCR packaged data (templates/examples/create-instructions) and the DEC/VCR model docstrings were rewritten off the em-dash; and the repo's own em-dash-headed artifacts (`docs/sop`'s release SOP, the `feat-36-delete` README, and this README's own prior entries) were migrated to the new separators, with all three re-verified to still parse under the updated models. The full unittest suite is green at 2724 tests (2720 baseline + 4 new em-dash-rejection tests), the phase-end gate (`ruff format --check`/`ruff check`/`vulture`/`pre-commit run --all-files`) is clean, and the advisory pylint baseline is unchanged (42 x W0622, 13 x W0611, ~160 x R0401, score 8.90/10). Next: start Phase 2 (issue #39, newest-first ordering).
+As of 2026-09-01: Phases 1 and 2 (issues #38, #39) are complete. Phase 1's SOP/FEAT em-dash rejection stands as before. Phase 2 added the shared `models/md/_ordering.py::validate_newest_first` helper (aware `datetime` comparison, day-granularity rule when either side is date-only, equal timestamps allowed) and wired it into a new `_validate_newest_first` `model_validator` on SOP's `Updates`, DEC's `Updates`, VCR's `Updates`, and TSK's `RecentUpdates` -- an older-before-newer pair now fails to parse (`AssertionError`/`ValidationError`), eagerly. DEC/VCR/TSK's `UpdateEntry` headings, previously free-form, gained the same timestamp-led `@alias` SOP/FEAT already had (bare `yyyy-MM-dd` or the full date+time+ms+offset variant, then ` - `/` : `, then a title) plus computed `timestamp`/`title` fields; SOP/DEC/TSK's update containers were promoted from `MarkdownSection2` to `MarkdownSection2WithComment` (VCR already was), and all four domains' packaged templates/examples now carry the `<!-- Newest entry first -- prepend new entries directly below this comment. -->` hint, with the create/update instructions reworded to direct prepending. Two packaged-data timestamp bugs were caught and fixed as a necessary consequence of enforcing the new alias immediately (not deferred to Phase 3): `vcr_template.md`'s `08:15:42`-only Updates heading and `tsk_template.md`/`tsk_example.md`'s `05:42`-only headings both lacked seconds/milliseconds/offset and would otherwise have failed to parse under the new alias, so they were normalized to bare dates now (Phase 3, issue #44, will still do its own broader timestamp-format sweep). `docs/sop`'s release SOP was reordered newest-first (its five dated entries were oldest-first); `docs/tsk`'s two documents were verified already newest-first and single-entry, needing no change. The full unittest suite is green at 2754 tests (2724 baseline + 30 new: 14 for `_ordering.py`, plus per-domain ordering/alias/comment tests across SOP/DEC/VCR/TSK), the phase-end gate (`ruff format --check`/`ruff check`/`vulture`/`pre-commit run --all-files`) is clean, and the advisory pylint baseline is materially unchanged (42 x W0622, 13 x W0611, 160 x R0401, score 8.89/10, -0.01 from the new file). Next: start Phase 3 (issue #44, unified timestamp format).
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-01 19:20:00.000+02:00 - Phase 2 complete: newest-first ordering enforced across SOP/DEC/VCR/TSK, DEC/VCR/TSK headings now timestamp-led
+
+Implemented Tasks 2.1-2.6. Added `models/md/_ordering.py::validate_newest_first(timestamps, label)` (Task 2.1, 14 new unit tests in `tests/models/md/test__ordering.py`) -- an aware `datetime.fromisoformat` comparison per consecutive pair, with the mixed-granularity rule that a date-only value (exactly 10 characters) compares at day granularity (`.date()`) against its neighbor, and `>=` (non-strict) so equal timestamps/same-day pairs are always allowed, mirroring FEAT's own inline `Updates`/`DecisionsMade` validators without touching that untouched precedent. Wired a `_validate_newest_first` `model_validator(mode="after")` delegating to the helper into SOP's `Updates` (`sop/models/v1/body.py`, Task 2.2), and into new equivalents on DEC's `Updates`, VCR's `Updates`, and TSK's `RecentUpdates` (Task 2.3) -- DEC/VCR/TSK's `UpdateEntry` classes each gained a new timestamp-led `@alias` (`^\d{4}-\d{2}-\d{2}(?: \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2}))?(?: - | : ).+$`, no trailing space before `.+$` -- Phase 1's stray-space bug was checked for explicitly and avoided) plus computed `timestamp`/`title` fields identical in shape to SOP/FEAT's own. Promoted SOP's `Updates`, DEC's `Updates`, and TSK's `RecentUpdates` from `MarkdownSection2` to `MarkdownSection2WithComment` (VCR's `Updates` already was); added the `<!-- Newest entry first -- prepend new entries directly below this comment. -->` hint to `sop_template.md`, `dec_template.md`/`dec_example.md`, and `tsk_template.md`/`tsk_example.md` (`vcr_template.md`/`vcr_example.md` already carried it); reworded all four domains' `*_create_instructions.md`/`*_update_instructions.md` to describe newest-first ordering and prepending (Task 2.4). Caught and fixed two pre-existing packaged-data timestamp defects that the new alias made fatal immediately: `vcr_template.md`'s `### 2026-08-31 08:15:42 - Created` heading (seconds only, no ms/offset) and `tsk_template.md`/`tsk_example.md`'s `05:42`/`19:27`-style headings (same defect) would otherwise fail to parse the moment the new alias landed, so all were normalized to bare `yyyy-MM-dd` dates now rather than deferred to Phase 3 -- a deliberate, necessary deviation from the letter of Task 3.6's wording, recorded in Decisions Made below. Reordered `docs/sop`'s release SOP `## Updates` (five entries, previously oldest-first) to newest-first (Task 2.5), and verified both `docs/tsk` documents already satisfy the new alias/ordering (single date-only entries each, no change needed). Updated the DEC/VCR/TSK test fixtures across `tests/dec/models/v1/`, `tests/vcr/models/v1/`, `tests/tsk/models/v1/`, `tests/tsk/tools/`, `tests/tsk/prompts/`, and the shared TSK fixtures in `tests/general/tools/test_delete.py`/`test_set_status.py`/`test_update.py` off the old free-form/em-dash-era headings, replacing the old "accepts any non-empty H3 text" alias tests with accept/reject matrices for the new regex, and adding explicit newest-first/out-of-order/equal-timestamp/same-day-date-only-vs-date-time coverage per domain (ACC-004). The full unittest suite is green at 2754 tests (2724 + 30 new), the phase-end gate is clean, and pylint is materially unchanged (42 x W0622, 13 x W0611, 160 x R0401, score 8.89/10).
 
 #### 2026-09-01 17:45:00.000+02:00 - Phase 1 complete: em-dash rejected from SOP/FEAT update-entry headings, repo artifacts migrated
 
@@ -169,6 +173,25 @@ After committing the plan, upstream dev had gained one commit, `8e07594` (feat-4
 The plan was written after fetching the five GitHub issues and examining the affected surfaces: the SOP/FEAT em-dash-enforced entry regexes (`sop/models/v1/body.py` line 421, `feat/models/v1/body.py` line 425), the DEC/VCR free-form conventions, the FEAT `_validate_newest_first` precedent, the feat-36 `_path_safety` module, the 44 `datetime.now().isoformat(timespec="microseconds")` generator sites, the free-form `MarkdownFrontmatter.created`/`updated`, and the captured pylint baseline (42 x W0622 in 39 files, 12 x W0611 in `server.py`, score 9.34/10). The branch was fast-forwarded to `origin/dev` `8c13e16`, uv synced with all extras on Python 3.13.13, and pre-commit installed, with the full suite (2713 tests) green as the baseline. No code changes yet.
 
 ### Decisions Made
+
+#### 2026-09-01 19:20:00.000+02:00 - D11: the two malformed packaged-data timestamps blocking Phase 2's own gate were fixed in Phase 2, not deferred to Phase 3
+
+Enforcing the new DEC/VCR/TSK timestamp-led `@alias` immediately made
+two pre-existing packaged-data defects fatal: `vcr_template.md`'s
+`### 2026-08-31 08:15:42 - Created` heading and
+`tsk_template.md`/`tsk_example.md`'s `05:42`/`19:27`-style headings all
+carry a time-of-day with no milliseconds/offset, which the new alias's
+date+time branch requires and the date-only branch cannot match either
+-- both would fail `parse_vcr`/`parse_tsk` (and their own packaged-data
+round-trip tests) the moment Task 2.3 landed, before Phase 3 (issue #44)
+ever runs. Rather than leave Phase 2's own gate red pending Phase 3,
+both were normalized to bare `yyyy-MM-dd` dates now (D11); Task 3.6's
+"Normalize packaged body-entry values" wording, written before this was
+discovered, is superseded for these two specific values -- Phase 3 still
+owns the broader timestamp-format sweep (frontmatter, other body-entry
+values, `.specmgr/_template/v1/README.md`) but has nothing left to do
+for `vcr_template.md`'s seconds or `tsk_template.md`/`tsk_example.md`'s
+`05:42`/`19:27` values specifically.
 
 #### 2026-09-01 15:14:00.000+02:00 - D7/D5 refinements: frontmatter is date+time-only and system-owned; migration assumes UTC
 

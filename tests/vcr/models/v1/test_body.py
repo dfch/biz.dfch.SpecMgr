@@ -107,13 +107,13 @@ Verification performed against the staging gateway (build 2026.08.30-rc3).
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
-### 2026-08-26 - Created
-
-Initial verification case drafted.
-
 ### 2026-08-27 : Confirmed
 
 AC-001 and AC-003 executed against staging.
+
+### 2026-08-26 - Created
+
+Initial verification case drafted.
 """
 )
 
@@ -431,12 +431,22 @@ class TestAcceptanceCriteriaZeroEntries(unittest.TestCase):
 
 
 class TestUpdateEntryHeadingAlias(unittest.TestCase):
-    """`UpdateEntry`'s H3 alias is the free-form `.+` REGEX (date-led titles are convention)."""
+    """`UpdateEntry`'s regex alias requires a `yyyy-MM-dd` (or full date+time) timestamp + ` - `/` : ` + `title`."""
 
-    def test_update_entry_matches_any_nonempty_h3_text(self) -> None:
-        for heading in ("2026-08-26 - Created", "A Note", "x"):
+    def test_accepts_date_only_and_date_time_headings(self) -> None:
+        for heading in (
+            "2026-08-26 - Created",
+            "2026-08-26 : Created",
+            "2026-08-26 14:30:00.000+02:00 - Confirmed",
+            "2026-08-26 14:30:00.000Z : Confirmed",
+        ):
             with self.subTest(heading=heading):
                 self.assertTrue(match_alias(UpdateEntry, heading))
+
+    def test_rejects_non_timestamp_led_headings(self) -> None:
+        for heading in ("A Note", "x", "2026-8-26 - Created", "Created"):
+            with self.subTest(heading=heading):
+                self.assertFalse(match_alias(UpdateEntry, heading))
 
     def test_update_entry_rejects_empty_h3_text(self) -> None:
         self.assertFalse(match_alias(UpdateEntry, ""))
@@ -727,8 +737,8 @@ class TestVcrReferenceDocumentRoundTrips(unittest.TestCase):
         self.assertIsNotNone(updates)
         self.assertIsNotNone(updates.comment)
         self.assertEqual(len(updates.updates), 2)
-        self.assertEqual(updates.updates[0].content.text, "Initial verification case drafted.")
-        self.assertEqual(updates.updates[1].content.text, "AC-001 and AC-003 executed against staging.")
+        self.assertEqual(updates.updates[0].content.text, "AC-001 and AC-003 executed against staging.")
+        self.assertEqual(updates.updates[1].content.text, "Initial verification case drafted.")
 
 
 if __name__ == "__main__":

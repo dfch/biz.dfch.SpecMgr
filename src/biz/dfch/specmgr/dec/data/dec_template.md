@@ -63,6 +63,8 @@ This optional section can contain additional information. There is no defined fo
 
 ## Updates
 
+<!-- Newest entry first -- prepend new entries directly below this comment. -->
+
 ### 2026-08-27 - Created
 
 A lead paragraph describing this update.

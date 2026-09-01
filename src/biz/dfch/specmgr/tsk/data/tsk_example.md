@@ -20,10 +20,12 @@ Number the tasks so that they are easier to track. -->
 
 ## Recent Updates
 
-### 2026-08-15 05:42 - Kickoff
+<!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+### 2026-08-15 - Kickoff
 
 Started the migration; inventoried 12 widgets currently registered against WidgetRegistryV1.
 
-### 2026-08-01 19:27 - Migration in progress
+### 2026-08-01 - Migration in progress
 
 Migrated 5 of 12 widgets so far; no regressions found.
