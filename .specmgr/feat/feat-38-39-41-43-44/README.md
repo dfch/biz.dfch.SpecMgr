@@ -3,7 +3,7 @@ created: '2026-09-01T15:14:00.000000'
 id: feat-38-39-41-43-44
 status: planning
 type: feat
-updated: '2026-09-01T15:14:00.000000'
+updated: '2026-09-01T15:42:48.000000'
 version: 1.0.0
 ---
 
@@ -24,7 +24,7 @@ This feature bundles five open issues into one sequential effort: #38 (drop the 
 - REQ-005: The SOP/DEC/TSK update containers gain leading-HTML-comment support (the `MarkdownSection2WithComment` shape), the packaged templates carry a "newest first, prepend" ordering hint, and the create/update instructions of all four domains direct prepending instead of appending.
 - REQ-006: The shared `MarkdownFrontmatter` fields `created`/`updated` accept only the date+time variant `yyyy-MM-dd HH:mm:ss.fff` + (`Z` or `±HH:mm`) at parse time (date-only is rejected; blank/absent stays `None`); the fields remain system-owned (no tool parameter exposes them).
 - REQ-007: Every tool-written `created`/`updated` value (the 11 `create_<d>` tools, the 22 `update` adapter sites, and the 11 `set_status` adapter sites) is produced by one shared helper that emits the date+time variant from `datetime.now().astimezone()`, with `Z` when the UTC offset is zero and `±HH:mm` otherwise, and milliseconds truncated to exactly three digits.
-- REQ-008: All legacy repo timestamps (frontmatter of the four parseable documents plus the nineteen legacy feat READMEs, and non-conforming packaged body-entry values) are migrated under the D7 rules: date-only becomes midnight UTC `00:00:00.000Z`, partial times are padded and assumed UTC, microsecond values are truncated to milliseconds and assumed UTC `Z`, and literal placeholders take the containing folder's first git-commit timestamp (UTC); `created:`/`updated:` lines inside code fences are excluded; all test-fixture `created`/`updated` values (~49 files) are normalized to the conforming date+time shape.
+- REQ-008: All legacy repo timestamps (frontmatter of the five parseable documents plus the twenty-one legacy feat READMEs, and non-conforming packaged body-entry values) are migrated under the D7 rules: date-only becomes midnight UTC `00:00:00.000Z`, partial times are padded and assumed UTC, microsecond values are truncated to milliseconds and assumed UTC `Z`, and literal placeholders take the containing folder's first git-commit timestamp (UTC); `created:`/`updated:` lines inside code fences are excluded; all test-fixture `created`/`updated` values (~49 files) are normalized to the conforming date+time shape.
 - REQ-009: The twelve `get_<d>` tools (including `get_adr`), the generic `update`, and the generic `set_status` validate `id` via `_path_safety.validate_id` before any filesystem access and confine the resolved path with `_path_safety.assert_within` after resolution; `validate_id` additionally accepts `adr` (a UUID domain); `delete` behavior is unchanged.
 - REQ-010: The pylint W0622 (redefined-builtin) count drops to zero via one explicit module-level `# pylint: disable=redefined-builtin` line with a rationale comment in each of the 39 affected files; no global pylint config change, so a future file shadowing `id`/`type` without the comment keeps warning.
 
@@ -55,7 +55,7 @@ This feature bundles five open issues into one sequential effort: #38 (drop the 
 
 #### Explicitly Out Of Scope
 
-- Body migration of the nineteen legacy feat READMEs (they predate the feat-31 schema and fail to parse for unrelated structural reasons; frontmatter only, per REQ-008)
+- Body migration of the twenty-one legacy feat READMEs (they predate the feat-31 schema and fail to parse for unrelated structural reasons; frontmatter only, per REQ-008)
 - ADR frontmatter: it has no `created`/`updated` fields, and the MADR `date` stays free-form (D9)
 - Prose em-dashes outside artifact formats (AGENTS.md, docstrings, `rsk_tara.md`/`rsk_risk_matrix.md` prose, the qa_example title)
 - The twelve pre-existing W0611 unused-import findings in `server.py` (intentional side-effect imports; a different warning class than W0622)
@@ -78,7 +78,7 @@ The Phase 3 validator lives on the shared `MarkdownFrontmatter` (`models/md/fron
 
 Phase 2 adds a shared pure helper `models/md/_ordering.py` (no `mcp` dependency, mirroring the `models/md/_util.py` precedent): `validate_newest_first(timestamps, label)` compares consecutive entries with `datetime.fromisoformat` (aware comparison; `Z` is supported on 3.11+), with the mixed-granularity rule that when either side is date-only the comparison happens at day granularity, and equal values (same day, or identical timestamps) are allowed. The four domains' validators (`sop.Updates` new, `dec.Updates` new, `vcr.Updates` new, `tsk.RecentUpdates` new) delegate to it, sharing one implementation with the untouched FEAT precedent. The SOP/DEC/TSK update containers are promoted from `MarkdownSection2` to `MarkdownSection2WithComment` (VCR already is) purely to carry the FEAT-style `<!-- Newest entry first -- prepend ... -->` hint in templates; the added `comment` field is optional, so direct construction is unaffected.
 
-The D7 migration is mechanical per value: date-only becomes ` 00:00:00.000Z` appended (midnight UTC); partial times (e.g. `05:42`) are padded to `HH:mm:ss.fff` and assumed UTC `Z`; microsecond values (`T`- or space-separated) become space-separated, the fraction is truncated to three digits, and UTC is assumed `Z` (no timezone conversion: the original instant is deliberately reinterpreted as UTC per the requester); literal `YYYY-MM-DD` placeholders take the containing folder's first git-commit timestamp (UTC, `Z`). Scope: real frontmatter blocks only, so `created:`/`updated:` lines inside code fences of the legacy READMEs (prose) are excluded (D8). The four parseable repo documents (docs/sop x1, docs/tsk x2, the feat-36 README) must migrate in Phase 3 or the tools stop working on them; the nineteen legacy feat READMEs get frontmatter-only normalization so a later body-migration effort does not have to re-derive the rule.
+The D7 migration is mechanical per value: date-only becomes ` 00:00:00.000Z` appended (midnight UTC); partial times (e.g. `05:42`) are padded to `HH:mm:ss.fff` and assumed UTC `Z`; microsecond values (`T`- or space-separated) become space-separated, the fraction is truncated to three digits, and UTC is assumed `Z` (no timezone conversion: the original instant is deliberately reinterpreted as UTC per the requester); literal `YYYY-MM-DD` placeholders take the containing folder's first git-commit timestamp (UTC, `Z`). Scope: real frontmatter blocks only, so `created:`/`updated:` lines inside code fences of the legacy READMEs (prose) are excluded (D8). The five parseable repo documents (docs/sop x1, docs/tsk x2, the feat-36 README, and this feature README) must migrate in Phase 3 or the tools stop working on them; the twenty-one legacy feat READMEs get frontmatter-only normalization so a later body-migration effort does not have to re-derive the rule.
 
 Phase 4 mirrors the `delete` contract (`general/tools/delete.py`): the public `update`/`set_status` call `validate_id(type, id)` before dispatch (a `ValueError` before any filesystem access), and every adapter calls `assert_within(base_dir, path)` after `load_by_id` inside the domain lock; the twelve `get_<d>` tools apply the same two guards without a lock (reads do not mutate). `_path_safety._UUID_TYPES` gains `"adr"` (eleven UUID domains; `delete`'s `Literal` still excludes `adr`, so its behavior is unchanged), and the `validate_id` docstring/error text are updated accordingly.
 
@@ -121,7 +121,7 @@ Each phase ends gate-green: `ruff format --check` + `ruff check`, `vulture src/ 
 - [ ] Task 3.1: `general/tools/_timestamps.py` helper (`now_timestamp`, `format_timestamp`, `format_date`; `Z` for zero offset; three-digit ms) + unit tests - depends on: Phase 2 - status: not-started
 - [ ] Task 3.2: `MarkdownFrontmatter.created`/`updated` date+time-only validator (D5) + tests (reject date-only/microseconds/`T`/timezone-less; accept `Z`/offset) - depends on: none - status: not-started
 - [ ] Task 3.3: Replace all 44 generator sites (11 create, 22 update, 11 set_status) with the helper - depends on: Tasks 3.1-3.2 - status: not-started
-- [ ] Task 3.4: Migrate repo documents per D7/D8 (four parseable docs mandatory; nineteen legacy feat READMEs frontmatter-only; placeholders to first-commit timestamp) - depends on: Task 3.2 - status: not-started
+- [ ] Task 3.4: Migrate repo documents per D7/D8 (five parseable docs mandatory; twenty-one legacy feat READMEs frontmatter-only; placeholders to first-commit timestamp) - depends on: Task 3.2 - status: not-started
 - [ ] Task 3.5: Normalize every test-fixture `created`/`updated` value (~49 files) to conforming date+time - depends on: Task 3.2 - status: not-started
 - [ ] Task 3.6: Normalize packaged body-entry values (vcr_template seconds; tsk_template/tsk_example `05:42` times) and align `.specmgr/_template/v1/README.md` with the enforced feat convention - depends on: Phase 2 - status: not-started
 - [ ] Task 3.7: Reword the "microsecond timestamp" docstrings (`update.py`, `set_status.py`, feat models) - depends on: Task 3.3 - status: not-started
@@ -146,11 +146,15 @@ Each phase ends gate-green: `ruff format --check` + `ruff check`, `vulture src/ 
 
 ### Current Status
 
-As of 2026-09-01: the design phase is complete. All five issues were examined against the codebase at `origin/dev` `8c13e16` (baseline: 2713 tests green; pylint 42 x W0622 across 39 files; only one of the twenty repo feat READMEs parses under the feat model). Decisions D1 to D10 are locked with the requester and logged under `### Decisions Made`; nothing is implemented yet. Next: start Phase 1 (issue #38).
+As of 2026-09-01: the design phase is complete. All five issues were examined against the codebase at `origin/dev` `8c13e16` (baseline: 2713 tests green; pylint 42 x W0622 across 39 files; after the post-plan merge of `8e07594`, 2720 tests green and only two of the twenty-two repo feat READMEs parse under the feat model: `feat-36-delete` and this one). Decisions D1 to D10 are locked with the requester and logged under `### Decisions Made`; nothing is implemented yet. Next: start Phase 1 (issue #38).
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-01 15:42:48.000+02:00 — Merged origin/dev (8e07594) after the plan commit; counts updated
+
+After committing the plan, upstream dev had gained one commit, `8e07594` (feat-40 docs pruning: `specmgr docs` now prunes stale `docs/api` pages; it also brought the `feat-32-sysrs` and `feat-40-docs-prune` folders and a CHANGELOG entry). It was merged into this branch (merge commit on top of the plan commit, not pushed). The feat parse inventory was re-verified on the merged tree: twenty-two feat READMEs, only `feat-36-delete` and this one parse, so the plan's migration counts were updated in place (REQ-008, Scope, Design Notes, Task 3.4, and decision D8: nineteen legacy READMEs becomes twenty-one; four parseable mandatory-migration documents becomes five, counting this README). The full unittest suite is green on the merged tree (2720 tests). No code changes.
 
 #### 2026-09-01 15:14:00.000+02:00 — Feature planned from issues 38, 39, 41, 43, 44 (design phase complete)
 
@@ -164,7 +168,7 @@ The requester confirmed that frontmatter `created`/`updated` must enforce date+t
 
 #### 2026-09-01 15:05:00.000+02:00 — D5/D8/D10: frontmatter format enforced strictly at parse; repo documents migrate in Phase 3
 
-Chosen over "tools only produce it": the shared `MarkdownFrontmatter` gains a date+time-only validator for `created`/`updated`, so a non-conforming document fails to parse (it appears missing from `get`/`list`/`update`/`set_status`/`delete`). Migrating the repo's own artifacts is part of Phase 3 (D8): the four parseable documents (docs/sop x1, docs/tsk x2, the feat-36 README) are mandatory, the nineteen legacy feat READMEs get frontmatter-only normalization, and code-fence `created:`/`updated:` prose lines are excluded. ADR frontmatter is untouched (D9: no created/updated fields; the MADR `date` stays free-form). The hard break for downstream documents was accepted (D10).
+Chosen over "tools only produce it": the shared `MarkdownFrontmatter` gains a date+time-only validator for `created`/`updated`, so a non-conforming document fails to parse (it appears missing from `get`/`list`/`update`/`set_status`/`delete`). Migrating the repo's own artifacts is part of Phase 3 (D8): the five parseable documents (docs/sop x1, docs/tsk x2, the feat-36 README, and this feature README) are mandatory, the twenty-one legacy feat READMEs get frontmatter-only normalization, and code-fence `created:`/`updated:` prose lines are excluded. ADR frontmatter is untouched (D9: no created/updated fields; the MADR `date` stays free-form). The hard break for downstream documents was accepted (D10).
 
 #### 2026-09-01 14:50:00.000+02:00 — D1/D2/D3/D4/D6: folder name, separators, ordering scope, timezone, pylint style
 
