@@ -3,7 +3,7 @@ created: '2026-09-01T14:19:27.649184'
 id: feat-28-get-update
 status: planning
 type: feat
-updated: '2026-09-01T15:26:26.838233'
+updated: '2026-09-01T15:58:41.329002'
 version: 1.0.0
 ---
 
@@ -151,9 +151,9 @@ tests move together in the LLM-contract phase.
 - [x] Task 0.1: Sync prerequisites — `git fetch origin` + `git merge --ff-only origin/dev` (branch was 0 ahead, fast-forwarded 72efee3 → 8c13e16), `uv sync --all-extras --frozen` (89 packages current), `uv run --frozen pre-commit install` (re-stamps the worktree-shared hook to this venv; the previous stamp pointed at the feat-27 worktree), baseline full test cycle green (2713 tests) — depends on: none — status: done (2026-09-01)
 - [x] Task 0.2: Create the GitHub issue on `create_feat`'s id auto-assignment (expected behaviour: optional caller-chosen id, `0` when unspecified with no max+1 fallback, fail if the id is already in use; plus the additional `set_feat_id` tool) — depends on: none — status: done (2026-09-01, issue #48)
 - [x] Task 0.3: Create this feature via `specmgr_create_feat` (auto-assigned `feat-37-offset-limit-coordinates-for-the-update-and-get-tools`, since `feat-36-delete` is the highest existing folder), then manually rename the folder + frontmatter `id` to `feat-28-get-update` (manual because the `set_feat_id` tool is out of scope, tracked in issue #48), verify with `specmgr_get_feat` — depends on: none — status: done (2026-09-01)
-- [ ] Task 0.4: Annotate `feat-7` Task 0.32 with the "split out into `feat-28-get-update`" pointer (Task 0.15 → feat-13 precedent) and bump `feat-7`'s frontmatter `updated` + a Recent Updates entry — depends on: none — status: not-started
-- [ ] Task 0.5: Create the ADR recording the revised `offset`/`limit` contract (draft; set to accepted at close) — depends on: none — status: not-started
-- [ ] Task 0.6: Phase gate — complete test cycle + commit — depends on: Task 0.4, Task 0.5 — status: not-started
+- [x] Task 0.4: Annotate `feat-7` Task 0.32 with the "split out into `feat-28-get-update`" pointer (Task 0.15 → feat-13 precedent) and bump `feat-7`'s frontmatter `updated` + a Recent Updates entry — depends on: none — status: done (2026-09-01)
+- [x] Task 0.5: Create the ADR recording the revised `offset`/`limit` contract (draft; set to accepted at close) — depends on: none — status: done (2026-09-01, ADR `4ec08dcb-fcb7-4961-abaf-ff7803e2f21d`)
+- [x] Task 0.6: Phase gate — complete test cycle + commit — depends on: Task 0.4, Task 0.5 — status: done (2026-09-01)
 
 #### Phase 1: update Core (offset/limit Rename)
 
@@ -187,16 +187,47 @@ tests move together in the LLM-contract phase.
 
 ### Current Status
 
-**As of 2026-09-01**: Planning complete. All design decisions are taken (see
-Decisions Made); the working tree is synced to the latest upstream `dev`
-(`8c13e16`) with the full suite green (2713 tests) and pre-commit hooks
-installed against this worktree's venv. GitHub issue #48 (the deferred
-`create_feat` id work) is filed. Implementation (Phase 0 remainder → Phase 4)
-has not started.
+**As of 2026-09-01**: Phase 0 complete. All design decisions are taken (see
+Decisions Made); feat-7's Task 0.32 carries the split-out pointer to this
+feature, and the ADR recording the revised `offset`/`limit` contract is
+drafted (`4ec08dcb-fcb7-4961-abaf-ff7803e2f21d` in `docs/adr/`, TOC
+regenerated; set to accepted at close per Task 4.3). The working tree is on
+branch `feat-28-get-update`, synced to upstream `dev` (`8e07594`), with the
+complete test cycle green (2720 tests); never pushed. GitHub issue #48 (the
+deferred `create_feat` id work) is filed. Next: Phase 1 (`update` core
+`begin`/`end` → `offset`/`limit` rename + test migration in one commit).
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-01 15:58:41.327+02:00 — Phase 0 complete (feat-7 split-out annotation, ADR draft, gate green)
+
+Task 0.4: feat-7's Task 0.32 annotated per the Task 0.15 → feat-13
+precedent — checkbox `[x]`, status set to "split out into
+`feat-28-get-update` (GitHub issue #28,
+`.specmgr/feat/feat-28-get-update/README.md`) on 2026-09-01" plus a clause
+noting the revised contract (`offset`/`limit` for the generic `update` tool
++ windowed `get_<d>` reads, hard rename, ADR draft) is recorded in this
+plan; feat-7 frontmatter `updated` bumped to 2026-09-01; a new `#### Update
+2026-09-01 (Task 0.32 split out)` entry prepended to feat-7's Recent Updates
+(the indented Background paragraph left untouched). Task 0.5: ADR
+`4ec08dcb-fcb7-4961-abaf-ff7803e2f21d` ("offset/limit coordinates for the
+generic update tool and get_<d> windowed reads") created via
+`specmgr_create_adr` with status `draft` (set to accepted at close, Task
+4.3) — six options across the three decided axes (hard rename vs. dual
+alias; strict vs. clamping splice validation; raw-only vs. both-modes
+windowing), the exact `offset`/`limit` semantics including the today→new
+`begin`/`end` mapping table, and Consequences naming every LLM-facing
+surface that moves in the same release; references ADR
+36905d5b-8057-4294-8665-c7eed5534db0 without superseding it. Verified via
+`git status` that it landed in this worktree's `docs/adr/`, then `uv run
+--frozen specmgr adr-toc` regenerated `docs/adr/README.md`. Task 0.6 gate
+(green): `ruff format --check` (1474 files already formatted), `ruff check`
+(All checks passed!), `vulture src/ whitelist.py --min-confidence 60`
+(clean, no output), full `unittest` suite (Ran 2720 tests — OK). No `src/`
+changes, so no `specmgr docs`/`mcp-docs` regeneration needed. Not committed
+(the orchestrator commits); not pushed.
 
 #### 2026-09-01 15:13:17.413+02:00 — Merged upstream dev (8e07594)
 

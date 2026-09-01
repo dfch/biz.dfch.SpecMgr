@@ -33,6 +33,11 @@ Index of all ADRs in this repository.
   - Id: 4c6119c9-532f-4629-8977-108e78304f48
   - Status: accepted
   - Decision-makers: dfch
+- [offset/limit coordinates for the generic update tool and get_<d> windowed reads](4ec08dcb-fcb7-4961-abaf-ff7803e2f21d-offset-limit-coordinates-for-the-generic-update-tool-and-get.md)
+  - Id: 4ec08dcb-fcb7-4961-abaf-ff7803e2f21d
+  - Status: draft
+  - Date: 2026-09-01
+  - Decision-makers: OpenCode agent + user decision
 - [Generic update_section(key, value) with deletion sentinel and mandatory-section rejection](71fd95d7-07f2-466f-81aa-d29b7e3ef34c-generic-update-section-key-value-with-deletion-sentinel-and.md)
   - Id: 71fd95d7-07f2-466f-81aa-d29b7e3ef34c
   - Status: accepted
