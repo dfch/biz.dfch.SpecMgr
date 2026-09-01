@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **BREAKING**: renamed the `webfetch` MCP tool to `confluence_fetch` (and
+  its environment variables `SPECMGR_WEBFETCH_BASE_URL`/
+  `SPECMGR_WEBFETCH_BEARER` to `SPECMGR_CONFLUENCE_BASE_URL`/
+  `SPECMGR_CONFLUENCE_BEARER`); part of feat-50-confluence.
+
 ## [0.16.0] - 2026-09-01
 
 ### Added

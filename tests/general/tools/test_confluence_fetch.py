@@ -15,7 +15,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Tests for the ``webfetch`` ``@mcp.tool()`` wrapper."""
+"""Tests for the ``confluence_fetch`` ``@mcp.tool()`` wrapper."""
 
 from __future__ import annotations
 
@@ -25,43 +25,45 @@ from unittest import mock
 
 import httpx
 
-from biz.dfch.specmgr.general.tools.webfetch import (
-    WEBFETCH_BASE_URL_ENV_VAR,
-    WEBFETCH_BEARER_ENV_VAR,
-    WebfetchNotConfiguredError,
-    WebfetchUrlNotAllowedError,
-    webfetch,
+from biz.dfch.specmgr.general.tools._confluence_config import (
+    CONFLUENCE_BASE_URL_ENV_VAR,
+    CONFLUENCE_BEARER_ENV_VAR,
+    ConfluenceNotConfiguredError,
+)
+from biz.dfch.specmgr.general.tools.confluence_fetch import (
+    ConfluenceUrlNotAllowedError,
+    confluence_fetch,
 )
 
 _BASE_URL = "https://example.atlassian.net/wiki"
 _TOKEN = "s3cr3t-token"
 
 
-class TestWebfetchTool(unittest.TestCase):
-    """Tests for the webfetch tool."""
+class TestConfluenceFetchTool(unittest.TestCase):
+    """Tests for the confluence_fetch tool."""
 
     def test_url_outside_base_is_rejected_without_http_call(self) -> None:
         """A URL outside the configured base must raise, with no HTTP call made."""
         with mock.patch.dict(
             os.environ,
-            {WEBFETCH_BASE_URL_ENV_VAR: _BASE_URL, WEBFETCH_BEARER_ENV_VAR: _TOKEN},
+            {CONFLUENCE_BASE_URL_ENV_VAR: _BASE_URL, CONFLUENCE_BEARER_ENV_VAR: _TOKEN},
         ):
             with mock.patch("httpx.get") as mock_get:
-                with self.assertRaises(WebfetchUrlNotAllowedError):
-                    webfetch("https://not-allowed.example.com/page")
+                with self.assertRaises(ConfluenceUrlNotAllowedError):
+                    confluence_fetch("https://not-allowed.example.com/page")
                 mock_get.assert_not_called()
 
     def test_case_insensitive_scheme_host_match_is_accepted(self) -> None:
         """A URL matching the base with different casing in scheme/host must be accepted."""
         with mock.patch.dict(
             os.environ,
-            {WEBFETCH_BASE_URL_ENV_VAR: _BASE_URL, WEBFETCH_BEARER_ENV_VAR: _TOKEN},
+            {CONFLUENCE_BASE_URL_ENV_VAR: _BASE_URL, CONFLUENCE_BEARER_ENV_VAR: _TOKEN},
         ):
             mock_response = mock.Mock(spec=httpx.Response)
             mock_response.text = "page content"
             mock_response.raise_for_status = mock.Mock()
             with mock.patch("httpx.get", return_value=mock_response) as mock_get:
-                result = webfetch("HTTPS://Example.atlassian.net/wiki/page")
+                result = confluence_fetch("HTTPS://Example.atlassian.net/wiki/page")
 
                 self.assertEqual(result, "page content")
                 mock_get.assert_called_once()
@@ -70,55 +72,55 @@ class TestWebfetchTool(unittest.TestCase):
         """A URL matching a differently-cased configured base URL must be accepted."""
         with mock.patch.dict(
             os.environ,
-            {WEBFETCH_BASE_URL_ENV_VAR: "HTTPS://EXAMPLE.ATLASSIAN.NET/WIKI", WEBFETCH_BEARER_ENV_VAR: _TOKEN},
+            {CONFLUENCE_BASE_URL_ENV_VAR: "HTTPS://EXAMPLE.ATLASSIAN.NET/WIKI", CONFLUENCE_BEARER_ENV_VAR: _TOKEN},
         ):
             mock_response = mock.Mock(spec=httpx.Response)
             mock_response.text = "page content"
             mock_response.raise_for_status = mock.Mock()
             with mock.patch("httpx.get", return_value=mock_response) as mock_get:
-                result = webfetch("https://example.atlassian.net/wiki/page")
+                result = confluence_fetch("https://example.atlassian.net/wiki/page")
 
                 self.assertEqual(result, "page content")
                 mock_get.assert_called_once()
 
     def test_missing_base_url_env_var_raises_not_configured(self) -> None:
-        """Missing the base-URL env var must raise WebfetchNotConfiguredError."""
-        with mock.patch.dict(os.environ, {WEBFETCH_BEARER_ENV_VAR: _TOKEN}, clear=True):
-            os.environ.pop(WEBFETCH_BASE_URL_ENV_VAR, None)
+        """Missing the base-URL env var must raise ConfluenceNotConfiguredError."""
+        with mock.patch.dict(os.environ, {CONFLUENCE_BEARER_ENV_VAR: _TOKEN}, clear=True):
+            os.environ.pop(CONFLUENCE_BASE_URL_ENV_VAR, None)
             with mock.patch("httpx.get") as mock_get:
-                with self.assertRaises(WebfetchNotConfiguredError):
-                    webfetch(f"{_BASE_URL}/page")
+                with self.assertRaises(ConfluenceNotConfiguredError):
+                    confluence_fetch(f"{_BASE_URL}/page")
                 mock_get.assert_not_called()
 
     def test_missing_bearer_env_var_raises_not_configured(self) -> None:
-        """Missing the bearer-token env var must raise WebfetchNotConfiguredError."""
-        with mock.patch.dict(os.environ, {WEBFETCH_BASE_URL_ENV_VAR: _BASE_URL}, clear=True):
-            os.environ.pop(WEBFETCH_BEARER_ENV_VAR, None)
+        """Missing the bearer-token env var must raise ConfluenceNotConfiguredError."""
+        with mock.patch.dict(os.environ, {CONFLUENCE_BASE_URL_ENV_VAR: _BASE_URL}, clear=True):
+            os.environ.pop(CONFLUENCE_BEARER_ENV_VAR, None)
             with mock.patch("httpx.get") as mock_get:
-                with self.assertRaises(WebfetchNotConfiguredError):
-                    webfetch(f"{_BASE_URL}/page")
+                with self.assertRaises(ConfluenceNotConfiguredError):
+                    confluence_fetch(f"{_BASE_URL}/page")
                 mock_get.assert_not_called()
 
     def test_missing_both_env_vars_raises_not_configured(self) -> None:
-        """Missing both env vars must raise WebfetchNotConfiguredError."""
+        """Missing both env vars must raise ConfluenceNotConfiguredError."""
         with mock.patch.dict(os.environ, {}, clear=True):
-            os.environ.pop(WEBFETCH_BASE_URL_ENV_VAR, None)
-            os.environ.pop(WEBFETCH_BEARER_ENV_VAR, None)
-            with self.assertRaises(WebfetchNotConfiguredError):
-                webfetch(f"{_BASE_URL}/page")
+            os.environ.pop(CONFLUENCE_BASE_URL_ENV_VAR, None)
+            os.environ.pop(CONFLUENCE_BEARER_ENV_VAR, None)
+            with self.assertRaises(ConfluenceNotConfiguredError):
+                confluence_fetch(f"{_BASE_URL}/page")
 
     def test_successful_call_sends_bearer_header_and_returns_body(self) -> None:
         """A successful call must send the Authorization header and return raw body text."""
         with mock.patch.dict(
             os.environ,
-            {WEBFETCH_BASE_URL_ENV_VAR: _BASE_URL, WEBFETCH_BEARER_ENV_VAR: _TOKEN},
+            {CONFLUENCE_BASE_URL_ENV_VAR: _BASE_URL, CONFLUENCE_BEARER_ENV_VAR: _TOKEN},
         ):
             mock_response = mock.Mock(spec=httpx.Response)
             mock_response.text = "<html>raw body</html>"
             mock_response.raise_for_status = mock.Mock()
             with mock.patch("httpx.get", return_value=mock_response) as mock_get:
                 url = f"{_BASE_URL}/spaces/FOO/pages/123"
-                result = webfetch(url)
+                result = confluence_fetch(url)
 
                 self.assertEqual(result, "<html>raw body</html>")
                 mock_get.assert_called_once()
@@ -132,7 +134,7 @@ class TestWebfetchTool(unittest.TestCase):
         """A non-2xx response must raise (via response.raise_for_status())."""
         with mock.patch.dict(
             os.environ,
-            {WEBFETCH_BASE_URL_ENV_VAR: _BASE_URL, WEBFETCH_BEARER_ENV_VAR: _TOKEN},
+            {CONFLUENCE_BASE_URL_ENV_VAR: _BASE_URL, CONFLUENCE_BEARER_ENV_VAR: _TOKEN},
         ):
             mock_response = mock.Mock(spec=httpx.Response)
             mock_response.text = "not found"
@@ -141,7 +143,7 @@ class TestWebfetchTool(unittest.TestCase):
             )
             with mock.patch("httpx.get", return_value=mock_response):
                 with self.assertRaises(httpx.HTTPStatusError):
-                    webfetch(f"{_BASE_URL}/missing")
+                    confluence_fetch(f"{_BASE_URL}/missing")
 
 
 if __name__ == "__main__":

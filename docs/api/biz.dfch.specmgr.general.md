@@ -9,7 +9,7 @@ are not specific to any single document domain at all (e.g. the server
 version). It complements the domain-specific packages (``adr``, ``req``,
 ``uc``).
 
-``tools`` (e.g. ``mdformat``, ``webfetch``) operate on raw markdown files or
+``tools`` (e.g. ``mdformat``, ``confluence_fetch``) operate on raw markdown files or
 external URLs and are registered as ``@mcp.tool()`` functions. ``resources``
 (e.g. ``version``, ``iso25010``, ``rasci``) are registered as
 ``@mcp.resource()`` functions. ``prompts`` (e.g. ``compact_history``) return

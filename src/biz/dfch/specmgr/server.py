@@ -227,9 +227,10 @@ resolves by ``id``, takes the domain lock, and returns the deleted path; a
 ``ValueError`` for injection/wrong-format ids before any file access, the
 domain's ``XNotFoundError`` for missing documents, and a ``DeleteError`` for
 I/O failures;
-``webfetch`` -- fetch a URL over HTTP GET with a
-bearer token, restricted to a configured base URL (``SPECMGR_WEBFETCH_BASE_URL``,
-``SPECMGR_WEBFETCH_BEARER``).
+``confluence_fetch`` (renamed from ``webfetch``, ADR
+a156fdf9-052c-4f43-93a2-eeec04a91eac) -- fetch a URL over HTTP GET with a
+bearer token, restricted to a configured base URL (``SPECMGR_CONFLUENCE_BASE_URL``,
+``SPECMGR_CONFLUENCE_BEARER``).
 
 Prompts
 -------

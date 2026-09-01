@@ -346,6 +346,7 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 
 | Name | Description |
 | --- | --- |
+| [`confluence_fetch`](#tool-confluence_fetch) | Fetch a URL over HTTP GET with a bearer token, but only if the URL matches the configured base URL (case-insensitively). Returns the raw response body text. Intended primarily for Confluence instances using PAT authentication. |
 | [`create_adr`](#tool-create_adr) | Create a new ADR: assigns a fresh id, derives a filename from the title, validates, renders, and writes the new document to the ADR base directory. |
 | [`create_dec`](#tool-create_dec) | Create a new decision: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the decision base directory. |
 | [`create_feat`](#tool-create_feat) | Create a new feature: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the feature base directory. |
@@ -438,7 +439,16 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`validate_tsk`](#tool-validate_tsk) | Disk-free, id-free dry run validating task list content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
 | [`validate_uc`](#tool-validate_uc) | Disk-free, id-free dry run validating use case content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
 | [`validate_vcr`](#tool-validate_vcr) | Disk-free, id-free dry run validating verification case record content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
-| [`webfetch`](#tool-webfetch) | Fetch a URL over HTTP GET with a bearer token, but only if the URL matches the configured base URL (case-insensitively). Returns the raw response body text. Intended primarily for Web Server instances using PAT authentication. |
+
+### Tool: confluence_fetch
+
+**Fetch a Confluence URL with bearer authentication**
+
+Fetch a URL over HTTP GET with a bearer token, but only if the URL matches the configured base URL (case-insensitively). Returns the raw response body text. Intended primarily for Confluence instances using PAT authentication.
+
+| Parameter | Type | Required |
+| --- | --- | --- |
+| `url` | `string` | Yes |
 
 ### Tool: create_adr
 
@@ -1323,16 +1333,6 @@ Disk-free, id-free dry run validating verification case record content. `full=Fa
 | --- | --- | --- |
 | `content` | `string` | Yes |
 | `full` | `boolean` | No |
-
-### Tool: webfetch
-
-**Fetch a URL with bearer authentication**
-
-Fetch a URL over HTTP GET with a bearer token, but only if the URL matches the configured base URL (case-insensitively). Returns the raw response body text. Intended primarily for Web Server instances using PAT authentication.
-
-| Parameter | Type | Required |
-| --- | --- | --- |
-| `url` | `string` | Yes |
 
 ## Prompts
 

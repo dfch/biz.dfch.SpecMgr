@@ -16,8 +16,10 @@ generic, cross-domain hard-delete for the eleven whole-body document types
 not supported), resolving the document by ``id``, taking the domain's own
 per-id lock, and removing it from disk (the single ``*.md`` file for the
 ten flat domains, the entire ``<base>/<id>/`` folder for ``feat``),
-returning the deleted path as a string. ``webfetch`` -- a
-bearer-authenticated HTTP GET fetch restricted to a configured base URL.
+returning the deleted path as a string. ``confluence_fetch`` (renamed from
+``webfetch``, ADR a156fdf9-052c-4f43-93a2-eeec04a91eac) -- a
+bearer-authenticated HTTP GET fetch restricted to a configured Confluence
+base URL.
 Import this package to register all general tools at once::
 
     from biz.dfch.specmgr.general import tools  # noqa: F401 (side-effects only)

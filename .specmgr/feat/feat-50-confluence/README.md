@@ -1,9 +1,9 @@
 ---
 created: '2026-09-01T17:36:02.251286'
 id: feat-50-confluence
-status: planning
+status: in-progress
 type: feat
-updated: '2026-09-01T17:36:02.251286'
+updated: '2026-09-01T18:00:00.000000'
 version: 1.0.0
 ---
 
@@ -118,13 +118,13 @@ Adds a `confluence_update` tool that converts a local Markdown file to an HTML f
 
 #### Phase 1: Rename `webfetch` to `confluence_fetch`
 
-- [ ] Task 1.1: Extract `general/tools/_confluence_config.py` (env var constants, `ConfluenceNotConfiguredError`, `_confluence_config()`).
+- [x] Task 1.1: Extract `general/tools/_confluence_config.py` (env var constants, `ConfluenceNotConfiguredError`, `_confluence_config()`).
 
-- [ ] Task 1.2: Rename `webfetch.py` to `confluence_fetch.py` (tool/function/exception names, env var names), update `general/tools/__init__.py`, `general/__init__.py`, `server.py` docstrings.
+- [x] Task 1.2: Rename `webfetch.py` to `confluence_fetch.py` (tool/function/exception names, env var names), update `general/tools/__init__.py`, `general/__init__.py`, `server.py` docstrings.
 
-- [ ] Task 1.3: Rename `test_webfetch.py` to `test_confluence_fetch.py`, updating all references.
+- [x] Task 1.3: Rename `test_webfetch.py` to `test_confluence_fetch.py`, updating all references.
 
-- [ ] Task 1.4: Update `README.md` environment variables section and `CHANGELOG.md`.
+- [x] Task 1.4: Update `README.md` environment variables section and `CHANGELOG.md`.
 
 #### Phase 2: URL helper + `confluence_fetch` enhancements
 
@@ -158,7 +158,7 @@ Adds a `confluence_update` tool that converts a local Markdown file to an HTML f
 
 ### Current Status
 
-**As of 2026-09-01**: Feature planned and its supporting ADR (a156fdf9-052c-4f43-93a2-eeec04a91eac) accepted, following real-instance exploration confirming the URL-conversion and auth-failure design. No implementation has started yet — this feature folder itself was created via `create_feat`, which assigned id `feat-37-confluence-fetch-and-update-tools`; the folder was then manually renamed to `feat-50-confluence` (and this file's frontmatter `id` updated to match) to keep it aligned with the GitHub issue number and the pre-existing `feat-50-confluence` branch/worktree, since `create_feat`'s automatic id assignment (highest existing `feat-NNN` folder plus one) has no way to target a specific GitHub issue number.
+**As of 2026-09-01**: Phase 1 (rename `webfetch` to `confluence_fetch`) complete — the mechanical rename with no new behavior. Next is Phase 2 (URL helper + `confluence_fetch` enhancements: automatic REST URL construction, tiny-link rejection, SSO-redirect detection, binary/image download support).
 
 ### Blockers
 
@@ -167,6 +167,12 @@ Adds a `confluence_update` tool that converts a local Markdown file to an HTML f
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-01 00:00:00.000Z — Phase 1 complete: renamed `webfetch` to `confluence_fetch`
+
+Completed: extracted the shared `general/tools/_confluence_config.py` helper (env var constants `SPECMGR_CONFLUENCE_BASE_URL`/`SPECMGR_CONFLUENCE_BEARER`, `ConfluenceNotConfiguredError`, `confluence_config()`), moved out of the former `webfetch.py`; renamed `general/tools/webfetch.py` to `general/tools/confluence_fetch.py` (tool `confluence_fetch`, function `confluence_fetch(url) -> str`, `ConfluenceUrlNotAllowedError` staying local to this module since it is fetch-specific), reusing the shared `_confluence_config` helper instead of redefining env vars/exceptions locally; updated `general/tools/__init__.py`, `general/__init__.py`, and `server.py` module docstrings accordingly; renamed `tests/general/tools/test_webfetch.py` to `test_confluence_fetch.py` (class `TestConfluenceFetchTool`, all names/imports renamed, full existing coverage preserved) and added a new `tests/general/tools/test__confluence_config.py` for the extracted helper; updated `README.md`'s Environment Variables section and added a `[Unreleased]` `CHANGELOG.md` entry documenting the breaking rename; regenerated `docs/api/`, `docs/GENERATED.md`, and `docs/MCP.md` via `specmgr docs`/`specmgr mcp-docs` (and manually removed the now-stale `docs/api/biz.dfch.specmgr.general.tools.webfetch.md`, which those generators do not prune automatically). No behavior changed -- this was a pure, mechanical rename; no URL auto-conversion, binary download, or `confluence_update` yet.
+Next: Phase 2 (URL helper + `confluence_fetch` enhancements: `_confluence_url.py`, automatic REST URL construction, tiny-link rejection, SSO-redirect detection, binary/image download support).
+Notes: quality gate green -- `ruff format --check`/`ruff check`/`vulture` clean, full `unittest` suite (2719 tests) passes with zero remaining `webfetch`/`Webfetch`/`WEBFETCH` references anywhere in `src/`/`tests/` (only the pre-existing historical `CHANGELOG.md` entry, `.specmgr/` artifacts, and `docs/adr/` content still mention the old name, as expected).
 
 #### 2026-09-01 00:00:00.000Z — Feature and ADR created; exploration complete
 
@@ -177,6 +183,10 @@ Notes: implementation has not started; this update only covers planning/design/e
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-01 00:00:00.000Z — Named the shared helper function `confluence_config()`, not `_confluence_config()`
+
+Decision: name the shared config-reading function in `general/tools/_confluence_config.py` as `confluence_config()` (no leading underscore), even though the plan's task list parenthetically writes it as `_confluence_config()`. Rationale: the module itself is already private (leading-underscore filename), and both `confluence_fetch.py` and the future `confluence_update.py` import this function as a sibling-module symbol -- a non-underscore-prefixed name exported via the module's own `__all__` is the clearer, more idiomatic signal that it is the module's public API surface, while the module's filename alone already conveys "private to `general/tools/`". Also removed the local `_webfetch_config()`-style helper entirely from `confluence_fetch.py` in favor of importing this one shared function, per the plan's explicit instruction to not duplicate config-reading logic.
 
 #### 2026-09-01 00:00:00.000Z — Accepted feat-37 -> feat-50-confluence manual id correction
 
