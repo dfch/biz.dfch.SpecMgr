@@ -3,7 +3,7 @@ created: 2026-08-31 15:37:40.000000
 id: feat-36-delete
 status: planning
 type: feat
-updated: 2026-08-31 22:26:26.000000
+updated: 2026-08-31 23:20:24.000000
 version: 1.0.0
 ---
 
@@ -445,9 +445,9 @@ no replacement per-domain delete tests are added — coverage moves entirely to
 #### Phase 4: Decision and documentation propagation (Phase-Orchestrator)
 
 - [ ] Task 4.1: Create the new ADR via the `create_adr` MCP tool per Design Notes §7 (requester-confirmed: the enabled specmgr MCP server resolves `docs/adr` relative to its CWD, i.e. this worktree — sanity-check with `git status` right after creation), set it `accepted`, run `specmgr adr-toc`, and ensure the new ADR file plus the regenerated `docs/adr/README.md` are `git add`ed into the Phase 4 commit — depends on: Task 3.3 — status: not-started.
-- [ ] Task 4.2: Update `AGENTS.md` per Design Notes §8 — depends on: Task 3.3 — status: not-started.
-- [ ] Task 4.3: Update `server.py`'s module docstring per Design Notes §8 — depends on: Task 3.3 — status: not-started.
-- [ ] Task 4.4: Add the `CHANGELOG.md` `[Unreleased]` entry per Design Notes §8 — depends on: Task 3.3 — status: not-started.
+- [x] Task 4.2: Update `AGENTS.md` per Design Notes §8 — depends on: Task 3.3 — status: done (2026-08-31).
+- [x] Task 4.3: Update `server.py`'s module docstring per Design Notes §8 — depends on: Task 3.3 — status: done (2026-08-31).
+- [x] Task 4.4: Add the `CHANGELOG.md` `[Unreleased]` entry per Design Notes §8 — depends on: Task 3.3 — status: done (2026-08-31).
 - [ ] Task 4.5: Regenerate `docs/` (`specmgr docs`, `specmgr mcp-docs`, `specmgr adr-toc`), each run twice to confirm no drift — depends on: Tasks 4.1–4.4 — status: not-started.
 
 #### Phase 5: Quality gate and sign-off (Phase-Orchestrator)
@@ -459,7 +459,8 @@ no replacement per-domain delete tests are added — coverage moves entirely to
 
 ### Current Status
 
-**As of 2026-08-31 (Phase 3 complete)**: Phase 0 (design, including Task 0.3),
+**As of 2026-08-31 (Phase 4 in progress — Tasks 4.2–4.4 done; Tasks 4.1 and
+4.5 remain orchestrator-owned)**: Phase 0 (design, including Task 0.3),
 Phase 1 (reusable path-safety module), Phase 2 (the generic `delete` tool),
 and Phase 3 (retire the eleven delete stubs) are complete. `general/tools/
 _path_safety.py` provides the five pinned, pure, non-I/O assertions, and
@@ -471,29 +472,39 @@ the domain's own `load_by_id` under the domain's own per-id lock (REQ-004),
 flat domains) or `shutil.rmtree` on the whole `<base>/<id>/` folder (`feat`);
 the domain's own `XNotFoundError` propagates unchanged and an I/O failure
 surfaces as `DeleteError` (an `OSError` subclass, REQ-005). The eleven
-`delete_<d>` stub tools are now fully retired: the eleven
-`src/biz/dfch/specmgr/<d>/tools/delete_<d>.py` modules and the eleven
-`tests/<d>/tools/test_delete_<d>.py` stub-test files are deleted, every
-`__init__.py` reference (import, `__all__` entry, docstring mention) is
-removed — with a pointer line to the generic `delete` tool in each
-`<d>/tools/__init__.py` — and the generic `delete(id, type)` tool is the sole
-delete entry point. The six integration-test modules that previously
-exercised the stubs (`tests/{dec,feat,gol,prb,sop,vcr}/tools/test_integration.py`)
-now end their lifecycle with a real generic delete (returned-path assertion,
-file/folder-gone assertion, follow-up `get_<d>` raising the domain's own
-`XNotFoundError`). Quality gate is green: full `unittest` suite OK (2713
-tests = 2735 Phase-2 baseline − 22 removed stub tests), `ruff format --check`
-(1472 files already formatted), `ruff check` (All checks passed), `vulture
-src/ whitelist.py --min-confidence 60` clean (no whitelist change needed),
-ACC-002 grep (`grep -rnE 'delete_(req|uc|tsk|qa|prb|gol|rsk|dec|sop|feat|
-vcr)' src/ tests/`) returns nothing under `tests/` and under `src/` only the
-two hard-constraint-protected files — `server.py`'s module docstring (Task
-4.3's job) and `general/tools/delete.py`'s private `_delete_<d>` adapter
-names (Phase 2 work, internal function names, not tools) — `import
-biz.dfch.specmgr.<d>.tools` succeeds for every domain, and `mcp.list_tools()`
-after importing `server` shows `delete` exactly once with zero `delete_<d>`
-tools (93 total = 104 − 11). **Phase 4 (decision and documentation
-propagation, Tasks 4.1–4.5) is next.**
+`delete_<d>` stub tools are fully retired (modules, `__init__.py` references,
+and stub tests all removed, with a pointer line to the generic `delete` tool
+in each `<d>/tools/__init__.py`), the six integration-test modules now end
+their lifecycle with a real generic delete, and the live MCP surface is 93
+tools — exactly one `delete` and zero `delete_<d>`. Phase 4's three
+file-edit tasks are now also done: Task 4.2 updated `AGENTS.md` (each of the
+eleven per-domain Status bullets drops the `delete_<d>` stub mention and
+notes that deletion goes through the generic `delete` tool
+(`type="<d>"`); the "Still genuinely missing" stubs bullet is removed; the
+`general/` bullet enumerates `delete` with the note that all eleven domains
+implement a `delete` adapter there (ADR excluded); the `ac` future-domain
+convention note now includes one `delete` adapter — not new per-domain
+`delete_<d>` tools); Task 4.3 updated `server.py`'s module docstring (the
+authoritative registration list — the eleven per-domain `delete_<d>` stub
+mentions removed from the domain tool paragraphs, and `delete` described in
+the General tools paragraph: type-dispatched hard-delete for the eleven
+whole-body domains, `adr` not supported, resolves by `id`, takes the domain
+lock, returns the deleted path, `ValueError`/`XNotFoundError`/`DeleteError`
+error contract; docstring text only, no code touched); Task 4.4 added the
+`CHANGELOG.md` `[Unreleased]` entry (`### Removed` **BREAKING** 0.x note for
+the eleven stub tools, `### Added` notes for the generic `delete` tool and
+the reusable `general/tools/_path_safety.py` module). Phase-end quality gate
+is green: `ruff format --check` (1472 files already formatted), `ruff check`
+(All checks passed), `vulture src/ whitelist.py --min-confidence 60` clean,
+full `unittest` suite OK (2713 tests — the Phase-3 baseline, unchanged since
+this phase is doc-only), `import biz.dfch.specmgr.server` OK, and the
+verification grep (`grep -nE 'delete_(req|uc|tsk|qa|prb|gol|rsk|dec|sop|
+feat|vcr)' AGENTS.md src/biz/dfch/specmgr/server.py`) returns zero matches in
+both files. **Remaining Phase 4 work (orchestrator-owned): Task 4.1 — the
+new ADR created via the `specmgr` MCP structured tools (`create_adr`, then
+`set_status` to `accepted`) — and Task 4.5 — `docs/` regeneration (`specmgr
+docs`, `specmgr mcp-docs`, `specmgr adr-toc`, each run twice to a fixed
+point). Then Phase 5 (quality gate and sign-off).**
 
 ### Blockers
 
@@ -502,6 +513,10 @@ propagation, Tasks 4.1–4.5) is next.**
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-08-31 23:20:24.000Z — Phase 4 (Tasks 4.2–4.4): AGENTS.md, server.py docstring, CHANGELOG.md updated
+
+Implemented Tasks 4.2–4.4 strictly per Design Notes §8 — the three documentation-propagation file edits of Phase 4; Task 4.1 (the new ADR, created via the `specmgr` MCP structured tools per ADR 898bfcd0 and set `accepted`) and Task 4.5 (docs regeneration, `specmgr docs`/`mcp-docs`/`adr-toc` each run twice to a fixed point) remain for the orchestrator. In `AGENTS.md` (Task 4.2), each of the eleven per-domain Status bullets (`req/`, `uc/`, `tsk/`, `qa/`, `prb/`, `gol/`, `rsk/`, `dec/`, `sop/`, `feat/`, `vcr/`) drops its `delete_<d>` stub mention from the tool enumeration (with `feat`'s "All 8 tools" count corrected to "All 7 tools") and gains a deletion note worded consistently with the generic `update`/`set_status` phrasing already in each bullet ("deletions through the generic `delete` tool (`type="<d>"`)"); the "Still genuinely missing / not yet done" stubs bullet ("`delete_req`/…/`delete_vcr` are stubs, not yet implemented") is removed, leaving the heading and the other three bullets intact; the `general/` bullet's `general/tools/` enumeration gains `delete` — the generic type-dispatched hard-delete for the eleven whole-body domains (`adr` excluded), with a note that all eleven domains implement a `delete` adapter in that one tool (a future domain adds its own adapter there, never a per-domain `delete_<d>` tool), resolving by `id`, taking the domain's own lock, and returning the deleted path; and the `ac` "future domain" convention note now reads "one dispatch entry to each of the two generic tools in `general/tools/` (`update`'s `type`, `set_status`'s `type`), one `delete` adapter in the generic `delete` tool, plus a `raw` parameter on the new `get_<d>` tool — not new `update_<d>`/`set_status_<d>`/`delete_<d>` tools". In `server.py`'s module docstring (Task 4.3 — the authoritative registration list; docstring text only, no code touched), the eleven per-domain `delete_<d>` stub mentions are removed from the domain tool paragraphs, keeping every other tool name and the surrounding sentence structure, and the "General tools" paragraph gains a `delete` entry on the same `name -- description` pattern: the generic type-dispatched hard-delete for the eleven whole-body domains (`type` one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr, `adr` not supported), resolves by `id`, takes the domain lock, and returns the deleted path, with a `ValueError` for injection/wrong-format ids before any file access, the domain's `XNotFoundError` for missing documents, and a `DeleteError` for I/O failures. In `CHANGELOG.md` (Task 4.4), the previously empty `[Unreleased]` section gains a `### Removed` entry (**BREAKING** 0.x: the eleven `delete_<d>` stub MCP tools deleted outright, no deprecated wrappers, with the caller switch to `delete` plus the explicit `type` parameter) and an `### Added` entry (the generic `delete(id, type)` MCP tool in `general/tools/` with its full dispatch, locking, and `ValueError`/`XNotFoundError`/`DeleteError` error contract, and the reusable, doc-type-agnostic `general/tools/_path_safety.py` module with its five pure, no-I/O guards, wired into `delete` now and adoptable later by `get_<d>`/`update`/`set_status` with zero rework) — both sub-headings following the file's existing Keep-a-Changelog convention and the 0.13.0 `### Removed`/`### Added` precedent. Phase-end quality gate all green: `ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, the full `unittest` suite (2713 tests OK — the Phase-3 baseline, unchanged since this phase is doc-only), `python -c "import biz.dfch.specmgr.server"` (SERVER IMPORT OK), and the verification grep `grep -nE 'delete_(req|uc|tsk|qa|prb|gol|rsk|dec|sop|feat|vcr)' AGENTS.md src/biz/dfch/specmgr/server.py` returning zero matches in both files (all eleven stub mentions gone; the remaining matches elsewhere — `general/tools/delete.py`'s private `_delete_<d>` adapter names and the `docs/` mirrors — are expected and will be reconciled by the orchestrator-owned Task 4.5 docs regeneration).
 
 #### 2026-08-31 21:32:55.000Z — Phase 3 complete: eleven delete stubs retired
 

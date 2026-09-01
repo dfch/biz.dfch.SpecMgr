@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- **BREAKING** (0.x): the eleven per-domain `delete_<d>` stub MCP tools are
+  deleted outright (no deprecated wrappers): `delete_req`, `delete_uc`,
+  `delete_tsk`, `delete_qa`, `delete_prb`, `delete_gol`, `delete_rsk`,
+  `delete_dec`, `delete_sop`, `delete_feat`, `delete_vcr` — each was a
+  registered stub that always raised `NotImplementedError`. The eleven
+  per-domain `delete_<d>.py` modules, their `__init__.py` registrations,
+  and their stub tests are gone with them. Callers must switch from
+  `tools/call --tool-name delete_<d>` to `tools/call --tool-name delete`
+  with the explicit `type` parameter (see "Added" below).
+
+### Added
+
+- Generic `delete(id, type)` MCP tool in `general/tools/`: the
+  type-dispatched hard-delete for the eleven whole-body domains (`type` is
+  one of `req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr`;
+  `adr` is not supported). Resolves the document by `id` under the
+  domain's own per-id lock and removes it — the single `*.md` file for the
+  ten flat domains, or the entire `<base>/<id>/` folder for `feat` —
+  returning the deleted path as a string. An invalid `id` (path-injection
+  attempt or wrong format) is a `ValueError` raised before any file access;
+  a missing document is the domain's own `XNotFoundError`; an I/O failure
+  during the delete is a `DeleteError` (an `OSError` subclass). This is
+  the sole delete entry point: every current and future domain implements
+  a `delete` adapter in the generic tool, never a per-domain `delete_<d>`
+  tool.
+- A reusable, doc-type-agnostic path-safety module
+  `general/tools/_path_safety.py`: `assert_no_traversal`, `assert_uuid`,
+  `assert_feat_id`, `validate_id`, and `assert_within` — pure, no-I/O
+  guards preventing path-injection through `type`/`id` inputs and confining
+  resolved paths to their base directory. Wired into the new `delete` tool
+  now; designed so the `get_<d>`, `update`, and `set_status` tools can
+  adopt it later with zero rework (they are not modified in this change).
+
 ## [0.15.0] - 2026-08-31
 
 ### Added

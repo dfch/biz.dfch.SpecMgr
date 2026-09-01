@@ -26,9 +26,10 @@ type or cross-cutting:
   schema uniquely lives under the shared top-level `models/adr/` (not
   `adr/models/`) — see the "models location" note below.
 - **`req/`** (Requirements) — `req/tools/` (`create_req`, `parse_req`,
-  `list_req`, `delete_req` stub, `validate_req`); whole-body and line-range
+  `list_req`, `validate_req`); whole-body and line-range
   updates go through the generic `update` tool in `general/tools/`
   (`type="req"`), status changes through the generic `set_status` tool
+  (`type="req"`), deletions through the generic `delete` tool
   (`type="req"`); `req/resources/` (`specmgr://req/schema`,
   `specmgr://req/example`, `specmgr://req/template`; no `specmgr://req/{id}`
   — id-based reads are `get_req`-only, ADR
@@ -39,10 +40,11 @@ type or cross-cutting:
   the domain package itself, not under top-level `models/`.
 - **`uc/`** (Use Cases) — same tools/resources/prompts shape as `req/` but
   for use cases (`create_uc`, `parse_uc`,
-  `list_uc`, `get_uc`, `get_uc_example`, `get_uc_template`, `delete_uc` stub,
+  `list_uc`, `get_uc`, `get_uc_example`, `get_uc_template`,
   `validate_uc`); whole-body and line-range updates go through the generic
   `update` tool in `general/tools/` (`type="uc"`), status changes through
-  the generic `set_status` tool (`type="uc"`), and the `get_uc` tool takes
+  the generic `set_status` tool (`type="uc"`), deletions through the generic
+  `delete` tool (`type="uc"`), and the `get_uc` tool takes
   `raw: bool = False` — `raw=True` returns the frontmatter-stripped body
   text as-is (the text `update`'s `begin`/`end` index into); no
   `specmgr://uc/{id}` resource for the same reason as
@@ -52,10 +54,11 @@ type or cross-cutting:
   inside the domain package, not `models/uc/`.
 - **`tsk/`** (Task Lists) — same shape again (`create_tsk`,
   `parse_tsk`, `list_tsk`, `get_tsk`, `get_tsk_example`,
-  `get_tsk_template`, `delete_tsk` stub, `validate_tsk`); whole-body and
+  `get_tsk_template`, `validate_tsk`); whole-body and
   line-range updates go through the generic `update` tool in
   `general/tools/` (`type="tsk"`), status changes through the generic
-  `set_status` tool (`type="tsk"`), and the `get_tsk` tool takes
+  `set_status` tool (`type="tsk"`), deletions through the generic
+  `delete` tool (`type="tsk"`), and the `get_tsk` tool takes
   `raw: bool = False` — `raw=True` returns the frontmatter-stripped body
   text as-is (the text `update`'s `begin`/`end` index into); plus a distinct
   `implement_task` prompt (reads a task list via `get_tsk`, builds a
@@ -68,10 +71,11 @@ type or cross-cutting:
 - **`qa/`** (Question and Answer) — same tools/resources/prompts shape as
   `req/`/`tsk/` but for requirements-elicitation Q&A interviews (`create_qa`,
   `parse_qa`, `list_qa`, `get_qa`, `get_qa_example`,
-  `get_qa_template`, `delete_qa` stub, `validate_qa`); whole-body and
+  `get_qa_template`, `validate_qa`); whole-body and
   line-range updates go through the generic `update` tool in
   `general/tools/` (`type="qa"`), status changes through the generic
-  `set_status` tool (`type="qa"`), and the `get_qa` tool takes
+  `set_status` tool (`type="qa"`), deletions through the generic
+  `delete` tool (`type="qa"`), and the `get_qa` tool takes
   `raw: bool = False` — `raw=True` returns the frontmatter-stripped body
   text as-is (the text `update`'s `begin`/`end` index into); `qa/resources/`
   (`specmgr://qa/schema`, `specmgr://qa/example`,
@@ -98,10 +102,11 @@ type or cross-cutting:
 - **`prb/`** (Problem Statement) — same tools/resources/prompts shape as
   `req/`/`tsk`/`qa` but for Six-Sigma-style problem statements
   (`create_prb`, `parse_prb`, `list_prb`,
-  `get_prb`, `get_prb_example`, `get_prb_template`, `delete_prb` stub,
+  `get_prb`, `get_prb_example`, `get_prb_template`,
   `validate_prb`); whole-body and line-range updates go through the generic
   `update` tool in `general/tools/` (`type="prb"`), status changes through
-  the generic `set_status` tool (`type="prb"`), and the `get_prb` tool
+  the generic `set_status` tool (`type="prb"`), deletions through the generic
+  `delete` tool (`type="prb"`), and the `get_prb` tool
   takes `raw: bool = False` — `raw=True` returns the frontmatter-stripped
   body text as-is (the text `update`'s `begin`/`end` index into);
   `prb/resources/` (`specmgr://prb/schema`,
@@ -118,10 +123,11 @@ type or cross-cutting:
   "what the organization wants to achieve" level that sits above
   individual requirements) (`create_gol`,
   `parse_gol`, `list_gol`, `get_gol`,
-  `get_gol_example`, `get_gol_template`, `delete_gol` stub,
+  `get_gol_example`, `get_gol_template`,
   `validate_gol`); whole-body and line-range updates go through the generic
   `update` tool in `general/tools/` (`type="gol"`), status changes through
-  the generic `set_status` tool (`type="gol"`), and the `get_gol` tool
+  the generic `set_status` tool (`type="gol"`), deletions through the generic
+  `delete` tool (`type="gol"`), and the `get_gol` tool
   takes `raw: bool = False` — `raw=True` returns the frontmatter-stripped
   body text as-is (the text `update`'s `begin`/`end` index into);
   `gol/resources/` (`specmgr://gol/schema`,
@@ -147,9 +153,10 @@ type or cross-cutting:
   `transfer`/`accept`/`reduce`/`avoid`))
   (`parse_rsk`, `get_rsk`, `list_rsk`, `get_rsk_example`,
   `get_rsk_template`, `create_rsk`,
-  `delete_rsk` stub, `validate_rsk`); whole-body and line-range updates
+  `validate_rsk`); whole-body and line-range updates
   go through the generic `update` tool in `general/tools/`
   (`type="rsk"`), status changes through the generic `set_status` tool
+  (`type="rsk"`), deletions through the generic `delete` tool
   (`type="rsk"`), and the `get_rsk` tool takes `raw: bool = False` —
   `raw=True` returns the frontmatter-stripped body text as-is (the text
   `update`'s `begin`/`end` index into); `rsk/resources/`
@@ -170,10 +177,11 @@ type or cross-cutting:
 - **`dec/`** (Decision) — same tools/resources/prompts shape as
   `req/`/`prb/` but for decisions in general (not architecture-only)
   (`parse_dec`, `get_dec`, `list_dec`, `get_dec_example`,
-  `get_dec_template`, `create_dec`, `delete_dec` stub,
+  `get_dec_template`, `create_dec`,
   `validate_dec`); whole-body and line-range updates go through the
   generic `update` tool in `general/tools/` (`type="dec"`), status
-  changes through the generic `set_status` tool (`type="dec"`), and
+  changes through the generic `set_status` tool (`type="dec"`),
+  deletions through the generic `delete` tool (`type="dec"`), and
   the `get_dec` tool takes `raw: bool = False` — `raw=True` returns
   the frontmatter-stripped body text as-is (the text `update`'s
   `begin`/`end` index into); `dec/resources/`
@@ -195,13 +203,15 @@ type or cross-cutting:
   shape as `dec/` but for structured, step-by-step operational documents
   with a RASCI-style responsibility assignment and a closed
   approval/effectivity lifecycle (`create_sop`, `parse_sop`, `list_sop`,
-  `get_sop`, `get_sop_example`, `get_sop_template`, `delete_sop` stub,
+  `get_sop`, `get_sop_example`, `get_sop_template`,
   `validate_sop`); `sop` is the **first domain built dispatch-only from day
   one** (ADR 36905d5b-8057-4294-8665-c7eed5534db0) — it has NO per-domain
-  `update_sop`/`set_status_sop` tools at all, so whole-body and line-range
-  updates go through the generic `update` tool in `general/tools/`
-  (`type="sop"`) and status changes through the generic `set_status` tool
-  (`type="sop"`), and the `get_sop` tool takes `raw: bool = False` —
+  `update_sop`/`set_status_sop` tools at all, so whole-body
+  and line-range updates go through the generic `update` tool in
+  `general/tools/` (`type="sop"`), status changes through the generic
+  `set_status` tool (`type="sop"`), and deletions through the generic
+  `delete` tool (`type="sop"`), and the `get_sop` tool takes
+  `raw: bool = False` —
   `raw=True` returns the frontmatter-stripped body text as-is (the text
   `update`'s `begin`/`end` index into); `sop/resources/`
   (`specmgr://sop/schema`, `specmgr://sop/example`,
@@ -236,13 +246,15 @@ type or cross-cutting:
   `general/tools/_doc_paths.py` every other whole-body domain uses;
   `SPECMGR_FEAT_DIR` overrides the base directory (mandatory-in-spirit
   test-isolation env var, same as every other domain's own equivalent).
-  All 8 tools (`create_feat`, `parse_feat`, `list_feat`, `get_feat`,
-  `get_feat_example`, `get_feat_template`, `delete_feat` stub,
+  All 7 tools (`create_feat`, `parse_feat`, `list_feat`, `get_feat`,
+  `get_feat_example`, `get_feat_template`,
   `validate_feat`); whole-body and line-range updates go through the
   generic `update` tool in `general/tools/` (`type="feat"`), status
-  changes through the generic `set_status` tool (`type="feat"`) — no
-  `update_feat`/`set_status_feat` of its own — and the `get_feat` tool
-  takes `raw: bool = False` — `raw=True` returns the frontmatter-stripped
+  changes through the generic `set_status` tool (`type="feat"`) and
+  deletions through the generic `delete` tool (`type="feat"`) — no
+  `update_feat`/`set_status_feat` of its own — and the
+  `get_feat` tool takes `raw: bool = False` — `raw=True` returns the
+  frontmatter-stripped
   body text as-is (the text `update`'s `begin`/`end` index into);
   `feat/resources/` (`specmgr://feat/schema`, `specmgr://feat/example`,
   `specmgr://feat/template`; no `specmgr://feat/{id}` — id-based reads
@@ -276,10 +288,11 @@ type or cross-cutting:
   `#### Test Steps` numbered procedure; a `model_validator` rejects
   duplicate `AC-NNN` numbers), plus optional `## More Information`/
   `## Updates` (`create_vcr`, `parse_vcr`, `list_vcr`, `get_vcr`,
-  `get_vcr_example`, `get_vcr_template`, `delete_vcr` stub,
+  `get_vcr_example`, `get_vcr_template`,
   `validate_vcr`); whole-body and line-range updates go through the
   generic `update` tool in `general/tools/` (`type="vcr"`), status
-  changes through the generic `set_status` tool (`type="vcr"`), and the
+  changes through the generic `set_status` tool (`type="vcr"`),
+  deletions through the generic `delete` tool (`type="vcr"`), and the
   `get_vcr` tool takes `raw: bool = False` — `raw=True` returns the
   frontmatter-stripped body text as-is (the text `update`'s `begin`/`end`
   index into); `vcr/resources/` (`specmgr://vcr/schema`,
@@ -305,7 +318,13 @@ type or cross-cutting:
     `begin`/`end` with the `N+1` end-of-body sentinel, splice-then-
     validate-whole; `set_status`, the generic status change for all twelve
     domains incl. adr — `superseded_by` is ADR-only, composing
-    `"superseded by X"`), `general/resources/`
+    `"superseded by X"`; `delete`, the generic type-dispatched hard-delete
+    for the eleven whole-body domains — `type` is one of
+    req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr (`adr` excluded), all eleven
+    domains implement a `delete` adapter in that one tool (a future domain
+    adds its own adapter there, never a per-domain `delete_<d>` tool),
+    resolving by `id`, taking the domain's own lock, and returning the
+    deleted path), `general/resources/`
    (`specmgr://version`, `specmgr://iso25010` — the ISO/IEC 25010:2023
    quality model, `specmgr://dtais` — the DTAIS verification-method
    vocabulary VCR's `## Acceptance Criteria` depends on, kept here rather
@@ -346,16 +365,14 @@ Still genuinely missing / not yet done (don't assume otherwise):
   own documents yet via pre-commit or CI. (ADR
   9c687bb1-8ee7-41c8-84ec-07606356bc73: "Enforce doc generation/lint/tests
   locally via pre-commit hook, not just CI")
-- `delete_req`/`delete_uc`/`delete_tsk`/`delete_qa`/`delete_prb`/
-  `delete_gol`/`delete_rsk`/`delete_dec`/`delete_sop`/`delete_feat`/
-  `delete_vcr` are stubs, not yet implemented.
 - No `ac` (Acceptance Criteria) domain exists yet, despite `server.py`'s
   docstring already reserving a spot for it ("... and later `ac`") — the
   convention for adding it (or any future domain) is fixed by ADR
   36905d5b-8057-4294-8665-c7eed5534db0: one dispatch entry to each of the
   two generic tools in `general/tools/` (`update`'s `type`,
-  `set_status`'s `type`) plus a `raw` parameter on the new `get_<d>` tool
-  — not new `update_<d>`/`set_status_<d>` tools.
+  `set_status`'s `type`), one `delete` adapter in the generic `delete`
+  tool, plus a `raw` parameter on the new `get_<d>` tool — not new
+  `update_<d>`/`set_status_<d>`/`delete_<d>` tools.
 - `req`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr` each register
   `tools`, `resources`, and `prompts`; `uc` registers `tools` and
   `resources` only — it has no `prompts` sub-package yet.
