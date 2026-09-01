@@ -1,7 +1,7 @@
 ---
 created: 2026-09-01
 id: feat-40-docs-prune
-status: planning
+status: done
 updated: 2026-09-01
 version: 1.0.0
 ---
@@ -52,21 +52,21 @@ correspond to a page written in this run.
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: Verifies REQ-001 — a test pre-seeds a stale `<module>.md`
+- [x] ACC-001: Verifies REQ-001 — a test pre-seeds a stale `<module>.md`
   page in a scratch `api/` directory, runs `_generate_api_docs` (or the
   `docs()` entry point with `--output`), and asserts the stale file is gone
   while all current module pages and `README.md` remain.
-- [ ] ACC-002: Verifies REQ-002 — tests assert (a) `README.md` is never
+- [x] ACC-002: Verifies REQ-002 — tests assert (a) `README.md` is never
   pruned, (b) a run that generates zero pages (unimportable package) leaves
   pre-existing files untouched, (c) non-`.md` files and nested directories
   in the `api/` dir are left untouched, and (d) a run in which exactly one
   module fails to import (mocked) skips pruning entirely — pre-seeded stale
   pages remain and the pruned count is 0.
-- [ ] ACC-003: Verifies REQ-003 — a test runs generation twice into the same
+- [x] ACC-003: Verifies REQ-003 — a test runs generation twice into the same
   scratch directory and asserts the resulting file sets are identical
   (idempotency); the existing signature-stability tests
   (`TestStableSignatureStr`) continue to pass.
-- [ ] ACC-004: Verifies REQ-004 — an end-to-end test of `docs()` with a
+- [x] ACC-004: Verifies REQ-004 — an end-to-end test of `docs()` with a
   pre-seeded stale page asserts the stale page is removed and the echo
   output reports the pruning count.
 
@@ -203,16 +203,16 @@ progresses (edit, don't duplicate).
   status: done (2026-09-01)
 
 #### Phase 2: Verify & close out
-- [ ] Task 2.1: Full quality gate re-run (`ruff format --check`, `ruff
+- [x] Task 2.1: Full quality gate re-run (`ruff format --check`, `ruff
   check`, `vulture src/ whitelist.py --min-confidence 60`, full `unittest`
   suite, `specmgr coverage-badge` diff-clean) with the pruned `docs/api/`
   committed, plus a `### Fixed` entry under `CHANGELOG.md`'s
   `[Unreleased]` for the prune behavior (issue #40) — depends on:
-  Task 1.4 — status: not-started
-- [ ] Task 2.2: Close GitHub issue #40 reference — record the issue link in
+  Task 1.4 — status: done (2026-09-01)
+- [x] Task 2.2: Close GitHub issue #40 reference — record the issue link in
   "Related PRs / Commits" below when the PR/commit lands; move
   frontmatter `status` to `done` and update "Current Status" — depends on:
-  Task 2.1 — status: not-started
+  Task 2.1 — status: done (2026-09-01)
 
 **Note:** If a task's scope changes mid-flight, edit its description in place;
 rely on git history (`git log -p` on this file) to recover what was
@@ -222,20 +222,41 @@ originally planned, rather than keeping a second copy of the task around.
 
 ### Current Status
 
-**As of 2026-09-01**: Phase 1 (Tasks 1.1–1.4) done — pruning implemented
-in `commands/docs.py`, tested (ACC-001..ACC-004), phase gate green, and
-the real run pruned exactly the five stale pages
-(`{adr,qa,req,tsk,uc}.resources.*_list.md`) from `docs/api/`. One expected
-additional `docs/` diff: the regenerated
-`docs/api/biz.dfch.specmgr.commands.docs.md` (the API page of the very
-module Phase 1 modified — its signatures and docstrings changed, so the
-generated page must too; `GENERATED.md` and the index are byte-identical).
-A second `specmgr docs` run over the pruned tree is byte-identical
-(idempotent, REQ-003). Phase 2 (verify & close out) not started.
+**As of 2026-09-01**: feature complete — both phases done (Phase 1,
+Tasks 1.1–1.4: pruning implemented, tested, and the five stale
+`docs/api/` pages pruned in commit `08bcefc`; Phase 2, Tasks 2.1–2.2:
+full quality gate re-run green with the pruned tree committed,
+`CHANGELOG.md` `[Unreleased]` `### Fixed` entry added, frontmatter
+`status` moved to `done`). All four acceptance criteria
+(ACC-001..ACC-004) are verified by tests; gates are green (ruff
+format/check, vulture, 2720-test suite, `docs/coverage.svg` diff-clean at
+99%); repeated `specmgr docs` runs over the pruned tree remain
+byte-identical (REQ-003). Ready for a PR to `dev` and closure of
+GitHub issue #40 — no PR exists yet; the work is on the local branch
+`feat-40-docs-prune` only.
 
 ### Recent Updates
 
 #### Update 2026-09-01 (newest)
+- Completed: Phase 2 (Tasks 2.1–2.2). Full quality gate re-run with the
+  pruned `docs/api/` committed — `ruff format --check` PASS (1472 files;
+  the 5 pruned `.md` pages no longer counted); `ruff check` PASS;
+  `vulture src/ whitelist.py --min-confidence 60` PASS (no findings);
+  full suite via the pre-commit hook's exact invocation
+  (`coverage run -m unittest discover -v -s tests -t . -p "test_*.py"`)
+  PASS (2720 tests, 0 failures); `specmgr coverage-badge` PASS (99%
+  overall, 7692 stmts / 106 miss — `docs/coverage.svg` diff-clean,
+  unchanged). Added the `### Fixed` entry under `CHANGELOG.md`'s
+  `[Unreleased]` for the prune behavior (issue #40); recorded the Phase 1
+  commit (`08bcefc`, full hash
+  `08bcefcb73133020c44d6863c92d3eeacb3f1627`) in "Related PRs / Commits";
+  moved frontmatter `status` to `done` and updated "Current Status".
+- Next: PR to `dev` / closure of GitHub issue #40 (no PR yet — local
+  branch `feat-40-docs-prune` only); the closing commit for this update +
+  the CHANGELOG entry lands immediately after (a commit cannot record its
+  own hash).
+
+#### Update 2026-09-01
 - Completed: Phase 1 (Tasks 1.1–1.4). `commands/docs.py`:
   `_generate_api_docs` now prunes stale flat `api/*.md` pages after the
   write loop (complement of the just-written filenames, `README.md`
@@ -343,3 +364,5 @@ A second `specmgr docs` run over the pruned tree is byte-identical
 
 - [Issue #40](https://github.com/dfch/biz.dfch.SpecMgr/issues/40): `specmgr docs`
   does not prune stale pages
+- [08bcefc](https://github.com/dfch/biz.dfch.SpecMgr/commit/08bcefcb73133020c44d6863c92d3eeacb3f1627): fix(docs): prune stale docs/api pages in `specmgr docs` (#40) — Phase 1, full hash `08bcefcb73133020c44d6863c92d3eeacb3f1627`
+- The closing commit for Phase 2 (this update + the `CHANGELOG.md` entry) lands immediately after this one — a commit cannot record its own hash. No PR yet: the work is on the local branch `feat-40-docs-prune` only.
