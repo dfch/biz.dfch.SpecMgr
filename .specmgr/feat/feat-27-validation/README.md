@@ -3,7 +3,7 @@ created: '2026-09-01T14:24:06.341303'
 id: feat-27-validation
 status: planning
 type: feat
-updated: '2026-09-01T19:45:00.000000'
+updated: '2026-09-01T21:15:00.000000'
 version: 1.0.0
 ---
 
@@ -100,9 +100,9 @@ The `create_feat` tool auto-assigns `max(NNN)+1` (which would be `feat-37-<slug>
 
 #### Phase 2: Frontmatter and Value Channels
 
-- [ ] Task 2.1: Wrap `yaml.YAMLError` in the per-domain parsers: name the frontmatter block, remap block-relative to document-relative line numbers — depends on: Phase 1
-- [ ] Task 2.2: Add domain/document context to the `pydantic.ValidationError` surface at the parser boundary — depends on: Phase 1
-- [ ] Task 2.3: Tests for both channels — depends on: Tasks 2.1 and 2.2
+- [x] Task 2.1: Wrap `yaml.YAMLError` in the per-domain parsers: name the frontmatter block, remap block-relative to document-relative line numbers — depends on: Phase 1 — status: done (2026-09-01)
+- [x] Task 2.2: Add domain/document context to the `pydantic.ValidationError` surface at the parser boundary — depends on: Phase 1 — status: done (2026-09-01)
+- [x] Task 2.3: Tests for both channels — depends on: Tasks 2.1 and 2.2 — status: done (2026-09-01)
 
 #### Phase 3: Tool Boundary
 
@@ -122,20 +122,108 @@ The `create_feat` tool auto-assigns `max(NNN)+1` (which would be `feat-37-<slug>
 
 ### Current Status
 
-**As of 2026-09-01**: Phase 1 (models/md Engine Messages) is complete. Every cataloged
-`models/md`-engine error surface now carries a document-relative field path (REQ-001), a
-1-based line reference relative to the normalized body plus a snippet (REQ-002), and an
-expected/fix detail (REQ-003) — "text left over after processing all fields", "expected …,
-found no match" (field and list), raw-HTML rejection (inline and block), "text is not in
-'mdformat'.", and heading alias mismatch. Task 1.7 additionally threaded the same path/line
-onto the domain-level item-regex computed-field raises in `tsk`/`rsk`/`vcr`/`feat`. Exception
-types are unchanged throughout (REQ-006); the full unittest suite (2747 tests, up from 2720)
-passes, with one existing domain test (`tests/qa/models/v2/test_parser.py`) updated to match
-its own intentionally-changed message substring. `ruff format --check`/`ruff check`/`vulture`
-are all clean. The next step is Phase 2 (Frontmatter and Value Channels), beginning with
-Task 2.1 (wrap `yaml.YAMLError` in the per-domain parsers).
+**As of 2026-09-01**: Phase 2 (Frontmatter and Value Channels) is complete, on top of Phase 1
+(models/md Engine Messages). Every one of the twelve domains' parsers (eleven whole-body
+domains plus ADR) now enriches both frontmatter error channels through one shared helper,
+`models/md/_frontmatter_parse.py`: a malformed-YAML `yaml.YAMLError` names "the frontmatter
+block" (replacing PyYAML's own opaque `"<unicode string>"`) and carries document-relative line
+numbers instead of block-relative ones (REQ-004), and an out-of-vocabulary/invalid-value
+`pydantic.ValidationError` is re-raised as the exact same exception type with each per-field
+message prefixed by the domain, the field name, and (when locatable) a document-relative line
+number (Task 2.2). Exception types are unchanged throughout (REQ-006); the full unittest suite
+(2760 tests, up from 2747) passes, `ruff format --check`/`ruff check`/`vulture` are all clean.
+The next step is Phase 3 (Tool Boundary), beginning with Task 3.1 (the shared domain + tool +
+frontmatter-vs-body context wrapper in a new `models/md/_errors.py`).
 
 ### Updates
+
+#### 2026-09-01 21:15:00.000Z — Phase 2 (Frontmatter and Value Channels) completed
+
+Implemented Tasks 2.1-2.3. New shared module:
+`src/biz/dfch/specmgr/models/md/_frontmatter_parse.py` (deliberately not `_errors.py`, which
+Phase 3's Task 3.1 reserves), holding `frontmatter_opening_line()` (the block-relative ->
+document-relative line-offset math), `enrich_frontmatter_yaml_error()` (Task 2.1),
+`enrich_frontmatter_validation_error()` (Task 2.2), and the composed convenience entry point
+`parse_frontmatter()` that every domain parser now calls in place of its previous bare
+`frontmatter.loads(text)` / `SomeFrontmatter.model_validate(...)` pair. All twelve domains'
+`parser.py` modules were updated to call it: `req`, `uc` (both `v1` and `v2`), `tsk`, `qa`,
+`prb`, `gol`, `rsk`, `dec`, `sop`, `feat`, `vcr`, and ADR's `models/adr/v1/parser.py` — the
+`import frontmatter` line moved out of every one of those twelve files into the new shared
+module, since `parse_frontmatter` now owns that call.
+
+Remap math (Task 2.1): `frontmatter.loads`/`frontmatter.parse` call `text.strip()` before
+splitting on the `---` boundary via `re.compile(r"^-{3,}\s*$", re.MULTILINE).split(text, 2)`,
+so PyYAML only ever sees the extracted YAML substring (`fm`), whose own `mark.line` (0-based)
+is relative to that substring, not the document. Verified empirically (not guessed) against
+`python-frontmatter`'s actual installed source
+(`.venv/.../frontmatter/__init__.py`/`default_handlers.py`): the opening `---` delimiter is
+always the *stripped* text's own line 1 (frontmatter detection requires the boundary regex to
+match at position 0), so `document_line = mark.line + opening_line`, where
+`opening_line = 1 + count("\n", leading_whitespace)` and `leading_whitespace` is whatever
+`str.lstrip()` would remove from the *original*, unstripped input. Worked example: for
+`text = "\n\n---\nid: tsk-1\nstatus: [unterminated\n---\nbody\n"` (two leading blank lines),
+PyYAML's own `ParserError` reports block-relative `context_mark.line=1`/`problem_mark.line=2`
+(0-based; "line 2"/"line 3" in its own 1-based display) for the two marks around
+`status: [unterminated`/the immediately-following `---` line; `opening_line = 1 + 2 = 3`
+(the *document*-relative 1-based line of the opening `---`), so the corrected document lines
+are `1+3=4`/`2+3=5` (0-based) i.e. document lines 5/6 in PyYAML's own 1-based display —
+verified directly against the real 1-based document line numbers of those two source lines.
+Implementation only rewrites each `yaml.error.Mark`'s `name` (to `"the frontmatter block"`,
+replacing `"<unicode string>"`) and `line` (shifted by `opening_line - 1`); `column`/`buffer`/
+`pointer` are left untouched, so PyYAML's own snippet extraction (which walks `buffer`/
+`pointer`, not `line`) and its own `context`/`problem` detail strings are carried alongside the
+corrected location unchanged, not replaced by it, per the plan's explicit instruction. The
+same-type re-raise is `type(error)(context=..., context_mark=<remapped>, problem=...,
+problem_mark=<remapped>, note=...)`, since every `MarkedYAMLError` subclass (`ParserError`,
+`ScannerError`, ...) inherits that exact constructor signature unchanged from PyYAML's own
+`yaml.error.MarkedYAMLError` — verified via `inspect.getsource`, not assumed.
+
+`pydantic.ValidationError` message enrichment (Task 2.2, the open design question the plan
+flagged): investigated `pydantic_core.PydanticCustomError` +
+`pydantic.ValidationError.from_exception_data(title, line_errors)` (verified: `pydantic.
+ValidationError` *is* `pydantic_core._pydantic_core.ValidationError` in pydantic 2.13 -- not a
+separate re-implementation -- so constructing one via `from_exception_data`, its own public
+classmethod constructor, produces the exact same runtime type as the one
+`model_validate` raised, satisfying REQ-006's letter, not just its spirit). For each of the
+original error's own `.errors()` entries, a new `InitErrorDetails` is built with
+`type=PydanticCustomError("frontmatter_value_error", <our enriched message>)` (a made-up type
+tag, not one of pydantic's own recognized ones, which is exactly why the enriched message
+renders with no unrelated `https://errors.pydantic.dev/...` documentation-link suffix
+appended) and the original `loc`/`input` preserved; `ValidationError.from_exception_data(error.
+title, line_errors)` then produces the re-raiseable replacement. No tradeoff or limitation was
+hit in the end -- the resulting object passes `isinstance(result, pydantic.ValidationError)`
+and `type(result) is type(original)` (both asserted directly in
+`tests/models/md/test_frontmatter_errors.py::TestEnrichFrontmatterValidationError::
+test_preserves_the_exact_exception_type`), and `str(result)` shows exactly the composed
+message with no residual pydantic boilerplate. See Decisions Made below for why this was
+judged preferable to the alternatives the plan raised.
+
+Each enriched validation message reads
+`"{domain} frontmatter block, field '{field}' (document line {N}): {original pydantic msg}"`
+(the `(document line {N})` clause omitted when the field cannot be located as a literal
+top-level `key:` line in the frontmatter block, e.g. a `pydantic` "Field required" error for a
+key that is simply absent) -- `{domain}` is a literal short code (`"tsk"`, `"req"`, ..., `"adr"`)
+passed by each parser, not derived by introspecting the frontmatter class, since ADR's own
+`AdrFrontmatter` has no `type` field to introspect at all (unlike every `MarkdownFrontmatter`
+subclass) and a plain, explicit string keeps the twelve call sites uniform.
+
+Files touched: `models/md/_frontmatter_parse.py` (new); all twelve domains' `parser.py`
+(`req`, `uc/v1`, `uc/v2`, `tsk`, `qa`, `prb`, `gol`, `rsk`, `dec`, `sop`, `feat`, `vcr`,
+`models/adr/v1`); `tests/models/md/test_validation_error_baseline.py` (the pinned
+`TestFrontmatterYamlErrorBaseline` assertion updated from `"<unicode string>"` to `"the
+frontmatter block"` -- exception type `yaml.parser.ParserError` unchanged, per this phase's own
+"pin-then-enrich" instruction; `TestFrontmatterValidationErrorBaseline`'s `assertIn` check
+needed no change, since the substring it already pinned remains a verbatim part of the new,
+longer enriched message). New test file:
+`tests/models/md/test_frontmatter_errors.py` (13 tests, Task 2.3) covering the remap math
+directly (`frontmatter_opening_line`, including a two-leading-blank-line case), both enrichment
+functions directly (type preservation, frontmatter-block naming, field/line composition, the
+line-omitted branch, and a plain non-`Marked` `yaml.YAMLError` passthrough), and cross-domain
+integration coverage through `parse_tsk`/`parse_req`/`parse_adr` (ACC-002 is satisfied by the
+updated `TestFrontmatterYamlErrorBaseline` baseline test via `parse_tsk`, corroborated by this
+new file's own `parse_adr`/`parse_req` cases). Quality gate: `ruff format --check` (clean),
+`ruff check` (clean), `vulture src/ whitelist.py --min-confidence 60` (clean), full
+`unittest discover` (2760 tests, up from 2747, OK).
 
 #### 2026-09-01 19:45:00.000Z — Phase 1 (models/md Engine Messages) completed
 
@@ -184,6 +272,31 @@ Phase 0 (Decide and Record) is complete: Task 0.1 (this feature was created via 
 Created for GitHub issue #27; subsumes feat-7's not-started Task 0.29. Investigation and planning complete; decisions confirmed with the user.
 
 ### Decisions Made
+
+#### 2026-09-01 21:15:00.000Z — Phase 2: `pydantic.ValidationError` message enrichment approach
+
+Chose `pydantic_core.ValidationError.from_exception_data(title, line_errors)` +
+`pydantic_core.PydanticCustomError` to re-raise an enriched, same-type replacement
+`pydantic.ValidationError`, over the alternatives the plan raised: (1) mutating the caught
+exception's `.args`/`__str__` in place -- rejected, since `pydantic_core.ValidationError` is a
+Rust-backed extension type with no writable `.args`/message attribute the public API exposes
+for post-hoc mutation; (2) a hand-rolled `ValueError`/custom wrapper subclassing
+`pydantic.ValidationError` -- rejected outright by REQ-006 ("no new exception types"), and
+`pydantic_core.ValidationError` is `@final`-like in practice (a C extension type not designed
+for subclassing) besides; (3) leaving the message unchanged and only prepending context via a
+*separate*, wrapping exception raised `from` the original (e.g. a plain `ValueError` chained on
+top) -- rejected, since that changes the exception TYPE a caller's `except
+pydantic.ValidationError` would need to catch, which is exactly the channel-preservation
+guarantee REQ-006 exists to protect. `from_exception_data` is `pydantic_core.ValidationError`'s
+own public classmethod constructor (not a private/`_`-prefixed API), and since
+`pydantic.ValidationError` is a straight re-export of `pydantic_core._pydantic_core.
+ValidationError` in pydantic 2.13 (verified via `ValidationError.__module__`), the object it
+returns is not merely "compatible with" `pydantic.ValidationError` -- it *is* one, satisfying
+REQ-006's letter with no caveat. No accepted limitation was identified: the per-field `.errors()`
+list, `loc`, and `input` are all preserved from the original error and only the displayed `msg`
+(and the internal `type` tag, changed to a made-up `"frontmatter_value_error"` solely to
+suppress pydantic's own irrelevant `https://errors.pydantic.dev/...` doc-link suffix for a
+message this module already fully composed) differ from what `model_validate` itself raised.
 
 #### 2026-09-01 19:45:00.000Z — Phase 1 implementation-detail decisions
 

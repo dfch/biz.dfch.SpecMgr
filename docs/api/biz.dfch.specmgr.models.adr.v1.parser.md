@@ -154,5 +154,9 @@ Adr
     The structured document. Raises :class:`AdrParseError` for a
     malformed heading structure, or ``pydantic.ValidationError`` for a
     structurally-sound document whose field values fail schema
-    validation (see this module's docstring).
+    validation (see this module's docstring). Raises ``yaml.YAMLError``
+    for malformed frontmatter YAML -- both frontmatter error channels
+    are enriched by
+    :func:`~biz.dfch.specmgr.models.md._frontmatter_parse.parse_frontmatter`
+    (feat-27-validation Phase 2).
 

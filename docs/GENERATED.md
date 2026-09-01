@@ -189,6 +189,7 @@ First-line docstrings from each module, organized by domain:
 - `models/adr/v1/summary.py` — Pydantic model for one line of ADR listing output (plan §8, §9a).
 - `models/iso25010.py` — Pydantic schema and parser for the ISO/IEC 25010:2023 product quality
 - `models/md/__init__.py` — Markdown base models.
+- `models/md/_frontmatter_parse.py` — Shared frontmatter-parsing error enrichment (feat-27-validation Phase 2, Tasks 2.1/2.2).
 - `models/md/_markdown.py` — Markdown shared instance.
 - `models/md/_util.py` — Shared, private validation helpers for the ``models.md`` subpackage.
 - `models/md/alias.py` — Alias decorator for MarkdownStr class name transformation.
@@ -484,4 +485,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 320
+**Test files**: 321

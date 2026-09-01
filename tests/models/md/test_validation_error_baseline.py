@@ -262,9 +262,9 @@ class TestFrontmatterYamlErrorBaseline(unittest.TestCase):
         self.assertIsInstance(ctx.exception, yaml.parser.ParserError)
         self.assertEqual(
             str(ctx.exception),
-            'while parsing a flow sequence\n  in "<unicode string>", line 3, column 9\n'
+            'while parsing a flow sequence\n  in "the frontmatter block", line 3, column 9\n'
             "did not find expected ',' or ']'\n"
-            '  in "<unicode string>", line 4, column 1',
+            '  in "the frontmatter block", line 4, column 1',
         )
 
 
