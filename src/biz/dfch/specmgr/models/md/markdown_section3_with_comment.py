@@ -46,10 +46,10 @@ class MarkdownSection3WithComment(MarkdownSection3):
         return super().get_extent(text)
 
     @classmethod
-    def from_text(cls, text: str) -> MarkdownSection3WithComment:
+    def from_text(cls, text: str, *, _path: str = "", _offset: int = 0) -> MarkdownSection3WithComment:
         """Enforce the >=1-other-field constraint, then defer to `MarkdownSection3.from_text`."""
         assert len(cls._get_field_names()) > 1, (
             f"{cls.__name__}: 'comment' must be paired with at least one other declared field "
             "to absorb the section's body content"
         )
-        return super().from_text(text)
+        return super().from_text(text, _path=_path, _offset=_offset)

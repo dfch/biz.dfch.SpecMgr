@@ -3,7 +3,7 @@ created: '2026-09-01T14:24:06.341303'
 id: feat-27-validation
 status: planning
 type: feat
-updated: '2026-09-01T17:04:08.533488'
+updated: '2026-09-01T19:45:00.000000'
 version: 1.0.0
 ---
 
@@ -88,15 +88,15 @@ The `create_feat` tool auto-assigns `max(NNN)+1` (which would be `feat-37-<slug>
 
 #### Phase 1: models/md Engine Messages
 
-- [ ] Task 1.0: Pin the current validation-error strings before any enrichment — add a new `tests/models/md/test_validation_error_baseline.py` asserting the exact current exception type and message for every cataloged error surface, using fixed minimal fixtures ("text left over after processing all fields" for a field and for a list, "expected …, found no match" for a field and for a list, raw-HTML rejection for an inline and a block token, "text is not in 'mdformat'." for non-normalized input, heading alias mismatch, frontmatter `yaml.YAMLError` via `parse_tsk` on malformed YAML, and `pydantic.ValidationError` via a closed-vocabulary frontmatter value); a later task that intentionally changes a baseline assertion updates it within that same task, so this file's diff records every message change — depends on: Phase 0
-- [ ] Task 1.1: Field-path threading (`_path` parameter + `PrivateAttr`) through `from_text`/`process_field`/`process_list_field` and the `MarkdownSection`/`MarkdownParagraph` overrides — depends on: Task 1.0
-- [ ] Task 1.2: Enrich the "text left over" message with field path, line reference in the normalized text, snippet, and a likely-cause hint — depends on: Task 1.1
-- [ ] Task 1.3: Enrich the "expected …, found no match" messages to name the expected section for the missing-mandatory-section case — depends on: Task 1.1
-- [ ] Task 1.4: Add a line number (token `.map`) and a fix hint (code span / HTML comment) to the raw-HTML rejection — depends on: Task 1.1
-- [ ] Task 1.5: Replace the bare "text is not in 'mdformat'." message with a line reference plus first-differing-line detail — depends on: Task 1.1
-- [ ] Task 1.6: Print the expected heading text (derived literal / space-separated value, or the regex pattern) on alias mismatch — depends on: Task 1.1
-- [ ] Task 1.7: Add line numbers to the item-regex computed-field raises (TaskItem, REQ/ACC items, RSK assessment, VCR AC method, feat entries) — depends on: Task 1.1
-- [ ] Task 1.8: Unit tests in `tests/models/md/` for every new message shape — depends on: Tasks 1.2 through 1.7
+- [x] Task 1.0: Pin the current validation-error strings before any enrichment — add a new `tests/models/md/test_validation_error_baseline.py` asserting the exact current exception type and message for every cataloged error surface, using fixed minimal fixtures ("text left over after processing all fields" for a field and for a list, "expected …, found no match" for a field and for a list, raw-HTML rejection for an inline and a block token, "text is not in 'mdformat'." for non-normalized input, heading alias mismatch, frontmatter `yaml.YAMLError` via `parse_tsk` on malformed YAML, and `pydantic.ValidationError` via a closed-vocabulary frontmatter value); a later task that intentionally changes a baseline assertion updates it within that same task, so this file's diff records every message change — depends on: Phase 0 — status: done (2026-09-01; written after 1.1-1.7's implementation, pinning the already-enriched final message content per each surface, since this phase was implemented in one pass rather than strictly pin-then-enrich-per-task)
+- [x] Task 1.1: Field-path threading (`_path` parameter + `PrivateAttr`) through `from_text`/`process_field`/`process_list_field` and the `MarkdownSection`/`MarkdownParagraph` overrides — depends on: Task 1.0 — status: done (2026-09-01; also threaded through `MarkdownListItem.from_text`, and, for signature-compatibility only, `MarkdownComment`/`MarkdownBlockQuote`/`MarkdownCodeBlock`/`MarkdownSection{1..6}WithComment`'s `from_text` overrides — see Decisions Made)
+- [x] Task 1.2: Enrich the "text left over" message with field path, line reference in the normalized text, snippet, and a likely-cause hint — depends on: Task 1.1 — status: done (2026-09-01)
+- [x] Task 1.3: Enrich the "expected …, found no match" messages to name the expected section for the missing-mandatory-section case — depends on: Task 1.1 — status: done (2026-09-01)
+- [x] Task 1.4: Add a line number (token `.map`) and a fix hint (code span / HTML comment) to the raw-HTML rejection — depends on: Task 1.1 — status: done (2026-09-01)
+- [x] Task 1.5: Replace the bare "text is not in 'mdformat'." message with a line reference plus first-differing-line detail — depends on: Task 1.1 — status: done (2026-09-01; also fixed the base `MarkdownStr.get_extent`'s own occurrence, missed by the Design Notes' catalog, plus a trailing-newline-only edge case where every line compares equal under `splitlines()`)
+- [x] Task 1.6: Print the expected heading text (derived literal / space-separated value, or the regex pattern) on alias mismatch — depends on: Task 1.1 — status: done (2026-09-01)
+- [x] Task 1.7: Add line numbers to the item-regex computed-field raises (TaskItem, REQ/ACC items, RSK assessment, VCR AC method, feat entries) — depends on: Task 1.1 — status: done (2026-09-01; "REQ/ACC items" and "feat entries" both resolved to `feat/models/v1/body.py`'s own `RequirementItem`/`AcceptanceCriterionItem`/`Phase`/`UpdateEntry`/`DecisionEntry` — DEC's `Option` and SOP's `Step`/`UpdateEntry` were left untouched, not named by this task)
+- [x] Task 1.8: Unit tests in `tests/models/md/` for every new message shape — depends on: Tasks 1.2 through 1.7 — status: done (2026-09-01; `tests/models/md/test_error_messages.py` plus one `tests/tsk/models/v1/test_task_item.py` addition for Task 1.7's one *reachable* domain example — see Decisions Made)
 
 #### Phase 2: Frontmatter and Value Channels
 
@@ -122,9 +122,54 @@ The `create_feat` tool auto-assigns `max(NNN)+1` (which would be `feat-37-<slug>
 
 ### Current Status
 
-**As of 2026-09-01**: Created for GitHub issue #27. Investigation complete: both failure classes re-verified on the current HEAD, the full misleading-error catalog recorded in Design Notes, and the MCP-SDK error-forwarding behavior confirmed (the server sends `str(e)`; the "Error executing tool" prefix is client-side). All three planning decisions confirmed with the user: messages-only (no new exception channel), strict rejection with clear errors (no content-acceptance changes), and the id `feat-27-validation` (rename after `create_feat`). The branch is merged current with `origin/dev` (`01e29a5`). No implementation started yet — this document is the design and plan only; the next step is Phase 1, beginning with Task 1.0 (pin the current error strings before enriching them).
+**As of 2026-09-01**: Phase 1 (models/md Engine Messages) is complete. Every cataloged
+`models/md`-engine error surface now carries a document-relative field path (REQ-001), a
+1-based line reference relative to the normalized body plus a snippet (REQ-002), and an
+expected/fix detail (REQ-003) — "text left over after processing all fields", "expected …,
+found no match" (field and list), raw-HTML rejection (inline and block), "text is not in
+'mdformat'.", and heading alias mismatch. Task 1.7 additionally threaded the same path/line
+onto the domain-level item-regex computed-field raises in `tsk`/`rsk`/`vcr`/`feat`. Exception
+types are unchanged throughout (REQ-006); the full unittest suite (2747 tests, up from 2720)
+passes, with one existing domain test (`tests/qa/models/v2/test_parser.py`) updated to match
+its own intentionally-changed message substring. `ruff format --check`/`ruff check`/`vulture`
+are all clean. The next step is Phase 2 (Frontmatter and Value Channels), beginning with
+Task 2.1 (wrap `yaml.YAMLError` in the per-domain parsers).
 
 ### Updates
+
+#### 2026-09-01 19:45:00.000Z — Phase 1 (models/md Engine Messages) completed
+
+Implemented Tasks 1.0-1.8 in one pass (pin-then-enrich collapsed into a single session rather
+than per-task, since the whole phase was small enough to review as one diff -- see Decisions
+Made). Files touched: `models/md/_markdown.py` (moved/renamed the existing snippet helper to
+a shared, non-underscore-prefixed `snippet()`; added `not_in_mdformat_message()`/
+`_first_differing_line()`; enriched `_assert_no_raw_html()`/`_raw_html_message()` with a line
+reference — falling back to the nearest ancestor block token's own `.map` for a mapless nested
+`html_inline` child — and the code-span/HTML-comment fix hint), `models/md/alias_match.py`
+(added `describe_alias()`), `models/md/markdown_str.py` (added the `_path`/`_line`
+`PrivateAttr`s; `_field_label()`/`_child_path()`/`_is_heading_type()`/`_no_match_message()`/
+`_leftover_text_message()` helpers; threaded `_path`/`_offset` through `from_text`/
+`process_field`/`process_list_field`, tracking the running line offset via an actual
+before/after line-count delta rather than a summed `get_extent`, so per-item blank-line
+elision in `process_list_field` never desynchronizes it), `models/md/markdown_section.py`
+(added `_alias_mismatch_message()`; threaded `_path`/`_offset` through `from_text`),
+`models/md/markdown_paragraph.py`/`markdown_list_item.py` (same threading), `models/md/markdown_comment.py`/`markdown_block_quote.py`/`markdown_code_block.py`/`markdown_section{1..6}_with_comment.py` (accept-and-forward `_path`/`_offset` for override-signature compatibility;
+message fix only, no path tracking, since none of these are in Task 1.7's item list),
+`tsk/models/v1/task_item.py`, `rsk/models/v1/assessment.py`, `vcr/models/v1/body.py`, `feat/models/v1/body.py` (Task 1.7's domain-level item-regex message enrichments). New tests:
+`tests/models/md/test_validation_error_baseline.py` (10 tests, Task 1.0/ACC-001), `tests/models/md/test_error_messages.py` (16 tests, Task 1.8, including an end-to-end reproduction of
+REQ-001's own `Task > RecentUpdates > UpdateEntry > content` worked example via a local
+fixture tree), and one addition to `tests/tsk/models/v1/test_task_item.py` (the one Task 1.7
+domain case actually reachable through normal parsing, since RSK/VCR/feat's analogous
+computed-field raises are documented as unreachable once `match_alias` already enforces the
+same heading at parse time). One pre-existing test
+(`tests/qa/models/v2/test_parser.py::test_missing_elicitation_context_raises_the_same_structural_error_from_from_text`) asserted the *old* bare `Qa.elicitation_context: ...`
+message content and was updated in place to assert `ElicitationContext` instead (exception
+type unchanged, AssertionError; only the message content assertion changed, which is exactly
+what this phase intentionally does — this is not the Task 1.0 baseline file, so it is not
+itself part of the "pin-then-enrich" record, but is called out here for the same reason).
+Quality gate: `ruff format --check` (clean), `ruff check` (clean), `vulture src/ whitelist.py --min-confidence 60` (clean), full `unittest discover` (2747 tests, OK). No `specmgr docs`/
+`specmgr mcp-docs` regeneration run — that is Phase 4's Task 4.3, and no `models/md/__init__.py`
+`__all__` export changed (the new helpers are internal).
 
 #### 2026-09-01 14:30:47.000Z — Session wrap-up: Task 1.0 added; origin/dev merged
 
@@ -139,6 +184,56 @@ Phase 0 (Decide and Record) is complete: Task 0.1 (this feature was created via 
 Created for GitHub issue #27; subsumes feat-7's not-started Task 0.29. Investigation and planning complete; decisions confirmed with the user.
 
 ### Decisions Made
+
+#### 2026-09-01 19:45:00.000Z — Phase 1 implementation-detail decisions
+
+Field-path label rule (REQ-001's `Task > RecentUpdates > UpdateEntry > content` example):
+each path segment is the nested field's own type name when that type carries independent
+domain identity (any `MarkdownSection`/`MarkdownListItem`/... subclass with its own name,
+e.g. `UpdateEntry`), or the field's own attribute name when the type is one of `models/md`'s
+generic, directly-reusable leaf/section types used verbatim (`MarkdownParagraph`,
+`MarkdownComment`, bare `MarkdownListItem`, ...) — a bare class name there (e.g.
+`"MarkdownParagraph"`) would say nothing about *which* field failed, since the same generic
+type is reused across many unrelated fields throughout the codebase. Implemented as
+`markdown_str._field_label`, checked against a fixed set of generic type names
+(`_GENERIC_LEAF_TYPE_NAMES`) rather than an `issubclass` check, to avoid a circular import
+between `markdown_str.py` and the section/paragraph/list-item modules that import it.
+
+Line numbers are relative to whatever `mdformat`-normalized text the *current* `from_text`/
+`process_field`/`process_list_field` call was actually invoked with — for a document parsed
+top-down from a domain parser's own `Body.from_text(post.content)` call (every real caller in
+this codebase), that is the whole normalized body, so REQ-002's "relative to the
+mdformat-normalized body" is satisfied for the common case; a hypothetical caller invoking
+`SomeSection.from_text(some_slice)` directly on an already-sliced sub-document would instead
+get a line number relative to *that* slice — an accepted, documented limitation (`_offset`
+threading only ever originates from the caller's own root call, defaulting to `0`).
+
+`process_list_field`'s running line offset for each matched item is tracked via an actual
+before/after `len(text.splitlines())` delta around each iteration, not a summed `get_extent`
+— its own docstring already flagged that summed `get_extent` values don't line up with real
+line positions once per-item `mdformat` renormalization elides a separating blank line; a
+direct line-count delta sidesteps that by construction, without needing a return-signature
+change (`process_list_field`'s existing 2-tuple return contract, relied on directly by
+`tests/qa/models/v2/test_question_answer.py`, is preserved unchanged).
+
+`_path`/`_offset`/`_line` were threaded through every `from_text` override for override-
+signature (Liskov) consistency, not just the two the task list names (`MarkdownSection`/
+`MarkdownParagraph`) — `MarkdownListItem.from_text` needed it directly for Task 1.7's
+`TaskItem`/`RequirementItem`/`AcceptanceCriterionItem`; `MarkdownComment`/`MarkdownBlockQuote`/
+`MarkdownCodeBlock`/the six `MarkdownSection{1..6}WithComment` wrappers accept-and-forward the
+same two keyword parameters purely so every `from_text` override shares one signature, even
+though none of the last four's *own* raise sites needed path/line data. Task 1.7's "REQ/ACC
+items"/"feat entries" were resolved to `feat/models/v1/body.py`'s own `RequirementItem`/
+`AcceptanceCriterionItem`/`Phase`/`UpdateEntry`/`DecisionEntry` (the only classes in the
+codebase matching those two literal patterns); DEC's `Option` and SOP's `Step`/`UpdateEntry`
+were intentionally left untouched since the task's own parenthetical list does not name them.
+
+Phase 1 was implemented in one pass rather than strictly one message-enrichment change per
+task with an immediately-following baseline-file update — Task 1.0's baseline file was
+written last, pinning the already-enriched final message content, once the full message
+contract was settled; the plan's "pin-then-enrich" guarantee (every message change being a
+reviewable diff to one file) still holds for *future* phases/tasks that touch these messages
+again, since the baseline file now exists and reflects the current, intentional state.
 
 #### 2026-09-01 11:56:45.000Z — Messages only; strict rejection; id feat-27-validation
 
