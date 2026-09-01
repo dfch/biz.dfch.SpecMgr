@@ -3,7 +3,7 @@ created: '2026-09-01T17:36:02.251286'
 id: feat-50-confluence
 status: in-progress
 type: feat
-updated: '2026-09-01T20:00:00.000000'
+updated: '2026-09-01T22:00:00.000000'
 version: 1.0.0
 ---
 
@@ -144,9 +144,9 @@ Adds a `confluence_update` tool that converts a local Markdown file to an HTML f
 
 #### Phase 4: Attachment upload + image macro rewrite
 
-- [ ] Task 4.1: Implement local-image discovery, attachment upload (with existing-filename fallback), and `<img>` -> `<ac:image>` rewriting in `confluence_update`.
+- [x] Task 4.1: Implement local-image discovery, attachment upload (with existing-filename fallback), and `<img>` -> `<ac:image>` rewriting in `confluence_update`.
 
-- [ ] Task 4.2: Extend `test_confluence_update.py` with mocked `POST` attachment upload/fallback cases.
+- [x] Task 4.2: Extend `test_confluence_update.py` with mocked `POST` attachment upload/fallback cases.
 
 #### Phase 5: Verification and docs
 
@@ -158,7 +158,7 @@ Adds a `confluence_update` tool that converts a local Markdown file to an HTML f
 
 ### Current Status
 
-**As of 2026-09-01**: Phase 3 (`confluence_update` core, no attachments yet) complete — the new `confluence_update` tool resolves a page id, reads its current version/title via `GET`, renders a Markdown file via `markdown-it-py`, and writes the incremented version via `PUT`. Next is Phase 4 (attachment upload + image macro rewrite).
+**As of 2026-09-01**: Phase 4 (attachment upload + image macro rewrite) complete — `confluence_update` now best-effort uploads every local image its rendered HTML references as a Confluence attachment (`POST .../child/attachment`, falling back to `.../child/attachment/{id}/data` if the filename already exists) and rewrites the corresponding `<img>` tag into `<ac:image>`/`<ri:attachment>`, before the existing `PUT` step. Next is Phase 5 (final phase — real, reversible smoke test against the dedicated Confluence test page, plus final `specmgr docs`/lint/test verification and the `CHANGELOG.md` entry).
 
 ### Blockers
 
@@ -167,6 +167,12 @@ Adds a `confluence_update` tool that converts a local Markdown file to an HTML f
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-01 22:00:00.000Z — Phase 4 complete: attachment upload + image macro rewrite
+
+Completed: extended `general/tools/confluence_update.py` (REQ-009/ACC-007) to insert a best-effort local-image attachment-upload/`<img>` -> `<ac:image>` rewrite step between rendering the Markdown file and the existing `PUT`. Local-image discovery scans the *rendered* HTML fragment's `<img src="...">` tags (a new `_IMG_TAG_PATTERN` regex), not the raw Markdown source, since `markdown-it` has already resolved the exact `src` values that also need to be found-and-replaced in the same fragment. A `src` is "local" if it contains no `://` (`_is_local_image_src`); a local `src` is resolved against `markdown_file_path`'s containing directory and, if the resulting path does not exist on disk, its `<img>` tag is silently left unrewritten with no upload attempted (REQ-009's explicit "best-effort"). For each local image that does exist, `_upload_attachment` `POST`s it to `{base}/rest/api/content/{id}/child/attachment` as `multipart/form-data` (field name `file`, real Confluence REST API shape) with the `X-Atlassian-Token: no-check` header (sent only on this and the fallback attachment call, never on the page GET/PUT); on a 400 response that looks like a duplicate-filename error (new `_looks_like_duplicate_filename_response` heuristic: status 400 plus a JSON `message` mentioning both "already exist" and "file"/"attachment"/"filename"), it falls back to `_find_existing_attachment_id` (a `GET .../child/attachment?filename=...` lookup) followed by a `POST .../child/attachment/{id}/data` with the new content. On success, the image's `<img>` tag is rewritten to `<ac:image><ri:attachment ri:filename="<basename>" /></ac:image>`; on ANY failure (missing file, non-2xx, network exception, unresolvable duplicate-filename fallback) the tag is left unrewritten, the failure is caught inside `_rewrite_local_images` (never propagates), and recorded as a `{"src": ..., "error": ...}` entry in a new `failed_images` list now always present in `confluence_update`'s return value (empty when nothing failed) -- this call sees this design decision as a deliberate deviation from purely "swallow-and-say-nothing" best-effort framing, since zero visibility into per-image failures would be a worse design. Added 8 new tests to `tests/general/tools/test_confluence_update.py` (24 tests total, up from 20): ACC-007 exactly (real temp Markdown + temp image file, mocked successful attachment POST, asserting the exact `<ac:image>`/`<ri:attachment>` rewrite and the POST's captured filename/bytes/headers), a missing-local-file case (no POST attempted, tag unrewritten, PUT still succeeds), a non-local `https://` image case (no POST attempted, tag unrewritten), the duplicate-filename fallback path (mocked 400 + lookup GET + fallback data POST, asserting the tag is still rewritten), an outright upload failure (mocked 500, tag unrewritten, `failed_images` populated), an `httpx` exception during upload (same assertions), and a mixed-multiple-images case (successful/missing/non-local in one call, each independently verified). Updated the existing Phase-3 ACC-006 test's expected return-value dict to include the now-always-present `failed_images: []` key. Updated `confluence_update`'s `@mcp.tool()` description/docstring, `general/tools/__init__.py`'s module docstring bullet, and `server.py`'s module docstring bullet to describe the new attachment-upload/image-rewrite behavior in full, removing the "not yet supported"/"a later phase, not yet implemented" language.
+Next: Phase 5 (final phase — a real, reversible smoke test against the dedicated Confluence test page (id `1232503612`), plus final `specmgr docs`/`ruff`/`vulture`/`unittest` verification and the `CHANGELOG.md` entry).
+Notes: quality gate green -- `ruff format --check`/`ruff check`/`vulture` clean, full `unittest` suite (2788 tests, up from 2781) passes; `specmgr docs`/`specmgr mcp-docs` regenerated `docs/api/biz.dfch.specmgr.general.tools.confluence_update.md`, `docs/api/biz.dfch.specmgr.general.tools.md`, `docs/api/biz.dfch.specmgr.server.md`, and `docs/MCP.md`'s `confluence_update` entry with no unexpected diffs. **Flagging explicitly for Phase 5 and the human relaying this to the user**: the real Confluence REST API shapes this phase implements -- the attachment-create `POST .../child/attachment` multipart shape is well-documented and implemented with reasonable confidence, but (a) the exact duplicate-filename 400 error-message wording `_looks_like_duplicate_filename_response` detects, (b) the existing-attachment lookup shape (`GET .../child/attachment?filename=...` and its `results[0].id` response shape) `_find_existing_attachment_id` assumes, and (c) the fallback binary-content-update shape (`POST .../child/attachment/{id}/data`) `_upload_attachment` uses, are ALL unverified against a real Confluence instance in this environment -- only mocked-`httpx` coverage exists for all three. Per the plan's own Task 5.1/ACC-008 wording, Phase 5's real smoke test is scoped narrowly to `confluence_fetch`'s REST content GET and `confluence_update`'s version-incrementing PUT against the dedicated test page, and may not exercise this attachment path (create, duplicate-fallback, or lookup) end-to-end at all.
 
 #### 2026-09-01 20:00:00.000Z — Phase 3 complete: `confluence_update` core (no attachments yet)
 
@@ -195,6 +201,10 @@ Notes: implementation has not started; this update only covers planning/design/e
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-01 22:00:00.000Z — Phase 4 judgement calls: image discovery approach, duplicate-filename detection, failure visibility, and unverified REST shapes
+
+Decision: (1) **Local-image discovery scans the rendered HTML fragment's `<img src="...">` tags, not the raw Markdown source.** The plan's Design Notes explicitly offered either approach; scanning the rendered output was chosen because `markdown-it` has already resolved the exact `src` string that must also be found-and-replaced in that same fragment -- a separate regex over the raw Markdown source risks producing a `src` value that does not exactly match what `markdown-it` actually emitted (e.g. differing whitespace/escaping rules), which would silently break the find-and-replace step. (2) **Duplicate-filename detection (`_looks_like_duplicate_filename_response`) is a heuristic, not a confirmed API contract**: it treats a response as "duplicate filename" only if the status code is exactly 400 AND the JSON body's `message` field contains both "already exist" and one of "file"/"attachment"/"filename" (case-insensitively) -- inferred from generally documented/community-reported Confluence behavior, NOT confirmed against a real instance during this feature's development (see the flag in this date's Updates entry). Any other 400, or a non-JSON 400 body, is treated as a genuine upload failure instead, so the fallback path is deliberately conservative rather than over-eager. (3) **Per-image upload failures ARE surfaced to the caller**, via a new `failed_images: list[{"src": ..., "error": ...}]` key always present in `confluence_update`'s return value (empty list when nothing failed) -- chosen over the plan's more minimal "best-effort, catch and continue" framing alone, since a caller with zero visibility into which images silently failed to upload would be a strictly worse design for a tool an LLM agent is expected to act on the result of. (4) **The existing-attachment lookup (`_find_existing_attachment_id`, `GET .../child/attachment?filename=...`) and the fallback binary-content-update endpoint (`POST .../child/attachment/{id}/data`) are both implemented as good-faith, best-effort attempts at the real Confluence REST API shape, but neither was verified against a real instance** -- flagged inline in both functions' docstrings/comments and explicitly called out in this date's Updates entry, per the phase instructions' explicit requirement not to silently guess without flagging the uncertainty. The attachment-create endpoint itself (`POST .../child/attachment`, multipart `file` field, `X-Atlassian-Token: no-check` header) is comparatively well-documented, real, confirmed Confluence REST API behavior and is implemented with higher confidence than the two fallback-path shapes.
 
 #### 2026-09-01 20:00:00.000Z — Phase 3 judgement calls: signature/return shape, `MarkdownIt` instance, shared-helper placement, and page-id resolution scope
 

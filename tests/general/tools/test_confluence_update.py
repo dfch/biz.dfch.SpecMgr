@@ -46,6 +46,7 @@ _TOKEN = "s3cr3t-token"
 _PAGE_ID = "123456"
 _TITLE = "fetch and update"
 _MARKDOWN_SOURCE = "# Heading\n\nSome *body* text.\n"
+_IMAGE_BYTES = b"\x89PNG\r\n\x1a\ndummy-not-a-real-png"
 
 
 def _make_get_response(
@@ -80,6 +81,27 @@ def _write_markdown_file(tmp_dir: str, content: str = _MARKDOWN_SOURCE) -> str:
     return str(path)
 
 
+def _write_image_file(tmp_dir: str, name: str = "image.png", content: bytes = _IMAGE_BYTES) -> str:
+    """Write ``content`` to a temporary image file named ``name`` inside ``tmp_dir`` and return its path."""
+    path = Path(tmp_dir) / name
+    path.write_bytes(content)
+    return str(path)
+
+
+def _make_post_response(*, status_code: int = 200, json_payload: dict | None = None) -> mock.Mock:
+    """Build a mocked ``httpx.Response`` for an attachment-upload POST call."""
+    response = mock.Mock(spec=httpx.Response)
+    response.status_code = status_code
+    response.json = mock.Mock(return_value=json_payload if json_payload is not None else {})
+    if status_code >= 400:
+        response.raise_for_status = mock.Mock(
+            side_effect=httpx.HTTPStatusError(str(status_code), request=mock.Mock(), response=response)
+        )
+    else:
+        response.raise_for_status = mock.Mock()
+    return response
+
+
 class TestConfluenceUpdateTool(unittest.TestCase):
     """Tests for the confluence_update tool."""
 
@@ -110,7 +132,7 @@ class TestConfluenceUpdateTool(unittest.TestCase):
                 self.assertEqual(payload["body"]["storage"]["representation"], "storage")
                 self.assertEqual(payload["type"], "page")
 
-                self.assertEqual(result, {"id": _PAGE_ID, "title": _TITLE, "version": 6})
+                self.assertEqual(result, {"id": _PAGE_ID, "title": _TITLE, "version": 6, "failed_images": []})
 
     def test_get_and_put_urls_target_the_same_rest_content_endpoint(self) -> None:
         """Both the GET and the PUT must target {base}/rest/api/content/{id}."""
@@ -370,6 +392,212 @@ class TestConfluenceUpdateTool(unittest.TestCase):
                         with self.assertRaises(FileNotFoundError):
                             confluence_update(_PAGE_ID, missing_path)
                         mock_put.assert_not_called()
+
+    # -- REQ-009/ACC-007: attachment upload + <img> -> <ac:image> macro rewriting -------------------
+
+    def test_local_image_that_exists_is_uploaded_and_its_img_tag_is_rewritten(self) -> None:
+        """ACC-007: a local image that exists on disk is POSTed to child/attachment and its <img> tag is rewritten."""
+        with mock.patch.dict(
+            os.environ,
+            {CONFLUENCE_BASE_URL_ENV_VAR: _BASE_URL, CONFLUENCE_BEARER_ENV_VAR: _TOKEN},
+        ):
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                _write_image_file(tmp_dir, "image.png")
+                markdown_file_path = _write_markdown_file(tmp_dir, "# Heading\n\n![alt](./image.png)\n")
+                get_response = _make_get_response()
+                put_response = _make_put_response()
+
+                captured_calls: list[tuple[str, str, bytes, dict]] = []
+
+                def _post_side_effect(url: str, *, headers: dict, files: dict, timeout: float) -> mock.Mock:
+                    filename, file_obj, _mime_type = files["file"]
+                    captured_calls.append((url, filename, file_obj.read(), headers))
+                    return _make_post_response()
+
+                with mock.patch("httpx.get", return_value=get_response):
+                    with mock.patch("httpx.put", return_value=put_response) as mock_put:
+                        with mock.patch("httpx.post", side_effect=_post_side_effect):
+                            result = confluence_update(_PAGE_ID, markdown_file_path)
+
+                self.assertEqual(len(captured_calls), 1)
+                post_url, filename, content, post_headers = captured_calls[0]
+                self.assertEqual(post_url, f"{_BASE_URL}/rest/api/content/{_PAGE_ID}/child/attachment")
+                self.assertEqual(filename, "image.png")
+                self.assertEqual(content, _IMAGE_BYTES)
+                self.assertEqual(post_headers["X-Atlassian-Token"], "no-check")
+                self.assertEqual(post_headers["Authorization"], f"Bearer {_TOKEN}")
+
+                payload = mock_put.call_args.kwargs["json"]
+                body = payload["body"]["storage"]["value"]
+                self.assertIn('<ac:image><ri:attachment ri:filename="image.png" /></ac:image>', body)
+                self.assertNotIn('<img src="./image.png"', body)
+                self.assertEqual(result["failed_images"], [])
+
+    def test_missing_local_image_leaves_img_tag_unrewritten_and_no_post_attempted(self) -> None:
+        """A local image that does not exist on disk is left unrewritten; no attachment POST is attempted."""
+        with mock.patch.dict(
+            os.environ,
+            {CONFLUENCE_BASE_URL_ENV_VAR: _BASE_URL, CONFLUENCE_BEARER_ENV_VAR: _TOKEN},
+        ):
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                markdown_file_path = _write_markdown_file(tmp_dir, "# Heading\n\n![alt](./missing.png)\n")
+                get_response = _make_get_response()
+                put_response = _make_put_response()
+
+                with mock.patch("httpx.get", return_value=get_response):
+                    with mock.patch("httpx.put", return_value=put_response) as mock_put:
+                        with mock.patch("httpx.post") as mock_post:
+                            result = confluence_update(_PAGE_ID, markdown_file_path)
+
+                mock_post.assert_not_called()
+                mock_put.assert_called_once()
+                payload = mock_put.call_args.kwargs["json"]
+                body = payload["body"]["storage"]["value"]
+                self.assertIn('<img src="./missing.png"', body)
+                self.assertNotIn("ac:image", body)
+                self.assertEqual(result["failed_images"], [])
+
+    def test_non_local_image_url_leaves_img_tag_unrewritten_and_no_post_attempted(self) -> None:
+        """An absolute https:// image URL is left unrewritten; no attachment POST is attempted for it."""
+        with mock.patch.dict(
+            os.environ,
+            {CONFLUENCE_BASE_URL_ENV_VAR: _BASE_URL, CONFLUENCE_BEARER_ENV_VAR: _TOKEN},
+        ):
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                markdown_file_path = _write_markdown_file(
+                    tmp_dir, "# Heading\n\n![alt](https://example.com/remote.png)\n"
+                )
+                get_response = _make_get_response()
+                put_response = _make_put_response()
+
+                with mock.patch("httpx.get", return_value=get_response):
+                    with mock.patch("httpx.put", return_value=put_response) as mock_put:
+                        with mock.patch("httpx.post") as mock_post:
+                            result = confluence_update(_PAGE_ID, markdown_file_path)
+
+                mock_post.assert_not_called()
+                payload = mock_put.call_args.kwargs["json"]
+                body = payload["body"]["storage"]["value"]
+                self.assertIn('<img src="https://example.com/remote.png"', body)
+                self.assertNotIn("ac:image", body)
+                self.assertEqual(result["failed_images"], [])
+
+    def test_duplicate_filename_fallback_still_rewrites_img_tag(self) -> None:
+        """A duplicate-filename 400 falls back to child/attachment/{id}/data, and the <img> tag is still rewritten."""
+        with mock.patch.dict(
+            os.environ,
+            {CONFLUENCE_BASE_URL_ENV_VAR: _BASE_URL, CONFLUENCE_BEARER_ENV_VAR: _TOKEN},
+        ):
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                _write_image_file(tmp_dir, "image.png")
+                markdown_file_path = _write_markdown_file(tmp_dir, "# Heading\n\n![alt](./image.png)\n")
+                get_response = _make_get_response()
+                put_response = _make_put_response()
+
+                duplicate_response = _make_post_response(
+                    status_code=400,
+                    json_payload={"message": "A file with the same file name already exists"},
+                )
+                fallback_response = _make_post_response()
+                lookup_response = _make_get_response(json_payload={"results": [{"id": "999"}]})
+
+                with mock.patch("httpx.get", side_effect=[get_response, lookup_response]):
+                    with mock.patch("httpx.put", return_value=put_response) as mock_put:
+                        with mock.patch("httpx.post", side_effect=[duplicate_response, fallback_response]) as mock_post:
+                            result = confluence_update(_PAGE_ID, markdown_file_path)
+
+                self.assertEqual(mock_post.call_count, 2)
+                fallback_call_url = mock_post.call_args_list[1].args[0]
+                self.assertEqual(
+                    fallback_call_url,
+                    f"{_BASE_URL}/rest/api/content/{_PAGE_ID}/child/attachment/999/data",
+                )
+
+                payload = mock_put.call_args.kwargs["json"]
+                body = payload["body"]["storage"]["value"]
+                self.assertIn('<ac:image><ri:attachment ri:filename="image.png" /></ac:image>', body)
+                self.assertEqual(result["failed_images"], [])
+
+    def test_attachment_upload_failure_leaves_img_tag_unrewritten_and_is_reported(self) -> None:
+        """A non-2xx, non-duplicate-filename attachment upload leaves the <img> tag unrewritten and is reported."""
+        with mock.patch.dict(
+            os.environ,
+            {CONFLUENCE_BASE_URL_ENV_VAR: _BASE_URL, CONFLUENCE_BEARER_ENV_VAR: _TOKEN},
+        ):
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                _write_image_file(tmp_dir, "image.png")
+                markdown_file_path = _write_markdown_file(tmp_dir, "# Heading\n\n![alt](./image.png)\n")
+                get_response = _make_get_response()
+                put_response = _make_put_response()
+                failure_response = _make_post_response(status_code=500, json_payload={"message": "server error"})
+
+                with mock.patch("httpx.get", return_value=get_response):
+                    with mock.patch("httpx.put", return_value=put_response) as mock_put:
+                        with mock.patch("httpx.post", return_value=failure_response):
+                            result = confluence_update(_PAGE_ID, markdown_file_path)
+
+                mock_put.assert_called_once()
+                payload = mock_put.call_args.kwargs["json"]
+                body = payload["body"]["storage"]["value"]
+                self.assertIn('<img src="./image.png"', body)
+                self.assertNotIn("ac:image", body)
+                self.assertEqual(len(result["failed_images"]), 1)
+                self.assertEqual(result["failed_images"][0]["src"], "./image.png")
+
+    def test_attachment_upload_network_error_leaves_img_tag_unrewritten_and_is_reported(self) -> None:
+        """An httpx exception during upload leaves the <img> tag unrewritten and the update still succeeds."""
+        with mock.patch.dict(
+            os.environ,
+            {CONFLUENCE_BASE_URL_ENV_VAR: _BASE_URL, CONFLUENCE_BEARER_ENV_VAR: _TOKEN},
+        ):
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                _write_image_file(tmp_dir, "image.png")
+                markdown_file_path = _write_markdown_file(tmp_dir, "# Heading\n\n![alt](./image.png)\n")
+                get_response = _make_get_response()
+                put_response = _make_put_response()
+
+                with mock.patch("httpx.get", return_value=get_response):
+                    with mock.patch("httpx.put", return_value=put_response) as mock_put:
+                        with mock.patch("httpx.post", side_effect=httpx.ConnectError("boom")):
+                            result = confluence_update(_PAGE_ID, markdown_file_path)
+
+                mock_put.assert_called_once()
+                payload = mock_put.call_args.kwargs["json"]
+                body = payload["body"]["storage"]["value"]
+                self.assertIn('<img src="./image.png"', body)
+                self.assertEqual(len(result["failed_images"]), 1)
+                self.assertEqual(result["failed_images"][0]["src"], "./image.png")
+
+    def test_multiple_images_mixed_success_missing_and_non_local(self) -> None:
+        """Multiple images (successful upload, missing file, non-local URL) each end up in their expected state."""
+        with mock.patch.dict(
+            os.environ,
+            {CONFLUENCE_BASE_URL_ENV_VAR: _BASE_URL, CONFLUENCE_BEARER_ENV_VAR: _TOKEN},
+        ):
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                _write_image_file(tmp_dir, "ok.png")
+                markdown_content = (
+                    "# Heading\n\n"
+                    "![ok](./ok.png)\n\n"
+                    "![missing](./missing.png)\n\n"
+                    "![remote](https://example.com/remote.png)\n"
+                )
+                markdown_file_path = _write_markdown_file(tmp_dir, markdown_content)
+                get_response = _make_get_response()
+                put_response = _make_put_response()
+
+                with mock.patch("httpx.get", return_value=get_response):
+                    with mock.patch("httpx.put", return_value=put_response) as mock_put:
+                        with mock.patch("httpx.post", return_value=_make_post_response()) as mock_post:
+                            result = confluence_update(_PAGE_ID, markdown_file_path)
+
+                mock_post.assert_called_once()
+                payload = mock_put.call_args.kwargs["json"]
+                body = payload["body"]["storage"]["value"]
+                self.assertIn('<ac:image><ri:attachment ri:filename="ok.png" /></ac:image>', body)
+                self.assertIn('<img src="./missing.png"', body)
+                self.assertIn('<img src="https://example.com/remote.png"', body)
+                self.assertEqual(result["failed_images"], [])
 
 
 if __name__ == "__main__":

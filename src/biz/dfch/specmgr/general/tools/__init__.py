@@ -41,14 +41,18 @@ API URL, rejects ``/x/<tinyid>`` tiny links outright, raises on an
 SSO-redirect off the configured base URL's host, and downloads
 non-text/binary content (e.g. images) to a caller-supplied
 ``destination_path`` instead of returning it as text. ``confluence_update``
-(ADR a156fdf9-052c-4f43-93a2-eeec04a91eac, feat-50-confluence Phase 3) --
+(ADR a156fdf9-052c-4f43-93a2-eeec04a91eac, feat-50-confluence Phases 3-4) --
 writes a local Markdown file's rendered HTML into an existing Confluence
 page's body via the REST API: resolves ``page_url_or_id`` (bare page id,
 browsable page URL, or REST content URL) to a page id, ``GET``\\ s the
 page's current ``version.number``/``title``, renders the Markdown file via
-``markdown-it-py``, then ``PUT``\\ s the incremented version with the
-rendered HTML fragment as the new body (local-image attachment
-upload/``<ac:image>`` rewriting is a later phase, not yet implemented).
+``markdown-it-py``, best-effort uploads every local image the Markdown
+references as a Confluence attachment (``POST .../child/attachment``,
+falling back to updating an existing attachment's content if the filename
+already exists) and rewrites the corresponding ``<img>`` tags into
+Confluence's ``<ac:image>``/``<ri:attachment>`` storage-format macro, then
+``PUT``\\ s the incremented version with that (possibly rewritten) HTML
+fragment as the new body.
 Import this package to register all general tools at once::
 
     from biz.dfch.specmgr.general import tools  # noqa: F401 (side-effects only)

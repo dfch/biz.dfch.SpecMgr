@@ -237,17 +237,22 @@ rejects ``/x/<tinyid>`` tiny links, raises on an SSO-redirect off the
 configured base URL's host, and downloads non-text/binary content to an
 optional ``destination_path`` instead of returning it as text.
 ``confluence_update`` (ADR a156fdf9-052c-4f43-93a2-eeec04a91eac,
-feat-50-confluence Phase 3) -- write a local Markdown file's rendered HTML
+feat-50-confluence Phases 3-4) -- write a local Markdown file's rendered HTML
 into an existing Confluence page's body via the REST API: ``page_url_or_id``
 (a bare page id, browsable page URL, or REST content URL; a ``/x/<tinyid>``
 tiny link is rejected the same way ``confluence_fetch`` rejects it) is
 resolved to a page id, its current ``version.number``/``title`` are read via
-a ``GET``, ``markdown_file_path`` is rendered via ``markdown-it-py``, and the
-incremented version is written via a ``PUT`` with the rendered HTML fragment
-as the new ``body.storage.value`` and the title unchanged; reuses the same
-two environment variables as ``confluence_fetch``, no new configuration
-surface. Local-image attachment upload and ``<img>`` -> ``<ac:image>`` macro
-rewriting are a later phase, not yet implemented.
+a ``GET``, ``markdown_file_path`` is rendered via ``markdown-it-py``, every
+local image it references (a relative/absolute filesystem path, not an
+``http(s)://`` URL) that exists on disk is best-effort uploaded as a
+Confluence attachment (``POST .../child/attachment``, falling back to
+``.../child/attachment/{id}/data`` if the filename already exists) with its
+``<img>`` tag rewritten to ``<ac:image><ri:attachment ri:filename="..." />
+</ac:image>`` on success (a missing file or a failed upload just leaves that
+one ``<img>`` tag unrewritten), and the incremented version is written via a
+``PUT`` with the (possibly rewritten) HTML fragment as the new
+``body.storage.value`` and the title unchanged; reuses the same two
+environment variables as ``confluence_fetch``, no new configuration surface.
 
 Prompts
 -------
