@@ -43,3 +43,9 @@ FeatDocument | str
     and re-parsed. With ``raw=True``: the body text as a plain string.
     Raises :class:`._paths.FeatNotFoundError` if no feature has this id.
 
+Raises
+------
+ValueError
+    ``id`` is a path-injection attempt or not a well-formed
+    ``feat-NNN-slug`` (raised before any filesystem access).
+

@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The twelve `get_<d>` tools (including `get_adr`), the generic `update`
+  tool, and the generic `set_status` tool now validate `id` for
+  path-injection/wrong-format before any filesystem access, and confine
+  the resolved path to the domain's own base directory after resolution —
+  the same `general.tools._path_safety` guards the generic `delete` tool
+  already had (feat-36-delete). `_path_safety.validate_id` now also
+  accepts `"adr"` as a UUID-shaped domain. This is purely additive
+  validation: a previously well-formed id for its domain is unaffected; a
+  path-injection attempt or a malformed id — which would already have
+  failed downstream (e.g. via a `FileNotFoundError`/`XNotFoundError`) —
+  now fails earlier and more explicitly with a `ValueError`. `delete`
+  itself is unchanged (GitHub issue #43, Phase 4 of
+  feat-38-39-41-43-44).
+
 - **BREAKING**: frontmatter `created`/`updated` now strictly require the
   date+time variant `yyyy-MM-dd HH:mm:ss.fff` followed by `Z` (UTC) or a
   signed `±HH:mm` offset — date-only, `T`-separated, six-digit-microsecond,

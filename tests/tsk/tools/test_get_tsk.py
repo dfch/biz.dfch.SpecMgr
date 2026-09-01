@@ -33,6 +33,11 @@ from biz.dfch.specmgr.tsk.tools._paths import TskNotFoundError
 from biz.dfch.specmgr.tsk.tools.create_tsk import create_tsk
 from biz.dfch.specmgr.tsk.tools.get_tsk import get_tsk
 
+
+#: A well-formed but non-existent canonical UUID (feat-38-39-41-43-44 Phase 4: the id
+#: must be well-formed to reach the domain's own not-found error past the new
+#: ``validate_id`` guard).
+_MISSING_UUID = "00000000-0000-0000-0000-000000000000"
 _MINIMAL_BODY = textwrap.dedent(
     """\
     # Simple Task List
@@ -70,7 +75,7 @@ class TestGetTsk(unittest.TestCase):
         create_tsk(_MINIMAL_BODY)
 
         with self.assertRaises(TskNotFoundError) as ctx:
-            get_tsk("no-such-id")
+            get_tsk(_MISSING_UUID)
         message = str(ctx.exception)
         self.assertIn("bare document UUID", message)
         self.assertIn("without a domain prefix", message)
@@ -120,9 +125,9 @@ class TestGetTsk(unittest.TestCase):
         create_tsk(_MINIMAL_BODY)
 
         with self.assertRaises(TskNotFoundError):
-            get_tsk("no-such-id", raw=True)
+            get_tsk(_MISSING_UUID, raw=True)
         with self.assertRaises(TskNotFoundError):
-            get_tsk("no-such-id", raw=False)
+            get_tsk(_MISSING_UUID, raw=False)
 
 
 if __name__ == "__main__":

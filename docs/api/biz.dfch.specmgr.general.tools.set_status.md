@@ -52,6 +52,15 @@ status-change entry point for every domain.
 because the pure, in-memory operation it delegates to shares this
 wrapper's own name.
 
+Safety (REQ-009, feat-38-39-41-43-44 Phase 4): the public
+:func:`set_status` validates ``id`` via ``_path_safety.validate_id``
+before dispatch (a ``ValueError`` before any filesystem access --
+mirroring the generic ``delete`` tool's own REQ-003; ``_path_safety``'s
+UUID-shaped domains now include ``adr``), and every adapter confines the
+resolved path to the domain's own base directory with
+``_path_safety.assert_within`` after ``load_by_id``, inside the domain
+lock.
+
 ## Functions
 
 ### `_set_status_adr(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'Adr'`
@@ -217,6 +226,17 @@ its set. Where that set lives is documented per domain -- see each
 ``models/<v>/frontmatter.py`` and ``models/adr/v1/frontmatter.py``)
 rather than any list in this docstring.
 
+Safety (REQ-009, feat-38-39-41-43-44 Phase 4, mirroring ``delete``'s
+own REQ-003): ``id`` is validated via ``_path_safety.validate_id`` (no
+``/``, no ``\``, no ``..``, plus the dispatched domain's own format --
+canonical lowercase-hex UUID for the eleven UUID domains including
+``adr``, ``feat-NNN-slug`` for ``feat``) **before** any filesystem
+access, so a path-injection attempt or a wrong-format id is a
+``ValueError`` raised before dispatch. Each adapter additionally
+confines the resolved path to the domain's own base directory with
+``_path_safety.assert_within`` inside the lock -- defense-in-depth
+against any future gap in the id validation.
+
 Parameters
 ----------
 id:
@@ -244,8 +264,11 @@ VcrDocument | Adr
 Raises
 ------
 ValueError
-    ``superseded_by`` given with a ``type`` other than ``"adr"``
-    (raised before any file access). Nothing is written.
+    ``id`` is a path-injection attempt or not in the dispatched
+    domain's own format (raised before any filesystem access; nothing
+    is written), or ``superseded_by`` given with a ``type`` other
+    than ``"adr"`` (raised before any file access). Nothing is
+    written in either case.
 pydantic.ValidationError
     ``status`` is not in the dispatched domain's closed vocabulary
     (for ``adr``: not one of its six values and not a

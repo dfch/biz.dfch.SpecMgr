@@ -40,6 +40,13 @@ ADR is deliberately *not* a ``type`` here: its section-level MADR mutation
 contract (``update_frontmatter``/``update_section``/``option_*``) has no
 whole-body replace by design.
 
+Safety (REQ-009, feat-38-39-41-43-44 Phase 4): the public :func:`update`
+validates ``id`` via ``_path_safety.validate_id`` before dispatch (a
+``ValueError`` before any filesystem access -- mirroring the generic
+``delete`` tool's own REQ-003), and every adapter confines the resolved
+path to the domain's own base directory with ``_path_safety.assert_within``
+after ``load_by_id``, inside the domain lock.
+
 ## Functions
 
 ### `_update_dec(id_: 'str', content: 'str', begin: 'int | None', end: 'int | None') -> 'DecDocument'`
@@ -213,6 +220,16 @@ date+time timestamp, via ``general.tools._timestamps.now_timestamp()``);
 generic ``set_status`` tool in ``general.tools`` is the only
 status-change path.
 
+Safety (REQ-009, feat-38-39-41-43-44 Phase 4, mirroring ``delete``'s
+own REQ-003): ``id`` is validated via ``_path_safety.validate_id`` (no
+``/``, no ``\``, no ``..``, plus the dispatched domain's own format --
+canonical lowercase-hex UUID for the ten UUID domains, ``feat-NNN-slug``
+for ``feat``) **before** any filesystem access, so a path-injection
+attempt or a wrong-format id is a ``ValueError`` raised before dispatch.
+Each adapter additionally confines the resolved path to the domain's
+own base directory with ``_path_safety.assert_within`` inside the
+lock -- defense-in-depth against any future gap in the id validation.
+
 Parameters
 ----------
 id:
@@ -243,8 +260,11 @@ VcrDocument
 Raises
 ------
 ValueError
-    Misused range coordinates: exactly one of ``begin``/``end`` given
-    (raised before any file access), or ``begin < 1``, ``begin > end``,
+    ``id`` is a path-injection attempt or not in the dispatched
+    domain's own format (raised before any filesystem access; nothing
+    is written). Also raised for misused range coordinates: exactly
+    one of ``begin``/``end`` given (raised before any file access), or
+    ``begin < 1``, ``begin > end``,
     or ``end > N + 1`` (raised after the on-disk body is read; the
     message names the offending value(s) and the allowed range).
     Nothing is written in any of these cases.

@@ -33,6 +33,11 @@ from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.general.tools._splice import body_text
 from biz.dfch.specmgr.general.tools.update import update
 
+
+#: A well-formed but non-existent canonical UUID (feat-38-39-41-43-44 Phase 4: the id
+#: must be well-formed to reach the domain's own not-found error past the new
+#: ``validate_id`` guard).
+_MISSING_UUID = "00000000-0000-0000-0000-000000000000"
 _MINIMAL_BODY = textwrap.dedent(
     """\
     # Choose a Document Store
@@ -70,7 +75,7 @@ class TestGetDec(unittest.TestCase):
         create_dec(_MINIMAL_BODY)
 
         with self.assertRaises(DecNotFoundError) as ctx:
-            get_dec("no-such-id")
+            get_dec(_MISSING_UUID)
         message = str(ctx.exception)
         self.assertIn("bare document UUID", message)
         self.assertIn("without a domain prefix", message)
@@ -120,9 +125,9 @@ class TestGetDec(unittest.TestCase):
         create_dec(_MINIMAL_BODY)
 
         with self.assertRaises(DecNotFoundError):
-            get_dec("no-such-id", raw=True)
+            get_dec(_MISSING_UUID, raw=True)
         with self.assertRaises(DecNotFoundError):
-            get_dec("no-such-id", raw=False)
+            get_dec(_MISSING_UUID, raw=False)
 
 
 if __name__ == "__main__":

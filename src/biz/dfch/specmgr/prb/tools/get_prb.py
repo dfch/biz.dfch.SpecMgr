@@ -38,6 +38,7 @@ against.
 
 from __future__ import annotations
 
+from ...general.tools._path_safety import assert_within, validate_id
 from ...general.tools._splice import body_text
 from ...server import mcp
 from ..models.v1 import PrbDocument
@@ -50,7 +51,8 @@ from ._paths import prb_base_dir
     title="Get problem statement",
     description=(
         "Read, parse, and return a full problem statement document (frontmatter and body) by its id. "
-        "Pass raw=True to return the frontmatter-stripped body text verbatim instead."
+        "Pass raw=True to return the frontmatter-stripped body text verbatim instead. "
+        "An invalid id (path-injection attempt or wrong format) is a ValueError raised before any file access."
     ),
 )
 def get_prb(id: str, raw: bool = False) -> PrbDocument | str:
@@ -74,9 +76,17 @@ def get_prb(id: str, raw: bool = False) -> PrbDocument | str:
         and re-parsed. With ``raw=True``: the body text as a plain string.
         Raises :class:`._paths.PrbNotFoundError` if no problem statement has
         this id.
+
+    Raises
+    ------
+    ValueError
+        ``id`` is a path-injection attempt or not a well-formed id for this domain
+        (raised before any filesystem access).
     """
+    validate_id("prb", id)
     base_dir = prb_base_dir()
     path, doc = load_by_id(base_dir, id)
+    assert_within(base_dir, path)
     if raw:
         result: PrbDocument | str = body_text(path)
         return result

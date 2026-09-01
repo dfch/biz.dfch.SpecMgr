@@ -45,3 +45,9 @@ PrbDocument | str
     Raises :class:`._paths.PrbNotFoundError` if no problem statement has
     this id.
 
+Raises
+------
+ValueError
+    ``id`` is a path-injection attempt or not a well-formed id for this domain
+    (raised before any filesystem access).
+

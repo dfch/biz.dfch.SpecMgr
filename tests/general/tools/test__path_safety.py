@@ -43,8 +43,9 @@ _VALID_UUID = "0d8f4c2a-1b3e-4f5a-9c7d-2e6b8a0f1c3d"
 #: A well-formed feat-NNN-slug folder name.
 _VALID_FEAT_ID = "feat-36-delete"
 
-#: The ten whole-body domains whose id is a server-generated UUID.
-_UUID_DOMAINS = ("req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "vcr")
+#: The eleven UUID domains whose id is a server-generated UUID (the ten
+#: whole-body domains plus ``adr``, feat-38-39-41-43-44 Phase 4).
+_UUID_DOMAINS = ("req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "vcr", "adr")
 
 #: The feat document type name.
 _FEAT_TYPE = "feat"
@@ -146,13 +147,13 @@ class TestValidateId(unittest.TestCase):
     """Tests for validate_id."""
 
     def test_accepts_a_uuid_for_each_uuid_domain(self):
-        """For each of the ten UUID domains, a canonical UUID must pass."""
+        """For each of the eleven UUID domains, a canonical UUID must pass."""
         for type_ in _UUID_DOMAINS:
             with self.subTest(type_=type_):
                 validate_id(type_, _VALID_UUID)
 
     def test_rejects_a_feat_id_for_each_uuid_domain(self):
-        """For each of the ten UUID domains, a feat-NNN-slug id must raise a ValueError."""
+        """For each of the eleven UUID domains, a feat-NNN-slug id must raise a ValueError."""
         for type_ in _UUID_DOMAINS:
             with self.subTest(type_=type_):
                 with self.assertRaises(ValueError):
@@ -176,10 +177,19 @@ class TestValidateId(unittest.TestCase):
 
     def test_rejects_an_unknown_type(self):
         """A type that is neither a UUID domain nor feat must raise a ValueError naming the type."""
-        value = "adr"
+        value = "not-a-real-domain"
         with self.assertRaises(ValueError) as ctx:
             validate_id(value, _VALID_UUID)
         self.assertIn(repr(value), str(ctx.exception))
+
+    def test_accepts_a_uuid_for_adr(self):
+        """For the adr domain (feat-38-39-41-43-44 Phase 4), a canonical UUID must pass."""
+        validate_id("adr", _VALID_UUID)
+
+    def test_rejects_a_feat_id_for_adr(self):
+        """For the adr domain, a feat-NNN-slug id must raise a ValueError."""
+        with self.assertRaises(ValueError):
+            validate_id("adr", _VALID_FEAT_ID)
 
 
 class TestAssertWithin(unittest.TestCase):

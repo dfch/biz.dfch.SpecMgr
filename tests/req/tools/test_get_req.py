@@ -33,6 +33,11 @@ from biz.dfch.specmgr.req.tools._paths import ReqNotFoundError
 from biz.dfch.specmgr.req.tools.create_req import create_req
 from biz.dfch.specmgr.req.tools.get_req import get_req
 
+
+#: A well-formed but non-existent canonical UUID (feat-38-39-41-43-44 Phase 4: the id
+#: must be well-formed to reach the domain's own not-found error past the new
+#: ``validate_id`` guard).
+_MISSING_UUID = "00000000-0000-0000-0000-000000000000"
 _MINIMAL_BODY = textwrap.dedent(
     """\
     # Maximum Engine Temperature
@@ -81,7 +86,7 @@ class TestGetReq(unittest.TestCase):
         create_req(_MINIMAL_BODY)
 
         with self.assertRaises(ReqNotFoundError) as ctx:
-            get_req("no-such-id")
+            get_req(_MISSING_UUID)
         message = str(ctx.exception)
         self.assertIn("bare document UUID", message)
         self.assertIn("without a domain prefix", message)
@@ -131,9 +136,9 @@ class TestGetReq(unittest.TestCase):
         create_req(_MINIMAL_BODY)
 
         with self.assertRaises(ReqNotFoundError):
-            get_req("no-such-id", raw=True)
+            get_req(_MISSING_UUID, raw=True)
         with self.assertRaises(ReqNotFoundError):
-            get_req("no-such-id", raw=False)
+            get_req(_MISSING_UUID, raw=False)
 
 
 if __name__ == "__main__":
