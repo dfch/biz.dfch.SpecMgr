@@ -3,7 +3,7 @@ created: '2026-09-01T14:19:27.649184'
 id: feat-28-get-update
 status: planning
 type: feat
-updated: '2026-09-01T14:54:14.603270'
+updated: '2026-09-01T15:26:26.838233'
 version: 1.0.0
 ---
 
@@ -198,6 +198,15 @@ has not started.
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
+#### 2026-09-01 15:13:17.413+02:00 — Merged upstream dev (8e07594)
+
+Upstream `dev` advanced one commit (`8e07594 fix(40): specmgr docs prunes
+stale docs/api pages`); merged it into this branch (merge commit `e5d665b`,
+no conflicts) and re-ran the complete test cycle — 2720 tests green (up from
+2713, the merged commit added 7), `ruff format --check`/`ruff check`/
+`vulture` clean. Not pushed. The `More Information` sync reference was
+updated to the new dev tip.
+
 #### 2026-09-01 14:41:58.971+02:00 — Session wrap-up; plan made self-contained for a fresh implementation session
 
 Added a `### More Information` section with the operational facts a fresh
@@ -288,8 +297,8 @@ Operational notes for the implementing session:
 
 - Work in the git worktree
   `/home/user/src/biz.dfch.SpecMgr.worktrees/feat-28-get-update` on branch
-  `feat-28-get-update` (synced to upstream `dev` `8c13e16` as of 2026-09-01).
-  Never push.
+  `feat-28-get-update` (synced to upstream `dev` `8e07594` as of 2026-09-01,
+  via merge commit `e5d665b`). Never push.
 
 - If re-syncing with upstream `dev` before starting implementation: the
   branch now carries local commits, so after `git fetch origin` use
