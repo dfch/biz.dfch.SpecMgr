@@ -3,7 +3,7 @@ created: '2026-09-01T14:19:27.649184'
 id: feat-28-get-update
 status: planning
 type: feat
-updated: '2026-09-01T14:19:27.649184'
+updated: '2026-09-01T14:41:58.972675'
 version: 1.0.0
 ---
 
@@ -198,6 +198,17 @@ has not started.
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
+#### 2026-09-01 14:41:58.971+02:00 — Session wrap-up; plan made self-contained for a fresh implementation session
+
+Added a `### More Information` section with the operational facts a fresh
+implementing agent would otherwise have to rediscover: worktree/branch,
+never-push, the per-phase commit-message convention, the specmgr MCP server
+cwd caveat (base dirs resolve relative to the server's own cwd — verify
+created files land in this worktree via `git status`), the `specmgr adr-toc`
+regeneration step for Task 0.5, and the `read`-tool reference for
+"read-style" coordinates. No code or contract changes. Implementation picks
+up at Task 0.4 (feat-7 Task 0.32 annotation) and Task 0.5 (ADR draft).
+
 #### 2026-09-01 14:09:43.294+02:00 — Feature created; planning complete
 
 Completed: the design phase — all contract decisions taken (see Decisions
@@ -270,3 +281,30 @@ breaks.
 - [Issue #28](https://github.com/dfch/biz.dfch.SpecMgr/issues/28): the source request — `specmgr_get` and `specmgr_update` must both support offset and limit.
 
 - [Issue #48](https://github.com/dfch/biz.dfch.SpecMgr/issues/48): the deferred `create_feat` id behaviour + the additional `set_feat_id` tool (out of scope for this feature).
+
+### More Information
+
+Operational notes for the implementing session:
+
+- Work in the git worktree
+  `/home/user/src/biz.dfch.SpecMgr.worktrees/feat-28-get-update` on branch
+  `feat-28-get-update` (synced to upstream `dev` `8c13e16` as of 2026-09-01).
+  Never push.
+
+- Per-phase commits follow the repo's Conventional Commit style with the
+  issue number as scope: `feat(28): …` for implementation phases,
+  `docs(28): …` for docs-only phases.
+
+- The connected specmgr MCP server resolves its base directories relative to
+  its own cwd (`.specmgr/feat`, `docs/adr`; no `SPECMGR_*` env vars are
+  set). After creating any file via the specmgr tools (e.g. the Task 0.5
+  ADR), verify it landed in this worktree via `git status` before
+  proceeding.
+
+- Task 0.5: create the ADR via `specmgr_create_adr` (it lands in
+  `docs/adr/`), then regenerate `docs/adr/README.md` via
+  `uv run --frozen specmgr adr-toc` before the Phase 0 gate commit.
+
+- "read-style" coordinates refer to the `read` tool convention the calling
+  agent knows: `offset` = 1-based line number to start at, `limit` = number
+  of lines to read.
