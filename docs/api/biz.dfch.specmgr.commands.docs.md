@@ -10,7 +10,12 @@ things under the chosen base directory:
 
 * ``api/*.md`` -- one Markdown API reference per module (plus a
   ``api/README.md`` index); the default ``docs/api/`` is committed to the
-  repo so it browses directly on GitHub without a build step.
+  repo so it browses directly on GitHub without a build step. Stale pages
+  (modules that no longer exist in the source tree) are pruned after the
+  current pages are written: every flat ``api/*.md`` file whose name is
+  neither the ``README.md`` index nor a page written in this run is
+  deleted. Pruning is skipped entirely whenever the run cannot be trusted
+  to have written the full current set (see ``_generate_api_docs``).
 * ``GENERATED.md`` -- implemented-domain list, first-line module docstrings
   grouped by domain, and a test-file count; the machine-generated
   counterpart that ``AGENTS.md`` points to instead of embedding.
@@ -20,9 +25,20 @@ file) and commit the result -- see ``AGENTS.md`` "Developer Commands".
 
 ## Functions
 
-### `_collect_all_modules(package_name: str) -> list[str]`
+### `_collect_all_modules(package_name: str) -> tuple[list[str], bool]`
 
 Recursively collect all module names in a package.
+
+Args:
+    package_name: Dotted name of the package to walk.
+
+Returns:
+    ``(modules, complete)`` -- the collected module names (always
+    including ``package_name`` itself) and a flag that is ``True`` only
+    when the package import and the ``pkgutil.walk_packages`` walk both
+    ran to completion. When either fails, the walk is aborted at the
+    point of failure, the returned list is then partial, and
+    ``complete`` is ``False``.
 
 
 ### `_collect_module_docs_by_domain() -> dict[str, list[tuple[str, str]]]`
@@ -55,11 +71,26 @@ Extract the first docstring from a Python file.
 Format a function signature, tolerating uninspectable callables.
 
 
-### `_generate_api_docs(api_dir: pathlib.Path, package: str) -> int`
+### `_generate_api_docs(api_dir: pathlib.Path, package: str) -> tuple[int, int]`
 
 Write one Markdown file per module of ``package`` under ``api_dir``, plus a README index.
 
-Returns the number of module files written.
+After the current pages are written, stale pages are pruned: every flat
+``*.md`` file directly in ``api_dir`` whose name is neither the
+``README.md`` index nor a filename written in this run is deleted.
+Nested directories and files of any other type are never touched.
+Pruning is skipped entirely (nothing is deleted, pruned count 0)
+whenever the run cannot be trusted to have written the full current
+set: zero pages written, any module failed to import mid-run, or
+module collection was truncated before the walk completed.
+
+Args:
+    api_dir: Directory to write the module pages and index into.
+    package: Dotted name of the package to document.
+
+Returns:
+    ``(written, pruned)`` -- the number of module files written and
+    the number of stale pages pruned.
 
 
 ### `_generate_module_markdown(module_name: str) -> str | None`
@@ -87,6 +118,18 @@ Extract module docstring.
 List domain packages and their subpackages (``models/``, ``adr/``).
 
 
+### `_pruning_was_skipped(module_count: int) -> bool`
+
+Report whether the run that just wrote ``module_count`` pages must have skipped pruning.
+
+``_generate_api_docs`` returns only ``(written, pruned)``, so the skip
+state is re-derived here instead: the run was untrustworthy when module
+collection was truncated, or when fewer pages were written than modules
+were collected (a per-module import failure). Both checks are cheap --
+every import has already been cached in ``sys.modules`` by the run
+itself. A healthy run with nothing to prune passes both checks.
+
+
 ### `_stable_signature_str(func: Any) -> str | None`
 
 Render ``func``'s signature as a string, stable across repeated runs and Python versions.
@@ -112,8 +155,11 @@ Regenerate ``api/`` and ``GENERATED.md`` from the codebase.
 Defaults to the repo's ``docs/`` directory so the pre-commit hook and CI
 backstop (both run with no ``--output``) produce reproducible output for
 an unchanged tree. Pass ``--output`` to write elsewhere instead, without
-touching the real ``docs/`` tree. Run this after any structural change
-and commit the result (see ``AGENTS.md``).
+touching the real ``docs/`` tree. After the current pages are written,
+stale ``api/*.md`` pages are pruned; the pruning count is echoed only
+when non-zero, and a warning is echoed whenever pruning was skipped
+because the run was untrustworthy (see ``_generate_api_docs``). Run this
+after any structural change and commit the result (see ``AGENTS.md``).
 
 
 ### `generate_generated_md() -> str`
