@@ -3,7 +3,7 @@ created: '2026-09-01T14:19:27.649184'
 id: feat-28-get-update
 status: in-progress
 type: feat
-updated: '2026-09-01T18:04:04.426635'
+updated: '2026-09-01T21:59:07.448994'
 version: 1.0.0
 ---
 
@@ -164,11 +164,11 @@ tests move together in the LLM-contract phase.
 
 #### Phase 2: get Windowing
 
-- [ ] Task 2.1: Add the no-I/O `window_body(text, offset, limit)` helper to `general/tools/_splice.py` (clamping per Design Notes) — depends on: Phase 1 — status: not-started
-- [ ] Task 2.2: Extend the eleven `get_<d>` tools — `offset`/`limit` parameters, raw-only guard, windowing via the shared helper, tool descriptions, docstrings — depends on: Task 2.1 — status: not-started
-- [ ] Task 2.3: New `tests/general/tools/test__splice.py` — direct unit tests for `window_body` (defaults, mid window, `offset>N` → `""`, `limit` capping, `limit=0`) and `splice_body`'s new signature — depends on: Task 2.1 — status: not-started
-- [ ] Task 2.4: Extend the eleven `tests/<d>/tools/test_get_<d>.py` — window slice equality, clamp/empty cases, coordinates + `raw=False` → `ValueError`, windowed read-into-splice round-trip — depends on: Task 2.2 — status: not-started
-- [ ] Task 2.5: Phase gate — complete test cycle + doc regeneration + commit — depends on: Task 2.4 — status: not-started
+- [x] Task 2.1: Add the no-I/O `window_body(text, offset, limit)` helper to `general/tools/_splice.py` (clamping per Design Notes) — depends on: Phase 1 — status: done (2026-09-01)
+- [x] Task 2.2: Extend the eleven `get_<d>` tools — `offset`/`limit` parameters, raw-only guard, windowing via the shared helper, tool descriptions, docstrings — depends on: Task 2.1 — status: done (2026-09-01)
+- [x] Task 2.3: New `tests/general/tools/test__splice.py` — direct unit tests for `window_body` (defaults, mid window, `offset>N` → `""`, `limit` capping, `limit=0`) and `splice_body`'s new signature — depends on: Task 2.1 — status: done (2026-09-01)
+- [x] Task 2.4: Extend the eleven `tests/<d>/tools/test_get_<d>.py` — window slice equality, clamp/empty cases, coordinates + `raw=False` → `ValueError`, windowed read-into-splice round-trip — depends on: Task 2.2 — status: done (2026-09-01)
+- [x] Task 2.5: Phase gate — complete test cycle + doc regeneration + commit — depends on: Task 2.4 — status: done (2026-09-01)
 
 #### Phase 3: LLM-facing Contract
 
@@ -187,25 +187,96 @@ tests move together in the LLM-contract phase.
 
 ### Current Status
 
-**As of 2026-09-01**: Phase 1 complete. The generic `update` tool's
-line-range mode is reworked to read-style `offset`/`limit` coordinates
-(hard rename, no `begin`/`end` alias): `splice_body` validates strictly
-(`offset<1`, `offset>N+1`, `limit<0`, `offset+limit-1>N` → `ValueError`,
-nothing written), omitted `limit` replaces through end of body, `limit=0`
-is a pure insert, `offset=N+1` appends, and the public guard raises
-`ValueError` for `limit` without `offset` before any file access; all
-`update(begin=, end=)` test call sites are migrated in the same change.
-The ADR recording the revised contract remains drafted
+**As of 2026-09-01**: Phase 2 complete. The eleven `get_<d>` tools
+(`req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr`) now
+support read-style `offset`/`limit` windowed raw reads: coordinates are
+valid with `raw=True` only (coordinates with `raw=False` raise
+`ValueError` before any file access), `offset` defaults to 1 and is
+floored, `limit` defaults to through end of body and is capped at the
+remaining lines, out-of-range values clamp (`offset > N` returns the
+empty string) in the `list_<d>` "clamped, not errored" convention, and
+the window is served by the new no-I/O `window_body` helper in
+`general/tools/_splice.py` (beside `body_text`/`splice_body`), so the
+raw/splice invariant holds for windowed reads exactly as for full raw
+reads; the default raw read stays byte-for-byte identical to before. New
+`tests/general/tools/test__splice.py` covers `window_body` and
+`splice_body` directly, and each of the eleven
+`tests/<d>/tools/test_get_<d>.py` gains window-slice, clamp/empty,
+guard, and windowed read-into-splice round-trip cases. The ADR recording
+the revised contract remains drafted
 (`4ec08dcb-fcb7-4961-abaf-ff7803e2f21d` in `docs/adr/`; set to accepted at
-close per Task 4.3). The working tree is on branch `feat-28-get-update`,
-synced to upstream `dev` (`8e07594`), with the complete test cycle green
-(2722 tests) and `docs/api/`/`docs/GENERATED.md`/`docs/MCP.md` regenerated
-without drift; never pushed. Next: Phase 2 (`get_<d>` windowing — the
-`window_body` helper + `offset`/`limit` on the eleven `get_<d>` tools).
+close per Task 4.3). The working tree is on branch
+`feat-28-get-update`, with the complete test cycle green (2784 tests)
+and `docs/api/`/`docs/GENERATED.md`/`docs/MCP.md` regenerated without
+drift; never pushed. Next: Phase 3 (LLM-facing contract — the ten
+`*_update_instructions.md` + `qa_refine_instructions.md` data files and
+their prompt tests).
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-01 21:59:07.448+02:00 — Phase 2 complete (get windowing: `window_body` helper + `offset`/`limit` on the eleven `get_<d>` tools, gate green)
+
+Task 2.1: `general/tools/_splice.py` gains the no-I/O
+`window_body(text, offset=1, limit=None)` helper (added to `__all__`
+beside `body_text`/`splice_body`): read-style windowing with clamping,
+never erroring — `offset` floors to 1, `offset > N` (incl. empty text)
+returns `""`, `limit` caps at the remaining lines (`None` = through end
+of body, negative = `""`), and the result keeps each window line's
+trailing newline (`""` for an empty window, else
+`"\n".join(lines[start-1 : start-1+count]) + "\n"`), so the defaults
+reproduce a normal trailing-newline body byte-for-byte and consecutive
+non-overlapping windows concatenate back to the body; the module
+docstring moves to the three-helper shape and the raw/splice invariant
+paragraph extends (windowed or not, `window_body` is the single
+windowing definition shared by all eleven tools). Task 2.2: the eleven
+`get_<d>` tools (`req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/
+`feat`/`vcr`) extended — signature `get_<d>(id, raw=False, offset=None,
+limit=None)`, a raw-only guard before any file access (coordinates with
+`raw=False` → `ValueError` naming both values, `update`-guard style),
+the raw branch returning `body_text(path)` directly when both
+coordinates are omitted (byte-for-byte pass-through, no rejoin) and
+`window_body(text, offset or 1, limit)` otherwise, not-found behaviour
+unchanged (incl. windowed raw mode), the `@mcp.tool` descriptions
+extended with the windowing sentence, the docstrings gained
+`offset`/`limit` Parameters entries + a `ValueError` Raises entry, the
+stale Phase-1 `begin`/`end` wording in the `raw` parameter reworded to
+`offset`/`limit` and extended for the window, and the module
+docstrings' `raw=True` paragraphs extended for the windowing capability
+(feat's folder-convention `id` docstring kept). Task 2.3: new
+`tests/general/tools/test__splice.py` (18 direct no-I/O tests):
+`window_body` defaults byte-for-byte, mid window, `offset > N` → `""`,
+limit capping, `limit=0` → `""`, `offset < 1` floors, negative limit →
+`""`, empty text → `""`, consecutive-window concatenation; and
+`splice_body`'s new signature — single-line replace, multi-line replace,
+omitted limit through end, `limit=0` mid-body insert, `offset=N+1`
+append (both limit forms), and each strict branch (`offset<1`,
+`offset>N+1`, `limit<0`, `offset+limit-1>N`) raising `ValueError`
+naming the offending value(s). Task 2.4: the eleven
+`tests/<d>/tools/test_get_<d>.py` extended (four new tests per domain,
+mirroring the existing style/naming): window slice equality (offset=2,
+limit=3 vs the seeded body's lines), clamp/empty cases (`offset` past
+the last line → `""`; oversized `limit` caps at the remaining lines),
+coordinates + `raw=False` → `ValueError` (offset/limit and limit-only
+variants; message names raw), and the windowed ACC-003
+read-into-splice round-trip (windowed raw read at domain-specific
+`k`/`m` asserted equal to the full read's slice, same-count replacement
+fragment spliced via the generic `update` at those coordinates, replaced
+lines equal the fragment and unchanged regions byte-identical); the
+existing both-modes not-found tests each gained a windowed raw
+assertion. All pre-existing tests pass unchanged (default raw read
+byte-for-byte identical). Task 2.5 gate (green): `ruff format --check`
+(1475 files already formatted — 1474 + the new test file), `ruff check`
+(All checks passed!), `vulture src/ whitelist.py --min-confidence 60`
+(clean, no output), full `unittest` suite (Ran 2784 tests — OK; 2722 +
+18 new `test__splice` + 44 new per-domain window tests), `specmgr docs`
++ `specmgr mcp-docs` regenerated (only the eleven
+`docs/api/...get_<d>.md` pages, `docs/api/..._splice.md`,
+`docs/api/README.md`, `docs/GENERATED.md` — test-file count 318 → 319 —
+and `docs/MCP.md`'s eleven `get_<d>` entries changed; a second
+regeneration run is byte-identical, no drift). Not committed (the
+orchestrator commits); not pushed.
 
 #### 2026-09-01 18:04:04.427+02:00 — Phase 1 complete (update core `begin`/`end` → `offset`/`limit` rename + test migration, gate green)
 

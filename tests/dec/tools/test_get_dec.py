@@ -105,6 +105,59 @@ class TestGetDec(unittest.TestCase):
         self.assertEqual(new_lines[: k - 1] + new_lines[k:], lines[: k - 1] + lines[k:])
         self.assertEqual(len(new_lines), len(lines))
 
+    def test_raw_windowed_read_returns_the_requested_slice(self) -> None:
+        """raw=True with offset/limit must return exactly the requested body window, each line
+        keeping its trailing newline."""
+        created = create_dec(_MINIMAL_BODY)
+        doc_id = created.frontmatter.id
+        lines = get_dec(doc_id, raw=True).splitlines()
+
+        result = get_dec(doc_id, raw=True, offset=2, limit=3)
+
+        self.assertIsInstance(result, str)
+        self.assertEqual(result, "\n".join(lines[1:4]) + "\n")
+
+    def test_raw_windowed_read_clamps_out_of_range_coordinates(self) -> None:
+        """raw=True: an offset past the last body line returns the empty string, and a limit
+        larger than the remaining lines caps at them."""
+        created = create_dec(_MINIMAL_BODY)
+        doc_id = created.frontmatter.id
+        lines = get_dec(doc_id, raw=True).splitlines()
+
+        self.assertEqual(get_dec(doc_id, raw=True, offset=len(lines) + 1), "")
+        self.assertEqual(get_dec(doc_id, raw=True, offset=len(lines) + 10, limit=5), "")
+        self.assertEqual(get_dec(doc_id, raw=True, offset=2, limit=len(lines) + 10), "\n".join(lines[1:]) + "\n")
+
+    def test_coordinates_with_raw_false_raise_value_error(self) -> None:
+        """offset/limit with raw=False must raise ValueError (naming raw), before any file access."""
+        created = create_dec(_MINIMAL_BODY)
+
+        with self.assertRaises(ValueError) as ctx:
+            get_dec(created.frontmatter.id, raw=False, offset=2, limit=3)
+        message = str(ctx.exception)
+        self.assertIn("raw", message)
+        self.assertIn("offset", message)
+        with self.assertRaises(ValueError):
+            get_dec(created.frontmatter.id, raw=False, limit=3)
+
+    def test_windowed_raw_read_coordinates_index_into_the_splice_target(self) -> None:
+        """The coordinates of a windowed raw read must splice at exactly those lines, unchanged
+        regions byte-identical (ACC-003 windowed)."""
+        created = create_dec(_MINIMAL_BODY)
+        doc_id = created.frontmatter.id
+        lines = get_dec(doc_id, raw=True).splitlines()
+        k, m = 3, 3
+        window = get_dec(doc_id, raw=True, offset=k, limit=m)
+        self.assertEqual(window, "\n".join(lines[k - 1 : k - 1 + m]) + "\n")
+        replacement = "## Context and Problem Statement\n\nThe store cannot serve the dashboard read path."
+
+        update(id=doc_id, type="dec", content=replacement, offset=k, limit=m)
+
+        new_lines = get_dec(doc_id, raw=True).splitlines()
+        self.assertEqual(new_lines[k - 1 : k - 1 + m], replacement.splitlines())
+        self.assertEqual(new_lines[: k - 1] + new_lines[k - 1 + m :], lines[: k - 1] + lines[k - 1 + m :])
+        self.assertEqual(len(new_lines), len(lines))
+
     def test_raw_false_returns_parsed_document_as_before(self) -> None:
         """raw=False (explicit) must return the parsed document, exactly as the default call does."""
         created = create_dec(_MINIMAL_BODY)
@@ -116,11 +169,14 @@ class TestGetDec(unittest.TestCase):
         self.assertEqual(result, default)
 
     def test_raw_unknown_id_raises_not_found_in_both_modes(self) -> None:
-        """raw=True and raw=False must both raise DecNotFoundError for an unknown id."""
+        """raw=True and raw=False must both raise DecNotFoundError for an unknown id, windowed raw
+        reads included."""
         create_dec(_MINIMAL_BODY)
 
         with self.assertRaises(DecNotFoundError):
             get_dec("no-such-id", raw=True)
+        with self.assertRaises(DecNotFoundError):
+            get_dec("no-such-id", raw=True, offset=2, limit=3)
         with self.assertRaises(DecNotFoundError):
             get_dec("no-such-id", raw=False)
 

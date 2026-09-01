@@ -1,9 +1,10 @@
 # `biz.dfch.specmgr.general.tools._splice`
 
-Frontmatter-stripped body extraction and body-line splicing for the generic
-``update`` tool (feat-22-consolidate-mutation-tools, Phase 2).
+Frontmatter-stripped body extraction, body-line splicing, and body-line
+windowing for the generic ``update`` tool (feat-22-consolidate-mutation-tools,
+Phase 2) and the ``get_<d>`` tools (feat-28-get-update, Phase 2).
 
-Two small, doc-type-agnostic text helpers shared by the generic ``update``
+Three small, doc-type-agnostic text helpers shared by the generic ``update``
 tool's range mode and the eleven ``get_<d>`` tools' ``raw=True`` reads:
 
 - :func:`body_text` extracts a document file's frontmatter-stripped body text
@@ -16,12 +17,21 @@ tool's range mode and the eleven ``get_<d>`` tools' ``raw=True`` reads:
   body line, ``0`` = pure insert, ``offset = N + 1`` = the virtual
   end-of-body append position), implementing the plan's range contract
   (strict validation, splice-then-validate-whole).
+- :func:`window_body` returns the read-style ``offset``/``limit`` window of
+  that text (``offset`` = 1-based first line to return, floored to 1;
+  ``limit`` = number of lines, omitted = through the last body line, capped
+  at the remaining lines), clamping out-of-range values instead of erroring
+  (the ``list_<d>`` "clamped, not errored" convention; reads are
+  non-destructive).
 
-**The raw/splice invariant.** Both helpers are the *single* definition of
-"the body text" in this codebase: every ``get_<d>(raw=True)`` read and every
-``update`` range splice go through :func:`body_text`, so *what the client
-counts is what the server splices* -- the line numbers a client sees in a raw
-read index byte-for-byte into the same text the server splices against.
+**The raw/splice invariant.** All three helpers are the *single* definition
+of "the body text" in this codebase: every ``get_<d>(raw=True)`` read
+(windowed or not) and every ``update`` range splice go through
+:func:`body_text`, so *what the client counts is what the server splices* --
+the line numbers a client sees in any ``get_<d>(raw=True)`` read, windowed or
+not, index byte-for-byte into the same text the server splices against;
+:func:`window_body` is the single windowing definition shared by all eleven
+``get_<d>`` tools.
 
 As with :mod:`_doc_paths`, this module has no ``mcp`` dependency -- plain
 file I/O and text manipulation only, kept separately from any
@@ -121,4 +131,52 @@ ValueError
     naming the offending value(s) and the allowed range. Client-
     controlled input, so these are ``ValueError``s (not ``assert``s),
     per the project's user-controlled-flow-control rule.
+
+
+### `window_body(text: 'str', offset: 'int' = 1, limit: 'int | None' = None) -> 'str'`
+
+Return the body-line window ``offset..offset + limit - 1`` of ``text``.
+
+The single windowing definition behind every
+``get_<d>(raw=True, offset=..., limit=...)`` read (REQ-002): a
+read-style, *clamping* (never erroring) window over a
+frontmatter-stripped body text, in the ``list_<d>`` "clamped, not
+errored" paging convention (ADR
+ec9f5262-9912-49d0-903f-fcfb54f28c13) -- reads are non-destructive, so
+out-of-range coordinates degrade to the nearest valid window instead of
+raising. Let ``N = len(text.splitlines())`` be the number of lines of
+``text``:
+
+- ``offset`` is floored to 1; a floored ``offset > N`` (including an
+  empty ``text``) returns the empty string.
+- ``limit = None`` (omitted) extends the window through the last line;
+  any given ``limit`` is capped at the remaining lines (``N - offset +
+  1``), and a negative ``limit`` yields an empty window.
+
+The result is the window's lines, each keeping its trailing newline --
+``""`` if the window is empty, else ``"\n".join(lines[offset - 1 :
+offset - 1 + count]) + "\n"``. Consequently, :func:`window_body` with
+the defaults (``offset = 1``, ``limit = None``) equals a normal
+trailing-newline body byte-for-byte, and concatenating consecutive
+non-overlapping windows reproduces the body -- the raw/splice invariant
+holds for windowed reads exactly as for full raw reads (see the module
+docstring).
+
+Parameters
+----------
+text:
+    The frontmatter-stripped body text (e.g. from :func:`body_text`).
+offset:
+    The 1-based first body line of the window; values below 1 floor to
+    1.
+limit:
+    The number of body lines the window spans; ``None`` (omitted)
+    extends the window through the last line, and the value is capped
+    at the remaining lines (a negative value yields an empty window).
+
+Returns
+-------
+str
+    The window's lines joined with ``"\n"`` plus a single trailing
+    newline, or ``""`` for an empty window.
 
