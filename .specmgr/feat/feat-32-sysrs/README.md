@@ -306,14 +306,35 @@ Explicitly out of scope:
   `general/tools/_timestamps.py` generator helper). `sysrs` adopts
   the locked post-sibling shapes from day one (no rework after its
   merge); `sysrs-example.md` was migrated to them in the same planning
-  pass (Task 0.12, done). Checkpoint: before Phase 3 (Task 3.1), re-
-  merge `dev` and re-verify the mirror targets — the sibling's
-  Phases 1–4 touch the same `general/tools` files (`update.py`/
-  `set_status.py` path-safety guards, issue #43; `_timestamps.py`,
-  issue #44), so a `get_sysrs` and the `sysrs` adapters built after
-  those phases carry the `_path_safety` guards from day one, and new
-  `sysrs` files shadowing `id`/`type` carry the per-file pylint
-  disable line (the sibling's Phase 5 convention).
+  pass (Task 0.12, done). Execution order relative to the sibling's
+  development (2026-09-01): Phases 1–2 are fully parallel-safe —
+  Phase 1 exercises only standard engine mechanics that already ship
+  in other domains (REGEX-aliased H3 headings: `vcr`'s
+  `AcceptanceCriterion`; the `assert`-based newest-first
+  `model_validator`: `feat`'s `Updates` — the locked `## Updates`
+  shape needs no sibling code), and Phase 2 writes only new
+  `sysrs/`/`tests/sysrs/` files (the ordering check ships domain-
+  local per the Design Notes fallback — use the shared
+  `models/md/_ordering.py` helper directly if the sibling's Phase 2
+  has landed by Task 2.3). Phase 3's Tasks 3.1/3.2 (new
+  `sysrs/tools/` files) are parallel-safe too (the Task 3.1
+  checkpoint picks the then-current mirror shape — `_timestamps.py`
+  and `_path_safety` guards included). The only shared-file surfaces
+  are Task 3.3 — which edits `general/tools/update.py`/
+  `set_status.py`/`delete.py`, the same files the sibling's Phase 4
+  rewrites (issue #43 path-safety guards) — and Phase 6's
+  `server.py` docstring / `AGENTS.md` edits (the sibling's Phase 4
+  Task 4.5 touches both). Run Task 3.3 after the sibling's Phase 4
+  has merged to `dev` (preferred — the `sysrs` adapters then carry
+  the `_path_safety` guards from day one), or do it now and rebase
+  on the sibling's merge (a mechanical conflict in three files, not
+  a semantic one); its tests/gate, Tasks 3.4/3.5, chain behind it,
+  and with them Phases 4–6 under the phase-gate discipline (Phases
+  4/5 themselves are new-file-only, no sibling overlap). Re-merge
+  `dev` at the start of Phase 6 (Task 6.1) and rebase the
+  enumeration edits on the post-sibling text. New `sysrs` files
+  shadowing `id`/`type` carry the per-file pylint disable line (the
+  sibling's Phase 5 convention) regardless of order.
 - Blocks: nothing known.
 
 ### Design Notes
@@ -1316,7 +1337,11 @@ its own ADR rather than living only in this feature's Design Notes.
   **no** per-domain mutation tools (dispatch-only from day one, ADR
   36905d5b; deletion is the generic `delete` tool, REQ-011) — depends
   on: Task 3.1 — status: not-started
-- [ ] Task 3.3: `"sysrs"` dispatch entries — `general/tools/update.py`:
+- [ ] Task 3.3: `"sysrs"` dispatch entries — **gated on the sibling's
+  Phase 4 per the Dependencies execution order** (run it after that
+  phase has merged to `dev`, or now + rebase on its merge — a
+  mechanical conflict in the three files, not a semantic one) —
+  `general/tools/update.py`:
   `_update_sysrs` adapter (verbatim-shape port of `_update_sop`) +
   `"sysrs"` in `_ADAPTERS` + in the `type` `Literal[...]` +
   `SysrsDocument` in the return union + import wiring; same for
@@ -1413,7 +1438,10 @@ its own ADR rather than living only in this feature's Design Notes.
 
 #### Phase 6: Cross-cutting registration
 
-- [ ] Task 6.1: `server.py` — add `sysrs` to the final import line
+- [ ] Task 6.1: `server.py` — **re-merge `dev` first** (the sibling's
+  Phase 4 Task 4.5 also edits the `server.py` docstring and
+  `AGENTS.md`; rebase the enumeration edits below on the post-
+  sibling text) — add `sysrs` to the final import line
   (`from . import adr, dec, feat, general, gol, prb, qa, req, rsk, sop, sysrs, tsk, uc, vcr`)
   + module docstring (3 resources, 7 tools, 2 prompts, domain summary,
   the dispatch-only/no-per-domain-mutation-tools note, the no-`/{id}`/
@@ -1492,13 +1520,16 @@ ADRs); (2) `sysrs` now adopts the sibling feature's locked
 conventions from day one — the `## Updates` timestamp-led entry
 shape (em-dash separators rejected, ` - `/`: ` separators, parse-
 enforced newest-first ordering, `MarkdownSection2WithComment`
-container, ordering-hint comment in the template only) and the
-conforming frontmatter `created`/`updated` date+time form
-(`yyyy-MM-dd HH:mm:ss.fff` + `Z`/`±HH:mm`) — so no rework after its
-merge (Dependencies gained the coordination entry with the pre-
-Phase-3 re-merge checkpoint; the Design Notes `Updates` sketch/
-error-channels/packaged-data/tools lines and Tasks 1.3/2.3/2.5/
-3.1/3.2/4.1/4.2 follow); Task 0.12 (done in this pass) migrated
+  container, ordering-hint comment in the template only) and the
+  conforming frontmatter `created`/`updated` date+time form
+  (`yyyy-MM-dd HH:mm:ss.fff` + `Z`/`±HH:mm`) — so no rework after its
+  merge (Dependencies gained the coordination entry with the
+  execution-order checkpoints — Phases 1–2 and Tasks 3.1/3.2
+  parallel-safe now, Task 3.3 and Phase 6's `server.py`/`AGENTS.md`
+  regions gated on its Phase 4; the Design Notes `Updates` sketch/
+  error-channels/packaged-data/tools lines and Tasks 1.3/2.3/2.5/
+  3.1/3.2/3.3/4.1/4.2/6.1 follow); Task 0.12 (done in this pass)
+  migrated
 `sysrs-example.md` to those conventions; (3) Phase 1 pins the
 engine's behavior for a mandatory free-text section present with
 zero body content (Task 1.3(e), ACC-004, Task 2.5), Task 4.2's
@@ -1666,10 +1697,13 @@ borrowed-section content.
   unused reference — non-blocking; the approved section is free-form
   text either way); optional cleanup of the `req` docstring's pre-2023
   example characteristic names (noted in `example.v7.md`'s header,
-  out of scope); the sibling-feature coordination checkpoint before
-  Phase 3 (re-merge `dev`, re-verify mirror targets — see
-  Dependencies; the locked conventions are already adopted, so this
-  is a verification step, not an open design question). **Settled and closed**: the Phase 1–6 implementation
+  out of scope); the sibling-feature execution-order checkpoints
+  (Phases 1–2 and Tasks 3.1/3.2 parallel-safe now; Task 3.3 gated
+  on the sibling's Phase 4 — or done now + rebased on its merge;
+  Phase 6 re-merges `dev` at Task 6.1 for the `server.py`/`AGENTS.md`
+  overlap — see Dependencies; the locked conventions are already
+  adopted, so these are verification steps, not open design
+  questions). **Settled and closed**: the Phase 1–6 implementation
   breakdown itself (2026-09-01 — the Task List's "Phase 1+" stub is
   replaced; the frontmatter `status` vocabulary and the per-section
   cross-ref type-tag regex decided the same day); `## References`'s
@@ -1715,10 +1749,13 @@ wait on it; see Task List Task 0.7/Design Notes item 4's note.)
   separators, parse-enforced newest-first, `MarkdownSection2With
   Comment` container, ordering-hint comment in the template only)
   and the conforming frontmatter date+time format (`yyyy-MM-dd
-  HH:mm:ss.fff` + `Z`/`±HH:mm`) — Dependencies gained the
-  coordination entry with the pre-Phase-3 re-merge checkpoint, the
-  Design Notes `Updates` sketch/error-channels/packaged-data/tools
-  lines were reworded, Tasks 1.3/2.3/2.5/3.1/3.2/4.1/4.2 updated,
+   HH:mm:ss.fff` + `Z`/`±HH:mm`) — Dependencies gained the
+   coordination entry with the execution-order checkpoints (Phases
+   1–2 and Tasks 3.1/3.2 parallel-safe; Task 3.3 and Phase 6's
+   `server.py`/`AGENTS.md` regions gated on its Phase 4, with
+   Tasks 3.3/6.1 carrying the gate notes), the Design Notes
+   `Updates` sketch/error-channels/packaged-data/tools lines were
+   reworded, Tasks 1.3/2.3/2.5/3.1/3.2/4.1/4.2 updated,
   and new Task 0.12 (done in this pass) migrated `sysrs-example.md`
   (both Updates headings `—` → ` - `, frontmatter date-only →
   midnight-UTC date+time per D7); (3) Phase 1 pins the empty-
