@@ -3,7 +3,7 @@ created: '2026-09-01T14:24:06.341303'
 id: feat-27-validation
 status: planning
 type: feat
-updated: '2026-09-01T14:42:47.209799'
+updated: '2026-09-01T17:04:08.533488'
 version: 1.0.0
 ---
 
@@ -69,6 +69,8 @@ The message contract is one template, decided once and applied everywhere (the f
 
 Field-path mechanics: thread a keyword-only `_path` parameter through `MarkdownStr.from_text`/`process_field`/`process_list_field` and the `MarkdownSection`/`MarkdownParagraph` overrides, plus a `PrivateAttr` so domain `model_validator`s and computed fields (TaskItem, REQ/ACC items, RSK assessment, VCR AC method, feat entries) can carry the path into their own raises; line numbers come from token `.map` values. A shared builder lives in a new `models/md/_errors.py` module; the tool-boundary wrapper prepends domain + tool + frontmatter-vs-body context.
 
+Phase 1 proceeds pin-then-enrich: Task 1.0 first records the exact current exception type and message of every cataloged error surface in a dedicated baseline test file; each subsequent enrichment task updates the baseline assertions it intentionally changes within that same task, so the baseline file's diff is the reviewable record of all message changes, and ACC-004's guarantee (no exception-type changes, no unintended message changes) becomes mechanically checkable.
+
 The `create_feat` tool auto-assigns `max(NNN)+1` (which would be `feat-37-<slug>`); per the recorded decision the folder and frontmatter `id` are renamed to `feat-27-validation` immediately after creation (a sanctioned manual feat edit, since the generic `update` tool never touches `id`), following the feat-21/feat-30/feat-33/feat-36 precedent of carrying the GitHub issue number even when it differs from the auto-derived value.
 
 ### Related Decisions
@@ -86,7 +88,8 @@ The `create_feat` tool auto-assigns `max(NNN)+1` (which would be `feat-37-<slug>
 
 #### Phase 1: models/md Engine Messages
 
-- [ ] Task 1.1: Field-path threading (`_path` parameter + `PrivateAttr`) through `from_text`/`process_field`/`process_list_field` and the `MarkdownSection`/`MarkdownParagraph` overrides — depends on: Phase 0
+- [ ] Task 1.0: Pin the current validation-error strings before any enrichment — add a new `tests/models/md/test_validation_error_baseline.py` asserting the exact current exception type and message for every cataloged error surface, using fixed minimal fixtures ("text left over after processing all fields" for a field and for a list, "expected …, found no match" for a field and for a list, raw-HTML rejection for an inline and a block token, "text is not in 'mdformat'." for non-normalized input, heading alias mismatch, frontmatter `yaml.YAMLError` via `parse_tsk` on malformed YAML, and `pydantic.ValidationError` via a closed-vocabulary frontmatter value); a later task that intentionally changes a baseline assertion updates it within that same task, so this file's diff records every message change — depends on: Phase 0
+- [ ] Task 1.1: Field-path threading (`_path` parameter + `PrivateAttr`) through `from_text`/`process_field`/`process_list_field` and the `MarkdownSection`/`MarkdownParagraph` overrides — depends on: Task 1.0
 - [ ] Task 1.2: Enrich the "text left over" message with field path, line reference in the normalized text, snippet, and a likely-cause hint — depends on: Task 1.1
 - [ ] Task 1.3: Enrich the "expected …, found no match" messages to name the expected section for the missing-mandatory-section case — depends on: Task 1.1
 - [ ] Task 1.4: Add a line number (token `.map`) and a fix hint (code span / HTML comment) to the raw-HTML rejection — depends on: Task 1.1
@@ -119,9 +122,13 @@ The `create_feat` tool auto-assigns `max(NNN)+1` (which would be `feat-37-<slug>
 
 ### Current Status
 
-**As of 2026-09-01**: Created for GitHub issue #27. Investigation complete: both failure classes re-verified on the current HEAD, the full misleading-error catalog recorded in Design Notes, and the MCP-SDK error-forwarding behavior confirmed (the server sends `str(e)`; the "Error executing tool" prefix is client-side). All three planning decisions confirmed with the user: messages-only (no new exception channel), strict rejection with clear errors (no content-acceptance changes), and the id `feat-27-validation` (rename after `create_feat`). No implementation started yet — this document is the design and plan only.
+**As of 2026-09-01**: Created for GitHub issue #27. Investigation complete: both failure classes re-verified on the current HEAD, the full misleading-error catalog recorded in Design Notes, and the MCP-SDK error-forwarding behavior confirmed (the server sends `str(e)`; the "Error executing tool" prefix is client-side). All three planning decisions confirmed with the user: messages-only (no new exception channel), strict rejection with clear errors (no content-acceptance changes), and the id `feat-27-validation` (rename after `create_feat`). The branch is merged current with `origin/dev` (`01e29a5`). No implementation started yet — this document is the design and plan only; the next step is Phase 1, beginning with Task 1.0 (pin the current error strings before enriching them).
 
 ### Updates
+
+#### 2026-09-01 14:30:47.000Z — Session wrap-up: Task 1.0 added; origin/dev merged
+
+Added Task 1.0 (pin the current validation-error strings in a dedicated baseline test file before Phase 1's enrichments, so every message change becomes a reviewable diff); Task 1.1 now depends on Task 1.0. Merged `origin/dev` into this branch as `01e29a5` (pulls in `8e07594`, feat-40's docs-prune): no conflicts, working tree clean, and the incoming `tests/commands/test_docs.py` suite passes post-merge. Plan artifacts committed as `7aac697` (ccm-generated message). No implementation has started — the next step for the phase orchestrator is Phase 1, beginning with Task 1.0.
 
 #### 2026-09-01 12:39:10.000Z — Phase 0 completed
 
@@ -139,4 +146,5 @@ Kept the documented two-channel error contract (`AssertionError` structural / `p
 
 ### Related PRs / Commits
 
-None yet.
+- `7aac697` — docs(feat-27): add the feature design for clear validation errors (this plan, plus the feat-7 Task 0.29 annotation)
+- `01e29a5` — merge of `origin/dev` into `feat-27-validation` (pulls in `8e07594`, feat-40's docs-prune)
