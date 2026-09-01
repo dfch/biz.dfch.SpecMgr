@@ -76,10 +76,13 @@ class TaskItem(MarkdownListItem):
 
         Raises:
             AssertionError: `.text` does not start with a well-formed
-                checkbox marker (see `_MARKER_PATTERN`).
+                checkbox marker (see `_MARKER_PATTERN`). The message names
+                this item's own path and 1-based line (REQ-001/REQ-002, via
+                `self._path`/`self._line`, threaded in by `models.md`'s
+                `MarkdownListItem.from_text`).
         """
         match = _MARKER_PATTERN.match(self.text)
-        assert match, f"TaskItem: expected a '- [ ]'/'- [x]' checkbox marker, got {self.text!r}"
+        assert match, f"{self._path} (line {self._line}): expected a '- [ ]'/'- [x]' checkbox marker, got {self.text!r}"
         return match.group(1).lower() == "x"
 
     @computed_field  # type: ignore
@@ -93,10 +96,13 @@ class TaskItem(MarkdownListItem):
 
         Raises:
             AssertionError: `.text` does not start with a well-formed
-                checkbox marker (see `_MARKER_PATTERN`).
+                checkbox marker (see `_MARKER_PATTERN`). The message names
+                this item's own path and 1-based line (REQ-001/REQ-002, via
+                `self._path`/`self._line`, threaded in by `models.md`'s
+                `MarkdownListItem.from_text`).
         """
         match = _MARKER_PATTERN.match(self.text)
-        assert match, f"TaskItem: expected a '- [ ]'/'- [x]' checkbox marker, got {self.text!r}"
+        assert match, f"{self._path} (line {self._line}): expected a '- [ ]'/'- [x]' checkbox marker, got {self.text!r}"
         return match.group("description").strip()
 
     content: list[MarkdownParagraph] | None = None

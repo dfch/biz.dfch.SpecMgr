@@ -38,8 +38,7 @@ leaves its own two error channels uncaught.
 
 from __future__ import annotations
 
-import frontmatter
-
+from biz.dfch.specmgr.models.md._frontmatter_parse import parse_frontmatter
 from biz.dfch.specmgr.models.md._markdown import format_text
 
 from .document import UcDocument
@@ -67,11 +66,13 @@ def parse_uc(text: str) -> UcDocument:
         structurally-sound document whose field values (or cross-field
         invariants, e.g. an unresolvable `Extension`/`SubVariation`
         reference) fail schema validation -- see this module's docstring
-        for the full split.
+        for the full split. Raises ``yaml.YAMLError`` for malformed
+        frontmatter YAML -- both frontmatter error channels are enriched by
+        :func:`~biz.dfch.specmgr.models.md._frontmatter_parse.parse_frontmatter`
+        (feat-27-validation Phase 2).
     """
-    post = frontmatter.loads(text)
-    fm = UcFrontmatter.model_validate(_stringify_metadata(post.metadata))
-    body = UseCase.from_text(format_text(post.content))
+    fm, content = parse_frontmatter(text, UcFrontmatter, domain="uc", stringify_metadata=_stringify_metadata)
+    body = UseCase.from_text(format_text(content))
     return UcDocument(frontmatter=fm, body=body)
 
 

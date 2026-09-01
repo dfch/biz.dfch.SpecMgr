@@ -38,6 +38,7 @@ from datetime import datetime
 
 from ...general.tools._doc_paths import slugify
 from ...models.md import CURRENT_SCHEMA_VERSION
+from ...models.md._errors import BODY_CHANNEL, wrap_tool_errors
 from ...models.md._markdown import format_text
 from ...server import mcp
 from ..models.v2 import UcDocument, UcFrontmatter, UseCase
@@ -68,7 +69,8 @@ def create_uc(content: str) -> UcDocument:
     :class:`~biz.dfch.specmgr.uc.models.v2.UseCase` from it
     (``UseCase.from_text(format_text(content))``); a structural failure
     raises ``AssertionError`` and a field/cross-field failure raises
-    ``pydantic.ValidationError``, both uncaught -- nothing is written in
+    ``pydantic.ValidationError``, both re-raised with domain/tool context
+    prepended (see Raises below) -- nothing is written in
     either case.
 
     No body rendering is ever needed: the caller's own already-validated
@@ -85,8 +87,21 @@ def create_uc(content: str) -> UcDocument:
     UcDocument
         The newly created document, with its assigned id in
         ``frontmatter.id``.
+
+    Raises
+    ------
+    AssertionError
+        A structural failure in ``content``. The message is prefixed with domain/tool/channel
+        context (e.g. ``"uc create_uc (body): ..."``) by the shared tool-boundary
+        wrapper (:func:`~biz.dfch.specmgr.models.md._errors.wrap_tool_errors`), layered on top
+        of the engine's own field-path/line/snippet enrichment (feat-27-validation Phases 1/2).
+        Nothing is written.
+    pydantic.ValidationError
+        A field/cross-field validation failure in ``content`` -- similarly prefixed. Nothing is
+        written.
     """
-    body = UseCase.from_text(format_text(content))
+    with wrap_tool_errors(domain="uc", tool="create_uc", channel=BODY_CHANNEL):
+        body = UseCase.from_text(format_text(content))
 
     new_id = str(uuid.uuid4())
     now = datetime.now().isoformat(timespec="microseconds")

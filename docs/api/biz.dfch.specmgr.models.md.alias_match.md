@@ -9,6 +9,26 @@ never-checked class data.
 
 ## Functions
 
+### `describe_alias(cls: 'type') -> 'str'`
+
+Return a human-readable description of `cls`'s effective `@alias` (REQ-003).
+
+Mirrors `match_alias`'s own default/LITERAL/SPACE_SEPARATED/REGEX
+handling, for use in error messages (alias mismatch, and the
+missing-mandatory-section case of "expected ..., found no match") that
+need to state what heading text was actually expected, not just a bare
+class name.
+
+Args:
+    cls: A `MarkdownSection` subclass, possibly decorated with `@alias`.
+
+Returns:
+    `"heading '<literal text>'"` for `LITERAL` (or the no-`@alias`
+    default/`SPACE_SEPARATED`, which both derive the same literal text
+    from `cls.__name__`), or `"heading matching regex '<pattern>'"` for
+    `REGEX`.
+
+
 ### `match_alias(cls: 'type', heading_text: 'str') -> 'bool'`
 
 Return whether `heading_text` satisfies `cls`'s declared `@alias`.

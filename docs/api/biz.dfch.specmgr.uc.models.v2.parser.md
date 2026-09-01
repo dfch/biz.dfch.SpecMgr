@@ -57,5 +57,8 @@ UcDocument
     structurally-sound document whose field values (or cross-field
     invariants, e.g. an unresolvable `Extension`/`SubVariation`
     reference) fail schema validation -- see this module's docstring
-    for the full split.
+    for the full split. Raises ``yaml.YAMLError`` for malformed
+    frontmatter YAML -- both frontmatter error channels are enriched by
+    :func:`~biz.dfch.specmgr.models.md._frontmatter_parse.parse_frontmatter`
+    (feat-27-validation Phase 2).
 

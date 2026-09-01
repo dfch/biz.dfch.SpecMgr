@@ -25,7 +25,7 @@ from pydantic import computed_field
 
 from .markdown_str import MarkdownStr
 from .markdown_paragraph import MarkdownParagraph
-from ._markdown import format_text, parse
+from ._markdown import format_text, not_in_mdformat_message, parse
 
 #: The two markdown-it block-container token types a list item can be nested under.
 #: `MarkdownListItem` is deliberately shared between bullet (`ul`) and ordered (`ol`)
@@ -98,7 +98,7 @@ class MarkdownListItem(MarkdownStr):
                 first list item in `text`.
         """
         assert isinstance(text, str), type(text)
-        assert text == format_text(text), "text is not in 'mdformat'."
+        assert text == format_text(text), not_in_mdformat_message(text)
 
         tokens = parse(text)
 
@@ -143,7 +143,7 @@ class MarkdownListItem(MarkdownStr):
         return extent
 
     @classmethod
-    def from_text(cls, text: str) -> MarkdownListItem:
+    def from_text(cls, text: str, *, _path: str = "", _offset: int = 0) -> MarkdownListItem:
         """Create an instance from markdown text starting with a list item.
 
         Validates that `text` starts with a list-open wrapper
@@ -167,9 +167,26 @@ class MarkdownListItem(MarkdownStr):
         `MarkdownParagraph`, whose marker-free `_value` needs no
         reconstruction, an item cannot reconstruct its own marker from class
         metadata alone (see the class docstring), so it is kept as-is instead.
+
+        Args:
+            text: the markdown text to parse.
+            _path: this item's own document-relative path (REQ-001) as
+                chosen by the caller -- `""` at the very root, in which case
+                `cls.__name__` is used instead (see
+                `MarkdownStr.from_text`'s own `_path` docs). Threaded down so
+                a domain subclass's own item-regex computed field (e.g.
+                `tsk.TaskItem.checked`) can report it via `self._path`.
+            _offset: the 0-based line at which `text` (this item's own
+                marker line) starts, relative to the root document's own
+                `mdformat`-normalized body (REQ-002) -- `0` at the root.
+                Exposed to a domain subclass's own computed fields via
+                `self._line` (REQ-002).
         """
         assert isinstance(text, str), f"text: '{type(text)}' != 'str'."
-        assert text == format_text(text), "text is not in 'mdformat'."
+        assert text == format_text(text), not_in_mdformat_message(text)
+
+        own_path = _path or cls.__name__
+        own_line = _offset + 1
 
         tokens = parse(text)
         assert len(tokens) >= 5, "Expected at least a list-open/list_item_open/paragraph triple"
@@ -197,6 +214,8 @@ class MarkdownListItem(MarkdownStr):
         if not field_names:
             instance = cls()
             instance._value = text
+            instance._path = own_path
+            instance._line = own_line
             return instance
 
         own_map = t_para_open.map
@@ -207,8 +226,10 @@ class MarkdownListItem(MarkdownStr):
         body_lines = lines[own_lines:]
         body_text = format_text("\n".join(body_lines)) if body_lines else ""
 
-        instance = super().from_text(body_text)
+        instance = super().from_text(body_text, _path=own_path, _offset=_offset + own_lines)
         instance._value = "\n".join(lines[:own_lines])
+        instance._path = own_path
+        instance._line = own_line
         return instance
 
     def __str__(self) -> str:

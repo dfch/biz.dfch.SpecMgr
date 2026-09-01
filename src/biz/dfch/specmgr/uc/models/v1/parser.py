@@ -32,9 +32,10 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
-import frontmatter
 from markdown_it import MarkdownIt
 from markdown_it.token import Token
+
+from biz.dfch.specmgr.models.md._frontmatter_parse import parse_frontmatter
 
 from .characteristic_information import CharacteristicInformation
 from .extension import Extension
@@ -155,14 +156,17 @@ def parse_uc(text: str) -> UseCase:
     -------
     UseCase
         The structured document. Raises :class:`UcParseError` for a malformed heading/list
-        structure, or ``pydantic.ValidationError`` for a structurally-sound document whose
-        field values (or cross-field invariants) fail schema validation.
+        structure,         or ``pydantic.ValidationError`` for a structurally-sound document whose
+        field values (or cross-field invariants) fail schema validation. Raises
+        ``yaml.YAMLError`` for malformed frontmatter YAML -- both frontmatter
+        error channels are enriched by
+        :func:`~biz.dfch.specmgr.models.md._frontmatter_parse.parse_frontmatter`
+        (feat-27-validation Phase 2).
     """
-    post = frontmatter.loads(text)
-    fm = UseCaseFrontmatter.model_validate(post.metadata)
+    fm, content = parse_frontmatter(text, UseCaseFrontmatter, domain="uc")
 
-    lines = post.content.splitlines()
-    heading_tokens = [tok for tok in _MD.parse(post.content) if tok.type == "heading_open"]
+    lines = content.splitlines()
+    heading_tokens = [tok for tok in _MD.parse(content) if tok.type == "heading_open"]
     _reject_leading_content(lines, heading_tokens)
     roots = _build_outline(heading_tokens, lines)
 

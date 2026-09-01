@@ -118,3 +118,43 @@ def match_alias(cls: type, heading_text: str) -> bool:
         assert False, f"{cls.__name__}: unknown alias type {alias_type!r}"
 
     return result
+
+
+def describe_alias(cls: type) -> str:
+    """Return a human-readable description of `cls`'s effective `@alias` (REQ-003).
+
+    Mirrors `match_alias`'s own default/LITERAL/SPACE_SEPARATED/REGEX
+    handling, for use in error messages (alias mismatch, and the
+    missing-mandatory-section case of "expected ..., found no match") that
+    need to state what heading text was actually expected, not just a bare
+    class name.
+
+    Args:
+        cls: A `MarkdownSection` subclass, possibly decorated with `@alias`.
+
+    Returns:
+        `"heading '<literal text>'"` for `LITERAL` (or the no-`@alias`
+        default/`SPACE_SEPARATED`, which both derive the same literal text
+        from `cls.__name__`), or `"heading matching regex '<pattern>'"` for
+        `REGEX`.
+    """
+    assert isinstance(cls, type), type(cls)
+
+    metadata = getattr(cls, "_alias_metadata", None)
+    if metadata is None:
+        result = f"heading {space_separated_name(cls.__name__)!r}"
+        return result
+
+    alias_type = metadata["type"]
+    alias_value = metadata["value"]
+
+    if alias_type == AliasType.REGEX:
+        result = f"heading matching regex {alias_value!r}"
+    elif alias_type == AliasType.SPACE_SEPARATED:
+        result = f"heading {space_separated_name(cls.__name__)!r}"
+    elif alias_type == AliasType.LITERAL:
+        result = f"heading {alias_value!r}"
+    else:
+        assert False, f"{cls.__name__}: unknown alias type {alias_type!r}"
+
+    return result

@@ -129,10 +129,13 @@ class Probability(MarkdownSection3):
             AssertionError: the retained heading text does not match
                 `Probability`'s declared `@alias` (unreachable via the
                 engine: `match_alias` already enforced it at parse time).
+                The message names this section's own path and 1-based line
+                (REQ-001/REQ-002, via `self._path`/`self._line`, threaded in
+                by `models.md`'s `MarkdownSection.from_text`).
         """
         heading_line = self.text.splitlines()[0].strip() if self.text else ""
         match = _PROBABILITY_HEADING_PATTERN.fullmatch(heading_line)
-        assert match, f"Probability: expected heading '### Probability 1..5', got {heading_line!r}"
+        assert match, f"{self._path} (line {self._line}): expected heading '### Probability 1..5', got {heading_line!r}"
         result: int = int(match.group(1))
         return result
 
@@ -168,11 +171,14 @@ class Impact(MarkdownSection3):
         Raises:
             AssertionError: the retained heading text does not match
                 `Impact`'s declared `@alias` (unreachable via the engine:
-                `match_alias` already enforced it at parse time).
+                `match_alias` already enforced it at parse time). The
+                message names this section's own path and 1-based line
+                (REQ-001/REQ-002, via `self._path`/`self._line`, threaded in
+                by `models.md`'s `MarkdownSection.from_text`).
         """
         heading_line = self.text.splitlines()[0].strip() if self.text else ""
         match = _IMPACT_HEADING_PATTERN.fullmatch(heading_line)
-        assert match, f"Impact: expected heading '### Impact 1..5', got {heading_line!r}"
+        assert match, f"{self._path} (line {self._line}): expected heading '### Impact 1..5', got {heading_line!r}"
         result: int = int(match.group(1))
         return result
 
