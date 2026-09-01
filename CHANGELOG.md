@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Eliminated all 42 pylint W0622 (redefined-builtin) findings via 39
+  explicit, per-file `# pylint: disable=redefined-builtin` comments (with
+  a one-line rationale) on the files whose public API intentionally uses
+  `id`/`type` as parameter names — the twelve `get_<d>` tools, the
+  per-domain update/implement prompts, the ADR tools/resources/prompts,
+  the generic `update`/`set_status`/`delete` public functions, and
+  `models/md/markdown.py`/`alias.py`. Not breaking — no behavior change,
+  purely an internal lint-suppression change. No global `pyproject.toml`
+  pylint configuration change: a future file that shadows a builtin
+  without adding its own disable comment still warns (GitHub issue #41,
+  Phase 5 of feat-38-39-41-43-44).
+
 - The twelve `get_<d>` tools (including `get_adr`), the generic `update`
   tool, and the generic `set_status` tool now validate `id` for
   path-injection/wrong-format before any filesystem access, and confine

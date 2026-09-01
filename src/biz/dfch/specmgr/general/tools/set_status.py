@@ -15,6 +15,8 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+# pylint: disable=redefined-builtin  # id/type intentionally shadow the builtins: public tool API, issue #41
+
 """``@mcp.tool()`` wrapper: set_status (feat-22-consolidate-mutation-tools, Phase 4).
 
 The generic, cross-domain status-change tool for all twelve document types

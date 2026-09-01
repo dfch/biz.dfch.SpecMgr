@@ -15,6 +15,8 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+# pylint: disable=redefined-builtin  # id/type intentionally shadow the builtins: public tool API, issue #41
+
 """``@mcp.prompt()``: update_adr_test (.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md §11).
 
 Experimental, strictly step-gated variant of ``update_adr`` (see

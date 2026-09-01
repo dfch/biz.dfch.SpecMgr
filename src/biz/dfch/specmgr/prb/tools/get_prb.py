@@ -15,6 +15,8 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+# pylint: disable=redefined-builtin  # id/type intentionally shadow the builtins: public tool API, issue #41
+
 """``@mcp.tool()`` wrapper: get_prb (Task 3.8).
 
 Mirrors ``tsk.tools.get_tsk``/``qa.tools.get_qa`` -- a thin file-I/O/id-lookup

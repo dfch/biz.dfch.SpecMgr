@@ -15,6 +15,8 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+# pylint: disable=redefined-builtin  # id/type intentionally shadow the builtins: public tool API, issue #41
+
 """``@mcp.prompt()``: update_gol (Task 3.15).
 
 Returns instructional text -- not itself a tool call -- that guides an LLM
