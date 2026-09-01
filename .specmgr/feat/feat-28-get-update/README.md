@@ -3,7 +3,7 @@ created: '2026-09-01T14:19:27.649184'
 id: feat-28-get-update
 status: planning
 type: feat
-updated: '2026-09-01T14:41:58.972675'
+updated: '2026-09-01T14:54:14.603270'
 version: 1.0.0
 ---
 
@@ -290,6 +290,11 @@ Operational notes for the implementing session:
   `/home/user/src/biz.dfch.SpecMgr.worktrees/feat-28-get-update` on branch
   `feat-28-get-update` (synced to upstream `dev` `8c13e16` as of 2026-09-01).
   Never push.
+
+- If re-syncing with upstream `dev` before starting implementation: the
+  branch now carries local commits, so after `git fetch origin` use
+  `git rebase origin/dev` (the Phase 0 `--ff-only` merge no longer applies),
+  then re-run the complete test cycle before touching code.
 
 - Per-phase commits follow the repo's Conventional Commit style with the
   issue number as scope: `feat(28): …` for implementation phases,
