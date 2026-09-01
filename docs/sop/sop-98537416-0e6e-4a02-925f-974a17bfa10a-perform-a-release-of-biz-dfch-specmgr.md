@@ -3,7 +3,7 @@ created: '2026-08-31T15:24:14.582592'
 id: 98537416-0e6e-4a02-925f-974a17bfa10a
 status: active
 type: sop
-updated: '2026-09-01T10:07:30.000000'
+updated: '2026-09-01T11:37:37.000000'
 version: 1.0.0
 ---
 
@@ -28,7 +28,8 @@ curating the `CHANGELOG.md` `[Unreleased]` section; bumping the version in
 to `dev`; merging `dev` into `main` through a fast-forward-only pull
 request; creating and pushing the `vX.Y.Z` tag on `main`; waiting for the
 four publication jobs of `.github/workflows/publish.yml`; and setting the
-GitHub Release notes.
+GitHub Release name and notes (the name is derived from the dated
+changelog section; see Step 9).
 
 It does not cover: deciding whether the changes warrant a patch, minor, or
 major version (a maintainer decision made before this SOP is invoked); the
@@ -61,6 +62,13 @@ point.
 - **Release commit**: the single commit on `dev` touching exactly three
   files — `pyproject.toml`, `uv.lock`, `CHANGELOG.md` — with the message
   `chore(release): bump version to vX.Y.Z`.
+- **Release name**: the title of the GitHub Release: a concise
+  title-case headline (a few words) naming the dated changelog
+  section's most significant user-visible change, derived from the
+  section's content — never the bare version string, which is already
+  carried by the release's tag. When a section has no single dominant
+  change, the name is a short compound of its two main changes. Set
+  alongside the release notes in Step 9.
 - **Fast-forward invariant**: `main` is always an ancestor of `dev`, i.e.
   `main` carries no unique commits. The invariant is what makes the
   `dev` → `main` merge possible in fast-forward-only form, and it must
@@ -299,9 +307,10 @@ publication run triggered by the tag — the workflow *file* is
 "Publish to PyPI", and the script locates the run by that name plus the
 tag's commit SHA, since `gh run list --workflow` filters by name —
 *Publish to TestPyPI* → *Publish to PyPI* → *Make GitHub Release*
-(attaches the sdist and wheel) → *Publish to MCP Registry* (updates
-`server.json`'s version and publishes via OIDC) — polling every 30 s
-until all four jobs complete.
+(creates the release with the bare version as its name — Step 9
+replaces it — and attaches the sdist and wheel) → *Publish to MCP
+Registry* (updates `server.json`'s version and publishes via OIDC) —
+polling every 30 s until all four jobs complete.
 
 **Manual fallback:** watch the `publish.yml` Actions run for the tag until
 all four jobs are green.
@@ -310,17 +319,24 @@ Any failed job stops the release: report the run URL, diagnose from its
 logs, and escalate to the maintainer. The tag already exists, so the
 remedy is never re-tagging — it is a fix plus a new, higher version.
 
-### Step 9: Verify the publication and finalize the release notes
+### Step 9: Verify the publication and finalize the release name and notes
 
-**Automated:** `scripts/release.sh release-notes <X.Y.Z>` verifies the
+**Automated:** first, the agent (not the script) derives the release
+name from the new dated changelog section's content, per the `Release
+name` definition: a concise title-case headline naming the section's
+most significant user-visible change — never the bare version string.
+Then `scripts/release.sh release-notes <X.Y.Z> <name>` verifies the
 GitHub Release exists with both artifacts (sdist and wheel), sets the
-release notes to the new dated changelog section's content
-(`gh release edit`), and prints the final summary: version, tag, GitHub
+release name to the derived headline and the release notes to the
+section's content (through `gh api` — this environment's `gh` has no
+`gh release edit`), and prints the final summary: version, tag, GitHub
 Release URL, PyPI and TestPyPI project URLs, and the MCP Registry
 listing.
 
-**Manual fallback:** open the GitHub Release, confirm both assets are
-attached, and paste the new changelog section into the release body.
+**Manual fallback:** derive the release name from the dated changelog
+section's content as above; open the GitHub Release, confirm both assets
+are attached, set its title to the derived name, and paste the new
+changelog section into the release body.
 
 The release is complete when all four publication targets are reachable
 and the maintainer is informed.
@@ -414,3 +430,23 @@ this environment's `gh` 2.4.0 offers (v0.15.0's plain-method merge
 happened to fast-forward; v0.16.0's did not). Safety and Precautions
 and Step 6 were corrected to describe the mechanism the script actually
 uses.
+
+### 2026-09-01 11:37:37.000+02:00 — Gap closed: the release name is derived from the changelog and set in Step 9
+
+A gap surfaced after the v0.16.0 release: the `release-notes` stage only
+ever set the GitHub Release *body* from the dated changelog section, so
+the release *name* stayed the bare version string that the publish
+workflow's "Make GitHub Release" job passes as `--title` — and the
+workflow cannot do better, since a name derived from the changelog
+section's content is agent judgment, like the Step 3 curation. Step 9
+now requires the agent to derive the release name from the dated
+changelog section's content (a concise title-case headline of the
+section's most significant user-visible change, never the bare version
+string) and to pass it to `release-notes`, which sets name and notes
+together; a `Release name` definition was added, Step 8 now states that
+the workflow creates the release with the bare version as its name, and
+Step 9's description of the mechanism was corrected to `gh api` (this
+environment's `gh` 2.4.0 has no `gh release edit`, as Safety and
+Precautions already states). The script's `release-notes` stage and the
+`/release` command must be corrected to match (where the two disagree,
+the SOP wins); as of this entry they still set the body only.
