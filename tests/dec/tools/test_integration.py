@@ -19,12 +19,13 @@
 
 Unlike the per-tool unit tests elsewhere under ``tests/dec/tools/``, this
 module drives the actual tool functions in a single realistic sequence --
-``list_dec`` (empty) -> ``create_dec`` -> ``get_dec`` -> ``list_dec`` (1) ->
-``update`` -> ``set_status`` (``type="dec"``) -> ``get_dec`` (status changed)
--> ``list_dec`` (status reflected) -> ``validate_dec`` -> ``delete_dec``
-(stub) -- against a real temporary docs directory, confirming ACC-003's
-create->get->list->update->set_status->validate round-trip requirement with
-concrete evidence beyond the isolated per-tool tests.
+ ``list_dec`` (empty) -> ``create_dec`` -> ``get_dec`` -> ``list_dec`` (1) ->
+ ``update`` -> ``set_status`` (``type="dec"``) -> ``get_dec`` (status changed)
+ -> ``list_dec`` (status reflected) -> ``validate_dec`` -> ``delete``
+ (generic, ``type="dec"``) -- against a real temporary docs directory,
+ confirming ACC-003's create->get->list->update->set_status->validate
+ round-trip requirement with concrete evidence beyond the isolated
+ per-tool tests.
 
 Isolation follows the exact same pattern as ``test_create_dec.py``'s
 ``TempDecDirTestCase``: a fresh ``tempfile.TemporaryDirectory()`` is pointed
@@ -48,13 +49,13 @@ import frontmatter
 from pydantic import ValidationError
 
 from biz.dfch.specmgr.dec.models.v1 import DecDocument
-from biz.dfch.specmgr.dec.tools._paths import dec_base_dir
+from biz.dfch.specmgr.dec.tools._paths import DecNotFoundError, dec_base_dir
 from biz.dfch.specmgr.dec.tools.create_dec import create_dec
-from biz.dfch.specmgr.dec.tools.delete_dec import delete_dec
 from biz.dfch.specmgr.dec.tools.get_dec import get_dec
 from biz.dfch.specmgr.dec.tools.list_dec import list_dec
 from biz.dfch.specmgr.dec.tools.validate_dec import validate_dec
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
+from biz.dfch.specmgr.general.tools.delete import delete
 from biz.dfch.specmgr.general.tools.set_status import set_status
 from biz.dfch.specmgr.general.tools.update import update
 
@@ -104,7 +105,7 @@ class TestDecLifecycleIntegration(TempDecDirTestCase):
 
     def test_list_create_get_list_update_set_status_get_list_validate_delete_roundtrip(self) -> None:
         """list_dec -> create_dec -> get_dec -> list_dec -> update -> set_status -> get_dec ->
-        list_dec -> validate_dec -> delete_dec, live."""
+        list_dec -> validate_dec -> delete (generic, type="dec"), live."""
         # 0. list_dec: an empty base directory must list nothing.
         initial_page = list_dec()
         self.assertEqual(initial_page.total, 0)
@@ -177,11 +178,14 @@ class TestDecLifecycleIntegration(TempDecDirTestCase):
         body_only = frontmatter.loads(on_disk_text).content  # type: ignore[union-attr]
         self.assertIs(validate_dec(body_only), True)
 
-        # 9. delete_dec: stub must always raise NotImplementedError, unconditionally.
-        with self.assertRaises(NotImplementedError):
-            delete_dec(dec_id)
-        # The document must still exist afterward -- the stub must not touch the filesystem.
-        self.assertEqual(get_dec(dec_id).frontmatter.id, dec_id)
+        # 9. delete (generic, type="dec"): a real hard delete via the generic tool -- the
+        #    returned str must be the seeded file path, the file must be gone, and a
+        #    follow-up get_dec must raise DecNotFoundError.
+        deleted_path = delete(dec_id, type="dec")
+        self.assertEqual(deleted_path, str(expected_path))
+        self.assertFalse(expected_path.exists())
+        with self.assertRaises(DecNotFoundError):
+            get_dec(dec_id)
 
     def test_set_status_rejects_gol_only_implemented_status(self) -> None:
         """ACC-003: set_status (type="dec") must reject `implemented` (GOL's seventh value, outside DEC's closed six-set)."""

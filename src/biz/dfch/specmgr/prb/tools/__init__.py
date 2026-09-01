@@ -36,17 +36,16 @@ generic ``update`` tool in ``general.tools`` (``type="prb"``), preserving
 every frontmatter field except ``updated``. Status changes of an existing
 document go through the generic ``set_status`` tool in ``general.tools``
 (``type="prb"``), also bumping ``updated``, leaving the body untouched.
-``delete_prb`` is a registered stub -- always raises
-``NotImplementedError``, reserving the name for a future real
-implementation. ``validate_prb`` is a disk-free, id-free dry run against a
-submitted ``content`` string, independent of the other tools. Import this
-package to register all problem statement tools at once::
+Deletion of ``prb`` documents goes through the generic ``delete`` tool in
+``general.tools`` (``type="prb"``). ``validate_prb`` is a disk-free,
+id-free dry run against a submitted ``content`` string, independent of the
+other tools. Import this package to register all problem statement tools at
+once::
 
     from biz.dfch.specmgr.prb import tools  # noqa: F401 (side-effects only)
 """
 
 from .create_prb import create_prb
-from .delete_prb import delete_prb
 from .get_prb import get_prb
 from .get_prb_example import get_prb_example
 from .get_prb_template import get_prb_template
@@ -56,7 +55,6 @@ from .validate_prb import validate_prb
 
 __all__ = [
     "create_prb",
-    "delete_prb",
     "get_prb",
     "get_prb_example",
     "get_prb_template",

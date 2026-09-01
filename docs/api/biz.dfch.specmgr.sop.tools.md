@@ -16,11 +16,9 @@ id/title/status/ref summaries of every SOP, shipped as a paged tool
 from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13). ``create_sop``
 assigns a fresh id, builds the frontmatter itself, and writes a new document
 (body markdown only, no frontmatter) under the SOP base directory
-(``sop.tools._paths``/``_io``). ``delete_sop`` is a registered stub --
-always raises ``NotImplementedError``, reserving the name for a future real
-implementation. ``validate_sop`` is a disk-free, id-free dry run against a
-submitted ``content`` string, independent of the other tools. Import this
-package to register all SOP tools at once::
+(``sop.tools._paths``/``_io``). ``validate_sop`` is a disk-free, id-free
+dry run against a submitted ``content`` string, independent of the other
+tools. Import this package to register all SOP tools at once::
 
     from biz.dfch.specmgr.sop import tools  # noqa: F401 (side-effects only)
 
@@ -30,4 +28,5 @@ and line-range updates of an existing document go through the generic
 ``update`` tool in ``general.tools`` (``type="sop"``), preserving every
 frontmatter field except ``updated``; status changes go through the generic
 ``set_status`` tool in ``general.tools`` (``type="sop"``), also bumping
-``updated``, leaving the body untouched.
+``updated``, leaving the body untouched; deletion goes through the generic
+``delete`` tool in ``general.tools`` (``type="sop"``).

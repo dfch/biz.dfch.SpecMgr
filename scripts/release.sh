@@ -8,6 +8,11 @@
 #
 # Usage: scripts/release.sh <stage> [X.Y.Z | patch | minor | major] [--dry-run]
 #
+# `release-notes` takes a second positional — the release name text
+# (the changelog-derived headline); the stage composes the full name as
+# "v<X.Y.Z> - <text>" (SOP step 9). Every other stage takes at most one
+# positional.
+#
 # Stages (mirror the SOP's 9 procedure steps; every stage is idempotent):
 #   resolve       compute and print the target version (no mutation)
 #   precheck      fail-fast pre-release checks (SOP step 2)
@@ -15,10 +20,15 @@
 #   changelog     move [Unreleased] into a dated section (SOP step 5a)
 #   commit-push   commit the 3 release files, push dev, wait for CI (SOP step 5b)
 #   pr-create     open the dev->main release PR, wait for checks (SOP step 6a)
-#   pr-merge      ff-only merge of the release PR (SOP step 6b, after the merge gate)
+#   pr-merge      wait for green checks, then ff-only merge locally (git
+#                 merge --ff-only of origin/dev on main + push of main,
+#                 closing the PR afterwards; the plain `gh pr merge
+#                 --merge` cannot be relied on to fast-forward)
+#                 (SOP step 6b, after the merge gate)
 #   tag-push      tag vX.Y.Z on main, push the tag, back to dev (SOP step 7)
 #   publish-wait  wait for the 4 publish.yml jobs (SOP step 8)
-#   release-notes verify the release + set the GitHub Release notes (SOP step 9)
+#   release-notes verify the release + set the GitHub Release name (the
+#                 composed "v<X.Y.Z> - <text>") and notes (SOP step 9)
 #   status        read-only: where does this release stand?
 #   all           resolve + precheck + bump + changelog + commit-push +
 #                 pr-create + [TTY merge gate] + pr-merge + tag-push +
@@ -33,8 +43,11 @@
 # edit`, no `--ff`-style merge flag. The publication run is located by
 # workflow NAME ("Publish to PyPI") plus the tag's commit SHA (filtered
 # with `jq`); the release notes are set via `gh api`; ff-only merging is
-# enforced by pre- and post-merge SHA assertions around the plain merge
-# method. The SOP's "Safety and Precautions" documents the same
+# enforced by pre- and post-merge SHA assertions around a LOCAL
+# `git merge --ff-only` + push of main — the plain `gh pr merge --merge`
+# method has been observed to create a merge commit although the
+# invariant held (v0.16.0 release) and cannot be relied on to
+# fast-forward. The SOP's "Safety and Precautions" documents the same
 # constraints.
 
 set -euo pipefail
@@ -50,6 +63,9 @@ PUBLISH_TIMEOUT_MIN=45
 
 DRY_RUN=0
 VERSION_ARG=""
+# release-notes only: the release name TEXT (the changelog-derived
+# headline). The stage composes the full name as "v<X.Y.Z> - <text>".
+RELEASE_TEXT=""
 
 info() { printf 'release: %s\n' "$*"; }
 die() { printf 'release: ERROR: %s\n' "$*" >&2; exit 1; }
@@ -475,14 +491,18 @@ stage_pr_merge() {
   [ -n "$pr_line" ] || die "no open dev->main PR — run pr-create first (after the maintainer's merge gate)"
   pr_num="${pr_line%%$'\t'*}"
 
-  local out rc
-  out=$(gh pr checks "$pr_num" 2>&1) && rc=0 || rc=$?
-  [ "$rc" -eq 0 ] || { printf '%s\n' "$out" >&2; die "PR #$pr_num checks are not all green — do not merge"; }
+  # Poll like pr-create, never fail fast on pending: ci.yml triggers on
+  # both push and pull_request, so the PR's own run can register pending
+  # check-runs after pr-create was already satisfied by the push run's
+  # green jobs (v0.16.0 incident).
+  wait_for_pr_checks "$pr_num"
 
-  # Fast-forward-only, enforced three ways (old `gh` has no --ff-only flag):
-  # assert the invariant before, merge with the plain merge method
-  # (GitHub fast-forwards an up-to-date branch instead of creating a
-  # merge commit), and re-assert the SHAs after.
+  # Fast-forward-only, enforced three ways. The merge itself is LOCAL
+  # (git merge --ff-only + push of main, then close the PR): the plain
+  # `gh pr merge --merge` method cannot be relied on to fast-forward —
+  # during the v0.16.0 release it created a merge commit on main
+  # although the invariant held, and this environment's gh 2.4.0 has
+  # no --ff flag.
   if git merge-base --is-ancestor origin/main origin/dev; then
     info "fast-forward invariant holds (main is an ancestor of dev)"
   else
@@ -490,14 +510,18 @@ stage_pr_merge() {
   fi
 
   if [ "$DRY_RUN" -eq 1 ]; then
-    info "[dry-run] would run: gh pr merge $pr_num --merge (fast-forward enforced by the assertions above and below)"
+    info "[dry-run] would run: git checkout main && git merge --ff-only origin/dev && git push origin main && git checkout dev, then close PR #$pr_num (fast-forward enforced by --ff-only and the assertions above and below)"
     return 0
   fi
 
-  gh pr merge "$pr_num" --merge
+  git checkout main --quiet
+  git merge --ff-only origin/dev --quiet
+  git push origin main --quiet
+  git checkout dev --quiet
   git fetch origin main --quiet
-  [ "$(git rev-parse origin/main)" = "$(git rev-parse origin/dev)" ] || die "after merge, origin/main != origin/dev — a merge commit was created (the invariant is broken); investigate before tagging"
-  info "pr-merge: done (fast-forward; the invariant holds)"
+  [ "$(git rev-parse origin/main)" = "$(git rev-parse origin/dev)" ] || die "after merge, origin/main != origin/dev — the invariant is broken; investigate before tagging"
+  gh pr close "$pr_num"
+  info "pr-merge: done (fast-forward via local --ff-only merge; the invariant holds)"
 }
 
 stage_tag_push() {
@@ -569,10 +593,19 @@ stage_publish_wait() {
 
 stage_release_notes() {
   local v="${1:-}"
-  [ -n "$v" ] || die "usage: $0 release-notes <X.Y.Z>"
+  [ -n "$v" ] || die "usage: $0 release-notes <X.Y.Z> [name-text]"
   validate_full_version "$v"
   require_repo_root
   require_tools
+
+  # The full release name is composed HERE, not by the caller: the version
+  # prefix must always match the tag, the caller only judges the text
+  # (SOP step 9, "Release name"). An empty text leaves the name as-is —
+  # only the non-agent `all` path runs that way.
+  local text="${2:-}" name=""
+  if [ -n "$text" ]; then
+    name="v$v - $text"
+  fi
 
   # `gh release view --json` and `gh release edit` do not exist in old `gh`;
   # read and update the release through `gh api` instead.
@@ -587,20 +620,37 @@ stage_release_notes() {
   section=$(extract_changelog_section "$v")
   [ -n "$section" ] || die "no changelog section for v$v in CHANGELOG.md"
 
-  local current_notes
-  current_notes=$(jq -r '.body // ""' <<<"$rel" 2>/dev/null || true)
-  if [ "$current_notes" = "$section" ]; then
+  local current_notes current_name
+  # The stored body is returned with CRLF line endings (confirmed for
+  # every release set this way — v0.15.0 and v0.16.0), while the
+  # changelog section is LF: compare with the CRs stripped, or the stage
+  # would re-PATCH forever and never report "already set".
+  current_notes=$(jq -r '.body // ""' <<<"$rel" 2>/dev/null | tr -d '\r')
+  current_name=$(jq -r '.name // ""' <<<"$rel" 2>/dev/null || true)
+  if [ "$current_notes" = "$section" ] && { [ -z "$name" ] || [ "$current_name" = "$name" ]; }; then
     info "release-notes: already set — nothing to do"
   elif [ "$DRY_RUN" -eq 1 ]; then
-    info "[dry-run] would set the release notes of $url to the v$v changelog section"
+    if [ -n "$name" ]; then
+      info "[dry-run] would set the name of $url to '$name' and the release notes to the v$v changelog section"
+    else
+      info "[dry-run] would set the release notes of $url to the v$v changelog section (name left as-is: $current_name)"
+    fi
   else
     local notes_file rel_id
     notes_file=$(mktemp)
     printf '%s\n' "$section" >"$notes_file"
     rel_id=$(jq -r '.id' <<<"$rel")
-    gh api --method PATCH repos/{owner}/{repo}/releases/"$rel_id" -F "body=@$notes_file" >/dev/null
+    if [ -n "$name" ]; then
+      gh api --method PATCH repos/{owner}/{repo}/releases/"$rel_id" -F "body=@$notes_file" -F "name=$name" >/dev/null
+    else
+      gh api --method PATCH repos/{owner}/{repo}/releases/"$rel_id" -F "body=@$notes_file" >/dev/null
+    fi
     rm -f "$notes_file"
-    info "release-notes: set"
+    if [ -n "$name" ]; then
+      info "release-notes: set (name: $name)"
+    else
+      info "release-notes: notes set (name left as-is: $current_name — the agent flow passes the name text per SOP step 9)"
+    fi
   fi
 
   info "----------------------------------------------------------------"
@@ -731,8 +781,13 @@ main() {
     case "$a" in
       --dry-run) DRY_RUN=1 ;;
       *)
-        [ -z "$VERSION_ARG" ] || die "at most one positional argument (got: $VERSION_ARG and $a)"
-        VERSION_ARG="$a"
+        if [ -z "$VERSION_ARG" ]; then
+          VERSION_ARG="$a"
+        elif [ "$stage" = "release-notes" ] && [ -z "$RELEASE_TEXT" ]; then
+          RELEASE_TEXT="$a"
+        else
+          die "unexpected argument '$a' (stages take at most one positional; release-notes takes one positional plus the name text)"
+        fi
         ;;
     esac
   done
@@ -747,7 +802,7 @@ main() {
     pr-merge) stage_pr_merge "$VERSION_ARG" ;;
     tag-push) stage_tag_push "$VERSION_ARG" ;;
     publish-wait) stage_publish_wait "$VERSION_ARG" ;;
-    release-notes) stage_release_notes "$VERSION_ARG" ;;
+    release-notes) stage_release_notes "$VERSION_ARG" "$RELEASE_TEXT" ;;
     status) stage_status "$VERSION_ARG" ;;
     all) stage_all "$VERSION_ARG" ;;
     help|-h|--help) usage ;;

@@ -19,13 +19,14 @@
 
 Unlike the per-tool unit tests elsewhere under ``tests/feat/tools/``, this
 module drives the actual tool functions in a single realistic sequence --
-``list_feat`` (empty) -> ``create_feat`` -> ``get_feat`` -> ``list_feat`` (1)
--> ``update`` (whole-body) -> ``update`` (line-range) -> ``set_status``
-(``type="feat"``) -> ``get_feat`` (status changed) -> ``list_feat`` (status
-reflected) -> ``validate_feat`` -> ``delete_feat`` (stub) -- against a real
-temporary feature base directory, confirming ACC-002/ACC-003/ACC-004's
-create->get->list->update->set_status->validate round-trip requirement with
-concrete evidence beyond the isolated per-tool tests. A separate test class
+ ``list_feat`` (empty) -> ``create_feat`` -> ``get_feat`` -> ``list_feat`` (1)
+ -> ``update`` (whole-body) -> ``update`` (line-range) -> ``set_status``
+ (``type="feat"``) -> ``get_feat`` (status changed) -> ``list_feat`` (status
+ reflected) -> ``validate_feat`` -> ``delete`` (generic, ``type="feat"``) --
+ against a real temporary feature base directory, confirming
+ ACC-002/ACC-003/ACC-004's create->get->list->update->set_status->validate
+ round-trip requirement with concrete evidence beyond the isolated
+ per-tool tests. A separate test class
 drives many concurrent ``create_feat`` calls to confirm the global
 ``feat_create_lock`` prevents two callers from ever deriving the same
 ``feat-NNN-...`` id (ACC-002).
@@ -55,12 +56,12 @@ import frontmatter
 from pydantic import ValidationError
 
 from biz.dfch.specmgr.feat.models.v1 import FeatDocument
-from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR, README_FILENAME, feat_base_dir
+from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR, FeatNotFoundError, README_FILENAME, feat_base_dir
 from biz.dfch.specmgr.feat.tools.create_feat import create_feat
-from biz.dfch.specmgr.feat.tools.delete_feat import delete_feat
 from biz.dfch.specmgr.feat.tools.get_feat import get_feat
 from biz.dfch.specmgr.feat.tools.list_feat import list_feat
 from biz.dfch.specmgr.feat.tools.validate_feat import validate_feat
+from biz.dfch.specmgr.general.tools.delete import delete
 from biz.dfch.specmgr.general.tools.set_status import set_status
 from biz.dfch.specmgr.general.tools.update import update
 
@@ -178,7 +179,7 @@ class TestFeatLifecycleIntegration(TempFeatDirTestCase):
     def test_full_lifecycle_roundtrip(self) -> None:
         """list_feat -> create_feat -> get_feat -> list_feat -> update (whole-body) ->
         update (line-range) -> set_status -> get_feat -> list_feat -> validate_feat ->
-        delete_feat, live."""
+        delete (generic, type="feat"), live."""
         # 0. list_feat: an empty base directory must list nothing.
         initial_page = list_feat()
         self.assertEqual(initial_page.total, 0)
@@ -262,11 +263,14 @@ class TestFeatLifecycleIntegration(TempFeatDirTestCase):
         body_only = frontmatter.loads(on_disk_text).content  # type: ignore[union-attr]
         self.assertIs(validate_feat(body_only), True)
 
-        # 9. delete_feat: stub must always raise NotImplementedError, unconditionally.
-        with self.assertRaises(NotImplementedError):
-            delete_feat(feat_id)
-        # The document must still exist afterward -- the stub must not touch the filesystem.
-        self.assertEqual(get_feat(feat_id).frontmatter.id, feat_id)
+        # 9. delete (generic, type="feat"): a real hard delete via the generic tool -- the
+        #    returned str must be the seeded <base>/<id>/ folder path, the whole folder must
+        #    be gone, and a follow-up get_feat must raise FeatNotFoundError.
+        deleted_path = delete(feat_id, type="feat")
+        self.assertEqual(deleted_path, str(expected_path.parent))
+        self.assertFalse(expected_path.parent.exists())
+        with self.assertRaises(FeatNotFoundError):
+            get_feat(feat_id)
 
     def test_set_status_rejects_status_outside_the_closed_four_set(self) -> None:
         """ACC-004: set_status (type="feat") must reject a status outside {planning, progress, review, done}."""

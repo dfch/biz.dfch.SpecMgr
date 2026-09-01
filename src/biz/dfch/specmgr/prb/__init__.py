@@ -28,7 +28,7 @@ resources against the shared ``mcp`` application instance at once::
 
 ``tools`` (``parse_prb``, ``get_prb``, ``list_prb``, ``get_prb_example``,
 ``get_prb_template``, ``create_prb``,
-``delete_prb``, ``validate_prb``), ``resources`` (``specmgr://prb/schema``,
+``validate_prb``), ``resources`` (``specmgr://prb/schema``,
 ``specmgr://prb/example``, ``specmgr://prb/template``), and ``prompts``
 (``create_prb``, ``update_prb``) all exist; whole-body and line-range
 updates of an existing document go through the generic ``update`` tool in

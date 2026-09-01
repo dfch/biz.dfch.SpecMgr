@@ -19,10 +19,11 @@ Follow these steps in order:
 7. **Finish the release** (generous timeouts again, `publish-wait` can take up to 45 minutes):
    - `bash scripts/release.sh tag-push <version>`
    - `bash scripts/release.sh publish-wait <version>`
-   - `bash scripts/release.sh release-notes <version>`
+   - Derive the release name text from the dated changelog section you curated in step 4 (SOP step 9, `Release name` definition): a concise title-case headline naming the section's most significant user-visible change. The stage composes the full release name as `v<version> - <text>` — you supply the text only.
+   - `bash scripts/release.sh release-notes <version> "<text>"`
 
 **Dry-run mode** (when I gave `--dry-run`): run only `resolve`, `precheck`, `bump --dry-run`, and `changelog --dry-run` (plus the changelog curation in step 4 if useful), then stop and show me what the remaining stages would do. Never commit, push, open a PR, tag, or publish.
 
 **On any non-zero exit:** stop immediately. Run `bash scripts/release.sh status <version>` to locate the failed stage, fetch the relevant CI log if a run failed (`gh run view <id> --log-failed`), and report the diagnosis with the run/PR URLs verbatim. Wait for my direction. Never auto-retry, never skip a failed stage, never perform release steps outside the script, and never merge a red PR.
 
-**On success:** summarize in a few lines — version, PR, tag, and the release URLs from the script's final output. Remind me that the SOP stays `draft` until this first release succeeds end to end, after which it should be activated.
+**On success:** summarize in a few lines — version, release name, PR, tag, and the release URLs from the script's final output.

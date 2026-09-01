@@ -21,9 +21,9 @@ existing document go through the generic ``update`` tool in ``general.tools``
 (``type="qa"``), preserving every frontmatter field except ``updated``.
 Status changes of an existing document go through the generic
 ``set_status`` tool in ``general.tools`` (``type="qa"``), also bumping
-``updated``, leaving the body untouched. ``delete_qa`` is a registered stub
--- always raises ``NotImplementedError``, reserving the name for a future
-real implementation. ``validate_qa`` is a disk-free, id-free dry run against
+``updated``, leaving the body untouched. Deletion of ``qa`` documents goes
+through the generic ``delete`` tool in ``general.tools`` (``type="qa"``).
+``validate_qa`` is a disk-free, id-free dry run against
 a submitted ``content`` string, independent of the other tools. Import this
 package to register all QA tools at once::
 

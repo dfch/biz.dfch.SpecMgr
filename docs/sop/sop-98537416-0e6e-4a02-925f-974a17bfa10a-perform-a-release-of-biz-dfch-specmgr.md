@@ -3,7 +3,7 @@ created: '2026-08-31T15:24:14.582592'
 id: 98537416-0e6e-4a02-925f-974a17bfa10a
 status: active
 type: sop
-updated: '2026-08-31T18:27:40.271756'
+updated: '2026-09-01T12:37:17.000000'
 version: 1.0.0
 ---
 
@@ -28,7 +28,8 @@ curating the `CHANGELOG.md` `[Unreleased]` section; bumping the version in
 to `dev`; merging `dev` into `main` through a fast-forward-only pull
 request; creating and pushing the `vX.Y.Z` tag on `main`; waiting for the
 four publication jobs of `.github/workflows/publish.yml`; and setting the
-GitHub Release notes.
+GitHub Release name and notes (the name is derived from the dated
+changelog section; see Step 9).
 
 It does not cover: deciding whether the changes warrant a patch, minor, or
 major version (a maintainer decision made before this SOP is invoked); the
@@ -61,6 +62,14 @@ point.
 - **Release commit**: the single commit on `dev` touching exactly three
   files — `pyproject.toml`, `uv.lock`, `CHANGELOG.md` — with the message
   `chore(release): bump version to vX.Y.Z`.
+- **Release name**: the title of the GitHub Release, of the form
+  `vX.Y.Z - <text>`: the release's version (always matching the tag),
+  a space-dash-space, and a concise title-case headline (a few words)
+  naming the dated changelog section's most significant user-visible
+  change, derived from the section's content. When a section has no
+  single dominant change, the text is a short compound of its two main
+  changes. The `release-notes` stage composes the version prefix; the
+  agent supplies the text (Step 9).
 - **Fast-forward invariant**: `main` is always an ancestor of `dev`, i.e.
   `main` carries no unique commits. The invariant is what makes the
   `dev` → `main` merge possible in fast-forward-only form, and it must
@@ -130,11 +139,21 @@ gate (Step 6), and adjudicate any exception.
   when merging `dev` into `main` — a commit unique to `main` breaks the
   fast-forward invariant and poisons every later release. The script
   enforces this in three places: it asserts `origin/main` is an ancestor
-  of `origin/dev` *before* merging, it merges the pull request with the
-  plain merge method (GitHub fast-forwards an up-to-date branch instead
-  of creating a merge commit), and it re-asserts
-  `origin/main == origin/dev` *after* the merge, failing the stage if a
-  merge commit appeared. Manual mode uses `git merge --ff-only dev`.
+  of `origin/dev` *before* merging, it performs the merge *locally* —
+  `git merge --ff-only` of `origin/dev` on `main`, pushed directly, with
+  the pull request (which has served as the CI check gate) closed
+  afterwards — and it re-asserts `origin/main == origin/dev` *after* the
+  merge. The local `--ff-only` merge is the only deterministic
+  fast-forward available here: the plain `gh pr merge --merge` method
+  cannot be relied on to fast-forward (during the v0.16.0 release it
+  created a merge commit on `main` although the invariant held), and this
+  environment's `gh` 2.4.0 ships no `--ff`-style flag. `pr-merge` also
+  *polls* for green checks rather than fail-fasting on pending ones:
+  `ci.yml` triggers on both `push` and `pull_request`, so the release PR
+  starts a second CI run of the same commit whose check-runs can register
+  only after `pr-create` was already satisfied by the first (push) run's
+  green jobs (v0.16.0 incident). Manual mode uses the same
+  `git merge --ff-only dev`.
 - **Never double-bump.** If `pyproject.toml` already carries the target
   version, the `bump` stage refuses to run. If a stage failed mid-release,
   resume from the failed stage — every stage is idempotent, and
@@ -253,11 +272,15 @@ the pull request body, waits until the pull request's checks are green
 (30 s polling), and prints the pull request URL and head SHA — without
 merging. The agent then presents the pull request and the changelog
 section to the maintainer and asks for the merge gate. Once approved,
-`scripts/release.sh pr-merge <X.Y.Z>` re-checks the green checks, asserts
-the fast-forward invariant (`origin/main` an ancestor of `origin/dev`),
-merges the pull request with the plain merge method (GitHub fast-forwards
-an up-to-date branch — no merge commit), and re-asserts that
-`origin/main` equals `origin/dev`.
+`scripts/release.sh pr-merge <X.Y.Z>` waits until the pull request's
+checks are green (30 s polling, like `pr-create` — a single re-check
+fail-fasts on the pending second CI run from the `pull_request` trigger;
+see Safety and Precautions), asserts the fast-forward invariant
+(`origin/main` an ancestor of `origin/dev`), merges *locally* with
+`git merge --ff-only` of `origin/dev` on `main` and pushes `main`
+directly (closing the pull request, which has served as the CI check
+gate — the plain `gh pr merge --merge` method cannot be relied on to
+fast-forward), and re-asserts that `origin/main` equals `origin/dev`.
 
 **Manual fallback:** `gh pr create --base main --head dev` (body: the new
 changelog section); wait for green checks; present to the maintainer; on
@@ -285,9 +308,10 @@ publication run triggered by the tag — the workflow *file* is
 "Publish to PyPI", and the script locates the run by that name plus the
 tag's commit SHA, since `gh run list --workflow` filters by name —
 *Publish to TestPyPI* → *Publish to PyPI* → *Make GitHub Release*
-(attaches the sdist and wheel) → *Publish to MCP Registry* (updates
-`server.json`'s version and publishes via OIDC) — polling every 30 s
-until all four jobs complete.
+(creates the release with the bare version as its name — Step 9
+replaces it — and attaches the sdist and wheel) → *Publish to MCP
+Registry* (updates `server.json`'s version and publishes via OIDC) —
+polling every 30 s until all four jobs complete.
 
 **Manual fallback:** watch the `publish.yml` Actions run for the tag until
 all four jobs are green.
@@ -296,17 +320,25 @@ Any failed job stops the release: report the run URL, diagnose from its
 logs, and escalate to the maintainer. The tag already exists, so the
 remedy is never re-tagging — it is a fix plus a new, higher version.
 
-### Step 9: Verify the publication and finalize the release notes
+### Step 9: Verify the publication and finalize the release name and notes
 
-**Automated:** `scripts/release.sh release-notes <X.Y.Z>` verifies the
-GitHub Release exists with both artifacts (sdist and wheel), sets the
-release notes to the new dated changelog section's content
-(`gh release edit`), and prints the final summary: version, tag, GitHub
-Release URL, PyPI and TestPyPI project URLs, and the MCP Registry
-listing.
+**Automated:** first, the agent (not the script) derives the release
+name *text* from the new dated changelog section's content, per the
+`Release name` definition: a concise title-case headline naming the
+section's most significant user-visible change. Then
+`scripts/release.sh release-notes <X.Y.Z> <text>` verifies the GitHub
+Release exists with both artifacts (sdist and wheel), sets the release
+name — composed by the stage as `v<X.Y.Z> - <text>` — and the release
+notes to the section's content (through `gh api` — this environment's
+`gh` has no `gh release edit`), and prints the final summary: version,
+tag, GitHub Release URL, PyPI and TestPyPI project URLs, and the MCP
+Registry listing.
 
-**Manual fallback:** open the GitHub Release, confirm both assets are
-attached, and paste the new changelog section into the release body.
+**Manual fallback:** derive the release name text from the dated
+changelog section's content as above; open the GitHub Release, confirm
+both assets are attached, set its title to `vX.Y.Z - <text>` (version
+matching the tag, space-dash-space, text), and paste the new changelog
+section into the release body.
 
 The release is complete when all four publication targets are reachable
 and the maintainer is informed.
@@ -327,6 +359,21 @@ flag that no `gh` release provides, and `publish-wait`/`status`/
 --json`, `gh release edit`). The script was rewritten to
 version-independent equivalents (see Safety and Precautions) and this SOP
 was corrected to describe the merge mechanism the script actually uses.
+
+The v0.16.0 release (2026-09-01) surfaced two further `pr-merge`
+defects, both fixed in the script and documented in Safety and
+Precautions: it fail-fasted on a *pending* check suite (the
+`pull_request` trigger's second run of the release commit registering
+its check-runs only after `pr-create` had been satisfied by the `push`
+run's green jobs), and the plain `gh pr merge --merge` method created a
+merge commit on `main` although the fast-forward invariant held — caught
+by the post-merge SHA assertion before anything was tagged or published.
+The invariant was repaired by a `--force-with-lease` push of `main` back
+to the release commit, after which the release completed (tag `v0.16.0`,
+publication run
+https://github.com/dfch/biz.dfch.SpecMgr/actions/runs/33484265428, all
+four jobs green). The merge is now a local `git merge --ff-only` plus a
+direct push of `main`, with the pull request closed afterwards.
 
 The `sop` tooling that manages this document (the `specmgr-test` MCP
 server) runs against this repository's own dev tree; until the first
@@ -361,3 +408,65 @@ was fixed (see More Information); this SOP was corrected to match (the
 actual fast-forward-only enforcement, the publication workflow's name,
 the old-`gh` constraints) and simplified (stage-to-step mapping up
 front, prerequisites in Scope). Status changed from `draft` to `active`.
+
+### 2026-09-01 10:07:30.000+02:00 — v0.16.0 released under this SOP; pr-merge made deterministic (two incidents fixed)
+
+The second release executed end to end under this SOP (v0.16.0, the
+generic `delete` tool). During it, `pr-merge` tripped twice. (1) It
+fail-fasted on a *pending* check suite: `ci.yml` triggers on both
+`push` and `pull_request`, so the release PR started a second CI run of
+the release commit whose check-runs registered only after `pr-create`'s
+polling had been satisfied by the push run's green jobs — nothing was
+red. (2) After the checks were green, the plain `gh pr merge --merge`
+method created a merge commit on `main` although the fast-forward
+invariant held; the post-merge SHA assertion caught it and stopped the
+stage before tagging (nothing was published). `main` was repaired with a
+`--force-with-lease` push back to the release commit, and the release
+then completed: tag `v0.16.0`, publication run
+https://github.com/dfch/biz.dfch.SpecMgr/actions/runs/33484265428 (all
+four jobs green), GitHub Release notes set. The script was corrected:
+`pr-merge` now polls for green checks like `pr-create` and performs the
+merge locally with `git merge --ff-only` plus a direct push of `main`,
+closing the pull request afterwards — the only fast-forward guarantee
+this environment's `gh` 2.4.0 offers (v0.15.0's plain-method merge
+happened to fast-forward; v0.16.0's did not). Safety and Precautions
+and Step 6 were corrected to describe the mechanism the script actually
+uses.
+
+### 2026-09-01 11:37:37.000+02:00 — Gap closed: the release name is derived from the changelog and set in Step 9
+
+A gap surfaced after the v0.16.0 release: the `release-notes` stage only
+ever set the GitHub Release *body* from the dated changelog section, so
+the release *name* stayed the bare version string that the publish
+workflow's "Make GitHub Release" job passes as `--title` — and the
+workflow cannot do better, since a name derived from the changelog
+section's content is agent judgment, like the Step 3 curation. Step 9
+now requires the agent to derive the release name from the dated
+changelog section's content (a concise title-case headline of the
+section's most significant user-visible change, never the bare version
+string) and to pass it to `release-notes`, which sets name and notes
+together; a `Release name` definition was added, Step 8 now states that
+the workflow creates the release with the bare version as its name, and
+Step 9's description of the mechanism was corrected to `gh api` (this
+environment's `gh` 2.4.0 has no `gh release edit`, as Safety and
+Precautions already states). The script's `release-notes` stage and the
+`/release` command must be corrected to match (where the two disagree,
+the SOP wins); as of this entry they still set the body only.
+
+### 2026-09-01 12:37:17.000+02:00 — Release name format refined (version prefix required); script and command aligned
+
+The name set for v0.16.0 under the previous entry's rule ("Generic
+delete tool") dropped the version; the maintainer wants the name to
+identify the release at a glance. The `Release name` is now of the
+form `vX.Y.Z - <text>` (version matching the tag, space-dash-space,
+then the changelog-derived headline), and the two owed corrections
+were made: the `release-notes` stage takes the name text as a second
+positional argument and composes and sets the full name alongside the
+notes (the non-agent `all` path passes no text, leaves the name as-is,
+and says so in its output), and the `/release` command derives the
+text from the curated section before calling the stage. The stage's
+idempotency check was fixed along the way: GitHub returns the stored
+release body with CRLF line endings (confirmed for v0.15.0 and
+v0.16.0), so the comparison strips CRs — without that the stage would
+re-PATCH forever and never report "already set". The v0.16.0 release
+was renamed to "v0.16.0 - Generic delete tool".
