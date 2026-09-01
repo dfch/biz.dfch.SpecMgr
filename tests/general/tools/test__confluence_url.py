@@ -21,11 +21,16 @@ from __future__ import annotations
 
 import unittest
 
+import httpx
+
 from biz.dfch.specmgr.general.tools._confluence_url import (
+    ConfluenceAuthRedirectError,
+    assert_same_host_as_base_url,
     build_rest_content_url,
     extract_page_id,
     looks_like_rest_or_download_url,
     looks_like_tiny_link,
+    resolve_page_id,
 )
 
 
@@ -188,6 +193,88 @@ class TestLooksLikeTinyLink(unittest.TestCase):
         result = looks_like_tiny_link(url)
 
         self.assertFalse(result)
+
+
+class TestResolvePageId(unittest.TestCase):
+    """Tests for resolve_page_id."""
+
+    def test_bare_numeric_id_returns_itself(self) -> None:
+        result = resolve_page_id("123456")
+
+        self.assertEqual(result, "123456")
+
+    def test_bare_numeric_id_with_surrounding_whitespace_is_stripped(self) -> None:
+        result = resolve_page_id("  123456  ")
+
+        self.assertEqual(result, "123456")
+
+    def test_cloud_style_pages_url_extracts_id(self) -> None:
+        url = "https://example.atlassian.net/wiki/spaces/FOO/pages/123456/My+Page+Title"
+
+        result = resolve_page_id(url)
+
+        self.assertEqual(result, "123456")
+
+    def test_server_style_query_pageid_extracts_id(self) -> None:
+        url = "https://example.com/pages/viewpage.action?pageId=789"
+
+        result = resolve_page_id(url)
+
+        self.assertEqual(result, "789")
+
+    def test_rest_content_url_extracts_id(self) -> None:
+        url = "https://example.com/wiki/rest/api/content/123?expand=version,title"
+
+        result = resolve_page_id(url)
+
+        self.assertEqual(result, "123")
+
+    def test_rest_content_url_without_query_string_extracts_id(self) -> None:
+        url = "https://example.com/wiki/rest/api/content/123"
+
+        result = resolve_page_id(url)
+
+        self.assertEqual(result, "123")
+
+    def test_tiny_link_returns_none(self) -> None:
+        url = "https://example.com/wiki/x/AbCdEf"
+
+        result = resolve_page_id(url)
+
+        self.assertIsNone(result)
+
+    def test_non_matching_url_returns_none(self) -> None:
+        url = "https://example.com/wiki/spaces/FOO/overview"
+
+        result = resolve_page_id(url)
+
+        self.assertIsNone(result)
+
+
+class TestAssertSameHostAsBaseUrl(unittest.TestCase):
+    """Tests for assert_same_host_as_base_url."""
+
+    def test_same_host_does_not_raise(self) -> None:
+        assert_same_host_as_base_url(
+            "https://example.com/wiki/rest/api/content/123",
+            httpx.URL("https://example.com/wiki/rest/api/content/123"),
+            "https://example.com/wiki",
+        )
+
+    def test_same_host_different_case_does_not_raise(self) -> None:
+        assert_same_host_as_base_url(
+            "https://example.com/wiki/rest/api/content/123",
+            httpx.URL("https://EXAMPLE.COM/wiki/rest/api/content/123"),
+            "https://example.com/wiki",
+        )
+
+    def test_different_host_raises(self) -> None:
+        with self.assertRaises(ConfluenceAuthRedirectError):
+            assert_same_host_as_base_url(
+                "https://example.com/wiki/rest/api/content/123",
+                httpx.URL("https://sso.example.com/login"),
+                "https://example.com/wiki",
+            )
 
 
 if __name__ == "__main__":

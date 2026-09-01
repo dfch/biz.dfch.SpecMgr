@@ -236,6 +236,18 @@ page URL (Cloud-style ``/pages/<id>/<title>`` or Server-style
 rejects ``/x/<tinyid>`` tiny links, raises on an SSO-redirect off the
 configured base URL's host, and downloads non-text/binary content to an
 optional ``destination_path`` instead of returning it as text.
+``confluence_update`` (ADR a156fdf9-052c-4f43-93a2-eeec04a91eac,
+feat-50-confluence Phase 3) -- write a local Markdown file's rendered HTML
+into an existing Confluence page's body via the REST API: ``page_url_or_id``
+(a bare page id, browsable page URL, or REST content URL; a ``/x/<tinyid>``
+tiny link is rejected the same way ``confluence_fetch`` rejects it) is
+resolved to a page id, its current ``version.number``/``title`` are read via
+a ``GET``, ``markdown_file_path`` is rendered via ``markdown-it-py``, and the
+incremented version is written via a ``PUT`` with the rendered HTML fragment
+as the new ``body.storage.value`` and the title unchanged; reuses the same
+two environment variables as ``confluence_fetch``, no new configuration
+surface. Local-image attachment upload and ``<img>`` -> ``<ac:image>`` macro
+rewriting are a later phase, not yet implemented.
 
 Prompts
 -------

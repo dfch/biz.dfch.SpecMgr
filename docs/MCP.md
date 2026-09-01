@@ -3,7 +3,7 @@
 Auto-generated from the live `biz.dfch.specmgr.server:mcp` registration --
 do not edit by hand, run `specmgr mcp-docs` instead (see `AGENTS.md`).
 
-39 resource(s), 1 resource template(s), 93 tool(s), 27 prompt(s).
+39 resource(s), 1 resource template(s), 94 tool(s), 27 prompt(s).
 
 ## Table of Contents
 
@@ -347,6 +347,7 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | Name | Description |
 | --- | --- |
 | [`confluence_fetch`](#tool-confluence_fetch) | Fetch a URL over HTTP GET with a bearer token, but only if the URL matches the configured base URL (case-insensitively). A normal, browsable Confluence page URL (Cloud-style '/pages/<id>/<title>' or Server-style '?pageId=<id>') is automatically converted into the equivalent '{base}/rest/api/content/{id}?expand=body.storage' REST API URL before fetching; a '/x/<tinyid>' tiny link is rejected outright, since it cannot be resolved to a page id without an authenticated browser session; a request that gets redirected off the configured base URL's host (e.g. to an SSO login page) raises instead of returning that page's content. Text/JSON/XML responses are returned as raw body text; other (binary/image) content types are written to the given destination_path and that path is returned instead. Intended primarily for Confluence instances using PAT authentication. |
+| [`confluence_update`](#tool-confluence_update) | Render a local Markdown file to an HTML fragment and write it into an existing Confluence page's body via the REST API, incrementing the page's version number. Accepts a bare numeric page id, a browsable page URL ('/pages/<id>/...' or '?pageId=<id>'), or a REST content URL; a '/x/<tinyid>' tiny link is rejected. Reuses the same two environment variables confluence_fetch uses. Local-image attachment upload and <img> -> <ac:image> macro rewriting are not yet supported (planned for a later phase) -- the rendered HTML is written as-is. |
 | [`create_adr`](#tool-create_adr) | Create a new ADR: assigns a fresh id, derives a filename from the title, validates, renders, and writes the new document to the ADR base directory. |
 | [`create_dec`](#tool-create_dec) | Create a new decision: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the decision base directory. |
 | [`create_feat`](#tool-create_feat) | Create a new feature: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the feature base directory. |
@@ -450,6 +451,17 @@ Fetch a URL over HTTP GET with a bearer token, but only if the URL matches the c
 | --- | --- | --- |
 | `url` | `string` | Yes |
 | `destination_path` | `string | None` | No |
+
+### Tool: confluence_update
+
+**Update a Confluence page's body from a local Markdown file**
+
+Render a local Markdown file to an HTML fragment and write it into an existing Confluence page's body via the REST API, incrementing the page's version number. Accepts a bare numeric page id, a browsable page URL ('/pages/<id>/...' or '?pageId=<id>'), or a REST content URL; a '/x/<tinyid>' tiny link is rejected. Reuses the same two environment variables confluence_fetch uses. Local-image attachment upload and <img> -> <ac:image> macro rewriting are not yet supported (planned for a later phase) -- the rendered HTML is written as-is.
+
+| Parameter | Type | Required |
+| --- | --- | --- |
+| `page_url_or_id` | `string` | Yes |
+| `markdown_file_path` | `string` | Yes |
 
 ### Tool: create_adr
 

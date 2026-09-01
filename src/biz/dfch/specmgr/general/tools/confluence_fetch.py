@@ -52,6 +52,8 @@ import httpx
 from ...server import mcp
 from ._confluence_config import confluence_config
 from ._confluence_url import (
+    ConfluenceAuthRedirectError,
+    assert_same_host_as_base_url,
     build_rest_content_url,
     extract_page_id,
     looks_like_rest_or_download_url,
@@ -91,15 +93,6 @@ class ConfluenceTinyLinkNotSupportedError(ValueError):
 
     Tiny links cannot be resolved to a page id without an authenticated
     browser session, so no HTTP request is attempted for them.
-    """
-
-
-class ConfluenceAuthRedirectError(RuntimeError):
-    """The request was redirected off the configured base URL's host.
-
-    Typically means the endpoint is gated by an SSO/auth proxy that does not
-    forward Bearer tokens, and the response received is an SSO login page,
-    not the requested Confluence content.
     """
 
 
@@ -255,14 +248,7 @@ def confluence_fetch(url: str, destination_path: str | None = None) -> str:
     )
     response.raise_for_status()
 
-    response_host = (response.url.host or "").casefold()
-    configured_host = (httpx.URL(base_url).host or "").casefold()
-    if response_host != configured_host:
-        raise ConfluenceAuthRedirectError(
-            f"Request for {target_url!r} was redirected to a different host ({response_host!r}), "
-            f"expected {configured_host!r}; the endpoint may be gated by an SSO/auth proxy that "
-            "does not forward Bearer tokens."
-        )
+    assert_same_host_as_base_url(target_url, response.url, base_url)
 
     if _is_text_content_type(response.headers.get("content-type", "")):
         result = response.text

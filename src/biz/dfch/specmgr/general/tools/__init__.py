@@ -40,13 +40,22 @@ the equivalent ``{base}/rest/api/content/{id}?expand=body.storage`` REST
 API URL, rejects ``/x/<tinyid>`` tiny links outright, raises on an
 SSO-redirect off the configured base URL's host, and downloads
 non-text/binary content (e.g. images) to a caller-supplied
-``destination_path`` instead of returning it as text.
+``destination_path`` instead of returning it as text. ``confluence_update``
+(ADR a156fdf9-052c-4f43-93a2-eeec04a91eac, feat-50-confluence Phase 3) --
+writes a local Markdown file's rendered HTML into an existing Confluence
+page's body via the REST API: resolves ``page_url_or_id`` (bare page id,
+browsable page URL, or REST content URL) to a page id, ``GET``\\ s the
+page's current ``version.number``/``title``, renders the Markdown file via
+``markdown-it-py``, then ``PUT``\\ s the incremented version with the
+rendered HTML fragment as the new body (local-image attachment
+upload/``<ac:image>`` rewriting is a later phase, not yet implemented).
 Import this package to register all general tools at once::
 
     from biz.dfch.specmgr.general import tools  # noqa: F401 (side-effects only)
 """
 
 from .confluence_fetch import confluence_fetch
+from .confluence_update import confluence_update
 from .delete import delete
 from .mdformat import mdformat
 from .set_status import set_status
@@ -54,6 +63,7 @@ from .update import update
 
 __all__ = [
     "confluence_fetch",
+    "confluence_update",
     "delete",
     "mdformat",
     "set_status",

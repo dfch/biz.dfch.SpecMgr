@@ -3,7 +3,7 @@ created: '2026-09-01T17:36:02.251286'
 id: feat-50-confluence
 status: in-progress
 type: feat
-updated: '2026-09-01T19:00:00.000000'
+updated: '2026-09-01T20:00:00.000000'
 version: 1.0.0
 ---
 
@@ -138,9 +138,9 @@ Adds a `confluence_update` tool that converts a local Markdown file to an HTML f
 
 #### Phase 3: `confluence_update` core (no attachments yet)
 
-- [ ] Task 3.1: Implement `confluence_update` (GET version/title, render Markdown via `markdown-it-py`, PUT with incremented version).
+- [x] Task 3.1: Implement `confluence_update` (GET version/title, render Markdown via `markdown-it-py`, PUT with incremented version).
 
-- [ ] Task 3.2: Add `tests/general/tools/test_confluence_update.py` (mocked GET/PUT).
+- [x] Task 3.2: Add `tests/general/tools/test_confluence_update.py` (mocked GET/PUT).
 
 #### Phase 4: Attachment upload + image macro rewrite
 
@@ -158,7 +158,7 @@ Adds a `confluence_update` tool that converts a local Markdown file to an HTML f
 
 ### Current Status
 
-**As of 2026-09-01**: Phase 2 (URL helper + `confluence_fetch` enhancements) complete — automatic REST URL construction, tiny-link rejection, SSO-redirect detection, and binary/image download support are all implemented and tested. Next is Phase 3 (`confluence_update` core: no attachments yet).
+**As of 2026-09-01**: Phase 3 (`confluence_update` core, no attachments yet) complete — the new `confluence_update` tool resolves a page id, reads its current version/title via `GET`, renders a Markdown file via `markdown-it-py`, and writes the incremented version via `PUT`. Next is Phase 4 (attachment upload + image macro rewrite).
 
 ### Blockers
 
@@ -167,6 +167,12 @@ Adds a `confluence_update` tool that converts a local Markdown file to an HTML f
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-01 20:00:00.000Z — Phase 3 complete: `confluence_update` core (no attachments yet)
+
+Completed: implemented the new `general/tools/confluence_update.py` tool (`confluence_update(page_url_or_id: str, markdown_file_path: str) -> dict[str, Any]`, REQ-007/REQ-008/ACC-006): `page_url_or_id` (a bare numeric page id, a browsable `/pages/<id>/...`/`?pageId=<id>` URL, or an already-`/rest/api/content/<id>`-shaped REST URL) is resolved to a numeric page id via the new shared `_confluence_url.resolve_page_id()` helper (tries bare-numeric, then `extract_page_id`, then a new `/rest/api/content/(\d+)` pattern), with a `/x/<tinyid>` tiny link raising the same `ConfluenceTinyLinkNotSupportedError` `confluence_fetch` raises (imported, not redefined) and anything else unresolvable raising the new `ConfluencePageIdNotResolvedError`; `GET {base}/rest/api/content/{id}?expand=version,title` (deliberately no `body.storage` -- this phase never reads the existing body) reads `version.number`/`title`, with a new `ConfluenceUnexpectedResponseShapeError` raised instead of a raw `KeyError` if either key is missing; the Markdown file at `markdown_file_path` is read as UTF-8 (a missing file raises the natural `FileNotFoundError`, no wrapper) and rendered via a local `MarkdownIt("commonmark")` instance (confirmed to emit a bare fragment, no `<html>`/`<head>`/`<body>` wrapper); `PUT {base}/rest/api/content/{id}` writes `{"version": {"number": N+1}, "title": <unchanged>, "type": "page", "body": {"storage": {"value": <rendered fragment>, "representation": "storage"}}}`. Extracted the SSO-redirect-host check the ADR says is "reused for `confluence_update`'s internal GET/PUT" out of `confluence_fetch.py` into a new shared `_confluence_url.assert_same_host_as_base_url()` (plus its `ConfluenceAuthRedirectError`, which moved into `_confluence_url.py` too and is re-exported, unchanged, from `confluence_fetch.py` for backward compatibility) -- both the GET and the PUT apply this identical check. Added `tests/general/tools/test_confluence_update.py` (20 tests: the exact ACC-006 payload assertion computing the expected HTML via a fresh `MarkdownIt("commonmark").render(...)` call and asserting equality, shared-config reuse, all three page-id-resolution input shapes converging on the same GET/PUT target, tiny-link rejection with no HTTP call, GET- and PUT-redirect detection, all three missing-key GET-response-shape cases, non-2xx GET/PUT, and a missing Markdown file) plus 11 new tests in `tests/general/tools/test__confluence_url.py` for `resolve_page_id`/`assert_same_host_as_base_url`. Updated `general/tools/__init__.py`, `general/__init__.py`, and `server.py`'s module docstrings to register/describe the new tool.
+Next: Phase 4 (attachment upload + image macro rewrite: local-image discovery, `POST .../child/attachment` upload with existing-filename fallback, and `<img>` -> `<ac:image>`/`<ri:attachment>` rewriting in `confluence_update`).
+Notes: quality gate green -- `ruff format --check`/`ruff check`/`vulture` clean, full `unittest` suite (2781 tests) passes; `specmgr docs`/`specmgr mcp-docs` regenerated `docs/api/` (new `biz.dfch.specmgr.general.tools.confluence_update.md` page, updated `_confluence_url`/`confluence_fetch`/`general`/`general.tools`/`server` pages), `docs/GENERATED.md` (321 test files), and `docs/MCP.md` (94 tools, new `confluence_update` entry) with no unexpected diffs. `confluence_update`'s write flow (GET/PUT payload shape, version-increment) remains unverified against the real dedicated Confluence test page (id `1232503612`) -- only mocked-`httpx` coverage exists so far; the real, reversible smoke test is Phase 5's job.
 
 #### 2026-09-01 00:00:00.000Z — Phase 2 complete: URL helper + `confluence_fetch` enhancements
 
@@ -189,6 +195,10 @@ Notes: implementation has not started; this update only covers planning/design/e
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-01 20:00:00.000Z — Phase 3 judgement calls: signature/return shape, `MarkdownIt` instance, shared-helper placement, and page-id resolution scope
+
+Decision: (1) `confluence_update(page_url_or_id: str, markdown_file_path: str) -> dict[str, Any]`, returning `{"id": <page id>, "title": <unchanged title>, "version": <new version number>}` rather than the raw PUT response JSON -- a small, caller-useful summary that does not require the caller to know Confluence's own response shape, and keeps the mocked-`httpx` PUT response in tests free of a `.json()` stub it would otherwise need only to satisfy an unused return value. (2) Instantiate a fresh, module-level `MarkdownIt("commonmark")` in `confluence_update.py` rather than reusing `models.md._markdown`'s shared `md` instance: that module is private to `models/md/`'s own parser pipeline, is not re-exported via `models.md.__all__`, and its sibling `parse()` wrapper additionally rejects raw HTML -- a constraint irrelevant to, and never called by, `confluence_update`; a second `MarkdownIt("commonmark")` instantiation is a negligible cost next to avoiding a cross-domain dependency on a private module. Confirmed empirically (via the new test's own `MarkdownIt("commonmark").render(...)` expectation, which passes byte-for-byte) that `.render()` already emits a bare HTML fragment with no `<html>`/`<head>`/`<body>` wrapper, as the plan assumed. (3) The SSO-redirect-host check (`ConfluenceAuthRedirectError` and a new `assert_same_host_as_base_url()`) moved from `confluence_fetch.py` into the shared `_confluence_url.py` module, since the ADR explicitly requires it "reused for `confluence_update`'s internal GET/PUT"; `confluence_fetch.py` now imports and re-exports the exception unchanged (same `__all__` entry, same import path for existing callers/tests), so this is a pure internal refactor with no external-facing rename. The tiny-link exception (`ConfluenceTinyLinkNotSupportedError`) was deliberately *not* moved -- `confluence_update.py` simply imports it directly from `confluence_fetch.py`, per the phase instructions' explicit "reuse whatever exception confluence_fetch.py defines for this, imported, not redefined." (4) `confluence_update` does *not* apply `confluence_fetch`'s base-URL prefix-match check (`ConfluenceUrlNotAllowedError`) to `page_url_or_id`: unlike `confluence_fetch`, which fetches the caller-supplied URL (possibly rewritten) directly, `confluence_update` only ever extracts a page *id* from `page_url_or_id` and then always rebuilds both the GET and PUT target URLs from the trusted, configured `base_url` via `build_rest_content_url()` -- the original URL's host is therefore never actually dereferenced, so restricting it would add a check with no corresponding safety benefit. A new `resolve_page_id()` helper (in `_confluence_url.py`, alongside a new `_REST_CONTENT_ID_PATTERN` regex) additionally accepts a bare numeric id and an already-`/rest/api/content/<id>`-shaped URL, on top of `extract_page_id()`'s existing browsable-URL shapes -- both new capabilities `confluence_fetch` itself has no need for. (5) Beyond ACC-006's three mandated PUT fields, the payload also sends `"type": "page"`, which real-world Confluence REST API PUT semantics require even when unchanged (confirmed via general REST API knowledge, not the real test instance, per the phase's own read-only-exploration-until-Phase-5 constraint).
 
 #### 2026-09-01 00:00:00.000Z — Phase 2 judgement calls: naming, content-type heuristic, and text/binary precedence
 

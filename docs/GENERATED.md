@@ -140,6 +140,7 @@ First-line docstrings from each module, organized by domain:
 - `general/tools/_path_safety.py` — Reusable, doc-type-agnostic path-safety assertions for document ids and
 - `general/tools/_splice.py` — Frontmatter-stripped body extraction and body-line splicing for the generic
 - `general/tools/confluence_fetch.py` — ``@mcp.tool()`` wrapper: confluence_fetch (renamed from ``webfetch``, ADR
+- `general/tools/confluence_update.py` — ``@mcp.tool()`` wrapper: confluence_update (ADR a156fdf9-052c-4f43-93a2-eeec04a91eac,
 - `general/tools/delete.py` — ``@mcp.tool()`` wrapper: delete (feat-36-delete, Phase 2).
 - `general/tools/mdformat.py` — ``@mcp.tool()`` wrapper: mdformat.
 - `general/tools/set_status.py` — ``@mcp.tool()`` wrapper: set_status (feat-22-consolidate-mutation-tools, Phase 4).
@@ -486,4 +487,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 320
+**Test files**: 321

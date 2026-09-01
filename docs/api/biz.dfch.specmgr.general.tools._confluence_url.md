@@ -1,8 +1,8 @@
 # `biz.dfch.specmgr.general.tools._confluence_url`
 
 Shared, ``mcp``-free Confluence URL helpers, used by both
-``confluence_fetch`` and (later) ``confluence_update`` (ADR
-a156fdf9-052c-4f43-93a2-eeec04a91eac, feat-50-confluence Phase 2).
+``confluence_fetch`` and ``confluence_update`` (ADR
+a156fdf9-052c-4f43-93a2-eeec04a91eac, feat-50-confluence Phases 2-3).
 
 Confirmed against a real Confluence Server/Data Center instance
 (read-only GETs; see the feature README's Design Notes): a page's numeric
@@ -16,11 +16,69 @@ recoverable page id at all and is *not* matched by :func:`extract_page_id`
 reject it with a dedicated error, since resolving it would require an
 authenticated browser session this tool does not attempt to emulate.
 
-This module has no dependency on ``mcp``, ``httpx``, or any other
-tool-specific machinery -- it is plain, unit-testable string/regex logic,
-mirroring the shape of :mod:`_confluence_config` and :mod:`_path_safety`.
+:func:`assert_same_host_as_base_url` (feat-50-confluence Phase 3) plus its
+:class:`ConfluenceAuthRedirectError` live here too, since both
+``confluence_fetch`` and ``confluence_update`` must apply the identical
+post-redirect host-comparison check to every request they make (the ADR's
+Design Notes: SSO-redirect detection is "reused for ``confluence_update``'s
+internal GET/PUT").
+
+This module has no dependency on ``mcp`` or any other tool-specific
+machinery beyond ``httpx`` itself (needed for :class:`httpx.URL` host
+parsing) -- it is plain, unit-testable logic, mirroring the shape of
+:mod:`_confluence_config` and :mod:`_path_safety`.
+
+## Classes
+
+### `ConfluenceAuthRedirectError`
+
+A request was redirected off the configured base URL's host.
+
+Typically means the endpoint is gated by an SSO/auth proxy that does not
+forward Bearer tokens, and the response received is an SSO login page,
+not the requested Confluence content. Shared between ``confluence_fetch``
+and ``confluence_update`` (both perform the identical host-comparison
+check via :func:`assert_same_host_as_base_url`).
+
+**Methods:**
+
+- `add_note(self, object, /)`
+  Exception.add_note(note) --
+  add a note to the exception
+
+- `with_traceback(self, object, /)`
+  Exception.with_traceback(tb) --
+  set self.__traceback__ to tb and return self.
+
 
 ## Functions
+
+### `assert_same_host_as_base_url(request_url: 'str', response_url: 'httpx.URL', base_url: 'str') -> 'None'`
+
+Raise :class:`ConfluenceAuthRedirectError` if ``response_url``'s host differs from ``base_url``'s.
+
+Shared between ``confluence_fetch`` and ``confluence_update``
+(ADR a156fdf9-052c-4f43-93a2-eeec04a91eac's Design Notes: SSO-redirect
+detection is "reused for ``confluence_update``'s internal GET/PUT"), so
+both tools apply the identical post-redirect host comparison instead of
+duplicating it.
+
+Parameters
+----------
+request_url:
+    The URL that was requested, used only for the error message.
+response_url:
+    The final response URL (``httpx.Response.url``), i.e. after
+    following any redirects.
+base_url:
+    The configured Confluence base URL.
+
+Raises
+------
+ConfluenceAuthRedirectError
+    If ``response_url``'s host (case-insensitively) differs from
+    ``base_url``'s host.
+
 
 ### `build_rest_content_url(base_url: 'str', page_id: 'str', expand: 'str | None' = None) -> 'str'`
 
@@ -111,4 +169,38 @@ Returns
 bool
     ``True`` if ``url`` contains a ``/x/<opaque-non-empty-segment>``
     path segment, ``False`` otherwise.
+
+
+### `resolve_page_id(value: 'str') -> 'str | None'`
+
+Resolve ``value`` to a Confluence numeric page id, for ``confluence_update``.
+
+Unlike :func:`extract_page_id` (browsable page URLs only, used by
+``confluence_fetch`` to build a fresh REST URL from scratch),
+``confluence_update`` must also accept a bare numeric page id or an
+already-``/rest/api/content/<id>``-shaped URL directly, since it always
+rebuilds the GET/PUT target itself from the configured base URL plus the
+resolved id (the id, not the caller-supplied value, is what actually
+matters). Tried, in order:
+
+- ``value`` stripped of surrounding whitespace is a bare numeric id
+  (``str.isdigit()``);
+- :func:`extract_page_id` (Server-style ``?pageId=`` query parameter or
+  Cloud-style ``/pages/<id>/...`` path segment);
+- the numeric id embedded in an already-``/rest/api/content/<id>``-shaped
+  URL.
+
+Parameters
+----------
+value:
+    A bare numeric page id, a browsable page URL, or a REST content URL.
+
+Returns
+-------
+str | None
+    The resolved numeric page id, or ``None`` if none of the above
+    match -- including a ``/x/<tinyid>`` tiny link, which callers must
+    detect separately via :func:`looks_like_tiny_link` and reject with a
+    dedicated error, mirroring :func:`extract_page_id`'s own tiny-link
+    handling.
 

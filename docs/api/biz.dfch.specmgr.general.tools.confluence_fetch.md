@@ -29,25 +29,6 @@ mirroring the constant + private-helper pattern used by
 
 ## Classes
 
-### `ConfluenceAuthRedirectError`
-
-The request was redirected off the configured base URL's host.
-
-Typically means the endpoint is gated by an SSO/auth proxy that does not
-forward Bearer tokens, and the response received is an SSO login page,
-not the requested Confluence content.
-
-**Methods:**
-
-- `add_note(self, object, /)`
-  Exception.add_note(note) --
-  add a note to the exception
-
-- `with_traceback(self, object, /)`
-  Exception.with_traceback(tb) --
-  set self.__traceback__ to tb and return self.
-
-
 ### `ConfluenceDestinationPathRequiredError`
 
 A non-text/binary response was received but no ``destination_path`` was given.
