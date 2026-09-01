@@ -49,7 +49,7 @@ import tempfile
 import textwrap
 import unittest
 from collections.abc import Callable, Iterator
-from contextlib import contextmanager
+from contextlib import AbstractContextManager, contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -518,7 +518,9 @@ _CASES: list[_Case] = [
 
 
 class TempDeleteDirTestCase(unittest.TestCase):
-    """Common fixture: temp dirs set as the docs root via SPECMGR_DOCS_DIR and the feat base dir via SPECMGR_FEAT_DIR."""
+    """Common fixture: temp dirs set as the docs root via SPECMGR_DOCS_DIR and the feat base
+    dir via SPECMGR_FEAT_DIR (the lifecycle is managed by ``enterContext``, per the sibling
+    ``test_set_status.py``/``test_update.py`` fixture convention)."""
 
     def setUp(self) -> None:
         self.docs_root = Path(self.enterContext(tempfile.TemporaryDirectory()))
@@ -552,7 +554,8 @@ class TempDeleteDirTestCase(unittest.TestCase):
 
 
 class TestDeleteWholeBodyDomains(TempDeleteDirTestCase):
-    """ACC-001/ACC-006: delete succeeds, returns the deleted path, the file/folder is gone, a follow-up load raises the domain not-found."""
+    """ACC-001/ACC-006: delete succeeds, returns the deleted path, the file/folder is gone,
+    a follow-up load raises the domain not-found."""
 
     def test_delete_returns_deleted_path_and_removes_the_document(self) -> None:
         """For each of the eleven types, delete must return the deleted file/folder path and remove it from disk."""
@@ -605,7 +608,8 @@ class TestDeleteInjection(TempDeleteDirTestCase):
     """ACC-005: every path-injection id raises ValueError before any filesystem access, the seed untouched."""
 
     def test_injection_ids_raise_value_error_and_leave_filesystem_untouched(self) -> None:
-        """Each pinned traversal shape and a wrong-format id must raise ValueError, leaving the seeded document intact."""
+        """Each pinned traversal shape and a wrong-format id must raise ValueError, leaving
+        the seeded document intact."""
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case)
@@ -643,7 +647,8 @@ class TestDeleteIoFailure(TempDeleteDirTestCase):
                 self.assertTrue(path.exists())
 
     def test_rmtree_failure_raises_delete_error_with_cause_and_path(self) -> None:
-        """For feat, a mocked shutil.rmtree OSError must raise DeleteError wrapping that exact OSError, folder intact."""
+        """For feat, a mocked shutil.rmtree OSError must raise DeleteError wrapping that exact
+        OSError, folder intact."""
         created = create_feat(_FEAT_MINIMAL_BODY)
         feat_id = created.frontmatter.id
         folder = feat_base_dir() / feat_id
@@ -663,29 +668,34 @@ class TestDeleteLocking(TempDeleteDirTestCase):
     """ACC-004: each adapter enters the domain's own per-id lock around the resolve-then-delete sequence."""
 
     def test_the_domain_lock_is_entered_around_the_delete(self) -> None:
-        """For each of the eleven types, the domain's own <d>_lock must be acquired with the id before the delete and released after."""
+        """For each of the eleven types, the domain's own <d>_lock must be acquired with the id
+        before the delete and released after."""
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
-                created = self._seed(case)
-                doc_id = created.frontmatter.id
-                target = self._target(case, doc_id)
+                self._assert_lock_entered(case)
 
-                events: list[str] = []
-                lock_attr = f"{case.doc_type}_lock"
-                real_lock = getattr(delete_module, lock_attr)
+    def _assert_lock_entered(self, case: _Case) -> None:
+        """The domain's own <d>_lock must be entered with the id around the delete for ``case``."""
+        created = self._seed(case)
+        doc_id = created.frontmatter.id
+        target = self._target(case, doc_id)
 
-                @contextmanager
-                def spy_lock(id_: str) -> Iterator[None]:
-                    events.append(f"acquire:{id_}")
-                    with real_lock(id_):
-                        yield
-                    events.append("release")
+        events: list[str] = []
+        lock_attr = f"{case.doc_type}_lock"
+        real_lock: Callable[[str], AbstractContextManager[None]] = getattr(delete_module, lock_attr)
 
-                with mock.patch.object(delete_module, lock_attr, spy_lock):
-                    delete(id=doc_id, type=case.doc_type)
+        @contextmanager
+        def spy_lock(id_: str) -> Iterator[None]:
+            events.append(f"acquire:{id_}")
+            with real_lock(id_):
+                yield
+            events.append("release")
 
-                self.assertEqual(events, [f"acquire:{doc_id}", "release"])
-                self.assertFalse(target.exists())
+        with mock.patch.object(delete_module, lock_attr, spy_lock):
+            delete(id=doc_id, type=case.doc_type)
+
+        self.assertEqual(events, [f"acquire:{doc_id}", "release"])
+        self.assertFalse(target.exists())
 
 
 class TestDeleteRegistration(unittest.TestCase):

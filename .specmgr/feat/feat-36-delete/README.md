@@ -1,9 +1,9 @@
 ---
 created: 2026-08-31 15:37:40.000000
 id: feat-36-delete
-status: planning
+status: done
 type: feat
-updated: 2026-08-31 23:20:24.000000
+updated: 2026-09-01 01:28:41.000000
 version: 1.0.0
 ---
 
@@ -49,14 +49,14 @@ Tracked by GitHub issue #36. Branch/worktree: `feat-36-delete`.
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: Verifies REQ-001 — `general/tools/delete.py` exists and registers `@mcp.tool(name="delete")` with the eleven-value `type` Literal; it dispatches through an `_ADAPTERS` table to eleven private `_delete_<d>` adapters; a live call `delete(id, type)` on a seeded document removes it and returns the deleted path as a `str`; `docs/MCP.md` (regenerated) lists exactly one `delete` tool and no `delete_<d>` tools.
-- [ ] ACC-002: Verifies REQ-002 — the eleven `delete_<d>.py` source files, their `__init__.py` imports/`__all__`/docstring references, and the eleven `test_delete_<d>.py` files are all gone (`git status`/`grep -r "delete_<d>"` over `src/` and `tests/` returns nothing for a per-domain delete tool); `import biz.dfch.specmgr.<d>.tools` succeeds for every domain.
-- [ ] ACC-003: Verifies REQ-003 — `general/tools/_path_safety.py` exposes `assert_no_traversal`, `assert_uuid`, `assert_feat_id`, `validate_id`, and `assert_within`; `tests/general/tools/test__path_safety.py` passes; the functions are pure (no filesystem side effects) and importable by `get_<d>`/`update`/`set_status` without modification (i.e. no delete-specific coupling).
-- [ ] ACC-004: Verifies REQ-004 — each of the eleven adapters acquires its domain's `<d>_lock(id_)` around the resolve-then-delete sequence (verified by a test that mocks/spies the lock, or a concurrency test showing a same-id `update` and `delete` do not interleave).
-- [ ] ACC-005: Verifies REQ-005 — for a seeded document, `delete` with an unknown id raises that domain's `XNotFoundError`; with an injected id (`../x`, `a/b`, `a\b`, `..`, a non-UUID string for a UUID type, a non-`feat-NNN-slug` for `feat`) it raises `ValueError` and leaves the filesystem untouched; with a mocked `unlink`/`rmtree` that raises `OSError` it raises `DeleteError` whose message names the path.
-- [ ] ACC-006: Verifies REQ-006 — for the ten flat domains the `*.md` file is removed and its directory is left intact; for `feat` the whole `<base>/<id>/` folder (including a seeded `history.md`) is removed.
-- [ ] ACC-007: Verifies REQ-007 — a new accepted ADR exists in `docs/adr/` (listed in the regenerated `docs/adr/README.md`); `AGENTS.md`, `server.py`'s docstring, and `CHANGELOG.md` are updated per REQ-007; `specmgr docs`/`specmgr mcp-docs`/`specmgr adr-toc` all run clean (no drift) after the edits.
-- [ ] ACC-008: Verifies REQ-008 — `tests/general/tools/test_delete.py` and `tests/general/tools/test__path_safety.py` exist and pass; the full `unittest` suite is green; `ruff format --check`, `ruff check`, and `vulture` are clean.
+- [x] ACC-001: Verifies REQ-001 — `general/tools/delete.py` exists and registers `@mcp.tool(name="delete")` with the eleven-value `type` Literal; it dispatches through an `_ADAPTERS` table to eleven private `_delete_<d>` adapters; a live call `delete(id, type)` on a seeded document removes it and returns the deleted path as a `str`; `docs/MCP.md` (regenerated) lists exactly one `delete` tool and no `delete_<d>` tools. — evidence: `tests.general.tools.test_delete.TestDeleteRegistration::test_delete_registered_with_11_value_type_enum` (live `mcp.list_tools()` after importing `server`: 93 tools, exactly one `delete`, zero `delete_<d>`, 11-value `type` enum, `required` `["id", "type"]`) and `TestDeleteWholeBodyDomains::test_delete_returns_deleted_path_and_removes_the_document` (live `delete()` call on a seeded document returns the deleted path `str`, file/folder gone); `docs/MCP.md` lists exactly one `delete` tool row (`### Tool: delete`) and zero `delete_<d>` rows (grep counts 1/0).
+- [x] ACC-002: Verifies REQ-002 — the eleven `delete_<d>.py` source files, their `__init__.py` imports/`__all__`/docstring references, and the eleven `test_delete_<d>.py` files are all gone (`git status`/`grep -r "delete_<d>"` over `src/` and `tests/` returns nothing for a per-domain delete tool); `import biz.dfch.specmgr.<d>.tools` succeeds for every domain. — evidence: `git ls-files | grep -E 'delete_(req|uc|tsk|qa|prb|gol|rsk|dec|sop|feat|vcr)'` returns zero files; `grep -rnE 'delete_(req|uc|tsk|qa|prb|gol|rsk|dec|sop|feat|vcr)' src/ tests/` returns nothing under `tests/` and, under `src/`, only the private `_delete_<d>` adapter names (def lines, the `_ADAPTERS` table, and docstring `:func:` references) inside `general/tools/delete.py` — the protected, by-design mirror of REQ-001's pinned adapter names, plus gitignored untracked build artifacts (`*.egg-info/`, `__pycache__/`); `import biz.dfch.specmgr.<d>.tools` → `IMPORTS OK` for all eleven domains.
+- [x] ACC-003: Verifies REQ-003 — `general/tools/_path_safety.py` exposes `assert_no_traversal`, `assert_uuid`, `assert_feat_id`, `validate_id`, and `assert_within`; `tests/general/tools/test__path_safety.py` passes; the functions are pure (no filesystem side effects) and importable by `get_<d>`/`update`/`set_status` without modification (i.e. no delete-specific coupling). — evidence: `__all__` exposes all five functions and `general/tools/delete.py:105` imports `assert_within, validate_id` from `._path_safety`; `tests.general.tools.test__path_safety` passes (23 tests, OK); purity grep: the module imports only `__future__`/`re`/`pathlib.Path` (no `mcp`, no delete-specific imports, no I/O beyond the sanctioned read-only `Path.resolve()` calls in `assert_within`) — its eight `delete`/`DeleteError` mentions are docstring/example text only, so `get_<d>`/`update`/`set_status` can import it unchanged.
+- [x] ACC-004: Verifies REQ-004 — each of the eleven adapters acquires its domain's `<d>_lock(id_)` around the resolve-then-delete sequence (verified by a test that mocks/spies the lock, or a concurrency test showing a same-id `update` and `delete` do not interleave). — evidence: `tests.general.tools.test_delete.TestDeleteLocking::test_the_domain_lock_is_entered_around_the_delete` (parameterized over all eleven types) spies each domain's `<d>_lock` on the `delete` module via `mock.patch.object` with an event-recording `spy_lock` and asserts the events equal `["acquire:<id>", "release"]` with the delete having completed inside the lock — OK.
+- [x] ACC-005: Verifies REQ-005 — for a seeded document, `delete` with an unknown id raises that domain's `XNotFoundError`; with an injected id (`../x`, `a/b`, `a\b`, `..`, a non-UUID string for a UUID type, a non-`feat-NNN-slug` for `feat`) it raises `ValueError` and leaves the filesystem untouched; with a mocked `unlink`/`rmtree` that raises `OSError` it raises `DeleteError` whose message names the path. — evidence: `tests.general.tools.test_delete.TestDeleteInjection::test_injection_ids_raise_value_error_and_leave_filesystem_untouched` (every pinned traversal shape plus each type's wrong-format id raises `ValueError`, seeded document left intact), `TestDeleteWholeBodyDomains::test_unknown_id_raises_domain_not_found_and_leaves_the_seed_intact` (well-formed unknown id raises the domain's own `XNotFoundError`), and `TestDeleteIoFailure::test_unlink_failure_raises_delete_error_with_cause_and_path` / `::test_rmtree_failure_raises_delete_error_with_cause_and_path` (mocked `Path.unlink`/`shutil.rmtree` raising `OSError` surface as `DeleteError` with the exact `OSError` as `__cause__` and the path in the message) — all OK.
+- [x] ACC-006: Verifies REQ-006 — for the ten flat domains the `*.md` file is removed and its directory is left intact; for `feat` the whole `<base>/<id>/` folder (including a seeded `history.md`) is removed. — evidence: `tests.general.tools.test_delete.TestDeleteWholeBodyDomains::test_delete_returns_deleted_path_and_removes_the_document` (for all eleven types the returned `str` is exactly the seeded `*.md` file path for the flat domains / the folder path for `feat`, the target no longer exists, the containing directory is left intact, and a follow-up `load_by_id` raises the domain `XNotFoundError`) and `::test_feat_delete_removes_the_whole_folder_including_history_md` (the entire `<base>/<id>/` folder, including a seeded `history.md`, is removed via `shutil.rmtree`) — both OK.
+- [x] ACC-007: Verifies REQ-007 — a new accepted ADR exists in `docs/adr/` (listed in the regenerated `docs/adr/README.md`); `AGENTS.md`, `server.py`'s docstring, and `CHANGELOG.md` are updated per REQ-007; `specmgr docs`/`specmgr mcp-docs`/`specmgr adr-toc` all run clean (no drift) after the edits. — evidence: `docs/adr/1af6787b-eaab-4e8f-888f-531c1e76c19d-replace-domain-specific-delete-tools-with-a-generic-type-dis.md` exists with frontmatter `status: accepted` and is listed in `docs/adr/README.md` (grep hit); `grep -cE 'delete_(req|uc|tsk|qa|prb|gol|rsk|dec|sop|feat|vcr)'` → 0 in `AGENTS.md` and 0 in `server.py` (`CHANGELOG.md`'s `[Unreleased]` entry is the pinned removal/added note per Design Notes §8, not a stub mention); `specmgr adr-toc` + `specmgr docs` + `specmgr mcp-docs` re-ran drift-free — each wrote byte-identical content and `git status` was clean afterwards (no `docs/` changes).
+- [x] ACC-008: Verifies REQ-008 — `tests/general/tools/test_delete.py` and `tests/general/tools/test__path_safety.py` exist and pass; the full `unittest` suite is green; `ruff format --check`, `ruff check`, and `vulture` are clean. — evidence: both files are git-tracked (`git ls-files`) and pass — `tests.general.tools.test_delete` (8 tests, all eleven types parameterized, OK) and `tests.general.tools.test__path_safety` (23 tests, OK); full `unittest` suite green (2713 tests, OK) and `ruff format --check` (1462 files) / `ruff check` / `vulture src/ whitelist.py --min-confidence 60` clean per the Task 5.1 post-fix gate re-run.
 
 ### Scope
 
@@ -444,67 +444,58 @@ no replacement per-domain delete tests are added — coverage moves entirely to
 
 #### Phase 4: Decision and documentation propagation (Phase-Orchestrator)
 
-- [ ] Task 4.1: Create the new ADR via the `create_adr` MCP tool per Design Notes §7 (requester-confirmed: the enabled specmgr MCP server resolves `docs/adr` relative to its CWD, i.e. this worktree — sanity-check with `git status` right after creation), set it `accepted`, run `specmgr adr-toc`, and ensure the new ADR file plus the regenerated `docs/adr/README.md` are `git add`ed into the Phase 4 commit — depends on: Task 3.3 — status: not-started.
+- [x] Task 4.1: Create the new ADR via the `create_adr` MCP tool per Design Notes §7 (requester-confirmed: the enabled specmgr MCP server resolves `docs/adr` relative to its CWD, i.e. this worktree — sanity-check with `git status` right after creation), set it `accepted`, run `specmgr adr-toc`, and ensure the new ADR file plus the regenerated `docs/adr/README.md` are `git add`ed into the Phase 4 commit — depends on: Task 3.3 — status: done (2026-09-01).
 - [x] Task 4.2: Update `AGENTS.md` per Design Notes §8 — depends on: Task 3.3 — status: done (2026-08-31).
 - [x] Task 4.3: Update `server.py`'s module docstring per Design Notes §8 — depends on: Task 3.3 — status: done (2026-08-31).
 - [x] Task 4.4: Add the `CHANGELOG.md` `[Unreleased]` entry per Design Notes §8 — depends on: Task 3.3 — status: done (2026-08-31).
-- [ ] Task 4.5: Regenerate `docs/` (`specmgr docs`, `specmgr mcp-docs`, `specmgr adr-toc`), each run twice to confirm no drift — depends on: Tasks 4.1–4.4 — status: not-started.
+- [x] Task 4.5: Regenerate `docs/` (`specmgr docs`, `specmgr mcp-docs`, `specmgr adr-toc`), each run twice to confirm no drift — depends on: Tasks 4.1–4.4 — status: done (2026-09-01).
 
 #### Phase 5: Quality gate and sign-off (Phase-Orchestrator)
 
-- [ ] Task 5.1: Run the full gate (`ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, the full `unittest` suite, and advisory `pylint`) and fix any failures — depends on: Task 4.5 — status: not-started.
-- [ ] Task 5.2: Walk ACC-001..ACC-008, mark each `[x]` with a concrete justification (test file / tool / doc proving it), update Current Status, and bump this README's frontmatter `status`/`updated` — depends on: Task 5.1 — status: not-started.
+- [x] Task 5.1: Run the full gate (`ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, the full `unittest` suite, and advisory `pylint`) and fix any failures — depends on: Task 4.5 — status: done (2026-09-01).
+- [x] Task 5.2: Walk ACC-001..ACC-008, mark each `[x]` with a concrete justification (test file / tool / doc proving it), update Current Status, and bump this README's frontmatter `status`/`updated` — depends on: Task 5.1 — status: done (2026-09-01).
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-08-31 (Phase 4 in progress — Tasks 4.2–4.4 done; Tasks 4.1 and
-4.5 remain orchestrator-owned)**: Phase 0 (design, including Task 0.3),
-Phase 1 (reusable path-safety module), Phase 2 (the generic `delete` tool),
-and Phase 3 (retire the eleven delete stubs) are complete. `general/tools/
-_path_safety.py` provides the five pinned, pure, non-I/O assertions, and
-`general/tools/delete.py` registers the single generic `delete(id, type)` MCP
-tool for the eleven whole-body domains (ADR excluded): `validate_id` before
-any filesystem access (REQ-003), per-domain private adapters that resolve via
+**As of 2026-09-01 (Phase 5 complete — feature signed off, done)**: all five
+phases are complete. Phase 0 (design, including Task 0.3), Phase 1 (the
+reusable path-safety module), Phase 2 (the generic `delete` tool), Phase 3
+(retire the eleven delete stubs), and Phase 4 (the accepted ADR
+`1af6787b-eaab-4e8f-888f-531c1e76c19d` in `docs/adr/`, propagation to
+`AGENTS.md`/`server.py`/`CHANGELOG.md`, and `docs/` regeneration to a
+verified fixed point) delivered: `general/tools/_path_safety.py` provides
+the five pinned, pure, non-I/O assertions, and `general/tools/delete.py`
+registers the single generic `delete(id, type)` MCP tool for the eleven
+whole-body domains (ADR excluded) — `validate_id` before any filesystem
+access (REQ-003), per-domain private `_delete_<d>` adapters that resolve via
 the domain's own `load_by_id` under the domain's own per-id lock (REQ-004),
 `assert_within` containment, and a hard delete via `Path.unlink()` (the ten
 flat domains) or `shutil.rmtree` on the whole `<base>/<id>/` folder (`feat`);
 the domain's own `XNotFoundError` propagates unchanged and an I/O failure
 surfaces as `DeleteError` (an `OSError` subclass, REQ-005). The eleven
-`delete_<d>` stub tools are fully retired (modules, `__init__.py` references,
-and stub tests all removed, with a pointer line to the generic `delete` tool
-in each `<d>/tools/__init__.py`), the six integration-test modules now end
-their lifecycle with a real generic delete, and the live MCP surface is 93
-tools — exactly one `delete` and zero `delete_<d>`. Phase 4's three
-file-edit tasks are now also done: Task 4.2 updated `AGENTS.md` (each of the
-eleven per-domain Status bullets drops the `delete_<d>` stub mention and
-notes that deletion goes through the generic `delete` tool
-(`type="<d>"`); the "Still genuinely missing" stubs bullet is removed; the
-`general/` bullet enumerates `delete` with the note that all eleven domains
-implement a `delete` adapter there (ADR excluded); the `ac` future-domain
-convention note now includes one `delete` adapter — not new per-domain
-`delete_<d>` tools); Task 4.3 updated `server.py`'s module docstring (the
-authoritative registration list — the eleven per-domain `delete_<d>` stub
-mentions removed from the domain tool paragraphs, and `delete` described in
-the General tools paragraph: type-dispatched hard-delete for the eleven
-whole-body domains, `adr` not supported, resolves by `id`, takes the domain
-lock, returns the deleted path, `ValueError`/`XNotFoundError`/`DeleteError`
-error contract; docstring text only, no code touched); Task 4.4 added the
-`CHANGELOG.md` `[Unreleased]` entry (`### Removed` **BREAKING** 0.x note for
-the eleven stub tools, `### Added` notes for the generic `delete` tool and
-the reusable `general/tools/_path_safety.py` module). Phase-end quality gate
-is green: `ruff format --check` (1472 files already formatted), `ruff check`
-(All checks passed), `vulture src/ whitelist.py --min-confidence 60` clean,
-full `unittest` suite OK (2713 tests — the Phase-3 baseline, unchanged since
-this phase is doc-only), `import biz.dfch.specmgr.server` OK, and the
-verification grep (`grep -nE 'delete_(req|uc|tsk|qa|prb|gol|rsk|dec|sop|
-feat|vcr)' AGENTS.md src/biz/dfch/specmgr/server.py`) returns zero matches in
-both files. **Remaining Phase 4 work (orchestrator-owned): Task 4.1 — the
-new ADR created via the `specmgr` MCP structured tools (`create_adr`, then
-`set_status` to `accepted`) — and Task 4.5 — `docs/` regeneration (`specmgr
-docs`, `specmgr mcp-docs`, `specmgr adr-toc`, each run twice to a fixed
-point). Then Phase 5 (quality gate and sign-off).**
+`delete_<d>` stub tools are fully retired (modules, `__init__.py`
+references, stub tests, and stale API pages all removed, with a pointer line
+to the generic `delete` tool in each `<d>/tools/__init__.py`), the six
+integration-test modules now end their lifecycle with a real generic delete,
+and the live MCP surface is 93 tools — exactly one `delete` and zero
+`delete_<d>`. Phase 5's full quality gate is green: `ruff format --check`
+(1462 files already formatted), `ruff check` (All checks passed), `vulture
+src/ whitelist.py --min-confidence 60` clean, full `unittest` suite OK
+(2713 tests), and the advisory `pylint` at the known 8.89/10 repo baseline —
+the only feature-file findings beyond the pinned `delete.py` W0622 (identical
+findings at `set_status.py`/`update.py`), the pre-existing `server.py:337`
+C0413/W0611, and the 160 pre-existing `cyclic-import` R0401 findings were in
+`tests/general/tools/test_delete.py` and are resolved: the five C0301
+line-too-long docstrings are wrapped without changing test semantics and the
+lock-spy test is restructured into a per-case helper so its closure captures
+no loop-defined cell variables (W0640 gone), while the two R1732 and one
+C0415 findings are left with sibling precedent (the identical patterns in
+`test_set_status.py`/`test_update.py`, which pylint flags the same way); a
+repo-wide pylint re-run confirms zero new findings. ACC-001..ACC-008 are all
+verified, each criterion line marked `[x]` with concrete evidence appended;
+this feature is done.
 
 ### Blockers
 
@@ -513,6 +504,10 @@ point). Then Phase 5 (quality gate and sign-off).**
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-01 01:28:41.000Z — Phase 5 complete: full gate green, ACC-001..ACC-008 verified, feature signed off
+
+Ran the Phase 5 full quality gate (Task 5.1) and the ACC sign-off walk (Task 5.2). Gate results before any fix: `ruff format --check` (1462 files already formatted), `ruff check` (All checks passed), `vulture src/ whitelist.py --min-confidence 60` (clean, exit 0), the full `unittest` suite (2713 tests, OK), and advisory `pylint` at the known repo baseline 8.89/10 — whose only feature-file findings, beyond the pinned `delete.py` W0622 redefined-builtin `id`/`type` (identical findings at `set_status.py:503-504` and `update.py:610-611`, intentional per the plan), the pre-existing `server.py:337` C0413/W0611, and the 160 pre-existing `cyclic-import` R0401 findings, were in `tests/general/tools/test_delete.py`: five C0301 line-too-long, three W0640 cell-var-from-loop (the lock-spy test), two R1732 consider-using-with, and one C0415 import-outside-toplevel. Applied exactly the pinned disposition: the five overlong docstrings (the `TempDeleteDirTestCase` class docstring, the `TestDeleteWholeBodyDomains` class docstring, and the injection/rmtree/lock-spy method docstrings) are wrapped without changing any test semantics, and the lock-spy test is restructured by extracting its per-case body into a `_assert_lock_entered(case)` helper method — the original `spy_lock` closure body is kept byte-identical, but its captured `events`/`real_lock` are now plain function locals rather than loop-defined cell variables, which removes all three W0640 findings (an intermediate default-argument capture variant was tried first and abandoned because it introduced a new W0102 dangerous-default-value finding). Left in place, with the sibling precedent: the two R1732 findings on the `setUp` temp-dir allocations are lifecycle-managed by `unittest.TestCase.enterContext` (not unmanaged) and match the byte-identical `Path(self.enterContext(tempfile.TemporaryDirectory()))` pattern at `test_set_status.py:460` and `test_update.py:798`, which pylint flags the same way, and the C0415 finding on the registration smoke test matches `test_update.py:1082` (`setUpClass` importing `server.mcp` to defer the server import out of module load). Every other feature-file finding (the six `test_integration.py` modules and the eleven `<d>/tools/__init__.py` files, all zero findings on `__init__.py`) was verified pre-existing by running pylint on the pre-feature base revision of those files — no finding sits on a feature-authored line, only line shifts. After the fix, the full gate was re-run: `ruff format --check` / `ruff check` / `vulture` clean, full `unittest` suite OK (2713 tests), and a repo-wide pylint re-run shows exactly the five C0301 + three W0640 findings gone, the three pinned leave-in-place findings (two R1732, one C0415) still present, and zero new findings anywhere. The ACC walk then verified each criterion with freshly-run evidence (each criterion line is now `[x]` with the concrete justification appended on the same line): ACC-001 the live `mcp.list_tools()` after importing `server` shows 93 tools, exactly one `delete` with the 11-value `type` enum and `required` `["id", "type"]`, zero `delete_<d>`, the live delete call on a seeded document returns the deleted path, and `docs/MCP.md` lists exactly one `delete` tool row and zero `delete_<d>` rows; ACC-002 `git ls-files` shows no `delete_<d>.py` file and the repo-wide grep returns nothing under `tests/` and, under `src/`, only the protected private `_delete_<d>` adapter names inside `general/tools/delete.py` (a by-design mirror of REQ-001's pinned adapter names, plus gitignored egg-info/pycache build artifacts) while `import biz.dfch.specmgr.<d>.tools` succeeds for all eleven domains; ACC-003 the five `_path_safety` functions are exposed and imported by `delete.py`, `tests/general/tools/test__path_safety` passes (23 tests), and the module is pure (imports only `__future__`/`re`/`pathlib`, no I/O beyond the sanctioned read-only `Path.resolve()` in `assert_within`, no delete-specific imports — its eight `delete` mentions are docstring/example text); ACC-004 `TestDeleteLocking.test_the_domain_lock_is_entered_around_the_delete` spies each of the eleven `<d>_lock`s and asserts `["acquire:<id>", "release"]` bracket the delete; ACC-005 `TestDeleteInjection`, `TestDeleteWholeBodyDomains.test_unknown_id_raises_domain_not_found_and_leaves_the_seed_intact`, and both `TestDeleteIoFailure` tests prove `ValueError` (seed untouched), the domain `XNotFoundError`, and `DeleteError` (with `__cause__` and the path in the message); ACC-006 `TestDeleteWholeBodyDomains` proves the flat-file delete (file gone, directory intact) and the `feat` whole-folder delete including a seeded `history.md`; ACC-007 ADR `1af6787b-eaab-4e8f-888f-531c1e76c19d` exists in `docs/adr/` with frontmatter `status: accepted`, is listed in `docs/adr/README.md`, `AGENTS.md` and `server.py` carry zero `delete_<d>` stub mentions (the `CHANGELOG.md` `[Unreleased]` entry is the pinned removal/added note per Design Notes §8), and `specmgr adr-toc`/`specmgr docs`/`specmgr mcp-docs` re-ran drift-free (byte-identical output, `git status` clean afterwards); ACC-008 both new test files are tracked and pass (8 + 23 tests), the full suite is green (2713 tests), and `ruff format --check`/`ruff check`/`vulture` are clean per the Task 5.1 re-run. Also normalized the pre-existing schema defect in the 2026-08-31 18:28:48 session-handover entry below: its bullet lists violated the feat v1 `UpdateEntry` schema (exactly one paragraph per entry) and made `parse_feat` of this README fail at HEAD — it is now a single flowing prose paragraph with the heading/timestamp byte-identical and every fact preserved, and `parse_feat` of the whole document now succeeds. With all five phases complete, the gate green, and ACC-001..ACC-008 verified, this feature is signed off: frontmatter `status` set to `done`.
 
 #### 2026-08-31 23:20:24.000Z — Phase 4 (Tasks 4.2–4.4): AGENTS.md, server.py docstring, CHANGELOG.md updated
 
@@ -569,54 +564,7 @@ Implemented Tasks 1.1–1.2 strictly per Design Notes §1/§9. Added `src/biz/df
 
 #### 2026-08-31 18:28:48.000Z — Session handover: Phase 0 complete, Phase 1 ready for a fresh session
 
-The design session ended with Phase 0 complete. Implementation of Phases 1–5 resumes
-in a **fresh session**, orchestrated from this README.
-
-**Execution model (agreed with the requester):**
-
-- Phase-by-phase: the main agent acts as Phase-Orchestrator and launches the
-  `phase-implementer` subagent **once per phase** (1, then 2, …, 5). Each
-  subagent implements its phase end-to-end (code, tests, phase-end quality gate,
-  task-line status updates in this README) and reports back; the orchestrator
-  verifies the gate results and commits before starting the next phase.
-- Commit policy: **one commit per phase** on `feat-36-delete`. The orchestrator
-  commits without asking for permission but does **NOT push**. The orchestrator
-  stops and asks only when it needs a user decision or hits a wall.
-- ADR (Task 4.1): the enabled specmgr MCP server (`uvx biz-dfch-specmgr[mcp]`)
-  resolves `docs/adr` relative to its CWD — the requester confirmed `create_adr`
-  lands the file in this worktree. The new ADR file must be committed together
-  with the other Phase 4 files. Do NOT enable the disabled `specmgr-test` MCP
-  server (it points at the main repo). Do NOT run `git pull` on this branch
-  (no upstream tracking is set).
-
-**Plan refinements agreed this session** (folded into the Task List above):
-
-- Task 2.1 additionally registers `delete` in `general/tools/__init__.py`
-  (import / `__all__` / docstring) — without it the tool would silently never
-  register.
-- Task 3.2 additionally drops `delete_<d>` from the eleven domain-level
-  `<d>/__init__.py` package docstrings — otherwise ACC-002's grep-over-`src/`
-  criterion would fail.
-
-**Repo state at handover:**
-
-- Worktree `/home/user/src/biz.dfch.SpecMgr.worktrees/feat-36-delete`, branch
-  `feat-36-delete`, working tree clean; tip is the Task 0.3 debug-print cleanup
-  commit.
-- Main repo on `dev` (`/home/user/src/biz.dfch.SpecMgr`) carries the byte-exact
-  same cleanup commit (`9eb7e8a`); the maintainer pushes `dev`.
-- Baseline verified green: full `unittest` suite (2704 tests, OK, noise-free
-  output), `ruff format --check` (1487 files), `ruff check`, and `vulture` all
-  clean.
-- Pre-commit hooks are active in both checkouts. Known UX: when a hook (e.g.
-  `ruff-format`) modifies a staged file, the first commit attempt fails with
-  "Files were modified by this hook" — re-`git add` the file and commit again.
-  The `unittest` hook (full suite, ~2 min) and `specmgr-coverage-badge` run on
-  any `src`/`tests` change; the `specmgr docs`/`mcp-docs`/`adr-toc`/`schema`
-  hooks are scoped to `src/` / `docs/adr` changes and will fire on the Phase
-  3/4 commits.
-
-**Next action:** launch `phase-implementer` for **Phase 1** (Tasks 1.1–1.2).
+The design session ended with Phase 0 complete. Implementation of Phases 1–5 resumes in a **fresh session**, orchestrated from this README, with the main agent acting as Phase-Orchestrator and launching the `phase-implementer` subagent **once per phase** (1, then 2, …, 5): each subagent implements its phase end-to-end (code, tests, phase-end quality gate, task-line status updates in this README) and reports back, and the orchestrator verifies the gate results and commits before starting the next phase. The agreed commit policy is **one commit per phase** on `feat-36-delete`: the orchestrator commits without asking for permission but does **NOT push**, and stops and asks only when it needs a user decision or hits a wall. For Task 4.1's ADR, the enabled specmgr MCP server (`uvx biz-dfch-specmgr[mcp]`) resolves `docs/adr` relative to its CWD — the requester confirmed `create_adr` lands the file in this worktree — and the new ADR file must be committed together with the other Phase 4 files; the disabled `specmgr-test` MCP server must NOT be enabled (it points at the main repo), and `git pull` must NOT be run on this branch (no upstream tracking is set). Two plan refinements agreed this session (folded into the Task List above): Task 2.1 additionally registers `delete` in `general/tools/__init__.py` (import / `__all__` / docstring) — without it the tool would silently never register — and Task 3.2 additionally drops `delete_<d>` from the eleven domain-level `<d>/__init__.py` package docstrings — otherwise ACC-002's grep-over-`src/` criterion would fail. Repo state at handover: worktree `/home/user/src/biz.dfch.SpecMgr.worktrees/feat-36-delete`, branch `feat-36-delete`, working tree clean, tip the Task 0.3 debug-print cleanup commit; the main repo on `dev` (`/home/user/src/biz.dfch.SpecMgr`) carries the byte-exact same cleanup commit (`9eb7e8a`), which the maintainer pushes; the baseline is verified green — full `unittest` suite (2704 tests, OK, noise-free output), `ruff format --check` (1487 files), `ruff check`, and `vulture` all clean. Pre-commit hooks are active in both checkouts, with one known UX: when a hook (e.g. `ruff-format`) modifies a staged file, the first commit attempt fails with "Files were modified by this hook" — re-`git add` the file and commit again — and the `unittest` hook (full suite, ~2 min) and `specmgr-coverage-badge` run on any `src`/`tests` change, while the `specmgr docs`/`mcp-docs`/`adr-toc`/`schema` hooks are scoped to `src/` / `docs/adr` changes and will fire on the Phase 3/4 commits. **Next action:** launch `phase-implementer` for **Phase 1** (Tasks 1.1–1.2).
 
 #### 2026-08-31 18:10:22.000Z — Leftover debug prints stripped from the md model tests (Task 0.3)
 
