@@ -19,7 +19,13 @@ ten flat domains, the entire ``<base>/<id>/`` folder for ``feat``),
 returning the deleted path as a string. ``confluence_fetch`` (renamed from
 ``webfetch``, ADR a156fdf9-052c-4f43-93a2-eeec04a91eac) -- a
 bearer-authenticated HTTP GET fetch restricted to a configured Confluence
-base URL.
+base URL; automatically converts a normal, browsable Confluence page URL
+(Cloud-style ``/pages/<id>/<title>`` or Server-style ``?pageId=<id>``) into
+the equivalent ``{base}/rest/api/content/{id}?expand=body.storage`` REST
+API URL, rejects ``/x/<tinyid>`` tiny links outright, raises on an
+SSO-redirect off the configured base URL's host, and downloads
+non-text/binary content (e.g. images) to a caller-supplied
+``destination_path`` instead of returning it as text.
 Import this package to register all general tools at once::
 
     from biz.dfch.specmgr.general import tools  # noqa: F401 (side-effects only)

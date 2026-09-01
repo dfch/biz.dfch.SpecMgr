@@ -133,6 +133,7 @@ First-line docstrings from each module, organized by domain:
 - `general/resources/version.py` — Resource: specmgr://version — MCP server package version number.
 - `general/tools/__init__.py` — MCP tool wrappers for general-purpose utilities (mirrors ``adr/tools/``'s shape).
 - `general/tools/_confluence_config.py` — Shared Confluence base-URL/bearer-token configuration, used by both
+- `general/tools/_confluence_url.py` — Shared, ``mcp``-free Confluence URL helpers, used by both
 - `general/tools/_doc_paths.py` — Generic, doc-type-agnostic base directory resolution, filename slugification,
 - `general/tools/_packaged_data.py` — Generic, doc-type-agnostic access to packaged example/template/schema data
 - `general/tools/_paging.py` — Generic, doc-type-agnostic paging helpers (feat-13 Task 1.2).
@@ -485,4 +486,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 319
+**Test files**: 320

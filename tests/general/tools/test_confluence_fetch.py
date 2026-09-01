@@ -20,7 +20,9 @@
 from __future__ import annotations
 
 import os
+import tempfile
 import unittest
+from pathlib import Path
 from unittest import mock
 
 import httpx
@@ -31,12 +33,32 @@ from biz.dfch.specmgr.general.tools._confluence_config import (
     ConfluenceNotConfiguredError,
 )
 from biz.dfch.specmgr.general.tools.confluence_fetch import (
+    ConfluenceAuthRedirectError,
+    ConfluenceDestinationPathRequiredError,
+    ConfluenceTinyLinkNotSupportedError,
     ConfluenceUrlNotAllowedError,
     confluence_fetch,
 )
 
 _BASE_URL = "https://example.atlassian.net/wiki"
 _TOKEN = "s3cr3t-token"
+
+
+def _make_response(
+    *,
+    text: str = "",
+    content: bytes = b"",
+    content_type: str = "text/html",
+    url: str = f"{_BASE_URL}/final",
+) -> mock.Mock:
+    """Build a mocked ``httpx.Response`` with the attributes confluence_fetch inspects."""
+    response = mock.Mock(spec=httpx.Response)
+    response.text = text
+    response.content = content
+    response.headers = {"content-type": content_type}
+    response.url = httpx.URL(url)
+    response.raise_for_status = mock.Mock()
+    return response
 
 
 class TestConfluenceFetchTool(unittest.TestCase):
@@ -59,9 +81,7 @@ class TestConfluenceFetchTool(unittest.TestCase):
             os.environ,
             {CONFLUENCE_BASE_URL_ENV_VAR: _BASE_URL, CONFLUENCE_BEARER_ENV_VAR: _TOKEN},
         ):
-            mock_response = mock.Mock(spec=httpx.Response)
-            mock_response.text = "page content"
-            mock_response.raise_for_status = mock.Mock()
+            mock_response = _make_response(text="page content")
             with mock.patch("httpx.get", return_value=mock_response) as mock_get:
                 result = confluence_fetch("HTTPS://Example.atlassian.net/wiki/page")
 
@@ -74,9 +94,7 @@ class TestConfluenceFetchTool(unittest.TestCase):
             os.environ,
             {CONFLUENCE_BASE_URL_ENV_VAR: "HTTPS://EXAMPLE.ATLASSIAN.NET/WIKI", CONFLUENCE_BEARER_ENV_VAR: _TOKEN},
         ):
-            mock_response = mock.Mock(spec=httpx.Response)
-            mock_response.text = "page content"
-            mock_response.raise_for_status = mock.Mock()
+            mock_response = _make_response(text="page content")
             with mock.patch("httpx.get", return_value=mock_response) as mock_get:
                 result = confluence_fetch("https://example.atlassian.net/wiki/page")
 
@@ -115,11 +133,10 @@ class TestConfluenceFetchTool(unittest.TestCase):
             os.environ,
             {CONFLUENCE_BASE_URL_ENV_VAR: _BASE_URL, CONFLUENCE_BEARER_ENV_VAR: _TOKEN},
         ):
-            mock_response = mock.Mock(spec=httpx.Response)
-            mock_response.text = "<html>raw body</html>"
-            mock_response.raise_for_status = mock.Mock()
+            mock_response = _make_response(text="<html>raw body</html>")
             with mock.patch("httpx.get", return_value=mock_response) as mock_get:
-                url = f"{_BASE_URL}/spaces/FOO/pages/123"
+                # No page id extractable and not a spaces/pages/pageId URL -- fetched unchanged.
+                url = f"{_BASE_URL}/overview"
                 result = confluence_fetch(url)
 
                 self.assertEqual(result, "<html>raw body</html>")
@@ -136,14 +153,194 @@ class TestConfluenceFetchTool(unittest.TestCase):
             os.environ,
             {CONFLUENCE_BASE_URL_ENV_VAR: _BASE_URL, CONFLUENCE_BEARER_ENV_VAR: _TOKEN},
         ):
-            mock_response = mock.Mock(spec=httpx.Response)
-            mock_response.text = "not found"
+            mock_response = _make_response(text="not found")
             mock_response.raise_for_status = mock.Mock(
                 side_effect=httpx.HTTPStatusError("404", request=mock.Mock(), response=mock_response)
             )
             with mock.patch("httpx.get", return_value=mock_response):
                 with self.assertRaises(httpx.HTTPStatusError):
                     confluence_fetch(f"{_BASE_URL}/missing")
+
+    # -- ACC-001: automatic REST URL construction -----------------------------------------------
+
+    def test_cloud_style_pages_url_is_converted_to_rest_content_url(self) -> None:
+        """A Cloud-style /pages/<id>/<title> URL must be converted to the REST content URL."""
+        with mock.patch.dict(
+            os.environ,
+            {CONFLUENCE_BASE_URL_ENV_VAR: _BASE_URL, CONFLUENCE_BEARER_ENV_VAR: _TOKEN},
+        ):
+            mock_response = _make_response(text='{"body": {}}', content_type="application/json")
+            with mock.patch("httpx.get", return_value=mock_response) as mock_get:
+                url = f"{_BASE_URL}/spaces/FOO/pages/123456/My+Page"
+                result = confluence_fetch(url)
+
+                self.assertEqual(result, '{"body": {}}')
+                call_args, _call_kwargs = mock_get.call_args
+                self.assertEqual(call_args[0], f"{_BASE_URL}/rest/api/content/123456?expand=body.storage")
+
+    def test_server_style_pageid_url_is_converted_to_rest_content_url(self) -> None:
+        """A Server-style ?pageId=<id> URL must be converted to the REST content URL."""
+        with mock.patch.dict(
+            os.environ,
+            {CONFLUENCE_BASE_URL_ENV_VAR: _BASE_URL, CONFLUENCE_BEARER_ENV_VAR: _TOKEN},
+        ):
+            mock_response = _make_response(text='{"body": {}}', content_type="application/json")
+            with mock.patch("httpx.get", return_value=mock_response) as mock_get:
+                url = f"{_BASE_URL}/pages/viewpage.action?pageId=789"
+                result = confluence_fetch(url)
+
+                self.assertEqual(result, '{"body": {}}')
+                call_args, _call_kwargs = mock_get.call_args
+                self.assertEqual(call_args[0], f"{_BASE_URL}/rest/api/content/789?expand=body.storage")
+
+    def test_rest_or_download_url_is_passed_through_unchanged(self) -> None:
+        """A URL that already looks like a REST/download URL must not be re-converted."""
+        with mock.patch.dict(
+            os.environ,
+            {CONFLUENCE_BASE_URL_ENV_VAR: _BASE_URL, CONFLUENCE_BEARER_ENV_VAR: _TOKEN},
+        ):
+            mock_response = _make_response(text='{"already": "rest"}', content_type="application/json")
+            with mock.patch("httpx.get", return_value=mock_response) as mock_get:
+                # Note: this URL also contains a numeric /pages/<id>/ segment that extract_page_id
+                # would otherwise match -- looks_like_rest_or_download_url must take priority.
+                url = f"{_BASE_URL}/rest/api/content/123?expand=body.storage"
+                result = confluence_fetch(url)
+
+                self.assertEqual(result, '{"already": "rest"}')
+                call_args, _call_kwargs = mock_get.call_args
+                self.assertEqual(call_args[0], url)
+
+    def test_download_url_is_passed_through_unchanged(self) -> None:
+        """A URL that already looks like a download URL must not be re-converted."""
+        with mock.patch.dict(
+            os.environ,
+            {CONFLUENCE_BASE_URL_ENV_VAR: _BASE_URL, CONFLUENCE_BEARER_ENV_VAR: _TOKEN},
+        ):
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                destination_path = str(Path(tmp_dir) / "image.png")
+                mock_response = _make_response(content=b"\x89PNG", content_type="image/png")
+                with mock.patch("httpx.get", return_value=mock_response) as mock_get:
+                    url = f"{_BASE_URL}/download/attachments/123/image.png"
+                    result = confluence_fetch(url, destination_path=destination_path)
+
+                    self.assertEqual(result, destination_path)
+                    call_args, _call_kwargs = mock_get.call_args
+                    self.assertEqual(call_args[0], url)
+
+    # -- ACC-002: tiny-link rejection ------------------------------------------------------------
+
+    def test_tiny_link_url_raises_without_http_call(self) -> None:
+        """A /x/<tinyid> tiny link must raise, with no HTTP call made."""
+        with mock.patch.dict(
+            os.environ,
+            {CONFLUENCE_BASE_URL_ENV_VAR: _BASE_URL, CONFLUENCE_BEARER_ENV_VAR: _TOKEN},
+        ):
+            with mock.patch("httpx.get") as mock_get:
+                with self.assertRaises(ConfluenceTinyLinkNotSupportedError):
+                    confluence_fetch(f"{_BASE_URL}/x/AbCdEf")
+                mock_get.assert_not_called()
+
+    # -- ACC-003: SSO-redirect detection ----------------------------------------------------------
+
+    def test_redirect_to_different_host_raises_auth_redirect_error(self) -> None:
+        """A response whose final URL host differs from the configured base must raise."""
+        with mock.patch.dict(
+            os.environ,
+            {CONFLUENCE_BASE_URL_ENV_VAR: _BASE_URL, CONFLUENCE_BEARER_ENV_VAR: _TOKEN},
+        ):
+            mock_response = _make_response(
+                text="<html>please log in</html>",
+                url="https://sso.example.com/login?redirect=foo",
+            )
+            with mock.patch("httpx.get", return_value=mock_response):
+                with self.assertRaises(ConfluenceAuthRedirectError):
+                    confluence_fetch(f"{_BASE_URL}/spaces/FOO/pages/123/Title")
+
+    def test_redirect_to_same_host_different_case_is_accepted(self) -> None:
+        """A response whose final URL host differs only in case from the base must be accepted."""
+        with mock.patch.dict(
+            os.environ,
+            {CONFLUENCE_BASE_URL_ENV_VAR: _BASE_URL, CONFLUENCE_BEARER_ENV_VAR: _TOKEN},
+        ):
+            mock_response = _make_response(
+                text="page content",
+                url="https://EXAMPLE.ATLASSIAN.NET/wiki/rest/api/content/123",
+            )
+            with mock.patch("httpx.get", return_value=mock_response):
+                result = confluence_fetch(f"{_BASE_URL}/spaces/FOO/pages/123/Title")
+
+                self.assertEqual(result, "page content")
+
+    # -- ACC-004: binary/image download -----------------------------------------------------------
+
+    def test_binary_response_with_destination_path_writes_file_and_returns_path(self) -> None:
+        """A non-text response with a destination_path must be written to disk and its path returned."""
+        with mock.patch.dict(
+            os.environ,
+            {CONFLUENCE_BASE_URL_ENV_VAR: _BASE_URL, CONFLUENCE_BEARER_ENV_VAR: _TOKEN},
+        ):
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                destination_path = str(Path(tmp_dir) / "nested" / "image.png")
+                png_bytes = b"\x89PNG\r\n\x1a\n"
+                mock_response = _make_response(content=png_bytes, content_type="image/png")
+                with mock.patch("httpx.get", return_value=mock_response):
+                    result = confluence_fetch(
+                        f"{_BASE_URL}/rest/api/content/123/child/attachment/456/data",
+                        destination_path=destination_path,
+                    )
+
+                    self.assertEqual(result, destination_path)
+                    self.assertEqual(Path(destination_path).read_bytes(), png_bytes)
+
+    def test_binary_response_without_destination_path_raises_with_no_file_written(self) -> None:
+        """A non-text response without a destination_path must raise, writing nothing."""
+        with mock.patch.dict(
+            os.environ,
+            {CONFLUENCE_BASE_URL_ENV_VAR: _BASE_URL, CONFLUENCE_BEARER_ENV_VAR: _TOKEN},
+        ):
+            mock_response = _make_response(content=b"\x89PNG", content_type="image/png")
+            with mock.patch("httpx.get", return_value=mock_response):
+                with self.assertRaises(ConfluenceDestinationPathRequiredError):
+                    confluence_fetch(f"{_BASE_URL}/rest/api/content/123/child/attachment/456/data")
+
+    def test_text_response_ignores_destination_path(self) -> None:
+        """A text response must be returned as text even when destination_path is given."""
+        with mock.patch.dict(
+            os.environ,
+            {CONFLUENCE_BASE_URL_ENV_VAR: _BASE_URL, CONFLUENCE_BEARER_ENV_VAR: _TOKEN},
+        ):
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                destination_path = str(Path(tmp_dir) / "unused.txt")
+                mock_response = _make_response(text="plain text body", content_type="text/plain")
+                with mock.patch("httpx.get", return_value=mock_response):
+                    result = confluence_fetch(f"{_BASE_URL}/rest/api/content/123", destination_path=destination_path)
+
+                    self.assertEqual(result, "plain text body")
+                    self.assertFalse(Path(destination_path).exists())
+
+    def test_json_with_charset_parameter_is_treated_as_text(self) -> None:
+        """A Content-Type with a charset parameter must still be classified as text."""
+        with mock.patch.dict(
+            os.environ,
+            {CONFLUENCE_BASE_URL_ENV_VAR: _BASE_URL, CONFLUENCE_BEARER_ENV_VAR: _TOKEN},
+        ):
+            mock_response = _make_response(text='{"a": 1}', content_type="application/json; charset=utf-8")
+            with mock.patch("httpx.get", return_value=mock_response):
+                result = confluence_fetch(f"{_BASE_URL}/rest/api/content/123")
+
+                self.assertEqual(result, '{"a": 1}')
+
+    def test_vendor_json_content_type_is_treated_as_text(self) -> None:
+        """A vendor-specific +json Content-Type must be classified as text."""
+        with mock.patch.dict(
+            os.environ,
+            {CONFLUENCE_BASE_URL_ENV_VAR: _BASE_URL, CONFLUENCE_BEARER_ENV_VAR: _TOKEN},
+        ):
+            mock_response = _make_response(text='{"a": 1}', content_type="application/vnd.api+json")
+            with mock.patch("httpx.get", return_value=mock_response):
+                result = confluence_fetch(f"{_BASE_URL}/rest/api/content/123")
+
+                self.assertEqual(result, '{"a": 1}')
 
 
 if __name__ == "__main__":

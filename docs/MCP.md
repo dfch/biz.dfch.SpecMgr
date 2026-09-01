@@ -346,7 +346,7 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 
 | Name | Description |
 | --- | --- |
-| [`confluence_fetch`](#tool-confluence_fetch) | Fetch a URL over HTTP GET with a bearer token, but only if the URL matches the configured base URL (case-insensitively). Returns the raw response body text. Intended primarily for Confluence instances using PAT authentication. |
+| [`confluence_fetch`](#tool-confluence_fetch) | Fetch a URL over HTTP GET with a bearer token, but only if the URL matches the configured base URL (case-insensitively). A normal, browsable Confluence page URL (Cloud-style '/pages/<id>/<title>' or Server-style '?pageId=<id>') is automatically converted into the equivalent '{base}/rest/api/content/{id}?expand=body.storage' REST API URL before fetching; a '/x/<tinyid>' tiny link is rejected outright, since it cannot be resolved to a page id without an authenticated browser session; a request that gets redirected off the configured base URL's host (e.g. to an SSO login page) raises instead of returning that page's content. Text/JSON/XML responses are returned as raw body text; other (binary/image) content types are written to the given destination_path and that path is returned instead. Intended primarily for Confluence instances using PAT authentication. |
 | [`create_adr`](#tool-create_adr) | Create a new ADR: assigns a fresh id, derives a filename from the title, validates, renders, and writes the new document to the ADR base directory. |
 | [`create_dec`](#tool-create_dec) | Create a new decision: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the decision base directory. |
 | [`create_feat`](#tool-create_feat) | Create a new feature: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the feature base directory. |
@@ -444,11 +444,12 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 
 **Fetch a Confluence URL with bearer authentication**
 
-Fetch a URL over HTTP GET with a bearer token, but only if the URL matches the configured base URL (case-insensitively). Returns the raw response body text. Intended primarily for Confluence instances using PAT authentication.
+Fetch a URL over HTTP GET with a bearer token, but only if the URL matches the configured base URL (case-insensitively). A normal, browsable Confluence page URL (Cloud-style '/pages/<id>/<title>' or Server-style '?pageId=<id>') is automatically converted into the equivalent '{base}/rest/api/content/{id}?expand=body.storage' REST API URL before fetching; a '/x/<tinyid>' tiny link is rejected outright, since it cannot be resolved to a page id without an authenticated browser session; a request that gets redirected off the configured base URL's host (e.g. to an SSO login page) raises instead of returning that page's content. Text/JSON/XML responses are returned as raw body text; other (binary/image) content types are written to the given destination_path and that path is returned instead. Intended primarily for Confluence instances using PAT authentication.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
 | `url` | `string` | Yes |
+| `destination_path` | `string | None` | No |
 
 ### Tool: create_adr
 

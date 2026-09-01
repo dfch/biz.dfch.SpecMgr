@@ -3,7 +3,7 @@ created: '2026-09-01T17:36:02.251286'
 id: feat-50-confluence
 status: in-progress
 type: feat
-updated: '2026-09-01T18:00:00.000000'
+updated: '2026-09-01T19:00:00.000000'
 version: 1.0.0
 ---
 
@@ -128,13 +128,13 @@ Adds a `confluence_update` tool that converts a local Markdown file to an HTML f
 
 #### Phase 2: URL helper + `confluence_fetch` enhancements
 
-- [ ] Task 2.1: Add `general/tools/_confluence_url.py` (`extract_page_id`, `build_rest_content_url`, `looks_like_rest_or_download_url`) with `tests/general/tools/test__confluence_url.py`.
+- [x] Task 2.1: Add `general/tools/_confluence_url.py` (`extract_page_id`, `build_rest_content_url`, `looks_like_rest_or_download_url`) with `tests/general/tools/test__confluence_url.py`.
 
-- [ ] Task 2.2: Wire automatic REST URL construction, tiny-link rejection, and SSO-redirect detection into `confluence_fetch`.
+- [x] Task 2.2: Wire automatic REST URL construction, tiny-link rejection, and SSO-redirect detection into `confluence_fetch`.
 
-- [ ] Task 2.3: Add binary/image download support (content-type detection, write-to-`destination_path`) to `confluence_fetch`.
+- [x] Task 2.3: Add binary/image download support (content-type detection, write-to-`destination_path`) to `confluence_fetch`.
 
-- [ ] Task 2.4: Extend `test_confluence_fetch.py` with cases for all of the above.
+- [x] Task 2.4: Extend `test_confluence_fetch.py` with cases for all of the above.
 
 #### Phase 3: `confluence_update` core (no attachments yet)
 
@@ -158,7 +158,7 @@ Adds a `confluence_update` tool that converts a local Markdown file to an HTML f
 
 ### Current Status
 
-**As of 2026-09-01**: Phase 1 (rename `webfetch` to `confluence_fetch`) complete — the mechanical rename with no new behavior. Next is Phase 2 (URL helper + `confluence_fetch` enhancements: automatic REST URL construction, tiny-link rejection, SSO-redirect detection, binary/image download support).
+**As of 2026-09-01**: Phase 2 (URL helper + `confluence_fetch` enhancements) complete — automatic REST URL construction, tiny-link rejection, SSO-redirect detection, and binary/image download support are all implemented and tested. Next is Phase 3 (`confluence_update` core: no attachments yet).
 
 ### Blockers
 
@@ -167,6 +167,12 @@ Adds a `confluence_update` tool that converts a local Markdown file to an HTML f
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-01 00:00:00.000Z — Phase 2 complete: URL helper + `confluence_fetch` enhancements
+
+Completed: added the new shared, `mcp`-free `general/tools/_confluence_url.py` helper (`extract_page_id` -- tries `[?&]pageId=(\d+)` then `/pages/(\d+)(?:/|$|\?)`, returning `None` for anything else including `/x/<tinyid>`; `build_rest_content_url` -- `f"{base_url.rstrip('/')}/rest/api/content/{page_id}"` plus an optional `?expand=`; `looks_like_rest_or_download_url` -- case-sensitive `/rest/api/`/`/download/` substring check; `looks_like_tiny_link` -- a small, dedicated `/x/<opaque-segment>` detector, not explicitly named in the plan's bullet list but required by REQ-003/ACC-002) with a fully-covered `tests/general/tools/test__confluence_url.py` (22 tests: Cloud-style/Server-style extraction including mid-query-string `&pageId=`, tiny-link/non-matching `None` cases, `build_rest_content_url` with/without `expand` and with/without a trailing base-URL slash, `looks_like_rest_or_download_url`/`looks_like_tiny_link` true/false cases). Wired all of this into `confluence_fetch` (REQ-001/002/003/004, ACC-001/002/003): the caller-supplied `url` is checked against the configured base URL first (unchanged from Phase 1), then a tiny link raises the new `ConfluenceTinyLinkNotSupportedError` with no HTTP call attempted, then a URL already shaped like a REST/download URL is used unchanged, then a URL with an extractable page id is rewritten to `{base}/rest/api/content/{id}?expand=body.storage`, and anything else falls through to a plain fetch of the URL as given (Phase-1 compatibility preserved); after the `httpx.get` call returns, the final `response.url.host` (case-folded) is compared against the configured base URL's host (also via `httpx.URL(base_url).host`, which normalizes casing) and a mismatch raises the new `ConfluenceAuthRedirectError` instead of returning/using that response. Added binary/image download support (REQ-005/ACC-004): `confluence_fetch`'s signature is now `confluence_fetch(url: str, destination_path: str | None = None) -> str`; a private `_is_text_content_type` helper classifies the response `Content-Type` (media-type prefix match against `text/`/`application/json`/`application/xml`, or suffix match against `+json`/`+xml`, both case-insensitive, ignoring any `;` parameters) -- text/JSON/XML responses are returned as `response.text` exactly as before (any given `destination_path` is silently ignored in this case, documented in the docstring); any other content type is written as raw bytes to `destination_path` (creating parent directories via `Path.mkdir(parents=True, exist_ok=True)`, mirroring how other tools use `pathlib.Path` directly rather than a shared write helper, since no existing shared "write bytes to path" helper exists in `general/tools/`) and the path itself is returned, or the new `ConfluenceDestinationPathRequiredError` is raised if `destination_path` was not given. Updated the `@mcp.tool()` description/docstring, `general/tools/__init__.py`'s module docstring, and `server.py`'s module docstring to describe the new behavior. Extended `tests/general/tools/test_confluence_fetch.py` (now 20 tests) with fully-mocked coverage for all of the above (a shared `_make_response()` test helper now sets `.headers`/`.url` on every mocked `httpx.Response` in addition to `.text`/`.content`/`.raise_for_status`) plus regression coverage confirming every Phase-1 behavior (base-URL matching case-insensitivity, missing-config errors, non-2xx raises, plain text returned as-is) still passes.
+Next: Phase 3 (`confluence_update` core: `GET` version/title, render Markdown via `markdown-it-py`, `PUT` with incremented version -- no attachments yet).
+Notes: quality gate green -- `ruff format --check`/`ruff check`/`vulture` clean, full `unittest` suite (2753 tests) passes; `specmgr docs`/`specmgr mcp-docs` regenerated `docs/api/` (new `biz.dfch.specmgr.general.tools._confluence_url.md` page, updated `confluence_fetch`/`general.tools`/`server` pages), `docs/GENERATED.md` (320 test files), and `docs/MCP.md` (`confluence_fetch`'s richer description and new `destination_path` parameter) with no unexpected diffs. Binary/image download support remains unverified against the one real customer instance with the confirmed oauth2-proxy limitation (documented in the feature's Decisions Made log and the ADR) -- only mocked-`httpx` coverage exists for it so far; the real, reversible smoke test is Phase 5's job.
 
 #### 2026-09-01 00:00:00.000Z — Phase 1 complete: renamed `webfetch` to `confluence_fetch`
 
@@ -183,6 +189,10 @@ Notes: implementation has not started; this update only covers planning/design/e
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-01 00:00:00.000Z — Phase 2 judgement calls: naming, content-type heuristic, and text/binary precedence
+
+Decision: (1) name the tiny-link detector `looks_like_tiny_link()`, mirroring the existing `looks_like_rest_or_download_url()` naming, and give the two new `confluence_fetch` exceptions the names `ConfluenceTinyLinkNotSupportedError` and `ConfluenceAuthRedirectError` (both suggested in the plan's own Design Notes), plus `ConfluenceDestinationPathRequiredError` for the missing-`destination_path` case (not explicitly named in the plan) -- all as plain, undecorated subclasses of `ValueError` (the two "bad input/config" cases) or `RuntimeError` (the auth-redirect case, since it is a runtime environment condition, not a caller input error), consistent with `ConfluenceUrlNotAllowedError`'s existing `ValueError` choice. (2) Classify a response `Content-Type` as text via a private `_is_text_content_type()` helper: the media type (text before any `;` parameter) must case-insensitively start with `text/`, `application/json`, or `application/xml`, or end with `+json`/`+xml` -- covering common vendor-specific JSON/XML variants (e.g. `application/vnd.api+json`) as the plan's Design Notes suggested "if judged worthwhile", while keeping the check itself a single `startswith`/`endswith` call, no MIME-type parsing library. A blank/missing `Content-Type` is conservatively treated as non-text (requires `destination_path`), since silently returning empty text for an unlabeled binary response would be a worse failure mode than a clear "provide a destination_path" error. (3) For a text/JSON/XML response, any given `destination_path` is silently ignored rather than raising -- the plan explicitly allowed either choice, and silently ignoring is simpler for callers that pass a `destination_path` speculatively without first knowing the content type. (4) The base-URL prefix-match check (`ConfluenceUrlNotAllowedError`) is applied to the original caller-supplied `url` before any tiny-link/REST-URL classification, and the SSO-redirect host check is applied unconditionally after the `httpx.get` call regardless of which of the three URL branches (tiny link / already-REST-or-download / auto-converted / pass-through) was taken -- exactly the order ACC-001..ACC-003 require. (5) The binary write path uses `pathlib.Path.mkdir(parents=True, exist_ok=True)` directly rather than introducing a new shared "write bytes to path" helper in `general/tools/`, since `_doc_paths.py`/`_path_safety.py` are id-to-document-path resolvers for the eleven whole-body domains, not general-purpose byte-writing helpers, and `confluence_fetch`'s `destination_path` is an arbitrary caller-supplied filesystem path outside any domain's base directory (so `_path_safety.assert_within` does not apply here either).
 
 #### 2026-09-01 00:00:00.000Z — Named the shared helper function `confluence_config()`, not `_confluence_config()`
 

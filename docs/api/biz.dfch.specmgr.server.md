@@ -215,7 +215,12 @@ I/O failures;
 ``confluence_fetch`` (renamed from ``webfetch``, ADR
 a156fdf9-052c-4f43-93a2-eeec04a91eac) -- fetch a URL over HTTP GET with a
 bearer token, restricted to a configured base URL (``SPECMGR_CONFLUENCE_BASE_URL``,
-``SPECMGR_CONFLUENCE_BEARER``).
+``SPECMGR_CONFLUENCE_BEARER``); automatically converts a browsable Confluence
+page URL (Cloud-style ``/pages/<id>/<title>`` or Server-style
+``?pageId=<id>``) into ``{base}/rest/api/content/{id}?expand=body.storage``,
+rejects ``/x/<tinyid>`` tiny links, raises on an SSO-redirect off the
+configured base URL's host, and downloads non-text/binary content to an
+optional ``destination_path`` instead of returning it as text.
 
 Prompts
 -------
