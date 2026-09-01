@@ -104,7 +104,7 @@ class TestGetPrb(unittest.TestCase):
         k = lines.index("Something is wrong.") + 1
         replacement = "Something is very wrong indeed."
 
-        update(id=created.frontmatter.id, type="prb", content=replacement, begin=k, end=k)
+        update(id=created.frontmatter.id, type="prb", content=replacement, offset=k, limit=1)
 
         new_lines = get_prb(created.frontmatter.id, raw=True).splitlines()
         self.assertEqual(new_lines[k - 1], replacement)

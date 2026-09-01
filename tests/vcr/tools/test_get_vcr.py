@@ -104,7 +104,7 @@ class TestGetVcr(unittest.TestCase):
         k = lines.index("Confirms that the sample requirement is met.") + 1
         replacement = "Confirms that the sample requirement is fully met."
 
-        update(id=created.frontmatter.id, type="vcr", content=replacement, begin=k, end=k)
+        update(id=created.frontmatter.id, type="vcr", content=replacement, offset=k, limit=1)
 
         new_lines = get_vcr(created.frontmatter.id, raw=True).splitlines()
         self.assertEqual(new_lines[k - 1], replacement)

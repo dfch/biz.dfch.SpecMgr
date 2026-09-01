@@ -166,7 +166,7 @@ class TestSopLifecycleIntegration(TempSopDirTestCase):
         raw_lines = get_sop(sop_id, raw=True).splitlines()
         k = raw_lines.index("HR submits the request.") + 1
         replacement = "HR submits the onboarding request."
-        update(id=sop_id, type="sop", content=replacement, begin=k, end=k)
+        update(id=sop_id, type="sop", content=replacement, offset=k, limit=1)
         range_checked = get_sop(sop_id)
         self.assertEqual(range_checked.body.procedure.steps[0].name, "Submit request")
         self.assertIn("onboarding", get_sop(sop_id, raw=True))

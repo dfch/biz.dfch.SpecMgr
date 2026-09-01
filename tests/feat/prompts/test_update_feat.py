@@ -271,10 +271,10 @@ class TestUpdateFeatInstructionsWalkthrough(TempFeatDirTestCase):
         self.assertEqual(current.frontmatter.id, feat_id)
 
         # Step 4, line-range replace: get_feat(id, raw=True) to find the exact line,
-        # then update(id, type="feat", content, begin=..., end=...).
+        # then update(id, type="feat", content, offset=..., limit=1).
         raw_lines = get_feat(feat_id, raw=True).splitlines()
         line_number = raw_lines.index("Short description.") + 1
-        update(feat_id, "feat", "Updated short description.", begin=line_number, end=line_number)
+        update(feat_id, "feat", "Updated short description.", offset=line_number, limit=1)
 
         after_range = get_feat(feat_id, raw=True).splitlines()
         self.assertEqual(after_range[line_number - 1], "Updated short description.")

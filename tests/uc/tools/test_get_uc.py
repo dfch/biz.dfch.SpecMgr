@@ -125,7 +125,7 @@ class TestGetUc(unittest.TestCase):
         k = lines.index("Buyer issues request directly to our company.") + 1
         replacement = "Buyer issues an updated request directly to our company."
 
-        update(id=created.frontmatter.id, type="uc", content=replacement, begin=k, end=k)
+        update(id=created.frontmatter.id, type="uc", content=replacement, offset=k, limit=1)
 
         new_lines = get_uc(created.frontmatter.id, raw=True).splitlines()
         self.assertEqual(new_lines[k - 1], replacement)

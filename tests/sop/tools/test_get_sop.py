@@ -100,7 +100,7 @@ class TestGetSop(unittest.TestCase):
         k = lines.index("Provision accounts for new hires.") + 1
         replacement = "Provision accounts for all new hires."
 
-        update(id=created.frontmatter.id, type="sop", content=replacement, begin=k, end=k)
+        update(id=created.frontmatter.id, type="sop", content=replacement, offset=k, limit=1)
 
         new_lines = get_sop(created.frontmatter.id, raw=True).splitlines()
         self.assertEqual(new_lines[k - 1], replacement)

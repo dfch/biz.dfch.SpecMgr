@@ -99,7 +99,7 @@ class TestGetGol(unittest.TestCase):
         )
         replacement = "THE company shall provide competitive engines in power output and fuel consumption."
 
-        update(id=created.frontmatter.id, type="gol", content=replacement, begin=k, end=k)
+        update(id=created.frontmatter.id, type="gol", content=replacement, offset=k, limit=1)
 
         new_lines = get_gol(created.frontmatter.id, raw=True).splitlines()
         self.assertEqual(new_lines[k - 1], replacement)

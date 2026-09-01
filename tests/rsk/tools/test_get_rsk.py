@@ -126,7 +126,7 @@ class TestGetRsk(unittest.TestCase):
         k = lines.index("A root condition.") + 1
         replacement = "A revised root condition."
 
-        update(id=created.frontmatter.id, type="rsk", content=replacement, begin=k, end=k)
+        update(id=created.frontmatter.id, type="rsk", content=replacement, offset=k, limit=1)
 
         new_lines = get_rsk(created.frontmatter.id, raw=True).splitlines()
         self.assertEqual(new_lines[k - 1], replacement)

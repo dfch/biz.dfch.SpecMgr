@@ -167,7 +167,7 @@ class TestGetQa(unittest.TestCase):
         k = lines.index("Some intro text.") + 1
         replacement = "Updated intro text."
 
-        update(id=created.frontmatter.id, type="qa", content=replacement, begin=k, end=k)
+        update(id=created.frontmatter.id, type="qa", content=replacement, offset=k, limit=1)
 
         new_lines = get_qa(created.frontmatter.id, raw=True).splitlines()
         self.assertEqual(new_lines[k - 1], replacement)

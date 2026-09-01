@@ -98,7 +98,7 @@ class TestGetDec(unittest.TestCase):
         k = lines.index("The current store cannot serve the dashboard read path.") + 1
         replacement = "The current store cannot serve the dashboard read path efficiently."
 
-        update(id=created.frontmatter.id, type="dec", content=replacement, begin=k, end=k)
+        update(id=created.frontmatter.id, type="dec", content=replacement, offset=k, limit=1)
 
         new_lines = get_dec(created.frontmatter.id, raw=True).splitlines()
         self.assertEqual(new_lines[k - 1], replacement)

@@ -109,7 +109,7 @@ class TestGetReq(unittest.TestCase):
         k = lines.index("If the engine becomes too hot, the lifetime of the system decreases.") + 1
         replacement = "Updated description text."
 
-        update(id=created.frontmatter.id, type="req", content=replacement, begin=k, end=k)
+        update(id=created.frontmatter.id, type="req", content=replacement, offset=k, limit=1)
 
         new_lines = get_req(created.frontmatter.id, raw=True).splitlines()
         self.assertEqual(new_lines[k - 1], replacement)

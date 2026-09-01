@@ -1,9 +1,9 @@
 ---
 created: '2026-09-01T14:19:27.649184'
 id: feat-28-get-update
-status: planning
+status: in-progress
 type: feat
-updated: '2026-09-01T15:58:41.329002'
+updated: '2026-09-01T18:04:04.426635'
 version: 1.0.0
 ---
 
@@ -157,10 +157,10 @@ tests move together in the LLM-contract phase.
 
 #### Phase 1: update Core (offset/limit Rename)
 
-- [ ] Task 1.1: Rework `general/tools/_splice.py` — `splice_body(current_body, offset, limit: int | None, content)` per the Design Notes contract (omitted limit = through end of body, 0 = insert, strict validation), module docstrings — depends on: Phase 0 — status: not-started
-- [ ] Task 1.2: Rework `general/tools/update.py` — public `offset`/`limit` parameters, new guard (`limit` without `offset` → `ValueError` before any file access), eleven `_update_<d>` adapter signatures, `_ADAPTERS` Callable type, tool description, docstrings — depends on: Task 1.1 — status: not-started
-- [ ] Task 1.3: Migrate every `update(begin=, end=)` test call site in the same commit — `tests/general/tools/test_update.py` (range cases re-expressed + all error cases incl. the new guard + input-schema assertions on `offset`/`limit`), the eleven `tests/<d>/tools/test_get_<d>.py` round-trip lines, `tests/feat/tools/test_integration.py`, `tests/sop/tools/test_integration.py` — depends on: Task 1.2 — status: not-started
-- [ ] Task 1.4: Phase gate — complete test cycle + doc regeneration + commit — depends on: Task 1.3 — status: not-started
+- [x] Task 1.1: Rework `general/tools/_splice.py` — `splice_body(current_body, offset, limit: int | None, content)` per the Design Notes contract (omitted limit = through end of body, 0 = insert, strict validation), module docstrings — depends on: Phase 0 — status: done (2026-09-01)
+- [x] Task 1.2: Rework `general/tools/update.py` — public `offset`/`limit` parameters, new guard (`limit` without `offset` → `ValueError` before any file access), eleven `_update_<d>` adapter signatures, `_ADAPTERS` Callable type, tool description, docstrings — depends on: Task 1.1 — status: done (2026-09-01)
+- [x] Task 1.3: Migrate every `update(begin=, end=)` test call site in the same commit — `tests/general/tools/test_update.py` (range cases re-expressed + all error cases incl. the new guard + input-schema assertions on `offset`/`limit`), the eleven `tests/<d>/tools/test_get_<d>.py` round-trip lines, `tests/feat/tools/test_integration.py`, `tests/sop/tools/test_integration.py` — depends on: Task 1.2 — status: done (2026-09-01)
+- [x] Task 1.4: Phase gate — complete test cycle + doc regeneration + commit — depends on: Task 1.3 — status: done (2026-09-01)
 
 #### Phase 2: get Windowing
 
@@ -187,19 +187,67 @@ tests move together in the LLM-contract phase.
 
 ### Current Status
 
-**As of 2026-09-01**: Phase 0 complete. All design decisions are taken (see
-Decisions Made); feat-7's Task 0.32 carries the split-out pointer to this
-feature, and the ADR recording the revised `offset`/`limit` contract is
-drafted (`4ec08dcb-fcb7-4961-abaf-ff7803e2f21d` in `docs/adr/`, TOC
-regenerated; set to accepted at close per Task 4.3). The working tree is on
-branch `feat-28-get-update`, synced to upstream `dev` (`8e07594`), with the
-complete test cycle green (2720 tests); never pushed. GitHub issue #48 (the
-deferred `create_feat` id work) is filed. Next: Phase 1 (`update` core
-`begin`/`end` → `offset`/`limit` rename + test migration in one commit).
+**As of 2026-09-01**: Phase 1 complete. The generic `update` tool's
+line-range mode is reworked to read-style `offset`/`limit` coordinates
+(hard rename, no `begin`/`end` alias): `splice_body` validates strictly
+(`offset<1`, `offset>N+1`, `limit<0`, `offset+limit-1>N` → `ValueError`,
+nothing written), omitted `limit` replaces through end of body, `limit=0`
+is a pure insert, `offset=N+1` appends, and the public guard raises
+`ValueError` for `limit` without `offset` before any file access; all
+`update(begin=, end=)` test call sites are migrated in the same change.
+The ADR recording the revised contract remains drafted
+(`4ec08dcb-fcb7-4961-abaf-ff7803e2f21d` in `docs/adr/`; set to accepted at
+close per Task 4.3). The working tree is on branch `feat-28-get-update`,
+synced to upstream `dev` (`8e07594`), with the complete test cycle green
+(2722 tests) and `docs/api/`/`docs/GENERATED.md`/`docs/MCP.md` regenerated
+without drift; never pushed. Next: Phase 2 (`get_<d>` windowing — the
+`window_body` helper + `offset`/`limit` on the eleven `get_<d>` tools).
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-01 18:04:04.427+02:00 — Phase 1 complete (update core `begin`/`end` → `offset`/`limit` rename + test migration, gate green)
+
+Task 1.1: `general/tools/_splice.py` reworked — `splice_body(current_body,
+offset, limit, content)` now takes read-style coordinates (`offset` =
+1-based first line to replace, `limit` = count; omitted `limit` = through
+end of body, `0` = pure insert, `offset=N+1` = virtual end-of-body append
+position) with strict validation (`offset<1`, `offset>N+1`, `limit<0`,
+`offset+limit-1>N` each raise `ValueError` naming the offending value(s)
+and the allowed range; never clamped); the module and `body_text`
+docstrings move to the new vocabulary (and the stale "seven get tools"
+count is corrected to eleven). `window_body` deliberately not added yet
+(Phase 2, Task 2.1). Task 1.2: `general/tools/update.py` reworked — public
+`offset`/`limit` parameters, the old both-or-neither guard replaced by
+`limit` without `offset` → `ValueError` before any file access, all eleven
+`_update_<d>` adapter signatures/branches/`splice_body` calls updated,
+`_update_req` docstring and the module docstring reworded, the `@mcp.tool`
+description rewritten for the new contract. Task 1.3: every
+`update(begin=, end=)` test call site migrated — `tests/general/tools/
+test_update.py` (success cases re-expressed per the Design Notes mapping,
+error cases re-expressed incl. the new pre-file-access guard tested
+against both a non-existent and an existing id, `TestUpdateRegistration`
+now asserts `offset`/`limit` in the input schema, that `begin`/`end` are
+gone, and that `required` is unchanged), the eleven
+`tests/<d>/tools/test_get_<d>.py` round-trip lines,
+`tests/feat/tools/test_integration.py`, `tests/sop/tools/test_integration.
+py`, and — beyond the Task 1.3 list — the real ACC-006 end-to-end prompt
+walk call site in `tests/feat/prompts/test_update_feat.py` (its comment
+too); the prompt-literal `assertIn("begin=..., end=...")` assertions in
+the `*_prompts` test files were left untouched per the Phase 3 boundary.
+Task 1.4 gate (green): `ruff format --check` (1474 files already
+formatted), `ruff check` (All checks passed!), `vulture src/ whitelist.py
+--min-confidence 60` (clean, no output), full `unittest` suite (Ran 2722
+tests — OK), `specmgr docs` + `specmgr mcp-docs` regenerated (only
+`docs/api/..._splice.md`, `docs/api/...update.md`, and `docs/MCP.md`'s
+`update` entry changed; re-run shows no drift). One flagged observation:
+`general/tools/__init__.py`'s package docstring still describes the old
+`begin`/`end` range (and predates the dec/sop/feat/vcr domains) — left
+untouched as the Phase 4 item the prompt lists under "do not touch"; the
+Phase 1 sanity grep therefore shows exactly that one file as the only
+`begin`/`end` range vocabulary remaining in `src/biz/dfch/specmgr/
+general/`. Not committed (the orchestrator commits); not pushed.
 
 #### 2026-09-01 15:58:41.327+02:00 — Phase 0 complete (feat-7 split-out annotation, ADR draft, gate green)
 

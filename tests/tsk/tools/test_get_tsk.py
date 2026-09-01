@@ -98,7 +98,7 @@ class TestGetTsk(unittest.TestCase):
         k = lines.index("Started the task list.") + 1
         replacement = "Started the task list with a kickoff note."
 
-        update(id=created.frontmatter.id, type="tsk", content=replacement, begin=k, end=k)
+        update(id=created.frontmatter.id, type="tsk", content=replacement, offset=k, limit=1)
 
         new_lines = get_tsk(created.frontmatter.id, raw=True).splitlines()
         self.assertEqual(new_lines[k - 1], replacement)

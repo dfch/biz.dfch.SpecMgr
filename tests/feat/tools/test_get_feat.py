@@ -129,7 +129,7 @@ class TestGetFeat(unittest.TestCase):
         k = lines.index("Short description.") + 1
         replacement = "Updated short description."
 
-        update(id=created.frontmatter.id, type="feat", content=replacement, begin=k, end=k)
+        update(id=created.frontmatter.id, type="feat", content=replacement, offset=k, limit=1)
 
         new_lines = get_feat(created.frontmatter.id, raw=True).splitlines()
         self.assertEqual(new_lines[k - 1], replacement)
