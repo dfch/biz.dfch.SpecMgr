@@ -7,12 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `confluence_update` MCP tool (`general/tools/`): writes a local Markdown
+  file's rendered content into an existing Confluence page's body via the
+  REST API, resolving a bare page id, a browsable page URL, or a REST
+  content URL to a numeric page id, `GET`-ing the page's current
+  `version`/`title`, rendering the Markdown via `markdown-it-py` to an
+  HTML fragment, and `PUT`-ing the incremented version. Local images
+  referenced by the Markdown file are uploaded as Confluence attachments
+  on a best-effort basis (`POST .../child/attachment`, falling back to
+  `.../child/attachment/{id}/data` if the filename already exists) and
+  their `<img>` tags are rewritten into Confluence's `<ac:image>`/
+  `<ri:attachment>` storage-format macro. Closes GitHub issue #50, per
+  ADR a156fdf9-052c-4f43-93a2-eeec04a91eac.
+
 ### Changed
 
 - **BREAKING**: renamed the `webfetch` MCP tool to `confluence_fetch` (and
   its environment variables `SPECMGR_WEBFETCH_BASE_URL`/
   `SPECMGR_WEBFETCH_BEARER` to `SPECMGR_CONFLUENCE_BASE_URL`/
-  `SPECMGR_CONFLUENCE_BEARER`); part of feat-50-confluence.
+  `SPECMGR_CONFLUENCE_BEARER`); part of feat-50-confluence. Beyond the
+  rename, `confluence_fetch` now auto-converts browsable Confluence page
+  URLs (Cloud-style `/pages/<id>/<title>` and Server-style
+  `?pageId=<id>`) into the equivalent
+  `{base}/rest/api/content/{id}?expand=body.storage` REST API URL before
+  fetching, rejects the `/x/<tinyid>` tiny-link URL shape with a clear
+  error (unresolvable to a page id without an authenticated browser
+  session), detects when a request is redirected off the configured base
+  URL's host (e.g. to an SSO login page) and raises instead of returning
+  that content, and supports binary/image download via a
+  `destination_path` parameter (content-type based). GitHub issue #50,
+  ADR a156fdf9-052c-4f43-93a2-eeec04a91eac.
 
 ## [0.16.0] - 2026-09-01
 
