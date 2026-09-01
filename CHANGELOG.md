@@ -26,6 +26,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   stale pages left by feat-13-list-paging's resource→tool conversion
   (`biz.dfch.specmgr.{adr,qa,req,tsk,uc}.resources.*_list.md`) (GitHub
   issue #40).
+- Every validation error surfaced by the `parse_<d>`/`create_<d>`/
+  `validate_<d>` MCP tools (all twelve document types) and the generic
+  `update`/`set_status` tools is now actionable instead of a bare,
+  uninformative message. Structural `AssertionError`s now carry a
+  document-relative field path (e.g. `Task > RecentUpdates > UpdateEntry
+  > content`), a 1-based line reference into the mdformat-normalized body
+  plus a snippet of the offending text, and what was expected. For the
+  two triggers that motivated this fix specifically: a bare `<word>`-style
+  token is rejected as raw HTML with a fix hint ("wrap it in a code span,
+  or write it as an HTML comment"), and a `+`/`-`/`*`-prefixed
+  continuation line gets a cause + fix hint ("this begins a new
+  CommonMark list; remove the marker or indent the line so it belongs to
+  the preceding block instead"). Malformed frontmatter YAML
+  (`yaml.YAMLError`) now names "the frontmatter block" instead of
+  PyYAML's opaque `"<unicode string>"`, with document-relative (not
+  block-relative) line numbers. Every touched tool additionally prepends
+  its own domain + tool context (e.g. `"tsk create_tsk (body): ..."`). No
+  new exception types and no channel changes throughout — the documented
+  two-channel contract (`AssertionError` structural / `pydantic.
+  ValidationError` value) is preserved exactly; only message content
+  changes (GitHub issue #27; subsumes feat-7's not-started Task 0.29).
 
 ## [0.16.0] - 2026-09-01
 
