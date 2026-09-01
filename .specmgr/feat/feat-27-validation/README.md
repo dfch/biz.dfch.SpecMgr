@@ -3,7 +3,7 @@ created: '2026-09-01T14:24:06.341303'
 id: feat-27-validation
 status: planning
 type: feat
-updated: '2026-09-01T23:30:00.000000'
+updated: '2026-09-01T23:59:00.000000'
 version: 1.0.0
 ---
 
@@ -113,31 +113,75 @@ The `create_feat` tool auto-assigns `max(NNN)+1` (which would be `feat-37-<slug>
 
 #### Phase 4: Verify and Close
 
-- [ ] Task 4.1: Regression tests with the issue #27 bodies verbatim through `validate_tsk`/`create_tsk`/`update`, plus the feat-7 Task 0.29 body — depends on: Phase 3
-- [ ] Task 4.2: Full quality gate (`ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, full `unittest` suite) — depends on: Task 4.1
-- [ ] Task 4.3: Regenerate `docs/api/`/`docs/GENERATED.md` (`specmgr docs`) and `docs/MCP.md` (`specmgr mcp-docs`); add the `AGENTS.md` note — depends on: Task 4.2
+- [x] Task 4.1: Regression tests with the issue #27 bodies verbatim through `validate_tsk`/`create_tsk`/`update`, plus the feat-7 Task 0.29 body — depends on: Phase 3 — status: done (2026-09-01)
+- [x] Task 4.2: Full quality gate (`ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, full `unittest` suite) — depends on: Task 4.1 — status: done (2026-09-01)
+- [x] Task 4.3: Regenerate `docs/api/`/`docs/GENERATED.md` (`specmgr docs`) and `docs/MCP.md` (`specmgr mcp-docs`); add the `AGENTS.md` note — depends on: Task 4.2 — status: done (2026-09-01)
 - [ ] Task 4.4: Comment on GitHub issue #27 (root cause, the message contract, the feature id); walk the ACCs; mark the feature done — depends on: Task 4.3
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-09-01**: Phase 3 (Tool Boundary) is complete, on top of Phases 1-2. Every
-`parse_<d>`/`create_<d>`/`validate_<d>` `@mcp.tool()` wrapper that actually exists on disk (35
-files: 11 `parse_<d>`, 12 `create_<d>`, 12 `validate_<d>` -- ADR has no `parse_adr` MCP tool),
-plus the generic `update` tool's 11 per-domain adapters and the generic `set_status` tool's 12
-per-domain adapters (`general/tools/update.py`/`set_status.py`), now wrap their own validating
-call with one shared context manager, `models/md._errors.wrap_tool_errors` (Task 3.1): on a
-caught `AssertionError`/`pydantic.ValidationError`/`yaml.YAMLError` (or, for ADR's own
-`AdrParseError` structural channel, via the `also_catch` extension point), the exact same
-exception type is re-raised with the domain + tool + (optional) channel prepended to the
-message, on top of the field-path/line/frontmatter enrichment Phases 1/2 already built into the
-engine message itself (REQ-005/REQ-006). Exception types are unchanged throughout; the full
-unittest suite (2781 tests, up from 2760) passes, `ruff format --check`/`ruff check`/`vulture`
-are all clean. The next step is Phase 4 (Verify and Close), beginning with Task 4.1 (the issue
-#27 and feat-7 Task 0.29 regression repros).
+**As of 2026-09-01**: Phase 4's Tasks 4.1-4.3 are complete, on top of Phases 1-3. Regression
+tests reproduce GitHub issue #27's own bare `<domain>` token repro and feat-7 Task 0.29's
+`+`-prefixed continuation-line trigger end to end through `validate_tsk`/`create_tsk`/the
+generic `update` tool (Task 4.1, `tests/regression/test_issue_27.py`, 6 tests, ACC-005/REQ-007).
+The full quality gate is green (`ruff format --check`, `ruff check`, `vulture`, and the full
+`unittest` suite: 2787 tests, up from 2781, OK) and `docs/api/`/`docs/GENERATED.md`/`docs/MCP.md`
+are regenerated (Task 4.2/4.3), plus a new `AGENTS.md` paragraph documents the feature's outcome.
+Only Task 4.4 remains -- commenting on GitHub issue #27, walking the ACCs, and setting this
+feature's status to `done` -- explicitly reserved for the orchestrator, not the phase
+implementer.
 
 ### Updates
+
+#### 2026-09-01 23:59:00.000Z — Phase 4 Tasks 4.1-4.3 (Verify and Close) completed
+
+Implemented Tasks 4.1-4.3 (Task 4.4 -- the GitHub comment, ACC walk, and marking the feature
+`done` -- is explicitly reserved for the orchestrator and was left untouched).
+
+Task 4.1 (REQ-007/ACC-005): new file `tests/regression/test_issue_27.py` (plus
+`tests/regression/__init__.py`), 6 tests, reproducing the two known triggers end to end through
+`validate_tsk`, `create_tsk`, and the generic `update` tool (`type="tsk"`):
+
+- GitHub issue #27's own minimal repro body (fetched verbatim via `gh issue view 27 --json
+  body` -- a `tsk` checklist with a bare `<domain>` token in one item's text plus a valid
+  `## Recent Updates` entry) is used byte-for-byte as `_ISSUE_27_BODY`. Each test asserts the
+  surfaced `AssertionError` contains the raw-HTML rejection's cause + fix-hint substrings
+  (`"raw HTML is not permitted"`, `"html_inline '<domain>'"`, `"wrap it in a code span"`,
+  `"write it as an HTML comment"`). The `create_tsk`/`update` variants use a valid seed body
+  identical except the token is wrapped in backticks (the issue's own documented workaround),
+  so `create_tsk` succeeds first and the offending body is introduced via `update`.
+- feat-7 Task 0.29's trigger: that feature's own README (Background, Task 0.29) preserves only
+  one literal fragment of the original TSK document (id `952d39e5-3b79-4389-bc71-a4fe8ca85cd3`,
+  itself not recoverable from repo history) -- `"+ group-block style as final..."`. `_FEAT_7_
+  TASK_0_29_BODY` is therefore a realistic reconstruction (a plausible `## Recent Updates` entry
+  paragraph) embedding that exact fragment as its offending continuation line, not a verbatim
+  original document -- called out in the test file's own module docstring, not silently
+  presented as verbatim. Each test asserts the "text left over" `AssertionError` contains the
+  stray-list-marker cause + fix-hint substrings (`"text left over after processing all
+  fields"`, `"a line starting with '-', '*', or '+' begins a new"`, `"CommonMark list"`,
+  `"remove the marker or indent the line"`). The `create_tsk`/`update` variants use a valid seed
+  body where the same paragraph is joined onto one line (no leading `+`).
+
+All assertions use `assertIn` against the cause/fix substrings (not full exact-string pins --
+that is `tests/models/md/test_validation_error_baseline.py`'s job), and do not re-assert the
+domain/tool prefix (already covered by Phase 3's `tests/general/tools/test_error_context.py`).
+
+Task 4.2: full quality gate run and green -- `ruff format --check` (1484 files already
+formatted), `ruff check` (all checks passed), `vulture src/ whitelist.py --min-confidence 60`
+(clean), full `unittest discover` (2787 tests, up from 2781, OK -- the +6 delta is exactly this
+phase's new regression tests, zero regressions elsewhere).
+
+Task 4.3: `specmgr docs` and `specmgr mcp-docs` regenerated `docs/api/`, `docs/GENERATED.md`
+(only the "Test files: 323 -> 324" count changed), and `docs/MCP.md` (no diff -- Phase 3 already
+left it current); both commands are idempotent on a second run. Added a new `AGENTS.md`
+paragraph (after the "Still genuinely missing" list, before the `adr-tool-plan.md` §10
+pointer sentence) documenting that every `parse_<d>`/`create_<d>`/`validate_<d>` and the
+generic `update`/`set_status` tools' error messages now carry field-path/line/domain/tool
+context -- no pre-existing AGENTS.md language described these messages as unhelpful/
+unenriched, and no AGENTS.md text referenced feat-7 Task 0.29 as still-open, so nothing needed
+correcting, only the new paragraph was added.
 
 #### 2026-09-01 23:30:00.000Z — Phase 3 (Tool Boundary) completed
 
