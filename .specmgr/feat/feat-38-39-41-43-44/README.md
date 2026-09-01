@@ -1,9 +1,9 @@
 ---
 created: '2026-09-01T15:14:00.000000'
 id: feat-38-39-41-43-44
-status: planning
+status: progress
 type: feat
-updated: '2026-09-01T16:14:12.000000'
+updated: '2026-09-01T17:45:00.000000'
 version: 1.0.0
 ---
 
@@ -98,14 +98,14 @@ Each phase ends gate-green: `ruff format --check` + `ruff check`, `vulture src/ 
 
 #### Phase 1: Em-dash out of update entries (issue 38)
 
-- [ ] Task 1.1: Change the SOP `UpdateEntry` alias and `_UPDATE_ENTRY_HEADING_PATTERN` to `(?: - | : )`; update docstrings - depends on: none - status: not-started
-- [ ] Task 1.2: Change the FEAT `_ENTRY_HEADING_ALIAS`/`_ENTRY_HEADING_PATTERN` (covers `UpdateEntry` and `DecisionEntry`); update docstrings - depends on: none - status: not-started
-- [ ] Task 1.3: Rewrite the SOP packaged data (template/example/create-instructions) to the new separators - depends on: Task 1.1 - status: not-started
-- [ ] Task 1.4: Rewrite the FEAT packaged data (template/example/create-instructions) - depends on: Task 1.2 - status: not-started
-- [ ] Task 1.5: Rewrite the DEC/VCR convention text (model docstrings + template/example/create-instructions) - depends on: none - status: not-started
-- [ ] Task 1.6: Migrate repo artifacts (docs/sop entries, feat-36 README entries, this README's entries) - depends on: Tasks 1.1-1.2 - status: not-started
-- [ ] Task 1.7: Update the SOP/FEAT/DEC/VCR test fixtures (parser + body tests) - depends on: Tasks 1.1-1.5 - status: not-started
-- [ ] Task 1.8: Phase gate (schema/docs/mcp-docs regen, suite, pylint, CHANGELOG BREAKING entry, this README's Updates) - depends on: Tasks 1.6-1.7 - status: not-started
+- [x] Task 1.1: Change the SOP `UpdateEntry` alias and `_UPDATE_ENTRY_HEADING_PATTERN` to `(?: - | : )`; update docstrings - depends on: none - status: done
+- [x] Task 1.2: Change the FEAT `_ENTRY_HEADING_ALIAS`/`_ENTRY_HEADING_PATTERN` (covers `UpdateEntry` and `DecisionEntry`); update docstrings - depends on: none - status: done
+- [x] Task 1.3: Rewrite the SOP packaged data (template/example/create-instructions) to the new separators - depends on: Task 1.1 - status: done
+- [x] Task 1.4: Rewrite the FEAT packaged data (template/example/create-instructions) - depends on: Task 1.2 - status: done
+- [x] Task 1.5: Rewrite the DEC/VCR convention text (model docstrings + template/example/create-instructions) - depends on: none - status: done
+- [x] Task 1.6: Migrate repo artifacts (docs/sop entries, feat-36 README entries, this README's entries) - depends on: Tasks 1.1-1.2 - status: done
+- [x] Task 1.7: Update the SOP/FEAT/DEC/VCR test fixtures (parser + body tests) - depends on: Tasks 1.1-1.5 - status: done
+- [x] Task 1.8: Phase gate (schema/docs/mcp-docs regen, suite, pylint, CHANGELOG BREAKING entry, this README's Updates) - depends on: Tasks 1.6-1.7 - status: done
 
 #### Phase 2: Newest-first ordering enforced in SOP/DEC/VCR/TSK (issue 39)
 
@@ -146,35 +146,39 @@ Each phase ends gate-green: `ruff format --check` + `ruff check`, `vulture src/ 
 
 ### Current Status
 
-As of 2026-09-01: the design phase is complete. All five issues were examined against the codebase at `origin/dev` `8c13e16` (baseline: 2713 tests green; pylint 42 x W0622 across 39 files; after the post-plan merge of `8e07594`, 2720 tests green and only two of the twenty-two repo feat READMEs parse under the feat model: `feat-36-delete` and this one). Decisions D1 to D10 are locked with the requester and logged under `### Decisions Made`; nothing is implemented yet. Next: start Phase 1 (issue #38).
+As of 2026-09-01: Phase 1 (issue #38) is complete. The SOP/FEAT `UpdateEntry`/`DecisionEntry` heading regexes now accept only ` - `/` : ` and reject the em-dash `—`, eagerly, at parse time; the SOP/FEAT/DEC/VCR packaged data (templates/examples/create-instructions) and the DEC/VCR model docstrings were rewritten off the em-dash; and the repo's own em-dash-headed artifacts (`docs/sop`'s release SOP, the `feat-36-delete` README, and this README's own prior entries) were migrated to the new separators, with all three re-verified to still parse under the updated models. The full unittest suite is green at 2724 tests (2720 baseline + 4 new em-dash-rejection tests), the phase-end gate (`ruff format --check`/`ruff check`/`vulture`/`pre-commit run --all-files`) is clean, and the advisory pylint baseline is unchanged (42 x W0622, 13 x W0611, ~160 x R0401, score 8.90/10). Next: start Phase 2 (issue #39, newest-first ordering).
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
-#### 2026-09-01 16:14:12.000+02:00 — Design session wrap-up: issue links recorded, pylint baseline re-verified
+#### 2026-09-01 17:45:00.000+02:00 - Phase 1 complete: em-dash rejected from SOP/FEAT update-entry headings, repo artifacts migrated
+
+Implemented Tasks 1.1-1.8. Changed the SOP `_UPDATE_ENTRY_HEADING_PATTERN`/`@alias` (`sop/models/v1/body.py`) and the FEAT `_ENTRY_HEADING_PATTERN`/`_ENTRY_HEADING_ALIAS` (`feat/models/v1/body.py`, shared verbatim by `UpdateEntry`/`DecisionEntry`) from the em-dash-joined timestamp+title shape to a non-capturing `(?: - | : )` separator group, with docstrings/error messages updated to match (Tasks 1.1-1.2; caught and fixed a copy-paste bug during implementation -- the first pass left a stray literal space between the separator group and the title, which made every valid ` - `/` : ` heading fail to parse until corrected). Rewrote the SOP (`sop_template.md`/`sop_example.md`/`sop_create_instructions.md`) and FEAT (`feat_template.md`/`feat_example.md`/`feat_create_instructions.md`) packaged data off the em-dash (Tasks 1.3-1.4), and updated the DEC/VCR `UpdateEntry` docstrings plus their packaged data (`dec_template.md`/`dec_example.md`/`dec_create_instructions.md`, `vcr_template.md`/`vcr_example.md`/`vcr_create_instructions.md`) to the same convention, even though DEC/VCR headings stay free-form/unenforced until Phase 2 (Task 1.5). Migrated the repo's own em-dash-headed artifacts: the five dated entries in `docs/sop/sop-98537416-...-perform-a-release-of-biz-dfch-specmgr.md`'s `## Updates`, the eleven dated `#### ` entries (`### Updates`/`### Decisions Made`) in `.specmgr/feat/feat-36-delete/README.md`, and this README's own six prior dated entries (Task 1.6) -- all three re-verified via a direct `parse_sop`/`parse_feat` call to still parse cleanly under the updated models (only separators changed, not ordering or timestamp format, per this phase's scope). Updated the SOP/FEAT/DEC/VCR unit test fixtures (parser + body tests across `tests/sop/models/v1/`, `tests/feat/models/v1/`, `tests/feat/{prompts,tools}/`, `tests/dec/models/v1/`, `tests/vcr/models/v1/`, and the shared FEAT fixture in `tests/general/tools/test_delete.py`) off the em-dash, and added four new tests proving ACC-001 (em-dash headings now fail to parse): `TestUpdateEntryHeadingAlias.test_rejects_em_dash_separator` and `TestParseSop.test_updates_entry_with_em_dash_separator_raises_assertion_error` for SOP, `TestUpdateEntryAndDecisionEntryHeadingAlias.test_rejects_em_dash_separator` and `test_update_entry_with_em_dash_separator_raises_assertion_error` for FEAT (Task 1.7). Regenerated the SOP/FEAT/DEC/VCR JSON schemas (`docs/*_schema.json` plus each domain's packaged `data/*_schema.json` copy) and the four domains' `docs/api/*.md` pages via `specmgr schema`/`specmgr docs`, added the CHANGELOG `[Unreleased]` `### Changed` entry with a **BREAKING** marker, and ran the full phase-end gate (Task 1.8): `ruff format --check` (1473 files), `ruff check` (all checks passed), `vulture src/ whitelist.py --min-confidence 60` (clean), the full `unittest` suite (2724 tests, OK -- 2720 baseline + 4 new), `pre-commit run --all-files` (green on the second run, after `git add`ing the regenerated `docs/api/*.md` files the first `specmgr docs` run produced), and advisory `pylint` (42 x W0622, 13 x W0611, ~160 x R0401, score 8.90/10 -- unchanged from baseline, no new finding types).
+
+#### 2026-09-01 16:14:12.000+02:00 - Design session wrap-up: issue links recorded, pylint baseline re-verified
 
 Closed out the design session: added the `### Related PRs / Commits` section with the five source-issue URLs (one phase each) and the design-session commits, and re-ran the advisory pylint baseline on the post-merge tree to confirm Phase 5's inventory is still exact (42 x W0622 in the same 39 files, score 9.34/10, unchanged by the `8e07594` merge). Nothing else outstanding; the branch is pushed and ready for Phase 1.
 
-#### 2026-09-01 15:42:48.000+02:00 — Merged origin/dev (8e07594) after the plan commit; counts updated
+#### 2026-09-01 15:42:48.000+02:00 - Merged origin/dev (8e07594) after the plan commit; counts updated
 
 After committing the plan, upstream dev had gained one commit, `8e07594` (feat-40 docs pruning: `specmgr docs` now prunes stale `docs/api` pages; it also brought the `feat-32-sysrs` and `feat-40-docs-prune` folders and a CHANGELOG entry). It was merged into this branch (merge commit on top of the plan commit, not pushed). The feat parse inventory was re-verified on the merged tree: twenty-two feat READMEs, only `feat-36-delete` and this one parse, so the plan's migration counts were updated in place (REQ-008, Scope, Design Notes, Task 3.4, and decision D8: nineteen legacy READMEs becomes twenty-one; four parseable mandatory-migration documents becomes five, counting this README). The full unittest suite is green on the merged tree (2720 tests). No code changes.
 
-#### 2026-09-01 15:14:00.000+02:00 — Feature planned from issues 38, 39, 41, 43, 44 (design phase complete)
+#### 2026-09-01 15:14:00.000+02:00 - Feature planned from issues 38, 39, 41, 43, 44 (design phase complete)
 
 The plan was written after fetching the five GitHub issues and examining the affected surfaces: the SOP/FEAT em-dash-enforced entry regexes (`sop/models/v1/body.py` line 421, `feat/models/v1/body.py` line 425), the DEC/VCR free-form conventions, the FEAT `_validate_newest_first` precedent, the feat-36 `_path_safety` module, the 44 `datetime.now().isoformat(timespec="microseconds")` generator sites, the free-form `MarkdownFrontmatter.created`/`updated`, and the captured pylint baseline (42 x W0622 in 39 files, 12 x W0611 in `server.py`, score 9.34/10). The branch was fast-forwarded to `origin/dev` `8c13e16`, uv synced with all extras on Python 3.13.13, and pre-commit installed, with the full suite (2713 tests) green as the baseline. No code changes yet.
 
 ### Decisions Made
 
-#### 2026-09-01 15:14:00.000+02:00 — D7/D5 refinements: frontmatter is date+time-only and system-owned; migration assumes UTC
+#### 2026-09-01 15:14:00.000+02:00 - D7/D5 refinements: frontmatter is date+time-only and system-owned; migration assumes UTC
 
 The requester confirmed that frontmatter `created`/`updated` must enforce date+time (date-only rejected) and that these fields are system-owned: the MCP tools always write them, and no tool parameter lets an agent set them manually (the existing invariant is preserved). The migration rule for legacy values was fixed (D7): date-only values become midnight UTC `00:00:00.000Z`; values with microseconds are truncated to milliseconds, use no timezone, and assume UTC (`Z`); partial times are padded and assumed UTC; literal `YYYY-MM-DD` placeholders take the containing folder's first git-commit timestamp (UTC, `Z`).
 
-#### 2026-09-01 15:05:00.000+02:00 — D5/D8/D10: frontmatter format enforced strictly at parse; repo documents migrate in Phase 3
+#### 2026-09-01 15:05:00.000+02:00 - D5/D8/D10: frontmatter format enforced strictly at parse; repo documents migrate in Phase 3
 
 Chosen over "tools only produce it": the shared `MarkdownFrontmatter` gains a date+time-only validator for `created`/`updated`, so a non-conforming document fails to parse (it appears missing from `get`/`list`/`update`/`set_status`/`delete`). Migrating the repo's own artifacts is part of Phase 3 (D8): the five parseable documents (docs/sop x1, docs/tsk x2, the feat-36 README, and this feature README) are mandatory, the twenty-one legacy feat READMEs get frontmatter-only normalization, and code-fence `created:`/`updated:` prose lines are excluded. ADR frontmatter is untouched (D9: no created/updated fields; the MADR `date` stays free-form). The hard break for downstream documents was accepted (D10).
 
-#### 2026-09-01 14:50:00.000+02:00 — D1/D2/D3/D4/D6: folder name, separators, ordering scope, timezone, pylint style
+#### 2026-09-01 14:50:00.000+02:00 - D1/D2/D3/D4/D6: folder name, separators, ordering scope, timezone, pylint style
 
 The folder/README id is `feat-38-39-41-43-44` (D1; the `31` in the branch name is a typo for issue 41, and the branch keeps its name). Update-entry headings accept both ` - ` and ` : ` separators, and the em-dash is strictly rejected with in-phase migration of the repo's artifacts (D2). Newest-first ordering is enforced at parse time across SOP, DEC, VCR, and TSK (not SOP-only), which requires the DEC/VCR/TSK entries to become timestamp-led (D3). Date+time values carry local time with the actual offset, or `Z` for UTC (D4; the issue's example was acknowledged as sloppy, the intent is "use tz info", and `Z` is allowed as well). The W0622 elimination uses explicit per-file pylint disable comments instead of a global config, so the shadowing stays visibly intentional in every affected file (D6).
 

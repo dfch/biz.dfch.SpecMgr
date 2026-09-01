@@ -63,6 +63,6 @@ This optional section can contain additional information. There is no defined fo
 
 ## Updates
 
-### 2026-08-27 — Created
+### 2026-08-27 - Created
 
 A lead paragraph describing this update.

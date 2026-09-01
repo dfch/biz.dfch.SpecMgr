@@ -14897,18 +14897,20 @@ items:
 
 ### `UpdateEntry`
 
-`### {ISO8601 timestamp} — {title}` under `## Updates` -- one update entry.
+`### {ISO8601 timestamp} ( - | : ) {title}` under `## Updates` -- one update entry.
 
 The H3 heading text carries an ISO8601 timestamp and a title, joined by
-``" — "`` (space, em-dash, space): e.g.
-`### 2026-08-30 14:30:00.000+02:00 — Approved`. The format is
-``yyyy-MM-dd HH:mm:ss.fff`` with an explicit UTC offset (``+02:00``,
-``-05:00``) or ``Z`` for UTC -- deliberately **not** the same format as
-frontmatter ``created``/``updated`` (which keep the shared generic tools'
-format); this format is scoped to `## Updates` entry headings only, which
-are hand/LLM-authored body content. Constrained by the regex `@alias`
-above and enforced by `match_alias` (`re.fullmatch`) at parse time -- a
-wrong timestamp format, a missing offset, or a missing `` — title`` all
+either ``" - "`` (space, hyphen, space) or ``" : "`` (space, colon,
+space): e.g. `### 2026-08-30 14:30:00.000+02:00 - Approved` or
+`### 2026-08-30 14:30:00.000+02:00 : Approved`. The em-dash separator is
+rejected. The format is ``yyyy-MM-dd HH:mm:ss.fff`` with an explicit UTC
+offset (``+02:00``, ``-05:00``) or ``Z`` for UTC -- deliberately **not**
+the same format as frontmatter ``created``/``updated`` (which keep the
+shared generic tools' format); this format is scoped to `## Updates`
+entry headings only, which are hand/LLM-authored body content.
+Constrained by the regex `@alias` above and enforced by `match_alias`
+(`re.fullmatch`) at parse time -- a wrong timestamp format, a missing
+offset, an em-dash separator, or a missing `` - ``/`` : `` title all
 fail the parse eagerly.
 
 Parameters
@@ -14921,8 +14923,8 @@ timestamp:
     separately -- derived from the retained heading text.
 title:
     Computed. The title carried by the heading (the text after
-    ``" — "``). Never stored separately -- derived from the retained
-    heading text.
+    ``" - "``/``" : "``). Never stored separately -- derived from the
+    retained heading text.
 
 Raises:
     AssertionError: the retained heading text does not match

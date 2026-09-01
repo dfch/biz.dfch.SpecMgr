@@ -72,7 +72,7 @@ pending, which is why `## Coverage` above is `partial` rather than
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
-### 2026-08-31 07:40:12.500+02:00 — Initial draft created
+### 2026-08-31 07:40:12.500+02:00 - Initial draft created
 
 Initial verification case drafted for the API key revocation latency
 requirement. AC-001..003 executed against staging; AC-004 (Security

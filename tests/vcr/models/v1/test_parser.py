@@ -127,11 +127,11 @@ _FULL_DOC = textwrap.dedent(
 
     ## Updates
 
-    ### 2026-08-26 — Created
+    ### 2026-08-26 - Created
 
     Initial verification case drafted.
 
-    ### 2026-08-27 — Confirmed
+    ### 2026-08-27 : Confirmed
 
     AC-001 and AC-003 executed against staging.
     """
@@ -494,7 +494,7 @@ class TestParseVcrStructuralViolations(unittest.TestCase):
 
             ## Updates
 
-            ### 2026-08-26 — Created
+            ### 2026-08-26 - Created
 
             Some update text.
 

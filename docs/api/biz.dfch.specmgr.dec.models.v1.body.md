@@ -11157,8 +11157,8 @@ cross-references to requirements, one per line
 `### {free-form title}` under `## Updates` -- one update entry.
 
 The H3 heading text is free-form (date-led titles like
-`2026-08-26 — Created` are convention, not enforced). Mirrors
-`tsk`'s `UpdateEntry` shape.
+`2026-08-26 - Created` or `2026-08-26 : Created` are convention, not
+enforced). Mirrors `tsk`'s `UpdateEntry` shape.
 
 Parameters
 ----------

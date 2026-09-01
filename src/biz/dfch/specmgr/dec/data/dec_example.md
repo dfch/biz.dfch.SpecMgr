@@ -94,12 +94,12 @@ their own arrangements.
 
 ## Updates
 
-### 2026-07-14 — Created
+### 2026-07-14 - Created
 
 The decision record was drafted by the engineering leadership team
 after two years of per-team improvisation.
 
-### 2026-07-28 — Accepted
+### 2026-07-28 : Accepted
 
 The arrangement was accepted at the monthly engineering meeting. The
 first quarterly review is scheduled for end of October 2026.

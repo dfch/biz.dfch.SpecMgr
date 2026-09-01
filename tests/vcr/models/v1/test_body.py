@@ -107,11 +107,11 @@ Verification performed against the staging gateway (build 2026.08.30-rc3).
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
-### 2026-08-26 — Created
+### 2026-08-26 - Created
 
 Initial verification case drafted.
 
-### 2026-08-27 — Confirmed
+### 2026-08-27 : Confirmed
 
 AC-001 and AC-003 executed against staging.
 """
@@ -434,7 +434,7 @@ class TestUpdateEntryHeadingAlias(unittest.TestCase):
     """`UpdateEntry`'s H3 alias is the free-form `.+` REGEX (date-led titles are convention)."""
 
     def test_update_entry_matches_any_nonempty_h3_text(self) -> None:
-        for heading in ("2026-08-26 — Created", "A Note", "x"):
+        for heading in ("2026-08-26 - Created", "A Note", "x"):
             with self.subTest(heading=heading):
                 self.assertTrue(match_alias(UpdateEntry, heading))
 
@@ -545,7 +545,7 @@ class TestOptionalSectionsIndividuallyOptional(unittest.TestCase):
 
     def test_updates_present(self) -> None:
         kwargs = _minimal_vcr_kwargs()
-        kwargs["updates"] = Updates.from_text(format_text("## Updates\n\n### 2026-08-26 — Created\n\nSome text.\n"))
+        kwargs["updates"] = Updates.from_text(format_text("## Updates\n\n### 2026-08-26 - Created\n\nSome text.\n"))
 
         sut = Vcr(**kwargs)
 
@@ -561,7 +561,7 @@ class TestOptionalSectionsIndividuallyOptional(unittest.TestCase):
         # outline), mirroring `feat`'s own `Updates(MarkdownSection3WithComment)`.
         text = format_text(
             "## Updates\n\n<!-- Newest entry first -- prepend new entries directly below this comment. -->\n\n"
-            "### 2026-08-26 — Created\n\nSome text.\n"
+            "### 2026-08-26 - Created\n\nSome text.\n"
         )
 
         sut = Updates.from_text(text)
@@ -609,7 +609,7 @@ class TestVcrMisordering(unittest.TestCase):
             "## Acceptance Criteria\n\n"
             "### AC-001 (Test): Some criterion\n\n"
             "## Updates\n\n"
-            "### 2026-08-26 — Created\n\n"
+            "### 2026-08-26 - Created\n\n"
             "Some update text.\n\n"
             "## More Information\n\n"
             "Some more information text.\n"

@@ -61,7 +61,7 @@
       "type": "object"
     },
     "DecisionEntry": {
-      "description": "`#### {timestamp} \u2014 {title}` under `### Decisions Made` -- one decision entry.\n\nIdentical shape to `UpdateEntry` (same alias regex, same `timestamp`/\n`title` computed-field extraction, same `content: MarkdownParagraph`) --\na distinct class since it belongs to a semantically distinct section.\n\nParameters\n----------\ncontent:\n    The lead paragraph right after the H4 heading -- this entry's own\n    decision text. Mandatory.\ntimestamp:\n    Computed. The entry's ISO8601 timestamp, verbatim from the heading.\n    Never stored separately -- derived from the retained heading text.\ntitle:\n    Computed. The entry's title (the heading text after `\" \u2014 \"`). Never\n    stored separately -- derived from the retained heading text.",
+      "description": "`#### {timestamp} ( - | : ) {title}` under `### Decisions Made` -- one decision entry.\n\nIdentical shape to `UpdateEntry` (same alias regex, same `timestamp`/\n`title` computed-field extraction, same `content: MarkdownParagraph`) --\na distinct class since it belongs to a semantically distinct section.\n\nParameters\n----------\ncontent:\n    The lead paragraph right after the H4 heading -- this entry's own\n    decision text. Mandatory.\ntimestamp:\n    Computed. The entry's ISO8601 timestamp, verbatim from the heading.\n    Never stored separately -- derived from the retained heading text.\ntitle:\n    Computed. The entry's title (the heading text after `\" - \"`/\n    `\" : \"`). Never stored separately -- derived from the retained\n    heading text.",
       "properties": {
         "content": {
           "$ref": "#/$defs/MarkdownParagraph",
@@ -75,7 +75,7 @@
       "type": "object"
     },
     "DecisionsMade": {
-      "description": "`### Decisions Made` -- a dynamic, newest-first list of ISO8601-timestamped `#### ` decision entries.\nOptional as a whole; at least one entry once present. May be preceded by an explanatory HTML comment\n(e.g. an ordering hint).\n\nOptionality lives one level up (`Progress.decisions_made: DecisionsMade\n| None = None`) -- a brand-new feature has no `### Decisions Made`\nsection at all, rather than an empty one, same \"non-`Optional` `list[X]`\nimplies >=1 once the section exists\" convention as `Updates.updates`/\n`TaskList.phases`.\n\nParameters\n----------\ncomment:\n    Optional explanatory HTML comment (`<!-- ... -->`). Inherited from\n    `MarkdownSection3WithComment`.\ndecisions:\n    The `#### {timestamp} \u2014 {title}` entries, in document order,\n    newest-first (enforced, see `_validate_newest_first`). At least\n    one entry.",
+      "description": "`### Decisions Made` -- a dynamic, newest-first list of ISO8601-timestamped `#### ` decision entries.\nOptional as a whole; at least one entry once present. May be preceded by an explanatory HTML comment\n(e.g. an ordering hint).\n\nOptionality lives one level up (`Progress.decisions_made: DecisionsMade\n| None = None`) -- a brand-new feature has no `### Decisions Made`\nsection at all, rather than an empty one, same \"non-`Optional` `list[X]`\nimplies >=1 once the section exists\" convention as `Updates.updates`/\n`TaskList.phases`.\n\nParameters\n----------\ncomment:\n    Optional explanatory HTML comment (`<!-- ... -->`). Inherited from\n    `MarkdownSection3WithComment`.\ndecisions:\n    The `#### {timestamp} ( - | : ) {title}` entries, in document order,\n    newest-first (enforced, see `_validate_newest_first`). At least\n    one entry.",
       "properties": {
         "comment": {
           "anyOf": [
@@ -90,7 +90,7 @@
           "description": "Optional explanatory HTML comment (`<!-- ... -->`)."
         },
         "decisions": {
-          "description": "Dynamic collection of `#### {timestamp} \u2014 {title}` entries, in document order, newest-first. Must contain at least one entry.",
+          "description": "Dynamic collection of `#### {timestamp} ( - | : ) {title}` entries, in document order, newest-first. Must contain at least one entry.",
           "items": {
             "$ref": "#/$defs/DecisionEntry"
           },
@@ -516,7 +516,7 @@
       "type": "object"
     },
     "UpdateEntry": {
-      "description": "`#### {timestamp} \u2014 {title}` under `### Updates` -- one update entry.\n\nThe timestamp format is deliberately not the same format as frontmatter\n`created`/`updated` (a `datetime.isoformat(timespec=\"microseconds\")`\nvalue, e.g. `2026-08-30T14:23:01.123456`) -- this format is scoped to\n`### Updates`/`### Decisions Made` entry headings only, hand/LLM-authored\nbody content, not tool-generated frontmatter.\n\nParameters\n----------\ncontent:\n    The lead paragraph right after the H4 heading -- this entry's own\n    update text. Mandatory.\ntimestamp:\n    Computed. The entry's ISO8601 timestamp, verbatim from the heading.\n    Never stored separately -- derived from the retained heading text.\ntitle:\n    Computed. The entry's title (the heading text after `\" \u2014 \"`). Never\n    stored separately -- derived from the retained heading text.",
+      "description": "`#### {timestamp} ( - | : ) {title}` under `### Updates` -- one update entry.\n\nThe timestamp format is deliberately not the same format as frontmatter\n`created`/`updated` (a `datetime.isoformat(timespec=\"microseconds\")`\nvalue, e.g. `2026-08-30T14:23:01.123456`) -- this format is scoped to\n`### Updates`/`### Decisions Made` entry headings only, hand/LLM-authored\nbody content, not tool-generated frontmatter.\n\nParameters\n----------\ncontent:\n    The lead paragraph right after the H4 heading -- this entry's own\n    update text. Mandatory.\ntimestamp:\n    Computed. The entry's ISO8601 timestamp, verbatim from the heading.\n    Never stored separately -- derived from the retained heading text.\ntitle:\n    Computed. The entry's title (the heading text after `\" - \"`/\n    `\" : \"`). Never stored separately -- derived from the retained\n    heading text.",
       "properties": {
         "content": {
           "$ref": "#/$defs/MarkdownParagraph",
@@ -530,7 +530,7 @@
       "type": "object"
     },
     "Updates": {
-      "description": "`### Updates` -- a dynamic, newest-first list of ISO8601-timestamped `#### ` update entries. Mandatory.\nAt least one entry. May be preceded by an explanatory HTML comment (e.g. an ordering hint).\n\nParameters\n----------\ncomment:\n    Optional explanatory HTML comment (`<!-- ... -->`), e.g.\n    `<!-- Newest entry first -- prepend new entries directly below\n    this comment. -->`. Inherited from `MarkdownSection3WithComment`.\nupdates:\n    The `#### {timestamp} \u2014 {title}` entries, in document order,\n    newest-first (enforced, see `_validate_newest_first`). At least\n    one entry.",
+      "description": "`### Updates` -- a dynamic, newest-first list of ISO8601-timestamped `#### ` update entries. Mandatory.\nAt least one entry. May be preceded by an explanatory HTML comment (e.g. an ordering hint).\n\nParameters\n----------\ncomment:\n    Optional explanatory HTML comment (`<!-- ... -->`), e.g.\n    `<!-- Newest entry first -- prepend new entries directly below\n    this comment. -->`. Inherited from `MarkdownSection3WithComment`.\nupdates:\n    The `#### {timestamp} ( - | : ) {title}` entries, in document order,\n    newest-first (enforced, see `_validate_newest_first`). At least\n    one entry.",
       "properties": {
         "comment": {
           "anyOf": [
@@ -545,7 +545,7 @@
           "description": "Optional explanatory HTML comment (`<!-- ... -->`)."
         },
         "updates": {
-          "description": "Dynamic collection of `#### {timestamp} \u2014 {title}` entries, in document order, newest-first. Must contain at least one entry.",
+          "description": "Dynamic collection of `#### {timestamp} ( - | : ) {title}` entries, in document order, newest-first. Must contain at least one entry.",
           "items": {
             "$ref": "#/$defs/UpdateEntry"
           },

@@ -87,11 +87,11 @@ Free-form design rationale, schema sketches, etc.
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
-#### 2026-08-30 16:47:59.981Z — Paused for review
+#### 2026-08-30 16:47:59.981Z - Paused for review
 
 Free-form prose describing what happened in this update.
 
-#### 2026-08-30 14:02:11.123+02:00 — Initial scaffolding
+#### 2026-08-30 14:02:11.123+02:00 : Initial scaffolding
 
 Free-form prose describing what happened in this update.
 
@@ -99,11 +99,11 @@ Free-form prose describing what happened in this update.
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
-#### 2026-08-30 17:10:00.000Z — Deferred mobile gestures
+#### 2026-08-30 17:10:00.000Z - Deferred mobile gestures
 
 Free-form prose describing the decision and its rationale.
 
-#### 2026-08-30 09:15:00.000+02:00 — Chose composite-based library
+#### 2026-08-30 09:15:00.000+02:00 : Chose composite-based library
 
 Free-form prose describing the decision and its rationale.
 

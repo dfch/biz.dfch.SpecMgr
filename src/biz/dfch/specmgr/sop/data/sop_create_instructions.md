@@ -52,11 +52,12 @@ step 1 if this is genuinely a new SOP.
   self-cross-reference (related/superseding SOPs).
 - `## More Information` -- optional freeform supplementary text.
 - `## Updates` -- optional, and the last section if present:
-  `### {ISO8601 timestamp} — {title}` entries (e.g.
-  `2026-08-30 14:30:00.000+02:00 — Created`), each with a mandatory
+  `### {ISO8601 timestamp} ( - | : ) {title}` entries (e.g.
+  `2026-08-30 14:30:00.000+02:00 - Created`), each with a mandatory
   lead paragraph. The timestamp is `yyyy-MM-dd HH:mm:ss.fff` with an
   explicit UTC offset (`+02:00`, `-05:00`) or `Z`, joined to the title
-  by `" — "` (space, em-dash, space) -- this is a different format from
+  by `" - "` (space, hyphen, space) or `" : "` (space, colon, space) --
+  the em-dash separator is rejected. This is a different format from
   the frontmatter dates.
 
 Section order is binding: Purpose -> Scope -> Definitions -> Roles and

@@ -159,7 +159,7 @@ rate) are reported monthly to the IT Operations Manager.
 
 ## Updates
 
-### 2026-08-30 14:30:00.000+02:00 — Approved and activated
+### 2026-08-30 14:30:00.000+02:00 - Approved and activated
 
 The procedure was approved by the IT Operations Manager and activated
 as the standing reference for new-employee provisioning. It supersedes

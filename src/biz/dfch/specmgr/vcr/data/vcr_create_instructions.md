@@ -43,7 +43,7 @@ genuinely a new verification case record.
 - `## More Information` -- optional freeform supplementary text.
 - `## Updates` -- optional, and the last section if present: an
   optional leading HTML comment (conventionally "Newest entry first"),
-  then dated `### {title}` entries (e.g. `2026-08-31 — Created`), each
+  then dated `### {title}` entries (e.g. `2026-08-31 - Created`), each
   with a mandatory lead paragraph.
 
 Section order is binding: Verifies -> Coverage -> Acceptance Criteria

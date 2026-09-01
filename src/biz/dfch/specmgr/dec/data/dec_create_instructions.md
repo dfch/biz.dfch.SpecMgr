@@ -37,7 +37,7 @@ step 1 if this is genuinely a new decision.
   present only if at least one option exists.
 - `## More Information` -- optional freeform supplementary text.
 - `## Updates` -- optional, and the last section if present: dated
-  `### {title}` entries (e.g. `2026-08-27 — Created`), each with a
+  `### {title}` entries (e.g. `2026-08-27 - Created`), each with a
   mandatory lead paragraph.
 
 Section order is binding: Context and Problem Statement -> Decision

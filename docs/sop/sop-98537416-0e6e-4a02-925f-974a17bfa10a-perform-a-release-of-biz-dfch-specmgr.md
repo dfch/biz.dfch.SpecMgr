@@ -382,7 +382,7 @@ directly against the local checkout.
 
 ## Updates
 
-### 2026-08-31 15:19:05.000+02:00 — Created
+### 2026-08-31 15:19:05.000+02:00 - Created
 
 Created as the normative procedure for releasing `biz-dfch-specmgr`,
 consolidating the previously hand-run README "Make a Release" steps
@@ -395,7 +395,7 @@ strategy that keeps `main` a strict ancestor of `dev`. Status is
 succeeds end to end (expected to be v0.15.0, the first release to carry
 the `sop` domain itself).
 
-### 2026-08-31 18:27:40.000+02:00 — v0.15.0 released under this SOP; script compatibility fixes; activated
+### 2026-08-31 18:27:40.000+02:00 - v0.15.0 released under this SOP; script compatibility fixes; activated
 
 The first release executed end to end under this SOP (v0.15.0): PR #37
 merged fast-forward into `main`, tag `v0.15.0` published to TestPyPI,
@@ -409,7 +409,7 @@ actual fast-forward-only enforcement, the publication workflow's name,
 the old-`gh` constraints) and simplified (stage-to-step mapping up
 front, prerequisites in Scope). Status changed from `draft` to `active`.
 
-### 2026-09-01 10:07:30.000+02:00 — v0.16.0 released under this SOP; pr-merge made deterministic (two incidents fixed)
+### 2026-09-01 10:07:30.000+02:00 - v0.16.0 released under this SOP; pr-merge made deterministic (two incidents fixed)
 
 The second release executed end to end under this SOP (v0.16.0, the
 generic `delete` tool). During it, `pr-merge` tripped twice. (1) It
@@ -433,7 +433,7 @@ happened to fast-forward; v0.16.0's did not). Safety and Precautions
 and Step 6 were corrected to describe the mechanism the script actually
 uses.
 
-### 2026-09-01 11:37:37.000+02:00 — Gap closed: the release name is derived from the changelog and set in Step 9
+### 2026-09-01 11:37:37.000+02:00 - Gap closed: the release name is derived from the changelog and set in Step 9
 
 A gap surfaced after the v0.16.0 release: the `release-notes` stage only
 ever set the GitHub Release *body* from the dated changelog section, so
@@ -453,7 +453,7 @@ Precautions already states). The script's `release-notes` stage and the
 `/release` command must be corrected to match (where the two disagree,
 the SOP wins); as of this entry they still set the body only.
 
-### 2026-09-01 12:37:17.000+02:00 — Release name format refined (version prefix required); script and command aligned
+### 2026-09-01 12:37:17.000+02:00 - Release name format refined (version prefix required); script and command aligned
 
 The name set for v0.16.0 under the previous entry's rule ("Generic
 delete tool") dropped the version; the maintainer wants the name to

@@ -3796,8 +3796,8 @@ items:
 `### {free-form title}` under `## Updates` -- one update entry.
 
 The H3 heading text is free-form (date-led titles like
-`2026-08-31 — Created` are convention, not enforced). Mirrors DEC's
-`UpdateEntry` shape.
+`2026-08-31 - Created` or `2026-08-31 : Created` are convention, not
+enforced). Mirrors DEC's `UpdateEntry` shape.
 
 Parameters
 ----------

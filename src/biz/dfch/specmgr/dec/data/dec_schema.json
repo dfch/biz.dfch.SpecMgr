@@ -394,7 +394,7 @@
       "type": "object"
     },
     "UpdateEntry": {
-      "description": "`### {free-form title}` under `## Updates` -- one update entry.\n\nThe H3 heading text is free-form (date-led titles like\n`2026-08-26 \u2014 Created` are convention, not enforced). Mirrors\n`tsk`'s `UpdateEntry` shape.\n\nParameters\n----------\ncontent:\n    The lead paragraph right after the H3 heading -- this entry's own\n    update text. Mandatory.",
+      "description": "`### {free-form title}` under `## Updates` -- one update entry.\n\nThe H3 heading text is free-form (date-led titles like\n`2026-08-26 - Created` or `2026-08-26 : Created` are convention, not\nenforced). Mirrors `tsk`'s `UpdateEntry` shape.\n\nParameters\n----------\ncontent:\n    The lead paragraph right after the H3 heading -- this entry's own\n    update text. Mandatory.",
       "properties": {
         "content": {
           "$ref": "#/$defs/MarkdownParagraph",

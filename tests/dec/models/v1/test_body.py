@@ -146,11 +146,11 @@ under `load-tests/orders/`.
 
 ## Updates
 
-### 2026-08-26 — Created
+### 2026-08-26 - Created
 
 Initial decision record drafted after the 2026-08-25 platform review.
 
-### 2026-08-27 — Confirmed
+### 2026-08-27 : Confirmed
 
 Load test passed; the decision is confirmed and the migration task list
 opened.
@@ -247,7 +247,7 @@ class TestUpdateEntryHeadingAlias(unittest.TestCase):
     """`UpdateEntry`'s H3 alias is the free-form `.+` REGEX (date-led titles are convention)."""
 
     def test_update_entry_matches_any_nonempty_h3_text(self) -> None:
-        for heading in ("2026-08-26 — Created", "A Note", "x"):
+        for heading in ("2026-08-26 - Created", "A Note", "x"):
             with self.subTest(heading=heading):
                 self.assertTrue(match_alias(UpdateEntry, heading))
 
@@ -472,7 +472,7 @@ class TestOptionalSectionsIndividuallyOptional(unittest.TestCase):
     def test_updates_present(self) -> None:
         kwargs = _minimal_decision_kwargs()
         kwargs["updates"] = Updates.from_text(
-            format_text("## Updates\n\n### 2026-08-26 — Created\n\nSome update text.\n")
+            format_text("## Updates\n\n### 2026-08-26 - Created\n\nSome update text.\n")
         )
 
         sut = Decision(**kwargs)
@@ -725,7 +725,7 @@ class TestUpdatesEntryShape(unittest.TestCase):
     """`Updates`/`UpdateEntry` mirror TSK's `RecentUpdates`/`UpdateEntry` shape."""
 
     def test_parses_entry_with_content(self) -> None:
-        text = format_text("### 2026-08-26 — Created\n\nSome update text.\n")
+        text = format_text("### 2026-08-26 - Created\n\nSome update text.\n")
 
         sut = UpdateEntry.from_text(text)
 
@@ -739,7 +739,7 @@ class TestUpdatesEntryShape(unittest.TestCase):
 
     def test_entry_without_lead_paragraph_raises_assertion_error(self) -> None:
         with self.assertRaises(AssertionError):
-            UpdateEntry.from_text(format_text("### 2026-08-26 — Created\n"))
+            UpdateEntry.from_text(format_text("### 2026-08-26 - Created\n"))
 
     def test_missing_content_raises_validation_error(self) -> None:
         with self.assertRaises(ValidationError):
@@ -748,9 +748,9 @@ class TestUpdatesEntryShape(unittest.TestCase):
     def test_parses_multiple_entries_in_document_order(self) -> None:
         text = format_text(
             "## Updates\n\n"
-            "### 2026-08-26 — Created\n\n"
+            "### 2026-08-26 - Created\n\n"
             "First entry text.\n\n"
-            "### 2026-08-27 — Confirmed\n\n"
+            "### 2026-08-27 : Confirmed\n\n"
             "Second entry text.\n"
         )
 
@@ -781,7 +781,7 @@ class TestDecisionMisordering(unittest.TestCase):
             "## Decision Outcome\n\n"
             "Some outcome prose.\n\n"
             "## Updates\n\n"
-            "### 2026-08-26 — Created\n\n"
+            "### 2026-08-26 - Created\n\n"
             "Some update text.\n\n"
             "## More Information\n\n"
             "Some more information text.\n"

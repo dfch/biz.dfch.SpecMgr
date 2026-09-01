@@ -81,6 +81,6 @@ Optional free-form supplementary text.
 
 ## Updates
 
-### 2026-08-30 09:00:00.000+02:00 — Created
+### 2026-08-30 09:00:00.000+02:00 - Created
 
 A lead paragraph describing this update.

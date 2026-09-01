@@ -173,7 +173,7 @@ The full account matrix is stored in the IT wiki under `onboarding/accounts/`.
 
 ## Updates
 
-### 2026-08-30 14:30:00.000+02:00 — Approved
+### 2026-08-30 14:30:00.000+02:00 - Approved
 
 The IT Manager signed off on the procedure after the pilot run.
 """
@@ -298,42 +298,58 @@ class TestStepHeadingAlias(unittest.TestCase):
 
 
 class TestUpdateEntryHeadingAlias(unittest.TestCase):
-    """`UpdateEntry`'s regex alias requires an ISO8601 timestamp + ` — title`."""
+    """`UpdateEntry`'s regex alias requires an ISO8601 timestamp + ` - `/` : ` + `title`."""
 
     def test_accepts_well_formed_offset_timestamps(self) -> None:
         for heading in (
-            "2026-08-30 14:30:00.000+02:00 — Approved",
-            "2026-08-30 14:30:00.000-05:00 — Approved",
-            "2026-08-30 14:30:00.000Z — Approved",
-            "2026-01-02 03:04:05.678+00:00 — Created",
+            "2026-08-30 14:30:00.000+02:00 - Approved",
+            "2026-08-30 14:30:00.000-05:00 - Approved",
+            "2026-08-30 14:30:00.000Z - Approved",
+            "2026-01-02 03:04:05.678+00:00 - Created",
+            "2026-08-30 14:30:00.000+02:00 : Approved",
+            "2026-08-30 14:30:00.000-05:00 : Approved",
+            "2026-08-30 14:30:00.000Z : Approved",
+            "2026-01-02 03:04:05.678+00:00 : Created",
         ):
             with self.subTest(heading=heading):
                 self.assertTrue(match_alias(UpdateEntry, heading))
 
+    def test_rejects_em_dash_separator(self) -> None:
+        """ACC-001: the em-dash separator is rejected -- only ` - `/` : ` are accepted."""
+        for heading in (
+            "2026-08-30 14:30:00.000+02:00 — Approved",
+            "2026-08-30 14:30:00.000-05:00 — Approved",
+            "2026-08-30 14:30:00.000Z — Approved",
+        ):
+            with self.subTest(heading=heading):
+                self.assertFalse(match_alias(UpdateEntry, heading))
+
     def test_rejects_missing_title(self) -> None:
         for heading in (
             "2026-08-30 14:30:00.000+02:00",
-            "2026-08-30 14:30:00.000+02:00 — ",
-            "2026-08-30 14:30:00.000+02:00 —",
+            "2026-08-30 14:30:00.000+02:00 - ",
+            "2026-08-30 14:30:00.000+02:00 -",
+            "2026-08-30 14:30:00.000+02:00 : ",
+            "2026-08-30 14:30:00.000+02:00 :",
         ):
             with self.subTest(heading=heading):
                 self.assertFalse(match_alias(UpdateEntry, heading))
 
     def test_rejects_missing_offset(self) -> None:
         for heading in (
-            "2026-08-30 14:30:00.000 — Approved",
-            "2026-08-30 14:30:00 — Approved",
-            "2026-08-30 14:30 — Approved",
+            "2026-08-30 14:30:00.000 - Approved",
+            "2026-08-30 14:30:00 - Approved",
+            "2026-08-30 14:30 - Approved",
         ):
             with self.subTest(heading=heading):
                 self.assertFalse(match_alias(UpdateEntry, heading))
 
     def test_rejects_wrong_timestamp_format(self) -> None:
         for heading in (
-            "2026-8-30 14:30:00.000+02:00 — Approved",
-            "2026-08-30 14:30:00+02:00 — Approved",
-            "2026-08-30T14:30:00.000+02:00 — Approved",
-            "bad — Approved",
+            "2026-8-30 14:30:00.000+02:00 - Approved",
+            "2026-08-30 14:30:00+02:00 - Approved",
+            "2026-08-30T14:30:00.000+02:00 - Approved",
+            "bad - Approved",
         ):
             with self.subTest(heading=heading):
                 self.assertFalse(match_alias(UpdateEntry, heading))
@@ -526,7 +542,7 @@ class TestOptionalSectionsIndividuallyOptional(unittest.TestCase):
     def test_updates_present(self) -> None:
         kwargs = _minimal_sop_kwargs()
         kwargs["updates"] = Updates.from_text(
-            format_text("## Updates\n\n### 2026-08-30 14:30:00.000+02:00 — Created\n\nSome update text.\n")
+            format_text("## Updates\n\n### 2026-08-30 14:30:00.000+02:00 - Created\n\nSome update text.\n")
         )
 
         sut = Sop(**kwargs)
@@ -837,7 +853,7 @@ class TestUpdateEntryComputedFields(unittest.TestCase):
     """`UpdateEntry.timestamp`/`UpdateEntry.title` are computed from the heading (ACC-002)."""
 
     def test_parses_timestamp_and_title_with_offset(self) -> None:
-        text = format_text("### 2026-08-30 14:30:00.000+02:00 — Approved\n\nSigned off.\n")
+        text = format_text("### 2026-08-30 14:30:00.000+02:00 - Approved\n\nSigned off.\n")
 
         sut = UpdateEntry.from_text(text)
 
@@ -847,15 +863,15 @@ class TestUpdateEntryComputedFields(unittest.TestCase):
         self.assertEqual(str(sut), text)
 
     def test_parses_timestamp_and_title_with_z(self) -> None:
-        sut = UpdateEntry.from_text(format_text("### 2026-08-30 14:30:00.000Z — Created\n\nInitial draft.\n"))
+        sut = UpdateEntry.from_text(format_text("### 2026-08-30 14:30:00.000Z - Created\n\nInitial draft.\n"))
 
         self.assertEqual(sut.timestamp, "2026-08-30 14:30:00.000Z")
         self.assertEqual(sut.title, "Created")
 
     def test_keeps_separator_inside_the_title(self) -> None:
-        sut = UpdateEntry.from_text(format_text("### 2026-08-30 14:30:00.000+02:00 — A — B\n\nBody.\n"))
+        sut = UpdateEntry.from_text(format_text("### 2026-08-30 14:30:00.000+02:00 - A - B\n\nBody.\n"))
 
-        self.assertEqual(sut.title, "A — B")
+        self.assertEqual(sut.title, "A - B")
 
     def test_rejects_heading_without_title_at_parse_time(self) -> None:
         with self.assertRaises(AssertionError):
@@ -863,19 +879,19 @@ class TestUpdateEntryComputedFields(unittest.TestCase):
 
     def test_rejects_heading_without_offset_at_parse_time(self) -> None:
         with self.assertRaises(AssertionError):
-            UpdateEntry.from_text(format_text("### 2026-08-30 14:30:00.000 — Approved\n\nBody.\n"))
+            UpdateEntry.from_text(format_text("### 2026-08-30 14:30:00.000 - Approved\n\nBody.\n"))
 
     def test_rejects_heading_with_wrong_timestamp_format_at_parse_time(self) -> None:
         with self.assertRaises(AssertionError):
-            UpdateEntry.from_text(format_text("### 2026-8-30 14:30:00.000+02:00 — Approved\n\nBody.\n"))
+            UpdateEntry.from_text(format_text("### 2026-8-30 14:30:00.000+02:00 - Approved\n\nBody.\n"))
 
     def test_rejects_heading_without_milliseconds_at_parse_time(self) -> None:
         with self.assertRaises(AssertionError):
-            UpdateEntry.from_text(format_text("### 2026-08-30 14:30:00+02:00 — Approved\n\nBody.\n"))
+            UpdateEntry.from_text(format_text("### 2026-08-30 14:30:00+02:00 - Approved\n\nBody.\n"))
 
     def test_entry_without_lead_paragraph_raises_assertion_error(self) -> None:
         with self.assertRaises(AssertionError):
-            UpdateEntry.from_text(format_text("### 2026-08-30 14:30:00.000+02:00 — Approved\n"))
+            UpdateEntry.from_text(format_text("### 2026-08-30 14:30:00.000+02:00 - Approved\n"))
 
     def test_missing_content_raises_validation_error(self) -> None:
         with self.assertRaises(ValidationError):
@@ -888,9 +904,9 @@ class TestUpdatesContainer(unittest.TestCase):
     def test_parses_multiple_entries_in_document_order(self) -> None:
         text = format_text(
             "## Updates\n\n"
-            "### 2026-08-26 09:00:00.000+02:00 — Created\n\n"
+            "### 2026-08-26 09:00:00.000+02:00 - Created\n\n"
             "First entry text.\n\n"
-            "### 2026-08-27 10:00:00.000+02:00 — Confirmed\n\n"
+            "### 2026-08-27 10:00:00.000+02:00 - Confirmed\n\n"
             "Second entry text.\n"
         )
 
@@ -924,7 +940,7 @@ class TestSopMisordering(unittest.TestCase):
     def test_updates_before_more_information_raises_assertion_error(self) -> None:
         text = format_text(
             "# An SOP\n\n## Purpose\n\np\n\n## Procedure\n\n### Step 1: x\n\ny\n\n"
-            "## Updates\n\n### 2026-08-30 14:30:00.000+02:00 — Created\n\nSome update.\n\n"
+            "## Updates\n\n### 2026-08-30 14:30:00.000+02:00 - Created\n\nSome update.\n\n"
             "## More Information\n\nSome more info.\n"
         )
 

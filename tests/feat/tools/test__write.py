@@ -70,7 +70,7 @@ _BODY = textwrap.dedent(
 
     ### Updates
 
-    #### 2026-08-30 16:47:59.981Z — Paused for review
+    #### 2026-08-30 16:47:59.981Z - Paused for review
 
     Free-form prose describing what happened in this update.
     """

@@ -95,7 +95,7 @@ _MINIMAL_DOC = textwrap.dedent(
 
     ### Updates
 
-    #### 2026-08-26 09:00:00.000Z — Created
+    #### 2026-08-26 09:00:00.000Z - Created
 
     Initial draft.
     """
@@ -239,11 +239,11 @@ class TestParseFeatValueViolations(unittest.TestCase):
 
             ### Updates
 
-            #### 2026-08-26 09:00:00.000Z — Created
+            #### 2026-08-26 09:00:00.000Z - Created
 
             Initial draft.
 
-            #### 2026-08-27 09:00:00.000Z — Later
+            #### 2026-08-27 09:00:00.000Z - Later
 
             A later update, out of order.
             """
@@ -303,7 +303,7 @@ class TestParseFeatStructuralViolations(unittest.TestCase):
 
             ### Updates
 
-            #### 2026-08-26 09:00:00.000Z — Created
+            #### 2026-08-26 09:00:00.000Z - Created
 
             Initial draft.
             """
@@ -351,7 +351,7 @@ class TestParseFeatStructuralViolations(unittest.TestCase):
 
             ### Updates
 
-            #### 2026-08-26 09:00:00.000Z — Created
+            #### 2026-08-26 09:00:00.000Z - Created
 
             Initial draft.
             """
@@ -367,7 +367,16 @@ class TestParseFeatStructuralViolations(unittest.TestCase):
             parse_feat(text)
 
     def test_malformed_update_entry_heading_raises_assertion_error(self) -> None:
-        text = _MINIMAL_DOC.replace("#### 2026-08-26 09:00:00.000Z — Created", "#### Not A Timestamp — Created")
+        text = _MINIMAL_DOC.replace("#### 2026-08-26 09:00:00.000Z - Created", "#### Not A Timestamp - Created")
+
+        with self.assertRaises(AssertionError):
+            parse_feat(text)
+
+    def test_update_entry_with_em_dash_separator_raises_assertion_error(self) -> None:
+        """ACC-001: an em-dash-separated `### Updates` entry heading is a structural failure."""
+        text = _MINIMAL_DOC.replace(
+            "#### 2026-08-26 09:00:00.000Z - Created", "#### 2026-08-26 09:00:00.000Z — Created"
+        )
 
         with self.assertRaises(AssertionError):
             parse_feat(text)
@@ -411,7 +420,7 @@ class TestParseFeatStructuralViolations(unittest.TestCase):
 
             ### Updates
 
-            #### 2026-08-26 09:00:00.000Z — Created
+            #### 2026-08-26 09:00:00.000Z - Created
 
             Initial draft.
             """

@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **BREAKING**: update-entry headings no longer accept an em-dash (`—`)
+  separator between the timestamp and the title. SOP `## Updates`
+  (`### {timestamp} - {title}`/`### {timestamp} : {title}`) and FEAT
+  `## Updates`/`### Decisions Made` (`#### {timestamp} - {title}`/
+  `#### {timestamp} : {title}`) now only accept `" - "` (space, hyphen,
+  space) or `" : "` (space, colon, space) as the separator; an em-dash
+  entry fails to parse (`AssertionError`/alias mismatch), eagerly, at
+  construction time. Existing SOP/FEAT documents using the em-dash
+  separator must be migrated to `" - "` or `" : "` (GitHub issue #38,
+  Phase 1 of feat-38-39-41-43-44). DEC/VCR update-entry convention text
+  (docstrings, packaged templates/examples/create-instructions) was
+  updated to the same separators for consistency, though those two
+  domains' `## Updates` headings remain free-form and unenforced until
+  Phase 2.
+
 ### Fixed
 
 - `specmgr docs`: stale per-module API pages are now pruned.
