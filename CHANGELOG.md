@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `specmgr docs`: stale per-module API pages are now pruned.
+  `_generate_api_docs` only ever *wrote* pages, so a module removed from
+  `src/` left its `docs/api/*.md` page behind forever — an orphaned file
+  no longer linked by the regenerated `api/README.md` index. It now
+  deletes every flat `*.md` file in the output `api/` directory that is
+  neither the `README.md` index nor a page written by the same run —
+  never touching `README.md`, non-`.md` files, or nested directories.
+  Pruning is skipped entirely rather than deleting the existing tree on
+  any untrustworthy run (zero pages written, any module import failure,
+  or truncated module collection), so a partial-import environment can
+  never wipe the tree. `docs()` echoes `✓ Pruned {n} stale page(s) from
+  {api_dir}` only when n > 0 (unchanged-tree output stays unchanged) plus
+  a one-line `⚠` warning when pruning was skipped due to import
+  problems. The first run with pruning enabled deleted the five real
+  stale pages left by feat-13-list-paging's resource→tool conversion
+  (`biz.dfch.specmgr.{adr,qa,req,tsk,uc}.resources.*_list.md`) (GitHub
+  issue #40).
+
 ## [0.16.0] - 2026-09-01
 
 ### Added

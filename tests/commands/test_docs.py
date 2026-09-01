@@ -25,9 +25,15 @@ bug in ``AGENTS.md``) lived. These tests call ``docs()`` itself and assert on
 the files it writes: once via its ``--output`` parameter directly, and once
 via its default (patching the module's ``_DOCS_DIR`` constant so the default
 branch is exercised without touching the real ``docs/`` tree).
+``TestApiDocsPruning`` covers the stale-page prune (feat-40): a healthy run
+deletes pre-seeded flat ``*.md`` orphans while leaving ``README.md``,
+non-``.md`` files, and nested directories untouched, and an untrustworthy run
+(zero pages, a mocked per-module import failure) skips pruning entirely.
 """
 
+import contextlib
 import importlib
+import io
 import tempfile
 import unittest
 from pathlib import Path
@@ -100,9 +106,10 @@ class TestGenerateApiDocs(unittest.TestCase):
         """Must write one .md per importable module plus a grouped README index."""
         with tempfile.TemporaryDirectory() as tmp:
             api_dir = Path(tmp) / "api"
-            count = _generate_api_docs(api_dir, "biz.dfch.specmgr.commands")
+            written, pruned = _generate_api_docs(api_dir, "biz.dfch.specmgr.commands")
 
-            self.assertGreater(count, 0)
+            self.assertGreater(written, 0)
+            self.assertEqual(pruned, 0)
             self.assertTrue((api_dir / "biz.dfch.specmgr.commands.md").is_file())
             self.assertTrue((api_dir / "biz.dfch.specmgr.commands.docs.md").is_file())
 
@@ -114,10 +121,152 @@ class TestGenerateApiDocs(unittest.TestCase):
         """An unimportable package name must not blow up, and must skip the index."""
         with tempfile.TemporaryDirectory() as tmp:
             api_dir = Path(tmp) / "api"
-            count = _generate_api_docs(api_dir, "no_such_package_xyz")
+            written, pruned = _generate_api_docs(api_dir, "no_such_package_xyz")
 
-            self.assertEqual(count, 0)
+            self.assertEqual(written, 0)
+            self.assertEqual(pruned, 0)
             self.assertFalse((api_dir / "README.md").exists())
+
+
+class TestApiDocsPruning(unittest.TestCase):
+    """Tests for the stale-page pruning of ``_generate_api_docs`` and ``docs()``."""
+
+    _STALE_PAGE_NAME = "biz.dfch.specmgr.commands.stale_module.md"
+
+    def _preseed_stale_page(self, api_dir: Path) -> Path:
+        api_dir.mkdir(parents=True, exist_ok=True)
+        stale = api_dir / self._STALE_PAGE_NAME
+        stale.write_text("# stale page\n", encoding="utf-8")
+        return stale
+
+    def test_prunes_stale_page_and_keeps_current_pages_and_index(self):
+        """A pre-seeded stale page must be deleted; current pages and README.md must remain."""
+        with tempfile.TemporaryDirectory() as tmp:
+            api_dir = Path(tmp) / "api"
+            stale = self._preseed_stale_page(api_dir)
+
+            written, pruned = _generate_api_docs(api_dir, "biz.dfch.specmgr.commands")
+
+            self.assertGreater(written, 0)
+            self.assertEqual(pruned, 1)
+            self.assertFalse(stale.exists())
+            self.assertTrue((api_dir / "biz.dfch.specmgr.commands.md").is_file())
+            self.assertTrue((api_dir / "biz.dfch.specmgr.commands.docs.md").is_file())
+            self.assertTrue((api_dir / "README.md").is_file())
+
+    def test_prune_never_deletes_readme_index(self):
+        """README.md is excluded from the prune set -- only the stale page may be deleted."""
+        with tempfile.TemporaryDirectory() as tmp:
+            api_dir = Path(tmp) / "api"
+            self._preseed_stale_page(api_dir)
+
+            written, pruned = _generate_api_docs(api_dir, "biz.dfch.specmgr.commands")
+
+            self.assertGreater(written, 0)
+            self.assertEqual(pruned, 1)
+            self.assertTrue((api_dir / "README.md").is_file())
+
+    def test_zero_page_run_leaves_preexisting_files_untouched(self):
+        """An unimportable package writes no pages and must not delete anything."""
+        with tempfile.TemporaryDirectory() as tmp:
+            api_dir = Path(tmp) / "api"
+            api_dir.mkdir()
+            stale = api_dir / "preexisting_stale.md"
+            stale.write_text("stale\n", encoding="utf-8")
+            readme = api_dir / "README.md"
+            readme.write_text("old index\n", encoding="utf-8")
+            notes = api_dir / "notes.txt"
+            notes.write_text("keep\n", encoding="utf-8")
+
+            written, pruned = _generate_api_docs(api_dir, "no_such_package_xyz")
+
+            self.assertEqual(written, 0)
+            self.assertEqual(pruned, 0)
+            self.assertTrue(stale.is_file())
+            self.assertEqual(readme.read_text(encoding="utf-8"), "old index\n")
+            self.assertTrue(notes.is_file())
+
+    def test_prune_ignores_non_md_files_and_nested_directories(self):
+        """Only flat, top-level, file-typed ``*.md`` pages are pruned candidates."""
+        with tempfile.TemporaryDirectory() as tmp:
+            api_dir = Path(tmp) / "api"
+            stale = self._preseed_stale_page(api_dir)
+            notes = api_dir / "notes.txt"
+            notes.write_text("keep\n", encoding="utf-8")
+            nested = api_dir / "nested"
+            nested.mkdir()
+            nested_stale = nested / "inner_stale.md"
+            nested_stale.write_text("keep\n", encoding="utf-8")
+            md_dir = api_dir / "stale.md"  # a directory carrying a .md name
+            md_dir.mkdir()
+
+            written, pruned = _generate_api_docs(api_dir, "biz.dfch.specmgr.commands")
+
+            self.assertGreater(written, 0)
+            self.assertEqual(pruned, 1)
+            self.assertFalse(stale.exists())
+            self.assertTrue(notes.is_file())
+            self.assertTrue(nested_stale.is_file())
+            self.assertTrue(md_dir.is_dir())
+
+    def test_single_module_import_failure_skips_pruning(self):
+        """One failed module import (mocked) must skip pruning entirely."""
+        with tempfile.TemporaryDirectory() as tmp:
+            healthy_api_dir = Path(tmp) / "healthy"
+            written_healthy, pruned_healthy = _generate_api_docs(healthy_api_dir, "biz.dfch.specmgr.commands")
+            self.assertGreater(written_healthy, 0)
+            self.assertEqual(pruned_healthy, 0)
+
+            api_dir = Path(tmp) / "api"
+            stale = self._preseed_stale_page(api_dir)
+            real_generate = docs_module._generate_module_markdown
+
+            def failing_generate(module_name: str) -> str | None:
+                if module_name == "biz.dfch.specmgr.commands":
+                    return None
+                return real_generate(module_name)
+
+            with mock.patch.object(docs_module, "_generate_module_markdown", side_effect=failing_generate):
+                written, pruned = _generate_api_docs(api_dir, "biz.dfch.specmgr.commands")
+
+            self.assertEqual(written, written_healthy - 1)
+            self.assertEqual(pruned, 0)
+            self.assertTrue(stale.is_file())
+
+    def test_double_run_into_same_dir_is_idempotent(self):
+        """Two consecutive runs into the same scratch dir must yield identical file sets."""
+        with tempfile.TemporaryDirectory() as tmp:
+            api_dir = Path(tmp) / "api"
+            stale = self._preseed_stale_page(api_dir)
+
+            _generate_api_docs(api_dir, "biz.dfch.specmgr.commands")
+            files_after_first_run = sorted(p.name for p in api_dir.iterdir())
+
+            _generate_api_docs(api_dir, "biz.dfch.specmgr.commands")
+            files_after_second_run = sorted(p.name for p in api_dir.iterdir())
+
+            self.assertEqual(files_after_first_run, files_after_second_run)
+            self.assertNotIn(stale.name, files_after_second_run)
+            self.assertIn("README.md", files_after_second_run)
+
+    def test_docs_end_to_end_prunes_and_reports_count(self):
+        """docs() with a pre-seeded stale page must prune it and echo the count."""
+        with tempfile.TemporaryDirectory() as tmp:
+            docs_dir = Path(tmp) / "docs"
+            api_dir = docs_dir / "api"
+            api_dir.mkdir(parents=True)
+            stale = api_dir / "biz.dfch.specmgr.stale_module_xyz.md"
+            stale.write_text("# stale page\n", encoding="utf-8")
+
+            buffer = io.StringIO()
+            with contextlib.redirect_stdout(buffer):
+                docs(output=docs_dir)
+            echoed = buffer.getvalue()
+
+            self.assertFalse(stale.exists())
+            self.assertRegex(echoed, r"✓ Wrote \d+ module file\(s\) to ")
+            self.assertIn("✓ Pruned 1 stale page(s) from", echoed)
+            self.assertNotIn("⚠", echoed)
 
 
 class TestGeneratedMdContent(unittest.TestCase):
