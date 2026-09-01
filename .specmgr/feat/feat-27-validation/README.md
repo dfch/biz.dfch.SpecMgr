@@ -1,9 +1,9 @@
 ---
 created: '2026-09-01T14:24:06.341303'
 id: feat-27-validation
-status: planning
+status: done
 type: feat
-updated: '2026-09-01T23:59:00.000000'
+updated: '2026-09-02T00:15:00.000000'
 version: 1.0.0
 ---
 
@@ -116,24 +116,33 @@ The `create_feat` tool auto-assigns `max(NNN)+1` (which would be `feat-37-<slug>
 - [x] Task 4.1: Regression tests with the issue #27 bodies verbatim through `validate_tsk`/`create_tsk`/`update`, plus the feat-7 Task 0.29 body — depends on: Phase 3 — status: done (2026-09-01)
 - [x] Task 4.2: Full quality gate (`ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, full `unittest` suite) — depends on: Task 4.1 — status: done (2026-09-01)
 - [x] Task 4.3: Regenerate `docs/api/`/`docs/GENERATED.md` (`specmgr docs`) and `docs/MCP.md` (`specmgr mcp-docs`); add the `AGENTS.md` note — depends on: Task 4.2 — status: done (2026-09-01)
-- [ ] Task 4.4: Comment on GitHub issue #27 (root cause, the message contract, the feature id); walk the ACCs; mark the feature done — depends on: Task 4.3
+- [x] Task 4.4: Comment on GitHub issue #27 (root cause, the message contract, the feature id); walk the ACCs; mark the feature done — depends on: Task 4.3 — status: done (2026-09-02; commented on GitHub issue #27 at https://github.com/dfch/biz.dfch.SpecMgr/issues/27#issuecomment-5498223849; all five ACCs (ACC-001 through ACC-005) independently verified by the orchestrator with concrete test-run evidence; feature marked done)
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-09-01**: Phase 4's Tasks 4.1-4.3 are complete, on top of Phases 1-3. Regression
-tests reproduce GitHub issue #27's own bare `<domain>` token repro and feat-7 Task 0.29's
-`+`-prefixed continuation-line trigger end to end through `validate_tsk`/`create_tsk`/the
-generic `update` tool (Task 4.1, `tests/regression/test_issue_27.py`, 6 tests, ACC-005/REQ-007).
-The full quality gate is green (`ruff format --check`, `ruff check`, `vulture`, and the full
-`unittest` suite: 2787 tests, up from 2781, OK) and `docs/api/`/`docs/GENERATED.md`/`docs/MCP.md`
-are regenerated (Task 4.2/4.3), plus a new `AGENTS.md` paragraph documents the feature's outcome.
-Only Task 4.4 remains -- commenting on GitHub issue #27, walking the ACCs, and setting this
-feature's status to `done` -- explicitly reserved for the orchestrator, not the phase
-implementer.
+**As of 2026-09-02, this feature is complete and closed.** All four phases (0-4) and every task
+are done. All five acceptance criteria were verified with concrete evidence: ACC-001 by
+`tests/models/md/test_validation_error_baseline.py`/`test_error_messages.py`; ACC-002 by
+`tests/models/md/test_frontmatter_errors.py`; ACC-003 by
+`tests/general/tools/test_error_context.py`; ACC-004 by the full unittest suite (2787 tests
+passing, zero exception-type regressions) plus a clean `ruff`/`vulture` run; and ACC-005 by
+`tests/regression/test_issue_27.py`. A comment was posted on GitHub issue #27 documenting the
+root cause, the message contract, and this feature id.
 
 ### Updates
+
+#### 2026-09-02 00:15:00.000Z — Orchestrator final verification and close-out
+
+Ran the full quality gate independently (`ruff format --check`, `ruff check`,
+`vulture src/ whitelist.py --min-confidence 60`, and the full `unittest` suite), confirming all
+green with no regressions. Confirmed no docs drift by re-running `specmgr docs` and
+`specmgr mcp-docs` (both idempotent, no diff). Posted a comment on GitHub issue #27
+(https://github.com/dfch/biz.dfch.SpecMgr/issues/27#issuecomment-5498223849) documenting the
+root cause, the message contract, and this feature id. Walked all five ACCs
+(ACC-001 through ACC-005) against the concrete test evidence and confirmed each is satisfied.
+Task 4.4 completed and this feature's status set to `done`.
 
 #### 2026-09-01 23:59:00.000Z — Phase 4 Tasks 4.1-4.3 (Verify and Close) completed
 
