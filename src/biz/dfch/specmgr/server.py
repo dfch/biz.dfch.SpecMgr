@@ -227,9 +227,32 @@ resolves by ``id``, takes the domain lock, and returns the deleted path; a
 ``ValueError`` for injection/wrong-format ids before any file access, the
 domain's ``XNotFoundError`` for missing documents, and a ``DeleteError`` for
 I/O failures;
-``webfetch`` -- fetch a URL over HTTP GET with a
-bearer token, restricted to a configured base URL (``SPECMGR_WEBFETCH_BASE_URL``,
-``SPECMGR_WEBFETCH_BEARER``).
+``confluence_fetch`` (renamed from ``webfetch``, ADR
+a156fdf9-052c-4f43-93a2-eeec04a91eac) -- fetch a URL over HTTP GET with a
+bearer token, restricted to a configured base URL (``SPECMGR_CONFLUENCE_BASE_URL``,
+``SPECMGR_CONFLUENCE_BEARER``); automatically converts a browsable Confluence
+page URL (Cloud-style ``/pages/<id>/<title>`` or Server-style
+``?pageId=<id>``) into ``{base}/rest/api/content/{id}?expand=body.storage``,
+rejects ``/x/<tinyid>`` tiny links, raises on an SSO-redirect off the
+configured base URL's host, and downloads non-text/binary content to an
+optional ``destination_path`` instead of returning it as text.
+``confluence_update`` (ADR a156fdf9-052c-4f43-93a2-eeec04a91eac,
+feat-50-confluence Phases 3-4) -- write a local Markdown file's rendered HTML
+into an existing Confluence page's body via the REST API: ``page_url_or_id``
+(a bare page id, browsable page URL, or REST content URL; a ``/x/<tinyid>``
+tiny link is rejected the same way ``confluence_fetch`` rejects it) is
+resolved to a page id, its current ``version.number``/``title`` are read via
+a ``GET``, ``markdown_file_path`` is rendered via ``markdown-it-py``, every
+local image it references (a relative/absolute filesystem path, not an
+``http(s)://`` URL) that exists on disk is best-effort uploaded as a
+Confluence attachment (``POST .../child/attachment``, falling back to
+``.../child/attachment/{id}/data`` if the filename already exists) with its
+``<img>`` tag rewritten to ``<ac:image><ri:attachment ri:filename="..." />
+</ac:image>`` on success (a missing file or a failed upload just leaves that
+one ``<img>`` tag unrewritten), and the incremented version is written via a
+``PUT`` with the (possibly rewritten) HTML fragment as the new
+``body.storage.value`` and the title unchanged; reuses the same two
+environment variables as ``confluence_fetch``, no new configuration surface.
 
 Prompts
 -------
@@ -282,7 +305,12 @@ near-duplicate verification case record.
 General prompts (``general/prompts/``): ``compact_history`` -- guides rotating
 older ``### Recent Updates`` entries out of any `.specmgr` feature folder's
 ``README.md`` into an optional sibling ``history.md``, per ADR
-e369ee2e-3353-4f92-991c-6367d76d832e.
+e369ee2e-3353-4f92-991c-6367d76d832e; plus ``confluence_update``/
+``confluence_fetch`` -- thin, single-tool-call prompts sharing their
+respective tools' exact names (see the ``confluence_update``/``confluence_fetch``
+tools above), each returning instructional text that tells the LLM to call
+the matching tool with the given parameters, never calling it themselves
+(feat-50-confluence Phase 8, REQ-012/REQ-013).
 
 Modules are grouped domain-first
 (ADR ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by
