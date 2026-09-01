@@ -3,7 +3,7 @@ created: '2026-08-31T15:24:14.582592'
 id: 98537416-0e6e-4a02-925f-974a17bfa10a
 status: active
 type: sop
-updated: '2026-09-01T11:37:37.000000'
+updated: '2026-09-01T12:37:17.000000'
 version: 1.0.0
 ---
 
@@ -62,13 +62,14 @@ point.
 - **Release commit**: the single commit on `dev` touching exactly three
   files — `pyproject.toml`, `uv.lock`, `CHANGELOG.md` — with the message
   `chore(release): bump version to vX.Y.Z`.
-- **Release name**: the title of the GitHub Release: a concise
-  title-case headline (a few words) naming the dated changelog
-  section's most significant user-visible change, derived from the
-  section's content — never the bare version string, which is already
-  carried by the release's tag. When a section has no single dominant
-  change, the name is a short compound of its two main changes. Set
-  alongside the release notes in Step 9.
+- **Release name**: the title of the GitHub Release, of the form
+  `vX.Y.Z - <text>`: the release's version (always matching the tag),
+  a space-dash-space, and a concise title-case headline (a few words)
+  naming the dated changelog section's most significant user-visible
+  change, derived from the section's content. When a section has no
+  single dominant change, the text is a short compound of its two main
+  changes. The `release-notes` stage composes the version prefix; the
+  agent supplies the text (Step 9).
 - **Fast-forward invariant**: `main` is always an ancestor of `dev`, i.e.
   `main` carries no unique commits. The invariant is what makes the
   `dev` → `main` merge possible in fast-forward-only form, and it must
@@ -322,21 +323,22 @@ remedy is never re-tagging — it is a fix plus a new, higher version.
 ### Step 9: Verify the publication and finalize the release name and notes
 
 **Automated:** first, the agent (not the script) derives the release
-name from the new dated changelog section's content, per the `Release
-name` definition: a concise title-case headline naming the section's
-most significant user-visible change — never the bare version string.
-Then `scripts/release.sh release-notes <X.Y.Z> <name>` verifies the
-GitHub Release exists with both artifacts (sdist and wheel), sets the
-release name to the derived headline and the release notes to the
-section's content (through `gh api` — this environment's `gh` has no
-`gh release edit`), and prints the final summary: version, tag, GitHub
-Release URL, PyPI and TestPyPI project URLs, and the MCP Registry
-listing.
+name *text* from the new dated changelog section's content, per the
+`Release name` definition: a concise title-case headline naming the
+section's most significant user-visible change. Then
+`scripts/release.sh release-notes <X.Y.Z> <text>` verifies the GitHub
+Release exists with both artifacts (sdist and wheel), sets the release
+name — composed by the stage as `v<X.Y.Z> - <text>` — and the release
+notes to the section's content (through `gh api` — this environment's
+`gh` has no `gh release edit`), and prints the final summary: version,
+tag, GitHub Release URL, PyPI and TestPyPI project URLs, and the MCP
+Registry listing.
 
-**Manual fallback:** derive the release name from the dated changelog
-section's content as above; open the GitHub Release, confirm both assets
-are attached, set its title to the derived name, and paste the new
-changelog section into the release body.
+**Manual fallback:** derive the release name text from the dated
+changelog section's content as above; open the GitHub Release, confirm
+both assets are attached, set its title to `vX.Y.Z - <text>` (version
+matching the tag, space-dash-space, text), and paste the new changelog
+section into the release body.
 
 The release is complete when all four publication targets are reachable
 and the maintainer is informed.
@@ -450,3 +452,21 @@ environment's `gh` 2.4.0 has no `gh release edit`, as Safety and
 Precautions already states). The script's `release-notes` stage and the
 `/release` command must be corrected to match (where the two disagree,
 the SOP wins); as of this entry they still set the body only.
+
+### 2026-09-01 12:37:17.000+02:00 — Release name format refined (version prefix required); script and command aligned
+
+The name set for v0.16.0 under the previous entry's rule ("Generic
+delete tool") dropped the version; the maintainer wants the name to
+identify the release at a glance. The `Release name` is now of the
+form `vX.Y.Z - <text>` (version matching the tag, space-dash-space,
+then the changelog-derived headline), and the two owed corrections
+were made: the `release-notes` stage takes the name text as a second
+positional argument and composes and sets the full name alongside the
+notes (the non-agent `all` path passes no text, leaves the name as-is,
+and says so in its output), and the `/release` command derives the
+text from the curated section before calling the stage. The stage's
+idempotency check was fixed along the way: GitHub returns the stored
+release body with CRLF line endings (confirmed for v0.15.0 and
+v0.16.0), so the comparison strips CRs — without that the stage would
+re-PATCH forever and never report "already set". The v0.16.0 release
+was renamed to "v0.16.0 - Generic delete tool".
