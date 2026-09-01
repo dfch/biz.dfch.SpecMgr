@@ -19,12 +19,12 @@
 
 Unlike the per-tool unit tests elsewhere under ``tests/gol/tools/``, this
 module drives the actual tool functions in a single realistic sequence --
-``list_gol`` (empty) -> ``create_gol`` -> ``get_gol`` -> ``list_gol`` (1) ->
-``update`` -> ``set_status`` (``type="gol"``) -> ``get_gol`` (status changed) ->
-``list_gol`` (status reflected) -> ``delete_gol`` (stub) -- against a real
-temporary docs directory, confirming ACC-004/ACC-006's "verified live, not
-just asserted" requirement with concrete evidence beyond the isolated
-per-tool tests.
+ ``list_gol`` (empty) -> ``create_gol`` -> ``get_gol`` -> ``list_gol`` (1) ->
+ ``update`` -> ``set_status`` (``type="gol"``) -> ``get_gol`` (status changed) ->
+ ``list_gol`` (status reflected) -> ``delete`` (generic, ``type="gol"``) --
+ against a real temporary docs directory, confirming ACC-004/ACC-006's
+ "verified live, not just asserted" requirement with concrete evidence
+ beyond the isolated per-tool tests.
 
 Isolation follows the exact same pattern as ``test_create_gol.py``'s
 ``TempGolDirTestCase``: a fresh ``tempfile.TemporaryDirectory()`` is pointed
@@ -41,11 +41,12 @@ from pathlib import Path
 from unittest import mock
 
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
+from biz.dfch.specmgr.general.tools.delete import delete
 from biz.dfch.specmgr.general.tools.set_status import set_status
 from biz.dfch.specmgr.general.tools.update import update
 from biz.dfch.specmgr.gol.models.v1 import GolDocument, parse_gol
+from biz.dfch.specmgr.gol.tools._paths import GolNotFoundError, find_gol_path, gol_base_dir
 from biz.dfch.specmgr.gol.tools.create_gol import create_gol
-from biz.dfch.specmgr.gol.tools.delete_gol import delete_gol
 from biz.dfch.specmgr.gol.tools.get_gol import get_gol
 from biz.dfch.specmgr.gol.tools.get_gol_example import get_gol_example
 from biz.dfch.specmgr.gol.tools.get_gol_template import get_gol_template
@@ -93,7 +94,7 @@ class TestGolLifecycleIntegration(TempGolDirTestCase):
 
     def test_list_create_get_list_update_set_status_get_list_delete_roundtrip(self) -> None:
         """list_gol -> create_gol -> get_gol -> list_gol -> update -> set_status -> get_gol ->
-        list_gol -> delete_gol, live."""
+        list_gol -> delete (generic, type="gol"), live."""
         # 0. list_gol: an empty base directory must list nothing.
         initial_page = list_gol()
         self.assertEqual(initial_page.total, 0)
@@ -153,11 +154,15 @@ class TestGolLifecycleIntegration(TempGolDirTestCase):
         self.assertEqual(matches[0].status, "accepted")
         self.assertEqual(matches[0].title, "Competitive Engines in Consumer Vehicles")
 
-        # 8. delete_gol: stub must always raise NotImplementedError, unconditionally.
-        with self.assertRaises(NotImplementedError):
-            delete_gol(gol_id)
-        # The document must still exist afterward -- the stub must not touch the filesystem.
-        self.assertEqual(get_gol(gol_id).frontmatter.id, gol_id)
+        # 8. delete (generic, type="gol"): a real hard delete via the generic tool -- the
+        #    returned str must be the seeded file path, the file must be gone, and a
+        #    follow-up get_gol must raise GolNotFoundError.
+        gol_path = find_gol_path(gol_base_dir(), gol_id)
+        deleted_path = delete(gol_id, type="gol")
+        self.assertEqual(deleted_path, str(gol_path))
+        self.assertFalse(gol_path.exists())
+        with self.assertRaises(GolNotFoundError):
+            get_gol(gol_id)
 
     def test_gol_example_and_template_are_real_parseable_content(self) -> None:
         """Packaged example/template content must be real, non-empty, parseable markdown."""

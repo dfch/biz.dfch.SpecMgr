@@ -10,7 +10,7 @@ shared ``mcp`` application instance at once::
 
 ``tools`` (``parse_uc``, ``get_uc``, ``list_uc``, ``get_uc_example``,
 ``get_uc_template``, ``create_uc``,
-``delete_uc``, ``validate_uc``) and ``resources`` (``specmgr://uc/schema``,
+``validate_uc``) and ``resources`` (``specmgr://uc/schema``,
 ``specmgr://uc/example``, ``specmgr://uc/template``) exist; whole-body and
 line-range updates of an existing document go through the generic
 ``update`` tool in ``general.tools`` (``type="uc"``), and status changes

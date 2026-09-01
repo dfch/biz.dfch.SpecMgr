@@ -31,7 +31,7 @@ resources against the shared ``mcp`` application instance at once::
 
 ``tools`` (``create_dec``, ``parse_dec``,
 ``list_dec``, ``get_dec``, ``get_dec_example``, ``get_dec_template``,
-``delete_dec``, ``validate_dec``), ``resources`` (``specmgr://dec/schema``,
+``validate_dec``), ``resources`` (``specmgr://dec/schema``,
 ``specmgr://dec/example``, ``specmgr://dec/template``), and ``prompts``
 (``create_dec``, ``update_dec``) all exist; whole-body and line-range
 updates of an existing document go through the generic ``update`` tool in

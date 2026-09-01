@@ -80,7 +80,6 @@ First-line docstrings from each module, organized by domain:
 - `dec/tools/_paths.py` — Decision base directory resolution and id -> path lookup (Task 2.1).
 - `dec/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_dec`` and
 - `dec/tools/create_dec.py` — ``@mcp.tool()`` wrapper: create_dec (Task 2.2).
-- `dec/tools/delete_dec.py` — ``@mcp.tool()`` wrapper: delete_dec (Task 2.2).
 - `dec/tools/get_dec.py` — ``@mcp.tool()`` wrapper: get_dec (Task 2.2).
 - `dec/tools/get_dec_example.py` — ``@mcp.tool()`` wrapper: get_dec_example (Task 2.2).
 - `dec/tools/get_dec_template.py` — ``@mcp.tool()`` wrapper: get_dec_template (Task 2.2).
@@ -112,7 +111,6 @@ First-line docstrings from each module, organized by domain:
 - `feat/tools/_paths.py` — Feature (FEAT) base directory resolution and id -> path lookup (Task 2.1).
 - `feat/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_feat`` and
 - `feat/tools/create_feat.py` — ``@mcp.tool()`` wrapper: create_feat (Task 2.3).
-- `feat/tools/delete_feat.py` — ``@mcp.tool()`` wrapper: delete_feat (Task 2.3).
 - `feat/tools/get_feat.py` — ``@mcp.tool()`` wrapper: get_feat (Task 2.3).
 - `feat/tools/get_feat_example.py` — ``@mcp.tool()`` wrapper: get_feat_example (Task 2.3).
 - `feat/tools/get_feat_template.py` — ``@mcp.tool()`` wrapper: get_feat_template (Task 2.3).
@@ -137,7 +135,9 @@ First-line docstrings from each module, organized by domain:
 - `general/tools/_doc_paths.py` — Generic, doc-type-agnostic base directory resolution, filename slugification,
 - `general/tools/_packaged_data.py` — Generic, doc-type-agnostic access to packaged example/template/schema data
 - `general/tools/_paging.py` — Generic, doc-type-agnostic paging helpers (feat-13 Task 1.2).
+- `general/tools/_path_safety.py` — Reusable, doc-type-agnostic path-safety assertions for document ids and
 - `general/tools/_splice.py` — Frontmatter-stripped body extraction and body-line splicing for the generic
+- `general/tools/delete.py` — ``@mcp.tool()`` wrapper: delete (feat-36-delete, Phase 2).
 - `general/tools/mdformat.py` — ``@mcp.tool()`` wrapper: mdformat.
 - `general/tools/set_status.py` — ``@mcp.tool()`` wrapper: set_status (feat-22-consolidate-mutation-tools, Phase 4).
 - `general/tools/update.py` — ``@mcp.tool()`` wrapper: update (feat-22-consolidate-mutation-tools, Phase 2).
@@ -166,7 +166,6 @@ First-line docstrings from each module, organized by domain:
 - `gol/tools/_paths.py` — Goal base directory resolution and id -> path lookup (Task 3.1).
 - `gol/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_gol`` and
 - `gol/tools/create_gol.py` — ``@mcp.tool()`` wrapper: create_gol (Task 3.3).
-- `gol/tools/delete_gol.py` — ``@mcp.tool()`` wrapper: delete_gol (Task 3.6).
 - `gol/tools/get_gol.py` — ``@mcp.tool()`` wrapper: get_gol (Task 3.8).
 - `gol/tools/get_gol_example.py` — ``@mcp.tool()`` wrapper: get_gol_example (Task 3.10).
 - `gol/tools/get_gol_template.py` — ``@mcp.tool()`` wrapper: get_gol_template (Task 3.10).
@@ -241,7 +240,6 @@ First-line docstrings from each module, organized by domain:
 - `prb/tools/_paths.py` — Problem statement base directory resolution and id -> path lookup (Task 3.1).
 - `prb/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_prb`` and
 - `prb/tools/create_prb.py` — ``@mcp.tool()`` wrapper: create_prb (Task 3.3).
-- `prb/tools/delete_prb.py` — ``@mcp.tool()`` wrapper: delete_prb (Task 3.6).
 - `prb/tools/get_prb.py` — ``@mcp.tool()`` wrapper: get_prb (Task 3.8).
 - `prb/tools/get_prb_example.py` — ``@mcp.tool()`` wrapper: get_prb_example (Task 3.10).
 - `prb/tools/get_prb_template.py` — ``@mcp.tool()`` wrapper: get_prb_template (Task 3.10).
@@ -275,7 +273,6 @@ First-line docstrings from each module, organized by domain:
 - `qa/tools/_paths.py` — Question and Answer (QA) base directory resolution and id -> path lookup (Phase 4, Task 4.1).
 - `qa/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_qa`` and
 - `qa/tools/create_qa.py` — ``@mcp.tool()`` wrapper: create_qa (Phase 4, Task 4.1).
-- `qa/tools/delete_qa.py` — ``@mcp.tool()`` wrapper: delete_qa (Phase 4, Task 4.1).
 - `qa/tools/get_qa.py` — ``@mcp.tool()`` wrapper: get_qa (Phase 4, Task 4.1).
 - `qa/tools/get_qa_example.py` — ``@mcp.tool()`` wrapper: get_qa_example (Phase 4, Task 4.1).
 - `qa/tools/get_qa_template.py` — ``@mcp.tool()`` wrapper: get_qa_template (Phase 4, Task 4.1).
@@ -306,7 +303,6 @@ First-line docstrings from each module, organized by domain:
 - `req/tools/_paths.py` — Requirement base directory resolution and id -> path lookup (Task 3.11).
 - `req/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_req`` and
 - `req/tools/create_req.py` — ``@mcp.tool()`` wrapper: create_req (Task 3.12).
-- `req/tools/delete_req.py` — ``@mcp.tool()`` wrapper: delete_req (Task 3.15).
 - `req/tools/get_req.py` — ``@mcp.tool()`` wrapper: get_req (feat-7-various-improvements Task 0.9).
 - `req/tools/get_req_example.py` — ``@mcp.tool()`` wrapper: get_req_example (Task 3.6).
 - `req/tools/get_req_template.py` — ``@mcp.tool()`` wrapper: get_req_template (Task 3.7).
@@ -341,7 +337,6 @@ First-line docstrings from each module, organized by domain:
 - `rsk/tools/_paths.py` — Risk base directory resolution and id -> path lookup (Task 3.1).
 - `rsk/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_rsk`` and
 - `rsk/tools/create_rsk.py` — ``@mcp.tool()`` wrapper: create_rsk (Task 3.3).
-- `rsk/tools/delete_rsk.py` — ``@mcp.tool()`` wrapper: delete_rsk (Task 3.6).
 - `rsk/tools/get_rsk.py` — ``@mcp.tool()`` wrapper: get_rsk (Task 3.8).
 - `rsk/tools/get_rsk_example.py` — ``@mcp.tool()`` wrapper: get_rsk_example (Task 3.9).
 - `rsk/tools/get_rsk_template.py` — ``@mcp.tool()`` wrapper: get_rsk_template (Task 3.9).
@@ -373,7 +368,6 @@ First-line docstrings from each module, organized by domain:
 - `sop/tools/_paths.py` — SOP base directory resolution and id -> path lookup (Task 2.1).
 - `sop/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_sop`` and
 - `sop/tools/create_sop.py` — ``@mcp.tool()`` wrapper: create_sop (Task 2.2).
-- `sop/tools/delete_sop.py` — ``@mcp.tool()`` wrapper: delete_sop (Task 2.2).
 - `sop/tools/get_sop.py` — ``@mcp.tool()`` wrapper: get_sop (Task 2.2).
 - `sop/tools/get_sop_example.py` — ``@mcp.tool()`` wrapper: get_sop_example (Task 2.2).
 - `sop/tools/get_sop_template.py` — ``@mcp.tool()`` wrapper: get_sop_template (Task 2.2).
@@ -407,7 +401,6 @@ First-line docstrings from each module, organized by domain:
 - `tsk/tools/_paths.py` — Task list base directory resolution and id -> path lookup (Task 3.1).
 - `tsk/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_tsk`` and
 - `tsk/tools/create_tsk.py` — ``@mcp.tool()`` wrapper: create_tsk (Task 3.3).
-- `tsk/tools/delete_tsk.py` — ``@mcp.tool()`` wrapper: delete_tsk (Task 3.6).
 - `tsk/tools/get_tsk.py` — ``@mcp.tool()`` wrapper: get_tsk (Task 3.8).
 - `tsk/tools/get_tsk_example.py` — ``@mcp.tool()`` wrapper: get_tsk_example (Task 3.9).
 - `tsk/tools/get_tsk_template.py` — ``@mcp.tool()`` wrapper: get_tsk_template (Task 3.9).
@@ -451,7 +444,6 @@ First-line docstrings from each module, organized by domain:
 - `uc/tools/_paths.py` — Use-case base directory resolution and id -> path lookup (Task 3.1.5).
 - `uc/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_uc`` and
 - `uc/tools/create_uc.py` — ``@mcp.tool()`` wrapper: create_uc (Task 3.1.5).
-- `uc/tools/delete_uc.py` — ``@mcp.tool()`` wrapper: delete_uc (Task 3.1.5).
 - `uc/tools/get_uc.py` — ``@mcp.tool()`` wrapper: get_uc (Task 3.1.5).
 - `uc/tools/get_uc_example.py` — ``@mcp.tool()`` wrapper: get_uc_example (Task 3.1.2).
 - `uc/tools/get_uc_template.py` — ``@mcp.tool()`` wrapper: get_uc_template (Task 3.1.3).
@@ -483,7 +475,6 @@ First-line docstrings from each module, organized by domain:
 - `vcr/tools/_paths.py` — Verification case record base directory resolution and id -> path lookup (Task 2.1).
 - `vcr/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_vcr`` and
 - `vcr/tools/create_vcr.py` — ``@mcp.tool()`` wrapper: create_vcr (Task 2.1).
-- `vcr/tools/delete_vcr.py` — ``@mcp.tool()`` wrapper: delete_vcr (Task 2.1).
 - `vcr/tools/get_vcr.py` — ``@mcp.tool()`` wrapper: get_vcr (Task 2.1).
 - `vcr/tools/get_vcr_example.py` — ``@mcp.tool()`` wrapper: get_vcr_example (Task 2.1).
 - `vcr/tools/get_vcr_template.py` — ``@mcp.tool()`` wrapper: get_vcr_template (Task 2.1).
@@ -493,4 +484,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 327
+**Test files**: 318

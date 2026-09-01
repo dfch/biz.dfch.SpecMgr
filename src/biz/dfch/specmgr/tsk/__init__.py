@@ -28,7 +28,7 @@ against the shared ``mcp`` application instance at once::
 
 ``tools`` (``parse_tsk``, ``get_tsk``, ``list_tsk``, ``get_tsk_example``,
 ``get_tsk_template``, ``create_tsk``,
-``delete_tsk``, ``validate_tsk``), ``resources`` (``specmgr://tsk/schema``,
+``validate_tsk``), ``resources`` (``specmgr://tsk/schema``,
 ``specmgr://tsk/example``, ``specmgr://tsk/template``), and ``prompts``
 (``create_task``, ``update_task``, ``implement_task``) all exist; whole-body
 and line-range updates of an existing document go through the generic

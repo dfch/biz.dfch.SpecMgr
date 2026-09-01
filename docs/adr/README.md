@@ -4,6 +4,10 @@ Index of all ADRs in this repository.
 
 ## All ADRs
 
+- [Replace domain-specific delete tools with a generic type-dispatched delete tool](1af6787b-eaab-4e8f-888f-531c1e76c19d-replace-domain-specific-delete-tools-with-a-generic-type-dis.md)
+  - Id: 1af6787b-eaab-4e8f-888f-531c1e76c19d
+  - Status: accepted
+  - Date: 2026-09-01
 - [Use ISO 8601 for all dates and times](23a14195-339c-48af-99d2-97c9964041ae-use-iso-8601-for-all-dates-and-times.md)
   - Id: 23a14195-339c-48af-99d2-97c9964041ae
   - Status: accepted

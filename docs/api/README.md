@@ -66,7 +66,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.dec.tools._paths`](biz.dfch.specmgr.dec.tools._paths.md) — Decision base directory resolution and id -> path lookup (Task 2.1).
 - [`biz.dfch.specmgr.dec.tools._write`](biz.dfch.specmgr.dec.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_dec`` and
 - [`biz.dfch.specmgr.dec.tools.create_dec`](biz.dfch.specmgr.dec.tools.create_dec.md) — ``@mcp.tool()`` wrapper: create_dec (Task 2.2).
-- [`biz.dfch.specmgr.dec.tools.delete_dec`](biz.dfch.specmgr.dec.tools.delete_dec.md) — ``@mcp.tool()`` wrapper: delete_dec (Task 2.2).
 - [`biz.dfch.specmgr.dec.tools.get_dec`](biz.dfch.specmgr.dec.tools.get_dec.md) — ``@mcp.tool()`` wrapper: get_dec (Task 2.2).
 - [`biz.dfch.specmgr.dec.tools.get_dec_example`](biz.dfch.specmgr.dec.tools.get_dec_example.md) — ``@mcp.tool()`` wrapper: get_dec_example (Task 2.2).
 - [`biz.dfch.specmgr.dec.tools.get_dec_template`](biz.dfch.specmgr.dec.tools.get_dec_template.md) — ``@mcp.tool()`` wrapper: get_dec_template (Task 2.2).
@@ -95,7 +94,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.feat.tools._paths`](biz.dfch.specmgr.feat.tools._paths.md) — Feature (FEAT) base directory resolution and id -> path lookup (Task 2.1).
 - [`biz.dfch.specmgr.feat.tools._write`](biz.dfch.specmgr.feat.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_feat`` and
 - [`biz.dfch.specmgr.feat.tools.create_feat`](biz.dfch.specmgr.feat.tools.create_feat.md) — ``@mcp.tool()`` wrapper: create_feat (Task 2.3).
-- [`biz.dfch.specmgr.feat.tools.delete_feat`](biz.dfch.specmgr.feat.tools.delete_feat.md) — ``@mcp.tool()`` wrapper: delete_feat (Task 2.3).
 - [`biz.dfch.specmgr.feat.tools.get_feat`](biz.dfch.specmgr.feat.tools.get_feat.md) — ``@mcp.tool()`` wrapper: get_feat (Task 2.3).
 - [`biz.dfch.specmgr.feat.tools.get_feat_example`](biz.dfch.specmgr.feat.tools.get_feat_example.md) — ``@mcp.tool()`` wrapper: get_feat_example (Task 2.3).
 - [`biz.dfch.specmgr.feat.tools.get_feat_template`](biz.dfch.specmgr.feat.tools.get_feat_template.md) — ``@mcp.tool()`` wrapper: get_feat_template (Task 2.3).
@@ -117,7 +115,9 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general.tools._doc_paths`](biz.dfch.specmgr.general.tools._doc_paths.md) — Generic, doc-type-agnostic base directory resolution, filename slugification,
 - [`biz.dfch.specmgr.general.tools._packaged_data`](biz.dfch.specmgr.general.tools._packaged_data.md) — Generic, doc-type-agnostic access to packaged example/template/schema data
 - [`biz.dfch.specmgr.general.tools._paging`](biz.dfch.specmgr.general.tools._paging.md) — Generic, doc-type-agnostic paging helpers (feat-13 Task 1.2).
+- [`biz.dfch.specmgr.general.tools._path_safety`](biz.dfch.specmgr.general.tools._path_safety.md) — Reusable, doc-type-agnostic path-safety assertions for document ids and
 - [`biz.dfch.specmgr.general.tools._splice`](biz.dfch.specmgr.general.tools._splice.md) — Frontmatter-stripped body extraction and body-line splicing for the generic
+- [`biz.dfch.specmgr.general.tools.delete`](biz.dfch.specmgr.general.tools.delete.md) — ``@mcp.tool()`` wrapper: delete (feat-36-delete, Phase 2).
 - [`biz.dfch.specmgr.general.tools.mdformat`](biz.dfch.specmgr.general.tools.mdformat.md) — ``@mcp.tool()`` wrapper: mdformat.
 - [`biz.dfch.specmgr.general.tools.set_status`](biz.dfch.specmgr.general.tools.set_status.md) — ``@mcp.tool()`` wrapper: set_status (feat-22-consolidate-mutation-tools, Phase 4).
 - [`biz.dfch.specmgr.general.tools.update`](biz.dfch.specmgr.general.tools.update.md) — ``@mcp.tool()`` wrapper: update (feat-22-consolidate-mutation-tools, Phase 2).
@@ -136,7 +136,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.gol.tools._paths`](biz.dfch.specmgr.gol.tools._paths.md) — Goal base directory resolution and id -> path lookup (Task 3.1).
 - [`biz.dfch.specmgr.gol.tools._write`](biz.dfch.specmgr.gol.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_gol`` and
 - [`biz.dfch.specmgr.gol.tools.create_gol`](biz.dfch.specmgr.gol.tools.create_gol.md) — ``@mcp.tool()`` wrapper: create_gol (Task 3.3).
-- [`biz.dfch.specmgr.gol.tools.delete_gol`](biz.dfch.specmgr.gol.tools.delete_gol.md) — ``@mcp.tool()`` wrapper: delete_gol (Task 3.6).
 - [`biz.dfch.specmgr.gol.tools.get_gol`](biz.dfch.specmgr.gol.tools.get_gol.md) — ``@mcp.tool()`` wrapper: get_gol (Task 3.8).
 - [`biz.dfch.specmgr.gol.tools.get_gol_example`](biz.dfch.specmgr.gol.tools.get_gol_example.md) — ``@mcp.tool()`` wrapper: get_gol_example (Task 3.10).
 - [`biz.dfch.specmgr.gol.tools.get_gol_template`](biz.dfch.specmgr.gol.tools.get_gol_template.md) — ``@mcp.tool()`` wrapper: get_gol_template (Task 3.10).
@@ -206,7 +205,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.prb.tools._paths`](biz.dfch.specmgr.prb.tools._paths.md) — Problem statement base directory resolution and id -> path lookup (Task 3.1).
 - [`biz.dfch.specmgr.prb.tools._write`](biz.dfch.specmgr.prb.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_prb`` and
 - [`biz.dfch.specmgr.prb.tools.create_prb`](biz.dfch.specmgr.prb.tools.create_prb.md) — ``@mcp.tool()`` wrapper: create_prb (Task 3.3).
-- [`biz.dfch.specmgr.prb.tools.delete_prb`](biz.dfch.specmgr.prb.tools.delete_prb.md) — ``@mcp.tool()`` wrapper: delete_prb (Task 3.6).
 - [`biz.dfch.specmgr.prb.tools.get_prb`](biz.dfch.specmgr.prb.tools.get_prb.md) — ``@mcp.tool()`` wrapper: get_prb (Task 3.8).
 - [`biz.dfch.specmgr.prb.tools.get_prb_example`](biz.dfch.specmgr.prb.tools.get_prb_example.md) — ``@mcp.tool()`` wrapper: get_prb_example (Task 3.10).
 - [`biz.dfch.specmgr.prb.tools.get_prb_template`](biz.dfch.specmgr.prb.tools.get_prb_template.md) — ``@mcp.tool()`` wrapper: get_prb_template (Task 3.10).
@@ -237,7 +235,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.qa.tools._paths`](biz.dfch.specmgr.qa.tools._paths.md) — Question and Answer (QA) base directory resolution and id -> path lookup (Phase 4, Task 4.1).
 - [`biz.dfch.specmgr.qa.tools._write`](biz.dfch.specmgr.qa.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_qa`` and
 - [`biz.dfch.specmgr.qa.tools.create_qa`](biz.dfch.specmgr.qa.tools.create_qa.md) — ``@mcp.tool()`` wrapper: create_qa (Phase 4, Task 4.1).
-- [`biz.dfch.specmgr.qa.tools.delete_qa`](biz.dfch.specmgr.qa.tools.delete_qa.md) — ``@mcp.tool()`` wrapper: delete_qa (Phase 4, Task 4.1).
 - [`biz.dfch.specmgr.qa.tools.get_qa`](biz.dfch.specmgr.qa.tools.get_qa.md) — ``@mcp.tool()`` wrapper: get_qa (Phase 4, Task 4.1).
 - [`biz.dfch.specmgr.qa.tools.get_qa_example`](biz.dfch.specmgr.qa.tools.get_qa_example.md) — ``@mcp.tool()`` wrapper: get_qa_example (Phase 4, Task 4.1).
 - [`biz.dfch.specmgr.qa.tools.get_qa_template`](biz.dfch.specmgr.qa.tools.get_qa_template.md) — ``@mcp.tool()`` wrapper: get_qa_template (Phase 4, Task 4.1).
@@ -258,7 +255,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.req.tools._paths`](biz.dfch.specmgr.req.tools._paths.md) — Requirement base directory resolution and id -> path lookup (Task 3.11).
 - [`biz.dfch.specmgr.req.tools._write`](biz.dfch.specmgr.req.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_req`` and
 - [`biz.dfch.specmgr.req.tools.create_req`](biz.dfch.specmgr.req.tools.create_req.md) — ``@mcp.tool()`` wrapper: create_req (Task 3.12).
-- [`biz.dfch.specmgr.req.tools.delete_req`](biz.dfch.specmgr.req.tools.delete_req.md) — ``@mcp.tool()`` wrapper: delete_req (Task 3.15).
 - [`biz.dfch.specmgr.req.tools.get_req`](biz.dfch.specmgr.req.tools.get_req.md) — ``@mcp.tool()`` wrapper: get_req (feat-7-various-improvements Task 0.9).
 - [`biz.dfch.specmgr.req.tools.get_req_example`](biz.dfch.specmgr.req.tools.get_req_example.md) — ``@mcp.tool()`` wrapper: get_req_example (Task 3.6).
 - [`biz.dfch.specmgr.req.tools.get_req_template`](biz.dfch.specmgr.req.tools.get_req_template.md) — ``@mcp.tool()`` wrapper: get_req_template (Task 3.7).
@@ -290,7 +286,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.rsk.tools._paths`](biz.dfch.specmgr.rsk.tools._paths.md) — Risk base directory resolution and id -> path lookup (Task 3.1).
 - [`biz.dfch.specmgr.rsk.tools._write`](biz.dfch.specmgr.rsk.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_rsk`` and
 - [`biz.dfch.specmgr.rsk.tools.create_rsk`](biz.dfch.specmgr.rsk.tools.create_rsk.md) — ``@mcp.tool()`` wrapper: create_rsk (Task 3.3).
-- [`biz.dfch.specmgr.rsk.tools.delete_rsk`](biz.dfch.specmgr.rsk.tools.delete_rsk.md) — ``@mcp.tool()`` wrapper: delete_rsk (Task 3.6).
 - [`biz.dfch.specmgr.rsk.tools.get_rsk`](biz.dfch.specmgr.rsk.tools.get_rsk.md) — ``@mcp.tool()`` wrapper: get_rsk (Task 3.8).
 - [`biz.dfch.specmgr.rsk.tools.get_rsk_example`](biz.dfch.specmgr.rsk.tools.get_rsk_example.md) — ``@mcp.tool()`` wrapper: get_rsk_example (Task 3.9).
 - [`biz.dfch.specmgr.rsk.tools.get_rsk_template`](biz.dfch.specmgr.rsk.tools.get_rsk_template.md) — ``@mcp.tool()`` wrapper: get_rsk_template (Task 3.9).
@@ -320,7 +315,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.sop.tools._paths`](biz.dfch.specmgr.sop.tools._paths.md) — SOP base directory resolution and id -> path lookup (Task 2.1).
 - [`biz.dfch.specmgr.sop.tools._write`](biz.dfch.specmgr.sop.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_sop`` and
 - [`biz.dfch.specmgr.sop.tools.create_sop`](biz.dfch.specmgr.sop.tools.create_sop.md) — ``@mcp.tool()`` wrapper: create_sop (Task 2.2).
-- [`biz.dfch.specmgr.sop.tools.delete_sop`](biz.dfch.specmgr.sop.tools.delete_sop.md) — ``@mcp.tool()`` wrapper: delete_sop (Task 2.2).
 - [`biz.dfch.specmgr.sop.tools.get_sop`](biz.dfch.specmgr.sop.tools.get_sop.md) — ``@mcp.tool()`` wrapper: get_sop (Task 2.2).
 - [`biz.dfch.specmgr.sop.tools.get_sop_example`](biz.dfch.specmgr.sop.tools.get_sop_example.md) — ``@mcp.tool()`` wrapper: get_sop_example (Task 2.2).
 - [`biz.dfch.specmgr.sop.tools.get_sop_template`](biz.dfch.specmgr.sop.tools.get_sop_template.md) — ``@mcp.tool()`` wrapper: get_sop_template (Task 2.2).
@@ -351,7 +345,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.tsk.tools._paths`](biz.dfch.specmgr.tsk.tools._paths.md) — Task list base directory resolution and id -> path lookup (Task 3.1).
 - [`biz.dfch.specmgr.tsk.tools._write`](biz.dfch.specmgr.tsk.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_tsk`` and
 - [`biz.dfch.specmgr.tsk.tools.create_tsk`](biz.dfch.specmgr.tsk.tools.create_tsk.md) — ``@mcp.tool()`` wrapper: create_tsk (Task 3.3).
-- [`biz.dfch.specmgr.tsk.tools.delete_tsk`](biz.dfch.specmgr.tsk.tools.delete_tsk.md) — ``@mcp.tool()`` wrapper: delete_tsk (Task 3.6).
 - [`biz.dfch.specmgr.tsk.tools.get_tsk`](biz.dfch.specmgr.tsk.tools.get_tsk.md) — ``@mcp.tool()`` wrapper: get_tsk (Task 3.8).
 - [`biz.dfch.specmgr.tsk.tools.get_tsk_example`](biz.dfch.specmgr.tsk.tools.get_tsk_example.md) — ``@mcp.tool()`` wrapper: get_tsk_example (Task 3.9).
 - [`biz.dfch.specmgr.tsk.tools.get_tsk_template`](biz.dfch.specmgr.tsk.tools.get_tsk_template.md) — ``@mcp.tool()`` wrapper: get_tsk_template (Task 3.9).
@@ -393,7 +386,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.uc.tools._paths`](biz.dfch.specmgr.uc.tools._paths.md) — Use-case base directory resolution and id -> path lookup (Task 3.1.5).
 - [`biz.dfch.specmgr.uc.tools._write`](biz.dfch.specmgr.uc.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_uc`` and
 - [`biz.dfch.specmgr.uc.tools.create_uc`](biz.dfch.specmgr.uc.tools.create_uc.md) — ``@mcp.tool()`` wrapper: create_uc (Task 3.1.5).
-- [`biz.dfch.specmgr.uc.tools.delete_uc`](biz.dfch.specmgr.uc.tools.delete_uc.md) — ``@mcp.tool()`` wrapper: delete_uc (Task 3.1.5).
 - [`biz.dfch.specmgr.uc.tools.get_uc`](biz.dfch.specmgr.uc.tools.get_uc.md) — ``@mcp.tool()`` wrapper: get_uc (Task 3.1.5).
 - [`biz.dfch.specmgr.uc.tools.get_uc_example`](biz.dfch.specmgr.uc.tools.get_uc_example.md) — ``@mcp.tool()`` wrapper: get_uc_example (Task 3.1.2).
 - [`biz.dfch.specmgr.uc.tools.get_uc_template`](biz.dfch.specmgr.uc.tools.get_uc_template.md) — ``@mcp.tool()`` wrapper: get_uc_template (Task 3.1.3).
@@ -422,7 +414,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.vcr.tools._paths`](biz.dfch.specmgr.vcr.tools._paths.md) — Verification case record base directory resolution and id -> path lookup (Task 2.1).
 - [`biz.dfch.specmgr.vcr.tools._write`](biz.dfch.specmgr.vcr.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_vcr`` and
 - [`biz.dfch.specmgr.vcr.tools.create_vcr`](biz.dfch.specmgr.vcr.tools.create_vcr.md) — ``@mcp.tool()`` wrapper: create_vcr (Task 2.1).
-- [`biz.dfch.specmgr.vcr.tools.delete_vcr`](biz.dfch.specmgr.vcr.tools.delete_vcr.md) — ``@mcp.tool()`` wrapper: delete_vcr (Task 2.1).
 - [`biz.dfch.specmgr.vcr.tools.get_vcr`](biz.dfch.specmgr.vcr.tools.get_vcr.md) — ``@mcp.tool()`` wrapper: get_vcr (Task 2.1).
 - [`biz.dfch.specmgr.vcr.tools.get_vcr_example`](biz.dfch.specmgr.vcr.tools.get_vcr_example.md) — ``@mcp.tool()`` wrapper: get_vcr_example (Task 2.1).
 - [`biz.dfch.specmgr.vcr.tools.get_vcr_template`](biz.dfch.specmgr.vcr.tools.get_vcr_template.md) — ``@mcp.tool()`` wrapper: get_vcr_template (Task 2.1).

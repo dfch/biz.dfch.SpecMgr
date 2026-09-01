@@ -28,7 +28,7 @@ against the shared ``mcp`` application instance at once::
 
 ``tools`` (``parse_rsk``, ``get_rsk``, ``list_rsk``, ``get_rsk_example``,
 ``get_rsk_template``, ``create_rsk``,
-``delete_rsk``, ``validate_rsk``), ``resources`` (``specmgr://rsk/schema``,
+``validate_rsk``), ``resources`` (``specmgr://rsk/schema``,
 ``specmgr://rsk/example``, ``specmgr://rsk/template``,
 ``specmgr://rsk/tara``, ``specmgr://rsk/risk-matrix``), and ``prompts``
 (``create_risk``, ``update_risk``) all exist; whole-body and line-range

@@ -32,14 +32,14 @@ straight into the generic ``update``/``set_status`` tools in
 ``general.tools`` from day one, per the convention ``AGENTS.md`` already
 reserves for future domains.
 
-Import this package to register all SOP tools/prompts/resources (8 tools,
+Import this package to register all SOP tools/prompts/resources (7 tools,
 3 resources, 2 prompts) against the shared ``mcp`` application instance at
 once::
 
     from biz.dfch.specmgr import sop  # noqa: F401 (side-effects only)
 
 ``tools`` (``create_sop``, ``parse_sop``, ``list_sop``, ``get_sop``,
-``get_sop_example``, ``get_sop_template``, ``delete_sop``,
+``get_sop_example``, ``get_sop_template``,
 ``validate_sop``), ``resources`` (``specmgr://sop/schema``,
 ``specmgr://sop/example``, ``specmgr://sop/template``), and ``prompts``
 (``create_sop``, ``update_sop``) all exist; whole-body and line-range

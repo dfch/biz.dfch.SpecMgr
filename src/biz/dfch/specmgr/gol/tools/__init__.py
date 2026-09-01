@@ -35,18 +35,16 @@ of an existing document go through the generic ``update`` tool in
 ``general.tools`` (``type="gol"``), preserving every frontmatter field
 except ``updated``. Status changes of an existing document go through the
 generic ``set_status`` tool in ``general.tools`` (``type="gol"``), also
-bumping ``updated``, leaving the body untouched.
-``delete_gol`` (Task 3.6) is a registered stub -- always raises
-``NotImplementedError``, reserving the name for a future real
-implementation. ``validate_gol`` (Task 3.7) is a disk-free, id-free dry run
-against a submitted ``content`` string, independent of the other tools.
+bumping ``updated``, leaving the body untouched. Deletion of ``gol``
+documents goes through the generic ``delete`` tool in ``general.tools``
+(``type="gol"``). ``validate_gol`` (Task 3.7) is a disk-free, id-free dry
+run against a submitted ``content`` string, independent of the other tools.
 Import this package to register all goal tools at once::
 
     from biz.dfch.specmgr.gol import tools  # noqa: F401 (side-effects only)
 """
 
 from .create_gol import create_gol
-from .delete_gol import delete_gol
 from .get_gol import get_gol
 from .get_gol_example import get_gol_example
 from .get_gol_template import get_gol_template
@@ -56,7 +54,6 @@ from .validate_gol import validate_gol
 
 __all__ = [
     "create_gol",
-    "delete_gol",
     "get_gol",
     "get_gol_example",
     "get_gol_template",
