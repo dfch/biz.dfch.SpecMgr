@@ -16,7 +16,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 """``@mcp.tool()`` wrapper: confluence_update (ADR a156fdf9-052c-4f43-93a2-eeec04a91eac,
-feat-50-confluence Phases 3-4).
+feat-50-confluence Phases 3-4, duplicate-filename detection fixed in Phase 6).
 
 Writes a local Markdown file's content into an existing Confluence page's
 body via the REST API, using the same Bearer/PAT authentication and the
@@ -44,9 +44,18 @@ ACC-006/ACC-007):
    ``<ac:image><ri:attachment ri:filename="..." /></ac:image>`` on success.
    A missing local file or any upload failure leaves that specific ``<img>``
    tag unrewritten and never aborts the overall update -- see
-   :func:`_rewrite_local_images` for the full best-effort contract, and the
-   feature README's Decisions Made log for which parts of this REST API
-   shape are unverified against a real instance.
+   :func:`_rewrite_local_images` for the full best-effort contract. The
+   attachment-create endpoint shape, the ``<ac:image>`` rewrite, and the
+   fallback ``.../child/attachment/{attachment_id}/data`` endpoint shape are
+   all now confirmed against a real Confluence instance (Phase 6, plus
+   Phase 5's real smoke test); re-uploading an already-attached filename
+   never creates a second attachment -- Confluence 400s the create attempt,
+   and the fallback data-update endpoint bumps only that existing
+   attachment's own ``version.number``, independent of the page's own
+   version this module's ``PUT`` always increments regardless of attachment
+   outcome. See :func:`_looks_like_duplicate_filename_response` for the
+   real, confirmed duplicate-filename 400 error-message shape and the
+   feature README's Decisions Made log for the full history.
 5. ``PUT {base}/rest/api/content/{id}`` with the incremented version number,
    the unchanged title, and the (possibly image-macro-rewritten) rendered
    fragment as the new ``body.storage.value``.
@@ -237,22 +246,39 @@ def _is_local_image_src(src: str) -> bool:
     return result
 
 
-def _looks_like_duplicate_filename_response(response: httpx.Response) -> bool:
+def _looks_like_duplicate_filename_response(response: httpx.Response, filename: str) -> bool:
     """Best-effort heuristic: does ``response`` look like a "filename already exists" 400?
 
-    **Unverified against a real instance** (see the feature README's Decisions Made log) --
-    Confluence's exact error message wording for this specific case was not confirmed live
-    during this feature's development, only inferred from documented/community-reported
-    behavior. Treated as a duplicate-filename response if the status code is 400 and the JSON
-    body's ``message`` field mentions both "already exist" and one of
-    "file"/"attachment"/"filename" (case-insensitively); any other 400 (or a non-JSON body) is
-    treated as a genuine failure, not a duplicate-filename case, so the fallback path is not
-    attempted for it.
+    **Confirmed against a real Confluence Server/Data Center instance** (feat-50-confluence
+    Phase 6, see the feature README's Decisions Made log). Phase 4's original heuristic checked
+    exclusively for the substring "already exist", inferred from documented/community-reported
+    behavior; a real-instance follow-up test found the ACTUAL error message for this case is:
+
+        "Cannot add a new attachment with same file name as an existing attachment:
+        <filename>. Log referral number is <uuid>"
+
+    which does not contain "already exist" at all, so the original heuristic never matched it and
+    the fallback path silently never fired against a real server. The response is now treated as
+    a duplicate-filename 400 if the status code is 400 AND EITHER:
+
+    - the uploaded ``filename`` itself (case-insensitively) appears in the JSON body's
+      ``message`` field -- the primary, more robust check: Confluence's real message always names
+      the offending file, so this check survives future wording changes that the exact-phrase
+      check above would not; or
+    - (secondary, kept for backward compatibility with community-reported message variants that
+      do not repeat the filename) the ``message`` field mentions both "already exist" and one of
+      "file"/"attachment"/"filename" (case-insensitively).
+
+    Any other 400 (or a non-JSON body) is treated as a genuine failure, not a duplicate-filename
+    case, so the fallback path is not attempted for it.
 
     Parameters
     ----------
     response:
         The response from the initial ``POST .../child/attachment`` create attempt.
+    filename:
+        The filename that was uploaded, used for the primary "filename appears in the message"
+        check.
 
     Returns
     -------
@@ -260,6 +286,7 @@ def _looks_like_duplicate_filename_response(response: httpx.Response) -> bool:
         Whether ``response`` looks like a duplicate-filename 400.
     """
     assert isinstance(response, httpx.Response), type(response)
+    assert isinstance(filename, str), type(filename)
 
     if response.status_code != _HTTP_STATUS_BAD_REQUEST:
         return False
@@ -271,6 +298,10 @@ def _looks_like_duplicate_filename_response(response: httpx.Response) -> bool:
 
     message = str(payload.get("message", "")) if isinstance(payload, dict) else ""
     message_lower = message.casefold()
+
+    if filename and filename.casefold() in message_lower:
+        return True
+
     result = "already exist" in message_lower and any(
         keyword in message_lower for keyword in ("file", "attachment", "filename")
     )
@@ -280,10 +311,14 @@ def _looks_like_duplicate_filename_response(response: httpx.Response) -> bool:
 def _find_existing_attachment_id(base_url: str, page_id: str, filename: str, headers: dict[str, str]) -> str:
     """Look up the id of an existing attachment named ``filename`` on ``page_id``.
 
-    **Unverified against a real instance**: this specific fallback lookup
-    (``GET {base}/rest/api/content/{id}/child/attachment?filename=...``) is documented
-    Confluence REST API behavior in general, but was not exercised against a real instance
-    during this feature's development -- see the feature README's Decisions Made log.
+    **Still unverified against a real instance as this specific lookup call**: this fallback
+    lookup (``GET {base}/rest/api/content/{id}/child/attachment?filename=...``) is documented
+    Confluence REST API behavior in general, and the sibling
+    ``POST .../child/attachment/{attachment_id}/data`` call that consumes this lookup's result
+    IS now confirmed against a real instance (feat-50-confluence Phase 6, using a directly
+    hardcoded attachment id rather than this lookup's own output) -- but this specific
+    filename-lookup GET itself was not separately exercised live during that investigation. See
+    the feature README's Decisions Made log.
 
     Parameters
     ----------
@@ -344,11 +379,16 @@ def _upload_attachment(*, base_url: str, page_id: str, local_path: Path, headers
     module also makes.
 
     If the create attempt fails with what looks like a duplicate-filename 400 (see
-    :func:`_looks_like_duplicate_filename_response` -- **unverified against a real instance**),
-    falls back to looking up the existing attachment's id
-    (:func:`_find_existing_attachment_id` -- also **unverified against a real instance**) and
-    ``POST``\\ ing the new content to ``.../child/attachment/{attachment_id}/data`` instead. See
-    the feature README's Decisions Made log for both caveats.
+    :func:`_looks_like_duplicate_filename_response`, fixed and confirmed against a real instance
+    in feat-50-confluence Phase 6), falls back to looking up the existing attachment's id
+    (:func:`_find_existing_attachment_id` -- this specific lookup GET itself remains unverified
+    against a real instance) and ``POST``\\ ing the new content to
+    ``.../child/attachment/{attachment_id}/data`` instead -- that data-update endpoint IS now
+    confirmed against a real instance (Phase 6): a real re-upload of an already-attached filename
+    returns HTTP 200 and bumps only that existing attachment's own ``version.number`` (never
+    creates a second attachment), independent of the page's own version (which this module's
+    ``PUT`` always increments regardless of attachment outcome). See the feature README's
+    Decisions Made log for the full evidence and remaining caveat.
 
     Parameters
     ----------
@@ -388,7 +428,7 @@ def _upload_attachment(*, base_url: str, page_id: str, local_path: Path, headers
             timeout=_REQUEST_TIMEOUT_SECONDS,
         )
 
-    if _looks_like_duplicate_filename_response(response):
+    if _looks_like_duplicate_filename_response(response, filename):
         attachment_id = _find_existing_attachment_id(base_url, page_id, filename, headers)
         data_url = f"{build_rest_content_url(base_url, page_id)}/child/attachment/{attachment_id}/data"
         with local_path.open("rb") as file_obj:

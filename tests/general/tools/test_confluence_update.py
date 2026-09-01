@@ -518,6 +518,65 @@ class TestConfluenceUpdateTool(unittest.TestCase):
                 self.assertIn('<ac:image><ri:attachment ri:filename="image.png" /></ac:image>', body)
                 self.assertEqual(result["failed_images"], [])
 
+    def test_real_duplicate_filename_message_triggers_fallback_and_rewrites_img_tag(self) -> None:
+        """Regression (feat-50-confluence Phase 6): the REAL Confluence duplicate-filename 400
+        message ("Cannot add a new attachment with same file name as an existing attachment:
+        <filename>. Log referral number is <uuid>") must trigger the fallback path, not be left
+        as a failed_images entry as it incorrectly was before this fix -- this message does NOT
+        contain "already exist", the only phrase the original heuristic checked for.
+        """
+        with mock.patch.dict(
+            os.environ,
+            {CONFLUENCE_BASE_URL_ENV_VAR: _BASE_URL, CONFLUENCE_BEARER_ENV_VAR: _TOKEN},
+        ):
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                _write_image_file(tmp_dir, "image.png")
+                markdown_file_path = _write_markdown_file(tmp_dir, "# Heading\n\n![alt](./image.png)\n")
+                get_response = _make_get_response()
+                put_response = _make_put_response()
+
+                real_duplicate_response = _make_post_response(
+                    status_code=400,
+                    json_payload={
+                        "statusCode": 400,
+                        "data": {
+                            "authorized": False,
+                            "valid": True,
+                            "allowedInReadOnlyMode": True,
+                            "errors": [],
+                            "successful": False,
+                        },
+                        "message": (
+                            "Cannot add a new attachment with same file name as an existing "
+                            "attachment: image.png. Log referral number is "
+                            "36ebfb5b-adaf-4627-a4df-c335326125d7"
+                        ),
+                        "reason": "Bad Request",
+                    },
+                )
+                fallback_response = _make_post_response()
+                lookup_response = _make_get_response(json_payload={"results": [{"id": "1232699838"}]})
+
+                with mock.patch("httpx.get", side_effect=[get_response, lookup_response]):
+                    with mock.patch("httpx.put", return_value=put_response) as mock_put:
+                        with mock.patch(
+                            "httpx.post", side_effect=[real_duplicate_response, fallback_response]
+                        ) as mock_post:
+                            result = confluence_update(_PAGE_ID, markdown_file_path)
+
+                self.assertEqual(mock_post.call_count, 2)
+                fallback_call_url = mock_post.call_args_list[1].args[0]
+                self.assertEqual(
+                    fallback_call_url,
+                    f"{_BASE_URL}/rest/api/content/{_PAGE_ID}/child/attachment/1232699838/data",
+                )
+
+                payload = mock_put.call_args.kwargs["json"]
+                body = payload["body"]["storage"]["value"]
+                self.assertIn('<ac:image><ri:attachment ri:filename="image.png" /></ac:image>', body)
+                self.assertNotIn('<img src="./image.png"', body)
+                self.assertEqual(result["failed_images"], [])
+
     def test_attachment_upload_failure_leaves_img_tag_unrewritten_and_is_reported(self) -> None:
         """A non-2xx, non-duplicate-filename attachment upload leaves the <img> tag unrewritten and is reported."""
         with mock.patch.dict(

@@ -3,7 +3,7 @@ created: '2026-09-01T17:36:02.251286'
 id: feat-50-confluence
 status: done
 type: feat
-updated: '2026-09-01T23:00:00.000000'
+updated: '2026-09-02T01:00:00.000000'
 version: 1.0.0
 ---
 
@@ -154,19 +154,134 @@ Adds a `confluence_update` tool that converts a local Markdown file to an HTML f
 
 - [x] Task 5.2: `specmgr docs`, `ruff format`/`check`, `vulture`, full `unittest` suite, `CHANGELOG.md` entry.
 
+#### Phase 6: Fix duplicate-filename detection against real Confluence behavior
+
+A post-completion, real-instance follow-up test (called `confluence_update` directly a second
+time against page `1232503612` with the same already-attached `feat-50-smoke-test.png` filename)
+found that `_looks_like_duplicate_filename_response()` never matches the real Confluence 400
+response, so the fallback path (`_find_existing_attachment_id` -> `.../child/attachment/{id}/data`)
+never fires on a real instance. The real error message, captured live, is:
+
+> `"Cannot add a new attachment with same file name as an existing attachment: <filename>. Log referral number is <uuid>"`
+
+— which does not contain `"already exist"`, the only phrase the current heuristic checks for. The
+fallback *endpoint itself* was separately confirmed live to work correctly (`POST
+.../child/attachment/{id}/data` -> HTTP 200, the existing attachment's own `version.number`
+incremented `1` -> `2`, independent of the page's own version) -- only the detection trigger is
+broken.
+
+- [x] Task 6.1: Fix `_looks_like_duplicate_filename_response()` in `confluence_update.py` to
+  detect the real, confirmed Confluence error message ("Cannot add a new attachment with same
+  file name as an existing attachment: `<filename>`. Log referral number is `<uuid>`"), in
+  addition to (or replacing) the current "already exist" heuristic; consider a more robust check
+  (e.g. status 400 + the uploaded filename itself appearing in the message) over exact-phrase
+  matching, so future message-wording variants are less likely to slip through undetected again.
+
+- [x] Task 6.2: Add a regression test in `test_confluence_update.py` using the exact real message
+  captured live, asserting the fallback path (`_find_existing_attachment_id` +
+  `.../child/attachment/{id}/data`) is now actually triggered for this real-world response shape,
+  and that the corresponding `<img>` tag IS rewritten to `<ac:image>`/`<ri:attachment>` in this
+  case (not left as a `failed_images` entry, as it incorrectly was before this fix).
+
+- [x] Task 6.3: Update code comments/docstrings in `confluence_update.py` and this feature
+  README's Decisions Made log: the attachment-create endpoint shape, the `<ac:image>` rewrite,
+  and the fallback `.../child/attachment/{id}/data` endpoint shape are now *confirmed* against a
+  real instance (not just the create path, as Phase 5 recorded) -- only the detection heuristic
+  was wrong. Record the newly-confirmed real behavior for future reference: re-uploading the same
+  filename never creates a second attachment -- Confluence 400s the create attempt, and the
+  fallback data-update endpoint bumps only that existing attachment's own `version.number`,
+  independent of the page's own version (which `confluence_update`'s `PUT` always increments on
+  every call, regardless of the attachment outcome).
+
+- [x] Task 6.4: Re-run the full quality gate (`ruff format`/`check`, `vulture`, full `unittest`
+  suite, `specmgr docs`/`specmgr mcp-docs`) and add a `CHANGELOG.md` entry (amend the existing
+  `[Unreleased]` `confluence_update` bullet, or add a `### Fixed` entry, since this feature has
+  not shipped in a release yet).
+
+- [x] Task 6.5 (optional): re-exercise the corrected heuristic once more against the real
+  dedicated test page (id `1232503612`) to confirm the fix actually triggers the fallback live,
+  end-to-end -- weigh this against leaving yet another permanent attachment-version increment on
+  the real page (there is no attachment-delete tool in this codebase, per Phase 5's already-
+  documented limitation). **Intentionally skipped** -- see the Decisions Made entry below for the
+  rationale (relied on the mocked regression test, Task 6.2, instead).
+
 ## Progress
 
 ### Current Status
 
-**As of 2026-09-01**: **Feature complete — all 5 phases done.** Phase 5's real, reversible smoke test against the dedicated Confluence test page (id `1232503612`, "fetch and update") succeeded for `confluence_fetch` (both confirmed browsable URL shapes auto-converted to the REST content URL, HTTP 200, no `ConfluenceAuthRedirectError`) and `confluence_update` (a `PUT` cycle taking the page from `version 1` -> `2` -> `3`, each independently `GET`-verified, ending with the page body restored byte-for-byte to the original `<p>This is a page for testing.</p>`); the optional attachment-upload path (REQ-009) was also exercised live (`version 3` -> `4` -> `5`), confirming the real `POST .../child/attachment` shape and the `<img>` -> `<ac:image>`/`<ri:attachment>` rewrite end to end, leaving one permanent test attachment (`feat-50-smoke-test.png`, id `1232699838`) on the page as an accepted, documented byproduct. All quality-gate checks are green (`ruff format --check`/`ruff check`/`vulture` clean, 2788 `unittest` tests pass, `specmgr docs`/`specmgr mcp-docs` regenerate with zero drift) and the `CHANGELOG.md` `[Unreleased]` section now summarizes the whole feature. See this date's Updates entry below for the full step-by-step smoke-test evidence.
+**As of 2026-09-02**: **Feature complete again — Phase 6 (bug fix) closed out; all 6 phases done.** The post-completion, ad hoc real-instance follow-up test documented below found that `_looks_like_duplicate_filename_response()` did not match the real Confluence 400 error message ("Cannot add a new attachment with same file name as an existing attachment: `<filename>`. Log referral number is `<uuid>`"), so the duplicate-filename fallback path never actually fired on a real instance -- the image was silently left unrewritten and reported in `failed_images` instead. Phase 6 fixed the detection heuristic (now checks whether the uploaded filename itself appears in the 400 response's `message`, in addition to the original "already exist" phrase check, per Task 6.1), added a byte-for-byte regression test using the exact real message captured live (Task 6.2, confirms the fallback path now fires and the `<img>` tag IS rewritten), updated code comments/docstrings to reflect which REST API shapes are now confirmed against a real instance (Task 6.3), and re-ran the full quality gate green (Task 6.4). Task 6.5 (re-exercising the fix live against the real test page) was deliberately skipped in favor of the mocked regression test -- see the Decisions Made entry below. Feature `status` restored from `in-progress` to `done`. See Phase 5's real, reversible smoke test against the dedicated Confluence test page (id `1232503612`, "fetch and update") in the 2026-09-01 Updates entry below for the original completion evidence, still valid and unaffected by this finding.
 
 ### Blockers
 
-- None. The real Confluence test page (id `1232503612`) permanently shows `version 5` (four extra revisions in its edit history from this phase's smoke test) and carries one permanent test attachment (`feat-50-smoke-test.png`) — both are documented, accepted, non-blocking side effects of Task 5.1's real smoke test (Confluence's version number is monotonic and cannot itself be reverted via the REST API; there is no attachment-delete tool in this codebase), not blockers on this feature or any future work.
+- None blocking, but note: the real Confluence test page (id `1232503612`) permanently shows `version 7` (incremented by the post-completion investigation that found this bug) and carries one permanent test attachment (`feat-50-smoke-test.png`, at attachment-version `2`) — documented, accepted, non-blocking side effects of this feature's real-instance testing (Confluence's version numbers are monotonic and cannot themselves be reverted via the REST API; there is no attachment-delete tool in this codebase), not blockers on this feature or any future work. Phase 6's fix was verified via mocked regression test only (Task 6.5 skipped), so this page/attachment was not touched further during Phase 6.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-02 01:00:00.000Z — Phase 6 complete: duplicate-filename detection fixed; feature done again
+
+Completed: fixed `_looks_like_duplicate_filename_response()` in `general/tools/confluence_update.py`
+(Task 6.1) to accept the filename that was uploaded and treat a 400 response as a duplicate-filename
+case if EITHER that filename itself (case-insensitively) appears in the JSON body's `message` field
+(the new, primary check -- directly matches the real, confirmed Confluence message "Cannot add a new
+attachment with same file name as an existing attachment: `<filename>`. Log referral number is
+`<uuid>`", which never contained "already exist") OR the original "already exist" + keyword
+combination still matches (kept as a secondary check for the community-reported message variant the
+existing mocked test already covered, so no existing test needed to change). Updated the call site in
+`_upload_attachment` to pass the uploaded filename through. Added a new regression test,
+`test_real_duplicate_filename_message_triggers_fallback_and_rewrites_img_tag` (Task 6.2), using the
+exact real message captured live (with `image.png` as the filename, matching the test's uploaded
+file) -- asserts the fallback path (`_find_existing_attachment_id`'s lookup GET, then `POST
+.../child/attachment/{id}/data`) now actually fires and the `<img>` tag IS rewritten to
+`<ac:image><ri:attachment .../></ac:image>`, with `failed_images` empty, reproducing exactly the bug
+this phase fixes. Updated docstrings/comments (Task 6.3) on `_looks_like_duplicate_filename_response`,
+`_upload_attachment`, `_find_existing_attachment_id`, and the module's own header docstring to record
+which REST API shapes are now confirmed against a real instance (attachment-create, `<ac:image>`
+rewrite, and the fallback `.../child/attachment/{id}/data` data-update endpoint -- the last one
+specifically via Phase 6's post-completion investigation, which called it directly with a hardcoded
+attachment id) versus what remains unconfirmed (the filename-lookup GET
+`_find_existing_attachment_id` itself uses, `GET .../child/attachment?filename=...`, which was not
+separately exercised live). Re-ran the full quality gate (Task 6.4): `ruff format --check`/`ruff
+check`/`vulture` clean; full `unittest` suite green, 2789 tests (up from 2788, the one new regression
+test); `specmgr docs`/`specmgr mcp-docs` regenerated `docs/api/biz.dfch.specmgr.general.tools.confluence_update.md`
+with no unexpected diff (only the docstring wording changes made above) and left `docs/MCP.md`/other
+`docs/api/` pages unchanged (the tool's own `@mcp.tool()` description string was not modified). Added
+a `CHANGELOG.md` clause to the existing `[Unreleased]` `confluence_update` bullet (amended, not a new
+`### Fixed` entry, since this feature has not shipped in a release yet) documenting the confirmed real
+400 message. Deliberately skipped Task 6.5 (optional live re-verification against the real test page)
+-- see the Decisions Made entry below. Restored this document's frontmatter `status` from
+`in-progress` back to `done`.
+Next: none -- feature complete again.
+Notes: this closes out the genuine implementation defect found post-completion; the ADR's chosen
+design (best-effort upload with a duplicate-filename fallback) remains correct and unchanged -- only
+the detection heuristic that decides *when* to use the fallback was fixed, plus its documentation.
+
+#### 2026-09-02 00:00:00.000Z — Post-completion bug found: duplicate-filename detection doesn't match real Confluence message; Phase 6 added
+
+Completed: after Phase 5 marked the feature `done`, a follow-up real-instance investigation
+directly re-called `confluence_update("1232503612", <markdown referencing the same already-
+attached feat-50-smoke-test.png>)` to answer a direct question about re-uploading a same-named
+attachment. The real Confluence server rejected the create attempt with `400 Bad Request`,
+`message: "Cannot add a new attachment with same file name as an existing attachment:
+feat-50-smoke-test.png. Log referral number is <uuid>"`. `_looks_like_duplicate_filename_response()`
+only checks for the substring `"already exist"`, which this real message does not contain, so the
+fallback path (`_find_existing_attachment_id` -> `.../child/attachment/{id}/data`) was never
+attempted; the `<img>` tag was left unrewritten and the failure recorded in `failed_images`
+instead. A follow-up manual call directly to `POST .../child/attachment/1232699838/data` confirmed
+the fallback *endpoint itself* is correctly shaped and works: HTTP 200, and the existing
+attachment's own `version.number` incremented from `1` to `2` (confirming that re-uploading a
+same-named attachment bumps only that attachment's own version, never creates a second attachment,
+and is independent of the page's own version, which `confluence_update`'s `PUT` increments on
+every call regardless of attachment outcome). The page body (left dangling by the failed test call)
+was reverted again, confirmed byte-for-byte back to the original; page is now permanently at
+`version 7`. Added Phase 6 (5 tasks) to the Task List to fix `_looks_like_duplicate_filename_response()`
+against this real message, add a regression test for it, update documentation/Decisions Made, and
+re-verify; reverted this document's frontmatter `status` from `done` back to `in-progress`.
+Next: Phase 6 (fix the duplicate-filename detection heuristic).
+Notes: this is a genuine implementation defect, not a design-level ADR issue -- the ADR's chosen
+approach (best-effort upload with a duplicate-filename fallback) remains correct; only the
+heuristic that decides *when* to use the fallback needs fixing.
 
 #### 2026-09-01 23:00:00.000Z — Phase 5 complete: real smoke test + final verification (feature done)
 
@@ -210,6 +325,37 @@ Notes: implementation has not started; this update only covers planning/design/e
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-02 01:00:00.000Z — Phase 6: skipped the optional live re-verification (Task 6.5), relying on the mocked regression test instead; robustness-over-exact-phrase heuristic design
+
+Decision: (1) **Skipped Task 6.5** (re-exercising the fixed heuristic live against the real dedicated
+test page, id `1232503612`) rather than attempting it. Rationale: the bug this phase fixes is a pure
+Python string-matching defect in `_looks_like_duplicate_filename_response()` -- it does not touch the
+HTTP request/response shapes themselves, which were already independently confirmed real (the
+attachment-create endpoint and `<ac:image>` rewrite in Phase 5; the fallback
+`.../child/attachment/{id}/data` data-update endpoint in the post-completion investigation that found
+this very bug, via a direct hardcoded-attachment-id call). The new regression test
+(`test_real_duplicate_filename_message_triggers_fallback_and_rewrites_img_tag`, Task 6.2) uses the
+EXACT real message string captured live from the real server, so it already proves the fixed detection
+logic correctly recognizes that exact real-world response shape and correctly drives the (separately
+real-confirmed) fallback call sequence -- a live re-run would mostly re-confirm facts already
+established, at the cost of yet another permanent version/attachment-version increment on the shared
+real test page, with no attachment-delete tool available to clean it up. Weighed against this: a live
+run would also incidentally re-exercise `_find_existing_attachment_id`'s own lookup GET
+(`GET .../child/attachment?filename=...`), which remains the one genuinely unconfirmed REST call in
+this whole flow (see Task 6.3's docstring updates) -- but a single additional real-instance
+verification of one already-narrow, already-documented gap was judged not worth another permanent,
+irreversible side effect on the shared page, especially since a future change to that specific lookup
+call can still independently justify its own dedicated real-instance verification if/when needed. (2)
+**The fixed heuristic checks "does the uploaded filename appear in the message" as its primary,
+new check, kept alongside (not instead of) the original "already exist" + keyword check** as a
+secondary/backward-compatible path. Rationale: the task instructions explicitly suggested this
+filename-presence check as "more robust... over exact-phrase matching, so future message-wording
+variants are less likely to slip through undetected again" -- Confluence's real message always names
+the offending file, so this check is wording-independent, while keeping the original phrase check
+means the existing Phase-4 mocked test (using a community-reported message variant that does not
+repeat the filename) continues to pass unchanged, with zero risk of a false-negative regression for
+that case.
 
 #### 2026-09-01 23:00:00.000Z — Phase 5: resolved two of Phase 4's three "unverified against a real instance" caveats; attempted the optional attachment smoke-test path
 

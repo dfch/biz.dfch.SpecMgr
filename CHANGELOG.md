@@ -17,10 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   HTML fragment, and `PUT`-ing the incremented version. Local images
   referenced by the Markdown file are uploaded as Confluence attachments
   on a best-effort basis (`POST .../child/attachment`, falling back to
-  `.../child/attachment/{id}/data` if the filename already exists) and
-  their `<img>` tags are rewritten into Confluence's `<ac:image>`/
-  `<ri:attachment>` storage-format macro. Closes GitHub issue #50, per
-  ADR a156fdf9-052c-4f43-93a2-eeec04a91eac.
+  `.../child/attachment/{id}/data` if the filename already exists --
+  duplicate-filename detection is confirmed against a real Confluence
+  server's actual 400 response, "Cannot add a new attachment with same
+  file name as an existing attachment: `<filename>`. Log referral number
+  is `<uuid>`") and their `<img>` tags are rewritten into Confluence's
+  `<ac:image>`/`<ri:attachment>` storage-format macro. Closes GitHub
+  issue #50, per ADR a156fdf9-052c-4f43-93a2-eeec04a91eac.
 
 ### Changed
 
