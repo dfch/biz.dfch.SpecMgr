@@ -3,7 +3,7 @@ created: '2026-09-01T15:14:00.000000'
 id: feat-38-39-41-43-44
 status: planning
 type: feat
-updated: '2026-09-01T15:42:48.000000'
+updated: '2026-09-01T16:14:12.000000'
 version: 1.0.0
 ---
 
@@ -152,6 +152,10 @@ As of 2026-09-01: the design phase is complete. All five issues were examined ag
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
+#### 2026-09-01 16:14:12.000+02:00 — Design session wrap-up: issue links recorded, pylint baseline re-verified
+
+Closed out the design session: added the `### Related PRs / Commits` section with the five source-issue URLs (one phase each) and the design-session commits, and re-ran the advisory pylint baseline on the post-merge tree to confirm Phase 5's inventory is still exact (42 x W0622 in the same 39 files, score 9.34/10, unchanged by the `8e07594` merge). Nothing else outstanding; the branch is pushed and ready for Phase 1.
+
 #### 2026-09-01 15:42:48.000+02:00 — Merged origin/dev (8e07594) after the plan commit; counts updated
 
 After committing the plan, upstream dev had gained one commit, `8e07594` (feat-40 docs pruning: `specmgr docs` now prunes stale `docs/api` pages; it also brought the `feat-32-sysrs` and `feat-40-docs-prune` folders and a CHANGELOG entry). It was merged into this branch (merge commit on top of the plan commit, not pushed). The feat parse inventory was re-verified on the merged tree: twenty-two feat READMEs, only `feat-36-delete` and this one parse, so the plan's migration counts were updated in place (REQ-008, Scope, Design Notes, Task 3.4, and decision D8: nineteen legacy READMEs becomes twenty-one; four parseable mandatory-migration documents becomes five, counting this README). The full unittest suite is green on the merged tree (2720 tests). No code changes.
@@ -173,3 +177,19 @@ Chosen over "tools only produce it": the shared `MarkdownFrontmatter` gains a da
 #### 2026-09-01 14:50:00.000+02:00 — D1/D2/D3/D4/D6: folder name, separators, ordering scope, timezone, pylint style
 
 The folder/README id is `feat-38-39-41-43-44` (D1; the `31` in the branch name is a typo for issue 41, and the branch keeps its name). Update-entry headings accept both ` - ` and ` : ` separators, and the em-dash is strictly rejected with in-phase migration of the repo's artifacts (D2). Newest-first ordering is enforced at parse time across SOP, DEC, VCR, and TSK (not SOP-only), which requires the DEC/VCR/TSK entries to become timestamp-led (D3). Date+time values carry local time with the actual offset, or `Z` for UTC (D4; the issue's example was acknowledged as sloppy, the intent is "use tz info", and `Z` is allowed as well). The W0622 elimination uses explicit per-file pylint disable comments instead of a global config, so the shadowing stays visibly intentional in every affected file (D6).
+
+### Related PRs / Commits
+
+Source issues (one phase each):
+
+- [Issue #38](https://github.com/dfch/biz.dfch.SpecMgr/issues/38): Replace "em-dash" in Sop.Updates section with "colon" or "dash" (Phase 1)
+- [Issue #39](https://github.com/dfch/biz.dfch.SpecMgr/issues/39): Sop.Updates are ascending and not descending (Phase 2)
+- [Issue #41](https://github.com/dfch/biz.dfch.SpecMgr/issues/41): Examine pylint W0622 id/type (Phase 5)
+- [Issue #43](https://github.com/dfch/biz.dfch.SpecMgr/issues/43): `get_<d>`, `update`, `set_status` must use `_path_safety` (Phase 4)
+- [Issue #44](https://github.com/dfch/biz.dfch.SpecMgr/issues/44): Timestamps in artifact must use the same format (Phase 3)
+
+Design-session commits on `feat-38-39-31-43-44`:
+
+- `4f88880`: plan created
+- `019a49b`: merged `origin/dev` (`8e07594`, feat-40 docs pruning)
+- `1958c11`: plan counts updated for the post-merge parse inventory
