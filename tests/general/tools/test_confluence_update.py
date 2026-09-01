@@ -38,6 +38,9 @@ from biz.dfch.specmgr.general.tools.confluence_fetch import ConfluenceTinyLinkNo
 from biz.dfch.specmgr.general.tools.confluence_update import (
     ConfluencePageIdNotResolvedError,
     ConfluenceUnexpectedResponseShapeError,
+    _HTML_COMMENT_PATTERN,
+    _convert_leading_frontmatter_to_code_block,
+    _sanitize_html_comments,
     confluence_update,
 )
 
@@ -657,6 +660,115 @@ class TestConfluenceUpdateTool(unittest.TestCase):
                 self.assertIn('<img src="./missing.png"', body)
                 self.assertIn('<img src="https://example.com/remote.png"', body)
                 self.assertEqual(result["failed_images"], [])
+
+    # -- REQ-010/ACC-009: HTML comment `--` sanitization (Phase 7) ----------------------------------
+
+    def test_html_comment_with_double_hyphen_is_sanitized_in_put_payload(self) -> None:
+        """ACC-009: a Markdown file with an HTML comment containing '--' has that '--' sanitized."""
+        with mock.patch.dict(
+            os.environ,
+            {CONFLUENCE_BASE_URL_ENV_VAR: _BASE_URL, CONFLUENCE_BEARER_ENV_VAR: _TOKEN},
+        ):
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                markdown_content = (
+                    "# Heading\n\n"
+                    "<!-- Newest entry first -- prepend new entries directly below this comment. -->\n\n"
+                    "Some *body* text.\n"
+                )
+                markdown_file_path = _write_markdown_file(tmp_dir, markdown_content)
+                get_response = _make_get_response()
+                put_response = _make_put_response()
+
+                with mock.patch("httpx.get", return_value=get_response):
+                    with mock.patch("httpx.put", return_value=put_response) as mock_put:
+                        confluence_update(_PAGE_ID, markdown_file_path)
+
+                payload = mock_put.call_args.kwargs["json"]
+                body = payload["body"]["storage"]["value"]
+                self.assertIn("<!--", body)
+                for comment_body in _HTML_COMMENT_PATTERN.findall(body):
+                    self.assertNotIn("--", comment_body)
+
+    def test_sanitize_html_comments_replaces_double_hyphen_with_em_dash(self) -> None:
+        """The private helper replaces every '--' inside a comment body with an em dash."""
+        html = "<p>ok</p><!-- a -- b -- c -->"
+        result = _sanitize_html_comments(html)
+        self.assertEqual(result, "<p>ok</p><!-- a — b — c -->")
+
+    def test_sanitize_html_comments_avoids_trailing_bare_hyphen_before_close(self) -> None:
+        """A sanitized comment must never end in a bare '-' immediately before '-->'."""
+        html = "<!--text--->"
+        result = _sanitize_html_comments(html)
+        self.assertFalse(result.endswith("--->"))
+        self.assertTrue(result.endswith("-->"))
+        inner = result[len("<!--") : -len("-->")]
+        self.assertFalse(inner.endswith("-"))
+
+    def test_sanitize_html_comments_handles_multiple_separate_comments(self) -> None:
+        """Multiple, separate comments in the same fragment are each sanitized independently."""
+        html = "<!-- one -- two -->\n<p>text</p>\n<!-- three -- four -->"
+        result = _sanitize_html_comments(html)
+        self.assertNotIn("--", "".join(_HTML_COMMENT_PATTERN.findall(result)))
+        self.assertEqual(result.count("<!--"), 2)
+
+    def test_sanitize_html_comments_leaves_text_without_comments_unchanged(self) -> None:
+        """Text with no HTML comments at all is returned unchanged."""
+        html = "<p>no comments here -- just a paragraph</p>"
+        result = _sanitize_html_comments(html)
+        self.assertEqual(result, html)
+
+    # -- REQ-011/ACC-010: leading YAML frontmatter -> fenced code block (Phase 7) --------------------
+
+    def test_leading_frontmatter_block_renders_as_code_block_not_heading(self) -> None:
+        """ACC-010: a leading YAML frontmatter block renders as a code block, not a heading."""
+        with mock.patch.dict(
+            os.environ,
+            {CONFLUENCE_BASE_URL_ENV_VAR: _BASE_URL, CONFLUENCE_BEARER_ENV_VAR: _TOKEN},
+        ):
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                markdown_content = "---\nid: feat-50-confluence\nstatus: draft\n---\n\n# Heading\n\nBody text.\n"
+                markdown_file_path = _write_markdown_file(tmp_dir, markdown_content)
+                get_response = _make_get_response()
+                put_response = _make_put_response()
+
+                with mock.patch("httpx.get", return_value=get_response):
+                    with mock.patch("httpx.put", return_value=put_response) as mock_put:
+                        confluence_update(_PAGE_ID, markdown_file_path)
+
+                payload = mock_put.call_args.kwargs["json"]
+                body = payload["body"]["storage"]["value"]
+                self.assertNotIn("<h2>", body)
+                self.assertNotIn("<hr", body)
+                self.assertIn("<pre>", body)
+                self.assertIn("id: feat-50-confluence", body)
+                self.assertIn("<h1>Heading</h1>", body)
+
+    def test_markdown_without_frontmatter_is_unaffected(self) -> None:
+        """A Markdown file with no leading frontmatter block renders exactly as before (unaffected)."""
+        text = "# Heading\n\nSome *body* text.\n"
+        result = _convert_leading_frontmatter_to_code_block(text)
+        self.assertEqual(result, text)
+
+    def test_markdown_with_unclosed_opening_fence_is_unaffected(self) -> None:
+        """An opening '---' with no matching closing '---' line leaves the text untouched."""
+        text = "---\nid: foo\nstatus: draft\n\n# Heading\n\nBody.\n"
+        result = _convert_leading_frontmatter_to_code_block(text)
+        self.assertEqual(result, text)
+
+    def test_frontmatter_with_trailing_whitespace_on_fence_lines_is_detected(self) -> None:
+        """Fence lines with trailing whitespace ('---   ') are still recognized as frontmatter."""
+        text = "---   \nid: foo\n---  \n\n# Heading\n"
+        result = _convert_leading_frontmatter_to_code_block(text)
+        self.assertNotEqual(result, text)
+        self.assertIn("id: foo", result)
+        self.assertIn("# Heading", result)
+        self.assertTrue(result.lstrip().startswith("````yaml"))
+
+    def test_frontmatter_not_at_very_first_line_is_unaffected(self) -> None:
+        """A leading blank line before the opening '---' means it is NOT treated as frontmatter."""
+        text = "\n---\nid: foo\n---\n\n# Heading\n"
+        result = _convert_leading_frontmatter_to_code_block(text)
+        self.assertEqual(result, text)
 
 
 if __name__ == "__main__":

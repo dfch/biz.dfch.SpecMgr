@@ -22,8 +22,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   server's actual 400 response, "Cannot add a new attachment with same
   file name as an existing attachment: `<filename>`. Log referral number
   is `<uuid>`") and their `<img>` tags are rewritten into Confluence's
-  `<ac:image>`/`<ri:attachment>` storage-format macro. Closes GitHub
-  issue #50, per ADR a156fdf9-052c-4f43-93a2-eeec04a91eac.
+  `<ac:image>`/`<ri:attachment>` storage-format macro. Also sanitizes any
+  raw `--` sequence inside rendered `<!-- -->` HTML comments (valid
+  CommonMark but rejected outright by Confluence's strict XHTML
+  storage-format parser, confirmed against a real instance: `"Error
+  parsing xhtml: String '--' not allowed in comment"`) and converts a
+  leading YAML frontmatter block into a fenced code block before
+  rendering, instead of letting CommonMark's thematic-break/Setext-heading
+  rules mangle it into a stray `<h2>` heading (also confirmed against a
+  real instance). Closes GitHub issue #50, per ADR
+  a156fdf9-052c-4f43-93a2-eeec04a91eac.
+- `confluence_update`/`confluence_fetch` MCP prompts (`general/prompts/`):
+  thin, single-tool-call prompts sharing their respective tools' exact
+  names (a separate MCP registry from tools). Each returns instructional
+  text telling the LLM to call the matching `confluence_update`/
+  `confluence_fetch` tool with the given parameters -- neither prompt ever
+  calls its tool itself. `confluence_update` also tells the LLM to report
+  back the tool's returned `version`/`failed_images`; `confluence_fetch`
+  documents that `destination_path` is only required for binary/non-text
+  content. Part of feat-50-confluence Phase 8, REQ-012/REQ-013.
 
 ### Changed
 

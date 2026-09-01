@@ -305,7 +305,12 @@ near-duplicate verification case record.
 General prompts (``general/prompts/``): ``compact_history`` -- guides rotating
 older ``### Recent Updates`` entries out of any `.specmgr` feature folder's
 ``README.md`` into an optional sibling ``history.md``, per ADR
-e369ee2e-3353-4f92-991c-6367d76d832e.
+e369ee2e-3353-4f92-991c-6367d76d832e; plus ``confluence_update``/
+``confluence_fetch`` -- thin, single-tool-call prompts sharing their
+respective tools' exact names (see the ``confluence_update``/``confluence_fetch``
+tools above), each returning instructional text that tells the LLM to call
+the matching tool with the given parameters, never calling it themselves
+(feat-50-confluence Phase 8, REQ-012/REQ-013).
 
 Modules are grouped domain-first
 (ADR ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by

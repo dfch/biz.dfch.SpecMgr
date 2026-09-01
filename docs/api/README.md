@@ -106,6 +106,8 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general.models.summary`](biz.dfch.specmgr.general.models.summary.md) — Common base for every domain's one-line listing summary (feat-13 Task 1.3, REQ-003/ACC-001).
 - [`biz.dfch.specmgr.general.prompts`](biz.dfch.specmgr.general.prompts.md) — MCP prompt registrations that are not specific to any single document
 - [`biz.dfch.specmgr.general.prompts.compact_history`](biz.dfch.specmgr.general.prompts.compact_history.md) — ``@mcp.prompt()``: compact_history (Various improvements, Task 0.21).
+- [`biz.dfch.specmgr.general.prompts.confluence_fetch`](biz.dfch.specmgr.general.prompts.confluence_fetch.md) — ``@mcp.prompt()``: confluence_fetch (feat-50-confluence Phase 8, REQ-013/ACC-012).
+- [`biz.dfch.specmgr.general.prompts.confluence_update`](biz.dfch.specmgr.general.prompts.confluence_update.md) — ``@mcp.prompt()``: confluence_update (feat-50-confluence Phase 8, REQ-012/ACC-011).
 - [`biz.dfch.specmgr.general.resources`](biz.dfch.specmgr.general.resources.md) — MCP resource registrations that are not specific to any single document
 - [`biz.dfch.specmgr.general.resources.dtais`](biz.dfch.specmgr.general.resources.dtais.md) — Resource: specmgr://dtais -- the DTAIS verification-method vocabulary (feat-33-vcr Task 3.3).
 - [`biz.dfch.specmgr.general.resources.iso25010`](biz.dfch.specmgr.general.resources.iso25010.md) — Resource: specmgr://iso25010 (Task 0.8.3).

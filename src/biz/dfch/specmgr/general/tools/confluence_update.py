@@ -16,13 +16,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 """``@mcp.tool()`` wrapper: confluence_update (ADR a156fdf9-052c-4f43-93a2-eeec04a91eac,
-feat-50-confluence Phases 3-4, duplicate-filename detection fixed in Phase 6).
+feat-50-confluence Phases 3-4, duplicate-filename detection fixed in Phase 6, content
+robustness fixes in Phase 7).
 
 Writes a local Markdown file's content into an existing Confluence page's
 body via the REST API, using the same Bearer/PAT authentication and the
 same two environment variables :mod:`.confluence_fetch` already uses (see
-:mod:`._confluence_config`). The full write flow (REQ-007/REQ-008/REQ-009,
-ACC-006/ACC-007):
+:mod:`._confluence_config`). The full write flow (REQ-007/REQ-008/REQ-009/
+REQ-010/REQ-011, ACC-006/ACC-007/ACC-009/ACC-010):
 
 1. Resolve ``page_url_or_id`` to a numeric page id (see
    :func:`._confluence_url.resolve_page_id`) -- a bare id, a browsable page
@@ -32,9 +33,25 @@ ACC-006/ACC-007):
 2. ``GET {base}/rest/api/content/{id}?expand=version,title`` to read the
    page's current ``version.number`` and ``title`` (``body.storage`` is not
    needed here, since this phase never reads the *existing* body).
-3. Render the Markdown file at ``markdown_file_path`` to an HTML fragment
-   via ``markdown_it.MarkdownIt("commonmark").render(...)``.
-4. Best-effort local-image attachment upload and ``<img>`` -> ``<ac:image>``
+3. If the Markdown file at ``markdown_file_path`` begins with a leading YAML
+   frontmatter block (a line consisting solely of ``---``, followed later by
+   a closing ``---`` line), that block is converted into a fenced code block
+   BEFORE rendering (REQ-011/ACC-010, Phase 7; see
+   :func:`_convert_leading_frontmatter_to_code_block`) -- otherwise
+   CommonMark's thematic-break/Setext-heading rules mangle it into an
+   `<hr>` immediately followed by a stray `<h2>` heading (confirmed against
+   a real instance). A file with no leading frontmatter, or an unclosed/
+   malformed opening ``---``, is left completely unaffected.
+4. Render the (possibly frontmatter-converted) Markdown text to an HTML
+   fragment via ``markdown_it.MarkdownIt("commonmark").render(...)``, then
+   sanitize every ``<!-- ... -->`` HTML comment in that fragment so no raw
+   ``--`` remains inside a comment body (REQ-010/ACC-009, Phase 7; see
+   :func:`_sanitize_html_comments`) -- Confluence's strict XHTML
+   storage-format parser otherwise rejects the whole `PUT` outright
+   (confirmed against a real instance: `"Error parsing xhtml: String '--'
+   not allowed in comment"`), which this repository's own Markdown docs
+   routinely trigger (`<!-- ... -- ... -->`-style comments).
+5. Best-effort local-image attachment upload and ``<img>`` -> ``<ac:image>``
    storage-format macro rewriting (REQ-009/ACC-007, Phase 4): every local
    image referenced by the rendered HTML (a ``src`` with no ``://`` scheme)
    that exists on disk is uploaded via
@@ -56,9 +73,9 @@ ACC-006/ACC-007):
    outcome. See :func:`_looks_like_duplicate_filename_response` for the
    real, confirmed duplicate-filename 400 error-message shape and the
    feature README's Decisions Made log for the full history.
-5. ``PUT {base}/rest/api/content/{id}`` with the incremented version number,
-   the unchanged title, and the (possibly image-macro-rewritten) rendered
-   fragment as the new ``body.storage.value``.
+6. ``PUT {base}/rest/api/content/{id}`` with the incremented version number,
+   the unchanged title, and the (possibly image-macro-rewritten,
+   comment-sanitized) rendered fragment as the new ``body.storage.value``.
 """
 
 from __future__ import annotations
@@ -134,6 +151,36 @@ _DEFAULT_ATTACHMENT_MIME_TYPE = "application/octet-stream"
 #: attribute value.
 _IMG_TAG_PATTERN = re.compile(r'<img\b[^>]*\bsrc="([^"]*)"[^>]*/?>')
 
+#: Matches every ``<!-- ... -->`` HTML comment in a rendered HTML fragment (REQ-010/ACC-009,
+#: Phase 7). ``re.DOTALL`` so a comment spanning multiple lines is matched as a single block, and
+#: the body is captured non-greedily (``.*?``) so multiple separate comments in one fragment are
+#: matched individually rather than as one comment spanning from the first ``<!--`` to the last
+#: ``-->``.
+_HTML_COMMENT_PATTERN = re.compile(r"<!--(.*?)-->", re.DOTALL)
+
+#: Replacement for a raw ``--`` sequence found inside an HTML comment body (see
+#: :func:`_sanitize_html_comments`) -- an em dash renders the same stylistic "aside" meaning the
+#: original ``--`` was almost always used for, while remaining a single character with no XML
+#: comment-grammar restrictions of its own.
+_COMMENT_DOUBLE_HYPHEN_REPLACEMENT = "—"
+
+#: The literal fence line that marks the start/end of a leading YAML frontmatter block (REQ-011/
+#: ACC-010, Phase 7). Matched via ``.strip()`` so trailing whitespace on the fence line itself is
+#: tolerated, matching this codebase's own frontmatter convention (e.g.
+#: ``models.adr.v1.parser``'s use of the ``python-frontmatter`` library, which is equally lenient).
+_FRONTMATTER_FENCE_LINE = "---"
+
+#: The code-fence marker :func:`_convert_leading_frontmatter_to_code_block` wraps a converted
+#: frontmatter block in. Four backticks (not the usual three) are used deliberately, even though a
+#: YAML frontmatter block is exceedingly unlikely to itself contain a triple-backtick sequence --
+#: an unambiguous fence is cheap insurance against exactly that edge case per CommonMark's own
+#: "the fence must be at least as long as any embedded backtick run" rule.
+_FRONTMATTER_CODE_FENCE = "````"
+
+#: The fenced code block's info string (language hint) -- the frontmatter block's own content is
+#: YAML.
+_FRONTMATTER_CODE_FENCE_LANGUAGE = "yaml"
+
 
 class ConfluencePageIdNotResolvedError(ValueError):
     """``page_url_or_id`` could not be resolved to a numeric Confluence page id."""
@@ -151,6 +198,108 @@ class ConfluenceAttachmentLookupError(RuntimeError):
     another best-effort per-image failure (REQ-009), never propagated out of
     :func:`confluence_update` itself.
     """
+
+
+def _sanitize_html_comments(html: str) -> str:
+    """Replace any ``--`` inside a rendered HTML comment body with a safe substitute (REQ-010/ACC-009).
+
+    **Confirmed against a real Confluence instance** (feat-50-confluence Phase 7, see the feature
+    README's Decisions Made log): Confluence's storage-format representation is strict XHTML,
+    whose comment grammar (unlike CommonMark's raw-HTML passthrough) never allows a bare ``--``
+    inside a comment body, nor a comment body ending in a bare ``-`` immediately before the
+    closing ``-->``. A real ``PUT`` containing either shape is rejected outright with
+    ``"Error parsing xhtml: String '--' not allowed in comment (missing '>'?)"`` -- and this
+    repository's own Markdown docs routinely write comments like
+    ``<!-- Newest entry first -- prepend new entries directly below this comment. -->``, valid
+    CommonMark but invalid strict XHTML.
+
+    Every ``--`` occurrence inside a comment's body is replaced with
+    :data:`_COMMENT_DOUBLE_HYPHEN_REPLACEMENT` (an em dash); if the resulting body would still end
+    in a bare ``-`` immediately before the closing ``-->`` (itself also invalid per the XML
+    comment grammar), a single trailing space is appended to separate it from the fence. Multiple,
+    separate comments in the same fragment are each sanitized independently
+    (:data:`_HTML_COMMENT_PATTERN` is non-greedy).
+
+    Parameters
+    ----------
+    html:
+        The rendered HTML fragment to scan (typically the output of ``_MD.render(...)``).
+
+    Returns
+    -------
+    str
+        ``html`` with every ``<!-- ... -->`` comment body sanitized; text outside comments is
+        returned unchanged.
+    """
+    assert isinstance(html, str), type(html)
+
+    def _fix(match: re.Match[str]) -> str:
+        inner = match.group(1).replace("--", _COMMENT_DOUBLE_HYPHEN_REPLACEMENT)
+        if inner.endswith("-"):
+            inner = inner + " "
+        return f"<!--{inner}-->"
+
+    result = _HTML_COMMENT_PATTERN.sub(_fix, html)
+    return result
+
+
+def _convert_leading_frontmatter_to_code_block(markdown_text: str) -> str:
+    """Convert a leading YAML frontmatter block into a fenced code block (REQ-011/ACC-010).
+
+    **Confirmed against a real Confluence instance** (feat-50-confluence Phase 7, see the feature
+    README's Decisions Made log): a leading YAML frontmatter block -- a line consisting solely of
+    ``---``, followed later by a closing ``---`` line -- is exactly the shape ``markdown-it``'s
+    CommonMark rules mangle: the opening ``---`` is read as a thematic break (``<hr>``), and the
+    closing ``---`` fence is read as a Setext-heading underline for whatever text sits directly
+    above it, turning the whole block into a single stray ``<h2>`` heading instead of the plain
+    text it should be.
+
+    Detection is deliberately strict and literal: the markdown text's very first line (no leading
+    blank lines tolerated -- this matches how frontmatter is conventionally required to sit at the
+    absolute start of the file, e.g. ``models.adr.v1.parser``'s use of the ``python-frontmatter``
+    library) must be exactly ``---`` (trailing whitespace tolerated), and a LATER line must also be
+    exactly ``---``. If found, that whole span -- both fence lines and everything between them --
+    is replaced with a fenced code block (:data:`_FRONTMATTER_CODE_FENCE`, four backticks to stay
+    unambiguous even in the unlikely case the frontmatter content itself contains a triple-backtick
+    run) containing the same inner YAML content completely unmodified. If no closing ``---`` line
+    is found after the opening one, or the first line is not exactly ``---``, ``markdown_text`` is
+    returned untouched -- this function never guesses.
+
+    Parameters
+    ----------
+    markdown_text:
+        The raw Markdown source text, as read from ``markdown_file_path``.
+
+    Returns
+    -------
+    str
+        ``markdown_text`` with its leading frontmatter block (if any) converted to a fenced code
+        block, or ``markdown_text`` unchanged if no well-formed leading frontmatter block is
+        found.
+    """
+    assert isinstance(markdown_text, str), type(markdown_text)
+
+    lines = markdown_text.splitlines(keepends=True)
+    if not lines or lines[0].strip() != _FRONTMATTER_FENCE_LINE:
+        return markdown_text
+
+    closing_index: int | None = None
+    for index in range(1, len(lines)):
+        if lines[index].strip() == _FRONTMATTER_FENCE_LINE:
+            closing_index = index
+            break
+
+    if closing_index is None:
+        return markdown_text
+
+    frontmatter_body = "".join(lines[1:closing_index])
+    if frontmatter_body and not frontmatter_body.endswith("\n"):
+        frontmatter_body = frontmatter_body + "\n"
+    remainder = "".join(lines[closing_index + 1 :])
+
+    fence = _FRONTMATTER_CODE_FENCE
+    result = f"{fence}{_FRONTMATTER_CODE_FENCE_LANGUAGE}\n{frontmatter_body}{fence}\n{remainder}"
+    return result
 
 
 def _resolve_page_id(page_url_or_id: str) -> str:
@@ -541,7 +690,10 @@ def _rewrite_local_images(
         "the filename already exists) and their <img> tags are rewritten into Confluence's "
         "<ac:image>/<ri:attachment> storage-format macro, on a best-effort basis: a missing "
         "local file or a failed upload simply leaves that one <img> tag unrewritten instead of "
-        "aborting the update."
+        "aborting the update. Also sanitizes any raw '--' inside rendered <!-- --> HTML "
+        "comments (invalid in Confluence's strict XHTML storage format, though valid "
+        "CommonMark) and converts a leading YAML frontmatter block into a fenced code block "
+        "before rendering, so it is not mangled into a heading."
     ),
 )
 def confluence_update(page_url_or_id: str, markdown_file_path: str) -> dict[str, Any]:
@@ -629,7 +781,9 @@ def confluence_update(page_url_or_id: str, markdown_file_path: str) -> dict[str,
     new_version = version_number + 1
 
     markdown_text = Path(markdown_file_path).read_text(encoding="utf-8")
+    markdown_text = _convert_leading_frontmatter_to_code_block(markdown_text)
     html_fragment = _MD.render(markdown_text)
+    html_fragment = _sanitize_html_comments(html_fragment)
 
     html_fragment, failed_images = _rewrite_local_images(html_fragment, markdown_file_path, base_url, page_id, headers)
 

@@ -3,7 +3,7 @@ created: '2026-09-01T17:36:02.251286'
 id: feat-50-confluence
 status: done
 type: feat
-updated: '2026-09-02T01:00:00.000000'
+updated: '2026-09-02T05:00:00.000000'
 version: 1.0.0
 ---
 
@@ -35,6 +35,14 @@ Adds a `confluence_update` tool that converts a local Markdown file to an HTML f
 
 - REQ-009: `confluence_update` must upload local images referenced by the source Markdown file as Confluence attachments and rewrite the corresponding `<img>` tags into Confluence's `<ac:image>`/`<ri:attachment>` storage-format macro, on a best-effort basis.
 
+- REQ-010: `confluence_update` must sanitize invalid `--` sequences inside HTML comments (`<!-- ... -->`) in the rendered content, since Confluence's strict XHTML storage-format parser rejects a raw `--` inside a comment body (confirmed against a real instance: `"Error parsing xhtml: String '--' not allowed in comment"`), a common Markdown doc-writing idiom (`--` used stylistically like an em dash inside a comment).
+
+- REQ-011: `confluence_update` must convert a leading YAML frontmatter block in the source Markdown file (a line consisting solely of `---`, followed later by a closing `---` line) into a fenced code block before rendering, instead of leaving it as raw text that CommonMark's Setext-heading/thematic-break rules can mangle (confirmed against a real instance: the frontmatter's closing `---` fence turned the whole frontmatter block into an `<h2>` heading).
+
+- REQ-012: A new `confluence_update` MCP prompt (same name as the `confluence_update` tool -- prompts and tools are separate MCP registries, precedent: `create_adr`/`create_dec`/`create_gol`/`create_req`) must accept the same `page_url_or_id`/`markdown_file_path` parameters as the tool and return instructional text directing an agent to call the `confluence_update` tool with them, so a user can trigger an upload with a single, simple instruction instead of needing to know the underlying tool's exact name/parameters.
+
+- REQ-013: A new `confluence_fetch` MCP prompt (same name as the `confluence_fetch` tool) must accept the same `url` parameter as the tool, plus an optional `destination_path` (used only when the target is binary/image content, per REQ-005), and return instructional text directing an agent to call the `confluence_fetch` tool with them, so a user can trigger a Confluence page/attachment download with a single, simple instruction.
+
 ### Acceptance Criteria
 
 - [x] ACC-001: Verifies REQ-001/REQ-002 — given a URL containing `/pages/<id>/` or `?pageId=<id>`, `confluence_fetch` fetches `{base}/rest/api/content/{id}?expand=body.storage` instead of the given URL.
@@ -52,6 +60,14 @@ Adds a `confluence_update` tool that converts a local Markdown file to an HTML f
 - [x] ACC-007: Verifies REQ-009 — given a Markdown file referencing a local image that exists on disk, `confluence_update` issues a `POST` to the page's `child/attachment` endpoint for that image and the rendered HTML fragment's corresponding `<img>` tag is rewritten to `<ac:image><ri:attachment ri:filename="..." /></ac:image>`.
 
 - [x] ACC-008: A real, reversible smoke test against the dedicated Confluence test page (id `1232503612`, "fetch and update") succeeds for both `confluence_fetch` (REST content GET) and `confluence_update` (version-incrementing PUT), performed once outside any read-only exploration constraint.
+
+- [x] ACC-009: Verifies REQ-010 — given a Markdown file containing an HTML comment with `--` inside it, `confluence_update`'s rendered `body.storage.value` contains no raw `--` inside any `<!-- -->` comment.
+
+- [x] ACC-010: Verifies REQ-011 — given a Markdown file starting with a YAML frontmatter block, `confluence_update`'s rendered `body.storage.value` contains that block inside a fenced code block rather than any heading tag; a Markdown file without a leading frontmatter block, or with a malformed/unclosed one, is unaffected.
+
+- [x] ACC-011: Verifies REQ-012 — invoking the `confluence_update` MCP prompt with given `page_url_or_id`/`markdown_file_path` values returns instructional text that embeds both values and names the `confluence_update` tool as the one to call.
+
+- [x] ACC-012: Verifies REQ-013 — invoking the `confluence_fetch` MCP prompt with a given `url` (with and without `destination_path`) returns instructional text that embeds the given value(s) and names the `confluence_fetch` tool as the one to call.
 
 ### Scope
 
@@ -205,19 +221,338 @@ broken.
   documented limitation). **Intentionally skipped** -- see the Decisions Made entry below for the
   rationale (relied on the mocked regression test, Task 6.2, instead).
 
+#### Phase 7: Sanitize invalid HTML comments and convert frontmatter to a code block
+
+A follow-up ad hoc real-instance test (uploading this very feature's own `README.md` -- a real,
+representative Markdown file with YAML frontmatter and `<!-- -->` HTML comments using `--` as a
+stylistic separator -- to the dedicated Confluence test page via `confluence_update`) found two
+real problems:
+
+1. Confluence's strict XHTML storage-format parser rejected the `PUT` outright: `"Error parsing
+   xhtml: String '--' not allowed in comment (missing '>'?)"`. Cause: this repository's own
+   Markdown docs commonly write HTML comments like
+   `<!-- Newest entry first -- prepend new entries directly below this comment. -->` -- valid
+   CommonMark (raw HTML passes through unmodified), but invalid strict XML/XHTML, since a comment
+   body must never contain a bare `--`.
+2. Once worked around (by hand, in a scratch copy, replacing `--` with an em dash inside the two
+   comments), the upload succeeded, but the leading YAML frontmatter block rendered oddly:
+   `markdown-it` treated the first `---` as a thematic break (`<hr>`) and the frontmatter's closing
+   `---` fence as a Setext-heading underline, turning the entire frontmatter block into a single
+   `<h2>` heading.
+
+- [x] Task 7.1: Fix REQ-010 for real (not just as a one-off manual workaround): add a
+  `confluence_update` render-pipeline step that finds every `<!-- ... -->` comment in the rendered
+  HTML fragment and replaces any `--` inside the comment body with a safe substitute (e.g. an em
+  dash `—`), also guarding against a sanitized comment ending in a bare `-` immediately before
+  `-->` (also invalid per the XML comment grammar).
+
+- [x] Task 7.2: Add tests in `test_confluence_update.py` reproducing the confirmed real scenario
+  (a Markdown file containing an HTML comment with `--` inside it) and asserting the final
+  `body.storage.value` contains no raw `--` inside any `<!-- -->` comment (ACC-009).
+
+- [x] Task 7.3: Fix REQ-011: if the source Markdown file begins with a YAML frontmatter block (a
+  line consisting solely of `---`, followed later by a closing `---` line), convert that block
+  into a fenced code block (e.g. an appropriate ` ``` ` fence) before rendering, so it becomes a
+  `<pre><code>`-style block instead of being mangled into a heading. A file with no leading
+  frontmatter, or with an unclosed/malformed opening `---` (no matching closing `---` line), must
+  be left completely unaffected.
+
+- [x] Task 7.4: Add tests in `test_confluence_update.py` for the frontmatter conversion (ACC-010):
+  a file with a leading frontmatter block renders it as a fenced/code block (not a heading); a
+  file without frontmatter is unaffected; a file with an opening `---` but no closing `---` is
+  unaffected (not incorrectly treated as frontmatter).
+
+- [x] Task 7.5: Update `confluence_update`'s module docstring/description and this feature
+  README's Decisions Made log to document both new robustness behaviors; re-run the full quality
+  gate (`ruff format`/`check`, `vulture`, full `unittest` suite, `specmgr docs`/`specmgr
+  mcp-docs`); add a `CHANGELOG.md` entry (amend the existing `[Unreleased]` `confluence_update`
+  bullet).
+
+- [x] Task 7.6 (optional): re-verify live against the real dedicated test page by uploading this
+  feature's own, real, UNMODIFIED `README.md` directly (no scratch-copy workaround needed this
+  time) and confirming the `PUT` now succeeds on the first try with the frontmatter rendered as a
+  code block; revert the page back to its original test content afterward. **Attempted and
+  passed** -- see the Updates entry below for full evidence.
+
+#### Phase 8: Sync with upstream `dev`; add `confluence_update`/`confluence_fetch` MCP prompts
+
+At the user's request: (a) sync this feature branch with `origin/dev` (which has advanced since
+this branch forked), and (b) add two new MCP *prompts* -- narrated instruction text, a separate
+MCP registry from tools, per this codebase's existing `create_adr`/`create_dec`/`create_gol`/
+`create_req` precedent of a prompt sharing its tool's exact name -- named `confluence_update` and
+`confluence_fetch`, so a user can trigger an upload/download with one simple instruction instead
+of needing to know the underlying tools' exact names/parameters. The sync (Task 8.1) is ordered
+first, ahead of the two prompt tasks the user listed first in their own request, purely for
+practical reasons: building the new prompts on the freshly-merged base avoids doing the work twice
+against a stale branch.
+
+- [x] Task 8.1: Merge `origin/dev` into this feature branch (`feat-50-confluence`). Expect
+  conflicts only in generated/shared files this feature also touched (`CHANGELOG.md`,
+  `docs/GENERATED.md`, `docs/api/README.md`, possibly other regenerated `docs/api/*.md` pages) --
+  resolve any real source-code conflicts by hand (none expected, since `dev`'s changes since this
+  branch's fork point do not touch `general/tools/confluence_*.py` or its tests), then regenerate
+  every auto-generated doc page fresh via `specmgr docs`/`specmgr mcp-docs` rather than
+  hand-resolving their conflict markers line-by-line. Re-run the full quality gate (`ruff
+  format`/`check`, `vulture`, full `unittest` suite) afterward to confirm the merged branch is
+  clean and this feature's own Confluence work still passes unchanged.
+
+- [x] Task 8.2: Add a new `@mcp.prompt()` named `confluence_update`
+  (`general/prompts/confluence_update.py`) -- same name as the existing `confluence_update` tool.
+  Accepts the same two parameters as the tool (`page_url_or_id: str, markdown_file_path: str`) and
+  returns instructional text (via a packaged data file,
+  `general/data/general_confluence_update_instructions.md`, `string.Template` substitution, per
+  this codebase's established prompt convention -- see `general/prompts/compact_history.py` or
+  `dec/prompts/create_dec.py`) telling the LLM to call the `confluence_update` tool with exactly
+  those two argument values to upload the given Markdown file's rendered content to the given
+  Confluence page. Register it in `general/prompts/__init__.py`.
+
+- [x] Task 8.3: Add tests for the `confluence_update` prompt (e.g.
+  `tests/general/prompts/test_confluence_update.py`) asserting the returned instructional text
+  embeds both given parameter values and names the `confluence_update` tool (ACC-011).
+
+- [x] Task 8.4: Add a new `@mcp.prompt()` named `confluence_fetch`
+  (`general/prompts/confluence_fetch.py`) -- same name as the existing `confluence_fetch` tool.
+  Accepts the same parameters as the tool (`url: str, destination_path: str | None = None`) and
+  returns instructional text (packaged data file,
+  `general/data/general_confluence_fetch_instructions.md`) telling the LLM to call the
+  `confluence_fetch` tool with exactly those argument values to fetch/download a Confluence page
+  or attachment; note that `destination_path` is only needed when the target is binary/image
+  content (REQ-005) and is optional/omittable for a normal page fetch. Register it in
+  `general/prompts/__init__.py`.
+
+- [x] Task 8.5: Add tests for the `confluence_fetch` prompt (e.g.
+  `tests/general/prompts/test_confluence_fetch.py`) asserting the returned instructional text
+  embeds the given parameter value(s) -- including the `destination_path=None` case -- and names
+  the `confluence_fetch` tool (ACC-012).
+
+- [x] Task 8.6: Update `general/__init__.py`'s and `server.py`'s module docstrings to mention both
+  new prompts; re-run the full quality gate (`ruff format`/`check`, `vulture`, full `unittest`
+  suite, `specmgr docs`/`specmgr mcp-docs`); add a `CHANGELOG.md` entry (`[Unreleased]`
+  `### Added`).
+
 ## Progress
 
 ### Current Status
 
-**As of 2026-09-02**: **Feature complete again — Phase 6 (bug fix) closed out; all 6 phases done.** The post-completion, ad hoc real-instance follow-up test documented below found that `_looks_like_duplicate_filename_response()` did not match the real Confluence 400 error message ("Cannot add a new attachment with same file name as an existing attachment: `<filename>`. Log referral number is `<uuid>`"), so the duplicate-filename fallback path never actually fired on a real instance -- the image was silently left unrewritten and reported in `failed_images` instead. Phase 6 fixed the detection heuristic (now checks whether the uploaded filename itself appears in the 400 response's `message`, in addition to the original "already exist" phrase check, per Task 6.1), added a byte-for-byte regression test using the exact real message captured live (Task 6.2, confirms the fallback path now fires and the `<img>` tag IS rewritten), updated code comments/docstrings to reflect which REST API shapes are now confirmed against a real instance (Task 6.3), and re-ran the full quality gate green (Task 6.4). Task 6.5 (re-exercising the fix live against the real test page) was deliberately skipped in favor of the mocked regression test -- see the Decisions Made entry below. Feature `status` restored from `in-progress` to `done`. See Phase 5's real, reversible smoke test against the dedicated Confluence test page (id `1232503612`, "fetch and update") in the 2026-09-01 Updates entry below for the original completion evidence, still valid and unaffected by this finding.
+**As of 2026-09-02**: **Feature complete again — Phase 8 (upstream sync + new prompts) closed out; all 8 phases done.** Task 8.1 merged `origin/dev` (2 commits: `a66e37c` "make every validation error message actionable" #52, `8e07594` "specmgr docs prunes stale docs/api pages" #49) into this feature branch via a real merge commit (`1d61f91`), with conflicts limited to exactly the two files predicted (`CHANGELOG.md`, hand-resolved keeping both sides' `[Unreleased]` content; `docs/GENERATED.md`, accepted as a placeholder then regenerated fresh) — no source-code conflicts in `general/tools/confluence_*.py` or its tests, confirming the prediction. A pre-existing, uncommitted Phase 7 working-tree diff (found already present at the start of this phase, apparently not yet committed by the orchestrator) was stashed before the merge and cleanly popped back on top afterward with no conflicts. Tasks 8.2-8.6 then added two new thin, single-tool-call `@mcp.prompt()` registrations under `general/prompts/` — `confluence_update` and `confluence_fetch`, same names as their respective tools (a separate MCP registry) — each backed by its own packaged data file under `general/data/` and `string.Template` substitution, registered in `general/prompts/__init__.py`, and documented in `general/__init__.py`'s and `server.py`'s module docstrings. 14 new tests added (`tests/general/prompts/test_confluence_update.py`, `test_confluence_fetch.py`), full suite now 2887 tests (up from 2873 pre-merge/pre-Phase-8). Full quality gate green after both the merge and the two new prompts: `ruff format`/`check`/`vulture` clean; `specmgr docs`/`specmgr mcp-docs` regenerated with zero drift on a second run (confirmed idempotent). Feature `status` restored from `in-progress` to `done`.
 
 ### Blockers
 
-- None blocking, but note: the real Confluence test page (id `1232503612`) permanently shows `version 7` (incremented by the post-completion investigation that found this bug) and carries one permanent test attachment (`feat-50-smoke-test.png`, at attachment-version `2`) — documented, accepted, non-blocking side effects of this feature's real-instance testing (Confluence's version numbers are monotonic and cannot themselves be reverted via the REST API; there is no attachment-delete tool in this codebase), not blockers on this feature or any future work. Phase 6's fix was verified via mocked regression test only (Task 6.5 skipped), so this page/attachment was not touched further during Phase 6.
+- None blocking, but note: the real Confluence test page (id `1232503612`) permanently shows `version 11` (from Phase 7's real re-verification) and still carries one permanent test attachment (`feat-50-smoke-test.png`, at attachment-version `2`) from earlier phases — documented, accepted, non-blocking side effects of this feature's real-instance testing (Confluence's version numbers are monotonic and cannot themselves be reverted via the REST API; there is no attachment-delete tool in this codebase), not blockers on this feature or any future work. The page's body is confirmed back to the original `<p>This is a page for testing.</p>` as of Phase 7's completion; Phase 8 involved no further real-instance testing (it was a code-only `origin/dev` merge plus two new MCP prompts, neither of which calls the underlying Confluence tools).
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-02 05:00:00.000Z — Phase 8 complete: merged `origin/dev`; added `confluence_update`/`confluence_fetch` MCP prompts; feature done again
+
+Completed Task 8.1 (upstream sync) first, verified fully green, then Tasks 8.2-8.6 (the two new
+prompts) on top of the merged base.
+
+**Task 8.1 — merge.** `git fetch origin` confirmed `origin/dev` had advanced by exactly 2 commits
+(`a66e37c` "feat(27): make every validation error message actionable ... (#52)`, `8e07594`
+"fix(40): specmgr docs prunes stale docs/api pages ... (#49)`) while this branch had 7 commits not
+on `origin/dev` — `git rev-list --left-right --count origin/dev...HEAD` returned `2  7`, matching
+the predicted shape exactly. Before merging, stashed (`git stash push -u`) a pre-existing,
+uncommitted Phase 7 working-tree diff (`README.md`, `CHANGELOG.md`, `docs/MCP.md`,
+`docs/api/biz.dfch.specmgr.general.tools.confluence_update.md`,
+`src/.../confluence_update.py`, `tests/.../test_confluence_update.py`) that was already present on
+disk at the start of this phase — evidently Phase 7's implementation work, completed but not yet
+committed by the orchestrator at the time Phase 8 began. `git merge origin/dev` then produced
+conflicts in EXACTLY the two files predicted and no others: `CHANGELOG.md` (hand-resolved,
+keeping HEAD's `### Added`/`### Changed` Confluence entries followed by `origin/dev`'s `### Fixed`
+entries, in that order, dropping neither side) and `docs/GENERATED.md` (accepted via
+`git checkout --theirs` as a disposable placeholder, then regenerated fresh afterward, per the
+task's own explicit guidance for generated files). `docs/api/README.md` and every other
+`docs/api/*.md` page auto-merged cleanly with no conflict markers at all. No conflicts touched
+`general/tools/confluence_*.py`, its tests, or `general/prompts/`, confirming the plan's
+prediction. Committed the merge as a real merge commit (`1d61f91`, `git commit --no-edit`), then
+`git stash pop`ped the earlier Phase 7 diff back on top — it auto-merged cleanly against
+`CHANGELOG.md` with zero remaining conflict markers. Regenerated `docs/api/`/`docs/GENERATED.md`/
+`docs/MCP.md` fresh via `specmgr docs`/`specmgr mcp-docs` (419 module pages), leaving only the
+originally-expected 6 files modified in `git status`. Ran the full `unittest` suite (needed
+~2m10s, longer than the default 120s shell timeout — reran with an explicit longer timeout): 2873
+tests, all green.
+
+**Tasks 8.2-8.6 — new prompts.** Read the current `confluence_update(page_url_or_id: str,
+markdown_file_path: str)`/`confluence_fetch(url: str, destination_path: str | None = None)` tool
+signatures (unchanged by the merge) plus `general/prompts/compact_history.py` and
+`dec/prompts/create_dec.py` for the established packaged-data-file + `string.Template` +
+same-name-as-tool convention. Added `general/prompts/confluence_update.py` and
+`general/prompts/confluence_fetch.py` — thin, single-tool-call prompts (unlike the multi-step
+`create_dec`/`create_adr`-style interview prompts) that never call their respective tools, only
+return instructional text naming the tool and echoing the given parameters back verbatim;
+`confluence_update`'s instructions additionally mention the best-effort local-image-attachment
+behavior and tell the LLM to report back the tool's returned `version`/`failed_images`;
+`confluence_fetch`'s instructions mention `destination_path` is only required for
+binary/non-text content, substituting an explanatory placeholder string (mirroring
+`compact_history.py`'s own `cutoff_hint or "(not given -- ...)"` pattern) when omitted. Backed by
+two new packaged data files, `general/data/general_confluence_update_instructions.md` and
+`general/data/general_confluence_fetch_instructions.md` (confirmed `general/data/*.md` was
+already globbed in `pyproject.toml`'s `[tool.setuptools.package-data]` — no change needed there).
+Registered both in `general/prompts/__init__.py` (import, `__all__`, docstring). Added
+`tests/general/prompts/test_confluence_update.py` and `test_confluence_fetch.py` (the
+`tests/general/prompts/` directory and its `__init__.py` already existed from
+`test_compact_history.py`) — 14 new tests total, covering parameter interpolation, the
+`confluence_update`/`confluence_fetch` tool-name mentions, the `destination_path=None` vs. given
+cases, packaged-data-file loading (patched, no caching), and the missing-file
+`FileNotFoundError` propagation — mirroring `test_compact_history.py`'s own test shape exactly.
+Updated `general/__init__.py`'s and `server.py`'s module docstrings (Task 8.6) to mention both new
+prompts in their respective Prompts sections/bullets, and added a `CHANGELOG.md` `[Unreleased]`
+`### Added` bullet for both prompts.
+
+Re-ran the full quality gate one more time for the combined final state (merge + two new
+prompts): `ruff format --check`/`ruff check`/`vulture` all clean; full `unittest` suite green,
+2887 tests (2873 merged + 14 new); `specmgr docs` (421 module pages, up from 419 pre-merge, from
+`origin/dev`'s own new modules) and `specmgr mcp-docs` regenerated with zero further diff on a
+second consecutive run (confirmed idempotent). Restored this document's frontmatter `status` from
+`in-progress` to `done`.
+
+Next: none -- feature complete again, now synced with `origin/dev` and with the two new
+`confluence_update`/`confluence_fetch` MCP prompts in place.
+Notes: no push, no force, no commit of Phase 8's own new work (Tasks 8.2-8.6) or the plan README
+update -- only the merge itself (Task 8.1) was committed, per the task's explicit instruction that
+a real `git merge` inherently requires a completing commit while everything else stays
+uncommitted for the orchestrator's own review, same as every prior phase.
+
+#### 2026-09-02 04:00:00.000Z — Phase 8 added: sync with upstream `dev`; new `confluence_update`/`confluence_fetch` MCP prompts
+
+Completed: per the user's explicit request, added Phase 8 (6 tasks, REQ-012/REQ-013,
+ACC-011/ACC-012) to the Task List: (1) merge `origin/dev` into this feature branch, since `dev` has
+advanced by 2 large merged PRs (`#52` "make every validation error message actionable",
+`#49` "specmgr docs prunes stale docs/api pages") since this branch's fork point, confirmed via
+`git fetch origin` + `git rev-list --left-right --count origin/dev...HEAD` (2 commits only on
+`origin/dev`, 7 only on this branch) and `git diff --stat` (192 files changed on `dev`'s side, none
+overlapping `general/tools/confluence_*.py` or its tests -- expected conflicts are limited to
+generated/shared files this feature also touched: `CHANGELOG.md`, `docs/GENERATED.md`,
+`docs/api/README.md`); (2) add a new `confluence_update` MCP prompt (same name as the existing
+tool, a separate MCP registry, per this codebase's `create_adr`/`create_dec`/`create_gol`/
+`create_req` precedent) taking the same `page_url_or_id`/`markdown_file_path` parameters and
+instructing an LLM to call the `confluence_update` tool with them; (3) add a new `confluence_fetch`
+MCP prompt taking the same `url`/`destination_path` parameters and instructing an LLM to call the
+`confluence_fetch` tool with them. The sync (Task 8.1) is ordered first even though the user listed
+the two new prompts first in their own request, purely to build the new prompts on the
+freshly-merged base rather than doing the work twice against a soon-to-be-stale branch. A separate,
+earlier request from the user (to add a new MCP/CLI command wrapping the same upload/download
+workflow as a *tool*, discussed but never actioned in the prior 2026-09-02 02:00 Updates entry) was
+explicitly reframed by the user as these two *prompts* instead, and is considered fully superseded
+by this Phase 8 addition -- not a separate, still-open request. Reverted this document's
+frontmatter `status` from `done` back to `in-progress`.
+Next: Phase 8 (sync with `dev`, then implement both new prompts).
+Notes: implementation has not started; this update only covers planning (Task List/REQ/ACC
+additions).
+
+#### 2026-09-02 03:00:00.000Z — Phase 7 complete: HTML-comment sanitization + frontmatter-to-code-block conversion fixed and re-verified live; feature done again
+
+Completed: fixed both real content-robustness bugs found by the post-completion investigation
+(Task 7.1/Task 7.3), in `general/tools/confluence_update.py`. (1) REQ-010/ACC-009: a new
+`_sanitize_html_comments(html)` helper (applied to the rendered HTML fragment, right after
+`_MD.render(...)` and before `_rewrite_local_images`) finds every `<!-- ... -->` comment via a
+`re.DOTALL`, non-greedy `_HTML_COMMENT_PATTERN = re.compile(r"<!--(.*?)-->", re.DOTALL)` and
+replaces every `--` inside the comment body with an em dash (`—`); if the sanitized body would
+still end in a bare `-` immediately before the closing `-->` (also invalid per the XML comment
+grammar), a single trailing space is appended. Handles multi-line comments, multiple `--`
+occurrences, and multiple separate comments in one fragment (verified by dedicated unit tests, not
+just the integration-level ACC-009 test). (2) REQ-011/ACC-010: a new
+`_convert_leading_frontmatter_to_code_block(markdown_text)` helper (applied to the RAW Markdown
+text, BEFORE `_MD.render(...)`) detects a leading YAML frontmatter block by requiring the
+markdown text's literal first line (no leading blank lines tolerated -- deliberately strict, per
+this codebase's own frontmatter convention) to be exactly `---` (trailing whitespace tolerated via
+`.strip()`) and a LATER line to also be exactly `---`; if found, that whole span is replaced with
+a fenced code block using FOUR backticks (`` ```` ``, not the usual three -- unambiguous even in
+the unlikely case the YAML content itself contains a triple-backtick run) and a `yaml` language
+hint, containing the same inner content completely unmodified. If no closing `---` is found, or
+the first line is not exactly `---`, the text is returned untouched -- verified by dedicated unit
+tests for "no frontmatter", "unclosed opening fence", "fence lines with trailing whitespace" (still
+detected), and "leading blank line before the opening fence" (NOT treated as frontmatter). Neither
+`models.md.frontmatter.MarkdownFrontmatter` (a Pydantic model for already-parsed fields, not raw-
+span detection) nor the `python-frontmatter` library used by `models.adr.v1.parser` (which
+re-serializes the YAML through its own dumper, which would NOT preserve the content "completely
+unmodified" as required) were suitable for reuse, so both new helpers are private, local functions
+in `confluence_update.py`, per the task's own explicit fallback guidance. Wired both into
+`confluence_update`'s write flow (Task 7.1/7.3) and added 10 new tests to
+`test_confluence_update.py` (Task 7.2/7.4): 2 integration-level tests (ACC-009's exact confirmed
+real scenario -- a Markdown file with `<!-- Newest entry first -- prepend ... -->`, asserting the
+final `body.storage.value` has no raw `--` inside any `<!-- -->` comment; ACC-010's exact confirmed
+real scenario -- a leading YAML frontmatter block, asserting the final body has no `<h2>`/`<hr>`
+and does have a `<pre>` block with the frontmatter content and a correctly-rendered `<h1>Heading</h1>`
+immediately after) plus 8 unit-level tests directly exercising the two private helpers' edge cases
+(em-dash replacement, trailing-bare-hyphen guarding, multiple separate comments, no-comments
+passthrough, no-frontmatter passthrough, unclosed-fence passthrough, trailing-whitespace-on-fence
+detection, leading-blank-line non-detection). Updated `confluence_update`'s module docstring (Task
+7.5) to document the frontmatter-conversion and comment-sanitization steps as new steps 3/4 in the
+write flow (renumbering the later steps), and its `@mcp.tool()` `description` string with a short
+mention of both. Re-ran the full quality gate (Task 7.5): `ruff format --check`/`ruff check`/
+`vulture` clean; full `unittest` suite green, 2799 tests (up from 2789, the 10 new tests);
+`specmgr docs`/`specmgr mcp-docs` regenerated `docs/api/biz.dfch.specmgr.general.tools.confluence_update.md`
+and `docs/MCP.md`'s `confluence_update` entries with no unexpected diffs (only the docstring/
+description wording changes made above). Amended the existing `[Unreleased]` `confluence_update`
+bullet in `CHANGELOG.md` (not a new `### Fixed` entry, matching Phase 6's precedent, since this
+feature has not shipped in a release yet) to document both new robustness behaviors.
+
+Attempted and PASSED Task 7.6 (optional live re-verification), sourcing the real base URL/bearer
+token from the sibling project's `.env` (same pattern as Phases 5/6, exported under the new
+`SPECMGR_CONFLUENCE_BASE_URL`/`SPECMGR_CONFLUENCE_BEARER` names into this shell session only, never
+written to any tracked file): called the FIXED `confluence_update` directly (imported, no MCP
+protocol) against the real dedicated test page (id `1232503612`) with the REAL, UNMODIFIED
+`.specmgr/feat/feat-50-confluence/README.md` path -- no scratch-copy workaround needed this time,
+which was the whole point of the fix. The `PUT` succeeded on the first try (`version: 10`, no
+manual intervention), confirming REQ-010's fix in the real environment. An independent follow-up
+`GET` confirmed: the leading YAML frontmatter now renders as `<pre><code class="language-yaml">...
+</code></pre>` (not `<hr>`/`<h2>`), immediately followed by the correct `<h1>Feature: Confluence
+Fetch and Update Tools</h1>`, confirming REQ-011's fix live; and the stored body contains ZERO
+`<!-- -->` HTML comments at all (`body.count("<!--") == 0`) -- Confluence's own storage layer
+apparently strips HTML comments entirely on save, rather than preserving a sanitized version of
+them, which was not anticipated but trivially satisfies ACC-009's "no raw `--` inside any comment"
+requirement (there being no comment left to contain one), and does not indicate any defect in the
+sanitization step itself (which is what made the `PUT` succeed in the first place -- confirmed by
+the fact the identical unsanitized content had previously failed the `PUT` outright with the
+strict-XHTML parser error). Immediately reverted the page back to its original test content via a
+second `confluence_update` call (a throwaway `/tmp/opencode/revert.md` containing exactly
+`This is a page for testing.`) -- returned `version: 11` -- and independently `GET`-verified the
+reverted `body.storage.value` is an EXACT, byte-for-byte match of the original
+`<p>This is a page for testing.</p>`. Cleaned up the throwaway revert file afterward; no untracked
+files left behind from this real-instance testing. Restored this document's frontmatter `status`
+from `in-progress` back to `done`.
+
+Next: none -- feature complete again, and this time with two real-instance-confirmed content-
+robustness fixes closing out the exact scenario (uploading this feature's own README) that first
+surfaced the gap.
+Notes: this closes out both genuine content-robustness defects found post-completion; the ADR's
+chosen design (best-effort Markdown-to-storage-format rendering via `markdown-it-py`) remains
+correct and unchanged -- these were pre-render/post-render sanitization steps layered on top, not
+a change to the core rendering approach. The real Confluence test page (id `1232503612`) now
+permanently sits at `version 11` (up from `version 8` at the start of this phase), with no other
+permanent side effects beyond the version-number increments already documented in Blockers above.
+
+#### 2026-09-02 02:00:00.000Z — Post-completion real-instance test uncovers two content-robustness bugs; Phase 7 added
+
+Completed: at the user's request, uploaded this feature's own `.specmgr/feat/feat-50-confluence/README.md`
+(a real, representative Markdown file -- YAML frontmatter, `<!-- -->` HTML comments, headings,
+lists, links) to the dedicated Confluence test page (id `1232503612`) via `confluence_update`,
+using the real base URL/bearer token from the sibling project's `.env` (same pattern as Phase 5/6).
+The first attempt failed: `PUT` returned `400`, `"Error parsing xhtml: String '--' not allowed in
+comment (missing '>'?)"`. Root cause: this repository's Markdown docs commonly write HTML comments
+like `<!-- Newest entry first -- prepend new entries directly below this comment. -->` -- valid
+CommonMark (raw HTML passes through `markdown-it` unmodified) but invalid strict XML/XHTML, which
+disallows a bare `--` inside a comment body; Confluence's storage-format parser enforces this
+strictly. Worked around it by hand in a scratch copy (`/tmp/opencode/`, not touching the repo file)
+by replacing `--` with an em dash inside the two comments, then retried -- the `PUT` succeeded
+(`version: 8`), independently `GET`-verified: the full rendered README is now the page's body.
+However, the leading YAML frontmatter block rendered oddly: `markdown-it` treated the first `---`
+as a thematic break (`<hr>`) and the frontmatter's closing `---` fence as a Setext-heading
+underline, turning the whole frontmatter block into a single `<h2>` heading -- cosmetically wrong
+but not a parse failure. Per the user's explicit request, added Phase 7 (6 tasks, REQ-010/REQ-011,
+ACC-009/ACC-010) to fix both issues for real in `confluence_update`'s own code (not a one-off
+manual workaround): (a) sanitize `--` inside rendered `<!-- -->` comments, (b) convert a leading
+YAML frontmatter block into a fenced code block before rendering. Reverted this document's
+frontmatter `status` from `done` back to `in-progress`. An earlier, separate request to add a new
+MCP/CLI command wrapping this workflow was explicitly withdrawn by the user in favor of this
+robustness-focused Phase 7 -- not tracked anywhere, intentionally not pursued.
+Next: Phase 7 (fix HTML-comment sanitization and frontmatter-to-code-block conversion).
+Notes: the real Confluence test page's body currently shows this feature's own README content
+(from the scratch-copy workaround upload), not yet reverted to the original test text -- see
+Blockers above and Phase 7's optional Task 7.6.
 
 #### 2026-09-02 01:00:00.000Z — Phase 6 complete: duplicate-filename detection fixed; feature done again
 
@@ -325,6 +660,78 @@ Notes: implementation has not started; this update only covers planning/design/e
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-02 05:00:00.000Z — Phase 8: real merge (not rebase) for the upstream sync; stashed a pre-existing uncommitted Phase 7 diff around it rather than committing it myself; thin non-calling prompts, not interview flows
+
+Decision: (1) **Used a real `git merge origin/dev`, not a rebase**, per the task's own explicit
+instruction -- this branch is local/unpushed so history rewriting was not strictly required
+either way, but a single merge commit is simpler and lower-risk for one-shot conflict resolution
+than replaying 7+ commits individually, and the task instructions were explicit on this point. (2)
+**Found a pre-existing, uncommitted Phase 7 working-tree diff already on disk at the start of this
+phase** (matching Phase 7's own already-`[x]`-checked tasks in this same README, itself found
+already edited to include Phase 8's plan before any Phase 8 implementation work began) — evidently
+completed by a prior turn but not yet committed by the orchestrator (which owns all commits, per
+this agent's own operating constraints). Rather than committing it myself (out of scope) or
+merging with a dirty tree (risky — a real conflict there could silently mix unrelated changes),
+**stashed it (`git stash push -u`) before merging and popped it back cleanly afterward** — the
+merge commit itself (`1d61f91`) therefore contains only `origin/dev`'s own history plus this
+branch's prior 7 commits, with Phase 7's pending diff still uncommitted on top, exactly as found,
+for the orchestrator's own review together with this phase's new work. (3) **The two new prompts
+are thin, single-tool-call, non-calling instructional text**, deliberately NOT structured as
+multi-step `TodoWrite`/`question`-tool interview flows like `create_dec`/`create_adr` — per the
+task's own explicit framing ("this is a thin, single-tool-call prompt, NOT a multi-step interview
+flow"), since both underlying tools (`confluence_update`/`confluence_fetch`) already take exactly
+the parameters a user would naturally supply directly; a prompt that also gathered other context
+via `question` would just add friction with no informational gain. (4) **A literal explanatory
+placeholder string, not a blank, is substituted for `destination_path` when absent** on
+`confluence_fetch`'s prompt, an exact analog of `compact_history.py`'s own
+`cutoff_hint or "(not given -- ...)"` idiom, chosen for consistency with that established
+convention over inventing a different absent-value rendering. (5) **Packaged-data-file naming
+follows the fixed `general_{kind}.md` convention exactly**
+(`general_confluence_update_instructions.md`/`general_confluence_fetch_instructions.md`), read via
+`read_packaged_text("general", "confluence_update_instructions", "md")`/
+`read_packaged_text("general", "confluence_fetch_instructions", "md")` — no deviation was needed
+since `general/data/*.md` was already globbed in `pyproject.toml`.
+
+#### 2026-09-02 03:00:00.000Z — Phase 7: em-dash substitution over deletion for `--`; strict literal-first-line frontmatter detection; four-backtick fence; attempted the optional live re-verification (unlike Phase 6's Task 6.5)
+
+Decision: (1) **Sanitize `--` inside HTML comments by substituting an em dash (`—`), not by
+deleting it or escaping it some other way.** Rationale: the task's own design guidance suggested
+this substitution explicitly; an em dash preserves the stylistic "aside" meaning `--` almost always
+carries in this codebase's own doc-writing idiom (e.g. "Newest entry first -- prepend..."), is a
+single character (so it cannot itself reintroduce a `--` sequence or an XML-illegal trailing bare
+`-` on its own), and requires no escaping of its own in either CommonMark or strict XHTML. (2)
+**Frontmatter detection is strict and literal**: the markdown text's very first line (no leading
+blank lines tolerated) must be exactly `---`, matching how frontmatter is conventionally required
+to sit at the absolute start of a file in this codebase (mirroring, in spirit, the ADR's own
+`python-frontmatter`-based parsing, which is equally strict about position) -- a file with a blank
+line before its `---` fence is deliberately NOT treated as having frontmatter, since that shape is
+ambiguous (could just be a thematic break in a normal document) and guessing wrong here would
+silently corrupt unrelated content. (3) **A four-backtick code fence (`` ```` ``), not the usual
+three**, wraps the converted frontmatter block -- cheap insurance against the vanishingly unlikely
+case that YAML frontmatter content itself contains a triple-backtick run, at zero cost to the
+common case. (4) **Neither existing frontmatter-adjacent code in this codebase was reused**:
+`models.md.frontmatter.MarkdownFrontmatter` is a Pydantic model over already-parsed fields, not a
+raw-text span-detection helper, and the `python-frontmatter` library (used by `models.adr.v1.parser`)
+re-serializes the YAML through its own dumper when read back out, which would violate this task's
+explicit "same inner YAML content unmodified" requirement (key order, quoting style, etc. could all
+change) -- so two small, private, local helpers were written in `confluence_update.py` instead, per
+the task's own explicit fallback guidance for exactly this case. (5) **Unlike Phase 6's Task 6.5,
+attempted Task 7.6** (the optional live re-verification) rather than relying solely on the mocked
+regression tests. Rationale: this phase's bug was originally discovered via a real-instance test
+that left the real page in a genuinely broken/awkward state (uploaded content with a mangled
+frontmatter heading, not yet reverted) -- attempting the live re-verification both closes that loop
+concretely (confirming the actual real-world scenario that triggered this phase now works
+end-to-end, first try, no manual workaround) and restores the shared test page to its documented
+baseline content, which leaving it un-reverted would not have done. This differs from Phase 6's
+Task 6.5 rationale (a pure Python string-matching fix with no need to re-prove already-confirmed
+HTTP shapes) -- here, the entire point was to re-prove the previously-FAILING real `PUT` now
+succeeds, which only a live call can demonstrate. The one unanticipated but harmless real-instance
+finding from this verification -- Confluence's storage layer strips `<!-- -->` HTML comments
+entirely on save, rather than persisting the sanitized version -- does not change this decision or
+the implementation: the sanitization step is still exactly what allows the `PUT` past Confluence's
+strict XHTML parser in the first place; what happens to comments after that point is an unrelated,
+pre-existing Confluence storage-layer behavior outside this feature's control or scope.
 
 #### 2026-09-02 01:00:00.000Z — Phase 6: skipped the optional live re-verification (Task 6.5), relying on the mocked regression test instead; robustness-over-exact-phrase heuristic design
 
