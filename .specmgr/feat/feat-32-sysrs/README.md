@@ -157,8 +157,9 @@ Domain key: `sysrs` (decided 2026-08-30 — see Decisions Made).
   `AssertionError`: unknown H2; missing mandatory H2 (`System Purpose`/
   `System Scope`/`Business Context and Goals`/`System Overview`/
   `Requirements`); `## Requirements` present with zero H3s; a
-  cross-reference list section present with zero items; H1 prefix
-  mismatch (a `# ...` line not starting `System Requirements
+  cross-reference list section present with zero items; `## References`
+  present with zero items; H1 prefix mismatch (a `# ...` line not
+  starting `System Requirements
   Specification: `); misordering of any top-level section; second H1;
   non-blank content before the H1.
 - [ ] ACC-005: Verifies REQ-005/006 — value violations raise
@@ -822,7 +823,7 @@ pinning `sop` uses for `Safety and Precautions`):
 - The cross-reference list classes — `Goals` (H3, `GOL`), `ProblemStatement` (H3, `PRB`), `StakeholderNeedsAndElicitation` (H2, LITERAL, `QA`), `OperationalConceptAndScenarios` (H2, LITERAL, `UC`), `Decisions` (H2, `DEC|ADR`), `Risks` (H2, `RSK`), plus the nine `## Requirements` H3s and six `## Other Characteristics` H3s (all `REQ`; LITERAL pins on `PolicyAndRegulation` and `PackagingHandlingShippingAndTransportation` — lowercase "and" and commas). Each: `items: list[MarkdownListItemWithNotes] = Field(min_length=1)` (≥1 item when present — absent is the section's own `| None`, present-with-zero-items must raise `AssertionError`) + a per-class `field_validator("items")` regex-checking each item's `.text` (the `MarkdownListItem` computed property holding the lead paragraph with the marker stripped — the exact item-text field name, confirmed from `models/md/markdown_list_item.py`; Phase 1 re-confirms that a list-level validator sees it) against the section's own module-level pattern, e.g. `_GOALS_PATTERN = r"^GOL [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}: .+$"` (vcr's `_VERIFIES_PATTERN` fragment style); `Decisions`'s pattern allows `(DEC|ADR)`. The item's `notes` field (`list[MarkdownParagraph] | None`, declared on `MarkdownListItemWithNotes`) holds the optional per-bullet indented notes paragraph (free text).
 - `Requirements(MarkdownSection2)` — mandatory container; nine `| None` H3 fields in canonical 25010:2023 order + a `model_validator(mode="after")` asserting at least one of the nine is present — a present-but-empty `## Requirements` is a **structural** violation, so the validator asserts (raises `AssertionError`), unlike DEC's duplicate-option-number after-validator, which raises `ValueError` into the `ValidationError` channel (Phase 1 confirms the engine mechanics for "≥1 of N optional children").
 - `OtherCharacteristics(MarkdownSection2)` — optional umbrella; six `| None` H3 fields; **no** ≥1-of-N validator (the whole umbrella is optional — "omit if none of the six apply").
-- `References(MarkdownSection2)` — optional; `items: list[MarkdownListItem] = Field(min_length=1)` — the plain no-notes variant (external standards/documents, no specmgr ids, no per-item regex). See the open question below for the ≥1-vs-may-be-empty choice.
+- `References(MarkdownSection2)` — optional; `items: list[MarkdownListItem] = Field(min_length=1)` — the plain no-notes variant (external standards/documents, no specmgr ids, no per-item regex). Present ⇒ ≥1 item required (user-confirmed 2026-09-01 — a bare heading with zero bullets is a structural error; see the resolved question below).
 - `Updates(MarkdownSection2)` + `UpdateEntry(MarkdownSection3)` — mirroring `dec`'s shipped free-form-H3 shape exactly: `UpdateEntry` with `@alias(value=".+", type=AliasType.REGEX)`, mandatory `content: MarkdownParagraph`, no ordering validator, no timestamp regex (date-led titles are convention, not enforced); `Updates` with `updates: list[UpdateEntry] = Field(min_length=1)`, optional as a whole, last section. DEC's plain `MarkdownSection2` (not VCR's `MarkdownSection2WithComment` variant), since `sysrs-example.md`'s `## Updates` carries no HTML comment.
 - `SysrsFrontmatter`/`SysrsDocument`/`parse_sysrs`/`SysrsSummary` — per the confirmed frontmatter shape above and sop's document/parser/summary shapes (`SysrsSummary(DocSummary)` plain: id/title/status/ref, no extras).
 - **Error channels** (codebase convention, no new exception types): structural → engine `AssertionError` (missing/unknown/misordered sections, zero-item list sections, zero-H3 `## Requirements`, H1 prefix mismatch); value → `pydantic.ValidationError` (`status` outside the 5-set, `type` != `sysrs`, a cross-ref bullet failing its section's type-tag regex — the `field_validator` `ValueError` channel).
@@ -922,17 +923,21 @@ text + real-looking placeholder UUIDs) so it round-trips through
   `docs/GENERATED.md` + `docs/api/` (`specmgr docs`),
   `docs/sysrs_schema.json` (`specmgr schema`).
 
-**Open questions (recorded 2026-09-01, for Phase 1's resolution):**
+**Resolved question (recorded 2026-09-01, decided 2026-09-01):**
 
-- `## References`'s cardinality when present: `example.v7.md` flags it
-  "OPTIONAL. Free-form bullet list" without the "at least 1 item when
-  present" marker the cross-reference lists carry (the v7 list rule is
-  scoped to cross-reference lists only). The sketch above uses
-  `items: list[MarkdownListItem] = Field(min_length=1)` — consistent
-  with every other list section in the codebase (a bare heading with
-  no bullets is useless); if the call is the may-be-present-with-zero-
-  items shape instead, flip to `items: list[MarkdownListItem] | None =
-  None` (sop's `Support`/`Consulted`/`Informed` precedent).
+- `## References`'s cardinality when present — the question was open
+  because `example.v7.md` flags it "OPTIONAL. Free-form bullet list"
+  without the "at least 1 item when present" marker the cross-
+  reference lists carry (the v7 list rule is scoped to cross-
+  reference lists only). **DECIDED (user-confirmed 2026-09-01):
+  present ⇒ ≥1 item required** — `items: list[MarkdownListItem] =
+  Field(min_length=1)`, consistent with every other list section in
+  the codebase (a bare heading with no bullets is useless); the may-
+  be-present-with-zero-items shape exists only for `sop`'s RASCI
+  `Support`/`Consulted`/`Informed`, a special case with its own
+  explicit rationale that does not apply here; the "no references"
+  case is already covered by the section being omittable
+  (`OPTIONAL`).
 
 **Commit discipline (binding for every phase)**: each phase ends with
 one Conventional Commit, scope `sysrs` (e.g. `feat(sysrs): add models
@@ -1174,10 +1179,11 @@ its own ADR rather than living only in this feature's Design Notes.
   (H2- and H3-level) with `items: list[MarkdownListItemWithNotes] =
   Field(min_length=1)` + per-class type-tag regex validator,
   `Requirements` with its nine optional H3 children + ≥1-of-9 after-
-  validator, `References` (plain `list[MarkdownListItem]`), DEC/VCR-
-  style `Updates`/`UpdateEntry` — **no** `models/md` engine changes;
-  implement the mechanics Phase 1 recorded, not new ones — depends on:
-  Task 2.2 — status: not-started
+  validator, `References` (plain `list[MarkdownListItem] =
+  Field(min_length=1)` — present ⇒ ≥1 item, Decisions Made 2026-09-01),
+  DEC/VCR-style `Updates`/`UpdateEntry` — **no** `models/md` engine
+  changes; implement the mechanics Phase 1 recorded, not new ones —
+  depends on: Task 2.2 — status: not-started
 - [ ] Task 2.4: `sysrs/models/v1/document.py` (`SysrsDocument`),
   `parser.py` (`parse_sysrs` glue, two-error-channel convention),
   `summary.py` (`SysrsSummary` — plain id/title/status/ref),
@@ -1189,8 +1195,9 @@ its own ADR rather than living only in this feature's Design Notes.
   acceptance/rejection incl. every LITERAL-vs-SPACE_SEPARATED pin; the
   full structural-violation matrix: unknown H2, missing mandatory H2,
   `## Requirements` with zero H3s, cross-ref list present with zero
-  items, H1 prefix mismatch, misordering, second H1, content before
-  H1; the per-section cross-ref regex matrix incl. wrong-type-tag
+  items, `## References` present with zero items, H1 prefix mismatch,
+  misordering, second H1, content before H1; the per-section cross-ref
+  regex matrix incl. wrong-type-tag
   rejection, `DEC`/`ADR` dual acceptance under `## Decisions` (and
   `REQ` rejection there), malformed-uuid/missing-title rejection, bare-
   bullet-without-notes acceptance; `## Updates` free-form-H3
@@ -1365,14 +1372,15 @@ around.
 The approved section outline (`example.v7.md`, REV 7 — 18 H2s / 22
 H3s, every heading annotated MANDATORY/OPTIONAL + content type, user-
 approved 2026-08-31) and the filled-in reference document
-(`sysrs-example.md`) are locked. Two 2026-09-01 user-confirmed
+(`sysrs-example.md`) are locked. Three 2026-09-01 user-confirmed
 decisions closed the last open schema questions — the frontmatter
 `status` vocabulary (the closed 5-set `draft`/`review`/`approved`/
-`active`/`retired`, default `draft`, mirroring `sop`'s shipped set)
-and the per-section cross-reference bullet type-tag regex (`<TYPE>
+`active`/`retired`, default `draft`, mirroring `sop`'s shipped set),
+the per-section cross-reference bullet type-tag regex (`<TYPE>
 <uuid>: <title>`, vcr's `_VERIFIES_PATTERN` uuid-fragment style;
 allowed tags per section — `GOL`/`PRB`/`QA`/`UC`/`DEC|ADR`/`RSK`/
-`REQ`×15/`VCR` — with semantic live validation out of v1). The Task
+`REQ`×15/`VCR` — with semantic live validation out of v1), and
+`## References`'s cardinality when present (≥1 item required). The Task
 List's "Phase 1+" stub is replaced by the full breakdown: Phase 1
 (empirical schema validation of the approved shapes against the live
 `models/md` engine before any model code — vcr's Phase 0 discipline,
@@ -1385,8 +1393,9 @@ Scope rewritten to the full-implementation split, and Design Notes
 gained the "Implementation design (added 2026-09-01, Phases 1–6)"
 subsection (confirmed shapes, the section-order table, the preliminary
 model-class sketch flagged for Phase 1 validation, tools/resources/
-prompts/packaged-data/cross-cutting wiring, commit discipline, one
-open question on `## References` cardinality). Next action: execute
+prompts/packaged-data/cross-cutting wiring, commit discipline; the
+one recorded open question on `## References` cardinality was resolved
+the same day (present ⇒ ≥1 item required)). Next action: execute
 Phase 1. Task 0.11 (ISO_24765 → `## Definitions and Acronyms`
 grounding) is the only leftover from Phase 0 and stays open/non-
 blocking — that section is free-form text either way.
@@ -1506,20 +1515,18 @@ borrowed-section content.
   content for the same case); Design Notes' preliminary model-class
   sketch is the starting point (flagged preliminary for exactly this
   phase). Non-blocking leftovers: Task 0.11 (ISO_24765 → `##
-  Definitions and Acronyms` grounding) and the one recorded open
-  question on `## References`'s cardinality when present.
+  Definitions and Acronyms` grounding).
 - **Still open / unresolved**: Task 0.11 (whether/how `ISO_24765.md`
   grounds the new `## Definitions and Acronyms` section or stays an
   unused reference — non-blocking; the approved section is free-form
-  text either way); the one Design Notes open question recorded
-  2026-09-01 (`## References`'s cardinality when present — ≥1 item vs.
-  may-be-empty — for Phase 1's resolution); optional cleanup of the
-  `req` docstring's pre-2023 example characteristic names (noted in
-  `example.v7.md`'s header, out of scope). **Settled and closed**: the
-  Phase 1–6 implementation breakdown itself (2026-09-01 — the Task
-  List's "Phase 1+" stub is replaced; the frontmatter `status`
-  vocabulary and the per-section cross-ref type-tag regex decided the
-  same day); Task 0.3.2 + ACC-002 (approved list in `example.v7.md` —
+  text either way); optional cleanup of the `req` docstring's pre-2023
+  example characteristic names (noted in `example.v7.md`'s header,
+  out of scope). **Settled and closed**: the Phase 1–6 implementation
+  breakdown itself (2026-09-01 — the Task List's "Phase 1+" stub is
+  replaced; the frontmatter `status` vocabulary and the per-section
+  cross-ref type-tag regex decided the same day); `## References`'s
+  cardinality when present (2026-09-01 — present ⇒ ≥1 item required,
+  user-confirmed); Task 0.3.2 + ACC-002 (approved list in `example.v7.md` —
   all M/O flags accepted, Appendix/Definitions and Acronyms added),
   Task 0.3.5 (HERMES framing dropped), Task 0.4 (MIL-STD-961E
   re-verification dropped — the outline doesn't use it), Task 0.7b
@@ -1539,6 +1546,22 @@ entirely, per explicit user instruction, rather than continuing to
 wait on it; see Task List Task 0.7/Design Notes item 4's note.)
 
 ### Recent Updates
+
+#### Update 2026-09-01 (## References cardinality resolved — present ⇒ ≥1 item)
+
+- Completed: The user confirmed the decision — `## References`'s
+  cardinality when present is ≥1 item required, i.e. a bare
+  `## References` heading with zero bullets is a structural error
+  (`AssertionError`). The Design Notes open question was resolved in
+  place (heading flipped to "Resolved question", the `References`
+  sketch line updated); ACC-004 and Tasks 2.3/2.5 now name the
+  `## References` zero-items rejection explicitly; Current Status and
+  the Handoff's next-action/still-open bullets updated; a Decisions
+  Made entry added. Implementation remains on hold per the user's
+  2026-09-01 instruction — next action is still to execute Phase 1
+  when the user says to continue.
+- Next: unchanged — execute Phase 1 (empirical schema validation) per
+  the Task List, once the user lifts the hold.
 
 #### Update 2026-09-01 (implementation broken down — Phases 1–6; status set + per-section cross-ref regex decided)
 
@@ -2161,6 +2184,17 @@ wait on it; see Task List Task 0.7/Design Notes item 4's note.)
 
 ### Decisions Made
 
+- **2026-09-01**: `## References`'s cardinality when present — ≥1
+  item required (`items: list[MarkdownListItem] =
+  Field(min_length=1)`); a bare `## References` heading with zero
+  bullets is a structural error (`AssertionError`). User-confirmed;
+  rationale: consistent with every other list section in the
+  codebase (a bare heading with no bullets is useless); the may-be-
+  present-with-zero-items shape exists only for `sop`'s RASCI
+  `Support`/`Consulted`/`Informed`, a special case with its own
+  explicit rationale that does not apply here; the "no references"
+  case is already covered by the section being omittable
+  (`OPTIONAL`).
 - **2026-09-01**: `sysrs` frontmatter `status` uses the closed 5-value
   set `draft`/`review`/`approved`/`active`/`retired` (default `draft`)
   — user-confirmed; rationale: mirrors `sop`'s shipped set
