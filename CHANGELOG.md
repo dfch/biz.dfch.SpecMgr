@@ -7,18 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Removed
-
-- **BREAKING** (0.x): the eleven per-domain `delete_<d>` stub MCP tools are
-  deleted outright (no deprecated wrappers): `delete_req`, `delete_uc`,
-  `delete_tsk`, `delete_qa`, `delete_prb`, `delete_gol`, `delete_rsk`,
-  `delete_dec`, `delete_sop`, `delete_feat`, `delete_vcr` — each was a
-  registered stub that always raised `NotImplementedError`. The eleven
-  per-domain `delete_<d>.py` modules, their `__init__.py` registrations,
-  and their stub tests are gone with them. Callers must switch from
-  `tools/call --tool-name delete_<d>` to `tools/call --tool-name delete`
-  with the explicit `type` parameter (see "Added" below).
-
 ### Added
 
 - Generic `delete(id, type)` MCP tool in `general/tools/`: the
@@ -41,6 +29,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   resolved paths to their base directory. Wired into the new `delete` tool
   now; designed so the `get_<d>`, `update`, and `set_status` tools can
   adopt it later with zero rework (they are not modified in this change).
+
+### Changed
+
+- The release SOP (now `active` — its status was `draft` until the first
+  release executed under it succeeded end to end, v0.15.0) was clarified:
+  tool prerequisites and the stage-to-step execution map up front in
+  Scope, the fast-forward-only merge mechanism the script actually uses
+  (pre- and post-merge SHA assertions around the plain merge method,
+  replacing the description of a nonexistent `gh pr merge --ff-only`),
+  the publication workflow's name ("Publish to PyPI") vs. file
+  (`.github/workflows/publish.yml`) distinction, and a dedicated
+  precaution about the old `gh` 2.4.0 the script targets.
+
+### Removed
+
+- **BREAKING** (0.x): the eleven per-domain `delete_<d>` stub MCP tools are
+  deleted outright (no deprecated wrappers): `delete_req`, `delete_uc`,
+  `delete_tsk`, `delete_qa`, `delete_prb`, `delete_gol`, `delete_rsk`,
+  `delete_dec`, `delete_sop`, `delete_feat`, `delete_vcr` — each was a
+  registered stub that always raised `NotImplementedError`. The eleven
+  per-domain `delete_<d>.py` modules, their `__init__.py` registrations,
+  and their stub tests are gone with them. Callers must switch from
+  `tools/call --tool-name delete_<d>` to `tools/call --tool-name delete`
+  with the explicit `type` parameter (see "Added" above).
+
+### Fixed
+
+- `scripts/release.sh`: the `pr-merge`, `publish-wait`, `status`, and
+  `release-notes` stages no longer rely on `gh` CLI features that do not
+  exist in this environment's `gh` 2.4.0 — a nonexistent `--ff-only`
+  merge flag, `gh run list --commit`, `gh run view --json jobs`, and
+  `gh release view --json`/`gh release edit`. Fast-forward-only merging
+  is now enforced by pre-merge and post-merge SHA assertions around the
+  plain merge method; the publication run is located by workflow name
+  ("Publish to PyPI") plus the tag's commit SHA (filtered with `jq`);
+  the GitHub Release is read and its notes set through `gh api`.
 
 ## [0.15.0] - 2026-08-31
 
