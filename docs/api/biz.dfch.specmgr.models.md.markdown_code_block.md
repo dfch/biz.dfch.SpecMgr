@@ -45,7 +45,7 @@ is always true here.
 
 - `from_orm(obj: 'Any') -> 'Self'`
 
-- `from_text(text: 'str') -> 'MarkdownCodeBlock'`
+- `from_text(text: 'str', *, _path: 'str' = '', _offset: 'int' = 0) -> 'MarkdownCodeBlock'`
   Create an instance from markdown text starting with a fenced code block.
 
   Validates that `text` starts with a single self-closing token
@@ -59,6 +59,12 @@ is always true here.
   Args:
       text: Markdown source, pre-formatted with `mdformat`, starting
           with this class's own fenced code block.
+      _path: this block's own document-relative path (REQ-001) as
+          chosen by the caller -- `""` at the very root, in which case
+          `cls.__name__` is used instead.
+      _offset: the 0-based line at which `text` starts, relative to
+          the root document's own `mdformat`-normalized body
+          (REQ-002) -- `0` at the root.
 
   Returns:
       A new instance with `_value` set to `text` verbatim.
@@ -216,11 +222,13 @@ is always true here.
 
 - `parse_raw(b: 'str | bytes', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'`
 
-- `process_field(name: 'str', type_: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False) -> 'tuple[int, MarkdownStr | None]'`
+- `process_field(name: 'str', type_: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False, _path: 'str' = '', _offset: 'int' = 0) -> 'tuple[int, MarkdownStr | None]'`
   Resolve one nested field's extent and parsed instance from `text`.
 
   Args:
-      name: the field's attribute name (used only for error messages).
+      name: the field's attribute name (used to build the document-
+          relative path -- see `_field_label` -- and, on failure, the
+          error message).
       type_: the field's declared `MarkdownStr` subclass.
       text: the not-yet-consumed remainder of the parent's markdown text;
           the field is assumed to start at the very first line of `text`.
@@ -230,6 +238,14 @@ is always true here.
           from `text` (e.g. an optional section whose heading doesn't
           appear next), and `(0, None)` is returned so the caller can
           move on to the next field without consuming any of `text`.
+      _path: the calling container's own document-relative path
+          (REQ-001), e.g. `"Task > RecentUpdates"` -- `""` at the root.
+          Threaded down into `type_.from_text` (with this field's own
+          label appended) so nested errors keep naming their real
+          location instead of a bare class name.
+      _offset: the 0-based line at which `text` starts, relative to the
+          root document's own `mdformat`-normalized body (REQ-002) --
+          `0` at the root.
 
   Returns:
       A `(extent, instance)` pair: `extent` is the number of leading
@@ -238,7 +254,11 @@ is always true here.
       `type_.from_text` on exactly those `extent` leading lines -- or
       `(0, None)` for an absent optional field (see `optional` above).
 
-- `process_list_field(name: 'str', item_type: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False) -> 'tuple[str, list[MarkdownStr] | None]'`
+  Raises:
+      AssertionError: `optional` is `False` and `type_.get_extent(text)`
+          finds no extent -- see `_no_match_message`.
+
+- `process_list_field(name: 'str', item_type: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False, _path: 'str' = '', _offset: 'int' = 0) -> 'tuple[str, list[MarkdownStr] | None]'`
   Resolve one repeated `list[MarkdownStr]` field's parsed items and new remainder from `text`.
 
   Repeats `process_field`'s single-item extent/slice/parse step against
@@ -270,7 +290,9 @@ is always true here.
   list, with no `Optional[X]` needed on `item_type` itself.
 
   Args:
-      name: the field's attribute name (used only for error messages).
+      name: the field's attribute name (used to build the document-
+          relative path -- see `_field_label` -- and, on failure, the
+          error message).
       item_type: the field's declared `MarkdownStr` subclass (the `X`
           in `list[X]`/`list[X] | None`).
       text: the not-yet-consumed remainder of the parent's markdown
@@ -280,6 +302,19 @@ is always true here.
           `True` and no item at all is found, this is not an error:
           `(text, None)` is returned so the caller can move on to the
           next field without consuming any of `text`.
+      _path: the calling container's own document-relative path
+          (REQ-001) -- `""` at the root. Every matched item's own path
+          is `_child_path(_path, _field_label(name, item_type))` (the
+          item's own type identity when it has one, else `name`),
+          threaded into each item's `from_text` call.
+      _offset: the 0-based line at which `text` starts, relative to
+          the root document's own `mdformat`-normalized body
+          (REQ-002) -- `0` at the root. Each matched item's own
+          `_offset` is tracked by measuring the actual line-count
+          delta of `remaining_text` before/after that item is
+          consumed (not a summed `get_extent`), so per-item blank-line
+          elision from re-normalization (see this docstring's own
+          discussion above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
@@ -288,6 +323,10 @@ is always true here.
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
+
+  Raises:
+      AssertionError: `optional` is `False` and zero items are matched
+          at all -- see `_no_match_message`.
 
 - `schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}') -> 'Dict[str, Any]'`
 
@@ -326,7 +365,7 @@ is always true here.
 
 - `from_orm(obj: 'Any') -> 'Self'`
 
-- `from_text(text: 'str') -> 'MarkdownCodeBlock'`
+- `from_text(text: 'str', *, _path: 'str' = '', _offset: 'int' = 0) -> 'MarkdownCodeBlock'`
   Create an instance from markdown text starting with a fenced code block.
 
   Validates that `text` starts with a single self-closing token
@@ -340,6 +379,12 @@ is always true here.
   Args:
       text: Markdown source, pre-formatted with `mdformat`, starting
           with this class's own fenced code block.
+      _path: this block's own document-relative path (REQ-001) as
+          chosen by the caller -- `""` at the very root, in which case
+          `cls.__name__` is used instead.
+      _offset: the 0-based line at which `text` starts, relative to
+          the root document's own `mdformat`-normalized body
+          (REQ-002) -- `0` at the root.
 
   Returns:
       A new instance with `_value` set to `text` verbatim.
@@ -589,11 +634,13 @@ is always true here.
 
 - `parse_raw(b: 'str | bytes', *, content_type: 'str | None' = None, encoding: 'str' = 'utf8', proto: 'DeprecatedParseProtocol | None' = None, allow_pickle: 'bool' = False) -> 'Self'`
 
-- `process_field(name: 'str', type_: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False) -> 'tuple[int, MarkdownStr | None]'`
+- `process_field(name: 'str', type_: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False, _path: 'str' = '', _offset: 'int' = 0) -> 'tuple[int, MarkdownStr | None]'`
   Resolve one nested field's extent and parsed instance from `text`.
 
   Args:
-      name: the field's attribute name (used only for error messages).
+      name: the field's attribute name (used to build the document-
+          relative path -- see `_field_label` -- and, on failure, the
+          error message).
       type_: the field's declared `MarkdownStr` subclass.
       text: the not-yet-consumed remainder of the parent's markdown text;
           the field is assumed to start at the very first line of `text`.
@@ -603,6 +650,14 @@ is always true here.
           from `text` (e.g. an optional section whose heading doesn't
           appear next), and `(0, None)` is returned so the caller can
           move on to the next field without consuming any of `text`.
+      _path: the calling container's own document-relative path
+          (REQ-001), e.g. `"Task > RecentUpdates"` -- `""` at the root.
+          Threaded down into `type_.from_text` (with this field's own
+          label appended) so nested errors keep naming their real
+          location instead of a bare class name.
+      _offset: the 0-based line at which `text` starts, relative to the
+          root document's own `mdformat`-normalized body (REQ-002) --
+          `0` at the root.
 
   Returns:
       A `(extent, instance)` pair: `extent` is the number of leading
@@ -611,7 +666,11 @@ is always true here.
       `type_.from_text` on exactly those `extent` leading lines -- or
       `(0, None)` for an absent optional field (see `optional` above).
 
-- `process_list_field(name: 'str', item_type: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False) -> 'tuple[str, list[MarkdownStr] | None]'`
+  Raises:
+      AssertionError: `optional` is `False` and `type_.get_extent(text)`
+          finds no extent -- see `_no_match_message`.
+
+- `process_list_field(name: 'str', item_type: 'type[MarkdownStr]', text: 'str', *, optional: 'bool' = False, _path: 'str' = '', _offset: 'int' = 0) -> 'tuple[str, list[MarkdownStr] | None]'`
   Resolve one repeated `list[MarkdownStr]` field's parsed items and new remainder from `text`.
 
   Repeats `process_field`'s single-item extent/slice/parse step against
@@ -643,7 +702,9 @@ is always true here.
   list, with no `Optional[X]` needed on `item_type` itself.
 
   Args:
-      name: the field's attribute name (used only for error messages).
+      name: the field's attribute name (used to build the document-
+          relative path -- see `_field_label` -- and, on failure, the
+          error message).
       item_type: the field's declared `MarkdownStr` subclass (the `X`
           in `list[X]`/`list[X] | None`).
       text: the not-yet-consumed remainder of the parent's markdown
@@ -653,6 +714,19 @@ is always true here.
           `True` and no item at all is found, this is not an error:
           `(text, None)` is returned so the caller can move on to the
           next field without consuming any of `text`.
+      _path: the calling container's own document-relative path
+          (REQ-001) -- `""` at the root. Every matched item's own path
+          is `_child_path(_path, _field_label(name, item_type))` (the
+          item's own type identity when it has one, else `name`),
+          threaded into each item's `from_text` call.
+      _offset: the 0-based line at which `text` starts, relative to
+          the root document's own `mdformat`-normalized body
+          (REQ-002) -- `0` at the root. Each matched item's own
+          `_offset` is tracked by measuring the actual line-count
+          delta of `remaining_text` before/after that item is
+          consumed (not a summed `get_extent`), so per-item blank-line
+          elision from re-normalization (see this docstring's own
+          discussion above) never desynchronizes the running offset.
 
   Returns:
       A `(remaining_text, items)` pair: `remaining_text` is `text` with
@@ -661,6 +735,10 @@ is always true here.
       to the next declared field -- and `items` is the non-empty list
       of parsed instances, or `(text, None)` for an absent optional
       field (see `optional` above).
+
+  Raises:
+      AssertionError: `optional` is `False` and zero items are matched
+          at all -- see `_no_match_message`.
 
 - `schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}') -> 'Dict[str, Any]'`
 

@@ -50,7 +50,8 @@ caller-supplied on create -- `feat`'s own default lifecycle state),
 :class:`~biz.dfch.specmgr.feat.models.v1.Feature` from it
 (``Feature.from_text(format_text(content))``); a structural failure
 raises ``AssertionError`` and a field/cross-field failure raises
-``pydantic.ValidationError``, both uncaught -- nothing is written in
+``pydantic.ValidationError``, both re-raised with domain/tool context
+prepended (see Raises below) -- nothing is written in
 either case, and neither the base directory nor any new folder is
 touched (validation happens before the create lock is even acquired).
 
@@ -68,4 +69,16 @@ Returns
 FeatDocument
     The newly created document, with its assigned ``feat-NNN-slug`` id
     in ``frontmatter.id``.
+
+Raises
+------
+AssertionError
+    A structural failure in ``content``. The message is prefixed with domain/tool/channel
+    context (e.g. ``"feat create_feat (body): ..."``) by the shared tool-boundary
+    wrapper (:func:`~biz.dfch.specmgr.models.md._errors.wrap_tool_errors`), layered on top
+    of the engine's own field-path/line/snippet enrichment (feat-27-validation Phases 1/2).
+    Nothing is written.
+pydantic.ValidationError
+    A field/cross-field validation failure in ``content`` -- similarly prefixed. Nothing is
+    written.
 

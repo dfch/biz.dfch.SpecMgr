@@ -30,7 +30,7 @@ First-line docstrings from each module, organized by domain:
 - `adr/tools/_io.py` — Thin file read/write helpers over ``parse_adr``/``render_adr`` (plan §7, §9a).
 - `adr/tools/_lock.py` — Per-document in-process lock guarding ADR mutations (plan §7, §9a).
 - `adr/tools/_paths.py` — ADR base directory resolution, filename slugification, and id -> path
-- `adr/tools/create_adr.py` — ``@mcp.tool()`` wrapper: create_adr (plan §8, §9a, §10 item 4).
+- `adr/tools/create_adr.py` — ``@mcp.tool()`` wrapper: create_adr (plan §8, §9a, §10 item 4; Task 3.2).
 - `adr/tools/get_adr.py` — ``@mcp.tool()`` wrapper: get_adr (plan §8, §9a, §10 item 4).
 - `adr/tools/list_adr.py` — ``@mcp.tool()`` wrapper: list_adr (feat-13-list-paging Task 2.1).
 - `adr/tools/option_create.py` — ``@mcp.tool()`` wrapper: option_create (plan §5, §8, §9a, §10 item 4).
@@ -40,7 +40,7 @@ First-line docstrings from each module, organized by domain:
 - `adr/tools/option_update.py` — ``@mcp.tool()`` wrapper: option_update (plan §5, §8, §9a, §10 item 4).
 - `adr/tools/update_frontmatter.py` — ``@mcp.tool()`` wrapper: update_frontmatter (plan §8, §9a, §10 item 4).
 - `adr/tools/update_section.py` — ``@mcp.tool()`` wrapper: update_section (plan §4, §8, §9a, §10 item 4).
-- `adr/tools/validate_adr.py` — ``@mcp.tool()`` wrapper: validate_adr (plan §7, §8, §9a, §10 item 4).
+- `adr/tools/validate_adr.py` — ``@mcp.tool()`` wrapper: validate_adr (plan §7, §8, §9a, §10 item 4; Task 3.2).
 
 **commands/**
 
@@ -132,19 +132,16 @@ First-line docstrings from each module, organized by domain:
 - `general/resources/rasci.py` — Resource: specmgr://rasci (feat-30 Task 3.5, REQ-011).
 - `general/resources/version.py` — Resource: specmgr://version — MCP server package version number.
 - `general/tools/__init__.py` — MCP tool wrappers for general-purpose utilities (mirrors ``adr/tools/``'s shape).
-- `general/tools/_confluence_config.py` — Shared Confluence base-URL/bearer-token configuration, used by both
-- `general/tools/_confluence_url.py` — Shared, ``mcp``-free Confluence URL helpers, used by both
 - `general/tools/_doc_paths.py` — Generic, doc-type-agnostic base directory resolution, filename slugification,
 - `general/tools/_packaged_data.py` — Generic, doc-type-agnostic access to packaged example/template/schema data
 - `general/tools/_paging.py` — Generic, doc-type-agnostic paging helpers (feat-13 Task 1.2).
 - `general/tools/_path_safety.py` — Reusable, doc-type-agnostic path-safety assertions for document ids and
 - `general/tools/_splice.py` — Frontmatter-stripped body extraction and body-line splicing for the generic
-- `general/tools/confluence_fetch.py` — ``@mcp.tool()`` wrapper: confluence_fetch (renamed from ``webfetch``, ADR
-- `general/tools/confluence_update.py` — ``@mcp.tool()`` wrapper: confluence_update (ADR a156fdf9-052c-4f43-93a2-eeec04a91eac,
 - `general/tools/delete.py` — ``@mcp.tool()`` wrapper: delete (feat-36-delete, Phase 2).
 - `general/tools/mdformat.py` — ``@mcp.tool()`` wrapper: mdformat.
 - `general/tools/set_status.py` — ``@mcp.tool()`` wrapper: set_status (feat-22-consolidate-mutation-tools, Phase 4).
 - `general/tools/update.py` — ``@mcp.tool()`` wrapper: update (feat-22-consolidate-mutation-tools, Phase 2).
+- `general/tools/webfetch.py` — ``@mcp.tool()`` wrapper: webfetch.
 
 **gol/**
 
@@ -192,6 +189,8 @@ First-line docstrings from each module, organized by domain:
 - `models/adr/v1/summary.py` — Pydantic model for one line of ADR listing output (plan §8, §9a).
 - `models/iso25010.py` — Pydantic schema and parser for the ISO/IEC 25010:2023 product quality
 - `models/md/__init__.py` — Markdown base models.
+- `models/md/_errors.py` — Shared tool-boundary error enrichment (feat-27-validation Phase 3, Task 3.1).
+- `models/md/_frontmatter_parse.py` — Shared frontmatter-parsing error enrichment (feat-27-validation Phase 2, Tasks 2.1/2.2).
 - `models/md/_markdown.py` — Markdown shared instance.
 - `models/md/_util.py` — Shared, private validation helpers for the ``models.md`` subpackage.
 - `models/md/alias.py` — Alias decorator for MarkdownStr class name transformation.
@@ -487,4 +486,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 321
+**Test files**: 324

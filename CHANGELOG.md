@@ -43,6 +43,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `destination_path` parameter (content-type based). GitHub issue #50,
   ADR a156fdf9-052c-4f43-93a2-eeec04a91eac.
 
+### Fixed
+
+- `specmgr docs`: stale per-module API pages are now pruned.
+  `_generate_api_docs` only ever *wrote* pages, so a module removed from
+  `src/` left its `docs/api/*.md` page behind forever — an orphaned file
+  no longer linked by the regenerated `api/README.md` index. It now
+  deletes every flat `*.md` file in the output `api/` directory that is
+  neither the `README.md` index nor a page written by the same run —
+  never touching `README.md`, non-`.md` files, or nested directories.
+  Pruning is skipped entirely rather than deleting the existing tree on
+  any untrustworthy run (zero pages written, any module import failure,
+  or truncated module collection), so a partial-import environment can
+  never wipe the tree. `docs()` echoes `✓ Pruned {n} stale page(s) from
+  {api_dir}` only when n > 0 (unchanged-tree output stays unchanged) plus
+  a one-line `⚠` warning when pruning was skipped due to import
+  problems. The first run with pruning enabled deleted the five real
+  stale pages left by feat-13-list-paging's resource→tool conversion
+  (`biz.dfch.specmgr.{adr,qa,req,tsk,uc}.resources.*_list.md`) (GitHub
+  issue #40).
+- Every validation error surfaced by the `parse_<d>`/`create_<d>`/
+  `validate_<d>` MCP tools (all twelve document types) and the generic
+  `update`/`set_status` tools is now actionable instead of a bare,
+  uninformative message. Structural `AssertionError`s now carry a
+  document-relative field path (e.g. `Task > RecentUpdates > UpdateEntry
+  > content`), a 1-based line reference into the mdformat-normalized body
+  plus a snippet of the offending text, and what was expected. For the
+  two triggers that motivated this fix specifically: a bare `<word>`-style
+  token is rejected as raw HTML with a fix hint ("wrap it in a code span,
+  or write it as an HTML comment"), and a `+`/`-`/`*`-prefixed
+  continuation line gets a cause + fix hint ("this begins a new
+  CommonMark list; remove the marker or indent the line so it belongs to
+  the preceding block instead"). Malformed frontmatter YAML
+  (`yaml.YAMLError`) now names "the frontmatter block" instead of
+  PyYAML's opaque `"<unicode string>"`, with document-relative (not
+  block-relative) line numbers. Every touched tool additionally prepends
+  its own domain + tool context (e.g. `"tsk create_tsk (body): ..."`). No
+  new exception types and no channel changes throughout — the documented
+  two-channel contract (`AssertionError` structural / `pydantic.
+  ValidationError` value) is preserved exactly; only message content
+  changes (GitHub issue #27; subsumes feat-7's not-started Task 0.29).
+
 ## [0.16.0] - 2026-09-01
 
 ### Added

@@ -23,39 +23,187 @@ between parsing rules and collect metadata like reference definitions.
 
 from __future__ import annotations
 
+import re
 import types
 import typing
 from typing import Any
-from pydantic import BaseModel
-from ._markdown import format_text, parse
+from pydantic import BaseModel, PrivateAttr
+from .alias_match import describe_alias
+from ._markdown import format_text, not_in_mdformat_message, parse, snippet
+
+#: Class names of the generic, directly-reusable `models/md` leaf/section
+#: types -- used by `_field_label` to decide whether a nested field's own
+#: *type* carries enough independent domain identity to serve as a
+#: document-relative path segment (REQ-001) on its own (a subclass of one
+#: of these, e.g. `UpdateEntry(MarkdownSection3)`), or whether the type is
+#: one of these generic classes used directly (e.g. a bare
+#: `content: MarkdownParagraph` field), in which case the field's own
+#: attribute name is the only thing that actually identifies it.
+_GENERIC_LEAF_TYPE_NAMES = frozenset(
+    {
+        "MarkdownStr",
+        "MarkdownSection",
+        "MarkdownSection1",
+        "MarkdownSection2",
+        "MarkdownSection3",
+        "MarkdownSection4",
+        "MarkdownSection5",
+        "MarkdownSection6",
+        "MarkdownSection1WithComment",
+        "MarkdownSection2WithComment",
+        "MarkdownSection3WithComment",
+        "MarkdownSection4WithComment",
+        "MarkdownSection5WithComment",
+        "MarkdownSection6WithComment",
+        "MarkdownParagraph",
+        "MarkdownListItem",
+        "MarkdownListItemWithNotes",
+        "MarkdownComment",
+        "MarkdownCodeBlock",
+        "MarkdownBlockQuote",
+    }
+)
 
 
-def _snippet(text: str, max_lines: int = 5, max_chars: int = 300) -> str:
-    """Return a truncated snippet of text for error messages.
+def _field_label(name: str, type_: type) -> str:
+    """Return the document-relative path label (REQ-001) for a nested field.
+
+    `type_.__name__` when `type_` carries its own independent domain
+    identity (any subclass not itself one of the generic engine types in
+    `_GENERIC_LEAF_TYPE_NAMES`, e.g. `UpdateEntry`), since that identity is
+    exactly what a reader sees in the document (a heading's text, an
+    aliased list item). `name` (the field's own attribute name, e.g.
+    `"content"`) when `type_` is one of those generic types used directly
+    -- its class name alone (e.g. `"MarkdownParagraph"`) says nothing about
+    *which* field failed, since the same generic type is reused verbatim
+    across many unrelated fields throughout the codebase.
 
     Args:
-        text: the markdown text to excerpt.
-        max_lines: maximum number of lines to include before truncating.
-        max_chars: maximum number of characters to include before truncating.
+        name: the field's attribute name.
+        type_: the field's declared `MarkdownStr` (item) type.
 
     Returns:
-        A snippet of up to `max_lines` lines and `max_chars` characters,
-        with a "... (truncated)" suffix if either limit was exceeded.
+        `type_.__name__` or `name`, per the rule above.
     """
-    lines = text.splitlines()
-    truncated_lines = lines[:max_lines]
-    snippet = "\n".join(truncated_lines)
+    if type_.__name__ in _GENERIC_LEAF_TYPE_NAMES:
+        result = name
+    else:
+        result = type_.__name__
+    return result
 
-    if len(lines) > max_lines or len(snippet) > max_chars:
-        snippet = snippet[:max_chars]
-        return f"{snippet}... (truncated)"
-    return snippet
+
+def _child_path(path: str, label: str) -> str:
+    """Append `label` to `path`, or return `label` alone if `path` is empty (the root case).
+
+    Args:
+        path: the containing class's own document-relative path (possibly
+            `""` at the very root, before any segment has been chosen).
+        label: the next path segment (see `_field_label`).
+
+    Returns:
+        `f"{path} > {label}"`, or just `label` when `path` is empty.
+    """
+    result = f"{path} > {label}" if path else label
+    return result
+
+
+def _is_heading_type(type_: type) -> bool:
+    """Return whether `type_` is a heading-bearing (`MarkdownSection`-family) type.
+
+    Duck-typed against the `@markdown` decorator's own metadata
+    (`type_.__name__` is deliberately not checked via `issubclass`, since
+    `markdown_section.py` imports this module and importing the reverse way
+    here would be circular) -- `"heading_open"` is the `@markdown(type=...)`
+    value every `MarkdownSection` subclass carries.
+
+    Args:
+        type_: a `MarkdownStr` subclass.
+
+    Returns:
+        `True` iff `type_`'s own `@markdown` metadata declares
+        `type="heading_open"`.
+    """
+    metadata = getattr(type_, "_metadata", {})
+    result = metadata.get("type") == "heading_open"
+    return result
+
+
+def _no_match_message(path: str, offset: int, type_: type, text: str, *, is_list: bool) -> str:
+    """Build the "expected ..., found no match" message (REQ-001/REQ-002/REQ-003).
+
+    Args:
+        path: the document-relative path (REQ-001) of the missing field
+            itself (already including the field's own label).
+        offset: the 0-based line at which `text` (the not-yet-consumed
+            remainder) starts, relative to the root document's own
+            `mdformat`-normalized body (REQ-002) -- `0` at the very root.
+        type_: the field's (or, for a list field, the item's) declared
+            `MarkdownStr` type.
+        text: the not-yet-consumed remainder of the parent's text, in which
+            no match for `type_` could be found.
+        is_list: whether this is a `list[type_]` field (mandatory list with
+            zero matched items) rather than a scalar field.
+
+    Returns:
+        A message naming the path, the expected type (plus, for a
+        heading-bearing type, the expected heading text/pattern -- REQ-003),
+        a snippet of the unmatched remainder, and a 1-based line reference
+        (REQ-002).
+    """
+    expected = f"list[{type_.__name__}]" if is_list else type_.__name__
+    heading_hint = f" ({describe_alias(type_)})" if _is_heading_type(type_) else ""
+    line_count = len(text.splitlines())
+    return (
+        f"{path}: expected {expected}{heading_hint}, found no match; remaining text starts at line "
+        f"{offset + 1} of the normalized body ({line_count} line(s)) and begins with:\n{snippet(text)}"
+    )
+
+
+#: Matches a line starting with a bullet-list marker (`-`, `*`, `+`) followed by whitespace -- the
+#: known trigger (feat-7 Task 0.29/GitHub issue #27) for "text left over": a paragraph continuation
+#: line the author meant to keep flowing instead starts a brand-new CommonMark list, which the
+#: engine has no declared field left to consume.
+_LIST_MARKER_HINT_RE = re.compile(r"^[-*+]\s")
+
+
+def _leftover_text_message(path: str, offset: int, remaining_text: str) -> str:
+    """Build the "text left over after processing all fields" message (REQ-001/REQ-002/REQ-003).
+
+    Args:
+        path: the document-relative path (REQ-001) of the class whose
+            declared fields failed to consume all of its own text.
+        offset: the 0-based line at which `remaining_text` starts, relative
+            to the root document's own `mdformat`-normalized body
+            (REQ-002) -- `0` at the root.
+        remaining_text: the non-empty leftover text.
+
+    Returns:
+        A message naming the path, a 1-based line reference and snippet of
+        the leftover text, and, when the leftover text's first line starts
+        with a bullet-list marker (the known trigger, REQ-007), a hint that
+        such a line begins a new CommonMark list (REQ-003).
+    """
+    first_line = remaining_text.splitlines()[0] if remaining_text else ""
+    hint = ""
+    if _LIST_MARKER_HINT_RE.match(first_line):
+        hint = (
+            " likely cause: a line starting with '-', '*', or '+' begins a new CommonMark list, which "
+            "the declared fields have nothing left to consume; if this was meant to continue the "
+            "previous paragraph, remove the marker or indent the line so it belongs to the preceding "
+            "block instead."
+        )
+    return (
+        f"{path}: text left over after processing all fields, starting at line {offset + 1} of the "
+        f"normalized body:\n{snippet(remaining_text)}{hint}"
+    )
 
 
 class MarkdownStr(BaseModel):
     """Markdown text parsed into token stream."""
 
     _value: str = ""
+    _path: str = PrivateAttr(default="")
+    _line: int = PrivateAttr(default=0)
 
     @classmethod
     def get_extent(cls, text: str) -> int:
@@ -83,7 +231,7 @@ class MarkdownStr(BaseModel):
         """
 
         assert isinstance(text, str), type(text)
-        assert text == format_text(text), "text is not in 'mdformat'."
+        assert text == format_text(text), not_in_mdformat_message(text)
 
         tokens = parse(text)
 
@@ -153,12 +301,21 @@ class MarkdownStr(BaseModel):
 
     @classmethod
     def process_field(
-        cls, name: str, type_: type[MarkdownStr], text: str, *, optional: bool = False
+        cls,
+        name: str,
+        type_: type[MarkdownStr],
+        text: str,
+        *,
+        optional: bool = False,
+        _path: str = "",
+        _offset: int = 0,
     ) -> tuple[int, MarkdownStr | None]:
         """Resolve one nested field's extent and parsed instance from `text`.
 
         Args:
-            name: the field's attribute name (used only for error messages).
+            name: the field's attribute name (used to build the document-
+                relative path -- see `_field_label` -- and, on failure, the
+                error message).
             type_: the field's declared `MarkdownStr` subclass.
             text: the not-yet-consumed remainder of the parent's markdown text;
                 the field is assumed to start at the very first line of `text`.
@@ -168,6 +325,14 @@ class MarkdownStr(BaseModel):
                 from `text` (e.g. an optional section whose heading doesn't
                 appear next), and `(0, None)` is returned so the caller can
                 move on to the next field without consuming any of `text`.
+            _path: the calling container's own document-relative path
+                (REQ-001), e.g. `"Task > RecentUpdates"` -- `""` at the root.
+                Threaded down into `type_.from_text` (with this field's own
+                label appended) so nested errors keep naming their real
+                location instead of a bare class name.
+            _offset: the 0-based line at which `text` starts, relative to the
+                root document's own `mdformat`-normalized body (REQ-002) --
+                `0` at the root.
 
         Returns:
             A `(extent, instance)` pair: `extent` is the number of leading
@@ -175,6 +340,10 @@ class MarkdownStr(BaseModel):
             and `instance` is the field's value, parsed via
             `type_.from_text` on exactly those `extent` leading lines -- or
             `(0, None)` for an absent optional field (see `optional` above).
+
+        Raises:
+            AssertionError: `optional` is `False` and `type_.get_extent(text)`
+                finds no extent -- see `_no_match_message`.
         """
         assert isinstance(name, str), type(name)
         assert isinstance(type_, type) and issubclass(type_, MarkdownStr), type_
@@ -185,14 +354,14 @@ class MarkdownStr(BaseModel):
             result: tuple[int, MarkdownStr | None] = (0, None)
             return result
 
-        assert extent > 0, (
-            f"{cls.__name__}.{name}: expected {type_.__name__}, found no match; "
-            f"remaining text ({len(text.splitlines())} line(s)) starts with:\n{_snippet(text)}"
-        )
+        label = _field_label(name, type_)
+        field_path = _child_path(_path, label)
+
+        assert extent > 0, _no_match_message(field_path, _offset, type_, text, is_list=False)
 
         lines = text.splitlines()
         field_text = format_text("\n".join(lines[:extent]))
-        instance = type_.from_text(field_text)
+        instance = type_.from_text(field_text, _path=field_path, _offset=_offset)
 
         result = (extent, instance)
 
@@ -200,7 +369,14 @@ class MarkdownStr(BaseModel):
 
     @classmethod
     def process_list_field(
-        cls, name: str, item_type: type[MarkdownStr], text: str, *, optional: bool = False
+        cls,
+        name: str,
+        item_type: type[MarkdownStr],
+        text: str,
+        *,
+        optional: bool = False,
+        _path: str = "",
+        _offset: int = 0,
     ) -> tuple[str, list[MarkdownStr] | None]:
         """Resolve one repeated `list[MarkdownStr]` field's parsed items and new remainder from `text`.
 
@@ -233,7 +409,9 @@ class MarkdownStr(BaseModel):
         list, with no `Optional[X]` needed on `item_type` itself.
 
         Args:
-            name: the field's attribute name (used only for error messages).
+            name: the field's attribute name (used to build the document-
+                relative path -- see `_field_label` -- and, on failure, the
+                error message).
             item_type: the field's declared `MarkdownStr` subclass (the `X`
                 in `list[X]`/`list[X] | None`).
             text: the not-yet-consumed remainder of the parent's markdown
@@ -243,6 +421,19 @@ class MarkdownStr(BaseModel):
                 `True` and no item at all is found, this is not an error:
                 `(text, None)` is returned so the caller can move on to the
                 next field without consuming any of `text`.
+            _path: the calling container's own document-relative path
+                (REQ-001) -- `""` at the root. Every matched item's own path
+                is `_child_path(_path, _field_label(name, item_type))` (the
+                item's own type identity when it has one, else `name`),
+                threaded into each item's `from_text` call.
+            _offset: the 0-based line at which `text` starts, relative to
+                the root document's own `mdformat`-normalized body
+                (REQ-002) -- `0` at the root. Each matched item's own
+                `_offset` is tracked by measuring the actual line-count
+                delta of `remaining_text` before/after that item is
+                consumed (not a summed `get_extent`), so per-item blank-line
+                elision from re-normalization (see this docstring's own
+                discussion above) never desynchronizes the running offset.
 
         Returns:
             A `(remaining_text, items)` pair: `remaining_text` is `text` with
@@ -251,13 +442,21 @@ class MarkdownStr(BaseModel):
             to the next declared field -- and `items` is the non-empty list
             of parsed instances, or `(text, None)` for an absent optional
             field (see `optional` above).
+
+        Raises:
+            AssertionError: `optional` is `False` and zero items are matched
+                at all -- see `_no_match_message`.
         """
         assert isinstance(name, str), type(name)
         assert isinstance(item_type, type) and issubclass(item_type, MarkdownStr), item_type
         assert isinstance(text, str), type(text)
 
+        label = _field_label(name, item_type)
+        item_path = _child_path(_path, label)
+
         items: list[MarkdownStr] = []
         remaining_text = text
+        item_offset = _offset
         while remaining_text:
             extent = item_type.get_extent(remaining_text)
             if extent == 0:
@@ -265,26 +464,27 @@ class MarkdownStr(BaseModel):
 
             lines = remaining_text.splitlines()
             item_text = format_text("\n".join(lines[:extent]))
-            items.append(item_type.from_text(item_text))
+            items.append(item_type.from_text(item_text, _path=item_path, _offset=item_offset))
 
             remaining_lines = lines[extent:]
-            remaining_text = format_text("\n".join(remaining_lines)) if remaining_lines else ""
+            new_remaining_text = format_text("\n".join(remaining_lines)) if remaining_lines else ""
+
+            consumed = len(remaining_text.splitlines()) - len(new_remaining_text.splitlines())
+            item_offset += consumed
+            remaining_text = new_remaining_text
 
         if not items:
             if optional:
                 result: tuple[str, list[MarkdownStr] | None] = (text, None)
                 return result
-            assert False, (
-                f"{cls.__name__}.{name}: expected list[{item_type.__name__}], found no match; "
-                f"remaining text ({len(text.splitlines())} line(s)) starts with:\n{_snippet(text)}"
-            )
+            assert False, _no_match_message(item_path, _offset, item_type, text, is_list=True)
 
         result = (remaining_text, items)
 
         return result
 
     @classmethod
-    def from_text(cls, text: str) -> MarkdownStr:
+    def from_text(cls, text: str, *, _path: str = "", _offset: int = 0) -> MarkdownStr:
         """Create an instance from markdown text, splitting `text` among nested fields.
 
         If `cls` declares no nested `MarkdownStr` fields, `text` is stored verbatim
@@ -325,9 +525,30 @@ class MarkdownStr(BaseModel):
         `list[X] | None` allows zero items (the field is left `None`); once
         the first item is found, every subsequent item is implicitly
         optional regardless of which of the two was declared.
+
+        Args:
+            text: the markdown text to parse.
+            _path: this instance's own document-relative path (REQ-001),
+                already including its own label as chosen by the caller
+                (`process_field`/`process_list_field`'s `_field_label`) --
+                `""` at the very root, in which case `cls.__name__` is used
+                instead (e.g. `"Task"` for a top-level `Task.from_text(...)`
+                call made directly by a domain parser).
+            _offset: the 0-based line at which `text` starts, relative to
+                the root document's own `mdformat`-normalized body
+                (REQ-002) -- `0` at the root.
+
+        Raises:
+            AssertionError: `text` is not `mdformat`-normalized (see
+                `not_in_mdformat_message`), `text` contains raw HTML
+                (REQ-005, see `parse`), a mandatory field/list field found
+                no match (see `_no_match_message`), or the declared fields
+                did not consume all of `text` (see `_leftover_text_message`).
         """
         assert isinstance(text, str), f"text: '{type(text)}' != 'str'."
-        assert text == format_text(text), "text is not in 'mdformat'."
+        assert text == format_text(text), not_in_mdformat_message(text)
+
+        own_path = _path or cls.__name__
 
         field_names = cls._get_field_names()
 
@@ -340,10 +561,13 @@ class MarkdownStr(BaseModel):
             parse(text)
             instance = cls()
             instance._value = text
+            instance._path = own_path
+            instance._line = _offset + 1
             return instance
 
         kwargs: dict[str, MarkdownStr | list[MarkdownStr]] = {}
         remaining_text = text
+        remaining_offset = _offset
         for field_name in field_names:
             raw_field_type = cls.model_fields[field_name].annotation
             field_type, is_optional = cls._unwrap_optional(raw_field_type)
@@ -353,10 +577,19 @@ class MarkdownStr(BaseModel):
                 # `process_list_field` returns the already-fully-reduced remaining
                 # text directly (see its docstring for why a combined line-count
                 # extent would be unsafe here), so it is adopted as-is below
-                # instead of going through the generic extent-based slicing.
+                # instead of going through the generic extent-based slicing. The
+                # actually-consumed line count (used to advance `remaining_offset`)
+                # is measured as a before/after line-count delta instead, for the
+                # same reason (a summed `get_extent` would not account for
+                # renormalization-elided separator lines).
                 assert isinstance(item_type, type) and issubclass(item_type, MarkdownStr), type(item_type)
                 new_remaining_text, list_value = cls.process_list_field(
-                    field_name, item_type, remaining_text, optional=is_optional
+                    field_name,
+                    item_type,
+                    remaining_text,
+                    optional=is_optional,
+                    _path=own_path,
+                    _offset=remaining_offset,
                 )
                 if list_value is None:
                     # Optional field with no item found in the remaining text: leave it
@@ -364,11 +597,15 @@ class MarkdownStr(BaseModel):
                     # of `remaining_text` -- move on to the next field.
                     continue
                 kwargs[field_name] = list_value
+                consumed = len(remaining_text.splitlines()) - len(new_remaining_text.splitlines())
+                remaining_offset += consumed
                 remaining_text = new_remaining_text
                 continue
 
             assert isinstance(field_type, type) and issubclass(field_type, MarkdownStr), type(field_type)
-            extent, instance_value = cls.process_field(field_name, field_type, remaining_text, optional=is_optional)
+            extent, instance_value = cls.process_field(
+                field_name, field_type, remaining_text, optional=is_optional, _path=own_path, _offset=remaining_offset
+            )
             if instance_value is None:
                 # Optional field with no extent in the remaining text: leave it
                 # unset (pydantic default, e.g. `None`) and don't consume any
@@ -376,13 +613,16 @@ class MarkdownStr(BaseModel):
                 continue
             kwargs[field_name] = instance_value
 
+            remaining_offset += extent
             remaining_lines = remaining_text.splitlines()[extent:]
             remaining_text = format_text("\n".join(remaining_lines)) if remaining_lines else ""
 
-        assert remaining_text == "", f"{cls.__name__}: text left over after processing all fields: {remaining_text!r}"
+        assert remaining_text == "", _leftover_text_message(own_path, remaining_offset, remaining_text)
 
         instance = cls(**kwargs)  # type: ignore
         instance._value = text
+        instance._path = own_path
+        instance._line = _offset + 1
         return instance
 
     def __str__(self) -> str:
