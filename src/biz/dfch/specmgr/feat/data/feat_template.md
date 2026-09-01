@@ -1,9 +1,9 @@
 ---
-created: 2026-08-30
+created: '2026-08-30 00:00:00.000Z'
 id: feat-0-template
 status: planning
 type: feat
-updated: 2026-08-30
+updated: '2026-08-30 00:00:00.000Z'
 version: 1.0.0
 ---
 

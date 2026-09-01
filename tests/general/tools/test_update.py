@@ -45,7 +45,6 @@ import tempfile
 import textwrap
 import unittest
 from dataclasses import dataclass
-from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable
 from unittest import mock
@@ -78,8 +77,9 @@ from biz.dfch.specmgr.vcr.tools.create_vcr import create_vcr
 update_module = importlib.import_module("biz.dfch.specmgr.general.tools.update")
 update = update_module.update
 
-#: ISO-8601 microsecond timestamp shape (the ``updated`` bump precision).
-_MICROSECOND_TIMESTAMP = r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}"
+#: The canonical date+time timestamp shape (D4/D7) the ``updated`` bump must match: space-separated,
+#: exactly three millisecond digits, `Z` or a signed `±HH:mm` offset.
+_DATE_TIME_TIMESTAMP = r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})"
 
 _REQ_MINIMAL_BODY = textwrap.dedent(
     """\
@@ -547,13 +547,9 @@ _VCR_UPDATED_BODY = textwrap.dedent(
 _MALFORMED_BODY = "# Title\n\nJust a paragraph, no recognized sections.\n"
 
 
-class _FixedDatetime(datetime):
-    """``datetime`` stand-in with a frozen ``now`` (the 1..N ≡ whole-body equivalence test)."""
-
-    @classmethod
-    def now(cls, tz: Any = None) -> datetime:
-        result = datetime(2026, 8, 27, 12, 0, 0, 123456)
-        return result
+#: A fixed date+time timestamp (the 1..N ≡ whole-body equivalence test needs both calls
+#: to bump ``updated`` to the identical value so the two resulting files compare byte-equal).
+_FIXED_TIMESTAMP = "2026-08-27 12:00:00.123Z"
 
 
 @dataclass(frozen=True)
@@ -828,7 +824,7 @@ class TestUpdateWholeBody(TempDocsDirTestCase):
                 self.assertEqual(result.frontmatter.created, created.frontmatter.created)
                 self.assertEqual(result.frontmatter.version, created.frontmatter.version)
                 self.assertNotEqual(result.frontmatter.updated, created.frontmatter.updated)
-                self.assertIsNotNone(re.fullmatch(_MICROSECOND_TIMESTAMP, result.frontmatter.updated))
+                self.assertIsNotNone(re.fullmatch(_DATE_TIME_TIMESTAMP, result.frontmatter.updated))
                 self.assertEqual(body_text(self._doc_path(case)), case.updated_body.rstrip("\n"))
 
     def test_status_not_settable_through_update(self) -> None:
@@ -952,7 +948,7 @@ class TestUpdateRange(TempDocsDirTestCase):
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case, case.minimal_body)
                 doc_id = created.frontmatter.id
-                with mock.patch.object(update_module, "datetime", _FixedDatetime):
+                with mock.patch.object(update_module, "now_timestamp", return_value=_FIXED_TIMESTAMP):
                     update(id=doc_id, type=case.doc_type, content=case.updated_body)
                     path = self._doc_path(case)
                     whole_body_file = path.read_text(encoding="utf-8")

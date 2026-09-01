@@ -45,9 +45,10 @@ the other ten's identical shape in how it resolves ``id``: via
 ``feat.tools._paths``'s bespoke folder-per-document shortcut, not a
 flat-file directory scan (see
 ``.specmgr/feat/feat-31-feature/README.md`` Design Notes, "Addressing").
-It bumps ``updated`` to the same microsecond timestamp as every other
-domain -- an earlier, deliberate divergence (a plain ``YYYY-MM-DD`` date)
-was reversed for cross-domain consistency; see that feature's Decisions
+It bumps ``updated`` to the same shared date+time timestamp (via
+``general.tools._timestamps.now_timestamp()``) as every other domain --
+an earlier, deliberate divergence (a plain ``YYYY-MM-DD`` date) was
+reversed for cross-domain consistency; see that feature's Decisions
 Made.
 
 ADR is deliberately *not* a ``type`` here: its section-level MADR mutation
@@ -58,7 +59,6 @@ whole-body replace by design.
 from __future__ import annotations
 
 from collections.abc import Callable
-from datetime import datetime
 from typing import Literal
 
 from ...dec.models.v1 import DecDocument, DecFrontmatter, Decision
@@ -119,6 +119,7 @@ from ...vcr.tools._lock import vcr_lock
 from ...vcr.tools._paths import vcr_base_dir
 from ...vcr.tools._write import write_vcr_file
 from ._splice import body_text, splice_body
+from ._timestamps import now_timestamp
 
 __all__ = ["update"]
 
@@ -159,7 +160,7 @@ def _update_req(id_: str, content: str, begin: int | None, end: int | None) -> R
             path, existing = load_req_by_id(base_dir, id_)
             spliced = splice_body(body_text(path), begin, end, content)
             body = Requirement.from_text(format_text(spliced))
-            now = datetime.now().isoformat(timespec="microseconds")
+            now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
             new_frontmatter = ReqFrontmatter(**fm_data)
@@ -172,7 +173,7 @@ def _update_req(id_: str, content: str, begin: int | None, end: int | None) -> R
     base_dir = req_base_dir()
     with req_lock(id_):
         path, existing = load_req_by_id(base_dir, id_)
-        now = datetime.now().isoformat(timespec="microseconds")
+        now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
         new_frontmatter = ReqFrontmatter(**fm_data)
@@ -198,7 +199,7 @@ def _update_uc(id_: str, content: str, begin: int | None, end: int | None) -> Uc
             path, existing = load_uc_by_id(base_dir, id_)
             spliced = splice_body(body_text(path), begin, end, content)
             body = UseCase.from_text(format_text(spliced))
-            now = datetime.now().isoformat(timespec="microseconds")
+            now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
             new_frontmatter = UcFrontmatter(**fm_data)
@@ -211,7 +212,7 @@ def _update_uc(id_: str, content: str, begin: int | None, end: int | None) -> Uc
     base_dir = uc_base_dir()
     with uc_lock(id_):
         path, existing = load_uc_by_id(base_dir, id_)
-        now = datetime.now().isoformat(timespec="microseconds")
+        now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
         new_frontmatter = UcFrontmatter(**fm_data)
@@ -237,7 +238,7 @@ def _update_tsk(id_: str, content: str, begin: int | None, end: int | None) -> T
             path, existing = load_tsk_by_id(base_dir, id_)
             spliced = splice_body(body_text(path), begin, end, content)
             body = Task.from_text(format_text(spliced))
-            now = datetime.now().isoformat(timespec="microseconds")
+            now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
             new_frontmatter = TskFrontmatter(**fm_data)
@@ -250,7 +251,7 @@ def _update_tsk(id_: str, content: str, begin: int | None, end: int | None) -> T
     base_dir = tsk_base_dir()
     with tsk_lock(id_):
         path, existing = load_tsk_by_id(base_dir, id_)
-        now = datetime.now().isoformat(timespec="microseconds")
+        now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
         new_frontmatter = TskFrontmatter(**fm_data)
@@ -276,7 +277,7 @@ def _update_qa(id_: str, content: str, begin: int | None, end: int | None) -> Qa
             path, existing = load_qa_by_id(base_dir, id_)
             spliced = splice_body(body_text(path), begin, end, content)
             body = Qa.from_text(format_text(spliced))
-            now = datetime.now().isoformat(timespec="microseconds")
+            now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
             new_frontmatter = QaFrontmatter(**fm_data)
@@ -289,7 +290,7 @@ def _update_qa(id_: str, content: str, begin: int | None, end: int | None) -> Qa
     base_dir = qa_base_dir()
     with qa_lock(id_):
         path, existing = load_qa_by_id(base_dir, id_)
-        now = datetime.now().isoformat(timespec="microseconds")
+        now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
         new_frontmatter = QaFrontmatter(**fm_data)
@@ -315,7 +316,7 @@ def _update_prb(id_: str, content: str, begin: int | None, end: int | None) -> P
             path, existing = load_prb_by_id(base_dir, id_)
             spliced = splice_body(body_text(path), begin, end, content)
             body = Prb.from_text(format_text(spliced))
-            now = datetime.now().isoformat(timespec="microseconds")
+            now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
             new_frontmatter = PrbFrontmatter(**fm_data)
@@ -328,7 +329,7 @@ def _update_prb(id_: str, content: str, begin: int | None, end: int | None) -> P
     base_dir = prb_base_dir()
     with prb_lock(id_):
         path, existing = load_prb_by_id(base_dir, id_)
-        now = datetime.now().isoformat(timespec="microseconds")
+        now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
         new_frontmatter = PrbFrontmatter(**fm_data)
@@ -354,7 +355,7 @@ def _update_gol(id_: str, content: str, begin: int | None, end: int | None) -> G
             path, existing = load_gol_by_id(base_dir, id_)
             spliced = splice_body(body_text(path), begin, end, content)
             body = Goal.from_text(format_text(spliced))
-            now = datetime.now().isoformat(timespec="microseconds")
+            now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
             new_frontmatter = GolFrontmatter(**fm_data)
@@ -367,7 +368,7 @@ def _update_gol(id_: str, content: str, begin: int | None, end: int | None) -> G
     base_dir = gol_base_dir()
     with gol_lock(id_):
         path, existing = load_gol_by_id(base_dir, id_)
-        now = datetime.now().isoformat(timespec="microseconds")
+        now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
         new_frontmatter = GolFrontmatter(**fm_data)
@@ -393,7 +394,7 @@ def _update_rsk(id_: str, content: str, begin: int | None, end: int | None) -> R
             path, existing = load_rsk_by_id(base_dir, id_)
             spliced = splice_body(body_text(path), begin, end, content)
             body = Risk.from_text(format_text(spliced))
-            now = datetime.now().isoformat(timespec="microseconds")
+            now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
             new_frontmatter = RskFrontmatter(**fm_data)
@@ -406,7 +407,7 @@ def _update_rsk(id_: str, content: str, begin: int | None, end: int | None) -> R
     base_dir = rsk_base_dir()
     with rsk_lock(id_):
         path, existing = load_rsk_by_id(base_dir, id_)
-        now = datetime.now().isoformat(timespec="microseconds")
+        now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
         new_frontmatter = RskFrontmatter(**fm_data)
@@ -434,7 +435,7 @@ def _update_dec(id_: str, content: str, begin: int | None, end: int | None) -> D
             path, existing = load_dec_by_id(base_dir, id_)
             spliced = splice_body(body_text(path), begin, end, content)
             body = Decision.from_text(format_text(spliced))
-            now = datetime.now().isoformat(timespec="microseconds")
+            now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
             new_frontmatter = DecFrontmatter(**fm_data)
@@ -447,7 +448,7 @@ def _update_dec(id_: str, content: str, begin: int | None, end: int | None) -> D
     base_dir = dec_base_dir()
     with dec_lock(id_):
         path, existing = load_dec_by_id(base_dir, id_)
-        now = datetime.now().isoformat(timespec="microseconds")
+        now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
         new_frontmatter = DecFrontmatter(**fm_data)
@@ -464,8 +465,8 @@ def _update_feat(id_: str, content: str, begin: int | None, end: int | None) -> 
     divergence (see the module docstring): ``id_`` resolves via
     ``feat.tools._paths``'s bespoke folder-per-document shortcut (through
     ``load_by_id``/``feat_base_dir``), not a flat-file directory scan.
-    ``updated`` is bumped to the same microsecond timestamp as every other
-    domain.
+    ``updated`` is bumped to the same shared date+time timestamp as every
+    other domain.
     """
     if begin is not None or end is not None:
         assert begin is not None and end is not None, "the public `update` guard enforces both-or-neither"
@@ -475,7 +476,7 @@ def _update_feat(id_: str, content: str, begin: int | None, end: int | None) -> 
             path, existing = load_feat_by_id(base_dir, id_)
             spliced = splice_body(body_text(path), begin, end, content)
             body = Feature.from_text(format_text(spliced))
-            now = datetime.now().isoformat(timespec="microseconds")
+            now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
             new_frontmatter = FeatFrontmatter(**fm_data)
@@ -488,7 +489,7 @@ def _update_feat(id_: str, content: str, begin: int | None, end: int | None) -> 
     base_dir = feat_base_dir()
     with feat_lock(id_):
         path, existing = load_feat_by_id(base_dir, id_)
-        now = datetime.now().isoformat(timespec="microseconds")
+        now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
         new_frontmatter = FeatFrontmatter(**fm_data)
@@ -516,7 +517,7 @@ def _update_sop(id_: str, content: str, begin: int | None, end: int | None) -> S
             path, existing = load_sop_by_id(base_dir, id_)
             spliced = splice_body(body_text(path), begin, end, content)
             body = Sop.from_text(format_text(spliced))
-            now = datetime.now().isoformat(timespec="microseconds")
+            now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
             new_frontmatter = SopFrontmatter(**fm_data)
@@ -529,7 +530,7 @@ def _update_sop(id_: str, content: str, begin: int | None, end: int | None) -> S
     base_dir = sop_base_dir()
     with sop_lock(id_):
         path, existing = load_sop_by_id(base_dir, id_)
-        now = datetime.now().isoformat(timespec="microseconds")
+        now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
         new_frontmatter = SopFrontmatter(**fm_data)
@@ -554,7 +555,7 @@ def _update_vcr(id_: str, content: str, begin: int | None, end: int | None) -> V
             path, existing = load_vcr_by_id(base_dir, id_)
             spliced = splice_body(body_text(path), begin, end, content)
             body = Vcr.from_text(format_text(spliced))
-            now = datetime.now().isoformat(timespec="microseconds")
+            now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
             new_frontmatter = VcrFrontmatter(**fm_data)
@@ -567,7 +568,7 @@ def _update_vcr(id_: str, content: str, begin: int | None, end: int | None) -> V
     base_dir = vcr_base_dir()
     with vcr_lock(id_):
         path, existing = load_vcr_by_id(base_dir, id_)
-        now = datetime.now().isoformat(timespec="microseconds")
+        now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
         new_frontmatter = VcrFrontmatter(**fm_data)
@@ -647,9 +648,10 @@ def update(
 
     In both modes the existing file's frontmatter is carried over with
     every field preserved except ``updated`` (bumped to the current
-    microsecond timestamp); ``status`` in particular is never settable
-    through this tool -- the generic ``set_status`` tool in
-    ``general.tools`` is the only status-change path.
+    date+time timestamp, via ``general.tools._timestamps.now_timestamp()``);
+    ``status`` in particular is never settable through this tool -- the
+    generic ``set_status`` tool in ``general.tools`` is the only
+    status-change path.
 
     Parameters
     ----------

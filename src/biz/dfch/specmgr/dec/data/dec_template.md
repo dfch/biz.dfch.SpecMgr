@@ -1,9 +1,9 @@
 ---
-created: 2026-08-27
+created: '2026-08-27 00:00:00.000Z'
 id: deadbeef-dead-dead-dead-deadbeefdead
 status: draft
 type: dec
-updated: 2026-08-27
+updated: '2026-08-27 00:00:00.000Z'
 version: 1.0.0
 ---
 

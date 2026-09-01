@@ -1,9 +1,9 @@
 ---
-created: 2026-08-16
+created: '2026-08-16 00:00:00.000Z'
 id: deaddead-face-face-face-deaddeadface
 status: active
 type: tsk
-updated: 2026-08-16
+updated: '2026-08-16 00:00:00.000Z'
 version: 1.0.0
 ---
 

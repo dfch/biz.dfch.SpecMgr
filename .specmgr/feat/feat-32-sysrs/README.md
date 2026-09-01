@@ -1,8 +1,8 @@
 ---
-created: 2026-08-30
+created: '2026-08-30 00:00:00.000Z'
 id: feat-32-sysrs
 status: in-progress
-updated: 2026-09-01
+updated: '2026-09-01 00:00:00.000Z'
 version: 1.0.0
 ---
 

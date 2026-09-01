@@ -48,8 +48,8 @@ _MINIMAL_DOC = textwrap.dedent(
     type: dec
     version: 1.0.0
     status: draft
-    created: 2026-08-26
-    updated: 2026-08-26
+    created: '2026-08-26 00:00:00.000Z'
+    updated: '2026-08-26 00:00:00.000Z'
     ---
 
     # Choose a Document Store
@@ -75,8 +75,8 @@ _FULL_DOC = textwrap.dedent(
     type: dec
     version: 1.0.0
     status: accepted
-    created: 2026-08-26
-    updated: 2026-08-27
+    created: '2026-08-26 00:00:00.000Z'
+    updated: '2026-08-27 00:00:00.000Z'
     ---
 
     # Choose a Document Store
@@ -153,7 +153,7 @@ class TestParseDec(unittest.TestCase):
         self.assertEqual(document.frontmatter.id, "dec-001")
         self.assertEqual(document.frontmatter.type, "dec")
         self.assertEqual(document.frontmatter.status, "draft")
-        self.assertEqual(document.frontmatter.created, "2026-08-26")
+        self.assertEqual(document.frontmatter.created, "2026-08-26 00:00:00.000Z")
         self.assertEqual(document.body.text, "Choose a Document Store")
         self.assertIn("cannot serve the dashboard read path", document.body.context.text)
         self.assertEqual(document.body.outcome.statement.text, "We chose the document store.")

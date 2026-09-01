@@ -42,7 +42,8 @@ whole-body domains' identical shape in the same way ``_update_feat``
 ``feat.tools._paths``'s bespoke folder-per-document shortcut, not a
 flat-file directory scan (see
 ``.specmgr/feat/feat-31-feature/README.md`` Design Notes). It bumps
-``updated`` to the same microsecond timestamp as every other domain --
+``updated`` to the same shared date+time timestamp (via
+``general.tools._timestamps.now_timestamp()``) as every other domain --
 an earlier, deliberate divergence (a plain ``YYYY-MM-DD`` date) was
 reversed for cross-domain consistency; see that feature's Decisions Made.
 
@@ -70,7 +71,6 @@ wrapper's own name.
 from __future__ import annotations
 
 from collections.abc import Callable
-from datetime import datetime
 from typing import Literal
 
 import frontmatter
@@ -137,6 +137,7 @@ from ...vcr.tools._io import load_by_id as load_vcr_by_id
 from ...vcr.tools._lock import vcr_lock
 from ...vcr.tools._paths import vcr_base_dir
 from ...vcr.tools._write import write_vcr_file
+from ._timestamps import now_timestamp
 
 __all__ = ["set_status"]
 
@@ -181,7 +182,7 @@ def _set_status_req(id_: str, status: str, superseded_by: str | None) -> ReqDocu
         path, existing = load_req_by_id(base_dir, id_)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
-        now = datetime.now().isoformat(timespec="microseconds")
+        now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["status"] = status
         fm_data["updated"] = now
@@ -206,7 +207,7 @@ def _set_status_uc(id_: str, status: str, superseded_by: str | None) -> UcDocume
         path, existing = load_uc_by_id(base_dir, id_)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
-        now = datetime.now().isoformat(timespec="microseconds")
+        now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["status"] = status
         fm_data["updated"] = now
@@ -231,7 +232,7 @@ def _set_status_tsk(id_: str, status: str, superseded_by: str | None) -> TskDocu
         path, existing = load_tsk_by_id(base_dir, id_)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
-        now = datetime.now().isoformat(timespec="microseconds")
+        now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["status"] = status
         fm_data["updated"] = now
@@ -256,7 +257,7 @@ def _set_status_qa(id_: str, status: str, superseded_by: str | None) -> QaDocume
         path, existing = load_qa_by_id(base_dir, id_)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
-        now = datetime.now().isoformat(timespec="microseconds")
+        now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["status"] = status
         fm_data["updated"] = now
@@ -282,7 +283,7 @@ def _set_status_prb(id_: str, status: str, superseded_by: str | None) -> PrbDocu
         path, existing = load_prb_by_id(base_dir, id_)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
-        now = datetime.now().isoformat(timespec="microseconds")
+        now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["status"] = status
         fm_data["updated"] = now
@@ -307,7 +308,7 @@ def _set_status_gol(id_: str, status: str, superseded_by: str | None) -> GolDocu
         path, existing = load_gol_by_id(base_dir, id_)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
-        now = datetime.now().isoformat(timespec="microseconds")
+        now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["status"] = status
         fm_data["updated"] = now
@@ -332,7 +333,7 @@ def _set_status_rsk(id_: str, status: str, superseded_by: str | None) -> RskDocu
         path, existing = load_rsk_by_id(base_dir, id_)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
-        now = datetime.now().isoformat(timespec="microseconds")
+        now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["status"] = status
         fm_data["updated"] = now
@@ -359,7 +360,7 @@ def _set_status_dec(id_: str, status: str, superseded_by: str | None) -> DecDocu
         path, existing = load_dec_by_id(base_dir, id_)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
-        now = datetime.now().isoformat(timespec="microseconds")
+        now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["status"] = status
         fm_data["updated"] = now
@@ -378,7 +379,7 @@ def _set_status_feat(id_: str, status: str, superseded_by: str | None) -> FeatDo
     feat-only divergence ``_update_feat`` (in ``update.py``) documents:
     ``id_`` resolves via ``feat.tools._paths``'s bespoke folder-per-document
     shortcut, not a flat-file directory scan. ``updated`` is bumped to the
-    same microsecond timestamp as every other domain.
+    same shared date+time timestamp as every other domain.
     """
     assert superseded_by is None, "the public `set_status` guard rejects superseded_by for non-adr types"
 
@@ -387,7 +388,7 @@ def _set_status_feat(id_: str, status: str, superseded_by: str | None) -> FeatDo
         path, existing = load_feat_by_id(base_dir, id_)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
-        now = datetime.now().isoformat(timespec="microseconds")
+        now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["status"] = status
         fm_data["updated"] = now
@@ -414,7 +415,7 @@ def _set_status_sop(id_: str, status: str, superseded_by: str | None) -> SopDocu
         path, existing = load_sop_by_id(base_dir, id_)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
-        now = datetime.now().isoformat(timespec="microseconds")
+        now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["status"] = status
         fm_data["updated"] = now
@@ -439,7 +440,7 @@ def _set_status_vcr(id_: str, status: str, superseded_by: str | None) -> VcrDocu
         path, existing = load_vcr_by_id(base_dir, id_)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
-        now = datetime.now().isoformat(timespec="microseconds")
+        now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["status"] = status
         fm_data["updated"] = now
@@ -514,7 +515,8 @@ def set_status(
 
     For the eleven whole-body domains the existing file's frontmatter is
     carried over with every field preserved except ``status`` (replaced)
-    and ``updated`` (bumped to the current microsecond timestamp); the
+    and ``updated`` (bumped to the current date+time timestamp, via
+    ``general.tools._timestamps.now_timestamp()``); the
     body is never touched -- its raw, on-disk markdown (not a render of
     the parsed model) is re-read and re-persisted verbatim. For
     ``type="adr"`` the change delegates to

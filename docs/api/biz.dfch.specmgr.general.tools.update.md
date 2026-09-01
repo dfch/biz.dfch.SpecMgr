@@ -30,9 +30,10 @@ the other ten's identical shape in how it resolves ``id``: via
 ``feat.tools._paths``'s bespoke folder-per-document shortcut, not a
 flat-file directory scan (see
 ``.specmgr/feat/feat-31-feature/README.md`` Design Notes, "Addressing").
-It bumps ``updated`` to the same microsecond timestamp as every other
-domain -- an earlier, deliberate divergence (a plain ``YYYY-MM-DD`` date)
-was reversed for cross-domain consistency; see that feature's Decisions
+It bumps ``updated`` to the same shared date+time timestamp (via
+``general.tools._timestamps.now_timestamp()``) as every other domain --
+an earlier, deliberate divergence (a plain ``YYYY-MM-DD`` date) was
+reversed for cross-domain consistency; see that feature's Decisions
 Made.
 
 ADR is deliberately *not* a ``type`` here: its section-level MADR mutation
@@ -63,8 +64,8 @@ Mirrors :func:`_update_dec`'s shape (same ``feat_lock``, ``load_by_id``,
 divergence (see the module docstring): ``id_`` resolves via
 ``feat.tools._paths``'s bespoke folder-per-document shortcut (through
 ``load_by_id``/``feat_base_dir``), not a flat-file directory scan.
-``updated`` is bumped to the same microsecond timestamp as every other
-domain.
+``updated`` is bumped to the same shared date+time timestamp as every
+other domain.
 
 
 ### `_update_gol(id_: 'str', content: 'str', begin: 'int | None', end: 'int | None') -> 'GolDocument'`
@@ -207,9 +208,10 @@ construction.
 
 In both modes the existing file's frontmatter is carried over with
 every field preserved except ``updated`` (bumped to the current
-microsecond timestamp); ``status`` in particular is never settable
-through this tool -- the generic ``set_status`` tool in
-``general.tools`` is the only status-change path.
+date+time timestamp, via ``general.tools._timestamps.now_timestamp()``);
+``status`` in particular is never settable through this tool -- the
+generic ``set_status`` tool in ``general.tools`` is the only
+status-change path.
 
 Parameters
 ----------

@@ -90,8 +90,9 @@ from biz.dfch.specmgr.vcr.models.v1.frontmatter import _ALLOWED_STATUSES as _VCR
 from biz.dfch.specmgr.vcr.tools._paths import VcrNotFoundError
 from biz.dfch.specmgr.vcr.tools.create_vcr import create_vcr
 
-#: ISO-8601 microsecond timestamp shape (the ``updated`` bump precision).
-_MICROSECOND_TIMESTAMP = r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}"
+#: The canonical date+time timestamp shape (D4/D7) the ``updated`` bump must match: space-separated,
+#: exactly three millisecond digits, `Z` or a signed `±HH:mm` offset.
+_DATE_TIME_TIMESTAMP = r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})"
 
 _REQ_MINIMAL_BODY = textwrap.dedent(
     """\
@@ -515,7 +516,7 @@ class TestSetStatusWholeBodyDomains(TempDocsDirTestCase):
                 self.assertEqual(result.frontmatter.created, created.frontmatter.created)
                 self.assertEqual(result.frontmatter.version, created.frontmatter.version)
                 self.assertNotEqual(result.frontmatter.updated, created.frontmatter.updated)
-                self.assertIsNotNone(re.fullmatch(_MICROSECOND_TIMESTAMP, result.frontmatter.updated))
+                self.assertIsNotNone(re.fullmatch(_DATE_TIME_TIMESTAMP, result.frontmatter.updated))
                 on_disk_metadata = frontmatter.loads(path.read_text(encoding="utf-8")).metadata
                 self.assertEqual(on_disk_metadata["status"], case.valid_status)
                 self.assertEqual(body_text(path), raw_body_before)

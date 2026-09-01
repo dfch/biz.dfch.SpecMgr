@@ -51,8 +51,8 @@ _MINIMAL_DOC = textwrap.dedent(
     type: feat
     version: 1.0.0
     status: planning
-    created: 2026-08-26
-    updated: 2026-08-26
+    created: '2026-08-26 00:00:00.000Z'
+    updated: '2026-08-26 00:00:00.000Z'
     ---
 
     # Feature: A Widget
@@ -116,7 +116,7 @@ class TestParseFeat(unittest.TestCase):
         self.assertEqual(document.frontmatter.id, "feat-1-widget")
         self.assertEqual(document.frontmatter.type, "feat")
         self.assertEqual(document.frontmatter.status, "planning")
-        self.assertEqual(document.frontmatter.created, "2026-08-26")
+        self.assertEqual(document.frontmatter.created, "2026-08-26 00:00:00.000Z")
         self.assertEqual(document.body.text, "Feature: A Widget")
         self.assertIsNone(document.body.plan.dependencies)
         self.assertIsNone(document.body.plan.design_notes)

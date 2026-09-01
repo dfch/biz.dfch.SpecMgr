@@ -28,20 +28,20 @@ as ``create_dec``/``create_gol``: the caller's own already-validated body is
 persisted byte-for-byte, and only the small, code-constructed frontmatter
 YAML block is (re)generated.
 
-``created``/``updated`` use the same microsecond ISO timestamp format
-(``datetime.now().isoformat(timespec="microseconds")``) as every other
-whole-body domain's ``create_<d>`` -- an earlier, deliberate ``feat``-only
-divergence (plain ``YYYY-MM-DD`` dates, matching the 17 pre-existing
-hand-authored feature files) was reversed for cross-domain consistency; see
+``created``/``updated`` use the same shared date+time timestamp format
+(``general.tools._timestamps.now_timestamp()``) as every other whole-body
+domain's ``create_<d>`` -- an earlier, deliberate ``feat``-only divergence
+(plain ``YYYY-MM-DD`` dates, matching the 17 pre-existing hand-authored
+feature files) was reversed for cross-domain consistency; see
 ``.specmgr/feat/feat-31-feature/README.md`` Design Notes ("Frontmatter") and
 Decisions Made.
 """
 
 from __future__ import annotations
 
-from datetime import datetime
 from pathlib import Path
 
+from ...general.tools._timestamps import now_timestamp
 from ...models.md import CURRENT_SCHEMA_VERSION
 from ...models.md._markdown import format_text
 from ...server import mcp
@@ -101,7 +101,7 @@ def create_feat(content: str) -> FeatDocument:
         base_dir = ensure_feat_base_dir()
         new_id = f"feat-{_next_feat_number(base_dir)}-{slug}"
 
-        now = datetime.now().isoformat(timespec="microseconds")
+        now = now_timestamp()
         new_frontmatter = FeatFrontmatter(
             id=new_id,
             type="feat",

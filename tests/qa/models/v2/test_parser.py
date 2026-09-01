@@ -164,8 +164,8 @@ def _make_document(body: str, version: str = "1.0.0") -> str:
         type: qa
         version: {version}
         status: draft
-        created: 2026-08-23
-        updated: 2026-08-23
+        created: '2026-08-23 00:00:00.000Z'
+        updated: '2026-08-23 00:00:00.000Z'
         ---
 
         """

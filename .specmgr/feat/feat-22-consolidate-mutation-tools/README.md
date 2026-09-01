@@ -1,8 +1,8 @@
 ---
-created: 2026-08-26
+created: '2026-08-26 00:00:00.000Z'
 id: feat-22-consolidate-mutation-tools
 status: done
-updated: 2026-08-27
+updated: '2026-08-27 00:00:00.000Z'
 version: 1.0.0
 ---
 

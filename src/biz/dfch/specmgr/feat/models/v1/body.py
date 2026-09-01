@@ -431,8 +431,9 @@ class UpdateEntry(MarkdownSection4):
     """`#### {timestamp} ( - | : ) {title}` under `### Updates` -- one update entry.
 
     The timestamp format is deliberately not the same format as frontmatter
-    `created`/`updated` (a `datetime.isoformat(timespec="microseconds")`
-    value, e.g. `2026-08-30T14:23:01.123456`) -- this format is scoped to
+    `created`/`updated` (the shared date+time variant produced by
+    `general.tools._timestamps.now_timestamp()`, e.g.
+    `2026-08-30 14:23:01.123Z`) -- this format is scoped to
     `### Updates`/`### Decisions Made` entry headings only, hand/LLM-authored
     body content, not tool-generated frontmatter.
 

@@ -2,8 +2,8 @@
 id: feat-21-decision
 version: 1.0.0
 status: done
-created: 2026-08-26
-updated: 2026-08-27
+created: '2026-08-26 00:00:00.000Z'
+updated: '2026-08-27 00:00:00.000Z'
 ---
 
 # Feature: Create artifact type "Decision" (DEC)

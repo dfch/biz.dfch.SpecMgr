@@ -51,8 +51,8 @@ class TestWriteDecFile(unittest.TestCase):
             id="some-id",
             type="dec",
             status="draft",
-            created="2026-08-14T10:00:00",
-            updated="2026-08-14T10:00:00",
+            created="2026-08-14 10:00:00.000Z",
+            updated="2026-08-14 10:00:00.000Z",
             version="1.0.0",
         )
         with tempfile.TemporaryDirectory() as tmp:

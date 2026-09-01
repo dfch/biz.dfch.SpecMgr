@@ -47,8 +47,8 @@ _MINIMAL_DOC = textwrap.dedent(
     type: vcr
     version: 1.0.0
     status: draft
-    created: 2026-08-31
-    updated: 2026-08-31
+    created: '2026-08-31 00:00:00.000Z'
+    updated: '2026-08-31 00:00:00.000Z'
     ---
 
     # API Key Revocation Latency Verification
@@ -84,8 +84,8 @@ _FULL_DOC = textwrap.dedent(
     type: vcr
     version: 1.0.0
     status: complete
-    created: 2026-08-31
-    updated: 2026-08-31
+    created: '2026-08-31 00:00:00.000Z'
+    updated: '2026-08-31 00:00:00.000Z'
     ---
 
     # API Key Revocation Latency Verification
@@ -149,7 +149,7 @@ class TestParseVcr(unittest.TestCase):
         self.assertEqual(document.frontmatter.id, "vcr-001")
         self.assertEqual(document.frontmatter.type, "vcr")
         self.assertEqual(document.frontmatter.status, "draft")
-        self.assertEqual(document.frontmatter.created, "2026-08-31")
+        self.assertEqual(document.frontmatter.created, "2026-08-31 00:00:00.000Z")
         self.assertEqual(document.body.text, "API Key Revocation Latency Verification")
         self.assertIn("closes the exposure window", document.body.verifies.notes.text)
         self.assertEqual(document.body.coverage.value.text, "partial")

@@ -43,8 +43,8 @@ _MINIMAL_DOC = textwrap.dedent(
     type: gol
     version: 1.0.0
     status: draft
-    created: 2026-08-25
-    updated: 2026-08-25
+    created: '2026-08-25 00:00:00.000Z'
+    updated: '2026-08-25 00:00:00.000Z'
     ---
 
     # Competitive Engines in Consumer Vehicles

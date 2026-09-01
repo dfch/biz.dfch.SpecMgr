@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **BREAKING**: frontmatter `created`/`updated` now strictly require the
+  date+time variant `yyyy-MM-dd HH:mm:ss.fff` followed by `Z` (UTC) or a
+  signed `±HH:mm` offset — date-only, `T`-separated, six-digit-microsecond,
+  and timezone-less values are all rejected at parse time
+  (`pydantic.ValidationError`), eagerly, on the shared
+  `MarkdownFrontmatter` base every one of the eleven whole-body domains'
+  frontmatter subclasses inherits from. Every tool-written `created`/
+  `updated` value — across all 11 whole-body `create_<d>` tools, the 22
+  generic `update` adapter sites, and the 11 generic `set_status` adapter
+  sites — is now produced by one shared helper
+  (`general.tools._timestamps.now_timestamp()`) that guarantees this exact
+  shape (local time via `datetime.now().astimezone()`, `Z` when the UTC
+  offset is exactly zero, milliseconds truncated to exactly three digits).
+  ADR frontmatter is unaffected (it has no `created`/`updated` fields).
+  Existing documents with a non-conforming frontmatter timestamp must be
+  migrated to the new shape before they will parse again — the repo's own
+  artifacts (the release SOP, the two `docs/tsk` documents, every
+  `.specmgr/feat/*/README.md`'s frontmatter, and every packaged
+  template/example) were migrated as part of this change (GitHub issue
+  #44, Phase 3 of feat-38-39-41-43-44).
+
 - **BREAKING**: SOP `## Updates`, DEC `## Updates`, VCR `## Updates`, and
   TSK `## Recent Updates` now enforce newest-first ordering at parse
   time — an entry whose timestamp precedes (is older than) the entry

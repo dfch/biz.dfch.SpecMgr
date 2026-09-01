@@ -1,8 +1,8 @@
 ---
-created: 2026-08-08
+created: '2026-08-08 00:00:00.000Z'
 id: feat-5-md-model-parser
 status: done
-updated: 2026-08-15
+updated: '2026-08-15 00:00:00.000Z'
 version: 1.16.4
 ---
 

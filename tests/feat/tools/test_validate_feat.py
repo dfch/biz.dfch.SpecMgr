@@ -90,8 +90,8 @@ _FULL_DOCUMENT = (
     type: feat
     version: 1.0.0
     status: planning
-    created: 2026-08-30
-    updated: 2026-08-30
+    created: '2026-08-30 00:00:00.000Z'
+    updated: '2026-08-30 00:00:00.000Z'
     ---
 
     """

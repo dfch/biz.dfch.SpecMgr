@@ -6,7 +6,7 @@ every write to disk goes through the specmgr MCP tools listed below.
 There is no frontmatter for you to draft: `create_feat` builds
 id/type/status/created/updated/version automatically -- a fresh
 `feat-NNN-slug` id, `status="planning"` always (never caller-supplied on
-create), and the current microsecond timestamp for `created`/`updated`.
+create), and the current date+time timestamp for `created`/`updated`.
 
 Make a todo list and use the question tool.
 

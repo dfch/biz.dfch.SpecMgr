@@ -46,9 +46,9 @@ codebase.
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
 
 from ...general.tools._doc_paths import slugify
+from ...general.tools._timestamps import now_timestamp
 from ...models.md import CURRENT_SCHEMA_VERSION
 from ...models.md._markdown import format_text
 from ...server import mcp
@@ -104,7 +104,7 @@ def create_tsk(content: str) -> TskDocument:
     body = Task.from_text(format_text(content))
 
     new_id = str(uuid.uuid4())
-    now = datetime.now().isoformat(timespec="microseconds")
+    now = now_timestamp()
     new_frontmatter = TskFrontmatter(
         id=new_id,
         type="tsk",

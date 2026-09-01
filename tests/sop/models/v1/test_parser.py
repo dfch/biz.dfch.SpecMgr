@@ -46,8 +46,8 @@ _MINIMAL_DOC = textwrap.dedent(
     type: sop
     version: 1.0.0
     status: draft
-    created: 2026-08-30
-    updated: 2026-08-30
+    created: '2026-08-30 00:00:00.000Z'
+    updated: '2026-08-30 00:00:00.000Z'
     ---
 
     # New Employee IT Account Provisioning
@@ -77,8 +77,8 @@ _FULL_DOC = textwrap.dedent(
     type: sop
     version: 1.0.0
     status: active
-    created: 2026-08-30
-    updated: 2026-08-30
+    created: '2026-08-30 00:00:00.000Z'
+    updated: '2026-08-30 00:00:00.000Z'
     ---
 
     # New Employee IT Account Provisioning
@@ -175,7 +175,7 @@ class TestParseSop(unittest.TestCase):
         self.assertEqual(document.frontmatter.id, "sop-001")
         self.assertEqual(document.frontmatter.type, "sop")
         self.assertEqual(document.frontmatter.status, "draft")
-        self.assertEqual(document.frontmatter.created, "2026-08-30")
+        self.assertEqual(document.frontmatter.created, "2026-08-30 00:00:00.000Z")
         self.assertEqual(document.body.text, "New Employee IT Account Provisioning")
         self.assertIn("Provision accounts for new hires", document.body.purpose.text)
         self.assertEqual([(s.number, s.name) for s in document.body.procedure.steps], [(1, "Submit request")])

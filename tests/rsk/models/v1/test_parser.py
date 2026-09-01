@@ -49,8 +49,8 @@ _MINIMAL_DOC = textwrap.dedent(
     type: rsk
     version: 1.0.0
     status: open
-    created: 2026-08-24
-    updated: 2026-08-24
+    created: '2026-08-24 00:00:00.000Z'
+    updated: '2026-08-24 00:00:00.000Z'
     ---
 
     # Simple Risk
@@ -137,8 +137,8 @@ class TestParseRsk(unittest.TestCase):
         self.assertEqual(document.frontmatter.id, "deadbeef-risk-risk-risk-deadbeefrisk")
         self.assertEqual(document.frontmatter.type, "rsk")
         self.assertEqual(document.frontmatter.status, "open")
-        self.assertEqual(document.frontmatter.created, "2026-08-24")
-        self.assertEqual(document.frontmatter.updated, "2026-08-24")
+        self.assertEqual(document.frontmatter.created, "2026-08-24 00:00:00.000Z")
+        self.assertEqual(document.frontmatter.updated, "2026-08-24 00:00:00.000Z")
         self.assertEqual(document.frontmatter.version, "1.0.0")
         self.assertEqual(document.body.text, "Untrusted File Uploads Parsed by an Unmaintained Parser Library")
         self.assertIsNotNone(document.body.comment)
@@ -199,8 +199,8 @@ class TestParseRsk(unittest.TestCase):
             type: rsk
             version: 1.0.0
             status: open
-            created: 2026-08-24
-            updated: 2026-08-24
+            created: '2026-08-24 00:00:00.000Z'
+            updated: '2026-08-24 00:00:00.000Z'
             ---
 
             # Simple Risk

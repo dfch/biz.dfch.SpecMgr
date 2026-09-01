@@ -1,9 +1,9 @@
 ---
-created: '2026-09-01T15:14:00.000000'
+created: '2026-09-01 15:14:00.000+02:00'
 id: feat-38-39-41-43-44
 status: progress
 type: feat
-updated: '2026-09-01T19:20:00.000000'
+updated: '2026-09-01 21:30:00.000+02:00'
 version: 1.0.0
 ---
 
@@ -118,14 +118,14 @@ Each phase ends gate-green: `ruff format --check` + `ruff check`, `vulture src/ 
 
 #### Phase 3: Unified timestamp format (issue 44)
 
-- [ ] Task 3.1: `general/tools/_timestamps.py` helper (`now_timestamp`, `format_timestamp`, `format_date`; `Z` for zero offset; three-digit ms) + unit tests - depends on: Phase 2 - status: not-started
-- [ ] Task 3.2: `MarkdownFrontmatter.created`/`updated` date+time-only validator (D5) + tests (reject date-only/microseconds/`T`/timezone-less; accept `Z`/offset) - depends on: none - status: not-started
-- [ ] Task 3.3: Replace all 44 generator sites (11 create, 22 update, 11 set_status) with the helper - depends on: Tasks 3.1-3.2 - status: not-started
-- [ ] Task 3.4: Migrate repo documents per D7/D8 (five parseable docs mandatory; twenty-one legacy feat READMEs frontmatter-only; placeholders to first-commit timestamp) - depends on: Task 3.2 - status: not-started
-- [ ] Task 3.5: Normalize every test-fixture `created`/`updated` value (~49 files) to conforming date+time - depends on: Task 3.2 - status: not-started
-- [ ] Task 3.6: Normalize packaged body-entry values (vcr_template seconds; tsk_template/tsk_example `05:42` times) and align `.specmgr/_template/v1/README.md` with the enforced feat convention - depends on: Phase 2 - status: not-started
-- [ ] Task 3.7: Reword the "microsecond timestamp" docstrings (`update.py`, `set_status.py`, feat models) - depends on: Task 3.3 - status: not-started
-- [ ] Task 3.8: Phase gate (regens, suite, pylint, CHANGELOG BREAKING entry, this README's Updates + its own frontmatter/entry migration) - depends on: Tasks 3.3-3.7 - status: not-started
+- [x] Task 3.1: `general/tools/_timestamps.py` helper (`now_timestamp`, `format_timestamp`, `format_date`; `Z` for zero offset; three-digit ms) + unit tests - depends on: Phase 2 - status: done
+- [x] Task 3.2: `MarkdownFrontmatter.created`/`updated` date+time-only validator (D5) + tests (reject date-only/microseconds/`T`/timezone-less; accept `Z`/offset) - depends on: none - status: done
+- [x] Task 3.3: Replace all 44 generator sites (11 create, 22 update, 11 set_status) with the helper - depends on: Tasks 3.1-3.2 - status: done
+- [x] Task 3.4: Migrate repo documents per D7/D8 (five parseable docs mandatory; twenty-one legacy feat READMEs frontmatter-only; placeholders to first-commit timestamp) - depends on: Task 3.2 - status: done
+- [x] Task 3.5: Normalize every test-fixture `created`/`updated` value (~49 files) to conforming date+time - depends on: Task 3.2 - status: done
+- [x] Task 3.6: Normalize packaged body-entry values (vcr_template seconds; tsk_template/tsk_example `05:42` times) and align `.specmgr/_template/v1/README.md` with the enforced feat convention - depends on: Phase 2 - status: done
+- [x] Task 3.7: Reword the "microsecond timestamp" docstrings (`update.py`, `set_status.py`, feat models) - depends on: Task 3.3 - status: done
+- [x] Task 3.8: Phase gate (regens, suite, pylint, CHANGELOG BREAKING entry, this README's Updates + its own frontmatter/entry migration) - depends on: Tasks 3.3-3.7 - status: done
 
 #### Phase 4: `_path_safety` in `get_<d>`/`update`/`set_status` (issue 43)
 
@@ -146,11 +146,15 @@ Each phase ends gate-green: `ruff format --check` + `ruff check`, `vulture src/ 
 
 ### Current Status
 
-As of 2026-09-01: Phases 1 and 2 (issues #38, #39) are complete. Phase 1's SOP/FEAT em-dash rejection stands as before. Phase 2 added the shared `models/md/_ordering.py::validate_newest_first` helper (aware `datetime` comparison, day-granularity rule when either side is date-only, equal timestamps allowed) and wired it into a new `_validate_newest_first` `model_validator` on SOP's `Updates`, DEC's `Updates`, VCR's `Updates`, and TSK's `RecentUpdates` -- an older-before-newer pair now fails to parse (`AssertionError`/`ValidationError`), eagerly. DEC/VCR/TSK's `UpdateEntry` headings, previously free-form, gained the same timestamp-led `@alias` SOP/FEAT already had (bare `yyyy-MM-dd` or the full date+time+ms+offset variant, then ` - `/` : `, then a title) plus computed `timestamp`/`title` fields; SOP/DEC/TSK's update containers were promoted from `MarkdownSection2` to `MarkdownSection2WithComment` (VCR already was), and all four domains' packaged templates/examples now carry the `<!-- Newest entry first -- prepend new entries directly below this comment. -->` hint, with the create/update instructions reworded to direct prepending. Two packaged-data timestamp bugs were caught and fixed as a necessary consequence of enforcing the new alias immediately (not deferred to Phase 3): `vcr_template.md`'s `08:15:42`-only Updates heading and `tsk_template.md`/`tsk_example.md`'s `05:42`-only headings both lacked seconds/milliseconds/offset and would otherwise have failed to parse under the new alias, so they were normalized to bare dates now (Phase 3, issue #44, will still do its own broader timestamp-format sweep). `docs/sop`'s release SOP was reordered newest-first (its five dated entries were oldest-first); `docs/tsk`'s two documents were verified already newest-first and single-entry, needing no change. The full unittest suite is green at 2754 tests (2724 baseline + 30 new: 14 for `_ordering.py`, plus per-domain ordering/alias/comment tests across SOP/DEC/VCR/TSK), the phase-end gate (`ruff format --check`/`ruff check`/`vulture`/`pre-commit run --all-files`) is clean, and the advisory pylint baseline is materially unchanged (42 x W0622, 13 x W0611, 160 x R0401, score 8.89/10, -0.01 from the new file). Next: start Phase 3 (issue #44, unified timestamp format).
+As of 2026-09-01: Phases 1, 2, and 3 (issues #38, #39, #44) are complete. Phase 1's SOP/FEAT em-dash rejection and Phase 2's newest-first ordering enforcement stand as before. Phase 3 unified every artifact timestamp into exactly two variants: a new `general/tools/_timestamps.py` (`now_timestamp`, `format_timestamp`, `format_date`; `Z` for a zero UTC offset, milliseconds truncated -- not rounded -- to exactly three digits) replaces all 44 previous `datetime.now().isoformat(timespec="microseconds")` generator sites (11 `create_<d>` tools, 22 generic-`update` adapter sites, 11 generic-`set_status` adapter sites); a new `mode="after"` field validator on the shared `MarkdownFrontmatter` (`created`/`updated`) rejects any non-`None` value that isn't `yyyy-MM-dd HH:mm:ss.fff` + (`Z`/`±HH:mm`) -- date-only, `T`-separated, microsecond, and timezone-less values all fail to parse now, eagerly, on all eleven whole-body domains' frontmatter subclasses (ADR untouched, D9). Adding that validator immediately surfaced every non-conforming `created`/`updated` value across the repo and the test suite as parse/construction failures; the empirical failure list (not the plan's own "~49" estimate) drove an exhaustive D7-mechanical migration: the five mandatory parseable documents (the release SOP, both `docs/tsk` documents, the feat-36 README, and this README's own frontmatter), the twenty-one other legacy `.specmgr/feat/*/README.md` files (frontmatter-only, D8), six `*_reference.md`/`qa_reference.md` fixtures under `.specmgr/feat/`, all 22 packaged `*_example.md`/`*_template.md` data files (`src/*/data/`), and roughly 60 test-fixture files (`tests/**/test_parser.py`, `test__io.py`, `test__paths.py`, `test__write.py`, `test_validate_*.py`, plus a handful of resource/integration tests) -- every migrated value now quoted in its YAML so PyYAML's implicit timestamp resolver doesn't silently reparse it back into a native `datetime`/`date` object ahead of `_stringify_metadata`'s `str()` coercion. `.specmgr/_template/v1/README.md`'s frontmatter placeholder became the illustrative `'YYYY-MM-DD HH:mm:ss.fffZ'` (a template is copied fresh each time, so a shape-illustrating placeholder beats a stale historical timestamp); `vcr_template.md`/`tsk_template.md`/`tsk_example.md`'s Phase-2-fixed bare-date `### Updates`/`### Recent Updates` body headings were verified still valid under the stricter frontmatter rule (frontmatter and body entries are validated independently, D11 stands unmodified). Every "microsecond timestamp" docstring mention was reworded to describe the new helper/shape (`update.py`, `set_status.py`, FEAT's `body.py`/`frontmatter.py`, its `create_feat` tool/prompt, and its packaged instructions), and `feat_schema.json` (both the `docs/` and packaged copies) was regenerated to pick up the reworded `UpdateEntry` docstring. The full unittest suite is green at 2776 tests (2754 baseline + 22 new: 12 for `_timestamps.py`, 10 for the frontmatter validator), the phase-end gate (`ruff format`/`check`, `vulture`, the full suite, `pre-commit run --all-files`, advisory `pylint`) is fully green with the pylint baseline unchanged (42 W0622, 13 W0611, ~160 R0401, score 8.89/10), and a CHANGELOG `[Unreleased]` BREAKING entry documents the change. Ready for Phase 4 (issue #43, `_path_safety` in `get_<d>`/`update`/`set_status`).
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-01 21:30:00.000+02:00 - Phase 3 complete: unified timestamp format across frontmatter and every generator site
+
+Implemented Tasks 3.1-3.8. Added `general/tools/_timestamps.py` (Task 3.1: `now_timestamp`/`format_timestamp`/`format_date`, 12 new unit tests in `tests/general/tools/test__timestamps.py`) -- `Z` for a zero UTC offset, a signed `±HH:mm` offset otherwise, milliseconds truncated (not rounded, matching the requirement's own wording) to exactly three digits. Added a second `mode="after"` field validator on `MarkdownFrontmatter.created`/`updated` (Task 3.2, `models/md/frontmatter.py`, 10 new tests in `tests/models/md/test_frontmatter.py`) that `re.fullmatch`es the date+time regex -- `None` passes, everything else must conform (D5); `models/adr/v1/frontmatter.py` was left untouched (D9). Replaced all 44 previous `datetime.now().isoformat(timespec="microseconds")` sites with `now_timestamp()` (Task 3.3: the 11 `create_<d>.py` files, plus 22 sites in `general/tools/update.py` and 11 in `general/tools/set_status.py`), removing the now-unused `datetime` import from every file where nothing else needed it. Adding the Task 3.2 validator immediately turned every non-conforming repo/test `created`/`updated` value into a parse/construction failure; the resulting empirical failure list (not the plan's own "~49" estimate) drove Tasks 3.4/3.5's migration exhaustively: the five mandatory parseable documents (the release SOP, both `docs/tsk` documents, the feat-36 README, and this README's own frontmatter -- reasoned about separately below), the twenty-one other legacy `.specmgr/feat/*/README.md` files (frontmatter-only, D8; their code-fenced example YAML prose was left untouched), six `*_reference.md`/`qa_reference.md` fixtures under `.specmgr/feat/`, all 22 packaged `*_example.md`/`*_template.md` files (`src/*/data/`, plus the `tests/feat/models/v1/data/feat_reference.md` copy that must stay byte-identical to `feat_example.md`), and roughly 60 test files across every domain's `test_parser.py`/`test__io.py`/`test__paths.py`/`test__write.py`/`test_validate_*.py` plus a handful of resource/integration/regex-assertion tests (Task 3.5). Every migrated frontmatter value was written single-quoted in its YAML -- unquoted, PyYAML's implicit resolver would silently reparse a date+time-with-offset string back into a native `datetime` object before `_stringify_metadata`'s `str()` coercion, producing a differently-shaped string (`+00:00` instead of `Z`, no milliseconds) that would then fail the very validator the migration was fixing. Verified (Task 3.6) that Phase 2's D11 fix to `vcr_template.md`/`tsk_template.md`/`tsk_example.md`'s bare-date body `### Updates`/`### Recent Updates` headings needed no further change (frontmatter and body-entry timestamps are validated independently); replaced `.specmgr/_template/v1/README.md`'s literal `YYYY-MM-DD` frontmatter placeholders with the illustrative `'YYYY-MM-DD HH:mm:ss.fffZ'` rather than a first-commit timestamp, since a template is copied fresh for every new feature and a shape-illustrating placeholder is more useful than a stale historical date. Reworded every "microsecond timestamp" docstring/comment (Task 3.7: `general/tools/update.py`, `general/tools/set_status.py`, `feat/models/v1/body.py`, `feat/models/v1/frontmatter.py`, `feat/tools/create_feat.py`, `feat/prompts/create_feat.py`, `feat/data/feat_create_instructions.md`, `feat/data/feat_update_instructions.md`) and regenerated `feat_schema.json` (both the `docs/` and `feat/data/` packaged copies) to pick up the reworded `UpdateEntry` docstring. This README's own frontmatter `created`/`updated` moved from the `T`+microsecond shape to the new format keeping its existing local `+02:00` offset rather than being forced to UTC `Z` -- the D7 "assume UTC" rule targets values whose original timezone is genuinely unknown, but this file's own prior `### Updates` entries already recorded the same session in `+02:00`, so reinterpreting the frontmatter as UTC would have introduced a two-hour inconsistency against entries this phase does not otherwise touch. The full unittest suite is green at 2776 tests (2754 baseline + 22 new), the phase-end gate (`ruff format`/`check`, `vulture`, the full suite, `pre-commit run --all-files`, advisory `pylint`) is fully green with the pylint baseline unchanged (42 W0622, 13 W0611, ~160 R0401, score 8.89/10, no new finding types), and a CHANGELOG `[Unreleased]` BREAKING entry documents the change (Task 3.8).
 
 #### 2026-09-01 19:20:00.000+02:00 - Phase 2 complete: newest-first ordering enforced across SOP/DEC/VCR/TSK, DEC/VCR/TSK headings now timestamp-led
 
@@ -173,6 +177,33 @@ After committing the plan, upstream dev had gained one commit, `8e07594` (feat-4
 The plan was written after fetching the five GitHub issues and examining the affected surfaces: the SOP/FEAT em-dash-enforced entry regexes (`sop/models/v1/body.py` line 421, `feat/models/v1/body.py` line 425), the DEC/VCR free-form conventions, the FEAT `_validate_newest_first` precedent, the feat-36 `_path_safety` module, the 44 `datetime.now().isoformat(timespec="microseconds")` generator sites, the free-form `MarkdownFrontmatter.created`/`updated`, and the captured pylint baseline (42 x W0622 in 39 files, 12 x W0611 in `server.py`, score 9.34/10). The branch was fast-forwarded to `origin/dev` `8c13e16`, uv synced with all extras on Python 3.13.13, and pre-commit installed, with the full suite (2713 tests) green as the baseline. No code changes yet.
 
 ### Decisions Made
+
+#### 2026-09-01 21:30:00.000+02:00 - D12: template placeholder shape over first-commit timestamp; this README's own frontmatter keeps its local offset instead of forced UTC
+
+Two Phase 3 judgment calls, both explicitly left open by the plan's own
+Task 3.6/README-migration wording. First, `.specmgr/_template/v1/README.md`'s
+literal `YYYY-MM-DD` frontmatter placeholders became the illustrative
+`'YYYY-MM-DD HH:mm:ss.fffZ'` (option (a) from Task 3.6's own text) rather
+than that folder's first-commit timestamp (option (b)): a template is
+copied fresh into a brand-new feature folder every time, so a
+shape-illustrating placeholder is strictly more useful to whoever fills
+it in next than a stale historical date tied to when the template file
+itself was authored. Second, this README's own frontmatter `created`/
+`updated` -- previously the `T`+microsecond shape
+(`'2026-09-01T15:14:00.000000'`/`'2026-09-01T19:20:00.000000'`) -- were
+migrated keeping their existing local `+02:00` offset
+(`'2026-09-01 15:14:00.000+02:00'`/`'2026-09-01 21:30:00.000+02:00'`,
+the latter bumped to this phase's own completion time) rather than the
+D7 microsecond-value rule's literal "assume UTC" instruction: D7's UTC
+assumption exists for values whose original timezone is genuinely
+unknown (e.g. a downstream/generated artifact with no other corroborating
+evidence), but this file's own `### Updates`/`### Decisions Made` entries
+already recorded the same authoring sessions in `+02:00` (Phases 1 and 2's
+own entries, untouched by this migration), so forcing the frontmatter to
+`Z` would have introduced a two-hour discrepancy against entries this
+phase does not otherwise rewrite. Both decisions are feature-scoped
+implementation details, not architecture-level, so they are recorded here
+rather than as a new ADR.
 
 #### 2026-09-01 19:20:00.000+02:00 - D11: the two malformed packaged-data timestamps blocking Phase 2's own gate were fixed in Phase 2, not deferred to Phase 3
 

@@ -1,9 +1,9 @@
 ---
-created: 2026-08-31 08:50:00
+created: '2026-08-31 08:50:00.000Z'
 id: 5e9c1a2b-3d4f-4b6a-8e91-7c2f5a1d9b3e
 status: progress
 type: vcr
-updated: 2026-08-31 08:50:00
+updated: '2026-08-31 08:50:00.000Z'
 version: 1.0.0
 ---
 

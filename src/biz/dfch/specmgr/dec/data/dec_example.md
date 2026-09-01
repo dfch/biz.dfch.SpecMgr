@@ -1,9 +1,9 @@
 ---
-created: 2026-07-14
+created: '2026-07-14 00:00:00.000Z'
 id: 3f6c1a2e-8b4d-4e7a-9c2f-5d8e1b6a7c90
 status: accepted
 type: dec
-updated: 2026-07-28
+updated: '2026-07-28 00:00:00.000Z'
 version: 1.0.0
 ---
 

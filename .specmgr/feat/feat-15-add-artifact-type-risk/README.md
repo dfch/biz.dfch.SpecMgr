@@ -2,8 +2,8 @@
 id: feat-15-add-artifact-type-risk
 version: 1.0.0
 status: done
-created: 2026-08-24
-updated: 2026-08-26
+created: '2026-08-24 00:00:00.000Z'
+updated: '2026-08-26 00:00:00.000Z'
 ---
 
 # Feature: Add artifact type Risk (rsk)

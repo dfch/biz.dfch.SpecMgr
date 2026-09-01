@@ -1,9 +1,9 @@
 ---
-created: 2026-08-31 15:37:40.000000
+created: '2026-08-31 15:37:40.000Z'
 id: feat-36-delete
 status: done
 type: feat
-updated: 2026-09-01 01:28:41.000000
+updated: '2026-09-01 01:28:41.000Z'
 version: 1.0.0
 ---
 

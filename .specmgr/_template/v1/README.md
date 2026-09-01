@@ -2,8 +2,8 @@
 id: feat-NNN-slug
 version: 1.0.0
 status: planning
-created: YYYY-MM-DD
-updated: YYYY-MM-DD
+created: 'YYYY-MM-DD HH:mm:ss.fffZ'
+updated: 'YYYY-MM-DD HH:mm:ss.fffZ'
 ---
 
 # Feature: [Feature Title]
