@@ -248,10 +248,16 @@ ValueError
     Nothing is written in any of these cases.
 AssertionError
     The (spliced) body is structurally invalid (e.g. a range that
-    deletes the H1). Nothing is written.
+    deletes the H1). The message is prefixed with domain/tool/channel
+    context (e.g. ``"tsk update (body): ..."``) by the shared
+    tool-boundary wrapper (:func:`~biz.dfch.specmgr.models.md._errors.
+    wrap_tool_errors`), layered on top of the engine's own
+    field-path/line/snippet enrichment (feat-27-validation Phases
+    1/2). Nothing is written.
 pydantic.ValidationError
     A field/cross-field validation failure in the (spliced) body (e.g.
-    a range producing an out-of-vocabulary value). Nothing is written.
+    a range producing an out-of-vocabulary value) -- similarly
+    prefixed. Nothing is written.
 ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
 PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
 FeatNotFoundError / SopNotFoundError / VcrNotFoundError

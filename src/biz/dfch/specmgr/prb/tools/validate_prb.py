@@ -32,6 +32,7 @@ from __future__ import annotations
 
 import frontmatter
 
+from ...models.md._errors import BODY_CHANNEL, wrap_tool_errors
 from ...models.md._markdown import format_text
 from ...server import mcp
 from ..models.v1 import Prb, parse_prb
@@ -81,6 +82,20 @@ def validate_prb(content: str, full: bool = False) -> bool:
     -------
     bool
         Always ``True`` on success.
+
+    Raises
+    ------
+    ValueError
+        ``full`` does not match whether ``content`` carries a frontmatter block (see above).
+    AssertionError
+        A structural failure in ``content``. The message is prefixed with domain/tool/channel
+        context by the shared tool-boundary wrapper
+        (:func:`~biz.dfch.specmgr.models.md._errors.wrap_tool_errors`), layered on top of the
+        engine's own field-path/line/snippet enrichment (feat-27-validation Phases 1/2).
+    pydantic.ValidationError
+        A field/cross-field validation failure in ``content`` -- similarly prefixed.
+    yaml.YAMLError
+        ``full=True`` only: malformed frontmatter YAML -- similarly prefixed.
     """
     has_frontmatter = bool(frontmatter.loads(content).metadata)  # type: ignore[union-attr]
 
@@ -91,13 +106,15 @@ def validate_prb(content: str, full: bool = False) -> bool:
                 "plus body) -- no frontmatter block was found. Pass full=False (the default) to "
                 "validate body-only content instead."
             )
-        parse_prb(content)
+        with wrap_tool_errors(domain="prb", tool="validate_prb"):
+            parse_prb(content)
     else:
         if has_frontmatter:
             raise ValueError(
                 "full=False requires 'content' to be body markdown only -- a YAML frontmatter "
                 "block was found. Pass full=True to validate a complete document instead."
             )
-        Prb.from_text(format_text(content))
+        with wrap_tool_errors(domain="prb", tool="validate_prb", channel=BODY_CHANNEL):
+            Prb.from_text(format_text(content))
 
     return True

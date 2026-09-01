@@ -30,7 +30,7 @@ First-line docstrings from each module, organized by domain:
 - `adr/tools/_io.py` — Thin file read/write helpers over ``parse_adr``/``render_adr`` (plan §7, §9a).
 - `adr/tools/_lock.py` — Per-document in-process lock guarding ADR mutations (plan §7, §9a).
 - `adr/tools/_paths.py` — ADR base directory resolution, filename slugification, and id -> path
-- `adr/tools/create_adr.py` — ``@mcp.tool()`` wrapper: create_adr (plan §8, §9a, §10 item 4).
+- `adr/tools/create_adr.py` — ``@mcp.tool()`` wrapper: create_adr (plan §8, §9a, §10 item 4; Task 3.2).
 - `adr/tools/get_adr.py` — ``@mcp.tool()`` wrapper: get_adr (plan §8, §9a, §10 item 4).
 - `adr/tools/list_adr.py` — ``@mcp.tool()`` wrapper: list_adr (feat-13-list-paging Task 2.1).
 - `adr/tools/option_create.py` — ``@mcp.tool()`` wrapper: option_create (plan §5, §8, §9a, §10 item 4).
@@ -40,7 +40,7 @@ First-line docstrings from each module, organized by domain:
 - `adr/tools/option_update.py` — ``@mcp.tool()`` wrapper: option_update (plan §5, §8, §9a, §10 item 4).
 - `adr/tools/update_frontmatter.py` — ``@mcp.tool()`` wrapper: update_frontmatter (plan §8, §9a, §10 item 4).
 - `adr/tools/update_section.py` — ``@mcp.tool()`` wrapper: update_section (plan §4, §8, §9a, §10 item 4).
-- `adr/tools/validate_adr.py` — ``@mcp.tool()`` wrapper: validate_adr (plan §7, §8, §9a, §10 item 4).
+- `adr/tools/validate_adr.py` — ``@mcp.tool()`` wrapper: validate_adr (plan §7, §8, §9a, §10 item 4; Task 3.2).
 
 **commands/**
 
@@ -189,6 +189,7 @@ First-line docstrings from each module, organized by domain:
 - `models/adr/v1/summary.py` — Pydantic model for one line of ADR listing output (plan §8, §9a).
 - `models/iso25010.py` — Pydantic schema and parser for the ISO/IEC 25010:2023 product quality
 - `models/md/__init__.py` — Markdown base models.
+- `models/md/_errors.py` — Shared tool-boundary error enrichment (feat-27-validation Phase 3, Task 3.1).
 - `models/md/_frontmatter_parse.py` — Shared frontmatter-parsing error enrichment (feat-27-validation Phase 2, Tasks 2.1/2.2).
 - `models/md/_markdown.py` — Markdown shared instance.
 - `models/md/_util.py` — Shared, private validation helpers for the ``models.md`` subpackage.
@@ -485,4 +486,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 321
+**Test files**: 323

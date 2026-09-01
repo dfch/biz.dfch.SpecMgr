@@ -21,7 +21,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.adr.tools._io`](biz.dfch.specmgr.adr.tools._io.md) — Thin file read/write helpers over ``parse_adr``/``render_adr`` (plan §7, §9a).
 - [`biz.dfch.specmgr.adr.tools._lock`](biz.dfch.specmgr.adr.tools._lock.md) — Per-document in-process lock guarding ADR mutations (plan §7, §9a).
 - [`biz.dfch.specmgr.adr.tools._paths`](biz.dfch.specmgr.adr.tools._paths.md) — ADR base directory resolution, filename slugification, and id -> path
-- [`biz.dfch.specmgr.adr.tools.create_adr`](biz.dfch.specmgr.adr.tools.create_adr.md) — ``@mcp.tool()`` wrapper: create_adr (plan §8, §9a, §10 item 4).
+- [`biz.dfch.specmgr.adr.tools.create_adr`](biz.dfch.specmgr.adr.tools.create_adr.md) — ``@mcp.tool()`` wrapper: create_adr (plan §8, §9a, §10 item 4; Task 3.2).
 - [`biz.dfch.specmgr.adr.tools.get_adr`](biz.dfch.specmgr.adr.tools.get_adr.md) — ``@mcp.tool()`` wrapper: get_adr (plan §8, §9a, §10 item 4).
 - [`biz.dfch.specmgr.adr.tools.list_adr`](biz.dfch.specmgr.adr.tools.list_adr.md) — ``@mcp.tool()`` wrapper: list_adr (feat-13-list-paging Task 2.1).
 - [`biz.dfch.specmgr.adr.tools.option_create`](biz.dfch.specmgr.adr.tools.option_create.md) — ``@mcp.tool()`` wrapper: option_create (plan §5, §8, §9a, §10 item 4).
@@ -31,7 +31,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.adr.tools.option_update`](biz.dfch.specmgr.adr.tools.option_update.md) — ``@mcp.tool()`` wrapper: option_update (plan §5, §8, §9a, §10 item 4).
 - [`biz.dfch.specmgr.adr.tools.update_frontmatter`](biz.dfch.specmgr.adr.tools.update_frontmatter.md) — ``@mcp.tool()`` wrapper: update_frontmatter (plan §8, §9a, §10 item 4).
 - [`biz.dfch.specmgr.adr.tools.update_section`](biz.dfch.specmgr.adr.tools.update_section.md) — ``@mcp.tool()`` wrapper: update_section (plan §4, §8, §9a, §10 item 4).
-- [`biz.dfch.specmgr.adr.tools.validate_adr`](biz.dfch.specmgr.adr.tools.validate_adr.md) — ``@mcp.tool()`` wrapper: validate_adr (plan §7, §8, §9a, §10 item 4).
+- [`biz.dfch.specmgr.adr.tools.validate_adr`](biz.dfch.specmgr.adr.tools.validate_adr.md) — ``@mcp.tool()`` wrapper: validate_adr (plan §7, §8, §9a, §10 item 4; Task 3.2).
 - [`biz.dfch.specmgr.cli`](biz.dfch.specmgr.cli.md) — Typer CLI entry point for ``biz-dfch-specmgr``.
 - [`biz.dfch.specmgr.commands`](biz.dfch.specmgr.commands.md) — commands module.
 - [`biz.dfch.specmgr.commands.adr_toc`](biz.dfch.specmgr.commands.adr_toc.md) — ``adr-toc`` -- generate table of contents for all ADRs in docs/adr.
@@ -156,6 +156,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.models.adr.v1.summary`](biz.dfch.specmgr.models.adr.v1.summary.md) — Pydantic model for one line of ADR listing output (plan §8, §9a).
 - [`biz.dfch.specmgr.models.iso25010`](biz.dfch.specmgr.models.iso25010.md) — Pydantic schema and parser for the ISO/IEC 25010:2023 product quality
 - [`biz.dfch.specmgr.models.md`](biz.dfch.specmgr.models.md.md) — Markdown base models.
+- [`biz.dfch.specmgr.models.md._errors`](biz.dfch.specmgr.models.md._errors.md) — Shared tool-boundary error enrichment (feat-27-validation Phase 3, Task 3.1).
 - [`biz.dfch.specmgr.models.md._frontmatter_parse`](biz.dfch.specmgr.models.md._frontmatter_parse.md) — Shared frontmatter-parsing error enrichment (feat-27-validation Phase 2, Tasks 2.1/2.2).
 - [`biz.dfch.specmgr.models.md._markdown`](biz.dfch.specmgr.models.md._markdown.md) — Markdown shared instance.
 - [`biz.dfch.specmgr.models.md._util`](biz.dfch.specmgr.models.md._util.md) — Shared, private validation helpers for the ``models.md`` subpackage.

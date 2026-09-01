@@ -96,6 +96,7 @@ from ...gol.tools._paths import gol_base_dir
 from ...gol.tools._write import write_gol_file
 from ...models.adr import Adr
 from ...models.adr.v1 import mutations
+from ...models.md._errors import FRONTMATTER_CHANNEL, wrap_tool_errors
 from ...prb.models.v1 import PrbDocument, PrbFrontmatter
 from ...prb.tools._io import load_by_id as load_prb_by_id
 from ...prb.tools._lock import prb_lock
@@ -185,7 +186,8 @@ def _set_status_req(id_: str, status: str, superseded_by: str | None) -> ReqDocu
         fm_data = existing.frontmatter.model_dump()
         fm_data["status"] = status
         fm_data["updated"] = now
-        new_frontmatter = ReqFrontmatter(**fm_data)
+        with wrap_tool_errors(domain="req", tool="set_status", channel=FRONTMATTER_CHANNEL):
+            new_frontmatter = ReqFrontmatter(**fm_data)
         new_doc = ReqDocument(frontmatter=new_frontmatter, body=existing.body)
         write_req_file(path, new_frontmatter, raw_body)
     return new_doc
@@ -210,7 +212,8 @@ def _set_status_uc(id_: str, status: str, superseded_by: str | None) -> UcDocume
         fm_data = existing.frontmatter.model_dump()
         fm_data["status"] = status
         fm_data["updated"] = now
-        new_frontmatter = UcFrontmatter(**fm_data)
+        with wrap_tool_errors(domain="uc", tool="set_status", channel=FRONTMATTER_CHANNEL):
+            new_frontmatter = UcFrontmatter(**fm_data)
         new_doc = UcDocument(frontmatter=new_frontmatter, body=existing.body)
         write_uc_file(path, new_frontmatter, raw_body)
     return new_doc
@@ -235,7 +238,8 @@ def _set_status_tsk(id_: str, status: str, superseded_by: str | None) -> TskDocu
         fm_data = existing.frontmatter.model_dump()
         fm_data["status"] = status
         fm_data["updated"] = now
-        new_frontmatter = TskFrontmatter(**fm_data)
+        with wrap_tool_errors(domain="tsk", tool="set_status", channel=FRONTMATTER_CHANNEL):
+            new_frontmatter = TskFrontmatter(**fm_data)
         new_doc = TskDocument(frontmatter=new_frontmatter, body=existing.body)
         write_tsk_file(path, new_frontmatter, raw_body)
     return new_doc
@@ -260,7 +264,8 @@ def _set_status_qa(id_: str, status: str, superseded_by: str | None) -> QaDocume
         fm_data = existing.frontmatter.model_dump()
         fm_data["status"] = status
         fm_data["updated"] = now
-        new_frontmatter = QaFrontmatter(**fm_data)
+        with wrap_tool_errors(domain="qa", tool="set_status", channel=FRONTMATTER_CHANNEL):
+            new_frontmatter = QaFrontmatter(**fm_data)
         new_doc = QaDocument(frontmatter=new_frontmatter, body=existing.body)
         write_qa_file(path, new_frontmatter, raw_body)
     return new_doc
@@ -286,7 +291,8 @@ def _set_status_prb(id_: str, status: str, superseded_by: str | None) -> PrbDocu
         fm_data = existing.frontmatter.model_dump()
         fm_data["status"] = status
         fm_data["updated"] = now
-        new_frontmatter = PrbFrontmatter(**fm_data)
+        with wrap_tool_errors(domain="prb", tool="set_status", channel=FRONTMATTER_CHANNEL):
+            new_frontmatter = PrbFrontmatter(**fm_data)
         new_doc = PrbDocument(frontmatter=new_frontmatter, body=existing.body)
         write_prb_file(path, new_frontmatter, raw_body)
     return new_doc
@@ -311,7 +317,8 @@ def _set_status_gol(id_: str, status: str, superseded_by: str | None) -> GolDocu
         fm_data = existing.frontmatter.model_dump()
         fm_data["status"] = status
         fm_data["updated"] = now
-        new_frontmatter = GolFrontmatter(**fm_data)
+        with wrap_tool_errors(domain="gol", tool="set_status", channel=FRONTMATTER_CHANNEL):
+            new_frontmatter = GolFrontmatter(**fm_data)
         new_doc = GolDocument(frontmatter=new_frontmatter, body=existing.body)
         write_gol_file(path, new_frontmatter, raw_body)
     return new_doc
@@ -336,7 +343,8 @@ def _set_status_rsk(id_: str, status: str, superseded_by: str | None) -> RskDocu
         fm_data = existing.frontmatter.model_dump()
         fm_data["status"] = status
         fm_data["updated"] = now
-        new_frontmatter = RskFrontmatter(**fm_data)
+        with wrap_tool_errors(domain="rsk", tool="set_status", channel=FRONTMATTER_CHANNEL):
+            new_frontmatter = RskFrontmatter(**fm_data)
         new_doc = RskDocument(frontmatter=new_frontmatter, body=existing.body)
         write_rsk_file(path, new_frontmatter, raw_body)
     return new_doc
@@ -363,7 +371,8 @@ def _set_status_dec(id_: str, status: str, superseded_by: str | None) -> DecDocu
         fm_data = existing.frontmatter.model_dump()
         fm_data["status"] = status
         fm_data["updated"] = now
-        new_frontmatter = DecFrontmatter(**fm_data)
+        with wrap_tool_errors(domain="dec", tool="set_status", channel=FRONTMATTER_CHANNEL):
+            new_frontmatter = DecFrontmatter(**fm_data)
         new_doc = DecDocument(frontmatter=new_frontmatter, body=existing.body)
         write_dec_file(path, new_frontmatter, raw_body)
     return new_doc
@@ -391,7 +400,8 @@ def _set_status_feat(id_: str, status: str, superseded_by: str | None) -> FeatDo
         fm_data = existing.frontmatter.model_dump()
         fm_data["status"] = status
         fm_data["updated"] = now
-        new_frontmatter = FeatFrontmatter(**fm_data)
+        with wrap_tool_errors(domain="feat", tool="set_status", channel=FRONTMATTER_CHANNEL):
+            new_frontmatter = FeatFrontmatter(**fm_data)
         new_doc = FeatDocument(frontmatter=new_frontmatter, body=existing.body)
         write_feat_file(path, new_frontmatter, raw_body)
     return new_doc
@@ -418,7 +428,8 @@ def _set_status_sop(id_: str, status: str, superseded_by: str | None) -> SopDocu
         fm_data = existing.frontmatter.model_dump()
         fm_data["status"] = status
         fm_data["updated"] = now
-        new_frontmatter = SopFrontmatter(**fm_data)
+        with wrap_tool_errors(domain="sop", tool="set_status", channel=FRONTMATTER_CHANNEL):
+            new_frontmatter = SopFrontmatter(**fm_data)
         new_doc = SopDocument(frontmatter=new_frontmatter, body=existing.body)
         write_sop_file(path, new_frontmatter, raw_body)
     return new_doc
@@ -443,7 +454,8 @@ def _set_status_vcr(id_: str, status: str, superseded_by: str | None) -> VcrDocu
         fm_data = existing.frontmatter.model_dump()
         fm_data["status"] = status
         fm_data["updated"] = now
-        new_frontmatter = VcrFrontmatter(**fm_data)
+        with wrap_tool_errors(domain="vcr", tool="set_status", channel=FRONTMATTER_CHANNEL):
+            new_frontmatter = VcrFrontmatter(**fm_data)
         new_doc = VcrDocument(frontmatter=new_frontmatter, body=existing.body)
         write_vcr_file(path, new_frontmatter, raw_body)
     return new_doc
@@ -462,7 +474,8 @@ def _set_status_adr(id_: str, status: str, superseded_by: str | None) -> Adr:
     base_dir = adr_base_dir()
     with adr_lock(id_):
         path, adr = load_adr_by_id(base_dir, id_)
-        new_adr = mutations.set_status(adr, status, superseded_by)
+        with wrap_tool_errors(domain="adr", tool="set_status", channel=FRONTMATTER_CHANNEL):
+            new_adr = mutations.set_status(adr, status, superseded_by)
         write_adr(path, new_adr)
     return new_adr
 
@@ -562,7 +575,11 @@ def set_status(
     pydantic.ValidationError
         ``status`` is not in the dispatched domain's closed vocabulary
         (for ``adr``: not one of its six values and not a
-        ``"superseded by ..."`` string). Nothing is written.
+        ``"superseded by ..."`` string). The message is prefixed with
+        domain/tool/channel context (e.g. ``"tsk set_status
+        (frontmatter): ..."``) by the shared tool-boundary wrapper
+        (:func:`~biz.dfch.specmgr.models.md._errors.wrap_tool_errors`).
+        Nothing is written.
     ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
     PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
     FeatNotFoundError / SopNotFoundError / VcrNotFoundError / AdrNotFoundError

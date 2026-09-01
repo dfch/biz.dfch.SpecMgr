@@ -3,7 +3,7 @@ created: '2026-09-01T14:24:06.341303'
 id: feat-27-validation
 status: planning
 type: feat
-updated: '2026-09-01T21:15:00.000000'
+updated: '2026-09-01T23:30:00.000000'
 version: 1.0.0
 ---
 
@@ -106,10 +106,10 @@ The `create_feat` tool auto-assigns `max(NNN)+1` (which would be `feat-37-<slug>
 
 #### Phase 3: Tool Boundary
 
-- [ ] Task 3.1: Shared context wrapper (domain + tool + frontmatter-vs-body) in `models/md/_errors.py` — depends on: Phase 2
-- [ ] Task 3.2: Apply it to the twelve `parse_<d>`, eleven `create_<d>`, and eleven `validate_<d>` tools and the generic `update` adapters + `set_status` — depends on: Task 3.1
-- [ ] Task 3.3: Update the `Raises` docstring sections of every touched tool — depends on: Task 3.2
-- [ ] Task 3.4: Tool-layer tests (tsk + one other domain, incl. the generic `update` adapter) — depends on: Task 3.2
+- [x] Task 3.1: Shared context wrapper (domain + tool + frontmatter-vs-body) in `models/md/_errors.py` — depends on: Phase 2 — status: done (2026-09-01)
+- [x] Task 3.2: Apply it to the twelve `parse_<d>`, eleven `create_<d>`, and eleven `validate_<d>` tools and the generic `update` adapters + `set_status` — depends on: Task 3.1 — status: done (2026-09-01; the literal counts in this task's own wording are reversed from what actually exists on disk -- 11 `parse_<d>` tools (no `parse_adr`), 12 `create_<d>`/`validate_<d>` tools each (the 11 plus ADR) -- applied to all 35 of those files as they actually exist, per REQ-005's own "all twelve domains" wording; see Decisions Made)
+- [x] Task 3.3: Update the `Raises` docstring sections of every touched tool — depends on: Task 3.2 — status: done (2026-09-01)
+- [x] Task 3.4: Tool-layer tests (tsk + one other domain, incl. the generic `update` adapter) — depends on: Task 3.2 — status: done (2026-09-01; `tsk` + `req`, plus a `set_status` case for completeness)
 
 #### Phase 4: Verify and Close
 
@@ -122,20 +122,78 @@ The `create_feat` tool auto-assigns `max(NNN)+1` (which would be `feat-37-<slug>
 
 ### Current Status
 
-**As of 2026-09-01**: Phase 2 (Frontmatter and Value Channels) is complete, on top of Phase 1
-(models/md Engine Messages). Every one of the twelve domains' parsers (eleven whole-body
-domains plus ADR) now enriches both frontmatter error channels through one shared helper,
-`models/md/_frontmatter_parse.py`: a malformed-YAML `yaml.YAMLError` names "the frontmatter
-block" (replacing PyYAML's own opaque `"<unicode string>"`) and carries document-relative line
-numbers instead of block-relative ones (REQ-004), and an out-of-vocabulary/invalid-value
-`pydantic.ValidationError` is re-raised as the exact same exception type with each per-field
-message prefixed by the domain, the field name, and (when locatable) a document-relative line
-number (Task 2.2). Exception types are unchanged throughout (REQ-006); the full unittest suite
-(2760 tests, up from 2747) passes, `ruff format --check`/`ruff check`/`vulture` are all clean.
-The next step is Phase 3 (Tool Boundary), beginning with Task 3.1 (the shared domain + tool +
-frontmatter-vs-body context wrapper in a new `models/md/_errors.py`).
+**As of 2026-09-01**: Phase 3 (Tool Boundary) is complete, on top of Phases 1-2. Every
+`parse_<d>`/`create_<d>`/`validate_<d>` `@mcp.tool()` wrapper that actually exists on disk (35
+files: 11 `parse_<d>`, 12 `create_<d>`, 12 `validate_<d>` -- ADR has no `parse_adr` MCP tool),
+plus the generic `update` tool's 11 per-domain adapters and the generic `set_status` tool's 12
+per-domain adapters (`general/tools/update.py`/`set_status.py`), now wrap their own validating
+call with one shared context manager, `models/md._errors.wrap_tool_errors` (Task 3.1): on a
+caught `AssertionError`/`pydantic.ValidationError`/`yaml.YAMLError` (or, for ADR's own
+`AdrParseError` structural channel, via the `also_catch` extension point), the exact same
+exception type is re-raised with the domain + tool + (optional) channel prepended to the
+message, on top of the field-path/line/frontmatter enrichment Phases 1/2 already built into the
+engine message itself (REQ-005/REQ-006). Exception types are unchanged throughout; the full
+unittest suite (2781 tests, up from 2760) passes, `ruff format --check`/`ruff check`/`vulture`
+are all clean. The next step is Phase 4 (Verify and Close), beginning with Task 4.1 (the issue
+#27 and feat-7 Task 0.29 regression repros).
 
 ### Updates
+
+#### 2026-09-01 23:30:00.000Z — Phase 3 (Tool Boundary) completed
+
+Implemented Tasks 3.1-3.4. New shared module: `src/biz/dfch/specmgr/models/md/_errors.py`
+(Task 3.1), exporting `wrap_tool_errors(domain, tool, *, channel=None, also_catch=())` -- a
+`@contextlib.contextmanager`-based context manager (chosen over a decorator since most tools
+need to wrap only *one* inner call, not their entire body -- e.g. every `validate_<d>` has an
+early `ValueError` shape-guard before the wrapped call that must NOT gain the prefix) -- plus
+two channel-label constants, `BODY_CHANNEL = "body"` and `FRONTMATTER_CHANNEL = "frontmatter"`.
+On a caught exception it re-raises the exact same runtime type with an enriched message,
+reusing Phase 1/2's own two reconstruction techniques: message-only reconstruction
+(`type(error)(f"{label}: {error}")`) for `AssertionError` and any `also_catch` type (both take
+a single message-argument constructor), and `pydantic_core.ValidationError.from_exception_data`
+(the same technique `models/md/_frontmatter_parse.py`'s own
+`enrich_frontmatter_validation_error` uses) for `pydantic.ValidationError`, prefixing each
+per-field message individually. `yaml.YAMLError` is reconstructed the same
+`yaml.error.Mark`-preserving way Phase 2 does, except only the `context` field (the first line
+`MarkedYAMLError.__str__` renders) is prefixed -- the marks themselves stay exactly as Phase 2
+already remapped them (document-relative), never touched again here. The label itself is
+`f"{domain} {tool}"`, optionally suffixed `f" ({channel})"` when a channel is knowable in
+advance at that call site.
+
+Example messages (before -> after, issue #27's own bare `<domain>` repro): `create_tsk`/
+`update(type="tsk")` on a checklist item containing a bare `<domain>` token (`AssertionError`,
+before: `"raw HTML is not permitted in a parsed document at line 3 (relative to this text's
+own numbering): html_inline '<domain>'; fix: wrap it in a code span (e.g. `` `<domain>` ``) or
+write it as an HTML comment (e.g. `` <!-- <domain> --> ``) instead"` -- Phase 1's own engine
+message, still missing which *tool*/*domain* raised it -- after, `create_tsk`:
+`"tsk create_tsk (body): raw HTML is not permitted ... (same detail)"`; after, the generic
+`update` tool: `"tsk update (body): raw HTML is not permitted ... (same detail)"`). `req`'s
+out-of-vocabulary `## Level` field (`pydantic.ValidationError`, a `create_req`/`validate_req`
+body-only failure): before, the bare pydantic message (`"Value error, value must match pattern
+'^(MUST|SHOULD|MUST NOT|SHOULD NOT|MAY)$', got 'NOT-A-VALID-LEVEL'"`); after: `"req create_req
+(body): Value error, value must match pattern '^(MUST|SHOULD|MUST NOT|SHOULD NOT|MAY)$', got
+'NOT-A-VALID-LEVEL'"`.
+
+Applied to all 35 `parse_<d>`/`create_<d>`/`validate_<d>` files that actually exist on disk (11
+`parse_<d>`: `dec`/`feat`/`gol`/`prb`/`qa`/`req`/`rsk`/`sop`/`tsk`/`uc`/`vcr`; 12 `create_<d>`/12
+`validate_<d>` each: the same 11 plus `adr`) -- see Decisions Made for the tool-count
+reconciliation against Task 3.2's own (reversed) literal wording -- plus `general/tools/
+update.py`'s 11 per-domain adapters (`_update_<d>`, both the whole-body and range branches) and
+`general/tools/set_status.py`'s 12 per-domain adapters (`_set_status_<d>`, wrapping the
+`XFrontmatter(**fm_data)`/ADR's `mutations.set_status(...)` reconstruction). ADR's `create_adr`/
+`validate_adr` (its own bespoke shape -- see Decisions Made) round out the 35+2 = 37 touched
+tool files. Every touched tool's docstring gained a `Raises` section (Task 3.3; none of the 35
+domain tool files had one before this phase -- they only described the two channels in prose)
+naming the enriched channels and pointing at `wrap_tool_errors`.
+
+New tests: `tests/models/md/test_errors.py` (14 tests, unit-level coverage of
+`wrap_tool_errors` itself: all three channels, `also_catch`, pass-through of unrelated
+exceptions) and `tests/general/tools/test_error_context.py` (7 tests, Task 3.4/ACC-003:
+`create_tsk`/`create_req`, `validate_tsk`/`validate_req`, the generic `update` adapter for both
+domains, and one `set_status` case, each asserting the surfaced exception string contains the
+domain + tool label). Quality gate: `ruff format --check` (clean, 1481 files), `ruff check`
+(clean), `vulture src/ whitelist.py --min-confidence 60` (clean), full `unittest discover`
+(2781 tests, up from 2760, OK -- zero exception-type regressions, ACC-004 preserved).
 
 #### 2026-09-01 21:15:00.000Z — Phase 2 (Frontmatter and Value Channels) completed
 
@@ -272,6 +330,54 @@ Phase 0 (Decide and Record) is complete: Task 0.1 (this feature was created via 
 Created for GitHub issue #27; subsumes feat-7's not-started Task 0.29. Investigation and planning complete; decisions confirmed with the user.
 
 ### Decisions Made
+
+#### 2026-09-01 23:30:00.000Z — Phase 3: tool-count reconciliation and `wrap_tool_errors` mechanism/message shape
+
+Task 3.2's own literal wording ("the twelve `parse_<d>`, eleven `create_<d>`, and eleven
+`validate_<d>` tools") is the *reverse* of what actually exists on disk, confirmed by direct
+enumeration before touching anything: 11 `parse_<d>` `@mcp.tool()` files (`dec`/`feat`/`gol`/
+`prb`/`qa`/`req`/`rsk`/`sop`/`tsk`/`uc`/`vcr` -- ADR exposes `get_adr` instead of a `parse_adr`
+MCP tool; `parse_adr` only exists as a model-layer free function, already enriched in Phase 2)
+and 12 `create_<d>`/12 `validate_<d>` files each (the same 11 plus `adr`). Resolved by applying
+the wrapper to all 35 files that actually exist, per REQ-005's own authoritative wording ("the
+parse/create/validate tools of all twelve domains") rather than the task list's miscounted
+numbers -- the task list's checkbox itself now records this discrepancy and its resolution
+inline (see the Task List above) instead of silently renumbering it. ADR's own
+`update_frontmatter`/`update_section`/`option_*` mutation tools were left untouched, per the
+orchestrator's explicit scope note (not named by the plan's Scope section).
+
+`wrap_tool_errors(domain, tool, *, channel=None, also_catch=())` was designed as a single
+`@contextlib.contextmanager`-based context manager, not a decorator: nearly every touched tool
+needs to wrap only *one* inner call (the domain body's `from_text`, the domain's `parse_<d>`,
+or a frontmatter's own constructor), not its entire function body -- `validate_<d>`'s early
+`full`-mismatch `ValueError` guard, `update`'s coordinate-range `ValueError` guard, and every
+domain's own lock/`load_by_id`/`write_<d>_file` calls must all stay *outside* the wrapped block,
+since REQ-005/REQ-006 apply only to the three specific channels, never to those already-
+actionable errors (`*NotFoundError`, coordinate `ValueError`s). A decorator wrapping the whole
+function would have caught those too, or required a second, narrower mechanism just for them --
+so a context manager scoped to the single call site was strictly simpler.
+
+Message shape: `f"{domain} {tool}"`, optionally suffixed `f" ({channel})"` when a channel is
+knowable in advance (`BODY_CHANNEL = "body"`, `FRONTMATTER_CHANNEL = "frontmatter"`), then
+`f"{label}: {original_message}"` -- e.g. `"tsk create_tsk (body): ..."`,
+`"req set_status (frontmatter): ..."`, `"tsk parse_tsk: ..."` (no channel -- `parse_<d>` and
+`validate_<d>(full=True)` cannot know in advance which of the three channels will actually
+fire, and the underlying Phase-1/2 message already self-identifies "the frontmatter block" vs.
+a field path regardless, so nothing is lost by omitting it). `also_catch` is an escape hatch
+added specifically for ADR: its own structural channel is `AdrParseError` (a plain `ValueError`
+subclass, per `models/adr/v1/parser.py`'s own two-channel docstring), not `AssertionError` like
+the eleven whole-body domains -- `also_catch=(AdrParseError,)` on `validate_adr`'s
+`wrap_tool_errors` call treats it exactly like `AssertionError` (message-only, same-type
+reconstruction), so ADR's structural failures get the same domain/tool context REQ-005 asks
+for uniformly, without inventing a fourth built-in channel in the shared module itself or
+loosening the wrapper's catch clause to a bare `ValueError` (which would have wrongly captured
+`update`'s/`set_status`'s own out-of-scope coordinate/argument `ValueError`s). `create_adr`
+itself has almost nothing left for the wrapper to catch in practice -- its `frontmatter`/`body`
+parameters are already-typed Pydantic models the MCP SDK validates *before* this function body
+ever runs, so its own two-channel validation happens entirely outside any code this feature can
+wrap; `wrap_tool_errors` is still applied around its final `Adr(...)` construction purely for
+cross-domain consistency (REQ-005), not because that call site is expected to ever actually
+fail in practice.
 
 #### 2026-09-01 21:15:00.000Z — Phase 2: `pydantic.ValidationError` message enrichment approach
 

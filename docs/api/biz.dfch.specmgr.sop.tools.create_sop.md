@@ -31,7 +31,8 @@ built by this tool: a fresh id (``uuid.uuid4()``), ``type="sop"``,
 :class:`~biz.dfch.specmgr.sop.models.v1.Sop` from it
 (``Sop.from_text(format_text(content))``); a structural failure
 raises ``AssertionError`` and a field/cross-field failure raises
-``pydantic.ValidationError``, both uncaught -- nothing is written in
+``pydantic.ValidationError``, both re-raised with domain/tool context
+prepended (see Raises below) -- nothing is written in
 either case.
 
 No body rendering is ever needed: the caller's own already-validated
@@ -48,4 +49,16 @@ Returns
 SopDocument
     The newly created document, with its assigned id in
     ``frontmatter.id``.
+
+Raises
+------
+AssertionError
+    A structural failure in ``content``. The message is prefixed with domain/tool/channel
+    context (e.g. ``"sop create_sop (body): ..."``) by the shared tool-boundary
+    wrapper (:func:`~biz.dfch.specmgr.models.md._errors.wrap_tool_errors`), layered on top
+    of the engine's own field-path/line/snippet enrichment (feat-27-validation Phases 1/2).
+    Nothing is written.
+pydantic.ValidationError
+    A field/cross-field validation failure in ``content`` -- similarly prefixed. Nothing is
+    written.
 
