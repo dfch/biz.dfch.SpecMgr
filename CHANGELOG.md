@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.19.0] - 2026-09-03
+
+### Changed
+
+- On a successful write, the generic `update`, `set_status` (its twelve
+  non-`adr` adapters), and `set_classification` tools, and every
+  per-domain `create_<d>` tool (`req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/
+  `dec`/`sop`/`feat`/`vcr`/`sysrs`), now return the domain's frontmatter
+  object only, instead of the full document with its (potentially large,
+  ever-growing) body. The `adr` dispatch branch of `set_status` and every
+  ADR-specific tool (`create_adr`, `update_frontmatter`, `update_section`,
+  the `option_*` tools) are unchanged and still return the full document
+  (GitHub issue #69).
+
 ## [0.18.0] - 2026-09-02
 
 ### Added
