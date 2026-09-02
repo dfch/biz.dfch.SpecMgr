@@ -4182,7 +4182,7 @@ feature ships. Optional.
 
 ### `DecisionEntry`
 
-`#### {timestamp} — {title}` under `### Decisions Made` -- one decision entry.
+`#### {timestamp} ( - | : ) {title}` under `### Decisions Made` -- one decision entry.
 
 Identical shape to `UpdateEntry` (same alias regex, same `timestamp`/
 `title` computed-field extraction, same `content: MarkdownParagraph`) --
@@ -4197,8 +4197,9 @@ timestamp:
     Computed. The entry's ISO8601 timestamp, verbatim from the heading.
     Never stored separately -- derived from the retained heading text.
 title:
-    Computed. The entry's title (the heading text after `" — "`). Never
-    stored separately -- derived from the retained heading text.
+    Computed. The entry's title (the heading text after `" - "`/
+    `" : "`). Never stored separately -- derived from the retained
+    heading text.
 
 **Methods:**
 
@@ -5052,7 +5053,7 @@ comment:
     Optional explanatory HTML comment (`<!-- ... -->`). Inherited from
     `MarkdownSection3WithComment`.
 decisions:
-    The `#### {timestamp} — {title}` entries, in document order,
+    The `#### {timestamp} ( - | : ) {title}` entries, in document order,
     newest-first (enforced, see `_validate_newest_first`). At least
     one entry.
 
@@ -20000,11 +20001,12 @@ phases:
 
 ### `UpdateEntry`
 
-`#### {timestamp} — {title}` under `### Updates` -- one update entry.
+`#### {timestamp} ( - | : ) {title}` under `### Updates` -- one update entry.
 
 The timestamp format is deliberately not the same format as frontmatter
-`created`/`updated` (a `datetime.isoformat(timespec="microseconds")`
-value, e.g. `2026-08-30T14:23:01.123456`) -- this format is scoped to
+`created`/`updated` (the shared date+time variant produced by
+`general.tools._timestamps.now_timestamp()`, e.g.
+`2026-08-30 14:23:01.123Z`) -- this format is scoped to
 `### Updates`/`### Decisions Made` entry headings only, hand/LLM-authored
 body content, not tool-generated frontmatter.
 
@@ -20017,8 +20019,9 @@ timestamp:
     Computed. The entry's ISO8601 timestamp, verbatim from the heading.
     Never stored separately -- derived from the retained heading text.
 title:
-    Computed. The entry's title (the heading text after `" — "`). Never
-    stored separately -- derived from the retained heading text.
+    Computed. The entry's title (the heading text after `" - "`/
+    `" : "`). Never stored separately -- derived from the retained
+    heading text.
 
 **Methods:**
 
@@ -20866,7 +20869,7 @@ comment:
     `<!-- Newest entry first -- prepend new entries directly below
     this comment. -->`. Inherited from `MarkdownSection3WithComment`.
 updates:
-    The `#### {timestamp} — {title}` entries, in document order,
+    The `#### {timestamp} ( - | : ) {title}` entries, in document order,
     newest-first (enforced, see `_validate_newest_first`). At least
     one entry.
 

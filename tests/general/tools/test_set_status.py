@@ -41,6 +41,7 @@ than trusting the pair literals.
 
 from __future__ import annotations
 
+import importlib
 import re
 import tempfile
 import textwrap
@@ -53,45 +54,50 @@ from unittest import mock
 import frontmatter
 from pydantic import ValidationError
 
-from biz.dfch.specmgr.adr.tools._paths import ADR_DIR_ENV_VAR, AdrNotFoundError
+from biz.dfch.specmgr.adr.tools._paths import ADR_DIR_ENV_VAR, AdrNotFoundError, adr_base_dir
 from biz.dfch.specmgr.dec.models.v1.frontmatter import _ALLOWED_STATUSES as _DEC_ALLOWED_STATUSES
-from biz.dfch.specmgr.dec.tools._paths import DecNotFoundError
+from biz.dfch.specmgr.dec.tools._paths import DecNotFoundError, dec_base_dir
 from biz.dfch.specmgr.dec.tools.create_dec import create_dec
+from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR, feat_base_dir
+from biz.dfch.specmgr.feat.tools.create_feat import create_feat
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.general.tools._splice import body_text
 from biz.dfch.specmgr.general.tools.set_status import set_status
 from biz.dfch.specmgr.gol.models.v1.frontmatter import _ALLOWED_STATUSES as _GOL_ALLOWED_STATUSES
-from biz.dfch.specmgr.gol.tools._paths import GolNotFoundError
+from biz.dfch.specmgr.gol.tools._paths import GolNotFoundError, gol_base_dir
 from biz.dfch.specmgr.gol.tools.create_gol import create_gol
 from biz.dfch.specmgr.models.adr import Adr, AdrBody, AdrFrontmatter, parse_adr, render_adr
 from biz.dfch.specmgr.models.adr.v1.frontmatter import _FIXED_STATUSES as _ADR_ALLOWED_STATUSES
 from biz.dfch.specmgr.prb.models.v1.frontmatter import _ALLOWED_STATUSES as _PRB_ALLOWED_STATUSES
-from biz.dfch.specmgr.prb.tools._paths import PrbNotFoundError
+from biz.dfch.specmgr.prb.tools._paths import PrbNotFoundError, prb_base_dir
 from biz.dfch.specmgr.prb.tools.create_prb import create_prb
 from biz.dfch.specmgr.qa.models.v2.frontmatter import _ALLOWED_STATUSES as _QA_ALLOWED_STATUSES
-from biz.dfch.specmgr.qa.tools._paths import QaNotFoundError
+from biz.dfch.specmgr.qa.tools._paths import QaNotFoundError, qa_base_dir
 from biz.dfch.specmgr.qa.tools.create_qa import create_qa
 from biz.dfch.specmgr.req.models.v1.frontmatter import _ALLOWED_STATUSES as _REQ_ALLOWED_STATUSES
-from biz.dfch.specmgr.req.tools._paths import ReqNotFoundError
+from biz.dfch.specmgr.req.tools._paths import ReqNotFoundError, req_base_dir
 from biz.dfch.specmgr.req.tools.create_req import create_req
 from biz.dfch.specmgr.rsk.models.v1.frontmatter import _ALLOWED_STATUSES as _RSK_ALLOWED_STATUSES
-from biz.dfch.specmgr.rsk.tools._paths import RskNotFoundError
+from biz.dfch.specmgr.rsk.tools._paths import RskNotFoundError, rsk_base_dir
 from biz.dfch.specmgr.rsk.tools.create_rsk import create_rsk
 from biz.dfch.specmgr.sop.models.v1.frontmatter import _ALLOWED_STATUSES as _SOP_ALLOWED_STATUSES
-from biz.dfch.specmgr.sop.tools._paths import SopNotFoundError
+from biz.dfch.specmgr.sop.tools._paths import SopNotFoundError, sop_base_dir
 from biz.dfch.specmgr.sop.tools.create_sop import create_sop
 from biz.dfch.specmgr.tsk.models.v1.frontmatter import _ALLOWED_STATUSES as _TSK_ALLOWED_STATUSES
-from biz.dfch.specmgr.tsk.tools._paths import TskNotFoundError
+from biz.dfch.specmgr.tsk.tools._paths import TskNotFoundError, tsk_base_dir
 from biz.dfch.specmgr.tsk.tools.create_tsk import create_tsk
 from biz.dfch.specmgr.uc.models.v2.frontmatter import _ALLOWED_STATUSES as _UC_ALLOWED_STATUSES
-from biz.dfch.specmgr.uc.tools._paths import UcNotFoundError
+from biz.dfch.specmgr.uc.tools._paths import UcNotFoundError, uc_base_dir
 from biz.dfch.specmgr.uc.tools.create_uc import create_uc
 from biz.dfch.specmgr.vcr.models.v1.frontmatter import _ALLOWED_STATUSES as _VCR_ALLOWED_STATUSES
-from biz.dfch.specmgr.vcr.tools._paths import VcrNotFoundError
+from biz.dfch.specmgr.vcr.tools._paths import VcrNotFoundError, vcr_base_dir
 from biz.dfch.specmgr.vcr.tools.create_vcr import create_vcr
 
-#: ISO-8601 microsecond timestamp shape (the ``updated`` bump precision).
-_MICROSECOND_TIMESTAMP = r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}"
+set_status_module = importlib.import_module("biz.dfch.specmgr.general.tools.set_status")
+
+#: The canonical date+time timestamp shape (D4/D7) the ``updated`` bump must match: space-separated,
+#: exactly three millisecond digits, `Z` or a signed `±HH:mm` offset.
+_DATE_TIME_TIMESTAMP = r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})"
 
 _REQ_MINIMAL_BODY = textwrap.dedent(
     """\
@@ -167,7 +173,7 @@ _TSK_MINIMAL_BODY = textwrap.dedent(
 
     ## Recent Updates
 
-    ### Kickoff
+    ### 2026-08-19 - Kickoff
 
     Started the task list.
     """
@@ -444,7 +450,12 @@ _CASES: list[_Case] = [
     ),
 ]
 
-_ADR_ID = "adr-test-id"
+#: A well-formed canonical UUID (feat-38-39-41-43-44 Phase 4 added "adr" to ``_path_safety``'s
+#: UUID-shaped domains, so this fixture id must be UUID-shaped, not a free-form string).
+_ADR_ID = "0d8f4c2a-1b3e-4f5a-9c7d-2e6b8a0f1c3d"
+
+#: A well-formed but non-existent canonical UUID, for the unknown-id not-found cases.
+_MISSING_UUID = "00000000-0000-0000-0000-000000000000"
 _ADR_SEED_BODY = AdrBody(
     title="A title",
     context_and_problem_statement="Context.",
@@ -515,7 +526,7 @@ class TestSetStatusWholeBodyDomains(TempDocsDirTestCase):
                 self.assertEqual(result.frontmatter.created, created.frontmatter.created)
                 self.assertEqual(result.frontmatter.version, created.frontmatter.version)
                 self.assertNotEqual(result.frontmatter.updated, created.frontmatter.updated)
-                self.assertIsNotNone(re.fullmatch(_MICROSECOND_TIMESTAMP, result.frontmatter.updated))
+                self.assertIsNotNone(re.fullmatch(_DATE_TIME_TIMESTAMP, result.frontmatter.updated))
                 on_disk_metadata = frontmatter.loads(path.read_text(encoding="utf-8")).metadata
                 self.assertEqual(on_disk_metadata["status"], case.valid_status)
                 self.assertEqual(body_text(path), raw_body_before)
@@ -559,7 +570,7 @@ class TestSetStatusWholeBodyDomains(TempDocsDirTestCase):
                 self._seed(case, case.minimal_body)
 
                 with self.assertRaises(case.not_found_error):
-                    set_status(id="no-such-id", type=case.doc_type, status=case.valid_status)
+                    set_status(id=_MISSING_UUID, type=case.doc_type, status=case.valid_status)
 
 
 class TestSetStatusAdr(TempDocsDirTestCase):
@@ -606,7 +617,7 @@ class TestSetStatusAdr(TempDocsDirTestCase):
         self._seed_adr()
 
         with self.assertRaises(AdrNotFoundError):
-            set_status(id="no-such-id", type="adr", status="accepted")
+            set_status(id=_MISSING_UUID, type="adr", status="accepted")
 
 
 class TestSetStatusSupersededByGuard(TempDocsDirTestCase):
@@ -623,6 +634,187 @@ class TestSetStatusSupersededByGuard(TempDocsDirTestCase):
                         status=case.valid_status,
                         superseded_by="other-id",
                     )
+
+
+@dataclass(frozen=True)
+class _InjectionCase:
+    """Per-type test data for ``_path_safety`` coverage (ACC-008), across all twelve document types."""
+
+    doc_type: str
+    create: Callable[[str], Any]
+    base_dir: Callable[[], Path]
+    minimal_body: str
+    valid_status: str
+    #: A well-formed id of a *different* domain shape (feat-NNN-slug for the UUID domains, a UUID for feat).
+    wrong_format_id: str
+
+
+#: The pinned path-injection shapes (mirrors ``test_delete.py``'s own ``_TRAVERSAL_IDS``).
+_TRAVERSAL_IDS = ("../x", "a/b", "a\\b", "..")
+
+#: A well-formed feat-NNN-slug folder name (the wrong-format id for the eleven UUID domains).
+_FEAT_SLUG_ID = "feat-36-delete"
+
+#: A minimal, valid feat body (ACC-008's injection coverage: feat is the one whole-body domain
+#: whose id shape differs from the ten UUID domains, mirroring ``test_delete.py``'s own fixture).
+_FEAT_MINIMAL_BODY = textwrap.dedent(
+    """\
+    # Feature: Example Widget
+
+    ## Plan
+
+    ### Overview
+
+    Short description.
+
+    ### Requirements
+
+    - REQ-001: The widget must render within 200ms.
+
+    ### Acceptance Criteria
+
+    - [ ] ACC-001: Render time stays below 200ms.
+
+    ### Scope
+
+    #### Included
+
+    - The widget component itself.
+
+    #### Explicitly Out Of Scope
+
+    - Mobile touch gestures.
+
+    ### Task List
+
+    #### Phase 0: Scaffolding
+
+    - [x] Task 0.1: Create branch and package skeleton
+
+    ## Progress
+
+    ### Current Status
+
+    **As of 2026-08-30**: free-form narrative.
+
+    ### Updates
+
+    #### 2026-08-30 16:47:59.981Z - Paused for review
+
+    Free-form prose describing what happened in this update.
+    """
+)
+
+_INJECTION_CASES: list[_InjectionCase] = [
+    _InjectionCase("req", create_req, req_base_dir, _REQ_MINIMAL_BODY, "accepted", _FEAT_SLUG_ID),
+    _InjectionCase("uc", create_uc, uc_base_dir, _UC_MINIMAL_BODY, "accepted", _FEAT_SLUG_ID),
+    _InjectionCase("tsk", create_tsk, tsk_base_dir, _TSK_MINIMAL_BODY, "active", _FEAT_SLUG_ID),
+    _InjectionCase("qa", create_qa, qa_base_dir, _QA_MINIMAL_BODY, "active", _FEAT_SLUG_ID),
+    _InjectionCase("prb", create_prb, prb_base_dir, _PRB_MINIMAL_BODY, "active", _FEAT_SLUG_ID),
+    _InjectionCase("gol", create_gol, gol_base_dir, _GOL_MINIMAL_BODY, "accepted", _FEAT_SLUG_ID),
+    _InjectionCase("rsk", create_rsk, rsk_base_dir, _RSK_MINIMAL_BODY, "mitigating", _FEAT_SLUG_ID),
+    _InjectionCase("dec", create_dec, dec_base_dir, _DEC_MINIMAL_BODY, "accepted", _FEAT_SLUG_ID),
+    _InjectionCase("sop", create_sop, sop_base_dir, _SOP_MINIMAL_BODY, "active", _FEAT_SLUG_ID),
+    _InjectionCase("vcr", create_vcr, vcr_base_dir, _VCR_MINIMAL_BODY, "progress", _FEAT_SLUG_ID),
+    _InjectionCase("feat", create_feat, feat_base_dir, _FEAT_MINIMAL_BODY, "progress", _MISSING_UUID),
+]
+
+
+class TempSetStatusInjectionDirTestCase(unittest.TestCase):
+    """Common fixture for ACC-008: temp dirs for SPECMGR_DOCS_DIR, SPECMGR_FEAT_DIR, and
+    SPECMGR_ADR_DIR (mirrors ``test_delete.py``'s ``TempDeleteDirTestCase``, since injection
+    coverage spans all twelve document types, feat and adr included)."""
+
+    def setUp(self) -> None:
+        self.docs_root = Path(self.enterContext(tempfile.TemporaryDirectory()))
+        self.feat_dir = Path(self.enterContext(tempfile.TemporaryDirectory()))
+        self.adr_dir = self.docs_root / "adr"
+        self.adr_dir.mkdir(parents=True, exist_ok=True)
+        self.enterContext(
+            mock.patch.dict(
+                "os.environ",
+                {
+                    DOCS_DIR_ENV_VAR: str(self.docs_root),
+                    FEAT_DIR_ENV_VAR: str(self.feat_dir),
+                    ADR_DIR_ENV_VAR: str(self.adr_dir),
+                },
+            )
+        )
+
+    def _doc_path(self, case: _InjectionCase, doc_id: str) -> Path:
+        """The single on-disk document file/README.md path for ``case``'s just-seeded document."""
+        if case.doc_type == "feat":
+            result = feat_base_dir() / doc_id / "README.md"
+        else:
+            matches = list((self.docs_root / case.doc_type).glob("*.md"))
+            self.assertEqual(len(matches), 1)
+            result = matches[0]
+        return result
+
+    def _seed_adr(self, id_: str = _ADR_ID) -> Path:
+        """Write a minimal, valid ADR (id ``id_``) to the temp ADR dir and return its path."""
+        path = self.adr_dir / f"{id_}.md"
+        path.write_text(render_adr(Adr(frontmatter=AdrFrontmatter(id=id_), body=_ADR_SEED_BODY)), encoding="utf-8")
+        return path
+
+
+class TestSetStatusInjection(TempSetStatusInjectionDirTestCase):
+    """ACC-008: injection ids raise ValueError before any filesystem access, the seed untouched."""
+
+    def test_injection_ids_raise_value_error_and_leave_the_seed_untouched(self) -> None:
+        """Each pinned traversal shape and a wrong-format id must raise ValueError before dispatch, seed intact."""
+        for case in _INJECTION_CASES:
+            with self.subTest(doc_type=case.doc_type):
+                created = case.create(case.minimal_body)
+                doc_id = created.frontmatter.id
+                path = self._doc_path(case, doc_id)
+                before = path.read_text(encoding="utf-8")
+
+                for bad_id in (*_TRAVERSAL_IDS, case.wrong_format_id):
+                    with self.subTest(doc_type=case.doc_type, bad_id=bad_id):
+                        with self.assertRaises(ValueError):
+                            set_status(id=bad_id, type=case.doc_type, status=case.valid_status)
+                        self.assertEqual(path.read_text(encoding="utf-8"), before)
+
+    def test_adr_injection_ids_raise_value_error_and_leave_the_seed_untouched(self) -> None:
+        """The same, for type="adr" (feat-38-39-41-43-44 Phase 4 added adr to the UUID-shaped domains)."""
+        path = self._seed_adr()
+        before = path.read_text(encoding="utf-8")
+
+        for bad_id in (*_TRAVERSAL_IDS, _FEAT_SLUG_ID):
+            with self.subTest(bad_id=bad_id):
+                with self.assertRaises(ValueError):
+                    set_status(id=bad_id, type="adr", status="accepted")
+                self.assertEqual(path.read_text(encoding="utf-8"), before)
+
+
+class TestSetStatusAssertWithinSpy(TempSetStatusInjectionDirTestCase):
+    """ACC-008: ``assert_within`` is actually invoked (not just present in source) during a valid set_status."""
+
+    def test_assert_within_is_called_with_base_dir_and_resolved_path(self) -> None:
+        """For each of the eleven whole-body domains, a valid status change must call ``assert_within(base_dir, path)``."""
+        for case in _INJECTION_CASES:
+            with self.subTest(doc_type=case.doc_type):
+                created = case.create(case.minimal_body)
+                doc_id = created.frontmatter.id
+                path = self._doc_path(case, doc_id)
+                base_dir = case.base_dir()
+
+                with mock.patch.object(
+                    set_status_module, "assert_within", wraps=set_status_module.assert_within
+                ) as spy:
+                    set_status(id=doc_id, type=case.doc_type, status=case.valid_status)
+
+                spy.assert_any_call(base_dir, path)
+
+    def test_assert_within_is_called_for_adr(self) -> None:
+        """The same, for type="adr"."""
+        path = self._seed_adr()
+
+        with mock.patch.object(set_status_module, "assert_within", wraps=set_status_module.assert_within) as spy:
+            set_status(id=_ADR_ID, type="adr", status="accepted")
+
+        spy.assert_any_call(adr_base_dir(), path)
 
 
 if __name__ == "__main__":

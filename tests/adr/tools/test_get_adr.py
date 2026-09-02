@@ -25,20 +25,30 @@ from biz.dfch.specmgr.adr.tools.get_adr import get_adr
 from ._helpers import TempAdrDirTestCase
 
 
+#: A well-formed but non-existent canonical UUID (feat-38-39-41-43-44 Phase 4: the id
+#: must be well-formed to reach the domain's own not-found error past the new
+#: ``validate_id`` guard).
+_MISSING_UUID = "00000000-0000-0000-0000-000000000000"
+
+#: A well-formed canonical UUID (feat-38-39-41-43-44 Phase 4 added "adr" to
+#: ``_path_safety``'s UUID-shaped domains, so this fixture id must be UUID-shaped).
+_MY_ID = "0d8f4c2a-1b3e-4f5a-9c7d-2e6b8a0f1c3d"
+
+
 class TestGetAdr(TempAdrDirTestCase):
     """Tests for the get_adr tool."""
 
     def test_returns_matching_document(self):
         """get_adr must return the parsed document matching the given id."""
-        self.existing_adr(id_="my-id")
-        result = get_adr("my-id")
-        self.assertEqual(result.frontmatter.id, "my-id")
+        self.existing_adr(id_=_MY_ID)
+        result = get_adr(_MY_ID)
+        self.assertEqual(result.frontmatter.id, _MY_ID)
         self.assertEqual(result.body.title, "A title")
 
     def test_raises_not_found_for_unknown_id(self):
         """get_adr must raise AdrNotFoundError, with the standardized message, for an unknown id."""
         with self.assertRaises(AdrNotFoundError) as ctx:
-            get_adr("no-such-id")
+            get_adr(_MISSING_UUID)
         message = str(ctx.exception)
         self.assertIn("bare document UUID", message)
         self.assertIn("without a domain prefix", message)

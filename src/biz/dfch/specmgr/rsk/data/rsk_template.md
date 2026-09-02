@@ -1,9 +1,9 @@
 ---
-created: 2026-08-24 08:15:42
+created: '2026-08-24 08:15:42.000Z'
 id: deadbeef-dead-dead-dead-deadbeefdead
 status: open
 type: rsk
-updated: 2026-08-24 08:15:42
+updated: '2026-08-24 08:15:42.000Z'
 version: 1.0.0
 ---
 

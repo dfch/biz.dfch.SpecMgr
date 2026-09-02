@@ -13,11 +13,11 @@ as ``create_dec``/``create_gol``: the caller's own already-validated body is
 persisted byte-for-byte, and only the small, code-constructed frontmatter
 YAML block is (re)generated.
 
-``created``/``updated`` use the same microsecond ISO timestamp format
-(``datetime.now().isoformat(timespec="microseconds")``) as every other
-whole-body domain's ``create_<d>`` -- an earlier, deliberate ``feat``-only
-divergence (plain ``YYYY-MM-DD`` dates, matching the 17 pre-existing
-hand-authored feature files) was reversed for cross-domain consistency; see
+``created``/``updated`` use the same shared date+time timestamp format
+(``general.tools._timestamps.now_timestamp()``) as every other whole-body
+domain's ``create_<d>`` -- an earlier, deliberate ``feat``-only divergence
+(plain ``YYYY-MM-DD`` dates, matching the 17 pre-existing hand-authored
+feature files) was reversed for cross-domain consistency; see
 ``.specmgr/feat/feat-31-feature/README.md`` Design Notes ("Frontmatter") and
 Decisions Made.
 

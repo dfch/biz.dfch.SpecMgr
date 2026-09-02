@@ -67,7 +67,11 @@ touch the roles section.
     passing only the replacement lines. The server splices the fragment
     into the current on-disk body and validates the result as a whole
     document before writing anything, so every out-of-range line stays
-    byte-identical.
+    byte-identical. Adding a new `## Updates` entry is typically a
+    line-range insert directly below the section's optional leading
+    comment (or directly below the `## Updates` heading if no comment
+    is present) -- new entries go first, since the section is
+    newest-first, enforced.
   - **Whole-body replace** (a multi-section change, or whenever you are
     uncertain about the line range): call
     `update(id, type="sop", content)` with no `offset`/`limit` --

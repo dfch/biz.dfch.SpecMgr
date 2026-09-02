@@ -360,7 +360,13 @@ type or cross-cutting:
    frontmatter-stripped body text as-is (the text `update`'s
    `offset`/`limit` index into), with optional read-style `offset`/`limit`
    windowing of that raw read (raw-only; out-of-range values clamp, never
-   error).
+   error). `get_<d>` (all twelve, incl. `get_adr`), `update`, and
+   `set_status` apply the same `general/tools/_path_safety` guards `delete`
+   already had (feat-38-39-41-43-44 Phase 4, extending feat-36-delete, ADR
+   1af6787b-eaab-4e8f-888f-531c1e76c19d): validate `id` for path-injection/
+   wrong-format before any filesystem access, and confine the resolved path
+   to the domain's own base directory after resolution — `_path_safety`'s
+   UUID-shaped domains now include `adr`; `delete` itself is unchanged.
 
 **Models location — a real, intentional divergence, not an oversight**:
 the rule is domain-first — every document type keeps its schema inside

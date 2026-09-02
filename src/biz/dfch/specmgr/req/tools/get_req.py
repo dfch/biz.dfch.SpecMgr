@@ -15,6 +15,8 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+# pylint: disable=redefined-builtin  # id/type intentionally shadow the builtins: public tool API, issue #41
+
 """``@mcp.tool()`` wrapper: get_req (feat-7-various-improvements Task 0.9).
 
 Mirrors ``adr.tools.get_adr`` -- a thin file-I/O/id-lookup adapter that
@@ -44,6 +46,7 @@ out-of-range values, never erroring).
 
 from __future__ import annotations
 
+from ...general.tools._path_safety import assert_within, validate_id
 from ...general.tools._splice import body_text, window_body
 from ...server import mcp
 from ..models.v1 import ReqDocument
@@ -60,7 +63,8 @@ from ._paths import req_base_dir
         "raw=True, optional read-style `offset`/`limit` window the raw read: `offset` (1-based, "
         "default 1) is the first body line to return, `limit` (line count, default through end "
         "of body) how many; out-of-range values clamp (`offset > N` returns the empty string), "
-        "and coordinates with raw=False raise ValueError."
+        "and coordinates with raw=False raise ValueError. An invalid id (path-injection attempt "
+        "or wrong format) is also a ValueError, raised before any file access."
     ),
 )
 def get_req(id: str, raw: bool = False, offset: int | None = None, limit: int | None = None) -> ReqDocument | str:
@@ -97,14 +101,18 @@ def get_req(id: str, raw: bool = False, offset: int | None = None, limit: int | 
     Raises
     ------
     ValueError
-        ``offset``/``limit`` coordinates with ``raw=False`` -- a parsed
-        document requires the whole body; raised before any file access.
+        ``id`` is a path-injection attempt or not a well-formed id for this domain
+        (raised before any filesystem access), or ``offset``/``limit`` coordinates
+        are given with ``raw=False`` (a parsed document requires the whole body;
+        also raised before any file access).
     """
+    validate_id("req", id)
     if not raw and (offset is not None or limit is not None):
         raise ValueError(f"offset/limit are only valid with raw=True, got offset={offset!r}, limit={limit!r}")
 
     base_dir = req_base_dir()
     path, doc = load_by_id(base_dir, id)
+    assert_within(base_dir, path)
     if raw:
         text = body_text(path)
         if offset is None and limit is None:

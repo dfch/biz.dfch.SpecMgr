@@ -1,8 +1,8 @@
 ---
-created: 2026-08-16
+created: '2026-08-16 00:00:00.000Z'
 id: feat-10-add-artifact-type-tasklist
 status: done
-updated: 2026-08-19
+updated: '2026-08-19 00:00:00.000Z'
 version: 1.0.0
 ---
 

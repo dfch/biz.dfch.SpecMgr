@@ -33,6 +33,11 @@ from biz.dfch.specmgr.uc.tools._paths import UcNotFoundError
 from biz.dfch.specmgr.uc.tools.create_uc import create_uc
 from biz.dfch.specmgr.uc.tools.get_uc import get_uc
 
+
+#: A well-formed but non-existent canonical UUID (feat-38-39-41-43-44 Phase 4: the id
+#: must be well-formed to reach the domain's own not-found error past the new
+#: ``validate_id`` guard).
+_MISSING_UUID = "00000000-0000-0000-0000-000000000000"
 _MINIMAL_BODY = textwrap.dedent(
     """\
     # Buy Goods
@@ -97,7 +102,7 @@ class TestGetUc(unittest.TestCase):
         create_uc(_MINIMAL_BODY)
 
         with self.assertRaises(UcNotFoundError) as ctx:
-            get_uc("no-such-id")
+            get_uc(_MISSING_UUID)
         message = str(ctx.exception)
         self.assertIn("bare document UUID", message)
         self.assertIn("without a domain prefix", message)
@@ -201,11 +206,11 @@ class TestGetUc(unittest.TestCase):
         create_uc(_MINIMAL_BODY)
 
         with self.assertRaises(UcNotFoundError):
-            get_uc("no-such-id", raw=True)
+            get_uc(_MISSING_UUID, raw=True)
         with self.assertRaises(UcNotFoundError):
-            get_uc("no-such-id", raw=True, offset=2, limit=3)
+            get_uc(_MISSING_UUID, raw=True, offset=2, limit=3)
         with self.assertRaises(UcNotFoundError):
-            get_uc("no-such-id", raw=False)
+            get_uc(_MISSING_UUID, raw=False)
 
 
 if __name__ == "__main__":

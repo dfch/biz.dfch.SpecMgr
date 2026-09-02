@@ -25,11 +25,13 @@ the base's ``"draft"`` (a `feat` document starts life ``"planning"``, not
 ``"draft"`` -- ``"draft"`` is not part of `feat`'s own closed set) -- see
 `.specmgr/feat/feat-31-feature/README.md` Design Notes ("Frontmatter").
 
-`created`/`updated` are inherited unchanged from `MarkdownFrontmatter` as
-plain, unvalidated ``str | None`` -- the base model performs no format
-validation on either field for any domain (the specific microsecond
-timestamp convention every domain, including `feat`, uses is a
-tool-layer/`_write.py` concern, not a model-layer one).
+`created`/`updated` are inherited unchanged from `MarkdownFrontmatter`,
+including its own date+time-only format validator (D5,
+`.specmgr/feat/feat-38-39-41-43-44/README.md`) -- the canonical
+`yyyy-MM-dd HH:mm:ss.fff` + (`Z`/`±HH:mm`) shape is enforced for every
+domain, including `feat`, at the base-model layer, not re-declared here.
+The value itself is produced by the shared
+`general.tools._timestamps.now_timestamp()` helper, a tool-layer concern.
 """
 
 from __future__ import annotations

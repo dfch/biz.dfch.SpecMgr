@@ -1,8 +1,8 @@
 ---
-created: 2026-09-01
+created: '2026-09-01 00:00:00.000Z'
 id: feat-40-docs-prune
 status: done
-updated: 2026-09-01
+updated: '2026-09-01 00:00:00.000Z'
 version: 1.0.0
 ---
 

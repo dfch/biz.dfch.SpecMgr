@@ -107,7 +107,7 @@ _INITIAL_BODY = textwrap.dedent(
 
     ### Updates
 
-    #### 2026-08-30 16:47:59.981Z — Paused for review
+    #### 2026-08-30 16:47:59.981Z - Paused for review
 
     Free-form prose describing what happened in this update.
     """
@@ -157,7 +157,7 @@ _REVISED_BODY = textwrap.dedent(
 
     ### Updates
 
-    #### 2026-08-30 16:47:59.981Z — Paused for review
+    #### 2026-08-30 16:47:59.981Z - Paused for review
 
     Free-form prose describing what happened in this update.
     """
@@ -223,7 +223,9 @@ class TestFeatLifecycleIntegration(TempFeatDirTestCase):
         self.assertEqual(updated.frontmatter.created, created.frontmatter.created)
         self.assertEqual(updated.frontmatter.status, "planning")
         self.assertEqual(updated.frontmatter.version, created.frontmatter.version)
-        self.assertRegex(updated.frontmatter.updated or "", r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}$")
+        self.assertRegex(
+            updated.frontmatter.updated or "", r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})$"
+        )
         self.assertEqual(len(updated.body.plan.requirements.items), 2)
 
         # 4b. update (type="feat", line-range): a single-line splice must round-trip
@@ -241,7 +243,9 @@ class TestFeatLifecycleIntegration(TempFeatDirTestCase):
         self.assertEqual(in_progress.frontmatter.status, "progress")
         self.assertEqual(in_progress.frontmatter.id, updated.frontmatter.id)
         self.assertEqual(in_progress.frontmatter.created, updated.frontmatter.created)
-        self.assertRegex(in_progress.frontmatter.updated or "", r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}$")
+        self.assertRegex(
+            in_progress.frontmatter.updated or "", r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})$"
+        )
         self.assertEqual(len(in_progress.body.plan.requirements.items), 2)
 
         # 6. get_feat: must reflect the latest on-disk state.

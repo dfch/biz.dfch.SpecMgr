@@ -12684,17 +12684,34 @@ cross-references to requirements, one per line
 
 ### `UpdateEntry`
 
-`### {free-form title}` under `## Updates` -- one update entry.
+`### {timestamp} ( - | : ) {title}` under `## Updates` -- one update entry.
 
-The H3 heading text is free-form (date-led titles like
-`2026-08-26 — Created` are convention, not enforced). Mirrors
-`tsk`'s `UpdateEntry` shape.
+The H3 heading text carries a timestamp and a title, joined by either
+``" - "`` (space, hyphen, space) or ``" : "`` (space, colon, space):
+e.g. `### 2026-08-27 - Confirmed` or
+`### 2026-08-27 14:30:00.000+02:00 : Confirmed`. The em-dash separator
+is rejected. The timestamp is either a bare ``yyyy-MM-dd`` date or the
+full ``yyyy-MM-dd HH:mm:ss.fff`` + explicit UTC offset (``+02:00``,
+``-05:00``) or ``Z`` for UTC variant (REQ-004) -- deliberately **not**
+the same format as frontmatter ``created``/``updated``; this format is
+scoped to `## Updates` entry headings only, which are hand/LLM-authored
+body content. Constrained by the regex `@alias` above and enforced by
+`match_alias` (`re.fullmatch`) at parse time -- a heading that does not
+start with a valid date, an em-dash separator, or a missing
+`` - ``/`` : `` title all fail the parse eagerly.
 
 Parameters
 ----------
 content:
     The lead paragraph right after the H3 heading -- this entry's own
     update text. Mandatory.
+timestamp:
+    Computed. The timestamp carried by the heading, verbatim. Never
+    stored separately -- derived from the retained heading text.
+title:
+    Computed. The title carried by the heading (the text after
+    ``" - "``/``" : "``). Never stored separately -- derived from the
+    retained heading text.
 
 **Methods:**
 
@@ -13532,18 +13549,24 @@ content:
 
 ### `Updates`
 
-`## Updates` -- a dynamic list of free-form-titled `### ` update
+`## Updates` -- a dynamic, newest-first list of timestamp-led `### ` update
 entries. Optional as a whole, and the last section of the document if
-present.
+present. May be preceded by an explanatory HTML comment (e.g. an
+ordering hint).
 
 Mirrors `tsk`'s `RecentUpdates` shape: no dedicated per-entry tools (no
-`option_create`/`option_list` equivalent) -- entries are appended by
-editing the whole body.
+`option_create`/`option_list` equivalent) -- entries are prepended
+(newest-first) by editing the whole body.
 
 Parameters
 ----------
+comment:
+    Optional explanatory HTML comment (`<!-- ... -->`), e.g.
+    `<!-- Newest entry first -- prepend new entries directly below
+    this comment. -->`. Inherited from `MarkdownSection2WithComment`.
 updates:
-    The dynamic collection of `### ` entries, in document order. Requires
+    The dynamic collection of `### ` entries, in document order,
+    newest-first (enforced, see `_validate_newest_first`). Requires
     at least one entry (``min_length=1``) -- an H2 with zero entries is
     a structural error.
 
@@ -13553,102 +13576,11 @@ updates:
 
 - `from_orm(obj: 'Any') -> 'Self'`
 
-- `from_text(text: 'str', *, _path: 'str' = '', _offset: 'int' = 0) -> 'MarkdownSection'`
-  Create an instance from markdown text starting with this class's own heading.
-
-  Validates that `text` starts with the heading triple
-  (`heading_open`/`inline`/`heading_close`) declared by the `@markdown`
-  decorator's metadata (`type`/`tag`), then that the heading's actual
-  text satisfies `cls`'s effective `@alias` (`match_alias`) -- either
-  the one explicitly declared, or, absent one, the implicit
-  `AliasType.SPACE_SEPARATED` derivation of `cls.__name__` (see
-  `match_alias`).
-
-  If `cls` declares no nested `MarkdownStr` fields (leaf case), nothing
-  else will ever retain this section's body text, so `_value` is set to
-  the complete extent `from_text` received (heading and body verbatim),
-  exactly like the base `MarkdownStr.from_text` leaf case.
-
-  Otherwise the heading's own line span is stripped off `text` and the
-  remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
-
-  Args:
-      text: the markdown text to parse.
-      _path: this section's own document-relative path (REQ-001) as
-          chosen by the caller -- `""` at the very root, in which case
-          `cls.__name__` is used instead (see
-          `MarkdownStr.from_text`'s own `_path` docs).
-      _offset: the 0-based line at which `text` (this section's own
-          heading) starts, relative to the root document's own
-          `mdformat`-normalized body (REQ-002) -- `0` at the root.
-
-  Raises:
-      AssertionError: `text` is not `mdformat`-normalized, does not
-          start with this class's own heading triple, or that
-          heading's own text does not satisfy `cls`'s effective
-          `@alias` (see `_alias_mismatch_message`) -- or any of the
-          structural errors `MarkdownStr.from_text` itself may raise
-          while populating this section's own declared fields.
+- `from_text(text: 'str', *, _path: 'str' = '', _offset: 'int' = 0) -> 'MarkdownSection2WithComment'`
+  Enforce the >=1-other-field constraint, then defer to `MarkdownSection2.from_text`.
 
 - `get_extent(text: 'str') -> 'int'`
-  Return the extent of this heading section, as a line count.
-
-  Overrides `MarkdownStr.get_extent` for heading-based sections. A
-  level-N heading section's extent spans from its own `heading_open`
-  token through every subsequent token, up to (but excluding) the
-  next heading whose level is `<= N` -- i.e. a sibling or ancestor
-  heading. Deeper headings (level > N, nested subsections) do not end
-  the extent. If no such heading follows, the extent reaches the end
-  of `text`.
-
-  If `cls`'s `@markdown` metadata declares an `end_marker` (a
-  `MarkdownStr` subclass, e.g. `MarkdownBlockQuote`), an occurrence of
-  that class's own `type`/`tag` also stops the scan, alongside the
-  heading-level check above -- but only when it occurs at nesting
-  depth 0 relative to this section's own body, i.e. it is not itself
-  nested inside some other block construct (a list item, another
-  block quote, ...) that legitimately belongs to this section's own
-  content. A depth counter is maintained across *every* token in the
-  stream (incremented/decremented by that token's own `Token.nesting`,
-  not just tokens matching the `end_marker`'s type), since any
-  intervening open/close pair -- not only the `end_marker`'s own --
-  shifts what "depth 0" means for everything that follows it; a token
-  is considered "at depth 0" when the running depth *going into* it
-  (before applying its own nesting delta) is 0, mirroring how the
-  heading check above already treats a stopping heading's own line as
-  outside the extent.
-
-  There is only an extent at all if the *first* token parsed from
-  `text` is a `heading_open` matching this class's own tag (from the
-  `@markdown` decorator's metadata) *and* that heading's own text
-  satisfies `cls`'s effective `@alias` (`match_alias`, the same check
-  `from_text` itself makes) -- otherwise this returns `0`, same as the
-  "no extent" case in the base class. This alias check is what lets
-  `process_field`'s optional-field handling correctly treat a
-  same-level-but-differently-named heading (e.g. an absent optional
-  `Notes` immediately followed by a sibling `Assumptions` heading) as
-  "this field is absent", instead of matching the wrong heading's
-  extent and then failing deeper inside `from_text`'s own alias
-  assertion.
-
-  Args:
-      text: Markdown source, pre-formatted with `mdformat`.
-
-  Returns:
-      0: `text` does not start with this class's own heading, or that
-          heading's text does not satisfy `cls`'s `@alias` (no extent).
-      int > 0: line count (see `MarkdownStr.get_extent`) covered by this
-          heading and its nested content, stopping before the next
-          sibling/ancestor heading, the next depth-0 `end_marker`
-          occurrence (if declared), or at the end of `text`.
+  Enforce the >=1-other-field constraint, then defer to `MarkdownSection2.get_extent`.
 
 - `model_construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
   Creates a new instance of the `Model` class with validated data.
@@ -13929,102 +13861,11 @@ updates:
 
 - `from_orm(obj: 'Any') -> 'Self'`
 
-- `from_text(text: 'str', *, _path: 'str' = '', _offset: 'int' = 0) -> 'MarkdownSection'`
-  Create an instance from markdown text starting with this class's own heading.
-
-  Validates that `text` starts with the heading triple
-  (`heading_open`/`inline`/`heading_close`) declared by the `@markdown`
-  decorator's metadata (`type`/`tag`), then that the heading's actual
-  text satisfies `cls`'s effective `@alias` (`match_alias`) -- either
-  the one explicitly declared, or, absent one, the implicit
-  `AliasType.SPACE_SEPARATED` derivation of `cls.__name__` (see
-  `match_alias`).
-
-  If `cls` declares no nested `MarkdownStr` fields (leaf case), nothing
-  else will ever retain this section's body text, so `_value` is set to
-  the complete extent `from_text` received (heading and body verbatim),
-  exactly like the base `MarkdownStr.from_text` leaf case.
-
-  Otherwise the heading's own line span is stripped off `text` and the
-  remainder ("body") is delegated to `MarkdownStr.from_text` (via
-  `super()`) for the actual recursive field population -- each child
-  field recursively captures its own full extent this same way, all the
-  way down to whichever leaf(ves) ultimately hold the body text. Since
-  the body is therefore already fully represented by the nested fields,
-  this section's own `_value` only needs the heading's inline content
-  (the `inline` token's text, e.g. `"Characteristic Information"`) so
-  that `__str__` can re-emit the original heading line without
-  duplicating what the children already carry.
-
-  Args:
-      text: the markdown text to parse.
-      _path: this section's own document-relative path (REQ-001) as
-          chosen by the caller -- `""` at the very root, in which case
-          `cls.__name__` is used instead (see
-          `MarkdownStr.from_text`'s own `_path` docs).
-      _offset: the 0-based line at which `text` (this section's own
-          heading) starts, relative to the root document's own
-          `mdformat`-normalized body (REQ-002) -- `0` at the root.
-
-  Raises:
-      AssertionError: `text` is not `mdformat`-normalized, does not
-          start with this class's own heading triple, or that
-          heading's own text does not satisfy `cls`'s effective
-          `@alias` (see `_alias_mismatch_message`) -- or any of the
-          structural errors `MarkdownStr.from_text` itself may raise
-          while populating this section's own declared fields.
+- `from_text(text: 'str', *, _path: 'str' = '', _offset: 'int' = 0) -> 'MarkdownSection2WithComment'`
+  Enforce the >=1-other-field constraint, then defer to `MarkdownSection2.from_text`.
 
 - `get_extent(text: 'str') -> 'int'`
-  Return the extent of this heading section, as a line count.
-
-  Overrides `MarkdownStr.get_extent` for heading-based sections. A
-  level-N heading section's extent spans from its own `heading_open`
-  token through every subsequent token, up to (but excluding) the
-  next heading whose level is `<= N` -- i.e. a sibling or ancestor
-  heading. Deeper headings (level > N, nested subsections) do not end
-  the extent. If no such heading follows, the extent reaches the end
-  of `text`.
-
-  If `cls`'s `@markdown` metadata declares an `end_marker` (a
-  `MarkdownStr` subclass, e.g. `MarkdownBlockQuote`), an occurrence of
-  that class's own `type`/`tag` also stops the scan, alongside the
-  heading-level check above -- but only when it occurs at nesting
-  depth 0 relative to this section's own body, i.e. it is not itself
-  nested inside some other block construct (a list item, another
-  block quote, ...) that legitimately belongs to this section's own
-  content. A depth counter is maintained across *every* token in the
-  stream (incremented/decremented by that token's own `Token.nesting`,
-  not just tokens matching the `end_marker`'s type), since any
-  intervening open/close pair -- not only the `end_marker`'s own --
-  shifts what "depth 0" means for everything that follows it; a token
-  is considered "at depth 0" when the running depth *going into* it
-  (before applying its own nesting delta) is 0, mirroring how the
-  heading check above already treats a stopping heading's own line as
-  outside the extent.
-
-  There is only an extent at all if the *first* token parsed from
-  `text` is a `heading_open` matching this class's own tag (from the
-  `@markdown` decorator's metadata) *and* that heading's own text
-  satisfies `cls`'s effective `@alias` (`match_alias`, the same check
-  `from_text` itself makes) -- otherwise this returns `0`, same as the
-  "no extent" case in the base class. This alias check is what lets
-  `process_field`'s optional-field handling correctly treat a
-  same-level-but-differently-named heading (e.g. an absent optional
-  `Notes` immediately followed by a sibling `Assumptions` heading) as
-  "this field is absent", instead of matching the wrong heading's
-  extent and then failing deeper inside `from_text`'s own alias
-  assertion.
-
-  Args:
-      text: Markdown source, pre-formatted with `mdformat`.
-
-  Returns:
-      0: `text` does not start with this class's own heading, or that
-          heading's text does not satisfy `cls`'s `@alias` (no extent).
-      int > 0: line count (see `MarkdownStr.get_extent`) covered by this
-          heading and its nested content, stopping before the next
-          sibling/ancestor heading, the next depth-0 `end_marker`
-          occurrence (if declared), or at the end of `text`.
+  Enforce the >=1-other-field constraint, then defer to `MarkdownSection2.get_extent`.
 
 - `json(self, *, include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, by_alias: 'bool' = False, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False, encoder: 'Callable[[Any], Any] | None' = PydanticUndefined, models_as_dict: 'bool' = PydanticUndefined, **dumps_kwargs: 'Any') -> 'str'`
 

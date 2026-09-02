@@ -1,9 +1,9 @@
 ---
-created: 2026-08-18 08:15:42
+created: '2026-08-18 08:15:42.000Z'
 id: deaddead-cafe-cafe-cafe-deaddeadcafe
 status: draft
 type: qa
-updated: 2026-08-18 08:15:42
+updated: '2026-08-18 08:15:42.000Z'
 version: 1.0.0
 ---
 

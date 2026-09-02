@@ -1,9 +1,9 @@
 ---
-created: 2026-08-05 08:15:42
+created: '2026-08-05 08:15:42.000Z'
 id: deaddead-dead-dead-dead-deaddeaddead
 status: draft
 type: uc
-updated: 2026-08-06 03:27:27
+updated: '2026-08-06 03:27:27.000Z'
 version: 1.0.0
 ---
 

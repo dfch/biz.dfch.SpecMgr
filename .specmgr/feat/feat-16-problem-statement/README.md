@@ -1,8 +1,8 @@
 ---
-created: 2026-08-25
+created: '2026-08-25 00:00:00.000Z'
 id: feat-16-problem-statement
 status: done
-updated: 2026-08-26
+updated: '2026-08-26 00:00:00.000Z'
 version: 1.0.0
 ---
 

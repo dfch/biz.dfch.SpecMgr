@@ -73,8 +73,8 @@ class TestWriteQaFile(unittest.TestCase):
             id="some-id",
             type="qa",
             status="draft",
-            created="2026-08-18T10:00:00",
-            updated="2026-08-18T10:00:00",
+            created="2026-08-18 10:00:00.000Z",
+            updated="2026-08-18 10:00:00.000Z",
             version="1.0.0",
         )
         with tempfile.TemporaryDirectory() as tmp:

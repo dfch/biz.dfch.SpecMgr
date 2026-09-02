@@ -43,8 +43,8 @@ _DOC_TEMPLATE = textwrap.dedent(
     type: sop
     version: 1.0.0
     status: draft
-    created: 2026-08-30
-    updated: 2026-08-30
+    created: '2026-08-30 00:00:00.000Z'
+    updated: '2026-08-30 00:00:00.000Z'
     ---
 
     # New Employee IT Account Provisioning

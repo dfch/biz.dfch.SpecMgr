@@ -1,8 +1,8 @@
 ---
-created: 2026-08-30
+created: '2026-08-30 00:00:00.000Z'
 id: feat-31-feature
 status: done
-updated: 2026-08-30
+updated: '2026-08-30 00:00:00.000Z'
 version: 1.13.0
 ---
 

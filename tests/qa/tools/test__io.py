@@ -35,8 +35,8 @@ _DOC_TEMPLATE = textwrap.dedent(
     type: qa
     version: 1.0.0
     status: draft
-    created: 2026-08-18
-    updated: 2026-08-18
+    created: '2026-08-18 00:00:00.000Z'
+    updated: '2026-08-18 00:00:00.000Z'
     ---
 
     # Some QA Title
@@ -80,8 +80,8 @@ _V1_SHAPED_DOC_TEMPLATE = textwrap.dedent(
     type: qa
     version: 1.0.0
     status: draft
-    created: 2026-08-18
-    updated: 2026-08-18
+    created: '2026-08-18 00:00:00.000Z'
+    updated: '2026-08-18 00:00:00.000Z'
     ---
 
     # Some QA Title

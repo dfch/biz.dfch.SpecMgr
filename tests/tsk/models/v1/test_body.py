@@ -29,6 +29,7 @@ import unittest
 from pydantic import ValidationError
 
 from biz.dfch.specmgr.models.md._markdown import format_text
+from biz.dfch.specmgr.models.md.alias_match import match_alias
 from biz.dfch.specmgr.tsk.models.v1.body import RecentUpdates, Task, UpdateEntry
 
 # A loose (blank-line separated) checklist, so `TaskItem`'s list round-trips
@@ -45,13 +46,13 @@ _NO_COMMENT_TEXT = format_text(
 
 ## Recent Updates
 
-### Kickoff
-
-Started the migration.
-
-### Progress
+### 2026-08-15 - Progress
 
 Migrated one widget so far.
+
+### 2026-08-01 - Kickoff
+
+Started the migration.
 """
 )
 
@@ -67,7 +68,7 @@ _WITH_COMMENT_TEXT = format_text(
 
 ## Recent Updates
 
-### Kickoff
+### 2026-08-01 - Kickoff
 
 Started the migration.
 """
@@ -87,8 +88,8 @@ class TestTaskWithoutComment(unittest.TestCase):
             [(False, "Inventory existing widgets"), (True, "Migrate the first widget")],
         )
         self.assertEqual(
-            [(entry.text, entry.content.text) for entry in sut.recent_updates.updates],
-            [("Kickoff", "Started the migration."), ("Progress", "Migrated one widget so far.")],
+            [(entry.title, entry.content.text) for entry in sut.recent_updates.updates],
+            [("Progress", "Migrated one widget so far."), ("Kickoff", "Started the migration.")],
         )
         self.assertEqual(str(sut), _NO_COMMENT_TEXT)
 
@@ -106,7 +107,7 @@ class TestTaskWithComment(unittest.TestCase):
             [(item.checked, item.description) for item in sut.items],
             [(False, "Inventory existing widgets"), (True, "Migrate the first widget")],
         )
-        self.assertEqual([entry.text for entry in sut.recent_updates.updates], ["Kickoff"])
+        self.assertEqual([entry.title for entry in sut.recent_updates.updates], ["Kickoff"])
         self.assertEqual(str(sut), _WITH_COMMENT_TEXT)
 
 
@@ -119,7 +120,7 @@ class TestTaskItemsValidation(unittest.TestCase):
                 """\
 ## Recent Updates
 
-### Kickoff
+### 2026-08-01 - Kickoff
 
 Started.
 """
@@ -153,7 +154,7 @@ class TestTaskItemMarkerValidatedEagerly(unittest.TestCase):
 
 ## Recent Updates
 
-### Kickoff
+### 2026-08-01 - Kickoff
 
 Started.
 """
@@ -186,7 +187,7 @@ class TestRecentUpdatesSingleEntry(unittest.TestCase):
             """\
 ## Recent Updates
 
-### Kickoff
+### 2026-08-01 - Kickoff
 
 Started the migration.
 """
@@ -195,53 +196,128 @@ Started the migration.
         sut = RecentUpdates.from_text(text)
 
         self.assertEqual(len(sut.updates), 1)
-        self.assertEqual(sut.updates[0].text, "Kickoff")
+        self.assertEqual(sut.updates[0].title, "Kickoff")
+        self.assertEqual(sut.updates[0].timestamp, "2026-08-01")
         self.assertEqual(sut.updates[0].content.text, "Started the migration.")
         self.assertEqual(str(sut), text)
 
 
 class TestRecentUpdatesMultipleEntries(unittest.TestCase):
-    """A `## Recent Updates` section with several free-form-titled entries parses and round-trips."""
+    """A `## Recent Updates` section with several timestamp-led entries parses and round-trips."""
 
     def test_parses_and_round_trips(self) -> None:
         text = format_text(
             """\
 ## Recent Updates
 
-### Kickoff
+### 2026-08-15 - Wrapping up
 
-Started the migration.
+Only the shim removal is left.
 
-### Halfway there
+### 2026-08-08 - Halfway there
 
 Migrated half of the widgets.
 
-### Wrapping up
+### 2026-08-01 - Kickoff
 
-Only the shim removal is left.
+Started the migration.
 """
         )
 
         sut = RecentUpdates.from_text(text)
 
         self.assertEqual(
-            [(entry.text, entry.content.text) for entry in sut.updates],
+            [(entry.title, entry.content.text) for entry in sut.updates],
             [
-                ("Kickoff", "Started the migration."),
-                ("Halfway there", "Migrated half of the widgets."),
                 ("Wrapping up", "Only the shim removal is left."),
+                ("Halfway there", "Migrated half of the widgets."),
+                ("Kickoff", "Started the migration."),
             ],
         )
         self.assertEqual(str(sut), text)
 
-
-class TestUpdateEntryFreeFormTitle(unittest.TestCase):
-    """`UpdateEntry`'s H3 title is free-form (any non-blank text matches its `@alias`)."""
-
-    def test_accepts_an_arbitrary_title(self) -> None:
+    def test_out_of_order_entries_raise_validation_error(self) -> None:
         text = format_text(
             """\
-### Anything Goes Here 123
+## Recent Updates
+
+### 2026-08-01 - Kickoff
+
+Started the migration.
+
+### 2026-08-15 - Wrapping up
+
+Only the shim removal is left.
+"""
+        )
+
+        with self.assertRaises(ValidationError):
+            RecentUpdates.from_text(text)
+
+    def test_equal_timestamps_are_allowed(self) -> None:
+        text = format_text(
+            """\
+## Recent Updates
+
+### 2026-08-01 - First
+
+First entry text.
+
+### 2026-08-01 - Second
+
+Second entry text.
+"""
+        )
+
+        sut = RecentUpdates.from_text(text)
+
+        self.assertEqual(len(sut.updates), 2)
+
+    def test_comment_is_optional(self) -> None:
+        text = format_text(
+            """\
+## Recent Updates
+
+<!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+### 2026-08-01 - Kickoff
+
+Started the migration.
+"""
+        )
+
+        sut = RecentUpdates.from_text(text)
+
+        self.assertIsNotNone(sut.comment)
+        self.assertEqual(len(sut.updates), 1)
+
+
+class TestUpdateEntryHeadingAlias(unittest.TestCase):
+    """`UpdateEntry`'s regex alias requires a `yyyy-MM-dd` (or full date+time) timestamp + ` - `/` : ` + `title`."""
+
+    def test_accepts_date_only_and_date_time_headings(self) -> None:
+        for heading in (
+            "2026-08-01 - Kickoff",
+            "2026-08-01 : Kickoff",
+            "2026-08-01 05:42:00.000+02:00 - Kickoff",
+            "2026-08-01 05:42:00.000Z : Kickoff",
+        ):
+            with self.subTest(heading=heading):
+                self.assertTrue(match_alias(UpdateEntry, heading))
+
+    def test_rejects_non_timestamp_led_headings(self) -> None:
+        for heading in ("Anything Goes Here 123", "Kickoff", "2026-8-1 - Kickoff"):
+            with self.subTest(heading=heading):
+                self.assertFalse(match_alias(UpdateEntry, heading))
+
+
+class TestUpdateEntryComputedFields(unittest.TestCase):
+    """`UpdateEntry.timestamp`/`UpdateEntry.title` are computed from the heading (ACC-002)."""
+
+    def test_parses_timestamp_and_title_date_only(self) -> None:
+        text = format_text(
+            """\
+### 2026-08-01 - Kickoff
 
 Some update text.
 """
@@ -249,9 +325,20 @@ Some update text.
 
         sut = UpdateEntry.from_text(text)
 
-        self.assertEqual(sut.text, "Anything Goes Here 123")
+        self.assertEqual(sut.timestamp, "2026-08-01")
+        self.assertEqual(sut.title, "Kickoff")
         self.assertEqual(sut.content.text, "Some update text.")
         self.assertEqual(str(sut), text)
+
+    def test_parses_timestamp_and_title_date_time_with_colon_separator(self) -> None:
+        sut = UpdateEntry.from_text(format_text("### 2026-08-01 05:42:00.000+02:00 : Kickoff\n\nBody.\n"))
+
+        self.assertEqual(sut.timestamp, "2026-08-01 05:42:00.000+02:00")
+        self.assertEqual(sut.title, "Kickoff")
+
+    def test_rejects_non_timestamp_led_heading_at_parse_time(self) -> None:
+        with self.assertRaises(AssertionError):
+            UpdateEntry.from_text(format_text("### Anything Goes Here 123\n\nSome update text.\n"))
 
 
 if __name__ == "__main__":

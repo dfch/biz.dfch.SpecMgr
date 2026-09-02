@@ -33,6 +33,11 @@ from biz.dfch.specmgr.rsk.tools._paths import RskNotFoundError
 from biz.dfch.specmgr.rsk.tools.create_rsk import create_rsk
 from biz.dfch.specmgr.rsk.tools.get_rsk import get_rsk
 
+
+#: A well-formed but non-existent canonical UUID (feat-38-39-41-43-44 Phase 4: the id
+#: must be well-formed to reach the domain's own not-found error past the new
+#: ``validate_id`` guard).
+_MISSING_UUID = "00000000-0000-0000-0000-000000000000"
 _MINIMAL_BODY = textwrap.dedent(
     """\
     # Sample Risk
@@ -98,7 +103,7 @@ class TestGetRsk(unittest.TestCase):
         create_rsk(_MINIMAL_BODY)
 
         with self.assertRaises(RskNotFoundError) as ctx:
-            get_rsk("no-such-id")
+            get_rsk(_MISSING_UUID)
         message = str(ctx.exception)
         self.assertIn("bare document UUID", message)
         self.assertIn("without a domain prefix", message)
@@ -202,11 +207,11 @@ class TestGetRsk(unittest.TestCase):
         create_rsk(_MINIMAL_BODY)
 
         with self.assertRaises(RskNotFoundError):
-            get_rsk("no-such-id", raw=True)
+            get_rsk(_MISSING_UUID, raw=True)
         with self.assertRaises(RskNotFoundError):
-            get_rsk("no-such-id", raw=True, offset=2, limit=3)
+            get_rsk(_MISSING_UUID, raw=True, offset=2, limit=3)
         with self.assertRaises(RskNotFoundError):
-            get_rsk("no-such-id", raw=False)
+            get_rsk(_MISSING_UUID, raw=False)
 
 
 if __name__ == "__main__":

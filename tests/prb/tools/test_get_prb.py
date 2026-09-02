@@ -33,6 +33,11 @@ from biz.dfch.specmgr.prb.tools._paths import PrbNotFoundError
 from biz.dfch.specmgr.prb.tools.create_prb import create_prb
 from biz.dfch.specmgr.prb.tools.get_prb import get_prb
 
+
+#: A well-formed but non-existent canonical UUID (feat-38-39-41-43-44 Phase 4: the id
+#: must be well-formed to reach the domain's own not-found error past the new
+#: ``validate_id`` guard).
+_MISSING_UUID = "00000000-0000-0000-0000-000000000000"
 _MINIMAL_BODY = textwrap.dedent(
     """\
     # Simple Problem Statement
@@ -76,7 +81,7 @@ class TestGetPrb(unittest.TestCase):
         create_prb(_MINIMAL_BODY)
 
         with self.assertRaises(PrbNotFoundError) as ctx:
-            get_prb("no-such-id")
+            get_prb(_MISSING_UUID)
         message = str(ctx.exception)
         self.assertIn("bare document UUID", message)
         self.assertIn("without a domain prefix", message)
@@ -180,11 +185,11 @@ class TestGetPrb(unittest.TestCase):
         create_prb(_MINIMAL_BODY)
 
         with self.assertRaises(PrbNotFoundError):
-            get_prb("no-such-id", raw=True)
+            get_prb(_MISSING_UUID, raw=True)
         with self.assertRaises(PrbNotFoundError):
-            get_prb("no-such-id", raw=True, offset=2, limit=3)
+            get_prb(_MISSING_UUID, raw=True, offset=2, limit=3)
         with self.assertRaises(PrbNotFoundError):
-            get_prb("no-such-id", raw=False)
+            get_prb(_MISSING_UUID, raw=False)
 
 
 if __name__ == "__main__":

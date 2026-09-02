@@ -40,7 +40,7 @@ _MINIMAL_BODY = textwrap.dedent(
 
     ## Recent Updates
 
-    ### Kickoff
+    ### 2026-08-19 - Kickoff
 
     Started the task list.
     """
@@ -64,7 +64,7 @@ _MALFORMED_CHECKBOX_MARKER_BODY = textwrap.dedent(
 
     ## Recent Updates
 
-    ### Kickoff
+    ### 2026-08-19 - Kickoff
 
     Started the task list.
     """

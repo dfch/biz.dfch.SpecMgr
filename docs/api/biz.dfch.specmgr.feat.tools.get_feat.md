@@ -60,6 +60,9 @@ FeatDocument | str
 Raises
 ------
 ValueError
-    ``offset``/``limit`` coordinates with ``raw=False`` -- a parsed
-    document requires the whole body; raised before any file access.
+    ``id`` is a path-injection attempt or not a well-formed
+    ``feat-NNN-slug`` (raised before any filesystem access), or
+    ``offset``/``limit`` coordinates are given with ``raw=False``
+    (a parsed document requires the whole body; also raised before
+    any file access).
 

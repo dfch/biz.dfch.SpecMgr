@@ -1,9 +1,9 @@
 ---
-created: 2026-08-31 08:15:42
+created: '2026-08-31 08:15:42.000Z'
 id: deaddead-face-face-face-deaddeadface
 status: draft
 type: vcr
-updated: 2026-08-31 08:15:42
+updated: '2026-08-31 08:15:42.000Z'
 version: 1.0.0
 ---
 
@@ -51,6 +51,6 @@ This optional section can contain additional information. There is no defined fo
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
-### 2026-08-31 08:15:42 — Created
+### 2026-08-31 - Created
 
 Blind text describing this update.

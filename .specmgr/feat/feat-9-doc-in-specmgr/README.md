@@ -2,8 +2,8 @@
 id: feat-9-doc-in-specmgr
 version: 1.0.0
 status: in-progress
-created: 2026-08-11
-updated: 2026-08-11
+created: '2026-08-11 00:00:00.000Z'
+updated: '2026-08-11 00:00:00.000Z'
 ---
 
 # Feature: Migrate `/doc` to `.specmgr`

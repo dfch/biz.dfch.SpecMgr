@@ -102,14 +102,70 @@ class TestMarkdownFrontmatter(unittest.TestCase):
         self.assertIsNone(frontmatter.updated)
 
     def test_created_and_updated_accept_explicit_values(self):
-        """created/updated must accept explicit date-like strings verbatim."""
-        frontmatter = MarkdownFrontmatter(type="uc", created="2026-08-05", updated="2026-08-11")
-        self.assertEqual(frontmatter.created, "2026-08-05")
-        self.assertEqual(frontmatter.updated, "2026-08-11")
+        """created/updated must accept explicit conforming date+time strings verbatim."""
+        frontmatter = MarkdownFrontmatter(
+            type="uc", created="2026-08-05 00:00:00.000Z", updated="2026-08-11 00:00:00.000Z"
+        )
+        self.assertEqual(frontmatter.created, "2026-08-05 00:00:00.000Z")
+        self.assertEqual(frontmatter.updated, "2026-08-11 00:00:00.000Z")
 
     def test_blank_created_and_updated_normalize_to_none(self):
         """A whitespace-only created/updated value must normalize to None."""
         frontmatter = MarkdownFrontmatter(type="uc", created="   ", updated="\t")
+        self.assertIsNone(frontmatter.created)
+        self.assertIsNone(frontmatter.updated)
+
+    def test_created_and_updated_reject_date_only(self):
+        """A date-only value (no time component) must be rejected (D5)."""
+        with self.assertRaises(ValidationError):
+            MarkdownFrontmatter(type="uc", created="2026-08-05")
+
+    def test_created_and_updated_reject_six_digit_microseconds(self):
+        """A six-digit-fraction (microsecond) value must be rejected."""
+        with self.assertRaises(ValidationError):
+            MarkdownFrontmatter(type="uc", created="2026-08-05 12:00:00.123456Z")
+
+    def test_created_and_updated_reject_t_separator(self):
+        """A ``T``-separated value must be rejected -- only the space separator is accepted."""
+        with self.assertRaises(ValidationError):
+            MarkdownFrontmatter(type="uc", created="2026-08-05T12:00:00.000Z")
+
+    def test_created_and_updated_reject_timezone_less(self):
+        """A value with no ``Z``/offset suffix at all must be rejected."""
+        with self.assertRaises(ValidationError):
+            MarkdownFrontmatter(type="uc", created="2026-08-05 12:00:00.000")
+
+    def test_created_and_updated_reject_two_millisecond_digits(self):
+        """A value with only two millisecond digits must be rejected."""
+        with self.assertRaises(ValidationError):
+            MarkdownFrontmatter(type="uc", created="2026-08-05 12:00:00.12Z")
+
+    def test_created_and_updated_reject_four_millisecond_digits(self):
+        """A value with four millisecond digits must be rejected."""
+        with self.assertRaises(ValidationError):
+            MarkdownFrontmatter(type="uc", created="2026-08-05 12:00:00.1234Z")
+
+    def test_created_and_updated_accept_z_variant(self):
+        """The exact ``Z`` (zero UTC offset) date+time variant must be accepted."""
+        frontmatter = MarkdownFrontmatter(type="uc", created="2026-08-05 12:00:00.000Z")
+        self.assertEqual(frontmatter.created, "2026-08-05 12:00:00.000Z")
+
+    def test_created_and_updated_accept_signed_offset_variant(self):
+        """The exact signed ``±HH:mm`` offset date+time variant must be accepted."""
+        frontmatter = MarkdownFrontmatter(type="uc", created="2026-08-05 12:00:00.000+02:00")
+        self.assertEqual(frontmatter.created, "2026-08-05 12:00:00.000+02:00")
+
+        frontmatter_negative = MarkdownFrontmatter(type="uc", updated="2026-08-05 12:00:00.000-05:00")
+        self.assertEqual(frontmatter_negative.updated, "2026-08-05 12:00:00.000-05:00")
+
+    def test_created_and_updated_blank_still_becomes_none_and_passes(self):
+        """A blank string must still become None via the before-validator, and pass this after-validator."""
+        frontmatter = MarkdownFrontmatter(type="uc", created="   ")
+        self.assertIsNone(frontmatter.created)
+
+    def test_created_and_updated_explicit_none_passes(self):
+        """An explicit None value must pass through unchanged."""
+        frontmatter = MarkdownFrontmatter(type="uc", created=None, updated=None)
         self.assertIsNone(frontmatter.created)
         self.assertIsNone(frontmatter.updated)
 

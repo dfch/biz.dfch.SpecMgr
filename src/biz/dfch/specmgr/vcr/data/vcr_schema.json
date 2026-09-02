@@ -109,7 +109,7 @@
       "type": "object"
     },
     "UpdateEntry": {
-      "description": "`### {free-form title}` under `## Updates` -- one update entry.\n\nThe H3 heading text is free-form (date-led titles like\n`2026-08-31 \u2014 Created` are convention, not enforced). Mirrors DEC's\n`UpdateEntry` shape.\n\nParameters\n----------\ncontent:\n    The lead paragraph right after the H3 heading -- this entry's own\n    update text. Mandatory.",
+      "description": "`### {timestamp} ( - | : ) {title}` under `## Updates` -- one update entry.\n\nThe H3 heading text carries a timestamp and a title, joined by either\n``\" - \"`` (space, hyphen, space) or ``\" : \"`` (space, colon, space):\ne.g. `### 2026-08-31 - Created` or\n`### 2026-08-31 07:40:12.500+02:00 : Created`. The em-dash separator is\nrejected. The timestamp is either a bare ``yyyy-MM-dd`` date or the\nfull ``yyyy-MM-dd HH:mm:ss.fff`` + explicit UTC offset (``+02:00``,\n``-05:00``) or ``Z`` for UTC variant (REQ-004). Mirrors DEC's\n`UpdateEntry` shape exactly.\n\nParameters\n----------\ncontent:\n    The lead paragraph right after the H3 heading -- this entry's own\n    update text. Mandatory.\ntimestamp:\n    Computed. The timestamp carried by the heading, verbatim. Never\n    stored separately -- derived from the retained heading text.\ntitle:\n    Computed. The title carried by the heading (the text after\n    ``\" - \"``/``\" : \"``). Never stored separately -- derived from the\n    retained heading text.",
       "properties": {
         "content": {
           "$ref": "#/$defs/MarkdownParagraph",
@@ -123,7 +123,7 @@
       "type": "object"
     },
     "Updates": {
-      "description": "`## Updates` -- a dynamic list of free-form-titled `### ` update entries. Optional as a whole, and the\nlast section of the document if present.\n\nUnlike DEC's own `Updates` (a plain `MarkdownSection2`, since\n`dec_example.md` carries no comment there), VCR's own `example.md`/\n`template.md` (Phase 0) both demonstrate a permanent \"newest first\"\nordering-hint HTML comment directly under this heading -- the same\nstructural-anchor role `feat`'s `Updates(MarkdownSection3WithComment)`\nalready gives its own comment (not authoring guidance, see\n`.specmgr/feat/feat-33-vcr/README.md` Design Notes' \"clean-example\nconvention\" bullet), so this is `MarkdownSection2WithComment` instead.\nNo dedicated per-entry tools -- entries are appended by editing the\nwhole body.\n\nParameters\n----------\ncomment:\n    Optional explanatory HTML comment (`<!-- ... -->`), e.g.\n    `<!-- Newest entry first -- prepend new entries directly below\n    this comment. -->`. Inherited from `MarkdownSection2WithComment`.\nupdates:\n    The dynamic collection of `### ` entries, in document order. Requires\n    at least one entry (``min_length=1``) -- an H2 with zero entries is\n    a structural error.",
+      "description": "`## Updates` -- a dynamic, newest-first list of timestamp-led `### ` update entries. Optional as a whole,\nand the last section of the document if present.\n\nVCR's own `example.md`/`template.md` (Phase 0) both demonstrate a\npermanent \"newest first\" ordering-hint HTML comment directly under\nthis heading -- the same structural-anchor role `feat`'s\n`Updates(MarkdownSection3WithComment)` already gives its own comment\n(not authoring guidance, see `.specmgr/feat/feat-33-vcr/README.md`\nDesign Notes' \"clean-example convention\" bullet), so this is\n`MarkdownSection2WithComment`. No dedicated per-entry tools -- entries\nare prepended (newest-first) by editing the whole body.\n\nParameters\n----------\ncomment:\n    Optional explanatory HTML comment (`<!-- ... -->`), e.g.\n    `<!-- Newest entry first -- prepend new entries directly below\n    this comment. -->`. Inherited from `MarkdownSection2WithComment`.\nupdates:\n    The dynamic collection of `### ` entries, in document order,\n    newest-first (enforced, see `_validate_newest_first`). Requires\n    at least one entry (``min_length=1``) -- an H2 with zero entries is\n    a structural error.",
       "properties": {
         "comment": {
           "anyOf": [
@@ -138,7 +138,7 @@
           "description": "Optional explanatory HTML comment (`<!-- ... -->`)."
         },
         "updates": {
-          "description": "Dynamic collection of `### {free-form title}` entries, in document order. Must contain at least one entry.",
+          "description": "Dynamic collection of `### {timestamp} ( - | : ) {title}` entries, in document order, newest-first. Must contain at least one entry.",
           "items": {
             "$ref": "#/$defs/UpdateEntry"
           },

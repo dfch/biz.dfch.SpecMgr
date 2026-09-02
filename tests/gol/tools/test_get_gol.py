@@ -33,6 +33,11 @@ from biz.dfch.specmgr.gol.tools._paths import GolNotFoundError
 from biz.dfch.specmgr.gol.tools.create_gol import create_gol
 from biz.dfch.specmgr.gol.tools.get_gol import get_gol
 
+
+#: A well-formed but non-existent canonical UUID (feat-38-39-41-43-44 Phase 4: the id
+#: must be well-formed to reach the domain's own not-found error past the new
+#: ``validate_id`` guard).
+_MISSING_UUID = "00000000-0000-0000-0000-000000000000"
 _MINIMAL_BODY = textwrap.dedent(
     """\
     # Competitive Engines in Consumer Vehicles
@@ -68,7 +73,7 @@ class TestGetGol(unittest.TestCase):
         create_gol(_MINIMAL_BODY)
 
         with self.assertRaises(GolNotFoundError) as ctx:
-            get_gol("no-such-id")
+            get_gol(_MISSING_UUID)
         message = str(ctx.exception)
         self.assertIn("bare document UUID", message)
         self.assertIn("without a domain prefix", message)
@@ -175,11 +180,11 @@ class TestGetGol(unittest.TestCase):
         create_gol(_MINIMAL_BODY)
 
         with self.assertRaises(GolNotFoundError):
-            get_gol("no-such-id", raw=True)
+            get_gol(_MISSING_UUID, raw=True)
         with self.assertRaises(GolNotFoundError):
-            get_gol("no-such-id", raw=True, offset=2, limit=3)
+            get_gol(_MISSING_UUID, raw=True, offset=2, limit=3)
         with self.assertRaises(GolNotFoundError):
-            get_gol("no-such-id", raw=False)
+            get_gol(_MISSING_UUID, raw=False)
 
 
 if __name__ == "__main__":

@@ -31,14 +31,22 @@ the other ten's identical shape in how it resolves ``id``: via
 ``feat.tools._paths``'s bespoke folder-per-document shortcut, not a
 flat-file directory scan (see
 ``.specmgr/feat/feat-31-feature/README.md`` Design Notes, "Addressing").
-It bumps ``updated`` to the same microsecond timestamp as every other
-domain -- an earlier, deliberate divergence (a plain ``YYYY-MM-DD`` date)
-was reversed for cross-domain consistency; see that feature's Decisions
+It bumps ``updated`` to the same shared date+time timestamp (via
+``general.tools._timestamps.now_timestamp()``) as every other domain --
+an earlier, deliberate divergence (a plain ``YYYY-MM-DD`` date) was
+reversed for cross-domain consistency; see that feature's Decisions
 Made.
 
 ADR is deliberately *not* a ``type`` here: its section-level MADR mutation
 contract (``update_frontmatter``/``update_section``/``option_*``) has no
 whole-body replace by design.
+
+Safety (REQ-009, feat-38-39-41-43-44 Phase 4): the public :func:`update`
+validates ``id`` via ``_path_safety.validate_id`` before dispatch (a
+``ValueError`` before any filesystem access -- mirroring the generic
+``delete`` tool's own REQ-003), and every adapter confines the resolved
+path to the domain's own base directory with ``_path_safety.assert_within``
+after ``load_by_id``, inside the domain lock.
 
 ## Functions
 
@@ -64,8 +72,8 @@ Mirrors :func:`_update_dec`'s shape (same ``feat_lock``, ``load_by_id``,
 divergence (see the module docstring): ``id_`` resolves via
 ``feat.tools._paths``'s bespoke folder-per-document shortcut (through
 ``load_by_id``/``feat_base_dir``), not a flat-file directory scan.
-``updated`` is bumped to the same microsecond timestamp as every other
-domain.
+``updated`` is bumped to the same shared date+time timestamp as every
+other domain.
 
 
 ### `_update_gol(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'GolDocument'`
@@ -212,9 +220,20 @@ coordinates are body-relative by construction.
 
 In both modes the existing file's frontmatter is carried over with
 every field preserved except ``updated`` (bumped to the current
-microsecond timestamp); ``status`` in particular is never settable
-through this tool -- the generic ``set_status`` tool in
-``general.tools`` is the only status-change path.
+date+time timestamp, via ``general.tools._timestamps.now_timestamp()``);
+``status`` in particular is never settable through this tool -- the
+generic ``set_status`` tool in ``general.tools`` is the only
+status-change path.
+
+Safety (REQ-009, feat-38-39-41-43-44 Phase 4, mirroring ``delete``'s
+own REQ-003): ``id`` is validated via ``_path_safety.validate_id`` (no
+``/``, no ``\``, no ``..``, plus the dispatched domain's own format --
+canonical lowercase-hex UUID for the ten UUID domains, ``feat-NNN-slug``
+for ``feat``) **before** any filesystem access, so a path-injection
+attempt or a wrong-format id is a ``ValueError`` raised before dispatch.
+Each adapter additionally confines the resolved path to the domain's
+own base directory with ``_path_safety.assert_within`` inside the
+lock -- defense-in-depth against any future gap in the id validation.
 
 Parameters
 ----------
@@ -249,12 +268,14 @@ VcrDocument
 Raises
 ------
 ValueError
-    Misused range coordinates: ``limit`` given without ``offset``
-    (raised before any file access), or ``offset < 1``,
-    ``offset > N + 1``, ``limit < 0``, or ``offset + limit - 1 > N``
-    (raised after the on-disk body is read; the message names the
-    offending value(s) and the allowed range). Nothing is written in
-    any of these cases.
+    ``id`` is a path-injection attempt or not in the dispatched
+    domain's own format (raised before any filesystem access; nothing
+    is written). Also raised for misused range coordinates: ``limit``
+    given without ``offset`` (raised before any file access), or
+    ``offset < 1``, ``offset > N + 1``, ``limit < 0``, or
+    ``offset + limit - 1 > N`` (raised after the on-disk body is read;
+    the message names the offending value(s) and the allowed range).
+    Nothing is written in any of these cases.
 AssertionError
     The (spliced) body is structurally invalid (e.g. a range that
     deletes the H1). The message is prefixed with domain/tool/channel

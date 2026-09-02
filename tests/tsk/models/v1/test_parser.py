@@ -43,8 +43,8 @@ _MINIMAL_DOC = textwrap.dedent(
     type: tsk
     version: 1.0.0
     status: draft
-    created: 2026-08-16
-    updated: 2026-08-16
+    created: '2026-08-16 00:00:00.000Z'
+    updated: '2026-08-16 00:00:00.000Z'
     ---
 
     # Simple Task List
@@ -53,7 +53,7 @@ _MINIMAL_DOC = textwrap.dedent(
 
     ## Recent Updates
 
-    ### Kickoff
+    ### 2026-08-16 - Kickoff
 
     Started the task list.
     """
@@ -77,7 +77,7 @@ class TestParseTsk(unittest.TestCase):
             [(False, "Do the first thing")],
         )
         self.assertEqual(
-            [(entry.text, entry.content.text) for entry in document.body.recent_updates.updates],
+            [(entry.title, entry.content.text) for entry in document.body.recent_updates.updates],
             [("Kickoff", "Started the task list.")],
         )
 
@@ -100,13 +100,13 @@ class TestParseTsk(unittest.TestCase):
             ],
         )
         self.assertEqual(
-            [(entry.text, entry.content.text) for entry in document.body.recent_updates.updates],
+            [(entry.title, entry.content.text) for entry in document.body.recent_updates.updates],
             [
+                ("Migration in progress", "Migrated 5 of 12 widgets so far; no regressions found."),
                 (
                     "Kickoff",
                     "Started the migration; inventoried 12 widgets currently registered against WidgetRegistryV1.",
                 ),
-                ("Migration in progress", "Migrated 5 of 12 widgets so far; no regressions found."),
             ],
         )
 
@@ -148,7 +148,7 @@ class TestParseTsk(unittest.TestCase):
 
             ## Recent Updates
 
-            ### Kickoff
+            ### 2026-08-16 - Kickoff
 
             Started the task list.
             """
@@ -166,8 +166,8 @@ class TestParseTsk(unittest.TestCase):
             type: tsk
             version: 1.0.0
             status: draft
-            created: 2026-08-16
-            updated: 2026-08-16
+            created: '2026-08-16 00:00:00.000Z'
+            updated: '2026-08-16 00:00:00.000Z'
             ---
 
             # Simple Task List
@@ -176,21 +176,21 @@ class TestParseTsk(unittest.TestCase):
 
             ## Recent Updates
 
-            ### Kickoff
-
-            Started the task list.
-
-            ### Follow-up
+            ### 2026-08-17 - Follow-up
 
             Made more progress.
+
+            ### 2026-08-16 - Kickoff
+
+            Started the task list.
             """
         )
 
         document = parse_tsk(text)
 
         self.assertEqual(
-            [(entry.text, entry.content.text) for entry in document.body.recent_updates.updates],
-            [("Kickoff", "Started the task list."), ("Follow-up", "Made more progress.")],
+            [(entry.title, entry.content.text) for entry in document.body.recent_updates.updates],
+            [("Follow-up", "Made more progress."), ("Kickoff", "Started the task list.")],
         )
 
     def test_recent_updates_with_zero_entries_raises_assertion_error(self) -> None:
