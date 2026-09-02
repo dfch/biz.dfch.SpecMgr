@@ -95,11 +95,11 @@ This feature mirrors the `req/prompts/` pattern exactly: each prompt function is
 
 #### Phase 2: Prompt modules
 
-- [ ] Task 2.1: Implement `uc/prompts/create_uc.py` (`@mcp.prompt()`, `read_packaged_text`, `string.Template` substitution), mirroring `req/prompts/create_req.py`.
+- [x] Task 2.1: Implement `uc/prompts/create_uc.py` (`@mcp.prompt()`, `read_packaged_text`, `string.Template` substitution), mirroring `req/prompts/create_req.py`.
 
-- [ ] Task 2.2: Implement `uc/prompts/update_uc.py` mirroring `req/prompts/update_req.py`.
+- [x] Task 2.2: Implement `uc/prompts/update_uc.py` mirroring `req/prompts/update_req.py`.
 
-- [ ] Task 2.3: Add `uc/prompts/__init__.py` and update `uc/__init__.py` to import `prompts` alongside `resources, tools`.
+- [x] Task 2.3: Add `uc/prompts/__init__.py` and update `uc/__init__.py` to import `prompts` alongside `resources, tools`.
 
 #### Phase 3: Documentation & registration
 
@@ -119,11 +119,38 @@ This feature mirrors the `req/prompts/` pattern exactly: each prompt function is
 
 ### Current Status
 
-**As of 2026-09-02**: Phase 0 (feat-56 sync gate) and Phase 1 (instructions content) are done. `uc/data/uc_create_instructions.md` and `uc/data/uc_update_instructions.md` now exist, mirroring `req/data/req_*_instructions.md`'s structure/tone and each referencing `set_classification(id, type="uc", classification)`. Phase 2 (prompt modules) is next.
+**As of 2026-09-02**: Phase 0 (feat-56 sync gate), Phase 1 (instructions content), and Phase 2 (prompt modules) are done. `uc/prompts/create_uc.py`/`update_uc.py`/`__init__.py` now exist, mirroring `req/prompts/`'s shape exactly, and `uc/__init__.py` imports/re-exports `prompts` alongside `resources, tools`. Both prompts are confirmed registered on the shared `mcp` app (`await mcp.list_prompts()` includes `create_uc`/`update_uc`). Phase 3 (documentation & registration) is next.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-02 00:00:00.000Z — Phase 2: Prompt modules implemented
+
+Added `src/biz/dfch/specmgr/uc/prompts/create_uc.py`, `update_uc.py`, and
+`__init__.py`, 1:1 ports of `req/prompts/create_req.py`/`update_req.py`/
+`__init__.py` (same `@mcp.prompt()` decorator shape, `string.Template`
+substitution via `read_packaged_text("uc", "create_instructions"/
+"update_instructions", "md")`, `id`/`instructions` parameters with the
+`pylint: disable=redefined-builtin` comment on `update_uc`), with
+docstrings adapted to UC's own tool/resource names (`list_uc`,
+`create_uc`, `validate_uc`, `get_uc`/`get_uc(raw=True)`,
+`specmgr://uc/template`/`example`/`schema`, and the generic
+`update`/`set_status`/`set_classification` tools with `type="uc"`, noting
+UC has no `specmgr://uc/{id}` resource -- id-based reads are
+`get_uc`-only). Updated `uc/__init__.py` to import `prompts` alongside
+`resources, tools` (alphabetical), added `"prompts"` to `__all__`, and
+replaced the outdated "There is no `prompts` sub-package yet" sentence in
+its module docstring with a description of the new `create_uc`/`update_uc`
+prompts, matching `req/__init__.py`'s docstring tone. Verified:
+`ruff format --check`/`ruff check` on `src/biz/dfch/specmgr/uc/` both
+pass with zero issues; `vulture src/ whitelist.py --min-confidence 60`
+produces no output (no new dead-code warnings); importing
+`biz.dfch.specmgr.server` (which imports `uc`) does not raise; and an ad
+hoc `await server.mcp.list_prompts()` check confirms both `create_uc` and
+`update_uc` are registered on the shared `mcp` app. No tests were added
+(Phase 4's job) and no `specmgr docs`/`server.py`/`AGENTS.md` edits were
+made (Phase 3's job). Nothing committed.
 
 #### 2026-09-02 00:00:00.000Z — Phase 1: Instructions content drafted
 
