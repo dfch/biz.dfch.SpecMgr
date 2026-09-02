@@ -40,7 +40,7 @@ from ...models.md import CURRENT_SCHEMA_VERSION
 from ...models.md._errors import BODY_CHANNEL, wrap_tool_errors
 from ...models.md._markdown import format_text
 from ...server import mcp
-from ..models.v1 import Vcr, VcrDocument, VcrFrontmatter
+from ..models.v1 import Vcr, VcrFrontmatter
 from ._paths import ensure_vcr_base_dir
 from ._write import write_vcr_file
 
@@ -51,10 +51,12 @@ from ._write import write_vcr_file
     description=(
         "Create a new verification case record: assigns a fresh id, derives a filename from the "
         "body's H1 title, validates the submitted body-only content, and writes the new "
-        "document to the verification case record base directory."
+        "document to the verification case record base directory. Returns the newly created "
+        "document's frontmatter only (no body); use the corresponding `get_vcr` tool to fetch "
+        "the full document afterward."
     ),
 )
-def create_vcr(content: str) -> VcrDocument:
+def create_vcr(content: str) -> VcrFrontmatter:
     """Create and write a new verification case record document.
 
     ``content`` is body markdown only (the ``Vcr`` H1 and its sections) --
@@ -83,9 +85,10 @@ def create_vcr(content: str) -> VcrDocument:
 
     Returns
     -------
-    VcrDocument
-        The newly created document, with its assigned id in
-        ``frontmatter.id``.
+    VcrFrontmatter
+        The newly created document's frontmatter only (no body), with its
+        assigned id in ``.id``. Use the corresponding ``get_vcr`` tool to
+        fetch the full document afterward.
 
     Raises
     ------
@@ -112,9 +115,7 @@ def create_vcr(content: str) -> VcrDocument:
         updated=now,
         version=CURRENT_SCHEMA_VERSION,
     )
-    new_doc = VcrDocument(frontmatter=new_frontmatter, body=body)
-
     filename = f"vcr-{new_id}-{slugify(body.text)}.md"
     base_dir = ensure_vcr_base_dir()
     write_vcr_file(base_dir / filename, new_frontmatter, content)
-    return new_doc
+    return new_frontmatter

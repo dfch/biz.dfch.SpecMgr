@@ -20,7 +20,7 @@ codebase.
 
 ## Functions
 
-### `create_qa(content: 'str') -> 'QaDocument'`
+### `create_qa(content: 'str') -> 'QaFrontmatter'`
 
 Create and write a new Question and Answer (QA) document.
 
@@ -50,9 +50,10 @@ content:
 
 Returns
 -------
-QaDocument
-    The newly created document, with its assigned id in
-    ``frontmatter.id``.
+QaFrontmatter
+    The newly created document's frontmatter only (no body), with its
+    assigned id in ``.id``. Use the corresponding ``get_qa`` tool to
+    fetch the full document afterward.
 
 Raises
 ------

@@ -48,7 +48,7 @@ from biz.dfch.specmgr.general.tools.delete import delete
 from biz.dfch.specmgr.general.tools.set_classification import set_classification
 from biz.dfch.specmgr.general.tools.set_status import set_status
 from biz.dfch.specmgr.general.tools.update import update
-from biz.dfch.specmgr.sysrs.models.v1 import SysrsDocument
+from biz.dfch.specmgr.sysrs.models.v1 import SysrsFrontmatter
 from biz.dfch.specmgr.sysrs.tools._paths import SysrsNotFoundError, sysrs_base_dir
 from biz.dfch.specmgr.sysrs.tools.create_sysrs import create_sysrs
 from biz.dfch.specmgr.sysrs.tools.get_sysrs import get_sysrs
@@ -117,15 +117,15 @@ class TestSysrsLifecycleIntegration(TempSysrsDirTestCase):
         self.assertEqual(initial_page.total, 0)
         self.assertEqual(initial_page.results, [])
 
-        # 1. create_sysrs: a freshly created document must be a SysrsDocument in status "draft",
+        # 1. create_sysrs: a freshly created document must be a SysrsFrontmatter in status "draft",
         #    with its file on disk named exactly sysrs-{id}-{slug}.md.
         created = create_sysrs(_INITIAL_BODY)
-        self.assertIsInstance(created, SysrsDocument)
-        self.assertEqual(created.frontmatter.status, "draft")
-        self.assertEqual(created.frontmatter.type, "sysrs")
-        self.assertIsNotNone(created.frontmatter.id)
-        self.assertEqual(created.frontmatter.created, created.frontmatter.updated)
-        sysrs_id = created.frontmatter.id
+        self.assertIsInstance(created, SysrsFrontmatter)
+        self.assertEqual(created.status, "draft")
+        self.assertEqual(created.type, "sysrs")
+        self.assertIsNotNone(created.id)
+        self.assertEqual(created.created, created.updated)
+        sysrs_id = created.id
         assert sysrs_id is not None
         expected_path = sysrs_base_dir() / f"sysrs-{sysrs_id}-system-requirements-specification-sample-document.md"
         self.assertTrue(expected_path.exists())
@@ -147,42 +147,42 @@ class TestSysrsLifecycleIntegration(TempSysrsDirTestCase):
         # 4. update (type="sysrs", whole-body): must bump only `updated` and preserve
         #    id/type/status/created/version.
         updated = update(sysrs_id, "sysrs", _REVISED_BODY)
-        self.assertEqual(updated.frontmatter.id, created.frontmatter.id)
-        self.assertEqual(updated.frontmatter.type, created.frontmatter.type)
-        self.assertEqual(updated.frontmatter.created, created.frontmatter.created)
-        self.assertEqual(updated.frontmatter.status, "draft")
-        self.assertEqual(updated.frontmatter.version, created.frontmatter.version)
-        self.assertNotEqual(updated.frontmatter.updated, created.frontmatter.updated)
-        self.assertIn("Onboarding and renewals", updated.body.system_scope.text)
+        self.assertEqual(updated.id, created.id)
+        self.assertEqual(updated.type, created.type)
+        self.assertEqual(updated.created, created.created)
+        self.assertEqual(updated.status, "draft")
+        self.assertEqual(updated.version, created.version)
+        self.assertNotEqual(updated.updated, created.updated)
+        self.assertIn("Onboarding and renewals", get_sysrs(sysrs_id).body.system_scope.text)
 
         # 5. update (type="sysrs", line-range): replace just the "## System Purpose" body line.
         lines = get_sysrs(sysrs_id, raw=True).splitlines()
         k = lines.index("Provision partner accounts.") + 1
         ranged = update(sysrs_id, "sysrs", "Provision and manage partner accounts.", offset=k, limit=1)
-        self.assertIn("Provision and manage partner accounts.", ranged.body.system_purpose.text)
+        self.assertIn("Provision and manage partner accounts.", get_sysrs(sysrs_id).body.system_purpose.text)
         new_lines = get_sysrs(sysrs_id, raw=True).splitlines()
         self.assertEqual(new_lines[: k - 1] + new_lines[k:], lines[: k - 1] + lines[k:])
 
         # 6. set_status (type="sysrs"): only status/updated may change.
         progressed = set_status(sysrs_id, "sysrs", "review")
-        self.assertEqual(progressed.frontmatter.status, "review")
-        self.assertEqual(progressed.frontmatter.id, ranged.frontmatter.id)
-        self.assertEqual(progressed.frontmatter.created, ranged.frontmatter.created)
-        self.assertNotEqual(progressed.frontmatter.updated, ranged.frontmatter.updated)
+        self.assertEqual(progressed.status, "review")
+        self.assertEqual(progressed.id, ranged.id)
+        self.assertEqual(progressed.created, ranged.created)
+        self.assertNotEqual(progressed.updated, ranged.updated)
         # The body must be carried forward verbatim, untouched by the status change.
-        self.assertIn("Onboarding and renewals", progressed.body.system_scope.text)
+        self.assertIn("Onboarding and renewals", get_sysrs(sysrs_id).body.system_scope.text)
 
         # 7. set_classification (type="sysrs", ACC-009 feat-56 addendum): only classification/updated
         #    may change.
         classified = set_classification(sysrs_id, "sysrs", "internal")
-        self.assertEqual(classified.frontmatter.classification, "internal")
-        self.assertEqual(classified.frontmatter.status, "review")
-        self.assertEqual(classified.frontmatter.id, progressed.frontmatter.id)
-        self.assertNotEqual(classified.frontmatter.updated, progressed.frontmatter.updated)
+        self.assertEqual(classified.classification, "internal")
+        self.assertEqual(classified.status, "review")
+        self.assertEqual(classified.id, progressed.id)
+        self.assertNotEqual(classified.updated, progressed.updated)
 
         # A blank classification clears the field back to None/absent.
         cleared = set_classification(sysrs_id, "sysrs", "")
-        self.assertIsNone(cleared.frontmatter.classification)
+        self.assertIsNone(cleared.classification)
 
         # 8. get_sysrs: must reflect the latest on-disk state.
         fetched_after_status = get_sysrs(sysrs_id)
@@ -217,18 +217,16 @@ class TestSysrsLifecycleIntegration(TempSysrsDirTestCase):
         created = create_sysrs(_INITIAL_BODY)
 
         with self.assertRaises(ValueError):
-            set_status(created.frontmatter.id, "sysrs", "review", superseded_by="some-other-id")
+            set_status(created.id, "sysrs", "review", superseded_by="some-other-id")
 
     def test_set_status_rejects_status_outside_closed_set(self) -> None:
         """set_status (type="sysrs") must reject a status outside the closed 5-value set."""
         created = create_sysrs(_INITIAL_BODY)
-        expected_path = (
-            sysrs_base_dir() / f"sysrs-{created.frontmatter.id}-system-requirements-specification-sample-document.md"
-        )
+        expected_path = sysrs_base_dir() / f"sysrs-{created.id}-system-requirements-specification-sample-document.md"
         before = expected_path.read_text(encoding="utf-8")
 
         with self.assertRaises(ValidationError):
-            set_status(created.frontmatter.id, "sysrs", "accepted")
+            set_status(created.id, "sysrs", "accepted")
 
         self.assertEqual(expected_path.read_text(encoding="utf-8"), before)
 

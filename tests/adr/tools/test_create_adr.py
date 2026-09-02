@@ -20,7 +20,7 @@
 import unittest
 from unittest import mock
 
-from biz.dfch.specmgr.models.adr import AdrFrontmatter
+from biz.dfch.specmgr.models.adr import Adr, AdrFrontmatter
 from biz.dfch.specmgr.adr.tools._paths import ADR_DIR_ENV_VAR
 from biz.dfch.specmgr.adr.tools.create_adr import create_adr
 from biz.dfch.specmgr.adr.tools.get_adr import get_adr
@@ -50,6 +50,18 @@ class TestCreateAdr(TempAdrDirTestCase):
         frontmatter = AdrFrontmatter(id="caller-supplied-id")
         result = create_adr(frontmatter, body())
         self.assertNotEqual(result.frontmatter.id, "caller-supplied-id")
+
+    def test_response_is_full_document_with_body_intact(self):
+        """feat-69 regression: create_adr is explicitly out of scope -- it must keep returning the
+        full `Adr` document (frontmatter and body both intact), unlike the 11 whole-body domains'
+        own `create_<d>` tools, which now return frontmatter only."""
+        new_body = body(title="A Document With A Body")
+        result = create_adr(AdrFrontmatter(status="proposed"), new_body)
+
+        self.assertIsInstance(result, Adr)
+        self.assertEqual(result.body, new_body)
+        self.assertEqual(result.body.title, "A Document With A Body")
+        self.assertEqual(result.frontmatter.status, "proposed")
 
     def test_creates_base_dir_if_missing(self):
         """create_adr must create the ADR base directory if it does not exist yet."""

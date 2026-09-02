@@ -27,9 +27,10 @@ from unittest import mock
 
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.models.md import CURRENT_SCHEMA_VERSION
-from biz.dfch.specmgr.qa.models.v2 import QaDocument, parse_qa
+from biz.dfch.specmgr.qa.models.v2 import QaDocument, QaFrontmatter, parse_qa
 from biz.dfch.specmgr.qa.tools._paths import qa_base_dir
 from biz.dfch.specmgr.qa.tools.create_qa import create_qa
+from biz.dfch.specmgr.qa.tools.get_qa import get_qa
 
 _MINIMAL_BODY = textwrap.dedent(
     """\
@@ -85,30 +86,34 @@ class TestCreateQa(TempQaDirTestCase):
         """create_qa must build the entire frontmatter itself (id/type/status/timestamps/version)."""
         result = create_qa(_MINIMAL_BODY)
 
-        self.assertIsInstance(result, QaDocument)
-        self.assertIsNotNone(result.frontmatter.id)
-        self.assertEqual(result.frontmatter.type, "qa")
-        self.assertEqual(result.frontmatter.status, "draft")
-        self.assertIsNotNone(result.frontmatter.created)
-        self.assertEqual(result.frontmatter.created, result.frontmatter.updated)
-        self.assertEqual(result.frontmatter.version, CURRENT_SCHEMA_VERSION)
-        self.assertEqual(result.body.text, "Some QA Title")
+        self.assertIsInstance(result, QaFrontmatter)
+        self.assertNotIsInstance(result, QaDocument)
+        self.assertFalse(hasattr(result, "body"))
+        self.assertIsNotNone(result.id)
+        self.assertEqual(result.type, "qa")
+        self.assertEqual(result.status, "draft")
+        self.assertIsNotNone(result.created)
+        self.assertEqual(result.created, result.updated)
+        self.assertEqual(result.version, CURRENT_SCHEMA_VERSION)
+
+        fetched = get_qa(result.id)
+        self.assertEqual(fetched.body.text, "Some QA Title")
 
     def test_writes_expected_filename(self) -> None:
         """create_qa must write f'qa-{id}-{slug}.md' under the QA base dir."""
         result = create_qa(_MINIMAL_BODY)
 
-        expected_path = qa_base_dir() / f"qa-{result.frontmatter.id}-some-qa-title.md"
+        expected_path = qa_base_dir() / f"qa-{result.id}-some-qa-title.md"
         self.assertTrue(expected_path.exists())
 
     def test_written_file_round_trips_via_parse_qa(self) -> None:
         """The written file must parse back into an equivalent document."""
         result = create_qa(_MINIMAL_BODY)
 
-        expected_path = qa_base_dir() / f"qa-{result.frontmatter.id}-some-qa-title.md"
+        expected_path = qa_base_dir() / f"qa-{result.id}-some-qa-title.md"
         on_disk = parse_qa(expected_path.read_text(encoding="utf-8"))
 
-        self.assertEqual(on_disk.frontmatter.id, result.frontmatter.id)
+        self.assertEqual(on_disk.frontmatter.id, result.id)
         self.assertEqual(on_disk.frontmatter.status, "draft")
         self.assertEqual(on_disk.body.text, "Some QA Title")
         self.assertIsNone(on_disk.body.compatibility.questions)

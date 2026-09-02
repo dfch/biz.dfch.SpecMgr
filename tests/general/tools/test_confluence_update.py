@@ -40,6 +40,7 @@ from biz.dfch.specmgr.general.tools.confluence_update import (
     ConfluenceUnexpectedResponseShapeError,
     _HTML_COMMENT_PATTERN,
     _convert_leading_frontmatter_to_code_block,
+    _extract_first_h1,
     _sanitize_html_comments,
     confluence_update,
 )
@@ -110,8 +111,8 @@ class TestConfluenceUpdateTool(unittest.TestCase):
 
     # -- ACC-006: core write flow -----------------------------------------------------------------
 
-    def test_put_payload_has_incremented_version_unchanged_title_and_rendered_body(self) -> None:
-        """The PUT payload must have version N+1, the unchanged title, and the rendered HTML fragment."""
+    def test_put_payload_has_incremented_version_h1_derived_title_and_rendered_body(self) -> None:
+        """The PUT payload must have version N+1, the Markdown's first H1 as the title, and the rendered body."""
         with mock.patch.dict(
             os.environ,
             {CONFLUENCE_BASE_URL_ENV_VAR: _BASE_URL, CONFLUENCE_BEARER_ENV_VAR: _TOKEN},
@@ -130,12 +131,109 @@ class TestConfluenceUpdateTool(unittest.TestCase):
                 _call_args, call_kwargs = mock_put.call_args
                 payload = call_kwargs["json"]
                 self.assertEqual(payload["version"]["number"], 6)
-                self.assertEqual(payload["title"], _TITLE)
+                self.assertEqual(payload["title"], "Heading")
                 self.assertEqual(payload["body"]["storage"]["value"], expected_html)
                 self.assertEqual(payload["body"]["storage"]["representation"], "storage")
                 self.assertEqual(payload["type"], "page")
 
+                self.assertEqual(result, {"id": _PAGE_ID, "title": "Heading", "version": 6, "failed_images": []})
+
+    # -- REQ-003/ACC-003: title set from the Markdown's first H1 (feat-73-74-76 Phase 3) ------------
+
+    def test_no_h1_in_markdown_leaves_existing_title_unchanged(self) -> None:
+        """A Markdown file with no H1 heading must leave the PUT payload's title (and the result) unchanged."""
+        with mock.patch.dict(
+            os.environ,
+            {CONFLUENCE_BASE_URL_ENV_VAR: _BASE_URL, CONFLUENCE_BEARER_ENV_VAR: _TOKEN},
+        ):
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                markdown_file_path = _write_markdown_file(tmp_dir, "Some *body* text with no heading at all.\n")
+                get_response = _make_get_response(version_number=5, title=_TITLE)
+                put_response = _make_put_response()
+                with mock.patch("httpx.get", return_value=get_response):
+                    with mock.patch("httpx.put", return_value=put_response) as mock_put:
+                        result = confluence_update(_PAGE_ID, markdown_file_path)
+
+                payload = mock_put.call_args.kwargs["json"]
+                self.assertEqual(payload["title"], _TITLE)
                 self.assertEqual(result, {"id": _PAGE_ID, "title": _TITLE, "version": 6, "failed_images": []})
+
+    def test_h2_only_markdown_leaves_existing_title_unchanged(self) -> None:
+        """A Markdown file whose only heading is an H2 (no H1) must leave the title unchanged."""
+        with mock.patch.dict(
+            os.environ,
+            {CONFLUENCE_BASE_URL_ENV_VAR: _BASE_URL, CONFLUENCE_BEARER_ENV_VAR: _TOKEN},
+        ):
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                markdown_file_path = _write_markdown_file(tmp_dir, "## Subheading\n\nSome body text.\n")
+                get_response = _make_get_response(title=_TITLE)
+                put_response = _make_put_response()
+                with mock.patch("httpx.get", return_value=get_response):
+                    with mock.patch("httpx.put", return_value=put_response) as mock_put:
+                        result = confluence_update(_PAGE_ID, markdown_file_path)
+
+                payload = mock_put.call_args.kwargs["json"]
+                self.assertEqual(payload["title"], _TITLE)
+                self.assertEqual(result["title"], _TITLE)
+
+    def test_frontmatter_then_h1_uses_h1_as_new_title(self) -> None:
+        """A leading YAML frontmatter block followed by an H1 must still use that H1 as the new title."""
+        with mock.patch.dict(
+            os.environ,
+            {CONFLUENCE_BASE_URL_ENV_VAR: _BASE_URL, CONFLUENCE_BEARER_ENV_VAR: _TOKEN},
+        ):
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                markdown_content = "---\nid: feat-73-74-76\nstatus: draft\n---\n\n# My New Title\n\nBody text.\n"
+                markdown_file_path = _write_markdown_file(tmp_dir, markdown_content)
+                get_response = _make_get_response(title=_TITLE)
+                put_response = _make_put_response()
+                with mock.patch("httpx.get", return_value=get_response):
+                    with mock.patch("httpx.put", return_value=put_response) as mock_put:
+                        result = confluence_update(_PAGE_ID, markdown_file_path)
+
+                payload = mock_put.call_args.kwargs["json"]
+                self.assertEqual(payload["title"], "My New Title")
+                self.assertEqual(result["title"], "My New Title")
+
+    def test_extract_first_h1_simple_first_line(self) -> None:
+        """A simple '# Title' first line is extracted verbatim."""
+        result = _extract_first_h1("# Title\n\nBody.\n")
+        self.assertEqual(result, "Title")
+
+    def test_extract_first_h1_after_leading_blank_lines_and_other_content(self) -> None:
+        """An H1 appearing after leading blank lines/other non-heading content is still found."""
+        text = "\n\nSome preamble text.\n\n# The Real Title\n\nBody.\n"
+        result = _extract_first_h1(text)
+        self.assertEqual(result, "The Real Title")
+
+    def test_extract_first_h1_after_h2_is_still_found(self) -> None:
+        """An H2 does not get mistaken for an H1; a subsequent H1 is still found."""
+        text = "## Not This One\n\n# This One\n\nBody.\n"
+        result = _extract_first_h1(text)
+        self.assertEqual(result, "This One")
+
+    def test_extract_first_h1_returns_none_when_absent(self) -> None:
+        """A Markdown text with no H1 anywhere (only an H2) returns None."""
+        text = "## Only An H2\n\nSome body text.\n"
+        result = _extract_first_h1(text)
+        self.assertIsNone(result)
+
+    def test_extract_first_h1_returns_none_for_plain_text_with_no_headings(self) -> None:
+        """A Markdown text with no headings at all returns None."""
+        text = "Just a paragraph of text.\n\nAnother paragraph.\n"
+        result = _extract_first_h1(text)
+        self.assertIsNone(result)
+
+    def test_extract_first_h1_h2_heading_is_not_mistaken_for_h1(self) -> None:
+        """A '## Title' (H2) line by itself must never match as an H1."""
+        result = _extract_first_h1("## Title\n\nBody.\n")
+        self.assertIsNone(result)
+
+    def test_extract_first_h1_after_frontmatter_block_is_found(self) -> None:
+        """An H1 following a leading YAML frontmatter block is found; frontmatter lines don't confuse the scan."""
+        text = "---\nid: feat-73-74-76\nstatus: draft\n---\n\n# Heading After Frontmatter\n\nBody.\n"
+        result = _extract_first_h1(text)
+        self.assertEqual(result, "Heading After Frontmatter")
 
     def test_get_and_put_urls_target_the_same_rest_content_endpoint(self) -> None:
         """Both the GET and the PUT must target {base}/rest/api/content/{id}."""

@@ -29,11 +29,11 @@ from biz.dfch.specmgr.general.resources.config import config_info
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.models import ConfigInfo
 
-#: All twelve document domains this resource must report on (REQ-001).
-_ALL_DOMAINS = ["adr", "req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "feat", "vcr"]
+#: All thirteen document domains this resource must report on (REQ-001).
+_ALL_DOMAINS = ["adr", "req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "feat", "vcr", "sysrs"]
 
-#: The ten domains sharing the single SPECMGR_DOCS_DIR root env var.
-_DOCS_DIR_DOMAINS = ["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "vcr"]
+#: The eleven domains sharing the single SPECMGR_DOCS_DIR root env var.
+_DOCS_DIR_DOMAINS = ["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "vcr", "sysrs"]
 
 #: The env vars this resource is allowed to read/report on at all.
 _KNOWN_ENV_VARS = {ADR_DIR_ENV_VAR, FEAT_DIR_ENV_VAR, DOCS_DIR_ENV_VAR}
@@ -48,7 +48,7 @@ class TestConfigResource(unittest.TestCase):
         self.assertIsInstance(result, ConfigInfo)
 
     def test_all_twelve_domains_present(self):
-        """ACC-001: every one of the twelve domains must have an entry."""
+        """ACC-001: every one of the thirteen domains must have an entry."""
         result = config_info()
         self.assertEqual(set(result.domains.keys()), set(_ALL_DOMAINS))
 
@@ -74,7 +74,7 @@ class TestConfigResource(unittest.TestCase):
         self.assertEqual(result.domains["feat"].env_var, FEAT_DIR_ENV_VAR)
 
     def test_ten_domains_share_docs_dir_env_var(self):
-        """The ten non-adr/feat domains all report the shared `SPECMGR_DOCS_DIR` env var."""
+        """The eleven non-adr/feat domains all report the shared `SPECMGR_DOCS_DIR` env var."""
         result = config_info()
         for domain in _DOCS_DIR_DOMAINS:
             with self.subTest(domain=domain):

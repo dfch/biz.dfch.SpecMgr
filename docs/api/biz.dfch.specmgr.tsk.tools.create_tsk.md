@@ -29,7 +29,7 @@ codebase.
 
 ## Functions
 
-### `create_tsk(content: 'str') -> 'TskDocument'`
+### `create_tsk(content: 'str') -> 'TskFrontmatter'`
 
 Create and write a new task list document.
 
@@ -62,9 +62,10 @@ content:
 
 Returns
 -------
-TskDocument
-    The newly created document, with its assigned id in
-    ``frontmatter.id``.
+TskFrontmatter
+    The newly created document's frontmatter only (no body), with its
+    assigned id in ``.id``. Use the corresponding ``get_tsk`` tool to
+    fetch the full document afterward.
 
 Raises
 ------

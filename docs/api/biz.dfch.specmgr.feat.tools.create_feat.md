@@ -28,7 +28,7 @@ Decisions Made.
 
 ## Functions
 
-### `create_feat(content: 'str', id: 'str | None' = None) -> 'FeatDocument'`
+### `create_feat(content: 'str', id: 'str | None' = None) -> 'FeatFrontmatter'`
 
 Create and write a new feature document.
 
@@ -86,9 +86,10 @@ id:
 
 Returns
 -------
-FeatDocument
-    The newly created document, with its assigned ``feat-NNN-slug`` id
-    in ``frontmatter.id``.
+FeatFrontmatter
+    The newly created document's frontmatter only (no body), with its
+    assigned ``feat-NNN-slug`` id in ``.id``. Use the corresponding
+    ``get_feat`` tool to fetch the full document afterward.
 
 Raises
 ------

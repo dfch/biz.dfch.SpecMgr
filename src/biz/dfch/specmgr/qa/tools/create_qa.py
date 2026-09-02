@@ -44,7 +44,7 @@ from ...models.md import CURRENT_SCHEMA_VERSION
 from ...models.md._errors import BODY_CHANNEL, wrap_tool_errors
 from ...models.md._markdown import format_text
 from ...server import mcp
-from ..models.v2 import Qa, QaDocument, QaFrontmatter
+from ..models.v2 import Qa, QaFrontmatter
 from ._paths import ensure_qa_base_dir
 from ._write import write_qa_file
 
@@ -55,10 +55,12 @@ from ._write import write_qa_file
     description=(
         "Create a new Question and Answer (QA) document: assigns a fresh id, derives a filename "
         "from the body's H1 title, validates the submitted body-only content, and writes the new "
-        "document to the QA base directory."
+        "document to the QA base directory. Returns the newly created document's frontmatter "
+        "only (no body); use the corresponding `get_qa` tool to fetch the full document "
+        "afterward."
     ),
 )
-def create_qa(content: str) -> QaDocument:
+def create_qa(content: str) -> QaFrontmatter:
     """Create and write a new Question and Answer (QA) document.
 
     ``content`` is body markdown only (the ``Qa`` H1 and its sections) --
@@ -87,9 +89,10 @@ def create_qa(content: str) -> QaDocument:
 
     Returns
     -------
-    QaDocument
-        The newly created document, with its assigned id in
-        ``frontmatter.id``.
+    QaFrontmatter
+        The newly created document's frontmatter only (no body), with its
+        assigned id in ``.id``. Use the corresponding ``get_qa`` tool to
+        fetch the full document afterward.
 
     Raises
     ------
@@ -116,9 +119,7 @@ def create_qa(content: str) -> QaDocument:
         updated=now,
         version=CURRENT_SCHEMA_VERSION,
     )
-    new_doc = QaDocument(frontmatter=new_frontmatter, body=body)
-
     filename = f"qa-{new_id}-{slugify(body.text)}.md"
     base_dir = ensure_qa_base_dir()
     write_qa_file(base_dir / filename, new_frontmatter, content)
-    return new_doc
+    return new_frontmatter

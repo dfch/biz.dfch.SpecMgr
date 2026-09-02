@@ -16,7 +16,7 @@ codebase.
 
 ## Functions
 
-### `create_vcr(content: 'str') -> 'VcrDocument'`
+### `create_vcr(content: 'str') -> 'VcrFrontmatter'`
 
 Create and write a new verification case record document.
 
@@ -46,9 +46,10 @@ content:
 
 Returns
 -------
-VcrDocument
-    The newly created document, with its assigned id in
-    ``frontmatter.id``.
+VcrFrontmatter
+    The newly created document's frontmatter only (no body), with its
+    assigned id in ``.id``. Use the corresponding ``get_vcr`` tool to
+    fetch the full document afterward.
 
 Raises
 ------

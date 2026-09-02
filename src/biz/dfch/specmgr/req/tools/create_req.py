@@ -43,7 +43,7 @@ from ...models.md import CURRENT_SCHEMA_VERSION
 from ...models.md._errors import BODY_CHANNEL, wrap_tool_errors
 from ...models.md._markdown import format_text
 from ...server import mcp
-from ..models.v1 import ReqDocument, ReqFrontmatter, Requirement
+from ..models.v1 import ReqFrontmatter, Requirement
 from ._paths import ensure_req_base_dir
 from ._write import write_req_file
 
@@ -54,10 +54,12 @@ from ._write import write_req_file
     description=(
         "Create a new requirement: assigns a fresh id, derives a filename from the body's "
         "H1 title, validates the submitted body-only content, and writes the new document "
-        "to the requirement base directory."
+        "to the requirement base directory. Returns the newly created document's frontmatter "
+        "only (no body); use the corresponding `get_req` tool to fetch the full document "
+        "afterward."
     ),
 )
-def create_req(content: str) -> ReqDocument:
+def create_req(content: str) -> ReqFrontmatter:
     """Create and write a new requirement document.
 
     ``content`` is body markdown only (the ``Requirement`` H1 and its
@@ -86,9 +88,10 @@ def create_req(content: str) -> ReqDocument:
 
     Returns
     -------
-    ReqDocument
-        The newly created document, with its assigned id in
-        ``frontmatter.id``.
+    ReqFrontmatter
+        The newly created document's frontmatter only (no body), with its
+        assigned id in ``.id``. Use the corresponding ``get_req`` tool to
+        fetch the full document afterward.
 
     Raises
     ------
@@ -115,9 +118,7 @@ def create_req(content: str) -> ReqDocument:
         updated=now,
         version=CURRENT_SCHEMA_VERSION,
     )
-    new_doc = ReqDocument(frontmatter=new_frontmatter, body=body)
-
     filename = f"req-{new_id}-{slugify(body.text)}.md"
     base_dir = ensure_req_base_dir()
     write_req_file(base_dir / filename, new_frontmatter, content)
-    return new_doc
+    return new_frontmatter

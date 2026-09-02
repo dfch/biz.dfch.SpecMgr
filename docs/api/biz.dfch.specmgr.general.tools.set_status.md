@@ -75,7 +75,7 @@ and the ``write_adr`` render round-trip, ``AdrNotFoundError``; that
 per-domain tool was retired in feat-22 Phase 4).
 
 
-### `_set_status_dec(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'DecDocument'`
+### `_set_status_dec(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'DecFrontmatter'`
 
 Replace the status of the decision identified by ``id_``.
 
@@ -87,7 +87,7 @@ old per-domain mechanism -- was converted to the generic tools) --
 see :func:`_set_status_req` for the full semantics.
 
 
-### `_set_status_feat(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'FeatDocument'`
+### `_set_status_feat(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'FeatFrontmatter'`
 
 Replace the status of the feature identified by ``id_``.
 
@@ -100,7 +100,7 @@ shortcut, not a flat-file directory scan. ``updated`` is bumped to the
 same shared date+time timestamp as every other domain.
 
 
-### `_set_status_gol(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'GolDocument'`
+### `_set_status_gol(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'GolFrontmatter'`
 
 Replace the status of the goal identified by ``id_``.
 
@@ -110,7 +110,7 @@ body (same ``gol_lock``, ``load_by_id``, ``write_gol_file``,
 Phase 4) -- see :func:`_set_status_req` for the full semantics.
 
 
-### `_set_status_prb(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'PrbDocument'`
+### `_set_status_prb(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'PrbFrontmatter'`
 
 Replace the status of the problem statement identified by ``id_``.
 
@@ -121,7 +121,7 @@ retired in feat-22 Phase 4) -- see :func:`_set_status_req` for the
 full semantics.
 
 
-### `_set_status_qa(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'QaDocument'`
+### `_set_status_qa(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'QaFrontmatter'`
 
 Replace the status of the QA document identified by ``id_``.
 
@@ -131,7 +131,7 @@ function body (same ``qa_lock``, ``load_by_id``, ``write_qa_file``,
 Phase 4) -- see :func:`_set_status_req` for the full semantics.
 
 
-### `_set_status_req(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'ReqDocument'`
+### `_set_status_req(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'ReqFrontmatter'`
 
 Replace the status of the requirement identified by ``id_``.
 
@@ -146,7 +146,7 @@ never used here -- the public :func:`set_status` guard rejects it for
 every non-``adr`` type before dispatch.
 
 
-### `_set_status_rsk(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'RskDocument'`
+### `_set_status_rsk(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'RskFrontmatter'`
 
 Replace the status of the risk identified by ``id_``.
 
@@ -156,7 +156,7 @@ body (same ``rsk_lock``, ``load_by_id``, ``write_rsk_file``,
 Phase 4) -- see :func:`_set_status_req` for the full semantics.
 
 
-### `_set_status_sop(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'SopDocument'`
+### `_set_status_sop(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'SopFrontmatter'`
 
 Replace the status of the SOP identified by ``id_``.
 
@@ -168,7 +168,7 @@ was written directly in this shape) -- see :func:`_set_status_req` for
 the full semantics.
 
 
-### `_set_status_sysrs(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'SysrsDocument'`
+### `_set_status_sysrs(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'SysrsFrontmatter'`
 
 Replace the status of the System Requirements Specification identified by ``id_``.
 
@@ -179,7 +179,7 @@ written directly in this shape) -- see :func:`_set_status_req` for
 the full semantics.
 
 
-### `_set_status_tsk(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'TskDocument'`
+### `_set_status_tsk(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'TskFrontmatter'`
 
 Replace the status of the task list identified by ``id_``.
 
@@ -189,7 +189,7 @@ function body (same ``tsk_lock``, ``load_by_id``, ``write_tsk_file``,
 Phase 4) -- see :func:`_set_status_req` for the full semantics.
 
 
-### `_set_status_uc(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'UcDocument'`
+### `_set_status_uc(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'UcFrontmatter'`
 
 Replace the status of the use case identified by ``id_``.
 
@@ -199,7 +199,7 @@ function body (same ``uc_lock``, ``load_by_id``, ``write_uc_file``,
 Phase 4) -- see :func:`_set_status_req` for the full semantics.
 
 
-### `_set_status_vcr(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'VcrDocument'`
+### `_set_status_vcr(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'VcrFrontmatter'`
 
 Replace the status of the verification case record identified by ``id_``.
 
@@ -209,89 +209,93 @@ Mirrors :func:`_set_status_dec`'s shape (same ``vcr_lock``,
 ``adr``, so ``superseded_by`` must never be given.
 
 
-### `set_status(id: 'str', type: "Literal['req', 'uc', 'tsk', 'qa', 'prb', 'gol', 'rsk', 'dec', 'sop', 'feat', 'vcr', 'sysrs', 'adr']", status: 'str', superseded_by: 'str | None' = None) -> '_SetStatusDocument'`
+### `set_status(id: 'str', type: "Literal['req', 'uc', 'tsk', 'qa', 'prb', 'gol', 'rsk', 'dec', 'sop', 'feat', 'vcr', 'sysrs', 'adr']", status: 'str', superseded_by: 'str | None' = None) -> '_SetStatusFrontmatter'`
 
 Replace the status of an existing document, across all thirteen domains.
 
-Cross-domain generic for every document type
-(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``adr``);
-dispatches on ``type`` to the domain's own ported adapter (same lock,
-same id resolution, same body handling, same domain not-found error).
+    Cross-domain generic for every document type
+    (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``adr``);
+    dispatches on ``type`` to the domain's own ported adapter (same lock,
+    same id resolution, same body handling, same domain not-found error).
 
-For the eleven whole-body domains the existing file's frontmatter is
-carried over with every field preserved except ``status`` (replaced)
-and ``updated`` (bumped to the current date+time timestamp, via
-``general.tools._timestamps.now_timestamp()``); the
-body is never touched -- its raw, on-disk markdown (not a render of
-the parsed model) is re-read and re-persisted verbatim. For
-``type="adr"`` the change delegates to
-``models.adr.v1.mutations.set_status`` (which composes ``status`` as
-``"superseded by {superseded_by}"`` when ``superseded_by`` is given)
-and re-renders the full file via the ``write_adr`` round-trip.
+    For the eleven whole-body domains the existing file's frontmatter is
+    carried over with every field preserved except ``status`` (replaced)
+    and ``updated`` (bumped to the current date+time timestamp, via
+    ``general.tools._timestamps.now_timestamp()``); the
+    body is never touched -- its raw, on-disk markdown (not a render of
+    the parsed model) is re-read and re-persisted verbatim. For
+    ``type="adr"`` the change delegates to
+    ``models.adr.v1.mutations.set_status`` (which composes ``status`` as
+    ``"superseded by {superseded_by}"`` when ``superseded_by`` is given)
+    and re-renders the full file via the ``write_adr`` round-trip.
 
-The new ``status`` must be in the domain's own closed vocabulary: the
-frontmatter is reconstructed through the domain's own
-``XFrontmatter`` constructor, so the domain's own validator enforces
-its set. Where that set lives is documented per domain -- see each
-``XFrontmatter.status`` field (the twelve whole-body domains'
-``models/<v>/frontmatter.py`` and ``models/adr/v1/frontmatter.py``)
-rather than any list in this docstring.
+    The new ``status`` must be in the domain's own closed vocabulary: the
+    frontmatter is reconstructed through the domain's own
+    ``XFrontmatter`` constructor, so the domain's own validator enforces
+    its set. Where that set lives is documented per domain -- see each
+    ``XFrontmatter.status`` field (the twelve whole-body domains'
+    ``models/<v>/frontmatter.py`` and ``models/adr/v1/frontmatter.py``)
+    rather than any list in this docstring.
 
-Safety (REQ-009, feat-38-39-41-43-44 Phase 4, mirroring ``delete``'s
-own REQ-003): ``id`` is validated via ``_path_safety.validate_id`` (no
-``/``, no ``\``, no ``..``, plus the dispatched domain's own format --
-canonical lowercase-hex UUID for the twelve UUID domains including
-``adr``, ``feat-NNN-slug`` for ``feat``) **before** any filesystem
-access, so a path-injection attempt or a wrong-format id is a
-``ValueError`` raised before dispatch. Each adapter additionally
-confines the resolved path to the domain's own base directory with
-``_path_safety.assert_within`` inside the lock -- defense-in-depth
-against any future gap in the id validation.
+    Safety (REQ-009, feat-38-39-41-43-44 Phase 4, mirroring ``delete``'s
+    own REQ-003): ``id`` is validated via ``_path_safety.validate_id`` (no
+    ``/``, no ``\``, no ``..``, plus the dispatched domain's own format --
+    canonical lowercase-hex UUID for the twelve UUID domains including
+    ``adr``, ``feat-NNN-slug`` for ``feat``) **before** any filesystem
+    access, so a path-injection attempt or a wrong-format id is a
+    ``ValueError`` raised before dispatch. Each adapter additionally
+    confines the resolved path to the domain's own base directory with
+    ``_path_safety.assert_within`` inside the lock -- defense-in-depth
+    against any future gap in the id validation.
 
-Parameters
-----------
-id:
-    The document's specmgr-assigned identifier.
-type:
-    The document type / domain: one of ``req``, ``uc``, ``tsk``,
-    ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
-    ``vcr``, ``sysrs``, ``adr``.
-status:
-    The new status. Must be one of the dispatched domain's own
-    accepted values (see its ``XFrontmatter.status`` field). For
-    ``adr``, ignored when ``superseded_by`` is given.
-superseded_by:
-    ADR only. When given (with ``type="adr"``), ``status`` is
-    composed as ``f"superseded by {superseded_by}"`` instead of being
-    used verbatim. A ``ValueError`` for any other ``type``.
+    Parameters
+    ----------
+    id:
+        The document's specmgr-assigned identifier.
+    type:
+        The document type / domain: one of ``req``, ``uc``, ``tsk``,
+        ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
+        ``vcr``, ``sysrs``, ``adr``.
+    status:
+        The new status. Must be one of the dispatched domain's own
+        accepted values (see its ``XFrontmatter.status`` field). For
+        ``adr``, ignored when ``superseded_by`` is given.
+    superseded_by:
+        ADR only. When given (with ``type="adr"``), ``status`` is
+        composed as ``f"superseded by {superseded_by}"`` instead of being
+        used verbatim. A ``ValueError`` for any other ``type``.
 
-Returns
--------
-ReqDocument | UcDocument | TskDocument | QaDocument | PrbDocument |
-GolDocument | RskDocument | DecDocument | FeatDocument | SopDocument |
-VcrDocument | SysrsDocument | Adr
-    The updated document of the dispatched domain type.
+    Returns
+    -------
+ReqFrontmatter | UcFrontmatter | TskFrontmatter | QaFrontmatter | PrbFrontmatter |
+GolFrontmatter | RskFrontmatter | DecFrontmatter | FeatFrontmatter | SopFrontmatter |
+VcrFrontmatter | SysrsFrontmatter | Adr
+    The updated document's frontmatter only (no body) of the dispatched domain type
+    for the twelve whole-body domains; for ``type="adr"`` (unchanged, out of scope for
+    this feature) the full ``Adr`` document, as before. Use the corresponding
+    ``get_<d>`` tool to fetch the full document afterward for the twelve whole-body
+    domains.
 
-Raises
-------
-ValueError
-    ``id`` is a path-injection attempt or not in the dispatched
-    domain's own format (raised before any filesystem access; nothing
-    is written), or ``superseded_by`` given with a ``type`` other
-    than ``"adr"`` (raised before any file access). Nothing is
-    written in either case.
-pydantic.ValidationError
-    ``status`` is not in the dispatched domain's closed vocabulary
-    (for ``adr``: not one of its six values and not a
-    ``"superseded by ..."`` string). The message is prefixed with
-    domain/tool/channel context (e.g. ``"tsk set_status
-    (frontmatter): ..."``) by the shared tool-boundary wrapper
-    (:func:`~biz.dfch.specmgr.models.md._errors.wrap_tool_errors`).
-    Nothing is written.
-ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
-PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
-FeatNotFoundError / SopNotFoundError / VcrNotFoundError / SysrsNotFoundError /
-AdrNotFoundError
-    No document of the dispatched ``type`` has this id -- the
-    domain's own not-found error, unchanged from the per-domain tools.
+    Raises
+    ------
+    ValueError
+        ``id`` is a path-injection attempt or not in the dispatched
+        domain's own format (raised before any filesystem access; nothing
+        is written), or ``superseded_by`` given with a ``type`` other
+        than ``"adr"`` (raised before any file access). Nothing is
+        written in either case.
+    pydantic.ValidationError
+        ``status`` is not in the dispatched domain's closed vocabulary
+        (for ``adr``: not one of its six values and not a
+        ``"superseded by ..."`` string). The message is prefixed with
+        domain/tool/channel context (e.g. ``"tsk set_status
+        (frontmatter): ..."``) by the shared tool-boundary wrapper
+        (:func:`~biz.dfch.specmgr.models.md._errors.wrap_tool_errors`).
+        Nothing is written.
+    ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
+    PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
+    FeatNotFoundError / SopNotFoundError / VcrNotFoundError / SysrsNotFoundError /
+    AdrNotFoundError
+        No document of the dispatched ``type`` has this id -- the
+        domain's own not-found error, unchanged from the per-domain tools.
 

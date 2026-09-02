@@ -41,7 +41,12 @@ REQ-010/REQ-011, ACC-006/ACC-007/ACC-009/ACC-010):
    CommonMark's thematic-break/Setext-heading rules mangle it into an
    `<hr>` immediately followed by a stray `<h2>` heading (confirmed against
    a real instance). A file with no leading frontmatter, or an unclosed/
-   malformed opening ``---``, is left completely unaffected.
+   malformed opening ``---``, is left completely unaffected. Independently,
+   the RAW Markdown source's first ATX-style H1 heading (``# Some Title``,
+   see :func:`_extract_first_h1`) is extracted and used as the Confluence
+   page's new title (REQ-003/ACC-003, feat-73-74-76 Phase 3); if no H1 is
+   present, the page's existing title (from step 2's GET) is left
+   unchanged.
 4. Render the (possibly frontmatter-converted) Markdown text to an HTML
    fragment via ``markdown_it.MarkdownIt("commonmark").render(...)``, then
    sanitize every ``<!-- ... -->`` HTML comment in that fragment so no raw
@@ -74,7 +79,8 @@ REQ-010/REQ-011, ACC-006/ACC-007/ACC-009/ACC-010):
    real, confirmed duplicate-filename 400 error-message shape and the
    feature README's Decisions Made log for the full history.
 6. ``PUT {base}/rest/api/content/{id}`` with the incremented version number,
-   the unchanged title, and the (possibly image-macro-rewritten,
+   the new title (the source Markdown's first H1, or the existing title if
+   none is found), and the (possibly image-macro-rewritten,
    comment-sanitized) rendered fragment as the new ``body.storage.value``.
 """
 
@@ -180,6 +186,15 @@ _FRONTMATTER_CODE_FENCE = "````"
 #: The fenced code block's info string (language hint) -- the frontmatter block's own content is
 #: YAML.
 _FRONTMATTER_CODE_FENCE_LANGUAGE = "yaml"
+
+#: Matches an ATX-style H1 heading line (REQ-003/ACC-003, feat-73-74-76 Phase 3): a single ``#``
+#: (not followed by another ``#``, so ``##``/``###``/... never match), followed by at least one
+#: whitespace character and then at least one non-whitespace character on the same line. Used with
+#: ``re.MULTILINE`` so ``^``/``$`` anchor to individual lines within a larger text, and only the
+#: FIRST match (scanning top-to-bottom) is used -- see :func:`_extract_first_h1`. Setext-style
+#: headings (``Title\n===``) are deliberately not matched; this codebase's own document
+#: conventions (ADR/REQ/UC/.../SYSRS bodies) exclusively use ATX-style H1s.
+_H1_HEADING_PATTERN = re.compile(r"^#(?!#)[ \t]+(\S.*)$", re.MULTILINE)
 
 
 class ConfluencePageIdNotResolvedError(ValueError):
@@ -299,6 +314,44 @@ def _convert_leading_frontmatter_to_code_block(markdown_text: str) -> str:
 
     fence = _FRONTMATTER_CODE_FENCE
     result = f"{fence}{_FRONTMATTER_CODE_FENCE_LANGUAGE}\n{frontmatter_body}{fence}\n{remainder}"
+    return result
+
+
+def _extract_first_h1(markdown_text: str) -> str | None:
+    """Extract the text of the first ATX-style H1 heading in ``markdown_text``, if any.
+
+    Scans ``markdown_text`` top-to-bottom for the first line matching :data:`_H1_HEADING_PATTERN`
+    -- a single ``#`` (not ``##``/``###``/...) followed by at least one space/tab and then
+    non-empty text on the same line (REQ-003/ACC-003, feat-73-74-76 Phase 3). Only ATX-style H1s
+    are supported; Setext-style headings (``Title\\n===``) are never matched, since this
+    codebase's own document conventions never use them.
+
+    Intended to be called on the RAW Markdown source text, before any leading YAML frontmatter
+    block is converted to a fenced code block (see :func:`_convert_leading_frontmatter_to_code_block`)
+    -- a frontmatter block's ``key: value`` lines can never themselves match ``_H1_HEADING_PATTERN``
+    (no leading ``#``), so scanning the raw text is simplest and safest: the real document H1
+    always follows the frontmatter block, if any, in every one of this repository's own
+    conventions.
+
+    Parameters
+    ----------
+    markdown_text:
+        The raw Markdown source text to scan (typically the unmodified content of
+        ``markdown_file_path``, read as UTF-8 text).
+
+    Returns
+    -------
+    str | None
+        The first H1's text, stripped of leading/trailing whitespace (the ``#`` marker itself is
+        not included), or ``None`` if no ATX-style H1 heading is found anywhere in the text.
+    """
+    assert isinstance(markdown_text, str), type(markdown_text)
+
+    match = _H1_HEADING_PATTERN.search(markdown_text)
+    if match is None:
+        return None
+
+    result = match.group(1).strip()
     return result
 
 
@@ -693,7 +746,9 @@ def _rewrite_local_images(
         "aborting the update. Also sanitizes any raw '--' inside rendered <!-- --> HTML "
         "comments (invalid in Confluence's strict XHTML storage format, though valid "
         "CommonMark) and converts a leading YAML frontmatter block into a fenced code block "
-        "before rendering, so it is not mangled into a heading."
+        "before rendering, so it is not mangled into a heading. Sets the Confluence page's "
+        "title to the Markdown file's first ATX-style H1 heading ('# Some Title'), if present; "
+        "if the Markdown file has no H1, the page's existing title is left unchanged."
     ),
 )
 def confluence_update(page_url_or_id: str, markdown_file_path: str) -> dict[str, Any]:
@@ -706,9 +761,11 @@ def confluence_update(page_url_or_id: str, markdown_file_path: str) -> dict[str,
     corresponding ``<img>`` tags into ``<ac:image>``/``<ri:attachment>``
     macros (see :func:`_rewrite_local_images`), then ``PUT``\\ s the
     incremented version with that (possibly rewritten) fragment as the new
-    ``body.storage.value``, leaving the title unchanged. Both the GET and
-    the PUT apply the same post-redirect host check
-    :func:`.confluence_fetch.confluence_fetch` applies, via
+    ``body.storage.value``. The page's title is set to the Markdown file's
+    first ATX-style H1 heading (see :func:`_extract_first_h1`), if present;
+    if the Markdown file has no H1, the existing title (from the GET) is
+    left unchanged. Both the GET and the PUT apply the same post-redirect
+    host check :func:`.confluence_fetch.confluence_fetch` applies, via
     :func:`._confluence_url.assert_same_host_as_base_url`.
 
     Parameters
@@ -730,12 +787,13 @@ def confluence_update(page_url_or_id: str, markdown_file_path: str) -> dict[str,
     Returns
     -------
     dict[str, Any]
-        ``{"id": <page id>, "title": <unchanged title>, "version": <new version number>,
+        ``{"id": <page id>, "title": <new title>, "version": <new version number>,
         "failed_images": [{"src": ..., "error": ...}, ...]}`` -- a small, caller-useful summary
-        rather than the raw PUT response JSON. ``failed_images`` is always present (an empty
-        list when every referenced local image either did not need uploading or uploaded
-        successfully), so a caller can tell which images, if any, were left unrewritten because
-        their upload failed.
+        rather than the raw PUT response JSON (``title`` is the Markdown file's first H1 if one
+        was found, otherwise the page's pre-existing title, unchanged). ``failed_images`` is
+        always present (an empty list when every referenced local image either did not need
+        uploading or uploaded successfully), so a caller can tell which images, if any, were
+        left unrewritten because their upload failed.
 
     Raises
     ------
@@ -780,8 +838,11 @@ def confluence_update(page_url_or_id: str, markdown_file_path: str) -> dict[str,
     version_number, title = _read_version_and_title(get_response.json())
     new_version = version_number + 1
 
-    markdown_text = Path(markdown_file_path).read_text(encoding="utf-8")
-    markdown_text = _convert_leading_frontmatter_to_code_block(markdown_text)
+    raw_markdown_text = Path(markdown_file_path).read_text(encoding="utf-8")
+    new_title = _extract_first_h1(raw_markdown_text)
+    title = new_title if new_title is not None else title
+
+    markdown_text = _convert_leading_frontmatter_to_code_block(raw_markdown_text)
     html_fragment = _MD.render(markdown_text)
     html_fragment = _sanitize_html_comments(html_fragment)
 

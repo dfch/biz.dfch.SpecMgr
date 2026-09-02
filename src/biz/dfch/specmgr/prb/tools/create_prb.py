@@ -40,7 +40,7 @@ from ...models.md import CURRENT_SCHEMA_VERSION
 from ...models.md._errors import BODY_CHANNEL, wrap_tool_errors
 from ...models.md._markdown import format_text
 from ...server import mcp
-from ..models.v1 import Prb, PrbDocument, PrbFrontmatter
+from ..models.v1 import Prb, PrbFrontmatter
 from ._paths import ensure_prb_base_dir
 from ._write import write_prb_file
 
@@ -51,10 +51,12 @@ from ._write import write_prb_file
     description=(
         "Create a new Problem Statement: assigns a fresh id, derives a filename from the "
         "body's H1 title, validates the submitted body-only content, and writes the new "
-        "document to the problem statement base directory."
+        "document to the problem statement base directory. Returns the newly created "
+        "document's frontmatter only (no body); use the corresponding `get_prb` tool to "
+        "fetch the full document afterward."
     ),
 )
-def create_prb(content: str) -> PrbDocument:
+def create_prb(content: str) -> PrbFrontmatter:
     """Create and write a new problem statement document.
 
     ``content`` is body markdown only (the ``Prb`` H1 and its sections) --
@@ -83,9 +85,10 @@ def create_prb(content: str) -> PrbDocument:
 
     Returns
     -------
-    PrbDocument
-        The newly created document, with its assigned id in
-        ``frontmatter.id``.
+    PrbFrontmatter
+        The newly created document's frontmatter only (no body), with its
+        assigned id in ``.id``. Use the corresponding ``get_prb`` tool to
+        fetch the full document afterward.
 
     Raises
     ------
@@ -112,9 +115,7 @@ def create_prb(content: str) -> PrbDocument:
         updated=now,
         version=CURRENT_SCHEMA_VERSION,
     )
-    new_doc = PrbDocument(frontmatter=new_frontmatter, body=body)
-
     filename = f"prb-{new_id}-{slugify(body.text)}.md"
     base_dir = ensure_prb_base_dir()
     write_prb_file(base_dir / filename, new_frontmatter, content)
-    return new_doc
+    return new_frontmatter

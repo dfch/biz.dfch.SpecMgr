@@ -16,7 +16,7 @@ codebase.
 
 ## Functions
 
-### `create_prb(content: 'str') -> 'PrbDocument'`
+### `create_prb(content: 'str') -> 'PrbFrontmatter'`
 
 Create and write a new problem statement document.
 
@@ -46,9 +46,10 @@ content:
 
 Returns
 -------
-PrbDocument
-    The newly created document, with its assigned id in
-    ``frontmatter.id``.
+PrbFrontmatter
+    The newly created document's frontmatter only (no body), with its
+    assigned id in ``.id``. Use the corresponding ``get_prb`` tool to
+    fetch the full document afterward.
 
 Raises
 ------

@@ -40,7 +40,7 @@ from ...models.md import CURRENT_SCHEMA_VERSION
 from ...models.md._errors import BODY_CHANNEL, wrap_tool_errors
 from ...models.md._markdown import format_text
 from ...server import mcp
-from ..models.v1 import Sop, SopDocument, SopFrontmatter
+from ..models.v1 import Sop, SopFrontmatter
 from ._paths import ensure_sop_base_dir
 from ._write import write_sop_file
 
@@ -50,10 +50,12 @@ from ._write import write_sop_file
     title="Create Standard Operating Procedure",
     description=(
         "Create a new Standard Operating Procedure: assigns a fresh id, derives a filename from the body's "
-        "H1 title, validates the submitted body-only content, and writes the new document to the SOP base directory."
+        "H1 title, validates the submitted body-only content, and writes the new document to the SOP base "
+        "directory. Returns the newly created document's frontmatter only (no body); use the corresponding "
+        "`get_sop` tool to fetch the full document afterward."
     ),
 )
-def create_sop(content: str) -> SopDocument:
+def create_sop(content: str) -> SopFrontmatter:
     """Create and write a new SOP document.
 
     ``content`` is body markdown only (the ``Sop`` H1 and its sections)
@@ -82,9 +84,10 @@ def create_sop(content: str) -> SopDocument:
 
     Returns
     -------
-    SopDocument
-        The newly created document, with its assigned id in
-        ``frontmatter.id``.
+    SopFrontmatter
+        The newly created document's frontmatter only (no body), with its
+        assigned id in ``.id``. Use the corresponding ``get_sop`` tool to
+        fetch the full document afterward.
 
     Raises
     ------
@@ -111,9 +114,7 @@ def create_sop(content: str) -> SopDocument:
         updated=now,
         version=CURRENT_SCHEMA_VERSION,
     )
-    new_doc = SopDocument(frontmatter=new_frontmatter, body=body)
-
     filename = f"sop-{new_id}-{slugify(body.text)}.md"
     base_dir = ensure_sop_base_dir()
     write_sop_file(base_dir / filename, new_frontmatter, content)
-    return new_doc
+    return new_frontmatter

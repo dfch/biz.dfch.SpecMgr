@@ -40,7 +40,7 @@ from ...models.md import CURRENT_SCHEMA_VERSION
 from ...models.md._errors import BODY_CHANNEL, wrap_tool_errors
 from ...models.md._markdown import format_text
 from ...server import mcp
-from ..models.v1 import Risk, RskDocument, RskFrontmatter
+from ..models.v1 import Risk, RskFrontmatter
 from ._paths import ensure_rsk_base_dir
 from ._write import write_rsk_file
 
@@ -51,10 +51,12 @@ from ._write import write_rsk_file
     description=(
         "Create a new risk: assigns a fresh id, derives a filename from the body's "
         "H1 title, validates the submitted body-only content, and writes the new document "
-        "to the risk base directory."
+        "to the risk base directory. Returns the newly created document's frontmatter "
+        "only (no body); use the corresponding `get_rsk` tool to fetch the full document "
+        "afterward."
     ),
 )
-def create_rsk(content: str) -> RskDocument:
+def create_rsk(content: str) -> RskFrontmatter:
     """Create and write a new risk document.
 
     ``content`` is body markdown only (the ``Risk`` H1 and its sections) --
@@ -84,9 +86,10 @@ def create_rsk(content: str) -> RskDocument:
 
     Returns
     -------
-    RskDocument
-        The newly created document, with its assigned id in
-        ``frontmatter.id``.
+    RskFrontmatter
+        The newly created document's frontmatter only (no body), with its
+        assigned id in ``.id``. Use the corresponding ``get_rsk`` tool to
+        fetch the full document afterward.
 
     Raises
     ------
@@ -113,9 +116,7 @@ def create_rsk(content: str) -> RskDocument:
         updated=now,
         version=CURRENT_SCHEMA_VERSION,
     )
-    new_doc = RskDocument(frontmatter=new_frontmatter, body=body)
-
     filename = f"rsk-{new_id}-{slugify(body.text)}.md"
     base_dir = ensure_rsk_base_dir()
     write_rsk_file(base_dir / filename, new_frontmatter, content)
-    return new_doc
+    return new_frontmatter

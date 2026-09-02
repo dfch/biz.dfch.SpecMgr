@@ -16,7 +16,7 @@ codebase.
 
 ## Functions
 
-### `create_gol(content: 'str') -> 'GolDocument'`
+### `create_gol(content: 'str') -> 'GolFrontmatter'`
 
 Create and write a new goal document.
 
@@ -46,9 +46,10 @@ content:
 
 Returns
 -------
-GolDocument
-    The newly created document, with its assigned id in
-    ``frontmatter.id``.
+GolFrontmatter
+    The newly created document's frontmatter only (no body), with its
+    assigned id in ``.id``. Use the corresponding ``get_gol`` tool to
+    fetch the full document afterward.
 
 Raises
 ------

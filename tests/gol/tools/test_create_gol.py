@@ -28,9 +28,10 @@ from unittest import mock
 from pydantic import ValidationError
 
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
-from biz.dfch.specmgr.gol.models.v1 import GolDocument, parse_gol
+from biz.dfch.specmgr.gol.models.v1 import GolDocument, GolFrontmatter, parse_gol
 from biz.dfch.specmgr.gol.tools._paths import gol_base_dir
 from biz.dfch.specmgr.gol.tools.create_gol import create_gol
+from biz.dfch.specmgr.gol.tools.get_gol import get_gol
 from biz.dfch.specmgr.models.md import CURRENT_SCHEMA_VERSION
 
 _MINIMAL_BODY = textwrap.dedent(
@@ -79,30 +80,34 @@ class TestCreateGol(TempGolDirTestCase):
         """create_gol must build the entire frontmatter itself (id/type/status/timestamps/version)."""
         result = create_gol(_MINIMAL_BODY)
 
-        self.assertIsInstance(result, GolDocument)
-        self.assertIsNotNone(result.frontmatter.id)
-        self.assertEqual(result.frontmatter.type, "gol")
-        self.assertEqual(result.frontmatter.status, "draft")
-        self.assertIsNotNone(result.frontmatter.created)
-        self.assertEqual(result.frontmatter.created, result.frontmatter.updated)
-        self.assertEqual(result.frontmatter.version, CURRENT_SCHEMA_VERSION)
-        self.assertEqual(result.body.text, "Competitive Engines in Consumer Vehicles")
+        self.assertIsInstance(result, GolFrontmatter)
+        self.assertNotIsInstance(result, GolDocument)
+        self.assertFalse(hasattr(result, "body"))
+        self.assertIsNotNone(result.id)
+        self.assertEqual(result.type, "gol")
+        self.assertEqual(result.status, "draft")
+        self.assertIsNotNone(result.created)
+        self.assertEqual(result.created, result.updated)
+        self.assertEqual(result.version, CURRENT_SCHEMA_VERSION)
+
+        fetched = get_gol(result.id)
+        self.assertEqual(fetched.body.text, "Competitive Engines in Consumer Vehicles")
 
     def test_writes_expected_filename(self) -> None:
         """create_gol must write f'gol-{id}-{slug}.md' under the goal base dir."""
         result = create_gol(_MINIMAL_BODY)
 
-        expected_path = gol_base_dir() / f"gol-{result.frontmatter.id}-competitive-engines-in-consumer-vehicles.md"
+        expected_path = gol_base_dir() / f"gol-{result.id}-competitive-engines-in-consumer-vehicles.md"
         self.assertTrue(expected_path.exists())
 
     def test_written_file_round_trips_via_parse_gol(self) -> None:
         """The written file must parse back into an equivalent document."""
         result = create_gol(_MINIMAL_BODY)
 
-        expected_path = gol_base_dir() / f"gol-{result.frontmatter.id}-competitive-engines-in-consumer-vehicles.md"
+        expected_path = gol_base_dir() / f"gol-{result.id}-competitive-engines-in-consumer-vehicles.md"
         on_disk = parse_gol(expected_path.read_text(encoding="utf-8"))
 
-        self.assertEqual(on_disk.frontmatter.id, result.frontmatter.id)
+        self.assertEqual(on_disk.frontmatter.id, result.id)
         self.assertEqual(on_disk.frontmatter.status, "draft")
         self.assertEqual(on_disk.body.text, "Competitive Engines in Consumer Vehicles")
 

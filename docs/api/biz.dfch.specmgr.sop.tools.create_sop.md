@@ -16,7 +16,7 @@ codebase.
 
 ## Functions
 
-### `create_sop(content: 'str') -> 'SopDocument'`
+### `create_sop(content: 'str') -> 'SopFrontmatter'`
 
 Create and write a new SOP document.
 
@@ -46,9 +46,10 @@ content:
 
 Returns
 -------
-SopDocument
-    The newly created document, with its assigned id in
-    ``frontmatter.id``.
+SopFrontmatter
+    The newly created document's frontmatter only (no body), with its
+    assigned id in ``.id``. Use the corresponding ``get_sop`` tool to
+    fetch the full document afterward.
 
 Raises
 ------
