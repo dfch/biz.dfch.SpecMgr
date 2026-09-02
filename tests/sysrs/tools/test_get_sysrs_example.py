@@ -15,14 +15,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Tests for the ``get_sysrs_example`` ``@mcp.tool()`` wrapper (Task 3.2, mock-only this phase).
-
-The real packaged ``sysrs_example.md`` data file does not exist yet as of
-Phase 3 -- it arrives in Phase 4 (``sysrs/data/``, Task 4.1) -- so, unlike
-the shipped `vcr`/`sop` domains' own tests, there is no "against the real,
-committed packaged data file" test here yet; that test is added once Phase
-4 ships the real file.
-"""
+"""Tests for the ``get_sysrs_example`` ``@mcp.tool()`` wrapper (Task 3.2, real packaged data from Task 4.1)."""
 
 from __future__ import annotations
 
@@ -37,6 +30,15 @@ from biz.dfch.specmgr.sysrs.tools.get_sysrs_example import get_sysrs_example
 
 class TestGetSysrsExampleTool(unittest.TestCase):
     """Tests for the get_sysrs_example tool."""
+
+    def test_returns_real_packaged_example(self) -> None:
+        """Against the real, committed packaged data file, without any patching."""
+        result = get_sysrs_example()
+
+        self.assertIsInstance(result, str)
+        self.assertTrue(result.startswith("---\n"))
+        self.assertIn("type: sysrs", result)
+        self.assertIn("# System Requirements Specification: Example Widget Platform", result)
 
     def test_delegates_to_shared_data_reader(self) -> None:
         """The tool must return whatever general.tools._packaged_data.read_packaged_text() returns."""
@@ -57,11 +59,6 @@ class TestGetSysrsExampleTool(unittest.TestCase):
             with mock.patch.object(_packaged_data, "packaged_data_path", return_value=missing_path):
                 with self.assertRaises(FileNotFoundError):
                     get_sysrs_example()
-
-    def test_no_real_packaged_data_yet(self) -> None:
-        """The real packaged sysrs_example.md does not exist yet this phase -- calling without mocks raises."""
-        with self.assertRaises(FileNotFoundError):
-            get_sysrs_example()
 
 
 if __name__ == "__main__":

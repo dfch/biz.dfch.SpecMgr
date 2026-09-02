@@ -342,7 +342,10 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.sysrs.models.v1.parser`](biz.dfch.specmgr.sysrs.models.v1.parser.md) — Parse raw System Requirements Specification (SYSRS) ``.md`` text into a :class:`SysrsDocument`.
 - [`biz.dfch.specmgr.sysrs.models.v1.summary`](biz.dfch.specmgr.sysrs.models.v1.summary.md) — Pydantic model for one line of SYSRS listing output (Phase 2, Task 2.4).
 - [`biz.dfch.specmgr.sysrs.prompts`](biz.dfch.specmgr.sysrs.prompts.md) — MCP prompt wrappers for System Requirements Specification (SYSRS) documents (placeholder).
-- [`biz.dfch.specmgr.sysrs.resources`](biz.dfch.specmgr.sysrs.resources.md) — MCP resource registrations for System Requirements Specification (SYSRS) documents (placeholder).
+- [`biz.dfch.specmgr.sysrs.resources`](biz.dfch.specmgr.sysrs.resources.md) — MCP resource registrations for System Requirements Specification (SYSRS) documents (Task 4.5).
+- [`biz.dfch.specmgr.sysrs.resources.sysrs_example`](biz.dfch.specmgr.sysrs.resources.sysrs_example.md) — Resource: specmgr://sysrs/example (Task 4.5).
+- [`biz.dfch.specmgr.sysrs.resources.sysrs_schema`](biz.dfch.specmgr.sysrs.resources.sysrs_schema.md) — Resource: specmgr://sysrs/schema (Task 4.5, packaged data).
+- [`biz.dfch.specmgr.sysrs.resources.sysrs_template`](biz.dfch.specmgr.sysrs.resources.sysrs_template.md) — Resource: specmgr://sysrs/template (Task 4.5).
 - [`biz.dfch.specmgr.sysrs.tools`](biz.dfch.specmgr.sysrs.tools.md) — MCP tool wrappers for System Requirements Specification (SYSRS) documents (mirrors ``vcr/tools/``'s own shape).
 - [`biz.dfch.specmgr.sysrs.tools._io`](biz.dfch.specmgr.sysrs.tools._io.md) — Thin file read helpers over ``parse_sysrs`` (Task 3.1).
 - [`biz.dfch.specmgr.sysrs.tools._lock`](biz.dfch.specmgr.sysrs.tools._lock.md) — Per-document in-process lock guarding System Requirements Specification mutations.

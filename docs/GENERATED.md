@@ -398,7 +398,10 @@ First-line docstrings from each module, organized by domain:
 - `sysrs/models/v1/parser.py` — Parse raw System Requirements Specification (SYSRS) ``.md`` text into a :class:`SysrsDocument`.
 - `sysrs/models/v1/summary.py` — Pydantic model for one line of SYSRS listing output (Phase 2, Task 2.4).
 - `sysrs/prompts/__init__.py` — MCP prompt wrappers for System Requirements Specification (SYSRS) documents (placeholder).
-- `sysrs/resources/__init__.py` — MCP resource registrations for System Requirements Specification (SYSRS) documents (placeholder).
+- `sysrs/resources/__init__.py` — MCP resource registrations for System Requirements Specification (SYSRS) documents (Task 4.5).
+- `sysrs/resources/sysrs_example.py` — Resource: specmgr://sysrs/example (Task 4.5).
+- `sysrs/resources/sysrs_schema.py` — Resource: specmgr://sysrs/schema (Task 4.5, packaged data).
+- `sysrs/resources/sysrs_template.py` — Resource: specmgr://sysrs/template (Task 4.5).
 - `sysrs/tools/__init__.py` — MCP tool wrappers for System Requirements Specification (SYSRS) documents (mirrors ``vcr/tools/``'s own shape).
 - `sysrs/tools/_io.py` — Thin file read helpers over ``parse_sysrs`` (Task 3.1).
 - `sysrs/tools/_lock.py` — Per-document in-process lock guarding System Requirements Specification mutations.
@@ -521,4 +524,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 349
+**Test files**: 352

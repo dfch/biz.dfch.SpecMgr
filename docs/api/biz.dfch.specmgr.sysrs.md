@@ -20,13 +20,16 @@ straight into the generic ``update``/``set_status`` tools in
 in ``general.tools`` (``type="sysrs"``), the same convention SOP/VCR
 already use.
 
-As of this package's Phase 2 (models + parser -- see
-``.specmgr/feat/feat-32-sysrs/README.md``), only ``sysrs.models`` carries
-real content; ``sysrs.tools``/``sysrs.resources``/``sysrs.prompts`` are
-still empty placeholder sub-packages, filled in during Phases 3/4/5 of
-that plan. Every cross-reference section (``### Goals``, ``## Decisions``,
-``## Requirements``'s nine H3s, ...) carries a per-section type-tag regex
-enforcing which domain(s) it may reference -- see ``sysrs.models.v1.body``.
+As of this package's Phase 4 (resources + packaged data + schema -- see
+``.specmgr/feat/feat-32-sysrs/README.md``), ``sysrs.models``,
+``sysrs.tools`` (7 tools), and ``sysrs.resources`` (3 resources --
+``specmgr://sysrs/schema``, ``specmgr://sysrs/example``,
+``specmgr://sysrs/template``; no ``/{id}``, no ``/list``) all carry real
+content; ``sysrs.prompts`` is still an empty placeholder sub-package,
+filled in during Phase 5 of that plan. Every cross-reference section
+(``### Goals``, ``## Decisions``, ``## Requirements``'s nine H3s, ...)
+carries a per-section type-tag regex enforcing which domain(s) it may
+reference -- see ``sysrs.models.v1.body``.
 
 Import this package to register everything SYSRS eventually exposes
 against the shared ``mcp`` application instance at once::

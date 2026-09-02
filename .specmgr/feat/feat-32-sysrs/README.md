@@ -1668,15 +1668,19 @@ its own ADR rather than living only in this feature's Design Notes.
 
 #### Phase 4: Resources + packaged data + schema
 
-- [ ] Task 4.1: `sysrs/data/sysrs_example.md` — content = this folder's
+- [x] Task 4.1: `sysrs/data/sysrs_example.md` — content = this folder's
   (Task 0.12-migrated) `sysrs-example.md`, cleaned per the shipped-
   example convention if the research differs (verify against
   `sop/data/sop_example.md`'s comment-free body: no instructional
   comments, only permanent structural anchors or realistic filled
   annotations — note: `vcr/data/vcr_example.md` carries one stray HTML
   comment and is left untouched, other-domain data); must parse via
-  `parse_sysrs` — depends on: Task 3.5 — status: not-started
-- [ ] Task 4.2: `sysrs/data/sysrs_template.md` — all-sections
+  `parse_sysrs` — depends on: Task 3.5 — status: done (2026-09-02;
+  the file already existed on disk, uncommitted, from a previous
+  interrupted attempt at this phase — verified rather than redone:
+  parses via `parse_sysrs`, and round-trips byte-exact against the
+  frontmatter-stripped body)
+- [x] Task 4.2: `sysrs/data/sysrs_template.md` — all-sections
   placeholder skeleton, `status: draft`, conforming date+time
   frontmatter; populated exactly: one placeholder bullet each in
   `### Goals` (mandatory anyway), `### Problem Statement`, `##
@@ -1689,37 +1693,65 @@ its own ADR rather than living only in this feature's Design Notes.
   every free-text leaf; `## Updates` with the "newest first, prepend"
   ordering-hint comment plus one placeholder entry — so it round-
   trips through `parse_sysrs` (SOP/VCR precedent) — depends on: Task
-  3.5 — status: not-started
-- [ ] Task 4.3: `sysrs/data/sysrs_create_instructions.md` + `sysrs_update_instructions.md`
+  3.5 — status: done (2026-09-02; the file already existed on disk,
+  uncommitted, from a previous interrupted attempt — verified against
+  this task's exact enumeration line by line, incl. that every
+  reused UUID matches `sysrs-example.md`'s own; parses via
+  `parse_sysrs`)
+- [x] Task 4.3: `sysrs/data/sysrs_create_instructions.md` + `sysrs_update_instructions.md`
   — narrated flows with `$topic`/`$id`/`$instructions` placeholders;
   `create` includes the `list_sysrs` dedup-check-first step and an
   explicit step to read `specmgr://iso25010` for the nine canonical
   ISO/IEC 25010:2023 characteristic names + the REQ placement rule
   before filling `## Requirements`; `update` names the GENERIC
   `update`/`set_status` tools with `type="sysrs"` (no per-domain tool
-  shape anywhere) — depends on: Task 3.5 — status: not-started
-- [ ] Task 4.4: `commands/schema.py` — `generate_sysrs_schema()`
+  shape anywhere) — depends on: Task 3.5 — status: done (2026-09-02;
+  both files already existed on disk, uncommitted, from a previous
+  interrupted attempt — verified: `create` has the `list_sysrs`
+  dedup-check-first step and the `specmgr://iso25010` read-first step;
+  `update` also has the `specmgr://iso25010` step (for revisions
+  touching `## Requirements`) and names the generic
+  `update`/`set_status`/`set_classification` tools with `type="sysrs"`)
+- [x] Task 4.4: `commands/schema.py` — `generate_sysrs_schema()`
   (mirror `generate_sop_schema`) + `_GENERATORS["sysrs"]`; run
   `specmgr schema --type sysrs` (writes `docs/sysrs_schema.json`) and
   `specmgr schema --type sysrs --output-dir src/biz/dfch/specmgr/
-  sysrs/data` (packaged copy) — depends on: Task 3.5 — status:
-  not-started
-- [ ] Task 4.5: `sysrs/resources/` — `sysrs_schema.py`
+  sysrs/data` (packaged copy) — depends on: Task 3.5 — status: done
+  (2026-09-02; `generate_sysrs_schema()` already existed on disk from
+  a previous interrupted attempt, but was never registered in
+  `_GENERATORS` — the one genuine gap found this phase; added
+  `"sysrs": generate_sysrs_schema,` at its alphabetical slot between
+  `sop` and `tsk`, then ran both `specmgr schema` invocations;
+  `docs/sysrs_schema.json` and `sysrs/data/sysrs_schema.json` are
+  byte-identical, confirmed via `diff`)
+- [x] Task 4.5: `sysrs/resources/` — `sysrs_schema.py`
   (`specmgr://sysrs/schema`, JSON from the packaged copy),
   `sysrs_example.py`, `sysrs_template.py`, `__init__.py` — exactly
   three `sysrs` resources, no `/{id}` (ADR ddfb1109), no `/list` (ADR
-  ec9f5262) — depends on: Task 4.1, Task 4.2, Task 4.4 — status:
-  not-started
-- [ ] Task 4.6: Tests `tests/sysrs/resources/` (ACC-007: schema equals
+  ec9f5262) — depends on: Task 4.1, Task 4.2, Task 4.4 — status: done
+  (2026-09-02; all four files newly written, file-for-file mirrors of
+  `sop.resources`/`vcr.resources`; `__init__.py` replaces the Phase-2
+  placeholder)
+- [x] Task 4.6: Tests `tests/sysrs/resources/` (ACC-007: schema equals
   fresh `generate_sysrs_schema()`, example/template equal the packaged
   files byte-for-byte, example parses, template round-trips, exactly
   three registered) mirroring `tests/sop/resources/` +
   `tests/vcr/resources/`; plus the deferred real-packaged-data tool
   tests for `get_sysrs_example`/`get_sysrs_template` — depends on:
-  Task 4.3, Task 4.5 — status: not-started
-- [ ] Task 4.7: Phase-end quality gate (ruff format/check, vulture,
+  Task 4.3, Task 4.5 — status: done (2026-09-02; 18 new tests under
+  `tests/sysrs/resources/` — one module per resource, all green;
+  `tests/sysrs/tools/test_get_sysrs_example.py`/
+  `test_get_sysrs_template.py` gained a `test_returns_real_packaged_*`
+  case each, mirroring `tests/sop/tools/test_get_sop_example.py`'s
+  actual pattern, and the now-obsolete Phase-3 "no real packaged data
+  yet" negative tests were removed)
+- [x] Task 4.7: Phase-end quality gate (ruff format/check, vulture,
   full unittest) + commit; update this README's Progress section —
-  depends on: Task 4.6 — status: not-started
+  depends on: Task 4.6 — status: done (2026-09-02; `ruff format
+  --check`/`ruff check` clean, `vulture src/ whitelist.py
+  --min-confidence 60` clean with no new whitelist entries needed,
+  full `python -m unittest discover` suite green at 3229 tests;
+  commit is the orchestrator's job, not this task's)
 
 #### Phase 5: Prompts
 
@@ -1806,6 +1838,60 @@ around.
 ## Progress
 
 ### Current Status
+
+**As of 2026-09-02 (Phase 4 complete — resources + packaged data + schema)**:
+Phase 4 (Tasks 4.1–4.7) is done. This phase resumed from a previous,
+interrupted attempt: Tasks 4.1–4.3 (the packaged `sysrs/data/` example,
+template, and create/update instruction files) and most of Task 4.4
+(`commands/schema.py`'s `generate_sysrs_schema()` function body) already
+existed on disk, uncommitted, from that earlier pass. All of it was
+verified rather than blindly redone: `sysrs_example.md` parses via
+`parse_sysrs` and round-trips byte-exact (frontmatter `created`/`updated`
+correctly quoted); `sysrs_template.md` matches Task 4.2's exact
+enumeration (one placeholder bullet each in `### Goals`,
+`### Problem Statement`, `## Stakeholder Needs and Elicitation`,
+`## Operational Concept and Scenarios`, `## Decisions`, `## Risks`,
+`## Verification`, every one of the nine `## Requirements` H3s and the
+six `## Other Characteristics` H3s — each `REQ <uuid>: <title>` bullet
+correctly reusing `sysrs-example.md`'s own UUIDs — one `## References`
+bullet, one-line blind text in every free-text leaf, and `## Updates`
+with the ordering-hint comment plus one entry) and parses via
+`parse_sysrs`; both `sysrs_create_instructions.md`/
+`sysrs_update_instructions.md` include the `list_sysrs` dedup-check-first
+step (create), the explicit `specmgr://iso25010` read-first step for the
+nine characteristic names + REQ placement rule (create and update), and
+name the generic `update`/`set_status`/`set_classification` tools with
+`type="sysrs"` (update). The one genuinely missing piece from that
+interrupted attempt — `"sysrs": generate_sysrs_schema,` was never added
+to `commands/schema.py`'s `_GENERATORS` dict, even though the generator
+function itself existed — was added (alphabetical slot, between `sop`
+and `tsk`), then `specmgr schema --type sysrs` (writes
+`docs/sysrs_schema.json`) and `specmgr schema --type sysrs
+--output-dir src/biz/dfch/specmgr/sysrs/data` (packaged copy) were run;
+the two files are byte-identical (`diff` confirmed). Task 4.5 added the
+three real resource modules under `sysrs/resources/`
+(`sysrs_schema.py`/`sysrs_example.py`/`sysrs_template.py`) plus a real
+`__init__.py` replacing the Phase-2 placeholder — exactly three `sysrs`
+resources (`specmgr://sysrs/schema`, `/example`, `/template`), no
+`/{id}`, no `/list` — file-for-file mirrors of `sop.resources`/
+`vcr.resources`. Task 4.6 added `tests/sysrs/resources/`
+(`test_sysrs_schema.py`/`test_sysrs_example.py`/`test_sysrs_template.py`,
+18 new tests: schema equals a fresh `generate_sysrs_schema()` output,
+example/template equal the packaged files byte-for-byte, example parses
+and exercises every section, template round-trips) and extended the
+Phase-3 mock-only `tests/sysrs/tools/test_get_sysrs_example.py`/
+`test_get_sysrs_template.py` with a `test_returns_real_packaged_*` case
+each (mirroring `tests/sop/tools/test_get_sop_example.py`'s actual
+pattern), removing the now-obsolete "no real packaged data yet"
+negative tests. `sysrs/__init__.py`'s module docstring was updated to
+reflect that `tools`/`resources` now carry real content (only `prompts`
+remains a Phase-5 placeholder). Quality gate green: `ruff format
+--check`/`ruff check` clean, `vulture src/ whitelist.py
+--min-confidence 60` clean (no new whitelist entries needed), full
+repo `python -m unittest discover` suite green at 3229 tests. `sysrs`
+is still **not** registered in `server.py` — that remains Phase 6's
+job; no `general/tools/` or other existing-domain file was touched this
+phase besides `commands/schema.py`. Next action: Phase 5 (prompts).
 
 **As of 2026-09-02 (Phase 3 complete — tools + generic-tool dispatch)**:
 Phase 3 (Tasks 3.1–3.5) is done. Task 3.1's checkpoint confirmed both
@@ -2132,29 +2218,33 @@ borrowed-section content.
   it into this folder following the same
   `session-ses_*-feat-32-NN-*.md` naming/`git check-ignore`-at-nested-
   path pattern already used in other feature folders.
-- **Immediate next action (corrected 2026-09-02 — Phase 2 done)**:
-  **execute Phase 3 (tools + generic-tool dispatch)** — Phase 2
-  (Tasks 2.1–2.6, models + parser) is done: `sysrs/models/v1/` (
-  `SysrsFrontmatter`, `Sysrs`/`body.py`'s ~40 section classes,
-  `SysrsDocument`, `parse_sysrs`, `SysrsSummary`) implements every
-  mechanic Phase 1's "outcome record" pinned, with no `models/md`
-  engine changes; 108 new tests (`tests/sysrs/models/v1/`) all green,
-  including a full round-trip of `sysrs-example.md`'s content
-  (byte-exact except the documented tight→loose `## References`
-  re-render). `sysrs/tools/`/`sysrs/resources/`/`sysrs/prompts/` are
-  still empty placeholder packages (Task 2.1); `sysrs` is not yet
-  imported/registered anywhere outside `sysrs/`/`tests/sysrs/` (no
-  `server.py` change, per Phase 6). Concretely: Task 3.1 (sibling
-  coordination checkpoint + `sysrs/tools/_paths.py`/`_io.py`/
-  `_lock.py`/`_write.py`) is next, then 3.2 (the 7 tool modules), 3.3
-  (generic `update`/`set_status`/`delete` dispatch entries — gated on
-  the sibling's Phase 4 per Dependencies), 3.4 (tests), 3.5 (phase-end
-  gate). Reference artifacts: `example.v7.md` (approved section list)
-  and `sysrs-example.md` (filled-in content, Task-0.12-migrated to the
-  locked sibling conventions); Design Notes' "Phase 1 outcome record"
-  remains the authoritative mechanics reference, now empirically
-  confirmed correct by Phase 2's own implementation. Zero non-blocking
-  leftovers remain (Task 0.11 closed 2026-09-02).
+- **Immediate next action (corrected 2026-09-02 — Phase 4 done)**:
+  **execute Phase 5 (prompts)** — Phases 2–4 are all done. Phase 4
+  (Tasks 4.1–4.7, resources + packaged data + schema) resumed a
+  previous, interrupted attempt: `sysrs/data/sysrs_example.md`/
+  `sysrs_template.md`/`sysrs_create_instructions.md`/
+  `sysrs_update_instructions.md` already existed on disk, uncommitted,
+  and were verified rather than redone; the one genuine gap found was
+  `commands/schema.py`'s `_GENERATORS` dict missing the `"sysrs"` entry
+  even though `generate_sysrs_schema()` itself already existed — fixed,
+  then both `specmgr schema --type sysrs` invocations run
+  (`docs/sysrs_schema.json` and the packaged
+  `sysrs/data/sysrs_schema.json` copy are byte-identical). `sysrs/
+  resources/` now ships all 3 planned resources
+  (`specmgr://sysrs/schema`/`/example`/`/template`, no `/{id}`, no
+  `/list`), file-for-file mirrors of `sop.resources`/`vcr.resources`.
+  `sysrs/prompts/` is still an empty placeholder package (only
+  remaining placeholder besides `server.py` registration); `sysrs` is
+  not yet imported/registered anywhere outside `sysrs/`/`tests/sysrs/`
+  (no `server.py` change, per Phase 6). Concretely: Task 5.1 (the
+  `create_sysrs`/`update_sysrs` prompt modules reading the already-
+  packaged instruction files via `string.Template`) is next, then 5.2
+  (tests), 5.3 (phase-end gate). Reference artifacts: `example.v7.md`
+  (approved section list) and `sysrs-example.md` (filled-in content,
+  Task-0.12-migrated to the locked sibling conventions); Design Notes'
+  "Phase 1 outcome record" remains the authoritative mechanics
+  reference. Zero non-blocking leftovers remain (Task 0.11 closed
+  2026-09-02).
 - **Still open / unresolved**: nothing schema/outline-related — only
   the pre-existing, out-of-scope optional cleanup of the `req`
   docstring's pre-2023 example characteristic names (noted in
@@ -2197,6 +2287,62 @@ entirely, per explicit user instruction, rather than continuing to
 wait on it; see Task List Task 0.7/Design Notes item 4's note.)
 
 ### Recent Updates
+
+#### Update 2026-09-02 (Phase 4 complete — resources + packaged data + schema; resumed from an interrupted prior attempt)
+
+- Completed: Implemented Phase 4 (Tasks 4.1–4.7) end to end, resuming
+  from a previous, interrupted attempt at this same phase. Tasks
+  4.1–4.3 and most of Task 4.4 already existed on disk, uncommitted,
+  when this pass started; each was verified against the plan's exact
+  requirements rather than blindly redone, and one genuine gap was
+  found and fixed. Task 4.1: `sysrs/data/sysrs_example.md` verified —
+  parses via `parse_sysrs`, round-trips byte-exact against the
+  frontmatter-stripped body. Task 4.2: `sysrs/data/sysrs_template.md`
+  verified against Task 4.2's explicit enumeration — every named
+  cross-reference section carries exactly one placeholder bullet
+  reusing `sysrs-example.md`'s own UUIDs, one `## References` bullet,
+  one-line blind text in every free-text leaf, `## Updates` with the
+  ordering-hint comment plus one entry — parses via `parse_sysrs`.
+  Task 4.3: `sysrs_create_instructions.md`/`sysrs_update_
+  instructions.md` verified — the `list_sysrs` dedup-check-first step
+  (create), the `specmgr://iso25010` read-first step for the nine
+  characteristic names + REQ placement rule (create and update), and
+  generic `update`/`set_status`/`set_classification` tool naming with
+  `type="sysrs"` (update) are all present. Task 4.4: found and fixed
+  the one real gap — `generate_sysrs_schema()` existed in
+  `commands/schema.py` but was never registered in `_GENERATORS`;
+  added `"sysrs": generate_sysrs_schema,` (alphabetical slot, between
+  `sop` and `tsk`), then ran `specmgr schema --type sysrs` (writes
+  `docs/sysrs_schema.json`) and `specmgr schema --type sysrs
+  --output-dir src/biz/dfch/specmgr/sysrs/data` (packaged copy) —
+  the two files are byte-identical. Task 4.5: added
+  `sysrs/resources/sysrs_schema.py`/`sysrs_example.py`/
+  `sysrs_template.py` plus a real `__init__.py` (replacing the Phase-2
+  placeholder) — exactly three resources
+  (`specmgr://sysrs/schema`/`/example`/`/template`), no `/{id}`
+  (ADR ddfb1109), no `/list` (ADR ec9f5262) — file-for-file mirrors of
+  `sop.resources`/`vcr.resources`. Task 4.6: added
+  `tests/sysrs/resources/test_sysrs_schema.py`/`test_sysrs_example.py`/
+  `test_sysrs_template.py` (18 new tests — ACC-007: schema equals a
+  fresh `generate_sysrs_schema()` output, example/template equal the
+  packaged files byte-for-byte, example parses and exercises every
+  section, template round-trips through `parse_sysrs`) and extended the
+  Phase-3 mock-only `tests/sysrs/tools/test_get_sysrs_example.py`/
+  `test_get_sysrs_template.py` with a `test_returns_real_packaged_*`
+  case each, mirroring `tests/sop/tools/test_get_sop_example.py`'s
+  actual pattern, removing the now-obsolete "no real packaged data yet"
+  negative tests. `sysrs/__init__.py`'s module docstring updated to
+  reflect that `tools`/`resources` now carry real content.
+- Quality gate: `ruff format --check`/`ruff check` clean, `vulture
+  src/ whitelist.py --min-confidence 60` clean (no new whitelist
+  entries), full repo `python -m unittest discover` suite green at
+  3229 tests; `docs/sysrs_schema.json` and
+  `src/biz/dfch/specmgr/sysrs/data/sysrs_schema.json` confirmed
+  byte-identical via `diff`.
+- Not done: `sysrs` is still not registered in `server.py` (Phase 6);
+  no `general/tools/` or other existing-domain file touched besides
+  `commands/schema.py`.
+- Next: Phase 5 (prompts).
 
 #### Update 2026-09-02 (Phase 2 complete — sysrs/models/v1/ schema, parser, and 108 new tests)
 
