@@ -45,29 +45,40 @@ from unittest import mock
 
 import frontmatter
 
+from biz.dfch.specmgr.dec.models.v1 import DecDocument, DecFrontmatter
 from biz.dfch.specmgr.dec.tools._paths import DecNotFoundError, dec_base_dir
 from biz.dfch.specmgr.dec.tools.create_dec import create_dec
+from biz.dfch.specmgr.feat.models.v1 import FeatDocument, FeatFrontmatter
 from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR, feat_base_dir
 from biz.dfch.specmgr.feat.tools.create_feat import create_feat
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.general.tools._splice import body_text
 from biz.dfch.specmgr.general.tools.set_classification import set_classification
+from biz.dfch.specmgr.gol.models.v1 import GolDocument, GolFrontmatter
 from biz.dfch.specmgr.gol.tools._paths import GolNotFoundError, gol_base_dir
 from biz.dfch.specmgr.gol.tools.create_gol import create_gol
+from biz.dfch.specmgr.prb.models.v1 import PrbDocument, PrbFrontmatter
 from biz.dfch.specmgr.prb.tools._paths import PrbNotFoundError, prb_base_dir
 from biz.dfch.specmgr.prb.tools.create_prb import create_prb
+from biz.dfch.specmgr.qa.models.v2 import QaDocument, QaFrontmatter
 from biz.dfch.specmgr.qa.tools._paths import QaNotFoundError, qa_base_dir
 from biz.dfch.specmgr.qa.tools.create_qa import create_qa
+from biz.dfch.specmgr.req.models.v1 import ReqDocument, ReqFrontmatter
 from biz.dfch.specmgr.req.tools._paths import ReqNotFoundError, req_base_dir
 from biz.dfch.specmgr.req.tools.create_req import create_req
+from biz.dfch.specmgr.rsk.models.v1 import RskDocument, RskFrontmatter
 from biz.dfch.specmgr.rsk.tools._paths import RskNotFoundError, rsk_base_dir
 from biz.dfch.specmgr.rsk.tools.create_rsk import create_rsk
+from biz.dfch.specmgr.sop.models.v1 import SopDocument, SopFrontmatter
 from biz.dfch.specmgr.sop.tools._paths import SopNotFoundError, sop_base_dir
 from biz.dfch.specmgr.sop.tools.create_sop import create_sop
+from biz.dfch.specmgr.tsk.models.v1 import TskDocument, TskFrontmatter
 from biz.dfch.specmgr.tsk.tools._paths import TskNotFoundError, tsk_base_dir
 from biz.dfch.specmgr.tsk.tools.create_tsk import create_tsk
+from biz.dfch.specmgr.uc.models.v2 import UcDocument, UcFrontmatter
 from biz.dfch.specmgr.uc.tools._paths import UcNotFoundError, uc_base_dir
 from biz.dfch.specmgr.uc.tools.create_uc import create_uc
+from biz.dfch.specmgr.vcr.models.v1 import VcrDocument, VcrFrontmatter
 from biz.dfch.specmgr.vcr.tools._paths import VcrNotFoundError, vcr_base_dir
 from biz.dfch.specmgr.vcr.tools.create_vcr import create_vcr
 
@@ -374,6 +385,11 @@ class _Case:
     create: Callable[[str], Any]
     base_dir: Callable[[], Path]
     not_found_error: type[Exception]
+    #: The domain's own frontmatter class -- the type ``set_classification`` must return (feat-69).
+    frontmatter_type: type
+    #: The domain's own document (frontmatter+body wrapper) class -- what ``set_classification``
+    #: must NOT return any more (feat-69).
+    document_type: type
     minimal_body: str
     #: A well-formed id of a different domain shape (feat-NNN-slug for the UUID domains, a UUID for feat).
     wrong_format_id: str
@@ -386,17 +402,35 @@ _MISSING_UUID = "00000000-0000-0000-0000-000000000000"
 _FEAT_SLUG_ID = "feat-36-delete"
 
 _CASES: list[_Case] = [
-    _Case("req", create_req, req_base_dir, ReqNotFoundError, _REQ_MINIMAL_BODY, _FEAT_SLUG_ID),
-    _Case("uc", create_uc, uc_base_dir, UcNotFoundError, _UC_MINIMAL_BODY, _FEAT_SLUG_ID),
-    _Case("tsk", create_tsk, tsk_base_dir, TskNotFoundError, _TSK_MINIMAL_BODY, _FEAT_SLUG_ID),
-    _Case("qa", create_qa, qa_base_dir, QaNotFoundError, _QA_MINIMAL_BODY, _FEAT_SLUG_ID),
-    _Case("prb", create_prb, prb_base_dir, PrbNotFoundError, _PRB_MINIMAL_BODY, _FEAT_SLUG_ID),
-    _Case("gol", create_gol, gol_base_dir, GolNotFoundError, _GOL_MINIMAL_BODY, _FEAT_SLUG_ID),
-    _Case("rsk", create_rsk, rsk_base_dir, RskNotFoundError, _RSK_MINIMAL_BODY, _FEAT_SLUG_ID),
-    _Case("dec", create_dec, dec_base_dir, DecNotFoundError, _DEC_MINIMAL_BODY, _FEAT_SLUG_ID),
-    _Case("sop", create_sop, sop_base_dir, SopNotFoundError, _SOP_MINIMAL_BODY, _FEAT_SLUG_ID),
-    _Case("vcr", create_vcr, vcr_base_dir, VcrNotFoundError, _VCR_MINIMAL_BODY, _FEAT_SLUG_ID),
-    _Case("feat", create_feat, feat_base_dir, Exception, _FEAT_MINIMAL_BODY, _MISSING_UUID),
+    _Case(
+        "req", create_req, req_base_dir, ReqNotFoundError, ReqFrontmatter, ReqDocument, _REQ_MINIMAL_BODY, _FEAT_SLUG_ID
+    ),
+    _Case("uc", create_uc, uc_base_dir, UcNotFoundError, UcFrontmatter, UcDocument, _UC_MINIMAL_BODY, _FEAT_SLUG_ID),
+    _Case(
+        "tsk", create_tsk, tsk_base_dir, TskNotFoundError, TskFrontmatter, TskDocument, _TSK_MINIMAL_BODY, _FEAT_SLUG_ID
+    ),
+    _Case("qa", create_qa, qa_base_dir, QaNotFoundError, QaFrontmatter, QaDocument, _QA_MINIMAL_BODY, _FEAT_SLUG_ID),
+    _Case(
+        "prb", create_prb, prb_base_dir, PrbNotFoundError, PrbFrontmatter, PrbDocument, _PRB_MINIMAL_BODY, _FEAT_SLUG_ID
+    ),
+    _Case(
+        "gol", create_gol, gol_base_dir, GolNotFoundError, GolFrontmatter, GolDocument, _GOL_MINIMAL_BODY, _FEAT_SLUG_ID
+    ),
+    _Case(
+        "rsk", create_rsk, rsk_base_dir, RskNotFoundError, RskFrontmatter, RskDocument, _RSK_MINIMAL_BODY, _FEAT_SLUG_ID
+    ),
+    _Case(
+        "dec", create_dec, dec_base_dir, DecNotFoundError, DecFrontmatter, DecDocument, _DEC_MINIMAL_BODY, _FEAT_SLUG_ID
+    ),
+    _Case(
+        "sop", create_sop, sop_base_dir, SopNotFoundError, SopFrontmatter, SopDocument, _SOP_MINIMAL_BODY, _FEAT_SLUG_ID
+    ),
+    _Case(
+        "vcr", create_vcr, vcr_base_dir, VcrNotFoundError, VcrFrontmatter, VcrDocument, _VCR_MINIMAL_BODY, _FEAT_SLUG_ID
+    ),
+    _Case(
+        "feat", create_feat, feat_base_dir, Exception, FeatFrontmatter, FeatDocument, _FEAT_MINIMAL_BODY, _MISSING_UUID
+    ),
 ]
 
 
@@ -443,6 +477,9 @@ class TestSetClassificationWholeBodyDomains(TempDocsDirTestCase):
 
                 result = set_classification(id=doc_id, type=case.doc_type, classification="Confidential")
 
+                self.assertIsInstance(result, case.frontmatter_type)
+                self.assertNotIsInstance(result, case.document_type)
+                self.assertFalse(hasattr(result, "body"))
                 self.assertEqual(result.classification, "Confidential")
                 self.assertEqual(result.id, created.id)
                 self.assertEqual(result.type, case.doc_type)

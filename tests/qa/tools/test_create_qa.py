@@ -27,7 +27,7 @@ from unittest import mock
 
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.models.md import CURRENT_SCHEMA_VERSION
-from biz.dfch.specmgr.qa.models.v2 import QaFrontmatter, parse_qa
+from biz.dfch.specmgr.qa.models.v2 import QaDocument, QaFrontmatter, parse_qa
 from biz.dfch.specmgr.qa.tools._paths import qa_base_dir
 from biz.dfch.specmgr.qa.tools.create_qa import create_qa
 from biz.dfch.specmgr.qa.tools.get_qa import get_qa
@@ -87,6 +87,8 @@ class TestCreateQa(TempQaDirTestCase):
         result = create_qa(_MINIMAL_BODY)
 
         self.assertIsInstance(result, QaFrontmatter)
+        self.assertNotIsInstance(result, QaDocument)
+        self.assertFalse(hasattr(result, "body"))
         self.assertIsNotNone(result.id)
         self.assertEqual(result.type, "qa")
         self.assertEqual(result.status, "draft")

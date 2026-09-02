@@ -29,7 +29,7 @@ from pydantic import ValidationError
 
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.models.md import CURRENT_SCHEMA_VERSION
-from biz.dfch.specmgr.req.models.v1 import ReqFrontmatter, parse_req
+from biz.dfch.specmgr.req.models.v1 import ReqDocument, ReqFrontmatter, parse_req
 from biz.dfch.specmgr.req.tools._paths import req_base_dir
 from biz.dfch.specmgr.req.tools.create_req import create_req
 from biz.dfch.specmgr.req.tools.get_req import get_req
@@ -78,6 +78,8 @@ class TestCreateReq(TempReqDirTestCase):
         result = create_req(_MINIMAL_BODY)
 
         self.assertIsInstance(result, ReqFrontmatter)
+        self.assertNotIsInstance(result, ReqDocument)
+        self.assertFalse(hasattr(result, "body"))
         self.assertIsNotNone(result.id)
         self.assertEqual(result.type, "req")
         self.assertEqual(result.status, "draft")

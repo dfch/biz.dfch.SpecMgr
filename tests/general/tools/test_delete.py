@@ -568,6 +568,10 @@ class TestDeleteWholeBodyDomains(TempDeleteDirTestCase):
 
                 result = delete(id=doc_id, type=case.doc_type)
 
+                # feat-69 regression: `delete` already returned a minimal payload (the
+                # deleted path as a plain `str`) before this feature and needs no change --
+                # confirm that contract explicitly, not just implicitly via string equality.
+                self.assertIsInstance(result, str)
                 self.assertEqual(result, str(target))
                 self.assertFalse(target.exists())
                 with self.assertRaises(case.not_found_error):

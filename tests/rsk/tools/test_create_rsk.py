@@ -29,7 +29,7 @@ from pydantic import ValidationError
 
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.models.md import CURRENT_SCHEMA_VERSION
-from biz.dfch.specmgr.rsk.models.v1 import RskFrontmatter, parse_rsk
+from biz.dfch.specmgr.rsk.models.v1 import RskDocument, RskFrontmatter, parse_rsk
 from biz.dfch.specmgr.rsk.tools._paths import rsk_base_dir
 from biz.dfch.specmgr.rsk.tools.create_rsk import create_rsk
 from biz.dfch.specmgr.rsk.tools.get_rsk import get_rsk
@@ -101,6 +101,8 @@ class TestCreateRsk(TempRskDirTestCase):
         result = create_rsk(_MINIMAL_BODY)
 
         self.assertIsInstance(result, RskFrontmatter)
+        self.assertNotIsInstance(result, RskDocument)
+        self.assertFalse(hasattr(result, "body"))
         self.assertIsNotNone(result.id)
         self.assertEqual(result.type, "rsk")
         self.assertEqual(result.status, "open")

@@ -29,7 +29,7 @@ from pydantic import ValidationError
 
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.models.md import CURRENT_SCHEMA_VERSION
-from biz.dfch.specmgr.vcr.models.v1 import VcrFrontmatter, parse_vcr
+from biz.dfch.specmgr.vcr.models.v1 import VcrDocument, VcrFrontmatter, parse_vcr
 from biz.dfch.specmgr.vcr.tools._paths import vcr_base_dir
 from biz.dfch.specmgr.vcr.tools.create_vcr import create_vcr
 from biz.dfch.specmgr.vcr.tools.get_vcr import get_vcr
@@ -98,6 +98,8 @@ class TestCreateVcr(TempVcrDirTestCase):
         result = create_vcr(_MINIMAL_BODY)
 
         self.assertIsInstance(result, VcrFrontmatter)
+        self.assertNotIsInstance(result, VcrDocument)
+        self.assertFalse(hasattr(result, "body"))
         self.assertIsNotNone(result.id)
         self.assertEqual(result.type, "vcr")
         self.assertEqual(result.status, "draft")

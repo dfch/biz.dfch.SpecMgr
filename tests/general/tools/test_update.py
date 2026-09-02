@@ -51,28 +51,38 @@ from unittest import mock
 
 from pydantic import ValidationError
 
+from biz.dfch.specmgr.dec.models.v1 import DecDocument, DecFrontmatter
 from biz.dfch.specmgr.dec.tools._paths import DecNotFoundError, dec_base_dir
 from biz.dfch.specmgr.dec.tools.create_dec import create_dec
 from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR, feat_base_dir
 from biz.dfch.specmgr.feat.tools.create_feat import create_feat
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.general.tools._splice import body_text
+from biz.dfch.specmgr.gol.models.v1 import GolDocument, GolFrontmatter
 from biz.dfch.specmgr.gol.tools._paths import GolNotFoundError, gol_base_dir
 from biz.dfch.specmgr.gol.tools.create_gol import create_gol
+from biz.dfch.specmgr.prb.models.v1 import PrbDocument, PrbFrontmatter
 from biz.dfch.specmgr.prb.tools._paths import PrbNotFoundError, prb_base_dir
 from biz.dfch.specmgr.prb.tools.create_prb import create_prb
+from biz.dfch.specmgr.qa.models.v2 import QaDocument, QaFrontmatter
 from biz.dfch.specmgr.qa.tools._paths import QaNotFoundError, qa_base_dir
 from biz.dfch.specmgr.qa.tools.create_qa import create_qa
+from biz.dfch.specmgr.req.models.v1 import ReqDocument, ReqFrontmatter
 from biz.dfch.specmgr.req.tools._paths import ReqNotFoundError, req_base_dir
 from biz.dfch.specmgr.req.tools.create_req import create_req
+from biz.dfch.specmgr.rsk.models.v1 import RskDocument, RskFrontmatter
 from biz.dfch.specmgr.rsk.tools._paths import RskNotFoundError, rsk_base_dir
 from biz.dfch.specmgr.rsk.tools.create_rsk import create_rsk
+from biz.dfch.specmgr.sop.models.v1 import SopDocument, SopFrontmatter
 from biz.dfch.specmgr.sop.tools._paths import SopNotFoundError, sop_base_dir
 from biz.dfch.specmgr.sop.tools.create_sop import create_sop
+from biz.dfch.specmgr.tsk.models.v1 import TskDocument, TskFrontmatter
 from biz.dfch.specmgr.tsk.tools._paths import TskNotFoundError, tsk_base_dir
 from biz.dfch.specmgr.tsk.tools.create_tsk import create_tsk
+from biz.dfch.specmgr.uc.models.v2 import UcDocument, UcFrontmatter
 from biz.dfch.specmgr.uc.tools._paths import UcNotFoundError, uc_base_dir
 from biz.dfch.specmgr.uc.tools.create_uc import create_uc
+from biz.dfch.specmgr.vcr.models.v1 import VcrDocument, VcrFrontmatter
 from biz.dfch.specmgr.vcr.tools._paths import VcrNotFoundError, vcr_base_dir
 from biz.dfch.specmgr.vcr.tools.create_vcr import create_vcr
 
@@ -615,6 +625,11 @@ class _Case:
     doc_type: str
     create: Callable[[str], Any]
     not_found_error: type[Exception]
+    #: The domain's own frontmatter class -- the type ``update`` must return (feat-69).
+    frontmatter_type: type
+    #: The domain's own document (frontmatter+body wrapper) class -- what ``update`` must
+    #: NOT return any more (feat-69).
+    document_type: type
     minimal_body: str
     updated_body: str
     #: A unique line of ``minimal_body``; replacing just that line keeps the document valid.
@@ -652,6 +667,8 @@ _CASES: list[_Case] = [
         doc_type="req",
         create=create_req,
         not_found_error=ReqNotFoundError,
+        frontmatter_type=ReqFrontmatter,
+        document_type=ReqDocument,
         minimal_body=_REQ_MINIMAL_BODY,
         updated_body=_REQ_UPDATED_BODY,
         middle_marker="If the engine becomes too hot, the lifetime of the system decreases.",
@@ -671,6 +688,8 @@ _CASES: list[_Case] = [
         doc_type="uc",
         create=create_uc,
         not_found_error=UcNotFoundError,
+        frontmatter_type=UcFrontmatter,
+        document_type=UcDocument,
         minimal_body=_UC_MINIMAL_BODY,
         updated_body=_UC_UPDATED_BODY,
         middle_marker="Buyer issues request directly to our company.",
@@ -695,6 +714,8 @@ _CASES: list[_Case] = [
         doc_type="tsk",
         create=create_tsk,
         not_found_error=TskNotFoundError,
+        frontmatter_type=TskFrontmatter,
+        document_type=TskDocument,
         minimal_body=_TSK_MINIMAL_BODY,
         updated_body=_TSK_UPDATED_BODY,
         middle_marker="Started the task list.",
@@ -714,6 +735,8 @@ _CASES: list[_Case] = [
         doc_type="qa",
         create=create_qa,
         not_found_error=QaNotFoundError,
+        frontmatter_type=QaFrontmatter,
+        document_type=QaDocument,
         minimal_body=_QA_MINIMAL_BODY,
         updated_body=_QA_UPDATED_BODY,
         middle_marker="Some intro text.",
@@ -733,6 +756,8 @@ _CASES: list[_Case] = [
         doc_type="prb",
         create=create_prb,
         not_found_error=PrbNotFoundError,
+        frontmatter_type=PrbFrontmatter,
+        document_type=PrbDocument,
         minimal_body=_PRB_MINIMAL_BODY,
         updated_body=_PRB_UPDATED_BODY,
         middle_marker="Something is wrong.",
@@ -752,6 +777,8 @@ _CASES: list[_Case] = [
         doc_type="gol",
         create=create_gol,
         not_found_error=GolNotFoundError,
+        frontmatter_type=GolFrontmatter,
+        document_type=GolDocument,
         minimal_body=_GOL_MINIMAL_BODY,
         updated_body=_GOL_UPDATED_BODY,
         middle_marker="THE company shall provide engines that are competitive in power output and fuel consumption.",
@@ -771,6 +798,8 @@ _CASES: list[_Case] = [
         doc_type="rsk",
         create=create_rsk,
         not_found_error=RskNotFoundError,
+        frontmatter_type=RskFrontmatter,
+        document_type=RskDocument,
         minimal_body=_RSK_MINIMAL_BODY,
         updated_body=_RSK_UPDATED_BODY,
         middle_marker="A root condition.",
@@ -790,6 +819,8 @@ _CASES: list[_Case] = [
         doc_type="dec",
         create=create_dec,
         not_found_error=DecNotFoundError,
+        frontmatter_type=DecFrontmatter,
+        document_type=DecDocument,
         minimal_body=_DEC_MINIMAL_BODY,
         updated_body=_DEC_UPDATED_BODY,
         middle_marker="Something is wrong with the status quo.",
@@ -815,6 +846,8 @@ _CASES: list[_Case] = [
         doc_type="sop",
         create=create_sop,
         not_found_error=SopNotFoundError,
+        frontmatter_type=SopFrontmatter,
+        document_type=SopDocument,
         minimal_body=_SOP_MINIMAL_BODY,
         updated_body=_SOP_UPDATED_BODY,
         middle_marker="Provision accounts for new hires.",
@@ -834,6 +867,8 @@ _CASES: list[_Case] = [
         doc_type="vcr",
         create=create_vcr,
         not_found_error=VcrNotFoundError,
+        frontmatter_type=VcrFrontmatter,
+        document_type=VcrDocument,
         minimal_body=_VCR_MINIMAL_BODY,
         updated_body=_VCR_UPDATED_BODY,
         middle_marker="Confirms that the sample requirement is met.",
@@ -901,6 +936,9 @@ class TestUpdateWholeBody(TempDocsDirTestCase):
 
                 result = update(id=created.id, type=case.doc_type, content=case.updated_body)
 
+                self.assertIsInstance(result, case.frontmatter_type)
+                self.assertNotIsInstance(result, case.document_type)
+                self.assertFalse(hasattr(result, "body"))
                 self.assertEqual(result.id, created.id)
                 self.assertEqual(result.type, case.doc_type)
                 self.assertEqual(result.status, created.status)

@@ -28,7 +28,7 @@ from unittest import mock
 
 from pydantic import ValidationError
 
-from biz.dfch.specmgr.feat.models.v1 import FeatFrontmatter, parse_feat
+from biz.dfch.specmgr.feat.models.v1 import FeatDocument, FeatFrontmatter, parse_feat
 from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR, README_FILENAME, feat_base_dir
 from biz.dfch.specmgr.feat.tools.create_feat import create_feat
 from biz.dfch.specmgr.feat.tools.get_feat import get_feat
@@ -119,6 +119,8 @@ class TestCreateFeat(TempFeatDirTestCase):
         result = create_feat(_MINIMAL_BODY)
 
         self.assertIsInstance(result, FeatFrontmatter)
+        self.assertNotIsInstance(result, FeatDocument)
+        self.assertFalse(hasattr(result, "body"))
         self.assertEqual(result.id, "feat-0-example-widget")
         self.assertEqual(result.type, "feat")
         self.assertEqual(result.status, "planning")

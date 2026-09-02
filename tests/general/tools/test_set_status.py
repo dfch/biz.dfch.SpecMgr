@@ -55,6 +55,7 @@ import frontmatter
 from pydantic import ValidationError
 
 from biz.dfch.specmgr.adr.tools._paths import ADR_DIR_ENV_VAR, AdrNotFoundError, adr_base_dir
+from biz.dfch.specmgr.dec.models.v1 import DecDocument, DecFrontmatter
 from biz.dfch.specmgr.dec.models.v1.frontmatter import _ALLOWED_STATUSES as _DEC_ALLOWED_STATUSES
 from biz.dfch.specmgr.dec.tools._paths import DecNotFoundError, dec_base_dir
 from biz.dfch.specmgr.dec.tools.create_dec import create_dec
@@ -63,32 +64,41 @@ from biz.dfch.specmgr.feat.tools.create_feat import create_feat
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.general.tools._splice import body_text
 from biz.dfch.specmgr.general.tools.set_status import set_status
+from biz.dfch.specmgr.gol.models.v1 import GolDocument, GolFrontmatter
 from biz.dfch.specmgr.gol.models.v1.frontmatter import _ALLOWED_STATUSES as _GOL_ALLOWED_STATUSES
 from biz.dfch.specmgr.gol.tools._paths import GolNotFoundError, gol_base_dir
 from biz.dfch.specmgr.gol.tools.create_gol import create_gol
 from biz.dfch.specmgr.models.adr import Adr, AdrBody, AdrFrontmatter, parse_adr, render_adr
 from biz.dfch.specmgr.models.adr.v1.frontmatter import _FIXED_STATUSES as _ADR_ALLOWED_STATUSES
+from biz.dfch.specmgr.prb.models.v1 import PrbDocument, PrbFrontmatter
 from biz.dfch.specmgr.prb.models.v1.frontmatter import _ALLOWED_STATUSES as _PRB_ALLOWED_STATUSES
 from biz.dfch.specmgr.prb.tools._paths import PrbNotFoundError, prb_base_dir
 from biz.dfch.specmgr.prb.tools.create_prb import create_prb
+from biz.dfch.specmgr.qa.models.v2 import QaDocument, QaFrontmatter
 from biz.dfch.specmgr.qa.models.v2.frontmatter import _ALLOWED_STATUSES as _QA_ALLOWED_STATUSES
 from biz.dfch.specmgr.qa.tools._paths import QaNotFoundError, qa_base_dir
 from biz.dfch.specmgr.qa.tools.create_qa import create_qa
+from biz.dfch.specmgr.req.models.v1 import ReqDocument, ReqFrontmatter
 from biz.dfch.specmgr.req.models.v1.frontmatter import _ALLOWED_STATUSES as _REQ_ALLOWED_STATUSES
 from biz.dfch.specmgr.req.tools._paths import ReqNotFoundError, req_base_dir
 from biz.dfch.specmgr.req.tools.create_req import create_req
+from biz.dfch.specmgr.rsk.models.v1 import RskDocument, RskFrontmatter
 from biz.dfch.specmgr.rsk.models.v1.frontmatter import _ALLOWED_STATUSES as _RSK_ALLOWED_STATUSES
 from biz.dfch.specmgr.rsk.tools._paths import RskNotFoundError, rsk_base_dir
 from biz.dfch.specmgr.rsk.tools.create_rsk import create_rsk
+from biz.dfch.specmgr.sop.models.v1 import SopDocument, SopFrontmatter
 from biz.dfch.specmgr.sop.models.v1.frontmatter import _ALLOWED_STATUSES as _SOP_ALLOWED_STATUSES
 from biz.dfch.specmgr.sop.tools._paths import SopNotFoundError, sop_base_dir
 from biz.dfch.specmgr.sop.tools.create_sop import create_sop
+from biz.dfch.specmgr.tsk.models.v1 import TskDocument, TskFrontmatter
 from biz.dfch.specmgr.tsk.models.v1.frontmatter import _ALLOWED_STATUSES as _TSK_ALLOWED_STATUSES
 from biz.dfch.specmgr.tsk.tools._paths import TskNotFoundError, tsk_base_dir
 from biz.dfch.specmgr.tsk.tools.create_tsk import create_tsk
+from biz.dfch.specmgr.uc.models.v2 import UcDocument, UcFrontmatter
 from biz.dfch.specmgr.uc.models.v2.frontmatter import _ALLOWED_STATUSES as _UC_ALLOWED_STATUSES
 from biz.dfch.specmgr.uc.tools._paths import UcNotFoundError, uc_base_dir
 from biz.dfch.specmgr.uc.tools.create_uc import create_uc
+from biz.dfch.specmgr.vcr.models.v1 import VcrDocument, VcrFrontmatter
 from biz.dfch.specmgr.vcr.models.v1.frontmatter import _ALLOWED_STATUSES as _VCR_ALLOWED_STATUSES
 from biz.dfch.specmgr.vcr.tools._paths import VcrNotFoundError, vcr_base_dir
 from biz.dfch.specmgr.vcr.tools.create_vcr import create_vcr
@@ -347,6 +357,11 @@ class _Case:
     doc_type: str
     create: Callable[[str], Any]
     not_found_error: type[Exception]
+    #: The domain's own frontmatter class -- the type ``set_status`` must return (feat-69).
+    frontmatter_type: type
+    #: The domain's own document (frontmatter+body wrapper) class -- what ``set_status`` must
+    #: NOT return any more (feat-69).
+    document_type: type
     minimal_body: str
     #: A value from the domain's OWN closed set (the positive vocabulary case).
     valid_status: str
@@ -362,6 +377,8 @@ _CASES: list[_Case] = [
         doc_type="req",
         create=create_req,
         not_found_error=ReqNotFoundError,
+        frontmatter_type=ReqFrontmatter,
+        document_type=ReqDocument,
         minimal_body=_REQ_MINIMAL_BODY,
         valid_status="accepted",
         invalid_status="open",
@@ -371,6 +388,8 @@ _CASES: list[_Case] = [
         doc_type="uc",
         create=create_uc,
         not_found_error=UcNotFoundError,
+        frontmatter_type=UcFrontmatter,
+        document_type=UcDocument,
         minimal_body=_UC_MINIMAL_BODY,
         valid_status="accepted",
         invalid_status="implemented",
@@ -380,6 +399,8 @@ _CASES: list[_Case] = [
         doc_type="tsk",
         create=create_tsk,
         not_found_error=TskNotFoundError,
+        frontmatter_type=TskFrontmatter,
+        document_type=TskDocument,
         minimal_body=_TSK_MINIMAL_BODY,
         valid_status="active",
         invalid_status="implemented",
@@ -389,6 +410,8 @@ _CASES: list[_Case] = [
         doc_type="qa",
         create=create_qa,
         not_found_error=QaNotFoundError,
+        frontmatter_type=QaFrontmatter,
+        document_type=QaDocument,
         minimal_body=_QA_MINIMAL_BODY,
         valid_status="active",
         invalid_status="implemented",
@@ -398,6 +421,8 @@ _CASES: list[_Case] = [
         doc_type="prb",
         create=create_prb,
         not_found_error=PrbNotFoundError,
+        frontmatter_type=PrbFrontmatter,
+        document_type=PrbDocument,
         minimal_body=_PRB_MINIMAL_BODY,
         valid_status="active",
         invalid_status="implemented",
@@ -407,6 +432,8 @@ _CASES: list[_Case] = [
         doc_type="gol",
         create=create_gol,
         not_found_error=GolNotFoundError,
+        frontmatter_type=GolFrontmatter,
+        document_type=GolDocument,
         minimal_body=_GOL_MINIMAL_BODY,
         valid_status="accepted",
         invalid_status="open",
@@ -416,6 +443,8 @@ _CASES: list[_Case] = [
         doc_type="rsk",
         create=create_rsk,
         not_found_error=RskNotFoundError,
+        frontmatter_type=RskFrontmatter,
+        document_type=RskDocument,
         minimal_body=_RSK_MINIMAL_BODY,
         valid_status="mitigating",
         invalid_status="implemented",
@@ -425,6 +454,8 @@ _CASES: list[_Case] = [
         doc_type="dec",
         create=create_dec,
         not_found_error=DecNotFoundError,
+        frontmatter_type=DecFrontmatter,
+        document_type=DecDocument,
         minimal_body=_DEC_MINIMAL_BODY,
         valid_status="accepted",
         invalid_status="implemented",
@@ -434,6 +465,8 @@ _CASES: list[_Case] = [
         doc_type="sop",
         create=create_sop,
         not_found_error=SopNotFoundError,
+        frontmatter_type=SopFrontmatter,
+        document_type=SopDocument,
         minimal_body=_SOP_MINIMAL_BODY,
         valid_status="active",
         invalid_status="implemented",
@@ -443,6 +476,8 @@ _CASES: list[_Case] = [
         doc_type="vcr",
         create=create_vcr,
         not_found_error=VcrNotFoundError,
+        frontmatter_type=VcrFrontmatter,
+        document_type=VcrDocument,
         minimal_body=_VCR_MINIMAL_BODY,
         valid_status="progress",
         invalid_status="accepted",
@@ -520,6 +555,9 @@ class TestSetStatusWholeBodyDomains(TempDocsDirTestCase):
 
                 result = set_status(id=doc_id, type=case.doc_type, status=case.valid_status)
 
+                self.assertIsInstance(result, case.frontmatter_type)
+                self.assertNotIsInstance(result, case.document_type)
+                self.assertFalse(hasattr(result, "body"))
                 self.assertEqual(result.status, case.valid_status)
                 self.assertEqual(result.id, created.id)
                 self.assertEqual(result.type, case.doc_type)
@@ -583,6 +621,11 @@ class TestSetStatusAdr(TempDocsDirTestCase):
 
         result = set_status(id=_ADR_ID, type="adr", status="accepted")
 
+        # feat-69 regression: the ADR branch is explicitly out of scope for the
+        # frontmatter-only response change -- set_status(type="adr", ...) must
+        # keep returning the full `Adr` document, body included, unaffected.
+        self.assertIsInstance(result, Adr)
+        self.assertEqual(result.body, _ADR_SEED_BODY)
         self.assertEqual(result.frontmatter.status, "accepted")
         on_disk = parse_adr(path.read_text(encoding="utf-8"))
         self.assertEqual(on_disk.frontmatter.status, "accepted")

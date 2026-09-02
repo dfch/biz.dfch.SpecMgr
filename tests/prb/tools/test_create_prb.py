@@ -27,7 +27,7 @@ from unittest import mock
 
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.models.md import CURRENT_SCHEMA_VERSION
-from biz.dfch.specmgr.prb.models.v1 import PrbFrontmatter, parse_prb
+from biz.dfch.specmgr.prb.models.v1 import PrbDocument, PrbFrontmatter, parse_prb
 from biz.dfch.specmgr.prb.tools._paths import prb_base_dir
 from biz.dfch.specmgr.prb.tools.create_prb import create_prb
 from biz.dfch.specmgr.prb.tools.get_prb import get_prb
@@ -87,6 +87,8 @@ class TestCreatePrb(TempPrbDirTestCase):
         result = create_prb(_MINIMAL_BODY)
 
         self.assertIsInstance(result, PrbFrontmatter)
+        self.assertNotIsInstance(result, PrbDocument)
+        self.assertFalse(hasattr(result, "body"))
         self.assertIsNotNone(result.id)
         self.assertEqual(result.type, "prb")
         self.assertEqual(result.status, "draft")

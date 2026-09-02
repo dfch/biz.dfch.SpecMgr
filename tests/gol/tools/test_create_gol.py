@@ -28,7 +28,7 @@ from unittest import mock
 from pydantic import ValidationError
 
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
-from biz.dfch.specmgr.gol.models.v1 import GolFrontmatter, parse_gol
+from biz.dfch.specmgr.gol.models.v1 import GolDocument, GolFrontmatter, parse_gol
 from biz.dfch.specmgr.gol.tools._paths import gol_base_dir
 from biz.dfch.specmgr.gol.tools.create_gol import create_gol
 from biz.dfch.specmgr.gol.tools.get_gol import get_gol
@@ -81,6 +81,8 @@ class TestCreateGol(TempGolDirTestCase):
         result = create_gol(_MINIMAL_BODY)
 
         self.assertIsInstance(result, GolFrontmatter)
+        self.assertNotIsInstance(result, GolDocument)
+        self.assertFalse(hasattr(result, "body"))
         self.assertIsNotNone(result.id)
         self.assertEqual(result.type, "gol")
         self.assertEqual(result.status, "draft")

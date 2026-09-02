@@ -27,7 +27,7 @@ from unittest import mock
 
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.models.md import CURRENT_SCHEMA_VERSION
-from biz.dfch.specmgr.tsk.models.v1 import TskFrontmatter, parse_tsk
+from biz.dfch.specmgr.tsk.models.v1 import TskDocument, TskFrontmatter, parse_tsk
 from biz.dfch.specmgr.tsk.tools._paths import tsk_base_dir
 from biz.dfch.specmgr.tsk.tools.create_tsk import create_tsk
 from biz.dfch.specmgr.tsk.tools.get_tsk import get_tsk
@@ -88,6 +88,8 @@ class TestCreateTsk(TempTskDirTestCase):
         result = create_tsk(_MINIMAL_BODY)
 
         self.assertIsInstance(result, TskFrontmatter)
+        self.assertNotIsInstance(result, TskDocument)
+        self.assertFalse(hasattr(result, "body"))
         self.assertIsNotNone(result.id)
         self.assertEqual(result.type, "tsk")
         self.assertEqual(result.status, "draft")

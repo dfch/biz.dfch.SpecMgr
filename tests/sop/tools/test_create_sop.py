@@ -29,7 +29,7 @@ from pydantic import ValidationError
 
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.models.md import CURRENT_SCHEMA_VERSION
-from biz.dfch.specmgr.sop.models.v1 import SopFrontmatter, parse_sop
+from biz.dfch.specmgr.sop.models.v1 import SopDocument, SopFrontmatter, parse_sop
 from biz.dfch.specmgr.sop.tools._paths import sop_base_dir
 from biz.dfch.specmgr.sop.tools.create_sop import create_sop
 from biz.dfch.specmgr.sop.tools.get_sop import get_sop
@@ -92,6 +92,8 @@ class TestCreateSop(TempSopDirTestCase):
         result = create_sop(_MINIMAL_BODY)
 
         self.assertIsInstance(result, SopFrontmatter)
+        self.assertNotIsInstance(result, SopDocument)
+        self.assertFalse(hasattr(result, "body"))
         self.assertIsNotNone(result.id)
         self.assertEqual(result.type, "sop")
         self.assertEqual(result.status, "draft")

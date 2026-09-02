@@ -27,7 +27,7 @@ from unittest import mock
 
 from pydantic import ValidationError
 
-from biz.dfch.specmgr.dec.models.v1 import DecFrontmatter, parse_dec
+from biz.dfch.specmgr.dec.models.v1 import DecDocument, DecFrontmatter, parse_dec
 from biz.dfch.specmgr.dec.tools._paths import dec_base_dir
 from biz.dfch.specmgr.dec.tools.create_dec import create_dec
 from biz.dfch.specmgr.dec.tools.get_dec import get_dec
@@ -94,6 +94,8 @@ class TestCreateDec(TempDecDirTestCase):
         result = create_dec(_MINIMAL_BODY)
 
         self.assertIsInstance(result, DecFrontmatter)
+        self.assertNotIsInstance(result, DecDocument)
+        self.assertFalse(hasattr(result, "body"))
         self.assertIsNotNone(result.id)
         self.assertEqual(result.type, "dec")
         self.assertEqual(result.status, "draft")

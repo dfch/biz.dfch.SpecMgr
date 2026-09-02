@@ -29,7 +29,7 @@ from pydantic import ValidationError
 
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.models.md import CURRENT_SCHEMA_VERSION
-from biz.dfch.specmgr.uc.models.v2 import UcFrontmatter, parse_uc
+from biz.dfch.specmgr.uc.models.v2 import UcDocument, UcFrontmatter, parse_uc
 from biz.dfch.specmgr.uc.tools._paths import uc_base_dir
 from biz.dfch.specmgr.uc.tools.create_uc import create_uc
 from biz.dfch.specmgr.uc.tools.get_uc import get_uc
@@ -94,6 +94,8 @@ class TestCreateUc(TempUcDirTestCase):
         result = create_uc(_MINIMAL_BODY)
 
         self.assertIsInstance(result, UcFrontmatter)
+        self.assertNotIsInstance(result, UcDocument)
+        self.assertFalse(hasattr(result, "body"))
         self.assertIsNotNone(result.id)
         self.assertEqual(result.type, "uc")
         self.assertEqual(result.status, "draft")

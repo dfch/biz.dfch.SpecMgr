@@ -55,7 +55,7 @@ from unittest import mock
 import frontmatter
 from pydantic import ValidationError
 
-from biz.dfch.specmgr.feat.models.v1 import FeatFrontmatter
+from biz.dfch.specmgr.feat.models.v1 import FeatDocument, FeatFrontmatter
 from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR, FeatNotFoundError, README_FILENAME, feat_base_dir
 from biz.dfch.specmgr.feat.tools.create_feat import create_feat
 from biz.dfch.specmgr.feat.tools.get_feat import get_feat
@@ -219,6 +219,9 @@ class TestFeatLifecycleIntegration(TempFeatDirTestCase):
         #    microsecond timestamp format every other domain uses) and preserve
         #    id/type/status/created/version (ACC-004).
         updated = update(feat_id, "feat", _REVISED_BODY)
+        self.assertIsInstance(updated, FeatFrontmatter)
+        self.assertNotIsInstance(updated, FeatDocument)
+        self.assertFalse(hasattr(updated, "body"))
         self.assertEqual(updated.id, created.id)
         self.assertEqual(updated.type, created.type)
         self.assertEqual(updated.created, created.created)
@@ -239,6 +242,9 @@ class TestFeatLifecycleIntegration(TempFeatDirTestCase):
         # 5. set_status (type="feat"): only status/updated may change; the body (already
         #    revised in steps 4/4b) must be carried forward verbatim, untouched.
         in_progress = set_status(feat_id, "feat", "progress")
+        self.assertIsInstance(in_progress, FeatFrontmatter)
+        self.assertNotIsInstance(in_progress, FeatDocument)
+        self.assertFalse(hasattr(in_progress, "body"))
         self.assertEqual(in_progress.status, "progress")
         self.assertEqual(in_progress.id, updated.id)
         self.assertEqual(in_progress.created, updated.created)

@@ -4,7 +4,7 @@ created: '2026-09-02 21:49:41.712+02:00'
 id: feat-69-update-context
 status: planning
 type: feat
-updated: '2026-09-02 23:20:00.000+02:00'
+updated: '2026-09-02 23:55:00.000+02:00'
 version: 1.0.0
 ---
 
@@ -28,13 +28,13 @@ Every mutating MCP tool call currently returns the fully re-parsed document (fro
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: After a successful `update` call, the response contains the document's frontmatter only -- no body content.
-- [ ] ACC-002: After a successful `set_status` call, the response contains the document's frontmatter only (reflecting the new status/updated) -- no body content.
-- [ ] ACC-003: After a successful `set_classification` call, the response contains the document's frontmatter only (reflecting the new classification/updated) -- no body content.
-- [ ] ACC-004: After a successful `create_<d>` call, the response contains the newly generated frontmatter only -- no body content.
+- [x] ACC-001: After a successful `update` call, the response contains the document's frontmatter only -- no body content.
+- [x] ACC-002: After a successful `set_status` call, the response contains the document's frontmatter only (reflecting the new status/updated) -- no body content.
+- [x] ACC-003: After a successful `set_classification` call, the response contains the document's frontmatter only (reflecting the new classification/updated) -- no body content.
+- [x] ACC-004: After a successful `create_<d>` call, the response contains the newly generated frontmatter only -- no body content.
 - [ ] ACC-005: A validation/parse error from any of the above still returns the existing detailed error message, unchanged.
-- [ ] ACC-006: `delete` and all ADR-specific tools are verified unchanged by this feature (regression check, not new behavior).
-- [ ] ACC-007: Tests updated/added across all eleven whole-body domains plus the three generic tools to assert frontmatter-only responses.
+- [x] ACC-006: `delete` and all ADR-specific tools are verified unchanged by this feature (regression check, not new behavior).
+- [x] ACC-007: Tests updated/added across all eleven whole-body domains plus the three generic tools to assert frontmatter-only responses.
 
 ### Scope
 
@@ -97,9 +97,9 @@ The shared contract: every in-scope tool's success return type stays the same do
 
 #### Phase 4: Tests
 
-- [ ] Task 4.1: Update/add unit tests asserting frontmatter-only responses for update/set_status/set_classification/`create_<d>` across all 11 domains.
-- [ ] Task 4.2: Add a regression test confirming `delete` and ADR tools are unaffected.
-- [ ] Task 4.3: Run the full test suite plus `ruff format --check`/`ruff check`/`vulture` before moving to Phase 5.
+- [x] Task 4.1: Update/add unit tests asserting frontmatter-only responses for update/set_status/set_classification/`create_<d>` across all 11 domains.
+- [x] Task 4.2: Add a regression test confirming `delete` and ADR tools are unaffected.
+- [x] Task 4.3: Run the full test suite plus `ruff format --check`/`ruff check`/`vulture` before moving to Phase 5.
 
 #### Phase 5: Docs
 
@@ -111,11 +111,79 @@ The shared contract: every in-scope tool's success return type stays the same do
 
 ### Current Status
 
-**As of 2026-09-02**: Feature drafted from GitHub issue #69. Root cause confirmed by reading source: `update`, `set_status`, `set_classification`, and every per-domain `create_<d>` tool return the fully re-parsed document (frontmatter + body) on every successful write; `delete` already returns a minimal path string, and ADR-specific tools are out of scope for this feature. Approach agreed: all in-scope tools switch to a frontmatter-only response (small, bounded size) instead of frontmatter+body (unbounded, growing with document size); error paths are untouched. No prompts currently document the old response shape, so no prompt changes are needed. **Phase 1 (design) is complete**: the frontmatter-only contract is formalized in Design Notes (return type change, removal of the now-pointless `XxxDocument(...)` wrapping construction, no new models needed, error paths untouched by design) and verified against every domain's `document.py`; Task 1.2's prompt-shape check is confirmed clean. **Phase 2 (generic tools) is complete**: `update`, `set_status` (its 11 non-adr adapters; the `adr` branch is unchanged), and `set_classification` all now return the domain's `XxxFrontmatter` object directly instead of the full `XxxDocument`. Full test suite green (3070 tests), ruff/vulture clean. **Phase 3 (per-domain `create_<d>` tools) is complete**: all 11 `create_<d>` tools now return the domain's `XxxFrontmatter` object directly instead of the full `XxxDocument`. Full test suite green (3070 tests), ruff/vulture clean. Phase 4 (tests) has not started.
+**As of 2026-09-02**: Feature drafted from GitHub issue #69. Root cause confirmed by reading source: `update`, `set_status`, `set_classification`, and every per-domain `create_<d>` tool return the fully re-parsed document (frontmatter + body) on every successful write; `delete` already returns a minimal path string, and ADR-specific tools are out of scope for this feature. Approach agreed: all in-scope tools switch to a frontmatter-only response (small, bounded size) instead of frontmatter+body (unbounded, growing with document size); error paths are untouched. No prompts currently document the old response shape, so no prompt changes are needed. **Phase 1 (design) is complete**: the frontmatter-only contract is formalized in Design Notes (return type change, removal of the now-pointless `XxxDocument(...)` wrapping construction, no new models needed, error paths untouched by design) and verified against every domain's `document.py`; Task 1.2's prompt-shape check is confirmed clean. **Phase 2 (generic tools) is complete**: `update`, `set_status` (its 11 non-adr adapters; the `adr` branch is unchanged), and `set_classification` all now return the domain's `XxxFrontmatter` object directly instead of the full `XxxDocument`. Full test suite green (3070 tests), ruff/vulture clean. **Phase 3 (per-domain `create_<d>` tools) is complete**: all 11 `create_<d>` tools now return the domain's `XxxFrontmatter` object directly instead of the full `XxxDocument`. Full test suite green (3070 tests), ruff/vulture clean. **Phase 4 (tests) is complete**: every in-scope test file now carries explicit, positive assertions (`assertIsInstance(result, XxxFrontmatter)` + `assertNotIsInstance(result, XxxDocument)` + `assertFalse(hasattr(result, "body"))`) proving the frontmatter-only contract, plus explicit regression assertions that `delete`/ADR tools are unaffected. Full test suite green (3071 tests), ruff/vulture clean. Phase 5 (docs) has not started.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-02 23:55:00.000+02:00 - Phase 4 done: explicit frontmatter-only assertions added across all in-scope tests
+
+Completed Phase 4 (Tasks 4.1-4.3). Phases 2/3 already fixed every test that broke from the
+return-shape change (rewriting `.frontmatter.X`/`.body.X` reads, and swapping
+`assertIsInstance(result, XxxDocument)` to `assertIsInstance(result, XxxFrontmatter)` where a
+test happened to touch that). Phase 4's job was to go one step further: add explicit, *positive*
+assertions -- for each of the 14 in-scope tools (`update`, `set_status`, `set_classification`,
+and all 11 `create_<d>`), a block of three assertions next to the existing
+`assertIsInstance(result, XxxFrontmatter)`:
+`self.assertIsInstance(result, XxxFrontmatter)` (already present everywhere checked),
+`self.assertNotIsInstance(result, XxxDocument)` (a genuinely new negative check -- confirmed it
+did not exist anywhere before this phase), and `self.assertFalse(hasattr(result, "body"))`
+(confirms the response is structurally bounded, not merely "the same type with an empty body" --
+verified `hasattr` is `False` on `ReqFrontmatter` before relying on it everywhere else, since
+Pydantic frontmatter models declare no `body` field).
+
+- **`create_<d>` (all 11 domains)**: each domain's own `tests/<d>/tools/test_create_<d>.py`
+  already had a `test_builds_frontmatter_and_returns_document` test asserting
+  `assertIsInstance(result, XxxFrontmatter)`; added the two new assertions immediately after it
+  in all 11 files (`req`, `uc`, `tsk`, `qa`, `prb`, `gol`, `rsk`, `dec`, `sop`, `feat`, `vcr`),
+  importing each domain's `XxxDocument` class alongside the already-imported `XxxFrontmatter`.
+- **`update`**: `tests/general/tools/test_update.py`'s `_CASES` list (covering 10 of the 11
+  whole-body domains -- `feat` is tested separately via `tests/feat/tools/test_integration.py`,
+  since its fixture/addressing strategy differs from the other ten's flat-file `_seed`/`_doc_path`
+  helpers) is genuinely data-driven; extended the shared `_Case` dataclass with
+  `frontmatter_type`/`document_type` fields, populated them for all 10 cases, and added the three
+  assertions once in `TestUpdateWholeBody.test_replaces_body_preserving_id_type_status_created_version`
+  (the one test that actually captures `update`'s own return value) -- covering all 10 domains
+  through the existing `for case in _CASES:` loop, not 10 near-duplicate test methods. Added the
+  same three assertions to `tests/feat/tools/test_integration.py`'s own `update(...)` call (step
+  4 of its lifecycle walkthrough) for `feat`'s coverage.
+- **`set_status`**: same data-driven pattern in `tests/general/tools/test_set_status.py`'s
+  `TestSetStatusWholeBodyDomains` class (its `_CASES` also excludes `feat`, mirroring `update`'s
+  own test file) -- extended `_Case` the same way and added the three assertions once in
+  `test_changes_status_bumps_updated_leaves_body_untouched`. Added the same three assertions to
+  `tests/feat/tools/test_integration.py`'s `set_status(...)` call (step 5) for `feat`'s coverage.
+  The ADR-specific `TestSetStatusAdr` class was deliberately left alone for the frontmatter-only
+  assertions (out of scope) but gained the Task 4.2 regression assertion instead (see below).
+- **`set_classification`**: same data-driven pattern in
+  `tests/general/tools/test_set_classification.py`'s `TestSetClassificationWholeBodyDomains`
+  class -- this file's `_CASES` already included `feat` (unlike `update`'s/`set_status`'s own),
+  so all 11 domains are covered through the single data-driven assertion block added to
+  `test_sets_classification_bumps_updated_leaves_body_untouched`.
+- **Task 4.2 (delete/ADR regression)**: added `self.assertIsInstance(result, str)` to
+  `tests/general/tools/test_delete.py`'s `test_delete_returns_deleted_path_and_removes_the_document`
+  (delete's minimal-payload contract was already exercised via `assertEqual(result, str(target))`
+  but never explicitly type-checked). Added `self.assertIsInstance(result, Adr)` plus a `.body`
+  equality check to `tests/general/tools/test_set_status.py`'s
+  `TestSetStatusAdr.test_changes_plain_status_with_superseded_by_none` (the ADR branch's success
+  path). Added a new `test_response_is_full_document_with_body_intact` test method to
+  `tests/adr/tools/test_create_adr.py` confirming `create_adr` still returns the full `Adr`
+  document with `.body`/`.frontmatter` both intact (inspected `models/adr/v1/adr.py` first to
+  confirm `Adr`'s exact `frontmatter`/`body` attribute names). Confirmed by inspection (no new
+  tests needed) that `update_frontmatter`/`update_section`/`option_create`/`option_read`/
+  `option_update`/`option_delete` -- all in `adr/tools/`, never touched by Phases 2/3 since they
+  live outside `general/tools/` -- already assert full-document-with-body return shapes in their
+  existing test files (`test_update_frontmatter.py`'s/`test_update_section.py`'s own
+  `.frontmatter.*`/`.body.*` assertions on their `create_adr`/`update_frontmatter`/
+  `update_section` return values; the four `option_*` tools return bare strings/lists by design,
+  not documents, so there is no document-shape claim to regress-test for them at all).
+
+Quality gate, all green: `ruff format --check` (1541 files already formatted), `ruff check` (all
+checks passed -- one `F401` self-inflicted during drafting, an unused `FeatFrontmatter`/
+`FeatDocument` import added to `test_update.py` before realizing `feat` is not in that file's
+`_CASES`; removed), `vulture src/ whitelist.py --min-confidence 60` (no findings),
+`python -m unittest discover -v -s tests -t . -p "test_*.py"` (3071 tests -- one more than
+Phase 3's 3070, from the new `test_create_adr.py` regression method -- all passing).
 
 #### 2026-09-02 23:20:00.000+02:00 - Phase 3 done: all 11 `create_<d>` tools return frontmatter-only
 
@@ -154,6 +222,20 @@ Feature drafted from GitHub issue #69, covering the generic `update`/`set_status
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-02 23:55:00.000+02:00 - Placed `feat`'s `update`/`set_status` frontmatter-only assertions in `test_integration.py`, not the generic test files (Phase 4)
+
+`tests/general/tools/test_update.py`'s and `tests/general/tools/test_set_status.py`'s own
+`_CASES` lists both, pre-existing before this feature, exclude `feat` (its folder-per-document
+fixture/addressing strategy differs from the other ten domains' flat-file `_seed`/`_doc_path`
+helpers) -- `feat`'s coverage of the generic `update`/`set_status` tools already lived solely in
+`tests/feat/tools/test_integration.py`'s lifecycle walkthrough. Rather than bolt a parallel,
+one-off `feat` case onto either generic test file's data-driven `_CASES` (a structural change
+beyond this test-only phase's scope) or invent a new test file, added the three frontmatter-only
+assertions directly to `test_integration.py`'s existing `update(...)`/`set_status(...)` call
+sites -- consistent with the plan's own instruction to extend an existing, naturally-fitting test
+rather than duplicate structure. `set_classification`'s own `_CASES` already included `feat`
+before this phase, so no equivalent judgment call was needed there.
 
 #### 2026-09-02 23:20:00.000+02:00 - Left each create_<d> module docstring's `:class:` cross-reference to `XxxDocument` alone (Phase 3)
 
