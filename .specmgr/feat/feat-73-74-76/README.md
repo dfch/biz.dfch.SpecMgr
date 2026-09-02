@@ -54,11 +54,11 @@ This feature tracks three independent maintenance/quality-gap issues opened on 2
 
 #### Phase 1: NOTICE License Audit (#73)
 
-- [ ] Task 1.1: List every direct 3rd-party library dependency from pyproject.toml.
+- [x] Task 1.1: List every direct 3rd-party library dependency from pyproject.toml.
 
-- [ ] Task 1.2: For each dependency, verify NOTICE lists the correct license type and attribution text (using #47/mdformat-simple-breaks as the worked example).
+- [x] Task 1.2: For each dependency, verify NOTICE lists the correct license type and attribution text (using #47/mdformat-simple-breaks as the worked example).
 
-- [ ] Task 1.3: Fix any discrepancies found in NOTICE.
+- [x] Task 1.3: Fix any discrepancies found in NOTICE.
 
 #### Phase 2: sysrs Config/Gap Analysis (#74)
 
@@ -86,11 +86,26 @@ This feature tracks three independent maintenance/quality-gap issues opened on 2
 
 ### Current Status
 
-**As of 2026-09-02**: Feature just created to track issues #73, #74, and #76. No implementation work has started yet; all three sub-issues are in the planning/investigation stage.
+**As of 2026-09-03**: Phase 1 (NOTICE license audit, #73) is complete. All direct dependencies from `pyproject.toml` were verified against installed package metadata (`importlib.metadata` + each package's own `*.dist-info/licenses/LICENSE*` file), several copyright-holder discrepancies were fixed, and NOTICE entries for the three previously-missing direct dependencies (`mdformat`, `mdformat-simple-breaks`, `httpx`) were added. Phase 2 (#74) and Phase 3 (#76) have not started.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-03 12:00:00.000+02:00 - Phase 1 complete: NOTICE license audit and corrections (#73)
+
+Verified all 10 direct dependencies from `pyproject.toml` (base: `pydantic`, `python-dotenv`, `markdown-it-py`, `python-frontmatter`, `mdformat`, `mdformat-simple-breaks`; `cli` extra: `typer`, `rich`; `mcp` extra: `mcp`, `httpx`) against each package's installed `*.dist-info/licenses/LICENSE*` file (source of truth, not guesswork). `test`/`dev` extras were confirmed out of scope by NOTICE's own header wording ("this project depends on the following third-party libraries") and existing convention (only base + `cli` + `mcp` extras were ever listed).
+
+Findings and fixes in `NOTICE`:
+- `pydantic`: copyright line was stale ("Samuel Colvin and contributors") -- corrected to the actual current holder, "Pydantic Services Inc. and individual contributors" (with the "2017 to present" year range from the shipped LICENSE file).
+- `python-dotenv`: copyright line was wrong (attributed only to "Saurabh Kumar", omitting the "Ted Tieken"/"Jacob Kaplan-Moss" original django-dotenv authors) and the reproduced license body's disclaimer used a generic numbered-list BSD-3-Clause template instead of python-dotenv's actual bullet-list wording ("Neither the name of django-dotenv..." not "...the copyright holder..."). Both corrected to match the installed LICENSE file verbatim.
+- `typer`: copyright line was missing its year (2019) present in the actual LICENSE file -- added.
+- `rich`: copyright line was missing its year (2020) present in the actual LICENSE file -- added.
+- `mcp` / `mcp-types`: copyright line was materially wrong -- NOTICE attributed it to "Model Context Protocol, a Series of LF Projects, LLC." but the package's actual shipped LICENSE file reads "Copyright (c) 2024 Anthropic, PBC". Corrected.
+- `markdown-it-py` and `python-frontmatter`: already correct, verified verbatim against their installed LICENSE files, no changes needed.
+- Added missing entries for the three direct dependencies NOTICE omitted entirely: `mdformat` (MIT, Copyright (c) 2021 Taneli Hukkinen, https://github.com/hukkin/mdformat), `mdformat-simple-breaks` (MIT, Copyright (c) 2023 Carles Sala, https://github.com/csala/mdformat-simple-breaks -- this is the #47 worked example the issue names, and it had never been added to NOTICE when the dependency was introduced), and `httpx` (the `mcp` extra's other runtime dependency, `optional "mcp" extra` annotation like `mcp` itself) -- NOTE: `httpx` is BSD-3-Clause, copyright Encode OSS Ltd (2019), NOT MIT as initially assumed; verified against its shipped `LICENSE.md`.
+
+Confirmed via `git grep -rln NOTICE` that no test, CI workflow, or config file depends on NOTICE's exact content (only documentation/changelog references exist) -- this phase required no test run, matching the plan's Phase 1 scope (no Task 1.4 quality-gate task).
 
 #### 2026-09-03 00:06:00.000+02:00 - Added final quality-gate tasks to Phase 2 and Phase 3
 
