@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.20.0] - 2026-09-03
+
+### Added
+
+- `confluence_update` now sets the Confluence page's title from the source
+  markdown's first H1 heading, falling back to the existing (GET-fetched)
+  title unchanged when no H1 is present (GitHub issue #76).
+
+### Fixed
+
+- `specmgr://config` now reports the `sysrs` domain (it was missing from
+  the resource's `domains` dict even though `sysrs` was already fully
+  wired into every dispatch tool), matching every other domain's entry
+  (GitHub issue #74).
+- Corrected stale/incorrect copyright holders in `NOTICE` for `pydantic`,
+  `python-dotenv`, `typer`, `rich`, and `mcp`; added missing attributions
+  for `mdformat`, `mdformat-simple-breaks`, and `httpx` (GitHub issue #73).
+
 ## [0.19.0] - 2026-09-03
 
 ### Changed
