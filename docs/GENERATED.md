@@ -397,7 +397,9 @@ First-line docstrings from each module, organized by domain:
 - `sysrs/models/v1/frontmatter.py` — System Requirements Specification (SYSRS) frontmatter, narrowing `feat-5-md-model-parser`'s generic
 - `sysrs/models/v1/parser.py` — Parse raw System Requirements Specification (SYSRS) ``.md`` text into a :class:`SysrsDocument`.
 - `sysrs/models/v1/summary.py` — Pydantic model for one line of SYSRS listing output (Phase 2, Task 2.4).
-- `sysrs/prompts/__init__.py` — MCP prompt wrappers for System Requirements Specification (SYSRS) documents (placeholder).
+- `sysrs/prompts/__init__.py` — MCP prompt wrappers for System Requirements Specification (SYSRS) documents (Task 5.1).
+- `sysrs/prompts/create_sysrs.py` — ``@mcp.prompt()``: create_sysrs (Task 5.1).
+- `sysrs/prompts/update_sysrs.py` — ``@mcp.prompt()``: update_sysrs (Task 5.1).
 - `sysrs/resources/__init__.py` — MCP resource registrations for System Requirements Specification (SYSRS) documents (Task 4.5).
 - `sysrs/resources/sysrs_example.py` — Resource: specmgr://sysrs/example (Task 4.5).
 - `sysrs/resources/sysrs_schema.py` — Resource: specmgr://sysrs/schema (Task 4.5, packaged data).
@@ -524,4 +526,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 352
+**Test files**: 354

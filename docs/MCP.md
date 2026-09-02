@@ -3,7 +3,7 @@
 Auto-generated from the live `biz.dfch.specmgr.server:mcp` registration --
 do not edit by hand, run `specmgr mcp-docs` instead (see `AGENTS.md`).
 
-42 resource(s), 1 resource template(s), 103 tool(s), 29 prompt(s).
+42 resource(s), 1 resource template(s), 103 tool(s), 31 prompt(s).
 
 ## Table of Contents
 
@@ -1510,6 +1510,7 @@ Disk-free, id-free dry run validating verification case record content. `full=Fa
 | [`create_req`](#prompt-create_req) | Guides the LLM through checking for an existing similar requirement, gathering the required information, and driving create_req/validate_req to author a new REQ document. |
 | [`create_risk`](#prompt-create_risk) | Guides the LLM through checking for an existing similar risk, gathering the required information, and driving create_rsk/validate_rsk to author a new RSK document. |
 | [`create_sop`](#prompt-create_sop) | Guides the LLM through checking for an existing similar SOP, gathering the required information, and driving create_sop/validate_sop to author a new SOP document. |
+| [`create_sysrs`](#prompt-create_sysrs) | Guides the LLM through checking for an existing similar system requirements specification, gathering the required information, and driving create_sysrs/validate_sysrs to author a new SYSRS document. |
 | [`create_task`](#prompt-create_task) | Guides the LLM through checking for an existing similar task list, gathering the required information, and driving create_tsk/validate_tsk to author a new TSK document. |
 | [`create_vcr`](#prompt-create_vcr) | Guides the LLM through checking for an existing similar verification case record, gathering the required information, and driving create_vcr/validate_vcr to author a new VCR document. |
 | [`implement_task`](#prompt-implement_task) | Reads an existing task list by id, builds a TodoWrite list from its items, and uses the question tool to resolve ambiguity before proceeding. |
@@ -1524,6 +1525,7 @@ Disk-free, id-free dry run validating verification case record content. `full=Fa
 | [`update_req`](#prompt-update_req) | Guides the LLM through revising an existing requirement by id: reading current state, applying the requested change with the right tool, and validating. |
 | [`update_risk`](#prompt-update_risk) | Guides the LLM through revising an existing risk by id: reading current state, applying the requested change with the right tool, and validating. |
 | [`update_sop`](#prompt-update_sop) | Guides the LLM through revising an existing SOP by id: reading current state, applying the requested change with the right tool, and validating. |
+| [`update_sysrs`](#prompt-update_sysrs) | Guides the LLM through revising an existing SYSRS by id: reading current state, applying the requested change with the right tool, and validating. |
 | [`update_task`](#prompt-update_task) | Guides the LLM through revising an existing task list by id: reading current state, applying the requested change with the right tool, and validating. |
 | [`update_vcr`](#prompt-update_vcr) | Guides the LLM through revising an existing verification case record by id: reading current state, applying the requested change with the right tool, and validating. |
 
@@ -1635,6 +1637,14 @@ Guides the LLM through checking for an existing similar risk, gathering the requ
 ### Prompt: create_sop
 
 Guides the LLM through checking for an existing similar SOP, gathering the required information, and driving create_sop/validate_sop to author a new SOP document.
+
+| Argument | Required | Description |
+| --- | --- | --- |
+| `topic` | Yes |  |
+
+### Prompt: create_sysrs
+
+Guides the LLM through checking for an existing similar system requirements specification, gathering the required information, and driving create_sysrs/validate_sysrs to author a new SYSRS document.
 
 | Argument | Required | Description |
 | --- | --- | --- |
@@ -1756,6 +1766,15 @@ Guides the LLM through revising an existing risk by id: reading current state, a
 ### Prompt: update_sop
 
 Guides the LLM through revising an existing SOP by id: reading current state, applying the requested change with the right tool, and validating.
+
+| Argument | Required | Description |
+| --- | --- | --- |
+| `id` | Yes |  |
+| `instructions` | No |  |
+
+### Prompt: update_sysrs
+
+Guides the LLM through revising an existing SYSRS by id: reading current state, applying the requested change with the right tool, and validating.
 
 | Argument | Required | Description |
 | --- | --- | --- |

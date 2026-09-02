@@ -1755,20 +1755,20 @@ its own ADR rather than living only in this feature's Design Notes.
 
 #### Phase 5: Prompts
 
-- [ ] Task 5.1: `sysrs/prompts/` — `create_sysrs.py`
+- [x] Task 5.1: `sysrs/prompts/` — `create_sysrs.py`
   (`create_sysrs(topic)`), `update_sysrs.py` (`update_sysrs(id, instructions=None)`
   with the standard "(not given — ask the user before making any
   change)" fallback), `__init__.py` — both read their packaged
   instruction file via `string.Template` — depends on: Task 4.3 —
-  status: not-started
-- [ ] Task 5.2: Tests `tests/sysrs/prompts/` (ACC-008: substitution
+  status: done (2026-09-02)
+- [x] Task 5.2: Tests `tests/sysrs/prompts/` (ACC-008: substitution
   from packaged data, `list_sysrs` dedup-check-first, the
   `specmgr://iso25010` read-first step, generic-tool naming in
   `update_sysrs`, fresh-read-per-call + `FileNotFoundError` behavior)
-  — depends on: Task 5.1 — status: not-started
-- [ ] Task 5.3: Phase-end quality gate (ruff format/check, vulture,
+  — depends on: Task 5.1 — status: done (2026-09-02)
+- [x] Task 5.3: Phase-end quality gate (ruff format/check, vulture,
   full unittest) + commit; update this README's Progress section —
-  depends on: Task 5.2 — status: not-started
+  depends on: Task 5.2 — status: done (2026-09-02)
 
 #### Phase 6: Cross-cutting registration
 
@@ -1838,6 +1838,48 @@ around.
 ## Progress
 
 ### Current Status
+
+**As of 2026-09-02 (Phase 5 complete — prompts)**: Phase 5 (Tasks 5.1–5.3)
+is done. `sysrs/prompts/` now ships the 2 planned prompts —
+`create_sysrs.py` (`create_sysrs(topic)`) and `update_sysrs.py`
+(`update_sysrs(id, instructions=None)`) — plus a real `__init__.py`
+replacing the Phase-2 placeholder, both file-for-file mirrors of
+`sop.prompts`/`vcr.prompts`'s own one-module-per-prompt split: each reads
+its own packaged instruction file (`sysrs_create_instructions.md`/
+`sysrs_update_instructions.md`, already on disk from Phase 4) fresh on
+every call via `general.tools._packaged_data.read_packaged_text` and
+substitutes `$topic` or `$id`/`$instructions` via `string.Template`;
+`update_sysrs.py` carries the standard `# pylint: disable=redefined-builtin`
+line for its `id`/`type`-shadowing signature, matching every other
+dispatch-only domain's prompt module. `sysrs/__init__.py`'s own
+module docstring already imported `prompts` from Phase 2 onward, so no
+import wiring was needed here. Added `tests/sysrs/prompts/test_create_sysrs.py`
+(13 tests) and `test_update_sysrs.py` (17 tests) — 30 new tests total,
+mirroring `tests/sop/prompts/`'s/`tests/vcr/prompts/`'s own structure/
+content-and-ordering-assertion style: `$topic`/`$id`/`$instructions`
+substitution, `list_sysrs` dedup-check-first and the `specmgr://iso25010`
+read-first step (ACC-008) in `create_sysrs`'s narration, the generic
+`update`/`set_status`/`set_classification` tools named with `type="sysrs"`
+(never a per-domain `update_sysrs(...)`/`set_status_sysrs(...)` shape) in
+`update_sysrs`'s narration, fresh-read-per-call behavior (patching
+`_packaged_data.packaged_data_path` and rewriting the file between two
+calls), and `FileNotFoundError` propagation for a missing packaged
+instructions file. One implementation note: because the real
+`sysrs_create_instructions.md`/`sysrs_update_instructions.md` files (Phase
+4, left untouched this phase) wrap several multi-token tool-call phrases
+(e.g. `` update(id, type="sysrs", `` / `` content) ``) across a markdown
+line boundary — unlike `sop`'s/`vcr`'s own packaged instructions, which
+keep those same phrases on one physical line — several assertions
+normalize whitespace (`" ".join(result.split())`) before checking for the
+intact phrase, rather than asserting on the raw (line-wrapped) text
+directly; this is a test-only accommodation, the packaged data files
+themselves were not edited. Quality gate green: `ruff format --check`/
+`ruff check` clean, `vulture src/ whitelist.py --min-confidence 60` clean
+(no new whitelist entries needed), full repo `python -m unittest discover`
+suite green at 3259 tests. `sysrs` is still **not** registered in
+`server.py` — that remains Phase 6's job; no `general/tools/`,
+`sysrs/models/`, `sysrs/tools/`, or `sysrs/resources/` file was touched
+this phase. Next action: Phase 6 (cross-cutting registration).
 
 **As of 2026-09-02 (Phase 4 complete — resources + packaged data + schema)**:
 Phase 4 (Tasks 4.1–4.7) is done. This phase resumed from a previous,
@@ -2287,6 +2329,61 @@ entirely, per explicit user instruction, rather than continuing to
 wait on it; see Task List Task 0.7/Design Notes item 4's note.)
 
 ### Recent Updates
+
+#### Update 2026-09-02 (Phase 5 complete — prompts)
+
+- Completed: Implemented Phase 5 (Tasks 5.1–5.3) end to end. Task 5.1:
+  added `sysrs/prompts/create_sysrs.py` (`create_sysrs(topic)`) and
+  `sysrs/prompts/update_sysrs.py` (`update_sysrs(id,
+  instructions=None)`, with the standard "(not given — ask the user
+  before making any change)" fallback and the
+  `# pylint: disable=redefined-builtin` line for its `id`/`type`
+  parameters), plus a real `sysrs/prompts/__init__.py` replacing the
+  Phase-2 placeholder — file-for-file mirrors of
+  `sop/prompts/create_sop.py`/`update_sop.py` and
+  `vcr/prompts/create_vcr.py`/`update_vcr.py`'s own shape/docstrings/
+  idioms. Both read their own packaged instruction file
+  (`sysrs_create_instructions.md`/`sysrs_update_instructions.md`,
+  already on disk from Phase 4, left untouched) fresh on every call via
+  `general.tools._packaged_data.read_packaged_text` and substitute
+  `$topic` (create) or `$id`/`$instructions` (update) via
+  `string.Template`. `sysrs/__init__.py` already imported `prompts`
+  from Phase 2 onward, so no import wiring was needed. Task 5.2: added
+  `tests/sysrs/prompts/test_create_sysrs.py` (13 tests) and
+  `test_update_sysrs.py` (17 tests) — 30 new tests total, mirroring
+  `tests/sop/prompts/`'s/`tests/vcr/prompts/`'s own
+  string-content-and-ordering-assertion style: `$topic`/`$id`/
+  `$instructions` substitution with no literal placeholder left behind;
+  ACC-008's `list_sysrs` dedup-check-first and `specmgr://iso25010`
+  read-first step, both asserted to occur before the relevant later
+  step in `create_sysrs`'s narration; the generic `update`/
+  `set_status`/`set_classification` tools named with `type="sysrs"`
+  (never a per-domain `update_sysrs(...)`/`set_status_sysrs(...)`
+  shape) in `update_sysrs`'s narration; fresh-read-per-call behavior
+  (patching `_packaged_data.packaged_data_path`, rewriting the file
+  between two calls, and confirming both calls reflect their own
+  file content); and `FileNotFoundError` propagation, uncaught, for a
+  missing packaged instructions file. One test-only accommodation:
+  the real `sysrs_create_instructions.md`/`sysrs_update_
+  instructions.md` files (Phase 4, not touched this phase) wrap
+  several multi-token tool-call phrases (e.g.
+  `` update(id, type="sysrs", `` / `` content) ``) across a markdown
+  line boundary, unlike `sop`'s/`vcr`'s own packaged instructions,
+  which keep those same phrases on one physical line — several
+  assertions normalize whitespace (`" ".join(result.split())`) before
+  checking for the intact phrase, rather than requiring it verbatim in
+  the raw (line-wrapped) text. Task 5.3: quality gate green — `ruff
+  format --check`/`ruff check` clean, `vulture src/ whitelist.py
+  --min-confidence 60` clean (no new whitelist entries needed), full
+  repo `python -m unittest discover` suite green at 3259 tests (up
+  from 3229 before this phase). `sysrs` is still **not** registered in
+  `server.py` — that remains Phase 6's job; no `general/tools/`,
+  `sysrs/models/`, `sysrs/tools/`, or `sysrs/resources/` file was
+  touched this phase.
+- Next: Phase 6 (cross-cutting registration) — `server.py`,
+  `pyproject.toml`, `.pre-commit-config.yaml`, `.github/workflows/
+  ci.yml`, `AGENTS.md`, root `README.md`, doc regeneration, final
+  quality gate, and the final ACC-004..ACC-012 verification pass.
 
 #### Update 2026-09-02 (Phase 4 complete — resources + packaged data + schema; resumed from an interrupted prior attempt)
 
@@ -3231,6 +3328,20 @@ wait on it; see Task List Task 0.7/Design Notes item 4's note.)
 
 ### Decisions Made
 
+- **2026-09-02 (Phase 5)**: `tests/sysrs/prompts/test_create_sysrs.py`/
+  `test_update_sysrs.py` normalize whitespace (`" ".join(result.split())`)
+  before asserting on several multi-token generic-tool-call phrases (e.g.
+  `` update(id, type="sysrs", content) ``), rather than asserting on the
+  raw prompt text directly the way `tests/sop/prompts/`'s/
+  `tests/vcr/prompts/`'s own tests do. Rationale: the real, already-on-
+  disk `sysrs_create_instructions.md`/`sysrs_update_instructions.md`
+  (Phase 4) wrap several of those phrases across a markdown line
+  boundary — a cosmetic line-wrap-width difference from `sop`'s/`vcr`'s
+  own packaged instructions, not a content difference — and Phase 5's
+  scope is prompts + tests only, not rewrapping already-shipped Phase 4
+  data files; normalizing whitespace in the test instead keeps the
+  assertions meaningful (the exact phrase, in order) without touching
+  files outside this phase's scope.
 - **2026-09-02 (Phase 2)**: `sysrs/__init__.py` does `from . import
   prompts, resources, tools` from day one in Phase 2 (Task 2.1), with
   `tools`/`resources`/`prompts` shipped as empty-but-valid placeholder

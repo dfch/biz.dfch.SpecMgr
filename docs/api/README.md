@@ -341,7 +341,9 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.sysrs.models.v1.frontmatter`](biz.dfch.specmgr.sysrs.models.v1.frontmatter.md) — System Requirements Specification (SYSRS) frontmatter, narrowing `feat-5-md-model-parser`'s generic
 - [`biz.dfch.specmgr.sysrs.models.v1.parser`](biz.dfch.specmgr.sysrs.models.v1.parser.md) — Parse raw System Requirements Specification (SYSRS) ``.md`` text into a :class:`SysrsDocument`.
 - [`biz.dfch.specmgr.sysrs.models.v1.summary`](biz.dfch.specmgr.sysrs.models.v1.summary.md) — Pydantic model for one line of SYSRS listing output (Phase 2, Task 2.4).
-- [`biz.dfch.specmgr.sysrs.prompts`](biz.dfch.specmgr.sysrs.prompts.md) — MCP prompt wrappers for System Requirements Specification (SYSRS) documents (placeholder).
+- [`biz.dfch.specmgr.sysrs.prompts`](biz.dfch.specmgr.sysrs.prompts.md) — MCP prompt wrappers for System Requirements Specification (SYSRS) documents (Task 5.1).
+- [`biz.dfch.specmgr.sysrs.prompts.create_sysrs`](biz.dfch.specmgr.sysrs.prompts.create_sysrs.md) — ``@mcp.prompt()``: create_sysrs (Task 5.1).
+- [`biz.dfch.specmgr.sysrs.prompts.update_sysrs`](biz.dfch.specmgr.sysrs.prompts.update_sysrs.md) — ``@mcp.prompt()``: update_sysrs (Task 5.1).
 - [`biz.dfch.specmgr.sysrs.resources`](biz.dfch.specmgr.sysrs.resources.md) — MCP resource registrations for System Requirements Specification (SYSRS) documents (Task 4.5).
 - [`biz.dfch.specmgr.sysrs.resources.sysrs_example`](biz.dfch.specmgr.sysrs.resources.sysrs_example.md) — Resource: specmgr://sysrs/example (Task 4.5).
 - [`biz.dfch.specmgr.sysrs.resources.sysrs_schema`](biz.dfch.specmgr.sysrs.resources.sysrs_schema.md) — Resource: specmgr://sysrs/schema (Task 4.5, packaged data).

@@ -1,8 +1,12 @@
 # `biz.dfch.specmgr.sysrs.prompts`
 
-MCP prompt wrappers for System Requirements Specification (SYSRS) documents (placeholder).
+MCP prompt wrappers for System Requirements Specification (SYSRS) documents (Task 5.1).
 
-Empty as of Phase 2 (models + parser) of
-``.specmgr/feat/feat-32-sysrs/README.md`` -- the 2 planned prompts
-(``create_sysrs``, ``update_sysrs``) are added in Phase 5, mirroring
-``sop/prompts/``'s/``vcr/prompts/``'s shape.
+Each returns plain instructional text (auto-wrapped as a single
+``UserMessage`` by the SDK) that guides an LLM through driving the
+existing ``sysrs/tools/``/``sysrs/resources/`` surface in the right order --
+one module per prompt, mirroring ``sop/prompts/``'s/``vcr/prompts/``'s own
+one-module-per-prompt split. Import this package to register both SYSRS
+prompts at once::
+
+    from biz.dfch.specmgr.sysrs import prompts  # noqa: F401 (side-effects only)
