@@ -3,7 +3,7 @@ created: '2026-09-02T09:50:23.991493'
 id: feat-56-classification-attribute-in-frontmatter
 status: planning
 type: feat
-updated: '2026-09-02T16:45:00.000000'
+updated: '2026-09-02T18:30:00.000000'
 version: 1.0.0
 ---
 
@@ -132,13 +132,13 @@ Since feat-27-validation (closed 2026-09-01) added `wrap_tool_errors`/`FRONTMATT
 
 #### Phase 2: Generic set_classification tool
 
-- [ ] Task 2.1: Implement `general/tools/set_classification.py` mirroring `set_status.py`'s structure (11 adapters, `_path_safety` guards, `wrap_tool_errors`/`FRONTMATTER_CHANNEL`).
+- [x] Task 2.1: Implement `general/tools/set_classification.py` mirroring `set_status.py`'s structure (11 adapters, `_path_safety` guards, `wrap_tool_errors`/`FRONTMATTER_CHANNEL`).
 
-- [ ] Task 2.2: Register the new tool's import in server.py and update its module docstring.
+- [x] Task 2.2: Register the new tool's import in server.py and update its module docstring.
 
-- [ ] Task 2.3: Add unit tests for `set_classification` across all 11 domains (set, clear via blank, invalid type error, path-safety rejection).
+- [x] Task 2.3: Add unit tests for `set_classification` across all 11 domains (set, clear via blank, invalid type error, path-safety rejection).
 
-- [ ] Task 2.4: Run the full test suite and fix any regressions before moving on.
+- [x] Task 2.4: Run the full test suite and fix any regressions before moving on.
 
 #### Phase 3: Prompt instructions
 
@@ -168,11 +168,21 @@ Since feat-27-validation (closed 2026-09-01) added `wrap_tool_errors`/`FRONTMATT
 
 ### Current Status
 
-**As of 2026-09-02**: Phase 1 (Model change) is done. The shared `MarkdownFrontmatter` model now has an optional, free-text `classification: str | None = None` field that normalizes blank/whitespace-only input to `None` via the existing `blank_to_none` helper, inherited by all eleven whole-body domain frontmatter classes. New unit tests cover default-to-`None`, round-trip, blank/whitespace normalization, and pre-existing (no-`classification`-key) frontmatter dicts still parsing (ACC-004 at the base-model level). `ruff format --check`, `ruff check`, and `vulture` are clean. The full test suite has 4 known, expected failures in `tests/{dec,feat,sop,vcr}/resources/test_*_schema.py` -- these compare the packaged static JSON Schema files against a fresh `generate_*_schema()` call and now diverge because the model gained a field; this drift is exactly what Phase 4 Task 4.1 (`specmgr schema` regeneration) is designed to close, and Phase 1 was explicitly scoped to not run `specmgr schema`. Phase 2 (generic `set_classification` tool) has not started.
+**As of 2026-09-02**: Phases 1 (Model change) and 2 (Generic `set_classification` tool) are done. The shared `MarkdownFrontmatter` model has an optional, free-text `classification: str | None = None` field that normalizes blank/whitespace-only input to `None`, inherited by all eleven whole-body domain frontmatter classes. The new generic `set_classification(id, type, classification)` tool in `general/tools/` dispatches to one adapter per whole-body domain (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr -- `adr` deliberately excluded), each shaped exactly like `set_status.py`'s corresponding adapter (same domain lock, `load_by_id`, `_path_safety.assert_within` guard, raw-body re-read/re-persistence, `wrap_tool_errors`/`FRONTMATTER_CHANNEL`-wrapped `XFrontmatter` reconstruction) but replacing `classification` instead of `status`, with no `superseded_by`-style parameter. It is registered in `server.py`'s module docstring and `general/tools/__init__.py`. New unit tests (`tests/general/tools/test_set_classification.py`) cover setting a value (ACC-002), clearing via blank/whitespace (ACC-003), an unsupported `type="bogus"` raising `ValueError` matching `set_status`'s own behavior for the same misuse (ACC-005), `type="adr"` raising `KeyError` (matching the generic `update` tool's own real, if undocumented, behavior for a UUID-shaped-but-out-of-dispatch type), per-domain not-found errors, and `_path_safety` injection/wrong-format-id rejection. `ruff format --check`, `ruff check`, and `vulture` are clean. The full test suite still has the same 4 known, expected failures in `tests/{dec,feat,sop,vcr}/resources/test_*_schema.py` from Phase 1 (schema drift, closed by Phase 4's `specmgr schema` regeneration) -- no new regressions. Phase 3 (prompt instructions) has not started.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-02 18:30:00.000Z — Phase 2 (Generic set_classification tool) complete
+
+Added `src/biz/dfch/specmgr/general/tools/set_classification.py`: the generic, cross-domain `set_classification(id, type, classification)` tool for the eleven whole-body document types (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr). It is an 11-way dispatch mirroring `set_status.py`'s adapter-dispatch pattern exactly (per-domain lock, `load_by_id`, `_path_safety.assert_within`, raw-body re-read via `frontmatter.loads(...).content` and verbatim re-persistence, `wrap_tool_errors(domain=..., tool="set_classification", channel=FRONTMATTER_CHANNEL)`-wrapped `XFrontmatter(**fm_data)` reconstruction, `write_<d>_file`, domain `XNotFoundError`) but replaces `classification` instead of `status`, with no `superseded_by` parameter and no `adr` adapter -- `adr`'s separate `AdrFrontmatter` model is out of scope for this feature per the plan's Scope section. The `feat` adapter diverges the same way `_update_feat`/`_set_status_feat` do (bespoke `feat.tools._paths` folder-per-document id resolution). Blank/whitespace `classification` values clear to `None` automatically via the shared `MarkdownFrontmatter` blank-to-`None` validator from Phase 1 -- no special-casing was added in `set_classification.py` itself, confirmed by a dedicated test. `_path_safety.validate_id(type, id)` runs before any dispatch, so a path-injection attempt, a wrong-format id, or a truly-unknown `type` string (e.g. `"bogus"`) raises `ValueError` before any file access, exactly matching `set_status`'s own behavior for the same misuse (REQ-004/ACC-005).
+
+Registered the tool: added the import/`__all__` entry to `src/biz/dfch/specmgr/general/tools/__init__.py` (with a docstring paragraph describing it, alphabetically placed alongside `set_status`), and added a description paragraph to `server.py`'s module docstring immediately after the existing `set_status` description, following the same prose style. No new top-level import was needed in `server.py` itself -- the existing `general` package import at the bottom of the file already wires up the new `@mcp.tool()` registration via the side-effect import chain.
+
+Added `tests/general/tools/test_set_classification.py`, structurally mirroring `tests/general/tools/test_set_status.py`'s fixture strategy (temp `SPECMGR_DOCS_DIR`/`SPECMGR_FEAT_DIR`, one `_Case` per domain seeded via the domain's own `create_<d>` tool) but simplified for the 11-domain (no-`adr`), no-closed-vocabulary shape of `classification`. Covers: setting a classification value, reading it back, and confirming `updated` is bumped while the raw body stays byte-identical (ACC-002); clearing via a blank/whitespace string back to `None`, verified on both the returned model and the on-disk YAML (ACC-003); an unsupported `type="bogus"` raising `ValueError` -- explicitly compared, by exception class, against `set_status`'s own error for the identical misuse (ACC-005); per-domain not-found errors for an unknown id; and `_path_safety` injection/wrong-format-id rejection plus an `assert_within`-is-actually-called spy check, both mirroring `test_set_status.py`'s own coverage.
+
+Ran the full quality gate: `ruff format --check` and `ruff check` are clean; `vulture src/ whitelist.py --min-confidence 60` is clean (the new adapters are all reached through the `_ADAPTERS` dispatch table, so no false-positive unused-code flags); the full `unittest` suite (3029 tests) has exactly the same 4 known, pre-existing failures from Phase 1 (`tests/{dec,feat,sop,vcr}/resources/test_*_schema.py`, schema drift closed by Phase 4) -- no new regressions from Phase 2's changes.
 
 #### 2026-09-02 16:45:00.000Z — Phase 1 (Model change) complete
 
@@ -185,6 +195,10 @@ Feature drafted from GitHub issue #56, covering the shared MarkdownFrontmatter c
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-02 18:30:00.000Z — type="adr" surfaces as KeyError, not ValueError
+
+While implementing Task 2.1, discovered that `_path_safety.validate_id` treats `adr` as one of its known UUID-shaped types (it is in `_UUID_TYPES` for use by `get_<d>`/`update`/`set_status`), so a well-formed UUID id with `type="adr"` passes `validate_id` even though `set_classification`'s own dispatch table has no `"adr"` entry -- the rejection then surfaces as a `KeyError` from the `_ADAPTERS[type]` lookup itself, not a `ValueError`. Verified this is not a bug introduced here but the same pre-existing, real (if undocumented) behavior the generic `update` tool already has for `type="adr"` (`update` also excludes `adr` from its own dispatch table for the same reason -- ADR's section-level mutation contract has no whole-body replace). Rather than adding special-case `adr` rejection logic to `set_classification` that `update` itself does not have, `set_classification` was left to inherit the identical `KeyError` behavior for `type="adr"`, with a test (`test_adr_type_is_not_supported`) pinning and documenting this precedent instead of asserting a `ValueError` that would diverge from `update`'s own established pattern.
 
 #### 2026-09-02 12:00:00.000Z — Locked scope, API shape, and validation for classification
 

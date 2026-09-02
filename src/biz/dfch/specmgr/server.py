@@ -234,6 +234,15 @@ also bumping
 ``updated`` (the eleven whole-body domains) and leaving the body untouched;
 ``superseded_by`` is ``adr``-only (it composes the status as
 ``"superseded by {superseded_by}"``);
+``set_classification`` -- replace the free-text ``classification``
+frontmatter field of an existing document across the eleven whole-body
+domains (``type`` is one of
+``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``;
+``adr`` is not supported), also bumping ``updated`` and leaving the body
+and every other frontmatter field untouched; a blank/whitespace-only value
+clears ``classification`` back to ``None``/absent; no ``create_<d>`` tool
+accepts a ``classification`` argument at all -- this is the sole
+classification-change entry point;
 ``delete`` -- the generic type-dispatched hard-delete for the eleven
 whole-body domains (``type`` is one of ``req``/``uc``/``tsk``/``qa``/``prb``/
 ``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``; ``adr`` is not supported),
