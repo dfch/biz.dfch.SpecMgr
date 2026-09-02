@@ -19,9 +19,9 @@
 
 """``@mcp.tool()`` wrapper: delete (feat-36-delete, Phase 2).
 
-The generic, cross-domain hard-delete tool for the eleven whole-body
+The generic, cross-domain hard-delete tool for the twelve whole-body
 document types (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/
-``dec``/``sop``/``feat``/``vcr``). It dispatches on the explicit ``type``
+``dec``/``sop``/``feat``/``vcr``/``sysrs``). It dispatches on the explicit ``type``
 parameter to a private per-domain adapter (``_delete_<d>``), each of which
 resolves the document by ``id`` through the domain's own ``load_by_id``
 (guaranteeing a valid, parseable document of that domain with that exact
@@ -30,7 +30,7 @@ the path is needed), takes the domain's own per-id lock around the whole
 resolve-then-delete sequence (the very lock the generic ``update`` and
 ``set_status`` tools take for the same id, so a concurrent same-id mutation
 cannot interleave with the delete), and hard-deletes the document from
-disk: the single ``*.md`` file for the ten flat domains
+disk: the single ``*.md`` file for the eleven flat domains
 (``Path.unlink``), or the entire ``<base>/<id>/`` folder for ``feat``
 (``shutil.rmtree`` -- deleting ``README.md``, any ``history.md``, and any
 session transcripts in that folder; ``feat`` is folder-per-document, ADR
@@ -95,6 +95,9 @@ from ...server import mcp
 from ...sop.tools._io import load_by_id as load_sop_by_id
 from ...sop.tools._lock import sop_lock
 from ...sop.tools._paths import sop_base_dir
+from ...sysrs.tools._io import load_by_id as load_sysrs_by_id
+from ...sysrs.tools._lock import sysrs_lock
+from ...sysrs.tools._paths import sysrs_base_dir
 from ...tsk.tools._io import load_by_id as load_tsk_by_id
 from ...tsk.tools._lock import tsk_lock
 from ...tsk.tools._paths import tsk_base_dir
@@ -108,8 +111,8 @@ from ._path_safety import assert_within, validate_id
 
 __all__ = ["delete"]
 
-#: The eleven whole-body domains the generic delete tool covers (ADR excluded).
-_DELETE_TYPES = ("req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "feat", "vcr")
+#: The twelve whole-body domains the generic delete tool covers (ADR excluded).
+_DELETE_TYPES = ("req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "feat", "vcr", "sysrs")
 
 
 class DeleteError(OSError):
@@ -307,6 +310,22 @@ def _delete_vcr(id_: str) -> str:
     return str(path)  # REQ-001
 
 
+def _delete_sysrs(id_: str) -> str:
+    """Hard-delete the System Requirements Specification ``id_`` from disk (REQ-001/004/005/006).
+
+    Same resolve/lock/safety semantics as :func:`_delete_req`.
+    """
+    base_dir = sysrs_base_dir()
+    with sysrs_lock(id_):  # REQ-004
+        path, _existing = load_sysrs_by_id(base_dir, id_)  # resolves + SysrsNotFoundError
+        assert_within(base_dir, path)  # REQ-003 defense-in-depth
+        try:
+            path.unlink()  # REQ-006
+        except OSError as ex:
+            raise DeleteError(f"failed to delete {path}: {ex}") from ex  # REQ-005
+    return str(path)  # REQ-001
+
+
 #: Dispatch table mapping the ``type`` value to its private adapter.
 _ADAPTERS: dict[str, Callable[[str], str]] = {
     "req": _delete_req,
@@ -320,6 +339,7 @@ _ADAPTERS: dict[str, Callable[[str], str]] = {
     "sop": _delete_sop,
     "feat": _delete_feat,
     "vcr": _delete_vcr,
+    "sysrs": _delete_sysrs,
 }
 
 
@@ -327,10 +347,10 @@ _ADAPTERS: dict[str, Callable[[str], str]] = {
     name="delete",
     title="Delete document",
     description=(
-        "Permanently delete an existing document from disk across the eleven whole-body "
-        "domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr; "
+        "Permanently delete an existing document from disk across the twelve whole-body "
+        "domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs; "
         "`adr` is not supported). Resolves the document by `id`, takes the domain lock, "
-        "and removes it: the single `*.md` file for the ten flat domains, or the entire "
+        "and removes it: the single `*.md` file for the eleven flat domains, or the entire "
         "`<base>/<id>/` folder for `feat`. Returns the deleted path as a string. "
         "An invalid `id` (path-injection attempt or wrong format) is a `ValueError` "
         "raised before any file access; a missing document is the domain's own "
@@ -340,16 +360,16 @@ _ADAPTERS: dict[str, Callable[[str], str]] = {
 )
 def delete(
     id: str,
-    type: Literal["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "feat", "vcr"],
+    type: Literal["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "feat", "vcr", "sysrs"],
 ) -> str:
-    """Permanently delete an existing document from disk, across the eleven whole-body domains.
+    """Permanently delete an existing document from disk, across the twelve whole-body domains.
 
     Cross-domain generic for every whole-body document type
     (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/
-    ``sop``/``feat``/``vcr``); dispatches on ``type`` to the domain's own
+    ``sop``/``feat``/``vcr``/``sysrs``); dispatches on ``type`` to the domain's own
     private adapter (same id resolution via the domain's ``load_by_id``,
     same per-id domain lock around the whole resolve-then-delete sequence,
-    same domain not-found error). The ten flat domains remove their single
+    same domain not-found error). The eleven flat domains remove their single
     ``*.md`` file; ``feat`` removes its entire ``<base>/<id>/`` folder
     (``README.md``, any ``history.md``, any session transcripts --
     folder-per-document, ADR 8cf940c5).
@@ -373,12 +393,12 @@ def delete(
     type:
         The document type / domain: one of ``req``, ``uc``, ``tsk``,
         ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
-        ``vcr``.
+        ``vcr``, ``sysrs``.
 
     Returns
     -------
     str
-        The deleted path: the ``*.md`` file path for the ten flat
+        The deleted path: the ``*.md`` file path for the eleven flat
         domains, the folder path for ``feat``.
 
     Raises
@@ -390,7 +410,7 @@ def delete(
     ReqNotFoundError / UcNotFoundError / TskNotFoundError /
     QaNotFoundError / PrbNotFoundError / GolNotFoundError /
     RskNotFoundError / DecNotFoundError / SopNotFoundError /
-    FeatNotFoundError / VcrNotFoundError
+    FeatNotFoundError / VcrNotFoundError / SysrsNotFoundError
         No document of the dispatched ``type`` has this id -- the
         domain's own not-found error, propagated unchanged from the
         domain's own ``load_by_id``.

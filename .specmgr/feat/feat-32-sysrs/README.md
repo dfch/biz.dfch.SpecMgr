@@ -1555,7 +1555,7 @@ its own ADR rather than living only in this feature's Design Notes.
 
 #### Phase 3: Tools (`sysrs/tools/`) + generic-tool dispatch
 
-- [ ] Task 3.1: **Sibling coordination checkpoint** — re-merge `dev`
+- [x] Task 3.1: **Sibling coordination checkpoint** — re-merge `dev`
   and check feat-38-39-41-43-44's merge status (Dependencies), re-
   verifying the mirror targets (`sop`/`vcr` helpers, the generic
   tools' current shape, whether `_timestamps.py`/`_ordering.py`/
@@ -1570,8 +1570,20 @@ its own ADR rather than living only in this feature's Design Notes.
   `_lock.py` (`sysrs_lock`), `_write.py` (`write_sysrs_file`) —
   mirror SOP/VCR (plus the `_path_safety` guards in `get_sysrs` if
   the sibling's Phase 4 has landed) — depends on: Task 2.6 — status:
-  not-started
-- [ ] Task 3.2: The 7 tool modules + `tools/__init__.py` per Design
+  done (2026-09-02; both siblings had already merged to this branch's
+  history by the time this task ran — feat-38-39-41-43-44 via PR #54,
+  commit `f0abc33`; feat-56 via PR #60, commit `a4070e1` — confirmed
+  by the orchestrator, not re-litigated; `_timestamps.py`/
+  `models/md/_ordering.py`/`_path_safety.py` were all already on this
+  branch. Added `"sysrs"` to `_path_safety._UUID_TYPES` (was missing
+  even for the shipped domains' own new-domain slot) so
+  `validate_id("sysrs", id)` — called by `get_sysrs` and the generic
+  `update`/`set_status`/`delete`/`set_classification` adapters — works;
+  bumped that module's "eleven"/"twelve" UUID-domain-count wording to
+  twelve/thirteen accordingly. `sysrs/tools/_paths.py`/`_io.py`/
+  `_lock.py`/`_write.py` are file-for-file mirrors of `vcr.tools`'s
+  current shape)
+- [x] Task 3.2: The 7 tool modules + `tools/__init__.py` per Design
   Notes — `create_sysrs` (fresh `uuid4`, `status="draft"` always,
   `created`/`updated`=now via the shared `general/tools/_timestamps.py`
   helper if it is on `dev`, else the current sop microsecond pattern,
@@ -1583,8 +1595,13 @@ its own ADR rather than living only in this feature's Design Notes.
   `validate_sysrs(content, full=False)` — **no** per-domain mutation
   tools (dispatch-only from day one, ADR 36905d5b; deletion is the
   generic `delete` tool, REQ-011) — depends on: Task 3.1 — status:
-  not-started
-- [ ] Task 3.3: `"sysrs"` dispatch entries — **gated on the sibling's
+  done (2026-09-02; all 7 modules mirror `vcr.tools`'s current shape
+  file-for-file, `now_timestamp()` used directly since the shared
+  helper was already on this branch; `get_sysrs_example`/
+  `get_sysrs_template` raise `FileNotFoundError` for now — expected,
+  the real packaged data arrives in Phase 4; `tools/__init__.py`
+  updated with the real registration docstring + imports)
+- [x] Task 3.3: `"sysrs"` dispatch entries — **gated on the sibling's
   Phase 4 per the Dependencies execution order** (run it after that
   phase has merged to `dev`, or now + rebase on its merge — a
   mechanical conflict in the three files, not a semantic one) —
@@ -1602,8 +1619,18 @@ its own ADR rather than living only in this feature's Design Notes.
   also add `_set_classification_sysrs` + `"sysrs"` in
   `general/tools/set_classification.py`'s dispatch table (same
   pattern as the other three); if not merged, skip this addendum —
-  depends on: Task 3.1 — status: not-started
-- [ ] Task 3.4: Tests `tests/sysrs/tools/` — one module per tool +
+  depends on: Task 3.1 — status: done (2026-09-02; ran now, no rebase
+  needed, both siblings already merged per Task 3.1. The
+  `_set_classification_sysrs` addendum WAS included, since
+  feat-56-classification-attribute-in-frontmatter had already merged
+  (PR #60) — `general/tools/set_classification.py` gained
+  `_set_classification_sysrs` + a `"sysrs"` dispatch-table entry +
+  `"sysrs"` in its `type` `Literal[...]`, same pattern as the other
+  eleven non-feat/non-adr domains there. All four generic modules'
+  docstrings/domain-count wording bumped accordingly (`update`:
+  eleven→twelve; `set_status`: twelve→thirteen; `delete`:
+  eleven→twelve; `set_classification`: eleven→twelve))
+- [x] Task 3.4: Tests `tests/sysrs/tools/` — one module per tool +
   helper tests + `test_integration.py` (ACC-006 round-trip using the
   generic `update`/`set_status` tools with `type="sysrs"`, both whole-
   body and `begin`/`end` line-range branches, plus `get_sysrs`'s
@@ -1612,10 +1639,32 @@ its own ADR rather than living only in this feature's Design Notes.
   `test_delete.py` covering `type="sysrs"` (ACC-009) —
   `get_sysrs_example`/`get_sysrs_template`
   mock-tested only this phase (the real packaged data files arrive in
-  Phase 4) — depends on: Task 3.2, Task 3.3 — status: not-started
-- [ ] Task 3.5: Phase-end quality gate (ruff format/check, vulture,
+  Phase 4) — depends on: Task 3.2, Task 3.3 — status: done (2026-09-02;
+  174 new tests under `tests/sysrs/tools/` — `test__paths.py`/
+  `test__io.py`/`test__lock.py`/`test__write.py` (helpers) +
+  `test_create_sysrs.py`/`test_get_sysrs.py`/`test_get_sysrs_example.py`
+  (mock-only)/`test_get_sysrs_template.py` (mock-only)/`test_list_sysrs.py`/
+  `test_parse_sysrs.py`/`test_validate_sysrs.py` (one per tool) +
+  `test_integration.py` (the full
+  `list_sysrs`→`create_sysrs`→`get_sysrs`→`list_sysrs`→`update`(whole-
+  body)→`update`(line-range)→`set_status`→`set_classification`→
+  `get_sysrs`→`list_sysrs`→`validate_sysrs`→`delete` round-trip, plus
+  `superseded_by`-rejection/out-of-vocabulary-status/validate-shape
+  cases). Also added a `"sysrs"` `_Case`/`_InjectionCase` entry to each
+  of `tests/general/tools/test_update.py`/`test_set_status.py`/
+  `test_delete.py`/`test_set_classification.py`'s existing table-driven
+  suites (per ACC-009's own explicit `test_set_classification.py`
+  callout, beyond the plan text's original three-file list, since the
+  feat-56 addendum was included) — every generic-tool test in those
+  four files now exercises `type="sysrs"` automatically as one more
+  table row, no bespoke sysrs-only test functions needed there)
+- [x] Task 3.5: Phase-end quality gate (ruff format/check, vulture,
   full unittest) + commit; update this README's Progress section —
-  depends on: Task 3.4 — status: not-started
+  depends on: Task 3.4 — status: done (2026-09-02; `ruff format
+  --check`/`ruff check` clean, `vulture src/ whitelist.py
+  --min-confidence 60` clean with no new whitelist entries needed,
+  full `python -m unittest discover` suite green at 3211 tests; commit
+  is the orchestrator's job, not this task's)
 
 #### Phase 4: Resources + packaged data + schema
 
@@ -1757,6 +1806,56 @@ around.
 ## Progress
 
 ### Current Status
+
+**As of 2026-09-02 (Phase 3 complete — tools + generic-tool dispatch)**:
+Phase 3 (Tasks 3.1–3.5) is done. Task 3.1's checkpoint confirmed both
+coordinating sibling features had already merged into this branch's
+history (`feat-38-39-41-43-44` via PR #54, commit `f0abc33`;
+`feat-56-classification-attribute-in-frontmatter` via PR #60, commit
+`a4070e1`), so Task 3.3's conditional `set_classification` addendum was
+included — **not** skipped. `sysrs/tools/` now ships all 7 planned
+tools (`create_sysrs`, `parse_sysrs`, `list_sysrs`, `get_sysrs`,
+`get_sysrs_example`, `get_sysrs_template`, `validate_sysrs`) plus the
+private `_paths`/`_io`/`_lock`/`_write` helpers, each a file-for-file
+mirror of `vcr.tools`'s current (post-sibling) shape — `get_sysrs`
+already carries the `_path_safety` guards (`validate_id`/
+`assert_within`) and the `raw`+`offset`/`limit` windowing convention.
+One necessary, non-optional fix surfaced during Task 3.1: `sysrs` was
+missing from `general/tools/_path_safety._UUID_TYPES`, which would have
+made every `validate_id("sysrs", id)` call (in `get_sysrs` and all four
+generic dispatch tools) raise "unknown document type" — added, with the
+module's own "eleven/twelve UUID domains" wording bumped to
+twelve/thirteen. The generic `update`/`set_status`/`delete`/
+`set_classification` tools in `general/tools/` all gained a `"sysrs"`
+dispatch entry (`_update_sysrs`/`_set_status_sysrs`/`_delete_sysrs`/
+`_set_classification_sysrs`, each a verbatim-shape port of the
+corresponding `sop`/`vcr` adapter), a `"sysrs"` `Literal[...]`/
+dispatch-table entry, and the domain-count wording in each module's
+docstrings bumped (`update`: eleven→twelve whole-body domains;
+`set_status`: twelve→thirteen incl. `adr`; `delete`: eleven→twelve;
+`set_classification`: eleven→twelve). 174 new tests under
+`tests/sysrs/tools/` (one module per tool/helper plus
+`test_integration.py`'s full
+`create_sysrs`→`get_sysrs`→`list_sysrs`→`update`(whole-body)→
+`update`(line-range)→`set_status`→`set_classification`→`get_sysrs`→
+`list_sysrs`→`validate_sysrs`→`delete` round-trip) are all green;
+`get_sysrs_example`/`get_sysrs_template` are mock-tested only this
+phase (`FileNotFoundError` against the real, not-yet-packaged data is
+itself asserted) — the real packaged files arrive in Phase 4. A
+`"sysrs"` `_Case`/`_InjectionCase` row was also added to each of
+`tests/general/tools/test_update.py`/`test_set_status.py`/
+`test_delete.py`/`test_set_classification.py`'s existing table-driven
+suites, so every generic-tool test there now exercises `type="sysrs"`
+automatically — no bespoke sysrs-only test functions needed in those
+four files. Quality gate green: `ruff format --check`/`ruff check`
+clean, `vulture src/ whitelist.py --min-confidence 60` clean (no new
+whitelist entries needed — every new symbol is genuinely referenced,
+unlike Phase 2's model-layer false positives), full repo
+`python -m unittest discover` suite green at 3211 tests. `sysrs` is
+still **not** registered in `server.py` — that is Phase 6's job; no
+other existing-domain file besides the four `general/tools/` dispatch
+modules and `_path_safety.py` was touched. Next action: Phase 4
+(resources + packaged data + schema).
 
 **As of 2026-09-02 (Phase 2 complete — models + parser)**: Phase 2
 (Tasks 2.1–2.6) is done. `sysrs/models/v1/` now implements the full
@@ -3022,6 +3121,25 @@ wait on it; see Task List Task 0.7/Design Notes item 4's note.)
   checked once at Task 3.1 and either folded in (Task 3.3) or skipped
   outright if not yet merged — no rework either way, so there is no
   need to wait for it before starting Phase 2.
+- **2026-09-02 (Phase 3)**: `feat-56-classification-attribute-in-frontmatter`
+  WAS included in Task 3.3 (confirmed merged to this branch's history
+  via PR #60, commit `a4070e1`, per the orchestrator) — the
+  `_set_classification_sysrs` adapter and its `"sysrs"` dispatch-table/
+  `Literal[...]` entry were added to `general/tools/
+  set_classification.py` in the same pass as the `update`/`set_status`/
+  `delete` entries, rather than deferred. This closes the conditional
+  addendum recorded above (2026-09-02, pre-Phase-3 entry).
+- **2026-09-02 (Phase 3)**: `general/tools/_path_safety._UUID_TYPES`
+  was missing `"sysrs"` — a gap in the shared module, not something the
+  plan text called out explicitly, but load-bearing: without it, every
+  `validate_id("sysrs", id)` call (from `get_sysrs` and all four
+  generic dispatch tools) would raise "unknown document type" before
+  ever reaching the intended not-found/success paths. Added `"sysrs"`
+  to that frozenset (alongside the other eleven whole-body UUID
+  domains and `adr`) and bumped the module's own "eleven"/"twelve"
+  UUID-domain-count docstring wording to twelve/thirteen accordingly —
+  a mechanical fix required for Task 3.2's `get_sysrs` and Task 3.3's
+  four adapters to work at all, not a new design choice.
 - **2026-09-02**: Task 0.11 closed as "no grounding" — `##
   Definitions and Acronyms` stays plain free-form text, with no
   ISO_24765-derived structure/glossary convention. Rationale:

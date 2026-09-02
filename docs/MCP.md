@@ -3,7 +3,7 @@
 Auto-generated from the live `biz.dfch.specmgr.server:mcp` registration --
 do not edit by hand, run `specmgr mcp-docs` instead (see `AGENTS.md`).
 
-39 resource(s), 1 resource template(s), 96 tool(s), 29 prompt(s).
+39 resource(s), 1 resource template(s), 103 tool(s), 29 prompt(s).
 
 ## Table of Contents
 
@@ -357,10 +357,11 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`create_req`](#tool-create_req) | Create a new requirement: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the requirement base directory. |
 | [`create_rsk`](#tool-create_rsk) | Create a new risk: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the risk base directory. |
 | [`create_sop`](#tool-create_sop) | Create a new Standard Operating Procedure: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the SOP base directory. |
+| [`create_sysrs`](#tool-create_sysrs) | Create a new System Requirements Specification: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the System Requirements Specification base directory. |
 | [`create_tsk`](#tool-create_tsk) | Create a new task list: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the task list base directory. |
 | [`create_uc`](#tool-create_uc) | Create a new use case: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the use-case base directory. |
 | [`create_vcr`](#tool-create_vcr) | Create a new verification case record: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the verification case record base directory. |
-| [`delete`](#tool-delete) | Permanently delete an existing document from disk across the eleven whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr; `adr` is not supported). Resolves the document by `id`, takes the domain lock, and removes it: the single `*.md` file for the ten flat domains, or the entire `<base>/<id>/` folder for `feat`. Returns the deleted path as a string. An invalid `id` (path-injection attempt or wrong format) is a `ValueError` raised before any file access; a missing document is the domain's own `XNotFoundError`; an I/O failure is a `DeleteError`. This is the sole delete entry point -- the former per-domain `delete_<d>` tools are removed. |
+| [`delete`](#tool-delete) | Permanently delete an existing document from disk across the twelve whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs; `adr` is not supported). Resolves the document by `id`, takes the domain lock, and removes it: the single `*.md` file for the eleven flat domains, or the entire `<base>/<id>/` folder for `feat`. Returns the deleted path as a string. An invalid `id` (path-injection attempt or wrong format) is a `ValueError` raised before any file access; a missing document is the domain's own `XNotFoundError`; an I/O failure is a `DeleteError`. This is the sole delete entry point -- the former per-domain `delete_<d>` tools are removed. |
 | [`get_adr`](#tool-get_adr) | Read, parse, and return a full ADR document (frontmatter and body) by its id. An invalid id (path-injection attempt or wrong format) is a ValueError raised before any file access. |
 | [`get_dec`](#tool-get_dec) | Read, parse, and return a full decision document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. With raw=True, optional read-style `offset`/`limit` window the raw read: `offset` (1-based, default 1) is the first body line to return, `limit` (line count, default through end of body) how many; out-of-range values clamp (`offset > N` returns the empty string), and coordinates with raw=False raise ValueError. An invalid id (path-injection attempt or wrong format) is also a ValueError, raised before any file access. |
 | [`get_dec_example`](#tool-get_dec_example) | Return a complete, valid sample decision document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example. |
@@ -386,6 +387,9 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`get_sop`](#tool-get_sop) | Read, parse, and return a full SOP document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. With raw=True, optional read-style `offset`/`limit` window the raw read: `offset` (1-based, default 1) is the first body line to return, `limit` (line count, default through end of body) how many; out-of-range values clamp (`offset > N` returns the empty string), and coordinates with raw=False raise ValueError. An invalid id (path-injection attempt or wrong format) is also a ValueError, raised before any file access. |
 | [`get_sop_example`](#tool-get_sop_example) | Return a complete, valid sample Standard Operating Procedure document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example. |
 | [`get_sop_template`](#tool-get_sop_template) | Return a SOP document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new Standard Operating Procedure. |
+| [`get_sysrs`](#tool-get_sysrs) | Read, parse, and return a full System Requirements Specification document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. With raw=True, optional read-style `offset`/`limit` window the raw read: `offset` (1-based, default 1) is the first body line to return, `limit` (line count, default through end of body) how many; out-of-range values clamp (`offset > N` returns the empty string), and coordinates with raw=False raise ValueError. An invalid id (path-injection attempt or wrong format) is also a ValueError, raised before any file access. |
+| [`get_sysrs_example`](#tool-get_sysrs_example) | Return a complete, valid sample System Requirements Specification document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example. |
+| [`get_sysrs_template`](#tool-get_sysrs_template) | Return a SYSRS document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new System Requirements Specification. |
 | [`get_tsk`](#tool-get_tsk) | Read, parse, and return a full task list document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. With raw=True, optional read-style `offset`/`limit` window the raw read: `offset` (1-based, default 1) is the first body line to return, `limit` (line count, default through end of body) how many; out-of-range values clamp (`offset > N` returns the empty string), and coordinates with raw=False raise ValueError. An invalid id (path-injection attempt or wrong format) is also a ValueError, raised before any file access. |
 | [`get_tsk_example`](#tool-get_tsk_example) | Return a complete, valid sample task list document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example. |
 | [`get_tsk_template`](#tool-get_tsk_template) | Return a TSK document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new task list. |
@@ -404,6 +408,7 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`list_req`](#tool-list_req) | Ids, titles, statuses, and refs of requirements in the configured requirement base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_req tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
 | [`list_rsk`](#tool-list_rsk) | Ids, titles, statuses, and refs of risks in the configured risk base directory, one page at a time, for context before addressing one by id. Each line also carries the initial/residual 5x5 zone levels, the TARA strategy word, the first `## Scope` entry, and the residual-risk coordinates (residual_probability/residual_impact/residual_product). 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_rsk tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
 | [`list_sop`](#tool-list_sop) | Ids, titles, statuses, and refs of Standard Operating Procedures in the configured SOP base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_sop tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
+| [`list_sysrs`](#tool-list_sysrs) | Ids, titles, statuses, and refs of System Requirements Specifications in the configured System Requirements Specification base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_sysrs tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
 | [`list_tsk`](#tool-list_tsk) | Ids, titles, statuses, and refs of task lists in the configured task list base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_tsk tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
 | [`list_uc`](#tool-list_uc) | Ids, titles, statuses, and refs of use cases in the configured use-case base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_uc tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
 | [`list_vcr`](#tool-list_vcr) | Ids, titles, statuses, and refs of verification case records in the configured verification case record base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_vcr tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
@@ -421,13 +426,14 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`parse_req`](#tool-parse_req) | Parse a requirement markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.req.models.v1.ReqDocument`. |
 | [`parse_rsk`](#tool-parse_rsk) | Parse a risk markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.rsk.models.v1.RskDocument`. |
 | [`parse_sop`](#tool-parse_sop) | Parse a Standard Operating Procedure markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.sop.models.v1.SopDocument`. |
+| [`parse_sysrs`](#tool-parse_sysrs) | Parse a System Requirements Specification markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.sysrs.models.v1.SysrsDocument`. |
 | [`parse_tsk`](#tool-parse_tsk) | Parse a task list markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.tsk.models.v1.TskDocument`. |
 | [`parse_uc`](#tool-parse_uc) | Parse a use-case markdown file (YAML frontmatter + body) from disk into a structured document. |
 | [`parse_vcr`](#tool-parse_vcr) | Parse a verification case record markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.vcr.models.v1.VcrDocument`. |
-| [`set_classification`](#tool-set_classification) | Replace the free-text `classification` frontmatter field of an existing document across the eleven whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr; `adr` is not supported), also bumping `updated` and leaving the body and every other frontmatter field untouched. `classification` is fully free-text -- no closed vocabulary; a blank or whitespace-only value clears it back to `None`/absent. No `create_*` tool accepts a `classification` argument at all -- this is the sole classification-change entry point. An invalid `id` (path-injection attempt or wrong format for `type`) or an unsupported `type` is a `ValueError` raised before any file access. |
+| [`set_classification`](#tool-set_classification) | Replace the free-text `classification` frontmatter field of an existing document across the twelve whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr; `adr` is not supported), also bumping `updated` and leaving the body and every other frontmatter field untouched. `classification` is fully free-text -- no closed vocabulary; a blank or whitespace-only value clears it back to `None`/absent. No `create_*` tool accepts a `classification` argument at all -- this is the sole classification-change entry point. An invalid `id` (path-injection attempt or wrong format for `type`) or an unsupported `type` is a `ValueError` raised before any file access. |
 | [`set_feat_id`](#tool-set_feat_id) | Rename an existing feature's id: validates new_id's feat-NNN-slug shape, refuses if new_id's folder already exists, renames <base>/<id>/ to <base>/<new_id>/, rewrites the README frontmatter id to new_id, bumps updated, and leaves the body byte-identical. Does not update or search for references to the old id in any other document. |
-| [`set_status`](#tool-set_status) | Replace the status of an existing document across all twelve domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, adr), also bumping `updated` (the eleven whole-body domains) and leaving the body untouched. The new `status` must be one of the domain's own closed vocabulary values (see the domain's `XFrontmatter.status` field); anything else raises `pydantic.ValidationError` and writes nothing. `superseded_by` is accepted only for `type="adr"` -- it composes the status as "superseded by {superseded_by}"; with any other `type` it is a `ValueError`. Neither `create_*` nor the generic `update` tool accepts a `status` argument at all -- this is the sole status-change entry point. An invalid `id` (path-injection attempt or wrong format for `type`) is a `ValueError` raised before any file access. |
-| [`update`](#tool-update) | Whole-body or line-range replace of an existing document's content across the eleven whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr), preserving its id/type/status/created/version; only `updated` changes. With no `offset`/`limit`, `content` is the full replacement body (body markdown only, no frontmatter block). With `offset`, `content` replaces the body line(s) starting at 1-based line `offset` of the current on-disk body: `limit` is the number of lines to replace (`offset`..`offset+limit-1`; `limit` omitted = through the last body line, `limit=0` = pure insert), and `offset=N+1` (one past the last body line) appends after it; the spliced result is validated as a whole document before anything is written. `status` is never settable -- use the generic `set_status` tool. An invalid `id` (path-injection attempt or wrong format for `type`) is a `ValueError` raised before any file access. |
+| [`set_status`](#tool-set_status) | Replace the status of an existing document across all thirteen domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs, adr), also bumping `updated` (the twelve whole-body domains) and leaving the body untouched. The new `status` must be one of the domain's own closed vocabulary values (see the domain's `XFrontmatter.status` field); anything else raises `pydantic.ValidationError` and writes nothing. `superseded_by` is accepted only for `type="adr"` -- it composes the status as "superseded by {superseded_by}"; with any other `type` it is a `ValueError`. Neither `create_*` nor the generic `update` tool accepts a `status` argument at all -- this is the sole status-change entry point. An invalid `id` (path-injection attempt or wrong format for `type`) is a `ValueError` raised before any file access. |
+| [`update`](#tool-update) | Whole-body or line-range replace of an existing document's content across the twelve whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs), preserving its id/type/status/created/version; only `updated` changes. With no `offset`/`limit`, `content` is the full replacement body (body markdown only, no frontmatter block). With `offset`, `content` replaces the body line(s) starting at 1-based line `offset` of the current on-disk body: `limit` is the number of lines to replace (`offset`..`offset+limit-1`; `limit` omitted = through the last body line, `limit=0` = pure insert), and `offset=N+1` (one past the last body line) appends after it; the spliced result is validated as a whole document before anything is written. `status` is never settable -- use the generic `set_status` tool. An invalid `id` (path-injection attempt or wrong format for `type`) is a `ValueError` raised before any file access. |
 | [`update_frontmatter`](#tool-update_frontmatter) | Whole-object replace of an ADR's frontmatter (plan §3), preserving its existing id. |
 | [`update_section`](#tool-update_section) | Whole-section replace/delete of one AdrBody field (plan §4). |
 | [`validate_adr`](#tool-validate_adr) | Re-read and re-parse an ADR by id, letting the models' own Pydantic validators run. |
@@ -439,6 +445,7 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`validate_req`](#tool-validate_req) | Disk-free, id-free dry run validating requirement content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
 | [`validate_rsk`](#tool-validate_rsk) | Disk-free, id-free dry run validating risk content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
 | [`validate_sop`](#tool-validate_sop) | Disk-free, id-free dry run validating SOP content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
+| [`validate_sysrs`](#tool-validate_sysrs) | Disk-free, id-free dry run validating System Requirements Specification content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
 | [`validate_tsk`](#tool-validate_tsk) | Disk-free, id-free dry run validating task list content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
 | [`validate_uc`](#tool-validate_uc) | Disk-free, id-free dry run validating use case content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
 | [`validate_vcr`](#tool-validate_vcr) | Disk-free, id-free dry run validating verification case record content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
@@ -557,6 +564,16 @@ Create a new Standard Operating Procedure: assigns a fresh id, derives a filenam
 | --- | --- | --- |
 | `content` | `string` | Yes |
 
+### Tool: create_sysrs
+
+**Create System Requirements Specification**
+
+Create a new System Requirements Specification: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the System Requirements Specification base directory.
+
+| Parameter | Type | Required |
+| --- | --- | --- |
+| `content` | `string` | Yes |
+
 ### Tool: create_tsk
 
 **Create task list**
@@ -591,12 +608,12 @@ Create a new verification case record: assigns a fresh id, derives a filename fr
 
 **Delete document**
 
-Permanently delete an existing document from disk across the eleven whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr; `adr` is not supported). Resolves the document by `id`, takes the domain lock, and removes it: the single `*.md` file for the ten flat domains, or the entire `<base>/<id>/` folder for `feat`. Returns the deleted path as a string. An invalid `id` (path-injection attempt or wrong format) is a `ValueError` raised before any file access; a missing document is the domain's own `XNotFoundError`; an I/O failure is a `DeleteError`. This is the sole delete entry point -- the former per-domain `delete_<d>` tools are removed.
+Permanently delete an existing document from disk across the twelve whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs; `adr` is not supported). Resolves the document by `id`, takes the domain lock, and removes it: the single `*.md` file for the eleven flat domains, or the entire `<base>/<id>/` folder for `feat`. Returns the deleted path as a string. An invalid `id` (path-injection attempt or wrong format) is a `ValueError` raised before any file access; a missing document is the domain's own `XNotFoundError`; an I/O failure is a `DeleteError`. This is the sole delete entry point -- the former per-domain `delete_<d>` tools are removed.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
 | `id` | `string` | Yes |
-| `type` | `string (enum: req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr)` | Yes |
+| `type` | `string (enum: req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs)` | Yes |
 
 ### Tool: get_adr
 
@@ -808,6 +825,31 @@ Return a complete, valid sample Standard Operating Procedure document as raw mar
 
 Return a SOP document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new Standard Operating Procedure.
 
+### Tool: get_sysrs
+
+**Get System Requirements Specification**
+
+Read, parse, and return a full System Requirements Specification document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. With raw=True, optional read-style `offset`/`limit` window the raw read: `offset` (1-based, default 1) is the first body line to return, `limit` (line count, default through end of body) how many; out-of-range values clamp (`offset > N` returns the empty string), and coordinates with raw=False raise ValueError. An invalid id (path-injection attempt or wrong format) is also a ValueError, raised before any file access.
+
+| Parameter | Type | Required |
+| --- | --- | --- |
+| `id` | `string` | Yes |
+| `raw` | `boolean` | No |
+| `offset` | `integer | None` | No |
+| `limit` | `integer | None` | No |
+
+### Tool: get_sysrs_example
+
+**Get SYSRS example**
+
+Return a complete, valid sample System Requirements Specification document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example.
+
+### Tool: get_sysrs_template
+
+**Get SYSRS template**
+
+Return a SYSRS document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new System Requirements Specification.
+
 ### Tool: get_tsk
 
 **Get task list**
@@ -976,6 +1018,17 @@ Ids, titles, statuses, and refs of risks in the configured risk base directory, 
 **List Standard Operating Procedures**
 
 Ids, titles, statuses, and refs of Standard Operating Procedures in the configured SOP base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_sop tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored.
+
+| Parameter | Type | Required |
+| --- | --- | --- |
+| `max_results` | `integer | None` | No |
+| `offset` | `integer | None` | No |
+
+### Tool: list_sysrs
+
+**List System Requirements Specifications**
+
+Ids, titles, statuses, and refs of System Requirements Specifications in the configured System Requirements Specification base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_sysrs tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
@@ -1161,6 +1214,16 @@ Parse a Standard Operating Procedure markdown file (YAML frontmatter + body) fro
 | --- | --- | --- |
 | `path` | `string` | Yes |
 
+### Tool: parse_sysrs
+
+**Parse System Requirements Specification**
+
+Parse a System Requirements Specification markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.sysrs.models.v1.SysrsDocument`.
+
+| Parameter | Type | Required |
+| --- | --- | --- |
+| `path` | `string` | Yes |
+
 ### Tool: parse_tsk
 
 **Parse task list**
@@ -1195,12 +1258,12 @@ Parse a verification case record markdown file (YAML frontmatter + body) from di
 
 **Set document classification**
 
-Replace the free-text `classification` frontmatter field of an existing document across the eleven whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr; `adr` is not supported), also bumping `updated` and leaving the body and every other frontmatter field untouched. `classification` is fully free-text -- no closed vocabulary; a blank or whitespace-only value clears it back to `None`/absent. No `create_*` tool accepts a `classification` argument at all -- this is the sole classification-change entry point. An invalid `id` (path-injection attempt or wrong format for `type`) or an unsupported `type` is a `ValueError` raised before any file access.
+Replace the free-text `classification` frontmatter field of an existing document across the twelve whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr; `adr` is not supported), also bumping `updated` and leaving the body and every other frontmatter field untouched. `classification` is fully free-text -- no closed vocabulary; a blank or whitespace-only value clears it back to `None`/absent. No `create_*` tool accepts a `classification` argument at all -- this is the sole classification-change entry point. An invalid `id` (path-injection attempt or wrong format for `type`) or an unsupported `type` is a `ValueError` raised before any file access.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
 | `id` | `string` | Yes |
-| `type` | `string (enum: req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr)` | Yes |
+| `type` | `string (enum: req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs)` | Yes |
 | `classification` | `string` | Yes |
 
 ### Tool: set_feat_id
@@ -1218,12 +1281,12 @@ Rename an existing feature's id: validates new_id's feat-NNN-slug shape, refuses
 
 **Set document status**
 
-Replace the status of an existing document across all twelve domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, adr), also bumping `updated` (the eleven whole-body domains) and leaving the body untouched. The new `status` must be one of the domain's own closed vocabulary values (see the domain's `XFrontmatter.status` field); anything else raises `pydantic.ValidationError` and writes nothing. `superseded_by` is accepted only for `type="adr"` -- it composes the status as "superseded by {superseded_by}"; with any other `type` it is a `ValueError`. Neither `create_*` nor the generic `update` tool accepts a `status` argument at all -- this is the sole status-change entry point. An invalid `id` (path-injection attempt or wrong format for `type`) is a `ValueError` raised before any file access.
+Replace the status of an existing document across all thirteen domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs, adr), also bumping `updated` (the twelve whole-body domains) and leaving the body untouched. The new `status` must be one of the domain's own closed vocabulary values (see the domain's `XFrontmatter.status` field); anything else raises `pydantic.ValidationError` and writes nothing. `superseded_by` is accepted only for `type="adr"` -- it composes the status as "superseded by {superseded_by}"; with any other `type` it is a `ValueError`. Neither `create_*` nor the generic `update` tool accepts a `status` argument at all -- this is the sole status-change entry point. An invalid `id` (path-injection attempt or wrong format for `type`) is a `ValueError` raised before any file access.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
 | `id` | `string` | Yes |
-| `type` | `string (enum: req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, adr)` | Yes |
+| `type` | `string (enum: req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs, adr)` | Yes |
 | `status` | `string` | Yes |
 | `superseded_by` | `string | None` | No |
 
@@ -1231,12 +1294,12 @@ Replace the status of an existing document across all twelve domains (`type` is 
 
 **Update document**
 
-Whole-body or line-range replace of an existing document's content across the eleven whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr), preserving its id/type/status/created/version; only `updated` changes. With no `offset`/`limit`, `content` is the full replacement body (body markdown only, no frontmatter block). With `offset`, `content` replaces the body line(s) starting at 1-based line `offset` of the current on-disk body: `limit` is the number of lines to replace (`offset`..`offset+limit-1`; `limit` omitted = through the last body line, `limit=0` = pure insert), and `offset=N+1` (one past the last body line) appends after it; the spliced result is validated as a whole document before anything is written. `status` is never settable -- use the generic `set_status` tool. An invalid `id` (path-injection attempt or wrong format for `type`) is a `ValueError` raised before any file access.
+Whole-body or line-range replace of an existing document's content across the twelve whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs), preserving its id/type/status/created/version; only `updated` changes. With no `offset`/`limit`, `content` is the full replacement body (body markdown only, no frontmatter block). With `offset`, `content` replaces the body line(s) starting at 1-based line `offset` of the current on-disk body: `limit` is the number of lines to replace (`offset`..`offset+limit-1`; `limit` omitted = through the last body line, `limit=0` = pure insert), and `offset=N+1` (one past the last body line) appends after it; the spliced result is validated as a whole document before anything is written. `status` is never settable -- use the generic `set_status` tool. An invalid `id` (path-injection attempt or wrong format for `type`) is a `ValueError` raised before any file access.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
 | `id` | `string` | Yes |
-| `type` | `string (enum: req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr)` | Yes |
+| `type` | `string (enum: req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs)` | Yes |
 | `content` | `string` | Yes |
 | `offset` | `integer | None` | No |
 | `limit` | `integer | None` | No |
@@ -1356,6 +1419,17 @@ Disk-free, id-free dry run validating risk content. `full=False` (default) valid
 **Validate SOP content**
 
 Disk-free, id-free dry run validating SOP content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body).
+
+| Parameter | Type | Required |
+| --- | --- | --- |
+| `content` | `string` | Yes |
+| `full` | `boolean` | No |
+
+### Tool: validate_sysrs
+
+**Validate System Requirements Specification content**
+
+Disk-free, id-free dry run validating System Requirements Specification content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body).
 
 | Parameter | Type | Required |
 | --- | --- | --- |

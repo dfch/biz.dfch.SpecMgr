@@ -3,8 +3,8 @@
 ``@mcp.tool()`` wrapper: update (feat-22-consolidate-mutation-tools, Phase 2).
 
 The generic, cross-domain whole-body *and* line-range replace tool for the
-eleven whole-body document types (``req``/``uc``/``tsk``/``qa``/``prb``/
-``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``). It dispatches on the
+twelve whole-body document types (``req``/``uc``/``tsk``/``qa``/``prb``/
+``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``). It dispatches on the
 explicit ``type`` parameter to a private per-domain adapter (``_update_<d>``),
 each a **verbatim port** of
 the corresponding per-domain ``update_<d>`` tool's function body (same
@@ -22,7 +22,7 @@ per-domain tool.
 
 The parameter is intentionally named ``type`` (it matches the frontmatter
 field vocabulary the client already knows); no enabled ruff rule objects to
-the builtin shadow. The 11-way union return type is annotation-only -- the
+the builtin shadow. The 12-way union return type is annotation-only -- the
 MCP input schema is built from the parameters, and the SDK serializes
 whichever concrete document is returned.
 
@@ -149,6 +149,18 @@ directly in this shape), plus the REQ-002 range branch
 (see :func:`_update_req`).
 
 
+### `_update_sysrs(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'SysrsDocument'`
+
+Replace the body of the System Requirements Specification identified by ``id_`` (whole-body or line-range mode).
+
+Verbatim-shape port of :func:`_update_sop` (same ``sysrs_lock``,
+``load_by_id``, frontmatter carry-over with only ``updated`` bumped,
+``write_sysrs_file``, ``SysrsNotFoundError``; ``sysrs`` is dispatch-only
+from day one per ADR 36905d5b, so there was never a per-domain
+``update_sysrs`` tool to port -- this adapter was written directly in
+this shape), plus the REQ-002 range branch (see :func:`_update_req`).
+
+
 ### `_update_tsk(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'TskDocument'`
 
 Replace the body of the task list identified by ``id_`` (whole-body or line-range mode).
@@ -181,12 +193,12 @@ frontmatter carry-over with only ``updated`` bumped, ``write_vcr_file``,
 :func:`_update_req`).
 
 
-### `update(id: 'str', type: "Literal['req', 'uc', 'tsk', 'qa', 'prb', 'gol', 'rsk', 'dec', 'sop', 'feat', 'vcr']", content: 'str', offset: 'int | None' = None, limit: 'int | None' = None) -> '_UpdateDocument'`
+### `update(id: 'str', type: "Literal['req', 'uc', 'tsk', 'qa', 'prb', 'gol', 'rsk', 'dec', 'sop', 'feat', 'vcr', 'sysrs']", content: 'str', offset: 'int | None' = None, limit: 'int | None' = None) -> '_UpdateDocument'`
 
 Replace the body of an existing document, in whole-body or line-range mode.
 
-Cross-domain generic for the eleven whole-body document types
-(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``);
+Cross-domain generic for the twelve whole-body document types
+(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``);
 dispatches on ``type`` to the domain's own ported adapter (same lock,
 same id resolution, same frontmatter carry-over, same verbatim
 persistence, same domain not-found error).
@@ -242,7 +254,7 @@ id:
 type:
     The document type / domain: one of ``req``, ``uc``, ``tsk``,
     ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
-    ``vcr``.
+    ``vcr``, ``sysrs``.
 content:
     Whole-body mode: the replacement body markdown, with no
     frontmatter block. Range mode: the replacement fragment for the
@@ -262,7 +274,7 @@ Returns
 -------
 ReqDocument | UcDocument | TskDocument | QaDocument | PrbDocument |
 GolDocument | RskDocument | DecDocument | FeatDocument | SopDocument |
-VcrDocument
+VcrDocument | SysrsDocument
     The updated document of the dispatched domain type.
 
 Raises
@@ -290,7 +302,7 @@ pydantic.ValidationError
     prefixed. Nothing is written.
 ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
 PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
-FeatNotFoundError / SopNotFoundError / VcrNotFoundError
+FeatNotFoundError / SopNotFoundError / VcrNotFoundError / SysrsNotFoundError
     No document of the dispatched ``type`` has this id -- the
     domain's own not-found error, unchanged from the per-domain tools.
 

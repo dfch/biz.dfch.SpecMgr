@@ -343,7 +343,18 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.sysrs.models.v1.summary`](biz.dfch.specmgr.sysrs.models.v1.summary.md) — Pydantic model for one line of SYSRS listing output (Phase 2, Task 2.4).
 - [`biz.dfch.specmgr.sysrs.prompts`](biz.dfch.specmgr.sysrs.prompts.md) — MCP prompt wrappers for System Requirements Specification (SYSRS) documents (placeholder).
 - [`biz.dfch.specmgr.sysrs.resources`](biz.dfch.specmgr.sysrs.resources.md) — MCP resource registrations for System Requirements Specification (SYSRS) documents (placeholder).
-- [`biz.dfch.specmgr.sysrs.tools`](biz.dfch.specmgr.sysrs.tools.md) — MCP tool wrappers for System Requirements Specification (SYSRS) documents (placeholder).
+- [`biz.dfch.specmgr.sysrs.tools`](biz.dfch.specmgr.sysrs.tools.md) — MCP tool wrappers for System Requirements Specification (SYSRS) documents (mirrors ``vcr/tools/``'s own shape).
+- [`biz.dfch.specmgr.sysrs.tools._io`](biz.dfch.specmgr.sysrs.tools._io.md) — Thin file read helpers over ``parse_sysrs`` (Task 3.1).
+- [`biz.dfch.specmgr.sysrs.tools._lock`](biz.dfch.specmgr.sysrs.tools._lock.md) — Per-document in-process lock guarding System Requirements Specification mutations.
+- [`biz.dfch.specmgr.sysrs.tools._paths`](biz.dfch.specmgr.sysrs.tools._paths.md) — System Requirements Specification (SYSRS) base directory resolution and id -> path lookup (Task 3.1).
+- [`biz.dfch.specmgr.sysrs.tools._write`](biz.dfch.specmgr.sysrs.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_sysrs`` and
+- [`biz.dfch.specmgr.sysrs.tools.create_sysrs`](biz.dfch.specmgr.sysrs.tools.create_sysrs.md) — ``@mcp.tool()`` wrapper: create_sysrs (Task 3.2).
+- [`biz.dfch.specmgr.sysrs.tools.get_sysrs`](biz.dfch.specmgr.sysrs.tools.get_sysrs.md) — ``@mcp.tool()`` wrapper: get_sysrs (Task 3.2).
+- [`biz.dfch.specmgr.sysrs.tools.get_sysrs_example`](biz.dfch.specmgr.sysrs.tools.get_sysrs_example.md) — ``@mcp.tool()`` wrapper: get_sysrs_example (Task 3.2).
+- [`biz.dfch.specmgr.sysrs.tools.get_sysrs_template`](biz.dfch.specmgr.sysrs.tools.get_sysrs_template.md) — ``@mcp.tool()`` wrapper: get_sysrs_template (Task 3.2).
+- [`biz.dfch.specmgr.sysrs.tools.list_sysrs`](biz.dfch.specmgr.sysrs.tools.list_sysrs.md) — ``@mcp.tool()`` wrapper: list_sysrs (Task 3.2).
+- [`biz.dfch.specmgr.sysrs.tools.parse_sysrs`](biz.dfch.specmgr.sysrs.tools.parse_sysrs.md) — ``@mcp.tool()`` wrapper: parse_sysrs (Task 3.2).
+- [`biz.dfch.specmgr.sysrs.tools.validate_sysrs`](biz.dfch.specmgr.sysrs.tools.validate_sysrs.md) — ``@mcp.tool()`` wrapper: validate_sysrs (Task 3.2).
 - [`biz.dfch.specmgr.tsk`](biz.dfch.specmgr.tsk.md) — TaskList (TSK) domain -- lightweight task/todo-list specifications.
 - [`biz.dfch.specmgr.tsk.models`](biz.dfch.specmgr.tsk.models.md) — TaskList (TSK) models -- Pydantic schema powered by the generic ``models/md`` engine.
 - [`biz.dfch.specmgr.tsk.models.v1`](biz.dfch.specmgr.tsk.models.v1.md) — TaskList (TSK) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.

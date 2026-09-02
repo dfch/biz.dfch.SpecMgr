@@ -399,7 +399,18 @@ First-line docstrings from each module, organized by domain:
 - `sysrs/models/v1/summary.py` — Pydantic model for one line of SYSRS listing output (Phase 2, Task 2.4).
 - `sysrs/prompts/__init__.py` — MCP prompt wrappers for System Requirements Specification (SYSRS) documents (placeholder).
 - `sysrs/resources/__init__.py` — MCP resource registrations for System Requirements Specification (SYSRS) documents (placeholder).
-- `sysrs/tools/__init__.py` — MCP tool wrappers for System Requirements Specification (SYSRS) documents (placeholder).
+- `sysrs/tools/__init__.py` — MCP tool wrappers for System Requirements Specification (SYSRS) documents (mirrors ``vcr/tools/``'s own shape).
+- `sysrs/tools/_io.py` — Thin file read helpers over ``parse_sysrs`` (Task 3.1).
+- `sysrs/tools/_lock.py` — Per-document in-process lock guarding System Requirements Specification mutations.
+- `sysrs/tools/_paths.py` — System Requirements Specification (SYSRS) base directory resolution and id -> path lookup (Task 3.1).
+- `sysrs/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_sysrs`` and
+- `sysrs/tools/create_sysrs.py` — ``@mcp.tool()`` wrapper: create_sysrs (Task 3.2).
+- `sysrs/tools/get_sysrs.py` — ``@mcp.tool()`` wrapper: get_sysrs (Task 3.2).
+- `sysrs/tools/get_sysrs_example.py` — ``@mcp.tool()`` wrapper: get_sysrs_example (Task 3.2).
+- `sysrs/tools/get_sysrs_template.py` — ``@mcp.tool()`` wrapper: get_sysrs_template (Task 3.2).
+- `sysrs/tools/list_sysrs.py` — ``@mcp.tool()`` wrapper: list_sysrs (Task 3.2).
+- `sysrs/tools/parse_sysrs.py` — ``@mcp.tool()`` wrapper: parse_sysrs (Task 3.2).
+- `sysrs/tools/validate_sysrs.py` — ``@mcp.tool()`` wrapper: validate_sysrs (Task 3.2).
 
 **tsk/**
 
@@ -510,4 +521,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 337
+**Test files**: 349
