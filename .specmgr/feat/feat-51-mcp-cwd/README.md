@@ -1,9 +1,9 @@
 ---
 created: '2026-09-02T15:24:37.128173'
 id: feat-51-mcp-cwd
-status: planning
+status: done
 type: feat
-updated: '2026-09-02T15:24:37.128173'
+updated: '2026-09-02T14:36:42.000000'
 version: 1.0.0
 ---
 
@@ -31,7 +31,7 @@ This feature adds a `specmgr://config` resource that reports, for every domain, 
 - [x] ACC-002: An automated test sets an unrelated environment variable (e.g. a fake PAT) and asserts it never appears anywhere in `specmgr://config`'s output.
 - [x] ACC-003: `README.md`'s "Add to OpenCode" example and "Environment Variables" section reflect the updated guidance, including `SPECMGR_FEAT_DIR`.
 - [x] ACC-004: `docs/MCP.md` lists `specmgr://config` after running `specmgr mcp-docs`, with no manual edits required.
-- [ ] ACC-005: `uv run --frozen ruff format --check`, `ruff check`, `vulture`, and the full unittest suite all pass with the new resource in place. (Phase 1's own slice passed; ACC-005 stays open pending Phase 2/3.)
+- [x] ACC-005: `uv run --frozen ruff format --check`, `ruff check`, `vulture`, and the full unittest suite all pass with the new resource in place. (Confirmed in Phase 3's final end-to-end pass -- all four commands pass, 3047 tests OK.)
 
 ### Scope
 
@@ -68,18 +68,22 @@ This feature adds a `specmgr://config` resource that reports, for every domain, 
 
 #### Phase 3: Verification
 
-- [ ] Task 3.1: Run the full lint (`ruff format --check`, `ruff check`), `vulture`, and unittest suite.
-- [ ] Task 3.2: Manually verify `specmgr://config` output against a real worktree to confirm the reported paths match reality.
+- [x] Task 3.1: Run the full lint (`ruff format --check`, `ruff check`), `vulture`, and unittest suite.
+- [x] Task 3.2: Manually verify `specmgr://config` output against a real worktree to confirm the reported paths match reality.
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-09-02**: Phase 1 (Diagnostic Resource) and Phase 2 (Documentation Updates) complete -- the `specmgr://config` resource is implemented, tested, and documented, and the top-level `README.md`'s "Add to OpenCode" example and "Environment Variables" section now reflect the updated guidance (ACC-003 satisfied). Phase 3 (verification) remains.
+**As of 2026-09-02**: All three phases complete -- the feature is done. Phase 1 (Diagnostic Resource) implemented and tested the `specmgr://config` resource; Phase 2 (Documentation Updates) updated the top-level `README.md`'s "Add to OpenCode" example and "Environment Variables" section; Phase 3 (Verification) re-ran the full quality gate end-to-end (ruff format/check, vulture, 3047 unittest tests, all green) and manually confirmed `specmgr://config`'s reported `base_dir`s match reality in this real worktree, including that overriding `SPECMGR_ADR_DIR` correctly flips both `base_dir` and `env_var_set`. All five acceptance criteria (ACC-001 through ACC-005) are satisfied.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-02 — Phase 3 complete: final verification pass, feature done
+
+Ran the full quality gate end-to-end in this real worktree: `uv run --frozen ruff format --check` (1527 files already formatted), `uv run --frozen ruff check` (all checks passed), `uv run --frozen vulture src/ whitelist.py --min-confidence 60` (no output, no findings), and `uv run --frozen --all-extras python -m unittest discover -v -s tests -t . -p "test_*.py"` (3047 tests, OK) -- all four green, satisfying ACC-005. Manually invoked `config_info()` directly (bypassing the MCP transport) with the default environment (no `SPECMGR_*_DIR` vars set) and confirmed every reported `base_dir` is the correct absolute path under this worktree's root (e.g. `adr` -> `.../feat-51-mcp-cwd/docs/adr` (exists on disk with real ADR files), `feat` -> `.../feat-51-mcp-cwd/.specmgr/feat` (exists on disk with real feature folders), `req` -> `.../feat-51-mcp-cwd/docs/req` (correctly computed, not yet created -- expected, since REQ has no documents yet in this worktree)), and that `env_var_set` is `false` for all twelve domains. Re-ran with `SPECMGR_ADR_DIR=/tmp/some/test/dir` set only for that single invocation and confirmed `adr`'s `base_dir` flipped to `/tmp/some/test/dir` and `env_var_set` flipped to `true`, with every other domain unaffected -- directly exercising the self-diagnosis scenario the feature exists for. Confirmed no stray env var was left in the shell afterward. Re-confirmed ACC-003 (README's "Add to OpenCode"/"Environment Variables" sections) and ACC-004 (`docs/MCP.md` lists `specmgr://config`) by grepping the committed files; `git status --short` showed a clean tree throughout, confirming no drift from running the doc-generation-adjacent commands. All five acceptance criteria (ACC-001 through ACC-005) are genuinely satisfied end-to-end. No blockers found.
 
 #### 2026-09-02 — Phase 2 complete: README documentation updates
 
