@@ -2,7 +2,7 @@
 created: '2026-08-30 00:00:00.000Z'
 id: feat-32-sysrs
 status: in-progress
-updated: '2026-09-01 00:00:00.000Z'
+updated: '2026-09-02 00:00:00.000Z'
 version: 1.0.0
 ---
 
@@ -98,8 +98,11 @@ Domain key: `sysrs` (decided 2026-08-30 — see Decisions Made).
   (dispatch-only from day one, ADR 36905d5b, `sop`'s precedent):
   `create_sysrs` (fresh `uuid4`, `status="draft"`, filename
   `sysrs-{id}-{slug}.md`), `parse_sysrs`, `list_sysrs` (paged tool from
-  day one, ADR ec9f5262), `get_sysrs(id, raw=False)`,
-  `get_sysrs_example`, `get_sysrs_template`,
+  day one, ADR ec9f5262), `get_sysrs(id, raw=False, offset=None,
+  limit=None)` (the `offset`/`limit` read-style windowing of the raw
+  body text is the now-generic feat-28 convention every other
+  `get_<d>` tool already carries — added 2026-09-02, this plan had
+  not caught up with it), `get_sysrs_example`, `get_sysrs_template`,
   `validate_sysrs` — plus private `_paths`/`_io`/`_lock`/`_write`
   helpers. **No** per-domain `delete_sysrs` tool either — deletion
   goes through the generic `delete` tool in `general/tools/`
@@ -201,9 +204,12 @@ Domain key: `sysrs` (decided 2026-08-30 — see Decisions Made).
   `type="sysrs"`)→`validate_sysrs` round-trip against a temp
   `SPECMGR_DOCS_DIR`; `create_sysrs` fixes `status="draft"` and writes
   `sysrs-{id}-{slug}.md`; `get_sysrs(id, raw=True)` returns the
-  frontmatter-stripped body text verbatim; `list_sysrs` paging
-  (default 25 / cap 100 / `truncated` boundary) mirrors every other
-  domain's `list_<d>` tool exactly.
+  frontmatter-stripped body text verbatim, and with `offset`/`limit`
+  also given returns the windowed slice of that text (out-of-range
+  values clamp; coordinates with `raw=False` raise `ValueError`) —
+  mirroring every other domain's `get_<d>` tool (feat-28); `list_sysrs`
+  paging (default 25 / cap 100 / `truncated` boundary) mirrors every
+  other domain's `list_<d>` tool exactly.
 - [ ] ACC-007: Verifies REQ-009 — every listed resource is implemented
   and registered (exactly three — no `/{id}`, no `/list`);
   `specmgr://sysrs/schema` equals fresh `generate_sysrs_schema()`
@@ -280,8 +286,9 @@ Explicitly out of scope:
   points at the existing `specmgr://iso25010` resource instead (unlike
   `sop`'s `specmgr://rasci` or `vcr`'s `specmgr://dtais`).
 - Any changes to any other existing domain's schema, tools, or data.
-- Task 0.11's ISO_24765 grounding question stays open and non-blocking
-  — `## Definitions and Acronyms` is free-form text either way.
+- Task 0.11's ISO_24765 grounding question — **closed 2026-09-02** as
+  "no grounding" (`ISO_24765.md` no longer exists locally); `##
+  Definitions and Acronyms` is free-form text either way.
 
 ### Dependencies
 
@@ -418,7 +425,10 @@ Explicitly out of scope:
    see `example.v5.md`'s updated inline `<!-- Q: ... -->` there. `ISO_24765.md` (the vocabulary standard) is not yet referenced by any
     design decision here — candidate use: grounding a future `## Definitions`/
     `## Acronyms` section (mirroring 29148 §9.2.3/9.2.5) if/when one is
-    added; flagged, not yet actioned.
+    added; flagged, not yet actioned. **Closed 2026-09-02 (Task 0.11)**:
+    the file no longer exists locally (same intentional-deletion pattern
+    as the INCOSE Handbook PDF) — this candidate use was never actioned,
+    and `## Definitions and Acronyms` stays plain free-form text.
 
     **Resolution (2026-08-31, REV 6/7)**: the still-open grouping
     question above is settled by the user in `example.v6.md`/
@@ -752,11 +762,14 @@ Explicitly out of scope:
   `vcr` cross-reference list (`example.v5.md`), the same shape as every
   other section — see the updated Domain-to-source mapping table and
   Dependencies.
-- Whether ISO/IEC/IEEE 29148 §9.5's own 19-subclause requirement-category
+- ~~Whether ISO/IEC/IEEE 29148 §9.5's own 19-subclause requirement-category
   taxonomy (vs. INCOSE's five-word scheme) should inform `## System Requirements`'s grouping, and whether `ISO_24765.md` (the vocabulary
   standard, added alongside the full `ISO_29148.md` text) should ground a
-  future `## Definitions`/`## Acronyms` section — both added 2026-08-31,
-  see Design Notes item 1's correction and Task 0.10/0.11.
+  future `## Definitions`/`## Acronyms` section~~ — **both resolved**:
+  the grouping question by Task 0.3.2/REV 6-7 (25010:2023 characteristics,
+  not INCOSE's scheme), the `ISO_24765.md` question by Task 0.11
+  (2026-09-02, closed as "no grounding" — see Design Notes item 1's
+  correction note). Nothing remains open from this bullet.
 
 **Conversion method used for the MITRE guide (Task 0.5) and the INCOSE
 SE Handbook (Task 0.8), for reproducibility:** `pandoc` cannot read PDF
@@ -1057,9 +1070,15 @@ pattern — tests assert system-owned/both-set, never the literal
 format, `version=CURRENT_SCHEMA_VERSION`, filename
 `sysrs-{id}-{slugify(body text)}.md`); `parse_sysrs(path)`;
 `list_sysrs(max_results?, offset?)` (paged from day one, ADR ec9f5262,
-inline `SysrsSummary`, skip-on-parse-failure); `get_sysrs(id, raw=False)`
-(`raw=True` returns the frontmatter-stripped body text verbatim — the
-text the generic `update`'s `begin`/`end` index into);
+inline `SysrsSummary`, skip-on-parse-failure); `get_sysrs(id,
+raw=False, offset=None, limit=None)` (`raw=True` returns the
+frontmatter-stripped body text verbatim — the text the generic
+`update`'s `begin`/`end` index into; with `raw=True` and
+`offset`/`limit` also given, returns the windowed slice of that text
+instead via the shared `general/tools/_splice.window_body` helper,
+clamping out-of-range values rather than erroring — the now-generic
+feat-28 convention every other `get_<d>` tool already carries, added
+to this design 2026-09-02);
 `get_sysrs_example()`/`get_sysrs_template()` (`read_packaged_text`);
 `validate_sysrs(content, full=False)`.
 Private helpers `_paths.py` (`SYSRS_TYPE_NAME = "sysrs"`,
@@ -1325,11 +1344,19 @@ its own ADR rather than living only in this feature's Design Notes.
   treatment for INCOSE) — depends on: none — status: done (2026-08-31;
   outline did not match — corrected, see Design Notes item 1's
   "Correction" note, §8.4/9.5/5.4/6.4.3 cited directly)
-- [ ] Task 0.11: Decide whether/how `ISO_24765.md` (ISO/IEC/IEEE
+- [x] Task 0.11: Decide whether/how `ISO_24765.md` (ISO/IEC/IEEE
   24765:2017, *Systems and software engineering — Vocabulary*, added to
   this folder alongside `ISO_29148.md`) grounds a future `## Definitions`/
   `## Acronyms` section (mirroring 29148 §9.2.3/9.2.5), or stays an
-  unused reference — depends on: Task 0.3.2 — status: not-started
+  unused reference — depends on: Task 0.3.2 — status: done (2026-09-02:
+  closed as "no grounding" — `ISO_24765.md`/`ISO_29148.md` no longer
+  exist anywhere in this folder or its git history, the same
+  intentional-deletion pattern already confirmed for the INCOSE
+  Handbook PDF, so there is no primary text left to re-consult;
+  `## Definitions and Acronyms` stays plain free-form text with no
+  ISO_24765-derived structure/glossary convention — this changes
+  nothing schema-wise, since the section was already free-form
+  regardless of the answer.)
 - [x] Task 0.12: Migrate `sysrs-example.md` to the locked sibling-
   feature conventions (feat-38-39-41-43-44, D2/D7) — both `## Updates`
   heading separators `—` → ` - ` (issue #38) and the frontmatter
@@ -1491,11 +1518,13 @@ its own ADR rather than living only in this feature's Design Notes.
   helper if it is on `dev`, else the current sop microsecond pattern,
   filename `sysrs-{id}-{slug}.md`), `parse_sysrs(path)`,
   `list_sysrs(max_results?, offset?)` (paged from day one, ADR
-  ec9f5262), `get_sysrs(id, raw=False)`, `get_sysrs_example`,
-  `get_sysrs_template`, `validate_sysrs(content, full=False)` —
-  **no** per-domain mutation tools (dispatch-only from day one, ADR
-  36905d5b; deletion is the generic `delete` tool, REQ-011) — depends
-  on: Task 3.1 — status: not-started
+  ec9f5262), `get_sysrs(id, raw=False, offset=None, limit=None)`
+  (offset/limit windowing of the raw read, feat-28 convention),
+  `get_sysrs_example`, `get_sysrs_template`,
+  `validate_sysrs(content, full=False)` — **no** per-domain mutation
+  tools (dispatch-only from day one, ADR 36905d5b; deletion is the
+  generic `delete` tool, REQ-011) — depends on: Task 3.1 — status:
+  not-started
 - [ ] Task 3.3: `"sysrs"` dispatch entries — **gated on the sibling's
   Phase 4 per the Dependencies execution order** (run it after that
   phase has merged to `dev`, or now + rebase on its merge — a
@@ -1513,7 +1542,8 @@ its own ADR rather than living only in this feature's Design Notes.
 - [ ] Task 3.4: Tests `tests/sysrs/tools/` — one module per tool +
   helper tests + `test_integration.py` (ACC-006 round-trip using the
   generic `update`/`set_status` tools with `type="sysrs"`, both whole-
-  body and `begin`/`end` line-range branches); new test cases in
+  body and `begin`/`end` line-range branches, plus `get_sysrs`'s
+  `raw`+`offset`/`limit` windowing); new test cases in
   `tests/general/tools/test_update.py`/`test_set_status.py`/
   `test_delete.py` covering `type="sysrs"` (ACC-009) —
   `get_sysrs_example`/`get_sysrs_template`
@@ -1664,6 +1694,33 @@ around.
 
 ### Current Status
 
+**As of 2026-09-02 (branch divergence reconciled + two remaining plan
+gaps closed)**: This local worktree had gone stale relative to
+`origin/feat-32-sysrs` — it had kept absorbing general `dev` merges
+(e.g. issue #28's `get_<d>` `offset`/`limit` windowing) but had missed
+the real `sysrs`-specific progress pushed to `origin/feat-32-sysrs`
+(Phase 1 complete, the 2026-09-01 plan-review pass). Reconciled via a
+clean, conflict-free `git merge origin/feat-32-sysrs` (local merge
+commit `78567b8`, not pushed). On top of that merge, two plan gaps
+that survived both the local staleness *and* the real upstream Phase-
+1/plan-review work were closed: (1) **Task 0.11** — `ISO_24765.md`/
+`ISO_29148.md` no longer exist locally or in git history (same
+intentional-deletion pattern as the INCOSE Handbook PDF), so there is
+no primary text left to consult; closed as "no grounding needed",
+`## Definitions and Acronyms` stays plain free-form text; Phase 0 (and
+now Task List-wide) has zero non-blocking leftovers. (2) **`get_sysrs`
+gains `offset`/`limit`** (`get_sysrs(id, raw=False, offset=None,
+limit=None)`) — the generic feat-28 raw-read windowing convention
+every other `get_<d>` tool already has shipped on `dev` after this
+plan's REQ-008/Design-Notes/ACC-006/Task-3.2 text was written; updated
+in place, referenced everywhere `get_sysrs`'s signature appears. Also
+corrected the "Handoff to next session" section, which had been left
+saying "execute Phase 1" as the immediate next action even though this
+section's own newest 2026-09-01 entry below already recorded Phase 1
+as complete — real staleness, not hypothetical; it now correctly says
+Phase 2. No Phase 2 code has been written this session — this was a
+reconciliation-and-plan-fix pass only.
+
 **As of 2026-09-01 (Phase 1 complete — empirical schema validation against the
 live `models/md` engine)**: Phase 1 (Tasks 1.1–1.5) is done — four scratch
 suites (list mechanics, containers, free-form/heading, full `sysrs-example.md`
@@ -1805,29 +1862,38 @@ borrowed-section content.
 
 ### Handoff to next session (read this first if you are a new session)
 
-- **You are here for a reason**: this feature moved out of the shared
-  main checkout into its own `git worktree` because another agent was
-  concurrently working on `feat-30-sop` directly on `dev` in the main
-  checkout (`/home/user/src/biz.dfch.SpecMgr`). Do **not** `cd` back into
-  that main checkout and run git commands there on this feature's
-  behalf — it's a different agent's live working directory. (This
-  concern may be stale by now — re-check whether `feat-30-sop` has
-  since merged — but don't assume the main checkout is free to use
-  without checking first.)
+- **You are here for a reason (now resolved)**: this feature moved out
+  of the shared main checkout into its own `git worktree` because
+  another agent was concurrently working on `feat-30-sop` directly on
+  `dev` in the main checkout (`/home/user/src/biz.dfch.SpecMgr`). **Re-
+  verified 2026-09-02**: `feat-30-sop` has long since merged (`sop` is
+  fully shipped on `dev`), so the original collision risk is gone, but
+  this feature stays in its own worktree regardless — that's now just
+  this repo's normal per-feature-branch pattern, not a workaround.
+  `git worktree list` currently shows three other linked worktrees
+  beside the main checkout (`feat-48-feat-id`, `feat-56-classification`,
+  plus this one) — same reasoning applies to all of them: don't `cd`
+  into another one and run git commands there on this feature's behalf.
 - **Where you are**: worktree
-  `/home/user/src/biz.dfch.SpecMgr.worktrees/feat-32-sysrs`, branch
-  `feat-32-sysrs`, originally branched from local `dev` (rebuilt clean
-  at `4a4fc62`); local `dev` was merged in on 2026-08-31 (`0f2794d`,
-  vcr fully shipped + v0.15.0 + release automation — 2,704 tests OK
-  after the merge), so the branch now contains the full current dev
-  tree plus this feature's docs. **Run `git status`/`git log
-  --oneline` yourself before trusting any commit list** — as of this
-  update (2026-09-01) the working tree is **clean** at `055fd2d`
-  (`feat(feat-32): add design document` — all research artifacts,
-  `example.md`…`example.v7.md`, `sysrs-example.md`, and the README
-  state before this planning pass are committed). The plan-review
-  pass's fixes (this README + the `sysrs-example.md` migration,
-  Task 0.12) land in one further commit on top of it.
+  `/home/user/src/biz.dfch.SpecMgr.worktree/feat-32-sysrs` (singular
+  `worktree`, **not** `worktrees` as earlier entries below recorded —
+  corrected 2026-09-02), branch `feat-32-sysrs`. **Run `git
+  status`/`git log --oneline`/`git worktree list` yourself before
+  trusting any commit list or path in this section** — commit hashes
+  go stale fast in this file. As of this update (2026-09-02): working
+  tree **clean** at `78567b8`, a local merge commit reconciling two
+  branches that had quietly diverged after `f0abc33` — this worktree's
+  own local history (which had kept fast-forwarding with more general
+  `dev` merges, e.g. issue #28's `get_<d>` `offset`/`limit` windowing)
+  and `origin/feat-32-sysrs` (which had the *real* `sysrs`-specific
+  progress: Phase 1 empirical validation complete, plus a plan-review
+  pass fixing the delete-tool story and adopting the sibling feature's
+  locked conventions — see Current Status). The merge was clean, no
+  conflicts. **Lesson for future sessions**: this worktree had gone
+  stale relative to `origin/feat-32-sysrs` for at least one session's
+  worth of real work before this was caught — always `git fetch` +
+  compare `HEAD` against `origin/feat-32-sysrs` early in a session,
+  not just trust this worktree's own `git log`.
 - **Folder history**: this feature folder was originally created as
   `feat-0-sysrs` (no GitHub issue yet) in the main checkout, then
   renamed to `feat-32-sysrs` and moved into this worktree/branch per
@@ -1862,53 +1928,60 @@ borrowed-section content.
   it into this folder following the same
   `session-ses_*-feat-32-NN-*.md` naming/`git check-ignore`-at-nested-
   path pattern already used in other feature folders.
-- **Immediate next action**: **execute Phase 1 (empirical schema
-  validation)** per the new Task List (the Phases 1–6 breakdown added
-  2026-09-01): read-only, in-memory validation of the approved shapes
-  against the live `models/md` engine via a throwaway /tmp scratch
-  script (NOT committed, NOT a permanent test file) — the cross-
-  reference bullet mechanics, the container/optional-list mechanics,
-  the `## Updates`/free-text/H1-prefix mechanics (including the
-  locked post-sibling `## Updates` shape and the empty-mandatory-
-  leaf pin, Task 1.3(a)/(e)), and a full `sysrs-example.md` round-
-  trip (`sysrs-example.md` is already migrated to the locked
-  conventions by the done Task 0.12) — recording every outcome in
-  Design Notes' "Implementation design" subsection and closing ACC-
-  003 **before Phase 2 writes any Pydantic model code** (mirrors
-  `vcr`'s Phase 0 discipline). Reference artifacts: `example.v7.md`
-  (the approved section list — its worked `## Updates` example is
-  illustrative only, it predates the sibling feature) and
-  `sysrs-example.md` (the filled-in content for the same case);
-  Design Notes' preliminary model-class sketch is the starting point
-  (flagged preliminary for exactly this phase). Non-blocking
-  leftovers: Task 0.11 (ISO_24765 → `##
-  Definitions and Acronyms` grounding).
-- **Still open / unresolved**: Task 0.11 (whether/how `ISO_24765.md`
-  grounds the new `## Definitions and Acronyms` section or stays an
-  unused reference — non-blocking; the approved section is free-form
-  text either way); optional cleanup of the `req` docstring's pre-2023
-  example characteristic names (noted in `example.v7.md`'s header,
-  out of scope); the sibling-feature execution-order checkpoints
-  (Phases 1–2 and Tasks 3.1/3.2 parallel-safe now; Task 3.3 gated
-  on the sibling's Phase 4 — or done now + rebased on its merge;
-  Phase 6 re-merges `dev` at Task 6.1 for the `server.py`/`AGENTS.md`
-  overlap — see Dependencies; the locked conventions are already
-  adopted, so these are verification steps, not open design
-  questions). **Settled and closed**: the Phase 1–6 implementation
-  breakdown itself (2026-09-01 — the Task List's "Phase 1+" stub is
-  replaced; the frontmatter `status` vocabulary and the per-section
-  cross-ref type-tag regex decided the same day); `## References`'s
-  cardinality when present (2026-09-01 — present ⇒ ≥1 item required,
-  user-confirmed); Task 0.3.2 + ACC-002 (approved list in `example.v7.md` —
-  all M/O flags accepted, Appendix/Definitions and Acronyms added),
-  Task 0.3.5 (HERMES framing dropped), Task 0.4 (MIL-STD-961E
-  re-verification dropped — the outline doesn't use it), Task 0.7b
-  (INCOSE GtWR read skipped — not needed at this time). Also settled
-  earlier (2026-08-31): organizing principle (Task 0.3.1 — 29148
-  clause structure + 25010 categories), Systems Integration placement
-  (Task 0.3.4 — `### System Integration` under `## System Overview`),
-  `## Traceability`/`## Overview` (dropped), cross-reference field
-  shape (Task 0.3.6, `<TYPE> <uuid>: <title>` + notes paraphrase).
+- **Immediate next action (corrected 2026-09-02 — was stale)**:
+  **execute Phase 2 (models + parser)**, **not** Phase 1 — Phase 1
+  (Tasks 1.1–1.5) is done (see Current Status's "Phase 1 complete"
+  entry): four scratch suites validated every approved shape against
+  the live `models/md` engine (50 checks, all passed), closed ACC-003,
+  and recorded every outcome + exact mechanic in Design Notes' "Phase
+  1 outcome record". This Handoff bullet had been left saying
+  "execute Phase 1" even after Current Status was updated to record
+  Phase 1's completion — a real staleness bug in this section, not
+  just a hypothetical one; don't trust this bullet's phase number
+  without cross-checking Current Status and the Task List's own
+  `[x]`/`[ ]` checkboxes first. Concretely: Task 2.1 (package
+  skeleton) is next, then 2.2 (frontmatter), 2.3 (body — using the
+  `ValidationError`-channel decision from Decisions Made 2026-09-02
+  for the zero-H3/out-of-order checks), 2.4 (document/parser/summary),
+  2.5 (tests), 2.6 (phase-end gate). Reference artifacts: `example.v7.md`
+  (approved section list) and `sysrs-example.md` (filled-in content,
+  Task-0.12-migrated to the locked sibling conventions); Design Notes'
+  "Phase 1 outcome record" is the authoritative mechanics reference
+  for Phase 2, superseding the earlier "preliminary model-class
+  sketch". Zero non-blocking leftovers remain (Task 0.11 closed
+  2026-09-02).
+- **Still open / unresolved**: nothing schema/outline-related — only
+  the pre-existing, out-of-scope optional cleanup of the `req`
+  docstring's pre-2023 example characteristic names (noted in
+  `example.v7.md`'s header); the sibling-feature execution-order
+  checkpoints (Phases 1–2 and Tasks 3.1/3.2 parallel-safe now; Task
+  3.3 gated on the sibling's Phase 4 — or done now + rebased on its
+  merge; Phase 6 re-merges `dev` at Task 6.1 for the `server.py`/
+  `AGENTS.md` overlap — see Dependencies; the locked conventions are
+  already adopted, so these are verification steps, not open design
+  questions). **Settled and closed**: Task 0.11 (2026-09-02 — closed
+  as "no grounding", `ISO_24765.md` no longer exists locally; see
+  Current Status); `get_sysrs`'s `offset`/`limit` amendment
+  (2026-09-02, matching the now-generic feat-28 convention); the
+  Phase 1–6 implementation breakdown itself (2026-09-01 — the Task
+  List's "Phase 1+" stub is replaced; the frontmatter `status`
+  vocabulary and the per-section cross-ref type-tag regex decided the
+  same day); Phase 1 itself, empirically validated and recorded
+  (2026-09-01); the delete-tool story (7 tools not 8, generic `delete`
+  adapter, 2026-09-01 plan-review pass); the Task 2.3 exception-channel
+  question (2026-09-02 — `ValidationError`, matching every other
+  domain); `## References`'s cardinality when present (2026-09-01 —
+  present ⇒ ≥1 item required, user-confirmed); Task 0.3.2 + ACC-002
+  (approved list in `example.v7.md` — all M/O flags accepted, Appendix/
+  Definitions and Acronyms added), Task 0.3.5 (HERMES framing dropped),
+  Task 0.4 (MIL-STD-961E re-verification dropped — the outline doesn't
+  use it), Task 0.7b (INCOSE GtWR read skipped — not needed at this
+  time). Also settled earlier (2026-08-31): organizing principle (Task
+  0.3.1 — 29148 clause structure + 25010 categories), Systems
+  Integration placement (Task 0.3.4 — `### System Integration` under
+  `## System Overview`), `## Traceability`/`## Overview` (dropped),
+  cross-reference field shape (Task 0.3.6, `<TYPE> <uuid>: <title>` +
+  notes paraphrase).
 
 ### Blockers
 
@@ -1919,6 +1992,37 @@ entirely, per explicit user instruction, rather than continuing to
 wait on it; see Task List Task 0.7/Design Notes item 4's note.)
 
 ### Recent Updates
+
+#### Update 2026-09-02 (branch divergence with origin/feat-32-sysrs reconciled; Task 0.11 closed; get_sysrs offset/limit added; Handoff Phase-1/2 staleness fixed)
+
+- Completed: Discovered this local worktree's `feat-32-sysrs` branch
+  had diverged from `origin/feat-32-sysrs` after `f0abc33` — this
+  worktree kept absorbing general `dev` merges (issue #28's `get_<d>`
+  `offset`/`limit` windowing, among others) but never received the
+  real `sysrs`-specific work already pushed upstream (Phase 1 complete,
+  the 2026-09-01 plan-review pass fixing the delete-tool story and
+  adopting the sibling feature's locked conventions). A prior session
+  in this same conversation had drafted planning-only edits against
+  the stale local copy without knowing this — those edits were
+  discarded (never committed) once the divergence was found. Merged
+  `origin/feat-32-sysrs` into this local branch cleanly (no conflicts,
+  local commit `78567b8`, not pushed). On top of the merge, closed the
+  two plan gaps that survived even the real upstream work: (1) Task
+  0.11 (`ISO_24765.md`/`ISO_29148.md` no longer exist locally or in
+  git history — closed as "no grounding needed"); (2) `get_sysrs`
+  amended to `get_sysrs(id, raw=False, offset=None, limit=None)`,
+  matching the now-generic feat-28 raw-read windowing convention every
+  other `get_<d>` tool already has, everywhere its signature appears
+  (REQ-008, ACC-006, Design Notes "Tools", Tasks 3.2/3.4). Also fixed
+  a real staleness bug in "Handoff to next session": its "Immediate
+  next action" bullet still said "execute Phase 1" even though this
+  same section's own newest 2026-09-01 Current Status entry already
+  recorded Phase 1 as complete with "Next action: Phase 2" — corrected
+  in place, plus the worktree-path typo (`worktrees` → `worktree`) and
+  the now-resolved `feat-30-sop` collision note.
+- Next: execute Phase 2 (models + parser), Tasks 2.1–2.6, per the Task
+  List and Design Notes' "Phase 1 outcome record" — nothing else is
+  blocking it.
 
 #### Update 2026-09-02 (ACC-004/005 corrected — sysrs matches every domain's ValidationError channel for the two mechanic-dependent checks)
 
@@ -2676,6 +2780,22 @@ wait on it; see Task List Task 0.7/Design Notes item 4's note.)
 
 ### Decisions Made
 
+- **2026-09-02**: Task 0.11 closed as "no grounding" — `##
+  Definitions and Acronyms` stays plain free-form text, with no
+  ISO_24765-derived structure/glossary convention. Rationale:
+  `ISO_24765.md`/`ISO_29148.md` no longer exist anywhere in this
+  folder or its git history (same intentional-deletion pattern already
+  confirmed for the INCOSE Handbook PDF), so there is no primary text
+  left to re-consult, and the schema is unaffected either way (the
+  section was already free-form regardless of the answer). Phase 0
+  (and the Task List as a whole) now has zero non-blocking leftovers.
+- **2026-09-02**: `get_sysrs` gains `offset`/`limit` parameters
+  (`get_sysrs(id, raw=False, offset=None, limit=None)`) — rationale:
+  the generic read-style `offset`/`limit` windowing of `get_<d>(raw=
+  True)` reads (feat-28) shipped on `dev` after this plan's REQ-008/
+  Design-Notes text was written, and every other domain's `get_<d>`
+  tool already carries it; `sysrs` should match the current convention
+  from day one rather than needing a follow-up patch.
 - **2026-09-02**: `sysrs`'s "≥1 of N children present" (`## Requirements`
   zero-H3s) and "newest-first ordering" (`## Updates` out-of-order)
   structural checks raise `pydantic.ValidationError`, not
