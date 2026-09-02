@@ -610,12 +610,16 @@ class TestDeleteWholeBodyDomains(TempDeleteDirTestCase):
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case)
-                doc_id = created.frontmatter.id
+                doc_id = created.id
                 target = self._target(case, doc_id)
                 self.assertTrue(target.exists())
 
                 result = delete(id=doc_id, type=case.doc_type)
 
+                # feat-69 regression: `delete` already returned a minimal payload (the
+                # deleted path as a plain `str`) before this feature and needs no change --
+                # confirm that contract explicitly, not just implicitly via string equality.
+                self.assertIsInstance(result, str)
                 self.assertEqual(result, str(target))
                 self.assertFalse(target.exists())
                 with self.assertRaises(case.not_found_error):
@@ -624,7 +628,7 @@ class TestDeleteWholeBodyDomains(TempDeleteDirTestCase):
     def test_feat_delete_removes_the_whole_folder_including_history_md(self) -> None:
         """For feat, the whole <base>/<id>/ folder -- including a seeded history.md -- must be removed."""
         created = create_feat(_FEAT_MINIMAL_BODY)
-        feat_id = created.frontmatter.id
+        feat_id = created.id
         folder = feat_base_dir() / feat_id
         history = folder / "history.md"
         history.write_text("# History\n\nAn archived older update entry.\n", encoding="utf-8")
@@ -642,7 +646,7 @@ class TestDeleteWholeBodyDomains(TempDeleteDirTestCase):
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case)
-                doc_id = created.frontmatter.id
+                doc_id = created.id
                 target = self._target(case, doc_id)
                 missing_id = _MISSING_FEAT_ID if case.doc_type == _TYPE_FEAT else _MISSING_UUID
 
@@ -661,7 +665,7 @@ class TestDeleteInjection(TempDeleteDirTestCase):
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case)
-                doc_id = created.frontmatter.id
+                doc_id = created.id
                 target = self._target(case, doc_id)
 
                 for bad_id in (*_TRAVERSAL_IDS, case.wrong_format_id):
@@ -681,7 +685,7 @@ class TestDeleteIoFailure(TempDeleteDirTestCase):
                 continue
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case)
-                doc_id = created.frontmatter.id
+                doc_id = created.id
                 path = self._flat_path(case)
                 failure = OSError("simulated I/O failure")
 
@@ -698,7 +702,7 @@ class TestDeleteIoFailure(TempDeleteDirTestCase):
         """For feat, a mocked shutil.rmtree OSError must raise DeleteError wrapping that exact
         OSError, folder intact."""
         created = create_feat(_FEAT_MINIMAL_BODY)
-        feat_id = created.frontmatter.id
+        feat_id = created.id
         folder = feat_base_dir() / feat_id
         failure = OSError("simulated I/O failure")
 
@@ -725,7 +729,7 @@ class TestDeleteLocking(TempDeleteDirTestCase):
     def _assert_lock_entered(self, case: _Case) -> None:
         """The domain's own <d>_lock must be entered with the id around the delete for ``case``."""
         created = self._seed(case)
-        doc_id = created.frontmatter.id
+        doc_id = created.id
         target = self._target(case, doc_id)
 
         events: list[str] = []

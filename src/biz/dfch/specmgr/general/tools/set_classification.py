@@ -92,64 +92,64 @@ from typing import Literal
 
 import frontmatter
 
-from ...dec.models.v1 import DecDocument, DecFrontmatter
+from ...dec.models.v1 import DecFrontmatter
 from ...dec.tools._io import load_by_id as load_dec_by_id
 from ...dec.tools._lock import dec_lock
 from ...dec.tools._paths import dec_base_dir
 from ...dec.tools._write import write_dec_file
-from ...feat.models.v1 import FeatDocument, FeatFrontmatter
+from ...feat.models.v1 import FeatFrontmatter
 from ...feat.tools._io import load_by_id as load_feat_by_id
 from ...feat.tools._lock import feat_lock
 from ...feat.tools._paths import feat_base_dir
 from ...feat.tools._write import write_feat_file
-from ...gol.models.v1 import GolDocument, GolFrontmatter
+from ...gol.models.v1 import GolFrontmatter
 from ...gol.tools._io import load_by_id as load_gol_by_id
 from ...gol.tools._lock import gol_lock
 from ...gol.tools._paths import gol_base_dir
 from ...gol.tools._write import write_gol_file
 from ...models.md._errors import FRONTMATTER_CHANNEL, wrap_tool_errors
-from ...prb.models.v1 import PrbDocument, PrbFrontmatter
+from ...prb.models.v1 import PrbFrontmatter
 from ...prb.tools._io import load_by_id as load_prb_by_id
 from ...prb.tools._lock import prb_lock
 from ...prb.tools._paths import prb_base_dir
 from ...prb.tools._write import write_prb_file
-from ...qa.models.v2 import QaDocument, QaFrontmatter
+from ...qa.models.v2 import QaFrontmatter
 from ...qa.tools._io import load_by_id as load_qa_by_id
 from ...qa.tools._lock import qa_lock
 from ...qa.tools._paths import qa_base_dir
 from ...qa.tools._write import write_qa_file
-from ...req.models.v1 import ReqDocument, ReqFrontmatter
+from ...req.models.v1 import ReqFrontmatter
 from ...req.tools._io import load_by_id as load_req_by_id
 from ...req.tools._lock import req_lock
 from ...req.tools._paths import req_base_dir
 from ...req.tools._write import write_req_file
-from ...rsk.models.v1 import RskDocument, RskFrontmatter
+from ...rsk.models.v1 import RskFrontmatter
 from ...rsk.tools._io import load_by_id as load_rsk_by_id
 from ...rsk.tools._lock import rsk_lock
 from ...rsk.tools._paths import rsk_base_dir
 from ...rsk.tools._write import write_rsk_file
 from ...server import mcp
-from ...sop.models.v1 import SopDocument, SopFrontmatter
+from ...sop.models.v1 import SopFrontmatter
 from ...sop.tools._io import load_by_id as load_sop_by_id
 from ...sop.tools._lock import sop_lock
 from ...sop.tools._paths import sop_base_dir
 from ...sop.tools._write import write_sop_file
-from ...sysrs.models.v1 import SysrsDocument, SysrsFrontmatter
+from ...sysrs.models.v1 import SysrsFrontmatter
 from ...sysrs.tools._io import load_by_id as load_sysrs_by_id
 from ...sysrs.tools._lock import sysrs_lock
 from ...sysrs.tools._paths import sysrs_base_dir
 from ...sysrs.tools._write import write_sysrs_file
-from ...tsk.models.v1 import TskDocument, TskFrontmatter
+from ...tsk.models.v1 import TskFrontmatter
 from ...tsk.tools._io import load_by_id as load_tsk_by_id
 from ...tsk.tools._lock import tsk_lock
 from ...tsk.tools._paths import tsk_base_dir
 from ...tsk.tools._write import write_tsk_file
-from ...uc.models.v2 import UcDocument, UcFrontmatter
+from ...uc.models.v2 import UcFrontmatter
 from ...uc.tools._io import load_by_id as load_uc_by_id
 from ...uc.tools._lock import uc_lock
 from ...uc.tools._paths import uc_base_dir
 from ...uc.tools._write import write_uc_file
-from ...vcr.models.v1 import VcrDocument, VcrFrontmatter
+from ...vcr.models.v1 import VcrFrontmatter
 from ...vcr.tools._io import load_by_id as load_vcr_by_id
 from ...vcr.tools._lock import vcr_lock
 from ...vcr.tools._paths import vcr_base_dir
@@ -160,23 +160,23 @@ from ._timestamps import now_timestamp
 __all__ = ["set_classification"]
 
 #: The generic tool's 12-way return union -- annotation-only (see module docstring).
-_SetClassificationDocument = (
-    ReqDocument
-    | UcDocument
-    | TskDocument
-    | QaDocument
-    | PrbDocument
-    | GolDocument
-    | RskDocument
-    | DecDocument
-    | FeatDocument
-    | SopDocument
-    | VcrDocument
-    | SysrsDocument
+_SetClassificationFrontmatter = (
+    ReqFrontmatter
+    | UcFrontmatter
+    | TskFrontmatter
+    | QaFrontmatter
+    | PrbFrontmatter
+    | GolFrontmatter
+    | RskFrontmatter
+    | DecFrontmatter
+    | FeatFrontmatter
+    | SopFrontmatter
+    | VcrFrontmatter
+    | SysrsFrontmatter
 )
 
 
-def _set_classification_req(id_: str, classification: str) -> ReqDocument:
+def _set_classification_req(id_: str, classification: str) -> ReqFrontmatter:
     """Replace the classification of the requirement identified by ``id_``.
 
     Shaped exactly like :func:`~.set_status._set_status_req` (same
@@ -198,12 +198,11 @@ def _set_classification_req(id_: str, classification: str) -> ReqDocument:
         fm_data["updated"] = now
         with wrap_tool_errors(domain="req", tool="set_classification", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = ReqFrontmatter(**fm_data)
-        new_doc = ReqDocument(frontmatter=new_frontmatter, body=existing.body)
         write_req_file(path, new_frontmatter, raw_body)
-    return new_doc
+    return new_frontmatter
 
 
-def _set_classification_uc(id_: str, classification: str) -> UcDocument:
+def _set_classification_uc(id_: str, classification: str) -> UcFrontmatter:
     """Replace the classification of the use case identified by ``id_``.
 
     See :func:`_set_classification_req` for the full semantics (same
@@ -221,12 +220,11 @@ def _set_classification_uc(id_: str, classification: str) -> UcDocument:
         fm_data["updated"] = now
         with wrap_tool_errors(domain="uc", tool="set_classification", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = UcFrontmatter(**fm_data)
-        new_doc = UcDocument(frontmatter=new_frontmatter, body=existing.body)
         write_uc_file(path, new_frontmatter, raw_body)
-    return new_doc
+    return new_frontmatter
 
 
-def _set_classification_tsk(id_: str, classification: str) -> TskDocument:
+def _set_classification_tsk(id_: str, classification: str) -> TskFrontmatter:
     """Replace the classification of the task list identified by ``id_``.
 
     See :func:`_set_classification_req` for the full semantics (same
@@ -244,12 +242,11 @@ def _set_classification_tsk(id_: str, classification: str) -> TskDocument:
         fm_data["updated"] = now
         with wrap_tool_errors(domain="tsk", tool="set_classification", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = TskFrontmatter(**fm_data)
-        new_doc = TskDocument(frontmatter=new_frontmatter, body=existing.body)
         write_tsk_file(path, new_frontmatter, raw_body)
-    return new_doc
+    return new_frontmatter
 
 
-def _set_classification_qa(id_: str, classification: str) -> QaDocument:
+def _set_classification_qa(id_: str, classification: str) -> QaFrontmatter:
     """Replace the classification of the QA document identified by ``id_``.
 
     See :func:`_set_classification_req` for the full semantics (same
@@ -267,12 +264,11 @@ def _set_classification_qa(id_: str, classification: str) -> QaDocument:
         fm_data["updated"] = now
         with wrap_tool_errors(domain="qa", tool="set_classification", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = QaFrontmatter(**fm_data)
-        new_doc = QaDocument(frontmatter=new_frontmatter, body=existing.body)
         write_qa_file(path, new_frontmatter, raw_body)
-    return new_doc
+    return new_frontmatter
 
 
-def _set_classification_prb(id_: str, classification: str) -> PrbDocument:
+def _set_classification_prb(id_: str, classification: str) -> PrbFrontmatter:
     """Replace the classification of the problem statement identified by ``id_``.
 
     See :func:`_set_classification_req` for the full semantics (same
@@ -290,12 +286,11 @@ def _set_classification_prb(id_: str, classification: str) -> PrbDocument:
         fm_data["updated"] = now
         with wrap_tool_errors(domain="prb", tool="set_classification", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = PrbFrontmatter(**fm_data)
-        new_doc = PrbDocument(frontmatter=new_frontmatter, body=existing.body)
         write_prb_file(path, new_frontmatter, raw_body)
-    return new_doc
+    return new_frontmatter
 
 
-def _set_classification_gol(id_: str, classification: str) -> GolDocument:
+def _set_classification_gol(id_: str, classification: str) -> GolFrontmatter:
     """Replace the classification of the goal identified by ``id_``.
 
     See :func:`_set_classification_req` for the full semantics (same
@@ -313,12 +308,11 @@ def _set_classification_gol(id_: str, classification: str) -> GolDocument:
         fm_data["updated"] = now
         with wrap_tool_errors(domain="gol", tool="set_classification", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = GolFrontmatter(**fm_data)
-        new_doc = GolDocument(frontmatter=new_frontmatter, body=existing.body)
         write_gol_file(path, new_frontmatter, raw_body)
-    return new_doc
+    return new_frontmatter
 
 
-def _set_classification_rsk(id_: str, classification: str) -> RskDocument:
+def _set_classification_rsk(id_: str, classification: str) -> RskFrontmatter:
     """Replace the classification of the risk identified by ``id_``.
 
     See :func:`_set_classification_req` for the full semantics (same
@@ -336,12 +330,11 @@ def _set_classification_rsk(id_: str, classification: str) -> RskDocument:
         fm_data["updated"] = now
         with wrap_tool_errors(domain="rsk", tool="set_classification", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = RskFrontmatter(**fm_data)
-        new_doc = RskDocument(frontmatter=new_frontmatter, body=existing.body)
         write_rsk_file(path, new_frontmatter, raw_body)
-    return new_doc
+    return new_frontmatter
 
 
-def _set_classification_dec(id_: str, classification: str) -> DecDocument:
+def _set_classification_dec(id_: str, classification: str) -> DecFrontmatter:
     """Replace the classification of the decision identified by ``id_``.
 
     See :func:`_set_classification_req` for the full semantics (same
@@ -359,12 +352,11 @@ def _set_classification_dec(id_: str, classification: str) -> DecDocument:
         fm_data["updated"] = now
         with wrap_tool_errors(domain="dec", tool="set_classification", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = DecFrontmatter(**fm_data)
-        new_doc = DecDocument(frontmatter=new_frontmatter, body=existing.body)
         write_dec_file(path, new_frontmatter, raw_body)
-    return new_doc
+    return new_frontmatter
 
 
-def _set_classification_feat(id_: str, classification: str) -> FeatDocument:
+def _set_classification_feat(id_: str, classification: str) -> FeatFrontmatter:
     """Replace the classification of the feature identified by ``id_``.
 
     Mirrors :func:`_set_classification_dec`'s shape (same ``feat_lock``,
@@ -387,12 +379,11 @@ def _set_classification_feat(id_: str, classification: str) -> FeatDocument:
         fm_data["updated"] = now
         with wrap_tool_errors(domain="feat", tool="set_classification", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = FeatFrontmatter(**fm_data)
-        new_doc = FeatDocument(frontmatter=new_frontmatter, body=existing.body)
         write_feat_file(path, new_frontmatter, raw_body)
-    return new_doc
+    return new_frontmatter
 
 
-def _set_classification_sop(id_: str, classification: str) -> SopDocument:
+def _set_classification_sop(id_: str, classification: str) -> SopFrontmatter:
     """Replace the classification of the SOP identified by ``id_``.
 
     Verbatim-shape port of :func:`_set_classification_dec` (same
@@ -413,12 +404,11 @@ def _set_classification_sop(id_: str, classification: str) -> SopDocument:
         fm_data["updated"] = now
         with wrap_tool_errors(domain="sop", tool="set_classification", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = SopFrontmatter(**fm_data)
-        new_doc = SopDocument(frontmatter=new_frontmatter, body=existing.body)
         write_sop_file(path, new_frontmatter, raw_body)
-    return new_doc
+    return new_frontmatter
 
 
-def _set_classification_vcr(id_: str, classification: str) -> VcrDocument:
+def _set_classification_vcr(id_: str, classification: str) -> VcrFrontmatter:
     """Replace the classification of the verification case record identified by ``id_``.
 
     Mirrors :func:`_set_classification_dec`'s shape (same ``vcr_lock``,
@@ -437,12 +427,11 @@ def _set_classification_vcr(id_: str, classification: str) -> VcrDocument:
         fm_data["updated"] = now
         with wrap_tool_errors(domain="vcr", tool="set_classification", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = VcrFrontmatter(**fm_data)
-        new_doc = VcrDocument(frontmatter=new_frontmatter, body=existing.body)
         write_vcr_file(path, new_frontmatter, raw_body)
-    return new_doc
+    return new_frontmatter
 
 
-def _set_classification_sysrs(id_: str, classification: str) -> SysrsDocument:
+def _set_classification_sysrs(id_: str, classification: str) -> SysrsFrontmatter:
     """Replace the classification of the System Requirements Specification identified by ``id_``.
 
     Mirrors :func:`_set_classification_sop`'s shape (same ``sysrs_lock``,
@@ -463,13 +452,12 @@ def _set_classification_sysrs(id_: str, classification: str) -> SysrsDocument:
         fm_data["updated"] = now
         with wrap_tool_errors(domain="sysrs", tool="set_classification", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = SysrsFrontmatter(**fm_data)
-        new_doc = SysrsDocument(frontmatter=new_frontmatter, body=existing.body)
         write_sysrs_file(path, new_frontmatter, raw_body)
-    return new_doc
+    return new_frontmatter
 
 
 #: Dispatch table mapping the ``type`` value to its private adapter.
-_ADAPTERS: dict[str, Callable[[str, str], _SetClassificationDocument]] = {
+_ADAPTERS: dict[str, Callable[[str, str], _SetClassificationFrontmatter]] = {
     "req": _set_classification_req,
     "uc": _set_classification_uc,
     "tsk": _set_classification_tsk,
@@ -496,14 +484,16 @@ _ADAPTERS: dict[str, Callable[[str, str], _SetClassificationDocument]] = {
         "vocabulary; a blank or whitespace-only value clears it back to `None`/absent. No `create_*` "
         "tool accepts a `classification` argument at all -- this is the sole classification-change "
         "entry point. An invalid `id` (path-injection attempt or wrong format for `type`) or an "
-        "unsupported `type` is a `ValueError` raised before any file access."
+        "unsupported `type` is a `ValueError` raised before any file access. Returns the updated "
+        "frontmatter only (no body); use the corresponding `get_<d>` tool to fetch the full "
+        "document afterward."
     ),
 )
 def set_classification(
     id: str,
     type: Literal["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "feat", "vcr", "sysrs"],
     classification: str,
-) -> _SetClassificationDocument:
+) -> _SetClassificationFrontmatter:
     """Replace the ``classification`` frontmatter field of an existing document.
 
     Cross-domain generic for the twelve whole-body document types
@@ -552,10 +542,11 @@ def set_classification(
 
     Returns
     -------
-    ReqDocument | UcDocument | TskDocument | QaDocument | PrbDocument |
-    GolDocument | RskDocument | DecDocument | FeatDocument | SopDocument |
-    VcrDocument | SysrsDocument
-        The updated document of the dispatched domain type.
+    ReqFrontmatter | UcFrontmatter | TskFrontmatter | QaFrontmatter | PrbFrontmatter |
+    GolFrontmatter | RskFrontmatter | DecFrontmatter | FeatFrontmatter | SopFrontmatter |
+    VcrFrontmatter | SysrsFrontmatter
+        The updated document's frontmatter only (no body) of the dispatched domain type;
+        use the corresponding ``get_<d>`` tool to fetch the full document afterward.
 
     Raises
     ------

@@ -44,7 +44,7 @@ from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.general.tools.delete import delete
 from biz.dfch.specmgr.general.tools.set_status import set_status
 from biz.dfch.specmgr.general.tools.update import update
-from biz.dfch.specmgr.gol.models.v1 import GolDocument, parse_gol
+from biz.dfch.specmgr.gol.models.v1 import GolDocument, GolFrontmatter, parse_gol
 from biz.dfch.specmgr.gol.tools._paths import GolNotFoundError, find_gol_path, gol_base_dir
 from biz.dfch.specmgr.gol.tools.create_gol import create_gol
 from biz.dfch.specmgr.gol.tools.get_gol import get_gol
@@ -100,14 +100,14 @@ class TestGolLifecycleIntegration(TempGolDirTestCase):
         self.assertEqual(initial_page.total, 0)
         self.assertEqual(initial_page.results, [])
 
-        # 1. create_gol: a freshly created document must be a GolDocument in status "draft".
+        # 1. create_gol: a freshly created document must be a GolFrontmatter in status "draft".
         created = create_gol(_INITIAL_BODY)
-        self.assertIsInstance(created, GolDocument)
-        self.assertEqual(created.frontmatter.status, "draft")
-        self.assertEqual(created.frontmatter.type, "gol")
-        self.assertIsNotNone(created.frontmatter.id)
-        self.assertEqual(created.frontmatter.created, created.frontmatter.updated)
-        gol_id = created.frontmatter.id
+        self.assertIsInstance(created, GolFrontmatter)
+        self.assertEqual(created.status, "draft")
+        self.assertEqual(created.type, "gol")
+        self.assertIsNotNone(created.id)
+        self.assertEqual(created.created, created.updated)
+        gol_id = created.id
         assert gol_id is not None
 
         # 2. get_gol: must reflect the freshly created document.
@@ -126,21 +126,21 @@ class TestGolLifecycleIntegration(TempGolDirTestCase):
 
         # 4. update: whole-body replace must preserve id/type/created, bump updated.
         updated = update(gol_id, "gol", _REVISED_BODY)
-        self.assertEqual(updated.frontmatter.id, created.frontmatter.id)
-        self.assertEqual(updated.frontmatter.type, created.frontmatter.type)
-        self.assertEqual(updated.frontmatter.created, created.frontmatter.created)
-        self.assertEqual(updated.frontmatter.status, "draft")
-        self.assertNotEqual(updated.frontmatter.updated, created.frontmatter.updated)
-        self.assertIsNotNone(updated.body.description)
+        self.assertEqual(updated.id, created.id)
+        self.assertEqual(updated.type, created.type)
+        self.assertEqual(updated.created, created.created)
+        self.assertEqual(updated.status, "draft")
+        self.assertNotEqual(updated.updated, created.updated)
+        self.assertIsNotNone(get_gol(gol_id).body.description)
 
         # 5. set_status (type="gol"): only status/updated may change.
         accepted = set_status(gol_id, "gol", "accepted")
-        self.assertEqual(accepted.frontmatter.status, "accepted")
-        self.assertEqual(accepted.frontmatter.id, updated.frontmatter.id)
-        self.assertEqual(accepted.frontmatter.created, updated.frontmatter.created)
-        self.assertNotEqual(accepted.frontmatter.updated, updated.frontmatter.updated)
+        self.assertEqual(accepted.status, "accepted")
+        self.assertEqual(accepted.id, updated.id)
+        self.assertEqual(accepted.created, updated.created)
+        self.assertNotEqual(accepted.updated, updated.updated)
         # The body must be carried forward verbatim, untouched by the status change.
-        self.assertIsNotNone(accepted.body.description)
+        self.assertIsNotNone(get_gol(gol_id).body.description)
 
         # 6. get_gol: must reflect the latest on-disk state.
         fetched_after_status = get_gol(gol_id)

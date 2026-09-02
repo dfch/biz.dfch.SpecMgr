@@ -27,9 +27,10 @@ from unittest import mock
 
 from pydantic import ValidationError
 
-from biz.dfch.specmgr.dec.models.v1 import DecDocument, parse_dec
+from biz.dfch.specmgr.dec.models.v1 import DecDocument, DecFrontmatter, parse_dec
 from biz.dfch.specmgr.dec.tools._paths import dec_base_dir
 from biz.dfch.specmgr.dec.tools.create_dec import create_dec
+from biz.dfch.specmgr.dec.tools.get_dec import get_dec
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.models.md import CURRENT_SCHEMA_VERSION
 
@@ -92,30 +93,34 @@ class TestCreateDec(TempDecDirTestCase):
         """create_dec must build the entire frontmatter itself (id/type/status/timestamps/version)."""
         result = create_dec(_MINIMAL_BODY)
 
-        self.assertIsInstance(result, DecDocument)
-        self.assertIsNotNone(result.frontmatter.id)
-        self.assertEqual(result.frontmatter.type, "dec")
-        self.assertEqual(result.frontmatter.status, "draft")
-        self.assertIsNotNone(result.frontmatter.created)
-        self.assertEqual(result.frontmatter.created, result.frontmatter.updated)
-        self.assertEqual(result.frontmatter.version, CURRENT_SCHEMA_VERSION)
-        self.assertEqual(result.body.text, "Choose a Document Store")
+        self.assertIsInstance(result, DecFrontmatter)
+        self.assertNotIsInstance(result, DecDocument)
+        self.assertFalse(hasattr(result, "body"))
+        self.assertIsNotNone(result.id)
+        self.assertEqual(result.type, "dec")
+        self.assertEqual(result.status, "draft")
+        self.assertIsNotNone(result.created)
+        self.assertEqual(result.created, result.updated)
+        self.assertEqual(result.version, CURRENT_SCHEMA_VERSION)
+
+        fetched = get_dec(result.id)
+        self.assertEqual(fetched.body.text, "Choose a Document Store")
 
     def test_writes_expected_filename(self) -> None:
         """create_dec must write f'dec-{id}-{slug}.md' under the decision base dir."""
         result = create_dec(_MINIMAL_BODY)
 
-        expected_path = dec_base_dir() / f"dec-{result.frontmatter.id}-choose-a-document-store.md"
+        expected_path = dec_base_dir() / f"dec-{result.id}-choose-a-document-store.md"
         self.assertTrue(expected_path.exists())
 
     def test_written_file_round_trips_via_parse_dec(self) -> None:
         """The written file must parse back into an equivalent document."""
         result = create_dec(_MINIMAL_BODY)
 
-        expected_path = dec_base_dir() / f"dec-{result.frontmatter.id}-choose-a-document-store.md"
+        expected_path = dec_base_dir() / f"dec-{result.id}-choose-a-document-store.md"
         on_disk = parse_dec(expected_path.read_text(encoding="utf-8"))
 
-        self.assertEqual(on_disk.frontmatter.id, result.frontmatter.id)
+        self.assertEqual(on_disk.frontmatter.id, result.id)
         self.assertEqual(on_disk.frontmatter.status, "draft")
         self.assertEqual(on_disk.body.text, "Choose a Document Store")
 

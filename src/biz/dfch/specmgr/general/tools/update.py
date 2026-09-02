@@ -71,65 +71,65 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Literal
 
-from ...dec.models.v1 import DecDocument, DecFrontmatter, Decision
+from ...dec.models.v1 import DecFrontmatter, Decision
 from ...dec.tools._io import load_by_id as load_dec_by_id
 from ...dec.tools._lock import dec_lock
 from ...dec.tools._paths import dec_base_dir
 from ...dec.tools._write import write_dec_file
-from ...feat.models.v1 import FeatDocument, FeatFrontmatter, Feature
+from ...feat.models.v1 import FeatFrontmatter, Feature
 from ...feat.tools._io import load_by_id as load_feat_by_id
 from ...feat.tools._lock import feat_lock
 from ...feat.tools._paths import feat_base_dir
 from ...feat.tools._write import write_feat_file
-from ...gol.models.v1 import GolDocument, GolFrontmatter, Goal
+from ...gol.models.v1 import GolFrontmatter, Goal
 from ...gol.tools._io import load_by_id as load_gol_by_id
 from ...gol.tools._lock import gol_lock
 from ...gol.tools._paths import gol_base_dir
 from ...gol.tools._write import write_gol_file
 from ...models.md._errors import BODY_CHANNEL, wrap_tool_errors
 from ...models.md._markdown import format_text
-from ...prb.models.v1 import Prb, PrbDocument, PrbFrontmatter
+from ...prb.models.v1 import Prb, PrbFrontmatter
 from ...prb.tools._io import load_by_id as load_prb_by_id
 from ...prb.tools._lock import prb_lock
 from ...prb.tools._paths import prb_base_dir
 from ...prb.tools._write import write_prb_file
-from ...qa.models.v2 import Qa, QaDocument, QaFrontmatter
+from ...qa.models.v2 import Qa, QaFrontmatter
 from ...qa.tools._io import load_by_id as load_qa_by_id
 from ...qa.tools._lock import qa_lock
 from ...qa.tools._paths import qa_base_dir
 from ...qa.tools._write import write_qa_file
-from ...req.models.v1 import ReqDocument, ReqFrontmatter, Requirement
+from ...req.models.v1 import ReqFrontmatter, Requirement
 from ...req.tools._io import load_by_id as load_req_by_id
 from ...req.tools._lock import req_lock
 from ...req.tools._paths import req_base_dir
 from ...req.tools._write import write_req_file
-from ...rsk.models.v1 import Risk, RskDocument, RskFrontmatter
+from ...rsk.models.v1 import Risk, RskFrontmatter
 from ...rsk.tools._io import load_by_id as load_rsk_by_id
 from ...rsk.tools._lock import rsk_lock
 from ...rsk.tools._paths import rsk_base_dir
 from ...rsk.tools._write import write_rsk_file
 from ...server import mcp
-from ...sop.models.v1 import Sop, SopDocument, SopFrontmatter
+from ...sop.models.v1 import Sop, SopFrontmatter
 from ...sop.tools._io import load_by_id as load_sop_by_id
 from ...sop.tools._lock import sop_lock
 from ...sop.tools._paths import sop_base_dir
 from ...sop.tools._write import write_sop_file
-from ...sysrs.models.v1 import Sysrs, SysrsDocument, SysrsFrontmatter
+from ...sysrs.models.v1 import Sysrs, SysrsFrontmatter
 from ...sysrs.tools._io import load_by_id as load_sysrs_by_id
 from ...sysrs.tools._lock import sysrs_lock
 from ...sysrs.tools._paths import sysrs_base_dir
 from ...sysrs.tools._write import write_sysrs_file
-from ...tsk.models.v1 import Task, TskDocument, TskFrontmatter
+from ...tsk.models.v1 import Task, TskFrontmatter
 from ...tsk.tools._io import load_by_id as load_tsk_by_id
 from ...tsk.tools._lock import tsk_lock
 from ...tsk.tools._paths import tsk_base_dir
 from ...tsk.tools._write import write_tsk_file
-from ...uc.models.v2 import UcDocument, UcFrontmatter, UseCase
+from ...uc.models.v2 import UcFrontmatter, UseCase
 from ...uc.tools._io import load_by_id as load_uc_by_id
 from ...uc.tools._lock import uc_lock
 from ...uc.tools._paths import uc_base_dir
 from ...uc.tools._write import write_uc_file
-from ...vcr.models.v1 import Vcr, VcrDocument, VcrFrontmatter
+from ...vcr.models.v1 import Vcr, VcrFrontmatter
 from ...vcr.tools._io import load_by_id as load_vcr_by_id
 from ...vcr.tools._lock import vcr_lock
 from ...vcr.tools._paths import vcr_base_dir
@@ -141,23 +141,23 @@ from ._timestamps import now_timestamp
 __all__ = ["update"]
 
 #: The generic tool's 12-way return union -- annotation-only (see module docstring).
-_UpdateDocument = (
-    ReqDocument
-    | UcDocument
-    | TskDocument
-    | QaDocument
-    | PrbDocument
-    | GolDocument
-    | RskDocument
-    | DecDocument
-    | FeatDocument
-    | SopDocument
-    | VcrDocument
-    | SysrsDocument
+_UpdateFrontmatter = (
+    ReqFrontmatter
+    | UcFrontmatter
+    | TskFrontmatter
+    | QaFrontmatter
+    | PrbFrontmatter
+    | GolFrontmatter
+    | RskFrontmatter
+    | DecFrontmatter
+    | FeatFrontmatter
+    | SopFrontmatter
+    | VcrFrontmatter
+    | SysrsFrontmatter
 )
 
 
-def _update_req(id_: str, content: str, offset: int | None, limit: int | None) -> ReqDocument:
+def _update_req(id_: str, content: str, offset: int | None, limit: int | None) -> ReqFrontmatter:
     """Replace the body of the requirement identified by ``id_`` (whole-body or line-range mode).
 
     Verbatim port of the previous per-domain requirement update tool's
@@ -180,17 +180,16 @@ def _update_req(id_: str, content: str, offset: int | None, limit: int | None) -
             assert_within(base_dir, path)
             spliced = splice_body(body_text(path), offset, limit, content)
             with wrap_tool_errors(domain="req", tool="update", channel=BODY_CHANNEL):
-                body = Requirement.from_text(format_text(spliced))
+                Requirement.from_text(format_text(spliced))
             now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
             new_frontmatter = ReqFrontmatter(**fm_data)
-            new_doc = ReqDocument(frontmatter=new_frontmatter, body=body)
             write_req_file(path, new_frontmatter, spliced)
-        return new_doc
+        return new_frontmatter
 
     with wrap_tool_errors(domain="req", tool="update", channel=BODY_CHANNEL):
-        body = Requirement.from_text(format_text(content))
+        Requirement.from_text(format_text(content))
 
     base_dir = req_base_dir()
     with req_lock(id_):
@@ -200,12 +199,11 @@ def _update_req(id_: str, content: str, offset: int | None, limit: int | None) -
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
         new_frontmatter = ReqFrontmatter(**fm_data)
-        new_doc = ReqDocument(frontmatter=new_frontmatter, body=body)
         write_req_file(path, new_frontmatter, content)
-    return new_doc
+    return new_frontmatter
 
 
-def _update_uc(id_: str, content: str, offset: int | None, limit: int | None) -> UcDocument:
+def _update_uc(id_: str, content: str, offset: int | None, limit: int | None) -> UcFrontmatter:
     """Replace the body of the use case identified by ``id_`` (whole-body or line-range mode).
 
     Verbatim port of the previous per-domain use-case update tool's function
@@ -223,17 +221,16 @@ def _update_uc(id_: str, content: str, offset: int | None, limit: int | None) ->
             assert_within(base_dir, path)
             spliced = splice_body(body_text(path), offset, limit, content)
             with wrap_tool_errors(domain="uc", tool="update", channel=BODY_CHANNEL):
-                body = UseCase.from_text(format_text(spliced))
+                UseCase.from_text(format_text(spliced))
             now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
             new_frontmatter = UcFrontmatter(**fm_data)
-            new_doc = UcDocument(frontmatter=new_frontmatter, body=body)
             write_uc_file(path, new_frontmatter, spliced)
-        return new_doc
+        return new_frontmatter
 
     with wrap_tool_errors(domain="uc", tool="update", channel=BODY_CHANNEL):
-        body = UseCase.from_text(format_text(content))
+        UseCase.from_text(format_text(content))
 
     base_dir = uc_base_dir()
     with uc_lock(id_):
@@ -243,12 +240,11 @@ def _update_uc(id_: str, content: str, offset: int | None, limit: int | None) ->
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
         new_frontmatter = UcFrontmatter(**fm_data)
-        new_doc = UcDocument(frontmatter=new_frontmatter, body=body)
         write_uc_file(path, new_frontmatter, content)
-    return new_doc
+    return new_frontmatter
 
 
-def _update_tsk(id_: str, content: str, offset: int | None, limit: int | None) -> TskDocument:
+def _update_tsk(id_: str, content: str, offset: int | None, limit: int | None) -> TskFrontmatter:
     """Replace the body of the task list identified by ``id_`` (whole-body or line-range mode).
 
     Verbatim port of the previous per-domain task list update tool's
@@ -266,17 +262,16 @@ def _update_tsk(id_: str, content: str, offset: int | None, limit: int | None) -
             assert_within(base_dir, path)
             spliced = splice_body(body_text(path), offset, limit, content)
             with wrap_tool_errors(domain="tsk", tool="update", channel=BODY_CHANNEL):
-                body = Task.from_text(format_text(spliced))
+                Task.from_text(format_text(spliced))
             now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
             new_frontmatter = TskFrontmatter(**fm_data)
-            new_doc = TskDocument(frontmatter=new_frontmatter, body=body)
             write_tsk_file(path, new_frontmatter, spliced)
-        return new_doc
+        return new_frontmatter
 
     with wrap_tool_errors(domain="tsk", tool="update", channel=BODY_CHANNEL):
-        body = Task.from_text(format_text(content))
+        Task.from_text(format_text(content))
 
     base_dir = tsk_base_dir()
     with tsk_lock(id_):
@@ -286,12 +281,11 @@ def _update_tsk(id_: str, content: str, offset: int | None, limit: int | None) -
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
         new_frontmatter = TskFrontmatter(**fm_data)
-        new_doc = TskDocument(frontmatter=new_frontmatter, body=body)
         write_tsk_file(path, new_frontmatter, content)
-    return new_doc
+    return new_frontmatter
 
 
-def _update_qa(id_: str, content: str, offset: int | None, limit: int | None) -> QaDocument:
+def _update_qa(id_: str, content: str, offset: int | None, limit: int | None) -> QaFrontmatter:
     """Replace the body of the QA document identified by ``id_`` (whole-body or line-range mode).
 
     Verbatim port of the previous per-domain QA document update tool's
@@ -309,17 +303,16 @@ def _update_qa(id_: str, content: str, offset: int | None, limit: int | None) ->
             assert_within(base_dir, path)
             spliced = splice_body(body_text(path), offset, limit, content)
             with wrap_tool_errors(domain="qa", tool="update", channel=BODY_CHANNEL):
-                body = Qa.from_text(format_text(spliced))
+                Qa.from_text(format_text(spliced))
             now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
             new_frontmatter = QaFrontmatter(**fm_data)
-            new_doc = QaDocument(frontmatter=new_frontmatter, body=body)
             write_qa_file(path, new_frontmatter, spliced)
-        return new_doc
+        return new_frontmatter
 
     with wrap_tool_errors(domain="qa", tool="update", channel=BODY_CHANNEL):
-        body = Qa.from_text(format_text(content))
+        Qa.from_text(format_text(content))
 
     base_dir = qa_base_dir()
     with qa_lock(id_):
@@ -329,12 +322,11 @@ def _update_qa(id_: str, content: str, offset: int | None, limit: int | None) ->
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
         new_frontmatter = QaFrontmatter(**fm_data)
-        new_doc = QaDocument(frontmatter=new_frontmatter, body=body)
         write_qa_file(path, new_frontmatter, content)
-    return new_doc
+    return new_frontmatter
 
 
-def _update_prb(id_: str, content: str, offset: int | None, limit: int | None) -> PrbDocument:
+def _update_prb(id_: str, content: str, offset: int | None, limit: int | None) -> PrbFrontmatter:
     """Replace the body of the problem statement identified by ``id_`` (whole-body or line-range mode).
 
     Verbatim port of the previous per-domain problem statement update
@@ -352,17 +344,16 @@ def _update_prb(id_: str, content: str, offset: int | None, limit: int | None) -
             assert_within(base_dir, path)
             spliced = splice_body(body_text(path), offset, limit, content)
             with wrap_tool_errors(domain="prb", tool="update", channel=BODY_CHANNEL):
-                body = Prb.from_text(format_text(spliced))
+                Prb.from_text(format_text(spliced))
             now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
             new_frontmatter = PrbFrontmatter(**fm_data)
-            new_doc = PrbDocument(frontmatter=new_frontmatter, body=body)
             write_prb_file(path, new_frontmatter, spliced)
-        return new_doc
+        return new_frontmatter
 
     with wrap_tool_errors(domain="prb", tool="update", channel=BODY_CHANNEL):
-        body = Prb.from_text(format_text(content))
+        Prb.from_text(format_text(content))
 
     base_dir = prb_base_dir()
     with prb_lock(id_):
@@ -372,12 +363,11 @@ def _update_prb(id_: str, content: str, offset: int | None, limit: int | None) -
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
         new_frontmatter = PrbFrontmatter(**fm_data)
-        new_doc = PrbDocument(frontmatter=new_frontmatter, body=body)
         write_prb_file(path, new_frontmatter, content)
-    return new_doc
+    return new_frontmatter
 
 
-def _update_gol(id_: str, content: str, offset: int | None, limit: int | None) -> GolDocument:
+def _update_gol(id_: str, content: str, offset: int | None, limit: int | None) -> GolFrontmatter:
     """Replace the body of the goal identified by ``id_`` (whole-body or line-range mode).
 
     Verbatim port of the previous per-domain goal update tool's function
@@ -395,17 +385,16 @@ def _update_gol(id_: str, content: str, offset: int | None, limit: int | None) -
             assert_within(base_dir, path)
             spliced = splice_body(body_text(path), offset, limit, content)
             with wrap_tool_errors(domain="gol", tool="update", channel=BODY_CHANNEL):
-                body = Goal.from_text(format_text(spliced))
+                Goal.from_text(format_text(spliced))
             now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
             new_frontmatter = GolFrontmatter(**fm_data)
-            new_doc = GolDocument(frontmatter=new_frontmatter, body=body)
             write_gol_file(path, new_frontmatter, spliced)
-        return new_doc
+        return new_frontmatter
 
     with wrap_tool_errors(domain="gol", tool="update", channel=BODY_CHANNEL):
-        body = Goal.from_text(format_text(content))
+        Goal.from_text(format_text(content))
 
     base_dir = gol_base_dir()
     with gol_lock(id_):
@@ -415,12 +404,11 @@ def _update_gol(id_: str, content: str, offset: int | None, limit: int | None) -
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
         new_frontmatter = GolFrontmatter(**fm_data)
-        new_doc = GolDocument(frontmatter=new_frontmatter, body=body)
         write_gol_file(path, new_frontmatter, content)
-    return new_doc
+    return new_frontmatter
 
 
-def _update_rsk(id_: str, content: str, offset: int | None, limit: int | None) -> RskDocument:
+def _update_rsk(id_: str, content: str, offset: int | None, limit: int | None) -> RskFrontmatter:
     """Replace the body of the risk identified by ``id_`` (whole-body or line-range mode).
 
     Verbatim port of the previous per-domain risk update tool's function
@@ -438,17 +426,16 @@ def _update_rsk(id_: str, content: str, offset: int | None, limit: int | None) -
             assert_within(base_dir, path)
             spliced = splice_body(body_text(path), offset, limit, content)
             with wrap_tool_errors(domain="rsk", tool="update", channel=BODY_CHANNEL):
-                body = Risk.from_text(format_text(spliced))
+                Risk.from_text(format_text(spliced))
             now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
             new_frontmatter = RskFrontmatter(**fm_data)
-            new_doc = RskDocument(frontmatter=new_frontmatter, body=body)
             write_rsk_file(path, new_frontmatter, spliced)
-        return new_doc
+        return new_frontmatter
 
     with wrap_tool_errors(domain="rsk", tool="update", channel=BODY_CHANNEL):
-        body = Risk.from_text(format_text(content))
+        Risk.from_text(format_text(content))
 
     base_dir = rsk_base_dir()
     with rsk_lock(id_):
@@ -458,12 +445,11 @@ def _update_rsk(id_: str, content: str, offset: int | None, limit: int | None) -
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
         new_frontmatter = RskFrontmatter(**fm_data)
-        new_doc = RskDocument(frontmatter=new_frontmatter, body=body)
         write_rsk_file(path, new_frontmatter, content)
-    return new_doc
+    return new_frontmatter
 
 
-def _update_dec(id_: str, content: str, offset: int | None, limit: int | None) -> DecDocument:
+def _update_dec(id_: str, content: str, offset: int | None, limit: int | None) -> DecFrontmatter:
     """Replace the body of the decision identified by ``id_`` (whole-body or line-range mode).
 
     Verbatim port of the previous per-domain decision update tool's
@@ -483,17 +469,16 @@ def _update_dec(id_: str, content: str, offset: int | None, limit: int | None) -
             assert_within(base_dir, path)
             spliced = splice_body(body_text(path), offset, limit, content)
             with wrap_tool_errors(domain="dec", tool="update", channel=BODY_CHANNEL):
-                body = Decision.from_text(format_text(spliced))
+                Decision.from_text(format_text(spliced))
             now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
             new_frontmatter = DecFrontmatter(**fm_data)
-            new_doc = DecDocument(frontmatter=new_frontmatter, body=body)
             write_dec_file(path, new_frontmatter, spliced)
-        return new_doc
+        return new_frontmatter
 
     with wrap_tool_errors(domain="dec", tool="update", channel=BODY_CHANNEL):
-        body = Decision.from_text(format_text(content))
+        Decision.from_text(format_text(content))
 
     base_dir = dec_base_dir()
     with dec_lock(id_):
@@ -503,12 +488,11 @@ def _update_dec(id_: str, content: str, offset: int | None, limit: int | None) -
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
         new_frontmatter = DecFrontmatter(**fm_data)
-        new_doc = DecDocument(frontmatter=new_frontmatter, body=body)
         write_dec_file(path, new_frontmatter, content)
-    return new_doc
+    return new_frontmatter
 
 
-def _update_feat(id_: str, content: str, offset: int | None, limit: int | None) -> FeatDocument:
+def _update_feat(id_: str, content: str, offset: int | None, limit: int | None) -> FeatFrontmatter:
     """Replace the body of the feature identified by ``id_`` (whole-body or line-range mode).
 
     Mirrors :func:`_update_dec`'s shape (same ``feat_lock``, ``load_by_id``,
@@ -528,17 +512,16 @@ def _update_feat(id_: str, content: str, offset: int | None, limit: int | None) 
             assert_within(base_dir, path)
             spliced = splice_body(body_text(path), offset, limit, content)
             with wrap_tool_errors(domain="feat", tool="update", channel=BODY_CHANNEL):
-                body = Feature.from_text(format_text(spliced))
+                Feature.from_text(format_text(spliced))
             now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
             new_frontmatter = FeatFrontmatter(**fm_data)
-            new_doc = FeatDocument(frontmatter=new_frontmatter, body=body)
             write_feat_file(path, new_frontmatter, spliced)
-        return new_doc
+        return new_frontmatter
 
     with wrap_tool_errors(domain="feat", tool="update", channel=BODY_CHANNEL):
-        body = Feature.from_text(format_text(content))
+        Feature.from_text(format_text(content))
 
     base_dir = feat_base_dir()
     with feat_lock(id_):
@@ -548,12 +531,11 @@ def _update_feat(id_: str, content: str, offset: int | None, limit: int | None) 
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
         new_frontmatter = FeatFrontmatter(**fm_data)
-        new_doc = FeatDocument(frontmatter=new_frontmatter, body=body)
         write_feat_file(path, new_frontmatter, content)
-    return new_doc
+    return new_frontmatter
 
 
-def _update_sop(id_: str, content: str, offset: int | None, limit: int | None) -> SopDocument:
+def _update_sop(id_: str, content: str, offset: int | None, limit: int | None) -> SopFrontmatter:
     """Replace the body of the SOP identified by ``id_`` (whole-body or line-range mode).
 
     Verbatim-shape port of :func:`_update_dec` (same ``sop_lock``,
@@ -573,17 +555,16 @@ def _update_sop(id_: str, content: str, offset: int | None, limit: int | None) -
             assert_within(base_dir, path)
             spliced = splice_body(body_text(path), offset, limit, content)
             with wrap_tool_errors(domain="sop", tool="update", channel=BODY_CHANNEL):
-                body = Sop.from_text(format_text(spliced))
+                Sop.from_text(format_text(spliced))
             now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
             new_frontmatter = SopFrontmatter(**fm_data)
-            new_doc = SopDocument(frontmatter=new_frontmatter, body=body)
             write_sop_file(path, new_frontmatter, spliced)
-        return new_doc
+        return new_frontmatter
 
     with wrap_tool_errors(domain="sop", tool="update", channel=BODY_CHANNEL):
-        body = Sop.from_text(format_text(content))
+        Sop.from_text(format_text(content))
 
     base_dir = sop_base_dir()
     with sop_lock(id_):
@@ -593,12 +574,11 @@ def _update_sop(id_: str, content: str, offset: int | None, limit: int | None) -
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
         new_frontmatter = SopFrontmatter(**fm_data)
-        new_doc = SopDocument(frontmatter=new_frontmatter, body=body)
         write_sop_file(path, new_frontmatter, content)
-    return new_doc
+    return new_frontmatter
 
 
-def _update_vcr(id_: str, content: str, offset: int | None, limit: int | None) -> VcrDocument:
+def _update_vcr(id_: str, content: str, offset: int | None, limit: int | None) -> VcrFrontmatter:
     """Replace the body of the verification case record identified by ``id_`` (whole-body or line-range mode).
 
     Mirrors :func:`_update_dec`'s shape (same ``vcr_lock``, ``load_by_id``,
@@ -615,17 +595,16 @@ def _update_vcr(id_: str, content: str, offset: int | None, limit: int | None) -
             assert_within(base_dir, path)
             spliced = splice_body(body_text(path), offset, limit, content)
             with wrap_tool_errors(domain="vcr", tool="update", channel=BODY_CHANNEL):
-                body = Vcr.from_text(format_text(spliced))
+                Vcr.from_text(format_text(spliced))
             now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
             new_frontmatter = VcrFrontmatter(**fm_data)
-            new_doc = VcrDocument(frontmatter=new_frontmatter, body=body)
             write_vcr_file(path, new_frontmatter, spliced)
-        return new_doc
+        return new_frontmatter
 
     with wrap_tool_errors(domain="vcr", tool="update", channel=BODY_CHANNEL):
-        body = Vcr.from_text(format_text(content))
+        Vcr.from_text(format_text(content))
 
     base_dir = vcr_base_dir()
     with vcr_lock(id_):
@@ -635,12 +614,11 @@ def _update_vcr(id_: str, content: str, offset: int | None, limit: int | None) -
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
         new_frontmatter = VcrFrontmatter(**fm_data)
-        new_doc = VcrDocument(frontmatter=new_frontmatter, body=body)
         write_vcr_file(path, new_frontmatter, content)
-    return new_doc
+    return new_frontmatter
 
 
-def _update_sysrs(id_: str, content: str, offset: int | None, limit: int | None) -> SysrsDocument:
+def _update_sysrs(id_: str, content: str, offset: int | None, limit: int | None) -> SysrsFrontmatter:
     """Replace the body of the System Requirements Specification identified by ``id_`` (whole-body or line-range mode).
 
     Verbatim-shape port of :func:`_update_sop` (same ``sysrs_lock``,
@@ -659,17 +637,16 @@ def _update_sysrs(id_: str, content: str, offset: int | None, limit: int | None)
             assert_within(base_dir, path)
             spliced = splice_body(body_text(path), offset, limit, content)
             with wrap_tool_errors(domain="sysrs", tool="update", channel=BODY_CHANNEL):
-                body = Sysrs.from_text(format_text(spliced))
+                Sysrs.from_text(format_text(spliced))
             now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
             new_frontmatter = SysrsFrontmatter(**fm_data)
-            new_doc = SysrsDocument(frontmatter=new_frontmatter, body=body)
             write_sysrs_file(path, new_frontmatter, spliced)
-        return new_doc
+        return new_frontmatter
 
     with wrap_tool_errors(domain="sysrs", tool="update", channel=BODY_CHANNEL):
-        body = Sysrs.from_text(format_text(content))
+        Sysrs.from_text(format_text(content))
 
     base_dir = sysrs_base_dir()
     with sysrs_lock(id_):
@@ -679,13 +656,12 @@ def _update_sysrs(id_: str, content: str, offset: int | None, limit: int | None)
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
         new_frontmatter = SysrsFrontmatter(**fm_data)
-        new_doc = SysrsDocument(frontmatter=new_frontmatter, body=body)
         write_sysrs_file(path, new_frontmatter, content)
-    return new_doc
+    return new_frontmatter
 
 
 #: Dispatch table mapping the ``type`` value to its private adapter.
-_ADAPTERS: dict[str, Callable[[str, str, int | None, int | None], _UpdateDocument]] = {
+_ADAPTERS: dict[str, Callable[[str, str, int | None, int | None], _UpdateFrontmatter]] = {
     "req": _update_req,
     "uc": _update_uc,
     "tsk": _update_tsk,
@@ -715,7 +691,8 @@ _ADAPTERS: dict[str, Callable[[str, str, int | None, int | None], _UpdateDocumen
         "the last body line) appends after it; the spliced result is validated as a whole document "
         "before anything is written. `status` is never settable -- use the generic `set_status` tool. "
         "An invalid `id` (path-injection attempt or wrong format for `type`) is a `ValueError` "
-        "raised before any file access."
+        "raised before any file access. Returns the updated frontmatter only (no body); use the "
+        "corresponding `get_<d>` tool to fetch the full document afterward."
     ),
 )
 def update(
@@ -724,117 +701,118 @@ def update(
     content: str,
     offset: int | None = None,
     limit: int | None = None,
-) -> _UpdateDocument:
+) -> _UpdateFrontmatter:
     """Replace the body of an existing document, in whole-body or line-range mode.
 
-    Cross-domain generic for the twelve whole-body document types
-    (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``);
-    dispatches on ``type`` to the domain's own ported adapter (same lock,
-    same id resolution, same frontmatter carry-over, same verbatim
-    persistence, same domain not-found error).
+        Cross-domain generic for the twelve whole-body document types
+        (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``);
+        dispatches on ``type`` to the domain's own ported adapter (same lock,
+        same id resolution, same frontmatter carry-over, same verbatim
+        persistence, same domain not-found error).
 
-    **Whole-body mode** (no ``offset``/``limit``): ``content`` is body
-    markdown only, with no YAML frontmatter block -- the same shape the
-    per-domain ``update_<d>`` tools accept. Validated the same way: the
-    domain body model's ``from_text(format_text(content))``, letting
-    ``AssertionError`` (structural failure) or ``pydantic.ValidationError``
-    (field/cross-field failure) propagate uncaught, with nothing written in
-    either case.
+        **Whole-body mode** (no ``offset``/``limit``): ``content`` is body
+        markdown only, with no YAML frontmatter block -- the same shape the
+        per-domain ``update_<d>`` tools accept. Validated the same way: the
+        domain body model's ``from_text(format_text(content))``, letting
+        ``AssertionError`` (structural failure) or ``pydantic.ValidationError``
+        (field/cross-field failure) propagate uncaught, with nothing written in
+        either case.
 
-    **Range mode** (``offset`` given): ``content`` is a replacement
-    *fragment* addressed by read-style ``offset``/``limit`` coordinates,
-    where ``N`` is the number of lines of the current frontmatter-stripped
-    body (the text ``get_<d>(id, raw=True)`` returns) and ``N+1`` is the
-    virtual end-of-body position (one past the last line). ``offset`` is
-    the 1-based first body line to replace; ``limit`` is the number of
-    lines to replace -- the replaced range is ``offset..offset+limit-1``:
-    an omitted ``limit`` replaces through the last body line, ``limit=0``
-    is a pure insert of ``content``'s lines before line ``offset`` (with
-    ``offset=N+1`` that is the append case), and ``offset=N+1`` appends
-    after the last line. The on-disk body is re-read under the domain
-    lock, spliced (drop the range's lines, insert the fragment's lines at
-    position ``offset - 1``), and the *spliced result* -- not the fragment
-    -- is validated as a whole body exactly like whole-body mode and then
-    persisted verbatim, so unchanged regions of the on-disk body stay
-    byte-identical. An empty ``content`` deletes the range (legal iff the
-    result still validates). The YAML frontmatter is never addressable:
-    coordinates are body-relative by construction.
+        **Range mode** (``offset`` given): ``content`` is a replacement
+        *fragment* addressed by read-style ``offset``/``limit`` coordinates,
+        where ``N`` is the number of lines of the current frontmatter-stripped
+        body (the text ``get_<d>(id, raw=True)`` returns) and ``N+1`` is the
+        virtual end-of-body position (one past the last line). ``offset`` is
+        the 1-based first body line to replace; ``limit`` is the number of
+        lines to replace -- the replaced range is ``offset..offset+limit-1``:
+        an omitted ``limit`` replaces through the last body line, ``limit=0``
+        is a pure insert of ``content``'s lines before line ``offset`` (with
+        ``offset=N+1`` that is the append case), and ``offset=N+1`` appends
+        after the last line. The on-disk body is re-read under the domain
+        lock, spliced (drop the range's lines, insert the fragment's lines at
+        position ``offset - 1``), and the *spliced result* -- not the fragment
+        -- is validated as a whole body exactly like whole-body mode and then
+        persisted verbatim, so unchanged regions of the on-disk body stay
+        byte-identical. An empty ``content`` deletes the range (legal iff the
+        result still validates). The YAML frontmatter is never addressable:
+        coordinates are body-relative by construction.
 
-    In both modes the existing file's frontmatter is carried over with
-    every field preserved except ``updated`` (bumped to the current
-    date+time timestamp, via ``general.tools._timestamps.now_timestamp()``);
-    ``status`` in particular is never settable through this tool -- the
-    generic ``set_status`` tool in ``general.tools`` is the only
-    status-change path.
+        In both modes the existing file's frontmatter is carried over with
+        every field preserved except ``updated`` (bumped to the current
+        date+time timestamp, via ``general.tools._timestamps.now_timestamp()``);
+        ``status`` in particular is never settable through this tool -- the
+        generic ``set_status`` tool in ``general.tools`` is the only
+        status-change path.
 
-    Safety (REQ-009, feat-38-39-41-43-44 Phase 4, mirroring ``delete``'s
-    own REQ-003): ``id`` is validated via ``_path_safety.validate_id`` (no
-    ``/``, no ``\\``, no ``..``, plus the dispatched domain's own format --
-    canonical lowercase-hex UUID for the ten UUID domains, ``feat-NNN-slug``
-    for ``feat``) **before** any filesystem access, so a path-injection
-    attempt or a wrong-format id is a ``ValueError`` raised before dispatch.
-    Each adapter additionally confines the resolved path to the domain's
-    own base directory with ``_path_safety.assert_within`` inside the
-    lock -- defense-in-depth against any future gap in the id validation.
+        Safety (REQ-009, feat-38-39-41-43-44 Phase 4, mirroring ``delete``'s
+        own REQ-003): ``id`` is validated via ``_path_safety.validate_id`` (no
+        ``/``, no ``\\``, no ``..``, plus the dispatched domain's own format --
+        canonical lowercase-hex UUID for the ten UUID domains, ``feat-NNN-slug``
+        for ``feat``) **before** any filesystem access, so a path-injection
+        attempt or a wrong-format id is a ``ValueError`` raised before dispatch.
+        Each adapter additionally confines the resolved path to the domain's
+        own base directory with ``_path_safety.assert_within`` inside the
+        lock -- defense-in-depth against any future gap in the id validation.
 
-    Parameters
-    ----------
-    id:
-        The document's specmgr-assigned identifier.
-    type:
-        The document type / domain: one of ``req``, ``uc``, ``tsk``,
-        ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
-        ``vcr``, ``sysrs``.
-    content:
-        Whole-body mode: the replacement body markdown, with no
-        frontmatter block. Range mode: the replacement fragment for the
-        lines ``offset..offset+limit-1`` (may be empty to delete the
-        range).
-    offset:
-        Optional 1-based first body line to replace; allowed ``1..N+1``,
-        where ``N+1`` (one past the last body line) is the virtual
-        end-of-body position. A given ``offset`` enters range mode; on its
-        own it replaces through the last body line.
-    limit:
-        Optional number of lines to replace starting at ``offset``
-        (``0`` = pure insert); must be given together with ``offset``
-        (``limit`` without ``offset`` is a ``ValueError``).
+        Parameters
+        ----------
+        id:
+            The document's specmgr-assigned identifier.
+        type:
+            The document type / domain: one of ``req``, ``uc``, ``tsk``,
+            ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
+            ``vcr``, ``sysrs``.
+        content:
+            Whole-body mode: the replacement body markdown, with no
+            frontmatter block. Range mode: the replacement fragment for the
+            lines ``offset..offset+limit-1`` (may be empty to delete the
+            range).
+        offset:
+            Optional 1-based first body line to replace; allowed ``1..N+1``,
+            where ``N+1`` (one past the last body line) is the virtual
+            end-of-body position. A given ``offset`` enters range mode; on its
+            own it replaces through the last body line.
+        limit:
+            Optional number of lines to replace starting at ``offset``
+            (``0`` = pure insert); must be given together with ``offset``
+            (``limit`` without ``offset`` is a ``ValueError``).
 
-    Returns
-    -------
-    ReqDocument | UcDocument | TskDocument | QaDocument | PrbDocument |
-    GolDocument | RskDocument | DecDocument | FeatDocument | SopDocument |
-    VcrDocument | SysrsDocument
-        The updated document of the dispatched domain type.
+        Returns
+        -------
+    ReqFrontmatter | UcFrontmatter | TskFrontmatter | QaFrontmatter | PrbFrontmatter |
+    GolFrontmatter | RskFrontmatter | DecFrontmatter | FeatFrontmatter | SopFrontmatter |
+    VcrFrontmatter | SysrsFrontmatter
+        The updated document's frontmatter only (no body) of the dispatched domain type;
+        use the corresponding ``get_<d>`` tool to fetch the full document afterward.
 
-    Raises
-    ------
-    ValueError
-        ``id`` is a path-injection attempt or not in the dispatched
-        domain's own format (raised before any filesystem access; nothing
-        is written). Also raised for misused range coordinates: ``limit``
-        given without ``offset`` (raised before any file access), or
-        ``offset < 1``, ``offset > N + 1``, ``limit < 0``, or
-        ``offset + limit - 1 > N`` (raised after the on-disk body is read;
-        the message names the offending value(s) and the allowed range).
-        Nothing is written in any of these cases.
-    AssertionError
-        The (spliced) body is structurally invalid (e.g. a range that
-        deletes the H1). The message is prefixed with domain/tool/channel
-        context (e.g. ``"tsk update (body): ..."``) by the shared
-        tool-boundary wrapper (:func:`~biz.dfch.specmgr.models.md._errors.
-        wrap_tool_errors`), layered on top of the engine's own
-        field-path/line/snippet enrichment (feat-27-validation Phases
-        1/2). Nothing is written.
-    pydantic.ValidationError
-        A field/cross-field validation failure in the (spliced) body (e.g.
-        a range producing an out-of-vocabulary value) -- similarly
-        prefixed. Nothing is written.
-    ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
-    PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
-    FeatNotFoundError / SopNotFoundError / VcrNotFoundError / SysrsNotFoundError
-        No document of the dispatched ``type`` has this id -- the
-        domain's own not-found error, unchanged from the per-domain tools.
+        Raises
+        ------
+        ValueError
+            ``id`` is a path-injection attempt or not in the dispatched
+            domain's own format (raised before any filesystem access; nothing
+            is written). Also raised for misused range coordinates: ``limit``
+            given without ``offset`` (raised before any file access), or
+            ``offset < 1``, ``offset > N + 1``, ``limit < 0``, or
+            ``offset + limit - 1 > N`` (raised after the on-disk body is read;
+            the message names the offending value(s) and the allowed range).
+            Nothing is written in any of these cases.
+        AssertionError
+            The (spliced) body is structurally invalid (e.g. a range that
+            deletes the H1). The message is prefixed with domain/tool/channel
+            context (e.g. ``"tsk update (body): ..."``) by the shared
+            tool-boundary wrapper (:func:`~biz.dfch.specmgr.models.md._errors.
+            wrap_tool_errors`), layered on top of the engine's own
+            field-path/line/snippet enrichment (feat-27-validation Phases
+            1/2). Nothing is written.
+        pydantic.ValidationError
+            A field/cross-field validation failure in the (spliced) body (e.g.
+            a range producing an out-of-vocabulary value) -- similarly
+            prefixed. Nothing is written.
+        ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
+        PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
+        FeatNotFoundError / SopNotFoundError / VcrNotFoundError / SysrsNotFoundError
+            No document of the dispatched ``type`` has this id -- the
+            domain's own not-found error, unchanged from the per-domain tools.
     """
     # REQ-009: validate before any filesystem access (injection prevention).
     validate_id(type, id)

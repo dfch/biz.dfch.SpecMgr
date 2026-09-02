@@ -27,9 +27,10 @@ from unittest import mock
 
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.models.md import CURRENT_SCHEMA_VERSION
-from biz.dfch.specmgr.prb.models.v1 import PrbDocument, parse_prb
+from biz.dfch.specmgr.prb.models.v1 import PrbDocument, PrbFrontmatter, parse_prb
 from biz.dfch.specmgr.prb.tools._paths import prb_base_dir
 from biz.dfch.specmgr.prb.tools.create_prb import create_prb
+from biz.dfch.specmgr.prb.tools.get_prb import get_prb
 
 _MINIMAL_BODY = textwrap.dedent(
     """\
@@ -85,30 +86,34 @@ class TestCreatePrb(TempPrbDirTestCase):
         """create_prb must build the entire frontmatter itself (id/type/status/timestamps/version)."""
         result = create_prb(_MINIMAL_BODY)
 
-        self.assertIsInstance(result, PrbDocument)
-        self.assertIsNotNone(result.frontmatter.id)
-        self.assertEqual(result.frontmatter.type, "prb")
-        self.assertEqual(result.frontmatter.status, "draft")
-        self.assertIsNotNone(result.frontmatter.created)
-        self.assertEqual(result.frontmatter.created, result.frontmatter.updated)
-        self.assertEqual(result.frontmatter.version, CURRENT_SCHEMA_VERSION)
-        self.assertEqual(result.body.text, "Simple Problem Statement")
+        self.assertIsInstance(result, PrbFrontmatter)
+        self.assertNotIsInstance(result, PrbDocument)
+        self.assertFalse(hasattr(result, "body"))
+        self.assertIsNotNone(result.id)
+        self.assertEqual(result.type, "prb")
+        self.assertEqual(result.status, "draft")
+        self.assertIsNotNone(result.created)
+        self.assertEqual(result.created, result.updated)
+        self.assertEqual(result.version, CURRENT_SCHEMA_VERSION)
+
+        fetched = get_prb(result.id)
+        self.assertEqual(fetched.body.text, "Simple Problem Statement")
 
     def test_writes_expected_filename(self) -> None:
         """create_prb must write f'prb-{id}-{slug}.md' under the problem statement base dir."""
         result = create_prb(_MINIMAL_BODY)
 
-        expected_path = prb_base_dir() / f"prb-{result.frontmatter.id}-simple-problem-statement.md"
+        expected_path = prb_base_dir() / f"prb-{result.id}-simple-problem-statement.md"
         self.assertTrue(expected_path.exists())
 
     def test_written_file_round_trips_via_parse_prb(self) -> None:
         """The written file must parse back into an equivalent document."""
         result = create_prb(_MINIMAL_BODY)
 
-        expected_path = prb_base_dir() / f"prb-{result.frontmatter.id}-simple-problem-statement.md"
+        expected_path = prb_base_dir() / f"prb-{result.id}-simple-problem-statement.md"
         on_disk = parse_prb(expected_path.read_text(encoding="utf-8"))
 
-        self.assertEqual(on_disk.frontmatter.id, result.frontmatter.id)
+        self.assertEqual(on_disk.frontmatter.id, result.id)
         self.assertEqual(on_disk.frontmatter.status, "draft")
         self.assertEqual(on_disk.body.text, "Simple Problem Statement")
         self.assertIn("Something is wrong.", on_disk.body.current_state.summary.text)

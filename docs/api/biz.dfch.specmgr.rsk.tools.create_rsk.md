@@ -16,7 +16,7 @@ codebase.
 
 ## Functions
 
-### `create_rsk(content: 'str') -> 'RskDocument'`
+### `create_rsk(content: 'str') -> 'RskFrontmatter'`
 
 Create and write a new risk document.
 
@@ -47,9 +47,10 @@ content:
 
 Returns
 -------
-RskDocument
-    The newly created document, with its assigned id in
-    ``frontmatter.id``.
+RskFrontmatter
+    The newly created document's frontmatter only (no body), with its
+    assigned id in ``.id``. Use the corresponding ``get_rsk`` tool to
+    fetch the full document afterward.
 
 Raises
 ------

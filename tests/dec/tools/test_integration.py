@@ -48,7 +48,7 @@ from unittest import mock
 import frontmatter
 from pydantic import ValidationError
 
-from biz.dfch.specmgr.dec.models.v1 import DecDocument
+from biz.dfch.specmgr.dec.models.v1 import DecFrontmatter
 from biz.dfch.specmgr.dec.tools._paths import DecNotFoundError, dec_base_dir
 from biz.dfch.specmgr.dec.tools.create_dec import create_dec
 from biz.dfch.specmgr.dec.tools.get_dec import get_dec
@@ -111,16 +111,16 @@ class TestDecLifecycleIntegration(TempDecDirTestCase):
         self.assertEqual(initial_page.total, 0)
         self.assertEqual(initial_page.results, [])
 
-        # 1. create_dec: a freshly created document must be a DecDocument in status "draft"
+        # 1. create_dec: a freshly created document must be a DecFrontmatter in status "draft"
         #    (ACC-003: status is fixed, never caller-supplied), with its file on disk
         #    named exactly dec-{id}-{slug}.md.
         created = create_dec(_INITIAL_BODY)
-        self.assertIsInstance(created, DecDocument)
-        self.assertEqual(created.frontmatter.status, "draft")
-        self.assertEqual(created.frontmatter.type, "dec")
-        self.assertIsNotNone(created.frontmatter.id)
-        self.assertEqual(created.frontmatter.created, created.frontmatter.updated)
-        dec_id = created.frontmatter.id
+        self.assertIsInstance(created, DecFrontmatter)
+        self.assertEqual(created.status, "draft")
+        self.assertEqual(created.type, "dec")
+        self.assertIsNotNone(created.id)
+        self.assertEqual(created.created, created.updated)
+        dec_id = created.id
         assert dec_id is not None
         expected_path = dec_base_dir() / f"dec-{dec_id}-choose-a-document-store.md"
         self.assertTrue(expected_path.exists())
@@ -142,22 +142,22 @@ class TestDecLifecycleIntegration(TempDecDirTestCase):
         # 4. update (type="dec"): whole-body replace must bump only `updated` and preserve
         #    id/type/status/created/version (ACC-003).
         updated = update(dec_id, "dec", _REVISED_BODY)
-        self.assertEqual(updated.frontmatter.id, created.frontmatter.id)
-        self.assertEqual(updated.frontmatter.type, created.frontmatter.type)
-        self.assertEqual(updated.frontmatter.created, created.frontmatter.created)
-        self.assertEqual(updated.frontmatter.status, "draft")
-        self.assertEqual(updated.frontmatter.version, created.frontmatter.version)
-        self.assertNotEqual(updated.frontmatter.updated, created.frontmatter.updated)
-        self.assertIsNotNone(updated.body.drivers)
+        self.assertEqual(updated.id, created.id)
+        self.assertEqual(updated.type, created.type)
+        self.assertEqual(updated.created, created.created)
+        self.assertEqual(updated.status, "draft")
+        self.assertEqual(updated.version, created.version)
+        self.assertNotEqual(updated.updated, created.updated)
+        self.assertIsNotNone(get_dec(dec_id).body.drivers)
 
         # 5. set_status (type="dec"): only status/updated may change.
         accepted = set_status(dec_id, "dec", "accepted")
-        self.assertEqual(accepted.frontmatter.status, "accepted")
-        self.assertEqual(accepted.frontmatter.id, updated.frontmatter.id)
-        self.assertEqual(accepted.frontmatter.created, updated.frontmatter.created)
-        self.assertNotEqual(accepted.frontmatter.updated, updated.frontmatter.updated)
+        self.assertEqual(accepted.status, "accepted")
+        self.assertEqual(accepted.id, updated.id)
+        self.assertEqual(accepted.created, updated.created)
+        self.assertNotEqual(accepted.updated, updated.updated)
         # The body must be carried forward verbatim, untouched by the status change.
-        self.assertIsNotNone(accepted.body.drivers)
+        self.assertIsNotNone(get_dec(dec_id).body.drivers)
 
         # 6. get_dec: must reflect the latest on-disk state.
         fetched_after_status = get_dec(dec_id)
@@ -190,11 +190,11 @@ class TestDecLifecycleIntegration(TempDecDirTestCase):
     def test_set_status_rejects_gol_only_implemented_status(self) -> None:
         """ACC-003: set_status (type="dec") must reject `implemented` (GOL's seventh value, outside DEC's closed six-set)."""
         created = create_dec(_INITIAL_BODY)
-        expected_path = dec_base_dir() / f"dec-{created.frontmatter.id}-choose-a-document-store.md"
+        expected_path = dec_base_dir() / f"dec-{created.id}-choose-a-document-store.md"
         before = expected_path.read_text(encoding="utf-8")
 
         with self.assertRaises(ValidationError):
-            set_status(created.frontmatter.id, "dec", "implemented")
+            set_status(created.id, "dec", "implemented")
 
         self.assertEqual(expected_path.read_text(encoding="utf-8"), before)
 

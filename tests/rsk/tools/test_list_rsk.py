@@ -114,7 +114,7 @@ class TestListRsk(unittest.TestCase):
         for summary in sut.results:
             self.assertIsInstance(summary, RskSummary)
         ids = {summary.id for summary in sut.results}
-        self.assertEqual(ids, {first.frontmatter.id, second.frontmatter.id})
+        self.assertEqual(ids, {first.id, second.id})
         titles = {summary.title for summary in sut.results}
         self.assertEqual(titles, {"Sample Risk", "Another Risk"})
         statuses = {summary.status for summary in sut.results}
@@ -213,7 +213,7 @@ class TestListRsk(unittest.TestCase):
 
         self.assertEqual(len(sut.results), 1)
         summary = sut.results[0]
-        self.assertEqual(summary.id, created.frontmatter.id)
+        self.assertEqual(summary.id, created.id)
         self.assertEqual(summary.initial_level, LEVEL_HIGH)  # 4 x 3 = 12 -> high
         self.assertEqual(summary.residual_level, LEVEL_MEDIUM)  # 2 x 3 = 6 -> medium
         self.assertEqual(summary.strategy, "reduce")
@@ -228,14 +228,14 @@ class TestListRsk(unittest.TestCase):
 
         sut = list_rsk()
 
-        summary = next(s for s in sut.results if s.id == created.frontmatter.id)
+        summary = next(s for s in sut.results if s.id == created.id)
         self.assertEqual(summary.initial_level, LEVEL_HIGH)  # 4 x 3 = 12 -> high
         self.assertEqual(summary.residual_probability, 5)
         self.assertEqual(summary.residual_impact, 5)
         self.assertEqual(summary.residual_product, 25)
         self.assertEqual(summary.residual_level, LEVEL_VERY_HIGH)
         # The minimal body's residual (2 x 3 = 6) is untouched by the other document.
-        self.assertNotIn(LEVEL_LOW, [s.residual_level for s in sut.results if s.id == created.frontmatter.id])
+        self.assertNotIn(LEVEL_LOW, [s.residual_level for s in sut.results if s.id == created.id])
 
 
 if __name__ == "__main__":

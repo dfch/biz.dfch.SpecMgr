@@ -40,7 +40,7 @@ from ...models.md import CURRENT_SCHEMA_VERSION
 from ...models.md._errors import BODY_CHANNEL, wrap_tool_errors
 from ...models.md._markdown import format_text
 from ...server import mcp
-from ..models.v1 import GolDocument, GolFrontmatter, Goal
+from ..models.v1 import GolFrontmatter, Goal
 from ._paths import ensure_gol_base_dir
 from ._write import write_gol_file
 
@@ -51,10 +51,12 @@ from ._write import write_gol_file
     description=(
         "Create a new goal: assigns a fresh id, derives a filename from the body's "
         "H1 title, validates the submitted body-only content, and writes the new "
-        "document to the goal base directory."
+        "document to the goal base directory. Returns the newly created document's "
+        "frontmatter only (no body); use the corresponding `get_gol` tool to fetch "
+        "the full document afterward."
     ),
 )
-def create_gol(content: str) -> GolDocument:
+def create_gol(content: str) -> GolFrontmatter:
     """Create and write a new goal document.
 
     ``content`` is body markdown only (the ``Goal`` H1 and its sections) --
@@ -83,9 +85,10 @@ def create_gol(content: str) -> GolDocument:
 
     Returns
     -------
-    GolDocument
-        The newly created document, with its assigned id in
-        ``frontmatter.id``.
+    GolFrontmatter
+        The newly created document's frontmatter only (no body), with its
+        assigned id in ``.id``. Use the corresponding ``get_gol`` tool to
+        fetch the full document afterward.
 
     Raises
     ------
@@ -112,9 +115,7 @@ def create_gol(content: str) -> GolDocument:
         updated=now,
         version=CURRENT_SCHEMA_VERSION,
     )
-    new_doc = GolDocument(frontmatter=new_frontmatter, body=body)
-
     filename = f"gol-{new_id}-{slugify(body.text)}.md"
     base_dir = ensure_gol_base_dir()
     write_gol_file(base_dir / filename, new_frontmatter, content)
-    return new_doc
+    return new_frontmatter

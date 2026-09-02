@@ -29,9 +29,10 @@ from pydantic import ValidationError
 
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.models.md import CURRENT_SCHEMA_VERSION
-from biz.dfch.specmgr.sop.models.v1 import SopDocument, parse_sop
+from biz.dfch.specmgr.sop.models.v1 import SopDocument, SopFrontmatter, parse_sop
 from biz.dfch.specmgr.sop.tools._paths import sop_base_dir
 from biz.dfch.specmgr.sop.tools.create_sop import create_sop
+from biz.dfch.specmgr.sop.tools.get_sop import get_sop
 
 _MINIMAL_BODY = textwrap.dedent(
     """\
@@ -90,30 +91,34 @@ class TestCreateSop(TempSopDirTestCase):
         """create_sop must build the entire frontmatter itself (id/type/status/timestamps/version)."""
         result = create_sop(_MINIMAL_BODY)
 
-        self.assertIsInstance(result, SopDocument)
-        self.assertIsNotNone(result.frontmatter.id)
-        self.assertEqual(result.frontmatter.type, "sop")
-        self.assertEqual(result.frontmatter.status, "draft")
-        self.assertIsNotNone(result.frontmatter.created)
-        self.assertEqual(result.frontmatter.created, result.frontmatter.updated)
-        self.assertEqual(result.frontmatter.version, CURRENT_SCHEMA_VERSION)
-        self.assertEqual(result.body.text, "New Employee IT Account Provisioning")
+        self.assertIsInstance(result, SopFrontmatter)
+        self.assertNotIsInstance(result, SopDocument)
+        self.assertFalse(hasattr(result, "body"))
+        self.assertIsNotNone(result.id)
+        self.assertEqual(result.type, "sop")
+        self.assertEqual(result.status, "draft")
+        self.assertIsNotNone(result.created)
+        self.assertEqual(result.created, result.updated)
+        self.assertEqual(result.version, CURRENT_SCHEMA_VERSION)
+
+        fetched = get_sop(result.id)
+        self.assertEqual(fetched.body.text, "New Employee IT Account Provisioning")
 
     def test_writes_expected_filename(self) -> None:
         """create_sop must write f'sop-{id}-{slug}.md' under the SOP base dir."""
         result = create_sop(_MINIMAL_BODY)
 
-        expected_path = sop_base_dir() / f"sop-{result.frontmatter.id}-new-employee-it-account-provisioning.md"
+        expected_path = sop_base_dir() / f"sop-{result.id}-new-employee-it-account-provisioning.md"
         self.assertTrue(expected_path.exists())
 
     def test_written_file_round_trips_via_parse_sop(self) -> None:
         """The written file must parse back into an equivalent document."""
         result = create_sop(_MINIMAL_BODY)
 
-        expected_path = sop_base_dir() / f"sop-{result.frontmatter.id}-new-employee-it-account-provisioning.md"
+        expected_path = sop_base_dir() / f"sop-{result.id}-new-employee-it-account-provisioning.md"
         on_disk = parse_sop(expected_path.read_text(encoding="utf-8"))
 
-        self.assertEqual(on_disk.frontmatter.id, result.frontmatter.id)
+        self.assertEqual(on_disk.frontmatter.id, result.id)
         self.assertEqual(on_disk.frontmatter.status, "draft")
         self.assertEqual(on_disk.body.text, "New Employee IT Account Provisioning")
 

@@ -50,7 +50,7 @@ from ...models.md import CURRENT_SCHEMA_VERSION
 from ...models.md._errors import BODY_CHANNEL, wrap_tool_errors
 from ...models.md._markdown import format_text
 from ...server import mcp
-from ..models.v1 import FeatDocument, FeatFrontmatter, Feature
+from ..models.v1 import FeatFrontmatter, Feature
 from ._lock import feat_create_lock
 from ._paths import README_FILENAME, ensure_feat_base_dir, feature_title, slugify
 from ._write import write_feat_file
@@ -63,10 +63,12 @@ from ._write import write_feat_file
         "Create a new feature: assigns a fresh id (caller-chosen via the optional 'id' parameter, "
         "or defaulted to feat-0-<slug-from-title> when omitted -- no max+1 auto-generation), derives "
         "a filename from the body's H1 title, validates the submitted body-only content, and writes "
-        "the new document to the feature base directory."
+        "the new document to the feature base directory. Returns the newly created document's "
+        "frontmatter only (no body); use the corresponding `get_feat` tool to fetch the full "
+        "document afterward."
     ),
 )
-def create_feat(content: str, id: str | None = None) -> FeatDocument:
+def create_feat(content: str, id: str | None = None) -> FeatFrontmatter:
     """Create and write a new feature document.
 
     ``content`` is body markdown only (the ``Feature`` H1 and its sections)
@@ -123,9 +125,10 @@ def create_feat(content: str, id: str | None = None) -> FeatDocument:
 
     Returns
     -------
-    FeatDocument
-        The newly created document, with its assigned ``feat-NNN-slug`` id
-        in ``frontmatter.id``.
+    FeatFrontmatter
+        The newly created document's frontmatter only (no body), with its
+        assigned ``feat-NNN-slug`` id in ``.id``. Use the corresponding
+        ``get_feat`` tool to fetch the full document afterward.
 
     Raises
     ------
@@ -174,7 +177,5 @@ def create_feat(content: str, id: str | None = None) -> FeatDocument:
             updated=now,
             version=CURRENT_SCHEMA_VERSION,
         )
-        new_doc = FeatDocument(frontmatter=new_frontmatter, body=body)
-
         write_feat_file(target_path, new_frontmatter, content)
-    return new_doc
+    return new_frontmatter

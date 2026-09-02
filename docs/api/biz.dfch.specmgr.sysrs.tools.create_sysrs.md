@@ -16,7 +16,7 @@ codebase.
 
 ## Functions
 
-### `create_sysrs(content: 'str') -> 'SysrsDocument'`
+### `create_sysrs(content: 'str') -> 'SysrsFrontmatter'`
 
 Create and write a new System Requirements Specification document.
 
@@ -46,9 +46,10 @@ content:
 
 Returns
 -------
-SysrsDocument
-    The newly created document, with its assigned id in
-    ``frontmatter.id``.
+SysrsFrontmatter
+    The newly created document's frontmatter only (no body), with its
+    assigned id in ``.id``. Use the corresponding ``get_sysrs`` tool to
+    fetch the full document afterward.
 
 Raises
 ------

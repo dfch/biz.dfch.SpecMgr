@@ -263,7 +263,7 @@ class TestUpdateFeatInstructionsWalkthrough(TempFeatDirTestCase):
         """get_feat(id, raw=True) -> update (line-range) -> update (whole-body) ->
         set_status, live, exactly as step 1/4 of the packaged instructions narrate."""
         created = create_feat_tool(_INITIAL_BODY)
-        feat_id = created.frontmatter.id
+        feat_id = created.id
         assert feat_id is not None
 
         # Step 1: read current state first.
@@ -287,17 +287,17 @@ class TestUpdateFeatInstructionsWalkthrough(TempFeatDirTestCase):
             "- REQ-001: The widget must render within 200ms.\n\n- REQ-002: The widget must be keyboard-navigable.",
         )
         whole_body_result = update(feat_id, "feat", revised_body)
-        self.assertEqual(len(whole_body_result.body.plan.requirements.items), 2)
-        self.assertEqual(whole_body_result.frontmatter.id, feat_id)
-        self.assertEqual(whole_body_result.frontmatter.created, created.frontmatter.created)
+        self.assertEqual(len(get_feat(feat_id).body.plan.requirements.items), 2)
+        self.assertEqual(whole_body_result.id, feat_id)
+        self.assertEqual(whole_body_result.created, created.created)
 
         # Step 4, status change: a separate, optional follow-up via the generic
         # set_status tool (never through `update`).
         status_result = set_status(feat_id, "feat", "progress")
-        self.assertEqual(status_result.frontmatter.status, "progress")
-        self.assertEqual(status_result.frontmatter.id, feat_id)
+        self.assertEqual(status_result.status, "progress")
+        self.assertEqual(status_result.id, feat_id)
         # The body carried forward by the whole-body update stays untouched by set_status.
-        self.assertEqual(len(status_result.body.plan.requirements.items), 2)
+        self.assertEqual(len(get_feat(feat_id).body.plan.requirements.items), 2)
 
         final = get_feat(feat_id)
         self.assertEqual(final.frontmatter.status, "progress")

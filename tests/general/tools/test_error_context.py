@@ -140,7 +140,7 @@ class TestGenericUpdateToolErrorContext(TempDocsDirTestCase):
         created = create_tsk(_TSK_MINIMAL_BODY)
 
         with self.assertRaises(AssertionError) as ctx:
-            update(id=created.frontmatter.id, type="tsk", content=_TSK_MALFORMED_BODY)
+            update(id=created.id, type="tsk", content=_TSK_MALFORMED_BODY)
 
         self.assertIn("tsk update", str(ctx.exception))
 
@@ -148,7 +148,7 @@ class TestGenericUpdateToolErrorContext(TempDocsDirTestCase):
         created = create_req(_REQ_MINIMAL_BODY)
 
         with self.assertRaises(ValidationError) as ctx:
-            update(id=created.frontmatter.id, type="req", content=_REQ_OUT_OF_VOCABULARY_BODY)
+            update(id=created.id, type="req", content=_REQ_OUT_OF_VOCABULARY_BODY)
 
         self.assertIn("req update", str(ctx.exception))
 
@@ -160,7 +160,7 @@ class TestGenericSetStatusToolErrorContext(TempDocsDirTestCase):
         created = create_tsk(_TSK_MINIMAL_BODY)
 
         with self.assertRaises(ValidationError) as ctx:
-            set_status(id=created.frontmatter.id, type="tsk", status="not-a-real-status")
+            set_status(id=created.id, type="tsk", status="not-a-real-status")
 
         self.assertIn("tsk set_status", str(ctx.exception))
 

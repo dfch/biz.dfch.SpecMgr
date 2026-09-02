@@ -17,7 +17,7 @@ codebase.
 
 ## Functions
 
-### `create_uc(content: 'str') -> 'UcDocument'`
+### `create_uc(content: 'str') -> 'UcFrontmatter'`
 
 Create and write a new use-case document.
 
@@ -47,9 +47,10 @@ content:
 
 Returns
 -------
-UcDocument
-    The newly created document, with its assigned id in
-    ``frontmatter.id``.
+UcFrontmatter
+    The newly created document's frontmatter only (no body), with its
+    assigned id in ``.id``. Use the corresponding ``get_uc`` tool to
+    fetch the full document afterward.
 
 Raises
 ------

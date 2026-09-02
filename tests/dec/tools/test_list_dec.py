@@ -82,7 +82,7 @@ class TestListDec(unittest.TestCase):
         for summary in sut.results:
             self.assertIsInstance(summary, DecSummary)
         ids = {summary.id for summary in sut.results}
-        self.assertEqual(ids, {first.frontmatter.id, second.frontmatter.id})
+        self.assertEqual(ids, {first.id, second.id})
         titles = {summary.title for summary in sut.results}
         self.assertEqual(titles, {"Choose a Document Store", "Nightly Order Export"})
         statuses = {summary.status for summary in sut.results}

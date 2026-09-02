@@ -90,17 +90,17 @@ from ...adr.tools._io import load_by_id as load_adr_by_id
 from ...adr.tools._io import write_adr
 from ...adr.tools._lock import adr_lock
 from ...adr.tools._paths import adr_base_dir
-from ...dec.models.v1 import DecDocument, DecFrontmatter
+from ...dec.models.v1 import DecFrontmatter
 from ...dec.tools._io import load_by_id as load_dec_by_id
 from ...dec.tools._lock import dec_lock
 from ...dec.tools._paths import dec_base_dir
 from ...dec.tools._write import write_dec_file
-from ...feat.models.v1 import FeatDocument, FeatFrontmatter
+from ...feat.models.v1 import FeatFrontmatter
 from ...feat.tools._io import load_by_id as load_feat_by_id
 from ...feat.tools._lock import feat_lock
 from ...feat.tools._paths import feat_base_dir
 from ...feat.tools._write import write_feat_file
-from ...gol.models.v1 import GolDocument, GolFrontmatter
+from ...gol.models.v1 import GolFrontmatter
 from ...gol.tools._io import load_by_id as load_gol_by_id
 from ...gol.tools._lock import gol_lock
 from ...gol.tools._paths import gol_base_dir
@@ -108,48 +108,48 @@ from ...gol.tools._write import write_gol_file
 from ...models.adr import Adr
 from ...models.adr.v1 import mutations
 from ...models.md._errors import FRONTMATTER_CHANNEL, wrap_tool_errors
-from ...prb.models.v1 import PrbDocument, PrbFrontmatter
+from ...prb.models.v1 import PrbFrontmatter
 from ...prb.tools._io import load_by_id as load_prb_by_id
 from ...prb.tools._lock import prb_lock
 from ...prb.tools._paths import prb_base_dir
 from ...prb.tools._write import write_prb_file
-from ...qa.models.v2 import QaDocument, QaFrontmatter
+from ...qa.models.v2 import QaFrontmatter
 from ...qa.tools._io import load_by_id as load_qa_by_id
 from ...qa.tools._lock import qa_lock
 from ...qa.tools._paths import qa_base_dir
 from ...qa.tools._write import write_qa_file
-from ...req.models.v1 import ReqDocument, ReqFrontmatter
+from ...req.models.v1 import ReqFrontmatter
 from ...req.tools._io import load_by_id as load_req_by_id
 from ...req.tools._lock import req_lock
 from ...req.tools._paths import req_base_dir
 from ...req.tools._write import write_req_file
-from ...rsk.models.v1 import RskDocument, RskFrontmatter
+from ...rsk.models.v1 import RskFrontmatter
 from ...rsk.tools._io import load_by_id as load_rsk_by_id
 from ...rsk.tools._lock import rsk_lock
 from ...rsk.tools._paths import rsk_base_dir
 from ...rsk.tools._write import write_rsk_file
 from ...server import mcp
-from ...sop.models.v1 import SopDocument, SopFrontmatter
+from ...sop.models.v1 import SopFrontmatter
 from ...sop.tools._io import load_by_id as load_sop_by_id
 from ...sop.tools._lock import sop_lock
 from ...sop.tools._paths import sop_base_dir
 from ...sop.tools._write import write_sop_file
-from ...sysrs.models.v1 import SysrsDocument, SysrsFrontmatter
+from ...sysrs.models.v1 import SysrsFrontmatter
 from ...sysrs.tools._io import load_by_id as load_sysrs_by_id
 from ...sysrs.tools._lock import sysrs_lock
 from ...sysrs.tools._paths import sysrs_base_dir
 from ...sysrs.tools._write import write_sysrs_file
-from ...tsk.models.v1 import TskDocument, TskFrontmatter
+from ...tsk.models.v1 import TskFrontmatter
 from ...tsk.tools._io import load_by_id as load_tsk_by_id
 from ...tsk.tools._lock import tsk_lock
 from ...tsk.tools._paths import tsk_base_dir
 from ...tsk.tools._write import write_tsk_file
-from ...uc.models.v2 import UcDocument, UcFrontmatter
+from ...uc.models.v2 import UcFrontmatter
 from ...uc.tools._io import load_by_id as load_uc_by_id
 from ...uc.tools._lock import uc_lock
 from ...uc.tools._paths import uc_base_dir
 from ...uc.tools._write import write_uc_file
-from ...vcr.models.v1 import VcrDocument, VcrFrontmatter
+from ...vcr.models.v1 import VcrFrontmatter
 from ...vcr.tools._io import load_by_id as load_vcr_by_id
 from ...vcr.tools._lock import vcr_lock
 from ...vcr.tools._paths import vcr_base_dir
@@ -164,24 +164,24 @@ __all__ = ["set_status"]
 _TYPE_ADR = "adr"
 
 #: The generic tool's 13-way return union -- annotation-only (see module docstring).
-_SetStatusDocument = (
-    ReqDocument
-    | UcDocument
-    | TskDocument
-    | QaDocument
-    | PrbDocument
-    | GolDocument
-    | RskDocument
-    | DecDocument
-    | FeatDocument
-    | SopDocument
-    | VcrDocument
-    | SysrsDocument
+_SetStatusFrontmatter = (
+    ReqFrontmatter
+    | UcFrontmatter
+    | TskFrontmatter
+    | QaFrontmatter
+    | PrbFrontmatter
+    | GolFrontmatter
+    | RskFrontmatter
+    | DecFrontmatter
+    | FeatFrontmatter
+    | SopFrontmatter
+    | VcrFrontmatter
+    | SysrsFrontmatter
     | Adr
 )
 
 
-def _set_status_req(id_: str, status: str, superseded_by: str | None) -> ReqDocument:
+def _set_status_req(id_: str, status: str, superseded_by: str | None) -> ReqFrontmatter:
     """Replace the status of the requirement identified by ``id_``.
 
     Verbatim port of the previous per-domain requirement status tool's
@@ -208,12 +208,11 @@ def _set_status_req(id_: str, status: str, superseded_by: str | None) -> ReqDocu
         fm_data["updated"] = now
         with wrap_tool_errors(domain="req", tool="set_status", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = ReqFrontmatter(**fm_data)
-        new_doc = ReqDocument(frontmatter=new_frontmatter, body=existing.body)
         write_req_file(path, new_frontmatter, raw_body)
-    return new_doc
+    return new_frontmatter
 
 
-def _set_status_uc(id_: str, status: str, superseded_by: str | None) -> UcDocument:
+def _set_status_uc(id_: str, status: str, superseded_by: str | None) -> UcFrontmatter:
     """Replace the status of the use case identified by ``id_``.
 
     Verbatim port of the previous per-domain use-case status tool's
@@ -235,12 +234,11 @@ def _set_status_uc(id_: str, status: str, superseded_by: str | None) -> UcDocume
         fm_data["updated"] = now
         with wrap_tool_errors(domain="uc", tool="set_status", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = UcFrontmatter(**fm_data)
-        new_doc = UcDocument(frontmatter=new_frontmatter, body=existing.body)
         write_uc_file(path, new_frontmatter, raw_body)
-    return new_doc
+    return new_frontmatter
 
 
-def _set_status_tsk(id_: str, status: str, superseded_by: str | None) -> TskDocument:
+def _set_status_tsk(id_: str, status: str, superseded_by: str | None) -> TskFrontmatter:
     """Replace the status of the task list identified by ``id_``.
 
     Verbatim port of the previous per-domain task list status tool's
@@ -262,12 +260,11 @@ def _set_status_tsk(id_: str, status: str, superseded_by: str | None) -> TskDocu
         fm_data["updated"] = now
         with wrap_tool_errors(domain="tsk", tool="set_status", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = TskFrontmatter(**fm_data)
-        new_doc = TskDocument(frontmatter=new_frontmatter, body=existing.body)
         write_tsk_file(path, new_frontmatter, raw_body)
-    return new_doc
+    return new_frontmatter
 
 
-def _set_status_qa(id_: str, status: str, superseded_by: str | None) -> QaDocument:
+def _set_status_qa(id_: str, status: str, superseded_by: str | None) -> QaFrontmatter:
     """Replace the status of the QA document identified by ``id_``.
 
     Verbatim port of the previous per-domain QA document status tool's
@@ -289,12 +286,11 @@ def _set_status_qa(id_: str, status: str, superseded_by: str | None) -> QaDocume
         fm_data["updated"] = now
         with wrap_tool_errors(domain="qa", tool="set_status", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = QaFrontmatter(**fm_data)
-        new_doc = QaDocument(frontmatter=new_frontmatter, body=existing.body)
         write_qa_file(path, new_frontmatter, raw_body)
-    return new_doc
+    return new_frontmatter
 
 
-def _set_status_prb(id_: str, status: str, superseded_by: str | None) -> PrbDocument:
+def _set_status_prb(id_: str, status: str, superseded_by: str | None) -> PrbFrontmatter:
     """Replace the status of the problem statement identified by ``id_``.
 
     Verbatim port of the previous per-domain problem statement status
@@ -317,12 +313,11 @@ def _set_status_prb(id_: str, status: str, superseded_by: str | None) -> PrbDocu
         fm_data["updated"] = now
         with wrap_tool_errors(domain="prb", tool="set_status", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = PrbFrontmatter(**fm_data)
-        new_doc = PrbDocument(frontmatter=new_frontmatter, body=existing.body)
         write_prb_file(path, new_frontmatter, raw_body)
-    return new_doc
+    return new_frontmatter
 
 
-def _set_status_gol(id_: str, status: str, superseded_by: str | None) -> GolDocument:
+def _set_status_gol(id_: str, status: str, superseded_by: str | None) -> GolFrontmatter:
     """Replace the status of the goal identified by ``id_``.
 
     Verbatim port of the previous per-domain goal status tool's function
@@ -344,12 +339,11 @@ def _set_status_gol(id_: str, status: str, superseded_by: str | None) -> GolDocu
         fm_data["updated"] = now
         with wrap_tool_errors(domain="gol", tool="set_status", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = GolFrontmatter(**fm_data)
-        new_doc = GolDocument(frontmatter=new_frontmatter, body=existing.body)
         write_gol_file(path, new_frontmatter, raw_body)
-    return new_doc
+    return new_frontmatter
 
 
-def _set_status_rsk(id_: str, status: str, superseded_by: str | None) -> RskDocument:
+def _set_status_rsk(id_: str, status: str, superseded_by: str | None) -> RskFrontmatter:
     """Replace the status of the risk identified by ``id_``.
 
     Verbatim port of the previous per-domain risk status tool's function
@@ -371,12 +365,11 @@ def _set_status_rsk(id_: str, status: str, superseded_by: str | None) -> RskDocu
         fm_data["updated"] = now
         with wrap_tool_errors(domain="rsk", tool="set_status", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = RskFrontmatter(**fm_data)
-        new_doc = RskDocument(frontmatter=new_frontmatter, body=existing.body)
         write_rsk_file(path, new_frontmatter, raw_body)
-    return new_doc
+    return new_frontmatter
 
 
-def _set_status_dec(id_: str, status: str, superseded_by: str | None) -> DecDocument:
+def _set_status_dec(id_: str, status: str, superseded_by: str | None) -> DecFrontmatter:
     """Replace the status of the decision identified by ``id_``.
 
     Verbatim port of the previous per-domain decision status tool's
@@ -400,12 +393,11 @@ def _set_status_dec(id_: str, status: str, superseded_by: str | None) -> DecDocu
         fm_data["updated"] = now
         with wrap_tool_errors(domain="dec", tool="set_status", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = DecFrontmatter(**fm_data)
-        new_doc = DecDocument(frontmatter=new_frontmatter, body=existing.body)
         write_dec_file(path, new_frontmatter, raw_body)
-    return new_doc
+    return new_frontmatter
 
 
-def _set_status_feat(id_: str, status: str, superseded_by: str | None) -> FeatDocument:
+def _set_status_feat(id_: str, status: str, superseded_by: str | None) -> FeatFrontmatter:
     """Replace the status of the feature identified by ``id_``.
 
     Mirrors :func:`_set_status_dec`'s shape (same ``feat_lock``,
@@ -430,12 +422,11 @@ def _set_status_feat(id_: str, status: str, superseded_by: str | None) -> FeatDo
         fm_data["updated"] = now
         with wrap_tool_errors(domain="feat", tool="set_status", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = FeatFrontmatter(**fm_data)
-        new_doc = FeatDocument(frontmatter=new_frontmatter, body=existing.body)
         write_feat_file(path, new_frontmatter, raw_body)
-    return new_doc
+    return new_frontmatter
 
 
-def _set_status_sop(id_: str, status: str, superseded_by: str | None) -> SopDocument:
+def _set_status_sop(id_: str, status: str, superseded_by: str | None) -> SopFrontmatter:
     """Replace the status of the SOP identified by ``id_``.
 
     Verbatim-shape port of :func:`_set_status_dec` (same ``sop_lock``,
@@ -459,12 +450,11 @@ def _set_status_sop(id_: str, status: str, superseded_by: str | None) -> SopDocu
         fm_data["updated"] = now
         with wrap_tool_errors(domain="sop", tool="set_status", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = SopFrontmatter(**fm_data)
-        new_doc = SopDocument(frontmatter=new_frontmatter, body=existing.body)
         write_sop_file(path, new_frontmatter, raw_body)
-    return new_doc
+    return new_frontmatter
 
 
-def _set_status_vcr(id_: str, status: str, superseded_by: str | None) -> VcrDocument:
+def _set_status_vcr(id_: str, status: str, superseded_by: str | None) -> VcrFrontmatter:
     """Replace the status of the verification case record identified by ``id_``.
 
     Mirrors :func:`_set_status_dec`'s shape (same ``vcr_lock``,
@@ -486,12 +476,11 @@ def _set_status_vcr(id_: str, status: str, superseded_by: str | None) -> VcrDocu
         fm_data["updated"] = now
         with wrap_tool_errors(domain="vcr", tool="set_status", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = VcrFrontmatter(**fm_data)
-        new_doc = VcrDocument(frontmatter=new_frontmatter, body=existing.body)
         write_vcr_file(path, new_frontmatter, raw_body)
-    return new_doc
+    return new_frontmatter
 
 
-def _set_status_sysrs(id_: str, status: str, superseded_by: str | None) -> SysrsDocument:
+def _set_status_sysrs(id_: str, status: str, superseded_by: str | None) -> SysrsFrontmatter:
     """Replace the status of the System Requirements Specification identified by ``id_``.
 
     Verbatim-shape port of :func:`_set_status_sop` (same ``sysrs_lock``,
@@ -514,9 +503,8 @@ def _set_status_sysrs(id_: str, status: str, superseded_by: str | None) -> Sysrs
         fm_data["updated"] = now
         with wrap_tool_errors(domain="sysrs", tool="set_status", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = SysrsFrontmatter(**fm_data)
-        new_doc = SysrsDocument(frontmatter=new_frontmatter, body=existing.body)
         write_sysrs_file(path, new_frontmatter, raw_body)
-    return new_doc
+    return new_frontmatter
 
 
 def _set_status_adr(id_: str, status: str, superseded_by: str | None) -> Adr:
@@ -540,7 +528,7 @@ def _set_status_adr(id_: str, status: str, superseded_by: str | None) -> Adr:
 
 
 #: Dispatch table mapping the ``type`` value to its private adapter.
-_ADAPTERS: dict[str, Callable[[str, str, str | None], _SetStatusDocument]] = {
+_ADAPTERS: dict[str, Callable[[str, str, str | None], _SetStatusFrontmatter]] = {
     "req": _set_status_req,
     "uc": _set_status_uc,
     "tsk": _set_status_tsk,
@@ -570,7 +558,9 @@ _ADAPTERS: dict[str, Callable[[str, str, str | None], _SetStatusDocument]] = {
         '{superseded_by}"; with any other `type` it is a `ValueError`. Neither `create_*` nor '
         "the generic `update` tool accepts a `status` argument at all -- this is the sole "
         "status-change entry point. An invalid `id` (path-injection attempt or wrong format "
-        "for `type`) is a `ValueError` raised before any file access."
+        "for `type`) is a `ValueError` raised before any file access. Returns the updated "
+        "frontmatter only (no body, except for the unchanged `adr` branch); use the "
+        "corresponding `get_<d>` tool to fetch the full document afterward."
     ),
 )
 def set_status(
@@ -578,90 +568,94 @@ def set_status(
     type: Literal["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "feat", "vcr", "sysrs", "adr"],
     status: str,
     superseded_by: str | None = None,
-) -> _SetStatusDocument:
+) -> _SetStatusFrontmatter:
     """Replace the status of an existing document, across all thirteen domains.
 
-    Cross-domain generic for every document type
-    (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``adr``);
-    dispatches on ``type`` to the domain's own ported adapter (same lock,
-    same id resolution, same body handling, same domain not-found error).
+        Cross-domain generic for every document type
+        (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``adr``);
+        dispatches on ``type`` to the domain's own ported adapter (same lock,
+        same id resolution, same body handling, same domain not-found error).
 
-    For the eleven whole-body domains the existing file's frontmatter is
-    carried over with every field preserved except ``status`` (replaced)
-    and ``updated`` (bumped to the current date+time timestamp, via
-    ``general.tools._timestamps.now_timestamp()``); the
-    body is never touched -- its raw, on-disk markdown (not a render of
-    the parsed model) is re-read and re-persisted verbatim. For
-    ``type="adr"`` the change delegates to
-    ``models.adr.v1.mutations.set_status`` (which composes ``status`` as
-    ``"superseded by {superseded_by}"`` when ``superseded_by`` is given)
-    and re-renders the full file via the ``write_adr`` round-trip.
+        For the eleven whole-body domains the existing file's frontmatter is
+        carried over with every field preserved except ``status`` (replaced)
+        and ``updated`` (bumped to the current date+time timestamp, via
+        ``general.tools._timestamps.now_timestamp()``); the
+        body is never touched -- its raw, on-disk markdown (not a render of
+        the parsed model) is re-read and re-persisted verbatim. For
+        ``type="adr"`` the change delegates to
+        ``models.adr.v1.mutations.set_status`` (which composes ``status`` as
+        ``"superseded by {superseded_by}"`` when ``superseded_by`` is given)
+        and re-renders the full file via the ``write_adr`` round-trip.
 
-    The new ``status`` must be in the domain's own closed vocabulary: the
-    frontmatter is reconstructed through the domain's own
-    ``XFrontmatter`` constructor, so the domain's own validator enforces
-    its set. Where that set lives is documented per domain -- see each
-    ``XFrontmatter.status`` field (the twelve whole-body domains'
-    ``models/<v>/frontmatter.py`` and ``models/adr/v1/frontmatter.py``)
-    rather than any list in this docstring.
+        The new ``status`` must be in the domain's own closed vocabulary: the
+        frontmatter is reconstructed through the domain's own
+        ``XFrontmatter`` constructor, so the domain's own validator enforces
+        its set. Where that set lives is documented per domain -- see each
+        ``XFrontmatter.status`` field (the twelve whole-body domains'
+        ``models/<v>/frontmatter.py`` and ``models/adr/v1/frontmatter.py``)
+        rather than any list in this docstring.
 
-    Safety (REQ-009, feat-38-39-41-43-44 Phase 4, mirroring ``delete``'s
-    own REQ-003): ``id`` is validated via ``_path_safety.validate_id`` (no
-    ``/``, no ``\\``, no ``..``, plus the dispatched domain's own format --
-    canonical lowercase-hex UUID for the twelve UUID domains including
-    ``adr``, ``feat-NNN-slug`` for ``feat``) **before** any filesystem
-    access, so a path-injection attempt or a wrong-format id is a
-    ``ValueError`` raised before dispatch. Each adapter additionally
-    confines the resolved path to the domain's own base directory with
-    ``_path_safety.assert_within`` inside the lock -- defense-in-depth
-    against any future gap in the id validation.
+        Safety (REQ-009, feat-38-39-41-43-44 Phase 4, mirroring ``delete``'s
+        own REQ-003): ``id`` is validated via ``_path_safety.validate_id`` (no
+        ``/``, no ``\\``, no ``..``, plus the dispatched domain's own format --
+        canonical lowercase-hex UUID for the twelve UUID domains including
+        ``adr``, ``feat-NNN-slug`` for ``feat``) **before** any filesystem
+        access, so a path-injection attempt or a wrong-format id is a
+        ``ValueError`` raised before dispatch. Each adapter additionally
+        confines the resolved path to the domain's own base directory with
+        ``_path_safety.assert_within`` inside the lock -- defense-in-depth
+        against any future gap in the id validation.
 
-    Parameters
-    ----------
-    id:
-        The document's specmgr-assigned identifier.
-    type:
-        The document type / domain: one of ``req``, ``uc``, ``tsk``,
-        ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
-        ``vcr``, ``sysrs``, ``adr``.
-    status:
-        The new status. Must be one of the dispatched domain's own
-        accepted values (see its ``XFrontmatter.status`` field). For
-        ``adr``, ignored when ``superseded_by`` is given.
-    superseded_by:
-        ADR only. When given (with ``type="adr"``), ``status`` is
-        composed as ``f"superseded by {superseded_by}"`` instead of being
-        used verbatim. A ``ValueError`` for any other ``type``.
+        Parameters
+        ----------
+        id:
+            The document's specmgr-assigned identifier.
+        type:
+            The document type / domain: one of ``req``, ``uc``, ``tsk``,
+            ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
+            ``vcr``, ``sysrs``, ``adr``.
+        status:
+            The new status. Must be one of the dispatched domain's own
+            accepted values (see its ``XFrontmatter.status`` field). For
+            ``adr``, ignored when ``superseded_by`` is given.
+        superseded_by:
+            ADR only. When given (with ``type="adr"``), ``status`` is
+            composed as ``f"superseded by {superseded_by}"`` instead of being
+            used verbatim. A ``ValueError`` for any other ``type``.
 
-    Returns
-    -------
-    ReqDocument | UcDocument | TskDocument | QaDocument | PrbDocument |
-    GolDocument | RskDocument | DecDocument | FeatDocument | SopDocument |
-    VcrDocument | SysrsDocument | Adr
-        The updated document of the dispatched domain type.
+        Returns
+        -------
+    ReqFrontmatter | UcFrontmatter | TskFrontmatter | QaFrontmatter | PrbFrontmatter |
+    GolFrontmatter | RskFrontmatter | DecFrontmatter | FeatFrontmatter | SopFrontmatter |
+    VcrFrontmatter | SysrsFrontmatter | Adr
+        The updated document's frontmatter only (no body) of the dispatched domain type
+        for the twelve whole-body domains; for ``type="adr"`` (unchanged, out of scope for
+        this feature) the full ``Adr`` document, as before. Use the corresponding
+        ``get_<d>`` tool to fetch the full document afterward for the twelve whole-body
+        domains.
 
-    Raises
-    ------
-    ValueError
-        ``id`` is a path-injection attempt or not in the dispatched
-        domain's own format (raised before any filesystem access; nothing
-        is written), or ``superseded_by`` given with a ``type`` other
-        than ``"adr"`` (raised before any file access). Nothing is
-        written in either case.
-    pydantic.ValidationError
-        ``status`` is not in the dispatched domain's closed vocabulary
-        (for ``adr``: not one of its six values and not a
-        ``"superseded by ..."`` string). The message is prefixed with
-        domain/tool/channel context (e.g. ``"tsk set_status
-        (frontmatter): ..."``) by the shared tool-boundary wrapper
-        (:func:`~biz.dfch.specmgr.models.md._errors.wrap_tool_errors`).
-        Nothing is written.
-    ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
-    PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
-    FeatNotFoundError / SopNotFoundError / VcrNotFoundError / SysrsNotFoundError /
-    AdrNotFoundError
-        No document of the dispatched ``type`` has this id -- the
-        domain's own not-found error, unchanged from the per-domain tools.
+        Raises
+        ------
+        ValueError
+            ``id`` is a path-injection attempt or not in the dispatched
+            domain's own format (raised before any filesystem access; nothing
+            is written), or ``superseded_by`` given with a ``type`` other
+            than ``"adr"`` (raised before any file access). Nothing is
+            written in either case.
+        pydantic.ValidationError
+            ``status`` is not in the dispatched domain's closed vocabulary
+            (for ``adr``: not one of its six values and not a
+            ``"superseded by ..."`` string). The message is prefixed with
+            domain/tool/channel context (e.g. ``"tsk set_status
+            (frontmatter): ..."``) by the shared tool-boundary wrapper
+            (:func:`~biz.dfch.specmgr.models.md._errors.wrap_tool_errors`).
+            Nothing is written.
+        ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
+        PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
+        FeatNotFoundError / SopNotFoundError / VcrNotFoundError / SysrsNotFoundError /
+        AdrNotFoundError
+            No document of the dispatched ``type`` has this id -- the
+            domain's own not-found error, unchanged from the per-domain tools.
     """
     # REQ-009: validate before any filesystem access (injection prevention).
     validate_id(type, id)

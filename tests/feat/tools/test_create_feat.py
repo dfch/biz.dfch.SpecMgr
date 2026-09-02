@@ -28,9 +28,10 @@ from unittest import mock
 
 from pydantic import ValidationError
 
-from biz.dfch.specmgr.feat.models.v1 import FeatDocument, parse_feat
+from biz.dfch.specmgr.feat.models.v1 import FeatDocument, FeatFrontmatter, parse_feat
 from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR, README_FILENAME, feat_base_dir
 from biz.dfch.specmgr.feat.tools.create_feat import create_feat
+from biz.dfch.specmgr.feat.tools.get_feat import get_feat
 from biz.dfch.specmgr.models.md import CURRENT_SCHEMA_VERSION
 
 _MINIMAL_BODY = textwrap.dedent(
@@ -117,48 +118,50 @@ class TestCreateFeat(TempFeatDirTestCase):
         """create_feat must build the entire frontmatter itself (id/type/status/timestamps/version)."""
         result = create_feat(_MINIMAL_BODY)
 
-        self.assertIsInstance(result, FeatDocument)
-        self.assertEqual(result.frontmatter.id, "feat-0-example-widget")
-        self.assertEqual(result.frontmatter.type, "feat")
-        self.assertEqual(result.frontmatter.status, "planning")
-        self.assertIsNotNone(result.frontmatter.created)
-        self.assertEqual(result.frontmatter.created, result.frontmatter.updated)
-        self.assertRegex(
-            result.frontmatter.created or "", r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})$"
-        )
-        self.assertEqual(result.frontmatter.version, CURRENT_SCHEMA_VERSION)
-        self.assertEqual(result.body.text, "Feature: Example Widget")
+        self.assertIsInstance(result, FeatFrontmatter)
+        self.assertNotIsInstance(result, FeatDocument)
+        self.assertFalse(hasattr(result, "body"))
+        self.assertEqual(result.id, "feat-0-example-widget")
+        self.assertEqual(result.type, "feat")
+        self.assertEqual(result.status, "planning")
+        self.assertIsNotNone(result.created)
+        self.assertEqual(result.created, result.updated)
+        self.assertRegex(result.created or "", r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})$")
+        self.assertEqual(result.version, CURRENT_SCHEMA_VERSION)
+
+        fetched = get_feat(result.id)
+        self.assertEqual(fetched.body.text, "Feature: Example Widget")
 
     def test_writes_expected_folder_and_filename(self) -> None:
         """create_feat must write <base>/feat-{NNN}-{slug}/README.md."""
         result = create_feat(_MINIMAL_BODY)
 
-        expected_path = feat_base_dir() / result.frontmatter.id / README_FILENAME
+        expected_path = feat_base_dir() / result.id / README_FILENAME
         self.assertTrue(expected_path.exists())
 
     def test_written_file_round_trips_via_parse_feat(self) -> None:
         """The written file must parse back into an equivalent document."""
         result = create_feat(_MINIMAL_BODY)
 
-        expected_path = feat_base_dir() / result.frontmatter.id / README_FILENAME
+        expected_path = feat_base_dir() / result.id / README_FILENAME
         on_disk = parse_feat(expected_path.read_text(encoding="utf-8"))
 
-        self.assertEqual(on_disk.frontmatter.id, result.frontmatter.id)
+        self.assertEqual(on_disk.frontmatter.id, result.id)
         self.assertEqual(on_disk.frontmatter.status, "planning")
         self.assertEqual(on_disk.body.text, "Feature: Example Widget")
 
     def test_id_defaults_to_feat_0_when_base_dir_is_empty(self) -> None:
         """The first feature created against an empty base dir must default to feat-0-<slug> (REQ-002)."""
         result = create_feat(_MINIMAL_BODY)
-        self.assertEqual(result.frontmatter.id, "feat-0-example-widget")
+        self.assertEqual(result.id, "feat-0-example-widget")
 
     def test_id_number_stays_0_across_creates_with_distinct_titles(self) -> None:
         """Each default-id create_feat call must derive feat-0-<slug> -- no max+1 auto-increment (REQ-002)."""
         first = create_feat(_body_with_title("Widget One"))
         second = create_feat(_body_with_title("Widget Two"))
 
-        self.assertEqual(first.frontmatter.id, "feat-0-widget-one")
-        self.assertEqual(second.frontmatter.id, "feat-0-widget-two")
+        self.assertEqual(first.id, "feat-0-widget-one")
+        self.assertEqual(second.id, "feat-0-widget-two")
 
     def test_id_number_derivation_ignores_other_feat_folders(self) -> None:
         """Other feat-NNN-... folders (even at a would-be-colliding number) must not affect the
@@ -171,13 +174,13 @@ class TestCreateFeat(TempFeatDirTestCase):
 
         result = create_feat(_MINIMAL_BODY)
 
-        self.assertEqual(result.frontmatter.id, "feat-0-example-widget")
+        self.assertEqual(result.id, "feat-0-example-widget")
 
     def test_slug_derivation_strips_the_feature_prefix(self) -> None:
         """The folder-name slug must be derived from the free-form title, not the literal 'Feature: ' prefix."""
         result = create_feat(_MINIMAL_BODY)
-        self.assertTrue(result.frontmatter.id.endswith("example-widget"))
-        self.assertNotIn("feature-example-widget", result.frontmatter.id)
+        self.assertTrue(result.id.endswith("example-widget"))
+        self.assertNotIn("feature-example-widget", result.id)
 
     def test_creates_base_dir_if_missing(self) -> None:
         """create_feat must create the feature base directory if it does not exist yet."""
@@ -211,7 +214,7 @@ class TestCreateFeatWithExplicitId(TempFeatDirTestCase):
         # slug-looking suffix ("get-update"), to prove the given id really is used as-is.
         result = create_feat(_body_with_title("Zzz Unrelated Title"), id="feat-28-get-update")
 
-        self.assertEqual(result.frontmatter.id, "feat-28-get-update")
+        self.assertEqual(result.id, "feat-28-get-update")
         expected_path = feat_base_dir() / "feat-28-get-update" / README_FILENAME
         self.assertTrue(expected_path.exists())
         self.assertFalse((feat_base_dir() / "feat-28-zzz-unrelated-title").exists())
@@ -241,7 +244,7 @@ class TestCreateFeatWithExplicitId(TempFeatDirTestCase):
 
         self.assertEqual(expected_path.read_text(encoding="utf-8"), before)
         on_disk = parse_feat(expected_path.read_text(encoding="utf-8"))
-        self.assertEqual(on_disk.frontmatter.id, first.frontmatter.id)
+        self.assertEqual(on_disk.frontmatter.id, first.id)
         self.assertEqual(on_disk.body.text, "Feature: First Title")
 
     def test_defaulted_id_collision_raises(self) -> None:
@@ -265,7 +268,7 @@ class TestCreateFeatConcurrency(TempFeatDirTestCase):
         """Many threads calling create_feat at once with distinct titles (hence distinct default
         feat-0-<slug> ids) must all get distinct ids -- no max+1 auto-increment is involved anymore
         (REQ-002), but the pre-write existence check + global lock must still prevent any collision."""
-        results: list[FeatDocument] = []
+        results: list[FeatFrontmatter] = []
         errors: list[BaseException] = []
         lock = threading.Lock()
 
@@ -288,7 +291,7 @@ class TestCreateFeatConcurrency(TempFeatDirTestCase):
         self.assertEqual(errors, [])
         self.assertEqual(len(results), 10)
 
-        ids = [doc.frontmatter.id for doc in results]
+        ids = [doc.id for doc in results]
         self.assertEqual(len(ids), len(set(ids)), f"duplicate ids created: {ids}")
         self.assertTrue(all(id_.startswith("feat-0-widget-") for id_ in ids), ids)
 

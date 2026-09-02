@@ -59,7 +59,7 @@ from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.general.tools.delete import delete
 from biz.dfch.specmgr.general.tools.set_status import set_status
 from biz.dfch.specmgr.general.tools.update import update
-from biz.dfch.specmgr.sop.models.v1 import SopDocument
+from biz.dfch.specmgr.sop.models.v1 import SopFrontmatter
 from biz.dfch.specmgr.sop.tools._paths import SopNotFoundError, sop_base_dir
 from biz.dfch.specmgr.sop.tools.create_sop import create_sop
 from biz.dfch.specmgr.sop.tools.get_sop import get_sop
@@ -123,16 +123,16 @@ class TestSopLifecycleIntegration(TempSopDirTestCase):
         self.assertEqual(initial_page.total, 0)
         self.assertEqual(initial_page.results, [])
 
-        # 1. create_sop: a freshly created document must be a SopDocument in status "draft"
+        # 1. create_sop: a freshly created document must be a SopFrontmatter in status "draft"
         #    (ACC-003: status is fixed, never caller-supplied), with its file on disk
         #    named exactly sop-{id}-{slug}.md.
         created = create_sop(_INITIAL_BODY)
-        self.assertIsInstance(created, SopDocument)
-        self.assertEqual(created.frontmatter.status, "draft")
-        self.assertEqual(created.frontmatter.type, "sop")
-        self.assertIsNotNone(created.frontmatter.id)
-        self.assertEqual(created.frontmatter.created, created.frontmatter.updated)
-        sop_id = created.frontmatter.id
+        self.assertIsInstance(created, SopFrontmatter)
+        self.assertEqual(created.status, "draft")
+        self.assertEqual(created.type, "sop")
+        self.assertIsNotNone(created.id)
+        self.assertEqual(created.created, created.updated)
+        sop_id = created.id
         assert sop_id is not None
         expected_path = sop_base_dir() / f"sop-{sop_id}-new-employee-it-account-provisioning.md"
         self.assertTrue(expected_path.exists())
@@ -154,13 +154,13 @@ class TestSopLifecycleIntegration(TempSopDirTestCase):
         # 4. update (type="sop", GENERIC): whole-body replace must bump only `updated` and preserve
         #    id/type/status/created/version (ACC-003, ACC-006).
         updated = update(sop_id, "sop", _REVISED_BODY)
-        self.assertEqual(updated.frontmatter.id, created.frontmatter.id)
-        self.assertEqual(updated.frontmatter.type, created.frontmatter.type)
-        self.assertEqual(updated.frontmatter.created, created.frontmatter.created)
-        self.assertEqual(updated.frontmatter.status, "draft")
-        self.assertEqual(updated.frontmatter.version, created.frontmatter.version)
-        self.assertNotEqual(updated.frontmatter.updated, created.frontmatter.updated)
-        self.assertIsNotNone(updated.body.scope)
+        self.assertEqual(updated.id, created.id)
+        self.assertEqual(updated.type, created.type)
+        self.assertEqual(updated.created, created.created)
+        self.assertEqual(updated.status, "draft")
+        self.assertEqual(updated.version, created.version)
+        self.assertNotEqual(updated.updated, created.updated)
+        self.assertIsNotNone(get_sop(sop_id).body.scope)
 
         # 4b. update (type="sop", GENERIC) range mode: a line-range splice must persist and stay valid.
         raw_lines = get_sop(sop_id, raw=True).splitlines()
@@ -173,12 +173,12 @@ class TestSopLifecycleIntegration(TempSopDirTestCase):
 
         # 5. set_status (type="sop", GENERIC): only status/updated may change (ACC-003, ACC-006).
         active = set_status(sop_id, "sop", "active")
-        self.assertEqual(active.frontmatter.status, "active")
-        self.assertEqual(active.frontmatter.id, updated.frontmatter.id)
-        self.assertEqual(active.frontmatter.created, updated.frontmatter.created)
-        self.assertNotEqual(active.frontmatter.updated, updated.frontmatter.updated)
+        self.assertEqual(active.status, "active")
+        self.assertEqual(active.id, updated.id)
+        self.assertEqual(active.created, updated.created)
+        self.assertNotEqual(active.updated, updated.updated)
         # The body must be carried forward verbatim, untouched by the status change.
-        self.assertIsNotNone(active.body.scope)
+        self.assertIsNotNone(get_sop(sop_id).body.scope)
 
         # 6. get_sop: must reflect the latest on-disk state.
         fetched_after_status = get_sop(sop_id)
@@ -211,22 +211,22 @@ class TestSopLifecycleIntegration(TempSopDirTestCase):
     def test_set_status_rejects_gol_only_implemented_status(self) -> None:
         """ACC-003: set_status (type="sop") must reject `implemented` (GOL's value, outside SOP's closed five-set)."""
         created = create_sop(_INITIAL_BODY)
-        expected_path = sop_base_dir() / f"sop-{created.frontmatter.id}-new-employee-it-account-provisioning.md"
+        expected_path = sop_base_dir() / f"sop-{created.id}-new-employee-it-account-provisioning.md"
         before = expected_path.read_text(encoding="utf-8")
 
         with self.assertRaises(ValidationError):
-            set_status(created.frontmatter.id, "sop", "implemented")
+            set_status(created.id, "sop", "implemented")
 
         self.assertEqual(expected_path.read_text(encoding="utf-8"), before)
 
     def test_set_status_rejects_superseded_by_for_sop(self) -> None:
         """ACC-006: set_status (type="sop") must reject `superseded_by` (ADR-only) with ValueError, before any file access."""
         created = create_sop(_INITIAL_BODY)
-        expected_path = sop_base_dir() / f"sop-{created.frontmatter.id}-new-employee-it-account-provisioning.md"
+        expected_path = sop_base_dir() / f"sop-{created.id}-new-employee-it-account-provisioning.md"
         before = expected_path.read_text(encoding="utf-8")
 
         with self.assertRaises(ValueError):
-            set_status(created.frontmatter.id, "sop", "active", superseded_by="other-sop")
+            set_status(created.id, "sop", "active", superseded_by="other-sop")
 
         self.assertEqual(expected_path.read_text(encoding="utf-8"), before)
 

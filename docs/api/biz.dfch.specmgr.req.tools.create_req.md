@@ -19,7 +19,7 @@ codebase.
 
 ## Functions
 
-### `create_req(content: 'str') -> 'ReqDocument'`
+### `create_req(content: 'str') -> 'ReqFrontmatter'`
 
 Create and write a new requirement document.
 
@@ -49,9 +49,10 @@ content:
 
 Returns
 -------
-ReqDocument
-    The newly created document, with its assigned id in
-    ``frontmatter.id``.
+ReqFrontmatter
+    The newly created document's frontmatter only (no body), with its
+    assigned id in ``.id``. Use the corresponding ``get_req`` tool to
+    fetch the full document afterward.
 
 Raises
 ------

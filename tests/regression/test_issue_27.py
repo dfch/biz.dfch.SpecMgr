@@ -178,7 +178,7 @@ class TestIssue27BareDomainTokenRegression(TempTskDirTestCase):
         created = create_tsk(_ISSUE_27_VALID_SEED_BODY)
 
         with self.assertRaises(AssertionError) as ctx:
-            update(id=created.frontmatter.id, type="tsk", content=_ISSUE_27_BODY)
+            update(id=created.id, type="tsk", content=_ISSUE_27_BODY)
 
         message = str(ctx.exception)
         for substring in _ISSUE_27_EXPECTED_SUBSTRINGS:
@@ -208,7 +208,7 @@ class TestFeat7Task029StrayListMarkerRegression(TempTskDirTestCase):
         created = create_tsk(_FEAT_7_TASK_0_29_VALID_SEED_BODY)
 
         with self.assertRaises(AssertionError) as ctx:
-            update(id=created.frontmatter.id, type="tsk", content=_FEAT_7_TASK_0_29_BODY)
+            update(id=created.id, type="tsk", content=_FEAT_7_TASK_0_29_BODY)
 
         message = str(ctx.exception)
         for substring in _FEAT_7_TASK_0_29_EXPECTED_SUBSTRINGS:

@@ -29,9 +29,10 @@ from pydantic import ValidationError
 
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.models.md import CURRENT_SCHEMA_VERSION
-from biz.dfch.specmgr.sysrs.models.v1 import SysrsDocument, parse_sysrs
+from biz.dfch.specmgr.sysrs.models.v1 import SysrsDocument, SysrsFrontmatter, parse_sysrs
 from biz.dfch.specmgr.sysrs.tools._paths import sysrs_base_dir
 from biz.dfch.specmgr.sysrs.tools.create_sysrs import create_sysrs
+from biz.dfch.specmgr.sysrs.tools.get_sysrs import get_sysrs
 
 _GOL_ID = "0e15c5de-4ac9-4279-aa75-53249a3e43e4"
 _REQ_ID = "a3f8c2d1-7b4e-4d9a-b6c0-91e5f2a8d734"
@@ -95,34 +96,34 @@ class TestCreateSysrs(TempSysrsDirTestCase):
         """create_sysrs must build the entire frontmatter itself (id/type/status/timestamps/version)."""
         result = create_sysrs(_MINIMAL_BODY)
 
-        self.assertIsInstance(result, SysrsDocument)
-        self.assertIsNotNone(result.frontmatter.id)
-        self.assertEqual(result.frontmatter.type, "sysrs")
-        self.assertEqual(result.frontmatter.status, "draft")
-        self.assertIsNotNone(result.frontmatter.created)
-        self.assertEqual(result.frontmatter.created, result.frontmatter.updated)
-        self.assertEqual(result.frontmatter.version, CURRENT_SCHEMA_VERSION)
-        self.assertEqual(result.body.text, "System Requirements Specification: Sample Document")
+        self.assertIsInstance(result, SysrsFrontmatter)
+        self.assertNotIsInstance(result, SysrsDocument)
+        self.assertFalse(hasattr(result, "body"))
+        self.assertIsNotNone(result.id)
+        self.assertEqual(result.type, "sysrs")
+        self.assertEqual(result.status, "draft")
+        self.assertIsNotNone(result.created)
+        self.assertEqual(result.created, result.updated)
+        self.assertEqual(result.version, CURRENT_SCHEMA_VERSION)
+
+        fetched = get_sysrs(result.id)
+        self.assertEqual(fetched.body.text, "System Requirements Specification: Sample Document")
 
     def test_writes_expected_filename(self) -> None:
         """create_sysrs must write f'sysrs-{id}-{slug}.md' under the System Requirements Specification base dir."""
         result = create_sysrs(_MINIMAL_BODY)
 
-        expected_path = (
-            sysrs_base_dir() / f"sysrs-{result.frontmatter.id}-system-requirements-specification-sample-document.md"
-        )
+        expected_path = sysrs_base_dir() / f"sysrs-{result.id}-system-requirements-specification-sample-document.md"
         self.assertTrue(expected_path.exists())
 
     def test_written_file_round_trips_via_parse_sysrs(self) -> None:
         """The written file must parse back into an equivalent document."""
         result = create_sysrs(_MINIMAL_BODY)
 
-        expected_path = (
-            sysrs_base_dir() / f"sysrs-{result.frontmatter.id}-system-requirements-specification-sample-document.md"
-        )
+        expected_path = sysrs_base_dir() / f"sysrs-{result.id}-system-requirements-specification-sample-document.md"
         on_disk = parse_sysrs(expected_path.read_text(encoding="utf-8"))
 
-        self.assertEqual(on_disk.frontmatter.id, result.frontmatter.id)
+        self.assertEqual(on_disk.frontmatter.id, result.id)
         self.assertEqual(on_disk.frontmatter.status, "draft")
         self.assertEqual(on_disk.body.text, "System Requirements Specification: Sample Document")
 

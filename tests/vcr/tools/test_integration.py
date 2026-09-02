@@ -45,7 +45,7 @@ from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.general.tools.delete import delete
 from biz.dfch.specmgr.general.tools.set_status import set_status
 from biz.dfch.specmgr.general.tools.update import update
-from biz.dfch.specmgr.vcr.models.v1 import VcrDocument
+from biz.dfch.specmgr.vcr.models.v1 import VcrFrontmatter
 from biz.dfch.specmgr.vcr.tools._paths import VcrNotFoundError, vcr_base_dir
 from biz.dfch.specmgr.vcr.tools.create_vcr import create_vcr
 from biz.dfch.specmgr.vcr.tools.get_vcr import get_vcr
@@ -94,15 +94,15 @@ class TestVcrLifecycleIntegration(TempVcrDirTestCase):
         self.assertEqual(initial_page.total, 0)
         self.assertEqual(initial_page.results, [])
 
-        # 1. create_vcr: a freshly created document must be a VcrDocument in status "draft",
+        # 1. create_vcr: a freshly created document must be a VcrFrontmatter in status "draft",
         #    with its file on disk named exactly vcr-{id}-{slug}.md.
         created = create_vcr(_INITIAL_BODY)
-        self.assertIsInstance(created, VcrDocument)
-        self.assertEqual(created.frontmatter.status, "draft")
-        self.assertEqual(created.frontmatter.type, "vcr")
-        self.assertIsNotNone(created.frontmatter.id)
-        self.assertEqual(created.frontmatter.created, created.frontmatter.updated)
-        vcr_id = created.frontmatter.id
+        self.assertIsInstance(created, VcrFrontmatter)
+        self.assertEqual(created.status, "draft")
+        self.assertEqual(created.type, "vcr")
+        self.assertIsNotNone(created.id)
+        self.assertEqual(created.created, created.updated)
+        vcr_id = created.id
         assert vcr_id is not None
         expected_path = vcr_base_dir() / f"vcr-{vcr_id}-sample-verification-case.md"
         self.assertTrue(expected_path.exists())
@@ -124,22 +124,22 @@ class TestVcrLifecycleIntegration(TempVcrDirTestCase):
         # 4. update (type="vcr"): whole-body replace must bump only `updated` and preserve
         #    id/type/status/created/version.
         updated = update(vcr_id, "vcr", _REVISED_BODY)
-        self.assertEqual(updated.frontmatter.id, created.frontmatter.id)
-        self.assertEqual(updated.frontmatter.type, created.frontmatter.type)
-        self.assertEqual(updated.frontmatter.created, created.frontmatter.created)
-        self.assertEqual(updated.frontmatter.status, "draft")
-        self.assertEqual(updated.frontmatter.version, created.frontmatter.version)
-        self.assertNotEqual(updated.frontmatter.updated, created.frontmatter.updated)
-        self.assertEqual(updated.body.coverage.value.text, "full")
+        self.assertEqual(updated.id, created.id)
+        self.assertEqual(updated.type, created.type)
+        self.assertEqual(updated.created, created.created)
+        self.assertEqual(updated.status, "draft")
+        self.assertEqual(updated.version, created.version)
+        self.assertNotEqual(updated.updated, created.updated)
+        self.assertEqual(get_vcr(vcr_id).body.coverage.value.text, "full")
 
         # 5. set_status (type="vcr"): only status/updated may change.
         progressed = set_status(vcr_id, "vcr", "progress")
-        self.assertEqual(progressed.frontmatter.status, "progress")
-        self.assertEqual(progressed.frontmatter.id, updated.frontmatter.id)
-        self.assertEqual(progressed.frontmatter.created, updated.frontmatter.created)
-        self.assertNotEqual(progressed.frontmatter.updated, updated.frontmatter.updated)
+        self.assertEqual(progressed.status, "progress")
+        self.assertEqual(progressed.id, updated.id)
+        self.assertEqual(progressed.created, updated.created)
+        self.assertNotEqual(progressed.updated, updated.updated)
         # The body must be carried forward verbatim, untouched by the status change.
-        self.assertEqual(progressed.body.coverage.value.text, "full")
+        self.assertEqual(get_vcr(vcr_id).body.coverage.value.text, "full")
 
         # 6. get_vcr: must reflect the latest on-disk state.
         fetched_after_status = get_vcr(vcr_id)
@@ -172,11 +172,11 @@ class TestVcrLifecycleIntegration(TempVcrDirTestCase):
     def test_set_status_rejects_dec_only_accepted_status(self) -> None:
         """set_status (type="vcr") must reject `accepted` (DEC's/GOL's value, outside VCR's closed four-set)."""
         created = create_vcr(_INITIAL_BODY)
-        expected_path = vcr_base_dir() / f"vcr-{created.frontmatter.id}-sample-verification-case.md"
+        expected_path = vcr_base_dir() / f"vcr-{created.id}-sample-verification-case.md"
         before = expected_path.read_text(encoding="utf-8")
 
         with self.assertRaises(ValidationError):
-            set_status(created.frontmatter.id, "vcr", "accepted")
+            set_status(created.id, "vcr", "accepted")
 
         self.assertEqual(expected_path.read_text(encoding="utf-8"), before)
 

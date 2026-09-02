@@ -29,9 +29,10 @@ from pydantic import ValidationError
 
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.models.md import CURRENT_SCHEMA_VERSION
-from biz.dfch.specmgr.uc.models.v2 import UcDocument, parse_uc
+from biz.dfch.specmgr.uc.models.v2 import UcDocument, UcFrontmatter, parse_uc
 from biz.dfch.specmgr.uc.tools._paths import uc_base_dir
 from biz.dfch.specmgr.uc.tools.create_uc import create_uc
+from biz.dfch.specmgr.uc.tools.get_uc import get_uc
 
 _MINIMAL_BODY = textwrap.dedent(
     """\
@@ -92,30 +93,34 @@ class TestCreateUc(TempUcDirTestCase):
         """create_uc must build the entire frontmatter itself (id/type/status/timestamps/version)."""
         result = create_uc(_MINIMAL_BODY)
 
-        self.assertIsInstance(result, UcDocument)
-        self.assertIsNotNone(result.frontmatter.id)
-        self.assertEqual(result.frontmatter.type, "uc")
-        self.assertEqual(result.frontmatter.status, "draft")
-        self.assertIsNotNone(result.frontmatter.created)
-        self.assertEqual(result.frontmatter.created, result.frontmatter.updated)
-        self.assertEqual(result.frontmatter.version, CURRENT_SCHEMA_VERSION)
-        self.assertEqual(result.body.text, "Buy Goods")
+        self.assertIsInstance(result, UcFrontmatter)
+        self.assertNotIsInstance(result, UcDocument)
+        self.assertFalse(hasattr(result, "body"))
+        self.assertIsNotNone(result.id)
+        self.assertEqual(result.type, "uc")
+        self.assertEqual(result.status, "draft")
+        self.assertIsNotNone(result.created)
+        self.assertEqual(result.created, result.updated)
+        self.assertEqual(result.version, CURRENT_SCHEMA_VERSION)
+
+        fetched = get_uc(result.id)
+        self.assertEqual(fetched.body.text, "Buy Goods")
 
     def test_writes_expected_filename(self) -> None:
         """create_uc must write f'uc-{id}-{slug}.md' under the use-case base dir."""
         result = create_uc(_MINIMAL_BODY)
 
-        expected_path = uc_base_dir() / f"uc-{result.frontmatter.id}-buy-goods.md"
+        expected_path = uc_base_dir() / f"uc-{result.id}-buy-goods.md"
         self.assertTrue(expected_path.exists())
 
     def test_written_file_round_trips_via_parse_uc(self) -> None:
         """The written file must parse back into an equivalent document."""
         result = create_uc(_MINIMAL_BODY)
 
-        expected_path = uc_base_dir() / f"uc-{result.frontmatter.id}-buy-goods.md"
+        expected_path = uc_base_dir() / f"uc-{result.id}-buy-goods.md"
         on_disk = parse_uc(expected_path.read_text(encoding="utf-8"))
 
-        self.assertEqual(on_disk.frontmatter.id, result.frontmatter.id)
+        self.assertEqual(on_disk.frontmatter.id, result.id)
         self.assertEqual(on_disk.frontmatter.status, "draft")
         self.assertEqual(on_disk.body.text, "Buy Goods")
 

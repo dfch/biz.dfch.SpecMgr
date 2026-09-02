@@ -40,7 +40,7 @@ from ...models.md import CURRENT_SCHEMA_VERSION
 from ...models.md._errors import BODY_CHANNEL, wrap_tool_errors
 from ...models.md._markdown import format_text
 from ...server import mcp
-from ..models.v1 import DecDocument, DecFrontmatter, Decision
+from ..models.v1 import DecFrontmatter, Decision
 from ._paths import ensure_dec_base_dir
 from ._write import write_dec_file
 
@@ -51,10 +51,12 @@ from ._write import write_dec_file
     description=(
         "Create a new decision: assigns a fresh id, derives a filename from the body's "
         "H1 title, validates the submitted body-only content, and writes the new "
-        "document to the decision base directory."
+        "document to the decision base directory. Returns the newly created document's "
+        "frontmatter only (no body); use the corresponding `get_dec` tool to fetch the "
+        "full document afterward."
     ),
 )
-def create_dec(content: str) -> DecDocument:
+def create_dec(content: str) -> DecFrontmatter:
     """Create and write a new decision document.
 
     ``content`` is body markdown only (the ``Decision`` H1 and its sections)
@@ -83,9 +85,10 @@ def create_dec(content: str) -> DecDocument:
 
     Returns
     -------
-    DecDocument
-        The newly created document, with its assigned id in
-        ``frontmatter.id``.
+    DecFrontmatter
+        The newly created document's frontmatter only (no body), with its
+        assigned id in ``.id``. Use the corresponding ``get_dec`` tool to
+        fetch the full document afterward.
 
     Raises
     ------
@@ -112,9 +115,7 @@ def create_dec(content: str) -> DecDocument:
         updated=now,
         version=CURRENT_SCHEMA_VERSION,
     )
-    new_doc = DecDocument(frontmatter=new_frontmatter, body=body)
-
     filename = f"dec-{new_id}-{slugify(body.text)}.md"
     base_dir = ensure_dec_base_dir()
     write_dec_file(base_dir / filename, new_frontmatter, content)
-    return new_doc
+    return new_frontmatter
