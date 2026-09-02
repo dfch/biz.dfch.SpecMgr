@@ -1,0 +1,150 @@
+---
+classification: null
+created: '2026-09-02 21:49:41.712+02:00'
+id: feat-69-update-context
+status: planning
+type: feat
+updated: '2026-09-02 22:09:20.820+02:00'
+version: 1.0.0
+---
+
+# Feature: MCP write tools return the full document on every call, filling up context quickly
+
+## Plan
+
+### Overview
+
+Every mutating MCP tool call currently returns the fully re-parsed document (frontmatter + body) on success, not a lightweight acknowledgement. Confirmed by reading the source: the generic `update`, `set_status`, and `set_classification` tools (`general/tools/`), and every per-domain `create_<d>` tool (`req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr`), all return the whole document object. Because documents such as QA transcripts, FEAT READMEs, and ADRs are explicitly append-only by convention, the returned payload grows monotonically with the document's size across a session, driving up the token cost of every subsequent write call -- this was observed directly during a `feat-63-refine` design session. This feature makes successful writes return the document's frontmatter only (small, bounded size, regardless of how large the body grows) instead of frontmatter+body, matching the behavior of OpenCode's own built-in `edit` tool, which does not echo the whole file back on a successful edit. Error/validation-failure responses are unaffected -- they keep returning full, actionable detail. Callers who need the full document after a write can still get it via the existing, explicit `get_<d>` tool.
+
+### Requirements
+
+- REQ-001: The generic `update` tool must return the document's frontmatter only (no body) on a successful write, across all eleven whole-body domains.
+- REQ-002: The generic `set_status` tool must return the document's frontmatter only (no body) on a successful write, across all eleven whole-body domains (the `adr` dispatch branch is unchanged, see Scope).
+- REQ-003: The generic `set_classification` tool must return the document's frontmatter only (no body) on a successful write, across all eleven whole-body domains.
+- REQ-004: Every per-domain `create_<d>` tool must return the newly generated frontmatter only (no body) on success, since the frontmatter (id, status, created, updated, version) is server-generated data the caller cannot otherwise learn, while the body is exactly what the caller just submitted.
+- REQ-005: Error/validation-failure responses from any of the above are unchanged by this feature -- they keep returning full actionable detail (per feat-27-validation).
+- REQ-006: The generic `delete` tool already returns a minimal payload (the deleted path) and needs no change.
+- REQ-007: Callers who need the full resulting document after a successful write must use the existing `get_<d>` tool explicitly.
+
+### Acceptance Criteria
+
+- [ ] ACC-001: After a successful `update` call, the response contains the document's frontmatter only -- no body content.
+- [ ] ACC-002: After a successful `set_status` call, the response contains the document's frontmatter only (reflecting the new status/updated) -- no body content.
+- [ ] ACC-003: After a successful `set_classification` call, the response contains the document's frontmatter only (reflecting the new classification/updated) -- no body content.
+- [ ] ACC-004: After a successful `create_<d>` call, the response contains the newly generated frontmatter only -- no body content.
+- [ ] ACC-005: A validation/parse error from any of the above still returns the existing detailed error message, unchanged.
+- [ ] ACC-006: `delete` and all ADR-specific tools are verified unchanged by this feature (regression check, not new behavior).
+- [ ] ACC-007: Tests updated/added across all eleven whole-body domains plus the three generic tools to assert frontmatter-only responses.
+
+### Scope
+
+#### Included
+
+- The generic `update` tool (`general/tools/update.py`) across all eleven whole-body domains (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr).
+- The generic `set_status` tool (`general/tools/set_status.py`) across all twelve domains, excluding the `adr` dispatch branch (left unchanged per scope decision).
+- The generic `set_classification` tool (`general/tools/set_classification.py`) across all eleven whole-body domains.
+- Every per-domain `create_<d>` tool (11 domains): create_req, create_uc, create_tsk, create_qa, create_prb, create_gol, create_rsk, create_dec, create_sop, create_feat, create_vcr.
+- Updating each tool's return type annotation and MCP tool description to reflect the new frontmatter-only response shape.
+- Updating/adding unit tests asserting the new response shape per domain.
+
+#### Explicitly Out Of Scope
+
+- All ADR-specific tools (create_adr, update_frontmatter, update_section, option_create, option_read, option_update, option_delete, set_status's adr branch) -- deferred until ADR's own mechanism is reworked.
+- The generic `delete` tool -- already returns a minimal payload (the deleted path), no change needed.
+- Any diff/patch-of-changes feature in the response (considered and dropped in favor of the simpler frontmatter-only approach).
+- Changes to `get_<d>` tools' behavior -- they remain the explicit, unchanged way to fetch a full document.
+- Any change to server-side validation logic or error message content (feat-27-validation's error paths are untouched).
+
+### Dependencies
+
+#### Depends On
+
+- feat-27-validation: this feature's error paths (REQ-005/ACC-005) rely on the actionable, field-path/line-referenced error messages that feature introduced staying intact and unchanged.
+
+### Design Notes
+
+The shared contract: every in-scope tool's success return type stays the same document model, but the body is always empty/omitted -- frontmatter is bounded in size regardless of document length, unlike the body, which grows unboundedly for append-only documents. Verified: no existing prompt (`*/prompts/*.py`) documents or depends on the old full-document response shape, so no prompt changes are required for this feature.
+
+**2026-09-02 (Phase 1) -- formalized contract for Phases 2/3:**
+
+1. **Return type.** Each in-scope tool/adapter's return type annotation changes from the domain's `XxxDocument` (or an N-way union of `XxxDocument`s for the three generic dispatch tools) to the domain's own `XxxFrontmatter` (or the equivalent N-way union of `XxxFrontmatter`s). The tool returns the frontmatter object directly -- not a `XxxDocument` wrapper with an emptied-out body. This applies to `general/tools/update.py`, `general/tools/set_status.py`, `general/tools/set_classification.py` (all three: the public dispatch function's return annotation, the module-level N-way union type alias such as `update.py`'s `_UpdateDocument`, the `_ADAPTERS` dispatch table's `Callable[..., _UpdateDocument]` value type, and every private `_update_<d>`/`_set_status_<d>`/`_set_classification_<d>` adapter's own `-> XxxDocument` annotation), and to all 11 `create_<d>` tools' `-> XxxDocument` annotation.
+2. **No cross-field validation is lost.** Read every in-scope domain's `document.py` (`req`, `uc`, `tsk`, `qa`, `prb`, `gol`, `rsk`, `dec`, `sop`, `feat`, `vcr`): none defines a `model_validator`/`field_validator` of any kind -- each `XxxDocument` is a plain two-field `pydantic.BaseModel` container (`frontmatter: XxxFrontmatter`, `body: XxxBody`) with zero cross-field logic. All real validation already happened earlier in each adapter, when `body` was built via `Xxx.from_text(format_text(...))` and `new_frontmatter` was built via `XxxFrontmatter(**fm_data)` -- constructing `XxxDocument(frontmatter=new_frontmatter, body=body)` today serves *no* validation purpose, only shapes the return value. Consequence: Phases 2/3 implementers should **remove** the now-pointless `new_doc = XxxDocument(frontmatter=new_frontmatter, body=body)` line in each adapter (it would otherwise become an unused-variable lint/vulture finding) and change `return new_doc` to `return new_frontmatter` (in `set_status`'s no-splice branches, which reuse `existing.body` and never rebuild `body`, the same applies: drop the `XxxDocument(...)` construction, return `new_frontmatter` directly). Do not delete the frontmatter-construction lines themselves -- only the trailing document-wrapping + return.
+3. **`create_<d>` tools follow the identical pattern.** Each builds `body` from the submitted `content` (validation), builds `new_frontmatter` (server-generated id/status/created/updated/version), persists via `write_<d>_file(...)`, and today wraps both into `new_doc = XxxDocument(frontmatter=new_frontmatter, body=body)` purely to return it. Per point 2, that wrapping adds no validation; drop it and `return new_frontmatter` instead.
+4. **No new Pydantic model classes.** The existing per-domain `XxxFrontmatter` classes (already imported into every one of these tool modules today, since they are used to build `new_frontmatter`) are reused as-is for the response type. Nothing new to define in any `models/vN/` package.
+5. **Scope of the change per adapter.** This is a narrow, mechanical, low-risk change: for `update`/`set_status`/`set_classification`, only (a) the removed `XxxDocument(...)` construction line, (b) the changed `return` statement, and (c) the function's own `->` return-type annotation change. The public `@mcp.tool()`-decorated function's return type annotation, its module-level union alias, the `_ADAPTERS` dict's value type, and the Returns section of its docstring all change accordingly; no other internal helper signature (`load_by_id`, `write_<d>_file`, `body_text`/`splice_body`, lock context managers, etc.) changes at all. Same for `create_<d>`: only the trailing wrap-and-return plus the function's own return annotation and docstring Returns section change.
+6. **Error paths need zero code changes.** Confirmed by reading `update.py`/`set_status.py`/`create_req.py`: every validation/parse failure path (`AssertionError`, `pydantic.ValidationError`, the domain's own `XxxNotFoundError`, `ValueError` from `_path_safety`) is a *raised exception*, propagated uncaught out of the tool function -- there is no "error return value" branch anywhere in scope. REQ-005/ACC-005 ("error paths unchanged") are therefore satisfied automatically by this design and require no implementation work in Phases 2/3; only success-path `return` statements and return-type annotations change.
+
+### Task List
+
+#### Phase 1: Design the shared minimal-response shape
+
+- [x] Task 1.1: Decide/document the frontmatter-only return type contract shared by update/set_status/set_classification/`create_<d>` (Design Notes).
+- [x] Task 1.2: Confirm via test run that no prompt currently documents the old full-document response shape (already verified: none do).
+
+#### Phase 2: Generic tools (general/tools/)
+
+- [ ] Task 2.1: Change `update` to return frontmatter-only across all 11 whole-body domains.
+- [ ] Task 2.2: Change `set_status` to return frontmatter-only across all 11 whole-body domains (adr branch unchanged).
+- [ ] Task 2.3: Change `set_classification` to return frontmatter-only across all 11 whole-body domains.
+- [ ] Task 2.4: Update each tool's MCP `description=` text and docstring Returns section.
+- [ ] Task 2.5: Run the full test suite (`uv run --frozen python -m unittest discover -v -s tests -t . -p "test_*.py"`) plus `ruff format --check`/`ruff check`/`vulture` before moving to Phase 3.
+
+#### Phase 3: Per-domain `create_<d>` tools
+
+- [ ] Task 3.1: Change all 11 `create_<d>` tools to return frontmatter-only.
+- [ ] Task 3.2: Update each tool's MCP `description=` text and docstring Returns section.
+- [ ] Task 3.3: Run the full test suite plus `ruff format --check`/`ruff check`/`vulture` before moving to Phase 4.
+
+#### Phase 4: Tests
+
+- [ ] Task 4.1: Update/add unit tests asserting frontmatter-only responses for update/set_status/set_classification/`create_<d>` across all 11 domains.
+- [ ] Task 4.2: Add a regression test confirming `delete` and ADR tools are unaffected.
+- [ ] Task 4.3: Run the full test suite plus `ruff format --check`/`ruff check`/`vulture` before moving to Phase 5.
+
+#### Phase 5: Docs
+
+- [ ] Task 5.1: Regenerate `docs/api/` + `docs/GENERATED.md` via `specmgr docs`.
+- [ ] Task 5.2: Update AGENTS.md bullets/README mentions of write-tool return shapes if any exist.
+- [ ] Task 5.3: Run the full test suite (final validation) plus `ruff format --check`/`ruff check`/`vulture` before considering the feature done.
+
+## Progress
+
+### Current Status
+
+**As of 2026-09-02**: Feature drafted from GitHub issue #69. Root cause confirmed by reading source: `update`, `set_status`, `set_classification`, and every per-domain `create_<d>` tool return the fully re-parsed document (frontmatter + body) on every successful write; `delete` already returns a minimal path string, and ADR-specific tools are out of scope for this feature. Approach agreed: all in-scope tools switch to a frontmatter-only response (small, bounded size) instead of frontmatter+body (unbounded, growing with document size); error paths are untouched. No prompts currently document the old response shape, so no prompt changes are needed. **Phase 1 (design) is complete**: the frontmatter-only contract is formalized in Design Notes (return type change, removal of the now-pointless `XxxDocument(...)` wrapping construction, no new models needed, error paths untouched by design) and verified against every domain's `document.py`; Task 1.2's prompt-shape check is confirmed clean. Phase 2 (generic tools) has not started.
+
+### Updates
+
+<!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-02 22:12:00.000+02:00 - Phase 1 done: formalized frontmatter-only return contract
+
+Completed Phase 1 (Design the shared minimal-response shape): documented the concrete, unambiguous contract Phases 2/3 must follow (see Design Notes) -- the return type annotation for every in-scope tool/adapter changes from the domain's `XxxDocument` to its `XxxFrontmatter`; internally each adapter still builds/validates the body exactly as today, but the now-pointless `XxxDocument(...)` wrapping construction (confirmed by reading every in-scope domain's `document.py` to have zero `model_validator`/`field_validator` cross-field logic) is removed and `return new_frontmatter` used instead; no new Pydantic model classes are needed; only the success-path return statement/type annotation changes, not internal helper signatures; error/validation-failure paths already raise exceptions rather than returning a value, so REQ-005/ACC-005 need zero code changes. Also verified via `grep -rn` across all 44 `*/prompts/*.py` files that no prompt documents or depends on the old full-document response shape -- confirming the existing claim, no prompt changes needed.
+
+#### 2026-09-02 21:55:52.000+02:00 - Added Depends On (feat-27-validation)
+
+Added a `Dependencies` / `Depends On` entry referencing `feat-27-validation`, since this feature's error paths (REQ-005/ACC-005) rely on the actionable, field-path/line-referenced error messages that feature introduced staying intact and unchanged. Also opened GitHub issue #70 to track a validation error-surfacing gap found while drafting this feature (a bare `create_<d>` token outside backticks fails with an unhelpful generic error instead of the actionable detail feat-27-validation promises) -- tracked separately, out of scope for this feature.
+
+#### 2026-09-02 00:00:00.000Z - Created
+
+Feature drafted from GitHub issue #69, covering the generic `update`/`set_status`/`set_classification` tools and all 11 per-domain `create_<d>` tools switching to a frontmatter-only success response. ADR-specific tools and `delete` are out of scope.
+
+### Decisions Made
+
+<!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-02 22:10:00.000+02:00 - Formalized frontmatter-only return contract (Phase 1)
+
+Made explicit, beyond what was already decided, that Phases 2/3 should not just change return type annotations but should also remove the now-pointless `new_doc = XxxDocument(frontmatter=new_frontmatter, body=body)` construction line in every adapter/tool, returning `new_frontmatter` directly instead -- confirmed by reading every in-scope domain's `document.py` that no `XxxDocument` class defines a `model_validator`/`field_validator`, so that construction step performs no cross-field validation today and would become dead code (an unused-variable lint/vulture finding) once the return statement no longer needs it.
+
+#### 2026-09-02 00:00:00.000Z - Dropped ADR from scope
+
+ADR-specific mutating tools (create_adr, update_frontmatter, update_section, option_create/option_read/option_update/option_delete, set_status's adr branch) are excluded from this feature, since ADR's own mechanism is expected to be reworked/phased out separately -- no benefit to updating it now.
+
+#### 2026-09-02 00:00:00.000Z - Frontmatter-only over diff/patch
+
+Chose a uniform "return frontmatter only, omit body" response shape over a bespoke per-tool payload (e.g. success flag + id/path + updated, or a diff/patch of changed lines): frontmatter is bounded in size and this is far simpler and more consistent to implement across all in-scope tools than custom payload shapes or diff generation.
+
+### Related PRs / Commits
+
+- [Issue #69](https://github.com/dfch/biz.dfch.SpecMgr/issues/69): tracking issue for this feature.
