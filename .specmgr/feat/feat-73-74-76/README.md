@@ -26,11 +26,11 @@ This feature tracks three independent maintenance/quality-gap issues opened on 2
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: Every direct 3rd-party dependency's license entry in NOTICE is manually verified correct (license type + attribution text) and any discrepancy found is fixed.
+- [x] ACC-001: Every direct 3rd-party dependency's license entry in NOTICE is manually verified correct (license type + attribution text) and any discrepancy found is fixed.
 
-- [ ] ACC-002: specmgr://config's output includes a sysrs entry, and a written gap list of missing sysrs functions (vs. other domains) exists in this feature's Design Notes or a follow-up.
+- [x] ACC-002: specmgr://config's output includes a sysrs entry, and a written gap list of missing sysrs functions (vs. other domains) exists in this feature's Design Notes or a follow-up.
 
-- [ ] ACC-003: A markdown file with a first H1 updates the Confluence page title on specmgr_confluence_update; a markdown file with no H1 leaves the existing page title untouched -- both verified by test.
+- [x] ACC-003: A markdown file with a first H1 updates the Confluence page title on specmgr_confluence_update; a markdown file with no H1 leaves the existing page title untouched -- both verified by test.
 
 ### Scope
 
@@ -72,15 +72,15 @@ This feature tracks three independent maintenance/quality-gap issues opened on 2
 
 #### Phase 3: Confluence Page Title Fix (#76)
 
-- [ ] Task 3.1: In specmgr_confluence_update, parse the first H1 heading from the source markdown file.
+- [x] Task 3.1: In specmgr_confluence_update, parse the first H1 heading from the source markdown file.
 
-- [ ] Task 3.2: Set the Confluence page's title field to that H1 text when updating the page body via the REST API.
+- [x] Task 3.2: Set the Confluence page's title field to that H1 text when updating the page body via the REST API.
 
-- [ ] Task 3.3: If no H1 is present, leave the existing page title untouched.
+- [x] Task 3.3: If no H1 is present, leave the existing page title untouched.
 
-- [ ] Task 3.4: Add/adjust tests covering both the H1-present and no-H1 cases.
+- [x] Task 3.4: Add/adjust tests covering both the H1-present and no-H1 cases.
 
-- [ ] Task 3.5: Run the full test suite (`uv run --frozen python -m unittest discover -v -s tests -t . -p "test_*.py"`) plus `ruff format --check`/`ruff check`/`vulture` and confirm all pass.
+- [x] Task 3.5: Run the full test suite (`uv run --frozen python -m unittest discover -v -s tests -t . -p "test_*.py"`) plus `ruff format --check`/`ruff check`/`vulture` and confirm all pass.
 
 ### Design Notes
 
@@ -140,11 +140,58 @@ usage) was already correctly wired when `sysrs` was built (feat-32-sysrs).
 
 ### Current Status
 
-**As of 2026-09-03**: Phase 1 (NOTICE license audit, #73) is complete. All direct dependencies from `pyproject.toml` were verified against installed package metadata (`importlib.metadata` + each package's own `*.dist-info/licenses/LICENSE*` file), several copyright-holder discrepancies were fixed, and NOTICE entries for the three previously-missing direct dependencies (`mdformat`, `mdformat-simple-breaks`, `httpx`) were added. Phase 2 (#74) is complete: `sysrs` is now exposed via `specmgr://config`, and a full gap analysis (Design Notes above) confirmed no other missing common cross-domain functions exist for `sysrs`. Phase 3 (#76) has not started.
+**As of 2026-09-03**: All three phases are complete. Phase 1 (NOTICE license audit, #73): all direct dependencies from `pyproject.toml` were verified against installed package metadata (`importlib.metadata` + each package's own `*.dist-info/licenses/LICENSE*` file), several copyright-holder discrepancies were fixed, and NOTICE entries for the three previously-missing direct dependencies (`mdformat`, `mdformat-simple-breaks`, `httpx`) were added. Phase 2 (#74): `sysrs` is now exposed via `specmgr://config`, and a full gap analysis (Design Notes above) confirmed no other missing common cross-domain functions exist for `sysrs`. Phase 3 (#76): `confluence_update` now sets the Confluence page's title from the source Markdown's first ATX-style H1 heading, leaving the existing title unchanged when no H1 is present, verified by test. All acceptance criteria (ACC-001/ACC-002/ACC-003) are satisfied; this feature is done.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-03 16:00:00.000+02:00 - Phase 3 complete: confluence_update sets page title from the Markdown's first H1 (#76)
+
+`src/biz/dfch/specmgr/general/tools/confluence_update.py`: added a new private helper
+`_extract_first_h1(markdown_text: str) -> str | None`, backed by a new module-level constant
+`_H1_HEADING_PATTERN = re.compile(r"^#(?!#)[ \t]+(\S.*)$", re.MULTILINE)` -- matches only
+ATX-style H1 headings (a single `#`, never `##`/`###`/...), scanning the RAW markdown source
+top-to-bottom via `.search()` and returning the first match's text stripped of leading/trailing
+whitespace, or `None` if no H1 is found anywhere. `confluence_update()` now reads the markdown
+file into `raw_markdown_text`, calls `_extract_first_h1` on it BEFORE the leading-frontmatter
+conversion overwrites the `markdown_text` variable (frontmatter's `key: value` lines can never
+themselves match the H1 pattern, so scanning the raw text before frontmatter-to-code-block
+conversion is safe and simplest), and uses the extracted H1 as the new `title` for the PUT
+payload -- falling back to the GET-fetched title unchanged when no H1 is found. Updated the
+module docstring's "full write flow" step 3/6, the `confluence_update()` docstring
+(behavior prose + `Returns` example dict shape), and the `@mcp.tool(...)` `description=` string
+to describe the new H1-driven title behavior (previously all three said "leaving the title
+unchanged"/"unchanged title", now corrected).
+
+`tests/general/tools/test_confluence_update.py`: renamed
+`test_put_payload_has_incremented_version_unchanged_title_and_rendered_body` to
+`test_put_payload_has_incremented_version_h1_derived_title_and_rendered_body` and updated its
+assertions -- the existing `_MARKDOWN_SOURCE` constant already contains an H1 ("Heading"), so
+under the new behavior the PUT payload's title and the returned `result["title"]` are now
+`"Heading"`, not the old GET-fetched `_TITLE`. Added new tests: `test_no_h1_in_markdown_leaves_existing_title_unchanged`
+and `test_h2_only_markdown_leaves_existing_title_unchanged` (both confirm the PUT payload/result
+title stays exactly the GET-fetched title when the markdown has no H1, including when it has
+only an H2), `test_frontmatter_then_h1_uses_h1_as_new_title` (a leading YAML frontmatter block
+followed by an H1 still updates the title through the full mocked-HTTP `confluence_update()`
+flow), plus eight focused unit tests directly against `_extract_first_h1` in isolation covering
+a simple first-line H1, an H1 after leading blank lines/preamble text, an H1 correctly found
+after a preceding H2 (H2 not mistaken for H1), no H1 anywhere (returns `None`, both with only an
+H2 and with only plain paragraphs), an H2-only heading not matching as H1, and an H1 correctly
+found after a leading YAML frontmatter block. Checked `tests/general/prompts/test_confluence_update.py`
+(no "title" references at all -- prompt-registration/text tests only, left unchanged as expected).
+
+Quality gate: full `unittest` suite (3302 tests, `OK`), `ruff format --check` (already
+formatted), `ruff check` (all checks passed), `vulture src/ whitelist.py --min-confidence 60`
+(no findings) -- all green, before and after doc regeneration. `specmgr docs` regenerated
+`docs/api/biz.dfch.specmgr.general.tools.confluence_update.md` (new `_extract_first_h1`
+docstring entry plus the updated docstring/flow-step prose, expected drift); `specmgr mcp-docs`
+regenerated `docs/MCP.md` (updated `confluence_update` tool description in both the summary
+table and its detail section, expected drift). Quality gate re-run clean after both doc
+regenerations.
+
+All three acceptance criteria (ACC-001/ACC-002/ACC-003) are now satisfied; this feature is
+complete.
 
 #### 2026-09-03 14:00:00.000+02:00 - Phase 2 complete: sysrs added to specmgr://config; gap analysis found no other gaps (#74)
 
