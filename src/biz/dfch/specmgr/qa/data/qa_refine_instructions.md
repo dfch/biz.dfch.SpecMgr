@@ -80,7 +80,7 @@ line range:
 - **Clean append (the `N+1` range)**: when the new pairs all go at the
   very end of the body (every targeted category is the document's last
   `##` section), call `get_qa(id, raw=True)` to count the body's lines
-  (`N`) and call `update(id, type="qa", content, begin=N+1, end=N+1)`
+  (`N`) and call `update(id, type="qa", content, offset=N+1)`
   passing only the new pairs -- the `N+1` position is end-of-body, so
   this appends without touching any existing line.
 - **Otherwise (whole-body replace)**: carry forward every section of

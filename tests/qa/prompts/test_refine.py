@@ -50,10 +50,10 @@ class TestRefinePrompt(unittest.TestCase):
         get_qa(id, raw=True) and use the N+1 end-of-body append range."""
         result = refine("abc-123")
         self.assertIn("get_qa(id, raw=True)", result)
-        self.assertIn('update(id, type="qa", content, begin=N+1, end=N+1)', result)
+        self.assertIn('update(id, type="qa", content, offset=N+1)', result)
         self.assertLess(
             result.index("get_qa(id, raw=True)"),
-            result.index('update(id, type="qa", content, begin=N+1, end=N+1)'),
+            result.index('update(id, type="qa", content, offset=N+1)'),
         )
 
     def test_mentions_iso25010_resource(self):

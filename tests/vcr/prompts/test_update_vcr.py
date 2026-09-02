@@ -78,20 +78,20 @@ class TestUpdateVcrPrompt(unittest.TestCase):
 
     def test_mentions_range_update_flow(self):
         """The prompt must teach the line-range flow: read the exact body
-        via get_vcr(id, raw=True), identify the 1-based inclusive range
-        (N+1 is end-of-body), call `update` with begin/end passing only
-        the replacement lines; whole-body for multi-section or uncertain
-        changes."""
+        via get_vcr(id, raw=True), identify the 1-based line to start at
+        and how many lines to replace (N+1 is end-of-body), call
+        `update` with offset/limit passing only the replacement lines;
+        whole-body for multi-section or uncertain changes."""
         result = update_vcr("id-abc-123")
         self.assertIn("get_vcr(id, raw=True)", result)
-        self.assertIn("1-based, inclusive line range", result)
-        self.assertIn("begin = end = N+1", result)
-        self.assertIn('update(id, type="vcr", content, begin=..., end=...)', result)
+        self.assertIn("1-based line to start at and how many", result)
+        self.assertIn("offset = N+1", result)
+        self.assertIn('update(id, type="vcr", content, offset=..., limit=...)', result)
         self.assertIn("multi-section change, or whenever you are", result)
         self.assertIn("byte-identical", result)
         self.assertLess(
             result.index("get_vcr(id, raw=True)"),
-            result.index('update(id, type="vcr", content, begin=..., end=...)'),
+            result.index('update(id, type="vcr", content, offset=..., limit=...)'),
         )
 
     def test_mentions_showing_which_sections_are_present(self):

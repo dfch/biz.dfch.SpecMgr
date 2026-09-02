@@ -32,7 +32,7 @@ module drives the actual tool functions in a single realistic sequence --
 tools, so the round-trip below drives the GENERIC ``update``/
 ``set_status`` tools in ``general.tools`` with ``type="sop"`` -- not
 per-domain mutation tools (which do not exist). Both the whole-body and
-line-range (``begin``/``end``) branches of ``update`` are exercised.
+line-range (``offset``/``limit``) branches of ``update`` are exercised.
 
 Isolation follows the exact same pattern as ``test_create_sop.py``'s
 ``TempSopDirTestCase``: a fresh ``tempfile.TemporaryDirectory()`` is pointed

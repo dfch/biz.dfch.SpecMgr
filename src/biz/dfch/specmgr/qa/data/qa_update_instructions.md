@@ -29,17 +29,19 @@ want to change before calling any write tool.
   (no frontmatter block) in both cases.
   - **Line-range replace** (a localized change -- one paragraph, field,
     or section): first call `get_qa(id, raw=True)` to see the exact body
-    text, identify the 1-based, inclusive line range to replace -- the
-    `N+1` position is end-of-body: `begin = end = N+1` appends after the
-    last line, `end = N+1` extends the range through the last line -- and
-    call `update(id, type="qa", content, begin=..., end=...)` passing only
-    the replacement lines. The server splices the fragment into the
-    current on-disk body and validates the result as a whole document
-    before writing anything, so every out-of-range line stays
+    text, identify the 1-based line to start at and how many lines to
+    replace -- `offset` is the first body line, `limit` the number of
+    lines (`offset`..`offset+limit-1`); `limit` omitted replaces through
+    the last body line, `limit=0` is a pure insert, and the `N+1`
+    position is end-of-body: `offset = N+1` appends after the last line
+    -- and call `update(id, type="qa", content, offset=..., limit=...)`
+    passing only the replacement lines. The server splices the fragment
+    into the current on-disk body and validates the result as a whole
+    document before writing anything, so every out-of-range line stays
     byte-identical.
   - **Whole-body replace** (a multi-section change, or whenever you are
     uncertain about the line range): call `update(id, type="qa", content)`
-    with no `begin`/`end` -- `content` is then the full replacement body:
+    with no `offset`/`limit` -- `content` is then the full replacement body:
     read the current body first (step 1) and carry forward every section
     you are not intentionally changing, or it will be dropped, including
     the ten fixed category headings even when you have nothing new to add

@@ -3,7 +3,7 @@ created: '2026-09-01T14:19:27.649184'
 id: feat-28-get-update
 status: in-progress
 type: feat
-updated: '2026-09-01T21:59:07.448994'
+updated: '2026-09-02T02:22:14.617316'
 version: 1.0.0
 ---
 
@@ -172,9 +172,9 @@ tests move together in the LLM-contract phase.
 
 #### Phase 3: LLM-facing Contract
 
-- [ ] Task 3.1: Rewrite the range-update step in the ten `*_update_instructions.md` data files + `qa_refine_instructions.md` to `offset`/`limit` (incl. the `N+1` append wording) — depends on: Phase 2 — status: not-started
-- [ ] Task 3.2: Update the ~12 prompt test files asserting the old `begin=..., end=...` literals (`tests/req/prompts/`, `tests/tsk/prompts/`, `tests/qa/prompts/` (incl. `test_refine.py`), `tests/prb/prompts/`, `tests/gol/prompts/`, `tests/rsk/prompts/`, `tests/dec/prompts/`, `tests/sop/prompts/`, `tests/feat/prompts/`, `tests/vcr/prompts/`) to the new literals — depends on: Task 3.1 — status: not-started
-- [ ] Task 3.3: Phase gate — complete test cycle + commit — depends on: Task 3.2 — status: not-started
+- [x] Task 3.1: Rewrite the range-update step in the ten `*_update_instructions.md` data files + `qa_refine_instructions.md` to `offset`/`limit` (incl. the `N+1` append wording) — depends on: Phase 2 — status: done (2026-09-02)
+- [x] Task 3.2: Update the ~12 prompt test files asserting the old `begin=..., end=...` literals (`tests/req/prompts/`, `tests/tsk/prompts/`, `tests/qa/prompts/` (incl. `test_refine.py`), `tests/prb/prompts/`, `tests/gol/prompts/`, `tests/rsk/prompts/`, `tests/dec/prompts/`, `tests/sop/prompts/`, `tests/feat/prompts/`, `tests/vcr/prompts/`) to the new literals — depends on: Task 3.1 — status: done (2026-09-02)
+- [x] Task 3.3: Phase gate — complete test cycle + commit — depends on: Task 3.2 — status: done (2026-09-02)
 
 #### Phase 4: Docs, Regen, Close
 
@@ -187,34 +187,105 @@ tests move together in the LLM-contract phase.
 
 ### Current Status
 
-**As of 2026-09-01**: Phase 2 complete. The eleven `get_<d>` tools
-(`req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr`) now
-support read-style `offset`/`limit` windowed raw reads: coordinates are
-valid with `raw=True` only (coordinates with `raw=False` raise
-`ValueError` before any file access), `offset` defaults to 1 and is
-floored, `limit` defaults to through end of body and is capped at the
-remaining lines, out-of-range values clamp (`offset > N` returns the
-empty string) in the `list_<d>` "clamped, not errored" convention, and
-the window is served by the new no-I/O `window_body` helper in
-`general/tools/_splice.py` (beside `body_text`/`splice_body`), so the
-raw/splice invariant holds for windowed reads exactly as for full raw
-reads; the default raw read stays byte-for-byte identical to before. New
-`tests/general/tools/test__splice.py` covers `window_body` and
-`splice_body` directly, and each of the eleven
-`tests/<d>/tools/test_get_<d>.py` gains window-slice, clamp/empty,
-guard, and windowed read-into-splice round-trip cases. The ADR recording
-the revised contract remains drafted
-(`4ec08dcb-fcb7-4961-abaf-ff7803e2f21d` in `docs/adr/`; set to accepted at
-close per Task 4.3). The working tree is on branch
+**As of 2026-09-02**: Phase 3 complete. Every packaged LLM-facing
+instruction data file now teaches the new `offset`/`limit` range
+contract: the ten `*_update_instructions.md` files
+(`req`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr`) read
+"identify the 1-based line to start at and how many lines to replace --
+`offset` is the first body line, `limit` the number of lines
+(`offset`..`offset+limit-1`); `limit` omitted replaces through the last
+body line, `limit=0` is a pure insert, and the `N+1` position is
+end-of-body: `offset = N+1` appends after the last line" and name the
+call shape `update(id, type="<d>", content, offset=..., limit=...)`;
+their whole-body bullets now say "with no `offset`/`limit`"; and
+`qa_refine_instructions.md`'s clean-append step uses `offset=N+1`. The
+`feat`/`vcr` files keep their own local bullet structure around the
+swapped vocabulary. The prompt tests moved to the new literals in the
+same change (the ten `test_update_*` files plus
+`tests/qa/prompts/test_refine.py`), and one Phase-1 leftover docstring
+in `tests/sop/tools/test_integration.py` was reworded to
+`offset`/`limit`. The ADR recording the revised contract remains
+drafted (`4ec08dcb-fcb7-4961-abaf-ff7803e2f21d` in `docs/adr/`; set to
+accepted at close per Task 4.3). The working tree is on branch
 `feat-28-get-update`, with the complete test cycle green (2784 tests)
 and `docs/api/`/`docs/GENERATED.md`/`docs/MCP.md` regenerated without
-drift; never pushed. Next: Phase 3 (LLM-facing contract — the ten
-`*_update_instructions.md` + `qa_refine_instructions.md` data files and
-their prompt tests).
+drift; never pushed. Next: Phase 4 (docs — the `server.py` +
+`general/tools/__init__.py` docstrings, `AGENTS.md`, `CHANGELOG.md`
+`[Unreleased]`, final regeneration, ADR to accepted).
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-02 02:22:14.617+02:00 — Phase 3 complete (LLM-facing contract: instruction data files + prompt tests moved to `offset`/`limit` in the same change, gate green)
+
+Task 3.1: the ten packaged `*_update_instructions.md` data files
+(`req`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr` — no `uc`,
+no prompts package; no `adr`, different mechanism) rewritten in the
+"Line-range replace" bullet to the new coordinate wording: "identify
+the 1-based line to start at and how many lines to replace -- `offset`
+is the first body line, `limit` the number of lines
+(`offset`..`offset+limit-1`); `limit` omitted replaces through the last
+body line, `limit=0` is a pure insert, and the `N+1` position is
+end-of-body: `offset = N+1` appends after the last line -- and call
+`update(id, type=\"<d>\", content, offset=..., limit=...)`", and in the
+"Whole-body replace" bullet "with no `begin`/`end`" → "with no
+`offset`/`limit`". The seven req-shaped files
+(`req`/`tsk`/`prb`/`gol`/`rsk`/`dec`/`sop`) take the target wording's
+own line breaks verbatim; `qa` keeps its wider wrap style (the
+orphaned "passing only" its old wrap produced was rejoined); `feat`
+keeps its long trailing-`update(...)`-call line and its extra
+`### Updates`/`### Decisions Made` insert sentence; `vcr` keeps its
+own-line call + "passing only" continuation and its
+"one paragraph, field, or acceptance criterion" bullet opening.
+`qa/data/qa_refine_instructions.md`'s "Persist the appended questions"
+clean-append step: `update(id, type="qa", content, begin=N+1, end=N+1)`
+→ `update(id, type="qa", content, offset=N+1)` (limit omitted is the
+append case; the `N+1` end-of-body wording kept). The only `begin`
+left in `src/` markdown is the prose word in
+`sop/data/sop_example.md:17` ("can begin productive work" — not a
+range reference, deliberately untouched). Task 3.2: the ten
+`test_update_*` prompt test files (`tests/{req,tsk,qa,prb,gol,rsk,dec,
+sop,feat,vcr}/prompts/`) — each `test_mentions_range_update_flow` now
+asserts the new literals, byte-identical to the data files:
+`assertIn("offset = N+1", result)` and
+`assertIn('update(id, type="<d>", content, offset=..., limit=...)',
+result)` plus the matching `result.index(...)` ordering assertion; the
+now-stale `assertIn("1-based, inclusive line range", result)` (that
+phrase no longer exists in the new wording) was replaced by
+`assertIn("1-based line to start at and how many", result)`, a phrase
+that is contiguous on a single data-file line in all ten domains; the
+method docstrings reworded to the `offset`/`limit` vocabulary.
+`tests/qa/prompts/test_refine.py` — `test_mentions_n_plus_one_append_
+range` literal `update(id, type="qa", content, begin=N+1, end=N+1)` →
+`update(id, type="qa", content, offset=N+1)` (assertIn + index; the
+docstring's "N+1 end-of-body append range" wording stays valid and was
+kept). Beyond the verified 11-file list, one Phase-1 leftover:
+`tests/sop/tools/test_integration.py`'s module docstring still said the
+round-trip exercises "line-range (`begin`/`end`) branches of `update`"
+while the test itself (line 169) calls `update(..., offset=k, limit=1)`
+— reworded that one line to `offset`/`limit`. The intentional
+`assertNotIn("begin", schema["properties"])` negative assertions in
+`tests/general/tools/test_update.py` and the ACC-006 end-to-end walk's
+real `update(..., offset=line_number, limit=1)` call (Phase 1) were
+left untouched. All 144 prompt tests pass, proving the asserted
+literals match the data files exactly. Task 3.3 gate (green): `ruff
+format --check` (1475 files already formatted), `ruff check` (All
+checks passed!), `vulture src/ whitelist.py --min-confidence 60`
+(clean, no output), full `unittest` suite (Ran 2784 tests — OK; same
+count as the Phase 2 baseline — data-file + literal changes only, no
+tests added or removed), `specmgr docs` + `specmgr mcp-docs`
+regenerated with no drift (`git status --short` byte-identical before
+and after the runs — data files are not API docstrings and no tool
+descriptions change in Phase 3). ACC-004 repo searches: `grep -rn
+"begin" src/biz/dfch/specmgr --include=*.md` shows only the
+`sop_example.md:17` prose word; `grep -rn "begin=\|end=\|begin\b"
+src/biz/dfch/specmgr --include=*.py` shows only the two known Phase-4
+items (`server.py:215` and `general/tools/__init__.py:24` docstrings)
+plus two prose "to begin with" docstring hits in
+`rsk/tools/__init__.py:28` and `tsk/tools/__init__.py:28` — no
+`begin`/`end` range references remain in `src/`. Not committed (the
+orchestrator commits); not pushed.
 
 #### 2026-09-01 21:59:07.448+02:00 — Phase 2 complete (get windowing: `window_body` helper + `offset`/`limit` on the eleven `get_<d>` tools, gate green)
 
