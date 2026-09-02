@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import frontmatter
 
+from ...models.md._errors import BODY_CHANNEL, wrap_tool_errors
 from ...models.md._markdown import format_text
 from ...server import mcp
 from ..models.v2 import UseCase, parse_uc
@@ -79,6 +80,20 @@ def validate_uc(content: str, full: bool = False) -> bool:
     -------
     bool
         Always ``True`` on success.
+
+    Raises
+    ------
+    ValueError
+        ``full`` does not match whether ``content`` carries a frontmatter block (see above).
+    AssertionError
+        A structural failure in ``content``. The message is prefixed with domain/tool/channel
+        context by the shared tool-boundary wrapper
+        (:func:`~biz.dfch.specmgr.models.md._errors.wrap_tool_errors`), layered on top of the
+        engine's own field-path/line/snippet enrichment (feat-27-validation Phases 1/2).
+    pydantic.ValidationError
+        A field/cross-field validation failure in ``content`` -- similarly prefixed.
+    yaml.YAMLError
+        ``full=True`` only: malformed frontmatter YAML -- similarly prefixed.
     """
     has_frontmatter = bool(frontmatter.loads(content).metadata)  # type: ignore[union-attr]
 
@@ -89,13 +104,15 @@ def validate_uc(content: str, full: bool = False) -> bool:
                 "plus body) -- no frontmatter block was found. Pass full=False (the default) to "
                 "validate body-only content instead."
             )
-        parse_uc(content)
+        with wrap_tool_errors(domain="uc", tool="validate_uc"):
+            parse_uc(content)
     else:
         if has_frontmatter:
             raise ValueError(
                 "full=False requires 'content' to be body markdown only -- a YAML frontmatter "
                 "block was found. Pass full=True to validate a complete document instead."
             )
-        UseCase.from_text(format_text(content))
+        with wrap_tool_errors(domain="uc", tool="validate_uc", channel=BODY_CHANNEL):
+            UseCase.from_text(format_text(content))
 
     return True

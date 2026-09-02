@@ -70,6 +70,11 @@ Index of all ADRs in this repository.
   - Id: 9d3800cf-b3b4-4d46-8b68-3573d932b1c8
   - Status: accepted
   - Decision-makers: dfch
+- [Rename `webfetch` to `confluence_fetch`, add `confluence_update`, and self-construct Confluence REST API URLs instead of relying on a non-existent "confluence skill"](a156fdf9-052c-4f43-93a2-eeec04a91eac-rename-webfetch-to-confluence-fetch-add-confluence-update-an.md)
+  - Id: a156fdf9-052c-4f43-93a2-eeec04a91eac
+  - Status: accepted
+  - Date: 2026-09-01
+  - Decision-makers: dfch
 - [Frontmatter extension fields (id, version) with whole-object full-replace update contract](bbf412a7-965e-4435-8669-c338407d73b7-frontmatter-extension-fields-id-version-with-whole-object-fu.md)
   - Id: bbf412a7-965e-4435-8669-c338407d73b7
   - Status: accepted

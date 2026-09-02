@@ -22,7 +22,7 @@ from __future__ import annotations
 from pydantic import computed_field
 
 from .markdown_str import MarkdownStr
-from ._markdown import format_text, parse
+from ._markdown import format_text, not_in_mdformat_message, parse
 from .markdown import markdown
 
 
@@ -55,7 +55,7 @@ class MarkdownComment(MarkdownStr):
                 comment block's own `.map`.
         """
         assert isinstance(text, str), type(text)
-        assert text == format_text(text), "text is not in 'mdformat'."
+        assert text == format_text(text), not_in_mdformat_message(text)
         assert not cls._get_field_names(), f"{cls.__name__}: leaf-only, must not declare any nested fields"
 
         own_type = cls._metadata.get("type")
@@ -80,7 +80,7 @@ class MarkdownComment(MarkdownStr):
         return result
 
     @classmethod
-    def from_text(cls, text: str) -> MarkdownComment:
+    def from_text(cls, text: str, *, _path: str = "", _offset: int = 0) -> MarkdownComment:
         """Create an instance from markdown text starting with a comment block.
 
         Validates that `text` starts with a single self-closing `"html_block"`
@@ -91,12 +91,18 @@ class MarkdownComment(MarkdownStr):
         Args:
             text: Markdown source, pre-formatted with `mdformat`, starting
                 with this class's own comment block.
+            _path: this comment's own document-relative path (REQ-001) as
+                chosen by the caller -- `""` at the very root, in which case
+                `cls.__name__` is used instead.
+            _offset: the 0-based line at which `text` starts, relative to
+                the root document's own `mdformat`-normalized body
+                (REQ-002) -- `0` at the root.
 
         Returns:
             A new instance with `_value` set to `text` verbatim.
         """
         assert isinstance(text, str), f"text: '{type(text)}' != 'str'."
-        assert text == format_text(text), "text is not in 'mdformat'."
+        assert text == format_text(text), not_in_mdformat_message(text)
         assert not cls._get_field_names(), f"{cls.__name__}: leaf-only, must not declare any nested fields"
 
         tokens = parse(text)
@@ -122,6 +128,8 @@ class MarkdownComment(MarkdownStr):
 
         instance = cls()
         instance._value = text
+        instance._path = _path or cls.__name__
+        instance._line = _offset + 1
 
         return instance
 

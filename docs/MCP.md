@@ -3,7 +3,7 @@
 Auto-generated from the live `biz.dfch.specmgr.server:mcp` registration --
 do not edit by hand, run `specmgr mcp-docs` instead (see `AGENTS.md`).
 
-39 resource(s), 1 resource template(s), 93 tool(s), 27 prompt(s).
+39 resource(s), 1 resource template(s), 94 tool(s), 29 prompt(s).
 
 ## Table of Contents
 
@@ -346,6 +346,8 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 
 | Name | Description |
 | --- | --- |
+| [`confluence_fetch`](#tool-confluence_fetch) | Fetch a URL over HTTP GET with a bearer token, but only if the URL matches the configured base URL (case-insensitively). A normal, browsable Confluence page URL (Cloud-style '/pages/<id>/<title>' or Server-style '?pageId=<id>') is automatically converted into the equivalent '{base}/rest/api/content/{id}?expand=body.storage' REST API URL before fetching; a '/x/<tinyid>' tiny link is rejected outright, since it cannot be resolved to a page id without an authenticated browser session; a request that gets redirected off the configured base URL's host (e.g. to an SSO login page) raises instead of returning that page's content. Text/JSON/XML responses are returned as raw body text; other (binary/image) content types are written to the given destination_path and that path is returned instead. Intended primarily for Confluence instances using PAT authentication. |
+| [`confluence_update`](#tool-confluence_update) | Render a local Markdown file to an HTML fragment and write it into an existing Confluence page's body via the REST API, incrementing the page's version number. Accepts a bare numeric page id, a browsable page URL ('/pages/<id>/...' or '?pageId=<id>'), or a REST content URL; a '/x/<tinyid>' tiny link is rejected. Reuses the same two environment variables confluence_fetch uses. Local images referenced by the Markdown file (a relative or absolute filesystem path, not an 'http(s)://' URL) that exist on disk are uploaded as Confluence attachments (POST .../child/attachment, falling back to updating an existing attachment's content if the filename already exists) and their <img> tags are rewritten into Confluence's <ac:image>/<ri:attachment> storage-format macro, on a best-effort basis: a missing local file or a failed upload simply leaves that one <img> tag unrewritten instead of aborting the update. Also sanitizes any raw '--' inside rendered <!-- --> HTML comments (invalid in Confluence's strict XHTML storage format, though valid CommonMark) and converts a leading YAML frontmatter block into a fenced code block before rendering, so it is not mangled into a heading. |
 | [`create_adr`](#tool-create_adr) | Create a new ADR: assigns a fresh id, derives a filename from the title, validates, renders, and writes the new document to the ADR base directory. |
 | [`create_dec`](#tool-create_dec) | Create a new decision: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the decision base directory. |
 | [`create_feat`](#tool-create_feat) | Create a new feature: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the feature base directory. |
@@ -438,7 +440,28 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`validate_tsk`](#tool-validate_tsk) | Disk-free, id-free dry run validating task list content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
 | [`validate_uc`](#tool-validate_uc) | Disk-free, id-free dry run validating use case content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
 | [`validate_vcr`](#tool-validate_vcr) | Disk-free, id-free dry run validating verification case record content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
-| [`webfetch`](#tool-webfetch) | Fetch a URL over HTTP GET with a bearer token, but only if the URL matches the configured base URL (case-insensitively). Returns the raw response body text. Intended primarily for Web Server instances using PAT authentication. |
+
+### Tool: confluence_fetch
+
+**Fetch a Confluence URL with bearer authentication**
+
+Fetch a URL over HTTP GET with a bearer token, but only if the URL matches the configured base URL (case-insensitively). A normal, browsable Confluence page URL (Cloud-style '/pages/<id>/<title>' or Server-style '?pageId=<id>') is automatically converted into the equivalent '{base}/rest/api/content/{id}?expand=body.storage' REST API URL before fetching; a '/x/<tinyid>' tiny link is rejected outright, since it cannot be resolved to a page id without an authenticated browser session; a request that gets redirected off the configured base URL's host (e.g. to an SSO login page) raises instead of returning that page's content. Text/JSON/XML responses are returned as raw body text; other (binary/image) content types are written to the given destination_path and that path is returned instead. Intended primarily for Confluence instances using PAT authentication.
+
+| Parameter | Type | Required |
+| --- | --- | --- |
+| `url` | `string` | Yes |
+| `destination_path` | `string | None` | No |
+
+### Tool: confluence_update
+
+**Update a Confluence page's body from a local Markdown file**
+
+Render a local Markdown file to an HTML fragment and write it into an existing Confluence page's body via the REST API, incrementing the page's version number. Accepts a bare numeric page id, a browsable page URL ('/pages/<id>/...' or '?pageId=<id>'), or a REST content URL; a '/x/<tinyid>' tiny link is rejected. Reuses the same two environment variables confluence_fetch uses. Local images referenced by the Markdown file (a relative or absolute filesystem path, not an 'http(s)://' URL) that exist on disk are uploaded as Confluence attachments (POST .../child/attachment, falling back to updating an existing attachment's content if the filename already exists) and their <img> tags are rewritten into Confluence's <ac:image>/<ri:attachment> storage-format macro, on a best-effort basis: a missing local file or a failed upload simply leaves that one <img> tag unrewritten instead of aborting the update. Also sanitizes any raw '--' inside rendered <!-- --> HTML comments (invalid in Confluence's strict XHTML storage format, though valid CommonMark) and converts a leading YAML frontmatter block into a fenced code block before rendering, so it is not mangled into a heading.
+
+| Parameter | Type | Required |
+| --- | --- | --- |
+| `page_url_or_id` | `string` | Yes |
+| `markdown_file_path` | `string` | Yes |
 
 ### Tool: create_adr
 
@@ -1346,21 +1369,13 @@ Disk-free, id-free dry run validating verification case record content. `full=Fa
 | `content` | `string` | Yes |
 | `full` | `boolean` | No |
 
-### Tool: webfetch
-
-**Fetch a URL with bearer authentication**
-
-Fetch a URL over HTTP GET with a bearer token, but only if the URL matches the configured base URL (case-insensitively). Returns the raw response body text. Intended primarily for Web Server instances using PAT authentication.
-
-| Parameter | Type | Required |
-| --- | --- | --- |
-| `url` | `string` | Yes |
-
 ## Prompts
 
 | Name | Description |
 | --- | --- |
 | [`compact_history`](#prompt-compact_history) | Guides the LLM through rotating older 'Recent Updates' entries out of a .specmgr feature folder's README.md and into an optional sibling history.md, leaving a pointer line behind, per ADR e369ee2e-3353-4f92-991c-6367d76d832e. |
+| [`confluence_fetch`](#prompt-confluence_fetch) | Guides the LLM through calling the confluence_fetch tool with the given url (and, when needed, destination_path) to fetch/download a Confluence page or attachment. |
+| [`confluence_update`](#prompt-confluence_update) | Guides the LLM through calling the confluence_update tool with the given page_url_or_id/markdown_file_path to upload a local Markdown file's rendered content to an existing Confluence page. |
 | [`create_adr`](#prompt-create_adr) | Guides the LLM through checking for an existing similar ADR, gathering the required information, and driving create_adr/option_create/set_status/validate_adr to author a new MADR-4.0.0-based Architecture Decision Record. |
 | [`create_adr_test`](#prompt-create_adr_test) | Experimental, strictly step-gated variant of create_adr for A/B comparison: the same MADR-4.0.0 structure and create_adr/option_create/set_status/validate_adr tool sequence, rewritten as hard numbered gates instead of narrated steps. |
 | [`create_dec`](#prompt-create_dec) | Guides the LLM through checking for an existing similar decision, gathering the required information, and driving create_dec/validate_dec to author a new DEC document. |
@@ -1396,6 +1411,24 @@ Guides the LLM through rotating older 'Recent Updates' entries out of a .specmgr
 | --- | --- | --- |
 | `feature_id` | Yes |  |
 | `cutoff_hint` | No |  |
+
+### Prompt: confluence_fetch
+
+Guides the LLM through calling the confluence_fetch tool with the given url (and, when needed, destination_path) to fetch/download a Confluence page or attachment.
+
+| Argument | Required | Description |
+| --- | --- | --- |
+| `url` | Yes |  |
+| `destination_path` | No |  |
+
+### Prompt: confluence_update
+
+Guides the LLM through calling the confluence_update tool with the given page_url_or_id/markdown_file_path to upload a local Markdown file's rendered content to an existing Confluence page.
+
+| Argument | Required | Description |
+| --- | --- | --- |
+| `page_url_or_id` | Yes |  |
+| `markdown_file_path` | Yes |  |
 
 ### Prompt: create_adr
 

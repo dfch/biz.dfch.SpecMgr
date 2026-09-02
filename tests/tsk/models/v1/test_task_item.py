@@ -72,6 +72,23 @@ class TestTaskItemMalformed(unittest.TestCase):
         with self.assertRaises(AssertionError):
             _ = sut.description
 
+    def test_missing_marker_message_names_path_and_line_feat_27(self) -> None:
+        """feat-27 Phase 1 (Task 1.7): the message now names this item's own document-
+        relative path and 1-based line (`self._path`/`self._line`, threaded in by
+        `models.md.MarkdownListItem.from_text`), not just a bare `"TaskItem: ..."` prefix."""
+        text = format_text("- ok\n\n- Do the thing without a marker\n")
+        _remaining, items = TaskItem.process_list_field("items", TaskItem, text, optional=False)
+        assert items is not None, type(items)
+        sut = items[1]
+
+        with self.assertRaises(AssertionError) as ctx:
+            _ = sut.checked
+
+        self.assertEqual(
+            str(ctx.exception),
+            "TaskItem (line 3): expected a '- [ ]'/'- [x]' checkbox marker, got 'Do the thing without a marker'",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

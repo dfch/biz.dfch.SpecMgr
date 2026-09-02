@@ -401,6 +401,16 @@ Still genuinely missing / not yet done (don't assume otherwise):
   `tools`, `resources`, and `prompts`; `uc` registers `tools` and
   `resources` only — it has no `prompts` sub-package yet.
 
+`feat-27-validation` (closed 2026-09-01, GitHub issue #27, subsuming feat-7's
+Task 0.29) made every `parse_<d>`/`create_<d>`/`validate_<d>` tool's and the
+generic `update`/`set_status` tools' `AssertionError`/`pydantic.ValidationError`/
+`yaml.YAMLError` messages actionable: each now carries a document-relative
+field path, a 1-based line reference into the mdformat-normalized body, and a
+cause/fix hint (e.g. a bare `<word>` token parsed as raw HTML, or a `+`/`-`/`*`-
+prefixed line starting a stray CommonMark list), with domain + tool + channel
+context prepended by the shared `models/md/_errors.wrap_tool_errors` wrapper —
+same exception types throughout, messages only (no new exception types).
+
 `.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md` §10 ("Next steps") tracks per-item done/not-done
 status for the ADR feature specifically and should be kept in sync with
 `src/` as this evolves; treat it as current-state tracking, not just a

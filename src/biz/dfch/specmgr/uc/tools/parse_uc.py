@@ -28,8 +28,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ..models.v2 import UcDocument, parse_uc as _parse_uc
+from ...models.md._errors import wrap_tool_errors
 from ...server import mcp
+from ..models.v2 import UcDocument, parse_uc as _parse_uc
 
 
 @mcp.tool(
@@ -47,8 +48,7 @@ def parse_uc(path: str) -> UcDocument:
     `adr.tools.validate_adr`'s own docstring describes for ADRs -- there is
     no separate validation step. Any structural problem (an unrecognized/
     misplaced heading, a list the schema doesn't expect) or field/
-    cross-field validation failure is not caught or wrapped here: it
-    propagates naturally as ``AssertionError``/``pydantic.ValidationError``,
+    cross-field validation failure propagates as ``AssertionError``/``pydantic.ValidationError``,
     so the MCP layer reports it as a tool error with the underlying
     message, giving the caller something concrete to self-correct from.
     Similarly, file-access errors (missing file, permission denied) propagate
@@ -64,6 +64,25 @@ def parse_uc(path: str) -> UcDocument:
     -------
     UcDocument
         The parsed, validated document.
+
+    Raises
+    ------
+    AssertionError
+        A structural problem in the parsed body (unrecognized/misplaced heading, a list the
+        schema doesn't expect, ...). The message is prefixed with domain/tool context (e.g.
+        ``"uc parse_uc: ..."``) by the shared tool-boundary wrapper
+        (:func:`~biz.dfch.specmgr.models.md._errors.wrap_tool_errors`), layered on top of the
+        engine's own field-path/line/snippet enrichment (feat-27-validation Phases 1/2).
+    pydantic.ValidationError
+        A field/cross-field validation failure -- similarly prefixed.
+    yaml.YAMLError
+        Malformed frontmatter YAML -- similarly prefixed, on top of the frontmatter-block
+        naming and document-relative line remap :mod:`~biz.dfch.specmgr.models.md.
+        _frontmatter_parse` already applies.
+    FileNotFoundError / PermissionError / OSError
+        A file-access failure reading ``path`` -- untouched by this wrapper (already
+        actionable; out of this feature's scope).
     """
     text = Path(path).read_text(encoding="utf-8")
-    return _parse_uc(text)
+    with wrap_tool_errors(domain="uc", tool="parse_uc"):
+        return _parse_uc(text)

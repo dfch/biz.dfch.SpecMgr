@@ -77,6 +77,7 @@ from ...gol.tools._io import load_by_id as load_gol_by_id
 from ...gol.tools._lock import gol_lock
 from ...gol.tools._paths import gol_base_dir
 from ...gol.tools._write import write_gol_file
+from ...models.md._errors import BODY_CHANNEL, wrap_tool_errors
 from ...models.md._markdown import format_text
 from ...prb.models.v1 import Prb, PrbDocument, PrbFrontmatter
 from ...prb.tools._io import load_by_id as load_prb_by_id
@@ -160,7 +161,8 @@ def _update_req(id_: str, content: str, offset: int | None, limit: int | None) -
         with req_lock(id_):
             path, existing = load_req_by_id(base_dir, id_)
             spliced = splice_body(body_text(path), offset, limit, content)
-            body = Requirement.from_text(format_text(spliced))
+            with wrap_tool_errors(domain="req", tool="update", channel=BODY_CHANNEL):
+                body = Requirement.from_text(format_text(spliced))
             now = datetime.now().isoformat(timespec="microseconds")
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
@@ -169,7 +171,8 @@ def _update_req(id_: str, content: str, offset: int | None, limit: int | None) -
             write_req_file(path, new_frontmatter, spliced)
         return new_doc
 
-    body = Requirement.from_text(format_text(content))
+    with wrap_tool_errors(domain="req", tool="update", channel=BODY_CHANNEL):
+        body = Requirement.from_text(format_text(content))
 
     base_dir = req_base_dir()
     with req_lock(id_):
@@ -199,7 +202,8 @@ def _update_uc(id_: str, content: str, offset: int | None, limit: int | None) ->
         with uc_lock(id_):
             path, existing = load_uc_by_id(base_dir, id_)
             spliced = splice_body(body_text(path), offset, limit, content)
-            body = UseCase.from_text(format_text(spliced))
+            with wrap_tool_errors(domain="uc", tool="update", channel=BODY_CHANNEL):
+                body = UseCase.from_text(format_text(spliced))
             now = datetime.now().isoformat(timespec="microseconds")
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
@@ -208,7 +212,8 @@ def _update_uc(id_: str, content: str, offset: int | None, limit: int | None) ->
             write_uc_file(path, new_frontmatter, spliced)
         return new_doc
 
-    body = UseCase.from_text(format_text(content))
+    with wrap_tool_errors(domain="uc", tool="update", channel=BODY_CHANNEL):
+        body = UseCase.from_text(format_text(content))
 
     base_dir = uc_base_dir()
     with uc_lock(id_):
@@ -238,7 +243,8 @@ def _update_tsk(id_: str, content: str, offset: int | None, limit: int | None) -
         with tsk_lock(id_):
             path, existing = load_tsk_by_id(base_dir, id_)
             spliced = splice_body(body_text(path), offset, limit, content)
-            body = Task.from_text(format_text(spliced))
+            with wrap_tool_errors(domain="tsk", tool="update", channel=BODY_CHANNEL):
+                body = Task.from_text(format_text(spliced))
             now = datetime.now().isoformat(timespec="microseconds")
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
@@ -247,7 +253,8 @@ def _update_tsk(id_: str, content: str, offset: int | None, limit: int | None) -
             write_tsk_file(path, new_frontmatter, spliced)
         return new_doc
 
-    body = Task.from_text(format_text(content))
+    with wrap_tool_errors(domain="tsk", tool="update", channel=BODY_CHANNEL):
+        body = Task.from_text(format_text(content))
 
     base_dir = tsk_base_dir()
     with tsk_lock(id_):
@@ -277,7 +284,8 @@ def _update_qa(id_: str, content: str, offset: int | None, limit: int | None) ->
         with qa_lock(id_):
             path, existing = load_qa_by_id(base_dir, id_)
             spliced = splice_body(body_text(path), offset, limit, content)
-            body = Qa.from_text(format_text(spliced))
+            with wrap_tool_errors(domain="qa", tool="update", channel=BODY_CHANNEL):
+                body = Qa.from_text(format_text(spliced))
             now = datetime.now().isoformat(timespec="microseconds")
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
@@ -286,7 +294,8 @@ def _update_qa(id_: str, content: str, offset: int | None, limit: int | None) ->
             write_qa_file(path, new_frontmatter, spliced)
         return new_doc
 
-    body = Qa.from_text(format_text(content))
+    with wrap_tool_errors(domain="qa", tool="update", channel=BODY_CHANNEL):
+        body = Qa.from_text(format_text(content))
 
     base_dir = qa_base_dir()
     with qa_lock(id_):
@@ -316,7 +325,8 @@ def _update_prb(id_: str, content: str, offset: int | None, limit: int | None) -
         with prb_lock(id_):
             path, existing = load_prb_by_id(base_dir, id_)
             spliced = splice_body(body_text(path), offset, limit, content)
-            body = Prb.from_text(format_text(spliced))
+            with wrap_tool_errors(domain="prb", tool="update", channel=BODY_CHANNEL):
+                body = Prb.from_text(format_text(spliced))
             now = datetime.now().isoformat(timespec="microseconds")
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
@@ -325,7 +335,8 @@ def _update_prb(id_: str, content: str, offset: int | None, limit: int | None) -
             write_prb_file(path, new_frontmatter, spliced)
         return new_doc
 
-    body = Prb.from_text(format_text(content))
+    with wrap_tool_errors(domain="prb", tool="update", channel=BODY_CHANNEL):
+        body = Prb.from_text(format_text(content))
 
     base_dir = prb_base_dir()
     with prb_lock(id_):
@@ -355,7 +366,8 @@ def _update_gol(id_: str, content: str, offset: int | None, limit: int | None) -
         with gol_lock(id_):
             path, existing = load_gol_by_id(base_dir, id_)
             spliced = splice_body(body_text(path), offset, limit, content)
-            body = Goal.from_text(format_text(spliced))
+            with wrap_tool_errors(domain="gol", tool="update", channel=BODY_CHANNEL):
+                body = Goal.from_text(format_text(spliced))
             now = datetime.now().isoformat(timespec="microseconds")
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
@@ -364,7 +376,8 @@ def _update_gol(id_: str, content: str, offset: int | None, limit: int | None) -
             write_gol_file(path, new_frontmatter, spliced)
         return new_doc
 
-    body = Goal.from_text(format_text(content))
+    with wrap_tool_errors(domain="gol", tool="update", channel=BODY_CHANNEL):
+        body = Goal.from_text(format_text(content))
 
     base_dir = gol_base_dir()
     with gol_lock(id_):
@@ -394,7 +407,8 @@ def _update_rsk(id_: str, content: str, offset: int | None, limit: int | None) -
         with rsk_lock(id_):
             path, existing = load_rsk_by_id(base_dir, id_)
             spliced = splice_body(body_text(path), offset, limit, content)
-            body = Risk.from_text(format_text(spliced))
+            with wrap_tool_errors(domain="rsk", tool="update", channel=BODY_CHANNEL):
+                body = Risk.from_text(format_text(spliced))
             now = datetime.now().isoformat(timespec="microseconds")
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
@@ -403,7 +417,8 @@ def _update_rsk(id_: str, content: str, offset: int | None, limit: int | None) -
             write_rsk_file(path, new_frontmatter, spliced)
         return new_doc
 
-    body = Risk.from_text(format_text(content))
+    with wrap_tool_errors(domain="rsk", tool="update", channel=BODY_CHANNEL):
+        body = Risk.from_text(format_text(content))
 
     base_dir = rsk_base_dir()
     with rsk_lock(id_):
@@ -435,7 +450,8 @@ def _update_dec(id_: str, content: str, offset: int | None, limit: int | None) -
         with dec_lock(id_):
             path, existing = load_dec_by_id(base_dir, id_)
             spliced = splice_body(body_text(path), offset, limit, content)
-            body = Decision.from_text(format_text(spliced))
+            with wrap_tool_errors(domain="dec", tool="update", channel=BODY_CHANNEL):
+                body = Decision.from_text(format_text(spliced))
             now = datetime.now().isoformat(timespec="microseconds")
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
@@ -444,7 +460,8 @@ def _update_dec(id_: str, content: str, offset: int | None, limit: int | None) -
             write_dec_file(path, new_frontmatter, spliced)
         return new_doc
 
-    body = Decision.from_text(format_text(content))
+    with wrap_tool_errors(domain="dec", tool="update", channel=BODY_CHANNEL):
+        body = Decision.from_text(format_text(content))
 
     base_dir = dec_base_dir()
     with dec_lock(id_):
@@ -476,7 +493,8 @@ def _update_feat(id_: str, content: str, offset: int | None, limit: int | None) 
         with feat_lock(id_):
             path, existing = load_feat_by_id(base_dir, id_)
             spliced = splice_body(body_text(path), offset, limit, content)
-            body = Feature.from_text(format_text(spliced))
+            with wrap_tool_errors(domain="feat", tool="update", channel=BODY_CHANNEL):
+                body = Feature.from_text(format_text(spliced))
             now = datetime.now().isoformat(timespec="microseconds")
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
@@ -485,7 +503,8 @@ def _update_feat(id_: str, content: str, offset: int | None, limit: int | None) 
             write_feat_file(path, new_frontmatter, spliced)
         return new_doc
 
-    body = Feature.from_text(format_text(content))
+    with wrap_tool_errors(domain="feat", tool="update", channel=BODY_CHANNEL):
+        body = Feature.from_text(format_text(content))
 
     base_dir = feat_base_dir()
     with feat_lock(id_):
@@ -517,7 +536,8 @@ def _update_sop(id_: str, content: str, offset: int | None, limit: int | None) -
         with sop_lock(id_):
             path, existing = load_sop_by_id(base_dir, id_)
             spliced = splice_body(body_text(path), offset, limit, content)
-            body = Sop.from_text(format_text(spliced))
+            with wrap_tool_errors(domain="sop", tool="update", channel=BODY_CHANNEL):
+                body = Sop.from_text(format_text(spliced))
             now = datetime.now().isoformat(timespec="microseconds")
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
@@ -526,7 +546,8 @@ def _update_sop(id_: str, content: str, offset: int | None, limit: int | None) -
             write_sop_file(path, new_frontmatter, spliced)
         return new_doc
 
-    body = Sop.from_text(format_text(content))
+    with wrap_tool_errors(domain="sop", tool="update", channel=BODY_CHANNEL):
+        body = Sop.from_text(format_text(content))
 
     base_dir = sop_base_dir()
     with sop_lock(id_):
@@ -555,7 +576,8 @@ def _update_vcr(id_: str, content: str, offset: int | None, limit: int | None) -
         with vcr_lock(id_):
             path, existing = load_vcr_by_id(base_dir, id_)
             spliced = splice_body(body_text(path), offset, limit, content)
-            body = Vcr.from_text(format_text(spliced))
+            with wrap_tool_errors(domain="vcr", tool="update", channel=BODY_CHANNEL):
+                body = Vcr.from_text(format_text(spliced))
             now = datetime.now().isoformat(timespec="microseconds")
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
@@ -564,7 +586,8 @@ def _update_vcr(id_: str, content: str, offset: int | None, limit: int | None) -
             write_vcr_file(path, new_frontmatter, spliced)
         return new_doc
 
-    body = Vcr.from_text(format_text(content))
+    with wrap_tool_errors(domain="vcr", tool="update", channel=BODY_CHANNEL):
+        body = Vcr.from_text(format_text(content))
 
     base_dir = vcr_base_dir()
     with vcr_lock(id_):
@@ -698,10 +721,16 @@ def update(
         any of these cases.
     AssertionError
         The (spliced) body is structurally invalid (e.g. a range that
-        deletes the H1). Nothing is written.
+        deletes the H1). The message is prefixed with domain/tool/channel
+        context (e.g. ``"tsk update (body): ..."``) by the shared
+        tool-boundary wrapper (:func:`~biz.dfch.specmgr.models.md._errors.
+        wrap_tool_errors`), layered on top of the engine's own
+        field-path/line/snippet enrichment (feat-27-validation Phases
+        1/2). Nothing is written.
     pydantic.ValidationError
         A field/cross-field validation failure in the (spliced) body (e.g.
-        a range producing an out-of-vocabulary value). Nothing is written.
+        a range producing an out-of-vocabulary value) -- similarly
+        prefixed. Nothing is written.
     ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
     PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
     FeatNotFoundError / SopNotFoundError / VcrNotFoundError

@@ -50,3 +50,17 @@ Returns
 bool
     Always ``True`` on success.
 
+Raises
+------
+ValueError
+    ``full`` does not match whether ``content`` carries a frontmatter block (see above).
+AssertionError
+    A structural failure in ``content``. The message is prefixed with domain/tool/channel
+    context by the shared tool-boundary wrapper
+    (:func:`~biz.dfch.specmgr.models.md._errors.wrap_tool_errors`), layered on top of the
+    engine's own field-path/line/snippet enrichment (feat-27-validation Phases 1/2).
+pydantic.ValidationError
+    A field/cross-field validation failure in ``content`` -- similarly prefixed.
+yaml.YAMLError
+    ``full=True`` only: malformed frontmatter YAML -- similarly prefixed.
+

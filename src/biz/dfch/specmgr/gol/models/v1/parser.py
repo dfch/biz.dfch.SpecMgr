@@ -43,8 +43,7 @@ equivalent); both error channels are plain ``AssertionError`` /
 
 from __future__ import annotations
 
-import frontmatter  # requires the ``frontmatter`` extra from pyproject.toml
-
+from biz.dfch.specmgr.models.md._frontmatter_parse import parse_frontmatter
 from biz.dfch.specmgr.models.md._markdown import format_text
 
 from .document import GolDocument
@@ -71,11 +70,13 @@ def parse_gol(text: str) -> GolDocument:
         heading/list structure, or ``pydantic.ValidationError`` for a
         structurally-sound document whose field values (or cross-field
         invariants) fail schema validation -- see this module's docstring
-        for the full split.
+        for the full split. Raises ``yaml.YAMLError`` for malformed
+        frontmatter YAML -- both frontmatter error channels are enriched by
+        :func:`~biz.dfch.specmgr.models.md._frontmatter_parse.parse_frontmatter`
+        (feat-27-validation Phase 2).
     """
-    post = frontmatter.loads(text)  # type: ignore[union-attr]
-    fm = GolFrontmatter.model_validate(_stringify_metadata(post.metadata))
-    body = Goal.from_text(format_text(post.content))
+    fm, content = parse_frontmatter(text, GolFrontmatter, domain="gol", stringify_metadata=_stringify_metadata)
+    body = Goal.from_text(format_text(content))
     return GolDocument(frontmatter=fm, body=body)
 
 

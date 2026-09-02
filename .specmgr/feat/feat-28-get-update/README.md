@@ -206,15 +206,36 @@ changed), `specmgr mcp-docs` and `specmgr adr-toc` verified no-change;
 the ADR was then set to `accepted` via the specmgr MCP `set_status`
 tool (verified to land in this worktree's `docs/adr/`), `specmgr
 adr-toc` regenerated `docs/adr/README.md` (Status: accepted), and
-`feat-7`'s Task 0.32 was annotated complete. The complete test cycle
-is green (2784 tests) with all generated docs regenerated without
+`feat-7`'s Task 0.32 was annotated complete. Upstream `dev`
+(`63149b0`, feat-27-validation's actionable validation errors +
+feat-50-confluence) was merged into this branch for the pull
+request (conflicts in `update.py`, `CHANGELOG.md`, and the feat-7
+plan resolved by combining both sides); the complete test cycle is
+green (2951 tests) with all generated docs regenerated without
 drift on a second pass. The working tree is on branch
-`feat-28-get-update`; never pushed (the Phase 4 commit is made by the
-orchestrator after final verification).
+`feat-28-get-update`; pushed to `origin` with a pull request
+opened against `dev`.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-02 — Merged upstream dev (63149b0) for the pull request
+
+Upstream `dev` advanced two commits since the planning-time merge
+(`a66e37c` feat(27): actionable validation error messages, #52;
+`63149b0` feat(general): `confluence_fetch` rename/enhancements +
+`confluence_update` tool and MCP prompts, #53); merged it into this
+branch for the PR. Conflicts resolved by combining both sides:
+`general/tools/update.py` (our `offset`/`limit` splice call + dev's
+`wrap_tool_errors` validation wrapper in all eleven adapters),
+`CHANGELOG.md` `[Unreleased]` (both `Added` and both `Changed`
+bullet sets kept in Keep-a-Changelog order), the feat-7 plan
+(frontmatter date, all three Recent Updates entries), and the two
+generated files (`docs/GENERATED.md`, `docs/api/README.md`) via full
+regeneration (`specmgr docs`/`mcp-docs`/`adr-toc`). Post-merge gate
+green: 2951 tests OK, ruff format/check + vulture clean, docs
+regenerated without drift on a second pass.
 
 #### 2026-09-02 04:54:34+02:00 — Phase 4 Tasks 4.1–4.3 complete (docstrings, `AGENTS.md`, `CHANGELOG.md` moved to `offset`/`limit`; docs regenerated; ADR accepted; feat-7 annotated)
 

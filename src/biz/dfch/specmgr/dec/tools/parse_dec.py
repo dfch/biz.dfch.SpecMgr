@@ -29,6 +29,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from ...models.md._errors import wrap_tool_errors
 from ...server import mcp
 from ..models.v1 import DecDocument, parse_dec as _parse_dec
 
@@ -50,7 +51,7 @@ def parse_dec(path: str) -> DecDocument:
     run during parsing is the only validation pass there is -- there is
     no separate validation step. Any structural problem (unrecognized/misplaced
     heading, list the schema doesn't expect) or field/cross-field validation
-    failure is not caught or wrapped here: it propagates naturally as
+    failure propagates as
     ``AssertionError``/``pydantic.ValidationError``, so the MCP layer reports
     it as a tool error with the underlying message, giving the caller something
     concrete to self-correct from.  Similarly, file-access errors migrate as
@@ -66,6 +67,25 @@ def parse_dec(path: str) -> DecDocument:
     -------
     DecDocument
         The parsed, validated document.
+
+    Raises
+    ------
+    AssertionError
+        A structural problem in the parsed body (unrecognized/misplaced heading, a list the
+        schema doesn't expect, ...). The message is prefixed with domain/tool context (e.g.
+        ``"dec parse_dec: ..."``) by the shared tool-boundary wrapper
+        (:func:`~biz.dfch.specmgr.models.md._errors.wrap_tool_errors`), layered on top of the
+        engine's own field-path/line/snippet enrichment (feat-27-validation Phases 1/2).
+    pydantic.ValidationError
+        A field/cross-field validation failure -- similarly prefixed.
+    yaml.YAMLError
+        Malformed frontmatter YAML -- similarly prefixed, on top of the frontmatter-block
+        naming and document-relative line remap :mod:`~biz.dfch.specmgr.models.md.
+        _frontmatter_parse` already applies.
+    FileNotFoundError / PermissionError / OSError
+        A file-access failure reading ``path`` -- untouched by this wrapper (already
+        actionable; out of this feature's scope).
     """
     text = Path(path).read_text(encoding="utf-8")
-    return _parse_dec(text)
+    with wrap_tool_errors(domain="dec", tool="parse_dec"):
+        return _parse_dec(text)
