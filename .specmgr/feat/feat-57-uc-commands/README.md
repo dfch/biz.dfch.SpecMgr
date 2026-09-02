@@ -1,9 +1,9 @@
 ---
 created: '2026-09-02T14:59:42.990052'
 id: feat-57-uc-commands
-status: planning
+status: done
 type: feat
-updated: '2026-09-02T15:02:09.712022'
+updated: '2026-09-02T15:30:00.000000'
 version: 1.0.0
 ---
 
@@ -33,17 +33,17 @@ Adds a `create_uc`/`update_uc` MCP prompt pair to the `uc` domain, mirroring the
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: `create_uc`/`update_uc` prompts exist and are registered/discoverable the same way `create_req`/`update_req` are.
+- [x] ACC-001: `create_uc`/`update_uc` prompts exist and are registered/discoverable the same way `create_req`/`update_req` are.
 
-- [ ] ACC-002: `uc_create_instructions.md`/`uc_update_instructions.md` exist under `uc/data/`, loaded via `read_packaged_text`, matching req's structure/tone.
+- [x] ACC-002: `uc_create_instructions.md`/`uc_update_instructions.md` exist under `uc/data/`, loaded via `read_packaged_text`, matching req's structure/tone.
 
-- [ ] ACC-003: `server.py`'s docstring and `AGENTS.md` are updated; `specmgr docs`/`docs/MCP.md` regenerate cleanly without manual edits to `docs/MCP.md`.
+- [x] ACC-003: `server.py`'s docstring and `AGENTS.md` are updated; `specmgr docs`/`docs/MCP.md` regenerate cleanly without manual edits to `docs/MCP.md`.
 
-- [ ] ACC-004: The existing test suite passes, plus new tests cover the two new prompt functions (registration + instructions content substitution).
+- [x] ACC-004: The existing test suite passes, plus new tests cover the two new prompt functions (registration + instructions content substitution).
 
-- [ ] ACC-005: `ruff format --check`, `ruff check`, and `vulture` all pass with the new files included.
+- [x] ACC-005: `ruff format --check`, `ruff check`, and `vulture` all pass with the new files included.
 
-- [ ] ACC-006: `uc_create_instructions.md` and `uc_update_instructions.md` each contain a `set_classification(id, type="uc", classification)` reference consistent with the mention pattern already present in at least one already-updated sibling domain's instructions (e.g. req) once feat-56 has landed.
+- [x] ACC-006: `uc_create_instructions.md` and `uc_update_instructions.md` each contain a `set_classification(id, type="uc", classification)` reference consistent with the mention pattern already present in at least one already-updated sibling domain's instructions (e.g. req) once feat-56 has landed.
 
 ### Scope
 
@@ -83,9 +83,9 @@ This feature mirrors the `req/prompts/` pattern exactly: each prompt function is
 
 #### Phase 0: Pre-requisite -- feat-56 sync gate
 
-- [ ] Task 0.1: Confirm feat-56 (classification frontmatter field + generic `set_classification` tool) has been implemented and merged; do not proceed to Phase 1 until confirmed.
+- [x] Task 0.1: Confirm feat-56 (classification frontmatter field + generic `set_classification` tool) has been implemented and merged; do not proceed to Phase 1 until confirmed.
 
-- [ ] Task 0.2: Review one already-updated sibling domain's create/update instructions (e.g. req) for the exact `set_classification` mention wording/pattern to mirror.
+- [x] Task 0.2: Review one already-updated sibling domain's create/update instructions (e.g. req) for the exact `set_classification` mention wording/pattern to mirror.
 
 #### Phase 1: Instructions content
 
@@ -111,19 +111,58 @@ This feature mirrors the `req/prompts/` pattern exactly: each prompt function is
 
 #### Phase 4: Tests & verification
 
-- [ ] Task 4.1: Add unit tests for `create_uc`/`update_uc` prompt registration and content substitution, mirroring existing req prompt tests.
+- [x] Task 4.1: Add unit tests for `create_uc`/`update_uc` prompt registration and content substitution, mirroring existing req prompt tests.
 
-- [ ] Task 4.2: Run the full lint/test suite (`ruff format --check`, `ruff check`, `vulture`, `unittest discover`) and fix any failures.
+- [x] Task 4.2: Run the full lint/test suite (`ruff format --check`, `ruff check`, `vulture`, `unittest discover`) and fix any failures.
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-09-02**: Phase 0 (feat-56 sync gate), Phase 1 (instructions content), Phase 2 (prompt modules), and Phase 3 (documentation & registration) are done. `uc/prompts/create_uc.py`/`update_uc.py`/`__init__.py` exist, mirroring `req/prompts/`'s shape exactly, and `uc/__init__.py` imports/re-exports `prompts` alongside `resources, tools`. Both prompts are confirmed registered on the shared `mcp` app (`await mcp.list_prompts()` includes `create_uc`/`update_uc`). `server.py`'s docstring and `AGENTS.md` now describe `uc/prompts/`, and `docs/api/`/`docs/GENERATED.md`/`docs/MCP.md` have been regenerated. Phase 4 (tests & verification) is next.
+**As of 2026-09-02**: Done -- feature complete. All five phases (Phase 0 feat-56 sync gate, Phase 1 instructions content, Phase 2 prompt modules, Phase 3 documentation & registration, Phase 4 tests & verification) are finished. `uc/prompts/create_uc.py`/`update_uc.py`/`__init__.py` exist, mirroring `req/prompts/`'s shape exactly, and `uc/__init__.py` imports/re-exports `prompts` alongside `resources, tools`. Both prompts are confirmed registered on the shared `mcp` app (`await mcp.list_prompts()` includes `create_uc`/`update_uc`). `server.py`'s docstring and `AGENTS.md` describe `uc/prompts/`, and `docs/api/`/`docs/GENERATED.md`/`docs/MCP.md` are regenerated and drift-free. New unit tests `tests/uc/prompts/test_create_uc.py`/`test_update_uc.py` (19 tests total) mirror the req prompt tests, adapted to UC's actual instructions content, and include the explicit `set_classification(id, type="uc", classification)` assertions ACC-006 requires. Full quality gate (`ruff format --check`, `ruff check`, `vulture`, `unittest discover` -- 3056 tests) passes. All Acceptance Criteria (ACC-001..006) confirmed.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-02 00:00:00.000Z — Phase 4: Tests & verification (feature complete)
+
+Added `tests/uc/prompts/__init__.py` (mirroring `tests/req/prompts/__init__.py`,
+empty package marker) and `tests/uc/prompts/test_create_uc.py`/
+`test_update_uc.py`, 1:1 ports of `tests/req/prompts/test_create_req.py`/
+`test_update_req.py` adapted to UC's actual packaged instructions content
+(read from `uc/data/uc_create_instructions.md`/`uc_update_instructions.md`
+directly, not guessed): mentions of `list_uc`, `specmgr://uc/template`/
+`example`/`schema`, `create_uc(content)`, tool-sequence ordering, the
+mandatory UC section names (`Goal in Context`, `Scope`, `Level`,
+`Preconditions`, `Success End Condition`, `Primary Actor`, `Trigger`), the
+`update_uc` prompt mention plus `update(id, type="uc", content)`/
+`set_status(id, type="uc", status)` for create_uc's "later revisions"
+test, `get_uc(id)`/`get_uc(id, raw=True)`, the line-range flow markers
+(`1-based line to start at and how many`, `offset = N+1`, `byte-identical`),
+the whole-body-replace caveat, `` `update` never accepts or changes `status` ``,
+and the packaged-data-file-read-fresh-on-every-call + missing-file-raises-
+`FileNotFoundError` tests via `mock.patch.object(_packaged_data,
+"packaged_data_path", return_value=...)`. Per this phase's explicit
+instructions (and ACC-006), added a dedicated
+`test_mentions_set_classification_tool` assertion in `test_update_uc.py`
+and a `set_classification(id, type="uc", classification)` assertion in
+`test_create_uc.py`'s "later revisions" test -- neither of which req's own
+test files carry, since req predates feat-56. All 19 new tests pass.
+Ran the full quality gate: `ruff format --check` (1533 files already
+formatted), `ruff check` (all checks passed), `vulture src/ whitelist.py
+--min-confidence 60` (no output, no new dead code), and
+`python -m unittest discover -v -s tests -t . -p "test_*.py"` (3056 tests,
+OK, ~87s). Confirmed `await server.mcp.list_prompts()` still lists both
+`create_uc`/`update_uc` (ACC-001). Re-ran `specmgr docs`/`specmgr mcp-docs`:
+`docs/MCP.md` and `docs/api/` showed zero diff (already correct from Phase 3,
+ACC-003), only `docs/GENERATED.md`'s "Test files" count bumped 334 -> 336 to
+reflect the two new test files, which is expected, not drift. Confirmed
+ACC-006 by inspecting both instructions files directly: each already
+contains a `set_classification(id, type="uc", classification)` line
+(Phase 1), now also locked in by the new tests. All six Acceptance Criteria
+(ACC-001..006) hold. This is the final phase -- feature complete, nothing
+committed (orchestrator's responsibility).
 
 #### 2026-09-02 00:00:00.000Z — Phase 3: Documentation & registration
 
