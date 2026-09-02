@@ -3,7 +3,7 @@
 Auto-generated from the live `biz.dfch.specmgr.server:mcp` registration --
 do not edit by hand, run `specmgr mcp-docs` instead (see `AGENTS.md`).
 
-39 resource(s), 1 resource template(s), 94 tool(s), 29 prompt(s).
+39 resource(s), 1 resource template(s), 95 tool(s), 29 prompt(s).
 
 ## Table of Contents
 
@@ -424,6 +424,7 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`parse_tsk`](#tool-parse_tsk) | Parse a task list markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.tsk.models.v1.TskDocument`. |
 | [`parse_uc`](#tool-parse_uc) | Parse a use-case markdown file (YAML frontmatter + body) from disk into a structured document. |
 | [`parse_vcr`](#tool-parse_vcr) | Parse a verification case record markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.vcr.models.v1.VcrDocument`. |
+| [`set_classification`](#tool-set_classification) | Replace the free-text `classification` frontmatter field of an existing document across the eleven whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr; `adr` is not supported), also bumping `updated` and leaving the body and every other frontmatter field untouched. `classification` is fully free-text -- no closed vocabulary; a blank or whitespace-only value clears it back to `None`/absent. No `create_*` tool accepts a `classification` argument at all -- this is the sole classification-change entry point. An invalid `id` (path-injection attempt or wrong format for `type`) or an unsupported `type` is a `ValueError` raised before any file access. |
 | [`set_status`](#tool-set_status) | Replace the status of an existing document across all twelve domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, adr), also bumping `updated` (the eleven whole-body domains) and leaving the body untouched. The new `status` must be one of the domain's own closed vocabulary values (see the domain's `XFrontmatter.status` field); anything else raises `pydantic.ValidationError` and writes nothing. `superseded_by` is accepted only for `type="adr"` -- it composes the status as "superseded by {superseded_by}"; with any other `type` it is a `ValueError`. Neither `create_*` nor the generic `update` tool accepts a `status` argument at all -- this is the sole status-change entry point. An invalid `id` (path-injection attempt or wrong format for `type`) is a `ValueError` raised before any file access. |
 | [`update`](#tool-update) | Whole-body or line-range replace of an existing document's content across the eleven whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr), preserving its id/type/status/created/version; only `updated` changes. With no `offset`/`limit`, `content` is the full replacement body (body markdown only, no frontmatter block). With `offset`, `content` replaces the body line(s) starting at 1-based line `offset` of the current on-disk body: `limit` is the number of lines to replace (`offset`..`offset+limit-1`; `limit` omitted = through the last body line, `limit=0` = pure insert), and `offset=N+1` (one past the last body line) appends after it; the spliced result is validated as a whole document before anything is written. `status` is never settable -- use the generic `set_status` tool. An invalid `id` (path-injection attempt or wrong format for `type`) is a `ValueError` raised before any file access. |
 | [`update_frontmatter`](#tool-update_frontmatter) | Whole-object replace of an ADR's frontmatter (plan §3), preserving its existing id. |
@@ -1187,6 +1188,18 @@ Parse a verification case record markdown file (YAML frontmatter + body) from di
 | Parameter | Type | Required |
 | --- | --- | --- |
 | `path` | `string` | Yes |
+
+### Tool: set_classification
+
+**Set document classification**
+
+Replace the free-text `classification` frontmatter field of an existing document across the eleven whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr; `adr` is not supported), also bumping `updated` and leaving the body and every other frontmatter field untouched. `classification` is fully free-text -- no closed vocabulary; a blank or whitespace-only value clears it back to `None`/absent. No `create_*` tool accepts a `classification` argument at all -- this is the sole classification-change entry point. An invalid `id` (path-injection attempt or wrong format for `type`) or an unsupported `type` is a `ValueError` raised before any file access.
+
+| Parameter | Type | Required |
+| --- | --- | --- |
+| `id` | `string` | Yes |
+| `type` | `string (enum: req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr)` | Yes |
+| `classification` | `string` | Yes |
 
 ### Tool: set_status
 
