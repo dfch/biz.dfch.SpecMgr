@@ -28,7 +28,7 @@ from __future__ import annotations
 import textwrap
 import unittest
 
-from biz.dfch.specmgr.models.md._markdown import format_markdown_document
+from biz.dfch.specmgr.models.md._markdown import format_markdown_document, format_text
 
 
 class TestFormatMarkdownDocument(unittest.TestCase):
@@ -135,6 +135,54 @@ class TestFormatMarkdownDocument(unittest.TestCase):
         format_markdown_document(original)
 
         self.assertEqual(original, original_copy)
+
+    def test_thematic_break_dashes_rendered_as_dashes(self) -> None:
+        unformatted = "Text\n\n---\n\nMore text.\n"
+
+        formatted_text = format_text(unformatted)
+
+        self.assertIn("\n---\n", formatted_text)
+        self.assertNotIn("_" * 70, formatted_text)
+
+    def test_thematic_break_asterisks_rendered_as_dashes(self) -> None:
+        unformatted = "Text\n\n***\n\nMore text.\n"
+
+        formatted_text = format_text(unformatted)
+
+        self.assertIn("\n---\n", formatted_text)
+        self.assertNotIn("_" * 70, formatted_text)
+
+    def test_thematic_break_underscores_rendered_as_dashes(self) -> None:
+        unformatted = "Text\n\n___\n\nMore text.\n"
+
+        formatted_text = format_text(unformatted)
+
+        self.assertIn("\n---\n", formatted_text)
+        self.assertNotIn("_" * 70, formatted_text)
+
+    def test_document_thematic_break_rendered_as_dashes(self) -> None:
+        unformatted = textwrap.dedent(
+            """\
+            ---
+            id: test
+            type: adr
+            ---
+
+            # Title
+
+            Some text.
+
+            ***
+
+            More text.
+            """
+        )
+
+        changed, formatted_text = format_markdown_document(unformatted)
+
+        self.assertTrue(changed)
+        self.assertIn("\n---\n", formatted_text)
+        self.assertNotIn("_" * 70, formatted_text)
 
 
 if __name__ == "__main__":

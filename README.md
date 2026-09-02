@@ -115,6 +115,9 @@ tool call, so hand-editing a file between calls is safe.
   configurable via the `SPECMGR_DOCS_DIR` environment variable (default
   `docs`), with each type's own subdirectory appended automatically (e.g.
   `docs/req` for requirements).
+- Features (FEAT): base directory defaults to `.specmgr/feat`, configurable
+  via the `SPECMGR_FEAT_DIR` environment variable. This is FEAT-specific,
+  like ADRs above, and not shared via `SPECMGR_DOCS_DIR`.
 - The `confluence_fetch` tool (renamed from `webfetch`; bearer-authenticated,
   URL-filtered HTTP GET, intended primarily for Confluence instances using
   PAT authentication) requires two environment variables:
@@ -122,6 +125,16 @@ tool call, so hand-editing a file between calls is safe.
   case-insensitively start with) and `SPECMGR_CONFLUENCE_BEARER` (the
   bearer token sent as the `Authorization` header). Both must be set or the
   tool raises an error; there are no defaults.
+
+All of the base directories above are resolved relative to the MCP server
+process's own current working directory unless overridden by their env var
+(or, for the shared `SPECMGR_DOCS_DIR` root, unless the server was started
+with `--directory`/`uv run --directory` targeting your project). If that
+CWD is not what you expect — e.g. after adding `specmgr` to an MCP host
+per [Add to OpenCode](#add-to-opencode) below — read the `specmgr://config`
+resource to see every domain's actually-resolved absolute base directory
+and whether its env var is explicitly set, without needing shell access to
+the server's host.
 
 ### Start the MCP Server
 
@@ -158,21 +171,62 @@ To add the `specmgr` MCP server to your OpenCode configuration:
 
 1. Open your OpenCode config file (typically `~/.config/opencode/opencode.json` or `~/.config/opencode/opencode.jsonc`)
 
-2. Add the following configuration to the `mcp` section (and use it via `stdio`):
+2. Add a configuration to the `mcp` section (and use it via `stdio`).
 
-```json
-"specmgr": {
-  "type": "local",
-  "enabled": true,
-  "command": [
-    "uvx",
-    "--from",
-    "biz-dfch-specmgr[mcp]",
-    "specmgr",
-    "mcp"
-  ]
-}
-```
+   **A bare `uvx --from biz-dfch-specmgr[mcp] specmgr mcp` command with no
+   `--directory` and no `SPECMGR_*_DIR` env vars is unsafe**: the server
+   resolves every base directory (`docs`, `docs/adr`, `.specmgr/feat`, ...)
+   relative to its own process's current working directory, which an MCP
+   host is free to launch from anywhere — not necessarily your project
+   root. Pick one of the two options below instead of the plain form:
+
+   **Option A — pin the working directory with `--directory`** (a global
+   `uv`/`uvx` flag, so it must come *before* `--from`):
+
+   ```json
+   "specmgr": {
+     "type": "local",
+     "enabled": true,
+     "command": [
+       "uvx",
+       "--directory",
+       "<path-to-your-project>",
+       "--from",
+       "biz-dfch-specmgr[mcp]",
+       "specmgr",
+       "mcp"
+     ]
+   }
+   ```
+
+   **Option B — set the directory env vars explicitly** instead of (or in
+   addition to) `--directory`:
+
+   ```json
+   "specmgr": {
+     "type": "local",
+     "enabled": true,
+     "command": [
+       "uvx",
+       "--from",
+       "biz-dfch-specmgr[mcp]",
+       "specmgr",
+       "mcp"
+     ],
+     "environment": {
+       "SPECMGR_DOCS_DIR": "<path-to-your-project>/docs",
+       "SPECMGR_ADR_DIR": "<path-to-your-project>/docs/adr",
+       "SPECMGR_FEAT_DIR": "<path-to-your-project>/.specmgr/feat"
+     }
+   }
+   ```
+
+   Either option (or both together) makes the resolved base directories
+   independent of wherever the MCP host happens to launch the server
+   from. Whichever you choose, you can confirm it worked by reading the
+   `specmgr://config` resource, which reports the actually-resolved
+   absolute base directory for every domain and whether its env var is
+   explicitly set.
 
 3. Save the file and restart OpenCode
 

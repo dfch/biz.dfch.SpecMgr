@@ -15,38 +15,21 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Pydantic models used by the ``biz-dfch-specmgr`` MCP server."""
+"""MCP prompt wrappers for Use Cases (feat-57-uc-commands).
 
-from .adr import (
-    CURRENT_SCHEMA_VERSION,
-    SCHEMA_MAJOR_VERSION,
-    Adr,
-    AdrBody,
-    AdrFrontmatter,
-    AdrOption,
-    AdrParseError,
-    AdrSummary,
-    parse_adr,
-)
-from .config_info import ConfigInfo, DomainConfig
-from .iso25010 import Characteristic, Iso25010, SubCharacteristic, parse_iso25010
-from .version_info import VersionInfo
+Each returns plain instructional text (auto-wrapped as a single
+``UserMessage`` by the SDK) that guides an LLM through driving the
+existing ``uc/tools/``/``uc/resources/`` surface in the right order --
+one module per prompt, mirroring ``req/prompts/``'s own one-module-per-
+prompt split. Import this package to register all UC prompts at once::
+
+    from biz.dfch.specmgr.uc import prompts  # noqa: F401 (side-effects only)
+"""
+
+from .create_uc import create_uc
+from .update_uc import update_uc
 
 __all__ = [
-    "CURRENT_SCHEMA_VERSION",
-    "SCHEMA_MAJOR_VERSION",
-    "Adr",
-    "AdrBody",
-    "AdrFrontmatter",
-    "AdrOption",
-    "AdrParseError",
-    "AdrSummary",
-    "Characteristic",
-    "ConfigInfo",
-    "DomainConfig",
-    "Iso25010",
-    "SubCharacteristic",
-    "VersionInfo",
-    "parse_adr",
-    "parse_iso25010",
+    "create_uc",
+    "update_uc",
 ]

@@ -222,6 +222,12 @@ verification
 appendix
 definitions_and_acronyms
 
+# config (feat-51-mcp-cwd Phase 1): `DomainConfig` fields read only via
+# (de)serialization; nothing in `src/` accesses them as plain attributes yet.
+env_var
+env_var_set
+
 # --- MCP `@mcp.resource(...)`/`@mcp.tool()` entry points -------------------------
 # Invoked by the MCP framework once registered, not called directly in `src/`.
 version_info
+config_info

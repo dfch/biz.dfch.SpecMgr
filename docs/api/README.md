@@ -110,6 +110,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general.prompts.confluence_fetch`](biz.dfch.specmgr.general.prompts.confluence_fetch.md) — ``@mcp.prompt()``: confluence_fetch (feat-50-confluence Phase 8, REQ-013/ACC-012).
 - [`biz.dfch.specmgr.general.prompts.confluence_update`](biz.dfch.specmgr.general.prompts.confluence_update.md) — ``@mcp.prompt()``: confluence_update (feat-50-confluence Phase 8, REQ-012/ACC-011).
 - [`biz.dfch.specmgr.general.resources`](biz.dfch.specmgr.general.resources.md) — MCP resource registrations that are not specific to any single document
+- [`biz.dfch.specmgr.general.resources.config`](biz.dfch.specmgr.general.resources.config.md) — Resource: specmgr://config -- resolved base directory diagnostics (feat-51-mcp-cwd).
 - [`biz.dfch.specmgr.general.resources.dtais`](biz.dfch.specmgr.general.resources.dtais.md) — Resource: specmgr://dtais -- the DTAIS verification-method vocabulary (feat-33-vcr Task 3.3).
 - [`biz.dfch.specmgr.general.resources.iso25010`](biz.dfch.specmgr.general.resources.iso25010.md) — Resource: specmgr://iso25010 (Task 0.8.3).
 - [`biz.dfch.specmgr.general.resources.rasci`](biz.dfch.specmgr.general.resources.rasci.md) — Resource: specmgr://rasci (feat-30 Task 3.5, REQ-011).
@@ -162,6 +163,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.models.adr.v1.parser`](biz.dfch.specmgr.models.adr.v1.parser.md) — Parse an on-disk ADR ``.md`` file into an :class:`Adr` (plan §7, §10 item 2).
 - [`biz.dfch.specmgr.models.adr.v1.renderer`](biz.dfch.specmgr.models.adr.v1.renderer.md) — Render an :class:`Adr` back into the canonical on-disk ``.md`` text (plan §7, §10 item 2).
 - [`biz.dfch.specmgr.models.adr.v1.summary`](biz.dfch.specmgr.models.adr.v1.summary.md) — Pydantic model for one line of ADR listing output (plan §8, §9a).
+- [`biz.dfch.specmgr.models.config_info`](biz.dfch.specmgr.models.config_info.md) — Pydantic models for the ``specmgr://config`` resource (feat-51-mcp-cwd REQ-001).
 - [`biz.dfch.specmgr.models.iso25010`](biz.dfch.specmgr.models.iso25010.md) — Pydantic schema and parser for the ISO/IEC 25010:2023 product quality
 - [`biz.dfch.specmgr.models.md`](biz.dfch.specmgr.models.md.md) — Markdown base models.
 - [`biz.dfch.specmgr.models.md._errors`](biz.dfch.specmgr.models.md._errors.md) — Shared tool-boundary error enrichment (feat-27-validation Phase 3, Task 3.1).
@@ -415,6 +417,9 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.uc.models.v2.parser`](biz.dfch.specmgr.uc.models.v2.parser.md) — Parse raw use-case ``.md`` text into a :class:`UcDocument` (Task 1.8).
 - [`biz.dfch.specmgr.uc.models.v2.summary`](biz.dfch.specmgr.uc.models.v2.summary.md) — Pydantic model for one line of UC listing output (Task 3.1.6).
 - [`biz.dfch.specmgr.uc.models.v2.use_case`](biz.dfch.specmgr.uc.models.v2.use_case.md) — No documentation available.
+- [`biz.dfch.specmgr.uc.prompts`](biz.dfch.specmgr.uc.prompts.md) — MCP prompt wrappers for Use Cases (feat-57-uc-commands).
+- [`biz.dfch.specmgr.uc.prompts.create_uc`](biz.dfch.specmgr.uc.prompts.create_uc.md) — ``@mcp.prompt()``: create_uc (feat-57-uc-commands).
+- [`biz.dfch.specmgr.uc.prompts.update_uc`](biz.dfch.specmgr.uc.prompts.update_uc.md) — ``@mcp.prompt()``: update_uc (feat-57-uc-commands).
 - [`biz.dfch.specmgr.uc.resources`](biz.dfch.specmgr.uc.resources.md) — MCP resource registrations for Use Case (UC) documents (Task 3.1.4, 3.1.6).
 - [`biz.dfch.specmgr.uc.resources.uc_example`](biz.dfch.specmgr.uc.resources.uc_example.md) — Resource: specmgr://uc/example (Task 3.1.4).
 - [`biz.dfch.specmgr.uc.resources.uc_schema`](biz.dfch.specmgr.uc.resources.uc_schema.md) — Resource: specmgr://uc/schema (Task 3.1.4).
