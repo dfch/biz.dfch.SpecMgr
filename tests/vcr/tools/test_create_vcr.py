@@ -29,9 +29,10 @@ from pydantic import ValidationError
 
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.models.md import CURRENT_SCHEMA_VERSION
-from biz.dfch.specmgr.vcr.models.v1 import VcrDocument, parse_vcr
+from biz.dfch.specmgr.vcr.models.v1 import VcrFrontmatter, parse_vcr
 from biz.dfch.specmgr.vcr.tools._paths import vcr_base_dir
 from biz.dfch.specmgr.vcr.tools.create_vcr import create_vcr
+from biz.dfch.specmgr.vcr.tools.get_vcr import get_vcr
 
 _MINIMAL_BODY = textwrap.dedent(
     """\
@@ -96,30 +97,32 @@ class TestCreateVcr(TempVcrDirTestCase):
         """create_vcr must build the entire frontmatter itself (id/type/status/timestamps/version)."""
         result = create_vcr(_MINIMAL_BODY)
 
-        self.assertIsInstance(result, VcrDocument)
-        self.assertIsNotNone(result.frontmatter.id)
-        self.assertEqual(result.frontmatter.type, "vcr")
-        self.assertEqual(result.frontmatter.status, "draft")
-        self.assertIsNotNone(result.frontmatter.created)
-        self.assertEqual(result.frontmatter.created, result.frontmatter.updated)
-        self.assertEqual(result.frontmatter.version, CURRENT_SCHEMA_VERSION)
-        self.assertEqual(result.body.text, "Sample Verification Case")
+        self.assertIsInstance(result, VcrFrontmatter)
+        self.assertIsNotNone(result.id)
+        self.assertEqual(result.type, "vcr")
+        self.assertEqual(result.status, "draft")
+        self.assertIsNotNone(result.created)
+        self.assertEqual(result.created, result.updated)
+        self.assertEqual(result.version, CURRENT_SCHEMA_VERSION)
+
+        fetched = get_vcr(result.id)
+        self.assertEqual(fetched.body.text, "Sample Verification Case")
 
     def test_writes_expected_filename(self) -> None:
         """create_vcr must write f'vcr-{id}-{slug}.md' under the verification case record base dir."""
         result = create_vcr(_MINIMAL_BODY)
 
-        expected_path = vcr_base_dir() / f"vcr-{result.frontmatter.id}-sample-verification-case.md"
+        expected_path = vcr_base_dir() / f"vcr-{result.id}-sample-verification-case.md"
         self.assertTrue(expected_path.exists())
 
     def test_written_file_round_trips_via_parse_vcr(self) -> None:
         """The written file must parse back into an equivalent document."""
         result = create_vcr(_MINIMAL_BODY)
 
-        expected_path = vcr_base_dir() / f"vcr-{result.frontmatter.id}-sample-verification-case.md"
+        expected_path = vcr_base_dir() / f"vcr-{result.id}-sample-verification-case.md"
         on_disk = parse_vcr(expected_path.read_text(encoding="utf-8"))
 
-        self.assertEqual(on_disk.frontmatter.id, result.frontmatter.id)
+        self.assertEqual(on_disk.frontmatter.id, result.id)
         self.assertEqual(on_disk.frontmatter.status, "draft")
         self.assertEqual(on_disk.body.text, "Sample Verification Case")
 

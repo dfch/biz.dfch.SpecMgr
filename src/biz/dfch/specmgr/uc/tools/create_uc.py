@@ -41,7 +41,7 @@ from ...models.md import CURRENT_SCHEMA_VERSION
 from ...models.md._errors import BODY_CHANNEL, wrap_tool_errors
 from ...models.md._markdown import format_text
 from ...server import mcp
-from ..models.v2 import UcDocument, UcFrontmatter, UseCase
+from ..models.v2 import UcFrontmatter, UseCase
 from ._paths import ensure_uc_base_dir
 from ._write import write_uc_file
 
@@ -52,10 +52,12 @@ from ._write import write_uc_file
     description=(
         "Create a new use case: assigns a fresh id, derives a filename from the body's "
         "H1 title, validates the submitted body-only content, and writes the new document "
-        "to the use-case base directory."
+        "to the use-case base directory. Returns the newly created document's frontmatter "
+        "only (no body); use the corresponding `get_uc` tool to fetch the full document "
+        "afterward."
     ),
 )
-def create_uc(content: str) -> UcDocument:
+def create_uc(content: str) -> UcFrontmatter:
     """Create and write a new use-case document.
 
     ``content`` is body markdown only (the ``UseCase`` H1 and its sections)
@@ -84,9 +86,10 @@ def create_uc(content: str) -> UcDocument:
 
     Returns
     -------
-    UcDocument
-        The newly created document, with its assigned id in
-        ``frontmatter.id``.
+    UcFrontmatter
+        The newly created document's frontmatter only (no body), with its
+        assigned id in ``.id``. Use the corresponding ``get_uc`` tool to
+        fetch the full document afterward.
 
     Raises
     ------
@@ -113,9 +116,7 @@ def create_uc(content: str) -> UcDocument:
         updated=now,
         version=CURRENT_SCHEMA_VERSION,
     )
-    new_doc = UcDocument(frontmatter=new_frontmatter, body=body)
-
     filename = f"uc-{new_id}-{slugify(body.text)}.md"
     base_dir = ensure_uc_base_dir()
     write_uc_file(base_dir / filename, new_frontmatter, content)
-    return new_doc
+    return new_frontmatter

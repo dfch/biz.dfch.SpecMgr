@@ -29,9 +29,10 @@ from pydantic import ValidationError
 
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.models.md import CURRENT_SCHEMA_VERSION
-from biz.dfch.specmgr.rsk.models.v1 import RskDocument, parse_rsk
+from biz.dfch.specmgr.rsk.models.v1 import RskFrontmatter, parse_rsk
 from biz.dfch.specmgr.rsk.tools._paths import rsk_base_dir
 from biz.dfch.specmgr.rsk.tools.create_rsk import create_rsk
+from biz.dfch.specmgr.rsk.tools.get_rsk import get_rsk
 
 _MINIMAL_BODY = textwrap.dedent(
     """\
@@ -99,30 +100,32 @@ class TestCreateRsk(TempRskDirTestCase):
         """create_rsk must build the entire frontmatter itself (id/type/status/timestamps/version)."""
         result = create_rsk(_MINIMAL_BODY)
 
-        self.assertIsInstance(result, RskDocument)
-        self.assertIsNotNone(result.frontmatter.id)
-        self.assertEqual(result.frontmatter.type, "rsk")
-        self.assertEqual(result.frontmatter.status, "open")
-        self.assertIsNotNone(result.frontmatter.created)
-        self.assertEqual(result.frontmatter.created, result.frontmatter.updated)
-        self.assertEqual(result.frontmatter.version, CURRENT_SCHEMA_VERSION)
-        self.assertEqual(result.body.text, "Sample Risk")
+        self.assertIsInstance(result, RskFrontmatter)
+        self.assertIsNotNone(result.id)
+        self.assertEqual(result.type, "rsk")
+        self.assertEqual(result.status, "open")
+        self.assertIsNotNone(result.created)
+        self.assertEqual(result.created, result.updated)
+        self.assertEqual(result.version, CURRENT_SCHEMA_VERSION)
+
+        fetched = get_rsk(result.id)
+        self.assertEqual(fetched.body.text, "Sample Risk")
 
     def test_writes_expected_filename(self) -> None:
         """create_rsk must write f'rsk-{id}-{slug}.md' under the risk base dir."""
         result = create_rsk(_MINIMAL_BODY)
 
-        expected_path = rsk_base_dir() / f"rsk-{result.frontmatter.id}-sample-risk.md"
+        expected_path = rsk_base_dir() / f"rsk-{result.id}-sample-risk.md"
         self.assertTrue(expected_path.exists())
 
     def test_written_file_round_trips_via_parse_rsk(self) -> None:
         """The written file must parse back into an equivalent document."""
         result = create_rsk(_MINIMAL_BODY)
 
-        expected_path = rsk_base_dir() / f"rsk-{result.frontmatter.id}-sample-risk.md"
+        expected_path = rsk_base_dir() / f"rsk-{result.id}-sample-risk.md"
         on_disk = parse_rsk(expected_path.read_text(encoding="utf-8"))
 
-        self.assertEqual(on_disk.frontmatter.id, result.frontmatter.id)
+        self.assertEqual(on_disk.frontmatter.id, result.id)
         self.assertEqual(on_disk.frontmatter.status, "open")
         self.assertEqual(on_disk.body.text, "Sample Risk")
         self.assertEqual(on_disk.body.initial_assessment.level, "high")

@@ -43,7 +43,7 @@ from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.general.tools.delete import delete
 from biz.dfch.specmgr.general.tools.set_status import set_status
 from biz.dfch.specmgr.general.tools.update import update
-from biz.dfch.specmgr.prb.models.v1 import PrbDocument, parse_prb
+from biz.dfch.specmgr.prb.models.v1 import PrbDocument, PrbFrontmatter, parse_prb
 from biz.dfch.specmgr.prb.tools._paths import PrbNotFoundError, find_prb_path, prb_base_dir
 from biz.dfch.specmgr.prb.tools.create_prb import create_prb
 from biz.dfch.specmgr.prb.tools.get_prb import get_prb
@@ -126,23 +126,23 @@ class TestPrbLifecycleIntegration(TempPrbDirTestCase):
 
     def test_create_update_set_status_get_list_delete_roundtrip(self) -> None:
         """create_prb -> update -> set_status -> get_prb -> list_prb -> delete (generic, type="prb"), live."""
-        # 1. create_prb: a freshly created document must be a PrbDocument in status "draft".
+        # 1. create_prb: a freshly created document must be a PrbFrontmatter in status "draft".
         created = create_prb(_INITIAL_BODY)
-        self.assertIsInstance(created, PrbDocument)
-        self.assertEqual(created.frontmatter.status, "draft")
-        self.assertEqual(created.frontmatter.type, "prb")
-        self.assertIsNotNone(created.frontmatter.id)
-        self.assertEqual(created.frontmatter.created, created.frontmatter.updated)
-        prb_id = created.frontmatter.id
+        self.assertIsInstance(created, PrbFrontmatter)
+        self.assertEqual(created.status, "draft")
+        self.assertEqual(created.type, "prb")
+        self.assertIsNotNone(created.id)
+        self.assertEqual(created.created, created.updated)
+        prb_id = created.id
         assert prb_id is not None
 
         # 2. update: whole-body replace must preserve id/type/created, bump updated.
         updated = update(prb_id, "prb", _REVISED_BODY)
-        self.assertEqual(updated.id, created.frontmatter.id)
-        self.assertEqual(updated.type, created.frontmatter.type)
-        self.assertEqual(updated.created, created.frontmatter.created)
+        self.assertEqual(updated.id, created.id)
+        self.assertEqual(updated.type, created.type)
+        self.assertEqual(updated.created, created.created)
         self.assertEqual(updated.status, "draft")
-        self.assertNotEqual(updated.updated, created.frontmatter.updated)
+        self.assertNotEqual(updated.updated, created.updated)
         after_update = get_prb(prb_id)
         self.assertIn("Android", after_update.body.current_state.question_3.text)  # type: ignore[union-attr]
         self.assertIsNotNone(after_update.body.impact)

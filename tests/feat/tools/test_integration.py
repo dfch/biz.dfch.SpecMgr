@@ -55,7 +55,7 @@ from unittest import mock
 import frontmatter
 from pydantic import ValidationError
 
-from biz.dfch.specmgr.feat.models.v1 import FeatDocument
+from biz.dfch.specmgr.feat.models.v1 import FeatFrontmatter
 from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR, FeatNotFoundError, README_FILENAME, feat_base_dir
 from biz.dfch.specmgr.feat.tools.create_feat import create_feat
 from biz.dfch.specmgr.feat.tools.get_feat import get_feat
@@ -185,17 +185,17 @@ class TestFeatLifecycleIntegration(TempFeatDirTestCase):
         self.assertEqual(initial_page.total, 0)
         self.assertEqual(initial_page.results, [])
 
-        # 1. create_feat: a freshly created document must be a FeatDocument in status
+        # 1. create_feat: a freshly created document must be a FeatFrontmatter in status
         #    "planning" (ACC-002/ACC-003: status is fixed, never caller-supplied), with
         #    its file on disk at <base>/feat-0-example-widget/README.md (feat-48-feat-id
         #    REQ-002: the default id is always feat-0-<slug>, no max+1 auto-increment).
         created = create_feat(_INITIAL_BODY)
-        self.assertIsInstance(created, FeatDocument)
-        self.assertEqual(created.frontmatter.status, "planning")
-        self.assertEqual(created.frontmatter.type, "feat")
-        self.assertEqual(created.frontmatter.id, "feat-0-example-widget")
-        self.assertEqual(created.frontmatter.created, created.frontmatter.updated)
-        feat_id = created.frontmatter.id
+        self.assertIsInstance(created, FeatFrontmatter)
+        self.assertEqual(created.status, "planning")
+        self.assertEqual(created.type, "feat")
+        self.assertEqual(created.id, "feat-0-example-widget")
+        self.assertEqual(created.created, created.updated)
+        feat_id = created.id
         assert feat_id is not None
         expected_path = feat_base_dir() / feat_id / README_FILENAME
         self.assertTrue(expected_path.exists())
@@ -219,11 +219,11 @@ class TestFeatLifecycleIntegration(TempFeatDirTestCase):
         #    microsecond timestamp format every other domain uses) and preserve
         #    id/type/status/created/version (ACC-004).
         updated = update(feat_id, "feat", _REVISED_BODY)
-        self.assertEqual(updated.id, created.frontmatter.id)
-        self.assertEqual(updated.type, created.frontmatter.type)
-        self.assertEqual(updated.created, created.frontmatter.created)
+        self.assertEqual(updated.id, created.id)
+        self.assertEqual(updated.type, created.type)
+        self.assertEqual(updated.created, created.created)
         self.assertEqual(updated.status, "planning")
-        self.assertEqual(updated.version, created.frontmatter.version)
+        self.assertEqual(updated.version, created.version)
         self.assertRegex(updated.updated or "", r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})$")
         self.assertEqual(len(get_feat(feat_id).body.plan.requirements.items), 2)
 
@@ -278,11 +278,11 @@ class TestFeatLifecycleIntegration(TempFeatDirTestCase):
     def test_set_status_rejects_status_outside_the_closed_four_set(self) -> None:
         """ACC-004: set_status (type="feat") must reject a status outside {planning, progress, review, done}."""
         created = create_feat(_INITIAL_BODY)
-        expected_path = feat_base_dir() / created.frontmatter.id / README_FILENAME
+        expected_path = feat_base_dir() / created.id / README_FILENAME
         before = expected_path.read_text(encoding="utf-8")
 
         with self.assertRaises(ValidationError):
-            set_status(created.frontmatter.id, "feat", "in-progress")
+            set_status(created.id, "feat", "in-progress")
 
         self.assertEqual(expected_path.read_text(encoding="utf-8"), before)
 
@@ -301,7 +301,7 @@ class TestCreateFeatConcurrencyIntegration(TempFeatDirTestCase):
 
     def test_many_concurrent_create_feat_calls_never_collide(self) -> None:
         """20 threads hammering create_feat concurrently must all end up with distinct, valid ids."""
-        results: list[FeatDocument] = []
+        results: list[FeatFrontmatter] = []
         errors: list[BaseException] = []
         lock = threading.Lock()
         thread_count = 20
@@ -326,7 +326,7 @@ class TestCreateFeatConcurrencyIntegration(TempFeatDirTestCase):
         self.assertEqual(errors, [])
         self.assertEqual(len(results), thread_count)
 
-        ids = [doc.frontmatter.id for doc in results]
+        ids = [doc.id for doc in results]
         self.assertEqual(len(ids), len(set(ids)), f"duplicate ids created: {ids}")
 
         # Every created id must also be independently resolvable via list_feat/get_feat.

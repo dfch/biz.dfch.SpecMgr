@@ -84,7 +84,7 @@ class TestListSop(unittest.TestCase):
         for summary in sut.results:
             self.assertIsInstance(summary, SopSummary)
         ids = {summary.id for summary in sut.results}
-        self.assertEqual(ids, {first.frontmatter.id, second.frontmatter.id})
+        self.assertEqual(ids, {first.id, second.id})
         titles = {summary.title for summary in sut.results}
         self.assertEqual(titles, {"New Employee IT Account Provisioning", "Nightly Backup Procedure"})
         statuses = {summary.status for summary in sut.results}

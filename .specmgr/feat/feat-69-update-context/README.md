@@ -4,7 +4,7 @@ created: '2026-09-02 21:49:41.712+02:00'
 id: feat-69-update-context
 status: planning
 type: feat
-updated: '2026-09-02 22:45:00.000+02:00'
+updated: '2026-09-02 23:20:00.000+02:00'
 version: 1.0.0
 ---
 
@@ -91,9 +91,9 @@ The shared contract: every in-scope tool's success return type stays the same do
 
 #### Phase 3: Per-domain `create_<d>` tools
 
-- [ ] Task 3.1: Change all 11 `create_<d>` tools to return frontmatter-only.
-- [ ] Task 3.2: Update each tool's MCP `description=` text and docstring Returns section.
-- [ ] Task 3.3: Run the full test suite plus `ruff format --check`/`ruff check`/`vulture` before moving to Phase 4.
+- [x] Task 3.1: Change all 11 `create_<d>` tools to return frontmatter-only.
+- [x] Task 3.2: Update each tool's MCP `description=` text and docstring Returns section.
+- [x] Task 3.3: Run the full test suite plus `ruff format --check`/`ruff check`/`vulture` before moving to Phase 4.
 
 #### Phase 4: Tests
 
@@ -111,11 +111,21 @@ The shared contract: every in-scope tool's success return type stays the same do
 
 ### Current Status
 
-**As of 2026-09-02**: Feature drafted from GitHub issue #69. Root cause confirmed by reading source: `update`, `set_status`, `set_classification`, and every per-domain `create_<d>` tool return the fully re-parsed document (frontmatter + body) on every successful write; `delete` already returns a minimal path string, and ADR-specific tools are out of scope for this feature. Approach agreed: all in-scope tools switch to a frontmatter-only response (small, bounded size) instead of frontmatter+body (unbounded, growing with document size); error paths are untouched. No prompts currently document the old response shape, so no prompt changes are needed. **Phase 1 (design) is complete**: the frontmatter-only contract is formalized in Design Notes (return type change, removal of the now-pointless `XxxDocument(...)` wrapping construction, no new models needed, error paths untouched by design) and verified against every domain's `document.py`; Task 1.2's prompt-shape check is confirmed clean. **Phase 2 (generic tools) is complete**: `update`, `set_status` (its 11 non-adr adapters; the `adr` branch is unchanged), and `set_classification` all now return the domain's `XxxFrontmatter` object directly instead of the full `XxxDocument`. Full test suite green (3070 tests), ruff/vulture clean. Phase 3 (per-domain `create_<d>` tools) has not started.
+**As of 2026-09-02**: Feature drafted from GitHub issue #69. Root cause confirmed by reading source: `update`, `set_status`, `set_classification`, and every per-domain `create_<d>` tool return the fully re-parsed document (frontmatter + body) on every successful write; `delete` already returns a minimal path string, and ADR-specific tools are out of scope for this feature. Approach agreed: all in-scope tools switch to a frontmatter-only response (small, bounded size) instead of frontmatter+body (unbounded, growing with document size); error paths are untouched. No prompts currently document the old response shape, so no prompt changes are needed. **Phase 1 (design) is complete**: the frontmatter-only contract is formalized in Design Notes (return type change, removal of the now-pointless `XxxDocument(...)` wrapping construction, no new models needed, error paths untouched by design) and verified against every domain's `document.py`; Task 1.2's prompt-shape check is confirmed clean. **Phase 2 (generic tools) is complete**: `update`, `set_status` (its 11 non-adr adapters; the `adr` branch is unchanged), and `set_classification` all now return the domain's `XxxFrontmatter` object directly instead of the full `XxxDocument`. Full test suite green (3070 tests), ruff/vulture clean. **Phase 3 (per-domain `create_<d>` tools) is complete**: all 11 `create_<d>` tools now return the domain's `XxxFrontmatter` object directly instead of the full `XxxDocument`. Full test suite green (3070 tests), ruff/vulture clean. Phase 4 (tests) has not started.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-02 23:20:00.000+02:00 - Phase 3 done: all 11 `create_<d>` tools return frontmatter-only
+
+Completed Phase 3 (Tasks 3.1-3.3). Applied the Phase 1 contract mechanically to all 11 per-domain `create_<d>` tools:
+
+- `req/tools/create_req.py`, `uc/tools/create_uc.py`, `tsk/tools/create_tsk.py`, `qa/tools/create_qa.py`, `prb/tools/create_prb.py`, `gol/tools/create_gol.py`, `rsk/tools/create_rsk.py`, `dec/tools/create_dec.py`, `sop/tools/create_sop.py`, `feat/tools/create_feat.py`, `vcr/tools/create_vcr.py`: each tool's `-> XxxDocument` return annotation changed to `-> XxxFrontmatter`; the `new_doc = XxxDocument(frontmatter=new_frontmatter, body=body)` line removed; `return new_doc` changed to `return new_frontmatter`. The preceding `body = Xxx.from_text(format_text(content))` binding stays exactly as-is in every file (unlike Phase 2's `update.py`), since `body.text` (or, for `create_feat`, `feature_title(body.text)`) is still needed to derive the filename slug -- no `F841` finding resulted. The now-fully-unused `XxxDocument` import removed from each file's models import line (confirmed via grep that no other reference to `XxxDocument` remained -- module docstrings still mention the class name in a `:class:` cross-reference/prose sense, which is fine since it is documentation about the general "no in-memory cache" pattern, not a code reference); `XxxFrontmatter` imports and the body-model imports (`Requirement`, `UseCase`, `Task`, `Qa`, `Prb`, `Goal`, `Risk`, `Decision`, `Feature`, `Sop`, `Vcr`) kept. `create_feat.py`'s extra logic (optional caller-chosen `id`, `FileExistsError` pre-write check, `feat_create_lock()`) is otherwise untouched -- only the same four mechanical changes applied. Each tool's `description=` text gained one short clarifying clause ("Returns the newly created document's frontmatter only (no body); use the corresponding `get_<d>` tool to fetch the full document afterward."), matching Phase 2's phrasing style for `update`/`set_status`/`set_classification`; each docstring's Returns section rewritten to name the `XxxFrontmatter` type, note the id now lives directly on `.id` (not nested under `.frontmatter.id`), and point at the corresponding `get_<d>` tool.
+
+Fixed every existing test that broke because `create_<d>`'s return value is now the frontmatter object directly, not a `XxxDocument` wrapper. Beyond each domain's own `test_create_<d>.py` (all 11), the full-suite run surfaced widespread breakage in every domain's `test_get_<d>.py`/`test_list_<d>.py` (which seed fixtures via `create_<d>` and then read `.frontmatter.id`/`.frontmatter.X` off that seed value), six cross-domain `test_integration.py` files (`dec`, `gol`, `prb`, `sop`, `feat`, `vcr` -- their `create_<d>` call's own return value was asserted with `.frontmatter.*`/`.body.*`, plus already-fixed-in-Phase-2 `update`/`set_status` result assertions that referenced `created.frontmatter.*`), two `feat`-specific files (`test_set_feat_id.py`, whose `set_feat_id` return value is unchanged but whose `create_feat`-seeded `created.frontmatter.*` reads needed fixing; `test_list_feat.py`), two `feat/prompts/` walkthrough tests (`test_create_feat.py`, `test_update_feat.py`), and five generic-tool files whose fixtures seed via every domain's `create_<d>` (`tests/general/tools/test_update.py`, `test_set_status.py`, `test_set_classification.py`, `test_delete.py`, `test_error_context.py`) plus `tests/regression/test_issue_27.py`. In every case the fix was the same: `.frontmatter.X` on the tool's own `create_<d>` return value became `.X`; the handful of `.body.X` assertions on that same return value (which have nothing left to read, since the return value carries no body at all) were rewritten to call the domain's own `get_<d>(id)` tool first and assert against the freshly fetched full document's `.body.X` instead -- preserving each test's original intent without expanding coverage, exactly the pattern Phase 2 used. `assertIsInstance(created, XxxDocument)` checks on a `create_<d>` return value became `assertIsInstance(created, XxxFrontmatter)`, with the corresponding import swapped (or, where the module also uses `XxxDocument` elsewhere -- e.g. `dec`'s/`gol`'s/`sop`'s/`vcr`'s/`feat`'s integration tests, which still call `parse_<d>`/`get_<d>_example` and assert on those results -- both `XxxDocument` and `XxxFrontmatter` are imported side by side). Every `get_<d>`/`parse_<d>`/`list_<d>` test's own assertions on *those* tools' still-unchanged return values, and every ADR-specific test, are untouched.
+
+Quality gate, all green: `ruff format --check` (1541 files already formatted, after one reformat of `tests/general/tools/test_update.py` for two lines that now fit under the 120-char limit once `created.frontmatter.` shrank to `created.`), `ruff check` (all checks passed, no new findings -- `body` stayed genuinely used in every `create_<d>` file, so no `F841`), `vulture src/ whitelist.py --min-confidence 60` (no findings), `python -m unittest discover -v -s tests -t . -p "test_*.py"` (3070 tests, all passing).
 
 #### 2026-09-02 22:45:00.000+02:00 - Phase 2 done: generic tools (update/set_status/set_classification) return frontmatter-only
 
@@ -144,6 +154,10 @@ Feature drafted from GitHub issue #69, covering the generic `update`/`set_status
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-02 23:20:00.000+02:00 - Left each create_<d> module docstring's `:class:` cross-reference to `XxxDocument` alone (Phase 3)
+
+Each `create_<d>.py` module docstring's opening paragraph says something like "there is no in-memory cache of a parsed `:class:`~biz.dfch.specmgr.req.models.v1.ReqDocument`` -- the `.md` file itself is always the source of truth". Task 3.1 removed the `XxxDocument` *import* (now genuinely unused in the tool's code) but this prose reference to the class name is still an accurate, general statement about the codebase's I/O pattern (no caching), not a claim that this specific tool constructs a `XxxDocument` -- and Sphinx `:class:` roles resolve by fully-qualified path, not local import, so the docstring still renders correctly without the import. Left unchanged rather than rewritten, since the plan's task list only calls for changing the function's own Returns section and the `description=` text, not the module docstring's introductory paragraph.
 
 #### 2026-09-02 22:45:00.000+02:00 - Dropped the unused `body` binding rather than keeping a dead variable (Phase 2)
 

@@ -92,10 +92,10 @@ class TestGetRsk(unittest.TestCase):
         """get_rsk must return the full RskDocument for a matching id."""
         created = create_rsk(_MINIMAL_BODY)
 
-        result = get_rsk(created.frontmatter.id)
+        result = get_rsk(created.id)
 
         self.assertIsInstance(result, RskDocument)
-        self.assertEqual(result.frontmatter.id, created.frontmatter.id)
+        self.assertEqual(result.frontmatter.id, created.id)
         self.assertEqual(result.body.text, "Sample Risk")
 
     def test_raises_not_found_for_unknown_id(self) -> None:
@@ -119,7 +119,7 @@ class TestGetRsk(unittest.TestCase):
         """raw=True must return the frontmatter-stripped body text, byte-identical to the shared body_text helper's output."""
         created = create_rsk(_MINIMAL_BODY)
 
-        result = get_rsk(created.frontmatter.id, raw=True)
+        result = get_rsk(created.id, raw=True)
 
         self.assertIsInstance(result, str)
         self.assertEqual(result, body_text(self._doc_path()))
@@ -127,13 +127,13 @@ class TestGetRsk(unittest.TestCase):
     def test_raw_line_coordinates_index_into_the_splice_target(self) -> None:
         """The line numbers from a raw read must index byte-for-byte into the text the update splice targets (ACC-003)."""
         created = create_rsk(_MINIMAL_BODY)
-        lines = get_rsk(created.frontmatter.id, raw=True).splitlines()
+        lines = get_rsk(created.id, raw=True).splitlines()
         k = lines.index("A root condition.") + 1
         replacement = "A revised root condition."
 
-        update(id=created.frontmatter.id, type="rsk", content=replacement, offset=k, limit=1)
+        update(id=created.id, type="rsk", content=replacement, offset=k, limit=1)
 
-        new_lines = get_rsk(created.frontmatter.id, raw=True).splitlines()
+        new_lines = get_rsk(created.id, raw=True).splitlines()
         self.assertEqual(new_lines[k - 1], replacement)
         self.assertEqual(new_lines[: k - 1] + new_lines[k:], lines[: k - 1] + lines[k:])
         self.assertEqual(len(new_lines), len(lines))
@@ -142,7 +142,7 @@ class TestGetRsk(unittest.TestCase):
         """raw=True with offset/limit must return exactly the requested body window, each line
         keeping its trailing newline."""
         created = create_rsk(_MINIMAL_BODY)
-        doc_id = created.frontmatter.id
+        doc_id = created.id
         lines = get_rsk(doc_id, raw=True).splitlines()
 
         result = get_rsk(doc_id, raw=True, offset=2, limit=3)
@@ -154,7 +154,7 @@ class TestGetRsk(unittest.TestCase):
         """raw=True: an offset past the last body line returns the empty string, and a limit
         larger than the remaining lines caps at them."""
         created = create_rsk(_MINIMAL_BODY)
-        doc_id = created.frontmatter.id
+        doc_id = created.id
         lines = get_rsk(doc_id, raw=True).splitlines()
 
         self.assertEqual(get_rsk(doc_id, raw=True, offset=len(lines) + 1), "")
@@ -166,18 +166,18 @@ class TestGetRsk(unittest.TestCase):
         created = create_rsk(_MINIMAL_BODY)
 
         with self.assertRaises(ValueError) as ctx:
-            get_rsk(created.frontmatter.id, raw=False, offset=2, limit=3)
+            get_rsk(created.id, raw=False, offset=2, limit=3)
         message = str(ctx.exception)
         self.assertIn("raw", message)
         self.assertIn("offset", message)
         with self.assertRaises(ValueError):
-            get_rsk(created.frontmatter.id, raw=False, limit=3)
+            get_rsk(created.id, raw=False, limit=3)
 
     def test_windowed_raw_read_coordinates_index_into_the_splice_target(self) -> None:
         """The coordinates of a windowed raw read must splice at exactly those lines, unchanged
         regions byte-identical (ACC-003 windowed)."""
         created = create_rsk(_MINIMAL_BODY)
-        doc_id = created.frontmatter.id
+        doc_id = created.id
         lines = get_rsk(doc_id, raw=True).splitlines()
         k, m = 3, 3
         window = get_rsk(doc_id, raw=True, offset=k, limit=m)
@@ -195,8 +195,8 @@ class TestGetRsk(unittest.TestCase):
         """raw=False (explicit) must return the parsed document, exactly as the default call does."""
         created = create_rsk(_MINIMAL_BODY)
 
-        result = get_rsk(created.frontmatter.id, raw=False)
-        default = get_rsk(created.frontmatter.id)
+        result = get_rsk(created.id, raw=False)
+        default = get_rsk(created.id)
 
         self.assertIsInstance(result, RskDocument)
         self.assertEqual(result, default)

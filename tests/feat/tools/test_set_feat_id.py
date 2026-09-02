@@ -107,15 +107,15 @@ class TestSetFeatId(TempFeatDirTestCase):
         created = create_feat(_MINIMAL_BODY, id="feat-0-get-update")
         old_path = feat_base_dir() / "feat-0-get-update" / README_FILENAME
         raw_body_before = body_text(old_path)
-        updated_before = created.frontmatter.updated
+        updated_before = created.updated
 
         result = set_feat_id("feat-0-get-update", "feat-42-get-update")
 
         self.assertEqual(result.frontmatter.id, "feat-42-get-update")
-        self.assertEqual(result.frontmatter.type, created.frontmatter.type)
-        self.assertEqual(result.frontmatter.status, created.frontmatter.status)
-        self.assertEqual(result.frontmatter.created, created.frontmatter.created)
-        self.assertEqual(result.frontmatter.version, created.frontmatter.version)
+        self.assertEqual(result.frontmatter.type, created.type)
+        self.assertEqual(result.frontmatter.status, created.status)
+        self.assertEqual(result.frontmatter.created, created.created)
+        self.assertEqual(result.frontmatter.version, created.version)
         self.assertNotEqual(result.frontmatter.updated, updated_before)
         self.assertRegex(
             result.frontmatter.updated or "", r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})$"

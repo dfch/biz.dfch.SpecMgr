@@ -514,18 +514,18 @@ class TestSetStatusWholeBodyDomains(TempDocsDirTestCase):
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case, case.minimal_body)
-                doc_id = created.frontmatter.id
+                doc_id = created.id
                 path = self._doc_path(case)
                 raw_body_before = body_text(path)
 
                 result = set_status(id=doc_id, type=case.doc_type, status=case.valid_status)
 
                 self.assertEqual(result.status, case.valid_status)
-                self.assertEqual(result.id, created.frontmatter.id)
+                self.assertEqual(result.id, created.id)
                 self.assertEqual(result.type, case.doc_type)
-                self.assertEqual(result.created, created.frontmatter.created)
-                self.assertEqual(result.version, created.frontmatter.version)
-                self.assertNotEqual(result.updated, created.frontmatter.updated)
+                self.assertEqual(result.created, created.created)
+                self.assertEqual(result.version, created.version)
+                self.assertNotEqual(result.updated, created.updated)
                 self.assertIsNotNone(re.fullmatch(_DATE_TIME_TIMESTAMP, result.updated))
                 on_disk_metadata = frontmatter.loads(path.read_text(encoding="utf-8")).metadata
                 self.assertEqual(on_disk_metadata["status"], case.valid_status)
@@ -540,7 +540,7 @@ class TestSetStatusWholeBodyDomains(TempDocsDirTestCase):
                 before = path.read_text(encoding="utf-8")
 
                 with self.assertRaises(ValidationError):
-                    set_status(id=created.frontmatter.id, type=case.doc_type, status=case.invalid_status)
+                    set_status(id=created.id, type=case.doc_type, status=case.invalid_status)
 
                 self.assertEqual(path.read_text(encoding="utf-8"), before)
 
@@ -554,7 +554,7 @@ class TestSetStatusWholeBodyDomains(TempDocsDirTestCase):
 
                 with self.assertRaises(ValueError) as ctx:
                     set_status(
-                        id=created.frontmatter.id,
+                        id=created.id,
                         type=case.doc_type,
                         status=case.valid_status,
                         superseded_by="other-id",
@@ -766,7 +766,7 @@ class TestSetStatusInjection(TempSetStatusInjectionDirTestCase):
         for case in _INJECTION_CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = case.create(case.minimal_body)
-                doc_id = created.frontmatter.id
+                doc_id = created.id
                 path = self._doc_path(case, doc_id)
                 before = path.read_text(encoding="utf-8")
 
@@ -796,7 +796,7 @@ class TestSetStatusAssertWithinSpy(TempSetStatusInjectionDirTestCase):
         for case in _INJECTION_CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = case.create(case.minimal_body)
-                doc_id = created.frontmatter.id
+                doc_id = created.id
                 path = self._doc_path(case, doc_id)
                 base_dir = case.base_dir()
 

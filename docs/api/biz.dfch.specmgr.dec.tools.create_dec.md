@@ -16,7 +16,7 @@ codebase.
 
 ## Functions
 
-### `create_dec(content: 'str') -> 'DecDocument'`
+### `create_dec(content: 'str') -> 'DecFrontmatter'`
 
 Create and write a new decision document.
 
@@ -46,9 +46,10 @@ content:
 
 Returns
 -------
-DecDocument
-    The newly created document, with its assigned id in
-    ``frontmatter.id``.
+DecFrontmatter
+    The newly created document's frontmatter only (no body), with its
+    assigned id in ``.id``. Use the corresponding ``get_dec`` tool to
+    fetch the full document afterward.
 
 Raises
 ------

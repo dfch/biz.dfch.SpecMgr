@@ -29,9 +29,10 @@ from pydantic import ValidationError
 
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.models.md import CURRENT_SCHEMA_VERSION
-from biz.dfch.specmgr.req.models.v1 import ReqDocument, parse_req
+from biz.dfch.specmgr.req.models.v1 import ReqFrontmatter, parse_req
 from biz.dfch.specmgr.req.tools._paths import req_base_dir
 from biz.dfch.specmgr.req.tools.create_req import create_req
+from biz.dfch.specmgr.req.tools.get_req import get_req
 
 _MINIMAL_BODY = textwrap.dedent(
     """\
@@ -76,30 +77,32 @@ class TestCreateReq(TempReqDirTestCase):
         """create_req must build the entire frontmatter itself (id/type/status/timestamps/version)."""
         result = create_req(_MINIMAL_BODY)
 
-        self.assertIsInstance(result, ReqDocument)
-        self.assertIsNotNone(result.frontmatter.id)
-        self.assertEqual(result.frontmatter.type, "req")
-        self.assertEqual(result.frontmatter.status, "draft")
-        self.assertIsNotNone(result.frontmatter.created)
-        self.assertEqual(result.frontmatter.created, result.frontmatter.updated)
-        self.assertEqual(result.frontmatter.version, CURRENT_SCHEMA_VERSION)
-        self.assertEqual(result.body.text, "Maximum Engine Temperature")
+        self.assertIsInstance(result, ReqFrontmatter)
+        self.assertIsNotNone(result.id)
+        self.assertEqual(result.type, "req")
+        self.assertEqual(result.status, "draft")
+        self.assertIsNotNone(result.created)
+        self.assertEqual(result.created, result.updated)
+        self.assertEqual(result.version, CURRENT_SCHEMA_VERSION)
+
+        fetched = get_req(result.id)
+        self.assertEqual(fetched.body.text, "Maximum Engine Temperature")
 
     def test_writes_expected_filename(self) -> None:
         """create_req must write f'req-{id}-{slug}.md' under the requirement base dir."""
         result = create_req(_MINIMAL_BODY)
 
-        expected_path = req_base_dir() / f"req-{result.frontmatter.id}-maximum-engine-temperature.md"
+        expected_path = req_base_dir() / f"req-{result.id}-maximum-engine-temperature.md"
         self.assertTrue(expected_path.exists())
 
     def test_written_file_round_trips_via_parse_req(self) -> None:
         """The written file must parse back into an equivalent document."""
         result = create_req(_MINIMAL_BODY)
 
-        expected_path = req_base_dir() / f"req-{result.frontmatter.id}-maximum-engine-temperature.md"
+        expected_path = req_base_dir() / f"req-{result.id}-maximum-engine-temperature.md"
         on_disk = parse_req(expected_path.read_text(encoding="utf-8"))
 
-        self.assertEqual(on_disk.frontmatter.id, result.frontmatter.id)
+        self.assertEqual(on_disk.frontmatter.id, result.id)
         self.assertEqual(on_disk.frontmatter.status, "draft")
         self.assertEqual(on_disk.body.text, "Maximum Engine Temperature")
         self.assertEqual(

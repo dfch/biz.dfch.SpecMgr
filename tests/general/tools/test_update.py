@@ -899,14 +899,14 @@ class TestUpdateWholeBody(TempDocsDirTestCase):
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case, case.minimal_body)
 
-                result = update(id=created.frontmatter.id, type=case.doc_type, content=case.updated_body)
+                result = update(id=created.id, type=case.doc_type, content=case.updated_body)
 
-                self.assertEqual(result.id, created.frontmatter.id)
+                self.assertEqual(result.id, created.id)
                 self.assertEqual(result.type, case.doc_type)
-                self.assertEqual(result.status, created.frontmatter.status)
-                self.assertEqual(result.created, created.frontmatter.created)
-                self.assertEqual(result.version, created.frontmatter.version)
-                self.assertNotEqual(result.updated, created.frontmatter.updated)
+                self.assertEqual(result.status, created.status)
+                self.assertEqual(result.created, created.created)
+                self.assertEqual(result.version, created.version)
+                self.assertNotEqual(result.updated, created.updated)
                 self.assertIsNotNone(re.fullmatch(_DATE_TIME_TIMESTAMP, result.updated))
                 self.assertEqual(body_text(self._doc_path(case)), case.updated_body.rstrip("\n"))
 
@@ -920,7 +920,7 @@ class TestUpdateWholeBody(TempDocsDirTestCase):
                 smuggled = "---\nstatus: accepted\n---\n" + case.updated_body
 
                 with self.assertRaises(AssertionError):
-                    update(id=created.frontmatter.id, type=case.doc_type, content=smuggled)
+                    update(id=created.id, type=case.doc_type, content=smuggled)
 
                 self.assertEqual(path.read_text(encoding="utf-8"), before)
 
@@ -933,7 +933,7 @@ class TestUpdateWholeBody(TempDocsDirTestCase):
                 before = path.read_text(encoding="utf-8")
 
                 with self.assertRaises(AssertionError):
-                    update(id=created.frontmatter.id, type=case.doc_type, content=_MALFORMED_BODY)
+                    update(id=created.id, type=case.doc_type, content=_MALFORMED_BODY)
 
                 self.assertEqual(path.read_text(encoding="utf-8"), before)
 
@@ -948,7 +948,7 @@ class TestUpdateWholeBody(TempDocsDirTestCase):
 
                 with self.assertRaises(expected_error):
                     update(
-                        id=created.frontmatter.id,
+                        id=created.id,
                         type=case.doc_type,
                         content=_field_error_body(case, case.minimal_body),
                     )
@@ -976,9 +976,7 @@ class TestUpdateRange(TempDocsDirTestCase):
                 lines = body_text(self._doc_path(case)).splitlines()
                 k = _line_no(lines, case.middle_marker)
 
-                update(
-                    id=created.frontmatter.id, type=case.doc_type, content=case.middle_replacement, offset=k, limit=1
-                )
+                update(id=created.id, type=case.doc_type, content=case.middle_replacement, offset=k, limit=1)
 
                 new_lines = body_text(self._doc_path(case)).splitlines()
                 expected = lines[: k - 1] + [case.middle_replacement] + lines[k:]
@@ -993,7 +991,7 @@ class TestUpdateRange(TempDocsDirTestCase):
                 lines = body_text(self._doc_path(case)).splitlines()
                 offset = _line_no(lines, case.insert_marker) - 1
 
-                update(id=created.frontmatter.id, type=case.doc_type, content=case.insert_line, offset=offset, limit=0)
+                update(id=created.id, type=case.doc_type, content=case.insert_line, offset=offset, limit=0)
 
                 self.assertEqual(
                     body_text(self._doc_path(case)).splitlines(),
@@ -1008,9 +1006,7 @@ class TestUpdateRange(TempDocsDirTestCase):
                 lines = body_text(self._doc_path(case)).splitlines()
                 n = len(lines)
 
-                update(
-                    id=created.frontmatter.id, type=case.doc_type, content=case.append_fragment, offset=n + 1, limit=0
-                )
+                update(id=created.id, type=case.doc_type, content=case.append_fragment, offset=n + 1, limit=0)
 
                 expected = lines + case.append_fragment.splitlines()
                 self.assertEqual(body_text(self._doc_path(case)).splitlines(), expected)
@@ -1023,7 +1019,7 @@ class TestUpdateRange(TempDocsDirTestCase):
                 lines = body_text(self._doc_path(case)).splitlines()
                 k = _line_no(lines, case.eof_marker)
 
-                update(id=created.frontmatter.id, type=case.doc_type, content=case.eof_fragment, offset=k)
+                update(id=created.id, type=case.doc_type, content=case.eof_fragment, offset=k)
 
                 expected = lines[: k - 1] + case.eof_fragment.splitlines()
                 self.assertEqual(body_text(self._doc_path(case)).splitlines(), expected)
@@ -1038,7 +1034,7 @@ class TestUpdateRange(TempDocsDirTestCase):
                 n_min = len(case.minimal_body.splitlines())
 
                 update(
-                    id=created.frontmatter.id,
+                    id=created.id,
                     type=case.doc_type,
                     content="",
                     offset=n_min + 1,
@@ -1052,7 +1048,7 @@ class TestUpdateRange(TempDocsDirTestCase):
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case, case.minimal_body)
-                doc_id = created.frontmatter.id
+                doc_id = created.id
                 with mock.patch.object(update_module, "now_timestamp", return_value=_FIXED_TIMESTAMP):
                     update(id=doc_id, type=case.doc_type, content=case.updated_body)
                     path = self._doc_path(case)
@@ -1071,7 +1067,7 @@ class TestUpdateRange(TempDocsDirTestCase):
                 with self.assertRaises(ValueError):
                     update(id=_MISSING_UUID, type=case.doc_type, content="frag", limit=2)
                 with self.assertRaises(ValueError):
-                    update(id=created.frontmatter.id, type=case.doc_type, content="frag", limit=2)
+                    update(id=created.id, type=case.doc_type, content="frag", limit=2)
 
     def test_offset_below_one_raises_value_error_file_untouched(self) -> None:
         """``offset < 1`` must raise ``ValueError`` naming the value and range, leaving the file untouched."""
@@ -1082,7 +1078,7 @@ class TestUpdateRange(TempDocsDirTestCase):
                 before = path.read_text(encoding="utf-8")
 
                 with self.assertRaises(ValueError) as ctx:
-                    update(id=created.frontmatter.id, type=case.doc_type, content="frag", offset=0, limit=3)
+                    update(id=created.id, type=case.doc_type, content="frag", offset=0, limit=3)
 
                 self.assertIn("offset", str(ctx.exception))
                 self.assertEqual(path.read_text(encoding="utf-8"), before)
@@ -1097,7 +1093,7 @@ class TestUpdateRange(TempDocsDirTestCase):
                 n = len(body_text(path).splitlines())
 
                 with self.assertRaises(ValueError) as ctx:
-                    update(id=created.frontmatter.id, type=case.doc_type, content="frag", offset=n + 2, limit=1)
+                    update(id=created.id, type=case.doc_type, content="frag", offset=n + 2, limit=1)
 
                 self.assertIn("offset", str(ctx.exception))
                 self.assertEqual(path.read_text(encoding="utf-8"), before)
@@ -1111,7 +1107,7 @@ class TestUpdateRange(TempDocsDirTestCase):
                 before = path.read_text(encoding="utf-8")
 
                 with self.assertRaises(ValueError) as ctx:
-                    update(id=created.frontmatter.id, type=case.doc_type, content="frag", offset=5, limit=-2)
+                    update(id=created.id, type=case.doc_type, content="frag", offset=5, limit=-2)
 
                 self.assertIn("limit", str(ctx.exception))
                 self.assertEqual(path.read_text(encoding="utf-8"), before)
@@ -1126,7 +1122,7 @@ class TestUpdateRange(TempDocsDirTestCase):
                 n = len(body_text(path).splitlines())
 
                 with self.assertRaises(ValueError) as ctx:
-                    update(id=created.frontmatter.id, type=case.doc_type, content="frag", offset=2, limit=n + 1)
+                    update(id=created.id, type=case.doc_type, content="frag", offset=2, limit=n + 1)
 
                 self.assertIn("offset", str(ctx.exception))
                 self.assertIn("limit", str(ctx.exception))
@@ -1141,7 +1137,7 @@ class TestUpdateRange(TempDocsDirTestCase):
                 before = path.read_text(encoding="utf-8")
 
                 with self.assertRaises(AssertionError):
-                    update(id=created.frontmatter.id, type=case.doc_type, content="", offset=1, limit=1)
+                    update(id=created.id, type=case.doc_type, content="", offset=1, limit=1)
 
                 self.assertEqual(path.read_text(encoding="utf-8"), before)
 
@@ -1159,7 +1155,7 @@ class TestUpdateRange(TempDocsDirTestCase):
                     n = len(lines)
                     with self.assertRaises(expected_error):
                         update(
-                            id=created.frontmatter.id,
+                            id=created.id,
                             type=case.doc_type,
                             content=case.field_error_fragment,
                             offset=n + 1,
@@ -1169,7 +1165,7 @@ class TestUpdateRange(TempDocsDirTestCase):
                     k = _line_no(lines, case.field_error_marker)
                     with self.assertRaises(expected_error):
                         update(
-                            id=created.frontmatter.id,
+                            id=created.id,
                             type=case.doc_type,
                             content=case.field_error_fragment,
                             offset=k,
@@ -1285,7 +1281,7 @@ class TestUpdateInjection(TempUpdateInjectionDirTestCase):
         for case in _INJECTION_CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = case.create(case.minimal_body)
-                doc_id = created.frontmatter.id
+                doc_id = created.id
                 path = self._doc_path(case, doc_id)
                 before = path.read_text(encoding="utf-8")
 
@@ -1304,7 +1300,7 @@ class TestUpdateAssertWithinSpy(TempUpdateInjectionDirTestCase):
         for case in _INJECTION_CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = case.create(case.minimal_body)
-                doc_id = created.frontmatter.id
+                doc_id = created.id
                 path = self._doc_path(case, doc_id)
                 base_dir = case.base_dir()
 

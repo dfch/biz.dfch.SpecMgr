@@ -27,9 +27,10 @@ from unittest import mock
 
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.models.md import CURRENT_SCHEMA_VERSION
-from biz.dfch.specmgr.tsk.models.v1 import TskDocument, parse_tsk
+from biz.dfch.specmgr.tsk.models.v1 import TskFrontmatter, parse_tsk
 from biz.dfch.specmgr.tsk.tools._paths import tsk_base_dir
 from biz.dfch.specmgr.tsk.tools.create_tsk import create_tsk
+from biz.dfch.specmgr.tsk.tools.get_tsk import get_tsk
 
 _MINIMAL_BODY = textwrap.dedent(
     """\
@@ -86,30 +87,32 @@ class TestCreateTsk(TempTskDirTestCase):
         """create_tsk must build the entire frontmatter itself (id/type/status/timestamps/version)."""
         result = create_tsk(_MINIMAL_BODY)
 
-        self.assertIsInstance(result, TskDocument)
-        self.assertIsNotNone(result.frontmatter.id)
-        self.assertEqual(result.frontmatter.type, "tsk")
-        self.assertEqual(result.frontmatter.status, "draft")
-        self.assertIsNotNone(result.frontmatter.created)
-        self.assertEqual(result.frontmatter.created, result.frontmatter.updated)
-        self.assertEqual(result.frontmatter.version, CURRENT_SCHEMA_VERSION)
-        self.assertEqual(result.body.text, "Simple Task List")
+        self.assertIsInstance(result, TskFrontmatter)
+        self.assertIsNotNone(result.id)
+        self.assertEqual(result.type, "tsk")
+        self.assertEqual(result.status, "draft")
+        self.assertIsNotNone(result.created)
+        self.assertEqual(result.created, result.updated)
+        self.assertEqual(result.version, CURRENT_SCHEMA_VERSION)
+
+        fetched = get_tsk(result.id)
+        self.assertEqual(fetched.body.text, "Simple Task List")
 
     def test_writes_expected_filename(self) -> None:
         """create_tsk must write f'tsk-{id}-{slug}.md' under the task list base dir."""
         result = create_tsk(_MINIMAL_BODY)
 
-        expected_path = tsk_base_dir() / f"tsk-{result.frontmatter.id}-simple-task-list.md"
+        expected_path = tsk_base_dir() / f"tsk-{result.id}-simple-task-list.md"
         self.assertTrue(expected_path.exists())
 
     def test_written_file_round_trips_via_parse_tsk(self) -> None:
         """The written file must parse back into an equivalent document."""
         result = create_tsk(_MINIMAL_BODY)
 
-        expected_path = tsk_base_dir() / f"tsk-{result.frontmatter.id}-simple-task-list.md"
+        expected_path = tsk_base_dir() / f"tsk-{result.id}-simple-task-list.md"
         on_disk = parse_tsk(expected_path.read_text(encoding="utf-8"))
 
-        self.assertEqual(on_disk.frontmatter.id, result.frontmatter.id)
+        self.assertEqual(on_disk.frontmatter.id, result.id)
         self.assertEqual(on_disk.frontmatter.status, "draft")
         self.assertEqual(on_disk.body.text, "Simple Task List")
         self.assertEqual(

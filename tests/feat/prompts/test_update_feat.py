@@ -263,7 +263,7 @@ class TestUpdateFeatInstructionsWalkthrough(TempFeatDirTestCase):
         """get_feat(id, raw=True) -> update (line-range) -> update (whole-body) ->
         set_status, live, exactly as step 1/4 of the packaged instructions narrate."""
         created = create_feat_tool(_INITIAL_BODY)
-        feat_id = created.frontmatter.id
+        feat_id = created.id
         assert feat_id is not None
 
         # Step 1: read current state first.
@@ -289,7 +289,7 @@ class TestUpdateFeatInstructionsWalkthrough(TempFeatDirTestCase):
         whole_body_result = update(feat_id, "feat", revised_body)
         self.assertEqual(len(get_feat(feat_id).body.plan.requirements.items), 2)
         self.assertEqual(whole_body_result.id, feat_id)
-        self.assertEqual(whole_body_result.created, created.frontmatter.created)
+        self.assertEqual(whole_body_result.created, created.created)
 
         # Step 4, status change: a separate, optional follow-up via the generic
         # set_status tool (never through `update`).

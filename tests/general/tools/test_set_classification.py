@@ -437,19 +437,19 @@ class TestSetClassificationWholeBodyDomains(TempDocsDirTestCase):
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case)
-                doc_id = created.frontmatter.id
+                doc_id = created.id
                 path = self._doc_path(case, doc_id)
                 raw_body_before = body_text(path)
 
                 result = set_classification(id=doc_id, type=case.doc_type, classification="Confidential")
 
                 self.assertEqual(result.classification, "Confidential")
-                self.assertEqual(result.id, created.frontmatter.id)
+                self.assertEqual(result.id, created.id)
                 self.assertEqual(result.type, case.doc_type)
-                self.assertEqual(result.created, created.frontmatter.created)
-                self.assertEqual(result.version, created.frontmatter.version)
-                self.assertEqual(result.status, created.frontmatter.status)
-                self.assertNotEqual(result.updated, created.frontmatter.updated)
+                self.assertEqual(result.created, created.created)
+                self.assertEqual(result.version, created.version)
+                self.assertEqual(result.status, created.status)
+                self.assertNotEqual(result.updated, created.updated)
                 self.assertIsNotNone(re.fullmatch(_DATE_TIME_TIMESTAMP, result.updated))
                 on_disk_metadata = frontmatter.loads(path.read_text(encoding="utf-8")).metadata
                 self.assertEqual(on_disk_metadata["classification"], "Confidential")
@@ -460,7 +460,7 @@ class TestSetClassificationWholeBodyDomains(TempDocsDirTestCase):
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case)
-                doc_id = created.frontmatter.id
+                doc_id = created.id
                 path = self._doc_path(case, doc_id)
 
                 set_classification(id=doc_id, type=case.doc_type, classification="Confidential")
@@ -532,7 +532,7 @@ class TestSetClassificationInjection(TempDocsDirTestCase):
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case)
-                doc_id = created.frontmatter.id
+                doc_id = created.id
                 path = self._doc_path(case, doc_id)
                 before = path.read_text(encoding="utf-8")
 
@@ -551,7 +551,7 @@ class TestSetClassificationAssertWithinSpy(TempDocsDirTestCase):
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case)
-                doc_id = created.frontmatter.id
+                doc_id = created.id
                 path = self._doc_path(case, doc_id)
                 base_dir = case.base_dir()
 
