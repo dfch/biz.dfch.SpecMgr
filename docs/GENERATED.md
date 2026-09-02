@@ -116,6 +116,7 @@ First-line docstrings from each module, organized by domain:
 - `feat/tools/get_feat_template.py` — ``@mcp.tool()`` wrapper: get_feat_template (Task 2.3).
 - `feat/tools/list_feat.py` — ``@mcp.tool()`` wrapper: list_feat (Task 2.3).
 - `feat/tools/parse_feat.py` — ``@mcp.tool()`` wrapper: parse_feat (Task 2.3).
+- `feat/tools/set_feat_id.py` — ``@mcp.tool()`` wrapper: set_feat_id (Task 3.1, feat-48-feat-id Phase 3).
 - `feat/tools/validate_feat.py` — ``@mcp.tool()`` wrapper: validate_feat (Task 2.3).
 
 **general/**

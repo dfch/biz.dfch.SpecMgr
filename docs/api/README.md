@@ -99,6 +99,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.feat.tools.get_feat_template`](biz.dfch.specmgr.feat.tools.get_feat_template.md) — ``@mcp.tool()`` wrapper: get_feat_template (Task 2.3).
 - [`biz.dfch.specmgr.feat.tools.list_feat`](biz.dfch.specmgr.feat.tools.list_feat.md) — ``@mcp.tool()`` wrapper: list_feat (Task 2.3).
 - [`biz.dfch.specmgr.feat.tools.parse_feat`](biz.dfch.specmgr.feat.tools.parse_feat.md) — ``@mcp.tool()`` wrapper: parse_feat (Task 2.3).
+- [`biz.dfch.specmgr.feat.tools.set_feat_id`](biz.dfch.specmgr.feat.tools.set_feat_id.md) — ``@mcp.tool()`` wrapper: set_feat_id (Task 3.1, feat-48-feat-id Phase 3).
 - [`biz.dfch.specmgr.feat.tools.validate_feat`](biz.dfch.specmgr.feat.tools.validate_feat.md) — ``@mcp.tool()`` wrapper: validate_feat (Task 2.3).
 - [`biz.dfch.specmgr.general`](biz.dfch.specmgr.general.md) — General-purpose (cross-cutting, not domain-specific) tools, resources, and
 - [`biz.dfch.specmgr.general.models`](biz.dfch.specmgr.general.models.md) — Shared, cross-domain Pydantic models with no document-type-specific content.

@@ -3,7 +3,7 @@ created: '2026-09-02T10:32:05.764646'
 id: feat-48-feat-id
 status: planning
 type: feat
-updated: '2026-09-02T14:30:00.000000'
+updated: '2026-09-02T15:20:00.000000'
 version: 1.0.0
 ---
 
@@ -107,9 +107,9 @@ known), keeping the document addressable end-to-end.
 
 #### Phase 3: set_feat_id tool
 
-- [ ] Task 3.1: Implement `feat/tools/set_feat_id.py`: validate `new_id` shape, resolve current id via `find_feat_path_by_id`, refuse if `new_id` folder exists, rename folder, rewrite frontmatter `id` + `updated`, preserve body byte-for-byte.
-- [ ] Task 3.2: Register `set_feat_id` as `@mcp.tool()` and export from `feat/tools/__init__.py`.
-- [ ] Task 3.3: Add `server.py` docstring entry for `set_feat_id` (feat now has 8 tools, not 7).
+- [x] Task 3.1: Implement `feat/tools/set_feat_id.py`: validate `new_id` shape, resolve current id via `find_feat_path_by_id`, refuse if `new_id` folder exists, rename folder, rewrite frontmatter `id` + `updated`, preserve body byte-for-byte.
+- [x] Task 3.2: Register `set_feat_id` as `@mcp.tool()` and export from `feat/tools/__init__.py`.
+- [x] Task 3.3: Add `server.py` docstring entry for `set_feat_id` (feat now has 8 tools, not 7).
 
 #### Phase 4: Prompts and documentation
 
@@ -135,17 +135,55 @@ known), keeping the document addressable end-to-end.
 
 ### Current Status
 
-**As of 2026-09-02**: Phase 2 (`create_feat` optional `id` parameter) done.
-`create_feat` now accepts an optional caller-chosen `id`, validated against
-`feat-NNN-slug` via `assert_feat_id`; when omitted it defaults to
-`feat-0-<slug-from-title>` with no max+1 auto-increment; a pre-write
-existence check (raising `FileExistsError`) guards both branches inside the
-existing `feat_create_lock()` block. Full test suite green (3015 tests).
-Implementation continues with Phase 3 (`set_feat_id` tool).
+**As of 2026-09-02**: Phase 3 (`set_feat_id` tool) done. The new
+`feat/tools/set_feat_id.py` renames an existing feature's `feat-NNN-slug`
+id/folder, rewrites its frontmatter `id`/`updated`, and leaves the body
+byte-identical, under `feat_create_lock()` (outer) + `feat_lock(id)`
+(nested) per Phase 1's Decision; registered as `@mcp.tool()` and exported
+from `feat/tools/__init__.py`; `server.py`'s module docstring's feat tool
+listing now includes it (8 tools, not 7). Full test suite green (3015
+tests); a throwaway manual smoke test exercised the happy path and both
+failure paths (see Updates below). Implementation continues with Phase 4
+(prompts and documentation).
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-02 15:20:00.000Z — Phase 3: set_feat_id tool
+
+Completed Task 3.1-3.3. New file
+`src/biz/dfch/specmgr/feat/tools/set_feat_id.py`: `set_feat_id(id, new_id)`
+validates `new_id` via `general.tools._path_safety.assert_feat_id` before
+any lock/filesystem access (a malformed `new_id` raises a bare
+`ValueError`); acquires `feat_create_lock()` first (outermost), then
+`feat_lock(id)` nested inside it, per Phase 1's Decision; resolves `id` via
+`feat.tools._io.load_by_id` (propagating `FeatNotFoundError` naturally, no
+catch/re-raise needed); refuses with `FileExistsError` before any rename if
+`<base>/<new_id>/` already exists; reads the raw on-disk body via the
+existing `general.tools._splice.body_text` helper *before* renaming so the
+body is preserved byte-for-byte; renames the folder
+(`old_path.parent.rename(new_path.parent)`); rebuilds `FeatFrontmatter`
+from `existing.frontmatter.model_dump()` with only `id` and `updated`
+(via `now_timestamp()`) changed; and rewrites the file via
+`write_feat_file(new_path, new_frontmatter, raw_body)`. Satisfies REQ-005,
+REQ-006, REQ-007, REQ-008. Registered as `@mcp.tool(name="set_feat_id",
+...)` and exported from `feat/tools/__init__.py` (its module docstring's
+"seven lifecycle tools" language updated to "eight", plus a short
+description of `set_feat_id`'s role, mirroring the existing
+create_feat/update/set_status/delete prose). `server.py`'s module
+docstring's feat-domain tool listing extended with `set_feat_id`'s
+description. No dedicated unit tests added yet (Phase 5's job); ran a
+throwaway manual smoke test under `/tmp` (not committed) against a
+`SPECMGR_FEAT_DIR`-scoped temp directory: happy-path rename
+(`feat-0-get-update` -> `feat-42-get-update`, verified byte-identical body,
+`updated` bumped, other frontmatter fields unchanged, old folder gone, new
+folder present), `FeatNotFoundError` for an unresolvable `id`, and
+`FileExistsError` for a `new_id` collision (verified no rename/write
+happened), plus a bad-shape `new_id` `ValueError` case -- all four passed.
+Full quality gate green: `ruff format --check`, `ruff check`, `vulture`
+(clean), and the full `unittest discover` suite (3015 tests, all passing,
+unchanged from Phase 2's count since no existing test needed adjustment).
 
 #### 2026-09-02 14:30:00.000Z — Phase 2: create_feat optional id parameter
 
@@ -237,3 +275,18 @@ Captured the two changes issue #48 asks for (`create_feat`'s optional caller-cho
   (e.g. left over from an interrupted create), consistent with
   `find_feat_path_by_id`'s own folder-is-the-unit-of-identity treatment
   of `feat` ids elsewhere in this domain.
+- **2026-09-02 (Task 3.1, Phase 3)**: `set_feat_id` obtains the exact,
+  byte-identical raw body content via the already-existing
+  `general/tools/_splice.body_text(path)` helper -- the same helper the
+  generic `update`/`get_<d>(raw=True)` tools already use to extract a
+  document's frontmatter-stripped body text -- called against the *old*
+  path before the folder rename happens. Rationale: this is the
+  established, single definition of "the body text" in this codebase (see
+  `_splice.py`'s own "raw/splice invariant" docstring section); reusing it
+  avoids inventing a second, parallel body-extraction mechanism, and
+  calling it before the rename (rather than trying to re-derive the raw
+  text from the parsed `Feature` model, which `feat` never renders back
+  out to markdown -- see `_write.py`'s "content embedded verbatim" note)
+  is what makes REQ-006 (byte-identical body) and REQ-008 (no
+  reference-updating) trivially true: the exact same string that was on
+  disk is written back out unchanged, just under new frontmatter.
