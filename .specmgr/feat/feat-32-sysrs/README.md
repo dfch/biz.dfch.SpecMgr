@@ -130,7 +130,17 @@ Domain key: `sysrs` (decided 2026-08-30 — see Decisions Made).
   (`_DELETE_TYPES` + `type` `Literal` + imports + the docstring
   count, eleven→twelve whole-body domains) (`set_status` rejects
   `superseded_by` for `sysrs` with the standard non-adr
-  `ValueError`; `adr` stays excluded from `delete`).
+  `ValueError`; `adr` stays excluded from `delete`). **Conditional
+  addendum (added 2026-09-02, see Dependencies)**: if sibling
+  `feat-56-classification-attribute-in-frontmatter` has merged to
+  `dev` by the time Task 3.3 runs, REQ-011's scope also covers a
+  fourth adapter, `_set_classification_sysrs`, plus a `"sysrs"` entry
+  in `general/tools/set_classification.py`'s dispatch table (same
+  pattern as the other three) — no schema change needed, since
+  `classification` lands on the shared `MarkdownFrontmatter` base
+  `SysrsFrontmatter` already inherits from. If `feat-56` has not
+  merged by then, skip this addendum entirely; nothing else in this
+  plan depends on it.
 - REQ-012: Packaged example/template/instructions/schema data
   (`sysrs/data/`) via the existing generic
   `general/tools/_packaged_data.py`, with the matching `pyproject.toml`
@@ -227,7 +237,11 @@ Domain key: `sysrs` (decided 2026-08-30 — see Decisions Made).
   `sysrs`; `set_status` rejects `superseded_by` for `type="sysrs"`
   with the same `ValueError` every non-adr type gets; `delete`
   resolves through the `sysrs` base dir and returns the deleted path;
-  new test cases added to
+  **conditionally** (only if `feat-56-classification-attribute-in-
+  frontmatter` merged before Task 3.3, per its REQ-011 addendum) the
+  generic `set_classification` tool also accepts `type="sysrs"` and
+  dispatches to `_set_classification_sysrs` — otherwise this clause is
+  not applicable and does not block ACC-009; new test cases added to
   `tests/general/tools/test_update.py`/`test_set_status.py`/
   `test_delete.py` (not just `tests/sysrs/`) exercise this.
 - [ ] ACC-010: Verifies REQ-012 — packaged data resolves correctly from
@@ -256,6 +270,12 @@ Included:
 - The `"sysrs"` dispatch entries in the generic `update`/`set_status`
   tools (`general/tools/`) — dispatch-only from day one, per ADR
   36905d5b (REQ-011).
+- **Conditional** (added 2026-09-02): a `"sysrs"` dispatch entry in
+  `general/tools/set_classification.py`, **only if** sibling
+  `feat-56-classification-attribute-in-frontmatter` has merged to
+  `dev` by the time Task 3.3 runs (REQ-011 addendum, Dependencies) —
+  skipped entirely otherwise, no separate task/rework needed either
+  way.
 - Cross-cutting registration (`server.py`, `pyproject.toml`,
   `.pre-commit-config.yaml`, CI, `commands/schema.py`, `AGENTS.md`,
   root `README.md`) (REQ-013).
@@ -356,6 +376,24 @@ Explicitly out of scope:
   enumeration edits on the post-sibling text. New `sysrs` files
   shadowing `id`/`type` carry the per-file pylint disable line (the
   sibling's Phase 5 convention) regardless of order.
+- **Watch (conditional, added 2026-09-02 — not yet mergeable)**:
+  `.specmgr/feat/feat-56-classification-attribute-in-frontmatter/README.md`
+  (sibling, its own worktree/branch, status `planning`, no PR open
+  yet as of this writing — only one commit, "add feature plan") adds
+  an optional `classification: str | None = None` field to the
+  shared `MarkdownFrontmatter` base (`models/md/frontmatter.py`) and
+  a new generic `set_classification(id, type, classification)` tool
+  mirroring `set_status.py`'s dispatch pattern. Because `sysrs`'s own
+  `SysrsFrontmatter` (Phase 2) extends `MarkdownFrontmatter`, it
+  inherits `classification` automatically the moment `feat-56` merges
+  to `dev` and this branch re-merges — **no schema change needed on
+  `sysrs`'s side**, only the dispatch-table addendum tracked in
+  REQ-011/Scope/Task 3.1/Task 3.3. Unlike the `feat-38-39-41-43-44`
+  coordination above, this is genuinely optional: if `feat-56` merges
+  before Task 3.3 runs, fold in the addendum; if it hasn't merged by
+  then, skip it entirely — nothing else in this plan depends on it,
+  and no rework is needed either way (the base class inheritance
+  means there's nothing to "get wrong" by going first).
 - Blocks: nothing known.
 
 ### Design Notes
@@ -1504,8 +1542,12 @@ its own ADR rather than living only in this feature's Design Notes.
   and check feat-38-39-41-43-44's merge status (Dependencies), re-
   verifying the mirror targets (`sop`/`vcr` helpers, the generic
   tools' current shape, whether `_timestamps.py`/`_ordering.py`/
-  `_path_safety` guards are on `dev` yet) against the live tree —
-  then: private helpers `sysrs/tools/_paths.py` (`SYSRS_TYPE_NAME =
+  `_path_safety` guards are on `dev` yet) against the live tree — also
+  check `feat-56-classification-attribute-in-frontmatter`'s merge
+  status here (Dependencies' "Watch" entry, added 2026-09-02):
+  merged → note it for Task 3.3's conditional addendum; not merged →
+  skip, no further action — then: private helpers
+  `sysrs/tools/_paths.py` (`SYSRS_TYPE_NAME =
   "sysrs"`, `SysrsNotFoundError`, wrappers over
   `general.tools._doc_paths`), `_io.py` (`read_sysrs`, `load_by_id`),
   `_lock.py` (`sysrs_lock`), `_write.py` (`write_sysrs_file`) —
@@ -1537,8 +1579,13 @@ its own ADR rather than living only in this feature's Design Notes.
   `superseded_by` with the standard non-adr `ValueError`) and
   `general/tools/delete.py` (`_delete_sysrs` mirroring `_delete_sop`,
   `"sysrs"` in `_DELETE_TYPES` and the `type` `Literal[...]`, imports,
-  docstring count eleven→twelve) — depends on: Task 3.1 — status:
-  not-started
+  docstring count eleven→twelve). **Conditional addendum (added
+  2026-09-02, REQ-011/Dependencies)**: if Task 3.1's checkpoint found
+  `feat-56-classification-attribute-in-frontmatter` merged to `dev`,
+  also add `_set_classification_sysrs` + `"sysrs"` in
+  `general/tools/set_classification.py`'s dispatch table (same
+  pattern as the other three); if not merged, skip this addendum —
+  depends on: Task 3.1 — status: not-started
 - [ ] Task 3.4: Tests `tests/sysrs/tools/` — one module per tool +
   helper tests + `test_integration.py` (ACC-006 round-trip using the
   generic `update`/`set_status` tools with `type="sysrs"`, both whole-
@@ -1992,6 +2039,34 @@ entirely, per explicit user instruction, rather than continuing to
 wait on it; see Task List Task 0.7/Design Notes item 4's note.)
 
 ### Recent Updates
+
+#### Update 2026-09-02 (conditional feat-56-classification addendum added to REQ-011/Scope/Task 3.1/Task 3.3/ACC-009)
+
+- Completed: Per user request, added a conditional note for sibling
+  `feat-56-classification-attribute-in-frontmatter` (currently
+  `planning`, one commit, no PR open) — it adds an optional
+  `classification` field to the shared `MarkdownFrontmatter` base
+  (inherited automatically by `SysrsFrontmatter` once both exist, no
+  schema change needed on `sysrs`'s side) and a new generic
+  `set_classification` tool mirroring `set_status`'s dispatch
+  pattern. Touched five spots so the condition can't be missed at
+  implementation time: a new "Watch" bullet in Dependencies (the full
+  rationale, marked genuinely optional/no-rework-either-way, unlike
+  the mandatory `feat-38-39-41-43-44` coordination above it); a
+  conditional addendum on REQ-011 (`_set_classification_sysrs` adapter
+  + dispatch entry, only if merged by Task 3.3); a matching
+  conditional bullet in Scope's "Included"; Task 3.1's sibling
+  coordination checkpoint now also checks `feat-56`'s merge status;
+  Task 3.3 carries the actual conditional addendum work; ACC-009 notes
+  the conditional verification clause. Explicitly not done: no
+  speculative `classification`/`set_classification` code — this is a
+  plan note only, to be resolved for real (added or explicitly
+  skipped) whenever Task 3.1's checkpoint runs.
+- Next: unchanged — execute Phase 2 (models + parser), Tasks 2.1–2.6,
+  once the user is ready to begin (per this session's separate note:
+  first sync `feat-48-feat-id`/`feat-56-classification-attribute-in-
+  frontmatter` into `dev` and re-merge into this branch before
+  starting).
 
 #### Update 2026-09-02 (branch divergence with origin/feat-32-sysrs reconciled; Task 0.11 closed; get_sysrs offset/limit added; Handoff Phase-1/2 staleness fixed)
 
@@ -2780,6 +2855,18 @@ wait on it; see Task List Task 0.7/Design Notes item 4's note.)
 
 ### Decisions Made
 
+- **2026-09-02**: `sysrs`'s coordination with sibling
+  `feat-56-classification-attribute-in-frontmatter` is conditional,
+  not mandatory — user-confirmed rationale: since `sysrs`'s frontmatter
+  extends the shared `MarkdownFrontmatter` base, the new
+  `classification` field lands "for free" via inheritance regardless
+  of merge order, and the only real coordination point is a dispatch-
+  table entry in a new generic `set_classification` tool. Unlike the
+  `feat-38-39-41-43-44` coordination (mandatory — those siblings
+  change shapes `sysrs` must match to avoid rework), `feat-56` is
+  checked once at Task 3.1 and either folded in (Task 3.3) or skipped
+  outright if not yet merged — no rework either way, so there is no
+  need to wait for it before starting Phase 2.
 - **2026-09-02**: Task 0.11 closed as "no grounding" — `##
   Definitions and Acronyms` stays plain free-form text, with no
   ISO_24765-derived structure/glossary convention. Rationale:
