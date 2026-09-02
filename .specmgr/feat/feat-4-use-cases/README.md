@@ -1,8 +1,8 @@
 ---
-created: 2026-08-05
+created: '2026-08-05 00:00:00.000Z'
 id: feat-4-use-cases
 status: planning
-updated: 2026-08-19
+updated: '2026-08-19 00:00:00.000Z'
 version: 1.7.0
 ---
 

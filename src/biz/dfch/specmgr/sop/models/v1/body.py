@@ -46,10 +46,12 @@ from ....models.md import (
     MarkdownParagraph,
     MarkdownSection1,
     MarkdownSection2,
+    MarkdownSection2WithComment,
     MarkdownSection3,
     alias,
     AliasType,
 )
+from ....models.md._ordering import validate_newest_first
 
 
 class Purpose(MarkdownSection2):
@@ -403,35 +405,38 @@ class MoreInformation(MarkdownSection2):
     fixed format. Optional."""
 
 
-#: Matches a `### {ISO8601 timestamp} — {title}` heading line as retained in a
-#: composite `MarkdownSection3`'s `.text` (which carries the heading's inline
-#: content without the `###` marker), capturing the timestamp (named group
-#: `timestamp`) and the title (named group `title`). Mirrors `UpdateEntry`'s
-#: own `@alias`, which sees the heading text without the `###` marker, and
-#: DEC's `Option`/RSK's `Probability`/`Impact` computed-field precedent (the
-#: value is carried by the heading and extracted at access time, never
-#: stored). Unlike DEC's leaf `Option`, `UpdateEntry` is a *composite*
-#: (it has a mandatory `content` paragraph), so its `.text` returns only the
-#: heading text, not the full extent -- hence no `### ` prefix here.
+#: Matches a `### {ISO8601 timestamp} ( - | : ) {title}` heading line as
+#: retained in a composite `MarkdownSection3`'s `.text` (which carries the
+#: heading's inline content without the `###` marker), capturing the
+#: timestamp (named group `timestamp`) and the title (named group `title`).
+#: Mirrors `UpdateEntry`'s own `@alias`, which sees the heading text without
+#: the `###` marker, and DEC's `Option`/RSK's `Probability`/`Impact`
+#: computed-field precedent (the value is carried by the heading and
+#: extracted at access time, never stored). Unlike DEC's leaf `Option`,
+#: `UpdateEntry` is a *composite* (it has a mandatory `content` paragraph),
+#: so its `.text` returns only the heading text, not the full extent --
+#: hence no `### ` prefix here.
 _UPDATE_ENTRY_HEADING_PATTERN = re.compile(
-    r"(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})) — (?P<title>.+)"
+    r"(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2}))(?: - | : )(?P<title>.+)"
 )
 
 
-@alias(value=r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2}) — .+$", type=AliasType.REGEX)
+@alias(value=r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})(?: - | : ).+$", type=AliasType.REGEX)
 class UpdateEntry(MarkdownSection3):
-    """`### {ISO8601 timestamp} — {title}` under `## Updates` -- one update entry.
+    """`### {ISO8601 timestamp} ( - | : ) {title}` under `## Updates` -- one update entry.
 
     The H3 heading text carries an ISO8601 timestamp and a title, joined by
-    ``" — "`` (space, em-dash, space): e.g.
-    `### 2026-08-30 14:30:00.000+02:00 — Approved`. The format is
-    ``yyyy-MM-dd HH:mm:ss.fff`` with an explicit UTC offset (``+02:00``,
-    ``-05:00``) or ``Z`` for UTC -- deliberately **not** the same format as
-    frontmatter ``created``/``updated`` (which keep the shared generic tools'
-    format); this format is scoped to `## Updates` entry headings only, which
-    are hand/LLM-authored body content. Constrained by the regex `@alias`
-    above and enforced by `match_alias` (`re.fullmatch`) at parse time -- a
-    wrong timestamp format, a missing offset, or a missing `` — title`` all
+    either ``" - "`` (space, hyphen, space) or ``" : "`` (space, colon,
+    space): e.g. `### 2026-08-30 14:30:00.000+02:00 - Approved` or
+    `### 2026-08-30 14:30:00.000+02:00 : Approved`. The em-dash separator is
+    rejected. The format is ``yyyy-MM-dd HH:mm:ss.fff`` with an explicit UTC
+    offset (``+02:00``, ``-05:00``) or ``Z`` for UTC -- deliberately **not**
+    the same format as frontmatter ``created``/``updated`` (which keep the
+    shared generic tools' format); this format is scoped to `## Updates`
+    entry headings only, which are hand/LLM-authored body content.
+    Constrained by the regex `@alias` above and enforced by `match_alias`
+    (`re.fullmatch`) at parse time -- a wrong timestamp format, a missing
+    offset, an em-dash separator, or a missing `` - ``/`` : `` title all
     fail the parse eagerly.
 
     Parameters
@@ -444,8 +449,8 @@ class UpdateEntry(MarkdownSection3):
         separately -- derived from the retained heading text.
     title:
         Computed. The title carried by the heading (the text after
-        ``" — "``). Never stored separately -- derived from the retained
-        heading text.
+        ``" - "``/``" : "``). Never stored separately -- derived from the
+        retained heading text.
 
     Raises:
         AssertionError: the retained heading text does not match
@@ -472,18 +477,18 @@ class UpdateEntry(MarkdownSection3):
         """
         heading_line = self.text.splitlines()[0].strip() if self.text else ""
         match = _UPDATE_ENTRY_HEADING_PATTERN.fullmatch(heading_line)
-        assert match, f"UpdateEntry: expected heading '### <ISO8601> — <title>', got {heading_line!r}"
+        assert match, f"UpdateEntry: expected heading '### <ISO8601> ( - | : ) <title>', got {heading_line!r}"
         result: str = match.group("timestamp")
         return result
 
     @computed_field  # type: ignore
     @property
     def title(self) -> str:
-        """The title carried by this heading (e.g. `Approved` for `### 2026-08-30 14:30:00.000+02:00 — Approved`).
+        """The title carried by this heading (e.g. `Approved` for `### 2026-08-30 14:30:00.000+02:00 - Approved`).
 
         Returns:
             The title parsed from the retained heading text (the text after
-            ``" — "``).
+            ``" - "``/``" : "``).
 
         Raises:
             AssertionError: the retained heading text does not match
@@ -492,33 +497,51 @@ class UpdateEntry(MarkdownSection3):
         """
         heading_line = self.text.splitlines()[0].strip() if self.text else ""
         match = _UPDATE_ENTRY_HEADING_PATTERN.fullmatch(heading_line)
-        assert match, f"UpdateEntry: expected heading '### <ISO8601> — <title>', got {heading_line!r}"
+        assert match, f"UpdateEntry: expected heading '### <ISO8601> ( - | : ) <title>', got {heading_line!r}"
         result: str = match.group("title")
         return result
 
 
-class Updates(MarkdownSection2):
-    """`## Updates` -- a dynamic list of ISO8601-timestamped `### ` update
+class Updates(MarkdownSection2WithComment):
+    """`## Updates` -- a dynamic, newest-first list of ISO8601-timestamped `### ` update
     entries. Optional as a whole, and the last section of the document if
-    present.
+    present. May be preceded by an explanatory HTML comment (e.g. an
+    ordering hint).
 
     Mirrors `tsk`/`dec`'s `Updates`/`RecentUpdates` container shape: no
     dedicated per-entry tools (no `option_create`/`option_list` equivalent)
-    -- entries are appended by editing the whole body.
+    -- entries are prepended (newest-first) by editing the whole body.
 
     Parameters
     ----------
+    comment:
+        Optional explanatory HTML comment (`<!-- ... -->`), e.g.
+        `<!-- Newest entry first -- prepend new entries directly below
+        this comment. -->`. Inherited from `MarkdownSection2WithComment`.
     updates:
-        The dynamic collection of `### ` entries, in document order. Requires
+        The dynamic collection of `### ` entries, in document order,
+        newest-first (enforced, see `_validate_newest_first`). Requires
         at least one entry (``min_length=1``) -- an H2 with zero entries is
         a structural error.
     """
 
     updates: list[UpdateEntry] = Field(
         min_length=1,
-        description="Dynamic collection of `### {ISO8601 timestamp} — {title}` entries, in document order. "
-        "Must contain at least one entry.",
+        description="Dynamic collection of `### {ISO8601 timestamp} ( - | : ) {title}` entries, in document "
+        "order, newest-first. Must contain at least one entry.",
     )
+
+    @model_validator(mode="after")
+    def _validate_newest_first(self) -> Updates:
+        """Reject entries that are not in newest-first order.
+
+        Delegates to the shared `models.md._ordering.validate_newest_first`
+        helper (mixed date-only/date+time day-granularity rule, equal
+        values allowed) -- mirrors `feat.models.v1.body.Updates._validate_newest_first`
+        without duplicating its logic. Raises on the first out-of-order pair.
+        """
+        validate_newest_first([update.timestamp for update in self.updates], "Updates")
+        return self
 
 
 @alias(value=".+", type=AliasType.REGEX)

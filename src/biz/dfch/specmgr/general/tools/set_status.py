@@ -15,6 +15,8 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+# pylint: disable=redefined-builtin  # id/type intentionally shadow the builtins: public tool API, issue #41
+
 """``@mcp.tool()`` wrapper: set_status (feat-22-consolidate-mutation-tools, Phase 4).
 
 The generic, cross-domain status-change tool for all twelve document types
@@ -42,7 +44,8 @@ whole-body domains' identical shape in the same way ``_update_feat``
 ``feat.tools._paths``'s bespoke folder-per-document shortcut, not a
 flat-file directory scan (see
 ``.specmgr/feat/feat-31-feature/README.md`` Design Notes). It bumps
-``updated`` to the same microsecond timestamp as every other domain --
+``updated`` to the same shared date+time timestamp (via
+``general.tools._timestamps.now_timestamp()``) as every other domain --
 an earlier, deliberate divergence (a plain ``YYYY-MM-DD`` date) was
 reversed for cross-domain consistency; see that feature's Decisions Made.
 
@@ -65,12 +68,20 @@ status-change entry point for every domain.
 ``models.adr.v1.mutations`` is imported qualified (as ``mutations``)
 because the pure, in-memory operation it delegates to shares this
 wrapper's own name.
+
+Safety (REQ-009, feat-38-39-41-43-44 Phase 4): the public
+:func:`set_status` validates ``id`` via ``_path_safety.validate_id``
+before dispatch (a ``ValueError`` before any filesystem access --
+mirroring the generic ``delete`` tool's own REQ-003; ``_path_safety``'s
+UUID-shaped domains now include ``adr``), and every adapter confines the
+resolved path to the domain's own base directory with
+``_path_safety.assert_within`` after ``load_by_id``, inside the domain
+lock.
 """
 
 from __future__ import annotations
 
 from collections.abc import Callable
-from datetime import datetime
 from typing import Literal
 
 import frontmatter
@@ -96,6 +107,7 @@ from ...gol.tools._paths import gol_base_dir
 from ...gol.tools._write import write_gol_file
 from ...models.adr import Adr
 from ...models.adr.v1 import mutations
+from ...models.md._errors import FRONTMATTER_CHANNEL, wrap_tool_errors
 from ...prb.models.v1 import PrbDocument, PrbFrontmatter
 from ...prb.tools._io import load_by_id as load_prb_by_id
 from ...prb.tools._lock import prb_lock
@@ -137,6 +149,8 @@ from ...vcr.tools._io import load_by_id as load_vcr_by_id
 from ...vcr.tools._lock import vcr_lock
 from ...vcr.tools._paths import vcr_base_dir
 from ...vcr.tools._write import write_vcr_file
+from ._path_safety import assert_within, validate_id
+from ._timestamps import now_timestamp
 
 __all__ = ["set_status"]
 
@@ -179,13 +193,15 @@ def _set_status_req(id_: str, status: str, superseded_by: str | None) -> ReqDocu
     base_dir = req_base_dir()
     with req_lock(id_):
         path, existing = load_req_by_id(base_dir, id_)
+        assert_within(base_dir, path)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
-        now = datetime.now().isoformat(timespec="microseconds")
+        now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["status"] = status
         fm_data["updated"] = now
-        new_frontmatter = ReqFrontmatter(**fm_data)
+        with wrap_tool_errors(domain="req", tool="set_status", channel=FRONTMATTER_CHANNEL):
+            new_frontmatter = ReqFrontmatter(**fm_data)
         new_doc = ReqDocument(frontmatter=new_frontmatter, body=existing.body)
         write_req_file(path, new_frontmatter, raw_body)
     return new_doc
@@ -204,13 +220,15 @@ def _set_status_uc(id_: str, status: str, superseded_by: str | None) -> UcDocume
     base_dir = uc_base_dir()
     with uc_lock(id_):
         path, existing = load_uc_by_id(base_dir, id_)
+        assert_within(base_dir, path)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
-        now = datetime.now().isoformat(timespec="microseconds")
+        now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["status"] = status
         fm_data["updated"] = now
-        new_frontmatter = UcFrontmatter(**fm_data)
+        with wrap_tool_errors(domain="uc", tool="set_status", channel=FRONTMATTER_CHANNEL):
+            new_frontmatter = UcFrontmatter(**fm_data)
         new_doc = UcDocument(frontmatter=new_frontmatter, body=existing.body)
         write_uc_file(path, new_frontmatter, raw_body)
     return new_doc
@@ -229,13 +247,15 @@ def _set_status_tsk(id_: str, status: str, superseded_by: str | None) -> TskDocu
     base_dir = tsk_base_dir()
     with tsk_lock(id_):
         path, existing = load_tsk_by_id(base_dir, id_)
+        assert_within(base_dir, path)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
-        now = datetime.now().isoformat(timespec="microseconds")
+        now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["status"] = status
         fm_data["updated"] = now
-        new_frontmatter = TskFrontmatter(**fm_data)
+        with wrap_tool_errors(domain="tsk", tool="set_status", channel=FRONTMATTER_CHANNEL):
+            new_frontmatter = TskFrontmatter(**fm_data)
         new_doc = TskDocument(frontmatter=new_frontmatter, body=existing.body)
         write_tsk_file(path, new_frontmatter, raw_body)
     return new_doc
@@ -254,13 +274,15 @@ def _set_status_qa(id_: str, status: str, superseded_by: str | None) -> QaDocume
     base_dir = qa_base_dir()
     with qa_lock(id_):
         path, existing = load_qa_by_id(base_dir, id_)
+        assert_within(base_dir, path)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
-        now = datetime.now().isoformat(timespec="microseconds")
+        now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["status"] = status
         fm_data["updated"] = now
-        new_frontmatter = QaFrontmatter(**fm_data)
+        with wrap_tool_errors(domain="qa", tool="set_status", channel=FRONTMATTER_CHANNEL):
+            new_frontmatter = QaFrontmatter(**fm_data)
         new_doc = QaDocument(frontmatter=new_frontmatter, body=existing.body)
         write_qa_file(path, new_frontmatter, raw_body)
     return new_doc
@@ -280,13 +302,15 @@ def _set_status_prb(id_: str, status: str, superseded_by: str | None) -> PrbDocu
     base_dir = prb_base_dir()
     with prb_lock(id_):
         path, existing = load_prb_by_id(base_dir, id_)
+        assert_within(base_dir, path)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
-        now = datetime.now().isoformat(timespec="microseconds")
+        now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["status"] = status
         fm_data["updated"] = now
-        new_frontmatter = PrbFrontmatter(**fm_data)
+        with wrap_tool_errors(domain="prb", tool="set_status", channel=FRONTMATTER_CHANNEL):
+            new_frontmatter = PrbFrontmatter(**fm_data)
         new_doc = PrbDocument(frontmatter=new_frontmatter, body=existing.body)
         write_prb_file(path, new_frontmatter, raw_body)
     return new_doc
@@ -305,13 +329,15 @@ def _set_status_gol(id_: str, status: str, superseded_by: str | None) -> GolDocu
     base_dir = gol_base_dir()
     with gol_lock(id_):
         path, existing = load_gol_by_id(base_dir, id_)
+        assert_within(base_dir, path)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
-        now = datetime.now().isoformat(timespec="microseconds")
+        now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["status"] = status
         fm_data["updated"] = now
-        new_frontmatter = GolFrontmatter(**fm_data)
+        with wrap_tool_errors(domain="gol", tool="set_status", channel=FRONTMATTER_CHANNEL):
+            new_frontmatter = GolFrontmatter(**fm_data)
         new_doc = GolDocument(frontmatter=new_frontmatter, body=existing.body)
         write_gol_file(path, new_frontmatter, raw_body)
     return new_doc
@@ -330,13 +356,15 @@ def _set_status_rsk(id_: str, status: str, superseded_by: str | None) -> RskDocu
     base_dir = rsk_base_dir()
     with rsk_lock(id_):
         path, existing = load_rsk_by_id(base_dir, id_)
+        assert_within(base_dir, path)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
-        now = datetime.now().isoformat(timespec="microseconds")
+        now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["status"] = status
         fm_data["updated"] = now
-        new_frontmatter = RskFrontmatter(**fm_data)
+        with wrap_tool_errors(domain="rsk", tool="set_status", channel=FRONTMATTER_CHANNEL):
+            new_frontmatter = RskFrontmatter(**fm_data)
         new_doc = RskDocument(frontmatter=new_frontmatter, body=existing.body)
         write_rsk_file(path, new_frontmatter, raw_body)
     return new_doc
@@ -357,13 +385,15 @@ def _set_status_dec(id_: str, status: str, superseded_by: str | None) -> DecDocu
     base_dir = dec_base_dir()
     with dec_lock(id_):
         path, existing = load_dec_by_id(base_dir, id_)
+        assert_within(base_dir, path)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
-        now = datetime.now().isoformat(timespec="microseconds")
+        now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["status"] = status
         fm_data["updated"] = now
-        new_frontmatter = DecFrontmatter(**fm_data)
+        with wrap_tool_errors(domain="dec", tool="set_status", channel=FRONTMATTER_CHANNEL):
+            new_frontmatter = DecFrontmatter(**fm_data)
         new_doc = DecDocument(frontmatter=new_frontmatter, body=existing.body)
         write_dec_file(path, new_frontmatter, raw_body)
     return new_doc
@@ -378,20 +408,22 @@ def _set_status_feat(id_: str, status: str, superseded_by: str | None) -> FeatDo
     feat-only divergence ``_update_feat`` (in ``update.py``) documents:
     ``id_`` resolves via ``feat.tools._paths``'s bespoke folder-per-document
     shortcut, not a flat-file directory scan. ``updated`` is bumped to the
-    same microsecond timestamp as every other domain.
+    same shared date+time timestamp as every other domain.
     """
     assert superseded_by is None, "the public `set_status` guard rejects superseded_by for non-adr types"
 
     base_dir = feat_base_dir()
     with feat_lock(id_):
         path, existing = load_feat_by_id(base_dir, id_)
+        assert_within(base_dir, path)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
-        now = datetime.now().isoformat(timespec="microseconds")
+        now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["status"] = status
         fm_data["updated"] = now
-        new_frontmatter = FeatFrontmatter(**fm_data)
+        with wrap_tool_errors(domain="feat", tool="set_status", channel=FRONTMATTER_CHANNEL):
+            new_frontmatter = FeatFrontmatter(**fm_data)
         new_doc = FeatDocument(frontmatter=new_frontmatter, body=existing.body)
         write_feat_file(path, new_frontmatter, raw_body)
     return new_doc
@@ -412,13 +444,15 @@ def _set_status_sop(id_: str, status: str, superseded_by: str | None) -> SopDocu
     base_dir = sop_base_dir()
     with sop_lock(id_):
         path, existing = load_sop_by_id(base_dir, id_)
+        assert_within(base_dir, path)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
-        now = datetime.now().isoformat(timespec="microseconds")
+        now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["status"] = status
         fm_data["updated"] = now
-        new_frontmatter = SopFrontmatter(**fm_data)
+        with wrap_tool_errors(domain="sop", tool="set_status", channel=FRONTMATTER_CHANNEL):
+            new_frontmatter = SopFrontmatter(**fm_data)
         new_doc = SopDocument(frontmatter=new_frontmatter, body=existing.body)
         write_sop_file(path, new_frontmatter, raw_body)
     return new_doc
@@ -437,13 +471,15 @@ def _set_status_vcr(id_: str, status: str, superseded_by: str | None) -> VcrDocu
     base_dir = vcr_base_dir()
     with vcr_lock(id_):
         path, existing = load_vcr_by_id(base_dir, id_)
+        assert_within(base_dir, path)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
-        now = datetime.now().isoformat(timespec="microseconds")
+        now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["status"] = status
         fm_data["updated"] = now
-        new_frontmatter = VcrFrontmatter(**fm_data)
+        with wrap_tool_errors(domain="vcr", tool="set_status", channel=FRONTMATTER_CHANNEL):
+            new_frontmatter = VcrFrontmatter(**fm_data)
         new_doc = VcrDocument(frontmatter=new_frontmatter, body=existing.body)
         write_vcr_file(path, new_frontmatter, raw_body)
     return new_doc
@@ -462,7 +498,9 @@ def _set_status_adr(id_: str, status: str, superseded_by: str | None) -> Adr:
     base_dir = adr_base_dir()
     with adr_lock(id_):
         path, adr = load_adr_by_id(base_dir, id_)
-        new_adr = mutations.set_status(adr, status, superseded_by)
+        assert_within(base_dir, path)
+        with wrap_tool_errors(domain="adr", tool="set_status", channel=FRONTMATTER_CHANNEL):
+            new_adr = mutations.set_status(adr, status, superseded_by)
         write_adr(path, new_adr)
     return new_adr
 
@@ -496,7 +534,8 @@ _ADAPTERS: dict[str, Callable[[str, str, str | None], _SetStatusDocument]] = {
         'accepted only for `type="adr"` -- it composes the status as "superseded by '
         '{superseded_by}"; with any other `type` it is a `ValueError`. Neither `create_*` nor '
         "the generic `update` tool accepts a `status` argument at all -- this is the sole "
-        "status-change entry point."
+        "status-change entry point. An invalid `id` (path-injection attempt or wrong format "
+        "for `type`) is a `ValueError` raised before any file access."
     ),
 )
 def set_status(
@@ -514,7 +553,8 @@ def set_status(
 
     For the eleven whole-body domains the existing file's frontmatter is
     carried over with every field preserved except ``status`` (replaced)
-    and ``updated`` (bumped to the current microsecond timestamp); the
+    and ``updated`` (bumped to the current date+time timestamp, via
+    ``general.tools._timestamps.now_timestamp()``); the
     body is never touched -- its raw, on-disk markdown (not a render of
     the parsed model) is re-read and re-persisted verbatim. For
     ``type="adr"`` the change delegates to
@@ -529,6 +569,17 @@ def set_status(
     ``XFrontmatter.status`` field (the eleven whole-body domains'
     ``models/<v>/frontmatter.py`` and ``models/adr/v1/frontmatter.py``)
     rather than any list in this docstring.
+
+    Safety (REQ-009, feat-38-39-41-43-44 Phase 4, mirroring ``delete``'s
+    own REQ-003): ``id`` is validated via ``_path_safety.validate_id`` (no
+    ``/``, no ``\\``, no ``..``, plus the dispatched domain's own format --
+    canonical lowercase-hex UUID for the eleven UUID domains including
+    ``adr``, ``feat-NNN-slug`` for ``feat``) **before** any filesystem
+    access, so a path-injection attempt or a wrong-format id is a
+    ``ValueError`` raised before dispatch. Each adapter additionally
+    confines the resolved path to the domain's own base directory with
+    ``_path_safety.assert_within`` inside the lock -- defense-in-depth
+    against any future gap in the id validation.
 
     Parameters
     ----------
@@ -557,18 +608,27 @@ def set_status(
     Raises
     ------
     ValueError
-        ``superseded_by`` given with a ``type`` other than ``"adr"``
-        (raised before any file access). Nothing is written.
+        ``id`` is a path-injection attempt or not in the dispatched
+        domain's own format (raised before any filesystem access; nothing
+        is written), or ``superseded_by`` given with a ``type`` other
+        than ``"adr"`` (raised before any file access). Nothing is
+        written in either case.
     pydantic.ValidationError
         ``status`` is not in the dispatched domain's closed vocabulary
         (for ``adr``: not one of its six values and not a
-        ``"superseded by ..."`` string). Nothing is written.
+        ``"superseded by ..."`` string). The message is prefixed with
+        domain/tool/channel context (e.g. ``"tsk set_status
+        (frontmatter): ..."``) by the shared tool-boundary wrapper
+        (:func:`~biz.dfch.specmgr.models.md._errors.wrap_tool_errors`).
+        Nothing is written.
     ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
     PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
     FeatNotFoundError / SopNotFoundError / VcrNotFoundError / AdrNotFoundError
         No document of the dispatched ``type`` has this id -- the
         domain's own not-found error, unchanged from the per-domain tools.
     """
+    # REQ-009: validate before any filesystem access (injection prevention).
+    validate_id(type, id)
     if superseded_by is not None and type != _TYPE_ADR:
         raise ValueError(
             f'superseded_by is only accepted for type={_TYPE_ADR!r} (the "superseded by X" '

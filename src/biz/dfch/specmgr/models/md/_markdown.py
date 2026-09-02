@@ -17,6 +17,8 @@
 
 """Markdown shared instance."""
 
+from itertools import zip_longest
+
 import frontmatter
 import mdformat
 from markdown_it import MarkdownIt
@@ -74,6 +76,99 @@ def format_text(text: str) -> str:
     return mdformat.text(text, options=_MDFORMAT_OPTIONS)
 
 
+def snippet(text: str, max_lines: int = 5, max_chars: int = 300) -> str:
+    """Return a truncated snippet of `text` for use in an error message.
+
+    Shared by every message-building helper across `models/md/` that needs
+    to show the caller a short excerpt of the offending text (REQ-002),
+    rather than dumping a whole (potentially huge) document into an
+    exception message.
+
+    Args:
+        text: the markdown text to excerpt.
+        max_lines: maximum number of lines to include before truncating.
+        max_chars: maximum number of characters to include before truncating.
+
+    Returns:
+        A snippet of up to `max_lines` lines and `max_chars` characters,
+        with a "... (truncated)" suffix if either limit was exceeded.
+    """
+    lines = text.splitlines()
+    truncated_lines = lines[:max_lines]
+    result = "\n".join(truncated_lines)
+
+    if len(lines) > max_lines or len(result) > max_chars:
+        result = result[:max_chars]
+        result = f"{result}... (truncated)"
+    return result
+
+
+def _first_differing_line(actual: str, expected: str) -> tuple[int, str, str]:
+    """Return the 1-based line number and both lines at the first point `actual`/`expected` differ.
+
+    Args:
+        actual: the text as received (not, or not yet, `mdformat`-normalized).
+        expected: `format_text(actual)`, the normalized text.
+
+    Returns:
+        `(line_no, actual_line, expected_line)`. `line_no` is 1-based,
+        relative to both `actual` and `expected`'s own line numbering (the
+        two agree up to and including the returned line number minus one).
+        `actual_line`/`expected_line` are `"<end of text>"` when one side
+        has fewer lines than the other at that position. `(0, "", "")` if
+        `actual == expected` (no difference at all -- unreachable via
+        `not_in_mdformat_message` below, which is only ever called once the
+        caller's own `text == format_text(text)` check has already failed).
+    """
+    actual_lines = actual.splitlines()
+    expected_lines = expected.splitlines()
+    for line_no, (actual_line, expected_line) in enumerate(zip_longest(actual_lines, expected_lines), start=1):
+        if actual_line != expected_line:
+            result = (
+                line_no,
+                actual_line if actual_line is not None else "<end of text>",
+                expected_line if expected_line is not None else "<end of text>",
+            )
+            return result
+    return 0, "", ""
+
+
+def not_in_mdformat_message(text: str) -> str:
+    """Build the enriched message for the `text == format_text(text)` precondition (REQ-002/REQ-003).
+
+    Every `get_extent`/`from_text` implementation across `models/md/`
+    asserts this precondition against its own `text` argument before doing
+    anything else -- callers must always pre-normalize with `format_text`.
+    A violation is usually a caller bug (an un-normalized slice handed to
+    the engine), not a document-authoring mistake, so this message states
+    exactly where `text` first diverges from its own `mdformat`-normalized
+    form instead of the previous bare "text is not in 'mdformat'.".
+
+    Args:
+        text: the text that failed `text == format_text(text)`.
+
+    Returns:
+        A message naming the 1-based line (relative to `text`'s own
+        numbering, stated as such) and content of the first line at which
+        `text` and `format_text(text)` disagree -- or, when every line
+        compares equal under `str.splitlines()` (e.g. `text` is missing
+        its single trailing newline, which `splitlines()` does not turn
+        into an extra empty line), a message naming that instead.
+    """
+    assert isinstance(text, str), type(text)
+    formatted = format_text(text)
+    line_no, actual_line, expected_line = _first_differing_line(text, formatted)
+    if line_no == 0:
+        return (
+            "text is not in 'mdformat' -- every line matches, but the text still differs (typically a "
+            f"missing/extra trailing newline): got {text!r}, mdformat produces {formatted!r}"
+        )
+    return (
+        f"text is not in 'mdformat' -- first difference at line {line_no} (relative to this text's own "
+        f"numbering): got {actual_line!r}, mdformat produces {expected_line!r}"
+    )
+
+
 def format_markdown_document(text: str) -> tuple[bool, str]:
     """Normalize a whole markdown document, preserving any leading YAML frontmatter block.
 
@@ -113,7 +208,33 @@ def format_markdown_document(text: str) -> tuple[bool, str]:
     return changed, formatted_text
 
 
-def _assert_no_raw_html(tokens: list[Token]) -> None:
+def _raw_html_message(tok: Token, own_map: tuple[int, int] | None) -> str:
+    """Build the enriched raw-HTML rejection message for `tok` (REQ-002/REQ-003).
+
+    Args:
+        tok: the offending `"html_block"`/`"html_inline"` token.
+        own_map: `tok.map` if it has one, else the nearest ancestor
+            (block-level) token's own `.map` -- an `"html_inline"` token
+            nested inside an `"inline"` token's `.children` never carries a
+            `.map` of its own, so `_assert_no_raw_html` passes its parent's
+            down as a fallback (see that function's docstring).
+
+    Returns:
+        A message naming the token kind/content, a line reference (when
+        `own_map` is available) relative to whatever text `parse()` was
+        called with, and a fix hint for the two documented remedies (wrap
+        in a code span, or write it as an HTML comment).
+    """
+    where = f" at line {own_map[0] + 1} (relative to this text's own numbering)" if own_map else ""
+    content = tok.content.strip()
+    return (
+        f"raw HTML is not permitted in a parsed document{where}: {tok.type} {content!r}; "
+        f"fix: wrap it in a code span (e.g. `{content}`) or write it as an HTML comment "
+        f"(e.g. `<!-- {content} -->`) instead"
+    )
+
+
+def _assert_no_raw_html(tokens: list[Token], _fallback_map: tuple[int, int] | None = None) -> None:
     """Raise if any token in `tokens` (recursively, including `.children`) is raw HTML.
 
     An `"html_block"` or `"html_inline"` token is permitted, not rejected,
@@ -127,15 +248,19 @@ def _assert_no_raw_html(tokens: list[Token]) -> None:
 
     Args:
         tokens: a token list, or a token's own `.children`.
+        _fallback_map: the nearest ancestor (block-level) token's own
+            `.map`, used as the line reference for a nested child token
+            (typically an `"html_inline"` token inside an `"inline"`
+            token's `.children`) that has no `.map` of its own.
     """
     for tok in tokens:
+        own_map = tok.map if tok.map else _fallback_map
         tok_type = tok.type.lower()
-        message = f"raw HTML is not permitted in a parsed document: {tok.type} {tok.content!r}"
         if tok_type in (_RAW_HTML_TOKEN_TYPE_BLOCK, _RAW_HTML_TOKEN_TYPE_INLINE):
-            assert tok.content.startswith(_ALLOWED_RAW_HTML_PREFIX), message
+            assert tok.content.startswith(_ALLOWED_RAW_HTML_PREFIX), _raw_html_message(tok, own_map)
 
         if tok.children:
-            _assert_no_raw_html(tok.children)
+            _assert_no_raw_html(tok.children, _fallback_map=own_map)
 
 
 def parse(text: str) -> list[Token]:
@@ -156,7 +281,10 @@ def parse(text: str) -> list[Token]:
     Raises:
         AssertionError: `text` contains an `html_block` or `html_inline`
             token anywhere (including nested inside an `"inline"` token's
-            `.children`).
+            `.children`) whose content is not an HTML comment. The message
+            (see `_raw_html_message`) names the offending token/content, a
+            line reference when available, and the fix (a code span or an
+            HTML comment).
     """
     assert isinstance(text, str), type(text)
     tokens = md.parse(text)

@@ -22,13 +22,16 @@ step 1 if this is genuinely a new task list.
 - A flat checklist, one `- [ ] ...`/`- [x] ...` entry per line --
   mandatory, at least one item. No phases, no per-item `depends on`/
   `status` metadata -- this is a deliberately lightweight, flat list.
-- `## Recent Updates` -- mandatory H2 section holding at least one
-  `### {free-form title}` entry (e.g. `### Created`), each followed by
-  a short paragraph of update text. A freshly drafted task list must
-  include at least one Recent Updates entry describing why this list
-  was made -- `RecentUpdates.updates` requires `min_length>=1`, so an
-  empty section (or omitting it) will fail validation. `create_tsk`
-  does not seed this entry automatically; you must include it yourself.
+- `## Recent Updates` -- mandatory H2 section, an optional leading HTML
+  comment (e.g. an ordering hint) followed by at least one
+  `### {timestamp} ( - | : ) {title}` entry, newest-first (e.g.
+  `### 2026-08-19 - Created` or the full date+time variant
+  `2026-08-19 05:42:00.000+02:00`), each followed by a short paragraph
+  of update text. A freshly drafted task list must include at least
+  one Recent Updates entry describing why this list was made --
+  `RecentUpdates.updates` requires `min_length>=1`, so an empty section
+  (or omitting it) will fail validation. `create_tsk` does not seed
+  this entry automatically; you must include it yourself.
 
 ## 2. Gather information before calling any tool
 Elicit (asking the user if not already given): the checklist items to

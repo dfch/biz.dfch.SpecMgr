@@ -104,10 +104,13 @@ class RequirementItem(MarkdownListItem):
             The description text following the `REQ-NNN: ` prefix.
 
         Raises:
-            AssertionError: `.text` does not match `^REQ-\\d{3}: .+$`.
+            AssertionError: `.text` does not match `^REQ-\\d{3}: .+$`. The
+                message names this item's own path and 1-based line
+                (REQ-001/REQ-002, via `self._path`/`self._line`, threaded in
+                by `models.md`'s `MarkdownListItem.from_text`).
         """
         match = _REQUIREMENT_ITEM_PATTERN.fullmatch(self.text)
-        assert match, f"RequirementItem: expected 'REQ-NNN: <description>', got {self.text!r}"
+        assert match, f"{self._path} (line {self._line}): expected 'REQ-NNN: <description>', got {self.text!r}"
         result: str = match.group("description")
         return result
 
@@ -171,9 +174,12 @@ class AcceptanceCriterionItem(TaskItem):
 
         Raises:
             AssertionError: `.description` does not match `^ACC-\\d{3}: .+$`.
+                The message names this item's own path and 1-based line
+                (REQ-001/REQ-002, via `self._path`/`self._line`, threaded in
+                by `models.md`'s `MarkdownListItem.from_text`).
         """
         match = _ACCEPTANCE_CRITERION_ITEM_PATTERN.fullmatch(self.description)
-        assert match, f"AcceptanceCriterionItem: expected 'ACC-NNN: <description>', got {self.description!r}"
+        assert match, f"{self._path} (line {self._line}): expected 'ACC-NNN: <description>', got {self.description!r}"
         result: str = match.group("description")
         return result
 
@@ -314,10 +320,13 @@ class Phase(MarkdownSection4):
         Raises:
             AssertionError: the retained heading text does not match
                 `Phase`'s declared `@alias` (unreachable via the engine:
-                `match_alias` already enforced it at parse time).
+                `match_alias` already enforced it at parse time). The
+                message names this section's own path and 1-based line
+                (REQ-001/REQ-002, via `self._path`/`self._line`, threaded in
+                by `models.md`'s `MarkdownSection.from_text`).
         """
         match = _PHASE_HEADING_PATTERN.fullmatch(self.text)
-        assert match, f"Phase: expected heading 'Phase N: <title>', got {self.text!r}"
+        assert match, f"{self._path} (line {self._line}): expected heading 'Phase N: <title>', got {self.text!r}"
         result: int = int(match.group("number"))
         return result
 
@@ -333,10 +342,13 @@ class Phase(MarkdownSection4):
         Raises:
             AssertionError: the retained heading text does not match
                 `Phase`'s declared `@alias` (unreachable via the engine:
-                `match_alias` already enforced it at parse time).
+                `match_alias` already enforced it at parse time). The
+                message names this section's own path and 1-based line
+                (REQ-001/REQ-002, via `self._path`/`self._line`, threaded in
+                by `models.md`'s `MarkdownSection.from_text`).
         """
         match = _PHASE_HEADING_PATTERN.fullmatch(self.text)
-        assert match, f"Phase: expected heading 'Phase N: <title>', got {self.text!r}"
+        assert match, f"{self._path} (line {self._line}): expected heading 'Phase N: <title>', got {self.text!r}"
         result: str = match.group("title")
         return result
 
@@ -411,27 +423,29 @@ class Blockers(MarkdownSection3):
     """`### Blockers` -- free-form list of open blockers. Optional."""
 
 
-#: Matches a `{timestamp} — {title}` heading line, capturing the ISO8601
-#: timestamp (named group `timestamp`) and the title (named group `title`).
-#: Shared verbatim between `UpdateEntry` and `DecisionEntry` (identical
-#: shape, see both classes' docstrings).
+#: Matches a `{timestamp} ( - | : ) {title}` heading line, capturing the
+#: ISO8601 timestamp (named group `timestamp`) and the title (named group
+#: `title`). Shared verbatim between `UpdateEntry` and `DecisionEntry`
+#: (identical shape, see both classes' docstrings).
 _ENTRY_HEADING_PATTERN = re.compile(
-    r"^(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})) — (?P<title>.+)$"
+    r"^(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2}))(?: - | : )(?P<title>.+)$"
 )
 
 #: The `@alias` REGEX value shared verbatim by `UpdateEntry` and
 #: `DecisionEntry` -- ISO8601 date + space + time + milliseconds + explicit
-#: UTC offset (`+02:00`, `-05:00`) or `Z` for UTC.
-_ENTRY_HEADING_ALIAS = r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2}) — .+$"
+#: UTC offset (`+02:00`, `-05:00`) or `Z` for UTC, joined to the title by
+#: either `" - "` or `" : "` (the em-dash separator is rejected).
+_ENTRY_HEADING_ALIAS = r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})(?: - | : ).+$"
 
 
 @alias(value=_ENTRY_HEADING_ALIAS, type=AliasType.REGEX)
 class UpdateEntry(MarkdownSection4):
-    """`#### {timestamp} — {title}` under `### Updates` -- one update entry.
+    """`#### {timestamp} ( - | : ) {title}` under `### Updates` -- one update entry.
 
     The timestamp format is deliberately not the same format as frontmatter
-    `created`/`updated` (a `datetime.isoformat(timespec="microseconds")`
-    value, e.g. `2026-08-30T14:23:01.123456`) -- this format is scoped to
+    `created`/`updated` (the shared date+time variant produced by
+    `general.tools._timestamps.now_timestamp()`, e.g.
+    `2026-08-30 14:23:01.123Z`) -- this format is scoped to
     `### Updates`/`### Decisions Made` entry headings only, hand/LLM-authored
     body content, not tool-generated frontmatter.
 
@@ -444,8 +458,9 @@ class UpdateEntry(MarkdownSection4):
         Computed. The entry's ISO8601 timestamp, verbatim from the heading.
         Never stored separately -- derived from the retained heading text.
     title:
-        Computed. The entry's title (the heading text after `" — "`). Never
-        stored separately -- derived from the retained heading text.
+        Computed. The entry's title (the heading text after `" - "`/
+        `" : "`). Never stored separately -- derived from the retained
+        heading text.
     """
 
     content: MarkdownParagraph = Field(
@@ -463,17 +478,22 @@ class UpdateEntry(MarkdownSection4):
         Raises:
             AssertionError: the retained heading text does not match this
                 class's declared `@alias` (unreachable via the engine:
-                `match_alias` already enforced it at parse time).
+                `match_alias` already enforced it at parse time). The
+                message names this entry's own path and 1-based line
+                (REQ-001/REQ-002, via `self._path`/`self._line`, threaded in
+                by `models.md`'s `MarkdownSection.from_text`).
         """
         match = _ENTRY_HEADING_PATTERN.fullmatch(self.text)
-        assert match, f"{type(self).__name__}: expected heading '{{timestamp}} — {{title}}', got {self.text!r}"
+        assert match, (
+            f"{self._path} (line {self._line}): expected heading '{{timestamp}} ( - | : ) {{title}}', got {self.text!r}"
+        )
         result: str = match.group("timestamp")
         return result
 
     @computed_field  # type: ignore
     @property
     def title(self) -> str:
-        """The entry's title carried by this heading (the heading text after `" — "`).
+        """The entry's title carried by this heading (the heading text after `" - "`/`" : "`).
 
         Returns:
             The title parsed from the retained heading text.
@@ -481,10 +501,15 @@ class UpdateEntry(MarkdownSection4):
         Raises:
             AssertionError: the retained heading text does not match this
                 class's declared `@alias` (unreachable via the engine:
-                `match_alias` already enforced it at parse time).
+                `match_alias` already enforced it at parse time). The
+                message names this entry's own path and 1-based line
+                (REQ-001/REQ-002, via `self._path`/`self._line`, threaded in
+                by `models.md`'s `MarkdownSection.from_text`).
         """
         match = _ENTRY_HEADING_PATTERN.fullmatch(self.text)
-        assert match, f"{type(self).__name__}: expected heading '{{timestamp}} — {{title}}', got {self.text!r}"
+        assert match, (
+            f"{self._path} (line {self._line}): expected heading '{{timestamp}} ( - | : ) {{title}}', got {self.text!r}"
+        )
         result: str = match.group("title")
         return result
 
@@ -500,14 +525,14 @@ class Updates(MarkdownSection3WithComment):
         `<!-- Newest entry first -- prepend new entries directly below
         this comment. -->`. Inherited from `MarkdownSection3WithComment`.
     updates:
-        The `#### {timestamp} — {title}` entries, in document order,
+        The `#### {timestamp} ( - | : ) {title}` entries, in document order,
         newest-first (enforced, see `_validate_newest_first`). At least
         one entry.
     """
 
     updates: list[UpdateEntry] = Field(
         min_length=1,
-        description="Dynamic collection of `#### {timestamp} — {title}` entries, in document order, "
+        description="Dynamic collection of `#### {timestamp} ( - | : ) {title}` entries, in document order, "
         "newest-first. Must contain at least one entry.",
     )
 
@@ -533,7 +558,7 @@ class Updates(MarkdownSection3WithComment):
 
 @alias(value=_ENTRY_HEADING_ALIAS, type=AliasType.REGEX)
 class DecisionEntry(MarkdownSection4):
-    """`#### {timestamp} — {title}` under `### Decisions Made` -- one decision entry.
+    """`#### {timestamp} ( - | : ) {title}` under `### Decisions Made` -- one decision entry.
 
     Identical shape to `UpdateEntry` (same alias regex, same `timestamp`/
     `title` computed-field extraction, same `content: MarkdownParagraph`) --
@@ -548,8 +573,9 @@ class DecisionEntry(MarkdownSection4):
         Computed. The entry's ISO8601 timestamp, verbatim from the heading.
         Never stored separately -- derived from the retained heading text.
     title:
-        Computed. The entry's title (the heading text after `" — "`). Never
-        stored separately -- derived from the retained heading text.
+        Computed. The entry's title (the heading text after `" - "`/
+        `" : "`). Never stored separately -- derived from the retained
+        heading text.
     """
 
     content: MarkdownParagraph = Field(
@@ -567,17 +593,22 @@ class DecisionEntry(MarkdownSection4):
         Raises:
             AssertionError: the retained heading text does not match this
                 class's declared `@alias` (unreachable via the engine:
-                `match_alias` already enforced it at parse time).
+                `match_alias` already enforced it at parse time). The
+                message names this entry's own path and 1-based line
+                (REQ-001/REQ-002, via `self._path`/`self._line`, threaded in
+                by `models.md`'s `MarkdownSection.from_text`).
         """
         match = _ENTRY_HEADING_PATTERN.fullmatch(self.text)
-        assert match, f"{type(self).__name__}: expected heading '{{timestamp}} — {{title}}', got {self.text!r}"
+        assert match, (
+            f"{self._path} (line {self._line}): expected heading '{{timestamp}} ( - | : ) {{title}}', got {self.text!r}"
+        )
         result: str = match.group("timestamp")
         return result
 
     @computed_field  # type: ignore
     @property
     def title(self) -> str:
-        """The entry's title carried by this heading (the heading text after `" — "`).
+        """The entry's title carried by this heading (the heading text after `" - "`/`" : "`).
 
         Returns:
             The title parsed from the retained heading text.
@@ -585,10 +616,15 @@ class DecisionEntry(MarkdownSection4):
         Raises:
             AssertionError: the retained heading text does not match this
                 class's declared `@alias` (unreachable via the engine:
-                `match_alias` already enforced it at parse time).
+                `match_alias` already enforced it at parse time). The
+                message names this entry's own path and 1-based line
+                (REQ-001/REQ-002, via `self._path`/`self._line`, threaded in
+                by `models.md`'s `MarkdownSection.from_text`).
         """
         match = _ENTRY_HEADING_PATTERN.fullmatch(self.text)
-        assert match, f"{type(self).__name__}: expected heading '{{timestamp}} — {{title}}', got {self.text!r}"
+        assert match, (
+            f"{self._path} (line {self._line}): expected heading '{{timestamp}} ( - | : ) {{title}}', got {self.text!r}"
+        )
         result: str = match.group("title")
         return result
 
@@ -610,14 +646,14 @@ class DecisionsMade(MarkdownSection3WithComment):
         Optional explanatory HTML comment (`<!-- ... -->`). Inherited from
         `MarkdownSection3WithComment`.
     decisions:
-        The `#### {timestamp} — {title}` entries, in document order,
+        The `#### {timestamp} ( - | : ) {title}` entries, in document order,
         newest-first (enforced, see `_validate_newest_first`). At least
         one entry.
     """
 
     decisions: list[DecisionEntry] = Field(
         min_length=1,
-        description="Dynamic collection of `#### {timestamp} — {title}` entries, in document order, "
+        description="Dynamic collection of `#### {timestamp} ( - | : ) {title}` entries, in document order, "
         "newest-first. Must contain at least one entry.",
     )
 

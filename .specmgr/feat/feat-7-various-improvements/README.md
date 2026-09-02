@@ -1,8 +1,8 @@
 ---
-created: 2026-08-15
+created: '2026-08-15 00:00:00.000Z'
 id: feat-7-various-improvements
 status: planning
-updated: 2026-08-30
+updated: '2026-09-01 00:00:00.000Z'
 version: 1.0.0
 ---
 
@@ -713,7 +713,14 @@ progresses (edit, don't duplicate).
 
 - [ ] Task 0.29: Fix silent/unhelpful validation failures when a
   `MarkdownParagraph`-typed field's prose wraps onto a line starting with
-  `+`, `-`, or `*` — depends on: none — status: not-started
+  `+`, `-`, or `*` — depends on: none — status: subsumed by
+  `feat-27-validation` (GitHub issue #27, recorded 2026-09-01): that
+  feature widens this task's scope from TSK to the validation-error
+  handling of every document type and adopts this task's candidate fix
+  directions 2 (clearer error wrapper) and 3 (regression tests) while
+  rejecting direction 1 (absorbing stray list blocks into paragraphs) per
+  its recorded strict-rejection decision; completion is tracked in the
+  new feature's own task list, so this line stays unchecked here
 
   Background: Found while closing out the "Finish persisting the OpenCode
   + MCP PlantUML sequence diagram" task list (TSK
@@ -1004,6 +1011,19 @@ already-compacted folder).
 
 See `history.md` for updates before 2026-08-18 (rotated out per ADR
 e369ee2e-3353-4f92-991c-6367d76d832e once this section grew too long).
+
+#### Update 2026-09-01 (Task 0.29 subsumed)
+
+- Subsumed: Task 0.29 (silent/unhelpful validation failures — the
+  `+`/`-`/`*`-continuation trigger and its sibling trigger from GitHub
+  issue #27, the bare `<word>`-token repro) is now tracked by its own
+  feature, `feat-27-validation` (GitHub issue #27), whose scope widens
+  the concern from TSK to the validation-error handling of every document
+  type. That feature adopts this task's candidate fix directions 2
+  (clearer error wrapper) and 3 (regression tests) and rejects direction
+  1 (absorbing stray list blocks into paragraphs) per its recorded
+  strict-rejection decision. The task line is annotated accordingly and
+  the background text is kept here as the investigation record.
 
 #### Update 2026-08-31 (Task 0.29 extended)
 

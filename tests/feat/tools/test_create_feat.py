@@ -76,7 +76,7 @@ _MINIMAL_BODY = textwrap.dedent(
 
     ### Updates
 
-    #### 2026-08-30 16:47:59.981Z — Paused for review
+    #### 2026-08-30 16:47:59.981Z - Paused for review
 
     Free-form prose describing what happened in this update.
     """
@@ -124,7 +124,9 @@ class TestCreateFeat(TempFeatDirTestCase):
         self.assertEqual(result.frontmatter.status, "planning")
         self.assertIsNotNone(result.frontmatter.created)
         self.assertEqual(result.frontmatter.created, result.frontmatter.updated)
-        self.assertRegex(result.frontmatter.created or "", r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}$")
+        self.assertRegex(
+            result.frontmatter.created or "", r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})$"
+        )
         self.assertEqual(result.frontmatter.version, CURRENT_SCHEMA_VERSION)
         self.assertEqual(result.body.text, "Feature: Example Widget")
 

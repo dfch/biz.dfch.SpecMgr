@@ -15,6 +15,8 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+# pylint: disable=redefined-builtin  # id/type intentionally shadow the builtins: public tool API, issue #41
+
 """``@mcp.tool()`` wrapper: update (feat-22-consolidate-mutation-tools, Phase 2).
 
 The generic, cross-domain whole-body *and* line-range replace tool for the
@@ -45,20 +47,27 @@ the other ten's identical shape in how it resolves ``id``: via
 ``feat.tools._paths``'s bespoke folder-per-document shortcut, not a
 flat-file directory scan (see
 ``.specmgr/feat/feat-31-feature/README.md`` Design Notes, "Addressing").
-It bumps ``updated`` to the same microsecond timestamp as every other
-domain -- an earlier, deliberate divergence (a plain ``YYYY-MM-DD`` date)
-was reversed for cross-domain consistency; see that feature's Decisions
+It bumps ``updated`` to the same shared date+time timestamp (via
+``general.tools._timestamps.now_timestamp()``) as every other domain --
+an earlier, deliberate divergence (a plain ``YYYY-MM-DD`` date) was
+reversed for cross-domain consistency; see that feature's Decisions
 Made.
 
 ADR is deliberately *not* a ``type`` here: its section-level MADR mutation
 contract (``update_frontmatter``/``update_section``/``option_*``) has no
 whole-body replace by design.
+
+Safety (REQ-009, feat-38-39-41-43-44 Phase 4): the public :func:`update`
+validates ``id`` via ``_path_safety.validate_id`` before dispatch (a
+``ValueError`` before any filesystem access -- mirroring the generic
+``delete`` tool's own REQ-003), and every adapter confines the resolved
+path to the domain's own base directory with ``_path_safety.assert_within``
+after ``load_by_id``, inside the domain lock.
 """
 
 from __future__ import annotations
 
 from collections.abc import Callable
-from datetime import datetime
 from typing import Literal
 
 from ...dec.models.v1 import DecDocument, DecFrontmatter, Decision
@@ -76,6 +85,7 @@ from ...gol.tools._io import load_by_id as load_gol_by_id
 from ...gol.tools._lock import gol_lock
 from ...gol.tools._paths import gol_base_dir
 from ...gol.tools._write import write_gol_file
+from ...models.md._errors import BODY_CHANNEL, wrap_tool_errors
 from ...models.md._markdown import format_text
 from ...prb.models.v1 import Prb, PrbDocument, PrbFrontmatter
 from ...prb.tools._io import load_by_id as load_prb_by_id
@@ -118,7 +128,9 @@ from ...vcr.tools._io import load_by_id as load_vcr_by_id
 from ...vcr.tools._lock import vcr_lock
 from ...vcr.tools._paths import vcr_base_dir
 from ...vcr.tools._write import write_vcr_file
+from ._path_safety import assert_within, validate_id
 from ._splice import body_text, splice_body
+from ._timestamps import now_timestamp
 
 __all__ = ["update"]
 
@@ -157,9 +169,11 @@ def _update_req(id_: str, content: str, begin: int | None, end: int | None) -> R
         base_dir = req_base_dir()
         with req_lock(id_):
             path, existing = load_req_by_id(base_dir, id_)
+            assert_within(base_dir, path)
             spliced = splice_body(body_text(path), begin, end, content)
-            body = Requirement.from_text(format_text(spliced))
-            now = datetime.now().isoformat(timespec="microseconds")
+            with wrap_tool_errors(domain="req", tool="update", channel=BODY_CHANNEL):
+                body = Requirement.from_text(format_text(spliced))
+            now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
             new_frontmatter = ReqFrontmatter(**fm_data)
@@ -167,12 +181,14 @@ def _update_req(id_: str, content: str, begin: int | None, end: int | None) -> R
             write_req_file(path, new_frontmatter, spliced)
         return new_doc
 
-    body = Requirement.from_text(format_text(content))
+    with wrap_tool_errors(domain="req", tool="update", channel=BODY_CHANNEL):
+        body = Requirement.from_text(format_text(content))
 
     base_dir = req_base_dir()
     with req_lock(id_):
         path, existing = load_req_by_id(base_dir, id_)
-        now = datetime.now().isoformat(timespec="microseconds")
+        assert_within(base_dir, path)
+        now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
         new_frontmatter = ReqFrontmatter(**fm_data)
@@ -196,9 +212,11 @@ def _update_uc(id_: str, content: str, begin: int | None, end: int | None) -> Uc
         base_dir = uc_base_dir()
         with uc_lock(id_):
             path, existing = load_uc_by_id(base_dir, id_)
+            assert_within(base_dir, path)
             spliced = splice_body(body_text(path), begin, end, content)
-            body = UseCase.from_text(format_text(spliced))
-            now = datetime.now().isoformat(timespec="microseconds")
+            with wrap_tool_errors(domain="uc", tool="update", channel=BODY_CHANNEL):
+                body = UseCase.from_text(format_text(spliced))
+            now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
             new_frontmatter = UcFrontmatter(**fm_data)
@@ -206,12 +224,14 @@ def _update_uc(id_: str, content: str, begin: int | None, end: int | None) -> Uc
             write_uc_file(path, new_frontmatter, spliced)
         return new_doc
 
-    body = UseCase.from_text(format_text(content))
+    with wrap_tool_errors(domain="uc", tool="update", channel=BODY_CHANNEL):
+        body = UseCase.from_text(format_text(content))
 
     base_dir = uc_base_dir()
     with uc_lock(id_):
         path, existing = load_uc_by_id(base_dir, id_)
-        now = datetime.now().isoformat(timespec="microseconds")
+        assert_within(base_dir, path)
+        now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
         new_frontmatter = UcFrontmatter(**fm_data)
@@ -235,9 +255,11 @@ def _update_tsk(id_: str, content: str, begin: int | None, end: int | None) -> T
         base_dir = tsk_base_dir()
         with tsk_lock(id_):
             path, existing = load_tsk_by_id(base_dir, id_)
+            assert_within(base_dir, path)
             spliced = splice_body(body_text(path), begin, end, content)
-            body = Task.from_text(format_text(spliced))
-            now = datetime.now().isoformat(timespec="microseconds")
+            with wrap_tool_errors(domain="tsk", tool="update", channel=BODY_CHANNEL):
+                body = Task.from_text(format_text(spliced))
+            now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
             new_frontmatter = TskFrontmatter(**fm_data)
@@ -245,12 +267,14 @@ def _update_tsk(id_: str, content: str, begin: int | None, end: int | None) -> T
             write_tsk_file(path, new_frontmatter, spliced)
         return new_doc
 
-    body = Task.from_text(format_text(content))
+    with wrap_tool_errors(domain="tsk", tool="update", channel=BODY_CHANNEL):
+        body = Task.from_text(format_text(content))
 
     base_dir = tsk_base_dir()
     with tsk_lock(id_):
         path, existing = load_tsk_by_id(base_dir, id_)
-        now = datetime.now().isoformat(timespec="microseconds")
+        assert_within(base_dir, path)
+        now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
         new_frontmatter = TskFrontmatter(**fm_data)
@@ -274,9 +298,11 @@ def _update_qa(id_: str, content: str, begin: int | None, end: int | None) -> Qa
         base_dir = qa_base_dir()
         with qa_lock(id_):
             path, existing = load_qa_by_id(base_dir, id_)
+            assert_within(base_dir, path)
             spliced = splice_body(body_text(path), begin, end, content)
-            body = Qa.from_text(format_text(spliced))
-            now = datetime.now().isoformat(timespec="microseconds")
+            with wrap_tool_errors(domain="qa", tool="update", channel=BODY_CHANNEL):
+                body = Qa.from_text(format_text(spliced))
+            now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
             new_frontmatter = QaFrontmatter(**fm_data)
@@ -284,12 +310,14 @@ def _update_qa(id_: str, content: str, begin: int | None, end: int | None) -> Qa
             write_qa_file(path, new_frontmatter, spliced)
         return new_doc
 
-    body = Qa.from_text(format_text(content))
+    with wrap_tool_errors(domain="qa", tool="update", channel=BODY_CHANNEL):
+        body = Qa.from_text(format_text(content))
 
     base_dir = qa_base_dir()
     with qa_lock(id_):
         path, existing = load_qa_by_id(base_dir, id_)
-        now = datetime.now().isoformat(timespec="microseconds")
+        assert_within(base_dir, path)
+        now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
         new_frontmatter = QaFrontmatter(**fm_data)
@@ -313,9 +341,11 @@ def _update_prb(id_: str, content: str, begin: int | None, end: int | None) -> P
         base_dir = prb_base_dir()
         with prb_lock(id_):
             path, existing = load_prb_by_id(base_dir, id_)
+            assert_within(base_dir, path)
             spliced = splice_body(body_text(path), begin, end, content)
-            body = Prb.from_text(format_text(spliced))
-            now = datetime.now().isoformat(timespec="microseconds")
+            with wrap_tool_errors(domain="prb", tool="update", channel=BODY_CHANNEL):
+                body = Prb.from_text(format_text(spliced))
+            now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
             new_frontmatter = PrbFrontmatter(**fm_data)
@@ -323,12 +353,14 @@ def _update_prb(id_: str, content: str, begin: int | None, end: int | None) -> P
             write_prb_file(path, new_frontmatter, spliced)
         return new_doc
 
-    body = Prb.from_text(format_text(content))
+    with wrap_tool_errors(domain="prb", tool="update", channel=BODY_CHANNEL):
+        body = Prb.from_text(format_text(content))
 
     base_dir = prb_base_dir()
     with prb_lock(id_):
         path, existing = load_prb_by_id(base_dir, id_)
-        now = datetime.now().isoformat(timespec="microseconds")
+        assert_within(base_dir, path)
+        now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
         new_frontmatter = PrbFrontmatter(**fm_data)
@@ -352,9 +384,11 @@ def _update_gol(id_: str, content: str, begin: int | None, end: int | None) -> G
         base_dir = gol_base_dir()
         with gol_lock(id_):
             path, existing = load_gol_by_id(base_dir, id_)
+            assert_within(base_dir, path)
             spliced = splice_body(body_text(path), begin, end, content)
-            body = Goal.from_text(format_text(spliced))
-            now = datetime.now().isoformat(timespec="microseconds")
+            with wrap_tool_errors(domain="gol", tool="update", channel=BODY_CHANNEL):
+                body = Goal.from_text(format_text(spliced))
+            now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
             new_frontmatter = GolFrontmatter(**fm_data)
@@ -362,12 +396,14 @@ def _update_gol(id_: str, content: str, begin: int | None, end: int | None) -> G
             write_gol_file(path, new_frontmatter, spliced)
         return new_doc
 
-    body = Goal.from_text(format_text(content))
+    with wrap_tool_errors(domain="gol", tool="update", channel=BODY_CHANNEL):
+        body = Goal.from_text(format_text(content))
 
     base_dir = gol_base_dir()
     with gol_lock(id_):
         path, existing = load_gol_by_id(base_dir, id_)
-        now = datetime.now().isoformat(timespec="microseconds")
+        assert_within(base_dir, path)
+        now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
         new_frontmatter = GolFrontmatter(**fm_data)
@@ -391,9 +427,11 @@ def _update_rsk(id_: str, content: str, begin: int | None, end: int | None) -> R
         base_dir = rsk_base_dir()
         with rsk_lock(id_):
             path, existing = load_rsk_by_id(base_dir, id_)
+            assert_within(base_dir, path)
             spliced = splice_body(body_text(path), begin, end, content)
-            body = Risk.from_text(format_text(spliced))
-            now = datetime.now().isoformat(timespec="microseconds")
+            with wrap_tool_errors(domain="rsk", tool="update", channel=BODY_CHANNEL):
+                body = Risk.from_text(format_text(spliced))
+            now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
             new_frontmatter = RskFrontmatter(**fm_data)
@@ -401,12 +439,14 @@ def _update_rsk(id_: str, content: str, begin: int | None, end: int | None) -> R
             write_rsk_file(path, new_frontmatter, spliced)
         return new_doc
 
-    body = Risk.from_text(format_text(content))
+    with wrap_tool_errors(domain="rsk", tool="update", channel=BODY_CHANNEL):
+        body = Risk.from_text(format_text(content))
 
     base_dir = rsk_base_dir()
     with rsk_lock(id_):
         path, existing = load_rsk_by_id(base_dir, id_)
-        now = datetime.now().isoformat(timespec="microseconds")
+        assert_within(base_dir, path)
+        now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
         new_frontmatter = RskFrontmatter(**fm_data)
@@ -432,9 +472,11 @@ def _update_dec(id_: str, content: str, begin: int | None, end: int | None) -> D
         base_dir = dec_base_dir()
         with dec_lock(id_):
             path, existing = load_dec_by_id(base_dir, id_)
+            assert_within(base_dir, path)
             spliced = splice_body(body_text(path), begin, end, content)
-            body = Decision.from_text(format_text(spliced))
-            now = datetime.now().isoformat(timespec="microseconds")
+            with wrap_tool_errors(domain="dec", tool="update", channel=BODY_CHANNEL):
+                body = Decision.from_text(format_text(spliced))
+            now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
             new_frontmatter = DecFrontmatter(**fm_data)
@@ -442,12 +484,14 @@ def _update_dec(id_: str, content: str, begin: int | None, end: int | None) -> D
             write_dec_file(path, new_frontmatter, spliced)
         return new_doc
 
-    body = Decision.from_text(format_text(content))
+    with wrap_tool_errors(domain="dec", tool="update", channel=BODY_CHANNEL):
+        body = Decision.from_text(format_text(content))
 
     base_dir = dec_base_dir()
     with dec_lock(id_):
         path, existing = load_dec_by_id(base_dir, id_)
-        now = datetime.now().isoformat(timespec="microseconds")
+        assert_within(base_dir, path)
+        now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
         new_frontmatter = DecFrontmatter(**fm_data)
@@ -464,8 +508,8 @@ def _update_feat(id_: str, content: str, begin: int | None, end: int | None) -> 
     divergence (see the module docstring): ``id_`` resolves via
     ``feat.tools._paths``'s bespoke folder-per-document shortcut (through
     ``load_by_id``/``feat_base_dir``), not a flat-file directory scan.
-    ``updated`` is bumped to the same microsecond timestamp as every other
-    domain.
+    ``updated`` is bumped to the same shared date+time timestamp as every
+    other domain.
     """
     if begin is not None or end is not None:
         assert begin is not None and end is not None, "the public `update` guard enforces both-or-neither"
@@ -473,9 +517,11 @@ def _update_feat(id_: str, content: str, begin: int | None, end: int | None) -> 
         base_dir = feat_base_dir()
         with feat_lock(id_):
             path, existing = load_feat_by_id(base_dir, id_)
+            assert_within(base_dir, path)
             spliced = splice_body(body_text(path), begin, end, content)
-            body = Feature.from_text(format_text(spliced))
-            now = datetime.now().isoformat(timespec="microseconds")
+            with wrap_tool_errors(domain="feat", tool="update", channel=BODY_CHANNEL):
+                body = Feature.from_text(format_text(spliced))
+            now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
             new_frontmatter = FeatFrontmatter(**fm_data)
@@ -483,12 +529,14 @@ def _update_feat(id_: str, content: str, begin: int | None, end: int | None) -> 
             write_feat_file(path, new_frontmatter, spliced)
         return new_doc
 
-    body = Feature.from_text(format_text(content))
+    with wrap_tool_errors(domain="feat", tool="update", channel=BODY_CHANNEL):
+        body = Feature.from_text(format_text(content))
 
     base_dir = feat_base_dir()
     with feat_lock(id_):
         path, existing = load_feat_by_id(base_dir, id_)
-        now = datetime.now().isoformat(timespec="microseconds")
+        assert_within(base_dir, path)
+        now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
         new_frontmatter = FeatFrontmatter(**fm_data)
@@ -514,9 +562,11 @@ def _update_sop(id_: str, content: str, begin: int | None, end: int | None) -> S
         base_dir = sop_base_dir()
         with sop_lock(id_):
             path, existing = load_sop_by_id(base_dir, id_)
+            assert_within(base_dir, path)
             spliced = splice_body(body_text(path), begin, end, content)
-            body = Sop.from_text(format_text(spliced))
-            now = datetime.now().isoformat(timespec="microseconds")
+            with wrap_tool_errors(domain="sop", tool="update", channel=BODY_CHANNEL):
+                body = Sop.from_text(format_text(spliced))
+            now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
             new_frontmatter = SopFrontmatter(**fm_data)
@@ -524,12 +574,14 @@ def _update_sop(id_: str, content: str, begin: int | None, end: int | None) -> S
             write_sop_file(path, new_frontmatter, spliced)
         return new_doc
 
-    body = Sop.from_text(format_text(content))
+    with wrap_tool_errors(domain="sop", tool="update", channel=BODY_CHANNEL):
+        body = Sop.from_text(format_text(content))
 
     base_dir = sop_base_dir()
     with sop_lock(id_):
         path, existing = load_sop_by_id(base_dir, id_)
-        now = datetime.now().isoformat(timespec="microseconds")
+        assert_within(base_dir, path)
+        now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
         new_frontmatter = SopFrontmatter(**fm_data)
@@ -552,9 +604,11 @@ def _update_vcr(id_: str, content: str, begin: int | None, end: int | None) -> V
         base_dir = vcr_base_dir()
         with vcr_lock(id_):
             path, existing = load_vcr_by_id(base_dir, id_)
+            assert_within(base_dir, path)
             spliced = splice_body(body_text(path), begin, end, content)
-            body = Vcr.from_text(format_text(spliced))
-            now = datetime.now().isoformat(timespec="microseconds")
+            with wrap_tool_errors(domain="vcr", tool="update", channel=BODY_CHANNEL):
+                body = Vcr.from_text(format_text(spliced))
+            now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
             new_frontmatter = VcrFrontmatter(**fm_data)
@@ -562,12 +616,14 @@ def _update_vcr(id_: str, content: str, begin: int | None, end: int | None) -> V
             write_vcr_file(path, new_frontmatter, spliced)
         return new_doc
 
-    body = Vcr.from_text(format_text(content))
+    with wrap_tool_errors(domain="vcr", tool="update", channel=BODY_CHANNEL):
+        body = Vcr.from_text(format_text(content))
 
     base_dir = vcr_base_dir()
     with vcr_lock(id_):
         path, existing = load_vcr_by_id(base_dir, id_)
-        now = datetime.now().isoformat(timespec="microseconds")
+        assert_within(base_dir, path)
+        now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
         new_frontmatter = VcrFrontmatter(**fm_data)
@@ -603,7 +659,9 @@ _ADAPTERS: dict[str, Callable[[str, str, int | None, int | None], _UpdateDocumen
         "`content` replaces the 1-based inclusive body-line range `begin`..`end` of the current "
         "on-disk body (`N+1` = end-of-body sentinel: append after the last line, or replace "
         "through end of body); the spliced result is validated as a whole document before "
-        "anything is written. `status` is never settable -- use the generic `set_status` tool."
+        "anything is written. `status` is never settable -- use the generic `set_status` tool. "
+        "An invalid `id` (path-injection attempt or wrong format for `type`) is a `ValueError` "
+        "raised before any file access."
     ),
 )
 def update(
@@ -647,9 +705,20 @@ def update(
 
     In both modes the existing file's frontmatter is carried over with
     every field preserved except ``updated`` (bumped to the current
-    microsecond timestamp); ``status`` in particular is never settable
-    through this tool -- the generic ``set_status`` tool in
-    ``general.tools`` is the only status-change path.
+    date+time timestamp, via ``general.tools._timestamps.now_timestamp()``);
+    ``status`` in particular is never settable through this tool -- the
+    generic ``set_status`` tool in ``general.tools`` is the only
+    status-change path.
+
+    Safety (REQ-009, feat-38-39-41-43-44 Phase 4, mirroring ``delete``'s
+    own REQ-003): ``id`` is validated via ``_path_safety.validate_id`` (no
+    ``/``, no ``\\``, no ``..``, plus the dispatched domain's own format --
+    canonical lowercase-hex UUID for the ten UUID domains, ``feat-NNN-slug``
+    for ``feat``) **before** any filesystem access, so a path-injection
+    attempt or a wrong-format id is a ``ValueError`` raised before dispatch.
+    Each adapter additionally confines the resolved path to the domain's
+    own base directory with ``_path_safety.assert_within`` inside the
+    lock -- defense-in-depth against any future gap in the id validation.
 
     Parameters
     ----------
@@ -681,23 +750,34 @@ def update(
     Raises
     ------
     ValueError
-        Misused range coordinates: exactly one of ``begin``/``end`` given
-        (raised before any file access), or ``begin < 1``, ``begin > end``,
+        ``id`` is a path-injection attempt or not in the dispatched
+        domain's own format (raised before any filesystem access; nothing
+        is written). Also raised for misused range coordinates: exactly
+        one of ``begin``/``end`` given (raised before any file access), or
+        ``begin < 1``, ``begin > end``,
         or ``end > N + 1`` (raised after the on-disk body is read; the
         message names the offending value(s) and the allowed range).
         Nothing is written in any of these cases.
     AssertionError
         The (spliced) body is structurally invalid (e.g. a range that
-        deletes the H1). Nothing is written.
+        deletes the H1). The message is prefixed with domain/tool/channel
+        context (e.g. ``"tsk update (body): ..."``) by the shared
+        tool-boundary wrapper (:func:`~biz.dfch.specmgr.models.md._errors.
+        wrap_tool_errors`), layered on top of the engine's own
+        field-path/line/snippet enrichment (feat-27-validation Phases
+        1/2). Nothing is written.
     pydantic.ValidationError
         A field/cross-field validation failure in the (spliced) body (e.g.
-        a range producing an out-of-vocabulary value). Nothing is written.
+        a range producing an out-of-vocabulary value) -- similarly
+        prefixed. Nothing is written.
     ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
     PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
     FeatNotFoundError / SopNotFoundError / VcrNotFoundError
         No document of the dispatched ``type`` has this id -- the
         domain's own not-found error, unchanged from the per-domain tools.
     """
+    # REQ-009: validate before any filesystem access (injection prevention).
+    validate_id(type, id)
     if (begin is None) != (end is None):
         raise ValueError(f"begin and end must be given together (both or neither), got begin={begin!r}, end={end!r}")
 

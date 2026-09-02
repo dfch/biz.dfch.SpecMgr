@@ -36,9 +36,13 @@ step 1 if this is genuinely a new decision.
   mandatory, numbers start at 1 and are never renumbered). The H2 is
   present only if at least one option exists.
 - `## More Information` -- optional freeform supplementary text.
-- `## Updates` -- optional, and the last section if present: dated
-  `### {title}` entries (e.g. `2026-08-27 — Created`), each with a
-  mandatory lead paragraph.
+- `## Updates` -- optional, and the last section if present: an
+  optional leading HTML comment (conventionally "Newest entry first"),
+  then timestamp-led `### {timestamp} ( - | : ) {title}` entries,
+  newest-first (e.g. `2026-08-27 - Created`, or the full date+time
+  variant `2026-08-27 14:30:00.000+02:00 - Created`), each with a
+  mandatory lead paragraph. New entries are prepended (newest first),
+  not appended.
 
 Section order is binding: Context and Problem Statement -> Decision
 Drivers -> Considered Options -> Decision Outcome -> Related Artifacts

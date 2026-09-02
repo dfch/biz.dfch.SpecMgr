@@ -47,8 +47,8 @@ _MINIMAL_DOC = textwrap.dedent(
     type: vcr
     version: 1.0.0
     status: draft
-    created: 2026-08-31
-    updated: 2026-08-31
+    created: '2026-08-31 00:00:00.000Z'
+    updated: '2026-08-31 00:00:00.000Z'
     ---
 
     # API Key Revocation Latency Verification
@@ -84,8 +84,8 @@ _FULL_DOC = textwrap.dedent(
     type: vcr
     version: 1.0.0
     status: complete
-    created: 2026-08-31
-    updated: 2026-08-31
+    created: '2026-08-31 00:00:00.000Z'
+    updated: '2026-08-31 00:00:00.000Z'
     ---
 
     # API Key Revocation Latency Verification
@@ -127,13 +127,13 @@ _FULL_DOC = textwrap.dedent(
 
     ## Updates
 
-    ### 2026-08-26 — Created
-
-    Initial verification case drafted.
-
-    ### 2026-08-27 — Confirmed
+    ### 2026-08-27 : Confirmed
 
     AC-001 and AC-003 executed against staging.
+
+    ### 2026-08-26 - Created
+
+    Initial verification case drafted.
     """
 )
 
@@ -149,7 +149,7 @@ class TestParseVcr(unittest.TestCase):
         self.assertEqual(document.frontmatter.id, "vcr-001")
         self.assertEqual(document.frontmatter.type, "vcr")
         self.assertEqual(document.frontmatter.status, "draft")
-        self.assertEqual(document.frontmatter.created, "2026-08-31")
+        self.assertEqual(document.frontmatter.created, "2026-08-31 00:00:00.000Z")
         self.assertEqual(document.body.text, "API Key Revocation Latency Verification")
         self.assertIn("closes the exposure window", document.body.verifies.notes.text)
         self.assertEqual(document.body.coverage.value.text, "partial")
@@ -190,8 +190,8 @@ class TestParseVcr(unittest.TestCase):
         updates = document.body.updates
         self.assertIsNotNone(updates)
         self.assertEqual(len(updates.updates), 2)
-        self.assertEqual(updates.updates[0].content.text, "Initial verification case drafted.")
-        self.assertEqual(updates.updates[1].content.text, "AC-001 and AC-003 executed against staging.")
+        self.assertEqual(updates.updates[0].content.text, "AC-001 and AC-003 executed against staging.")
+        self.assertEqual(updates.updates[1].content.text, "Initial verification case drafted.")
 
     def test_full_document_round_trips(self) -> None:
         """The body of the full document round-trips byte-exact through `parse_vcr`."""
@@ -494,7 +494,7 @@ class TestParseVcrStructuralViolations(unittest.TestCase):
 
             ## Updates
 
-            ### 2026-08-26 — Created
+            ### 2026-08-26 - Created
 
             Some update text.
 

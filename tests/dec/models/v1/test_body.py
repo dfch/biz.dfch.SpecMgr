@@ -146,14 +146,14 @@ under `load-tests/orders/`.
 
 ## Updates
 
-### 2026-08-26 — Created
-
-Initial decision record drafted after the 2026-08-25 platform review.
-
-### 2026-08-27 — Confirmed
+### 2026-08-27 : Confirmed
 
 Load test passed; the decision is confirmed and the migration task list
 opened.
+
+### 2026-08-26 - Created
+
+Initial decision record drafted after the 2026-08-25 platform review.
 """
 )
 
@@ -244,12 +244,22 @@ class TestOptionHeadingAlias(unittest.TestCase):
 
 
 class TestUpdateEntryHeadingAlias(unittest.TestCase):
-    """`UpdateEntry`'s H3 alias is the free-form `.+` REGEX (date-led titles are convention)."""
+    """`UpdateEntry`'s regex alias requires a `yyyy-MM-dd` (or full date+time) timestamp + ` - `/` : ` + `title`."""
 
-    def test_update_entry_matches_any_nonempty_h3_text(self) -> None:
-        for heading in ("2026-08-26 — Created", "A Note", "x"):
+    def test_accepts_date_only_and_date_time_headings(self) -> None:
+        for heading in (
+            "2026-08-26 - Created",
+            "2026-08-26 : Created",
+            "2026-08-26 14:30:00.000+02:00 - Confirmed",
+            "2026-08-26 14:30:00.000Z : Confirmed",
+        ):
             with self.subTest(heading=heading):
                 self.assertTrue(match_alias(UpdateEntry, heading))
+
+    def test_rejects_non_timestamp_led_headings(self) -> None:
+        for heading in ("A Note", "x", "2026-8-26 - Created", "Created"):
+            with self.subTest(heading=heading):
+                self.assertFalse(match_alias(UpdateEntry, heading))
 
     def test_update_entry_rejects_empty_h3_text(self) -> None:
         self.assertFalse(match_alias(UpdateEntry, ""))
@@ -472,7 +482,7 @@ class TestOptionalSectionsIndividuallyOptional(unittest.TestCase):
     def test_updates_present(self) -> None:
         kwargs = _minimal_decision_kwargs()
         kwargs["updates"] = Updates.from_text(
-            format_text("## Updates\n\n### 2026-08-26 — Created\n\nSome update text.\n")
+            format_text("## Updates\n\n### 2026-08-26 - Created\n\nSome update text.\n")
         )
 
         sut = Decision(**kwargs)
@@ -721,45 +731,81 @@ class TestRelatedArtifactsSubListsIndividuallyOptional(unittest.TestCase):
             AcceptanceCriteria(items=[])
 
 
-class TestUpdatesEntryShape(unittest.TestCase):
-    """`Updates`/`UpdateEntry` mirror TSK's `RecentUpdates`/`UpdateEntry` shape."""
+class TestUpdateEntryComputedFields(unittest.TestCase):
+    """`UpdateEntry.timestamp`/`UpdateEntry.title` are computed from the heading (ACC-002)."""
 
-    def test_parses_entry_with_content(self) -> None:
-        text = format_text("### 2026-08-26 — Created\n\nSome update text.\n")
+    def test_parses_timestamp_and_title_date_only(self) -> None:
+        text = format_text("### 2026-08-26 - Created\n\nSome update text.\n")
 
         sut = UpdateEntry.from_text(text)
 
+        self.assertEqual(sut.timestamp, "2026-08-26")
+        self.assertEqual(sut.title, "Created")
         self.assertEqual(sut.content.text, "Some update text.")
         self.assertEqual(str(sut), text)
 
-    def test_entry_title_is_free_form(self) -> None:
-        sut = UpdateEntry.from_text(format_text("### Anything Goes\n\nSome update text.\n"))
+    def test_parses_timestamp_and_title_date_time_with_colon_separator(self) -> None:
+        sut = UpdateEntry.from_text(format_text("### 2026-08-27 14:30:00.000+02:00 : Confirmed\n\nBody.\n"))
 
-        self.assertEqual(sut.content.text, "Some update text.")
+        self.assertEqual(sut.timestamp, "2026-08-27 14:30:00.000+02:00")
+        self.assertEqual(sut.title, "Confirmed")
+
+    def test_rejects_non_timestamp_led_heading_at_parse_time(self) -> None:
+        with self.assertRaises(AssertionError):
+            UpdateEntry.from_text(format_text("### Anything Goes\n\nSome update text.\n"))
 
     def test_entry_without_lead_paragraph_raises_assertion_error(self) -> None:
         with self.assertRaises(AssertionError):
-            UpdateEntry.from_text(format_text("### 2026-08-26 — Created\n"))
+            UpdateEntry.from_text(format_text("### 2026-08-26 - Created\n"))
 
     def test_missing_content_raises_validation_error(self) -> None:
         with self.assertRaises(ValidationError):
             UpdateEntry()
 
+
+class TestUpdatesContainer(unittest.TestCase):
+    """`Updates`/`UpdateEntry` mirror TSK's `RecentUpdates`/`UpdateEntry` shape."""
+
     def test_parses_multiple_entries_in_document_order(self) -> None:
         text = format_text(
             "## Updates\n\n"
-            "### 2026-08-26 — Created\n\n"
+            "### 2026-08-27 : Confirmed\n\n"
+            "Second entry text.\n\n"
+            "### 2026-08-26 - Created\n\n"
+            "First entry text.\n"
+        )
+
+        sut = Updates.from_text(text)
+
+        self.assertEqual(len(sut.updates), 2)
+        self.assertEqual(sut.updates[0].content.text, "Second entry text.")
+        self.assertEqual(sut.updates[1].content.text, "First entry text.")
+        self.assertEqual(str(sut), text)
+
+    def test_out_of_order_entries_raise_validation_error(self) -> None:
+        text = format_text(
+            "## Updates\n\n"
+            "### 2026-08-26 - Created\n\n"
             "First entry text.\n\n"
-            "### 2026-08-27 — Confirmed\n\n"
+            "### 2026-08-27 : Confirmed\n\n"
+            "Second entry text.\n"
+        )
+
+        with self.assertRaises(ValidationError):
+            Updates.from_text(text)
+
+    def test_equal_timestamps_are_allowed(self) -> None:
+        text = format_text(
+            "## Updates\n\n"
+            "### 2026-08-27 - First\n\n"
+            "First entry text.\n\n"
+            "### 2026-08-27 - Second\n\n"
             "Second entry text.\n"
         )
 
         sut = Updates.from_text(text)
 
         self.assertEqual(len(sut.updates), 2)
-        self.assertEqual(sut.updates[0].content.text, "First entry text.")
-        self.assertEqual(sut.updates[1].content.text, "Second entry text.")
-        self.assertEqual(str(sut), text)
 
     def test_updates_with_zero_entries_raises_assertion_error(self) -> None:
         with self.assertRaises(AssertionError):
@@ -768,6 +814,19 @@ class TestUpdatesEntryShape(unittest.TestCase):
     def test_direct_construction_with_empty_list_raises_validation_error(self) -> None:
         with self.assertRaises(ValidationError):
             Updates(updates=[])
+
+    def test_comment_is_optional(self) -> None:
+        text = format_text(
+            "## Updates\n\n"
+            "<!-- Newest entry first -- prepend new entries directly below this comment. -->\n\n"
+            "### 2026-08-27 - Confirmed\n\n"
+            "Some update text.\n"
+        )
+
+        sut = Updates.from_text(text)
+
+        self.assertIsNotNone(sut.comment)
+        self.assertEqual(len(sut.updates), 1)
 
 
 class TestDecisionMisordering(unittest.TestCase):
@@ -781,7 +840,7 @@ class TestDecisionMisordering(unittest.TestCase):
             "## Decision Outcome\n\n"
             "Some outcome prose.\n\n"
             "## Updates\n\n"
-            "### 2026-08-26 — Created\n\n"
+            "### 2026-08-26 - Created\n\n"
             "Some update text.\n\n"
             "## More Information\n\n"
             "Some more information text.\n"
@@ -932,11 +991,13 @@ class TestDecisionReferenceDocumentRoundTrips(unittest.TestCase):
         updates = sut.updates
         self.assertIsNotNone(updates)
         self.assertEqual(len(updates.updates), 2)
-        self.assertEqual(
-            updates.updates[0].content.text, "Initial decision record drafted after the 2026-08-25 platform review."
-        )
+        # Newest-first: the 2026-08-27 "Confirmed" entry comes first, the
+        # 2026-08-26 "Created" entry second.
+        self.assertIn("Load test passed; the decision is confirmed", updates.updates[0].content.text)
+        self.assertIn("migration task list", updates.updates[0].content.text)
         # `.text` retains embedded line breaks exactly as authored, so the
         # wrapped reference paragraph is checked with `assertIn`; the
         # byte-exact structure is guarded by `test_round_trips` above.
-        self.assertIn("Load test passed; the decision is confirmed", updates.updates[1].content.text)
-        self.assertIn("migration task list", updates.updates[1].content.text)
+        self.assertEqual(
+            updates.updates[1].content.text, "Initial decision record drafted after the 2026-08-25 platform review."
+        )

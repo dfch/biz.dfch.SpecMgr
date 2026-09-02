@@ -47,9 +47,10 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
-import frontmatter
 from markdown_it import MarkdownIt
 from markdown_it.token import Token
+
+from biz.dfch.specmgr.models.md._frontmatter_parse import parse_frontmatter
 
 from .adr import Adr
 from .body import AdrBody
@@ -164,11 +165,14 @@ def parse_adr(text: str) -> Adr:
         The structured document. Raises :class:`AdrParseError` for a
         malformed heading structure, or ``pydantic.ValidationError`` for a
         structurally-sound document whose field values fail schema
-        validation (see this module's docstring).
+        validation (see this module's docstring). Raises ``yaml.YAMLError``
+        for malformed frontmatter YAML -- both frontmatter error channels
+        are enriched by
+        :func:`~biz.dfch.specmgr.models.md._frontmatter_parse.parse_frontmatter`
+        (feat-27-validation Phase 2).
     """
-    post = frontmatter.loads(text)
-    fm = AdrFrontmatter.model_validate(_stringify_metadata(post.metadata))
-    body = _parse_body(post.content)
+    fm, content = parse_frontmatter(text, AdrFrontmatter, domain="adr", stringify_metadata=_stringify_metadata)
+    body = _parse_body(content)
     return Adr(frontmatter=fm, body=body)
 
 

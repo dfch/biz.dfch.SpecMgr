@@ -28,21 +28,22 @@ as ``create_dec``/``create_gol``: the caller's own already-validated body is
 persisted byte-for-byte, and only the small, code-constructed frontmatter
 YAML block is (re)generated.
 
-``created``/``updated`` use the same microsecond ISO timestamp format
-(``datetime.now().isoformat(timespec="microseconds")``) as every other
-whole-body domain's ``create_<d>`` -- an earlier, deliberate ``feat``-only
-divergence (plain ``YYYY-MM-DD`` dates, matching the 17 pre-existing
-hand-authored feature files) was reversed for cross-domain consistency; see
+``created``/``updated`` use the same shared date+time timestamp format
+(``general.tools._timestamps.now_timestamp()``) as every other whole-body
+domain's ``create_<d>`` -- an earlier, deliberate ``feat``-only divergence
+(plain ``YYYY-MM-DD`` dates, matching the 17 pre-existing hand-authored
+feature files) was reversed for cross-domain consistency; see
 ``.specmgr/feat/feat-31-feature/README.md`` Design Notes ("Frontmatter") and
 Decisions Made.
 """
 
 from __future__ import annotations
 
-from datetime import datetime
 from pathlib import Path
 
+from ...general.tools._timestamps import now_timestamp
 from ...models.md import CURRENT_SCHEMA_VERSION
+from ...models.md._errors import BODY_CHANNEL, wrap_tool_errors
 from ...models.md._markdown import format_text
 from ...server import mcp
 from ..models.v1 import FeatDocument, FeatFrontmatter, Feature
@@ -75,7 +76,8 @@ def create_feat(content: str) -> FeatDocument:
     :class:`~biz.dfch.specmgr.feat.models.v1.Feature` from it
     (``Feature.from_text(format_text(content))``); a structural failure
     raises ``AssertionError`` and a field/cross-field failure raises
-    ``pydantic.ValidationError``, both uncaught -- nothing is written in
+    ``pydantic.ValidationError``, both re-raised with domain/tool context
+    prepended (see Raises below) -- nothing is written in
     either case, and neither the base directory nor any new folder is
     touched (validation happens before the create lock is even acquired).
 
@@ -93,15 +95,28 @@ def create_feat(content: str) -> FeatDocument:
     FeatDocument
         The newly created document, with its assigned ``feat-NNN-slug`` id
         in ``frontmatter.id``.
+
+    Raises
+    ------
+    AssertionError
+        A structural failure in ``content``. The message is prefixed with domain/tool/channel
+        context (e.g. ``"feat create_feat (body): ..."``) by the shared tool-boundary
+        wrapper (:func:`~biz.dfch.specmgr.models.md._errors.wrap_tool_errors`), layered on top
+        of the engine's own field-path/line/snippet enrichment (feat-27-validation Phases 1/2).
+        Nothing is written.
+    pydantic.ValidationError
+        A field/cross-field validation failure in ``content`` -- similarly prefixed. Nothing is
+        written.
     """
-    body = Feature.from_text(format_text(content))
+    with wrap_tool_errors(domain="feat", tool="create_feat", channel=BODY_CHANNEL):
+        body = Feature.from_text(format_text(content))
     slug = slugify(feature_title(body.text))
 
     with feat_create_lock():
         base_dir = ensure_feat_base_dir()
         new_id = f"feat-{_next_feat_number(base_dir)}-{slug}"
 
-        now = datetime.now().isoformat(timespec="microseconds")
+        now = now_timestamp()
         new_frontmatter = FeatFrontmatter(
             id=new_id,
             type="feat",

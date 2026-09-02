@@ -1,9 +1,9 @@
 ---
-created: 2026-08-26
+created: '2026-08-26 00:00:00.000Z'
 id: deaddead-goal-goal-goal-deaddeadgoal
 status: draft
 type: gol
-updated: 2026-08-26
+updated: '2026-08-26 00:00:00.000Z'
 version: 1.0.0
 ---
 

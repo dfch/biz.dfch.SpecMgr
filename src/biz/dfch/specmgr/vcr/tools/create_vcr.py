@@ -33,10 +33,11 @@ codebase.
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
 
 from ...general.tools._doc_paths import slugify
+from ...general.tools._timestamps import now_timestamp
 from ...models.md import CURRENT_SCHEMA_VERSION
+from ...models.md._errors import BODY_CHANNEL, wrap_tool_errors
 from ...models.md._markdown import format_text
 from ...server import mcp
 from ..models.v1 import Vcr, VcrDocument, VcrFrontmatter
@@ -67,7 +68,8 @@ def create_vcr(content: str) -> VcrDocument:
     :class:`~biz.dfch.specmgr.vcr.models.v1.Vcr` from it
     (``Vcr.from_text(format_text(content))``); a structural failure
     raises ``AssertionError`` and a field/cross-field failure raises
-    ``pydantic.ValidationError``, both uncaught -- nothing is written in
+    ``pydantic.ValidationError``, both re-raised with domain/tool context
+    prepended (see Raises below) -- nothing is written in
     either case.
 
     No body rendering is ever needed: the caller's own already-validated
@@ -84,11 +86,24 @@ def create_vcr(content: str) -> VcrDocument:
     VcrDocument
         The newly created document, with its assigned id in
         ``frontmatter.id``.
+
+    Raises
+    ------
+    AssertionError
+        A structural failure in ``content``. The message is prefixed with domain/tool/channel
+        context (e.g. ``"vcr create_vcr (body): ..."``) by the shared tool-boundary
+        wrapper (:func:`~biz.dfch.specmgr.models.md._errors.wrap_tool_errors`), layered on top
+        of the engine's own field-path/line/snippet enrichment (feat-27-validation Phases 1/2).
+        Nothing is written.
+    pydantic.ValidationError
+        A field/cross-field validation failure in ``content`` -- similarly prefixed. Nothing is
+        written.
     """
-    body = Vcr.from_text(format_text(content))
+    with wrap_tool_errors(domain="vcr", tool="create_vcr", channel=BODY_CHANNEL):
+        body = Vcr.from_text(format_text(content))
 
     new_id = str(uuid.uuid4())
-    now = datetime.now().isoformat(timespec="microseconds")
+    now = now_timestamp()
     new_frontmatter = VcrFrontmatter(
         id=new_id,
         type="vcr",

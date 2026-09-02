@@ -42,12 +42,24 @@ no-dependency invariant (ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae).
 
 from __future__ import annotations
 
+import re
+
 from pydantic import BaseModel, field_validator
 
 from ._util import CURRENT_SCHEMA_VERSION, blank_to_none, default_if_blank, validate_schema_version
 
 #: Default ``status`` value when omitted or blank/``None``.
 DEFAULT_STATUS = "draft"
+
+#: The canonical date+time variant (D4/D5/D7,
+#: ``.specmgr/feat/feat-38-39-41-43-44/README.md`` Design Notes):
+#: space-separated ``yyyy-MM-dd HH:mm:ss.fff``, followed by either ``Z``
+#: (UTC) or a signed ``±HH:mm`` offset. Date-only, ``T``-separated,
+#: microsecond, and timezone-less values all fail this pattern -- ``created``/
+#: ``updated`` are the two fields that are strictly date+time-only (D5); a
+#: date-only value is legitimate elsewhere (e.g. a DEC/VCR/TSK ``UpdateEntry``
+#: heading) but never here.
+_DATE_TIME_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})$")
 
 
 class MarkdownFrontmatter(BaseModel):
@@ -122,3 +134,25 @@ class MarkdownFrontmatter(BaseModel):
     @classmethod
     def _optional_blank_to_none(cls, value: str | None) -> str | None:
         return blank_to_none(value)
+
+    @field_validator("created", "updated", mode="after")
+    @classmethod
+    def _validate_date_time_format(cls, value: str | None) -> str | None:
+        """Reject any non-``None`` ``created``/``updated`` value that isn't the date+time variant (D5).
+
+        Runs after :meth:`_optional_blank_to_none` (mode="before" validators
+        on a class run before mode="after" validators on the same class),
+        so this validator only ever sees ``None`` or an already-non-blank
+        string. ``None`` passes through unchanged; any other value must
+        :func:`re.fullmatch` :data:`_DATE_TIME_PATTERN` -- date-only,
+        ``T``-separated, microsecond, and timezone-less values are all
+        rejected here.
+        """
+        if value is None:
+            return value
+        if not _DATE_TIME_PATTERN.fullmatch(value):
+            raise ValueError(
+                f"created/updated {value!r} must be the date+time variant "
+                f"'yyyy-MM-dd HH:mm:ss.fff' followed by 'Z' or a signed '+HH:mm'/'-HH:mm' offset"
+            )
+        return value

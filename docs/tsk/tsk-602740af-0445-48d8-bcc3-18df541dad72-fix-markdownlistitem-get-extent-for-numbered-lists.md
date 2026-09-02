@@ -1,9 +1,9 @@
 ---
-created: '2026-08-18T09:29:03.936493'
+created: '2026-08-18 09:29:03.936Z'
 id: 602740af-0445-48d8-bcc3-18df541dad72
 status: draft
 type: tsk
-updated: '2026-08-18T09:29:03.936493'
+updated: '2026-08-18 09:29:03.936Z'
 version: 1.0.0
 ---
 

@@ -15,6 +15,8 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+# pylint: disable=redefined-builtin  # id/type intentionally shadow the builtins: public tool API, issue #41
+
 """Alias decorator for MarkdownStr class name transformation.
 
 This module provides the @alias decorator to control how class names are

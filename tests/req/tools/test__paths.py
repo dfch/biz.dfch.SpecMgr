@@ -43,8 +43,8 @@ _DOC_TEMPLATE = textwrap.dedent(
     type: req
     version: 1.0.0
     status: draft
-    created: 2026-08-05
-    updated: 2026-08-05
+    created: '2026-08-05 00:00:00.000Z'
+    updated: '2026-08-05 00:00:00.000Z'
     ---
 
     # Maximum Engine Temperature

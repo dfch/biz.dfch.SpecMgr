@@ -1,9 +1,9 @@
 ---
-created: 2026-08-25 08:15:42
+created: '2026-08-25 08:15:42.000Z'
 id: deaddead-b00b-b00b-b00b-deaddeadb00b
 status: draft
 type: prb
-updated: 2026-08-25 08:15:42
+updated: '2026-08-25 08:15:42.000Z'
 version: 1.0.0
 ---
 

@@ -43,3 +43,9 @@ VcrDocument | str
     Raises :class:`._paths.VcrNotFoundError` if no verification case
     record has this id.
 
+Raises
+------
+ValueError
+    ``id`` is a path-injection attempt or not a well-formed id for this domain
+    (raised before any filesystem access).
+

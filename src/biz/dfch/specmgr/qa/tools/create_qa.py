@@ -37,10 +37,11 @@ codebase.
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
 
 from ...general.tools._doc_paths import slugify
+from ...general.tools._timestamps import now_timestamp
 from ...models.md import CURRENT_SCHEMA_VERSION
+from ...models.md._errors import BODY_CHANNEL, wrap_tool_errors
 from ...models.md._markdown import format_text
 from ...server import mcp
 from ..models.v2 import Qa, QaDocument, QaFrontmatter
@@ -71,7 +72,8 @@ def create_qa(content: str) -> QaDocument:
     :class:`~biz.dfch.specmgr.qa.models.v2.Qa` from it
     (``Qa.from_text(format_text(content))``); a structural failure raises
     ``AssertionError`` and a field/cross-field failure raises
-    ``pydantic.ValidationError``, both uncaught -- nothing is written in
+    ``pydantic.ValidationError``, both re-raised with domain/tool context
+    prepended (see Raises below) -- nothing is written in
     either case.
 
     No body rendering is ever needed: the caller's own already-validated
@@ -88,11 +90,24 @@ def create_qa(content: str) -> QaDocument:
     QaDocument
         The newly created document, with its assigned id in
         ``frontmatter.id``.
+
+    Raises
+    ------
+    AssertionError
+        A structural failure in ``content``. The message is prefixed with domain/tool/channel
+        context (e.g. ``"qa create_qa (body): ..."``) by the shared tool-boundary
+        wrapper (:func:`~biz.dfch.specmgr.models.md._errors.wrap_tool_errors`), layered on top
+        of the engine's own field-path/line/snippet enrichment (feat-27-validation Phases 1/2).
+        Nothing is written.
+    pydantic.ValidationError
+        A field/cross-field validation failure in ``content`` -- similarly prefixed. Nothing is
+        written.
     """
-    body = Qa.from_text(format_text(content))
+    with wrap_tool_errors(domain="qa", tool="create_qa", channel=BODY_CHANNEL):
+        body = Qa.from_text(format_text(content))
 
     new_id = str(uuid.uuid4())
-    now = datetime.now().isoformat(timespec="microseconds")
+    now = now_timestamp()
     new_frontmatter = QaFrontmatter(
         id=new_id,
         type="qa",

@@ -25,11 +25,36 @@ from markdown_it.token import Token
 from pydantic import model_validator, computed_field, PrivateAttr
 
 from .markdown_str import MarkdownStr
-from ._markdown import format_text, parse
+from ._markdown import format_text, not_in_mdformat_message, parse
 from .markdown import markdown
-from .alias_match import match_alias
+from .alias_match import describe_alias, match_alias
 
 _HEADING_TAGS = ("h1", "h2", "h3", "h4", "h5", "h6")
+
+
+def _alias_mismatch_message(path: str, line: int, cls: type, heading_text: str) -> str:
+    """Build the alias-mismatch message (REQ-001/REQ-002/REQ-003).
+
+    Args:
+        path: the document-relative path (REQ-001) of the section whose
+            heading was actually parsed (`path`'s own last segment names
+            `cls` itself, since a mismatch is only detected once a heading
+            of the right tag/level has already been found -- `get_extent`'s
+            own alias check keeps a wrongly-titled heading from ever
+            reaching this section's own `process_field`/`process_list_field`
+            call in the first place).
+        line: the 1-based line (REQ-002) at which the mismatched heading
+            starts, relative to the root document's own `mdformat`-
+            normalized body.
+        cls: the `MarkdownSection` subclass whose `@alias` was not
+            satisfied.
+        heading_text: the heading's actual (mismatching) text.
+
+    Returns:
+        A message naming the path, the line, what was expected (REQ-003,
+        via `describe_alias`), and what was actually found.
+    """
+    return f"{path} (line {line}): expected {describe_alias(cls)}, got heading {heading_text!r}"
 
 
 @markdown(type="heading_open")
@@ -92,7 +117,7 @@ class MarkdownSection(MarkdownStr, ABC):
                 occurrence (if declared), or at the end of `text`.
         """
         assert isinstance(text, str), type(text)
-        assert text == format_text(text), "text is not in 'mdformat'."
+        assert text == format_text(text), not_in_mdformat_message(text)
 
         own_tag = cls._metadata.get("tag")
         own_type = cls._metadata.get("type")
@@ -146,7 +171,7 @@ class MarkdownSection(MarkdownStr, ABC):
         return result
 
     @classmethod
-    def from_text(cls, text: str) -> MarkdownSection:
+    def from_text(cls, text: str, *, _path: str = "", _offset: int = 0) -> MarkdownSection:
         """Create an instance from markdown text starting with this class's own heading.
 
         Validates that `text` starts with the heading triple
@@ -172,9 +197,30 @@ class MarkdownSection(MarkdownStr, ABC):
         (the `inline` token's text, e.g. `"Characteristic Information"`) so
         that `__str__` can re-emit the original heading line without
         duplicating what the children already carry.
+
+        Args:
+            text: the markdown text to parse.
+            _path: this section's own document-relative path (REQ-001) as
+                chosen by the caller -- `""` at the very root, in which case
+                `cls.__name__` is used instead (see
+                `MarkdownStr.from_text`'s own `_path` docs).
+            _offset: the 0-based line at which `text` (this section's own
+                heading) starts, relative to the root document's own
+                `mdformat`-normalized body (REQ-002) -- `0` at the root.
+
+        Raises:
+            AssertionError: `text` is not `mdformat`-normalized, does not
+                start with this class's own heading triple, or that
+                heading's own text does not satisfy `cls`'s effective
+                `@alias` (see `_alias_mismatch_message`) -- or any of the
+                structural errors `MarkdownStr.from_text` itself may raise
+                while populating this section's own declared fields.
         """
         assert isinstance(text, str), f"text: '{type(text)}' != 'str'."
-        assert text == format_text(text), "text is not in 'mdformat'."
+        assert text == format_text(text), not_in_mdformat_message(text)
+
+        own_path = _path or cls.__name__
+        own_line = _offset + 1
 
         tokens = parse(text)
         assert len(tokens) >= 3, "Expected at least 3 tokens for heading triple"
@@ -195,15 +241,15 @@ class MarkdownSection(MarkdownStr, ABC):
         assert t_close.nesting == -1, f"Token[2]: expected closing tag, got '{t_close.type}' '{t_close.nesting}'."
 
         heading_text = t_mid.content.strip()
-        assert match_alias(cls, heading_text), (
-            f"{cls.__name__}: heading text {heading_text!r} does not match its declared @alias"
-        )
+        assert match_alias(cls, heading_text), _alias_mismatch_message(own_path, own_line, cls, heading_text)
 
         field_names = cls._get_field_names()
 
         if not field_names:
             instance = cls()
             instance._value = text
+            instance._path = own_path
+            instance._line = own_line
             return instance
 
         heading_map = t_open.map
@@ -213,8 +259,10 @@ class MarkdownSection(MarkdownStr, ABC):
         body_lines = text.splitlines()[heading_lines:]
         body_text = format_text("\n".join(body_lines)) if body_lines else ""
 
-        instance = super().from_text(body_text)
+        instance = super().from_text(body_text, _path=own_path, _offset=_offset + heading_lines)
         instance._value = heading_text
+        instance._path = own_path
+        instance._line = own_line
         return instance
 
     def __str__(self) -> str:

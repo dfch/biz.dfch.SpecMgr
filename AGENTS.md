@@ -336,7 +336,13 @@ type or cross-cutting:
      into a sibling `history.md`). The eleven `get_<d>` tools additionally
      take a `raw: bool = False` parameter — `raw=True` returns the
     frontmatter-stripped body text as-is (the text `update`'s `begin`/`end`
-    index into).
+    index into). `get_<d>` (all twelve, incl. `get_adr`), `update`, and
+    `set_status` apply the same `general/tools/_path_safety` guards `delete`
+    already had (feat-38-39-41-43-44 Phase 4, extending feat-36-delete, ADR
+    1af6787b-eaab-4e8f-888f-531c1e76c19d): validate `id` for path-injection/
+    wrong-format before any filesystem access, and confine the resolved path
+    to the domain's own base directory after resolution — `_path_safety`'s
+    UUID-shaped domains now include `adr`; `delete` itself is unchanged.
 
 **Models location — a real, intentional divergence, not an oversight**:
 the rule is domain-first — every document type keeps its schema inside
@@ -376,6 +382,16 @@ Still genuinely missing / not yet done (don't assume otherwise):
 - `req`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr` each register
   `tools`, `resources`, and `prompts`; `uc` registers `tools` and
   `resources` only — it has no `prompts` sub-package yet.
+
+`feat-27-validation` (closed 2026-09-01, GitHub issue #27, subsuming feat-7's
+Task 0.29) made every `parse_<d>`/`create_<d>`/`validate_<d>` tool's and the
+generic `update`/`set_status` tools' `AssertionError`/`pydantic.ValidationError`/
+`yaml.YAMLError` messages actionable: each now carries a document-relative
+field path, a 1-based line reference into the mdformat-normalized body, and a
+cause/fix hint (e.g. a bare `<word>` token parsed as raw HTML, or a `+`/`-`/`*`-
+prefixed line starting a stray CommonMark list), with domain + tool + channel
+context prepended by the shared `models/md/_errors.wrap_tool_errors` wrapper —
+same exception types throughout, messages only (no new exception types).
 
 `.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md` §10 ("Next steps") tracks per-item done/not-done
 status for the ADR feature specifically and should be kept in sync with

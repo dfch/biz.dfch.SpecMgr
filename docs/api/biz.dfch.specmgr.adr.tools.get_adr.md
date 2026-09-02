@@ -24,3 +24,10 @@ Adr
     The current on-disk document, freshly re-read and re-parsed.
     Raises :class:`._paths.AdrNotFoundError` if no ADR has this id.
 
+Raises
+------
+ValueError
+    ``id`` is a path-injection attempt or not a canonical
+    lowercase-hex UUID (feat-38-39-41-43-44 Phase 4, REQ-009; raised
+    before any filesystem access).
+

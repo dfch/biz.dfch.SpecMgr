@@ -3,7 +3,7 @@
 Auto-generated from the live `biz.dfch.specmgr.server:mcp` registration --
 do not edit by hand, run `specmgr mcp-docs` instead (see `AGENTS.md`).
 
-39 resource(s), 1 resource template(s), 93 tool(s), 27 prompt(s).
+39 resource(s), 1 resource template(s), 94 tool(s), 29 prompt(s).
 
 ## Table of Contents
 
@@ -346,6 +346,8 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 
 | Name | Description |
 | --- | --- |
+| [`confluence_fetch`](#tool-confluence_fetch) | Fetch a URL over HTTP GET with a bearer token, but only if the URL matches the configured base URL (case-insensitively). A normal, browsable Confluence page URL (Cloud-style '/pages/<id>/<title>' or Server-style '?pageId=<id>') is automatically converted into the equivalent '{base}/rest/api/content/{id}?expand=body.storage' REST API URL before fetching; a '/x/<tinyid>' tiny link is rejected outright, since it cannot be resolved to a page id without an authenticated browser session; a request that gets redirected off the configured base URL's host (e.g. to an SSO login page) raises instead of returning that page's content. Text/JSON/XML responses are returned as raw body text; other (binary/image) content types are written to the given destination_path and that path is returned instead. Intended primarily for Confluence instances using PAT authentication. |
+| [`confluence_update`](#tool-confluence_update) | Render a local Markdown file to an HTML fragment and write it into an existing Confluence page's body via the REST API, incrementing the page's version number. Accepts a bare numeric page id, a browsable page URL ('/pages/<id>/...' or '?pageId=<id>'), or a REST content URL; a '/x/<tinyid>' tiny link is rejected. Reuses the same two environment variables confluence_fetch uses. Local images referenced by the Markdown file (a relative or absolute filesystem path, not an 'http(s)://' URL) that exist on disk are uploaded as Confluence attachments (POST .../child/attachment, falling back to updating an existing attachment's content if the filename already exists) and their <img> tags are rewritten into Confluence's <ac:image>/<ri:attachment> storage-format macro, on a best-effort basis: a missing local file or a failed upload simply leaves that one <img> tag unrewritten instead of aborting the update. Also sanitizes any raw '--' inside rendered <!-- --> HTML comments (invalid in Confluence's strict XHTML storage format, though valid CommonMark) and converts a leading YAML frontmatter block into a fenced code block before rendering, so it is not mangled into a heading. |
 | [`create_adr`](#tool-create_adr) | Create a new ADR: assigns a fresh id, derives a filename from the title, validates, renders, and writes the new document to the ADR base directory. |
 | [`create_dec`](#tool-create_dec) | Create a new decision: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the decision base directory. |
 | [`create_feat`](#tool-create_feat) | Create a new feature: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the feature base directory. |
@@ -359,38 +361,38 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`create_uc`](#tool-create_uc) | Create a new use case: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the use-case base directory. |
 | [`create_vcr`](#tool-create_vcr) | Create a new verification case record: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the verification case record base directory. |
 | [`delete`](#tool-delete) | Permanently delete an existing document from disk across the eleven whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr; `adr` is not supported). Resolves the document by `id`, takes the domain lock, and removes it: the single `*.md` file for the ten flat domains, or the entire `<base>/<id>/` folder for `feat`. Returns the deleted path as a string. An invalid `id` (path-injection attempt or wrong format) is a `ValueError` raised before any file access; a missing document is the domain's own `XNotFoundError`; an I/O failure is a `DeleteError`. This is the sole delete entry point -- the former per-domain `delete_<d>` tools are removed. |
-| [`get_adr`](#tool-get_adr) | Read, parse, and return a full ADR document (frontmatter and body) by its id. |
-| [`get_dec`](#tool-get_dec) | Read, parse, and return a full decision document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. |
+| [`get_adr`](#tool-get_adr) | Read, parse, and return a full ADR document (frontmatter and body) by its id. An invalid id (path-injection attempt or wrong format) is a ValueError raised before any file access. |
+| [`get_dec`](#tool-get_dec) | Read, parse, and return a full decision document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. An invalid id (path-injection attempt or wrong format) is a ValueError raised before any file access. |
 | [`get_dec_example`](#tool-get_dec_example) | Return a complete, valid sample decision document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example. |
 | [`get_dec_template`](#tool-get_dec_template) | Return a DEC document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new decision. |
-| [`get_feat`](#tool-get_feat) | Read, parse, and return a full feature document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. |
+| [`get_feat`](#tool-get_feat) | Read, parse, and return a full feature document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. An invalid id (path-injection attempt or wrong format) is a ValueError raised before any file access. |
 | [`get_feat_example`](#tool-get_feat_example) | Return a complete, valid sample feature document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example. |
 | [`get_feat_template`](#tool-get_feat_template) | Return a FEAT document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new feature. |
-| [`get_gol`](#tool-get_gol) | Read, parse, and return a full goal document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. |
+| [`get_gol`](#tool-get_gol) | Read, parse, and return a full goal document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. An invalid id (path-injection attempt or wrong format) is a ValueError raised before any file access. |
 | [`get_gol_example`](#tool-get_gol_example) | Return a complete, valid sample goal document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example. |
 | [`get_gol_template`](#tool-get_gol_template) | Return a GOL document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new goal. |
-| [`get_prb`](#tool-get_prb) | Read, parse, and return a full problem statement document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. |
+| [`get_prb`](#tool-get_prb) | Read, parse, and return a full problem statement document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. An invalid id (path-injection attempt or wrong format) is a ValueError raised before any file access. |
 | [`get_prb_example`](#tool-get_prb_example) | Return a complete, valid sample problem statement document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example. |
 | [`get_prb_template`](#tool-get_prb_template) | Return a PRB document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new problem statement. |
-| [`get_qa`](#tool-get_qa) | Read, parse, and return a full QA document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. |
+| [`get_qa`](#tool-get_qa) | Read, parse, and return a full QA document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. An invalid id (path-injection attempt or wrong format) is a ValueError raised before any file access. |
 | [`get_qa_example`](#tool-get_qa_example) | Return a complete, valid sample QA document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example. |
 | [`get_qa_template`](#tool-get_qa_template) | Return a QA document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new QA document. |
-| [`get_req`](#tool-get_req) | Read, parse, and return a full requirement document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. |
+| [`get_req`](#tool-get_req) | Read, parse, and return a full requirement document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. An invalid id (path-injection attempt or wrong format) is a ValueError raised before any file access. |
 | [`get_req_example`](#tool-get_req_example) | Return a complete, valid sample requirement document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example. |
 | [`get_req_template`](#tool-get_req_template) | Return a REQ document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new requirement. |
-| [`get_rsk`](#tool-get_rsk) | Read, parse, and return a full risk document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. |
+| [`get_rsk`](#tool-get_rsk) | Read, parse, and return a full risk document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. An invalid id (path-injection attempt or wrong format) is a ValueError raised before any file access. |
 | [`get_rsk_example`](#tool-get_rsk_example) | Return a complete, valid sample risk document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example. |
 | [`get_rsk_template`](#tool-get_rsk_template) | Return a risk document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new risk. |
-| [`get_sop`](#tool-get_sop) | Read, parse, and return a full SOP document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. |
+| [`get_sop`](#tool-get_sop) | Read, parse, and return a full SOP document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. An invalid id (path-injection attempt or wrong format) is a ValueError raised before any file access. |
 | [`get_sop_example`](#tool-get_sop_example) | Return a complete, valid sample Standard Operating Procedure document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example. |
 | [`get_sop_template`](#tool-get_sop_template) | Return a SOP document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new Standard Operating Procedure. |
-| [`get_tsk`](#tool-get_tsk) | Read, parse, and return a full task list document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. |
+| [`get_tsk`](#tool-get_tsk) | Read, parse, and return a full task list document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. An invalid id (path-injection attempt or wrong format) is a ValueError raised before any file access. |
 | [`get_tsk_example`](#tool-get_tsk_example) | Return a complete, valid sample task list document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example. |
 | [`get_tsk_template`](#tool-get_tsk_template) | Return a TSK document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new task list. |
-| [`get_uc`](#tool-get_uc) | Read, parse, and return a full use-case document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. |
+| [`get_uc`](#tool-get_uc) | Read, parse, and return a full use-case document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. An invalid id (path-injection attempt or wrong format) is a ValueError raised before any file access. |
 | [`get_uc_example`](#tool-get_uc_example) | Return a complete, valid sample use case document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example. |
 | [`get_uc_template`](#tool-get_uc_template) | Return a UC document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new use case. |
-| [`get_vcr`](#tool-get_vcr) | Read, parse, and return a full verification case record document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. |
+| [`get_vcr`](#tool-get_vcr) | Read, parse, and return a full verification case record document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. An invalid id (path-injection attempt or wrong format) is a ValueError raised before any file access. |
 | [`get_vcr_example`](#tool-get_vcr_example) | Return a complete, valid sample verification case record document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example. |
 | [`get_vcr_template`](#tool-get_vcr_template) | Return a VCR document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new verification case record. |
 | [`list_adr`](#tool-list_adr) | Ids, titles, statuses, and refs of ADRs in the configured ADR base directory (SPECMGR_ADR_DIR), one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use get_adr with it instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
@@ -422,8 +424,8 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`parse_tsk`](#tool-parse_tsk) | Parse a task list markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.tsk.models.v1.TskDocument`. |
 | [`parse_uc`](#tool-parse_uc) | Parse a use-case markdown file (YAML frontmatter + body) from disk into a structured document. |
 | [`parse_vcr`](#tool-parse_vcr) | Parse a verification case record markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.vcr.models.v1.VcrDocument`. |
-| [`set_status`](#tool-set_status) | Replace the status of an existing document across all twelve domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, adr), also bumping `updated` (the eleven whole-body domains) and leaving the body untouched. The new `status` must be one of the domain's own closed vocabulary values (see the domain's `XFrontmatter.status` field); anything else raises `pydantic.ValidationError` and writes nothing. `superseded_by` is accepted only for `type="adr"` -- it composes the status as "superseded by {superseded_by}"; with any other `type` it is a `ValueError`. Neither `create_*` nor the generic `update` tool accepts a `status` argument at all -- this is the sole status-change entry point. |
-| [`update`](#tool-update) | Whole-body or line-range replace of an existing document's content across the eleven whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr), preserving its id/type/status/created/version; only `updated` changes. With no `begin`/`end`, `content` is the full replacement body (body markdown only, no frontmatter block). With both, `content` replaces the 1-based inclusive body-line range `begin`..`end` of the current on-disk body (`N+1` = end-of-body sentinel: append after the last line, or replace through end of body); the spliced result is validated as a whole document before anything is written. `status` is never settable -- use the generic `set_status` tool. |
+| [`set_status`](#tool-set_status) | Replace the status of an existing document across all twelve domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, adr), also bumping `updated` (the eleven whole-body domains) and leaving the body untouched. The new `status` must be one of the domain's own closed vocabulary values (see the domain's `XFrontmatter.status` field); anything else raises `pydantic.ValidationError` and writes nothing. `superseded_by` is accepted only for `type="adr"` -- it composes the status as "superseded by {superseded_by}"; with any other `type` it is a `ValueError`. Neither `create_*` nor the generic `update` tool accepts a `status` argument at all -- this is the sole status-change entry point. An invalid `id` (path-injection attempt or wrong format for `type`) is a `ValueError` raised before any file access. |
+| [`update`](#tool-update) | Whole-body or line-range replace of an existing document's content across the eleven whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr), preserving its id/type/status/created/version; only `updated` changes. With no `begin`/`end`, `content` is the full replacement body (body markdown only, no frontmatter block). With both, `content` replaces the 1-based inclusive body-line range `begin`..`end` of the current on-disk body (`N+1` = end-of-body sentinel: append after the last line, or replace through end of body); the spliced result is validated as a whole document before anything is written. `status` is never settable -- use the generic `set_status` tool. An invalid `id` (path-injection attempt or wrong format for `type`) is a `ValueError` raised before any file access. |
 | [`update_frontmatter`](#tool-update_frontmatter) | Whole-object replace of an ADR's frontmatter (plan §3), preserving its existing id. |
 | [`update_section`](#tool-update_section) | Whole-section replace/delete of one AdrBody field (plan §4). |
 | [`validate_adr`](#tool-validate_adr) | Re-read and re-parse an ADR by id, letting the models' own Pydantic validators run. |
@@ -438,7 +440,28 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`validate_tsk`](#tool-validate_tsk) | Disk-free, id-free dry run validating task list content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
 | [`validate_uc`](#tool-validate_uc) | Disk-free, id-free dry run validating use case content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
 | [`validate_vcr`](#tool-validate_vcr) | Disk-free, id-free dry run validating verification case record content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
-| [`webfetch`](#tool-webfetch) | Fetch a URL over HTTP GET with a bearer token, but only if the URL matches the configured base URL (case-insensitively). Returns the raw response body text. Intended primarily for Web Server instances using PAT authentication. |
+
+### Tool: confluence_fetch
+
+**Fetch a Confluence URL with bearer authentication**
+
+Fetch a URL over HTTP GET with a bearer token, but only if the URL matches the configured base URL (case-insensitively). A normal, browsable Confluence page URL (Cloud-style '/pages/<id>/<title>' or Server-style '?pageId=<id>') is automatically converted into the equivalent '{base}/rest/api/content/{id}?expand=body.storage' REST API URL before fetching; a '/x/<tinyid>' tiny link is rejected outright, since it cannot be resolved to a page id without an authenticated browser session; a request that gets redirected off the configured base URL's host (e.g. to an SSO login page) raises instead of returning that page's content. Text/JSON/XML responses are returned as raw body text; other (binary/image) content types are written to the given destination_path and that path is returned instead. Intended primarily for Confluence instances using PAT authentication.
+
+| Parameter | Type | Required |
+| --- | --- | --- |
+| `url` | `string` | Yes |
+| `destination_path` | `string | None` | No |
+
+### Tool: confluence_update
+
+**Update a Confluence page's body from a local Markdown file**
+
+Render a local Markdown file to an HTML fragment and write it into an existing Confluence page's body via the REST API, incrementing the page's version number. Accepts a bare numeric page id, a browsable page URL ('/pages/<id>/...' or '?pageId=<id>'), or a REST content URL; a '/x/<tinyid>' tiny link is rejected. Reuses the same two environment variables confluence_fetch uses. Local images referenced by the Markdown file (a relative or absolute filesystem path, not an 'http(s)://' URL) that exist on disk are uploaded as Confluence attachments (POST .../child/attachment, falling back to updating an existing attachment's content if the filename already exists) and their <img> tags are rewritten into Confluence's <ac:image>/<ri:attachment> storage-format macro, on a best-effort basis: a missing local file or a failed upload simply leaves that one <img> tag unrewritten instead of aborting the update. Also sanitizes any raw '--' inside rendered <!-- --> HTML comments (invalid in Confluence's strict XHTML storage format, though valid CommonMark) and converts a leading YAML frontmatter block into a fenced code block before rendering, so it is not mangled into a heading.
+
+| Parameter | Type | Required |
+| --- | --- | --- |
+| `page_url_or_id` | `string` | Yes |
+| `markdown_file_path` | `string` | Yes |
 
 ### Tool: create_adr
 
@@ -576,7 +599,7 @@ Permanently delete an existing document from disk across the eleven whole-body d
 
 **Get ADR**
 
-Read, parse, and return a full ADR document (frontmatter and body) by its id.
+Read, parse, and return a full ADR document (frontmatter and body) by its id. An invalid id (path-injection attempt or wrong format) is a ValueError raised before any file access.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
@@ -586,7 +609,7 @@ Read, parse, and return a full ADR document (frontmatter and body) by its id.
 
 **Get decision**
 
-Read, parse, and return a full decision document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead.
+Read, parse, and return a full decision document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. An invalid id (path-injection attempt or wrong format) is a ValueError raised before any file access.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
@@ -609,7 +632,7 @@ Return a DEC document template -- frontmatter and every body field present, popu
 
 **Get feature**
 
-Read, parse, and return a full feature document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead.
+Read, parse, and return a full feature document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. An invalid id (path-injection attempt or wrong format) is a ValueError raised before any file access.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
@@ -632,7 +655,7 @@ Return a FEAT document template -- frontmatter and every body field present, pop
 
 **Get goal**
 
-Read, parse, and return a full goal document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead.
+Read, parse, and return a full goal document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. An invalid id (path-injection attempt or wrong format) is a ValueError raised before any file access.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
@@ -655,7 +678,7 @@ Return a GOL document template -- frontmatter and every body field present, popu
 
 **Get problem statement**
 
-Read, parse, and return a full problem statement document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead.
+Read, parse, and return a full problem statement document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. An invalid id (path-injection attempt or wrong format) is a ValueError raised before any file access.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
@@ -678,7 +701,7 @@ Return a PRB document template -- frontmatter and every body field present, popu
 
 **Get QA document**
 
-Read, parse, and return a full QA document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead.
+Read, parse, and return a full QA document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. An invalid id (path-injection attempt or wrong format) is a ValueError raised before any file access.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
@@ -701,7 +724,7 @@ Return a QA document template -- frontmatter and every body field present, popul
 
 **Get requirement**
 
-Read, parse, and return a full requirement document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead.
+Read, parse, and return a full requirement document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. An invalid id (path-injection attempt or wrong format) is a ValueError raised before any file access.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
@@ -724,7 +747,7 @@ Return a REQ document template -- frontmatter and every body field present, popu
 
 **Get risk**
 
-Read, parse, and return a full risk document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead.
+Read, parse, and return a full risk document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. An invalid id (path-injection attempt or wrong format) is a ValueError raised before any file access.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
@@ -747,7 +770,7 @@ Return a risk document template -- frontmatter and every body field present, pop
 
 **Get Standard Operating Procedure**
 
-Read, parse, and return a full SOP document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead.
+Read, parse, and return a full SOP document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. An invalid id (path-injection attempt or wrong format) is a ValueError raised before any file access.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
@@ -770,7 +793,7 @@ Return a SOP document template -- frontmatter and every body field present, popu
 
 **Get task list**
 
-Read, parse, and return a full task list document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead.
+Read, parse, and return a full task list document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. An invalid id (path-injection attempt or wrong format) is a ValueError raised before any file access.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
@@ -793,7 +816,7 @@ Return a TSK document template -- frontmatter and every body field present, popu
 
 **Get use case**
 
-Read, parse, and return a full use-case document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead.
+Read, parse, and return a full use-case document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. An invalid id (path-injection attempt or wrong format) is a ValueError raised before any file access.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
@@ -816,7 +839,7 @@ Return a UC document template -- frontmatter and every body field present, popul
 
 **Get verification case record**
 
-Read, parse, and return a full verification case record document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead.
+Read, parse, and return a full verification case record document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. An invalid id (path-injection attempt or wrong format) is a ValueError raised before any file access.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
@@ -1147,7 +1170,7 @@ Parse a verification case record markdown file (YAML frontmatter + body) from di
 
 **Set document status**
 
-Replace the status of an existing document across all twelve domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, adr), also bumping `updated` (the eleven whole-body domains) and leaving the body untouched. The new `status` must be one of the domain's own closed vocabulary values (see the domain's `XFrontmatter.status` field); anything else raises `pydantic.ValidationError` and writes nothing. `superseded_by` is accepted only for `type="adr"` -- it composes the status as "superseded by {superseded_by}"; with any other `type` it is a `ValueError`. Neither `create_*` nor the generic `update` tool accepts a `status` argument at all -- this is the sole status-change entry point.
+Replace the status of an existing document across all twelve domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, adr), also bumping `updated` (the eleven whole-body domains) and leaving the body untouched. The new `status` must be one of the domain's own closed vocabulary values (see the domain's `XFrontmatter.status` field); anything else raises `pydantic.ValidationError` and writes nothing. `superseded_by` is accepted only for `type="adr"` -- it composes the status as "superseded by {superseded_by}"; with any other `type` it is a `ValueError`. Neither `create_*` nor the generic `update` tool accepts a `status` argument at all -- this is the sole status-change entry point. An invalid `id` (path-injection attempt or wrong format for `type`) is a `ValueError` raised before any file access.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
@@ -1160,7 +1183,7 @@ Replace the status of an existing document across all twelve domains (`type` is 
 
 **Update document**
 
-Whole-body or line-range replace of an existing document's content across the eleven whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr), preserving its id/type/status/created/version; only `updated` changes. With no `begin`/`end`, `content` is the full replacement body (body markdown only, no frontmatter block). With both, `content` replaces the 1-based inclusive body-line range `begin`..`end` of the current on-disk body (`N+1` = end-of-body sentinel: append after the last line, or replace through end of body); the spliced result is validated as a whole document before anything is written. `status` is never settable -- use the generic `set_status` tool.
+Whole-body or line-range replace of an existing document's content across the eleven whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr), preserving its id/type/status/created/version; only `updated` changes. With no `begin`/`end`, `content` is the full replacement body (body markdown only, no frontmatter block). With both, `content` replaces the 1-based inclusive body-line range `begin`..`end` of the current on-disk body (`N+1` = end-of-body sentinel: append after the last line, or replace through end of body); the spliced result is validated as a whole document before anything is written. `status` is never settable -- use the generic `set_status` tool. An invalid `id` (path-injection attempt or wrong format for `type`) is a `ValueError` raised before any file access.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
@@ -1324,21 +1347,13 @@ Disk-free, id-free dry run validating verification case record content. `full=Fa
 | `content` | `string` | Yes |
 | `full` | `boolean` | No |
 
-### Tool: webfetch
-
-**Fetch a URL with bearer authentication**
-
-Fetch a URL over HTTP GET with a bearer token, but only if the URL matches the configured base URL (case-insensitively). Returns the raw response body text. Intended primarily for Web Server instances using PAT authentication.
-
-| Parameter | Type | Required |
-| --- | --- | --- |
-| `url` | `string` | Yes |
-
 ## Prompts
 
 | Name | Description |
 | --- | --- |
 | [`compact_history`](#prompt-compact_history) | Guides the LLM through rotating older 'Recent Updates' entries out of a .specmgr feature folder's README.md and into an optional sibling history.md, leaving a pointer line behind, per ADR e369ee2e-3353-4f92-991c-6367d76d832e. |
+| [`confluence_fetch`](#prompt-confluence_fetch) | Guides the LLM through calling the confluence_fetch tool with the given url (and, when needed, destination_path) to fetch/download a Confluence page or attachment. |
+| [`confluence_update`](#prompt-confluence_update) | Guides the LLM through calling the confluence_update tool with the given page_url_or_id/markdown_file_path to upload a local Markdown file's rendered content to an existing Confluence page. |
 | [`create_adr`](#prompt-create_adr) | Guides the LLM through checking for an existing similar ADR, gathering the required information, and driving create_adr/option_create/set_status/validate_adr to author a new MADR-4.0.0-based Architecture Decision Record. |
 | [`create_adr_test`](#prompt-create_adr_test) | Experimental, strictly step-gated variant of create_adr for A/B comparison: the same MADR-4.0.0 structure and create_adr/option_create/set_status/validate_adr tool sequence, rewritten as hard numbered gates instead of narrated steps. |
 | [`create_dec`](#prompt-create_dec) | Guides the LLM through checking for an existing similar decision, gathering the required information, and driving create_dec/validate_dec to author a new DEC document. |
@@ -1374,6 +1389,24 @@ Guides the LLM through rotating older 'Recent Updates' entries out of a .specmgr
 | --- | --- | --- |
 | `feature_id` | Yes |  |
 | `cutoff_hint` | No |  |
+
+### Prompt: confluence_fetch
+
+Guides the LLM through calling the confluence_fetch tool with the given url (and, when needed, destination_path) to fetch/download a Confluence page or attachment.
+
+| Argument | Required | Description |
+| --- | --- | --- |
+| `url` | Yes |  |
+| `destination_path` | No |  |
+
+### Prompt: confluence_update
+
+Guides the LLM through calling the confluence_update tool with the given page_url_or_id/markdown_file_path to upload a local Markdown file's rendered content to an existing Confluence page.
+
+| Argument | Required | Description |
+| --- | --- | --- |
+| `page_url_or_id` | Yes |  |
+| `markdown_file_path` | Yes |  |
 
 ### Prompt: create_adr
 

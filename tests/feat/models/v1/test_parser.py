@@ -51,8 +51,8 @@ _MINIMAL_DOC = textwrap.dedent(
     type: feat
     version: 1.0.0
     status: planning
-    created: 2026-08-26
-    updated: 2026-08-26
+    created: '2026-08-26 00:00:00.000Z'
+    updated: '2026-08-26 00:00:00.000Z'
     ---
 
     # Feature: A Widget
@@ -95,7 +95,7 @@ _MINIMAL_DOC = textwrap.dedent(
 
     ### Updates
 
-    #### 2026-08-26 09:00:00.000Z — Created
+    #### 2026-08-26 09:00:00.000Z - Created
 
     Initial draft.
     """
@@ -116,7 +116,7 @@ class TestParseFeat(unittest.TestCase):
         self.assertEqual(document.frontmatter.id, "feat-1-widget")
         self.assertEqual(document.frontmatter.type, "feat")
         self.assertEqual(document.frontmatter.status, "planning")
-        self.assertEqual(document.frontmatter.created, "2026-08-26")
+        self.assertEqual(document.frontmatter.created, "2026-08-26 00:00:00.000Z")
         self.assertEqual(document.body.text, "Feature: A Widget")
         self.assertIsNone(document.body.plan.dependencies)
         self.assertIsNone(document.body.plan.design_notes)
@@ -239,11 +239,11 @@ class TestParseFeatValueViolations(unittest.TestCase):
 
             ### Updates
 
-            #### 2026-08-26 09:00:00.000Z — Created
+            #### 2026-08-26 09:00:00.000Z - Created
 
             Initial draft.
 
-            #### 2026-08-27 09:00:00.000Z — Later
+            #### 2026-08-27 09:00:00.000Z - Later
 
             A later update, out of order.
             """
@@ -303,7 +303,7 @@ class TestParseFeatStructuralViolations(unittest.TestCase):
 
             ### Updates
 
-            #### 2026-08-26 09:00:00.000Z — Created
+            #### 2026-08-26 09:00:00.000Z - Created
 
             Initial draft.
             """
@@ -351,7 +351,7 @@ class TestParseFeatStructuralViolations(unittest.TestCase):
 
             ### Updates
 
-            #### 2026-08-26 09:00:00.000Z — Created
+            #### 2026-08-26 09:00:00.000Z - Created
 
             Initial draft.
             """
@@ -367,7 +367,16 @@ class TestParseFeatStructuralViolations(unittest.TestCase):
             parse_feat(text)
 
     def test_malformed_update_entry_heading_raises_assertion_error(self) -> None:
-        text = _MINIMAL_DOC.replace("#### 2026-08-26 09:00:00.000Z — Created", "#### Not A Timestamp — Created")
+        text = _MINIMAL_DOC.replace("#### 2026-08-26 09:00:00.000Z - Created", "#### Not A Timestamp - Created")
+
+        with self.assertRaises(AssertionError):
+            parse_feat(text)
+
+    def test_update_entry_with_em_dash_separator_raises_assertion_error(self) -> None:
+        """ACC-001: an em-dash-separated `### Updates` entry heading is a structural failure."""
+        text = _MINIMAL_DOC.replace(
+            "#### 2026-08-26 09:00:00.000Z - Created", "#### 2026-08-26 09:00:00.000Z — Created"
+        )
 
         with self.assertRaises(AssertionError):
             parse_feat(text)
@@ -411,7 +420,7 @@ class TestParseFeatStructuralViolations(unittest.TestCase):
 
             ### Updates
 
-            #### 2026-08-26 09:00:00.000Z — Created
+            #### 2026-08-26 09:00:00.000Z - Created
 
             Initial draft.
             """

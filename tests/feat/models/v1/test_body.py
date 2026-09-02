@@ -191,9 +191,12 @@ class TestUpdateEntryAndDecisionEntryHeadingAlias(unittest.TestCase):
     def test_accepts_well_formed_headings(self) -> None:
         for cls in (UpdateEntry, DecisionEntry):
             for heading in (
-                "2026-08-30 16:47:59.981Z — Paused for review",
-                "2026-08-30 14:02:11.123+02:00 — Initial scaffolding",
-                "2026-08-30 09:15:00.000-05:00 — x",
+                "2026-08-30 16:47:59.981Z - Paused for review",
+                "2026-08-30 14:02:11.123+02:00 - Initial scaffolding",
+                "2026-08-30 09:15:00.000-05:00 - x",
+                "2026-08-30 16:47:59.981Z : Paused for review",
+                "2026-08-30 14:02:11.123+02:00 : Initial scaffolding",
+                "2026-08-30 09:15:00.000-05:00 : x",
             ):
                 with self.subTest(cls=cls.__name__, heading=heading):
                     self.assertTrue(match_alias(cls, heading))
@@ -201,12 +204,24 @@ class TestUpdateEntryAndDecisionEntryHeadingAlias(unittest.TestCase):
     def test_rejects_malformed_headings(self) -> None:
         for cls in (UpdateEntry, DecisionEntry):
             for heading in (
-                "2026-08-30 16:47:59Z — Missing milliseconds",
-                "2026-08-30 16:47:59.981 — Missing offset",
-                "2026-08-30T16:47:59.981Z — Wrong separator",
+                "2026-08-30 16:47:59Z - Missing milliseconds",
+                "2026-08-30 16:47:59.981 - Missing offset",
+                "2026-08-30T16:47:59.981Z - Wrong timestamp separator",
                 "Anything Goes",
                 "2026-08-30 16:47:59.981Z",
-                "2026-08-30 16:47:59.981Z — ",
+                "2026-08-30 16:47:59.981Z - ",
+                "2026-08-30 16:47:59.981Z : ",
+            ):
+                with self.subTest(cls=cls.__name__, heading=heading):
+                    self.assertFalse(match_alias(cls, heading))
+
+    def test_rejects_em_dash_separator(self) -> None:
+        """ACC-001: the em-dash separator is rejected -- only ` - `/` : ` are accepted."""
+        for cls in (UpdateEntry, DecisionEntry):
+            for heading in (
+                "2026-08-30 16:47:59.981Z — Paused for review",
+                "2026-08-30 14:02:11.123+02:00 — Initial scaffolding",
+                "2026-08-30 09:15:00.000-05:00 — x",
             ):
                 with self.subTest(cls=cls.__name__, heading=heading):
                     self.assertFalse(match_alias(cls, heading))
@@ -397,7 +412,7 @@ class TestUpdateEntryAndDecisionEntry(unittest.TestCase):
     """`UpdateEntry`/`DecisionEntry` parse `content`/`timestamp`/`title` identically."""
 
     def test_update_entry_parses_content_and_computed_fields(self) -> None:
-        text = format_text("#### 2026-08-30 16:47:59.981Z — Paused for review\n\nSome update text.\n")
+        text = format_text("#### 2026-08-30 16:47:59.981Z - Paused for review\n\nSome update text.\n")
 
         sut = UpdateEntry.from_text(text)
 
@@ -407,7 +422,7 @@ class TestUpdateEntryAndDecisionEntry(unittest.TestCase):
         self.assertEqual(str(sut), text)
 
     def test_decision_entry_parses_content_and_computed_fields(self) -> None:
-        text = format_text("#### 2026-08-30 17:10:00.000Z — Deferred mobile gestures\n\nSome decision text.\n")
+        text = format_text("#### 2026-08-30 17:10:00.000Z - Deferred mobile gestures\n\nSome decision text.\n")
 
         sut = DecisionEntry.from_text(text)
 
@@ -420,7 +435,7 @@ class TestUpdateEntryAndDecisionEntry(unittest.TestCase):
         for cls in (UpdateEntry, DecisionEntry):
             with self.subTest(cls=cls.__name__):
                 with self.assertRaises(AssertionError):
-                    cls.from_text(format_text("#### 2026-08-30 16:47:59.981Z — Paused for review\n"))
+                    cls.from_text(format_text("#### 2026-08-30 16:47:59.981Z - Paused for review\n"))
 
     def test_missing_content_raises_validation_error(self) -> None:
         for cls in (UpdateEntry, DecisionEntry):
@@ -435,9 +450,9 @@ class TestUpdatesOrdering(unittest.TestCase):
     def test_parses_newest_first_entries(self) -> None:
         text = format_text(
             "### Updates\n\n"
-            "#### 2026-08-30 16:47:59.981Z — Paused for review\n\n"
+            "#### 2026-08-30 16:47:59.981Z - Paused for review\n\n"
             "First entry text.\n\n"
-            "#### 2026-08-30 14:02:11.123+02:00 — Initial scaffolding\n\n"
+            "#### 2026-08-30 14:02:11.123+02:00 - Initial scaffolding\n\n"
             "Second entry text.\n"
         )
 
@@ -449,9 +464,9 @@ class TestUpdatesOrdering(unittest.TestCase):
     def test_out_of_order_entries_raise_validation_error(self) -> None:
         text = format_text(
             "### Updates\n\n"
-            "#### 2026-08-30 14:02:11.123+02:00 — Initial scaffolding\n\n"
+            "#### 2026-08-30 14:02:11.123+02:00 - Initial scaffolding\n\n"
             "First entry text.\n\n"
-            "#### 2026-08-30 16:47:59.981Z — Paused for review\n\n"
+            "#### 2026-08-30 16:47:59.981Z - Paused for review\n\n"
             "Second entry text.\n"
         )
 
@@ -461,9 +476,9 @@ class TestUpdatesOrdering(unittest.TestCase):
     def test_equal_timestamps_are_allowed(self) -> None:
         text = format_text(
             "### Updates\n\n"
-            "#### 2026-08-30 16:47:59.981Z — First\n\n"
+            "#### 2026-08-30 16:47:59.981Z - First\n\n"
             "First entry text.\n\n"
-            "#### 2026-08-30 16:47:59.981Z — Second\n\n"
+            "#### 2026-08-30 16:47:59.981Z - Second\n\n"
             "Second entry text.\n"
         )
 
@@ -483,7 +498,7 @@ class TestUpdatesOrdering(unittest.TestCase):
         text = format_text(
             "### Updates\n\n"
             "<!-- Newest entry first -->\n\n"
-            "#### 2026-08-30 16:47:59.981Z — Paused for review\n\n"
+            "#### 2026-08-30 16:47:59.981Z - Paused for review\n\n"
             "Some update text.\n"
         )
 
@@ -499,9 +514,9 @@ class TestDecisionsMadeOrdering(unittest.TestCase):
     def test_parses_newest_first_entries(self) -> None:
         text = format_text(
             "### Decisions Made\n\n"
-            "#### 2026-08-30 17:10:00.000Z — Deferred mobile gestures\n\n"
+            "#### 2026-08-30 17:10:00.000Z - Deferred mobile gestures\n\n"
             "First entry text.\n\n"
-            "#### 2026-08-30 09:15:00.000+02:00 — Chose composite-based library\n\n"
+            "#### 2026-08-30 09:15:00.000+02:00 - Chose composite-based library\n\n"
             "Second entry text.\n"
         )
 
@@ -513,9 +528,9 @@ class TestDecisionsMadeOrdering(unittest.TestCase):
     def test_out_of_order_entries_raise_validation_error(self) -> None:
         text = format_text(
             "### Decisions Made\n\n"
-            "#### 2026-08-30 09:15:00.000+02:00 — Chose composite-based library\n\n"
+            "#### 2026-08-30 09:15:00.000+02:00 - Chose composite-based library\n\n"
             "First entry text.\n\n"
-            "#### 2026-08-30 17:10:00.000Z — Deferred mobile gestures\n\n"
+            "#### 2026-08-30 17:10:00.000Z - Deferred mobile gestures\n\n"
             "Second entry text.\n"
         )
 
@@ -566,7 +581,7 @@ def _minimal_progress() -> Progress:
             "### Current Status\n\n"
             "Some status.\n\n"
             "### Updates\n\n"
-            "#### 2026-08-30 16:47:59.981Z — Created\n\n"
+            "#### 2026-08-30 16:47:59.981Z - Created\n\n"
             "Some update text.\n"
         )
     )

@@ -56,8 +56,8 @@ _FULL_DOCUMENT = (
     type: prb
     version: 1.0.0
     status: draft
-    created: 2026-08-25
-    updated: 2026-08-25
+    created: '2026-08-25 00:00:00.000Z'
+    updated: '2026-08-25 00:00:00.000Z'
     ---
 
     """

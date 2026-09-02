@@ -27,7 +27,8 @@ whole-body domains' identical shape in the same way ``_update_feat``
 ``feat.tools._paths``'s bespoke folder-per-document shortcut, not a
 flat-file directory scan (see
 ``.specmgr/feat/feat-31-feature/README.md`` Design Notes). It bumps
-``updated`` to the same microsecond timestamp as every other domain --
+``updated`` to the same shared date+time timestamp (via
+``general.tools._timestamps.now_timestamp()``) as every other domain --
 an earlier, deliberate divergence (a plain ``YYYY-MM-DD`` date) was
 reversed for cross-domain consistency; see that feature's Decisions Made.
 
@@ -50,6 +51,15 @@ status-change entry point for every domain.
 ``models.adr.v1.mutations`` is imported qualified (as ``mutations``)
 because the pure, in-memory operation it delegates to shares this
 wrapper's own name.
+
+Safety (REQ-009, feat-38-39-41-43-44 Phase 4): the public
+:func:`set_status` validates ``id`` via ``_path_safety.validate_id``
+before dispatch (a ``ValueError`` before any filesystem access --
+mirroring the generic ``delete`` tool's own REQ-003; ``_path_safety``'s
+UUID-shaped domains now include ``adr``), and every adapter confines the
+resolved path to the domain's own base directory with
+``_path_safety.assert_within`` after ``load_by_id``, inside the domain
+lock.
 
 ## Functions
 
@@ -87,7 +97,7 @@ Mirrors :func:`_set_status_dec`'s shape (same ``feat_lock``,
 feat-only divergence ``_update_feat`` (in ``update.py``) documents:
 ``id_`` resolves via ``feat.tools._paths``'s bespoke folder-per-document
 shortcut, not a flat-file directory scan. ``updated`` is bumped to the
-same microsecond timestamp as every other domain.
+same shared date+time timestamp as every other domain.
 
 
 ### `_set_status_gol(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'GolDocument'`
@@ -199,7 +209,8 @@ same id resolution, same body handling, same domain not-found error).
 
 For the eleven whole-body domains the existing file's frontmatter is
 carried over with every field preserved except ``status`` (replaced)
-and ``updated`` (bumped to the current microsecond timestamp); the
+and ``updated`` (bumped to the current date+time timestamp, via
+``general.tools._timestamps.now_timestamp()``); the
 body is never touched -- its raw, on-disk markdown (not a render of
 the parsed model) is re-read and re-persisted verbatim. For
 ``type="adr"`` the change delegates to
@@ -214,6 +225,17 @@ its set. Where that set lives is documented per domain -- see each
 ``XFrontmatter.status`` field (the eleven whole-body domains'
 ``models/<v>/frontmatter.py`` and ``models/adr/v1/frontmatter.py``)
 rather than any list in this docstring.
+
+Safety (REQ-009, feat-38-39-41-43-44 Phase 4, mirroring ``delete``'s
+own REQ-003): ``id`` is validated via ``_path_safety.validate_id`` (no
+``/``, no ``\``, no ``..``, plus the dispatched domain's own format --
+canonical lowercase-hex UUID for the eleven UUID domains including
+``adr``, ``feat-NNN-slug`` for ``feat``) **before** any filesystem
+access, so a path-injection attempt or a wrong-format id is a
+``ValueError`` raised before dispatch. Each adapter additionally
+confines the resolved path to the domain's own base directory with
+``_path_safety.assert_within`` inside the lock -- defense-in-depth
+against any future gap in the id validation.
 
 Parameters
 ----------
@@ -242,12 +264,19 @@ VcrDocument | Adr
 Raises
 ------
 ValueError
-    ``superseded_by`` given with a ``type`` other than ``"adr"``
-    (raised before any file access). Nothing is written.
+    ``id`` is a path-injection attempt or not in the dispatched
+    domain's own format (raised before any filesystem access; nothing
+    is written), or ``superseded_by`` given with a ``type`` other
+    than ``"adr"`` (raised before any file access). Nothing is
+    written in either case.
 pydantic.ValidationError
     ``status`` is not in the dispatched domain's closed vocabulary
     (for ``adr``: not one of its six values and not a
-    ``"superseded by ..."`` string). Nothing is written.
+    ``"superseded by ..."`` string). The message is prefixed with
+    domain/tool/channel context (e.g. ``"tsk set_status
+    (frontmatter): ..."``) by the shared tool-boundary wrapper
+    (:func:`~biz.dfch.specmgr.models.md._errors.wrap_tool_errors`).
+    Nothing is written.
 ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
 PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
 FeatNotFoundError / SopNotFoundError / VcrNotFoundError / AdrNotFoundError

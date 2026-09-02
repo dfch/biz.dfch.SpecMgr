@@ -115,13 +115,13 @@ tool call, so hand-editing a file between calls is safe.
   configurable via the `SPECMGR_DOCS_DIR` environment variable (default
   `docs`), with each type's own subdirectory appended automatically (e.g.
   `docs/req` for requirements).
-- The `webfetch` tool (bearer-authenticated, URL-filtered HTTP GET, intended
-  primarily for Web Server instances using PAT authentication)
-  requires two environment variables: `SPECMGR_WEBFETCH_BASE_URL` (the base
-  URL requested URLs must case-insensitively start with) and
-  `SPECMGR_WEBFETCH_BEARER` (the bearer token sent as the `Authorization`
-  header). Both must be set or the tool raises an error; there are no
-  defaults.
+- The `confluence_fetch` tool (renamed from `webfetch`; bearer-authenticated,
+  URL-filtered HTTP GET, intended primarily for Confluence instances using
+  PAT authentication) requires two environment variables:
+  `SPECMGR_CONFLUENCE_BASE_URL` (the base URL requested URLs must
+  case-insensitively start with) and `SPECMGR_CONFLUENCE_BEARER` (the
+  bearer token sent as the `Authorization` header). Both must be set or the
+  tool raises an error; there are no defaults.
 
 ### Start the MCP Server
 

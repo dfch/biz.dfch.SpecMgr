@@ -7,6 +7,145 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `confluence_update` MCP tool (`general/tools/`): writes a local Markdown
+  file's rendered content into an existing Confluence page's body via the
+  REST API, resolving a bare page id, a browsable page URL, or a REST
+  content URL to a numeric page id, `GET`-ing the page's current
+  `version`/`title`, rendering the Markdown via `markdown-it-py` to an
+  HTML fragment, and `PUT`-ing the incremented version. Local images
+  referenced by the Markdown file are uploaded as Confluence attachments
+  on a best-effort basis (`POST .../child/attachment`, falling back to
+  `.../child/attachment/{id}/data` if the filename already exists --
+  duplicate-filename detection is confirmed against a real Confluence
+  server's actual 400 response, "Cannot add a new attachment with same
+  file name as an existing attachment: `<filename>`. Log referral number
+  is `<uuid>`") and their `<img>` tags are rewritten into Confluence's
+  `<ac:image>`/`<ri:attachment>` storage-format macro. Also sanitizes any
+  raw `--` sequence inside rendered `<!-- -->` HTML comments (valid
+  CommonMark but rejected outright by Confluence's strict XHTML
+  storage-format parser, confirmed against a real instance: `"Error
+  parsing xhtml: String '--' not allowed in comment"`) and converts a
+  leading YAML frontmatter block into a fenced code block before
+  rendering, instead of letting CommonMark's thematic-break/Setext-heading
+  rules mangle it into a stray `<h2>` heading (also confirmed against a
+  real instance). Closes GitHub issue #50, per ADR
+  a156fdf9-052c-4f43-93a2-eeec04a91eac.
+- `confluence_update`/`confluence_fetch` MCP prompts (`general/prompts/`):
+  thin, single-tool-call prompts sharing their respective tools' exact
+  names (a separate MCP registry from tools). Each returns instructional
+  text telling the LLM to call the matching `confluence_update`/
+  `confluence_fetch` tool with the given parameters -- neither prompt ever
+  calls its tool itself. `confluence_update` also tells the LLM to report
+  back the tool's returned `version`/`failed_images`; `confluence_fetch`
+  documents that `destination_path` is only required for binary/non-text
+  content. Part of feat-50-confluence Phase 8, REQ-012/REQ-013.
+
+### Changed
+
+- Eliminated all 42 pylint W0622 (redefined-builtin) findings via 39
+  explicit, per-file `# pylint: disable=redefined-builtin` comments (with
+  a one-line rationale) on the files whose public API intentionally uses
+  `id`/`type` as parameter names — the twelve `get_<d>` tools, the
+  per-domain update/implement prompts, the ADR tools/resources/prompts,
+  the generic `update`/`set_status`/`delete` public functions, and
+  `models/md/markdown.py`/`alias.py`. Not breaking — no behavior change,
+  purely an internal lint-suppression change. No global `pyproject.toml`
+  pylint configuration change: a future file that shadows a builtin
+  without adding its own disable comment still warns (GitHub issue #41,
+  Phase 5 of feat-38-39-41-43-44).
+
+- The twelve `get_<d>` tools (including `get_adr`), the generic `update`
+  tool, and the generic `set_status` tool now validate `id` for
+  path-injection/wrong-format before any filesystem access, and confine
+  the resolved path to the domain's own base directory after resolution —
+  the same `general.tools._path_safety` guards the generic `delete` tool
+  already had (feat-36-delete). `_path_safety.validate_id` now also
+  accepts `"adr"` as a UUID-shaped domain. This is purely additive
+  validation: a previously well-formed id for its domain is unaffected; a
+  path-injection attempt or a malformed id — which would already have
+  failed downstream (e.g. via a `FileNotFoundError`/`XNotFoundError`) —
+  now fails earlier and more explicitly with a `ValueError`. `delete`
+  itself is unchanged (GitHub issue #43, Phase 4 of
+  feat-38-39-41-43-44).
+
+- **BREAKING**: renamed the `webfetch` MCP tool to `confluence_fetch` (and
+  its environment variables `SPECMGR_WEBFETCH_BASE_URL`/
+  `SPECMGR_WEBFETCH_BEARER` to `SPECMGR_CONFLUENCE_BASE_URL`/
+  `SPECMGR_CONFLUENCE_BEARER`); part of feat-50-confluence. Beyond the
+  rename, `confluence_fetch` now auto-converts browsable Confluence page
+  URLs (Cloud-style `/pages/<id>/<title>` and Server-style
+  `?pageId=<id>`) into the equivalent
+  `{base}/rest/api/content/{id}?expand=body.storage` REST API URL before
+  fetching, rejects the `/x/<tinyid>` tiny-link URL shape with a clear
+  error (unresolvable to a page id without an authenticated browser
+  session), detects when a request is redirected off the configured base
+  URL's host (e.g. to an SSO login page) and raises instead of returning
+  that content, and supports binary/image download via a
+  `destination_path` parameter (content-type based). GitHub issue #50,
+  ADR a156fdf9-052c-4f43-93a2-eeec04a91eac.
+
+- **BREAKING**: frontmatter `created`/`updated` now strictly require the
+  date+time variant `yyyy-MM-dd HH:mm:ss.fff` followed by `Z` (UTC) or a
+  signed `±HH:mm` offset — date-only, `T`-separated, six-digit-microsecond,
+  and timezone-less values are all rejected at parse time
+  (`pydantic.ValidationError`), eagerly, on the shared
+  `MarkdownFrontmatter` base every one of the eleven whole-body domains'
+  frontmatter subclasses inherits from. Every tool-written `created`/
+  `updated` value — across all 11 whole-body `create_<d>` tools, the 22
+  generic `update` adapter sites, and the 11 generic `set_status` adapter
+  sites — is now produced by one shared helper
+  (`general.tools._timestamps.now_timestamp()`) that guarantees this exact
+  shape (local time via `datetime.now().astimezone()`, `Z` when the UTC
+  offset is exactly zero, milliseconds truncated to exactly three digits).
+  ADR frontmatter is unaffected (it has no `created`/`updated` fields).
+  Existing documents with a non-conforming frontmatter timestamp must be
+  migrated to the new shape before they will parse again — the repo's own
+  artifacts (the release SOP, the two `docs/tsk` documents, every
+  `.specmgr/feat/*/README.md`'s frontmatter, and every packaged
+  template/example) were migrated as part of this change (GitHub issue
+  #44, Phase 3 of feat-38-39-41-43-44).
+
+- **BREAKING**: SOP `## Updates`, DEC `## Updates`, VCR `## Updates`, and
+  TSK `## Recent Updates` now enforce newest-first ordering at parse
+  time — an entry whose timestamp precedes (is older than) the entry
+  above it fails to parse (`AssertionError`/`ValidationError`), eagerly,
+  at construction time. Consecutive entries are compared with an aware
+  `datetime` comparison; when either side is a bare date (no time
+  component) the comparison happens at day granularity, so a date-only
+  entry and a same-day date+time entry are treated as equal, and equal
+  timestamps are always allowed (non-strict "newest-first"). DEC/VCR/TSK
+  update-entry headings, previously free-form, are now themselves
+  timestamp-led: `### {yyyy-MM-dd or yyyy-MM-dd HH:mm:ss.fff±HH:mm/Z}
+  ( - | : ) {title}`, mirroring SOP/FEAT's existing shape — a heading
+  that does not start with a valid date fails to parse. The SOP/DEC/TSK
+  update containers gained leading-HTML-comment support (promoted from
+  `MarkdownSection2` to `MarkdownSection2WithComment`; VCR already had
+  it), so all four now carry a `<!-- Newest entry first -- prepend new
+  entries directly below this comment. -->` ordering hint in their
+  packaged templates, and the create/update instructions of all four
+  domains now direct prepending new entries instead of appending them.
+  Existing out-of-order or non-timestamp-led SOP/DEC/VCR/TSK documents
+  must be migrated to the newest-first, timestamp-led shape before they
+  will parse again (GitHub issue #39, Phase 2 of
+  feat-38-39-41-43-44).
+
+- **BREAKING**: update-entry headings no longer accept an em-dash (`—`)
+  separator between the timestamp and the title. SOP `## Updates`
+  (`### {timestamp} - {title}`/`### {timestamp} : {title}`) and FEAT
+  `## Updates`/`### Decisions Made` (`#### {timestamp} - {title}`/
+  `#### {timestamp} : {title}`) now only accept `" - "` (space, hyphen,
+  space) or `" : "` (space, colon, space) as the separator; an em-dash
+  entry fails to parse (`AssertionError`/alias mismatch), eagerly, at
+  construction time. Existing SOP/FEAT documents using the em-dash
+  separator must be migrated to `" - "` or `" : "` (GitHub issue #38,
+  Phase 1 of feat-38-39-41-43-44). DEC/VCR update-entry convention text
+  (docstrings, packaged templates/examples/create-instructions) was
+  updated to the same separators for consistency, though those two
+  domains' `## Updates` headings remain free-form and unenforced until
+  Phase 2.
+
 ### Fixed
 
 - `specmgr docs`: stale per-module API pages are now pruned.
@@ -26,6 +165,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   stale pages left by feat-13-list-paging's resource→tool conversion
   (`biz.dfch.specmgr.{adr,qa,req,tsk,uc}.resources.*_list.md`) (GitHub
   issue #40).
+- Every validation error surfaced by the `parse_<d>`/`create_<d>`/
+  `validate_<d>` MCP tools (all twelve document types) and the generic
+  `update`/`set_status` tools is now actionable instead of a bare,
+  uninformative message. Structural `AssertionError`s now carry a
+  document-relative field path (e.g. `Task > RecentUpdates > UpdateEntry
+  > content`), a 1-based line reference into the mdformat-normalized body
+  plus a snippet of the offending text, and what was expected. For the
+  two triggers that motivated this fix specifically: a bare `<word>`-style
+  token is rejected as raw HTML with a fix hint ("wrap it in a code span,
+  or write it as an HTML comment"), and a `+`/`-`/`*`-prefixed
+  continuation line gets a cause + fix hint ("this begins a new
+  CommonMark list; remove the marker or indent the line so it belongs to
+  the preceding block instead"). Malformed frontmatter YAML
+  (`yaml.YAMLError`) now names "the frontmatter block" instead of
+  PyYAML's opaque `"<unicode string>"`, with document-relative (not
+  block-relative) line numbers. Every touched tool additionally prepends
+  its own domain + tool context (e.g. `"tsk create_tsk (body): ..."`). No
+  new exception types and no channel changes throughout — the documented
+  two-channel contract (`AssertionError` structural / `pydantic.
+  ValidationError` value) is preserved exactly; only message content
+  changes (GitHub issue #27; subsumes feat-7's not-started Task 0.29).
 
 ## [0.16.0] - 2026-09-01
 
