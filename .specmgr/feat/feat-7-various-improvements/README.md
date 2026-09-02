@@ -1,8 +1,8 @@
 ---
-created: 2026-08-15
+created: '2026-08-15 00:00:00.000Z'
 id: feat-7-various-improvements
 status: planning
-updated: 2026-09-01
+updated: '2026-09-01 00:00:00.000Z'
 version: 1.0.0
 ---
 

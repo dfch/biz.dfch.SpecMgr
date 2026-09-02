@@ -33,9 +33,9 @@ codebase.
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
 
 from ...general.tools._doc_paths import slugify
+from ...general.tools._timestamps import now_timestamp
 from ...models.md import CURRENT_SCHEMA_VERSION
 from ...models.md._errors import BODY_CHANNEL, wrap_tool_errors
 from ...models.md._markdown import format_text
@@ -103,7 +103,7 @@ def create_vcr(content: str) -> VcrDocument:
         body = Vcr.from_text(format_text(content))
 
     new_id = str(uuid.uuid4())
-    now = datetime.now().isoformat(timespec="microseconds")
+    now = now_timestamp()
     new_frontmatter = VcrFrontmatter(
         id=new_id,
         type="vcr",

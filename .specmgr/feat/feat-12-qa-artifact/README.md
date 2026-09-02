@@ -1,8 +1,8 @@
 ---
-created: 2026-08-18
+created: '2026-08-18 00:00:00.000Z'
 id: feat-12-qa-artifact
 status: done
-updated: 2026-08-18
+updated: '2026-08-18 00:00:00.000Z'
 version: 1.0.0
 ---
 

@@ -42,50 +42,125 @@ comment (inherited) -> items (>=1) -> mandatory `## Recent Updates`), since
 in that same order.
 """
 
-from pydantic import Field, model_validator
+from __future__ import annotations
+
+import re
+
+from pydantic import Field, computed_field, model_validator
 
 from ....models.md import (
     MarkdownParagraph,
     MarkdownSection1WithComment,
-    MarkdownSection2,
+    MarkdownSection2WithComment,
     MarkdownSection3,
     alias,
     AliasType,
 )
+from ....models.md._ordering import validate_newest_first
 from .task_item import TaskItem
 
+#: Matches a `{yyyy-MM-dd or full date+time} ( - | : ) {title}` heading line
+#: as retained in a composite `MarkdownSection3`'s `.text` (which carries the
+#: heading's inline content, no `###` marker), capturing the timestamp
+#: (named group `timestamp`) and the title (named group `title`). Mirrors
+#: `dec.models.v1.body._UPDATE_ENTRY_HEADING_PATTERN`/`vcr.models.v1.body._UPDATE_ENTRY_HEADING_PATTERN`
+#: exactly.
+_UPDATE_ENTRY_HEADING_PATTERN = re.compile(
+    r"(?P<timestamp>\d{4}-\d{2}-\d{2}(?: \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2}))?)(?: - | : )(?P<title>.+)"
+)
 
-@alias(value=".+", type=AliasType.REGEX)
+
+@alias(
+    value=r"^\d{4}-\d{2}-\d{2}(?: \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2}))?(?: - | : ).+$",
+    type=AliasType.REGEX,
+)
 class UpdateEntry(MarkdownSection3):
-    """`### {free-form title}` under `## Recent Updates` -- one dated/titled update entry.
+    """`### {timestamp} ( - | : ) {title}` under `## Recent Updates` -- one update entry.
 
-    The H3 heading text is free-form (no fixed vocabulary/numbering, unlike
-    ADR's `### Option N: ...` -- update entries are not numbered options).
+    The H3 heading text carries a timestamp and a title, joined by either
+    ``" - "`` (space, hyphen, space) or ``" : "`` (space, colon, space):
+    e.g. `### 2026-08-19 - Kickoff` or
+    `### 2026-08-19 05:42:00.000+02:00 : Kickoff`. The em-dash separator is
+    rejected. The timestamp is either a bare ``yyyy-MM-dd`` date or the
+    full ``yyyy-MM-dd HH:mm:ss.fff`` + explicit UTC offset (``+02:00``,
+    ``-05:00``) or ``Z`` for UTC variant (REQ-004). Mirrors DEC/VCR's own
+    `UpdateEntry` shape exactly.
 
     Parameters
     ----------
     content:
         The lead paragraph right after the H3 heading -- this entry's own
         update text. Mandatory.
+    timestamp:
+        Computed. The timestamp carried by the heading, verbatim. Never
+        stored separately -- derived from the retained heading text.
+    title:
+        Computed. The title carried by the heading (the text after
+        ``" - "``/``" : "``). Never stored separately -- derived from the
+        retained heading text.
     """
 
     content: MarkdownParagraph = Field(
         description="The lead paragraph directly under the H3 heading -- this entry's own update text. Mandatory."
     )
 
+    @computed_field  # type: ignore
+    @property
+    def timestamp(self) -> str:
+        """The timestamp carried by this heading (e.g. `2026-08-19` or `2026-08-19 05:42:00.000+02:00`).
 
-class RecentUpdates(MarkdownSection2):
-    """`## Recent Updates` -- a dynamic list of free-form-titled `### ` update entries.
+        Returns:
+            The timestamp string parsed from the retained heading text.
 
-    A fixed-title (non-alias) `MarkdownSection2`, structurally similar to
-    `AdrBody`'s `## Pros and Cons of the Options`/`AdrOption` collection, but
-    with no dedicated per-entry tools (no `option_create`/`option_list`
-    equivalent) -- entries are appended by editing the whole body.
+        Raises:
+            AssertionError: the retained heading text does not match
+                `UpdateEntry`'s declared `@alias` (unreachable via the
+                engine: `match_alias` already enforced it at parse time).
+        """
+        match = _UPDATE_ENTRY_HEADING_PATTERN.fullmatch(self.text)
+        assert match, f"UpdateEntry: expected heading '{{timestamp}} ( - | : ) {{title}}', got {self.text!r}"
+        result: str = match.group("timestamp")
+        return result
+
+    @computed_field  # type: ignore
+    @property
+    def title(self) -> str:
+        """The title carried by this heading (e.g. `Kickoff` for `### 2026-08-19 - Kickoff`).
+
+        Returns:
+            The title parsed from the retained heading text (the text
+            after ``" - "``/``" : "``).
+
+        Raises:
+            AssertionError: the retained heading text does not match
+                `UpdateEntry`'s declared `@alias` (unreachable via the
+                engine: `match_alias` already enforced it at parse time).
+        """
+        match = _UPDATE_ENTRY_HEADING_PATTERN.fullmatch(self.text)
+        assert match, f"UpdateEntry: expected heading '{{timestamp}} ( - | : ) {{title}}', got {self.text!r}"
+        result: str = match.group("title")
+        return result
+
+
+class RecentUpdates(MarkdownSection2WithComment):
+    """`## Recent Updates` -- a dynamic, newest-first list of timestamp-led `### ` update entries.
+
+    A fixed-title (non-alias) `MarkdownSection2WithComment`, structurally
+    similar to `AdrBody`'s `## Pros and Cons of the Options`/`AdrOption`
+    collection, but with no dedicated per-entry tools (no
+    `option_create`/`option_list` equivalent) -- entries are prepended
+    (newest-first) by editing the whole body. May be preceded by an
+    explanatory HTML comment (e.g. an ordering hint).
 
     Parameters
     ----------
+    comment:
+        Optional explanatory HTML comment (`<!-- ... -->`), e.g.
+        `<!-- Newest entry first -- prepend new entries directly below
+        this comment. -->`. Inherited from `MarkdownSection2WithComment`.
     updates:
-        The dynamic collection of `### ` entries, in document order. Requires
+        The dynamic collection of `### ` entries, in document order,
+        newest-first (enforced, see `_validate_newest_first`). Requires
         at least one entry (``min_length=1``), same as `Task.items` below --
         `models.md`'s generic list-parsing engine already enforces this
         during `from_text` for any non-`Optional` `list[X]` field regardless
@@ -98,9 +173,21 @@ class RecentUpdates(MarkdownSection2):
 
     updates: list[UpdateEntry] = Field(
         min_length=1,
-        description="Dynamic collection of `### {free-form title}` entries, in document order. "
-        "Must contain at least one entry.",
+        description="Dynamic collection of `### {timestamp} ( - | : ) {title}` entries, in document order, "
+        "newest-first. Must contain at least one entry.",
     )
+
+    @model_validator(mode="after")
+    def _validate_newest_first(self) -> RecentUpdates:
+        """Reject entries that are not in newest-first order.
+
+        Delegates to the shared `models.md._ordering.validate_newest_first`
+        helper (mixed date-only/date+time day-granularity rule, equal
+        values allowed) -- mirrors `feat.models.v1.body.Updates._validate_newest_first`
+        without duplicating its logic. Raises on the first out-of-order pair.
+        """
+        validate_newest_first([update.timestamp for update in self.updates], "RecentUpdates")
+        return self
 
 
 @alias(value=".+", type=AliasType.REGEX)

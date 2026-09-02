@@ -80,8 +80,8 @@ _FULL_DOCUMENT = (
     type: rsk
     version: 1.0.0
     status: open
-    created: 2026-08-24
-    updated: 2026-08-24
+    created: '2026-08-24 00:00:00.000Z'
+    updated: '2026-08-24 00:00:00.000Z'
     ---
 
     """

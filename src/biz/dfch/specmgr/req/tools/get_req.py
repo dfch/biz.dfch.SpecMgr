@@ -15,6 +15,8 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+# pylint: disable=redefined-builtin  # id/type intentionally shadow the builtins: public tool API, issue #41
+
 """``@mcp.tool()`` wrapper: get_req (feat-7-various-improvements Task 0.9).
 
 Mirrors ``adr.tools.get_adr`` -- a thin file-I/O/id-lookup adapter that
@@ -40,6 +42,7 @@ splices against.
 
 from __future__ import annotations
 
+from ...general.tools._path_safety import assert_within, validate_id
 from ...general.tools._splice import body_text
 from ...server import mcp
 from ..models.v1 import ReqDocument
@@ -52,7 +55,8 @@ from ._paths import req_base_dir
     title="Get requirement",
     description=(
         "Read, parse, and return a full requirement document (frontmatter and body) by its id. "
-        "Pass raw=True to return the frontmatter-stripped body text verbatim instead."
+        "Pass raw=True to return the frontmatter-stripped body text verbatim instead. "
+        "An invalid id (path-injection attempt or wrong format) is a ValueError raised before any file access."
     ),
 )
 def get_req(id: str, raw: bool = False) -> ReqDocument | str:
@@ -75,9 +79,17 @@ def get_req(id: str, raw: bool = False) -> ReqDocument | str:
         With ``raw=False``: the current on-disk document, freshly re-read
         and re-parsed. With ``raw=True``: the body text as a plain string.
         Raises :class:`._paths.ReqNotFoundError` if no requirement has this id.
+
+    Raises
+    ------
+    ValueError
+        ``id`` is a path-injection attempt or not a well-formed id for this domain
+        (raised before any filesystem access).
     """
+    validate_id("req", id)
     base_dir = req_base_dir()
     path, doc = load_by_id(base_dir, id)
+    assert_within(base_dir, path)
     if raw:
         result: ReqDocument | str = body_text(path)
         return result

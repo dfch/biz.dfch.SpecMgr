@@ -253,6 +253,17 @@ one ``<img>`` tag unrewritten), and the incremented version is written via a
 ``PUT`` with the (possibly rewritten) HTML fragment as the new
 ``body.storage.value`` and the title unchanged; reuses the same two
 environment variables as ``confluence_fetch``, no new configuration surface.
+  Path safety (feat-38-39-41-43-44 Phase 4, REQ-009, extending feat-36-delete's
+``delete``-only guards, ADR 1af6787b-eaab-4e8f-888f-531c1e76c19d): every one of the twelve
+``get_<d>`` tools (including ``get_adr``), the generic ``update``, and the generic
+``set_status`` now validate ``id`` via ``general.tools._path_safety.validate_id`` (no
+``/``, no ``\\``, no ``..``, plus the dispatched/fixed domain's own format --
+canonical lowercase-hex UUID for the eleven UUID domains including ``adr``,
+``feat-NNN-slug`` for ``feat``) before any filesystem access, raising ``ValueError``
+before dispatch on a path-injection attempt or a wrong-format id, and additionally
+confine the resolved path to the domain's own base directory with
+``general.tools._path_safety.assert_within`` after id resolution (defense-in-depth).
+``delete`` itself is unchanged by this phase.
 
 Prompts
 -------

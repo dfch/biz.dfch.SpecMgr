@@ -141,6 +141,7 @@ First-line docstrings from each module, organized by domain:
 - `general/tools/_paging.py` — Generic, doc-type-agnostic paging helpers (feat-13 Task 1.2).
 - `general/tools/_path_safety.py` — Reusable, doc-type-agnostic path-safety assertions for document ids and
 - `general/tools/_splice.py` — Frontmatter-stripped body extraction and body-line splicing for the generic
+- `general/tools/_timestamps.py` — Shared, private timestamp-formatting helpers (feat-38-39-41-43-44 Phase 3, Task 3.1).
 - `general/tools/confluence_fetch.py` — ``@mcp.tool()`` wrapper: confluence_fetch (renamed from ``webfetch``, ADR
 - `general/tools/confluence_update.py` — ``@mcp.tool()`` wrapper: confluence_update (ADR a156fdf9-052c-4f43-93a2-eeec04a91eac,
 - `general/tools/delete.py` — ``@mcp.tool()`` wrapper: delete (feat-36-delete, Phase 2).
@@ -197,6 +198,7 @@ First-line docstrings from each module, organized by domain:
 - `models/md/_errors.py` — Shared tool-boundary error enrichment (feat-27-validation Phase 3, Task 3.1).
 - `models/md/_frontmatter_parse.py` — Shared frontmatter-parsing error enrichment (feat-27-validation Phase 2, Tasks 2.1/2.2).
 - `models/md/_markdown.py` — Markdown shared instance.
+- `models/md/_ordering.py` — Shared, private newest-first ordering validation helper for `models.md` domain body models.
 - `models/md/_util.py` — Shared, private validation helpers for the ``models.md`` subpackage.
 - `models/md/alias.py` — Alias decorator for MarkdownStr class name transformation.
 - `models/md/alias_match.py` — Match a parsed heading's actual text against a class's declared `@alias`.
@@ -491,4 +493,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 329
+**Test files**: 331

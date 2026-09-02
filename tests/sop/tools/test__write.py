@@ -53,8 +53,8 @@ class TestWriteSopFile(unittest.TestCase):
             id="some-id",
             type="sop",
             status="draft",
-            created="2026-08-30T10:00:00",
-            updated="2026-08-30T10:00:00",
+            created="2026-08-30 10:00:00.000Z",
+            updated="2026-08-30 10:00:00.000Z",
             version="1.0.0",
         )
         with tempfile.TemporaryDirectory() as tmp:

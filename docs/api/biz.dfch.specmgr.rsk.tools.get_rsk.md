@@ -45,3 +45,9 @@ RskDocument | str
     and re-parsed. With ``raw=True``: the body text as a plain string.
     Raises :class:`._paths.RskNotFoundError` if no risk has this id.
 
+Raises
+------
+ValueError
+    ``id`` is a path-injection attempt or not a well-formed id for this domain
+    (raised before any filesystem access).
+

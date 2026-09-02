@@ -1,9 +1,9 @@
 ---
-created: 2026-08-18
+created: '2026-08-18 00:00:00.000Z'
 id: deaddead-feed-feed-feed-deaddeadfeed
 status: active
 type: qa
-updated: 2026-08-18
+updated: '2026-08-18 00:00:00.000Z'
 version: 1.0.0
 ---
 

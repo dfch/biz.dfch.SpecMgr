@@ -30,14 +30,15 @@ naming the offending value. (:func:`assert_within`'s read-only
 touch.)
 
 The generic ``delete`` tool (``.specmgr/feat/feat-36-delete/README.md``,
-Design Notes sections 2-6) is the first caller. The five functions are
-deliberately reusable by the ``get_<d>``, ``update``, and ``set_status``
-tools with zero rework: they take only plain ``str``/``Path`` inputs,
-return ``None`` (raise on failure), and carry no delete-specific state,
-argument, or return value -- in particular the delete-specific
-``DeleteError`` wrapper (REQ-005) deliberately lives in ``delete.py``,
-not here, because it is a delete-specific concern, not a reusable safety
-primitive.
+Design Notes sections 2-6) was the first caller. The five functions are
+now also called by the twelve ``get_<d>`` tools (including ``get_adr``)
+and by the generic ``update`` and ``set_status`` tools
+(``.specmgr/feat/feat-38-39-41-43-44/README.md``, Phase 4, REQ-009): they
+take only plain ``str``/``Path`` inputs, return ``None`` (raise on
+failure), and carry no delete-specific state, argument, or return value --
+in particular the delete-specific ``DeleteError`` wrapper (REQ-005)
+deliberately lives in ``delete.py``, not here, because it is a
+delete-specific concern, not a reusable safety primitive.
 """
 
 from __future__ import annotations
@@ -53,8 +54,14 @@ __all__ = [
     "validate_id",
 ]
 
-#: The ten whole-body domains whose ``id`` is a server-generated v4 UUID.
-_UUID_TYPES = frozenset({"req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "vcr"})
+#: The eleven UUID domains whose ``id`` is a server-generated v4 UUID: the
+#: ten whole-body domains plus ``adr`` (feat-38-39-41-43-44 Phase 4,
+#: REQ-009) -- ADR ids are canonical lowercase-hex UUIDs of the exact same
+#: shape (see ``adr.tools._paths.find_adr_path``/any ``docs/adr/*.md``
+#: frontmatter ``id`` value). ``delete``'s own ``Literal`` type still
+#: excludes ``"adr"`` (its behavior is unchanged, D-Phase-4) -- this
+#: addition is purely for use by ``get_<d>``/``update``/``set_status``.
+_UUID_TYPES = frozenset({"req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "vcr", "adr"})
 
 #: The ``feat`` document type: the one whole-body domain whose ``id`` is a
 #: chosen ``feat-NNN-slug`` folder name, not a server-generated UUID.
@@ -160,20 +167,21 @@ def validate_id(type_: str, id_: str) -> None:
     ``type_`` in :data:`_UUID_TYPES` -> :func:`assert_uuid`;
     ``type_ == "feat"`` -> :func:`assert_feat_id`; any other ``type_`` ->
     ``ValueError`` (unknown type). This is the single entry point the
-    generic ``delete`` (and, later, ``update``/``set_status``) calls
-    before any filesystem access.
+    generic ``delete``, ``update``, ``set_status``, and every ``get_<d>``
+    tool (including ``get_adr``) call before any filesystem access.
 
     Parameters
     ----------
     type_:
-        The document type name: one of the eleven whole-body domains.
+        The document type name: one of the twelve document types (the
+        eleven whole-body domains, or ``adr``).
     id_:
         The id to check.
 
     Raises
     ------
     ValueError
-        ``type_`` is not one of the eleven whole-body domain names, or the
+        ``type_`` is not one of the twelve document type names, or the
         id fails :func:`assert_no_traversal` or the type's own format
         check; the message names the offending value.
     """
@@ -188,8 +196,8 @@ def validate_id(type_: str, id_: str) -> None:
         assert_feat_id(id_)
     else:
         raise ValueError(
-            f"unknown document type {type_!r}; expected 'feat' or one of the ten UUID domains "
-            f"(req/uc/tsk/qa/prb/gol/rsk/dec/sop/vcr)"
+            f"unknown document type {type_!r}; expected 'feat' or one of the eleven UUID domains "
+            f"(req/uc/tsk/qa/prb/gol/rsk/dec/sop/vcr/adr)"
         )
 
 

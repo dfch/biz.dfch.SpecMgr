@@ -43,8 +43,8 @@ _DOC_TEMPLATE = textwrap.dedent(
     type: vcr
     version: 1.0.0
     status: draft
-    created: 2026-08-31
-    updated: 2026-08-31
+    created: '2026-08-31 00:00:00.000Z'
+    updated: '2026-08-31 00:00:00.000Z'
     ---
 
     # Sample Verification Case

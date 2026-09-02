@@ -34,7 +34,7 @@ _MINIMAL_BODY = textwrap.dedent(
 
     ## Recent Updates
 
-    ### Kickoff
+    ### 2026-08-19 - Kickoff
 
     Started the task list.
     """
@@ -50,8 +50,8 @@ _FULL_DOCUMENT = (
     type: tsk
     version: 1.0.0
     status: draft
-    created: 2026-08-16
-    updated: 2026-08-16
+    created: '2026-08-16 00:00:00.000Z'
+    updated: '2026-08-16 00:00:00.000Z'
     ---
 
     """

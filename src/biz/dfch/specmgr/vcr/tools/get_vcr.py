@@ -15,6 +15,8 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+# pylint: disable=redefined-builtin  # id/type intentionally shadow the builtins: public tool API, issue #41
+
 """``@mcp.tool()`` wrapper: get_vcr (Task 2.1).
 
 Mirrors ``dec.tools.get_dec`` -- a thin file-I/O/id-lookup adapter that
@@ -36,6 +38,7 @@ against.
 
 from __future__ import annotations
 
+from ...general.tools._path_safety import assert_within, validate_id
 from ...general.tools._splice import body_text
 from ...server import mcp
 from ..models.v1 import VcrDocument
@@ -48,7 +51,8 @@ from ._paths import vcr_base_dir
     title="Get verification case record",
     description=(
         "Read, parse, and return a full verification case record document (frontmatter and body) "
-        "by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead."
+        "by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. "
+        "An invalid id (path-injection attempt or wrong format) is a ValueError raised before any file access."
     ),
 )
 def get_vcr(id: str, raw: bool = False) -> VcrDocument | str:
@@ -72,9 +76,17 @@ def get_vcr(id: str, raw: bool = False) -> VcrDocument | str:
         and re-parsed. With ``raw=True``: the body text as a plain string.
         Raises :class:`._paths.VcrNotFoundError` if no verification case
         record has this id.
+
+    Raises
+    ------
+    ValueError
+        ``id`` is a path-injection attempt or not a well-formed id for this domain
+        (raised before any filesystem access).
     """
+    validate_id("vcr", id)
     base_dir = vcr_base_dir()
     path, doc = load_by_id(base_dir, id)
+    assert_within(base_dir, path)
     if raw:
         result: VcrDocument | str = body_text(path)
         return result

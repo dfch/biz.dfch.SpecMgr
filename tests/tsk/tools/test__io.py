@@ -35,8 +35,8 @@ _DOC_TEMPLATE = textwrap.dedent(
     type: tsk
     version: 1.0.0
     status: draft
-    created: 2026-08-16
-    updated: 2026-08-16
+    created: '2026-08-16 00:00:00.000Z'
+    updated: '2026-08-16 00:00:00.000Z'
     ---
 
     # Simple Task List
@@ -45,7 +45,7 @@ _DOC_TEMPLATE = textwrap.dedent(
 
     ## Recent Updates
 
-    ### Kickoff
+    ### 2026-08-19 - Kickoff
 
     Started the task list.
     """

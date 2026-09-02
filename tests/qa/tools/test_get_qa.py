@@ -34,6 +34,11 @@ from biz.dfch.specmgr.qa.tools._paths import QaNotFoundError
 from biz.dfch.specmgr.qa.tools.create_qa import create_qa
 from biz.dfch.specmgr.qa.tools.get_qa import get_qa
 
+
+#: A well-formed but non-existent canonical UUID (feat-38-39-41-43-44 Phase 4: the id
+#: must be well-formed to reach the domain's own not-found error past the new
+#: ``validate_id`` guard).
+_MISSING_UUID = "00000000-0000-0000-0000-000000000000"
 _MINIMAL_BODY = textwrap.dedent(
     """\
     # Some QA Title
@@ -139,7 +144,7 @@ class TestGetQa(unittest.TestCase):
         create_qa(_MINIMAL_BODY)
 
         with self.assertRaises(QaNotFoundError) as ctx:
-            get_qa("no-such-id")
+            get_qa(_MISSING_UUID)
         message = str(ctx.exception)
         self.assertIn("bare document UUID", message)
         self.assertIn("without a domain prefix", message)
@@ -189,9 +194,9 @@ class TestGetQa(unittest.TestCase):
         create_qa(_MINIMAL_BODY)
 
         with self.assertRaises(QaNotFoundError):
-            get_qa("no-such-id", raw=True)
+            get_qa(_MISSING_UUID, raw=True)
         with self.assertRaises(QaNotFoundError):
-            get_qa("no-such-id", raw=False)
+            get_qa(_MISSING_UUID, raw=False)
 
     def test_read_path_surfaces_structural_error_for_v1_shaped_document(self) -> None:
         """`get_qa`'s own read path (`qa.tools._io.read_qa`, which `load_by_id`

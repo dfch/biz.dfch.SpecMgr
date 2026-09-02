@@ -15,14 +15,15 @@ naming the offending value. (:func:`assert_within`'s read-only
 touch.)
 
 The generic ``delete`` tool (``.specmgr/feat/feat-36-delete/README.md``,
-Design Notes sections 2-6) is the first caller. The five functions are
-deliberately reusable by the ``get_<d>``, ``update``, and ``set_status``
-tools with zero rework: they take only plain ``str``/``Path`` inputs,
-return ``None`` (raise on failure), and carry no delete-specific state,
-argument, or return value -- in particular the delete-specific
-``DeleteError`` wrapper (REQ-005) deliberately lives in ``delete.py``,
-not here, because it is a delete-specific concern, not a reusable safety
-primitive.
+Design Notes sections 2-6) was the first caller. The five functions are
+now also called by the twelve ``get_<d>`` tools (including ``get_adr``)
+and by the generic ``update`` and ``set_status`` tools
+(``.specmgr/feat/feat-38-39-41-43-44/README.md``, Phase 4, REQ-009): they
+take only plain ``str``/``Path`` inputs, return ``None`` (raise on
+failure), and carry no delete-specific state, argument, or return value --
+in particular the delete-specific ``DeleteError`` wrapper (REQ-005)
+deliberately lives in ``delete.py``, not here, because it is a
+delete-specific concern, not a reusable safety primitive.
 
 ## Functions
 
@@ -117,20 +118,21 @@ Convenience dispatcher: :func:`assert_no_traversal` plus the type's format check
 ``type_`` in :data:`_UUID_TYPES` -> :func:`assert_uuid`;
 ``type_ == "feat"`` -> :func:`assert_feat_id`; any other ``type_`` ->
 ``ValueError`` (unknown type). This is the single entry point the
-generic ``delete`` (and, later, ``update``/``set_status``) calls
-before any filesystem access.
+generic ``delete``, ``update``, ``set_status``, and every ``get_<d>``
+tool (including ``get_adr``) call before any filesystem access.
 
 Parameters
 ----------
 type_:
-    The document type name: one of the eleven whole-body domains.
+    The document type name: one of the twelve document types (the
+    eleven whole-body domains, or ``adr``).
 id_:
     The id to check.
 
 Raises
 ------
 ValueError
-    ``type_`` is not one of the eleven whole-body domain names, or the
+    ``type_`` is not one of the twelve document type names, or the
     id fails :func:`assert_no_traversal` or the type's own format
     check; the message names the offending value.
 

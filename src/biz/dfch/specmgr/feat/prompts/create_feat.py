@@ -28,7 +28,7 @@ through drafting a brand-new Feature (FEAT) document using the existing
 caller only ever supplies body markdown. Unlike every other domain in this
 codebase, ``id`` is not a server-generated UUID but a fresh
 ``feat-NNN-slug`` derived from the H1 title (REQ-004); ``created``/
-``updated`` use the same microsecond timestamp format as every other
+``updated`` use the same shared date+time timestamp format as every other
 domain.
 
 Naming note: this prompt is named ``create_feat``, the same name as the

@@ -1,8 +1,8 @@
 ---
-created: 2026-08-29
+created: '2026-08-29 00:00:00.000Z'
 id: feat-30-sop
 status: done
-updated: 2026-08-30
+updated: '2026-08-30 00:00:00.000Z'
 version: 1.0.0
 ---
 

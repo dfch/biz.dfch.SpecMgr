@@ -46,8 +46,8 @@ _MINIMAL_DOC = textwrap.dedent(
     type: sop
     version: 1.0.0
     status: draft
-    created: 2026-08-30
-    updated: 2026-08-30
+    created: '2026-08-30 00:00:00.000Z'
+    updated: '2026-08-30 00:00:00.000Z'
     ---
 
     # New Employee IT Account Provisioning
@@ -77,8 +77,8 @@ _FULL_DOC = textwrap.dedent(
     type: sop
     version: 1.0.0
     status: active
-    created: 2026-08-30
-    updated: 2026-08-30
+    created: '2026-08-30 00:00:00.000Z'
+    updated: '2026-08-30 00:00:00.000Z'
     ---
 
     # New Employee IT Account Provisioning
@@ -157,7 +157,7 @@ _FULL_DOC = textwrap.dedent(
 
     ## Updates
 
-    ### 2026-08-30 14:30:00.000+02:00 — Approved
+    ### 2026-08-30 14:30:00.000+02:00 - Approved
 
     Signed off.
     """
@@ -175,7 +175,7 @@ class TestParseSop(unittest.TestCase):
         self.assertEqual(document.frontmatter.id, "sop-001")
         self.assertEqual(document.frontmatter.type, "sop")
         self.assertEqual(document.frontmatter.status, "draft")
-        self.assertEqual(document.frontmatter.created, "2026-08-30")
+        self.assertEqual(document.frontmatter.created, "2026-08-30 00:00:00.000Z")
         self.assertEqual(document.body.text, "New Employee IT Account Provisioning")
         self.assertIn("Provision accounts for new hires", document.body.purpose.text)
         self.assertEqual([(s.number, s.name) for s in document.body.procedure.steps], [(1, "Submit request")])
@@ -616,7 +616,34 @@ class TestParseSopStructuralViolations(unittest.TestCase):
 
             ## Updates
 
-            ### 2026-08-30 14:30:00.000 — Approved
+            ### 2026-08-30 14:30:00.000 - Approved
+
+            Signed off.
+            """
+        )
+
+        with self.assertRaises(AssertionError):
+            parse_sop(text)
+
+    def test_updates_entry_with_em_dash_separator_raises_assertion_error(self) -> None:
+        """ACC-001: a `## Updates` entry heading using the em-dash separator is a structural failure."""
+        text = textwrap.dedent(
+            """\
+            # New Employee IT Account Provisioning
+
+            ## Purpose
+
+            Provision accounts for new hires.
+
+            ## Procedure
+
+            ### Step 1: Submit request
+
+            HR submits the request.
+
+            ## Updates
+
+            ### 2026-08-30 14:30:00.000+02:00 — Approved
 
             Signed off.
             """
@@ -626,7 +653,7 @@ class TestParseSopStructuralViolations(unittest.TestCase):
             parse_sop(text)
 
     def test_malformed_updates_entry_missing_title_raises_assertion_error(self) -> None:
-        """A `## Updates` entry heading missing the ` — title` is a structural failure."""
+        """A `## Updates` entry heading missing the ` - `/` : ` + `title` is a structural failure."""
         text = textwrap.dedent(
             """\
             # New Employee IT Account Provisioning
@@ -693,7 +720,7 @@ class TestParseSopStructuralViolations(unittest.TestCase):
 
             ## Updates
 
-            ### 2026-08-30 14:30:00.000+02:00 — Created
+            ### 2026-08-30 14:30:00.000+02:00 - Created
 
             Some update text.
 

@@ -336,7 +336,13 @@ type or cross-cutting:
      into a sibling `history.md`). The eleven `get_<d>` tools additionally
      take a `raw: bool = False` parameter — `raw=True` returns the
     frontmatter-stripped body text as-is (the text `update`'s `begin`/`end`
-    index into).
+    index into). `get_<d>` (all twelve, incl. `get_adr`), `update`, and
+    `set_status` apply the same `general/tools/_path_safety` guards `delete`
+    already had (feat-38-39-41-43-44 Phase 4, extending feat-36-delete, ADR
+    1af6787b-eaab-4e8f-888f-531c1e76c19d): validate `id` for path-injection/
+    wrong-format before any filesystem access, and confine the resolved path
+    to the domain's own base directory after resolution — `_path_safety`'s
+    UUID-shaped domains now include `adr`; `delete` itself is unchanged.
 
 **Models location — a real, intentional divergence, not an oversight**:
 the rule is domain-first — every document type keeps its schema inside

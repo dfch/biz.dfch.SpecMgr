@@ -45,41 +45,43 @@ import tempfile
 import textwrap
 import unittest
 from dataclasses import dataclass
-from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable
 from unittest import mock
 
 from pydantic import ValidationError
 
-from biz.dfch.specmgr.dec.tools._paths import DecNotFoundError
+from biz.dfch.specmgr.dec.tools._paths import DecNotFoundError, dec_base_dir
 from biz.dfch.specmgr.dec.tools.create_dec import create_dec
+from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR, feat_base_dir
+from biz.dfch.specmgr.feat.tools.create_feat import create_feat
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.general.tools._splice import body_text
-from biz.dfch.specmgr.gol.tools._paths import GolNotFoundError
+from biz.dfch.specmgr.gol.tools._paths import GolNotFoundError, gol_base_dir
 from biz.dfch.specmgr.gol.tools.create_gol import create_gol
-from biz.dfch.specmgr.prb.tools._paths import PrbNotFoundError
+from biz.dfch.specmgr.prb.tools._paths import PrbNotFoundError, prb_base_dir
 from biz.dfch.specmgr.prb.tools.create_prb import create_prb
-from biz.dfch.specmgr.qa.tools._paths import QaNotFoundError
+from biz.dfch.specmgr.qa.tools._paths import QaNotFoundError, qa_base_dir
 from biz.dfch.specmgr.qa.tools.create_qa import create_qa
-from biz.dfch.specmgr.req.tools._paths import ReqNotFoundError
+from biz.dfch.specmgr.req.tools._paths import ReqNotFoundError, req_base_dir
 from biz.dfch.specmgr.req.tools.create_req import create_req
-from biz.dfch.specmgr.rsk.tools._paths import RskNotFoundError
+from biz.dfch.specmgr.rsk.tools._paths import RskNotFoundError, rsk_base_dir
 from biz.dfch.specmgr.rsk.tools.create_rsk import create_rsk
-from biz.dfch.specmgr.sop.tools._paths import SopNotFoundError
+from biz.dfch.specmgr.sop.tools._paths import SopNotFoundError, sop_base_dir
 from biz.dfch.specmgr.sop.tools.create_sop import create_sop
-from biz.dfch.specmgr.tsk.tools._paths import TskNotFoundError
+from biz.dfch.specmgr.tsk.tools._paths import TskNotFoundError, tsk_base_dir
 from biz.dfch.specmgr.tsk.tools.create_tsk import create_tsk
-from biz.dfch.specmgr.uc.tools._paths import UcNotFoundError
+from biz.dfch.specmgr.uc.tools._paths import UcNotFoundError, uc_base_dir
 from biz.dfch.specmgr.uc.tools.create_uc import create_uc
-from biz.dfch.specmgr.vcr.tools._paths import VcrNotFoundError
+from biz.dfch.specmgr.vcr.tools._paths import VcrNotFoundError, vcr_base_dir
 from biz.dfch.specmgr.vcr.tools.create_vcr import create_vcr
 
 update_module = importlib.import_module("biz.dfch.specmgr.general.tools.update")
 update = update_module.update
 
-#: ISO-8601 microsecond timestamp shape (the ``updated`` bump precision).
-_MICROSECOND_TIMESTAMP = r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}"
+#: The canonical date+time timestamp shape (D4/D7) the ``updated`` bump must match: space-separated,
+#: exactly three millisecond digits, `Z` or a signed `±HH:mm` offset.
+_DATE_TIME_TIMESTAMP = r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})"
 
 _REQ_MINIMAL_BODY = textwrap.dedent(
     """\
@@ -221,7 +223,7 @@ _TSK_MINIMAL_BODY = textwrap.dedent(
 
     ## Recent Updates
 
-    ### Kickoff
+    ### 2026-08-19 - Kickoff
 
     Started the task list.
     """
@@ -236,11 +238,11 @@ _TSK_UPDATED_BODY = textwrap.dedent(
 
     ## Recent Updates
 
-    ### Kickoff
+    ### 2026-08-19 - Kickoff
 
     Started the task list.
 
-    ### Progress
+    ### 2026-08-19 - Progress
 
     Finished the first item.
     """
@@ -544,16 +546,66 @@ _VCR_UPDATED_BODY = textwrap.dedent(
     """
 )
 
+#: A minimal, valid feat body (ACC-008's injection coverage: feat is the one whole-body domain
+#: whose id shape differs from the ten UUID domains, mirroring ``test_delete.py``'s own fixture).
+_FEAT_MINIMAL_BODY = textwrap.dedent(
+    """\
+    # Feature: Example Widget
+
+    ## Plan
+
+    ### Overview
+
+    Short description.
+
+    ### Requirements
+
+    - REQ-001: The widget must render within 200ms.
+
+    ### Acceptance Criteria
+
+    - [ ] ACC-001: Render time stays below 200ms.
+
+    ### Scope
+
+    #### Included
+
+    - The widget component itself.
+
+    #### Explicitly Out Of Scope
+
+    - Mobile touch gestures.
+
+    ### Task List
+
+    #### Phase 0: Scaffolding
+
+    - [x] Task 0.1: Create branch and package skeleton
+
+    ## Progress
+
+    ### Current Status
+
+    **As of 2026-08-30**: free-form narrative.
+
+    ### Updates
+
+    #### 2026-08-30 16:47:59.981Z - Paused for review
+
+    Free-form prose describing what happened in this update.
+    """
+)
+
 _MALFORMED_BODY = "# Title\n\nJust a paragraph, no recognized sections.\n"
 
 
-class _FixedDatetime(datetime):
-    """``datetime`` stand-in with a frozen ``now`` (the 1..N ≡ whole-body equivalence test)."""
+#: A fixed date+time timestamp (the 1..N ≡ whole-body equivalence test needs both calls
+#: to bump ``updated`` to the identical value so the two resulting files compare byte-equal).
+_FIXED_TIMESTAMP = "2026-08-27 12:00:00.123Z"
 
-    @classmethod
-    def now(cls, tz: Any = None) -> datetime:
-        result = datetime(2026, 8, 27, 12, 0, 0, 123456)
-        return result
+#: A well-formed but non-existent canonical UUID (feat-38-39-41-43-44 Phase 4: the id must be
+#: well-formed to reach the domain's own not-found error past the new ``validate_id`` guard).
+_MISSING_UUID = "00000000-0000-0000-0000-000000000000"
 
 
 @dataclass(frozen=True)
@@ -636,10 +688,10 @@ _CASES: list[_Case] = [
         updated_body=_TSK_UPDATED_BODY,
         middle_marker="Started the task list.",
         middle_replacement="Started the task list with a kickoff note.",
-        append_fragment="\n### Progress\n\nFinished the first item.\n",
+        append_fragment="\n### 2026-08-19 - Progress\n\nFinished the first item.\n",
         eof_marker="## Recent Updates",
-        eof_fragment="## Recent Updates\n\n### Kickoff\n\nStarted the task list.\n",
-        deletable_suffix="\n### Progress\n\nFinished the first item.\n",
+        eof_fragment="## Recent Updates\n\n### 2026-08-19 - Kickoff\n\nStarted the task list.\n",
+        deletable_suffix="\n### 2026-08-19 - Progress\n\nFinished the first item.\n",
         field_error_marker="- [ ] Do the first thing",
         field_error_fragment="- [z] Not a valid checkbox marker",
         field_error_is_append=False,
@@ -828,7 +880,7 @@ class TestUpdateWholeBody(TempDocsDirTestCase):
                 self.assertEqual(result.frontmatter.created, created.frontmatter.created)
                 self.assertEqual(result.frontmatter.version, created.frontmatter.version)
                 self.assertNotEqual(result.frontmatter.updated, created.frontmatter.updated)
-                self.assertIsNotNone(re.fullmatch(_MICROSECOND_TIMESTAMP, result.frontmatter.updated))
+                self.assertIsNotNone(re.fullmatch(_DATE_TIME_TIMESTAMP, result.frontmatter.updated))
                 self.assertEqual(body_text(self._doc_path(case)), case.updated_body.rstrip("\n"))
 
     def test_status_not_settable_through_update(self) -> None:
@@ -883,7 +935,7 @@ class TestUpdateWholeBody(TempDocsDirTestCase):
                 self._seed(case, case.minimal_body)
 
                 with self.assertRaises(case.not_found_error):
-                    update(id="no-such-id", type=case.doc_type, content=case.minimal_body)
+                    update(id=_MISSING_UUID, type=case.doc_type, content=case.minimal_body)
 
 
 class TestUpdateRange(TempDocsDirTestCase):
@@ -952,7 +1004,7 @@ class TestUpdateRange(TempDocsDirTestCase):
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case, case.minimal_body)
                 doc_id = created.frontmatter.id
-                with mock.patch.object(update_module, "datetime", _FixedDatetime):
+                with mock.patch.object(update_module, "now_timestamp", return_value=_FIXED_TIMESTAMP):
                     update(id=doc_id, type=case.doc_type, content=case.updated_body)
                     path = self._doc_path(case)
                     whole_body_file = path.read_text(encoding="utf-8")
@@ -1070,7 +1122,7 @@ class TestUpdateRange(TempDocsDirTestCase):
                 self._seed(case, case.minimal_body)
 
                 with self.assertRaises(case.not_found_error):
-                    update(id="no-such-id", type=case.doc_type, content="frag", begin=1, end=1)
+                    update(id=_MISSING_UUID, type=case.doc_type, content="frag", begin=1, end=1)
 
 
 class TestUpdateRegistration(unittest.TestCase):
@@ -1099,6 +1151,102 @@ class TestUpdateRegistration(unittest.TestCase):
             self.assertEqual(prop["anyOf"], [{"type": "integer"}, {"type": "null"}])
             self.assertIsNone(prop["default"])
         self.assertEqual(schema["required"], ["id", "type", "content"])
+
+
+@dataclass(frozen=True)
+class _InjectionCase:
+    """Per-type test data for the eleven whole-body domains' ``_path_safety`` coverage (ACC-008)."""
+
+    doc_type: str
+    create: Callable[[str], Any]
+    base_dir: Callable[[], Path]
+    minimal_body: str
+    #: A well-formed id of a *different* domain shape (feat-NNN-slug for the UUID domains, a UUID for feat).
+    wrong_format_id: str
+
+
+#: The pinned path-injection shapes (mirrors ``test_delete.py``'s own ``_TRAVERSAL_IDS``).
+_TRAVERSAL_IDS = ("../x", "a/b", "a\\b", "..")
+
+#: A well-formed feat-NNN-slug folder name (the wrong-format id for the ten UUID domains).
+_FEAT_SLUG_ID = "feat-36-delete"
+
+_INJECTION_CASES: list[_InjectionCase] = [
+    _InjectionCase("req", create_req, req_base_dir, _REQ_MINIMAL_BODY, _FEAT_SLUG_ID),
+    _InjectionCase("uc", create_uc, uc_base_dir, _UC_MINIMAL_BODY, _FEAT_SLUG_ID),
+    _InjectionCase("tsk", create_tsk, tsk_base_dir, _TSK_MINIMAL_BODY, _FEAT_SLUG_ID),
+    _InjectionCase("qa", create_qa, qa_base_dir, _QA_MINIMAL_BODY, _FEAT_SLUG_ID),
+    _InjectionCase("prb", create_prb, prb_base_dir, _PRB_MINIMAL_BODY, _FEAT_SLUG_ID),
+    _InjectionCase("gol", create_gol, gol_base_dir, _GOL_MINIMAL_BODY, _FEAT_SLUG_ID),
+    _InjectionCase("rsk", create_rsk, rsk_base_dir, _RSK_MINIMAL_BODY, _FEAT_SLUG_ID),
+    _InjectionCase("dec", create_dec, dec_base_dir, _DEC_MINIMAL_BODY, _FEAT_SLUG_ID),
+    _InjectionCase("sop", create_sop, sop_base_dir, _SOP_MINIMAL_BODY, _FEAT_SLUG_ID),
+    _InjectionCase("vcr", create_vcr, vcr_base_dir, _VCR_MINIMAL_BODY, _FEAT_SLUG_ID),
+    _InjectionCase("feat", create_feat, feat_base_dir, _FEAT_MINIMAL_BODY, _MISSING_UUID),
+]
+
+
+class TempUpdateInjectionDirTestCase(unittest.TestCase):
+    """Common fixture for ACC-008: temp dirs for both SPECMGR_DOCS_DIR and SPECMGR_FEAT_DIR
+    (mirrors ``test_delete.py``'s ``TempDeleteDirTestCase``, since injection coverage spans
+    all eleven whole-body domains, feat included)."""
+
+    def setUp(self) -> None:
+        self.docs_root = Path(self.enterContext(tempfile.TemporaryDirectory()))
+        self.feat_dir = Path(self.enterContext(tempfile.TemporaryDirectory()))
+        self.enterContext(
+            mock.patch.dict(
+                "os.environ",
+                {DOCS_DIR_ENV_VAR: str(self.docs_root), FEAT_DIR_ENV_VAR: str(self.feat_dir)},
+            )
+        )
+
+    def _doc_path(self, case: _InjectionCase, doc_id: str) -> Path:
+        """The single on-disk document file/README.md path for ``case``'s just-seeded document."""
+        if case.doc_type == "feat":
+            result = feat_base_dir() / doc_id / "README.md"
+        else:
+            matches = list((self.docs_root / case.doc_type).glob("*.md"))
+            self.assertEqual(len(matches), 1)
+            result = matches[0]
+        return result
+
+
+class TestUpdateInjection(TempUpdateInjectionDirTestCase):
+    """ACC-008: injection ids raise ValueError before any filesystem access; the seeded document untouched."""
+
+    def test_injection_ids_raise_value_error_and_leave_the_seed_untouched(self) -> None:
+        """Each pinned traversal shape and a wrong-format id must raise ValueError before dispatch, seed intact."""
+        for case in _INJECTION_CASES:
+            with self.subTest(doc_type=case.doc_type):
+                created = case.create(case.minimal_body)
+                doc_id = created.frontmatter.id
+                path = self._doc_path(case, doc_id)
+                before = path.read_text(encoding="utf-8")
+
+                for bad_id in (*_TRAVERSAL_IDS, case.wrong_format_id):
+                    with self.subTest(doc_type=case.doc_type, bad_id=bad_id):
+                        with self.assertRaises(ValueError):
+                            update(id=bad_id, type=case.doc_type, content="irrelevant")
+                        self.assertEqual(path.read_text(encoding="utf-8"), before)
+
+
+class TestUpdateAssertWithinSpy(TempUpdateInjectionDirTestCase):
+    """ACC-008: ``assert_within`` is actually invoked (not just present in source) during a valid update."""
+
+    def test_assert_within_is_called_with_base_dir_and_resolved_path(self) -> None:
+        """For each of the eleven domains, a valid whole-body update must call ``assert_within(base_dir, path)``."""
+        for case in _INJECTION_CASES:
+            with self.subTest(doc_type=case.doc_type):
+                created = case.create(case.minimal_body)
+                doc_id = created.frontmatter.id
+                path = self._doc_path(case, doc_id)
+                base_dir = case.base_dir()
+
+                with mock.patch.object(update_module, "assert_within", wraps=update_module.assert_within) as spy:
+                    update(id=doc_id, type=case.doc_type, content=case.minimal_body)
+
+                spy.assert_any_call(base_dir, path)
 
 
 if __name__ == "__main__":

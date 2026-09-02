@@ -56,7 +56,7 @@ _TSK_MINIMAL_BODY = textwrap.dedent(
 
     ## Recent Updates
 
-    ### Kickoff
+    ### 2026-08-15 - Kickoff
 
     Started the task list.
     """

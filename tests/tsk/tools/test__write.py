@@ -35,7 +35,7 @@ _BODY = textwrap.dedent(
 
     ## Recent Updates
 
-    ### Kickoff
+    ### 2026-08-19 - Kickoff
 
     Started the task list.
     """
@@ -51,8 +51,8 @@ class TestWriteTskFile(unittest.TestCase):
             id="some-id",
             type="tsk",
             status="draft",
-            created="2026-08-14T10:00:00",
-            updated="2026-08-14T10:00:00",
+            created="2026-08-14 10:00:00.000Z",
+            updated="2026-08-14 10:00:00.000Z",
             version="1.0.0",
         )
         with tempfile.TemporaryDirectory() as tmp:

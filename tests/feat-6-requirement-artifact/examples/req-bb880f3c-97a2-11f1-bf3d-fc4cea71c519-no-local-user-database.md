@@ -1,8 +1,8 @@
 ---
 id: bb880f3c-97a2-11f1-bf3d-fc4cea71c519
 type: req
-created: 2026-08-13 22:38:55
-updated: 2026-08-13 22:38:55
+created: '2026-08-13 22:38:55.000Z'
+updated: '2026-08-13 22:38:55.000Z'
 status: draft
 version: 1.0.0
 ---

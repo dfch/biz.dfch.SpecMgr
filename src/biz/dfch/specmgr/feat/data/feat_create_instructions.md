@@ -6,7 +6,7 @@ every write to disk goes through the specmgr MCP tools listed below.
 There is no frontmatter for you to draft: `create_feat` builds
 id/type/status/created/updated/version automatically -- a fresh
 `feat-NNN-slug` id, `status="planning"` always (never caller-supplied on
-create), and the current microsecond timestamp for `created`/`updated`.
+create), and the current date+time timestamp for `created`/`updated`.
 
 Make a todo list and use the question tool.
 
@@ -44,10 +44,11 @@ step 1 if this is genuinely a new feature.
   - `### Current Status` -- mandatory prose: where things stand today.
   - `### Blockers` -- optional prose/list of open blockers.
   - `### Updates` -- mandatory, an optional leading HTML comment (e.g. an
-    ordering hint) followed by at least one `#### {timestamp} — {title}`
-    entry, newest-first, where `{timestamp}` is
-    `yyyy-MM-dd HH:mm:ss.fff±HH:mm` (or `Z` for UTC), each with a lead
-    paragraph.
+    ordering hint) followed by at least one
+    `#### {timestamp} ( - | : ) {title}` entry, newest-first, where
+    `{timestamp}` is `yyyy-MM-dd HH:mm:ss.fff±HH:mm` (or `Z` for UTC) and
+    the separator is `" - "` or `" : "` (the em-dash separator is
+    rejected), each with a lead paragraph.
   - `### Decisions Made` -- optional, same shape as `### Updates` (same
     timestamp format, same newest-first ordering, at least one entry once
     the section is present at all).

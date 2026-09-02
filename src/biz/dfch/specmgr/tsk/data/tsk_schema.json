@@ -14,10 +14,22 @@
       "type": "object"
     },
     "RecentUpdates": {
-      "description": "`## Recent Updates` -- a dynamic list of free-form-titled `### ` update entries.\n\nA fixed-title (non-alias) `MarkdownSection2`, structurally similar to\n`AdrBody`'s `## Pros and Cons of the Options`/`AdrOption` collection, but\nwith no dedicated per-entry tools (no `option_create`/`option_list`\nequivalent) -- entries are appended by editing the whole body.\n\nParameters\n----------\nupdates:\n    The dynamic collection of `### ` entries, in document order. Requires\n    at least one entry (``min_length=1``), same as `Task.items` below --\n    `models.md`'s generic list-parsing engine already enforces this\n    during `from_text` for any non-`Optional` `list[X]` field regardless\n    of `min_length`, so this constraint makes direct Python construction\n    (e.g. a future `create_tsk` tool) consistent with parsing instead of\n    silently allowing `RecentUpdates(updates=[])`. A newly created `tsk`\n    document must therefore seed a first entry (e.g. \"Created\") -- see\n    the feature README's Decisions Made.",
+      "description": "`## Recent Updates` -- a dynamic, newest-first list of timestamp-led `### ` update entries.\n\nA fixed-title (non-alias) `MarkdownSection2WithComment`, structurally\nsimilar to `AdrBody`'s `## Pros and Cons of the Options`/`AdrOption`\ncollection, but with no dedicated per-entry tools (no\n`option_create`/`option_list` equivalent) -- entries are prepended\n(newest-first) by editing the whole body. May be preceded by an\nexplanatory HTML comment (e.g. an ordering hint).\n\nParameters\n----------\ncomment:\n    Optional explanatory HTML comment (`<!-- ... -->`), e.g.\n    `<!-- Newest entry first -- prepend new entries directly below\n    this comment. -->`. Inherited from `MarkdownSection2WithComment`.\nupdates:\n    The dynamic collection of `### ` entries, in document order,\n    newest-first (enforced, see `_validate_newest_first`). Requires\n    at least one entry (``min_length=1``), same as `Task.items` below --\n    `models.md`'s generic list-parsing engine already enforces this\n    during `from_text` for any non-`Optional` `list[X]` field regardless\n    of `min_length`, so this constraint makes direct Python construction\n    (e.g. a future `create_tsk` tool) consistent with parsing instead of\n    silently allowing `RecentUpdates(updates=[])`. A newly created `tsk`\n    document must therefore seed a first entry (e.g. \"Created\") -- see\n    the feature README's Decisions Made.",
       "properties": {
+        "comment": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MarkdownComment"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional explanatory HTML comment (`<!-- ... -->`)."
+        },
         "updates": {
-          "description": "Dynamic collection of `### {free-form title}` entries, in document order. Must contain at least one entry.",
+          "description": "Dynamic collection of `### {timestamp} ( - | : ) {title}` entries, in document order, newest-first. Must contain at least one entry.",
           "items": {
             "$ref": "#/$defs/UpdateEntry"
           },
@@ -150,7 +162,7 @@
       "type": "object"
     },
     "UpdateEntry": {
-      "description": "`### {free-form title}` under `## Recent Updates` -- one dated/titled update entry.\n\nThe H3 heading text is free-form (no fixed vocabulary/numbering, unlike\nADR's `### Option N: ...` -- update entries are not numbered options).\n\nParameters\n----------\ncontent:\n    The lead paragraph right after the H3 heading -- this entry's own\n    update text. Mandatory.",
+      "description": "`### {timestamp} ( - | : ) {title}` under `## Recent Updates` -- one update entry.\n\nThe H3 heading text carries a timestamp and a title, joined by either\n``\" - \"`` (space, hyphen, space) or ``\" : \"`` (space, colon, space):\ne.g. `### 2026-08-19 - Kickoff` or\n`### 2026-08-19 05:42:00.000+02:00 : Kickoff`. The em-dash separator is\nrejected. The timestamp is either a bare ``yyyy-MM-dd`` date or the\nfull ``yyyy-MM-dd HH:mm:ss.fff`` + explicit UTC offset (``+02:00``,\n``-05:00``) or ``Z`` for UTC variant (REQ-004). Mirrors DEC/VCR's own\n`UpdateEntry` shape exactly.\n\nParameters\n----------\ncontent:\n    The lead paragraph right after the H3 heading -- this entry's own\n    update text. Mandatory.\ntimestamp:\n    Computed. The timestamp carried by the heading, verbatim. Never\n    stored separately -- derived from the retained heading text.\ntitle:\n    Computed. The title carried by the heading (the text after\n    ``\" - \"``/``\" : \"``). Never stored separately -- derived from the\n    retained heading text.",
       "properties": {
         "content": {
           "$ref": "#/$defs/MarkdownParagraph",

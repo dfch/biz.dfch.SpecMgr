@@ -1,9 +1,9 @@
 ---
-created: 2026-08-16
+created: '2026-08-16 00:00:00.000Z'
 id: deaddead-face-face-face-deaddeadface
 status: active
 type: tsk
-updated: 2026-08-16
+updated: '2026-08-16 00:00:00.000Z'
 version: 1.0.0
 ---
 
@@ -19,10 +19,10 @@ version: 1.0.0
 
 ## Recent Updates
 
-### Kickoff
-
-Started the migration; inventoried 12 widgets currently registered against WidgetRegistryV1.
-
-### Migration in progress
+### 2026-08-20 - Migration in progress
 
 Migrated 5 of 12 widgets so far; no regressions found.
+
+### 2026-08-16 - Kickoff
+
+Started the migration; inventoried 12 widgets currently registered against WidgetRegistryV1.

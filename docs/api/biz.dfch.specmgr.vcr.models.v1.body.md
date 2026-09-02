@@ -4303,17 +4303,29 @@ items:
 
 ### `UpdateEntry`
 
-`### {free-form title}` under `## Updates` -- one update entry.
+`### {timestamp} ( - | : ) {title}` under `## Updates` -- one update entry.
 
-The H3 heading text is free-form (date-led titles like
-`2026-08-31 — Created` are convention, not enforced). Mirrors DEC's
-`UpdateEntry` shape.
+The H3 heading text carries a timestamp and a title, joined by either
+``" - "`` (space, hyphen, space) or ``" : "`` (space, colon, space):
+e.g. `### 2026-08-31 - Created` or
+`### 2026-08-31 07:40:12.500+02:00 : Created`. The em-dash separator is
+rejected. The timestamp is either a bare ``yyyy-MM-dd`` date or the
+full ``yyyy-MM-dd HH:mm:ss.fff`` + explicit UTC offset (``+02:00``,
+``-05:00``) or ``Z`` for UTC variant (REQ-004). Mirrors DEC's
+`UpdateEntry` shape exactly.
 
 Parameters
 ----------
 content:
     The lead paragraph right after the H3 heading -- this entry's own
     update text. Mandatory.
+timestamp:
+    Computed. The timestamp carried by the heading, verbatim. Never
+    stored separately -- derived from the retained heading text.
+title:
+    Computed. The title carried by the heading (the text after
+    ``" - "``/``" : "``). Never stored separately -- derived from the
+    retained heading text.
 
 **Methods:**
 
@@ -5151,19 +5163,17 @@ content:
 
 ### `Updates`
 
-`## Updates` -- a dynamic list of free-form-titled `### ` update entries. Optional as a whole, and the
-last section of the document if present.
+`## Updates` -- a dynamic, newest-first list of timestamp-led `### ` update entries. Optional as a whole,
+and the last section of the document if present.
 
-Unlike DEC's own `Updates` (a plain `MarkdownSection2`, since
-`dec_example.md` carries no comment there), VCR's own `example.md`/
-`template.md` (Phase 0) both demonstrate a permanent "newest first"
-ordering-hint HTML comment directly under this heading -- the same
-structural-anchor role `feat`'s `Updates(MarkdownSection3WithComment)`
-already gives its own comment (not authoring guidance, see
-`.specmgr/feat/feat-33-vcr/README.md` Design Notes' "clean-example
-convention" bullet), so this is `MarkdownSection2WithComment` instead.
-No dedicated per-entry tools -- entries are appended by editing the
-whole body.
+VCR's own `example.md`/`template.md` (Phase 0) both demonstrate a
+permanent "newest first" ordering-hint HTML comment directly under
+this heading -- the same structural-anchor role `feat`'s
+`Updates(MarkdownSection3WithComment)` already gives its own comment
+(not authoring guidance, see `.specmgr/feat/feat-33-vcr/README.md`
+Design Notes' "clean-example convention" bullet), so this is
+`MarkdownSection2WithComment`. No dedicated per-entry tools -- entries
+are prepended (newest-first) by editing the whole body.
 
 Parameters
 ----------
@@ -5172,7 +5182,8 @@ comment:
     `<!-- Newest entry first -- prepend new entries directly below
     this comment. -->`. Inherited from `MarkdownSection2WithComment`.
 updates:
-    The dynamic collection of `### ` entries, in document order. Requires
+    The dynamic collection of `### ` entries, in document order,
+    newest-first (enforced, see `_validate_newest_first`). Requires
     at least one entry (``min_length=1``) -- an H2 with zero entries is
     a structural error.
 

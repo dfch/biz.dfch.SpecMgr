@@ -33,6 +33,11 @@ from biz.dfch.specmgr.sop.tools._paths import SopNotFoundError
 from biz.dfch.specmgr.sop.tools.create_sop import create_sop
 from biz.dfch.specmgr.sop.tools.get_sop import get_sop
 
+
+#: A well-formed but non-existent canonical UUID (feat-38-39-41-43-44 Phase 4: the id
+#: must be well-formed to reach the domain's own not-found error past the new
+#: ``validate_id`` guard).
+_MISSING_UUID = "00000000-0000-0000-0000-000000000000"
 _MINIMAL_BODY = textwrap.dedent(
     """\
     # New Employee IT Account Provisioning
@@ -72,7 +77,7 @@ class TestGetSop(unittest.TestCase):
         create_sop(_MINIMAL_BODY)
 
         with self.assertRaises(SopNotFoundError) as ctx:
-            get_sop("no-such-id")
+            get_sop(_MISSING_UUID)
         message = str(ctx.exception)
         self.assertIn("bare document UUID", message)
         self.assertIn("without a domain prefix", message)
@@ -122,9 +127,9 @@ class TestGetSop(unittest.TestCase):
         create_sop(_MINIMAL_BODY)
 
         with self.assertRaises(SopNotFoundError):
-            get_sop("no-such-id", raw=True)
+            get_sop(_MISSING_UUID, raw=True)
         with self.assertRaises(SopNotFoundError):
-            get_sop("no-such-id", raw=False)
+            get_sop(_MISSING_UUID, raw=False)
 
 
 if __name__ == "__main__":
