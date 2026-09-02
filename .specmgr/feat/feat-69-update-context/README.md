@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-02 21:49:41.712+02:00'
 id: feat-69-update-context
-status: planning
+status: done
 type: feat
-updated: '2026-09-02 23:55:00.000+02:00'
+updated: '2026-09-03 00:10:00.000+02:00'
 version: 1.0.0
 ---
 
@@ -32,7 +32,7 @@ Every mutating MCP tool call currently returns the fully re-parsed document (fro
 - [x] ACC-002: After a successful `set_status` call, the response contains the document's frontmatter only (reflecting the new status/updated) -- no body content.
 - [x] ACC-003: After a successful `set_classification` call, the response contains the document's frontmatter only (reflecting the new classification/updated) -- no body content.
 - [x] ACC-004: After a successful `create_<d>` call, the response contains the newly generated frontmatter only -- no body content.
-- [ ] ACC-005: A validation/parse error from any of the above still returns the existing detailed error message, unchanged.
+- [x] ACC-005: A validation/parse error from any of the above still returns the existing detailed error message, unchanged.
 - [x] ACC-006: `delete` and all ADR-specific tools are verified unchanged by this feature (regression check, not new behavior).
 - [x] ACC-007: Tests updated/added across all eleven whole-body domains plus the three generic tools to assert frontmatter-only responses.
 
@@ -103,19 +103,69 @@ The shared contract: every in-scope tool's success return type stays the same do
 
 #### Phase 5: Docs
 
-- [ ] Task 5.1: Regenerate `docs/api/` + `docs/GENERATED.md` via `specmgr docs`.
-- [ ] Task 5.2: Update AGENTS.md bullets/README mentions of write-tool return shapes if any exist.
-- [ ] Task 5.3: Run the full test suite (final validation) plus `ruff format --check`/`ruff check`/`vulture` before considering the feature done.
+- [x] Task 5.1: Regenerate `docs/api/` + `docs/GENERATED.md` via `specmgr docs`.
+- [x] Task 5.2: Update AGENTS.md bullets/README mentions of write-tool return shapes if any exist.
+- [x] Task 5.3: Run the full test suite (final validation) plus `ruff format --check`/`ruff check`/`vulture` before considering the feature done.
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-09-02**: Feature drafted from GitHub issue #69. Root cause confirmed by reading source: `update`, `set_status`, `set_classification`, and every per-domain `create_<d>` tool return the fully re-parsed document (frontmatter + body) on every successful write; `delete` already returns a minimal path string, and ADR-specific tools are out of scope for this feature. Approach agreed: all in-scope tools switch to a frontmatter-only response (small, bounded size) instead of frontmatter+body (unbounded, growing with document size); error paths are untouched. No prompts currently document the old response shape, so no prompt changes are needed. **Phase 1 (design) is complete**: the frontmatter-only contract is formalized in Design Notes (return type change, removal of the now-pointless `XxxDocument(...)` wrapping construction, no new models needed, error paths untouched by design) and verified against every domain's `document.py`; Task 1.2's prompt-shape check is confirmed clean. **Phase 2 (generic tools) is complete**: `update`, `set_status` (its 11 non-adr adapters; the `adr` branch is unchanged), and `set_classification` all now return the domain's `XxxFrontmatter` object directly instead of the full `XxxDocument`. Full test suite green (3070 tests), ruff/vulture clean. **Phase 3 (per-domain `create_<d>` tools) is complete**: all 11 `create_<d>` tools now return the domain's `XxxFrontmatter` object directly instead of the full `XxxDocument`. Full test suite green (3070 tests), ruff/vulture clean. **Phase 4 (tests) is complete**: every in-scope test file now carries explicit, positive assertions (`assertIsInstance(result, XxxFrontmatter)` + `assertNotIsInstance(result, XxxDocument)` + `assertFalse(hasattr(result, "body"))`) proving the frontmatter-only contract, plus explicit regression assertions that `delete`/ADR tools are unaffected. Full test suite green (3071 tests), ruff/vulture clean. Phase 5 (docs) has not started.
+**As of 2026-09-02**: Feature drafted from GitHub issue #69. Root cause confirmed by reading source: `update`, `set_status`, `set_classification`, and every per-domain `create_<d>` tool return the fully re-parsed document (frontmatter + body) on every successful write; `delete` already returns a minimal path string, and ADR-specific tools are out of scope for this feature. Approach agreed: all in-scope tools switch to a frontmatter-only response (small, bounded size) instead of frontmatter+body (unbounded, growing with document size); error paths are untouched. No prompts currently document the old response shape, so no prompt changes are needed. **Phase 1 (design) is complete**: the frontmatter-only contract is formalized in Design Notes (return type change, removal of the now-pointless `XxxDocument(...)` wrapping construction, no new models needed, error paths untouched by design) and verified against every domain's `document.py`; Task 1.2's prompt-shape check is confirmed clean. **Phase 2 (generic tools) is complete**: `update`, `set_status` (its 11 non-adr adapters; the `adr` branch is unchanged), and `set_classification` all now return the domain's `XxxFrontmatter` object directly instead of the full `XxxDocument`. Full test suite green (3070 tests), ruff/vulture clean. **Phase 3 (per-domain `create_<d>` tools) is complete**: all 11 `create_<d>` tools now return the domain's `XxxFrontmatter` object directly instead of the full `XxxDocument`. Full test suite green (3070 tests), ruff/vulture clean. **Phase 4 (tests) is complete**: every in-scope test file now carries explicit, positive assertions (`assertIsInstance(result, XxxFrontmatter)` + `assertNotIsInstance(result, XxxDocument)` + `assertFalse(hasattr(result, "body"))`) proving the frontmatter-only contract, plus explicit regression assertions that `delete`/ADR tools are unaffected. Full test suite green (3071 tests), ruff/vulture clean. **Phase 5 (docs) is complete, and the feature is done**: `specmgr docs`/`specmgr mcp-docs` confirmed zero drift (Phases 2-4's pre-commit hooks already kept `docs/api/`/`docs/GENERATED.md`/`docs/MCP.md` current on every prior commit); `AGENTS.md`'s `general/` bullet gained one new sentence stating that `update`/`set_status` (its eleven non-`adr` adapters)/`set_classification`/every `create_<d>` tool now return frontmatter-only on success, citing `feat-69-update-context`, with the `adr` branch and ADR-specific tools explicitly excluded; `README.md` needed no change (verified by search, no existing text described the old return shape). Final quality gate all green: `ruff format --check`, `ruff check`, `vulture`, and the full suite (3071 tests). ACC-005 re-investigated and now checked: existing tests already assert that a validation/structural failure raises (`AssertionError`/`pydantic.ValidationError`) *and* leaves the on-disk file byte-identical/writes nothing at all, across `update` (`test_update.py`'s `test_structural_failure_raises_and_leaves_file_byte_identical`/`test_field_validation_failure_raises_and_leaves_file_byte_identical`/`test_status_not_settable_through_update`), `set_status` (`test_set_status.py`'s equivalent `before`/`assertEqual(path.read_text(...), before)` pattern), `set_classification` (`test_set_classification.py`, same pattern), and all 11 `create_<d>` domains (each `test_create_<d>.py` has a `test_*_raises_and_writes_nothing` pair) -- these predate this feature (feat-27-validation and earlier) and were never touched by Phases 2-4 since they only touch success-path code, so they demonstrate REQ-005/ACC-005 held throughout. All seven acceptance criteria are now satisfied; the feature is complete.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-02 (Phase 5) - Docs verified current, AGENTS.md updated, ACC-005 confirmed satisfied -- feature done
+
+Completed Phase 5 (Tasks 5.1-5.3), the final phase.
+
+- **Task 5.1**: ran `uv run --frozen specmgr docs` and `uv run --frozen specmgr mcp-docs` from a
+  clean tree (after Phase 4's last commit `36cca8e`); `git status --short`/`git diff --stat` showed
+  zero changes afterward -- confirming `docs/api/`, `docs/GENERATED.md`, and `docs/MCP.md` were
+  already fully current, since the repo's pre-commit hooks already ran both generators on every
+  prior commit in this feature. No drift found; nothing to stage.
+- **Task 5.2**: searched `AGENTS.md` and `README.md` for existing prose describing what
+  `update`/`set_status`/`set_classification`/`create_<d>` return on success. Confirmed: `README.md`
+  has no such text at all (no change needed); `AGENTS.md`'s only "return"-related hits besides the
+  `general/` bullet are the eleven `get_<d>(..., raw=True)` mentions (an unrelated, pre-existing
+  parameter on the read-only tools) and the `delete`-returns-a-path mention -- none describe the
+  in-scope tools' old full-document shape. Added one new sentence to `AGENTS.md`'s `general/` bullet
+  (immediately after the `general/tools/` tool list, before `general/resources/`) stating that
+  `update`, `set_status` (its eleven non-`adr` adapters), `set_classification`, and every
+  per-domain `create_<d>` tool now return the domain's frontmatter object only (no body) on a
+  successful write, with the `adr` dispatch branch of `set_status` and every ADR-specific tool
+  (`create_adr`, `update_frontmatter`, `update_section`, the `option_*` tools) explicitly excluded
+  and still returning the full document with `body` intact -- cited as `(feat-69-update-context)`,
+  matching the file's existing citation convention. No per-domain bullet (`req/`, `uc/`, etc.) was
+  touched, per the task's own instruction, since none of them describe any tool's return shape today.
+- **Task 5.3**: final quality gate, all green -- `ruff format --check` (1541 files already
+  formatted), `ruff check` (all checks passed), `vulture src/ whitelist.py --min-confidence 60` (no
+  findings), `python -m unittest discover -v -s tests -t . -p "test_*.py"` (3071 tests, all passing
+  -- same count as the end of Phase 4, since Phase 5 touched no test files).
+- **ACC-005 re-investigation**: Phase 4 left ACC-005 unchecked, noting it "did not find/verify
+  dedicated error-path coverage." Searched `tests/general/tools/test_error_context.py` (confirms
+  `create_<d>`/`update`/`set_status`/`validate_<d>` still raise `AssertionError`/
+  `pydantic.ValidationError` with domain+tool-prefixed actionable messages, per feat-27-validation)
+  plus every in-scope domain's own test files for a stronger "and nothing gets written" assertion.
+  Found it already present, universally: `tests/general/tools/test_update.py`'s
+  `test_structural_failure_raises_and_leaves_file_byte_identical`,
+  `test_field_validation_failure_raises_and_leaves_file_byte_identical`, and
+  `test_status_not_settable_through_update` all capture the on-disk file's content before calling
+  `update` with invalid content, assert the expected exception is raised, then assert the file is
+  byte-identical afterward, across every domain in `_CASES`; `tests/general/tools/test_set_status.py`
+  and `tests/general/tools/test_set_classification.py` both have the equivalent
+  `before = path.read_text(...)` / `assertEqual(path.read_text(...), before)` pattern around their
+  own validation-failure tests; and all 11 `tests/<d>/tools/test_create_<d>.py` files have a
+  `test_*_raises_and_writes_nothing`-named test pair (structural + field-validation) confirming
+  `create_<d>` raises and creates no file at all on invalid content. All of this coverage predates
+  this feature (feat-27-validation and earlier) and was never touched by Phases 2-4, since those
+  phases only changed success-path `return` statements -- so it demonstrates REQ-005/ACC-005 held
+  throughout this feature's work without requiring any new test. ACC-005 is now checked.
+
+All seven acceptance criteria (ACC-001 through ACC-007) are satisfied. The feature is complete;
+`Current Status` and the plan's frontmatter `status` are updated to reflect that.
 
 #### 2026-09-02 23:55:00.000+02:00 - Phase 4 done: explicit frontmatter-only assertions added across all in-scope tests
 
@@ -222,6 +272,18 @@ Feature drafted from GitHub issue #69, covering the generic `update`/`set_status
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-02 (Phase 5) - Ticked ACC-005 based on pre-existing tests, without adding new ones
+
+Phase 4 left ACC-005 unchecked because it didn't go looking for "nothing was written" coverage
+specifically. Rather than writing new tests myself (Phase 4 already closed test-writing for this
+feature, and the plan's own instructions for Phase 5 say to investigate, not expand scope), I
+searched for and found pre-existing tests -- in `test_update.py`, `test_set_status.py`,
+`test_set_classification.py`, and all 11 `test_create_<d>.py` files -- that already assert both
+halves of ACC-005 (the actionable exception is still raised, and the file is left untouched/never
+created). Since this coverage predates this feature and was never touched by Phases 2-4 (which only
+changed success-path returns), I judged it sufficient evidence that REQ-005/ACC-005 held throughout
+without needing to author anything new, and ticked the checkbox on that basis.
 
 #### 2026-09-02 23:55:00.000+02:00 - Placed `feat`'s `update`/`set_status` frontmatter-only assertions in `test_integration.py`, not the generic test files (Phase 4)
 

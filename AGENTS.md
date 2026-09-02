@@ -379,15 +379,23 @@ type or cross-cutting:
     req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr (`adr` excluded), all eleven
     domains implement a `delete` adapter in that one tool (a future domain
     adds its own adapter there, never a per-domain `delete_<d>` tool),
-    resolving by `id`, taking the domain's own lock, and returning the
-    deleted path), `general/resources/`
-   (`specmgr://version`, `specmgr://iso25010` — the ISO/IEC 25010:2023
-   quality model, `specmgr://dtais` — the DTAIS verification-method
-   vocabulary VCR's `## Acceptance Criteria` depends on, kept here rather
-   than under `vcr/resources/` since it is domain-knowledge other document
-   types may also want to reference, and `specmgr://rasci` — the generic
-   RASCI responsibility-assignment framework, REQ-011; motivated by `sop`
-   but not scoped to it), and `general/prompts/` (`compact_history` — rotates
+     resolving by `id`, taking the domain's own lock, and returning the
+     deleted path). On a successful write, `update`, `set_status` (its eleven
+     non-`adr` adapters), `set_classification`, and every per-domain
+     `create_<d>` tool now return the domain's frontmatter object only (no
+     body) — small and bounded regardless of document size, unlike an
+     append-only document's ever-growing body — with the `adr` dispatch
+     branch of `set_status` and every ADR-specific tool (`create_adr`,
+     `update_frontmatter`, `update_section`, the `option_*` tools) excluded,
+     still returning the full document with `body` intact
+     (feat-69-update-context). `general/resources/`
+    (`specmgr://version`, `specmgr://iso25010` — the ISO/IEC 25010:2023
+    quality model, `specmgr://dtais` — the DTAIS verification-method
+    vocabulary VCR's `## Acceptance Criteria` depends on, kept here rather
+    than under `vcr/resources/` since it is domain-knowledge other document
+    types may also want to reference, and `specmgr://rasci` — the generic
+    RASCI responsibility-assignment framework, REQ-011; motivated by `sop`
+    but not scoped to it), and `general/prompts/` (`compact_history` — rotates
      older `Recent Updates` entries out of any feature folder's `README.md`
      into a sibling `history.md`). The eleven `get_<d>` tools additionally
    take a `raw: bool = False` parameter — `raw=True` returns the
