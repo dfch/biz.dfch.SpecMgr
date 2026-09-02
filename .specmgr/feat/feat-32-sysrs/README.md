@@ -94,14 +94,17 @@ Domain key: `sysrs` (decided 2026-08-30 — see Decisions Made).
   `parse_dec`/`parse_sop`'s two-error-channel convention
   (`AssertionError` for structural problems,
   `pydantic.ValidationError` for field-level problems).
-- REQ-008: 8 MCP tools — **no** `update_sysrs`/`set_status_sysrs`
+- REQ-008: 7 MCP tools — **no** `update_sysrs`/`set_status_sysrs`
   (dispatch-only from day one, ADR 36905d5b, `sop`'s precedent):
   `create_sysrs` (fresh `uuid4`, `status="draft"`, filename
   `sysrs-{id}-{slug}.md`), `parse_sysrs`, `list_sysrs` (paged tool from
   day one, ADR ec9f5262), `get_sysrs(id, raw=False)`,
-  `get_sysrs_example`, `get_sysrs_template`, `delete_sysrs` (stub),
+  `get_sysrs_example`, `get_sysrs_template`,
   `validate_sysrs` — plus private `_paths`/`_io`/`_lock`/`_write`
-  helpers.
+  helpers. **No** per-domain `delete_sysrs` tool either — deletion
+  goes through the generic `delete` tool in `general/tools/`
+  (`type="sysrs"`, feat-36-delete convention, ADR 1af6787b; the
+  `_delete_sysrs` adapter is REQ-011).
 - REQ-009: MCP resources: `specmgr://sysrs/schema`, `/example`,
   `/template` (exactly three — no `/list`, listing is the `list_sysrs`
   tool, ADR ec9f5262; no `/{id}`, id-based reads are `get_sysrs`-only,
@@ -117,11 +120,14 @@ Domain key: `sysrs` (decided 2026-08-30 — see Decisions Made).
   `general` resource is introduced); `update_sysrs` names the generic
   `update`/`set_status` tools with `type="sysrs"`.
 - REQ-011: Add `"sysrs"` to the generic cross-domain mutation tools —
-  `_update_sysrs`/`_set_status_sysrs` private adapters, `"sysrs"`
-  dispatch-table entries, and `"sysrs"` added to the `Literal[...]`
-  parameter unions in `general/tools/update.py` and
-  `general/tools/set_status.py` (`set_status` rejects `superseded_by`
-  for `sysrs` with the standard non-adr `ValueError`).
+  `_update_sysrs`/`_set_status_sysrs`/`_delete_sysrs` private
+  adapters, `"sysrs"` dispatch-table entries, and `"sysrs"` added to
+  the `Literal[...]` parameter unions in `general/tools/update.py`,
+  `general/tools/set_status.py`, and `general/tools/delete.py`
+  (`_DELETE_TYPES` + `type` `Literal` + imports + the docstring
+  count, eleven→twelve whole-body domains) (`set_status` rejects
+  `superseded_by` for `sysrs` with the standard non-adr
+  `ValueError`; `adr` stays excluded from `delete`).
 - REQ-012: Packaged example/template/instructions/schema data
   (`sysrs/data/`) via the existing generic
   `general/tools/_packaged_data.py`, with the matching `pyproject.toml`
@@ -147,37 +153,57 @@ Domain key: `sysrs` (decided 2026-08-30 — see Decisions Made).
   direction): `example.v7.md` (REV 7), approved 2026-08-31 — all
   per-section mandatory/optional flags accepted, `## Appendix`/
   `## Definitions and Acronyms` added.
-- [ ] ACC-003: Verifies REQ-003 — the exact `RelatedArtifacts`-with-
+- [x] ACC-003: Verifies REQ-003 — the exact `RelatedArtifacts`-with-
   summary field shape is written down in Design Notes and validated
   against the `models/md` engine (mirroring `sop`'s pre-implementation
   empirical-verification discipline) in Phase 1 before any Pydantic
-  model code (Phase 2) is written.
+  model code (Phase 2) is written. (Closed 2026-09-01: the confirmed
+  shape — `<TYPE> <uuid>: <title>` + per-bullet optional notes via
+  `MarkdownListItemWithNotes`, per-section type-tag `field_validator`
+  with `re.DOTALL`, `Field(min_length=1)` lists, `References` plain
+  `list[MarkdownListItem]` — is recorded with its exact engine
+  mechanics in Design Notes' "Phase 1 outcome record"; the full
+  `sysrs-example.md` round-trips through the scratch model.)
 - [ ] ACC-004: Verifies REQ-005/006/007 — packaged example **and**
   template parse via `parse_sysrs`; structural violations raise
   `AssertionError`: unknown H2; missing mandatory H2 (`System Purpose`/
   `System Scope`/`Business Context and Goals`/`System Overview`/
-  `Requirements`); `## Requirements` present with zero H3s; a
-  cross-reference list section present with zero items; `## References`
-  present with zero items; H1 prefix mismatch (a `# ...` line not
-  starting `System Requirements
+  `Requirements`); a cross-reference list section present with zero
+  items; `## References` present with zero items; H1 prefix mismatch
+  (a `# ...` line not starting `System Requirements
   Specification: `); misordering of any top-level section; second H1;
-  non-blank content before the H1.
+  non-blank content before the H1; a mandatory free-text H2/H3
+  present with zero body content (the engine's behavior for that case
+  is pinned in Phase 1, Task 1.3(e), and the pinned behavior is
+  asserted); a `## Updates` entry heading failing its timestamp-led
+  alias (missing timestamp lead or an em-dash separator). (`##
+  Requirements` present with zero H3s and out-of-order `## Updates`
+  entries moved to ACC-005 below — corrected 2026-09-02: `sysrs`
+  matches every other domain's `ValidationError` channel for these two
+  checks instead of a domain-local `AssertionError` special case; see
+  Decisions Made.)
 - [ ] ACC-005: Verifies REQ-005/006 — value violations raise
   `pydantic.ValidationError`: `status` outside the 5-value set; `type`
   != `"sysrs"`; a cross-reference bullet with the wrong type tag for
   its section, a malformed uuid (not 8-4-4-4-12 lowercase hex), or a
   missing `: <title>`; `DEC` and `ADR` both accepted under `##
   Decisions` (and `REQ` rejected there); a bare cross-reference bullet
-  without a notes paragraph accepted (notes are per-bullet optional).
+  without a notes paragraph accepted (notes are per-bullet optional);
+  `## Requirements` present with zero H3s; and out-of-order `##
+  Updates` entries (newest-first is parse-enforced via a
+  `model_validator` delegating to the shared
+  `models/md/_ordering.py::validate_newest_first` helper, matching
+  every other domain's — SOP/DEC/VCR/TSK — identical check; moved here
+  from ACC-004, 2026-09-02, see Decisions Made).
 - [ ] ACC-006: Verifies REQ-008 — every listed tool is implemented,
   registered, and callable; `create_sysrs`→`get_sysrs`→`list_sysrs`→
   `update` (generic, `type="sysrs"`)→`set_status` (generic,
   `type="sysrs"`)→`validate_sysrs` round-trip against a temp
   `SPECMGR_DOCS_DIR`; `create_sysrs` fixes `status="draft"` and writes
-  `sysrs-{id}-{slug}.md`; `delete_sysrs` raises `NotImplementedError`;
-  `get_sysrs(id, raw=True)` returns the frontmatter-stripped body text
-  verbatim; `list_sysrs` paging (default 25 / cap 100 / `truncated`
-  boundary) mirrors every other domain's `list_<d>` tool exactly.
+  `sysrs-{id}-{slug}.md`; `get_sysrs(id, raw=True)` returns the
+  frontmatter-stripped body text verbatim; `list_sysrs` paging
+  (default 25 / cap 100 / `truncated` boundary) mirrors every other
+  domain's `list_<d>` tool exactly.
 - [ ] ACC-007: Verifies REQ-009 — every listed resource is implemented
   and registered (exactly three — no `/{id}`, no `/list`);
   `specmgr://sysrs/schema` equals fresh `generate_sysrs_schema()`
@@ -188,14 +214,16 @@ Domain key: `sysrs` (decided 2026-08-30 — see Decisions Made).
   `create_sysrs`'s narration includes the `list_sysrs` dedup check
   first and the `specmgr://iso25010` read-first step; `update_sysrs`
   names the generic `update`/`set_status` tools with `type="sysrs"`.
-- [ ] ACC-009: Verifies REQ-011 — the generic `update`/`set_status`
-  tools accept `type="sysrs"` and correctly dispatch to
-  `_update_sysrs`/`_set_status_sysrs`; both the whole-body and
-  line-range (`begin`/`end`) branches of `update` work for `sysrs`;
-  `set_status` rejects `superseded_by` for `type="sysrs"` with the same
-  `ValueError` every non-adr type gets; new test cases added to
-  `tests/general/tools/test_update.py`/`test_set_status.py` (not just
-  `tests/sysrs/`) exercise this.
+- [ ] ACC-009: Verifies REQ-011 — the generic `update`/`set_status`/
+  `delete` tools accept `type="sysrs"` and correctly dispatch to
+  `_update_sysrs`/`_set_status_sysrs`/`_delete_sysrs`; both the whole-
+  body and line-range (`begin`/`end`) branches of `update` work for
+  `sysrs`; `set_status` rejects `superseded_by` for `type="sysrs"`
+  with the same `ValueError` every non-adr type gets; `delete`
+  resolves through the `sysrs` base dir and returns the deleted path;
+  new test cases added to
+  `tests/general/tools/test_update.py`/`test_set_status.py`/
+  `test_delete.py` (not just `tests/sysrs/`) exercise this.
 - [ ] ACC-010: Verifies REQ-012 — packaged data resolves correctly from
   a real, non-editable install (`uv build --wheel` + scratch-venv
   install), mirroring `sop`'s ACC-007 verification.
@@ -212,7 +240,7 @@ Domain key: `sysrs` (decided 2026-08-30 — see Decisions Made).
 Included:
 
 - The full `sysrs` domain implementation (Phases 1–6):
-  `sysrs/models/v1/` schema + parser, `sysrs/tools/` (8 tools,
+  `sysrs/models/v1/` schema + parser, `sysrs/tools/` (7 tools,
   dispatch-only), `sysrs/resources/` (3), `sysrs/prompts/` (2),
   `sysrs/data/` packaged data.
 - Per-section cross-reference bullet type-tag regex enforcement
@@ -240,9 +268,10 @@ Explicitly out of scope:
   like GOL/RSK/QA/DEC/SOP/VCR).
 - A `specmgr://sysrs/{id}` resource or a `specmgr://sysrs/list`
   resource (ADR ddfb1109 / ec9f5262).
-- A real `delete_sysrs` implementation — a stub raising
-  `NotImplementedError`, matching every other domain's `delete_*`
-  stub.
+- A per-domain `delete_sysrs` tool — deletion goes through the
+  generic `delete` tool (feat-36-delete, ADR 1af6787b); the `sysrs`
+  `_delete_sysrs` adapter is in Scope/REQ-011 (no whole-body domain
+  has a per-domain `delete_*` tool).
 - Semantic live validation of cross-referenced ids (that the
   `<uuid>`/title actually matches the referenced document) — text-only
   references in v1, same as every other domain's cross-references
@@ -278,6 +307,48 @@ Explicitly out of scope:
   (`general/resources/`) as the source of the nine canonical ISO/IEC
   25010:2023 characteristic names the `create_sysrs` prompt's REQ
   placement rule reads.
+- Coordinates with (2026-09-01 decision): `.specmgr/feat/feat-38-39-
+  41-43-44/README.md` (sibling branch `feat-38-39-31-43-44`, design
+  complete 2026-09-01 with decisions D1–D10 locked, not yet
+  implemented) changes the two surfaces `sysrs` mirrors — the `##
+  Updates` entry shape (issues #38/#39: em-dash separators rejected,
+  ` - ` or ` : ` separators, timestamp-led headings, parse-enforced
+  newest-first ordering, `MarkdownSection2WithComment` containers with
+  an ordering-hint comment in templates) and the frontmatter
+  `created`/`updated` format (issue #44: date+time only, `yyyy-MM-dd
+  HH:mm:ss.fff` + `Z`/`±HH:mm`, three-digit milliseconds, one shared
+  `general/tools/_timestamps.py` generator helper). `sysrs` adopts
+  the locked post-sibling shapes from day one (no rework after its
+  merge); `sysrs-example.md` was migrated to them in the same planning
+  pass (Task 0.12, done). Execution order relative to the sibling's
+  development (2026-09-01): Phases 1–2 are fully parallel-safe —
+  Phase 1 exercises only standard engine mechanics that already ship
+  in other domains (REGEX-aliased H3 headings: `vcr`'s
+  `AcceptanceCriterion`; the `assert`-based newest-first
+  `model_validator`: `feat`'s `Updates` — the locked `## Updates`
+  shape needs no sibling code), and Phase 2 writes only new
+  `sysrs/`/`tests/sysrs/` files (the ordering check ships domain-
+  local per the Design Notes fallback — use the shared
+  `models/md/_ordering.py` helper directly if the sibling's Phase 2
+  has landed by Task 2.3). Phase 3's Tasks 3.1/3.2 (new
+  `sysrs/tools/` files) are parallel-safe too (the Task 3.1
+  checkpoint picks the then-current mirror shape — `_timestamps.py`
+  and `_path_safety` guards included). The only shared-file surfaces
+  are Task 3.3 — which edits `general/tools/update.py`/
+  `set_status.py`/`delete.py`, the same files the sibling's Phase 4
+  rewrites (issue #43 path-safety guards) — and Phase 6's
+  `server.py` docstring / `AGENTS.md` edits (the sibling's Phase 4
+  Task 4.5 touches both). Run Task 3.3 after the sibling's Phase 4
+  has merged to `dev` (preferred — the `sysrs` adapters then carry
+  the `_path_safety` guards from day one), or do it now and rebase
+  on the sibling's merge (a mechanical conflict in three files, not
+  a semantic one); its tests/gate, Tasks 3.4/3.5, chain behind it,
+  and with them Phases 4–6 under the phase-gate discipline (Phases
+  4/5 themselves are new-file-only, no sibling overlap). Re-merge
+  `dev` at the start of Phase 6 (Task 6.1) and rebase the
+  enumeration edits on the post-sibling text. New `sysrs` files
+  shadowing `id`/`type` carry the per-file pylint disable line (the
+  sibling's Phase 5 convention) regardless of order.
 - Blocks: nothing known.
 
 ### Design Notes
@@ -800,7 +871,7 @@ in `example.v7.md`, and the worked content in `sysrs-example.md`):
 | 15 | `More Information` | O | free-text leaf |
 | 16 | `Appendix` | O | free-text leaf (may carry fenced code blocks) |
 | 17 | `Definitions and Acronyms` | O | free-text leaf |
-| 18 | `Updates` | O, last | dynamic free-form H3 entries (DEC/VCR shape) |
+| 18 | `Updates` | O, last | dynamic timestamp-led H3 entries (post-sibling DEC/VCR shape) |
 
 ("list directly under the H2" = the list sits in the H2's own body, no
 `###` sub-heading — the 2026-08-30 "drop the redundant single H3"
@@ -820,26 +891,177 @@ pinning `sop` uses for `Safety and Precautions`):
 - Opaque free-text leaves (DEC-`Context`/sop-`Purpose` shape: no declared nested fields; any body content — paragraphs, bullets, fenced code blocks): `SystemPurpose` (M), `SystemScope` (M), `BusinessContext` (O, H3), `AssumptionsAndDependencies` (O, LITERAL), `SystemContext` (M, H3), `SystemFunctions` (M, H3), `UserCharacteristics` (O, H3), `SystemIntegration` (O, H3), `SystemModesAndStates` (O, LITERAL), `MoreInformation` (O), `Appendix` (O), `DefinitionsAndAcronyms` (O, LITERAL).
 - `BusinessContextAndGoals(MarkdownSection2)` — LITERAL; mandatory container; `business_context: BusinessContext | None`, `goals: Goals` (mandatory), `problem_statement: ProblemStatement | None`.
 - `SystemOverview(MarkdownSection2)` — mandatory container; `system_context: SystemContext`, `system_functions: SystemFunctions`, `user_characteristics: UserCharacteristics | None`, `system_integration: SystemIntegration | None`.
-- The cross-reference list classes — `Goals` (H3, `GOL`), `ProblemStatement` (H3, `PRB`), `StakeholderNeedsAndElicitation` (H2, LITERAL, `QA`), `OperationalConceptAndScenarios` (H2, LITERAL, `UC`), `Decisions` (H2, `DEC|ADR`), `Risks` (H2, `RSK`), plus the nine `## Requirements` H3s and six `## Other Characteristics` H3s (all `REQ`; LITERAL pins on `PolicyAndRegulation` and `PackagingHandlingShippingAndTransportation` — lowercase "and" and commas). Each: `items: list[MarkdownListItemWithNotes] = Field(min_length=1)` (≥1 item when present — absent is the section's own `| None`, present-with-zero-items must raise `AssertionError`) + a per-class `field_validator("items")` regex-checking each item's `.text` (the `MarkdownListItem` computed property holding the lead paragraph with the marker stripped — the exact item-text field name, confirmed from `models/md/markdown_list_item.py`; Phase 1 re-confirms that a list-level validator sees it) against the section's own module-level pattern, e.g. `_GOALS_PATTERN = r"^GOL [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}: .+$"` (vcr's `_VERIFIES_PATTERN` fragment style); `Decisions`'s pattern allows `(DEC|ADR)`. The item's `notes` field (`list[MarkdownParagraph] | None`, declared on `MarkdownListItemWithNotes`) holds the optional per-bullet indented notes paragraph (free text).
-- `Requirements(MarkdownSection2)` — mandatory container; nine `| None` H3 fields in canonical 25010:2023 order + a `model_validator(mode="after")` asserting at least one of the nine is present — a present-but-empty `## Requirements` is a **structural** violation, so the validator asserts (raises `AssertionError`), unlike DEC's duplicate-option-number after-validator, which raises `ValueError` into the `ValidationError` channel (Phase 1 confirms the engine mechanics for "≥1 of N optional children").
+- The cross-reference list classes — `Goals` (H3, `GOL`), `ProblemStatement` (H3, `PRB`), `StakeholderNeedsAndElicitation` (H2, LITERAL, `QA`), `OperationalConceptAndScenarios` (H2, LITERAL, `UC`), `Decisions` (H2, `DEC|ADR`), `Risks` (H2, `RSK`), plus the nine `## Requirements` H3s and six `## Other Characteristics` H3s (all `REQ`; LITERAL pins on `PolicyAndRegulation` and `PackagingHandlingShippingAndTransportation` — lowercase "and" and commas; the full 8-class LITERAL pin set was confirmed exactly as sketched in Phase 1). Each: `items: list[MarkdownListItemWithNotes] = Field(min_length=1)` (≥1 item when present — absent is the section's own `| None`, present-with-zero-items raises the engine's raw `AssertionError` from `process_list_field`'s `assert False`, before any pydantic validation — Phase 1 confirmed) + a per-class `field_validator("items")` regex-checking each item's `.text` — the item-text field is exactly `MarkdownListItem.text` (computed property, lead paragraph with the marker stripped), and the list-level validator sees it during parse (it fires at the engine's `cls(**kwargs)` at the end of `from_text`; a raised `ValueError` lands in the `pydantic.ValidationError` channel — Phase 1 confirmed) — against the section's own module-level pattern, e.g. `_GOALS_PATTERN = r"^GOL [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}: .+$"` (vcr's `_VERIFIES_PATTERN` fragment style); `Decisions`'s pattern allows `(DEC|ADR)`. **Phase 1 refinement: the per-item `re.fullmatch` must run with `re.DOTALL`** — `item.text` keeps the embedded newline of soft-wrapped bullet lines (mdformat does not reflow), and `.` does not match `\n` without it (the pattern itself is unchanged). The item's `notes` field (`list[MarkdownParagraph] | None`, declared on `MarkdownListItemWithNotes`) holds the optional per-bullet indented notes paragraph (free text; bare bullet → `notes is None` — Phase 1 confirmed). **Phase 1 pin: `## References` as a plain `list[MarkdownListItem]` works as intended** (plain items are leaves — no `notes` attribute, continuation lines stay in `_value`), and a tight multi-item list under an `items`-declared section parses but `str()` re-renders it loose (the documented `MarkdownListItem` tight→loose round-trip exception) — `sysrs-example.md`'s `## References` is tight, so the packaged example (Task 4.1) must loosen it (the shipped `gol_example.md` `## Tags` convention).
+- `Requirements(MarkdownSection2)` — mandatory container; nine `| None` H3 fields in canonical 25010:2023 order + a check that at least one of the nine is present. **Phase 1 confirmed the "≥1 of N optional children" mechanics and corrected the channel claim**: the engine has no built-in "≥1 of N children" check, and a `model_validator(mode="after")` `assert` (the sketch's proposed mechanic) surfaces as **`pydantic.ValidationError`** (`type=assertion_error` — pydantic 2.13.4 wraps validator `AssertionError`s; the shipped FEAT precedent's own tests pin this: `tests/feat/.../test_body.py::TestUpdatesOrdering::test_out_of_order_entries_raise_validation_error`), not the raw `AssertionError` the preliminary sketch assumed. A raw `AssertionError` for the same check is achievable by placing the assert in the container's `from_text` classmethod override (after `super().from_text` — the engine's own `*WithComment` classes use exactly this classmethod-assert pattern); Phase 1 demonstrated both mechanics. Phase 1 also confirmed the engine **enforces child order** (sequential one-pass field distribution): nine H3s in any order other than declaration (canonical) order → raw `AssertionError` ("text left over after processing all fields") — so the canonical 25010 order is parse-enforced, not just a rendering convention. **Decided 2026-09-02 (see Decisions Made): `sysrs` uses the `model_validator(mode="after")` mechanic — `ValidationError` — matching every other domain's identical-shape checks rather than special-casing `sysrs` alone; ACC-004/ACC-005 updated accordingly.**
 - `OtherCharacteristics(MarkdownSection2)` — optional umbrella; six `| None` H3 fields; **no** ≥1-of-N validator (the whole umbrella is optional — "omit if none of the six apply").
 - `References(MarkdownSection2)` — optional; `items: list[MarkdownListItem] = Field(min_length=1)` — the plain no-notes variant (external standards/documents, no specmgr ids, no per-item regex). Present ⇒ ≥1 item required (user-confirmed 2026-09-01 — a bare heading with zero bullets is a structural error; see the resolved question below).
-- `Updates(MarkdownSection2)` + `UpdateEntry(MarkdownSection3)` — mirroring `dec`'s shipped free-form-H3 shape exactly: `UpdateEntry` with `@alias(value=".+", type=AliasType.REGEX)`, mandatory `content: MarkdownParagraph`, no ordering validator, no timestamp regex (date-led titles are convention, not enforced); `Updates` with `updates: list[UpdateEntry] = Field(min_length=1)`, optional as a whole, last section. DEC's plain `MarkdownSection2` (not VCR's `MarkdownSection2WithComment` variant), since `sysrs-example.md`'s `## Updates` carries no HTML comment.
+- `Updates(MarkdownSection2WithComment)` + `UpdateEntry(MarkdownSection3)` — the locked post-sibling shape (feat-38-39-41-43-44 D2/D3, adopted from day one — see Dependencies), mirroring `dec`'s/`vcr`'s `## Updates` as it exists on `dev` after that feature's Phases 1–2: `UpdateEntry` with a timestamp-led REGEX alias — **Phase 1 correction: use the prose-described form `^\d{4}-\d{2}-\d{2}(?: \d{2}:\d{2}:\d{2}\.\d{3}(Z|[+-]\d{2}:\d{2}))?(?: - | : ).+$`** (date-only or full date+time lead, then ` - ` or ` : `, then title — em-dash separators rejected); the literal string quoted in this plan's Task 1.3/Design Notes (`(?: - | : ) .+$`, with a space between the separator group and the title) does **not** fullmatch the plan's own locked example headings (`### 2026-09-14 - Added Security Requirements` in `sysrs-example.md`, migrated per the locked convention by Task 0.12) — verified by direct `re.fullmatch` on both variants; the prose form matches every valid lead (date-only and full, `Z`/`±HH:mm`, both separators) and rejects em-dash/free-form, so it is the intended alias — mandatory `content: MarkdownParagraph`, plus the computed `timestamp` field the sibling feature adds to DEC/VCR's entries (FEAT-precedent shape: named-group `fullmatch` against the composite section's heading-only `.text` — Phase 1 confirmed it works at H3 level); `Updates` with `updates: list[UpdateEntry] = Field(min_length=1)`, optional as a whole, last section, and a newest-first ordering check. **Phase 1 channel findings for the ordering check**: as a `model_validator(mode="after")` `assert` (the sketch's proposed mechanic / the FEAT precedent's own implementation) it surfaces as **`pydantic.ValidationError`** (pydantic wraps validator asserts — same correction as the `Requirements` ≥1 check above); as a `from_text` classmethod-override `assert` it surfaces as the raw **`AssertionError`** ACC-004 pins. **Phase 1 hazard pin: the ordering comparison must normalize naive→aware datetimes** — a date-only lead parses via `datetime.fromisoformat` to a *naive* datetime, a full lead to an *aware* one, and comparing mixed formats raises a raw `TypeError` ("can't compare offset-naive and offset-aware datetimes") even for correctly-ordered documents; normalizing naive to UTC before comparing accepts in-order mixed documents (verified). Equal timestamps are allowed (non-increasing check, FEAT precedent). Alias failure (missing timestamp lead, em-dash separator, missing separator) raises the raw `AssertionError` either way (first entry → `get_extent` returns 0 on the alias mismatch → "expected list[UpdateEntry], found no match"; a later entry → "text left over"); zero entries and an entry heading with no content paragraph also raise the raw `AssertionError`. **Update 2026-09-02: the sibling feature is now merged (`dev` @ `f0abc33`, PR #54)** — `Updates` calls the shared `models/md/_ordering.py::validate_newest_first` helper directly from a `model_validator(mode="after")`, exactly mirroring SOP's/DEC's/VCR's/TSK's own `Updates`/`RecentUpdates` implementation — **decided: `ValidationError`, not a domain-local `AssertionError` special case (see Decisions Made).** The inherited `comment` field stays absent in `sysrs-example.md` and carries the "newest first, prepend" ordering hint only in the packaged template.
 - `SysrsFrontmatter`/`SysrsDocument`/`parse_sysrs`/`SysrsSummary` — per the confirmed frontmatter shape above and sop's document/parser/summary shapes (`SysrsSummary(DocSummary)` plain: id/title/status/ref, no extras).
-- **Error channels** (codebase convention, no new exception types): structural → engine `AssertionError` (missing/unknown/misordered sections, zero-item list sections, zero-H3 `## Requirements`, H1 prefix mismatch); value → `pydantic.ValidationError` (`status` outside the 5-set, `type` != `sysrs`, a cross-ref bullet failing its section's type-tag regex — the `field_validator` `ValueError` channel).
+- **Error channels** (codebase convention, no new exception types; **Phase 1-confirmed**): structural → raw engine `AssertionError` (missing mandatory H2 — "expected X, found no match"; unknown H2, second H1, and misordering of any top-level section — mandatory *or* optional pairs — "text left over after processing all fields"; non-blank content before the H1 — "Token[0]: expected 'heading_open', …"; H1 prefix mismatch and any heading alias failure incl. a `## Updates` entry failing its timestamp-led alias — "heading text … does not match its declared @alias" / list-no-match / text-left-over; zero-item list sections — cross-ref lists, `## References`, `## Updates` — `process_list_field`'s `assert False`); value → `pydantic.ValidationError` (`status` outside the 5-set, `type` != `sysrs`, a cross-ref bullet failing its section's type-tag regex — the `field_validator` `ValueError` channel, pinned for wrong tag / malformed uuid / missing `: <title>` / wrong-section tag; `Field(min_length=1)` on direct construction). **Decided 2026-09-02**: zero-H3 `## Requirements` and out-of-order `## Updates` entries land in `pydantic.ValidationError` via the `model_validator(mode="after")` mechanic, matching every other domain's identical checks (see Decisions Made) — moved from ACC-004 to ACC-005. **Phase 1 pin (Task 1.3(e)): a mandatory free-text section present with zero body content is ACCEPTED by the engine** (leaf sections carry no body-content requirement; the empty leaf holds exactly its own heading line and round-trips byte-exact) — it is therefore *not* a structural violation, and ACC-004's "the pinned behavior is asserted" means Task 2.5 asserts acceptance (parse succeeds, `.text` is the bare heading).
+
+**Phase 1 outcome record (2026-09-01 — empirical validation against the
+live `models/md` engine, all tasks passed)**
+
+Method (vcr's Phase 0 discipline): four throwaway scratch suites under
+`/tmp/opencode/sysrs-phase1/` (`task1_1_lists.py`, `task1_2_containers.py`,
+`task1_3_freeform.py`, `task1_4_roundtrip.py` + `common.py`; uncommitted,
+never to be committed) define small Pydantic classes that subclass the REAL
+live engine classes (`MarkdownSection1/2/3`, `MarkdownSection2WithComment`,
+`MarkdownListItem`, `MarkdownListItemWithNotes`, `MarkdownParagraph`,
+`alias`/`AliasType`) and run
+`uv run --frozen --all-extras python <script>` from the worktree root;
+every mechanic is tested positive AND negative with the exact observed
+exception type recorded. Totals: Task 1.1 — 7/7 checks; Task 1.2 — 8/8;
+Task 1.3 — 15/15; Task 1.4 — 20/20. Closes ACC-003.
+
+- **Task 1.1 (cross-reference list mechanics) — pass.** The item-text
+  field is exactly `MarkdownListItem.text` (computed property: the lead
+  paragraph's inline text, marker stripped) and a section-level
+  `field_validator("items")` sees it during parse (it fires at the
+  engine's `cls(**kwargs)` at the end of `from_text`); a raised
+  `ValueError` there lands in `pydantic.ValidationError` (pinned for
+  wrong type tag, malformed/uppercase uuid, missing `: <title>`).
+  **`item.text` keeps the embedded `\n` of soft-wrapped bullet lines**
+  (mdformat does not reflow), so the per-item `re.fullmatch` needs
+  `re.DOTALL` — the sketch's patterns are otherwise unchanged. Three
+  states of an optional list section: absent → `None` (no error);
+  present-with-N≥1 → parsed; **present-with-zero-items → raw
+  `AssertionError`** from `process_list_field`'s `assert False`
+  ("expected list[…], found no match") — fires before any pydantic
+  validation, so `Field(min_length=1)` is only the direct-construction
+  backstop (`SomeSection(items=[])` → `ValidationError`). `## References`
+  as a plain `list[MarkdownListItem]` confirmed: plain items are leaves
+  (no `notes` attribute; continuation lines stay in `_value`),
+  `MarkdownListItemWithNotes` captures continuation paragraphs into
+  `notes` (bare bullet → `notes is None`, accepted). Bonus pin: a TIGHT
+  multi-item list under an `items`-declared section parses but `str()`
+  re-renders it LOOSE (the documented `MarkdownListItem` tight→loose
+  exception) — `sysrs-example.md`'s `## References` is tight, so the
+  packaged example (Task 4.1) must loosen it (shipped
+  `gol_example.md`'s `## Tags` does exactly that) for byte-exact
+  round-trip tests.
+- **Task 1.2 (container mechanics) — pass.** "≥1 of N optional
+  children": the engine has no built-in check; the sketch's
+  `model_validator(mode="after")` `assert` surfaces as
+  **`pydantic.ValidationError`** (`type=assertion_error` — pydantic
+  2.13.4 wraps validator asserts; the shipped FEAT precedent pins the
+  same in `tests/feat/models/v1/test_body.py::test_out_of_order_entries_
+  raise_validation_error`), while the identical check placed in the
+  container's `from_text` classmethod override (after
+  `super().from_text`) surfaces as the **raw `AssertionError`** — both
+  mechanics demonstrated; the `*WithComment` engine classes already use
+  the classmethod-assert pattern. The engine also **enforces child
+  order** (sequential one-pass distribution): the nine H3s in any order
+  other than declaration (canonical) order → raw `AssertionError`
+  ("text left over") — canonical order is parse-enforced.
+  `BusinessContextAndGoals`/`SystemOverview`: missing mandatory child
+  → raw `AssertionError` ("expected X, found no match"); omitted
+  optional child → `None`; all children present → byte-exact round
+  trip (incl. the LITERAL `Business Context and Goals` heading).
+  `OtherCharacteristics` umbrella present with zero H3s → **accepted**
+  (no ≥1-of-N validator, per sketch). A mandatory free-text H3 leaf
+  present with zero body → **accepted** (early Task 1.3(e) signal).
+- **Task 1.3 (free-form and heading mechanics) — pass.** (a) `##
+  Updates`: the prose-described alias matches all locked forms (date-
+  only and full `HH:mm:ss.fff` + `Z`/`±HH:mm` leads; ` - ` and ` : `
+  separators) and rejects em-dash, missing-separator, and free-form
+  titles; **the plan's literal alias string carries a stray space
+  (`(?: - | : ) .+$`) and matches none of the locked example headings —
+  corrected to the prose form above**; alias failure → raw
+  `AssertionError` (first entry: "expected list[UpdateEntry], found no
+  match" via `get_extent` returning 0 on the alias mismatch; a later
+  entry: "text left over"); zero entries and an entry with no content
+  paragraph → raw `AssertionError`; computed `timestamp`/`title`
+  (FEAT-style named-group `fullmatch` on the composite section's
+  heading-only `.text`) work at H3 level; equal timestamps allowed;
+  ordering channel is mechanic-dependent (see Task 1.2) and the
+  comparison **must normalize naive (date-only) → aware (UTC) or
+  mixed-format documents raise raw `TypeError`** even when correctly
+  ordered. (b) Fenced code blocks (```mermaid) inside opaque free-text
+  leaves: accepted verbatim, byte-exact round trip (the example's
+  `### System Context` and `## Appendix`). (c) Mixed prose+bullets free-
+  text leaf (the example's `## Assumptions and Dependencies` body,
+  paragraphs AND bolded tight bullets): accepted, byte-exact — opaque
+  leaves keep the full extent verbatim. (d) H1 prefix REGEX alias on the
+  root: mismatch (wrong prefix, empty title, lowercase) → raw
+  `AssertionError` ("heading text … does not match its declared @alias");
+  non-blank content before the H1 → raw `AssertionError` ("Token[0]:
+  expected 'heading_open', got 'paragraph_open'"). **(e) THE PIN: a
+  mandatory free-text leaf present with zero body content (heading
+  immediately followed by the next H2) is ACCEPTED by the engine — no
+  `AssertionError`** (confirmed at both H3 level in Task 1.2 and H2
+  level at the root in Task 1.4); the empty leaf's `.text` is exactly
+  its own heading line and round-trips byte-exact — so ACC-004's
+  "pinned behavior is asserted" means Task 2.5 asserts acceptance, not a
+  raise.
+- **Task 1.4 (full-document round-trip) — pass.** The entire
+  `sysrs-example.md` body (frontmatter stripped; the on-disk body is
+  mdformat-clean) parses through the complete 18-field scratch root with
+  all 18 H2s present in order and all 22 H3s populated; every cross-
+  reference bullet validated against its section's type-tag regex (2
+  GOL, 1 PRB, 1 QA, 2 UC, 2 DEC, 2 RSK, 19 REQ under `## Requirements`,
+  8 REQ under `## Other Characteristics` — 27 REQ total — and 3 VCR);
+  the bare bullet without notes
+  (`## Other Characteristics` → `### Policy and Regulation`, first
+  bullet) accepted; both mermaid fences preserved verbatim; `## Updates`
+  timestamps `['2026-09-14', '2026-08-30']` (newest-first, date-only
+  leads). `str()` round trip is byte-exact **except** the documented
+  tight→loose re-render of the example's tight `## References` (the only
+  drift — verified by diff). Negative matrix channels (all confirmed):
+  raw `AssertionError` — unknown H2, missing mandatory H2, zero-item
+  cross-ref list section (`## Verification` heading kept), `##
+  References` present with zero items, H1 prefix mismatch, second H1,
+  content before the H1, misordering (mandatory pair AND optional pair),
+  Updates em-dash heading, Updates free-form heading, Updates zero
+  entries, empty mandatory leaf (accepted — see pin);
+  `pydantic.ValidationError` — `## Requirements` zero H3s (sketch
+  mechanic), out-of-order Updates (sketch mechanic), wrong type tag,
+  malformed uuid, missing `: <title>`, REQ under `## Decisions`;
+  accepted — ADR under `## Decisions` (the `DEC|ADR` alternation).
+  Frontmatter probe (Phase 2 parser-glue note, out of the body engine's
+  scope): PyYAML parses the locked `created`/`updated` values
+  (`2026-08-30 00:00:00.000Z`) as aware `datetime` objects, so the
+  shipped `_stringify_metadata` `str()` renders them as
+  `2026-08-30 00:00:00+00:00` (losing the `.000Z` form) — the sibling
+  feature's shared-frontmatter surface (issue #44); `parse_sysrs`
+  inherits the shipped behavior unchanged.
+- **Naming pitfall (Phase 1 scratch observation, relevant to Task 2.3):**
+  every section class name must either derive to its exact heading under
+  the implicit `SPACE_SEPARATED` rule or carry an explicit LITERAL alias —
+  a scratch class named e.g. `SystemPurposeLeaf` silently derives to
+  "System Purpose Leaf" and then fails every `get_extent`/`from_text`
+  match; the 8 LITERAL pins in the sketch are the complete set.
+- **Resolved 2026-09-02 (was an open item after Phase 1):** ACC-004
+  originally listed "## Requirements present with zero H3s" and "out-
+  of-order ## Updates entries" under "structural violations raise
+  `AssertionError`", but both checks' named mechanic (an `assert`-based
+  `model_validator`) lands in `pydantic.ValidationError` (pydantic wraps
+  validator asserts). The now-merged sibling feature ships SOP's/DEC's/
+  VCR's/TSK's own newest-first check with exactly this mechanic. User-
+  confirmed decision: `sysrs` matches every other domain's
+  `ValidationError` channel for these two checks rather than special-
+  casing itself via a `from_text`-override `AssertionError` — the
+  original ACC-004 wording was a misjudgment made before this
+  mechanical wrinkle was understood. Both cases moved to ACC-005; see
+  Decisions Made.
 
 **Tools** (one module per tool, mirror `sop/tools/`/`vcr/tools/`;
 **dispatch-only — no** `update_sysrs`/`set_status_sysrs`, ADR
-36905d5b): `create_sysrs` (fresh `uuid4`, `status="draft"` always,
-`created`/`updated`=now, `version=CURRENT_SCHEMA_VERSION`, filename
+36905d5b; **no** per-domain `delete_sysrs` either — deletion is the
+generic `delete` tool with a `sysrs` adapter, feat-36-delete):
+`create_sysrs` (fresh `uuid4`, `status="draft"` always,
+`created`/`updated`=now via the shared `general/tools/_timestamps.py`
+helper once it is on `dev` (feat-38-39-41-43-44 Phase 3), else the
+current sop `datetime.now().isoformat(timespec="microseconds")`
+pattern — tests assert system-owned/both-set, never the literal
+format, `version=CURRENT_SCHEMA_VERSION`, filename
 `sysrs-{id}-{slugify(body text)}.md`); `parse_sysrs(path)`;
 `list_sysrs(max_results?, offset?)` (paged from day one, ADR ec9f5262,
 inline `SysrsSummary`, skip-on-parse-failure); `get_sysrs(id, raw=False)`
 (`raw=True` returns the frontmatter-stripped body text verbatim — the
 text the generic `update`'s `begin`/`end` index into);
 `get_sysrs_example()`/`get_sysrs_template()` (`read_packaged_text`);
-`delete_sysrs(id)` stub (`NotImplementedError`,
-`structured_output=False`); `validate_sysrs(content, full=False)`.
+`validate_sysrs(content, full=False)`.
 Private helpers `_paths.py` (`SYSRS_TYPE_NAME = "sysrs"`,
 `SysrsNotFoundError`), `_io.py`, `_lock.py`, `_write.py` — identical
 shape to SOP/VCR's.
@@ -854,7 +1076,12 @@ set_status.py` gains `_set_status_sysrs` (same shape as
 `_set_status_sop`; the public level rejects `superseded_by` for
 `type="sysrs"` with the standard non-adr `ValueError`) + a `"sysrs"`
 entry in `_ADAPTERS` + `"sysrs"` in `type`'s `Literal[...]` (twelve
-domains becomes thirteen incl. `adr`). Both modules' imports gain the
+domains becomes thirteen incl. `adr`); `general/tools/delete.py` gains
+`_delete_sysrs` (mirror of `_delete_sop`: resolve via
+`load_by_id`, take `sysrs_lock`, `Path.unlink` confined by
+`assert_within`) + `"sysrs"` in `_DELETE_TYPES` and the `type`
+`Literal[...]` (eleven becomes twelve; `adr` stays excluded) +
+imports + the docstring count. All three modules' imports gain the
 `sysrs.*` equivalents.
 
 **Resources**: `specmgr://sysrs/schema` (JSON from packaged
@@ -881,22 +1108,29 @@ point resources. `update_sysrs` must name the GENERIC `update`/
 via `get_sysrs(id, raw=True)`).
 
 **Packaged data**: `sysrs_example.md` — content = this folder's
-`sysrs-example.md` (cleaned per the shipped-example convention if the
-research differs — verify against `vcr/data/vcr_example.md`); must
+(Task 0.12-migrated) `sysrs-example.md`, cleaned per the shipped-
+example convention if the research differs (verify against
+`sop/data/sop_example.md`'s comment-free body: no instructional
+comments, only permanent structural anchors or realistic filled
+annotations — note: `vcr/data/vcr_example.md` carries one stray HTML
+comment, left untouched: other-domain data, out of scope); must
 parse. `sysrs_template.md` — all-sections placeholder skeleton,
-`status: draft`, every optional cross-reference list populated (blind
-text + real-looking placeholder UUIDs) so it round-trips through
-`parse_sysrs` (SOP/VCR precedent). `sysrs_create_instructions.md`/
+`status: draft`, conforming date+time frontmatter, every optional
+cross-reference list populated (blind text + real-looking placeholder
+UUIDs, per Task 4.2's explicit enumeration) so it round-trips through
+`parse_sysrs` (SOP/VCR precedent), with the "newest first, prepend"
+ordering-hint comment in its `## Updates` (the locked sibling-feature
+template convention). `sysrs_create_instructions.md`/
 `sysrs_update_instructions.md` — narrated `string.Template` flows.
 `sysrs_schema.json` — generated copy (Task 4.4).
 
 **Cross-cutting wiring**:
 
 - `server.py`: add `sysrs` to the final import line (`from . import adr, dec, feat, general, gol, prb, qa, req, rsk, sop, sysrs, tsk, uc, vcr`)
-  + module docstring (3 resources, 8 tools, 2 prompts, domain summary,
+  + module docstring (3 resources, 7 tools, 2 prompts, domain summary,
   explicit dispatch-only note) + every stale domain enumeration/count
-  sentence (the `update`/`set_status` domain counts, the "... and
-  later `ac`" reservation sentence, the per-domain registration
+  sentence (the `update`/`set_status`/`delete` domain counts, the "...
+  and later `ac`" reservation sentence, the per-domain registration
   paragraphs).
 - `pyproject.toml`: `"biz.dfch.specmgr.sysrs" = ["data/*.md", "data/*.json"]`
   under `[tool.setuptools.package-data]` (alphabetical slot: after
@@ -961,6 +1195,10 @@ lands (it stays "None yet." until the first phase commits).
 - 36905d5b-8057-4294-8665-c7eed5534db0: Generic `update`/`set_status`
   dispatch tools — new domains use these from day one, no per-domain
   mutation tools
+- 1af6787b-eaab-4e8f-888f-531c1e76c19d: Path-safety guards for the
+  generic `delete` tool (feat-36-delete) — `sysrs` ships no per-domain
+  `delete_sysrs` tool; it adds a `_delete_sysrs` adapter to the
+  generic `delete` tool (REQ-011)
 
 No new ADR is anticipated yet; revisit once the aggregation-model and
 schema decisions above are finalized — if the "reference + AI-paraphrase"
@@ -1092,10 +1330,18 @@ its own ADR rather than living only in this feature's Design Notes.
   this folder alongside `ISO_29148.md`) grounds a future `## Definitions`/
   `## Acronyms` section (mirroring 29148 §9.2.3/9.2.5), or stays an
   unused reference — depends on: Task 0.3.2 — status: not-started
+- [x] Task 0.12: Migrate `sysrs-example.md` to the locked sibling-
+  feature conventions (feat-38-39-41-43-44, D2/D7) — both `## Updates`
+  heading separators `—` → ` - ` (issue #38) and the frontmatter
+  `created`/`updated` date-only → date+time midnight-UTC (`2026-08-30`
+  → `2026-08-30 00:00:00.000Z`, `2026-09-14` → `2026-09-14
+  00:00:00.000Z`, issue #44) — prerequisite of Task 1.4's full-
+  document round-trip — depends on: none — status: done (2026-09-01,
+  applied in the plan-review pass)
 
 #### Phase 1: Empirical schema validation
 
-- [ ] Task 1.1: Cross-reference list mechanics — read-only, in-memory
+- [x] Task 1.1: Cross-reference list mechanics — read-only, in-memory
   validation of the approved shapes against the **live** `models/md`
   engine using a throwaway scratch script under /tmp (NOT committed,
   NOT a permanent test file — no `sysrs` model code exists yet): the
@@ -1110,8 +1356,8 @@ its own ADR rather than living only in this feature's Design Notes.
   the "≥1 item when present" list rule is enforced); and `## References`
   as a plain `list[MarkdownListItem]` (no-notes variant — confirm the
   `MarkdownListItem` vs. `MarkdownListItemWithNotes` distinction works
-  as intended) — depends on: none — status: not-started
-- [ ] Task 1.2: Container mechanics — same discipline: (a) `##
+  as intended) — depends on: none — status: done (2026-09-01)
+- [x] Task 1.2: Container mechanics — same discipline: (a) `##
   Requirements`, a mandatory section where at least ONE of the nine
   optional H3 children must be present (confirm the engine mechanics
   for "≥1 of N optional children", e.g. a `model_validator(mode="after")`
@@ -1124,11 +1370,19 @@ its own ADR rather than living only in this feature's Design Notes.
   Characteristics`/`### System Integration`); (c) `## Other
   Characteristics` optional umbrella + six optional
   `Field(min_length=1)` H3 lists — depends on: Task 1.1 — status:
-  not-started
-- [ ] Task 1.3: Free-form and heading mechanics — same discipline: (a)
-  DEC/VCR-style `## Updates` (optional-as-a-whole, free-form H3 titles
-  `@alias(".+")`, no ordering validator) as worked in `example.v7.md`'s
-  trailing answer comment; (b) fenced code blocks (```mermaid) inside
+  done (2026-09-01)
+- [x] Task 1.3: Free-form and heading mechanics — same discipline: (a)
+  the locked post-sibling `## Updates` shape (optional-as-a-whole,
+  timestamp-led H3 titles with the alias `^\d{4}-\d{2}-\d{2}(?:
+  \d{2}:\d{2}:\d{2}\.\d{3}(Z|[+-]\d{2}:\d{2}))?(?: - | : ) .+$`,
+  newest-first `model_validator` ordering check) — confirm the
+  alias+validator mechanics on `MarkdownSection3` entries and the
+  `AssertionError` channel for both the alias failure (missing
+  timestamp lead, em-dash separator) and an out-of-order pair; the
+  FEAT precedent `feat/models/v1/body.py::Updates._validate_newest_
+  first` is the reference — `example.v7.md`'s trailing answer comment
+  is illustrative only (it predates the sibling feature and shows an
+  em-dash); (b) fenced code blocks (```mermaid) inside
   opaque free-text leaves (they occur in `sysrs-example.md` under
   `### System Context` and `## Appendix`) — confirm the engine
   tolerates them in free-text sections; (c) a mixed prose+bullets
@@ -1136,23 +1390,27 @@ its own ADR rather than living only in this feature's Design Notes.
   `sysrs-example.md` has paragraphs AND bolded bullets) — confirm it
   parses as an opaque free-text leaf; (d) the H1 prefix regex
   `^System Requirements Specification: .+$` as the root class's REGEX
-  alias — depends on: Task 1.2 — status: not-started
-- [ ] Task 1.4: Full-document round-trip — validate the entire
+  alias; (e) a mandatory free-text leaf present with zero body content
+  (e.g. a `## System Purpose` heading immediately followed by the next
+  H2) — pin whether the engine raises `AssertionError` or accepts, and
+  record the outcome (it feeds ACC-004/Task 2.5's matrix either way) —
+  depends on: Task 1.2 — status: done (2026-09-01)
+- [x] Task 1.4: Full-document round-trip — validate the entire
   `sysrs-example.md` content (all 18 H2s in order, all 22 H3s, every
   cross-reference bullet against its section's allowed type tag)
   through a scratch in-memory model built on the live engine per the
   preliminary sketch in Design Notes — depends on: Task 1.3 — status:
-  not-started
-- [ ] Task 1.5: Record every outcome (pass + exact mechanics) in this
+  done (2026-09-01)
+- [x] Task 1.5: Record every outcome (pass + exact mechanics) in this
   README's Design Notes' "Implementation design" subsection and refine
   the preliminary model sketch accordingly — closes ACC-003; the
   scratch script stays under /tmp (uncommitted) — depends on: Task 1.4
-  — status: not-started
-- [ ] Task 1.6: Phase-end quality gate (ruff format/check, vulture,
+  — status: done (2026-09-01)
+- [x] Task 1.6: Phase-end quality gate (ruff format/check, vulture,
   full unittest) + commit (the Design Notes outcome record only — no
   `sysrs` code exists yet, and the /tmp scratch script is never
   committed); update this README's Progress section — depends on:
-  Task 1.5 — status: not-started
+  Task 1.5 — status: done (2026-09-01)
 
 #### Phase 2: Models + parser (`sysrs/models/v1/`)
 
@@ -1179,11 +1437,13 @@ its own ADR rather than living only in this feature's Design Notes.
   (H2- and H3-level) with `items: list[MarkdownListItemWithNotes] =
   Field(min_length=1)` + per-class type-tag regex validator,
   `Requirements` with its nine optional H3 children + ≥1-of-9 after-
-  validator, `References` (plain `list[MarkdownListItem] =
+  validator,   `References` (plain `list[MarkdownListItem] =
   Field(min_length=1)` — present ⇒ ≥1 item, Decisions Made 2026-09-01),
-  DEC/VCR-style `Updates`/`UpdateEntry` — **no** `models/md` engine
-  changes; implement the mechanics Phase 1 recorded, not new ones —
-  depends on: Task 2.2 — status: not-started
+  `Updates`/`UpdateEntry` per the locked post-sibling shape in Design
+  Notes (timestamp-led alias, computed `timestamp`, newest-first
+  ordering — the shared `models/md/_ordering.py::validate_newest_first` helper directly, now merged into `dev` via PR #54) — **no**
+  `models/md` engine changes; implement the mechanics Phase 1 recorded,
+  not new ones — depends on: Task 2.2 — status: not-started
 - [ ] Task 2.4: `sysrs/models/v1/document.py` (`SysrsDocument`),
   `parser.py` (`parse_sysrs` glue, two-error-channel convention),
   `summary.py` (`SysrsSummary` — plain id/title/status/ref),
@@ -1200,8 +1460,11 @@ its own ADR rather than living only in this feature's Design Notes.
   regex matrix incl. wrong-type-tag
   rejection, `DEC`/`ADR` dual acceptance under `## Decisions` (and
   `REQ` rejection there), malformed-uuid/missing-title rejection, bare-
-  bullet-without-notes acceptance; `## Updates` free-form-H3
-  acceptance + zero-entry rejection), `test_parser.py` (ACC-004/ACC-
+  bullet-without-notes acceptance; `## Updates` timestamp-led-H3
+  acceptance (date-only and date+time leads, both ` - ` and ` : `
+  separators) + em-dash-heading rejection + out-of-order rejection +
+  zero-entry rejection + the empty-mandatory-leaf case pinned by Task
+  1.3(e)), `test_parser.py` (ACC-004/ACC-
   005 matrix + full round-trip of `sysrs-example.md`'s content) —
   depends on: Task 2.4 — status: not-started
 - [ ] Task 2.6: Phase-end quality gate (ruff format/check, vulture,
@@ -1210,33 +1473,50 @@ its own ADR rather than living only in this feature's Design Notes.
 
 #### Phase 3: Tools (`sysrs/tools/`) + generic-tool dispatch
 
-- [ ] Task 3.1: Private helpers `sysrs/tools/_paths.py` (`SYSRS_TYPE_NAME = "sysrs"`,
-  `SysrsNotFoundError`, wrappers over `general.tools._doc_paths`),
-  `_io.py` (`read_sysrs`, `load_by_id`), `_lock.py` (`sysrs_lock`),
-  `_write.py` (`write_sysrs_file`) — mirror SOP/VCR — depends on:
-  Task 2.6 — status: not-started
-- [ ] Task 3.2: The 8 tool modules + `tools/__init__.py` per Design
+- [ ] Task 3.1: **Sibling coordination checkpoint** — re-merge `dev`
+  and check feat-38-39-41-43-44's merge status (Dependencies), re-
+  verifying the mirror targets (`sop`/`vcr` helpers, the generic
+  tools' current shape, whether `_timestamps.py`/`_ordering.py`/
+  `_path_safety` guards are on `dev` yet) against the live tree —
+  then: private helpers `sysrs/tools/_paths.py` (`SYSRS_TYPE_NAME =
+  "sysrs"`, `SysrsNotFoundError`, wrappers over
+  `general.tools._doc_paths`), `_io.py` (`read_sysrs`, `load_by_id`),
+  `_lock.py` (`sysrs_lock`), `_write.py` (`write_sysrs_file`) —
+  mirror SOP/VCR (plus the `_path_safety` guards in `get_sysrs` if
+  the sibling's Phase 4 has landed) — depends on: Task 2.6 — status:
+  not-started
+- [ ] Task 3.2: The 7 tool modules + `tools/__init__.py` per Design
   Notes — `create_sysrs` (fresh `uuid4`, `status="draft"` always,
+  `created`/`updated`=now via the shared `general/tools/_timestamps.py`
+  helper if it is on `dev`, else the current sop microsecond pattern,
   filename `sysrs-{id}-{slug}.md`), `parse_sysrs(path)`,
   `list_sysrs(max_results?, offset?)` (paged from day one, ADR
   ec9f5262), `get_sysrs(id, raw=False)`, `get_sysrs_example`,
-  `get_sysrs_template`, `delete_sysrs` stub (`NotImplementedError`,
-  `structured_output=False`), `validate_sysrs(content, full=False)` —
+  `get_sysrs_template`, `validate_sysrs(content, full=False)` —
   **no** per-domain mutation tools (dispatch-only from day one, ADR
-  36905d5b) — depends on: Task 3.1 — status: not-started
-- [ ] Task 3.3: `"sysrs"` dispatch entries — `general/tools/update.py`:
+  36905d5b; deletion is the generic `delete` tool, REQ-011) — depends
+  on: Task 3.1 — status: not-started
+- [ ] Task 3.3: `"sysrs"` dispatch entries — **gated on the sibling's
+  Phase 4 per the Dependencies execution order** (run it after that
+  phase has merged to `dev`, or now + rebase on its merge — a
+  mechanical conflict in the three files, not a semantic one) —
+  `general/tools/update.py`:
   `_update_sysrs` adapter (verbatim-shape port of `_update_sop`) +
   `"sysrs"` in `_ADAPTERS` + in the `type` `Literal[...]` +
   `SysrsDocument` in the return union + import wiring; same for
   `general/tools/set_status.py` (`_set_status_sysrs`, rejects
-  `superseded_by` with the standard non-adr `ValueError`) — depends
-  on: Task 3.1 — status: not-started
+  `superseded_by` with the standard non-adr `ValueError`) and
+  `general/tools/delete.py` (`_delete_sysrs` mirroring `_delete_sop`,
+  `"sysrs"` in `_DELETE_TYPES` and the `type` `Literal[...]`, imports,
+  docstring count eleven→twelve) — depends on: Task 3.1 — status:
+  not-started
 - [ ] Task 3.4: Tests `tests/sysrs/tools/` — one module per tool +
   helper tests + `test_integration.py` (ACC-006 round-trip using the
   generic `update`/`set_status` tools with `type="sysrs"`, both whole-
   body and `begin`/`end` line-range branches); new test cases in
-  `tests/general/tools/test_update.py`/`test_set_status.py` covering
-  `type="sysrs"` (ACC-009) — `get_sysrs_example`/`get_sysrs_template`
+  `tests/general/tools/test_update.py`/`test_set_status.py`/
+  `test_delete.py` covering `type="sysrs"` (ACC-009) —
+  `get_sysrs_example`/`get_sysrs_template`
   mock-tested only this phase (the real packaged data files arrive in
   Phase 4) — depends on: Task 3.2, Task 3.3 — status: not-started
 - [ ] Task 3.5: Phase-end quality gate (ruff format/check, vulture,
@@ -1246,16 +1526,27 @@ its own ADR rather than living only in this feature's Design Notes.
 #### Phase 4: Resources + packaged data + schema
 
 - [ ] Task 4.1: `sysrs/data/sysrs_example.md` — content = this folder's
-  `sysrs-example.md`, cleaned per the shipped-example convention if
-  the research differs (verify against `vcr/data/vcr_example.md`'s
-  comment-free body: no instructional comments, only permanent
-  structural anchors or realistic filled annotations); must parse via
+  (Task 0.12-migrated) `sysrs-example.md`, cleaned per the shipped-
+  example convention if the research differs (verify against
+  `sop/data/sop_example.md`'s comment-free body: no instructional
+  comments, only permanent structural anchors or realistic filled
+  annotations — note: `vcr/data/vcr_example.md` carries one stray HTML
+  comment and is left untouched, other-domain data); must parse via
   `parse_sysrs` — depends on: Task 3.5 — status: not-started
 - [ ] Task 4.2: `sysrs/data/sysrs_template.md` — all-sections
-  placeholder skeleton, `status: draft`, every optional cross-
-  reference list populated (blind text, real-looking placeholder
-  UUIDs) so it round-trips through `parse_sysrs` (SOP/VCR precedent) —
-  depends on: Task 3.5 — status: not-started
+  placeholder skeleton, `status: draft`, conforming date+time
+  frontmatter; populated exactly: one placeholder bullet each in
+  `### Goals` (mandatory anyway), `### Problem Statement`, `##
+  Stakeholder Needs and Elicitation`, `## Operational Concept and
+  Scenarios`, `## Decisions`, `## Risks`, `## Verification`, and in
+  every one of the nine `## Requirements` H3s and the six `## Other
+  Characteristics` H3s (each a `REQ <uuid>: <title>` bullet reusing
+  `sysrs-example.md`'s UUIDs, so template and example share the
+  fictional story); one `## References` bullet; one-line blind text in
+  every free-text leaf; `## Updates` with the "newest first, prepend"
+  ordering-hint comment plus one placeholder entry — so it round-
+  trips through `parse_sysrs` (SOP/VCR precedent) — depends on: Task
+  3.5 — status: not-started
 - [ ] Task 4.3: `sysrs/data/sysrs_create_instructions.md` + `sysrs_update_instructions.md`
   — narrated flows with `$topic`/`$id`/`$instructions` placeholders;
   `create` includes the `list_sysrs` dedup-check-first step and an
@@ -1306,14 +1597,18 @@ its own ADR rather than living only in this feature's Design Notes.
 
 #### Phase 6: Cross-cutting registration
 
-- [ ] Task 6.1: `server.py` — add `sysrs` to the final import line
+- [ ] Task 6.1: `server.py` — **re-merge `dev` first** (the sibling's
+  Phase 4 Task 4.5 also edits the `server.py` docstring and
+  `AGENTS.md`; rebase the enumeration edits below on the post-
+  sibling text) — add `sysrs` to the final import line
   (`from . import adr, dec, feat, general, gol, prb, qa, req, rsk, sop, sysrs, tsk, uc, vcr`)
-  + module docstring (3 resources, 8 tools, 2 prompts, domain summary,
+  + module docstring (3 resources, 7 tools, 2 prompts, domain summary,
   the dispatch-only/no-per-domain-mutation-tools note, the no-`/{id}`/
   no-`/list` paragraph) + every domain enumeration/count sentence that
   would otherwise go stale (the `update` "eleven whole-body domains"
   becomes twelve, the `set_status` "twelve domains" becomes thirteen,
-  the "... and later `ac`" reservation sentence, the per-domain
+  the `delete` eleven-domain count becomes twelve, the "... and later
+  `ac`" reservation sentence, the per-domain
   registration paragraphs) — depends on: Task 5.3 — status:
   not-started
 - [ ] Task 6.2: `pyproject.toml` — `"biz.dfch.specmgr.sysrs" = ["data/*.md", "data/*.json"]`
@@ -1332,12 +1627,13 @@ its own ADR rather than living only in this feature's Design Notes.
 - [ ] Task 6.5: `AGENTS.md` — new `sysrs/` bullet in the Status section
   (domain-first layout, dispatch-only from day one, schema at
   `sysrs/models/v1/`, the per-section type-tag regex note, the cross-
-  reference aggregation model, the `raw` param, 3 resources / 2
+  reference aggregation model, the `raw` param, deletions through the
+  generic `delete` tool (`type="sysrs"`), 3 resources / 7 tools / 2
   prompts); update the "still missing" enumerations so `sysrs` joins
-  the tools/resources/prompts registration list and the `delete_*`
-  stub list (and `validate_sysrs` the validate-tool list; the
-  `general/tools` "eleven whole-body domains" wording) — depends on:
-  Task 6.1 — status: not-started
+  the tools/resources/prompts registration list and the validate-
+  tool list, and the `general/` bullet's `update`/`set_status`/
+  `delete` "eleven whole-body domains" wordings become twelve —
+  depends on: Task 6.1 — status: not-started
 - [ ] Task 6.6: Root `README.md` — add `System Requirements Specification (SYSRS)`
   to the "At this time, we have these artifact:" list (alphabetical
   slot: after SOP, before TSK) — depends on: Task 6.1 — status:
@@ -1367,6 +1663,73 @@ around.
 ## Progress
 
 ### Current Status
+
+**As of 2026-09-01 (Phase 1 complete — empirical schema validation against the
+live `models/md` engine)**: Phase 1 (Tasks 1.1–1.5) is done — four scratch
+suites (list mechanics, containers, free-form/heading, full `sysrs-example.md`
+round-trip; 50 checks, all passed; scripts uncommitted under /tmp) validated
+every approved shape against the live engine by subclassing the real `models/md`
+classes, closed ACC-003, and recorded every outcome + exact mechanic in Design
+Notes' new "Phase 1 outcome record" (the preliminary sketch refined in place).
+Key pins: (1) **a mandatory free-text leaf present with zero body content is
+ACCEPTED by the engine** (Task 1.3(e) — no `AssertionError`; the empty leaf's
+`.text` is its own heading line; Task 2.5 asserts acceptance, not a raise); (2)
+`item.text` keeps soft-wrapped newlines → every per-item cross-reference
+`fullmatch` needs `re.DOTALL` (patterns unchanged); (3) present-with-zero-items
+list sections raise the raw engine `AssertionError` (`process_list_field`'s
+`assert False`, before pydantic) — `Field(min_length=1)` only backstops direct
+construction (`ValidationError`); (4) an `assert` inside a `model_validator`
+surfaces as `pydantic.ValidationError` (pydantic 2.13.4 wraps validator asserts
+— the FEAT precedent's own shipped tests pin this), so under the sketch's
+mechanics zero-H3 `## Requirements` and out-of-order `## Updates` land in the
+**value** channel, while the demonstrated `from_text`-override mechanic lands
+them in the raw **structural** `AssertionError` channel ACC-004 pins — recorded
+as the one open item for the orchestrator/user before Task 2.3 (the sibling's
+locked D2/D3 design may prescribe the ordering channel); (5) the plan-text `##
+Updates` alias string carries a stray space and matches none of the locked
+example headings — corrected to the prose form in Design Notes; (6) the
+newest-first comparison must normalize naive (date-only) → aware datetimes or
+mixed-format documents raise a raw `TypeError`; (7) the packaged example must
+loosen `## References` (documented tight→loose `str()` round-trip exception) for
+byte-exact round-trip tests. Next action: Phase 2 (models + parser) — the
+Task 2.3 channel question was resolved 2026-09-02 (see Decisions Made:
+`sysrs` uses `ValidationError`, matching every other domain, for the
+zero-H3 `## Requirements` and out-of-order `## Updates` checks).
+
+**As of 2026-09-01 (plan-review fixes applied)**: A plan review
+against the live codebase and the sibling feature
+`.specmgr/feat/feat-38-39-41-43-44/README.md` (issues
+#38/#39/#41/#43/#44 — design complete 2026-09-01, D1–D10 locked,
+not yet implemented) found and fixed three things, recorded below
+and in Decisions Made: (1) the delete story was stale — `sysrs` now ships
+**7** MCP tools, not 8: the per-domain `delete_sysrs` stub is
+dropped (no whole-body domain has a per-domain delete tool since
+feat-36-delete) and `sysrs` instead adds a `_delete_sysrs` adapter
+to the generic `delete` tool (REQ-008/REQ-011/ACC-006/ACC-009,
+Tasks 3.2/3.3/3.4/6.1/6.5 updated, ADR 1af6787b added to Related
+ADRs); (2) `sysrs` now adopts the sibling feature's locked
+conventions from day one — the `## Updates` timestamp-led entry
+shape (em-dash separators rejected, ` - `/`: ` separators, parse-
+enforced newest-first ordering, `MarkdownSection2WithComment`
+  container, ordering-hint comment in the template only) and the
+  conforming frontmatter `created`/`updated` date+time form
+  (`yyyy-MM-dd HH:mm:ss.fff` + `Z`/`±HH:mm`) — so no rework after its
+  merge (Dependencies gained the coordination entry with the
+  execution-order checkpoints — Phases 1–2 and Tasks 3.1/3.2
+  parallel-safe now, Task 3.3 and Phase 6's `server.py`/`AGENTS.md`
+  regions gated on its Phase 4; the Design Notes `Updates` sketch/
+  error-channels/packaged-data/tools lines and Tasks 1.3/2.3/2.5/
+  3.1/3.2/3.3/4.1/4.2/6.1 follow); Task 0.12 (done in this pass)
+  migrated
+`sysrs-example.md` to those conventions; (3) Phase 1 pins the
+engine's behavior for a mandatory free-text section present with
+zero body content (Task 1.3(e), ACC-004, Task 2.5), Task 4.2's
+template content is now explicitly enumerated, and Task 4.1's
+comment-free reference is `sop/data/sop_example.md` (`vcr/data/
+vcr_example.md` carries one stray HTML comment, left untouched —
+other-domain data). Every other technical claim in the plan was
+re-verified against the code in this pass and held. Next action:
+Phase 1.
 
 **As of 2026-09-01**: Phase 0 complete; implementation broken down.
 The approved section outline (`example.v7.md`, REV 7 — 18 H2s / 22
@@ -1462,10 +1825,9 @@ borrowed-section content.
   update (2026-09-01) the working tree is **clean** at `055fd2d`
   (`feat(feat-32): add design document` — all research artifacts,
   `example.md`…`example.v7.md`, `sysrs-example.md`, and the README
-  state before this planning pass are committed). The only change this
-  planning pass makes is this README itself, which stays uncommitted
-  until asked — per this repo's "only commit when explicitly
-  requested" norm.
+  state before this planning pass are committed). The plan-review
+  pass's fixes (this README + the `sysrs-example.md` migration,
+  Task 0.12) land in one further commit on top of it.
 - **Folder history**: this feature folder was originally created as
   `feat-0-sysrs` (no GitHub issue yet) in the main checkout, then
   renamed to `feat-32-sysrs` and moved into this worktree/branch per
@@ -1506,22 +1868,33 @@ borrowed-section content.
   against the live `models/md` engine via a throwaway /tmp scratch
   script (NOT committed, NOT a permanent test file) — the cross-
   reference bullet mechanics, the container/optional-list mechanics,
-  the `## Updates`/free-text/H1-prefix mechanics, and a full
-  `sysrs-example.md` round-trip — recording every outcome in Design
-  Notes' "Implementation design" subsection and closing ACC-003
-  **before Phase 2 writes any Pydantic model code** (mirrors `vcr`'s
-  Phase 0 discipline). Reference artifacts: `example.v7.md` (the
-  approved section list) and `sysrs-example.md` (the filled-in
-  content for the same case); Design Notes' preliminary model-class
-  sketch is the starting point (flagged preliminary for exactly this
-  phase). Non-blocking leftovers: Task 0.11 (ISO_24765 → `##
+  the `## Updates`/free-text/H1-prefix mechanics (including the
+  locked post-sibling `## Updates` shape and the empty-mandatory-
+  leaf pin, Task 1.3(a)/(e)), and a full `sysrs-example.md` round-
+  trip (`sysrs-example.md` is already migrated to the locked
+  conventions by the done Task 0.12) — recording every outcome in
+  Design Notes' "Implementation design" subsection and closing ACC-
+  003 **before Phase 2 writes any Pydantic model code** (mirrors
+  `vcr`'s Phase 0 discipline). Reference artifacts: `example.v7.md`
+  (the approved section list — its worked `## Updates` example is
+  illustrative only, it predates the sibling feature) and
+  `sysrs-example.md` (the filled-in content for the same case);
+  Design Notes' preliminary model-class sketch is the starting point
+  (flagged preliminary for exactly this phase). Non-blocking
+  leftovers: Task 0.11 (ISO_24765 → `##
   Definitions and Acronyms` grounding).
 - **Still open / unresolved**: Task 0.11 (whether/how `ISO_24765.md`
   grounds the new `## Definitions and Acronyms` section or stays an
   unused reference — non-blocking; the approved section is free-form
   text either way); optional cleanup of the `req` docstring's pre-2023
   example characteristic names (noted in `example.v7.md`'s header,
-  out of scope). **Settled and closed**: the Phase 1–6 implementation
+  out of scope); the sibling-feature execution-order checkpoints
+  (Phases 1–2 and Tasks 3.1/3.2 parallel-safe now; Task 3.3 gated
+  on the sibling's Phase 4 — or done now + rebased on its merge;
+  Phase 6 re-merges `dev` at Task 6.1 for the `server.py`/`AGENTS.md`
+  overlap — see Dependencies; the locked conventions are already
+  adopted, so these are verification steps, not open design
+  questions). **Settled and closed**: the Phase 1–6 implementation
   breakdown itself (2026-09-01 — the Task List's "Phase 1+" stub is
   replaced; the frontmatter `status` vocabulary and the per-section
   cross-ref type-tag regex decided the same day); `## References`'s
@@ -1546,6 +1919,125 @@ entirely, per explicit user instruction, rather than continuing to
 wait on it; see Task List Task 0.7/Design Notes item 4's note.)
 
 ### Recent Updates
+
+#### Update 2026-09-02 (ACC-004/005 corrected — sysrs matches every domain's ValidationError channel for the two mechanic-dependent checks)
+
+- Completed: User decision — `sysrs` should behave like every other
+  domain rather than special-case itself for two checks whose exception
+  channel Phase 1 found to be mechanic-dependent (`## Requirements`
+  zero-H3s; `## Updates` out-of-order). Moved both cases from ACC-004's
+  `AssertionError` list to ACC-005's `ValidationError` list; corrected
+  the Design Notes model-sketch bullets, the "Error channels" bullet,
+  and the Phase 1 outcome record's former "open item" paragraph (now
+  resolved) accordingly; added a Decisions Made entry; lightly updated
+  Task 2.3's still-open description to point at the shared
+  `models/md/_ordering.py::validate_newest_first` helper unconditionally
+  (the sibling feature merged via PR #54, no more domain-local
+  fallback needed).
+- Next: Phase 2 (models + parser, Tasks 2.1–2.6), likely in a fresh
+  session per context-budget planning.
+
+#### Update 2026-09-01 (Phase 1 complete — empirical schema validation against the live models/md engine)
+
+- Completed: Phase 1 done (Tasks 1.1–1.5; Task 1.6's gate ran green —
+  its commit is the orchestrator's). Four throwaway scratch suites
+  under /tmp (`task1_1_lists`, `task1_2_containers`,
+  `task1_3_freeform`, `task1_4_roundtrip` + `common`; 50 checks, all
+  passed, never committed) subclassed the real live `models/md` engine
+  classes and validated every approved shape: (1) cross-reference list
+  mechanics — the item-text field is `MarkdownListItem.text` (marker
+  stripped, **keeps soft-wrapped `\n`** → per-item regexes need
+  `re.DOTALL`), the section-level `field_validator("items")` sees it
+  during parse and its `ValueError` lands in
+  `pydantic.ValidationError` (wrong tag / malformed uuid / missing
+  `: <title>` pinned), absent / present-N / present-zero = `None` /
+  parsed / **raw `AssertionError`** (`process_list_field`'s
+  `assert False`, before pydantic), `## References` confirmed as a
+  plain `list[MarkdownListItem]` (leaf items, no `notes` attribute);
+  (2) containers — missing mandatory child → raw `AssertionError`
+  ("expected X, found no match"), child **order is parse-enforced**
+  (reversed children → "text left over"), the `Requirements`
+  ≥1-of-9 check lands in `ValidationError` under the sketch's
+  `model_validator` mechanic (pydantic wraps validator asserts — the
+  FEAT precedent's own shipped tests pin this) and in raw
+  `AssertionError` under the demonstrated `from_text`-override
+  mechanic, the `OtherCharacteristics` umbrella present-with-zero-H3s
+  is accepted (no ≥1-of-N validator, per sketch); (3) free-form and
+  heading mechanics — the locked `## Updates` shape (the plan-literal
+  alias carries a stray space and matches none of the locked example
+  headings; corrected to the prose form), alias failures / zero
+  entries / missing entry content → raw `AssertionError`, ordering
+  channel is mechanic-dependent, the naive/aware datetime comparison
+  hazard pinned (mixed formats raise a raw `TypeError` without
+  normalization; equal timestamps allowed), fenced mermaid blocks and
+  mixed prose+bullets bodies round-trip byte-exact inside opaque
+  leaves, the H1 REGEX prefix + content-before-H1 channels pinned, and
+  **Task 1.3(e) pinned: a mandatory free-text leaf present with zero
+  body content is ACCEPTED** (no raise); (4) the full
+  `sysrs-example.md` round-trip through the complete 18-field scratch
+  root — all 18 H2s / 22 H3s, every cross-reference bullet validated
+  against its section's type tag (27 REQ + 2 GOL + 1 PRB + 1 QA + 2
+  UC + 2 DEC + 2 RSK + 3 VCR), bare-bullet-without-notes accepted,
+  ADR accepted under `## Decisions`, the only round-trip drift = the
+  documented tight→loose re-render of the example's tight `##
+  References` (packaged example must loosen it, Task 4.1), the full
+  negative-matrix channels pinned, plus a frontmatter probe (PyYAML
+  parses the locked date+time values as `datetime`; the shipped
+  `_stringify_metadata` would render `+00:00` — the sibling's shared-
+  frontmatter surface, inherited as-is by `parse_sysrs`). Every
+  outcome + the sketch refinements are recorded in Design Notes' new
+  "Phase 1 outcome record" block (one open item flagged for the
+  orchestrator/user: the zero-H3 `## Requirements` / out-of-order
+  `## Updates` exception channel — `from_text`-override assert honors
+  ACC-004's `AssertionError`, FEAT-precedent `model_validator` style
+  yields `ValidationError`); ACC-003 closed; Tasks 1.1–1.6 marked
+  done. Phase-end gate (ruff format/check, vulture, full unittest):
+  all green — no `src/`/`tests/` files changed in this phase.
+- Next: Phase 2 (models + parser, Tasks 2.1–2.6) — Task 2.3 needs the
+  recorded open item resolved first (which channel the two
+  `model_validator`-style checks ship in; the sibling's locked D2/D3
+  design may prescribe the ordering channel).
+
+#### Update 2026-09-01 (plan-review fixes — 7 tools + generic delete adapter; locked sibling #38/#39/#44 conventions adopted from day one; Phase 1 pins extended)
+
+- Completed: A plan review against the live codebase (vcr/sop
+  models, the `models/md` engine, the generic `update`/`set_status`/
+  `delete` tools, the pre-commit/CI/pyproject wiring, the shipped
+  data files) and the sibling feature `feat-38-39-41-43-44`'s
+  locked design found and fixed: (1) the stale delete story —
+  REQ-008 now lists 7 tools (the `delete_sysrs` stub dropped; no
+  whole-body domain has a per-domain delete tool since feat-
+  36-delete), REQ-011/Task 3.3 gain the `_delete_sysrs` adapter in
+  `general/tools/delete.py` (`_DELETE_TYPES`/`Literal`/imports/
+  docstring count), ACC-006 drops the stub assertion, ACC-009 and
+  Task 3.4 cover `tests/general/tools/test_delete.py`, and the
+  Scope/Design Notes/Related ADRs/Task 6.1/6.5 wording follows suit
+  (ADR 1af6787b added); (2) adoption of the sibling feature's
+  locked conventions from day one (D1–D10 locked there 2026-09-01):
+  the `## Updates` timestamp-led shape (em-dash rejected, ` - `/`: `
+  separators, parse-enforced newest-first, `MarkdownSection2With
+  Comment` container, ordering-hint comment in the template only)
+  and the conforming frontmatter date+time format (`yyyy-MM-dd
+   HH:mm:ss.fff` + `Z`/`±HH:mm`) — Dependencies gained the
+   coordination entry with the execution-order checkpoints (Phases
+   1–2 and Tasks 3.1/3.2 parallel-safe; Task 3.3 and Phase 6's
+   `server.py`/`AGENTS.md` regions gated on its Phase 4, with
+   Tasks 3.3/6.1 carrying the gate notes), the Design Notes
+   `Updates` sketch/error-channels/packaged-data/tools lines were
+   reworded, Tasks 1.3/2.3/2.5/3.1/3.2/4.1/4.2 updated,
+  and new Task 0.12 (done in this pass) migrated `sysrs-example.md`
+  (both Updates headings `—` → ` - `, frontmatter date-only →
+  midnight-UTC date+time per D7); (3) Phase 1 pins the empty-
+  mandatory-leaf engine behavior (Task 1.3(e), ACC-004, Task 2.5),
+  Task 4.2's template content is explicitly enumerated (all nine +
+  six H3s with one placeholder `REQ` bullet each, reusing the
+  example's UUIDs), and Task 4.1's comment-free reference is
+  `sop/data/sop_example.md` (the vcr example's one stray HTML
+  comment is left untouched — other-domain data, out of scope).
+  Every other technical claim in the plan was re-verified against
+  the code in this pass and held.
+- Next: Phase 1 (Tasks 1.1–1.6) — with the sibling-feature
+  checkpoint recorded for before Phase 3.
 
 #### Update 2026-09-01 (## References cardinality resolved — present ⇒ ≥1 item)
 
@@ -2184,6 +2676,47 @@ wait on it; see Task List Task 0.7/Design Notes item 4's note.)
 
 ### Decisions Made
 
+- **2026-09-02**: `sysrs`'s "≥1 of N children present" (`## Requirements`
+  zero-H3s) and "newest-first ordering" (`## Updates` out-of-order)
+  structural checks raise `pydantic.ValidationError`, not
+  `AssertionError` — supersedes the original ACC-004 wording (both
+  cases moved to ACC-005). Rationale: Phase 1 found these two checks
+  land in different exception channels purely depending on *where* the
+  identical `assert` is placed (a `model_validator` gets it wrapped
+  into `ValidationError`; a `from_text` classmethod override lets it
+  propagate as raw `AssertionError`), and the now-merged sibling
+  feature's shipped SOP/DEC/VCR/TSK `Updates`/`RecentUpdates`
+  newest-first check uses the `model_validator` mechanic
+  (`ValidationError`) via the shared
+  `models/md/_ordering.py::validate_newest_first` helper. User-
+  confirmed: `sysrs` should behave like every other domain rather than
+  special-case itself into the `AssertionError` channel — the original
+  ACC-004 wording was a misjudgment made before this mechanical wrinkle
+  was understood.
+- **2026-09-01**: `sysrs` adopts the sibling feature `feat-38-39-
+  41-43-44`'s locked conventions (issues #38/#39/#44, D1–D10 locked
+  there 2026-09-01) from day one — the `## Updates` timestamp-led
+  entry shape (em-dash separators rejected, ` - ` or ` : `
+  separators, parse-enforced newest-first ordering,
+  `MarkdownSection2WithComment` container with the ordering-hint
+  comment in the template only) and the conforming frontmatter
+  `created`/`updated` date+time form (`yyyy-MM-dd HH:mm:ss.fff` +
+  `Z`/`±HH:mm`, three-digit milliseconds) — rationale: `sysrs`
+  mirrors exactly the `dec`/`vcr`/shared-frontmatter surfaces that
+  feature changes, so waiting for its merge would only defer the
+  same shape and risk rework; `sysrs-example.md` was migrated to the
+  conventions in the same pass (Task 0.12, done); checkpoint before
+  Phase 3 (re-merge `dev`, re-verify mirror targets — the sibling's
+  Phases 1–4 touch the same `general/tools` files).
+- **2026-09-01**: `sysrs` ships **7** MCP tools, not 8 — the per-
+  domain `delete_sysrs` stub is dropped and deletion goes through
+  the generic `delete` tool (feat-36-delete, ADR 1af6787b), to
+  which `sysrs` adds its own `_delete_sysrs` adapter (REQ-011) —
+  rationale: the plan's 8-tool list predated feat-36's convention
+  change; no whole-body domain (sop/vcr included) has a per-domain
+  `delete_*` tool anymore, and ADR 36905d5b's new-domain
+  convention explicitly says "one `delete` adapter in the generic
+  `delete` tool ... not new ... `delete_<d>` tools".
 - **2026-09-01**: `## References`'s cardinality when present — ≥1
   item required (`items: list[MarkdownListItem] =
   Field(min_length=1)`); a bare `## References` heading with zero
