@@ -3,7 +3,7 @@ created: '2026-09-02T09:50:23.991493'
 id: feat-56-classification-attribute-in-frontmatter
 status: planning
 type: feat
-updated: '2026-09-02T09:50:23.991493'
+updated: '2026-09-02T16:45:00.000000'
 version: 1.0.0
 ---
 
@@ -124,11 +124,11 @@ Since feat-27-validation (closed 2026-09-01) added `wrap_tool_errors`/`FRONTMATT
 
 #### Phase 1: Model change
 
-- [ ] Task 1.1: Add `classification: str | None = None` field + blank-to-None validator to `MarkdownFrontmatter` (models/md/frontmatter.py), reusing `blank_to_none`.
+- [x] Task 1.1: Add `classification: str | None = None` field + blank-to-None validator to `MarkdownFrontmatter` (models/md/frontmatter.py), reusing `blank_to_none`.
 
-- [ ] Task 1.2: Add/update unit tests for the base frontmatter model covering classification parse, round-trip, and blank/whitespace-to-None.
+- [x] Task 1.2: Add/update unit tests for the base frontmatter model covering classification parse, round-trip, and blank/whitespace-to-None.
 
-- [ ] Task 1.3: Run the full test suite (`uv run --frozen python -m unittest discover -v -s tests -t . -p "test_*.py"`) and fix any regressions before moving on.
+- [x] Task 1.3: Run the full test suite (`uv run --frozen python -m unittest discover -v -s tests -t . -p "test_*.py"`) and fix any regressions before moving on.
 
 #### Phase 2: Generic set_classification tool
 
@@ -168,11 +168,15 @@ Since feat-27-validation (closed 2026-09-01) added `wrap_tool_errors`/`FRONTMATT
 
 ### Current Status
 
-**As of 2026-09-02**: This feature is in planning. GitHub issue #56 has been reviewed, the design (shared MarkdownFrontmatter field + generic set_classification tool, ADR frontmatter out of scope) has been agreed with the requester, and the task list has been broken into 5 phases, each ending with a full test-suite run. A related gap -- the `uc` domain has no `create_uc`/`update_uc` prompts at all -- was discovered during drafting and filed separately as GitHub issue #57. No code has been written yet.
+**As of 2026-09-02**: Phase 1 (Model change) is done. The shared `MarkdownFrontmatter` model now has an optional, free-text `classification: str | None = None` field that normalizes blank/whitespace-only input to `None` via the existing `blank_to_none` helper, inherited by all eleven whole-body domain frontmatter classes. New unit tests cover default-to-`None`, round-trip, blank/whitespace normalization, and pre-existing (no-`classification`-key) frontmatter dicts still parsing (ACC-004 at the base-model level). `ruff format --check`, `ruff check`, and `vulture` are clean. The full test suite has 4 known, expected failures in `tests/{dec,feat,sop,vcr}/resources/test_*_schema.py` -- these compare the packaged static JSON Schema files against a fresh `generate_*_schema()` call and now diverge because the model gained a field; this drift is exactly what Phase 4 Task 4.1 (`specmgr schema` regeneration) is designed to close, and Phase 1 was explicitly scoped to not run `specmgr schema`. Phase 2 (generic `set_classification` tool) has not started.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-02 16:45:00.000Z — Phase 1 (Model change) complete
+
+Added `classification: str | None = None` to `MarkdownFrontmatter` (`src/biz/dfch/specmgr/models/md/frontmatter.py`), immediately after `version`, documented in the class docstring's Parameters section, and normalized via the existing `blank_to_none` helper by adding `classification` to the existing `_optional_blank_to_none` `field_validator("created", "updated", ..., mode="before")` field list rather than adding a separate validator -- it needs the exact same blank-to-None behavior as `created`/`updated` and no other validation, so extending the existing validator's field tuple was the more idiomatic fit for this file. Added 5 new test cases to `tests/models/md/test_frontmatter.py` (`TestMarkdownFrontmatter`): default-to-`None`, explicit-value round-trip, blank-string-to-`None`, whitespace-only-to-`None`, and a pre-existing (no `classification` key) frontmatter dict still parsing with `classification is None` (ACC-004 at the base-model level). Added a `classification` entry to `whitelist.py`'s "Pydantic model fields read only via (de)serialization/rendering" section, since nothing in `src/` accesses `.classification` as a plain attribute yet (Phase 2's `set_classification` tool will add real usage, mirroring `set_status.py`'s `.status` access) -- without it, `vulture` flagged the new field as a false-positive unused variable. Ran the full quality gate: `ruff format --check` and `ruff check` are clean; `vulture src/ whitelist.py --min-confidence 60` is clean; the full `unittest` suite has 4 known failures (`tests/dec/resources/test_dec_schema.py`, `tests/feat/resources/test_feat_schema.py`, `tests/sop/resources/test_sop_schema.py`, `tests/vcr/resources/test_vcr_schema.py`), all comparing the packaged static schema JSON against a freshly generated schema that now includes `classification` -- this is the expected, Phase-4-owned consequence of the model change (Task 4.1 regenerates and commits these schemas) and was left unresolved here per this phase's explicit scope boundary (no `specmgr schema` run in Phase 1).
 
 #### 2026-09-02 12:00:00.000Z — Feature drafted
 

@@ -75,6 +75,7 @@ assumptions
 channels_to_primary_actor
 channels_to_secondary_actors
 characteristics
+classification
 comment
 created
 decisions
