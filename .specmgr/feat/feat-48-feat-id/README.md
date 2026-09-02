@@ -3,7 +3,7 @@ created: '2026-09-02T10:32:05.764646'
 id: feat-48-feat-id
 status: planning
 type: feat
-updated: '2026-09-02T17:05:00.000000'
+updated: '2026-09-02T17:40:00.000000'
 version: 1.0.0
 ---
 
@@ -128,26 +128,45 @@ known), keeping the document addressable end-to-end.
 
 #### Phase 6: Release
 
-- [ ] Task 6.1: Update `CHANGELOG.md`'s `[Unreleased]` section.
+- [x] Task 6.1: Update `CHANGELOG.md`'s `[Unreleased]` section.
 - [ ] Task 6.2: Open PR referencing issue #48, ensure pre-commit hooks pass.
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-09-02**: Phase 5 (tests) done. New unit tests cover both
-`create_feat`'s optional caller-chosen `id` parameter (happy path, shape
-validation, both caller-supplied and defaulted existing-id collisions) and
-the new `set_feat_id` tool (happy-path rename with byte-identical body,
-target-exists/source-not-found/invalid-shape failure paths). Full test
-suite green (3023 tests, up from 3015 -- 8 new tests). ACC-002 through
-ACC-007 and ACC-010 are now satisfied end-to-end, closing out every
-acceptance criterion for this feature. Implementation continues with
-Phase 6 (release).
+**As of 2026-09-02**: Phase 6 Task 6.1 (CHANGELOG) done. `CHANGELOG.md`'s
+`[Unreleased]` → `### Added` section now documents both `create_feat`'s
+optional caller-chosen `id` parameter (with the `feat-0-<slug>` default and
+the two new failure modes) and the new `set_feat_id` tool, citing GitHub
+issue #48. Full test suite reconfirmed green (3023 tests, unaffected by a
+docs-only change). Task 6.2 (open PR referencing issue #48) is deferred to
+the orchestrator/user pending a decision about pushing this branch — it is
+explicitly out of scope for the phase implementer that did Task 6.1.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-02 17:40:00.000Z — Phase 6: Release (Task 6.1)
+
+Completed Task 6.1. Added a new bullet to `CHANGELOG.md`'s
+`## [Unreleased]` → `### Added` section (prepended above the existing
+"Windowed raw reads..." entry) describing both of this feature's changes
+at the same prose density as the file's other entries (e.g.
+`confluence_update`): `create_feat`'s optional caller-chosen
+`id: str | None = None` parameter, its `feat-0-<slug-from-title>` default
+(no more max+1 auto-increment), its `FileExistsError`/`ValueError`
+failure modes, and the new `set_feat_id(id, new_id)` `@mcp.tool()`
+(validation, `FileExistsError`/`FeatNotFoundError` failure modes, byte-
+identical body preservation, `feat_create_lock()`/`feat_lock(id)` locking
+order) — cited as "GitHub issue #48", no new ADR (this feature builds on
+the two pre-existing ADRs already listed under Dependencies/Related
+Decisions). No other file touched. Quality gate: full `unittest discover`
+suite reconfirmed green (3023 tests, unchanged from Phase 5's count, as
+expected for a docs-only change). Task 6.2 (open PR) left unchecked and
+deferred to the orchestrator/user, per this task's explicit scope
+boundary.
 
 #### 2026-09-02 17:05:00.000Z — Phase 5: Tests
 
