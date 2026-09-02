@@ -2,10 +2,10 @@
 
 ``@mcp.tool()`` wrapper: set_classification (feat-56-classification, Phase 2).
 
-The generic, cross-domain classification-change tool for the eleven
+The generic, cross-domain classification-change tool for the twelve
 whole-body document types
-(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``).
-Unlike the 12-way ``set_status`` (``general/tools/set_status.py``), ``adr``
+(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``).
+Unlike the 13-way ``set_status`` (``general/tools/set_status.py``), ``adr``
 is deliberately excluded here: ADR's separate ``AdrFrontmatter`` model
 (``models/adr/``) is out of scope for the ``classification`` field entirely
 (``.specmgr/feat/feat-56-classification-attribute-in-frontmatter/README.md``
@@ -35,7 +35,7 @@ Design Notes). It bumps ``updated`` to the same shared date+time timestamp
 
 The parameter is intentionally named ``type`` (it matches the frontmatter
 field vocabulary the client already knows); no enabled ruff rule objects
-to the builtin shadow. The 11-way union return type is annotation-only --
+to the builtin shadow. The 12-way union return type is annotation-only --
 the MCP input schema is built from the parameters, and the SDK serializes
 whichever concrete document is returned.
 
@@ -145,6 +145,17 @@ Verbatim-shape port of :func:`_set_classification_dec` (same
 :func:`_set_classification_req` for the full semantics.
 
 
+### `_set_classification_sysrs(id_: 'str', classification: 'str') -> 'SysrsFrontmatter'`
+
+Replace the classification of the System Requirements Specification identified by ``id_``.
+
+Mirrors :func:`_set_classification_sop`'s shape (same ``sysrs_lock``,
+``load_by_id``, ``write_sysrs_file``, ``SysrsNotFoundError``; ``sysrs``
+is dispatch-only from day one per ADR 36905d5b, so this adapter was
+written directly in this shape) -- see :func:`_set_classification_req`
+for the full semantics.
+
+
 ### `_set_classification_tsk(id_: 'str', classification: 'str') -> 'TskFrontmatter'`
 
 Replace the classification of the task list identified by ``id_``.
@@ -170,11 +181,11 @@ Mirrors :func:`_set_classification_dec`'s shape (same ``vcr_lock``,
 :func:`_set_classification_req` for the full semantics.
 
 
-### `set_classification(id: 'str', type: "Literal['req', 'uc', 'tsk', 'qa', 'prb', 'gol', 'rsk', 'dec', 'sop', 'feat', 'vcr']", classification: 'str') -> '_SetClassificationFrontmatter'`
+### `set_classification(id: 'str', type: "Literal['req', 'uc', 'tsk', 'qa', 'prb', 'gol', 'rsk', 'dec', 'sop', 'feat', 'vcr', 'sysrs']", classification: 'str') -> '_SetClassificationFrontmatter'`
 
 Replace the ``classification`` frontmatter field of an existing document.
 
-Cross-domain generic for the eleven whole-body document types
+Cross-domain generic for the twelve whole-body document types
 (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``);
 dispatches on ``type`` to the domain's own adapter (same lock, same id
 resolution, same body handling, same domain not-found error). ``adr``
@@ -198,7 +209,7 @@ passing ``""`` or whitespace here clears the field back to
 Safety (mirroring ``set_status``'s/``update``'s/``delete``'s own
 REQ-009/REQ-003): ``id`` is validated via ``_path_safety.validate_id``
 (no ``/``, no ``\``, no ``..``, plus the dispatched domain's own
-format -- canonical lowercase-hex UUID for the ten UUID domains,
+format -- canonical lowercase-hex UUID for the eleven UUID domains,
 ``feat-NNN-slug`` for ``feat``) **before** any filesystem access, so a
 path-injection attempt, a wrong-format id, or an unsupported ``type``
 is a ``ValueError`` raised before dispatch. Each adapter additionally
@@ -213,7 +224,7 @@ id:
 type:
     The document type / domain: one of ``req``, ``uc``, ``tsk``,
     ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
-    ``vcr``.
+    ``vcr``, ``sysrs``.
 classification:
     The new classification value. Fully free-text; a blank or
     whitespace-only value clears the field back to ``None``/absent.
@@ -222,7 +233,7 @@ Returns
 -------
 ReqFrontmatter | UcFrontmatter | TskFrontmatter | QaFrontmatter | PrbFrontmatter |
 GolFrontmatter | RskFrontmatter | DecFrontmatter | FeatFrontmatter | SopFrontmatter |
-VcrFrontmatter
+VcrFrontmatter | SysrsFrontmatter
     The updated document's frontmatter only (no body) of the dispatched domain type;
     use the corresponding ``get_<d>`` tool to fetch the full document afterward.
 
@@ -230,12 +241,12 @@ Raises
 ------
 ValueError
     ``id`` is a path-injection attempt or not in the dispatched
-    domain's own format, or ``type`` is not one of the eleven
+    domain's own format, or ``type`` is not one of the twelve
     supported domains (raised before any filesystem access; nothing
     is written).
 ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
 PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
-FeatNotFoundError / SopNotFoundError / VcrNotFoundError
+FeatNotFoundError / SopNotFoundError / VcrNotFoundError / SysrsNotFoundError
     No document of the dispatched ``type`` has this id -- the
     domain's own not-found error, unchanged from the sibling generic
     tools.

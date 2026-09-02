@@ -55,6 +55,8 @@ _._validate_status
 _._validate_type_non_blank
 _._validate_value
 _._validate_version
+_._validate_items
+_._validate_at_least_one_present
 _.validate_actions_numbered_sequentially
 _.validate_heading_structure
 _.validate_headings
@@ -190,6 +192,36 @@ related_prs_commits
 # (de)serialization; nothing in `src/` accesses them as plain attributes yet.
 verifies
 test_steps
+# sysrs (feat-32 Phase 2): `Sysrs`/`BusinessContextAndGoals`/`SystemOverview`/
+# `OtherCharacteristics` fields read only via (de)serialization; nothing in
+# `src/` accesses them as plain attributes yet (the `sysrs` tools come in
+# Phase 3).
+system_purpose
+system_scope
+business_context_and_goals
+business_context
+problem_statement
+stakeholder_needs_and_elicitation
+operational_concept_and_scenarios
+risks
+assumptions_and_dependencies
+system_overview
+system_context
+system_functions
+user_characteristics
+system_integration
+system_modes_and_states
+other_characteristics
+physical_characteristics
+environmental_conditions
+information_management
+policy_and_regulation
+system_life_cycle_sustainment
+packaging_handling_shipping_and_transportation
+verification
+appendix
+definitions_and_acronyms
+
 # config (feat-51-mcp-cwd Phase 1): `DomainConfig` fields read only via
 # (de)serialization; nothing in `src/` accesses them as plain attributes yet.
 env_var

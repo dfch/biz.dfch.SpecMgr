@@ -356,31 +356,66 @@ type or cross-cutting:
   other document types may also want to reference (mirroring RSK's
   `specmgr://rsk/tara` shape). See `.specmgr/feat/feat-33-vcr/README.md`
   for the full design.
+- **`sysrs/`** (System Requirements Specification) — an aggregator document
+  type that ties together already-existing specmgr artifacts (`gol`, `prb`,
+  `qa`, `uc`, `req`, `rsk`, `dec`/`adr`, `vcr`) into one coherent, navigable
+  specification via per-section, type-tagged cross-reference lists (bullets
+  shaped `<TYPE> <uuid>: <title>` plus an optional per-bullet notes
+  paraphrase, mirroring VCR's `_VERIFIES_PATTERN` precedent) rather than
+  duplicating their content — e.g. `### Goals` accepts only `GOL` bullets,
+  `## Decisions` accepts `DEC` or `ADR`, and the nine `## Requirements` H3s
+  plus the six `## Other Characteristics` H3s each accept only `REQ`.
+  `sysrs` is, like `sop`/`vcr`, built dispatch-only from day one (ADR
+  36905d5b-8057-4294-8665-c7eed5534db0) — no per-domain `update_sysrs`/
+  `set_status_sysrs` tools of its own; whole-body and line-range updates go
+  through the generic `update` tool in `general/tools/` (`type="sysrs"`),
+  status changes through the generic `set_status` tool (`type="sysrs"`),
+  classification changes through the generic `set_classification` tool
+  (`type="sysrs"`), and deletions through the generic `delete` tool
+  (`type="sysrs"`). 7 tools (`create_sysrs`, `parse_sysrs`, `list_sysrs`,
+  `get_sysrs`, `get_sysrs_example`, `get_sysrs_template`, `validate_sysrs`);
+  the `get_sysrs` tool takes `raw: bool = False` — `raw=True` returns the
+  frontmatter-stripped body text as-is (the text `update`'s `offset`/`limit`
+  index into), with optional read-style `offset`/`limit` windowing of that
+  raw read (raw-only; out-of-range values clamp, never error). 3 resources
+  in `sysrs/resources/` (`specmgr://sysrs/schema`, `specmgr://sysrs/example`,
+  `specmgr://sysrs/template`; no `specmgr://sysrs/{id}` — id-based reads are
+  `get_sysrs`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
+  `specmgr://sysrs/list` — `list_sysrs` ships as a paged tool from day one,
+  ADR ec9f5262-9912-49d0-903f-fcfb54f28c13). 2 prompts in `sysrs/prompts/`
+  (`create_sysrs`/`update_sysrs` — `create_sysrs` first checks `list_sysrs`
+  for a near-duplicate and reads the existing cross-cutting
+  `specmgr://iso25010` resource for the nine canonical ISO/IEC 25010:2023
+  characteristic names used to group `## Requirements` (no new `general`
+  resource is introduced); `update_sysrs` names the generic
+  `update`/`set_status` tools with `type="sysrs"`). Its schema lives at
+  `sysrs/models/v1/`, inside the domain package, not top-level `models/`.
+  See `.specmgr/feat/feat-32-sysrs/README.md` for the full design.
   - **`general/`** — cross-cutting, non-domain-specific package:
     `general/tools/` (`mdformat`, formats a markdown file in place while
     preserving YAML frontmatter blocks; `update`, the generic whole-body
-    *and* line-range replace for the eleven whole-body domains — `type` is
-    one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr, read-style
+    *and* line-range replace for the twelve whole-body domains — `type` is
+    one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs, read-style
     `offset`/`limit` body-line coordinates (`offset` = 1-based first line,
     `limit` = count; omitted `limit` = through end of body, `0` = pure
     insert, `offset` `N+1` = append; strict validation, never clamped),
     splice-then-validate-whole; `set_status`, the generic status change for
-    all twelve
+    all thirteen
     domains incl. adr — `superseded_by` is ADR-only, composing
     `"superseded by X"`; `set_classification`, the generic free-text
-    `classification` frontmatter field change for the eleven whole-body
-    domains only — `type` is one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr
+    `classification` frontmatter field change for the twelve whole-body
+    domains only — `type` is one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs
     (`adr` excluded, same as `update`/`delete`, since ADR's separate
     `AdrFrontmatter` model is out of scope), bumping `updated` and leaving
     the body and every other frontmatter field untouched, with a
     blank/whitespace-only value clearing `classification` back to
     `None`/absent; `delete`, the generic type-dispatched hard-delete
-    for the eleven whole-body domains — `type` is one of
-    req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr (`adr` excluded), all eleven
+    for the twelve whole-body domains — `type` is one of
+    req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs (`adr` excluded), all twelve
     domains implement a `delete` adapter in that one tool (a future domain
     adds its own adapter there, never a per-domain `delete_<d>` tool),
      resolving by `id`, taking the domain's own lock, and returning the
-     deleted path). On a successful write, `update`, `set_status` (its eleven
+     deleted path). On a successful write, `update`, `set_status` (its twelve
      non-`adr` adapters), `set_classification`, and every per-domain
      `create_<d>` tool now return the domain's frontmatter object only (no
      body) — small and bounded regardless of document size, unlike an
@@ -397,12 +432,12 @@ type or cross-cutting:
     RASCI responsibility-assignment framework, REQ-011; motivated by `sop`
     but not scoped to it), and `general/prompts/` (`compact_history` — rotates
      older `Recent Updates` entries out of any feature folder's `README.md`
-     into a sibling `history.md`). The eleven `get_<d>` tools additionally
+     into a sibling `history.md`). The twelve `get_<d>` tools additionally
    take a `raw: bool = False` parameter — `raw=True` returns the
    frontmatter-stripped body text as-is (the text `update`'s
    `offset`/`limit` index into), with optional read-style `offset`/`limit`
    windowing of that raw read (raw-only; out-of-range values clamp, never
-   error). `get_<d>` (all twelve, incl. `get_adr`), `update`, and
+   error). `get_<d>` (all thirteen, incl. `get_adr`), `update`, and
    `set_status` apply the same `general/tools/_path_safety` guards `delete`
    already had (feat-38-39-41-43-44 Phase 4, extending feat-36-delete, ADR
    1af6787b-eaab-4e8f-888f-531c1e76c19d): validate `id` for path-injection/
@@ -432,8 +467,8 @@ mirror of that same registration and must never be hand-edited.
 Still genuinely missing / not yet done (don't assume otherwise):
 - No `validate_adr` (or `validate_req`/`validate_uc`/`validate_tsk`/
   `validate_qa`/`validate_prb`/`validate_gol`/`validate_rsk`/
-  `validate_dec`/`validate_sop`/`validate_feat`/`validate_vcr`) tool runs
-  over the repo's
+  `validate_dec`/`validate_sop`/`validate_feat`/`validate_vcr`/
+  `validate_sysrs`) tool runs over the repo's
   own documents yet via pre-commit or CI. (ADR
   9c687bb1-8ee7-41c8-84ec-07606356bc73: "Enforce doc generation/lint/tests
   locally via pre-commit hook, not just CI")

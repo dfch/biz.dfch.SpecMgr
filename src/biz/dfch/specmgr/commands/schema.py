@@ -63,6 +63,8 @@ from ..rsk.models.v1 import SCHEMA_COMMENT_VERSION as RSK_SCHEMA_COMMENT_VERSION
 from ..rsk.models.v1.document import RskDocument
 from ..sop.models.v1 import SCHEMA_COMMENT_VERSION as SOP_SCHEMA_COMMENT_VERSION
 from ..sop.models.v1.document import SopDocument
+from ..sysrs.models.v1 import SCHEMA_COMMENT_VERSION as SYSRS_SCHEMA_COMMENT_VERSION
+from ..sysrs.models.v1.document import SysrsDocument
 from ..tsk.models.v1 import SCHEMA_COMMENT_VERSION as TSK_SCHEMA_COMMENT_VERSION
 from ..tsk.models.v1.document import TskDocument
 from ..uc.models.v2 import SCHEMA_COMMENT_VERSION as UC_SCHEMA_COMMENT_VERSION
@@ -261,6 +263,24 @@ def generate_sop_schema() -> str:
     return json.dumps(schema_dict, indent=2, sort_keys=True) + "\n"
 
 
+def generate_sysrs_schema() -> str:
+    """Generate SYSRS's JSON Schema (2020-12 dialect) from ``SysrsDocument.model_json_schema()``.
+
+    Mirrors :func:`generate_req_schema` exactly, but for ``sysrs.models.v1``:
+    the ``"$schema"`` key is injected the same way (Pydantic v2 omits it by
+    default), and ``"$comment"`` holds ``sysrs.models.v1.SCHEMA_COMMENT_VERSION``
+    (currently ``"v1"``) instead of REQ's own version token.
+
+    Serializes with ``indent=2, sort_keys=True`` plus a trailing newline, for
+    the same byte-identical-output/drift-detection reason as
+    :func:`generate_req_schema`.
+    """
+    schema_dict = SysrsDocument.model_json_schema()
+    schema_dict["$schema"] = GenerateJsonSchema.schema_dialect
+    schema_dict["$comment"] = SYSRS_SCHEMA_COMMENT_VERSION
+    return json.dumps(schema_dict, indent=2, sort_keys=True) + "\n"
+
+
 def generate_vcr_schema() -> str:
     """Generate VCR's JSON Schema (2020-12 dialect) from ``VcrDocument.model_json_schema()``.
 
@@ -291,6 +311,7 @@ _GENERATORS: dict[str, Callable[[], str]] = {
     "req": generate_req_schema,
     "rsk": generate_rsk_schema,
     "sop": generate_sop_schema,
+    "sysrs": generate_sysrs_schema,
     "tsk": generate_tsk_schema,
     "uc": generate_uc_schema,
     "vcr": generate_vcr_schema,

@@ -31,7 +31,8 @@ touch.)
 
 The generic ``delete`` tool (``.specmgr/feat/feat-36-delete/README.md``,
 Design Notes sections 2-6) was the first caller. The five functions are
-now also called by the twelve ``get_<d>`` tools (including ``get_adr``)
+now also called by the thirteen ``get_<d>`` tools (including ``get_adr``,
+and ``get_sysrs`` since feat-32-sysrs Phase 3)
 and by the generic ``update`` and ``set_status`` tools
 (``.specmgr/feat/feat-38-39-41-43-44/README.md``, Phase 4, REQ-009): they
 take only plain ``str``/``Path`` inputs, return ``None`` (raise on
@@ -54,14 +55,15 @@ __all__ = [
     "validate_id",
 ]
 
-#: The eleven UUID domains whose ``id`` is a server-generated v4 UUID: the
-#: ten whole-body domains plus ``adr`` (feat-38-39-41-43-44 Phase 4,
-#: REQ-009) -- ADR ids are canonical lowercase-hex UUIDs of the exact same
+#: The twelve UUID domains whose ``id`` is a server-generated v4 UUID: the
+#: eleven whole-body domains plus ``adr`` (feat-38-39-41-43-44 Phase 4,
+#: REQ-009; ``sysrs`` added feat-32-sysrs Phase 3) -- ADR ids are canonical
+#: lowercase-hex UUIDs of the exact same
 #: shape (see ``adr.tools._paths.find_adr_path``/any ``docs/adr/*.md``
 #: frontmatter ``id`` value). ``delete``'s own ``Literal`` type still
 #: excludes ``"adr"`` (its behavior is unchanged, D-Phase-4) -- this
 #: addition is purely for use by ``get_<d>``/``update``/``set_status``.
-_UUID_TYPES = frozenset({"req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "vcr", "adr"})
+_UUID_TYPES = frozenset({"req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "vcr", "sysrs", "adr"})
 
 #: The ``feat`` document type: the one whole-body domain whose ``id`` is a
 #: chosen ``feat-NNN-slug`` folder name, not a server-generated UUID.
@@ -173,15 +175,15 @@ def validate_id(type_: str, id_: str) -> None:
     Parameters
     ----------
     type_:
-        The document type name: one of the twelve document types (the
-        eleven whole-body domains, or ``adr``).
+        The document type name: one of the thirteen document types (the
+        twelve whole-body domains, or ``adr``).
     id_:
         The id to check.
 
     Raises
     ------
     ValueError
-        ``type_`` is not one of the twelve document type names, or the
+        ``type_`` is not one of the thirteen document type names, or the
         id fails :func:`assert_no_traversal` or the type's own format
         check; the message names the offending value.
     """
@@ -196,8 +198,8 @@ def validate_id(type_: str, id_: str) -> None:
         assert_feat_id(id_)
     else:
         raise ValueError(
-            f"unknown document type {type_!r}; expected 'feat' or one of the eleven UUID domains "
-            f"(req/uc/tsk/qa/prb/gol/rsk/dec/sop/vcr/adr)"
+            f"unknown document type {type_!r}; expected 'feat' or one of the twelve UUID domains "
+            f"(req/uc/tsk/qa/prb/gol/rsk/dec/sop/vcr/sysrs/adr)"
         )
 
 

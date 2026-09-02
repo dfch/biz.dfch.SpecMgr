@@ -27,6 +27,7 @@ At this time, we have these artifact:
 - Requirement (REQ)
 - Risk (RSK)
 - Standard Operating Procedure (SOP)
+- System Requirements Specification (SYSRS)
 - Task List (TSK)
 - Use Case (UC)
 - Verification Case Record (VCR)

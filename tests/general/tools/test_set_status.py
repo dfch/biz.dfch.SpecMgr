@@ -17,13 +17,13 @@
 
 """Tests for the generic ``set_status`` ``@mcp.tool()`` wrapper (feat-22-consolidate-mutation-tools, Phase 4).
 
-Parameterized over all twelve document types (ACC-004); seeds a real,
-persisted document per type -- the eleven whole-body domains via the
+Parameterized over all thirteen document types (ACC-004); seeds a real,
+persisted document per type -- the twelve whole-body domains via the
 domain's own ``create_<d>`` tool in a temp ``SPECMGR_DOCS_DIR`` (mirroring
 the fixture strategy of ``tests/general/tools/test_update.py``), the ADR
 by rendering a minimal valid model into a temp ``SPECMGR_ADR_DIR`` -- and
 covers: status changed + ``updated`` bumped (microsecond timestamp) + body
-untouched (eleven domains: raw body byte-identical; ADR: re-render round-
+untouched (twelve domains: raw body byte-identical; ADR: re-render round-
 trip equal apart from status); each domain's closed-vocabulary
 enforcement (positive value from the domain's own ``_ALLOWED_STATUSES``;
 negative value valid in one domain but invalid in the tested one -- each a
@@ -90,6 +90,10 @@ from biz.dfch.specmgr.sop.models.v1 import SopDocument, SopFrontmatter
 from biz.dfch.specmgr.sop.models.v1.frontmatter import _ALLOWED_STATUSES as _SOP_ALLOWED_STATUSES
 from biz.dfch.specmgr.sop.tools._paths import SopNotFoundError, sop_base_dir
 from biz.dfch.specmgr.sop.tools.create_sop import create_sop
+from biz.dfch.specmgr.sysrs.models.v1 import SysrsDocument, SysrsFrontmatter
+from biz.dfch.specmgr.sysrs.models.v1.frontmatter import _ALLOWED_STATUSES as _SYSRS_ALLOWED_STATUSES
+from biz.dfch.specmgr.sysrs.tools._paths import SysrsNotFoundError, sysrs_base_dir
+from biz.dfch.specmgr.sysrs.tools.create_sysrs import create_sysrs
 from biz.dfch.specmgr.tsk.models.v1 import TskDocument, TskFrontmatter
 from biz.dfch.specmgr.tsk.models.v1.frontmatter import _ALLOWED_STATUSES as _TSK_ALLOWED_STATUSES
 from biz.dfch.specmgr.tsk.tools._paths import TskNotFoundError, tsk_base_dir
@@ -349,10 +353,49 @@ _VCR_MINIMAL_BODY = textwrap.dedent(
     """
 )
 
+_SYSRS_GOL_ID = "0e15c5de-4ac9-4279-aa75-53249a3e43e4"
+_SYSRS_REQ_ID = "a3f8c2d1-7b4e-4d9a-b6c0-91e5f2a8d734"
+
+_SYSRS_MINIMAL_BODY = textwrap.dedent(
+    f"""\
+    # System Requirements Specification: Sample Document
+
+    ## System Purpose
+
+    Provision partner accounts.
+
+    ## System Scope
+
+    Onboarding only.
+
+    ## Business Context and Goals
+
+    ### Goals
+
+    - GOL {_SYSRS_GOL_ID}: A goal
+
+    ## System Overview
+
+    ### System Context
+
+    Context.
+
+    ### System Functions
+
+    Functions.
+
+    ## Requirements
+
+    ### Functional Suitability
+
+    - REQ {_SYSRS_REQ_ID}: A requirement
+    """
+)
+
 
 @dataclass(frozen=True)
 class _Case:
-    """Per-type test data for the eleven whole-body document types."""
+    """Per-type test data for the twelve whole-body document types."""
 
     doc_type: str
     create: Callable[[str], Any]
@@ -483,6 +526,17 @@ _CASES: list[_Case] = [
         invalid_status="accepted",
         allowed_statuses=_VCR_ALLOWED_STATUSES,
     ),
+    _Case(
+        doc_type="sysrs",
+        create=create_sysrs,
+        not_found_error=SysrsNotFoundError,
+        frontmatter_type=SysrsFrontmatter,
+        document_type=SysrsDocument,
+        minimal_body=_SYSRS_MINIMAL_BODY,
+        valid_status="review",
+        invalid_status="accepted",
+        allowed_statuses=_SYSRS_ALLOWED_STATUSES,
+    ),
 ]
 
 #: A well-formed canonical UUID (feat-38-39-41-43-44 Phase 4 added "adr" to ``_path_safety``'s
@@ -533,7 +587,7 @@ class TempDocsDirTestCase(unittest.TestCase):
 
 
 class TestSetStatusWholeBodyDomains(TempDocsDirTestCase):
-    """ACC-004: the eleven whole-body domains -- status changed, ``updated`` bumped, body untouched."""
+    """ACC-004: the twelve whole-body domains -- status changed, ``updated`` bumped, body untouched."""
 
     def test_case_data_matches_the_domains_own_closed_sets(self) -> None:
         """Each ``valid_status``/``invalid_status`` pair must be exactly as claimed against the domain's own set."""
@@ -681,7 +735,7 @@ class TestSetStatusSupersededByGuard(TempDocsDirTestCase):
 
 @dataclass(frozen=True)
 class _InjectionCase:
-    """Per-type test data for ``_path_safety`` coverage (ACC-008), across all twelve document types."""
+    """Per-type test data for ``_path_safety`` coverage (ACC-008), across all thirteen document types."""
 
     doc_type: str
     create: Callable[[str], Any]
@@ -695,11 +749,11 @@ class _InjectionCase:
 #: The pinned path-injection shapes (mirrors ``test_delete.py``'s own ``_TRAVERSAL_IDS``).
 _TRAVERSAL_IDS = ("../x", "a/b", "a\\b", "..")
 
-#: A well-formed feat-NNN-slug folder name (the wrong-format id for the eleven UUID domains).
+#: A well-formed feat-NNN-slug folder name (the wrong-format id for the twelve UUID domains).
 _FEAT_SLUG_ID = "feat-36-delete"
 
 #: A minimal, valid feat body (ACC-008's injection coverage: feat is the one whole-body domain
-#: whose id shape differs from the ten UUID domains, mirroring ``test_delete.py``'s own fixture).
+#: whose id shape differs from the eleven UUID domains, mirroring ``test_delete.py``'s own fixture).
 _FEAT_MINIMAL_BODY = textwrap.dedent(
     """\
     # Feature: Example Widget
@@ -759,6 +813,7 @@ _INJECTION_CASES: list[_InjectionCase] = [
     _InjectionCase("dec", create_dec, dec_base_dir, _DEC_MINIMAL_BODY, "accepted", _FEAT_SLUG_ID),
     _InjectionCase("sop", create_sop, sop_base_dir, _SOP_MINIMAL_BODY, "active", _FEAT_SLUG_ID),
     _InjectionCase("vcr", create_vcr, vcr_base_dir, _VCR_MINIMAL_BODY, "progress", _FEAT_SLUG_ID),
+    _InjectionCase("sysrs", create_sysrs, sysrs_base_dir, _SYSRS_MINIMAL_BODY, "review", _FEAT_SLUG_ID),
     _InjectionCase("feat", create_feat, feat_base_dir, _FEAT_MINIMAL_BODY, "progress", _MISSING_UUID),
 ]
 
@@ -766,7 +821,7 @@ _INJECTION_CASES: list[_InjectionCase] = [
 class TempSetStatusInjectionDirTestCase(unittest.TestCase):
     """Common fixture for ACC-008: temp dirs for SPECMGR_DOCS_DIR, SPECMGR_FEAT_DIR, and
     SPECMGR_ADR_DIR (mirrors ``test_delete.py``'s ``TempDeleteDirTestCase``, since injection
-    coverage spans all twelve document types, feat and adr included)."""
+    coverage spans all thirteen document types, feat and adr included)."""
 
     def setUp(self) -> None:
         self.docs_root = Path(self.enterContext(tempfile.TemporaryDirectory()))
@@ -835,7 +890,7 @@ class TestSetStatusAssertWithinSpy(TempSetStatusInjectionDirTestCase):
     """ACC-008: ``assert_within`` is actually invoked (not just present in source) during a valid set_status."""
 
     def test_assert_within_is_called_with_base_dir_and_resolved_path(self) -> None:
-        """For each of the eleven whole-body domains, a valid status change must call ``assert_within(base_dir, path)``."""
+        """For each of the twelve whole-body domains, a valid status change must call ``assert_within(base_dir, path)``."""
         for case in _INJECTION_CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = case.create(case.minimal_body)

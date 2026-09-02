@@ -1,0 +1,1151 @@
+{
+  "$comment": "v1",
+  "$defs": {
+    "Appendix": {
+      "description": "`## Appendix` -- supplementary material that does not belong in any\nother section, e.g. large diagrams, worked examples, extended\ninterface descriptions. Optional, free-form prose (fenced code\nblocks, e.g. ```mermaid, are accepted verbatim). No 29148 clause\n(user addition).",
+      "properties": {},
+      "title": "Appendix",
+      "type": "object"
+    },
+    "AssumptionsAndDependencies": {
+      "description": "`## Assumptions and Dependencies` -- assumptions/dependencies to take\ninto account when allocating and deriving lower-level requirements\n(29148 \u00a79.5.19). Optional, free-form prose (may mix paragraphs and\nbullets).\n\nThe class name's implicit `SPACE_SEPARATED` derivation would expect\n\"Assumptions And Dependencies\" (capitalized \"And\"), so the alias is\npinned LITERAL to the lowercase \"and\" the heading actually uses.",
+      "properties": {},
+      "title": "AssumptionsAndDependencies",
+      "type": "object"
+    },
+    "BusinessContext": {
+      "description": "`### Business Context` under `## Business Context and Goals` --\nfree-form prose describing the business situation driving this\nspecification (BRS \u00a79.3.2/9.3.7; StRS \u00a79.4.2/9.4.7). Optional; may not\nexist at creation time.",
+      "properties": {},
+      "title": "BusinessContext",
+      "type": "object"
+    },
+    "BusinessContextAndGoals": {
+      "description": "`## Business Context and Goals` -- umbrella for the BRS/StRS content\nborrowed into this document (BRS \u00a79.3.2/9.3.7; StRS \u00a79.4.2/9.4.7).\nMandatory.\n\nThe class name `BusinessContextAndGoals` does not match the heading's\nexact wording (lowercase \"and\"), so the alias is pinned LITERAL (the\nimplicit `SPACE_SEPARATED` alias would expect \"Business Context And\nGoals\").\n\nParameters\n----------\nbusiness_context:\n    `### Business Context` sub-section (free-form prose). Optional.\ngoals:\n    `### Goals` sub-section (cross-reference list to `gol`, >=1 item).\n    Mandatory once this container is present.\nproblem_statement:\n    `### Problem Statement` sub-section (cross-reference list to\n    `prb`, >=1 item when present). Optional.",
+      "properties": {
+        "business_context": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BusinessContext"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### Business Context` sub-section. Optional."
+        },
+        "goals": {
+          "$ref": "#/$defs/Goals",
+          "description": "`### Goals` sub-section (cross-reference list to `gol`, >=1 item). Mandatory once this container is present."
+        },
+        "problem_statement": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ProblemStatement"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### Problem Statement` sub-section (cross-reference list to `prb`, >=1 item when present). Optional."
+        }
+      },
+      "required": [
+        "goals"
+      ],
+      "title": "BusinessContextAndGoals",
+      "type": "object"
+    },
+    "Compatibility": {
+      "description": "`### Compatibility` under `## Requirements` -- cross-reference list to\n`req` (29148 \u00a79.5.8 interfaces -> Interoperability; \u00a79.5.9.4 other\nquality). Optional; at least one item when present.\n\nParameters\n----------\nitems:\n    Bullet list of `REQ <uuid>: <title>` cross-references. Must\n    contain at least one item.",
+      "properties": {
+        "items": {
+          "description": "Bullet list of `REQ <uuid>: <title>` cross-references; must contain at least one item.",
+          "items": {
+            "$ref": "#/$defs/MarkdownListItemWithNotes"
+          },
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "Compatibility",
+      "type": "object"
+    },
+    "Decisions": {
+      "description": "`## Decisions` -- cross-reference list to `dec`/`adr` -- architecture/\ndesign choices made in service of the requirements below. Optional as\na whole; at least one item when present. No 29148 clause (specmgr\naddition).\n\nParameters\n----------\nitems:\n    Bullet list of `DEC <uuid>: <title>` or `ADR <uuid>: <title>`\n    cross-references. Must contain at least one item.",
+      "properties": {
+        "items": {
+          "description": "Bullet list of `DEC <uuid>: <title>` or `ADR <uuid>: <title>` cross-references; must contain at least one item.",
+          "items": {
+            "$ref": "#/$defs/MarkdownListItemWithNotes"
+          },
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "Decisions",
+      "type": "object"
+    },
+    "DefinitionsAndAcronyms": {
+      "description": "`## Definitions and Acronyms` -- list of abbreviations used in this\ndocument (e.g. API, MVP, SLA). Optional, free-form prose. No 29148\nclause (user addition).\n\nThe class name's implicit `SPACE_SEPARATED` derivation would expect\n\"Definitions And Acronyms\" (capitalized \"And\"), so the alias is pinned\nLITERAL to the lowercase \"and\" the heading actually uses.",
+      "properties": {},
+      "title": "DefinitionsAndAcronyms",
+      "type": "object"
+    },
+    "EnvironmentalConditions": {
+      "description": "`### Environmental Conditions` under `## Other Characteristics` --\ncross-reference list to `req` (29148 \u00a79.5.12). Optional; at least one\nitem when present.\n\nParameters\n----------\nitems:\n    Bullet list of `REQ <uuid>: <title>` cross-references. Must\n    contain at least one item.",
+      "properties": {
+        "items": {
+          "description": "Bullet list of `REQ <uuid>: <title>` cross-references; must contain at least one item.",
+          "items": {
+            "$ref": "#/$defs/MarkdownListItemWithNotes"
+          },
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "EnvironmentalConditions",
+      "type": "object"
+    },
+    "Flexibility": {
+      "description": "`### Flexibility` under `## Requirements` -- cross-reference list to\n`req` (29148 \u00a79.5.9.4; the 25010:2023 rename of Portability). Optional;\nat least one item when present.\n\nParameters\n----------\nitems:\n    Bullet list of `REQ <uuid>: <title>` cross-references. Must\n    contain at least one item.",
+      "properties": {
+        "items": {
+          "description": "Bullet list of `REQ <uuid>: <title>` cross-references; must contain at least one item.",
+          "items": {
+            "$ref": "#/$defs/MarkdownListItemWithNotes"
+          },
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "Flexibility",
+      "type": "object"
+    },
+    "FunctionalSuitability": {
+      "description": "`### Functional Suitability` under `## Requirements` -- cross-reference\nlist to `req` (29148 \u00a79.5.5 functional). Optional; at least one item\nwhen present.\n\nParameters\n----------\nitems:\n    Bullet list of `REQ <uuid>: <title>` cross-references. Must\n    contain at least one item.",
+      "properties": {
+        "items": {
+          "description": "Bullet list of `REQ <uuid>: <title>` cross-references; must contain at least one item.",
+          "items": {
+            "$ref": "#/$defs/MarkdownListItemWithNotes"
+          },
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "FunctionalSuitability",
+      "type": "object"
+    },
+    "Goals": {
+      "description": "`### Goals` under `## Business Context and Goals` -- cross-reference\nlist to `gol`. Mandatory once the container is present, at least one\nitem.\n\nParameters\n----------\nitems:\n    Bullet list of `GOL <uuid>: <title>` cross-references, each\n    optionally followed by an indented notes paragraph (the\n    `MarkdownListItemWithNotes` shape, REQ-003). Must contain at least\n    one item.",
+      "properties": {
+        "items": {
+          "description": "Bullet list of `GOL <uuid>: <title>` cross-references; must contain at least one item.",
+          "items": {
+            "$ref": "#/$defs/MarkdownListItemWithNotes"
+          },
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "Goals",
+      "type": "object"
+    },
+    "InformationManagement": {
+      "description": "`### Information Management` under `## Other Characteristics` --\ncross-reference list to `req` (29148 \u00a79.5.14). Optional; at least one\nitem when present.\n\nParameters\n----------\nitems:\n    Bullet list of `REQ <uuid>: <title>` cross-references. Must\n    contain at least one item.",
+      "properties": {
+        "items": {
+          "description": "Bullet list of `REQ <uuid>: <title>` cross-references; must contain at least one item.",
+          "items": {
+            "$ref": "#/$defs/MarkdownListItemWithNotes"
+          },
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "InformationManagement",
+      "type": "object"
+    },
+    "InteractionCapability": {
+      "description": "`### Interaction Capability` under `## Requirements` -- cross-reference\nlist to `req` (29148 \u00a79.5.6 usability; \u00a79.5.9.1 human system\nintegration). Optional; at least one item when present.\n\nParameters\n----------\nitems:\n    Bullet list of `REQ <uuid>: <title>` cross-references. Must\n    contain at least one item.",
+      "properties": {
+        "items": {
+          "description": "Bullet list of `REQ <uuid>: <title>` cross-references; must contain at least one item.",
+          "items": {
+            "$ref": "#/$defs/MarkdownListItemWithNotes"
+          },
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "InteractionCapability",
+      "type": "object"
+    },
+    "Maintainability": {
+      "description": "`### Maintainability` under `## Requirements` -- cross-reference list\nto `req` (29148 \u00a79.5.9.2). Optional; at least one item when present.\n\nParameters\n----------\nitems:\n    Bullet list of `REQ <uuid>: <title>` cross-references. Must\n    contain at least one item.",
+      "properties": {
+        "items": {
+          "description": "Bullet list of `REQ <uuid>: <title>` cross-references; must contain at least one item.",
+          "items": {
+            "$ref": "#/$defs/MarkdownListItemWithNotes"
+          },
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "Maintainability",
+      "type": "object"
+    },
+    "MarkdownComment": {
+      "description": "A standalone HTML comment block (`\"html_block\"`, e.g. `<!-- some note -->`).\n\nDeliberately leaf-only, like `MarkdownCodeBlock`. Declare an optional\n`comment: MarkdownComment | None` field on any `MarkdownStr` subclass to\nlet a value be preceded by such an explanatory comment without it\nbreaking that class's own structural field matching. See `get_extent`/\n`from_text`/`text` for the full mechanics.",
+      "properties": {},
+      "title": "MarkdownComment",
+      "type": "object"
+    },
+    "MarkdownListItem": {
+      "description": "One item (\"li\") of a markdown bullet or numbered list.\n\nUsed only as `items: list[MarkdownListItem]` (or `list[MarkdownListItem] |\nNone`) on a `MarkdownSection`/`MarkdownParagraph`/`MarkdownListItem` --\nthere is no separate list-container class, and a bare item cannot be\nparsed as a top-level/scalar field on its own; every item is assumed to\nstart with at least one paragraph (its own lead text).\n\nLeaf (no declared nested fields, the default): `_value` holds the item's\ncomplete extent verbatim, marker included. Composite (a subclass declares\nfields): `_value` holds only the item's own leading paragraph, marker\nincluded -- the marker cannot be reconstructed from class metadata alone,\nso it is kept verbatim -- and the remainder is dedented and delegated to\nnested field parsing; `__str__` re-indents the children's rendered output\nby the marker's own width before recombining.\n\nRound-trip note: a tight source list currently round-trips to a\nstructurally-equivalent loose list rather than byte-exact (loose lists\nremain byte-exact) -- an accepted, documented exception; see\n`from_text`/`__str__` docstrings below for the full mechanics.",
+      "properties": {},
+      "title": "MarkdownListItem",
+      "type": "object"
+    },
+    "MarkdownListItemWithNotes": {
+      "description": "One list item that captures continuation paragraphs (loose-list notes) via a declared `notes` field.\n\nMirrors `ExtensionItem`'s docstring: adds `notes` for captured continuation\nparagraphs inside a list item, so they appear in ``model_dump()``/JSON output\ninstead of being lost to Pydantic's private-attribute invisibility. Delegates\n``get_extent()`` / ``from_text()`` / ``__str__()`` to the inherited\n``MarkdownListItem`` (no new extent logic needed; ``MarkdownStr.process_list_field()``\niterates items by ``get_extent()`` and the field-distribution loop picks up\nremaining text).",
+      "properties": {
+        "notes": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/MarkdownParagraph"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Notes"
+        }
+      },
+      "title": "MarkdownListItemWithNotes",
+      "type": "object"
+    },
+    "MarkdownParagraph": {
+      "description": "A markdown paragraph (\"p\"), the non-heading sibling of `MarkdownSection`.\n\nA paragraph has no level, so there is a single `MarkdownParagraph` class\n(no `MarkdownParagraph1`..`6` spectrum) and no `@alias` check -- a\nparagraph's content is free-form prose, not a title.\n\nLeaf (no declared nested fields): `_value` holds the paragraph's own line\nspan, verbatim. Composite (declares fields): `_value` holds only the\nparagraph's own inline text (e.g. a lead-in sentence); the remaining text\nis delegated to nested field parsing, bounded by the next heading of any\nlevel (a paragraph can never itself contain a heading). See\n`get_extent`/`from_text`/`__str__` docstrings below for the full\nmechanics.",
+      "properties": {},
+      "title": "MarkdownParagraph",
+      "type": "object"
+    },
+    "MoreInformation": {
+      "description": "`## More Information` -- free-form optional supplementary text, no\nfixed format. Optional. Mirrors `dec`/`sop`/`vcr`'s own `## More\nInformation`.",
+      "properties": {},
+      "title": "MoreInformation",
+      "type": "object"
+    },
+    "OperationalConceptAndScenarios": {
+      "description": "`## Operational Concept and Scenarios` -- cross-reference list to\n`uc` (StRS \u00a79.4.16/9.4.17; ConOps/OpsCon \u00a75.4/Annex A). Optional as a\nwhole; at least one item when present.\n\nThe class name's implicit `SPACE_SEPARATED` derivation would expect\n\"Operational Concept And Scenarios\" (capitalized \"And\"), so the alias\nis pinned LITERAL to the lowercase \"and\" the heading actually uses.\n\nParameters\n----------\nitems:\n    Bullet list of `UC <uuid>: <title>` cross-references. Must contain\n    at least one item.",
+      "properties": {
+        "items": {
+          "description": "Bullet list of `UC <uuid>: <title>` cross-references; must contain at least one item.",
+          "items": {
+            "$ref": "#/$defs/MarkdownListItemWithNotes"
+          },
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "OperationalConceptAndScenarios",
+      "type": "object"
+    },
+    "OtherCharacteristics": {
+      "description": "`## Other Characteristics` -- umbrella for 29148 \u00a79.5.11-9.5.17 -- the\nrequirement categories that are NOT 25010 characteristics. Optional as\na whole (omit if none of the six apply, e.g. no packaging for\ncloud-hosted software); **no** >=1-of-N validator, unlike\n`Requirements` -- the whole umbrella is optional.\n\nParameters\n----------\nphysical_characteristics, environmental_conditions,\ninformation_management, policy_and_regulation,\nsystem_life_cycle_sustainment,\npackaging_handling_shipping_and_transportation:\n    The six sub-sections, in that fixed (parse-enforced) order. Each\n    independently optional.",
+      "properties": {
+        "environmental_conditions": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EnvironmentalConditions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### Environmental Conditions` sub-section. Optional."
+        },
+        "information_management": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/InformationManagement"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### Information Management` sub-section. Optional."
+        },
+        "packaging_handling_shipping_and_transportation": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PackagingHandlingShippingAndTransportation"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### Packaging, Handling, Shipping and Transportation` sub-section. Optional."
+        },
+        "physical_characteristics": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PhysicalCharacteristics"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### Physical Characteristics` sub-section. Optional."
+        },
+        "policy_and_regulation": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PolicyAndRegulation"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### Policy and Regulation` sub-section. Optional."
+        },
+        "system_life_cycle_sustainment": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SystemLifeCycleSustainment"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### System Life Cycle Sustainment` sub-section. Optional."
+        }
+      },
+      "title": "OtherCharacteristics",
+      "type": "object"
+    },
+    "PackagingHandlingShippingAndTransportation": {
+      "description": "`### Packaging, Handling, Shipping and Transportation` under `##\nOther Characteristics` -- cross-reference list to `req` (29148\n\u00a79.5.17). Optional; at least one item when present.\n\nThe class name's implicit `SPACE_SEPARATED` derivation would produce\n\"Packaging Handling Shipping And Transportation\" (no commas,\ncapitalized \"And\"), so the alias is pinned LITERAL to the heading's\nactual comma-separated, lowercase-\"and\" wording.\n\nParameters\n----------\nitems:\n    Bullet list of `REQ <uuid>: <title>` cross-references. Must\n    contain at least one item.",
+      "properties": {
+        "items": {
+          "description": "Bullet list of `REQ <uuid>: <title>` cross-references; must contain at least one item.",
+          "items": {
+            "$ref": "#/$defs/MarkdownListItemWithNotes"
+          },
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "PackagingHandlingShippingAndTransportation",
+      "type": "object"
+    },
+    "PerformanceEfficiency": {
+      "description": "`### Performance Efficiency` under `## Requirements` -- cross-reference\nlist to `req` (29148 \u00a79.5.7). Optional; at least one item when\npresent.\n\nParameters\n----------\nitems:\n    Bullet list of `REQ <uuid>: <title>` cross-references. Must\n    contain at least one item.",
+      "properties": {
+        "items": {
+          "description": "Bullet list of `REQ <uuid>: <title>` cross-references; must contain at least one item.",
+          "items": {
+            "$ref": "#/$defs/MarkdownListItemWithNotes"
+          },
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "PerformanceEfficiency",
+      "type": "object"
+    },
+    "PhysicalCharacteristics": {
+      "description": "`### Physical Characteristics` under `## Other Characteristics` --\ncross-reference list to `req` (29148 \u00a79.5.11). Optional; at least one\nitem when present.\n\nParameters\n----------\nitems:\n    Bullet list of `REQ <uuid>: <title>` cross-references. Must\n    contain at least one item.",
+      "properties": {
+        "items": {
+          "description": "Bullet list of `REQ <uuid>: <title>` cross-references; must contain at least one item.",
+          "items": {
+            "$ref": "#/$defs/MarkdownListItemWithNotes"
+          },
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "PhysicalCharacteristics",
+      "type": "object"
+    },
+    "PolicyAndRegulation": {
+      "description": "`### Policy and Regulation` under `## Other Characteristics` --\ncross-reference list to `req` (29148 \u00a79.5.15). Optional; at least one\nitem when present.\n\nThe class name's implicit `SPACE_SEPARATED` derivation would expect\n\"Policy And Regulation\" (capitalized \"And\"), so the alias is pinned\nLITERAL to the lowercase \"and\" the heading actually uses.\n\nParameters\n----------\nitems:\n    Bullet list of `REQ <uuid>: <title>` cross-references. Must\n    contain at least one item.",
+      "properties": {
+        "items": {
+          "description": "Bullet list of `REQ <uuid>: <title>` cross-references; must contain at least one item.",
+          "items": {
+            "$ref": "#/$defs/MarkdownListItemWithNotes"
+          },
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "PolicyAndRegulation",
+      "type": "object"
+    },
+    "ProblemStatement": {
+      "description": "`### Problem Statement` under `## Business Context and Goals` --\ncross-reference list to `prb`. Optional as a whole (not every system\nhas a formal problem statement); at least one item when present.\n\nParameters\n----------\nitems:\n    Bullet list of `PRB <uuid>: <title>` cross-references. Must\n    contain at least one item.",
+      "properties": {
+        "items": {
+          "description": "Bullet list of `PRB <uuid>: <title>` cross-references; must contain at least one item.",
+          "items": {
+            "$ref": "#/$defs/MarkdownListItemWithNotes"
+          },
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "ProblemStatement",
+      "type": "object"
+    },
+    "References": {
+      "description": "`## References` -- free-form bullet list of external standards/\ndocuments (no specmgr ids, no per-item type-tag regex) -- mirrors\n29148's own \"5 References\". Optional as a whole; present implies at\nleast one item (user-confirmed 2026-09-01: a bare heading with zero\nbullets is a structural error, consistent with every other list\nsection in the codebase).\n\nParameters\n----------\nitems:\n    Plain bullet list of external references (the no-notes\n    `MarkdownListItem` variant, unlike every cross-reference list\n    above). Must contain at least one item.",
+      "properties": {
+        "items": {
+          "description": "Plain bullet list of external references; must contain at least one item.",
+          "items": {
+            "$ref": "#/$defs/MarkdownListItem"
+          },
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "References",
+      "type": "object"
+    },
+    "Reliability": {
+      "description": "`### Reliability` under `## Requirements` -- cross-reference list to\n`req` (29148 \u00a79.5.9.3). Optional; at least one item when present.\n\nParameters\n----------\nitems:\n    Bullet list of `REQ <uuid>: <title>` cross-references. Must\n    contain at least one item.",
+      "properties": {
+        "items": {
+          "description": "Bullet list of `REQ <uuid>: <title>` cross-references; must contain at least one item.",
+          "items": {
+            "$ref": "#/$defs/MarkdownListItemWithNotes"
+          },
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "Reliability",
+      "type": "object"
+    },
+    "Requirements": {
+      "description": "`## Requirements` -- the document's reason for existing: the nine\nISO/IEC 25010:2023 product-quality characteristics in canonical model\norder, each a cross-reference list to `req`, grouped by the REQ's\nfirst `## Characteristics` item (the placement rule, see\n`example.v7.md`'s header comment). Mandatory as a whole; at least one\nof the nine H3s must be present.\n\nParameters\n----------\nfunctional_suitability, performance_efficiency, compatibility,\ninteraction_capability, reliability, security, maintainability,\nflexibility, safety:\n    The nine canonical ISO/IEC 25010:2023 characteristic sub-sections,\n    in that fixed (parse-enforced) order. Each independently optional,\n    but at least one of the nine must be present (`_validate_at_least_one_present`).",
+      "properties": {
+        "compatibility": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Compatibility"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### Compatibility` sub-section. Optional."
+        },
+        "flexibility": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Flexibility"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### Flexibility` sub-section. Optional."
+        },
+        "functional_suitability": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FunctionalSuitability"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### Functional Suitability` sub-section. Optional."
+        },
+        "interaction_capability": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/InteractionCapability"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### Interaction Capability` sub-section. Optional."
+        },
+        "maintainability": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Maintainability"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### Maintainability` sub-section. Optional."
+        },
+        "performance_efficiency": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PerformanceEfficiency"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### Performance Efficiency` sub-section. Optional."
+        },
+        "reliability": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Reliability"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### Reliability` sub-section. Optional."
+        },
+        "safety": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Safety"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### Safety` sub-section. Optional."
+        },
+        "security": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Security"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### Security` sub-section. Optional."
+        }
+      },
+      "title": "Requirements",
+      "type": "object"
+    },
+    "Risks": {
+      "description": "`## Risks` -- cross-reference list to `rsk`. Optional as a whole; at\nleast one item when present. No 29148 clause.\n\nParameters\n----------\nitems:\n    Bullet list of `RSK <uuid>: <title>` cross-references. Must\n    contain at least one item.",
+      "properties": {
+        "items": {
+          "description": "Bullet list of `RSK <uuid>: <title>` cross-references; must contain at least one item.",
+          "items": {
+            "$ref": "#/$defs/MarkdownListItemWithNotes"
+          },
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "Risks",
+      "type": "object"
+    },
+    "Safety": {
+      "description": "`### Safety` under `## Requirements` -- cross-reference list to `req`\n(no 29148 \u00a79.5 clause; 25010:2023 addition). Optional; at least one\nitem when present.\n\nParameters\n----------\nitems:\n    Bullet list of `REQ <uuid>: <title>` cross-references. Must\n    contain at least one item.",
+      "properties": {
+        "items": {
+          "description": "Bullet list of `REQ <uuid>: <title>` cross-references; must contain at least one item.",
+          "items": {
+            "$ref": "#/$defs/MarkdownListItemWithNotes"
+          },
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "Safety",
+      "type": "object"
+    },
+    "Security": {
+      "description": "`### Security` under `## Requirements` -- cross-reference list to\n`req` (29148 \u00a79.5.13). Optional; at least one item when present.\n\nParameters\n----------\nitems:\n    Bullet list of `REQ <uuid>: <title>` cross-references. Must\n    contain at least one item.",
+      "properties": {
+        "items": {
+          "description": "Bullet list of `REQ <uuid>: <title>` cross-references; must contain at least one item.",
+          "items": {
+            "$ref": "#/$defs/MarkdownListItemWithNotes"
+          },
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "Security",
+      "type": "object"
+    },
+    "StakeholderNeedsAndElicitation": {
+      "description": "`## Stakeholder Needs and Elicitation` -- cross-reference list to\n`qa` (StRS \u00a79.4.5/9.4.15). Optional as a whole (elicitation artifacts\nmay not exist yet at first drafting); at least one item when present.\n\nThe class name's implicit `SPACE_SEPARATED` derivation would expect\n\"Stakeholder Needs And Elicitation\" (capitalized \"And\"), so the alias\nis pinned LITERAL to the lowercase \"and\" the heading actually uses.\n\nParameters\n----------\nitems:\n    Bullet list of `QA <uuid>: <title>` cross-references. Must contain\n    at least one item.",
+      "properties": {
+        "items": {
+          "description": "Bullet list of `QA <uuid>: <title>` cross-references; must contain at least one item.",
+          "items": {
+            "$ref": "#/$defs/MarkdownListItemWithNotes"
+          },
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "StakeholderNeedsAndElicitation",
+      "type": "object"
+    },
+    "Sysrs": {
+      "description": "The `sysrs` body: a single H1 section with the fields below.\n\nThe H1 heading text is mandated to start with `System Requirements\nSpecification: ` (unlike every other domain's free-form H1) --\nREQ-005.\n\nParameters\n----------\nsystem_purpose:\n    `## System Purpose`. Mandatory.\nsystem_scope:\n    `## System Scope`. Mandatory.\nbusiness_context_and_goals:\n    `## Business Context and Goals`. Mandatory.\nstakeholder_needs_and_elicitation:\n    `## Stakeholder Needs and Elicitation`. Optional.\noperational_concept_and_scenarios:\n    `## Operational Concept and Scenarios`. Optional.\ndecisions:\n    `## Decisions`. Optional.\nrisks:\n    `## Risks`. Optional.\nassumptions_and_dependencies:\n    `## Assumptions and Dependencies`. Optional.\nsystem_overview:\n    `## System Overview`. Mandatory.\nsystem_modes_and_states:\n    `## System Modes and States`. Optional.\nrequirements:\n    `## Requirements` (>=1 of 9 characteristic sub-sections).\n    Mandatory.\nother_characteristics:\n    `## Other Characteristics`. Optional.\nverification:\n    `## Verification`. Optional.\nreferences:\n    `## References`. Optional.\nmore_information:\n    `## More Information`. Optional.\nappendix:\n    `## Appendix`. Optional.\ndefinitions_and_acronyms:\n    `## Definitions and Acronyms`. Optional.\nupdates:\n    `## Updates` (>=1 entry if present). Optional; last section.",
+      "properties": {
+        "appendix": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Appendix"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`## Appendix` section. Optional."
+        },
+        "assumptions_and_dependencies": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AssumptionsAndDependencies"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`## Assumptions and Dependencies` section. Optional."
+        },
+        "business_context_and_goals": {
+          "$ref": "#/$defs/BusinessContextAndGoals",
+          "description": "`## Business Context and Goals` section. Mandatory."
+        },
+        "decisions": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Decisions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`## Decisions` section. Optional."
+        },
+        "definitions_and_acronyms": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DefinitionsAndAcronyms"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`## Definitions and Acronyms` section. Optional."
+        },
+        "more_information": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MoreInformation"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`## More Information` section. Optional."
+        },
+        "operational_concept_and_scenarios": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/OperationalConceptAndScenarios"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`## Operational Concept and Scenarios` section. Optional."
+        },
+        "other_characteristics": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/OtherCharacteristics"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`## Other Characteristics` section. Optional."
+        },
+        "references": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/References"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`## References` section. Optional."
+        },
+        "requirements": {
+          "$ref": "#/$defs/Requirements",
+          "description": "`## Requirements` section (>=1 of 9 sub-sections). Mandatory."
+        },
+        "risks": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Risks"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`## Risks` section. Optional."
+        },
+        "stakeholder_needs_and_elicitation": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/StakeholderNeedsAndElicitation"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`## Stakeholder Needs and Elicitation` section. Optional."
+        },
+        "system_modes_and_states": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SystemModesAndStates"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`## System Modes and States` section. Optional."
+        },
+        "system_overview": {
+          "$ref": "#/$defs/SystemOverview",
+          "description": "`## System Overview` section. Mandatory."
+        },
+        "system_purpose": {
+          "$ref": "#/$defs/SystemPurpose",
+          "description": "`## System Purpose` section. Mandatory."
+        },
+        "system_scope": {
+          "$ref": "#/$defs/SystemScope",
+          "description": "`## System Scope` section. Mandatory."
+        },
+        "updates": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Updates"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`## Updates` section. Optional; last."
+        },
+        "verification": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Verification"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`## Verification` section. Optional."
+        }
+      },
+      "required": [
+        "system_purpose",
+        "system_scope",
+        "business_context_and_goals",
+        "system_overview",
+        "requirements"
+      ],
+      "title": "Sysrs",
+      "type": "object"
+    },
+    "SysrsFrontmatter": {
+      "description": "System Requirements Specification (SYSRS) frontmatter: `MarkdownFrontmatter` narrowed for the ``sysrs``\ndocument type.\n\nParameters\n----------\ntype:\n    Fixed discriminator, always ``\"sysrs\"``. Narrows the base's\n    mandatory, default-less ``str`` field to a ``Literal[\"sysrs\"] =\n    \"sysrs\"``, so a document omitting ``type`` entirely still parses\n    as a SYSRS document.\nstatus:\n    One of ``\"draft\"``, ``\"review\"``, ``\"approved\"``, ``\"active\"``,\n    ``\"retired\"``. Narrows the base's free-form ``str = \"draft\"``\n    default to this closed five-value set. Blank/absent still defaults\n    to ``\"draft\"`` (inherited from the base's\n    `_default_blank_status_to_draft` validator, which runs before this\n    one). ``approved`` (signed off) and ``active`` (currently in\n    force) are distinct: the transition between them is a manual\n    ``set_status`` call, not automatic.\nversion:\n    The ``models.md`` schema major.minor.patch version this document's\n    frontmatter was written with. DO NOT CHANGE!\n\nAll other fields (``id``, ``created``, ``updated``, ``version``,\n``classification``) are inherited unchanged from :class:`MarkdownFrontmatter`.",
+      "properties": {
+        "classification": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Classification"
+        },
+        "created": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Created"
+        },
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Id"
+        },
+        "status": {
+          "default": "draft",
+          "title": "Status",
+          "type": "string"
+        },
+        "type": {
+          "const": "sysrs",
+          "default": "sysrs",
+          "title": "Type",
+          "type": "string"
+        },
+        "updated": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Updated"
+        },
+        "version": {
+          "default": "1.0.0",
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "title": "SysrsFrontmatter",
+      "type": "object"
+    },
+    "SystemContext": {
+      "description": "`### System Context` under `## System Overview` -- major elements\nincl. human elements and all significant interfaces crossing the\nsystem boundary (29148 \u00a79.5.4.1). Mandatory, free-form prose (diagram\nrecommended; fenced code blocks, e.g. ```mermaid, are accepted\nverbatim).",
+      "properties": {},
+      "title": "SystemContext",
+      "type": "object"
+    },
+    "SystemFunctions": {
+      "description": "`### System Functions` under `## System Overview` -- major system\ncapabilities, conditions, constraints (29148 \u00a79.5.4.2). Mandatory,\nfree-form prose.",
+      "properties": {},
+      "title": "SystemFunctions",
+      "type": "object"
+    },
+    "SystemIntegration": {
+      "description": "`### System Integration` under `## System Overview` -- integration\nsequence/dependencies across subsystems, interface control points.\nOptional, free-form prose. No 29148 clause (specmgr addition).",
+      "properties": {},
+      "title": "SystemIntegration",
+      "type": "object"
+    },
+    "SystemLifeCycleSustainment": {
+      "description": "`### System Life Cycle Sustainment` under `## Other Characteristics` --\ncross-reference list to `req` (29148 \u00a79.5.16). Optional; at least one\nitem when present.\n\nParameters\n----------\nitems:\n    Bullet list of `REQ <uuid>: <title>` cross-references. Must\n    contain at least one item.",
+      "properties": {
+        "items": {
+          "description": "Bullet list of `REQ <uuid>: <title>` cross-references; must contain at least one item.",
+          "items": {
+            "$ref": "#/$defs/MarkdownListItemWithNotes"
+          },
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "SystemLifeCycleSustainment",
+      "type": "object"
+    },
+    "SystemModesAndStates": {
+      "description": "`## System Modes and States` -- the standard itself is conditional:\n\"if the system can exist in various operational modes or states,\ndefine these\" (29148 \u00a79.5.10). Optional, free-form prose.\n\nThe class name's implicit `SPACE_SEPARATED` derivation would expect\n\"System Modes And States\" (capitalized \"And\"), so the alias is pinned\nLITERAL to the lowercase \"and\" the heading actually uses.",
+      "properties": {},
+      "title": "SystemModesAndStates",
+      "type": "object"
+    },
+    "SystemOverview": {
+      "description": "`## System Overview` -- umbrella for the system's context, functions,\nusers, and integration (29148 \u00a79.5.4). Mandatory.\n\nParameters\n----------\nsystem_context:\n    `### System Context` sub-section. Mandatory once this container\n    is present.\nsystem_functions:\n    `### System Functions` sub-section. Mandatory once this container\n    is present.\nuser_characteristics:\n    `### User Characteristics` sub-section. Optional.\nsystem_integration:\n    `### System Integration` sub-section. Optional.",
+      "properties": {
+        "system_context": {
+          "$ref": "#/$defs/SystemContext",
+          "description": "`### System Context` sub-section. Mandatory once this container is present."
+        },
+        "system_functions": {
+          "$ref": "#/$defs/SystemFunctions",
+          "description": "`### System Functions` sub-section. Mandatory once this container is present."
+        },
+        "system_integration": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SystemIntegration"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### System Integration` sub-section. Optional."
+        },
+        "user_characteristics": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UserCharacteristics"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### User Characteristics` sub-section. Optional."
+        }
+      },
+      "required": [
+        "system_context",
+        "system_functions"
+      ],
+      "title": "SystemOverview",
+      "type": "object"
+    },
+    "SystemPurpose": {
+      "description": "`## System Purpose` -- the reason the system is being developed or\nmodified (29148 \u00a79.5.2). Mandatory, free-form prose (DEC's `Context`/\nSOP's `Purpose` precedent: opaque free text, no declared nested\nfields).",
+      "properties": {},
+      "title": "SystemPurpose",
+      "type": "object"
+    },
+    "SystemScope": {
+      "description": "`## System Scope` -- what the system will and will not do; results of\nthe earlier needs analysis (29148 \u00a79.5.3). Mandatory, free-form prose.",
+      "properties": {},
+      "title": "SystemScope",
+      "type": "object"
+    },
+    "UpdateEntry": {
+      "description": "`### {timestamp} ( - | : ) {title}` under `## Updates` -- one update\nentry (a change to the `sysrs` document itself, not to the system it\nspecifies).\n\nThe H3 heading text carries a timestamp and a title, joined by either\n``\" - \"`` (space, hyphen, space) or ``\" : \"`` (space, colon, space):\ne.g. `### 2026-08-31 - Created` or\n`### 2026-08-31 07:40:12.500+02:00 : Created`. The em-dash separator is\nrejected. The timestamp is either a bare ``yyyy-MM-dd`` date or the\nfull ``yyyy-MM-dd HH:mm:ss.fff`` + explicit UTC offset (``+02:00``,\n``-05:00``) or ``Z`` for UTC variant. Mirrors DEC's/VCR's `UpdateEntry`\nshape exactly (feat-38-39-41-43-44 D2/D3, adopted from day one).\n\nParameters\n----------\ncontent:\n    The lead paragraph right after the H3 heading -- this entry's own\n    update text. Mandatory.\ntimestamp:\n    Computed. The timestamp carried by the heading, verbatim. Never\n    stored separately -- derived from the retained heading text.\ntitle:\n    Computed. The title carried by the heading (the text after\n    ``\" - \"``/``\" : \"``). Never stored separately -- derived from the\n    retained heading text.",
+      "properties": {
+        "content": {
+          "$ref": "#/$defs/MarkdownParagraph",
+          "description": "The lead paragraph directly under the H3 heading -- this entry's own update text. Mandatory."
+        }
+      },
+      "required": [
+        "content"
+      ],
+      "title": "UpdateEntry",
+      "type": "object"
+    },
+    "Updates": {
+      "description": "`## Updates` -- a dynamic, newest-first list of timestamp-led `### `\nupdate entries. Optional as a whole, and the last section of the\ndocument if present. May be preceded by an explanatory HTML comment\n(e.g. an ordering hint).\n\nMirrors `dec`/`sop`/`vcr`'s `Updates` container shape exactly: no\ndedicated per-entry tools -- entries are prepended (newest-first) by\nediting the whole body.\n\nParameters\n----------\ncomment:\n    Optional explanatory HTML comment (`<!-- ... -->`), e.g.\n    `<!-- Newest entry first -- prepend new entries directly below\n    this comment. -->`. Inherited from `MarkdownSection2WithComment`.\nupdates:\n    The dynamic collection of `### ` entries, in document order,\n    newest-first (enforced, see `_validate_newest_first`). Requires\n    at least one entry (``min_length=1``) -- an H2 with zero entries\n    is a structural error.",
+      "properties": {
+        "comment": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MarkdownComment"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional explanatory HTML comment (`<!-- ... -->`)."
+        },
+        "updates": {
+          "description": "Dynamic collection of `### {timestamp} ( - | : ) {title}` entries, in document order, newest-first. Must contain at least one entry.",
+          "items": {
+            "$ref": "#/$defs/UpdateEntry"
+          },
+          "minItems": 1,
+          "title": "Updates",
+          "type": "array"
+        }
+      },
+      "required": [
+        "updates"
+      ],
+      "title": "Updates",
+      "type": "object"
+    },
+    "UserCharacteristics": {
+      "description": "`### User Characteristics` under `## System Overview` -- roles /\nuser-operator-maintainer classes, numbers, nature of use (29148\n\u00a79.5.4.3). Optional, free-form prose.",
+      "properties": {},
+      "title": "UserCharacteristics",
+      "type": "object"
+    },
+    "Verification": {
+      "description": "`## Verification` -- cross-reference list to `vcr` (Verification\nCase Records). Optional as a whole (an early document may legitimately\nhave no VCRs yet); at least one item when present.\n\nParameters\n----------\nitems:\n    Bullet list of `VCR <uuid>: <title>` cross-references. Must\n    contain at least one item.",
+      "properties": {
+        "items": {
+          "description": "Bullet list of `VCR <uuid>: <title>` cross-references; must contain at least one item.",
+          "items": {
+            "$ref": "#/$defs/MarkdownListItemWithNotes"
+          },
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "Verification",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "A full System Requirements Specification (SYSRS) document: YAML frontmatter and body.\n\nAttributes\n----------\nfrontmatter:\n    The YAML frontmatter block. See :class:`SysrsFrontmatter`.\nbody:\n    The parsed SYSRS sections. See :class:`Sysrs`.",
+  "properties": {
+    "body": {
+      "$ref": "#/$defs/Sysrs"
+    },
+    "frontmatter": {
+      "$ref": "#/$defs/SysrsFrontmatter"
+    }
+  },
+  "required": [
+    "frontmatter",
+    "body"
+  ],
+  "title": "SysrsDocument",
+  "type": "object"
+}

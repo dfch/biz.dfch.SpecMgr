@@ -20,8 +20,8 @@
 """``@mcp.tool()`` wrapper: update (feat-22-consolidate-mutation-tools, Phase 2).
 
 The generic, cross-domain whole-body *and* line-range replace tool for the
-eleven whole-body document types (``req``/``uc``/``tsk``/``qa``/``prb``/
-``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``). It dispatches on the
+twelve whole-body document types (``req``/``uc``/``tsk``/``qa``/``prb``/
+``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``). It dispatches on the
 explicit ``type`` parameter to a private per-domain adapter (``_update_<d>``),
 each a **verbatim port** of
 the corresponding per-domain ``update_<d>`` tool's function body (same
@@ -39,7 +39,7 @@ per-domain tool.
 
 The parameter is intentionally named ``type`` (it matches the frontmatter
 field vocabulary the client already knows); no enabled ruff rule objects to
-the builtin shadow. The 11-way union return type is annotation-only -- the
+the builtin shadow. The 12-way union return type is annotation-only -- the
 MCP input schema is built from the parameters, and the SDK serializes
 whichever concrete document is returned.
 
@@ -114,6 +114,11 @@ from ...sop.tools._io import load_by_id as load_sop_by_id
 from ...sop.tools._lock import sop_lock
 from ...sop.tools._paths import sop_base_dir
 from ...sop.tools._write import write_sop_file
+from ...sysrs.models.v1 import Sysrs, SysrsFrontmatter
+from ...sysrs.tools._io import load_by_id as load_sysrs_by_id
+from ...sysrs.tools._lock import sysrs_lock
+from ...sysrs.tools._paths import sysrs_base_dir
+from ...sysrs.tools._write import write_sysrs_file
 from ...tsk.models.v1 import Task, TskFrontmatter
 from ...tsk.tools._io import load_by_id as load_tsk_by_id
 from ...tsk.tools._lock import tsk_lock
@@ -135,7 +140,7 @@ from ._timestamps import now_timestamp
 
 __all__ = ["update"]
 
-#: The generic tool's 11-way return union -- annotation-only (see module docstring).
+#: The generic tool's 12-way return union -- annotation-only (see module docstring).
 _UpdateFrontmatter = (
     ReqFrontmatter
     | UcFrontmatter
@@ -148,6 +153,7 @@ _UpdateFrontmatter = (
     | FeatFrontmatter
     | SopFrontmatter
     | VcrFrontmatter
+    | SysrsFrontmatter
 )
 
 
@@ -612,6 +618,48 @@ def _update_vcr(id_: str, content: str, offset: int | None, limit: int | None) -
     return new_frontmatter
 
 
+def _update_sysrs(id_: str, content: str, offset: int | None, limit: int | None) -> SysrsFrontmatter:
+    """Replace the body of the System Requirements Specification identified by ``id_`` (whole-body or line-range mode).
+
+    Verbatim-shape port of :func:`_update_sop` (same ``sysrs_lock``,
+    ``load_by_id``, frontmatter carry-over with only ``updated`` bumped,
+    ``write_sysrs_file``, ``SysrsNotFoundError``; ``sysrs`` is dispatch-only
+    from day one per ADR 36905d5b, so there was never a per-domain
+    ``update_sysrs`` tool to port -- this adapter was written directly in
+    this shape), plus the REQ-002 range branch (see :func:`_update_req`).
+    """
+    if offset is not None:
+        assert limit is None or offset is not None, "the public `update` guard enforces offset with limit"
+
+        base_dir = sysrs_base_dir()
+        with sysrs_lock(id_):
+            path, existing = load_sysrs_by_id(base_dir, id_)
+            assert_within(base_dir, path)
+            spliced = splice_body(body_text(path), offset, limit, content)
+            with wrap_tool_errors(domain="sysrs", tool="update", channel=BODY_CHANNEL):
+                Sysrs.from_text(format_text(spliced))
+            now = now_timestamp()
+            fm_data = existing.frontmatter.model_dump()
+            fm_data["updated"] = now
+            new_frontmatter = SysrsFrontmatter(**fm_data)
+            write_sysrs_file(path, new_frontmatter, spliced)
+        return new_frontmatter
+
+    with wrap_tool_errors(domain="sysrs", tool="update", channel=BODY_CHANNEL):
+        Sysrs.from_text(format_text(content))
+
+    base_dir = sysrs_base_dir()
+    with sysrs_lock(id_):
+        path, existing = load_sysrs_by_id(base_dir, id_)
+        assert_within(base_dir, path)
+        now = now_timestamp()
+        fm_data = existing.frontmatter.model_dump()
+        fm_data["updated"] = now
+        new_frontmatter = SysrsFrontmatter(**fm_data)
+        write_sysrs_file(path, new_frontmatter, content)
+    return new_frontmatter
+
+
 #: Dispatch table mapping the ``type`` value to its private adapter.
 _ADAPTERS: dict[str, Callable[[str, str, int | None, int | None], _UpdateFrontmatter]] = {
     "req": _update_req,
@@ -625,6 +673,7 @@ _ADAPTERS: dict[str, Callable[[str, str, int | None, int | None], _UpdateFrontma
     "feat": _update_feat,
     "sop": _update_sop,
     "vcr": _update_vcr,
+    "sysrs": _update_sysrs,
 }
 
 
@@ -632,9 +681,9 @@ _ADAPTERS: dict[str, Callable[[str, str, int | None, int | None], _UpdateFrontma
     name="update",
     title="Update document",
     description=(
-        "Whole-body or line-range replace of an existing document's content across the eleven "
-        "whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr), "
-        "preserving its id/type/status/created/version; only `updated` changes. With no `offset`/`limit`, "
+        "Whole-body or line-range replace of an existing document's content across the twelve "
+        "whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, "
+        "sysrs), preserving its id/type/status/created/version; only `updated` changes. With no `offset`/`limit`, "
         "`content` is the full replacement body (body markdown only, no frontmatter block). With "
         "`offset`, `content` replaces the body line(s) starting at 1-based line `offset` of the current "
         "on-disk body: `limit` is the number of lines to replace (`offset`..`offset+limit-1`; `limit` "
@@ -648,122 +697,122 @@ _ADAPTERS: dict[str, Callable[[str, str, int | None, int | None], _UpdateFrontma
 )
 def update(
     id: str,
-    type: Literal["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "feat", "vcr"],
+    type: Literal["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "feat", "vcr", "sysrs"],
     content: str,
     offset: int | None = None,
     limit: int | None = None,
 ) -> _UpdateFrontmatter:
     """Replace the body of an existing document, in whole-body or line-range mode.
 
-    Cross-domain generic for the eleven whole-body document types
-    (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``);
-    dispatches on ``type`` to the domain's own ported adapter (same lock,
-    same id resolution, same frontmatter carry-over, same verbatim
-    persistence, same domain not-found error).
+        Cross-domain generic for the twelve whole-body document types
+        (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``);
+        dispatches on ``type`` to the domain's own ported adapter (same lock,
+        same id resolution, same frontmatter carry-over, same verbatim
+        persistence, same domain not-found error).
 
-    **Whole-body mode** (no ``offset``/``limit``): ``content`` is body
-    markdown only, with no YAML frontmatter block -- the same shape the
-    per-domain ``update_<d>`` tools accept. Validated the same way: the
-    domain body model's ``from_text(format_text(content))``, letting
-    ``AssertionError`` (structural failure) or ``pydantic.ValidationError``
-    (field/cross-field failure) propagate uncaught, with nothing written in
-    either case.
+        **Whole-body mode** (no ``offset``/``limit``): ``content`` is body
+        markdown only, with no YAML frontmatter block -- the same shape the
+        per-domain ``update_<d>`` tools accept. Validated the same way: the
+        domain body model's ``from_text(format_text(content))``, letting
+        ``AssertionError`` (structural failure) or ``pydantic.ValidationError``
+        (field/cross-field failure) propagate uncaught, with nothing written in
+        either case.
 
-    **Range mode** (``offset`` given): ``content`` is a replacement
-    *fragment* addressed by read-style ``offset``/``limit`` coordinates,
-    where ``N`` is the number of lines of the current frontmatter-stripped
-    body (the text ``get_<d>(id, raw=True)`` returns) and ``N+1`` is the
-    virtual end-of-body position (one past the last line). ``offset`` is
-    the 1-based first body line to replace; ``limit`` is the number of
-    lines to replace -- the replaced range is ``offset..offset+limit-1``:
-    an omitted ``limit`` replaces through the last body line, ``limit=0``
-    is a pure insert of ``content``'s lines before line ``offset`` (with
-    ``offset=N+1`` that is the append case), and ``offset=N+1`` appends
-    after the last line. The on-disk body is re-read under the domain
-    lock, spliced (drop the range's lines, insert the fragment's lines at
-    position ``offset - 1``), and the *spliced result* -- not the fragment
-    -- is validated as a whole body exactly like whole-body mode and then
-    persisted verbatim, so unchanged regions of the on-disk body stay
-    byte-identical. An empty ``content`` deletes the range (legal iff the
-    result still validates). The YAML frontmatter is never addressable:
-    coordinates are body-relative by construction.
+        **Range mode** (``offset`` given): ``content`` is a replacement
+        *fragment* addressed by read-style ``offset``/``limit`` coordinates,
+        where ``N`` is the number of lines of the current frontmatter-stripped
+        body (the text ``get_<d>(id, raw=True)`` returns) and ``N+1`` is the
+        virtual end-of-body position (one past the last line). ``offset`` is
+        the 1-based first body line to replace; ``limit`` is the number of
+        lines to replace -- the replaced range is ``offset..offset+limit-1``:
+        an omitted ``limit`` replaces through the last body line, ``limit=0``
+        is a pure insert of ``content``'s lines before line ``offset`` (with
+        ``offset=N+1`` that is the append case), and ``offset=N+1`` appends
+        after the last line. The on-disk body is re-read under the domain
+        lock, spliced (drop the range's lines, insert the fragment's lines at
+        position ``offset - 1``), and the *spliced result* -- not the fragment
+        -- is validated as a whole body exactly like whole-body mode and then
+        persisted verbatim, so unchanged regions of the on-disk body stay
+        byte-identical. An empty ``content`` deletes the range (legal iff the
+        result still validates). The YAML frontmatter is never addressable:
+        coordinates are body-relative by construction.
 
-    In both modes the existing file's frontmatter is carried over with
-    every field preserved except ``updated`` (bumped to the current
-    date+time timestamp, via ``general.tools._timestamps.now_timestamp()``);
-    ``status`` in particular is never settable through this tool -- the
-    generic ``set_status`` tool in ``general.tools`` is the only
-    status-change path.
+        In both modes the existing file's frontmatter is carried over with
+        every field preserved except ``updated`` (bumped to the current
+        date+time timestamp, via ``general.tools._timestamps.now_timestamp()``);
+        ``status`` in particular is never settable through this tool -- the
+        generic ``set_status`` tool in ``general.tools`` is the only
+        status-change path.
 
-    Safety (REQ-009, feat-38-39-41-43-44 Phase 4, mirroring ``delete``'s
-    own REQ-003): ``id`` is validated via ``_path_safety.validate_id`` (no
-    ``/``, no ``\\``, no ``..``, plus the dispatched domain's own format --
-    canonical lowercase-hex UUID for the ten UUID domains, ``feat-NNN-slug``
-    for ``feat``) **before** any filesystem access, so a path-injection
-    attempt or a wrong-format id is a ``ValueError`` raised before dispatch.
-    Each adapter additionally confines the resolved path to the domain's
-    own base directory with ``_path_safety.assert_within`` inside the
-    lock -- defense-in-depth against any future gap in the id validation.
+        Safety (REQ-009, feat-38-39-41-43-44 Phase 4, mirroring ``delete``'s
+        own REQ-003): ``id`` is validated via ``_path_safety.validate_id`` (no
+        ``/``, no ``\\``, no ``..``, plus the dispatched domain's own format --
+        canonical lowercase-hex UUID for the ten UUID domains, ``feat-NNN-slug``
+        for ``feat``) **before** any filesystem access, so a path-injection
+        attempt or a wrong-format id is a ``ValueError`` raised before dispatch.
+        Each adapter additionally confines the resolved path to the domain's
+        own base directory with ``_path_safety.assert_within`` inside the
+        lock -- defense-in-depth against any future gap in the id validation.
 
-    Parameters
-    ----------
-    id:
-        The document's specmgr-assigned identifier.
-    type:
-        The document type / domain: one of ``req``, ``uc``, ``tsk``,
-        ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
-        ``vcr``.
-    content:
-        Whole-body mode: the replacement body markdown, with no
-        frontmatter block. Range mode: the replacement fragment for the
-        lines ``offset..offset+limit-1`` (may be empty to delete the
-        range).
-    offset:
-        Optional 1-based first body line to replace; allowed ``1..N+1``,
-        where ``N+1`` (one past the last body line) is the virtual
-        end-of-body position. A given ``offset`` enters range mode; on its
-        own it replaces through the last body line.
-    limit:
-        Optional number of lines to replace starting at ``offset``
-        (``0`` = pure insert); must be given together with ``offset``
-        (``limit`` without ``offset`` is a ``ValueError``).
+        Parameters
+        ----------
+        id:
+            The document's specmgr-assigned identifier.
+        type:
+            The document type / domain: one of ``req``, ``uc``, ``tsk``,
+            ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
+            ``vcr``, ``sysrs``.
+        content:
+            Whole-body mode: the replacement body markdown, with no
+            frontmatter block. Range mode: the replacement fragment for the
+            lines ``offset..offset+limit-1`` (may be empty to delete the
+            range).
+        offset:
+            Optional 1-based first body line to replace; allowed ``1..N+1``,
+            where ``N+1`` (one past the last body line) is the virtual
+            end-of-body position. A given ``offset`` enters range mode; on its
+            own it replaces through the last body line.
+        limit:
+            Optional number of lines to replace starting at ``offset``
+            (``0`` = pure insert); must be given together with ``offset``
+            (``limit`` without ``offset`` is a ``ValueError``).
 
-    Returns
-    -------
+        Returns
+        -------
     ReqFrontmatter | UcFrontmatter | TskFrontmatter | QaFrontmatter | PrbFrontmatter |
     GolFrontmatter | RskFrontmatter | DecFrontmatter | FeatFrontmatter | SopFrontmatter |
-    VcrFrontmatter
+    VcrFrontmatter | SysrsFrontmatter
         The updated document's frontmatter only (no body) of the dispatched domain type;
         use the corresponding ``get_<d>`` tool to fetch the full document afterward.
 
-    Raises
-    ------
-    ValueError
-        ``id`` is a path-injection attempt or not in the dispatched
-        domain's own format (raised before any filesystem access; nothing
-        is written). Also raised for misused range coordinates: ``limit``
-        given without ``offset`` (raised before any file access), or
-        ``offset < 1``, ``offset > N + 1``, ``limit < 0``, or
-        ``offset + limit - 1 > N`` (raised after the on-disk body is read;
-        the message names the offending value(s) and the allowed range).
-        Nothing is written in any of these cases.
-    AssertionError
-        The (spliced) body is structurally invalid (e.g. a range that
-        deletes the H1). The message is prefixed with domain/tool/channel
-        context (e.g. ``"tsk update (body): ..."``) by the shared
-        tool-boundary wrapper (:func:`~biz.dfch.specmgr.models.md._errors.
-        wrap_tool_errors`), layered on top of the engine's own
-        field-path/line/snippet enrichment (feat-27-validation Phases
-        1/2). Nothing is written.
-    pydantic.ValidationError
-        A field/cross-field validation failure in the (spliced) body (e.g.
-        a range producing an out-of-vocabulary value) -- similarly
-        prefixed. Nothing is written.
-    ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
-    PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
-    FeatNotFoundError / SopNotFoundError / VcrNotFoundError
-        No document of the dispatched ``type`` has this id -- the
-        domain's own not-found error, unchanged from the per-domain tools.
+        Raises
+        ------
+        ValueError
+            ``id`` is a path-injection attempt or not in the dispatched
+            domain's own format (raised before any filesystem access; nothing
+            is written). Also raised for misused range coordinates: ``limit``
+            given without ``offset`` (raised before any file access), or
+            ``offset < 1``, ``offset > N + 1``, ``limit < 0``, or
+            ``offset + limit - 1 > N`` (raised after the on-disk body is read;
+            the message names the offending value(s) and the allowed range).
+            Nothing is written in any of these cases.
+        AssertionError
+            The (spliced) body is structurally invalid (e.g. a range that
+            deletes the H1). The message is prefixed with domain/tool/channel
+            context (e.g. ``"tsk update (body): ..."``) by the shared
+            tool-boundary wrapper (:func:`~biz.dfch.specmgr.models.md._errors.
+            wrap_tool_errors`), layered on top of the engine's own
+            field-path/line/snippet enrichment (feat-27-validation Phases
+            1/2). Nothing is written.
+        pydantic.ValidationError
+            A field/cross-field validation failure in the (spliced) body (e.g.
+            a range producing an out-of-vocabulary value) -- similarly
+            prefixed. Nothing is written.
+        ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
+        PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
+        FeatNotFoundError / SopNotFoundError / VcrNotFoundError / SysrsNotFoundError
+            No document of the dispatched ``type`` has this id -- the
+            domain's own not-found error, unchanged from the per-domain tools.
     """
     # REQ-009: validate before any filesystem access (injection prevention).
     validate_id(type, id)

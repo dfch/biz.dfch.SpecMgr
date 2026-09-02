@@ -17,8 +17,8 @@
 
 """Tests for the generic ``set_classification`` ``@mcp.tool()`` wrapper (feat-56-classification, Phase 2).
 
-Parameterized over the eleven whole-body document types (``adr`` is out of
-scope for this feature, unlike ``set_status``'s twelve); seeds a real,
+Parameterized over the twelve whole-body document types (``adr`` is out of
+scope for this feature, unlike ``set_status``'s thirteen); seeds a real,
 persisted document per type via the domain's own ``create_<d>`` tool in a
 temp ``SPECMGR_DOCS_DIR``/``SPECMGR_FEAT_DIR`` (mirroring the fixture
 strategy of ``tests/general/tools/test_set_status.py``), and covers:
@@ -78,6 +78,9 @@ from biz.dfch.specmgr.tsk.tools.create_tsk import create_tsk
 from biz.dfch.specmgr.uc.models.v2 import UcDocument, UcFrontmatter
 from biz.dfch.specmgr.uc.tools._paths import UcNotFoundError, uc_base_dir
 from biz.dfch.specmgr.uc.tools.create_uc import create_uc
+from biz.dfch.specmgr.sysrs.models.v1 import SysrsDocument, SysrsFrontmatter
+from biz.dfch.specmgr.sysrs.tools._paths import SysrsNotFoundError, sysrs_base_dir
+from biz.dfch.specmgr.sysrs.tools.create_sysrs import create_sysrs
 from biz.dfch.specmgr.vcr.models.v1 import VcrDocument, VcrFrontmatter
 from biz.dfch.specmgr.vcr.tools._paths import VcrNotFoundError, vcr_base_dir
 from biz.dfch.specmgr.vcr.tools.create_vcr import create_vcr
@@ -328,6 +331,42 @@ _VCR_MINIMAL_BODY = textwrap.dedent(
     """
 )
 
+_SYSRS_MINIMAL_BODY = textwrap.dedent(
+    """\
+    # System Requirements Specification: Sample Document
+
+    ## System Purpose
+
+    Provision partner accounts.
+
+    ## System Scope
+
+    Onboarding only.
+
+    ## Business Context and Goals
+
+    ### Goals
+
+    - GOL 0e15c5de-4ac9-4279-aa75-53249a3e43e4: A goal
+
+    ## System Overview
+
+    ### System Context
+
+    Context.
+
+    ### System Functions
+
+    Functions.
+
+    ## Requirements
+
+    ### Functional Suitability
+
+    - REQ a3f8c2d1-7b4e-4d9a-b6c0-91e5f2a8d734: A requirement
+    """
+)
+
 _FEAT_MINIMAL_BODY = textwrap.dedent(
     """\
     # Feature: Example Widget
@@ -379,7 +418,7 @@ _FEAT_MINIMAL_BODY = textwrap.dedent(
 
 @dataclass(frozen=True)
 class _Case:
-    """Per-type test data for the eleven whole-body document types."""
+    """Per-type test data for the twelve whole-body document types."""
 
     doc_type: str
     create: Callable[[str], Any]
@@ -398,7 +437,7 @@ class _Case:
 #: A well-formed but non-existent canonical UUID, for the unknown-id not-found cases.
 _MISSING_UUID = "00000000-0000-0000-0000-000000000000"
 
-#: A well-formed feat-NNN-slug folder name (the wrong-format id for the ten UUID domains).
+#: A well-formed feat-NNN-slug folder name (the wrong-format id for the eleven UUID domains).
 _FEAT_SLUG_ID = "feat-36-delete"
 
 _CASES: list[_Case] = [
@@ -427,6 +466,16 @@ _CASES: list[_Case] = [
     ),
     _Case(
         "vcr", create_vcr, vcr_base_dir, VcrNotFoundError, VcrFrontmatter, VcrDocument, _VCR_MINIMAL_BODY, _FEAT_SLUG_ID
+    ),
+    _Case(
+        "sysrs",
+        create_sysrs,
+        sysrs_base_dir,
+        SysrsNotFoundError,
+        SysrsFrontmatter,
+        SysrsDocument,
+        _SYSRS_MINIMAL_BODY,
+        _FEAT_SLUG_ID,
     ),
     _Case(
         "feat", create_feat, feat_base_dir, Exception, FeatFrontmatter, FeatDocument, _FEAT_MINIMAL_BODY, _MISSING_UUID
@@ -584,7 +633,7 @@ class TestSetClassificationAssertWithinSpy(TempDocsDirTestCase):
     """``assert_within`` is actually invoked (not just present in source) during a valid set_classification."""
 
     def test_assert_within_is_called_with_base_dir_and_resolved_path(self) -> None:
-        """For each of the eleven whole-body domains, a valid classification change must call ``assert_within``."""
+        """For each of the twelve whole-body domains, a valid classification change must call ``assert_within``."""
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case)
