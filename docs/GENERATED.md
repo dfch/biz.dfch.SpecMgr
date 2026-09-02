@@ -130,6 +130,7 @@ First-line docstrings from each module, organized by domain:
 - `general/prompts/confluence_fetch.py` — ``@mcp.prompt()``: confluence_fetch (feat-50-confluence Phase 8, REQ-013/ACC-012).
 - `general/prompts/confluence_update.py` — ``@mcp.prompt()``: confluence_update (feat-50-confluence Phase 8, REQ-012/ACC-011).
 - `general/resources/__init__.py` — MCP resource registrations that are not specific to any single document
+- `general/resources/config.py` — Resource: specmgr://config -- resolved base directory diagnostics (feat-51-mcp-cwd).
 - `general/resources/dtais.py` — Resource: specmgr://dtais -- the DTAIS verification-method vocabulary (feat-33-vcr Task 3.3).
 - `general/resources/iso25010.py` — Resource: specmgr://iso25010 (Task 0.8.3).
 - `general/resources/rasci.py` — Resource: specmgr://rasci (feat-30 Task 3.5, REQ-011).
@@ -195,6 +196,7 @@ First-line docstrings from each module, organized by domain:
 - `models/adr/v1/parser.py` — Parse an on-disk ADR ``.md`` file into an :class:`Adr` (plan §7, §10 item 2).
 - `models/adr/v1/renderer.py` — Render an :class:`Adr` back into the canonical on-disk ``.md`` text (plan §7, §10 item 2).
 - `models/adr/v1/summary.py` — Pydantic model for one line of ADR listing output (plan §8, §9a).
+- `models/config_info.py` — Pydantic models for the ``specmgr://config`` resource (feat-51-mcp-cwd REQ-001).
 - `models/iso25010.py` — Pydantic schema and parser for the ISO/IEC 25010:2023 product quality
 - `models/md/__init__.py` — Markdown base models.
 - `models/md/_errors.py` — Shared tool-boundary error enrichment (feat-27-validation Phase 3, Task 3.1).
@@ -476,6 +478,9 @@ First-line docstrings from each module, organized by domain:
 - `uc/models/v2/frontmatter.py` — Use-case frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
 - `uc/models/v2/parser.py` — Parse raw use-case ``.md`` text into a :class:`UcDocument` (Task 1.8).
 - `uc/models/v2/summary.py` — Pydantic model for one line of UC listing output (Task 3.1.6).
+- `uc/prompts/__init__.py` — MCP prompt wrappers for Use Cases (feat-57-uc-commands).
+- `uc/prompts/create_uc.py` — ``@mcp.prompt()``: create_uc (feat-57-uc-commands).
+- `uc/prompts/update_uc.py` — ``@mcp.prompt()``: update_uc (feat-57-uc-commands).
 - `uc/resources/__init__.py` — MCP resource registrations for Use Case (UC) documents (Task 3.1.4, 3.1.6).
 - `uc/resources/uc_example.py` — Resource: specmgr://uc/example (Task 3.1.4).
 - `uc/resources/uc_schema.py` — Resource: specmgr://uc/schema (Task 3.1.4).
@@ -526,4 +531,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 354
+**Test files**: 357

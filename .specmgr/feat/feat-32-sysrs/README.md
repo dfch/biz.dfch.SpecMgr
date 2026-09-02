@@ -1,7 +1,7 @@
 ---
 created: '2026-08-30 00:00:00.000Z'
 id: feat-32-sysrs
-status: in-progress
+status: done
 updated: '2026-09-02 00:00:00.000Z'
 version: 1.0.0
 ---
@@ -177,7 +177,7 @@ Domain key: `sysrs` (decided 2026-08-30 — see Decisions Made).
   `list[MarkdownListItem]` — is recorded with its exact engine
   mechanics in Design Notes' "Phase 1 outcome record"; the full
   `sysrs-example.md` round-trips through the scratch model.)
-- [ ] ACC-004: Verifies REQ-005/006/007 — packaged example **and**
+- [x] ACC-004: Verifies REQ-005/006/007 — packaged example **and**
   template parse via `parse_sysrs`; structural violations raise
   `AssertionError`: unknown H2; missing mandatory H2 (`System Purpose`/
   `System Scope`/`Business Context and Goals`/`System Overview`/
@@ -195,7 +195,7 @@ Domain key: `sysrs` (decided 2026-08-30 — see Decisions Made).
   matches every other domain's `ValidationError` channel for these two
   checks instead of a domain-local `AssertionError` special case; see
   Decisions Made.)
-- [ ] ACC-005: Verifies REQ-005/006 — value violations raise
+- [x] ACC-005: Verifies REQ-005/006 — value violations raise
   `pydantic.ValidationError`: `status` outside the 5-value set; `type`
   != `"sysrs"`; a cross-reference bullet with the wrong type tag for
   its section, a malformed uuid (not 8-4-4-4-12 lowercase hex), or a
@@ -208,7 +208,7 @@ Domain key: `sysrs` (decided 2026-08-30 — see Decisions Made).
   `models/md/_ordering.py::validate_newest_first` helper, matching
   every other domain's — SOP/DEC/VCR/TSK — identical check; moved here
   from ACC-004, 2026-09-02, see Decisions Made).
-- [ ] ACC-006: Verifies REQ-008 — every listed tool is implemented,
+- [x] ACC-006: Verifies REQ-008 — every listed tool is implemented,
   registered, and callable; `create_sysrs`→`get_sysrs`→`list_sysrs`→
   `update` (generic, `type="sysrs"`)→`set_status` (generic,
   `type="sysrs"`)→`validate_sysrs` round-trip against a temp
@@ -220,17 +220,17 @@ Domain key: `sysrs` (decided 2026-08-30 — see Decisions Made).
   mirroring every other domain's `get_<d>` tool (feat-28); `list_sysrs`
   paging (default 25 / cap 100 / `truncated` boundary) mirrors every
   other domain's `list_<d>` tool exactly.
-- [ ] ACC-007: Verifies REQ-009 — every listed resource is implemented
+- [x] ACC-007: Verifies REQ-009 — every listed resource is implemented
   and registered (exactly three — no `/{id}`, no `/list`);
   `specmgr://sysrs/schema` equals fresh `generate_sysrs_schema()`
   output; example/template resources equal the packaged files
   byte-for-byte.
-- [ ] ACC-008: Verifies REQ-010 — both prompts return instruction text
+- [x] ACC-008: Verifies REQ-010 — both prompts return instruction text
   with `$topic`/`$id`/`$instructions` substituted from packaged data;
   `create_sysrs`'s narration includes the `list_sysrs` dedup check
   first and the `specmgr://iso25010` read-first step; `update_sysrs`
   names the generic `update`/`set_status` tools with `type="sysrs"`.
-- [ ] ACC-009: Verifies REQ-011 — the generic `update`/`set_status`/
+- [x] ACC-009: Verifies REQ-011 — the generic `update`/`set_status`/
   `delete` tools accept `type="sysrs"` and correctly dispatch to
   `_update_sysrs`/`_set_status_sysrs`/`_delete_sysrs`; both the whole-
   body and line-range (`begin`/`end`) branches of `update` work for
@@ -244,15 +244,15 @@ Domain key: `sysrs` (decided 2026-08-30 — see Decisions Made).
   not applicable and does not block ACC-009; new test cases added to
   `tests/general/tools/test_update.py`/`test_set_status.py`/
   `test_delete.py` (not just `tests/sysrs/`) exercise this.
-- [ ] ACC-010: Verifies REQ-012 — packaged data resolves correctly from
+- [x] ACC-010: Verifies REQ-012 — packaged data resolves correctly from
   a real, non-editable install (`uv build --wheel` + scratch-venv
   install), mirroring `sop`'s ACC-007 verification.
-- [ ] ACC-011: Verifies REQ-013 — `specmgr docs`/`specmgr schema`/
+- [x] ACC-011: Verifies REQ-013 — `specmgr docs`/`specmgr schema`/
   `specmgr mcp-docs` all report no drift after implementation;
   `AGENTS.md` and root `README.md` reflect the new `sysrs` domain,
   including the "dispatch-only, no per-domain update/set_status tools"
   note and the per-section cross-ref type-tag regex note.
-- [ ] ACC-012: Verifies REQ-004/014 — full unittest suite green; ruff
+- [x] ACC-012: Verifies REQ-004/014 — full unittest suite green; ruff
   format/check and vulture clean; `specmgr unused-code` clean.
 
 ### Scope
@@ -1772,7 +1772,7 @@ its own ADR rather than living only in this feature's Design Notes.
 
 #### Phase 6: Cross-cutting registration
 
-- [ ] Task 6.1: `server.py` — **re-merge `dev` first** (the sibling's
+- [x] Task 6.1: `server.py` — **re-merge `dev` first** (the sibling's
   Phase 4 Task 4.5 also edits the `server.py` docstring and
   `AGENTS.md`; rebase the enumeration edits below on the post-
   sibling text) — add `sysrs` to the final import line
@@ -1785,21 +1785,21 @@ its own ADR rather than living only in this feature's Design Notes.
   the `delete` eleven-domain count becomes twelve, the "... and later
   `ac`" reservation sentence, the per-domain
   registration paragraphs) — depends on: Task 5.3 — status:
-  not-started
-- [ ] Task 6.2: `pyproject.toml` — `"biz.dfch.specmgr.sysrs" = ["data/*.md", "data/*.json"]`
+  done (2026-09-02)
+- [x] Task 6.2: `pyproject.toml` — `"biz.dfch.specmgr.sysrs" = ["data/*.md", "data/*.json"]`
   package-data entry (alphabetical slot: after `sop`, before `tsk`) —
-  depends on: Task 4.7 — status: not-started
-- [ ] Task 6.3: `.pre-commit-config.yaml` — add `sysrs/models/v1` to
+  depends on: Task 4.7 — status: done (2026-09-02)
+- [x] Task 6.3: `.pre-commit-config.yaml` — add `sysrs/models/v1` to
   the 12 existing `files:` globs (`specmgr-schema` + the 11 per-domain
   `specmgr-schema-*-package` hooks) + new `specmgr-schema-sysrs-
   package` hook (`--type sysrs --output-dir src/biz/dfch/specmgr/
-  sysrs/data`) — depends on: Task 4.4 — status: not-started
-- [ ] Task 6.4: `.github/workflows/ci.yml` — new packaged-copy drift
+  sysrs/data`) — depends on: Task 4.4 — status: done (2026-09-02)
+- [x] Task 6.4: `.github/workflows/ci.yml` — new packaged-copy drift
   step for `sysrs/data/sysrs_schema.json` mirroring the per-type
   steps (the all-types `docs/*_schema.json` step picks `sysrs` up
   automatically once registered in `_GENERATORS`) — depends on: Task
-  4.4 — status: not-started
-- [ ] Task 6.5: `AGENTS.md` — new `sysrs/` bullet in the Status section
+  4.4 — status: done (2026-09-02)
+- [x] Task 6.5: `AGENTS.md` — new `sysrs/` bullet in the Status section
   (domain-first layout, dispatch-only from day one, schema at
   `sysrs/models/v1/`, the per-section type-tag regex note, the cross-
   reference aggregation model, the `raw` param, deletions through the
@@ -1808,27 +1808,27 @@ its own ADR rather than living only in this feature's Design Notes.
   the tools/resources/prompts registration list and the validate-
   tool list, and the `general/` bullet's `update`/`set_status`/
   `delete` "eleven whole-body domains" wordings become twelve —
-  depends on: Task 6.1 — status: not-started
-- [ ] Task 6.6: Root `README.md` — add `System Requirements Specification (SYSRS)`
+  depends on: Task 6.1 — status: done (2026-09-02)
+- [x] Task 6.6: Root `README.md` — add `System Requirements Specification (SYSRS)`
   to the "At this time, we have these artifact:" list (alphabetical
   slot: after SOP, before TSK) — depends on: Task 6.1 — status:
-  not-started
-- [ ] Task 6.7: Regenerate `docs/MCP.md` (`specmgr mcp-docs`),
+  done (2026-09-02)
+- [x] Task 6.7: Regenerate `docs/MCP.md` (`specmgr mcp-docs`),
   `docs/GENERATED.md` + `docs/api/` (`specmgr docs`),
   `docs/sysrs_schema.json` (`specmgr schema`); verify all idempotent
   on a second run (ACC-011) — depends on: Task 6.1, Task 6.2 —
-  status: not-started
-- [ ] Task 6.8: Final quality gate (ruff format/check, vulture, full
+  status: done (2026-09-02)
+- [x] Task 6.8: Final quality gate (ruff format/check, vulture, full
   unittest, `specmgr unused-code`) + commit — depends on: Task 6.3,
-  Task 6.4, Task 6.5, Task 6.6, Task 6.7 — status: not-started
-- [ ] Task 6.9: Final verification pass — walk every ACC-004..ACC-012
+  Task 6.4, Task 6.5, Task 6.6, Task 6.7 — status: done (2026-09-02)
+- [x] Task 6.9: Final verification pass — walk every ACC-004..ACC-012
   with concrete evidence (including a live `create_sysrs`→
   `get_sysrs`→`list_sysrs`→`update`(type="sysrs", whole-body AND line-
   range)→`set_status`(type="sysrs")→`validate_sysrs` run, not just
   unit tests, and the ACC-010 non-editable wheel check); update this
   README's Progress section; record the phase commit hashes in
   "Related PRs / Commits"; set this README's frontmatter `status` to
-  `done` — depends on: Task 6.8 — status: not-started
+  `done` — depends on: Task 6.8 — status: done (2026-09-02)
 
 **Note:** If a task's scope changes mid-flight, edit its description in
 place; rely on git history (`git log -p` on this file) to recover what
@@ -1838,6 +1838,87 @@ around.
 ## Progress
 
 ### Current Status
+
+**As of 2026-09-02 (Phase 6 complete — cross-cutting registration; feature DONE)**:
+Phase 6 (Tasks 6.1–6.9) is done and the `feat-32-sysrs` feature is now
+**complete**. Started with the required `dev` re-merge (Task 6.1's
+prerequisite): `git fetch origin dev` + `git merge origin/dev` pulled in
+three sibling commits landed on `dev` since this branch's last merge
+(`feat: expose resolved base directories via specmgr://config (#51)
+(#64)`, `fix: preserve --- thematic breaks in mdformat via
+mdformat-simple-breaks (#65)`, `feat: create_uc/update_uc MCP prompts for
+the uc domain (#57) (#62)`) — the merge conflicted only in three
+generated/whitelist files (`docs/GENERATED.md`, `docs/MCP.md`,
+`whitelist.py`; resolved by keeping `HEAD`'s content for the two docs
+files, since both are regenerated fresh via `specmgr docs`/`specmgr
+mcp-docs` immediately after, and taking the union of both sides' new
+entries for `whitelist.py`, which had independent `sysrs` (Phase 2) and
+`config` (feat-51) false-positive blocks) — `server.py` and `AGENTS.md`
+merged cleanly with **no** conflict markers at all (git's own 3-way merge
+resolved them; the sibling's `specmgr://config` resource and `create_uc`/
+`update_uc` prompts touched different lines than this feature's own
+still-unmade `sysrs` edits). Verified the merge itself first (ruff/vulture/
+full unittest all green) before layering `sysrs`'s own registration on
+top, per the phase brief.
+
+Then registered `sysrs` across every cross-cutting surface: `server.py`
+(final import line + the module docstring's Resources/Tools/Prompts
+sections — new `specmgr://sysrs/schema`/`/example`/`/template` entries,
+a new SYSRS tools paragraph and SYSRS prompts paragraph, and every stale
+domain-count sentence bumped — `update` eleven→twelve whole-body domains,
+`set_status` twelve→thirteen, `set_classification` eleven→twelve, `delete`
+eleven→twelve, the path-safety paragraph's twelve→thirteen `get_<d>`
+tools/eleven→twelve UUID domains, the "...and later `ac`" reservation
+sentence, and the "each register tools/resources/prompts" sentence);
+`pyproject.toml` (`biz.dfch.specmgr.sysrs` package-data entry, alphabetical
+slot after `sop`); `.pre-commit-config.yaml` (`sysrs/models/v1` added to
+all 12 existing schema-hook `files:` globs + a new
+`specmgr-schema-sysrs-package` hook); `.github/workflows/ci.yml` (a new
+packaged-copy drift step for `sysrs/data/sysrs_schema.json`, mirroring the
+per-type steps, plus the all-types step's comment); `AGENTS.md` (a new
+`sysrs/` Status-section bullet mirroring `sop`'s/`vcr`'s density, the
+`general/` bullet's `update`/`set_status`/`set_classification`/`delete`
+domain-count wordings bumped, and `validate_sysrs` added to the "still
+missing" validate-tool enumeration; the `uc/` bullet already correctly
+said `uc/prompts/` — the dev re-merge had already fixed that staleness,
+nothing left to do there); root `README.md` (added "System Requirements
+Specification (SYSRS)" to the artifact list, alphabetically after SOP).
+Regenerated `docs/MCP.md`/`docs/GENERATED.md`+`docs/api/`/
+`docs/sysrs_schema.json` and confirmed byte-identical (md5sum) on a second
+run of each — zero drift (ACC-011); `specmgr adr-toc` also confirmed a
+no-op.
+
+Full quality gate green: `ruff format --check`/`ruff check` clean,
+`vulture src/ whitelist.py --min-confidence 60` clean, `specmgr
+unused-code` clean, full repo `python -m unittest discover` suite green
+at 3292 tests. Beyond the unit-test suite, ran a **live** (no
+mocks) round trip against a real `tempfile.mkdtemp()` directory
+(`SPECMGR_DOCS_DIR` — the shared root env var every whole-body domain
+except `adr`/`feat` reads, not a `SPECMGR_SYSRS_DIR` that doesn't exist):
+`create_sysrs` (from the packaged template, frontmatter stripped) →
+`get_sysrs` → `get_sysrs(raw=True)` → `get_sysrs(raw=True, offset=1,
+limit=1)` → `list_sysrs` → generic `update` (`type="sysrs"`, whole-body)
+→ generic `update` (`type="sysrs"`, line-range `offset=1, limit=1`) →
+generic `set_status` (`type="sysrs"`, `"review"`) → `validate_sysrs` — all
+passed; a second script exercised the generic `delete` tool
+(`type="sysrs"`) end-to-end, confirming the file is gone and a second
+delete raises `SysrsNotFoundError` (ACC-006/ACC-009). For ACC-010 (real,
+non-editable install), ran `uv build --wheel`, created a scratch venv with
+`uv venv` + `uv pip install "<wheel>[mcp]"`, and from that installed
+(site-packages, non-source-checkout) interpreter successfully called
+`get_sysrs_example()`/`get_sysrs_template()` and the
+`sysrs.resources.sysrs_schema.sysrs_schema()` resource function, and
+imported `biz.dfch.specmgr.server` cleanly — packaged
+example/template/schema data all resolve correctly from a real install.
+
+Deviation from the plan: none in scope or task content; Task 6.5's brief
+anticipated a possible stale "`uc` has no `prompts` sub-package yet"
+sentence in `AGENTS.md` needing a fix alongside the `sysrs` bullet — on
+inspection, the `dev` re-merge had already brought in the corrected
+`uc/prompts/` wording (feat-57), so there was nothing left to fix there.
+
+All Phase 1–6 commit hashes are recorded below in "Related PRs / Commits".
+This README's frontmatter `status` is now `done`.
 
 **As of 2026-09-02 (Phase 5 complete — prompts)**: Phase 5 (Tasks 5.1–5.3)
 is done. `sysrs/prompts/` now ships the 2 planned prompts —
@@ -3614,4 +3695,26 @@ wait on it; see Task List Task 0.7/Design Notes item 4's note.)
 
 ### Related PRs / Commits
 
-None yet.
+- Phase 1 (empirical schema validation): `d387fbb` — "docs(feat-32): record
+  Phase 1 empirical schema validation outcomes" (no `src/` changes —
+  throwaway `/tmp` scratch scripts only, per this plan's own discipline).
+- Phase 2 (models + parser): `64e9f24` — "feat(sysrs): add models and
+  parser (Phase 2)".
+- Phase 3 (tools + generic dispatch): `10d57a7` — "feat(sysrs): add tools
+  + generic dispatch (Phase 3)".
+- Phase 4 (resources + packaged data + schema): `a4f9d57` — "feat(sysrs):
+  add resources + packaged data + schema (Phase 4)".
+- Phase 5 (prompts): `f148295` — "feat(sysrs): add prompts (Phase 5)".
+- Phase 6 (cross-cutting registration): dev re-merge `1f91664` — "Merge
+  remote-tracking branch 'origin/dev' into feat-32-sysrs" (brought in
+  `feat-56-classification`, `specmgr://config`, the `create_uc`/`update_uc`
+  prompts, and the `mdformat-simple-breaks` fix; conflicts in
+  `docs/GENERATED.md`/`docs/MCP.md`/`whitelist.py` only — both generated
+  docs regenerated fresh afterward, `whitelist.py` resolved as a union of
+  both sides' new entries; `server.py`/`AGENTS.md` merged cleanly with no
+  conflict markers) — plus the Phase 6 commit itself: see `git log` for
+  the commit immediately following this README update, scope `sysrs`,
+  registering `sysrs` in `server.py`, `pyproject.toml`,
+  `.pre-commit-config.yaml`, `.github/workflows/ci.yml`, `AGENTS.md`, and
+  root `README.md`, and regenerating `docs/MCP.md`/`docs/GENERATED.md`/
+  `docs/api/`.
