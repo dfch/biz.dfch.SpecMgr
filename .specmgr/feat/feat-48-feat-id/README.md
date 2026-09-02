@@ -3,7 +3,7 @@ created: '2026-09-02T10:32:05.764646'
 id: feat-48-feat-id
 status: planning
 type: feat
-updated: '2026-09-02T15:20:00.000000'
+updated: '2026-09-02T16:10:00.000000'
 version: 1.0.0
 ---
 
@@ -53,8 +53,8 @@ known), keeping the document addressable end-to-end.
 - [ ] ACC-005: `set_feat_id("feat-0-get-update", "feat-42-get-update")` renames the folder, updates the frontmatter `id`, bumps `updated`, and leaves the body otherwise byte-identical.
 - [ ] ACC-006: `set_feat_id` raises (without renaming) when `new_id` already exists as a folder.
 - [ ] ACC-007: `set_feat_id` raises `FeatNotFoundError` when `id` does not resolve to an existing feature.
-- [ ] ACC-008: `set_feat_id` is registered as an `@mcp.tool()` and appears in `server.py`'s docstring/registration and in `docs/MCP.md` after regeneration.
-- [ ] ACC-009: The packaged `feat` prompt instructions, `AGENTS.md`, and `server.py`'s docstring are updated to mention the optional `id` parameter and `set_feat_id`.
+- [x] ACC-008: `set_feat_id` is registered as an `@mcp.tool()` and appears in `server.py`'s docstring/registration and in `docs/MCP.md` after regeneration.
+- [x] ACC-009: The packaged `feat` prompt instructions, `AGENTS.md`, and `server.py`'s docstring are updated to mention the optional `id` parameter and `set_feat_id`.
 - [ ] ACC-010: The full test suite (`uv run --frozen python -m unittest discover -v -s tests -t . -p "test_*.py"`) passes, including new unit tests for `create_feat(id=...)` and `set_feat_id`.
 
 ### Scope
@@ -113,10 +113,10 @@ known), keeping the document addressable end-to-end.
 
 #### Phase 4: Prompts and documentation
 
-- [ ] Task 4.1: Review/update the `feat` create-instructions packaged text to mention the optional `id` parameter and the no-auto-increment default.
-- [ ] Task 4.2: Review/update the `feat` update-instructions packaged text to mention `set_feat_id` as the renumbering path.
-- [ ] Task 4.3: Update `AGENTS.md`'s `feat/` bullet (tool count/list, mention of `set_feat_id`).
-- [ ] Task 4.4: Regenerate `docs/api/`, `docs/GENERATED.md`, and `docs/MCP.md`; verify no drift.
+- [x] Task 4.1: Review/update the `feat` create-instructions packaged text to mention the optional `id` parameter and the no-auto-increment default.
+- [x] Task 4.2: Review/update the `feat` update-instructions packaged text to mention `set_feat_id` as the renumbering path.
+- [x] Task 4.3: Update `AGENTS.md`'s `feat/` bullet (tool count/list, mention of `set_feat_id`).
+- [x] Task 4.4: Regenerate `docs/api/`, `docs/GENERATED.md`, and `docs/MCP.md`; verify no drift.
 
 #### Phase 5: Tests
 
@@ -135,20 +135,70 @@ known), keeping the document addressable end-to-end.
 
 ### Current Status
 
-**As of 2026-09-02**: Phase 3 (`set_feat_id` tool) done. The new
-`feat/tools/set_feat_id.py` renames an existing feature's `feat-NNN-slug`
-id/folder, rewrites its frontmatter `id`/`updated`, and leaves the body
-byte-identical, under `feat_create_lock()` (outer) + `feat_lock(id)`
-(nested) per Phase 1's Decision; registered as `@mcp.tool()` and exported
-from `feat/tools/__init__.py`; `server.py`'s module docstring's feat tool
-listing now includes it (8 tools, not 7). Full test suite green (3015
-tests); a throwaway manual smoke test exercised the happy path and both
-failure paths (see Updates below). Implementation continues with Phase 4
-(prompts and documentation).
+**As of 2026-09-02**: Phase 4 (prompts and documentation) done. The
+packaged `feat_create_instructions.md`/`feat_update_instructions.md`
+prompt text and `AGENTS.md`'s `feat/` bullet now describe `create_feat`'s
+optional `id` parameter, the `feat-0-<slug>` no-auto-increment default,
+and `set_feat_id` as the dedicated renumbering path (distinct from the
+generic `update`/`set_status` tools). `specmgr docs` and `specmgr
+mcp-docs` were re-run and produced no drift beyond these prompt-text/
+`AGENTS.md` edits themselves -- confirming Phase 3's commit had already
+regenerated `docs/api/`/`docs/GENERATED.md`/`docs/MCP.md` faithfully.
+Full test suite green (3015 tests, unchanged). ACC-008 and ACC-009 are
+now satisfied end-to-end. Implementation continues with Phase 5 (tests).
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-02 16:10:00.000Z — Phase 4: Prompts and documentation
+
+Completed Task 4.1-4.4 (REQ-009). `feat/data/feat_create_instructions.md`:
+reworded the opening paragraph to state that `create_feat` now accepts an
+optional `id` (a full, well-formed `feat-NNN-slug`, pass it explicitly
+once the GitHub issue number is known) and, when omitted, defaults to
+`feat-0-<slug-from-title>` -- not an auto-incrementing number -- with a
+one-line rationale (`NNN` is meant to be the GitHub issue number,
+`feat-0-...` signals "no issue yet"); step 2 of "## 4. Tool call
+sequence" now shows both call shapes
+(`create_feat(content, id="feat-42-my-slug")` vs. `create_feat(content)`)
+and documents both new failure modes (`ValueError` for a malformed
+caller-supplied `id`, `FileExistsError` for an existing id/folder
+collision), each before any write; "## 5. Later revisions" gained a
+closing sentence naming `set_feat_id(id, new_id)` as the dedicated path
+for an id/renumbering change, distinct from `update_feat`/generic
+`update`/`set_status`. `feat/data/feat_update_instructions.md`: "## 4.
+Map the requested change to the right tool" gained a third bullet (after
+the existing body-change and status-change bullets) for an `id` change,
+naming `set_feat_id(id, new_id)` explicitly, noting `update` never
+accepts/changes `id`, the `new_id` shape requirement, the byte-for-byte
+body preservation, and explicitly calling `set_feat_id` a "bespoke
+`feat`-only tool" distinct from the generic `update`/`set_status
+(type="feat")` dispatch pattern -- so as not to imply it is itself a
+generic dispatch tool. The opening paragraph's existing "no
+`update_feat`/`set_status_feat` tool of its own" sentence was left
+unchanged (still true; `set_feat_id` is a new, distinct kind of tool, not
+an `update_feat`/`set_status_feat` equivalent). `AGENTS.md`'s `feat/`
+bullet: "All 7 tools" -> "All 8 tools", `set_feat_id` added to the tool
+list (right after `create_feat`), plus two new clauses describing (a)
+`create_feat`'s optional `id` parameter and `feat-0-<slug>` default (no
+max+1 auto-generation), and (b) `set_feat_id`'s role as the one tool that
+renames an existing feature's id (folder rename + frontmatter rewrite),
+explicitly called out as distinct from the generic `update`/`set_status`
+dispatch tools the same bullet already describes `feat` as using; the
+existing "no `update_feat`/`set_status_feat` of its own" sentence later
+in the same bullet was left unchanged (still accurate) and the "Still
+genuinely missing" paragraph at the end of the Status section was left
+untouched (nothing there became inaccurate). Ran `specmgr docs` and
+`specmgr mcp-docs`: `git diff --stat` afterward showed changes to only
+the three files above -- zero diff under `docs/`, confirming Phase 3's
+commit had already regenerated `docs/api/`/`docs/GENERATED.md`/
+`docs/MCP.md` to a faithful fixed point and there was no lingering drift
+to pick up here. Full quality gate green: `specmgr docs`, `specmgr
+mcp-docs` (both no-op on `docs/`), and the full `unittest discover` suite
+(3015 tests, all passing, unchanged from Phase 3's count -- no test
+asserts on exact packaged-instruction-text content that this phase's
+wording changes broke).
 
 #### 2026-09-02 15:20:00.000Z — Phase 3: set_feat_id tool
 
