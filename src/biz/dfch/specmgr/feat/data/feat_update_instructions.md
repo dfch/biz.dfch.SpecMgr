@@ -76,6 +76,16 @@ revise.
   `set_classification(id, type="feat", classification)` instead --
   `update` never accepts or changes `classification`. Fully free-text;
   a blank or whitespace-only value clears it back to `None`/absent.
+- A change to the feature's own `id` (e.g. renumbering `feat-0-...` to
+  `feat-NNN-...` once the GitHub issue number is known) ->
+  `set_feat_id(id, new_id)` instead -- `update` never accepts or changes
+  `id`; `set_feat_id` renames the containing folder and rewrites the
+  frontmatter `id` in one atomic operation, refusing if `new_id` already
+  exists. `new_id` must be a well-formed `feat-NNN-slug`; the body is
+  preserved byte-for-byte. `set_feat_id` is a bespoke `feat`-only tool,
+  distinct from the generic `update`/`set_status(type="feat")` pattern
+  used for the body/status changes above -- it is not itself a generic
+  dispatch tool.
 
 ## 5. Check the schema, and validate before writing if useful
 

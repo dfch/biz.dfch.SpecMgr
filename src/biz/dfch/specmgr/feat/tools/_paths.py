@@ -60,7 +60,6 @@ not-found-shaped error to handle, without needing to separately catch
 from __future__ import annotations
 
 import os
-import re
 from collections.abc import Iterator
 from pathlib import Path
 
@@ -118,11 +117,6 @@ README_FILENAME = "README.md"
 #: just the free-form part, so :func:`feature_title` strips it once here
 #: rather than duplicating the same two lines in both tools.
 _TITLE_PREFIX = "Feature: "
-
-#: Matches a ``feat-NNN-...`` folder name, capturing the numeric ``NNN``
-#: part (unpadded, matching this very plan's own "Phase 0".."Phase 5"
-#: numbering convention). Used by ``create_feat`` to derive the next id.
-FEAT_FOLDER_PATTERN = re.compile(r"^feat-(\d+)-")
 
 
 class FeatNotFoundError(LookupError):

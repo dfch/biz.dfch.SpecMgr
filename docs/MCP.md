@@ -3,7 +3,7 @@
 Auto-generated from the live `biz.dfch.specmgr.server:mcp` registration --
 do not edit by hand, run `specmgr mcp-docs` instead (see `AGENTS.md`).
 
-39 resource(s), 1 resource template(s), 95 tool(s), 29 prompt(s).
+39 resource(s), 1 resource template(s), 96 tool(s), 29 prompt(s).
 
 ## Table of Contents
 
@@ -350,7 +350,7 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`confluence_update`](#tool-confluence_update) | Render a local Markdown file to an HTML fragment and write it into an existing Confluence page's body via the REST API, incrementing the page's version number. Accepts a bare numeric page id, a browsable page URL ('/pages/<id>/...' or '?pageId=<id>'), or a REST content URL; a '/x/<tinyid>' tiny link is rejected. Reuses the same two environment variables confluence_fetch uses. Local images referenced by the Markdown file (a relative or absolute filesystem path, not an 'http(s)://' URL) that exist on disk are uploaded as Confluence attachments (POST .../child/attachment, falling back to updating an existing attachment's content if the filename already exists) and their <img> tags are rewritten into Confluence's <ac:image>/<ri:attachment> storage-format macro, on a best-effort basis: a missing local file or a failed upload simply leaves that one <img> tag unrewritten instead of aborting the update. Also sanitizes any raw '--' inside rendered <!-- --> HTML comments (invalid in Confluence's strict XHTML storage format, though valid CommonMark) and converts a leading YAML frontmatter block into a fenced code block before rendering, so it is not mangled into a heading. |
 | [`create_adr`](#tool-create_adr) | Create a new ADR: assigns a fresh id, derives a filename from the title, validates, renders, and writes the new document to the ADR base directory. |
 | [`create_dec`](#tool-create_dec) | Create a new decision: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the decision base directory. |
-| [`create_feat`](#tool-create_feat) | Create a new feature: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the feature base directory. |
+| [`create_feat`](#tool-create_feat) | Create a new feature: assigns a fresh id (caller-chosen via the optional 'id' parameter, or defaulted to feat-0-<slug-from-title> when omitted -- no max+1 auto-generation), derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the feature base directory. |
 | [`create_gol`](#tool-create_gol) | Create a new goal: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the goal base directory. |
 | [`create_prb`](#tool-create_prb) | Create a new Problem Statement: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the problem statement base directory. |
 | [`create_qa`](#tool-create_qa) | Create a new Question and Answer (QA) document: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the QA base directory. |
@@ -425,6 +425,7 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`parse_uc`](#tool-parse_uc) | Parse a use-case markdown file (YAML frontmatter + body) from disk into a structured document. |
 | [`parse_vcr`](#tool-parse_vcr) | Parse a verification case record markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.vcr.models.v1.VcrDocument`. |
 | [`set_classification`](#tool-set_classification) | Replace the free-text `classification` frontmatter field of an existing document across the eleven whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr; `adr` is not supported), also bumping `updated` and leaving the body and every other frontmatter field untouched. `classification` is fully free-text -- no closed vocabulary; a blank or whitespace-only value clears it back to `None`/absent. No `create_*` tool accepts a `classification` argument at all -- this is the sole classification-change entry point. An invalid `id` (path-injection attempt or wrong format for `type`) or an unsupported `type` is a `ValueError` raised before any file access. |
+| [`set_feat_id`](#tool-set_feat_id) | Rename an existing feature's id: validates new_id's feat-NNN-slug shape, refuses if new_id's folder already exists, renames <base>/<id>/ to <base>/<new_id>/, rewrites the README frontmatter id to new_id, bumps updated, and leaves the body byte-identical. Does not update or search for references to the old id in any other document. |
 | [`set_status`](#tool-set_status) | Replace the status of an existing document across all twelve domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, adr), also bumping `updated` (the eleven whole-body domains) and leaving the body untouched. The new `status` must be one of the domain's own closed vocabulary values (see the domain's `XFrontmatter.status` field); anything else raises `pydantic.ValidationError` and writes nothing. `superseded_by` is accepted only for `type="adr"` -- it composes the status as "superseded by {superseded_by}"; with any other `type` it is a `ValueError`. Neither `create_*` nor the generic `update` tool accepts a `status` argument at all -- this is the sole status-change entry point. An invalid `id` (path-injection attempt or wrong format for `type`) is a `ValueError` raised before any file access. |
 | [`update`](#tool-update) | Whole-body or line-range replace of an existing document's content across the eleven whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr), preserving its id/type/status/created/version; only `updated` changes. With no `offset`/`limit`, `content` is the full replacement body (body markdown only, no frontmatter block). With `offset`, `content` replaces the body line(s) starting at 1-based line `offset` of the current on-disk body: `limit` is the number of lines to replace (`offset`..`offset+limit-1`; `limit` omitted = through the last body line, `limit=0` = pure insert), and `offset=N+1` (one past the last body line) appends after it; the spliced result is validated as a whole document before anything is written. `status` is never settable -- use the generic `set_status` tool. An invalid `id` (path-injection attempt or wrong format for `type`) is a `ValueError` raised before any file access. |
 | [`update_frontmatter`](#tool-update_frontmatter) | Whole-object replace of an ADR's frontmatter (plan §3), preserving its existing id. |
@@ -489,11 +490,12 @@ Create a new decision: assigns a fresh id, derives a filename from the body's H1
 
 **Create feature**
 
-Create a new feature: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the feature base directory.
+Create a new feature: assigns a fresh id (caller-chosen via the optional 'id' parameter, or defaulted to feat-0-<slug-from-title> when omitted -- no max+1 auto-generation), derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the feature base directory.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
 | `content` | `string` | Yes |
+| `id` | `string | None` | No |
 
 ### Tool: create_gol
 
@@ -1200,6 +1202,17 @@ Replace the free-text `classification` frontmatter field of an existing document
 | `id` | `string` | Yes |
 | `type` | `string (enum: req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr)` | Yes |
 | `classification` | `string` | Yes |
+
+### Tool: set_feat_id
+
+**Rename feature id**
+
+Rename an existing feature's id: validates new_id's feat-NNN-slug shape, refuses if new_id's folder already exists, renames <base>/<id>/ to <base>/<new_id>/, rewrites the README frontmatter id to new_id, bumps updated, and leaves the body byte-identical. Does not update or search for references to the old id in any other document.
+
+| Parameter | Type | Required |
+| --- | --- | --- |
+| `id` | `string` | Yes |
+| `new_id` | `string` | Yes |
 
 ### Tool: set_status
 

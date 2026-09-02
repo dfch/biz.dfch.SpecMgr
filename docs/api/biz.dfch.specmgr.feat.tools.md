@@ -5,7 +5,7 @@ MCP tool wrappers for features (mirrors ``dec/tools/``'s own shape).
 Bespoke, folder-per-document addressing (``_paths.py``, ``_io.py``,
 ``_lock.py``, ``_write.py`` -- *not* built on
 ``general/tools/_doc_paths.py``, since ``feat`` documents live one per
-folder at ``<base>/<id>/README.md`` with a non-UUID id) underpins the seven
+folder at ``<base>/<id>/README.md`` with a non-UUID id) underpins the eight
 lifecycle tools below.
 
 ``parse_feat`` reads a raw filepath, parses, and validates it into a
@@ -32,7 +32,14 @@ generic ``set_status`` tool in ``general.tools`` (``type="feat"``), also
 bumping ``updated``, leaving the body untouched. There is no
 ``update_feat``/``set_status_feat`` tool of ``feat``'s own. Deletion of
 ``feat`` documents goes through the generic ``delete`` tool in
-``general.tools`` (``type="feat"``). ``validate_feat`` is a disk-free,
+``general.tools`` (``type="feat"``). ``set_feat_id`` renames an existing
+feature's ``feat-NNN-slug`` id: it validates the new id's shape, refuses if
+the target folder already exists, renames ``<base>/<id>/`` to
+``<base>/<new_id>/``, rewrites the frontmatter ``id`` and ``updated``
+fields, and leaves the body byte-identical -- the one path that ever
+changes a ``feat`` document's id after ``create_feat`` assigns it (see
+``set_feat_id.py``'s own module docstring for the ``feat_create_lock()``
++ ``feat_lock(id)`` locking order). ``validate_feat`` is a disk-free,
 id-free dry run against a submitted ``content`` string, independent of the
 other tools. Import this package to register all feature tools at once::
 

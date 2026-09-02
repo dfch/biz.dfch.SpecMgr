@@ -193,7 +193,10 @@ windowed with read-style ``offset``/``limit`` (raw-only, clamping)), ``list_sop`
 frontmatter-stripped body text verbatim instead of the parsed document, optionally
 windowed with read-style ``offset``/``limit`` (raw-only, clamping)), ``list_feat``,
   ``get_feat_example``,
-  ``get_feat_template``, ``create_feat``, ``validate_feat``. Unlike every other domain here, ``feat``
+  ``get_feat_template``, ``create_feat``, ``set_feat_id`` (renames an existing feature's
+  ``feat-NNN-slug`` id: validates the new id's shape, refuses if the target folder already
+  exists, renames the folder, rewrites the frontmatter ``id``/``updated``, leaves the body
+  byte-identical), ``validate_feat``. Unlike every other domain here, ``feat``
   uses bespoke, folder-per-document addressing (``feat/tools/_paths.py``, not the shared
   ``general/tools/_doc_paths.py``) and has no ``update_feat``/``set_status_feat`` tools of
   its own -- it dispatches through the generic ``update``/``set_status`` tools below from

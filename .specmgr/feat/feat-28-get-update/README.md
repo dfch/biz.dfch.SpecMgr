@@ -635,6 +635,8 @@ breaks.
 
 - [Issue #28](https://github.com/dfch/biz.dfch.SpecMgr/issues/28): the source request — `specmgr_get` and `specmgr_update` must both support offset and limit.
 
+- [PR #55](https://github.com/dfch/biz.dfch.SpecMgr/pull/55): merge (squash into `dev` at `a9dbe9c`, closing issue #28.
+
 - [Issue #48](https://github.com/dfch/biz.dfch.SpecMgr/issues/48): the deferred `create_feat` id behaviour + the additional `set_feat_id` tool (out of scope for this feature).
 
 ### More Information
