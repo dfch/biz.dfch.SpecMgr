@@ -3,7 +3,7 @@ created: '2026-09-02T09:50:23.991493'
 id: feat-56-classification-attribute-in-frontmatter
 status: planning
 type: feat
-updated: '2026-09-02T18:30:00.000000'
+updated: '2026-09-02T20:15:00.000000'
 version: 1.0.0
 ---
 
@@ -142,11 +142,11 @@ Since feat-27-validation (closed 2026-09-01) added `wrap_tool_errors`/`FRONTMATT
 
 #### Phase 3: Prompt instructions
 
-- [ ] Task 3.1: Update the 10 whole-body domains' (req/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr) `<d>_create_instructions.md` files to mention `set_classification` in the "Later revisions" step.
+- [x] Task 3.1: Update the 10 whole-body domains' (req/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr) `<d>_create_instructions.md` files to mention `set_classification` in the "Later revisions" step.
 
-- [ ] Task 3.2: Update the same 10 domains' `<d>_update_instructions.md` files with a "change to `classification`" mapping bullet, matching the existing `status`/`set_status` bullet.
+- [x] Task 3.2: Update the same 10 domains' `<d>_update_instructions.md` files with a "change to `classification`" mapping bullet, matching the existing `status`/`set_status` bullet.
 
-- [ ] Task 3.3: Run the full test suite and fix any regressions before moving on.
+- [x] Task 3.3: Run the full test suite and fix any regressions before moving on.
 
 #### Phase 4: Docs and schema regeneration
 
@@ -168,11 +168,57 @@ Since feat-27-validation (closed 2026-09-01) added `wrap_tool_errors`/`FRONTMATT
 
 ### Current Status
 
-**As of 2026-09-02**: Phases 1 (Model change) and 2 (Generic `set_classification` tool) are done. The shared `MarkdownFrontmatter` model has an optional, free-text `classification: str | None = None` field that normalizes blank/whitespace-only input to `None`, inherited by all eleven whole-body domain frontmatter classes. The new generic `set_classification(id, type, classification)` tool in `general/tools/` dispatches to one adapter per whole-body domain (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr -- `adr` deliberately excluded), each shaped exactly like `set_status.py`'s corresponding adapter (same domain lock, `load_by_id`, `_path_safety.assert_within` guard, raw-body re-read/re-persistence, `wrap_tool_errors`/`FRONTMATTER_CHANNEL`-wrapped `XFrontmatter` reconstruction) but replacing `classification` instead of `status`, with no `superseded_by`-style parameter. It is registered in `server.py`'s module docstring and `general/tools/__init__.py`. New unit tests (`tests/general/tools/test_set_classification.py`) cover setting a value (ACC-002), clearing via blank/whitespace (ACC-003), an unsupported `type="bogus"` raising `ValueError` matching `set_status`'s own behavior for the same misuse (ACC-005), `type="adr"` raising `KeyError` (matching the generic `update` tool's own real, if undocumented, behavior for a UUID-shaped-but-out-of-dispatch type), per-domain not-found errors, and `_path_safety` injection/wrong-format-id rejection. `ruff format --check`, `ruff check`, and `vulture` are clean. The full test suite still has the same 4 known, expected failures in `tests/{dec,feat,sop,vcr}/resources/test_*_schema.py` from Phase 1 (schema drift, closed by Phase 4's `specmgr schema` regeneration) -- no new regressions. Phase 3 (prompt instructions) has not started.
+**As of 2026-09-02**: Phases 1 (Model change), 2 (Generic `set_classification` tool), and 3 (Prompt instructions) are done. The shared `MarkdownFrontmatter` model has an optional, free-text `classification: str | None = None` field that normalizes blank/whitespace-only input to `None`, inherited by all eleven whole-body domain frontmatter classes. The new generic `set_classification(id, type, classification)` tool in `general/tools/` dispatches to one adapter per whole-body domain (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr -- `adr` deliberately excluded), each shaped exactly like `set_status.py`'s corresponding adapter (same domain lock, `load_by_id`, `_path_safety.assert_within` guard, raw-body re-read/re-persistence, `wrap_tool_errors`/`FRONTMATTER_CHANNEL`-wrapped `XFrontmatter` reconstruction) but replacing `classification` instead of `status`, with no `superseded_by`-style parameter. It is registered in `server.py`'s module docstring and `general/tools/__init__.py`. New unit tests (`tests/general/tools/test_set_classification.py`) cover setting a value (ACC-002), clearing via blank/whitespace (ACC-003), an unsupported `type="bogus"` raising `ValueError` matching `set_status`'s own behavior for the same misuse (ACC-005), `type="adr"` raising `KeyError` (matching the generic `update` tool's own real, if undocumented, behavior for a UUID-shaped-but-out-of-dispatch type), per-domain not-found errors, and `_path_safety` injection/wrong-format-id rejection. All 10 whole-body domains' (req/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr) packaged `<d>_create_instructions.md`/`<d>_update_instructions.md` prompt files now reference `set_classification` alongside the existing `set_status` mentions (ACC-008); `uc` and `adr` remain untouched by design. `ruff format --check`, `ruff check`, and `vulture` are clean. The full test suite still has the same 4 known, expected failures in `tests/{dec,feat,sop,vcr}/resources/test_*_schema.py` from Phase 1 (schema drift, closed by Phase 4's `specmgr schema` regeneration) -- no new regressions. Phase 4 (docs and schema regeneration) has not started.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-02 20:15:00.000Z — Phase 3 (Prompt instructions) complete
+
+Updated all 20 packaged prompt-instruction data files for the 10
+whole-body domains with prompts (req/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr
+-- `uc` skipped per its own separately-filed issue #57 gap, `adr`
+skipped as out of scope for classification entirely). In each
+`<d>_create_instructions.md`'s "Later revisions" step (numbered
+differently per domain -- e.g. req/tsk/qa/gol/rsk/dec/feat/vcr use
+"## 5.", prb uses "## 10.", sop uses "## 6."), the existing parenthetical
+list of generic tool calls (`update(id, type="<d>", content)` and
+`set_status(id, type="<d>", status)`) now also names
+`set_classification(id, type="<d>", classification)`, in each file's own
+existing prose style and line-wrap width -- no section numbering,
+heading text, or other wording was otherwise touched. In each
+`<d>_update_instructions.md`'s "Map the requested change to the right
+tool" step, a new bullet was appended directly after the existing
+`- A change to \`status\` -> set_status(...)` bullet:
+"A change to `classification` -> `set_classification(id, type="<d>",
+classification)` instead -- `update` never accepts or changes
+`classification`. Fully free-text; a blank or whitespace-only value
+clears it back to `None`/absent." -- worded identically across all 10
+files since, unlike `status`, `classification` has no per-domain closed
+vocabulary to describe. sop's create-instructions step 6 additionally
+had its existing "`sop` has no per-domain `update_sop`/`set_status_sop`
+tools" sentence extended to
+"`update_sop`/`set_status_sop`/`set_classification_sop`" for
+consistency, since sop is the one domain whose prose already calls out
+the absence of per-domain mutation tools by name.
+
+Before editing, searched `tests/` for any test asserting on the literal
+content of these instructions files (`grep -rn
+"create_instructions\|update_instructions" tests/`) and confirmed every
+`test_create_<d>.py`/`test_update_<d>.py` prompt test uses `assertIn`/
+`assertLess(result.index(...))` substring checks against the rendered
+prompt text, never a full-string `assertEqual` against the whole file
+-- appending new sentences/bullets without removing or reordering any
+existing substring could not break them, and none did.
+
+Ran the full quality gate: `ruff format --check` and `ruff check` are
+clean (these are `.md` data files, unaffected either way); `vulture
+src/ whitelist.py --min-confidence 60` is clean; the full `unittest`
+suite (3029 tests) has exactly the same 4 known, pre-existing failures
+from Phase 1 (`tests/{dec,feat,sop,vcr}/resources/test_*_schema.py`,
+schema drift closed by Phase 4) -- no new regressions from Phase 3's
+changes.
 
 #### 2026-09-02 18:30:00.000Z — Phase 2 (Generic set_classification tool) complete
 

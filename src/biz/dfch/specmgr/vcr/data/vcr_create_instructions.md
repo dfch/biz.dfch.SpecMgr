@@ -90,5 +90,6 @@ present there.
 
 Any later change to this verification case record should go through
 the `update_vcr` prompt (or directly through the generic
-`update(id, type="vcr", content)` and `set_status(id, type="vcr", status)`
-tools), not by re-running this prompt.
+`update(id, type="vcr", content)`, `set_status(id, type="vcr", status)`,
+and `set_classification(id, type="vcr", classification)` tools), not by
+re-running this prompt.

@@ -96,6 +96,7 @@ are not present there.
 ## 5. Later revisions
 
 Any later change to this feature should go through the `update_feat`
-prompt (or directly through the generic `update(id, type="feat", content)`
-and `set_status(id, type="feat", status)` tools), not by re-running this
-prompt.
+prompt (or directly through the generic `update(id, type="feat", content)`,
+`set_status(id, type="feat", status)`, and
+`set_classification(id, type="feat", classification)` tools), not by
+re-running this prompt.

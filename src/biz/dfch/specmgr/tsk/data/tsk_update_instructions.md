@@ -51,6 +51,10 @@ want to change before calling any write tool.
 - A change to `status` -> `set_status(id, type="tsk", status)` instead
   -- `update` never accepts or changes `status`. `status` must be one
   of: draft, active, done, cancelled.
+- A change to `classification` ->
+  `set_classification(id, type="tsk", classification)` instead --
+  `update` never accepts or changes `classification`. Fully free-text;
+  a blank or whitespace-only value clears it back to `None`/absent.
 
 ## 4. Check the schema, and validate before writing if useful
 Fetch `specmgr://tsk/schema` to confirm field names and constraints

@@ -116,5 +116,6 @@ there.
 
 Any later change to this problem statement should go through the
 `update_prb` prompt (or directly through the generic
-`update(id, type="prb", content)` and `set_status(id, type="prb", status)`
-tools), not by re-running this prompt.
+`update(id, type="prb", content)`, `set_status(id, type="prb", status)`,
+and `set_classification(id, type="prb", classification)` tools), not by
+re-running this prompt.
