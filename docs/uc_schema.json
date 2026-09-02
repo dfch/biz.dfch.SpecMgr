@@ -604,6 +604,18 @@
     "UcFrontmatter": {
       "description": "Use-case frontmatter: `MarkdownFrontmatter` narrowed for the `uc` document type.\n\nParameters\n----------\ntype:\n    Fixed discriminator, always `\"uc\"`. Narrows the base's mandatory,\n    default-less `str` field to a `Literal[\"uc\"] = \"uc\"`, so a document\n    omitting `type` entirely still parses as a use case.\nstatus:\n    One of `\"draft\"`, `\"proposed\"`, `\"accepted\"`, `\"deprecated\"`,\n    `\"superseded\"`. Narrows the base's free-form `str = \"draft\"` default\n    to this closed five-value set, matching `uc/models/v1`'s own\n    vocabulary. Blank/absent still defaults to `\"draft\"` (inherited from\n    the base's `_default_blank_status_to_draft` validator, which runs\n    before this one).\n\nAll other fields (`id`, `created`, `updated`, `version`) are inherited\nunchanged from :class:`MarkdownFrontmatter`.",
       "properties": {
+        "classification": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Classification"
+        },
         "created": {
           "anyOf": [
             {

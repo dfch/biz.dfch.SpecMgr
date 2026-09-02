@@ -69,6 +69,10 @@ ask which ones (if any) they want to add to or revise.
   has been verified, `approved` once the result has been formally
   signed off -- do not call `set_status` unless the user actually asks
   for a status change.
+- A change to `classification` ->
+  `set_classification(id, type="vcr", classification)` instead --
+  `update` never accepts or changes `classification`. Fully free-text;
+  a blank or whitespace-only value clears it back to `None`/absent.
 
 ## 5. Check the schema, and validate before writing if useful
 

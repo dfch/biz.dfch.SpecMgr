@@ -117,7 +117,9 @@ there.
 ## 6. Later revisions
 
 Any later change to this SOP should go through the `update_sop` prompt
-(or directly through the generic `update(id, type="sop", content)` and
-`set_status(id, type="sop", status)` tools), not by re-running this
-prompt. `sop` has no per-domain `update_sop`/`set_status_sop` tools --
-those generic tools are the only mutation path.
+(or directly through the generic `update(id, type="sop", content)`,
+`set_status(id, type="sop", status)`, and
+`set_classification(id, type="sop", classification)` tools), not by
+re-running this prompt. `sop` has no per-domain
+`update_sop`/`set_status_sop`/`set_classification_sop` tools -- those
+generic tools are the only mutation path.

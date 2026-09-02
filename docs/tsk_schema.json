@@ -105,6 +105,18 @@
     "TskFrontmatter": {
       "description": "TaskList frontmatter: `MarkdownFrontmatter` narrowed for the ``tsk`` document type.\n\nParameters\n----------\ntype:\n    Fixed discriminator, always ``\"tsk\"``. Narrows the base's mandatory,\n    default-less ``str`` field to a ``Literal[\"tsk\"] = \"tsk\"``, so a document\n    omitting ``type`` entirely still parses as a task list document.\nstatus:\n    One of ``\"draft\"``, ``\"active\"``, ``\"done\"``, ``\"cancelled\"``. Narrows\n    the base's free-form ``str = \"draft\"`` default to this closed\n    four-value set. Blank/absent still defaults to ``\"draft\"`` (inherited\n    from the base's ``_default_blank_status_to_draft`` validator, which\n    runs before this one).\nversion:\n    The ``models.md`` schema major.minor.patch version this document's\n    frontmatter was written with. DO NOT CHANGE!\n\nAll other fields (``id``, ``created``, ``updated``, ``version``) are inherited\nunchanged from :class:`MarkdownFrontmatter`.",
       "properties": {
+        "classification": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Classification"
+        },
         "created": {
           "anyOf": [
             {

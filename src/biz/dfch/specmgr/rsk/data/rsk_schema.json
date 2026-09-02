@@ -207,6 +207,18 @@
     "RskFrontmatter": {
       "description": "Risk frontmatter: `MarkdownFrontmatter` narrowed for the ``rsk`` document type.\n\nParameters\n----------\ntype:\n    Fixed discriminator, always ``\"rsk\"``. Narrows the base's mandatory,\n    default-less ``str`` field to a ``Literal[\"rsk\"] = \"rsk\"``, so a document\n    omitting ``type`` entirely still parses as a risk document.\nstatus:\n    One of ``\"open\"``, ``\"mitigating\"``, ``\"accepted\"``, ``\"occurred\"``,\n    ``\"closed\"``, ``\"dropped\"``. Narrows the base's free-form ``str``\n    field to this closed six-value set; absent/blank defaults to\n    ``\"open\"`` (``_default_blank_status_to_open`` below, which runs\n    before the base's ``_default_blank_status_to_draft``).\nversion:\n    The ``models.md`` schema major.minor.patch version this document's\n    frontmatter was written with. DO NOT CHANGE!\n\nAll other fields (``id``, ``created``, ``updated``, ``version``) are inherited\nunchanged from :class:`MarkdownFrontmatter`.",
       "properties": {
+        "classification": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Classification"
+        },
         "created": {
           "anyOf": [
             {

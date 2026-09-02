@@ -104,6 +104,14 @@ class MarkdownFrontmatter(BaseModel):
         value while ``models.md``'s
         :data:`biz.dfch.specmgr.models.md._util.SCHEMA_MAJOR_VERSION` is
         ``1``.
+    classification:
+        Free-text classification label for the document -- e.g. a security
+        classification, a business-confidentiality level, or a
+        project-specific taxonomy. Optional, defaults to ``None`` so every
+        existing document without this key keeps parsing unchanged.
+        Deliberately not restricted to a fixed set of values -- specmgr
+        imposes no single classification scheme; blank/whitespace-only
+        input normalizes to ``None``, same as ``created``/``updated``.
     """
 
     id: str | None = None
@@ -112,6 +120,7 @@ class MarkdownFrontmatter(BaseModel):
     updated: str | None = None
     status: str = DEFAULT_STATUS
     version: str = CURRENT_SCHEMA_VERSION
+    classification: str | None = None
 
     @field_validator("type")
     @classmethod
@@ -130,7 +139,7 @@ class MarkdownFrontmatter(BaseModel):
     def _default_blank_status_to_draft(cls, value: object) -> object:
         return default_if_blank(value, DEFAULT_STATUS)
 
-    @field_validator("created", "updated", mode="before")
+    @field_validator("created", "updated", "classification", mode="before")
     @classmethod
     def _optional_blank_to_none(cls, value: str | None) -> str | None:
         return blank_to_none(value)

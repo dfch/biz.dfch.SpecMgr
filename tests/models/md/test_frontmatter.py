@@ -169,6 +169,31 @@ class TestMarkdownFrontmatter(unittest.TestCase):
         self.assertIsNone(frontmatter.created)
         self.assertIsNone(frontmatter.updated)
 
+    def test_classification_defaults_to_none(self):
+        """classification must default to None when omitted."""
+        frontmatter = MarkdownFrontmatter(type="uc")
+        self.assertIsNone(frontmatter.classification)
+
+    def test_classification_accepts_explicit_value(self):
+        """An explicit, non-blank classification value must round-trip verbatim."""
+        frontmatter = MarkdownFrontmatter(type="uc", classification="Confidential")
+        self.assertEqual(frontmatter.classification, "Confidential")
+
+    def test_classification_blank_normalizes_to_none(self):
+        """An empty-string classification value must normalize to None."""
+        frontmatter = MarkdownFrontmatter(type="uc", classification="")
+        self.assertIsNone(frontmatter.classification)
+
+    def test_classification_whitespace_only_normalizes_to_none(self):
+        """A whitespace-only classification value must normalize to None."""
+        frontmatter = MarkdownFrontmatter(type="uc", classification="   \t")
+        self.assertIsNone(frontmatter.classification)
+
+    def test_classification_absent_key_still_parses(self):
+        """A pre-feature-style frontmatter dict without a classification key still parses (ACC-004)."""
+        frontmatter = MarkdownFrontmatter.model_validate({"type": "uc", "status": "draft"})
+        self.assertIsNone(frontmatter.classification)
+
 
 class TestMarkdownFrontmatterSubclassing(unittest.TestCase):
     """Tests for the document-type subclassing pattern (ADR bc5e18ad-6bbf-4265-bae4-3e34984a2d29)."""

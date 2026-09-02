@@ -451,6 +451,18 @@
     "SopFrontmatter": {
       "description": "Standard Operating Procedure (SOP) frontmatter: `MarkdownFrontmatter` narrowed for the ``sop`` document type.\n\nParameters\n----------\ntype:\n    Fixed discriminator, always ``\"sop\"``. Narrows the base's mandatory,\n    default-less ``str`` field to a ``Literal[\"sop\"] = \"sop\"``, so a document\n    omitting ``type`` entirely still parses as an SOP document.\nstatus:\n    One of ``\"draft\"``, ``\"review\"``, ``\"approved\"``, ``\"active\"``,\n    ``\"retired\"``. Narrows the base's free-form ``str = \"draft\"`` default\n    to this closed five-value set. Blank/absent still defaults to\n    ``\"draft\"`` (inherited from the base's ``_default_blank_status_to_draft``\n    validator, which runs before this one). ``approved`` (signed off) and\n    ``active`` (currently in force) are distinct: the transition between\n    them is a manual ``set_status`` call, not automatic.\nversion:\n    The ``models.md`` schema major.minor.patch version this document's\n    frontmatter was written with. DO NOT CHANGE!\n\nAll other fields (``id``, ``created``, ``updated``, ``version``) are inherited\nunchanged from :class:`MarkdownFrontmatter`.",
       "properties": {
+        "classification": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Classification"
+        },
         "created": {
           "anyOf": [
             {

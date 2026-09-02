@@ -76,5 +76,7 @@ there, and do not rename or reorder the ten fixed category headings.
 
 ## 5. Later revisions
 Any later change to this QA document should go through the `update_qa` prompt
-(or directly through the generic `update(id, type="qa", content)` and
-`set_status(id, type="qa", status)` tools), not by re-running this prompt.
+(or directly through the generic `update(id, type="qa", content)`,
+`set_status(id, type="qa", status)`, and
+`set_classification(id, type="qa", classification)` tools), not by
+re-running this prompt.

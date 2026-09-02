@@ -85,5 +85,7 @@ there.
 ## 5. Later revisions
 
 Any later change to this decision should go through the `update_dec` prompt
-(or directly through the generic `update(id, type="dec", content)` and
-`set_status(id, type="dec", status)` tools), not by re-running this prompt.
+(or directly through the generic `update(id, type="dec", content)`,
+`set_status(id, type="dec", status)`, and
+`set_classification(id, type="dec", classification)` tools), not by
+re-running this prompt.
