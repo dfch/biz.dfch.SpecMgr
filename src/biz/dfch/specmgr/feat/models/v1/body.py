@@ -104,10 +104,13 @@ class RequirementItem(MarkdownListItem):
             The description text following the `REQ-NNN: ` prefix.
 
         Raises:
-            AssertionError: `.text` does not match `^REQ-\\d{3}: .+$`.
+            AssertionError: `.text` does not match `^REQ-\\d{3}: .+$`. The
+                message names this item's own path and 1-based line
+                (REQ-001/REQ-002, via `self._path`/`self._line`, threaded in
+                by `models.md`'s `MarkdownListItem.from_text`).
         """
         match = _REQUIREMENT_ITEM_PATTERN.fullmatch(self.text)
-        assert match, f"RequirementItem: expected 'REQ-NNN: <description>', got {self.text!r}"
+        assert match, f"{self._path} (line {self._line}): expected 'REQ-NNN: <description>', got {self.text!r}"
         result: str = match.group("description")
         return result
 
@@ -171,9 +174,12 @@ class AcceptanceCriterionItem(TaskItem):
 
         Raises:
             AssertionError: `.description` does not match `^ACC-\\d{3}: .+$`.
+                The message names this item's own path and 1-based line
+                (REQ-001/REQ-002, via `self._path`/`self._line`, threaded in
+                by `models.md`'s `MarkdownListItem.from_text`).
         """
         match = _ACCEPTANCE_CRITERION_ITEM_PATTERN.fullmatch(self.description)
-        assert match, f"AcceptanceCriterionItem: expected 'ACC-NNN: <description>', got {self.description!r}"
+        assert match, f"{self._path} (line {self._line}): expected 'ACC-NNN: <description>', got {self.description!r}"
         result: str = match.group("description")
         return result
 
@@ -314,10 +320,13 @@ class Phase(MarkdownSection4):
         Raises:
             AssertionError: the retained heading text does not match
                 `Phase`'s declared `@alias` (unreachable via the engine:
-                `match_alias` already enforced it at parse time).
+                `match_alias` already enforced it at parse time). The
+                message names this section's own path and 1-based line
+                (REQ-001/REQ-002, via `self._path`/`self._line`, threaded in
+                by `models.md`'s `MarkdownSection.from_text`).
         """
         match = _PHASE_HEADING_PATTERN.fullmatch(self.text)
-        assert match, f"Phase: expected heading 'Phase N: <title>', got {self.text!r}"
+        assert match, f"{self._path} (line {self._line}): expected heading 'Phase N: <title>', got {self.text!r}"
         result: int = int(match.group("number"))
         return result
 
@@ -333,10 +342,13 @@ class Phase(MarkdownSection4):
         Raises:
             AssertionError: the retained heading text does not match
                 `Phase`'s declared `@alias` (unreachable via the engine:
-                `match_alias` already enforced it at parse time).
+                `match_alias` already enforced it at parse time). The
+                message names this section's own path and 1-based line
+                (REQ-001/REQ-002, via `self._path`/`self._line`, threaded in
+                by `models.md`'s `MarkdownSection.from_text`).
         """
         match = _PHASE_HEADING_PATTERN.fullmatch(self.text)
-        assert match, f"Phase: expected heading 'Phase N: <title>', got {self.text!r}"
+        assert match, f"{self._path} (line {self._line}): expected heading 'Phase N: <title>', got {self.text!r}"
         result: str = match.group("title")
         return result
 
@@ -466,10 +478,15 @@ class UpdateEntry(MarkdownSection4):
         Raises:
             AssertionError: the retained heading text does not match this
                 class's declared `@alias` (unreachable via the engine:
-                `match_alias` already enforced it at parse time).
+                `match_alias` already enforced it at parse time). The
+                message names this entry's own path and 1-based line
+                (REQ-001/REQ-002, via `self._path`/`self._line`, threaded in
+                by `models.md`'s `MarkdownSection.from_text`).
         """
         match = _ENTRY_HEADING_PATTERN.fullmatch(self.text)
-        assert match, f"{type(self).__name__}: expected heading '{{timestamp}} ( - | : ) {{title}}', got {self.text!r}"
+        assert match, (
+            f"{self._path} (line {self._line}): expected heading '{{timestamp}} ( - | : ) {{title}}', got {self.text!r}"
+        )
         result: str = match.group("timestamp")
         return result
 
@@ -484,10 +501,15 @@ class UpdateEntry(MarkdownSection4):
         Raises:
             AssertionError: the retained heading text does not match this
                 class's declared `@alias` (unreachable via the engine:
-                `match_alias` already enforced it at parse time).
+                `match_alias` already enforced it at parse time). The
+                message names this entry's own path and 1-based line
+                (REQ-001/REQ-002, via `self._path`/`self._line`, threaded in
+                by `models.md`'s `MarkdownSection.from_text`).
         """
         match = _ENTRY_HEADING_PATTERN.fullmatch(self.text)
-        assert match, f"{type(self).__name__}: expected heading '{{timestamp}} ( - | : ) {{title}}', got {self.text!r}"
+        assert match, (
+            f"{self._path} (line {self._line}): expected heading '{{timestamp}} ( - | : ) {{title}}', got {self.text!r}"
+        )
         result: str = match.group("title")
         return result
 
@@ -571,10 +593,15 @@ class DecisionEntry(MarkdownSection4):
         Raises:
             AssertionError: the retained heading text does not match this
                 class's declared `@alias` (unreachable via the engine:
-                `match_alias` already enforced it at parse time).
+                `match_alias` already enforced it at parse time). The
+                message names this entry's own path and 1-based line
+                (REQ-001/REQ-002, via `self._path`/`self._line`, threaded in
+                by `models.md`'s `MarkdownSection.from_text`).
         """
         match = _ENTRY_HEADING_PATTERN.fullmatch(self.text)
-        assert match, f"{type(self).__name__}: expected heading '{{timestamp}} ( - | : ) {{title}}', got {self.text!r}"
+        assert match, (
+            f"{self._path} (line {self._line}): expected heading '{{timestamp}} ( - | : ) {{title}}', got {self.text!r}"
+        )
         result: str = match.group("timestamp")
         return result
 
@@ -589,10 +616,15 @@ class DecisionEntry(MarkdownSection4):
         Raises:
             AssertionError: the retained heading text does not match this
                 class's declared `@alias` (unreachable via the engine:
-                `match_alias` already enforced it at parse time).
+                `match_alias` already enforced it at parse time). The
+                message names this entry's own path and 1-based line
+                (REQ-001/REQ-002, via `self._path`/`self._line`, threaded in
+                by `models.md`'s `MarkdownSection.from_text`).
         """
         match = _ENTRY_HEADING_PATTERN.fullmatch(self.text)
-        assert match, f"{type(self).__name__}: expected heading '{{timestamp}} ( - | : ) {{title}}', got {self.text!r}"
+        assert match, (
+            f"{self._path} (line {self._line}): expected heading '{{timestamp}} ( - | : ) {{title}}', got {self.text!r}"
+        )
         result: str = match.group("title")
         return result
 

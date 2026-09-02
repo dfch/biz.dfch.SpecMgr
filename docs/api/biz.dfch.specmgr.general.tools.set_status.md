@@ -272,7 +272,11 @@ ValueError
 pydantic.ValidationError
     ``status`` is not in the dispatched domain's closed vocabulary
     (for ``adr``: not one of its six values and not a
-    ``"superseded by ..."`` string). Nothing is written.
+    ``"superseded by ..."`` string). The message is prefixed with
+    domain/tool/channel context (e.g. ``"tsk set_status
+    (frontmatter): ..."``) by the shared tool-boundary wrapper
+    (:func:`~biz.dfch.specmgr.models.md._errors.wrap_tool_errors`).
+    Nothing is written.
 ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
 PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
 FeatNotFoundError / SopNotFoundError / VcrNotFoundError / AdrNotFoundError

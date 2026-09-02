@@ -22,7 +22,7 @@ from __future__ import annotations
 from pydantic import computed_field
 
 from .markdown_str import MarkdownStr
-from ._markdown import format_text, parse
+from ._markdown import format_text, not_in_mdformat_message, parse
 from .markdown import markdown
 from .markdown_section import _HEADING_TAGS
 
@@ -80,7 +80,7 @@ class MarkdownParagraph(MarkdownStr):
                 `text`.
         """
         assert isinstance(text, str), type(text)
-        assert text == format_text(text), "text is not in 'mdformat'."
+        assert text == format_text(text), not_in_mdformat_message(text)
 
         own_type = cls._metadata.get("type")
         own_tag = cls._metadata.get("tag")
@@ -114,7 +114,7 @@ class MarkdownParagraph(MarkdownStr):
         return result
 
     @classmethod
-    def from_text(cls, text: str) -> MarkdownParagraph:
+    def from_text(cls, text: str, *, _path: str = "", _offset: int = 0) -> MarkdownParagraph:
         """Create an instance from markdown text starting with this class's own paragraph.
 
         Validates that `text` starts with the paragraph triple
@@ -135,9 +135,22 @@ class MarkdownParagraph(MarkdownStr):
         `_value` only needs the paragraph's own inline text (e.g. a lead-in
         sentence) so that `__str__` can re-emit it without duplicating what
         the children already carry.
+
+        Args:
+            text: the markdown text to parse.
+            _path: this paragraph's own document-relative path (REQ-001) as
+                chosen by the caller -- `""` at the very root, in which case
+                `cls.__name__` is used instead (see
+                `MarkdownStr.from_text`'s own `_path` docs).
+            _offset: the 0-based line at which `text` (this paragraph's own
+                lead line) starts, relative to the root document's own
+                `mdformat`-normalized body (REQ-002) -- `0` at the root.
         """
         assert isinstance(text, str), f"text: '{type(text)}' != 'str'."
-        assert text == format_text(text), "text is not in 'mdformat'."
+        assert text == format_text(text), not_in_mdformat_message(text)
+
+        own_path = _path or cls.__name__
+        own_line = _offset + 1
 
         tokens = parse(text)
         assert len(tokens) >= 3, "Expected at least 3 tokens for paragraph triple"
@@ -163,6 +176,8 @@ class MarkdownParagraph(MarkdownStr):
         if not field_names:
             instance = cls()
             instance._value = text
+            instance._path = own_path
+            instance._line = own_line
             return instance
 
         own_map = t_open.map
@@ -172,8 +187,10 @@ class MarkdownParagraph(MarkdownStr):
         body_lines = text.splitlines()[own_lines:]
         body_text = format_text("\n".join(body_lines)) if body_lines else ""
 
-        instance = super().from_text(body_text)
+        instance = super().from_text(body_text, _path=own_path, _offset=_offset + own_lines)
         instance._value = paragraph_text
+        instance._path = own_path
+        instance._line = own_line
         return instance
 
     def __str__(self) -> str:

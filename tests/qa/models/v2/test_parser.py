@@ -200,12 +200,16 @@ class TestParseQaRejectsV1ShapedBody(unittest.TestCase):
     """A v1-shaped body fails to parse via v2's `parse_qa`, with no fallback to v1 parsing (ACC-004)."""
 
     def test_missing_elicitation_context_raises_the_same_structural_error_from_from_text(self) -> None:
+        """feat-27 Phase 1 note: the engine's "expected ..., found no match" message now names
+        the missing field by its own type identity (`ElicitationContext`, a domain-specific
+        `MarkdownSection` subclass) rather than its bare attribute name (`elicitation_context`)
+        -- see `models.md.markdown_str._field_label`."""
         text = _make_document(_V1_SHAPED_BODY_MISSING_ELICITATION_CONTEXT)
 
         with self.assertRaises(AssertionError) as ctx:
             parse_qa(text)
 
-        self.assertIn("elicitation_context", str(ctx.exception))
+        self.assertIn("ElicitationContext", str(ctx.exception))
 
     def test_invalid_frontmatter_status_raises_validation_error(self) -> None:
         """A frontmatter value that fails `QaFrontmatter`'s own validation surfaces `ValidationError` unchanged."""

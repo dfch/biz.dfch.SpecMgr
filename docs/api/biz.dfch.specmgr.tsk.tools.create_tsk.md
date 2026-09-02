@@ -44,7 +44,8 @@ built by this tool: a fresh id (``uuid.uuid4()``), ``type="tsk"``,
 :class:`~biz.dfch.specmgr.tsk.models.v1.Task` from it
 (``Task.from_text(format_text(content))``); a structural failure raises
 ``AssertionError`` and a field/cross-field failure raises
-``pydantic.ValidationError``, both uncaught -- nothing is written in
+``pydantic.ValidationError``, both re-raised with domain/tool context
+prepended (see Raises below) -- nothing is written in
 either case. In particular, a ``content`` whose ``## Recent Updates``
 section has zero ``### `` entries fails this same way
 (``RecentUpdates.updates`` requires ``min_length=1``) -- this tool does
@@ -64,4 +65,16 @@ Returns
 TskDocument
     The newly created document, with its assigned id in
     ``frontmatter.id``.
+
+Raises
+------
+AssertionError
+    A structural failure in ``content``. The message is prefixed with domain/tool/channel
+    context (e.g. ``"tsk create_tsk (body): ..."``) by the shared tool-boundary
+    wrapper (:func:`~biz.dfch.specmgr.models.md._errors.wrap_tool_errors`), layered on top
+    of the engine's own field-path/line/snippet enrichment (feat-27-validation Phases 1/2).
+    Nothing is written.
+pydantic.ValidationError
+    A field/cross-field validation failure in ``content`` -- similarly prefixed. Nothing is
+    written.
 

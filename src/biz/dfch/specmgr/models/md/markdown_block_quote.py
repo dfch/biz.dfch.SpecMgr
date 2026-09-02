@@ -24,7 +24,7 @@ import re
 from pydantic import computed_field
 
 from .markdown_str import MarkdownStr
-from ._markdown import format_text, parse
+from ._markdown import format_text, not_in_mdformat_message, parse
 from .markdown import markdown
 
 #: Matches a block quote marker (">" or "> ") at the start of a line.
@@ -144,7 +144,7 @@ class MarkdownBlockQuote(MarkdownStr):
                 including any more deeply nested quote.
         """
         assert isinstance(text, str), type(text)
-        assert text == format_text(text), "text is not in 'mdformat'."
+        assert text == format_text(text), not_in_mdformat_message(text)
 
         own_type = cls._metadata.get("type")
         own_tag = cls._metadata.get("tag")
@@ -165,7 +165,7 @@ class MarkdownBlockQuote(MarkdownStr):
         return result
 
     @classmethod
-    def from_text(cls, text: str) -> MarkdownBlockQuote:
+    def from_text(cls, text: str, *, _path: str = "", _offset: int = 0) -> MarkdownBlockQuote:
         """Create an instance from markdown text starting with a block quote.
 
         Validates only the `blockquote_open` token itself (`type`/`tag`
@@ -189,12 +189,21 @@ class MarkdownBlockQuote(MarkdownStr):
         Args:
             text: Markdown source, pre-formatted with `mdformat`, starting
                 with this class's own block quote.
+            _path: this quote's own document-relative path (REQ-001) as
+                chosen by the caller -- `""` at the very root, in which case
+                `cls.__name__` is used instead.
+            _offset: the 0-based line at which `text` starts, relative to
+                the root document's own `mdformat`-normalized body
+                (REQ-002) -- `0` at the root.
 
         Returns:
             A new instance, populated per the leaf/composite case above.
         """
         assert isinstance(text, str), f"text: '{type(text)}' != 'str'."
-        assert text == format_text(text), "text is not in 'mdformat'."
+        assert text == format_text(text), not_in_mdformat_message(text)
+
+        own_path = _path or cls.__name__
+        own_line = _offset + 1
 
         tokens = parse(text)
         assert tokens, "Expected at least one token for a block quote"
@@ -217,13 +226,17 @@ class MarkdownBlockQuote(MarkdownStr):
         if not field_names:
             instance = cls()
             instance._value = text
+            instance._path = own_path
+            instance._line = own_line
             return instance
 
         dedented_text = _dedent_quote_lines(text)
         body_text = format_text(dedented_text) if dedented_text else ""
 
-        instance = super().from_text(body_text)
+        instance = super().from_text(body_text, _path=own_path, _offset=_offset)
         instance._value = ""
+        instance._path = own_path
+        instance._line = own_line
 
         return instance
 
