@@ -321,6 +321,34 @@ class TestCalculator(unittest.TestCase):
     def test_divide_by_zero_fails() -> None: ...
 ```
 
+### Markdown Authoring (Line Wrapping)
+
+**Requirement:** Never break a line inside an inline span (a backtick code span, `**bold**`/`_italic_`
+emphasis, or a `[link](url)` label) when hand-wrapping markdown prose to a fixed column width.
+
+- CommonMark normalizes a line ending inside an inline span to a single space during parsing --
+  the break is not recoverable as a distinct token afterward.
+- This repo's `mdformat` tool/MCP tool (`models/md/_markdown.py::format_text`) uses `mdformat`'s
+  default `wrap: "keep"` option, which can only preserve line breaks that survive as real token
+  boundaries between separate inline nodes. A break swallowed into a span's content silently
+  merges with its neighboring line the next time the file is run through `mdformat`, producing a
+  surprisingly large diff for what looks like a purely cosmetic operation.
+
+**Example:**
+```markdown
+<!-- ✗ Before: line break lands inside the backtick code span -->
+See the `## Operational
+Concept and Scenarios` section for details.
+
+<!-- After running mdformat: the break inside the span is collapsed to a single space -->
+See the `## Operational Concept and Scenarios` section for details.
+```
+
+**Best Practices:**
+- Prefer not hand-wrapping markdown prose at all -- one long logical line per paragraph is what
+  most of this codebase's already-`mdformat`-clean domain body content does.
+- If you do hard-wrap for editor readability, always break at a plain word boundary that falls
+  outside of any inline span.
 
 ## TODO
 
@@ -349,3 +377,4 @@ These conventions were chosen to:
 - **2026-08-06:** Added test file organization guidelines
 - **2026-08-06:** Added test method naming conventions
 - **2026-08-06:** Added test data and fixtures guidelines
+- **2026-09-02:** Added markdown line-wrapping convention (avoid breaking inside inline spans)
