@@ -29,7 +29,7 @@ This feature adds a `specmgr://config` resource that reports, for every domain, 
 
 - [x] ACC-001: Fetching `specmgr://config` returns a structured payload listing all twelve domains, each with its resolved absolute base directory path and a flag indicating whether its `SPECMGR_*_DIR` env var was explicitly set.
 - [x] ACC-002: An automated test sets an unrelated environment variable (e.g. a fake PAT) and asserts it never appears anywhere in `specmgr://config`'s output.
-- [ ] ACC-003: `README.md`'s "Add to OpenCode" example and "Environment Variables" section reflect the updated guidance, including `SPECMGR_FEAT_DIR`.
+- [x] ACC-003: `README.md`'s "Add to OpenCode" example and "Environment Variables" section reflect the updated guidance, including `SPECMGR_FEAT_DIR`.
 - [x] ACC-004: `docs/MCP.md` lists `specmgr://config` after running `specmgr mcp-docs`, with no manual edits required.
 - [ ] ACC-005: `uv run --frozen ruff format --check`, `ruff check`, `vulture`, and the full unittest suite all pass with the new resource in place. (Phase 1's own slice passed; ACC-005 stays open pending Phase 2/3.)
 
@@ -63,8 +63,8 @@ This feature adds a `specmgr://config` resource that reports, for every domain, 
 
 #### Phase 2: Documentation Updates
 
-- [ ] Task 2.1: Update README's "Add to OpenCode" example per the chosen guidance (REQ-003).
-- [ ] Task 2.2: Add `SPECMGR_FEAT_DIR` to README's "Environment Variables" section (REQ-004).
+- [x] Task 2.1: Update README's "Add to OpenCode" example per the chosen guidance (REQ-003).
+- [x] Task 2.2: Add `SPECMGR_FEAT_DIR` to README's "Environment Variables" section (REQ-004).
 
 #### Phase 3: Verification
 
@@ -75,11 +75,15 @@ This feature adds a `specmgr://config` resource that reports, for every domain, 
 
 ### Current Status
 
-**As of 2026-09-02**: Phase 1 (Diagnostic Resource) complete -- the `specmgr://config` resource is implemented, tested, and documented. Phase 2 (README documentation updates) and Phase 3 (verification) remain.
+**As of 2026-09-02**: Phase 1 (Diagnostic Resource) and Phase 2 (Documentation Updates) complete -- the `specmgr://config` resource is implemented, tested, and documented, and the top-level `README.md`'s "Add to OpenCode" example and "Environment Variables" section now reflect the updated guidance (ACC-003 satisfied). Phase 3 (verification) remains.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-02 — Phase 2 complete: README documentation updates
+
+Updated the top-level `README.md`'s "Environment Variables" section to add a `SPECMGR_FEAT_DIR` bullet (mirroring the existing `SPECMGR_ADR_DIR` bullet's style: FEAT-specific, defaults to `.specmgr/feat`, not shared via `SPECMGR_DOCS_DIR`) plus a short pointer to the new `specmgr://config` resource for self-diagnosis. Rewrote "Add to OpenCode"'s single, unsafe example into two labeled alternatives: Option A uses `uvx --directory <path-to-your-project> --from biz-dfch-specmgr[mcp] specmgr mcp` (confirmed via `uv --help`/a live `uv run --directory` test that `--directory` is a global uv/uvx flag that must precede `--from`); Option B adds an explicit `"environment"` block setting `SPECMGR_DOCS_DIR`/`SPECMGR_ADR_DIR`/`SPECMGR_FEAT_DIR` (confirmed as a real key in OpenCode's own `McpLocalConfig` JSON schema, found in `.opencode/node_modules/@opencode-ai/sdk/dist/gen/types.gen.d.ts`). Both are framed as alternatives, with prose explaining why the plain example is CWD-dependent/unsafe and pointing at `specmgr://config` to verify either option worked. Satisfies REQ-003/REQ-004/ACC-003. Full quality gate (`ruff format --check`, `ruff check`, `vulture`, full unittest suite, `specmgr docs`) passes unchanged, since this phase only touched `README.md` (not part of the generated docs pipeline).
 
 #### 2026-09-02 — Phase 1 complete: specmgr://config resource implemented
 
@@ -92,6 +96,10 @@ Feature drafted from GitHub issue #51 ("MCP server silently resolves per-domain 
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-02 — Combine both REQ-003 "Add to OpenCode" options rather than picking one
+
+REQ-003 originally offered an either/or: recommend `uv run --frozen --directory <path> specmgr mcp` (or the OpenCode-JSON equivalent, `uvx --directory <path> ...`), OR document setting `SPECMGR_DOCS_DIR`/`SPECMGR_ADR_DIR`/`SPECMGR_FEAT_DIR` explicitly. The user was asked to choose between these two and explicitly chose a **combination of both** rather than picking just one: the README's "Add to OpenCode" example now shows both as labeled alternatives (Option A: `uvx --directory <path-to-your-project> --from biz-dfch-specmgr[mcp] specmgr mcp`; Option B: the plain `uvx --from ...` command plus an explicit `"environment"` block setting all three directory env vars), with prose noting either (or both together) is valid and pointing at `specmgr://config` to verify the result.
 
 #### 2026-09-02 — ConfigInfo model shape and location
 
