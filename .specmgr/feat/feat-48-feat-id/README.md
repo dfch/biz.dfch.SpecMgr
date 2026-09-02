@@ -1,9 +1,9 @@
 ---
 created: '2026-09-02T10:32:05.764646'
 id: feat-48-feat-id
-status: planning
+status: review
 type: feat
-updated: '2026-09-02T17:40:00.000000'
+updated: '2026-09-02T18:00:00.000000'
 version: 1.0.0
 ---
 
@@ -46,7 +46,7 @@ known), keeping the document addressable end-to-end.
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: `create_feat(content)` with no `id` creates `feat-0-<slug>` when no `feat-0-*` folder exists yet.
+- [x] ACC-001: `create_feat(content)` with no `id` creates `feat-0-<slug>` when no `feat-0-*` folder exists yet.
 - [x] ACC-002: `create_feat(content, id="feat-28-get-update")` creates exactly that folder/id when not already taken.
 - [x] ACC-003: `create_feat` raises before writing anything when the resulting id (given or defaulted) already exists on disk.
 - [x] ACC-004: `create_feat` raises `ValueError` before writing anything when a caller-supplied `id` does not match the `feat-NNN-slug` shape.
@@ -129,24 +129,38 @@ known), keeping the document addressable end-to-end.
 #### Phase 6: Release
 
 - [x] Task 6.1: Update `CHANGELOG.md`'s `[Unreleased]` section.
-- [ ] Task 6.2: Open PR referencing issue #48, ensure pre-commit hooks pass.
+- [x] Task 6.2: Open PR referencing issue #48, ensure pre-commit hooks pass.
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-09-02**: Phase 6 Task 6.1 (CHANGELOG) done. `CHANGELOG.md`'s
-`[Unreleased]` → `### Added` section now documents both `create_feat`'s
-optional caller-chosen `id` parameter (with the `feat-0-<slug>` default and
-the two new failure modes) and the new `set_feat_id` tool, citing GitHub
-issue #48. Full test suite reconfirmed green (3023 tests, unaffected by a
-docs-only change). Task 6.2 (open PR referencing issue #48) is deferred to
-the orchestrator/user pending a decision about pushing this branch — it is
-explicitly out of scope for the phase implementer that did Task 6.1.
+**As of 2026-09-02**: All 6 phases complete. Every acceptance criterion
+(ACC-001 through ACC-010) is verified and checked off. PR #58
+(<https://github.com/dfch/biz.dfch.SpecMgr/pull/58>, branch `feat-48-feat-id`
+→ `dev`) is open, referencing issue #48, with every commit on the branch
+having passed its pre-commit hooks (ruff format/check, vulture, full
+unittest suite, `specmgr docs`/`mcp-docs`/coverage-badge). The feature is
+now awaiting external PR review/CI; nothing further remains in this
+document's own scope.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-02 18:00:00.000Z — Phase 6: Release (Task 6.2, PR opened)
+
+Completed Task 6.2. PR #58
+(<https://github.com/dfch/biz.dfch.SpecMgr/pull/58>) is now open for branch
+`feat-48-feat-id` → `dev`, referencing GitHub issue #48; every commit on
+the branch passed its pre-commit hooks (ruff format/check, vulture, the
+full unittest suite, `specmgr docs`/`mcp-docs`/coverage-badge). Checked
+off ACC-001 (re-confirmed genuinely covered by the pre-existing
+`test_id_defaults_to_feat_0_when_base_dir_is_empty` in
+`tests/feat/tools/test_create_feat.py`, per Phase 5's Updates entry below)
+and Task 6.2 itself. This closes out this feature's own plan-tracking —
+implementation, tests, and documentation are all complete; only external
+PR review/merge remains, which is outside this document's own scope.
 
 #### 2026-09-02 17:40:00.000Z — Phase 6: Release (Task 6.1)
 
