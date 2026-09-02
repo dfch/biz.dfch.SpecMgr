@@ -124,22 +124,22 @@ class TestVcrLifecycleIntegration(TempVcrDirTestCase):
         # 4. update (type="vcr"): whole-body replace must bump only `updated` and preserve
         #    id/type/status/created/version.
         updated = update(vcr_id, "vcr", _REVISED_BODY)
-        self.assertEqual(updated.frontmatter.id, created.frontmatter.id)
-        self.assertEqual(updated.frontmatter.type, created.frontmatter.type)
-        self.assertEqual(updated.frontmatter.created, created.frontmatter.created)
-        self.assertEqual(updated.frontmatter.status, "draft")
-        self.assertEqual(updated.frontmatter.version, created.frontmatter.version)
-        self.assertNotEqual(updated.frontmatter.updated, created.frontmatter.updated)
-        self.assertEqual(updated.body.coverage.value.text, "full")
+        self.assertEqual(updated.id, created.frontmatter.id)
+        self.assertEqual(updated.type, created.frontmatter.type)
+        self.assertEqual(updated.created, created.frontmatter.created)
+        self.assertEqual(updated.status, "draft")
+        self.assertEqual(updated.version, created.frontmatter.version)
+        self.assertNotEqual(updated.updated, created.frontmatter.updated)
+        self.assertEqual(get_vcr(vcr_id).body.coverage.value.text, "full")
 
         # 5. set_status (type="vcr"): only status/updated may change.
         progressed = set_status(vcr_id, "vcr", "progress")
-        self.assertEqual(progressed.frontmatter.status, "progress")
-        self.assertEqual(progressed.frontmatter.id, updated.frontmatter.id)
-        self.assertEqual(progressed.frontmatter.created, updated.frontmatter.created)
-        self.assertNotEqual(progressed.frontmatter.updated, updated.frontmatter.updated)
+        self.assertEqual(progressed.status, "progress")
+        self.assertEqual(progressed.id, updated.id)
+        self.assertEqual(progressed.created, updated.created)
+        self.assertNotEqual(progressed.updated, updated.updated)
         # The body must be carried forward verbatim, untouched by the status change.
-        self.assertEqual(progressed.body.coverage.value.text, "full")
+        self.assertEqual(get_vcr(vcr_id).body.coverage.value.text, "full")
 
         # 6. get_vcr: must reflect the latest on-disk state.
         fetched_after_status = get_vcr(vcr_id)

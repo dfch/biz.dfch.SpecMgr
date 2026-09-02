@@ -154,13 +154,13 @@ class TestSopLifecycleIntegration(TempSopDirTestCase):
         # 4. update (type="sop", GENERIC): whole-body replace must bump only `updated` and preserve
         #    id/type/status/created/version (ACC-003, ACC-006).
         updated = update(sop_id, "sop", _REVISED_BODY)
-        self.assertEqual(updated.frontmatter.id, created.frontmatter.id)
-        self.assertEqual(updated.frontmatter.type, created.frontmatter.type)
-        self.assertEqual(updated.frontmatter.created, created.frontmatter.created)
-        self.assertEqual(updated.frontmatter.status, "draft")
-        self.assertEqual(updated.frontmatter.version, created.frontmatter.version)
-        self.assertNotEqual(updated.frontmatter.updated, created.frontmatter.updated)
-        self.assertIsNotNone(updated.body.scope)
+        self.assertEqual(updated.id, created.frontmatter.id)
+        self.assertEqual(updated.type, created.frontmatter.type)
+        self.assertEqual(updated.created, created.frontmatter.created)
+        self.assertEqual(updated.status, "draft")
+        self.assertEqual(updated.version, created.frontmatter.version)
+        self.assertNotEqual(updated.updated, created.frontmatter.updated)
+        self.assertIsNotNone(get_sop(sop_id).body.scope)
 
         # 4b. update (type="sop", GENERIC) range mode: a line-range splice must persist and stay valid.
         raw_lines = get_sop(sop_id, raw=True).splitlines()
@@ -173,12 +173,12 @@ class TestSopLifecycleIntegration(TempSopDirTestCase):
 
         # 5. set_status (type="sop", GENERIC): only status/updated may change (ACC-003, ACC-006).
         active = set_status(sop_id, "sop", "active")
-        self.assertEqual(active.frontmatter.status, "active")
-        self.assertEqual(active.frontmatter.id, updated.frontmatter.id)
-        self.assertEqual(active.frontmatter.created, updated.frontmatter.created)
-        self.assertNotEqual(active.frontmatter.updated, updated.frontmatter.updated)
+        self.assertEqual(active.status, "active")
+        self.assertEqual(active.id, updated.id)
+        self.assertEqual(active.created, updated.created)
+        self.assertNotEqual(active.updated, updated.updated)
         # The body must be carried forward verbatim, untouched by the status change.
-        self.assertIsNotNone(active.body.scope)
+        self.assertIsNotNone(get_sop(sop_id).body.scope)
 
         # 6. get_sop: must reflect the latest on-disk state.
         fetched_after_status = get_sop(sop_id)

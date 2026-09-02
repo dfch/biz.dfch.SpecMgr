@@ -50,7 +50,7 @@ after ``load_by_id``, inside the domain lock.
 
 ## Functions
 
-### `_update_dec(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'DecDocument'`
+### `_update_dec(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'DecFrontmatter'`
 
 Replace the body of the decision identified by ``id_`` (whole-body or line-range mode).
 
@@ -63,7 +63,7 @@ domain -- merged from dev while still on the old per-domain mechanism
 (see :func:`_update_req`).
 
 
-### `_update_feat(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'FeatDocument'`
+### `_update_feat(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'FeatFrontmatter'`
 
 Replace the body of the feature identified by ``id_`` (whole-body or line-range mode).
 
@@ -76,7 +76,7 @@ divergence (see the module docstring): ``id_`` resolves via
 other domain.
 
 
-### `_update_gol(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'GolDocument'`
+### `_update_gol(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'GolFrontmatter'`
 
 Replace the body of the goal identified by ``id_`` (whole-body or line-range mode).
 
@@ -87,7 +87,7 @@ per-domain tool was retired in feat-22 Phase 3), plus the REQ-002 range
 branch (see :func:`_update_req`).
 
 
-### `_update_prb(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'PrbDocument'`
+### `_update_prb(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'PrbFrontmatter'`
 
 Replace the body of the problem statement identified by ``id_`` (whole-body or line-range mode).
 
@@ -98,7 +98,7 @@ carry-over with only ``updated`` bumped, ``write_prb_file``,
 Phase 3), plus the REQ-002 range branch (see :func:`_update_req`).
 
 
-### `_update_qa(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'QaDocument'`
+### `_update_qa(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'QaFrontmatter'`
 
 Replace the body of the QA document identified by ``id_`` (whole-body or line-range mode).
 
@@ -109,7 +109,7 @@ that per-domain tool was retired in feat-22 Phase 3), plus the REQ-002
 range branch (see :func:`_update_req`).
 
 
-### `_update_req(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'ReqDocument'`
+### `_update_req(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'ReqFrontmatter'`
 
 Replace the body of the requirement identified by ``id_`` (whole-body or line-range mode).
 
@@ -125,7 +125,7 @@ coordinates, and the *spliced result* is validated and persisted
 verbatim instead of the raw fragment.
 
 
-### `_update_rsk(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'RskDocument'`
+### `_update_rsk(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'RskFrontmatter'`
 
 Replace the body of the risk identified by ``id_`` (whole-body or line-range mode).
 
@@ -136,7 +136,7 @@ per-domain tool was retired in feat-22 Phase 3), plus the REQ-002 range
 branch (see :func:`_update_req`).
 
 
-### `_update_sop(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'SopDocument'`
+### `_update_sop(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'SopFrontmatter'`
 
 Replace the body of the SOP identified by ``id_`` (whole-body or line-range mode).
 
@@ -149,7 +149,7 @@ directly in this shape), plus the REQ-002 range branch
 (see :func:`_update_req`).
 
 
-### `_update_tsk(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'TskDocument'`
+### `_update_tsk(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'TskFrontmatter'`
 
 Replace the body of the task list identified by ``id_`` (whole-body or line-range mode).
 
@@ -160,7 +160,7 @@ that per-domain tool was retired in feat-22 Phase 3), plus the REQ-002
 range branch (see :func:`_update_req`).
 
 
-### `_update_uc(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'UcDocument'`
+### `_update_uc(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'UcFrontmatter'`
 
 Replace the body of the use case identified by ``id_`` (whole-body or line-range mode).
 
@@ -171,7 +171,7 @@ per-domain tool was retired in feat-22 Phase 3), plus the REQ-002 range
 branch (see :func:`_update_req`).
 
 
-### `_update_vcr(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'VcrDocument'`
+### `_update_vcr(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'VcrFrontmatter'`
 
 Replace the body of the verification case record identified by ``id_`` (whole-body or line-range mode).
 
@@ -181,7 +181,7 @@ frontmatter carry-over with only ``updated`` bumped, ``write_vcr_file``,
 :func:`_update_req`).
 
 
-### `update(id: 'str', type: "Literal['req', 'uc', 'tsk', 'qa', 'prb', 'gol', 'rsk', 'dec', 'sop', 'feat', 'vcr']", content: 'str', offset: 'int | None' = None, limit: 'int | None' = None) -> '_UpdateDocument'`
+### `update(id: 'str', type: "Literal['req', 'uc', 'tsk', 'qa', 'prb', 'gol', 'rsk', 'dec', 'sop', 'feat', 'vcr']", content: 'str', offset: 'int | None' = None, limit: 'int | None' = None) -> '_UpdateFrontmatter'`
 
 Replace the body of an existing document, in whole-body or line-range mode.
 
@@ -260,10 +260,11 @@ limit:
 
 Returns
 -------
-ReqDocument | UcDocument | TskDocument | QaDocument | PrbDocument |
-GolDocument | RskDocument | DecDocument | FeatDocument | SopDocument |
-VcrDocument
-    The updated document of the dispatched domain type.
+ReqFrontmatter | UcFrontmatter | TskFrontmatter | QaFrontmatter | PrbFrontmatter |
+GolFrontmatter | RskFrontmatter | DecFrontmatter | FeatFrontmatter | SopFrontmatter |
+VcrFrontmatter
+    The updated document's frontmatter only (no body) of the dispatched domain type;
+    use the corresponding ``get_<d>`` tool to fetch the full document afterward.
 
 Raises
 ------

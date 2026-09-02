@@ -901,13 +901,13 @@ class TestUpdateWholeBody(TempDocsDirTestCase):
 
                 result = update(id=created.frontmatter.id, type=case.doc_type, content=case.updated_body)
 
-                self.assertEqual(result.frontmatter.id, created.frontmatter.id)
-                self.assertEqual(result.frontmatter.type, case.doc_type)
-                self.assertEqual(result.frontmatter.status, created.frontmatter.status)
-                self.assertEqual(result.frontmatter.created, created.frontmatter.created)
-                self.assertEqual(result.frontmatter.version, created.frontmatter.version)
-                self.assertNotEqual(result.frontmatter.updated, created.frontmatter.updated)
-                self.assertIsNotNone(re.fullmatch(_DATE_TIME_TIMESTAMP, result.frontmatter.updated))
+                self.assertEqual(result.id, created.frontmatter.id)
+                self.assertEqual(result.type, case.doc_type)
+                self.assertEqual(result.status, created.frontmatter.status)
+                self.assertEqual(result.created, created.frontmatter.created)
+                self.assertEqual(result.version, created.frontmatter.version)
+                self.assertNotEqual(result.updated, created.frontmatter.updated)
+                self.assertIsNotNone(re.fullmatch(_DATE_TIME_TIMESTAMP, result.updated))
                 self.assertEqual(body_text(self._doc_path(case)), case.updated_body.rstrip("\n"))
 
     def test_status_not_settable_through_update(self) -> None:

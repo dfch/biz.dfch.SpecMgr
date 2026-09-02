@@ -520,13 +520,13 @@ class TestSetStatusWholeBodyDomains(TempDocsDirTestCase):
 
                 result = set_status(id=doc_id, type=case.doc_type, status=case.valid_status)
 
-                self.assertEqual(result.frontmatter.status, case.valid_status)
-                self.assertEqual(result.frontmatter.id, created.frontmatter.id)
-                self.assertEqual(result.frontmatter.type, case.doc_type)
-                self.assertEqual(result.frontmatter.created, created.frontmatter.created)
-                self.assertEqual(result.frontmatter.version, created.frontmatter.version)
-                self.assertNotEqual(result.frontmatter.updated, created.frontmatter.updated)
-                self.assertIsNotNone(re.fullmatch(_DATE_TIME_TIMESTAMP, result.frontmatter.updated))
+                self.assertEqual(result.status, case.valid_status)
+                self.assertEqual(result.id, created.frontmatter.id)
+                self.assertEqual(result.type, case.doc_type)
+                self.assertEqual(result.created, created.frontmatter.created)
+                self.assertEqual(result.version, created.frontmatter.version)
+                self.assertNotEqual(result.updated, created.frontmatter.updated)
+                self.assertIsNotNone(re.fullmatch(_DATE_TIME_TIMESTAMP, result.updated))
                 on_disk_metadata = frontmatter.loads(path.read_text(encoding="utf-8")).metadata
                 self.assertEqual(on_disk_metadata["status"], case.valid_status)
                 self.assertEqual(body_text(path), raw_body_before)

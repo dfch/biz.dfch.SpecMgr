@@ -4,7 +4,7 @@ created: '2026-09-02 21:49:41.712+02:00'
 id: feat-69-update-context
 status: planning
 type: feat
-updated: '2026-09-02 22:09:20.820+02:00'
+updated: '2026-09-02 22:45:00.000+02:00'
 version: 1.0.0
 ---
 
@@ -83,11 +83,11 @@ The shared contract: every in-scope tool's success return type stays the same do
 
 #### Phase 2: Generic tools (general/tools/)
 
-- [ ] Task 2.1: Change `update` to return frontmatter-only across all 11 whole-body domains.
-- [ ] Task 2.2: Change `set_status` to return frontmatter-only across all 11 whole-body domains (adr branch unchanged).
-- [ ] Task 2.3: Change `set_classification` to return frontmatter-only across all 11 whole-body domains.
-- [ ] Task 2.4: Update each tool's MCP `description=` text and docstring Returns section.
-- [ ] Task 2.5: Run the full test suite (`uv run --frozen python -m unittest discover -v -s tests -t . -p "test_*.py"`) plus `ruff format --check`/`ruff check`/`vulture` before moving to Phase 3.
+- [x] Task 2.1: Change `update` to return frontmatter-only across all 11 whole-body domains.
+- [x] Task 2.2: Change `set_status` to return frontmatter-only across all 11 whole-body domains (adr branch unchanged).
+- [x] Task 2.3: Change `set_classification` to return frontmatter-only across all 11 whole-body domains.
+- [x] Task 2.4: Update each tool's MCP `description=` text and docstring Returns section.
+- [x] Task 2.5: Run the full test suite (`uv run --frozen python -m unittest discover -v -s tests -t . -p "test_*.py"`) plus `ruff format --check`/`ruff check`/`vulture` before moving to Phase 3.
 
 #### Phase 3: Per-domain `create_<d>` tools
 
@@ -111,11 +111,23 @@ The shared contract: every in-scope tool's success return type stays the same do
 
 ### Current Status
 
-**As of 2026-09-02**: Feature drafted from GitHub issue #69. Root cause confirmed by reading source: `update`, `set_status`, `set_classification`, and every per-domain `create_<d>` tool return the fully re-parsed document (frontmatter + body) on every successful write; `delete` already returns a minimal path string, and ADR-specific tools are out of scope for this feature. Approach agreed: all in-scope tools switch to a frontmatter-only response (small, bounded size) instead of frontmatter+body (unbounded, growing with document size); error paths are untouched. No prompts currently document the old response shape, so no prompt changes are needed. **Phase 1 (design) is complete**: the frontmatter-only contract is formalized in Design Notes (return type change, removal of the now-pointless `XxxDocument(...)` wrapping construction, no new models needed, error paths untouched by design) and verified against every domain's `document.py`; Task 1.2's prompt-shape check is confirmed clean. Phase 2 (generic tools) has not started.
+**As of 2026-09-02**: Feature drafted from GitHub issue #69. Root cause confirmed by reading source: `update`, `set_status`, `set_classification`, and every per-domain `create_<d>` tool return the fully re-parsed document (frontmatter + body) on every successful write; `delete` already returns a minimal path string, and ADR-specific tools are out of scope for this feature. Approach agreed: all in-scope tools switch to a frontmatter-only response (small, bounded size) instead of frontmatter+body (unbounded, growing with document size); error paths are untouched. No prompts currently document the old response shape, so no prompt changes are needed. **Phase 1 (design) is complete**: the frontmatter-only contract is formalized in Design Notes (return type change, removal of the now-pointless `XxxDocument(...)` wrapping construction, no new models needed, error paths untouched by design) and verified against every domain's `document.py`; Task 1.2's prompt-shape check is confirmed clean. **Phase 2 (generic tools) is complete**: `update`, `set_status` (its 11 non-adr adapters; the `adr` branch is unchanged), and `set_classification` all now return the domain's `XxxFrontmatter` object directly instead of the full `XxxDocument`. Full test suite green (3070 tests), ruff/vulture clean. Phase 3 (per-domain `create_<d>` tools) has not started.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-02 22:45:00.000+02:00 - Phase 2 done: generic tools (update/set_status/set_classification) return frontmatter-only
+
+Completed Phase 2 (Tasks 2.1-2.5). Applied the Phase 1 contract mechanically to all three generic dispatch tools in `general/tools/`:
+
+- `update.py`: all 11 `_update_<d>` adapters' return annotation changed `-> XxxDocument` to `-> XxxFrontmatter`; the `new_doc = XxxDocument(frontmatter=new_frontmatter, body=body)` line removed from both the whole-body and range branches of each adapter; `return new_doc` changed to `return new_frontmatter`. The now-pointless `body = Xxx.from_text(...)` bindings (both branches, all 11 domains) became `F841` unused-variable findings once the document-wrapping was removed, since `body` was only ever used to build the removed `XxxDocument(...)` -- fixed by dropping the assignment and keeping the bare validating call (`Xxx.from_text(format_text(...))`) for its side effect (raising on invalid content), matching the Design Notes' point that this validation step performs no cross-field logic today but must still run. The module-level union alias renamed `_UpdateDocument` -> `_UpdateFrontmatter` with every member changed to its `XxxFrontmatter` counterpart; the `_ADAPTERS` dict value type and the public `update()` return annotation updated accordingly; the now-fully-unused `XxxDocument` imports (11 domains) removed, `XxxFrontmatter` imports and the body-model imports (`Requirement`, `UseCase`, `Task`, `Qa`, `Prb`, `Goal`, `Risk`, `Decision`, `Feature`, `Sop`, `Vcr`) kept. `update()`'s `description=` text and docstring Returns section updated to state the frontmatter-only response shape and point callers at the corresponding `get_<d>` tool.
+- `set_status.py`: the same mechanical change applied to its 11 non-adr adapters (`_set_status_req` .. `_set_status_vcr`); `_set_status_adr` and the `Adr` union member are explicitly untouched (out of scope, per the feature's Scope section and the plan's explicit exception). The union alias renamed `_SetStatusDocument` -> `_SetStatusFrontmatter`, keeping `Adr` in the union; `_ADAPTERS` dict value type and the public `set_status()` return annotation updated; the 11 now-unused `XxxDocument` imports removed. `set_status()`'s `description=` text and docstring Returns section updated, explicitly noting the `adr` branch still returns the full `Adr` document (unchanged).
+- `set_classification.py`: the same mechanical change applied to all 11 adapters (no `adr` branch exists in this tool at all). Union alias renamed `_SetClassificationDocument` -> `_SetClassificationFrontmatter`; `_ADAPTERS` dict value type and the public `set_classification()` return annotation updated; the 11 now-unused `XxxDocument` imports removed; `description=`/docstring Returns updated.
+
+Also fixed every existing test that broke because `result` (the tool's return value) is now the frontmatter object directly, not a `XxxDocument` wrapper: `tests/general/tools/test_update.py`, `test_set_status.py` (its non-adr `TestSetStatusWholeBodyDomains` test only -- the ADR-specific tests are unchanged, since `_set_status_adr` still returns the full `Adr`), and `test_set_classification.py` all had their `result.frontmatter.X`/`result.body.X` assertions on the tool's own direct return value rewritten to `result.X` (dropping the now-nonexistent `.frontmatter` indirection; `.body` assertions on the *tool's own return value* no longer apply since the body is gone). Beyond the three generic-tool test files the plan named, the full-suite run surfaced six cross-domain integration tests and one prompt test that also call `update`/`set_status` directly and asserted on their return value's `.frontmatter.*`/`.body.*` -- `tests/vcr/tools/test_integration.py`, `tests/prb/tools/test_integration.py`, `tests/dec/tools/test_integration.py`, `tests/gol/tools/test_integration.py`, `tests/sop/tools/test_integration.py`, `tests/feat/tools/test_integration.py`, and `tests/feat/prompts/test_update_feat.py`. Their `.frontmatter.*` assertions on the tool's own return value became `.X` the same way; their `.body.*` assertions (which no longer have anything to read, since the return value no longer carries a body at all) were rewritten to call the domain's own `get_<d>(id)` tool first and assert against the freshly fetched full document's `.body.*` instead -- preserving each test's original intent (confirming the body was actually persisted/updated) without expanding coverage. Every `create_<d>`/`get_<d>`/`parse_<d>` test's own `.frontmatter.*`/`.body.*` assertions (on `create_<d>`'s own still-unchanged return value, Phase 3's job) and every ADR-specific test are untouched.
+
+Quality gate, all green: `ruff format --check` (1541 files already formatted), `ruff check` (all checks passed, after fixing 11 new `F841` findings from the removed `XxxDocument` wrapping making `body` locals genuinely unused), `vulture src/ whitelist.py --min-confidence 60` (no findings), `python -m unittest discover -v -s tests -t . -p "test_*.py"` (3070 tests, all passing).
 
 #### 2026-09-02 22:12:00.000+02:00 - Phase 1 done: formalized frontmatter-only return contract
 
@@ -132,6 +144,14 @@ Feature drafted from GitHub issue #69, covering the generic `update`/`set_status
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-02 22:45:00.000+02:00 - Dropped the unused `body` binding rather than keeping a dead variable (Phase 2)
+
+Removing the `new_doc = XxxDocument(frontmatter=new_frontmatter, body=body)` line per the Phase 1 contract left the preceding `body = Xxx.from_text(format_text(...))` binding in `update.py` genuinely unused (an `F841` finding across all 11 domains, both the whole-body and range branches) -- `body`'s only prior use was building the now-removed `XxxDocument`. Fixed by dropping the assignment and keeping the bare `Xxx.from_text(format_text(...))` call for its validation side effect (it still raises `AssertionError`/`pydantic.ValidationError` on invalid content, which is the only thing that call was ever needed for per the Design Notes' point 2). This is a direct, mechanical consequence of the Phase 1 contract, not a new design decision -- documented here because it wasn't spelled out explicitly in the plan's per-adapter change list.
+
+#### 2026-09-02 22:40:00.000+02:00 - Fixed broader breakage beyond the three named test files (Phase 2)
+
+The plan named `tests/general/tools/test_update.py`/`test_set_status.py`/`test_set_classification.py` as the tests to fix for Task 2.5. Running the full suite surfaced six cross-domain integration tests (`vcr`/`prb`/`dec`/`gol`/`sop`/`feat`) and one prompt test (`feat`'s `update_feat`) that also call the generic `update`/`set_status` tools directly and asserted `.frontmatter.*`/`.body.*` on the return value -- these broke for the same root reason (return value is now frontmatter-only) and were in scope for "the full test suite MUST be green" even though not individually named. Fixed the same way: `.frontmatter.X` -> `.X` on the tool's own return value, and `.body.X` assertions (which have nothing left to read since the return value carries no body) rewritten to fetch the current document via the domain's own `get_<d>(id)` tool first, then assert against that. This preserves each test's original intent (the body was actually persisted) without adding new coverage, consistent with the phase's "only fix what breaks" instruction.
 
 #### 2026-09-02 22:10:00.000+02:00 - Formalized frontmatter-only return contract (Phase 1)
 

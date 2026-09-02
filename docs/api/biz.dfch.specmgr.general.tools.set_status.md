@@ -75,7 +75,7 @@ and the ``write_adr`` render round-trip, ``AdrNotFoundError``; that
 per-domain tool was retired in feat-22 Phase 4).
 
 
-### `_set_status_dec(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'DecDocument'`
+### `_set_status_dec(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'DecFrontmatter'`
 
 Replace the status of the decision identified by ``id_``.
 
@@ -87,7 +87,7 @@ old per-domain mechanism -- was converted to the generic tools) --
 see :func:`_set_status_req` for the full semantics.
 
 
-### `_set_status_feat(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'FeatDocument'`
+### `_set_status_feat(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'FeatFrontmatter'`
 
 Replace the status of the feature identified by ``id_``.
 
@@ -100,7 +100,7 @@ shortcut, not a flat-file directory scan. ``updated`` is bumped to the
 same shared date+time timestamp as every other domain.
 
 
-### `_set_status_gol(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'GolDocument'`
+### `_set_status_gol(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'GolFrontmatter'`
 
 Replace the status of the goal identified by ``id_``.
 
@@ -110,7 +110,7 @@ body (same ``gol_lock``, ``load_by_id``, ``write_gol_file``,
 Phase 4) -- see :func:`_set_status_req` for the full semantics.
 
 
-### `_set_status_prb(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'PrbDocument'`
+### `_set_status_prb(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'PrbFrontmatter'`
 
 Replace the status of the problem statement identified by ``id_``.
 
@@ -121,7 +121,7 @@ retired in feat-22 Phase 4) -- see :func:`_set_status_req` for the
 full semantics.
 
 
-### `_set_status_qa(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'QaDocument'`
+### `_set_status_qa(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'QaFrontmatter'`
 
 Replace the status of the QA document identified by ``id_``.
 
@@ -131,7 +131,7 @@ function body (same ``qa_lock``, ``load_by_id``, ``write_qa_file``,
 Phase 4) -- see :func:`_set_status_req` for the full semantics.
 
 
-### `_set_status_req(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'ReqDocument'`
+### `_set_status_req(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'ReqFrontmatter'`
 
 Replace the status of the requirement identified by ``id_``.
 
@@ -146,7 +146,7 @@ never used here -- the public :func:`set_status` guard rejects it for
 every non-``adr`` type before dispatch.
 
 
-### `_set_status_rsk(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'RskDocument'`
+### `_set_status_rsk(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'RskFrontmatter'`
 
 Replace the status of the risk identified by ``id_``.
 
@@ -156,7 +156,7 @@ body (same ``rsk_lock``, ``load_by_id``, ``write_rsk_file``,
 Phase 4) -- see :func:`_set_status_req` for the full semantics.
 
 
-### `_set_status_sop(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'SopDocument'`
+### `_set_status_sop(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'SopFrontmatter'`
 
 Replace the status of the SOP identified by ``id_``.
 
@@ -168,7 +168,7 @@ was written directly in this shape) -- see :func:`_set_status_req` for
 the full semantics.
 
 
-### `_set_status_tsk(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'TskDocument'`
+### `_set_status_tsk(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'TskFrontmatter'`
 
 Replace the status of the task list identified by ``id_``.
 
@@ -178,7 +178,7 @@ function body (same ``tsk_lock``, ``load_by_id``, ``write_tsk_file``,
 Phase 4) -- see :func:`_set_status_req` for the full semantics.
 
 
-### `_set_status_uc(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'UcDocument'`
+### `_set_status_uc(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'UcFrontmatter'`
 
 Replace the status of the use case identified by ``id_``.
 
@@ -188,7 +188,7 @@ function body (same ``uc_lock``, ``load_by_id``, ``write_uc_file``,
 Phase 4) -- see :func:`_set_status_req` for the full semantics.
 
 
-### `_set_status_vcr(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'VcrDocument'`
+### `_set_status_vcr(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'VcrFrontmatter'`
 
 Replace the status of the verification case record identified by ``id_``.
 
@@ -198,7 +198,7 @@ Mirrors :func:`_set_status_dec`'s shape (same ``vcr_lock``,
 ``adr``, so ``superseded_by`` must never be given.
 
 
-### `set_status(id: 'str', type: "Literal['req', 'uc', 'tsk', 'qa', 'prb', 'gol', 'rsk', 'dec', 'sop', 'feat', 'vcr', 'adr']", status: 'str', superseded_by: 'str | None' = None) -> '_SetStatusDocument'`
+### `set_status(id: 'str', type: "Literal['req', 'uc', 'tsk', 'qa', 'prb', 'gol', 'rsk', 'dec', 'sop', 'feat', 'vcr', 'adr']", status: 'str', superseded_by: 'str | None' = None) -> '_SetStatusFrontmatter'`
 
 Replace the status of an existing document, across all twelve domains.
 
@@ -256,10 +256,14 @@ superseded_by:
 
 Returns
 -------
-ReqDocument | UcDocument | TskDocument | QaDocument | PrbDocument |
-GolDocument | RskDocument | DecDocument | FeatDocument | SopDocument |
-VcrDocument | Adr
-    The updated document of the dispatched domain type.
+ReqFrontmatter | UcFrontmatter | TskFrontmatter | QaFrontmatter | PrbFrontmatter |
+GolFrontmatter | RskFrontmatter | DecFrontmatter | FeatFrontmatter | SopFrontmatter |
+VcrFrontmatter | Adr
+    The updated document's frontmatter only (no body) of the dispatched domain type
+    for the eleven whole-body domains; for ``type="adr"`` (unchanged, out of scope for
+    this feature) the full ``Adr`` document, as before. Use the corresponding
+    ``get_<d>`` tool to fetch the full document afterward for the eleven whole-body
+    domains.
 
 Raises
 ------

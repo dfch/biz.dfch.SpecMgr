@@ -219,15 +219,13 @@ class TestFeatLifecycleIntegration(TempFeatDirTestCase):
         #    microsecond timestamp format every other domain uses) and preserve
         #    id/type/status/created/version (ACC-004).
         updated = update(feat_id, "feat", _REVISED_BODY)
-        self.assertEqual(updated.frontmatter.id, created.frontmatter.id)
-        self.assertEqual(updated.frontmatter.type, created.frontmatter.type)
-        self.assertEqual(updated.frontmatter.created, created.frontmatter.created)
-        self.assertEqual(updated.frontmatter.status, "planning")
-        self.assertEqual(updated.frontmatter.version, created.frontmatter.version)
-        self.assertRegex(
-            updated.frontmatter.updated or "", r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})$"
-        )
-        self.assertEqual(len(updated.body.plan.requirements.items), 2)
+        self.assertEqual(updated.id, created.frontmatter.id)
+        self.assertEqual(updated.type, created.frontmatter.type)
+        self.assertEqual(updated.created, created.frontmatter.created)
+        self.assertEqual(updated.status, "planning")
+        self.assertEqual(updated.version, created.frontmatter.version)
+        self.assertRegex(updated.updated or "", r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})$")
+        self.assertEqual(len(get_feat(feat_id).body.plan.requirements.items), 2)
 
         # 4b. update (type="feat", line-range): a single-line splice must round-trip
         #     through the raw body text exactly like every other domain's own range mode.
@@ -241,13 +239,13 @@ class TestFeatLifecycleIntegration(TempFeatDirTestCase):
         # 5. set_status (type="feat"): only status/updated may change; the body (already
         #    revised in steps 4/4b) must be carried forward verbatim, untouched.
         in_progress = set_status(feat_id, "feat", "progress")
-        self.assertEqual(in_progress.frontmatter.status, "progress")
-        self.assertEqual(in_progress.frontmatter.id, updated.frontmatter.id)
-        self.assertEqual(in_progress.frontmatter.created, updated.frontmatter.created)
+        self.assertEqual(in_progress.status, "progress")
+        self.assertEqual(in_progress.id, updated.id)
+        self.assertEqual(in_progress.created, updated.created)
         self.assertRegex(
-            in_progress.frontmatter.updated or "", r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})$"
+            in_progress.updated or "", r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})$"
         )
-        self.assertEqual(len(in_progress.body.plan.requirements.items), 2)
+        self.assertEqual(len(get_feat(feat_id).body.plan.requirements.items), 2)
 
         # 6. get_feat: must reflect the latest on-disk state.
         fetched_after_status = get_feat(feat_id)

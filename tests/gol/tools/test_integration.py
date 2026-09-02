@@ -126,21 +126,21 @@ class TestGolLifecycleIntegration(TempGolDirTestCase):
 
         # 4. update: whole-body replace must preserve id/type/created, bump updated.
         updated = update(gol_id, "gol", _REVISED_BODY)
-        self.assertEqual(updated.frontmatter.id, created.frontmatter.id)
-        self.assertEqual(updated.frontmatter.type, created.frontmatter.type)
-        self.assertEqual(updated.frontmatter.created, created.frontmatter.created)
-        self.assertEqual(updated.frontmatter.status, "draft")
-        self.assertNotEqual(updated.frontmatter.updated, created.frontmatter.updated)
-        self.assertIsNotNone(updated.body.description)
+        self.assertEqual(updated.id, created.frontmatter.id)
+        self.assertEqual(updated.type, created.frontmatter.type)
+        self.assertEqual(updated.created, created.frontmatter.created)
+        self.assertEqual(updated.status, "draft")
+        self.assertNotEqual(updated.updated, created.frontmatter.updated)
+        self.assertIsNotNone(get_gol(gol_id).body.description)
 
         # 5. set_status (type="gol"): only status/updated may change.
         accepted = set_status(gol_id, "gol", "accepted")
-        self.assertEqual(accepted.frontmatter.status, "accepted")
-        self.assertEqual(accepted.frontmatter.id, updated.frontmatter.id)
-        self.assertEqual(accepted.frontmatter.created, updated.frontmatter.created)
-        self.assertNotEqual(accepted.frontmatter.updated, updated.frontmatter.updated)
+        self.assertEqual(accepted.status, "accepted")
+        self.assertEqual(accepted.id, updated.id)
+        self.assertEqual(accepted.created, updated.created)
+        self.assertNotEqual(accepted.updated, updated.updated)
         # The body must be carried forward verbatim, untouched by the status change.
-        self.assertIsNotNone(accepted.body.description)
+        self.assertIsNotNone(get_gol(gol_id).body.description)
 
         # 6. get_gol: must reflect the latest on-disk state.
         fetched_after_status = get_gol(gol_id)

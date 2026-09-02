@@ -443,14 +443,14 @@ class TestSetClassificationWholeBodyDomains(TempDocsDirTestCase):
 
                 result = set_classification(id=doc_id, type=case.doc_type, classification="Confidential")
 
-                self.assertEqual(result.frontmatter.classification, "Confidential")
-                self.assertEqual(result.frontmatter.id, created.frontmatter.id)
-                self.assertEqual(result.frontmatter.type, case.doc_type)
-                self.assertEqual(result.frontmatter.created, created.frontmatter.created)
-                self.assertEqual(result.frontmatter.version, created.frontmatter.version)
-                self.assertEqual(result.frontmatter.status, created.frontmatter.status)
-                self.assertNotEqual(result.frontmatter.updated, created.frontmatter.updated)
-                self.assertIsNotNone(re.fullmatch(_DATE_TIME_TIMESTAMP, result.frontmatter.updated))
+                self.assertEqual(result.classification, "Confidential")
+                self.assertEqual(result.id, created.frontmatter.id)
+                self.assertEqual(result.type, case.doc_type)
+                self.assertEqual(result.created, created.frontmatter.created)
+                self.assertEqual(result.version, created.frontmatter.version)
+                self.assertEqual(result.status, created.frontmatter.status)
+                self.assertNotEqual(result.updated, created.frontmatter.updated)
+                self.assertIsNotNone(re.fullmatch(_DATE_TIME_TIMESTAMP, result.updated))
                 on_disk_metadata = frontmatter.loads(path.read_text(encoding="utf-8")).metadata
                 self.assertEqual(on_disk_metadata["classification"], "Confidential")
                 self.assertEqual(body_text(path), raw_body_before)
@@ -466,7 +466,7 @@ class TestSetClassificationWholeBodyDomains(TempDocsDirTestCase):
                 set_classification(id=doc_id, type=case.doc_type, classification="Confidential")
                 result = set_classification(id=doc_id, type=case.doc_type, classification="   ")
 
-                self.assertIsNone(result.frontmatter.classification)
+                self.assertIsNone(result.classification)
                 on_disk_metadata = frontmatter.loads(path.read_text(encoding="utf-8")).metadata
                 self.assertIsNone(on_disk_metadata.get("classification"))
 

@@ -69,7 +69,7 @@ enriched (field path + line reference + fix hint) shape.
 
 ## Functions
 
-### `_set_classification_dec(id_: 'str', classification: 'str') -> 'DecDocument'`
+### `_set_classification_dec(id_: 'str', classification: 'str') -> 'DecFrontmatter'`
 
 Replace the classification of the decision identified by ``id_``.
 
@@ -77,7 +77,7 @@ See :func:`_set_classification_req` for the full semantics (same
 ``dec_lock``, ``load_by_id``, ``write_dec_file``, ``DecNotFoundError``).
 
 
-### `_set_classification_feat(id_: 'str', classification: 'str') -> 'FeatDocument'`
+### `_set_classification_feat(id_: 'str', classification: 'str') -> 'FeatFrontmatter'`
 
 Replace the classification of the feature identified by ``id_``.
 
@@ -90,7 +90,7 @@ shortcut, not a flat-file directory scan. ``updated`` is bumped to the
 same shared date+time timestamp as every other domain.
 
 
-### `_set_classification_gol(id_: 'str', classification: 'str') -> 'GolDocument'`
+### `_set_classification_gol(id_: 'str', classification: 'str') -> 'GolFrontmatter'`
 
 Replace the classification of the goal identified by ``id_``.
 
@@ -98,7 +98,7 @@ See :func:`_set_classification_req` for the full semantics (same
 ``gol_lock``, ``load_by_id``, ``write_gol_file``, ``GolNotFoundError``).
 
 
-### `_set_classification_prb(id_: 'str', classification: 'str') -> 'PrbDocument'`
+### `_set_classification_prb(id_: 'str', classification: 'str') -> 'PrbFrontmatter'`
 
 Replace the classification of the problem statement identified by ``id_``.
 
@@ -106,7 +106,7 @@ See :func:`_set_classification_req` for the full semantics (same
 ``prb_lock``, ``load_by_id``, ``write_prb_file``, ``PrbNotFoundError``).
 
 
-### `_set_classification_qa(id_: 'str', classification: 'str') -> 'QaDocument'`
+### `_set_classification_qa(id_: 'str', classification: 'str') -> 'QaFrontmatter'`
 
 Replace the classification of the QA document identified by ``id_``.
 
@@ -114,7 +114,7 @@ See :func:`_set_classification_req` for the full semantics (same
 ``qa_lock``, ``load_by_id``, ``write_qa_file``, ``QaNotFoundError``).
 
 
-### `_set_classification_req(id_: 'str', classification: 'str') -> 'ReqDocument'`
+### `_set_classification_req(id_: 'str', classification: 'str') -> 'ReqFrontmatter'`
 
 Replace the classification of the requirement identified by ``id_``.
 
@@ -126,7 +126,7 @@ own constructor, ``write_req_file``, ``ReqNotFoundError``), replacing
 ``classification`` instead of ``status``.
 
 
-### `_set_classification_rsk(id_: 'str', classification: 'str') -> 'RskDocument'`
+### `_set_classification_rsk(id_: 'str', classification: 'str') -> 'RskFrontmatter'`
 
 Replace the classification of the risk identified by ``id_``.
 
@@ -134,7 +134,7 @@ See :func:`_set_classification_req` for the full semantics (same
 ``rsk_lock``, ``load_by_id``, ``write_rsk_file``, ``RskNotFoundError``).
 
 
-### `_set_classification_sop(id_: 'str', classification: 'str') -> 'SopDocument'`
+### `_set_classification_sop(id_: 'str', classification: 'str') -> 'SopFrontmatter'`
 
 Replace the classification of the SOP identified by ``id_``.
 
@@ -145,7 +145,7 @@ Verbatim-shape port of :func:`_set_classification_dec` (same
 :func:`_set_classification_req` for the full semantics.
 
 
-### `_set_classification_tsk(id_: 'str', classification: 'str') -> 'TskDocument'`
+### `_set_classification_tsk(id_: 'str', classification: 'str') -> 'TskFrontmatter'`
 
 Replace the classification of the task list identified by ``id_``.
 
@@ -153,7 +153,7 @@ See :func:`_set_classification_req` for the full semantics (same
 ``tsk_lock``, ``load_by_id``, ``write_tsk_file``, ``TskNotFoundError``).
 
 
-### `_set_classification_uc(id_: 'str', classification: 'str') -> 'UcDocument'`
+### `_set_classification_uc(id_: 'str', classification: 'str') -> 'UcFrontmatter'`
 
 Replace the classification of the use case identified by ``id_``.
 
@@ -161,7 +161,7 @@ See :func:`_set_classification_req` for the full semantics (same
 ``uc_lock``, ``load_by_id``, ``write_uc_file``, ``UcNotFoundError``).
 
 
-### `_set_classification_vcr(id_: 'str', classification: 'str') -> 'VcrDocument'`
+### `_set_classification_vcr(id_: 'str', classification: 'str') -> 'VcrFrontmatter'`
 
 Replace the classification of the verification case record identified by ``id_``.
 
@@ -170,7 +170,7 @@ Mirrors :func:`_set_classification_dec`'s shape (same ``vcr_lock``,
 :func:`_set_classification_req` for the full semantics.
 
 
-### `set_classification(id: 'str', type: "Literal['req', 'uc', 'tsk', 'qa', 'prb', 'gol', 'rsk', 'dec', 'sop', 'feat', 'vcr']", classification: 'str') -> '_SetClassificationDocument'`
+### `set_classification(id: 'str', type: "Literal['req', 'uc', 'tsk', 'qa', 'prb', 'gol', 'rsk', 'dec', 'sop', 'feat', 'vcr']", classification: 'str') -> '_SetClassificationFrontmatter'`
 
 Replace the ``classification`` frontmatter field of an existing document.
 
@@ -220,10 +220,11 @@ classification:
 
 Returns
 -------
-ReqDocument | UcDocument | TskDocument | QaDocument | PrbDocument |
-GolDocument | RskDocument | DecDocument | FeatDocument | SopDocument |
-VcrDocument
-    The updated document of the dispatched domain type.
+ReqFrontmatter | UcFrontmatter | TskFrontmatter | QaFrontmatter | PrbFrontmatter |
+GolFrontmatter | RskFrontmatter | DecFrontmatter | FeatFrontmatter | SopFrontmatter |
+VcrFrontmatter
+    The updated document's frontmatter only (no body) of the dispatched domain type;
+    use the corresponding ``get_<d>`` tool to fetch the full document afterward.
 
 Raises
 ------

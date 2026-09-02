@@ -138,22 +138,23 @@ class TestPrbLifecycleIntegration(TempPrbDirTestCase):
 
         # 2. update: whole-body replace must preserve id/type/created, bump updated.
         updated = update(prb_id, "prb", _REVISED_BODY)
-        self.assertEqual(updated.frontmatter.id, created.frontmatter.id)
-        self.assertEqual(updated.frontmatter.type, created.frontmatter.type)
-        self.assertEqual(updated.frontmatter.created, created.frontmatter.created)
-        self.assertEqual(updated.frontmatter.status, "draft")
-        self.assertNotEqual(updated.frontmatter.updated, created.frontmatter.updated)
-        self.assertIn("Android", updated.body.current_state.question_3.text)  # type: ignore[union-attr]
-        self.assertIsNotNone(updated.body.impact)
+        self.assertEqual(updated.id, created.frontmatter.id)
+        self.assertEqual(updated.type, created.frontmatter.type)
+        self.assertEqual(updated.created, created.frontmatter.created)
+        self.assertEqual(updated.status, "draft")
+        self.assertNotEqual(updated.updated, created.frontmatter.updated)
+        after_update = get_prb(prb_id)
+        self.assertIn("Android", after_update.body.current_state.question_3.text)  # type: ignore[union-attr]
+        self.assertIsNotNone(after_update.body.impact)
 
         # 3. set_status (type="prb"): only status/updated may change.
         activated = set_status(prb_id, "prb", "active")
-        self.assertEqual(activated.frontmatter.status, "active")
-        self.assertEqual(activated.frontmatter.id, updated.frontmatter.id)
-        self.assertEqual(activated.frontmatter.created, updated.frontmatter.created)
-        self.assertNotEqual(activated.frontmatter.updated, updated.frontmatter.updated)
+        self.assertEqual(activated.status, "active")
+        self.assertEqual(activated.id, updated.id)
+        self.assertEqual(activated.created, updated.created)
+        self.assertNotEqual(activated.updated, updated.updated)
         # The body must be carried forward verbatim, untouched by the status change.
-        self.assertIn("Android", activated.body.current_state.question_3.text)  # type: ignore[union-attr]
+        self.assertIn("Android", get_prb(prb_id).body.current_state.question_3.text)  # type: ignore[union-attr]
 
         # 4. get_prb: must reflect the latest on-disk state.
         fetched = get_prb(prb_id)

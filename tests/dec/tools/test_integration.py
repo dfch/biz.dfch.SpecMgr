@@ -142,22 +142,22 @@ class TestDecLifecycleIntegration(TempDecDirTestCase):
         # 4. update (type="dec"): whole-body replace must bump only `updated` and preserve
         #    id/type/status/created/version (ACC-003).
         updated = update(dec_id, "dec", _REVISED_BODY)
-        self.assertEqual(updated.frontmatter.id, created.frontmatter.id)
-        self.assertEqual(updated.frontmatter.type, created.frontmatter.type)
-        self.assertEqual(updated.frontmatter.created, created.frontmatter.created)
-        self.assertEqual(updated.frontmatter.status, "draft")
-        self.assertEqual(updated.frontmatter.version, created.frontmatter.version)
-        self.assertNotEqual(updated.frontmatter.updated, created.frontmatter.updated)
-        self.assertIsNotNone(updated.body.drivers)
+        self.assertEqual(updated.id, created.frontmatter.id)
+        self.assertEqual(updated.type, created.frontmatter.type)
+        self.assertEqual(updated.created, created.frontmatter.created)
+        self.assertEqual(updated.status, "draft")
+        self.assertEqual(updated.version, created.frontmatter.version)
+        self.assertNotEqual(updated.updated, created.frontmatter.updated)
+        self.assertIsNotNone(get_dec(dec_id).body.drivers)
 
         # 5. set_status (type="dec"): only status/updated may change.
         accepted = set_status(dec_id, "dec", "accepted")
-        self.assertEqual(accepted.frontmatter.status, "accepted")
-        self.assertEqual(accepted.frontmatter.id, updated.frontmatter.id)
-        self.assertEqual(accepted.frontmatter.created, updated.frontmatter.created)
-        self.assertNotEqual(accepted.frontmatter.updated, updated.frontmatter.updated)
+        self.assertEqual(accepted.status, "accepted")
+        self.assertEqual(accepted.id, updated.id)
+        self.assertEqual(accepted.created, updated.created)
+        self.assertNotEqual(accepted.updated, updated.updated)
         # The body must be carried forward verbatim, untouched by the status change.
-        self.assertIsNotNone(accepted.body.drivers)
+        self.assertIsNotNone(get_dec(dec_id).body.drivers)
 
         # 6. get_dec: must reflect the latest on-disk state.
         fetched_after_status = get_dec(dec_id)
