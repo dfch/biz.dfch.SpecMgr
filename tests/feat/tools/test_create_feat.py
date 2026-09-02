@@ -202,6 +202,62 @@ class TestCreateFeat(TempFeatDirTestCase):
         self.assertFalse(feat_base_dir().exists())
 
 
+class TestCreateFeatWithExplicitId(TempFeatDirTestCase):
+    """Tests for create_feat's optional caller-chosen ``id`` parameter (feat-48-feat-id Phase 2)."""
+
+    def test_explicit_id_creates_exact_folder_and_id(self) -> None:
+        """A caller-supplied id is used verbatim -- the title-derived slug plays no role (ACC-002)."""
+        # The title's own slug ("zzz-unrelated-title") deliberately differs from the given id's
+        # slug-looking suffix ("get-update"), to prove the given id really is used as-is.
+        result = create_feat(_body_with_title("Zzz Unrelated Title"), id="feat-28-get-update")
+
+        self.assertEqual(result.frontmatter.id, "feat-28-get-update")
+        expected_path = feat_base_dir() / "feat-28-get-update" / README_FILENAME
+        self.assertTrue(expected_path.exists())
+        self.assertFalse((feat_base_dir() / "feat-28-zzz-unrelated-title").exists())
+
+        on_disk = parse_feat(expected_path.read_text(encoding="utf-8"))
+        self.assertEqual(on_disk.frontmatter.id, "feat-28-get-update")
+
+    def test_invalid_explicit_id_raises_value_error_and_writes_nothing(self) -> None:
+        """A malformed caller-supplied id raises ValueError before any lock/fs access (ACC-004)."""
+        malformed_ids = ["not-a-valid-id", "feat-abc-slug", "Feat-1-Slug"]
+        for malformed_id in malformed_ids:
+            with self.subTest(malformed_id=malformed_id):
+                with self.assertRaises(ValueError):
+                    create_feat(_MINIMAL_BODY, id=malformed_id)
+
+                self.assertFalse(feat_base_dir().exists())
+
+    def test_explicit_id_collision_raises_and_leaves_existing_untouched(self) -> None:
+        """A second create_feat call with an already-taken caller-supplied id raises FileExistsError,
+        and the first document is left completely unchanged (ACC-003)."""
+        first = create_feat(_body_with_title("First Title"), id="feat-28-get-update")
+        expected_path = feat_base_dir() / "feat-28-get-update" / README_FILENAME
+        before = expected_path.read_text(encoding="utf-8")
+
+        with self.assertRaises(FileExistsError):
+            create_feat(_body_with_title("Second Title"), id="feat-28-get-update")
+
+        self.assertEqual(expected_path.read_text(encoding="utf-8"), before)
+        on_disk = parse_feat(expected_path.read_text(encoding="utf-8"))
+        self.assertEqual(on_disk.frontmatter.id, first.frontmatter.id)
+        self.assertEqual(on_disk.body.text, "Feature: First Title")
+
+    def test_defaulted_id_collision_raises(self) -> None:
+        """When id is omitted, a pre-existing feat-0-<slug> folder for the same title-derived
+        slug must also raise FileExistsError before any write (ACC-003)."""
+        base_dir = feat_base_dir()
+        colliding_folder = base_dir / "feat-0-example-widget"
+        colliding_folder.mkdir(parents=True)
+
+        with self.assertRaises(FileExistsError):
+            create_feat(_MINIMAL_BODY)
+
+        # Nothing beyond the pre-seeded folder itself must have been written.
+        self.assertFalse((colliding_folder / README_FILENAME).exists())
+
+
 class TestCreateFeatConcurrency(TempFeatDirTestCase):
     """Tests for create_feat's concurrent-create id-collision handling (ACC-002)."""
 

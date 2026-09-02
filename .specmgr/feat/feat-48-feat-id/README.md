@@ -3,7 +3,7 @@ created: '2026-09-02T10:32:05.764646'
 id: feat-48-feat-id
 status: planning
 type: feat
-updated: '2026-09-02T16:10:00.000000'
+updated: '2026-09-02T17:05:00.000000'
 version: 1.0.0
 ---
 
@@ -47,15 +47,15 @@ known), keeping the document addressable end-to-end.
 ### Acceptance Criteria
 
 - [ ] ACC-001: `create_feat(content)` with no `id` creates `feat-0-<slug>` when no `feat-0-*` folder exists yet.
-- [ ] ACC-002: `create_feat(content, id="feat-28-get-update")` creates exactly that folder/id when not already taken.
-- [ ] ACC-003: `create_feat` raises before writing anything when the resulting id (given or defaulted) already exists on disk.
-- [ ] ACC-004: `create_feat` raises `ValueError` before writing anything when a caller-supplied `id` does not match the `feat-NNN-slug` shape.
-- [ ] ACC-005: `set_feat_id("feat-0-get-update", "feat-42-get-update")` renames the folder, updates the frontmatter `id`, bumps `updated`, and leaves the body otherwise byte-identical.
-- [ ] ACC-006: `set_feat_id` raises (without renaming) when `new_id` already exists as a folder.
-- [ ] ACC-007: `set_feat_id` raises `FeatNotFoundError` when `id` does not resolve to an existing feature.
+- [x] ACC-002: `create_feat(content, id="feat-28-get-update")` creates exactly that folder/id when not already taken.
+- [x] ACC-003: `create_feat` raises before writing anything when the resulting id (given or defaulted) already exists on disk.
+- [x] ACC-004: `create_feat` raises `ValueError` before writing anything when a caller-supplied `id` does not match the `feat-NNN-slug` shape.
+- [x] ACC-005: `set_feat_id("feat-0-get-update", "feat-42-get-update")` renames the folder, updates the frontmatter `id`, bumps `updated`, and leaves the body otherwise byte-identical.
+- [x] ACC-006: `set_feat_id` raises (without renaming) when `new_id` already exists as a folder.
+- [x] ACC-007: `set_feat_id` raises `FeatNotFoundError` when `id` does not resolve to an existing feature.
 - [x] ACC-008: `set_feat_id` is registered as an `@mcp.tool()` and appears in `server.py`'s docstring/registration and in `docs/MCP.md` after regeneration.
 - [x] ACC-009: The packaged `feat` prompt instructions, `AGENTS.md`, and `server.py`'s docstring are updated to mention the optional `id` parameter and `set_feat_id`.
-- [ ] ACC-010: The full test suite (`uv run --frozen python -m unittest discover -v -s tests -t . -p "test_*.py"`) passes, including new unit tests for `create_feat(id=...)` and `set_feat_id`.
+- [x] ACC-010: The full test suite (`uv run --frozen python -m unittest discover -v -s tests -t . -p "test_*.py"`) passes, including new unit tests for `create_feat(id=...)` and `set_feat_id`.
 
 ### Scope
 
@@ -120,11 +120,11 @@ known), keeping the document addressable end-to-end.
 
 #### Phase 5: Tests
 
-- [ ] Task 5.1: Unit tests for `create_feat(id=...)` happy path, shape-validation failure, and existing-id collision (before any write).
-- [ ] Task 5.2: Unit tests for `create_feat()` default `feat-0-<slug>` path with no auto-increment.
-- [ ] Task 5.3: Unit tests for `set_feat_id` happy path (rename + frontmatter rewrite + `updated` bump + byte-identical body).
-- [ ] Task 5.4: Unit tests for `set_feat_id` failure paths (target exists, source not found, invalid `new_id` shape).
-- [ ] Task 5.5: Run full test suite, ruff, vulture, pylint per `AGENTS.md` developer commands.
+- [x] Task 5.1: Unit tests for `create_feat(id=...)` happy path, shape-validation failure, and existing-id collision (before any write).
+- [x] Task 5.2: Unit tests for `create_feat()` default `feat-0-<slug>` path with no auto-increment.
+- [x] Task 5.3: Unit tests for `set_feat_id` happy path (rename + frontmatter rewrite + `updated` bump + byte-identical body).
+- [x] Task 5.4: Unit tests for `set_feat_id` failure paths (target exists, source not found, invalid `new_id` shape).
+- [x] Task 5.5: Run full test suite, ruff, vulture, pylint per `AGENTS.md` developer commands.
 
 #### Phase 6: Release
 
@@ -135,21 +135,106 @@ known), keeping the document addressable end-to-end.
 
 ### Current Status
 
-**As of 2026-09-02**: Phase 4 (prompts and documentation) done. The
-packaged `feat_create_instructions.md`/`feat_update_instructions.md`
-prompt text and `AGENTS.md`'s `feat/` bullet now describe `create_feat`'s
-optional `id` parameter, the `feat-0-<slug>` no-auto-increment default,
-and `set_feat_id` as the dedicated renumbering path (distinct from the
-generic `update`/`set_status` tools). `specmgr docs` and `specmgr
-mcp-docs` were re-run and produced no drift beyond these prompt-text/
-`AGENTS.md` edits themselves -- confirming Phase 3's commit had already
-regenerated `docs/api/`/`docs/GENERATED.md`/`docs/MCP.md` faithfully.
-Full test suite green (3015 tests, unchanged). ACC-008 and ACC-009 are
-now satisfied end-to-end. Implementation continues with Phase 5 (tests).
+**As of 2026-09-02**: Phase 5 (tests) done. New unit tests cover both
+`create_feat`'s optional caller-chosen `id` parameter (happy path, shape
+validation, both caller-supplied and defaulted existing-id collisions) and
+the new `set_feat_id` tool (happy-path rename with byte-identical body,
+target-exists/source-not-found/invalid-shape failure paths). Full test
+suite green (3023 tests, up from 3015 -- 8 new tests). ACC-002 through
+ACC-007 and ACC-010 are now satisfied end-to-end, closing out every
+acceptance criterion for this feature. Implementation continues with
+Phase 6 (release).
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-02 17:05:00.000Z — Phase 5: Tests
+
+Completed Task 5.1-5.5. `tests/feat/tools/test_create_feat.py`: added a new
+`TestCreateFeatWithExplicitId` class (4 new tests) covering the *new*
+`id=` parameter behavior Phase 2 did not already have dedicated coverage
+for --
+`test_explicit_id_creates_exact_folder_and_id` (ACC-002: a caller-supplied
+`id="feat-28-get-update"` is used verbatim against a body whose own
+title-derived slug, `"zzz-unrelated-title"`, deliberately differs, proving
+the slug plays no role in this branch);
+`test_invalid_explicit_id_raises_value_error_and_writes_nothing` (ACC-004:
+three malformed shapes -- `"not-a-valid-id"`, `"feat-abc-slug"` (non-numeric
+NNN), `"Feat-1-Slug"` (uppercase) -- each raise `ValueError` with
+`feat_base_dir().exists()` still `False` afterward, i.e. before even the
+base dir is touched, let alone `feat_create_lock()`);
+`test_explicit_id_collision_raises_and_leaves_existing_untouched` (ACC-003,
+caller-supplied path: a second `create_feat(..., id="feat-28-get-update")`
+call raises `FileExistsError` and the first document's on-disk bytes and
+frontmatter id/title are re-verified unchanged afterward); and
+`test_defaulted_id_collision_raises` (ACC-003, default path: a
+`feat-0-example-widget` folder is pre-seeded directly on disk, mirroring
+`test_id_number_derivation_ignores_other_feat_folders`'s existing
+pre-seeding style, then a default-id `create_feat(_MINIMAL_BODY)` call
+whose title derives that exact slug raises `FileExistsError`, and no
+`README.md` was written into the pre-seeded folder). Confirmed (no
+duplicate added) that ACC-001 is already covered by the pre-existing
+`test_id_defaults_to_feat_0_when_base_dir_is_empty`, and that Task 5.2's
+"no auto-increment" requirement is already covered by the pre-existing
+`test_id_number_stays_0_across_creates_with_distinct_titles` and
+`test_id_number_derivation_ignores_other_feat_folders`.
+
+New file `tests/feat/tools/test_set_feat_id.py` (4 tests, new
+`TestSetFeatId` class): mirrors `test_create_feat.py`'s exact
+structure/style/license header, with a locally duplicated
+`TempFeatDirTestCase` fixture (grepped `tests/dec/tools/`,
+`tests/rsk/tools/`, and `tests/feat/prompts/` first -- every existing test
+file in this codebase that needs this fixture shape duplicates it locally
+rather than importing a shared helper, so the same precedent was followed
+here rather than introducing a new `tests/feat/tools/_helpers.py`).
+`test_happy_path_renames_updates_frontmatter_and_preserves_body` (ACC-005,
+REQ-006: creates `feat-0-get-update`, captures its raw body via
+`general.tools._splice.body_text` and its pre-rename `updated` timestamp,
+calls `set_feat_id("feat-0-get-update", "feat-42-get-update")`, then
+asserts `frontmatter.id == "feat-42-get-update"`, `type`/`status`/
+`created`/`version` unchanged, `updated` changed and re-matches the
+standard timestamp regex, the old folder is gone, the new
+`README.md` exists and round-trips via `parse_feat` to the new id, and the
+post-rename raw body text -- read the same way via `body_text` -- is
+byte-identical to the pre-rename capture);
+`test_target_id_already_exists_raises_and_leaves_both_untouched` (ACC-006:
+two features `feat-0-a`/`feat-1-b`, then
+`set_feat_id("feat-0-a", "feat-1-b")` raises `FileExistsError` with both
+files' raw bytes and parsed frontmatter ids re-verified unchanged
+afterward -- no partial rename); `test_source_id_not_found_raises_feat_not_found_error`
+(ACC-007: `set_feat_id("feat-999-does-not-exist", "feat-100-whatever")`
+raises `FeatNotFoundError`, imported from `feat.tools._paths`, with the
+`new_id` folder confirmed never created); and
+`test_invalid_new_id_shape_raises_value_error_and_leaves_source_untouched`
+(the same three malformed shapes as `create_feat`'s equivalent test,
+each raising `ValueError` against an existing source id, with the source's
+raw bytes and frontmatter id re-verified unchanged after each attempt).
+Did not add the optional concurrency smoke test mentioned in the phase
+instructions -- `set_feat_id`'s own module docstring already states its
+lock order was designed for consistency with `create_feat`'s existing
+`feat_create_lock()`-based concurrency coverage
+(`TestCreateFeatConcurrency`/`TestCreateFeatConcurrencyIntegration`), and
+`test__lock.py` already exercises `feat_lock`/`feat_create_lock`'s
+serialization primitives directly; a dedicated concurrent-`set_feat_id`
+test was judged to add no material signal beyond that existing coverage.
+
+No implementation bugs found in Phases 2/3's code while writing these
+tests -- every ACC/REQ behavior documented in `create_feat.py`'s and
+`set_feat_id.py`'s own docstrings held up exactly as described.
+
+Full quality gate green: `ruff format --check`/`ruff check` (both new/
+changed test files clean), `vulture src/ whitelist.py --min-confidence 60`
+(clean, no output), `pylint` on the two test files (9.81/10, advisory-only
+per `AGENTS.md` -- two pre-existing-style `R1732`/`W0718`/`R0801` notes,
+the same kind already present elsewhere in this test suite, e.g. the
+`TempFeatDirTestCase` fixture duplicated verbatim across
+`test_create_feat.py`/`test_integration.py`/`test_set_feat_id.py` itself
+triggering `R0801` similar-lines), the two new test files individually
+(15 tests in `test_create_feat.py`, 4 in `test_set_feat_id.py`, all
+passing), and the full `unittest discover` suite (3023 tests, up from
+3015 -- the 8 new tests above, all passing, no existing test needed
+adjustment).
 
 #### 2026-09-02 16:10:00.000Z — Phase 4: Prompts and documentation
 
