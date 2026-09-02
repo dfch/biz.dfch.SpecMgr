@@ -62,13 +62,13 @@ This feature tracks three independent maintenance/quality-gap issues opened on 2
 
 #### Phase 2: sysrs Config/Gap Analysis (#74)
 
-- [ ] Task 2.1: Add sysrs to specmgr://config.
+- [x] Task 2.1: Add sysrs to specmgr://config.
 
-- [ ] Task 2.2: Compare sysrs's tools/resources/prompts against every other whole-body domain (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr) to find other missing common functions.
+- [x] Task 2.2: Compare sysrs's tools/resources/prompts against every other whole-body domain (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr) to find other missing common functions.
 
-- [ ] Task 2.3: Write up the gap list (in Design Notes or a follow-up feature).
+- [x] Task 2.3: Write up the gap list (in Design Notes or a follow-up feature).
 
-- [ ] Task 2.4: Run the full test suite (`uv run --frozen python -m unittest discover -v -s tests -t . -p "test_*.py"`) plus `ruff format --check`/`ruff check`/`vulture` and confirm all pass.
+- [x] Task 2.4: Run the full test suite (`uv run --frozen python -m unittest discover -v -s tests -t . -p "test_*.py"`) plus `ruff format --check`/`ruff check`/`vulture` and confirm all pass.
 
 #### Phase 3: Confluence Page Title Fix (#76)
 
@@ -82,15 +82,97 @@ This feature tracks three independent maintenance/quality-gap issues opened on 2
 
 - [ ] Task 3.5: Run the full test suite (`uv run --frozen python -m unittest discover -v -s tests -t . -p "test_*.py"`) plus `ruff format --check`/`ruff check`/`vulture` and confirm all pass.
 
+### Design Notes
+
+#### sysrs common-function gap analysis (Task 2.2/2.3, #74)
+
+Cross-referenced `sysrs`'s actual tools/resources/prompts/dispatch-tool coverage (verified against
+source, not just AGENTS.md prose) against every other whole-body domain, using `sop`/`vcr` as the
+closest "dispatch-only from day one" baselines (ADR 36905d5b-8057-4294-8665-c7eed5534db0):
+
+- **`specmgr://config` missing `sysrs` entry** -- confirmed missing (`general/resources/config.py`
+  had no `sysrs_base_dir` import or `"sysrs"` key in the `domains` dict, and no `sysrs` in the
+  resource's `description=`/docstring domain counts). **Fixed in this phase** (Task 2.1): added the
+  `sysrs_base_dir` import, a `"sysrs": DomainConfig(...)` entry mirroring `"vcr"`'s exact shape
+  (shared `DOCS_DIR_ENV_VAR`), updated the resource `description=` and `config_info()` docstring
+  domain counts/lists from "twelve"/ten-shared to "thirteen"/eleven-shared, and updated
+  `models/config_info.py`'s `DomainConfig.env_var`/`ConfigInfo.domains` docstrings similarly. Test
+  file `tests/general/resources/test_config.py` updated in lockstep (`_ALL_DOMAINS`,
+  `_DOCS_DIR_DOMAINS` now include `sysrs`).
+
+- **Generic dispatch tool coverage (`update`, `set_status`, `set_classification`, `delete`)** --
+  all four already fully support `sysrs`: `_UPDATE_ADAPTERS`/dispatch dict in
+  `general/tools/update.py` has `"sysrs": _update_sysrs` (line 700) plus `"sysrs"` in the `type`
+  `Literal[...]` (line 723); `general/tools/set_status.py` has `_set_status_sysrs` registered
+  (line 555) and `"sysrs"` in its `Literal[...]` (line 578); `general/tools/set_classification.py`
+  likewise (`_set_classification_sysrs` at line 484, `Literal[...]` at line 504);
+  `general/tools/delete.py` has `_DELETE_TYPES` including `"sysrs"` (line 115) and
+  `"sysrs": _delete_sysrs` in its adapter dict (line 342). **No gap** -- nothing to fix.
+
+- **`get_sysrs` `raw`/`offset`/`limit` support** -- confirmed present:
+  `sysrs/tools/get_sysrs.py` signature is
+  `get_sysrs(id: str, raw: bool = False, offset: int | None = None, limit: int | None = None)`,
+  using the same shared `body_text`/`window_body` helpers every other domain's `get_<d>` raw path
+  uses. **No gap.**
+
+- **`_path_safety.py`'s `_UUID_TYPES`** -- confirmed `"sysrs"` is present in the frozenset
+  (`general/tools/_path_safety.py:66`), so `sysrs` gets the same path-injection/wrong-format UUID
+  guard as every other UUID-addressed domain. **No gap.**
+
+- **All 7 tools / 3 resources / 2 prompts** -- confirmed all present on disk:
+  `sysrs/tools/` has `create_sysrs.py`, `parse_sysrs.py`, `list_sysrs.py`, `get_sysrs.py`,
+  `get_sysrs_example.py`, `get_sysrs_template.py`, `validate_sysrs.py` (7/7);
+  `sysrs/resources/` has `sysrs_schema.py`, `sysrs_example.py`, `sysrs_template.py` (3/3, matching
+  the no-`{id}`/no-`list` convention every other whole-body domain follows); `sysrs/prompts/` has
+  `create_sysrs.py`/`update_sysrs.py` (2/2). **No gap.**
+
+- **`specmgr://iso25010` usage in `create_sysrs`/`update_sysrs` prompts** -- confirmed both
+  prompts reference the cross-cutting `specmgr://iso25010` resource by name for grouping
+  `## Requirements` by ISO/IEC 25010:2023 characteristic, matching AGENTS.md's claim. **No gap.**
+
+**Conclusion**: the *only* gap found for `sysrs` relative to every other whole-body domain was the
+missing `specmgr://config` entry, which this phase fixes directly (Task 2.1). No follow-up feature
+is needed for `sysrs` itself -- every other common cross-domain function (dispatch tools, `raw`
+read support, `_UUID_TYPES` membership, tool/resource/prompt completeness, cross-cutting resource
+usage) was already correctly wired when `sysrs` was built (feat-32-sysrs).
+
 ## Progress
 
 ### Current Status
 
-**As of 2026-09-03**: Phase 1 (NOTICE license audit, #73) is complete. All direct dependencies from `pyproject.toml` were verified against installed package metadata (`importlib.metadata` + each package's own `*.dist-info/licenses/LICENSE*` file), several copyright-holder discrepancies were fixed, and NOTICE entries for the three previously-missing direct dependencies (`mdformat`, `mdformat-simple-breaks`, `httpx`) were added. Phase 2 (#74) and Phase 3 (#76) have not started.
+**As of 2026-09-03**: Phase 1 (NOTICE license audit, #73) is complete. All direct dependencies from `pyproject.toml` were verified against installed package metadata (`importlib.metadata` + each package's own `*.dist-info/licenses/LICENSE*` file), several copyright-holder discrepancies were fixed, and NOTICE entries for the three previously-missing direct dependencies (`mdformat`, `mdformat-simple-breaks`, `httpx`) were added. Phase 2 (#74) is complete: `sysrs` is now exposed via `specmgr://config`, and a full gap analysis (Design Notes above) confirmed no other missing common cross-domain functions exist for `sysrs`. Phase 3 (#76) has not started.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-03 14:00:00.000+02:00 - Phase 2 complete: sysrs added to specmgr://config; gap analysis found no other gaps (#74)
+
+Added `sysrs` to `specmgr://config`: `general/resources/config.py` now imports `sysrs_base_dir` from
+`sysrs.tools._paths` and adds a `"sysrs": DomainConfig(base_dir=..., env_var=DOCS_DIR_ENV_VAR,
+env_var_set=docs_dir_set)` entry to the `domains` dict, mirroring the existing `"vcr"` entry's exact
+shape (shared `SPECMGR_DOCS_DIR` root env var). Updated the resource's `description=` string and the
+`config_info()` docstring's domain-count prose from "twelve"/"ten...share" to
+"thirteen"/"eleven...share", now listing `sysrs` explicitly. Also updated
+`models/config_info.py`'s `DomainConfig.env_var` and `ConfigInfo.domains` docstrings to match (stale
+"ten domains" / missing `"sysrs"` from the domain-name list). Updated
+`tests/general/resources/test_config.py`'s `_ALL_DOMAINS`/`_DOCS_DIR_DOMAINS` module-level lists to
+include `sysrs` (existing parametrized tests then cover it automatically; no new test cases needed).
+
+Performed the full tools/resources/prompts/dispatch-tool gap analysis (Task 2.2) comparing `sysrs`
+against every other whole-body domain, using `sop`/`vcr` as the closest dispatch-only baselines --
+see the new "Design Notes" section above for the full write-up. Conclusion: the missing
+`specmgr://config` entry was the *only* gap; `sysrs` was already fully wired into all four generic
+dispatch tools (`update`/`set_status`/`set_classification`/`delete`), `_path_safety.py`'s
+`_UUID_TYPES`, has all 7 tools/3 resources/2 prompts, `get_sysrs` already supports
+`raw`/`offset`/`limit`, and its prompts already correctly reference `specmgr://iso25010`. No
+follow-up feature needed for `sysrs` itself.
+
+Quality gate: full `unittest` suite (3292 tests, `OK`), `ruff format --check` (already formatted),
+`ruff check` (all checks passed), `vulture src/ whitelist.py --min-confidence 60` (no findings) --
+all green. `specmgr docs` regenerated `docs/api/biz.dfch.specmgr.general.resources.config.md` and
+`docs/api/biz.dfch.specmgr.models.config_info.md` (docstring-count updates only, expected drift);
+`docs/GENERATED.md` had no drift. Quality gate re-run clean after doc regeneration.
 
 #### 2026-09-03 12:00:00.000+02:00 - Phase 1 complete: NOTICE license audit and corrections (#73)
 
