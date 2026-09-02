@@ -19,7 +19,6 @@
 
 from __future__ import annotations
 
-import re
 import tempfile
 import textwrap
 import threading
@@ -119,7 +118,7 @@ class TestCreateFeat(TempFeatDirTestCase):
         result = create_feat(_MINIMAL_BODY)
 
         self.assertIsInstance(result, FeatDocument)
-        self.assertEqual(result.frontmatter.id, "feat-1-example-widget")
+        self.assertEqual(result.frontmatter.id, "feat-0-example-widget")
         self.assertEqual(result.frontmatter.type, "feat")
         self.assertEqual(result.frontmatter.status, "planning")
         self.assertIsNotNone(result.frontmatter.created)
@@ -148,21 +147,22 @@ class TestCreateFeat(TempFeatDirTestCase):
         self.assertEqual(on_disk.frontmatter.status, "planning")
         self.assertEqual(on_disk.body.text, "Feature: Example Widget")
 
-    def test_id_starts_at_1_when_base_dir_is_empty(self) -> None:
-        """The first feature created against an empty base dir must be feat-1-<slug>."""
+    def test_id_defaults_to_feat_0_when_base_dir_is_empty(self) -> None:
+        """The first feature created against an empty base dir must default to feat-0-<slug> (REQ-002)."""
         result = create_feat(_MINIMAL_BODY)
-        self.assertEqual(result.frontmatter.id, "feat-1-example-widget")
+        self.assertEqual(result.frontmatter.id, "feat-0-example-widget")
 
-    def test_id_number_increments_across_creates(self) -> None:
-        """Each subsequent create_feat call must derive the next NNN."""
+    def test_id_number_stays_0_across_creates_with_distinct_titles(self) -> None:
+        """Each default-id create_feat call must derive feat-0-<slug> -- no max+1 auto-increment (REQ-002)."""
         first = create_feat(_body_with_title("Widget One"))
         second = create_feat(_body_with_title("Widget Two"))
 
-        self.assertEqual(first.frontmatter.id, "feat-1-widget-one")
-        self.assertEqual(second.frontmatter.id, "feat-2-widget-two")
+        self.assertEqual(first.frontmatter.id, "feat-0-widget-one")
+        self.assertEqual(second.frontmatter.id, "feat-0-widget-two")
 
-    def test_id_number_derivation_handles_gaps(self) -> None:
-        """A gap in existing feat-NNN-... folder numbers must not be reused -- max + 1 always."""
+    def test_id_number_derivation_ignores_other_feat_folders(self) -> None:
+        """Other feat-NNN-... folders (even at a would-be-colliding number) must not affect the
+        default feat-0-<slug> id -- there is no more max+1 scanning to perturb (REQ-002)."""
         base_dir = feat_base_dir()
         for number in (1, 5):
             folder = base_dir / f"feat-{number}-placeholder"
@@ -171,7 +171,7 @@ class TestCreateFeat(TempFeatDirTestCase):
 
         result = create_feat(_MINIMAL_BODY)
 
-        self.assertEqual(result.frontmatter.id, "feat-6-example-widget")
+        self.assertEqual(result.frontmatter.id, "feat-0-example-widget")
 
     def test_slug_derivation_strips_the_feature_prefix(self) -> None:
         """The folder-name slug must be derived from the free-form title, not the literal 'Feature: ' prefix."""
@@ -202,11 +202,69 @@ class TestCreateFeat(TempFeatDirTestCase):
         self.assertFalse(feat_base_dir().exists())
 
 
-class TestCreateFeatConcurrency(TempFeatDirTestCase):
-    """Tests for create_feat's concurrent-create NNN-collision handling (ACC-002)."""
+class TestCreateFeatWithExplicitId(TempFeatDirTestCase):
+    """Tests for create_feat's optional caller-chosen ``id`` parameter (feat-48-feat-id Phase 2)."""
 
-    def test_concurrent_creates_never_collide_on_the_same_number(self) -> None:
-        """Many threads calling create_feat at once must all get distinct feat-NNN-... ids."""
+    def test_explicit_id_creates_exact_folder_and_id(self) -> None:
+        """A caller-supplied id is used verbatim -- the title-derived slug plays no role (ACC-002)."""
+        # The title's own slug ("zzz-unrelated-title") deliberately differs from the given id's
+        # slug-looking suffix ("get-update"), to prove the given id really is used as-is.
+        result = create_feat(_body_with_title("Zzz Unrelated Title"), id="feat-28-get-update")
+
+        self.assertEqual(result.frontmatter.id, "feat-28-get-update")
+        expected_path = feat_base_dir() / "feat-28-get-update" / README_FILENAME
+        self.assertTrue(expected_path.exists())
+        self.assertFalse((feat_base_dir() / "feat-28-zzz-unrelated-title").exists())
+
+        on_disk = parse_feat(expected_path.read_text(encoding="utf-8"))
+        self.assertEqual(on_disk.frontmatter.id, "feat-28-get-update")
+
+    def test_invalid_explicit_id_raises_value_error_and_writes_nothing(self) -> None:
+        """A malformed caller-supplied id raises ValueError before any lock/fs access (ACC-004)."""
+        malformed_ids = ["not-a-valid-id", "feat-abc-slug", "Feat-1-Slug"]
+        for malformed_id in malformed_ids:
+            with self.subTest(malformed_id=malformed_id):
+                with self.assertRaises(ValueError):
+                    create_feat(_MINIMAL_BODY, id=malformed_id)
+
+                self.assertFalse(feat_base_dir().exists())
+
+    def test_explicit_id_collision_raises_and_leaves_existing_untouched(self) -> None:
+        """A second create_feat call with an already-taken caller-supplied id raises FileExistsError,
+        and the first document is left completely unchanged (ACC-003)."""
+        first = create_feat(_body_with_title("First Title"), id="feat-28-get-update")
+        expected_path = feat_base_dir() / "feat-28-get-update" / README_FILENAME
+        before = expected_path.read_text(encoding="utf-8")
+
+        with self.assertRaises(FileExistsError):
+            create_feat(_body_with_title("Second Title"), id="feat-28-get-update")
+
+        self.assertEqual(expected_path.read_text(encoding="utf-8"), before)
+        on_disk = parse_feat(expected_path.read_text(encoding="utf-8"))
+        self.assertEqual(on_disk.frontmatter.id, first.frontmatter.id)
+        self.assertEqual(on_disk.body.text, "Feature: First Title")
+
+    def test_defaulted_id_collision_raises(self) -> None:
+        """When id is omitted, a pre-existing feat-0-<slug> folder for the same title-derived
+        slug must also raise FileExistsError before any write (ACC-003)."""
+        base_dir = feat_base_dir()
+        colliding_folder = base_dir / "feat-0-example-widget"
+        colliding_folder.mkdir(parents=True)
+
+        with self.assertRaises(FileExistsError):
+            create_feat(_MINIMAL_BODY)
+
+        # Nothing beyond the pre-seeded folder itself must have been written.
+        self.assertFalse((colliding_folder / README_FILENAME).exists())
+
+
+class TestCreateFeatConcurrency(TempFeatDirTestCase):
+    """Tests for create_feat's concurrent-create id-collision handling (ACC-002)."""
+
+    def test_concurrent_creates_with_distinct_titles_never_collide(self) -> None:
+        """Many threads calling create_feat at once with distinct titles (hence distinct default
+        feat-0-<slug> ids) must all get distinct ids -- no max+1 auto-increment is involved anymore
+        (REQ-002), but the pre-write existence check + global lock must still prevent any collision."""
         results: list[FeatDocument] = []
         errors: list[BaseException] = []
         lock = threading.Lock()
@@ -232,9 +290,7 @@ class TestCreateFeatConcurrency(TempFeatDirTestCase):
 
         ids = [doc.frontmatter.id for doc in results]
         self.assertEqual(len(ids), len(set(ids)), f"duplicate ids created: {ids}")
-
-        numbers = [int(re.match(r"^feat-(\d+)-", id_).group(1)) for id_ in ids]  # type: ignore[union-attr]
-        self.assertEqual(sorted(numbers), list(range(1, 11)))
+        self.assertTrue(all(id_.startswith("feat-0-widget-") for id_ in ids), ids)
 
 
 if __name__ == "__main__":

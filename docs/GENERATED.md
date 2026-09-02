@@ -110,12 +110,13 @@ First-line docstrings from each module, organized by domain:
 - `feat/tools/_lock.py` — Per-document and global in-process locks guarding feature mutations (Task 2.2).
 - `feat/tools/_paths.py` — Feature (FEAT) base directory resolution and id -> path lookup (Task 2.1).
 - `feat/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_feat`` and
-- `feat/tools/create_feat.py` — ``@mcp.tool()`` wrapper: create_feat (Task 2.3).
+- `feat/tools/create_feat.py` — ``@mcp.tool()`` wrapper: create_feat (Task 2.3, feat-48-feat-id Phase 2).
 - `feat/tools/get_feat.py` — ``@mcp.tool()`` wrapper: get_feat (Task 2.3).
 - `feat/tools/get_feat_example.py` — ``@mcp.tool()`` wrapper: get_feat_example (Task 2.3).
 - `feat/tools/get_feat_template.py` — ``@mcp.tool()`` wrapper: get_feat_template (Task 2.3).
 - `feat/tools/list_feat.py` — ``@mcp.tool()`` wrapper: list_feat (Task 2.3).
 - `feat/tools/parse_feat.py` — ``@mcp.tool()`` wrapper: parse_feat (Task 2.3).
+- `feat/tools/set_feat_id.py` — ``@mcp.tool()`` wrapper: set_feat_id (Task 3.1, feat-48-feat-id Phase 3).
 - `feat/tools/validate_feat.py` — ``@mcp.tool()`` wrapper: validate_feat (Task 2.3).
 
 **general/**
@@ -493,4 +494,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 332
+**Test files**: 333

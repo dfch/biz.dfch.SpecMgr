@@ -1,0 +1,99 @@
+# `biz.dfch.specmgr.feat.tools.set_feat_id`
+
+``@mcp.tool()`` wrapper: set_feat_id (Task 3.1, feat-48-feat-id Phase 3).
+
+Renames an existing feature's ``feat-NNN-slug`` id: the containing folder
+``<base>/<id>/`` is renamed to ``<base>/<new_id>/`` and the ``README.md``
+frontmatter's ``id`` field is rewritten to match, so the document stays
+addressable end-to-end (REQ-005). This is the one path that ever changes a
+``feat`` document's id after creation -- ``create_feat`` (Phase 2) assigns
+the initial id, but has no way to fix it later (e.g. once a GitHub issue
+number is known); ``set_feat_id`` is that fix-up path, motivated by the
+``feat-NNN-slug`` convention where ``NNN`` is meant to be the GitHub issue
+number (ADR e369ee2e-3353-4f92-991c-6367d76d832e).
+
+``new_id`` is validated against the same ``feat-NNN-slug`` shape
+``create_feat``'s optional ``id`` parameter uses
+(:func:`~biz.dfch.specmgr.general.tools._path_safety.assert_feat_id`,
+reused unchanged per this feature's Phase 1 Decision -- see
+``.specmgr/feat/feat-48-feat-id/README.md`` Decisions Made), and this
+validation runs *before any lock or filesystem access*, mirroring
+``create_feat``'s own before-any-lock validation window.
+
+**Lock order** (Phase 1 Decision, REQ-007): :func:`~biz.dfch.specmgr.feat.
+tools._lock.feat_create_lock` is acquired first (outermost), then
+:func:`~biz.dfch.specmgr.feat.tools._lock.feat_lock` for the *existing* id
+nested inside it -- this exact order, never swapped. ``feat_create_lock()``
+serializes this tool against a concurrent ``create_feat`` call that might
+race on the same ``new_id`` folder path (covering both the existence check
+and the actual rename); ``feat_lock(id)`` serializes it against a
+concurrent ``update``/``set_status``/``delete`` targeting the same existing
+(old) id. No other tool in this codebase acquires ``feat_lock`` before
+``feat_create_lock``, so this ordering introduces no inconsistent-ordering
+deadlock risk.
+
+The body is preserved byte-for-byte (REQ-006, REQ-008): the on-disk body is
+re-read via the frontmatter-stripping
+:func:`~biz.dfch.specmgr.general.tools._splice.body_text` helper *before*
+the rename, then written back verbatim under the new frontmatter -- no
+reference to the old id anywhere else in the repository is searched for or
+touched (REQ-008 is explicitly out of scope for this tool).
+
+## Functions
+
+### `set_feat_id(id: 'str', new_id: 'str') -> 'FeatDocument'`
+
+Rename the feature identified by ``id`` to ``new_id``.
+
+``new_id`` is validated against the ``feat-NNN-slug`` shape (via
+:func:`~biz.dfch.specmgr.general.tools._path_safety.assert_feat_id`)
+before any lock or filesystem access is attempted; a malformed
+``new_id`` raises a bare ``ValueError`` and nothing is touched.
+
+Once validated, the whole "resolve ``id`` -> refuse if ``new_id``
+already exists -> rename folder -> rewrite frontmatter" sequence runs
+under both :func:`~biz.dfch.specmgr.feat.tools._lock.feat_create_lock`
+(acquired first) and :func:`~biz.dfch.specmgr.feat.tools._lock.feat_lock`
+for ``id`` (nested inside it) -- see this module's docstring for the
+lock-order rationale. ``id`` is resolved via
+:func:`~biz.dfch.specmgr.feat.tools._io.load_by_id`, which raises
+``FeatNotFoundError`` naturally if ``id`` does not resolve to an
+existing feature -- this tool does not catch or re-raise that error.
+
+If ``<base>/<new_id>/`` already exists on disk, this raises
+``FileExistsError`` before any rename happens.
+
+Only the frontmatter's ``id`` and ``updated`` fields change; every other
+frontmatter field (``type``, ``status``, ``created``, ``version``) and
+the entire body are carried over unchanged. The body is re-read as raw,
+frontmatter-stripped text before the rename and written back verbatim
+afterward, so it stays byte-identical (REQ-006); no other document's
+references to the old id are searched for or updated (REQ-008).
+
+Parameters
+----------
+id:
+    The feature's current id (the exact containing folder name).
+new_id:
+    The new ``feat-NNN-slug`` id to rename ``id`` to.
+
+Returns
+-------
+FeatDocument
+    The renamed document, with ``frontmatter.id == new_id`` and a
+    freshly bumped ``frontmatter.updated``.
+
+Raises
+------
+ValueError
+    ``new_id`` does not match the ``feat-NNN-slug`` shape (raised by
+    :func:`~biz.dfch.specmgr.general.tools._path_safety.assert_feat_id`).
+    Nothing is touched.
+FeatNotFoundError
+    ``id`` does not resolve to an existing feature (propagated from
+    :func:`~biz.dfch.specmgr.feat.tools._io.load_by_id`). Nothing is
+    touched.
+FileExistsError
+    ``<base>/<new_id>/`` already exists on disk. Nothing is renamed or
+    rewritten.
+

@@ -4,9 +4,17 @@ Follow this structure and tool sequence exactly. Do not write raw
 markdown yourself beyond the body content you pass to `create_feat` --
 every write to disk goes through the specmgr MCP tools listed below.
 There is no frontmatter for you to draft: `create_feat` builds
-id/type/status/created/updated/version automatically -- a fresh
-`feat-NNN-slug` id, `status="planning"` always (never caller-supplied on
-create), and the current date+time timestamp for `created`/`updated`.
+type/status/created/updated/version automatically -- `status="planning"`
+always (never caller-supplied on create), and the current date+time
+timestamp for `created`/`updated`. The `feat-NNN-slug` id, however, is
+partly yours to choose: `create_feat` accepts an optional `id` parameter
+carrying a full, well-formed `feat-NNN-slug` value -- pass it explicitly
+when you already know the GitHub issue number this feature tracks (`NNN`
+is meant to be that issue number). When `id` is omitted, it now defaults
+to `feat-0-<slug-from-title>` -- **not** an auto-incrementing number --
+where `feat-0-...` signals "no issue yet". If the issue number becomes
+known later, rename the feature via the `set_feat_id` tool instead of
+recreating it (see step 5).
 
 Make a todo list and use the question tool.
 
@@ -84,10 +92,17 @@ are not present there.
 
 1. Assemble the full body-only markdown per the structure above, from
    the information gathered in step 2.
-2. Call `create_feat(content)` -- `content` is body markdown only; the
-   entire frontmatter is built automatically, including the
-   `feat-NNN-slug` id derived from the H1 title. A structural or field
-   validation failure raises uncaught and nothing is written.
+2. Call `create_feat(content, id="feat-42-my-slug")` if the GitHub issue
+   number is already known, or `create_feat(content)` otherwise -- the
+   latter defaults the id to `feat-0-<slug-from-title>` (no
+   max+1 auto-generation). `content` is body markdown only; the rest of
+   the frontmatter is always built automatically. This raises `ValueError`
+   before any write if a caller-supplied `id` does not match the
+   `feat-NNN-slug` shape, and raises `FileExistsError` before any write if
+   the resulting id/folder (given or defaulted) already exists -- in
+   either failure case nothing is written. A structural or field
+   validation failure on `content` likewise raises uncaught and nothing is
+   written.
 3. Optionally call `validate_feat(content, full=False)` first if you
    want to dry-run the body without writing anything -- `create_feat`
    already performs the same validation internally, so this step is
@@ -98,4 +113,9 @@ are not present there.
 Any later change to this feature should go through the `update_feat`
 prompt (or directly through the generic `update(id, type="feat", content)`
 and `set_status(id, type="feat", status)` tools), not by re-running this
-prompt.
+prompt. A change to the feature's own id specifically -- e.g. renumbering
+a `feat-0-...` default to `feat-NNN-...` once the GitHub issue number is
+known -- goes through neither of those: use the dedicated
+`set_feat_id(id, new_id)` tool instead, which renames the containing
+folder and rewrites the frontmatter `id` in one atomic operation (never a
+hand-edit).

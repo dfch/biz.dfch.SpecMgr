@@ -187,12 +187,13 @@ class TestFeatLifecycleIntegration(TempFeatDirTestCase):
 
         # 1. create_feat: a freshly created document must be a FeatDocument in status
         #    "planning" (ACC-002/ACC-003: status is fixed, never caller-supplied), with
-        #    its file on disk at <base>/feat-1-example-widget/README.md.
+        #    its file on disk at <base>/feat-0-example-widget/README.md (feat-48-feat-id
+        #    REQ-002: the default id is always feat-0-<slug>, no max+1 auto-increment).
         created = create_feat(_INITIAL_BODY)
         self.assertIsInstance(created, FeatDocument)
         self.assertEqual(created.frontmatter.status, "planning")
         self.assertEqual(created.frontmatter.type, "feat")
-        self.assertEqual(created.frontmatter.id, "feat-1-example-widget")
+        self.assertEqual(created.frontmatter.id, "feat-0-example-widget")
         self.assertEqual(created.frontmatter.created, created.frontmatter.updated)
         feat_id = created.frontmatter.id
         assert feat_id is not None

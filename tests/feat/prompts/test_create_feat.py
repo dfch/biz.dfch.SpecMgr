@@ -240,7 +240,7 @@ class TestCreateFeatInstructionsWalkthrough(TempFeatDirTestCase):
         # Step 4: assemble body markdown (no frontmatter block) and call create_feat.
         created = create_feat_tool(_WALKTHROUGH_BODY)
         self.assertEqual(created.frontmatter.status, "planning")
-        self.assertEqual(created.frontmatter.id, "feat-1-widget-renderer")
+        self.assertEqual(created.frontmatter.id, "feat-0-widget-renderer")
 
         # A second dedup check now finds the just-created document.
         after = list_feat()

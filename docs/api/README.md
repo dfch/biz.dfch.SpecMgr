@@ -93,12 +93,13 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.feat.tools._lock`](biz.dfch.specmgr.feat.tools._lock.md) — Per-document and global in-process locks guarding feature mutations (Task 2.2).
 - [`biz.dfch.specmgr.feat.tools._paths`](biz.dfch.specmgr.feat.tools._paths.md) — Feature (FEAT) base directory resolution and id -> path lookup (Task 2.1).
 - [`biz.dfch.specmgr.feat.tools._write`](biz.dfch.specmgr.feat.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_feat`` and
-- [`biz.dfch.specmgr.feat.tools.create_feat`](biz.dfch.specmgr.feat.tools.create_feat.md) — ``@mcp.tool()`` wrapper: create_feat (Task 2.3).
+- [`biz.dfch.specmgr.feat.tools.create_feat`](biz.dfch.specmgr.feat.tools.create_feat.md) — ``@mcp.tool()`` wrapper: create_feat (Task 2.3, feat-48-feat-id Phase 2).
 - [`biz.dfch.specmgr.feat.tools.get_feat`](biz.dfch.specmgr.feat.tools.get_feat.md) — ``@mcp.tool()`` wrapper: get_feat (Task 2.3).
 - [`biz.dfch.specmgr.feat.tools.get_feat_example`](biz.dfch.specmgr.feat.tools.get_feat_example.md) — ``@mcp.tool()`` wrapper: get_feat_example (Task 2.3).
 - [`biz.dfch.specmgr.feat.tools.get_feat_template`](biz.dfch.specmgr.feat.tools.get_feat_template.md) — ``@mcp.tool()`` wrapper: get_feat_template (Task 2.3).
 - [`biz.dfch.specmgr.feat.tools.list_feat`](biz.dfch.specmgr.feat.tools.list_feat.md) — ``@mcp.tool()`` wrapper: list_feat (Task 2.3).
 - [`biz.dfch.specmgr.feat.tools.parse_feat`](biz.dfch.specmgr.feat.tools.parse_feat.md) — ``@mcp.tool()`` wrapper: parse_feat (Task 2.3).
+- [`biz.dfch.specmgr.feat.tools.set_feat_id`](biz.dfch.specmgr.feat.tools.set_feat_id.md) — ``@mcp.tool()`` wrapper: set_feat_id (Task 3.1, feat-48-feat-id Phase 3).
 - [`biz.dfch.specmgr.feat.tools.validate_feat`](biz.dfch.specmgr.feat.tools.validate_feat.md) — ``@mcp.tool()`` wrapper: validate_feat (Task 2.3).
 - [`biz.dfch.specmgr.general`](biz.dfch.specmgr.general.md) — General-purpose (cross-cutting, not domain-specific) tools, resources, and
 - [`biz.dfch.specmgr.general.models`](biz.dfch.specmgr.general.models.md) — Shared, cross-domain Pydantic models with no document-type-specific content.

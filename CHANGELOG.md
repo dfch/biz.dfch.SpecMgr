@@ -9,6 +9,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `create_feat` (feat domain) now accepts an optional, caller-chosen
+  `id: str | None = None` parameter — a full, well-formed `feat-NNN-slug`
+  value, validated via `assert_feat_id` (`general/tools/_path_safety.py`)
+  before any lock/filesystem access. When `id` is omitted, the default is
+  now `feat-0-<slug-from-title>` — the previous `feat-{max existing NNN +
+  1}-{slug}` auto-increment fallback is gone entirely, since `NNN` is
+  meant to be the GitHub issue number a feature tracks, and `feat-0-...`
+  now signals "no issue yet" rather than a scan-derived guess. Either way
+  (caller-supplied or defaulted), `create_feat` raises `FileExistsError`
+  before any write if the resulting id/folder already exists, and raises
+  `ValueError` before any write if a caller-supplied `id` doesn't match the
+  `feat-NNN-slug` shape. A new `set_feat_id(id, new_id)` `@mcp.tool()`
+  (feat domain, `feat/tools/set_feat_id.py`) complements this by letting an
+  existing feature's id be renamed afterwards (e.g. once its GitHub issue
+  number becomes known): it validates `new_id`'s shape, refuses via
+  `FileExistsError` if the target folder already exists, renames
+  `<base>/<id>/` to `<base>/<new_id>/`, rewrites the frontmatter `id` and
+  bumps `updated`, leaves the body byte-identical, and raises
+  `FeatNotFoundError` if `id` does not resolve. It runs under
+  `feat_create_lock()` (outermost) then `feat_lock(id)` (nested) to avoid
+  races with `create_feat`/`update`/`set_status`/`delete` on the same id.
+  `feat` remains dispatch-only for whole-body updates/status changes — no
+  `update_feat`/`set_status_feat` tool of its own; `set_feat_id` is a
+  distinct, bespoke tool for id changes specifically (GitHub issue #48).
+
 - Windowed raw reads on the eleven `get_<d>` MCP tools
   (`req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr`):
   each now accepts optional read-style `offset`/`limit` coordinates for a
