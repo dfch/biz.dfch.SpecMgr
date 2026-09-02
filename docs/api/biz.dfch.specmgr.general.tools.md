@@ -14,6 +14,12 @@ validation, splice-then-validate-whole). ``set_status`` -- the generic,
 cross-domain status change for all twelve document types (``type`` is one of
 req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/adr; ``superseded_by`` is
 ``adr``-only, composing the status as ``"superseded by {superseded_by}"``).
+``set_classification`` -- the generic, cross-domain change of the free-text
+``classification`` frontmatter field for the eleven whole-body document
+types (``type`` is one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr;
+``adr`` is not supported), bumping ``updated`` and leaving the body and
+every other frontmatter field untouched; a blank/whitespace-only value
+clears ``classification`` back to ``None``/absent.
 ``delete`` -- the
 generic, cross-domain hard-delete for the eleven whole-body document types
 (``type`` is one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr; ``adr`` is

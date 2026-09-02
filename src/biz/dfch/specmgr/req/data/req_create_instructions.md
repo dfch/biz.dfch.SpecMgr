@@ -61,5 +61,7 @@ there.
 
 ## 5. Later revisions
 Any later change to this requirement should go through the `update_req` prompt
-(or directly through the generic `update(id, type="req", content)` and
-`set_status(id, type="req", status)` tools), not by re-running this prompt.
+(or directly through the generic `update(id, type="req", content)`,
+`set_status(id, type="req", status)`, and
+`set_classification(id, type="req", classification)` tools), not by
+re-running this prompt.

@@ -69,6 +69,14 @@ version:
     value while ``models.md``'s
     :data:`biz.dfch.specmgr.models.md._util.SCHEMA_MAJOR_VERSION` is
     ``1``.
+classification:
+    Free-text classification label for the document -- e.g. a security
+    classification, a business-confidentiality level, or a
+    project-specific taxonomy. Optional, defaults to ``None`` so every
+    existing document without this key keeps parsing unchanged.
+    Deliberately not restricted to a fixed set of values -- specmgr
+    imposes no single classification scheme; blank/whitespace-only
+    input normalizes to ``None``, same as ``created``/``updated``.
 
 **Methods:**
 

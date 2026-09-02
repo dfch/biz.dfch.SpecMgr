@@ -59,6 +59,10 @@ the new or revised text.
   `superseded` if the goal is abandoned or replaced by another goal --
   do not call `set_status` unless the user actually asks for a status
   change.
+- A change to `classification` ->
+  `set_classification(id, type="gol", classification)` instead --
+  `update` never accepts or changes `classification`. Fully free-text;
+  a blank or whitespace-only value clears it back to `None`/absent.
 
 ## 5. Check the schema, and validate before writing if useful
 

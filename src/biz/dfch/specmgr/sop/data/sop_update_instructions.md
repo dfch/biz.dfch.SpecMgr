@@ -88,6 +88,10 @@ touch the roles section.
   is in force and staff must follow it, `retired` once it is no longer
   in force and kept only for reference -- do not call `set_status`
   unless the user actually asks for a status change.
+- A change to `classification` ->
+  `set_classification(id, type="sop", classification)` instead --
+  `update` never accepts or changes `classification`. Fully free-text;
+  a blank or whitespace-only value clears it back to `None`/absent.
 
 ## 6. Check the schema, and validate before writing if useful
 

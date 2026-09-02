@@ -111,11 +111,12 @@ are not present there.
 ## 5. Later revisions
 
 Any later change to this feature should go through the `update_feat`
-prompt (or directly through the generic `update(id, type="feat", content)`
-and `set_status(id, type="feat", status)` tools), not by re-running this
-prompt. A change to the feature's own id specifically -- e.g. renumbering
-a `feat-0-...` default to `feat-NNN-...` once the GitHub issue number is
-known -- goes through neither of those: use the dedicated
+prompt (or directly through the generic `update(id, type="feat", content)`,
+`set_status(id, type="feat", status)`, and
+`set_classification(id, type="feat", classification)` tools), not by
+re-running this prompt. A change to the feature's own id specifically --
+e.g. renumbering a `feat-0-...` default to `feat-NNN-...` once the GitHub
+issue number is known -- goes through neither of those: use the dedicated
 `set_feat_id(id, new_id)` tool instead, which renames the containing
 folder and rewrites the frontmatter `id` in one atomic operation (never a
 hand-edit).

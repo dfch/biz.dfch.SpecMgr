@@ -72,6 +72,10 @@ revise.
   `progress` once implementation starts, `review` once implementation is
   done and pending verification, `done` once shipped -- do not call
   `set_status` unless the user actually asks for a status change.
+- A change to `classification` ->
+  `set_classification(id, type="feat", classification)` instead --
+  `update` never accepts or changes `classification`. Fully free-text;
+  a blank or whitespace-only value clears it back to `None`/absent.
 - A change to the feature's own `id` (e.g. renumbering `feat-0-...` to
   `feat-NNN-...` once the GitHub issue number is known) ->
   `set_feat_id(id, new_id)` instead -- `update` never accepts or changes

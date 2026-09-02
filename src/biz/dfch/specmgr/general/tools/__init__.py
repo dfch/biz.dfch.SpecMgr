@@ -29,6 +29,12 @@ validation, splice-then-validate-whole). ``set_status`` -- the generic,
 cross-domain status change for all twelve document types (``type`` is one of
 req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/adr; ``superseded_by`` is
 ``adr``-only, composing the status as ``"superseded by {superseded_by}"``).
+``set_classification`` -- the generic, cross-domain change of the free-text
+``classification`` frontmatter field for the eleven whole-body document
+types (``type`` is one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr;
+``adr`` is not supported), bumping ``updated`` and leaving the body and
+every other frontmatter field untouched; a blank/whitespace-only value
+clears ``classification`` back to ``None``/absent.
 ``delete`` -- the
 generic, cross-domain hard-delete for the eleven whole-body document types
 (``type`` is one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr; ``adr`` is
@@ -66,6 +72,7 @@ from .confluence_fetch import confluence_fetch
 from .confluence_update import confluence_update
 from .delete import delete
 from .mdformat import mdformat
+from .set_classification import set_classification
 from .set_status import set_status
 from .update import update
 
@@ -74,6 +81,7 @@ __all__ = [
     "confluence_update",
     "delete",
     "mdformat",
+    "set_classification",
     "set_status",
     "update",
 ]

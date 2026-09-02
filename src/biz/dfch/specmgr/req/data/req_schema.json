@@ -246,6 +246,18 @@
     "ReqFrontmatter": {
       "description": "Requirement frontmatter: `MarkdownFrontmatter` narrowed for the ``req`` document type.\n\nParameters\n----------\ntype:\n    Fixed discriminator, always ``\"req\"``. Narrows the base's mandatory,\n    default-less ``str`` field to a ``Literal[\"req\"] = \"req\"``, so a document\n    omitting ``type`` entirely still parses as a requirement document.\nstatus:\n    One of ``\"draft\"``, ``\"proposed\"``, ``\"accepted\"``, ``\"superseded\"``,\n    ``\"deprecated\"``, ``\"rejected\"``, ``\"implemented\"``. Narrows the base's\n    free-form ``str = \"draft\"`` default to this closed seven-value set.\n    Blank/absent still defaults to ``\"draft\"`` (inherited from the base's\n    ``_default_blank_status_to_draft`` validator, which runs before this one).\nversion:\n    The ``models.md`` schema major.minor.patch version this document's\n    frontmatter was written with. DO NOT CHANGE!\n\nAll other fields (``id``, ``created``, ``updated``, ``version``) are inherited\nunchanged from :class:`MarkdownFrontmatter`.",
       "properties": {
+        "classification": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Classification"
+        },
         "created": {
           "anyOf": [
             {
