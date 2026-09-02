@@ -69,6 +69,8 @@ from biz.dfch.specmgr.rsk.tools._paths import RskNotFoundError, rsk_base_dir
 from biz.dfch.specmgr.rsk.tools.create_rsk import create_rsk
 from biz.dfch.specmgr.sop.tools._paths import SopNotFoundError, sop_base_dir
 from biz.dfch.specmgr.sop.tools.create_sop import create_sop
+from biz.dfch.specmgr.sysrs.tools._paths import SysrsNotFoundError, sysrs_base_dir
+from biz.dfch.specmgr.sysrs.tools.create_sysrs import create_sysrs
 from biz.dfch.specmgr.tsk.tools._paths import TskNotFoundError, tsk_base_dir
 from biz.dfch.specmgr.tsk.tools.create_tsk import create_tsk
 from biz.dfch.specmgr.uc.tools._paths import UcNotFoundError, uc_base_dir
@@ -546,6 +548,47 @@ _VCR_UPDATED_BODY = textwrap.dedent(
     """
 )
 
+_SYSRS_GOL_ID = "0e15c5de-4ac9-4279-aa75-53249a3e43e4"
+_SYSRS_REQ_ID = "a3f8c2d1-7b4e-4d9a-b6c0-91e5f2a8d734"
+
+_SYSRS_MINIMAL_BODY = textwrap.dedent(
+    f"""\
+    # System Requirements Specification: Sample Document
+
+    ## System Purpose
+
+    Provision partner accounts.
+
+    ## System Scope
+
+    Onboarding only.
+
+    ## Business Context and Goals
+
+    ### Goals
+
+    - GOL {_SYSRS_GOL_ID}: A goal
+
+    ## System Overview
+
+    ### System Context
+
+    Context.
+
+    ### System Functions
+
+    Functions.
+
+    ## Requirements
+
+    ### Functional Suitability
+
+    - REQ {_SYSRS_REQ_ID}: A requirement
+    """
+)
+
+_SYSRS_UPDATED_BODY = _SYSRS_MINIMAL_BODY.replace("Onboarding only.", "Onboarding and renewals.")
+
 #: A minimal, valid feat body (ACC-008's injection coverage: feat is the one whole-body domain
 #: whose id shape differs from the ten UUID domains, mirroring ``test_delete.py``'s own fixture).
 _FEAT_MINIMAL_BODY = textwrap.dedent(
@@ -848,6 +891,27 @@ _CASES: list[_Case] = [
         field_error_is_validation=True,
         insert_marker="## Coverage",
         insert_line="Inserted verification detail.",
+    ),
+    _Case(
+        doc_type="sysrs",
+        create=create_sysrs,
+        not_found_error=SysrsNotFoundError,
+        minimal_body=_SYSRS_MINIMAL_BODY,
+        updated_body=_SYSRS_UPDATED_BODY,
+        middle_marker="Onboarding only.",
+        middle_replacement="Onboarding and renewals.",
+        append_fragment="\n## References\n\n- ISO/IEC/IEEE 29148:2018, Systems and software engineering\n",
+        eof_marker="## Requirements",
+        eof_fragment=(
+            f"## Requirements\n\n### Functional Suitability\n\n- REQ {_SYSRS_REQ_ID}: A revised requirement\n"
+        ),
+        deletable_suffix="\n## References\n\n- ISO/IEC/IEEE 29148:2018, Systems and software engineering\n",
+        field_error_marker=f"- GOL {_SYSRS_GOL_ID}: A goal",
+        field_error_fragment=f"- PRB {_SYSRS_GOL_ID}: A goal",
+        field_error_is_append=False,
+        field_error_is_validation=True,
+        insert_marker="## System Scope",
+        insert_line="Additional purpose detail.",
     ),
 ]
 
@@ -1189,7 +1253,7 @@ class TestUpdateRange(TempDocsDirTestCase):
 
 
 class TestUpdateRegistration(unittest.TestCase):
-    """Task 2.8: the live ``mcp`` registration carries ``update`` with the 11-value ``type`` enum and
+    """Task 2.8: the live ``mcp`` registration carries ``update`` with the 12-value ``type`` enum and
     optional integer ``offset``/``limit`` in its input schema (and no ``begin``/``end`` any more)."""
 
     @classmethod
@@ -1199,14 +1263,15 @@ class TestUpdateRegistration(unittest.TestCase):
         cls._tools = asyncio.run(mcp.list_tools())
 
     def test_update_registered_with_type_enum_and_optional_range(self) -> None:
-        """``update`` must be registered once, with the 11-value ``type`` enum and optional int ``offset``/``limit``."""
+        """``update`` must be registered once, with the 12-value ``type`` enum and optional int ``offset``/``limit``."""
         matching = [t for t in self._tools if t.name == "update"]
         self.assertEqual(len(matching), 1)
 
         schema = matching[0].input_schema
         type_prop = schema["properties"]["type"]
         self.assertEqual(
-            type_prop["enum"], ["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "feat", "vcr"]
+            type_prop["enum"],
+            ["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "feat", "vcr", "sysrs"],
         )
         self.assertEqual(type_prop["type"], "string")
         for name in ("offset", "limit"):
@@ -1220,7 +1285,7 @@ class TestUpdateRegistration(unittest.TestCase):
 
 @dataclass(frozen=True)
 class _InjectionCase:
-    """Per-type test data for the eleven whole-body domains' ``_path_safety`` coverage (ACC-008)."""
+    """Per-type test data for the twelve whole-body domains' ``_path_safety`` coverage (ACC-008)."""
 
     doc_type: str
     create: Callable[[str], Any]
@@ -1247,6 +1312,7 @@ _INJECTION_CASES: list[_InjectionCase] = [
     _InjectionCase("dec", create_dec, dec_base_dir, _DEC_MINIMAL_BODY, _FEAT_SLUG_ID),
     _InjectionCase("sop", create_sop, sop_base_dir, _SOP_MINIMAL_BODY, _FEAT_SLUG_ID),
     _InjectionCase("vcr", create_vcr, vcr_base_dir, _VCR_MINIMAL_BODY, _FEAT_SLUG_ID),
+    _InjectionCase("sysrs", create_sysrs, sysrs_base_dir, _SYSRS_MINIMAL_BODY, _FEAT_SLUG_ID),
     _InjectionCase("feat", create_feat, feat_base_dir, _FEAT_MINIMAL_BODY, _MISSING_UUID),
 ]
 
@@ -1300,7 +1366,7 @@ class TestUpdateAssertWithinSpy(TempUpdateInjectionDirTestCase):
     """ACC-008: ``assert_within`` is actually invoked (not just present in source) during a valid update."""
 
     def test_assert_within_is_called_with_base_dir_and_resolved_path(self) -> None:
-        """For each of the eleven domains, a valid whole-body update must call ``assert_within(base_dir, path)``."""
+        """For each of the twelve domains, a valid whole-body update must call ``assert_within(base_dir, path)``."""
         for case in _INJECTION_CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = case.create(case.minimal_body)

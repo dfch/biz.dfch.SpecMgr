@@ -19,8 +19,8 @@
 
 """``@mcp.tool()`` wrapper: set_status (feat-22-consolidate-mutation-tools, Phase 4).
 
-The generic, cross-domain status-change tool for all twelve document types
-(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``adr``).
+The generic, cross-domain status-change tool for all thirteen document types
+(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``adr``).
 It dispatches on the explicit ``type`` parameter to a private per-domain
 adapter (``_set_status_<d>``), each a **verbatim port** of the
 corresponding per-domain status tool's function body (same domain lock,
@@ -51,7 +51,7 @@ reversed for cross-domain consistency; see that feature's Decisions Made.
 
 The parameter is intentionally named ``type`` (it matches the frontmatter
 field vocabulary the client already knows); no enabled ruff rule objects
-to the builtin shadow. The 12-way union return type is annotation-only --
+to the builtin shadow. The 13-way union return type is annotation-only --
 the MCP input schema is built from the parameters, and the SDK
 serializes whichever concrete document is returned.
 
@@ -134,6 +134,11 @@ from ...sop.tools._io import load_by_id as load_sop_by_id
 from ...sop.tools._lock import sop_lock
 from ...sop.tools._paths import sop_base_dir
 from ...sop.tools._write import write_sop_file
+from ...sysrs.models.v1 import SysrsDocument, SysrsFrontmatter
+from ...sysrs.tools._io import load_by_id as load_sysrs_by_id
+from ...sysrs.tools._lock import sysrs_lock
+from ...sysrs.tools._paths import sysrs_base_dir
+from ...sysrs.tools._write import write_sysrs_file
 from ...tsk.models.v1 import TskDocument, TskFrontmatter
 from ...tsk.tools._io import load_by_id as load_tsk_by_id
 from ...tsk.tools._lock import tsk_lock
@@ -158,7 +163,7 @@ __all__ = ["set_status"]
 #: (the ``"superseded by X"`` pattern is ADR-specific).
 _TYPE_ADR = "adr"
 
-#: The generic tool's 12-way return union -- annotation-only (see module docstring).
+#: The generic tool's 13-way return union -- annotation-only (see module docstring).
 _SetStatusDocument = (
     ReqDocument
     | UcDocument
@@ -171,6 +176,7 @@ _SetStatusDocument = (
     | FeatDocument
     | SopDocument
     | VcrDocument
+    | SysrsDocument
     | Adr
 )
 
@@ -485,6 +491,34 @@ def _set_status_vcr(id_: str, status: str, superseded_by: str | None) -> VcrDocu
     return new_doc
 
 
+def _set_status_sysrs(id_: str, status: str, superseded_by: str | None) -> SysrsDocument:
+    """Replace the status of the System Requirements Specification identified by ``id_``.
+
+    Verbatim-shape port of :func:`_set_status_sop` (same ``sysrs_lock``,
+    ``load_by_id``, ``write_sysrs_file``, ``SysrsNotFoundError``; ``sysrs``
+    is dispatch-only from day one per ADR 36905d5b, so this adapter was
+    written directly in this shape) -- see :func:`_set_status_req` for
+    the full semantics.
+    """
+    assert superseded_by is None, "the public `set_status` guard rejects superseded_by for non-adr types"
+
+    base_dir = sysrs_base_dir()
+    with sysrs_lock(id_):
+        path, existing = load_sysrs_by_id(base_dir, id_)
+        assert_within(base_dir, path)
+        raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
+
+        now = now_timestamp()
+        fm_data = existing.frontmatter.model_dump()
+        fm_data["status"] = status
+        fm_data["updated"] = now
+        with wrap_tool_errors(domain="sysrs", tool="set_status", channel=FRONTMATTER_CHANNEL):
+            new_frontmatter = SysrsFrontmatter(**fm_data)
+        new_doc = SysrsDocument(frontmatter=new_frontmatter, body=existing.body)
+        write_sysrs_file(path, new_frontmatter, raw_body)
+    return new_doc
+
+
 def _set_status_adr(id_: str, status: str, superseded_by: str | None) -> Adr:
     """Replace the status of the ADR identified by ``id_``.
 
@@ -518,6 +552,7 @@ _ADAPTERS: dict[str, Callable[[str, str, str | None], _SetStatusDocument]] = {
     "feat": _set_status_feat,
     "sop": _set_status_sop,
     "vcr": _set_status_vcr,
+    "sysrs": _set_status_sysrs,
     _TYPE_ADR: _set_status_adr,
 }
 
@@ -526,9 +561,9 @@ _ADAPTERS: dict[str, Callable[[str, str, str | None], _SetStatusDocument]] = {
     name="set_status",
     title="Set document status",
     description=(
-        "Replace the status of an existing document across all twelve domains (`type` is one of "
-        "req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, adr), also bumping `updated` (the eleven "
-        "whole-body domains) and leaving the body untouched. The new `status` must be one of the "
+        "Replace the status of an existing document across all thirteen domains (`type` is one of "
+        "req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs, adr), also bumping `updated` (the "
+        "twelve whole-body domains) and leaving the body untouched. The new `status` must be one of the "
         "domain's own closed vocabulary values (see the domain's `XFrontmatter.status` field); "
         "anything else raises `pydantic.ValidationError` and writes nothing. `superseded_by` is "
         'accepted only for `type="adr"` -- it composes the status as "superseded by '
@@ -540,14 +575,14 @@ _ADAPTERS: dict[str, Callable[[str, str, str | None], _SetStatusDocument]] = {
 )
 def set_status(
     id: str,
-    type: Literal["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "feat", "vcr", "adr"],
+    type: Literal["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "feat", "vcr", "sysrs", "adr"],
     status: str,
     superseded_by: str | None = None,
 ) -> _SetStatusDocument:
-    """Replace the status of an existing document, across all twelve domains.
+    """Replace the status of an existing document, across all thirteen domains.
 
     Cross-domain generic for every document type
-    (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``adr``);
+    (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``adr``);
     dispatches on ``type`` to the domain's own ported adapter (same lock,
     same id resolution, same body handling, same domain not-found error).
 
@@ -566,14 +601,14 @@ def set_status(
     frontmatter is reconstructed through the domain's own
     ``XFrontmatter`` constructor, so the domain's own validator enforces
     its set. Where that set lives is documented per domain -- see each
-    ``XFrontmatter.status`` field (the eleven whole-body domains'
+    ``XFrontmatter.status`` field (the twelve whole-body domains'
     ``models/<v>/frontmatter.py`` and ``models/adr/v1/frontmatter.py``)
     rather than any list in this docstring.
 
     Safety (REQ-009, feat-38-39-41-43-44 Phase 4, mirroring ``delete``'s
     own REQ-003): ``id`` is validated via ``_path_safety.validate_id`` (no
     ``/``, no ``\\``, no ``..``, plus the dispatched domain's own format --
-    canonical lowercase-hex UUID for the eleven UUID domains including
+    canonical lowercase-hex UUID for the twelve UUID domains including
     ``adr``, ``feat-NNN-slug`` for ``feat``) **before** any filesystem
     access, so a path-injection attempt or a wrong-format id is a
     ``ValueError`` raised before dispatch. Each adapter additionally
@@ -588,7 +623,7 @@ def set_status(
     type:
         The document type / domain: one of ``req``, ``uc``, ``tsk``,
         ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
-        ``vcr``, ``adr``.
+        ``vcr``, ``sysrs``, ``adr``.
     status:
         The new status. Must be one of the dispatched domain's own
         accepted values (see its ``XFrontmatter.status`` field). For
@@ -602,7 +637,7 @@ def set_status(
     -------
     ReqDocument | UcDocument | TskDocument | QaDocument | PrbDocument |
     GolDocument | RskDocument | DecDocument | FeatDocument | SopDocument |
-    VcrDocument | Adr
+    VcrDocument | SysrsDocument | Adr
         The updated document of the dispatched domain type.
 
     Raises
@@ -623,7 +658,8 @@ def set_status(
         Nothing is written.
     ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
     PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
-    FeatNotFoundError / SopNotFoundError / VcrNotFoundError / AdrNotFoundError
+    FeatNotFoundError / SopNotFoundError / VcrNotFoundError / SysrsNotFoundError /
+    AdrNotFoundError
         No document of the dispatched ``type`` has this id -- the
         domain's own not-found error, unchanged from the per-domain tools.
     """

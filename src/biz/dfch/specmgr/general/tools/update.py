@@ -20,8 +20,8 @@
 """``@mcp.tool()`` wrapper: update (feat-22-consolidate-mutation-tools, Phase 2).
 
 The generic, cross-domain whole-body *and* line-range replace tool for the
-eleven whole-body document types (``req``/``uc``/``tsk``/``qa``/``prb``/
-``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``). It dispatches on the
+twelve whole-body document types (``req``/``uc``/``tsk``/``qa``/``prb``/
+``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``). It dispatches on the
 explicit ``type`` parameter to a private per-domain adapter (``_update_<d>``),
 each a **verbatim port** of
 the corresponding per-domain ``update_<d>`` tool's function body (same
@@ -39,7 +39,7 @@ per-domain tool.
 
 The parameter is intentionally named ``type`` (it matches the frontmatter
 field vocabulary the client already knows); no enabled ruff rule objects to
-the builtin shadow. The 11-way union return type is annotation-only -- the
+the builtin shadow. The 12-way union return type is annotation-only -- the
 MCP input schema is built from the parameters, and the SDK serializes
 whichever concrete document is returned.
 
@@ -114,6 +114,11 @@ from ...sop.tools._io import load_by_id as load_sop_by_id
 from ...sop.tools._lock import sop_lock
 from ...sop.tools._paths import sop_base_dir
 from ...sop.tools._write import write_sop_file
+from ...sysrs.models.v1 import Sysrs, SysrsDocument, SysrsFrontmatter
+from ...sysrs.tools._io import load_by_id as load_sysrs_by_id
+from ...sysrs.tools._lock import sysrs_lock
+from ...sysrs.tools._paths import sysrs_base_dir
+from ...sysrs.tools._write import write_sysrs_file
 from ...tsk.models.v1 import Task, TskDocument, TskFrontmatter
 from ...tsk.tools._io import load_by_id as load_tsk_by_id
 from ...tsk.tools._lock import tsk_lock
@@ -135,7 +140,7 @@ from ._timestamps import now_timestamp
 
 __all__ = ["update"]
 
-#: The generic tool's 11-way return union -- annotation-only (see module docstring).
+#: The generic tool's 12-way return union -- annotation-only (see module docstring).
 _UpdateDocument = (
     ReqDocument
     | UcDocument
@@ -148,6 +153,7 @@ _UpdateDocument = (
     | FeatDocument
     | SopDocument
     | VcrDocument
+    | SysrsDocument
 )
 
 
@@ -634,6 +640,50 @@ def _update_vcr(id_: str, content: str, offset: int | None, limit: int | None) -
     return new_doc
 
 
+def _update_sysrs(id_: str, content: str, offset: int | None, limit: int | None) -> SysrsDocument:
+    """Replace the body of the System Requirements Specification identified by ``id_`` (whole-body or line-range mode).
+
+    Verbatim-shape port of :func:`_update_sop` (same ``sysrs_lock``,
+    ``load_by_id``, frontmatter carry-over with only ``updated`` bumped,
+    ``write_sysrs_file``, ``SysrsNotFoundError``; ``sysrs`` is dispatch-only
+    from day one per ADR 36905d5b, so there was never a per-domain
+    ``update_sysrs`` tool to port -- this adapter was written directly in
+    this shape), plus the REQ-002 range branch (see :func:`_update_req`).
+    """
+    if offset is not None:
+        assert limit is None or offset is not None, "the public `update` guard enforces offset with limit"
+
+        base_dir = sysrs_base_dir()
+        with sysrs_lock(id_):
+            path, existing = load_sysrs_by_id(base_dir, id_)
+            assert_within(base_dir, path)
+            spliced = splice_body(body_text(path), offset, limit, content)
+            with wrap_tool_errors(domain="sysrs", tool="update", channel=BODY_CHANNEL):
+                body = Sysrs.from_text(format_text(spliced))
+            now = now_timestamp()
+            fm_data = existing.frontmatter.model_dump()
+            fm_data["updated"] = now
+            new_frontmatter = SysrsFrontmatter(**fm_data)
+            new_doc = SysrsDocument(frontmatter=new_frontmatter, body=body)
+            write_sysrs_file(path, new_frontmatter, spliced)
+        return new_doc
+
+    with wrap_tool_errors(domain="sysrs", tool="update", channel=BODY_CHANNEL):
+        body = Sysrs.from_text(format_text(content))
+
+    base_dir = sysrs_base_dir()
+    with sysrs_lock(id_):
+        path, existing = load_sysrs_by_id(base_dir, id_)
+        assert_within(base_dir, path)
+        now = now_timestamp()
+        fm_data = existing.frontmatter.model_dump()
+        fm_data["updated"] = now
+        new_frontmatter = SysrsFrontmatter(**fm_data)
+        new_doc = SysrsDocument(frontmatter=new_frontmatter, body=body)
+        write_sysrs_file(path, new_frontmatter, content)
+    return new_doc
+
+
 #: Dispatch table mapping the ``type`` value to its private adapter.
 _ADAPTERS: dict[str, Callable[[str, str, int | None, int | None], _UpdateDocument]] = {
     "req": _update_req,
@@ -647,6 +697,7 @@ _ADAPTERS: dict[str, Callable[[str, str, int | None, int | None], _UpdateDocumen
     "feat": _update_feat,
     "sop": _update_sop,
     "vcr": _update_vcr,
+    "sysrs": _update_sysrs,
 }
 
 
@@ -654,9 +705,9 @@ _ADAPTERS: dict[str, Callable[[str, str, int | None, int | None], _UpdateDocumen
     name="update",
     title="Update document",
     description=(
-        "Whole-body or line-range replace of an existing document's content across the eleven "
-        "whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr), "
-        "preserving its id/type/status/created/version; only `updated` changes. With no `offset`/`limit`, "
+        "Whole-body or line-range replace of an existing document's content across the twelve "
+        "whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, "
+        "sysrs), preserving its id/type/status/created/version; only `updated` changes. With no `offset`/`limit`, "
         "`content` is the full replacement body (body markdown only, no frontmatter block). With "
         "`offset`, `content` replaces the body line(s) starting at 1-based line `offset` of the current "
         "on-disk body: `limit` is the number of lines to replace (`offset`..`offset+limit-1`; `limit` "
@@ -669,15 +720,15 @@ _ADAPTERS: dict[str, Callable[[str, str, int | None, int | None], _UpdateDocumen
 )
 def update(
     id: str,
-    type: Literal["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "feat", "vcr"],
+    type: Literal["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "feat", "vcr", "sysrs"],
     content: str,
     offset: int | None = None,
     limit: int | None = None,
 ) -> _UpdateDocument:
     """Replace the body of an existing document, in whole-body or line-range mode.
 
-    Cross-domain generic for the eleven whole-body document types
-    (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``);
+    Cross-domain generic for the twelve whole-body document types
+    (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``);
     dispatches on ``type`` to the domain's own ported adapter (same lock,
     same id resolution, same frontmatter carry-over, same verbatim
     persistence, same domain not-found error).
@@ -733,7 +784,7 @@ def update(
     type:
         The document type / domain: one of ``req``, ``uc``, ``tsk``,
         ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
-        ``vcr``.
+        ``vcr``, ``sysrs``.
     content:
         Whole-body mode: the replacement body markdown, with no
         frontmatter block. Range mode: the replacement fragment for the
@@ -753,7 +804,7 @@ def update(
     -------
     ReqDocument | UcDocument | TskDocument | QaDocument | PrbDocument |
     GolDocument | RskDocument | DecDocument | FeatDocument | SopDocument |
-    VcrDocument
+    VcrDocument | SysrsDocument
         The updated document of the dispatched domain type.
 
     Raises
@@ -781,7 +832,7 @@ def update(
         prefixed. Nothing is written.
     ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
     PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
-    FeatNotFoundError / SopNotFoundError / VcrNotFoundError
+    FeatNotFoundError / SopNotFoundError / VcrNotFoundError / SysrsNotFoundError
         No document of the dispatched ``type`` has this id -- the
         domain's own not-found error, unchanged from the per-domain tools.
     """

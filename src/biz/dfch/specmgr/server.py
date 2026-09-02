@@ -102,6 +102,13 @@ specmgr://vcr/example -- A complete, valid sample verification case record docum
                         raw markdown.
 specmgr://vcr/template -- A verification case record template (every field present,
                           placeholder text) as raw markdown.
+specmgr://sysrs/schema -- The generated SYSRS JSON Schema, read from a packaged data copy
+                        (kept in sync with ``docs/sysrs_schema.json``) so it works from a
+                        real, non-editable install.
+specmgr://sysrs/example -- A complete, valid sample system requirements specification
+                        document as raw markdown.
+specmgr://sysrs/template -- A system requirements specification template (every field
+                          present, placeholder text) as raw markdown.
 specmgr://dtais --      The DTAIS verification-method vocabulary (Demonstration, Test,
                         Analysis, Inspection, Special), the five valid
                         ``### AC-NNN (Method): ...`` method words, and when and how to
@@ -152,7 +159,11 @@ id-based reads go through the ``get_gol`` tool only, and there is also no
  ``specmgr://vcr/{id}`` resource either, for the same reason -- id-based
  reads go through the ``get_vcr`` tool only, and there is also no
  ``specmgr://vcr/list`` resource either -- ``list_vcr`` ships as a paged
- tool from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
+ tool from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13). SYSRS has no
+ ``specmgr://sysrs/{id}`` resource either, for the same reason -- id-based
+ reads go through the ``get_sysrs`` tool only, and there is also no
+ ``specmgr://sysrs/list`` resource either -- ``list_sysrs`` ships as a
+ paged tool from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
 
 Tools
 -----
@@ -229,34 +240,45 @@ windowed with read-style ``offset``/``limit`` (raw-only, clamping)), ``list_feat
   parsed document, optionally windowed with read-style ``offset``/``limit``
   (raw-only, clamping)), ``list_vcr``, ``get_vcr_example``, ``get_vcr_template``,
   ``create_vcr``, ``validate_vcr``.
+  System Requirements Specification tools (``sysrs/tools/``): ``parse_sysrs``,
+  ``get_sysrs`` (``raw=True`` returns the frontmatter-stripped body text verbatim
+  instead of the parsed document, optionally windowed with read-style
+  ``offset``/``limit`` (raw-only, clamping)), ``list_sysrs``, ``get_sysrs_example``,
+  ``get_sysrs_template``, ``create_sysrs``, ``validate_sysrs``. ``sysrs`` is an
+  aggregator domain tying together already-existing artifacts (``gol``, ``prb``,
+  ``qa``, ``uc``, ``req``, ``rsk``, ``dec``/``adr``, ``vcr``) via per-section
+  type-tagged cross-reference lists, and is built dispatch-only from day one (ADR
+  36905d5b-8057-4294-8665-c7eed5534db0) like ``sop``/``vcr`` -- no per-domain
+  ``update_sysrs``/``set_status_sysrs`` tools of its own; deletion goes through the
+  generic ``delete`` tool (``type="sysrs"``).
   General tools (``general/tools/``): ``mdformat`` -- format markdown files in place,
 preserving YAML frontmatter blocks; ``update`` -- whole-body or line-range replace of an
-existing document's content across the eleven whole-body domains (``type`` is one of
- ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``;
+existing document's content across the twelve whole-body domains (``type`` is one of
+ ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``;
  optional read-style
  ``offset``/``limit`` body-line coordinates -- ``offset`` = 1-based first line,
  ``limit`` = number of lines, omitted ``limit`` = through end of body, ``0`` =
  pure insert, ``offset = N+1`` = the virtual end-of-body append position;
  strict validation; the spliced result is validated as a whole document
  before anything is written); ``set_status`` --
-replace an existing document's status across all twelve domains (``type`` is one of
-``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``adr``),
+replace an existing document's status across all thirteen domains (``type`` is one of
+``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``adr``),
 also bumping
-``updated`` (the eleven whole-body domains) and leaving the body untouched;
+``updated`` (the twelve whole-body domains) and leaving the body untouched;
 ``superseded_by`` is ``adr``-only (it composes the status as
 ``"superseded by {superseded_by}"``);
 ``set_classification`` -- replace the free-text ``classification``
-frontmatter field of an existing document across the eleven whole-body
+frontmatter field of an existing document across the twelve whole-body
 domains (``type`` is one of
-``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``;
+``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``;
 ``adr`` is not supported), also bumping ``updated`` and leaving the body
 and every other frontmatter field untouched; a blank/whitespace-only value
 clears ``classification`` back to ``None``/absent; no ``create_<d>`` tool
 accepts a ``classification`` argument at all -- this is the sole
 classification-change entry point;
-``delete`` -- the generic type-dispatched hard-delete for the eleven
+``delete`` -- the generic type-dispatched hard-delete for the twelve
 whole-body domains (``type`` is one of ``req``/``uc``/``tsk``/``qa``/``prb``/
-``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``; ``adr`` is not supported),
+``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``; ``adr`` is not supported),
 resolves by ``id``, takes the domain lock, and returns the deleted path; a
 ``ValueError`` for injection/wrong-format ids before any file access, the
 domain's ``XNotFoundError`` for missing documents, and a ``DeleteError`` for
@@ -288,11 +310,11 @@ one ``<img>`` tag unrewritten), and the incremented version is written via a
 ``body.storage.value`` and the title unchanged; reuses the same two
 environment variables as ``confluence_fetch``, no new configuration surface.
   Path safety (feat-38-39-41-43-44 Phase 4, REQ-009, extending feat-36-delete's
-``delete``-only guards, ADR 1af6787b-eaab-4e8f-888f-531c1e76c19d): every one of the twelve
+``delete``-only guards, ADR 1af6787b-eaab-4e8f-888f-531c1e76c19d): every one of the thirteen
 ``get_<d>`` tools (including ``get_adr``), the generic ``update``, and the generic
 ``set_status`` now validate ``id`` via ``general.tools._path_safety.validate_id`` (no
 ``/``, no ``\\``, no ``..``, plus the dispatched/fixed domain's own format --
-canonical lowercase-hex UUID for the eleven UUID domains including ``adr``,
+canonical lowercase-hex UUID for the twelve UUID domains including ``adr``,
 ``feat-NNN-slug`` for ``feat``) before any filesystem access, raising ``ValueError``
 before dispatch on a path-injection attempt or a wrong-format id, and additionally
 confine the resolved path to the domain's own base directory with
@@ -349,6 +371,16 @@ Verification case record prompts (``vcr/prompts/``): ``create_vcr``,
 ``update_vcr`` -- narrated instruction flows guiding an LLM through the VCR
 tool sequence above; ``create_vcr`` first checks ``list_vcr`` for a
 near-duplicate verification case record.
+System Requirements Specification prompts (``sysrs/prompts/``): ``create_sysrs``,
+``update_sysrs`` -- narrated instruction flows guiding an LLM through the SYSRS
+tool sequence above; ``create_sysrs`` first checks ``list_sysrs`` for a
+near-duplicate system requirements specification, then reads the existing
+cross-cutting ``specmgr://iso25010`` resource for the nine canonical ISO/IEC
+25010:2023 characteristic names used to group ``## Requirements`` (no new
+``general`` resource is introduced); ``update_sysrs`` names the generic
+``update``/``set_status`` tools with ``type="sysrs"`` (both whole-body and
+line-range via ``get_sysrs(id, raw=True)``) -- ``sysrs`` has no per-domain
+``update_sysrs``/``set_status_sysrs`` tools (ADR 36905d5b-8057-4294-8665-c7eed5534db0).
 General prompts (``general/prompts/``): ``compact_history`` -- guides rotating
 older ``### Recent Updates`` entries out of any `.specmgr` feature folder's
 ``README.md`` into an optional sibling ``history.md``, per ADR
@@ -363,7 +395,7 @@ Modules are grouped domain-first
 (ADR ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by
 document-type domain"): each document
 domain (``adr``, ``uc``, ``req``, ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``,
-``feat``, ``vcr``, and later ``ac``) is a
+``feat``, ``vcr``, ``sysrs``, and later ``ac``) is a
 top-level package with its own ``tools``/``prompts``/``resources`` sub-packages,
 self-registered via the domain package's own ``__init__.py``. Cross-cutting, non-domain-specific
 tools/resources/prompts (e.g. ``specmgr://version``/``specmgr://iso25010``/``specmgr://dtais``
@@ -372,10 +404,10 @@ resources, the ``mdformat`` tool, or the ``compact_history`` prompt) stay under 
 Add a new domain by
 creating its top-level package and importing it at the bottom of this
 module, next to the existing
-``adr``/``dec``/``feat``/``general``/``gol``/``prb``/``qa``/``req``/``rsk``/``sop``/``tsk``/``uc``/``vcr``
+``adr``/``dec``/``feat``/``general``/``gol``/``prb``/``qa``/``req``/``rsk``/``sop``/``sysrs``/``tsk``/``uc``/``vcr``
 imports, so its ``@mcp.tool()`` / ``@mcp.prompt()`` / ``@mcp.resource()``
 decorators actually run. ``req``, ``uc``, ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``,
-``feat``, and ``vcr``
+``feat``, ``vcr``, and ``sysrs``
 each register ``tools``, ``resources``, and ``prompts``; ``general`` now also
 registers all three.
 """
@@ -408,4 +440,4 @@ mcp = MCPServer(
 # decorators to actually run.
 # ---------------------------------------------------------------------------
 
-from . import adr, dec, feat, general, gol, prb, qa, req, rsk, sop, tsk, uc, vcr  # noqa: E402, F401
+from . import adr, dec, feat, general, gol, prb, qa, req, rsk, sop, sysrs, tsk, uc, vcr  # noqa: E402, F401

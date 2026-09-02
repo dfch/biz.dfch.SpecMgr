@@ -2,9 +2,9 @@
 
 ``@mcp.tool()`` wrapper: delete (feat-36-delete, Phase 2).
 
-The generic, cross-domain hard-delete tool for the eleven whole-body
+The generic, cross-domain hard-delete tool for the twelve whole-body
 document types (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/
-``dec``/``sop``/``feat``/``vcr``). It dispatches on the explicit ``type``
+``dec``/``sop``/``feat``/``vcr``/``sysrs``). It dispatches on the explicit ``type``
 parameter to a private per-domain adapter (``_delete_<d>``), each of which
 resolves the document by ``id`` through the domain's own ``load_by_id``
 (guaranteeing a valid, parseable document of that domain with that exact
@@ -13,7 +13,7 @@ the path is needed), takes the domain's own per-id lock around the whole
 resolve-then-delete sequence (the very lock the generic ``update`` and
 ``set_status`` tools take for the same id, so a concurrent same-id mutation
 cannot interleave with the delete), and hard-deletes the document from
-disk: the single ``*.md`` file for the ten flat domains
+disk: the single ``*.md`` file for the eleven flat domains
 (``Path.unlink``), or the entire ``<base>/<id>/`` folder for ``feat``
 (``shutil.rmtree`` -- deleting ``README.md``, any ``history.md``, and any
 session transcripts in that folder; ``feat`` is folder-per-document, ADR
@@ -135,6 +135,13 @@ Same resolve/lock/safety semantics as :func:`_delete_req`.
 Hard-delete the SOP ``id_`` from disk (REQ-001/004/005/006) -- see :func:`_delete_req` for the full semantics.
 
 
+### `_delete_sysrs(id_: 'str') -> 'str'`
+
+Hard-delete the System Requirements Specification ``id_`` from disk (REQ-001/004/005/006).
+
+Same resolve/lock/safety semantics as :func:`_delete_req`.
+
+
 ### `_delete_tsk(id_: 'str') -> 'str'`
 
 Hard-delete the task list ``id_`` from disk (REQ-001/004/005/006).
@@ -156,16 +163,16 @@ Hard-delete the verification case record ``id_`` from disk (REQ-001/004/005/006)
 Same resolve/lock/safety semantics as :func:`_delete_req`.
 
 
-### `delete(id: 'str', type: "Literal['req', 'uc', 'tsk', 'qa', 'prb', 'gol', 'rsk', 'dec', 'sop', 'feat', 'vcr']") -> 'str'`
+### `delete(id: 'str', type: "Literal['req', 'uc', 'tsk', 'qa', 'prb', 'gol', 'rsk', 'dec', 'sop', 'feat', 'vcr', 'sysrs']") -> 'str'`
 
-Permanently delete an existing document from disk, across the eleven whole-body domains.
+Permanently delete an existing document from disk, across the twelve whole-body domains.
 
 Cross-domain generic for every whole-body document type
 (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/
-``sop``/``feat``/``vcr``); dispatches on ``type`` to the domain's own
+``sop``/``feat``/``vcr``/``sysrs``); dispatches on ``type`` to the domain's own
 private adapter (same id resolution via the domain's ``load_by_id``,
 same per-id domain lock around the whole resolve-then-delete sequence,
-same domain not-found error). The ten flat domains remove their single
+same domain not-found error). The eleven flat domains remove their single
 ``*.md`` file; ``feat`` removes its entire ``<base>/<id>/`` folder
 (``README.md``, any ``history.md``, any session transcripts --
 folder-per-document, ADR 8cf940c5).
@@ -189,12 +196,12 @@ id:
 type:
     The document type / domain: one of ``req``, ``uc``, ``tsk``,
     ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
-    ``vcr``.
+    ``vcr``, ``sysrs``.
 
 Returns
 -------
 str
-    The deleted path: the ``*.md`` file path for the ten flat
+    The deleted path: the ``*.md`` file path for the eleven flat
     domains, the folder path for ``feat``.
 
 Raises
@@ -206,7 +213,7 @@ ValueError
 ReqNotFoundError / UcNotFoundError / TskNotFoundError /
 QaNotFoundError / PrbNotFoundError / GolNotFoundError /
 RskNotFoundError / DecNotFoundError / SopNotFoundError /
-FeatNotFoundError / VcrNotFoundError
+FeatNotFoundError / VcrNotFoundError / SysrsNotFoundError
     No document of the dispatched ``type`` has this id -- the
     domain's own not-found error, propagated unchanged from the
     domain's own ``load_by_id``.
