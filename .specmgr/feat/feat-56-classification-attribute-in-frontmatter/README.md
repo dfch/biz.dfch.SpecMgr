@@ -3,7 +3,7 @@ created: '2026-09-02T09:50:23.991493'
 id: feat-56-classification-attribute-in-frontmatter
 status: planning
 type: feat
-updated: '2026-09-02T20:15:00.000000'
+updated: '2026-09-02T21:30:00.000000'
 version: 1.0.0
 ---
 
@@ -55,7 +55,7 @@ Add an optional, free-text `classification` attribute to the shared frontmatter 
 
 - Optional `classification: str | None = None` field on the shared `MarkdownFrontmatter` base (models/md/frontmatter.py), inherited by all 11 whole-body domain frontmatter classes.
 
-- Blank/whitespace-only value normalizes to `None`, reusing the existing `blank_to_none` helper (models/md/_util.py).
+- Blank/whitespace-only value normalizes to `None`, reusing the existing `blank_to_none` helper (models/md/\_util.py).
 
 - New generic `set_classification(id, type, classification)` tool in general/tools/, dispatch-mirroring `set_status.py`'s 11 whole-body adapters (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr), including `_path_safety.validate_id`/`assert_within` guards and `wrap_tool_errors`/`FRONTMATTER_CHANNEL` wrapping.
 
@@ -112,7 +112,7 @@ classification: Confidential
 
 Only `updated` and `classification` change; the body is untouched.
 
-Since feat-27-validation (closed 2026-09-01) added `wrap_tool_errors`/`FRONTMATTER_CHANNEL` (models/md/_errors.py) and already applies it to every `set_status.py` adapter around its `XFrontmatter(**fm_data)` reconstruction call, `set_classification` must wrap its own per-domain frontmatter reconstruction the same way (`domain="<d>"`, `tool="set_classification"`, `channel=FRONTMATTER_CHANNEL`). Skipping this would make `set_classification`'s errors regress to a pre-feat-27 bare/unhelpful shape while every sibling tool has the enriched (field path + line reference + fix hint) shape.
+Since feat-27-validation (closed 2026-09-01) added `wrap_tool_errors`/`FRONTMATTER_CHANNEL` (models/md/\_errors.py) and already applies it to every `set_status.py` adapter around its `XFrontmatter(**fm_data)` reconstruction call, `set_classification` must wrap its own per-domain frontmatter reconstruction the same way (`domain="<d>"`, `tool="set_classification"`, `channel=FRONTMATTER_CHANNEL`). Skipping this would make `set_classification`'s errors regress to a pre-feat-27 bare/unhelpful shape while every sibling tool has the enriched (field path + line reference + fix hint) shape.
 
 ### Related Decisions
 
@@ -150,13 +150,13 @@ Since feat-27-validation (closed 2026-09-01) added `wrap_tool_errors`/`FRONTMATT
 
 #### Phase 4: Docs and schema regeneration
 
-- [ ] Task 4.1: Run `uv run --frozen specmgr schema` and commit the regenerated JSON Schemas for all 11 affected domains.
+- [x] Task 4.1: Run `uv run --frozen specmgr schema` and commit the regenerated JSON Schemas for all 11 affected domains.
 
-- [ ] Task 4.2: Run `uv run --frozen specmgr docs` and commit the regenerated docs/GENERATED.md + docs/api/.
+- [x] Task 4.2: Run `uv run --frozen specmgr docs` and commit the regenerated docs/GENERATED.md + docs/api/.
 
-- [ ] Task 4.3: Update AGENTS.md's per-domain bullets / general/ bullet to mention `set_classification` alongside `set_status`/`update`/`delete`.
+- [x] Task 4.3: Update AGENTS.md's per-domain bullets / general/ bullet to mention `set_classification` alongside `set_status`/`update`/`delete`.
 
-- [ ] Task 4.4: Run the full test suite and fix any regressions before moving on.
+- [x] Task 4.4: Run the full test suite and fix any regressions before moving on.
 
 #### Phase 5: Verification
 
@@ -168,11 +168,69 @@ Since feat-27-validation (closed 2026-09-01) added `wrap_tool_errors`/`FRONTMATT
 
 ### Current Status
 
-**As of 2026-09-02**: Phases 1 (Model change), 2 (Generic `set_classification` tool), and 3 (Prompt instructions) are done. The shared `MarkdownFrontmatter` model has an optional, free-text `classification: str | None = None` field that normalizes blank/whitespace-only input to `None`, inherited by all eleven whole-body domain frontmatter classes. The new generic `set_classification(id, type, classification)` tool in `general/tools/` dispatches to one adapter per whole-body domain (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr -- `adr` deliberately excluded), each shaped exactly like `set_status.py`'s corresponding adapter (same domain lock, `load_by_id`, `_path_safety.assert_within` guard, raw-body re-read/re-persistence, `wrap_tool_errors`/`FRONTMATTER_CHANNEL`-wrapped `XFrontmatter` reconstruction) but replacing `classification` instead of `status`, with no `superseded_by`-style parameter. It is registered in `server.py`'s module docstring and `general/tools/__init__.py`. New unit tests (`tests/general/tools/test_set_classification.py`) cover setting a value (ACC-002), clearing via blank/whitespace (ACC-003), an unsupported `type="bogus"` raising `ValueError` matching `set_status`'s own behavior for the same misuse (ACC-005), `type="adr"` raising `KeyError` (matching the generic `update` tool's own real, if undocumented, behavior for a UUID-shaped-but-out-of-dispatch type), per-domain not-found errors, and `_path_safety` injection/wrong-format-id rejection. All 10 whole-body domains' (req/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr) packaged `<d>_create_instructions.md`/`<d>_update_instructions.md` prompt files now reference `set_classification` alongside the existing `set_status` mentions (ACC-008); `uc` and `adr` remain untouched by design. `ruff format --check`, `ruff check`, and `vulture` are clean. The full test suite still has the same 4 known, expected failures in `tests/{dec,feat,sop,vcr}/resources/test_*_schema.py` from Phase 1 (schema drift, closed by Phase 4's `specmgr schema` regeneration) -- no new regressions. Phase 4 (docs and schema regeneration) has not started.
+**As of 2026-09-02**: Phases 1 (Model change), 2 (Generic `set_classification` tool), 3 (Prompt instructions), and 4 (Docs and schema regeneration) are done. The shared `MarkdownFrontmatter` model has an optional, free-text `classification: str | None = None` field that normalizes blank/whitespace-only input to `None`, inherited by all eleven whole-body domain frontmatter classes. The new generic `set_classification(id, type, classification)` tool in `general/tools/` dispatches to one adapter per whole-body domain (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr -- `adr` deliberately excluded), each shaped exactly like `set_status.py`'s corresponding adapter (same domain lock, `load_by_id`, `_path_safety.assert_within` guard, raw-body re-read/re-persistence, `wrap_tool_errors`/`FRONTMATTER_CHANNEL`-wrapped `XFrontmatter` reconstruction) but replacing `classification` instead of `status`, with no `superseded_by`-style parameter. It is registered in `server.py`'s module docstring and `general/tools/__init__.py`. New unit tests (`tests/general/tools/test_set_classification.py`) cover setting a value (ACC-002), clearing via blank/whitespace (ACC-003), an unsupported `type="bogus"` raising `ValueError` matching `set_status`'s own behavior for the same misuse (ACC-005), `type="adr"` raising `KeyError` (matching the generic `update` tool's own real, if undocumented, behavior for a UUID-shaped-but-out-of-dispatch type), per-domain not-found errors, and `_path_safety` injection/wrong-format-id rejection. All 10 whole-body domains' (req/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr) packaged `<d>_create_instructions.md`/`<d>_update_instructions.md` prompt files now reference `set_classification` alongside the existing `set_status` mentions (ACC-008); `uc` and `adr` remain untouched by design. All 11 affected domains' JSON Schemas (`docs/<d>_schema.json` and each domain's packaged `src/biz/dfch/specmgr/<d>/data/<d>_schema.json`) have been regenerated via `specmgr schema` and now include `classification` (ACC-006); `docs/GENERATED.md`/`docs/api/` have been regenerated via `specmgr docs` (including a new `docs/api/biz.dfch.specmgr.general.tools.set_classification.md`); `AGENTS.md`'s per-domain bullets and the cross-cutting `general/` bullet now mention `set_classification` alongside `set_status`/`update`/`delete`. The 4 previously-expected schema-drift failures in `tests/{dec,feat,sop,vcr}/resources/test_*_schema.py` are now resolved -- the full test suite (3029 tests) is 100% green (ACC-007). `ruff format --check`, `ruff check`, and `vulture` are clean, and both `specmgr schema` and `specmgr docs` were confirmed idempotent by a second run after the `AGENTS.md` edit producing no further diff. Only Phase 5 (Verification) remains.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-02 21:30:00.000Z — Phase 4 (Docs and schema regeneration) complete
+
+Ran `uv run --frozen specmgr schema --type <d> --output-dir src/biz/dfch/specmgr/<d>/data`
+for each of the 11 affected domains (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr)
+followed by a plain `uv run --frozen specmgr schema` (all types, default
+`docs/` output) -- mirroring the two-tier docs-copy/packaged-copy pattern
+already wired into `.pre-commit-config.yaml`/`.github/workflows/ci.yml` for
+every existing domain, since `specmgr schema` itself only writes to one
+`--output-dir` per invocation and has no built-in fan-out to a domain's own
+packaged copy. This regenerated exactly 22 JSON Schema files -- the 11
+`docs/<d>_schema.json` copies and the 11 packaged
+`src/biz/dfch/specmgr/<d>/data/<d>_schema.json` copies -- each now carrying
+the new optional `classification` property (`anyOf` string/null,
+`default: null`) inside its `<D>Frontmatter` definition (ACC-006). This is
+exactly what the 4 previously-expected schema-drift test failures
+(`tests/{dec,feat,sop,vcr}/resources/test_*_schema.py`, comparing the
+packaged JSON against a freshly generated schema) were waiting on.
+
+Ran `uv run --frozen specmgr docs`, regenerating `docs/GENERATED.md` and
+424 files under `docs/api/`; the diff is exactly the new
+`set_classification` tool/module (`docs/api/biz.dfch.specmgr.general.tools.set_classification.md`,
+new file), its listing in `docs/api/README.md`/`docs/GENERATED.md`, the
+`classification` field showing up in
+`docs/api/biz.dfch.specmgr.models.md.frontmatter.md`, the
+`set_classification` paragraph in `docs/api/biz.dfch.specmgr.server.md`
+(mirroring `server.py`'s own module docstring, already written in Phase 2),
+and the test-file count in `docs/GENERATED.md` bumping from 332 to 333 for
+the new `tests/general/tools/test_set_classification.py`. Also ran
+`uv run --frozen specmgr adr-toc`: no drift, `docs/adr/README.md` was
+already current.
+
+Updated `AGENTS.md`'s Status section: added a
+", classification changes through the generic `set_classification` tool
+(`type=\"<d>\"`)" clause into each of the 11 whole-body domains' own bullets
+(req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr), matching each bullet's own
+existing update/set_status/delete clause wording and line-wrap style
+exactly (including extending sop's and feat's own "no
+`update_<d>`/`set_status_<d>`" negation sentences to also name
+`set_classification_<d>`, since both bullets already call out the absence
+of per-domain mutation tools by name). Added a matching `set_classification`
+description to the cross-cutting `general/` bullet, in the same prose
+pattern as the existing `set_status`/`delete` descriptions there --
+explicitly noting it covers the *eleven* whole-body domains only (`adr`
+excluded, same reason as `update`/`delete`). Did not touch the `adr`
+bullet, the "Still genuinely missing" list, or any other section, per the
+task's explicit instructions.
+
+Ran the full quality gate: `ruff format --check` and `ruff check` are
+clean; `vulture src/ whitelist.py --min-confidence 60` is clean; the full
+`unittest` suite (3029 tests) is now 100% green -- the 4 previously-expected
+schema-drift failures are resolved, with no other regressions (ACC-007).
+Re-ran both `specmgr schema` (all 11 packaged copies + the `docs/` copies)
+and `specmgr docs` a second time after the `AGENTS.md` edit to confirm
+idempotency: every schema file reported "unchanged" and `git status`
+showed no further diff beyond the one new `set_classification` API doc
+page already produced by the first run (ACC-006's "no unrelated diff"
+requirement).
 
 #### 2026-09-02 20:15:00.000Z — Phase 3 (Prompt instructions) complete
 
@@ -190,22 +248,13 @@ existing prose style and line-wrap width -- no section numbering,
 heading text, or other wording was otherwise touched. In each
 `<d>_update_instructions.md`'s "Map the requested change to the right
 tool" step, a new bullet was appended directly after the existing
-`- A change to \`status\` -> set_status(...)` bullet:
-"A change to `classification` -> `set_classification(id, type="<d>",
-classification)` instead -- `update` never accepts or changes
-`classification`. Fully free-text; a blank or whitespace-only value
-clears it back to `None`/absent." -- worded identically across all 10
-files since, unlike `status`, `classification` has no per-domain closed
-vocabulary to describe. sop's create-instructions step 6 additionally
-had its existing "`sop` has no per-domain `update_sop`/`set_status_sop`
-tools" sentence extended to
-"`update_sop`/`set_status_sop`/`set_classification_sop`" for
+`- A change to \`status\` -> set_status(...)`bullet: "A change to`classification`->`set_classification(id, type="<d>",
+classification)`instead --`update`never accepts or changes`classification`. Fully free-text; a blank or whitespace-only value clears it back to `None`/absent." -- worded identically across all 10 files since, unlike `status`, `classification` has no per-domain closed vocabulary to describe. sop's create-instructions step 6 additionally had its existing "`sop`has no per-domain`update_sop`/`set_status_sop` tools" sentence extended to "`update_sop`/`set_status_sop`/`set_classification_sop\`" for
 consistency, since sop is the one domain whose prose already calls out
 the absence of per-domain mutation tools by name.
 
 Before editing, searched `tests/` for any test asserting on the literal
-content of these instructions files (`grep -rn
-"create_instructions\|update_instructions" tests/`) and confirmed every
+content of these instructions files (`grep -rn "create_instructions\|update_instructions" tests/`) and confirmed every
 `test_create_<d>.py`/`test_update_<d>.py` prompt test uses `assertIn`/
 `assertLess(result.index(...))` substring checks against the rendered
 prompt text, never a full-string `assertEqual` against the whole file
@@ -213,8 +262,7 @@ prompt text, never a full-string `assertEqual` against the whole file
 existing substring could not break them, and none did.
 
 Ran the full quality gate: `ruff format --check` and `ruff check` are
-clean (these are `.md` data files, unaffected either way); `vulture
-src/ whitelist.py --min-confidence 60` is clean; the full `unittest`
+clean (these are `.md` data files, unaffected either way); `vulture src/ whitelist.py --min-confidence 60` is clean; the full `unittest`
 suite (3029 tests) has exactly the same 4 known, pre-existing failures
 from Phase 1 (`tests/{dec,feat,sop,vcr}/resources/test_*_schema.py`,
 schema drift closed by Phase 4) -- no new regressions from Phase 3's

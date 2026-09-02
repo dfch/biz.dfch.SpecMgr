@@ -29,8 +29,9 @@ type or cross-cutting:
   `list_req`, `validate_req`); whole-body and line-range
   updates go through the generic `update` tool in `general/tools/`
   (`type="req"`), status changes through the generic `set_status` tool
-  (`type="req"`), deletions through the generic `delete` tool
-  (`type="req"`); `req/resources/` (`specmgr://req/schema`,
+  (`type="req"`), classification changes through the generic
+  `set_classification` tool (`type="req"`), deletions through the generic
+  `delete` tool (`type="req"`); `req/resources/` (`specmgr://req/schema`,
   `specmgr://req/example`, `specmgr://req/template`; no `specmgr://req/{id}`
   — id-based reads are `get_req`-only, ADR
   ddfb1109-422d-4507-8dbc-dc5e4bec9614; no `specmgr://req/list` —
@@ -43,8 +44,9 @@ type or cross-cutting:
   `list_uc`, `get_uc`, `get_uc_example`, `get_uc_template`,
   `validate_uc`); whole-body and line-range updates go through the generic
   `update` tool in `general/tools/` (`type="uc"`), status changes through
-  the generic `set_status` tool (`type="uc"`), deletions through the generic
-  `delete` tool (`type="uc"`), and the `get_uc` tool takes
+  the generic `set_status` tool (`type="uc"`), classification changes
+  through the generic `set_classification` tool (`type="uc"`), deletions
+  through the generic `delete` tool (`type="uc"`), and the `get_uc` tool takes
   `raw: bool = False` — `raw=True` returns the frontmatter-stripped body
    text as-is (the text `update`'s `offset`/`limit` index into), with
    optional read-style `offset`/`limit` windowing of that raw read
@@ -59,8 +61,9 @@ type or cross-cutting:
   `get_tsk_template`, `validate_tsk`); whole-body and
   line-range updates go through the generic `update` tool in
   `general/tools/` (`type="tsk"`), status changes through the generic
-  `set_status` tool (`type="tsk"`), deletions through the generic
-  `delete` tool (`type="tsk"`), and the `get_tsk` tool takes
+  `set_status` tool (`type="tsk"`), classification changes through the
+  generic `set_classification` tool (`type="tsk"`), deletions through the
+  generic `delete` tool (`type="tsk"`), and the `get_tsk` tool takes
   `raw: bool = False` — `raw=True` returns the frontmatter-stripped body
    text as-is (the text `update`'s `offset`/`limit` index into), with
    optional read-style `offset`/`limit` windowing of that raw read
@@ -78,8 +81,9 @@ type or cross-cutting:
   `get_qa_template`, `validate_qa`); whole-body and
   line-range updates go through the generic `update` tool in
   `general/tools/` (`type="qa"`), status changes through the generic
-  `set_status` tool (`type="qa"`), deletions through the generic
-  `delete` tool (`type="qa"`), and the `get_qa` tool takes
+  `set_status` tool (`type="qa"`), classification changes through the
+  generic `set_classification` tool (`type="qa"`), deletions through the
+  generic `delete` tool (`type="qa"`), and the `get_qa` tool takes
   `raw: bool = False` — `raw=True` returns the frontmatter-stripped body
    text as-is (the text `update`'s `offset`/`limit` index into), with
    optional read-style `offset`/`limit` windowing of that raw read
@@ -111,8 +115,9 @@ type or cross-cutting:
   `get_prb`, `get_prb_example`, `get_prb_template`,
   `validate_prb`); whole-body and line-range updates go through the generic
   `update` tool in `general/tools/` (`type="prb"`), status changes through
-  the generic `set_status` tool (`type="prb"`), deletions through the generic
-  `delete` tool (`type="prb"`), and the `get_prb` tool
+  the generic `set_status` tool (`type="prb"`), classification changes
+  through the generic `set_classification` tool (`type="prb"`), deletions
+  through the generic `delete` tool (`type="prb"`), and the `get_prb` tool
   takes `raw: bool = False` — `raw=True` returns the frontmatter-stripped
    body text as-is (the text `update`'s `offset`/`limit` index into), with
    optional read-style `offset`/`limit` windowing of that raw read
@@ -134,8 +139,9 @@ type or cross-cutting:
   `get_gol_example`, `get_gol_template`,
   `validate_gol`); whole-body and line-range updates go through the generic
   `update` tool in `general/tools/` (`type="gol"`), status changes through
-  the generic `set_status` tool (`type="gol"`), deletions through the generic
-  `delete` tool (`type="gol"`), and the `get_gol` tool
+  the generic `set_status` tool (`type="gol"`), classification changes
+  through the generic `set_classification` tool (`type="gol"`), deletions
+  through the generic `delete` tool (`type="gol"`), and the `get_gol` tool
   takes `raw: bool = False` — `raw=True` returns the frontmatter-stripped
    body text as-is (the text `update`'s `offset`/`limit` index into), with
    optional read-style `offset`/`limit` windowing of that raw read
@@ -166,8 +172,9 @@ type or cross-cutting:
   `validate_rsk`); whole-body and line-range updates
   go through the generic `update` tool in `general/tools/`
   (`type="rsk"`), status changes through the generic `set_status` tool
-  (`type="rsk"`), deletions through the generic `delete` tool
-  (`type="rsk"`), and the `get_rsk` tool takes `raw: bool = False` —
+  (`type="rsk"`), classification changes through the generic
+  `set_classification` tool (`type="rsk"`), deletions through the generic
+  `delete` tool (`type="rsk"`), and the `get_rsk` tool takes `raw: bool = False` —
    `raw=True` returns the frontmatter-stripped body text as-is (the text
    `update`'s `offset`/`limit` index into), with optional read-style
    `offset`/`limit` windowing of that raw read (raw-only; out-of-range
@@ -193,7 +200,9 @@ type or cross-cutting:
   `validate_dec`); whole-body and line-range updates go through the
   generic `update` tool in `general/tools/` (`type="dec"`), status
   changes through the generic `set_status` tool (`type="dec"`),
-  deletions through the generic `delete` tool (`type="dec"`), and
+  classification changes through the generic `set_classification` tool
+  (`type="dec"`), deletions through the generic `delete` tool
+  (`type="dec"`), and
    the `get_dec` tool takes `raw: bool = False` — `raw=True` returns
    the frontmatter-stripped body text as-is (the text `update`'s
    `offset`/`limit` index into), with optional read-style `offset`/`limit`
@@ -220,10 +229,13 @@ type or cross-cutting:
   `get_sop`, `get_sop_example`, `get_sop_template`,
   `validate_sop`); `sop` is the **first domain built dispatch-only from day
   one** (ADR 36905d5b-8057-4294-8665-c7eed5534db0) — it has NO per-domain
-  `update_sop`/`set_status_sop` tools at all, so whole-body
+  `update_sop`/`set_status_sop`/`set_classification_sop` tools at all, so
+  whole-body
   and line-range updates go through the generic `update` tool in
   `general/tools/` (`type="sop"`), status changes through the generic
-  `set_status` tool (`type="sop"`), and deletions through the generic
+  `set_status` tool (`type="sop"`), classification changes through the
+  generic `set_classification` tool (`type="sop"`), and deletions
+  through the generic
   `delete` tool (`type="sop"`), and the `get_sop` tool takes
   `raw: bool = False` —
    `raw=True` returns the frontmatter-stripped body text as-is (the text
@@ -266,9 +278,11 @@ type or cross-cutting:
   `get_feat_example`, `get_feat_template`,
   `validate_feat`); whole-body and line-range updates go through the
   generic `update` tool in `general/tools/` (`type="feat"`), status
-  changes through the generic `set_status` tool (`type="feat"`) and
+  changes through the generic `set_status` tool (`type="feat"`),
+  classification changes through the generic `set_classification` tool
+  (`type="feat"`), and
   deletions through the generic `delete` tool (`type="feat"`) — no
-  `update_feat`/`set_status_feat` of its own — and the
+  `update_feat`/`set_status_feat`/`set_classification_feat` of its own — and the
    `get_feat` tool takes `raw: bool = False` — `raw=True` returns the
    frontmatter-stripped
    body text as-is (the text `update`'s `offset`/`limit` index into),
@@ -310,7 +324,9 @@ type or cross-cutting:
   `validate_vcr`); whole-body and line-range updates go through the
   generic `update` tool in `general/tools/` (`type="vcr"`), status
   changes through the generic `set_status` tool (`type="vcr"`),
-  deletions through the generic `delete` tool (`type="vcr"`), and the
+  classification changes through the generic `set_classification` tool
+  (`type="vcr"`), deletions through the generic `delete` tool
+  (`type="vcr"`), and the
    `get_vcr` tool takes `raw: bool = False` — `raw=True` returns the
    frontmatter-stripped body text as-is (the text `update`'s
    `offset`/`limit` index into), with optional read-style `offset`/`limit`
@@ -340,7 +356,14 @@ type or cross-cutting:
     splice-then-validate-whole; `set_status`, the generic status change for
     all twelve
     domains incl. adr — `superseded_by` is ADR-only, composing
-    `"superseded by X"`; `delete`, the generic type-dispatched hard-delete
+    `"superseded by X"`; `set_classification`, the generic free-text
+    `classification` frontmatter field change for the eleven whole-body
+    domains only — `type` is one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr
+    (`adr` excluded, same as `update`/`delete`, since ADR's separate
+    `AdrFrontmatter` model is out of scope), bumping `updated` and leaving
+    the body and every other frontmatter field untouched, with a
+    blank/whitespace-only value clearing `classification` back to
+    `None`/absent; `delete`, the generic type-dispatched hard-delete
     for the eleven whole-body domains — `type` is one of
     req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr (`adr` excluded), all eleven
     domains implement a `delete` adapter in that one tool (a future domain

@@ -157,6 +157,18 @@
     "FeatFrontmatter": {
       "description": "Feature (FEAT) frontmatter: `MarkdownFrontmatter` narrowed for the ``feat`` document type.\n\nParameters\n----------\ntype:\n    Fixed discriminator, always ``\"feat\"``. Narrows the base's mandatory,\n    default-less ``str`` field to a ``Literal[\"feat\"] = \"feat\"``, so a document\n    omitting ``type`` entirely still parses as a feature document.\nstatus:\n    One of ``\"planning\"``, ``\"progress\"``, ``\"review\"``, ``\"done\"``.\n    Narrows the base's free-form ``str`` field to this closed four-value\n    set; absent/blank defaults to ``\"planning\"``\n    (``_default_blank_status_to_planning`` below, which runs before the\n    base's inherited ``_default_blank_status_to_draft``).\nversion:\n    The ``models.md`` schema major.minor.patch version this document's\n    frontmatter was written with. DO NOT CHANGE!\n\nAll other fields (``id``, ``created``, ``updated``, ``version``) are inherited\nunchanged from :class:`MarkdownFrontmatter`.",
       "properties": {
+        "classification": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Classification"
+        },
         "created": {
           "anyOf": [
             {
