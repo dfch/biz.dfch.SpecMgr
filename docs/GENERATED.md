@@ -386,6 +386,21 @@ First-line docstrings from each module, organized by domain:
 - `sop/tools/parse_sop.py` — ``@mcp.tool()`` wrapper: parse_sop (Task 2.2).
 - `sop/tools/validate_sop.py` — ``@mcp.tool()`` wrapper: validate_sop (Task 2.2).
 
+**sysrs/**
+
+- `sysrs/__init__.py` — System Requirements Specification (SYSRS) domain -- an aggregator document type that
+- `sysrs/models/__init__.py` — System Requirements Specification (SYSRS) models -- Pydantic schema and parser powered by the generic
+- `sysrs/models/v1/__init__.py` — System Requirements Specification (SYSRS) models -- Pydantic schema and parser powered by the generic
+- `sysrs/models/v1/_util.py` — Shared, private constants for the ``sysrs.models.v1`` subpackage.
+- `sysrs/models/v1/body.py` — System Requirements Specification (SYSRS) body models: whole-section fields under a single H1.
+- `sysrs/models/v1/document.py` — Pydantic model for a full System Requirements Specification (SYSRS) document (frontmatter + body).
+- `sysrs/models/v1/frontmatter.py` — System Requirements Specification (SYSRS) frontmatter, narrowing `feat-5-md-model-parser`'s generic
+- `sysrs/models/v1/parser.py` — Parse raw System Requirements Specification (SYSRS) ``.md`` text into a :class:`SysrsDocument`.
+- `sysrs/models/v1/summary.py` — Pydantic model for one line of SYSRS listing output (Phase 2, Task 2.4).
+- `sysrs/prompts/__init__.py` — MCP prompt wrappers for System Requirements Specification (SYSRS) documents (placeholder).
+- `sysrs/resources/__init__.py` — MCP resource registrations for System Requirements Specification (SYSRS) documents (placeholder).
+- `sysrs/tools/__init__.py` — MCP tool wrappers for System Requirements Specification (SYSRS) documents (placeholder).
+
 **tsk/**
 
 - `tsk/__init__.py` — TaskList (TSK) domain -- lightweight task/todo-list specifications.
@@ -495,4 +510,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 334
+**Test files**: 337

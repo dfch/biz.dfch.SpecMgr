@@ -1479,21 +1479,26 @@ its own ADR rather than living only in this feature's Design Notes.
 
 #### Phase 2: Models + parser (`sysrs/models/v1/`)
 
-- [ ] Task 2.1: Package skeleton — `sysrs/__init__.py` (`from . import prompts, resources, tools`
+- [x] Task 2.1: Package skeleton — `sysrs/__init__.py` (`from . import prompts, resources, tools`
   + registration docstring, per `sop`'s Task 0.1 shape), empty
   `sysrs/models/v1/`, `sysrs/tools/`, `sysrs/resources/`,
   `sysrs/prompts/`, `sysrs/data/` packages, and `tests/sysrs/`
   skeleton mirroring `tests/sop/` (`models/v1/`, `tools/`, `prompts/`,
   `resources/` + `__init__.py` files) — plus `sysrs/models/v1/_util.py`
   (`SCHEMA_COMMENT_VERSION = "v1"`) — depends on: Task 1.6 — status:
-  not-started
-- [ ] Task 2.2: `sysrs/models/v1/frontmatter.py` —
+  done (2026-09-02; `sysrs/__init__.py` does `from . import prompts,
+  resources, tools` from day one per this task's own wording, with
+  `tools`/`resources`/`prompts` as empty-but-valid placeholder packages
+  filled in during Phases 3-5 — a deliberate divergence from `vcr`'s
+  real Phase 1 precedent, which deferred that import to Phase 2; see
+  Decisions Made)
+- [x] Task 2.2: `sysrs/models/v1/frontmatter.py` —
   `SysrsFrontmatter(MarkdownFrontmatter)`: `type: Literal["sysrs"] =
   "sysrs"`, the confirmed closed 5-value status set
   `draft`/`review`/`approved`/`active`/`retired` (default `draft`,
   GOL/DEC/SOP error-message pattern; Decisions Made 2026-09-01) —
-  depends on: Task 2.1 — status: not-started
-- [ ] Task 2.3: `sysrs/models/v1/body.py` — every section class per the
+  depends on: Task 2.1 — status: done (2026-09-02)
+- [x] Task 2.3: `sysrs/models/v1/body.py` — every section class per the
   (Phase 1-validated) Design Notes sketch: root `Sysrs` (H1 REGEX
   prefix alias, 18 fields in binding order), the opaque free-text
   leaves, the `BusinessContextAndGoals`/`SystemOverview`/
@@ -1508,13 +1513,18 @@ its own ADR rather than living only in this feature's Design Notes.
   Notes (timestamp-led alias, computed `timestamp`, newest-first
   ordering — the shared `models/md/_ordering.py::validate_newest_first` helper directly, now merged into `dev` via PR #54) — **no**
   `models/md` engine changes; implement the mechanics Phase 1 recorded,
-  not new ones — depends on: Task 2.2 — status: not-started
-- [ ] Task 2.4: `sysrs/models/v1/document.py` (`SysrsDocument`),
+  not new ones — depends on: Task 2.2 — status: done (2026-09-02; the
+  `Requirements`/`Updates` `model_validator(mode="after")` `assert`s
+  both land in `pydantic.ValidationError` as decided; empirically
+  verified against the full `sysrs-example.md` content, byte-exact
+  round trip except the documented tight→loose `## References`
+  re-render)
+- [x] Task 2.4: `sysrs/models/v1/document.py` (`SysrsDocument`),
   `parser.py` (`parse_sysrs` glue, two-error-channel convention),
   `summary.py` (`SysrsSummary` — plain id/title/status/ref),
   `models/v1/__init__.py` + `models/__init__.py` exports — depends on:
-  Task 2.3 — status: not-started
-- [ ] Task 2.5: Tests `tests/sysrs/models/v1/` mirroring
+  Task 2.3 — status: done (2026-09-02)
+- [x] Task 2.5: Tests `tests/sysrs/models/v1/` mirroring
   `tests/sop/models/v1/` — `test_frontmatter.py` (status-set
   acceptance/rejection, `type` literal), `test_body.py` (alias
   acceptance/rejection incl. every LITERAL-vs-SPACE_SEPARATED pin; the
@@ -1531,10 +1541,17 @@ its own ADR rather than living only in this feature's Design Notes.
   zero-entry rejection + the empty-mandatory-leaf case pinned by Task
   1.3(e)), `test_parser.py` (ACC-004/ACC-
   005 matrix + full round-trip of `sysrs-example.md`'s content) —
-  depends on: Task 2.4 — status: not-started
-- [ ] Task 2.6: Phase-end quality gate (ruff format/check, vulture,
+  depends on: Task 2.4 — status: done (2026-09-02; `## Requirements`
+  zero-H3s and out-of-order `## Updates` moved into the
+  `pydantic.ValidationError` matrix per the 2026-09-02 decision;
+  108 new tests, all green)
+- [x] Task 2.6: Phase-end quality gate (ruff format/check, vulture,
   full unittest) + commit; update this README's Progress section —
-  depends on: Task 2.5 — status: not-started
+  depends on: Task 2.5 — status: done (2026-09-02; ruff format/check
+  clean, vulture clean after adding the new field/validator false
+  positives to `whitelist.py` following the `sop`/`vcr`/`dec` Phase 1
+  precedent already in that file, full 3145-test `unittest discover`
+  suite green — commit is the orchestrator's job, not this task's)
 
 #### Phase 3: Tools (`sysrs/tools/`) + generic-tool dispatch
 
@@ -1740,6 +1757,47 @@ around.
 ## Progress
 
 ### Current Status
+
+**As of 2026-09-02 (Phase 2 complete — models + parser)**: Phase 2
+(Tasks 2.1–2.6) is done. `sysrs/models/v1/` now implements the full
+schema Phase 1 empirically validated: `SysrsFrontmatter` (closed
+5-value status set); `body.py`'s ~40 section classes (`Sysrs` root
+with the H1 REGEX prefix alias and all 18 fields in binding order; the
+opaque free-text leaves; the `BusinessContextAndGoals`/
+`SystemOverview`/`OtherCharacteristics` composite containers; the
+~22 cross-reference list classes, each with a per-class `field_validator`
+delegating to a shared `_validate_cross_reference_items` helper against
+its own module-level `<TAG(S)> <uuid>: <title>` pattern, `re.DOTALL`
+included; `Requirements`'s ≥1-of-9 `model_validator(mode="after")`
+`assert` and `Updates`'s newest-first ordering check, both landing in
+`pydantic.ValidationError` per the 2026-09-02 decision, using the
+shared `models/md/_ordering.py::validate_newest_first` helper for the
+latter; the 8-class LITERAL alias pin set exactly as Phase 1
+predicted); `SysrsDocument`/`parse_sysrs`/`SysrsSummary` mirroring
+`sop`'s shapes. `sysrs/tools/`/`sysrs/resources/`/`sysrs/prompts/`
+ship as empty-but-valid placeholder packages so `sysrs/__init__.py`'s
+`from . import prompts, resources, tools` succeeds already in this
+phase (Task 2.1, a deliberate divergence from `vcr`'s real Phase 1
+history — see Decisions Made). 108 new tests
+(`tests/sysrs/models/v1/test_frontmatter.py`/`test_body.py`/
+`test_parser.py`) are all green, including a full round-trip of
+`sysrs-example.md`'s content through `parse_sysrs` (frontmatter dates
+quoted in the test fixture to sidestep the documented PyYAML
+auto-datetime-coercion hazard; the on-disk feature-folder file itself
+is unquoted and is expected to need the same quoting when it becomes
+`sysrs/data/sysrs_example.md` in Phase 4) — byte-exact except the
+documented tight→loose `## References` re-render. Quality gate green:
+`ruff format --check`/`ruff check` clean, `vulture src/ whitelist.py
+--min-confidence 60` clean after adding the new field/`_validate_items`/
+`_validate_at_least_one_present` false positives to `whitelist.py`
+(same pattern as `sop`/`vcr`/`dec`'s own Phase-1-era entries already
+there), full repo `python -m unittest discover` suite green at 3145
+tests. `sysrs` is still not imported/registered anywhere outside
+`sysrs/`/`tests/sysrs/` — no `general/tools/`, `server.py`, or other
+existing-domain file was touched (`whitelist.py` is the one exception,
+edited only to record the new legitimate false positives, per this
+phase's own quality-gate instructions). Next action: Phase 3 (tools +
+generic-tool dispatch).
 
 **As of 2026-09-02 (branch divergence reconciled + two remaining plan
 gaps closed)**: This local worktree had gone stale relative to
@@ -1975,28 +2033,29 @@ borrowed-section content.
   it into this folder following the same
   `session-ses_*-feat-32-NN-*.md` naming/`git check-ignore`-at-nested-
   path pattern already used in other feature folders.
-- **Immediate next action (corrected 2026-09-02 — was stale)**:
-  **execute Phase 2 (models + parser)**, **not** Phase 1 — Phase 1
-  (Tasks 1.1–1.5) is done (see Current Status's "Phase 1 complete"
-  entry): four scratch suites validated every approved shape against
-  the live `models/md` engine (50 checks, all passed), closed ACC-003,
-  and recorded every outcome + exact mechanic in Design Notes' "Phase
-  1 outcome record". This Handoff bullet had been left saying
-  "execute Phase 1" even after Current Status was updated to record
-  Phase 1's completion — a real staleness bug in this section, not
-  just a hypothetical one; don't trust this bullet's phase number
-  without cross-checking Current Status and the Task List's own
-  `[x]`/`[ ]` checkboxes first. Concretely: Task 2.1 (package
-  skeleton) is next, then 2.2 (frontmatter), 2.3 (body — using the
-  `ValidationError`-channel decision from Decisions Made 2026-09-02
-  for the zero-H3/out-of-order checks), 2.4 (document/parser/summary),
-  2.5 (tests), 2.6 (phase-end gate). Reference artifacts: `example.v7.md`
-  (approved section list) and `sysrs-example.md` (filled-in content,
-  Task-0.12-migrated to the locked sibling conventions); Design Notes'
-  "Phase 1 outcome record" is the authoritative mechanics reference
-  for Phase 2, superseding the earlier "preliminary model-class
-  sketch". Zero non-blocking leftovers remain (Task 0.11 closed
-  2026-09-02).
+- **Immediate next action (corrected 2026-09-02 — Phase 2 done)**:
+  **execute Phase 3 (tools + generic-tool dispatch)** — Phase 2
+  (Tasks 2.1–2.6, models + parser) is done: `sysrs/models/v1/` (
+  `SysrsFrontmatter`, `Sysrs`/`body.py`'s ~40 section classes,
+  `SysrsDocument`, `parse_sysrs`, `SysrsSummary`) implements every
+  mechanic Phase 1's "outcome record" pinned, with no `models/md`
+  engine changes; 108 new tests (`tests/sysrs/models/v1/`) all green,
+  including a full round-trip of `sysrs-example.md`'s content
+  (byte-exact except the documented tight→loose `## References`
+  re-render). `sysrs/tools/`/`sysrs/resources/`/`sysrs/prompts/` are
+  still empty placeholder packages (Task 2.1); `sysrs` is not yet
+  imported/registered anywhere outside `sysrs/`/`tests/sysrs/` (no
+  `server.py` change, per Phase 6). Concretely: Task 3.1 (sibling
+  coordination checkpoint + `sysrs/tools/_paths.py`/`_io.py`/
+  `_lock.py`/`_write.py`) is next, then 3.2 (the 7 tool modules), 3.3
+  (generic `update`/`set_status`/`delete` dispatch entries — gated on
+  the sibling's Phase 4 per Dependencies), 3.4 (tests), 3.5 (phase-end
+  gate). Reference artifacts: `example.v7.md` (approved section list)
+  and `sysrs-example.md` (filled-in content, Task-0.12-migrated to the
+  locked sibling conventions); Design Notes' "Phase 1 outcome record"
+  remains the authoritative mechanics reference, now empirically
+  confirmed correct by Phase 2's own implementation. Zero non-blocking
+  leftovers remain (Task 0.11 closed 2026-09-02).
 - **Still open / unresolved**: nothing schema/outline-related — only
   the pre-existing, out-of-scope optional cleanup of the `req`
   docstring's pre-2023 example characteristic names (noted in
@@ -2039,6 +2098,78 @@ entirely, per explicit user instruction, rather than continuing to
 wait on it; see Task List Task 0.7/Design Notes item 4's note.)
 
 ### Recent Updates
+
+#### Update 2026-09-02 (Phase 2 complete — sysrs/models/v1/ schema, parser, and 108 new tests)
+
+- Completed: Implemented Phase 2 (Tasks 2.1–2.6) end to end. Task 2.1:
+  package skeleton (`sysrs/__init__.py` doing
+  `from . import prompts, resources, tools` from day one, per the
+  task's own pre-resolved instruction; empty-but-valid placeholder
+  `sysrs/tools/`/`sysrs/resources/`/`sysrs/prompts/` packages;
+  `sysrs/models/v1/_util.py`'s `SCHEMA_COMMENT_VERSION`; the matching
+  `tests/sysrs/` skeleton). Task 2.2: `SysrsFrontmatter` (closed
+  5-value status set, `type: Literal["sysrs"]`). Task 2.3:
+  `sysrs/models/v1/body.py` — the `Sysrs` root (H1 REGEX prefix alias,
+  18 fields in binding order); opaque free-text leaves; the
+  `BusinessContextAndGoals`/`SystemOverview`/`OtherCharacteristics`
+  composite containers; every cross-reference list class (`Goals`,
+  `ProblemStatement`, `StakeholderNeedsAndElicitation`,
+  `OperationalConceptAndScenarios`, `Decisions` (`DEC|ADR`), `Risks`,
+  the nine `Requirements` H3s, the six `OtherCharacteristics` H3s,
+  `Verification`) with a `field_validator("items")` delegating to a
+  new shared `_validate_cross_reference_items` helper (`re.DOTALL`
+  included, per the Phase 1 pin) against a per-class module-level
+  `<TAG(S)> <uuid>: <title>` pattern; the plain `References` list (no
+  type-tag regex); `Requirements`'s ≥1-of-9 `model_validator(mode=
+  "after")` `assert` and `Updates`'s newest-first ordering check (via
+  the shared `models/md/_ordering.py::validate_newest_first` helper),
+  both landing in `pydantic.ValidationError` per the 2026-09-02
+  decision recorded in Decisions Made; the full 8-class LITERAL alias
+  pin set (`BusinessContextAndGoals`, `StakeholderNeedsAndElicitation`,
+  `OperationalConceptAndScenarios`, `AssumptionsAndDependencies`,
+  `SystemModesAndStates`, `DefinitionsAndAcronyms`,
+  `PolicyAndRegulation`, `PackagingHandlingShippingAndTransportation`)
+  confirmed exactly as Phase 1 predicted. Task 2.4: `SysrsDocument`,
+  `parse_sysrs` (two-error-channel glue), `SysrsSummary` (plain, no
+  extras), `models/v1/__init__.py`/`models/__init__.py` exports. Task
+  2.5: 108 new tests across `test_frontmatter.py` (13), `test_body.py`
+  (73), and `test_parser.py` (22) — the full structural (`AssertionError`)
+  and value (`pydantic.ValidationError`) matrices from ACC-004/ACC-005,
+  the per-section cross-reference regex matrix (wrong-tag rejection,
+  `DEC`/`ADR` dual acceptance and `REQ` rejection under `## Decisions`,
+  malformed-uuid/missing-title rejection, bare-bullet-without-notes
+  acceptance), the `## Updates` timestamp-led-H3 matrix (date-only and
+  date+time leads, both ` - `/` : ` separators, em-dash rejection,
+  out-of-order rejection, zero-entry rejection), the Task 1.3(e)
+  empty-mandatory-leaf acceptance pin, and a full round-trip of
+  `sysrs-example.md`'s content through `parse_sysrs` (embedded inline
+  in `test_parser.py` with the frontmatter `created`/`updated` values
+  quoted, to sidestep the PyYAML auto-datetime-coercion hazard the
+  Phase 1 outcome record's "Frontmatter probe" note pins — the on-disk
+  feature-folder file itself is left unquoted, since it is not this
+  phase's file to fix; Task 4.1 will need the same quoting when the
+  packaged `sysrs_example.md` is created) — byte-exact except the
+  documented tight→loose `## References` re-render, verified two ways
+  (a diff assertion that every changed line is an inserted blank line,
+  and an idempotence check that the once-loosened body round-trips
+  byte-exact from there on). Task 2.6: quality gate green (`ruff format
+  --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence
+  60` after adding the new field/`_validate_items`/
+  `_validate_at_least_one_present` false positives to `whitelist.py`
+  following the `sop`/`vcr`/`dec` Phase-1-era precedent already there,
+  full repo `python -m unittest discover` at 3145 tests all green).
+  No deviation from the plan's mechanics was needed — every Phase 1
+  outcome-record pin (the `re.DOTALL` requirement, the
+  present-with-zero-items `AssertionError`, the
+  `model_validator`-surfaces-as-`ValidationError` channel, the
+  empty-mandatory-leaf acceptance, the tight→loose `## References`
+  exception) held exactly as recorded when implemented for real.
+  `sysrs` is not yet imported/registered anywhere outside
+  `sysrs/`/`tests/sysrs/` (no `general/tools/`/`server.py` change;
+  that is Phase 3/Phase 6's job).
+- Next: execute Phase 3 (tools + generic-tool dispatch), Tasks
+  3.1–3.5, per the Task List and Dependencies' sibling-coordination
+  checkpoints.
 
 #### Update 2026-09-02 (conditional feat-56-classification addendum added to REQ-011/Scope/Task 3.1/Task 3.3/ACC-009)
 
@@ -2855,6 +2986,30 @@ wait on it; see Task List Task 0.7/Design Notes item 4's note.)
 
 ### Decisions Made
 
+- **2026-09-02 (Phase 2)**: `sysrs/__init__.py` does `from . import
+  prompts, resources, tools` from day one in Phase 2 (Task 2.1), with
+  `tools`/`resources`/`prompts` shipped as empty-but-valid placeholder
+  packages (a bare copyright header + docstring, no real content until
+  Phases 3/4/5) rather than deferring the import entirely the way the
+  sibling `vcr` domain's real Phase 1 (models-only) did. Rationale:
+  this plan's own Task 2.1 wording explicitly names both options
+  (mirror `vcr`'s history, or ship placeholders) and pre-resolves the
+  choice in favor of placeholders — `sysrs` is not registered in
+  `server.py` yet (that stays Phase 6), so this is purely an internal
+  package-import ordering choice with no externally-visible effect
+  either way.
+- **2026-09-02 (Phase 2)**: `sysrs`'s cross-reference list classes
+  share one private module-level helper,
+  `_validate_cross_reference_items(items, pattern)`
+  (`sysrs/models/v1/body.py`), invoked from each class's own
+  `field_validator("items")` rather than duplicating the `re.fullmatch(...,
+  re.DOTALL)` loop body in all ~22 classes. Rationale: the per-class
+  `field_validator` methods themselves stay one-per-class (matching
+  every other domain's `_validate_value` convention, e.g. `vcr.Verifies`/
+  `gol.Priority`), but the actual regex-check logic is DRY'd out since
+  the loop body is byte-for-byte identical across every cross-reference
+  list class — a plain refactor, not a design decision that changes
+  any observable behavior.
 - **2026-09-02**: `sysrs`'s coordination with sibling
   `feat-56-classification-attribute-in-frontmatter` is conditional,
   not mandatory — user-confirmed rationale: since `sysrs`'s frontmatter
