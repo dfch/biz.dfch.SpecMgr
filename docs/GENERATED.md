@@ -447,6 +447,9 @@ First-line docstrings from each module, organized by domain:
 - `uc/models/v2/frontmatter.py` — Use-case frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
 - `uc/models/v2/parser.py` — Parse raw use-case ``.md`` text into a :class:`UcDocument` (Task 1.8).
 - `uc/models/v2/summary.py` — Pydantic model for one line of UC listing output (Task 3.1.6).
+- `uc/prompts/__init__.py` — MCP prompt wrappers for Use Cases (feat-57-uc-commands).
+- `uc/prompts/create_uc.py` — ``@mcp.prompt()``: create_uc (feat-57-uc-commands).
+- `uc/prompts/update_uc.py` — ``@mcp.prompt()``: update_uc (feat-57-uc-commands).
 - `uc/resources/__init__.py` — MCP resource registrations for Use Case (UC) documents (Task 3.1.4, 3.1.6).
 - `uc/resources/uc_example.py` — Resource: specmgr://uc/example (Task 3.1.4).
 - `uc/resources/uc_schema.py` — Resource: specmgr://uc/schema (Task 3.1.4).
@@ -497,4 +500,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 335
+**Test files**: 337

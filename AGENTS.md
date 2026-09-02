@@ -53,7 +53,8 @@ type or cross-cutting:
    (raw-only; out-of-range values clamp, never error); no
   `specmgr://uc/{id}` resource for the same reason as
   REQ, and no `specmgr://uc/list` resource either — listing is the
-  `list_uc` tool (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13). Schema at
+  `list_uc` tool (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13);
+  `uc/prompts/` (`create_uc`/`update_uc`). Schema at
   `uc/models/v1/` (legacy) and `uc/models/v2/` (current),
   inside the domain package, not `models/uc/`.
 - **`tsk/`** (Task Lists) — same shape again (`create_tsk`,
@@ -436,9 +437,6 @@ Still genuinely missing / not yet done (don't assume otherwise):
   `set_status`'s `type`), one `delete` adapter in the generic `delete`
   tool, plus a `raw` parameter on the new `get_<d>` tool — not new
   `update_<d>`/`set_status_<d>`/`delete_<d>` tools.
-- `req`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr` each register
-  `tools`, `resources`, and `prompts`; `uc` registers `tools` and
-  `resources` only — it has no `prompts` sub-package yet.
 
 `feat-27-validation` (closed 2026-09-01, GitHub issue #27, subsuming feat-7's
 Task 0.29) made every `parse_<d>`/`create_<d>`/`validate_<d>` tool's and the
