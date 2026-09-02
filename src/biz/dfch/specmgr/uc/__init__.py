@@ -10,21 +10,21 @@ shared ``mcp`` application instance at once::
 
 ``tools`` (``parse_uc``, ``get_uc``, ``list_uc``, ``get_uc_example``,
 ``get_uc_template``, ``create_uc``,
-``validate_uc``) and ``resources`` (``specmgr://uc/schema``,
-``specmgr://uc/example``, ``specmgr://uc/template``) exist; whole-body and
+``validate_uc``), ``resources`` (``specmgr://uc/schema``,
+``specmgr://uc/example``, ``specmgr://uc/template``), and ``prompts``
+(``create_uc``, ``update_uc``) all exist; whole-body and
 line-range updates of an existing document go through the generic
 ``update`` tool in ``general.tools`` (``type="uc"``), and status changes
 go through the generic ``set_status`` tool in ``general.tools``
 (``type="uc"``). The former
 ``specmgr://uc/list`` resource was replaced by the ``list_uc`` tool, so
-that paging parameters could be accepted (feat-13-list-paging). There is
-no ``prompts`` sub-package yet (see
-``.specmgr/feat/feat-4-use-cases/README.md`` Phase 3).
+that paging parameters could be accepted (feat-13-list-paging).
 """
 
-from . import resources, tools  # noqa: F401
+from . import prompts, resources, tools  # noqa: F401
 
 __all__ = [
+    "prompts",
     "resources",
     "tools",
 ]

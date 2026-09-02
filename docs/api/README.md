@@ -387,6 +387,9 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.uc.models.v2.parser`](biz.dfch.specmgr.uc.models.v2.parser.md) — Parse raw use-case ``.md`` text into a :class:`UcDocument` (Task 1.8).
 - [`biz.dfch.specmgr.uc.models.v2.summary`](biz.dfch.specmgr.uc.models.v2.summary.md) — Pydantic model for one line of UC listing output (Task 3.1.6).
 - [`biz.dfch.specmgr.uc.models.v2.use_case`](biz.dfch.specmgr.uc.models.v2.use_case.md) — No documentation available.
+- [`biz.dfch.specmgr.uc.prompts`](biz.dfch.specmgr.uc.prompts.md) — MCP prompt wrappers for Use Cases (feat-57-uc-commands).
+- [`biz.dfch.specmgr.uc.prompts.create_uc`](biz.dfch.specmgr.uc.prompts.create_uc.md) — ``@mcp.prompt()``: create_uc (feat-57-uc-commands).
+- [`biz.dfch.specmgr.uc.prompts.update_uc`](biz.dfch.specmgr.uc.prompts.update_uc.md) — ``@mcp.prompt()``: update_uc (feat-57-uc-commands).
 - [`biz.dfch.specmgr.uc.resources`](biz.dfch.specmgr.uc.resources.md) — MCP resource registrations for Use Case (UC) documents (Task 3.1.4, 3.1.6).
 - [`biz.dfch.specmgr.uc.resources.uc_example`](biz.dfch.specmgr.uc.resources.uc_example.md) — Resource: specmgr://uc/example (Task 3.1.4).
 - [`biz.dfch.specmgr.uc.resources.uc_schema`](biz.dfch.specmgr.uc.resources.uc_schema.md) — Resource: specmgr://uc/schema (Task 3.1.4).

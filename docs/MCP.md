@@ -3,7 +3,7 @@
 Auto-generated from the live `biz.dfch.specmgr.server:mcp` registration --
 do not edit by hand, run `specmgr mcp-docs` instead (see `AGENTS.md`).
 
-39 resource(s), 1 resource template(s), 96 tool(s), 29 prompt(s).
+39 resource(s), 1 resource template(s), 96 tool(s), 31 prompt(s).
 
 ## Table of Contents
 
@@ -1413,6 +1413,7 @@ Disk-free, id-free dry run validating verification case record content. `full=Fa
 | [`create_risk`](#prompt-create_risk) | Guides the LLM through checking for an existing similar risk, gathering the required information, and driving create_rsk/validate_rsk to author a new RSK document. |
 | [`create_sop`](#prompt-create_sop) | Guides the LLM through checking for an existing similar SOP, gathering the required information, and driving create_sop/validate_sop to author a new SOP document. |
 | [`create_task`](#prompt-create_task) | Guides the LLM through checking for an existing similar task list, gathering the required information, and driving create_tsk/validate_tsk to author a new TSK document. |
+| [`create_uc`](#prompt-create_uc) | Guides the LLM through checking for an existing similar use case, gathering the required information, and driving create_uc/validate_uc to author a new UC document. |
 | [`create_vcr`](#prompt-create_vcr) | Guides the LLM through checking for an existing similar verification case record, gathering the required information, and driving create_vcr/validate_vcr to author a new VCR document. |
 | [`implement_task`](#prompt-implement_task) | Reads an existing task list by id, builds a TodoWrite list from its items, and uses the question tool to resolve ambiguity before proceeding. |
 | [`refine`](#prompt-refine) | Guides the LLM through appending a batch of new, unanswered interview questions (each with an empty placeholder answer) to an existing QA document, for one or more of the nine ISO/IEC 25010:2023 quality characteristics. |
@@ -1427,6 +1428,7 @@ Disk-free, id-free dry run validating verification case record content. `full=Fa
 | [`update_risk`](#prompt-update_risk) | Guides the LLM through revising an existing risk by id: reading current state, applying the requested change with the right tool, and validating. |
 | [`update_sop`](#prompt-update_sop) | Guides the LLM through revising an existing SOP by id: reading current state, applying the requested change with the right tool, and validating. |
 | [`update_task`](#prompt-update_task) | Guides the LLM through revising an existing task list by id: reading current state, applying the requested change with the right tool, and validating. |
+| [`update_uc`](#prompt-update_uc) | Guides the LLM through revising an existing use case by id: reading current state, applying the requested change with the right tool, and validating. |
 | [`update_vcr`](#prompt-update_vcr) | Guides the LLM through revising an existing verification case record by id: reading current state, applying the requested change with the right tool, and validating. |
 
 ### Prompt: compact_history
@@ -1550,6 +1552,14 @@ Guides the LLM through checking for an existing similar task list, gathering the
 | --- | --- | --- |
 | `topic` | Yes |  |
 
+### Prompt: create_uc
+
+Guides the LLM through checking for an existing similar use case, gathering the required information, and driving create_uc/validate_uc to author a new UC document.
+
+| Argument | Required | Description |
+| --- | --- | --- |
+| `topic` | Yes |  |
+
 ### Prompt: create_vcr
 
 Guides the LLM through checking for an existing similar verification case record, gathering the required information, and driving create_vcr/validate_vcr to author a new VCR document.
@@ -1667,6 +1677,15 @@ Guides the LLM through revising an existing SOP by id: reading current state, ap
 ### Prompt: update_task
 
 Guides the LLM through revising an existing task list by id: reading current state, applying the requested change with the right tool, and validating.
+
+| Argument | Required | Description |
+| --- | --- | --- |
+| `id` | Yes |  |
+| `instructions` | No |  |
+
+### Prompt: update_uc
+
+Guides the LLM through revising an existing use case by id: reading current state, applying the requested change with the right tool, and validating.
 
 | Argument | Required | Description |
 | --- | --- | --- |

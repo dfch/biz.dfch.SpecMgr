@@ -296,6 +296,8 @@ Prompts
 ADR prompts (``adr/prompts/``): ``create_adr``, ``update_adr`` -- instructional
 text guiding an LLM through the ADR tool sequence above (``.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md``
 §11).
+Use-case prompts (``uc/prompts/``): ``create_uc``, ``update_uc`` --
+instructional text guiding an LLM through the UC tool sequence above.
 Requirement prompts (``req/prompts/``): ``create_req``, ``update_req`` --
 instructional text guiding an LLM through the REQ tool sequence above (Task 3.19).
 Task list prompts (``tsk/prompts/``): ``create_task``, ``update_task`` -- instructional
@@ -364,11 +366,10 @@ creating its top-level package and importing it at the bottom of this
 module, next to the existing
 ``adr``/``dec``/``feat``/``general``/``gol``/``prb``/``qa``/``req``/``rsk``/``sop``/``tsk``/``uc``/``vcr``
 imports, so its ``@mcp.tool()`` / ``@mcp.prompt()`` / ``@mcp.resource()``
-decorators actually run. ``req``, ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``,
+decorators actually run. ``req``, ``uc``, ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``,
 ``feat``, and ``vcr``
 each register ``tools``, ``resources``, and ``prompts``; ``general`` now also
-registers all three; ``uc`` registers ``tools`` and ``resources`` only -- it
-has no ``prompts`` sub-package yet.
+registers all three.
 """
 
 from __future__ import annotations
