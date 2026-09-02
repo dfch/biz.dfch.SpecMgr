@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.17.0] - 2026-09-02
+
 ### Added
 
 - `create_feat` (feat domain) now accepts an optional, caller-chosen
@@ -82,6 +84,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   back the tool's returned `version`/`failed_images`; `confluence_fetch`
   documents that `destination_path` is only required for binary/non-text
   content. Part of feat-50-confluence Phase 8, REQ-012/REQ-013.
+
+- Optional, free-text `classification` frontmatter field on the shared
+  `MarkdownFrontmatter` base, inherited by all eleven whole-body domains
+  (`req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr`; ADR
+  excluded, since it has its own separate frontmatter model). A new
+  generic `set_classification(id, type, classification)` MCP tool
+  (`general/tools/`) mirrors `set_status`'s dispatch pattern to change it
+  after creation, bumping `updated` and leaving the body and every other
+  frontmatter field untouched; a blank/whitespace-only value clears
+  `classification` back to `None`/absent, same as every other optional
+  frontmatter field's blank-to-`None` normalization. Existing documents
+  without a `classification` key keep parsing unchanged. The ten
+  whole-body domains' packaged create/update prompt instruction files
+  (`uc`, which has no prompts sub-package yet, is untouched) now mention
+  `set_classification` alongside the existing `set_status` mentions
+  (GitHub issue #56).
 
 ### Changed
 
