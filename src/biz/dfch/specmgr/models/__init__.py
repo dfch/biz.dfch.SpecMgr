@@ -28,6 +28,7 @@ from .adr import (
     AdrSummary,
     parse_adr,
 )
+from .config_info import ConfigInfo, DomainConfig
 from .iso25010 import Characteristic, Iso25010, SubCharacteristic, parse_iso25010
 from .version_info import VersionInfo
 
@@ -41,6 +42,8 @@ __all__ = [
     "AdrParseError",
     "AdrSummary",
     "Characteristic",
+    "ConfigInfo",
+    "DomainConfig",
     "Iso25010",
     "SubCharacteristic",
     "VersionInfo",

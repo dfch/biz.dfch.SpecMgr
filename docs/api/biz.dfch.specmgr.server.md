@@ -95,6 +95,14 @@ specmgr://iso25010 --   The ISO/IEC 25010:2023 product quality model's nine main
                         characteristics (and sub-characteristics), each with a description.
 specmgr://rasci --      The generic RASCI (Responsible/Accountable/Support/Consulted/
                         Informed) responsibility-assignment framework, as raw markdown.
+specmgr://config --     For all twelve document domains (adr, req, uc, tsk, qa, prb, gol,
+                        rsk, dec, sop, feat, vcr), the resolved absolute base directory and
+                        whether the domain's ``SPECMGR_*_DIR`` environment variable is
+                        explicitly set (feat-51-mcp-cwd REQ-001) -- lets a client
+                        self-diagnose a CWD/env-var misconfiguration without shell access to
+                        the server's host. Never discloses the value of any environment
+                        variable, only whether the relevant directory-path env var is present
+                        (REQ-002).
 
 REQ has no ``specmgr://req/{id}`` resource, unlike ADR -- id-based reads go
 through the ``get_req`` tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).

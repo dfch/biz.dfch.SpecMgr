@@ -29,16 +29,23 @@ owned by ``vcr``'s own schema. ``rasci`` registers the generic RASCI
 responsibility-assignment guidance resource (``specmgr://rasci``,
 REQ-011) -- motivated by the ``sop`` domain but not scoped to it, mirroring
 ``iso25010``'s cross-cutting placement rather than ``rsk/tara``'s
-domain-scoped one. Domain-specific resources (e.g. ``adr_list``/``adr_get``)
+domain-scoped one. ``config`` registers the ``specmgr://config`` diagnostic
+resource (feat-51-mcp-cwd REQ-001) -- the resolved absolute base directory
+and env-var-set flag for all twelve document domains, so a client can
+self-diagnose a CWD/env-var misconfiguration without shell access to the
+server's host; it never discloses the value of any environment variable,
+only whether a domain's own ``SPECMGR_*_DIR`` is set (REQ-002). Domain-specific
+resources (e.g. ``adr_list``/``adr_get``)
 live under their own domain package instead (``biz.dfch.specmgr.adr.resources``).
 Import this package to load all cross-cutting resources at once::
 
     from biz.dfch.specmgr.general import resources  # noqa: F401 (side-effects only)
 """
 
-from . import dtais, iso25010, rasci, version  # noqa: F401
+from . import config, dtais, iso25010, rasci, version  # noqa: F401
 
 __all__ = [
+    "config",
     "dtais",
     "iso25010",
     "rasci",

@@ -27,11 +27,11 @@ This feature adds a `specmgr://config` resource that reports, for every domain, 
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: Fetching `specmgr://config` returns a structured payload listing all twelve domains, each with its resolved absolute base directory path and a flag indicating whether its `SPECMGR_*_DIR` env var was explicitly set.
-- [ ] ACC-002: An automated test sets an unrelated environment variable (e.g. a fake PAT) and asserts it never appears anywhere in `specmgr://config`'s output.
+- [x] ACC-001: Fetching `specmgr://config` returns a structured payload listing all twelve domains, each with its resolved absolute base directory path and a flag indicating whether its `SPECMGR_*_DIR` env var was explicitly set.
+- [x] ACC-002: An automated test sets an unrelated environment variable (e.g. a fake PAT) and asserts it never appears anywhere in `specmgr://config`'s output.
 - [ ] ACC-003: `README.md`'s "Add to OpenCode" example and "Environment Variables" section reflect the updated guidance, including `SPECMGR_FEAT_DIR`.
-- [ ] ACC-004: `docs/MCP.md` lists `specmgr://config` after running `specmgr mcp-docs`, with no manual edits required.
-- [ ] ACC-005: `uv run --frozen ruff format --check`, `ruff check`, `vulture`, and the full unittest suite all pass with the new resource in place.
+- [x] ACC-004: `docs/MCP.md` lists `specmgr://config` after running `specmgr mcp-docs`, with no manual edits required.
+- [ ] ACC-005: `uv run --frozen ruff format --check`, `ruff check`, `vulture`, and the full unittest suite all pass with the new resource in place. (Phase 1's own slice passed; ACC-005 stays open pending Phase 2/3.)
 
 ### Scope
 
@@ -56,10 +56,10 @@ This feature adds a `specmgr://config` resource that reports, for every domain, 
 
 #### Phase 1: Diagnostic Resource
 
-- [ ] Task 1.1: Finalize the `specmgr://config` payload schema (domain -> base_dir, env_var name, env_var_set flag) for all twelve domains.
-- [ ] Task 1.2: Implement the resource in `general/resources/` and register it in `server.py`.
-- [ ] Task 1.3: Add unit tests, including the non-disclosure test required by ACC-002.
-- [ ] Task 1.4: Update `server.py`'s module docstring and regenerate `docs/MCP.md` via `specmgr mcp-docs`.
+- [x] Task 1.1: Finalize the `specmgr://config` payload schema (domain -> base_dir, env_var name, env_var_set flag) for all twelve domains.
+- [x] Task 1.2: Implement the resource in `general/resources/` and register it in `server.py`.
+- [x] Task 1.3: Add unit tests, including the non-disclosure test required by ACC-002.
+- [x] Task 1.4: Update `server.py`'s module docstring and regenerate `docs/MCP.md` via `specmgr mcp-docs`.
 
 #### Phase 2: Documentation Updates
 
@@ -75,11 +75,15 @@ This feature adds a `specmgr://config` resource that reports, for every domain, 
 
 ### Current Status
 
-**As of 2026-09-02**: Feature drafted from GitHub issue #51; not yet implemented. Awaiting the start of Phase 1.
+**As of 2026-09-02**: Phase 1 (Diagnostic Resource) complete -- the `specmgr://config` resource is implemented, tested, and documented. Phase 2 (README documentation updates) and Phase 3 (verification) remain.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-02 — Phase 1 complete: specmgr://config resource implemented
+
+Added the `specmgr://config` resource reporting, for all twelve document domains (adr, req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr), the resolved absolute base directory and whether the domain's `SPECMGR_*_DIR` env var is explicitly set. New files: `src/biz/dfch/specmgr/models/config_info.py` (`DomainConfig`/`ConfigInfo` Pydantic models, registered in `models/__init__.py`), `src/biz/dfch/specmgr/general/resources/config.py` (the `config_info()` resource function, registered in `general/resources/__init__.py`), `tests/general/resources/test_config.py` (13 tests, including ACC-002's non-disclosure tests). Updated `server.py`'s module docstring with a `specmgr://config` entry and regenerated `docs/MCP.md` via `specmgr mcp-docs`. Only the twelve known `SPECMGR_*_DIR` env var names are ever read (never `os.environ` wholesale), satisfying REQ-002. Full quality gate (`ruff format --check`, `ruff check`, `vulture`, full unittest suite of 3047 tests) passes.
 
 #### 2026-09-02 00:00:00.000Z — Created
 
@@ -88,6 +92,10 @@ Feature drafted from GitHub issue #51 ("MCP server silently resolves per-domain 
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-02 — ConfigInfo model shape and location
+
+`ConfigInfo`/`DomainConfig` were added to top-level `models/config_info.py` (mirroring `VersionInfo`'s location), not inlined in the resource module, since the payload is structured/machine-readable output (like `Iso25010`), not raw markdown prose (like `dtais`/`rasci`). `ConfigInfo` holds a single `domains: dict[str, DomainConfig]` field (domain name -> config) rather than twelve named fields, matching the plan's own "domain -> {...}" mapping wording and avoiding a 12-field model that would need editing for every future domain.
 
 #### 2026-09-02 00:00:02.000Z — Never disclose non-directory environment variables
 
