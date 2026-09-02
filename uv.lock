@@ -114,6 +114,7 @@ source = { editable = "." }
 dependencies = [
     { name = "markdown-it-py" },
     { name = "mdformat" },
+    { name = "mdformat-simple-breaks" },
     { name = "pydantic" },
     { name = "python-dotenv" },
     { name = "python-frontmatter" },
@@ -166,6 +167,7 @@ requires-dist = [
     { name = "markdown-it-py", specifier = ">=3.0" },
     { name = "mcp", marker = "extra == 'mcp'", specifier = ">=2.0.0" },
     { name = "mdformat", specifier = ">=1.0.0" },
+    { name = "mdformat-simple-breaks", specifier = "==0.1.0" },
     { name = "mypy", marker = "extra == 'test'", specifier = ">=1.0" },
     { name = "parameterized", marker = "extra == 'test'", specifier = ">=0.9.0" },
     { name = "pre-commit", marker = "extra == 'dev'" },
@@ -935,6 +937,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/3f/05/32b5e14b192b0a8a309f32232c580aefedd9d06017cb8fe8fce34bec654c/mdformat-1.0.0.tar.gz", hash = "sha256:4954045fcae797c29f86d4ad879e43bb151fa55dbaf74ac6eaeacf1d45bb3928", size = 56953, upload-time = "2025-10-16T12:05:03.695Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/54/9a/8fe71b95985ca7a4001effbcc58e5a07a1f2a2884203f74dcf48a3b08315/mdformat-1.0.0-py3-none-any.whl", hash = "sha256:bca015d65a1d063a02e885a91daee303057bc7829c2cd37b2075a50dbb65944b", size = 53288, upload-time = "2025-10-16T12:05:02.607Z" },
+]
+
+[[package]]
+name = "mdformat-simple-breaks"
+version = "0.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "mdformat" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/97/cf/21faa8db8ac7548fc58424a82a48b4e6c53dcd45d4cf86494586e8eb4329/mdformat_simple_breaks-0.1.0.tar.gz", hash = "sha256:0f1d57edba17d6ca7175031a3f2edb2e69ea5800c7c406c905e81e75a325470d", size = 6684, upload-time = "2025-10-28T07:06:14.34Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c1/61/ae77d87133bd32c86631dcfb595a24432cec45d868c99b7e9b6b50597bf0/mdformat_simple_breaks-0.1.0-py3-none-any.whl", hash = "sha256:c81c3d2ee65f0a0d9a968fb02347d1d34a14a6b0f3655c01e2a05bba10e8211f", size = 4265, upload-time = "2025-10-28T07:06:13.481Z" },
 ]
 
 [[package]]

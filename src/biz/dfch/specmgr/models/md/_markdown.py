@@ -56,6 +56,15 @@ _ALLOWED_RAW_HTML_PREFIX = "<!--"
 #: on bullet lists, headings, or paragraphs.
 _MDFORMAT_OPTIONS = {"number": True}
 
+#: `mdformat.parser_extension` plugins enabled for every normalization call
+#: across `models/md/`. `"simple_breaks"` (package `mdformat-simple-breaks`,
+#: pinned exactly in `pyproject.toml`) overrides `mdformat`'s hardcoded `hr`
+#: renderer (`"_" * 70`, not otherwise configurable -- see
+#: executablebooks/mdformat#69) so a thematic break renders as a literal
+#: `---` instead, regardless of whether the source used `---`, `***`, or
+#: `___` (GitHub issue #47).
+_MDFORMAT_EXTENSIONS = {"simple_breaks"}
+
 
 def format_text(text: str) -> str:
     """Normalize `text` with the shared `mdformat` options (see `_MDFORMAT_OPTIONS`).
@@ -73,7 +82,7 @@ def format_text(text: str) -> str:
         The `mdformat`-normalized text.
     """
     assert isinstance(text, str), type(text)
-    return mdformat.text(text, options=_MDFORMAT_OPTIONS)
+    return mdformat.text(text, options=_MDFORMAT_OPTIONS, extensions=_MDFORMAT_EXTENSIONS)
 
 
 def snippet(text: str, max_lines: int = 5, max_chars: int = 300) -> str:

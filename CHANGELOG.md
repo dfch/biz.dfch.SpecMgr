@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `format_text()`/`format_markdown_document()` (`models/md/_markdown.py`),
+  and transitively every domain's `parse_<d>`/`create_<d>`/`validate_<d>`/
+  `update` path plus the `mdformat` CLI command and MCP tool, now render a
+  thematic break (`---`, `***`, `___`, or any other CommonMark-valid
+  variant) as a literal `---` instead of `mdformat`'s hardcoded 70-character
+  underscore line (`"_" * 70`, not otherwise configurable upstream — see
+  executablebooks/mdformat#69). Fixed by wiring the third-party
+  `mdformat-simple-breaks` plugin (pinned exactly, `==0.1.0`) into the
+  shared `mdformat.text(...)` call via its `mdformat.parser_extension`
+  entry point (GitHub issue #47).
+
 ## [0.17.0] - 2026-09-02
 
 ### Added
