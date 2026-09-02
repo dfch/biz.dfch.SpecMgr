@@ -79,6 +79,8 @@ At this time, in the Iso25010Refiner, `resolve` combined a question and an answe
 
 `/resolve` stays scoped to exactly one `qa` document. When additional `qa` documents exist, a separate, later command is used instead: it cross-checks that additional `qa` document's content against the artifacts already created from earlier `qa` documents, to catch likely duplicates or conflicts before any new artifact is created from it.
 
+TODO: we have to redefine that. Even the "first" `/resolve` must examine existing artifacts. So, there is not difference between any run of the tool or any number of qa document.s
+
 > Since there is no longer an intermediate resolved-sentence step inside the `qa` document itself, how do we avoid `/resolve` creating duplicate artifacts if it is run more than once over the same `qa` document?
 
 When `/resolve` creates one or more artifacts from a `qa` pair, it adds a leading comment directly in front of that pair, referencing every artifact created from it (id and type). A later `/resolve` run treats a pair that already carries such a comment as already resolved, and skips it.
