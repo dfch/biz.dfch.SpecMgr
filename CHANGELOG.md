@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.18.0] - 2026-09-02
+
+### Added
+
+- New `sysrs` (System Requirements Specification) domain: an aggregator
+  document type that ties together existing `gol`/`prb`/`qa`/`uc`/`req`/
+  `rsk`/`dec`/`adr`/`vcr` artifacts into one coherent, navigable
+  specification via per-section, type-tagged cross-reference lists (e.g.
+  `### Goals` accepts only `GOL` bullets, `## Decisions` accepts `DEC` or
+  `ADR`, and the nine `## Requirements` H3s plus six `## Other
+  Characteristics` H3s each accept only `REQ`) rather than duplicating
+  their content. Dispatch-only from day one, with no `update_sysrs`/
+  `set_status_sysrs` tools of its own — whole-body/line-range updates,
+  status changes, classification changes, and deletions all go through
+  the existing generic `update`/`set_status`/`set_classification`/
+  `delete` tools (`type="sysrs"`). Ships 7 tools (`create_sysrs`,
+  `parse_sysrs`, `list_sysrs`, `get_sysrs`, `get_sysrs_example`,
+  `get_sysrs_template`, `validate_sysrs`), 3 resources
+  (`specmgr://sysrs/schema`, `specmgr://sysrs/example`,
+  `specmgr://sysrs/template`), and 2 prompts (`create_sysrs`,
+  `update_sysrs`) (GitHub issue #32).
+
+- New `specmgr://config` resource: reports, for all twelve document
+  domains, the resolved absolute base directory and whether the domain's
+  `SPECMGR_*_DIR` environment variable is explicitly set, so a client can
+  self-diagnose a working-directory-relative base-directory
+  misconfiguration. Only the twelve known env var names are ever read
+  (never `os.environ` wholesale), so no unrelated secret is ever
+  disclosed. The "Add to OpenCode" README example now shows two
+  alternatives for pinning the resolved base directory — `uv`/`uvx`'s
+  `--directory` flag, or explicit `SPECMGR_*_DIR` environment variables in
+  the MCP client config — and documents the previously-missing
+  `SPECMGR_FEAT_DIR` variable (GitHub issue #51).
+
+- `create_uc`/`update_uc` MCP prompts for the `uc` (Use Case) domain,
+  mirroring the `req` domain's prompt pattern and including
+  `set_classification` guidance (GitHub issue #57).
+
 ### Fixed
 
 - `format_text()`/`format_markdown_document()` (`models/md/_markdown.py`),
