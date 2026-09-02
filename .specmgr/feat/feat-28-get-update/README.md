@@ -1,9 +1,9 @@
 ---
 created: '2026-09-01T14:19:27.649184'
 id: feat-28-get-update
-status: in-progress
+status: done
 type: feat
-updated: '2026-09-02T02:22:14.617316'
+updated: '2026-09-02T04:54:34'
 version: 1.0.0
 ---
 
@@ -178,44 +178,148 @@ tests move together in the LLM-contract phase.
 
 #### Phase 4: Docs, Regen, Close
 
-- [ ] Task 4.1: Update `server.py` + `general/tools/__init__.py` docstrings, `AGENTS.md` (eleven per-domain `raw` bullets + the generic `update` bullet), `CHANGELOG.md` `[Unreleased]` (Changed: breaking `begin`/`end` → `offset`/`limit` rename; Added: `get_<d>` windowing) — depends on: Phase 3 — status: not-started
-- [ ] Task 4.2: Regenerate `specmgr mcp-docs` (+ `specmgr docs`/`specmgr adr-toc` drift check) — depends on: Task 4.1 — status: not-started
-- [ ] Task 4.3: Set the ADR to `accepted`; annotate `feat-7` Task 0.32 done (split-out feature complete); set this feature's status to `done` — depends on: Task 4.2 — status: not-started
-- [ ] Task 4.4: Final phase gate — complete test cycle + final commit — depends on: Task 4.3 — status: not-started
+- [x] Task 4.1: Update `server.py` + `general/tools/__init__.py` docstrings, `AGENTS.md` (eleven per-domain `raw` bullets + the generic `update` bullet), `CHANGELOG.md` `[Unreleased]` (Changed: breaking `begin`/`end` → `offset`/`limit` rename; Added: `get_<d>` windowing) — depends on: Phase 3 — status: done (2026-09-02)
+- [x] Task 4.2: Regenerate `specmgr mcp-docs` (+ `specmgr docs`/`specmgr adr-toc` drift check) — depends on: Task 4.1 — status: done (2026-09-02)
+- [x] Task 4.3: Set the ADR to `accepted`; annotate `feat-7` Task 0.32 done (split-out feature complete); set this feature's status to `done` — depends on: Task 4.2 — status: done (2026-09-02)
+- [x] Task 4.4: Final phase gate — complete test cycle + final commit — depends on: Task 4.3 — status: done (2026-09-02)
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-09-02**: Phase 3 complete. Every packaged LLM-facing
-instruction data file now teaches the new `offset`/`limit` range
-contract: the ten `*_update_instructions.md` files
-(`req`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr`) read
-"identify the 1-based line to start at and how many lines to replace --
-`offset` is the first body line, `limit` the number of lines
-(`offset`..`offset+limit-1`); `limit` omitted replaces through the last
-body line, `limit=0` is a pure insert, and the `N+1` position is
-end-of-body: `offset = N+1` appends after the last line" and name the
-call shape `update(id, type="<d>", content, offset=..., limit=...)`;
-their whole-body bullets now say "with no `offset`/`limit`"; and
-`qa_refine_instructions.md`'s clean-append step uses `offset=N+1`. The
-`feat`/`vcr` files keep their own local bullet structure around the
-swapped vocabulary. The prompt tests moved to the new literals in the
-same change (the ten `test_update_*` files plus
-`tests/qa/prompts/test_refine.py`), and one Phase-1 leftover docstring
-in `tests/sop/tools/test_integration.py` was reworded to
-`offset`/`limit`. The ADR recording the revised contract remains
-drafted (`4ec08dcb-fcb7-4961-abaf-ff7803e2f21d` in `docs/adr/`; set to
-accepted at close per Task 4.3). The working tree is on branch
-`feat-28-get-update`, with the complete test cycle green (2784 tests)
-and `docs/api/`/`docs/GENERATED.md`/`docs/MCP.md` regenerated without
-drift; never pushed. Next: Phase 4 (docs — the `server.py` +
-`general/tools/__init__.py` docstrings, `AGENTS.md`, `CHANGELOG.md`
-`[Unreleased]`, final regeneration, ADR to accepted).
+**As of 2026-09-02**: Feature complete — all five phases (0–4) done.
+Phase 4 closed the LLM-facing contract: the `server.py` module
+docstring (the `update` entry rewritten to read-style `offset`/`limit`
+coordinates, and each of the eleven `get_<d>` entries extended with the
+windowing clause), the `general/tools/__init__.py` module docstring
+(the stale `update` "seven whole-body types … `begin`/`end`" and
+`set_status` "eight document types" clauses rewritten to the eleven/
+twelve-domain `offset`/`limit` truth), `AGENTS.md` (eleven per-domain
+`raw` bullets + the generic `update` bullet moved to the new
+vocabulary, naming the windowed raw read), and `CHANGELOG.md`'s
+`[Unreleased]` (new `### Added` — `get_<d>` windowing via the
+`window_body` helper; new `### Changed` — the breaking `begin`/`end` →
+`offset`/`limit` hard rename, referencing ADR
+`4ec08dcb-fcb7-4961-abaf-ff7803e2f21d` and GitHub issue #28). After the
+doc changes, `specmgr docs` regenerated (only the two docstring pages
+changed), `specmgr mcp-docs` and `specmgr adr-toc` verified no-change;
+the ADR was then set to `accepted` via the specmgr MCP `set_status`
+tool (verified to land in this worktree's `docs/adr/`), `specmgr
+adr-toc` regenerated `docs/adr/README.md` (Status: accepted), and
+`feat-7`'s Task 0.32 was annotated complete. The complete test cycle
+is green (2784 tests) with all generated docs regenerated without
+drift on a second pass. The working tree is on branch
+`feat-28-get-update`; never pushed (the Phase 4 commit is made by the
+orchestrator after final verification).
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-02 04:54:34+02:00 — Phase 4 Tasks 4.1–4.3 complete (docstrings, `AGENTS.md`, `CHANGELOG.md` moved to `offset`/`limit`; docs regenerated; ADR accepted; feat-7 annotated)
+
+Task 4.1: `src/biz/dfch/specmgr/general/tools/__init__.py`'s module
+docstring — the two stale clauses rewritten: `update` now reads "the
+generic, cross-domain whole-body or line-range replace for the eleven
+whole-body document types (``type`` is one of
+req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr; optional read-style
+body-line ``offset``/``limit`` coordinates -- ``offset`` = 1-based first
+line, ``limit`` = number of lines, omitted = through end of body, ``0``
+= pure insert, ``offset = N+1`` = the virtual end-of-body append
+position -- strict validation, splice-then-validate-whole)" (was "seven
+whole-body document types … optional 1-based inclusive body-line
+``begin``/``end`` range with the ``N+1`` end-of-body sentinel") and
+`set_status` now reads "all twelve document types (``type`` is one of
+req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/adr …)" (was "all eight …
+req/uc/tsk/qa/prb/gol/rsk/adr"); the `mdformat`/`delete`/`webfetch`
+clauses untouched (already accurate). `src/biz/dfch/specmgr/server.py`'
+module docstring — the `update` entry's "optional 1-based inclusive
+``begin``/``end`` body-line range with the ``N+1`` end-of-body
+sentinel; the spliced result is validated as a whole document before
+anything is written" replaced by the read-style `offset`/`limit`
+equivalent (omitted ``limit`` = through end of body, ``0`` = pure
+insert, ``offset = N+1`` = the virtual end-of-body append position;
+strict validation; spliced result validated as a whole document before
+anything is written), and each of the eleven `get_<d>` entries (uc,
+req, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr — the feat/vcr lines
+adapted to their local wrapping) had its `raw=True` parenthetical
+extended with the same clause: ", optionally windowed with read-style
+``offset``/``limit`` (raw-only, clamping))". `AGENTS.md` — the eleven
+per-domain bullets (uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr plus the
+`general/` bullet's closing "eleven `get_<d>` tools" sentence) each
+moved to "(the text `update`'s `offset`/`limit` index into), with
+optional read-style `offset`/`limit` windowing of that raw read
+(raw-only; out-of-range values clamp, never error)" keeping their
+surrounding structure, and the generic `update` bullet's "optional
+1-based inclusive body-line `begin`/`end` with the `N+1` end-of-body
+sentinel, splice-then-validate-whole" replaced by "read-style
+`offset`/`limit` body-line coordinates (`offset` = 1-based first line,
+`limit` = count; omitted `limit` = through end of body, `0` = pure
+insert, `offset` `N+1` = append; strict validation, never clamped),
+splice-then-validate-whole"; nothing else in `AGENTS.md` touched.
+`CHANGELOG.md` — above the existing `### Fixed` entry (untouched) in
+`[Unreleased]`, a `### Added` bullet for the `get_<d>` windowing
+(eleven tools, raw-only, `offset` 1-based default 1 floored, `limit` a
+line count defaulting through end of body capped at the remaining
+lines, `offset > N` → empty string, coordinates with `raw=False` →
+`ValueError`, served by the new no-I/O `window_body` helper in
+`general/tools/_splice.py`, clamping per the `list_<d>` convention,
+GitHub issue #28 + ADR 4ec08dcb) and a `### Changed` bullet for the
+breaking hard rename (`offset` 1..N+1 with N+1 the virtual append
+position, `limit` a count, omitted = through end of body, `0` = pure
+insert; strict `ValueError` out-of-range, `limit` without `offset`
+before any file access; splice-then-validate-whole/verbatim
+persistence/frontmatter carry-over unchanged; every LLM-facing surface
+moved in the same release; ADR 4ec08dcb referencing, not superseding,
+ADR 36905d5b; GitHub issue #28), styled after the file's existing
+**BREAKING** (0.x) bullet. Task 4.2: `uv run --frozen specmgr docs`
+changed exactly the two docstring pages (`docs/api/biz.dfch.specmgr.
+server.md`, `docs/api/biz.dfch.specmgr.general.tools.md` — the
+`general/tools/__init__.py` module page; no other file) and rewrote
+`docs/GENERATED.md` byte-identically; `uv run --frozen specmgr
+mcp-docs` proved no-change (`docs/MCP.md` absent from `git status`
+afterwards — no tool descriptions change in Phase 4); `uv run --frozen
+specmgr adr-toc` proved no-change at that point (the status flip
+follows in Task 4.3). Task 4.3: the ADR set to accepted via the
+specmgr MCP `specmgr_set_status` tool (`id=4ec08dcb-…`, `type="adr"`,
+`status="accepted"`), verified via `git status` to have changed this
+worktree's `docs/adr/4ec08dcb-fcb7-4961-abaf-ff7803e2f21d-offset-limit-
+coordinates-for-the-generic-update-tool-and-get.md` (frontmatter
+`status: accepted`); `uv run --frozen specmgr adr-toc` then regenerated
+`docs/adr/README.md` (the 4ec08dcb entry now shows `Status: accepted`);
+`feat-7-various-improvements/README.md`'s Task 0.32 status text gained
+"**`feat-28-get-update` is now complete** (all five phases 0–4 done;
+the revised contract is recorded in ADR
+4ec08dcb-fcb7-4961-abaf-ff7803e2f21d, accepted)." after the existing
+split-out clause (Task 0.15 → feat-13 precedent), its frontmatter
+`updated` bumped to 2026-09-02, and a `#### Update 2026-09-02 (Task
+0.32 split-out feature complete)` entry prepended to its Recent
+Updates; this plan's frontmatter flipped `status: in-progress` →
+`done` (`updated` bumped) and Tasks 4.1–4.3 marked done in place.
+Task 4.4 (final gate, green): `uv run --frozen ruff format --check`
+(1475 files already formatted), `uv run --frozen ruff check` (All
+checks passed!), `uv run --frozen vulture src/ whitelist.py
+--min-confidence 60` (clean, no output), `uv run --frozen python -m
+unittest discover -s tests -t . -p "test_*.py"` (Ran 2784 tests in
+109.288s — OK; same count as the Phase 2/3 baselines — docstring,
+prose, and changelog changes only, no tests added or removed). Drift
+check: `specmgr docs` + `specmgr mcp-docs` + `specmgr adr-toc`
+re-run a second time produced no further changes — `git status --short`
+byte-identical before and after the runs. ACC-004: `grep -rn "begin"
+src/biz/dfch/specmgr --include=*.md` shows only the `sop_example.md:17`
+prose word ("can begin productive work"); `grep -rn "begin=\|end=\|begin\b"
+src/biz/dfch/specmgr --include=*.py` shows zero range-vocabulary hits —
+the only two matches are English phrases "to begin with" in
+`rsk/tools/__init__.py:28` and `tsk/tools/__init__.py:28` (neither a
+`begin`/`end` range reference); `grep -n "begin" AGENTS.md` zero
+hits. ACC-005: the ADR frontmatter says `status: accepted`,
+`docs/adr/README.md` shows `Status: accepted` for 4ec08dcb, and the
+ADR references 36905d5b in four places (all "referenced, not
+superseded"). ACC-006: exactly one commit per phase — this branch
+carries the four Phase 0–3 commits (`f15f01f`, `0783675`, `cf8df5d`,
+`9efbff5`) plus pre-phase-0 planning/merge housekeeping; Phase 4's
+fifth commit is the orchestrator's after this report. Not committed
+(the orchestrator commits); not pushed.
 
 #### 2026-09-02 02:22:14.617+02:00 — Phase 3 complete (LLM-facing contract: instruction data files + prompt tests moved to `offset`/`limit` in the same change, gate green)
 

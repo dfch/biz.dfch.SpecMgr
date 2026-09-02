@@ -152,39 +152,48 @@ ADR tools (``adr/tools/``): ``get_adr``, ``list_adr``, ``create_adr``, ``update_
 ``update_section``, ``option_list``, ``option_create``,
 ``option_update``, ``option_read``, ``option_delete``, ``validate_adr``.
 Use-case tools (``uc/tools/``): ``parse_uc``, ``get_uc`` (``raw=True`` returns the
-frontmatter-stripped body text verbatim instead of the parsed document), ``list_uc``,
+frontmatter-stripped body text verbatim instead of the parsed document, optionally
+windowed with read-style ``offset``/``limit`` (raw-only, clamping)), ``list_uc``,
 ``get_uc_example``,
 ``get_uc_template``, ``create_uc``, ``validate_uc``.
 Requirement tools (``req/tools/``): ``parse_req``, ``get_req`` (``raw=True`` returns the
-frontmatter-stripped body text verbatim instead of the parsed document), ``list_req``,
+frontmatter-stripped body text verbatim instead of the parsed document, optionally
+windowed with read-style ``offset``/``limit`` (raw-only, clamping)), ``list_req``,
 ``get_req_example``,
 ``get_req_template``, ``create_req``, ``validate_req``.
 Task list tools (``tsk/tools/``): ``parse_tsk``, ``get_tsk`` (``raw=True`` returns the
-frontmatter-stripped body text verbatim instead of the parsed document), ``list_tsk``,
+frontmatter-stripped body text verbatim instead of the parsed document, optionally
+windowed with read-style ``offset``/``limit`` (raw-only, clamping)), ``list_tsk``,
 ``get_tsk_example``,
 ``get_tsk_template``, ``create_tsk``, ``validate_tsk``.
 QA tools (``qa/tools/``): ``parse_qa``, ``get_qa`` (``raw=True`` returns the
-frontmatter-stripped body text verbatim instead of the parsed document), ``list_qa``,
+frontmatter-stripped body text verbatim instead of the parsed document, optionally
+windowed with read-style ``offset``/``limit`` (raw-only, clamping)), ``list_qa``,
 ``get_qa_example``,
 ``get_qa_template``, ``create_qa``, ``validate_qa``.
 Problem statement tools (``prb/tools/``): ``parse_prb``, ``get_prb`` (``raw=True`` returns
-the frontmatter-stripped body text verbatim instead of the parsed document), ``list_prb``,
+the frontmatter-stripped body text verbatim instead of the parsed document, optionally
+windowed with read-style ``offset``/``limit`` (raw-only, clamping)), ``list_prb``,
 ``get_prb_example``, ``get_prb_template``, ``create_prb``,
 ``validate_prb``.
 Goal tools (``gol/tools/``): ``parse_gol``, ``get_gol`` (``raw=True`` returns the
-frontmatter-stripped body text verbatim instead of the parsed document), ``list_gol``,
+frontmatter-stripped body text verbatim instead of the parsed document, optionally
+windowed with read-style ``offset``/``limit`` (raw-only, clamping)), ``list_gol``,
 ``get_gol_example``, ``get_gol_template``, ``create_gol``,
 ``validate_gol``.
  Risk tools (``rsk/tools/``): ``parse_rsk``, ``get_rsk`` (``raw=True`` returns the
-frontmatter-stripped body text verbatim instead of the parsed document), ``list_rsk``,
+frontmatter-stripped body text verbatim instead of the parsed document, optionally
+windowed with read-style ``offset``/``limit`` (raw-only, clamping)), ``list_rsk``,
  ``get_rsk_example``,
  ``get_rsk_template``, ``create_rsk``, ``validate_rsk``.
    Decision tools (``dec/tools/``): ``parse_dec``, ``get_dec`` (``raw=True`` returns the
-frontmatter-stripped body text verbatim instead of the parsed document), ``list_dec``,
+frontmatter-stripped body text verbatim instead of the parsed document, optionally
+windowed with read-style ``offset``/``limit`` (raw-only, clamping)), ``list_dec``,
     ``get_dec_example``,
     ``get_dec_template``, ``create_dec``, ``validate_dec``.
     SOP tools (``sop/tools/``): ``parse_sop``, ``get_sop`` (``raw=True`` returns the
-frontmatter-stripped body text verbatim instead of the parsed document), ``list_sop``,
+frontmatter-stripped body text verbatim instead of the parsed document, optionally
+windowed with read-style ``offset``/``limit`` (raw-only, clamping)), ``list_sop``,
     ``get_sop_example``,
     ``get_sop_template``, ``create_sop``, ``validate_sop``. SOP is the first domain with NO
     per-domain ``update_sop``/``set_status_sop`` tools at all -- whole-body and line-range
@@ -196,7 +205,8 @@ frontmatter-stripped body text verbatim instead of the parsed document), ``list_
     its ``## Roles and Responsibilities`` section -- role definitions: see general
     ``specmgr://rasci``.
   Feature tools (``feat/tools/``): ``parse_feat``, ``get_feat`` (``raw=True`` returns the
-frontmatter-stripped body text verbatim instead of the parsed document), ``list_feat``,
+frontmatter-stripped body text verbatim instead of the parsed document, optionally
+windowed with read-style ``offset``/``limit`` (raw-only, clamping)), ``list_feat``,
   ``get_feat_example``,
   ``get_feat_template``, ``create_feat``, ``validate_feat``. Unlike every other domain here, ``feat``
   uses bespoke, folder-per-document addressing (``feat/tools/_paths.py``, not the shared
@@ -205,15 +215,19 @@ frontmatter-stripped body text verbatim instead of the parsed document), ``list_
   day one (ADR 36905d5b-8057-4294-8665-c7eed5534db0), same as every other domain.
   Verification case record tools (``vcr/tools/``): ``parse_vcr``, ``get_vcr``
   (``raw=True`` returns the frontmatter-stripped body text verbatim instead of the
-  parsed document), ``list_vcr``, ``get_vcr_example``, ``get_vcr_template``,
+  parsed document, optionally windowed with read-style ``offset``/``limit``
+  (raw-only, clamping)), ``list_vcr``, ``get_vcr_example``, ``get_vcr_template``,
   ``create_vcr``, ``validate_vcr``.
   General tools (``general/tools/``): ``mdformat`` -- format markdown files in place,
 preserving YAML frontmatter blocks; ``update`` -- whole-body or line-range replace of an
 existing document's content across the eleven whole-body domains (``type`` is one of
-``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``;
-optional 1-based inclusive
-``begin``/``end`` body-line range with the ``N+1`` end-of-body sentinel; the spliced
-result is validated as a whole document before anything is written); ``set_status`` --
+ ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``;
+ optional read-style
+ ``offset``/``limit`` body-line coordinates -- ``offset`` = 1-based first line,
+ ``limit`` = number of lines, omitted ``limit`` = through end of body, ``0`` =
+ pure insert, ``offset = N+1`` = the virtual end-of-body append position;
+ strict validation; the spliced result is validated as a whole document
+ before anything is written); ``set_status`` --
 replace an existing document's status across all twelve domains (``type`` is one of
 ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``adr``),
 also bumping

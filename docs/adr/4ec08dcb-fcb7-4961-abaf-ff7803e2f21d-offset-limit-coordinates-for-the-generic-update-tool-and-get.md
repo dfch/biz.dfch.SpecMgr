@@ -1,5 +1,5 @@
 ---
-status: draft
+status: accepted
 date: '2026-09-01'
 decision-makers: OpenCode agent + user decision
 id: 4ec08dcb-fcb7-4961-abaf-ff7803e2f21d
