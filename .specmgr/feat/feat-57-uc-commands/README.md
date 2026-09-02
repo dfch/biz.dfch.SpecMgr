@@ -103,11 +103,11 @@ This feature mirrors the `req/prompts/` pattern exactly: each prompt function is
 
 #### Phase 3: Documentation & registration
 
-- [ ] Task 3.1: Update `server.py`'s module docstring to add the "Use-case prompts (uc/prompts/)" entry.
+- [x] Task 3.1: Update `server.py`'s module docstring to add the "Use-case prompts (uc/prompts/)" entry.
 
-- [ ] Task 3.2: Update `AGENTS.md`'s `uc/` bullet and "Still genuinely missing" list.
+- [x] Task 3.2: Update `AGENTS.md`'s `uc/` bullet and "Still genuinely missing" list.
 
-- [ ] Task 3.3: Regenerate `docs/api/`, `docs/GENERATED.md`, and `docs/MCP.md` via `specmgr docs`.
+- [x] Task 3.3: Regenerate `docs/api/`, `docs/GENERATED.md`, and `docs/MCP.md` via `specmgr docs`.
 
 #### Phase 4: Tests & verification
 
@@ -119,11 +119,35 @@ This feature mirrors the `req/prompts/` pattern exactly: each prompt function is
 
 ### Current Status
 
-**As of 2026-09-02**: Phase 0 (feat-56 sync gate), Phase 1 (instructions content), and Phase 2 (prompt modules) are done. `uc/prompts/create_uc.py`/`update_uc.py`/`__init__.py` now exist, mirroring `req/prompts/`'s shape exactly, and `uc/__init__.py` imports/re-exports `prompts` alongside `resources, tools`. Both prompts are confirmed registered on the shared `mcp` app (`await mcp.list_prompts()` includes `create_uc`/`update_uc`). Phase 3 (documentation & registration) is next.
+**As of 2026-09-02**: Phase 0 (feat-56 sync gate), Phase 1 (instructions content), Phase 2 (prompt modules), and Phase 3 (documentation & registration) are done. `uc/prompts/create_uc.py`/`update_uc.py`/`__init__.py` exist, mirroring `req/prompts/`'s shape exactly, and `uc/__init__.py` imports/re-exports `prompts` alongside `resources, tools`. Both prompts are confirmed registered on the shared `mcp` app (`await mcp.list_prompts()` includes `create_uc`/`update_uc`). `server.py`'s docstring and `AGENTS.md` now describe `uc/prompts/`, and `docs/api/`/`docs/GENERATED.md`/`docs/MCP.md` have been regenerated. Phase 4 (tests & verification) is next.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-02 00:00:00.000Z — Phase 3: Documentation & registration
+
+Updated `src/biz/dfch/specmgr/server.py`'s module docstring: added a
+"Use-case prompts (``uc/prompts/``)" paragraph to the "Prompts" section,
+placed right after the ADR paragraph and before the Requirement paragraph
+(matching the "Tools" section's own ADR-then-UC-then-REQ ordering), and
+removed the now-stale closing sentence claiming `uc` "registers `tools`
+and `resources` only -- it has no `prompts` sub-package yet" (added `uc`
+to the list of domains that register `tools`/`resources`/`prompts`
+instead). Updated `AGENTS.md`: added a `` `uc/prompts/`
+(`create_uc`/`update_uc`)`` clause to the `uc/` bullet (same phrasing
+pattern as the `req/` bullet's own `req/prompts/` mention), and removed
+the now-false "Still genuinely missing" bullet claiming uc has no
+prompts sub-package (REQ-006). Regenerated `docs/api/`,
+`docs/GENERATED.md` (via `specmgr docs`), and `docs/MCP.md` (via
+`specmgr mcp-docs`) -- `docs/MCP.md`/`docs/GENERATED.md` showed no diff
+(already reflected the Phase 2 prompt registration), only
+`docs/api/biz.dfch.specmgr.server.md` changed, mirroring the docstring
+edit exactly. Verified: `ruff format --check`/`ruff check` on
+`server.py` both pass; `from biz.dfch.specmgr import server` imports
+without raising; running `specmgr docs`/`specmgr mcp-docs` a second time
+produced no further `git status` changes (idempotent). No test files
+were added (Phase 4's job). Nothing committed.
 
 #### 2026-09-02 00:00:00.000Z — Phase 2: Prompt modules implemented
 
