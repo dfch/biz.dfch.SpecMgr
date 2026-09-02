@@ -19,11 +19,15 @@ produced by the same
 :func:`~biz.dfch.specmgr.general.tools._splice.body_text` helper the
 generic ``update`` tool's range splice uses, so the line numbers a client
 counts in a raw read index byte-for-byte into the text the server splices
-against.
+against. With optional read-style ``offset``/``limit`` coordinates
+(feat-28-get-update, Phase 2), the same raw read instead returns the window
+of that text, served by the shared
+:func:`~biz.dfch.specmgr.general.tools._splice.window_body` helper (clamping
+out-of-range values, never erroring).
 
 ## Functions
 
-### `get_tsk(id: 'str', raw: 'bool' = False) -> 'TskDocument | str'`
+### `get_tsk(id: 'str', raw: 'bool' = False, offset: 'int | None' = None, limit: 'int | None' = None) -> 'TskDocument | str'`
 
 Read and return the task list identified by ``id``.
 
@@ -35,19 +39,31 @@ raw:
     With ``False`` (the default), return the parsed document, exactly
     as before. With ``True``, return the frontmatter-stripped body
     text verbatim as a plain string -- the same text whose 1-based
-    lines the generic ``update`` tool's ``begin``/``end`` coordinates
-    address (shared body-extraction helper with the splice).
+    lines the generic ``update`` tool's ``offset``/``limit``
+    coordinates address (shared body-extraction helper with the
+    splice) -- optionally windowed by ``offset``/``limit`` (see below).
+offset:
+    With ``raw=True`` only: the 1-based first body line of the window
+    to return (default 1; values below 1 floor to 1, values past the
+    last body line return the empty string).
+limit:
+    With ``raw=True`` only: the number of body lines the window spans
+    (default through the end of the body; capped at the remaining
+    lines, a negative value returns the empty string).
 
 Returns
 -------
 TskDocument | str
     With ``raw=False``: the current on-disk document, freshly re-read
-    and re-parsed. With ``raw=True``: the body text as a plain string.
+    and re-parsed. With ``raw=True``: the body text (or its
+    ``offset``/``limit`` window) as a plain string.
     Raises :class:`._paths.TskNotFoundError` if no task list has this id.
 
 Raises
 ------
 ValueError
     ``id`` is a path-injection attempt or not a well-formed id for this domain
-    (raised before any filesystem access).
+    (raised before any filesystem access), or ``offset``/``limit`` coordinates
+    are given with ``raw=False`` (a parsed document requires the whole body;
+    also raised before any file access).
 

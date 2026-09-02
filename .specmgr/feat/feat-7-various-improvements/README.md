@@ -2,7 +2,7 @@
 created: '2026-08-15 00:00:00.000Z'
 id: feat-7-various-improvements
 status: planning
-updated: '2026-09-01 00:00:00.000Z'
+updated: '2026-09-02 00:00:00.000Z'
 version: 1.0.0
 ---
 
@@ -847,14 +847,21 @@ progresses (edit, don't duplicate).
    and its `### Updates` shape are both settled (user-directed decision,
    recorded in `feat-31-feature`'s own Decisions Made log).
 
-- [ ] Task 0.32: Per GitHub issue #28 ("specmgr_get and specmgr_update
+- [x] Task 0.32: Per GitHub issue #28 ("specmgr_get and specmgr_update
    must both support offset and limit"): change the generic `update`
    tool's (`general/tools/update.py`) 1-based inclusive `begin`/`end`
    body-line range to `offset`/`limit` (matching the `read` tool's
    parameter names), and add `offset`/`limit` paging to the ten
    `get_<d>` tools (alongside their existing `raw` parameter) so a
    caller can read a body window without fetching the whole document —
-   depends on: none — status: not-started
+   depends on: none — status: split out into `feat-28-get-update`
+   (GitHub issue #28, `.specmgr/feat/feat-28-get-update/README.md`) on
+    2026-09-01; the revised contract (`offset`/`limit` for the generic
+    `update` tool + windowed `get_<d>` reads, hard rename, ADR draft
+    created in this feature) is recorded in the feat-28 plan.
+    **`feat-28-get-update` is now complete** (all five phases 0–4 done;
+    the revised contract is recorded in ADR
+    4ec08dcb-fcb7-4961-abaf-ff7803e2f21d, accepted).
 
    Background: Both requests date from 2026-08-27, before/around
    feat-22's consolidation, when the tools were still named
@@ -1011,6 +1018,30 @@ already-compacted folder).
 
 See `history.md` for updates before 2026-08-18 (rotated out per ADR
 e369ee2e-3353-4f92-991c-6367d76d832e once this section grew too long).
+
+#### Update 2026-09-02 (Task 0.32 split-out feature complete)
+
+- Completed: the split-out feature `feat-28-get-update` (GitHub issue #28
+  — rename the generic `update` tool's `begin`/`end` splice range to
+  `offset`/`limit` and add `offset`/`limit` windowed reads to the
+  `get_<d>` tools) is now complete: all five phases 0–4 done, the full
+  test cycle green (2784 tests). The revised contract
+  is recorded in ADR 4ec08dcb-fcb7-4961-abaf-ff7803e2f21d (`docs/adr/`,
+  accepted), referencing ADR 36905d5b-8057-4294-8665-c7eed5534db0 without
+  superseding it; every LLM-facing surface (the packaged prompt
+  instruction data files, tool descriptions, docstrings, `AGENTS.md`,
+  `CHANGELOG.md`) moved to the new vocabulary in the same release.
+
+#### Update 2026-09-01 (Task 0.32 split out)
+
+- Split out: Task 0.32 (GitHub issue #28 — rename the generic `update`
+  tool's `begin`/`end` splice range to `offset`/`limit` and add
+  `offset`/`limit` windowed reads to the `get_<d>` tools) is now tracked
+  in `feat-28-get-update` (`.specmgr/feat/feat-28-get-update/README.md`),
+  created 2026-09-01. The revised contract (hard rename with no
+  compatibility alias, strict `update` splice validation, raw-only
+  clamping windowed reads) is recorded in that plan, and the new ADR
+  recording it lands in `docs/adr/` as a draft in Phase 0.
 
 #### Update 2026-09-01 (Task 0.29 subsumed)
 

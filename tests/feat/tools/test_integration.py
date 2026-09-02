@@ -232,7 +232,7 @@ class TestFeatLifecycleIntegration(TempFeatDirTestCase):
         #     through the raw body text exactly like every other domain's own range mode.
         lines = get_feat(feat_id, raw=True).splitlines()
         line_number = lines.index("Short description.") + 1
-        update(feat_id, "feat", "Updated short description.", begin=line_number, end=line_number)
+        update(feat_id, "feat", "Updated short description.", offset=line_number, limit=1)
         after_range_update = get_feat(feat_id, raw=True).splitlines()
         self.assertEqual(after_range_update[line_number - 1], "Updated short description.")
         self.assertEqual(len(after_range_update), len(lines))

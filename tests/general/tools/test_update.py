@@ -620,9 +620,9 @@ class _Case:
     #: A unique line of ``minimal_body``; replacing just that line keeps the document valid.
     middle_marker: str
     middle_replacement: str
-    #: The fragment appended at ``begin = end = N+1`` (a valid trailing optional section).
+    #: The fragment appended at ``offset = N+1`` (a valid trailing optional section).
     append_fragment: str
-    #: The line from which ``end = N+1`` replaces through end of body.
+    #: The line from which ``offset`` (with ``limit`` omitted) replaces through end of body.
     eof_marker: str
     eof_fragment: str
     #: A valid optional trailing section appended to the seed for the empty-fragment
@@ -638,6 +638,13 @@ class _Case:
     #: (``req``/``uc``/``tsk``/``gol``/``rsk``) or structural ``AssertionError``
     #: (``qa``/``prb`` -- their body schemas have no field-level validation).
     field_error_is_validation: bool
+    #: The section heading line that directly follows the blank line the
+    #: ``limit = 0`` insert test targets (``offset = _line_no(lines, marker) -
+    #: 1``); the inserted line joins the current section's text (or checklist),
+    #: keeping the document valid.
+    insert_marker: str
+    #: The single line inserted by the ``limit = 0`` mid-body insert test.
+    insert_line: str
 
 
 _CASES: list[_Case] = [
@@ -657,6 +664,8 @@ _CASES: list[_Case] = [
         field_error_fragment="NOT-A-VALID-LEVEL",
         field_error_is_append=False,
         field_error_is_validation=True,
+        insert_marker="## Characteristics",
+        insert_line="Inserted description detail.",
     ),
     _Case(
         doc_type="uc",
@@ -679,6 +688,8 @@ _CASES: list[_Case] = [
         field_error_fragment="## Extensions\n\n### Extension 99a. Out-of-range reference\n\n1. Not resolvable.\n",
         field_error_is_append=True,
         field_error_is_validation=True,
+        insert_marker="### Scope",
+        insert_line="Inserted goal context.",
     ),
     _Case(
         doc_type="tsk",
@@ -696,6 +707,8 @@ _CASES: list[_Case] = [
         field_error_fragment="- [z] Not a valid checkbox marker",
         field_error_is_append=False,
         field_error_is_validation=True,
+        insert_marker="## Recent Updates",
+        insert_line="- [ ] Inserted task.",
     ),
     _Case(
         doc_type="qa",
@@ -713,6 +726,8 @@ _CASES: list[_Case] = [
         field_error_fragment="## Not A Category",
         field_error_is_append=False,
         field_error_is_validation=False,
+        insert_marker="### Raw Requirements",
+        insert_line="Inserted introduction detail.",
     ),
     _Case(
         doc_type="prb",
@@ -730,6 +745,8 @@ _CASES: list[_Case] = [
         field_error_fragment="### Not A Question",
         field_error_is_append=False,
         field_error_is_validation=False,
+        insert_marker="## Gap",
+        insert_line="Inserted summary detail.",
     ),
     _Case(
         doc_type="gol",
@@ -747,6 +764,8 @@ _CASES: list[_Case] = [
         field_error_fragment="## Priority\n\n100\n\n## Source",
         field_error_is_append=False,
         field_error_is_validation=True,
+        insert_marker="## Source",
+        insert_line="Inserted statement detail.",
     ),
     _Case(
         doc_type="rsk",
@@ -764,6 +783,8 @@ _CASES: list[_Case] = [
         field_error_fragment="not-a-strategy",
         field_error_is_append=False,
         field_error_is_validation=True,
+        insert_marker="## Trigger",
+        insert_line="Inserted cause detail.",
     ),
     _Case(
         doc_type="dec",
@@ -787,6 +808,8 @@ _CASES: list[_Case] = [
         ),
         field_error_is_append=True,
         field_error_is_validation=True,
+        insert_marker="## Decision Outcome",
+        insert_line="Inserted context detail.",
     ),
     _Case(
         doc_type="sop",
@@ -804,6 +827,8 @@ _CASES: list[_Case] = [
         field_error_fragment=("\n### Step 1: Duplicate step\n\nDuplicate step text.\n"),
         field_error_is_append=True,
         field_error_is_validation=True,
+        insert_marker="## Procedure",
+        insert_line="Inserted purpose detail.",
     ),
     _Case(
         doc_type="vcr",
@@ -821,6 +846,8 @@ _CASES: list[_Case] = [
         field_error_fragment="\n### AC-001 (Analysis): Duplicate AC number\n",
         field_error_is_append=True,
         field_error_is_validation=True,
+        insert_marker="## Coverage",
+        insert_line="Inserted verification detail.",
     ),
 ]
 
@@ -864,7 +891,7 @@ class TempDocsDirTestCase(unittest.TestCase):
 
 
 class TestUpdateWholeBody(TempDocsDirTestCase):
-    """ACC-001: whole-body mode (no ``begin``/``end``) across all eight types."""
+    """ACC-001: whole-body mode (no ``offset``/``limit``) across all eight types."""
 
     def test_replaces_body_preserving_id_type_status_created_version(self) -> None:
         """Whole-body mode must replace the body but preserve every frontmatter field but ``updated``."""
@@ -939,7 +966,7 @@ class TestUpdateWholeBody(TempDocsDirTestCase):
 
 
 class TestUpdateRange(TempDocsDirTestCase):
-    """ACC-002: range mode (``begin``/``end``) across all eight types."""
+    """ACC-002: range mode (``offset``/``limit``) across all eight types."""
 
     def test_middle_range_replace_leaves_out_of_range_lines_byte_identical(self) -> None:
         """A single middle-line replace must change only that line, leaving every other line identical."""
@@ -949,15 +976,32 @@ class TestUpdateRange(TempDocsDirTestCase):
                 lines = body_text(self._doc_path(case)).splitlines()
                 k = _line_no(lines, case.middle_marker)
 
-                update(id=created.frontmatter.id, type=case.doc_type, content=case.middle_replacement, begin=k, end=k)
+                update(
+                    id=created.frontmatter.id, type=case.doc_type, content=case.middle_replacement, offset=k, limit=1
+                )
 
                 new_lines = body_text(self._doc_path(case)).splitlines()
                 expected = lines[: k - 1] + [case.middle_replacement] + lines[k:]
                 self.assertEqual(new_lines, expected)
                 self.assertNotIn(case.middle_marker, new_lines)
 
+    def test_zero_limit_inserts_without_dropping(self) -> None:
+        """``limit = 0`` must be a pure mid-body insert: no line dropped, fragment in, rest byte-identical."""
+        for case in _CASES:
+            with self.subTest(doc_type=case.doc_type):
+                created = self._seed(case, case.minimal_body)
+                lines = body_text(self._doc_path(case)).splitlines()
+                offset = _line_no(lines, case.insert_marker) - 1
+
+                update(id=created.frontmatter.id, type=case.doc_type, content=case.insert_line, offset=offset, limit=0)
+
+                self.assertEqual(
+                    body_text(self._doc_path(case)).splitlines(),
+                    lines[: offset - 1] + [case.insert_line] + lines[offset - 1 :],
+                )
+
     def test_n_plus_one_appends_at_end_of_body(self) -> None:
-        """``begin = end = N+1`` must be a pure append after the last body line."""
+        """``offset = N+1`` with ``limit = 0`` must be a pure append after the last body line."""
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case, case.minimal_body)
@@ -965,22 +1009,21 @@ class TestUpdateRange(TempDocsDirTestCase):
                 n = len(lines)
 
                 update(
-                    id=created.frontmatter.id, type=case.doc_type, content=case.append_fragment, begin=n + 1, end=n + 1
+                    id=created.frontmatter.id, type=case.doc_type, content=case.append_fragment, offset=n + 1, limit=0
                 )
 
                 expected = lines + case.append_fragment.splitlines()
                 self.assertEqual(body_text(self._doc_path(case)).splitlines(), expected)
 
-    def test_end_n_plus_one_replaces_through_end_of_body(self) -> None:
-        """``end = N+1`` must extend the range through the last line, replacing it with the fragment."""
+    def test_limit_omitted_replaces_through_end_of_body(self) -> None:
+        """An omitted ``limit`` must extend the range through the last line, replacing it with the fragment."""
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case, case.minimal_body)
                 lines = body_text(self._doc_path(case)).splitlines()
-                n = len(lines)
                 k = _line_no(lines, case.eof_marker)
 
-                update(id=created.frontmatter.id, type=case.doc_type, content=case.eof_fragment, begin=k, end=n + 1)
+                update(id=created.frontmatter.id, type=case.doc_type, content=case.eof_fragment, offset=k)
 
                 expected = lines[: k - 1] + case.eof_fragment.splitlines()
                 self.assertEqual(body_text(self._doc_path(case)).splitlines(), expected)
@@ -994,12 +1037,18 @@ class TestUpdateRange(TempDocsDirTestCase):
                 lines = body_text(self._doc_path(case)).splitlines()
                 n_min = len(case.minimal_body.splitlines())
 
-                update(id=created.frontmatter.id, type=case.doc_type, content="", begin=n_min + 1, end=len(lines))
+                update(
+                    id=created.frontmatter.id,
+                    type=case.doc_type,
+                    content="",
+                    offset=n_min + 1,
+                    limit=len(lines) - n_min,
+                )
 
                 self.assertEqual(body_text(self._doc_path(case)), case.minimal_body.rstrip("\n"))
 
-    def test_begin_one_end_n_equals_whole_body_mode(self) -> None:
-        """``begin = 1``, ``end = N`` must produce the same file as whole-body mode with the identical text."""
+    def test_offset_one_equals_whole_body_mode(self) -> None:
+        """``offset = 1`` (``limit`` omitted) must produce the same file as whole-body mode with the identical text."""
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case, case.minimal_body)
@@ -1008,25 +1057,24 @@ class TestUpdateRange(TempDocsDirTestCase):
                     update(id=doc_id, type=case.doc_type, content=case.updated_body)
                     path = self._doc_path(case)
                     whole_body_file = path.read_text(encoding="utf-8")
-                    n = len(body_text(path).splitlines())
 
-                    update(id=doc_id, type=case.doc_type, content=case.updated_body, begin=1, end=n)
+                    update(id=doc_id, type=case.doc_type, content=case.updated_body, offset=1)
 
                     self.assertEqual(path.read_text(encoding="utf-8"), whole_body_file)
 
-    def test_exactly_one_of_begin_end_raises_value_error_before_file_access(self) -> None:
-        """Passing exactly one of ``begin``/``end`` must raise ``ValueError`` -- even for an unknown id (no file access)."""
+    def test_limit_without_offset_raises_value_error_before_file_access(self) -> None:
+        """``limit`` without ``offset`` must raise ``ValueError`` -- even for an unknown id (no file access)."""
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
-                self._seed(case, case.minimal_body)
+                created = self._seed(case, case.minimal_body)
 
                 with self.assertRaises(ValueError):
-                    update(id="no-such-id-" + case.doc_type, type=case.doc_type, content="frag", begin=2)
+                    update(id=_MISSING_UUID, type=case.doc_type, content="frag", limit=2)
                 with self.assertRaises(ValueError):
-                    update(id="no-such-id-" + case.doc_type, type=case.doc_type, content="frag", end=2)
+                    update(id=created.frontmatter.id, type=case.doc_type, content="frag", limit=2)
 
-    def test_begin_below_one_raises_value_error_file_untouched(self) -> None:
-        """``begin < 1`` must raise ``ValueError`` naming the value and range, leaving the file untouched."""
+    def test_offset_below_one_raises_value_error_file_untouched(self) -> None:
+        """``offset < 1`` must raise ``ValueError`` naming the value and range, leaving the file untouched."""
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case, case.minimal_body)
@@ -1034,28 +1082,13 @@ class TestUpdateRange(TempDocsDirTestCase):
                 before = path.read_text(encoding="utf-8")
 
                 with self.assertRaises(ValueError) as ctx:
-                    update(id=created.frontmatter.id, type=case.doc_type, content="frag", begin=0, end=2)
+                    update(id=created.frontmatter.id, type=case.doc_type, content="frag", offset=0, limit=3)
 
-                self.assertIn("begin", str(ctx.exception))
+                self.assertIn("offset", str(ctx.exception))
                 self.assertEqual(path.read_text(encoding="utf-8"), before)
 
-    def test_begin_above_end_raises_value_error_file_untouched(self) -> None:
-        """``begin > end`` must raise ``ValueError`` naming both values, leaving the file untouched."""
-        for case in _CASES:
-            with self.subTest(doc_type=case.doc_type):
-                created = self._seed(case, case.minimal_body)
-                path = self._doc_path(case)
-                before = path.read_text(encoding="utf-8")
-
-                with self.assertRaises(ValueError) as ctx:
-                    update(id=created.frontmatter.id, type=case.doc_type, content="frag", begin=5, end=3)
-
-                self.assertIn("begin", str(ctx.exception))
-                self.assertIn("end", str(ctx.exception))
-                self.assertEqual(path.read_text(encoding="utf-8"), before)
-
-    def test_end_above_n_plus_one_raises_value_error_file_untouched(self) -> None:
-        """``end > N+1`` must raise ``ValueError`` naming the value and the allowed range, file untouched."""
+    def test_offset_above_n_plus_one_raises_value_error_file_untouched(self) -> None:
+        """``offset > N+1`` must raise ``ValueError`` naming the value and range, leaving the file untouched."""
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case, case.minimal_body)
@@ -1064,9 +1097,39 @@ class TestUpdateRange(TempDocsDirTestCase):
                 n = len(body_text(path).splitlines())
 
                 with self.assertRaises(ValueError) as ctx:
-                    update(id=created.frontmatter.id, type=case.doc_type, content="frag", begin=2, end=n + 2)
+                    update(id=created.frontmatter.id, type=case.doc_type, content="frag", offset=n + 2, limit=1)
 
-                self.assertIn("end", str(ctx.exception))
+                self.assertIn("offset", str(ctx.exception))
+                self.assertEqual(path.read_text(encoding="utf-8"), before)
+
+    def test_negative_limit_raises_value_error_file_untouched(self) -> None:
+        """``limit < 0`` must raise ``ValueError`` naming the value and range, leaving the file untouched."""
+        for case in _CASES:
+            with self.subTest(doc_type=case.doc_type):
+                created = self._seed(case, case.minimal_body)
+                path = self._doc_path(case)
+                before = path.read_text(encoding="utf-8")
+
+                with self.assertRaises(ValueError) as ctx:
+                    update(id=created.frontmatter.id, type=case.doc_type, content="frag", offset=5, limit=-2)
+
+                self.assertIn("limit", str(ctx.exception))
+                self.assertEqual(path.read_text(encoding="utf-8"), before)
+
+    def test_offset_plus_limit_past_body_raises_value_error_file_untouched(self) -> None:
+        """``offset + limit - 1 > N`` must raise ``ValueError`` naming the values and range, file untouched."""
+        for case in _CASES:
+            with self.subTest(doc_type=case.doc_type):
+                created = self._seed(case, case.minimal_body)
+                path = self._doc_path(case)
+                before = path.read_text(encoding="utf-8")
+                n = len(body_text(path).splitlines())
+
+                with self.assertRaises(ValueError) as ctx:
+                    update(id=created.frontmatter.id, type=case.doc_type, content="frag", offset=2, limit=n + 1)
+
+                self.assertIn("offset", str(ctx.exception))
+                self.assertIn("limit", str(ctx.exception))
                 self.assertEqual(path.read_text(encoding="utf-8"), before)
 
     def test_range_deleting_the_h1_raises_and_leaves_file_untouched(self) -> None:
@@ -1078,7 +1141,7 @@ class TestUpdateRange(TempDocsDirTestCase):
                 before = path.read_text(encoding="utf-8")
 
                 with self.assertRaises(AssertionError):
-                    update(id=created.frontmatter.id, type=case.doc_type, content="", begin=1, end=1)
+                    update(id=created.frontmatter.id, type=case.doc_type, content="", offset=1, limit=1)
 
                 self.assertEqual(path.read_text(encoding="utf-8"), before)
 
@@ -1099,8 +1162,8 @@ class TestUpdateRange(TempDocsDirTestCase):
                             id=created.frontmatter.id,
                             type=case.doc_type,
                             content=case.field_error_fragment,
-                            begin=n + 1,
-                            end=n + 1,
+                            offset=n + 1,
+                            limit=0,
                         )
                 else:
                     k = _line_no(lines, case.field_error_marker)
@@ -1109,8 +1172,8 @@ class TestUpdateRange(TempDocsDirTestCase):
                             id=created.frontmatter.id,
                             type=case.doc_type,
                             content=case.field_error_fragment,
-                            begin=k,
-                            end=k,
+                            offset=k,
+                            limit=1,
                         )
 
                 self.assertEqual(path.read_text(encoding="utf-8"), before)
@@ -1122,12 +1185,12 @@ class TestUpdateRange(TempDocsDirTestCase):
                 self._seed(case, case.minimal_body)
 
                 with self.assertRaises(case.not_found_error):
-                    update(id=_MISSING_UUID, type=case.doc_type, content="frag", begin=1, end=1)
+                    update(id=_MISSING_UUID, type=case.doc_type, content="frag", offset=1, limit=1)
 
 
 class TestUpdateRegistration(unittest.TestCase):
     """Task 2.8: the live ``mcp`` registration carries ``update`` with the 11-value ``type`` enum and
-    optional integer ``begin``/``end`` in its input schema."""
+    optional integer ``offset``/``limit`` in its input schema (and no ``begin``/``end`` any more)."""
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -1136,7 +1199,7 @@ class TestUpdateRegistration(unittest.TestCase):
         cls._tools = asyncio.run(mcp.list_tools())
 
     def test_update_registered_with_type_enum_and_optional_range(self) -> None:
-        """``update`` must be registered exactly once, with the 11-value ``type`` enum and optional int ``begin``/``end``."""
+        """``update`` must be registered once, with the 11-value ``type`` enum and optional int ``offset``/``limit``."""
         matching = [t for t in self._tools if t.name == "update"]
         self.assertEqual(len(matching), 1)
 
@@ -1146,10 +1209,12 @@ class TestUpdateRegistration(unittest.TestCase):
             type_prop["enum"], ["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "feat", "vcr"]
         )
         self.assertEqual(type_prop["type"], "string")
-        for name in ("begin", "end"):
+        for name in ("offset", "limit"):
             prop = schema["properties"][name]
             self.assertEqual(prop["anyOf"], [{"type": "integer"}, {"type": "null"}])
             self.assertIsNone(prop["default"])
+        self.assertNotIn("begin", schema["properties"])
+        self.assertNotIn("end", schema["properties"])
         self.assertEqual(schema["required"], ["id", "type", "content"])
 
 

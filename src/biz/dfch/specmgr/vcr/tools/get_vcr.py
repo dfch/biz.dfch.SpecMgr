@@ -33,13 +33,17 @@ the parsed document -- produced by the same
 :func:`~biz.dfch.specmgr.general.tools._splice.body_text` helper the
 generic ``update`` tool's range splice uses, so the line numbers a client
 counts in a raw read index byte-for-byte into the text the server splices
-against.
+against. With optional read-style ``offset``/``limit`` coordinates
+(feat-28-get-update, Phase 2), the same raw read instead returns the window
+of that text, served by the shared
+:func:`~biz.dfch.specmgr.general.tools._splice.window_body` helper (clamping
+out-of-range values, never erroring).
 """
 
 from __future__ import annotations
 
 from ...general.tools._path_safety import assert_within, validate_id
-from ...general.tools._splice import body_text
+from ...general.tools._splice import body_text, window_body
 from ...server import mcp
 from ..models.v1 import VcrDocument
 from ._io import load_by_id
@@ -52,10 +56,15 @@ from ._paths import vcr_base_dir
     description=(
         "Read, parse, and return a full verification case record document (frontmatter and body) "
         "by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. "
-        "An invalid id (path-injection attempt or wrong format) is a ValueError raised before any file access."
+        "With raw=True, optional read-style `offset`/`limit` window the raw read: `offset` "
+        "(1-based, default 1) is the first body line to return, `limit` (line count, default "
+        "through end of body) how many; out-of-range values clamp (`offset > N` returns the empty "
+        "string), and coordinates with raw=False raise ValueError."
+        " An invalid id (path-injection attempt "
+        "or wrong format) is also a ValueError, raised before any file access."
     ),
 )
-def get_vcr(id: str, raw: bool = False) -> VcrDocument | str:
+def get_vcr(id: str, raw: bool = False, offset: int | None = None, limit: int | None = None) -> VcrDocument | str:
     """Read and return the verification case record identified by ``id``.
 
     Parameters
@@ -66,14 +75,24 @@ def get_vcr(id: str, raw: bool = False) -> VcrDocument | str:
         With ``False`` (the default), return the parsed document, exactly
         as before. With ``True``, return the frontmatter-stripped body
         text verbatim as a plain string -- the same text whose 1-based
-        lines the generic ``update`` tool's ``begin``/``end`` coordinates
-        address (shared body-extraction helper with the splice).
+        lines the generic ``update`` tool's ``offset``/``limit``
+        coordinates address (shared body-extraction helper with the
+        splice) -- optionally windowed by ``offset``/``limit`` (see below).
+    offset:
+        With ``raw=True`` only: the 1-based first body line of the window
+        to return (default 1; values below 1 floor to 1, values past the
+        last body line return the empty string).
+    limit:
+        With ``raw=True`` only: the number of body lines the window spans
+        (default through the end of the body; capped at the remaining
+        lines, a negative value returns the empty string).
 
     Returns
     -------
     VcrDocument | str
         With ``raw=False``: the current on-disk document, freshly re-read
-        and re-parsed. With ``raw=True``: the body text as a plain string.
+        and re-parsed. With ``raw=True``: the body text (or its
+        ``offset``/``limit`` window) as a plain string.
         Raises :class:`._paths.VcrNotFoundError` if no verification case
         record has this id.
 
@@ -81,14 +100,23 @@ def get_vcr(id: str, raw: bool = False) -> VcrDocument | str:
     ------
     ValueError
         ``id`` is a path-injection attempt or not a well-formed id for this domain
-        (raised before any filesystem access).
+        (raised before any filesystem access), or ``offset``/``limit`` coordinates
+        are given with ``raw=False`` (a parsed document requires the whole body;
+        also raised before any file access).
     """
     validate_id("vcr", id)
+    if not raw and (offset is not None or limit is not None):
+        raise ValueError(f"offset/limit are only valid with raw=True, got offset={offset!r}, limit={limit!r}")
+
     base_dir = vcr_base_dir()
     path, doc = load_by_id(base_dir, id)
     assert_within(base_dir, path)
     if raw:
-        result: VcrDocument | str = body_text(path)
+        text = body_text(path)
+        if offset is None and limit is None:
+            result: VcrDocument | str = text
+            return result
+        result = window_body(text, offset if offset is not None else 1, limit)
         return result
     result = doc
     return result

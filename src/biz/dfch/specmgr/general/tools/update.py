@@ -28,11 +28,12 @@ the corresponding per-domain ``update_<d>`` tool's function body (same
 domain lock, same ``load_by_id``, same frontmatter carry-over with only
 ``updated`` bumped, same verbatim persistence via the domain's own
 ``write_<d>_file``, same domain ``XNotFoundError``) plus the REQ-002 range
-branch: with ``begin``/``end`` given, the on-disk body is re-read via
-:func:`._splice.body_text`, spliced via :func:`._splice.splice_body`, and
-the *spliced result* is validated as a whole document and persisted
-verbatim instead of the raw fragment. ``sop`` is the first domain built
-dispatch-only from day one (ADR 36905d5b): its ``_update_sop`` adapter was
+branch: with ``offset`` given (``limit`` optional), the on-disk body is
+re-read via :func:`._splice.body_text`, spliced via
+:func:`._splice.splice_body` at the read-style ``offset``/``limit``
+coordinates, and the *spliced result* is validated as a whole document and
+persisted verbatim instead of the raw fragment. ``sop`` is the first domain
+built dispatch-only from day one (ADR 36905d5b): its ``_update_sop`` adapter was
 written directly in this shape rather than ported from a retired
 per-domain tool.
 
@@ -150,27 +151,28 @@ _UpdateDocument = (
 )
 
 
-def _update_req(id_: str, content: str, begin: int | None, end: int | None) -> ReqDocument:
+def _update_req(id_: str, content: str, offset: int | None, limit: int | None) -> ReqDocument:
     """Replace the body of the requirement identified by ``id_`` (whole-body or line-range mode).
 
     Verbatim port of the previous per-domain requirement update tool's
     function body (same ``req_lock``, ``load_by_id``, frontmatter carry-over
     with only ``updated`` bumped, ``write_req_file``, ``ReqNotFoundError``;
     that per-domain tool was retired in feat-22 Phase 3), plus the REQ-002
-    range branch: with ``begin``/``end`` given (both-or-neither is
-    enforced by the public :func:`update` before dispatch), the on-disk
-    body is re-read via :func:`body_text`, spliced via
-    :func:`splice_body`, and the *spliced result* is validated and
-    persisted verbatim instead of the raw fragment.
+    range branch: with ``offset`` given (``limit`` optional; ``limit``
+    without ``offset`` is rejected by the public :func:`update` guard
+    before dispatch), the on-disk body is re-read via :func:`body_text`,
+    spliced via :func:`splice_body` at the read-style ``offset``/``limit``
+    coordinates, and the *spliced result* is validated and persisted
+    verbatim instead of the raw fragment.
     """
-    if begin is not None or end is not None:
-        assert begin is not None and end is not None, "the public `update` guard enforces both-or-neither"
+    if offset is not None:
+        assert limit is None or offset is not None, "the public `update` guard enforces offset with limit"
 
         base_dir = req_base_dir()
         with req_lock(id_):
             path, existing = load_req_by_id(base_dir, id_)
             assert_within(base_dir, path)
-            spliced = splice_body(body_text(path), begin, end, content)
+            spliced = splice_body(body_text(path), offset, limit, content)
             with wrap_tool_errors(domain="req", tool="update", channel=BODY_CHANNEL):
                 body = Requirement.from_text(format_text(spliced))
             now = now_timestamp()
@@ -197,7 +199,7 @@ def _update_req(id_: str, content: str, begin: int | None, end: int | None) -> R
     return new_doc
 
 
-def _update_uc(id_: str, content: str, begin: int | None, end: int | None) -> UcDocument:
+def _update_uc(id_: str, content: str, offset: int | None, limit: int | None) -> UcDocument:
     """Replace the body of the use case identified by ``id_`` (whole-body or line-range mode).
 
     Verbatim port of the previous per-domain use-case update tool's function
@@ -206,14 +208,14 @@ def _update_uc(id_: str, content: str, begin: int | None, end: int | None) -> Uc
     per-domain tool was retired in feat-22 Phase 3), plus the REQ-002 range
     branch (see :func:`_update_req`).
     """
-    if begin is not None or end is not None:
-        assert begin is not None and end is not None, "the public `update` guard enforces both-or-neither"
+    if offset is not None:
+        assert limit is None or offset is not None, "the public `update` guard enforces offset with limit"
 
         base_dir = uc_base_dir()
         with uc_lock(id_):
             path, existing = load_uc_by_id(base_dir, id_)
             assert_within(base_dir, path)
-            spliced = splice_body(body_text(path), begin, end, content)
+            spliced = splice_body(body_text(path), offset, limit, content)
             with wrap_tool_errors(domain="uc", tool="update", channel=BODY_CHANNEL):
                 body = UseCase.from_text(format_text(spliced))
             now = now_timestamp()
@@ -240,7 +242,7 @@ def _update_uc(id_: str, content: str, begin: int | None, end: int | None) -> Uc
     return new_doc
 
 
-def _update_tsk(id_: str, content: str, begin: int | None, end: int | None) -> TskDocument:
+def _update_tsk(id_: str, content: str, offset: int | None, limit: int | None) -> TskDocument:
     """Replace the body of the task list identified by ``id_`` (whole-body or line-range mode).
 
     Verbatim port of the previous per-domain task list update tool's
@@ -249,14 +251,14 @@ def _update_tsk(id_: str, content: str, begin: int | None, end: int | None) -> T
     that per-domain tool was retired in feat-22 Phase 3), plus the REQ-002
     range branch (see :func:`_update_req`).
     """
-    if begin is not None or end is not None:
-        assert begin is not None and end is not None, "the public `update` guard enforces both-or-neither"
+    if offset is not None:
+        assert limit is None or offset is not None, "the public `update` guard enforces offset with limit"
 
         base_dir = tsk_base_dir()
         with tsk_lock(id_):
             path, existing = load_tsk_by_id(base_dir, id_)
             assert_within(base_dir, path)
-            spliced = splice_body(body_text(path), begin, end, content)
+            spliced = splice_body(body_text(path), offset, limit, content)
             with wrap_tool_errors(domain="tsk", tool="update", channel=BODY_CHANNEL):
                 body = Task.from_text(format_text(spliced))
             now = now_timestamp()
@@ -283,7 +285,7 @@ def _update_tsk(id_: str, content: str, begin: int | None, end: int | None) -> T
     return new_doc
 
 
-def _update_qa(id_: str, content: str, begin: int | None, end: int | None) -> QaDocument:
+def _update_qa(id_: str, content: str, offset: int | None, limit: int | None) -> QaDocument:
     """Replace the body of the QA document identified by ``id_`` (whole-body or line-range mode).
 
     Verbatim port of the previous per-domain QA document update tool's
@@ -292,14 +294,14 @@ def _update_qa(id_: str, content: str, begin: int | None, end: int | None) -> Qa
     that per-domain tool was retired in feat-22 Phase 3), plus the REQ-002
     range branch (see :func:`_update_req`).
     """
-    if begin is not None or end is not None:
-        assert begin is not None and end is not None, "the public `update` guard enforces both-or-neither"
+    if offset is not None:
+        assert limit is None or offset is not None, "the public `update` guard enforces offset with limit"
 
         base_dir = qa_base_dir()
         with qa_lock(id_):
             path, existing = load_qa_by_id(base_dir, id_)
             assert_within(base_dir, path)
-            spliced = splice_body(body_text(path), begin, end, content)
+            spliced = splice_body(body_text(path), offset, limit, content)
             with wrap_tool_errors(domain="qa", tool="update", channel=BODY_CHANNEL):
                 body = Qa.from_text(format_text(spliced))
             now = now_timestamp()
@@ -326,7 +328,7 @@ def _update_qa(id_: str, content: str, begin: int | None, end: int | None) -> Qa
     return new_doc
 
 
-def _update_prb(id_: str, content: str, begin: int | None, end: int | None) -> PrbDocument:
+def _update_prb(id_: str, content: str, offset: int | None, limit: int | None) -> PrbDocument:
     """Replace the body of the problem statement identified by ``id_`` (whole-body or line-range mode).
 
     Verbatim port of the previous per-domain problem statement update
@@ -335,14 +337,14 @@ def _update_prb(id_: str, content: str, begin: int | None, end: int | None) -> P
     ``PrbNotFoundError``; that per-domain tool was retired in feat-22
     Phase 3), plus the REQ-002 range branch (see :func:`_update_req`).
     """
-    if begin is not None or end is not None:
-        assert begin is not None and end is not None, "the public `update` guard enforces both-or-neither"
+    if offset is not None:
+        assert limit is None or offset is not None, "the public `update` guard enforces offset with limit"
 
         base_dir = prb_base_dir()
         with prb_lock(id_):
             path, existing = load_prb_by_id(base_dir, id_)
             assert_within(base_dir, path)
-            spliced = splice_body(body_text(path), begin, end, content)
+            spliced = splice_body(body_text(path), offset, limit, content)
             with wrap_tool_errors(domain="prb", tool="update", channel=BODY_CHANNEL):
                 body = Prb.from_text(format_text(spliced))
             now = now_timestamp()
@@ -369,7 +371,7 @@ def _update_prb(id_: str, content: str, begin: int | None, end: int | None) -> P
     return new_doc
 
 
-def _update_gol(id_: str, content: str, begin: int | None, end: int | None) -> GolDocument:
+def _update_gol(id_: str, content: str, offset: int | None, limit: int | None) -> GolDocument:
     """Replace the body of the goal identified by ``id_`` (whole-body or line-range mode).
 
     Verbatim port of the previous per-domain goal update tool's function
@@ -378,14 +380,14 @@ def _update_gol(id_: str, content: str, begin: int | None, end: int | None) -> G
     per-domain tool was retired in feat-22 Phase 3), plus the REQ-002 range
     branch (see :func:`_update_req`).
     """
-    if begin is not None or end is not None:
-        assert begin is not None and end is not None, "the public `update` guard enforces both-or-neither"
+    if offset is not None:
+        assert limit is None or offset is not None, "the public `update` guard enforces offset with limit"
 
         base_dir = gol_base_dir()
         with gol_lock(id_):
             path, existing = load_gol_by_id(base_dir, id_)
             assert_within(base_dir, path)
-            spliced = splice_body(body_text(path), begin, end, content)
+            spliced = splice_body(body_text(path), offset, limit, content)
             with wrap_tool_errors(domain="gol", tool="update", channel=BODY_CHANNEL):
                 body = Goal.from_text(format_text(spliced))
             now = now_timestamp()
@@ -412,7 +414,7 @@ def _update_gol(id_: str, content: str, begin: int | None, end: int | None) -> G
     return new_doc
 
 
-def _update_rsk(id_: str, content: str, begin: int | None, end: int | None) -> RskDocument:
+def _update_rsk(id_: str, content: str, offset: int | None, limit: int | None) -> RskDocument:
     """Replace the body of the risk identified by ``id_`` (whole-body or line-range mode).
 
     Verbatim port of the previous per-domain risk update tool's function
@@ -421,14 +423,14 @@ def _update_rsk(id_: str, content: str, begin: int | None, end: int | None) -> R
     per-domain tool was retired in feat-22 Phase 3), plus the REQ-002 range
     branch (see :func:`_update_req`).
     """
-    if begin is not None or end is not None:
-        assert begin is not None and end is not None, "the public `update` guard enforces both-or-neither"
+    if offset is not None:
+        assert limit is None or offset is not None, "the public `update` guard enforces offset with limit"
 
         base_dir = rsk_base_dir()
         with rsk_lock(id_):
             path, existing = load_rsk_by_id(base_dir, id_)
             assert_within(base_dir, path)
-            spliced = splice_body(body_text(path), begin, end, content)
+            spliced = splice_body(body_text(path), offset, limit, content)
             with wrap_tool_errors(domain="rsk", tool="update", channel=BODY_CHANNEL):
                 body = Risk.from_text(format_text(spliced))
             now = now_timestamp()
@@ -455,7 +457,7 @@ def _update_rsk(id_: str, content: str, begin: int | None, end: int | None) -> R
     return new_doc
 
 
-def _update_dec(id_: str, content: str, begin: int | None, end: int | None) -> DecDocument:
+def _update_dec(id_: str, content: str, offset: int | None, limit: int | None) -> DecDocument:
     """Replace the body of the decision identified by ``id_`` (whole-body or line-range mode).
 
     Verbatim port of the previous per-domain decision update tool's
@@ -466,14 +468,14 @@ def _update_dec(id_: str, content: str, begin: int | None, end: int | None) -> D
     -- was converted to the generic tools), plus the REQ-002 range branch
     (see :func:`_update_req`).
     """
-    if begin is not None or end is not None:
-        assert begin is not None and end is not None, "the public `update` guard enforces both-or-neither"
+    if offset is not None:
+        assert limit is None or offset is not None, "the public `update` guard enforces offset with limit"
 
         base_dir = dec_base_dir()
         with dec_lock(id_):
             path, existing = load_dec_by_id(base_dir, id_)
             assert_within(base_dir, path)
-            spliced = splice_body(body_text(path), begin, end, content)
+            spliced = splice_body(body_text(path), offset, limit, content)
             with wrap_tool_errors(domain="dec", tool="update", channel=BODY_CHANNEL):
                 body = Decision.from_text(format_text(spliced))
             now = now_timestamp()
@@ -500,7 +502,7 @@ def _update_dec(id_: str, content: str, begin: int | None, end: int | None) -> D
     return new_doc
 
 
-def _update_feat(id_: str, content: str, begin: int | None, end: int | None) -> FeatDocument:
+def _update_feat(id_: str, content: str, offset: int | None, limit: int | None) -> FeatDocument:
     """Replace the body of the feature identified by ``id_`` (whole-body or line-range mode).
 
     Mirrors :func:`_update_dec`'s shape (same ``feat_lock``, ``load_by_id``,
@@ -511,14 +513,14 @@ def _update_feat(id_: str, content: str, begin: int | None, end: int | None) -> 
     ``updated`` is bumped to the same shared date+time timestamp as every
     other domain.
     """
-    if begin is not None or end is not None:
-        assert begin is not None and end is not None, "the public `update` guard enforces both-or-neither"
+    if offset is not None:
+        assert limit is None or offset is not None, "the public `update` guard enforces offset with limit"
 
         base_dir = feat_base_dir()
         with feat_lock(id_):
             path, existing = load_feat_by_id(base_dir, id_)
             assert_within(base_dir, path)
-            spliced = splice_body(body_text(path), begin, end, content)
+            spliced = splice_body(body_text(path), offset, limit, content)
             with wrap_tool_errors(domain="feat", tool="update", channel=BODY_CHANNEL):
                 body = Feature.from_text(format_text(spliced))
             now = now_timestamp()
@@ -545,7 +547,7 @@ def _update_feat(id_: str, content: str, begin: int | None, end: int | None) -> 
     return new_doc
 
 
-def _update_sop(id_: str, content: str, begin: int | None, end: int | None) -> SopDocument:
+def _update_sop(id_: str, content: str, offset: int | None, limit: int | None) -> SopDocument:
     """Replace the body of the SOP identified by ``id_`` (whole-body or line-range mode).
 
     Verbatim-shape port of :func:`_update_dec` (same ``sop_lock``,
@@ -556,14 +558,14 @@ def _update_sop(id_: str, content: str, begin: int | None, end: int | None) -> S
     directly in this shape), plus the REQ-002 range branch
     (see :func:`_update_req`).
     """
-    if begin is not None or end is not None:
-        assert begin is not None and end is not None, "the public `update` guard enforces both-or-neither"
+    if offset is not None:
+        assert limit is None or offset is not None, "the public `update` guard enforces offset with limit"
 
         base_dir = sop_base_dir()
         with sop_lock(id_):
             path, existing = load_sop_by_id(base_dir, id_)
             assert_within(base_dir, path)
-            spliced = splice_body(body_text(path), begin, end, content)
+            spliced = splice_body(body_text(path), offset, limit, content)
             with wrap_tool_errors(domain="sop", tool="update", channel=BODY_CHANNEL):
                 body = Sop.from_text(format_text(spliced))
             now = now_timestamp()
@@ -590,7 +592,7 @@ def _update_sop(id_: str, content: str, begin: int | None, end: int | None) -> S
     return new_doc
 
 
-def _update_vcr(id_: str, content: str, begin: int | None, end: int | None) -> VcrDocument:
+def _update_vcr(id_: str, content: str, offset: int | None, limit: int | None) -> VcrDocument:
     """Replace the body of the verification case record identified by ``id_`` (whole-body or line-range mode).
 
     Mirrors :func:`_update_dec`'s shape (same ``vcr_lock``, ``load_by_id``,
@@ -598,14 +600,14 @@ def _update_vcr(id_: str, content: str, begin: int | None, end: int | None) -> V
     ``VcrNotFoundError``), plus the REQ-002 range branch (see
     :func:`_update_req`).
     """
-    if begin is not None or end is not None:
-        assert begin is not None and end is not None, "the public `update` guard enforces both-or-neither"
+    if offset is not None:
+        assert limit is None or offset is not None, "the public `update` guard enforces offset with limit"
 
         base_dir = vcr_base_dir()
         with vcr_lock(id_):
             path, existing = load_vcr_by_id(base_dir, id_)
             assert_within(base_dir, path)
-            spliced = splice_body(body_text(path), begin, end, content)
+            spliced = splice_body(body_text(path), offset, limit, content)
             with wrap_tool_errors(domain="vcr", tool="update", channel=BODY_CHANNEL):
                 body = Vcr.from_text(format_text(spliced))
             now = now_timestamp()
@@ -654,12 +656,13 @@ _ADAPTERS: dict[str, Callable[[str, str, int | None, int | None], _UpdateDocumen
     description=(
         "Whole-body or line-range replace of an existing document's content across the eleven "
         "whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr), "
-        "preserving its id/type/status/created/version; only `updated` changes. With no `begin`/`end`, "
-        "`content` is the full replacement body (body markdown only, no frontmatter block). With both, "
-        "`content` replaces the 1-based inclusive body-line range `begin`..`end` of the current "
-        "on-disk body (`N+1` = end-of-body sentinel: append after the last line, or replace "
-        "through end of body); the spliced result is validated as a whole document before "
-        "anything is written. `status` is never settable -- use the generic `set_status` tool. "
+        "preserving its id/type/status/created/version; only `updated` changes. With no `offset`/`limit`, "
+        "`content` is the full replacement body (body markdown only, no frontmatter block). With "
+        "`offset`, `content` replaces the body line(s) starting at 1-based line `offset` of the current "
+        "on-disk body: `limit` is the number of lines to replace (`offset`..`offset+limit-1`; `limit` "
+        "omitted = through the last body line, `limit=0` = pure insert), and `offset=N+1` (one past "
+        "the last body line) appends after it; the spliced result is validated as a whole document "
+        "before anything is written. `status` is never settable -- use the generic `set_status` tool. "
         "An invalid `id` (path-injection attempt or wrong format for `type`) is a `ValueError` "
         "raised before any file access."
     ),
@@ -668,8 +671,8 @@ def update(
     id: str,
     type: Literal["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "feat", "vcr"],
     content: str,
-    begin: int | None = None,
-    end: int | None = None,
+    offset: int | None = None,
+    limit: int | None = None,
 ) -> _UpdateDocument:
     """Replace the body of an existing document, in whole-body or line-range mode.
 
@@ -679,7 +682,7 @@ def update(
     same id resolution, same frontmatter carry-over, same verbatim
     persistence, same domain not-found error).
 
-    **Whole-body mode** (no ``begin``/``end``): ``content`` is body
+    **Whole-body mode** (no ``offset``/``limit``): ``content`` is body
     markdown only, with no YAML frontmatter block -- the same shape the
     per-domain ``update_<d>`` tools accept. Validated the same way: the
     domain body model's ``from_text(format_text(content))``, letting
@@ -687,21 +690,24 @@ def update(
     (field/cross-field failure) propagate uncaught, with nothing written in
     either case.
 
-    **Range mode** (both ``begin`` and ``end`` given): ``content`` is a
-    replacement *fragment* for the current on-disk body's 1-based,
-    inclusive line range ``begin..end``, where ``N`` is the number of lines
-    of the current frontmatter-stripped body (the text ``get_<d>(id,
-    raw=True`` returns) and ``N+1`` is a virtual position past the last
-    line (``begin = end = N+1`` appends at end of body; ``end = N+1``
-    extends the range through the last line). The on-disk body is re-read
-    under the domain lock, spliced (drop lines ``begin..min(end, N)``,
-    insert the fragment's lines at position ``begin - 1``), and the
-    *spliced result* -- not the fragment -- is validated as a whole body
-    exactly like whole-body mode and then persisted verbatim, so unchanged
-    regions of the on-disk body stay byte-identical. An empty ``content``
-    deletes the range (legal iff the result still validates). The YAML
-    frontmatter is never addressable: coordinates are body-relative by
-    construction.
+    **Range mode** (``offset`` given): ``content`` is a replacement
+    *fragment* addressed by read-style ``offset``/``limit`` coordinates,
+    where ``N`` is the number of lines of the current frontmatter-stripped
+    body (the text ``get_<d>(id, raw=True)`` returns) and ``N+1`` is the
+    virtual end-of-body position (one past the last line). ``offset`` is
+    the 1-based first body line to replace; ``limit`` is the number of
+    lines to replace -- the replaced range is ``offset..offset+limit-1``:
+    an omitted ``limit`` replaces through the last body line, ``limit=0``
+    is a pure insert of ``content``'s lines before line ``offset`` (with
+    ``offset=N+1`` that is the append case), and ``offset=N+1`` appends
+    after the last line. The on-disk body is re-read under the domain
+    lock, spliced (drop the range's lines, insert the fragment's lines at
+    position ``offset - 1``), and the *spliced result* -- not the fragment
+    -- is validated as a whole body exactly like whole-body mode and then
+    persisted verbatim, so unchanged regions of the on-disk body stay
+    byte-identical. An empty ``content`` deletes the range (legal iff the
+    result still validates). The YAML frontmatter is never addressable:
+    coordinates are body-relative by construction.
 
     In both modes the existing file's frontmatter is carried over with
     every field preserved except ``updated`` (bumped to the current
@@ -730,15 +736,18 @@ def update(
         ``vcr``.
     content:
         Whole-body mode: the replacement body markdown, with no
-        frontmatter block. Range mode: the replacement fragment for lines
-        ``begin..end`` (may be empty to delete the range).
-    begin:
-        Optional 1-based first line of the range to replace. Must be given
-        together with ``end`` (exactly one of the two is a ``ValueError``).
-    end:
-        Optional 1-based last line of the range to replace (inclusive);
-        ``N+1`` (one past the last body line) extends the range through
-        end of body. Must be given together with ``begin``.
+        frontmatter block. Range mode: the replacement fragment for the
+        lines ``offset..offset+limit-1`` (may be empty to delete the
+        range).
+    offset:
+        Optional 1-based first body line to replace; allowed ``1..N+1``,
+        where ``N+1`` (one past the last body line) is the virtual
+        end-of-body position. A given ``offset`` enters range mode; on its
+        own it replaces through the last body line.
+    limit:
+        Optional number of lines to replace starting at ``offset``
+        (``0`` = pure insert); must be given together with ``offset``
+        (``limit`` without ``offset`` is a ``ValueError``).
 
     Returns
     -------
@@ -752,11 +761,11 @@ def update(
     ValueError
         ``id`` is a path-injection attempt or not in the dispatched
         domain's own format (raised before any filesystem access; nothing
-        is written). Also raised for misused range coordinates: exactly
-        one of ``begin``/``end`` given (raised before any file access), or
-        ``begin < 1``, ``begin > end``,
-        or ``end > N + 1`` (raised after the on-disk body is read; the
-        message names the offending value(s) and the allowed range).
+        is written). Also raised for misused range coordinates: ``limit``
+        given without ``offset`` (raised before any file access), or
+        ``offset < 1``, ``offset > N + 1``, ``limit < 0``, or
+        ``offset + limit - 1 > N`` (raised after the on-disk body is read;
+        the message names the offending value(s) and the allowed range).
         Nothing is written in any of these cases.
     AssertionError
         The (spliced) body is structurally invalid (e.g. a range that
@@ -778,9 +787,9 @@ def update(
     """
     # REQ-009: validate before any filesystem access (injection prevention).
     validate_id(type, id)
-    if (begin is None) != (end is None):
-        raise ValueError(f"begin and end must be given together (both or neither), got begin={begin!r}, end={end!r}")
+    if offset is None and limit is not None:
+        raise ValueError(f"limit must be given together with offset, got offset={offset!r}, limit={limit!r}")
 
     adapter = _ADAPTERS[type]
-    result = adapter(id, content, begin, end)
+    result = adapter(id, content, offset, limit)
     return result

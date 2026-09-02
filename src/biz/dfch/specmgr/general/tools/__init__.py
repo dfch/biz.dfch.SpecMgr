@@ -19,13 +19,17 @@
 
 ``mdformat`` -- a markdown document formatter that preserves YAML frontmatter
 blocks (for ADR/UC files) and formats only the body markdown. ``update`` --
-the generic, cross-domain whole-body or line-range replace for the seven
-whole-body document types (``type`` is one of req/uc/tsk/qa/prb/gol/rsk;
-optional 1-based inclusive body-line ``begin``/``end`` range with the
-``N+1`` end-of-body sentinel). ``set_status`` -- the generic, cross-domain
-status change for all eight document types (``type`` is one of
-req/uc/tsk/qa/prb/gol/rsk/adr; ``superseded_by`` is ``adr``-only, composing
-the status as ``"superseded by {superseded_by}"``). ``delete`` -- the
+the generic, cross-domain whole-body or line-range replace for the eleven
+whole-body document types (``type`` is one of
+req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr; optional read-style body-line
+``offset``/``limit`` coordinates -- ``offset`` = 1-based first line,
+``limit`` = number of lines, omitted = through end of body, ``0`` = pure
+insert, ``offset = N+1`` = the virtual end-of-body append position -- strict
+validation, splice-then-validate-whole). ``set_status`` -- the generic,
+cross-domain status change for all twelve document types (``type`` is one of
+req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/adr; ``superseded_by`` is
+``adr``-only, composing the status as ``"superseded by {superseded_by}"``).
+``delete`` -- the
 generic, cross-domain hard-delete for the eleven whole-body document types
 (``type`` is one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr; ``adr`` is
 not supported), resolving the document by ``id``, taking the domain's own

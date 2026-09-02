@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Windowed raw reads on the eleven `get_<d>` MCP tools
+  (`req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr`):
+  each now accepts optional read-style `offset`/`limit` coordinates for a
+  windowed raw read — valid with `raw=True` only (coordinates with
+  `raw=False` raise `ValueError`), `offset` 1-based with default 1
+  (floored, never errors), `limit` a line count defaulting to through end
+  of body (capped at the remaining lines), and `offset > N` returning the
+  empty string; out-of-range values clamp, consistent with the `list_<d>`
+  paging convention. The window is served by a new no-I/O
+  `window_body(text, offset, limit)` helper in `general/tools/_splice.py`,
+  beside `body_text`/`splice_body`, so the raw/splice invariant (the line
+  numbers a client sees in any `get_<d>(raw=True)` read, windowed or not,
+  index byte-for-byte into the same text the generic `update` tool splices
+  against) is defined once and shared by all eleven tools (GitHub issue
+  #28; ADR 4ec08dcb-fcb7-4961-abaf-ff7803e2f21d).
+
 - `confluence_update` MCP tool (`general/tools/`): writes a local Markdown
   file's rendered content into an existing Confluence page's body via the
   REST API, resolving a bare page id, a browsable page URL, or a REST
@@ -43,6 +59,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   content. Part of feat-50-confluence Phase 8, REQ-012/REQ-013.
 
 ### Changed
+
+- **BREAKING** (0.x): the generic `update` MCP tool's 1-based inclusive
+  `begin`/`end` body-line range (with the `N+1` end-of-body sentinel) is
+  replaced by read-style `offset`/`limit` coordinates in a hard rename (no
+  compatibility alias): `offset` is the 1-based first line to replace
+  (allowed `1..N+1`, where `N+1` is the virtual end-of-body append
+  position), `limit` is the number of lines (`offset..offset+limit-1`);
+  omitted `limit` replaces through the last body line, `limit=0` is a pure
+  insert. Out-of-range coordinates raise `ValueError` (strict, never
+  clamped, nothing written) and `limit` without `offset` raises
+  `ValueError` before any file access; splice-then-validate-whole, verbatim
+  persistence, and frontmatter carry-over are unchanged. Every LLM-facing
+  surface (the packaged prompt instruction files, tool descriptions,
+  docstrings, `AGENTS.md`) moved to the new vocabulary in this same
+  release. The revised contract is recorded in ADR
+  4ec08dcb-fcb7-4961-abaf-ff7803e2f21d (referencing, not superseding, ADR
+  36905d5b-8057-4294-8665-c7eed5534db0) (GitHub issue #28).
 
 - Eliminated all 42 pylint W0622 (redefined-builtin) findings via 39
   explicit, per-file `# pylint: disable=redefined-builtin` comments (with

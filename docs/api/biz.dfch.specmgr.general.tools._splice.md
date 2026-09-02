@@ -1,24 +1,37 @@
 # `biz.dfch.specmgr.general.tools._splice`
 
-Frontmatter-stripped body extraction and body-line splicing for the generic
-``update`` tool (feat-22-consolidate-mutation-tools, Phase 2).
+Frontmatter-stripped body extraction, body-line splicing, and body-line
+windowing for the generic ``update`` tool (feat-22-consolidate-mutation-tools,
+Phase 2) and the ``get_<d>`` tools (feat-28-get-update, Phase 2).
 
-Two small, doc-type-agnostic text helpers shared by the generic ``update``
-tool's range mode and the seven ``get_<d>`` tools' ``raw=True`` reads:
+Three small, doc-type-agnostic text helpers shared by the generic ``update``
+tool's range mode and the eleven ``get_<d>`` tools' ``raw=True`` reads:
 
 - :func:`body_text` extracts a document file's frontmatter-stripped body text
   using the established ``frontmatter.loads(path.read_text(encoding="utf-8")).
   content`` mechanism -- the same frontmatter-stripping mechanism the
   domain write paths use.
-- :func:`splice_body` replaces a 1-based, inclusive body-line range of that
-  text with a replacement fragment, implementing the plan's range contract
-  (the ``N+1`` end-of-body sentinel, splice-then-validate-whole).
+- :func:`splice_body` replaces a body-line range of that text, addressed by
+  read-style ``offset``/``limit`` coordinates (``offset`` = 1-based first
+  line to replace, ``limit`` = number of lines, omitted = through the last
+  body line, ``0`` = pure insert, ``offset = N + 1`` = the virtual
+  end-of-body append position), implementing the plan's range contract
+  (strict validation, splice-then-validate-whole).
+- :func:`window_body` returns the read-style ``offset``/``limit`` window of
+  that text (``offset`` = 1-based first line to return, floored to 1;
+  ``limit`` = number of lines, omitted = through the last body line, capped
+  at the remaining lines), clamping out-of-range values instead of erroring
+  (the ``list_<d>`` "clamped, not errored" convention; reads are
+  non-destructive).
 
-**The raw/splice invariant.** Both helpers are the *single* definition of
-"the body text" in this codebase: every ``get_<d>(raw=True)`` read and every
-``update`` range splice go through :func:`body_text`, so *what the client
-counts is what the server splices* -- the line numbers a client sees in a raw
-read index byte-for-byte into the same text the server splices against.
+**The raw/splice invariant.** All three helpers are the *single* definition
+of "the body text" in this codebase: every ``get_<d>(raw=True)`` read
+(windowed or not) and every ``update`` range splice go through
+:func:`body_text`, so *what the client counts is what the server splices* --
+the line numbers a client sees in any ``get_<d>(raw=True)`` read, windowed or
+not, index byte-for-byte into the same text the server splices against;
+:func:`window_body` is the single windowing definition shared by all eleven
+``get_<d>`` tools.
 
 As with :mod:`_doc_paths`, this module has no ``mcp`` dependency -- plain
 file I/O and text manipulation only, kept separately from any
@@ -37,7 +50,7 @@ YAML frontmatter block is
 removed, and the remaining body markdown is returned verbatim -- never
 reformatted, re-rendered, or otherwise touched. The returned text is
 exactly the text whose 1-based lines the generic ``update`` tool's
-``begin``/``end`` coordinates address (see the module docstring's
+``offset``/``limit`` coordinates address (see the module docstring's
 raw/splice invariant).
 
 Parameters
@@ -59,27 +72,29 @@ ValueError
     ``frontmatter`` library raises ``ValueError`` for that shape).
 
 
-### `splice_body(current_body: 'str', begin: 'int', end: 'int', content: 'str') -> 'str'`
+### `splice_body(current_body: 'str', offset: 'int', limit: 'int | None', content: 'str') -> 'str'`
 
-Replace the 1-based, inclusive body-line range ``begin..end`` of ``current_body`` with ``content``.
+Replace the body-line range ``offset..offset + limit - 1`` of ``current_body`` with ``content``.
 
 Implements the generic ``update`` tool's range contract (REQ-002)
 exactly. Let ``N = len(current_body.splitlines())`` be the number of
 lines of the current body; ``N + 1`` is a virtual position past the
-last line:
+last line (the append position):
 
-- ``begin = end = k`` (1 <= k <= N) -> replace line ``k`` only.
-- ``begin = k``, ``end = m`` (k <= m <= N) -> replace lines ``k..m``.
-- ``end = N + 1`` -> the range extends through the last line (``k..N``).
-- ``begin = end = N + 1`` -> the range is empty at end-of-body: a pure
-  append of ``content`` after the last line.
-- ``begin = 1``, ``end = N`` -> whole-body replace, equivalent to the
-  no-range (whole-body) mode with the identical text.
+- ``offset = k``, ``limit = 1`` (1 <= k <= N) -> replace line ``k`` only.
+- ``offset = k``, ``limit = m`` (k + m - 1 <= N) -> replace lines ``k..k + m - 1``.
+- ``limit`` omitted -> the range extends through the last line (``k..N``).
+- ``limit = 0`` -> a pure insert of ``content``'s lines before line ``offset``.
+- ``offset = N + 1`` (``limit`` omitted or ``0``) -> the range is empty at
+  end-of-body: a pure append of ``content`` after the last line.
+- ``offset = 1``, ``limit`` omitted -> whole-body replace, equivalent to
+  the no-range (whole-body) mode with the identical text.
 - Empty ``content`` -> the range is deleted (legal iff the spliced
   result still validates as a whole body).
 
-The splice drops lines ``begin..min(end, N)``, inserts
-``content.splitlines()`` at position ``begin - 1``, and rejoins with
+The splice drops the range's lines (``limit`` of them, or
+``N - offset + 1`` when ``limit`` is omitted), inserts
+``content.splitlines()`` at position ``offset - 1``, and rejoins with
 ``"\n"`` plus a single trailing ``"\n"``. Lines outside the range are
 never touched, so unchanged regions of the on-disk body stay
 byte-identical; the caller validates the *spliced result* as a whole
@@ -90,12 +105,14 @@ Parameters
 current_body:
     The current frontmatter-stripped body text (e.g. from
     :func:`body_text`).
-begin:
-    The 1-based first line of the range to replace.
-end:
-    The 1-based last line of the range to replace (inclusive); may be
-    ``N + 1`` to extend the range through (or past, i.e. append after)
-    the last line.
+offset:
+    The 1-based first line of the range to replace; allowed
+    ``1..N + 1``, where ``N + 1`` (one past the last body line) is the
+    virtual end-of-body position.
+limit:
+    The number of lines the range spans (``offset..offset + limit -
+    1``); ``0`` is a pure insert, ``None`` (omitted) extends the range
+    through the last body line.
 content:
     The replacement fragment; its lines (``content.splitlines()``) take
     the place of the dropped range. Empty string deletes the range.
@@ -109,9 +126,57 @@ str
 Raises
 ------
 ValueError
-    Misused coordinates -- ``begin < 1``, ``begin > end``, or
-    ``end > N + 1`` -- with a message naming the offending value(s)
-    and the allowed range. Client-controlled input, so this is a
-    ``ValueError`` (not an ``assert``), per the project's
-    user-controlled-flow-control rule.
+    Misused coordinates -- ``offset < 1``, ``offset > N + 1``,
+    ``limit < 0``, or ``offset + limit - 1 > N`` -- with a message
+    naming the offending value(s) and the allowed range. Client-
+    controlled input, so these are ``ValueError``s (not ``assert``s),
+    per the project's user-controlled-flow-control rule.
+
+
+### `window_body(text: 'str', offset: 'int' = 1, limit: 'int | None' = None) -> 'str'`
+
+Return the body-line window ``offset..offset + limit - 1`` of ``text``.
+
+The single windowing definition behind every
+``get_<d>(raw=True, offset=..., limit=...)`` read (REQ-002): a
+read-style, *clamping* (never erroring) window over a
+frontmatter-stripped body text, in the ``list_<d>`` "clamped, not
+errored" paging convention (ADR
+ec9f5262-9912-49d0-903f-fcfb54f28c13) -- reads are non-destructive, so
+out-of-range coordinates degrade to the nearest valid window instead of
+raising. Let ``N = len(text.splitlines())`` be the number of lines of
+``text``:
+
+- ``offset`` is floored to 1; a floored ``offset > N`` (including an
+  empty ``text``) returns the empty string.
+- ``limit = None`` (omitted) extends the window through the last line;
+  any given ``limit`` is capped at the remaining lines (``N - offset +
+  1``), and a negative ``limit`` yields an empty window.
+
+The result is the window's lines, each keeping its trailing newline --
+``""`` if the window is empty, else ``"\n".join(lines[offset - 1 :
+offset - 1 + count]) + "\n"``. Consequently, :func:`window_body` with
+the defaults (``offset = 1``, ``limit = None``) equals a normal
+trailing-newline body byte-for-byte, and concatenating consecutive
+non-overlapping windows reproduces the body -- the raw/splice invariant
+holds for windowed reads exactly as for full raw reads (see the module
+docstring).
+
+Parameters
+----------
+text:
+    The frontmatter-stripped body text (e.g. from :func:`body_text`).
+offset:
+    The 1-based first body line of the window; values below 1 floor to
+    1.
+limit:
+    The number of body lines the window spans; ``None`` (omitted)
+    extends the window through the last line, and the value is capped
+    at the remaining lines (a negative value yields an empty window).
+
+Returns
+-------
+str
+    The window's lines joined with ``"\n"`` plus a single trailing
+    newline, or ``""`` for an empty window.
 

@@ -32,7 +32,7 @@ module drives the actual tool functions in a single realistic sequence --
 tools, so the round-trip below drives the GENERIC ``update``/
 ``set_status`` tools in ``general.tools`` with ``type="sop"`` -- not
 per-domain mutation tools (which do not exist). Both the whole-body and
-line-range (``begin``/``end``) branches of ``update`` are exercised.
+line-range (``offset``/``limit``) branches of ``update`` are exercised.
 
 Isolation follows the exact same pattern as ``test_create_sop.py``'s
 ``TempSopDirTestCase``: a fresh ``tempfile.TemporaryDirectory()`` is pointed
@@ -166,7 +166,7 @@ class TestSopLifecycleIntegration(TempSopDirTestCase):
         raw_lines = get_sop(sop_id, raw=True).splitlines()
         k = raw_lines.index("HR submits the request.") + 1
         replacement = "HR submits the onboarding request."
-        update(id=sop_id, type="sop", content=replacement, begin=k, end=k)
+        update(id=sop_id, type="sop", content=replacement, offset=k, limit=1)
         range_checked = get_sop(sop_id)
         self.assertEqual(range_checked.body.procedure.steps[0].name, "Submit request")
         self.assertIn("onboarding", get_sop(sop_id, raw=True))

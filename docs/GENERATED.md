@@ -140,7 +140,7 @@ First-line docstrings from each module, organized by domain:
 - `general/tools/_packaged_data.py` — Generic, doc-type-agnostic access to packaged example/template/schema data
 - `general/tools/_paging.py` — Generic, doc-type-agnostic paging helpers (feat-13 Task 1.2).
 - `general/tools/_path_safety.py` — Reusable, doc-type-agnostic path-safety assertions for document ids and
-- `general/tools/_splice.py` — Frontmatter-stripped body extraction and body-line splicing for the generic
+- `general/tools/_splice.py` — Frontmatter-stripped body extraction, body-line splicing, and body-line
 - `general/tools/_timestamps.py` — Shared, private timestamp-formatting helpers (feat-38-39-41-43-44 Phase 3, Task 3.1).
 - `general/tools/confluence_fetch.py` — ``@mcp.tool()`` wrapper: confluence_fetch (renamed from ``webfetch``, ADR
 - `general/tools/confluence_update.py` — ``@mcp.tool()`` wrapper: confluence_update (ADR a156fdf9-052c-4f43-93a2-eeec04a91eac,
@@ -493,4 +493,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 331
+**Test files**: 332

@@ -46,7 +46,9 @@ type or cross-cutting:
   the generic `set_status` tool (`type="uc"`), deletions through the generic
   `delete` tool (`type="uc"`), and the `get_uc` tool takes
   `raw: bool = False` — `raw=True` returns the frontmatter-stripped body
-  text as-is (the text `update`'s `begin`/`end` index into); no
+   text as-is (the text `update`'s `offset`/`limit` index into), with
+   optional read-style `offset`/`limit` windowing of that raw read
+   (raw-only; out-of-range values clamp, never error); no
   `specmgr://uc/{id}` resource for the same reason as
   REQ, and no `specmgr://uc/list` resource either — listing is the
   `list_uc` tool (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13). Schema at
@@ -60,7 +62,9 @@ type or cross-cutting:
   `set_status` tool (`type="tsk"`), deletions through the generic
   `delete` tool (`type="tsk"`), and the `get_tsk` tool takes
   `raw: bool = False` — `raw=True` returns the frontmatter-stripped body
-  text as-is (the text `update`'s `begin`/`end` index into); plus a distinct
+   text as-is (the text `update`'s `offset`/`limit` index into), with
+   optional read-style `offset`/`limit` windowing of that raw read
+   (raw-only; out-of-range values clamp, never error); plus a distinct
   `implement_task` prompt (reads a task list via `get_tsk`, builds a
   `TodoWrite` list from its items, and uses the `question` tool to resolve
   ambiguity). Its resources are the usual `specmgr://tsk/schema`/
@@ -77,7 +81,9 @@ type or cross-cutting:
   `set_status` tool (`type="qa"`), deletions through the generic
   `delete` tool (`type="qa"`), and the `get_qa` tool takes
   `raw: bool = False` — `raw=True` returns the frontmatter-stripped body
-  text as-is (the text `update`'s `begin`/`end` index into); `qa/resources/`
+   text as-is (the text `update`'s `offset`/`limit` index into), with
+   optional read-style `offset`/`limit` windowing of that raw read
+   (raw-only; out-of-range values clamp, never error); `qa/resources/`
   (`specmgr://qa/schema`, `specmgr://qa/example`,
   `specmgr://qa/template`; no `specmgr://qa/{id}` — id-based reads are
   `get_qa`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
@@ -108,8 +114,10 @@ type or cross-cutting:
   the generic `set_status` tool (`type="prb"`), deletions through the generic
   `delete` tool (`type="prb"`), and the `get_prb` tool
   takes `raw: bool = False` — `raw=True` returns the frontmatter-stripped
-  body text as-is (the text `update`'s `begin`/`end` index into);
-  `prb/resources/` (`specmgr://prb/schema`,
+   body text as-is (the text `update`'s `offset`/`limit` index into), with
+   optional read-style `offset`/`limit` windowing of that raw read
+   (raw-only; out-of-range values clamp, never error); `prb/resources/`
+   (`specmgr://prb/schema`,
   `specmgr://prb/example`, `specmgr://prb/template`; no
   `specmgr://prb/{id}` — id-based reads are `get_prb`-only, ADR
   ddfb1109-422d-4507-8dbc-dc5e4bec9614; no `specmgr://prb/list` — listing
@@ -129,8 +137,10 @@ type or cross-cutting:
   the generic `set_status` tool (`type="gol"`), deletions through the generic
   `delete` tool (`type="gol"`), and the `get_gol` tool
   takes `raw: bool = False` — `raw=True` returns the frontmatter-stripped
-  body text as-is (the text `update`'s `begin`/`end` index into);
-  `gol/resources/` (`specmgr://gol/schema`,
+   body text as-is (the text `update`'s `offset`/`limit` index into), with
+   optional read-style `offset`/`limit` windowing of that raw read
+   (raw-only; out-of-range values clamp, never error); `gol/resources/`
+   (`specmgr://gol/schema`,
   `specmgr://gol/example`, `specmgr://gol/template`; no
   `specmgr://gol/{id}` — id-based reads are `get_gol`-only, ADR
   ddfb1109-422d-4507-8dbc-dc5e4bec9614; no `specmgr://gol/list` —
@@ -158,8 +168,10 @@ type or cross-cutting:
   (`type="rsk"`), status changes through the generic `set_status` tool
   (`type="rsk"`), deletions through the generic `delete` tool
   (`type="rsk"`), and the `get_rsk` tool takes `raw: bool = False` —
-  `raw=True` returns the frontmatter-stripped body text as-is (the text
-  `update`'s `begin`/`end` index into); `rsk/resources/`
+   `raw=True` returns the frontmatter-stripped body text as-is (the text
+   `update`'s `offset`/`limit` index into), with optional read-style
+   `offset`/`limit` windowing of that raw read (raw-only; out-of-range
+   values clamp, never error); `rsk/resources/`
   (`specmgr://rsk/schema`, `specmgr://rsk/example`,
   `specmgr://rsk/template`, plus two static domain-knowledge resources
   `specmgr://rsk/tara` — what TARA is and when/how to apply each of the
@@ -182,9 +194,11 @@ type or cross-cutting:
   generic `update` tool in `general/tools/` (`type="dec"`), status
   changes through the generic `set_status` tool (`type="dec"`),
   deletions through the generic `delete` tool (`type="dec"`), and
-  the `get_dec` tool takes `raw: bool = False` — `raw=True` returns
-  the frontmatter-stripped body text as-is (the text `update`'s
-  `begin`/`end` index into); `dec/resources/`
+   the `get_dec` tool takes `raw: bool = False` — `raw=True` returns
+   the frontmatter-stripped body text as-is (the text `update`'s
+   `offset`/`limit` index into), with optional read-style `offset`/`limit`
+   windowing of that raw read (raw-only; out-of-range values clamp, never
+   error); `dec/resources/`
   (`specmgr://dec/schema`, `specmgr://dec/example`,
   `specmgr://dec/template`; no `specmgr://dec/{id}` — id-based reads
   are `get_dec`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
@@ -212,8 +226,10 @@ type or cross-cutting:
   `set_status` tool (`type="sop"`), and deletions through the generic
   `delete` tool (`type="sop"`), and the `get_sop` tool takes
   `raw: bool = False` —
-  `raw=True` returns the frontmatter-stripped body text as-is (the text
-  `update`'s `begin`/`end` index into); `sop/resources/`
+   `raw=True` returns the frontmatter-stripped body text as-is (the text
+   `update`'s `offset`/`limit` index into), with optional read-style
+   `offset`/`limit` windowing of that raw read (raw-only; out-of-range
+   values clamp, never error); `sop/resources/`
   (`specmgr://sop/schema`, `specmgr://sop/example`,
   `specmgr://sop/template`; no `specmgr://sop/{id}` — id-based reads
   are `get_sop`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
@@ -253,9 +269,11 @@ type or cross-cutting:
   changes through the generic `set_status` tool (`type="feat"`) and
   deletions through the generic `delete` tool (`type="feat"`) — no
   `update_feat`/`set_status_feat` of its own — and the
-  `get_feat` tool takes `raw: bool = False` — `raw=True` returns the
-  frontmatter-stripped
-  body text as-is (the text `update`'s `begin`/`end` index into);
+   `get_feat` tool takes `raw: bool = False` — `raw=True` returns the
+   frontmatter-stripped
+   body text as-is (the text `update`'s `offset`/`limit` index into),
+   with optional read-style `offset`/`limit` windowing of that raw read
+   (raw-only; out-of-range values clamp, never error);
   `feat/resources/` (`specmgr://feat/schema`, `specmgr://feat/example`,
   `specmgr://feat/template`; no `specmgr://feat/{id}` — id-based reads
   are `get_feat`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
@@ -293,9 +311,11 @@ type or cross-cutting:
   generic `update` tool in `general/tools/` (`type="vcr"`), status
   changes through the generic `set_status` tool (`type="vcr"`),
   deletions through the generic `delete` tool (`type="vcr"`), and the
-  `get_vcr` tool takes `raw: bool = False` — `raw=True` returns the
-  frontmatter-stripped body text as-is (the text `update`'s `begin`/`end`
-  index into); `vcr/resources/` (`specmgr://vcr/schema`,
+   `get_vcr` tool takes `raw: bool = False` — `raw=True` returns the
+   frontmatter-stripped body text as-is (the text `update`'s
+   `offset`/`limit` index into), with optional read-style `offset`/`limit`
+   windowing of that raw read (raw-only; out-of-range values clamp, never
+   error); `vcr/resources/` (`specmgr://vcr/schema`,
   `specmgr://vcr/example`, `specmgr://vcr/template`; no
   `specmgr://vcr/{id}` — id-based reads are `get_vcr`-only, ADR
   ddfb1109-422d-4507-8dbc-dc5e4bec9614; no `specmgr://vcr/list` —
@@ -313,10 +333,12 @@ type or cross-cutting:
     `general/tools/` (`mdformat`, formats a markdown file in place while
     preserving YAML frontmatter blocks; `update`, the generic whole-body
     *and* line-range replace for the eleven whole-body domains — `type` is
-    one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr, optional 1-based inclusive
-    body-line
-    `begin`/`end` with the `N+1` end-of-body sentinel, splice-then-
-    validate-whole; `set_status`, the generic status change for all twelve
+    one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr, read-style
+    `offset`/`limit` body-line coordinates (`offset` = 1-based first line,
+    `limit` = count; omitted `limit` = through end of body, `0` = pure
+    insert, `offset` `N+1` = append; strict validation, never clamped),
+    splice-then-validate-whole; `set_status`, the generic status change for
+    all twelve
     domains incl. adr — `superseded_by` is ADR-only, composing
     `"superseded by X"`; `delete`, the generic type-dispatched hard-delete
     for the eleven whole-body domains — `type` is one of
@@ -334,15 +356,17 @@ type or cross-cutting:
    but not scoped to it), and `general/prompts/` (`compact_history` — rotates
      older `Recent Updates` entries out of any feature folder's `README.md`
      into a sibling `history.md`). The eleven `get_<d>` tools additionally
-     take a `raw: bool = False` parameter — `raw=True` returns the
-    frontmatter-stripped body text as-is (the text `update`'s `begin`/`end`
-    index into). `get_<d>` (all twelve, incl. `get_adr`), `update`, and
-    `set_status` apply the same `general/tools/_path_safety` guards `delete`
-    already had (feat-38-39-41-43-44 Phase 4, extending feat-36-delete, ADR
-    1af6787b-eaab-4e8f-888f-531c1e76c19d): validate `id` for path-injection/
-    wrong-format before any filesystem access, and confine the resolved path
-    to the domain's own base directory after resolution — `_path_safety`'s
-    UUID-shaped domains now include `adr`; `delete` itself is unchanged.
+   take a `raw: bool = False` parameter — `raw=True` returns the
+   frontmatter-stripped body text as-is (the text `update`'s
+   `offset`/`limit` index into), with optional read-style `offset`/`limit`
+   windowing of that raw read (raw-only; out-of-range values clamp, never
+   error). `get_<d>` (all twelve, incl. `get_adr`), `update`, and
+   `set_status` apply the same `general/tools/_path_safety` guards `delete`
+   already had (feat-38-39-41-43-44 Phase 4, extending feat-36-delete, ADR
+   1af6787b-eaab-4e8f-888f-531c1e76c19d): validate `id` for path-injection/
+   wrong-format before any filesystem access, and confine the resolved path
+   to the domain's own base directory after resolution — `_path_safety`'s
+   UUID-shaped domains now include `adr`; `delete` itself is unchanged.
 
 **Models location — a real, intentional divergence, not an oversight**:
 the rule is domain-first — every document type keeps its schema inside
