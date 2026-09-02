@@ -19,7 +19,6 @@
 
 from __future__ import annotations
 
-import re
 import tempfile
 import textwrap
 import threading
@@ -119,7 +118,7 @@ class TestCreateFeat(TempFeatDirTestCase):
         result = create_feat(_MINIMAL_BODY)
 
         self.assertIsInstance(result, FeatDocument)
-        self.assertEqual(result.frontmatter.id, "feat-1-example-widget")
+        self.assertEqual(result.frontmatter.id, "feat-0-example-widget")
         self.assertEqual(result.frontmatter.type, "feat")
         self.assertEqual(result.frontmatter.status, "planning")
         self.assertIsNotNone(result.frontmatter.created)
@@ -148,21 +147,22 @@ class TestCreateFeat(TempFeatDirTestCase):
         self.assertEqual(on_disk.frontmatter.status, "planning")
         self.assertEqual(on_disk.body.text, "Feature: Example Widget")
 
-    def test_id_starts_at_1_when_base_dir_is_empty(self) -> None:
-        """The first feature created against an empty base dir must be feat-1-<slug>."""
+    def test_id_defaults_to_feat_0_when_base_dir_is_empty(self) -> None:
+        """The first feature created against an empty base dir must default to feat-0-<slug> (REQ-002)."""
         result = create_feat(_MINIMAL_BODY)
-        self.assertEqual(result.frontmatter.id, "feat-1-example-widget")
+        self.assertEqual(result.frontmatter.id, "feat-0-example-widget")
 
-    def test_id_number_increments_across_creates(self) -> None:
-        """Each subsequent create_feat call must derive the next NNN."""
+    def test_id_number_stays_0_across_creates_with_distinct_titles(self) -> None:
+        """Each default-id create_feat call must derive feat-0-<slug> -- no max+1 auto-increment (REQ-002)."""
         first = create_feat(_body_with_title("Widget One"))
         second = create_feat(_body_with_title("Widget Two"))
 
-        self.assertEqual(first.frontmatter.id, "feat-1-widget-one")
-        self.assertEqual(second.frontmatter.id, "feat-2-widget-two")
+        self.assertEqual(first.frontmatter.id, "feat-0-widget-one")
+        self.assertEqual(second.frontmatter.id, "feat-0-widget-two")
 
-    def test_id_number_derivation_handles_gaps(self) -> None:
-        """A gap in existing feat-NNN-... folder numbers must not be reused -- max + 1 always."""
+    def test_id_number_derivation_ignores_other_feat_folders(self) -> None:
+        """Other feat-NNN-... folders (even at a would-be-colliding number) must not affect the
+        default feat-0-<slug> id -- there is no more max+1 scanning to perturb (REQ-002)."""
         base_dir = feat_base_dir()
         for number in (1, 5):
             folder = base_dir / f"feat-{number}-placeholder"
@@ -171,7 +171,7 @@ class TestCreateFeat(TempFeatDirTestCase):
 
         result = create_feat(_MINIMAL_BODY)
 
-        self.assertEqual(result.frontmatter.id, "feat-6-example-widget")
+        self.assertEqual(result.frontmatter.id, "feat-0-example-widget")
 
     def test_slug_derivation_strips_the_feature_prefix(self) -> None:
         """The folder-name slug must be derived from the free-form title, not the literal 'Feature: ' prefix."""
@@ -203,10 +203,12 @@ class TestCreateFeat(TempFeatDirTestCase):
 
 
 class TestCreateFeatConcurrency(TempFeatDirTestCase):
-    """Tests for create_feat's concurrent-create NNN-collision handling (ACC-002)."""
+    """Tests for create_feat's concurrent-create id-collision handling (ACC-002)."""
 
-    def test_concurrent_creates_never_collide_on_the_same_number(self) -> None:
-        """Many threads calling create_feat at once must all get distinct feat-NNN-... ids."""
+    def test_concurrent_creates_with_distinct_titles_never_collide(self) -> None:
+        """Many threads calling create_feat at once with distinct titles (hence distinct default
+        feat-0-<slug> ids) must all get distinct ids -- no max+1 auto-increment is involved anymore
+        (REQ-002), but the pre-write existence check + global lock must still prevent any collision."""
         results: list[FeatDocument] = []
         errors: list[BaseException] = []
         lock = threading.Lock()
@@ -232,9 +234,7 @@ class TestCreateFeatConcurrency(TempFeatDirTestCase):
 
         ids = [doc.frontmatter.id for doc in results]
         self.assertEqual(len(ids), len(set(ids)), f"duplicate ids created: {ids}")
-
-        numbers = [int(re.match(r"^feat-(\d+)-", id_).group(1)) for id_ in ids]  # type: ignore[union-attr]
-        self.assertEqual(sorted(numbers), list(range(1, 11)))
+        self.assertTrue(all(id_.startswith("feat-0-widget-") for id_ in ids), ids)
 
 
 if __name__ == "__main__":

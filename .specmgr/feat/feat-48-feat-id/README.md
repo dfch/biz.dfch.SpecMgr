@@ -3,7 +3,7 @@ created: '2026-09-02T10:32:05.764646'
 id: feat-48-feat-id
 status: planning
 type: feat
-updated: '2026-09-02T13:15:00.000000'
+updated: '2026-09-02T14:30:00.000000'
 version: 1.0.0
 ---
 
@@ -100,10 +100,10 @@ known), keeping the document addressable end-to-end.
 
 #### Phase 2: create_feat optional id parameter
 
-- [ ] Task 2.1: Add `id: str | None = None` to `create_feat`; validate shape when given.
-- [ ] Task 2.2: Change id derivation: `id` given -> use as-is; `id` omitted -> `feat-0-<slug-from-title>`, removing the max+1 auto-increment fallback from the default path.
-- [ ] Task 2.3: Add a pre-write existence check for the resulting id/folder; raise before any write side effect.
-- [ ] Task 2.4: Update `create_feat.py`'s docstring/description for the new parameter and failure mode.
+- [x] Task 2.1: Add `id: str | None = None` to `create_feat`; validate shape when given.
+- [x] Task 2.2: Change id derivation: `id` given -> use as-is; `id` omitted -> `feat-0-<slug-from-title>`, removing the max+1 auto-increment fallback from the default path.
+- [x] Task 2.3: Add a pre-write existence check for the resulting id/folder; raise before any write side effect.
+- [x] Task 2.4: Update `create_feat.py`'s docstring/description for the new parameter and failure mode.
 
 #### Phase 3: set_feat_id tool
 
@@ -135,13 +135,46 @@ known), keeping the document addressable end-to-end.
 
 ### Current Status
 
-**As of 2026-09-02**: Phase 1 (Design & Validation Helpers) done. Both design
-questions the plan flagged are settled and recorded below; no `src/` code
-changes yet — implementation starts in Phase 2.
+**As of 2026-09-02**: Phase 2 (`create_feat` optional `id` parameter) done.
+`create_feat` now accepts an optional caller-chosen `id`, validated against
+`feat-NNN-slug` via `assert_feat_id`; when omitted it defaults to
+`feat-0-<slug-from-title>` with no max+1 auto-increment; a pre-write
+existence check (raising `FileExistsError`) guards both branches inside the
+existing `feat_create_lock()` block. Full test suite green (3015 tests).
+Implementation continues with Phase 3 (`set_feat_id` tool).
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-02 14:30:00.000Z — Phase 2: create_feat optional id parameter
+
+Completed Task 2.1-2.4. `src/biz/dfch/specmgr/feat/tools/create_feat.py`:
+added `id: str | None = None` (validated via
+`general.tools._path_safety.assert_feat_id` before any lock/filesystem
+access, per Phase 1's Decision); id derivation now branches on whether
+`id` was given (used verbatim) or omitted (`feat-0-<slug-from-title>`,
+REQ-002 -- no more `_next_feat_number` max+1 scan); a pre-write existence
+check (`target_path.parent.exists()`) raises `FileExistsError` before
+`write_feat_file` runs for either branch (REQ-003), inside the existing
+`feat_create_lock()` block, per Phase 1's Decision that this lock must
+cover the caller-supplied-id existence-check too. Removed the now-fully-
+dead `_next_feat_number` helper and its `FEAT_FOLDER_PATTERN`/`re` imports
+from `create_feat.py`; `FEAT_FOLDER_PATTERN` itself (and the now-unused
+`re` import) were also removed from `feat/tools/_paths.py` after `vulture`
+flagged it as dead once `create_feat.py` stopped importing it. Updated the
+module/function docstrings and the `@mcp.tool()` `description=` string to
+describe both `id` branches and the two new failure modes (`ValueError`
+for a malformed `id`, `FileExistsError` for a collision). Satisfies
+REQ-001, REQ-002, REQ-003, REQ-004 and ACC-001 through ACC-004. Adjusted
+five existing tests that asserted the removed max+1 auto-increment
+behavior (`tests/feat/tools/test_create_feat.py`,
+`tests/feat/prompts/test_create_feat.py`,
+`tests/feat/tools/test_integration.py`) to expect `feat-0-<slug>` instead
+of an incrementing number; no new test cases were added (Phase 5 owns
+that). Full quality gate green: `ruff format --check`, `ruff check`,
+`vulture` (clean after the `_paths.py` cleanup), and the full
+`unittest discover` suite (3015 tests, all passing).
 
 #### 2026-09-02 13:15:00.000Z — Phase 1: Design & Validation Helpers
 
@@ -190,3 +223,17 @@ Captured the two changes issue #48 asks for (`create_feat`'s optional caller-cho
   the default-id derivation path), so both tools consistently serialize on
   the same global lock for their respective "check existence, then
   create/rename" sequences — flagged here for Phase 2/3 to follow.
+- **2026-09-02 (Task 2.3, Phase 2)**: The pre-write existence check tests
+  `target_path.parent.exists()` (i.e. `<base>/<new_id>/`, the folder),
+  not just `target_path.exists()` (the `README.md` file itself), and
+  raises the builtin `FileExistsError` on a hit. Rationale: no other
+  domain tool in this codebase has an established "id/folder already
+  exists" collision exception to mirror (grepped for `FileExistsError`/
+  "already exist" across `src/`; none found as a raised-collision
+  pattern), so `FileExistsError` was chosen as the most semantically
+  correct builtin for this condition, per the task instructions.
+  Checking the folder rather than just the file also correctly rejects a
+  half-written/collided folder that exists without a `README.md` yet
+  (e.g. left over from an interrupted create), consistent with
+  `find_feat_path_by_id`'s own folder-is-the-unit-of-identity treatment
+  of `feat` ids elsewhere in this domain.

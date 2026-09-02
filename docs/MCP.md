@@ -350,7 +350,7 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`confluence_update`](#tool-confluence_update) | Render a local Markdown file to an HTML fragment and write it into an existing Confluence page's body via the REST API, incrementing the page's version number. Accepts a bare numeric page id, a browsable page URL ('/pages/<id>/...' or '?pageId=<id>'), or a REST content URL; a '/x/<tinyid>' tiny link is rejected. Reuses the same two environment variables confluence_fetch uses. Local images referenced by the Markdown file (a relative or absolute filesystem path, not an 'http(s)://' URL) that exist on disk are uploaded as Confluence attachments (POST .../child/attachment, falling back to updating an existing attachment's content if the filename already exists) and their <img> tags are rewritten into Confluence's <ac:image>/<ri:attachment> storage-format macro, on a best-effort basis: a missing local file or a failed upload simply leaves that one <img> tag unrewritten instead of aborting the update. Also sanitizes any raw '--' inside rendered <!-- --> HTML comments (invalid in Confluence's strict XHTML storage format, though valid CommonMark) and converts a leading YAML frontmatter block into a fenced code block before rendering, so it is not mangled into a heading. |
 | [`create_adr`](#tool-create_adr) | Create a new ADR: assigns a fresh id, derives a filename from the title, validates, renders, and writes the new document to the ADR base directory. |
 | [`create_dec`](#tool-create_dec) | Create a new decision: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the decision base directory. |
-| [`create_feat`](#tool-create_feat) | Create a new feature: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the feature base directory. |
+| [`create_feat`](#tool-create_feat) | Create a new feature: assigns a fresh id (caller-chosen via the optional 'id' parameter, or defaulted to feat-0-<slug-from-title> when omitted -- no max+1 auto-generation), derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the feature base directory. |
 | [`create_gol`](#tool-create_gol) | Create a new goal: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the goal base directory. |
 | [`create_prb`](#tool-create_prb) | Create a new Problem Statement: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the problem statement base directory. |
 | [`create_qa`](#tool-create_qa) | Create a new Question and Answer (QA) document: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the QA base directory. |
@@ -488,11 +488,12 @@ Create a new decision: assigns a fresh id, derives a filename from the body's H1
 
 **Create feature**
 
-Create a new feature: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the feature base directory.
+Create a new feature: assigns a fresh id (caller-chosen via the optional 'id' parameter, or defaulted to feat-0-<slug-from-title> when omitted -- no max+1 auto-generation), derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the feature base directory.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
 | `content` | `string` | Yes |
+| `id` | `string | None` | No |
 
 ### Tool: create_gol
 
