@@ -168,25 +168,33 @@ Domain key: `sysrs` (decided 2026-08-30 — see Decisions Made).
   template parse via `parse_sysrs`; structural violations raise
   `AssertionError`: unknown H2; missing mandatory H2 (`System Purpose`/
   `System Scope`/`Business Context and Goals`/`System Overview`/
-  `Requirements`); `## Requirements` present with zero H3s; a
-  cross-reference list section present with zero items; `## References`
-  present with zero items; H1 prefix mismatch (a `# ...` line not
-  starting `System Requirements
+  `Requirements`); a cross-reference list section present with zero
+  items; `## References` present with zero items; H1 prefix mismatch
+  (a `# ...` line not starting `System Requirements
   Specification: `); misordering of any top-level section; second H1;
   non-blank content before the H1; a mandatory free-text H2/H3
   present with zero body content (the engine's behavior for that case
   is pinned in Phase 1, Task 1.3(e), and the pinned behavior is
   asserted); a `## Updates` entry heading failing its timestamp-led
-  alias (missing timestamp lead or an em-dash separator) and out-of-
-  order `## Updates` entries (newest-first is parse-enforced — the
-  locked sibling-feature shape, see Dependencies).
+  alias (missing timestamp lead or an em-dash separator). (`##
+  Requirements` present with zero H3s and out-of-order `## Updates`
+  entries moved to ACC-005 below — corrected 2026-09-02: `sysrs`
+  matches every other domain's `ValidationError` channel for these two
+  checks instead of a domain-local `AssertionError` special case; see
+  Decisions Made.)
 - [ ] ACC-005: Verifies REQ-005/006 — value violations raise
   `pydantic.ValidationError`: `status` outside the 5-value set; `type`
   != `"sysrs"`; a cross-reference bullet with the wrong type tag for
   its section, a malformed uuid (not 8-4-4-4-12 lowercase hex), or a
   missing `: <title>`; `DEC` and `ADR` both accepted under `##
   Decisions` (and `REQ` rejected there); a bare cross-reference bullet
-  without a notes paragraph accepted (notes are per-bullet optional).
+  without a notes paragraph accepted (notes are per-bullet optional);
+  `## Requirements` present with zero H3s; and out-of-order `##
+  Updates` entries (newest-first is parse-enforced via a
+  `model_validator` delegating to the shared
+  `models/md/_ordering.py::validate_newest_first` helper, matching
+  every other domain's — SOP/DEC/VCR/TSK — identical check; moved here
+  from ACC-004, 2026-09-02, see Decisions Made).
 - [ ] ACC-006: Verifies REQ-008 — every listed tool is implemented,
   registered, and callable; `create_sysrs`→`get_sysrs`→`list_sysrs`→
   `update` (generic, `type="sysrs"`)→`set_status` (generic,
@@ -884,12 +892,12 @@ pinning `sop` uses for `Safety and Precautions`):
 - `BusinessContextAndGoals(MarkdownSection2)` — LITERAL; mandatory container; `business_context: BusinessContext | None`, `goals: Goals` (mandatory), `problem_statement: ProblemStatement | None`.
 - `SystemOverview(MarkdownSection2)` — mandatory container; `system_context: SystemContext`, `system_functions: SystemFunctions`, `user_characteristics: UserCharacteristics | None`, `system_integration: SystemIntegration | None`.
 - The cross-reference list classes — `Goals` (H3, `GOL`), `ProblemStatement` (H3, `PRB`), `StakeholderNeedsAndElicitation` (H2, LITERAL, `QA`), `OperationalConceptAndScenarios` (H2, LITERAL, `UC`), `Decisions` (H2, `DEC|ADR`), `Risks` (H2, `RSK`), plus the nine `## Requirements` H3s and six `## Other Characteristics` H3s (all `REQ`; LITERAL pins on `PolicyAndRegulation` and `PackagingHandlingShippingAndTransportation` — lowercase "and" and commas; the full 8-class LITERAL pin set was confirmed exactly as sketched in Phase 1). Each: `items: list[MarkdownListItemWithNotes] = Field(min_length=1)` (≥1 item when present — absent is the section's own `| None`, present-with-zero-items raises the engine's raw `AssertionError` from `process_list_field`'s `assert False`, before any pydantic validation — Phase 1 confirmed) + a per-class `field_validator("items")` regex-checking each item's `.text` — the item-text field is exactly `MarkdownListItem.text` (computed property, lead paragraph with the marker stripped), and the list-level validator sees it during parse (it fires at the engine's `cls(**kwargs)` at the end of `from_text`; a raised `ValueError` lands in the `pydantic.ValidationError` channel — Phase 1 confirmed) — against the section's own module-level pattern, e.g. `_GOALS_PATTERN = r"^GOL [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}: .+$"` (vcr's `_VERIFIES_PATTERN` fragment style); `Decisions`'s pattern allows `(DEC|ADR)`. **Phase 1 refinement: the per-item `re.fullmatch` must run with `re.DOTALL`** — `item.text` keeps the embedded newline of soft-wrapped bullet lines (mdformat does not reflow), and `.` does not match `\n` without it (the pattern itself is unchanged). The item's `notes` field (`list[MarkdownParagraph] | None`, declared on `MarkdownListItemWithNotes`) holds the optional per-bullet indented notes paragraph (free text; bare bullet → `notes is None` — Phase 1 confirmed). **Phase 1 pin: `## References` as a plain `list[MarkdownListItem]` works as intended** (plain items are leaves — no `notes` attribute, continuation lines stay in `_value`), and a tight multi-item list under an `items`-declared section parses but `str()` re-renders it loose (the documented `MarkdownListItem` tight→loose round-trip exception) — `sysrs-example.md`'s `## References` is tight, so the packaged example (Task 4.1) must loosen it (the shipped `gol_example.md` `## Tags` convention).
-- `Requirements(MarkdownSection2)` — mandatory container; nine `| None` H3 fields in canonical 25010:2023 order + a check that at least one of the nine is present. **Phase 1 confirmed the "≥1 of N optional children" mechanics and corrected the channel claim**: the engine has no built-in "≥1 of N children" check, and a `model_validator(mode="after")` `assert` (the sketch's proposed mechanic) surfaces as **`pydantic.ValidationError`** (`type=assertion_error` — pydantic 2.13.4 wraps validator `AssertionError`s; the shipped FEAT precedent's own tests pin this: `tests/feat/.../test_body.py::TestUpdatesOrdering::test_out_of_order_entries_raise_validation_error`), not the raw `AssertionError` the preliminary sketch assumed. A raw `AssertionError` for the same check is achievable by placing the assert in the container's `from_text` classmethod override (after `super().from_text` — the engine's own `*WithComment` classes use exactly this classmethod-assert pattern); Phase 1 demonstrated both mechanics. Phase 1 also confirmed the engine **enforces child order** (sequential one-pass field distribution): nine H3s in any order other than declaration (canonical) order → raw `AssertionError` ("text left over after processing all fields") — so the canonical 25010 order is parse-enforced, not just a rendering convention. The channel choice for the ≥1 check (sketch mechanic → `ValidationError` vs. `from_text` override → `AssertionError` per ACC-004) is recorded as the open item below.
+- `Requirements(MarkdownSection2)` — mandatory container; nine `| None` H3 fields in canonical 25010:2023 order + a check that at least one of the nine is present. **Phase 1 confirmed the "≥1 of N optional children" mechanics and corrected the channel claim**: the engine has no built-in "≥1 of N children" check, and a `model_validator(mode="after")` `assert` (the sketch's proposed mechanic) surfaces as **`pydantic.ValidationError`** (`type=assertion_error` — pydantic 2.13.4 wraps validator `AssertionError`s; the shipped FEAT precedent's own tests pin this: `tests/feat/.../test_body.py::TestUpdatesOrdering::test_out_of_order_entries_raise_validation_error`), not the raw `AssertionError` the preliminary sketch assumed. A raw `AssertionError` for the same check is achievable by placing the assert in the container's `from_text` classmethod override (after `super().from_text` — the engine's own `*WithComment` classes use exactly this classmethod-assert pattern); Phase 1 demonstrated both mechanics. Phase 1 also confirmed the engine **enforces child order** (sequential one-pass field distribution): nine H3s in any order other than declaration (canonical) order → raw `AssertionError` ("text left over after processing all fields") — so the canonical 25010 order is parse-enforced, not just a rendering convention. **Decided 2026-09-02 (see Decisions Made): `sysrs` uses the `model_validator(mode="after")` mechanic — `ValidationError` — matching every other domain's identical-shape checks rather than special-casing `sysrs` alone; ACC-004/ACC-005 updated accordingly.**
 - `OtherCharacteristics(MarkdownSection2)` — optional umbrella; six `| None` H3 fields; **no** ≥1-of-N validator (the whole umbrella is optional — "omit if none of the six apply").
 - `References(MarkdownSection2)` — optional; `items: list[MarkdownListItem] = Field(min_length=1)` — the plain no-notes variant (external standards/documents, no specmgr ids, no per-item regex). Present ⇒ ≥1 item required (user-confirmed 2026-09-01 — a bare heading with zero bullets is a structural error; see the resolved question below).
-- `Updates(MarkdownSection2WithComment)` + `UpdateEntry(MarkdownSection3)` — the locked post-sibling shape (feat-38-39-41-43-44 D2/D3, adopted from day one — see Dependencies), mirroring `dec`'s/`vcr`'s `## Updates` as it exists on `dev` after that feature's Phases 1–2: `UpdateEntry` with a timestamp-led REGEX alias — **Phase 1 correction: use the prose-described form `^\d{4}-\d{2}-\d{2}(?: \d{2}:\d{2}:\d{2}\.\d{3}(Z|[+-]\d{2}:\d{2}))?(?: - | : ).+$`** (date-only or full date+time lead, then ` - ` or ` : `, then title — em-dash separators rejected); the literal string quoted in this plan's Task 1.3/Design Notes (`(?: - | : ) .+$`, with a space between the separator group and the title) does **not** fullmatch the plan's own locked example headings (`### 2026-09-14 - Added Security Requirements` in `sysrs-example.md`, migrated per the locked convention by Task 0.12) — verified by direct `re.fullmatch` on both variants; the prose form matches every valid lead (date-only and full, `Z`/`±HH:mm`, both separators) and rejects em-dash/free-form, so it is the intended alias — mandatory `content: MarkdownParagraph`, plus the computed `timestamp` field the sibling feature adds to DEC/VCR's entries (FEAT-precedent shape: named-group `fullmatch` against the composite section's heading-only `.text` — Phase 1 confirmed it works at H3 level); `Updates` with `updates: list[UpdateEntry] = Field(min_length=1)`, optional as a whole, last section, and a newest-first ordering check. **Phase 1 channel findings for the ordering check**: as a `model_validator(mode="after")` `assert` (the sketch's proposed mechanic / the FEAT precedent's own implementation) it surfaces as **`pydantic.ValidationError`** (pydantic wraps validator asserts — same correction as the `Requirements` ≥1 check above); as a `from_text` classmethod-override `assert` it surfaces as the raw **`AssertionError`** ACC-004 pins. **Phase 1 hazard pin: the ordering comparison must normalize naive→aware datetimes** — a date-only lead parses via `datetime.fromisoformat` to a *naive* datetime, a full lead to an *aware* one, and comparing mixed formats raises a raw `TypeError` ("can't compare offset-naive and offset-aware datetimes") even for correctly-ordered documents; normalizing naive to UTC before comparing accepts in-order mixed documents (verified). Equal timestamps are allowed (non-increasing check, FEAT precedent). Alias failure (missing timestamp lead, em-dash separator, missing separator) raises the raw `AssertionError` either way (first entry → `get_extent` returns 0 on the alias mismatch → "expected list[UpdateEntry], found no match"; a later entry → "text left over"); zero entries and an entry heading with no content paragraph also raise the raw `AssertionError`. If the sibling feature's Phase 2 has not merged by the time Task 2.3 runs, implement the ordering check domain-locally per the channel decision above (no `models/md` change) and switch to the shared `models/md/_ordering.py::validate_newest_first` helper when it lands. The inherited `comment` field stays absent in `sysrs-example.md` and carries the "newest first, prepend" ordering hint only in the packaged template.
+- `Updates(MarkdownSection2WithComment)` + `UpdateEntry(MarkdownSection3)` — the locked post-sibling shape (feat-38-39-41-43-44 D2/D3, adopted from day one — see Dependencies), mirroring `dec`'s/`vcr`'s `## Updates` as it exists on `dev` after that feature's Phases 1–2: `UpdateEntry` with a timestamp-led REGEX alias — **Phase 1 correction: use the prose-described form `^\d{4}-\d{2}-\d{2}(?: \d{2}:\d{2}:\d{2}\.\d{3}(Z|[+-]\d{2}:\d{2}))?(?: - | : ).+$`** (date-only or full date+time lead, then ` - ` or ` : `, then title — em-dash separators rejected); the literal string quoted in this plan's Task 1.3/Design Notes (`(?: - | : ) .+$`, with a space between the separator group and the title) does **not** fullmatch the plan's own locked example headings (`### 2026-09-14 - Added Security Requirements` in `sysrs-example.md`, migrated per the locked convention by Task 0.12) — verified by direct `re.fullmatch` on both variants; the prose form matches every valid lead (date-only and full, `Z`/`±HH:mm`, both separators) and rejects em-dash/free-form, so it is the intended alias — mandatory `content: MarkdownParagraph`, plus the computed `timestamp` field the sibling feature adds to DEC/VCR's entries (FEAT-precedent shape: named-group `fullmatch` against the composite section's heading-only `.text` — Phase 1 confirmed it works at H3 level); `Updates` with `updates: list[UpdateEntry] = Field(min_length=1)`, optional as a whole, last section, and a newest-first ordering check. **Phase 1 channel findings for the ordering check**: as a `model_validator(mode="after")` `assert` (the sketch's proposed mechanic / the FEAT precedent's own implementation) it surfaces as **`pydantic.ValidationError`** (pydantic wraps validator asserts — same correction as the `Requirements` ≥1 check above); as a `from_text` classmethod-override `assert` it surfaces as the raw **`AssertionError`** ACC-004 pins. **Phase 1 hazard pin: the ordering comparison must normalize naive→aware datetimes** — a date-only lead parses via `datetime.fromisoformat` to a *naive* datetime, a full lead to an *aware* one, and comparing mixed formats raises a raw `TypeError` ("can't compare offset-naive and offset-aware datetimes") even for correctly-ordered documents; normalizing naive to UTC before comparing accepts in-order mixed documents (verified). Equal timestamps are allowed (non-increasing check, FEAT precedent). Alias failure (missing timestamp lead, em-dash separator, missing separator) raises the raw `AssertionError` either way (first entry → `get_extent` returns 0 on the alias mismatch → "expected list[UpdateEntry], found no match"; a later entry → "text left over"); zero entries and an entry heading with no content paragraph also raise the raw `AssertionError`. **Update 2026-09-02: the sibling feature is now merged (`dev` @ `f0abc33`, PR #54)** — `Updates` calls the shared `models/md/_ordering.py::validate_newest_first` helper directly from a `model_validator(mode="after")`, exactly mirroring SOP's/DEC's/VCR's/TSK's own `Updates`/`RecentUpdates` implementation — **decided: `ValidationError`, not a domain-local `AssertionError` special case (see Decisions Made).** The inherited `comment` field stays absent in `sysrs-example.md` and carries the "newest first, prepend" ordering hint only in the packaged template.
 - `SysrsFrontmatter`/`SysrsDocument`/`parse_sysrs`/`SysrsSummary` — per the confirmed frontmatter shape above and sop's document/parser/summary shapes (`SysrsSummary(DocSummary)` plain: id/title/status/ref, no extras).
-- **Error channels** (codebase convention, no new exception types; **Phase 1-confirmed**): structural → raw engine `AssertionError` (missing mandatory H2 — "expected X, found no match"; unknown H2, second H1, and misordering of any top-level section — mandatory *or* optional pairs — "text left over after processing all fields"; non-blank content before the H1 — "Token[0]: expected 'heading_open', …"; H1 prefix mismatch and any heading alias failure incl. a `## Updates` entry failing its timestamp-led alias — "heading text … does not match its declared @alias" / list-no-match / text-left-over; zero-item list sections — cross-ref lists, `## References`, `## Updates` — `process_list_field`'s `assert False`); value → `pydantic.ValidationError` (`status` outside the 5-set, `type` != `sysrs`, a cross-ref bullet failing its section's type-tag regex — the `field_validator` `ValueError` channel, pinned for wrong tag / malformed uuid / missing `: <title>` / wrong-section tag; `Field(min_length=1)` on direct construction). **Mechanic-dependent (open item, see below)**: zero-H3 `## Requirements` and out-of-order `## Updates` entries land in `ValidationError` under the sketch's `model_validator` mechanic and in raw `AssertionError` under the `from_text`-override mechanic — ACC-004 pins `AssertionError` for both. **Phase 1 pin (Task 1.3(e)): a mandatory free-text section present with zero body content is ACCEPTED by the engine** (leaf sections carry no body-content requirement; the empty leaf holds exactly its own heading line and round-trips byte-exact) — it is therefore *not* a structural violation, and ACC-004's "the pinned behavior is asserted" means Task 2.5 asserts acceptance (parse succeeds, `.text` is the bare heading).
+- **Error channels** (codebase convention, no new exception types; **Phase 1-confirmed**): structural → raw engine `AssertionError` (missing mandatory H2 — "expected X, found no match"; unknown H2, second H1, and misordering of any top-level section — mandatory *or* optional pairs — "text left over after processing all fields"; non-blank content before the H1 — "Token[0]: expected 'heading_open', …"; H1 prefix mismatch and any heading alias failure incl. a `## Updates` entry failing its timestamp-led alias — "heading text … does not match its declared @alias" / list-no-match / text-left-over; zero-item list sections — cross-ref lists, `## References`, `## Updates` — `process_list_field`'s `assert False`); value → `pydantic.ValidationError` (`status` outside the 5-set, `type` != `sysrs`, a cross-ref bullet failing its section's type-tag regex — the `field_validator` `ValueError` channel, pinned for wrong tag / malformed uuid / missing `: <title>` / wrong-section tag; `Field(min_length=1)` on direct construction). **Decided 2026-09-02**: zero-H3 `## Requirements` and out-of-order `## Updates` entries land in `pydantic.ValidationError` via the `model_validator(mode="after")` mechanic, matching every other domain's identical checks (see Decisions Made) — moved from ACC-004 to ACC-005. **Phase 1 pin (Task 1.3(e)): a mandatory free-text section present with zero body content is ACCEPTED by the engine** (leaf sections carry no body-content requirement; the empty leaf holds exactly its own heading line and round-trips byte-exact) — it is therefore *not* a structural violation, and ACC-004's "the pinned behavior is asserted" means Task 2.5 asserts acceptance (parse succeeds, `.text` is the bare heading).
 
 **Phase 1 outcome record (2026-09-01 — empirical validation against the
 live `models/md` engine, all tasks passed)**
@@ -1023,22 +1031,19 @@ Task 1.3 — 15/15; Task 1.4 — 20/20. Closes ACC-003.
   a scratch class named e.g. `SystemPurposeLeaf` silently derives to
   "System Purpose Leaf" and then fails every `get_extent`/`from_text`
   match; the 8 LITERAL pins in the sketch are the complete set.
-- **Open item for the orchestrator/user (NOT decided in Phase 1):**
-  ACC-004 lists "## Requirements present with zero H3s" and "out-of-
-  order ## Updates entries" under "structural violations raise
-  `AssertionError`", but the sketch's named mechanic (an
-  `assert`-based `model_validator`, i.e. the FEAT precedent's own
-  implementation) lands both in `pydantic.ValidationError` — pydantic
-  wraps validator asserts, and the FEAT precedent's shipped tests pin
-  exactly that. Phase 2 (Task 2.3) can honor ACC-004's channels by
-  placing both checks in `from_text` classmethod overrides (demonstrated
-  here to yield raw `AssertionError`; engine-supported — the
-  `*WithComment` classes use the same pattern), or keep the FEAT-
-  precedent `model_validator` style and have ACC-004's wording for those
-  two cases re-read; the sibling feature's locked D2/D3 design (not on
-  this branch) may prescribe the channel for the ordering check
-  specifically. Phase 1 records both observed mechanics and defers the
-  choice.
+- **Resolved 2026-09-02 (was an open item after Phase 1):** ACC-004
+  originally listed "## Requirements present with zero H3s" and "out-
+  of-order ## Updates entries" under "structural violations raise
+  `AssertionError`", but both checks' named mechanic (an `assert`-based
+  `model_validator`) lands in `pydantic.ValidationError` (pydantic wraps
+  validator asserts). The now-merged sibling feature ships SOP's/DEC's/
+  VCR's/TSK's own newest-first check with exactly this mechanic. User-
+  confirmed decision: `sysrs` matches every other domain's
+  `ValidationError` channel for these two checks rather than special-
+  casing itself via a `from_text`-override `AssertionError` — the
+  original ACC-004 wording was a misjudgment made before this
+  mechanical wrinkle was understood. Both cases moved to ACC-005; see
+  Decisions Made.
 
 **Tools** (one module per tool, mirror `sop/tools/`/`vcr/tools/`;
 **dispatch-only — no** `update_sysrs`/`set_status_sysrs`, ADR
@@ -1436,8 +1441,7 @@ its own ADR rather than living only in this feature's Design Notes.
   Field(min_length=1)` — present ⇒ ≥1 item, Decisions Made 2026-09-01),
   `Updates`/`UpdateEntry` per the locked post-sibling shape in Design
   Notes (timestamp-led alias, computed `timestamp`, newest-first
-  ordering — the shared `models/md/_ordering.py` helper once it exists
-  on `dev`, else the domain-local validator fallback) — **no**
+  ordering — the shared `models/md/_ordering.py::validate_newest_first` helper directly, now merged into `dev` via PR #54) — **no**
   `models/md` engine changes; implement the mechanics Phase 1 recorded,
   not new ones — depends on: Task 2.2 — status: not-started
 - [ ] Task 2.4: `sysrs/models/v1/document.py` (`SysrsDocument`),
@@ -1687,9 +1691,10 @@ example headings — corrected to the prose form in Design Notes; (6) the
 newest-first comparison must normalize naive (date-only) → aware datetimes or
 mixed-format documents raise a raw `TypeError`; (7) the packaged example must
 loosen `## References` (documented tight→loose `str()` round-trip exception) for
-byte-exact round-trip tests. Next action: Phase 2 (models + parser) — Task 2.3
-needs the open channel decision above; the Phase 1 commit (Design Notes record
-only) is the orchestrator's.
+byte-exact round-trip tests. Next action: Phase 2 (models + parser) — the
+Task 2.3 channel question was resolved 2026-09-02 (see Decisions Made:
+`sysrs` uses `ValidationError`, matching every other domain, for the
+zero-H3 `## Requirements` and out-of-order `## Updates` checks).
 
 **As of 2026-09-01 (plan-review fixes applied)**: A plan review
 against the live codebase and the sibling feature
@@ -1914,6 +1919,23 @@ entirely, per explicit user instruction, rather than continuing to
 wait on it; see Task List Task 0.7/Design Notes item 4's note.)
 
 ### Recent Updates
+
+#### Update 2026-09-02 (ACC-004/005 corrected — sysrs matches every domain's ValidationError channel for the two mechanic-dependent checks)
+
+- Completed: User decision — `sysrs` should behave like every other
+  domain rather than special-case itself for two checks whose exception
+  channel Phase 1 found to be mechanic-dependent (`## Requirements`
+  zero-H3s; `## Updates` out-of-order). Moved both cases from ACC-004's
+  `AssertionError` list to ACC-005's `ValidationError` list; corrected
+  the Design Notes model-sketch bullets, the "Error channels" bullet,
+  and the Phase 1 outcome record's former "open item" paragraph (now
+  resolved) accordingly; added a Decisions Made entry; lightly updated
+  Task 2.3's still-open description to point at the shared
+  `models/md/_ordering.py::validate_newest_first` helper unconditionally
+  (the sibling feature merged via PR #54, no more domain-local
+  fallback needed).
+- Next: Phase 2 (models + parser, Tasks 2.1–2.6), likely in a fresh
+  session per context-budget planning.
 
 #### Update 2026-09-01 (Phase 1 complete — empirical schema validation against the live models/md engine)
 
@@ -2654,6 +2676,23 @@ wait on it; see Task List Task 0.7/Design Notes item 4's note.)
 
 ### Decisions Made
 
+- **2026-09-02**: `sysrs`'s "≥1 of N children present" (`## Requirements`
+  zero-H3s) and "newest-first ordering" (`## Updates` out-of-order)
+  structural checks raise `pydantic.ValidationError`, not
+  `AssertionError` — supersedes the original ACC-004 wording (both
+  cases moved to ACC-005). Rationale: Phase 1 found these two checks
+  land in different exception channels purely depending on *where* the
+  identical `assert` is placed (a `model_validator` gets it wrapped
+  into `ValidationError`; a `from_text` classmethod override lets it
+  propagate as raw `AssertionError`), and the now-merged sibling
+  feature's shipped SOP/DEC/VCR/TSK `Updates`/`RecentUpdates`
+  newest-first check uses the `model_validator` mechanic
+  (`ValidationError`) via the shared
+  `models/md/_ordering.py::validate_newest_first` helper. User-
+  confirmed: `sysrs` should behave like every other domain rather than
+  special-case itself into the `AssertionError` channel — the original
+  ACC-004 wording was a misjudgment made before this mechanical wrinkle
+  was understood.
 - **2026-09-01**: `sysrs` adopts the sibling feature `feat-38-39-
   41-43-44`'s locked conventions (issues #38/#39/#44, D1–D10 locked
   there 2026-09-01) from day one — the `## Updates` timestamp-led
