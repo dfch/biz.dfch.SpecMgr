@@ -3,7 +3,7 @@ created: '2026-09-02T10:32:05.764646'
 id: feat-48-feat-id
 status: planning
 type: feat
-updated: '2026-09-02T10:35:00.000000'
+updated: '2026-09-02T13:15:00.000000'
 version: 1.0.0
 ---
 
@@ -95,8 +95,8 @@ known), keeping the document addressable end-to-end.
 
 #### Phase 1: Design & Validation Helpers
 
-- [ ] Task 1.1: Confirm `assert_feat_id` (`general/tools/_path_safety.py`) is reusable for validating both `create_feat`'s optional `id` and `set_feat_id`'s `new_id`, or decide a feat-local validator is preferable.
-- [ ] Task 1.2: Design `set_feat_id`'s locking strategy (`feat_lock`/`feat_create_lock` ordering) to avoid races with `create_feat` and other mutations.
+- [x] Task 1.1: Confirm `assert_feat_id` (`general/tools/_path_safety.py`) is reusable for validating both `create_feat`'s optional `id` and `set_feat_id`'s `new_id`, or decide a feat-local validator is preferable.
+- [x] Task 1.2: Design `set_feat_id`'s locking strategy (`feat_lock`/`feat_create_lock` ordering) to avoid races with `create_feat` and other mutations.
 
 #### Phase 2: create_feat optional id parameter
 
@@ -135,12 +135,58 @@ known), keeping the document addressable end-to-end.
 
 ### Current Status
 
-**As of 2026-09-02**: Feature plan drafted from GitHub issue #48; no implementation started yet.
+**As of 2026-09-02**: Phase 1 (Design & Validation Helpers) done. Both design
+questions the plan flagged are settled and recorded below; no `src/` code
+changes yet — implementation starts in Phase 2.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
+#### 2026-09-02 13:15:00.000Z — Phase 1: Design & Validation Helpers
+
+Completed Task 1.1 and Task 1.2 (design-only, no `src/` changes). Confirmed
+`general/tools/_path_safety.assert_feat_id` is directly reusable, unchanged,
+for validating both `create_feat`'s optional `id` and `set_feat_id`'s
+`new_id` — no feat-local validator needed. Designed `set_feat_id`'s locking
+order (`feat_create_lock()` outermost, `feat_lock(id)` nested inside) and
+noted that `create_feat`'s Phase 2 change must also hold `feat_create_lock()`
+around its existence-check for a caller-supplied id. See Decisions Made below
+for the full rationale.
+
 #### 2026-09-02 12:00:00.000Z — Drafted feature plan from issue #48
 
 Captured the two changes issue #48 asks for (`create_feat`'s optional caller-chosen id with no auto-increment fallback, and a new `set_feat_id` rename tool) into a Plan with requirements, acceptance criteria, scope, and a six-phase task list. No code changes made yet.
+
+### Decisions Made
+
+- **2026-09-02 (Task 1.1)**: `assert_feat_id` (`general/tools/_path_safety.py`)
+  is reused directly, unchanged, for validating both `create_feat`'s optional
+  `id` parameter and `set_feat_id`'s `new_id` parameter — no feat-local
+  validator is introduced. Rationale: both values must satisfy the exact same
+  `feat-NNN-slug` shape (`^feat-[0-9]+-[a-z0-9-]+$`) this function already
+  enforces; `feat/tools/create_feat.py` and the future
+  `feat/tools/set_feat_id.py` will import it via
+  `from ...general.tools._path_safety import assert_feat_id`.
+- **2026-09-02 (Task 1.2)**: `set_feat_id(id, new_id)` acquires
+  `feat_create_lock()` first (outermost), then `feat_lock(id)` nested inside
+  it, wrapping the whole "resolve `id` -> check `new_id` doesn't already
+  exist -> rename folder -> rewrite frontmatter" sequence. Rationale:
+  `feat_create_lock()` is already the outermost (and only) lock
+  `create_feat` acquires today (confirmed by reading `create_feat.py`, and by
+  grepping every `feat_lock`/`feat_create_lock` call site in
+  `general/tools/update.py`, `set_status.py`, and `delete.py` — none of those
+  acquire `feat_lock` before `feat_create_lock`, so no other tool establishes
+  a conflicting lock order), so nesting `feat_lock(id)` inside it for
+  `set_feat_id` keeps a single, consistent acquisition order project-wide and
+  avoids any inconsistent-ordering deadlock risk. `feat_create_lock()`
+  serializes `set_feat_id` against a concurrent `create_feat` call that might
+  race on the same `new_id` folder path (covering both the existence check
+  and the actual rename); `feat_lock(id)` serializes it against a concurrent
+  `update`/`set_status`/`delete` targeting the same existing (old) id. As a
+  consequence, `create_feat`'s own Phase 2 change (accepting a
+  caller-supplied `id`) must extend its existing `with feat_create_lock():`
+  block to cover the existence-check for a caller-supplied id too (not just
+  the default-id derivation path), so both tools consistently serialize on
+  the same global lock for their respective "check existence, then
+  create/rename" sequences — flagged here for Phase 2/3 to follow.
