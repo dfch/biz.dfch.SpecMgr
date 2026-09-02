@@ -153,11 +153,17 @@ Domain key: `sysrs` (decided 2026-08-30 — see Decisions Made).
   direction): `example.v7.md` (REV 7), approved 2026-08-31 — all
   per-section mandatory/optional flags accepted, `## Appendix`/
   `## Definitions and Acronyms` added.
-- [ ] ACC-003: Verifies REQ-003 — the exact `RelatedArtifacts`-with-
+- [x] ACC-003: Verifies REQ-003 — the exact `RelatedArtifacts`-with-
   summary field shape is written down in Design Notes and validated
   against the `models/md` engine (mirroring `sop`'s pre-implementation
   empirical-verification discipline) in Phase 1 before any Pydantic
-  model code (Phase 2) is written.
+  model code (Phase 2) is written. (Closed 2026-09-01: the confirmed
+  shape — `<TYPE> <uuid>: <title>` + per-bullet optional notes via
+  `MarkdownListItemWithNotes`, per-section type-tag `field_validator`
+  with `re.DOTALL`, `Field(min_length=1)` lists, `References` plain
+  `list[MarkdownListItem]` — is recorded with its exact engine
+  mechanics in Design Notes' "Phase 1 outcome record"; the full
+  `sysrs-example.md` round-trips through the scratch model.)
 - [ ] ACC-004: Verifies REQ-005/006/007 — packaged example **and**
   template parse via `parse_sysrs`; structural violations raise
   `AssertionError`: unknown H2; missing mandatory H2 (`System Purpose`/
@@ -877,13 +883,162 @@ pinning `sop` uses for `Safety and Precautions`):
 - Opaque free-text leaves (DEC-`Context`/sop-`Purpose` shape: no declared nested fields; any body content — paragraphs, bullets, fenced code blocks): `SystemPurpose` (M), `SystemScope` (M), `BusinessContext` (O, H3), `AssumptionsAndDependencies` (O, LITERAL), `SystemContext` (M, H3), `SystemFunctions` (M, H3), `UserCharacteristics` (O, H3), `SystemIntegration` (O, H3), `SystemModesAndStates` (O, LITERAL), `MoreInformation` (O), `Appendix` (O), `DefinitionsAndAcronyms` (O, LITERAL).
 - `BusinessContextAndGoals(MarkdownSection2)` — LITERAL; mandatory container; `business_context: BusinessContext | None`, `goals: Goals` (mandatory), `problem_statement: ProblemStatement | None`.
 - `SystemOverview(MarkdownSection2)` — mandatory container; `system_context: SystemContext`, `system_functions: SystemFunctions`, `user_characteristics: UserCharacteristics | None`, `system_integration: SystemIntegration | None`.
-- The cross-reference list classes — `Goals` (H3, `GOL`), `ProblemStatement` (H3, `PRB`), `StakeholderNeedsAndElicitation` (H2, LITERAL, `QA`), `OperationalConceptAndScenarios` (H2, LITERAL, `UC`), `Decisions` (H2, `DEC|ADR`), `Risks` (H2, `RSK`), plus the nine `## Requirements` H3s and six `## Other Characteristics` H3s (all `REQ`; LITERAL pins on `PolicyAndRegulation` and `PackagingHandlingShippingAndTransportation` — lowercase "and" and commas). Each: `items: list[MarkdownListItemWithNotes] = Field(min_length=1)` (≥1 item when present — absent is the section's own `| None`, present-with-zero-items must raise `AssertionError`) + a per-class `field_validator("items")` regex-checking each item's `.text` (the `MarkdownListItem` computed property holding the lead paragraph with the marker stripped — the exact item-text field name, confirmed from `models/md/markdown_list_item.py`; Phase 1 re-confirms that a list-level validator sees it) against the section's own module-level pattern, e.g. `_GOALS_PATTERN = r"^GOL [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}: .+$"` (vcr's `_VERIFIES_PATTERN` fragment style); `Decisions`'s pattern allows `(DEC|ADR)`. The item's `notes` field (`list[MarkdownParagraph] | None`, declared on `MarkdownListItemWithNotes`) holds the optional per-bullet indented notes paragraph (free text).
-- `Requirements(MarkdownSection2)` — mandatory container; nine `| None` H3 fields in canonical 25010:2023 order + a `model_validator(mode="after")` asserting at least one of the nine is present — a present-but-empty `## Requirements` is a **structural** violation, so the validator asserts (raises `AssertionError`), unlike DEC's duplicate-option-number after-validator, which raises `ValueError` into the `ValidationError` channel (Phase 1 confirms the engine mechanics for "≥1 of N optional children").
+- The cross-reference list classes — `Goals` (H3, `GOL`), `ProblemStatement` (H3, `PRB`), `StakeholderNeedsAndElicitation` (H2, LITERAL, `QA`), `OperationalConceptAndScenarios` (H2, LITERAL, `UC`), `Decisions` (H2, `DEC|ADR`), `Risks` (H2, `RSK`), plus the nine `## Requirements` H3s and six `## Other Characteristics` H3s (all `REQ`; LITERAL pins on `PolicyAndRegulation` and `PackagingHandlingShippingAndTransportation` — lowercase "and" and commas; the full 8-class LITERAL pin set was confirmed exactly as sketched in Phase 1). Each: `items: list[MarkdownListItemWithNotes] = Field(min_length=1)` (≥1 item when present — absent is the section's own `| None`, present-with-zero-items raises the engine's raw `AssertionError` from `process_list_field`'s `assert False`, before any pydantic validation — Phase 1 confirmed) + a per-class `field_validator("items")` regex-checking each item's `.text` — the item-text field is exactly `MarkdownListItem.text` (computed property, lead paragraph with the marker stripped), and the list-level validator sees it during parse (it fires at the engine's `cls(**kwargs)` at the end of `from_text`; a raised `ValueError` lands in the `pydantic.ValidationError` channel — Phase 1 confirmed) — against the section's own module-level pattern, e.g. `_GOALS_PATTERN = r"^GOL [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}: .+$"` (vcr's `_VERIFIES_PATTERN` fragment style); `Decisions`'s pattern allows `(DEC|ADR)`. **Phase 1 refinement: the per-item `re.fullmatch` must run with `re.DOTALL`** — `item.text` keeps the embedded newline of soft-wrapped bullet lines (mdformat does not reflow), and `.` does not match `\n` without it (the pattern itself is unchanged). The item's `notes` field (`list[MarkdownParagraph] | None`, declared on `MarkdownListItemWithNotes`) holds the optional per-bullet indented notes paragraph (free text; bare bullet → `notes is None` — Phase 1 confirmed). **Phase 1 pin: `## References` as a plain `list[MarkdownListItem]` works as intended** (plain items are leaves — no `notes` attribute, continuation lines stay in `_value`), and a tight multi-item list under an `items`-declared section parses but `str()` re-renders it loose (the documented `MarkdownListItem` tight→loose round-trip exception) — `sysrs-example.md`'s `## References` is tight, so the packaged example (Task 4.1) must loosen it (the shipped `gol_example.md` `## Tags` convention).
+- `Requirements(MarkdownSection2)` — mandatory container; nine `| None` H3 fields in canonical 25010:2023 order + a check that at least one of the nine is present. **Phase 1 confirmed the "≥1 of N optional children" mechanics and corrected the channel claim**: the engine has no built-in "≥1 of N children" check, and a `model_validator(mode="after")` `assert` (the sketch's proposed mechanic) surfaces as **`pydantic.ValidationError`** (`type=assertion_error` — pydantic 2.13.4 wraps validator `AssertionError`s; the shipped FEAT precedent's own tests pin this: `tests/feat/.../test_body.py::TestUpdatesOrdering::test_out_of_order_entries_raise_validation_error`), not the raw `AssertionError` the preliminary sketch assumed. A raw `AssertionError` for the same check is achievable by placing the assert in the container's `from_text` classmethod override (after `super().from_text` — the engine's own `*WithComment` classes use exactly this classmethod-assert pattern); Phase 1 demonstrated both mechanics. Phase 1 also confirmed the engine **enforces child order** (sequential one-pass field distribution): nine H3s in any order other than declaration (canonical) order → raw `AssertionError` ("text left over after processing all fields") — so the canonical 25010 order is parse-enforced, not just a rendering convention. The channel choice for the ≥1 check (sketch mechanic → `ValidationError` vs. `from_text` override → `AssertionError` per ACC-004) is recorded as the open item below.
 - `OtherCharacteristics(MarkdownSection2)` — optional umbrella; six `| None` H3 fields; **no** ≥1-of-N validator (the whole umbrella is optional — "omit if none of the six apply").
 - `References(MarkdownSection2)` — optional; `items: list[MarkdownListItem] = Field(min_length=1)` — the plain no-notes variant (external standards/documents, no specmgr ids, no per-item regex). Present ⇒ ≥1 item required (user-confirmed 2026-09-01 — a bare heading with zero bullets is a structural error; see the resolved question below).
-- `Updates(MarkdownSection2WithComment)` + `UpdateEntry(MarkdownSection3)` — the locked post-sibling shape (feat-38-39-41-43-44 D2/D3, adopted from day one — see Dependencies), mirroring `dec`'s/`vcr`'s `## Updates` as it exists on `dev` after that feature's Phases 1–2: `UpdateEntry` with a timestamp-led REGEX alias `^\d{4}-\d{2}-\d{2}(?: \d{2}:\d{2}:\d{2}\.\d{3}(Z|[+-]\d{2}:\d{2}))?(?: - | : ) .+$` (date-only or full date+time lead, then ` - ` or ` : `, then title — em-dash separators rejected), mandatory `content: MarkdownParagraph`, plus the computed `timestamp` field the sibling feature adds to DEC/VCR's entries; `Updates` with `updates: list[UpdateEntry] = Field(min_length=1)`, optional as a whole, last section, and a `model_validator(mode="after")` newest-first ordering check delegating to the shared `models/md/_ordering.py::validate_newest_first` helper once it exists on `dev` (the FEAT precedent `feat/models/v1/body.py::Updates._validate_newest_first` — `assert`-based, so the structural `AssertionError` channel). If the sibling feature's Phase 2 has not merged by the time Task 2.3 runs, implement the identical ordering check as a domain-local validator in `sysrs/models/v1/body.py` (no `models/md` change) and switch to the shared helper when it lands. The inherited `comment` field stays absent in `sysrs-example.md` and carries the "newest first, prepend" ordering hint only in the packaged template.
+- `Updates(MarkdownSection2WithComment)` + `UpdateEntry(MarkdownSection3)` — the locked post-sibling shape (feat-38-39-41-43-44 D2/D3, adopted from day one — see Dependencies), mirroring `dec`'s/`vcr`'s `## Updates` as it exists on `dev` after that feature's Phases 1–2: `UpdateEntry` with a timestamp-led REGEX alias — **Phase 1 correction: use the prose-described form `^\d{4}-\d{2}-\d{2}(?: \d{2}:\d{2}:\d{2}\.\d{3}(Z|[+-]\d{2}:\d{2}))?(?: - | : ).+$`** (date-only or full date+time lead, then ` - ` or ` : `, then title — em-dash separators rejected); the literal string quoted in this plan's Task 1.3/Design Notes (`(?: - | : ) .+$`, with a space between the separator group and the title) does **not** fullmatch the plan's own locked example headings (`### 2026-09-14 - Added Security Requirements` in `sysrs-example.md`, migrated per the locked convention by Task 0.12) — verified by direct `re.fullmatch` on both variants; the prose form matches every valid lead (date-only and full, `Z`/`±HH:mm`, both separators) and rejects em-dash/free-form, so it is the intended alias — mandatory `content: MarkdownParagraph`, plus the computed `timestamp` field the sibling feature adds to DEC/VCR's entries (FEAT-precedent shape: named-group `fullmatch` against the composite section's heading-only `.text` — Phase 1 confirmed it works at H3 level); `Updates` with `updates: list[UpdateEntry] = Field(min_length=1)`, optional as a whole, last section, and a newest-first ordering check. **Phase 1 channel findings for the ordering check**: as a `model_validator(mode="after")` `assert` (the sketch's proposed mechanic / the FEAT precedent's own implementation) it surfaces as **`pydantic.ValidationError`** (pydantic wraps validator asserts — same correction as the `Requirements` ≥1 check above); as a `from_text` classmethod-override `assert` it surfaces as the raw **`AssertionError`** ACC-004 pins. **Phase 1 hazard pin: the ordering comparison must normalize naive→aware datetimes** — a date-only lead parses via `datetime.fromisoformat` to a *naive* datetime, a full lead to an *aware* one, and comparing mixed formats raises a raw `TypeError` ("can't compare offset-naive and offset-aware datetimes") even for correctly-ordered documents; normalizing naive to UTC before comparing accepts in-order mixed documents (verified). Equal timestamps are allowed (non-increasing check, FEAT precedent). Alias failure (missing timestamp lead, em-dash separator, missing separator) raises the raw `AssertionError` either way (first entry → `get_extent` returns 0 on the alias mismatch → "expected list[UpdateEntry], found no match"; a later entry → "text left over"); zero entries and an entry heading with no content paragraph also raise the raw `AssertionError`. If the sibling feature's Phase 2 has not merged by the time Task 2.3 runs, implement the ordering check domain-locally per the channel decision above (no `models/md` change) and switch to the shared `models/md/_ordering.py::validate_newest_first` helper when it lands. The inherited `comment` field stays absent in `sysrs-example.md` and carries the "newest first, prepend" ordering hint only in the packaged template.
 - `SysrsFrontmatter`/`SysrsDocument`/`parse_sysrs`/`SysrsSummary` — per the confirmed frontmatter shape above and sop's document/parser/summary shapes (`SysrsSummary(DocSummary)` plain: id/title/status/ref, no extras).
-- **Error channels** (codebase convention, no new exception types): structural → engine `AssertionError` (missing/unknown/misordered sections, zero-item list sections, zero-H3 `## Requirements`, H1 prefix mismatch, a `## Updates` entry heading failing its timestamp-led alias, out-of-order `## Updates` entries, and — the engine's behavior to be pinned in Phase 1, Task 1.3(e) — a mandatory free-text section present with zero body content); value → `pydantic.ValidationError` (`status` outside the 5-set, `type` != `sysrs`, a cross-ref bullet failing its section's type-tag regex — the `field_validator` `ValueError` channel).
+- **Error channels** (codebase convention, no new exception types; **Phase 1-confirmed**): structural → raw engine `AssertionError` (missing mandatory H2 — "expected X, found no match"; unknown H2, second H1, and misordering of any top-level section — mandatory *or* optional pairs — "text left over after processing all fields"; non-blank content before the H1 — "Token[0]: expected 'heading_open', …"; H1 prefix mismatch and any heading alias failure incl. a `## Updates` entry failing its timestamp-led alias — "heading text … does not match its declared @alias" / list-no-match / text-left-over; zero-item list sections — cross-ref lists, `## References`, `## Updates` — `process_list_field`'s `assert False`); value → `pydantic.ValidationError` (`status` outside the 5-set, `type` != `sysrs`, a cross-ref bullet failing its section's type-tag regex — the `field_validator` `ValueError` channel, pinned for wrong tag / malformed uuid / missing `: <title>` / wrong-section tag; `Field(min_length=1)` on direct construction). **Mechanic-dependent (open item, see below)**: zero-H3 `## Requirements` and out-of-order `## Updates` entries land in `ValidationError` under the sketch's `model_validator` mechanic and in raw `AssertionError` under the `from_text`-override mechanic — ACC-004 pins `AssertionError` for both. **Phase 1 pin (Task 1.3(e)): a mandatory free-text section present with zero body content is ACCEPTED by the engine** (leaf sections carry no body-content requirement; the empty leaf holds exactly its own heading line and round-trips byte-exact) — it is therefore *not* a structural violation, and ACC-004's "the pinned behavior is asserted" means Task 2.5 asserts acceptance (parse succeeds, `.text` is the bare heading).
+
+**Phase 1 outcome record (2026-09-01 — empirical validation against the
+live `models/md` engine, all tasks passed)**
+
+Method (vcr's Phase 0 discipline): four throwaway scratch suites under
+`/tmp/opencode/sysrs-phase1/` (`task1_1_lists.py`, `task1_2_containers.py`,
+`task1_3_freeform.py`, `task1_4_roundtrip.py` + `common.py`; uncommitted,
+never to be committed) define small Pydantic classes that subclass the REAL
+live engine classes (`MarkdownSection1/2/3`, `MarkdownSection2WithComment`,
+`MarkdownListItem`, `MarkdownListItemWithNotes`, `MarkdownParagraph`,
+`alias`/`AliasType`) and run
+`uv run --frozen --all-extras python <script>` from the worktree root;
+every mechanic is tested positive AND negative with the exact observed
+exception type recorded. Totals: Task 1.1 — 7/7 checks; Task 1.2 — 8/8;
+Task 1.3 — 15/15; Task 1.4 — 20/20. Closes ACC-003.
+
+- **Task 1.1 (cross-reference list mechanics) — pass.** The item-text
+  field is exactly `MarkdownListItem.text` (computed property: the lead
+  paragraph's inline text, marker stripped) and a section-level
+  `field_validator("items")` sees it during parse (it fires at the
+  engine's `cls(**kwargs)` at the end of `from_text`); a raised
+  `ValueError` there lands in `pydantic.ValidationError` (pinned for
+  wrong type tag, malformed/uppercase uuid, missing `: <title>`).
+  **`item.text` keeps the embedded `\n` of soft-wrapped bullet lines**
+  (mdformat does not reflow), so the per-item `re.fullmatch` needs
+  `re.DOTALL` — the sketch's patterns are otherwise unchanged. Three
+  states of an optional list section: absent → `None` (no error);
+  present-with-N≥1 → parsed; **present-with-zero-items → raw
+  `AssertionError`** from `process_list_field`'s `assert False`
+  ("expected list[…], found no match") — fires before any pydantic
+  validation, so `Field(min_length=1)` is only the direct-construction
+  backstop (`SomeSection(items=[])` → `ValidationError`). `## References`
+  as a plain `list[MarkdownListItem]` confirmed: plain items are leaves
+  (no `notes` attribute; continuation lines stay in `_value`),
+  `MarkdownListItemWithNotes` captures continuation paragraphs into
+  `notes` (bare bullet → `notes is None`, accepted). Bonus pin: a TIGHT
+  multi-item list under an `items`-declared section parses but `str()`
+  re-renders it LOOSE (the documented `MarkdownListItem` tight→loose
+  exception) — `sysrs-example.md`'s `## References` is tight, so the
+  packaged example (Task 4.1) must loosen it (shipped
+  `gol_example.md`'s `## Tags` does exactly that) for byte-exact
+  round-trip tests.
+- **Task 1.2 (container mechanics) — pass.** "≥1 of N optional
+  children": the engine has no built-in check; the sketch's
+  `model_validator(mode="after")` `assert` surfaces as
+  **`pydantic.ValidationError`** (`type=assertion_error` — pydantic
+  2.13.4 wraps validator asserts; the shipped FEAT precedent pins the
+  same in `tests/feat/models/v1/test_body.py::test_out_of_order_entries_
+  raise_validation_error`), while the identical check placed in the
+  container's `from_text` classmethod override (after
+  `super().from_text`) surfaces as the **raw `AssertionError`** — both
+  mechanics demonstrated; the `*WithComment` engine classes already use
+  the classmethod-assert pattern. The engine also **enforces child
+  order** (sequential one-pass distribution): the nine H3s in any order
+  other than declaration (canonical) order → raw `AssertionError`
+  ("text left over") — canonical order is parse-enforced.
+  `BusinessContextAndGoals`/`SystemOverview`: missing mandatory child
+  → raw `AssertionError` ("expected X, found no match"); omitted
+  optional child → `None`; all children present → byte-exact round
+  trip (incl. the LITERAL `Business Context and Goals` heading).
+  `OtherCharacteristics` umbrella present with zero H3s → **accepted**
+  (no ≥1-of-N validator, per sketch). A mandatory free-text H3 leaf
+  present with zero body → **accepted** (early Task 1.3(e) signal).
+- **Task 1.3 (free-form and heading mechanics) — pass.** (a) `##
+  Updates`: the prose-described alias matches all locked forms (date-
+  only and full `HH:mm:ss.fff` + `Z`/`±HH:mm` leads; ` - ` and ` : `
+  separators) and rejects em-dash, missing-separator, and free-form
+  titles; **the plan's literal alias string carries a stray space
+  (`(?: - | : ) .+$`) and matches none of the locked example headings —
+  corrected to the prose form above**; alias failure → raw
+  `AssertionError` (first entry: "expected list[UpdateEntry], found no
+  match" via `get_extent` returning 0 on the alias mismatch; a later
+  entry: "text left over"); zero entries and an entry with no content
+  paragraph → raw `AssertionError`; computed `timestamp`/`title`
+  (FEAT-style named-group `fullmatch` on the composite section's
+  heading-only `.text`) work at H3 level; equal timestamps allowed;
+  ordering channel is mechanic-dependent (see Task 1.2) and the
+  comparison **must normalize naive (date-only) → aware (UTC) or
+  mixed-format documents raise raw `TypeError`** even when correctly
+  ordered. (b) Fenced code blocks (```mermaid) inside opaque free-text
+  leaves: accepted verbatim, byte-exact round trip (the example's
+  `### System Context` and `## Appendix`). (c) Mixed prose+bullets free-
+  text leaf (the example's `## Assumptions and Dependencies` body,
+  paragraphs AND bolded tight bullets): accepted, byte-exact — opaque
+  leaves keep the full extent verbatim. (d) H1 prefix REGEX alias on the
+  root: mismatch (wrong prefix, empty title, lowercase) → raw
+  `AssertionError` ("heading text … does not match its declared @alias");
+  non-blank content before the H1 → raw `AssertionError` ("Token[0]:
+  expected 'heading_open', got 'paragraph_open'"). **(e) THE PIN: a
+  mandatory free-text leaf present with zero body content (heading
+  immediately followed by the next H2) is ACCEPTED by the engine — no
+  `AssertionError`** (confirmed at both H3 level in Task 1.2 and H2
+  level at the root in Task 1.4); the empty leaf's `.text` is exactly
+  its own heading line and round-trips byte-exact — so ACC-004's
+  "pinned behavior is asserted" means Task 2.5 asserts acceptance, not a
+  raise.
+- **Task 1.4 (full-document round-trip) — pass.** The entire
+  `sysrs-example.md` body (frontmatter stripped; the on-disk body is
+  mdformat-clean) parses through the complete 18-field scratch root with
+  all 18 H2s present in order and all 22 H3s populated; every cross-
+  reference bullet validated against its section's type-tag regex (2
+  GOL, 1 PRB, 1 QA, 2 UC, 2 DEC, 2 RSK, 19 REQ under `## Requirements`,
+  8 REQ under `## Other Characteristics` — 27 REQ total — and 3 VCR);
+  the bare bullet without notes
+  (`## Other Characteristics` → `### Policy and Regulation`, first
+  bullet) accepted; both mermaid fences preserved verbatim; `## Updates`
+  timestamps `['2026-09-14', '2026-08-30']` (newest-first, date-only
+  leads). `str()` round trip is byte-exact **except** the documented
+  tight→loose re-render of the example's tight `## References` (the only
+  drift — verified by diff). Negative matrix channels (all confirmed):
+  raw `AssertionError` — unknown H2, missing mandatory H2, zero-item
+  cross-ref list section (`## Verification` heading kept), `##
+  References` present with zero items, H1 prefix mismatch, second H1,
+  content before the H1, misordering (mandatory pair AND optional pair),
+  Updates em-dash heading, Updates free-form heading, Updates zero
+  entries, empty mandatory leaf (accepted — see pin);
+  `pydantic.ValidationError` — `## Requirements` zero H3s (sketch
+  mechanic), out-of-order Updates (sketch mechanic), wrong type tag,
+  malformed uuid, missing `: <title>`, REQ under `## Decisions`;
+  accepted — ADR under `## Decisions` (the `DEC|ADR` alternation).
+  Frontmatter probe (Phase 2 parser-glue note, out of the body engine's
+  scope): PyYAML parses the locked `created`/`updated` values
+  (`2026-08-30 00:00:00.000Z`) as aware `datetime` objects, so the
+  shipped `_stringify_metadata` `str()` renders them as
+  `2026-08-30 00:00:00+00:00` (losing the `.000Z` form) — the sibling
+  feature's shared-frontmatter surface (issue #44); `parse_sysrs`
+  inherits the shipped behavior unchanged.
+- **Naming pitfall (Phase 1 scratch observation, relevant to Task 2.3):**
+  every section class name must either derive to its exact heading under
+  the implicit `SPACE_SEPARATED` rule or carry an explicit LITERAL alias —
+  a scratch class named e.g. `SystemPurposeLeaf` silently derives to
+  "System Purpose Leaf" and then fails every `get_extent`/`from_text`
+  match; the 8 LITERAL pins in the sketch are the complete set.
+- **Open item for the orchestrator/user (NOT decided in Phase 1):**
+  ACC-004 lists "## Requirements present with zero H3s" and "out-of-
+  order ## Updates entries" under "structural violations raise
+  `AssertionError`", but the sketch's named mechanic (an
+  `assert`-based `model_validator`, i.e. the FEAT precedent's own
+  implementation) lands both in `pydantic.ValidationError` — pydantic
+  wraps validator asserts, and the FEAT precedent's shipped tests pin
+  exactly that. Phase 2 (Task 2.3) can honor ACC-004's channels by
+  placing both checks in `from_text` classmethod overrides (demonstrated
+  here to yield raw `AssertionError`; engine-supported — the
+  `*WithComment` classes use the same pattern), or keep the FEAT-
+  precedent `model_validator` style and have ACC-004's wording for those
+  two cases re-read; the sibling feature's locked D2/D3 design (not on
+  this branch) may prescribe the channel for the ordering check
+  specifically. Phase 1 records both observed mechanics and defers the
+  choice.
 
 **Tools** (one module per tool, mirror `sop/tools/`/`vcr/tools/`;
 **dispatch-only — no** `update_sysrs`/`set_status_sysrs`, ADR
@@ -1181,7 +1336,7 @@ its own ADR rather than living only in this feature's Design Notes.
 
 #### Phase 1: Empirical schema validation
 
-- [ ] Task 1.1: Cross-reference list mechanics — read-only, in-memory
+- [x] Task 1.1: Cross-reference list mechanics — read-only, in-memory
   validation of the approved shapes against the **live** `models/md`
   engine using a throwaway scratch script under /tmp (NOT committed,
   NOT a permanent test file — no `sysrs` model code exists yet): the
@@ -1196,8 +1351,8 @@ its own ADR rather than living only in this feature's Design Notes.
   the "≥1 item when present" list rule is enforced); and `## References`
   as a plain `list[MarkdownListItem]` (no-notes variant — confirm the
   `MarkdownListItem` vs. `MarkdownListItemWithNotes` distinction works
-  as intended) — depends on: none — status: not-started
-- [ ] Task 1.2: Container mechanics — same discipline: (a) `##
+  as intended) — depends on: none — status: done (2026-09-01)
+- [x] Task 1.2: Container mechanics — same discipline: (a) `##
   Requirements`, a mandatory section where at least ONE of the nine
   optional H3 children must be present (confirm the engine mechanics
   for "≥1 of N optional children", e.g. a `model_validator(mode="after")`
@@ -1210,8 +1365,8 @@ its own ADR rather than living only in this feature's Design Notes.
   Characteristics`/`### System Integration`); (c) `## Other
   Characteristics` optional umbrella + six optional
   `Field(min_length=1)` H3 lists — depends on: Task 1.1 — status:
-  not-started
-- [ ] Task 1.3: Free-form and heading mechanics — same discipline: (a)
+  done (2026-09-01)
+- [x] Task 1.3: Free-form and heading mechanics — same discipline: (a)
   the locked post-sibling `## Updates` shape (optional-as-a-whole,
   timestamp-led H3 titles with the alias `^\d{4}-\d{2}-\d{2}(?:
   \d{2}:\d{2}:\d{2}\.\d{3}(Z|[+-]\d{2}:\d{2}))?(?: - | : ) .+$`,
@@ -1234,23 +1389,23 @@ its own ADR rather than living only in this feature's Design Notes.
   (e.g. a `## System Purpose` heading immediately followed by the next
   H2) — pin whether the engine raises `AssertionError` or accepts, and
   record the outcome (it feeds ACC-004/Task 2.5's matrix either way) —
-  depends on: Task 1.2 — status: not-started
-- [ ] Task 1.4: Full-document round-trip — validate the entire
+  depends on: Task 1.2 — status: done (2026-09-01)
+- [x] Task 1.4: Full-document round-trip — validate the entire
   `sysrs-example.md` content (all 18 H2s in order, all 22 H3s, every
   cross-reference bullet against its section's allowed type tag)
   through a scratch in-memory model built on the live engine per the
   preliminary sketch in Design Notes — depends on: Task 1.3 — status:
-  not-started
-- [ ] Task 1.5: Record every outcome (pass + exact mechanics) in this
+  done (2026-09-01)
+- [x] Task 1.5: Record every outcome (pass + exact mechanics) in this
   README's Design Notes' "Implementation design" subsection and refine
   the preliminary model sketch accordingly — closes ACC-003; the
   scratch script stays under /tmp (uncommitted) — depends on: Task 1.4
-  — status: not-started
-- [ ] Task 1.6: Phase-end quality gate (ruff format/check, vulture,
+  — status: done (2026-09-01)
+- [x] Task 1.6: Phase-end quality gate (ruff format/check, vulture,
   full unittest) + commit (the Design Notes outcome record only — no
   `sysrs` code exists yet, and the /tmp scratch script is never
   committed); update this README's Progress section — depends on:
-  Task 1.5 — status: not-started
+  Task 1.5 — status: done (2026-09-01)
 
 #### Phase 2: Models + parser (`sysrs/models/v1/`)
 
@@ -1505,6 +1660,37 @@ around.
 
 ### Current Status
 
+**As of 2026-09-01 (Phase 1 complete — empirical schema validation against the
+live `models/md` engine)**: Phase 1 (Tasks 1.1–1.5) is done — four scratch
+suites (list mechanics, containers, free-form/heading, full `sysrs-example.md`
+round-trip; 50 checks, all passed; scripts uncommitted under /tmp) validated
+every approved shape against the live engine by subclassing the real `models/md`
+classes, closed ACC-003, and recorded every outcome + exact mechanic in Design
+Notes' new "Phase 1 outcome record" (the preliminary sketch refined in place).
+Key pins: (1) **a mandatory free-text leaf present with zero body content is
+ACCEPTED by the engine** (Task 1.3(e) — no `AssertionError`; the empty leaf's
+`.text` is its own heading line; Task 2.5 asserts acceptance, not a raise); (2)
+`item.text` keeps soft-wrapped newlines → every per-item cross-reference
+`fullmatch` needs `re.DOTALL` (patterns unchanged); (3) present-with-zero-items
+list sections raise the raw engine `AssertionError` (`process_list_field`'s
+`assert False`, before pydantic) — `Field(min_length=1)` only backstops direct
+construction (`ValidationError`); (4) an `assert` inside a `model_validator`
+surfaces as `pydantic.ValidationError` (pydantic 2.13.4 wraps validator asserts
+— the FEAT precedent's own shipped tests pin this), so under the sketch's
+mechanics zero-H3 `## Requirements` and out-of-order `## Updates` land in the
+**value** channel, while the demonstrated `from_text`-override mechanic lands
+them in the raw **structural** `AssertionError` channel ACC-004 pins — recorded
+as the one open item for the orchestrator/user before Task 2.3 (the sibling's
+locked D2/D3 design may prescribe the ordering channel); (5) the plan-text `##
+Updates` alias string carries a stray space and matches none of the locked
+example headings — corrected to the prose form in Design Notes; (6) the
+newest-first comparison must normalize naive (date-only) → aware datetimes or
+mixed-format documents raise a raw `TypeError`; (7) the packaged example must
+loosen `## References` (documented tight→loose `str()` round-trip exception) for
+byte-exact round-trip tests. Next action: Phase 2 (models + parser) — Task 2.3
+needs the open channel decision above; the Phase 1 commit (Design Notes record
+only) is the orchestrator's.
+
 **As of 2026-09-01 (plan-review fixes applied)**: A plan review
 against the live codebase and the sibling feature
 `.specmgr/feat/feat-38-39-41-43-44/README.md` (issues
@@ -1728,6 +1914,67 @@ entirely, per explicit user instruction, rather than continuing to
 wait on it; see Task List Task 0.7/Design Notes item 4's note.)
 
 ### Recent Updates
+
+#### Update 2026-09-01 (Phase 1 complete — empirical schema validation against the live models/md engine)
+
+- Completed: Phase 1 done (Tasks 1.1–1.5; Task 1.6's gate ran green —
+  its commit is the orchestrator's). Four throwaway scratch suites
+  under /tmp (`task1_1_lists`, `task1_2_containers`,
+  `task1_3_freeform`, `task1_4_roundtrip` + `common`; 50 checks, all
+  passed, never committed) subclassed the real live `models/md` engine
+  classes and validated every approved shape: (1) cross-reference list
+  mechanics — the item-text field is `MarkdownListItem.text` (marker
+  stripped, **keeps soft-wrapped `\n`** → per-item regexes need
+  `re.DOTALL`), the section-level `field_validator("items")` sees it
+  during parse and its `ValueError` lands in
+  `pydantic.ValidationError` (wrong tag / malformed uuid / missing
+  `: <title>` pinned), absent / present-N / present-zero = `None` /
+  parsed / **raw `AssertionError`** (`process_list_field`'s
+  `assert False`, before pydantic), `## References` confirmed as a
+  plain `list[MarkdownListItem]` (leaf items, no `notes` attribute);
+  (2) containers — missing mandatory child → raw `AssertionError`
+  ("expected X, found no match"), child **order is parse-enforced**
+  (reversed children → "text left over"), the `Requirements`
+  ≥1-of-9 check lands in `ValidationError` under the sketch's
+  `model_validator` mechanic (pydantic wraps validator asserts — the
+  FEAT precedent's own shipped tests pin this) and in raw
+  `AssertionError` under the demonstrated `from_text`-override
+  mechanic, the `OtherCharacteristics` umbrella present-with-zero-H3s
+  is accepted (no ≥1-of-N validator, per sketch); (3) free-form and
+  heading mechanics — the locked `## Updates` shape (the plan-literal
+  alias carries a stray space and matches none of the locked example
+  headings; corrected to the prose form), alias failures / zero
+  entries / missing entry content → raw `AssertionError`, ordering
+  channel is mechanic-dependent, the naive/aware datetime comparison
+  hazard pinned (mixed formats raise a raw `TypeError` without
+  normalization; equal timestamps allowed), fenced mermaid blocks and
+  mixed prose+bullets bodies round-trip byte-exact inside opaque
+  leaves, the H1 REGEX prefix + content-before-H1 channels pinned, and
+  **Task 1.3(e) pinned: a mandatory free-text leaf present with zero
+  body content is ACCEPTED** (no raise); (4) the full
+  `sysrs-example.md` round-trip through the complete 18-field scratch
+  root — all 18 H2s / 22 H3s, every cross-reference bullet validated
+  against its section's type tag (27 REQ + 2 GOL + 1 PRB + 1 QA + 2
+  UC + 2 DEC + 2 RSK + 3 VCR), bare-bullet-without-notes accepted,
+  ADR accepted under `## Decisions`, the only round-trip drift = the
+  documented tight→loose re-render of the example's tight `##
+  References` (packaged example must loosen it, Task 4.1), the full
+  negative-matrix channels pinned, plus a frontmatter probe (PyYAML
+  parses the locked date+time values as `datetime`; the shipped
+  `_stringify_metadata` would render `+00:00` — the sibling's shared-
+  frontmatter surface, inherited as-is by `parse_sysrs`). Every
+  outcome + the sketch refinements are recorded in Design Notes' new
+  "Phase 1 outcome record" block (one open item flagged for the
+  orchestrator/user: the zero-H3 `## Requirements` / out-of-order
+  `## Updates` exception channel — `from_text`-override assert honors
+  ACC-004's `AssertionError`, FEAT-precedent `model_validator` style
+  yields `ValidationError`); ACC-003 closed; Tasks 1.1–1.6 marked
+  done. Phase-end gate (ruff format/check, vulture, full unittest):
+  all green — no `src/`/`tests/` files changed in this phase.
+- Next: Phase 2 (models + parser, Tasks 2.1–2.6) — Task 2.3 needs the
+  recorded open item resolved first (which channel the two
+  `model_validator`-style checks ship in; the sibling's locked D2/D3
+  design may prescribe the ordering channel).
 
 #### Update 2026-09-01 (plan-review fixes — 7 tools + generic delete adapter; locked sibling #38/#39/#44 conventions adopted from day one; Phase 1 pins extended)
 
