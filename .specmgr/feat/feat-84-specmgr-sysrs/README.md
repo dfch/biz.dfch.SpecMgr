@@ -4,7 +4,7 @@ created: '2026-09-03 10:00:47.481+02:00'
 id: feat-84-specmgr-sysrs
 status: planning
 type: feat
-updated: '2026-09-03 10:04:36.472+02:00'
+updated: '2026-09-03 10:29:55.382+02:00'
 version: 1.0.0
 ---
 
@@ -67,9 +67,9 @@ as new domains/features land, so the effort is not a one-off dead end.
 
 #### Phase 2: Gap-Filling
 
-- [ ] Task 2.1: Identify SysRS sections (Goals, Decisions, Requirements per ISO 25010 characteristic, Other Characteristics) that have no corresponding existing artifact.
-- [ ] Task 2.2: Ask the user via the `question` tool to resolve each identified gap.
-- [ ] Task 2.3: Create any minimal prerequisite `GOL`/`REQ`/`DEC` documents needed to back a SysRS cross-reference bullet.
+- [x] Task 2.1: Identify SysRS sections (Goals, Decisions, Requirements per ISO 25010 characteristic, Other Characteristics) that have no corresponding existing artifact.
+- [x] Task 2.2: Ask the user via the `question` tool to resolve each identified gap.
+- [x] Task 2.3: Create any minimal prerequisite `GOL`/`REQ`/`DEC` documents needed to back a SysRS cross-reference bullet.
 
 #### Phase 3: Draft and Create the SysRS
 
@@ -82,11 +82,15 @@ as new domains/features land, so the effort is not a one-off dead end.
 
 ### Current Status
 
-**As of 2026-09-03**: Phase 1 (Discovery) is complete. Read `AGENTS.md` in full and confirmed the domain-package inventory it documents (13 domain/cross-cutting packages: adr, req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs, plus the cross-cutting `general` package). Read all 33 other `.specmgr/feat/*/README.md` feature folders in full (34 total including this one) and extracted their requirements/decisions/scope. Enumerated existing domain documents on disk via `list_gol`/`list_req`/`list_uc`/`list_rsk`/`list_dec`/`list_adr`/`list_vcr`: only `adr` has documents (28 accepted ADRs); `gol`/`req`/`uc`/`rsk`/`dec`/`vcr` all have zero documents on disk. This confirms Phase 2 (Gap-Filling) will need to create prerequisite `GOL`/`REQ`/`DEC` documents from scratch, since no reusable cross-reference targets exist yet for those six domains. Next step is Phase 2 (Gap-Filling).
+**As of 2026-09-03**: Phase 2 (Gap-Filling) is complete. Recorded the gap analysis (Task 2.1): the `## Decisions` section will cross-reference existing ADRs directly (no new DEC documents needed); the optional `## Stakeholder Needs and Elicitation` (QA), `## Operational Concept and Scenarios` (UC), `## Risks` (RSK), `## Verification` (VCR), `### Problem Statement` (PRB), and `## Other Characteristics` sections will all be omitted from the SysRS with a documented reason, since no `qa`/`uc`/`rsk`/`vcr`/`prb` documents exist and none are needed to satisfy the acceptance criteria. No `question`-tool interactions were needed (Task 2.2): every GOL/REQ content gap was resolvable directly from `README.md`/`AGENTS.md`/`.specmgr/feat/*/README.md` without inventing content. Created (Task 2.3) 2 `GOL` documents (`08666592-a2d2-4309-95c6-3c94248ca342` "AI-Agent-Native Specification Artifact Management", `b663528e-08c5-426b-9f20-32192c0a3bdb` "Cross-Referenceable, Non-Duplicating Specification Artifacts") and 14 `REQ` documents, one per domain package listed in `AGENTS.md`'s Status section (adr, req, uc, tsk, qa, prb, gol, rsk, dec, feat -- Functional Suitability; sop, vcr, sysrs, general -- Maintainability), each validated with `validate_req`/`validate_gol` before `create_req`/`create_gol`. `list_gol`/`list_req` confirm exactly 2 and 14 documents on disk. Next step is Phase 3 (Draft and Create the SysRS).
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-03 00:00:00.000Z - Phase 2 Gap-Filling complete
+
+Completed Task 2.1 (recorded the gap analysis carried over from Phase 1 discovery/orchestrator decisions: the SysRS `## Decisions` section will cross-reference existing ADRs directly rather than creating new `dec` documents; the optional `## Stakeholder Needs and Elicitation`, `## Operational Concept and Scenarios`, `## Risks`, `## Verification`, `### Problem Statement`, and `## Other Characteristics` sections will all be omitted from the SysRS in Phase 3, with the reason -- no `qa`/`uc`/`rsk`/`vcr`/`prb` documents exist on disk and none are needed to satisfy ACC-001..ACC-005 -- documented here), Task 2.2 (no `question`-tool interaction was required: every GOL/REQ content gap encountered while drafting was resolvable directly from `README.md`'s stated project purpose and `AGENTS.md`'s per-domain Status section descriptions, without inventing unsupported content), and Task 2.3 (created the minimal prerequisite documents: 2 `GOL` documents via `create_gol`, each preceded by a passing `validate_gol` call -- `08666592-a2d2-4309-95c6-3c94248ca342` "AI-Agent-Native Specification Artifact Management" grounded in README.md's stated purpose ("An artifact manager for system specifications" / "an MCP server that you can use to manage different specification artifacts"), and `b663528e-08c5-426b-9f20-32192c0a3bdb` "Cross-Referenceable, Non-Duplicating Specification Artifacts" grounded in AGENTS.md's domain-first architecture description and the `sysrs` domain's cross-reference-only design; and 14 `REQ` documents via `create_req`, each preceded by a passing `validate_req` call, one per domain package in `AGENTS.md`'s Status section, each with a `## Related Artifacts` -> `### Goals` link back to whichever GOL above it serves -- Functional Suitability (10, linked to GOL `08666592-a2d2-4309-95c6-3c94248ca342`): `678319da-f8e6-4f65-8f98-1096024012af` "Architecture Decision Record Document Management" (adr), `64065cad-bb84-45c4-9e18-b2a8c5ce6865` "Requirement Document Management" (req), `594afce9-7166-47b2-8e8f-788b9ed68c8e` "Use Case Document Management" (uc), `c097fcb4-9bbd-41f8-b774-b2afdcb8ecb9` "Task List Document Management" (tsk), `152d608b-ea4c-463b-8183-33332fb41e50` "Requirements-Elicitation Question and Answer Document Management" (qa), `f4180953-9f1b-45a5-8474-8d15a5872d49` "Problem Statement Document Management" (prb), `7c0e56e2-3fa5-437e-b886-1be32b142292` "Goal Document Management" (gol), `bb018715-f9e6-4ae6-830c-58e40162ac70` "Risk Register Document Management" (rsk), `1b6975fb-f5c2-4a16-b9db-9f026b8e6912` "General Decision Document Management" (dec), `ccbf7ade-7d9e-4b2e-9868-0740bdc0e824` "Feature Folder Document Management" (feat); Maintainability (4, linked to GOL `b663528e-08c5-426b-9f20-32192c0a3bdb`): `3bbe6a0e-038c-4abb-987c-79d4db8abd51` "Standard Operating Procedure Document Management" (sop), `10b78b36-abad-4bfe-9281-f75677ff7d09` "Verification Case Record Document Management" (vcr), `26c37265-1a85-4b18-aada-c9e3db9574a8` "System Requirements Specification Aggregator Document Management" (sysrs), `bad7e9c7-f794-477b-b64f-ce04645c6ef3` "Generic Cross-Domain Document Dispatch Tools" (general)). `list_gol`/`list_req` were re-checked and confirm exactly 2 `GOL` and 14 `REQ` documents on disk, matching the intended counts. Next step is Phase 3 (Draft and Create the SysRS).
 
 #### 2026-09-03 00:00:00.000Z - Phase 1 Discovery complete
 
