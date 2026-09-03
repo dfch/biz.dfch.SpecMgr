@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-03 08:28:23.003+02:00'
 id: feat-67-70-71
-status: planning
+status: done
 type: feat
-updated: '2026-09-03 10:36:16.175+02:00'
+updated: '2026-09-03 10:51:10.996+02:00'
 version: 1.0.0
 ---
 
@@ -26,10 +26,10 @@ This feature closes three interconnected GitHub issues discovered during dogfood
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: A repo-wide search for `00:00:00.000` (or equivalent round, all-zero time-of-day patterns) across every `*/data/*_template.md` and `*/data/*_example.md` returns zero matches.
-- [ ] ACC-002: An end-to-end regression test with a bare `<word>` token outside backticks in a heading or list item, driven through `create_<d>`/`validate_<d>` for every affected domain, asserts the final `wrap_tool_errors`-enriched message is actionable (field path + line + cause/fix hint), not a bare `Error executing tool`.
-- [ ] ACC-003: An end-to-end regression test with a `####` heading whose leading text is not a parseable timestamp, driven through `create_<d>`/`validate_<d>`/the generic `update` tool, asserts the same actionable-error detail, not a bare `Error executing tool`.
-- [ ] ACC-004: Design Notes (or a follow-up DEC/ADR, if the investigation reveals architecture-level implications) documents the root cause of each topic, the large-document/MCP-client reproduction findings, and confirms no unintended side effects before any Phase 3/4 fix implementation starts.
+- [x] ACC-001: A repo-wide search for `00:00:00.000` (or equivalent round, all-zero time-of-day patterns) across every `*/data/*_template.md` and `*/data/*_example.md` returns zero matches.
+- [x] ACC-002: An end-to-end regression test with a bare `<word>` token outside backticks in a heading or list item, driven through `create_<d>`/`validate_<d>` for every affected domain, asserts the final `wrap_tool_errors`-enriched message is actionable (field path + line + cause/fix hint), not a bare `Error executing tool`.
+- [x] ACC-003: An end-to-end regression test with a `####` heading whose leading text is not a parseable timestamp, driven through `create_<d>`/`validate_<d>`/the generic `update` tool, asserts the same actionable-error detail, not a bare `Error executing tool`.
+- [x] ACC-004: Design Notes (or a follow-up DEC/ADR, if the investigation reveals architecture-level implications) documents the root cause of each topic, the large-document/MCP-client reproduction findings, and confirms no unintended side effects before any Phase 3/4 fix implementation starts.
 
 ### Scope
 
@@ -89,6 +89,14 @@ The orchestrator/user judged Phase 1's repro not literal enough (it injected a b
 - **Verdict: no gap found for either #70 or #71, even reproducing the exact literal input and exact literal call path from both issue reports.** Neither the document scale, the token's nesting/position, the presence of multiple simultaneous structural violations, nor routing through the generic `update` tool's splice-then-validate-whole path changes the outcome: every attempt yields a fully actionable message at the MCP client boundary.
 - **Best hypothesis for the discrepancy with the original reports.** `git log` shows the actionable-error mechanism (`wrap_tool_errors`, `feat-27-validation`) shipped in release `0.16.0` (2026-09-01), a full day before both issues were filed (2026-09-02); the `update` tool's own splice-then-wrap code (`feat-28`/`#55`, commit `a9dbe9c`) also predates both issue-filing timestamps. Both issues explicitly say they were found *while drafting* `feat-69-update-context`, whose own commit (`d678fb1`, "MCP write tools return frontmatter-only", `#75`) merged *after* both issues were filed -- so the reporting agent was very plausibly working against an in-progress, uncommitted, or mid-refactor working tree state of that very feature at the moment the bare error was seen, not any commit that exists (or ever existed) on `dev`/`main`. A second, independent possibility: the reporting agent's MCP client was a different process/install than this repo's dev worktree (e.g. a `uvx`-cached older release predating `0.16.0`, or a host application that itself truncates a long tool-error string for display) -- neither of which this investigation's reach can confirm or rule out from inside this repository. Either way, the current `dev` HEAD (and every commit at or after `0.16.0`) does not exhibit the reported bare-error symptom for either literal input.
 
+#### Final verdict (2026-09-03) -- issues #67, #70, #71
+
+Recorded here in one place, per Task 5.3, now that all three topics' phases are complete:
+
+- **#67 (round, all-zero placeholder timestamps) -- confirmed real, fixed.** Task 1.5's audit found the bug in all 24 affected `*/data/*_template.md`/`*/data/*_example.md` files; Phase 2 corrected every one of them (not just the literal `00:00:00.000` full-midnight tier, but also the round-non-midnight body headings and the round-milliseconds-only borderline tier), and `tests/regression/test_issue_67.py` now locks the fix in for good, asserting zero matches for both patterns across every domain's template/example files.
+- **#70 (bare `<word>`-shaped HTML-like token surfaces only a bare `Error executing tool`) -- no gap found, already correct.** Both Phase 1 and Phase 1b reproduced the issue's exact literal input (including at realistic/larger document scale, at multiple positions within the document, with multiple simultaneous bad tokens, and over a real MCP client/`stdio` transport round-trip) and found the message fully actionable at every layer every time -- no code fix was needed or made. A permanent regression test, `tests/regression/test_issue_70.py`, now guards this already-correct behavior across 3 domains (`feat`, `req`, `dec`) with deliberately different body shapes, so a future regression in the shared `models/md` tokenizer would be caught.
+- **#71 (malformed `#### {timestamp}` heading surfaces only a bare `Error executing tool`, and its literal duplicate of #67's timestamp-format ask) -- mixed verdict, both parts resolved.** The timestamp-format portion of #71 is the same bug as #67 and is fixed by #67's Phase 2 work above (both issues shared one fix, since they were literal duplicates on that point). The error-message portion of #71 (the malformed-heading validation failure itself) is, like #70, a no-gap-found case: Phase 1b's exact literal repro of the issue's own reported heading shape, driven through both whole-document validation and the generic `update` tool's real `offset`/`limit` line-range splice path, produced a fully actionable message every time. `tests/regression/test_issue_71.py` now locks this in, covering both the literal malformed-heading sub-case and the related newest-first-ordering sub-case discovered during this feature's own drafting session (also confirmed already-correct by Task 1.6).
+
 ### Task List
 
 #### Phase 1: Investigation and Design
@@ -122,20 +130,24 @@ The orchestrator/user judged Phase 1's repro not literal enough (it injected a b
 
 #### Phase 5: Closeout and Final Verification
 
-- [ ] Task 5.1: Re-run the full repo-wide round-timestamp search (ACC-001) to confirm zero remaining matches.
-- [ ] Task 5.2: Re-run the full test suite to confirm no regressions across all changes.
-- [ ] Task 5.3: Record the final verdict on issues #67/#70/#71 (fixed vs. confirmed-already-correct-plus-regression-test-added) in Design Notes/Decisions Made.
-- [ ] Task 5.4: Update this feature's Progress section (Current Status) and close out.
+- [x] Task 5.1: Re-run the full repo-wide round-timestamp search (ACC-001) to confirm zero remaining matches.
+- [x] Task 5.2: Re-run the full test suite to confirm no regressions across all changes.
+- [x] Task 5.3: Record the final verdict on issues #67/#70/#71 (fixed vs. confirmed-already-correct-plus-regression-test-added) in Design Notes/Decisions Made.
+- [x] Task 5.4: Update this feature's Progress section (Current Status) and close out.
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-09-03**: Phases 2, 3, and 4 are complete. Phase 2 (placeholder timestamp fix and test) fixed all 24 domain `*/data/*_template.md`/`*/data/*_example.md` files identified by Task 1.5's audit -- not just the literal `00:00:00.000` full-midnight tier, but also the round-non-midnight body headings and the "round milliseconds only, real hour" borderline tier -- with every replaced timestamp given a deliberately odd, non-round, year-2025 value in the correct `yyyy-MM-dd HH:mm:ss.fff[+HH:mm|Z]` format, preserving each file's own `created`≤`updated` relationship and every `Updates`/`Decisions Made` section's newest-first ordering. A repo-wide regression test (`tests/regression/test_issue_67.py`) globs every such file and asserts zero matches for both the literal ACC-001 `00:00:00.000` pattern and the broader round-milliseconds class. Phase 3 (bare HTML-like token actionable-error test) and Phase 4 (malformed timestamp-heading actionable-error test), both rescoped to regression-test-only per Phase 1/1b/Task 1.6's accepted "no gap found" verdicts, added `tests/regression/test_issue_70.py` and `tests/regression/test_issue_71.py` respectively, driving `validate_<d>`/`create_<d>`/(for #71 only) the generic `update` tool through affected domains and asserting the surfaced message is actionable; Task 3.1's and Task 4.1's conditional code fixes were both skipped as inapplicable. The full test suite (3318 tests) and the ruff/vulture quality gate both pass with no regressions. All 5 original phases plus the inserted Phase 1b are now done; Phase 5 (closeout and final verification) is next.
+**As of 2026-09-03**: Feature complete -- all 5 phases plus the inserted Phase 1b are done, and Phase 5 (closeout and final verification) has confirmed no regressions across the whole feature. Task 5.1 re-ran the ACC-001 repo-wide round-timestamp search (`grep -rn -E '\.000[Z+-]' src/biz/dfch/specmgr/*/data/*_template.md src/biz/dfch/specmgr/*/data/*_example.md`) and confirmed zero matches, and `tests.regression.test_issue_67` still passes (3/3). Task 5.2 re-ran the full test suite end to end (3318 tests, 0 failures/errors -- unchanged from Phase 4's baseline) plus the full quality gate (`ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`), all clean. All 4 top-level Acceptance Criteria are now satisfied: ACC-001 by Phase 2's fix plus `tests/regression/test_issue_67.py`; ACC-002 by `tests/regression/test_issue_70.py` (Phase 3); ACC-003 by `tests/regression/test_issue_71.py` (Phase 4); ACC-004 by the Phase 1/Phase 1b Design Notes findings, recorded before any Phase 3/4 fix was implemented (none was needed). Final verdict on all three GitHub issues (see Design Notes' "Final verdict" sub-heading): **#67 confirmed real, fixed** (24 files corrected); **#70 no gap found, already correct** (regression test added); **#71 mixed** -- its timestamp-format portion fixed via #67's Phase 2 work, its error-message portion no gap found, already correct (regression test added, also covering the newest-first-ordering sub-case found during this feature's own drafting). The feature's frontmatter `status` has been moved from `planning` to `done` via `set_status`.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-03 20:15:33.874+02:00 - Phase 5 (closeout and final verification) complete -- feature done
+
+Re-ran ACC-001's repo-wide round-timestamp search (`grep -rn -E '\.000[Z+-]' src/biz/dfch/specmgr/*/data/*_template.md src/biz/dfch/specmgr/*/data/*_example.md`): zero matches, confirmed; `tests.regression.test_issue_67` still passes (3/3). Re-ran the full test suite end to end: 3318 tests, 0 failures/errors, unchanged from Phase 4's baseline -- no regressions across the whole feature. Re-ran the full quality gate (`ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`): all clean. Checked off all 4 top-level Acceptance Criteria (ACC-001 through ACC-004) as satisfied, added a "Final verdict" Design Notes sub-heading summarizing the closing verdict for all three GitHub issues in one place (#67 confirmed real and fixed; #70 no gap found, already correct; #71 mixed -- timestamp-format portion fixed via #67, error-message portion no gap found, already correct), and moved the feature's frontmatter `status` from `planning` to `done` via `set_status`. No `src/`/`tests/` file was touched in this phase, per its own closeout-only scope. This is the feature's final Updates entry.
 
 #### 2026-09-03 19:32:18.647+02:00 - Phase 4 (malformed timestamp-heading actionable-error test) complete
 
@@ -168,6 +180,10 @@ Feature created from GitHub issues #67, #70, and #71, combining the placeholder-
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-03 20:18:52.607+02:00 - Feature closeout: all 3 issues addressed, ready for `status: done`
+
+Confirmed with the orchestrator/user that all three tracked GitHub issues are now addressed: #67 (round, all-zero placeholder timestamps) via a real fix across 24 files plus `tests/regression/test_issue_67.py`; #70 (bare HTML-like token bare error) and #71 (malformed timestamp-heading bare error, plus its literal duplicate of #67's timestamp-format ask) via confirmed-already-correct verdicts (Phase 1/1b) plus `tests/regression/test_issue_70.py`/`tests/regression/test_issue_71.py` locking in that correct behavior going forward. Final state: 3318 tests passing (0 failures/errors), ruff format/check and vulture both clean, all 4 top-level Acceptance Criteria satisfied. The feature's frontmatter `status` is being moved from `planning` to `done` via the generic `set_status` tool (`type="feat"`) as the very last step of this phase, since `update`'s own body-only scope cannot touch frontmatter.
 
 #### 2026-09-03 19:35:44.129+02:00 - Phase 4 rescoped to regression-test-only for both #71 sub-cases, per the accepted Phase 1/1b/Task 1.6 "no gap found" verdicts
 
