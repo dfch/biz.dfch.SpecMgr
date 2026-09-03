@@ -38,6 +38,11 @@ Index of all ADRs in this repository.
   - Status: accepted
   - Date: 2026-09-01
   - Decision-makers: OpenCode agent + user decision
+- [Design validate as a non-raising, structured-result tool to work around client-side MCP error-content truncation](519d1206-4d2a-4500-9046-6db635209996-design-validate-as-a-non-raising-structured-result-tool-to-w.md)
+  - Id: 519d1206-4d2a-4500-9046-6db635209996
+  - Status: accepted
+  - Date: 2026-09-03
+  - Decision-makers: OpenCode agent + user decision
 - [Generic update_section(key, value) with deletion sentinel and mandatory-section rejection](71fd95d7-07f2-466f-81aa-d29b7e3ef34c-generic-update-section-key-value-with-deletion-sentinel-and.md)
   - Id: 71fd95d7-07f2-466f-81aa-d29b7e3ef34c
   - Status: accepted
