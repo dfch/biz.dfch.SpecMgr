@@ -16,9 +16,9 @@ An artifact manager for system specifications.
 This project is an **MCP server** that you can use to manage different
 specification artifacts.
 
-At this time, we have these artifact:
+At this time, we have these artifact types:
 
-- Architecture Decision Record (ADR)
+- Architecture Decision Record (ADR) (deprecated, will be phased out, use DEC instead)
 - Decision (DEC)
 - Feature (FEAT)
 - Goal (GOL)
@@ -31,9 +31,6 @@ At this time, we have these artifact:
 - Task List (TSK)
 - Use Case (UC)
 - Verification Case Record (VCR)
-<!-- 
-- Acceptance Criterium (ACC)
--->
 
 See [MCP Server](#mcp-server) and [docs/MCP.md](docs/MCP.md) for details.
 
