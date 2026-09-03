@@ -4,7 +4,7 @@ created: '2026-09-03 08:28:23.003+02:00'
 id: feat-67-70-71
 status: planning
 type: feat
-updated: '2026-09-03 09:58:22.573+02:00'
+updated: '2026-09-03 10:14:47.459+02:00'
 version: 1.0.0
 ---
 
@@ -109,9 +109,9 @@ The orchestrator/user judged Phase 1's repro not literal enough (it injected a b
 
 #### Phase 3: Bare HTML-Like Token Actionable-Error Fix and Test
 
-- [ ] Task 3.1: Based on Phase 1 findings, fix the origin path in `models/md/_markdown.py` so a bare `<word>`-shaped token failure carries full actionable detail, only if Task 1.3/1.4 confirmed a real gap.
-- [ ] Task 3.2: Add an end-to-end regression test fixture (a bare `<word>` token outside backticks in a heading/list item, driven through `create_feat`/`validate_feat`) asserting the final message is actionable.
-- [ ] Task 3.3: Verify ACC-002 passes.
+- [ ] Task 3.1: Based on Phase 1 findings, fix the origin path in `models/md/_markdown.py` so a bare `<word>`-shaped token failure carries full actionable detail, only if Task 1.3/1.4 confirmed a real gap. **Skipped, intentionally**: Phase 1 and Phase 1b both conclusively found no gap (see Design Notes), and the orchestrator/user accepted that verdict, so this task's own precondition was never met -- left unchecked (not `[x]`) to record "not applicable" rather than "done", per Task 3.3's own findings entry below.
+- [x] Task 3.2: Add an end-to-end regression test fixture (a bare `<word>` token outside backticks in a heading/list item, driven through `create_feat`/`validate_feat`) asserting the final message is actionable.
+- [x] Task 3.3: Verify ACC-002 passes.
 
 #### Phase 4: Malformed Timestamp-Heading Actionable-Error Fix and Test
 
@@ -131,11 +131,15 @@ The orchestrator/user judged Phase 1's repro not literal enough (it injected a b
 
 ### Current Status
 
-**As of 2026-09-03**: Phase 2 (placeholder timestamp fix and test) is complete. All 24 domain `*/data/*_template.md`/`*/data/*_example.md` files identified by Task 1.5's audit were fixed -- not just the literal `00:00:00.000` full-midnight tier, but also the round-non-midnight body headings and the "round milliseconds only, real hour" borderline tier -- with every replaced timestamp given a deliberately odd, non-round, year-2025 value in the correct `yyyy-MM-dd HH:mm:ss.fff[+HH:mm|Z]` format, preserving each file's own `created`≤`updated` relationship and every `Updates`/`Decisions Made` section's newest-first ordering. A new repo-wide regression test (`tests/regression/test_issue_67.py`) globs every such file and asserts zero matches for both the literal ACC-001 `00:00:00.000` pattern and the broader round-milliseconds class. The full test suite (3306 tests) and the ruff/vulture quality gate both pass with no regressions. Phases 3 and 4 remain scoped down to regression-test-only per Phase 1/1b's findings.
+**As of 2026-09-03**: Phases 2 and 3 are complete. Phase 2 (placeholder timestamp fix and test) fixed all 24 domain `*/data/*_template.md`/`*/data/*_example.md` files identified by Task 1.5's audit -- not just the literal `00:00:00.000` full-midnight tier, but also the round-non-midnight body headings and the "round milliseconds only, real hour" borderline tier -- with every replaced timestamp given a deliberately odd, non-round, year-2025 value in the correct `yyyy-MM-dd HH:mm:ss.fff[+HH:mm|Z]` format, preserving each file's own `created`≤`updated` relationship and every `Updates`/`Decisions Made` section's newest-first ordering. A repo-wide regression test (`tests/regression/test_issue_67.py`) globs every such file and asserts zero matches for both the literal ACC-001 `00:00:00.000` pattern and the broader round-milliseconds class. Phase 3 (bare HTML-like token actionable-error test), rescoped to regression-test-only per Phase 1/1b's accepted "no gap found" verdict, added `tests/regression/test_issue_70.py`, driving `validate_<d>`/`create_<d>` through `feat`/`req`/`dec` and asserting the surfaced message is actionable; Task 3.1's conditional code fix was skipped as inapplicable. The full test suite (3312 tests) and the ruff/vulture quality gate both pass with no regressions. Phase 4 remains scoped down to regression-test-only per Phase 1/1b's findings.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-03 18:21:47.512+02:00 - Phase 3 (bare HTML-like token actionable-error test) complete
+
+Executed Phase 3 as regression-test-only, per the accepted Phase 1/1b "no gap found" verdict for issue #70 -- Task 3.1's conditional code fix in `models/md/_markdown.py` was skipped entirely, since its own precondition was never met. Added `tests/regression/test_issue_70.py`, driving `validate_<d>` and `create_<d>` through three domains with deliberately different body shapes, not just `feat` (the domain the issue was filed against): `feat` (the literal issue #70 reproduction, a `#### Phase 3: Per-domain create_<d> tools` Task List heading, folder-per-document schema), `req` (a bullet-list-item token inside a free-form `## Description` section, flat WHILE/THE-grammar schema), and `dec` (a bullet-list-item token inside `## Context and Problem Statement`, flat MADR-style schema). Each domain's test asserts both `validate_<d>` and `create_<d>` raise `AssertionError` with a message naming the offending raw-HTML token, an absolute 1-based line reference, and both documented fix hints (wrap in a code span, or write as an HTML comment) -- and that `create_<d>` writes nothing to disk on failure. All 6 new tests pass; the full test suite (3312 tests) and the ruff format/check + vulture quality gate both pass with zero failures/errors. ACC-002 is satisfied.
 
 #### 2026-09-03 17:45:12.803+02:00 - Phase 2 (placeholder timestamp fix and test) complete
 
@@ -160,6 +164,10 @@ Feature created from GitHub issues #67, #70, and #71, combining the placeholder-
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-03 18:09:33.847+02:00 - Phase 3 rescoped to regression-test-only, per the accepted Phase 1/1b "no gap found" verdict
+
+Confirmed with the orchestrator/user that Phase 3's Task 3.1 (the conditional code fix in `models/md/_markdown.py`) does not apply: its own precondition -- "only if Task 1.3/1.4 confirmed a real gap" -- was never met, since both Phase 1 and Phase 1b independently reproduced the exact literal issue #70 input/call path and found the bare `<word>`-as-HTML failure already fully actionable at every layer, at every document scale tried. Phase 3 was therefore executed as regression-test-only: added `tests/regression/test_issue_70.py`, driving `validate_<d>`/`create_<d>` through three domains with deliberately different body shapes (`feat`'s folder-per-document, nested-container schema, using the issue's own literal `#### Phase N: Per-domain create_<d> tools` heading wording; `req`'s flat, WHILE/THE-grammar schema; `dec`'s flat, MADR-style schema, both via a bullet-list-item token) to genuinely exercise the shared `models/md` parser across more than just the one domain issue #70 was filed against. No `src/` file was touched.
 
 #### 2026-09-03 17:22:48.395+02:00 - Fixed the round-milliseconds-only tier too, not just literal `00:00:00.000`
 
