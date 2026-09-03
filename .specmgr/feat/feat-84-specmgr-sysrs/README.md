@@ -4,7 +4,7 @@ created: '2026-09-03 10:00:47.481+02:00'
 id: feat-84-specmgr-sysrs
 status: planning
 type: feat
-updated: '2026-09-03 10:00:47.481+02:00'
+updated: '2026-09-03 10:04:36.472+02:00'
 version: 1.0.0
 ---
 
@@ -61,9 +61,9 @@ as new domains/features land, so the effort is not a one-off dead end.
 
 #### Phase 1: Discovery
 
-- [ ] Task 1.1: Read `AGENTS.md` and the source tree under `src/` to build a domain-package inventory.
-- [ ] Task 1.2: Read every `.specmgr/feat/*/README.md` and extract requirements, decisions, and scope already captured there.
-- [ ] Task 1.3: Enumerate any existing `gol`/`req`/`uc`/`rsk`/`dec`/`adr`/`vcr` documents on disk via their `list_<d>` tools and record their ids/titles.
+- [x] Task 1.1: Read `AGENTS.md` and the source tree under `src/` to build a domain-package inventory.
+- [x] Task 1.2: Read every `.specmgr/feat/*/README.md` and extract requirements, decisions, and scope already captured there.
+- [x] Task 1.3: Enumerate any existing `gol`/`req`/`uc`/`rsk`/`dec`/`adr`/`vcr` documents on disk via their `list_<d>` tools and record their ids/titles.
 
 #### Phase 2: Gap-Filling
 
@@ -82,11 +82,15 @@ as new domains/features land, so the effort is not a one-off dead end.
 
 ### Current Status
 
-**As of 2026-09-03**: Feature just scaffolded; no codebase/feature-folder analysis has started yet. Next step is Phase 1 (Discovery).
+**As of 2026-09-03**: Phase 1 (Discovery) is complete. Read `AGENTS.md` in full and confirmed the domain-package inventory it documents (13 domain/cross-cutting packages: adr, req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs, plus the cross-cutting `general` package). Read all 33 other `.specmgr/feat/*/README.md` feature folders in full (34 total including this one) and extracted their requirements/decisions/scope. Enumerated existing domain documents on disk via `list_gol`/`list_req`/`list_uc`/`list_rsk`/`list_dec`/`list_adr`/`list_vcr`: only `adr` has documents (28 accepted ADRs); `gol`/`req`/`uc`/`rsk`/`dec`/`vcr` all have zero documents on disk. This confirms Phase 2 (Gap-Filling) will need to create prerequisite `GOL`/`REQ`/`DEC` documents from scratch, since no reusable cross-reference targets exist yet for those six domains. Next step is Phase 2 (Gap-Filling).
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-03 00:00:00.000Z - Phase 1 Discovery complete
+
+Completed Task 1.1 (read `AGENTS.md` and confirmed the `src/` domain-package inventory: 13 domain/cross-cutting packages -- adr, req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs -- plus the cross-cutting `general` package), Task 1.2 (read all 33 other feature folders under `.specmgr/feat/` in full and extracted their requirements/decisions/scope -- notable prior art: feat-32-sysrs designed the `sysrs` schema itself; feat-18-goal/feat-6-requirement-artifact/feat-21-decision designed the `gol`/`req`/`dec` domains this feature will need to create documents in), and Task 1.3 (enumerated existing documents via `list_gol`/`list_req`/`list_uc`/`list_rsk`/`list_dec`/`list_adr`/`list_vcr`: `gol`=0, `req`=0, `uc`=0, `rsk`=0, `dec`=0, `vcr`=0, `adr`=28 accepted ADRs). No documents currently exist for `gol`/`req`/`uc`/`rsk`/`dec`/`vcr` on disk, so Phase 2 will need to create minimal prerequisite documents from scratch rather than reusing existing ids.
 
 #### 2026-09-03 00:00:00.000Z - Created
 
