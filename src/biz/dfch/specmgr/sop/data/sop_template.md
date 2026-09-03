@@ -1,9 +1,9 @@
 ---
-created: '2026-08-30 00:00:00.000Z'
+created: '2025-05-01 07:23:46.815Z'
 id: deadbeef-dead-dead-dead-deadbeefdead
 status: draft
 type: sop
-updated: '2026-08-30 00:00:00.000Z'
+updated: '2025-05-14 19:58:32.271Z'
 version: 1.0.0
 ---
 
@@ -81,6 +81,6 @@ Optional free-form supplementary text.
 
 ## Updates
 
-### 2026-08-30 09:00:00.000+02:00 - Created
+### 2025-05-01 09:47:23.658+02:00 - Created
 
 A lead paragraph describing this update.

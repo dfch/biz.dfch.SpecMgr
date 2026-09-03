@@ -1,9 +1,9 @@
 ---
-created: '2026-06-15 00:00:00.000Z'
+created: '2025-04-01 06:18:52.437Z'
 id: c4e7b8a3-1f2d-4e9c-8b6a-3d5f7e9c1a2b
 status: active
 type: sop
-updated: '2026-08-30 00:00:00.000Z'
+updated: '2025-04-27 14:39:07.916Z'
 version: 1.0.0
 ---
 
@@ -159,7 +159,7 @@ rate) are reported monthly to the IT Operations Manager.
 
 ## Updates
 
-### 2026-08-30 14:30:00.000+02:00 - Approved and activated
+### 2025-04-27 16:52:19.384+02:00 - Approved and activated
 
 The procedure was approved by the IT Operations Manager and activated
 as the standing reference for new-employee provisioning. It supersedes

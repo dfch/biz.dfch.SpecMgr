@@ -4,7 +4,7 @@ created: '2026-09-03 08:28:23.003+02:00'
 id: feat-67-70-71
 status: planning
 type: feat
-updated: '2026-09-03 09:22:22.131+02:00'
+updated: '2026-09-03 09:58:22.573+02:00'
 version: 1.0.0
 ---
 
@@ -103,9 +103,9 @@ The orchestrator/user judged Phase 1's repro not literal enough (it injected a b
 
 #### Phase 2: Placeholder Timestamp Fix and Test
 
-- [ ] Task 2.1: Replace round, all-zero placeholder timestamps across every affected `*_template.md`/`*_example.md` (per Task 1.5's list) with deliberately odd, non-round values in the correct format.
-- [ ] Task 2.2: Add/extend a regression test asserting a repo-wide search for round, all-zero timestamps returns zero matches across every domain's template/example files.
-- [ ] Task 2.3: Run the full test suite to confirm no regressions from the content changes.
+- [x] Task 2.1: Replace round, all-zero placeholder timestamps across every affected `*_template.md`/`*_example.md` (per Task 1.5's list) with deliberately odd, non-round values in the correct format.
+- [x] Task 2.2: Add/extend a regression test asserting a repo-wide search for round, all-zero timestamps returns zero matches across every domain's template/example files.
+- [x] Task 2.3: Run the full test suite to confirm no regressions from the content changes.
 
 #### Phase 3: Bare HTML-Like Token Actionable-Error Fix and Test
 
@@ -131,11 +131,15 @@ The orchestrator/user judged Phase 1's repro not literal enough (it injected a b
 
 ### Current Status
 
-**As of 2026-09-03**: Phase 1b (literal-repro deep dive) is complete. The orchestrator/user judged Phase 1's repro not literal enough for #70/#71, so both were redone with the exact literal reported input and call path: #70's literal `#### Phase N: Per-domain create_<d> tools` heading against a realistic 175-line document (start/middle/end positions, plus two simultaneous bad tokens, 16 combinations total across `Feature.from_text`/in-process `validate_feat`/real MCP client over `stdio`), and #71's literal `#### 2026-09-02 (Phase 1) - Some Title` heading driven through the generic `update` tool's real line-range splice (not just `Feature.from_text`), via a real MCP client against a scratch `SPECMGR_FEAT_DIR`. **Verdict for both: no gap found**, confirmed with the exact literal inputs/call paths -- every attempt produced a fully actionable message at the MCP client boundary; see Design Notes' "Phase 1b" sub-heading for the full evidence, root-cause analysis (why #70 structurally can never miss the raw-HTML check regardless of document scale/nesting/position), and the best hypothesis for the discrepancy with the original reports (a mid-refactor/uncommitted working-tree state during the concurrent `feat-69-update-context` session, or a stale/different MCP client install on the reporter's side). Phase 1's original recommendation stands unchanged: Phase 2 proceeds as planned; Phases 3 and 4 are scoped down to "regression test only" (no code fix, since no gap was found even under this deeper literal-repro pass).
+**As of 2026-09-03**: Phase 2 (placeholder timestamp fix and test) is complete. All 24 domain `*/data/*_template.md`/`*/data/*_example.md` files identified by Task 1.5's audit were fixed -- not just the literal `00:00:00.000` full-midnight tier, but also the round-non-midnight body headings and the "round milliseconds only, real hour" borderline tier -- with every replaced timestamp given a deliberately odd, non-round, year-2025 value in the correct `yyyy-MM-dd HH:mm:ss.fff[+HH:mm|Z]` format, preserving each file's own `created`≤`updated` relationship and every `Updates`/`Decisions Made` section's newest-first ordering. A new repo-wide regression test (`tests/regression/test_issue_67.py`) globs every such file and asserts zero matches for both the literal ACC-001 `00:00:00.000` pattern and the broader round-milliseconds class. The full test suite (3306 tests) and the ruff/vulture quality gate both pass with no regressions. Phases 3 and 4 remain scoped down to regression-test-only per Phase 1/1b's findings.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-03 17:45:12.803+02:00 - Phase 2 (placeholder timestamp fix and test) complete
+
+Fixed all 24 files Task 1.5's audit identified, per the orchestrator/user's explicit scope decision -- not just the 14 literal full-midnight (`00:00:00.000`) files, but also the 4 round-non-midnight body headings and the 10 "round milliseconds only, real hour" borderline-tier frontmatter files. Every replaced timestamp uses a deliberately odd, non-round value in year 2025, following the `2025-11-06 12:34:56.789Z`-style reference pattern (every field non-round), while preserving each file's own `created`≤`updated` relationship and the newest-first ordering of `feat_example.md`'s and `sop_example.md`'s/`sop_template.md`'s multi-entry `Updates`/`Decisions Made`/body-heading sections. Added a new repo-wide regression test, `tests/regression/test_issue_67.py`, which globs every domain's `*/data/*_template.md`/`*/data/*_example.md` file and asserts zero matches for both the literal ACC-001 `00:00:00.000` pattern and the broader `\.000[Z+-]` round-milliseconds class (deliberately excluding the legitimate date-only `### yyyy-MM-dd` headings Task 1.5 already cleared). Also updated `tests/feat/models/v1/data/feat_reference.md`, a separate golden-fixture copy of `feat_example.md` that `test_matches_the_reference_fixture_byte_for_byte` asserts stays byte-identical to the packaged file, so it did not regress after `feat_example.md`'s own timestamps changed. The full test suite (3306 tests) and the ruff format/check + vulture quality gate both pass with zero failures/errors.
 
 #### 2026-09-03 16:34:27.619+02:00 - Phase 1b (literal-repro deep dive) complete: no gap found for #70 or #71, even with exact literal input/call path
 
@@ -156,6 +160,10 @@ Feature created from GitHub issues #67, #70, and #71, combining the placeholder-
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-03 17:22:48.395+02:00 - Fixed the round-milliseconds-only tier too, not just literal `00:00:00.000`
+
+Followed the orchestrator/user's explicit Phase 2 scope decision: rather than fixing only the 14 files/30 occurrences matching the literal ACC-001 `00:00:00.000` full-midnight pattern, Phase 2 fixed all 24 files Task 1.5's audit found, including the 10 "round-milliseconds-only, real hour" frontmatter files (e.g. `08:15:42.000Z`) that Task 1.5 had flagged as a judgment call. Chosen because ACC-001's own literal grep target would not have caught that tier, silently leaving a lower-severity but still-round, still-copyable placeholder timestamp in `prb`/`qa`/`req`/`rsk`/`tsk`/`uc`/`vcr`'s own templates/examples -- broadening the fix (and the new regression test's own check) to the wider round-milliseconds class closes that gap in the same pass rather than deferring it. The new regression test, `tests/regression/test_issue_67.py`, encodes this decision directly: it asserts on both the narrow literal ACC-001 pattern and the broader round-milliseconds pattern, so any future regression of either tier is caught, not just the narrowest one the original issue reported.
 
 #### 2026-09-03 11:52:07.318Z - Renamed feature id to feat-67-70-71
 
