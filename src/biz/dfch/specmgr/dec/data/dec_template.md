@@ -1,9 +1,9 @@
 ---
-created: '2026-08-27 00:00:00.000Z'
+created: '2025-04-14 07:52:19.384Z'
 id: deadbeef-dead-dead-dead-deadbeefdead
 status: draft
 type: dec
-updated: '2026-08-27 00:00:00.000Z'
+updated: '2025-04-14 16:38:05.221Z'
 version: 1.0.0
 ---
 

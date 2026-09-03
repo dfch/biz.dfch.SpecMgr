@@ -1,9 +1,9 @@
 ---
-created: '2026-08-30 00:00:00.000Z'
+created: '2025-06-03 06:27:41.558Z'
 id: feat-0-template
 status: planning
 type: feat
-updated: '2026-08-30 00:00:00.000Z'
+updated: '2025-06-15 13:09:56.732Z'
 version: 1.0.0
 ---
 
@@ -71,7 +71,7 @@ Free-form design rationale, schema sketches, etc. Optional.
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
-#### 2026-08-30 00:00:00.000Z - Created
+#### 2025-06-15 08:47:29.104Z - Created
 
 A short lead paragraph describing this update.
 
@@ -79,7 +79,7 @@ A short lead paragraph describing this update.
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
-#### 2026-08-30 00:00:00.000Z - Placeholder decision
+#### 2025-06-14 19:22:53.667Z - Placeholder decision
 
 A short lead paragraph describing the decision and its rationale.
 

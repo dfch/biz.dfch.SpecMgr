@@ -1,9 +1,9 @@
 ---
-created: '2026-08-25 00:00:00.000Z'
+created: '2025-07-08 10:16:04.372Z'
 id: deaddead-goal-goal-goal-deaddeadgoal
 status: accepted
 type: gol
-updated: '2026-08-25 00:00:00.000Z'
+updated: '2025-07-22 15:49:27.918Z'
 version: 1.0.0
 ---
 
