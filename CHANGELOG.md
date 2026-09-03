@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.21.0] - 2026-09-03
+
+### Changed
+
+- README now flags the Architecture Decision Record (ADR) artifact type
+  as deprecated in favor of Decision (DEC).
+
+### Fixed
+
+- Replaced round, all-zero-time-of-day placeholder timestamps (frontmatter
+  `created`/`updated`, and `feat`'s body-level `#### {timestamp}` headings)
+  across all 24 affected domain template/example files with realistic,
+  non-round values, so they no longer invite copy-paste-without-substitution
+  (GitHub issue #67).
+
 ## [0.20.0] - 2026-09-03
 
 ### Added
