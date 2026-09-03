@@ -4,7 +4,7 @@ created: '2026-09-03 08:28:23.003+02:00'
 id: feat-67-70-71
 status: planning
 type: feat
-updated: '2026-09-03 10:14:47.459+02:00'
+updated: '2026-09-03 10:36:16.175+02:00'
 version: 1.0.0
 ---
 
@@ -115,10 +115,10 @@ The orchestrator/user judged Phase 1's repro not literal enough (it injected a b
 
 #### Phase 4: Malformed Timestamp-Heading Actionable-Error Fix and Test
 
-- [ ] Task 4.1: Based on Phase 1 findings, fix the origin path in `models/md/markdown_section.py`/`markdown_str.py`'s alias/`get_extent` matching so a malformed `#### {timestamp}` heading failure carries full actionable detail, only if Task 1.3/1.4 confirmed a real gap.
-- [ ] Task 4.2: Add an end-to-end regression test fixture (a malformed `#### {timestamp}` heading in `Updates`/`Decisions Made`, driven through `create_feat`/`validate_feat`/the generic `update` tool) asserting the final message is actionable.
-- [ ] Task 4.3: Based on Task 1.6's findings, decide whether the newest-first-ordering failure mode also needs its own fix here or is already covered by Task 4.1/4.2's fix; add a dedicated regression test either way.
-- [ ] Task 4.4: Verify ACC-003 passes.
+- [ ] Task 4.1: Based on Phase 1 findings, fix the origin path in `models/md/markdown_section.py`/`markdown_str.py`'s alias/`get_extent` matching so a malformed `#### {timestamp}` heading failure carries full actionable detail, only if Task 1.3/1.4 confirmed a real gap. **Skipped, intentionally**: Phase 1 and Phase 1b both conclusively found no gap for #71's malformed-heading case (see Design Notes), and the orchestrator/user accepted that verdict, so this task's own precondition was never met -- left unchecked (not `[x]`) to record "not applicable" rather than "done", matching Phase 3's Task 3.1 precedent.
+- [x] Task 4.2: Add an end-to-end regression test fixture (a malformed `#### {timestamp}` heading in `Updates`/`Decisions Made`, driven through `create_feat`/`validate_feat`/the generic `update` tool) asserting the final message is actionable.
+- [x] Task 4.3: Based on Task 1.6's findings, decide whether the newest-first-ordering failure mode also needs its own fix here or is already covered by Task 4.1/4.2's fix; add a dedicated regression test either way.
+- [x] Task 4.4: Verify ACC-003 passes.
 
 #### Phase 5: Closeout and Final Verification
 
@@ -131,11 +131,15 @@ The orchestrator/user judged Phase 1's repro not literal enough (it injected a b
 
 ### Current Status
 
-**As of 2026-09-03**: Phases 2 and 3 are complete. Phase 2 (placeholder timestamp fix and test) fixed all 24 domain `*/data/*_template.md`/`*/data/*_example.md` files identified by Task 1.5's audit -- not just the literal `00:00:00.000` full-midnight tier, but also the round-non-midnight body headings and the "round milliseconds only, real hour" borderline tier -- with every replaced timestamp given a deliberately odd, non-round, year-2025 value in the correct `yyyy-MM-dd HH:mm:ss.fff[+HH:mm|Z]` format, preserving each file's own `created`≤`updated` relationship and every `Updates`/`Decisions Made` section's newest-first ordering. A repo-wide regression test (`tests/regression/test_issue_67.py`) globs every such file and asserts zero matches for both the literal ACC-001 `00:00:00.000` pattern and the broader round-milliseconds class. Phase 3 (bare HTML-like token actionable-error test), rescoped to regression-test-only per Phase 1/1b's accepted "no gap found" verdict, added `tests/regression/test_issue_70.py`, driving `validate_<d>`/`create_<d>` through `feat`/`req`/`dec` and asserting the surfaced message is actionable; Task 3.1's conditional code fix was skipped as inapplicable. The full test suite (3312 tests) and the ruff/vulture quality gate both pass with no regressions. Phase 4 remains scoped down to regression-test-only per Phase 1/1b's findings.
+**As of 2026-09-03**: Phases 2, 3, and 4 are complete. Phase 2 (placeholder timestamp fix and test) fixed all 24 domain `*/data/*_template.md`/`*/data/*_example.md` files identified by Task 1.5's audit -- not just the literal `00:00:00.000` full-midnight tier, but also the round-non-midnight body headings and the "round milliseconds only, real hour" borderline tier -- with every replaced timestamp given a deliberately odd, non-round, year-2025 value in the correct `yyyy-MM-dd HH:mm:ss.fff[+HH:mm|Z]` format, preserving each file's own `created`≤`updated` relationship and every `Updates`/`Decisions Made` section's newest-first ordering. A repo-wide regression test (`tests/regression/test_issue_67.py`) globs every such file and asserts zero matches for both the literal ACC-001 `00:00:00.000` pattern and the broader round-milliseconds class. Phase 3 (bare HTML-like token actionable-error test) and Phase 4 (malformed timestamp-heading actionable-error test), both rescoped to regression-test-only per Phase 1/1b/Task 1.6's accepted "no gap found" verdicts, added `tests/regression/test_issue_70.py` and `tests/regression/test_issue_71.py` respectively, driving `validate_<d>`/`create_<d>`/(for #71 only) the generic `update` tool through affected domains and asserting the surfaced message is actionable; Task 3.1's and Task 4.1's conditional code fixes were both skipped as inapplicable. The full test suite (3318 tests) and the ruff/vulture quality gate both pass with no regressions. All 5 original phases plus the inserted Phase 1b are now done; Phase 5 (closeout and final verification) is next.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-03 19:32:18.647+02:00 - Phase 4 (malformed timestamp-heading actionable-error test) complete
+
+Executed Phase 4 as regression-test-only, per the accepted Phase 1/1b "no gap found" verdict for issue #71's malformed-heading case and Task 1.6's "no gap found" verdict for the newest-first-ordering sub-case -- Task 4.1's conditional code fix in `models/md/markdown_section.py`/`markdown_str.py` was skipped entirely, since its own precondition was never met for either sub-case. Added `tests/regression/test_issue_71.py`, covering both sub-cases for `feat`: issue #71's own literal repro (`#### 2026-09-02 (Phase 1) - Some Title`, a date with no time-of-day, then a parenthetical, then ` - title`) and the `+02:00`/`Z` offset-arithmetic newest-first-ordering mistake documented in this feature's own Design Notes. Each sub-case is driven through all three surfaces ACC-003 names: `validate_feat`, `create_feat` (both whole-document), and the generic `update` tool's real `offset`/`limit` line-range splice path -- the splice coverage Phase 1b's own literal #71 repro specifically exercised and Phase 1's first pass had not. All 6 new tests pass; the full test suite (3318 tests) and the ruff format/check + vulture quality gate both pass with zero failures/errors. ACC-003 is satisfied.
 
 #### 2026-09-03 18:21:47.512+02:00 - Phase 3 (bare HTML-like token actionable-error test) complete
 
@@ -164,6 +168,10 @@ Feature created from GitHub issues #67, #70, and #71, combining the placeholder-
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-03 19:35:44.129+02:00 - Phase 4 rescoped to regression-test-only for both #71 sub-cases, per the accepted Phase 1/1b/Task 1.6 "no gap found" verdicts
+
+Confirmed with the orchestrator/user that Phase 4's Task 4.1 (the conditional code fix in `models/md/markdown_section.py`/`markdown_str.py`) does not apply: its precondition -- "only if Task 1.3/1.4 confirmed a real gap" -- was never met for the malformed-heading case (#71 itself), and Task 1.6's own finding that the newest-first-ordering validator's `AssertionError` is already correctly wrapped into a `pydantic.ValidationError` by `wrap_tool_errors` meant no fix was needed for that sub-case either. Phase 4 was therefore executed as regression-test-only: added `tests/regression/test_issue_71.py`, covering both sub-cases for `feat` (the domain both issue #71 and the ordering discovery are scoped to) across all three surfaces ACC-003 names -- `validate_feat`, `create_feat` (both whole-document), and, uniquely among this feature's regression tests, the generic `update` tool's real `offset`/`limit` line-range splice path (`general/tools/update.py::_update_feat` + `general/tools/_splice.py::splice_body`), reproducing Phase 1b's own literal `update`-tool repro of #71 exactly. No `src/` file was touched.
 
 #### 2026-09-03 18:09:33.847+02:00 - Phase 3 rescoped to regression-test-only, per the accepted Phase 1/1b "no gap found" verdict
 
