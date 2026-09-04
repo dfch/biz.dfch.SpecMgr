@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Dedicated Pydantic models with drift-guard unittests for
+  `specmgr://dtais`, `specmgr://rsk/tara`, `specmgr://rsk/risk-matrix`,
+  and `specmgr://rasci`; all four are now also parsed on every resource
+  call to fail fast on structural drift, discarding the parsed result,
+  matching `specmgr://iso25010`'s existing pattern. New
+  `specmgr://ears` resource documenting the EARS (Easy Approach to
+  Requirements Syntax) five requirement-phrasing templates, likewise
+  backed by a model and drift-guard tests -- content aligned with the
+  source paper's (Mavin et al., "Easy Approach to Requirements Syntax
+  (EARS)", RE'09) exact pattern names, order, and sentence templates,
+  and now includes the paper's own worked example for each pattern. New
+  ADR (356d8781-e446-4c26-917a-eda85648ce9d) documenting the resulting
+  repo-wide convention for reference resources (GitHub issue #92).
+
+### Changed
+
+- `specmgr://iso25010` now returns raw markdown (`text/markdown`)
+  instead of a structured `Iso25010` JSON object, still parsed via
+  `parse_iso25010()` on every read to fail fast on structural drift
+  (GitHub issue #92).
+- Local `pytest` pre-commit hook and CI's "Run unit tests with coverage"
+  step now run the (unchanged, still plain `unittest.TestCase`-based) test
+  suite via `pytest` with `pytest-xdist` (`-n auto`) instead of serial
+  `coverage run -m unittest discover`, cutting the local pre-commit gate's
+  test step from 9-11 minutes to roughly a minute. `pytest-cov` produces
+  the same `.coverage` file format, so `specmgr coverage-badge` is
+  unaffected.
+
 ## [0.21.0] - 2026-09-03
 
 ### Changed

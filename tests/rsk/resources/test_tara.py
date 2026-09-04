@@ -41,6 +41,69 @@ _EXPECTED_TARA_WORDS = ["transfer", "accept", "reduce", "avoid"]
 _REJECTED_WORDS = ["tolerate", "assign", "recover"]
 
 
+def _valid_tara_text(marker: str) -> str:
+    """Build a minimal, well-formed TARA-shaped document, tagged with `marker`.
+
+    `marker` is embedded in the title so two calls with different markers produce
+    distinguishable, but both individually valid, `parse_tara`-accepted text.
+    """
+    result = f"""# {marker}
+
+`rsk` documents (risk register entries) carry a mandatory `## Strategy`
+section with exactly one lowercase word naming the TARA response chosen for
+the risk. **TARA** is the risk-response framework: **T**ransfer, **A**ccept,
+**R**educe, **A**void. Only the four valid words below are accepted by the
+schema -- anything else (including the TARRA-era words `tolerate`, `assign`,
+`recover`, or any capitalized/compound variant) is a validation error:
+
+- `transfer`
+- `accept`
+- `reduce`
+- `avoid`
+
+## When to apply each strategy
+
+Read the risk's matrix coordinates (`## Initial Assessment`, see the risk
+matrix document) to pick a strategy:
+
+- **Low probability / high impact → `transfer`**
+  The risk is unlikely but would be severe if it hit.
+- **High probability / high impact → `avoid`**
+  The risk is both likely and severe.
+- **High probability / low impact → `reduce`**
+  The risk is likely but the consequence is bounded.
+- **Low probability / low impact → `accept`**
+  The risk is unlikely and bounded.
+
+The four quadrants are a guideline, not a rule -- the documented
+rationale of the choice matters more than the quadrant label.
+
+## Interaction with `## Mitigation`
+
+`## Mitigation` is the treatment section between the two assessments.
+
+- `reduce`: concrete measures are mandatory.
+- `transfer`: name the transfer mechanism.
+- `avoid`: describe what is eliminated.
+- `accept`: write `none` — acceptance means no treatment is taken.
+
+## Interaction with the frontmatter `status`
+
+The `rsk` frontmatter `status` is a six-value lifecycle:
+
+- `open` — identified and monitored; no treatment decided or started yet.
+- `mitigating` — treatment is in progress.
+- `accepted` — the residual risk is formally accepted.
+- `occurred` — the risk event materialized.
+- `closed` — resolved or expired.
+- `dropped` — removed from the register.
+
+`status` tracks the lifecycle state of the entry; `strategy` tracks the
+chosen response. They are independent fields.
+"""
+    return result
+
+
 class TestRskTaraResource(unittest.TestCase):
     """Tests for the `tara` resource function."""
 
@@ -81,19 +144,22 @@ class TestRskTaraResource(unittest.TestCase):
 
     def test_reads_fresh_on_every_call(self):
         """No in-memory cache -- a second call must reflect an on-disk change since the first."""
+        first_text = _valid_tara_text("First Marker")
+        second_text = _valid_tara_text("Second Marker")
+
         with tempfile.TemporaryDirectory() as tmp:
             tara_path = Path(tmp) / "rsk_tara.md"
-            tara_path.write_text("first", encoding="utf-8")
+            tara_path.write_text(first_text, encoding="utf-8")
 
             with mock.patch.object(_packaged_data, "packaged_data_path", return_value=tara_path):
                 sut = tara
 
                 first = sut()
-                tara_path.write_text("second", encoding="utf-8")
+                tara_path.write_text(second_text, encoding="utf-8")
                 second = sut()
 
-            self.assertEqual(first, "first")
-            self.assertEqual(second, "second")
+            self.assertEqual(first, first_text)
+            self.assertEqual(second, second_text)
 
     def test_raises_file_not_found_when_missing(self):
         """A missing packaged rsk_tara.md must propagate FileNotFoundError uncaught."""
@@ -104,6 +170,20 @@ class TestRskTaraResource(unittest.TestCase):
                 sut = tara
 
                 with self.assertRaises(FileNotFoundError):
+                    sut()
+
+    def test_raises_on_structural_drift(self):
+        """A malformed packaged file must fail fast via `parse_tara`, not return silently."""
+        malformed_text = "# Not A Valid TARA Document\n\nThis file has no strategy bullets at all.\n"
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tara_path = Path(tmp) / "rsk_tara.md"
+            tara_path.write_text(malformed_text, encoding="utf-8")
+
+            with mock.patch.object(_packaged_data, "packaged_data_path", return_value=tara_path):
+                sut = tara
+
+                with self.assertRaises((AssertionError, ValueError)):
                     sut()
 
 

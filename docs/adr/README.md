@@ -21,6 +21,10 @@ Index of all ADRs in this repository.
   - Id: 33c5ab08-ff58-4c73-8c32-23abaf3838e3
   - Status: accepted
   - Decision-makers: dfch
+- [Expose cross-cutting reference resources as raw markdown with model-backed drift-guard tests, not structured JSON](356d8781-e446-4c26-917a-eda85648ce9d-expose-cross-cutting-reference-resources-as-raw-markdown-wit.md)
+  - Id: 356d8781-e446-4c26-917a-eda85648ce9d
+  - Status: accepted
+  - Decision-makers: dfch
 - [Consolidate whole-body update and status-change tools into generic type-dispatched tools](36905d5b-8057-4294-8665-c7eed5534db0-consolidate-whole-body-update-and-status-change-tools-into-g.md)
   - Id: 36905d5b-8057-4294-8665-c7eed5534db0
   - Status: accepted

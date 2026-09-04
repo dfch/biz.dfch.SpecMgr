@@ -26,25 +26,6 @@ repos:
         pass_filenames: false
         files: ^(src/.*\.py|whitelist\.py)$
 
-      - id: unittest
-        name: unittest
-        description: Run the full test suite with coverage before every commit.
-        entry: uv run --frozen coverage run -m unittest discover -v -s tests -t . -p "test_*.py"
-        language: system
-        pass_filenames: false
-        files: ^(src|tests)/.*\.py$
-
-      - id: specmgr-coverage-badge
-        name: specmgr coverage-badge
-        description: >-
-          Generate coverage badge SVG, then fail if that changed anything
-          -- standard formatter-hook UX: review and `git add` the regenerated
-          badge, then commit again.
-        entry: bash -c 'uv run --frozen specmgr coverage-badge && git diff --exit-code -- docs/coverage.svg'
-        language: system
-        pass_filenames: false
-        files: ^(src|tests)/.*\.py$
-
       - id: specmgr-docs
         name: specmgr docs
         description: >-
@@ -300,3 +281,32 @@ repos:
         language: system
         pass_filenames: false
         files: ^src/biz/dfch/specmgr/(dec/models/v1|feat/models/v1|gol/models/v1|prb/models/v1|qa/models/v2|req/models/v1|rsk/models/v1|sop/models/v1|sysrs/models/v1|tsk/models/v1|uc/models/v2|vcr/models/v1|models/md)/.*\.py$
+
+      - id: pytest
+        name: pytest
+        description: >-
+          Run the full test suite in parallel (pytest-xdist, -n auto) with
+          coverage before every commit. Every test is still a plain
+          unittest.TestCase (pytest collects/runs those natively, no test
+          rewrites) -- only the runner changed, to split work across CPU
+          cores instead of running ~3300 tests serially (measured: ~58s on
+          the primary dev machine with coverage on, vs. 9-11 min serially).
+          Deliberately placed last (not right after vulture) so every
+          faster check -- ruff, vulture, and the doc/schema drift checks
+          above -- fails fast first.
+        entry: uv run --frozen pytest -n auto --cov=src --cov-report=
+        language: system
+        pass_filenames: false
+        files: ^(src|tests)/.*\.py$
+
+      - id: specmgr-coverage-badge
+        name: specmgr coverage-badge
+        description: >-
+          Generate coverage badge SVG, then fail if that changed anything
+          -- standard formatter-hook UX: review and `git add` the regenerated
+          badge, then commit again. Must run after the pytest hook above,
+          since it reads the .coverage data pytest-cov just produced.
+        entry: bash -c 'uv run --frozen specmgr coverage-badge && git diff --exit-code -- docs/coverage.svg'
+        language: system
+        pass_filenames: false
+        files: ^(src|tests)/.*\.py$

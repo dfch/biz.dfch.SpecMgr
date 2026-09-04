@@ -47,6 +47,16 @@ _._validate_date_time_format
 _._required_non_blank
 _._validate_items_eagerly
 _._validate_newest_first
+_._validate_coverage_values
+_._validate_when_to_apply_matches_methods
+_._validate_status_values
+_._validate_strategies
+_._validate_quadrant_matches_strategies
+_._validate_mitigation_matches_strategies
+_._validate_thresholds
+_._validate_roles
+_._validate_patterns
+_._validate_when_to_use_matches_patterns
 _._validate_ac_numbers_unique
 _._validate_option_numbers_unique
 _._validate_step_numbers_unique
@@ -226,6 +236,33 @@ definitions_and_acronyms
 # (de)serialization; nothing in `src/` accesses them as plain attributes yet.
 env_var
 env_var_set
+
+# dtais (feat-92-resources Phase 2): `Dtais`/`CoverageRelationship` fields
+# read only via (de)serialization; nothing in `src/` accesses them as plain
+# attributes yet (the `general/resources/dtais.py` wiring comes later).
+methods
+when_to_apply
+coverage
+closing
+# risk_matrix (feat-92-resources Phase 4): `RiskMatrix` fields read only via
+# (de)serialization; the leaf sections they hold are deliberately never
+# cross-checked by any `model_validator` (REQ-004's narrow scope), so
+# nothing in `src/` accesses them as plain attributes.
+scale_anchors
+zone_table
+product_thresholds
+reading_together
+# rasci (feat-92-resources Phase 5): `Rasci` fields read only via
+# (de)serialization; nothing in `src/` accesses them as plain attributes
+# yet.
+roles
+rasci_vs_raci
+# ears (feat-92-resources Phase 6): `Ears.combining_patterns` is a leaf
+# section deliberately never cross-checked by any `model_validator`
+# (REQ-006's narrow scope), so nothing in `src/` accesses it as a plain
+# attribute. `Ears.patterns`/`.when_to_use` ARE read by
+# `_validate_when_to_use_matches_patterns`, so they need no entry here.
+combining_patterns
 
 # --- MCP `@mcp.resource(...)`/`@mcp.tool()` entry points -------------------------
 # Invoked by the MCP framework once registered, not called directly in `src/`.

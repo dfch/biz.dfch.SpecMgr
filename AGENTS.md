@@ -573,7 +573,7 @@ uv run --frozen pre-commit install                                     # one-tim
 uv run --frozen ruff format --check && uv run --frozen ruff check      # lint (enforced)
 uv run --frozen pylint $(git ls-files '*.py')                          # lint (advisory only; CI runs it with `|| true`)
 uv run --frozen vulture src/ whitelist.py --min-confidence 60          # dead-code check (enforced)
-uv run --frozen python -m unittest discover -v -s tests -t . -p "test_*.py"  # tests
+uv run --frozen pytest -n auto --cov=src --cov-report=                # tests (parallel, pytest-xdist)
 scripts/release.sh help                                            # staged release automation (SOP 98537416; README "Make a Release")
 uv run --frozen specmgr docs                                           # regenerate docs/api/ + docs/GENERATED.md
 uv run --frozen specmgr adr-toc                                        # regenerate docs/adr/README.md (ADR table of contents)
@@ -597,12 +597,21 @@ Without `--all-extras` on `uv run`, only base dependencies are installed, causin
 `git add`ed before it will lint them, both locally and in CI.
 
 `pre-commit install` is one-time per clone (see `.pre-commit-config.yaml`):
-runs `ruff format`/`ruff check`, the full `unittest` suite (scoped to
-`src/**/*.py`/`tests/**/*.py` changes), a local `specmgr docs` hook (scoped to
-`src/**/*.py` changes), and a local `specmgr adr-toc` hook (scoped to
-`docs/adr/**/*.md` changes) before every commit, so a broken test or drift in
-`docs/api/`/`docs/GENERATED.md`/`docs/adr/README.md` gets caught locally instead
-of failing later in CI. (ADR 9c687bb1-8ee7-41c8-84ec-07606356bc73: "Enforce doc generation/lint/tests locally via pre-commit hook, not just CI")
+runs `ruff format`/`ruff check`, `vulture`, a local `specmgr docs` hook
+(scoped to `src/**/*.py` changes), a local `specmgr adr-toc` hook (scoped to
+`docs/adr/**/*.md` changes), and the other doc/schema drift checks, then the
+full test suite (scoped to `src/**/*.py`/`tests/**/*.py` changes, run via
+`pytest`/`pytest-xdist` in parallel, `-n auto`) and `specmgr coverage-badge`
+last, before every commit, so a broken test or drift in
+`docs/api/`/`docs/GENERATED.md`/`docs/adr/README.md` gets caught locally
+instead of failing later in CI. The `pytest` hook is deliberately ordered
+last (not right after `vulture`) so every faster check fails fast first;
+running the suite in parallel also cut its own wall time from 9-11 minutes
+(serial `coverage run -m unittest discover`) to roughly a minute measured on
+the primary dev machine. `specmgr coverage-badge` must stay immediately
+after it, since it reads the `.coverage` data `pytest-cov` just produced.
+(ADR 9c687bb1-8ee7-41c8-84ec-07606356bc73: "Enforce doc generation/lint/tests
+locally via pre-commit hook, not just CI")
 
 ## Extras split (base library has no CLI/MCP deps)
 
@@ -645,7 +654,8 @@ consumer of the base library.
 
 - Branches: `dev` (default, feature work) → `main` (stable) → tag.
 - `.github/workflows/ci.yml`: ruff + pylint (`|| true`) + vulture + unittest
-  run on matrix 3.11/3.12/3.13 via `uv sync --frozen --all-extras`, but
+  run on matrix 3.11/3.12/3.13 via `uv sync --frozen --all-extras` (unit
+  tests run via `pytest`/`pytest-xdist`, `-n auto`, not raw `unittest`), but
   `specmgr docs` and `specmgr adr-toc` drift checks run **only on Python
   3.13** (pinned, since different Python versions generate different
   docstring formatting in the API docs, and we want consistent ADR TOC
@@ -654,6 +664,11 @@ consumer of the base library.
   `v0.2.1` to PyPI/the MCP Registry, triggered on `v*` tags.
 - Version bumps: update `version` in `pyproject.toml` (single source) and
   move `CHANGELOG.md`'s `[Unreleased]` into a dated section, same commit.
+- Don't block on `gh pr checks --watch` for CI results -- duration is
+  variable across the 3.11/3.12/3.13 matrix and can exceed a single
+  tool-call timeout. Poll instead: call `gh pr checks <pr-number>`
+  (without `--watch`) repeatedly, optionally `sleep 30 &&` before each
+  call, until every check reports a final state.
 
 ## Coding Standards
 

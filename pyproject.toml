@@ -73,6 +73,9 @@ test = [
     "mypy>=1.0",
     "ruff>=0.16.0",
     "vulture>=2.14",
+    "pytest>=8.0",
+    "pytest-xdist>=3.6",
+    "pytest-cov>=6.0",
 ]
 
 dev = [
@@ -175,3 +178,13 @@ namespaces = true
 
 [tool.coverage.run]
 source = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = [
+    # src/biz/dfch/specmgr/vcr/models/v1/body.py's `TestSteps` is a Pydantic
+    # model, not a test class -- pytest's default `Test*` collection heuristic
+    # matches its name and warns because it has an `__init__`. Harmless, but
+    # noisy across 24 test files that import it.
+    "ignore::pytest.PytestCollectionWarning",
+]

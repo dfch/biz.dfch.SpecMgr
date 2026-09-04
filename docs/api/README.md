@@ -103,7 +103,10 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.feat.tools.validate_feat`](biz.dfch.specmgr.feat.tools.validate_feat.md) — ``@mcp.tool()`` wrapper: validate_feat (Task 2.3).
 - [`biz.dfch.specmgr.general`](biz.dfch.specmgr.general.md) — General-purpose (cross-cutting, not domain-specific) tools, resources, and
 - [`biz.dfch.specmgr.general.models`](biz.dfch.specmgr.general.models.md) — Shared, cross-domain Pydantic models with no document-type-specific content.
+- [`biz.dfch.specmgr.general.models.dtais`](biz.dfch.specmgr.general.models.dtais.md) — Pydantic schema and parser for the DTAIS verification-methods guidance
+- [`biz.dfch.specmgr.general.models.ears`](biz.dfch.specmgr.general.models.ears.md) — Pydantic schema and parser for the EARS requirement-phrasing-templates guidance
 - [`biz.dfch.specmgr.general.models.paged_result`](biz.dfch.specmgr.general.models.paged_result.md) — Generic paged-result wrapper shared by every ``list_<domain>`` MCP tool (feat-13 Task 1.1).
+- [`biz.dfch.specmgr.general.models.rasci`](biz.dfch.specmgr.general.models.rasci.md) — Pydantic schema and parser for the RASCI responsibility-assignment guidance
 - [`biz.dfch.specmgr.general.models.summary`](biz.dfch.specmgr.general.models.summary.md) — Common base for every domain's one-line listing summary (feat-13 Task 1.3, REQ-003/ACC-001).
 - [`biz.dfch.specmgr.general.prompts`](biz.dfch.specmgr.general.prompts.md) — MCP prompt registrations that are not specific to any single document
 - [`biz.dfch.specmgr.general.prompts.compact_history`](biz.dfch.specmgr.general.prompts.compact_history.md) — ``@mcp.prompt()``: compact_history (Various improvements, Task 0.21).
@@ -112,7 +115,8 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general.resources`](biz.dfch.specmgr.general.resources.md) — MCP resource registrations that are not specific to any single document
 - [`biz.dfch.specmgr.general.resources.config`](biz.dfch.specmgr.general.resources.config.md) — Resource: specmgr://config -- resolved base directory diagnostics (feat-51-mcp-cwd).
 - [`biz.dfch.specmgr.general.resources.dtais`](biz.dfch.specmgr.general.resources.dtais.md) — Resource: specmgr://dtais -- the DTAIS verification-method vocabulary (feat-33-vcr Task 3.3).
-- [`biz.dfch.specmgr.general.resources.iso25010`](biz.dfch.specmgr.general.resources.iso25010.md) — Resource: specmgr://iso25010 (Task 0.8.3).
+- [`biz.dfch.specmgr.general.resources.ears`](biz.dfch.specmgr.general.resources.ears.md) — Resource: specmgr://ears -- the EARS requirement-phrasing templates (feat-92-resources REQ-006).
+- [`biz.dfch.specmgr.general.resources.iso25010`](biz.dfch.specmgr.general.resources.iso25010.md) — Resource: specmgr://iso25010 (Task 0.8.3; feat-92-resources Phase 1).
 - [`biz.dfch.specmgr.general.resources.rasci`](biz.dfch.specmgr.general.resources.rasci.md) — Resource: specmgr://rasci (feat-30 Task 3.5, REQ-011).
 - [`biz.dfch.specmgr.general.resources.version`](biz.dfch.specmgr.general.resources.version.md) — Resource: specmgr://version — MCP server package version number.
 - [`biz.dfch.specmgr.general.tools`](biz.dfch.specmgr.general.tools.md) — MCP tool wrappers for general-purpose utilities (mirrors ``adr/tools/``'s shape).
@@ -283,7 +287,9 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.rsk.models.v1.document`](biz.dfch.specmgr.rsk.models.v1.document.md) — Pydantic model for a full Risk document (frontmatter + body).
 - [`biz.dfch.specmgr.rsk.models.v1.frontmatter`](biz.dfch.specmgr.rsk.models.v1.frontmatter.md) — Risk (RSK) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
 - [`biz.dfch.specmgr.rsk.models.v1.parser`](biz.dfch.specmgr.rsk.models.v1.parser.md) — Parse raw Risk ``.md`` text into a :class:`RskDocument` (Phase 2, Task 2.2).
+- [`biz.dfch.specmgr.rsk.models.v1.risk_matrix`](biz.dfch.specmgr.rsk.models.v1.risk_matrix.md) — Pydantic schema and parser for the 5x5 risk-matrix guidance document
 - [`biz.dfch.specmgr.rsk.models.v1.summary`](biz.dfch.specmgr.rsk.models.v1.summary.md) — Pydantic model for one line of RSK listing output (Phase 2, Task 2.3).
+- [`biz.dfch.specmgr.rsk.models.v1.tara`](biz.dfch.specmgr.rsk.models.v1.tara.md) — Pydantic schema and parser for the TARA risk-response-strategy guidance
 - [`biz.dfch.specmgr.rsk.prompts`](biz.dfch.specmgr.rsk.prompts.md) — MCP prompt wrappers for Risks (Task 3.13).
 - [`biz.dfch.specmgr.rsk.prompts.create_risk`](biz.dfch.specmgr.rsk.prompts.create_risk.md) — ``@mcp.prompt()``: create_risk (Task 3.13).
 - [`biz.dfch.specmgr.rsk.prompts.update_risk`](biz.dfch.specmgr.rsk.prompts.update_risk.md) — ``@mcp.prompt()``: update_risk (Task 3.13).

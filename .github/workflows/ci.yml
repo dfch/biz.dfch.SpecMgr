@@ -58,7 +58,7 @@ jobs:
 
     - name: Run unit tests with coverage
       run: |
-        uv run --frozen coverage run -m unittest discover -v -s tests -t . -p "test_*.py"
+        uv run --frozen pytest -n auto --cov=src --cov-report=
 
     - name: Make sure `docs/` is correct
       # Python's inspect module (used by annotated-doc for API docs generation) formats
