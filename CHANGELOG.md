@@ -36,6 +36,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   test step from 9-11 minutes to roughly a minute. `pytest-cov` produces
   the same `.coverage` file format, so `specmgr coverage-badge` is
   unaffected.
+- `set_feat_id` now returns the domain's `FeatFrontmatter` object only (no
+  `body`) on a successful rename, matching the frontmatter-only return
+  shape `create_feat`/`update`/`set_status`/`set_classification` already
+  use -- it was a bespoke `feat`-only tool that predated, and was missed
+  by, that conversion. Callers needing the full document should call
+  `get_feat` afterward (GitHub issue #80).
 
 ## [0.21.0] - 2026-09-03
 
