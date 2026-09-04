@@ -26,7 +26,13 @@ from biz.dfch.specmgr.general.resources.ears import ears
 from biz.dfch.specmgr.general.tools import _packaged_data
 
 #: The five valid EARS pattern names, in the closed, ordered vocabulary.
-_EXPECTED_PATTERN_NAMES = ["Ubiquitous", "Event-driven", "State-driven", "Unwanted behavior", "Optional feature"]
+_EXPECTED_PATTERN_NAMES = [
+    "Ubiquitous requirements",
+    "Event-driven requirements",
+    "Unwanted behaviours",
+    "State-driven requirements",
+    "Optional features",
+]
 
 
 def _valid_ears_text(marker: str) -> str:
@@ -42,19 +48,19 @@ requirements in unambiguous, testable natural language.
 
 ## The five requirement patterns
 
-- **Ubiquitous** -- `The <system name> shall <system response>.` Always active.
-- **Event-driven** -- `When <trigger>, the <system name> shall <system response>.` Event-triggered.
-- **State-driven** -- `While <precondition>, the <system name> shall <system response>.` State-scoped.
-- **Unwanted behavior** -- `If <trigger>, then the <system name> shall <system response>.` Guards against faults.
-- **Optional feature** -- `Where <feature is included>, the <system name> shall <system response>.` Feature-conditional.
+- **Ubiquitous requirements** -- `The <system name> shall <system response>.` Always active.
+- **Event-driven requirements** -- `WHEN <trigger> the <system name> shall <system response>.` Event-triggered.
+- **Unwanted behaviours** -- `IF <trigger>, THEN the <system name> shall <system response>.` Guards against faults.
+- **State-driven requirements** -- `WHILE <in a specific state> the <system name> shall <system response>.` State-scoped.
+- **Optional features** -- `WHERE <feature is included> the <system name> shall <system response>.` Feature-conditional.
 
 ## When to use each pattern
 
-- **`Ubiquitous`** -- use for a requirement with no meaningful trigger.
-- **`Event-driven`** -- use for an immediate reaction to an event.
-- **`State-driven`** -- use for the duration of an ongoing state.
-- **`Unwanted behavior`** -- use for error handling or fault recovery.
-- **`Optional feature`** -- use for a specific optional feature.
+- **`Ubiquitous requirements`** -- use for a requirement with no meaningful trigger.
+- **`Event-driven requirements`** -- use for an immediate reaction to an event.
+- **`Unwanted behaviours`** -- use for error handling or fault recovery.
+- **`State-driven requirements`** -- use for the duration of an ongoing state.
+- **`Optional features`** -- use for a specific optional feature.
 
 ## Combining patterns
 

@@ -13,13 +13,18 @@ package), since it is cross-cutting domain knowledge, not owned by any
 single document-type domain -- mirroring ``general/models/dtais.py``/
 ``rasci.py``'s own placement rationale.
 
+The five pattern names and their order (``Ubiquitous requirements``,
+``Event-driven requirements``, ``Unwanted behaviours``, ``State-driven
+requirements``, ``Optional features``) match the source paper's own
+terminology exactly (Mavin et al., "Easy Approach to Requirements
+Syntax (EARS)", RE'09, sections 4.1-4.6 -- feat-92-resources Phase 8).
+
 Unlike ``dtais``/``tara`` (both reverse-engineered from a pre-existing
 packaged file with inconsistent per-list ordering), ``general/data/
 general_ears.md`` was authored from scratch alongside this model, so its
 two closed-vocabulary lists ("The five requirement patterns" and "When to
 use each pattern") were deliberately kept in the SAME pattern-name order
-(``Ubiquitous``, ``Event-driven``, ``State-driven``, ``Unwanted
-behavior``, ``Optional feature``) -- the cross-check between them
+-- the cross-check between them
 (:meth:`Ears._validate_when_to_use_matches_patterns`) is therefore a
 simple, strict ordered-list equality, not the set-based comparison
 ``rsk.models.v1.tara.Tara._validate_quadrant_matches_strategies``/
@@ -1750,17 +1755,18 @@ combining_patterns:
 A leaf `MarkdownListItem` subclass (declares no nested `MarkdownStr`
 fields of its own, only the two computed properties below): the
 pattern name and its template both live in the item's own text (e.g.
-`` "**Ubiquitous** -- `The <system name> shall <system response>.` A
-requirement ..." ``), recovered by `@computed_field` at access time,
-never stored separately.
+`` "**Ubiquitous requirements** -- `The <system name> shall <system
+response>.` A requirement ..." ``), recovered by `@computed_field` at
+access time, never stored separately.
 
 Parameters
 ----------
 name:
     Computed. This item's own bolded pattern name, e.g.
-    `"Ubiquitous"`, `"Event-driven"`, or `"Unwanted behavior"`. Raises
-    `AssertionError` if `.text` does not match `` **Name** --
-    `template` ... `` (see `_PATTERN_ITEM_PATTERN`).
+    `"Ubiquitous requirements"`, `"Event-driven requirements"`, or
+    `"Unwanted behaviours"`. Raises `AssertionError` if `.text` does
+    not match `` **Name** -- `template` ... `` (see
+    `_PATTERN_ITEM_PATTERN`).
 template:
     Computed. This item's own backticked sentence template, e.g.
     `` "`The <system name> shall <system response>.`" ``. Same
@@ -2549,9 +2555,9 @@ Parameters
 items:
     The `` **Name** -- `template` {explanation} `` entries, in
     document order. Exactly 5, and exactly the closed, ordered
-    `["Ubiquitous", "Event-driven", "State-driven", "Unwanted
-    behavior", "Optional feature"]` vocabulary (see
-    `_validate_patterns`).
+    `["Ubiquitous requirements", "Event-driven requirements",
+    "Unwanted behaviours", "State-driven requirements", "Optional
+    features"]` vocabulary (see `_validate_patterns`).
 
 **Methods:**
 
@@ -4243,8 +4249,8 @@ Parameters
 ----------
 name:
     Computed. This item's own bolded, backticked pattern name, e.g.
-    `"Ubiquitous"`. Raises `AssertionError` if `.text` does not match
-    `` **`Name`** -- ... `` (see `_WHEN_TO_USE_ITEM_PATTERN`).
+    `"Ubiquitous requirements"`. Raises `AssertionError` if `.text` does
+    not match `` **`Name`** -- ... `` (see `_WHEN_TO_USE_ITEM_PATTERN`).
 
 **Methods:**
 

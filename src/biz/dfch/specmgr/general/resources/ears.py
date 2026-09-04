@@ -19,9 +19,10 @@
 
 Static, domain-knowledge resource: what EARS (Easy Approach to
 Requirements Syntax) is, the five canonical sentence templates
-(Ubiquitous, Event-driven, State-driven, Unwanted behavior, Optional
-feature), when to use each, and how "complex" EARS sentences combine
-more than one trigger/condition keyword.
+(Ubiquitous requirements, Event-driven requirements, Unwanted
+behaviours, State-driven requirements, Optional features), when to use
+each, and how "complex" EARS sentences combine more than one
+trigger/condition keyword.
 
 Served as raw packaged markdown (``text/markdown``, mirroring
 ``specmgr://iso25010``/``specmgr://dtais``/``specmgr://rsk/tara``/
@@ -52,8 +53,9 @@ from ..tools._packaged_data import read_packaged_text
     title="EARS Requirement-Phrasing Templates",
     description=(
         "The EARS (Easy Approach to Requirements Syntax) five requirement-phrasing templates "
-        "(Ubiquitous, Event-driven, State-driven, Unwanted behavior, Optional feature) and when "
-        "to use each, as raw markdown domain-knowledge guidance."
+        "(Ubiquitous requirements, Event-driven requirements, Unwanted behaviours, State-driven "
+        "requirements, Optional features) and when to use each, as raw markdown domain-knowledge "
+        "guidance."
     ),
     mime_type="text/markdown",
 )

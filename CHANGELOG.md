@@ -16,8 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   matching `specmgr://iso25010`'s existing pattern. New
   `specmgr://ears` resource documenting the EARS (Easy Approach to
   Requirements Syntax) five requirement-phrasing templates, likewise
-  backed by a model and drift-guard tests. New ADR
-  (356d8781-e446-4c26-917a-eda85648ce9d) documenting the resulting
+  backed by a model and drift-guard tests -- content aligned with the
+  source paper's (Mavin et al., "Easy Approach to Requirements Syntax
+  (EARS)", RE'09) exact pattern names, order, and sentence templates,
+  and now includes the paper's own worked example for each pattern. New
+  ADR (356d8781-e446-4c26-917a-eda85648ce9d) documenting the resulting
   repo-wide convention for reference resources (GitHub issue #92).
 
 ### Changed

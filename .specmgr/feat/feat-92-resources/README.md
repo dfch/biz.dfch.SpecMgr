@@ -183,29 +183,29 @@ only, not a repo artifact, and will not be available at implementation time:**
   the six items requested), so it will read inconsistently (lowercase keywords)
   next to the newly upper-cased templates above it -- known, accepted, not a bug.
 
-- [ ] Task 8.0: Discard the stray uncommitted partial edit to
+- [x] Task 8.0: Discard the stray uncommitted partial edit to
   `general/data/general_ears.md` (`git checkout --` it) before starting.
-- [ ] Task 8.1: Update `general/models/ears.py`'s `_PATTERN_NAMES` constant to the
+- [x] Task 8.1: Update `general/models/ears.py`'s `_PATTERN_NAMES` constant to the
   paper's exact ordered vocabulary (`["Ubiquitous requirements", "Event-driven
   requirements", "Unwanted behaviours", "State-driven requirements", "Optional
   features"]`); update stale name/order mentions in its module and class
   docstrings. No structural/field changes needed.
-- [ ] Task 8.2: Rewrite `general/data/general_ears.md` per the source paper: append
+- [x] Task 8.2: Rewrite `general/data/general_ears.md` per the source paper: append
   the generic EARS syntax to the existing intro paragraph (same block, no blank
   line); reorder/rename/reword `## The five requirement patterns`'s five bullets
   to the paper's exact names and templates (keep each bullet's existing
   hand-written explanatory sentence); reorder `## When to use each pattern` to
   match, and append the paper's first worked example per pattern to each bullet.
-- [ ] Task 8.3: Update `tests/models/test_ears.py`: `_EXPECTED_PATTERN_NAMES` and
+- [x] Task 8.3: Update `tests/models/test_ears.py`: `_EXPECTED_PATTERN_NAMES` and
   all 3 malformed fixtures (`_MISSING_PATTERN_TEXT`, `_MISMATCHED_WHEN_TO_USE_TEXT`,
   `_WRONG_PATTERN_NAME_TEXT`) to the new names/order/templates.
-- [ ] Task 8.4: Update `tests/general/resources/test_ears.py`:
+- [x] Task 8.4: Update `tests/general/resources/test_ears.py`:
   `_EXPECTED_PATTERN_NAMES` and `_valid_ears_text()`'s fixture to the new
   names/order/templates.
-- [ ] Task 8.5: Update stale old-name/order mentions in `general/resources/ears.py`
+- [x] Task 8.5: Update stale old-name/order mentions in `general/resources/ears.py`
   (module docstring + `@mcp.resource(...)` description) and `server.py`'s module
   docstring (~line 120-122).
-- [ ] Task 8.6: Wrap-up: regenerate docs (`specmgr docs`), extend the existing
+- [x] Task 8.6: Wrap-up: regenerate docs (`specmgr docs`), extend the existing
   CHANGELOG `[Unreleased]` entry, run the full lint/test pass, commit, and push
   to `origin/feat-92-resources` (lands on the existing open PR #95 -- no new PR).
 
@@ -244,11 +244,23 @@ docstring, `README.md`, and `AGENTS.md` already accurate (no stale
 resources), added a `CHANGELOG.md` `[Unreleased]` entry (GitHub issue
 #92), and re-ran `specmgr docs`/`specmgr mcp-docs`/`specmgr adr-toc`
 with zero resulting diff -- confirming every prior phase's own
-doc-regeneration step already left the repo fully in sync. **The feature
-is now complete**: all 7 phases plus the dtais/tara follow-up are done,
-every REQ-001..007 is implemented, and every ACC-001..007 was
-individually re-verified against the current repo state (see the dated
-Updates entry below).
+doc-regeneration step already left the repo fully in sync.
+
+**Phase 8 (align EARS content with the source paper, Mavin et al.,
+RE'09) is now also done**: cross-checking Phase 6's freshly-authored
+`general_ears.md` against the actual source paper found its pattern
+names/order/templates were invented rather than transcribed, so this
+phase replaced `general/models/ears.py`'s `_PATTERN_NAMES` and every
+stale docstring mention with the paper's own §4.1-4.6 vocabulary
+(`Ubiquitous requirements`, `Event-driven requirements`, `Unwanted
+behaviours`, `State-driven requirements`, `Optional features`, in that
+order), rewrote `general/data/general_ears.md` to use the paper's exact
+generic syntax and per-pattern templates, and appended the paper's own
+worked example sentence to each `## When to use each pattern` bullet;
+`## Combining patterns` was deliberately left untouched. **The feature
+is now fully complete**: all 8 phases plus the dtais/tara follow-up are
+done, every REQ-001..007 is implemented, and every ACC-001..007 remains
+satisfied (see the dated Updates entries below).
 
 ### Blockers
 
@@ -257,6 +269,88 @@ None.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-04 - Phase 8 (align EARS content with the source paper) complete -- feature done
+
+Cross-checked Phase 6's from-scratch `general/data/general_ears.md`
+against the actual source paper (Mavin et al., "Easy Approach to
+Requirements Syntax (EARS)", RE'09, sections 4.1-4.6, kept as a personal
+reference PDF in this feature folder, not a repo artifact) and found it
+had used invented pattern names/order/wording instead of transcribing
+the paper's own terminology, omitted the paper's §4.1 generic syntax
+sentence entirely, and had no worked examples under `## When to use each
+pattern`.
+
+Task 8.0: confirmed via `git status`/`git diff` that there was no stray
+uncommitted edit to `general_ears.md` to discard -- nothing to do.
+
+Task 8.1: updated `general/models/ears.py`'s `_PATTERN_NAMES` to the
+paper's exact ordered vocabulary (`["Ubiquitous requirements",
+"Event-driven requirements", "Unwanted behaviours", "State-driven
+requirements", "Optional features"]`) and every stale name/order mention
+in the module docstring and the `PatternItem`/`WhenToUseItem`/`Patterns`
+docstrings. Verified (see Decisions Made below) that the existing `_NAME`
+regex fragment (`` [A-Za-z]+(?:[- ][A-Za-z]+)* ``) already matches a
+3-token name like `Event-driven requirements` without modification, so
+no regex widening was needed.
+
+Task 8.2: rewrote `general/data/general_ears.md`: appended the paper's
+generic syntax (`` `<optional preconditions> <optional trigger> the
+<system name> shall <system response>` ``) as a trailing clause of the
+existing intro paragraph (same block, no new paragraph); reordered/
+renamed/re-templated `## The five requirement patterns`'s five bullets to
+the paper's exact names and backticked templates, in the paper's exact
+order, keeping each bullet's pre-existing hand-written explanatory
+sentence untouched; reordered `## When to use each pattern` to match and
+appended the paper's own first worked example sentence, verbatim, to each
+bullet. Left `## Combining patterns` completely untouched, per the task's
+explicit instruction (its lowercase `when`/`while`/`where` keywords now
+read inconsistently against the newly upper-cased `WHEN`/`WHILE`/`WHERE`
+templates above it -- known, accepted, not fixed). Ran the file through
+`specmgr_mdformat` and adopted its normalized wrapping as the committed
+form.
+
+Task 8.3: updated `tests/models/test_ears.py`'s `_EXPECTED_PATTERN_NAMES`
+and all three malformed fixtures (`_MISSING_PATTERN_TEXT`,
+`_MISMATCHED_WHEN_TO_USE_TEXT`, `_WRONG_PATTERN_NAME_TEXT`) to the new
+names/order/templates, each still exercising the exact same failure mode
+as before (missing one pattern bullet; mismatched order between the two
+lists; an out-of-vocabulary pattern name).
+
+Task 8.4: updated `tests/general/resources/test_ears.py`'s
+`_EXPECTED_PATTERN_NAMES` and `_valid_ears_text()`'s fixture to the new
+names/order/templates; confirmed it remains a well-formed,
+`parse_ears`-accepted document.
+
+Task 8.5: updated the stale name/order mentions in
+`general/resources/ears.py`'s module docstring and its
+`@mcp.resource(...)` `description=` string, and in `server.py`'s module
+docstring's `specmgr://ears --` bullet.
+
+Task 8.6: regenerated `docs/api/`, `docs/GENERATED.md`, and `docs/MCP.md`
+via `specmgr docs`/`specmgr mcp-docs` (both produced real diffs, since
+`ears.py`'s docstrings and `general_ears.md`'s content changed); `specmgr
+adr-toc` produced zero diff, as expected (no ADR touched by this phase).
+Extended the existing `CHANGELOG.md` `[Unreleased]` `### Added` bullet
+(rather than adding a new bullet) with a clause noting the `specmgr://ears`
+content was aligned with the source paper's exact pattern names/order/
+templates and now includes its worked examples.
+
+Full quality gate, all green: `ruff format --check` (1672 files already
+formatted), `ruff check` (all checks passed), `vulture src/ whitelist.py
+--min-confidence 60` (no findings), full `unittest` suite (**3377
+tests**, all passing -- identical count to Phase 7's own last run, since
+this phase only changed existing fixtures/docstrings, not test/src
+structure), and `specmgr unused-code` ("No unused code found").
+
+The feature is now fully complete: all 8 phases plus the dtais/tara
+follow-up are done, REQ-001 through REQ-007 remain implemented, and
+ACC-001 through ACC-007 remain satisfied -- REQ-006/ACC-006 are unchanged
+in scope by this phase, only corrected in content accuracy. No new
+REQ-*/ACC-* item was added. No blockers. Per this phase's own explicit
+instructions, this work was NOT committed or pushed -- it lands as
+additional commits on the still-open PR #95 at the orchestrator's/user's
+discretion.
 
 #### 2026-09-04 00:00:00.000Z - Phase 7 (wrap-up) complete -- feature done
 
@@ -848,6 +942,25 @@ and agreed with the user.
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-04 - Phase 8 implementation calls: no regex widening needed; CHANGELOG bullet extended in place
+
+Two small calls made while implementing Phase 8: (1) Task 8.1 asked to
+verify whether `general/models/ears.py`'s shared `_NAME` regex fragment
+(`` [A-Za-z]+(?:[- ][A-Za-z]+)* ``) needed widening to match a 2-3-token
+name like `Event-driven requirements`/`Unwanted behaviours` -- a quick
+standalone regex check (`re.fullmatch` against all five new names)
+confirmed the existing fragment already matches an unbounded number of
+`[- ]`-separated letter-groups, so `Event-driven requirements` (three
+groups: `Event`, `-driven`, ` requirements`) and every other new name
+match without any change; no widening was made, since the fragment's `*`
+repetition was never actually bounded to one extra group in the first
+place. (2) The CHANGELOG instructions offered either extending the
+existing `specmgr://ears` bullet or adding a small new one -- chose to
+extend the existing `### Added` bullet in place with one more clause,
+since the correction is a content-accuracy refinement of the exact same
+resource already announced there, not a separate change worth its own
+bullet.
 
 #### 2026-09-04 00:00:00.000Z - `ears` model design calls (Phase 6)
 

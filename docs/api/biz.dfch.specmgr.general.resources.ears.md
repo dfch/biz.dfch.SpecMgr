@@ -4,9 +4,10 @@ Resource: specmgr://ears -- the EARS requirement-phrasing templates (feat-92-res
 
 Static, domain-knowledge resource: what EARS (Easy Approach to
 Requirements Syntax) is, the five canonical sentence templates
-(Ubiquitous, Event-driven, State-driven, Unwanted behavior, Optional
-feature), when to use each, and how "complex" EARS sentences combine
-more than one trigger/condition keyword.
+(Ubiquitous requirements, Event-driven requirements, Unwanted
+behaviours, State-driven requirements, Optional features), when to use
+each, and how "complex" EARS sentences combine more than one
+trigger/condition keyword.
 
 Served as raw packaged markdown (``text/markdown``, mirroring
 ``specmgr://iso25010``/``specmgr://dtais``/``specmgr://rsk/tara``/
