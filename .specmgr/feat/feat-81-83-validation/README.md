@@ -1,10 +1,10 @@
 ---
 classification: null
-created: '2026-09-03 12:38:25.338+02:00'
+created: '2026-09-03 10:38:25.338Z'
 id: feat-81-83-validation
 status: planning
 type: feat
-updated: '2026-09-03 17:00:00.000+00:00'
+updated: '2026-09-03 17:00:00.000Z'
 version: 1.0.0
 ---
 
