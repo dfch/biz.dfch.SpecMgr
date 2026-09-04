@@ -102,7 +102,7 @@ GitHub issue #94 reports that every whole-body document type's frontmatter `crea
 
 #### Phase 3: Verification and Closeout
 
-- [ ] Task 3.1: Full quality gate (`ruff format --check`, `ruff check`, `vulture`, full `unittest` suite, `specmgr docs`, `specmgr schema` drift check for both `docs/` and package copies).
+- [x] Task 3.1: Full quality gate (`ruff format --check`, `ruff check`, `vulture`, full `unittest` suite, `specmgr docs`, `specmgr schema` drift check for both `docs/` and package copies).
 
 - [ ] Task 3.2: Comment on GitHub issue #94 with the outcome; mark this feature done.
 
@@ -110,11 +110,54 @@ GitHub issue #94 reports that every whole-body document type's frontmatter `crea
 
 ### Current Status
 
-**As of 2026-09-04**: Phase 1 (Schema Exposure) and Phase 2 (Regression Tests) complete. `MarkdownFrontmatter.created`/`updated` now carry `Field(json_schema_extra={"pattern": _DATE_TIME_PATTERN.pattern})`, and all twelve affected domains' `docs/{type}_schema.json` and packaged `src/biz/dfch/specmgr/{type}/data/{type}_schema.json` copies have been regenerated with zero drift on a second run; `adr`'s schema files are untouched. REQ-003/REQ-004 are now covered by regression tests. Phase 3 (Verification and Closeout) not started yet.
+**As of 2026-09-04**: Phase 1 (Schema Exposure), Phase 2 (Regression Tests), and Phase 3's
+quality-gate verification (Task 3.1) are all complete. `MarkdownFrontmatter.created`/`updated` now
+carry `Field(json_schema_extra={"pattern": _DATE_TIME_PATTERN.pattern})`, and all twelve affected
+domains' `docs/{type}_schema.json` and packaged `src/biz/dfch/specmgr/{type}/data/{type}_schema.json`
+copies regenerate with zero drift; `adr`'s schema files are untouched (ADR has no registered schema
+type at all). REQ-003/REQ-004 are covered by regression tests. All seven acceptance criteria
+(ACC-001 through ACC-007) have been walked through with concrete evidence and are confirmed met.
+Only Task 3.2 remains: posting a summary comment on GitHub issue #94 and marking this feature
+`done` -- both held pending explicit human confirmation, so the frontmatter `status` here stays
+`planning` for now.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-04 - Phase 3 (Verification and Closeout) quality gate complete
+
+Ran Task 3.1's full quality gate on top of Phase 1 (commit `32ccc14`) and Phase 2 (commit
+`b07809a`), starting from and ending with a fully clean working tree (`git status --porcelain`
+empty before and after every command below):
+
+- `uv run --frozen ruff format --check`: `1652 files already formatted`.
+- `uv run --frozen ruff check`: `All checks passed!`.
+- `uv run --frozen vulture src/ whitelist.py --min-confidence 60`: no output (clean).
+- `uv run --frozen python -m unittest discover -v -s tests -t . -p "test_*.py"`: `Ran 3320 tests in
+  127.626s` / `OK` -- same 3320-test count Phase 2 left behind (no regressions, no new failures).
+- `uv run --frozen specmgr docs`: regenerated `docs/api` + `docs/GENERATED.md`; `git status`
+  confirmed zero diff (docs were already current from Phase 1/2).
+- `uv run --frozen specmgr schema` (all twelve registered types, `docs/` output): all twelve
+  `docs/{type}_schema.json` files reported `(unchanged)` -- `dec`, `feat`, `gol`, `prb`, `qa`, `req`,
+  `rsk`, `sop`, `sysrs`, `tsk`, `uc`, `vcr`.
+- `uv run --frozen specmgr schema --type <t> --output-dir src/biz/dfch/specmgr/<t>/data` for each of
+  the same twelve domains: all twelve packaged `{type}/data/{type}_schema.json` copies also reported
+  `(unchanged)`.
+- Spot-checked `docs/req_schema.json`'s `$defs.ReqFrontmatter.properties.created`/`.updated`: both
+  carry `"pattern": "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}(?:Z|[+-]\\d{2}:\\d{2})$"` as
+  a sibling of the `anyOf` array, matching Design Notes' documented tradeoff exactly.
+- Confirmed `adr` has no registered schema type at all (`specmgr schema --help`'s `--type` list
+  omits it, and no `docs/adr_schema.json`/`adr/data/adr_schema.json` file exists anywhere in the
+  repo) -- ADR's schema is untouched, as REQ-001/Scope require.
+
+Walked all seven acceptance criteria against this evidence plus the Phase 1/Phase 2 Updates
+entries above; all seven (ACC-001 through ACC-007) are confirmed met. Task 3.2 (GitHub issue
+comment + marking the feature `done`) is intentionally NOT done yet -- posting to GitHub and
+flipping this document's frontmatter `status` are both held for explicit human confirmation, per
+this phase's own instructions. No source, test, or schema files were touched during this
+verification pass -- read-only quality-gate commands only, with only this README's Progress
+section edited afterward.
 
 #### 2026-09-04 - Phase 2 (Regression Tests) complete
 
