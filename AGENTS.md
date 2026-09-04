@@ -573,7 +573,7 @@ uv run --frozen pre-commit install                                     # one-tim
 uv run --frozen ruff format --check && uv run --frozen ruff check      # lint (enforced)
 uv run --frozen pylint $(git ls-files '*.py')                          # lint (advisory only; CI runs it with `|| true`)
 uv run --frozen vulture src/ whitelist.py --min-confidence 60          # dead-code check (enforced)
-uv run --frozen python -m unittest discover -v -s tests -t . -p "test_*.py"  # tests
+uv run --frozen pytest -n auto --cov=src --cov-report=                # tests (parallel, pytest-xdist)
 scripts/release.sh help                                            # staged release automation (SOP 98537416; README "Make a Release")
 uv run --frozen specmgr docs                                           # regenerate docs/api/ + docs/GENERATED.md
 uv run --frozen specmgr adr-toc                                        # regenerate docs/adr/README.md (ADR table of contents)
@@ -600,19 +600,20 @@ Without `--all-extras` on `uv run`, only base dependencies are installed, causin
 runs `ruff format`/`ruff check`, `vulture`, a local `specmgr docs` hook
 (scoped to `src/**/*.py` changes), a local `specmgr adr-toc` hook (scoped to
 `docs/adr/**/*.md` changes), and the other doc/schema drift checks, then the
-full `unittest` suite (scoped to `src/**/*.py`/`tests/**/*.py` changes) and
-`specmgr coverage-badge` last, before every commit, so a broken test or drift
-in `docs/api/`/`docs/GENERATED.md`/`docs/adr/README.md` gets caught locally
-instead of failing later in CI. The `unittest` hook is deliberately ordered
-last (not right after `vulture`) so every faster check fails fast first
-instead of waiting 9-11 minutes to discover a lint or drift issue; `specmgr
-coverage-badge` must stay immediately after it, since it reads the
-`.coverage` data `unittest` just produced. (ADR
-9c687bb1-8ee7-41c8-84ec-07606356bc73: "Enforce doc generation/lint/tests
+full test suite (scoped to `src/**/*.py`/`tests/**/*.py` changes, run via
+`pytest`/`pytest-xdist` in parallel, `-n auto`) and `specmgr coverage-badge`
+last, before every commit, so a broken test or drift in
+`docs/api/`/`docs/GENERATED.md`/`docs/adr/README.md` gets caught locally
+instead of failing later in CI. The `pytest` hook is deliberately ordered
+last (not right after `vulture`) so every faster check fails fast first;
+running the suite in parallel also cut its own wall time from 9-11 minutes
+(serial `coverage run -m unittest discover`) to roughly a minute measured on
+the primary dev machine. `specmgr coverage-badge` must stay immediately
+after it, since it reads the `.coverage` data `pytest-cov` just produced.
+(ADR 9c687bb1-8ee7-41c8-84ec-07606356bc73: "Enforce doc generation/lint/tests
 locally via pre-commit hook, not just CI")
-**Agents: see "Agent Workflow: Commits and Long-Running Commands" below before
-running `git commit` or `pre-commit run` — the unittest hook alone takes 9-11
-minutes and is not cached between invocations.**
+**Agents: see "Agent Workflow: Commits and Long-Running Commands" below
+before running `git commit` or `pre-commit run`.**
 
 ## Extras split (base library has no CLI/MCP deps)
 
@@ -655,7 +656,8 @@ consumer of the base library.
 
 - Branches: `dev` (default, feature work) → `main` (stable) → tag.
 - `.github/workflows/ci.yml`: ruff + pylint (`|| true`) + vulture + unittest
-  run on matrix 3.11/3.12/3.13 via `uv sync --frozen --all-extras`, but
+  run on matrix 3.11/3.12/3.13 via `uv sync --frozen --all-extras` (unit
+  tests run via `pytest`/`pytest-xdist`, `-n auto`, not raw `unittest`), but
   `specmgr docs` and `specmgr adr-toc` drift checks run **only on Python
   3.13** (pinned, since different Python versions generate different
   docstring formatting in the API docs, and we want consistent ADR TOC
@@ -667,33 +669,39 @@ consumer of the base library.
 
 ## Agent Workflow: Commits and Long-Running Commands
 
-The local `unittest` pre-commit hook takes 9-11 minutes and is a `language:
-system` hook with no result caching -- it re-executes the raw command every
-time it's invoked, whether that's via `git commit` or a manual `pre-commit
-run`. Follow these rules to avoid running it twice for one commit and to
-avoid tool-call timeouts:
+The local `pytest` pre-commit hook runs the full suite in parallel
+(pytest-xdist, `-n auto`) and completes in roughly a minute on the primary
+dev machine (measured: ~58s including coverage; previously 9-11 minutes
+running serially under plain `unittest` + `coverage run`). It's still a
+`language: system` hook with no result caching -- it re-executes the raw
+command every time it's invoked, whether that's via `git commit` or a
+manual `pre-commit run`. Follow these rules to avoid running it twice for
+one commit and to avoid tool-call timeouts:
 
 - **Never manually run `pre-commit run` / `pre-commit run --all-files`
   before committing.** `git commit` already triggers the installed hook
   (`.git/hooks/pre-commit` -> `pre-commit run`), which runs the full gate
   (ruff, vulture, the doc/schema drift checks, then the full `unittest`
   suite and `specmgr coverage-badge` last) exactly once. Running it by
-  hand first and then committing runs the
-  9-11 min `unittest` hook twice back-to-back for the same change. Just
-  run `git commit` directly; if it fails, fix the reported issue and
-  commit again -- each retry legitimately re-runs the gate against the
-  fixed code, that's expected and not the "double run" this rule avoids.
-- **Always pass an explicit, generous `timeout` (in milliseconds) on the
-  bash tool call for `git commit` and for any standalone test run.** The
-  bash tool's own default timeout is 120000ms (2 minutes) unless
-  overridden, well under the suite's 9-11 min runtime. Use at least
-  900000 (15 min) for `git commit` and for standalone
-  `uv run --frozen coverage run -m unittest ...` /
-  `python -m unittest ...` invocations. If the commit's staged files are
-  entirely outside `src/**/*.py` and `tests/**/*.py` (e.g. only
-  `.md`/`docs/adr/*.md` changes), the slow `unittest` hook won't fire at
-  all per its `files:` scope in `.pre-commit-config.yaml`, and the
-  default timeout is fine.
+  hand first and then committing runs the whole gate twice back-to-back
+  for the same change. Just run `git commit` directly; if it fails, fix
+  the reported issue and commit again -- each retry legitimately re-runs
+  the gate against the fixed code, that's expected and not the "double
+  run" this rule avoids.
+- **Always pass an explicit `timeout` (in milliseconds) on the bash tool
+  call for `git commit` and for any standalone test run.** The bash
+  tool's own default timeout is 120000ms (2 minutes), which is cutting it
+  close given the pytest hook's own ~1 min runtime plus the other hooks'
+  overhead (ruff, vulture, doc/schema regeneration). Use at least 300000
+  (5 min) for `git commit` and for standalone
+  `uv run --frozen pytest ...` invocations -- comfortably above the
+  measured runtime, with headroom for a loaded machine or a future
+  test-count increase. If a real run ever creeps close to that, bump the
+  timeout and flag it so this number gets revised. If the commit's
+  staged files are entirely outside `src/**/*.py` and `tests/**/*.py`
+  (e.g. only `.md`/`docs/adr/*.md` changes), the slow `pytest` hook won't
+  fire at all per its `files:` scope in `.pre-commit-config.yaml`, and
+  the default timeout is fine.
 - **Don't block on `gh pr checks --watch` for CI results.** CI duration
   is variable and can exceed any fixed timeout you pick. Poll instead:
   call `gh pr checks <pr-number>` (without `--watch`) -- it returns

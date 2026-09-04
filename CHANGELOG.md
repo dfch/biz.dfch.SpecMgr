@@ -29,6 +29,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   instead of a structured `Iso25010` JSON object, still parsed via
   `parse_iso25010()` on every read to fail fast on structural drift
   (GitHub issue #92).
+- Local `pytest` pre-commit hook and CI's "Run unit tests with coverage"
+  step now run the (unchanged, still plain `unittest.TestCase`-based) test
+  suite via `pytest` with `pytest-xdist` (`-n auto`) instead of serial
+  `coverage run -m unittest discover`, cutting the local pre-commit gate's
+  test step from 9-11 minutes to roughly a minute. `pytest-cov` produces
+  the same `.coverage` file format, so `specmgr coverage-badge` is
+  unaffected.
 
 ## [0.21.0] - 2026-09-03
 

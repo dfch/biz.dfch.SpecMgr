@@ -257,7 +257,7 @@ uv run --frozen pylint $(git ls-files '*.py')
 ### Run tests
 
 ```bash
-uv run --frozen python -m unittest discover -v -s tests -t . -p "test_*.py"
+uv run --frozen pytest -n auto --cov=src --cov-report=
 ```
 
 ## Testing
