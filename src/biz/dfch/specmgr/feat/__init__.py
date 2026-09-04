@@ -36,9 +36,11 @@ domain's shared ``general/tools/_doc_paths.py``.
 already follows the ``sop``-style generic-dispatch MCP surface (ADR
 36905d5b-8057-4294-8665-c7eed5534db0): ``create_feat``, ``parse_feat``,
 ``list_feat``, ``get_feat``, ``get_feat_example``, ``get_feat_template``,
-``validate_feat``, plus ``type="feat"`` entries in
-the generic ``update``/``set_status``/``delete`` tools -- no ``update_feat``/
-``set_status_feat`` of its own. Resources: ``specmgr://feat/schema``,
+plus ``type="feat"`` entries in
+the generic ``update``/``set_status``/``delete``/``validate`` tools -- no
+``update_feat``/``set_status_feat``/``validate_feat`` of its own (the
+former ``validate_feat`` tool was removed in favor of the generic
+``validate`` tool, feat-81-83-validation). Resources: ``specmgr://feat/schema``,
 ``specmgr://feat/example``, ``specmgr://feat/template`` (no ``/{id}``, no
 ``/list``). Prompts: ``create_feat(topic)``/``update_feat(id, instructions=None)`` -- narrated instruction flows only,
 reading packaged instructions data from ``feat/data/``.

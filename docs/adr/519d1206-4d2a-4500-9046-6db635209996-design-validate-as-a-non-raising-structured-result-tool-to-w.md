@@ -1,8 +1,8 @@
 ---
+status: accepted
 date: '2026-09-03'
 decision-makers: OpenCode agent + user decision
 id: 519d1206-4d2a-4500-9046-6db635209996
-status: accepted
 version: 1.0.0
 ---
 
@@ -38,7 +38,7 @@ Option 3: the new generic `validate` tool never raises for a content-validation 
 
 ### Confirmation
 
-Confirmed during feat-81-83-validation's Phase 1 investigation: a standalone MCP JSON-RPC client, bypassing OpenCode's own tool-calling layer, proved the specmgr server always sends the full, actionable message on the wire; every observed successful (`isError: false`) tool result in the same OpenCode 1.18.27 session passed through intact regardless of size, while every observed `isError: true` result was truncated to a bare `"Error executing tool <name>"`. Future confirmation, once the generic `validate` tool is implemented (feat-81-83-validation Phase 2): its `{valid, errors}` result must be observed intact end-to-end through a live OpenCode session for at least the two Phase 1 regression fixtures (the `req` naive-isoformat-timestamp repro and the `dec` em-dash-heading repro).
+Confirmed during feat-81-83-validation's Phase 1 investigation: a standalone MCP JSON-RPC client, bypassing OpenCode's own tool-calling layer, proved the specmgr server always sends the full, actionable message on the wire; every observed successful (`isError: false`) tool result in the same OpenCode 1.18.27 session passed through intact regardless of size, while every observed `isError: true` result was truncated to a bare `"Error executing tool <name>"`. Further confirmed during feat-81-83-validation's own Phase 2 implementation (and re-verified during Phase 6's post-closeout review): once the generic `validate` tool was implemented, its `{valid, errors}` result was reproduced, at the unit level, for both Phase 1 regression fixtures (the `req` naive-isoformat-timestamp repro and the `dec` em-dash-heading repro) via direct Python calls through `tests/general/tools/test_validate.py::TestValidateIssue83Regressions`, asserting `{valid: False, errors: [...]}` with the enriched message present rather than a raised exception. This confirmation was never performed as a live MCP-client/OpenCode-session round-trip -- unlike the wire-level MCP JSON-RPC check performed during Phase 1 above, a live-session round-trip is not something an agent session can reliably automate or independently verify (the same limitation Phase 1's own investigation ran into, requiring a bespoke standalone JSON-RPC script outside the normal tool-calling harness), so no such check was attempted, and none is recorded as an outstanding commitment.
 
 ## Pros and Cons of the Options
 

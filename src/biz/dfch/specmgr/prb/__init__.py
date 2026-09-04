@@ -27,14 +27,17 @@ resources against the shared ``mcp`` application instance at once::
     from biz.dfch.specmgr import prb  # noqa: F401 (side-effects only)
 
 ``tools`` (``parse_prb``, ``get_prb``, ``list_prb``, ``get_prb_example``,
-``get_prb_template``, ``create_prb``,
-``validate_prb``), ``resources`` (``specmgr://prb/schema``,
+``get_prb_template``, ``create_prb``), ``resources``
+(``specmgr://prb/schema``,
 ``specmgr://prb/example``, ``specmgr://prb/template``), and ``prompts``
 (``create_prb``, ``update_prb``) all exist; whole-body and line-range
 updates of an existing document go through the generic ``update`` tool in
 ``general.tools`` (``type="prb"``), and status changes go through the
-generic ``set_status`` tool in ``general.tools`` (``type="prb"``). Like
-REQ/TSK/QA, PRB has no
+generic ``set_status`` tool in ``general.tools`` (``type="prb"``).
+Disk-free, id-free dry-run content validation goes through the generic
+``validate`` tool in ``general.tools`` (``type="prb"``) -- the former
+``validate_prb`` tool was removed in favor of it (feat-81-83-validation).
+Like REQ/TSK/QA, PRB has no
 ``specmgr://prb/{id}`` resource -- id-based reads go through the ``get_prb``
 tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614). Likewise, there is no
 ``specmgr://prb/list`` resource -- ``list_prb`` ships as a paged

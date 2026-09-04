@@ -88,6 +88,7 @@ from ...feat.models.v1 import Feature, parse_feat
 from ...general.models import ValidateResult, ValidationErrorEntry
 from ...gol.models.v1 import Goal, parse_gol
 from ...models.md._errors import BODY_CHANNEL, wrap_tool_errors
+from ...models.md._frontmatter_parse import enrich_frontmatter_yaml_error
 from ...models.md._markdown import format_text
 from ...prb.models.v1 import Prb, parse_prb
 from ...qa.models.v2 import Qa, parse_qa
@@ -112,13 +113,70 @@ _VALIDATE_TYPES = ("req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", 
 _CAUGHT_EXCEPTIONS: tuple[type[Exception], ...] = (AssertionError, ValidationError, yaml.YAMLError)
 
 
+def _detect_frontmatter(content: str, *, domain: str) -> bool:
+    """Return whether ``content`` carries a non-empty YAML frontmatter block (REQ-010).
+
+    Every adapter below used to probe this via a raw, unwrapped
+    ``bool(frontmatter.loads(content).metadata)`` call, run before ``full`` was even branched
+    on and entirely outside any error-enrichment context. For malformed frontmatter YAML, that
+    raised PyYAML's own opaque error (``"<unicode string>"`` location name, block-relative line
+    number) instead of ``parse_<d>``'s enriched form (``"the frontmatter block"`` naming,
+    document-relative line number). This helper composes the same two enrichment layers
+    ``parse_<d>``'s own pipeline does, in the same order:
+    :func:`~biz.dfch.specmgr.models.md._frontmatter_parse.enrich_frontmatter_yaml_error`
+    (block-naming + document-relative line remap) first/innermost -- mirroring
+    ``models/md/_frontmatter_parse.py::parse_frontmatter``'s own
+    ``except yaml.YAMLError: raise enrich_frontmatter_yaml_error(...) from error`` -- then
+    :func:`~biz.dfch.specmgr.models.md._errors.wrap_tool_errors`'s own domain/tool labeling
+    second/outermost, exactly like every ``parse_<d>`` tool wrapper's own
+    ``with wrap_tool_errors(domain=..., tool="parse_<d>"): ...``. The net effect: a
+    malformed-YAML ``validate(type=<domain>, content=..., full=True)`` call's error message is
+    textually identical to ``parse_<domain>``'s own message for byte-identical input, modulo the
+    ``tool=`` label itself (``"validate"`` here vs. ``"parse_<domain>"`` there).
+
+    Kept as a private helper local to this module, not promoted to a shared ``models/md``
+    module, per an explicit Phase 6 scoping decision (feat-81-83-validation) -- nothing else in
+    the codebase currently needs this exact composition.
+
+    Parameters
+    ----------
+    content:
+        The candidate document content to probe for a frontmatter block.
+    domain:
+        The short domain code (e.g. ``"req"``, ``"dec"``) to name in the enriched message on a
+        malformed-YAML failure -- the same ``domain`` value the calling adapter already passes
+        to its own ``wrap_tool_errors`` calls.
+
+    Returns
+    -------
+    bool
+        ``True`` if ``content`` carries a non-empty YAML frontmatter block, ``False`` otherwise.
+
+    Raises
+    ------
+    yaml.YAMLError
+        Malformed frontmatter YAML -- enriched exactly like ``parse_<domain>``'s own message
+        (frontmatter-block naming, document-relative line number), with this call's own
+        ``"{domain} validate"`` tool-boundary label prepended on top.
+    """
+    assert isinstance(content, str), type(content)
+    assert isinstance(domain, str) and domain.strip(), domain
+
+    with wrap_tool_errors(domain=domain, tool="validate"):
+        try:
+            result = bool(frontmatter.loads(content).metadata)  # type: ignore[union-attr]
+        except yaml.YAMLError as error:
+            raise enrich_frontmatter_yaml_error(content, error) from error
+    return result
+
+
 def _validate_req(content: str, full: bool) -> None:
     """Validate ``content`` as requirement markdown -- verbatim port of the retired ``validate_req``.
 
     See the module docstring for the shared ``has_frontmatter``/``full``
     semantics every adapter in this module follows.
     """
-    has_frontmatter = bool(frontmatter.loads(content).metadata)  # type: ignore[union-attr]
+    has_frontmatter = _detect_frontmatter(content, domain="req")
 
     if full:
         if not has_frontmatter:
@@ -144,7 +202,7 @@ def _validate_uc(content: str, full: bool) -> None:
 
     See :func:`_validate_req` for the shared semantics.
     """
-    has_frontmatter = bool(frontmatter.loads(content).metadata)  # type: ignore[union-attr]
+    has_frontmatter = _detect_frontmatter(content, domain="uc")
 
     if full:
         if not has_frontmatter:
@@ -170,7 +228,7 @@ def _validate_tsk(content: str, full: bool) -> None:
 
     See :func:`_validate_req` for the shared semantics.
     """
-    has_frontmatter = bool(frontmatter.loads(content).metadata)  # type: ignore[union-attr]
+    has_frontmatter = _detect_frontmatter(content, domain="tsk")
 
     if full:
         if not has_frontmatter:
@@ -196,7 +254,7 @@ def _validate_qa(content: str, full: bool) -> None:
 
     See :func:`_validate_req` for the shared semantics.
     """
-    has_frontmatter = bool(frontmatter.loads(content).metadata)  # type: ignore[union-attr]
+    has_frontmatter = _detect_frontmatter(content, domain="qa")
 
     if full:
         if not has_frontmatter:
@@ -222,7 +280,7 @@ def _validate_prb(content: str, full: bool) -> None:
 
     See :func:`_validate_req` for the shared semantics.
     """
-    has_frontmatter = bool(frontmatter.loads(content).metadata)  # type: ignore[union-attr]
+    has_frontmatter = _detect_frontmatter(content, domain="prb")
 
     if full:
         if not has_frontmatter:
@@ -248,7 +306,7 @@ def _validate_gol(content: str, full: bool) -> None:
 
     See :func:`_validate_req` for the shared semantics.
     """
-    has_frontmatter = bool(frontmatter.loads(content).metadata)  # type: ignore[union-attr]
+    has_frontmatter = _detect_frontmatter(content, domain="gol")
 
     if full:
         if not has_frontmatter:
@@ -274,7 +332,7 @@ def _validate_rsk(content: str, full: bool) -> None:
 
     See :func:`_validate_req` for the shared semantics.
     """
-    has_frontmatter = bool(frontmatter.loads(content).metadata)  # type: ignore[union-attr]
+    has_frontmatter = _detect_frontmatter(content, domain="rsk")
 
     if full:
         if not has_frontmatter:
@@ -300,7 +358,7 @@ def _validate_dec(content: str, full: bool) -> None:
 
     See :func:`_validate_req` for the shared semantics.
     """
-    has_frontmatter = bool(frontmatter.loads(content).metadata)  # type: ignore[union-attr]
+    has_frontmatter = _detect_frontmatter(content, domain="dec")
 
     if full:
         if not has_frontmatter:
@@ -326,7 +384,7 @@ def _validate_sop(content: str, full: bool) -> None:
 
     See :func:`_validate_req` for the shared semantics.
     """
-    has_frontmatter = bool(frontmatter.loads(content).metadata)  # type: ignore[union-attr]
+    has_frontmatter = _detect_frontmatter(content, domain="sop")
 
     if full:
         if not has_frontmatter:
@@ -356,7 +414,7 @@ def _validate_feat(content: str, full: bool) -> None:
     addressing/tool layer (``feat.tools._paths``), not here, since this
     disk-free tool has no path/folder-name to check against.
     """
-    has_frontmatter = bool(frontmatter.loads(content).metadata)  # type: ignore[union-attr]
+    has_frontmatter = _detect_frontmatter(content, domain="feat")
 
     if full:
         if not has_frontmatter:
@@ -382,7 +440,7 @@ def _validate_vcr(content: str, full: bool) -> None:
 
     See :func:`_validate_req` for the shared semantics.
     """
-    has_frontmatter = bool(frontmatter.loads(content).metadata)  # type: ignore[union-attr]
+    has_frontmatter = _detect_frontmatter(content, domain="vcr")
 
     if full:
         if not has_frontmatter:
@@ -409,7 +467,7 @@ def _validate_sysrs(content: str, full: bool) -> None:
     Verbatim port of the retired ``validate_sysrs`` -- see
     :func:`_validate_req` for the shared semantics.
     """
-    has_frontmatter = bool(frontmatter.loads(content).metadata)  # type: ignore[union-attr]
+    has_frontmatter = _detect_frontmatter(content, domain="sysrs")
 
     if full:
         if not has_frontmatter:

@@ -58,6 +58,54 @@ to the builtin shadow.
 
 ## Functions
 
+### `_detect_frontmatter(content: 'str', *, domain: 'str') -> 'bool'`
+
+Return whether ``content`` carries a non-empty YAML frontmatter block (REQ-010).
+
+Every adapter below used to probe this via a raw, unwrapped
+``bool(frontmatter.loads(content).metadata)`` call, run before ``full`` was even branched
+on and entirely outside any error-enrichment context. For malformed frontmatter YAML, that
+raised PyYAML's own opaque error (``"<unicode string>"`` location name, block-relative line
+number) instead of ``parse_<d>``'s enriched form (``"the frontmatter block"`` naming,
+document-relative line number). This helper composes the same two enrichment layers
+``parse_<d>``'s own pipeline does, in the same order:
+:func:`~biz.dfch.specmgr.models.md._frontmatter_parse.enrich_frontmatter_yaml_error`
+(block-naming + document-relative line remap) first/innermost -- mirroring
+``models/md/_frontmatter_parse.py::parse_frontmatter``'s own
+``except yaml.YAMLError: raise enrich_frontmatter_yaml_error(...) from error`` -- then
+:func:`~biz.dfch.specmgr.models.md._errors.wrap_tool_errors`'s own domain/tool labeling
+second/outermost, exactly like every ``parse_<d>`` tool wrapper's own
+``with wrap_tool_errors(domain=..., tool="parse_<d>"): ...``. The net effect: a
+malformed-YAML ``validate(type=<domain>, content=..., full=True)`` call's error message is
+textually identical to ``parse_<domain>``'s own message for byte-identical input, modulo the
+``tool=`` label itself (``"validate"`` here vs. ``"parse_<domain>"`` there).
+
+Kept as a private helper local to this module, not promoted to a shared ``models/md``
+module, per an explicit Phase 6 scoping decision (feat-81-83-validation) -- nothing else in
+the codebase currently needs this exact composition.
+
+Parameters
+----------
+content:
+    The candidate document content to probe for a frontmatter block.
+domain:
+    The short domain code (e.g. ``"req"``, ``"dec"``) to name in the enriched message on a
+    malformed-YAML failure -- the same ``domain`` value the calling adapter already passes
+    to its own ``wrap_tool_errors`` calls.
+
+Returns
+-------
+bool
+    ``True`` if ``content`` carries a non-empty YAML frontmatter block, ``False`` otherwise.
+
+Raises
+------
+yaml.YAMLError
+    Malformed frontmatter YAML -- enriched exactly like ``parse_<domain>``'s own message
+    (frontmatter-block naming, document-relative line number), with this call's own
+    ``"{domain} validate"`` tool-boundary label prepended on top.
+
+
 ### `_validate_dec(content: 'str', full: 'bool') -> 'None'`
 
 Validate ``content`` as decision markdown -- verbatim port of the retired ``validate_dec``.

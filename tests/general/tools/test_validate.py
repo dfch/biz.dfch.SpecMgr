@@ -48,8 +48,14 @@ from __future__ import annotations
 import textwrap
 import unittest
 from dataclasses import dataclass
+from typing import Callable
 
+import yaml
+
+from biz.dfch.specmgr.dec.models.v1 import parse_dec as _parse_dec
 from biz.dfch.specmgr.general.tools.validate import validate
+from biz.dfch.specmgr.models.md._errors import wrap_tool_errors
+from biz.dfch.specmgr.req.models.v1 import parse_req as _parse_req
 
 # ---------------------------------------------------------------------------
 # Per-domain fixture bodies -- 1:1 ports of the retired test_validate_<d>.py files' own
@@ -843,6 +849,54 @@ class TestValidateIssue83Regressions(unittest.TestCase):
         self.assertFalse(result.valid)
         self.assertEqual(len(result.errors), 1)
         self.assertTrue(result.errors[0].message)
+
+
+class TestValidateYamlErrorEnrichment(unittest.TestCase):
+    """REQ-010/ACC-010 (feat-81-83-validation, Phase 6): a malformed-YAML-frontmatter
+    ``validate(type=<d>, ..., full=True)`` call's error message must be textually identical to
+    ``parse_<d>``'s own message for byte-identical input, modulo the ``wrap_tool_errors`` label
+    prefix itself (``"validate"`` vs. ``"parse_<d>"``).
+
+    Regression test for the gap fixed by ``general/tools/validate.py::_detect_frontmatter``:
+    before that fix, each adapter's raw, unwrapped ``has_frontmatter`` probe raised PyYAML's own
+    opaque error (``"<unicode string>"`` location, block-relative line number) instead of the
+    frontmatter-block-naming, document-relative-line-remapped form every ``parse_<d>`` tool
+    already produced -- this test fails if that fix is reverted.
+    """
+
+    def _assert_message_parity(
+        self,
+        doc_type: str,
+        malformed: str,
+        parse_fn: Callable[[str], object],
+        parse_tool_name: str,
+    ) -> None:
+        """Assert ``validate``'s and ``parse_<d>``'s error messages agree past their own labels."""
+        result = validate(type=doc_type, content=malformed, full=True)  # type: ignore[arg-type]
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        validate_message = result.errors[0].message
+
+        with self.assertRaises(yaml.YAMLError) as caught:
+            with wrap_tool_errors(domain=doc_type, tool=parse_tool_name):
+                parse_fn(malformed)
+        parse_message = str(caught.exception)
+
+        validate_label = f"{doc_type} validate: "
+        parse_label = f"{doc_type} {parse_tool_name}: "
+        self.assertTrue(validate_message.startswith(validate_label), validate_message)
+        self.assertTrue(parse_message.startswith(parse_label), parse_message)
+        # Same block-naming + document-relative line number on both sides, modulo the label.
+        self.assertEqual(validate_message[len(validate_label) :], parse_message[len(parse_label) :])
+        self.assertIn('"the frontmatter block"', validate_message)
+
+    def test_req_malformed_yaml_frontmatter_matches_parse_req(self) -> None:
+        malformed = f"---\nid: req-1\nstatus: [unterminated\n---\n{_REQ_MINIMAL_BODY}"
+        self._assert_message_parity("req", malformed, _parse_req, "parse_req")
+
+    def test_dec_malformed_yaml_frontmatter_matches_parse_dec(self) -> None:
+        malformed = f"---\nid: dec-1\nstatus: [unterminated\n---\n{_DEC_MINIMAL_BODY}"
+        self._assert_message_parity("dec", malformed, _parse_dec, "parse_dec")
 
 
 if __name__ == "__main__":
