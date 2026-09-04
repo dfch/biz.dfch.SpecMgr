@@ -612,8 +612,6 @@ the primary dev machine. `specmgr coverage-badge` must stay immediately
 after it, since it reads the `.coverage` data `pytest-cov` just produced.
 (ADR 9c687bb1-8ee7-41c8-84ec-07606356bc73: "Enforce doc generation/lint/tests
 locally via pre-commit hook, not just CI")
-**Agents: see "Agent Workflow: Commits and Long-Running Commands" below
-before running `git commit` or `pre-commit run`.**
 
 ## Extras split (base library has no CLI/MCP deps)
 
@@ -666,49 +664,11 @@ consumer of the base library.
   `v0.2.1` to PyPI/the MCP Registry, triggered on `v*` tags.
 - Version bumps: update `version` in `pyproject.toml` (single source) and
   move `CHANGELOG.md`'s `[Unreleased]` into a dated section, same commit.
-
-## Agent Workflow: Commits and Long-Running Commands
-
-The local `pytest` pre-commit hook runs the full suite in parallel
-(pytest-xdist, `-n auto`) and completes in roughly a minute on the primary
-dev machine (measured: ~58s including coverage; previously 9-11 minutes
-running serially under plain `unittest` + `coverage run`). It's still a
-`language: system` hook with no result caching -- it re-executes the raw
-command every time it's invoked, whether that's via `git commit` or a
-manual `pre-commit run`. Follow these rules to avoid running it twice for
-one commit and to avoid tool-call timeouts:
-
-- **Never manually run `pre-commit run` / `pre-commit run --all-files`
-  before committing.** `git commit` already triggers the installed hook
-  (`.git/hooks/pre-commit` -> `pre-commit run`), which runs the full gate
-  (ruff, vulture, the doc/schema drift checks, then the full `unittest`
-  suite and `specmgr coverage-badge` last) exactly once. Running it by
-  hand first and then committing runs the whole gate twice back-to-back
-  for the same change. Just run `git commit` directly; if it fails, fix
-  the reported issue and commit again -- each retry legitimately re-runs
-  the gate against the fixed code, that's expected and not the "double
-  run" this rule avoids.
-- **Always pass an explicit `timeout` (in milliseconds) on the bash tool
-  call for `git commit` and for any standalone test run.** The bash
-  tool's own default timeout is 120000ms (2 minutes), which is cutting it
-  close given the pytest hook's own ~1 min runtime plus the other hooks'
-  overhead (ruff, vulture, doc/schema regeneration). Use at least 300000
-  (5 min) for `git commit` and for standalone
-  `uv run --frozen pytest ...` invocations -- comfortably above the
-  measured runtime, with headroom for a loaded machine or a future
-  test-count increase. If a real run ever creeps close to that, bump the
-  timeout and flag it so this number gets revised. If the commit's
-  staged files are entirely outside `src/**/*.py` and `tests/**/*.py`
-  (e.g. only `.md`/`docs/adr/*.md` changes), the slow `pytest` hook won't
-  fire at all per its `files:` scope in `.pre-commit-config.yaml`, and
-  the default timeout is fine.
-- **Don't block on `gh pr checks --watch` for CI results.** CI duration
-  is variable and can exceed any fixed timeout you pick. Poll instead:
-  call `gh pr checks <pr-number>` (without `--watch`) -- it returns
-  immediately with current status and comfortably fits the default
-  120000ms timeout -- repeated across a few tool calls (optionally
-  `sleep 30 && gh pr checks <pr-number>` per call) until every check
-  reports a final state, rather than issuing one long-blocking call.
+- Don't block on `gh pr checks --watch` for CI results -- duration is
+  variable across the 3.11/3.12/3.13 matrix and can exceed a single
+  tool-call timeout. Poll instead: call `gh pr checks <pr-number>`
+  (without `--watch`) repeatedly, optionally `sleep 30 &&` before each
+  call, until every check reports a final state.
 
 ## Coding Standards
 
