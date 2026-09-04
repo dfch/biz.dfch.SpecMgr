@@ -26,25 +26,6 @@ repos:
         pass_filenames: false
         files: ^(src/.*\.py|whitelist\.py)$
 
-      - id: unittest
-        name: unittest
-        description: Run the full test suite with coverage before every commit.
-        entry: uv run --frozen coverage run -m unittest discover -v -s tests -t . -p "test_*.py"
-        language: system
-        pass_filenames: false
-        files: ^(src|tests)/.*\.py$
-
-      - id: specmgr-coverage-badge
-        name: specmgr coverage-badge
-        description: >-
-          Generate coverage badge SVG, then fail if that changed anything
-          -- standard formatter-hook UX: review and `git add` the regenerated
-          badge, then commit again.
-        entry: bash -c 'uv run --frozen specmgr coverage-badge && git diff --exit-code -- docs/coverage.svg'
-        language: system
-        pass_filenames: false
-        files: ^(src|tests)/.*\.py$
-
       - id: specmgr-docs
         name: specmgr docs
         description: >-
@@ -300,3 +281,27 @@ repos:
         language: system
         pass_filenames: false
         files: ^src/biz/dfch/specmgr/(dec/models/v1|feat/models/v1|gol/models/v1|prb/models/v1|qa/models/v2|req/models/v1|rsk/models/v1|sop/models/v1|sysrs/models/v1|tsk/models/v1|uc/models/v2|vcr/models/v1|models/md)/.*\.py$
+
+      - id: unittest
+        name: unittest
+        description: >-
+          Run the full test suite with coverage before every commit. Deliberately
+          placed last (not right after vulture) so every faster check -- ruff,
+          vulture, and the doc/schema drift checks above -- fails fast first,
+          instead of waiting 9-11 minutes to discover a lint or drift issue.
+        entry: uv run --frozen coverage run -m unittest discover -v -s tests -t . -p "test_*.py"
+        language: system
+        pass_filenames: false
+        files: ^(src|tests)/.*\.py$
+
+      - id: specmgr-coverage-badge
+        name: specmgr coverage-badge
+        description: >-
+          Generate coverage badge SVG, then fail if that changed anything
+          -- standard formatter-hook UX: review and `git add` the regenerated
+          badge, then commit again. Must run after the unittest hook above,
+          since it reads the .coverage data unittest just produced.
+        entry: bash -c 'uv run --frozen specmgr coverage-badge && git diff --exit-code -- docs/coverage.svg'
+        language: system
+        pass_filenames: false
+        files: ^(src|tests)/.*\.py$

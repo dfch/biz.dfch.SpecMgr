@@ -597,12 +597,19 @@ Without `--all-extras` on `uv run`, only base dependencies are installed, causin
 `git add`ed before it will lint them, both locally and in CI.
 
 `pre-commit install` is one-time per clone (see `.pre-commit-config.yaml`):
-runs `ruff format`/`ruff check`, the full `unittest` suite (scoped to
-`src/**/*.py`/`tests/**/*.py` changes), a local `specmgr docs` hook (scoped to
-`src/**/*.py` changes), and a local `specmgr adr-toc` hook (scoped to
-`docs/adr/**/*.md` changes) before every commit, so a broken test or drift in
-`docs/api/`/`docs/GENERATED.md`/`docs/adr/README.md` gets caught locally instead
-of failing later in CI. (ADR 9c687bb1-8ee7-41c8-84ec-07606356bc73: "Enforce doc generation/lint/tests locally via pre-commit hook, not just CI")
+runs `ruff format`/`ruff check`, `vulture`, a local `specmgr docs` hook
+(scoped to `src/**/*.py` changes), a local `specmgr adr-toc` hook (scoped to
+`docs/adr/**/*.md` changes), and the other doc/schema drift checks, then the
+full `unittest` suite (scoped to `src/**/*.py`/`tests/**/*.py` changes) and
+`specmgr coverage-badge` last, before every commit, so a broken test or drift
+in `docs/api/`/`docs/GENERATED.md`/`docs/adr/README.md` gets caught locally
+instead of failing later in CI. The `unittest` hook is deliberately ordered
+last (not right after `vulture`) so every faster check fails fast first
+instead of waiting 9-11 minutes to discover a lint or drift issue; `specmgr
+coverage-badge` must stay immediately after it, since it reads the
+`.coverage` data `unittest` just produced. (ADR
+9c687bb1-8ee7-41c8-84ec-07606356bc73: "Enforce doc generation/lint/tests
+locally via pre-commit hook, not just CI")
 **Agents: see "Agent Workflow: Commits and Long-Running Commands" below before
 running `git commit` or `pre-commit run` — the unittest hook alone takes 9-11
 minutes and is not cached between invocations.**
@@ -669,8 +676,9 @@ avoid tool-call timeouts:
 - **Never manually run `pre-commit run` / `pre-commit run --all-files`
   before committing.** `git commit` already triggers the installed hook
   (`.git/hooks/pre-commit` -> `pre-commit run`), which runs the full gate
-  (ruff, vulture, the full `unittest` suite, doc/schema drift checks)
-  exactly once. Running it by hand first and then committing runs the
+  (ruff, vulture, the doc/schema drift checks, then the full `unittest`
+  suite and `specmgr coverage-badge` last) exactly once. Running it by
+  hand first and then committing runs the
   9-11 min `unittest` hook twice back-to-back for the same change. Just
   run `git commit` directly; if it fails, fix the reported issue and
   commit again -- each retry legitimately re-runs the gate against the
