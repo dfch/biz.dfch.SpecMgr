@@ -2,10 +2,10 @@
 classification: null
 created: '2026-09-03 10:38:25.338Z'
 id: feat-81-83-validation
-status: done
+status: in-progress
 type: feat
-updated: '2026-09-04 17:00:00.000Z'
-version: 1.0.0
+updated: '2026-09-04 18:00:00.000Z'
+version: 1.1.0
 ---
 
 # Feature: Consolidate Validation Tools and Fix Opaque Validation/List Failures (#81, #83)
@@ -34,6 +34,12 @@ GitHub issues #81 and #83 both concern how this repo's MCP tools report validati
 
 - REQ-008: Regression tests reproduce issue #83's two literal repro bodies end-to-end through the new generic `validate` tool, and a directory with a mix of valid and unparseable documents end-to-end through `list_<d>` for at least two domains.
 
+- REQ-009 (Phase 6, added following an independent post-closeout quality review): Fix the 11 stale domain `__init__.py` module docstrings (`dec`/`feat`/`gol`/`prb`/`qa`/`req`/`rsk`/`sop`/`tsk`/`uc`/`vcr`) that still enumerate the retired `validate_<d>` tool in their own "tools (...)" listing (e.g. `req/__init__.py`'s docstring still lists `validate_req` as one of its tools) -- a real, verifiable inaccuracy Task 2.3/5.2 did not catch because both only audited `AGENTS.md`/`server.py`/prompts, not every domain package's own module docstring. In the same pass, also correct `sysrs/__init__.py`'s own unrelated, pre-existing staleness (claims "7 tools" and that "`sysrs.prompts` is still an empty placeholder sub-package", both no longer true as of feat-32-sysrs's later phases), since it is touched during the same audit. Regenerate `docs/api/`/`docs/GENERATED.md` afterward, since they mirror these docstrings verbatim and currently ship the same stale claims.
+
+- REQ-010 (Phase 6): Fix `general/tools/validate.py`'s `yaml.YAMLError` message-enrichment gap. Every `_validate_<d>` adapter's unconditional, unwrapped `has_frontmatter = bool(frontmatter.loads(content).metadata)` probe -- run before the `full=True`/`full=False` branch is even decided -- raises PyYAML's raw, un-enriched error (opaque `"<unicode string>"` location, block-relative line number) for malformed frontmatter YAML, instead of `parse_<d>`'s enriched form (`"the frontmatter block"` naming, document-relative line number, via `models/md/_frontmatter_parse.py::enrich_frontmatter_yaml_error`) -- because the probe runs entirely outside any `wrap_tool_errors` context. This directly contradicts REQ-004's own claim ("reusing feat-27-validation's already-enriched message... verbatim") for this one channel, and was inherited unchanged from the original per-domain `validate_<d>` tools (a "verbatim port"), not introduced by this feature -- but it was never caught because `tests/general/tools/test_validate.py` (849 lines, 15 test methods) contains zero `yaml`/`YAMLError`/malformed-YAML-syntax test coverage, unlike the parallel `list_<d>` fix (Task 3.3), which got a dedicated test for exactly this channel. Fix: add a private helper `_detect_frontmatter(content: str, *, domain: str) -> bool` inside `general/tools/validate.py` (kept local to this file, not promoted to a shared `models/md` module, since nothing else in the codebase currently needs this exact composition) that composes `enrich_frontmatter_yaml_error` (block-naming + document-relative line remap) with `wrap_tool_errors`'s own domain/tool labeling, used by all twelve adapters in place of their raw probe, so a malformed-YAML `validate(type=<d>, content=..., full=True)` call's error message becomes textually identical to `parse_<d>`'s own message for the same input (modulo the `wrap_tool_errors` label prefix). Must not change the existing `full`/content-shape-mismatch `ValueError` behavior -- `TestValidateFullShapeMismatchRaises` must keep passing unmodified.
+
+- REQ-011 (Phase 6): Amend ADR 519d1206-4d2a-4500-9046-6db635209996's `### Confirmation` section, which currently commits to a specific future step ("its `{valid, errors}` result must be observed intact end-to-end through a live OpenCode session for at least the two Phase 1 regression fixtures") that this feature's own closeout (Phase 5) never actually performed or recorded -- only unit-level Python calls (`TestValidateIssue83Regressions`) were run. Revise that section to state precisely what was verified (unit-level `{valid, errors}` shape reproduction of both Phase 1 regression fixtures via direct Python calls, not a live MCP client round-trip) rather than leaving an unfulfilled, silently-open commitment in an `accepted`-status ADR.
+
 ### Acceptance Criteria
 
 - [x] ACC-001: Verifies REQ-001 -- Design Notes records a confirmed-real-or-already-fixed verdict for both of issue #83's literal repro bodies, reproduced against current HEAD. Verdict: both reproduce as client-observed symptoms, root-caused to a client-side tool-error-rendering gap outside this repo's code, not a server-side regression -- see Design Notes.
@@ -52,6 +58,12 @@ GitHub issues #81 and #83 both concern how this repo's MCP tools report validati
 
 - [x] ACC-008: Verifies REQ-008 -- the regression tests described exist and pass. Verdict: done -- `tests/general/tools/test_validate.py::TestValidateIssue83Regressions` reproduces both of issue #83's literal repro bodies end-to-end through the generic `validate` tool (`{valid: False, errors: [...]}`, never a raised exception); `tests/req/tools/test_list_req.py`/`tests/rsk/tools/test_list_rsk.py` each reproduce a mixed valid/unparseable directory end-to-end through `list_<d>` (including a malformed-YAML-frontmatter fixture), satisfying the "at least two domains" requirement. Full suite (3342 tests) passes.
 
+- [ ] ACC-009: Verifies REQ-009 -- `grep -rn "validate_<d>"` (for each of the twelve retired names) across all twelve domains' `__init__.py` files returns nothing implying a still-existing per-domain tool; `sysrs/__init__.py`'s docstring accurately reflects its current tool/prompt/resource counts; `docs/api/`/`docs/GENERATED.md` regenerated with zero remaining stale mentions.
+
+- [ ] ACC-010: Verifies REQ-010 -- a new test in `tests/general/tools/test_validate.py` submits identical malformed-YAML-frontmatter content to `validate(type=<d>, content=..., full=True)` and to `parse_<d>` for at least two domains (e.g. `req`, `dec`), asserting `{valid: False}` and that the two paths' error messages match (up to the `wrap_tool_errors` label prefix); all pre-existing `test_validate.py` tests continue to pass unmodified.
+
+- [ ] ACC-011: Verifies REQ-011 -- ADR 519d1206's Confirmation section no longer describes an unperformed live-session check as an open commitment.
+
 ### Scope
 
 #### Included
@@ -69,6 +81,8 @@ GitHub issues #81 and #83 both concern how this repo's MCP tools report validati
 - `list_<d>` summary `path`-field parity with `FeatSummary.path` across the other eleven whole-body domains, plus retrofitting `FeatSummary.path` to a resolved (absolute) path and revising `DocSummary.ref`'s docstring accordingly.
 
 - Regression tests, docstring `Raises`/return-shape updates, `docs/api`/`docs/GENERATED.md`/`docs/MCP.md` regeneration, `CHANGELOG.md` `[Unreleased]` entries (with **BREAKING** markers where applicable, per phase), a new ADR recording the `validate`-consolidation decision, and an `AGENTS.md` update.
+
+- Phase 6 (added following an independent post-closeout quality review, before this feature's true closeout): fixing 11 domain `__init__.py` docstrings' stale `validate_<d>` mentions plus `sysrs/__init__.py`'s own unrelated drift (REQ-009); fixing `validate`'s `yaml.YAMLError` message-enrichment gap for malformed frontmatter YAML via a private `_detect_frontmatter` helper (REQ-010); amending ADR 519d1206's Confirmation section to match what was actually verified (REQ-011).
 
 #### Explicitly Out Of Scope
 
@@ -169,6 +183,16 @@ Design questions resolved during plan refinement (2026-09-03), prior to Phase 1 
 
 - **`RskSummary`'s extra fields -- sentinel-document design**: `RskSummary` is the only domain summary type carrying fields beyond the shared `DocSummary` base (`initial_level`, `residual_level`, `strategy`, `scope`, `residual_probability`, `residual_impact`, `residual_product`) -- every other domain's summary type is a plain, fieldless `DocSummary` subclass. These seven fields are derived, via `RskSummary.from_document()`, from a fully-parsed `RskDocument`'s computed properties (e.g. `Assessment.level`, `Probability.value`) -- values that do not exist independently of a complete, successfully-validated object graph; Pydantic model construction is atomic, so a parse failure yields zero of the seven fields, never a partial set. Two alternatives were rejected: weakening `RskSummary`'s fields to `Optional` (defeats the field constraints' purpose for real rows too, not just failed ones); and fabricating schema-valid-but-plausible placeholder data via direct `RskSummary(...)` construction (indistinguishable from real, low-severity data in an aggregate risk view unless every consumer checks `error` first -- worse than a silent zero, since it is a believable lie rather than an obvious absence). Adopted instead: a fixed, valid, deliberately worst-case-severity RSK markdown document (`rsk/tools/_sentinel.py::_SENTINEL_RSK_TEXT`), parsed exactly once via the real `parse_rsk` pipeline (no bypass) into `_SENTINEL_RSK_DOCUMENT: RskDocument`. A failed row is built by running this sentinel through the same `RskSummary.from_document()` every real row uses, then `model_copy(update={"id": None, "status": "<failed to parse>", "path": ..., "error": ...})` for only the four fields no document could ever supply. Every domain-specific value -- `title="<failed to parse>"` (the sentinel's real H1), `strategy="accept"`, `scope="unknown"`, `initial_level`/`residual_level` (genuinely computed as `"very high"` from `Probability 5`/`Impact 5`, i.e. `level_from_product(25)`), `residual_probability`/`residual_impact`/`residual_product` (`5`/`5`/`25`) -- comes from real parsing and derivation, not hand-typed literals, so it can never drift out of sync with `level_from_product`'s own thresholds; a future schema-breaking change to the RSK model surfaces as a loud sentinel-parse failure, not silent staleness. `accept`/`dropped` (the sentinel frontmatter's real, valid `status`, overridden to the marker afterward, since `RskFrontmatter.status` is closed-vocabulary-enforced the same way `Strategy._validate_value` enforces the TARA words) are chosen as the most passive/neutral values of their respective closed vocabularies, so a fabricated row cannot accidentally trigger any strategy/status-keyed downstream automation. `RskSummary`'s own field constraints are completely unmodified -- no schema change of any kind. A dedicated unit test parses `_SENTINEL_RSK_TEXT` via `parse_rsk` directly and asserts success, independent of any `list_rsk` test, so a future RSK schema change (a new mandatory section, a changed `_TARA_PATTERN`, a renamed heading) is caught at the sentinel's own narrow, fast test rather than surfacing indirectly through `list_rsk`.
 
+**Phase 6 motivation: independent quality review findings (2026-09-04), after the feature's own Phase 5 closeout.** A review conducted separately from this feature's own self-audits re-verified the shipped artifacts against their own claims (running the real quality gate, reading the actual implementation rather than trusting the Updates log, and probing the generic `validate` tool live) and found three concrete, reproducible gaps, none of which invalidate the feature's overall design but which do contradict specific claims recorded as `[x]`/"done"/"no edits needed" above:
+
+1. **Stale docstrings** (REQ-009): 11 of 12 domain `__init__.py` module docstrings still literally list the retired `validate_<d>` tool as existing (confirmed via `grep`), even though Task 2.3/5.2 both claimed a full audit with "no edits needed" -- those audits only covered `AGENTS.md`/`server.py`/prompts, not each domain package's own top-level docstring. `docs/api/*.md` mirrors this stale text verbatim (it regenerates from the docstrings, so "zero drift" after `specmgr docs` only proves the generator matched its stale source, not that the source was accurate).
+
+2. **Unenriched `yaml.YAMLError` messages in `validate`** (REQ-010): live-reproduced by calling `validate(type="req", content=<malformed-YAML-frontmatter doc>, full=True)` directly -- it correctly returns `{valid: False, ...}` (REQ-004's core "never raises" contract holds), but the single error message is PyYAML's raw, un-enriched text (`in "<unicode string>", line 2, column 1`), not `parse_req`'s enriched equivalent (`in "the frontmatter block", line 2`) for the byte-identical input. Root cause: each `_validate_<d>` adapter's `has_frontmatter` probe (`bool(frontmatter.loads(content).metadata)`) runs unconditionally, before `full` is even branched on and entirely outside any `wrap_tool_errors` context, so a malformed-YAML exception raised there never reaches either enrichment layer. This is inherited byte-for-byte from the original per-domain `validate_<d>` tools (a "verbatim port," not a regression this feature introduced), but it directly contradicts REQ-004's own text ("reusing feat-27-validation's already-enriched message... verbatim") for this one of its three named channels, and `tests/general/tools/test_validate.py`'s 15 test methods across 849 lines contain zero `yaml`/`YAMLError` coverage to have ever caught it -- an asymmetry against the parallel `list_<d>` fix in this same feature, which got a dedicated `yaml.YAMLError` test (Task 3.3) specifically because Task 3.1's own design notes flagged that channel by name.
+
+3. **ADR 519d1206's unfulfilled Confirmation commitment** (REQ-011): that ADR's `### Confirmation` section commits to a specific future step -- observing `validate`'s result "intact end-to-end through a live OpenCode session" for both Phase 1 regression fixtures, once Phase 2 shipped -- that no entry in this feature's own Updates log records as ever having been performed.
+
+None of these three gaps required reopening this feature's core design (the generic `validate` tool, the `list_<d>` failure-reporting fix, the RSK sentinel, both ADRs' reasoning all hold up); they are documentation-accuracy and test-completeness fixes plus one narrow, well-scoped code fix, tracked as Phase 6 rather than folding silently back into Phase 2/3/5's already-closed task numbers, so the discrepancy between what was claimed done and what was actually done stays visible in this document's own history rather than being quietly overwritten.
+
 ### Related Decisions
 
 - ADR 36905d5b-8057-4294-8665-c7eed5534db0: established the one-generic-dispatch-tool-per-mutation convention (`update`/`set_status`/`delete`) this feature extends to `validate`.
@@ -237,22 +261,41 @@ Design questions resolved during plan refinement (2026-09-03), prior to Phase 1 
 
 - [x] Task 5.3: Comment on GitHub issues #81 and #83 with the outcome; mark this feature done. Done -- see Updates below for the comment URLs.
 
+#### Phase 6: Post-Review Remediation
+
+- [ ] Task 6.1: Audit all twelve domain `__init__.py` docstrings (`dec`/`feat`/`gol`/`prb`/`qa`/`req`/`rsk`/`sop`/`tsk`/`uc`/`vcr`/`sysrs`) for `validate_<d>`-staleness and any other drift; fix each in place (REQ-009). Regenerate `specmgr docs` (`docs/api/`/`docs/GENERATED.md`) and confirm no remaining stale mentions.
+
+- [ ] Task 6.2: Implement the private `_detect_frontmatter(content: str, *, domain: str) -> bool` helper inside `general/tools/validate.py` (kept local to this file per REQ-010's own scoping decision), composing `models/md/_frontmatter_parse.py::enrich_frontmatter_yaml_error` with `wrap_tool_errors`'s domain/tool labeling; replace all twelve adapters' raw `bool(frontmatter.loads(content).metadata)` probes with it. Confirm `TestValidateFullShapeMismatchRaises` and every other pre-existing `test_validate.py` test still passes unmodified.
+
+- [ ] Task 6.3: Add the missing `yaml.YAMLError` regression test(s) to `tests/general/tools/test_validate.py` for at least two domains (e.g. `req`, `dec`), asserting message parity between `validate(type=<d>, ..., full=True)` and `parse_<d>` for identical malformed-YAML-frontmatter input (REQ-010/ACC-010).
+
+- [ ] Task 6.4: Revise ADR 519d1206-4d2a-4500-9046-6db635209996's `### Confirmation` section per REQ-011.
+
+- [ ] Task 6.5: Full quality gate re-run (`ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, full `pytest -n auto --cov=src`); `specmgr docs`/`specmgr mcp-docs`/`specmgr adr-toc` drift checks; add a `CHANGELOG.md [Unreleased]` entry only if warranted (likely not needed -- Phase 6's changes are docstring/test/ADR-only, no MCP tool contract change; record the "no entry needed" conclusion explicitly rather than silently skipping it).
+
+- [ ] Task 6.6: Update Progress/Current Status and the Decisions Made log; mark ACC-009/ACC-010/ACC-011 `[x]`; restore `status: done` in frontmatter once all of Phase 6 is complete.
+
 ## Progress
 
 ### Current Status
 
-**As of 2026-09-04**: **the feature is complete -- all 5 phases, all 8 REQs/ACCs (ACC-001 through ACC-008) done.** Feature drafted from GitHub issues #81 and #83, then refined three times ahead of Phase 1 -- see the earlier Updates entries below for that refinement history. Phase 1 confirmed both of issue #83's repro cases reproduce as client-observed symptoms, root-caused to a client-side tool-error-rendering gap, not a specmgr server-side regression, and inventoried all thirteen `validate_<d>` tools. Phase 2 implemented the generic `validate(type, content, full)` tool in `general/tools/`, recorded the consolidation decision as ADR 078bf395-0a5f-4afd-84f6-b7a2191a00e6, removed the twelve per-domain `validate_<d>` tools and their dedicated tests, and migrated every dependent prompt/test. Phase 3 implemented the shared `general/tools/_listing.py::build_summaries()` helper (REQ-006), added `PagedResult.error_count`/`DocSummary.path`+`error`, wired all twelve `list_<d>.py` files through it so a malformed document now appears inline in `results` as a failed entry (marker `title`/`status`, `ref`, `path`, `error`) and contributes to `total`/`error_count` instead of being silently skipped, built RSK's sentinel-document construction (`rsk/tools/_sentinel.py`) for its own richer `RskSummary`, added regression tests (including a malformed-YAML-frontmatter fixture) for `req`/`rsk` plus updated every other domain's own pre-existing list test for the new semantics, and updated `AGENTS.md`'s twelve `list_<d>` bullets to mention `error_count`. `feat`'s `FeatSummary.path` deliberately kept its existing unresolved form in Phase 3 (Phase 4, Task 4.2's job). Phase 4 closed out REQ-007/ACC-007: confirmed (Task 4.1) the other eleven domains' `path`-field population and test coverage already fully landed in Phase 3, with no gaps; retrofitted `FeatSummary.path`/`list_feat.py` to the same resolved (absolute) form the other eleven domains use, and removed `FeatSummary`'s now-redundant separate `path` field declaration (Task 4.2); revised `DocSummary.ref`'s docstring to drop its "must not read this off disk" policy language (Task 4.3); added/extended tests confirming the new behavior, including simplifying `default_failed_summary` by removing its now-unused `resolve` parameter (Task 4.4, see Decisions Made); and added a `CHANGELOG.md` `[Unreleased]` entry (Task 4.5). Phase 5 (this closeout) re-ran the full quality gate (`ruff format --check`: 1652 files already formatted; `ruff check`: all checks passed; `vulture src/ whitelist.py --min-confidence 60`: no output; `pytest -n auto --cov=src`: 3342 passed) with zero regressions, confirmed `specmgr docs`/`specmgr mcp-docs`/`specmgr adr-toc` all already reflect the current state with zero drift, audited `AGENTS.md`/`CHANGELOG.md` in full and found no stale content requiring correction, marked ACC-008 done (REQ-008's regression tests were already implemented in Phases 2/3 and verified passing here), and posted outcome comments to GitHub issues #81 and #83 (see Updates below for the comment URLs). No code changes were needed in Phase 5 -- it is a pure verification/closeout pass.
+**As of 2026-09-04**: Phases 1-5 complete (REQ-001 through REQ-008, ACC-001 through ACC-008, all `[x]`); **Phase 6 (Post-Review Remediation) added and not yet started** (REQ-009 through REQ-011, ACC-009 through ACC-011, all `[ ]`), following an independent quality review conducted after this feature's own Phase 5 closeout -- see Design Notes' "Phase 6 motivation" note for the three findings driving it. `status` reverted from `done` to `in-progress` accordingly; it goes back to `done` once Phase 6's own Task 6.6 closes it out.
+
+Phases 1-5 summary (unchanged from the original closeout): **all 5 phases, all 8 REQs/ACCs (ACC-001 through ACC-008) done.** Feature drafted from GitHub issues #81 and #83, then refined three times ahead of Phase 1 -- see the earlier Updates entries below for that refinement history. Phase 1 confirmed both of issue #83's repro cases reproduce as client-observed symptoms, root-caused to a client-side tool-error-rendering gap, not a specmgr server-side regression, and inventoried all thirteen `validate_<d>` tools. Phase 2 implemented the generic `validate(type, content, full)` tool in `general/tools/`, recorded the consolidation decision as ADR 078bf395-0a5f-4afd-84f6-b7a2191a00e6, removed the twelve per-domain `validate_<d>` tools and their dedicated tests, and migrated every dependent prompt/test. Phase 3 implemented the shared `general/tools/_listing.py::build_summaries()` helper (REQ-006), added `PagedResult.error_count`/`DocSummary.path`+`error`, wired all twelve `list_<d>.py` files through it so a malformed document now appears inline in `results` as a failed entry (marker `title`/`status`, `ref`, `path`, `error`) and contributes to `total`/`error_count` instead of being silently skipped, built RSK's sentinel-document construction (`rsk/tools/_sentinel.py`) for its own richer `RskSummary`, added regression tests (including a malformed-YAML-frontmatter fixture) for `req`/`rsk` plus updated every other domain's own pre-existing list test for the new semantics, and updated `AGENTS.md`'s twelve `list_<d>` bullets to mention `error_count`. `feat`'s `FeatSummary.path` deliberately kept its existing unresolved form in Phase 3 (Phase 4, Task 4.2's job). Phase 4 closed out REQ-007/ACC-007: confirmed (Task 4.1) the other eleven domains' `path`-field population and test coverage already fully landed in Phase 3, with no gaps; retrofitted `FeatSummary.path`/`list_feat.py` to the same resolved (absolute) form the other eleven domains use, and removed `FeatSummary`'s now-redundant separate `path` field declaration (Task 4.2); revised `DocSummary.ref`'s docstring to drop its "must not read this off disk" policy language (Task 4.3); added/extended tests confirming the new behavior, including simplifying `default_failed_summary` by removing its now-unused `resolve` parameter (Task 4.4, see Decisions Made); and added a `CHANGELOG.md` `[Unreleased]` entry (Task 4.5). Phase 5 (this closeout) re-ran the full quality gate (`ruff format --check`: 1652 files already formatted; `ruff check`: all checks passed; `vulture src/ whitelist.py --min-confidence 60`: no output; `pytest -n auto --cov=src`: 3342 passed) with zero regressions, confirmed `specmgr docs`/`specmgr mcp-docs`/`specmgr adr-toc` all already reflect the current state with zero drift, audited `AGENTS.md`/`CHANGELOG.md` in full and found no stale content requiring correction, marked ACC-008 done (REQ-008's regression tests were already implemented in Phases 2/3 and verified passing here), and posted outcome comments to GitHub issues #81 and #83 (see Updates below for the comment URLs). No code changes were needed in Phase 5 -- it is a pure verification/closeout pass.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
+#### 2026-09-04 18:00:00.000Z - Phase 6 (Post-Review Remediation) planned: REQ-009/010/011, ACC-009/010/011, and the Phase 6 task list added following an independent quality review
+
+An independent review of this already-closed-out feature (conducted after Phase 5) re-verified the shipped artifacts directly -- running the real quality gate, reading the actual implementation, and probing the generic `validate` tool live -- rather than relying on this document's own self-audit log. It confirmed the core design and full test suite (3342 tests, `ruff`/`vulture` clean) are sound, but found three concrete, reproducible gaps: (1) 11 of 12 domain `__init__.py` module docstrings still list the retired `validate_<d>` tool as existing, missed by Task 2.3/5.2's audits since those only covered `AGENTS.md`/`server.py`/prompts; (2) `validate`'s `yaml.YAMLError` messages are not enriched the way `parse_<d>`'s are, for malformed frontmatter YAML specifically, because each adapter's `has_frontmatter` probe runs outside any enrichment context -- reproduced live, and confirmed untested (zero `yaml`/`YAMLError` mentions in `test_validate.py`); (3) ADR 519d1206's own Confirmation section commits to a live-OpenCode-session re-check that was never recorded as performed. Added REQ-009/ACC-009 (docstring fix), REQ-010/ACC-010 (`_detect_frontmatter` helper + missing test coverage, kept as a private helper local to `general/tools/validate.py` per an explicit scoping decision -- see Decisions Made), and REQ-011/ACC-011 (ADR amendment) accordingly, plus a new Phase 6 task list (Tasks 6.1-6.6) and a Design Notes addendum recording the three findings in full. `status` reverted from `done` to `in-progress` in frontmatter; `version` bumped to `1.1.0`. This entry is planning-only -- no code, tests, or other files outside this plan document were touched; Phase 6's own tasks remain `[ ]` until implemented.
+
 #### 2026-09-04 17:00:00.000Z - Phase 5 (Verification and Closeout) complete: Tasks 5.1-5.3 done -- feature closed out
 
 Closed out the whole feature. Task 5.1 re-ran the full quality gate with no
 code changes needed: `ruff format --check` (1652 files already formatted),
-`ruff check` (all checks passed), `vulture src/ whitelist.py
---min-confidence 60` (no output), and the full `pytest -n auto --cov=src`
+`ruff check` (all checks passed), `vulture src/ whitelist.py --min-confidence 60` (no output), and the full `pytest -n auto --cov=src`
 suite (3342 passed, unchanged from Phase 4's own count -- no test edits were
 needed in this phase).
 
@@ -369,15 +412,13 @@ by original design (not merely an incidental convenience gained later, as
 for the other eleven domains).
 
 Quality gate: `ruff format --check` (clean, 1652 files already formatted),
-`ruff check` (all checks passed), `vulture src/ whitelist.py
---min-confidence 60` (no output), the full `pytest -n auto --cov=src` suite
+`ruff check` (all checks passed), `vulture src/ whitelist.py --min-confidence 60` (no output), the full `pytest -n auto --cov=src` suite
 (3342 tests, up from 3339 immediately before this phase's test edits -- net
 +3: +1 `test_path_is_always_resolved` replacing the removed
 `test_path_stays_unresolved_when_resolve_is_false` in `test__listing.py`,
 +1 `is_absolute()`/resolved-equality assertion pair in `test_list_feat.py`
 (no new test method), +3 new test methods in the new
-`TestFeatSummarySharesDocSummaryBase` class in `test_summary.py`), `specmgr
-docs` (regenerated exactly the four touched modules' API pages --
+`TestFeatSummarySharesDocSummaryBase` class in `test_summary.py`), `specmgr docs` (regenerated exactly the four touched modules' API pages --
 `feat.models.v1.summary`, `feat.tools.list_feat`,
 `general.models.summary`, `general.tools._listing` -- plus
 `docs/GENERATED.md`), `specmgr mcp-docs` (`docs/MCP.md` unchanged -- no
@@ -397,8 +438,7 @@ same, simplified two-or-three-positional-plus-`ref`-keyword signature.
 
 Implemented REQ-006's `list_<d>` failure-reporting fix and the shared
 listing infrastructure it depends on (Task 3.1): `general/tools/_listing.py`
-(`build_summaries(paths, read, to_summary, to_failed_summary, error_types=
-(AssertionError, ValidationError, yaml.YAMLError))`, `default_failed_summary()`,
+(`build_summaries(paths, read, to_summary, to_failed_summary, error_types= (AssertionError, ValidationError, yaml.YAMLError))`, `default_failed_summary()`,
 `FAILED_TO_PARSE_MARKER`), mirroring `general/tools/_doc_paths.py::find_doc_path_by_id`'s
 callback-based generalization; `PagedResult.error_count: int = 0`;
 `DocSummary.path: str`/`error: str | None = None` added to the shared base
@@ -594,6 +634,18 @@ Created from GitHub issues #81 (consolidate validation tools) and #83 (opaque va
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-04 18:00:00.000Z - Phase 6 scoping decisions, made during the independent post-closeout quality review
+
+Three implementation-approach decisions were made while turning the review's findings into Phase 6's REQ-009/010/011:
+
+1. **REQ-010's `yaml.YAMLError` enrichment gap is fixed, not just documented.** Considered leaving the behavior as-is (it matches the original per-domain `validate_<d>` tools byte-for-byte) and only correcting REQ-004/the module docstring's overstated "verbatim" enrichment claim plus adding the missing test. Rejected in favor of an actual fix, since `validate`'s entire purpose is consistent, actionable failure reporting, and leaving one of its three named channels quietly worse than the other two undermines that purpose more than the small code change to fix it costs.
+
+2. **The `_detect_frontmatter` helper stays private inside `general/tools/validate.py`, not promoted to a shared `models/md` module.** Considered adding it to `models/md/_frontmatter_parse.py`/`_errors.py` for future reusability. Rejected for now: nothing else in the codebase currently needs this exact composition (`enrich_frontmatter_yaml_error` + `wrap_tool_errors` labeling for a presence-only probe, as opposed to a full parse), and adding it to a shared module speculatively would be scope creep beyond what REQ-010 actually requires.
+
+3. **REQ-011 amends ADR 519d1206's Confirmation section rather than attempting the live-session re-check it originally committed to.** A live MCP-client round-trip isn't something an agent session can reliably automate or independently verify (the same limitation Phase 1's own investigation ran into, requiring a bespoke standalone JSON-RPC script outside the normal tool-calling harness). Rather than attempt and possibly mis-record another ad hoc repro, the ADR's own Confirmation section is corrected to state what was actually verified (unit-level `{valid, errors}` shape reproduction), consistent with this repo's general preference for accurate records over unfulfilled commitments.
+
+4. **`sysrs/__init__.py`'s own unrelated docstring staleness is fixed in the same Phase 6 pass as REQ-009**, rather than filed as a separate cleanup item, since it is discovered and touched during the same twelve-domain `__init__.py` audit and costs nothing extra to fix immediately.
 
 #### 2026-09-04 16:00:00.000Z - Removed `default_failed_summary`'s `resolve` parameter entirely rather than leaving it as dead flexibility
 
