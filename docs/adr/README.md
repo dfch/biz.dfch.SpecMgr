@@ -4,6 +4,11 @@ Index of all ADRs in this repository.
 
 ## All ADRs
 
+- [Replace domain-specific validate tools with a generic type-dispatched validate tool](078bf395-0a5f-4afd-84f6-b7a2191a00e6-replace-domain-specific-validate-tools-with-a-generic-type-d.md)
+  - Id: 078bf395-0a5f-4afd-84f6-b7a2191a00e6
+  - Status: accepted
+  - Date: 2026-09-04
+  - Decision-makers: OpenCode agent + user decision
 - [Replace domain-specific delete tools with a generic type-dispatched delete tool](1af6787b-eaab-4e8f-888f-531c1e76c19d-replace-domain-specific-delete-tools-with-a-generic-type-dis.md)
   - Id: 1af6787b-eaab-4e8f-888f-531c1e76c19d
   - Status: accepted

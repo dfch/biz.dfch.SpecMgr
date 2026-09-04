@@ -11,6 +11,14 @@ Backs feat-13's ``<domain>_list`` -> ``list_<domain>`` pagination rollout
   set that every domain's own ``*Summary`` model (``ReqSummary``,
   ``UcSummary``, ``TskSummary``, ``QaSummary``) subclasses.
 
+Also backs feat-81-83-validation Phase 2's generic ``validate`` tool
+(REQ-004):
+
+- :class:`ValidateResult`/:class:`ValidationErrorEntry` -- the non-raising,
+  structured ``{valid, errors}`` result the generic ``validate`` tool
+  (``general.tools.validate``) returns for a content-validation failure
+  instead of letting the exception propagate.
+
 Also backs feat-92-resources's cross-cutting reference-resource
 model-backed drift-guard convention (ADR
 356d8781-e446-4c26-917a-eda85648ce9d, REQ-002/REQ-005/REQ-006):

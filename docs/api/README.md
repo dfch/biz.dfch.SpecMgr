@@ -71,7 +71,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.dec.tools.get_dec_template`](biz.dfch.specmgr.dec.tools.get_dec_template.md) — ``@mcp.tool()`` wrapper: get_dec_template (Task 2.2).
 - [`biz.dfch.specmgr.dec.tools.list_dec`](biz.dfch.specmgr.dec.tools.list_dec.md) — ``@mcp.tool()`` wrapper: list_dec (Task 2.2).
 - [`biz.dfch.specmgr.dec.tools.parse_dec`](biz.dfch.specmgr.dec.tools.parse_dec.md) — ``@mcp.tool()`` wrapper: parse_dec (Task 2.2).
-- [`biz.dfch.specmgr.dec.tools.validate_dec`](biz.dfch.specmgr.dec.tools.validate_dec.md) — ``@mcp.tool()`` wrapper: validate_dec (Task 2.2).
 - [`biz.dfch.specmgr.feat`](biz.dfch.specmgr.feat.md) — Feature (FEAT) domain -- formalizes the ``.specmgr/feat/<id>/README.md`` convention.
 - [`biz.dfch.specmgr.feat.models`](biz.dfch.specmgr.feat.models.md) — Feature (FEAT) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
 - [`biz.dfch.specmgr.feat.models.v1`](biz.dfch.specmgr.feat.models.v1.md) — Feature (FEAT) v1 schema -- frontmatter, body, document, parser, summary.
@@ -100,7 +99,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.feat.tools.list_feat`](biz.dfch.specmgr.feat.tools.list_feat.md) — ``@mcp.tool()`` wrapper: list_feat (Task 2.3).
 - [`biz.dfch.specmgr.feat.tools.parse_feat`](biz.dfch.specmgr.feat.tools.parse_feat.md) — ``@mcp.tool()`` wrapper: parse_feat (Task 2.3).
 - [`biz.dfch.specmgr.feat.tools.set_feat_id`](biz.dfch.specmgr.feat.tools.set_feat_id.md) — ``@mcp.tool()`` wrapper: set_feat_id (Task 3.1, feat-48-feat-id Phase 3).
-- [`biz.dfch.specmgr.feat.tools.validate_feat`](biz.dfch.specmgr.feat.tools.validate_feat.md) — ``@mcp.tool()`` wrapper: validate_feat (Task 2.3).
 - [`biz.dfch.specmgr.general`](biz.dfch.specmgr.general.md) — General-purpose (cross-cutting, not domain-specific) tools, resources, and
 - [`biz.dfch.specmgr.general.models`](biz.dfch.specmgr.general.models.md) — Shared, cross-domain Pydantic models with no document-type-specific content.
 - [`biz.dfch.specmgr.general.models.dtais`](biz.dfch.specmgr.general.models.dtais.md) — Pydantic schema and parser for the DTAIS verification-methods guidance
@@ -108,6 +106,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general.models.paged_result`](biz.dfch.specmgr.general.models.paged_result.md) — Generic paged-result wrapper shared by every ``list_<domain>`` MCP tool (feat-13 Task 1.1).
 - [`biz.dfch.specmgr.general.models.rasci`](biz.dfch.specmgr.general.models.rasci.md) — Pydantic schema and parser for the RASCI responsibility-assignment guidance
 - [`biz.dfch.specmgr.general.models.summary`](biz.dfch.specmgr.general.models.summary.md) — Common base for every domain's one-line listing summary (feat-13 Task 1.3, REQ-003/ACC-001).
+- [`biz.dfch.specmgr.general.models.validate_result`](biz.dfch.specmgr.general.models.validate_result.md) — The generic ``validate`` tool's non-raising, structured result shape (feat-81-83-validation Phase 2, REQ-004).
 - [`biz.dfch.specmgr.general.prompts`](biz.dfch.specmgr.general.prompts.md) — MCP prompt registrations that are not specific to any single document
 - [`biz.dfch.specmgr.general.prompts.compact_history`](biz.dfch.specmgr.general.prompts.compact_history.md) — ``@mcp.prompt()``: compact_history (Various improvements, Task 0.21).
 - [`biz.dfch.specmgr.general.prompts.confluence_fetch`](biz.dfch.specmgr.general.prompts.confluence_fetch.md) — ``@mcp.prompt()``: confluence_fetch (feat-50-confluence Phase 8, REQ-013/ACC-012).
@@ -135,6 +134,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general.tools.set_classification`](biz.dfch.specmgr.general.tools.set_classification.md) — ``@mcp.tool()`` wrapper: set_classification (feat-56-classification, Phase 2).
 - [`biz.dfch.specmgr.general.tools.set_status`](biz.dfch.specmgr.general.tools.set_status.md) — ``@mcp.tool()`` wrapper: set_status (feat-22-consolidate-mutation-tools, Phase 4).
 - [`biz.dfch.specmgr.general.tools.update`](biz.dfch.specmgr.general.tools.update.md) — ``@mcp.tool()`` wrapper: update (feat-22-consolidate-mutation-tools, Phase 2).
+- [`biz.dfch.specmgr.general.tools.validate`](biz.dfch.specmgr.general.tools.validate.md) — ``@mcp.tool()`` wrapper: validate (feat-81-83-validation, Phase 2).
 - [`biz.dfch.specmgr.gol`](biz.dfch.specmgr.gol.md) — Goal (GOL) domain -- high-level business goal specifications.
 - [`biz.dfch.specmgr.gol.prompts`](biz.dfch.specmgr.gol.prompts.md) — MCP prompt wrappers for Goals (Tasks 3.14-3.15).
 - [`biz.dfch.specmgr.gol.prompts.create_gol`](biz.dfch.specmgr.gol.prompts.create_gol.md) — ``@mcp.prompt()``: create_gol (Task 3.14).
@@ -154,7 +154,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.gol.tools.get_gol_template`](biz.dfch.specmgr.gol.tools.get_gol_template.md) — ``@mcp.tool()`` wrapper: get_gol_template (Task 3.10).
 - [`biz.dfch.specmgr.gol.tools.list_gol`](biz.dfch.specmgr.gol.tools.list_gol.md) — ``@mcp.tool()`` wrapper: list_gol (Task 3.9).
 - [`biz.dfch.specmgr.gol.tools.parse_gol`](biz.dfch.specmgr.gol.tools.parse_gol.md) — ``@mcp.tool()`` wrapper: parse_gol (Task 3.2).
-- [`biz.dfch.specmgr.gol.tools.validate_gol`](biz.dfch.specmgr.gol.tools.validate_gol.md) — ``@mcp.tool()`` wrapper: validate_gol (Task 3.7).
 - [`biz.dfch.specmgr.models`](biz.dfch.specmgr.models.md) — Pydantic models used by the ``biz-dfch-specmgr`` MCP server.
 - [`biz.dfch.specmgr.models.adr`](biz.dfch.specmgr.models.adr.md) — Pydantic models for MADR 4.0.0-based Architecture Decision Records.
 - [`biz.dfch.specmgr.models.adr.v1`](biz.dfch.specmgr.models.adr.v1.md) — ADR schema version 1 (``SCHEMA_MAJOR_VERSION == 1``).
@@ -227,7 +226,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.prb.tools.get_prb_template`](biz.dfch.specmgr.prb.tools.get_prb_template.md) — ``@mcp.tool()`` wrapper: get_prb_template (Task 3.10).
 - [`biz.dfch.specmgr.prb.tools.list_prb`](biz.dfch.specmgr.prb.tools.list_prb.md) — ``@mcp.tool()`` wrapper: list_prb (Task 3.9).
 - [`biz.dfch.specmgr.prb.tools.parse_prb`](biz.dfch.specmgr.prb.tools.parse_prb.md) — ``@mcp.tool()`` wrapper: parse_prb (Task 3.2).
-- [`biz.dfch.specmgr.prb.tools.validate_prb`](biz.dfch.specmgr.prb.tools.validate_prb.md) — ``@mcp.tool()`` wrapper: validate_prb (Task 3.7).
 - [`biz.dfch.specmgr.qa`](biz.dfch.specmgr.qa.md) — Question and Answer (QA) domain -- requirements-elicitation interview specifications.
 - [`biz.dfch.specmgr.qa.models`](biz.dfch.specmgr.qa.models.md) — Question and Answer (QA) models -- Pydantic schema powered by the generic ``models/md`` engine.
 - [`biz.dfch.specmgr.qa.models.v2`](biz.dfch.specmgr.qa.models.v2.md) — Question and Answer (QA) v2 models -- adjacent question/answer pairs, no per-question heading.
@@ -257,7 +255,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.qa.tools.get_qa_template`](biz.dfch.specmgr.qa.tools.get_qa_template.md) — ``@mcp.tool()`` wrapper: get_qa_template (Phase 4, Task 4.1).
 - [`biz.dfch.specmgr.qa.tools.list_qa`](biz.dfch.specmgr.qa.tools.list_qa.md) — ``@mcp.tool()`` wrapper: list_qa (feat-13-list-paging Task 2.5).
 - [`biz.dfch.specmgr.qa.tools.parse_qa`](biz.dfch.specmgr.qa.tools.parse_qa.md) — ``@mcp.tool()`` wrapper: parse_qa (Phase 4, Task 4.1).
-- [`biz.dfch.specmgr.qa.tools.validate_qa`](biz.dfch.specmgr.qa.tools.validate_qa.md) — ``@mcp.tool()`` wrapper: validate_qa (Phase 4, Task 4.1).
 - [`biz.dfch.specmgr.req`](biz.dfch.specmgr.req.md) — Requirement (REQ) domain -- requirement specifications.
 - [`biz.dfch.specmgr.req.prompts`](biz.dfch.specmgr.req.prompts.md) — MCP prompt wrappers for Requirements (Task 3.19).
 - [`biz.dfch.specmgr.req.prompts.create_req`](biz.dfch.specmgr.req.prompts.create_req.md) — ``@mcp.prompt()``: create_req (Task 3.19).
@@ -277,7 +274,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.req.tools.get_req_template`](biz.dfch.specmgr.req.tools.get_req_template.md) — ``@mcp.tool()`` wrapper: get_req_template (Task 3.7).
 - [`biz.dfch.specmgr.req.tools.list_req`](biz.dfch.specmgr.req.tools.list_req.md) — ``@mcp.tool()`` wrapper: list_req (feat-13-list-paging Task 2.2).
 - [`biz.dfch.specmgr.req.tools.parse_req`](biz.dfch.specmgr.req.tools.parse_req.md) — ``@mcp.tool()`` wrapper: parse_req.
-- [`biz.dfch.specmgr.req.tools.validate_req`](biz.dfch.specmgr.req.tools.validate_req.md) — ``@mcp.tool()`` wrapper: validate_req (Task 3.16).
 - [`biz.dfch.specmgr.rsk`](biz.dfch.specmgr.rsk.md) — Risk (RSK) domain -- risk registers for system specifications.
 - [`biz.dfch.specmgr.rsk.models`](biz.dfch.specmgr.rsk.models.md) — Risk (RSK) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
 - [`biz.dfch.specmgr.rsk.models.v1`](biz.dfch.specmgr.rsk.models.v1.md) — Risk (RSK) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
@@ -310,7 +306,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.rsk.tools.get_rsk_template`](biz.dfch.specmgr.rsk.tools.get_rsk_template.md) — ``@mcp.tool()`` wrapper: get_rsk_template (Task 3.9).
 - [`biz.dfch.specmgr.rsk.tools.list_rsk`](biz.dfch.specmgr.rsk.tools.list_rsk.md) — ``@mcp.tool()`` wrapper: list_rsk (Task 3.14).
 - [`biz.dfch.specmgr.rsk.tools.parse_rsk`](biz.dfch.specmgr.rsk.tools.parse_rsk.md) — ``@mcp.tool()`` wrapper: parse_rsk (Task 3.2).
-- [`biz.dfch.specmgr.rsk.tools.validate_rsk`](biz.dfch.specmgr.rsk.tools.validate_rsk.md) — ``@mcp.tool()`` wrapper: validate_rsk (Task 3.7).
 - [`biz.dfch.specmgr.server`](biz.dfch.specmgr.server.md) — MCP server for ``biz-dfch-specmgr``.
 - [`biz.dfch.specmgr.sop`](biz.dfch.specmgr.sop.md) — Standard Operating Procedure (SOP) domain -- structured, step-by-step
 - [`biz.dfch.specmgr.sop.models`](biz.dfch.specmgr.sop.models.md) — Standard Operating Procedure (SOP) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
@@ -339,7 +334,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.sop.tools.get_sop_template`](biz.dfch.specmgr.sop.tools.get_sop_template.md) — ``@mcp.tool()`` wrapper: get_sop_template (Task 2.2).
 - [`biz.dfch.specmgr.sop.tools.list_sop`](biz.dfch.specmgr.sop.tools.list_sop.md) — ``@mcp.tool()`` wrapper: list_sop (Task 2.2).
 - [`biz.dfch.specmgr.sop.tools.parse_sop`](biz.dfch.specmgr.sop.tools.parse_sop.md) — ``@mcp.tool()`` wrapper: parse_sop (Task 2.2).
-- [`biz.dfch.specmgr.sop.tools.validate_sop`](biz.dfch.specmgr.sop.tools.validate_sop.md) — ``@mcp.tool()`` wrapper: validate_sop (Task 2.2).
 - [`biz.dfch.specmgr.sysrs`](biz.dfch.specmgr.sysrs.md) — System Requirements Specification (SYSRS) domain -- an aggregator document type that
 - [`biz.dfch.specmgr.sysrs.models`](biz.dfch.specmgr.sysrs.models.md) — System Requirements Specification (SYSRS) models -- Pydantic schema and parser powered by the generic
 - [`biz.dfch.specmgr.sysrs.models.v1`](biz.dfch.specmgr.sysrs.models.v1.md) — System Requirements Specification (SYSRS) models -- Pydantic schema and parser powered by the generic
@@ -367,7 +361,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.sysrs.tools.get_sysrs_template`](biz.dfch.specmgr.sysrs.tools.get_sysrs_template.md) — ``@mcp.tool()`` wrapper: get_sysrs_template (Task 3.2).
 - [`biz.dfch.specmgr.sysrs.tools.list_sysrs`](biz.dfch.specmgr.sysrs.tools.list_sysrs.md) — ``@mcp.tool()`` wrapper: list_sysrs (Task 3.2).
 - [`biz.dfch.specmgr.sysrs.tools.parse_sysrs`](biz.dfch.specmgr.sysrs.tools.parse_sysrs.md) — ``@mcp.tool()`` wrapper: parse_sysrs (Task 3.2).
-- [`biz.dfch.specmgr.sysrs.tools.validate_sysrs`](biz.dfch.specmgr.sysrs.tools.validate_sysrs.md) — ``@mcp.tool()`` wrapper: validate_sysrs (Task 3.2).
 - [`biz.dfch.specmgr.tsk`](biz.dfch.specmgr.tsk.md) — TaskList (TSK) domain -- lightweight task/todo-list specifications.
 - [`biz.dfch.specmgr.tsk.models`](biz.dfch.specmgr.tsk.models.md) — TaskList (TSK) models -- Pydantic schema powered by the generic ``models/md`` engine.
 - [`biz.dfch.specmgr.tsk.models.v1`](biz.dfch.specmgr.tsk.models.v1.md) — TaskList (TSK) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
@@ -397,7 +390,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.tsk.tools.get_tsk_template`](biz.dfch.specmgr.tsk.tools.get_tsk_template.md) — ``@mcp.tool()`` wrapper: get_tsk_template (Task 3.9).
 - [`biz.dfch.specmgr.tsk.tools.list_tsk`](biz.dfch.specmgr.tsk.tools.list_tsk.md) — ``@mcp.tool()`` wrapper: list_tsk (feat-13-list-paging Task 2.4).
 - [`biz.dfch.specmgr.tsk.tools.parse_tsk`](biz.dfch.specmgr.tsk.tools.parse_tsk.md) — ``@mcp.tool()`` wrapper: parse_tsk (Task 3.2).
-- [`biz.dfch.specmgr.tsk.tools.validate_tsk`](biz.dfch.specmgr.tsk.tools.validate_tsk.md) — ``@mcp.tool()`` wrapper: validate_tsk (Task 3.7).
 - [`biz.dfch.specmgr.uc`](biz.dfch.specmgr.uc.md) — Use Case (UC) domain — Cockburn-based use case specification and validation.
 - [`biz.dfch.specmgr.uc.models`](biz.dfch.specmgr.uc.models.md) — Use Case models — Pydantic schema for Cockburn-based use cases.
 - [`biz.dfch.specmgr.uc.models.v1`](biz.dfch.specmgr.uc.models.v1.md) — Use Case models v1 — Pydantic schema for Cockburn-based use cases.
@@ -441,7 +433,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.uc.tools.get_uc_template`](biz.dfch.specmgr.uc.tools.get_uc_template.md) — ``@mcp.tool()`` wrapper: get_uc_template (Task 3.1.3).
 - [`biz.dfch.specmgr.uc.tools.list_uc`](biz.dfch.specmgr.uc.tools.list_uc.md) — ``@mcp.tool()`` wrapper: list_uc (feat-13-list-paging Task 2.3).
 - [`biz.dfch.specmgr.uc.tools.parse_uc`](biz.dfch.specmgr.uc.tools.parse_uc.md) — ``@mcp.tool()`` wrapper: parse_uc.
-- [`biz.dfch.specmgr.uc.tools.validate_uc`](biz.dfch.specmgr.uc.tools.validate_uc.md) — ``@mcp.tool()`` wrapper: validate_uc (Task 3.1.5).
 - [`biz.dfch.specmgr.vcr`](biz.dfch.specmgr.vcr.md) — Verification Case Record (VCR) domain -- how a single REQ/UC is verified.
 - [`biz.dfch.specmgr.vcr.models`](biz.dfch.specmgr.vcr.models.md) — Verification Case Record (VCR) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
 - [`biz.dfch.specmgr.vcr.models.v1`](biz.dfch.specmgr.vcr.models.v1.md) — Verification Case Record (VCR) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
@@ -469,4 +460,3 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.vcr.tools.get_vcr_template`](biz.dfch.specmgr.vcr.tools.get_vcr_template.md) — ``@mcp.tool()`` wrapper: get_vcr_template (Task 2.1).
 - [`biz.dfch.specmgr.vcr.tools.list_vcr`](biz.dfch.specmgr.vcr.tools.list_vcr.md) — ``@mcp.tool()`` wrapper: list_vcr (Task 2.1).
 - [`biz.dfch.specmgr.vcr.tools.parse_vcr`](biz.dfch.specmgr.vcr.tools.parse_vcr.md) — ``@mcp.tool()`` wrapper: parse_vcr (Task 2.1).
-- [`biz.dfch.specmgr.vcr.tools.validate_vcr`](biz.dfch.specmgr.vcr.tools.validate_vcr.md) — ``@mcp.tool()`` wrapper: validate_vcr (Task 2.1).

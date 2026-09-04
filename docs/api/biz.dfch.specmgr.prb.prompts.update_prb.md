@@ -4,7 +4,7 @@
 
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through revising an existing Problem Statement (PRB) document by id, using
-the existing ``prb/tools/`` surface (``get_prb``, ``validate_prb``) plus
+the existing ``prb/tools/`` surface (``get_prb``, generic ``validate`` tool) plus
 the generic ``update``/``set_status`` tools in ``general/tools/`` (called
 with ``type="prb"``; ``get_prb``'s ``raw=True`` parameter serves the
 line-range flow's line numbers). There is no ``specmgr://prb/{id}``

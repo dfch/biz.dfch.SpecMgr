@@ -4,7 +4,7 @@ created: '2026-09-03 10:38:25.338Z'
 id: feat-81-83-validation
 status: planning
 type: feat
-updated: '2026-09-04 13:00:00.000Z'
+updated: '2026-09-04 14:00:00.000Z'
 version: 1.0.0
 ---
 
@@ -40,11 +40,11 @@ GitHub issues #81 and #83 both concern how this repo's MCP tools report validati
 
 - [x] ACC-002: Verifies REQ-002 -- Design Notes contains a table/list of all thirteen current `validate_<d>` tools with signature and behavior. Verdict: inventory complete, see Design Notes.
 
-- [ ] ACC-003: Verifies REQ-003 -- the generic `validate(type, content, full)` tool exists, dispatches to all twelve applicable domains, the twelve consolidated per-domain `validate_<d>` tools (all except `validate_adr`, which still exists unchanged) no longer exist, their dedicated `test_validate_<d>.py` files are removed/migrated (Task 2.5), and a new ADR documenting the consolidation decision exists (Task 2.2).
+- [x] ACC-003: Verifies REQ-003 -- the generic `validate(type, content, full)` tool exists, dispatches to all twelve applicable domains, the twelve consolidated per-domain `validate_<d>` tools (all except `validate_adr`, which still exists unchanged) no longer exist, their dedicated `test_validate_<d>.py` files are removed/migrated (Task 2.5), and a new ADR documenting the consolidation decision exists (Task 2.2). Verdict: done -- `general/tools/validate.py` implements the tool, the twelve per-domain tools and their dedicated tests are removed, ADR 078bf395-0a5f-4afd-84f6-b7a2191a00e6 records the decision, and `docs/adr/README.md` is regenerated.
 
-- [ ] ACC-004: Verifies REQ-004 -- `validate` never raises for a content-validation failure, returns `{valid, errors}` with `errors: list[{message}]` reusing `feat-27-validation`'s enriched messages verbatim; a test confirms `validate(type="adr", ...)` and any other unsupported `type` still raise `ValueError`; a further test, for a representative sample of domains (`req`, `dec`, `vcr`), confirms that a `full`/content-shape mismatch still raises `ValueError` through the generic tool rather than being swallowed into `{valid: false}`.
+- [x] ACC-004: Verifies REQ-004 -- `validate` never raises for a content-validation failure, returns `{valid, errors}` with `errors: list[{message}]` reusing `feat-27-validation`'s enriched messages verbatim; a test confirms `validate(type="adr", ...)` and any other unsupported `type` still raise `ValueError`; a further test, for a representative sample of domains (`req`, `dec`, `vcr`), confirms that a `full`/content-shape mismatch still raises `ValueError` through the generic tool rather than being swallowed into `{valid: false}`. Verdict: done -- `tests/general/tools/test_validate.py` (`TestValidateAllDomains`, `TestValidateUnsupportedType`, `TestValidateFullShapeMismatchRaises`, `TestValidateIssue83Regressions`) covers all of this; the exception handler catches exactly `(AssertionError, ValidationError, yaml.YAMLError)`.
 
-- [ ] ACC-005: Verifies REQ-005 -- existing `parse_<d>`/`get_<d>` tests continue to pass unchanged (raise-based contract untouched).
+- [x] ACC-005: Verifies REQ-005 -- existing `parse_<d>`/`get_<d>` tests continue to pass unchanged (raise-based contract untouched). Verdict: done -- the full test suite (3308 tests) passes unchanged for `parse_<d>`/`get_<d>`; only `validate_<d>`-referencing tests were migrated.
 
 - [ ] ACC-006: Verifies REQ-006 -- a `list_<d>` test with a directory containing both valid and unparseable documents asserts `error_count` is correct (across the whole directory, not just the current page) and `total` includes failed entries, with each failed document appearing in `results` with `ref`/marker/`error`/`path` populated -- for at least two domains, including `rsk`'s sentinel-document construction (see Design Notes); a dedicated test additionally asserts the RSK sentinel markdown parses successfully on its own, independent of `list_rsk`'s own test, so a future RSK schema change is caught at the sentinel level.
 
@@ -175,7 +175,7 @@ Design questions resolved during plan refinement (2026-09-03), prior to Phase 1 
 
 - ADR 519d1206-4d2a-4500-9046-6db635209996: records that `validate`'s non-raising, structured `{valid, errors}` design (REQ-003/004) is fundamentally a workaround for a confirmed, external OpenCode 1.18.27 client-side defect (truncating `isError: true` MCP tool results down to a bare `"Error executing tool <name>"`), not an independently preferred design -- written up separately from this feature's own Design Notes because the rationale generalizes to any future tool in this repo facing the same need.
 
-- ADR (id to be assigned by Task 2.2): will document the decision to extend ADR 36905d5b-8057-4294-8665-c7eed5534db0's dispatch-only convention to `validate`, a read-only/dry-run tool category distinct from the mutation-adjacent tools (`update`/`set_status`/`set_classification`/`delete`) that convention originally covered -- mirroring `feat-36-delete`'s own precedent of writing a dedicated ADR even where a general convention already existed. Placeholder bullet until Task 2.2 creates the ADR and this entry is updated with its real id.
+- ADR 078bf395-0a5f-4afd-84f6-b7a2191a00e6: documents the decision to extend ADR 36905d5b-8057-4294-8665-c7eed5534db0's dispatch-only convention to `validate`, a read-only/dry-run tool category distinct from the mutation-adjacent tools (`update`/`set_status`/`set_classification`/`delete`) that convention originally covered -- mirroring `feat-36-delete`'s own precedent of writing a dedicated ADR even where a general convention already existed.
 
 ### Task List
 
@@ -193,19 +193,19 @@ Design questions resolved during plan refinement (2026-09-03), prior to Phase 1 
 
 #### Phase 2: Generic `validate` Tool
 
-- [ ] Task 2.1: Implement the generic `validate(type, content, full)` tool in `general/tools/`, dispatching to each of the twelve applicable domains' existing validation logic (`adr` excluded), returning `{valid: bool, errors: list[{message: str}]}` without raising for a content-validation failure. The exception handler must catch exactly `(AssertionError, ValidationError, yaml.YAMLError)`, never a bare `ValueError`, so the `full`/content-shape-mismatch `ValueError` (REQ-004's carve-out) still propagates instead of being absorbed into `{valid: false}`.
+- [x] Task 2.1: Implement the generic `validate(type, content, full)` tool in `general/tools/`, dispatching to each of the twelve applicable domains' existing validation logic (`adr` excluded), returning `{valid: bool, errors: list[{message: str}]}` without raising for a content-validation failure. The exception handler must catch exactly `(AssertionError, ValidationError, yaml.YAMLError)`, never a bare `ValueError`, so the `full`/content-shape-mismatch `ValueError` (REQ-004's carve-out) still propagates instead of being absorbed into `{valid: false}`. Done -- `src/biz/dfch/specmgr/general/tools/validate.py` (twelve private `_validate_<d>` adapters, a dispatch table, and the public `validate` `@mcp.tool()`), plus `src/biz/dfch/specmgr/general/models/validate_result.py` (`ValidateResult`/`ValidationErrorEntry`).
 
-- [ ] Task 2.2: Create a new ADR documenting the decision to consolidate the twelve per-domain `validate_<d>` tools into the generic `validate(type, content, full)` tool -- extending ADR 36905d5b-8057-4294-8665-c7eed5534db0's dispatch-only convention to a read-only/dry-run tool category, distinct from `update`/`set_status`/`set_classification`/`delete`'s mutation category -- via `create_adr`, then `specmgr adr-toc`; update the placeholder bullet under Related Decisions above with the assigned id.
+- [x] Task 2.2: Create a new ADR documenting the decision to consolidate the twelve per-domain `validate_<d>` tools into the generic `validate(type, content, full)` tool -- extending ADR 36905d5b-8057-4294-8665-c7eed5534db0's dispatch-only convention to a read-only/dry-run tool category, distinct from `update`/`set_status`/`set_classification`/`delete`'s mutation category -- via `create_adr`, then `specmgr adr-toc`; update the placeholder bullet under Related Decisions above with the assigned id. Done -- ADR 078bf395-0a5f-4afd-84f6-b7a2191a00e6 (`docs/adr/078bf395-0a5f-4afd-84f6-b7a2191a00e6-replace-domain-specific-validate-tools-with-a-generic-type-d.md`), `docs/adr/README.md` regenerated, Related Decisions bullet updated.
 
-- [ ] Task 2.3: Migrate `create_<d>`/`update_<d>` prompts and `AGENTS.md`'s `validate_<d>` mentions to the generic `validate` tool, for the twelve consolidated domains; `validate_adr` references are left untouched.
+- [x] Task 2.3: Migrate `create_<d>`/`update_<d>` prompts and `AGENTS.md`'s `validate_<d>` mentions to the generic `validate` tool, for the twelve consolidated domains; `validate_adr` references are left untouched. Done -- all 24 `create_<d>`/`update_<d>` prompt `.py` docstrings/descriptions and their packaged `*_instructions.md` data files updated to reference the generic `validate` tool; `AGENTS.md`'s per-domain bullets, the `general/` bullet, and the "Still genuinely missing" section updated; `server.py`'s own module docstring updated (its per-domain tool lists and the `general/tools/` paragraph).
 
-- [ ] Task 2.4: Remove the twelve consolidated per-domain `validate_<d>` tool files (all except `validate_adr`, which remains).
+- [x] Task 2.4: Remove the twelve consolidated per-domain `validate_<d>` tool files (all except `validate_adr`, which remains). Done -- `git rm`'d all twelve `<d>/tools/validate_<d>.py` files and their `__init__.py` imports/`__all__`/docstring registrations.
 
-- [ ] Task 2.5: Remove the 12 dedicated `test_validate_<d>.py` files (~1600 lines total; coverage superseded by Task 2.6's generic-tool tests), and update the 6 `test_integration.py` files (dec/feat/sop/sysrs/vcr, plus one more) and the 3 regression tests (`test_issue_27.py`, `test_issue_70.py`, `test_issue_71.py`) plus `tests/general/tools/test_error_context.py` that currently import a `validate_<d>` function directly, repointing each to the generic `validate` tool.
+- [x] Task 2.5: Remove the 12 dedicated `test_validate_<d>.py` files (~1600 lines total; coverage superseded by Task 2.6's generic-tool tests), and update the 6 `test_integration.py` files (dec/feat/sop/sysrs/vcr, plus one more) and the 3 regression tests (`test_issue_27.py`, `test_issue_70.py`, `test_issue_71.py`) plus `tests/general/tools/test_error_context.py` that currently import a `validate_<d>` function directly, repointing each to the generic `validate` tool. Done -- 12 `test_validate_<d>.py` files removed; the 5 affected `test_integration.py` files (dec/feat/sop/sysrs/vcr -- `prb`/`gol`'s own `test_integration.py` never referenced `validate_<d>`, confirmed by search), the 3 regression tests, `tests/general/tools/test_error_context.py`, and `tests/sop/prompts/test_create_sop.py`/`tests/sysrs/prompts/test_create_sysrs.py` (found by a broader search, per this task's own instruction) all repointed to the generic `validate` tool.
 
-- [ ] Task 2.6: Unit tests for the generic tool across all twelve applicable domains, plus the two regression fixtures from Phase 1, plus a test that `validate(type="adr", ...)` and any other unsupported `type` still raise `ValueError`, plus a test -- for a representative sample of domains (`req`, `dec`, `vcr`) -- that a `full`/content-shape mismatch (`full=True` with body-only content, and `full=False` with a complete document) still raises `ValueError` through the generic tool rather than being swallowed into `{valid: false}`.
+- [x] Task 2.6: Unit tests for the generic tool across all twelve applicable domains, plus the two regression fixtures from Phase 1, plus a test that `validate(type="adr", ...)` and any other unsupported `type` still raise `ValueError`, plus a test -- for a representative sample of domains (`req`, `dec`, `vcr`) -- that a `full`/content-shape mismatch (`full=True` with body-only content, and `full=False` with a complete document) still raises `ValueError` through the generic tool rather than being swallowed into `{valid: false}`. Done -- `tests/general/tools/test_validate.py` (15 test methods across 4 test classes, parameterized over all twelve domains' ported fixture bodies).
 
-- [ ] Task 2.7: Add a `CHANGELOG.md` `[Unreleased]` entry (**BREAKING**) documenting the twelve `validate_<d>` tool removals and the new generic `validate` tool's non-raising `{valid, errors}` contract.
+- [x] Task 2.7: Add a `CHANGELOG.md` `[Unreleased]` entry (**BREAKING**) documenting the twelve `validate_<d>` tool removals and the new generic `validate` tool's non-raising `{valid, errors}` contract. Done -- `CHANGELOG.md` `[Unreleased]` gained an "Added" entry for the new `validate` tool and a "Removed" **BREAKING** entry for the twelve retired `validate_<d>` tools.
 
 #### Phase 3: `list_<d>` Failure Reporting
 
@@ -241,11 +241,99 @@ Design questions resolved during plan refinement (2026-09-03), prior to Phase 1 
 
 ### Current Status
 
-**As of 2026-09-04**: Feature drafted from GitHub issues #81 and #83, then refined three times -- Task 1.5's design questions were resolved ahead of Phase 1, Tasks 1.1-1.3 (reproducing issue #83's two literal repro cases) are done (both reproduce as client-observed symptoms, but root-caused to a client-side tool-error-rendering gap, not a specmgr server-side regression -- see Design Notes), a follow-up refinement pass resolved the `list_<d>` shared-helper design, `total`/`error_count` semantics, and RSK's sentinel-document design for its failed-row entries, and a third refinement pass (independent plan review) added a dedicated ADR task, a `yaml.YAMLError` coverage fix for `list_<d>`'s failure catch set, explicit `CHANGELOG.md` tasks, a test-migration task for the twelve removed `validate_<d>` tools' dependent tests, a `full`/content-shape-mismatch regression test, and a Phase 3/Phase 4 sequencing clarification for the `path` field (see Design Notes and the Decisions Made log below). Task 1.4 (the full tool inventory of all thirteen `validate_<d>` tools) is now also done, so **Phase 1 is fully complete** (all five tasks done). No implementation started yet -- Phase 2 (the generic `validate` tool) has not begun.
+**As of 2026-09-04**: **Phase 1 (Investigation and Inventory) and Phase 2 (Generic `validate` Tool) are both fully complete.** Feature drafted from GitHub issues #81 and #83, then refined three times ahead of Phase 1 -- see the earlier Updates entries below for that refinement history. Phase 1 confirmed both of issue #83's repro cases reproduce as client-observed symptoms, root-caused to a client-side tool-error-rendering gap, not a specmgr server-side regression, and inventoried all thirteen `validate_<d>` tools. Phase 2 implemented the generic `validate(type, content, full)` tool in `general/tools/` (twelve private per-domain adapters, dispatch table, and the `ValidateResult`/`ValidationErrorEntry` non-raising result models), recorded the consolidation decision as ADR 078bf395-0a5f-4afd-84f6-b7a2191a00e6, removed the twelve per-domain `validate_<d>` tools and their dedicated tests, migrated every dependent prompt/test (24 `create_<d>`/`update_<d>` prompts, 5 `test_integration.py` files, 3 regression tests, `test_error_context.py`, and 2 prompt tests found via a broader search), added 15 new generic-tool unit tests (`tests/general/tools/test_validate.py`), and updated `AGENTS.md`/`server.py`'s own module docstring/`CHANGELOG.md` accordingly. The full quality gate (`ruff format --check`, `ruff check`, `vulture`, the full 3308-test `unittest` suite, `specmgr docs`, `specmgr adr-toc`, `specmgr mcp-docs`) is green. Phase 3 (`list_<d>` Failure Reporting) has not begun.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-04 14:00:00.000Z - Phase 2 (Generic `validate` Tool) complete: Tasks 2.1-2.7 done
+
+Implemented the generic, type-dispatched `validate(type, content, full)` tool in
+`general/tools/validate.py` for the twelve whole-body domains (`adr` excluded,
+`validate_adr` unchanged), covering REQ-003/REQ-004/ACC-003/ACC-004: twelve
+private `_validate_<d>` adapters (verbatim ports of the retired per-domain
+tool bodies, `wrap_tool_errors(domain=..., tool="validate", channel=...)`
+enrichment preserved, but with `tool="validate"` -- the generic tool's own
+name -- rather than the retired per-domain tool name, mirroring `update`'s/
+`set_status`'s own generic-tool-name convention), a dispatch table, and the
+public `validate()` function wrapping each adapter call in
+`try`/`except (AssertionError, pydantic.ValidationError, yaml.YAMLError)` that
+returns `ValidateResult(valid=False, errors=[ValidationErrorEntry(message=...)])`
+on a catch instead of raising; an unsupported `type` (including `"adr"`) is an
+explicit `if type not in _ADAPTERS: raise ValueError(...)` check, not a bare
+dict-lookup `KeyError` -- this is a deliberate, explicitly-instructed deviation
+from `delete`'s/`set_classification`'s own undocumented `KeyError`-for-`"adr"`
+behavior (confirmed via their own tests), since ACC-004 explicitly requires a
+`ValueError` here and there is no `_path_safety.validate_id` call to piggyback
+on (`validate` is content-based, not id-based). Added
+`general/models/validate_result.py` (`ValidateResult`/`ValidationErrorEntry`,
+greenfield -- no existing non-raising-result precedent in this codebase) and
+registered `validate` in `general/tools/__init__.py`.
+
+Created ADR 078bf395-0a5f-4afd-84f6-b7a2191a00e6 (Task 2.2), extending ADR
+36905d5b-8057-4294-8665-c7eed5534db0's dispatch-only convention to this
+read-only/dry-run tool category; regenerated `docs/adr/README.md` via
+`specmgr adr-toc`; updated the Related Decisions placeholder bullet above with
+the real id.
+
+Migrated every prompt/test dependent on the twelve retired `validate_<d>`
+functions (Task 2.3/2.5): all 24 `create_<d>`/`update_<d>` prompt `.py`
+docstrings/descriptions and their packaged `*_instructions.md` data files
+(`validate_<d>(content, full=False)` -> `validate(type="<d>", content=content, full=False)`); `AGENTS.md`'s twelve per-domain bullets, the `general/` bullet
+(added a `validate` paragraph mirroring `delete`'s own), and the "Still
+genuinely missing" section; `server.py`'s own module docstring (per-domain
+tool lists, the `general/tools/` paragraph, and the SOP prompts paragraph).
+Removed the twelve `<d>/tools/validate_<d>.py` files and their `__init__.py`
+imports/`__all__`/docstring mentions (Task 2.4), and their 12 dedicated
+`test_validate_<d>.py` files (Task 2.5) -- their fixture bodies
+(`_MINIMAL_BODY`/`_MALFORMED_BODY`/`_FULL_DOCUMENT`/bad-field bodies) were
+ported into the new `tests/general/tools/test_validate.py` rather than
+discarded. Repointed the 5 affected `test_integration.py` files (dec, feat,
+sop, sysrs, vcr -- confirmed by search that `prb`'s and `gol`'s own
+`test_integration.py` never referenced `validate_<d>`, so the plan's "6 files,
+dec/feat/sop/sysrs/vcr plus one more" estimate was one too many), the 3
+regression tests (`test_issue_27.py`, `test_issue_70.py`, `test_issue_71.py`),
+`tests/general/tools/test_error_context.py`, and (found via the broader
+search Task 2.5 itself called for) `tests/sop/prompts/test_create_sop.py`/
+`tests/sysrs/prompts/test_create_sysrs.py`.
+
+Added `tests/general/tools/test_validate.py` (Task 2.6): 15 test methods
+across 4 classes -- `TestValidateAllDomains` (parameterized over all twelve
+domains' ported fixture bodies: valid body-only, valid full document,
+structural-failure-returns-`{valid:false}`, field-validation-failure-returns-
+`{valid:false}` where a straightforward fixture existed, invalid-frontmatter-
+field-when-`full=True`), `TestValidateUnsupportedType` (`type="adr"` and an
+arbitrary bogus `type` both raise `ValueError`), `TestValidateFullShapeMismatchRaises`
+(`req`/`dec`/`vcr` -- both mismatch directions each raise `ValueError`), and
+`TestValidateIssue83Regressions` (the two Phase 1 repro fixtures, reproduced
+through the generic tool, asserting `{valid: False, errors: [...]}` with the
+enriched message present, never a raised exception). Added a `CHANGELOG.md`
+`[Unreleased]` entry (Task 2.7): an "Added" entry for the new `validate` tool
+and a "Removed" **BREAKING** entry for the twelve retired `validate_<d>`
+tools, matching `delete`'s/`update`'s own precedent wording.
+
+Quality gate: `ruff format --check` (clean), `ruff check` (all checks
+passed), `vulture src/ whitelist.py --min-confidence 60` (no output), the
+full `unittest discover` suite (3308 tests, up from 3293 -- net +15 new,
+-1600ish lines of retired per-domain tests folded into one file), `specmgr docs` (regenerated `docs/api/`/`docs/GENERATED.md`, twelve stale
+`validate_<d>` API pages pruned, two new pages added for `validate.py`/
+`validate_result.py`), `specmgr adr-toc` (regenerated `docs/adr/README.md`),
+and `specmgr mcp-docs` (regenerated `docs/MCP.md`) all green.
+
+Design decision made during this phase, not already covered by the plan's
+own Design Notes (added to Decisions Made below): the unsupported-`type`
+check in `validate()` deliberately does NOT mirror `delete`'s/
+`set_classification`'s own actual runtime behavior (an implicit `KeyError`
+from the dispatch-dict lookup for `type="adr"`, confirmed via
+`test_set_classification.py::test_adr_type_is_not_supported`) -- it uses an
+explicit `if type not in _ADAPTERS: raise ValueError(...)` check instead,
+per this phase's own prompt's explicit, repeated instruction that
+`validate(type="adr", ...)` must raise `ValueError` "at runtime, not just at
+static-type-check time." `update`'s/`set_classification`'s own docstrings
+already (inaccurately) claim a `ValueError` for this case, so `validate`'s
+explicit check is arguably a corrected precedent, not a deviation from the
+documented (if not actual) contract.
 
 #### 2026-09-04 13:00:00.000Z - Task 1.4 done: full inventory of all thirteen `validate_<d>` tools added; Phase 1 complete
 
@@ -278,6 +366,26 @@ Created from GitHub issues #81 (consolidate validation tools) and #83 (opaque va
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-04 14:00:00.000Z - `validate`'s unsupported-`type` check is an explicit `ValueError`, not an implicit `KeyError`
+
+Decided, during Phase 2 implementation, that `validate()`'s unsupported-`type` guard (including
+`type="adr"`) must be an explicit `if type not in _ADAPTERS: raise ValueError(...)` check rather
+than mirroring `delete`'s/`set_classification`'s own actual runtime behavior for the same
+misuse -- an implicit `KeyError` from the dispatch-dict lookup itself, confirmed via
+`tests/general/tools/test_set_classification.py::test_adr_type_is_not_supported`'s own explicit
+`self.assertRaises(KeyError)`. This was called out explicitly, twice, in this phase's own
+implementation instructions ("make sure passing `type=\"adr\"` literally raises `ValueError` at
+runtime, not just at static-type-check time"), and is required by ACC-004's own wording ("a test
+confirms `validate(type=\"adr\", ...)` and any other unsupported `type` still raise
+`ValueError`"). `validate` has no `id` parameter and therefore no `_path_safety.validate_id` call
+to piggyback the check onto (unlike `delete`/`set_classification`/`update`, which validate `id`
+format before dispatch and happen to also raise `ValueError` for other reasons on the way there,
+making their own `KeyError`-for-unsupported-`type` behavior easy to overlook) -- so `validate`'s
+own explicit check is a deliberate, freestanding guard, not a byproduct of some other validation
+path. Note that `update`'s/`set_classification`'s own docstrings already (inaccurately) document
+a `ValueError` for an unsupported `type`, so `validate`'s explicit, correct-per-its-own-docstring
+behavior is arguably a corrected precedent for future generic tools, not a one-off inconsistency.
 
 #### 2026-09-04 12:00:00.000Z - Independent plan review: write a dedicated ADR for the validate consolidation, fix `list_<d>`'s YAMLError gap, add CHANGELOG/test-migration tasks, clarify path-field sequencing
 

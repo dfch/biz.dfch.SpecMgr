@@ -3,7 +3,7 @@
 Auto-generated from the live `biz.dfch.specmgr.server:mcp` registration --
 do not edit by hand, run `specmgr mcp-docs` instead (see `AGENTS.md`).
 
-44 resource(s), 1 resource template(s), 103 tool(s), 33 prompt(s).
+44 resource(s), 1 resource template(s), 92 tool(s), 33 prompt(s).
 
 ## Table of Contents
 
@@ -476,19 +476,8 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`update`](#tool-update) | Whole-body or line-range replace of an existing document's content across the twelve whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs), preserving its id/type/status/created/version; only `updated` changes. With no `offset`/`limit`, `content` is the full replacement body (body markdown only, no frontmatter block). With `offset`, `content` replaces the body line(s) starting at 1-based line `offset` of the current on-disk body: `limit` is the number of lines to replace (`offset`..`offset+limit-1`; `limit` omitted = through the last body line, `limit=0` = pure insert), and `offset=N+1` (one past the last body line) appends after it; the spliced result is validated as a whole document before anything is written. `status` is never settable -- use the generic `set_status` tool. An invalid `id` (path-injection attempt or wrong format for `type`) is a `ValueError` raised before any file access. Returns the updated frontmatter only (no body); use the corresponding `get_<d>` tool to fetch the full document afterward. |
 | [`update_frontmatter`](#tool-update_frontmatter) | Whole-object replace of an ADR's frontmatter (plan §3), preserving its existing id. |
 | [`update_section`](#tool-update_section) | Whole-section replace/delete of one AdrBody field (plan §4). |
+| [`validate`](#tool-validate) | Disk-free, id-free dry run validating document content across the twelve whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs; `adr` is not supported -- use `validate_adr` instead). `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). Never raises for a content-validation failure: always returns `{valid: bool, errors: list[{message: str}]}` -- `errors` is empty when `valid` is `True`. A `full`/content-shape mismatch, or an unsupported `type`, is a caller-usage error and still raises `ValueError` before any validation runs. This is the sole validate entry point for these twelve domains -- the former per-domain `validate_<d>` tools are removed; `validate_adr` remains a separate, unchanged, id-based tool. |
 | [`validate_adr`](#tool-validate_adr) | Re-read and re-parse an ADR by id, letting the models' own Pydantic validators run. |
-| [`validate_dec`](#tool-validate_dec) | Disk-free, id-free dry run validating decision content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
-| [`validate_feat`](#tool-validate_feat) | Disk-free, id-free dry run validating feature content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
-| [`validate_gol`](#tool-validate_gol) | Disk-free, id-free dry run validating goal content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
-| [`validate_prb`](#tool-validate_prb) | Disk-free, id-free dry run validating problem statement content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
-| [`validate_qa`](#tool-validate_qa) | Disk-free, id-free dry run validating QA document content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
-| [`validate_req`](#tool-validate_req) | Disk-free, id-free dry run validating requirement content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
-| [`validate_rsk`](#tool-validate_rsk) | Disk-free, id-free dry run validating risk content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
-| [`validate_sop`](#tool-validate_sop) | Disk-free, id-free dry run validating SOP content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
-| [`validate_sysrs`](#tool-validate_sysrs) | Disk-free, id-free dry run validating System Requirements Specification content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
-| [`validate_tsk`](#tool-validate_tsk) | Disk-free, id-free dry run validating task list content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
-| [`validate_uc`](#tool-validate_uc) | Disk-free, id-free dry run validating use case content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
-| [`validate_vcr`](#tool-validate_vcr) | Disk-free, id-free dry run validating verification case record content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). |
 
 ### Tool: confluence_fetch
 
@@ -1367,6 +1356,18 @@ Whole-section replace/delete of one AdrBody field (plan §4).
 | `key` | `string` | Yes |
 | `value` | `string` | Yes |
 
+### Tool: validate
+
+**Validate document content**
+
+Disk-free, id-free dry run validating document content across the twelve whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs; `adr` is not supported -- use `validate_adr` instead). `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). Never raises for a content-validation failure: always returns `{valid: bool, errors: list[{message: str}]}` -- `errors` is empty when `valid` is `True`. A `full`/content-shape mismatch, or an unsupported `type`, is a caller-usage error and still raises `ValueError` before any validation runs. This is the sole validate entry point for these twelve domains -- the former per-domain `validate_<d>` tools are removed; `validate_adr` remains a separate, unchanged, id-based tool.
+
+| Parameter | Type | Required |
+| --- | --- | --- |
+| `type` | `string (enum: req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs)` | Yes |
+| `content` | `string` | Yes |
+| `full` | `boolean` | No |
+
 ### Tool: validate_adr
 
 **Validate ADR**
@@ -1377,138 +1378,6 @@ Re-read and re-parse an ADR by id, letting the models' own Pydantic validators r
 | --- | --- | --- |
 | `id` | `string` | Yes |
 
-### Tool: validate_dec
-
-**Validate decision content**
-
-Disk-free, id-free dry run validating decision content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body).
-
-| Parameter | Type | Required |
-| --- | --- | --- |
-| `content` | `string` | Yes |
-| `full` | `boolean` | No |
-
-### Tool: validate_feat
-
-**Validate feature content**
-
-Disk-free, id-free dry run validating feature content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body).
-
-| Parameter | Type | Required |
-| --- | --- | --- |
-| `content` | `string` | Yes |
-| `full` | `boolean` | No |
-
-### Tool: validate_gol
-
-**Validate goal content**
-
-Disk-free, id-free dry run validating goal content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body).
-
-| Parameter | Type | Required |
-| --- | --- | --- |
-| `content` | `string` | Yes |
-| `full` | `boolean` | No |
-
-### Tool: validate_prb
-
-**Validate problem statement content**
-
-Disk-free, id-free dry run validating problem statement content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body).
-
-| Parameter | Type | Required |
-| --- | --- | --- |
-| `content` | `string` | Yes |
-| `full` | `boolean` | No |
-
-### Tool: validate_qa
-
-**Validate QA document content**
-
-Disk-free, id-free dry run validating QA document content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body).
-
-| Parameter | Type | Required |
-| --- | --- | --- |
-| `content` | `string` | Yes |
-| `full` | `boolean` | No |
-
-### Tool: validate_req
-
-**Validate requirement content**
-
-Disk-free, id-free dry run validating requirement content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body).
-
-| Parameter | Type | Required |
-| --- | --- | --- |
-| `content` | `string` | Yes |
-| `full` | `boolean` | No |
-
-### Tool: validate_rsk
-
-**Validate risk content**
-
-Disk-free, id-free dry run validating risk content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body).
-
-| Parameter | Type | Required |
-| --- | --- | --- |
-| `content` | `string` | Yes |
-| `full` | `boolean` | No |
-
-### Tool: validate_sop
-
-**Validate SOP content**
-
-Disk-free, id-free dry run validating SOP content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body).
-
-| Parameter | Type | Required |
-| --- | --- | --- |
-| `content` | `string` | Yes |
-| `full` | `boolean` | No |
-
-### Tool: validate_sysrs
-
-**Validate System Requirements Specification content**
-
-Disk-free, id-free dry run validating System Requirements Specification content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body).
-
-| Parameter | Type | Required |
-| --- | --- | --- |
-| `content` | `string` | Yes |
-| `full` | `boolean` | No |
-
-### Tool: validate_tsk
-
-**Validate task list content**
-
-Disk-free, id-free dry run validating task list content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body).
-
-| Parameter | Type | Required |
-| --- | --- | --- |
-| `content` | `string` | Yes |
-| `full` | `boolean` | No |
-
-### Tool: validate_uc
-
-**Validate use case content**
-
-Disk-free, id-free dry run validating use case content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body).
-
-| Parameter | Type | Required |
-| --- | --- | --- |
-| `content` | `string` | Yes |
-| `full` | `boolean` | No |
-
-### Tool: validate_vcr
-
-**Validate verification case record content**
-
-Disk-free, id-free dry run validating verification case record content. `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body).
-
-| Parameter | Type | Required |
-| --- | --- | --- |
-| `content` | `string` | Yes |
-| `full` | `boolean` | No |
-
 ## Prompts
 
 | Name | Description |
@@ -1518,18 +1387,18 @@ Disk-free, id-free dry run validating verification case record content. `full=Fa
 | [`confluence_update`](#prompt-confluence_update) | Guides the LLM through calling the confluence_update tool with the given page_url_or_id/markdown_file_path to upload a local Markdown file's rendered content to an existing Confluence page. |
 | [`create_adr`](#prompt-create_adr) | Guides the LLM through checking for an existing similar ADR, gathering the required information, and driving create_adr/option_create/set_status/validate_adr to author a new MADR-4.0.0-based Architecture Decision Record. |
 | [`create_adr_test`](#prompt-create_adr_test) | Experimental, strictly step-gated variant of create_adr for A/B comparison: the same MADR-4.0.0 structure and create_adr/option_create/set_status/validate_adr tool sequence, rewritten as hard numbered gates instead of narrated steps. |
-| [`create_dec`](#prompt-create_dec) | Guides the LLM through checking for an existing similar decision, gathering the required information, and driving create_dec/validate_dec to author a new DEC document. |
-| [`create_feat`](#prompt-create_feat) | Guides the LLM through checking for an existing similar feature, gathering the required information, and driving create_feat/validate_feat to author a new FEAT document. |
-| [`create_gol`](#prompt-create_gol) | Guides the LLM through checking for an existing similar goal, gathering the required information, and driving create_gol/validate_gol to author a new GOL document. |
-| [`create_prb`](#prompt-create_prb) | Guides the LLM through checking for an existing similar problem statement, interviewing the user for the 5W2H current-state questions, synthesizing the Summary and Gap, and driving create_prb/validate_prb to author a new PRB document. |
-| [`create_qa`](#prompt-create_qa) | Guides the LLM through checking for an existing similar QA document, gathering answers to ISO/IEC 25010:2023 characteristic-relevant questions, and driving create_qa/validate_qa to author a new QA document. |
-| [`create_req`](#prompt-create_req) | Guides the LLM through checking for an existing similar requirement, gathering the required information, and driving create_req/validate_req to author a new REQ document. |
-| [`create_risk`](#prompt-create_risk) | Guides the LLM through checking for an existing similar risk, gathering the required information, and driving create_rsk/validate_rsk to author a new RSK document. |
-| [`create_sop`](#prompt-create_sop) | Guides the LLM through checking for an existing similar SOP, gathering the required information, and driving create_sop/validate_sop to author a new SOP document. |
-| [`create_sysrs`](#prompt-create_sysrs) | Guides the LLM through checking for an existing similar system requirements specification, gathering the required information, and driving create_sysrs/validate_sysrs to author a new SYSRS document. |
-| [`create_task`](#prompt-create_task) | Guides the LLM through checking for an existing similar task list, gathering the required information, and driving create_tsk/validate_tsk to author a new TSK document. |
-| [`create_uc`](#prompt-create_uc) | Guides the LLM through checking for an existing similar use case, gathering the required information, and driving create_uc/validate_uc to author a new UC document. |
-| [`create_vcr`](#prompt-create_vcr) | Guides the LLM through checking for an existing similar verification case record, gathering the required information, and driving create_vcr/validate_vcr to author a new VCR document. |
+| [`create_dec`](#prompt-create_dec) | Guides the LLM through checking for an existing similar decision, gathering the required information, and driving create_dec/validate to author a new DEC document. |
+| [`create_feat`](#prompt-create_feat) | Guides the LLM through checking for an existing similar feature, gathering the required information, and driving create_feat/validate to author a new FEAT document. |
+| [`create_gol`](#prompt-create_gol) | Guides the LLM through checking for an existing similar goal, gathering the required information, and driving create_gol/validate to author a new GOL document. |
+| [`create_prb`](#prompt-create_prb) | Guides the LLM through checking for an existing similar problem statement, interviewing the user for the 5W2H current-state questions, synthesizing the Summary and Gap, and driving create_prb/validate to author a new PRB document. |
+| [`create_qa`](#prompt-create_qa) | Guides the LLM through checking for an existing similar QA document, gathering answers to ISO/IEC 25010:2023 characteristic-relevant questions, and driving create_qa/validate to author a new QA document. |
+| [`create_req`](#prompt-create_req) | Guides the LLM through checking for an existing similar requirement, gathering the required information, and driving create_req/validate to author a new REQ document. |
+| [`create_risk`](#prompt-create_risk) | Guides the LLM through checking for an existing similar risk, gathering the required information, and driving create_rsk/validate to author a new RSK document. |
+| [`create_sop`](#prompt-create_sop) | Guides the LLM through checking for an existing similar SOP, gathering the required information, and driving create_sop/validate to author a new SOP document. |
+| [`create_sysrs`](#prompt-create_sysrs) | Guides the LLM through checking for an existing similar system requirements specification, gathering the required information, and driving create_sysrs/validate to author a new SYSRS document. |
+| [`create_task`](#prompt-create_task) | Guides the LLM through checking for an existing similar task list, gathering the required information, and driving create_tsk/validate to author a new TSK document. |
+| [`create_uc`](#prompt-create_uc) | Guides the LLM through checking for an existing similar use case, gathering the required information, and driving create_uc/validate to author a new UC document. |
+| [`create_vcr`](#prompt-create_vcr) | Guides the LLM through checking for an existing similar verification case record, gathering the required information, and driving create_vcr/validate to author a new VCR document. |
 | [`implement_task`](#prompt-implement_task) | Reads an existing task list by id, builds a TodoWrite list from its items, and uses the question tool to resolve ambiguity before proceeding. |
 | [`refine`](#prompt-refine) | Guides the LLM through appending a batch of new, unanswered interview questions (each with an empty placeholder answer) to an existing QA document, for one or more of the nine ISO/IEC 25010:2023 quality characteristics. |
 | [`update_adr`](#prompt-update_adr) | Guides the LLM through revising an existing ADR by id: reading current state, applying the requested change with the right tool, and validating. |
@@ -1598,7 +1467,7 @@ Experimental, strictly step-gated variant of create_adr for A/B comparison: the 
 
 ### Prompt: create_dec
 
-Guides the LLM through checking for an existing similar decision, gathering the required information, and driving create_dec/validate_dec to author a new DEC document.
+Guides the LLM through checking for an existing similar decision, gathering the required information, and driving create_dec/validate to author a new DEC document.
 
 | Argument | Required | Description |
 | --- | --- | --- |
@@ -1606,7 +1475,7 @@ Guides the LLM through checking for an existing similar decision, gathering the 
 
 ### Prompt: create_feat
 
-Guides the LLM through checking for an existing similar feature, gathering the required information, and driving create_feat/validate_feat to author a new FEAT document.
+Guides the LLM through checking for an existing similar feature, gathering the required information, and driving create_feat/validate to author a new FEAT document.
 
 | Argument | Required | Description |
 | --- | --- | --- |
@@ -1614,7 +1483,7 @@ Guides the LLM through checking for an existing similar feature, gathering the r
 
 ### Prompt: create_gol
 
-Guides the LLM through checking for an existing similar goal, gathering the required information, and driving create_gol/validate_gol to author a new GOL document.
+Guides the LLM through checking for an existing similar goal, gathering the required information, and driving create_gol/validate to author a new GOL document.
 
 | Argument | Required | Description |
 | --- | --- | --- |
@@ -1622,7 +1491,7 @@ Guides the LLM through checking for an existing similar goal, gathering the requ
 
 ### Prompt: create_prb
 
-Guides the LLM through checking for an existing similar problem statement, interviewing the user for the 5W2H current-state questions, synthesizing the Summary and Gap, and driving create_prb/validate_prb to author a new PRB document.
+Guides the LLM through checking for an existing similar problem statement, interviewing the user for the 5W2H current-state questions, synthesizing the Summary and Gap, and driving create_prb/validate to author a new PRB document.
 
 | Argument | Required | Description |
 | --- | --- | --- |
@@ -1630,7 +1499,7 @@ Guides the LLM through checking for an existing similar problem statement, inter
 
 ### Prompt: create_qa
 
-Guides the LLM through checking for an existing similar QA document, gathering answers to ISO/IEC 25010:2023 characteristic-relevant questions, and driving create_qa/validate_qa to author a new QA document.
+Guides the LLM through checking for an existing similar QA document, gathering answers to ISO/IEC 25010:2023 characteristic-relevant questions, and driving create_qa/validate to author a new QA document.
 
 | Argument | Required | Description |
 | --- | --- | --- |
@@ -1638,7 +1507,7 @@ Guides the LLM through checking for an existing similar QA document, gathering a
 
 ### Prompt: create_req
 
-Guides the LLM through checking for an existing similar requirement, gathering the required information, and driving create_req/validate_req to author a new REQ document.
+Guides the LLM through checking for an existing similar requirement, gathering the required information, and driving create_req/validate to author a new REQ document.
 
 | Argument | Required | Description |
 | --- | --- | --- |
@@ -1646,7 +1515,7 @@ Guides the LLM through checking for an existing similar requirement, gathering t
 
 ### Prompt: create_risk
 
-Guides the LLM through checking for an existing similar risk, gathering the required information, and driving create_rsk/validate_rsk to author a new RSK document.
+Guides the LLM through checking for an existing similar risk, gathering the required information, and driving create_rsk/validate to author a new RSK document.
 
 | Argument | Required | Description |
 | --- | --- | --- |
@@ -1654,7 +1523,7 @@ Guides the LLM through checking for an existing similar risk, gathering the requ
 
 ### Prompt: create_sop
 
-Guides the LLM through checking for an existing similar SOP, gathering the required information, and driving create_sop/validate_sop to author a new SOP document.
+Guides the LLM through checking for an existing similar SOP, gathering the required information, and driving create_sop/validate to author a new SOP document.
 
 | Argument | Required | Description |
 | --- | --- | --- |
@@ -1662,7 +1531,7 @@ Guides the LLM through checking for an existing similar SOP, gathering the requi
 
 ### Prompt: create_sysrs
 
-Guides the LLM through checking for an existing similar system requirements specification, gathering the required information, and driving create_sysrs/validate_sysrs to author a new SYSRS document.
+Guides the LLM through checking for an existing similar system requirements specification, gathering the required information, and driving create_sysrs/validate to author a new SYSRS document.
 
 | Argument | Required | Description |
 | --- | --- | --- |
@@ -1670,7 +1539,7 @@ Guides the LLM through checking for an existing similar system requirements spec
 
 ### Prompt: create_task
 
-Guides the LLM through checking for an existing similar task list, gathering the required information, and driving create_tsk/validate_tsk to author a new TSK document.
+Guides the LLM through checking for an existing similar task list, gathering the required information, and driving create_tsk/validate to author a new TSK document.
 
 | Argument | Required | Description |
 | --- | --- | --- |
@@ -1678,7 +1547,7 @@ Guides the LLM through checking for an existing similar task list, gathering the
 
 ### Prompt: create_uc
 
-Guides the LLM through checking for an existing similar use case, gathering the required information, and driving create_uc/validate_uc to author a new UC document.
+Guides the LLM through checking for an existing similar use case, gathering the required information, and driving create_uc/validate to author a new UC document.
 
 | Argument | Required | Description |
 | --- | --- | --- |
@@ -1686,7 +1555,7 @@ Guides the LLM through checking for an existing similar use case, gathering the 
 
 ### Prompt: create_vcr
 
-Guides the LLM through checking for an existing similar verification case record, gathering the required information, and driving create_vcr/validate_vcr to author a new VCR document.
+Guides the LLM through checking for an existing similar verification case record, gathering the required information, and driving create_vcr/validate to author a new VCR document.
 
 | Argument | Required | Description |
 | --- | --- | --- |

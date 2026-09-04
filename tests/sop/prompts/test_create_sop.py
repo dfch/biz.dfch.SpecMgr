@@ -91,10 +91,10 @@ class TestCreateSopPrompt(unittest.TestCase):
         self.assertIn("specmgr://sop/schema", result)
 
     def test_mentions_create_and_validate_tools(self):
-        """The prompt must name the create_sop and validate_sop tools."""
+        """The prompt must name the create_sop tool and the generic validate tool."""
         result = create_sop("Some topic")
         self.assertIn("create_sop(content)", result)
-        self.assertIn("validate_sop(content, full=False)", result)
+        self.assertIn('validate(type="sop", content=content, full=False)', result)
 
     def test_instructions_loaded_from_packaged_data_file(self):
         """The instructional text must come from sop/data/sop_create_instructions.md,

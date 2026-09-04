@@ -21,7 +21,7 @@
 
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through revising an existing Decision (DEC) document by id, using the
-existing ``dec/tools/`` surface (``get_dec``, ``validate_dec``) plus the
+existing ``dec/tools/`` surface (``get_dec``, generic ``validate`` tool) plus the
 generic ``update``/``set_status`` tools in ``general/tools/`` (called with
 ``type="dec"``; ``get_dec``'s ``raw=True`` parameter serves the line-range
 flow's line numbers). There is no ``specmgr://dec/{id}`` resource to point

@@ -37,9 +37,11 @@ except ``updated``. Status changes of an existing document go through the
 generic ``set_status`` tool in ``general.tools`` (``type="dec"``), also
 bumping ``updated``, leaving the body untouched. Deletion of ``dec``
 documents goes through the generic ``delete`` tool in ``general.tools``
-(``type="dec"``). ``validate_dec`` is a disk-free, id-free dry run against
-a submitted ``content`` string, independent of the other tools. Import this
-package to register all decision tools at once::
+(``type="dec"``). Disk-free, id-free dry-run content validation goes
+through the generic ``validate`` tool in ``general.tools`` (``type="dec"``)
+-- the former ``validate_dec`` tool was removed in favor of it
+(feat-81-83-validation Phase 2). Import this package to register all
+decision tools at once::
 
     from biz.dfch.specmgr.dec import tools  # noqa: F401 (side-effects only)
 """
@@ -50,7 +52,6 @@ from .get_dec_example import get_dec_example
 from .get_dec_template import get_dec_template
 from .list_dec import list_dec
 from .parse_dec import parse_dec
-from .validate_dec import validate_dec
 
 __all__ = [
     "create_dec",
@@ -59,5 +60,4 @@ __all__ = [
     "get_dec_template",
     "list_dec",
     "parse_dec",
-    "validate_dec",
 ]

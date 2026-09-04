@@ -100,7 +100,7 @@ the nine sub-sections. Skip this step if the change does not touch
 
 Fetch `specmgr://sysrs/schema` to confirm field names and constraints
 before drafting the replacement body. Optionally call
-`validate_sysrs(content, full=False)` beforehand to dry-run the new
+`validate(type="sysrs", content=content, full=False)` beforehand to dry-run the new
 body without writing anything -- `update` already performs the same
 validation internally, so this step is never required, only a
 convenience.

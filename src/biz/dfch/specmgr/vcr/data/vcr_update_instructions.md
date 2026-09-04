@@ -79,7 +79,7 @@ ask which ones (if any) they want to add to or revise.
 Fetch `specmgr://vcr/schema` to confirm field names and constraints,
 and `specmgr://dtais` if you are unsure which DTAIS method word applies
 to a criterion, before drafting the replacement body. Optionally call
-`validate_vcr(content, full=False)` beforehand to dry-run the new body
+`validate(type="vcr", content=content, full=False)` beforehand to dry-run the new body
 without writing anything -- `update` already performs the same
 validation internally, so this step is never required, only a
 convenience.

@@ -21,7 +21,7 @@ Returns instructional text -- not itself a tool call -- that guides an LLM
 through drafting a brand-new Question and Answer (QA) document using the
 existing ``qa/tools/``/``qa/resources/`` surface (``list_qa``,
 ``specmgr://qa/template``/``specmgr://qa/example``, ``specmgr://qa/schema``,
-``create_qa``, ``validate_qa``). Structural shape ported 1:1 from
+``create_qa``, generic ``validate`` tool). Structural shape ported 1:1 from
 ``req.prompts.create_req``, with the instructional content rewritten to
 describe QA's own schema instead of REQ's.
 
@@ -60,7 +60,7 @@ from ...server import mcp
     description=(
         "Guides the LLM through checking for an existing similar QA document, gathering answers "
         "to ISO/IEC 25010:2023 characteristic-relevant questions, and driving "
-        "create_qa/validate_qa to author a new QA document."
+        "create_qa/validate to author a new QA document."
     ),
 )
 def create_qa(topic: str) -> str:

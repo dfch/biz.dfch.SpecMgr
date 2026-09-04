@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Generic `validate(type, content, full)` MCP tool in `general/tools/`:
+  the disk-free, id-free dry-run content validator for the twelve
+  whole-body domains (`type` is one of
+  `req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr`/`sysrs`;
+  `adr` is not supported -- `validate_adr` remains its own standalone,
+  unchanged tool). Unlike every other generic tool in `general/tools/`, it
+  never raises for a content-validation failure: it always returns a
+  structured `{valid: bool, errors: list[{message: str}]}` result,
+  reusing feat-27-validation's already-enriched exception messages
+  verbatim as each error's `message` -- only a `full`/content-shape
+  mismatch (`full=True` with body-only content, or `full=False` with a
+  complete document) or an unsupported `type` still raises `ValueError`,
+  since that is a caller-usage error, not a content-validation failure.
+  This is the sole validate entry point for these twelve domains: every
+  current and future domain implements a `validate` adapter in the
+  generic tool, never a per-domain `validate_<d>` tool. New ADR
+  (078bf395-0a5f-4afd-84f6-b7a2191a00e6) extends ADR
+  36905d5b-8057-4294-8665-c7eed5534db0's dispatch-only convention
+  (previously covering only mutation-adjacent tools) to this read-only/
+  dry-run tool category (GitHub issues #81/#83).
 - Dedicated Pydantic models with drift-guard unittests for
   `specmgr://dtais`, `specmgr://rsk/tara`, `specmgr://rsk/risk-matrix`,
   and `specmgr://rasci`; all four are now also parsed on every resource
@@ -36,6 +56,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   test step from 9-11 minutes to roughly a minute. `pytest-cov` produces
   the same `.coverage` file format, so `specmgr coverage-badge` is
   unaffected.
+
+### Removed
+
+- **BREAKING** (0.x): the twelve per-domain `validate_<d>` MCP tools are
+  deleted outright (no deprecated wrappers): `validate_req`, `validate_uc`,
+  `validate_tsk`, `validate_qa`, `validate_prb`, `validate_gol`,
+  `validate_rsk`, `validate_dec`, `validate_sop`, `validate_feat`,
+  `validate_vcr`, `validate_sysrs` -- each raised on a content-validation
+  failure instead of returning a structured result. The twelve
+  per-domain `validate_<d>.py` modules, their `__init__.py`
+  registrations, and their dedicated tests are gone with them. Callers
+  must switch from `tools/call --tool-name validate_<d>` to
+  `tools/call --tool-name validate` with the explicit `type` parameter
+  (see "Added" above) -- and, since `validate` never raises for a
+  content-validation failure, callers checking `{valid: bool}` on the
+  returned result instead of catching an exception. `validate_adr` is
+  unaffected and remains unchanged.
 
 ## [0.21.0] - 2026-09-03
 

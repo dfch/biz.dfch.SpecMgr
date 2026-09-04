@@ -97,7 +97,7 @@ touch the roles section.
 
 Fetch `specmgr://sop/schema` to confirm field names and constraints
 before drafting the replacement body. Optionally call
-`validate_sop(content, full=False)` beforehand to dry-run the new body
+`validate(type="sop", content=content, full=False)` beforehand to dry-run the new body
 without writing anything -- `update` already performs the same
 validation internally, so this step is never required, only a
 convenience.

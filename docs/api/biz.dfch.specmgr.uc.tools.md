@@ -24,8 +24,10 @@ Status changes of an existing document go through the generic
 ``set_status`` tool in ``general.tools`` (``type="uc"``), also bumping
 ``updated``, leaving the body untouched. Deletion of ``uc`` documents
 goes through the generic ``delete`` tool in ``general.tools``
-(``type="uc"``). ``validate_uc`` (Task 3.1.5) is a disk-free, id-free dry
-run against a submitted ``content`` string, independent of the other
-tools. Import this package to register all use-case tools at once::
+(``type="uc"``). Disk-free, id-free dry-run content validation goes
+through the generic ``validate`` tool in ``general.tools`` (``type="uc"``)
+-- the former ``validate_uc`` tool was removed in favor of it
+(feat-81-83-validation Phase 2). Import this package to register all
+use-case tools at once::
 
     from biz.dfch.specmgr.uc import tools  # noqa: F401 (side-effects only)

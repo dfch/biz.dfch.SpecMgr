@@ -22,7 +22,8 @@ module drives the actual tool functions in a single realistic sequence --
  ``list_sop`` (empty) -> ``create_sop`` -> ``get_sop`` -> ``list_sop`` (1) ->
  ``update`` (generic, ``type="sop"``) -> ``set_status`` (generic,
  ``type="sop"``) -> ``get_sop`` (status changed) -> ``list_sop`` (status
- reflected) -> ``validate_sop`` -> ``delete`` (generic, ``type="sop"``) --
+ reflected) -> ``validate`` (generic, ``type="sop"``) -> ``delete``
+ (generic, ``type="sop"``) --
  against a real temporary docs directory, confirming ACC-003's
  create->get->list->update->set_status->validate round-trip requirement
  with concrete evidence beyond the isolated per-tool tests.
@@ -59,12 +60,12 @@ from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.general.tools.delete import delete
 from biz.dfch.specmgr.general.tools.set_status import set_status
 from biz.dfch.specmgr.general.tools.update import update
+from biz.dfch.specmgr.general.tools.validate import validate
 from biz.dfch.specmgr.sop.models.v1 import SopFrontmatter
 from biz.dfch.specmgr.sop.tools._paths import SopNotFoundError, sop_base_dir
 from biz.dfch.specmgr.sop.tools.create_sop import create_sop
 from biz.dfch.specmgr.sop.tools.get_sop import get_sop
 from biz.dfch.specmgr.sop.tools.list_sop import list_sop
-from biz.dfch.specmgr.sop.tools.validate_sop import validate_sop
 
 _INITIAL_BODY = textwrap.dedent(
     """\
@@ -116,8 +117,9 @@ class TestSopLifecycleIntegration(TempSopDirTestCase):
 
     def test_list_create_get_list_update_set_status_get_list_validate_delete_roundtrip(self) -> None:
         """list_sop -> create_sop -> get_sop -> list_sop -> update -> set_status -> get_sop ->
-        list_sop -> validate_sop -> delete (generic, type="sop"), live -- using the GENERIC
-        update/set_status/delete tools (no per-domain mutation tools exist)."""
+        list_sop -> validate (generic, type="sop") -> delete (generic, type="sop"), live --
+        using the GENERIC update/set_status/validate/delete tools (no per-domain mutation
+        tools exist)."""
         # 0. list_sop: an empty base directory must list nothing.
         initial_page = list_sop()
         self.assertEqual(initial_page.total, 0)
@@ -192,12 +194,17 @@ class TestSopLifecycleIntegration(TempSopDirTestCase):
         self.assertEqual(matches[0].status, "active")
         self.assertEqual(matches[0].title, "New Employee IT Account Provisioning")
 
-        # 8. validate_sop (ACC-003): the on-disk file must validate as a complete
-        #    document (full=True) and its body-only half must validate as body-only.
+        # 8. validate (generic, type="sop") (ACC-003): the on-disk file must validate as a
+        #    complete document (full=True) and its body-only half must validate as body-only --
+        #    never raising, always {valid, errors}.
         on_disk_text = expected_path.read_text(encoding="utf-8")
-        self.assertIs(validate_sop(on_disk_text, full=True), True)
+        full_result = validate(type="sop", content=on_disk_text, full=True)
+        self.assertTrue(full_result.valid)
+        self.assertEqual(full_result.errors, [])
         body_only = frontmatter.loads(on_disk_text).content  # type: ignore[union-attr]
-        self.assertIs(validate_sop(body_only), True)
+        body_result = validate(type="sop", content=body_only)
+        self.assertTrue(body_result.valid)
+        self.assertEqual(body_result.errors, [])
 
         # 9. delete (generic, type="sop"): a real hard delete via the generic tool -- the
         #    returned str must be the seeded file path, the file must be gone, and a
@@ -231,13 +238,15 @@ class TestSopLifecycleIntegration(TempSopDirTestCase):
         self.assertEqual(expected_path.read_text(encoding="utf-8"), before)
 
     def test_validate_rejects_malformed_body_and_wrong_full_shape(self) -> None:
-        """ACC-003: validate_sop's body-only/full semantics must match validate_dec's --
-        invalid body fails (AssertionError); full=True requires a frontmatter block (ValueError)."""
-        with self.assertRaises(AssertionError):
-            validate_sop("# Title\n\nJust a paragraph, no recognized SOP sections.\n")
+        """ACC-003/ACC-004: the generic validate tool's (type="sop") body-only/full semantics --
+        an invalid body returns {valid: False, errors: [...]} (never raises); full=True with
+        body-only content still raises ValueError (caller-usage error, not a content failure)."""
+        result = validate(type="sop", content="# Title\n\nJust a paragraph, no recognized SOP sections.\n")
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
 
         with self.assertRaises(ValueError):
-            validate_sop(_INITIAL_BODY, full=True)
+            validate(type="sop", content=_INITIAL_BODY, full=True)
 
 
 if __name__ == "__main__":

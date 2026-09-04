@@ -21,7 +21,7 @@
 
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through revising an existing Question and Answer (QA) document by id, using
-the existing ``qa/tools/`` surface (``get_qa``, ``validate_qa``) plus the
+the existing ``qa/tools/`` surface (``get_qa``, generic ``validate`` tool) plus the
 generic ``update``/``set_status`` tools in ``general/tools/`` (called
 with ``type="qa"``; ``get_qa``'s ``raw=True`` parameter serves the
 line-range flow's line numbers). Structural shape ported 1:1 from

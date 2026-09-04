@@ -85,7 +85,6 @@ First-line docstrings from each module, organized by domain:
 - `dec/tools/get_dec_template.py` — ``@mcp.tool()`` wrapper: get_dec_template (Task 2.2).
 - `dec/tools/list_dec.py` — ``@mcp.tool()`` wrapper: list_dec (Task 2.2).
 - `dec/tools/parse_dec.py` — ``@mcp.tool()`` wrapper: parse_dec (Task 2.2).
-- `dec/tools/validate_dec.py` — ``@mcp.tool()`` wrapper: validate_dec (Task 2.2).
 
 **feat/**
 
@@ -117,7 +116,6 @@ First-line docstrings from each module, organized by domain:
 - `feat/tools/list_feat.py` — ``@mcp.tool()`` wrapper: list_feat (Task 2.3).
 - `feat/tools/parse_feat.py` — ``@mcp.tool()`` wrapper: parse_feat (Task 2.3).
 - `feat/tools/set_feat_id.py` — ``@mcp.tool()`` wrapper: set_feat_id (Task 3.1, feat-48-feat-id Phase 3).
-- `feat/tools/validate_feat.py` — ``@mcp.tool()`` wrapper: validate_feat (Task 2.3).
 
 **general/**
 
@@ -128,6 +126,7 @@ First-line docstrings from each module, organized by domain:
 - `general/models/paged_result.py` — Generic paged-result wrapper shared by every ``list_<domain>`` MCP tool (feat-13 Task 1.1).
 - `general/models/rasci.py` — Pydantic schema and parser for the RASCI responsibility-assignment guidance
 - `general/models/summary.py` — Common base for every domain's one-line listing summary (feat-13 Task 1.3, REQ-003/ACC-001).
+- `general/models/validate_result.py` — The generic ``validate`` tool's non-raising, structured result shape (feat-81-83-validation Phase 2, REQ-004).
 - `general/prompts/__init__.py` — MCP prompt registrations that are not specific to any single document
 - `general/prompts/compact_history.py` — ``@mcp.prompt()``: compact_history (Various improvements, Task 0.21).
 - `general/prompts/confluence_fetch.py` — ``@mcp.prompt()``: confluence_fetch (feat-50-confluence Phase 8, REQ-013/ACC-012).
@@ -155,6 +154,7 @@ First-line docstrings from each module, organized by domain:
 - `general/tools/set_classification.py` — ``@mcp.tool()`` wrapper: set_classification (feat-56-classification, Phase 2).
 - `general/tools/set_status.py` — ``@mcp.tool()`` wrapper: set_status (feat-22-consolidate-mutation-tools, Phase 4).
 - `general/tools/update.py` — ``@mcp.tool()`` wrapper: update (feat-22-consolidate-mutation-tools, Phase 2).
+- `general/tools/validate.py` — ``@mcp.tool()`` wrapper: validate (feat-81-83-validation, Phase 2).
 
 **gol/**
 
@@ -184,7 +184,6 @@ First-line docstrings from each module, organized by domain:
 - `gol/tools/get_gol_template.py` — ``@mcp.tool()`` wrapper: get_gol_template (Task 3.10).
 - `gol/tools/list_gol.py` — ``@mcp.tool()`` wrapper: list_gol (Task 3.9).
 - `gol/tools/parse_gol.py` — ``@mcp.tool()`` wrapper: parse_gol (Task 3.2).
-- `gol/tools/validate_gol.py` — ``@mcp.tool()`` wrapper: validate_gol (Task 3.7).
 
 **models/**
 
@@ -262,7 +261,6 @@ First-line docstrings from each module, organized by domain:
 - `prb/tools/get_prb_template.py` — ``@mcp.tool()`` wrapper: get_prb_template (Task 3.10).
 - `prb/tools/list_prb.py` — ``@mcp.tool()`` wrapper: list_prb (Task 3.9).
 - `prb/tools/parse_prb.py` — ``@mcp.tool()`` wrapper: parse_prb (Task 3.2).
-- `prb/tools/validate_prb.py` — ``@mcp.tool()`` wrapper: validate_prb (Task 3.7).
 
 **qa/**
 
@@ -295,7 +293,6 @@ First-line docstrings from each module, organized by domain:
 - `qa/tools/get_qa_template.py` — ``@mcp.tool()`` wrapper: get_qa_template (Phase 4, Task 4.1).
 - `qa/tools/list_qa.py` — ``@mcp.tool()`` wrapper: list_qa (feat-13-list-paging Task 2.5).
 - `qa/tools/parse_qa.py` — ``@mcp.tool()`` wrapper: parse_qa (Phase 4, Task 4.1).
-- `qa/tools/validate_qa.py` — ``@mcp.tool()`` wrapper: validate_qa (Phase 4, Task 4.1).
 
 **req/**
 
@@ -325,7 +322,6 @@ First-line docstrings from each module, organized by domain:
 - `req/tools/get_req_template.py` — ``@mcp.tool()`` wrapper: get_req_template (Task 3.7).
 - `req/tools/list_req.py` — ``@mcp.tool()`` wrapper: list_req (feat-13-list-paging Task 2.2).
 - `req/tools/parse_req.py` — ``@mcp.tool()`` wrapper: parse_req.
-- `req/tools/validate_req.py` — ``@mcp.tool()`` wrapper: validate_req (Task 3.16).
 
 **rsk/**
 
@@ -361,7 +357,6 @@ First-line docstrings from each module, organized by domain:
 - `rsk/tools/get_rsk_template.py` — ``@mcp.tool()`` wrapper: get_rsk_template (Task 3.9).
 - `rsk/tools/list_rsk.py` — ``@mcp.tool()`` wrapper: list_rsk (Task 3.14).
 - `rsk/tools/parse_rsk.py` — ``@mcp.tool()`` wrapper: parse_rsk (Task 3.2).
-- `rsk/tools/validate_rsk.py` — ``@mcp.tool()`` wrapper: validate_rsk (Task 3.7).
 
 **sop/**
 
@@ -392,7 +387,6 @@ First-line docstrings from each module, organized by domain:
 - `sop/tools/get_sop_template.py` — ``@mcp.tool()`` wrapper: get_sop_template (Task 2.2).
 - `sop/tools/list_sop.py` — ``@mcp.tool()`` wrapper: list_sop (Task 2.2).
 - `sop/tools/parse_sop.py` — ``@mcp.tool()`` wrapper: parse_sop (Task 2.2).
-- `sop/tools/validate_sop.py` — ``@mcp.tool()`` wrapper: validate_sop (Task 2.2).
 
 **sysrs/**
 
@@ -423,7 +417,6 @@ First-line docstrings from each module, organized by domain:
 - `sysrs/tools/get_sysrs_template.py` — ``@mcp.tool()`` wrapper: get_sysrs_template (Task 3.2).
 - `sysrs/tools/list_sysrs.py` — ``@mcp.tool()`` wrapper: list_sysrs (Task 3.2).
 - `sysrs/tools/parse_sysrs.py` — ``@mcp.tool()`` wrapper: parse_sysrs (Task 3.2).
-- `sysrs/tools/validate_sysrs.py` — ``@mcp.tool()`` wrapper: validate_sysrs (Task 3.2).
 
 **tsk/**
 
@@ -456,7 +449,6 @@ First-line docstrings from each module, organized by domain:
 - `tsk/tools/get_tsk_template.py` — ``@mcp.tool()`` wrapper: get_tsk_template (Task 3.9).
 - `tsk/tools/list_tsk.py` — ``@mcp.tool()`` wrapper: list_tsk (feat-13-list-paging Task 2.4).
 - `tsk/tools/parse_tsk.py` — ``@mcp.tool()`` wrapper: parse_tsk (Task 3.2).
-- `tsk/tools/validate_tsk.py` — ``@mcp.tool()`` wrapper: validate_tsk (Task 3.7).
 
 **uc/**
 
@@ -502,7 +494,6 @@ First-line docstrings from each module, organized by domain:
 - `uc/tools/get_uc_template.py` — ``@mcp.tool()`` wrapper: get_uc_template (Task 3.1.3).
 - `uc/tools/list_uc.py` — ``@mcp.tool()`` wrapper: list_uc (feat-13-list-paging Task 2.3).
 - `uc/tools/parse_uc.py` — ``@mcp.tool()`` wrapper: parse_uc.
-- `uc/tools/validate_uc.py` — ``@mcp.tool()`` wrapper: validate_uc (Task 3.1.5).
 
 **vcr/**
 
@@ -533,8 +524,7 @@ First-line docstrings from each module, organized by domain:
 - `vcr/tools/get_vcr_template.py` — ``@mcp.tool()`` wrapper: get_vcr_template (Task 2.1).
 - `vcr/tools/list_vcr.py` — ``@mcp.tool()`` wrapper: list_vcr (Task 2.1).
 - `vcr/tools/parse_vcr.py` — ``@mcp.tool()`` wrapper: parse_vcr (Task 2.1).
-- `vcr/tools/validate_vcr.py` — ``@mcp.tool()`` wrapper: validate_vcr (Task 2.1).
 
 ## Test Coverage
 
-**Test files**: 366
+**Test files**: 355

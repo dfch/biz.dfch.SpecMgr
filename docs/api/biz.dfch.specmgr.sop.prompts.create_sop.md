@@ -6,7 +6,7 @@ Returns instructional text -- not itself a tool call -- that guides an LLM
 through drafting a brand-new Standard Operating Procedure (SOP) document
 using the existing ``sop/tools/``/``sop/resources/`` surface (``list_sop``,
 ``specmgr://sop/template``/``specmgr://sop/example``,
-``specmgr://sop/schema``, ``create_sop``, ``validate_sop``) plus the
+``specmgr://sop/schema``, ``create_sop``, generic ``validate`` tool) plus the
 cross-cutting ``specmgr://rasci`` resource (read before drafting
 ``## Roles and Responsibilities``).
 

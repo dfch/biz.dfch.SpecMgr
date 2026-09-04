@@ -25,7 +25,8 @@ Notes) and Phase 1b (a follow-up literal-reproduction deep dive) both conclusive
 -- even reproducing the exact literal reported heading text
 (``#### Phase N: Per-domain create_<d> tools``) at document sizes up to 175 lines, with multiple
 simultaneous violations, at various positions in the document, through ``Feature.from_text``,
-the in-process ``validate_feat`` tool, and a real MCP client over a real ``stdio`` transport. The
+the in-process ``validate_feat`` tool (since retired in favor of the generic ``validate`` tool,
+feat-81-83-validation Phase 2), and a real MCP client over a real ``stdio`` transport. The
 orchestrator/user accepted that "no gap found" verdict, so Task 3.1's conditional code fix in
 ``models/md/_markdown.py`` was skipped entirely -- this file exists purely to catch a *future*
 regression of today's already-correct behavior.
@@ -45,8 +46,12 @@ different structural paths rather than just one:
    ``## Context and Problem Statement`` prose section, inside a flat, single-file, MADR-style
    schema.
 
-Each domain is driven through both ``validate_<d>`` (disk-free dry run) and ``create_<d>``
-(actual create, asserted to write nothing to disk on failure) -- the two surfaces ACC-002 names.
+Each domain is driven through both the generic ``validate`` tool (disk-free dry run) and
+``create_<d>`` (actual create, asserted to write nothing to disk on failure) -- the two
+surfaces ACC-002 names. Since feat-81-83-validation Phase 2, ``validate`` never raises for a
+content-validation failure -- it returns ``{valid: False, errors: [{message: str}]}`` instead,
+so the ``validate``-tool tests below assert against ``result.errors[0].message`` rather than a
+raised exception.
 """
 
 from __future__ import annotations
@@ -58,13 +63,11 @@ from pathlib import Path
 from unittest import mock
 
 from biz.dfch.specmgr.dec.tools.create_dec import create_dec
-from biz.dfch.specmgr.dec.tools.validate_dec import validate_dec
 from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR, feat_base_dir
 from biz.dfch.specmgr.feat.tools.create_feat import create_feat
-from biz.dfch.specmgr.feat.tools.validate_feat import validate_feat
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR, doc_base_dir
+from biz.dfch.specmgr.general.tools.validate import validate
 from biz.dfch.specmgr.req.tools.create_req import create_req
-from biz.dfch.specmgr.req.tools.validate_req import validate_req
 
 #: The cause + fix-hint substrings every one of this test's bad bodies must surface (REQ-003),
 #: taken from `models/md/_markdown.py::_raw_html_message`'s own message shape. `"at line"` checks
@@ -84,7 +87,8 @@ def _assert_actionable_message(message: str) -> None:
     Parameters
     ----------
     message:
-        The ``str(exception)`` a failed ``validate_<d>``/``create_<d>`` call raised.
+        The ``str(exception)`` a failed ``create_<d>`` call raised, or a failed generic
+        ``validate`` call's ``result.errors[0].message``.
     """
     assert isinstance(message, str), type(message)
 
@@ -208,11 +212,12 @@ class TestIssue70FeatBareHtmlTokenRegression(unittest.TestCase):
         self.feat_root = tmp / "feat"
         self.enterContext(mock.patch.dict("os.environ", {FEAT_DIR_ENV_VAR: str(self.feat_root)}))
 
-    def test_validate_feat_surfaces_an_actionable_message(self) -> None:
-        with self.assertRaises(AssertionError) as ctx:
-            validate_feat(_FEAT_BAD_BODY)
+    def test_validate_surfaces_an_actionable_message(self) -> None:
+        result = validate(type="feat", content=_FEAT_BAD_BODY)
 
-        _assert_actionable_message(str(ctx.exception))
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        _assert_actionable_message(result.errors[0].message)
 
     def test_create_feat_surfaces_an_actionable_message_and_writes_nothing(self) -> None:
         with self.assertRaises(AssertionError) as ctx:
@@ -232,11 +237,12 @@ class TestIssue70ReqBareHtmlTokenRegression(unittest.TestCase):
         self.docs_root = Path(self.enterContext(tempfile.TemporaryDirectory()))
         self.enterContext(mock.patch.dict("os.environ", {DOCS_DIR_ENV_VAR: str(self.docs_root)}))
 
-    def test_validate_req_surfaces_an_actionable_message(self) -> None:
-        with self.assertRaises(AssertionError) as ctx:
-            validate_req(_REQ_BAD_BODY)
+    def test_validate_surfaces_an_actionable_message(self) -> None:
+        result = validate(type="req", content=_REQ_BAD_BODY)
 
-        _assert_actionable_message(str(ctx.exception))
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        _assert_actionable_message(result.errors[0].message)
 
     def test_create_req_surfaces_an_actionable_message_and_writes_nothing(self) -> None:
         with self.assertRaises(AssertionError) as ctx:
@@ -255,11 +261,12 @@ class TestIssue70DecBareHtmlTokenRegression(unittest.TestCase):
         self.docs_root = Path(self.enterContext(tempfile.TemporaryDirectory()))
         self.enterContext(mock.patch.dict("os.environ", {DOCS_DIR_ENV_VAR: str(self.docs_root)}))
 
-    def test_validate_dec_surfaces_an_actionable_message(self) -> None:
-        with self.assertRaises(AssertionError) as ctx:
-            validate_dec(_DEC_BAD_BODY)
+    def test_validate_surfaces_an_actionable_message(self) -> None:
+        result = validate(type="dec", content=_DEC_BAD_BODY)
 
-        _assert_actionable_message(str(ctx.exception))
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        _assert_actionable_message(result.errors[0].message)
 
     def test_create_dec_surfaces_an_actionable_message_and_writes_nothing(self) -> None:
         with self.assertRaises(AssertionError) as ctx:

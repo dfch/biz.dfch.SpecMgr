@@ -32,12 +32,15 @@ triggers that motivated this feature.
    continuation line, not the verbatim original document. This is called out here, not silently
    presented as a full verbatim repro.
 
-Each trigger is reproduced through all three of ``validate_tsk`` (disk-free dry run),
-``create_tsk`` (create), and the generic ``update`` tool (``type="tsk"``, whole-body replace of
-an existing document) -- the three surfaces GitHub issue #27 named as all affected. Every test
-asserts the surfaced exception message contains the cause + fix-hint substrings the plan's
-Design Notes describe (REQ-003), not a full exact-string pin -- that pinning job belongs to
-``tests/models/md/test_validation_error_baseline.py`` (Phase 1's Task 1.0/1.8).
+Each trigger is reproduced through all three of the generic ``validate`` tool (``type="tsk"``,
+disk-free dry run), ``create_tsk`` (create), and the generic ``update`` tool (``type="tsk"``,
+whole-body replace of an existing document) -- the three surfaces GitHub issue #27 named as all
+affected. Every test asserts the surfaced message contains the cause + fix-hint substrings the
+plan's Design Notes describe (REQ-003), not a full exact-string pin -- that pinning job belongs
+to ``tests/models/md/test_validation_error_baseline.py`` (Phase 1's Task 1.0/1.8). Since
+feat-81-83-validation Phase 2, the generic ``validate`` tool never raises for a content-validation
+failure -- it returns ``{valid: False, errors: [{message: str}]}`` instead, so the ``validate``-tool
+tests below assert against ``result.errors[0].message`` rather than a raised exception.
 """
 
 from __future__ import annotations
@@ -50,8 +53,8 @@ from unittest import mock
 
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.general.tools.update import update
+from biz.dfch.specmgr.general.tools.validate import validate
 from biz.dfch.specmgr.tsk.tools.create_tsk import create_tsk
-from biz.dfch.specmgr.tsk.tools.validate_tsk import validate_tsk
 
 # ---------------------------------------------------------------------------
 # Trigger 1: GitHub issue #27's own minimal repro body, verbatim (the issue's
@@ -156,13 +159,14 @@ class TempTskDirTestCase(unittest.TestCase):
 
 
 class TestIssue27BareDomainTokenRegression(TempTskDirTestCase):
-    """GitHub issue #27's own repro body, through ``validate_tsk``/``create_tsk``/``update``."""
+    """GitHub issue #27's own repro body, through the generic ``validate``/``create_tsk``/``update``."""
 
-    def test_validate_tsk_surfaces_an_actionable_message(self) -> None:
-        with self.assertRaises(AssertionError) as ctx:
-            validate_tsk(_ISSUE_27_BODY)
+    def test_validate_surfaces_an_actionable_message(self) -> None:
+        result = validate(type="tsk", content=_ISSUE_27_BODY)
 
-        message = str(ctx.exception)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        message = result.errors[0].message
         for substring in _ISSUE_27_EXPECTED_SUBSTRINGS:
             self.assertIn(substring, message)
 
@@ -188,11 +192,12 @@ class TestIssue27BareDomainTokenRegression(TempTskDirTestCase):
 class TestFeat7Task029StrayListMarkerRegression(TempTskDirTestCase):
     """feat-7 Task 0.29's `+`-prefixed continuation line, through the same three surfaces."""
 
-    def test_validate_tsk_surfaces_an_actionable_message(self) -> None:
-        with self.assertRaises(AssertionError) as ctx:
-            validate_tsk(_FEAT_7_TASK_0_29_BODY)
+    def test_validate_surfaces_an_actionable_message(self) -> None:
+        result = validate(type="tsk", content=_FEAT_7_TASK_0_29_BODY)
 
-        message = str(ctx.exception)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        message = result.errors[0].message
         for substring in _FEAT_7_TASK_0_29_EXPECTED_SUBSTRINGS:
             self.assertIn(substring, message)
 

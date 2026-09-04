@@ -21,7 +21,8 @@ Unlike the per-tool unit tests elsewhere under ``tests/vcr/tools/``, this
 module drives the actual tool functions in a single realistic sequence --
  ``list_vcr`` (empty) -> ``create_vcr`` -> ``get_vcr`` -> ``list_vcr`` (1) ->
  ``update`` -> ``set_status`` (``type="vcr"``) -> ``get_vcr`` (status changed)
- -> ``list_vcr`` (status reflected) -> ``validate_vcr`` -> ``delete``
+ -> ``list_vcr`` (status reflected) -> ``validate`` (generic, ``type="vcr"``)
+ -> ``delete``
  (generic, ``type="vcr"``) -- against a real temporary docs directory.
 
 Isolation follows the exact same pattern as ``test_create_vcr.py``'s
@@ -45,12 +46,12 @@ from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.general.tools.delete import delete
 from biz.dfch.specmgr.general.tools.set_status import set_status
 from biz.dfch.specmgr.general.tools.update import update
+from biz.dfch.specmgr.general.tools.validate import validate
 from biz.dfch.specmgr.vcr.models.v1 import VcrFrontmatter
 from biz.dfch.specmgr.vcr.tools._paths import VcrNotFoundError, vcr_base_dir
 from biz.dfch.specmgr.vcr.tools.create_vcr import create_vcr
 from biz.dfch.specmgr.vcr.tools.get_vcr import get_vcr
 from biz.dfch.specmgr.vcr.tools.list_vcr import list_vcr
-from biz.dfch.specmgr.vcr.tools.validate_vcr import validate_vcr
 
 _INITIAL_BODY = textwrap.dedent(
     """\
@@ -88,7 +89,7 @@ class TestVcrLifecycleIntegration(TempVcrDirTestCase):
 
     def test_list_create_get_list_update_set_status_get_list_validate_delete_roundtrip(self) -> None:
         """list_vcr -> create_vcr -> get_vcr -> list_vcr -> update -> set_status -> get_vcr ->
-        list_vcr -> validate_vcr -> delete (generic, type="vcr"), live."""
+        list_vcr -> validate (generic, type="vcr") -> delete (generic, type="vcr"), live."""
         # 0. list_vcr: an empty base directory must list nothing.
         initial_page = list_vcr()
         self.assertEqual(initial_page.total, 0)
@@ -153,12 +154,17 @@ class TestVcrLifecycleIntegration(TempVcrDirTestCase):
         self.assertEqual(matches[0].status, "progress")
         self.assertEqual(matches[0].title, "Sample Verification Case")
 
-        # 8. validate_vcr: the on-disk file must validate as a complete
-        #    document (full=True) and its body-only half must validate as body-only.
+        # 8. validate (generic, type="vcr"): the on-disk file must validate as a complete
+        #    document (full=True) and its body-only half must validate as body-only -- never
+        #    raising, always {valid, errors}.
         on_disk_text = expected_path.read_text(encoding="utf-8")
-        self.assertIs(validate_vcr(on_disk_text, full=True), True)
+        full_result = validate(type="vcr", content=on_disk_text, full=True)
+        self.assertTrue(full_result.valid)
+        self.assertEqual(full_result.errors, [])
         body_only = frontmatter.loads(on_disk_text).content  # type: ignore[union-attr]
-        self.assertIs(validate_vcr(body_only), True)
+        body_result = validate(type="vcr", content=body_only)
+        self.assertTrue(body_result.valid)
+        self.assertEqual(body_result.errors, [])
 
         # 9. delete (generic, type="vcr"): a real hard delete via the generic tool -- the
         #    returned str must be the seeded file path, the file must be gone, and a
@@ -181,13 +187,17 @@ class TestVcrLifecycleIntegration(TempVcrDirTestCase):
         self.assertEqual(expected_path.read_text(encoding="utf-8"), before)
 
     def test_validate_rejects_malformed_body_and_wrong_full_shape(self) -> None:
-        """validate_vcr's body-only/full semantics must match validate_dec's --
-        invalid body fails (AssertionError); full=True requires a frontmatter block (ValueError)."""
-        with self.assertRaises(AssertionError):
-            validate_vcr("# Title\n\nJust a paragraph, no recognized verification case record sections.\n")
+        """The generic validate tool's (type="vcr") body-only/full semantics -- an invalid
+        body returns {valid: False, errors: [...]} (never raises); full=True with body-only
+        content still raises ValueError (caller-usage error, not a content failure)."""
+        result = validate(
+            type="vcr", content="# Title\n\nJust a paragraph, no recognized verification case record sections.\n"
+        )
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
 
         with self.assertRaises(ValueError):
-            validate_vcr(_INITIAL_BODY, full=True)
+            validate(type="vcr", content=_INITIAL_BODY, full=True)
 
 
 if __name__ == "__main__":
