@@ -4,7 +4,7 @@ created: '2026-09-03 10:38:25.338Z'
 id: feat-81-83-validation
 status: planning
 type: feat
-updated: '2026-09-03 17:00:00.000Z'
+updated: '2026-09-04 09:00:00.000Z'
 version: 1.0.0
 ---
 
@@ -24,13 +24,13 @@ GitHub issues #81 and #83 both concern how this repo's MCP tools report validati
 
 - REQ-003: Replace twelve of the thirteen per-domain `validate_<d>` tools (all except `validate_adr`, which keeps its distinct `id`-based, disk-touching signature and is excluded from consolidation) with one generic, type-dispatched `validate(type, content, full)` tool in `general/tools/`, mirroring the `update`/`set_status`/`set_classification`/`delete` precedent (ADR 36905d5b-8057-4294-8665-c7eed5534db0); the twelve consolidated per-domain tools are removed, not kept as wrappers, matching that precedent.
 
-- REQ-004: The generic `validate` tool never raises for a content-validation failure; it always returns a structured result (`{valid: bool, errors: list[{message: str}]}` -- no `field` key), reusing `feat-27-validation`'s already-enriched, actionable message text verbatim as each error's `message` -- only a shape-mismatch on `full`/`type` (an already-actionable `ValueError` today) may still raise.
+- REQ-004: The generic `validate` tool never raises for a content-validation failure; it always returns a structured result (`{valid: bool, errors: list[{message: str}]}` -- no `field` key), reusing `feat-27-validation`'s already-enriched, actionable message text verbatim as each error's `message` -- only a shape-mismatch on `full`/`type` (an already-actionable `ValueError` today, including passing `type="adr"` or any other unsupported/unknown domain, mirroring `update`/`set_classification`/`delete`'s existing rejection of `adr`) may still raise.
 
 - REQ-005: `parse_<d>`/`get_<d>` keep their existing raise-based contract unchanged -- this feature's structured-result change is scoped to `validate` only.
 
-- REQ-006: `list_<d>` (all twelve whole-body domains) reports parse failures explicitly: an `error_count` field alongside `total`/`truncated`, with each failed document appearing inline within `results` -- `title` replaced by the fixed marker `"<failed to parse>"`, `ref` populated as `path.stem` (identical to every domain's existing successful-entry `ref` derivation, since a content-parse failure never prevents deriving the filename stem), and a new `error` field carrying the actual exception message -- rather than being silently omitted. Directory-listing/permission errors that could prevent even filename enumeration are out of scope.
+- REQ-006: `list_<d>` (all twelve whole-body domains) reports parse failures explicitly through one new, shared `general/tools/_listing.py` helper (`build_summaries()`, callback-based, mirroring `general/tools/_doc_paths.py::find_doc_path_by_id`'s existing generalization pattern) reused by every domain's `list_<d>.py`, replacing the eleven-times-copy-pasted try/except/append loop rather than a "shared listing helper" that -- per an earlier draft's incorrect assumption -- already existed. `PagedResult` gains `error_count: int = 0` (default `0`, so `list_adr` -- out of scope -- is unaffected), counting failed documents across the *entire* base directory, independent of `offset`/`max_results` paging, mirroring `total`'s own already-documented across-all-pages semantics. Failed documents appear inline within `results` and now contribute to `total` alongside successes -- a deliberate semantics change from today's "parseable documents only" `total`, since that is precisely what fixes issue #83's "indistinguishable from an empty directory" complaint. Each failed entry has `id=None`, `title`/`status` both replaced by the fixed marker `"<failed to parse>"`, `ref` populated as `path.stem` (identical to every domain's existing successful-entry `ref` derivation), `path` populated the same way as a successful entry (REQ-007), and a new `error: str | None` field (added to the shared `DocSummary` base, `None` for successful entries) carrying the actual exception message -- rather than being silently omitted. `rsk` is a documented implementation exception within this same requirement, not a scope carve-out: `RskSummary` carries additional derived fields beyond the `DocSummary` base (see Design Notes), so its failed entries are built from a parsed sentinel document rather than hand-set literals, but the externally observable contract (marker `title`/`status`, `ref`, `path`, `error`, contribution to `total`/`error_count`) is identical to every other domain. Directory-listing/permission errors that could prevent even filename enumeration are out of scope.
 
-- REQ-007: Add a `path: str` field (an absolute, `.resolve()`d filesystem path) to `list_<d>` summaries for the other eleven whole-body domains, matching and extending `FeatSummary.path`'s existing precedent; in the same pass, retrofit `FeatSummary.path` itself to use a resolved (absolute) path rather than its current unresolved `str(path)`, and revise `DocSummary.ref`'s docstring to drop its "must not read this off disk" policy language now that `path` makes direct reads a sanctioned, first-class option for every whole-body domain.
+- REQ-007: Add a `path: str` field (an absolute, `.resolve()`d filesystem path) to `list_<d>` summaries for the other eleven whole-body domains, matching and extending `FeatSummary.path`'s existing precedent; in the same pass, retrofit `FeatSummary.path` itself to use a resolved (absolute) path rather than its current unresolved `str(path)`, and revise `DocSummary.ref`'s docstring to drop its "must not read this off disk" policy language now that `path` makes direct reads a sanctioned, first-class option for every whole-body domain. Implemented by adding `path: str` and `error: str | None = None` directly to the shared `DocSummary` base model (`general/models/summary.py`) rather than redeclaring them in each of the eleven other domains' summary subclasses; `FeatSummary`'s existing separate `path` field is removed in favor of the inherited one once retrofitted to the resolved form, rather than duplicated.
 
 - REQ-008: Regression tests reproduce issue #83's two literal repro bodies end-to-end through the new generic `validate` tool, and a directory with a mix of valid and unparseable documents end-to-end through `list_<d>` for at least two domains.
 
@@ -40,15 +40,17 @@ GitHub issues #81 and #83 both concern how this repo's MCP tools report validati
 
 - [ ] ACC-002: Verifies REQ-002 -- Design Notes contains a table/list of all thirteen current `validate_<d>` tools with signature and behavior.
 
-- [ ] ACC-003: Verifies REQ-003/REQ-004 -- the generic `validate(type, content, full)` tool exists, dispatches to all twelve applicable domains, returns `{valid, errors}` without raising for a content-validation failure, and the twelve consolidated per-domain `validate_<d>` tools (all except `validate_adr`, which still exists unchanged) no longer exist.
+- [ ] ACC-003: Verifies REQ-003 -- the generic `validate(type, content, full)` tool exists, dispatches to all twelve applicable domains, and the twelve consolidated per-domain `validate_<d>` tools (all except `validate_adr`, which still exists unchanged) no longer exist.
 
-- [ ] ACC-004: Verifies REQ-005 -- existing `parse_<d>`/`get_<d>` tests continue to pass unchanged (raise-based contract untouched).
+- [ ] ACC-004: Verifies REQ-004 -- `validate` never raises for a content-validation failure, returns `{valid, errors}` with `errors: list[{message}]` reusing `feat-27-validation`'s enriched messages verbatim; a test confirms `validate(type="adr", ...)` and any other unsupported `type` still raise `ValueError`.
 
-- [ ] ACC-005: Verifies REQ-006 -- a `list_<d>` test with a directory containing both valid and unparseable documents asserts `error_count` is correct and each failed document appears in `results` with `ref`/marker/`error` populated.
+- [ ] ACC-005: Verifies REQ-005 -- existing `parse_<d>`/`get_<d>` tests continue to pass unchanged (raise-based contract untouched).
 
-- [ ] ACC-006: Verifies REQ-007 -- all eleven other whole-body domains' summary types gain an absolute, resolved `path: str` field with a passing test each; `FeatSummary.path` is retrofitted to resolved/absolute form with its existing tests updated accordingly; `DocSummary.ref`'s docstring no longer states callers must not read the file off disk directly.
+- [ ] ACC-006: Verifies REQ-006 -- a `list_<d>` test with a directory containing both valid and unparseable documents asserts `error_count` is correct (across the whole directory, not just the current page) and `total` includes failed entries, with each failed document appearing in `results` with `ref`/marker/`error`/`path` populated -- for at least two domains, including `rsk`'s sentinel-document construction (see Design Notes); a dedicated test additionally asserts the RSK sentinel markdown parses successfully on its own, independent of `list_rsk`'s own test, so a future RSK schema change is caught at the sentinel level.
 
-- [ ] ACC-007: Verifies REQ-008 -- the regression tests described exist and pass.
+- [ ] ACC-007: Verifies REQ-007 -- all eleven other whole-body domains' summary types gain `path` via the shared `DocSummary` base with a passing test each; `FeatSummary` is retrofitted to the inherited, resolved `path` (its own redundant field declaration removed) with its existing tests updated accordingly; `DocSummary.ref`'s docstring no longer states callers must not read the file off disk directly.
+
+- [ ] ACC-008: Verifies REQ-008 -- the regression tests described exist and pass.
 
 ### Scope
 
@@ -135,6 +137,14 @@ Design questions resolved during plan refinement (2026-09-03), prior to Phase 1 
 
 - **`list_<d>` `path`-field parity (REQ-007)**: `path` is added to all eleven other whole-body domains' summary types, as an absolute, `.resolve()`d path -- not left as an undecided "decide, and where warranted implement" question. `FeatSummary.path` is retrofitted in the same pass to also use a resolved path (a deliberate behavior change from its current unresolved `str(path)`), and `DocSummary.ref`'s docstring is revised to drop its "callers must not read this off disk themselves" policy language, since `path` now makes direct reads a sanctioned, first-class option for every whole-body domain rather than a `feat`-only divergence. This decision was made knowingly against the stricter, more conservative alternative (leaving `ref`'s policy intact and declining to add `path` to the other eleven domains, on the grounds that their architecture -- locking, id-based dispatch, validation-on-write -- assumes tool-only mutation, unlike `feat`'s sanctioned direct-editing convention); implementers should keep the tool-only mutation contract intact elsewhere (`path` is for reads/context, not a new direct-write path) even though direct reads are now explicitly sanctioned.
 
+**Follow-up refinements (2026-09-04), resolved before Phase 2 implementation begins:**
+
+- **Why `errors` omits a `field` key uniformly, not just for some error sources**: Pydantic-sourced validation errors do carry structured `loc` data internally (via `.errors()`); `AssertionError`/YAML-sourced errors carry none. Rather than populate `field` for some errors and leave it `None`/absent for others depending on which validation layer raised, `{message}` alone is used for every error, keeping the shape predictable regardless of source.
+
+- **Shared `list_<d>` helper**: `general/tools/_doc_paths.py::find_doc_path_by_id` already establishes the callback-based generalization pattern this feature follows for `list_<d>`: a new `general/tools/_listing.py::build_summaries(paths, read, to_summary, to_failed_summary, error_types=(AssertionError, ValidationError)) -> tuple[list[SummaryT], int]` replaces the eleven-times-copy-pasted try/except/append loop (confirmed byte-for-byte identical across `req`/`dec`/`gol`/`prb`/`qa`/`sop`/`sysrs`/`tsk`/`uc`/`vcr`; `rsk`/`feat` differ only in summary construction, handled by their own `to_summary`/`to_failed_summary` callbacks) -- an earlier draft of Task 3.1 incorrectly assumed a shared helper already existed; it did not.
+
+- **`RskSummary`'s extra fields -- sentinel-document design**: `RskSummary` is the only domain summary type carrying fields beyond the shared `DocSummary` base (`initial_level`, `residual_level`, `strategy`, `scope`, `residual_probability`, `residual_impact`, `residual_product`) -- every other domain's summary type is a plain, fieldless `DocSummary` subclass. These seven fields are derived, via `RskSummary.from_document()`, from a fully-parsed `RskDocument`'s computed properties (e.g. `Assessment.level`, `Probability.value`) -- values that do not exist independently of a complete, successfully-validated object graph; Pydantic model construction is atomic, so a parse failure yields zero of the seven fields, never a partial set. Two alternatives were rejected: weakening `RskSummary`'s fields to `Optional` (defeats the field constraints' purpose for real rows too, not just failed ones); and fabricating schema-valid-but-plausible placeholder data via direct `RskSummary(...)` construction (indistinguishable from real, low-severity data in an aggregate risk view unless every consumer checks `error` first -- worse than a silent zero, since it is a believable lie rather than an obvious absence). Adopted instead: a fixed, valid, deliberately worst-case-severity RSK markdown document (`rsk/tools/_sentinel.py::_SENTINEL_RSK_TEXT`), parsed exactly once via the real `parse_rsk` pipeline (no bypass) into `_SENTINEL_RSK_DOCUMENT: RskDocument`. A failed row is built by running this sentinel through the same `RskSummary.from_document()` every real row uses, then `model_copy(update={"id": None, "status": "<failed to parse>", "path": ..., "error": ...})` for only the four fields no document could ever supply. Every domain-specific value -- `title="<failed to parse>"` (the sentinel's real H1), `strategy="accept"`, `scope="unknown"`, `initial_level`/`residual_level` (genuinely computed as `"very high"` from `Probability 5`/`Impact 5`, i.e. `level_from_product(25)`), `residual_probability`/`residual_impact`/`residual_product` (`5`/`5`/`25`) -- comes from real parsing and derivation, not hand-typed literals, so it can never drift out of sync with `level_from_product`'s own thresholds; a future schema-breaking change to the RSK model surfaces as a loud sentinel-parse failure, not silent staleness. `accept`/`dropped` (the sentinel frontmatter's real, valid `status`, overridden to the marker afterward, since `RskFrontmatter.status` is closed-vocabulary-enforced the same way `Strategy._validate_value` enforces the TARA words) are chosen as the most passive/neutral values of their respective closed vocabularies, so a fabricated row cannot accidentally trigger any strategy/status-keyed downstream automation. `RskSummary`'s own field constraints are completely unmodified -- no schema change of any kind. A dedicated unit test parses `_SENTINEL_RSK_TEXT` via `parse_rsk` directly and asserts success, independent of any `list_rsk` test, so a future RSK schema change (a new mandatory section, a changed `_TARA_PATTERN`, a renamed heading) is caught at the sentinel's own narrow, fast test rather than surfacing indirectly through `list_rsk`.
+
 ### Related Decisions
 
 - ADR 36905d5b-8057-4294-8665-c7eed5534db0: established the one-generic-dispatch-tool-per-mutation convention (`update`/`set_status`/`delete`) this feature extends to `validate`.
@@ -149,7 +159,7 @@ Design questions resolved during plan refinement (2026-09-03), prior to Phase 1 
 
 - [x] Task 1.2: Reproduce issue #83's `dec` em-dash-heading repro against current HEAD via `validate_dec`. Done -- see Design Notes.
 
-- [x] Task 1.3: Record a confirmed-real-or-already-fixed verdict for both, in Design Notes. Done -- verdict recorded, with a root-cause diagnosis that narrows this feature's fix rationale (see Design Notes).
+- [x] Task 1.3: Record a confirmed-real-or-already-fixed verdict for both, in Design Notes. Done -- verdict recorded, with a root-cause diagnosis that narrows this feature's fix rationale (also spot-checked via `validate_feat`; see Design Notes).
 
 - [ ] Task 1.4: Inventory all thirteen current `validate_<d>` tools (signature, domain, behavior) in Design Notes, per issue #81.
 
@@ -159,23 +169,25 @@ Design questions resolved during plan refinement (2026-09-03), prior to Phase 1 
 
 - [ ] Task 2.1: Implement the generic `validate(type, content, full)` tool in `general/tools/`, dispatching to each of the twelve applicable domains' existing validation logic (`adr` excluded), returning `{valid: bool, errors: list[{message: str}]}` without raising for a content-validation failure.
 
-- [ ] Task 2.2: Migrate every caller/reference (prompts, docs, `AGENTS.md`) from the twelve consolidated per-domain `validate_<d>` tools to the generic tool; `validate_adr` references are left untouched.
+- [ ] Task 2.2: Migrate `create_<d>`/`update_<d>` prompts and `AGENTS.md`'s `validate_<d>` mentions to the generic `validate` tool, for the twelve consolidated domains; `validate_adr` references are left untouched.
 
 - [ ] Task 2.3: Remove the twelve consolidated per-domain `validate_<d>` tool files (all except `validate_adr`, which remains).
 
-- [ ] Task 2.4: Unit tests for the generic tool across all twelve applicable domains, plus the two regression fixtures from Phase 1.
+- [ ] Task 2.4: Unit tests for the generic tool across all twelve applicable domains, plus the two regression fixtures from Phase 1, plus a test that `validate(type="adr", ...)` and any other unsupported `type` still raise `ValueError`.
 
 #### Phase 3: `list_<d>` Failure Reporting
 
-- [ ] Task 3.1: Add `error_count` and inline failed-document entries (`ref`/marker `title`/`error`) to `list_<d>`'s shared listing helper, across all twelve whole-body domains.
+- [ ] Task 3.1: Implement `general/tools/_listing.py::build_summaries()` (per Design Notes); add `error_count: int = 0` to `PagedResult` and `path`/`error` to the shared `DocSummary` base; wire all twelve whole-body domains' `list_<d>.py` through the new helper, replacing each domain's own copy-pasted loop; update `AGENTS.md`'s `list_<d>` bullets to mention `error_count`.
 
-- [ ] Task 3.2: Regression tests with a mixed valid/unparseable directory for at least two domains.
+- [ ] Task 3.2: Implement RSK's sentinel-document construction (`rsk/tools/_sentinel.py`) per Design Notes; wire into `list_rsk`'s `to_failed_summary` callback; add a dedicated unit test that parses `_SENTINEL_RSK_TEXT` via `parse_rsk` and asserts it succeeds, independent of `list_rsk`'s own tests.
+
+- [ ] Task 3.3: Regression tests with a mixed valid/unparseable directory for at least two domains, including `rsk`.
 
 #### Phase 4: `list_<d>` Path Field Parity
 
-- [ ] Task 4.1: Add an absolute, `.resolve()`d `path: str` field to the other eleven whole-body domains' summary types and their `list_<d>` implementations (the loop's `path: Path` variable is already in scope at summary-construction time in every domain -- confirmed via `list_req.py`; mirrors `FeatSummary`'s existing one-line pattern).
+- [ ] Task 4.1: Add an absolute, `.resolve()`d `path: str` field to the other eleven whole-body domains' summary types and their `list_<d>` implementations (the loop's `path: Path` variable is already in scope at summary-construction time in every domain -- confirmed via `list_req.py`; mirrors `FeatSummary`'s existing one-line pattern); update `AGENTS.md`'s `list_<d>`/`FeatSummary` bullets to mention the shared `path` field.
 
-- [ ] Task 4.2: Retrofit `FeatSummary.path`/`list_feat.py` to also use `path.resolve()` instead of the current unresolved `str(path)`; update any existing `feat` tests that assert on the old unresolved-path format.
+- [ ] Task 4.2: Retrofit `FeatSummary.path`/`list_feat.py` to also use `path.resolve()` instead of the current unresolved `str(path)`; update any existing `feat` tests that assert on the old unresolved-path format; remove `FeatSummary`'s now-redundant local `path` field declaration, since it is now inherited from `DocSummary`.
 
 - [ ] Task 4.3: Revise `DocSummary.ref`'s docstring to drop the "callers must not read this off disk themselves" policy language, since `path` now makes direct reads a sanctioned, first-class option for every whole-body domain.
 
@@ -185,7 +197,7 @@ Design questions resolved during plan refinement (2026-09-03), prior to Phase 1 
 
 - [ ] Task 5.1: Full quality gate (`ruff format --check`, `ruff check`, `vulture`, full `unittest` suite).
 
-- [ ] Task 5.2: Regenerate `docs/api/`/`docs/GENERATED.md`/`docs/MCP.md`; update `AGENTS.md`.
+- [ ] Task 5.2: Regenerate `docs/api/`/`docs/GENERATED.md`/`docs/MCP.md`; confirm no `AGENTS.md` edit was missed beyond what Tasks 2.2/3.1/4.1 already covered.
 
 - [ ] Task 5.3: Comment on GitHub issues #81 and #83 with the outcome; mark this feature done.
 
@@ -193,11 +205,15 @@ Design questions resolved during plan refinement (2026-09-03), prior to Phase 1 
 
 ### Current Status
 
-**As of 2026-09-03**: Feature drafted from GitHub issues #81 and #83, then refined -- Task 1.5's design questions were resolved ahead of Phase 1, and Tasks 1.1-1.3 (reproducing issue #83's two literal repro cases) are now also done: both reproduce as client-observed symptoms, but root-caused to a client-side tool-error-rendering gap, not a specmgr server-side regression -- see Design Notes. No implementation started yet. Only Task 1.4 (the full tool inventory) remains before Phase 1 is complete.
+**As of 2026-09-04**: Feature drafted from GitHub issues #81 and #83, then refined twice -- Task 1.5's design questions were resolved ahead of Phase 1, Tasks 1.1-1.3 (reproducing issue #83's two literal repro cases) are done (both reproduce as client-observed symptoms, but root-caused to a client-side tool-error-rendering gap, not a specmgr server-side regression -- see Design Notes), and a follow-up refinement pass resolved the `list_<d>` shared-helper design, `total`/`error_count` semantics, and RSK's sentinel-document design for its failed-row entries (see Design Notes). No implementation started yet. Only Task 1.4 (the full tool inventory) remains before Phase 1 is complete.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-04 09:00:00.000Z - Plan refined further: shared listing helper, `list_<d>` total/error_count semantics, RSK sentinel-document design, ACC restructured one-per-REQ
+
+Refined the plan again, before Phase 2 implementation begins. Corrected Task 3.1's incorrect assumption that a shared `list_<d>` listing helper already existed (it did not -- confirmed the try/except/append loop is copy-pasted identically across ten domains); designed a new `general/tools/_listing.py::build_summaries()` helper to replace it, plus `error_count`/`path`/`error` additions to the shared `PagedResult`/`DocSummary` bases rather than duplicated per domain. Resolved `total`'s semantics once failed entries are folded into `results` (it now includes them, a deliberate change from today's "parseable only" meaning, which is exactly what fixes issue #83's silent-zero complaint) and `error_count`'s semantics (counts across the whole directory, mirroring `total`, not just the current page). Worked through, and resolved, why `RskSummary` -- the only domain summary type with fields beyond the shared `DocSummary` base -- cannot represent a failed row via `Optional` fields (rejected: weakens real rows' guarantees too) or fabricated plausible-looking placeholder data (rejected: indistinguishable from real low-severity risk data in an aggregate view); adopted a fixed, valid, deliberately worst-case-severity sentinel RSK document, parsed once through the real `parse_rsk` pipeline (no validation bypass), with only the four fields no document could ever supply (`id`/`status` marker/`path`/`error`) set after the fact -- see Design Notes for the full design and rationale, including a dedicated standalone test for the sentinel document itself. Also folded `validate_feat`'s ad hoc Phase 1 spot-check into Task 1.3, split Task 2.2/5.2's `AGENTS.md` responsibilities so the work isn't deferred to one vague catch-all task, and restructured Acceptance Criteria to exactly one ACC per REQ (previously ACC-003 covered both REQ-003 and REQ-004).
 
 #### 2026-09-03 17:00:00.000Z - Recorded the client-side-defect workaround rationale as an ADR
 
@@ -218,6 +234,10 @@ Created from GitHub issues #81 (consolidate validation tools) and #83 (opaque va
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-04 09:00:00.000Z - Shared `list_<d>` helper, `list_<d>` total/error_count semantics, and RSK's sentinel-document design
+
+Decided to generalize `list_<d>`'s failure-reporting loop into one shared `general/tools/_listing.py` helper (mirroring `general/tools/_doc_paths.py::find_doc_path_by_id`'s existing callback-based precedent) instead of the originally-planned per-domain edits, since the twelve domains' loops are (with the exception of `rsk`/`feat`'s summary-construction step) byte-for-byte identical. Decided `total`'s meaning changes to include failed entries once they are folded into `results` (rather than adding a second "successes only" count field), and `error_count` counts across the whole directory independent of paging, mirroring `total`'s own existing semantics -- both computed for free by materializing the full list, including failures, before `paginate()` slices it. Decided against weakening `RskSummary`'s schema (`Optional` fields) or fabricating schema-valid-but-plausible placeholder risk data to represent a failed RSK document, since the latter is indistinguishable from real, low-severity data in an aggregate risk-matrix view and considered worse than a silent zero (a believable lie, not an obvious absence). Decided instead on a fixed, deliberately worst-case-severity sentinel RSK markdown document, parsed once through the unmodified real `parse_rsk` pipeline, with only the four fields no document could ever supply (`id`, the `status` marker, `path`, `error`) set after parsing via `model_copy` -- keeping `RskSummary`'s schema completely untouched while still surfacing every failed risk document as an unmistakable (title marker plus worst-case severity), non-fabricated-looking row. A dedicated test parses the sentinel text on its own, so a future RSK schema change is caught immediately rather than surfacing indirectly through `list_rsk`.
 
 #### 2026-09-03 17:00:00.000Z - Wrote a full ADR for the client-side-defect workaround rationale
 
