@@ -88,11 +88,11 @@ GitHub issue #94 reports that every whole-body document type's frontmatter `crea
 
 #### Phase 1: Schema Exposure
 
-- [ ] Task 1.1: Implement the schema-exposure mechanism satisfying REQ-002's constraint (e.g. `Field(json_schema_extra={"pattern": _DATE_TIME_PATTERN.pattern})`) on `MarkdownFrontmatter.created`/`updated`.
+- [x] Task 1.1: Implement the schema-exposure mechanism satisfying REQ-002's constraint (e.g. `Field(json_schema_extra={"pattern": _DATE_TIME_PATTERN.pattern})`) on `MarkdownFrontmatter.created`/`updated`.
 
-- [ ] Task 1.2: Update the `created`/`updated` docstring per REQ-006.
+- [x] Task 1.2: Update the `created`/`updated` docstring per REQ-006.
 
-- [ ] Task 1.3: Regenerate `docs/{type}_schema.json` and each domain's packaged copy for all twelve affected domains; confirm zero drift on a second run.
+- [x] Task 1.3: Regenerate `docs/{type}_schema.json` and each domain's packaged copy for all twelve affected domains; confirm zero drift on a second run.
 
 #### Phase 2: Regression Tests
 
@@ -110,11 +110,15 @@ GitHub issue #94 reports that every whole-body document type's frontmatter `crea
 
 ### Current Status
 
-**As of 2026-09-04**: Feature drafted from GitHub issue #94, corrected to close a domain-list gap (`qa` was missing from the original issue) and to add an explicit constraint against regressing `feat-27-validation`'s actionable error messages -- discovered during `feat-81-83-validation`'s own review of a prototyped `Field(pattern=...)` implementation that was built, found defective, and discarded (per that feature's own "do not implement" scope; no code from that prototype was carried over). No implementation started yet.
+**As of 2026-09-04**: Phase 1 (Schema Exposure) complete. `MarkdownFrontmatter.created`/`updated` now carry `Field(json_schema_extra={"pattern": _DATE_TIME_PATTERN.pattern})`, and all twelve affected domains' `docs/{type}_schema.json` and packaged `src/biz/dfch/specmgr/{type}/data/{type}_schema.json` copies have been regenerated with zero drift on a second run; `adr`'s schema files are untouched. Phase 2 (Regression Tests) and Phase 3 (Verification and Closeout) not started yet.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-04 - Phase 1 (Schema Exposure) complete
+
+Implemented Tasks 1.1-1.3. In `src/biz/dfch/specmgr/models/md/frontmatter.py`, changed `created`/`updated` from plain `str | None = None` fields to `Field(default=None, json_schema_extra={"pattern": _DATE_TIME_PATTERN.pattern})`, confirmed this does NOT engage pydantic-core's own runtime `pattern` enforcement (verified end-to-end: a bad `created` value still raises the original actionable `@field_validator(mode="after")` message, not a generic pydantic pattern-mismatch dump), and updated both fields' docstrings per REQ-006 to mention the new schema-level `pattern` constraint. Regenerated `docs/{type}_schema.json` and each domain's packaged `{type}/data/{type}_schema.json` copy for all twelve affected domains (`dec`, `feat`, `gol`, `prb`, `qa`, `req`, `rsk`, `sop`, `sysrs`, `tsk`, `uc`, `vcr`) via `uv run --frozen specmgr schema` and `uv run --frozen specmgr schema --type <t> --output-dir src/biz/dfch/specmgr/<t>/data`; a second run of each produced `(unchanged)` for every file, confirming zero drift. Confirmed `adr`'s schema files show no diff. Full quality gate green: `ruff format --check`, `ruff check`, `vulture`, the full `unittest` suite (3318 tests), and `specmgr docs` (which regenerated only `docs/api/biz.dfch.specmgr.models.md.frontmatter.md` to reflect the docstring change, as expected).
 
 #### 2026-09-04 08:22:35.000Z - Created
 
