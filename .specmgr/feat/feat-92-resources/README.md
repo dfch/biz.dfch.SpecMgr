@@ -3,7 +3,7 @@ created: '2026-09-04 00:00:00.000Z'
 id: feat-92-resources
 status: review
 type: feat
-updated: '2026-09-04 00:00:00.000Z'
+updated: '2026-09-04 12:00:00.000Z'
 version: 1.0.0
 ---
 
@@ -138,6 +138,76 @@ the raw text returned, and (b) covered by its own
 #### Phase 7: Wrap-up
 
 - [x] Task 7.1: Regenerate docs, update `server.py`'s docstring, add a CHANGELOG entry, run the full lint/test pass.
+
+#### Phase 8: Align EARS content with the source paper (Mavin et al., RE'09)
+
+Cross-checked against the original paper (`Mavin_A_Rolls_Royce_EARS_RE09_Paperaccepted.pdf`,
+kept in this feature folder): the packaged `general_ears.md` authored in Phase 6 used
+invented pattern names/order/template wording instead of the paper's own §4.1-4.6
+terminology, omitted the paper's §4.1 generic syntax entirely, and had no worked
+examples in `## When to use each pattern`. This phase corrects REQ-006's realized
+content to match the source paper; no new requirement/acceptance-criterion is added
+since REQ-006/ACC-006 already cover "documents the EARS requirement-phrasing
+templates" -- this is a content-accuracy fix, not new scope. Lands as additional
+commits on the still-open PR #95 (branch `feat-92-resources` -> `dev`), not a new PR.
+
+**Source material, verbatim from the paper (§4.1-4.6), needed for Tasks 8.1-8.4 --
+recorded here because the PDF is a personal reference kept in this feature folder
+only, not a repo artifact, and will not be available at implementation time:**
+
+- **Generic syntax (§4.1)**: `` `<optional preconditions> <optional trigger> the <system name> shall <system response>` `` -- goes into `general_ears.md`'s intro paragraph (Task 8.2).
+- **Pattern order and names, in this exact order** (§4.1's specialization list and the
+  §4.2-4.6 section headings agree): `Ubiquitous requirements`, `Event-driven
+  requirements`, `Unwanted behaviours`, `State-driven requirements`, `Optional
+  features` -- this is the new `_PATTERN_NAMES` value for Task 8.1, and the bullet
+  order for both lists in `general_ears.md` (Task 8.2).
+- **Templates, one per pattern (§4.2-4.6), each a backticked sentence template
+  followed by the existing hand-written explanation (kept as-is per the "leave
+  explanatory text as-is" decision)**:
+  - Ubiquitous requirements -- `` `The <system name> shall <system response>.` ``
+  - Event-driven requirements -- `` `WHEN <optional preconditions> <trigger> the <system name> shall <system response>.` ``
+  - Unwanted behaviours -- `` `IF <optional preconditions> <trigger>, THEN the <system name> shall <system response>.` ``
+  - State-driven requirements -- `` `WHILE <in a specific state> the <system name> shall <system response>.` ``
+  - Optional features -- `` `WHERE <feature is included> the <system name> shall <system response>.` ``
+- **First worked example per pattern (§4.2-4.6's own "For example: ..." sentence --
+  the paper's §4.5 gives State-driven a second, alternate "During" example too, not
+  used here), to append to each `## When to use each pattern` bullet (Task 8.2)**:
+  - Ubiquitous requirements: "The control system shall prevent engine overspeed."
+  - Event-driven requirements: "When continuous ignition is commanded by the aircraft, the control system shall switch on continuous ignition."
+  - Unwanted behaviours: "If the computed airspeed fault flag is set, then the control system shall use modelled airspeed."
+  - State-driven requirements: "While the aircraft is in-flight, the control system shall maintain engine fuel flow above XXlbs/sec."
+  - Optional features: "Where the control system includes an overspeed protection function, the control system shall test the availability of the overspeed protection function prior to aircraft dispatch."
+- The paper's `## Combining patterns`-equivalent (§4.7) still uses lowercase
+  `when`/`while`/`where` keywords in its own prose; this phase deliberately does
+  NOT touch `general_ears.md`'s existing `## Combining patterns` section (out of
+  the six items requested), so it will read inconsistently (lowercase keywords)
+  next to the newly upper-cased templates above it -- known, accepted, not a bug.
+
+- [ ] Task 8.0: Discard the stray uncommitted partial edit to
+  `general/data/general_ears.md` (`git checkout --` it) before starting.
+- [ ] Task 8.1: Update `general/models/ears.py`'s `_PATTERN_NAMES` constant to the
+  paper's exact ordered vocabulary (`["Ubiquitous requirements", "Event-driven
+  requirements", "Unwanted behaviours", "State-driven requirements", "Optional
+  features"]`); update stale name/order mentions in its module and class
+  docstrings. No structural/field changes needed.
+- [ ] Task 8.2: Rewrite `general/data/general_ears.md` per the source paper: append
+  the generic EARS syntax to the existing intro paragraph (same block, no blank
+  line); reorder/rename/reword `## The five requirement patterns`'s five bullets
+  to the paper's exact names and templates (keep each bullet's existing
+  hand-written explanatory sentence); reorder `## When to use each pattern` to
+  match, and append the paper's first worked example per pattern to each bullet.
+- [ ] Task 8.3: Update `tests/models/test_ears.py`: `_EXPECTED_PATTERN_NAMES` and
+  all 3 malformed fixtures (`_MISSING_PATTERN_TEXT`, `_MISMATCHED_WHEN_TO_USE_TEXT`,
+  `_WRONG_PATTERN_NAME_TEXT`) to the new names/order/templates.
+- [ ] Task 8.4: Update `tests/general/resources/test_ears.py`:
+  `_EXPECTED_PATTERN_NAMES` and `_valid_ears_text()`'s fixture to the new
+  names/order/templates.
+- [ ] Task 8.5: Update stale old-name/order mentions in `general/resources/ears.py`
+  (module docstring + `@mcp.resource(...)` description) and `server.py`'s module
+  docstring (~line 120-122).
+- [ ] Task 8.6: Wrap-up: regenerate docs (`specmgr docs`), extend the existing
+  CHANGELOG `[Unreleased]` entry, run the full lint/test pass, commit, and push
+  to `origin/feat-92-resources` (lands on the existing open PR #95 -- no new PR).
 
 ## Progress
 
