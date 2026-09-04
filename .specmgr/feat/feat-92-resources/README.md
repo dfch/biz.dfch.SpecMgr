@@ -1,7 +1,7 @@
 ---
 created: '2026-09-04 00:00:00.000Z'
 id: feat-92-resources
-status: planning
+status: review
 type: feat
 updated: '2026-09-04 00:00:00.000Z'
 version: 1.0.0
@@ -137,7 +137,7 @@ the raw text returned, and (b) covered by its own
 
 #### Phase 7: Wrap-up
 
-- [ ] Task 7.1: Regenerate docs, update `server.py`'s docstring, add a CHANGELOG entry, run the full lint/test pass.
+- [x] Task 7.1: Regenerate docs, update `server.py`'s docstring, add a CHANGELOG entry, run the full lint/test pass.
 
 ## Progress
 
@@ -167,8 +167,18 @@ guidance file from scratch AND built `general/models/ears.py`/
 `general/resources/ears.py`'s request-time parse-and-discard wiring in
 the same phase, from day one -- no "later wiring" follow-up was needed
 for this one, unlike `dtais`/`tara`'s original narrower Phase 2/3 task
-scoping. Only Phase 7 (wrap-up: CHANGELOG entry, final consistency pass)
-remains.
+scoping. Phase 7 (wrap-up) is now also done: a final consistency pass
+found `server.py`'s module docstring, every touched resource's own
+docstring, `README.md`, and `AGENTS.md` already accurate (no stale
+"structured JSON"/"no dedicated model" claims for any of the six
+resources), added a `CHANGELOG.md` `[Unreleased]` entry (GitHub issue
+#92), and re-ran `specmgr docs`/`specmgr mcp-docs`/`specmgr adr-toc`
+with zero resulting diff -- confirming every prior phase's own
+doc-regeneration step already left the repo fully in sync. **The feature
+is now complete**: all 7 phases plus the dtais/tara follow-up are done,
+every REQ-001..007 is implemented, and every ACC-001..007 was
+individually re-verified against the current repo state (see the dated
+Updates entry below).
 
 ### Blockers
 
@@ -177,6 +187,77 @@ None.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-04 00:00:00.000Z - Phase 7 (wrap-up) complete -- feature done
+
+Ran the final consistency/verification pass (Task 7.1). Cross-checked
+every `server.py` module-docstring line mentioning `specmgr://iso25010`,
+`specmgr://dtais`, `specmgr://rsk/tara`, `specmgr://rsk/risk-matrix`,
+`specmgr://rasci`, and `specmgr://ears` against what each resource
+actually does now: all six bullets already describe the current
+raw-markdown behavior correctly (`iso25010`'s own bullet never claimed a
+JSON/MIME shape to begin with, confirmed by direct inspection rather
+than trusting Phase 1's own self-report). Searched the whole `src/` tree
+for "structured"/"no dedicated model"/"parsed into a structured" near
+these six resource names: every hit found is either a model's own
+docstring correctly describing its *own* structured internal
+representation, or a resource docstring correctly stating what the
+resource is now, per ADR 356d8781-e446-4c26-917a-eda85648ce9d ("not
+structured JSON") -- no stale claim survived from before this feature.
+Checked the repo-root `README.md` and `AGENTS.md` for the same six
+resource names: no claim about output shape (JSON vs. markdown) is made
+in either file for any of the six, so nothing needed fixing there;
+`AGENTS.md`'s own `general/` bullet and "Still genuinely missing"
+section were inspected too and found to have a pre-existing, unrelated
+staleness (they don't enumerate every resource under `general/resources/`,
+e.g. `dtais`/`rasci` predate this feature and were already unlisted, and
+the new `ears` resource is likewise not listed) -- left untouched since
+it predates this feature and is a listing-completeness gap, not an
+output-shape claim this feature's ADR is about; fixing it would be scope
+creep beyond Task 7.1's own instructions.
+
+Ran `uv run --frozen specmgr docs`, `specmgr mcp-docs`, and `specmgr
+adr-toc`: all three produced **zero** `git status` diff, confirming every
+prior phase's own doc-regeneration step already left `docs/api/`,
+`docs/GENERATED.md`, `docs/MCP.md`, and `docs/adr/README.md` fully in
+sync -- no missed regeneration step from Phases 0-6.
+
+Added a `CHANGELOG.md` `[Unreleased]` entry (GitHub issue #92): one
+`### Changed` bullet for `specmgr://iso25010`'s breaking output-shape
+change (raw markdown instead of structured JSON, still parse-and-discard
+validated), and one `### Added` bullet for the four new drift-guarded
+models (`dtais`/`tara`/`risk-matrix`/`rasci`), the new `specmgr://ears`
+resource, and the new ADR.
+
+Full lint/test pass, all green: `ruff format --check` (1672 files already
+formatted), `ruff check` (all checks passed), `vulture src/ whitelist.py
+--min-confidence 60` (no findings), `pylint $(git ls-files '*.py')`
+(advisory-only, 8.91/10, same pre-existing `R0401` cyclic-import noise as
+every prior phase, `|| true` in CI, not a regression), full `unittest`
+suite (**3377 tests**, all passing -- identical count to Phase 6's own
+last run, confirming Phase 7 added no new src/test code of its own, only
+docs/CHANGELOG/this README), and `specmgr unused-code` ("No unused code
+found").
+
+Re-walked every acceptance criterion (ACC-001..007) against the current
+repo state rather than trusting the existing checkboxes: ACC-001
+(`general/resources/iso25010.py`'s `mime_type="text/markdown"` confirmed
+directly, `tests/models/test_iso25010.py::test_raises_on_malformed_text`
+and `tests/general/resources/test_iso25010.py::test_raises_on_structural_drift`
+both exist), ACC-002..005 (`tests/models/test_dtais.py`/`test_tara.py`/
+`test_risk_matrix.py`/`test_rasci.py` all exist with 10/11/10/7 tests
+each, including 4/5/4/3 distinct malformed-fixture drift-guard assertions
+respectively), ACC-006 (`specmgr://ears` registered in
+`general/resources/ears.py`, imported/exported from
+`general/resources/__init__.py`, documented in `server.py`'s module
+docstring, and covered by `tests/models/test_ears.py` (8 tests) plus a
+resource-level test), ACC-007 (the ADR file exists on disk with
+`status: accepted`) -- all seven confirmed genuinely satisfied, not just
+checkbox-ticked.
+
+The feature is complete: all 7 phases plus the dtais/tara follow-up are
+done, REQ-001 through REQ-007 are all implemented, and ACC-001 through
+ACC-007 are all independently re-verified in this entry. No blockers.
 
 #### 2026-09-04 00:00:00.000Z - Phase 6 (`ears` resource) complete
 
