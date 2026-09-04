@@ -45,7 +45,7 @@ the raw text returned, and (b) covered by its own
 - [ ] ACC-004: `tests/models/test_risk_matrix.py` fails if `rsk_risk_matrix.md`'s 4-item threshold list is broken.
 - [ ] ACC-005: `tests/models/test_rasci.py` fails if `general_rasci.md`'s 5-role structure is broken.
 - [ ] ACC-006: `specmgr://ears` is registered, documented in `server.py`'s module docstring, and covered by a model + resource test.
-- [ ] ACC-007: An ADR exists documenting the convention.
+- [x] ACC-007: An ADR exists documenting the convention.
 
 ### Scope
 
@@ -104,7 +104,7 @@ the raw text returned, and (b) covered by its own
 
 #### Phase 0: ADR
 
-- [ ] Task 0.1: Write and merge the ADR (REQ-007).
+- [x] Task 0.1: Write and merge the ADR (REQ-007).
 
 #### Phase 1: `iso25010`
 
@@ -141,8 +141,9 @@ the raw text returned, and (b) covered by its own
 
 ### Current Status
 
-**As of 2026-09-04**: Planning phase. Feature folder just created for
-GitHub issue #92; no implementation started yet.
+**As of 2026-09-04**: Phase 0 (ADR) done. ADR
+356d8781-e446-4c26-917a-eda85648ce9d accepted, documenting the repo-wide
+convention. Phases 1-7 (implementation) not started yet.
 
 ### Blockers
 
@@ -151,6 +152,21 @@ None.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-04 00:00:00.000Z - Phase 0 (ADR) complete
+
+Created and accepted ADR
+`docs/adr/356d8781-e446-4c26-917a-eda85648ce9d-expose-cross-cutting-reference-resources-as-raw-markdown-wit.md`
+("Expose cross-cutting reference resources as raw markdown with
+model-backed drift-guard tests, not structured JSON") via the `create_adr`
+MCP tool, covering all three considered options (chosen: uniform raw
+markdown + model-backed drift-guard tests; rejected: uniform structured
+JSON; rejected: uniform raw markdown with ad hoc regex tests only) and
+cross-referencing `specmgr://iso25010`/`dtais`/`rsk/tara`/`rsk/risk-matrix`/
+`rasci`/the new `ears`, plus GitHub issue #92 and this feature's README in
+"More Information". Regenerated `docs/adr/README.md` via
+`specmgr adr-toc`. Full quality gate (ruff format --check, ruff check,
+vulture, full unittest suite: 3318 tests) passed.
 
 #### 2026-09-04 00:00:00.000Z - Created
 
