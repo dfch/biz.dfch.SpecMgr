@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-04 08:22:35.000Z'
 id: feat-94-frontmatter-schema
-status: planning
+status: done
 type: feat
-updated: '2026-09-04 08:22:35.000Z'
+updated: '2026-09-04 09:45:00.000Z'
 version: 1.0.0
 ---
 
@@ -104,26 +104,37 @@ GitHub issue #94 reports that every whole-body document type's frontmatter `crea
 
 - [x] Task 3.1: Full quality gate (`ruff format --check`, `ruff check`, `vulture`, full `unittest` suite, `specmgr docs`, `specmgr schema` drift check for both `docs/` and package copies).
 
-- [ ] Task 3.2: Comment on GitHub issue #94 with the outcome; mark this feature done.
+- [x] Task 3.2: Comment on GitHub issue #94 with the outcome; mark this feature done.
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-09-04**: Phase 1 (Schema Exposure), Phase 2 (Regression Tests), and Phase 3's
-quality-gate verification (Task 3.1) are all complete. `MarkdownFrontmatter.created`/`updated` now
-carry `Field(json_schema_extra={"pattern": _DATE_TIME_PATTERN.pattern})`, and all twelve affected
+**As of 2026-09-04**: All three phases -- Phase 1 (Schema Exposure, commit `32ccc14`), Phase 2
+(Regression Tests, commit `b07809a`), and Phase 3 (Verification and Closeout, commit `a531624`) --
+are complete. `MarkdownFrontmatter.created`/`updated` now carry
+`Field(json_schema_extra={"pattern": _DATE_TIME_PATTERN.pattern})`, and all twelve affected
 domains' `docs/{type}_schema.json` and packaged `src/biz/dfch/specmgr/{type}/data/{type}_schema.json`
 copies regenerate with zero drift; `adr`'s schema files are untouched (ADR has no registered schema
 type at all). REQ-003/REQ-004 are covered by regression tests. All seven acceptance criteria
 (ACC-001 through ACC-007) have been walked through with concrete evidence and are confirmed met.
-Only Task 3.2 remains: posting a summary comment on GitHub issue #94 and marking this feature
-`done` -- both held pending explicit human confirmation, so the frontmatter `status` here stays
-`planning` for now.
+Task 3.2 is now complete: the outcome was posted as a comment on GitHub issue #94
+(https://github.com/dfch/biz.dfch.SpecMgr/issues/94#issuecomment-5540432436), and this feature's
+frontmatter `status` is now `done`. The feature is closed.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-04 09:45:00.000Z - Feature closed
+
+Completed Task 3.2, the last remaining task. Posted a summary comment on GitHub issue #94 with the
+outcome (https://github.com/dfch/biz.dfch.SpecMgr/issues/94#issuecomment-5540432436), covering all
+three phases (Phase 1 commit `32ccc14`, Phase 2 commit `b07809a`, Phase 3 commit `a531624`) and the
+confirmed-met status of all seven acceptance criteria (ACC-001 through ACC-007). This document's
+frontmatter `status` is now `done` (was `planning`), and Task 3.2 is checked off in the Task List.
+No source, test, or schema files were touched -- this README-only edit is the sole remaining
+change for this feature.
 
 #### 2026-09-04 - Phase 3 (Verification and Closeout) quality gate complete
 
