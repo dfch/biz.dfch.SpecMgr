@@ -68,11 +68,11 @@ The canonical source of truth for a feature template/example is the packaged dat
 
 ### Task List
 
-#### Phase 1: Discovery
+#### Phase 1: Discovery ✅ DONE
 
-- [ ] Task 1.1: Locate all diverging copies of the feature template/example concept and confirm the canonical `feat_template.md` / `feat_example.md` data files.
-- [ ] Task 1.2: Scan `src/` and `tests/` for any reference to `.specmgr/_template/v1/README.md`.
-- [ ] Task 1.3: Confirm the exact fenced template blocks and line ranges inside ADR e369ee2e.
+- [x] Task 1.1: Locate all diverging copies of the feature template/example concept and confirm the canonical `feat_template.md` / `feat_example.md` data files.
+- [x] Task 1.2: Scan `src/` and `tests/` for any reference to `.specmgr/_template/v1/README.md`.
+- [x] Task 1.3: Confirm the exact fenced template blocks and line ranges inside ADR e369ee2e.
 
 #### Phase 2: Implementation
 
@@ -90,12 +90,20 @@ The canonical source of truth for a feature template/example is the packaged dat
 
 ### Current Status
 
-**As of 2026-09-04**: The feature is in planning. No changes made yet; the body below is awaiting user confirmation before `create_feat` is called.
+**As of 2026-09-04 10:15**: Phase 1 (Discovery) is complete. All three diverging copies located and confirmed; the orphaned `.specmgr/_template/v1/README.md` has zero `src/`/`tests/` consumers; ADR e369ee2e's fenced blocks mapped. No code changes made yet. Phase 2 (Implementation) is next.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
+#### 2026-09-04 10:15:00.000+02:00 - Discovery complete
+
+Phase 1 (Discovery) done. Confirmed three diverging copies: (1) canonical `src/biz/dfch/specmgr/feat/data/feat_template.md` (1980 B) + `feat_example.md` (2423 B) under `feat/data/`; (2) orphaned `.specmgr/_template/v1/README.md` (110 lines, 2849 B, zero code consumers); (3) verbatim fenced template blocks inside ADR e369ee2e. `grep -rn "_template/v1" src/ tests/` returns no matches (exit 1). ADR e369ee2e fenced blocks: Option 1 README.md block lines 79–190; Option 2 README.md block lines 235–292 and progress.md block lines 296–343.
+
 #### 2026-09-04 10:00:00.000+02:00 - Created
 
 Feature scaffolded from GitHub issue #93 ("Consolidate feature templates/examples onto the feat MCP tools"). Scope, requirements, acceptance criteria, and a 3-phase task list were captured; discovery work has not started yet.
+
+### Decisions Made
+
+- **[2026-09-04]**: Confirmed the canonical source is the packaged `feat/data/feat_template.md` + `feat_example.md` behind `get_feat_template`/`get_feat_example`; the `.specmgr/_template/v1/README.md` orphan and ADR e369ee2e fenced blocks are removable duplicates with zero `src/`/`tests/` consumers. Rationale: Phase 1 discovery (`grep -rn "_template/v1" src/ tests/` = no matches, exit 1) shows no code consumers, so removing them preserves the full unit-test suite unchanged.
