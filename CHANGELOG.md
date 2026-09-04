@@ -60,11 +60,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `total`'s own already-documented across-all-pages semantics). Every
   domain's summary type (`DocSummary` subclass) also gains a `path: str`
   field -- an absolute, resolved filesystem path -- for the eleven
-  non-`feat` whole-body domains (`feat/FeatSummary` already had its own
-  `path` field; it keeps its existing unresolved form for now, retrofitted
-  separately). Callers relying on a malformed document being silently
-  absent from `results`/uncounted in `total` must instead check each
-  entry's `error` field (GitHub issue #83).
+  non-`feat` whole-body domains. Callers relying on a malformed document
+  being silently absent from `results`/uncounted in `total` must instead
+  check each entry's `error` field (GitHub issue #83).
+- `feat/FeatSummary`'s own, previously `feat`-only `path` field is removed
+  in favor of the same, now-shared `DocSummary.path` field every other
+  whole-body domain's summary carries (see above), and is retrofitted in
+  the same pass to the same absolute, resolved form the other eleven
+  domains use -- `FeatSummary.path` was previously left in its pre-existing
+  unresolved `str(path)` form. This completes `list_<d>`'s `path`-field
+  parity across all twelve whole-body domains (GitHub issue #81).
 - `specmgr://iso25010` now returns raw markdown (`text/markdown`)
   instead of a structured `Iso25010` JSON object, still parsed via
   `parse_iso25010()` on every read to fail fast on structural drift

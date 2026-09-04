@@ -83,7 +83,6 @@ def default_failed_summary(
     error: Exception,
     *,
     ref: str | None = None,
-    resolve: bool = True,
 ) -> _SummaryT:
     """Build a generic failed-entry summary for a plain :class:`DocSummary` subclass.
 
@@ -106,33 +105,27 @@ def default_failed_summary(
         The entry's ``ref`` value. Defaults to ``path.stem`` (every flat-file
         domain's own successful-entry derivation); pass e.g.
         ``path.parent.name`` for a folder-per-document domain like ``feat``.
-    resolve:
-        Whether ``path`` should be ``.resolve()``d before being stored in
-        the entry's ``path`` field. Defaults to ``True`` for the ten plain
-        domains; ``feat`` passes ``False`` in Phase 3 to keep its existing,
-        as-yet-unretrofitted unresolved ``str(path)`` behavior (Phase 4,
-        Task 4.2 flips this).
 
     Returns
     -------
     _SummaryT
         A ``cls`` instance with ``id=None``, ``title``/``status`` both set
-        to :data:`FAILED_TO_PARSE_MARKER`, ``ref``/``path`` populated the
-        same way a successful entry would be, and ``error=str(error)``.
+        to :data:`FAILED_TO_PARSE_MARKER`, ``ref``/``path`` (always
+        ``.resolve()``d) populated the same way a successful entry would
+        be, and ``error=str(error)``.
     """
     assert isinstance(path, Path), type(path)
     assert isinstance(error, Exception), type(error)
     assert ref is None or isinstance(ref, str), type(ref)
 
     resolved_ref = path.stem if ref is None else ref
-    path_value = str(path.resolve()) if resolve else str(path)
 
     result = cls(
         id=None,
         title=FAILED_TO_PARSE_MARKER,
         status=FAILED_TO_PARSE_MARKER,
         ref=resolved_ref,
-        path=path_value,
+        path=str(path.resolve()),
         error=str(error),
     )
     return result

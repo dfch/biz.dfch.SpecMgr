@@ -97,20 +97,13 @@ class TestDefaultFailedSummary(unittest.TestCase):
 
         self.assertEqual(sut.ref, "feat-1-x")
 
-    def test_path_is_resolved_by_default(self) -> None:
+    def test_path_is_always_resolved(self) -> None:
         path = Path("relative/some-doc.md")
 
         sut = default_failed_summary(_FakeSummary, path, ValueError("boom"))
 
         self.assertEqual(Path(sut.path), path.resolve())
         self.assertTrue(Path(sut.path).is_absolute())
-
-    def test_path_stays_unresolved_when_resolve_is_false(self) -> None:
-        path = Path("relative/some-doc.md")
-
-        sut = default_failed_summary(_FakeSummary, path, ValueError("boom"), resolve=False)
-
-        self.assertEqual(sut.path, str(path))
 
 
 class TestBuildSummaries(unittest.TestCase):

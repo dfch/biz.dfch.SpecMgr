@@ -18,24 +18,30 @@
 """Tests for `general.models.summary.DocSummary` (feat-13 Task 1.3/1.4, REQ-003/ACC-001/ACC-003).
 
 ``ReqSummary``/``UcSummary``/``TskSummary``/``QaSummary`` are asserted to be
-actual subclasses of :class:`DocSummary`. ``AdrSummary`` is a deliberate
-exception (see ``biz.dfch.specmgr.models.adr.v1.summary``'s module
-docstring and this feature's Decisions Made log for why it cannot subclass
-:class:`DocSummary` without adding an ``mcp`` dependency to the
-dependency-free base library) -- it was originally asserted to be fully
-*structurally* equivalent (same field names, same annotations), but
-feat-81-83-validation Phase 3 (REQ-006/REQ-007) added ``path``/``error`` to
-:class:`DocSummary` for the twelve whole-body domains only -- ``adr`` is
-explicitly out of scope for that feature (``list_adr`` untouched), so
-``AdrSummary`` deliberately keeps its original four-field shape and the two
-are no longer expected to match field-for-field. ``AdrSummary`` is instead
-asserted to still share ``DocSummary``'s *original* four-field prefix.
+actual subclasses of :class:`DocSummary`. ``FeatSummary`` gets its own,
+narrower test class below (feat-81-83-validation Phase 4, REQ-007): it used
+to redeclare its own separate ``path`` field, and Phase 4 removed that
+redundant declaration, so it is now checked for the same field set as
+every other whole-body domain, plus a direct assertion that ``path`` is no
+longer redeclared. ``AdrSummary`` is a deliberate exception (see
+``biz.dfch.specmgr.models.adr.v1.summary``'s module docstring and this
+feature's Decisions Made log for why it cannot subclass :class:`DocSummary`
+without adding an ``mcp`` dependency to the dependency-free base library)
+-- it was originally asserted to be fully *structurally* equivalent (same
+field names, same annotations), but feat-81-83-validation Phase 3
+(REQ-006/REQ-007) added ``path``/``error`` to :class:`DocSummary` for the
+twelve whole-body domains only -- ``adr`` is explicitly out of scope for
+that feature (``list_adr`` untouched), so ``AdrSummary`` deliberately keeps
+its original four-field shape and the two are no longer expected to match
+field-for-field. ``AdrSummary`` is instead asserted to still share
+``DocSummary``'s *original* four-field prefix.
 """
 
 from __future__ import annotations
 
 import unittest
 
+from biz.dfch.specmgr.feat.models.v1.summary import FeatSummary
 from biz.dfch.specmgr.general.models.summary import DocSummary
 from biz.dfch.specmgr.models.adr.v1.summary import AdrSummary
 from biz.dfch.specmgr.qa.models.v2.summary import QaSummary
@@ -106,6 +112,25 @@ class TestQaSummarySharesDocSummaryBase(unittest.TestCase):
 
     def test_declares_no_extra_fields(self):
         self.assertEqual(list(QaSummary.model_fields.keys()), _EXPECTED_FIELD_NAMES)
+
+
+class TestFeatSummarySharesDocSummaryBase(unittest.TestCase):
+    """Tests that FeatSummary subclasses DocSummary and no longer redeclares `path` (feat-81-83-validation Phase 4).
+
+    ``FeatSummary`` used to redeclare its own, separate ``path`` field
+    (predating ``path``'s generalization onto the shared base in Phase 3);
+    Phase 4 (Task 4.2, REQ-007) removed that redundant declaration, so
+    ``path`` -- like every other field -- is now purely inherited.
+    """
+
+    def test_is_a_docsummary_subclass(self):
+        self.assertTrue(issubclass(FeatSummary, DocSummary))
+
+    def test_declares_no_extra_fields(self):
+        self.assertEqual(list(FeatSummary.model_fields.keys()), _EXPECTED_FIELD_NAMES)
+
+    def test_does_not_redeclare_path(self):
+        self.assertNotIn("path", FeatSummary.__dict__.get("__annotations__", {}))
 
 
 class TestAdrSummaryIsStructurallyEquivalent(unittest.TestCase):

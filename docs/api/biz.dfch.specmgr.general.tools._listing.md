@@ -60,7 +60,7 @@ tuple[list[_SummaryT], int]
     entries among them.
 
 
-### `default_failed_summary(cls: 'type[_SummaryT]', path: 'Path', error: 'Exception', *, ref: 'str | None' = None, resolve: 'bool' = True) -> '_SummaryT'`
+### `default_failed_summary(cls: 'type[_SummaryT]', path: 'Path', error: 'Exception', *, ref: 'str | None' = None) -> '_SummaryT'`
 
 Build a generic failed-entry summary for a plain :class:`DocSummary` subclass.
 
@@ -83,17 +83,12 @@ ref:
     The entry's ``ref`` value. Defaults to ``path.stem`` (every flat-file
     domain's own successful-entry derivation); pass e.g.
     ``path.parent.name`` for a folder-per-document domain like ``feat``.
-resolve:
-    Whether ``path`` should be ``.resolve()``d before being stored in
-    the entry's ``path`` field. Defaults to ``True`` for the ten plain
-    domains; ``feat`` passes ``False`` in Phase 3 to keep its existing,
-    as-yet-unretrofitted unresolved ``str(path)`` behavior (Phase 4,
-    Task 4.2 flips this).
 
 Returns
 -------
 _SummaryT
     A ``cls`` instance with ``id=None``, ``title``/``status`` both set
-    to :data:`FAILED_TO_PARSE_MARKER`, ``ref``/``path`` populated the
-    same way a successful entry would be, and ``error=str(error)``.
+    to :data:`FAILED_TO_PARSE_MARKER`, ``ref``/``path`` (always
+    ``.resolve()``d) populated the same way a successful entry would
+    be, and ``error=str(error)``.
 

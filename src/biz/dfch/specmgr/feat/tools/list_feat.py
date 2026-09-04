@@ -22,10 +22,13 @@ ec9f5262-9912-49d0-903f-fcfb54f28c13). Mirrors ``dec.tools.list_dec``'s
 overall shape, with two feat-only differences: (1) it scans
 ``<base>/*/README.md`` via :func:`~biz.dfch.specmgr.feat.tools._paths.iter_feat_paths`,
 not ``<base>/*.md``; (2) each :class:`~biz.dfch.specmgr.feat.models.v1.FeatSummary`
-also carries the real filesystem ``path`` (REQ-004's Addressing section) and
 uses ``ref = path.parent.name`` (the containing folder's own name, which by
 convention already equals ``id`` for a healthy document) rather than
 ``path.stem`` (which would just be the fixed, uninformative ``"README"``).
+``path`` itself (REQ-004's original Addressing section) is no longer a
+`feat`-only field -- feat-81-83-validation Phase 3/4 (REQ-007) generalized
+it onto the shared ``DocSummary`` base every whole-body domain's summary
+now carries.
 
 feat-81-83-validation Phase 3 (REQ-006/REQ-007) routed this tool through
 the shared ``general.tools._listing.build_summaries`` helper: a folder
@@ -35,11 +38,12 @@ failed entry (marker ``title``/``status``, ``ref``, ``path``, and
 instead of being silently skipped -- this includes every one of the
 pre-existing, hand-authored feature folders that predate this schema (out
 of scope for that feature, see its own README's Scope section), which are
-therefore no longer invisible, just reported with an ``error``. Unlike the
-other eleven whole-body domains, ``FeatSummary.path`` in Phase 3 still uses
-its existing *unresolved* ``str(path)`` (both for successful and failed
-entries) -- retrofitting it to a resolved path is Phase 4, Task 4.2's own
-job, deliberately not bundled into this phase's change.
+therefore no longer invisible, just reported with an ``error``.
+Phase 4 (Task 4.2) retrofitted ``FeatSummary.path`` (both for successful
+and failed entries) to the same resolved, absolute
+(``.resolve()``d) form the other eleven whole-body domains already use --
+Phase 3 had deliberately left it in its pre-existing unresolved
+``str(path)`` form; that divergence no longer exists.
 """
 
 from __future__ import annotations
@@ -61,13 +65,13 @@ def _to_summary(doc: FeatDocument, path: Path) -> FeatSummary:
         title=feature_title(doc.body.text),
         status=doc.frontmatter.status,
         ref=path.parent.name,
-        path=str(path),
+        path=str(path.resolve()),
     )
     return result
 
 
 def _to_failed_summary(path: Path, error: Exception) -> FeatSummary:
-    result = default_failed_summary(FeatSummary, path, error, ref=path.parent.name, resolve=False)
+    result = default_failed_summary(FeatSummary, path, error, ref=path.parent.name)
     return result
 
 

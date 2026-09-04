@@ -4,7 +4,7 @@ created: '2026-09-03 10:38:25.338Z'
 id: feat-81-83-validation
 status: planning
 type: feat
-updated: '2026-09-04 14:00:00.000Z'
+updated: '2026-09-04 16:00:00.000Z'
 version: 1.0.0
 ---
 
@@ -48,7 +48,7 @@ GitHub issues #81 and #83 both concern how this repo's MCP tools report validati
 
 - [x] ACC-006: Verifies REQ-006 -- a `list_<d>` test with a directory containing both valid and unparseable documents asserts `error_count` is correct (across the whole directory, not just the current page) and `total` includes failed entries, with each failed document appearing in `results` with `ref`/marker/`error`/`path` populated -- for at least two domains, including `rsk`'s sentinel-document construction (see Design Notes); a dedicated test additionally asserts the RSK sentinel markdown parses successfully on its own, independent of `list_rsk`'s own test, so a future RSK schema change is caught at the sentinel level. Verdict: done -- `tests/req/tools/test_list_req.py`/`tests/rsk/tools/test_list_rsk.py` cover the full contract (including a malformed-YAML-frontmatter fixture each), `tests/rsk/tools/test__sentinel.py` covers the sentinel document independently, and `tests/general/tools/test__listing.py` covers `build_summaries()` directly.
 
-- [ ] ACC-007: Verifies REQ-007 -- all eleven other whole-body domains' summary types gain `path` via the shared `DocSummary` base with a passing test each; `FeatSummary` is retrofitted to the inherited, resolved `path` (its own redundant field declaration removed) with its existing tests updated accordingly; `DocSummary.ref`'s docstring no longer states callers must not read the file off disk directly.
+- [x] ACC-007: Verifies REQ-007 -- all eleven other whole-body domains' summary types gain `path` via the shared `DocSummary` base with a passing test each; `FeatSummary` is retrofitted to the inherited, resolved `path` (its own redundant field declaration removed) with its existing tests updated accordingly; `DocSummary.ref`'s docstring no longer states callers must not read the file off disk directly. Verdict: done -- confirmed all eleven other domains' `list_<d>.py`/`test_list_<d>.py` already had `path=str(path.resolve())` and `Path(summary.path).is_absolute()` assertions from Phase 3; `FeatSummary`'s own redundant `path` field declaration removed (now purely inherited from `DocSummary`), `list_feat.py`'s `_to_summary`/`_to_failed_summary` retrofitted to `path.resolve()`, and `tests/feat/tools/test_list_feat.py`/`tests/general/models/test_summary.py` updated/extended accordingly; `DocSummary.ref`'s docstring revised.
 
 - [ ] ACC-008: Verifies REQ-008 -- the regression tests described exist and pass.
 
@@ -219,15 +219,15 @@ Design questions resolved during plan refinement (2026-09-03), prior to Phase 1 
 
 #### Phase 4: `list_<d>` Path Field Parity
 
-- [ ] Task 4.1: Confirm/spot-check the `path` field population Task 3.1 already wired into the other eleven whole-body domains' `list_<d>` implementations (see Design Notes' Phase 3/Phase 4 sequencing note -- Task 3.1 necessarily populated `path=path.resolve()` on every successful-entry construction across all twelve domains as an unavoidable consequence of `path` becoming mandatory on the shared base; this task introduces no new field-population code); update `AGENTS.md`'s `list_<d>`/`FeatSummary` bullets to mention the shared `path` field.
+- [x] Task 4.1: Confirm/spot-check the `path` field population Task 3.1 already wired into the other eleven whole-body domains' `list_<d>` implementations (see Design Notes' Phase 3/Phase 4 sequencing note -- Task 3.1 necessarily populated `path=path.resolve()` on every successful-entry construction across all twelve domains as an unavoidable consequence of `path` becoming mandatory on the shared base; this task introduces no new field-population code); update `AGENTS.md`'s `list_<d>`/`FeatSummary` bullets to mention the shared `path` field. Done -- confirmed, by reading each of the eleven `list_<d>.py` files, that `path=str(path.resolve())` (successful entries) and a plain `default_failed_summary(...)` call defaulting to resolved (failed entries) are genuinely present for req/uc/tsk/qa/prb/gol/rsk/dec/sop/vcr/sysrs, and that each domain's own `test_list_<d>.py` already asserts `Path(summary.path).is_absolute()`/`Path(failed.path) == broken_path.resolve()` -- no gaps found, no new field-population code introduced. Updated all twelve `list_<d>` bullets in `AGENTS.md` (including `rsk`/`feat`'s own) to mention the (now-shared) resolved `path` field, and rewrote `FeatSummary`'s stale "one extra field" bullet paragraph (see Task 4.2).
 
-- [ ] Task 4.2: Retrofit `FeatSummary.path`/`list_feat.py` to also use `path.resolve()` instead of the current unresolved `str(path)`; update any existing `feat` tests that assert on the old unresolved-path format; remove `FeatSummary`'s now-redundant local `path` field declaration, since it is now inherited from `DocSummary`.
+- [x] Task 4.2: Retrofit `FeatSummary.path`/`list_feat.py` to also use `path.resolve()` instead of the current unresolved `str(path)`; update any existing `feat` tests that assert on the old unresolved-path format; remove `FeatSummary`'s now-redundant local `path` field declaration, since it is now inherited from `DocSummary`. Done -- `feat/tools/list_feat.py`'s `_to_summary` now builds `path=str(path.resolve())`, and `_to_failed_summary` no longer passes `resolve=False` (that parameter was removed entirely, see Decisions Made); `feat/models/v1/summary.py`'s `FeatSummary` no longer redeclares `path: str` (now purely inherited from `DocSummary`), and its module/class docstrings rewritten accordingly; `tests/feat/tools/test_list_feat.py` gained `Path(summary.path).is_absolute()`/exact resolved-equality assertions (no test asserted the old literal unresolved form, so nothing broke, but the module docstring's stale Phase 3/4 framing was corrected); `tests/general/models/test_summary.py` gained a new `TestFeatSummarySharesDocSummaryBase` class asserting `FeatSummary` now matches every other whole-body domain's exact field set and no longer redeclares `path` in its own `__annotations__`.
 
-- [ ] Task 4.3: Revise `DocSummary.ref`'s docstring to drop the "callers must not read this off disk themselves" policy language, since `path` now makes direct reads a sanctioned, first-class option for every whole-body domain.
+- [x] Task 4.3: Revise `DocSummary.ref`'s docstring to drop the "callers must not read this off disk themselves" policy language, since `path` now makes direct reads a sanctioned, first-class option for every whole-body domain. Done -- see the revised docstring quoted in this phase's own Updates entry below.
 
-- [ ] Task 4.4: Tests for the new `path` field (all eleven domains) and for `FeatSummary`'s changed, now-resolved `path` behavior.
+- [x] Task 4.4: Tests for the new `path` field (all eleven domains) and for `FeatSummary`'s changed, now-resolved `path` behavior. Done -- the eleven other domains' tests already had full `path` coverage from Phase 3 (Task 4.1 confirmed, no gaps to fill); `feat`'s own coverage extended in `tests/feat/tools/test_list_feat.py` (absolute-path assertion for every summary, exact resolved-path equality for the failed entry) and `tests/general/models/test_summary.py` (`TestFeatSummarySharesDocSummaryBase`); `tests/general/tools/test__listing.py`'s now-removed `resolve=False` test replaced with a single `test_path_is_always_resolved` test reflecting the simplified, always-resolving `default_failed_summary` (Decisions Made).
 
-- [ ] Task 4.5: Add a `CHANGELOG.md` `[Unreleased]` entry documenting the `path`/`error` fields on all twelve whole-body domains' `list_<d>` summaries and `FeatSummary.path`'s resolved-path retrofit.
+- [x] Task 4.5: Add a `CHANGELOG.md` `[Unreleased]` entry documenting the `path`/`error` fields on all twelve whole-body domains' `list_<d>` summaries and `FeatSummary.path`'s resolved-path retrofit. Done -- amended Phase 3's own "Changed" `list_<d>` bullet to drop its now-stale "`feat`/`FeatSummary` keeps its existing unresolved form for now" parenthetical, and added a new dedicated "Changed" bullet documenting `FeatSummary.path`'s field-removal/resolved-path retrofit.
 
 #### Phase 5: Verification and Closeout
 
@@ -241,11 +241,97 @@ Design questions resolved during plan refinement (2026-09-03), prior to Phase 1 
 
 ### Current Status
 
-**As of 2026-09-04**: **Phases 1-3 are all fully complete** (Investigation and Inventory; Generic `validate` Tool; `list_<d>` Failure Reporting). Feature drafted from GitHub issues #81 and #83, then refined three times ahead of Phase 1 -- see the earlier Updates entries below for that refinement history. Phase 1 confirmed both of issue #83's repro cases reproduce as client-observed symptoms, root-caused to a client-side tool-error-rendering gap, not a specmgr server-side regression, and inventoried all thirteen `validate_<d>` tools. Phase 2 implemented the generic `validate(type, content, full)` tool in `general/tools/`, recorded the consolidation decision as ADR 078bf395-0a5f-4afd-84f6-b7a2191a00e6, removed the twelve per-domain `validate_<d>` tools and their dedicated tests, and migrated every dependent prompt/test. Phase 3 implemented the shared `general/tools/_listing.py::build_summaries()` helper (REQ-006), added `PagedResult.error_count`/`DocSummary.path`+`error`, wired all twelve `list_<d>.py` files through it so a malformed document now appears inline in `results` as a failed entry (marker `title`/`status`, `ref`, `path`, `error`) and contributes to `total`/`error_count` instead of being silently skipped, built RSK's sentinel-document construction (`rsk/tools/_sentinel.py`) for its own richer `RskSummary`, added regression tests (including a malformed-YAML-frontmatter fixture) for `req`/`rsk` plus updated every other domain's own pre-existing list test for the new semantics, and updated `AGENTS.md`'s twelve `list_<d>` bullets to mention `error_count`. `feat`'s `FeatSummary.path` deliberately keeps its existing unresolved form in Phase 3 (Phase 4, Task 4.2's job); ACC-007 (the eleven-other-domains `path` parity plus the `FeatSummary`/`ref`-docstring retrofit) is Phase 4's own acceptance criterion, not Phase 3's, and stays open. The full quality gate (`ruff format --check`, `ruff check`, `vulture`, the full 3340-test `unittest`/`pytest` suite, `specmgr docs`, `specmgr adr-toc`, `specmgr mcp-docs`) is green. Phase 4 (`list_<d>` Path Field Parity) has not begun.
+**As of 2026-09-04**: **Phases 1-4 are all fully complete** (Investigation and Inventory; Generic `validate` Tool; `list_<d>` Failure Reporting; `list_<d>` Path Field Parity). Feature drafted from GitHub issues #81 and #83, then refined three times ahead of Phase 1 -- see the earlier Updates entries below for that refinement history. Phase 1 confirmed both of issue #83's repro cases reproduce as client-observed symptoms, root-caused to a client-side tool-error-rendering gap, not a specmgr server-side regression, and inventoried all thirteen `validate_<d>` tools. Phase 2 implemented the generic `validate(type, content, full)` tool in `general/tools/`, recorded the consolidation decision as ADR 078bf395-0a5f-4afd-84f6-b7a2191a00e6, removed the twelve per-domain `validate_<d>` tools and their dedicated tests, and migrated every dependent prompt/test. Phase 3 implemented the shared `general/tools/_listing.py::build_summaries()` helper (REQ-006), added `PagedResult.error_count`/`DocSummary.path`+`error`, wired all twelve `list_<d>.py` files through it so a malformed document now appears inline in `results` as a failed entry (marker `title`/`status`, `ref`, `path`, `error`) and contributes to `total`/`error_count` instead of being silently skipped, built RSK's sentinel-document construction (`rsk/tools/_sentinel.py`) for its own richer `RskSummary`, added regression tests (including a malformed-YAML-frontmatter fixture) for `req`/`rsk` plus updated every other domain's own pre-existing list test for the new semantics, and updated `AGENTS.md`'s twelve `list_<d>` bullets to mention `error_count`. `feat`'s `FeatSummary.path` deliberately kept its existing unresolved form in Phase 3 (Phase 4, Task 4.2's job). Phase 4 closed out REQ-007/ACC-007: confirmed (Task 4.1) the other eleven domains' `path`-field population and test coverage already fully landed in Phase 3, with no gaps; retrofitted `FeatSummary.path`/`list_feat.py` to the same resolved (absolute) form the other eleven domains use, and removed `FeatSummary`'s now-redundant separate `path` field declaration (Task 4.2); revised `DocSummary.ref`'s docstring to drop its "must not read this off disk" policy language (Task 4.3); added/extended tests confirming the new behavior, including simplifying `default_failed_summary` by removing its now-unused `resolve` parameter (Task 4.4, see Decisions Made); and added a `CHANGELOG.md` `[Unreleased]` entry (Task 4.5). Only Phase 5 (Verification and Closeout) remains. The full quality gate (`ruff format --check`, `ruff check`, `vulture`, the full 3342-test `unittest`/`pytest` suite, `specmgr docs`, `specmgr mcp-docs`, `specmgr adr-toc`) is green as of Phase 4's own completion -- see the dated Updates entry below for full detail.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-04 16:00:00.000Z - Phase 4 (`list_<d>` Path Field Parity) complete: Tasks 4.1-4.5 done
+
+Closed out REQ-007/ACC-007. Task 4.1 (spot-check, no new field-population code):
+confirmed by reading every one of the other eleven whole-body domains'
+`list_<d>.py` files that Phase 3 already wired `path=str(path.resolve())` on
+every successful-entry construction, and confirmed by reading every one of
+their `test_list_<d>.py` files that each already asserts
+`Path(summary.path).is_absolute()` (successful entries) and
+`Path(failed.path) == broken_path.resolve()` (failed entries) -- no gaps
+found across `req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`vcr`/`sysrs`.
+
+Task 4.2 retrofitted `feat`: `feat/tools/list_feat.py`'s `_to_summary` now
+builds `path=str(path.resolve())` (previously unresolved `str(path)`), and
+its `_to_failed_summary` no longer passes `resolve=False` to
+`default_failed_summary` (that parameter was removed entirely, see Decisions
+Made below); `feat/models/v1/summary.py`'s `FeatSummary` no longer redeclares
+its own `path: str` field -- it is now purely inherited from the shared
+`DocSummary` base, like every other whole-body domain's summary -- and its
+module/class docstrings were rewritten to describe this as history, not a
+live divergence.
+
+Task 4.3 revised `DocSummary.ref`'s docstring
+(`general/models/summary.py`) to drop the "callers must not read this off
+disk themselves, only pass it to the matching domain's `get_<domain>` tool"
+policy sentence, replacing it with a note that `path` (the sibling field)
+now exposes the real filesystem path directly for a caller that wants it,
+per REQ-007.
+
+Task 4.4 added/extended tests: `tests/feat/tools/test_list_feat.py` gained
+an `is_absolute()` assertion for every summary in its malformed-folder test,
+plus an exact `Path(failed.path) == (broken / README_FILENAME).resolve()`
+equality assertion for the failed entry (mirroring every other domain's own
+pattern), and its module docstring's stale Phase-3-vs-Phase-4 framing was
+corrected; `tests/general/models/test_summary.py` gained a new
+`TestFeatSummarySharesDocSummaryBase` class asserting `FeatSummary` now
+declares the exact same field set as every other whole-body domain's
+summary (`id`/`title`/`status`/`ref`/`path`/`error`) and no longer
+redeclares `path` in its own class-level `__annotations__`;
+`tests/general/tools/test__listing.py`'s `test_path_stays_unresolved_when_resolve_is_false`
+test (exercising the now-removed `resolve` parameter) was replaced with a
+single `test_path_is_always_resolved` test. The other eleven domains needed
+no new tests -- Task 4.1 confirmed their Phase 3 coverage was already
+complete.
+
+Task 4.5 added a `CHANGELOG.md` `[Unreleased]` entry: amended Phase 3's own
+"Changed" `list_<d>` bullet to drop its now-stale "`feat`/`FeatSummary`
+already had its own `path` field; it keeps its existing unresolved form for
+now, retrofitted separately" parenthetical (no longer true), and added a new
+dedicated "Changed" bullet documenting `FeatSummary.path`'s field-removal/
+resolved-path retrofit.
+
+Updated `AGENTS.md` (Task 4.1's own scope): all twelve `list_<d>` bullets
+(including `rsk`'s and `feat`'s own) now mention the shared, resolved `path`
+field alongside their existing `error_count` mention; `feat`'s own bullet's
+stale "`FeatSummary` adds one extra field beyond every other domain's
+summary, `path: str`... a deliberate divergence" paragraph was rewritten to
+state that `path` is no longer `feat`-only, while still noting `feat`'s own
+direct-editing workflow treats it as a first-class, sanctioned entry point
+by original design (not merely an incidental convenience gained later, as
+for the other eleven domains).
+
+Quality gate: `ruff format --check` (clean, 1652 files already formatted),
+`ruff check` (all checks passed), `vulture src/ whitelist.py
+--min-confidence 60` (no output), the full `pytest -n auto --cov=src` suite
+(3342 tests, up from 3339 immediately before this phase's test edits -- net
++3: +1 `test_path_is_always_resolved` replacing the removed
+`test_path_stays_unresolved_when_resolve_is_false` in `test__listing.py`,
++1 `is_absolute()`/resolved-equality assertion pair in `test_list_feat.py`
+(no new test method), +3 new test methods in the new
+`TestFeatSummarySharesDocSummaryBase` class in `test_summary.py`), `specmgr
+docs` (regenerated exactly the four touched modules' API pages --
+`feat.models.v1.summary`, `feat.tools.list_feat`,
+`general.models.summary`, `general.tools._listing` -- plus
+`docs/GENERATED.md`), `specmgr mcp-docs` (`docs/MCP.md` unchanged -- no
+tool descriptions/signatures changed), and `specmgr adr-toc`
+(`docs/adr/README.md` unchanged) all green.
+
+Design decision made during this phase, not already covered by the plan's
+own Design Notes (added to Decisions Made below): simplified
+`general/tools/_listing.py::default_failed_summary` by removing its
+`resolve: bool = True` parameter entirely, rather than leaving it as dead
+flexibility once `feat` (its only caller ever passing `resolve=False`) was
+retrofitted to always resolve -- every one of the twelve domains'
+`to_failed_summary` callbacks now calls `default_failed_summary` with the
+same, simplified two-or-three-positional-plus-`ref`-keyword signature.
 
 #### 2026-09-04 15:00:00.000Z - Phase 3 (`list_<d>` Failure Reporting) complete: Tasks 3.1-3.4 done
 
@@ -448,6 +534,25 @@ Created from GitHub issues #81 (consolidate validation tools) and #83 (opaque va
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-04 16:00:00.000Z - Removed `default_failed_summary`'s `resolve` parameter entirely rather than leaving it as dead flexibility
+
+Decided, during Phase 4 implementation, to remove `general/tools/_listing.py::default_failed_summary`'s
+`resolve: bool = True` parameter outright rather than simply leaving it in place (still defaulting to
+`True`) now that every one of the twelve domains' `to_failed_summary` callbacks resolves. `feat` was the
+only caller that ever passed `resolve=False` (Phase 3's own deliberate, temporary carve-out for
+`FeatSummary`'s not-yet-retrofitted unresolved `path`); once Task 4.2 retrofitted `feat` to also resolve,
+no caller anywhere in the codebase had a remaining use for `resolve=False`, and the parameter's own
+Phase-3-era docstring ("`feat` passes `False` in Phase 3 to keep its existing... behavior (Phase 4, Task
+4.2 flips this)") would otherwise have become permanently stale, describing a boundary that no longer
+exists in the code. Removing it (rather than keeping it as unused, always-`True` optionality) matches this
+phase's own prompt's explicit preference ("if no caller needs `resolve=False` anymore, simplifying...is
+cleaner and should be preferred over leaving dead flexibility around"). Every caller
+(`default_failed_summary(cls, path, error)`/`default_failed_summary(cls, path, error, ref=...)`) and every
+place describing the Phase 3/Phase 4 boundary in the past tense (`_listing.py`'s own docstrings,
+`list_feat.py`'s module docstring, `AGENTS.md`'s `feat` bullet, this plan's own Design Notes reference to
+Task 3.1's sequencing note) were updated so no "Phase 3 exception" language remains describing a boundary
+that, after this phase, no longer exists.
 
 #### 2026-09-04 15:00:00.000Z - RSK sentinel's `title` is overridden via `model_copy`, not read off the sentinel's own H1
 

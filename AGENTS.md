@@ -41,7 +41,7 @@ type or cross-cutting:
   listing is the `list_req` tool, ADR
   ec9f5262-9912-49d0-903f-fcfb54f28c13, whose `PagedResult` now also
   carries `error_count` and reports a failed-to-parse document inline
-  (marker `title`/`status`, `error`) rather than silently dropping it,
+  (marker `title`/`status`, `error`, plus a resolved `path`) rather than silently dropping it,
   feat-81-83-validation Phase 3); `req/prompts/`
   (`create_req`/`update_req`). Its schema lives at `req/models/v1/`, inside
   the domain package itself, not under top-level `models/`.
@@ -64,7 +64,8 @@ type or cross-cutting:
   REQ, and no `specmgr://uc/list` resource either — listing is the
   `list_uc` tool (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13, whose
   `PagedResult` now also carries `error_count` and reports a
-  failed-to-parse document inline rather than silently dropping it,
+  failed-to-parse document inline (with a resolved `path`) rather than
+  silently dropping it,
   feat-81-83-validation Phase 3);
   `uc/prompts/` (`create_uc`/`update_uc`). Schema at
   `uc/models/v1/` (legacy) and `uc/models/v2/` (current),
@@ -91,7 +92,8 @@ type or cross-cutting:
   `specmgr://tsk/{id}` and no `specmgr://tsk/list` resource (listing is
   the `list_tsk` tool, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13, whose
   `PagedResult` now also carries `error_count` and reports a
-  failed-to-parse document inline rather than silently dropping it,
+  failed-to-parse document inline (with a resolved `path`) rather than
+  silently dropping it,
   feat-81-83-validation Phase 3). Schema
   at `tsk/models/v1/`, inside the domain package.
 - **`qa/`** (Question and Answer) — same tools/resources/prompts shape as
@@ -116,7 +118,8 @@ type or cross-cutting:
   `specmgr://qa/list` — listing is the `list_qa` tool, ADR
   ec9f5262-9912-49d0-903f-fcfb54f28c13, whose `PagedResult` now also
   carries `error_count` and reports a failed-to-parse document inline
-  rather than silently dropping it, feat-81-83-validation Phase 3);
+  (with a resolved `path`) rather than silently dropping it,
+  feat-81-83-validation Phase 3);
   `qa/prompts/`
   (`create_qa`/`update_qa`, plus `refine`). Schema at `qa/models/v2/`,
   inside the domain package, not `models/qa/` — QA is a single-schema
@@ -156,7 +159,8 @@ type or cross-cutting:
   ddfb1109-422d-4507-8dbc-dc5e4bec9614; no `specmgr://prb/list` — listing
   is the `list_prb` tool, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13, whose
   `PagedResult` now also carries `error_count` and reports a
-  failed-to-parse document inline rather than silently dropping it,
+  failed-to-parse document inline (with a resolved `path`) rather than
+  silently dropping it,
   feat-81-83-validation Phase 3);
    `prb/prompts/` (`create_prb`/`update_prb`, narrated `TodoWrite` +
    `question`-tool-driven 5W2H interview flows). Schema at
@@ -187,7 +191,8 @@ type or cross-cutting:
   `list_gol` ships as a paged tool from day one, ADR
   ec9f5262-9912-49d0-903f-fcfb54f28c13, whose `PagedResult` now also
   carries `error_count` and reports a failed-to-parse document inline
-  rather than silently dropping it, feat-81-83-validation Phase 3);
+  (with a resolved `path`) rather than silently dropping it,
+  feat-81-83-validation Phase 3);
   `gol/prompts/`
   (`create_gol`/`update_gol`, narrated `TodoWrite` +
   `question`-tool-driven interview flows; `create_gol` first checks
@@ -229,7 +234,8 @@ type or cross-cutting:
   carry the residual-risk coordinates so a register-wide risk-matrix view
   can be built from the listing alone; its `PagedResult` now also carries
   `error_count` and reports a failed-to-parse document inline as a
-  sentinel-derived failed row (`rsk.tools._sentinel`) rather than silently
+  sentinel-derived failed row (`rsk.tools._sentinel`), with a resolved `path`
+  like every other domain, rather than silently
   dropping it, feat-81-83-validation Phase 3); `rsk/prompts/`
    (`create_risk`/`update_risk` — the issue's literal wording, not the
    `rsk`-prefixed convention the tools/resources use). Its schema lives at
@@ -258,8 +264,8 @@ type or cross-cutting:
   `specmgr://dec/list` — `list_dec` ships as a paged tool from day
   one, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13, whose `PagedResult` now
   also carries `error_count` and reports a failed-to-parse document
-  inline rather than silently dropping it, feat-81-83-validation
-  Phase 3); `dec/prompts/`
+  inline (with a resolved `path`) rather than silently dropping it,
+  feat-81-83-validation Phase 3); `dec/prompts/`
   (`create_dec`/`update_dec`, narrated `TodoWrite` +
   `question`-tool-driven interview flows; `create_dec` first checks
   `list_dec` for a near-duplicate decision). Its schema lives at
@@ -298,8 +304,8 @@ type or cross-cutting:
   `specmgr://sop/list` — `list_sop` ships as a paged tool from day
   one, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13, whose `PagedResult` now
   also carries `error_count` and reports a failed-to-parse document
-  inline rather than silently dropping it, feat-81-83-validation
-  Phase 3); `sop/prompts/`
+  inline (with a resolved `path`) rather than silently dropping it,
+  feat-81-83-validation Phase 3); `sop/prompts/`
   (`create_sop`/`update_sop`, narrated `TodoWrite` +
   `question`-tool-driven interview flows; `create_sop` first checks
   `list_sop` for a near-duplicate SOP; both prompts include an explicit
@@ -359,20 +365,24 @@ type or cross-cutting:
   are `get_feat`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
   `specmgr://feat/list` — `list_feat` ships as a paged tool from day
   one, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13, whose `PagedResult` now
-  also carries `error_count` and reports a failed-to-parse folder inline
-  rather than silently dropping it, feat-81-83-validation Phase 3);
+  also carries `error_count` and reports a failed-to-parse folder inline, with a resolved `path`
+  (feat-81-83-validation Phase 4 retrofitted `FeatSummary`'s own `path` to
+  match) rather than silently dropping it, feat-81-83-validation Phase 3);
   `feat/prompts/`
   (`create_feat`/`update_feat`, narrated instruction flows; `create_feat`
   first checks `list_feat` for a near-duplicate feature). Its schema
   lives at `feat/models/v1/`, inside the domain package, not top-level
-  `models/`. `FeatSummary` adds one extra field beyond every other
-  domain's summary, `path: str` (the real filesystem path to the
-  document's `README.md`) — a deliberate divergence, since direct
-  hand/agent editing of `.specmgr/feat/<id>/README.md` remains the
-  domain's own normal, sanctioned workflow even after its MCP tools
-  exist, unlike every other domain's summary, whose `ref` field is
-  deliberately *not* a path. See
-  `.specmgr/feat/feat-31-feature/README.md` for the full design.
+  `models/`. `FeatSummary`'s own separate `path` field was removed in
+  feat-81-83-validation Phase 4 -- it now inherits the same, resolved
+  `path: str` field every other whole-body domain's summary also carries
+  via the shared `DocSummary` base (feat-81-83-validation Phase 3/4), no
+  longer a `feat`-only divergence. Unlike every other domain, though,
+  `feat`'s own workflow -- direct hand/agent editing of
+  `.specmgr/feat/<id>/README.md` -- treats this shared `path` as a
+  first-class, sanctioned read/edit entry point by original design, not
+  merely an incidental convenience the other eleven domains only gained
+  later. See `.specmgr/feat/feat-31-feature/README.md` for the full
+  design.
 - **`vcr/`** (Verification Case Record) — same tools/resources/prompts
   shape as `req/`/`prb/`/`dec/` but for how a single REQ/UC is verified: a
   `## Verifies` single-value cross-reference (exactly one mandatory
@@ -409,7 +419,8 @@ type or cross-cutting:
   `list_vcr` ships as a paged tool from day one, ADR
   ec9f5262-9912-49d0-903f-fcfb54f28c13, whose `PagedResult` now also
   carries `error_count` and reports a failed-to-parse document inline
-  rather than silently dropping it, feat-81-83-validation Phase 3);
+  (with a resolved `path`) rather than silently dropping it,
+  feat-81-83-validation Phase 3);
   `vcr/prompts/`
   (`create_vcr`/`update_vcr`). Its schema lives at `vcr/models/v1/`,
   inside the domain package, not top-level `models/`. The closed DTAIS
@@ -451,7 +462,8 @@ type or cross-cutting:
   `specmgr://sysrs/list` — `list_sysrs` ships as a paged tool from day one,
   ADR ec9f5262-9912-49d0-903f-fcfb54f28c13, whose `PagedResult` now also
   carries `error_count` and reports a failed-to-parse document inline
-  rather than silently dropping it, feat-81-83-validation Phase 3).
+  (with a resolved `path`) rather than silently dropping it,
+  feat-81-83-validation Phase 3).
   2 prompts in `sysrs/prompts/`
   (`create_sysrs`/`update_sysrs` — `create_sysrs` first checks `list_sysrs`
   for a near-duplicate and reads the existing cross-cutting

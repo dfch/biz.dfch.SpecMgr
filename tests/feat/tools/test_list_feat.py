@@ -20,9 +20,10 @@
 feat-81-83-validation Phase 3 (REQ-006): a folder whose ``README.md`` fails
 to parse no longer silently disappears from the listing -- it appears
 inline in ``results`` as a failed entry and contributes to both ``total``
-and the new ``error_count``. ``FeatSummary.path`` keeps its existing
-unresolved form in Phase 3 (Phase 4, Task 4.2 retrofits it to a resolved
-path) -- unlike the other eleven whole-body domains.
+and the new ``error_count``. feat-81-83-validation Phase 4 (Task 4.2,
+REQ-007) retrofitted ``FeatSummary.path`` (both successful and failed
+entries) to the same resolved, absolute (``.resolve()``d) form the other
+eleven whole-body domains already use.
 """
 
 from __future__ import annotations
@@ -127,6 +128,7 @@ class TestListFeat(unittest.TestCase):
         self.assertEqual(statuses, {"planning", "<failed to parse>"})
         for summary in sut.results:
             self.assertTrue(summary.ref)
+            self.assertTrue(Path(summary.path).is_absolute())
             if summary.ref != "feat-99-broken":
                 self.assertEqual(summary.ref, summary.id)
                 self.assertTrue(summary.path.endswith(f"{summary.id}/{README_FILENAME}"))
@@ -136,6 +138,7 @@ class TestListFeat(unittest.TestCase):
         self.assertIsNone(failed.id)
         self.assertEqual(failed.title, "<failed to parse>")
         self.assertEqual(failed.status, "<failed to parse>")
+        self.assertEqual(Path(failed.path), (broken / README_FILENAME).resolve())
         self.assertTrue(failed.path.endswith(f"feat-99-broken/{README_FILENAME}"))
         self.assertTrue(Path(failed.path).exists())
         self.assertIsNotNone(failed.error)

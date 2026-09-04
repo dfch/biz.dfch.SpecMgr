@@ -72,12 +72,13 @@ class DocSummary(BaseModel):
     ref:
         The document's extensionless base name (e.g.
         ``"req-<uuid>-a-title"``), deliberately *not* a filename or path --
-        callers must not read this off disk themselves, only pass it to
-        the matching domain's ``get_<domain>`` tool alongside (or instead
-        of) ``id``. Named ``ref`` rather than ``filename`` precisely to
-        avoid inviting direct filesystem access. Derived from the
-        filename/folder alone, so it is always populated even for a
-        document that failed to parse.
+        pass it to the matching domain's ``get_<domain>`` tool alongside
+        (or instead of) ``id``. Named ``ref`` rather than ``filename`` for
+        that reason, even though ``path`` (below) does now expose the real
+        filesystem path directly for a caller that wants it (REQ-007,
+        feat-81-83-validation Phase 3/4). Derived from the filename/folder
+        alone, so it is always populated even for a document that failed
+        to parse.
     path:
         The real, absolute (``.resolve()``d) filesystem path to the
         document's on-disk file, for a caller that wants to read it
