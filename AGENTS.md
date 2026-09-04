@@ -520,9 +520,6 @@ documentation in `docs/`:
 
 ```
 .specmgr/
-├── _template/
-│   └── v1/
-│       └── README.md              # Versioned feature template (plan + progress)
 └── feat/
     └── feat-NNN-slug/              # One folder per GitHub issue
         ├── README.md               # Feature plan + progress (mandatory)
@@ -537,10 +534,11 @@ documentation in `docs/`:
   (current status, blockers, recent updates, decisions made) — there is no
   separate `progress.md`; status lives inline on each task line, edited in
   place rather than duplicated.
-- **Template**: `.specmgr/_template/v1/README.md` is the versioned,
-  reusable template (copy it when starting a new feature folder). It is
-  hand-copied, not scaffolded by any tool — no automation exists for this
-  yet, and none is currently planned.
+- **Template**: The canonical feature template/example is the packaged
+  data behind the `get_feat_template` / `get_feat_example` MCP tools
+  (`src/biz/dfch/specmgr/feat/data/`). There is no hand-copied
+  `_template` file — copy the tools' output when starting a new
+  feature folder. See feat-93 for the consolidation.
 - **Frontmatter**: every feature `README.md` starts with a minimal YAML
   frontmatter block — `id` (the `feat-NNN-slug` folder name itself, not a
   generated UUID), `version` (semver, starts at `1.0.0`), `status`
