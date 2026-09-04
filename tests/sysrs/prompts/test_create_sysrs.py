@@ -100,10 +100,10 @@ class TestCreateSysrsPrompt(unittest.TestCase):
         self.assertIn("specmgr://sysrs/schema", result)
 
     def test_mentions_create_and_validate_tools(self):
-        """The prompt must name the create_sysrs and validate_sysrs tools."""
+        """The prompt must name the create_sysrs tool and the generic validate tool."""
         result = create_sysrs("Some topic")
         self.assertIn("create_sysrs(content)", result)
-        self.assertIn("validate_sysrs(content, full=False)", result)
+        self.assertIn('validate(type="sysrs", content=content, full=False)', result)
 
     def test_mentions_tool_sequence_in_order(self):
         """The prompt must mention list_sysrs, the iso25010 resource, the

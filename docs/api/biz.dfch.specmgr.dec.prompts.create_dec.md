@@ -6,7 +6,7 @@ Returns instructional text -- not itself a tool call -- that guides an LLM
 through drafting a brand-new Decision (DEC) document using the existing
 ``dec/tools/``/``dec/resources/`` surface (``list_dec``,
 ``specmgr://dec/template``/``specmgr://dec/example``,
-``specmgr://dec/schema``, ``create_dec``, ``validate_dec``).
+``specmgr://dec/schema``, ``create_dec``, generic ``validate`` tool).
 
 Unlike ``adr.prompts.create_adr``, this prompt has no frontmatter-related
 parameters to pre-fill: ``create_dec`` builds the entire DEC frontmatter

@@ -22,7 +22,7 @@
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through revising an existing Verification Case Record (VCR) document by
 id, using the existing ``vcr/tools/`` surface (``get_vcr``,
-``validate_vcr``) plus the generic ``update``/``set_status`` tools in
+generic ``validate`` tool) plus the generic ``update``/``set_status`` tools in
 ``general/tools/`` (called with ``type="vcr"``; ``get_vcr``'s ``raw=True``
 parameter serves the line-range flow's line numbers). There is no
 ``specmgr://vcr/{id}`` resource to point at -- id-based reads always go

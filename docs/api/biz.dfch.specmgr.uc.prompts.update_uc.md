@@ -4,7 +4,7 @@
 
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through revising an existing Use Case (UC) document by id, using the
-existing ``uc/tools/`` surface (``get_uc``, ``validate_uc``) plus the
+existing ``uc/tools/`` surface (``get_uc``, generic ``validate`` tool) plus the
 generic ``update``/``set_status``/``set_classification`` tools in
 ``general/tools/`` (called with ``type="uc"``). UC has no
 ``specmgr://uc/{id}`` resource -- id-based reads are ``get_uc``-only, ADR

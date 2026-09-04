@@ -4,6 +4,11 @@ Index of all ADRs in this repository.
 
 ## All ADRs
 
+- [Replace domain-specific validate tools with a generic type-dispatched validate tool](078bf395-0a5f-4afd-84f6-b7a2191a00e6-replace-domain-specific-validate-tools-with-a-generic-type-d.md)
+  - Id: 078bf395-0a5f-4afd-84f6-b7a2191a00e6
+  - Status: accepted
+  - Date: 2026-09-04
+  - Decision-makers: OpenCode agent + user decision
 - [Replace domain-specific delete tools with a generic type-dispatched delete tool](1af6787b-eaab-4e8f-888f-531c1e76c19d-replace-domain-specific-delete-tools-with-a-generic-type-dis.md)
   - Id: 1af6787b-eaab-4e8f-888f-531c1e76c19d
   - Status: accepted
@@ -41,6 +46,11 @@ Index of all ADRs in this repository.
   - Id: 4ec08dcb-fcb7-4961-abaf-ff7803e2f21d
   - Status: accepted
   - Date: 2026-09-01
+  - Decision-makers: OpenCode agent + user decision
+- [Design validate as a non-raising, structured-result tool to work around client-side MCP error-content truncation](519d1206-4d2a-4500-9046-6db635209996-design-validate-as-a-non-raising-structured-result-tool-to-w.md)
+  - Id: 519d1206-4d2a-4500-9046-6db635209996
+  - Status: accepted
+  - Date: 2026-09-03
   - Decision-makers: OpenCode agent + user decision
 - [Generic update_section(key, value) with deletion sentinel and mandatory-section rejection](71fd95d7-07f2-466f-81aa-d29b7e3ef34c-generic-update-section-key-value-with-deletion-sentinel-and.md)
   - Id: 71fd95d7-07f2-466f-81aa-d29b7e3ef34c

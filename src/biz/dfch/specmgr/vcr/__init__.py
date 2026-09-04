@@ -34,14 +34,17 @@ resources against the shared ``mcp`` application instance at once::
     from biz.dfch.specmgr import vcr  # noqa: F401 (side-effects only)
 
 ``tools`` (``create_vcr``, ``parse_vcr``,
-``list_vcr``, ``get_vcr``, ``get_vcr_example``, ``get_vcr_template``,
-``validate_vcr``), ``resources`` (``specmgr://vcr/schema``,
+``list_vcr``, ``get_vcr``, ``get_vcr_example``, ``get_vcr_template``),
+``resources`` (``specmgr://vcr/schema``,
 ``specmgr://vcr/example``, ``specmgr://vcr/template``), and ``prompts``
 (``create_vcr``, ``update_vcr``) all exist; whole-body and line-range
 updates of an existing document go through the generic ``update`` tool in
 ``general.tools`` (``type="vcr"``), and status changes go through the
-generic ``set_status`` tool in ``general.tools`` (``type="vcr"``). Like
-DEC, VCR has no
+generic ``set_status`` tool in ``general.tools`` (``type="vcr"``).
+Disk-free, id-free dry-run content validation goes through the generic
+``validate`` tool in ``general.tools`` (``type="vcr"``) -- the former
+``validate_vcr`` tool was removed in favor of it (feat-81-83-validation).
+Like DEC, VCR has no
 ``specmgr://vcr/{id}`` resource -- id-based reads go through the ``get_vcr``
 tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614). Likewise, there is no
 ``specmgr://vcr/list`` resource -- ``list_vcr`` ships as a paged

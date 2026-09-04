@@ -25,8 +25,10 @@ Status changes of an existing document go through the generic
 ``set_status`` tool in ``general.tools`` (``type="req"``), also bumping
 ``updated``, leaving the body untouched. Deletion of ``req`` documents
 goes through the generic ``delete`` tool in ``general.tools``
-(``type="req"``). ``validate_req`` (Task 3.16) is a disk-free, id-free dry
-run against a submitted ``content`` string, independent of the other
-tools. Import this package to register all requirement tools at once::
+(``type="req"``). Disk-free, id-free dry-run content validation goes
+through the generic ``validate`` tool in ``general.tools`` (``type="req"``)
+-- the former ``validate_req`` tool was removed in favor of it
+(feat-81-83-validation Phase 2). Import this package to register all
+requirement tools at once::
 
     from biz.dfch.specmgr.req import tools  # noqa: F401 (side-effects only)

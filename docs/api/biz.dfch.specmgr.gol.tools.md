@@ -22,8 +22,10 @@ except ``updated``. Status changes of an existing document go through the
 generic ``set_status`` tool in ``general.tools`` (``type="gol"``), also
 bumping ``updated``, leaving the body untouched. Deletion of ``gol``
 documents goes through the generic ``delete`` tool in ``general.tools``
-(``type="gol"``). ``validate_gol`` (Task 3.7) is a disk-free, id-free dry
-run against a submitted ``content`` string, independent of the other tools.
-Import this package to register all goal tools at once::
+(``type="gol"``). Disk-free, id-free dry-run content validation goes
+through the generic ``validate`` tool in ``general.tools`` (``type="gol"``)
+-- the former ``validate_gol`` tool was removed in favor of it
+(feat-81-83-validation Phase 2). Import this package to register all goal
+tools at once::
 
     from biz.dfch.specmgr.gol import tools  # noqa: F401 (side-effects only)

@@ -103,7 +103,7 @@ are not present there.
    either failure case nothing is written. A structural or field
    validation failure on `content` likewise raises uncaught and nothing is
    written.
-3. Optionally call `validate_feat(content, full=False)` first if you
+3. Optionally call `validate(type="feat", content=content, full=False)` first if you
    want to dry-run the body without writing anything -- `create_feat`
    already performs the same validation internally, so this step is
    never required, only a convenience.

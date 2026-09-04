@@ -81,7 +81,7 @@ present there.
 2. Call `create_uc(content)` -- `content` is body markdown only; the
    entire frontmatter is built automatically. A structural or field
    validation failure raises uncaught and nothing is written.
-3. Optionally call `validate_uc(content, full=False)` first if you want
+3. Optionally call `validate(type="uc", content=content, full=False)` first if you want
    to dry-run the body without writing anything -- `create_uc` already
    performs the same validation internally, so this step is never
    required, only a convenience.

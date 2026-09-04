@@ -6,7 +6,7 @@ Returns instructional text -- not itself a tool call -- that guides an LLM
 through drafting a brand-new Use Case (UC) document using the existing
 ``uc/tools/``/``uc/resources/`` surface (``list_uc``,
 ``specmgr://uc/template``/``specmgr://uc/example``, ``specmgr://uc/schema``,
-``create_uc``, ``validate_uc``).
+``create_uc``, generic ``validate`` tool).
 
 Unlike ``adr.prompts.create_adr``, this prompt has no frontmatter-related
 parameters to pre-fill: ``create_uc`` builds the entire UC frontmatter

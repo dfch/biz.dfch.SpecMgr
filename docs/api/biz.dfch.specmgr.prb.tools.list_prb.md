@@ -11,21 +11,37 @@ so it must not repeat that resource-then-convert history. See
 ``.specmgr/feat/feat-13-list-paging/README.md`` for the full paging contract
 shared by every ``list_<domain>`` tool.
 
+feat-81-83-validation Phase 3 (REQ-006/REQ-007) routed this tool through
+the shared ``general.tools._listing.build_summaries`` helper: a file that
+fails to parse now appears inline in ``results`` as a failed entry (marker
+``title``/``status``, ``ref``, ``path``, and ``error``) and contributes to
+both ``total`` and the new ``error_count``, instead of being silently
+skipped.
+
 ## Functions
+
+### `_to_failed_summary(path: 'Path', error: 'Exception') -> 'PrbSummary'`
+
+
+### `_to_summary(doc: 'PrbDocument', path: 'Path') -> 'PrbSummary'`
+
 
 ### `list_prb(max_results: 'int | None' = None, offset: 'int | None' = None) -> 'PagedResult[PrbSummary]'`
 
 Return one page of one-line problem-statement summaries from the configured base directory.
 
-A file that fails to parse (``AssertionError`` or
-``pydantic.ValidationError`` -- the same two error channels
-:func:`~biz.dfch.specmgr.prb.models.v1.parse_prb` raises) is silently
-skipped -- a single malformed file must not break listing every other
-valid one (mirrors ``prb.tools._paths.find_prb_path``'s own
-skip-on-parse-failure rule). The complete, skip-broken-file-filtered
-list is materialized first, then paginated in memory, so the returned
-``total`` always reflects the count of parseable documents only,
-independent of paging.
+A file that fails to parse (``AssertionError``, ``pydantic.ValidationError``,
+or ``yaml.YAMLError`` -- the same channels
+:func:`~biz.dfch.specmgr.prb.models.v1.parse_prb` raises) appears inline
+in ``results`` as its own failed entry (``id=None``, ``title``/``status``
+both the fixed marker ``"<failed to parse>"``, ``ref``/``path``
+populated the same way as a successful entry, and ``error`` carrying the
+exception's message) rather than being silently skipped
+(feat-81-83-validation Phase 3, REQ-006) -- a single malformed file must
+not break listing every other valid one. The complete list (successes
+and failures both) is materialized first, then paginated in memory, so
+the returned ``total``/``error_count`` always reflect the whole
+directory, independent of paging.
 
 Parameters
 ----------
@@ -42,8 +58,8 @@ offset:
 Returns
 -------
 PagedResult[PrbSummary]
-    One entry per successfully-parsed ``*.md`` file within the
-    requested page, in filename-sorted order. ``results`` is empty if
-    the base directory does not exist, holds no problem statements, or
-    ``offset`` is past the end of the full list.
+    One entry per ``*.md`` file within the requested page (successes
+    and failures both), in filename-sorted order. ``results`` is empty
+    if the base directory does not exist, holds no problem statements,
+    or ``offset`` is past the end of the full list.
 

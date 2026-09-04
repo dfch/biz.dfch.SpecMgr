@@ -25,18 +25,42 @@ of REQ/UC/TSK/QA/PRB (launched as a ``specmgr://<domain>/list`` resource,
 converted later in feat-13-list-paging). See
 ``.specmgr/feat/feat-13-list-paging/README.md`` for the full paging contract
 shared by every ``list_<domain>`` tool.
+
+feat-81-83-validation Phase 3 (REQ-006/REQ-007) routed this tool through
+the shared ``general.tools._listing.build_summaries`` helper: a file that
+fails to parse now appears inline in ``results`` as a failed entry (marker
+``title``/``status``, ``ref``, ``path``, and ``error``) and contributes to
+both ``total`` and the new ``error_count``, instead of being silently
+skipped.
 """
 
 from __future__ import annotations
 
-from pydantic import ValidationError
+from pathlib import Path
 
 from ...general.models import PagedResult
+from ...general.tools._listing import build_summaries, default_failed_summary
 from ...general.tools._paging import normalize_paging, paginate
 from ...server import mcp
-from ..models.v1 import SysrsSummary
+from ..models.v1 import SysrsDocument, SysrsSummary
 from ._io import read_sysrs
 from ._paths import iter_sysrs_paths
+
+
+def _to_summary(doc: SysrsDocument, path: Path) -> SysrsSummary:
+    result = SysrsSummary(
+        id=doc.frontmatter.id,
+        title=doc.body.text,
+        status=doc.frontmatter.status,
+        ref=path.stem,
+        path=str(path.resolve()),
+    )
+    return result
+
+
+def _to_failed_summary(path: Path, error: Exception) -> SysrsSummary:
+    result = default_failed_summary(SysrsSummary, path, error)
+    return result
 
 
 @mcp.tool(
@@ -54,15 +78,18 @@ from ._paths import iter_sysrs_paths
 def list_sysrs(max_results: int | None = None, offset: int | None = None) -> PagedResult[SysrsSummary]:
     """Return one page of one-line System Requirements Specification summaries from the configured base directory.
 
-    A file that fails to parse (``AssertionError`` or
-    ``pydantic.ValidationError`` -- the same two error channels
-    :func:`~biz.dfch.specmgr.sysrs.models.v1.parse_sysrs` raises) is silently
-    skipped -- a single malformed file must not break listing every other
-    valid one (mirrors ``sysrs.tools._paths.find_sysrs_path``'s own
-    skip-on-parse-failure rule). The complete, skip-broken-file-filtered
-    list is materialized first, then paginated in memory, so the returned
-    ``total`` always reflects the count of parseable documents only,
-    independent of paging.
+    A file that fails to parse (``AssertionError``, ``pydantic.ValidationError``,
+    or ``yaml.YAMLError`` -- the same channels
+    :func:`~biz.dfch.specmgr.sysrs.models.v1.parse_sysrs` raises) appears
+    inline in ``results`` as its own failed entry (``id=None``,
+    ``title``/``status`` both the fixed marker ``"<failed to parse>"``,
+    ``ref``/``path`` populated the same way as a successful entry, and
+    ``error`` carrying the exception's message) rather than being silently
+    skipped (feat-81-83-validation Phase 3, REQ-006) -- a single malformed
+    file must not break listing every other valid one. The complete list
+    (successes and failures both) is materialized first, then paginated in
+    memory, so the returned ``total``/``error_count`` always reflect the
+    whole directory, independent of paging.
 
     Parameters
     ----------
@@ -79,23 +106,10 @@ def list_sysrs(max_results: int | None = None, offset: int | None = None) -> Pag
     Returns
     -------
     PagedResult[SysrsSummary]
-        One entry per successfully-parsed ``*.md`` file within the
-        requested page, in filename-sorted order. ``results`` is empty if
-        the base directory does not exist, holds no System Requirements
+        One entry per ``*.md`` file within the requested page (successes
+        and failures both), in filename-sorted order. ``results`` is empty
+        if the base directory does not exist, holds no System Requirements
         Specifications, or ``offset`` is past the end of the full list.
     """
-    summaries: list[SysrsSummary] = []
-    for path in iter_sysrs_paths():
-        try:
-            doc = read_sysrs(path)
-        except (AssertionError, ValidationError):
-            continue
-        summaries.append(
-            SysrsSummary(
-                id=doc.frontmatter.id,
-                title=doc.body.text,
-                status=doc.frontmatter.status,
-                ref=path.stem,
-            )
-        )
-    return paginate(summaries, *normalize_paging(max_results, offset))
+    summaries, error_count = build_summaries(iter_sysrs_paths(), read_sysrs, _to_summary, _to_failed_summary)
+    return paginate(summaries, *normalize_paging(max_results, offset), error_count=error_count)

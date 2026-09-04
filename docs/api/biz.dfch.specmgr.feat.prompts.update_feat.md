@@ -4,7 +4,7 @@
 
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through revising an existing Feature (FEAT) document by id, using the
-existing ``feat/tools/`` surface (``get_feat``, ``validate_feat``) plus the
+existing ``feat/tools/`` surface (``get_feat``, generic ``validate`` tool) plus the
 generic ``update``/``set_status`` tools in ``general/tools/`` (called with
 ``type="feat"``; ``get_feat``'s ``raw=True`` parameter serves the
 line-range flow's line numbers). There is no ``specmgr://feat/{id}``

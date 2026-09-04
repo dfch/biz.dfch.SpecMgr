@@ -109,7 +109,7 @@ there.
    entire frontmatter is built automatically and `status` is fixed to
    `"draft"`. A structural or field validation failure raises uncaught
    and nothing is written.
-3. Optionally call `validate_sop(content, full=False)` first if you
+3. Optionally call `validate(type="sop", content=content, full=False)` first if you
    want to dry-run the body without writing anything -- `create_sop`
    already performs the same validation internally, so this step is
    never required, only a convenience.

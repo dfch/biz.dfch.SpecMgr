@@ -29,7 +29,9 @@ This is a **regression-test-only** phase, not a fix, for both sub-cases:
 - Phase 1 and Phase 1b (this feature's own README, Design Notes) both conclusively found no gap
   for the malformed-heading case -- even reproducing the exact literal reported heading text
   (``#### 2026-09-02 (Phase 1) - Some Title``) through ``Feature.from_text``, the in-process
-  ``validate_feat``/``update`` tools, and a real MCP client over a real ``stdio`` transport,
+  ``validate_feat``/``update`` tools (``validate_feat`` since retired in favor of the generic
+  ``validate`` tool, feat-81-83-validation Phase 2), and a real MCP client over a real ``stdio``
+  transport,
   *including* the generic ``update`` tool's real ``offset``/``limit`` line-range splice path (the
   exact call shape issue #71 was filed against), not just whole-document validation.
 - Task 1.6 found no gap for the newest-first-ordering case either: ``Updates``/
@@ -47,7 +49,11 @@ was literally filed against, and the domain the newest-first-ordering case was f
 ``update`` coverage is the one Phase 1b's own literal repro specifically called out as untested
 by Phase 1's first pass, since it drives the tool's real re-read/splice/validate-whole path
 (``general/tools/update.py::_update_feat`` + ``general/tools/_splice.py::splice_body``), not a
-shortcut around it.
+shortcut around it. Since feat-81-83-validation Phase 2, ``validate_feat`` is retired in favor of
+the generic ``validate`` tool (``type="feat"``), which never raises for a content-validation
+failure -- it returns ``{valid: False, errors: [{message: str}]}`` instead, so the two
+``validate``-tool tests below assert against ``result.errors[0].message`` rather than a raised
+exception.
 """
 
 from __future__ import annotations
@@ -63,9 +69,9 @@ import pydantic
 from biz.dfch.specmgr.feat.tools._io import load_by_id
 from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR, feat_base_dir
 from biz.dfch.specmgr.feat.tools.create_feat import create_feat
-from biz.dfch.specmgr.feat.tools.validate_feat import validate_feat
 from biz.dfch.specmgr.general.tools._splice import body_text
 from biz.dfch.specmgr.general.tools.update import update
+from biz.dfch.specmgr.general.tools.validate import validate
 
 
 def _line_number(text: str, needle: str) -> int:
@@ -243,10 +249,10 @@ def _assert_actionable(message: str, tool_prefix: str, expected_substrings: tupl
     Parameters
     ----------
     message:
-        The ``str(exception)`` a failed ``validate_feat``/``create_feat``/``update`` call
-        raised.
+        The ``str(exception)`` a failed ``create_feat``/``update`` call raised, or a failed
+        generic ``validate`` call's ``result.errors[0].message``.
     tool_prefix:
-        The domain/tool/channel prefix `wrap_tool_errors` adds (e.g. ``"feat validate_feat
+        The domain/tool/channel prefix `wrap_tool_errors` adds (e.g. ``"feat validate
         (body):"``, ``"feat create_feat (body):"``, ``"feat update (body):"``).
     expected_substrings:
         The cause/field/line/snippet substrings the message must also carry.
@@ -270,11 +276,12 @@ class TestIssue71MalformedHeadingRegression(unittest.TestCase):
         self.feat_root = tmp / "feat"
         self.enterContext(mock.patch.dict("os.environ", {FEAT_DIR_ENV_VAR: str(self.feat_root)}))
 
-    def test_validate_feat_surfaces_an_actionable_message(self) -> None:
-        with self.assertRaises(AssertionError) as ctx:
-            validate_feat(_FEAT_MALFORMED_HEADING_BODY)
+    def test_validate_surfaces_an_actionable_message(self) -> None:
+        result = validate(type="feat", content=_FEAT_MALFORMED_HEADING_BODY)
 
-        _assert_actionable(str(ctx.exception), "feat validate_feat (body):", _MALFORMED_HEADING_SUBSTRINGS)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        _assert_actionable(result.errors[0].message, "feat validate (body):", _MALFORMED_HEADING_SUBSTRINGS)
 
     def test_create_feat_surfaces_an_actionable_message_and_writes_nothing(self) -> None:
         with self.assertRaises(AssertionError) as ctx:
@@ -321,11 +328,12 @@ class TestIssue71NewestFirstOrderingRegression(unittest.TestCase):
         self.feat_root = tmp / "feat"
         self.enterContext(mock.patch.dict("os.environ", {FEAT_DIR_ENV_VAR: str(self.feat_root)}))
 
-    def test_validate_feat_surfaces_an_actionable_message(self) -> None:
-        with self.assertRaises(pydantic.ValidationError) as ctx:
-            validate_feat(_FEAT_ORDER_VIOLATION_BODY)
+    def test_validate_surfaces_an_actionable_message(self) -> None:
+        result = validate(type="feat", content=_FEAT_ORDER_VIOLATION_BODY)
 
-        _assert_actionable(str(ctx.exception), "feat validate_feat (body):", _ORDER_VIOLATION_SUBSTRINGS)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        _assert_actionable(result.errors[0].message, "feat validate (body):", _ORDER_VIOLATION_SUBSTRINGS)
 
     def test_create_feat_surfaces_an_actionable_message_and_writes_nothing(self) -> None:
         with self.assertRaises(pydantic.ValidationError) as ctx:

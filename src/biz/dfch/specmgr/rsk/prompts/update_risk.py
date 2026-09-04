@@ -21,7 +21,7 @@
 
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through revising an existing Risk (RSK) document by id, using the existing
-``rsk/tools/`` surface (``get_rsk``, ``validate_rsk``) plus the generic
+``rsk/tools/`` surface (``get_rsk``, generic ``validate`` tool) plus the generic
 ``update``/``set_status`` tools in ``general/tools/`` (called with
 ``type="rsk"``; ``get_rsk``'s ``raw=True`` parameter serves the line-range
 flow's line numbers). There is no ``specmgr://rsk/{id}`` resource to point at

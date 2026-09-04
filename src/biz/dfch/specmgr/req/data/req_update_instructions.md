@@ -53,7 +53,7 @@ want to change before calling any write tool.
 ## 4. Check the schema, and validate before writing if useful
 Fetch `specmgr://req/schema` to confirm field names and constraints
 before drafting the replacement body. Optionally call
-`validate_req(content, full=False)` beforehand to dry-run the new body
+`validate(type="req", content=content, full=False)` beforehand to dry-run the new body
 without writing anything -- `update` already performs the same
 validation internally, so this step is never required, only a
 convenience.

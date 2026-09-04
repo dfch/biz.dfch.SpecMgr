@@ -47,7 +47,7 @@ tuple[int, int]
     ``paginate(items, *normalize_paging(max_results, offset))``.
 
 
-### `paginate(items: 'list[_ItemT]', offset: 'int', max_results: 'int') -> 'PagedResult[_ItemT]'`
+### `paginate(items: 'list[_ItemT]', offset: 'int', max_results: 'int', error_count: 'int' = 0) -> 'PagedResult[_ItemT]'`
 
 Slice a fully materialized item list into one page, plus paging metadata.
 
@@ -55,18 +55,26 @@ Parameters
 ----------
 items:
     The complete, already-materialized list of items (e.g. every
-    parsed document summary for a domain). Callers should normalize
+    document summary for a domain, including failed-to-parse entries --
+    feat-81-83-validation Phase 3). Callers should normalize
     ``offset``/``max_results`` via :func:`normalize_paging` first.
 offset:
     Zero-based start index into ``items``. Must be non-negative.
 max_results:
     Maximum number of items to include in the returned page. Must be at
     least :data:`MIN_MAX_RESULTS`.
+error_count:
+    The number of ``items`` that represent a document that failed to
+    parse, independent of paging (feat-81-83-validation Phase 3,
+    REQ-006). Defaults to ``0`` -- callers that never produce failed
+    entries (e.g. ``list_adr``, out of scope for that feature) do not
+    need to pass this.
 
 Returns
 -------
 PagedResult[_ItemT]
     ``total`` is ``len(items)``; ``results`` is
     ``items[offset : offset + max_results]``; ``truncated`` is ``True``
-    iff further items exist beyond this page.
+    iff further items exist beyond this page; ``error_count`` is
+    ``error_count``, passed straight through.
 

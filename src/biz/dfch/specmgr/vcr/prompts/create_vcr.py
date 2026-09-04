@@ -22,7 +22,7 @@ through drafting a brand-new Verification Case Record (VCR) document using
 the existing ``vcr/tools/``/``vcr/resources/`` surface (``list_vcr``,
 ``specmgr://vcr/template``/``specmgr://vcr/example``,
 ``specmgr://vcr/schema``, ``specmgr://dtais``, ``create_vcr``,
-``validate_vcr``).
+generic ``validate`` tool).
 
 Unlike ``adr.prompts.create_adr``, this prompt has no frontmatter-related
 parameters to pre-fill: ``create_vcr`` builds the entire VCR frontmatter
@@ -70,7 +70,7 @@ from ...server import mcp
     title="Create a verification case record",
     description=(
         "Guides the LLM through checking for an existing similar verification case record, "
-        "gathering the required information, and driving create_vcr/validate_vcr to author a "
+        "gathering the required information, and driving create_vcr/validate to author a "
         "new VCR document."
     ),
 )

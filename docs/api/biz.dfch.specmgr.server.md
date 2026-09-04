@@ -164,47 +164,45 @@ Use-case tools (``uc/tools/``): ``parse_uc``, ``get_uc`` (``raw=True`` returns t
 frontmatter-stripped body text verbatim instead of the parsed document, optionally
 windowed with read-style ``offset``/``limit`` (raw-only, clamping)), ``list_uc``,
 ``get_uc_example``,
-``get_uc_template``, ``create_uc``, ``validate_uc``.
+``get_uc_template``, ``create_uc``.
 Requirement tools (``req/tools/``): ``parse_req``, ``get_req`` (``raw=True`` returns the
 frontmatter-stripped body text verbatim instead of the parsed document, optionally
 windowed with read-style ``offset``/``limit`` (raw-only, clamping)), ``list_req``,
 ``get_req_example``,
-``get_req_template``, ``create_req``, ``validate_req``.
+``get_req_template``, ``create_req``.
 Task list tools (``tsk/tools/``): ``parse_tsk``, ``get_tsk`` (``raw=True`` returns the
 frontmatter-stripped body text verbatim instead of the parsed document, optionally
 windowed with read-style ``offset``/``limit`` (raw-only, clamping)), ``list_tsk``,
 ``get_tsk_example``,
-``get_tsk_template``, ``create_tsk``, ``validate_tsk``.
+``get_tsk_template``, ``create_tsk``.
 QA tools (``qa/tools/``): ``parse_qa``, ``get_qa`` (``raw=True`` returns the
 frontmatter-stripped body text verbatim instead of the parsed document, optionally
 windowed with read-style ``offset``/``limit`` (raw-only, clamping)), ``list_qa``,
 ``get_qa_example``,
-``get_qa_template``, ``create_qa``, ``validate_qa``.
+``get_qa_template``, ``create_qa``.
 Problem statement tools (``prb/tools/``): ``parse_prb``, ``get_prb`` (``raw=True`` returns
 the frontmatter-stripped body text verbatim instead of the parsed document, optionally
 windowed with read-style ``offset``/``limit`` (raw-only, clamping)), ``list_prb``,
-``get_prb_example``, ``get_prb_template``, ``create_prb``,
-``validate_prb``.
+``get_prb_example``, ``get_prb_template``, ``create_prb``.
 Goal tools (``gol/tools/``): ``parse_gol``, ``get_gol`` (``raw=True`` returns the
 frontmatter-stripped body text verbatim instead of the parsed document, optionally
 windowed with read-style ``offset``/``limit`` (raw-only, clamping)), ``list_gol``,
-``get_gol_example``, ``get_gol_template``, ``create_gol``,
-``validate_gol``.
+``get_gol_example``, ``get_gol_template``, ``create_gol``.
  Risk tools (``rsk/tools/``): ``parse_rsk``, ``get_rsk`` (``raw=True`` returns the
 frontmatter-stripped body text verbatim instead of the parsed document, optionally
 windowed with read-style ``offset``/``limit`` (raw-only, clamping)), ``list_rsk``,
  ``get_rsk_example``,
- ``get_rsk_template``, ``create_rsk``, ``validate_rsk``.
+ ``get_rsk_template``, ``create_rsk``.
    Decision tools (``dec/tools/``): ``parse_dec``, ``get_dec`` (``raw=True`` returns the
 frontmatter-stripped body text verbatim instead of the parsed document, optionally
 windowed with read-style ``offset``/``limit`` (raw-only, clamping)), ``list_dec``,
     ``get_dec_example``,
-    ``get_dec_template``, ``create_dec``, ``validate_dec``.
+    ``get_dec_template``, ``create_dec``.
     SOP tools (``sop/tools/``): ``parse_sop``, ``get_sop`` (``raw=True`` returns the
 frontmatter-stripped body text verbatim instead of the parsed document, optionally
 windowed with read-style ``offset``/``limit`` (raw-only, clamping)), ``list_sop``,
     ``get_sop_example``,
-    ``get_sop_template``, ``create_sop``, ``validate_sop``. SOP is the first domain with NO
+    ``get_sop_template``, ``create_sop``. SOP is the first domain with NO
     per-domain ``update_sop``/``set_status_sop`` tools at all -- whole-body and line-range
     updates go through the generic ``update`` tool in ``general/tools/`` (``type="sop"``)
     and status changes through the generic ``set_status`` tool (``type="sop"``), per ADR
@@ -220,7 +218,7 @@ windowed with read-style ``offset``/``limit`` (raw-only, clamping)), ``list_feat
   ``get_feat_template``, ``create_feat``, ``set_feat_id`` (renames an existing feature's
   ``feat-NNN-slug`` id: validates the new id's shape, refuses if the target folder already
   exists, renames the folder, rewrites the frontmatter ``id``/``updated``, leaves the body
-  byte-identical), ``validate_feat``. Unlike every other domain here, ``feat``
+  byte-identical). Unlike every other domain here, ``feat``
   uses bespoke, folder-per-document addressing (``feat/tools/_paths.py``, not the shared
   ``general/tools/_doc_paths.py``) and has no ``update_feat``/``set_status_feat`` tools of
   its own -- it dispatches through the generic ``update``/``set_status`` tools below from
@@ -229,12 +227,12 @@ windowed with read-style ``offset``/``limit`` (raw-only, clamping)), ``list_feat
   (``raw=True`` returns the frontmatter-stripped body text verbatim instead of the
   parsed document, optionally windowed with read-style ``offset``/``limit``
   (raw-only, clamping)), ``list_vcr``, ``get_vcr_example``, ``get_vcr_template``,
-  ``create_vcr``, ``validate_vcr``.
+  ``create_vcr``.
   System Requirements Specification tools (``sysrs/tools/``): ``parse_sysrs``,
   ``get_sysrs`` (``raw=True`` returns the frontmatter-stripped body text verbatim
   instead of the parsed document, optionally windowed with read-style
   ``offset``/``limit`` (raw-only, clamping)), ``list_sysrs``, ``get_sysrs_example``,
-  ``get_sysrs_template``, ``create_sysrs``, ``validate_sysrs``. ``sysrs`` is an
+  ``get_sysrs_template``, ``create_sysrs``. ``sysrs`` is an
   aggregator domain tying together already-existing artifacts (``gol``, ``prb``,
   ``qa``, ``uc``, ``req``, ``rsk``, ``dec``/``adr``, ``vcr``) via per-section
   type-tagged cross-reference lists, and is built dispatch-only from day one (ADR
@@ -273,6 +271,16 @@ resolves by ``id``, takes the domain lock, and returns the deleted path; a
 ``ValueError`` for injection/wrong-format ids before any file access, the
 domain's ``XNotFoundError`` for missing documents, and a ``DeleteError`` for
 I/O failures;
+``validate`` (feat-81-83-validation, ADR 078bf395-0a5f-4afd-84f6-b7a2191a00e6) --
+the generic, disk-free/id-free dry-run content validator for the twelve
+whole-body domains (``type`` is one of
+``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``;
+``adr`` is not supported -- use ``validate_adr`` instead), replacing the
+twelve former per-domain ``validate_<d>`` tools; unlike every other generic
+tool above, it never raises for a content-validation failure -- it always
+returns ``{valid: bool, errors: list[{message: str}]}`` (``errors`` empty
+when ``valid`` is ``True``), only raising ``ValueError`` for a ``full``/
+content-shape mismatch or an unsupported ``type``;
 ``confluence_fetch`` (renamed from ``webfetch``, ADR
 a156fdf9-052c-4f43-93a2-eeec04a91eac) -- fetch a URL over HTTP GET with a
 bearer token, restricted to a configured base URL (``SPECMGR_CONFLUENCE_BASE_URL``,
@@ -348,7 +356,7 @@ instructional text guiding an LLM through a ``TodoWrite`` +
 ``question``-tool-driven interview flow over the SOP surface (the
 ``specmgr://sop/template``/``/example``/``/schema`` starting-point resources,
 the ``specmgr://rasci`` read-first step before ``## Roles and Responsibilities``,
-and the ``create_sop``/``validate_sop`` tool calls); ``create_sop`` first checks
+and the ``create_sop``/generic ``validate`` (``type="sop"``) tool calls); ``create_sop`` first checks
 ``list_sop`` for a near-duplicate SOP. ``update_sop`` names the GENERIC
 ``update``/``set_status`` tools with ``type="sop"`` (both whole-body and line-range
 via ``get_sop(id, raw=True)``) -- ``sop`` has no per-domain ``update_sop``/

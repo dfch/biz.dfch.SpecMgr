@@ -39,10 +39,11 @@ frontmatter field except ``updated``. Status changes of an existing
 document go through the generic ``set_status`` tool in ``general.tools``
 (``type="tsk"``), also bumping ``updated``, leaving the body untouched.
 Deletion of ``tsk`` documents goes through the generic ``delete`` tool in
-``general.tools`` (``type="tsk"``). ``validate_tsk`` is a
-disk-free, id-free dry run against a submitted ``content`` string,
-independent of the other tools. Import this package to register all task
-list tools at once::
+``general.tools`` (``type="tsk"``). Disk-free, id-free dry-run content
+validation goes through the generic ``validate`` tool in ``general.tools``
+(``type="tsk"``) -- the former ``validate_tsk`` tool was removed in favor
+of it (feat-81-83-validation Phase 2). Import this package to register all
+task list tools at once::
 
     from biz.dfch.specmgr.tsk import tools  # noqa: F401 (side-effects only)
 """
@@ -53,7 +54,6 @@ from .get_tsk_example import get_tsk_example
 from .get_tsk_template import get_tsk_template
 from .list_tsk import list_tsk
 from .parse_tsk import parse_tsk
-from .validate_tsk import validate_tsk
 
 __all__ = [
     "create_tsk",
@@ -62,5 +62,4 @@ __all__ = [
     "get_tsk_template",
     "list_tsk",
     "parse_tsk",
-    "validate_tsk",
 ]

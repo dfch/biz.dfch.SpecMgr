@@ -6,7 +6,7 @@ Returns instructional text -- not itself a tool call -- that guides an LLM
 through drafting a brand-new System Requirements Specification (SYSRS)
 document using the existing ``sysrs/tools/``/``sysrs/resources/`` surface
 (``list_sysrs``, ``specmgr://sysrs/template``/``specmgr://sysrs/example``,
-``specmgr://sysrs/schema``, ``create_sysrs``, ``validate_sysrs``) plus the
+``specmgr://sysrs/schema``, ``create_sysrs``, generic ``validate`` tool) plus the
 existing cross-cutting ``specmgr://iso25010`` resource (read before grouping
 ``## Requirements`` by its nine canonical characteristic names).
 

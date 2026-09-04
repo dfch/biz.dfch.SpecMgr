@@ -22,7 +22,7 @@
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through revising an existing System Requirements Specification (SYSRS)
 document by id, using the existing ``sysrs/tools/`` surface (``get_sysrs``,
-``validate_sysrs``) plus the generic ``update``/``set_status``/
+generic ``validate`` tool) plus the generic ``update``/``set_status``/
 ``set_classification`` tools in ``general/tools/`` (called with
 ``type="sysrs"``; ``get_sysrs``'s ``raw=True`` parameter serves the
 line-range flow's line numbers). There is no ``specmgr://sysrs/{id}``

@@ -6,7 +6,7 @@ Returns instructional text -- not itself a tool call -- that guides an LLM
 through drafting a brand-new Feature (FEAT) document using the existing
 ``feat/tools/``/``feat/resources/`` surface (``list_feat``,
 ``specmgr://feat/template``/``specmgr://feat/example``,
-``specmgr://feat/schema``, ``create_feat``, ``validate_feat``).
+``specmgr://feat/schema``, ``create_feat``, generic ``validate`` tool).
 
 ``create_feat`` (the tool) builds the entire FEAT frontmatter itself
 (``id``/``type``/``status``/``created``/``updated``/``version``) -- the

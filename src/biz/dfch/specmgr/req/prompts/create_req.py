@@ -21,7 +21,7 @@ Returns instructional text -- not itself a tool call -- that guides an LLM
 through drafting a brand-new Requirement (REQ) document using the existing
 ``req/tools/``/``req/resources/`` surface (``list_req``,
 ``specmgr://req/template``/``specmgr://req/example``, ``specmgr://req/schema``,
-``create_req``, ``validate_req``).
+``create_req``, generic ``validate`` tool).
 
 Unlike ``adr.prompts.create_adr``, this prompt has no frontmatter-related
 parameters to pre-fill: ``create_req`` builds the entire REQ frontmatter
@@ -57,7 +57,7 @@ from ...server import mcp
     title="Create a requirement",
     description=(
         "Guides the LLM through checking for an existing similar requirement, gathering the "
-        "required information, and driving create_req/validate_req to author a new REQ document."
+        "required information, and driving create_req/validate to author a new REQ document."
     ),
 )
 def create_req(topic: str) -> str:

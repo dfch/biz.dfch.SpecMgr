@@ -43,12 +43,14 @@ bumping ``updated``, leaving the body untouched. Classification changes go
 through the generic ``set_classification`` tool in ``general.tools``
 (``type="sysrs"``). Deletion of ``sysrs`` documents goes through the
 generic ``delete`` tool in ``general.tools`` (``type="sysrs"``).
-``validate_sysrs`` is a disk-free, id-free dry run against a submitted
-``content`` string, independent of the other tools. There is **no**
-per-domain ``update_sysrs``/``set_status_sysrs``/``delete_sysrs`` tool --
-dispatch-only from day one, ADR 36905d5b-8057-4294-8665-c7eed5534db0.
-Import this package to register all System Requirements Specification
-tools at once::
+Disk-free, id-free dry-run content validation goes through the generic
+``validate`` tool in ``general.tools`` (``type="sysrs"``) -- the former
+``validate_sysrs`` tool was removed in favor of it (feat-81-83-validation
+Phase 2). There is **no** per-domain
+``update_sysrs``/``set_status_sysrs``/``delete_sysrs``/``validate_sysrs``
+tool -- dispatch-only from day one, ADR
+36905d5b-8057-4294-8665-c7eed5534db0. Import this package to register all
+System Requirements Specification tools at once::
 
     from biz.dfch.specmgr.sysrs import tools  # noqa: F401 (side-effects only)
 """
@@ -59,7 +61,6 @@ from .get_sysrs_example import get_sysrs_example
 from .get_sysrs_template import get_sysrs_template
 from .list_sysrs import list_sysrs
 from .parse_sysrs import parse_sysrs
-from .validate_sysrs import validate_sysrs
 
 __all__ = [
     "create_sysrs",
@@ -68,5 +69,4 @@ __all__ = [
     "get_sysrs_template",
     "list_sysrs",
     "parse_sysrs",
-    "validate_sysrs",
 ]

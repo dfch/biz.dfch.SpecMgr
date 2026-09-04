@@ -17,12 +17,13 @@
 
 """feat-27-validation Phase 3, Task 3.4: tool-layer tests for the shared error-context wrapper.
 
-ACC-003: asserts that the exception string surfaced by ``create_<d>``/``validate_<d>`` and the
-generic ``update`` adapter (``general.tools.update``) prepends domain + tool context (built by
-``models.md._errors.wrap_tool_errors``, Task 3.1) on top of the engine's own message
-(feat-27-validation Phases 1/2). Covers ``tsk`` and ``req`` -- the two domains the task names --
-plus one ``set_status`` case for completeness, since that generic tool's own adapters were
-touched by Task 3.2 as well.
+ACC-003: asserts that the exception string surfaced by ``create_<d>`` and the generic ``update``
+adapter (``general.tools.update``), plus the ``message`` returned by the generic ``validate``
+tool's non-raising result (feat-81-83-validation Phase 2, retiring the former ``validate_<d>``
+tools), prepends domain + tool context (built by ``models.md._errors.wrap_tool_errors``,
+Task 3.1) on top of the engine's own message (feat-27-validation Phases 1/2). Covers ``tsk`` and
+``req`` -- the two domains the task names -- plus one ``set_status`` case for completeness, since
+that generic tool's own adapters were touched by Task 3.2 as well.
 
 Unlike ``tests/general/tools/test_update.py``'s exhaustive, all-eleven-domain parametrization,
 this file only needs one representative domain pair to prove the wrapper is actually wired in
@@ -43,10 +44,9 @@ from pydantic import ValidationError
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.general.tools.set_status import set_status
 from biz.dfch.specmgr.general.tools.update import update
+from biz.dfch.specmgr.general.tools.validate import validate
 from biz.dfch.specmgr.req.tools.create_req import create_req
-from biz.dfch.specmgr.req.tools.validate_req import validate_req
 from biz.dfch.specmgr.tsk.tools.create_tsk import create_tsk
-from biz.dfch.specmgr.tsk.tools.validate_tsk import validate_tsk
 
 _TSK_MINIMAL_BODY = textwrap.dedent(
     """\
@@ -118,19 +118,26 @@ class TestCreateToolErrorContext(TempDocsDirTestCase):
 
 
 class TestValidateToolErrorContext(unittest.TestCase):
-    """``validate_<d>``: a structural/field failure names the domain and the tool."""
+    """The generic ``validate`` tool: a structural/field failure names the domain and ``validate``.
+
+    Since feat-81-83-validation Phase 2, ``validate`` never raises for a content-validation
+    failure -- it returns ``{valid: False, errors: [{message: str}]}`` instead, so these tests
+    assert against ``result.errors[0].message`` rather than a raised exception.
+    """
 
     def test_validate_tsk_structural_failure_names_domain_and_tool(self) -> None:
-        with self.assertRaises(AssertionError) as ctx:
-            validate_tsk(_TSK_MALFORMED_BODY)
+        result = validate(type="tsk", content=_TSK_MALFORMED_BODY)
 
-        self.assertIn("tsk validate_tsk", str(ctx.exception))
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        self.assertIn("tsk validate", result.errors[0].message)
 
     def test_validate_req_field_validation_failure_names_domain_and_tool(self) -> None:
-        with self.assertRaises(ValidationError) as ctx:
-            validate_req(_REQ_OUT_OF_VOCABULARY_BODY)
+        result = validate(type="req", content=_REQ_OUT_OF_VOCABULARY_BODY)
 
-        self.assertIn("req validate_req", str(ctx.exception))
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        self.assertIn("req validate", result.errors[0].message)
 
 
 class TestGenericUpdateToolErrorContext(TempDocsDirTestCase):

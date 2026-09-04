@@ -41,7 +41,16 @@ generic, cross-domain hard-delete for the eleven whole-body document types
 not supported), resolving the document by ``id``, taking the domain's own
 per-id lock, and removing it from disk (the single ``*.md`` file for the
 ten flat domains, the entire ``<base>/<id>/`` folder for ``feat``),
-returning the deleted path as a string. ``confluence_fetch`` (renamed from
+returning the deleted path as a string. ``validate`` -- the generic,
+cross-domain, disk-free/id-free dry-run content validator for the twelve
+whole-body document types (``type`` is one of
+req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs; ``adr`` is not supported,
+``validate_adr`` remains its own standalone tool); unlike every other
+generic tool here, it never raises for a content-validation failure --
+it always returns ``{valid: bool, errors: list[{message: str}]}``, only
+raising ``ValueError`` for a ``full``/content-shape mismatch or an
+unsupported ``type`` (feat-81-83-validation, ADR
+078bf395-0a5f-4afd-84f6-b7a2191a00e6). ``confluence_fetch`` (renamed from
 ``webfetch``, ADR a156fdf9-052c-4f43-93a2-eeec04a91eac) -- a
 bearer-authenticated HTTP GET fetch restricted to a configured Confluence
 base URL; automatically converts a normal, browsable Confluence page URL
@@ -75,6 +84,7 @@ from .mdformat import mdformat
 from .set_classification import set_classification
 from .set_status import set_status
 from .update import update
+from .validate import validate
 
 __all__ = [
     "confluence_fetch",
@@ -84,4 +94,5 @@ __all__ = [
     "set_classification",
     "set_status",
     "update",
+    "validate",
 ]

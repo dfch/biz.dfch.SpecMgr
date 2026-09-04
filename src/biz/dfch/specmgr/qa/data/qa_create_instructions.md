@@ -69,7 +69,7 @@ there, and do not rename or reorder the ten fixed category headings.
 2. Call `create_qa(content)` -- `content` is body markdown only; the
    entire frontmatter is built automatically. A structural or field
    validation failure raises uncaught and nothing is written.
-3. Optionally call `validate_qa(content, full=False)` first if you want
+3. Optionally call `validate(type="qa", content=content, full=False)` first if you want
    to dry-run the body without writing anything -- `create_qa` already
    performs the same validation internally, so this step is never
    required, only a convenience.

@@ -11,13 +11,16 @@ the shared ``mcp`` application instance at once::
     from biz.dfch.specmgr import req  # noqa: F401 (side-effects only)
 
 ``tools`` (``parse_req``, ``get_req``, ``list_req``, ``get_req_example``,
-``get_req_template``, ``create_req``,
-``validate_req``), ``resources`` (``specmgr://req/schema``,
+``get_req_template``, ``create_req``), ``resources``
+(``specmgr://req/schema``,
 ``specmgr://req/example``, ``specmgr://req/template``), and ``prompts``
 (``create_req``, ``update_req``) all exist; whole-body and line-range
 updates of an existing document go through the generic ``update`` tool in
 ``general.tools`` (``type="req"``), and status changes go through the
 generic ``set_status`` tool in ``general.tools`` (``type="req"``).
+Disk-free, id-free dry-run content validation goes through the generic
+``validate`` tool in ``general.tools`` (``type="req"``) -- the former
+``validate_req`` tool was removed in favor of it (feat-81-83-validation).
 Unlike ADR, REQ has no
 ``specmgr://req/{id}`` resource -- id-based reads go through the ``get_req``
 tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614). Likewise, the former

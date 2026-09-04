@@ -4,7 +4,7 @@
 
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through revising an existing Goal (GOL) document by id, using the existing
-``gol/tools/`` surface (``get_gol``, ``validate_gol``) plus the generic
+``gol/tools/`` surface (``get_gol``, generic ``validate`` tool) plus the generic
 ``update``/``set_status`` tools in ``general/tools/`` (called with
 ``type="gol"``; ``get_gol``'s ``raw=True`` parameter serves the line-range
 flow's line numbers). There is no ``specmgr://gol/{id}`` resource to point at

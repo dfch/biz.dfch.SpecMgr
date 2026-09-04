@@ -17,21 +17,24 @@ straight into the generic ``update``/``set_status`` tools in
 ``general.tools`` from day one, per the convention ``AGENTS.md`` already
 reserves for future domains.
 
-Import this package to register all SOP tools/prompts/resources (7 tools,
+Import this package to register all SOP tools/prompts/resources (6 tools,
 3 resources, 2 prompts) against the shared ``mcp`` application instance at
 once::
 
     from biz.dfch.specmgr import sop  # noqa: F401 (side-effects only)
 
 ``tools`` (``create_sop``, ``parse_sop``, ``list_sop``, ``get_sop``,
-``get_sop_example``, ``get_sop_template``,
-``validate_sop``), ``resources`` (``specmgr://sop/schema``,
+``get_sop_example``, ``get_sop_template``), ``resources``
+(``specmgr://sop/schema``,
 ``specmgr://sop/example``, ``specmgr://sop/template``), and ``prompts``
 (``create_sop``, ``update_sop``) all exist; whole-body and line-range
 updates of an existing document go through the generic ``update`` tool in
 ``general.tools`` (``type="sop"``), and status changes go through the
-generic ``set_status`` tool in ``general.tools`` (``type="sop"``). Like
-DEC, SOP has no ``specmgr://sop/{id}`` resource -- id-based reads go
+generic ``set_status`` tool in ``general.tools`` (``type="sop"``).
+Disk-free, id-free dry-run content validation goes through the generic
+``validate`` tool in ``general.tools`` (``type="sop"``) -- the former
+``validate_sop`` tool was removed in favor of it (feat-81-83-validation).
+Like DEC, SOP has no ``specmgr://sop/{id}`` resource -- id-based reads go
 through the ``get_sop`` tool only (ADR
 ddf1109-422d-4507-8dbc-dc5e4bec9614). Likewise, there is no
 ``specmgr://sop/list`` resource -- ``list_sop`` ships as a paged

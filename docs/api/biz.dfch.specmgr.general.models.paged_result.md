@@ -39,6 +39,13 @@ truncated:
 results:
     The page's items, i.e. ``items[offset : offset + max_results]`` of
     the full, materialized item list.
+error_count:
+    The number of items in the full, materialized item list that
+    represent a document that failed to parse (feat-81-83-validation
+    Phase 3, REQ-006), independent of ``offset``/``max_results`` --
+    mirrors ``total``'s own already-documented across-all-pages
+    semantics. Defaults to ``0``, so ``list_adr`` (out of scope for
+    that feature) is unaffected.
 
 **Methods:**
 
@@ -480,6 +487,13 @@ truncated:
 results:
     The page's items, i.e. ``items[offset : offset + max_results]`` of
     the full, materialized item list.
+error_count:
+    The number of items in the full, materialized item list that
+    represent a document that failed to parse (feat-81-83-validation
+    Phase 3, REQ-006), independent of ``offset``/``max_results`` --
+    mirrors ``total``'s own already-documented across-all-pages
+    semantics. Defaults to ``0``, so ``list_adr`` (out of scope for
+    that feature) is unaffected.
 
 **Methods:**
 
@@ -921,6 +935,13 @@ truncated:
 results:
     The page's items, i.e. ``items[offset : offset + max_results]`` of
     the full, materialized item list.
+error_count:
+    The number of items in the full, materialized item list that
+    represent a document that failed to parse (feat-81-83-validation
+    Phase 3, REQ-006), independent of ``offset``/``max_results`` --
+    mirrors ``total``'s own already-documented across-all-pages
+    semantics. Defaults to ``0``, so ``list_adr`` (out of scope for
+    that feature) is unaffected.
 
 **Methods:**
 
@@ -1362,6 +1383,13 @@ truncated:
 results:
     The page's items, i.e. ``items[offset : offset + max_results]`` of
     the full, materialized item list.
+error_count:
+    The number of items in the full, materialized item list that
+    represent a document that failed to parse (feat-81-83-validation
+    Phase 3, REQ-006), independent of ``offset``/``max_results`` --
+    mirrors ``total``'s own already-documented across-all-pages
+    semantics. Defaults to ``0``, so ``list_adr`` (out of scope for
+    that feature) is unaffected.
 
 **Methods:**
 
@@ -1803,6 +1831,13 @@ truncated:
 results:
     The page's items, i.e. ``items[offset : offset + max_results]`` of
     the full, materialized item list.
+error_count:
+    The number of items in the full, materialized item list that
+    represent a document that failed to parse (feat-81-83-validation
+    Phase 3, REQ-006), independent of ``offset``/``max_results`` --
+    mirrors ``total``'s own already-documented across-all-pages
+    semantics. Defaults to ``0``, so ``list_adr`` (out of scope for
+    that feature) is unaffected.
 
 **Methods:**
 
@@ -2244,6 +2279,13 @@ truncated:
 results:
     The page's items, i.e. ``items[offset : offset + max_results]`` of
     the full, materialized item list.
+error_count:
+    The number of items in the full, materialized item list that
+    represent a document that failed to parse (feat-81-83-validation
+    Phase 3, REQ-006), independent of ``offset``/``max_results`` --
+    mirrors ``total``'s own already-documented across-all-pages
+    semantics. Defaults to ``0``, so ``list_adr`` (out of scope for
+    that feature) is unaffected.
 
 **Methods:**
 
@@ -2685,6 +2727,13 @@ truncated:
 results:
     The page's items, i.e. ``items[offset : offset + max_results]`` of
     the full, materialized item list.
+error_count:
+    The number of items in the full, materialized item list that
+    represent a document that failed to parse (feat-81-83-validation
+    Phase 3, REQ-006), independent of ``offset``/``max_results`` --
+    mirrors ``total``'s own already-documented across-all-pages
+    semantics. Defaults to ``0``, so ``list_adr`` (out of scope for
+    that feature) is unaffected.
 
 **Methods:**
 
@@ -3126,6 +3175,13 @@ truncated:
 results:
     The page's items, i.e. ``items[offset : offset + max_results]`` of
     the full, materialized item list.
+error_count:
+    The number of items in the full, materialized item list that
+    represent a document that failed to parse (feat-81-83-validation
+    Phase 3, REQ-006), independent of ``offset``/``max_results`` --
+    mirrors ``total``'s own already-documented across-all-pages
+    semantics. Defaults to ``0``, so ``list_adr`` (out of scope for
+    that feature) is unaffected.
 
 **Methods:**
 
@@ -3567,6 +3623,13 @@ truncated:
 results:
     The page's items, i.e. ``items[offset : offset + max_results]`` of
     the full, materialized item list.
+error_count:
+    The number of items in the full, materialized item list that
+    represent a document that failed to parse (feat-81-83-validation
+    Phase 3, REQ-006), independent of ``offset``/``max_results`` --
+    mirrors ``total``'s own already-documented across-all-pages
+    semantics. Defaults to ``0``, so ``list_adr`` (out of scope for
+    that feature) is unaffected.
 
 **Methods:**
 
@@ -4008,6 +4071,13 @@ truncated:
 results:
     The page's items, i.e. ``items[offset : offset + max_results]`` of
     the full, materialized item list.
+error_count:
+    The number of items in the full, materialized item list that
+    represent a document that failed to parse (feat-81-83-validation
+    Phase 3, REQ-006), independent of ``offset``/``max_results`` --
+    mirrors ``total``'s own already-documented across-all-pages
+    semantics. Defaults to ``0``, so ``list_adr`` (out of scope for
+    that feature) is unaffected.
 
 **Methods:**
 
@@ -4449,6 +4519,13 @@ truncated:
 results:
     The page's items, i.e. ``items[offset : offset + max_results]`` of
     the full, materialized item list.
+error_count:
+    The number of items in the full, materialized item list that
+    represent a document that failed to parse (feat-81-83-validation
+    Phase 3, REQ-006), independent of ``offset``/``max_results`` --
+    mirrors ``total``'s own already-documented across-all-pages
+    semantics. Defaults to ``0``, so ``list_adr`` (out of scope for
+    that feature) is unaffected.
 
 **Methods:**
 
@@ -4890,6 +4967,13 @@ truncated:
 results:
     The page's items, i.e. ``items[offset : offset + max_results]`` of
     the full, materialized item list.
+error_count:
+    The number of items in the full, materialized item list that
+    represent a document that failed to parse (feat-81-83-validation
+    Phase 3, REQ-006), independent of ``offset``/``max_results`` --
+    mirrors ``total``'s own already-documented across-all-pages
+    semantics. Defaults to ``0``, so ``list_adr`` (out of scope for
+    that feature) is unaffected.
 
 **Methods:**
 
@@ -5331,6 +5415,13 @@ truncated:
 results:
     The page's items, i.e. ``items[offset : offset + max_results]`` of
     the full, materialized item list.
+error_count:
+    The number of items in the full, materialized item list that
+    represent a document that failed to parse (feat-81-83-validation
+    Phase 3, REQ-006), independent of ``offset``/``max_results`` --
+    mirrors ``total``'s own already-documented across-all-pages
+    semantics. Defaults to ``0``, so ``list_adr`` (out of scope for
+    that feature) is unaffected.
 
 **Methods:**
 
@@ -5772,6 +5863,13 @@ truncated:
 results:
     The page's items, i.e. ``items[offset : offset + max_results]`` of
     the full, materialized item list.
+error_count:
+    The number of items in the full, materialized item list that
+    represent a document that failed to parse (feat-81-83-validation
+    Phase 3, REQ-006), independent of ``offset``/``max_results`` --
+    mirrors ``total``'s own already-documented across-all-pages
+    semantics. Defaults to ``0``, so ``list_adr`` (out of scope for
+    that feature) is unaffected.
 
 **Methods:**
 

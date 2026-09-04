@@ -35,13 +35,16 @@ straight into the generic ``update``/``set_status`` tools in
 in ``general.tools`` (``type="sysrs"``), the same convention SOP/VCR
 already use.
 
-As of this package's Phase 4 (resources + packaged data + schema -- see
-``.specmgr/feat/feat-32-sysrs/README.md``), ``sysrs.models``,
-``sysrs.tools`` (7 tools), and ``sysrs.resources`` (3 resources --
+``sysrs.models``, ``sysrs.tools`` (6 tools -- ``create_sysrs``,
+``get_sysrs``, ``get_sysrs_example``, ``get_sysrs_template``,
+``list_sysrs``, ``parse_sysrs``; there is no ``validate_sysrs`` --
+disk-free, id-free dry-run content validation goes through the generic
+``validate`` tool in ``general.tools`` (``type="sysrs"``) instead, as of
+feat-81-83-validation Phase 2), ``sysrs.resources`` (3 resources --
 ``specmgr://sysrs/schema``, ``specmgr://sysrs/example``,
-``specmgr://sysrs/template``; no ``/{id}``, no ``/list``) all carry real
-content; ``sysrs.prompts`` is still an empty placeholder sub-package,
-filled in during Phase 5 of that plan. Every cross-reference section
+``specmgr://sysrs/template``; no ``/{id}``, no ``/list``), and
+``sysrs.prompts`` (2 prompts -- ``create_sysrs``, ``update_sysrs``) all
+carry real content. Every cross-reference section
 (``### Goals``, ``## Decisions``, ``## Requirements``'s nine H3s, ...)
 carries a per-section type-tag regex enforcing which domain(s) it may
 reference -- see ``sysrs.models.v1.body``.

@@ -26,40 +26,53 @@ type or cross-cutting:
   schema uniquely lives under the shared top-level `models/adr/` (not
   `adr/models/`) — see the "models location" note below.
 - **`req/`** (Requirements) — `req/tools/` (`create_req`, `parse_req`,
-  `list_req`, `validate_req`); whole-body and line-range
+  `list_req`); whole-body and line-range
   updates go through the generic `update` tool in `general/tools/`
   (`type="req"`), status changes through the generic `set_status` tool
   (`type="req"`), classification changes through the generic
   `set_classification` tool (`type="req"`), deletions through the generic
-  `delete` tool (`type="req"`); `req/resources/` (`specmgr://req/schema`,
+  `delete` tool (`type="req"`), disk-free/id-free dry-run content
+  validation through the generic `validate` tool (`type="req"`) — the
+  former `validate_req` tool was removed in favor of it
+  (feat-81-83-validation); `req/resources/` (`specmgr://req/schema`,
   `specmgr://req/example`, `specmgr://req/template`; no `specmgr://req/{id}`
   — id-based reads are `get_req`-only, ADR
   ddfb1109-422d-4507-8dbc-dc5e4bec9614; no `specmgr://req/list` —
   listing is the `list_req` tool, ADR
-  ec9f5262-9912-49d0-903f-fcfb54f28c13); `req/prompts/`
+  ec9f5262-9912-49d0-903f-fcfb54f28c13, whose `PagedResult` now also
+  carries `error_count` and reports a failed-to-parse document inline
+  (marker `title`/`status`, `error`, plus a resolved `path`) rather than silently dropping it,
+  feat-81-83-validation Phase 3); `req/prompts/`
   (`create_req`/`update_req`). Its schema lives at `req/models/v1/`, inside
   the domain package itself, not under top-level `models/`.
 - **`uc/`** (Use Cases) — same tools/resources/prompts shape as `req/` but
   for use cases (`create_uc`, `parse_uc`,
-  `list_uc`, `get_uc`, `get_uc_example`, `get_uc_template`,
-  `validate_uc`); whole-body and line-range updates go through the generic
+  `list_uc`, `get_uc`, `get_uc_example`, `get_uc_template`); whole-body and
+  line-range updates go through the generic
   `update` tool in `general/tools/` (`type="uc"`), status changes through
   the generic `set_status` tool (`type="uc"`), classification changes
   through the generic `set_classification` tool (`type="uc"`), deletions
-  through the generic `delete` tool (`type="uc"`), and the `get_uc` tool takes
+  through the generic `delete` tool (`type="uc"`), disk-free/id-free
+  dry-run content validation through the generic `validate` tool
+  (`type="uc"`) — the former `validate_uc` tool was removed in favor of it
+  (feat-81-83-validation), and the `get_uc` tool takes
   `raw: bool = False` — `raw=True` returns the frontmatter-stripped body
    text as-is (the text `update`'s `offset`/`limit` index into), with
    optional read-style `offset`/`limit` windowing of that raw read
    (raw-only; out-of-range values clamp, never error); no
   `specmgr://uc/{id}` resource for the same reason as
   REQ, and no `specmgr://uc/list` resource either — listing is the
-  `list_uc` tool (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13);
+  `list_uc` tool (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13, whose
+  `PagedResult` now also carries `error_count` and reports a
+  failed-to-parse document inline (with a resolved `path`) rather than
+  silently dropping it,
+  feat-81-83-validation Phase 3);
   `uc/prompts/` (`create_uc`/`update_uc`). Schema at
   `uc/models/v1/` (legacy) and `uc/models/v2/` (current),
   inside the domain package, not `models/uc/`.
 - **`tsk/`** (Task Lists) — same shape again (`create_tsk`,
   `parse_tsk`, `list_tsk`, `get_tsk`, `get_tsk_example`,
-  `get_tsk_template`, `validate_tsk`); whole-body and
+  `get_tsk_template`); whole-body and
   line-range updates go through the generic `update` tool in
   `general/tools/` (`type="tsk"`), status changes through the generic
   `set_status` tool (`type="tsk"`), classification changes through the
@@ -68,23 +81,33 @@ type or cross-cutting:
   `raw: bool = False` — `raw=True` returns the frontmatter-stripped body
    text as-is (the text `update`'s `offset`/`limit` index into), with
    optional read-style `offset`/`limit` windowing of that raw read
-   (raw-only; out-of-range values clamp, never error); plus a distinct
+   (raw-only; out-of-range values clamp, never error); disk-free/id-free
+   dry-run content validation through the generic `validate` tool
+   (`type="tsk"`) — the former `validate_tsk` tool was removed in favor of
+   it (feat-81-83-validation); plus a distinct
   `implement_task` prompt (reads a task list via `get_tsk`, builds a
   `TodoWrite` list from its items, and uses the `question` tool to resolve
   ambiguity). Its resources are the usual `specmgr://tsk/schema`/
   `specmgr://tsk/example`/`specmgr://tsk/template` only — no
   `specmgr://tsk/{id}` and no `specmgr://tsk/list` resource (listing is
-  the `list_tsk` tool, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13). Schema
+  the `list_tsk` tool, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13, whose
+  `PagedResult` now also carries `error_count` and reports a
+  failed-to-parse document inline (with a resolved `path`) rather than
+  silently dropping it,
+  feat-81-83-validation Phase 3). Schema
   at `tsk/models/v1/`, inside the domain package.
 - **`qa/`** (Question and Answer) — same tools/resources/prompts shape as
   `req/`/`tsk/` but for requirements-elicitation Q&A interviews (`create_qa`,
   `parse_qa`, `list_qa`, `get_qa`, `get_qa_example`,
-  `get_qa_template`, `validate_qa`); whole-body and
+  `get_qa_template`); whole-body and
   line-range updates go through the generic `update` tool in
   `general/tools/` (`type="qa"`), status changes through the generic
   `set_status` tool (`type="qa"`), classification changes through the
   generic `set_classification` tool (`type="qa"`), deletions through the
-  generic `delete` tool (`type="qa"`), and the `get_qa` tool takes
+  generic `delete` tool (`type="qa"`), disk-free/id-free dry-run content
+  validation through the generic `validate` tool (`type="qa"`) — the
+  former `validate_qa` tool was removed in favor of it
+  (feat-81-83-validation), and the `get_qa` tool takes
   `raw: bool = False` — `raw=True` returns the frontmatter-stripped body
    text as-is (the text `update`'s `offset`/`limit` index into), with
    optional read-style `offset`/`limit` windowing of that raw read
@@ -93,7 +116,11 @@ type or cross-cutting:
   `specmgr://qa/template`; no `specmgr://qa/{id}` — id-based reads are
   `get_qa`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
   `specmgr://qa/list` — listing is the `list_qa` tool, ADR
-  ec9f5262-9912-49d0-903f-fcfb54f28c13); `qa/prompts/`
+  ec9f5262-9912-49d0-903f-fcfb54f28c13, whose `PagedResult` now also
+  carries `error_count` and reports a failed-to-parse document inline
+  (with a resolved `path`) rather than silently dropping it,
+  feat-81-83-validation Phase 3);
+  `qa/prompts/`
   (`create_qa`/`update_qa`, plus `refine`). Schema at `qa/models/v2/`,
   inside the domain package, not `models/qa/` — QA is a single-schema
   (v2-only) domain: every question/answer category holds zero or more
@@ -113,8 +140,8 @@ type or cross-cutting:
 - **`prb/`** (Problem Statement) — same tools/resources/prompts shape as
   `req/`/`tsk`/`qa` but for Six-Sigma-style problem statements
   (`create_prb`, `parse_prb`, `list_prb`,
-  `get_prb`, `get_prb_example`, `get_prb_template`,
-  `validate_prb`); whole-body and line-range updates go through the generic
+  `get_prb`, `get_prb_example`, `get_prb_template`); whole-body and
+  line-range updates go through the generic
   `update` tool in `general/tools/` (`type="prb"`), status changes through
   the generic `set_status` tool (`type="prb"`), classification changes
   through the generic `set_classification` tool (`type="prb"`), deletions
@@ -122,12 +149,19 @@ type or cross-cutting:
   takes `raw: bool = False` — `raw=True` returns the frontmatter-stripped
    body text as-is (the text `update`'s `offset`/`limit` index into), with
    optional read-style `offset`/`limit` windowing of that raw read
-   (raw-only; out-of-range values clamp, never error); `prb/resources/`
+   (raw-only; out-of-range values clamp, never error); disk-free/id-free
+   dry-run content validation through the generic `validate` tool
+   (`type="prb"`) — the former `validate_prb` tool was removed in favor
+   of it (feat-81-83-validation); `prb/resources/`
    (`specmgr://prb/schema`,
   `specmgr://prb/example`, `specmgr://prb/template`; no
   `specmgr://prb/{id}` — id-based reads are `get_prb`-only, ADR
   ddfb1109-422d-4507-8dbc-dc5e4bec9614; no `specmgr://prb/list` — listing
-  is the `list_prb` tool, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13);
+  is the `list_prb` tool, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13, whose
+  `PagedResult` now also carries `error_count` and reports a
+  failed-to-parse document inline (with a resolved `path`) rather than
+  silently dropping it,
+  feat-81-83-validation Phase 3);
    `prb/prompts/` (`create_prb`/`update_prb`, narrated `TodoWrite` +
    `question`-tool-driven 5W2H interview flows). Schema at
    `prb/models/v1/`, inside the domain package, not top-level
@@ -137,12 +171,15 @@ type or cross-cutting:
   "what the organization wants to achieve" level that sits above
   individual requirements) (`create_gol`,
   `parse_gol`, `list_gol`, `get_gol`,
-  `get_gol_example`, `get_gol_template`,
-  `validate_gol`); whole-body and line-range updates go through the generic
+  `get_gol_example`, `get_gol_template`); whole-body and line-range
+  updates go through the generic
   `update` tool in `general/tools/` (`type="gol"`), status changes through
   the generic `set_status` tool (`type="gol"`), classification changes
   through the generic `set_classification` tool (`type="gol"`), deletions
-  through the generic `delete` tool (`type="gol"`), and the `get_gol` tool
+  through the generic `delete` tool (`type="gol"`), disk-free/id-free
+  dry-run content validation through the generic `validate` tool
+  (`type="gol"`) — the former `validate_gol` tool was removed in favor of
+  it (feat-81-83-validation), and the `get_gol` tool
   takes `raw: bool = False` — `raw=True` returns the frontmatter-stripped
    body text as-is (the text `update`'s `offset`/`limit` index into), with
    optional read-style `offset`/`limit` windowing of that raw read
@@ -152,7 +189,11 @@ type or cross-cutting:
   `specmgr://gol/{id}` — id-based reads are `get_gol`-only, ADR
   ddfb1109-422d-4507-8dbc-dc5e4bec9614; no `specmgr://gol/list` —
   `list_gol` ships as a paged tool from day one, ADR
-  ec9f5262-9912-49d0-903f-fcfb54f28c13); `gol/prompts/`
+  ec9f5262-9912-49d0-903f-fcfb54f28c13, whose `PagedResult` now also
+  carries `error_count` and reports a failed-to-parse document inline
+  (with a resolved `path`) rather than silently dropping it,
+  feat-81-83-validation Phase 3);
+  `gol/prompts/`
   (`create_gol`/`update_gol`, narrated `TodoWrite` +
   `question`-tool-driven interview flows; `create_gol` first checks
    `list_gol` for a near-duplicate goal). Its schema lives at
@@ -169,8 +210,7 @@ type or cross-cutting:
   product), and a TARA response strategy `## Strategy` (closed 4-value set
   `transfer`/`accept`/`reduce`/`avoid`))
   (`parse_rsk`, `get_rsk`, `list_rsk`, `get_rsk_example`,
-  `get_rsk_template`, `create_rsk`,
-  `validate_rsk`); whole-body and line-range updates
+  `get_rsk_template`, `create_rsk`); whole-body and line-range updates
   go through the generic `update` tool in `general/tools/`
   (`type="rsk"`), status changes through the generic `set_status` tool
   (`type="rsk"`), classification changes through the generic
@@ -179,7 +219,10 @@ type or cross-cutting:
    `raw=True` returns the frontmatter-stripped body text as-is (the text
    `update`'s `offset`/`limit` index into), with optional read-style
    `offset`/`limit` windowing of that raw read (raw-only; out-of-range
-   values clamp, never error); `rsk/resources/`
+   values clamp, never error); disk-free/id-free dry-run content
+   validation through the generic `validate` tool (`type="rsk"`) — the
+   former `validate_rsk` tool was removed in favor of it
+   (feat-81-83-validation); `rsk/resources/`
   (`specmgr://rsk/schema`, `specmgr://rsk/example`,
   `specmgr://rsk/template`, plus two static domain-knowledge resources
   `specmgr://rsk/tara` — what TARA is and when/how to apply each of the
@@ -189,7 +232,11 @@ type or cross-cutting:
   `specmgr://rsk/list` — `list_rsk` ships as a paged tool from day one,
   ADR ec9f5262-9912-49d0-903f-fcfb54f28c13, and its `RskSummary` lines
   carry the residual-risk coordinates so a register-wide risk-matrix view
-  can be built from the listing alone); `rsk/prompts/`
+  can be built from the listing alone; its `PagedResult` now also carries
+  `error_count` and reports a failed-to-parse document inline as a
+  sentinel-derived failed row (`rsk.tools._sentinel`), with a resolved `path`
+  like every other domain, rather than silently
+  dropping it, feat-81-83-validation Phase 3); `rsk/prompts/`
    (`create_risk`/`update_risk` — the issue's literal wording, not the
    `rsk`-prefixed convention the tools/resources use). Its schema lives at
    `rsk/models/v1/`, inside the domain package, not top-level
@@ -197,8 +244,7 @@ type or cross-cutting:
 - **`dec/`** (Decision) — same tools/resources/prompts shape as
   `req/`/`prb/` but for decisions in general (not architecture-only)
   (`parse_dec`, `get_dec`, `list_dec`, `get_dec_example`,
-  `get_dec_template`, `create_dec`,
-  `validate_dec`); whole-body and line-range updates go through the
+  `get_dec_template`, `create_dec`); whole-body and line-range updates go through the
   generic `update` tool in `general/tools/` (`type="dec"`), status
   changes through the generic `set_status` tool (`type="dec"`),
   classification changes through the generic `set_classification` tool
@@ -208,12 +254,18 @@ type or cross-cutting:
    the frontmatter-stripped body text as-is (the text `update`'s
    `offset`/`limit` index into), with optional read-style `offset`/`limit`
    windowing of that raw read (raw-only; out-of-range values clamp, never
-   error); `dec/resources/`
+   error); disk-free/id-free dry-run content
+   validation through the generic `validate` tool (`type="dec"`) — the
+   former `validate_dec` tool was removed in favor of it
+   (feat-81-83-validation); `dec/resources/`
   (`specmgr://dec/schema`, `specmgr://dec/example`,
   `specmgr://dec/template`; no `specmgr://dec/{id}` — id-based reads
   are `get_dec`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
   `specmgr://dec/list` — `list_dec` ships as a paged tool from day
-  one, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13); `dec/prompts/`
+  one, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13, whose `PagedResult` now
+  also carries `error_count` and reports a failed-to-parse document
+  inline (with a resolved `path`) rather than silently dropping it,
+  feat-81-83-validation Phase 3); `dec/prompts/`
   (`create_dec`/`update_dec`, narrated `TodoWrite` +
   `question`-tool-driven interview flows; `create_dec` first checks
   `list_dec` for a near-duplicate decision). Its schema lives at
@@ -227,8 +279,8 @@ type or cross-cutting:
   shape as `dec/` but for structured, step-by-step operational documents
   with a RASCI-style responsibility assignment and a closed
   approval/effectivity lifecycle (`create_sop`, `parse_sop`, `list_sop`,
-  `get_sop`, `get_sop_example`, `get_sop_template`,
-  `validate_sop`); `sop` is the **first domain built dispatch-only from day
+  `get_sop`, `get_sop_example`, `get_sop_template`); `sop` is the **first
+  domain built dispatch-only from day
   one** (ADR 36905d5b-8057-4294-8665-c7eed5534db0) — it has NO per-domain
   `update_sop`/`set_status_sop`/`set_classification_sop` tools at all, so
   whole-body
@@ -242,12 +294,18 @@ type or cross-cutting:
    `raw=True` returns the frontmatter-stripped body text as-is (the text
    `update`'s `offset`/`limit` index into), with optional read-style
    `offset`/`limit` windowing of that raw read (raw-only; out-of-range
-   values clamp, never error); `sop/resources/`
+   values clamp, never error); disk-free/id-free dry-run content
+   validation through the generic `validate` tool (`type="sop"`) — the
+   former `validate_sop` tool was removed in favor of it
+   (feat-81-83-validation); `sop/resources/`
   (`specmgr://sop/schema`, `specmgr://sop/example`,
   `specmgr://sop/template`; no `specmgr://sop/{id}` — id-based reads
   are `get_sop`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
   `specmgr://sop/list` — `list_sop` ships as a paged tool from day
-  one, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13); `sop/prompts/`
+  one, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13, whose `PagedResult` now
+  also carries `error_count` and reports a failed-to-parse document
+  inline (with a resolved `path`) rather than silently dropping it,
+  feat-81-83-validation Phase 3); `sop/prompts/`
   (`create_sop`/`update_sop`, narrated `TodoWrite` +
   `question`-tool-driven interview flows; `create_sop` first checks
   `list_sop` for a near-duplicate SOP; both prompts include an explicit
@@ -275,9 +333,9 @@ type or cross-cutting:
   `general/tools/_doc_paths.py` every other whole-body domain uses;
   `SPECMGR_FEAT_DIR` overrides the base directory (mandatory-in-spirit
   test-isolation env var, same as every other domain's own equivalent).
-  All 8 tools (`create_feat`, `set_feat_id`, `parse_feat`, `list_feat`,
-  `get_feat`, `get_feat_example`, `get_feat_template`,
-  `validate_feat`); `create_feat` accepts an optional, caller-chosen `id`
+   All 7 tools (`create_feat`, `set_feat_id`, `parse_feat`, `list_feat`,
+   `get_feat`, `get_feat_example`, `get_feat_template`);
+   `create_feat` accepts an optional, caller-chosen `id`
   (a full `feat-NNN-slug`, validated against that shape) and, when `id`
   is omitted, now defaults to `feat-0-<slug-from-title>` — not an
   auto-incrementing number — failing with `FileExistsError` before any
@@ -301,22 +359,32 @@ type or cross-cutting:
    body text as-is (the text `update`'s `offset`/`limit` index into),
    with optional read-style `offset`/`limit` windowing of that raw read
    (raw-only; out-of-range values clamp, never error);
+  disk-free/id-free dry-run content validation through the generic
+  `validate` tool (`type="feat"`) — the former `validate_feat` tool was
+  removed in favor of it (feat-81-83-validation);
   `feat/resources/` (`specmgr://feat/schema`, `specmgr://feat/example`,
   `specmgr://feat/template`; no `specmgr://feat/{id}` — id-based reads
   are `get_feat`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
   `specmgr://feat/list` — `list_feat` ships as a paged tool from day
-  one, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13); `feat/prompts/`
+  one, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13, whose `PagedResult` now
+  also carries `error_count` and reports a failed-to-parse folder inline, with a resolved `path`
+  (feat-81-83-validation Phase 4 retrofitted `FeatSummary`'s own `path` to
+  match) rather than silently dropping it, feat-81-83-validation Phase 3);
+  `feat/prompts/`
   (`create_feat`/`update_feat`, narrated instruction flows; `create_feat`
   first checks `list_feat` for a near-duplicate feature). Its schema
   lives at `feat/models/v1/`, inside the domain package, not top-level
-  `models/`. `FeatSummary` adds one extra field beyond every other
-  domain's summary, `path: str` (the real filesystem path to the
-  document's `README.md`) — a deliberate divergence, since direct
-  hand/agent editing of `.specmgr/feat/<id>/README.md` remains the
-  domain's own normal, sanctioned workflow even after its MCP tools
-  exist, unlike every other domain's summary, whose `ref` field is
-  deliberately *not* a path. See
-  `.specmgr/feat/feat-31-feature/README.md` for the full design.
+  `models/`. `FeatSummary`'s own separate `path` field was removed in
+  feat-81-83-validation Phase 4 -- it now inherits the same, resolved
+  `path: str` field every other whole-body domain's summary also carries
+  via the shared `DocSummary` base (feat-81-83-validation Phase 3/4), no
+  longer a `feat`-only divergence. Unlike every other domain, though,
+  `feat`'s own workflow -- direct hand/agent editing of
+  `.specmgr/feat/<id>/README.md` -- treats this shared `path` as a
+  first-class, sanctioned read/edit entry point by original design, not
+  merely an incidental convenience the other eleven domains only gained
+  later. See `.specmgr/feat/feat-31-feature/README.md` for the full
+  design.
 - **`vcr/`** (Verification Case Record) — same tools/resources/prompts
   shape as `req/`/`prb/`/`dec/` but for how a single REQ/UC is verified: a
   `## Verifies` single-value cross-reference (exactly one mandatory
@@ -332,24 +400,30 @@ type or cross-cutting:
   optionally carries a free-form `description` paragraph and/or a
   `#### Test Steps` numbered procedure; a `model_validator` rejects
   duplicate `AC-NNN` numbers), plus optional `## More Information`/
-  `## Updates` (`create_vcr`, `parse_vcr`, `list_vcr`, `get_vcr`,
-  `get_vcr_example`, `get_vcr_template`,
-  `validate_vcr`); whole-body and line-range updates go through the
-  generic `update` tool in `general/tools/` (`type="vcr"`), status
-  changes through the generic `set_status` tool (`type="vcr"`),
-  classification changes through the generic `set_classification` tool
-  (`type="vcr"`), deletions through the generic `delete` tool
-  (`type="vcr"`), and the
-   `get_vcr` tool takes `raw: bool = False` — `raw=True` returns the
-   frontmatter-stripped body text as-is (the text `update`'s
-   `offset`/`limit` index into), with optional read-style `offset`/`limit`
-   windowing of that raw read (raw-only; out-of-range values clamp, never
-   error); `vcr/resources/` (`specmgr://vcr/schema`,
+   `## Updates` (`create_vcr`, `parse_vcr`, `list_vcr`, `get_vcr`,
+   `get_vcr_example`, `get_vcr_template`); whole-body and line-range updates go through the
+   generic `update` tool in `general/tools/` (`type="vcr"`), status
+   changes through the generic `set_status` tool (`type="vcr"`),
+   classification changes through the generic `set_classification` tool
+   (`type="vcr"`), deletions through the generic `delete` tool
+   (`type="vcr"`), and the
+    `get_vcr` tool takes `raw: bool = False` — `raw=True` returns the
+    frontmatter-stripped body text as-is (the text `update`'s
+    `offset`/`limit` index into), with optional read-style `offset`/`limit`
+    windowing of that raw read (raw-only; out-of-range values clamp, never
+    error); disk-free/id-free dry-run content validation through the
+    generic `validate` tool (`type="vcr"`) — the former `validate_vcr`
+    tool was removed in favor of it (feat-81-83-validation);
+    `vcr/resources/` (`specmgr://vcr/schema`,
   `specmgr://vcr/example`, `specmgr://vcr/template`; no
   `specmgr://vcr/{id}` — id-based reads are `get_vcr`-only, ADR
   ddfb1109-422d-4507-8dbc-dc5e4bec9614; no `specmgr://vcr/list` —
   `list_vcr` ships as a paged tool from day one, ADR
-  ec9f5262-9912-49d0-903f-fcfb54f28c13); `vcr/prompts/`
+  ec9f5262-9912-49d0-903f-fcfb54f28c13, whose `PagedResult` now also
+  carries `error_count` and reports a failed-to-parse document inline
+  (with a resolved `path`) rather than silently dropping it,
+  feat-81-83-validation Phase 3);
+  `vcr/prompts/`
   (`create_vcr`/`update_vcr`). Its schema lives at `vcr/models/v1/`,
   inside the domain package, not top-level `models/`. The closed DTAIS
   method vocabulary its `## Acceptance Criteria` depends on is documented
@@ -367,16 +441,20 @@ type or cross-cutting:
   duplicating their content — e.g. `### Goals` accepts only `GOL` bullets,
   `## Decisions` accepts `DEC` or `ADR`, and the nine `## Requirements` H3s
   plus the six `## Other Characteristics` H3s each accept only `REQ`.
-  `sysrs` is, like `sop`/`vcr`, built dispatch-only from day one (ADR
-  36905d5b-8057-4294-8665-c7eed5534db0) — no per-domain `update_sysrs`/
-  `set_status_sysrs` tools of its own; whole-body and line-range updates go
-  through the generic `update` tool in `general/tools/` (`type="sysrs"`),
-  status changes through the generic `set_status` tool (`type="sysrs"`),
-  classification changes through the generic `set_classification` tool
-  (`type="sysrs"`), and deletions through the generic `delete` tool
-  (`type="sysrs"`). 7 tools (`create_sysrs`, `parse_sysrs`, `list_sysrs`,
-  `get_sysrs`, `get_sysrs_example`, `get_sysrs_template`, `validate_sysrs`);
-  the `get_sysrs` tool takes `raw: bool = False` — `raw=True` returns the
+   `sysrs` is, like `sop`/`vcr`, built dispatch-only from day one (ADR
+   36905d5b-8057-4294-8665-c7eed5534db0) — no per-domain `update_sysrs`/
+   `set_status_sysrs`/`validate_sysrs` tools of its own; whole-body and
+   line-range updates go
+   through the generic `update` tool in `general/tools/` (`type="sysrs"`),
+   status changes through the generic `set_status` tool (`type="sysrs"`),
+   classification changes through the generic `set_classification` tool
+   (`type="sysrs"`), deletions through the generic `delete` tool
+   (`type="sysrs"`), and disk-free/id-free dry-run content validation
+   through the generic `validate` tool (`type="sysrs"`) — the former
+   `validate_sysrs` tool was removed in favor of it
+   (feat-81-83-validation). 6 tools (`create_sysrs`, `parse_sysrs`, `list_sysrs`,
+   `get_sysrs`, `get_sysrs_example`, `get_sysrs_template`);
+   the `get_sysrs` tool takes `raw: bool = False` — `raw=True` returns the
   frontmatter-stripped body text as-is (the text `update`'s `offset`/`limit`
   index into), with optional read-style `offset`/`limit` windowing of that
   raw read (raw-only; out-of-range values clamp, never error). 3 resources
@@ -384,7 +462,11 @@ type or cross-cutting:
   `specmgr://sysrs/template`; no `specmgr://sysrs/{id}` — id-based reads are
   `get_sysrs`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
   `specmgr://sysrs/list` — `list_sysrs` ships as a paged tool from day one,
-  ADR ec9f5262-9912-49d0-903f-fcfb54f28c13). 2 prompts in `sysrs/prompts/`
+  ADR ec9f5262-9912-49d0-903f-fcfb54f28c13, whose `PagedResult` now also
+  carries `error_count` and reports a failed-to-parse document inline
+  (with a resolved `path`) rather than silently dropping it,
+  feat-81-83-validation Phase 3).
+  2 prompts in `sysrs/prompts/`
   (`create_sysrs`/`update_sysrs` — `create_sysrs` first checks `list_sysrs`
   for a near-duplicate and reads the existing cross-cutting
   `specmgr://iso25010` resource for the nine canonical ISO/IEC 25010:2023
@@ -414,10 +496,19 @@ type or cross-cutting:
     `None`/absent; `delete`, the generic type-dispatched hard-delete
     for the twelve whole-body domains — `type` is one of
     req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs (`adr` excluded), all twelve
-    domains implement a `delete` adapter in that one tool (a future domain
-    adds its own adapter there, never a per-domain `delete_<d>` tool),
-     resolving by `id`, taking the domain's own lock, and returning the
-     deleted path). On a successful write, `update`, `set_status` (its twelve
+     domains implement a `delete` adapter in that one tool (a future domain
+     adds its own adapter there, never a per-domain `delete_<d>` tool),
+      resolving by `id`, taking the domain's own lock, and returning the
+      deleted path; `validate`, the generic, disk-free/id-free dry-run
+      content validator for the same twelve whole-body domains (`adr`
+      excluded, `validate_adr` remains its own standalone tool) —
+      replacing the former twelve per-domain `validate_<d>` tools
+      (feat-81-83-validation, ADR 078bf395-0a5f-4afd-84f6-b7a2191a00e6);
+      unlike every other generic tool here, it never raises for a
+      content-validation failure, always returning
+      `{valid: bool, errors: list[{message: str}]}`, only raising
+      `ValueError` for a `full`/content-shape mismatch or an unsupported
+      `type`. On a successful write, `update`, `set_status` (its twelve
      non-`adr` adapters), `set_classification`, and every per-domain
      `create_<d>` tool now return the domain's frontmatter object only (no
      body) — small and bounded regardless of document size, unlike an
@@ -467,10 +558,8 @@ it whenever you add/remove/rename a resource, tool, or prompt.
 mirror of that same registration and must never be hand-edited.
 
 Still genuinely missing / not yet done (don't assume otherwise):
-- No `validate_adr` (or `validate_req`/`validate_uc`/`validate_tsk`/
-  `validate_qa`/`validate_prb`/`validate_gol`/`validate_rsk`/
-  `validate_dec`/`validate_sop`/`validate_feat`/`validate_vcr`/
-  `validate_sysrs`) tool runs over the repo's
+- No `validate_adr` (or the generic `validate` tool, for the other twelve
+  whole-body domains) tool runs over the repo's
   own documents yet via pre-commit or CI. (ADR
   9c687bb1-8ee7-41c8-84ec-07606356bc73: "Enforce doc generation/lint/tests
   locally via pre-commit hook, not just CI")

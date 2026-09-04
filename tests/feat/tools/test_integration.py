@@ -22,7 +22,8 @@ module drives the actual tool functions in a single realistic sequence --
  ``list_feat`` (empty) -> ``create_feat`` -> ``get_feat`` -> ``list_feat`` (1)
  -> ``update`` (whole-body) -> ``update`` (line-range) -> ``set_status``
  (``type="feat"``) -> ``get_feat`` (status changed) -> ``list_feat`` (status
- reflected) -> ``validate_feat`` -> ``delete`` (generic, ``type="feat"``) --
+ reflected) -> ``validate`` (generic, ``type="feat"``) -> ``delete``
+ (generic, ``type="feat"``) --
  against a real temporary feature base directory, confirming
  ACC-002/ACC-003/ACC-004's create->get->list->update->set_status->validate
  round-trip requirement with concrete evidence beyond the isolated
@@ -60,10 +61,10 @@ from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR, FeatNotFoundErr
 from biz.dfch.specmgr.feat.tools.create_feat import create_feat
 from biz.dfch.specmgr.feat.tools.get_feat import get_feat
 from biz.dfch.specmgr.feat.tools.list_feat import list_feat
-from biz.dfch.specmgr.feat.tools.validate_feat import validate_feat
 from biz.dfch.specmgr.general.tools.delete import delete
 from biz.dfch.specmgr.general.tools.set_status import set_status
 from biz.dfch.specmgr.general.tools.update import update
+from biz.dfch.specmgr.general.tools.validate import validate
 
 _INITIAL_BODY = textwrap.dedent(
     """\
@@ -178,8 +179,8 @@ class TestFeatLifecycleIntegration(TempFeatDirTestCase):
 
     def test_full_lifecycle_roundtrip(self) -> None:
         """list_feat -> create_feat -> get_feat -> list_feat -> update (whole-body) ->
-        update (line-range) -> set_status -> get_feat -> list_feat -> validate_feat ->
-        delete (generic, type="feat"), live."""
+        update (line-range) -> set_status -> get_feat -> list_feat -> validate (generic,
+        type="feat") -> delete (generic, type="feat"), live."""
         # 0. list_feat: an empty base directory must list nothing.
         initial_page = list_feat()
         self.assertEqual(initial_page.total, 0)
@@ -265,12 +266,17 @@ class TestFeatLifecycleIntegration(TempFeatDirTestCase):
         self.assertEqual(matches[0].status, "progress")
         self.assertEqual(matches[0].title, "Example Widget")
 
-        # 8. validate_feat (ACC-003): the on-disk file must validate as a complete
-        #    document (full=True) and its body-only half must validate as body-only.
+        # 8. validate (generic, type="feat") (ACC-003/ACC-004): the on-disk file must
+        #    validate as a complete document (full=True) and its body-only half must
+        #    validate as body-only -- never raising, always {valid, errors}.
         on_disk_text = expected_path.read_text(encoding="utf-8")
-        self.assertIs(validate_feat(on_disk_text, full=True), True)
+        full_result = validate(type="feat", content=on_disk_text, full=True)
+        self.assertTrue(full_result.valid)
+        self.assertEqual(full_result.errors, [])
         body_only = frontmatter.loads(on_disk_text).content  # type: ignore[union-attr]
-        self.assertIs(validate_feat(body_only), True)
+        body_result = validate(type="feat", content=body_only)
+        self.assertTrue(body_result.valid)
+        self.assertEqual(body_result.errors, [])
 
         # 9. delete (generic, type="feat"): a real hard delete via the generic tool -- the
         #    returned str must be the seeded <base>/<id>/ folder path, the whole folder must
@@ -293,13 +299,15 @@ class TestFeatLifecycleIntegration(TempFeatDirTestCase):
         self.assertEqual(expected_path.read_text(encoding="utf-8"), before)
 
     def test_validate_rejects_malformed_body_and_wrong_full_shape(self) -> None:
-        """ACC-003: validate_feat's body-only/full semantics -- invalid body fails (AssertionError);
-        full=True requires a frontmatter block (ValueError)."""
-        with self.assertRaises(AssertionError):
-            validate_feat("# Title\n\nJust a paragraph, no recognized feature sections.\n")
+        """ACC-003/ACC-004: the generic validate tool's (type="feat") body-only/full semantics --
+        an invalid body returns {valid: False, errors: [...]} (never raises); full=True with
+        body-only content still raises ValueError (caller-usage error, not a content failure)."""
+        result = validate(type="feat", content="# Title\n\nJust a paragraph, no recognized feature sections.\n")
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
 
         with self.assertRaises(ValueError):
-            validate_feat(_INITIAL_BODY, full=True)
+            validate(type="feat", content=_INITIAL_BODY, full=True)
 
 
 class TestCreateFeatConcurrencyIntegration(TempFeatDirTestCase):

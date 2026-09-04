@@ -22,9 +22,10 @@ every frontmatter field except ``updated``. Status changes of an existing
 document go through the generic ``set_status`` tool in ``general.tools``
 (``type="prb"``), also bumping ``updated``, leaving the body untouched.
 Deletion of ``prb`` documents goes through the generic ``delete`` tool in
-``general.tools`` (``type="prb"``). ``validate_prb`` is a disk-free,
-id-free dry run against a submitted ``content`` string, independent of the
-other tools. Import this package to register all problem statement tools at
-once::
+``general.tools`` (``type="prb"``). Disk-free, id-free dry-run content
+validation goes through the generic ``validate`` tool in ``general.tools``
+(``type="prb"``) -- the former ``validate_prb`` tool was removed in favor
+of it (feat-81-83-validation Phase 2). Import this package to register all
+problem statement tools at once::
 
     from biz.dfch.specmgr.prb import tools  # noqa: F401 (side-effects only)

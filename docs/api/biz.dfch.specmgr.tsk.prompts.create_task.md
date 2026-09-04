@@ -6,7 +6,7 @@ Returns instructional text -- not itself a tool call -- that guides an LLM
 through drafting a brand-new Task List (TSK) document using the existing
 ``tsk/tools/``/``tsk/resources/`` surface (``list_tsk``,
 ``specmgr://tsk/template``/``specmgr://tsk/example``, ``specmgr://tsk/schema``,
-``create_tsk``, ``validate_tsk``).
+``create_tsk``, generic ``validate`` tool).
 
 Unlike ``adr.prompts.create_adr``, this prompt has no frontmatter-related
 parameters to pre-fill: ``create_tsk`` builds the entire TSK frontmatter

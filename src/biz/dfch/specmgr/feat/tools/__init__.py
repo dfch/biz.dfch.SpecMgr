@@ -54,9 +54,11 @@ the target folder already exists, renames ``<base>/<id>/`` to
 fields, and leaves the body byte-identical -- the one path that ever
 changes a ``feat`` document's id after ``create_feat`` assigns it (see
 ``set_feat_id.py``'s own module docstring for the ``feat_create_lock()``
-+ ``feat_lock(id)`` locking order). ``validate_feat`` is a disk-free,
-id-free dry run against a submitted ``content`` string, independent of the
-other tools. Import this package to register all feature tools at once::
++ ``feat_lock(id)`` locking order). Disk-free, id-free dry-run content
+validation goes through the generic ``validate`` tool in ``general.tools``
+(``type="feat"``) -- the former ``validate_feat`` tool was removed in
+favor of it (feat-81-83-validation Phase 2). Import this package to
+register all feature tools at once::
 
     from biz.dfch.specmgr.feat import tools  # noqa: F401 (side-effects only)
 """
@@ -68,7 +70,6 @@ from .get_feat_template import get_feat_template
 from .list_feat import list_feat
 from .parse_feat import parse_feat
 from .set_feat_id import set_feat_id
-from .validate_feat import validate_feat
 
 __all__ = [
     "create_feat",
@@ -78,5 +79,4 @@ __all__ = [
     "list_feat",
     "parse_feat",
     "set_feat_id",
-    "validate_feat",
 ]

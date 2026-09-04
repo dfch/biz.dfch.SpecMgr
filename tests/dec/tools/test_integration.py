@@ -21,7 +21,8 @@ Unlike the per-tool unit tests elsewhere under ``tests/dec/tools/``, this
 module drives the actual tool functions in a single realistic sequence --
  ``list_dec`` (empty) -> ``create_dec`` -> ``get_dec`` -> ``list_dec`` (1) ->
  ``update`` -> ``set_status`` (``type="dec"``) -> ``get_dec`` (status changed)
- -> ``list_dec`` (status reflected) -> ``validate_dec`` -> ``delete``
+ -> ``list_dec`` (status reflected) -> ``validate`` (generic, ``type="dec"``)
+ -> ``delete``
  (generic, ``type="dec"``) -- against a real temporary docs directory,
  confirming ACC-003's create->get->list->update->set_status->validate
  round-trip requirement with concrete evidence beyond the isolated
@@ -53,11 +54,11 @@ from biz.dfch.specmgr.dec.tools._paths import DecNotFoundError, dec_base_dir
 from biz.dfch.specmgr.dec.tools.create_dec import create_dec
 from biz.dfch.specmgr.dec.tools.get_dec import get_dec
 from biz.dfch.specmgr.dec.tools.list_dec import list_dec
-from biz.dfch.specmgr.dec.tools.validate_dec import validate_dec
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.general.tools.delete import delete
 from biz.dfch.specmgr.general.tools.set_status import set_status
 from biz.dfch.specmgr.general.tools.update import update
+from biz.dfch.specmgr.general.tools.validate import validate
 
 _INITIAL_BODY = textwrap.dedent(
     """\
@@ -105,7 +106,7 @@ class TestDecLifecycleIntegration(TempDecDirTestCase):
 
     def test_list_create_get_list_update_set_status_get_list_validate_delete_roundtrip(self) -> None:
         """list_dec -> create_dec -> get_dec -> list_dec -> update -> set_status -> get_dec ->
-        list_dec -> validate_dec -> delete (generic, type="dec"), live."""
+        list_dec -> validate (generic, type="dec") -> delete (generic, type="dec"), live."""
         # 0. list_dec: an empty base directory must list nothing.
         initial_page = list_dec()
         self.assertEqual(initial_page.total, 0)
@@ -171,12 +172,17 @@ class TestDecLifecycleIntegration(TempDecDirTestCase):
         self.assertEqual(matches[0].status, "accepted")
         self.assertEqual(matches[0].title, "Choose a Document Store")
 
-        # 8. validate_dec (ACC-003): the on-disk file must validate as a complete
-        #    document (full=True) and its body-only half must validate as body-only.
+        # 8. validate (generic, type="dec") (ACC-003/ACC-004): the on-disk file must
+        #    validate as a complete document (full=True) and its body-only half must
+        #    validate as body-only -- never raising, always {valid, errors}.
         on_disk_text = expected_path.read_text(encoding="utf-8")
-        self.assertIs(validate_dec(on_disk_text, full=True), True)
+        full_result = validate(type="dec", content=on_disk_text, full=True)
+        self.assertTrue(full_result.valid)
+        self.assertEqual(full_result.errors, [])
         body_only = frontmatter.loads(on_disk_text).content  # type: ignore[union-attr]
-        self.assertIs(validate_dec(body_only), True)
+        body_result = validate(type="dec", content=body_only)
+        self.assertTrue(body_result.valid)
+        self.assertEqual(body_result.errors, [])
 
         # 9. delete (generic, type="dec"): a real hard delete via the generic tool -- the
         #    returned str must be the seeded file path, the file must be gone, and a
@@ -199,13 +205,15 @@ class TestDecLifecycleIntegration(TempDecDirTestCase):
         self.assertEqual(expected_path.read_text(encoding="utf-8"), before)
 
     def test_validate_rejects_malformed_body_and_wrong_full_shape(self) -> None:
-        """ACC-003: validate_dec's body-only/full semantics must match validate_gol's --
-        invalid body fails (AssertionError); full=True requires a frontmatter block (ValueError)."""
-        with self.assertRaises(AssertionError):
-            validate_dec("# Title\n\nJust a paragraph, no recognized decision sections.\n")
+        """ACC-003/ACC-004: the generic validate tool's (type="dec") body-only/full semantics --
+        an invalid body returns {valid: False, errors: [...]} (never raises); full=True with
+        body-only content still raises ValueError (caller-usage error, not a content failure)."""
+        result = validate(type="dec", content="# Title\n\nJust a paragraph, no recognized decision sections.\n")
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
 
         with self.assertRaises(ValueError):
-            validate_dec(_INITIAL_BODY, full=True)
+            validate(type="dec", content=_INITIAL_BODY, full=True)
 
 
 if __name__ == "__main__":

@@ -21,7 +21,7 @@ Returns instructional text -- not itself a tool call -- that guides an LLM
 through drafting a brand-new Feature (FEAT) document using the existing
 ``feat/tools/``/``feat/resources/`` surface (``list_feat``,
 ``specmgr://feat/template``/``specmgr://feat/example``,
-``specmgr://feat/schema``, ``create_feat``, ``validate_feat``).
+``specmgr://feat/schema``, ``create_feat``, generic ``validate`` tool).
 
 ``create_feat`` (the tool) builds the entire FEAT frontmatter itself
 (``id``/``type``/``status``/``created``/``updated``/``version``) -- the
@@ -69,7 +69,7 @@ from ...server import mcp
     title="Create a feature",
     description=(
         "Guides the LLM through checking for an existing similar feature, gathering the "
-        "required information, and driving create_feat/validate_feat to author a new FEAT document."
+        "required information, and driving create_feat/validate to author a new FEAT document."
     ),
 )
 def create_feat(topic: str) -> str:

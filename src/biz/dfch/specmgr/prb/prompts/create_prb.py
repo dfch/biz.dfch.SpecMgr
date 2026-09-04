@@ -21,7 +21,7 @@ Returns instructional text -- not itself a tool call -- that guides an LLM
 through drafting a brand-new Problem Statement (PRB) document using the
 existing ``prb/tools/``/``prb/resources/`` surface (``list_prb``,
 ``specmgr://prb/template``/``specmgr://prb/example``, ``specmgr://prb/schema``,
-``create_prb``, ``validate_prb``).
+``create_prb``, generic ``validate`` tool).
 
 Unlike ``adr.prompts.create_adr``, this prompt has no frontmatter-related
 parameters to pre-fill: ``create_prb`` builds the entire PRB frontmatter
@@ -68,7 +68,7 @@ from ...server import mcp
     description=(
         "Guides the LLM through checking for an existing similar problem statement, "
         "interviewing the user for the 5W2H current-state questions, synthesizing the Summary "
-        "and Gap, and driving create_prb/validate_prb to author a new PRB document."
+        "and Gap, and driving create_prb/validate to author a new PRB document."
     ),
 )
 def create_prb(topic: str) -> str:

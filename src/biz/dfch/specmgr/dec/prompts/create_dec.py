@@ -21,7 +21,7 @@ Returns instructional text -- not itself a tool call -- that guides an LLM
 through drafting a brand-new Decision (DEC) document using the existing
 ``dec/tools/``/``dec/resources/`` surface (``list_dec``,
 ``specmgr://dec/template``/``specmgr://dec/example``,
-``specmgr://dec/schema``, ``create_dec``, ``validate_dec``).
+``specmgr://dec/schema``, ``create_dec``, generic ``validate`` tool).
 
 Unlike ``adr.prompts.create_adr``, this prompt has no frontmatter-related
 parameters to pre-fill: ``create_dec`` builds the entire DEC frontmatter
@@ -70,7 +70,7 @@ from ...server import mcp
     title="Create a decision",
     description=(
         "Guides the LLM through checking for an existing similar decision, gathering the "
-        "required information, and driving create_dec/validate_dec to author a new DEC document."
+        "required information, and driving create_dec/validate to author a new DEC document."
     ),
 )
 def create_dec(topic: str) -> str:

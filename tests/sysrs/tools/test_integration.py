@@ -23,7 +23,8 @@ module drives the actual tool functions in a single realistic sequence --
 (1) -> ``update`` (whole-body) -> ``update`` (line-range) -> ``set_status``
 (``type="sysrs"``) -> ``set_classification`` (``type="sysrs"``) ->
 ``get_sysrs`` (status/classification changed) -> ``list_sysrs`` (status
-reflected) -> ``validate_sysrs`` -> ``delete`` (generic, ``type="sysrs"``)
+reflected) -> ``validate`` (generic, ``type="sysrs"``) -> ``delete``
+(generic, ``type="sysrs"``)
 -- against a real temporary docs directory.
 
 Isolation follows the exact same pattern as ``test_create_sysrs.py``'s
@@ -48,12 +49,12 @@ from biz.dfch.specmgr.general.tools.delete import delete
 from biz.dfch.specmgr.general.tools.set_classification import set_classification
 from biz.dfch.specmgr.general.tools.set_status import set_status
 from biz.dfch.specmgr.general.tools.update import update
+from biz.dfch.specmgr.general.tools.validate import validate
 from biz.dfch.specmgr.sysrs.models.v1 import SysrsFrontmatter
 from biz.dfch.specmgr.sysrs.tools._paths import SysrsNotFoundError, sysrs_base_dir
 from biz.dfch.specmgr.sysrs.tools.create_sysrs import create_sysrs
 from biz.dfch.specmgr.sysrs.tools.get_sysrs import get_sysrs
 from biz.dfch.specmgr.sysrs.tools.list_sysrs import list_sysrs
-from biz.dfch.specmgr.sysrs.tools.validate_sysrs import validate_sysrs
 
 _GOL_ID = "0e15c5de-4ac9-4279-aa75-53249a3e43e4"
 _REQ_ID = "a3f8c2d1-7b4e-4d9a-b6c0-91e5f2a8d734"
@@ -111,7 +112,8 @@ class TestSysrsLifecycleIntegration(TempSysrsDirTestCase):
     def test_full_lifecycle_roundtrip(self) -> None:
         """list_sysrs -> create_sysrs -> get_sysrs -> list_sysrs -> update (whole-body) ->
         update (line-range) -> set_status -> set_classification -> get_sysrs -> list_sysrs ->
-        validate_sysrs -> delete (generic, type="sysrs"), live (ACC-006/ACC-009)."""
+        validate (generic, type="sysrs") -> delete (generic, type="sysrs"), live
+        (ACC-006/ACC-009)."""
         # 0. list_sysrs: an empty base directory must list nothing.
         initial_page = list_sysrs()
         self.assertEqual(initial_page.total, 0)
@@ -196,12 +198,17 @@ class TestSysrsLifecycleIntegration(TempSysrsDirTestCase):
         self.assertEqual(matches[0].status, "review")
         self.assertEqual(matches[0].title, "System Requirements Specification: Sample Document")
 
-        # 10. validate_sysrs: the on-disk file must validate as a complete
-        #     document (full=True) and its body-only half must validate as body-only.
+        # 10. validate (generic, type="sysrs"): the on-disk file must validate as a complete
+        #     document (full=True) and its body-only half must validate as body-only -- never
+        #     raising, always {valid, errors}.
         on_disk_text = expected_path.read_text(encoding="utf-8")
-        self.assertIs(validate_sysrs(on_disk_text, full=True), True)
+        full_result = validate(type="sysrs", content=on_disk_text, full=True)
+        self.assertTrue(full_result.valid)
+        self.assertEqual(full_result.errors, [])
         body_only = frontmatter.loads(on_disk_text).content  # type: ignore[union-attr]
-        self.assertIs(validate_sysrs(body_only), True)
+        body_result = validate(type="sysrs", content=body_only)
+        self.assertTrue(body_result.valid)
+        self.assertEqual(body_result.errors, [])
 
         # 11. delete (generic, type="sysrs"): a real hard delete via the generic tool -- the
         #     returned str must be the seeded file path, the file must be gone, and a
@@ -231,13 +238,15 @@ class TestSysrsLifecycleIntegration(TempSysrsDirTestCase):
         self.assertEqual(expected_path.read_text(encoding="utf-8"), before)
 
     def test_validate_rejects_malformed_body_and_wrong_full_shape(self) -> None:
-        """validate_sysrs's body-only/full semantics -- invalid body fails (AssertionError);
-        full=True requires a frontmatter block (ValueError)."""
-        with self.assertRaises(AssertionError):
-            validate_sysrs("# Title\n\nJust a paragraph, no recognized SYSRS sections.\n")
+        """The generic validate tool's (type="sysrs") body-only/full semantics -- an invalid
+        body returns {valid: False, errors: [...]} (never raises); full=True with body-only
+        content still raises ValueError (caller-usage error, not a content failure)."""
+        result = validate(type="sysrs", content="# Title\n\nJust a paragraph, no recognized SYSRS sections.\n")
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
 
         with self.assertRaises(ValueError):
-            validate_sysrs(_INITIAL_BODY, full=True)
+            validate(type="sysrs", content=_INITIAL_BODY, full=True)
 
 
 if __name__ == "__main__":

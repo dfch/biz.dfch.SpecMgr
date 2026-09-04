@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Generic `validate(type, content, full)` MCP tool in `general/tools/`:
+  the disk-free, id-free dry-run content validator for the twelve
+  whole-body domains (`type` is one of
+  `req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr`/`sysrs`;
+  `adr` is not supported -- `validate_adr` remains its own standalone,
+  unchanged tool). Unlike every other generic tool in `general/tools/`, it
+  never raises for a content-validation failure: it always returns a
+  structured `{valid: bool, errors: list[{message: str}]}` result,
+  reusing feat-27-validation's already-enriched exception messages
+  verbatim as each error's `message` -- only a `full`/content-shape
+  mismatch (`full=True` with body-only content, or `full=False` with a
+  complete document) or an unsupported `type` still raises `ValueError`,
+  since that is a caller-usage error, not a content-validation failure.
+  This is the sole validate entry point for these twelve domains: every
+  current and future domain implements a `validate` adapter in the
+  generic tool, never a per-domain `validate_<d>` tool. New ADR
+  (078bf395-0a5f-4afd-84f6-b7a2191a00e6) extends ADR
+  36905d5b-8057-4294-8665-c7eed5534db0's dispatch-only convention
+  (previously covering only mutation-adjacent tools) to this read-only/
+  dry-run tool category (GitHub issues #81/#83).
 - Dedicated Pydantic models with drift-guard unittests for
   `specmgr://dtais`, `specmgr://rsk/tara`, `specmgr://rsk/risk-matrix`,
   and `specmgr://rasci`; all four are now also parsed on every resource
@@ -25,6 +45,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **BREAKING** (0.x): `list_<d>` (all twelve whole-body domains --
+  `req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr`/`sysrs`;
+  `list_adr` is unaffected, out of scope) no longer silently skips a
+  document that fails to parse: it now appears inline in `results` as its
+  own failed entry (`id=None`, `title`/`status` both the fixed marker
+  `"<failed to parse>"`, `ref`/`path` populated the same way as a
+  successful entry, and a new `error: str | None` field carrying the
+  caught exception's message), and `total` now includes failed entries
+  alongside successes -- a deliberate semantics change from the previous
+  "parseable documents only" `total`. `PagedResult` gains a new
+  `error_count: int = 0` field, counting failed entries across the whole
+  base directory, independent of `offset`/`max_results` paging (mirroring
+  `total`'s own already-documented across-all-pages semantics). Every
+  domain's summary type (`DocSummary` subclass) also gains a `path: str`
+  field -- an absolute, resolved filesystem path -- for the eleven
+  non-`feat` whole-body domains. Callers relying on a malformed document
+  being silently absent from `results`/uncounted in `total` must instead
+  check each entry's `error` field (GitHub issue #83).
+- `feat/FeatSummary`'s own, previously `feat`-only `path` field is removed
+  in favor of the same, now-shared `DocSummary.path` field every other
+  whole-body domain's summary carries (see above), and is retrofitted in
+  the same pass to the same absolute, resolved form the other eleven
+  domains use -- `FeatSummary.path` was previously left in its pre-existing
+  unresolved `str(path)` form. This completes `list_<d>`'s `path`-field
+  parity across all twelve whole-body domains (GitHub issue #81).
 - `specmgr://iso25010` now returns raw markdown (`text/markdown`)
   instead of a structured `Iso25010` JSON object, still parsed via
   `parse_iso25010()` on every read to fail fast on structural drift
@@ -42,6 +87,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   use -- it was a bespoke `feat`-only tool that predated, and was missed
   by, that conversion. Callers needing the full document should call
   `get_feat` afterward (GitHub issue #80).
+
+### Removed
+
+- **BREAKING** (0.x): the twelve per-domain `validate_<d>` MCP tools are
+  deleted outright (no deprecated wrappers): `validate_req`, `validate_uc`,
+  `validate_tsk`, `validate_qa`, `validate_prb`, `validate_gol`,
+  `validate_rsk`, `validate_dec`, `validate_sop`, `validate_feat`,
+  `validate_vcr`, `validate_sysrs` -- each raised on a content-validation
+  failure instead of returning a structured result. The twelve
+  per-domain `validate_<d>.py` modules, their `__init__.py`
+  registrations, and their dedicated tests are gone with them. Callers
+  must switch from `tools/call --tool-name validate_<d>` to
+  `tools/call --tool-name validate` with the explicit `type` parameter
+  (see "Added" above) -- and, since `validate` never raises for a
+  content-validation failure, callers checking `{valid: bool}` on the
+  returned result instead of catching an exception. `validate_adr` is
+  unaffected and remains unchanged.
 
 ## [0.21.0] - 2026-09-03
 

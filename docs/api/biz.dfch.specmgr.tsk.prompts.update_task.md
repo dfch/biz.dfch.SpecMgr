@@ -4,7 +4,7 @@
 
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through revising an existing Task List (TSK) document by id, using the
-existing ``tsk/tools/`` surface (``get_tsk``, ``validate_tsk``) plus the
+existing ``tsk/tools/`` surface (``get_tsk``, generic ``validate`` tool) plus the
 generic ``update``/``set_status`` tools in ``general/tools/`` (called
 with ``type="tsk"``; ``get_tsk``'s ``raw=True`` parameter serves the
 line-range flow's line numbers). There is no

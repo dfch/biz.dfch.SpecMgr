@@ -21,7 +21,7 @@
 
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through revising an existing Requirement (REQ) document by id, using the
-existing ``req/tools/`` surface (``get_req``, ``validate_req``) plus the
+existing ``req/tools/`` surface (``get_req``, generic ``validate`` tool) plus the
 generic ``update``/``set_status`` tools in ``general/tools/`` (called with
 ``type="req"``). Unlike an earlier revision of this prompt, step 1 no
 longer points at a ``specmgr://req/{id}`` resource -- that resource was
