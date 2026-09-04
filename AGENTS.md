@@ -603,6 +603,9 @@ runs `ruff format`/`ruff check`, the full `unittest` suite (scoped to
 `docs/adr/**/*.md` changes) before every commit, so a broken test or drift in
 `docs/api/`/`docs/GENERATED.md`/`docs/adr/README.md` gets caught locally instead
 of failing later in CI. (ADR 9c687bb1-8ee7-41c8-84ec-07606356bc73: "Enforce doc generation/lint/tests locally via pre-commit hook, not just CI")
+**Agents: see "Agent Workflow: Commits and Long-Running Commands" below before
+running `git commit` or `pre-commit run` — the unittest hook alone takes 9-11
+minutes and is not cached between invocations.**
 
 ## Extras split (base library has no CLI/MCP deps)
 
@@ -654,6 +657,42 @@ consumer of the base library.
   `v0.2.1` to PyPI/the MCP Registry, triggered on `v*` tags.
 - Version bumps: update `version` in `pyproject.toml` (single source) and
   move `CHANGELOG.md`'s `[Unreleased]` into a dated section, same commit.
+
+## Agent Workflow: Commits and Long-Running Commands
+
+The local `unittest` pre-commit hook takes 9-11 minutes and is a `language:
+system` hook with no result caching -- it re-executes the raw command every
+time it's invoked, whether that's via `git commit` or a manual `pre-commit
+run`. Follow these rules to avoid running it twice for one commit and to
+avoid tool-call timeouts:
+
+- **Never manually run `pre-commit run` / `pre-commit run --all-files`
+  before committing.** `git commit` already triggers the installed hook
+  (`.git/hooks/pre-commit` -> `pre-commit run`), which runs the full gate
+  (ruff, vulture, the full `unittest` suite, doc/schema drift checks)
+  exactly once. Running it by hand first and then committing runs the
+  9-11 min `unittest` hook twice back-to-back for the same change. Just
+  run `git commit` directly; if it fails, fix the reported issue and
+  commit again -- each retry legitimately re-runs the gate against the
+  fixed code, that's expected and not the "double run" this rule avoids.
+- **Always pass an explicit, generous `timeout` (in milliseconds) on the
+  bash tool call for `git commit` and for any standalone test run.** The
+  bash tool's own default timeout is 120000ms (2 minutes) unless
+  overridden, well under the suite's 9-11 min runtime. Use at least
+  900000 (15 min) for `git commit` and for standalone
+  `uv run --frozen coverage run -m unittest ...` /
+  `python -m unittest ...` invocations. If the commit's staged files are
+  entirely outside `src/**/*.py` and `tests/**/*.py` (e.g. only
+  `.md`/`docs/adr/*.md` changes), the slow `unittest` hook won't fire at
+  all per its `files:` scope in `.pre-commit-config.yaml`, and the
+  default timeout is fine.
+- **Don't block on `gh pr checks --watch` for CI results.** CI duration
+  is variable and can exceed any fixed timeout you pick. Poll instead:
+  call `gh pr checks <pr-number>` (without `--watch`) -- it returns
+  immediately with current status and comfortably fits the default
+  120000ms timeout -- repeated across a few tool calls (optionally
+  `sleep 30 && gh pr checks <pr-number>` per call) until every check
+  reports a final state, rather than issuing one long-blocking call.
 
 ## Coding Standards
 
