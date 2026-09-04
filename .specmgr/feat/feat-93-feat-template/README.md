@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-04 10:00:51.149+02:00'
 id: feat-93-feat-template
-status: planning
+status: done
 type: feat
-updated: '2026-09-04 10:00:51.149+02:00'
+updated: '2026-09-04 11:15:00.000+02:00'
 version: 1.0.0
 ---
 
@@ -82,9 +82,9 @@ The canonical source of truth for a feature template/example is the packaged dat
 
 #### Phase 3: Verification
 
-- [ ] Task 3.1: Regenerate `docs/MCP.md` / `docs/GENERATED.md`.
-- [ ] Task 3.2: Run the full unit-test suite and confirm it passes unchanged.
-- [ ] Task 3.3: Dry-run `validate_feat(content, full=True)` on this feature's body.
+- [x] Task 3.1: Regenerate `docs/MCP.md` / `docs/GENERATED.md`.
+- [x] Task 3.2: Run the full unit-test suite and confirm it passes unchanged.
+- [x] Task 3.3: Dry-run `validate_feat(content, full=True)` on this feature's body.
 
 ## Progress
 
@@ -94,9 +94,15 @@ The canonical source of truth for a feature template/example is the packaged dat
 
 **As of 2026-09-04 10:45**: Phase 2 (Implementation) is complete. Deleted `.specmgr/_template/v1/README.md`; removed the three verbatim fenced template blocks from ADR e369ee2e and updated its Option 1 "Template location" open question plus appended a pointer note to the canonical tools; updated the AGENTS.md `feat` template bullet and `.specmgr/` directory tree. Phase 3 (Verification) is next.
 
+**As of 2026-09-04 11:15**: Phase 3 (Verification) is complete and the feature is **done**. Full unit-test suite: 3318 tests, OK (unchanged from baseline). `specmgr docs` + `specmgr adr-toc` ran clean with no changes to `docs/MCP.md`/`docs/GENERATED.md` (those are generated from source docstrings; Phase 2 only touched AGENTS.md, not source). `validate_feat(content, full=True)` on this feature's body parses cleanly. Note: the `### Decisions Made` section was migrated from markdown-rendered `- **[date]**:` bullets to the canonical `#### {timestamp} ( - | : ) {title}` H4 heading format required by the feat parser — without it `parse_feat` raised an `AssertionError` on `DecisionEntry`. `ruff format --check` + `ruff check` both pass.
+
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-04 10:45:00.000+02:00 - Verification complete
+
+Phase 3 (Verification) done. (1) Ran `specmgr docs` + `specadr adr-toc` — both exited cleanly and produced **no changes** to `docs/MCP.md`/`docs/GENERATED.md` (those files are generated from source docstrings; Phase 2 only edited AGENTS.md, not source, so no drift). (2) Full unit-test suite: **3318 tests, OK** (unchanged from baseline). (3) `validate_feat(content, full=True)` on this feature's body: **parses cleanly**. Note: the README's `### Decisions Made` section was migrated from markdown-rendered `- **[date]**:` bullets to the canonical `#### {timestamp} ( - | : ) {title}` H4 heading format required by `feat/models/v1` (matching `feat/data/feat_example.md`); without this the body failed `parse_feat` with an `AssertionError` on `DecisionEntry`. (4) `ruff format --check` + `ruff check` both pass.
 
 #### 2026-09-04 10:45:00.000+02:00 - Implementation complete
 
@@ -112,5 +118,12 @@ Feature scaffolded from GitHub issue #93 ("Consolidate feature templates/example
 
 ### Decisions Made
 
-- **[2026-09-04]**: Confirmed the canonical source is the packaged `feat/data/feat_template.md` + `feat_example.md` behind `get_feat_template`/`get_feat_example`; the `.specmgr/_template/v1/README.md` orphan and ADR e369ee2e fenced blocks are removable duplicates with zero `src/`/`tests/` consumers. Rationale: Phase 1 discovery (`grep -rn "_template/v1" src/ tests/` = no matches, exit 1) shows no code consumers, so removing them preserves the full unit-test suite unchanged.
-- **[2026-09-04]**: Kept the removed template blocks in ADR e369ee2e as a historical-reference blockquote note (not deleted from the ADR body) so the ADR's decision narrative stays intact and traceable. Rationale: the ADR documents *why* the structure was chosen; the old bare templates are historical, not live references, so a short pointer note (not a verbatim fenced copy) is the right level of fidelity without re-introducing a drifting duplicate.
+<!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-04 10:45:00.000+02:00 : Canonical source is the packaged feat tools
+
+Confirmed the canonical source is the packaged `feat/data/feat_template.md` + `feat_example.md` behind `get_feat_template`/`get_feat_example`; the `.specmgr/_template/v1/README.md` orphan and ADR e369ee2e fenced blocks are removable duplicates with zero `src/`/`tests/` consumers. Rationale: Phase 1 discovery (`grep -rn "_template/v1" src/ tests/` = no matches, exit 1) shows no code consumers, so removing them preserves the full unit-test suite unchanged.
+
+#### 2026-09-04 10:45:00.000+02:00 : ADR e369ee2e keeps a pointer note, not a verbatim copy
+
+Kept the removed template blocks in ADR e369ee2e as a historical-reference blockquote note (not deleted from the ADR body) so the ADR's decision narrative stays intact and traceable. Rationale: the ADR documents *why* the structure was chosen; the old bare templates are historical, not live references, so a short pointer note (not a verbatim fenced copy) is the right level of fidelity without re-introducing a drifting duplicate.
