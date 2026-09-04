@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-03 10:38:25.338Z'
 id: feat-81-83-validation
-status: planning
+status: done
 type: feat
-updated: '2026-09-04 16:00:00.000Z'
+updated: '2026-09-04 17:00:00.000Z'
 version: 1.0.0
 ---
 
@@ -50,7 +50,7 @@ GitHub issues #81 and #83 both concern how this repo's MCP tools report validati
 
 - [x] ACC-007: Verifies REQ-007 -- all eleven other whole-body domains' summary types gain `path` via the shared `DocSummary` base with a passing test each; `FeatSummary` is retrofitted to the inherited, resolved `path` (its own redundant field declaration removed) with its existing tests updated accordingly; `DocSummary.ref`'s docstring no longer states callers must not read the file off disk directly. Verdict: done -- confirmed all eleven other domains' `list_<d>.py`/`test_list_<d>.py` already had `path=str(path.resolve())` and `Path(summary.path).is_absolute()` assertions from Phase 3; `FeatSummary`'s own redundant `path` field declaration removed (now purely inherited from `DocSummary`), `list_feat.py`'s `_to_summary`/`_to_failed_summary` retrofitted to `path.resolve()`, and `tests/feat/tools/test_list_feat.py`/`tests/general/models/test_summary.py` updated/extended accordingly; `DocSummary.ref`'s docstring revised.
 
-- [ ] ACC-008: Verifies REQ-008 -- the regression tests described exist and pass.
+- [x] ACC-008: Verifies REQ-008 -- the regression tests described exist and pass. Verdict: done -- `tests/general/tools/test_validate.py::TestValidateIssue83Regressions` reproduces both of issue #83's literal repro bodies end-to-end through the generic `validate` tool (`{valid: False, errors: [...]}`, never a raised exception); `tests/req/tools/test_list_req.py`/`tests/rsk/tools/test_list_rsk.py` each reproduce a mixed valid/unparseable directory end-to-end through `list_<d>` (including a malformed-YAML-frontmatter fixture), satisfying the "at least two domains" requirement. Full suite (3342 tests) passes.
 
 ### Scope
 
@@ -231,21 +231,81 @@ Design questions resolved during plan refinement (2026-09-03), prior to Phase 1 
 
 #### Phase 5: Verification and Closeout
 
-- [ ] Task 5.1: Full quality gate (`ruff format --check`, `ruff check`, `vulture`, full `unittest` suite).
+- [x] Task 5.1: Full quality gate (`ruff format --check`, `ruff check`, `vulture`, full `unittest` suite). Done -- all four commands clean (1652 files already formatted, all ruff checks passed, no vulture output, 3342 tests passed via `pytest -n auto --cov=src`); see Updates below.
 
-- [ ] Task 5.2: Regenerate `docs/api/`/`docs/GENERATED.md`/`docs/MCP.md`; confirm no `AGENTS.md` edit was missed beyond what Tasks 2.3/3.1/4.1 already covered; confirm the three `CHANGELOG.md [Unreleased]` entries from Tasks 2.7/3.4/4.5 are all present (or consciously squashed into fewer entries if committed together).
+- [x] Task 5.2: Regenerate `docs/api/`/`docs/GENERATED.md`/`docs/MCP.md`; confirm no `AGENTS.md` edit was missed beyond what Tasks 2.3/3.1/4.1 already covered; confirm the three `CHANGELOG.md [Unreleased]` entries from Tasks 2.7/3.4/4.5 are all present (or consciously squashed into fewer entries if committed together). Done -- `specmgr docs`/`specmgr mcp-docs`/`specmgr adr-toc` all re-ran with zero drift (Phases 2-4 already left everything current); `AGENTS.md` audited in full, no stale content found (all twelve `validate_<d>` mentions correctly phrased as "former"/removed, the generic `validate` tool mentioned for all twelve domains, `error_count`/resolved `path` mentioned in all twelve `list_<d>` bullets, "Still genuinely missing" section already correctly names the generic `validate` tool); `CHANGELOG.md [Unreleased]` audited, confirmed all three pieces of information present (consciously squashed into one "Added" + one "Removed" + two "Changed" entries rather than kept as three separate per-phase entries): (a) the `validate` tool addition + twelve `validate_<d>` removals, (b) `list_<d>`'s `total`/`error_count` semantics change, (c) `path`/`error` fields on all twelve domains' summaries + `FeatSummary.path`'s resolved-path retrofit. No edits needed to either file.
 
-- [ ] Task 5.3: Comment on GitHub issues #81 and #83 with the outcome; mark this feature done.
+- [x] Task 5.3: Comment on GitHub issues #81 and #83 with the outcome; mark this feature done. Done -- see Updates below for the comment URLs.
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-09-04**: **Phases 1-4 are all fully complete** (Investigation and Inventory; Generic `validate` Tool; `list_<d>` Failure Reporting; `list_<d>` Path Field Parity). Feature drafted from GitHub issues #81 and #83, then refined three times ahead of Phase 1 -- see the earlier Updates entries below for that refinement history. Phase 1 confirmed both of issue #83's repro cases reproduce as client-observed symptoms, root-caused to a client-side tool-error-rendering gap, not a specmgr server-side regression, and inventoried all thirteen `validate_<d>` tools. Phase 2 implemented the generic `validate(type, content, full)` tool in `general/tools/`, recorded the consolidation decision as ADR 078bf395-0a5f-4afd-84f6-b7a2191a00e6, removed the twelve per-domain `validate_<d>` tools and their dedicated tests, and migrated every dependent prompt/test. Phase 3 implemented the shared `general/tools/_listing.py::build_summaries()` helper (REQ-006), added `PagedResult.error_count`/`DocSummary.path`+`error`, wired all twelve `list_<d>.py` files through it so a malformed document now appears inline in `results` as a failed entry (marker `title`/`status`, `ref`, `path`, `error`) and contributes to `total`/`error_count` instead of being silently skipped, built RSK's sentinel-document construction (`rsk/tools/_sentinel.py`) for its own richer `RskSummary`, added regression tests (including a malformed-YAML-frontmatter fixture) for `req`/`rsk` plus updated every other domain's own pre-existing list test for the new semantics, and updated `AGENTS.md`'s twelve `list_<d>` bullets to mention `error_count`. `feat`'s `FeatSummary.path` deliberately kept its existing unresolved form in Phase 3 (Phase 4, Task 4.2's job). Phase 4 closed out REQ-007/ACC-007: confirmed (Task 4.1) the other eleven domains' `path`-field population and test coverage already fully landed in Phase 3, with no gaps; retrofitted `FeatSummary.path`/`list_feat.py` to the same resolved (absolute) form the other eleven domains use, and removed `FeatSummary`'s now-redundant separate `path` field declaration (Task 4.2); revised `DocSummary.ref`'s docstring to drop its "must not read this off disk" policy language (Task 4.3); added/extended tests confirming the new behavior, including simplifying `default_failed_summary` by removing its now-unused `resolve` parameter (Task 4.4, see Decisions Made); and added a `CHANGELOG.md` `[Unreleased]` entry (Task 4.5). Only Phase 5 (Verification and Closeout) remains. The full quality gate (`ruff format --check`, `ruff check`, `vulture`, the full 3342-test `unittest`/`pytest` suite, `specmgr docs`, `specmgr mcp-docs`, `specmgr adr-toc`) is green as of Phase 4's own completion -- see the dated Updates entry below for full detail.
+**As of 2026-09-04**: **the feature is complete -- all 5 phases, all 8 REQs/ACCs (ACC-001 through ACC-008) done.** Feature drafted from GitHub issues #81 and #83, then refined three times ahead of Phase 1 -- see the earlier Updates entries below for that refinement history. Phase 1 confirmed both of issue #83's repro cases reproduce as client-observed symptoms, root-caused to a client-side tool-error-rendering gap, not a specmgr server-side regression, and inventoried all thirteen `validate_<d>` tools. Phase 2 implemented the generic `validate(type, content, full)` tool in `general/tools/`, recorded the consolidation decision as ADR 078bf395-0a5f-4afd-84f6-b7a2191a00e6, removed the twelve per-domain `validate_<d>` tools and their dedicated tests, and migrated every dependent prompt/test. Phase 3 implemented the shared `general/tools/_listing.py::build_summaries()` helper (REQ-006), added `PagedResult.error_count`/`DocSummary.path`+`error`, wired all twelve `list_<d>.py` files through it so a malformed document now appears inline in `results` as a failed entry (marker `title`/`status`, `ref`, `path`, `error`) and contributes to `total`/`error_count` instead of being silently skipped, built RSK's sentinel-document construction (`rsk/tools/_sentinel.py`) for its own richer `RskSummary`, added regression tests (including a malformed-YAML-frontmatter fixture) for `req`/`rsk` plus updated every other domain's own pre-existing list test for the new semantics, and updated `AGENTS.md`'s twelve `list_<d>` bullets to mention `error_count`. `feat`'s `FeatSummary.path` deliberately kept its existing unresolved form in Phase 3 (Phase 4, Task 4.2's job). Phase 4 closed out REQ-007/ACC-007: confirmed (Task 4.1) the other eleven domains' `path`-field population and test coverage already fully landed in Phase 3, with no gaps; retrofitted `FeatSummary.path`/`list_feat.py` to the same resolved (absolute) form the other eleven domains use, and removed `FeatSummary`'s now-redundant separate `path` field declaration (Task 4.2); revised `DocSummary.ref`'s docstring to drop its "must not read this off disk" policy language (Task 4.3); added/extended tests confirming the new behavior, including simplifying `default_failed_summary` by removing its now-unused `resolve` parameter (Task 4.4, see Decisions Made); and added a `CHANGELOG.md` `[Unreleased]` entry (Task 4.5). Phase 5 (this closeout) re-ran the full quality gate (`ruff format --check`: 1652 files already formatted; `ruff check`: all checks passed; `vulture src/ whitelist.py --min-confidence 60`: no output; `pytest -n auto --cov=src`: 3342 passed) with zero regressions, confirmed `specmgr docs`/`specmgr mcp-docs`/`specmgr adr-toc` all already reflect the current state with zero drift, audited `AGENTS.md`/`CHANGELOG.md` in full and found no stale content requiring correction, marked ACC-008 done (REQ-008's regression tests were already implemented in Phases 2/3 and verified passing here), and posted outcome comments to GitHub issues #81 and #83 (see Updates below for the comment URLs). No code changes were needed in Phase 5 -- it is a pure verification/closeout pass.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-04 17:00:00.000Z - Phase 5 (Verification and Closeout) complete: Tasks 5.1-5.3 done -- feature closed out
+
+Closed out the whole feature. Task 5.1 re-ran the full quality gate with no
+code changes needed: `ruff format --check` (1652 files already formatted),
+`ruff check` (all checks passed), `vulture src/ whitelist.py
+--min-confidence 60` (no output), and the full `pytest -n auto --cov=src`
+suite (3342 passed, unchanged from Phase 4's own count -- no test edits were
+needed in this phase).
+
+Task 5.2 re-ran `specmgr docs`, `specmgr mcp-docs`, and `specmgr adr-toc`;
+`git status`/`git diff` showed zero drift after all three, confirming
+Phases 2-4 already left `docs/api/`, `docs/GENERATED.md`, `docs/MCP.md`, and
+`docs/adr/README.md` fully current. Audited `AGENTS.md` in full: confirmed
+the generic `validate` tool is mentioned for all twelve domains, every
+`validate_<d>` mention is correctly phrased as "former"/removed (none
+describe a still-existing per-domain tool), all twelve `list_<d>` bullets
+mention `error_count` and a resolved `path` field (`feat`'s own bullet
+explicitly notes `path` is no longer `feat`-only), and the "Still genuinely
+missing" section already correctly names the generic `validate` tool rather
+than the retired thirteen per-domain names. No edits were needed. Audited
+`CHANGELOG.md`'s `[Unreleased]` section in full: confirmed all three pieces
+of information from Tasks 2.7/3.4/4.5 are present, consciously squashed
+into one "Added" entry (the new `validate` tool), one "Removed" entry (the
+twelve retired `validate_<d>` tools, itemized by name), and two "Changed"
+entries (`list_<d>`'s `total`/`error_count` semantics change; `path`/`error`
+fields on all twelve domains' summaries plus `FeatSummary.path`'s
+resolved-path retrofit) rather than kept as three separate per-phase
+entries -- explicitly permitted by this task's own wording. No edits were
+needed.
+
+Task 5.3 posted one outcome comment each to GitHub issues #81
+(<https://github.com/dfch/biz.dfch.SpecMgr/issues/81#issuecomment-5545854938>)
+and #83
+(<https://github.com/dfch/biz.dfch.SpecMgr/issues/83#issuecomment-5545855566>),
+summarizing the generic `validate(type, content, full)` tool replacing the
+twelve per-domain `validate_<d>` tools, the new ADR
+(078bf395-0a5f-4afd-84f6-b7a2191a00e6) recording that consolidation
+decision, `list_<d>`'s `error_count`/inline-failed-entry fix, and the
+`path`-field parity across all twelve whole-body domains; issue #83's
+comment additionally covered the investigation finding that both repro
+cases were confirmed to reproduce as client-observed symptoms but were
+root-caused to a client-side MCP tool-error-rendering gap (not a specmgr
+server-side regression), and that `validate`'s non-raising `{valid, errors}`
+design is a client-independent workaround for that gap (ADR
+519d1206-4d2a-4500-9046-6db635209996). Neither issue was closed, per this
+task's own instruction -- that is left to a human.
+
+Confirmed, on a final read-through, every ACC-001 through ACC-007 checkbox
+was already `[x]` with a verdict note from Phases 1-4; found one genuine
+gap -- ACC-008 (REQ-008's regression tests) was still `[ ]` even though the
+regression tests it describes were already implemented and passing (Task
+2.6's `TestValidateIssue83Regressions`, Task 3.3's mixed valid/unparseable
+directory tests for `req`/`rsk`) -- and marked it `[x]` with a verdict note
+identifying exactly which tests satisfy it. No new test code was written;
+this was a documentation-only correction.
+
+This closes the feature: all 5 phases and all 8 REQs/ACCs (ACC-001 through
+ACC-008) are done, with a clean final quality gate and zero outstanding
+documentation drift.
 
 #### 2026-09-04 16:00:00.000Z - Phase 4 (`list_<d>` Path Field Parity) complete: Tasks 4.1-4.5 done
 
