@@ -61,7 +61,7 @@ from ...general.tools._path_safety import assert_feat_id
 from ...general.tools._splice import body_text
 from ...general.tools._timestamps import now_timestamp
 from ...server import mcp
-from ..models.v1 import FeatDocument, FeatFrontmatter
+from ..models.v1 import FeatFrontmatter
 from ._io import load_by_id
 from ._lock import feat_create_lock, feat_lock
 from ._paths import README_FILENAME, feat_base_dir
@@ -75,10 +75,12 @@ from ._write import write_feat_file
         "Rename an existing feature's id: validates new_id's feat-NNN-slug shape, refuses if "
         "new_id's folder already exists, renames <base>/<id>/ to <base>/<new_id>/, rewrites the "
         "README frontmatter id to new_id, bumps updated, and leaves the body byte-identical. Does "
-        "not update or search for references to the old id in any other document."
+        "not update or search for references to the old id in any other document. Returns the "
+        "renamed document's frontmatter only (no body); use the corresponding `get_feat` tool to "
+        "fetch the full document afterward."
     ),
 )
-def set_feat_id(id: str, new_id: str) -> FeatDocument:
+def set_feat_id(id: str, new_id: str) -> FeatFrontmatter:
     """Rename the feature identified by ``id`` to ``new_id``.
 
     ``new_id`` is validated against the ``feat-NNN-slug`` shape (via
@@ -115,9 +117,10 @@ def set_feat_id(id: str, new_id: str) -> FeatDocument:
 
     Returns
     -------
-    FeatDocument
-        The renamed document, with ``frontmatter.id == new_id`` and a
-        freshly bumped ``frontmatter.updated``.
+    FeatFrontmatter
+        The renamed document's frontmatter only (no body), with ``.id ==
+        new_id`` and a freshly bumped ``.updated``. Use the corresponding
+        ``get_feat`` tool to fetch the full document afterward.
 
     Raises
     ------
@@ -150,7 +153,6 @@ def set_feat_id(id: str, new_id: str) -> FeatDocument:
         fm_data["id"] = new_id
         fm_data["updated"] = now_timestamp()
         new_frontmatter = FeatFrontmatter(**fm_data)
-        new_doc = FeatDocument(frontmatter=new_frontmatter, body=existing.body)
 
         write_feat_file(new_path, new_frontmatter, raw_body)
-    return new_doc
+    return new_frontmatter

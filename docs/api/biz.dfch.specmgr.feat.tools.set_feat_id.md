@@ -41,7 +41,7 @@ touched (REQ-008 is explicitly out of scope for this tool).
 
 ## Functions
 
-### `set_feat_id(id: 'str', new_id: 'str') -> 'FeatDocument'`
+### `set_feat_id(id: 'str', new_id: 'str') -> 'FeatFrontmatter'`
 
 Rename the feature identified by ``id`` to ``new_id``.
 
@@ -79,9 +79,10 @@ new_id:
 
 Returns
 -------
-FeatDocument
-    The renamed document, with ``frontmatter.id == new_id`` and a
-    freshly bumped ``frontmatter.updated``.
+FeatFrontmatter
+    The renamed document's frontmatter only (no body), with ``.id ==
+    new_id`` and a freshly bumped ``.updated``. Use the corresponding
+    ``get_feat`` tool to fetch the full document afterward.
 
 Raises
 ------
