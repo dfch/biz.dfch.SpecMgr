@@ -285,7 +285,9 @@ type or cross-cutting:
   new_id)` is the one tool that renames an existing feature's id
   afterwards (e.g. once a GitHub issue number becomes known), atomically
   renaming `<base>/<id>/` to `<base>/<new_id>/` and rewriting the
-  frontmatter `id`, leaving the body byte-identical — a bespoke
+  frontmatter `id`, leaving the body byte-identical, and returning the
+  renamed document's frontmatter only (no body), consistent with the
+  other write tools — a bespoke
   `feat`-only tool, distinct from the generic `update`/`set_status`
   dispatch tools below. Whole-body and line-range updates go through the
   generic `update` tool in `general/tools/` (`type="feat"`), status

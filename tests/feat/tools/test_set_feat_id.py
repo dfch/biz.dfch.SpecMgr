@@ -25,7 +25,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from biz.dfch.specmgr.feat.models.v1 import parse_feat
+from biz.dfch.specmgr.feat.models.v1 import FeatDocument, FeatFrontmatter, parse_feat
 from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR, FeatNotFoundError, README_FILENAME, feat_base_dir
 from biz.dfch.specmgr.feat.tools.create_feat import create_feat
 from biz.dfch.specmgr.feat.tools.set_feat_id import set_feat_id
@@ -111,15 +111,16 @@ class TestSetFeatId(TempFeatDirTestCase):
 
         result = set_feat_id("feat-0-get-update", "feat-42-get-update")
 
-        self.assertEqual(result.frontmatter.id, "feat-42-get-update")
-        self.assertEqual(result.frontmatter.type, created.type)
-        self.assertEqual(result.frontmatter.status, created.status)
-        self.assertEqual(result.frontmatter.created, created.created)
-        self.assertEqual(result.frontmatter.version, created.version)
-        self.assertNotEqual(result.frontmatter.updated, updated_before)
-        self.assertRegex(
-            result.frontmatter.updated or "", r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})$"
-        )
+        self.assertIsInstance(result, FeatFrontmatter)
+        self.assertNotIsInstance(result, FeatDocument)
+        self.assertFalse(hasattr(result, "body"))
+        self.assertEqual(result.id, "feat-42-get-update")
+        self.assertEqual(result.type, created.type)
+        self.assertEqual(result.status, created.status)
+        self.assertEqual(result.created, created.created)
+        self.assertEqual(result.version, created.version)
+        self.assertNotEqual(result.updated, updated_before)
+        self.assertRegex(result.updated or "", r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})$")
 
         old_folder = feat_base_dir() / "feat-0-get-update"
         self.assertFalse(old_folder.exists())
