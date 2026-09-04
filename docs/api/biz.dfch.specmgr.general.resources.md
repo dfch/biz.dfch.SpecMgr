@@ -14,7 +14,12 @@ owned by ``vcr``'s own schema. ``rasci`` registers the generic RASCI
 responsibility-assignment guidance resource (``specmgr://rasci``,
 REQ-011) -- motivated by the ``sop`` domain but not scoped to it, mirroring
 ``iso25010``'s cross-cutting placement rather than ``rsk/tara``'s
-domain-scoped one. ``config`` registers the ``specmgr://config`` diagnostic
+domain-scoped one. ``ears`` registers the EARS requirement-phrasing-
+templates guidance resource (``specmgr://ears``, feat-92-resources
+REQ-006) -- cross-cutting domain knowledge for any requirement-phrasing
+document type (``req``, ``gol``, ``sysrs``, ...), not owned by any single
+domain's own schema, mirroring ``dtais``'s cross-domain placement
+rationale. ``config`` registers the ``specmgr://config`` diagnostic
 resource (feat-51-mcp-cwd REQ-001) -- the resolved absolute base directory
 and env-var-set flag for all twelve document domains, so a client can
 self-diagnose a CWD/env-var misconfiguration without shell access to the

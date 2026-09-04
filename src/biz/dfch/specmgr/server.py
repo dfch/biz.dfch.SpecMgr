@@ -117,6 +117,11 @@ specmgr://iso25010 --   The ISO/IEC 25010:2023 product quality model's nine main
                         characteristics (and sub-characteristics), each with a description.
 specmgr://rasci --      The generic RASCI (Responsible/Accountable/Support/Consulted/
                         Informed) responsibility-assignment framework, as raw markdown.
+specmgr://ears --       The EARS (Easy Approach to Requirements Syntax) five
+                        requirement-phrasing templates (Ubiquitous requirements,
+                        Event-driven requirements, Unwanted behaviours, State-driven
+                        requirements, Optional features) and when to use each -- raw
+                        markdown domain-knowledge guidance.
 specmgr://config --     For all twelve document domains (adr, req, uc, tsk, qa, prb, gol,
                         rsk, dec, sop, feat, vcr), the resolved absolute base directory and
                         whether the domain's ``SPECMGR_*_DIR`` environment variable is

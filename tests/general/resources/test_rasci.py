@@ -19,11 +19,12 @@
 
 Mirrors `tests/rsk/resources/test_tara.py`'s non-drift-guard tests
 (real-content assertions, fresh-read-per-call, `FileNotFoundError` on a
-missing packaged file). No drift-guard test is needed here: unlike
-`rsk/tara` (whose four documented TARA words are validated by
-`rsk.models.v1.body.Strategy`'s closed set), no Pydantic field
-independently validates against the RASCI role vocabulary -- the resource
-is generic framework guidance, not a closed-set mirror of a model field.
+missing packaged file). Since feat-92-resources Phase 5, `rasci` also
+gains a dedicated `general.models.rasci.Rasci` model, parsed on every
+resource call purely to fail fast on structural drift (ADR
+356d8781-e446-4c26-917a-eda85648ce9d) -- see
+`test_raises_on_structural_drift` below, mirroring
+`tests/general/resources/test_dtais.py`'s equivalent test.
 
 ACC-010 additionally requires the content to be genuinely generic (no
 `sop`-specific structural rule leaked in), covered by
@@ -57,6 +58,36 @@ _SOP_SPECIFIC_STRUCTURAL = [
 ]
 
 
+def _valid_rasci_text(marker: str) -> str:
+    """Build a minimal, well-formed RASCI-shaped document, tagged with `marker`.
+
+    `marker` is embedded in the title so two calls with different markers produce
+    distinguishable, but both individually valid, `parse_rasci`-accepted text.
+    """
+    result = f"""# {marker}
+
+RASCI is a responsibility-assignment framework that names, for a given
+piece of work, who does it, who owns it, who helps, who is consulted, and
+who is kept informed.
+
+## The five roles
+
+- **Responsible** -- the people who do the work.
+- **Accountable** -- the single owner who is ultimately answerable for the
+  work.
+- **Support** -- the people who provide resources, tooling, or assistance.
+- **Consulted** -- the people whose opinions are sought before or during
+  the work.
+- **Informed** -- the people who are kept up to date on progress.
+
+## RASCI vs. plain RACI
+
+Plain RACI names four roles -- Responsible, Accountable, Consulted, and
+Informed. RASCI adds the fifth, **S**upport role.
+"""
+    return result
+
+
 class TestRasciResource(unittest.TestCase):
     """Tests for the `rasci` resource function."""
 
@@ -83,19 +114,22 @@ class TestRasciResource(unittest.TestCase):
 
     def test_reads_fresh_on_every_call(self):
         """No in-memory cache -- a second call must reflect an on-disk change since the first."""
+        first_text = _valid_rasci_text("First Marker")
+        second_text = _valid_rasci_text("Second Marker")
+
         with tempfile.TemporaryDirectory() as tmp:
             rasci_path = Path(tmp) / "general_rasci.md"
-            rasci_path.write_text("first", encoding="utf-8")
+            rasci_path.write_text(first_text, encoding="utf-8")
 
             with mock.patch.object(_packaged_data, "packaged_data_path", return_value=rasci_path):
                 sut = rasci
 
                 first = sut()
-                rasci_path.write_text("second", encoding="utf-8")
+                rasci_path.write_text(second_text, encoding="utf-8")
                 second = sut()
 
-            self.assertEqual(first, "first")
-            self.assertEqual(second, "second")
+            self.assertEqual(first, first_text)
+            self.assertEqual(second, second_text)
 
     def test_raises_file_not_found_when_missing(self):
         """A missing packaged general_rasci.md must propagate FileNotFoundError uncaught."""
@@ -106,6 +140,20 @@ class TestRasciResource(unittest.TestCase):
                 sut = rasci
 
                 with self.assertRaises(FileNotFoundError):
+                    sut()
+
+    def test_raises_on_structural_drift(self):
+        """A malformed packaged file must fail fast via `parse_rasci`, not return silently."""
+        malformed_text = "# Not A Valid RASCI Document\n\nThis file has no role bullets at all.\n"
+
+        with tempfile.TemporaryDirectory() as tmp:
+            rasci_path = Path(tmp) / "general_rasci.md"
+            rasci_path.write_text(malformed_text, encoding="utf-8")
+
+            with mock.patch.object(_packaged_data, "packaged_data_path", return_value=rasci_path):
+                sut = rasci
+
+                with self.assertRaises((AssertionError, ValueError)):
                     sut()
 
 

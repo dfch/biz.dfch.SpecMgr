@@ -61,6 +61,46 @@ def _zone_table(text: str) -> dict[tuple[int, int], str]:
     return cells
 
 
+def _valid_risk_matrix_text(marker: str) -> str:
+    """Build a minimal, well-formed risk-matrix-shaped document, tagged with `marker`.
+
+    `marker` is embedded in the title so two calls with different markers produce
+    distinguishable, but both individually valid, `parse_risk_matrix`-accepted text.
+    Mirrors `tests.rsk.resources.test_tara._valid_tara_text`'s precedent -- needed
+    since `risk_matrix()` now calls `parse_risk_matrix` on every read (feat-92-resources
+    Phase 4), so a bare non-risk-matrix-shaped string would fail fast instead of
+    round-tripping unchanged.
+    """
+    result = f"""# {marker}
+
+Every `rsk` document carries two 5x5 assessments.
+
+## Scale anchors
+
+Probability and impact anchors go here.
+
+## Zone table
+
+The visual 5x5 table goes here.
+
+## Product thresholds
+
+The zone is derived from the product `p x i` (range 1..25):
+
+- `1-4` \u2192 `low`
+- `5-9` \u2192 `medium`
+- `10-14` \u2192 `high`
+- `15-25` \u2192 `very high`
+
+These are the same thresholds the schema derives.
+
+## Reading initial and residual together
+
+- `## Initial Assessment` is the risk as identified.
+"""
+    return result
+
+
 class TestRskRiskMatrixResource(unittest.TestCase):
     """Tests for the `risk_matrix` resource function."""
 
@@ -119,19 +159,22 @@ class TestRskRiskMatrixResource(unittest.TestCase):
 
     def test_reads_fresh_on_every_call(self):
         """No in-memory cache -- a second call must reflect an on-disk change since the first."""
+        first_text = _valid_risk_matrix_text("First Marker")
+        second_text = _valid_risk_matrix_text("Second Marker")
+
         with tempfile.TemporaryDirectory() as tmp:
             matrix_path = Path(tmp) / "rsk_risk_matrix.md"
-            matrix_path.write_text("first", encoding="utf-8")
+            matrix_path.write_text(first_text, encoding="utf-8")
 
             with mock.patch.object(_packaged_data, "packaged_data_path", return_value=matrix_path):
                 sut = risk_matrix
 
                 first = sut()
-                matrix_path.write_text("second", encoding="utf-8")
+                matrix_path.write_text(second_text, encoding="utf-8")
                 second = sut()
 
-            self.assertEqual(first, "first")
-            self.assertEqual(second, "second")
+            self.assertEqual(first, first_text)
+            self.assertEqual(second, second_text)
 
     def test_raises_file_not_found_when_missing(self):
         """A missing packaged rsk_risk_matrix.md must propagate FileNotFoundError uncaught."""
@@ -142,6 +185,20 @@ class TestRskRiskMatrixResource(unittest.TestCase):
                 sut = risk_matrix
 
                 with self.assertRaises(FileNotFoundError):
+                    sut()
+
+    def test_raises_on_structural_drift(self):
+        """A malformed packaged file must fail fast via `parse_risk_matrix`, not return silently."""
+        malformed_text = "# Not A Valid Risk Matrix Document\n\nThis file has no threshold bullets at all.\n"
+
+        with tempfile.TemporaryDirectory() as tmp:
+            matrix_path = Path(tmp) / "rsk_risk_matrix.md"
+            matrix_path.write_text(malformed_text, encoding="utf-8")
+
+            with mock.patch.object(_packaged_data, "packaged_data_path", return_value=matrix_path):
+                sut = risk_matrix
+
+                with self.assertRaises((AssertionError, ValueError)):
                     sut()
 
 

@@ -26,15 +26,70 @@ Backs feat-13's ``<domain>_list`` -> ``list_<domain>`` pagination rollout
   set that every domain's own ``*Summary`` model (``ReqSummary``,
   ``UcSummary``, ``TskSummary``, ``QaSummary``) subclasses.
 
+Also backs feat-92-resources's cross-cutting reference-resource
+model-backed drift-guard convention (ADR
+356d8781-e446-4c26-917a-eda85648ce9d, REQ-002/REQ-005/REQ-006):
+
+- :func:`parse_dtais`/:class:`Dtais` -- parses the DTAIS verification-
+  methods guidance document (``general/data/general_dtais.md``) backing
+  ``specmgr://dtais``, purely to fail fast on structural drift (the parsed
+  result is discarded by the resource itself).
+- :func:`parse_rasci`/:class:`Rasci` -- parses the RASCI responsibility-
+  assignment guidance document (``general/data/general_rasci.md``) backing
+  ``specmgr://rasci``, purely to fail fast on structural drift (the parsed
+  result is discarded by the resource itself).
+- :func:`parse_ears`/:class:`Ears` -- parses the EARS requirement-
+  phrasing-templates guidance document (``general/data/general_ears.md``)
+  backing ``specmgr://ears``, purely to fail fast on structural drift (the
+  parsed result is discarded by the resource itself).
+
 Import this package to use either model directly::
 
     from biz.dfch.specmgr.general.models import DocSummary, PagedResult
 """
 
+from .dtais import (
+    CoverageItem,
+    CoverageRelationship,
+    Dtais,
+    MethodItem,
+    WhenToApply,
+    WhenToApplyItem,
+    parse_dtais,
+)
+from .ears import (
+    CombiningPatterns,
+    Ears,
+    PatternItem,
+    Patterns,
+    WhenToUse,
+    WhenToUseItem,
+    parse_ears,
+)
 from .paged_result import PagedResult
+from .rasci import Rasci, RasciVsRaci, RoleItem, Roles, parse_rasci
 from .summary import DocSummary
 
 __all__ = [
+    "CombiningPatterns",
+    "CoverageItem",
+    "CoverageRelationship",
+    "Dtais",
     "DocSummary",
+    "Ears",
+    "MethodItem",
     "PagedResult",
+    "PatternItem",
+    "Patterns",
+    "Rasci",
+    "RasciVsRaci",
+    "RoleItem",
+    "Roles",
+    "WhenToApply",
+    "WhenToApplyItem",
+    "WhenToUse",
+    "WhenToUseItem",
+    "parse_dtais",
+    "parse_ears",
+    "parse_rasci",
 ]
