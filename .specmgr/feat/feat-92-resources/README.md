@@ -147,12 +147,14 @@ the raw text returned, and (b) covered by its own
 convention; `specmgr://iso25010` now follows it (raw markdown,
 parse-and-discard). `general/models/dtais.py`'s `Dtais` model and
 `rsk/models/v1/tara.py`'s `Tara` model both exist and are covered by
-`tests/models/test_dtais.py`/`tests/models/test_tara.py`, but
-`general/resources/dtais.py`/`rsk/resources/tara.py` themselves are NOT
-yet wired to call `parse_dtais`/`parse_tara` -- that wiring is
-deliberately deferred to a later phase (each of these phases was model +
-test only, per the plan's own Task 2.1/Task 3.1 notes). Phases 4-7 not
-started yet.
+`tests/models/test_dtais.py`/`tests/models/test_tara.py`. A follow-up
+unit of work (not a numbered phase of its own) has now wired
+`general/resources/dtais.py`/`rsk/resources/tara.py` to call
+`parse_dtais`/`parse_tara` on every resource call, per the ADR's literal
+Decision Outcome -- see the dated Updates entry below. Phases 4-7 not
+started yet, and each will include this same request-time parse-and-
+discard wiring as part of its own scope going forward (see Decisions
+Made below).
 
 ### Blockers
 
@@ -161,6 +163,65 @@ None.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-04 00:00:00.000Z - Follow-up: wired `dtais`/`tara` resources to parse-and-discard at request time
+
+Phase 2's Task 2.1 and Phase 3's Task 3.1 were scoped, by their own task
+text, to "add the model and its `tests/models/test_*.py` drift-guard
+suite" only, deliberately leaving `general/resources/dtais.py`'s
+`dtais()` and `rsk/resources/tara.py`'s `tara()` as plain
+`read_packaged_text` passthroughs with no request-time parse call. That
+narrower task scoping left a gap against the ADR's own Decision Outcome,
+which states plainly that the backing model "is parsed on every resource
+call purely to fail fast on structural drift at request time... the
+parsed result is discarded and the original raw text returned
+unchanged" for every reference resource, not just `iso25010`. The user
+was asked to resolve this task-list-vs-ADR gap explicitly and chose to
+follow the ADR literally (see the new Decisions Made entry below) rather
+than leave Phases 2/3 as model-only forever. This follow-up (not itself
+a numbered phase or task) implements that resolution for `dtais`/`tara`,
+mirroring Phase 1's exact `iso25010.py` precedent: `general/resources/
+dtais.py`'s `dtais()` now imports `parse_dtais` from `..models` and
+calls it (discarding the result) right after `read_packaged_text`,
+before returning the raw text; `rsk/resources/tara.py`'s `tara()`
+does the same with `parse_tara` from `..models.v1`. Both modules' module
+and function docstrings were updated to describe the parse-and-discard
+behavior and its `Raises` section (`FileNotFoundError`/`AssertionError`/
+`pydantic.ValidationError`), word-for-word mirroring `iso25010.py`'s
+wording. Added a `test_raises_on_structural_drift` test to both
+`tests/general/resources/test_dtais.py` and `tests/rsk/resources/
+test_tara.py`, mirroring `test_iso25010.py`'s pattern exactly
+(`tempfile.TemporaryDirectory()` + `mock.patch.object(_packaged_data,
+"packaged_data_path", ...)` pointing at a minimal malformed document,
+asserting `(AssertionError, ValueError)` -- `pydantic.ValidationError`
+is a `ValueError` subclass, so this covers both failure shapes exactly
+like `test_iso25010.py`'s own assertion). Also had to fix both files'
+pre-existing `test_reads_fresh_on_every_call` tests: they previously
+wrote bare `"first"`/`"second"` strings to the temp packaged file, which
+is not valid DTAIS-/TARA-shaped markdown and would now fail the new
+parse-and-discard call -- replaced with `_valid_dtais_text(marker)`/
+`_valid_tara_text(marker)` builder functions (mirroring `test_iso25010.
+py`'s own `_valid_iso25010_text(marker)` precedent) that produce
+minimal, well-formed, `parse_dtais`/`parse_tara`-accepted documents
+tagged with a marker in the title, so the fresh-read-per-call assertion
+still holds. `_valid_tara_text` had to reproduce the real file's exact
+arrow (`→`) and em-dash (`—`) characters in the quadrant/mitigation/
+status bullets, since `Tara`'s `_QUADRANT_ITEM_PATTERN`/
+`_STATUS_ITEM_PATTERN` regexes match those literal Unicode characters,
+not an ASCII `->`/`--` substitute. Did NOT touch `general/data/
+general_dtais.md`, `rsk/data/rsk_tara.md`, or the `Dtais`/`Tara` model
+classes themselves -- all already correct from Phases 2/3. Did NOT check
+off any Task List items or ACC boxes for this follow-up: Task 2.1/
+ACC-002 and Task 3.1/ACC-003 already correctly describe "model + test"
+only and remain checked; this wiring gap is closed by this Updates entry
+plus the Decisions Made entry, not by a new/retroactively-edited task.
+Full quality gate (ruff format --check, ruff check, vulture, full
+unittest suite: 3345 tests) passed. Regenerated `docs/api/` via
+`specmgr docs` (docstring-only diffs in
+`docs/api/biz.dfch.specmgr.general.resources.dtais.md`/
+`docs/api/biz.dfch.specmgr.rsk.resources.tara.md`); `specmgr mcp-docs`
+produced no `docs/MCP.md` diff, as expected, since neither resource's
+`mime_type`/URI/name changed.
 
 #### 2026-09-04 00:00:00.000Z - Phase 3 (`tara` model) complete
 
@@ -345,6 +406,26 @@ and agreed with the user.
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-04 00:00:00.000Z - Follow the ADR literally: every reference resource is wired to parse-and-discard at request time, not just `iso25010`
+
+Phase 2's Task 2.1 and Phase 3's Task 3.1 task descriptions were scoped
+too narrowly -- "add the model + its `tests/models/test_*.py` suite"
+only -- leaving `general/resources/dtais.py`/`rsk/resources/tara.py`
+themselves un-wired to call `parse_dtais`/`parse_tara` at request time,
+which contradicted ADR 356d8781-e446-4c26-917a-eda85648ce9d's Decision
+Outcome ("That model is parsed on every resource call purely to fail
+fast on structural drift at request time... the parsed result is
+discarded and the original raw text returned unchanged" -- stated for
+every reference resource, not `iso25010` alone). The orchestrator
+surfaced this task-list-vs-ADR gap to the user, who decided explicitly:
+follow the ADR literally -- every reference resource (not just
+`iso25010`) is wired to parse-and-discard at request time. This was
+implemented immediately as a follow-up for `dtais`/`tara` (see the
+Updates entry above); Phases 4/5/6 (`risk_matrix`, `rasci`, `ears`) will
+include this same request-time parse-and-discard wiring as part of
+their own scope, not as separately-deferred follow-up work, so no
+similar gap should recur for those three.
 
 #### 2026-09-04 00:00:00.000Z - `tara` model's cross-list "matching" checks compare by set, not by order (Phase 3)
 
