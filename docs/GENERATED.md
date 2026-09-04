@@ -125,6 +125,7 @@ First-line docstrings from each module, organized by domain:
 - `general/models/__init__.py` — Shared, cross-domain Pydantic models with no document-type-specific content.
 - `general/models/dtais.py` — Pydantic schema and parser for the DTAIS verification-methods guidance
 - `general/models/paged_result.py` — Generic paged-result wrapper shared by every ``list_<domain>`` MCP tool (feat-13 Task 1.1).
+- `general/models/rasci.py` — Pydantic schema and parser for the RASCI responsibility-assignment guidance
 - `general/models/summary.py` — Common base for every domain's one-line listing summary (feat-13 Task 1.3, REQ-003/ACC-001).
 - `general/prompts/__init__.py` — MCP prompt registrations that are not specific to any single document
 - `general/prompts/compact_history.py` — ``@mcp.prompt()``: compact_history (Various improvements, Task 0.21).
@@ -534,4 +535,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 363
+**Test files**: 364

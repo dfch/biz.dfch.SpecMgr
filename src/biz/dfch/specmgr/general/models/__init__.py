@@ -28,11 +28,15 @@ Backs feat-13's ``<domain>_list`` -> ``list_<domain>`` pagination rollout
 
 Also backs feat-92-resources's cross-cutting reference-resource
 model-backed drift-guard convention (ADR
-356d8781-e446-4c26-917a-eda85648ce9d, REQ-002):
+356d8781-e446-4c26-917a-eda85648ce9d, REQ-002/REQ-005):
 
 - :func:`parse_dtais`/:class:`Dtais` -- parses the DTAIS verification-
   methods guidance document (``general/data/general_dtais.md``) backing
   ``specmgr://dtais``, purely to fail fast on structural drift (the parsed
+  result is discarded by the resource itself).
+- :func:`parse_rasci`/:class:`Rasci` -- parses the RASCI responsibility-
+  assignment guidance document (``general/data/general_rasci.md``) backing
+  ``specmgr://rasci``, purely to fail fast on structural drift (the parsed
   result is discarded by the resource itself).
 
 Import this package to use either model directly::
@@ -50,6 +54,7 @@ from .dtais import (
     parse_dtais,
 )
 from .paged_result import PagedResult
+from .rasci import Rasci, RasciVsRaci, RoleItem, Roles, parse_rasci
 from .summary import DocSummary
 
 __all__ = [
@@ -59,7 +64,12 @@ __all__ = [
     "DocSummary",
     "MethodItem",
     "PagedResult",
+    "Rasci",
+    "RasciVsRaci",
+    "RoleItem",
+    "Roles",
     "WhenToApply",
     "WhenToApplyItem",
     "parse_dtais",
+    "parse_rasci",
 ]

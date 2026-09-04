@@ -43,7 +43,7 @@ the raw text returned, and (b) covered by its own
 - [x] ACC-002: `tests/models/test_dtais.py` fails if `general_dtais.md`'s 5+3-item structure is broken.
 - [x] ACC-003: `tests/models/test_tara.py` fails if `rsk_tara.md`'s 4+4+6-item structure is broken.
 - [x] ACC-004: `tests/models/test_risk_matrix.py` fails if `rsk_risk_matrix.md`'s 4-item threshold list is broken.
-- [ ] ACC-005: `tests/models/test_rasci.py` fails if `general_rasci.md`'s 5-role structure is broken.
+- [x] ACC-005: `tests/models/test_rasci.py` fails if `general_rasci.md`'s 5-role structure is broken.
 - [ ] ACC-006: `specmgr://ears` is registered, documented in `server.py`'s module docstring, and covered by a model + resource test.
 - [x] ACC-007: An ADR exists documenting the convention.
 
@@ -128,7 +128,7 @@ the raw text returned, and (b) covered by its own
 
 #### Phase 5: `rasci` model
 
-- [ ] Task 5.1: Add `general/models/rasci.py` and `tests/models/test_rasci.py`.
+- [x] Task 5.1: Add `general/models/rasci.py` and `tests/models/test_rasci.py`.
 
 #### Phase 6: `ears` resource
 
@@ -144,8 +144,8 @@ the raw text returned, and (b) covered by its own
 ### Current Status
 
 **As of 2026-09-04**: Phase 0 (ADR), Phase 1 (`iso25010`), Phase 2
-(`dtais` model), Phase 3 (`tara` model), and Phase 4 (`risk_matrix`
-model) done. ADR
+(`dtais` model), Phase 3 (`tara` model), Phase 4 (`risk_matrix` model),
+and Phase 5 (`rasci` model) done. ADR
 356d8781-e446-4c26-917a-eda85648ce9d accepted, documenting the repo-wide
 convention; `specmgr://iso25010` now follows it (raw markdown,
 parse-and-discard). `general/models/dtais.py`'s `Dtais` model and
@@ -155,14 +155,16 @@ unit of work (not a numbered phase of its own) has now wired
 `general/resources/dtais.py`/`rsk/resources/tara.py` to call
 `parse_dtais`/`parse_tara` on every resource call, per the ADR's literal
 Decision Outcome -- see the dated Updates entry below. Phase 4
-(`risk_matrix`) followed the user's "follow the ADR literally" decision
-from the start: `rsk/models/v1/risk_matrix.py`'s `RiskMatrix` model was
-added together with `rsk/resources/risk_matrix.py`'s wiring to
-`parse_risk_matrix` in the same phase, not as a separately-deferred
-follow-up -- see the dated Updates entry below. Phases 5-7 not started
-yet, and each will include this same request-time parse-and-discard
-wiring as part of its own scope going forward (see Decisions Made
-below).
+(`risk_matrix`) and Phase 5 (`rasci`) both followed the user's "follow
+the ADR literally" decision from the start: `rsk/models/v1/risk_matrix.py`'s
+`RiskMatrix` model was added together with `rsk/resources/risk_matrix.py`'s
+wiring to `parse_risk_matrix` in the same phase, and
+`general/models/rasci.py`'s `Rasci` model was added together with
+`general/resources/rasci.py`'s wiring to `parse_rasci`, neither as a
+separately-deferred follow-up -- see the dated Updates entries below.
+Phases 6-7 not started yet, and each will include this same request-time
+parse-and-discard wiring as part of its own scope going forward (see
+Decisions Made below).
 
 ### Blockers
 
@@ -171,6 +173,88 @@ None.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-04 00:00:00.000Z - Phase 5 (`rasci` model, scope extended to include resource wiring) complete
+
+Added `general/models/rasci.py` (REQ-005): a `Rasci(MarkdownSection1)`
+document model for `general/data/general_rasci.md`, mirroring
+`general.models.dtais.Dtais`'s shape (H1-rooted, leading `MarkdownParagraph`
+intro -- confirmed against the real file that lines 3-9 form a single
+paragraph, not two -- followed by an H2-nested section, not a leading bare
+list directly under the H1 like `Dtais.methods`/`Tara.strategies`, since
+the real file's role list lives under `## The five roles`, not the intro).
+`RoleItem` (a leaf `MarkdownListItem`) recovers a bullet's role name and
+description via two separate `@computed_field`s (`role: str`,
+`description: str`), mirroring `tsk.models.v1.task_item.TaskItem`'s
+`checked`/`description` two-computed-field precedent rather than
+`dtais`'s/`risk_matrix`'s single-computed-field pattern, since REQ-005
+explicitly asks for "the 5 RASCI roles **and their descriptions**", not
+just the role words; the regex (`^\*\*(?P<role>[A-Za-z]+)\*\* -- ...$`,
+`re.DOTALL`) matches RASCI's bolded-plain-text role names
+(`**Responsible**`), confirmed against the real, `mdformat`-normalized
+file to differ from DTAIS/TARA's backticked (`` `Word` ``) style. `## The
+five roles` (`Roles`, `@alias(..., type=AliasType.LITERAL)` since the
+heading text doesn't match the implicit `SPACE_SEPARATED` derivation of
+the class name) declares `items: list[RoleItem]` (`min_length=5,
+max_length=5`), with `_validate_roles` forcing eager evaluation of every
+item's `.role`/`.description` AND pinning the closed, ordered 5-value
+vocabulary (`["Responsible", "Accountable", "Support", "Consulted",
+"Informed"]`) -- REQ-005's "5 RASCI roles" read strictly, per
+ACC-005's own "fails if ... structure is broken" wording, mirroring
+`CoverageRelationship`/`ProductThresholds`'s strict-reading precedent.
+`## RASCI vs. plain RACI` (`RasciVsRaci`, also `@alias(...,
+type=AliasType.LITERAL)`) is a **leaf** `MarkdownSection2` subclass with no
+nested fields, storing the comparison section verbatim -- out of REQ-005's
+narrow scope, same reasoning as `risk_matrix.py`'s `ScaleAnchors`/
+`ZoneTable`/`ReadingTogether` leaf sections. `parse_rasci()` mirrors
+`parse_dtais()`'s exact `format_text` + `from_text` + `isinstance` shape.
+Exported from `general/models/__init__.py` alongside `Dtais`/`parse_dtais`,
+per that package's existing style. Added `tests/models/test_rasci.py` (7
+tests) mirroring `test_dtais.py`'s structure: 4 happy-path assertions
+against the real packaged file (instance type, 5-item count, exact role
+names/order, non-empty descriptions) plus 3 distinct malformed-fixture
+drift-guard tests (ACC-005) -- a role list with only 4 of the 5 required
+entries, a role list with two roles swapped out of order, and a role list
+with a role name (`Owner`) not in the closed vocabulary -- each asserting
+`parse_rasci` raises `AssertionError`/`pydantic.ValidationError`.
+
+Per the user's "follow the ADR literally" decision (see this feature's
+Decisions Made log), and per this phase's own explicitly-extended scope
+(not deferred, unlike Phases 2/3's original narrower task wording), this
+phase also wired `general/resources/rasci.py`'s `rasci()` to
+`parse_rasci` on every call from the start: imports `parse_rasci` from
+`..models` and calls it (discarding the result) right after
+`read_packaged_text`, before returning the raw text; the module and
+function docstrings were updated to describe the parse-and-discard
+behavior and a `Raises` section (`FileNotFoundError`/`AssertionError`/
+`pydantic.ValidationError`), mirroring `iso25010.py`/`dtais.py`'s
+wording, and the stale "unlike `iso25010` ... this is a raw passthrough
+with no dedicated model yet" line was removed. Added a
+`test_raises_on_structural_drift` test to the EXISTING
+`tests/general/resources/test_rasci.py` (left every other test in that
+file untouched, per this phase's own instructions -- in particular
+`test_content_is_generic_no_sop_specific_rules`, ACC-010, unrelated to
+this phase). Also had to fix that file's pre-existing
+`test_reads_fresh_on_every_call` test: it previously wrote bare
+`"first"`/`"second"` strings to the temp packaged file, which is not
+valid RASCI-shaped markdown and would now fail the new parse-and-discard
+call -- replaced with a `_valid_rasci_text(marker)` builder function
+(mirroring `test_dtais.py`'s own `_valid_dtais_text(marker)` precedent)
+that produces a minimal, well-formed, `parse_rasci`-accepted document
+tagged with a marker in the title, so the fresh-read-per-call assertion
+still holds. Added `_._validate_roles` to `whitelist.py`'s
+Pydantic-validator group, and `roles`/`rasci_vs_raci` to its
+(de)serialization-only-field group (these two `Rasci` fields are never
+read as plain attributes anywhere in `src/`). Regenerated
+`docs/api/`/`docs/GENERATED.md` via `specmgr docs` (new
+`docs/api/biz.dfch.specmgr.general.models.rasci.md` module page, plus the
+expected cross-reference updates in `docs/api/README.md`/
+`docs/api/biz.dfch.specmgr.general.models.md`/
+`docs/api/biz.dfch.specmgr.general.resources.rasci.md`/
+`docs/GENERATED.md`); `specmgr mcp-docs` produced no `docs/MCP.md` diff,
+as expected, since the resource's `mime_type`/URI/name did not change.
+Full quality gate (ruff format --check, ruff check, vulture, full
+unittest suite: 3364 tests) passed.
 
 #### 2026-09-04 00:00:00.000Z - Phase 4 (`risk_matrix` model, scope extended to include resource wiring) complete
 
@@ -503,6 +587,27 @@ and agreed with the user.
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-04 00:00:00.000Z - `rasci` model design calls (Phase 5)
+
+Two non-obvious calls made while implementing `general/models/rasci.py`:
+(1) `RoleItem` exposes two `@computed_field`s (`role`/`description`)
+rather than one, mirroring `tsk.models.v1.task_item.TaskItem`'s
+`checked`/`description` precedent instead of `dtais`'s/`risk_matrix`'s
+single-computed-field `MethodItem`/`ThresholdItem` style -- REQ-005's own
+wording ("the 5 RASCI roles **and their descriptions**") explicitly calls
+out the description as part of what must be modeled, unlike REQ-002's "5
+method words" (no "and their descriptions" clause). (2) REQ-005's "5
+RASCI roles" is read strictly, pinning the closed, ordered 5-value
+vocabulary (`["Responsible", "Accountable", "Support", "Consulted",
+"Informed"]`) in `Roles._validate_roles`, not just a `Field(min_length=5,
+max_length=5)` count -- mirroring `CoverageRelationship`/
+`ProductThresholds`'s strict-reading precedent from Phases 2/4, and
+matching ACC-005's own "fails if ... 5-role **structure** is broken"
+wording (a renamed/reordered role is a structural break, not merely a
+count mismatch). Unlike `dtais`'s two 5-word lists, RASCI has only the one
+role list in the whole document (no second list to cross-check against),
+so there is no analogous "matching" cross-check to add here.
 
 #### 2026-09-04 00:00:00.000Z - `risk_matrix` model design calls (Phase 4)
 

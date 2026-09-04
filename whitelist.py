@@ -54,6 +54,7 @@ _._validate_strategies
 _._validate_quadrant_matches_strategies
 _._validate_mitigation_matches_strategies
 _._validate_thresholds
+_._validate_roles
 _._validate_ac_numbers_unique
 _._validate_option_numbers_unique
 _._validate_step_numbers_unique
@@ -249,6 +250,11 @@ scale_anchors
 zone_table
 product_thresholds
 reading_together
+# rasci (feat-92-resources Phase 5): `Rasci` fields read only via
+# (de)serialization; nothing in `src/` accesses them as plain attributes
+# yet.
+roles
+rasci_vs_raci
 
 # --- MCP `@mcp.resource(...)`/`@mcp.tool()` entry points -------------------------
 # Invoked by the MCP framework once registered, not called directly in `src/`.
