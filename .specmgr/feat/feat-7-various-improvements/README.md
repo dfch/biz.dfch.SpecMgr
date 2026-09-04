@@ -881,7 +881,14 @@ progresses (edit, don't duplicate).
    need additional attributes from ADR frontmatter"): extend
    `DecFrontmatter` (`dec/models/v1/frontmatter.py`) with the ADR-style
    attributes a decision in general is missing, e.g. `source` or
-   `owner` — depends on: none — status: not-started
+   `owner` — depends on: none — status: subsumed by
+   `feat-46-remove-adr` (GitHub issue #46, recorded 2026-09-04): that
+   feature removes the ADR artifact type in favor of DEC and therefore
+   depends on this same gap being closed first (converting 28 real ADRs
+   that carry `date`/`decision-makers` data would otherwise lose it), so
+   it folds this task in as its own blocking Phase 0 (Tasks 0.1/0.2)
+   rather than leaving it here as a standalone item; completion is
+   tracked in feat-46's own task list, so this line stays unchecked here
 
    Background: `DecFrontmatter` currently narrows only `type`
    (`Literal["dec"]`) and `status` (closed six-value set) on top of the
