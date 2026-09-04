@@ -284,6 +284,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.rsk.models.v1.document`](biz.dfch.specmgr.rsk.models.v1.document.md) — Pydantic model for a full Risk document (frontmatter + body).
 - [`biz.dfch.specmgr.rsk.models.v1.frontmatter`](biz.dfch.specmgr.rsk.models.v1.frontmatter.md) — Risk (RSK) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
 - [`biz.dfch.specmgr.rsk.models.v1.parser`](biz.dfch.specmgr.rsk.models.v1.parser.md) — Parse raw Risk ``.md`` text into a :class:`RskDocument` (Phase 2, Task 2.2).
+- [`biz.dfch.specmgr.rsk.models.v1.risk_matrix`](biz.dfch.specmgr.rsk.models.v1.risk_matrix.md) — Pydantic schema and parser for the 5x5 risk-matrix guidance document
 - [`biz.dfch.specmgr.rsk.models.v1.summary`](biz.dfch.specmgr.rsk.models.v1.summary.md) — Pydantic model for one line of RSK listing output (Phase 2, Task 2.3).
 - [`biz.dfch.specmgr.rsk.models.v1.tara`](biz.dfch.specmgr.rsk.models.v1.tara.md) — Pydantic schema and parser for the TARA risk-response-strategy guidance
 - [`biz.dfch.specmgr.rsk.prompts`](biz.dfch.specmgr.rsk.prompts.md) — MCP prompt wrappers for Risks (Task 3.13).

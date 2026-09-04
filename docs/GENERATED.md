@@ -335,6 +335,7 @@ First-line docstrings from each module, organized by domain:
 - `rsk/models/v1/document.py` — Pydantic model for a full Risk document (frontmatter + body).
 - `rsk/models/v1/frontmatter.py` — Risk (RSK) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
 - `rsk/models/v1/parser.py` — Parse raw Risk ``.md`` text into a :class:`RskDocument` (Phase 2, Task 2.2).
+- `rsk/models/v1/risk_matrix.py` — Pydantic schema and parser for the 5x5 risk-matrix guidance document
 - `rsk/models/v1/summary.py` — Pydantic model for one line of RSK listing output (Phase 2, Task 2.3).
 - `rsk/models/v1/tara.py` — Pydantic schema and parser for the TARA risk-response-strategy guidance
 - `rsk/prompts/__init__.py` — MCP prompt wrappers for Risks (Task 3.13).
@@ -533,4 +534,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 362
+**Test files**: 363

@@ -53,6 +53,7 @@ _._validate_status_values
 _._validate_strategies
 _._validate_quadrant_matches_strategies
 _._validate_mitigation_matches_strategies
+_._validate_thresholds
 _._validate_ac_numbers_unique
 _._validate_option_numbers_unique
 _._validate_step_numbers_unique
@@ -240,6 +241,14 @@ methods
 when_to_apply
 coverage
 closing
+# risk_matrix (feat-92-resources Phase 4): `RiskMatrix` fields read only via
+# (de)serialization; the leaf sections they hold are deliberately never
+# cross-checked by any `model_validator` (REQ-004's narrow scope), so
+# nothing in `src/` accesses them as plain attributes.
+scale_anchors
+zone_table
+product_thresholds
+reading_together
 
 # --- MCP `@mcp.resource(...)`/`@mcp.tool()` entry points -------------------------
 # Invoked by the MCP framework once registered, not called directly in `src/`.

@@ -42,7 +42,7 @@ the raw text returned, and (b) covered by its own
 - [x] ACC-001: `specmgr://iso25010`'s `mime_type` is `text/markdown` and its test asserts fail-fast behavior on a malformed packaged file.
 - [x] ACC-002: `tests/models/test_dtais.py` fails if `general_dtais.md`'s 5+3-item structure is broken.
 - [x] ACC-003: `tests/models/test_tara.py` fails if `rsk_tara.md`'s 4+4+6-item structure is broken.
-- [ ] ACC-004: `tests/models/test_risk_matrix.py` fails if `rsk_risk_matrix.md`'s 4-item threshold list is broken.
+- [x] ACC-004: `tests/models/test_risk_matrix.py` fails if `rsk_risk_matrix.md`'s 4-item threshold list is broken.
 - [ ] ACC-005: `tests/models/test_rasci.py` fails if `general_rasci.md`'s 5-role structure is broken.
 - [ ] ACC-006: `specmgr://ears` is registered, documented in `server.py`'s module docstring, and covered by a model + resource test.
 - [x] ACC-007: An ADR exists documenting the convention.
@@ -122,7 +122,9 @@ the raw text returned, and (b) covered by its own
 
 #### Phase 4: `risk_matrix` model
 
-- [ ] Task 4.1: Add `rsk/models/v1/risk_matrix.py` and `tests/models/test_risk_matrix.py`.
+- [x] Task 4.1: Add `rsk/models/v1/risk_matrix.py` and `tests/models/test_risk_matrix.py`. Scope extended per the
+  user's explicit "follow the ADR" decision to also include wiring `rsk/resources/risk_matrix.py` to
+  `parse_risk_matrix` on every call, not deferred to a later follow-up.
 
 #### Phase 5: `rasci` model
 
@@ -142,7 +144,8 @@ the raw text returned, and (b) covered by its own
 ### Current Status
 
 **As of 2026-09-04**: Phase 0 (ADR), Phase 1 (`iso25010`), Phase 2
-(`dtais` model), and Phase 3 (`tara` model) done. ADR
+(`dtais` model), Phase 3 (`tara` model), and Phase 4 (`risk_matrix`
+model) done. ADR
 356d8781-e446-4c26-917a-eda85648ce9d accepted, documenting the repo-wide
 convention; `specmgr://iso25010` now follows it (raw markdown,
 parse-and-discard). `general/models/dtais.py`'s `Dtais` model and
@@ -151,10 +154,15 @@ parse-and-discard). `general/models/dtais.py`'s `Dtais` model and
 unit of work (not a numbered phase of its own) has now wired
 `general/resources/dtais.py`/`rsk/resources/tara.py` to call
 `parse_dtais`/`parse_tara` on every resource call, per the ADR's literal
-Decision Outcome -- see the dated Updates entry below. Phases 4-7 not
-started yet, and each will include this same request-time parse-and-
-discard wiring as part of its own scope going forward (see Decisions
-Made below).
+Decision Outcome -- see the dated Updates entry below. Phase 4
+(`risk_matrix`) followed the user's "follow the ADR literally" decision
+from the start: `rsk/models/v1/risk_matrix.py`'s `RiskMatrix` model was
+added together with `rsk/resources/risk_matrix.py`'s wiring to
+`parse_risk_matrix` in the same phase, not as a separately-deferred
+follow-up -- see the dated Updates entry below. Phases 5-7 not started
+yet, and each will include this same request-time parse-and-discard
+wiring as part of its own scope going forward (see Decisions Made
+below).
 
 ### Blockers
 
@@ -163,6 +171,95 @@ None.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-04 00:00:00.000Z - Phase 4 (`risk_matrix` model, scope extended to include resource wiring) complete
+
+Added `rsk/models/v1/risk_matrix.py` (REQ-004): a `RiskMatrix(MarkdownSection1)`
+document model for `rsk/data/rsk_risk_matrix.md`, following REQ-004's
+narrow scope literally -- only the "Product thresholds" 4-item list is
+modeled. `## Scale anchors`, `## Zone table`, and `## Reading initial and
+residual together` are each a **leaf** `MarkdownSection2` subclass
+(`ScaleAnchors`/`ZoneTable`/`ReadingTogether`, no nested fields of their
+own), so `models/md`'s engine stores each one's entire extent (heading +
+full body, verbatim) without attempting to parse its internal
+bullets/table/paragraphs -- this still satisfies the parser's
+every-line-consumed-by-some-field requirement while leaving the visual
+5x5 table and the two scale-anchor lists genuinely unmodeled, exactly as
+this feature's Design Notes call for. All three leaf sections needed an
+explicit `@alias(..., type=AliasType.LITERAL)` (their headings'
+second-word-lowercase wording -- "Scale anchors", "Zone table", "Reading
+initial and residual together" -- does not match the implicit
+`SPACE_SEPARATED` derivation of a PascalCase class name). `ThresholdItem`
+(a leaf `MarkdownListItem`) recovers a `` `low-high` → `zone` `` bullet's
+three pieces via three separate `@computed_field`s (`low: int`,
+`high: int`, `zone: str`), reusing `feat.RequirementItem`/`tsk.TaskItem`'s
+established regex precedent; the zone regex group allows an internal
+space (`"very high"`). `ProductThresholds.items` is `Field(min_length=4,
+max_length=4)`, and its `_validate_thresholds` `model_validator` gives
+REQ-004's drift-guard real teeth (per this module's own Decisions Made
+entry below): beyond the count, it pins the 4 zone names' exact order
+(`["low", "medium", "high", "very high"]`), asserts the 4 bands are
+contiguous and span 1..25 exactly, and cross-checks every band's bounds
+against `rsk.models.v1.assessment.level_from_product`'s own executable
+zone-derivation logic (`level_from_product(low) == zone` and
+`level_from_product(high) == zone`) -- tying the packaged prose directly
+to the schema's actual computed-field logic, not just an independently
+maintained copy of the same four numbers. `parse_risk_matrix()` mirrors
+`parse_tara()`'s exact `format_text` + `from_text` + `isinstance` shape.
+Exported from `rsk/models/v1/__init__.py` alongside `Tara`/`parse_tara`,
+per that package's existing style. Added `tests/models/test_risk_matrix.py`
+(10 tests) mirroring `test_tara.py`'s structure: 6 happy-path assertions
+against the real packaged file (instance type, 4-item count, exact zone
+names/order, exact bounds, and the `level_from_product` cross-check),
+1 "does the hand-built minimal fixture even parse" sanity check backing
+the malformed fixtures below, and 4 distinct malformed-fixture drift-guard
+tests (ACC-004) -- a threshold list with only 3 of the 4 required entries,
+a threshold list with two zone names swapped out of order, a threshold
+list with a gap in its bounds (non-contiguous), and a threshold entry
+whose stated zone doesn't match what `level_from_product` would actually
+derive for its bounds -- each asserting `parse_risk_matrix` raises
+`AssertionError`/`pydantic.ValidationError`.
+
+Per the user's "follow the ADR literally" decision (see this feature's
+Decisions Made log), this phase's scope was extended beyond Task 4.1's
+literal "model + test" wording to also wire `rsk/resources/
+risk_matrix.py`'s `risk_matrix()` to `parse_risk_matrix` on every call,
+mirroring the `dtais`/`tara` follow-up's exact pattern from the start
+rather than deferring it: imports `parse_risk_matrix` from `..models.v1`
+and calls it (discarding the result) right after `read_packaged_text`,
+before returning the raw text; the module and function docstrings were
+updated to describe the parse-and-discard behavior and a `Raises` section
+(`FileNotFoundError`/`AssertionError`/`pydantic.ValidationError`),
+mirroring `iso25010.py`/`tara.py`'s wording. Added a
+`test_raises_on_structural_drift` test to the EXISTING
+`tests/rsk/resources/test_risk_matrix.py` (left every other test in that
+file untouched, per this phase's own instructions -- in particular the
+ACC-005 drift-guard tests `test_documented_product_thresholds_match_the_model`/
+`test_documented_zone_table_matches_the_model`, which stay as their own
+ad hoc regex-based check against the visual table, since REQ-004
+deliberately leaves that table unmodeled). Also had to fix that file's
+pre-existing `test_reads_fresh_on_every_call` test: it previously wrote
+bare `"first"`/`"second"` strings to the temp packaged file, which is not
+valid risk-matrix-shaped markdown and would now fail the new
+parse-and-discard call -- replaced with a `_valid_risk_matrix_text(marker)`
+builder function (mirroring `test_tara.py`'s own `_valid_tara_text(marker)`
+precedent) that produces a minimal, well-formed, `parse_risk_matrix`-accepted
+document tagged with a marker in the title, so the fresh-read-per-call
+assertion still holds. Added `_._validate_thresholds` to `whitelist.py`'s
+Pydantic-validator group, and `scale_anchors`/`zone_table`/
+`product_thresholds`/`reading_together` to its
+(de)serialization-only-field group (these four `RiskMatrix` fields are
+never touched by any `model_validator`, unlike `dtais`/`tara`'s own
+fields, since REQ-004 deliberately leaves their content unvalidated).
+Regenerated `docs/api/`/`docs/GENERATED.md` via `specmgr docs` (new
+`docs/api/biz.dfch.specmgr.rsk.models.v1.risk_matrix.md` module page,
+plus the expected cross-reference updates in `docs/api/README.md`/
+`docs/api/biz.dfch.specmgr.rsk.models.v1.md`/
+`docs/api/biz.dfch.specmgr.rsk.resources.risk_matrix.md`/
+`docs/GENERATED.md`); `specmgr mcp-docs` produced no `docs/MCP.md` diff,
+as expected, since the resource's `mime_type`/URI/name did not change.
+Full quality gate (ruff format --check, ruff check, vulture, full
+unittest suite: 3356 tests) passed.
 
 #### 2026-09-04 00:00:00.000Z - Follow-up: wired `dtais`/`tara` resources to parse-and-discard at request time
 
@@ -406,6 +503,32 @@ and agreed with the user.
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-04 00:00:00.000Z - `risk_matrix` model design calls (Phase 4)
+
+Two non-obvious calls made while implementing `rsk/models/v1/risk_matrix.py`:
+(1) the `level_from_product` cross-check the phase instructions "strongly
+encouraged" (rather than mandated) was implemented: `ProductThresholds.
+_validate_thresholds` asserts `level_from_product(low) == zone` and
+`level_from_product(high) == zone` for every one of the 4 threshold
+bands, in addition to pinning the closed, ordered 4-value zone vocabulary
+and the contiguous-bounds-spanning-1..25 check. This ties the packaged
+prose directly to the schema's own executable zone-derivation logic
+(`rsk.models.v1.assessment.level_from_product`), giving REQ-004's
+drift-guard real teeth against the same class of "documentation quietly
+diverges from code" drift the existing (and still-present)
+`tests/rsk/resources/test_risk_matrix.py` ad hoc regex checks already
+guarded against for the visual table, but now enforced at request time
+via the model, not just in a resource-level test. (2) `ThresholdItem`
+exposes its three pieces (`low: int`, `high: int`, `zone: str`) as three
+separate `@computed_field`s rather than one combined tuple-returning
+field, since `ProductThresholds._validate_thresholds` needs to read each
+piece independently (for the order check, the contiguity check, and the
+`level_from_product` cross-check) and three plain `int`/`str`-typed
+properties are simpler to consume there than unpacking a tuple three
+times; this also matches `assessment.Probability.value`/`Impact.value`'s
+own "one computed field per meaningfully-distinct piece of data" style
+already established in this same package.
 
 #### 2026-09-04 00:00:00.000Z - Follow the ADR literally: every reference resource is wired to parse-and-discard at request time, not just `iso25010`
 
