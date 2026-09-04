@@ -41,7 +41,7 @@ the raw text returned, and (b) covered by its own
 
 - [x] ACC-001: `specmgr://iso25010`'s `mime_type` is `text/markdown` and its test asserts fail-fast behavior on a malformed packaged file.
 - [x] ACC-002: `tests/models/test_dtais.py` fails if `general_dtais.md`'s 5+3-item structure is broken.
-- [ ] ACC-003: `tests/models/test_tara.py` fails if `rsk_tara.md`'s 4+4+6-item structure is broken.
+- [x] ACC-003: `tests/models/test_tara.py` fails if `rsk_tara.md`'s 4+4+6-item structure is broken.
 - [ ] ACC-004: `tests/models/test_risk_matrix.py` fails if `rsk_risk_matrix.md`'s 4-item threshold list is broken.
 - [ ] ACC-005: `tests/models/test_rasci.py` fails if `general_rasci.md`'s 5-role structure is broken.
 - [ ] ACC-006: `specmgr://ears` is registered, documented in `server.py`'s module docstring, and covered by a model + resource test.
@@ -118,7 +118,7 @@ the raw text returned, and (b) covered by its own
 
 #### Phase 3: `tara` model
 
-- [ ] Task 3.1: Add `rsk/models/v1/tara.py` and `tests/models/test_tara.py`.
+- [x] Task 3.1: Add `rsk/models/v1/tara.py` and `tests/models/test_tara.py`.
 
 #### Phase 4: `risk_matrix` model
 
@@ -141,14 +141,17 @@ the raw text returned, and (b) covered by its own
 
 ### Current Status
 
-**As of 2026-09-04**: Phase 0 (ADR), Phase 1 (`iso25010`), and Phase 2
-(`dtais` model) done. ADR 356d8781-e446-4c26-917a-eda85648ce9d accepted,
-documenting the repo-wide convention; `specmgr://iso25010` now follows it
-(raw markdown, parse-and-discard). `general/models/dtais.py`'s `Dtais`
-model exists and is covered by `tests/models/test_dtais.py`, but
-`general/resources/dtais.py` itself is NOT yet wired to call `parse_dtais`
--- that wiring is deliberately deferred to a later phase (this phase was
-model + test only, per the plan's own Task 2.1 note). Phases 3-7 not
+**As of 2026-09-04**: Phase 0 (ADR), Phase 1 (`iso25010`), Phase 2
+(`dtais` model), and Phase 3 (`tara` model) done. ADR
+356d8781-e446-4c26-917a-eda85648ce9d accepted, documenting the repo-wide
+convention; `specmgr://iso25010` now follows it (raw markdown,
+parse-and-discard). `general/models/dtais.py`'s `Dtais` model and
+`rsk/models/v1/tara.py`'s `Tara` model both exist and are covered by
+`tests/models/test_dtais.py`/`tests/models/test_tara.py`, but
+`general/resources/dtais.py`/`rsk/resources/tara.py` themselves are NOT
+yet wired to call `parse_dtais`/`parse_tara` -- that wiring is
+deliberately deferred to a later phase (each of these phases was model +
+test only, per the plan's own Task 2.1/Task 3.1 notes). Phases 4-7 not
 started yet.
 
 ### Blockers
@@ -158,6 +161,79 @@ None.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-04 00:00:00.000Z - Phase 3 (`tara` model) complete
+
+Added `rsk/models/v1/tara.py` (REQ-003): a `Tara(MarkdownSection1)`
+document model for `rsk/data/rsk_tara.md`, mirroring
+`general.models.dtais.Dtais`'s shape (H1-rooted, leading `MarkdownParagraph`
+intro -- confirmed against the real file that lines 3-8 form a single
+paragraph, not two, so no `list[MarkdownParagraph]` intro field was
+needed -- followed by a leading `list[StrategyItem]` field directly under
+the H1 before any H2). Four leaf `MarkdownListItem` subclasses recover the
+distinct bullet shapes via `@computed_field` regex extraction:
+`StrategyItem.strategy` (the bare `` `word` `` intro list, single-line, no
+`re.DOTALL`), `QuadrantItem.strategy` (the bolded
+`` **{quadrant} -> `word`**\n{explanation} `` list under `## When to apply
+each strategy`), `MitigationItem.strategy` (the `` `word`: {explanation} ``
+list under `` ## Interaction with `## Mitigation` ``), and
+`StatusItem.status` (the `` `word` -- {explanation} `` list under
+`` ## Interaction with the frontmatter `status` ``, using the real file's
+em dash character, not a hyphen). The latter three regexes use
+`re.DOTALL`, same reasoning as `dtais`. Confirmed via direct token
+inspection of the real, `mdformat`-normalized file that
+`` ## Interaction with `## Mitigation` `` has an intro paragraph and items
+but deliberately **no** closing paragraph (its bullet list is followed
+directly by the next `##` heading), unlike `WhenToApply`/
+`StatusInteraction`, which both have one -- `MitigationInteraction`
+therefore declares no `closing` field. All three H2 section classes use
+`@alias(..., type=AliasType.LITERAL)` since their headings contain
+backticks/nested `##`/inline code, mirroring `dtais`'s established
+precedent. `Tara.strategies`/`WhenToApply.items`/`MitigationInteraction.
+items` are each `Field(min_length=4, max_length=4)`;
+`StatusInteraction.items` is `Field(min_length=6, max_length=6)`. Five
+`model_validator(mode="after")`s: `WhenToApply._validate_items_eagerly`/
+`MitigationInteraction._validate_items_eagerly` (reusing the already-
+whitelisted generic name, no new `whitelist.py` entry needed for these
+two) force eager per-item computed-field evaluation only;
+`StatusInteraction._validate_status_values` forces eager evaluation AND
+pins the closed, ordered 6-value vocabulary (`["open", "mitigating",
+"accepted", "occurred", "closed", "dropped"]`); `Tara._validate_strategies`
+forces eager evaluation AND pins the intro list's own order as the one
+canonical, fixed 4-value vocabulary (`["transfer", "accept", "reduce",
+"avoid"]`); `Tara._validate_quadrant_matches_strategies`/`Tara.
+_validate_mitigation_matches_strategies` are REQ-003's "matching"
+cross-checks -- **by set, not by order** (see Decisions Made below).
+`parse_tara()` mirrors `parse_dtais()`'s exact `format_text` + `from_text`
++ `isinstance` shape. Exported from `rsk/models/v1/__init__.py` alongside
+`Strategy`/`level_from_product`, per that package's existing style. Added
+`tests/models/test_tara.py` (11 tests) mirroring `test_dtais.py`'s
+structure: 6 happy-path assertions against the real packaged file
+(instance type, 4/4/4/6 counts, the exact strategy/status word lists, and
+set-equality assertions -- not order assertions -- for the quadrant/
+mitigation lists, matching the model's own validator logic) plus 5
+distinct malformed-fixture drift-guard tests (ACC-003) -- a missing intro
+strategy bullet (3 of 4), a quadrant list whose *set* no longer matches
+(drops `accept`, duplicates `avoid`), a mitigation list whose *set* no
+longer matches (drops `accept`, duplicates `reduce`), a short-by-one
+status list (5 of 6, `occurred` dropped), and a status list with an
+out-of-vocabulary value (`unknown` instead of `occurred`) -- each
+asserting `parse_tara` raises `AssertionError`/`pydantic.ValidationError`.
+Deliberately did NOT touch `rsk/resources/tara.py` (the resource function
+itself) or `rsk/data/rsk_tara.md` -- wiring the resource to call
+`parse_tara` for parse-and-discard validation is a later phase's task, per
+the plan's own Task 3.1 note. Added
+`_._validate_status_values`/`_._validate_strategies`/
+`_._validate_quadrant_matches_strategies`/
+`_._validate_mitigation_matches_strategies` to `whitelist.py`'s
+Pydantic-validator group (the two `_validate_items_eagerly` methods
+needed no new entry, reusing the name `dtais`'s Phase 2 addition already
+whitelisted). Regenerated `docs/api/`/`docs/GENERATED.md` via
+`specmgr docs` (new `docs/api/biz.dfch.specmgr.rsk.models.v1.tara.md`
+module page, plus the expected cross-reference updates in
+`docs/api/README.md`/`docs/api/biz.dfch.specmgr.rsk.models.v1.md`/
+`docs/GENERATED.md`). Full quality gate (ruff format --check, ruff check,
+vulture, full unittest suite: 3343 tests) passed.
 
 #### 2026-09-04 00:00:00.000Z - Phase 2 (`dtais` model) complete
 
@@ -269,6 +345,39 @@ and agreed with the user.
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-04 00:00:00.000Z - `tara` model's cross-list "matching" checks compare by set, not by order (Phase 3)
+
+Unlike `dtais`'s two 5-word lists (which happen to share the same order,
+so `Dtais._validate_when_to_apply_matches_methods` could -- and does --
+compare them as ordered lists), the real `rsk_tara.md`'s TARA strategy
+word appears in three lists with three genuinely *different* orders:
+`transfer`/`accept`/`reduce`/`avoid` (the intro list, organized
+alphabetically-ish by the TARA acronym), `transfer`/`avoid`/`reduce`/
+`accept` (the "When to apply each strategy" quadrant list, organized by
+probability/impact quadrant), and `reduce`/`transfer`/`avoid`/`accept`
+(the "Interaction with `## Mitigation`" list, organized by how much
+`## Mitigation` prose each strategy needs). Verified directly against the
+real, `mdformat`-normalized file (not just the plan's own hint) before
+writing the validators. Given this, `Tara._validate_quadrant_matches_
+strategies`/`Tara._validate_mitigation_matches_strategies` compare the
+three lists' strategy words as Python `set`s, not as ordered lists --
+REQ-003's "matching 'when to apply' quadrant list"/"mitigation-interaction
+list" is read as "names the same four words", not "in the same order".
+The intro list itself still gets a strict, ordered check
+(`Tara._validate_strategies` pins `["transfer", "accept", "reduce",
+"avoid"]` exactly, mirroring `CoverageRelationship._validate_
+coverage_values`'s strict-reading precedent for a list with no competing
+alternate order elsewhere in the same document) -- it is the one list with
+no other list to disagree with about ordering, so pinning its order costs
+nothing and still catches a renamed/reordered canonical vocabulary. The
+independent 6-value frontmatter `status` list gets the same strict,
+ordered treatment for the same reason (no other list mentions it at all).
+Tests mirror this exactly: happy-path assertions compare the quadrant/
+mitigation lists' words as sets (`self.assertEqual(quadrant_words,
+strategy_words)` on `set` values), never asserting a specific order for
+those two lists, so a future test edit cannot silently regress back to an
+order-sensitive (and therefore wrong, given the real file) comparison.
 
 #### 2026-09-04 00:00:00.000Z - `dtais` model design calls (Phase 2)
 

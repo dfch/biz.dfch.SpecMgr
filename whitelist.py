@@ -49,6 +49,10 @@ _._validate_items_eagerly
 _._validate_newest_first
 _._validate_coverage_values
 _._validate_when_to_apply_matches_methods
+_._validate_status_values
+_._validate_strategies
+_._validate_quadrant_matches_strategies
+_._validate_mitigation_matches_strategies
 _._validate_ac_numbers_unique
 _._validate_option_numbers_unique
 _._validate_step_numbers_unique
