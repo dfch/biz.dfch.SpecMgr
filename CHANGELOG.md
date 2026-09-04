@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.22.0] - 2026-09-04
+
 ### Added
 
 - Generic `validate(type, content, full)` MCP tool in `general/tools/`:
@@ -42,6 +44,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and now includes the paper's own worked example for each pattern. New
   ADR (356d8781-e446-4c26-917a-eda85648ce9d) documenting the resulting
   repo-wide convention for reference resources (GitHub issue #92).
+- Generated JSON Schema for the twelve whole-body domains now documents
+  the `created`/`updated` frontmatter fields' `yyyy-MM-dd HH:mm:ss.fff` +
+  `Z`/`±HH:mm` timestamp format as a `pattern` constraint, without
+  changing the existing runtime validation behavior (`adr`'s schema is
+  unaffected) (GitHub issue #94).
 
 ### Changed
 
