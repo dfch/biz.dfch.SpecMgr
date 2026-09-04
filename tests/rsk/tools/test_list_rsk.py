@@ -21,6 +21,12 @@ Mirrors ``tests/tsk/tools/test_list_tsk.py``'s paging-contract coverage, plus
 the risk-specific ``RskSummary`` fields (the initial/residual zone levels,
 the TARA strategy word, the first ``## Scope`` entry, and the residual-risk
 coordinates) that ``list_rsk`` carries beyond the base's four.
+
+feat-81-83-validation Phase 3 (REQ-006/REQ-007, Task 3.2/3.3): a malformed
+file no longer silently disappears from the listing -- it appears inline in
+``results`` as a failed entry (built from the sentinel document, see
+``rsk.tools._sentinel``) and contributes to both ``total`` and the new
+``error_count``, and every successful entry now carries a resolved ``path``.
 """
 
 from __future__ import annotations
@@ -100,28 +106,63 @@ class TestListRsk(unittest.TestCase):
         self.docs_root = Path(self.enterContext(tempfile.TemporaryDirectory()))
         self.enterContext(mock.patch.dict("os.environ", {DOCS_DIR_ENV_VAR: str(self.docs_root)}))
 
-    def test_returns_summaries_and_skips_malformed_file(self) -> None:
+    def test_returns_summaries_and_reports_malformed_file_as_a_failed_entry(self) -> None:
         first = create_rsk(_MINIMAL_BODY)
         second = create_rsk(_OTHER_BODY)
 
         base_dir = ensure_rsk_base_dir()
-        (base_dir / "broken.md").write_text("not a valid risk, no headings at all", encoding="utf-8")
+        broken_path = base_dir / "broken.md"
+        broken_path.write_text("not a valid risk, no headings at all", encoding="utf-8")
 
         sut = list_rsk()
 
         self.assertIsInstance(sut, PagedResult)
-        self.assertEqual(sut.total, 2)
+        self.assertEqual(sut.total, 3)
+        self.assertEqual(sut.error_count, 1)
         for summary in sut.results:
             self.assertIsInstance(summary, RskSummary)
         ids = {summary.id for summary in sut.results}
-        self.assertEqual(ids, {first.id, second.id})
+        self.assertEqual(ids, {first.id, second.id, None})
         titles = {summary.title for summary in sut.results}
-        self.assertEqual(titles, {"Sample Risk", "Another Risk"})
+        self.assertEqual(titles, {"Sample Risk", "Another Risk", "<failed to parse>"})
         statuses = {summary.status for summary in sut.results}
-        self.assertEqual(statuses, {"open"})
+        self.assertEqual(statuses, {"open", "<failed to parse>"})
         for summary in sut.results:
             self.assertNotIn(".md", summary.ref)
             self.assertTrue(summary.ref)
+            self.assertTrue(Path(summary.path).is_absolute())
+
+        failed = next(summary for summary in sut.results if summary.ref == "broken")
+        self.assertIsNone(failed.id)
+        self.assertEqual(failed.title, "<failed to parse>")
+        self.assertEqual(failed.status, "<failed to parse>")
+        self.assertEqual(Path(failed.path), broken_path.resolve())
+        self.assertIsNotNone(failed.error)
+        # Even a failed entry carries genuinely-derived, worst-case-severity risk-specific
+        # fields from the sentinel document (rsk.tools._sentinel), never blank/placeholder ones.
+        self.assertEqual(failed.initial_level, LEVEL_VERY_HIGH)
+        self.assertEqual(failed.residual_level, LEVEL_VERY_HIGH)
+        self.assertEqual(failed.residual_probability, 5)
+        self.assertEqual(failed.residual_impact, 5)
+        self.assertEqual(failed.residual_product, 25)
+        self.assertEqual(failed.strategy, "accept")
+
+    def test_malformed_yaml_frontmatter_is_reported_as_a_failed_entry(self) -> None:
+        """Exercises the `yaml.YAMLError` arm of `build_summaries`'s default `error_types`."""
+        create_rsk(_MINIMAL_BODY)
+        base_dir = ensure_rsk_base_dir()
+        malformed = f"---\nid: rsk-1\nstatus: [unterminated\n---\n{_MINIMAL_BODY}"
+        (base_dir / "malformed-yaml.md").write_text(malformed, encoding="utf-8")
+
+        sut = list_rsk()
+
+        self.assertEqual(sut.total, 2)
+        self.assertEqual(sut.error_count, 1)
+        failed = next(summary for summary in sut.results if summary.ref == "malformed-yaml")
+        self.assertIsNone(failed.id)
+        self.assertEqual(failed.title, "<failed to parse>")
+        self.assertEqual(failed.status, "<failed to parse>")
+        self.assertIsNotNone(failed.error)
 
     def test_empty_result_for_missing_directory(self) -> None:
         self.assertFalse((self.docs_root / "rsk").exists())
@@ -195,7 +236,7 @@ class TestListRsk(unittest.TestCase):
 
         self.assertTrue(sut.truncated)
 
-    def test_total_reflects_full_parseable_count_regardless_of_paging(self) -> None:
+    def test_total_and_error_count_reflect_the_full_directory_regardless_of_paging(self) -> None:
         for i in range(5):
             create_rsk(_body_with_title(f"Title {i}"))
         base_dir = ensure_rsk_base_dir()
@@ -203,7 +244,8 @@ class TestListRsk(unittest.TestCase):
 
         sut = list_rsk(max_results=1, offset=1)
 
-        self.assertEqual(sut.total, 5)
+        self.assertEqual(sut.total, 6)
+        self.assertEqual(sut.error_count, 1)
 
     def test_residual_fields_present_and_correct(self) -> None:
         """Every summary line must carry the risk-specific fields, derived correctly from the document."""

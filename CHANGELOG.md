@@ -45,6 +45,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **BREAKING** (0.x): `list_<d>` (all twelve whole-body domains --
+  `req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr`/`sysrs`;
+  `list_adr` is unaffected, out of scope) no longer silently skips a
+  document that fails to parse: it now appears inline in `results` as its
+  own failed entry (`id=None`, `title`/`status` both the fixed marker
+  `"<failed to parse>"`, `ref`/`path` populated the same way as a
+  successful entry, and a new `error: str | None` field carrying the
+  caught exception's message), and `total` now includes failed entries
+  alongside successes -- a deliberate semantics change from the previous
+  "parseable documents only" `total`. `PagedResult` gains a new
+  `error_count: int = 0` field, counting failed entries across the whole
+  base directory, independent of `offset`/`max_results` paging (mirroring
+  `total`'s own already-documented across-all-pages semantics). Every
+  domain's summary type (`DocSummary` subclass) also gains a `path: str`
+  field -- an absolute, resolved filesystem path -- for the eleven
+  non-`feat` whole-body domains (`feat/FeatSummary` already had its own
+  `path` field; it keeps its existing unresolved form for now, retrofitted
+  separately). Callers relying on a malformed document being silently
+  absent from `results`/uncounted in `total` must instead check each
+  entry's `error` field (GitHub issue #83).
 - `specmgr://iso25010` now returns raw markdown (`text/markdown`)
   instead of a structured `Iso25010` JSON object, still parsed via
   `parse_iso25010()` on every read to fail fast on structural drift

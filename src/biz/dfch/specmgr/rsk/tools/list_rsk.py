@@ -31,18 +31,37 @@ carries six risk-specific derived fields (the zone levels, the TARA word,
 the first ``## Scope`` entry, and the residual-risk coordinates) that the
 factory derives from the parsed assessments in one place -- see the feature
 README's Decisions Made.
+
+feat-81-83-validation Phase 3 (REQ-006/REQ-007) routed this tool through the
+shared ``general.tools._listing.build_summaries`` helper: a file that fails
+to parse now appears inline in ``results`` as a failed entry rather than
+being silently skipped. ``RskSummary``'s own extra risk-specific fields (not
+part of the shared ``DocSummary`` base) cannot be represented by the
+generic ``general.tools._listing.default_failed_summary`` builder every
+other domain uses, so a failed row is instead built by
+``rsk.tools._sentinel.build_failed_rsk_summary`` from a fixed, valid,
+deliberately worst-case-severity sentinel document -- see that module's own
+docstring and the feature README's Design Notes ("``RskSummary``'s extra
+fields -- sentinel-document design") for the full rationale.
 """
 
 from __future__ import annotations
 
-from pydantic import ValidationError
+from pathlib import Path
 
 from ...general.models import PagedResult
+from ...general.tools._listing import build_summaries
 from ...general.tools._paging import normalize_paging, paginate
 from ...server import mcp
-from ..models.v1 import RskSummary
+from ..models.v1 import RskDocument, RskSummary
 from ._io import read_rsk
 from ._paths import iter_rsk_paths
+from ._sentinel import build_failed_rsk_summary
+
+
+def _to_summary(doc: RskDocument, path: Path) -> RskSummary:
+    result = RskSummary.from_document(doc, ref=path.stem, path=str(path.resolve()))
+    return result
 
 
 @mcp.tool(
@@ -62,14 +81,21 @@ from ._paths import iter_rsk_paths
 def list_rsk(max_results: int | None = None, offset: int | None = None) -> PagedResult[RskSummary]:
     """Return one page of one-line risk summaries from the configured base directory.
 
-    A file that fails to parse (``AssertionError`` or
-    ``pydantic.ValidationError`` -- the same two error channels
-    :func:`~biz.dfch.specmgr.rsk.models.v1.parse_rsk` raises) is silently
-    skipped -- a single malformed file must not break listing every other
-    valid one (mirrors ``rsk.tools._paths.find_rsk_path``'s own
-    skip-on-parse-failure rule). The complete, skip-broken-file-filtered
-    list is materialized first, then paginated in memory, so the returned
-    ``total`` always reflects the count of parseable documents only,
+    A file that fails to parse (``AssertionError``, ``pydantic.ValidationError``,
+    or ``yaml.YAMLError`` -- the same channels
+    :func:`~biz.dfch.specmgr.rsk.models.v1.parse_rsk` raises) appears inline
+    in ``results`` as its own failed entry (``id=None``, ``title``/``status``
+    both the fixed marker ``"<failed to parse>"`` (overridden onto a
+    genuinely-parsed sentinel document -- see ``rsk.tools._sentinel``'s own
+    docstring for why ``title`` cannot be read off that document's real H1
+    the way every other domain's failed entry reads it off its own
+    ``path.stem``-adjacent marker), ``ref``/``path`` populated the same way
+    as a successful entry, and ``error`` carrying the exception's message)
+    rather than being silently skipped (feat-81-83-validation Phase 3,
+    REQ-006) -- a single malformed file must not break listing every other
+    valid one. The complete list (successes and failures both) is
+    materialized first, then paginated in memory, so the returned
+    ``total``/``error_count`` always reflect the whole directory,
     independent of paging.
 
     Parameters
@@ -87,16 +113,10 @@ def list_rsk(max_results: int | None = None, offset: int | None = None) -> Paged
     Returns
     -------
     PagedResult[RskSummary]
-        One entry per successfully-parsed ``*.md`` file within the
-        requested page, in filename-sorted order. ``results`` is empty if
-        the base directory does not exist, holds no risks, or ``offset`` is
-        past the end of the full list.
+        One entry per ``*.md`` file within the requested page (successes
+        and failures both), in filename-sorted order. ``results`` is empty
+        if the base directory does not exist, holds no risks, or ``offset``
+        is past the end of the full list.
     """
-    summaries: list[RskSummary] = []
-    for path in iter_rsk_paths():
-        try:
-            doc = read_rsk(path)
-        except (AssertionError, ValidationError):
-            continue
-        summaries.append(RskSummary.from_document(doc, ref=path.stem))
-    return paginate(summaries, *normalize_paging(max_results, offset))
+    summaries, error_count = build_summaries(iter_rsk_paths(), read_rsk, _to_summary, build_failed_rsk_summary)
+    return paginate(summaries, *normalize_paging(max_results, offset), error_count=error_count)

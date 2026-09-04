@@ -142,6 +142,7 @@ First-line docstrings from each module, organized by domain:
 - `general/tools/_confluence_config.py` — Shared Confluence base-URL/bearer-token configuration, used by both
 - `general/tools/_confluence_url.py` — Shared, ``mcp``-free Confluence URL helpers, used by both
 - `general/tools/_doc_paths.py` — Generic, doc-type-agnostic base directory resolution, filename slugification,
+- `general/tools/_listing.py` — Generic, doc-type-agnostic ``list_<domain>`` summary construction (feat-81-83-validation Phase 3, Task 3.1).
 - `general/tools/_packaged_data.py` — Generic, doc-type-agnostic access to packaged example/template/schema data
 - `general/tools/_paging.py` — Generic, doc-type-agnostic paging helpers (feat-13 Task 1.2).
 - `general/tools/_path_safety.py` — Reusable, doc-type-agnostic path-safety assertions for document ids and
@@ -350,6 +351,7 @@ First-line docstrings from each module, organized by domain:
 - `rsk/tools/_io.py` — Thin file read helpers over ``parse_rsk`` (Task 3.1).
 - `rsk/tools/_lock.py` — Per-document in-process lock guarding risk mutations.
 - `rsk/tools/_paths.py` — Risk base directory resolution and id -> path lookup (Task 3.1).
+- `rsk/tools/_sentinel.py` — RSK's sentinel-document construction for ``list_rsk``'s failed-entry rows (feat-81-83-validation Phase 3, Task 3.2).
 - `rsk/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_rsk`` and
 - `rsk/tools/create_rsk.py` — ``@mcp.tool()`` wrapper: create_rsk (Task 3.3).
 - `rsk/tools/get_rsk.py` — ``@mcp.tool()`` wrapper: get_rsk (Task 3.8).
@@ -527,4 +529,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 355
+**Test files**: 357

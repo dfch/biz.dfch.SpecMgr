@@ -46,7 +46,7 @@ GitHub issues #81 and #83 both concern how this repo's MCP tools report validati
 
 - [x] ACC-005: Verifies REQ-005 -- existing `parse_<d>`/`get_<d>` tests continue to pass unchanged (raise-based contract untouched). Verdict: done -- the full test suite (3308 tests) passes unchanged for `parse_<d>`/`get_<d>`; only `validate_<d>`-referencing tests were migrated.
 
-- [ ] ACC-006: Verifies REQ-006 -- a `list_<d>` test with a directory containing both valid and unparseable documents asserts `error_count` is correct (across the whole directory, not just the current page) and `total` includes failed entries, with each failed document appearing in `results` with `ref`/marker/`error`/`path` populated -- for at least two domains, including `rsk`'s sentinel-document construction (see Design Notes); a dedicated test additionally asserts the RSK sentinel markdown parses successfully on its own, independent of `list_rsk`'s own test, so a future RSK schema change is caught at the sentinel level.
+- [x] ACC-006: Verifies REQ-006 -- a `list_<d>` test with a directory containing both valid and unparseable documents asserts `error_count` is correct (across the whole directory, not just the current page) and `total` includes failed entries, with each failed document appearing in `results` with `ref`/marker/`error`/`path` populated -- for at least two domains, including `rsk`'s sentinel-document construction (see Design Notes); a dedicated test additionally asserts the RSK sentinel markdown parses successfully on its own, independent of `list_rsk`'s own test, so a future RSK schema change is caught at the sentinel level. Verdict: done -- `tests/req/tools/test_list_req.py`/`tests/rsk/tools/test_list_rsk.py` cover the full contract (including a malformed-YAML-frontmatter fixture each), `tests/rsk/tools/test__sentinel.py` covers the sentinel document independently, and `tests/general/tools/test__listing.py` covers `build_summaries()` directly.
 
 - [ ] ACC-007: Verifies REQ-007 -- all eleven other whole-body domains' summary types gain `path` via the shared `DocSummary` base with a passing test each; `FeatSummary` is retrofitted to the inherited, resolved `path` (its own redundant field declaration removed) with its existing tests updated accordingly; `DocSummary.ref`'s docstring no longer states callers must not read the file off disk directly.
 
@@ -209,13 +209,13 @@ Design questions resolved during plan refinement (2026-09-03), prior to Phase 1 
 
 #### Phase 3: `list_<d>` Failure Reporting
 
-- [ ] Task 3.1: Implement `general/tools/_listing.py::build_summaries()` (per Design Notes), with a default `error_types=(AssertionError, ValidationError, yaml.YAMLError)` -- covering all three of `validate_<d>`'s own documented parse-failure channels, not just the first two, so malformed frontmatter YAML is reported as a failed entry rather than crashing `list_<d>`; add `error_count: int = 0` to `PagedResult` and `path`/`error` to the shared `DocSummary` base; wire all twelve whole-body domains' `list_<d>.py` through the new helper, replacing each domain's own copy-pasted loop -- this necessarily also populates `path=path.resolve()` on every *successful*-entry construction across all twelve domains, since `path` is now mandatory on the shared base (see Design Notes' Phase 3/Phase 4 sequencing note; Task 4.1 only verifies/spot-checks this afterward, it does not introduce new population code); update `AGENTS.md`'s `list_<d>` bullets to mention `error_count`.
+- [x] Task 3.1: Implement `general/tools/_listing.py::build_summaries()` (per Design Notes), with a default `error_types=(AssertionError, ValidationError, yaml.YAMLError)` -- covering all three of `validate_<d>`'s own documented parse-failure channels, not just the first two, so malformed frontmatter YAML is reported as a failed entry rather than crashing `list_<d>`; add `error_count: int = 0` to `PagedResult` and `path`/`error` to the shared `DocSummary` base; wire all twelve whole-body domains' `list_<d>.py` through the new helper, replacing each domain's own copy-pasted loop -- this necessarily also populates `path=path.resolve()` on every *successful*-entry construction across all twelve domains, since `path` is now mandatory on the shared base (see Design Notes' Phase 3/Phase 4 sequencing note; Task 4.1 only verifies/spot-checks this afterward, it does not introduce new population code); update `AGENTS.md`'s `list_<d>` bullets to mention `error_count`. Done -- `general/tools/_listing.py` (`build_summaries()`, `default_failed_summary()`, `FAILED_TO_PARSE_MARKER`, `DEFAULT_ERROR_TYPES`) added; `PagedResult.error_count: int = 0` and `DocSummary.path: str`/`error: str | None = None` added; `general/tools/_paging.py::paginate()` gained an `error_count: int = 0` parameter threaded straight into the returned `PagedResult`; all twelve `list_<d>.py` files (`req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr`/`sysrs`) now route through `build_summaries()`. **Clarification on the "across all twelve domains" wording above**: per this task's own delegated implementation instructions, `feat` is the one deliberate exception -- `list_feat.py`'s `to_summary`/`to_failed_summary` callbacks keep `FeatSummary.path` as the existing *unresolved* `str(path)` in this phase (via `default_failed_summary(..., resolve=False)` for its failed rows), since `FeatSummary` already had its own separate `path` field before this feature and its resolved-path retrofit is explicitly Phase 4, Task 4.2's job, not this one's -- so "all twelve domains" above should be read as "the other eleven domains get a brand-new resolved `path` field; `feat`'s pre-existing `path` field is merely routed through the new helper, unchanged in value." `AGENTS.md`'s twelve `list_<d>` bullets each now mention `error_count`.
 
-- [ ] Task 3.2: Implement RSK's sentinel-document construction (`rsk/tools/_sentinel.py`) per Design Notes; wire into `list_rsk`'s `to_failed_summary` callback; add a dedicated unit test that parses `_SENTINEL_RSK_TEXT` via `parse_rsk` and asserts it succeeds, independent of `list_rsk`'s own tests.
+- [x] Task 3.2: Implement RSK's sentinel-document construction (`rsk/tools/_sentinel.py`) per Design Notes; wire into `list_rsk`'s `to_failed_summary` callback; add a dedicated unit test that parses `_SENTINEL_RSK_TEXT` via `parse_rsk` and asserts it succeeds, independent of `list_rsk`'s own tests. Done -- `rsk/tools/_sentinel.py` (`_SENTINEL_RSK_TEXT`, `_SENTINEL_RSK_DOCUMENT`, `build_failed_rsk_summary()`) added and wired into `list_rsk.py`; `tests/rsk/tools/test__sentinel.py` added (9 tests, parsing `_SENTINEL_RSK_TEXT` directly, independent of `list_rsk`'s own tests). One deviation from the plan's original design, recorded in Decisions Made below: the sentinel's H1 is a plain descriptive title, not literally `"<failed to parse>"` -- `title` is overridden via `model_copy` (a fifth field, alongside `id`/`status`/`path`/`error`) using the shared `FAILED_TO_PARSE_MARKER` constant, since writing that literal marker text as a markdown H1 is rejected by `models/md`'s own raw-HTML guard and every markdown escape-hatch that survives the guard leaves its own syntax embedded in `.text`'s raw-source-derived output.
 
-- [ ] Task 3.3: Regression tests with a mixed valid/unparseable directory for at least two domains, including `rsk`; include at least one malformed-YAML-frontmatter fixture (not just structural/field-validation failures) to exercise the `yaml.YAMLError` path.
+- [x] Task 3.3: Regression tests with a mixed valid/unparseable directory for at least two domains, including `rsk`; include at least one malformed-YAML-frontmatter fixture (not just structural/field-validation failures) to exercise the `yaml.YAMLError` path. Done -- `req` and `rsk` (the two mandated domains) each gained a `test_returns_summaries_and_reports_malformed_file_as_a_failed_entry` test (structural-failure fixture, asserting `total`/`error_count`, marker `title`/`status`, `ref`, resolved `path`, `error`) and a dedicated `test_malformed_yaml_frontmatter_is_reported_as_a_failed_entry` test exercising the `yaml.YAMLError` path; every other whole-body domain's own pre-existing `test_list_<d>.py` was also updated (not just left red) since `build_summaries()`'s semantics change broke their old skip-based assertions -- `uc`/`tsk`/`qa`/`prb`/`gol`/`dec`/`sop`/`vcr`/`sysrs`/`feat` all got their `..._skips_malformed_..."` test renamed to `..._reports_malformed_..._as_a_failed_entry` and their `total`/`error_count` assertions updated to match. New `tests/general/tools/test__listing.py` (18 tests) covers `build_summaries()`/`default_failed_summary()` directly (all three `error_types` channels, a non-matching exception propagating, mixed success/failure ordering, custom `error_types`). `tests/general/tools/test_paging.py`/`tests/general/models/test_paged_result.py`/`tests/general/models/test_summary.py` updated for `error_count`/`path`/`error`; `AdrSummary`'s own tests split off into their own, narrower four-field expectation, since `adr` is out of scope for this feature and `AdrSummary` deliberately does not gain `path`/`error`.
 
-- [ ] Task 3.4: Add a `CHANGELOG.md` `[Unreleased]` entry (**BREAKING**) documenting `list_<d>`'s `total`/`error_count` semantics change (`total` now includes failed entries alongside successes).
+- [x] Task 3.4: Add a `CHANGELOG.md` `[Unreleased]` entry (**BREAKING**) documenting `list_<d>`'s `total`/`error_count` semantics change (`total` now includes failed entries alongside successes). Done -- `CHANGELOG.md` `[Unreleased]` gained a "Changed" **BREAKING** entry.
 
 #### Phase 4: `list_<d>` Path Field Parity
 
@@ -241,11 +241,93 @@ Design questions resolved during plan refinement (2026-09-03), prior to Phase 1 
 
 ### Current Status
 
-**As of 2026-09-04**: **Phase 1 (Investigation and Inventory) and Phase 2 (Generic `validate` Tool) are both fully complete.** Feature drafted from GitHub issues #81 and #83, then refined three times ahead of Phase 1 -- see the earlier Updates entries below for that refinement history. Phase 1 confirmed both of issue #83's repro cases reproduce as client-observed symptoms, root-caused to a client-side tool-error-rendering gap, not a specmgr server-side regression, and inventoried all thirteen `validate_<d>` tools. Phase 2 implemented the generic `validate(type, content, full)` tool in `general/tools/` (twelve private per-domain adapters, dispatch table, and the `ValidateResult`/`ValidationErrorEntry` non-raising result models), recorded the consolidation decision as ADR 078bf395-0a5f-4afd-84f6-b7a2191a00e6, removed the twelve per-domain `validate_<d>` tools and their dedicated tests, migrated every dependent prompt/test (24 `create_<d>`/`update_<d>` prompts, 5 `test_integration.py` files, 3 regression tests, `test_error_context.py`, and 2 prompt tests found via a broader search), added 15 new generic-tool unit tests (`tests/general/tools/test_validate.py`), and updated `AGENTS.md`/`server.py`'s own module docstring/`CHANGELOG.md` accordingly. The full quality gate (`ruff format --check`, `ruff check`, `vulture`, the full 3308-test `unittest` suite, `specmgr docs`, `specmgr adr-toc`, `specmgr mcp-docs`) is green. Phase 3 (`list_<d>` Failure Reporting) has not begun.
+**As of 2026-09-04**: **Phases 1-3 are all fully complete** (Investigation and Inventory; Generic `validate` Tool; `list_<d>` Failure Reporting). Feature drafted from GitHub issues #81 and #83, then refined three times ahead of Phase 1 -- see the earlier Updates entries below for that refinement history. Phase 1 confirmed both of issue #83's repro cases reproduce as client-observed symptoms, root-caused to a client-side tool-error-rendering gap, not a specmgr server-side regression, and inventoried all thirteen `validate_<d>` tools. Phase 2 implemented the generic `validate(type, content, full)` tool in `general/tools/`, recorded the consolidation decision as ADR 078bf395-0a5f-4afd-84f6-b7a2191a00e6, removed the twelve per-domain `validate_<d>` tools and their dedicated tests, and migrated every dependent prompt/test. Phase 3 implemented the shared `general/tools/_listing.py::build_summaries()` helper (REQ-006), added `PagedResult.error_count`/`DocSummary.path`+`error`, wired all twelve `list_<d>.py` files through it so a malformed document now appears inline in `results` as a failed entry (marker `title`/`status`, `ref`, `path`, `error`) and contributes to `total`/`error_count` instead of being silently skipped, built RSK's sentinel-document construction (`rsk/tools/_sentinel.py`) for its own richer `RskSummary`, added regression tests (including a malformed-YAML-frontmatter fixture) for `req`/`rsk` plus updated every other domain's own pre-existing list test for the new semantics, and updated `AGENTS.md`'s twelve `list_<d>` bullets to mention `error_count`. `feat`'s `FeatSummary.path` deliberately keeps its existing unresolved form in Phase 3 (Phase 4, Task 4.2's job); ACC-007 (the eleven-other-domains `path` parity plus the `FeatSummary`/`ref`-docstring retrofit) is Phase 4's own acceptance criterion, not Phase 3's, and stays open. The full quality gate (`ruff format --check`, `ruff check`, `vulture`, the full 3340-test `unittest`/`pytest` suite, `specmgr docs`, `specmgr adr-toc`, `specmgr mcp-docs`) is green. Phase 4 (`list_<d>` Path Field Parity) has not begun.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-04 15:00:00.000Z - Phase 3 (`list_<d>` Failure Reporting) complete: Tasks 3.1-3.4 done
+
+Implemented REQ-006's `list_<d>` failure-reporting fix and the shared
+listing infrastructure it depends on (Task 3.1): `general/tools/_listing.py`
+(`build_summaries(paths, read, to_summary, to_failed_summary, error_types=
+(AssertionError, ValidationError, yaml.YAMLError))`, `default_failed_summary()`,
+`FAILED_TO_PARSE_MARKER`), mirroring `general/tools/_doc_paths.py::find_doc_path_by_id`'s
+callback-based generalization; `PagedResult.error_count: int = 0`;
+`DocSummary.path: str`/`error: str | None = None` added to the shared base
+(`general/models/summary.py`); `general/tools/_paging.py::paginate()` gained
+an `error_count: int = 0` parameter threaded straight into the returned
+`PagedResult`. All twelve `list_<d>.py` files (`req`/`uc`/`tsk`/`qa`/`prb`/
+`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr`/`sysrs`) now route through
+`build_summaries()`, replacing each domain's own copy-pasted try/except/append
+loop; a file that fails to parse now appears inline in `results` as a failed
+entry (`id=None`, `title`/`status` both `"<failed to parse>"`, `ref`/`path`
+populated the same way as a successful entry, `error` carrying the caught
+exception's message) rather than being silently skipped, and `total`/
+`error_count` reflect the whole directory, independent of paging. Per this
+phase's own delegated scope boundary, `feat`'s `FeatSummary.path` keeps its
+existing *unresolved* `str(path)` form in this phase (via
+`default_failed_summary(..., resolve=False)` for its failed rows) -- the
+resolved-path retrofit is explicitly Phase 4, Task 4.2's job -- while the
+other eleven domains' successful *and* failed entries both get a brand-new,
+`.resolve()`d `path`. `AGENTS.md`'s twelve `list_<d>` bullets each now
+mention `error_count`.
+
+Implemented RSK's sentinel-document construction (Task 3.2):
+`rsk/tools/_sentinel.py` (`_SENTINEL_RSK_TEXT`, `_SENTINEL_RSK_DOCUMENT`,
+`build_failed_rsk_summary()`), a fixed, valid, deliberately
+worst-case-severity (`Probability 5`/`Impact 5` in both assessments,
+`level_from_product(25)` = `"very high"`) risk document, parsed exactly once
+via the real, unmodified `parse_rsk` pipeline, then run through the same
+`RskSummary.from_document()` every real row uses before `model_copy`
+overriding the fields no document could ever supply. `tests/rsk/tools/test__sentinel.py`
+(9 tests) parses `_SENTINEL_RSK_TEXT` directly, independent of `list_rsk`'s
+own tests.
+
+Added regression tests (Task 3.3): `req`/`rsk` (the two mandated domains)
+each gained a full `test_returns_summaries_and_reports_malformed_file_as_a_failed_entry`
+test (asserting `total`/`error_count`, marker `title`/`status`, `ref`,
+resolved `path`, `error`) and a dedicated `test_malformed_yaml_frontmatter_is_reported_as_a_failed_entry`
+test exercising the `yaml.YAMLError` path specifically (not just a
+structural/field-validation failure); every other domain's own pre-existing
+`test_list_<d>.py` (`uc`/`tsk`/`qa`/`prb`/`gol`/`dec`/`sop`/`vcr`/`sysrs`/`feat`)
+was also updated for the new semantics, since `build_summaries()` broke
+their old skip-based assertions outright (a document previously silently
+skipped now counts toward `total`). New `tests/general/tools/test__listing.py`
+(18 tests) covers `build_summaries()`/`default_failed_summary()` directly.
+`tests/general/tools/test_paging.py`/`tests/general/models/test_paged_result.py`/
+`tests/general/models/test_summary.py` updated for `error_count`/`path`/`error`;
+`AdrSummary`'s own tests were split off into a narrower four-field
+expectation, since `adr` is out of scope for this feature and `AdrSummary`
+deliberately does not gain `path`/`error` (see Decisions Made below).
+
+Added a `CHANGELOG.md` `[Unreleased]` entry (Task 3.4): a "Changed"
+**BREAKING** entry documenting `list_<d>`'s `total`/`error_count` semantics
+change.
+
+Quality gate: `ruff format --check` (clean), `ruff check` (all checks
+passed), `vulture src/ whitelist.py --min-confidence 60` (no output), the
+full `pytest -n auto --cov=src` suite (3340 tests, up from 3308 -- net +32:
++18 `test__listing.py`, +9 `test__sentinel.py`, +5 new/renamed assertions
+spread across the twelve `test_list_<d>.py` files and the three
+`general/models`/`general/tools` test files), `specmgr docs` (regenerated
+`docs/api/`/`docs/GENERATED.md`, two new API pages for `_listing.py`/
+`_sentinel.py`), `specmgr mcp-docs` (`docs/MCP.md` unchanged -- no tool
+descriptions/signatures changed), and `specmgr adr-toc` (`docs/adr/README.md`
+unchanged) all green.
+
+Design decision made during this phase, not already covered by the plan's
+own Design Notes (added to Decisions Made below): the RSK sentinel's H1 is
+a plain descriptive title, not literally `"<failed to parse>"` -- `title`
+is overridden via `model_copy` (a fifth field, alongside `id`/`status`/
+`path`/`error`) using the shared `FAILED_TO_PARSE_MARKER` constant, because
+writing that literal marker text as a markdown H1 is rejected by
+`models/md`'s own raw-HTML guard (a bare `<...>` token parses as
+`html_inline`), and every escape-hatch that survives the guard (a code
+span, a backslash escape) leaves its own markdown syntax embedded in
+`MarkdownSection.text`'s raw-source-derived output instead of yielding the
+bare marker string.
 
 #### 2026-09-04 14:00:00.000Z - Phase 2 (Generic `validate` Tool) complete: Tasks 2.1-2.7 done
 
@@ -366,6 +448,31 @@ Created from GitHub issues #81 (consolidate validation tools) and #83 (opaque va
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-04 15:00:00.000Z - RSK sentinel's `title` is overridden via `model_copy`, not read off the sentinel's own H1
+
+Decided, during Phase 3 implementation, that the RSK sentinel document's H1 must be a plain
+descriptive title (`"RSK Sentinel Document (Internal)"`), not literally the fixed marker text
+`"<failed to parse>"` as an earlier draft of the design proposed -- discovered to be technically
+infeasible once actually implemented: `models/md`'s own raw-HTML guard
+(`models/md/_markdown.py::_assert_no_raw_html`) rejects a bare `<...>` token as an `html_inline`
+tag unless it starts with `<!--`, so `# <failed to parse>` fails to parse outright with an
+`AssertionError` ("raw HTML is not permitted..."). Every markdown escape-hatch that survives the
+guard was tried and rejected in turn: a code span (`` `<failed to parse>` ``) and a backslash
+escape (`\<failed to parse>`) both parse successfully, but `MarkdownSection.text`'s composite-case
+branch returns the heading's inline token's raw *source* content verbatim (confirmed by direct
+inspection of `markdown-it-py`'s token stream), not a markdown-unescaped/rendered string -- so
+either escape-hatch leaves its own syntax (backticks, or a literal backslash) embedded in `.text`,
+never yielding the bare `"<failed to parse>"` string the design called for. Resolved by keeping
+every risk-specific field (`initial_level`/`residual_level`/`strategy`/`scope`/
+`residual_probability`/`residual_impact`/`residual_product`) genuinely derived from real parsing
+as originally designed, but adding `title` as a fifth `model_copy`-overridden field (alongside
+`id`/`status`/`path`/`error`) -- using the exact same `general.tools._listing.FAILED_TO_PARSE_MARKER`
+constant every other domain's failed entries use for their own `title`/`status`, so the RSK
+sentinel's marker can never drift out of sync with the other eleven domains' even though it is no
+longer read off the sentinel document's own H1. `RskSummary`'s field constraints, and every other
+part of the original sentinel-document design (a fixed, valid, deliberately worst-case-severity
+document parsed once via the real, unmodified `parse_rsk` pipeline), are completely unchanged.
 
 #### 2026-09-04 14:00:00.000Z - `validate`'s unsupported-`type` check is an explicit `ValueError`, not an implicit `KeyError`
 

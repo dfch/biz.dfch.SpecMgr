@@ -122,6 +122,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general.tools._confluence_config`](biz.dfch.specmgr.general.tools._confluence_config.md) — Shared Confluence base-URL/bearer-token configuration, used by both
 - [`biz.dfch.specmgr.general.tools._confluence_url`](biz.dfch.specmgr.general.tools._confluence_url.md) — Shared, ``mcp``-free Confluence URL helpers, used by both
 - [`biz.dfch.specmgr.general.tools._doc_paths`](biz.dfch.specmgr.general.tools._doc_paths.md) — Generic, doc-type-agnostic base directory resolution, filename slugification,
+- [`biz.dfch.specmgr.general.tools._listing`](biz.dfch.specmgr.general.tools._listing.md) — Generic, doc-type-agnostic ``list_<domain>`` summary construction (feat-81-83-validation Phase 3, Task 3.1).
 - [`biz.dfch.specmgr.general.tools._packaged_data`](biz.dfch.specmgr.general.tools._packaged_data.md) — Generic, doc-type-agnostic access to packaged example/template/schema data
 - [`biz.dfch.specmgr.general.tools._paging`](biz.dfch.specmgr.general.tools._paging.md) — Generic, doc-type-agnostic paging helpers (feat-13 Task 1.2).
 - [`biz.dfch.specmgr.general.tools._path_safety`](biz.dfch.specmgr.general.tools._path_safety.md) — Reusable, doc-type-agnostic path-safety assertions for document ids and
@@ -299,6 +300,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.rsk.tools._io`](biz.dfch.specmgr.rsk.tools._io.md) — Thin file read helpers over ``parse_rsk`` (Task 3.1).
 - [`biz.dfch.specmgr.rsk.tools._lock`](biz.dfch.specmgr.rsk.tools._lock.md) — Per-document in-process lock guarding risk mutations.
 - [`biz.dfch.specmgr.rsk.tools._paths`](biz.dfch.specmgr.rsk.tools._paths.md) — Risk base directory resolution and id -> path lookup (Task 3.1).
+- [`biz.dfch.specmgr.rsk.tools._sentinel`](biz.dfch.specmgr.rsk.tools._sentinel.md) — RSK's sentinel-document construction for ``list_rsk``'s failed-entry rows (feat-81-83-validation Phase 3, Task 3.2).
 - [`biz.dfch.specmgr.rsk.tools._write`](biz.dfch.specmgr.rsk.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_rsk`` and
 - [`biz.dfch.specmgr.rsk.tools.create_rsk`](biz.dfch.specmgr.rsk.tools.create_rsk.md) — ``@mcp.tool()`` wrapper: create_rsk (Task 3.3).
 - [`biz.dfch.specmgr.rsk.tools.get_rsk`](biz.dfch.specmgr.rsk.tools.get_rsk.md) — ``@mcp.tool()`` wrapper: get_rsk (Task 3.8).

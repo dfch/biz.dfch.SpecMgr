@@ -27,18 +27,42 @@ characteristics/tags filtering was explicitly deferred for REQ's own
 equivalent, and the same deferral applies here. See
 ``.specmgr/feat/feat-13-list-paging/README.md`` for the full paging
 contract shared by every ``list_<domain>`` tool.
+
+feat-81-83-validation Phase 3 (REQ-006/REQ-007) routed this tool through
+the shared ``general.tools._listing.build_summaries`` helper: a file that
+fails to parse now appears inline in ``results`` as a failed entry (marker
+``title``/``status``, ``ref``, ``path``, and ``error``) and contributes to
+both ``total`` and the new ``error_count``, instead of being silently
+skipped.
 """
 
 from __future__ import annotations
 
-from pydantic import ValidationError
+from pathlib import Path
 
 from ...general.models import PagedResult
+from ...general.tools._listing import build_summaries, default_failed_summary
 from ...general.tools._paging import normalize_paging, paginate
 from ...server import mcp
-from ..models.v2 import QaSummary
+from ..models.v2 import QaDocument, QaSummary
 from ._io import read_qa
 from ._paths import iter_qa_paths
+
+
+def _to_summary(doc: QaDocument, path: Path) -> QaSummary:
+    result = QaSummary(
+        id=doc.frontmatter.id,
+        title=doc.body.text,
+        status=doc.frontmatter.status,
+        ref=path.stem,
+        path=str(path.resolve()),
+    )
+    return result
+
+
+def _to_failed_summary(path: Path, error: Exception) -> QaSummary:
+    result = default_failed_summary(QaSummary, path, error)
+    return result
 
 
 @mcp.tool(
@@ -56,15 +80,18 @@ from ._paths import iter_qa_paths
 def list_qa(max_results: int | None = None, offset: int | None = None) -> PagedResult[QaSummary]:
     """Return one page of one-line QA document summaries from the configured base directory.
 
-    A file that fails to parse (``AssertionError`` or
-    ``pydantic.ValidationError`` -- the same two error channels
-    :func:`~biz.dfch.specmgr.qa.models.v2.parse_qa` raises) is silently
-    skipped -- a single malformed file must not break listing every other
-    valid one (mirrors ``qa.tools._paths.find_qa_path``'s own
-    skip-on-parse-failure rule). The complete, skip-broken-file-filtered
-    list is materialized first, then paginated in memory, so the returned
-    ``total`` always reflects the count of parseable documents only,
-    independent of paging.
+    A file that fails to parse (``AssertionError``, ``pydantic.ValidationError``,
+    or ``yaml.YAMLError`` -- the same channels
+    :func:`~biz.dfch.specmgr.qa.models.v2.parse_qa` raises) appears inline
+    in ``results`` as its own failed entry (``id=None``, ``title``/``status``
+    both the fixed marker ``"<failed to parse>"``, ``ref``/``path``
+    populated the same way as a successful entry, and ``error`` carrying the
+    exception's message) rather than being silently skipped
+    (feat-81-83-validation Phase 3, REQ-006) -- a single malformed file must
+    not break listing every other valid one. The complete list (successes
+    and failures both) is materialized first, then paginated in memory, so
+    the returned ``total``/``error_count`` always reflect the whole
+    directory, independent of paging.
 
     Parameters
     ----------
@@ -81,23 +108,10 @@ def list_qa(max_results: int | None = None, offset: int | None = None) -> PagedR
     Returns
     -------
     PagedResult[QaSummary]
-        One entry per successfully-parsed ``*.md`` file within the
-        requested page, in filename-sorted order. ``results`` is empty if
-        the base directory does not exist, holds no QA documents, or
+        One entry per ``*.md`` file within the requested page (successes
+        and failures both), in filename-sorted order. ``results`` is empty
+        if the base directory does not exist, holds no QA documents, or
         ``offset`` is past the end of the full list.
     """
-    summaries: list[QaSummary] = []
-    for path in iter_qa_paths():
-        try:
-            doc = read_qa(path)
-        except (AssertionError, ValidationError):
-            continue
-        summaries.append(
-            QaSummary(
-                id=doc.frontmatter.id,
-                title=doc.body.text,
-                status=doc.frontmatter.status,
-                ref=path.stem,
-            )
-        )
-    return paginate(summaries, *normalize_paging(max_results, offset))
+    summaries, error_count = build_summaries(iter_qa_paths(), read_qa, _to_summary, _to_failed_summary)
+    return paginate(summaries, *normalize_paging(max_results, offset), error_count=error_count)

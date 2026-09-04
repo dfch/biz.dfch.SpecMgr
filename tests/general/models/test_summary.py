@@ -22,8 +22,14 @@ actual subclasses of :class:`DocSummary`. ``AdrSummary`` is a deliberate
 exception (see ``biz.dfch.specmgr.models.adr.v1.summary``'s module
 docstring and this feature's Decisions Made log for why it cannot subclass
 :class:`DocSummary` without adding an ``mcp`` dependency to the
-dependency-free base library) -- it is instead asserted to be
-*structurally* equivalent: same field names, same annotations.
+dependency-free base library) -- it was originally asserted to be fully
+*structurally* equivalent (same field names, same annotations), but
+feat-81-83-validation Phase 3 (REQ-006/REQ-007) added ``path``/``error`` to
+:class:`DocSummary` for the twelve whole-body domains only -- ``adr`` is
+explicitly out of scope for that feature (``list_adr`` untouched), so
+``AdrSummary`` deliberately keeps its original four-field shape and the two
+are no longer expected to match field-for-field. ``AdrSummary`` is instead
+asserted to still share ``DocSummary``'s *original* four-field prefix.
 """
 
 from __future__ import annotations
@@ -37,7 +43,12 @@ from biz.dfch.specmgr.req.models.v1.summary import ReqSummary
 from biz.dfch.specmgr.tsk.models.v1.summary import TskSummary
 from biz.dfch.specmgr.uc.models.v2.summary import UcSummary
 
-_EXPECTED_FIELD_NAMES = ["id", "title", "status", "ref"]
+#: The four fields every domain's summary (including the out-of-scope ``AdrSummary``) has always had.
+_ADR_FIELD_NAMES = ["id", "title", "status", "ref"]
+
+#: The current shared `DocSummary` base's fields -- the four original ones plus `path`/`error`,
+#: added in feat-81-83-validation Phase 3 (REQ-006/REQ-007) for the twelve whole-body domains only.
+_EXPECTED_FIELD_NAMES = ["id", "title", "status", "ref", "path", "error"]
 
 
 class TestDocSummary(unittest.TestCase):
@@ -47,9 +58,14 @@ class TestDocSummary(unittest.TestCase):
         self.assertEqual(list(DocSummary.model_fields.keys()), _EXPECTED_FIELD_NAMES)
 
     def test_allows_a_none_id(self):
-        sut = DocSummary(id=None, title="t", status="draft", ref="r")
+        sut = DocSummary(id=None, title="t", status="draft", ref="r", path="/tmp/r.md")
 
         self.assertIsNone(sut.id)
+
+    def test_error_defaults_to_none(self):
+        sut = DocSummary(id="x", title="t", status="draft", ref="r", path="/tmp/r.md")
+
+        self.assertIsNone(sut.error)
 
 
 class TestReqSummarySharesDocSummaryBase(unittest.TestCase):
@@ -93,26 +109,44 @@ class TestQaSummarySharesDocSummaryBase(unittest.TestCase):
 
 
 class TestAdrSummaryIsStructurallyEquivalent(unittest.TestCase):
-    """Tests that AdrSummary, though not a DocSummary subclass, shares its field set."""
+    """Tests that AdrSummary, though not a DocSummary subclass, still shares DocSummary's original four fields.
+
+    feat-81-83-validation Phase 3 added ``path``/``error`` to
+    :class:`DocSummary` for the twelve whole-body domains only -- ``adr`` is
+    explicitly out of scope, so ``AdrSummary`` deliberately does NOT gain
+    those two fields, and the two models' field sets are no longer expected
+    to match field-for-field (see this module's own docstring).
+    """
 
     def test_is_deliberately_not_a_docsummary_subclass(self):
         self.assertFalse(issubclass(AdrSummary, DocSummary))
 
-    def test_declares_the_same_field_names_as_docsummary(self):
-        self.assertEqual(list(AdrSummary.model_fields.keys()), _EXPECTED_FIELD_NAMES)
+    def test_declares_its_original_four_field_names(self):
+        self.assertEqual(list(AdrSummary.model_fields.keys()), _ADR_FIELD_NAMES)
 
-    def test_declares_the_same_field_annotations_as_docsummary(self):
+    def test_does_not_declare_path_or_error(self):
+        self.assertNotIn("path", AdrSummary.model_fields)
+        self.assertNotIn("error", AdrSummary.model_fields)
+
+    def test_declares_the_same_annotations_as_docsummary_for_its_shared_fields(self):
         adr_annotations = {name: field.annotation for name, field in AdrSummary.model_fields.items()}
         doc_annotations = {name: field.annotation for name, field in DocSummary.model_fields.items()}
 
-        self.assertEqual(adr_annotations, doc_annotations)
+        for name in _ADR_FIELD_NAMES:
+            with self.subTest(field=name):
+                self.assertEqual(adr_annotations[name], doc_annotations[name])
 
 
-class TestAllFiveSummariesShareTheCommonBaseFieldSet(unittest.TestCase):
-    """Side-by-side test across every domain's summary model (ACC-001/ACC-003)."""
+class TestAllFourWholeBodySummariesShareTheCommonBaseFieldSet(unittest.TestCase):
+    """Side-by-side test across every whole-body domain's summary model (ACC-001/ACC-003).
 
-    def test_all_five_summaries_declare_the_same_field_names(self):
-        summary_classes = [AdrSummary, ReqSummary, UcSummary, TskSummary, QaSummary]
+    Unlike an earlier version of this test, ``AdrSummary`` is deliberately
+    excluded here -- see :class:`TestAdrSummaryIsStructurallyEquivalent`
+    above for its own, narrower four-field expectation.
+    """
+
+    def test_all_four_summaries_declare_the_same_field_names(self):
+        summary_classes = [ReqSummary, UcSummary, TskSummary, QaSummary]
 
         for summary_class in summary_classes:
             with self.subTest(summary_class=summary_class.__name__):
