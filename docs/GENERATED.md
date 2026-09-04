@@ -132,7 +132,7 @@ First-line docstrings from each module, organized by domain:
 - `general/resources/__init__.py` — MCP resource registrations that are not specific to any single document
 - `general/resources/config.py` — Resource: specmgr://config -- resolved base directory diagnostics (feat-51-mcp-cwd).
 - `general/resources/dtais.py` — Resource: specmgr://dtais -- the DTAIS verification-method vocabulary (feat-33-vcr Task 3.3).
-- `general/resources/iso25010.py` — Resource: specmgr://iso25010 (Task 0.8.3).
+- `general/resources/iso25010.py` — Resource: specmgr://iso25010 (Task 0.8.3; feat-92-resources Phase 1).
 - `general/resources/rasci.py` — Resource: specmgr://rasci (feat-30 Task 3.5, REQ-011).
 - `general/resources/version.py` — Resource: specmgr://version — MCP server package version number.
 - `general/tools/__init__.py` — MCP tool wrappers for general-purpose utilities (mirrors ``adr/tools/``'s shape).

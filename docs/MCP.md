@@ -140,7 +140,7 @@ A GOL document template -- frontmatter and every body field present, populated w
 ### Resource: iso25010
 
 - **URI:** `specmgr://iso25010`
-- **MIME type:** `application/json`
+- **MIME type:** `text/markdown`
 
 The nine main characteristics (and their sub-characteristics) of the ISO/IEC 25010:2023 system/software product quality model, each with a description.
 

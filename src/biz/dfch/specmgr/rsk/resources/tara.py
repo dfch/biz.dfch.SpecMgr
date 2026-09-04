@@ -23,12 +23,11 @@ closed set), when and how to apply each, and how the strategy interacts with
 ``## Mitigation`` and the frontmatter ``status`` vocabulary.
 
 Served as raw packaged markdown (``text/markdown``, mirroring
-``specmgr://tsk/example``/``/template``) rather than parsed into structured
-models -- the audience is an LLM agent that needs to read guidance, not code
-that needs data (``specmgr://iso25010``'s structured parse is the precedent
-for machine-readable reference data; these are prose). The content was
-drafted in Phase 1 of ``.specmgr/feat/feat-15-add-artifact-type-risk`` and
-packaged here in Phase 3; the TARA words have a single source of truth
+``specmgr://iso25010``/``specmgr://tsk/example``/``/template``) -- the
+audience is an LLM agent that needs to read guidance, not code that needs
+data. The content was drafted in Phase 1 of
+``.specmgr/feat/feat-15-add-artifact-type-risk`` and packaged here in
+Phase 3; the TARA words have a single source of truth
 (``rsk.models.v1.body.Strategy``'s closed set).
 """
 

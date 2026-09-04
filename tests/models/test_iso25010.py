@@ -16,15 +16,44 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 """Tests for `parse_iso25010`, exercised end-to-end against the real,
-packaged ``general/data/general_iso25010.md`` (Task 0.8.5).
+packaged ``general/data/general_iso25010.md`` (Task 0.8.5), plus a
+fail-fast/malformed-content drift-guard test (feat-92-resources Task 1.3,
+ACC-001).
 """
 
 from __future__ import annotations
 
 import unittest
 
+import pydantic
+
 from biz.dfch.specmgr.general.tools._packaged_data import read_packaged_text
 from biz.dfch.specmgr.models import Characteristic, Iso25010, parse_iso25010
+
+#: A deliberately malformed document: only 2 of the required 9 characteristic
+#: names/characteristics, so `Iso25010`'s `min_length=9`/`max_length=9`
+#: constraints reject it.
+_MALFORMED_TEXT = """# ISO/IEC 25010:2023 Product Quality Model
+
+- Functional Suitability
+- Performance Efficiency
+
+## Functional Suitability
+
+Ability of a product to meet stated and implied needs.
+
+### Functional Completeness
+
+The set of functions covers all the specified tasks and user objectives.
+
+## Performance Efficiency
+
+Performance relative to the amount of resources used.
+
+### Time Behaviour
+
+Response and processing times, and throughput rates.
+"""
 
 
 class TestParseIso25010(unittest.TestCase):
@@ -72,6 +101,11 @@ class TestParseIso25010(unittest.TestCase):
         sub_by_name = {sub.text: sub.description.text for sub in characteristic.sub_characteristics}
         self.assertIn("Hazard Warning", sub_by_name)
         self.assertIn("unacceptable risks", sub_by_name["Hazard Warning"])
+
+    def test_raises_on_malformed_text(self):
+        """A document missing required characteristics must fail fast, not silently parse."""
+        with self.assertRaises((AssertionError, pydantic.ValidationError)):
+            parse_iso25010(_MALFORMED_TEXT)
 
 
 if __name__ == "__main__":

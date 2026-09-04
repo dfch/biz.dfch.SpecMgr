@@ -39,7 +39,7 @@ the raw text returned, and (b) covered by its own
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: `specmgr://iso25010`'s `mime_type` is `text/markdown` and its test asserts fail-fast behavior on a malformed packaged file.
+- [x] ACC-001: `specmgr://iso25010`'s `mime_type` is `text/markdown` and its test asserts fail-fast behavior on a malformed packaged file.
 - [ ] ACC-002: `tests/models/test_dtais.py` fails if `general_dtais.md`'s 5+3-item structure is broken.
 - [ ] ACC-003: `tests/models/test_tara.py` fails if `rsk_tara.md`'s 4+4+6-item structure is broken.
 - [ ] ACC-004: `tests/models/test_risk_matrix.py` fails if `rsk_risk_matrix.md`'s 4-item threshold list is broken.
@@ -108,9 +108,9 @@ the raw text returned, and (b) covered by its own
 
 #### Phase 1: `iso25010`
 
-- [ ] Task 1.1: Switch `general/resources/iso25010.py` to markdown output with parse-and-discard validation.
-- [ ] Task 1.2: Update `dtais.py`'s stale docstring cross-reference.
-- [ ] Task 1.3: Broaden `tests/models/test_iso25010.py`; rewrite `tests/general/resources/test_iso25010.py`.
+- [x] Task 1.1: Switch `general/resources/iso25010.py` to markdown output with parse-and-discard validation.
+- [x] Task 1.2: Update `dtais.py`'s stale docstring cross-reference.
+- [x] Task 1.3: Broaden `tests/models/test_iso25010.py`; rewrite `tests/general/resources/test_iso25010.py`.
 
 #### Phase 2: `dtais` model
 
@@ -141,9 +141,10 @@ the raw text returned, and (b) covered by its own
 
 ### Current Status
 
-**As of 2026-09-04**: Phase 0 (ADR) done. ADR
+**As of 2026-09-04**: Phase 0 (ADR) and Phase 1 (`iso25010`) done. ADR
 356d8781-e446-4c26-917a-eda85648ce9d accepted, documenting the repo-wide
-convention. Phases 1-7 (implementation) not started yet.
+convention; `specmgr://iso25010` now follows it (raw markdown,
+parse-and-discard). Phases 2-7 not started yet.
 
 ### Blockers
 
@@ -152,6 +153,37 @@ None.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-04 00:00:00.000Z - Phase 1 (`iso25010`) complete
+
+Switched `general/resources/iso25010.py`'s `iso25010()` resource function
+from returning a structured `Iso25010` JSON object (`mime_type="application/json"`)
+to returning the packaged `general/data/general_iso25010.md` raw markdown
+text (`mime_type="text/markdown"`), per ADR
+356d8781-e446-4c26-917a-eda85648ce9d: it still
+calls `parse_iso25010()` on every call to fail fast on structural drift,
+discarding the parsed result and returning the original raw text. Fixed
+stale "`specmgr://iso25010`'s structured parse is the precedent for
+machine-readable reference data" cross-references in
+`general/resources/dtais.py`, `general/resources/rasci.py`, and
+`rsk/resources/tara.py`'s docstrings (Task 1.2), and one similarly stale
+"unlike `iso25010` (parsed into a structured model)" line in `rasci.py`'s
+function docstring. Broadened `tests/models/test_iso25010.py` with a new
+`test_raises_on_malformed_text` fail-fast/drift-guard test (a
+deliberately-truncated 2-of-9-characteristic document). Rewrote
+`tests/general/resources/test_iso25010.py` to match the new raw-markdown
+contract, mirroring `tests/general/resources/test_dtais.py`/
+`tests/rsk/resources/test_tara.py`'s established pattern: real packaged
+content assertions, fresh-read-per-call
+(`mock.patch.object(_packaged_data, "packaged_data_path", ...)`),
+`FileNotFoundError` propagation on a missing file, and (ACC-001) a new
+`test_raises_on_structural_drift` test that patches the packaged file to
+malformed content and asserts the resource raises. Regenerated
+`docs/api/`/`docs/GENERATED.md` via `specmgr docs` (docstring-only diff,
+`server.py`'s own module docstring intentionally left describing the old
+JSON behavior for now -- that's Phase 7's Task 7.1). Full quality gate
+(ruff format --check, ruff check, vulture, full unittest suite: 3322
+tests) passed.
 
 #### 2026-09-04 00:00:00.000Z - Phase 0 (ADR) complete
 

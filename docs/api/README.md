@@ -112,7 +112,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general.resources`](biz.dfch.specmgr.general.resources.md) — MCP resource registrations that are not specific to any single document
 - [`biz.dfch.specmgr.general.resources.config`](biz.dfch.specmgr.general.resources.config.md) — Resource: specmgr://config -- resolved base directory diagnostics (feat-51-mcp-cwd).
 - [`biz.dfch.specmgr.general.resources.dtais`](biz.dfch.specmgr.general.resources.dtais.md) — Resource: specmgr://dtais -- the DTAIS verification-method vocabulary (feat-33-vcr Task 3.3).
-- [`biz.dfch.specmgr.general.resources.iso25010`](biz.dfch.specmgr.general.resources.iso25010.md) — Resource: specmgr://iso25010 (Task 0.8.3).
+- [`biz.dfch.specmgr.general.resources.iso25010`](biz.dfch.specmgr.general.resources.iso25010.md) — Resource: specmgr://iso25010 (Task 0.8.3; feat-92-resources Phase 1).
 - [`biz.dfch.specmgr.general.resources.rasci`](biz.dfch.specmgr.general.resources.rasci.md) — Resource: specmgr://rasci (feat-30 Task 3.5, REQ-011).
 - [`biz.dfch.specmgr.general.resources.version`](biz.dfch.specmgr.general.resources.version.md) — Resource: specmgr://version — MCP server package version number.
 - [`biz.dfch.specmgr.general.tools`](biz.dfch.specmgr.general.tools.md) — MCP tool wrappers for general-purpose utilities (mirrors ``adr/tools/``'s shape).

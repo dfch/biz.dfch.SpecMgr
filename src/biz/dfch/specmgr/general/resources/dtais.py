@@ -24,11 +24,12 @@ when and how to apply each, and how the chosen method interacts with a
 verification case record's document-level ``## Coverage`` signal.
 
 Served as raw packaged markdown (``text/markdown``, mirroring
-``specmgr://rsk/tara``/``specmgr://rsk/risk-matrix``) rather than parsed
-into structured models -- the audience is an LLM agent that needs to read
-guidance, not code that needs data (``specmgr://iso25010``'s structured
-parse is the precedent for machine-readable reference data; this is
-prose). Registered as a flat, top-level ``specmgr://dtais`` URI (like
+``specmgr://iso25010``/``specmgr://rsk/tara``/``specmgr://rsk/risk-matrix``,
+per ADR 356d8781-e446-4c26-917a-eda85648ce9d's uniform convention: raw
+markdown output, backed by a dedicated model parsed elsewhere purely to
+fail fast on structural drift) -- the audience is an LLM agent that needs
+to read guidance, not code that needs data. Registered as a flat,
+top-level ``specmgr://dtais`` URI (like
 ``specmgr://iso25010``, not ``specmgr://vcr/dtais``) since the DTAIS
 vocabulary is domain-knowledge that other domains (e.g. a future `sysrs`)
 may want to reference too, not owned by `vcr`'s own schema -- see

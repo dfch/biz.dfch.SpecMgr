@@ -32,10 +32,10 @@ stay exclusively in ``sop``'s own schema field docstrings (surfaced via
 ``specmgr://sop/schema``) and packaged instructions.
 
 Served as raw packaged markdown (``text/markdown``, mirroring
-``rsk/resources/tara``'s raw passthrough rather than ``iso25010``'s
-structured parse) -- the audience is an LLM agent that needs to read
-guidance, not code that needs data. The ``sop`` domain reaches this
-resource via four explicit cross-references (the six RASCI-family class
+``iso25010``/``rsk/resources/tara``'s raw-markdown output) -- the audience
+is an LLM agent that needs to read guidance, not code that needs data. The
+``sop`` domain reaches this resource via four explicit cross-references
+(the six RASCI-family class
 docstrings in ``sop/models/v1/body.py``, the ``create_sop``/``update_sop``
 packaged instructions, ``sop/__init__.py``'s module docstring, and
 ``server.py``'s module docstring) rather than by copying the role
@@ -63,9 +63,9 @@ def rasci() -> str:
 
     Same packaged-data source and no-cache, hard-failure-on-missing-file
     design as every other ``general`` resource -- reads the file fresh on
-    every call. Unlike ``iso25010`` (parsed into a structured model), this
-    is a raw passthrough: the content is prose guidance, not
-    machine-readable reference data.
+    every call. Unlike ``iso25010`` (parsed on every call purely to fail
+    fast on structural drift, then discarded), this is a raw passthrough
+    with no dedicated model yet: the content is prose guidance.
 
     Returns
     -------
