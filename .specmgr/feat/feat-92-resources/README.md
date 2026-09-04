@@ -44,7 +44,7 @@ the raw text returned, and (b) covered by its own
 - [x] ACC-003: `tests/models/test_tara.py` fails if `rsk_tara.md`'s 4+4+6-item structure is broken.
 - [x] ACC-004: `tests/models/test_risk_matrix.py` fails if `rsk_risk_matrix.md`'s 4-item threshold list is broken.
 - [x] ACC-005: `tests/models/test_rasci.py` fails if `general_rasci.md`'s 5-role structure is broken.
-- [ ] ACC-006: `specmgr://ears` is registered, documented in `server.py`'s module docstring, and covered by a model + resource test.
+- [x] ACC-006: `specmgr://ears` is registered, documented in `server.py`'s module docstring, and covered by a model + resource test.
 - [x] ACC-007: An ADR exists documenting the convention.
 
 ### Scope
@@ -132,8 +132,8 @@ the raw text returned, and (b) covered by its own
 
 #### Phase 6: `ears` resource
 
-- [ ] Task 6.1: Author `general/data/general_ears.md`.
-- [ ] Task 6.2: Add `general/models/ears.py`, `general/resources/ears.py`, and tests.
+- [x] Task 6.1: Author `general/data/general_ears.md`.
+- [x] Task 6.2: Add `general/models/ears.py`, `general/resources/ears.py`, and tests.
 
 #### Phase 7: Wrap-up
 
@@ -145,7 +145,7 @@ the raw text returned, and (b) covered by its own
 
 **As of 2026-09-04**: Phase 0 (ADR), Phase 1 (`iso25010`), Phase 2
 (`dtais` model), Phase 3 (`tara` model), Phase 4 (`risk_matrix` model),
-and Phase 5 (`rasci` model) done. ADR
+Phase 5 (`rasci` model), and Phase 6 (`ears` resource) done. ADR
 356d8781-e446-4c26-917a-eda85648ce9d accepted, documenting the repo-wide
 convention; `specmgr://iso25010` now follows it (raw markdown,
 parse-and-discard). `general/models/dtais.py`'s `Dtais` model and
@@ -162,9 +162,13 @@ wiring to `parse_risk_matrix` in the same phase, and
 `general/models/rasci.py`'s `Rasci` model was added together with
 `general/resources/rasci.py`'s wiring to `parse_rasci`, neither as a
 separately-deferred follow-up -- see the dated Updates entries below.
-Phases 6-7 not started yet, and each will include this same request-time
-parse-and-discard wiring as part of its own scope going forward (see
-Decisions Made below).
+Phase 6 (`ears`) authored the brand-new `general/data/general_ears.md`
+guidance file from scratch AND built `general/models/ears.py`/
+`general/resources/ears.py`'s request-time parse-and-discard wiring in
+the same phase, from day one -- no "later wiring" follow-up was needed
+for this one, unlike `dtais`/`tara`'s original narrower Phase 2/3 task
+scoping. Only Phase 7 (wrap-up: CHANGELOG entry, final consistency pass)
+remains.
 
 ### Blockers
 
@@ -173,6 +177,112 @@ None.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-04 00:00:00.000Z - Phase 6 (`ears` resource) complete
+
+Authored `general/data/general_ears.md` from scratch (REQ-006, Task
+6.1): an EARS (Easy Approach to Requirements Syntax) guidance document
+with an intro paragraph, `## The five requirement patterns` (5 bolded,
+backtick-templated bullets: `Ubiquitous`, `Event-driven`, `State-driven`,
+`Unwanted behavior`, `Optional feature`), `## When to use each pattern`
+(5 bolded-and-backticked bullets naming the same 5 pattern names, in the
+SAME order as the first list, deliberately, since this content was
+authored fresh rather than reverse-engineered from a pre-existing file),
+and `## Combining patterns` (prose about "complex" multi-keyword EARS
+sentences, left unmodeled). Ran the content through `specmgr_mdformat`
+while iterating and adopted its normalized wrapping (inline code spans
+are never broken across lines by `mdformat`, so several bullets ended up
+single-line rather than soft-wrapped) as the committed, canonical form,
+so a future `mdformat` pass produces no diff.
+
+Added `general/models/ears.py` (REQ-006, Task 6.2): an `Ears
+(MarkdownSection1)` document model mirroring `general.models.dtais.
+Dtais`'s shape closely, with one structural deviation forced by the
+authored content itself (see Decisions Made below): unlike `Dtais.
+methods` (a bare `list[MethodItem]` field directly under the H1, no
+heading of its own), `general_ears.md`'s first closed-vocabulary list
+lives under its own `## The five requirement patterns` H2 heading, so it
+is wrapped in a composite `Patterns(MarkdownSection2)` section (`items:
+list[PatternItem]`, `min_length=5, max_length=5`) rather than declared as
+a bare list field on `Ears` itself. `PatternItem` exposes two
+`@computed_field`s (`name: str`, `template: str`) via
+`_PATTERN_ITEM_PATTERN` (`` ^\*\*(?P<name>NAME)\*\* -- (?P<template>`[^`]+`).*$ ``,
+`re.DOTALL`) -- the pattern name is bolded plain text, the template
+itself IS backticked; the shared `_NAME` regex fragment
+(`` [A-Za-z]+(?:[- ][A-Za-z]+)* ``) handles a name containing an internal
+hyphen (`Event-driven`) or space (`Unwanted behavior`, `Optional
+feature`). `WhenToUseItem` exposes one `@computed_field` (`name: str`)
+via `_WHEN_TO_USE_ITEM_PATTERN` (bolded AND backticked variant, same
+shape as `general.models.dtais.WhenToApplyItem`). `Patterns.
+_validate_patterns` forces eager evaluation of every item's
+`.name`/`.template` AND pins the closed, ordered 5-value vocabulary
+(`_PATTERN_NAMES = ["Ubiquitous", "Event-driven", "State-driven",
+"Unwanted behavior", "Optional feature"]`), mirroring `general.models.
+rasci.Roles._validate_roles`'s strict-reading precedent. `WhenToUse.
+_validate_items_eagerly` forces eager evaluation only (mirroring
+`WhenToApply._validate_items_eagerly`). `## Combining patterns` is a
+**leaf** `CombiningPatterns(MarkdownSection2)` subclass (no nested
+fields), out of REQ-006's narrow scope, mirroring `RasciVsRaci`/
+`ScaleAnchors`'s leaf-section precedent. `Ears.
+_validate_when_to_use_matches_patterns` is REQ-006's "matching"
+cross-check: `patterns.items`' names and `when_to_use.items`' names must
+be equal, in the same order -- a **simple, strict ordered-list
+equality**, not the set-based comparison `rsk.models.v1.tara.Tara` needed
+(see Decisions Made below for why). `parse_ears()` mirrors
+`parse_dtais()`'s exact `format_text` + `from_text` + `isinstance` shape.
+Exported from `general/models/__init__.py` alongside `Dtais`/`Rasci`, per
+that package's existing style. Added `tests/models/test_ears.py` (8
+tests) mirroring `test_dtais.py`'s structure: 5 happy-path assertions
+against the real packaged file (instance type, 5/5 counts, exact pattern
+names/order, non-empty backticked templates, when-to-use names matching
+in order) plus 3 distinct malformed-fixture drift-guard tests (ACC-006)
+-- a patterns list with only 4 of the 5 required entries, a when-to-use
+list whose order doesn't match the patterns list, and a patterns list
+with a name (`Guard clause`) not in the closed vocabulary -- each
+asserting `parse_ears` raises `AssertionError`/`pydantic.ValidationError`.
+
+Added `general/resources/ears.py` (Task 6.2, built dispatch-ready and
+wired from day one, unlike `dtais`/`tara`'s original Phase 2/3 scoping):
+`@mcp.resource("specmgr://ears", ..., mime_type="text/markdown")`
+decorating an `ears() -> str` function that reads the packaged text via
+`read_packaged_text("general", "ears")`, calls `parse_ears(text)` to
+validate (discarding the result), and returns the raw text unchanged --
+mirroring `general/resources/dtais.py`'s already-wired shape exactly,
+module/function docstrings included (`Raises` section:
+`FileNotFoundError`/`AssertionError`/`pydantic.ValidationError`). Added
+`ears` to `general/resources/__init__.py`'s import list, `__all__`, and
+module docstring bullet. Added a `specmgr://ears` bullet to `server.py`'s
+module docstring `Resources` section, in the same format as the
+`specmgr://dtais`/`specmgr://iso25010`/`specmgr://rasci` bullets
+(ACC-006's explicit requirement for this phase, not deferred to Phase
+7). Added `tests/general/resources/test_ears.py` (5 tests) mirroring
+`tests/general/resources/test_dtais.py`'s structure exactly, built in
+full immediately (no retrofit needed, since this resource was wired from
+day one): real packaged content assertions, fresh-read-per-call
+(`mock.patch.object(_packaged_data, "packaged_data_path", ...)` with a
+`_valid_ears_text(marker)` builder function mirroring `_valid_dtais_text`'s
+precedent), `FileNotFoundError` propagation on a missing file, and a
+`test_raises_on_structural_drift` fail-fast test (ACC-006's "resource
+test" requirement).
+
+Added `_._validate_patterns`/`_._validate_when_to_use_matches_patterns`
+to `whitelist.py`'s Pydantic-validator group, and `combining_patterns` to
+its (de)serialization-only-field group (`Ears.patterns`/`.when_to_use`
+are both read by `_validate_when_to_use_matches_patterns`, so they needed
+no entry; only the leaf `combining_patterns` field is never read as a
+plain attribute). Regenerated `docs/api/`/`docs/GENERATED.md` via
+`specmgr docs` (new `docs/api/biz.dfch.specmgr.general.models.ears.md`/
+`docs/api/biz.dfch.specmgr.general.resources.ears.md` module pages, plus
+the expected cross-reference updates in `docs/api/README.md`/
+`docs/api/biz.dfch.specmgr.general.models.md`/
+`docs/api/biz.dfch.specmgr.general.resources.md`/
+`docs/api/biz.dfch.specmgr.server.md`/`docs/GENERATED.md`); `specmgr
+mcp-docs` DID produce a `docs/MCP.md` diff this time (unlike prior
+phases), as expected -- the resource count bumped from 43 to 44 and a new
+`### Resource: ears` entry/TOC row appeared, since this is a brand-new
+resource registration, not a re-wiring of an existing one. Full quality
+gate (ruff format --check, ruff check, vulture, full unittest suite: 3377
+tests) passed.
 
 #### 2026-09-04 00:00:00.000Z - Phase 5 (`rasci` model, scope extended to include resource wiring) complete
 
@@ -587,6 +697,34 @@ and agreed with the user.
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-04 00:00:00.000Z - `ears` model design calls (Phase 6)
+
+Two non-obvious calls made while implementing `general/models/ears.py`:
+(1) the phase's own design guidance suggested declaring `patterns:
+list[PatternItem]` as a bare field directly on `Ears`, mirroring `Dtais.
+methods`'s bare-list shape -- but the authored `general/data/
+general_ears.md` content itself (fixed verbatim per REQ-006's own "Content
+to author" section) puts `## The five requirement patterns` under its
+own H2 heading, unlike `Dtais.methods`'s heading-less intro list. A bare
+list field cannot skip an intervening heading (confirmed by an
+`AssertionError` from `models.md`'s own parser when first attempted), so
+`patterns` is instead a composite `Patterns(MarkdownSection2)` section
+(`patterns: Patterns`, with the 5-item list living at `patterns.items`),
+mirroring `WhenToUse`'s own composite shape one section earlier than the
+original design sketch called for. This is a straightforward adaptation
+to the parser's actual heading-consumption rules, not a deferred-to-user
+ambiguity -- the fixed content and the parser's own constraints left only
+one workable model shape. (2) Unlike `tara`'s three lists (which
+genuinely disagree on order across the document, forcing set-based
+cross-checks), `general_ears.md`'s two closed-vocabulary lists were
+authored from scratch with the SAME pattern-name order deliberately kept
+in both, so `Ears._validate_when_to_use_matches_patterns` is a simple,
+strict ordered-list equality (`patterns.items` names == `when_to_use.
+items` names, in order) -- simpler and stricter than `tara`'s set-based
+comparison, and possible only because this document's author (this
+phase) controlled both lists' ordering from the start, unlike `tara`'s
+pre-existing, reverse-engineered file.
 
 #### 2026-09-04 00:00:00.000Z - `rasci` model design calls (Phase 5)
 

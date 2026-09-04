@@ -124,6 +124,7 @@ First-line docstrings from each module, organized by domain:
 - `general/__init__.py` — General-purpose (cross-cutting, not domain-specific) tools, resources, and
 - `general/models/__init__.py` — Shared, cross-domain Pydantic models with no document-type-specific content.
 - `general/models/dtais.py` — Pydantic schema and parser for the DTAIS verification-methods guidance
+- `general/models/ears.py` — Pydantic schema and parser for the EARS requirement-phrasing-templates guidance
 - `general/models/paged_result.py` — Generic paged-result wrapper shared by every ``list_<domain>`` MCP tool (feat-13 Task 1.1).
 - `general/models/rasci.py` — Pydantic schema and parser for the RASCI responsibility-assignment guidance
 - `general/models/summary.py` — Common base for every domain's one-line listing summary (feat-13 Task 1.3, REQ-003/ACC-001).
@@ -134,6 +135,7 @@ First-line docstrings from each module, organized by domain:
 - `general/resources/__init__.py` — MCP resource registrations that are not specific to any single document
 - `general/resources/config.py` — Resource: specmgr://config -- resolved base directory diagnostics (feat-51-mcp-cwd).
 - `general/resources/dtais.py` — Resource: specmgr://dtais -- the DTAIS verification-method vocabulary (feat-33-vcr Task 3.3).
+- `general/resources/ears.py` — Resource: specmgr://ears -- the EARS requirement-phrasing templates (feat-92-resources REQ-006).
 - `general/resources/iso25010.py` — Resource: specmgr://iso25010 (Task 0.8.3; feat-92-resources Phase 1).
 - `general/resources/rasci.py` — Resource: specmgr://rasci (feat-30 Task 3.5, REQ-011).
 - `general/resources/version.py` — Resource: specmgr://version — MCP server package version number.
@@ -535,4 +537,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 364
+**Test files**: 366

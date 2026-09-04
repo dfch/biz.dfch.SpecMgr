@@ -55,6 +55,8 @@ _._validate_quadrant_matches_strategies
 _._validate_mitigation_matches_strategies
 _._validate_thresholds
 _._validate_roles
+_._validate_patterns
+_._validate_when_to_use_matches_patterns
 _._validate_ac_numbers_unique
 _._validate_option_numbers_unique
 _._validate_step_numbers_unique
@@ -255,6 +257,12 @@ reading_together
 # yet.
 roles
 rasci_vs_raci
+# ears (feat-92-resources Phase 6): `Ears.combining_patterns` is a leaf
+# section deliberately never cross-checked by any `model_validator`
+# (REQ-006's narrow scope), so nothing in `src/` accesses it as a plain
+# attribute. `Ears.patterns`/`.when_to_use` ARE read by
+# `_validate_when_to_use_matches_patterns`, so they need no entry here.
+combining_patterns
 
 # --- MCP `@mcp.resource(...)`/`@mcp.tool()` entry points -------------------------
 # Invoked by the MCP framework once registered, not called directly in `src/`.
