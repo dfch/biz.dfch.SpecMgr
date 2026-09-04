@@ -76,9 +76,9 @@ The canonical source of truth for a feature template/example is the packaged dat
 
 #### Phase 2: Implementation
 
-- [ ] Task 2.1: Delete `.specmgr/_template/v1/README.md`.
-- [ ] Task 2.2: Edit ADR e369ee2e to drop the verbatim fenced template blocks and append a pointer to the canonical tools.
-- [ ] Task 2.3: Update the AGENTS.md `feat` template bullet to point at the canonical tools.
+- [x] Task 2.1: Delete `.specmgr/_template/v1/README.md`.
+- [x] Task 2.2: Edit ADR e369ee2e to drop the verbatim fenced template blocks and append a pointer to the canonical tools.
+- [x] Task 2.3: Update the AGENTS.md `feat` template bullet to point at the canonical tools.
 
 #### Phase 3: Verification
 
@@ -92,9 +92,15 @@ The canonical source of truth for a feature template/example is the packaged dat
 
 **As of 2026-09-04 10:15**: Phase 1 (Discovery) is complete. All three diverging copies located and confirmed; the orphaned `.specmgr/_template/v1/README.md` has zero `src/`/`tests/` consumers; ADR e369ee2e's fenced blocks mapped. No code changes made yet. Phase 2 (Implementation) is next.
 
+**As of 2026-09-04 10:45**: Phase 2 (Implementation) is complete. Deleted `.specmgr/_template/v1/README.md`; removed the three verbatim fenced template blocks from ADR e369ee2e and updated its Option 1 "Template location" open question plus appended a pointer note to the canonical tools; updated the AGENTS.md `feat` template bullet and `.specmgr/` directory tree. Phase 3 (Verification) is next.
+
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-04 10:45:00.000+02:00 - Implementation complete
+
+Phase 2 (Implementation) done. (1) Deleted `.specmgr/_template/v1/README.md` (110 lines, zero consumers) via `git rm`. (2) ADR e369ee2e: removed the three verbatim fenced template blocks (Option 1 README.md block lines 77–190, Option 2 README.md block lines 233–292, Option 2 progress.md block lines 294–343), updated the Option 1 "Template location" open question to point at the canonical `get_feat_template`/`get_feat_example` tools, and appended a feat-93 pointer note at the end of the ADR. (3) AGENTS.md: rewrote the `feat` "Template" bullet to point at the canonical tools and dropped the `_template/v1/README.md` entry from the `.specmgr/` directory tree. `src/biz/dfch/specmgr/feat/data/` and the tools untouched. Phase 3 (Verification) is next.
 
 #### 2026-09-04 10:15:00.000+02:00 - Discovery complete
 
@@ -107,3 +113,4 @@ Feature scaffolded from GitHub issue #93 ("Consolidate feature templates/example
 ### Decisions Made
 
 - **[2026-09-04]**: Confirmed the canonical source is the packaged `feat/data/feat_template.md` + `feat_example.md` behind `get_feat_template`/`get_feat_example`; the `.specmgr/_template/v1/README.md` orphan and ADR e369ee2e fenced blocks are removable duplicates with zero `src/`/`tests/` consumers. Rationale: Phase 1 discovery (`grep -rn "_template/v1" src/ tests/` = no matches, exit 1) shows no code consumers, so removing them preserves the full unit-test suite unchanged.
+- **[2026-09-04]**: Kept the removed template blocks in ADR e369ee2e as a historical-reference blockquote note (not deleted from the ADR body) so the ADR's decision narrative stays intact and traceable. Rationale: the ADR documents *why* the structure was chosen; the old bare templates are historical, not live references, so a short pointer note (not a verbatim fenced copy) is the right level of fidelity without re-introducing a drifting duplicate.
