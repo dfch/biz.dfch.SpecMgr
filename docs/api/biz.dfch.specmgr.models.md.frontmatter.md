@@ -49,8 +49,18 @@ type:
     needing to know that beforehand. Must not be blank.
 created:
     Free-form date/timestamp the document was first created. Optional.
+    The generated JSON Schema carries a ``pattern`` key (derived from
+    :data:`_DATE_TIME_PATTERN`, the same regex :meth:`_validate_date_time_format`
+    enforces at runtime) documenting the required ``yyyy-MM-dd
+    HH:mm:ss.fff`` + ``Z``/``±HH:mm`` format -- this is schema-level
+    documentation only, added via ``json_schema_extra`` rather than
+    ``Field(pattern=...)`` so that pydantic-core does not itself enforce
+    the pattern (which would fire before, and mask the message of,
+    :meth:`_validate_date_time_format`).
 updated:
     Free-form date/timestamp the document was last updated. Optional.
+    Carries the same schema-level ``pattern`` documentation as
+    ``created`` (see above).
 status:
     Free-form lifecycle status. Defaults to ``"draft"`` -- both when
     the key is absent entirely and when it is present but blank (e.g. a

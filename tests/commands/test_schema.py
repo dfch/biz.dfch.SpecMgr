@@ -27,6 +27,7 @@ from pathlib import Path
 import typer
 
 from biz.dfch.specmgr.commands.schema import _GENERATORS, generate_req_schema, schema
+from biz.dfch.specmgr.models.md.frontmatter import _DATE_TIME_PATTERN
 
 
 class TestGenerateReqSchema(unittest.TestCase):
@@ -68,6 +69,27 @@ class TestGenerateReqSchema(unittest.TestCase):
     def test_registered_under_req_in_generators(self):
         """The generator registry must expose this function under the 'req' key."""
         self.assertIs(_GENERATORS["req"], generate_req_schema)
+
+
+class TestGeneratedSchemaCreatedUpdatedPattern(unittest.TestCase):
+    """feat-94 REQ-004: every affected domain's generated schema must carry `pattern` for
+    `created`/`updated`, derived from `frontmatter._DATE_TIME_PATTERN`, not just a plain
+    `string | null` union. Parametrized (via `subTest`) across all twelve registered
+    `_GENERATORS` entries -- `adr` is intentionally excluded, since it is not registered here
+    (its `AdrFrontmatter` has no `created`/`updated` fields, feat-94 Overview)."""
+
+    def test_all_registered_domains_expose_pattern_on_created_and_updated(self):
+        """Every domain's `{Domain}Frontmatter` $defs entry must carry the shared pattern."""
+        for domain, generate in sorted(_GENERATORS.items()):
+            with self.subTest(domain=domain):
+                schema_dict = json.loads(generate())
+                frontmatter_key = f"{domain.capitalize()}Frontmatter"
+
+                self.assertIn(frontmatter_key, schema_dict["$defs"])
+                frontmatter_schema = schema_dict["$defs"][frontmatter_key]["properties"]
+
+                self.assertEqual(frontmatter_schema["created"]["pattern"], _DATE_TIME_PATTERN.pattern)
+                self.assertEqual(frontmatter_schema["updated"]["pattern"], _DATE_TIME_PATTERN.pattern)
 
 
 class TestSchemaCommand(unittest.TestCase):
