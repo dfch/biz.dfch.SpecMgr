@@ -4,7 +4,7 @@ created: '2026-09-04 10:00:51.149+02:00'
 id: feat-93-feat-template
 status: done
 type: feat
-updated: '2026-09-04 11:15:00.000+02:00'
+updated: '2026-09-04 12:09:30.151+02:00'
 version: 1.0.0
 ---
 
@@ -26,11 +26,11 @@ Three diverging copies of the "feature template / example" concept exist in the 
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: `validate_feat(content, full=True)` passes with no errors on the drafted document before `create_feat` is called.
-- [ ] ACC-002: `.specmgr/_template/v1/README.md` is deleted; no `src/` or `tests/` file references it.
-- [ ] ACC-003: ADR e369ee2e no longer embeds the fenced template blocks and ends with a pointer noting the up-to-date template lives at the `get_feat_template` / `get_feat_example` feature tools.
-- [ ] ACC-004: AGENTS.md `feat` template bullet points at `get_feat_template` / `get_feat_example` and states the tools are the canonical source.
-- [ ] ACC-005: `docs/MCP.md` / `docs/GENERATED.md` are regenerated and the full unit-test suite passes unchanged.
+- [x] ACC-001: `validate_feat(content, full=True)` passes with no errors on the drafted document before `create_feat` is called.
+- [x] ACC-002: `.specmgr/_template/v1/README.md` is deleted; no `src/` or `tests/` file references it.
+- [x] ACC-003: ADR e369ee2e no longer embeds the fenced template blocks and ends with a pointer noting the up-to-date template lives at the `get_feat_template` / `get_feat_example` feature tools.
+- [x] ACC-004: AGENTS.md `feat` template bullet points at `get_feat_template` / `get_feat_example` and states the tools are the canonical source.
+- [x] ACC-005: `docs/MCP.md` / `docs/GENERATED.md` are regenerated and the full unit-test suite passes unchanged.
 
 ### Scope
 
@@ -64,7 +64,7 @@ The canonical source of truth for a feature template/example is the packaged dat
 
 ### Related Decisions
 
-- e369ee2e-xxxx-xxxx-xxxx-xxxxxxxxxxxx (ADR): Organize development artifacts in `.specmgr` — the ADR that introduced the on-disk template copy and now hosts the verbatim fenced block being removed.
+- e369ee2e-3353-4f92-991c-6367d76d832e (ADR): Organize development artifacts in `.specmgr` — the ADR that introduced the on-disk template copy and now hosts the verbatim fenced block being removed.
 
 ### Task List
 
@@ -100,7 +100,11 @@ The canonical source of truth for a feature template/example is the packaged dat
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
-#### 2026-09-04 10:45:00.000+02:00 - Verification complete
+#### 2026-09-04 12:10:00.000+02:00 - Quality review corrections
+
+Corrected four content-accuracy issues found during a post-hoc quality review of this already-`done` feature: (1) fixed ADR e369ee2e's closing note, which wrongly claimed the removed verbatim fenced template blocks were "retained" above when they were in fact deleted by this same feature; (2) replaced the placeholder-style `e369ee2e-xxxx-xxxx-xxxx-xxxxxxxxxxxx` in `### Related Decisions` with the ADR's real full UUID `e369ee2e-3353-4f92-991c-6367d76d832e`; (3) corrected the `### Updates` "Verification complete" entry's own timestamp, which duplicated the "Implementation complete" entry's `10:45:00.000+02:00` instead of matching `### Current Status`'s `11:15`; (4) checked off all five `### Acceptance Criteria` boxes, which had been left unchecked despite every Task List item being `[x]` and `status: done`. No Task List, Design Notes, or prior Decisions Made entries were touched.
+
+#### 2026-09-04 11:15:00.000+02:00 - Verification complete
 
 Phase 3 (Verification) done. (1) Ran `specmgr docs` + `specadr adr-toc` — both exited cleanly and produced **no changes** to `docs/MCP.md`/`docs/GENERATED.md` (those files are generated from source docstrings; Phase 2 only edited AGENTS.md, not source, so no drift). (2) Full unit-test suite: **3318 tests, OK** (unchanged from baseline). (3) `validate_feat(content, full=True)` on this feature's body: **parses cleanly**. Note: the README's `### Decisions Made` section was migrated from markdown-rendered `- **[date]**:` bullets to the canonical `#### {timestamp} ( - | : ) {title}` H4 heading format required by `feat/models/v1` (matching `feat/data/feat_example.md`); without this the body failed `parse_feat` with an `AssertionError` on `DecisionEntry`. (4) `ruff format --check` + `ruff check` both pass.
 

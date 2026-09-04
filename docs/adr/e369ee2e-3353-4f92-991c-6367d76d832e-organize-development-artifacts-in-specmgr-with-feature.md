@@ -142,10 +142,11 @@ For now, confirmation that new `feat-NNN-slug/README.md` files follow the chosen
 
 - specmgr repository: https://github.com/anomalyco/biz.dfch.SpecMgr
 
-> **Note (feat-93, 2026-09-04):** The verbatim fenced copies of the feature
-> `README.md` template above are retained for historical reference only. The
-> up-to-date, canonical feature template/example is the packaged data behind the
+> **Note (feat-93, 2026-09-04):** The verbatim fenced `README.md`/`progress.md`
+> template blocks that used to appear under Option 1 and Option 2 above have
+> been removed — only their folder-structure diagrams remain. The up-to-date,
+> canonical feature template/example is the packaged data behind the
 > `get_feat_template` / `get_feat_example` MCP tools (files under
 > `src/biz/dfch/specmgr/feat/data/`) — see `get_feat_template` and
 > `get_feat_example`. The on-disk `.specmgr/_template/v1/README.md` copy was
-> removed (feat-93).
+> also removed (feat-93).
