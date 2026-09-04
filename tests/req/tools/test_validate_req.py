@@ -109,6 +109,25 @@ class TestValidateReq(unittest.TestCase):
         with self.assertRaises(ValidationError):
             validate_req(text, full=True)
 
+    def test_bad_created_value_surfaces_actionable_message_not_raw_pattern_dump(self) -> None:
+        """feat-94 REQ-003: a non-conforming `created` value must still surface the existing
+        actionable `@field_validator(mode="after")` message through `validate_req`, not a raw
+        pydantic `pattern`-mismatch dump -- guards against the `Field(pattern=...)` regression
+        recorded in feat-94's Design Notes, where the schema-level `pattern` documentation added
+        for REQ-001 would otherwise engage pydantic-core's own runtime enforcement instead."""
+        text = _FULL_DOCUMENT.replace("created: '2026-08-05 00:00:00.000Z'", "created: '2026-08-05T00:00:00.000Z'")
+
+        with self.assertRaises(ValidationError) as ctx:
+            validate_req(text, full=True)
+
+        message = str(ctx.exception)
+        self.assertIn(
+            "must be the date+time variant 'yyyy-MM-dd HH:mm:ss.fff' followed by 'Z' or a signed "
+            "'+HH:mm'/'-HH:mm' offset",
+            message,
+        )
+        self.assertNotIn("String should match pattern", message)
+
 
 if __name__ == "__main__":
     unittest.main()

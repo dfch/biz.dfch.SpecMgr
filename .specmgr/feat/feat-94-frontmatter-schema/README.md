@@ -96,9 +96,9 @@ GitHub issue #94 reports that every whole-body document type's frontmatter `crea
 
 #### Phase 2: Regression Tests
 
-- [ ] Task 2.1: Add a test asserting the generated schema carries `pattern` for `created`/`updated` (REQ-004).
+- [x] Task 2.1: Add a test asserting the generated schema carries `pattern` for `created`/`updated` (REQ-004).
 
-- [ ] Task 2.2: Add a test asserting the actionable validator message still surfaces through `validate_<d>` for a non-conforming value, not a raw pydantic pattern-mismatch dump (REQ-003).
+- [x] Task 2.2: Add a test asserting the actionable validator message still surfaces through `validate_<d>` for a non-conforming value, not a raw pydantic pattern-mismatch dump (REQ-003).
 
 #### Phase 3: Verification and Closeout
 
@@ -110,11 +110,31 @@ GitHub issue #94 reports that every whole-body document type's frontmatter `crea
 
 ### Current Status
 
-**As of 2026-09-04**: Phase 1 (Schema Exposure) complete. `MarkdownFrontmatter.created`/`updated` now carry `Field(json_schema_extra={"pattern": _DATE_TIME_PATTERN.pattern})`, and all twelve affected domains' `docs/{type}_schema.json` and packaged `src/biz/dfch/specmgr/{type}/data/{type}_schema.json` copies have been regenerated with zero drift on a second run; `adr`'s schema files are untouched. Phase 2 (Regression Tests) and Phase 3 (Verification and Closeout) not started yet.
+**As of 2026-09-04**: Phase 1 (Schema Exposure) and Phase 2 (Regression Tests) complete. `MarkdownFrontmatter.created`/`updated` now carry `Field(json_schema_extra={"pattern": _DATE_TIME_PATTERN.pattern})`, and all twelve affected domains' `docs/{type}_schema.json` and packaged `src/biz/dfch/specmgr/{type}/data/{type}_schema.json` copies have been regenerated with zero drift on a second run; `adr`'s schema files are untouched. REQ-003/REQ-004 are now covered by regression tests. Phase 3 (Verification and Closeout) not started yet.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-04 - Phase 2 (Regression Tests) complete
+
+Implemented Tasks 2.1-2.2. Added `TestGeneratedSchemaCreatedUpdatedPattern` to
+`tests/commands/test_schema.py` (REQ-004): a single test method loops (via `subTest`) over every
+entry in `commands.schema._GENERATORS` (all twelve affected domains: `dec`, `feat`, `gol`, `prb`,
+`qa`, `req`, `rsk`, `sop`, `sysrs`, `tsk`, `uc`, `vcr`), generates each domain's schema, locates its
+`{Domain}Frontmatter` entry under `$defs`, and asserts both `created["pattern"]` and
+`updated["pattern"]` equal `frontmatter._DATE_TIME_PATTERN.pattern` exactly -- this was previously
+unverified by any existing test. Added
+`test_bad_created_value_surfaces_actionable_message_not_raw_pattern_dump` to
+`tests/req/tools/test_validate_req.py` (REQ-003): calls `validate_req(..., full=True)` with a
+`T`-separated (non-conforming) `created` value and asserts the raised `pydantic.ValidationError`'s
+message contains the existing actionable text ("must be the date+time variant 'yyyy-MM-dd
+HH:mm:ss.fff' followed by 'Z' or a signed '+HH:mm'/'-HH:mm' offset") and does NOT contain the raw
+pydantic pattern-mismatch phrase "String should match pattern" -- guarding specifically against the
+`Field(pattern=...)` regression this feature's Design Notes records. No source files or schema JSON
+files were touched -- test-only change. Full quality gate green: `ruff format --check`, `ruff
+check`, `vulture`, the full `unittest` suite (3320 tests, up from 3318), and `specmgr docs` (no
+drift -- no docstrings changed in this phase).
 
 #### 2026-09-04 - Phase 1 (Schema Exposure) complete
 
@@ -127,6 +147,19 @@ Created from GitHub issue #94 ("Expose frontmatter created/updated date+time for
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-04 - Chose `req` for REQ-003 and a parametrized `subTest` loop for REQ-004
+
+REQ-003 ("at least one domain") was satisfied via `req`/`validate_req`, following the plan's own
+suggestion and matching an established test pattern already in `tests/req/tools/test_validate_req.py`
+(a full-document fixture with a single field swapped, then asserted against via
+`assertRaises(...) as ctx` + message inspection) rather than adding a new test file. REQ-004
+("ideally parametrized/looped across all twelve") was implemented as a single `subTest`-looped test
+method in `tests/commands/test_schema.py` iterating `commands.schema._GENERATORS`, since that module
+already owns the one canonical `{domain: generate_fn}` mapping across all twelve affected domains --
+avoiding a hand-maintained duplicate list of domain names/`Frontmatter` classes elsewhere, and
+`domain.capitalize()` reliably reconstructs each `{Domain}Frontmatter` `$defs` key for every current
+single-word domain name.
 
 #### 2026-09-04 08:22:35.000Z - Require the schema-exposure mechanism not to change runtime validation behavior
 
