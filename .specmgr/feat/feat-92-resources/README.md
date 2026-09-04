@@ -40,7 +40,7 @@ the raw text returned, and (b) covered by its own
 ### Acceptance Criteria
 
 - [x] ACC-001: `specmgr://iso25010`'s `mime_type` is `text/markdown` and its test asserts fail-fast behavior on a malformed packaged file.
-- [ ] ACC-002: `tests/models/test_dtais.py` fails if `general_dtais.md`'s 5+3-item structure is broken.
+- [x] ACC-002: `tests/models/test_dtais.py` fails if `general_dtais.md`'s 5+3-item structure is broken.
 - [ ] ACC-003: `tests/models/test_tara.py` fails if `rsk_tara.md`'s 4+4+6-item structure is broken.
 - [ ] ACC-004: `tests/models/test_risk_matrix.py` fails if `rsk_risk_matrix.md`'s 4-item threshold list is broken.
 - [ ] ACC-005: `tests/models/test_rasci.py` fails if `general_rasci.md`'s 5-role structure is broken.
@@ -114,7 +114,7 @@ the raw text returned, and (b) covered by its own
 
 #### Phase 2: `dtais` model
 
-- [ ] Task 2.1: Add `general/models/dtais.py` and `tests/models/test_dtais.py`.
+- [x] Task 2.1: Add `general/models/dtais.py` and `tests/models/test_dtais.py`.
 
 #### Phase 3: `tara` model
 
@@ -141,10 +141,15 @@ the raw text returned, and (b) covered by its own
 
 ### Current Status
 
-**As of 2026-09-04**: Phase 0 (ADR) and Phase 1 (`iso25010`) done. ADR
-356d8781-e446-4c26-917a-eda85648ce9d accepted, documenting the repo-wide
-convention; `specmgr://iso25010` now follows it (raw markdown,
-parse-and-discard). Phases 2-7 not started yet.
+**As of 2026-09-04**: Phase 0 (ADR), Phase 1 (`iso25010`), and Phase 2
+(`dtais` model) done. ADR 356d8781-e446-4c26-917a-eda85648ce9d accepted,
+documenting the repo-wide convention; `specmgr://iso25010` now follows it
+(raw markdown, parse-and-discard). `general/models/dtais.py`'s `Dtais`
+model exists and is covered by `tests/models/test_dtais.py`, but
+`general/resources/dtais.py` itself is NOT yet wired to call `parse_dtais`
+-- that wiring is deliberately deferred to a later phase (this phase was
+model + test only, per the plan's own Task 2.1 note). Phases 3-7 not
+started yet.
 
 ### Blockers
 
@@ -153,6 +158,62 @@ None.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-04 00:00:00.000Z - Phase 2 (`dtais` model) complete
+
+Added `general/models/dtais.py` (REQ-002): a `Dtais(MarkdownSection1)`
+document model for `general/data/general_dtais.md`, mirroring
+`models.iso25010.Iso25010`'s shape (H1-rooted, leading `MarkdownParagraph`
+intro, a leading `list[MethodItem]` field directly under the H1 before any
+H2). Two leaf `MarkdownListItem` subclasses recover the closed
+vocabularies via `@computed_field` regex extraction, mirroring
+`feat.RequirementItem`/`tsk.TaskItem`'s precedent: `MethodItem.method`
+(the un-bolded `` `Word` -- ... `` intro list) and `WhenToApplyItem.method`/
+`CoverageItem.value` (the bolded-and-backticked `` **`Word`** -- ... ``
+lists under `## When to apply each method`/`` ## Relationship to `##
+Coverage` ``, the latter's heading pinned via `@alias(..., type=AliasType.
+LITERAL)` since it literally contains backticks and a nested `##`). Both
+regexes use `re.DOTALL` (a soft-wrapped bullet's `.text` keeps its
+continuation lines' embedded newline), mirroring
+`sysrs.models.v1.body._validate_cross_reference_items`'s established
+reasoning. `Dtais.methods`/`WhenToApply.items` are each `Field(min_length=5,
+max_length=5)`; `CoverageRelationship.items` is `Field(min_length=3,
+max_length=3)`. Three `model_validator(mode="after")`s extend
+`tsk.Task._validate_items_eagerly`'s pattern: `WhenToApply.
+_validate_items_eagerly` forces every item's `.method` eagerly;
+`CoverageRelationship._validate_coverage_values` forces every item's
+`.value` eagerly AND pins the closed, ordered 3-value vocabulary
+(`["full", "partial", "none"]`) -- REQ-002's "3-value coverage list" read
+strictly (actual values, not just count); `Dtais.
+_validate_when_to_apply_matches_methods` is REQ-002's explicit "matching"
+cross-check: the intro 5-item method list and the "when to apply" 5-item
+list must name the same 5 words in the same order. `parse_dtais()` mirrors
+`parse_iso25010()`'s exact `format_text` + `from_text` + `isinstance`
+shape. Exported from `general/models/__init__.py` alongside `DocSummary`/
+`PagedResult`, per that package's existing style. Added `tests/models/
+test_dtais.py` (10 tests) mirroring `test_iso25010.py`'s structure: 6
+happy-path assertions against the real packaged file (instance type,
+5/5/3 counts, the exact method/when-to-apply/coverage word lists) plus 4
+distinct malformed-fixture drift-guard tests (ACC-002) -- a missing intro
+method bullet (4 of 5), a mismatched "when to apply" word, a
+short-by-one coverage list (2 of 3), and a coverage list with an
+out-of-vocabulary value (`unknown` instead of `none`) -- each asserting
+`parse_dtais` raises `AssertionError`/`pydantic.ValidationError`.
+Deliberately did NOT touch `general/resources/dtais.py` (the resource
+function itself) or `general/data/general_dtais.md` -- wiring the
+resource to call `parse_dtais` for parse-and-discard validation is a
+later phase's task, per the plan's own Task 2.1 note. Added
+`_._validate_coverage_values`/`_._validate_when_to_apply_matches_methods`
+to `whitelist.py`'s Pydantic-validator group, and `methods`/
+`when_to_apply`/`coverage`/`closing` to its (de)serialization-only-field
+group (the new model's fields aren't read as plain attributes by any
+`src/` code yet, same as every other domain's Phase-1-style model
+addition). Regenerated `docs/api/`/`docs/GENERATED.md` via `specmgr docs`
+(new `docs/api/biz.dfch.specmgr.general.models.dtais.md` module page,
+plus the expected cross-reference updates in `docs/api/README.md`/
+`docs/api/biz.dfch.specmgr.general.models.md`/`docs/GENERATED.md`). Full
+quality gate (ruff format --check, ruff check, vulture, full unittest
+suite: 3332 tests) passed.
 
 #### 2026-09-04 00:00:00.000Z - Phase 1 (`iso25010`) complete
 
@@ -208,6 +269,30 @@ and agreed with the user.
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-04 00:00:00.000Z - `dtais` model design calls (Phase 2)
+
+Three non-obvious calls made while implementing `general/models/dtais.py`:
+(1) `` ## Relationship to `## Coverage` ``'s heading is pinned via
+`@alias(value="Relationship to `## Coverage`", type=AliasType.LITERAL)`
+rather than `AliasType.REGEX` -- an exact literal comparison is simpler
+and just as correct as a regex here, since the heading text (backticks
+and nested `##` included) is a fixed literal string, not a pattern to
+match; mirrors `feat.RelatedPrsCommits`'s existing `LITERAL`-for-
+special-punctuation precedent. (2) REQ-002's "3-value coverage list" is
+read strictly: `CoverageRelationship._validate_coverage_values` asserts
+the actual ordered values (`["full", "partial", "none"]`), not just a
+`Field(min_length=3, max_length=3)` count -- giving ACC-002 real
+drift-detection teeth against a renamed/reordered coverage value, not
+just a missing/extra bullet. (3) The DTAIS method-word vocabulary itself
+(`Demonstration`/`Test`/`Analysis`/`Inspection`/`Special`) is NOT pinned
+as a closed literal set on `Dtais.methods` -- only the count (`min_length=
+5, max_length=5`) and the cross-list "matching" guarantee against
+`when_to_apply.items` are enforced, mirroring `Iso25010.names`'s existing
+"count only, no fixed vocabulary" precedent; REQ-002 asks for "5 method
+words, matching 'when to apply' list", not a fixed vocabulary check, and
+`vcr.models.v1.body._AC_HEADING_PATTERN` already separately owns the
+authoritative closed DTAIS set.
 
 #### 2026-09-04 00:00:00.000Z - EARS resource placement
 

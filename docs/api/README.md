@@ -103,6 +103,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.feat.tools.validate_feat`](biz.dfch.specmgr.feat.tools.validate_feat.md) — ``@mcp.tool()`` wrapper: validate_feat (Task 2.3).
 - [`biz.dfch.specmgr.general`](biz.dfch.specmgr.general.md) — General-purpose (cross-cutting, not domain-specific) tools, resources, and
 - [`biz.dfch.specmgr.general.models`](biz.dfch.specmgr.general.models.md) — Shared, cross-domain Pydantic models with no document-type-specific content.
+- [`biz.dfch.specmgr.general.models.dtais`](biz.dfch.specmgr.general.models.dtais.md) — Pydantic schema and parser for the DTAIS verification-methods guidance
 - [`biz.dfch.specmgr.general.models.paged_result`](biz.dfch.specmgr.general.models.paged_result.md) — Generic paged-result wrapper shared by every ``list_<domain>`` MCP tool (feat-13 Task 1.1).
 - [`biz.dfch.specmgr.general.models.summary`](biz.dfch.specmgr.general.models.summary.md) — Common base for every domain's one-line listing summary (feat-13 Task 1.3, REQ-003/ACC-001).
 - [`biz.dfch.specmgr.general.prompts`](biz.dfch.specmgr.general.prompts.md) — MCP prompt registrations that are not specific to any single document
