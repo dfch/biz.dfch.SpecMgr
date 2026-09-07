@@ -3,7 +3,11 @@
 > **Status**: Drafted, not filed. Prepared while investigating GitHub issues #81/#83 of `biz.dfch.SpecMgr`
 > (see `.specmgr/feat/feat-81-83-validation/README.md`), saved here for reference/reuse. File this against
 > `anomalyco/opencode` once reviewed. See also ADR 519d1206-4d2a-4500-9046-6db635209996, which records
-> `biz.dfch.SpecMgr`'s own `validate` tool design as a workaround for the defect described here.
+> `biz.dfch.SpecMgr`'s own `validate` tool design as a workaround for the defect described here, and ADR
+> b399f1ce-ed42-4929-b01c-7a57d18e8014 (GitHub issue #103), which had to narrowly extend that same
+> non-raising-workaround pattern to a second, unrelated tool (`set_status`'s invalid-status case) days later
+> -- direct evidence that this defect keeps forcing server-side workarounds on a per-tool, per-failure-mode
+> basis rather than being something a well-behaved MCP server can design around once.
 
 ## Environment
 
@@ -148,7 +152,11 @@ number, cause/fix hint, etc.) has that work silently discarded whenever they sig
 the standard, spec-compliant way to report a tool failure. The only reliable way found so far to get a detailed
 message to the model is to avoid the error channel entirely and return the detail as normal, successful
 (`isError: false`) tool output instead -- which is not a fix, only a workaround available to server authors who
-can afford to redesign their tool's contract around it.
+can afford to redesign their tool's contract around it. In this specific server, that workaround already had to
+be applied twice within the same week, to two otherwise-unrelated tools (`validate`, then `set_status`'s
+invalid-status case) -- each time only after a real user hit the truncated, contentless error in practice. This
+suggests the defect is not confined to one tool shape or one kind of thrown exception, and that any raise-based
+MCP tool in an OpenCode-driven session is at risk of it.
 
 ## Suggested Next Steps for Investigation
 

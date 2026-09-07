@@ -42,9 +42,9 @@ GitHub issue #103 reports that set_status's error for an invalid status value is
 
 - [ ] ACC-004: a new ADR documenting this decision exists under `docs/adr/`, passes `validate_adr`, and appears in `docs/adr/README.md` via `specmgr adr-toc`.
 
-- [ ] ACC-005: `docs/MCP.md` (regenerated via `specmgr docs`) reflects the updated set_status behavior.
+- [x] ACC-005: `docs/MCP.md` (regenerated via `specmgr docs`) reflects the updated set_status behavior.
 
-- [ ] ACC-006: the drafted upstream bug report has been filed as a real GitHub issue against `anomalyco/opencode`, its URL recorded in this feature's Related PRs / Commits.
+- [ ] ACC-006: the drafted upstream bug report has been filed as a real GitHub issue against `anomalyco/opencode`, its URL recorded in this feature's Related PRs / Commits. (explicitly declined by the user -- filing skipped by design, not forgotten)
 
 - [ ] ACC-007: full quality gate green (`ruff format --check`, `ruff check`, `vulture`, `pytest -n auto`).
 
@@ -120,11 +120,13 @@ Pre-check happens in `general/tools/set_status.py` before each adapter's `wrap_t
 
 #### Phase 4: Docs & Upstream Filing
 
-- [ ] Task 4.1: Regenerate docs/api/, docs/GENERATED.md, docs/MCP.md via specmgr docs.
+- [x] Task 4.1: Regenerate docs/api/, docs/GENERATED.md, docs/MCP.md via specmgr docs.
 
-- [ ] Task 4.2: Regenerate docs/adr/README.md via specmgr adr-toc.
+- [x] Task 4.2: Regenerate docs/adr/README.md via specmgr adr-toc.
 
-- [ ] Task 4.3: File the drafted upstream bug report against anomalyco/opencode; record the resulting issue URL.
+- [x] Task 4.3: **DEVIATION (per explicit user instruction)**: did NOT file the drafted upstream bug report as a
+  real GitHub issue -- only reviewed and updated its drafted text (see Updates below). ACC-006 remains
+  unmet by explicit user choice.
 
 #### Phase 5: Verification & Closeout
 
@@ -136,11 +138,42 @@ Pre-check happens in `general/tools/set_status.py` before each adapter's `wrap_t
 
 ### Current Status
 
-**As of 2026-09-07**: Phase 3 (Tests) complete. All 18 previously-failing test methods across `tests/general/tools/test_set_status.py` (2 methods), `tests/general/tools/test_error_context.py` (1 method), and five domains' `test_integration.py` files (dec, sop, sysrs, vcr, feat -- 1 method each) were updated to assert the new, non-raising `InvalidStatusResult` (`isinstance` check, `valid`/`type`/`status`/`allowed_values`/`message` content) instead of `self.assertRaises(pydantic.ValidationError)`, keeping every pre-existing file-untouched-on-disk assertion unchanged. Two new regression tests (`test_invalid_status_message_wording_pinned` for `tsk`, `test_invalid_status_message_wording_pinned_for_adr` for `adr`) pin the exact literal message wording via `assertEqual` (Task 3.3, no partial matching). `TestGenericSetStatusToolErrorContext`'s one test (`test_error_context.py`) was rewritten (not deleted) since its original premise -- verifying `wrap_tool_errors`'s "{domain} {tool}" prefix on a raised exception -- no longer applies to this specific failure mode, which now short-circuits before `wrap_tool_errors` is ever entered; it now asserts the returned `InvalidStatusResult`'s own `type`/`message` fields still unambiguously identify the domain. The now-unused `from pydantic import ValidationError` import was removed from `test_set_status.py` and all five integration test files (each had exactly one use, the rewritten test); `test_error_context.py` keeps its `ValidationError` import since two other, untouched tests in that file still legitimately assert a raised `ValidationError`. Quality gate green: `ruff format --check`/`ruff check` on all 7 touched files, the 7-file targeted `pytest -n auto` run (41 passed, 155 subtests passed), and the full suite (`pytest -n auto`, 3346 passed, zero failures). Ready to start Phase 4 (Docs & Upstream Filing).
+**As of 2026-09-07**: Phase 4 (Docs & Upstream Filing) complete, with the Task 4.3 scope deviation explicitly
+directed by the user: `specmgr docs`/`specmgr adr-toc` were run (twice each, to confirm idempotency) and produced
+**zero diff** both times -- Phase 2's pre-commit hook had already regenerated `docs/api/`, `docs/GENERATED.md`,
+`docs/MCP.md`, and `docs/adr/README.md` as part of its own commit, so this phase was purely a confirmation step.
+ACC-005 confirmed satisfied: `docs/MCP.md`'s `set_status` entry (both the tool-index row and the full tool
+section) already describes the new non-raising `InvalidStatusResult` behavior in full. Per the user's explicit
+instruction, the drafted upstream bug report was reviewed but **not filed** as a real GitHub issue -- its text was
+instead updated (two small additions: the status blockquote now also references this feature's own ADR
+b399f1ce, and the Impact section now notes the workaround has had to be applied twice within the same week to
+two unrelated tools) to reflect what feat-103 itself demonstrated about the underlying OpenCode defect's
+recurrence. ACC-006 is left explicitly unmet (checkbox unchecked, annotated) since filing was declined by
+design, not forgotten or blocked. Ready to start Phase 5 (Verification & Closeout).
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-07 18:00:00.000Z - Phase 4 (Docs & Upstream Filing) complete, Task 4.3 scope-deviated per user instruction
+
+Ran `uv run --frozen specmgr docs` and `uv run --frozen specmgr adr-toc` (Tasks 4.1/4.2); both produced **no
+diff** against the working tree, and a second immediate run of each was also diff-free, confirming Phase 2's
+pre-commit hook had already regenerated `docs/api/`, `docs/GENERATED.md`, `docs/MCP.md`, and
+`docs/adr/README.md` in its own commit (`d8b2077`) -- this phase's runs were a confirmation, not a fresh
+regeneration. Verified ACC-005 directly: `docs/MCP.md` line 475 (tool-index table) and the full `### Tool:
+set_status` section both read "an out-of-vocabulary `status` does NOT raise -- it returns a structured,
+non-raising `InvalidStatusResult` (`{valid: false, type, status, allowed_values, message}`) instead, so the
+allowed-values detail survives MCP clients that truncate error content" -- marked `[x]`. Per the orchestrator's
+explicit, twice-repeated instruction ("do not file the issue, only draft or update the text for it"), Task 4.3
+did **not** run `gh issue create` or file anything against `anomalyco/opencode` -- instead reviewed the drafted
+report at `.specmgr/feat/feat-81-83-validation/opencode-issue-mcp-tool-error-truncated.md` and made two small,
+substantive text updates given what feat-103 itself demonstrated (see Decisions Made): the status blockquote now
+cross-references this feature's own ADR b399f1ce-ed42-4929-b01c-7a57d18e8014, and the Impact section now notes
+the same non-raising workaround had to be independently applied a second time, within the same week, to an
+unrelated tool (`set_status`) -- concrete evidence the underlying OpenCode defect is not a one-off confined to
+`validate`. ACC-006 is left unmet by explicit user choice (checkbox unchecked, annotated inline in Acceptance
+Criteria) -- not forgotten, not blocked. No files under `src/` or `tests/` were touched; nothing was committed.
 
 #### 2026-09-07 17:00:00.000Z - Phase 3 (Tests) complete
 
@@ -169,6 +202,21 @@ Investigated issue #103's premise (set_status error message lacks allowed values
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-07 18:00:00.000Z - Updated (not left unchanged) the drafted upstream bug-report text, without filing it
+
+Task 4.3 was explicitly scope-adjusted by the user to review-and-possibly-update the drafted upstream OpenCode
+bug report's text, never to file it. On review, two small, substantive updates were judged worth making rather
+than leaving the draft untouched: (1) the top status blockquote, which already cross-referenced ADR
+519d1206 as the one prior instance of this repo's non-raising workaround, was extended to also cross-reference
+this feature's own ADR b399f1ce-ed42-4929-b01c-7a57d18e8014, since feat-103 is now a second, concrete,
+independent instance of the same underlying OpenCode defect forcing the same kind of server-side workaround on
+an otherwise-unrelated tool; (2) the Impact section gained one sentence noting the workaround had to be applied
+twice within the same week, which strengthens the report's core claim (this is a systemic risk for any
+raise-based MCP tool, not a one-off quirk of `validate`) with fresh, dated evidence rather than speculation.
+Both edits were kept minimal and additive -- no existing claim, reproduction step, or piece of evidence in the
+draft was altered or removed, since feat-103 did not contradict anything already documented there, only added
+one more corroborating data point.
 
 #### 2026-09-07 17:00:00.000Z - test_error_context.py's set_status test rewritten, not deleted or left raise-based
 
