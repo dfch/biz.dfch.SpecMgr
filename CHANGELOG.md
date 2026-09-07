@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.23.0] - 2026-09-07
+
+### Fixed
+
+- `set_status`: an out-of-vocabulary `status` value for a given `type` (all
+  13 domains, including `adr`) no longer raises a `pydantic.ValidationError`
+  -- it returns a new, non-raising `InvalidStatusResult`
+  (`valid`/`type`/`status`/`allowed_values`/`message`) instead, so the
+  allowed-values detail survives MCP clients that truncate `isError: true`
+  results. Every other `set_status` failure mode (unknown `id`,
+  path-injection/wrong-shape `id`, `superseded_by` misuse on a non-`adr`
+  type) still raises unchanged. New ADR
+  b399f1ce-ed42-4929-b01c-7a57d18e8014 extends ADR
+  519d1206's non-raising, structured-result workaround (previously scoped
+  to `validate`) to this case (GitHub issue #103).
+
 ## [0.22.0] - 2026-09-04
 
 ### Added
