@@ -112,11 +112,11 @@ Pre-check happens in `general/tools/set_status.py` before each adapter's `wrap_t
 
 #### Phase 3: Tests
 
-- [ ] Task 3.1: Update test_out_of_vocabulary_status_raises_validation_error_file_untouched (whole-body + ADR) to assert the new structured, non-raising result and its content.
+- [x] Task 3.1: Update test_out_of_vocabulary_status_raises_validation_error_file_untouched (whole-body + ADR) to assert the new structured, non-raising result and its content.
 
-- [ ] Task 3.2: Assert the file on disk remains untouched on rejection.
+- [x] Task 3.2: Assert the file on disk remains untouched on rejection.
 
-- [ ] Task 3.3: Add regression tests pinning the exact message wording.
+- [x] Task 3.3: Add regression tests pinning the exact message wording.
 
 #### Phase 4: Docs & Upstream Filing
 
@@ -136,11 +136,15 @@ Pre-check happens in `general/tools/set_status.py` before each adapter's `wrap_t
 
 ### Current Status
 
-**As of 2026-09-07**: Phase 2 (Implementation) complete. `general/tools/set_status.py` now pre-checks `status` against the dispatched domain's own closed vocabulary (`_ALLOWED_STATUSES_BY_TYPE` mapping, plus ADR's `_FIXED_STATUSES`/`_SUPERSEDED_PATTERN`) before taking any domain lock or reading any file, returning the new `InvalidStatusResult` (`general/models/invalid_status_result.py`) instead of letting `pydantic.ValidationError` propagate, for all 13 domains (12 whole-body + adr). Every other failure mode (path-injection/wrong-shape id, `superseded_by` misuse on a non-adr type, unknown id with a valid status, valid id + valid status) was manually traced and confirmed unaffected. The tool's `@mcp.tool` description, function docstring, and module docstring were updated to describe the new non-raising case. As expected per this phase's scope, 18 existing test methods across `tests/general/tools/test_set_status.py`, `tests/general/tools/test_error_context.py`, and four domains' `test_integration.py` files now fail because they still assert a raised `pydantic.ValidationError` for an invalid status -- Phase 3 owns updating them to assert the new structured result instead. Ready to start Phase 3 (Tests).
+**As of 2026-09-07**: Phase 3 (Tests) complete. All 18 previously-failing test methods across `tests/general/tools/test_set_status.py` (2 methods), `tests/general/tools/test_error_context.py` (1 method), and five domains' `test_integration.py` files (dec, sop, sysrs, vcr, feat -- 1 method each) were updated to assert the new, non-raising `InvalidStatusResult` (`isinstance` check, `valid`/`type`/`status`/`allowed_values`/`message` content) instead of `self.assertRaises(pydantic.ValidationError)`, keeping every pre-existing file-untouched-on-disk assertion unchanged. Two new regression tests (`test_invalid_status_message_wording_pinned` for `tsk`, `test_invalid_status_message_wording_pinned_for_adr` for `adr`) pin the exact literal message wording via `assertEqual` (Task 3.3, no partial matching). `TestGenericSetStatusToolErrorContext`'s one test (`test_error_context.py`) was rewritten (not deleted) since its original premise -- verifying `wrap_tool_errors`'s "{domain} {tool}" prefix on a raised exception -- no longer applies to this specific failure mode, which now short-circuits before `wrap_tool_errors` is ever entered; it now asserts the returned `InvalidStatusResult`'s own `type`/`message` fields still unambiguously identify the domain. The now-unused `from pydantic import ValidationError` import was removed from `test_set_status.py` and all five integration test files (each had exactly one use, the rewritten test); `test_error_context.py` keeps its `ValidationError` import since two other, untouched tests in that file still legitimately assert a raised `ValidationError`. Quality gate green: `ruff format --check`/`ruff check` on all 7 touched files, the 7-file targeted `pytest -n auto` run (41 passed, 155 subtests passed), and the full suite (`pytest -n auto`, 3346 passed, zero failures). Ready to start Phase 4 (Docs & Upstream Filing).
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-07 17:00:00.000Z - Phase 3 (Tests) complete
+
+Rewrote all 18 previously-failing test methods (per Phase 2's own tracing) to assert the new `InvalidStatusResult` return value instead of a raised `pydantic.ValidationError`, while keeping every existing file-untouched-on-disk assertion: `tests/general/tools/test_set_status.py`'s `TestSetStatusWholeBodyDomains.test_out_of_vocabulary_status_raises_validation_error_file_untouched` (parameterized over all 12 whole-body `_CASES`) and `TestSetStatusAdr.test_out_of_vocabulary_status_raises_validation_error_file_untouched` (ADR, asserting `allowed_values == sorted(_ADR_ALLOWED_STATUSES) + ["superseded by <target-id>"]`, matching `_check_status_allowed`'s exact literal); `tests/general/tools/test_error_context.py`'s `TestGenericSetStatusToolErrorContext.test_set_status_tsk_out_of_vocabulary_names_domain_and_tool` (see Decisions Made below); and one test each in `tests/dec/tools/test_integration.py`, `tests/sop/tools/test_integration.py`, `tests/sysrs/tools/test_integration.py`, `tests/vcr/tools/test_integration.py`, `tests/feat/tools/test_integration.py` (each now also imports and asserts against its own domain's `_ALLOWED_STATUSES` constant for a full `result.allowed_values` check, not just presence). Added two new Task 3.3 regression tests in `test_set_status.py` (`test_invalid_status_message_wording_pinned`, `test_invalid_status_message_wording_pinned_for_adr`) that `assertEqual` the exact literal `message` string, no `assertIn`. Updated `test_set_status.py`'s module docstring (no longer says invalid status "raises `pydantic.ValidationError`") and `test_error_context.py`'s module + class docstrings to describe the new non-raising path and why it bypasses `wrap_tool_errors`. Removed the now-unused `from pydantic import ValidationError` import from `test_set_status.py` and all five integration test files (verified each had exactly one use, the rewritten test); kept it in `test_error_context.py`, which still has two legitimate, untouched uses (`TestCreateToolErrorContext`/`TestGenericUpdateToolErrorContext`'s own `req` cases). Files touched: `tests/general/tools/test_set_status.py`, `tests/general/tools/test_error_context.py`, `tests/dec/tools/test_integration.py`, `tests/sop/tools/test_integration.py`, `tests/sysrs/tools/test_integration.py`, `tests/vcr/tools/test_integration.py`, `tests/feat/tools/test_integration.py` -- no `src/` changes (tests-only phase). Quality gate: `ruff format --check`/`ruff check` on all 7 files (both clean), the 7-file targeted `pytest -n auto -v` (41 passed, 155 subtests passed), and the full `pytest -n auto` suite (3346 passed, 0 failures) -- the suite is fully green again after Phase 2's expected interim breakage.
 
 #### 2026-09-07 16:00:00.000Z - Fixed adr+superseded_by edge case flagged after Phase 2; ADR amended
 
@@ -165,6 +169,10 @@ Investigated issue #103's premise (set_status error message lacks allowed values
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-07 17:00:00.000Z - test_error_context.py's set_status test rewritten, not deleted or left raise-based
+
+`TestGenericSetStatusToolErrorContext.test_set_status_tsk_out_of_vocabulary_names_domain_and_tool`'s original premise (asserting `wrap_tool_errors`'s `"{domain} {tool}"` prefix on a raised `pydantic.ValidationError`) no longer holds for this one failure mode, since Phase 2's pre-check now short-circuits before `wrap_tool_errors` is ever entered. Rather than deleting the test (its purpose -- proving an invalid status still identifies which domain rejected it -- still matters) or leaving it broken, it was rewritten to call `set_status` and assert the returned `InvalidStatusResult`'s own `type`/`message` fields carry that same identifying information (`result.type == "tsk"`, `"tsk" in result.message`), plus `isinstance`/`valid is False`. The class and method docstrings were updated to explain why this one case diverges from its sibling tests in the same file (`TestCreateToolErrorContext`, `TestGenericUpdateToolErrorContext`), which still legitimately exercise `wrap_tool_errors` for other tools/failure modes and were left untouched.
 
 #### 2026-09-07 16:00:00.000Z - Pre-check skips status validation entirely for adr+superseded_by
 

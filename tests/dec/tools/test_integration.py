@@ -47,13 +47,14 @@ from pathlib import Path
 from unittest import mock
 
 import frontmatter
-from pydantic import ValidationError
 
 from biz.dfch.specmgr.dec.models.v1 import DecFrontmatter
+from biz.dfch.specmgr.dec.models.v1.frontmatter import _ALLOWED_STATUSES as _DEC_ALLOWED_STATUSES
 from biz.dfch.specmgr.dec.tools._paths import DecNotFoundError, dec_base_dir
 from biz.dfch.specmgr.dec.tools.create_dec import create_dec
 from biz.dfch.specmgr.dec.tools.get_dec import get_dec
 from biz.dfch.specmgr.dec.tools.list_dec import list_dec
+from biz.dfch.specmgr.general.models import InvalidStatusResult
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.general.tools.delete import delete
 from biz.dfch.specmgr.general.tools.set_status import set_status
@@ -194,14 +195,20 @@ class TestDecLifecycleIntegration(TempDecDirTestCase):
             get_dec(dec_id)
 
     def test_set_status_rejects_gol_only_implemented_status(self) -> None:
-        """ACC-003: set_status (type="dec") must reject `implemented` (GOL's seventh value, outside DEC's closed six-set)."""
+        """ACC-003: set_status (type="dec") must reject `implemented` (GOL's seventh value, outside
+        DEC's closed six-set), returning a non-raising ``InvalidStatusResult`` (ADR
+        b399f1ce-ed42-4929-b01c-7a57d18e8014) instead of raising ``pydantic.ValidationError``."""
         created = create_dec(_INITIAL_BODY)
         expected_path = dec_base_dir() / f"dec-{created.id}-choose-a-document-store.md"
         before = expected_path.read_text(encoding="utf-8")
 
-        with self.assertRaises(ValidationError):
-            set_status(created.id, "dec", "implemented")
+        result = set_status(created.id, "dec", "implemented")
 
+        self.assertIsInstance(result, InvalidStatusResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(result.type, "dec")
+        self.assertEqual(result.status, "implemented")
+        self.assertEqual(result.allowed_values, sorted(_DEC_ALLOWED_STATUSES))
         self.assertEqual(expected_path.read_text(encoding="utf-8"), before)
 
     def test_validate_rejects_malformed_body_and_wrong_full_shape(self) -> None:

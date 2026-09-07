@@ -42,8 +42,8 @@ from pathlib import Path
 from unittest import mock
 
 import frontmatter
-from pydantic import ValidationError
 
+from biz.dfch.specmgr.general.models import InvalidStatusResult
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.general.tools.delete import delete
 from biz.dfch.specmgr.general.tools.set_classification import set_classification
@@ -51,6 +51,7 @@ from biz.dfch.specmgr.general.tools.set_status import set_status
 from biz.dfch.specmgr.general.tools.update import update
 from biz.dfch.specmgr.general.tools.validate import validate
 from biz.dfch.specmgr.sysrs.models.v1 import SysrsFrontmatter
+from biz.dfch.specmgr.sysrs.models.v1.frontmatter import _ALLOWED_STATUSES as _SYSRS_ALLOWED_STATUSES
 from biz.dfch.specmgr.sysrs.tools._paths import SysrsNotFoundError, sysrs_base_dir
 from biz.dfch.specmgr.sysrs.tools.create_sysrs import create_sysrs
 from biz.dfch.specmgr.sysrs.tools.get_sysrs import get_sysrs
@@ -227,14 +228,20 @@ class TestSysrsLifecycleIntegration(TempSysrsDirTestCase):
             set_status(created.id, "sysrs", "review", superseded_by="some-other-id")
 
     def test_set_status_rejects_status_outside_closed_set(self) -> None:
-        """set_status (type="sysrs") must reject a status outside the closed 5-value set."""
+        """set_status (type="sysrs") must reject a status outside the closed 5-value set,
+        returning a non-raising ``InvalidStatusResult`` (ADR b399f1ce-ed42-4929-b01c-7a57d18e8014)
+        instead of raising ``pydantic.ValidationError``."""
         created = create_sysrs(_INITIAL_BODY)
         expected_path = sysrs_base_dir() / f"sysrs-{created.id}-system-requirements-specification-sample-document.md"
         before = expected_path.read_text(encoding="utf-8")
 
-        with self.assertRaises(ValidationError):
-            set_status(created.id, "sysrs", "accepted")
+        result = set_status(created.id, "sysrs", "accepted")
 
+        self.assertIsInstance(result, InvalidStatusResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(result.type, "sysrs")
+        self.assertEqual(result.status, "accepted")
+        self.assertEqual(result.allowed_values, sorted(_SYSRS_ALLOWED_STATUSES))
         self.assertEqual(expected_path.read_text(encoding="utf-8"), before)
 
     def test_validate_rejects_malformed_body_and_wrong_full_shape(self) -> None:

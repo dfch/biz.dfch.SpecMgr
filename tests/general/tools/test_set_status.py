@@ -27,8 +27,10 @@ untouched (twelve domains: raw body byte-identical; ADR: re-render round-
 trip equal apart from status); each domain's closed-vocabulary
 enforcement (positive value from the domain's own ``_ALLOWED_STATUSES``;
 negative value valid in one domain but invalid in the tested one -- each a
-``pydantic.ValidationError`` with the file left byte-identical on disk);
-the ADR-only ``superseded_by`` composition (``"superseded by X"`` in the
+non-raising, structured ``InvalidStatusResult`` (ADR
+b399f1ce-ed42-4929-b01c-7a57d18e8014) with the file left byte-identical on
+disk, its ``message`` wording pinned by a dedicated regression test); the
+ADR-only ``superseded_by`` composition (``"superseded by X"`` in the
 file) and the guard that rejects it for every non-``adr`` type *before*
 any file access; and the per-domain not-found errors for an unknown id.
 
@@ -52,7 +54,6 @@ from typing import Any, Callable
 from unittest import mock
 
 import frontmatter
-from pydantic import ValidationError
 
 from biz.dfch.specmgr.adr.tools._paths import ADR_DIR_ENV_VAR, AdrNotFoundError, adr_base_dir
 from biz.dfch.specmgr.dec.models.v1 import DecDocument, DecFrontmatter
@@ -61,6 +62,7 @@ from biz.dfch.specmgr.dec.tools._paths import DecNotFoundError, dec_base_dir
 from biz.dfch.specmgr.dec.tools.create_dec import create_dec
 from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR, feat_base_dir
 from biz.dfch.specmgr.feat.tools.create_feat import create_feat
+from biz.dfch.specmgr.general.models import InvalidStatusResult
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.general.tools._splice import body_text
 from biz.dfch.specmgr.general.tools.set_status import set_status
@@ -624,17 +626,49 @@ class TestSetStatusWholeBodyDomains(TempDocsDirTestCase):
                 self.assertEqual(body_text(path), raw_body_before)
 
     def test_out_of_vocabulary_status_raises_validation_error_file_untouched(self) -> None:
-        """A status valid in one domain but not the tested one must raise ``pydantic.ValidationError``, file byte-identical."""
+        """A status valid in one domain but not the tested one must return a non-raising
+        ``InvalidStatusResult`` (ADR b399f1ce-ed42-4929-b01c-7a57d18e8014) whose content
+        identifies the rejected value and the domain's own full allowed-values list, file
+        byte-identical (never raises ``pydantic.ValidationError`` any more)."""
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case, case.minimal_body)
                 path = self._doc_path(case)
                 before = path.read_text(encoding="utf-8")
 
-                with self.assertRaises(ValidationError):
-                    set_status(id=created.id, type=case.doc_type, status=case.invalid_status)
+                result = set_status(id=created.id, type=case.doc_type, status=case.invalid_status)
 
+                self.assertIsInstance(result, InvalidStatusResult)
+                self.assertFalse(result.valid)
+                self.assertEqual(result.type, case.doc_type)
+                self.assertEqual(result.status, case.invalid_status)
+                expected_allowed = sorted(case.allowed_statuses)
+                self.assertEqual(result.allowed_values, expected_allowed)
+                self.assertEqual(
+                    result.message,
+                    f"Invalid status '{case.invalid_status}' for type '{case.doc_type}'. "
+                    f"Allowed values: {', '.join(expected_allowed)}",
+                )
                 self.assertEqual(path.read_text(encoding="utf-8"), before)
+
+    def test_invalid_status_message_wording_pinned(self) -> None:
+        """Regression (Task 3.3): the exact literal message wording must not silently drift.
+
+        Picks the ``tsk`` case (arbitrary, any whole-body domain would do) and asserts
+        ``result.message`` equals the exact expected string byte-for-byte -- no
+        ``assertIn``/partial matching, so a future refactor that changes the wording fails
+        loudly here instead of only being caught by a looser assertion elsewhere.
+        """
+        case = next(c for c in _CASES if c.doc_type == "tsk")
+        created = self._seed(case, case.minimal_body)
+
+        result = set_status(id=created.id, type=case.doc_type, status=case.invalid_status)
+
+        expected_allowed = ", ".join(sorted(case.allowed_statuses))
+        self.assertEqual(
+            result.message,
+            f"Invalid status '{case.invalid_status}' for type '{case.doc_type}'. Allowed values: {expected_allowed}",
+        )
 
     def test_superseded_by_with_non_adr_type_raises_value_error_file_untouched(self) -> None:
         """``superseded_by`` with any non-``adr`` type must raise ``ValueError``, leaving the file byte-identical."""
@@ -700,14 +734,44 @@ class TestSetStatusAdr(TempDocsDirTestCase):
         self.assertEqual(on_disk.frontmatter.status, "superseded by other-decision")
 
     def test_out_of_vocabulary_status_raises_validation_error_file_untouched(self) -> None:
-        """A status valid in one domain but not ADR's must raise ``pydantic.ValidationError``, file byte-identical."""
+        """A status valid in one domain but not ADR's must return a non-raising
+        ``InvalidStatusResult`` (ADR b399f1ce-ed42-4929-b01c-7a57d18e8014) -- ``allowed_values``
+        is ADR's own fixed 6-value set plus the literal ``"superseded by <target-id>"`` trailing
+        entry documenting the pattern -- file byte-identical (never raises
+        ``pydantic.ValidationError`` any more)."""
         path = self._seed_adr()
         before = path.read_text(encoding="utf-8")
 
-        with self.assertRaises(ValidationError):
-            set_status(id=_ADR_ID, type="adr", status="implemented")
+        result = set_status(id=_ADR_ID, type="adr", status="implemented")
 
+        self.assertIsInstance(result, InvalidStatusResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(result.type, "adr")
+        self.assertEqual(result.status, "implemented")
+        expected_allowed = sorted(_ADR_ALLOWED_STATUSES) + ["superseded by <target-id>"]
+        self.assertEqual(result.allowed_values, expected_allowed)
+        self.assertEqual(
+            result.message,
+            f"Invalid status 'implemented' for type 'adr'. Allowed values: {', '.join(expected_allowed)}",
+        )
         self.assertEqual(path.read_text(encoding="utf-8"), before)
+
+    def test_invalid_status_message_wording_pinned_for_adr(self) -> None:
+        """Regression (Task 3.3): the exact literal message wording must not silently drift, for ADR.
+
+        No ``assertIn``/partial matching -- exact ``assertEqual`` so a future refactor that
+        changes the wording (including the ADR-specific trailing ``"superseded by <target-id>"``
+        entry) fails loudly here.
+        """
+        self._seed_adr()
+
+        result = set_status(id=_ADR_ID, type="adr", status="implemented")
+
+        expected_allowed = ", ".join(sorted(_ADR_ALLOWED_STATUSES) + ["superseded by <target-id>"])
+        self.assertEqual(
+            result.message,
+            f"Invalid status 'implemented' for type 'adr'. Allowed values: {expected_allowed}",
+        )
 
     def test_unknown_id_raises_adr_not_found(self) -> None:
         """An unknown id must raise ``AdrNotFoundError``."""
