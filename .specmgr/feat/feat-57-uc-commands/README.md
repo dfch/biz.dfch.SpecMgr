@@ -1,9 +1,9 @@
 ---
-created: '2026-09-02T14:59:42.990052'
+created: '2026-09-02 14:59:42.990Z'
 id: feat-57-uc-commands
 status: done
 type: feat
-updated: '2026-09-02T15:30:00.000000'
+updated: '2026-09-06 07:09:18.000Z'
 version: 1.0.0
 ---
 

@@ -2,8 +2,8 @@
 created: '2026-08-08 00:00:00.000Z'
 id: feat-5-md-model-parser
 status: done
-updated: '2026-08-15 00:00:00.000Z'
-version: 1.16.4
+updated: '2026-09-06 07:09:18.000Z'
+version: 1.0.0
 ---
 
 # Feature: Generic heading-mapped Markdown-to-Pydantic document parser

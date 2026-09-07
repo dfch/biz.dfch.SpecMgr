@@ -1,9 +1,9 @@
 ---
-created: '2026-09-01T14:24:06.341303'
+created: '2026-09-01 14:24:06.341Z'
 id: feat-27-validation
 status: done
 type: feat
-updated: '2026-09-02T00:15:00.000000'
+updated: '2026-09-06 07:25:54.000Z'
 version: 1.0.0
 ---
 
@@ -215,9 +215,9 @@ advance at that call site.
 
 Example messages (before -> after, issue #27's own bare `<domain>` repro): `create_tsk`/
 `update(type="tsk")` on a checklist item containing a bare `<domain>` token (`AssertionError`,
-before: `"raw HTML is not permitted in a parsed document at line 3 (relative to this text's
+before: ```"raw HTML is not permitted in a parsed document at line 3 (relative to this text's
 own numbering): html_inline '<domain>'; fix: wrap it in a code span (e.g. `` `<domain>` ``) or
-write it as an HTML comment (e.g. `` <!-- <domain> --> ``) instead"` -- Phase 1's own engine
+write it as an HTML comment (e.g. `` <!-- <domain> --> ``) instead"``` -- Phase 1's own engine
 message, still missing which *tool*/*domain* raised it -- after, `create_tsk`:
 `"tsk create_tsk (body): raw HTML is not permitted ... (same detail)"`; after, the generic
 `update` tool: `"tsk update (body): raw HTML is not permitted ... (same detail)"`). `req`'s

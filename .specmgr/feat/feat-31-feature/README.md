@@ -2,8 +2,8 @@
 created: '2026-08-30 00:00:00.000Z'
 id: feat-31-feature
 status: done
-updated: '2026-08-30 00:00:00.000Z'
-version: 1.13.0
+updated: '2026-09-06 07:09:18.000Z'
+version: 1.0.0
 ---
 
 # Feature: Formalize the Feature artifact type ("feat")

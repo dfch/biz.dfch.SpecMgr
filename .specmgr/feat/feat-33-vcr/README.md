@@ -3,8 +3,8 @@ created: '2026-08-31 07:25:24.241Z'
 id: feat-33-vcr
 status: done
 type: feat
-updated: '2026-08-31 16:26:00.000Z'
-version: 1.2.0
+updated: '2026-09-06 07:09:18.000Z'
+version: 1.0.0
 ---
 
 # Feature: Add artifact type "Verification Case Record" (VCR)

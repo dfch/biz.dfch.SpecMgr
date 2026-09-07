@@ -1,9 +1,9 @@
 ---
-created: '2026-09-02T15:24:37.128173'
+created: '2026-09-02 15:24:37.128Z'
 id: feat-51-mcp-cwd
 status: done
 type: feat
-updated: '2026-09-02T14:36:42.000000'
+updated: '2026-09-06 07:09:18.000Z'
 version: 1.0.0
 ---
 

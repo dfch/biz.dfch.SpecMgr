@@ -1,9 +1,9 @@
 ---
-created: '2026-09-02T09:50:23.991493'
+created: '2026-09-02 09:50:23.991Z'
 id: feat-56-classification-attribute-in-frontmatter
 status: done
 type: feat
-updated: '2026-09-02T22:15:00.000000'
+updated: '2026-09-06 07:25:54.000Z'
 version: 1.0.0
 ---
 
@@ -319,8 +319,7 @@ existing prose style and line-wrap width -- no section numbering,
 heading text, or other wording was otherwise touched. In each
 `<d>_update_instructions.md`'s "Map the requested change to the right
 tool" step, a new bullet was appended directly after the existing
-`- A change to \`status\` -> set_status(...)`bullet: "A change to`classification`->`set_classification(id, type="<d>",
-classification)`instead --`update`never accepts or changes`classification`. Fully free-text; a blank or whitespace-only value clears it back to `None`/absent." -- worded identically across all 10 files since, unlike `status`, `classification` has no per-domain closed vocabulary to describe. sop's create-instructions step 6 additionally had its existing "`sop`has no per-domain`update_sop`/`set_status_sop` tools" sentence extended to "`update_sop`/`set_status_sop`/`set_classification_sop\`" for
+``- A change to `status` -> set_status(...)`` bullet: "A change to `classification` -> `set_classification(id, type="<d>", classification)` instead -- `update` never accepts or changes `classification`. Fully free-text; a blank or whitespace-only value clears it back to `None`/absent." -- worded identically across all 10 files since, unlike `status`, `classification` has no per-domain closed vocabulary to describe. sop's create-instructions step 6 additionally had its existing "`sop` has no per-domain `update_sop`/`set_status_sop` tools" sentence extended to "`update_sop`/`set_status_sop`/`set_classification_sop`" for
 consistency, since sop is the one domain whose prose already calls out
 the absence of per-domain mutation tools by name.
 
