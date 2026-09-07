@@ -96,11 +96,11 @@ Pre-check happens in `general/tools/set_status.py` before each adapter's `wrap_t
 
 #### Phase 1: Design & ADR
 
-- [ ] Task 1.1: Draft and create the new ADR extending 519d1206 to set_status's invalid-status case; get sign-off; set status accepted.
+- [x] Task 1.1: Draft and create the new ADR extending 519d1206 to set_status's invalid-status case; get sign-off; set status accepted. **(ADR b399f1ce-ed42-4929-b01c-7a57d18e8014, reviewed and approved by the user; status set to `accepted`)**
 
-- [ ] Task 1.2: Design the shared status-vocabulary lookup (mapping type -> allowed values, incl. ADR's fixed set + pattern) without duplicating each domain's existing private constant.
+- [x] Task 1.2: Design the shared status-vocabulary lookup (mapping type -> allowed values, incl. ADR's fixed set + pattern) without duplicating each domain's existing private constant.
 
-- [ ] Task 1.3: Design the structured invalid-status result shape and exact message wording.
+- [x] Task 1.3: Design the structured invalid-status result shape and exact message wording.
 
 #### Phase 2: Implementation
 
@@ -136,11 +136,19 @@ Pre-check happens in `general/tools/set_status.py` before each adapter's `wrap_t
 
 ### Current Status
 
-**As of 2026-09-07**: Feature drafted from GitHub issue #103. Root cause investigated and confirmed as the previously diagnosed OpenCode 1.18.27 client-side isError truncation bug (ADR 519d1206). Scope agreed: a narrow, non-raising pre-check for set_status's invalid-status failure mode only, plus filing the drafted upstream OpenCode bug report. No implementation started yet. A brief explanatory comment was posted to GitHub issue #103.
+**As of 2026-09-07**: Phase 1 (Design & ADR) fully complete. ADR b399f1ce-ed42-4929-b01c-7a57d18e8014 ("Extend the non-raising structured-result workaround to set_status's invalid-status case") drafted, created at `docs/adr/b399f1ce-ed42-4929-b01c-7a57d18e8014-extend-the-non-raising-structured-result-workaround-to-set-s.md`, reviewed and approved by the user, and its status set to `accepted`; `validate_adr` passes at both the `proposed` and `accepted` stages. It records the Task 1.2 vocabulary-lookup design (a private `_ALLOWED_STATUSES_BY_TYPE` mapping in `set_status.py`, built from direct private-name imports of each domain's own `_ALLOWED_STATUSES`/`_FIXED_STATUSES` constant, plus ADR's `_SUPERSEDED_PATTERN` regex) and the Task 1.3 result-shape design (new `InvalidStatusResult` model in `general/models/invalid_status_result.py`, mirroring `ValidateResult`'s precedent, with `valid`/`type`/`status`/`allowed_values`/`message` fields and exact message wording) that Phase 2 will implement from. Ready to start Phase 2 (Implementation).
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-07 14:00:00.000Z - ADR reviewed and accepted; Phase 1 fully complete
+
+The user reviewed and approved ADR b399f1ce-ed42-4929-b01c-7a57d18e8014's design as drafted at status `proposed`; its status was then set to `accepted` via `specmgr_set_status` (type="adr"), and `specmgr_validate_adr` was re-run to confirm it still passes after the status change. This resolves Task 1.1's outstanding sign-off/accepted-status caveat -- Phase 1 (Design & ADR) is now fully complete; Phase 2 (Implementation) can begin.
+
+#### 2026-09-07 13:00:00.000Z - Phase 1 (Design & ADR) drafted, pending sign-off
+
+Completed Tasks 1.2/1.3 design work and drafted/created ADR b399f1ce-ed42-4929-b01c-7a57d18e8014 at status `proposed` (not yet `accepted` -- awaiting human sign-off before that bump, per the orchestrator's explicit process deviation from Task 1.1's literal wording). The ADR narrowly extends ADR 519d1206's non-raising-workaround rationale to set_status's invalid-status case, explicitly documents why every other set_status failure mode (unknown id, path-injection, superseded_by misuse) stays raise-based, and records the concrete vocabulary-lookup and result-shape designs Phase 2 implements from. `specmgr_validate_adr` passes.
 
 #### 2026-09-07 12:00:00.000Z - Drafted feature from GitHub issue #103
 
