@@ -65,6 +65,24 @@ Neither any ``create_<d>`` tool nor the generic :func:`update` tool
 accepts a ``status`` argument at all -- this tool is the sole
 status-change entry point for every domain.
 
+An out-of-vocabulary ``status`` for the dispatched ``type`` (ADR
+b399f1ce-ed42-4929-b01c-7a57d18e8014, "Extend the non-raising
+structured-result workaround to set_status's invalid-status case") is
+pre-checked by the public :func:`set_status` against a private,
+module-scope ``_ALLOWED_STATUSES_BY_TYPE`` mapping (built from each
+domain's own ``_ALLOWED_STATUSES``/``_FIXED_STATUSES`` constant, imported
+directly from its ``models/v{N}/frontmatter.py`` submodule) **before**
+dispatching to any ``_set_status_<d>`` adapter -- so before any domain
+lock is taken or any file is read -- and returns a structured, non-raising
+:class:`~biz.dfch.specmgr.general.models.InvalidStatusResult` instead of
+letting ``pydantic.ValidationError`` propagate from the adapter's
+``XFrontmatter``/``AdrFrontmatter`` reconstruction. This is a narrow,
+additive exception to this tool's otherwise raise-based contract
+(mirroring the generic ``validate`` tool's own non-raising workaround,
+ADR 519d1206-4d2a-4500-9046-6db635209996) -- every other failure mode
+(unknown id, path-injection/wrong-shape id, ``superseded_by`` misuse on a
+non-``adr`` type) still raises exactly as before.
+
 ``models.adr.v1.mutations`` is imported qualified (as ``mutations``)
 because the pure, in-memory operation it delegates to shares this
 wrapper's own name.
@@ -91,65 +109,80 @@ from ...adr.tools._io import write_adr
 from ...adr.tools._lock import adr_lock
 from ...adr.tools._paths import adr_base_dir
 from ...dec.models.v1 import DecFrontmatter
+from ...dec.models.v1.frontmatter import _ALLOWED_STATUSES as _DEC_ALLOWED_STATUSES
 from ...dec.tools._io import load_by_id as load_dec_by_id
 from ...dec.tools._lock import dec_lock
 from ...dec.tools._paths import dec_base_dir
 from ...dec.tools._write import write_dec_file
 from ...feat.models.v1 import FeatFrontmatter
+from ...feat.models.v1.frontmatter import _ALLOWED_STATUSES as _FEAT_ALLOWED_STATUSES
 from ...feat.tools._io import load_by_id as load_feat_by_id
 from ...feat.tools._lock import feat_lock
 from ...feat.tools._paths import feat_base_dir
 from ...feat.tools._write import write_feat_file
+from ...general.models import InvalidStatusResult
 from ...gol.models.v1 import GolFrontmatter
+from ...gol.models.v1.frontmatter import _ALLOWED_STATUSES as _GOL_ALLOWED_STATUSES
 from ...gol.tools._io import load_by_id as load_gol_by_id
 from ...gol.tools._lock import gol_lock
 from ...gol.tools._paths import gol_base_dir
 from ...gol.tools._write import write_gol_file
 from ...models.adr import Adr
 from ...models.adr.v1 import mutations
+from ...models.adr.v1.frontmatter import _FIXED_STATUSES as _ADR_FIXED_STATUSES
+from ...models.adr.v1.frontmatter import _SUPERSEDED_PATTERN as _ADR_SUPERSEDED_PATTERN
 from ...models.md._errors import FRONTMATTER_CHANNEL, wrap_tool_errors
 from ...prb.models.v1 import PrbFrontmatter
+from ...prb.models.v1.frontmatter import _ALLOWED_STATUSES as _PRB_ALLOWED_STATUSES
 from ...prb.tools._io import load_by_id as load_prb_by_id
 from ...prb.tools._lock import prb_lock
 from ...prb.tools._paths import prb_base_dir
 from ...prb.tools._write import write_prb_file
 from ...qa.models.v2 import QaFrontmatter
+from ...qa.models.v2.frontmatter import _ALLOWED_STATUSES as _QA_ALLOWED_STATUSES
 from ...qa.tools._io import load_by_id as load_qa_by_id
 from ...qa.tools._lock import qa_lock
 from ...qa.tools._paths import qa_base_dir
 from ...qa.tools._write import write_qa_file
 from ...req.models.v1 import ReqFrontmatter
+from ...req.models.v1.frontmatter import _ALLOWED_STATUSES as _REQ_ALLOWED_STATUSES
 from ...req.tools._io import load_by_id as load_req_by_id
 from ...req.tools._lock import req_lock
 from ...req.tools._paths import req_base_dir
 from ...req.tools._write import write_req_file
 from ...rsk.models.v1 import RskFrontmatter
+from ...rsk.models.v1.frontmatter import _ALLOWED_STATUSES as _RSK_ALLOWED_STATUSES
 from ...rsk.tools._io import load_by_id as load_rsk_by_id
 from ...rsk.tools._lock import rsk_lock
 from ...rsk.tools._paths import rsk_base_dir
 from ...rsk.tools._write import write_rsk_file
 from ...server import mcp
 from ...sop.models.v1 import SopFrontmatter
+from ...sop.models.v1.frontmatter import _ALLOWED_STATUSES as _SOP_ALLOWED_STATUSES
 from ...sop.tools._io import load_by_id as load_sop_by_id
 from ...sop.tools._lock import sop_lock
 from ...sop.tools._paths import sop_base_dir
 from ...sop.tools._write import write_sop_file
 from ...sysrs.models.v1 import SysrsFrontmatter
+from ...sysrs.models.v1.frontmatter import _ALLOWED_STATUSES as _SYSRS_ALLOWED_STATUSES
 from ...sysrs.tools._io import load_by_id as load_sysrs_by_id
 from ...sysrs.tools._lock import sysrs_lock
 from ...sysrs.tools._paths import sysrs_base_dir
 from ...sysrs.tools._write import write_sysrs_file
 from ...tsk.models.v1 import TskFrontmatter
+from ...tsk.models.v1.frontmatter import _ALLOWED_STATUSES as _TSK_ALLOWED_STATUSES
 from ...tsk.tools._io import load_by_id as load_tsk_by_id
 from ...tsk.tools._lock import tsk_lock
 from ...tsk.tools._paths import tsk_base_dir
 from ...tsk.tools._write import write_tsk_file
 from ...uc.models.v2 import UcFrontmatter
+from ...uc.models.v2.frontmatter import _ALLOWED_STATUSES as _UC_ALLOWED_STATUSES
 from ...uc.tools._io import load_by_id as load_uc_by_id
 from ...uc.tools._lock import uc_lock
 from ...uc.tools._paths import uc_base_dir
 from ...uc.tools._write import write_uc_file
 from ...vcr.models.v1 import VcrFrontmatter
+from ...vcr.models.v1.frontmatter import _ALLOWED_STATUSES as _VCR_ALLOWED_STATUSES
 from ...vcr.tools._io import load_by_id as load_vcr_by_id
 from ...vcr.tools._lock import vcr_lock
 from ...vcr.tools._paths import vcr_base_dir
@@ -179,6 +212,67 @@ _SetStatusFrontmatter = (
     | SysrsFrontmatter
     | Adr
 )
+
+#: Each of the twelve whole-body domains' own closed status vocabulary, plus ADR's fixed set,
+#: keyed by ``type`` (ADR b399f1ce-ed42-4929-b01c-7a57d18e8014). Reuses each domain's existing
+#: ``_ALLOWED_STATUSES``/``_FIXED_STATUSES`` constant directly -- no new duplicated list. ADR's
+#: ``"superseded by ..."`` pattern is checked separately (see :func:`_check_status_allowed`),
+#: since it is not a fixed, enumerable member of this mapping's ``adr`` entry.
+_ALLOWED_STATUSES_BY_TYPE: dict[str, frozenset[str]] = {
+    "req": _REQ_ALLOWED_STATUSES,
+    "uc": _UC_ALLOWED_STATUSES,
+    "tsk": _TSK_ALLOWED_STATUSES,
+    "qa": _QA_ALLOWED_STATUSES,
+    "prb": _PRB_ALLOWED_STATUSES,
+    "gol": _GOL_ALLOWED_STATUSES,
+    "rsk": _RSK_ALLOWED_STATUSES,
+    "dec": _DEC_ALLOWED_STATUSES,
+    "sop": _SOP_ALLOWED_STATUSES,
+    "feat": _FEAT_ALLOWED_STATUSES,
+    "vcr": _VCR_ALLOWED_STATUSES,
+    "sysrs": _SYSRS_ALLOWED_STATUSES,
+    _TYPE_ADR: _ADR_FIXED_STATUSES,
+}
+
+
+def _check_status_allowed(type_: str, status: str, superseded_by: str | None) -> InvalidStatusResult | None:
+    """Pre-check ``status`` against ``type_``'s own closed vocabulary; ``None`` if valid.
+
+    For ``type_ != "adr"``: valid iff ``status`` is a member of
+    ``_ALLOWED_STATUSES_BY_TYPE[type_]``. For ``type_ == "adr"`` with ``superseded_by is None``:
+    valid iff ``status`` is in ``_ADR_FIXED_STATUSES`` or matches ``_ADR_SUPERSEDED_PATTERN`` --
+    mirroring ``AdrFrontmatter._validate_status``'s own check exactly.
+
+    For ``type_ == "adr"`` with ``superseded_by`` given, ``status`` is never checked here at
+    all -- always ``None`` (valid) -- because ``models.adr.v1.mutations.set_status`` itself
+    ignores the raw ``status`` argument in that case and composes ``f"superseded by
+    {superseded_by}"`` instead; validating the discarded ``status`` value would incorrectly
+    reject an otherwise-valid call.
+
+    Called before any domain lock is taken or file is read (ADR
+    b399f1ce-ed42-4929-b01c-7a57d18e8014's Decision Outcome, point 3). Returns an
+    :class:`InvalidStatusResult` (never raises) on a miss, or ``None`` when ``status`` is valid
+    (or ignored, per the ``adr``+``superseded_by`` case above).
+    """
+    if type_ == _TYPE_ADR:
+        if superseded_by is not None:
+            return None
+        if status in _ADR_FIXED_STATUSES or _ADR_SUPERSEDED_PATTERN.match(status):
+            return None
+        allowed_values = sorted(_ADR_FIXED_STATUSES) + ["superseded by <target-id>"]
+    else:
+        allowed = _ALLOWED_STATUSES_BY_TYPE[type_]
+        if status in allowed:
+            return None
+        allowed_values = sorted(allowed)
+
+    return InvalidStatusResult(
+        valid=False,
+        type=type_,
+        status=status,
+        allowed_values=allowed_values,
+        message=f"Invalid status '{status}' for type '{type_}'. Allowed values: {', '.join(allowed_values)}",
+    )
 
 
 def _set_status_req(id_: str, status: str, superseded_by: str | None) -> ReqFrontmatter:
@@ -553,8 +647,10 @@ _ADAPTERS: dict[str, Callable[[str, str, str | None], _SetStatusFrontmatter]] = 
         "req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs, adr), also bumping `updated` (the "
         "twelve whole-body domains) and leaving the body untouched. The new `status` must be one of the "
         "domain's own closed vocabulary values (see the domain's `XFrontmatter.status` field); "
-        "anything else raises `pydantic.ValidationError` and writes nothing. `superseded_by` is "
-        'accepted only for `type="adr"` -- it composes the status as "superseded by '
+        "an out-of-vocabulary `status` does NOT raise -- it returns a structured, non-raising "
+        "`InvalidStatusResult` ({valid: false, type, status, allowed_values, message}) instead, so "
+        "the allowed-values detail survives MCP clients that truncate error content. `superseded_by` "
+        'is accepted only for `type="adr"` -- it composes the status as "superseded by '
         '{superseded_by}"; with any other `type` it is a `ValueError`. Neither `create_*` nor '
         "the generic `update` tool accepts a `status` argument at all -- this is the sole "
         "status-change entry point. An invalid `id` (path-injection attempt or wrong format "
@@ -568,7 +664,7 @@ def set_status(
     type: Literal["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "feat", "vcr", "sysrs", "adr"],
     status: str,
     superseded_by: str | None = None,
-) -> _SetStatusFrontmatter:
+) -> _SetStatusFrontmatter | InvalidStatusResult:
     """Replace the status of an existing document, across all thirteen domains.
 
         Cross-domain generic for every document type
@@ -627,12 +723,15 @@ def set_status(
         -------
     ReqFrontmatter | UcFrontmatter | TskFrontmatter | QaFrontmatter | PrbFrontmatter |
     GolFrontmatter | RskFrontmatter | DecFrontmatter | FeatFrontmatter | SopFrontmatter |
-    VcrFrontmatter | SysrsFrontmatter | Adr
+    VcrFrontmatter | SysrsFrontmatter | Adr | InvalidStatusResult
         The updated document's frontmatter only (no body) of the dispatched domain type
         for the twelve whole-body domains; for ``type="adr"`` (unchanged, out of scope for
         this feature) the full ``Adr`` document, as before. Use the corresponding
         ``get_<d>`` tool to fetch the full document afterward for the twelve whole-body
-        domains.
+        domains. When ``status`` is not in the dispatched domain's closed vocabulary,
+        returns an :class:`~biz.dfch.specmgr.general.models.InvalidStatusResult` instead
+        (ADR b399f1ce-ed42-4929-b01c-7a57d18e8014) -- see the Raises section below for
+        why this one case no longer raises.
 
         Raises
         ------
@@ -643,13 +742,18 @@ def set_status(
             than ``"adr"`` (raised before any file access). Nothing is
             written in either case.
         pydantic.ValidationError
-            ``status`` is not in the dispatched domain's closed vocabulary
-            (for ``adr``: not one of its six values and not a
-            ``"superseded by ..."`` string). The message is prefixed with
-            domain/tool/channel context (e.g. ``"tsk set_status
-            (frontmatter): ..."``) by the shared tool-boundary wrapper
-            (:func:`~biz.dfch.specmgr.models.md._errors.wrap_tool_errors`).
-            Nothing is written.
+            Does **not** raise for an out-of-vocabulary ``status`` -- that
+            one case is pre-checked before dispatch (see Returns above) and
+            returns an ``InvalidStatusResult`` instead (ADR
+            b399f1ce-ed42-4929-b01c-7a57d18e8014), a deliberate, narrow
+            exception to this tool's otherwise raise-based contract. No
+            other path in this function still raises
+            ``pydantic.ValidationError``: every other frontmatter field
+            carried into the domain's ``XFrontmatter``/``AdrFrontmatter``
+            reconstruction is either preserved unchanged from the existing,
+            already-valid document or (``updated``) a well-formed timestamp
+            generated internally, so nothing else in the reconstructed
+            model can fail validation in practice.
         ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
         PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
         FeatNotFoundError / SopNotFoundError / VcrNotFoundError / SysrsNotFoundError /
@@ -664,6 +768,11 @@ def set_status(
             f'superseded_by is only accepted for type={_TYPE_ADR!r} (the "superseded by X" '
             f"pattern is ADR-specific), got type={type!r} with superseded_by={superseded_by!r}"
         )
+
+    # ADR b399f1ce-ed42-4929-b01c-7a57d18e8014: pre-check status before any domain lock/file I/O.
+    invalid_status_result = _check_status_allowed(type, status, superseded_by)
+    if invalid_status_result is not None:
+        return invalid_status_result
 
     adapter = _ADAPTERS[type]
     result = adapter(id, status, superseded_by)

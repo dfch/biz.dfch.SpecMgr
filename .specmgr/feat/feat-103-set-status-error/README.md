@@ -104,11 +104,11 @@ Pre-check happens in `general/tools/set_status.py` before each adapter's `wrap_t
 
 #### Phase 2: Implementation
 
-- [ ] Task 2.1: Implement the pre-check in general/tools/set_status.py for all 12 whole-body domains + adr.
+- [x] Task 2.1: Implement the pre-check in general/tools/set_status.py for all 12 whole-body domains + adr.
 
-- [ ] Task 2.2: Update set_status's docstring/description for the new return shape.
+- [x] Task 2.2: Update set_status's docstring/description for the new return shape.
 
-- [ ] Task 2.3: Confirm every other existing failure mode is unchanged.
+- [x] Task 2.3: Confirm every other existing failure mode is unchanged.
 
 #### Phase 3: Tests
 
@@ -136,11 +136,19 @@ Pre-check happens in `general/tools/set_status.py` before each adapter's `wrap_t
 
 ### Current Status
 
-**As of 2026-09-07**: Phase 1 (Design & ADR) fully complete. ADR b399f1ce-ed42-4929-b01c-7a57d18e8014 ("Extend the non-raising structured-result workaround to set_status's invalid-status case") drafted, created at `docs/adr/b399f1ce-ed42-4929-b01c-7a57d18e8014-extend-the-non-raising-structured-result-workaround-to-set-s.md`, reviewed and approved by the user, and its status set to `accepted`; `validate_adr` passes at both the `proposed` and `accepted` stages. It records the Task 1.2 vocabulary-lookup design (a private `_ALLOWED_STATUSES_BY_TYPE` mapping in `set_status.py`, built from direct private-name imports of each domain's own `_ALLOWED_STATUSES`/`_FIXED_STATUSES` constant, plus ADR's `_SUPERSEDED_PATTERN` regex) and the Task 1.3 result-shape design (new `InvalidStatusResult` model in `general/models/invalid_status_result.py`, mirroring `ValidateResult`'s precedent, with `valid`/`type`/`status`/`allowed_values`/`message` fields and exact message wording) that Phase 2 will implement from. Ready to start Phase 2 (Implementation).
+**As of 2026-09-07**: Phase 2 (Implementation) complete. `general/tools/set_status.py` now pre-checks `status` against the dispatched domain's own closed vocabulary (`_ALLOWED_STATUSES_BY_TYPE` mapping, plus ADR's `_FIXED_STATUSES`/`_SUPERSEDED_PATTERN`) before taking any domain lock or reading any file, returning the new `InvalidStatusResult` (`general/models/invalid_status_result.py`) instead of letting `pydantic.ValidationError` propagate, for all 13 domains (12 whole-body + adr). Every other failure mode (path-injection/wrong-shape id, `superseded_by` misuse on a non-adr type, unknown id with a valid status, valid id + valid status) was manually traced and confirmed unaffected. The tool's `@mcp.tool` description, function docstring, and module docstring were updated to describe the new non-raising case. As expected per this phase's scope, 18 existing test methods across `tests/general/tools/test_set_status.py`, `tests/general/tools/test_error_context.py`, and four domains' `test_integration.py` files now fail because they still assert a raised `pydantic.ValidationError` for an invalid status -- Phase 3 owns updating them to assert the new structured result instead. Ready to start Phase 3 (Tests).
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-07 16:00:00.000Z - Fixed adr+superseded_by edge case flagged after Phase 2; ADR amended
+
+The user confirmed the edge case flagged at the end of Phase 2: when `type="adr"` and `superseded_by` is given, `_check_status_allowed` (`general/tools/set_status.py`) now skips validating `status` entirely (returns `None`/valid unconditionally), regardless of its content, instead of checking the raw, discarded `status` argument against `_ADR_FIXED_STATUSES`/`_ADR_SUPERSEDED_PATTERN`. This matches `models.adr.v1.mutations.set_status`'s own existing semantics, which ignores `status` and composes `f"superseded by {superseded_by}"` whenever `superseded_by` is given. The helper's signature grew a `superseded_by: str | None` parameter (the `adr`-branch check now short-circuits to `None`/valid when `superseded_by is not None`, before touching `status` at all); its call site in `set_status()` was updated to pass `superseded_by` through. Re-verified with an extended scratch script: `set_status(id=<adr>, type="adr", status="garbage-not-a-valid-status", superseded_by="some-other-id")` now succeeds and persists `status == "superseded by some-other-id"` (previously would have incorrectly returned `InvalidStatusResult`); the same call with `superseded_by=None` still correctly returns `InvalidStatusResult`; every other previously-verified Task 2.3 scenario (path-injection id, `superseded_by`-on-non-adr `ValueError`, unknown id, valid id+status happy path, adr with a valid fixed status) still passes unchanged. `ruff format --check`/`ruff check` on the two touched files and `vulture` on the whole `src/` tree are all clean. ADR b399f1ce-ed42-4929-b01c-7a57d18e8014's Decision Outcome (point 3) was amended via `update_section` with a short paragraph documenting this refinement; `validate_adr` still passes after the amendment.
+
+#### 2026-09-07 15:00:00.000Z - Phase 2 (Implementation) complete
+
+Implemented ADR b399f1ce-ed42-4929-b01c-7a57d18e8014's design in full: created `general/models/invalid_status_result.py` (new `InvalidStatusResult` Pydantic model, `valid`/`type`/`status`/`allowed_values`/`message` fields, re-exported from `general/models/__init__.py` alongside `ValidateResult`); added a private `_ALLOWED_STATUSES_BY_TYPE` mapping to `general/tools/set_status.py` built from direct imports of each of the 12 whole-body domains' own `_ALLOWED_STATUSES` constant (from each domain's `models/v{N}/frontmatter.py`, not its package `__init__.py`) plus ADR's `_FIXED_STATUSES`/`_SUPERSEDED_PATTERN`; added a `_check_status_allowed` helper implementing the pre-check (mirrors `AdrFrontmatter._validate_status`'s own in/pattern-match logic for `type="adr"`); wired the pre-check into the public `set_status()` function after the existing `validate_id`/`superseded_by` guards but before adapter dispatch, so an invalid status is now rejected before any domain lock or file I/O; updated the `@mcp.tool` description, `set_status()`'s own docstring (Returns/Raises sections), and the module docstring to describe the new non-raising case and note that no other path in this file can still raise `pydantic.ValidationError` in practice. Verified with a scratch script (not committed) that all four required failure-mode scenarios remain unaffected: path-injection/wrong-shape id still raises `ValueError` first; `superseded_by` misuse on a non-adr type still raises `ValueError` first; unknown id + valid status still raises the domain's own `XNotFoundError`; valid id + valid status still succeeds via the adapter -- for both a whole-body domain (qa) and adr (including `superseded_by` composition). `ruff format --check`, `ruff check`, and `vulture` are clean on the changed files/whole `src/` tree. Running the full test suite (informational only, not this phase's gate) confirmed exactly 18 existing test methods now fail because they still assert a raised `pydantic.ValidationError` for set_status's invalid-status case -- all in `tests/general/tools/test_set_status.py` (`TestSetStatusWholeBodyDomains`/`TestSetStatusAdr`'s `test_out_of_vocabulary_status_raises_validation_error_file_untouched`), `tests/general/tools/test_error_context.py` (`TestGenericSetStatusToolErrorContext.test_set_status_tsk_out_of_vocabulary_names_domain_and_tool`), and four domains' `test_integration.py` files (`dec`, `feat`, `sop`, `sysrs`, `vcr` each have one `test_set_status_rejects_*` test) -- all expected, Phase 3 owns fixing them.
 
 #### 2026-09-07 14:00:00.000Z - ADR reviewed and accepted; Phase 1 fully complete
 
@@ -157,6 +165,10 @@ Investigated issue #103's premise (set_status error message lacks allowed values
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-07 16:00:00.000Z - Pre-check skips status validation entirely for adr+superseded_by
+
+Resolved, with the user's sign-off, an edge case flagged at the end of Phase 2: for `type="adr"` with `superseded_by` given, the invalid-status pre-check now skips validating `status` entirely (never rejects it, regardless of content), matching `models.adr.v1.mutations.set_status`'s own existing semantics of ignoring `status` and composing `"superseded by {superseded_by}"` in that case. Without this, the pre-check would have incorrectly rejected an otherwise-valid `superseded_by` call whenever the caller's (discarded) `status` argument happened to be out of vocabulary -- a behavior regression the original ADR text did not explicitly address. ADR b399f1ce-ed42-4929-b01c-7a57d18e8014's Decision Outcome (point 3) was amended to record this refinement.
 
 #### 2026-09-07 12:00:00.000Z - Scoped to a narrow pre-check, not a full redesign
 
