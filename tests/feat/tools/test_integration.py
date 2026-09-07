@@ -54,13 +54,14 @@ from pathlib import Path
 from unittest import mock
 
 import frontmatter
-from pydantic import ValidationError
 
 from biz.dfch.specmgr.feat.models.v1 import FeatDocument, FeatFrontmatter
+from biz.dfch.specmgr.feat.models.v1.frontmatter import _ALLOWED_STATUSES as _FEAT_ALLOWED_STATUSES
 from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR, FeatNotFoundError, README_FILENAME, feat_base_dir
 from biz.dfch.specmgr.feat.tools.create_feat import create_feat
 from biz.dfch.specmgr.feat.tools.get_feat import get_feat
 from biz.dfch.specmgr.feat.tools.list_feat import list_feat
+from biz.dfch.specmgr.general.models import InvalidStatusResult
 from biz.dfch.specmgr.general.tools.delete import delete
 from biz.dfch.specmgr.general.tools.set_status import set_status
 from biz.dfch.specmgr.general.tools.update import update
@@ -288,14 +289,20 @@ class TestFeatLifecycleIntegration(TempFeatDirTestCase):
             get_feat(feat_id)
 
     def test_set_status_rejects_status_outside_the_closed_four_set(self) -> None:
-        """ACC-004: set_status (type="feat") must reject a status outside {planning, progress, review, done}."""
+        """ACC-004: set_status (type="feat") must reject a status outside {planning, progress,
+        review, done}, returning a non-raising ``InvalidStatusResult`` (ADR
+        b399f1ce-ed42-4929-b01c-7a57d18e8014) instead of raising ``pydantic.ValidationError``."""
         created = create_feat(_INITIAL_BODY)
         expected_path = feat_base_dir() / created.id / README_FILENAME
         before = expected_path.read_text(encoding="utf-8")
 
-        with self.assertRaises(ValidationError):
-            set_status(created.id, "feat", "in-progress")
+        result = set_status(created.id, "feat", "in-progress")
 
+        self.assertIsInstance(result, InvalidStatusResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(result.type, "feat")
+        self.assertEqual(result.status, "in-progress")
+        self.assertEqual(result.allowed_values, sorted(_FEAT_ALLOWED_STATUSES))
         self.assertEqual(expected_path.read_text(encoding="utf-8"), before)
 
     def test_validate_rejects_malformed_body_and_wrong_full_shape(self) -> None:

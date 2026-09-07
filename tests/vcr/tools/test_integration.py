@@ -40,14 +40,15 @@ from pathlib import Path
 from unittest import mock
 
 import frontmatter
-from pydantic import ValidationError
 
+from biz.dfch.specmgr.general.models import InvalidStatusResult
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.general.tools.delete import delete
 from biz.dfch.specmgr.general.tools.set_status import set_status
 from biz.dfch.specmgr.general.tools.update import update
 from biz.dfch.specmgr.general.tools.validate import validate
 from biz.dfch.specmgr.vcr.models.v1 import VcrFrontmatter
+from biz.dfch.specmgr.vcr.models.v1.frontmatter import _ALLOWED_STATUSES as _VCR_ALLOWED_STATUSES
 from biz.dfch.specmgr.vcr.tools._paths import VcrNotFoundError, vcr_base_dir
 from biz.dfch.specmgr.vcr.tools.create_vcr import create_vcr
 from biz.dfch.specmgr.vcr.tools.get_vcr import get_vcr
@@ -176,14 +177,20 @@ class TestVcrLifecycleIntegration(TempVcrDirTestCase):
             get_vcr(vcr_id)
 
     def test_set_status_rejects_dec_only_accepted_status(self) -> None:
-        """set_status (type="vcr") must reject `accepted` (DEC's/GOL's value, outside VCR's closed four-set)."""
+        """set_status (type="vcr") must reject `accepted` (DEC's/GOL's value, outside VCR's closed
+        four-set), returning a non-raising ``InvalidStatusResult`` (ADR
+        b399f1ce-ed42-4929-b01c-7a57d18e8014) instead of raising ``pydantic.ValidationError``."""
         created = create_vcr(_INITIAL_BODY)
         expected_path = vcr_base_dir() / f"vcr-{created.id}-sample-verification-case.md"
         before = expected_path.read_text(encoding="utf-8")
 
-        with self.assertRaises(ValidationError):
-            set_status(created.id, "vcr", "accepted")
+        result = set_status(created.id, "vcr", "accepted")
 
+        self.assertIsInstance(result, InvalidStatusResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(result.type, "vcr")
+        self.assertEqual(result.status, "accepted")
+        self.assertEqual(result.allowed_values, sorted(_VCR_ALLOWED_STATUSES))
         self.assertEqual(expected_path.read_text(encoding="utf-8"), before)
 
     def test_validate_rejects_malformed_body_and_wrong_full_shape(self) -> None:

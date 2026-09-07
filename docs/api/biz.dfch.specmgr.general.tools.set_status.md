@@ -48,6 +48,24 @@ Neither any ``create_<d>`` tool nor the generic :func:`update` tool
 accepts a ``status`` argument at all -- this tool is the sole
 status-change entry point for every domain.
 
+An out-of-vocabulary ``status`` for the dispatched ``type`` (ADR
+b399f1ce-ed42-4929-b01c-7a57d18e8014, "Extend the non-raising
+structured-result workaround to set_status's invalid-status case") is
+pre-checked by the public :func:`set_status` against a private,
+module-scope ``_ALLOWED_STATUSES_BY_TYPE`` mapping (built from each
+domain's own ``_ALLOWED_STATUSES``/``_FIXED_STATUSES`` constant, imported
+directly from its ``models/v{N}/frontmatter.py`` submodule) **before**
+dispatching to any ``_set_status_<d>`` adapter -- so before any domain
+lock is taken or any file is read -- and returns a structured, non-raising
+:class:`~biz.dfch.specmgr.general.models.InvalidStatusResult` instead of
+letting ``pydantic.ValidationError`` propagate from the adapter's
+``XFrontmatter``/``AdrFrontmatter`` reconstruction. This is a narrow,
+additive exception to this tool's otherwise raise-based contract
+(mirroring the generic ``validate`` tool's own non-raising workaround,
+ADR 519d1206-4d2a-4500-9046-6db635209996) -- every other failure mode
+(unknown id, path-injection/wrong-shape id, ``superseded_by`` misuse on a
+non-``adr`` type) still raises exactly as before.
+
 ``models.adr.v1.mutations`` is imported qualified (as ``mutations``)
 because the pure, in-memory operation it delegates to shares this
 wrapper's own name.
@@ -62,6 +80,27 @@ resolved path to the domain's own base directory with
 lock.
 
 ## Functions
+
+### `_check_status_allowed(type_: 'str', status: 'str', superseded_by: 'str | None') -> 'InvalidStatusResult | None'`
+
+Pre-check ``status`` against ``type_``'s own closed vocabulary; ``None`` if valid.
+
+For ``type_ != "adr"``: valid iff ``status`` is a member of
+``_ALLOWED_STATUSES_BY_TYPE[type_]``. For ``type_ == "adr"`` with ``superseded_by is None``:
+valid iff ``status`` is in ``_ADR_FIXED_STATUSES`` or matches ``_ADR_SUPERSEDED_PATTERN`` --
+mirroring ``AdrFrontmatter._validate_status``'s own check exactly.
+
+For ``type_ == "adr"`` with ``superseded_by`` given, ``status`` is never checked here at
+all -- always ``None`` (valid) -- because ``models.adr.v1.mutations.set_status`` itself
+ignores the raw ``status`` argument in that case and composes ``f"superseded by
+{superseded_by}"`` instead; validating the discarded ``status`` value would incorrectly
+reject an otherwise-valid call.
+
+Called before any domain lock is taken or file is read (ADR
+b399f1ce-ed42-4929-b01c-7a57d18e8014's Decision Outcome, point 3). Returns an
+:class:`InvalidStatusResult` (never raises) on a miss, or ``None`` when ``status`` is valid
+(or ignored, per the ``adr``+``superseded_by`` case above).
+
 
 ### `_set_status_adr(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'Adr'`
 
@@ -209,7 +248,7 @@ Mirrors :func:`_set_status_dec`'s shape (same ``vcr_lock``,
 ``adr``, so ``superseded_by`` must never be given.
 
 
-### `set_status(id: 'str', type: "Literal['req', 'uc', 'tsk', 'qa', 'prb', 'gol', 'rsk', 'dec', 'sop', 'feat', 'vcr', 'sysrs', 'adr']", status: 'str', superseded_by: 'str | None' = None) -> '_SetStatusFrontmatter'`
+### `set_status(id: 'str', type: "Literal['req', 'uc', 'tsk', 'qa', 'prb', 'gol', 'rsk', 'dec', 'sop', 'feat', 'vcr', 'sysrs', 'adr']", status: 'str', superseded_by: 'str | None' = None) -> '_SetStatusFrontmatter | InvalidStatusResult'`
 
 Replace the status of an existing document, across all thirteen domains.
 
@@ -269,12 +308,15 @@ Replace the status of an existing document, across all thirteen domains.
     -------
 ReqFrontmatter | UcFrontmatter | TskFrontmatter | QaFrontmatter | PrbFrontmatter |
 GolFrontmatter | RskFrontmatter | DecFrontmatter | FeatFrontmatter | SopFrontmatter |
-VcrFrontmatter | SysrsFrontmatter | Adr
+VcrFrontmatter | SysrsFrontmatter | Adr | InvalidStatusResult
     The updated document's frontmatter only (no body) of the dispatched domain type
     for the twelve whole-body domains; for ``type="adr"`` (unchanged, out of scope for
     this feature) the full ``Adr`` document, as before. Use the corresponding
     ``get_<d>`` tool to fetch the full document afterward for the twelve whole-body
-    domains.
+    domains. When ``status`` is not in the dispatched domain's closed vocabulary,
+    returns an :class:`~biz.dfch.specmgr.general.models.InvalidStatusResult` instead
+    (ADR b399f1ce-ed42-4929-b01c-7a57d18e8014) -- see the Raises section below for
+    why this one case no longer raises.
 
     Raises
     ------
@@ -285,13 +327,18 @@ VcrFrontmatter | SysrsFrontmatter | Adr
         than ``"adr"`` (raised before any file access). Nothing is
         written in either case.
     pydantic.ValidationError
-        ``status`` is not in the dispatched domain's closed vocabulary
-        (for ``adr``: not one of its six values and not a
-        ``"superseded by ..."`` string). The message is prefixed with
-        domain/tool/channel context (e.g. ``"tsk set_status
-        (frontmatter): ..."``) by the shared tool-boundary wrapper
-        (:func:`~biz.dfch.specmgr.models.md._errors.wrap_tool_errors`).
-        Nothing is written.
+        Does **not** raise for an out-of-vocabulary ``status`` -- that
+        one case is pre-checked before dispatch (see Returns above) and
+        returns an ``InvalidStatusResult`` instead (ADR
+        b399f1ce-ed42-4929-b01c-7a57d18e8014), a deliberate, narrow
+        exception to this tool's otherwise raise-based contract. No
+        other path in this function still raises
+        ``pydantic.ValidationError``: every other frontmatter field
+        carried into the domain's ``XFrontmatter``/``AdrFrontmatter``
+        reconstruction is either preserved unchanged from the existing,
+        already-valid document or (``updated``) a well-formed timestamp
+        generated internally, so nothing else in the reconstructed
+        model can fail validation in practice.
     ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
     PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
     FeatNotFoundError / SopNotFoundError / VcrNotFoundError / SysrsNotFoundError /

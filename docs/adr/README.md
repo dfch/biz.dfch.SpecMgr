@@ -89,6 +89,11 @@ Index of all ADRs in this repository.
   - Status: accepted
   - Date: 2026-09-01
   - Decision-makers: dfch
+- [Extend the non-raising structured-result workaround to set_status's invalid-status case](b399f1ce-ed42-4929-b01c-7a57d18e8014-extend-the-non-raising-structured-result-workaround-to-set-s.md)
+  - Id: b399f1ce-ed42-4929-b01c-7a57d18e8014
+  - Status: accepted
+  - Date: 2026-09-07
+  - Decision-makers: OpenCode agent + user decision
 - [Frontmatter extension fields (id, version) with whole-object full-replace update contract](bbf412a7-965e-4435-8669-c338407d73b7-frontmatter-extension-fields-id-version-with-whole-object-fu.md)
   - Id: bbf412a7-965e-4435-8669-c338407d73b7
   - Status: accepted

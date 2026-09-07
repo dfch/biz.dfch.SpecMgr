@@ -54,14 +54,15 @@ from pathlib import Path
 from unittest import mock
 
 import frontmatter
-from pydantic import ValidationError
 
+from biz.dfch.specmgr.general.models import InvalidStatusResult
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.general.tools.delete import delete
 from biz.dfch.specmgr.general.tools.set_status import set_status
 from biz.dfch.specmgr.general.tools.update import update
 from biz.dfch.specmgr.general.tools.validate import validate
 from biz.dfch.specmgr.sop.models.v1 import SopFrontmatter
+from biz.dfch.specmgr.sop.models.v1.frontmatter import _ALLOWED_STATUSES as _SOP_ALLOWED_STATUSES
 from biz.dfch.specmgr.sop.tools._paths import SopNotFoundError, sop_base_dir
 from biz.dfch.specmgr.sop.tools.create_sop import create_sop
 from biz.dfch.specmgr.sop.tools.get_sop import get_sop
@@ -216,14 +217,20 @@ class TestSopLifecycleIntegration(TempSopDirTestCase):
             get_sop(sop_id)
 
     def test_set_status_rejects_gol_only_implemented_status(self) -> None:
-        """ACC-003: set_status (type="sop") must reject `implemented` (GOL's value, outside SOP's closed five-set)."""
+        """ACC-003: set_status (type="sop") must reject `implemented` (GOL's value, outside SOP's
+        closed five-set), returning a non-raising ``InvalidStatusResult`` (ADR
+        b399f1ce-ed42-4929-b01c-7a57d18e8014) instead of raising ``pydantic.ValidationError``."""
         created = create_sop(_INITIAL_BODY)
         expected_path = sop_base_dir() / f"sop-{created.id}-new-employee-it-account-provisioning.md"
         before = expected_path.read_text(encoding="utf-8")
 
-        with self.assertRaises(ValidationError):
-            set_status(created.id, "sop", "implemented")
+        result = set_status(created.id, "sop", "implemented")
 
+        self.assertIsInstance(result, InvalidStatusResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(result.type, "sop")
+        self.assertEqual(result.status, "implemented")
+        self.assertEqual(result.allowed_values, sorted(_SOP_ALLOWED_STATUSES))
         self.assertEqual(expected_path.read_text(encoding="utf-8"), before)
 
     def test_set_status_rejects_superseded_by_for_sop(self) -> None:
