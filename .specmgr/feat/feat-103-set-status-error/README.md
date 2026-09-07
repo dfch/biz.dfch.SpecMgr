@@ -4,7 +4,7 @@ created: '2026-09-07 04:41:26.135+02:00'
 id: feat-103-set-status-error
 status: done
 type: feat
-updated: '2026-09-07 06:10:51.000+02:00'
+updated: '2026-09-07 08:16:48.000+02:00'
 version: 1.0.0
 ---
 
@@ -44,7 +44,8 @@ GitHub issue #103 reports that set_status's error for an invalid status value is
 
 - [x] ACC-005: `docs/MCP.md` (regenerated via `specmgr docs`) reflects the updated set_status behavior.
 
-- [ ] ACC-006: the drafted upstream bug report has been filed as a real GitHub issue against `anomalyco/opencode`, its URL recorded in this feature's Related PRs / Commits. (explicitly declined by the user -- filing skipped by design, not forgotten)
+- [x] ACC-006: the drafted upstream bug report has been filed as a real GitHub issue against `anomalyco/opencode`, its URL recorded in this feature's Related PRs / Commits. Filed later, in a follow-up session, as
+  [anomalyco/opencode#47740](https://github.com/anomalyco/opencode/issues/47740).
 
 - [x] ACC-007: full quality gate green (`ruff format --check`, `ruff check`, `vulture`, `pytest -n auto`).
 
@@ -138,30 +139,39 @@ Pre-check happens in `general/tools/set_status.py` before each adapter's `wrap_t
 
 ### Current Status
 
-**As of 2026-09-07**: **Feature done.** Phase 5 (Verification & Closeout) complete: every acceptance criterion
-except the explicitly-declined ACC-006 is verified and checked (ACC-001 through ACC-005 and ACC-007), the full
-quality gate (`ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`,
-`pytest -n auto --cov=src --cov-report=`) is green (3346 tests passed, zero failures), and the feature's own
-frontmatter `status` is now `done`. ACC-006 remains permanently, deliberately unmet -- the drafted upstream
-OpenCode bug report was reviewed and updated (Phase 4) but never filed, per the user's explicit, repeated
-instruction; this is a known, accepted gap for this feature, not an oversight. All five phases (Design & ADR,
-Implementation, Tests, Docs & Upstream Filing, Verification & Closeout) are now complete.
+**As of 2026-09-07**: **Feature done.** Phase 5 (Verification & Closeout) complete: every acceptance criterion,
+including ACC-006, is now verified and checked, the full quality gate (`ruff format --check`, `ruff check`,
+`vulture src/ whitelist.py --min-confidence 60`, `pytest -n auto --cov=src --cov-report=`) is green (3346 tests
+passed, zero failures), and the feature's own frontmatter `status` is `done`. ACC-006 was left deliberately
+unmet at original closeout time (the drafted upstream OpenCode bug report was reviewed/updated in Phase 4 but
+not filed, per the user's explicit, repeated instruction at the time), then filed in a later session as
+[anomalyco/opencode#47740](https://github.com/anomalyco/opencode/issues/47740) -- see Updates below. All five
+phases (Design & ADR, Implementation, Tests, Docs & Upstream Filing, Verification & Closeout) are complete.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-07 20:00:00.000Z - ACC-006 closed: upstream bug report filed as anomalyco/opencode#47740
+
+The drafted upstream bug report (`.specmgr/feat/feat-81-83-validation/opencode-issue-mcp-tool-error-truncated.md`)
+was revised further in a later session (tighter, template-conforming wording per `anomalyco/opencode`'s own
+`CONTRIBUTING.md`/`bug-report.yml` guidance against "AI-generated walls of text": internal ADR/feature
+cross-references moved out of the filed body into an HTML comment, the reproduction table's example id changed
+from a sensitive-looking `../../../etc/passwd` path to a clearly-benign, confirmed-non-existent
+`./non-existing-file.txt`, and the "unknown id" UUID changed from the nil UUID to an obviously-fake
+`deadbeef-dead-...-deadbeefdead` pattern), then filed via `gh issue create` as
+[anomalyco/opencode#47740](https://github.com/anomalyco/opencode/issues/47740). ACC-006 is now checked; this
+feature's frontmatter `updated` timestamp was bumped accordingly. No `src/`/`tests/` files were touched.
 
 #### 2026-09-07 19:00:00.000Z - Phase 5 (Verification & Closeout) complete -- feature done
 
 Walked every acceptance criterion with fresh, independent evidence rather than re-checking boxes blindly.
 **ACC-001**: created a temporary `qa` document in an isolated `SPECMGR_DOCS_DIR` (`tempfile.mkdtemp()`, never
 touching the real `docs/` tree) and called `set_status(id=<that id>, type="qa", status="closed")` directly at the
-Python level -- confirmed it returns `InvalidStatusResult(valid=False, type='qa', status='closed',
-allowed_values=['active', 'cancelled', 'done', 'draft'], message="Invalid status 'closed' for type 'qa'. Allowed
-values: active, cancelled, done, draft")`, i.e. a structured, non-raising result carrying the domain type, the
+Python level -- confirmed it returns `InvalidStatusResult(valid=False, type='qa', status='closed', allowed_values=['active', 'cancelled', 'done', 'draft'], message="Invalid status 'closed' for type 'qa'. Allowed values: active, cancelled, done, draft")`, i.e. a structured, non-raising result carrying the domain type, the
 rejected value, and the full sorted allowed-values list, exactly as ACC-001 requires. (A first attempt to
-reproduce this same check purely through the live MCP `set_status` tool call surfaced as `"Error executing tool
-set_status"` in this session's own MCP client -- concrete, first-hand corroboration of the OpenCode client-side
+reproduce this same check purely through the live MCP `set_status` tool call surfaced as `"Error executing tool set_status"` in this session's own MCP client -- concrete, first-hand corroboration of the OpenCode client-side
 `isError` truncation defect ADR 519d1206 and this feature's own ADR b399f1ce both discuss, not a regression in
 the fix itself: a follow-up `get_qa` on the same document confirmed its `status` was still `draft`, i.e. nothing
 was written, consistent with a non-raising rejection happening before any file I/O.) **ACC-002**: ran the six
@@ -182,8 +192,7 @@ re-confirmed still checked from Phase 4, not re-verified from scratch (per the o
 **ACC-006**: left explicitly, permanently unchecked -- the drafted upstream OpenCode bug report was never filed,
 by the user's own repeated, explicit choice; this is a known, accepted scope deviation for this feature, not an
 oversight, and nothing was filed against `anomalyco/opencode` during this phase either. **ACC-007**/Task 5.1: ran
-the full quality gate -- `uv run --frozen ruff format --check` (1658 files already formatted), `uv run --frozen
-ruff check` ("All checks passed!"), `uv run --frozen vulture src/ whitelist.py --min-confidence 60` (no output,
+the full quality gate -- `uv run --frozen ruff format --check` (1658 files already formatted), `uv run --frozen ruff check` ("All checks passed!"), `uv run --frozen vulture src/ whitelist.py --min-confidence 60` (no output,
 clean), `uv run --frozen pytest -n auto --cov=src --cov-report=` (3346 passed in 43.50s, 24 workers) -- all four
 green with zero regressions. Task 5.2: set this feature's own frontmatter `status` from `planning` to `done` and
 bumped `updated`, via a direct file edit of this README's YAML frontmatter -- not the `specmgr_set_status` MCP
@@ -202,8 +211,7 @@ Ran `uv run --frozen specmgr docs` and `uv run --frozen specmgr adr-toc` (Tasks 
 diff** against the working tree, and a second immediate run of each was also diff-free, confirming Phase 2's
 pre-commit hook had already regenerated `docs/api/`, `docs/GENERATED.md`, `docs/MCP.md`, and
 `docs/adr/README.md` in its own commit (`d8b2077`) -- this phase's runs were a confirmation, not a fresh
-regeneration. Verified ACC-005 directly: `docs/MCP.md` line 475 (tool-index table) and the full `### Tool:
-set_status` section both read "an out-of-vocabulary `status` does NOT raise -- it returns a structured,
+regeneration. Verified ACC-005 directly: `docs/MCP.md` line 475 (tool-index table) and the full `### Tool: set_status` section both read "an out-of-vocabulary `status` does NOT raise -- it returns a structured,
 non-raising `InvalidStatusResult` (`{valid: false, type, status, allowed_values, message}`) instead, so the
 allowed-values detail survives MCP clients that truncate error content" -- marked `[x]`. Per the orchestrator's
 explicit, twice-repeated instruction ("do not file the issue, only draft or update the text for it"), Task 4.3
@@ -276,3 +284,5 @@ Chose to extend ADR 519d1206's non-raising workaround only to set_status's singl
 - ADR 519d1206-4d2a-4500-9046-6db635209996: the prior decision this feature extends.
 
 - `.specmgr/feat/feat-81-83-validation/README.md` and `opencode-issue-mcp-tool-error-truncated.md`: the original investigation and drafted upstream report this feature builds on.
+
+- [anomalyco/opencode#47740](https://github.com/anomalyco/opencode/issues/47740): the upstream bug report (ACC-006), filed in a later session after this feature's own closeout.

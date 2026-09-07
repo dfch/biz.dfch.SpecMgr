@@ -1,171 +1,114 @@
-# [Bug] MCP tool call failures (`isError: true`) reach the model as a bare `"Error executing tool <name>"`, discarding the full `CallToolResult` message
+# MCP tool errors (`isError: true`) reach the model as a bare `Error executing tool <name>`, discarding the full error message
 
-> **Status**: Drafted, not filed. Prepared while investigating GitHub issues #81/#83 of `biz.dfch.SpecMgr`
-> (see `.specmgr/feat/feat-81-83-validation/README.md`), saved here for reference/reuse. File this against
-> `anomalyco/opencode` once reviewed. See also ADR 519d1206-4d2a-4500-9046-6db635209996, which records
-> `biz.dfch.SpecMgr`'s own `validate` tool design as a workaround for the defect described here, and ADR
-> b399f1ce-ed42-4929-b01c-7a57d18e8014 (GitHub issue #103), which had to narrowly extend that same
-> non-raising-workaround pattern to a second, unrelated tool (`set_status`'s invalid-status case) days later
-> -- direct evidence that this defect keeps forcing server-side workarounds on a per-tool, per-failure-mode
-> basis rather than being something a well-behaved MCP server can design around once.
+<!-- Internal note, not part of the filed issue: filed as anomalyco/opencode#47740
+(https://github.com/anomalyco/opencode/issues/47740). Searched anomalyco/opencode issues for duplicates first;
+found none matching this symptom (closest: #15041, #25098, both unrelated). Body below mirrors their
+bug-report.yml form fields as headings, and is what was actually submitted (H1 title above became the issue
+title; this comment was stripped before filing). -->
 
-## Environment
+## Description
 
-- OpenCode version: **1.18.27**
-- MCP server: a local `stdio` Python server built on the `mcp`/FastMCP SDK (`biz-dfch-specmgr`'s `specmgr mcp`
-  command), but the bug is not specific to this server -- see "Why this looks like an OpenCode-side issue" below.
-- OS: Linux
+When an MCP tool call fails with `isError: true`, the model only receives a bare `Error executing tool <name>` --
+the real error text the server put in `content[].text` is dropped. A successful call (`isError: false`) forwards
+its full content fine.
 
-## Summary
+Proof: the same MCP server, tool, and input, called two ways -- via the MCP Inspector (raw MCP protocol, no
+OpenCode) and via a live OpenCode session. The Inspector always returns the full error; OpenCode always truncates
+it to the bare tool name, across every failure mode tested on two unrelated tools of the same server.
 
-When an MCP tool call fails and the server returns a `CallToolResult` with `isError: true`, the model (the LLM
-driving the OpenCode session) only ever receives a short, contentless `"Error executing tool <name>"` string.
-The actual error detail -- which the MCP server places in full inside `content[].text` -- never reaches the
-model's context. A tool call that *succeeds* (`isError: false`), by contrast, has its full `content` -- of any
-size we tested -- forwarded to the model intact.
+| # | Tool call | Failure mode | Inspector | OpenCode |
+| - | --- | --- | --- | --- |
+| 1 | `get_req(id="./non-existing-file.txt")` | path-like id, `isError:true` | full message | `Error executing tool get_req` |
+| 2 | `set_status(id=<uuid>, type=req, status="bogus-status")` | invalid status, `isError:false` (control) | full JSON | full JSON (not truncated) |
+| 3 | `set_status(id="deadbeef-dead-dead-dead-deadbeefdead", type=req, status=draft)` | unknown id, `isError:true` | full message | `Error executing tool set_status` |
+| 4 | `set_status(id="./non-existing-file.txt", type=req, status=draft)` | path-like id, `isError:true` | full message | `Error executing tool set_status` |
+| 5 | `set_status(id=<uuid>, type=req, status=draft, superseded_by="x")` | `superseded_by` misuse, `isError:true` | full message | `Error executing tool set_status` |
 
-This makes any MCP tool that reports failures by raising/returning `isError: true` effectively useless for
-communicating *why* it failed to the agent, even when the tool author did the work of producing a detailed,
-actionable message.
+Row 2 is a control: the one failure mode that doesn't raise comes through OpenCode intact, so the bug is
+specifically about `isError: true`, not the tool or server.
 
-## Steps to Reproduce
+Worked example (row 1):
 
-1. Configure an MCP server (stdio or otherwise) that exposes a tool which, on invalid input, returns
-   `CallToolResult(isError=True, content=[TextContent(type="text", text="Error executing tool <name>: <long, detailed message>")])` -- this is exactly what a Python FastMCP tool produces by default when the tool
-   function raises an exception.
-2. In an OpenCode session, call that tool with input that triggers the failure.
-3. Observe the tool result surfaced to the model.
-
-### Minimal concrete repro used during investigation
-
-Any of the following calls into `biz-dfch-specmgr`'s MCP server (`specmgr mcp`) reproduce it:
-
-- `validate_req` with body-only content whose `created`/`updated` frontmatter fields use a naive ISO-8601
-  timestamp instead of the required `yyyy-MM-dd HH:mm:ss.fff` + `Z`/offset variant.
-- `validate_dec` with an `## Updates` sub-heading using an em dash (`—`) instead of a hyphen (`-`).
-- `validate_feat` with a `feat` document body whose `Updates`/`Decisions Made` heading timestamp doesn't match
-  the required regex.
-
-All three are ordinary Python tool functions that raise `pydantic.ValidationError`/`AssertionError` on invalid
-input; the MCP/FastMCP framework wraps that exception into `CallToolResult(isError=True, content=[...])`
-automatically.
-
-## Expected Behavior
-
-The model receives the full `content[].text` of the `CallToolResult`, e.g.:
-
-```
-Error executing tool validate_req: 2 validation errors for ReqFrontmatter
-created
-  req validate_req: req frontmatter block, field 'created' (document line 2): Value error, created/updated
-  '2026-08-05T08:15:42' must be the date+time variant 'yyyy-MM-dd HH:mm:ss.fff' followed by 'Z' or a signed
-  '+HH:mm'/'-HH:mm' offset [...]
-updated
-  req validate_req: req frontmatter block, field 'updated' (document line 6): Value error, created/updated
-  '2026-08-06T03:27:27' must be the date+time variant 'yyyy-MM-dd HH:mm:ss.fff' followed by 'Z' or a signed
-  '+HH:mm'/'-HH:mm' offset [...]
-```
-
-## Actual Behavior
-
-The model receives only:
-
-```
-Error executing tool validate_req
-```
-
-Nothing after the tool name -- no colon, no validation detail, no indication of which field or line failed.
-
-## Evidence That the Full Message Exists on the Wire (Ruling Out the MCP Server)
-
-A standalone script using the `mcp` Python SDK's `stdio_client`/`ClientSession` was used to call the exact same
-tool with the exact same input, bypassing OpenCode's tool-calling layer entirely and inspecting the raw
-`CallToolResult` returned by the server process:
-
-```python
-result = await session.call_tool("validate_req", {"content": REQ_REPRO, "full": True})
-print("isError:", result.is_error)  # -> True
-print(result.content[0].model_dump())  # -> full text below
+```bash
+npx @modelcontextprotocol/inspector --cli specmgr mcp \
+  --method tools/call --tool-name get_req --tool-arg id="./non-existing-file.txt" --format json
 ```
 
 ```json
-{
-  "type": "text",
-  "text": "Error executing tool validate_req: 2 validation errors for ReqFrontmatter\ncreated\n  req validate_req: req frontmatter block, field 'created' (document line 2): Value error, created/updated '2026-08-05T08:15:42' must be the date+time variant 'yyyy-MM-dd HH:mm:ss.fff' followed by 'Z' or a signed '+HH:mm'/'-HH:mm' offset [type=tool_boundary_error, input_value='2026-08-05T08:15:42', input_type=str]\nupdated\n  req validate_req: req frontmatter block, field 'updated' (document line 6): Value error, created/updated '2026-08-06T03:27:27' must be the date+time variant 'yyyy-MM-dd HH:mm:ss.fff' followed by 'Z' or a signed '+HH:mm'/'-HH:mm' offset [type=tool_boundary_error, input_value='2026-08-06T03:27:27', input_type=str]",
-  "annotations": null,
-  "meta": null
-}
+{"result":{"content":[{"type":"text","text":"Error executing tool get_req: id './non-existing-file.txt' contains a path separator or a '..' traversal sequence; a bare id is expected"}],"isError":true}}
 ```
 
-This confirms the MCP server sends the complete, detailed message. The truncation happens strictly between the
-wire response and what the model sees inside the OpenCode-driven session.
+(the check rejects either condition; this id only has the path separator, not `..` -- the message text is the same
+either way)
 
-## Why This Looks Like an OpenCode-Side Issue (Not the MCP Server's)
+Same call, live in OpenCode, returns only:
 
-A shallow clone of `anomalyco/opencode` (`dev` branch) was inspected. The code path that handles a failed MCP
-tool call does not appear to discard the message -- if anything, it goes out of its way to preserve it:
-
-```ts
-// packages/opencode/src/mcp/catalog.ts:68-74 (dynamicTool execute(), used for direct MCP tool calls)
-if (result.isError)
-  throw new Error(
-    result.content
-      .flatMap((item) => (item.type === "text" ? [item.text] : []))
-      .filter((text) => text.trim())
-      .join("\n\n") || "MCP tool returned an error",
-  )
+```
+Error executing tool get_req
 ```
 
-The identical pattern also exists in the "Code Mode" sandboxed tool-calling path:
+Where that message comes from, in the MCP server:
 
-```ts
-// packages/opencode/src/tool/code-mode.ts:161-167 (invokeChildTool)
-if (raw.isError)
-  throw new Error(
-    raw.content
-      .flatMap((item) => (item.type === "text" ? [item.text] : []))
-      .filter((text) => text.trim())
-      .join("\n\n") || "MCP tool returned an error",
-  )
+```python
+# src/biz/dfch/specmgr/req/tools/get_req.py:109 (inside the @mcp.tool()-decorated get_req)
+validate_id("req", id)
+
+# src/biz/dfch/specmgr/general/tools/_path_safety.py:106-111 (assert_no_traversal, called by validate_id)
+if not id_.strip():
+    raise ValueError(f"id {id_!r} is empty; a non-empty id is required")
+if _TRAVERSAL_SEQUENCE in id_ or any(separator in id_ for separator in _PATH_SEPARATORS):
+    raise ValueError(f"id {id_!r} contains a path separator or a '..' traversal sequence; a bare id is expected")
 ```
 
-Both join every `text` content block into the thrown `Error`'s `.message`, so the full detail should survive at
-least this point. Yet the observed behavior in this session (OpenCode 1.18.27) is a bare
-`"Error executing tool <name>"` with nothing else -- inconsistent with this code, as read.
+Plain `raise ValueError`, nothing MCP-specific -- the `mcp` Python SDK (FastMCP) is what turns an uncaught
+exception from inside a `@mcp.tool()` function into
+`CallToolResult(isError=True, content=[TextContent(text=f"Error executing tool {name}: {exc}")])` automatically;
+the server itself never constructs that envelope.
 
-Two possibilities, in order of likelihood based on available evidence:
+- [get_req.py#L109](https://github.com/dfch/biz.dfch.SpecMgr/blob/v0.23.0/src/biz/dfch/specmgr/req/tools/get_req.py#L109)
+- [\_path_safety.py#L106-L111](https://github.com/dfch/biz.dfch.SpecMgr/blob/v0.23.0/src/biz/dfch/specmgr/general/tools/_path_safety.py#L106-L111)
 
-1. Something further downstream of `catalog.ts`/`code-mode.ts` -- possibly in how the underlying LLM/tool-calling
-   SDK (e.g. the `ai` package's own tool-error-to-model-message serialization, which was not available to inspect
-   in this source-only clone) formats a thrown tool error before it is placed into the model's context -- discards
-   everything but a short summary.
-2. A different/older code path than the one inspected on `dev` is active in 1.18.27, or some wrapping
-   layer/config in this particular deployment reformats tool errors before they reach the model.
+## Plugins
 
-This report intentionally does not claim a single, pinpointed line as root cause -- only that the symptom is
-real, reproducible, and inconsistent with the mainline `dev`-branch code inspected.
+None -- this is an MCP server (`biz-dfch-specmgr`), not a plugin.
 
-## Impact
+## OpenCode version
 
-Any MCP tool author who puts effort into producing an actionable, detailed failure message (field path, line
-number, cause/fix hint, etc.) has that work silently discarded whenever they signal failure via `isError: true` --
-the standard, spec-compliant way to report a tool failure. The only reliable way found so far to get a detailed
-message to the model is to avoid the error channel entirely and return the detail as normal, successful
-(`isError: false`) tool output instead -- which is not a fix, only a workaround available to server authors who
-can afford to redesign their tool's contract around it. In this specific server, that workaround already had to
-be applied twice within the same week, to two otherwise-unrelated tools (`validate`, then `set_status`'s
-invalid-status case) -- each time only after a real user hit the truncated, contentless error in practice. This
-suggests the defect is not confined to one tool shape or one kind of thrown exception, and that any raise-based
-MCP tool in an OpenCode-driven session is at risk of it.
+1.18.29
 
-## Suggested Next Steps for Investigation
+## Steps to reproduce
 
-- Confirm whether `dynamicTool`'s thrown `Error` (`catalog.ts`) is what actually reaches the model, or whether
-  the underlying LLM/tool SDK's own error handling replaces/truncates `error.message` before it is included in
-  the conversation history sent to the provider.
-- Check whether there is a deliberate, but overly aggressive, message-length or content sanitization step
-  specifically for tool-call *errors* (as opposed to tool-call *results*), given that large *successful* tool
-  outputs were observed to pass through this same session without truncation.
-- If reproducible outside this specific deployment, add a regression test asserting that a `CallToolResult` with
-  `isError: true` and a multi-line `content[].text` payload is fully preserved in the message/context passed to
-  the model.
+1. Add an MCP server whose tool raises a plain exception on invalid input (default FastMCP behavior):
+   ```json
+   {
+     "mcp": {
+       "specmgr": {
+         "type": "local",
+         "enabled": true,
+         "command": ["uvx", "--from", "biz-dfch-specmgr[mcp]==0.23.0", "specmgr", "mcp"]
+       }
+     }
+   }
+   ```
+2. Call a tool with input that triggers the failure, e.g. `get_req(id="./non-existing-file.txt")`
+   -- any str containing a path separator is rejected, the file doesn't need to exist.
+3. Compare against calling the same tool/args through the MCP Inspector:
+   ```bash
+   npx @modelcontextprotocol/inspector --cli <server-command> \
+     --method tools/call --tool-name <tool> --tool-arg <name>=<value> --format json
+   ```
+
+`biz-dfch-specmgr[mcp]==0.23.0` = tag `v0.23.0` (commit `89484c4`) of `github.com/dfch/biz.dfch.SpecMgr`, `main`
+branch. Tool versions: `uv`/`uvx` 0.12.1, `npx` 9.2.0 (Node v22.22.1), Python `3.13.13 (main, May 10 2026, 19:26:54) [Clang 22.1.3]`.
+
+## Screenshot and/or share link
+
+None. This is only about tool-result content.
+
+## Operating System
+
+Ubuntu 26.04 LTS
+
+## Terminal
+
+OpenCode TUI with bash.
