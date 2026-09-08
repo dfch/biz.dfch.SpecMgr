@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-08 09:37:19.699+02:00'
 id: feat-110-truncate-validation-errors
-status: planning
+status: review
 type: feat
-updated: '2026-09-08 09:37:19.699+02:00'
+updated: '2026-09-08 09:53:48.000+02:00'
 version: 1.0.0
 ---
 
@@ -41,15 +41,15 @@ The fix reuses the existing `snippet()` convention (already designed for exactly
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: `validate(type="req", content=<REQ body with a duplicate H1 heading>, full=False)` returns a message of at most `_MAX_VALIDATE_ERROR_CHARS + len("... (truncated)")` characters, ending in `"... (truncated)"`.
+- [x] ACC-001: `validate(type="req", content=<REQ body with a duplicate H1 heading>, full=False)` returns a message of at most `_MAX_VALIDATE_ERROR_CHARS + len("... (truncated)")` characters, ending in `"... (truncated)"`.
 
-- [ ] ACC-002: A short, already-under-the-cap `validate()` failure message is returned byte-identical to today (no suffix appended, no truncation applied).
+- [x] ACC-002: A short, already-under-the-cap `validate()` failure message is returned byte-identical to today (no suffix appended, no truncation applied).
 
-- [ ] ACC-003: `not_in_mdformat_message()`'s global-mismatch (`line_no == 0`) branch no longer embeds an unbounded raw `text!r`/`formatted!r` -- both are routed through `snippet()`.
+- [x] ACC-003: `not_in_mdformat_message()`'s global-mismatch (`line_no == 0`) branch no longer embeds an unbounded raw `text!r`/`formatted!r` -- both are routed through `snippet()`.
 
-- [ ] ACC-004: `TestValidateIssue83Regressions` and `TestValidateYamlErrorEnrichment` still pass unmodified (or with only test-expectation adjustments, never production-behavior changes, if their fixtures turn out to exceed the cap).
+- [x] ACC-004: `TestValidateIssue83Regressions` and `TestValidateYamlErrorEnrichment` still pass unmodified (or with only test-expectation adjustments, never production-behavior changes, if their fixtures turn out to exceed the cap).
 
-- [ ] ACC-005: `ruff format --check`, `ruff check`, `pytest -n auto --cov=src --cov-report=` (full suite), and `specmgr docs` (no drift) all pass.
+- [x] ACC-005: `ruff format --check`, `ruff check`, `pytest -n auto --cov=src --cov-report=` (full suite), and `specmgr docs` (no drift) all pass.
 
 ### Scope
 
@@ -103,33 +103,33 @@ The fix reuses the existing `snippet()` convention (already designed for exactly
 
 #### Phase 1: Implement truncation and the `not_in_mdformat_message` fix
 
-- [ ] Task 1.1: Add `_MAX_VALIDATE_ERROR_CHARS` constant and route `str(ex)` through `snippet()` in `general/tools/validate.py`'s `validate()` exception handler.
+- [x] Task 1.1: Add `_MAX_VALIDATE_ERROR_CHARS` constant and route `str(ex)` through `snippet()` in `general/tools/validate.py`'s `validate()` exception handler.
 
-- [ ] Task 1.2: Update `validate.py`'s module docstring, `validate()`'s docstring, and its `@mcp.tool()` `description=` string to describe the truncation instead of "verbatim".
+- [x] Task 1.2: Update `validate.py`'s module docstring, `validate()`'s docstring, and its `@mcp.tool()` `description=` string to describe the truncation instead of "verbatim".
 
-- [ ] Task 1.3: Update `ValidationErrorEntry.message`'s docstring in `general/models/validate_result.py`.
+- [x] Task 1.3: Update `ValidationErrorEntry.message`'s docstring in `general/models/validate_result.py`.
 
-- [ ] Task 1.4: Fix `models/md/_markdown.py::not_in_mdformat_message()`'s `line_no == 0` branch to route `text`/`formatted` through `snippet()`; update its docstring.
+- [x] Task 1.4: Fix `models/md/_markdown.py::not_in_mdformat_message()`'s `line_no == 0` branch to route `text`/`formatted` through `snippet()`; update its docstring.
 
 #### Phase 2: Tests and verification
 
-- [ ] Task 2.1: Add the duplicate-H1-heading real repro test to `tests/general/tools/test_validate.py` (ACC-001).
+- [x] Task 2.1: Add the duplicate-H1-heading real repro test to `tests/general/tools/test_validate.py` (ACC-001).
 
-- [ ] Task 2.2: Add a short-message-unaffected regression test (ACC-002).
+- [x] Task 2.2: Add a short-message-unaffected regression test (ACC-002).
 
-- [ ] Task 2.3: Add a `not_in_mdformat_message()` long-input unit test (ACC-003).
+- [x] Task 2.3: Add a `not_in_mdformat_message()` long-input unit test (ACC-003).
 
-- [ ] Task 2.4: Re-run `TestValidateIssue83Regressions`/`TestValidateYamlErrorEnrichment`, adjust test expectations only if their fixtures exceed the cap (ACC-004).
+- [x] Task 2.4: Re-run `TestValidateIssue83Regressions`/`TestValidateYamlErrorEnrichment`, adjust test expectations only if their fixtures exceed the cap (ACC-004). Also fixed 2 additional full-suite regressions discovered beyond these two named classes -- see Updates/Decisions Made below.
 
-- [ ] Task 2.5: Add `CHANGELOG.md` entry (REQ-007).
+- [x] Task 2.5: Add `CHANGELOG.md` entry (REQ-007).
 
-- [ ] Task 2.6: Run `ruff format --check`, `ruff check`, full `pytest -n auto --cov=src --cov-report=`, `specmgr docs` (ACC-005).
+- [x] Task 2.6: Run `ruff format --check`, `ruff check`, full `pytest -n auto --cov=src --cov-report=`, `specmgr docs` (ACC-005).
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-09-08**: Investigation complete (plan-mode, read-only, live-verified via `python -c` repros); this README captures the finalized plan. Implementation not yet started.
+**As of 2026-09-08**: Phase 2 (tests and verification) complete -- this feature's implementation is now complete and ready for a final PR. Phase 1 (implementation) and Phase 2 (new regression tests, `CHANGELOG.md` entry, full-suite quality gate, including 2 extra full-suite regressions fixed beyond the plan's own named test classes) are both done; `ruff format --check`, `ruff check`, `vulture`, the full `pytest -n auto --cov=src --cov-report=` suite (3349 tests), and `specmgr docs` (drift regenerated, matches Phase 1's docstring changes only) all pass.
 
 ### Blockers
 
@@ -139,6 +139,14 @@ None.
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
+#### 2026-09-08 07:53:48.000Z - Phase 2 implemented, feature complete
+
+Implemented Task 2.1-2.6. Added `TestValidateMessageTruncation` to `tests/general/tools/test_validate.py` with two new tests: `test_duplicate_h1_heading_produces_a_truncated_message` (ACC-001 -- a valid REQ body >500 chars via `## Description` filler, followed by a second duplicate H1-level heading plus enough trailing filler that the parser's own embedded `snippet()` call also hits its cap, confirmed live to produce a 315-character message today, exactly at the `_MAX_VALIDATE_ERROR_CHARS + len("... (truncated)")` = 315 cap, ending in `"... (truncated)"`) and `test_short_message_is_returned_unchanged` (ACC-002 -- reuses the existing `_REQ_MALFORMED_BODY` fixture already used by `TestValidateAllDomains`, pinning its exact 205-character message with no truncation suffix). Added `test_trailing_newline_only_difference_with_long_text_is_truncated` to `tests/models/md/test_error_messages.py`'s existing `TestNotInMdformatMessage` class (ACC-003 -- a long (>500 char) missing-trailing-newline-only input, confirming the `line_no == 0` branch no longer embeds the full raw text verbatim and the message now ends in `"... (truncated)"`). Re-ran `TestValidateIssue83Regressions`/`TestValidateYamlErrorEnrichment` (ACC-004): both pass unmodified, their fixtures stay comfortably under the 300-char cap. Added a `CHANGELOG.md` `[Unreleased]` -> `### Fixed` entry (REQ-007) covering both the `validate` truncation and the `not_in_mdformat_message` fix, referencing GitHub issue #110. Ran the full quality gate (Task 2.6): `ruff format --check` (1659 files already formatted), `ruff check` (all checks passed), `vulture src/ whitelist.py --min-confidence 60` (no output), `pytest -n auto --cov=src --cov-report=` (3349 passed), and `specmgr docs` (regenerated `docs/api/`/`docs/MCP.md`/`docs/GENERATED.md`, reflecting only Phase 1's already-landed docstring changes -- no further drift from Phase 2's own test-only/`CHANGELOG.md` edits). **Beyond the plan's own named test classes**, discovered (via the orchestrator's own pre-commit `git commit` run, which exercises the full suite rather than just the two files Phase 1 verified) and fixed 2 additional full-suite regressions of the same category: `tests/regression/test_issue_27.py::TestFeat7Task029StrayListMarkerRegression::test_validate_surfaces_an_actionable_message` and `tests/regression/test_issue_71.py::TestIssue71MalformedHeadingRegression::test_validate_surfaces_an_actionable_message` each asserted a substring that now falls past the 300-character cap for their respective fixtures' `validate()`-tool message. Fixed both by adjusting only the affected assertions (a new, narrower substring tuple dropping the now-unreachable tail substring, e.g. `_FEAT_7_TASK_0_29_EXPECTED_SUBSTRINGS_VIA_VALIDATE`/`_MALFORMED_HEADING_SUBSTRINGS_VIA_VALIDATE`, each documented with an issue-#110 comment explaining why), plus a new assertion that the message ends with `"... (truncated)"` to keep proving each original issue is still caught and reported actionably -- their sibling `create_<d>`/`update` surfaces (which raise the full, untruncated exception directly, not through `validate()`) were left untouched, since `validate.py`'s truncation is scoped to the non-raising `ValidateResult` path only (REQ-002). No production code was touched beyond Phase 1's own already-landed changes.
+
+#### 2026-09-08 07:44:32.000Z - Phase 1 implemented
+
+Implemented Task 1.1-1.4: added the `_MAX_VALIDATE_ERROR_CHARS = 300` module-level constant to `general/tools/validate.py` and changed `validate()`'s exception handler to build `ValidationErrorEntry.message` via `snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)` instead of `str(ex)` verbatim; updated `validate.py`'s module docstring (the "Non-raising contract" section), `validate()`'s own docstring, and its `@mcp.tool()` `description=` string to describe the new truncation behavior; updated `ValidationErrorEntry.message`'s docstring in `general/models/validate_result.py` to match; fixed `models/md/_markdown.py::not_in_mdformat_message()`'s `line_no == 0` branch to route both `text` and `formatted` through `snippet()` before embedding them (matching every sibling message-builder in that module, e.g. `_raw_html_message`) and updated its docstring. `ruff format --check`, `ruff check`, `vulture`, and `pytest -n auto tests/general/tools/test_validate.py tests/models/md/` (337 tests) all pass unmodified -- no test changes were needed or made in this phase. Phase 2 (new regression tests, `CHANGELOG.md` entry, full-suite quality gate) is next.
+
 #### 2026-09-08 08:00:00.000Z - Created
 
 Feature folder created after an investigation-first planning session for GitHub issue #110, including two live-verified findings that changed the original hypothesis: pydantic's `input_value` repr is already self-capped (dead end), and `not_in_mdformat_message()`'s global-mismatch branch is a genuine, separate unbounded-repr gap worth fixing in the same pass. A real, disk-free repro (duplicate-H1 REQ body) was confirmed to produce a 521-character `validate()` message today, replacing an initially-proposed VCR-duplicate-AC repro that turned out not to reproduce oversized output.
@@ -146,6 +154,10 @@ Feature folder created after an investigation-first planning session for GitHub 
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-08 07:53:48.000Z - Fix the 2 extra full-suite regressions as test-only changes, not production changes
+
+The orchestrator's own pre-commit `git commit` run (which exercises the *full* test suite, not just the two files Phase 1's own quality gate covered) surfaced 2 additional failing tests beyond the plan's named `TestValidateIssue83Regressions`/`TestValidateYamlErrorEnrichment`: `tests/regression/test_issue_27.py::TestFeat7Task029StrayListMarkerRegression::test_validate_surfaces_an_actionable_message` and `tests/regression/test_issue_71.py::TestIssue71MalformedHeadingRegression::test_validate_surfaces_an_actionable_message`. Both are the exact same category of regression Task 2.4/ACC-004 already anticipated (a fixture's `validate()`-tool message, previously short enough to substring-match in full, now exceeds `_MAX_VALIDATE_ERROR_CHARS` and gets truncated before the asserted substring is reached) -- not a new, distinct failure mode, and not evidence of a production bug. Applying the same "adjust only the test's expectations, never production behavior" rule Task 2.4 already established for the two named classes: each test's now-unreachable trailing substring was dropped from a new, narrower substring tuple (used only for the `validate`-tool assertion; the sibling `create_<d>`/`update` tests in the same files, which raise the full untruncated exception directly rather than going through `validate()`, were left unmodified since their messages are unaffected), and a new assertion that the message ends with `"... (truncated)"` was added to keep each test proving its original issue (#27/#71) is still caught and reported actionably, just now truncated. This is a judgement call worth recording since the plan's Task 2.4 named only two specific test classes, not these two regression files -- but the underlying rule ("this is intended, in-scope, working-as-designed truncation behavior, not a bug to route around") applies identically.
 
 #### 2026-09-08 08:00:00.000Z - Scope validate() only, not wrap_tool_errors/validate_adr
 
