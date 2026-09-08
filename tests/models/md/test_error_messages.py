@@ -261,6 +261,25 @@ class TestNotInMdformatMessage(unittest.TestCase):
         self.assertIn("every line matches", message)
         self.assertNotIn("line 0", message)
 
+    def test_trailing_newline_only_difference_with_long_text_is_truncated(self) -> None:
+        """Issue #110/ACC-003: the `line_no == 0` (global-mismatch) branch routes both `text`
+        and `format_text(text)` through `snippet()` before embedding them, just like every
+        sibling message-builder in this module -- a long input (here, missing its trailing
+        newline only, so it still hits this same branch) no longer produces a message that
+        embeds the full raw text/formatted-text verbatim."""
+        long_content = (
+            "A rather long paragraph line repeated many times to exceed the snippet cap of "
+            "three hundred characters comfortably so that this test can prove truncation "
+            "kicks in for the global mismatch branch. "
+        ) * 3
+        text = "# Title\n\n" + long_content.rstrip()  # missing trailing newline only
+
+        message = not_in_mdformat_message(text)
+
+        self.assertIn("every line matches", message)
+        self.assertNotIn(text, message)
+        self.assertIn("... (truncated)", message)
+
 
 if __name__ == "__main__":
     unittest.main()

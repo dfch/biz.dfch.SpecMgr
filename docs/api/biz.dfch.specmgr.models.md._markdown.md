@@ -126,7 +126,11 @@ Returns:
     `text` and `format_text(text)` disagree -- or, when every line
     compares equal under `str.splitlines()` (e.g. `text` is missing
     its single trailing newline, which `splitlines()` does not turn
-    into an extra empty line), a message naming that instead.
+    into an extra empty line), a message naming that instead. In
+    either case, the offending text is passed through `snippet()`
+    before being embedded, so the message stays bounded regardless of
+    `text`'s own size (issue #110), matching every sibling
+    message-builder in this module (e.g. `_raw_html_message`).
 
 
 ### `parse(text: str) -> list[markdown_it.token.Token]`

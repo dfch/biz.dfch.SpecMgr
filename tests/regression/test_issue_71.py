@@ -198,6 +198,14 @@ _MALFORMED_HEADING_SUBSTRINGS = (
     _MALFORMED_HEADING,
 )
 
+#: Feat-110 (issue #110): the same substrings above, minus the literal `_MALFORMED_HEADING`
+#: itself, which now falls past `validate()`'s `_MAX_VALIDATE_ERROR_CHARS` cap for this
+#: fixture's raw message length and is truncated away -- `create_feat`/`update` still raise the
+#: full, untruncated exception (`validate.py`'s truncation is scoped to the non-raising
+#: `ValidateResult` path only, REQ-002), so only the `validate`-tool surface below needs this
+#: weaker substring set.
+_MALFORMED_HEADING_SUBSTRINGS_VIA_VALIDATE = _MALFORMED_HEADING_SUBSTRINGS[:-1]
+
 
 # ---------------------------------------------------------------------------
 # Sub-case 2 (Task 1.6, this feature's own drafting-session discovery): two
@@ -277,11 +285,18 @@ class TestIssue71MalformedHeadingRegression(unittest.TestCase):
         self.enterContext(mock.patch.dict("os.environ", {FEAT_DIR_ENV_VAR: str(self.feat_root)}))
 
     def test_validate_surfaces_an_actionable_message(self) -> None:
+        """Issue #110: this fixture's raw message now exceeds `validate()`'s
+        `_MAX_VALIDATE_ERROR_CHARS` cap, so the literal malformed heading text (near the end
+        of the message) is truncated away -- assert only the substrings that still survive
+        (the field path + cause), plus the truncation marker itself, to keep proving issue
+        #71's malformed-heading case is still caught and reported actionably."""
         result = validate(type="feat", content=_FEAT_MALFORMED_HEADING_BODY)
 
         self.assertFalse(result.valid)
         self.assertEqual(len(result.errors), 1)
-        _assert_actionable(result.errors[0].message, "feat validate (body):", _MALFORMED_HEADING_SUBSTRINGS)
+        message = result.errors[0].message
+        _assert_actionable(message, "feat validate (body):", _MALFORMED_HEADING_SUBSTRINGS_VIA_VALIDATE)
+        self.assertTrue(message.endswith("... (truncated)"), message)
 
     def test_create_feat_surfaces_an_actionable_message_and_writes_nothing(self) -> None:
         with self.assertRaises(AssertionError) as ctx:

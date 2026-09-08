@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `validate`: `ValidationErrorEntry.message` is now capped at 300
+  characters (`_MAX_VALIDATE_ERROR_CHARS`, plus a trailing
+  `"... (truncated)"` suffix when truncation occurs) instead of reusing
+  the caught exception's `str()` verbatim without limit -- a structurally
+  malformed document (e.g. an unexpected/duplicate heading) could
+  otherwise produce a message several hundred characters long once
+  `wrap_tool_errors`'s domain/tool/channel label was prepended. Also fixed
+  `models/md/_markdown.py::not_in_mdformat_message()`'s global-mismatch
+  (`line_no == 0`) branch, which embedded the full raw `text`/`formatted`
+  via `repr()` with no bound -- it now routes both through the existing
+  `snippet()` helper, matching every sibling message-builder in that
+  module (GitHub issue #110).
+
 ## [0.23.0] - 2026-09-07
 
 ### Fixed

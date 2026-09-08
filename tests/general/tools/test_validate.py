@@ -53,7 +53,7 @@ from typing import Callable
 import yaml
 
 from biz.dfch.specmgr.dec.models.v1 import parse_dec as _parse_dec
-from biz.dfch.specmgr.general.tools.validate import validate
+from biz.dfch.specmgr.general.tools.validate import _MAX_VALIDATE_ERROR_CHARS, validate
 from biz.dfch.specmgr.models.md._errors import wrap_tool_errors
 from biz.dfch.specmgr.req.models.v1 import parse_req as _parse_req
 
@@ -897,6 +897,63 @@ class TestValidateYamlErrorEnrichment(unittest.TestCase):
     def test_dec_malformed_yaml_frontmatter_matches_parse_dec(self) -> None:
         malformed = f"---\nid: dec-1\nstatus: [unterminated\n---\n{_DEC_MINIMAL_BODY}"
         self._assert_message_parity("dec", malformed, _parse_dec, "parse_dec")
+
+
+class TestValidateMessageTruncation(unittest.TestCase):
+    """Issue #110/ACC-001/ACC-002: `validate()`'s error message is capped at
+    `_MAX_VALIDATE_ERROR_CHARS` characters (plus the `"... (truncated)"` suffix), while a
+    message already under that cap is returned unchanged."""
+
+    def test_duplicate_h1_heading_produces_a_truncated_message(self) -> None:
+        """A real, disk-free repro (feat-110's own Design Notes): a valid `req` body (>500
+        chars, via `## Description` filler) followed by a second, duplicate H1-level heading
+        (plus enough trailing filler that the parser's own embedded `snippet()` call also
+        hits its cap) makes `Requirement.from_text` fail past `## Description` with a message
+        that, once `wrap_tool_errors`'s `"req validate (body): "` label is prepended,
+        comfortably exceeds `_MAX_VALIDATE_ERROR_CHARS` today."""
+        filler = (
+            "Filler text to exceed five hundred characters in the description field so the "
+            "parser has enough content before the duplicate heading appears further down in "
+            "this fixture body. "
+        ) * 3
+        body = (
+            "# Maximum Engine Temperature\n\n"
+            "WHILE the engine is running, THE temperature must be a maximum of 80 \u00b0C.\n\n"
+            "## Description\n\n"
+            f"{filler}\n\n"
+            "# Duplicate Invalid Heading\n\n"
+            "More filler text after the duplicate heading, so the unmatched remainder is "
+            "itself long enough for the embedded snippet() call inside the parser error "
+            "message to also hit its own 300-character/5-line cap, pushing the overall "
+            "validate() message comfortably past 300 characters even after prefixing.\n"
+        )
+
+        result = validate(type="req", content=body, full=False)
+
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        message = result.errors[0].message
+        max_len = _MAX_VALIDATE_ERROR_CHARS + len("... (truncated)")
+        self.assertLessEqual(len(message), max_len)
+        self.assertTrue(message.endswith("... (truncated)"), message)
+
+    def test_short_message_is_returned_unchanged(self) -> None:
+        """A short, already-under-the-cap failure message (the `_REQ_MALFORMED_BODY` fixture
+        also used by `TestValidateAllDomains`) is returned byte-identical to today -- no
+        `"... (truncated)"` suffix, no truncation applied."""
+        result = validate(type="req", content=_REQ_MALFORMED_BODY)
+
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        message = result.errors[0].message
+        self.assertLess(len(message), _MAX_VALIDATE_ERROR_CHARS)
+        self.assertFalse(message.endswith("... (truncated)"), message)
+        self.assertEqual(
+            message,
+            "req validate (body): Requirement > Characteristics: expected Characteristics "
+            "(heading 'Characteristics'), found no match; remaining text starts at line 3 of "
+            "the normalized body (0 line(s)) and begins with:",
+        )
 
 
 if __name__ == "__main__":
