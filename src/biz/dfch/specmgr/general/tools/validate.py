@@ -47,7 +47,13 @@ public :func:`validate` wraps each adapter call in
 and turns a caught exception into
 ``{"valid": False, "errors": [{"message": str(exception)}]}`` instead of
 letting it propagate -- reusing feat-27-validation's already-enriched
-message verbatim as the sole error entry's ``message``. A ``full``/
+message as the sole error entry's ``message``, capped at
+``_MAX_VALIDATE_ERROR_CHARS`` characters via
+``models/md/_markdown.py::snippet()`` (issue #110): a structurally
+malformed document can produce a message several hundred characters long
+once ``wrap_tool_errors``'s domain/tool/channel label is prepended, so the
+message is truncated (with a trailing ``"... (truncated)"`` suffix) rather
+than returned verbatim without limit. A ``full``/
 content-shape mismatch (``full=True`` with body-only content, or
 ``full=False`` with a complete document) is a caller-usage error, not a
 content-validation failure, and is **not** in that catch set: it is a bare
@@ -89,7 +95,7 @@ from ...general.models import ValidateResult, ValidationErrorEntry
 from ...gol.models.v1 import Goal, parse_gol
 from ...models.md._errors import BODY_CHANNEL, wrap_tool_errors
 from ...models.md._frontmatter_parse import enrich_frontmatter_yaml_error
-from ...models.md._markdown import format_text
+from ...models.md._markdown import format_text, snippet
 from ...prb.models.v1 import Prb, parse_prb
 from ...qa.models.v2 import Qa, parse_qa
 from ...req.models.v1 import Requirement, parse_req
@@ -111,6 +117,15 @@ _VALIDATE_TYPES = ("req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", 
 #: content-shape-mismatch case, or an unsupported type) is deliberately NOT in this tuple, so it
 #: still propagates instead of being absorbed.
 _CAUGHT_EXCEPTIONS: tuple[type[Exception], ...] = (AssertionError, ValidationError, yaml.YAMLError)
+
+#: Caps `ValidationErrorEntry.message`'s length (issue #110): a structurally malformed document
+#: (e.g. an unexpected/duplicate heading) can produce a `str(AssertionError)`/
+#: `str(pydantic.ValidationError)` several hundred characters long once `wrap_tool_errors`'s
+#: domain/tool/channel label is prepended, with no cap today. `300` deliberately matches
+#: `snippet()`'s own default `max_chars` (see `models/md/_markdown.py::snippet`), but is kept as
+#: its own named constant here rather than relying on that default implicitly, per
+#: `.specmgr/conventions.md`'s "Comparison Constants" rule.
+_MAX_VALIDATE_ERROR_CHARS = 300
 
 
 def _detect_frontmatter(content: str, *, domain: str) -> bool:
@@ -515,8 +530,11 @@ _ADAPTERS: dict[str, Callable[[str, bool], None]] = {
         "body-only content (no frontmatter); `full=True` validates a complete document "
         "(frontmatter + body). Never raises for a content-validation failure: always returns "
         "`{valid: bool, errors: list[{message: str}]}` -- `errors` is empty when `valid` is "
-        "`True`. A `full`/content-shape mismatch, or an unsupported `type`, is a caller-usage "
-        "error and still raises `ValueError` before any validation runs. This is the sole "
+        "`True`, and each `message` is truncated to at most `_MAX_VALIDATE_ERROR_CHARS` (300) "
+        'characters (plus an `"... (truncated)"` suffix when truncation occurred) rather than '
+        "returned verbatim without limit. A `full`/content-shape mismatch, or an unsupported "
+        "`type`, is a caller-usage error and still raises `ValueError` before any validation "
+        "runs. This is the sole "
         "validate entry point for these twelve domains -- the former per-domain `validate_<d>` "
         "tools are removed; `validate_adr` remains a separate, unchanged, id-based tool."
     ),
@@ -543,11 +561,16 @@ def validate(
     never raises for a content-validation failure (REQ-004): a caught
     ``AssertionError``, ``pydantic.ValidationError``, or ``yaml.YAMLError``
     (``full=True`` only, malformed frontmatter YAML) is turned into
-    ``ValidateResult(valid=False, errors=[ValidationErrorEntry(message=str(exception))])``
+    ``ValidateResult(valid=False, errors=[ValidationErrorEntry(message=...)])``
     instead of propagating -- reusing feat-27-validation's already-enriched
     message (field path, line reference, cause/fix hint, plus this tool's
-    own domain/``validate``/channel prefix) verbatim as the sole error
-    entry's ``message``.
+    own domain/``validate``/channel prefix) as the sole error entry's
+    ``message``, but capped at ``_MAX_VALIDATE_ERROR_CHARS`` characters via
+    :func:`~biz.dfch.specmgr.models.md._markdown.snippet` (issue #110):
+    ``str(exception)`` is passed through
+    ``snippet(str(exception), max_chars=_MAX_VALIDATE_ERROR_CHARS)`` rather
+    than embedded verbatim without limit, so a structurally malformed
+    document can no longer produce an unbounded message.
 
     A ``full``/content-shape mismatch is a caller-usage error, not a
     content-validation failure, and is **not** caught: ``content`` must be
@@ -596,5 +619,6 @@ def validate(
     try:
         adapter(content, full)
     except _CAUGHT_EXCEPTIONS as ex:
-        return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=str(ex))])
+        message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
+        return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
     return ValidateResult(valid=True, errors=[])

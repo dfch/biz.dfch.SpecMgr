@@ -45,9 +45,14 @@ class ValidationErrorEntry(BaseModel):
     Parameters
     ----------
     message:
-        The full, already-enriched exception message (domain/tool/channel
+        The already-enriched exception message (domain/tool/channel
         context plus feat-27-validation's field-path/line/cause-hint
-        enrichment), reused verbatim from the caught exception's ``str()``.
+        enrichment), derived from the caught exception's ``str()`` but
+        capped at ``general.tools.validate._MAX_VALIDATE_ERROR_CHARS``
+        (300) characters via
+        :func:`~biz.dfch.specmgr.models.md._markdown.snippet` (issue #110)
+        rather than reused verbatim without limit -- a trailing
+        ``"... (truncated)"`` suffix is appended when truncation occurred.
     """
 
     message: str

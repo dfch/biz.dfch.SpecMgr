@@ -103,13 +103,13 @@ The fix reuses the existing `snippet()` convention (already designed for exactly
 
 #### Phase 1: Implement truncation and the `not_in_mdformat_message` fix
 
-- [ ] Task 1.1: Add `_MAX_VALIDATE_ERROR_CHARS` constant and route `str(ex)` through `snippet()` in `general/tools/validate.py`'s `validate()` exception handler.
+- [x] Task 1.1: Add `_MAX_VALIDATE_ERROR_CHARS` constant and route `str(ex)` through `snippet()` in `general/tools/validate.py`'s `validate()` exception handler.
 
-- [ ] Task 1.2: Update `validate.py`'s module docstring, `validate()`'s docstring, and its `@mcp.tool()` `description=` string to describe the truncation instead of "verbatim".
+- [x] Task 1.2: Update `validate.py`'s module docstring, `validate()`'s docstring, and its `@mcp.tool()` `description=` string to describe the truncation instead of "verbatim".
 
-- [ ] Task 1.3: Update `ValidationErrorEntry.message`'s docstring in `general/models/validate_result.py`.
+- [x] Task 1.3: Update `ValidationErrorEntry.message`'s docstring in `general/models/validate_result.py`.
 
-- [ ] Task 1.4: Fix `models/md/_markdown.py::not_in_mdformat_message()`'s `line_no == 0` branch to route `text`/`formatted` through `snippet()`; update its docstring.
+- [x] Task 1.4: Fix `models/md/_markdown.py::not_in_mdformat_message()`'s `line_no == 0` branch to route `text`/`formatted` through `snippet()`; update its docstring.
 
 #### Phase 2: Tests and verification
 
@@ -129,7 +129,7 @@ The fix reuses the existing `snippet()` convention (already designed for exactly
 
 ### Current Status
 
-**As of 2026-09-08**: Investigation complete (plan-mode, read-only, live-verified via `python -c` repros); this README captures the finalized plan. Implementation not yet started.
+**As of 2026-09-08**: Phase 1 (implementation) complete -- `_MAX_VALIDATE_ERROR_CHARS` added and wired into `validate()`'s exception handler, `not_in_mdformat_message()`'s `line_no == 0` branch now routes through `snippet()`, and every affected docstring/`@mcp.tool()` description updated. Phase 2 (tests, `CHANGELOG.md`, full quality gate) not yet started.
 
 ### Blockers
 
@@ -138,6 +138,10 @@ None.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-08 07:44:32.000Z - Phase 1 implemented
+
+Implemented Task 1.1-1.4: added the `_MAX_VALIDATE_ERROR_CHARS = 300` module-level constant to `general/tools/validate.py` and changed `validate()`'s exception handler to build `ValidationErrorEntry.message` via `snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)` instead of `str(ex)` verbatim; updated `validate.py`'s module docstring (the "Non-raising contract" section), `validate()`'s own docstring, and its `@mcp.tool()` `description=` string to describe the new truncation behavior; updated `ValidationErrorEntry.message`'s docstring in `general/models/validate_result.py` to match; fixed `models/md/_markdown.py::not_in_mdformat_message()`'s `line_no == 0` branch to route both `text` and `formatted` through `snippet()` before embedding them (matching every sibling message-builder in that module, e.g. `_raw_html_message`) and updated its docstring. `ruff format --check`, `ruff check`, `vulture`, and `pytest -n auto tests/general/tools/test_validate.py tests/models/md/` (337 tests) all pass unmodified -- no test changes were needed or made in this phase. Phase 2 (new regression tests, `CHANGELOG.md` entry, full-suite quality gate) is next.
 
 #### 2026-09-08 08:00:00.000Z - Created
 
