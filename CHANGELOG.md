@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.26.0] - 2026-09-09
+
+### Security
+
+- Bumped transitive `httpx`/`httpcore` dependencies (`httpx` 2.10.0 ->
+  2.12.0, `httpcore` 2.10.0 -> 2.12.0, pulled in via `mcp`), resolving
+  three GitHub Security Advisories: multipart header injection
+  (GHSA-h4x7-gw46-3wm6), conflicting Content-Length/Transfer-Encoding
+  request smuggling (GHSA-pf96-p4fj-6566), and unbounded decompression
+  amplification (GHSA-8xx6-hgc6-gc2m, high severity).
+
 ## [0.25.0] - 2026-09-09
 
 ### Changed

@@ -109,7 +109,7 @@ wheels = [
 
 [[package]]
 name = "biz-dfch-specmgr"
-version = "0.25.0"
+version = "0.26.0"
 source = { editable = "." }
 dependencies = [
     { name = "markdown-it-py" },
