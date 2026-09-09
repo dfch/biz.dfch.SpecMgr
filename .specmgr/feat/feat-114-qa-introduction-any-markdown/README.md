@@ -154,7 +154,7 @@ above are now checked.
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
-#### 2026-09-09 - Phase 4 complete: final verification -- feature fully implemented
+#### 2026-09-09 04:10:00.000Z - Phase 4 complete: final verification -- feature fully implemented
 
 Implemented Task 4.1-4.4, the final confidence pass over the whole feature
 (no code changes were needed -- Phases 1-3 were already individually
@@ -167,25 +167,40 @@ from Phase 3). Re-ran all four drift-check commands
 confirmed zero diff after each (`git status --short` stayed empty
 throughout), so Phase 1's regeneration remains fully in sync with the
 final state. Walked every Acceptance Criterion and Requirement against the
-current repo and confirmed all satisfied:
+current repo and confirmed all satisfied: ACC-001 (plain-paragraph
+regression) via `tests/qa/models/v2/test_body.py::TestGeneralIntroductionRawRequirements::test_parses_and_round_trips`
+still asserting `introduction.body.text == "Some intro text.\n"` and
+round-tripping via `str(sut)`; ACC-002 (non-paragraph body) via
+`TestIntroductionAcceptsNonParagraphContent`'s two tests (bullet list;
+comment + code block) in the same file; ACC-003 (comment-only, `body is
+None`) via `TestIntroductionCommentOnly::test_comment_only_introduction_parses_with_body_none`;
+ACC-004 (`model_dump()` surfaces real text) via
+`tests/qa/tools/test_parse_qa.py::TestParseQaTool::test_model_dump_surfaces_markdownparagraph_backed_fields`
+(plain-paragraph case) and `::test_model_dump_surfaces_non_paragraph_introduction_body_content`
+(bullet-list case); ACC-005 (suite green after every phase) via each
+phase's own Progress entry recording a passing full run (3349 after Phase
+1, 3353 after Phase 2 and Phase 3, 3353 again now); ACC-006 (lint/format/
+vulture green) confirmed directly above, this pass; and ACC-007 (schema/
+docs regenerated, no drift) via Phase 1 commit `67a2611` showing
+`docs/qa_schema.json`, `src/biz/dfch/specmgr/qa/data/qa_schema.json`, and
+`docs/api/biz.dfch.specmgr.qa.models.v2.body.md` all updated in the same
+commit as the model change, with this phase's re-run confirming no further
+drift. Likewise, REQ-001 (any markdown accepted) is satisfied by
+`qa/models/v2/body.py`'s `IntroductionBody(MarkdownStr)` plus the ACC-002
+tests above; REQ-002 (`comment` unchanged) by `Introduction` still
+inheriting `MarkdownSection3WithComment`'s `comment` field unmodified,
+exercised by the ACC-002/ACC-003 tests (`introduction.comment`
+assertions); REQ-003 (`body` stays optional) by `Introduction.body:
+IntroductionBody | None = Field(default=None, ...)` in
+`qa/models/v2/body.py`, exercised by ACC-003; REQ-004 (reachable via
+`model_dump()`) by `IntroductionBody.text`'s computed property plus the
+ACC-004 tests; and REQ-005 (packaged artifacts reflect the new shape) by
+`qa_schema.json` (both copies)/`docs/api/` per ACC-007 above and
+`qa/data/qa_example.md`/`qa/data/qa_template.md`/`qa/data/qa_create_instructions.md`
+updated in Phase 3 commit `5207d05`. No outstanding concerns -- feature is
+fully complete per its own Acceptance Criteria.
 
-- ACC-001 (plain-paragraph regression): `tests/qa/models/v2/test_body.py::TestGeneralIntroductionRawRequirements::test_parses_and_round_trips` still asserts `introduction.body.text == "Some intro text.\n"` and round-trips via `str(sut)`.
-- ACC-002 (non-paragraph body): `TestIntroductionAcceptsNonParagraphContent`'s two tests (bullet list; comment + code block) in the same file.
-- ACC-003 (comment-only, `body is None`): `TestIntroductionCommentOnly::test_comment_only_introduction_parses_with_body_none`.
-- ACC-004 (`model_dump()` surfaces real text): `tests/qa/tools/test_parse_qa.py::TestParseQaTool::test_model_dump_surfaces_markdownparagraph_backed_fields` (plain-paragraph case) and `::test_model_dump_surfaces_non_paragraph_introduction_body_content` (bullet-list case).
-- ACC-005 (suite green after every phase): each phase's own Progress entry records a passing full run (3349 after Phase 1, 3353 after Phase 2 and Phase 3, 3353 again now).
-- ACC-006 (lint/format/vulture green): confirmed directly above, this pass.
-- ACC-007 (schema/docs regenerated, no drift): Phase 1 commit `67a2611` shows `docs/qa_schema.json`, `src/biz/dfch/specmgr/qa/data/qa_schema.json`, and `docs/api/biz.dfch.specmgr.qa.models.v2.body.md` all updated in the same commit as the model change; this phase's re-run confirms no further drift.
-- REQ-001 (any markdown accepted): `qa/models/v2/body.py`'s `IntroductionBody(MarkdownStr)` plus the ACC-002 tests above.
-- REQ-002 (`comment` unchanged): `Introduction` still inherits `MarkdownSection3WithComment`'s `comment` field unmodified; exercised by the ACC-002/ACC-003 tests (`introduction.comment` assertions).
-- REQ-003 (`body` stays optional): `Introduction.body: IntroductionBody | None = Field(default=None, ...)` in `qa/models/v2/body.py`; exercised by ACC-003.
-- REQ-004 (reachable via `model_dump()`): `IntroductionBody.text` computed property plus the ACC-004 tests.
-- REQ-005 (packaged artifacts reflect the new shape): `qa_schema.json` (both copies)/`docs/api/` per ACC-007 above; `qa/data/qa_example.md`/`qa/data/qa_template.md`/`qa/data/qa_create_instructions.md` updated in Phase 3 commit `5207d05`.
-
-No outstanding concerns. Feature is fully complete per its own Acceptance
-Criteria.
-
-#### 2026-09-09 - Phase 3 complete: packaged data files
+#### 2026-09-09 03:45:00.000Z - Phase 3 complete: packaged data files
 
 Implemented Task 3.1-3.5. `qa/data/qa_example.md`'s `### Introduction` now
 opens with the `<!-- filled in during the kickoff interview -->` comment
@@ -220,7 +235,7 @@ previous `qa_example.md`/`qa_template.md` prose text, so none needed
 updating. Full quality gate green: `ruff format --check`, `ruff check`,
 `vulture src/ whitelist.py --min-confidence 60`, and `pytest -n auto --cov=src --cov-report=` (3353 passed, unchanged from Phase 2's count).
 
-#### 2026-09-09 - Phase 2 complete: new positive/negative test coverage
+#### 2026-09-09 03:20:00.000Z - Phase 2 complete: new positive/negative test coverage
 
 Implemented Task 2.1-2.4. Added `TestIntroductionAcceptsNonParagraphContent`
 to `tests/qa/models/v2/test_body.py` with two tests
@@ -245,7 +260,7 @@ other leaf fields. No production code was touched. Full quality gate green:
 `ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, and `pytest -n auto --cov=src --cov-report=` (3353
 passed, up from 3349 after Phase 1 -- exactly the 4 new tests added).
 
-#### 2026-09-09 - Phase 1 complete: model change
+#### 2026-09-09 02:55:00.000Z - Phase 1 complete: model change
 
 Implemented Task 1.1-1.7: added `IntroductionBody(MarkdownStr)` (a leaf class
 with a `text` computed property mirroring `QaAnswer.text`) to
@@ -274,7 +289,7 @@ Feature folder created from GitHub issue #114, following a plan-mode design disc
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
-#### 2026-09-09 - Leave qa_create_instructions.md's pre-existing formatting drift untouched
+#### 2026-09-09 03:42:00.000Z - Leave qa_create_instructions.md's pre-existing formatting drift untouched
 
 Running `specmgr_mdformat` against `qa_create_instructions.md` after the
 Phase 3 wording tweak reported a change, but diffing showed most of that
@@ -291,7 +306,7 @@ the pre-existing drift alone, rather than bundling an unrelated
 reformatting into this feature's diff -- a future feature or a dedicated
 cleanup pass can reformat this file on its own terms.
 
-#### 2026-09-09 - Fix broken tests by expecting the exact raw text (with trailing newline), not `.strip()`
+#### 2026-09-09 02:52:00.000Z - Fix broken tests by expecting the exact raw text (with trailing newline), not `.strip()`
 
 Widening `Introduction.body` to `IntroductionBody(MarkdownStr)` changes its
 `text` computed property's value from `MarkdownParagraph.text`'s inline text
