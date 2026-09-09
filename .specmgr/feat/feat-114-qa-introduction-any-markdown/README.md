@@ -43,9 +43,9 @@ before starting this feature.
 ### Acceptance Criteria
 
 - [ ] ACC-001: A `### Introduction` section containing only plain paragraph(s) still parses and round-trips identically to today (no regression).
-- [ ] ACC-002: A `### Introduction` section containing a non-paragraph element (e.g. a bullet list, or a leading comment followed by a code block) parses and round-trips successfully.
-- [ ] ACC-003: A `### Introduction` section with only a leading comment and no further content still parses successfully with `body is None`.
-- [ ] ACC-004: `model_dump()` on a parsed QA document surfaces the `Introduction` body's real text content (not an empty object) for both a plain-paragraph and a non-paragraph body.
+- [x] ACC-002: A `### Introduction` section containing a non-paragraph element (e.g. a bullet list, or a leading comment followed by a code block) parses and round-trips successfully.
+- [x] ACC-003: A `### Introduction` section with only a leading comment and no further content still parses successfully with `body is None`.
+- [x] ACC-004: `model_dump()` on a parsed QA document surfaces the `Introduction` body's real text content (not an empty object) for both a plain-paragraph and a non-paragraph body.
 - [ ] ACC-005: The full test suite passes after every phase below, not just at the end.
 - [ ] ACC-006: `ruff format --check`, `ruff check`, and `vulture` all pass against the final state.
 - [ ] ACC-007: `qa_schema.json` (both copies) and `docs/api/` are regenerated and committed in sync with the model change (no drift).
@@ -106,10 +106,10 @@ None of the other existing concrete `models/md` leaf types can be reused for thi
 
 #### Phase 2: New positive/negative test coverage
 
-- [ ] Task 2.1: Add a test constructing/parsing an `Introduction` whose body is a non-paragraph element and asserting it round-trips successfully (ACC-002).
-- [ ] Task 2.2: Add/confirm a test asserting a comment-only `### Introduction` still parses with `body is None` (ACC-003).
-- [ ] Task 2.3: Confirm (add if missing) a `model_dump()` assertion covering the non-paragraph body case (ACC-004).
-- [ ] Task 2.4: Run the full test suite. Must pass before moving to Phase 3.
+- [x] Task 2.1: Add a test constructing/parsing an `Introduction` whose body is a non-paragraph element and asserting it round-trips successfully (ACC-002).
+- [x] Task 2.2: Add/confirm a test asserting a comment-only `### Introduction` still parses with `body is None` (ACC-003).
+- [x] Task 2.3: Confirm (add if missing) a `model_dump()` assertion covering the non-paragraph body case (ACC-004).
+- [x] Task 2.4: Run the full test suite. Must pass before moving to Phase 3.
 
 #### Phase 3: Packaged data files
 
@@ -130,11 +130,14 @@ None of the other existing concrete `models/md` leaf types can be reused for thi
 
 ### Current Status
 
-**As of 2026-09-09**: Phase 1 (model change) complete. `Introduction.body` is
-now `IntroductionBody | None` (was `list[MarkdownParagraph] | None`), both
-`qa_schema.json` copies and `docs/api/` are regenerated, and the full test
-suite is green. Phase 2 (new positive/negative test coverage) not yet
-started.
+**As of 2026-09-09**: Phase 1 (model change) and Phase 2 (new
+positive/negative test coverage) complete. `Introduction.body` is now
+`IntroductionBody | None` (was `list[MarkdownParagraph] | None`), both
+`qa_schema.json` copies and `docs/api/` are regenerated, and new tests cover
+a bullet-list body, a comment-plus-code-block body, a comment-only body
+(`body is None`), and `model_dump()` surfacing non-paragraph body content.
+The full test suite is green (3353 tests, up from 3349 at the end of Phase
+1). Phase 3 (packaged data files) not yet started.
 
 ### Blockers
 
@@ -143,6 +146,32 @@ started.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-09 - Phase 2 complete: new positive/negative test coverage
+
+Implemented Task 2.1-2.4. Added `TestIntroductionAcceptsNonParagraphContent`
+to `tests/qa/models/v2/test_body.py` with two tests
+(`test_bullet_list_body_parses_and_round_trips`,
+`test_comment_followed_by_code_block_body_parses_and_round_trips`) covering
+both example shapes from the plan (ACC-002), each building a `## General`
+section via `General.from_text(...)` (mirroring `_minimal_general()`'s
+style) and asserting `introduction.body.text` contains the expected content
+plus a byte-for-byte `str(sut) == text` round-trip. Added
+`TestIntroductionCommentOnly.test_comment_only_introduction_parses_with_body_none`
+confirming a comment-only `### Introduction` still parses with
+`introduction.body is None` (ACC-003) -- no prior test covered this exact
+case, so this was a genuine addition, not a confirmation of an existing
+test. Added `test_model_dump_surfaces_non_paragraph_introduction_body_content`
+to `tests/qa/tools/test_parse_qa.py` (alongside a new `_NON_PARAGRAPH_INTRO_DOC`
+fixture constant, matching that file's existing `textwrap.dedent`/
+`model_dump(mode="json")` idiom) asserting `model_dump()` surfaces a bullet
+list's real text under `body["general"]["introduction"]["body"]["text"]`,
+not an empty object (ACC-004) -- extending the same concern
+`test_model_dump_surfaces_leaf_section_body_content` already covers for
+other leaf fields. No production code was touched. Full quality gate green:
+`ruff format --check`, `ruff check`, `vulture src/ whitelist.py
+--min-confidence 60`, and `pytest -n auto --cov=src --cov-report=` (3353
+passed, up from 3349 after Phase 1 -- exactly the 4 new tests added).
 
 #### 2026-09-09 - Phase 1 complete: model change
 

@@ -79,6 +79,55 @@ _VALID_DOC = textwrap.dedent(
     """
 )
 
+_NON_PARAGRAPH_INTRO_DOC = textwrap.dedent(
+    """\
+    ---
+    id: qa-002
+    type: qa
+    status: draft
+    ---
+
+    # Some QA Title
+
+    ## General
+
+    ### Introduction
+
+    <!-- filled in during the kickoff interview -->
+
+    - Stakeholder: Product Management
+    - Constraint: Must support 500 req/s
+
+    ### Raw Requirements
+
+    Some raw requirements text.
+
+    ## Elicitation Context
+
+    ## Functional Suitability
+
+    ## Performance Efficiency
+
+    ## Compatibility
+
+    ## Interaction Capability
+
+    ## Reliability
+
+    ## Security
+
+    ## Maintainability
+
+    ## Flexibility
+
+    ## Safety
+
+    ## More Information
+
+    This optional section can contain additional information.
+    """
+)
+
 _V1_SHAPED_DOC = textwrap.dedent(
     """\
     ---
@@ -179,6 +228,23 @@ class TestParseQaTool(unittest.TestCase):
             item = body["functional_suitability"]["questions"][0]
             self.assertIn("Yes, it is acceptable.", item["answer"]["text"])
             self.assertIn("Is this acceptable?", item["question"]["text"])
+
+    def test_model_dump_surfaces_non_paragraph_introduction_body_content(self) -> None:
+        """Regression test: `model_dump()` must surface real bullet-list content for a
+        non-paragraph `Introduction.body`, not an empty object -- exactly the path an
+        MCP server uses to transmit a tool's return value over the wire (ACC-004).
+        """
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "test.md"
+            path.write_text(_NON_PARAGRAPH_INTRO_DOC, encoding="utf-8")
+
+            result = parse_qa(str(path))
+            dump = result.model_dump(mode="json")
+
+            introduction = dump["body"]["general"]["introduction"]
+            self.assertIsNotNone(introduction["comment"])
+            self.assertIn("Stakeholder: Product Management", introduction["body"]["text"])
+            self.assertIn("Constraint: Must support 500 req/s", introduction["body"]["text"])
 
     def test_raises_for_invalid_frontmatter(self) -> None:
         """parse_qa must let a frontmatter validation failure propagate."""
