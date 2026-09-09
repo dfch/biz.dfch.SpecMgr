@@ -2541,6 +2541,52 @@ template:
 
 - `schema_json(*, by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', **dumps_kwargs: 'Any') -> 'str'`
 
+- `single_line_text(self, *, expected: 'str') -> 'str'`
+  Return `.text`, rejecting it if it spans more than one physical line.
+
+  `.text` (see the property above) already correctly joins a
+  soft-wrapped ("lazy continuation", standard CommonMark) list item
+  onto a single string with an embedded `\n` where the original
+  source had 2+ physical lines -- but a structurally-checked
+  subclass (e.g. `tsk.TaskItem`, `feat.RequirementItem`/
+  `AcceptanceCriterionItem`, `rsk.ThresholdItem`/`StrategyItem`)
+  applies its own marker/pattern regex to that text and never
+  expects it to span more than one physical source line. Rather
+  than teach every such regex to additionally tolerate an embedded
+  `\n` (`re.DOTALL`), this shared guard rejects a soft-wrapped item
+  outright with an actionable error -- call it once, before running
+  the domain regex against `.text`, from each affected subclass's
+  own computed field.
+
+  Free-form `MarkdownListItem`/`MarkdownListItemWithNotes` usages
+  with no structural regex of their own (e.g. `req`'s `## Tags`,
+  the `sysrs` cross-reference lists, or any subclass whose own
+  regex already uses `re.DOTALL`, such as `rsk.QuadrantItem`/
+  `MitigationItem`/`StatusItem`) must not call this helper -- they
+  are meant to keep tolerating soft-wraps unchanged.
+
+  Args:
+      expected: a short, human-readable description of the shape
+          this item's text is expected to have (e.g. `"a '- [ ]'/
+          '- [x]' checkbox marker"`), echoed into the error message
+          so it reads consistently with the calling subclass's own
+          malformed-shape assertion message.
+
+  Returns:
+      `.text`, unchanged -- only once confirmed to be a single
+      physical line.
+
+  Raises:
+      AssertionError: `.text` spans more than one physical line
+          (contains an embedded `\n`, meaning the original source
+          had 2+ physical lines joined via CommonMark lazy
+          continuation). The message names this item's own path and
+          1-based line (`self._path`/`self._line`, same convention
+          as every other regex-assert message in this codebase),
+          states plainly that soft-wrapped/lazy-continuation list
+          items are not supported, and tells the author to join the
+          text onto one physical line instead.
+
 - `update_forward_refs(**localns: 'Any') -> 'None'`
 
 - `validate(value: 'Any') -> 'Self'`
@@ -5020,6 +5066,52 @@ name:
 - `schema(by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}') -> 'Dict[str, Any]'`
 
 - `schema_json(*, by_alias: 'bool' = True, ref_template: 'str' = '#/$defs/{model}', **dumps_kwargs: 'Any') -> 'str'`
+
+- `single_line_text(self, *, expected: 'str') -> 'str'`
+  Return `.text`, rejecting it if it spans more than one physical line.
+
+  `.text` (see the property above) already correctly joins a
+  soft-wrapped ("lazy continuation", standard CommonMark) list item
+  onto a single string with an embedded `\n` where the original
+  source had 2+ physical lines -- but a structurally-checked
+  subclass (e.g. `tsk.TaskItem`, `feat.RequirementItem`/
+  `AcceptanceCriterionItem`, `rsk.ThresholdItem`/`StrategyItem`)
+  applies its own marker/pattern regex to that text and never
+  expects it to span more than one physical source line. Rather
+  than teach every such regex to additionally tolerate an embedded
+  `\n` (`re.DOTALL`), this shared guard rejects a soft-wrapped item
+  outright with an actionable error -- call it once, before running
+  the domain regex against `.text`, from each affected subclass's
+  own computed field.
+
+  Free-form `MarkdownListItem`/`MarkdownListItemWithNotes` usages
+  with no structural regex of their own (e.g. `req`'s `## Tags`,
+  the `sysrs` cross-reference lists, or any subclass whose own
+  regex already uses `re.DOTALL`, such as `rsk.QuadrantItem`/
+  `MitigationItem`/`StatusItem`) must not call this helper -- they
+  are meant to keep tolerating soft-wraps unchanged.
+
+  Args:
+      expected: a short, human-readable description of the shape
+          this item's text is expected to have (e.g. `"a '- [ ]'/
+          '- [x]' checkbox marker"`), echoed into the error message
+          so it reads consistently with the calling subclass's own
+          malformed-shape assertion message.
+
+  Returns:
+      `.text`, unchanged -- only once confirmed to be a single
+      physical line.
+
+  Raises:
+      AssertionError: `.text` spans more than one physical line
+          (contains an embedded `\n`, meaning the original source
+          had 2+ physical lines joined via CommonMark lazy
+          continuation). The message names this item's own path and
+          1-based line (`self._path`/`self._line`, same convention
+          as every other regex-assert message in this codebase),
+          states plainly that soft-wrapped/lazy-continuation list
+          items are not supported, and tells the author to join the
+          text onto one physical line instead.
 
 - `update_forward_refs(**localns: 'Any') -> 'None'`
 
