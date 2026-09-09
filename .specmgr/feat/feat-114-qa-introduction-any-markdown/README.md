@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-09 04:33:02.804+02:00'
 id: feat-114-qa-introduction-any-markdown
-status: planning
+status: done
 type: feat
-updated: '2026-09-09 04:33:02.804+02:00'
+updated: '2026-09-09 05:45:00.000+02:00'
 version: 1.0.0
 ---
 
@@ -42,13 +42,13 @@ before starting this feature.
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: A `### Introduction` section containing only plain paragraph(s) still parses and round-trips identically to today (no regression).
+- [x] ACC-001: A `### Introduction` section containing only plain paragraph(s) still parses and round-trips identically to today (no regression).
 - [x] ACC-002: A `### Introduction` section containing a non-paragraph element (e.g. a bullet list, or a leading comment followed by a code block) parses and round-trips successfully.
 - [x] ACC-003: A `### Introduction` section with only a leading comment and no further content still parses successfully with `body is None`.
 - [x] ACC-004: `model_dump()` on a parsed QA document surfaces the `Introduction` body's real text content (not an empty object) for both a plain-paragraph and a non-paragraph body.
-- [ ] ACC-005: The full test suite passes after every phase below, not just at the end.
-- [ ] ACC-006: `ruff format --check`, `ruff check`, and `vulture` all pass against the final state.
-- [ ] ACC-007: `qa_schema.json` (both copies) and `docs/api/` are regenerated and committed in sync with the model change (no drift).
+- [x] ACC-005: The full test suite passes after every phase below, not just at the end.
+- [x] ACC-006: `ruff format --check`, `ruff check`, and `vulture` all pass against the final state.
+- [x] ACC-007: `qa_schema.json` (both copies) and `docs/api/` are regenerated and committed in sync with the model change (no drift).
 
 ### Scope
 
@@ -121,26 +121,30 @@ None of the other existing concrete `models/md` leaf types can be reused for thi
 
 #### Phase 4: Final verification
 
-- [ ] Task 4.1: `uv run --frozen ruff format --check && uv run --frozen ruff check`.
-- [ ] Task 4.2: `uv run --frozen vulture src/ whitelist.py --min-confidence 60`.
-- [ ] Task 4.3: Run the full test suite one final time.
-- [ ] Task 4.4: Review `git status`/`git diff` for completeness, then commit.
+- [x] Task 4.1: `uv run --frozen ruff format --check && uv run --frozen ruff check`.
+- [x] Task 4.2: `uv run --frozen vulture src/ whitelist.py --min-confidence 60`.
+- [x] Task 4.3: Run the full test suite one final time.
+- [x] Task 4.4: Review `git status`/`git diff` for completeness, then commit.
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-09-09**: Phase 1 (model change), Phase 2 (new
-positive/negative test coverage), and Phase 3 (packaged data files)
-complete. `Introduction.body` is now `IntroductionBody | None` (was
+**As of 2026-09-09**: All 4 phases complete -- feature fully implemented
+and verified. `Introduction.body` is now `IntroductionBody | None` (was
 `list[MarkdownParagraph] | None`), both `qa_schema.json` copies and
 `docs/api/` are regenerated, and new tests cover a bullet-list body, a
 comment-plus-code-block body, a comment-only body (`body is None`), and
 `model_dump()` surfacing non-paragraph body content. `qa_example.md`,
 `qa_template.md`, and `qa_create_instructions.md` now demonstrate/document
-the widened `### Introduction` shape. The full test suite is green (3353
-tests, unchanged from the end of Phase 2 -- Phase 3 was a data-file-only
-change, no new tests). Phase 4 (final verification) not yet started.
+the widened `### Introduction` shape. Phase 4's final verification pass
+confirmed every one of ACC-001 through ACC-007 and REQ-001 through REQ-005
+is satisfied against the current repo state (see the Phase 4 Recent
+Updates entry below for the full walkthrough), re-ran `ruff format --check`/`ruff check`/`vulture` (all green), re-ran the full test suite
+(3353 tests, unchanged from the end of Phase 3), and re-ran the
+`specmgr docs`/`specmgr mcp-docs`/`specmgr schema --type qa` (both output
+locations) drift checks with zero diff. All Acceptance Criteria checkboxes
+above are now checked.
 
 ### Blockers
 
@@ -149,6 +153,37 @@ change, no new tests). Phase 4 (final verification) not yet started.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-09 - Phase 4 complete: final verification -- feature fully implemented
+
+Implemented Task 4.1-4.4, the final confidence pass over the whole feature
+(no code changes were needed -- Phases 1-3 were already individually
+committed as `67a2611`, `4b6b978`, and `5207d05`). Re-ran the quality gate
+from a clean working tree: `ruff format --check` (1660 files already
+formatted), `ruff check` (all checks passed), `vulture src/ whitelist.py --min-confidence 60` (no findings), and the full suite via `python -m unittest discover -v -s tests -t . -p "test_*.py"` (3353 passed, unchanged
+from Phase 3). Re-ran all four drift-check commands
+(`specmgr docs`, `specmgr mcp-docs`, `specmgr schema --type qa`, and
+`specmgr schema --type qa --output-dir src/biz/dfch/specmgr/qa/data`) and
+confirmed zero diff after each (`git status --short` stayed empty
+throughout), so Phase 1's regeneration remains fully in sync with the
+final state. Walked every Acceptance Criterion and Requirement against the
+current repo and confirmed all satisfied:
+
+- ACC-001 (plain-paragraph regression): `tests/qa/models/v2/test_body.py::TestGeneralIntroductionRawRequirements::test_parses_and_round_trips` still asserts `introduction.body.text == "Some intro text.\n"` and round-trips via `str(sut)`.
+- ACC-002 (non-paragraph body): `TestIntroductionAcceptsNonParagraphContent`'s two tests (bullet list; comment + code block) in the same file.
+- ACC-003 (comment-only, `body is None`): `TestIntroductionCommentOnly::test_comment_only_introduction_parses_with_body_none`.
+- ACC-004 (`model_dump()` surfaces real text): `tests/qa/tools/test_parse_qa.py::TestParseQaTool::test_model_dump_surfaces_markdownparagraph_backed_fields` (plain-paragraph case) and `::test_model_dump_surfaces_non_paragraph_introduction_body_content` (bullet-list case).
+- ACC-005 (suite green after every phase): each phase's own Progress entry records a passing full run (3349 after Phase 1, 3353 after Phase 2 and Phase 3, 3353 again now).
+- ACC-006 (lint/format/vulture green): confirmed directly above, this pass.
+- ACC-007 (schema/docs regenerated, no drift): Phase 1 commit `67a2611` shows `docs/qa_schema.json`, `src/biz/dfch/specmgr/qa/data/qa_schema.json`, and `docs/api/biz.dfch.specmgr.qa.models.v2.body.md` all updated in the same commit as the model change; this phase's re-run confirms no further drift.
+- REQ-001 (any markdown accepted): `qa/models/v2/body.py`'s `IntroductionBody(MarkdownStr)` plus the ACC-002 tests above.
+- REQ-002 (`comment` unchanged): `Introduction` still inherits `MarkdownSection3WithComment`'s `comment` field unmodified; exercised by the ACC-002/ACC-003 tests (`introduction.comment` assertions).
+- REQ-003 (`body` stays optional): `Introduction.body: IntroductionBody | None = Field(default=None, ...)` in `qa/models/v2/body.py`; exercised by ACC-003.
+- REQ-004 (reachable via `model_dump()`): `IntroductionBody.text` computed property plus the ACC-004 tests.
+- REQ-005 (packaged artifacts reflect the new shape): `qa_schema.json` (both copies)/`docs/api/` per ACC-007 above; `qa/data/qa_example.md`/`qa/data/qa_template.md`/`qa/data/qa_create_instructions.md` updated in Phase 3 commit `5207d05`.
+
+No outstanding concerns. Feature is fully complete per its own Acceptance
+Criteria.
 
 #### 2026-09-09 - Phase 3 complete: packaged data files
 
@@ -183,8 +218,7 @@ produced no diff (expected for a pure data-file change with no docstring
 changes). No test file was modified -- no existing test hardcodes the
 previous `qa_example.md`/`qa_template.md` prose text, so none needed
 updating. Full quality gate green: `ruff format --check`, `ruff check`,
-`vulture src/ whitelist.py --min-confidence 60`, and `pytest -n auto
---cov=src --cov-report=` (3353 passed, unchanged from Phase 2's count).
+`vulture src/ whitelist.py --min-confidence 60`, and `pytest -n auto --cov=src --cov-report=` (3353 passed, unchanged from Phase 2's count).
 
 #### 2026-09-09 - Phase 2 complete: new positive/negative test coverage
 
@@ -208,8 +242,7 @@ list's real text under `body["general"]["introduction"]["body"]["text"]`,
 not an empty object (ACC-004) -- extending the same concern
 `test_model_dump_surfaces_leaf_section_body_content` already covers for
 other leaf fields. No production code was touched. Full quality gate green:
-`ruff format --check`, `ruff check`, `vulture src/ whitelist.py
---min-confidence 60`, and `pytest -n auto --cov=src --cov-report=` (3353
+`ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, and `pytest -n auto --cov=src --cov-report=` (3353
 passed, up from 3349 after Phase 1 -- exactly the 4 new tests added).
 
 #### 2026-09-09 - Phase 1 complete: model change
@@ -228,11 +261,9 @@ to index the new scalar directly and expect the trailing newline
 `MarkdownStr.text` preserves verbatim (`"Some intro text.\n"`, not
 `"Some intro text."`). Regenerated both `qa_schema.json` copies
 (`docs/qa_schema.json` and `src/biz/dfch/specmgr/qa/data/qa_schema.json`, via
-`specmgr schema --type qa` and `specmgr schema --type qa --output-dir
-src/biz/dfch/specmgr/qa/data`, mirroring the exact pre-commit hook commands)
+`specmgr schema --type qa` and `specmgr schema --type qa --output-dir src/biz/dfch/specmgr/qa/data`, mirroring the exact pre-commit hook commands)
 and `docs/api/`/`docs/GENERATED.md` (via `specmgr docs`); confirmed
-`specmgr mcp-docs` produces no diff. Full quality gate green: `ruff format
---check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, and
+`specmgr mcp-docs` produces no diff. Full quality gate green: `ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, and
 `pytest -n auto --cov=src --cov-report=` (3349 passed).
 
 #### 2026-09-09 02:32:25.000Z - Created
