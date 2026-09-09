@@ -1,8 +1,8 @@
 ---
 created: '2026-08-13 00:00:00.000Z'
 id: feat-8-coverage-badge
-status: completed
-updated: '2026-08-15 00:00:00.000Z'
+status: done
+updated: '2026-09-06 07:09:18.000Z'
 version: 1.0.0
 ---
 

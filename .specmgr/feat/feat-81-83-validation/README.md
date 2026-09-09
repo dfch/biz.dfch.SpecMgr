@@ -4,8 +4,8 @@ created: '2026-09-03 10:38:25.338Z'
 id: feat-81-83-validation
 status: done
 type: feat
-updated: '2026-09-04 19:00:00.000Z'
-version: 1.2.0
+updated: '2026-09-06 07:09:18.000Z'
+version: 1.0.0
 ---
 
 # Feature: Consolidate Validation Tools and Fix Opaque Validation/List Failures (#81, #83)

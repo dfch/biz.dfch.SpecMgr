@@ -30,7 +30,13 @@ public :func:`validate` wraps each adapter call in
 and turns a caught exception into
 ``{"valid": False, "errors": [{"message": str(exception)}]}`` instead of
 letting it propagate -- reusing feat-27-validation's already-enriched
-message verbatim as the sole error entry's ``message``. A ``full``/
+message as the sole error entry's ``message``, capped at
+``_MAX_VALIDATE_ERROR_CHARS`` characters via
+``models/md/_markdown.py::snippet()`` (issue #110): a structurally
+malformed document can produce a message several hundred characters long
+once ``wrap_tool_errors``'s domain/tool/channel label is prepended, so the
+message is truncated (with a trailing ``"... (truncated)"`` suffix) rather
+than returned verbatim without limit. A ``full``/
 content-shape mismatch (``full=True`` with body-only content, or
 ``full=False`` with a complete document) is a caller-usage error, not a
 content-validation failure, and is **not** in that catch set: it is a bare
@@ -215,11 +221,16 @@ Unlike every other generic tool in ``general.tools``, ``validate``
 never raises for a content-validation failure (REQ-004): a caught
 ``AssertionError``, ``pydantic.ValidationError``, or ``yaml.YAMLError``
 (``full=True`` only, malformed frontmatter YAML) is turned into
-``ValidateResult(valid=False, errors=[ValidationErrorEntry(message=str(exception))])``
+``ValidateResult(valid=False, errors=[ValidationErrorEntry(message=...)])``
 instead of propagating -- reusing feat-27-validation's already-enriched
 message (field path, line reference, cause/fix hint, plus this tool's
-own domain/``validate``/channel prefix) verbatim as the sole error
-entry's ``message``.
+own domain/``validate``/channel prefix) as the sole error entry's
+``message``, but capped at ``_MAX_VALIDATE_ERROR_CHARS`` characters via
+:func:`~biz.dfch.specmgr.models.md._markdown.snippet` (issue #110):
+``str(exception)`` is passed through
+``snippet(str(exception), max_chars=_MAX_VALIDATE_ERROR_CHARS)`` rather
+than embedded verbatim without limit, so a structurally malformed
+document can no longer produce an unbounded message.
 
 A ``full``/content-shape mismatch is a caller-usage error, not a
 content-validation failure, and is **not** caught: ``content`` must be

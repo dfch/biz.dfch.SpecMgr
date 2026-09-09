@@ -30,7 +30,7 @@ category section. `Qa` is the top-level H1 container:
 ## General                                     general: General
 ### Introduction                                introduction: Introduction
 <!-- optional comment -->
-{intro paragraphs}
+{any markdown}
 ### Raw Requirements                            raw_requirements: RawRequirements
 {opaque raw text}
 
@@ -84,15 +84,15 @@ siblings).
 
 from __future__ import annotations
 
-from pydantic import Field
+from pydantic import computed_field, Field
 
 from ....models.md import (
-    MarkdownParagraph,
     MarkdownSection1,
     MarkdownSection2,
     MarkdownSection2WithComment,
     MarkdownSection3,
     MarkdownSection3WithComment,
+    MarkdownStr,
     alias,
     AliasType,
 )
@@ -103,6 +103,30 @@ from .question_answer import QaQuestionAnswer
 # --------------------------------------------------------------------------
 
 
+class IntroductionBody(MarkdownStr):
+    """`Introduction.body`'s opaque markdown blob -- any markdown content, not just plain paragraphs.
+
+    Leaf class (no declared fields) applying no `@markdown` type/tag
+    restriction of its own -- unlike `MarkdownParagraph`/`MarkdownSection*`/
+    `MarkdownComment`. Because of that, `get_extent`/`from_text` fall back to
+    the unmodified `MarkdownStr` base implementation, which simply consumes
+    everything remaining in the given text regardless of its shape. Since
+    this field is always declared last (and alone, besides `comment`) on
+    `Introduction`, "everything remaining" is exactly correct -- no custom
+    stop-condition override is needed.
+
+    Adds a `text` computed property (mirroring `QaAnswer.text`) so this
+    otherwise-private `_value` is reachable through
+    `model_dump()`/`model_dump_json()`.
+    """
+
+    @computed_field  # type: ignore
+    @property
+    def text(self) -> str:
+        """Return this introduction body's raw markdown text verbatim (or `""` if unset)."""
+        return self._value
+
+
 class Introduction(MarkdownSection3WithComment):
     """`### Introduction` under `## General` -- free-form prose framing the interview. Mandatory.
 
@@ -111,8 +135,8 @@ class Introduction(MarkdownSection3WithComment):
     idiom (see e.g. TSK's `Task`, REQ's `Level`/`Priority`).
     """
 
-    body: list[MarkdownParagraph] | None = Field(
-        default=None, description="Free-form introductory prose paragraphs. Optional."
+    body: IntroductionBody | None = Field(
+        default=None, description="Free-form introductory markdown content (any shape). Optional."
     )
 
 

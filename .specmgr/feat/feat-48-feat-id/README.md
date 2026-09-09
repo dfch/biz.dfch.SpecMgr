@@ -1,9 +1,9 @@
 ---
-created: '2026-09-02T10:32:05.764646'
+created: '2026-09-02 10:32:05.764Z'
 id: feat-48-feat-id
 status: review
 type: feat
-updated: '2026-09-02T18:00:00.000000'
+updated: '2026-09-06 07:09:18.000Z'
 version: 1.0.0
 ---
 

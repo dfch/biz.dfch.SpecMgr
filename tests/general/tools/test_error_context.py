@@ -23,7 +23,11 @@ tool's non-raising result (feat-81-83-validation Phase 2, retiring the former ``
 tools), prepends domain + tool context (built by ``models.md._errors.wrap_tool_errors``,
 Task 3.1) on top of the engine's own message (feat-27-validation Phases 1/2). Covers ``tsk`` and
 ``req`` -- the two domains the task names -- plus one ``set_status`` case for completeness, since
-that generic tool's own adapters were touched by Task 3.2 as well.
+that generic tool's own adapters were touched by Task 3.2 as well. Since
+feat-103-set-status-error (ADR b399f1ce-ed42-4929-b01c-7a57d18e8014), that ``set_status`` case's
+own out-of-vocabulary-status failure mode is pre-checked *before* dispatch and no longer reaches
+``wrap_tool_errors`` at all -- see ``TestGenericSetStatusToolErrorContext``'s own docstring below
+for how it still identifies the domain, via the non-raising ``InvalidStatusResult`` instead.
 
 Unlike ``tests/general/tools/test_update.py``'s exhaustive, all-eleven-domain parametrization,
 this file only needs one representative domain pair to prove the wrapper is actually wired in
@@ -41,6 +45,7 @@ from unittest import mock
 
 from pydantic import ValidationError
 
+from biz.dfch.specmgr.general.models import InvalidStatusResult
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.general.tools.set_status import set_status
 from biz.dfch.specmgr.general.tools.update import update
@@ -161,15 +166,27 @@ class TestGenericUpdateToolErrorContext(TempDocsDirTestCase):
 
 
 class TestGenericSetStatusToolErrorContext(TempDocsDirTestCase):
-    """The generic ``set_status`` adapter: an out-of-vocabulary status names the domain and ``set_status``."""
+    """The generic ``set_status`` adapter's out-of-vocabulary-status case still identifies the domain.
+
+    Since feat-103-set-status-error (ADR b399f1ce-ed42-4929-b01c-7a57d18e8014), an
+    out-of-vocabulary ``status`` is pre-checked *before* any adapter dispatch and therefore
+    never reaches the ``wrap_tool_errors``-wrapped ``XFrontmatter(**fm_data)`` reconstruction
+    ``TestCreateToolErrorContext``/``TestGenericUpdateToolErrorContext`` above exercise -- it
+    returns a structured, non-raising ``InvalidStatusResult`` instead of a raised,
+    wrapper-annotated ``pydantic.ValidationError``. The domain is still unambiguously
+    identified, just via the result's own ``type``/``message`` fields rather than
+    ``wrap_tool_errors``'s ``"{domain} {tool}"`` prefix.
+    """
 
     def test_set_status_tsk_out_of_vocabulary_names_domain_and_tool(self) -> None:
         created = create_tsk(_TSK_MINIMAL_BODY)
 
-        with self.assertRaises(ValidationError) as ctx:
-            set_status(id=created.id, type="tsk", status="not-a-real-status")
+        result = set_status(id=created.id, type="tsk", status="not-a-real-status")
 
-        self.assertIn("tsk set_status", str(ctx.exception))
+        self.assertIsInstance(result, InvalidStatusResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(result.type, "tsk")
+        self.assertIn("tsk", result.message)
 
 
 if __name__ == "__main__":

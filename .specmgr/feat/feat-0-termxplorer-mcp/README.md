@@ -2,7 +2,7 @@
 created: '2026-08-26 00:00:00.000Z'
 id: feat-0-termxplorer-mcp
 status: planning
-updated: '2026-08-26 00:00:00.000Z'
+updated: '2026-09-04 22:07:15.000Z'
 version: 1.0.0
 ---
 
@@ -17,16 +17,41 @@ An MCP server that lets agents query the tekom terminology database
 validate technological terms against the agreed tekom glossary (preferred /
 admitted / do-not-use designations, definitions, equivalents).
 
-This folder currently holds **research findings only**. The implementation
-plan (requirements, acceptance criteria, design, task list) is **not yet
-written** and will be added here later, based on `findings.md`.
+This folder currently holds **research findings only** (see `findings.md`,
+the detailed results of the 2026-08-26 API investigation of the
+TermXplorer instance: system identification, official API situation,
+official data model, the verified internal RPC interface, account
+permission profile, risks, and open questions for the MCP design). The
+requirements/acceptance criteria/task list below are placeholders pending
+the decision to draft the full MCP implementation plan.
 
-### Related artifacts
+### Requirements
 
-- `findings.md` — detailed results of the 2026-08-26 API investigation of
-  the TermXplorer instance (system identification, official API situation,
-  official data model, the verified internal RPC interface, account
-  permission profile, risks, open questions for the MCP design).
+- REQ-001: Define the concrete requirements for the TermXplorer MCP server once the implementation plan is drafted (see `findings.md`).
+
+### Acceptance Criteria
+
+- [ ] ACC-001: A full implementation plan (requirements, acceptance criteria, design, task list) has been drafted in this README, replacing this placeholder section.
+
+### Scope
+
+#### Included
+
+- The black-box research and API investigation of the tekom TermXplorer instance, documented in `findings.md`.
+
+#### Explicitly Out Of Scope
+
+- Implementation of the MCP server itself, until the implementation plan is drafted and approved.
+
+### Task List
+
+#### Phase 0: Research
+
+- [x] Task 0.1: Complete the black-box API investigation of tekom.termtechnologies.com (read-only, with the public `tekom_EN` demo credentials) and document findings in `findings.md`.
+
+#### Phase 1: Implementation Planning
+
+- [ ] Task 1.1: Draft the MCP server implementation plan (requirements, acceptance criteria, design, task list) in this README, based on `findings.md`.
 
 ## Progress
 
@@ -35,18 +60,23 @@ written** and will be added here later, based on `findings.md`.
 **As of 2026-08-26**: Investigation done, findings documented in
 `findings.md`. Awaiting the decision to draft the MCP implementation plan.
 
-### Recent Updates
+### Updates
 
-#### Update 2026-08-26T22:30:00+02:00 (newest)
+<!-- Newest entry first -- prepend new entries directly below this comment. -->
 
-- Completed: black-box API investigation of tekom.termtechnologies.com
-  (read-only, with the public `tekom_EN` demo credentials); findings
-  written to `findings.md`.
-- Next: draft the MCP server implementation plan in this README once
-  requested.
+#### 2026-08-26 22:30:00.000+02:00 - Investigation completed
+
+Completed the black-box API investigation of tekom.termtechnologies.com
+(read-only, with the public `tekom_EN` demo credentials); findings written
+to `findings.md`. Next: draft the MCP server implementation plan in this
+README once requested.
 
 ### Decisions Made
 
-- **2026-08-26**: Document the findings in this feature folder
-  (`findings.md`) rather than in `docs/` — this is development planning
-  input for the upcoming MCP feature, per the `.specmgr/` convention.
+<!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-08-26 00:00:00.000Z - Findings documented in the feature folder
+
+Document the findings in this feature folder (`findings.md`) rather than
+in `docs/` -- this is development planning input for the upcoming MCP
+feature, per the `.specmgr/` convention.

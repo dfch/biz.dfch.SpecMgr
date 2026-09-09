@@ -34,6 +34,16 @@ Also backs feat-81-83-validation Phase 2's generic ``validate`` tool
   (``general.tools.validate``) returns for a content-validation failure
   instead of letting the exception propagate.
 
+Also backs feat-103-set-status-error's narrow extension of that same
+non-raising workaround to the generic ``set_status`` tool's own single
+failure mode (ADR b399f1ce-ed42-4929-b01c-7a57d18e8014):
+
+- :class:`InvalidStatusResult` -- the non-raising, structured result the
+  generic ``set_status`` tool (``general.tools.set_status``) returns for an
+  out-of-vocabulary ``status`` value, instead of letting
+  ``pydantic.ValidationError`` propagate. Distinct from
+  :class:`ValidateResult` -- a different tool's own model.
+
 Also backs feat-92-resources's cross-cutting reference-resource
 model-backed drift-guard convention (ADR
 356d8781-e446-4c26-917a-eda85648ce9d, REQ-002/REQ-005/REQ-006):
@@ -74,6 +84,7 @@ from .ears import (
     WhenToUseItem,
     parse_ears,
 )
+from .invalid_status_result import InvalidStatusResult
 from .paged_result import PagedResult
 from .rasci import Rasci, RasciVsRaci, RoleItem, Roles, parse_rasci
 from .summary import DocSummary
@@ -86,6 +97,7 @@ __all__ = [
     "Dtais",
     "DocSummary",
     "Ears",
+    "InvalidStatusResult",
     "MethodItem",
     "PagedResult",
     "PatternItem",

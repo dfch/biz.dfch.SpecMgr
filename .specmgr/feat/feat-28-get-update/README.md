@@ -1,9 +1,9 @@
 ---
-created: '2026-09-01T14:19:27.649184'
+created: '2026-09-01 14:19:27.649Z'
 id: feat-28-get-update
 status: done
 type: feat
-updated: '2026-09-02T04:54:34'
+updated: '2026-09-06 07:25:54.000Z'
 version: 1.0.0
 ---
 
@@ -523,12 +523,12 @@ precedent — checkbox `[x]`, status set to "split out into
 `feat-28-get-update` (GitHub issue #28,
 `.specmgr/feat/feat-28-get-update/README.md`) on 2026-09-01" plus a clause
 noting the revised contract (`offset`/`limit` for the generic `update` tool
-+ windowed `get_<d>` reads, hard rename, ADR draft) is recorded in this
+\+ windowed `get_<d>` reads, hard rename, ADR draft) is recorded in this
 plan; feat-7 frontmatter `updated` bumped to 2026-09-01; a new `#### Update
 2026-09-01 (Task 0.32 split out)` entry prepended to feat-7's Recent Updates
 (the indented Background paragraph left untouched). Task 0.5: ADR
 `4ec08dcb-fcb7-4961-abaf-ff7803e2f21d` ("offset/limit coordinates for the
-generic update tool and get_<d> windowed reads") created via
+generic update tool and `get_<d>` windowed reads") created via
 `specmgr_create_adr` with status `draft` (set to accepted at close, Task
 4.3) — six options across the three decided axes (hard rename vs. dual
 alias; strict vs. clamping splice validation; raw-only vs. both-modes

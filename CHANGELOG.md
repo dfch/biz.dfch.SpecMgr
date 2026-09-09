@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.24.0] - 2026-09-08
+
+### Fixed
+
+- `validate`: `ValidationErrorEntry.message` is now capped at 300
+  characters (`_MAX_VALIDATE_ERROR_CHARS`, plus a trailing
+  `"... (truncated)"` suffix when truncation occurs) instead of reusing
+  the caught exception's `str()` verbatim without limit -- a structurally
+  malformed document (e.g. an unexpected/duplicate heading) could
+  otherwise produce a message several hundred characters long once
+  `wrap_tool_errors`'s domain/tool/channel label was prepended. Also fixed
+  `models/md/_markdown.py::not_in_mdformat_message()`'s global-mismatch
+  (`line_no == 0`) branch, which embedded the full raw `text`/`formatted`
+  via `repr()` with no bound -- it now routes both through the existing
+  `snippet()` helper, matching every sibling message-builder in that
+  module (GitHub issue #110).
+
+## [0.23.0] - 2026-09-07
+
+### Fixed
+
+- `set_status`: an out-of-vocabulary `status` value for a given `type` (all
+  13 domains, including `adr`) no longer raises a `pydantic.ValidationError`
+  -- it returns a new, non-raising `InvalidStatusResult`
+  (`valid`/`type`/`status`/`allowed_values`/`message`) instead, so the
+  allowed-values detail survives MCP clients that truncate `isError: true`
+  results. Every other `set_status` failure mode (unknown `id`,
+  path-injection/wrong-shape `id`, `superseded_by` misuse on a non-`adr`
+  type) still raises unchanged. New ADR
+  b399f1ce-ed42-4929-b01c-7a57d18e8014 extends ADR
+  519d1206's non-raising, structured-result workaround (previously scoped
+  to `validate`) to this case (GitHub issue #103).
+
+## [0.22.0] - 2026-09-04
+
 ### Added
 
 - Generic `validate(type, content, full)` MCP tool in `general/tools/`:
@@ -42,6 +77,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and now includes the paper's own worked example for each pattern. New
   ADR (356d8781-e446-4c26-917a-eda85648ce9d) documenting the resulting
   repo-wide convention for reference resources (GitHub issue #92).
+- Generated JSON Schema for the twelve whole-body domains now documents
+  the `created`/`updated` frontmatter fields' `yyyy-MM-dd HH:mm:ss.fff` +
+  `Z`/`±HH:mm` timestamp format as a `pattern` constraint, without
+  changing the existing runtime validation behavior (`adr`'s schema is
+  unaffected) (GitHub issue #94).
 
 ### Changed
 

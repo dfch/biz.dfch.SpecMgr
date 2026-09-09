@@ -149,6 +149,14 @@ _FEAT_7_TASK_0_29_EXPECTED_SUBSTRINGS = (
     "remove the marker or indent the line",
 )
 
+#: Feat-110 (issue #110): the same substrings above, minus the trailing fix-hint clause
+#: ("remove the marker or indent the line"), which now falls past `validate()`'s
+#: `_MAX_VALIDATE_ERROR_CHARS` cap for this fixture's raw message length and is truncated
+#: away -- `create_tsk`/`update` still raise the full, untruncated exception (`validate.py`'s
+#: truncation is scoped to the non-raising `ValidateResult` path only, REQ-002), so only the
+#: `validate`-tool surface below needs this weaker substring set.
+_FEAT_7_TASK_0_29_EXPECTED_SUBSTRINGS_VIA_VALIDATE = _FEAT_7_TASK_0_29_EXPECTED_SUBSTRINGS[:-1]
+
 
 class TempTskDirTestCase(unittest.TestCase):
     """Common fixture: a temp dir set as the docs root via ``SPECMGR_DOCS_DIR``."""
@@ -193,13 +201,19 @@ class TestFeat7Task029StrayListMarkerRegression(TempTskDirTestCase):
     """feat-7 Task 0.29's `+`-prefixed continuation line, through the same three surfaces."""
 
     def test_validate_surfaces_an_actionable_message(self) -> None:
+        """Issue #110: this fixture's raw message now exceeds `validate()`'s
+        `_MAX_VALIDATE_ERROR_CHARS` cap, so the trailing fix-hint clause ("remove the marker
+        or indent the line") is truncated away -- assert only the substrings that still
+        survive (cause + the start of the fix hint), plus the truncation marker itself, to
+        keep proving issue #27/feat-7 Task 0.29 is still caught and reported actionably."""
         result = validate(type="tsk", content=_FEAT_7_TASK_0_29_BODY)
 
         self.assertFalse(result.valid)
         self.assertEqual(len(result.errors), 1)
         message = result.errors[0].message
-        for substring in _FEAT_7_TASK_0_29_EXPECTED_SUBSTRINGS:
+        for substring in _FEAT_7_TASK_0_29_EXPECTED_SUBSTRINGS_VIA_VALIDATE:
             self.assertIn(substring, message)
+        self.assertTrue(message.endswith("... (truncated)"), message)
 
     def test_create_tsk_surfaces_an_actionable_message(self) -> None:
         with self.assertRaises(AssertionError) as ctx:

@@ -1,9 +1,9 @@
 ---
-created: '2026-09-01T17:36:02.251286'
+created: '2026-09-01 17:36:02.251Z'
 id: feat-50-confluence
 status: done
 type: feat
-updated: '2026-09-02T05:00:00.000000'
+updated: '2026-09-06 07:09:18.000Z'
 version: 1.0.0
 ---
 
