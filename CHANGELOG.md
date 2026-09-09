@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.25.0] - 2026-09-09
+
+### Changed
+
+- `qa`: the `### Introduction` body now accepts any markdown content (a
+  bullet list, code block, block quote, etc.), not just plain paragraphs
+  -- the field is retyped from a paragraph list to an opaque markdown
+  leaf. The optional leading comment and the section's optionality are
+  unchanged (GitHub issue #114).
+
+### Fixed
+
+- `models/md`: a soft-wrapped (CommonMark lazy-continuation) list item
+  now fails with an actionable error -- field path, 1-based line, and an
+  explicit "soft-wrapped/lazy-continuation list items are not supported"
+  cause/fix hint -- instead of an opaque parsing failure, across every
+  structurally-checked list item in all twelve whole-body domains
+  (`tsk`, `feat`, `rsk`) (GitHub issue #99).
+
 ## [0.24.0] - 2026-09-08
 
 ### Fixed
