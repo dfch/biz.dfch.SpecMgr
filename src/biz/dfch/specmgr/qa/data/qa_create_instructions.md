@@ -18,8 +18,9 @@ step 1 if this is genuinely a new interview.
 ## 1. Structure recap (body markdown only, no frontmatter block)
 - `# {title}` -- H1, mandatory, free-form.
 - `## General` -- mandatory, always present.
-  - `### Introduction` -- mandatory. Free-form prose framing the
-    interview: who was interviewed, when, and why.
+  - `### Introduction` -- mandatory. Free-form markdown (prose, lists,
+    code blocks, ...) framing the interview: who was interviewed, when,
+    and why.
   - `### Raw Requirements` -- mandatory. Free-form, pre-existing raw
     requirement notes (e.g. from a wiki page), preserved verbatim for
     traceability. May simply note there were none.

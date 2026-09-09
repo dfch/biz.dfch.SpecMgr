@@ -13,10 +13,15 @@ version: 1.0.0
 
 ### Introduction
 
+<!-- filled in during the kickoff interview -->
+
 This Q&A session captures the requirements-elicitation interview backing the
 widget-registry migration (see `tsk_reference.md`'s "Migrate Widgets to the
-New Registry" task list). It was conducted across two sessions with the
-platform team, plus one safety-reviewer sign-off session.
+New Registry" task list). It was conducted across:
+
+- two sessions with the platform team (two engineers each);
+- one safety-reviewer sign-off session focused specifically on the cutover
+  procedure.
 
 The transcript below is organized by ISO/IEC 25010:2023 quality
 characteristic, plus an `Elicitation Context` section describing who was

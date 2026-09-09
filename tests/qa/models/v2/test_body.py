@@ -222,13 +222,91 @@ class TestGeneralIntroductionRawRequirements(unittest.TestCase):
         sut = _minimal_general()
 
         self.assertIsNone(sut.comment)
-        self.assertEqual(sut.introduction.body[0].text, "Some intro text.")
+        self.assertEqual(sut.introduction.body.text, "Some intro text.\n")
         self.assertIn("Some raw requirements text.", sut.raw_requirements.text)
 
     def test_introduction_and_raw_requirements_keep_implicit_alias_derivation(self) -> None:
         """No explicit `@alias` on `Introduction`/`RawRequirements` -- per v1's own established precedent."""
         self.assertTrue(match_alias(Introduction, "Introduction"))
         self.assertTrue(match_alias(RawRequirements, "Raw Requirements"))
+
+
+class TestIntroductionAcceptsNonParagraphContent(unittest.TestCase):
+    """`Introduction.body` accepts non-paragraph markdown content verbatim (ACC-002)."""
+
+    def test_bullet_list_body_parses_and_round_trips(self) -> None:
+        text = format_text(
+            """\
+## General
+
+### Introduction
+
+- item one
+- item two
+
+### Raw Requirements
+
+Some raw requirements text.
+"""
+        )
+
+        sut = General.from_text(text)
+
+        self.assertIsNotNone(sut.introduction.body)
+        self.assertIn("item one", sut.introduction.body.text)
+        self.assertIn("item two", sut.introduction.body.text)
+        self.assertEqual(str(sut), text)
+
+    def test_comment_followed_by_code_block_body_parses_and_round_trips(self) -> None:
+        text = format_text(
+            """\
+## General
+
+### Introduction
+
+<!-- filled in during the kickoff interview -->
+
+```
+code block content
+```
+
+### Raw Requirements
+
+Some raw requirements text.
+"""
+        )
+
+        sut = General.from_text(text)
+
+        self.assertIsNotNone(sut.introduction.comment)
+        self.assertIsNotNone(sut.introduction.body)
+        self.assertIn("code block content", sut.introduction.body.text)
+        self.assertEqual(str(sut), text)
+
+
+class TestIntroductionCommentOnly(unittest.TestCase):
+    """A comment-only `### Introduction` section still parses with `body is None` (ACC-003)."""
+
+    def test_comment_only_introduction_parses_with_body_none(self) -> None:
+        text = format_text(
+            """\
+## General
+
+### Introduction
+
+<!-- filled in during the kickoff interview -->
+
+### Raw Requirements
+
+Some raw requirements text.
+"""
+        )
+
+        sut = General.from_text(text)
+
+        self.assertIsNotNone(sut.introduction.comment)
+        self.assertIsNone(sut.introduction.body)
+        self.assertEqual(str(sut), text)
 
 
 class TestQaRequiredVsOptionalFields(unittest.TestCase):

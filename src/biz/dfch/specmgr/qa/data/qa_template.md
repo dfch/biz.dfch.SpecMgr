@@ -13,8 +13,9 @@ version: 1.0.0
 
 ### Introduction
 
-Free-form prose framing the interview: who was interviewed, when, and why.
-Mandatory, but a single sentence like this one is sufficient.
+Free-form markdown (prose, lists, code blocks, ...) framing the interview:
+who was interviewed, when, and why. Mandatory, but a single sentence like
+this one is sufficient.
 
 ### Raw Requirements
 
