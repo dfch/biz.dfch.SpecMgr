@@ -42,7 +42,15 @@ eda85648ce9d's Decision Drivers) rather than inventing a new shared
 line): a soft-wrapped bullet's `.text` keeps the embedded newline of its
 continuation lines (`mdformat` does not reflow), mirroring
 `sysrs.models.v1.body._validate_cross_reference_items`'s established
-reasoning.
+reasoning. Since `StrategyItem.strategy` is genuinely expected to always
+be a single physical line, feat-99-list-item's shared
+`MarkdownListItem.single_line_text` guard is called there (only) before
+`_STRATEGY_ITEM_PATTERN` runs, rejecting a soft-wrapped bullet with an
+actionable error rather than silently letting the unanchored,
+non-`DOTALL` regex fail with a less specific message;
+`QuadrantItem`/`MitigationItem`/`StatusItem` below already tolerate
+soft-wraps via their own `re.DOTALL` regexes and are deliberately not
+wired to that guard.
 
 The real document's own TARA strategy word appears, in order, in **three
 different lists**, and -- unlike DTAIS's two 5-word lists, which happen to
@@ -147,13 +155,17 @@ class StrategyItem(MarkdownListItem):
 
         Raises:
             AssertionError: `.text` does not match `` `word` `` exactly
-                (see `_STRATEGY_ITEM_PATTERN`). The message names this
+                (see `_STRATEGY_ITEM_PATTERN`), or spans more than one
+                physical line (soft-wrapped/lazy-continuation list items
+                are not supported, see
+                `MarkdownListItem.single_line_text`). The message names this
                 item's own path and 1-based line (REQ-001/REQ-002, via
                 `self._path`/`self._line`, threaded in by `models.md`'s
                 `MarkdownListItem.from_text`).
         """
-        match = _STRATEGY_ITEM_PATTERN.fullmatch(self.text)
-        assert match, f"{self._path} (line {self._line}): expected '`word`', got {self.text!r}"
+        text = self.single_line_text(expected="'`word`'")
+        match = _STRATEGY_ITEM_PATTERN.fullmatch(text)
+        assert match, f"{self._path} (line {self._line}): expected '`word`', got {text!r}"
         result: str = match.group("strategy")
         return result
 

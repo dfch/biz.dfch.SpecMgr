@@ -144,13 +144,17 @@ class ThresholdItem(MarkdownListItem):
 
         Raises:
             AssertionError: `.text` does not match `` `low-high` → `zone` ``
-                (see `_THRESHOLD_ITEM_PATTERN`). The message names this
+                (see `_THRESHOLD_ITEM_PATTERN`), or spans more than one
+                physical line (soft-wrapped/lazy-continuation list items
+                are not supported, see
+                `MarkdownListItem.single_line_text`). The message names this
                 item's own path and 1-based line (REQ-001/REQ-002, via
                 `self._path`/`self._line`, threaded in by `models.md`'s
                 `MarkdownListItem.from_text`).
         """
-        match = _THRESHOLD_ITEM_PATTERN.fullmatch(self.text)
-        assert match, f"{self._path} (line {self._line}): expected '`low-high` \u2192 `zone`', got {self.text!r}"
+        text = self.single_line_text(expected="'`low-high` \u2192 `zone`'")
+        match = _THRESHOLD_ITEM_PATTERN.fullmatch(text)
+        assert match, f"{self._path} (line {self._line}): expected '`low-high` \u2192 `zone`', got {text!r}"
         result: int = int(match.group("low"))
         return result
 
@@ -164,13 +168,17 @@ class ThresholdItem(MarkdownListItem):
 
         Raises:
             AssertionError: `.text` does not match `` `low-high` → `zone` ``
-                (see `_THRESHOLD_ITEM_PATTERN`). The message names this
+                (see `_THRESHOLD_ITEM_PATTERN`), or spans more than one
+                physical line (soft-wrapped/lazy-continuation list items
+                are not supported, see
+                `MarkdownListItem.single_line_text`). The message names this
                 item's own path and 1-based line (REQ-001/REQ-002, via
                 `self._path`/`self._line`, threaded in by `models.md`'s
                 `MarkdownListItem.from_text`).
         """
-        match = _THRESHOLD_ITEM_PATTERN.fullmatch(self.text)
-        assert match, f"{self._path} (line {self._line}): expected '`low-high` \u2192 `zone`', got {self.text!r}"
+        text = self.single_line_text(expected="'`low-high` \u2192 `zone`'")
+        match = _THRESHOLD_ITEM_PATTERN.fullmatch(text)
+        assert match, f"{self._path} (line {self._line}): expected '`low-high` \u2192 `zone`', got {text!r}"
         result: int = int(match.group("high"))
         return result
 
@@ -184,13 +192,17 @@ class ThresholdItem(MarkdownListItem):
 
         Raises:
             AssertionError: `.text` does not match `` `low-high` → `zone` ``
-                (see `_THRESHOLD_ITEM_PATTERN`). The message names this
+                (see `_THRESHOLD_ITEM_PATTERN`), or spans more than one
+                physical line (soft-wrapped/lazy-continuation list items
+                are not supported, see
+                `MarkdownListItem.single_line_text`). The message names this
                 item's own path and 1-based line (REQ-001/REQ-002, via
                 `self._path`/`self._line`, threaded in by `models.md`'s
                 `MarkdownListItem.from_text`).
         """
-        match = _THRESHOLD_ITEM_PATTERN.fullmatch(self.text)
-        assert match, f"{self._path} (line {self._line}): expected '`low-high` \u2192 `zone`', got {self.text!r}"
+        text = self.single_line_text(expected="'`low-high` \u2192 `zone`'")
+        match = _THRESHOLD_ITEM_PATTERN.fullmatch(text)
+        assert match, f"{self._path} (line {self._line}): expected '`low-high` \u2192 `zone`', got {text!r}"
         result: str = match.group("zone")
         return result
 

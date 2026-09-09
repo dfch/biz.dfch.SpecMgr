@@ -91,6 +91,14 @@ _BAD_ACC_BODY = _MINIMAL_BODY.replace(
 
 _MALFORMED_BODY = "# Title\n\nJust a paragraph, no recognized feature sections.\n"
 
+# feat-99-list-item: a soft-wrapped (CommonMark lazy-continuation) `REQ-NNN:` bullet -- the
+# `RequirementItem.description` computed field's `single_line_text` guard must reject this with
+# an actionable error, not a confusing unanchored-regex failure.
+_SOFT_WRAPPED_REQUIREMENT_BODY = _MINIMAL_BODY.replace(
+    "- REQ-001: The widget must render within 200ms.",
+    "- REQ-001: The widget must render within 200ms\n  even across a second physical line.",
+)
+
 
 def _body_with_title(title: str) -> str:
     return _MINIMAL_BODY.replace("Example Widget", title)
@@ -202,6 +210,19 @@ class TestCreateFeat(TempFeatDirTestCase):
         with self.assertRaises(ValidationError):
             create_feat(_BAD_ACC_BODY)
 
+        self.assertFalse(feat_base_dir().exists())
+
+    def test_soft_wrapped_requirement_item_raises_actionable_error_and_writes_nothing(self) -> None:
+        """feat-99-list-item: a soft-wrapped `REQ-NNN:` bullet must raise with the shared
+        `MarkdownListItem.single_line_text` guard's actionable message end-to-end through the
+        real write path, and must write nothing -- not a generic "Error executing tool" string
+        or an opaque, unrelated regex-mismatch failure."""
+        with self.assertRaises(ValidationError) as ctx:
+            create_feat(_SOFT_WRAPPED_REQUIREMENT_BODY)
+
+        message = str(ctx.exception)
+        self.assertIn("soft-wrapped/lazy-continuation list items are not supported", message)
+        self.assertIn("join the text onto one physical line", message)
         self.assertFalse(feat_base_dir().exists())
 
 

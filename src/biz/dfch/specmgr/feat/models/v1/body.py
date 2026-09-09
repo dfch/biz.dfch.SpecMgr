@@ -104,13 +104,17 @@ class RequirementItem(MarkdownListItem):
             The description text following the `REQ-NNN: ` prefix.
 
         Raises:
-            AssertionError: `.text` does not match `^REQ-\\d{3}: .+$`. The
-                message names this item's own path and 1-based line
-                (REQ-001/REQ-002, via `self._path`/`self._line`, threaded in
-                by `models.md`'s `MarkdownListItem.from_text`).
+            AssertionError: `.text` does not match `REQ-\\d{3}: .+`, or
+                spans more than one physical line (soft-wrapped/lazy-
+                continuation list items are not supported, see
+                `MarkdownListItem.single_line_text`). The message names
+                this item's own path and 1-based line (REQ-001/REQ-002, via
+                `self._path`/`self._line`, threaded in by `models.md`'s
+                `MarkdownListItem.from_text`).
         """
-        match = _REQUIREMENT_ITEM_PATTERN.fullmatch(self.text)
-        assert match, f"{self._path} (line {self._line}): expected 'REQ-NNN: <description>', got {self.text!r}"
+        text = self.single_line_text(expected="'REQ-NNN: <description>'")
+        match = _REQUIREMENT_ITEM_PATTERN.fullmatch(text)
+        assert match, f"{self._path} (line {self._line}): expected 'REQ-NNN: <description>', got {text!r}"
         result: str = match.group("description")
         return result
 

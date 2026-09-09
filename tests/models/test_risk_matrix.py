@@ -28,7 +28,9 @@ import unittest
 import pydantic
 
 from biz.dfch.specmgr.general.tools._packaged_data import read_packaged_text
+from biz.dfch.specmgr.models.md._markdown import format_text
 from biz.dfch.specmgr.rsk.models.v1 import RiskMatrix, level_from_product, parse_risk_matrix
+from biz.dfch.specmgr.rsk.models.v1.risk_matrix import ThresholdItem
 
 #: A minimal, well-formed header shared by every fixture below -- everything
 #: up to and including `## Zone table`, which stays leaf/unmodeled and so
@@ -147,6 +149,47 @@ These are the same thresholds the schema derives.
 """
     + _FOOTER
 )
+
+
+class TestThresholdItemSoftWrap(unittest.TestCase):
+    """feat-99-list-item: a soft-wrapped (lazy-continuation) threshold bullet raises an
+    actionable error via `.low`/`.high`/`.zone`, instead of failing the unanchored
+    `_THRESHOLD_ITEM_PATTERN` with a confusing message."""
+
+    def _soft_wrapped_item(self) -> ThresholdItem:
+        text = format_text("- `1-4` \u2192 `low`\n  across a second physical line\n")
+        result = ThresholdItem.from_text(text)
+        return result
+
+    def test_low_raises_actionable_error(self) -> None:
+        sut = self._soft_wrapped_item()
+
+        with self.assertRaises(AssertionError) as ctx:
+            _ = sut.low
+
+        message = str(ctx.exception)
+        self.assertIn("soft-wrapped/lazy-continuation list items are not supported", message)
+        self.assertIn("join the text onto one physical line", message)
+
+    def test_high_raises_actionable_error(self) -> None:
+        sut = self._soft_wrapped_item()
+
+        with self.assertRaises(AssertionError) as ctx:
+            _ = sut.high
+
+        message = str(ctx.exception)
+        self.assertIn("soft-wrapped/lazy-continuation list items are not supported", message)
+        self.assertIn("join the text onto one physical line", message)
+
+    def test_zone_raises_actionable_error(self) -> None:
+        sut = self._soft_wrapped_item()
+
+        with self.assertRaises(AssertionError) as ctx:
+            _ = sut.zone
+
+        message = str(ctx.exception)
+        self.assertIn("soft-wrapped/lazy-continuation list items are not supported", message)
+        self.assertIn("join the text onto one physical line", message)
 
 
 class TestParseRiskMatrix(unittest.TestCase):

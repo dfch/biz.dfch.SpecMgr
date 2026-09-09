@@ -28,7 +28,9 @@ import unittest
 import pydantic
 
 from biz.dfch.specmgr.general.tools._packaged_data import read_packaged_text
+from biz.dfch.specmgr.models.md._markdown import format_text
 from biz.dfch.specmgr.rsk.models.v1 import Tara, parse_tara
+from biz.dfch.specmgr.rsk.models.v1.tara import StrategyItem
 
 #: A deliberately malformed document: only 3 of the required 4 intro
 #: strategy bullets, so `Tara.strategies`'s `min_length=4`/`max_length=4`
@@ -320,6 +322,24 @@ The `rsk` frontmatter `status` is a six-value lifecycle:
 `status` tracks the lifecycle state of the entry; `strategy` tracks the
 chosen response. They are independent fields.
 """
+
+
+class TestStrategyItemSoftWrap(unittest.TestCase):
+    """feat-99-list-item: a soft-wrapped (lazy-continuation) intro strategy bullet raises an
+    actionable error via `.strategy`, instead of failing the unanchored `_STRATEGY_ITEM_PATTERN`
+    with a confusing message. `QuadrantItem`/`MitigationItem`/`StatusItem` already tolerate
+    soft-wraps via their own `re.DOTALL` regexes and are deliberately not covered here."""
+
+    def test_strategy_raises_actionable_error(self) -> None:
+        text = format_text("- `transfer`\n  across a second physical line\n")
+        sut = StrategyItem.from_text(text)
+
+        with self.assertRaises(AssertionError) as ctx:
+            _ = sut.strategy
+
+        message = str(ctx.exception)
+        self.assertIn("soft-wrapped/lazy-continuation list items are not supported", message)
+        self.assertIn("join the text onto one physical line", message)
 
 
 class TestParseTara(unittest.TestCase):
