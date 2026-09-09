@@ -855,7 +855,14 @@ class TestValidateSoftWrappedListItemIssue99(unittest.TestCase):
     """feat-99-list-item: a soft-wrapped (CommonMark lazy-continuation) `REQ-NNN:` bullet,
     end-to-end through the generic `validate` tool, surfaces the shared `MarkdownListItem.
     single_line_text` guard's actionable message (not a generic "Error executing tool" string)
-    via `{valid: False, errors: [...]}`, never a raised/opaque exception."""
+    via `{valid: False, errors: [...]}`, never a raised/opaque exception.
+
+    Note: `validate()`'s returned message is truncated at `_MAX_VALIDATE_ERROR_CHARS` (issue
+    #110, see `TestValidateMessageTruncation`), so this end-to-end test only asserts the prefix
+    of the guard's message that survives truncation. The full, untruncated "join the text onto
+    one physical line" fix-hint wording is already covered at the unit level by
+    `tests/models/md/test_markdown_list_item.py` and, for this domain specifically, by
+    `tests/feat/models/v1/test_body.py` -- no need to duplicate that coverage here."""
 
     def test_soft_wrapped_requirement_item_surfaces_actionable_message(self) -> None:
         soft_wrapped_body = _FEAT_MINIMAL_BODY.replace(
@@ -870,7 +877,6 @@ class TestValidateSoftWrappedListItemIssue99(unittest.TestCase):
         message = result.errors[0].message
         self.assertNotIn("Error executing tool", message)
         self.assertIn("soft-wrapped/lazy-continuation list items are not supported", message)
-        self.assertIn("join the text onto one physical line", message)
 
 
 class TestValidateYamlErrorEnrichment(unittest.TestCase):
