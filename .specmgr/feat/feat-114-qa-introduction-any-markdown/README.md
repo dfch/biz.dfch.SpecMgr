@@ -113,11 +113,11 @@ None of the other existing concrete `models/md` leaf types can be reused for thi
 
 #### Phase 3: Packaged data files
 
-- [ ] Task 3.1: Update `qa/data/qa_example.md`'s `### Introduction` section to add a leading comment plus a short bullet list.
-- [ ] Task 3.2: Update `qa/data/qa_template.md`'s `### Introduction` placeholder wording.
-- [ ] Task 3.3: Brief wording tweak in `qa/data/qa_create_instructions.md`.
-- [ ] Task 3.4: Re-run `uv run --frozen specmgr docs` if needed.
-- [ ] Task 3.5: Run the full test suite. Must pass before moving to Phase 4.
+- [x] Task 3.1: Update `qa/data/qa_example.md`'s `### Introduction` section to add a leading comment plus a short bullet list.
+- [x] Task 3.2: Update `qa/data/qa_template.md`'s `### Introduction` placeholder wording.
+- [x] Task 3.3: Brief wording tweak in `qa/data/qa_create_instructions.md`.
+- [x] Task 3.4: Re-run `uv run --frozen specmgr docs` if needed.
+- [x] Task 3.5: Run the full test suite. Must pass before moving to Phase 4.
 
 #### Phase 4: Final verification
 
@@ -130,14 +130,17 @@ None of the other existing concrete `models/md` leaf types can be reused for thi
 
 ### Current Status
 
-**As of 2026-09-09**: Phase 1 (model change) and Phase 2 (new
-positive/negative test coverage) complete. `Introduction.body` is now
-`IntroductionBody | None` (was `list[MarkdownParagraph] | None`), both
-`qa_schema.json` copies and `docs/api/` are regenerated, and new tests cover
-a bullet-list body, a comment-plus-code-block body, a comment-only body
-(`body is None`), and `model_dump()` surfacing non-paragraph body content.
-The full test suite is green (3353 tests, up from 3349 at the end of Phase
-1). Phase 3 (packaged data files) not yet started.
+**As of 2026-09-09**: Phase 1 (model change), Phase 2 (new
+positive/negative test coverage), and Phase 3 (packaged data files)
+complete. `Introduction.body` is now `IntroductionBody | None` (was
+`list[MarkdownParagraph] | None`), both `qa_schema.json` copies and
+`docs/api/` are regenerated, and new tests cover a bullet-list body, a
+comment-plus-code-block body, a comment-only body (`body is None`), and
+`model_dump()` surfacing non-paragraph body content. `qa_example.md`,
+`qa_template.md`, and `qa_create_instructions.md` now demonstrate/document
+the widened `### Introduction` shape. The full test suite is green (3353
+tests, unchanged from the end of Phase 2 -- Phase 3 was a data-file-only
+change, no new tests). Phase 4 (final verification) not yet started.
 
 ### Blockers
 
@@ -146,6 +149,42 @@ The full test suite is green (3353 tests, up from 3349 at the end of Phase
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-09 - Phase 3 complete: packaged data files
+
+Implemented Task 3.1-3.5. `qa/data/qa_example.md`'s `### Introduction` now
+opens with the `<!-- filled in during the kickoff interview -->` comment
+(the same comment text used throughout Phase 1/2's test fixtures, reused
+here for consistency) followed by the existing prose, now ending in a short
+bullet list breaking out the two elicitation sessions: two sessions with the
+platform team, plus one safety-reviewer sign-off session focused
+specifically on the cutover procedure -- demonstrating both a leading
+comment and non-paragraph content in one realistic, still-readable example.
+`qa/data/qa_template.md`'s `### Introduction` placeholder wording changed
+from "Free-form prose framing the interview" to "Free-form markdown (prose,
+lists, code blocks, ...) framing the interview", a brief tweak per the
+task's own wording, with no added comment/list (kept as pure placeholder
+"blind text", per `get_qa_template`'s own tool description).
+`qa/data/qa_create_instructions.md`'s `### Introduction` bullet under
+"Structure recap" got the identical brief wording tweak ("Free-form markdown
+(prose, lists, code blocks, ...) framing the interview"), keeping the "who
+was interviewed, when, and why" purpose guidance unchanged. Verified both
+edited data files still parse successfully via `parse_qa` (direct Python
+snippet) and are unchanged by `mdformat` (`specmgr_mdformat` returned
+`False` for both, confirming they remain in the exact mdformat-normalized
+form the parser's round-trip assertions expect); `qa_create_instructions.md`
+is prompt text, not itself parsed by the QA parser, and was found to NOT
+already be in strict mdformat-normalized form even before this edit
+(`mdformat` reflows several of its long prose lines regardless of this
+feature's change), so it was deliberately left un-reformatted beyond the one
+intended wording tweak, to avoid bundling an unrelated, pre-existing
+formatting drift into this feature's diff. `uv run --frozen specmgr docs`
+produced no diff (expected for a pure data-file change with no docstring
+changes). No test file was modified -- no existing test hardcodes the
+previous `qa_example.md`/`qa_template.md` prose text, so none needed
+updating. Full quality gate green: `ruff format --check`, `ruff check`,
+`vulture src/ whitelist.py --min-confidence 60`, and `pytest -n auto
+--cov=src --cov-report=` (3353 passed, unchanged from Phase 2's count).
 
 #### 2026-09-09 - Phase 2 complete: new positive/negative test coverage
 
@@ -203,6 +242,23 @@ Feature folder created from GitHub issue #114, following a plan-mode design disc
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-09 - Leave qa_create_instructions.md's pre-existing formatting drift untouched
+
+Running `specmgr_mdformat` against `qa_create_instructions.md` after the
+Phase 3 wording tweak reported a change, but diffing showed most of that
+diff was pre-existing drift (added blank lines after headings, re-wrapped
+long prose lines, a re-indented continuation line) unrelated to this
+feature's edit -- confirmed by running the same `mdformat` pass against the
+untouched, pre-edit file and observing the identical unrelated diff. Since
+`qa_create_instructions.md` is prompt text consumed by the `create_qa` MCP
+prompt, not a document parsed by the QA parser (unlike `qa_example.md`/
+`qa_template.md`, whose round-trip assertions genuinely depend on staying
+mdformat-normalized), there is no functional requirement for it to be
+mdformat-clean. Chose to keep only the one intended wording tweak and leave
+the pre-existing drift alone, rather than bundling an unrelated
+reformatting into this feature's diff -- a future feature or a dedicated
+cleanup pass can reformat this file on its own terms.
 
 #### 2026-09-09 - Fix broken tests by expecting the exact raw text (with trailing newline), not `.strip()`
 
