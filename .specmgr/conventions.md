@@ -350,6 +350,38 @@ See the `## Operational Concept and Scenarios` section for details.
 - If you do hard-wrap for editor readability, always break at a plain word boundary that falls
   outside of any inline span.
 
+### Markdown Authoring (List Items Must Not Soft-Wrap)
+
+**Requirement:** A structurally-checked list item -- one whose own domain model applies a
+marker/pattern regex directly against `MarkdownListItem.text` (e.g. `tsk.TaskItem`,
+`feat.RequirementItem`/`AcceptanceCriterionItem`, `rsk.ThresholdItem`/`StrategyItem`) -- must
+never soft-wrap (CommonMark lazy continuation) across two physical source lines.
+
+- **Authoring side:** keep such a bullet's text on a single physical line, however long, e.g.
+  `- REQ-001: The widget must render within 200ms.`, never split across an indented continuation
+  line the way a soft-wrapped paragraph would be.
+- **Implementation side:** every such subclass's computed field must call
+  `MarkdownListItem.single_line_text(self, *, expected: str) -> str`
+  (`models/md/markdown_list_item.py`) before running its own regex against the text. This
+  rejects a soft-wrapped bullet with an actionable `AssertionError` (field path, 1-based line, an
+  explicit "soft-wrapped/lazy-continuation list items are not supported" cause, and a "join onto
+  one physical line" fix hint) instead of silently mis-parsing it or failing the domain regex
+  with a confusing, unrelated message.
+- Free-form list items with no structural check of their own (e.g. `req`'s `## Tags`), and any
+  subclass whose own regex already tolerates multiple physical lines via `re.DOTALL` (e.g.
+  `rsk.QuadrantItem`/`MitigationItem`/`StatusItem`), must NOT call this guard -- they are meant
+  to keep tolerating soft-wraps unchanged.
+
+**Example:**
+```markdown
+<!-- ✓ Single physical line -->
+- REQ-001: The widget must render within 200ms.
+
+<!-- ✗ Soft-wrapped across two physical lines -- rejected by single_line_text() -->
+- REQ-001: The widget must render within 200ms
+  even under heavy load.
+```
+
 ## TODO
 
 * Use "uv", do not use "pip"
@@ -378,3 +410,5 @@ These conventions were chosen to:
 - **2026-08-06:** Added test method naming conventions
 - **2026-08-06:** Added test data and fixtures guidelines
 - **2026-09-02:** Added markdown line-wrapping convention (avoid breaking inside inline spans)
+- **2026-09-09:** Added markdown list-item soft-wrap convention (structurally-checked list items
+  must stay on one physical line; call `MarkdownListItem.single_line_text()`)

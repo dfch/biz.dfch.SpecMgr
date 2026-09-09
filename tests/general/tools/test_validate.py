@@ -851,6 +851,28 @@ class TestValidateIssue83Regressions(unittest.TestCase):
         self.assertTrue(result.errors[0].message)
 
 
+class TestValidateSoftWrappedListItemIssue99(unittest.TestCase):
+    """feat-99-list-item: a soft-wrapped (CommonMark lazy-continuation) `REQ-NNN:` bullet,
+    end-to-end through the generic `validate` tool, surfaces the shared `MarkdownListItem.
+    single_line_text` guard's actionable message (not a generic "Error executing tool" string)
+    via `{valid: False, errors: [...]}`, never a raised/opaque exception."""
+
+    def test_soft_wrapped_requirement_item_surfaces_actionable_message(self) -> None:
+        soft_wrapped_body = _FEAT_MINIMAL_BODY.replace(
+            "- REQ-001: The widget must render within 200ms.",
+            "- REQ-001: The widget must render within 200ms\n  even across a second physical line.",
+        )
+
+        result = validate(type="feat", content=soft_wrapped_body)
+
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        message = result.errors[0].message
+        self.assertNotIn("Error executing tool", message)
+        self.assertIn("soft-wrapped/lazy-continuation list items are not supported", message)
+        self.assertIn("join the text onto one physical line", message)
+
+
 class TestValidateYamlErrorEnrichment(unittest.TestCase):
     """REQ-010/ACC-010 (feat-81-83-validation, Phase 6): a malformed-YAML-frontmatter
     ``validate(type=<d>, ..., full=True)`` call's error message must be textually identical to

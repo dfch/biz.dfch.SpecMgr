@@ -253,6 +253,20 @@ class TestRequirementItem(unittest.TestCase):
         with self.assertRaises(ValidationError):
             Requirements.from_text(text)
 
+    def test_soft_wrapped_item_raises_actionable_error(self) -> None:
+        """feat-99-list-item: a soft-wrapped (lazy-continuation) `REQ-NNN:` bullet raises via
+        `.description`, naming the soft-wrap-specific cause/fix hint, instead of failing the
+        unanchored `_REQUIREMENT_ITEM_PATTERN` with a confusing message."""
+        text = format_text("- REQ-001: The widget must render within 200ms\n  across a second physical line.\n")
+        sut = RequirementItem.from_text(text)
+
+        with self.assertRaises(AssertionError) as ctx:
+            _ = sut.description
+
+        message = str(ctx.exception)
+        self.assertIn("soft-wrapped/lazy-continuation list items are not supported", message)
+        self.assertIn("join the text onto one physical line", message)
+
     def test_requirements_with_zero_items_raises_assertion_error(self) -> None:
         with self.assertRaises(AssertionError):
             Requirements.from_text(format_text("### Requirements\n"))
@@ -282,6 +296,21 @@ class TestAcceptanceCriterionItem(unittest.TestCase):
 
         with self.assertRaises(AssertionError):
             _ = sut.criterion_description
+
+    def test_soft_wrapped_item_raises_actionable_error(self) -> None:
+        """feat-99-list-item: a soft-wrapped `ACC-NNN:` checklist bullet raises via
+        `.criterion_description`, covered transitively through the inherited
+        `TaskItem.description`'s own `single_line_text` guard -- no direct wiring needed on
+        `AcceptanceCriterionItem` itself."""
+        text = format_text("- [ ] ACC-001: Render time stays below 200ms\n  even under a second physical line.\n")
+        sut = AcceptanceCriterionItem.from_text(text)
+
+        with self.assertRaises(AssertionError) as ctx:
+            _ = sut.criterion_description
+
+        message = str(ctx.exception)
+        self.assertIn("soft-wrapped/lazy-continuation list items are not supported", message)
+        self.assertIn("join the text onto one physical line", message)
 
     def test_acceptance_criteria_rejects_malformed_item_eagerly(self) -> None:
         text = format_text("### Acceptance Criteria\n\n- [ ] Not an acceptance criterion.\n")

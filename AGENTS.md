@@ -582,6 +582,25 @@ prefixed line starting a stray CommonMark list), with domain + tool + channel
 context prepended by the shared `models/md/_errors.wrap_tool_errors` wrapper —
 same exception types throughout, messages only (no new exception types).
 
+`feat-99-list-item` (GitHub issue #99) added
+`MarkdownListItem.single_line_text(self, *, expected: str) -> str`
+(`models/md/markdown_list_item.py`): a shared guard that rejects a
+soft-wrapped (CommonMark lazy-continuation) list item with an actionable
+`AssertionError` (field path, 1-based line, an explicit "soft-wrapped/
+lazy-continuation list items are not supported" cause, and a "join onto
+one physical line" fix hint), called before a domain's own marker/pattern
+regex ever runs against `.text`. Wired into every structurally-checked
+`MarkdownListItem` subclass found across all twelve `models/md` whole-body
+domains: `tsk.TaskItem.checked`/`.description`, `feat.RequirementItem.
+description` (`feat.AcceptanceCriterionItem.criterion_description` is
+covered transitively via `TaskItem.description`, no direct wiring needed),
+`rsk.ThresholdItem.low`/`.high`/`.zone`, and `rsk.StrategyItem.strategy`.
+Free-form list items (e.g. `req`'s `## Tags`) and anything whose own regex
+already uses `re.DOTALL` (e.g. `rsk.QuadrantItem`/`MitigationItem`/
+`StatusItem`) are unaffected and must not call this guard — see
+`.specmgr/conventions.md`'s "Markdown Authoring (List Items Must Not
+Soft-Wrap)" section for the full authoring/implementation convention.
+
 `.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md` §10 ("Next steps") tracks per-item done/not-done
 status for the ADR feature specifically and should be kept in sync with
 `src/` as this evolves; treat it as current-state tracking, not just a
