@@ -96,13 +96,13 @@ None of the other existing concrete `models/md` leaf types can be reused for thi
 
 #### Phase 1: Model change
 
-- [ ] Task 1.1: In `qa/models/v2/body.py`, drop the now-unused `MarkdownParagraph` import; add `MarkdownStr` to the `models.md` import; add `computed_field` to the `pydantic` import.
-- [ ] Task 1.2: Add `IntroductionBody(MarkdownStr)` with a `text` computed property (mirroring `QaAnswer.text`), per Design Notes.
-- [ ] Task 1.3: Retype `Introduction.body` from `list[MarkdownParagraph] | None` to `IntroductionBody | None` (`default=None` unchanged); update `Introduction`'s own docstring.
-- [ ] Task 1.4: Update the module-level docstring's ASCII diagram (`### Introduction` block: `{intro paragraphs}` → `{any markdown}`).
-- [ ] Task 1.5: Fix the now-broken existing tests to match the new scalar (not list) shape (see Design Notes).
-- [ ] Task 1.6: Regenerate build artifacts (schema + docs).
-- [ ] Task 1.7: Run the full test suite. Must pass before moving to Phase 2.
+- [x] Task 1.1: In `qa/models/v2/body.py`, drop the now-unused `MarkdownParagraph` import; add `MarkdownStr` to the `models.md` import; add `computed_field` to the `pydantic` import.
+- [x] Task 1.2: Add `IntroductionBody(MarkdownStr)` with a `text` computed property (mirroring `QaAnswer.text`), per Design Notes.
+- [x] Task 1.3: Retype `Introduction.body` from `list[MarkdownParagraph] | None` to `IntroductionBody | None` (`default=None` unchanged); update `Introduction`'s own docstring.
+- [x] Task 1.4: Update the module-level docstring's ASCII diagram (`### Introduction` block: `{intro paragraphs}` → `{any markdown}`).
+- [x] Task 1.5: Fix the now-broken existing tests to match the new scalar (not list) shape (see Design Notes).
+- [x] Task 1.6: Regenerate build artifacts (schema + docs).
+- [x] Task 1.7: Run the full test suite. Must pass before moving to Phase 2.
 
 #### Phase 2: New positive/negative test coverage
 
@@ -130,7 +130,11 @@ None of the other existing concrete `models/md` leaf types can be reused for thi
 
 ### Current Status
 
-**As of 2026-09-09**: Feature created, planning complete, no implementation started yet.
+**As of 2026-09-09**: Phase 1 (model change) complete. `Introduction.body` is
+now `IntroductionBody | None` (was `list[MarkdownParagraph] | None`), both
+`qa_schema.json` copies and `docs/api/` are regenerated, and the full test
+suite is green. Phase 2 (new positive/negative test coverage) not yet
+started.
 
 ### Blockers
 
@@ -140,6 +144,29 @@ None of the other existing concrete `models/md` leaf types can be reused for thi
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
+#### 2026-09-09 - Phase 1 complete: model change
+
+Implemented Task 1.1-1.7: added `IntroductionBody(MarkdownStr)` (a leaf class
+with a `text` computed property mirroring `QaAnswer.text`) to
+`qa/models/v2/body.py`, retyped `Introduction.body` from
+`list[MarkdownParagraph] | None` to `IntroductionBody | None`, dropped the
+now-unused `MarkdownParagraph` import, updated the module docstring's ASCII
+diagram (`{intro paragraphs}` -> `{any markdown}`), and fixed the two existing
+tests that assumed `introduction.body` was a list
+(`tests/qa/models/v2/test_body.py::TestGeneralIntroductionRawRequirements::test_parses_and_round_trips`
+and
+`tests/qa/tools/test_parse_qa.py::TestParseQaTool::test_model_dump_surfaces_markdownparagraph_backed_fields`)
+to index the new scalar directly and expect the trailing newline
+`MarkdownStr.text` preserves verbatim (`"Some intro text.\n"`, not
+`"Some intro text."`). Regenerated both `qa_schema.json` copies
+(`docs/qa_schema.json` and `src/biz/dfch/specmgr/qa/data/qa_schema.json`, via
+`specmgr schema --type qa` and `specmgr schema --type qa --output-dir
+src/biz/dfch/specmgr/qa/data`, mirroring the exact pre-commit hook commands)
+and `docs/api/`/`docs/GENERATED.md` (via `specmgr docs`); confirmed
+`specmgr mcp-docs` produces no diff. Full quality gate green: `ruff format
+--check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, and
+`pytest -n auto --cov=src --cov-report=` (3349 passed).
+
 #### 2026-09-09 02:32:25.000Z - Created
 
 Feature folder created from GitHub issue #114, following a plan-mode design discussion that: (1) confirmed the change is a schema relaxation with no existing negative-test coverage to protect; (2) settled on keeping `Introduction.body` optional (not making it mandatory); and (3) settled on a dedicated `IntroductionBody` leaf class (comment stays, body becomes fully opaque) over either "drop comment entirely" or "restrict to paragraphs" alternatives.
@@ -147,6 +174,21 @@ Feature folder created from GitHub issue #114, following a plan-mode design disc
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-09 - Fix broken tests by expecting the exact raw text (with trailing newline), not `.strip()`
+
+Widening `Introduction.body` to `IntroductionBody(MarkdownStr)` changes its
+`text` computed property's value from `MarkdownParagraph.text`'s inline text
+(no trailing newline for a one-line paragraph) to `MarkdownStr._value`'s
+verbatim line-span capture, which does include the source's trailing
+newline (`"Some intro text.\n"`, confirmed empirically against the pre-Phase-1
+fixture). Chose to update the two affected assertions to expect that exact
+verbatim string rather than reach for `.strip()`/`assertIn()` (the pattern
+`RawRequirements`/`QaAnswer`'s own existing tests use elsewhere in the same
+file), since these two spots were originally written as exact-equality
+checks and `IntroductionBody.text`'s contract -- like `QaAnswer.text`'s -- is
+"the raw markdown text verbatim", trailing newline included; changing the
+assertion style itself was out of scope for a pure shape fix.
 
 #### 2026-09-09 02:32:25.000Z - Keep Introduction.body optional, do not tighten to mandatory
 

@@ -153,18 +153,14 @@
         "body": {
           "anyOf": [
             {
-              "items": {
-                "$ref": "#/$defs/MarkdownParagraph"
-              },
-              "type": "array"
+              "$ref": "#/$defs/IntroductionBody"
             },
             {
               "type": "null"
             }
           ],
           "default": null,
-          "description": "Free-form introductory prose paragraphs. Optional.",
-          "title": "Body"
+          "description": "Free-form introductory markdown content (any shape). Optional."
         },
         "comment": {
           "anyOf": [
@@ -180,6 +176,12 @@
         }
       },
       "title": "Introduction",
+      "type": "object"
+    },
+    "IntroductionBody": {
+      "description": "`Introduction.body`'s opaque markdown blob -- any markdown content, not just plain paragraphs.\n\nLeaf class (no declared fields) applying no `@markdown` type/tag\nrestriction of its own -- unlike `MarkdownParagraph`/`MarkdownSection*`/\n`MarkdownComment`. Because of that, `get_extent`/`from_text` fall back to\nthe unmodified `MarkdownStr` base implementation, which simply consumes\neverything remaining in the given text regardless of its shape. Since\nthis field is always declared last (and alone, besides `comment`) on\n`Introduction`, \"everything remaining\" is exactly correct -- no custom\nstop-condition override is needed.\n\nAdds a `text` computed property (mirroring `QaAnswer.text`) so this\notherwise-private `_value` is reachable through\n`model_dump()`/`model_dump_json()`.",
+      "properties": {},
+      "title": "IntroductionBody",
       "type": "object"
     },
     "Maintainability": {
@@ -215,12 +217,6 @@
       "description": "A standalone HTML comment block (`\"html_block\"`, e.g. `<!-- some note -->`).\n\nDeliberately leaf-only, like `MarkdownCodeBlock`. Declare an optional\n`comment: MarkdownComment | None` field on any `MarkdownStr` subclass to\nlet a value be preceded by such an explanatory comment without it\nbreaking that class's own structural field matching. See `get_extent`/\n`from_text`/`text` for the full mechanics.",
       "properties": {},
       "title": "MarkdownComment",
-      "type": "object"
-    },
-    "MarkdownParagraph": {
-      "description": "A markdown paragraph (\"p\"), the non-heading sibling of `MarkdownSection`.\n\nA paragraph has no level, so there is a single `MarkdownParagraph` class\n(no `MarkdownParagraph1`..`6` spectrum) and no `@alias` check -- a\nparagraph's content is free-form prose, not a title.\n\nLeaf (no declared nested fields): `_value` holds the paragraph's own line\nspan, verbatim. Composite (declares fields): `_value` holds only the\nparagraph's own inline text (e.g. a lead-in sentence); the remaining text\nis delegated to nested field parsing, bounded by the next heading of any\nlevel (a paragraph can never itself contain a heading). See\n`get_extent`/`from_text`/`__str__` docstrings below for the full\nmechanics.",
-      "properties": {},
-      "title": "MarkdownParagraph",
       "type": "object"
     },
     "MoreInformation": {

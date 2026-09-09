@@ -222,7 +222,7 @@ class TestGeneralIntroductionRawRequirements(unittest.TestCase):
         sut = _minimal_general()
 
         self.assertIsNone(sut.comment)
-        self.assertEqual(sut.introduction.body[0].text, "Some intro text.")
+        self.assertEqual(sut.introduction.body.text, "Some intro text.\n")
         self.assertIn("Some raw requirements text.", sut.raw_requirements.text)
 
     def test_introduction_and_raw_requirements_keep_implicit_alias_derivation(self) -> None:

@@ -158,7 +158,7 @@ class TestParseQaTool(unittest.TestCase):
             dump = result.model_dump(mode="json")
 
             body = dump["body"]
-            self.assertEqual(body["general"]["introduction"]["body"][0]["text"], "Some intro text.")
+            self.assertEqual(body["general"]["introduction"]["body"]["text"], "Some intro text.\n")
 
     def test_model_dump_surfaces_leaf_section_body_content(self) -> None:
         """Regression test: `model_dump()` must surface the full body prose --
