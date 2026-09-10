@@ -122,7 +122,7 @@ Lock ordering: the cache's own lock (REQ-006) is always the innermost lock acqui
 
 #### Phase 2: Generic Cache Module
 
-- [ ] Task 2.1: Implement `general/tools/_doc_cache.py`'s domain cache (content-hash read/store/invalidate/reconcile, caching both successful parses and parse failures keyed by hash, plus a test-only reset/clear hook per instance), with its own unit tests using a counting fake `parse_fn` (covering both the success and failure caching paths).
+- [x] Task 2.1: Implement `general/tools/_doc_cache.py`'s domain cache (content-hash read/store/invalidate/reconcile, caching both successful parses and parse failures keyed by hash, plus a test-only reset/clear hook per instance), with its own unit tests using a counting fake `parse_fn` (covering both the success and failure caching paths).
 
 #### Phase 3: Wire req as the Pilot Domain
 
@@ -158,11 +158,15 @@ Lock ordering: the cache's own lock (REQ-006) is always the innermost lock acqui
 
 ### Current Status
 
-**As of 2026-09-09**: Plan drafted and agreed with the user through a design conversation; no implementation has started yet.
+**As of 2026-09-10**: Phase 2 complete -- the generic `DocCache` module and its unit tests are implemented and green; Phase 3 (wiring `req` as the pilot domain) may now begin.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-10 10:30:00.000Z - Phase 2 complete: generic DocCache module implemented and tested
+
+Implemented `general/tools/_doc_cache.py`'s `DocCache[_DocT]` class exactly per the illustrative API sketch (`read`/`invalidate`/`reconcile`/`move`/`reset`), with one small addition beyond the sketch: a module-level `CACHEABLE_ERROR_TYPES` constant (`(AssertionError, ValidationError, yaml.YAMLError)`, mirroring `general.tools._listing.DEFAULT_ERROR_TYPES`'s precedent exactly) fixes which `parse_fn` failures `read` caches as a "failure" rather than letting the caller parameterize it per call -- every `parse_<domain>` function in this codebase raises the same fixed failure channel, so no per-call override was needed. `read(path, parse_fn)` hashes `path`'s full text with `hashlib.blake2b` on every call (inside the lock only for the dict get/set, never around the file read or the `parse_fn` call itself), returns/re-raises the cached `(hash, result)` entry on a hash match, and otherwise calls `parse_fn(path)` fresh and stores the new `(hash, result_or_exception)` pair; a read failure before `parse_fn` even runs (e.g. `path.read_text()` raising `OSError`/`FileNotFoundError` for a missing file) propagates uncaught and is never cached, exactly per the design brief. `move(old_path, new_path)` relocates the dict entry as-is without re-hashing, so a post-rename `read` of `new_path` naturally hits (byte-identical content, the realistic `set_feat_id` case) or misses and reparses (differing content) through the same `read` path every other call uses -- no special-cased validation logic in `move` itself. Added `tests/general/tools/test__doc_cache.py` (17 tests, `unittest.TestCase`-based per this codebase's convention, real `tmp_path`-style temp files via `tempfile.TemporaryDirectory()`, no mocks) covering: single-call cache miss; unchanged-content cache hit (fake not re-invoked); changed-content cache miss (fake re-invoked); `AssertionError` failure caching and re-raising on unchanged content, with automatic recovery on content change; a non-cacheable failure type (`RuntimeError`) correctly NOT cached; a missing-file `OSError` before `parse_fn` runs correctly NOT cached; `invalidate` forcing a re-parse; `reconcile` dropping an orphaned path while keeping a still-live one cached; `move`'s identical-content-survives-as-hit and differing-content-misses-and-reparses contracts, plus old_path no longer serving a cached hit post-move; and `reset` clearing everything. Quality gate green: `ruff format --check` (1665 files already formatted), `ruff check` (all checks passed), `vulture src/ whitelist.py --min-confidence 60` (clean after adding a phase-scoped `whitelist.py` entry for `invalidate`/`reconcile`/`move`/`reset` -- these four methods have no caller in `src/` yet by design, since Phase 3/4 is what wires them into each domain's `read_<domain>`/`create_<domain>`/the generic `update`/`set_status`/`set_classification`/`delete` tools/`set_feat_id`; `reset` itself is permanently test-only), full `pytest -n auto --cov=src --cov-report=` suite (3383 passed, no regressions). No domain wiring was touched -- Phase 3/4 remain untouched, per this phase's scope.
 
 #### 2026-09-10 09:15:00.000Z - Phase 1 complete: ADR created and design locked in
 

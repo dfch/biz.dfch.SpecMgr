@@ -268,3 +268,14 @@ combining_patterns
 # Invoked by the MCP framework once registered, not called directly in `src/`.
 version_info
 config_info
+
+# doc cache (feat-107-doc-cache Phase 2): `DocCache`'s public API surface,
+# exercised only by its own unit tests so far; `invalidate`/`reconcile`/`move`
+# are wired into per-domain `read_<domain>`/`create_<domain>`/generic
+# `update`/`set_status`/`set_classification`/`delete`/`set_feat_id` call
+# sites in Phase 3/4, and `reset` is a test-only hook by design (never called
+# from `src/`).
+invalidate
+reconcile
+move
+reset
