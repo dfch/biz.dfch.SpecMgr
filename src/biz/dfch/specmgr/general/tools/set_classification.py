@@ -94,63 +94,75 @@ import frontmatter
 
 from ...dec.models.v1 import DecFrontmatter
 from ...dec.tools._io import load_by_id as load_dec_by_id
+from ...dec.tools._io import read_dec
 from ...dec.tools._lock import dec_lock
 from ...dec.tools._paths import dec_base_dir
 from ...dec.tools._write import write_dec_file
 from ...feat.models.v1 import FeatFrontmatter
+from ...feat.tools._cache import read_feat
 from ...feat.tools._io import load_by_id as load_feat_by_id
 from ...feat.tools._lock import feat_lock
 from ...feat.tools._paths import feat_base_dir
 from ...feat.tools._write import write_feat_file
 from ...gol.models.v1 import GolFrontmatter
 from ...gol.tools._io import load_by_id as load_gol_by_id
+from ...gol.tools._io import read_gol
 from ...gol.tools._lock import gol_lock
 from ...gol.tools._paths import gol_base_dir
 from ...gol.tools._write import write_gol_file
 from ...models.md._errors import FRONTMATTER_CHANNEL, wrap_tool_errors
 from ...prb.models.v1 import PrbFrontmatter
 from ...prb.tools._io import load_by_id as load_prb_by_id
+from ...prb.tools._io import read_prb
 from ...prb.tools._lock import prb_lock
 from ...prb.tools._paths import prb_base_dir
 from ...prb.tools._write import write_prb_file
 from ...qa.models.v2 import QaFrontmatter
 from ...qa.tools._io import load_by_id as load_qa_by_id
+from ...qa.tools._io import read_qa
 from ...qa.tools._lock import qa_lock
 from ...qa.tools._paths import qa_base_dir
 from ...qa.tools._write import write_qa_file
 from ...req.models.v1 import ReqFrontmatter
 from ...req.tools._io import load_by_id as load_req_by_id
+from ...req.tools._io import read_req
 from ...req.tools._lock import req_lock
 from ...req.tools._paths import req_base_dir
 from ...req.tools._write import write_req_file
 from ...rsk.models.v1 import RskFrontmatter
 from ...rsk.tools._io import load_by_id as load_rsk_by_id
+from ...rsk.tools._io import read_rsk
 from ...rsk.tools._lock import rsk_lock
 from ...rsk.tools._paths import rsk_base_dir
 from ...rsk.tools._write import write_rsk_file
 from ...server import mcp
 from ...sop.models.v1 import SopFrontmatter
 from ...sop.tools._io import load_by_id as load_sop_by_id
+from ...sop.tools._io import read_sop
 from ...sop.tools._lock import sop_lock
 from ...sop.tools._paths import sop_base_dir
 from ...sop.tools._write import write_sop_file
 from ...sysrs.models.v1 import SysrsFrontmatter
 from ...sysrs.tools._io import load_by_id as load_sysrs_by_id
+from ...sysrs.tools._io import read_sysrs
 from ...sysrs.tools._lock import sysrs_lock
 from ...sysrs.tools._paths import sysrs_base_dir
 from ...sysrs.tools._write import write_sysrs_file
 from ...tsk.models.v1 import TskFrontmatter
 from ...tsk.tools._io import load_by_id as load_tsk_by_id
+from ...tsk.tools._io import read_tsk
 from ...tsk.tools._lock import tsk_lock
 from ...tsk.tools._paths import tsk_base_dir
 from ...tsk.tools._write import write_tsk_file
 from ...uc.models.v2 import UcFrontmatter
 from ...uc.tools._io import load_by_id as load_uc_by_id
+from ...uc.tools._io import read_uc
 from ...uc.tools._lock import uc_lock
 from ...uc.tools._paths import uc_base_dir
 from ...uc.tools._write import write_uc_file
 from ...vcr.models.v1 import VcrFrontmatter
 from ...vcr.tools._io import load_by_id as load_vcr_by_id
+from ...vcr.tools._io import read_vcr
 from ...vcr.tools._lock import vcr_lock
 from ...vcr.tools._paths import vcr_base_dir
 from ...vcr.tools._write import write_vcr_file
@@ -199,6 +211,7 @@ def _set_classification_req(id_: str, classification: str) -> ReqFrontmatter:
         with wrap_tool_errors(domain="req", tool="set_classification", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = ReqFrontmatter(**fm_data)
         write_req_file(path, new_frontmatter, raw_body)
+        read_req(path)  # warm the cache (feat-107-doc-cache Phase 3, REQ-003)
     return new_frontmatter
 
 
@@ -221,6 +234,7 @@ def _set_classification_uc(id_: str, classification: str) -> UcFrontmatter:
         with wrap_tool_errors(domain="uc", tool="set_classification", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = UcFrontmatter(**fm_data)
         write_uc_file(path, new_frontmatter, raw_body)
+        read_uc(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
     return new_frontmatter
 
 
@@ -243,6 +257,7 @@ def _set_classification_tsk(id_: str, classification: str) -> TskFrontmatter:
         with wrap_tool_errors(domain="tsk", tool="set_classification", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = TskFrontmatter(**fm_data)
         write_tsk_file(path, new_frontmatter, raw_body)
+        read_tsk(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
     return new_frontmatter
 
 
@@ -265,6 +280,7 @@ def _set_classification_qa(id_: str, classification: str) -> QaFrontmatter:
         with wrap_tool_errors(domain="qa", tool="set_classification", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = QaFrontmatter(**fm_data)
         write_qa_file(path, new_frontmatter, raw_body)
+        read_qa(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
     return new_frontmatter
 
 
@@ -287,6 +303,7 @@ def _set_classification_prb(id_: str, classification: str) -> PrbFrontmatter:
         with wrap_tool_errors(domain="prb", tool="set_classification", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = PrbFrontmatter(**fm_data)
         write_prb_file(path, new_frontmatter, raw_body)
+        read_prb(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
     return new_frontmatter
 
 
@@ -309,6 +326,7 @@ def _set_classification_gol(id_: str, classification: str) -> GolFrontmatter:
         with wrap_tool_errors(domain="gol", tool="set_classification", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = GolFrontmatter(**fm_data)
         write_gol_file(path, new_frontmatter, raw_body)
+        read_gol(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
     return new_frontmatter
 
 
@@ -331,6 +349,7 @@ def _set_classification_rsk(id_: str, classification: str) -> RskFrontmatter:
         with wrap_tool_errors(domain="rsk", tool="set_classification", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = RskFrontmatter(**fm_data)
         write_rsk_file(path, new_frontmatter, raw_body)
+        read_rsk(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
     return new_frontmatter
 
 
@@ -353,6 +372,7 @@ def _set_classification_dec(id_: str, classification: str) -> DecFrontmatter:
         with wrap_tool_errors(domain="dec", tool="set_classification", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = DecFrontmatter(**fm_data)
         write_dec_file(path, new_frontmatter, raw_body)
+        read_dec(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
     return new_frontmatter
 
 
@@ -380,6 +400,7 @@ def _set_classification_feat(id_: str, classification: str) -> FeatFrontmatter:
         with wrap_tool_errors(domain="feat", tool="set_classification", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = FeatFrontmatter(**fm_data)
         write_feat_file(path, new_frontmatter, raw_body)
+        read_feat(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
     return new_frontmatter
 
 
@@ -405,6 +426,7 @@ def _set_classification_sop(id_: str, classification: str) -> SopFrontmatter:
         with wrap_tool_errors(domain="sop", tool="set_classification", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = SopFrontmatter(**fm_data)
         write_sop_file(path, new_frontmatter, raw_body)
+        read_sop(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
     return new_frontmatter
 
 
@@ -428,6 +450,7 @@ def _set_classification_vcr(id_: str, classification: str) -> VcrFrontmatter:
         with wrap_tool_errors(domain="vcr", tool="set_classification", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = VcrFrontmatter(**fm_data)
         write_vcr_file(path, new_frontmatter, raw_body)
+        read_vcr(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
     return new_frontmatter
 
 
@@ -453,6 +476,7 @@ def _set_classification_sysrs(id_: str, classification: str) -> SysrsFrontmatter
         with wrap_tool_errors(domain="sysrs", tool="set_classification", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = SysrsFrontmatter(**fm_data)
         write_sysrs_file(path, new_frontmatter, raw_body)
+        read_sysrs(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
     return new_frontmatter
 
 

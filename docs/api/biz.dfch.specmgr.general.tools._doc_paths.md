@@ -17,10 +17,26 @@ bundled into this change.
 As with ``adr.tools._paths``, this module has no ``mcp``/file-write
 dependency beyond read-only directory listing: :func:`doc_base_dir` never
 creates the directory (a read-only tool shouldn't have that side effect),
-only :func:`ensure_doc_base_dir` does. There is deliberately no in-memory
-id -> path cache either -- every lookup re-scans the base directory and
-re-parses each file, matching this codebase's "the on-disk file is the sole
-source of truth" design.
+only :func:`ensure_doc_base_dir` does.
+
+**Cache-backed scan (feat-107-doc-cache Phase 3/4).** :func:`find_doc_path_by_id`
+no longer re-parses a file's raw text unconditionally on every scan. Its
+``read_fn`` parameter (formerly a text-taking ``parse_fn``) is expected to
+be a domain's own content-hash-validated, cache-backed reader (e.g.
+``req.tools._cache.read_req``) -- when a candidate file's on-disk content
+hash is unchanged since the last time that path was read, ``read_fn``
+returns the cached result without re-invoking the underlying parser
+(ADR bfd76370-b59b-4d65-b550-a969f6c93c9d). Callers may also pass
+``reconcile_fn`` (a domain's own cache-reconcile callable, e.g.
+``req.tools._cache.reconcile_req_cache``), invoked once against the freshly
+materialized live path listing *before* any per-file work, dropping any
+cached entry for a file deleted outside specmgr's own tooling (REQ-005) --
+this keeps orphan cleanup to a cheap set comparison rather than additional
+file reads. The filesystem nonetheless remains the sole source of truth
+(ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3): a cache entry is only ever a
+memoization keyed by a validated content hash, so a stale entry is
+structurally impossible -- it can only ever cost one extra parse, never an
+incorrect result.
 
 ## Classes
 
@@ -86,16 +102,19 @@ Path
     ``type_name`` documents.
 
 
-### `find_doc_path_by_id(base_dir: 'Path', id_: 'str', parse_fn: 'Callable[[str], _DocT]', get_id_fn: 'Callable[[_DocT], str | None]') -> 'Path'`
+### `find_doc_path_by_id(base_dir: 'Path', id_: 'str', read_fn: 'Callable[[Path], _DocT]', get_id_fn: 'Callable[[_DocT], str | None]', reconcile_fn: 'Callable[[Iterable[Path]], None] | None' = None) -> 'Path'`
 
 Resolve an ``id`` to its on-disk file path, for any doc type.
 
-Scans every ``*.md`` file under ``base_dir``, parsing each via
-``parse_fn`` and comparing ``get_id_fn(parsed)`` against ``id_``. A file
-that fails to parse (``AssertionError`` or ``ValueError``, which
-``pydantic.ValidationError`` and every parser-specific error in this
-codebase -- e.g. ``AdrParseError`` -- subclass) is silently skipped --
-one broken file must not prevent lookup of a different, valid id.
+Materializes the full ``*.md`` path listing under ``base_dir`` up
+front, reconciles a cache against it (via ``reconcile_fn``, if given)
+before doing any per-file work, then scans that same materialized
+listing, reading each path via ``read_fn`` and comparing
+``get_id_fn(parsed)`` against ``id_``. A file that fails to parse
+(``AssertionError`` or ``ValueError``, which ``pydantic.ValidationError``
+and every parser-specific error in this codebase -- e.g.
+``AdrParseError`` -- subclass) is silently skipped -- one broken file
+must not prevent lookup of a different, valid id.
 
 Parameters
 ----------
@@ -103,12 +122,23 @@ base_dir:
     The directory to scan for ``*.md`` files.
 id_:
     The id to look up.
-parse_fn:
-    Parses a file's full text into a document object (e.g. ``parse_adr``,
-    ``parse_req``).
+read_fn:
+    Reads and parses a file at the given path into a document object
+    (e.g. a domain's own cache-backed ``read_<domain>``, such as
+    ``req.tools._cache.read_req``). Unlike the retired ``parse_fn`` this
+    replaces, ``read_fn`` takes a ``Path``, not text -- a cache-backed
+    reader decides for itself whether to re-read/re-parse ``path`` or
+    return an already-validated cached result.
 get_id_fn:
     Extracts the id (or ``None``) from a parsed document object (e.g.
     ``lambda doc: doc.frontmatter.id``).
+reconcile_fn:
+    When given, called once with the full materialized live path
+    listing before any per-file work, to drop any cache entry for a
+    path no longer present on disk (e.g.
+    ``req.tools._cache.reconcile_req_cache``, REQ-005). ``None`` (the
+    default) skips reconciliation entirely -- e.g. for a domain that
+    has not yet wired a cache through this function.
 
 Returns
 -------

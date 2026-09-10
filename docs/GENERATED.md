@@ -75,7 +75,8 @@ First-line docstrings from each module, organized by domain:
 - `dec/resources/dec_schema.py` — Resource: specmgr://dec/schema (feat-21 Task 3.4, packaged data).
 - `dec/resources/dec_template.py` — Resource: specmgr://dec/template (feat-21 Task 3.4).
 - `dec/tools/__init__.py` — MCP tool wrappers for decisions (mirrors ``gol/tools/``'s own shape).
-- `dec/tools/_io.py` — Thin file read helpers over ``parse_dec`` (Task 2.1).
+- `dec/tools/_cache.py` — Per-domain content-hash-validated read cache singleton for decisions (feat-107-doc-cache Phase 4).
+- `dec/tools/_io.py` — Thin file read helpers over ``parse_dec`` (feat-107-doc-cache Phase 4).
 - `dec/tools/_lock.py` — Per-document in-process lock guarding decision mutations.
 - `dec/tools/_paths.py` — Decision base directory resolution and id -> path lookup (Task 2.1).
 - `dec/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_dec`` and
@@ -105,6 +106,7 @@ First-line docstrings from each module, organized by domain:
 - `feat/resources/feat_schema.py` — Resource: specmgr://feat/schema (feat-31 Task 3.5, packaged data).
 - `feat/resources/feat_template.py` — Resource: specmgr://feat/template (feat-31 Task 3.5).
 - `feat/tools/__init__.py` — MCP tool wrappers for features (mirrors ``dec/tools/``'s own shape).
+- `feat/tools/_cache.py` — Per-domain content-hash-validated read cache singleton for features (feat-107-doc-cache Phase 4, Task 4.1a).
 - `feat/tools/_io.py` — Thin file read helpers over ``parse_feat`` (Task 2.2).
 - `feat/tools/_lock.py` — Per-document and global in-process locks guarding feature mutations (Task 2.2).
 - `feat/tools/_paths.py` — Feature (FEAT) base directory resolution and id -> path lookup (Task 2.1).
@@ -177,7 +179,8 @@ First-line docstrings from each module, organized by domain:
 - `gol/resources/gol_schema.py` — Resource: specmgr://gol/schema (Task 3.11, packaged data).
 - `gol/resources/gol_template.py` — Resource: specmgr://gol/template (Task 3.11).
 - `gol/tools/__init__.py` — MCP tool wrappers for goals (mirrors ``prb/tools/``'s own shape).
-- `gol/tools/_io.py` — Thin file read helpers over ``parse_gol`` (Task 3.1).
+- `gol/tools/_cache.py` — Per-domain content-hash-validated read cache singleton for goals (feat-107-doc-cache Phase 4).
+- `gol/tools/_io.py` — Thin file read helpers over ``parse_gol`` (feat-107-doc-cache Phase 4).
 - `gol/tools/_lock.py` — Per-document in-process lock guarding goal mutations.
 - `gol/tools/_paths.py` — Goal base directory resolution and id -> path lookup (Task 3.1).
 - `gol/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_gol`` and
@@ -254,7 +257,8 @@ First-line docstrings from each module, organized by domain:
 - `prb/resources/prb_schema.py` — Resource: specmgr://prb/schema (Task 3.11).
 - `prb/resources/prb_template.py` — Resource: specmgr://prb/template (Task 3.11).
 - `prb/tools/__init__.py` — MCP tool wrappers for problem statements (mirrors ``tsk/tools/``'s own shape).
-- `prb/tools/_io.py` — Thin file read helpers over ``parse_prb`` (Task 3.1).
+- `prb/tools/_cache.py` — Per-domain content-hash-validated read cache singleton for problem statements (feat-107-doc-cache Phase 4).
+- `prb/tools/_io.py` — Thin file read helpers over ``parse_prb`` (feat-107-doc-cache Phase 4).
 - `prb/tools/_lock.py` — Per-document in-process lock guarding problem statement mutations.
 - `prb/tools/_paths.py` — Problem statement base directory resolution and id -> path lookup (Task 3.1).
 - `prb/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_prb`` and
@@ -286,7 +290,8 @@ First-line docstrings from each module, organized by domain:
 - `qa/resources/qa_schema.py` — Resource: specmgr://qa/schema (Phase 4, Task 4.2).
 - `qa/resources/qa_template.py` — Resource: specmgr://qa/template (Phase 4, Task 4.2).
 - `qa/tools/__init__.py` — MCP tool wrappers for Question and Answer (QA) documents (mirrors ``req/tools/``'s own shape).
-- `qa/tools/_io.py` — Thin file read helpers over ``parse_qa`` (Phase 4, Task 4.1).
+- `qa/tools/_cache.py` — Per-domain content-hash-validated read cache singleton for QA documents (feat-107-doc-cache Phase 4).
+- `qa/tools/_io.py` — Thin file read helpers over ``parse_qa`` (feat-107-doc-cache Phase 4).
 - `qa/tools/_lock.py` — Per-document in-process lock guarding Question and Answer (QA) mutations.
 - `qa/tools/_paths.py` — Question and Answer (QA) base directory resolution and id -> path lookup (Phase 4, Task 4.1).
 - `qa/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_qa`` and
@@ -315,6 +320,7 @@ First-line docstrings from each module, organized by domain:
 - `req/resources/req_schema.py` — Resource: specmgr://req/schema (Task 3.5, packaged data since Task 3.8).
 - `req/resources/req_template.py` — Resource: specmgr://req/template (Task 3.7).
 - `req/tools/__init__.py` — MCP tool wrappers for requirements (mirrors ``uc/tools/``'s own shape).
+- `req/tools/_cache.py` — Per-domain content-hash-validated read cache singleton for requirements (feat-107-doc-cache Phase 3).
 - `req/tools/_io.py` — Thin file read helpers over ``parse_req`` (Task 3.11).
 - `req/tools/_lock.py` — Per-document in-process lock guarding requirement mutations.
 - `req/tools/_paths.py` — Requirement base directory resolution and id -> path lookup (Task 3.11).
@@ -350,7 +356,8 @@ First-line docstrings from each module, organized by domain:
 - `rsk/resources/rsk_template.py` — Resource: specmgr://rsk/template (Task 3.11).
 - `rsk/resources/tara.py` — Resource: specmgr://rsk/tara (Task 3.15).
 - `rsk/tools/__init__.py` — MCP tool wrappers for risks (mirrors ``tsk/tools/``'s own shape).
-- `rsk/tools/_io.py` — Thin file read helpers over ``parse_rsk`` (Task 3.1).
+- `rsk/tools/_cache.py` — Per-domain content-hash-validated read cache singleton for risks (feat-107-doc-cache Phase 4).
+- `rsk/tools/_io.py` — Thin file read helpers over ``parse_rsk`` (feat-107-doc-cache Phase 4).
 - `rsk/tools/_lock.py` — Per-document in-process lock guarding risk mutations.
 - `rsk/tools/_paths.py` — Risk base directory resolution and id -> path lookup (Task 3.1).
 - `rsk/tools/_sentinel.py` — RSK's sentinel-document construction for ``list_rsk``'s failed-entry rows (feat-81-83-validation Phase 3, Task 3.2).
@@ -381,7 +388,8 @@ First-line docstrings from each module, organized by domain:
 - `sop/resources/sop_schema.py` — Resource: specmgr://sop/schema (feat-30 Task 3.7, packaged data).
 - `sop/resources/sop_template.py` — Resource: specmgr://sop/template (feat-30 Task 3.7).
 - `sop/tools/__init__.py` — MCP tool wrappers for Standard Operating Procedures (mirrors ``dec/tools/``'s own shape).
-- `sop/tools/_io.py` — Thin file read helpers over ``parse_sop`` (Task 2.1).
+- `sop/tools/_cache.py` — Per-domain content-hash-validated read cache singleton for SOPs (feat-107-doc-cache Phase 4).
+- `sop/tools/_io.py` — Thin file read helpers over ``parse_sop`` (feat-107-doc-cache Phase 4).
 - `sop/tools/_lock.py` — Per-document in-process lock guarding SOP mutations.
 - `sop/tools/_paths.py` — SOP base directory resolution and id -> path lookup (Task 2.1).
 - `sop/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_sop`` and
@@ -411,7 +419,8 @@ First-line docstrings from each module, organized by domain:
 - `sysrs/resources/sysrs_schema.py` — Resource: specmgr://sysrs/schema (Task 4.5, packaged data).
 - `sysrs/resources/sysrs_template.py` — Resource: specmgr://sysrs/template (Task 4.5).
 - `sysrs/tools/__init__.py` — MCP tool wrappers for System Requirements Specification (SYSRS) documents (mirrors ``vcr/tools/``'s own shape).
-- `sysrs/tools/_io.py` — Thin file read helpers over ``parse_sysrs`` (Task 3.1).
+- `sysrs/tools/_cache.py` — Per-domain content-hash-validated read cache singleton for SYSRS documents (feat-107-doc-cache Phase 4).
+- `sysrs/tools/_io.py` — Thin file read helpers over ``parse_sysrs`` (feat-107-doc-cache Phase 4).
 - `sysrs/tools/_lock.py` — Per-document in-process lock guarding System Requirements Specification mutations.
 - `sysrs/tools/_paths.py` — System Requirements Specification (SYSRS) base directory resolution and id -> path lookup (Task 3.1).
 - `sysrs/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_sysrs`` and
@@ -443,7 +452,8 @@ First-line docstrings from each module, organized by domain:
 - `tsk/resources/tsk_schema.py` — Resource: specmgr://tsk/schema (Task 3.10).
 - `tsk/resources/tsk_template.py` — Resource: specmgr://tsk/template (Task 3.11).
 - `tsk/tools/__init__.py` — MCP tool wrappers for task lists (mirrors ``req/tools/``'s own shape).
-- `tsk/tools/_io.py` — Thin file read helpers over ``parse_tsk`` (Task 3.1).
+- `tsk/tools/_cache.py` — Per-domain content-hash-validated read cache singleton for task lists (feat-107-doc-cache Phase 4).
+- `tsk/tools/_io.py` — Thin file read helpers over ``parse_tsk`` (feat-107-doc-cache Phase 4).
 - `tsk/tools/_lock.py` — Per-document in-process lock guarding task list mutations.
 - `tsk/tools/_paths.py` — Task list base directory resolution and id -> path lookup (Task 3.1).
 - `tsk/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_tsk`` and
@@ -488,7 +498,8 @@ First-line docstrings from each module, organized by domain:
 - `uc/resources/uc_schema.py` — Resource: specmgr://uc/schema (Task 3.1.4).
 - `uc/resources/uc_template.py` — Resource: specmgr://uc/template (Task 3.1.4).
 - `uc/tools/__init__.py` — MCP tool wrappers for use cases (mirrors ``req/tools/``'s own shape).
-- `uc/tools/_io.py` — Thin file read helpers over ``parse_uc`` (Task 3.1.5).
+- `uc/tools/_cache.py` — Per-domain content-hash-validated read cache singleton for use cases (feat-107-doc-cache Phase 4).
+- `uc/tools/_io.py` — Thin file read helpers over ``parse_uc`` (feat-107-doc-cache Phase 4).
 - `uc/tools/_lock.py` — Per-document in-process lock guarding use-case mutations.
 - `uc/tools/_paths.py` — Use-case base directory resolution and id -> path lookup (Task 3.1.5).
 - `uc/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_uc`` and
@@ -518,7 +529,8 @@ First-line docstrings from each module, organized by domain:
 - `vcr/resources/vcr_schema.py` — Resource: specmgr://vcr/schema (Task 3.1, packaged data).
 - `vcr/resources/vcr_template.py` — Resource: specmgr://vcr/template (Task 3.1).
 - `vcr/tools/__init__.py` — MCP tool wrappers for verification case records (mirrors ``dec/tools/``'s own shape).
-- `vcr/tools/_io.py` — Thin file read helpers over ``parse_vcr`` (Task 2.1).
+- `vcr/tools/_cache.py` — Per-domain content-hash-validated read cache singleton for verification case records (feat-107-doc-cache Phase 4).
+- `vcr/tools/_io.py` — Thin file read helpers over ``parse_vcr`` (feat-107-doc-cache Phase 4).
 - `vcr/tools/_lock.py` — Per-document in-process lock guarding verification case record mutations.
 - `vcr/tools/_paths.py` — Verification case record base directory resolution and id -> path lookup (Task 2.1).
 - `vcr/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_vcr`` and
@@ -531,4 +543,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 358
+**Test files**: 361

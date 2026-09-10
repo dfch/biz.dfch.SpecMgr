@@ -13,10 +13,21 @@ See ``.specmgr/feat/feat-31-feature/README.md`` Design Notes
 
 Mirrors ``adr.tools._paths``'s read-only/write split: :func:`feat_base_dir`
 never creates the directory (a read-only tool shouldn't have that side
-effect), only :func:`ensure_feat_base_dir` does, for ``create_feat``. There
-is deliberately no in-memory id -> path cache either -- every lookup
-re-reads whatever is currently on disk, matching this codebase's "the
-on-disk file is the sole source of truth" design.
+effect), only :func:`ensure_feat_base_dir` does, for ``create_feat``.
+
+**Cache-backed single-file read (feat-107-doc-cache Phase 4, Task 4.1a).**
+:func:`find_feat_path_by_id` reads its single target file through the
+content-hash-validated ``feat`` cache (ADR bfd76370-b59b-4d65-b550-a969f6c93c9d)
+via ``._cache``'s own ``read_feat`` (not ``parse_feat`` directly) -- a file
+whose on-disk content hash is unchanged since its last read is not
+re-parsed. This also fixes the same double-parse bug every other domain's
+``find_<domain>_path`` had: without it, ``load_by_id`` would parse this
+single file once here (to validate its frontmatter id) and again via
+``read_feat`` right after. There is no directory scan here to reconcile a
+cache against (unlike every other domain's ``find_<domain>_path``) -- see
+this module's own docstring above for why: the shortcut-only lookup never
+scans, so :func:`~._cache.reconcile_feat_cache` is instead called from
+``list_feat``, the one place that does scan.
 
 **The key behavioral divergence from every other (UUID-addressed) domain**:
 since ``id`` *is* the containing folder's own name by convention (REQ-004),

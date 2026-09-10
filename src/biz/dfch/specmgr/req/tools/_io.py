@@ -27,35 +27,26 @@ that shape, so none is added speculatively here.
 No ``mcp`` dependency here either -- these are plain file-I/O adapters, kept
 separate from any future ``@mcp.tool()``-decorated function so they stay
 independently testable.
+
+``read_req`` itself now lives in ``._cache`` (feat-107-doc-cache Phase 3) --
+it is re-exported here unchanged (same name, same signature) so every
+existing external caller (e.g. ``req.tools.list_req``'s
+``from ._io import read_req``) keeps working with zero changes to its own
+import line. See ``._cache``'s module docstring for why ``read_req`` had to
+move out of this module in the first place (avoiding a circular import
+between ``_io.py`` and ``_paths.py``) and for the module-level cache
+singleton it now reads through.
 """
 
 from __future__ import annotations
 
 from pathlib import Path
 
-from ..models.v1 import ReqDocument, parse_req
+from ..models.v1 import ReqDocument
+from ._cache import read_req
 from ._paths import find_req_path
 
 __all__ = ["load_by_id", "read_req"]
-
-
-def read_req(path: Path) -> ReqDocument:
-    """Read and parse the requirement at ``path``.
-
-    Parameters
-    ----------
-    path:
-        The filesystem path to the requirement ``.md`` file.
-
-    Returns
-    -------
-    ReqDocument
-        The parsed, validated document.
-    """
-    assert isinstance(path, Path), type(path)
-
-    result = parse_req(path.read_text(encoding="utf-8"))
-    return result
 
 
 def load_by_id(base_dir: Path, id_: str) -> tuple[Path, ReqDocument]:

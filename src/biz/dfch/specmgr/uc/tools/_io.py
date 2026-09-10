@@ -15,7 +15,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Thin file read helpers over ``parse_uc`` (Task 3.1.5).
+"""Thin file read helpers over ``parse_uc`` (feat-107-doc-cache Phase 4).
 
 Read-only, mirroring ``req.tools._io`` exactly: there is no
 ``write_uc``/``render_uc`` counterpart here, since ``create_uc`` and the
@@ -27,35 +27,26 @@ added speculatively here.
 No ``mcp`` dependency here either -- these are plain file-I/O adapters, kept
 separate from any future ``@mcp.tool()``-decorated function so they stay
 independently testable.
+
+``read_uc`` itself now lives in ``._cache`` (feat-107-doc-cache Phase 4) --
+it is re-exported here unchanged (same name, same signature) so every
+existing external caller (e.g. ``uc.tools.list_uc``'s
+``from ._io import read_uc``) keeps working with zero changes to its own
+import line. See ``._cache``'s module docstring for why ``read_uc`` had to
+move out of this module in the first place (avoiding a circular import
+between ``_io.py`` and ``_paths.py``) and for the module-level cache
+singleton it now reads through.
 """
 
 from __future__ import annotations
 
 from pathlib import Path
 
-from ..models.v2 import UcDocument, parse_uc
+from ..models.v2 import UcDocument
+from ._cache import read_uc
 from ._paths import find_uc_path
 
 __all__ = ["load_by_id", "read_uc"]
-
-
-def read_uc(path: Path) -> UcDocument:
-    """Read and parse the use case at ``path``.
-
-    Parameters
-    ----------
-    path:
-        The filesystem path to the use-case ``.md`` file.
-
-    Returns
-    -------
-    UcDocument
-        The parsed, validated document.
-    """
-    assert isinstance(path, Path), type(path)
-
-    result = parse_uc(path.read_text(encoding="utf-8"))
-    return result
 
 
 def load_by_id(base_dir: Path, id_: str) -> tuple[Path, UcDocument]:

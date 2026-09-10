@@ -41,6 +41,7 @@ from ...models.md._errors import BODY_CHANNEL, wrap_tool_errors
 from ...models.md._markdown import format_text
 from ...server import mcp
 from ..models.v1 import GolFrontmatter, Goal
+from ._io import read_gol
 from ._paths import ensure_gol_base_dir
 from ._write import write_gol_file
 
@@ -117,5 +118,7 @@ def create_gol(content: str) -> GolFrontmatter:
     )
     filename = f"gol-{new_id}-{slugify(body.text)}.md"
     base_dir = ensure_gol_base_dir()
-    write_gol_file(base_dir / filename, new_frontmatter, content)
+    path = base_dir / filename
+    write_gol_file(path, new_frontmatter, content)
+    read_gol(path)  # warm the cache with this write's own validated content (feat-107-doc-cache Phase 4, REQ-003)
     return new_frontmatter

@@ -13,6 +13,15 @@ No ``mcp`` dependency here either -- these are plain file-I/O adapters, kept
 separate from any ``@mcp.tool()``-decorated function so they stay
 independently testable.
 
+``read_feat`` itself now lives in ``._cache`` (feat-107-doc-cache Phase 4,
+Task 4.1a) -- it is re-exported here unchanged (same name, same signature)
+so every existing external caller (e.g. ``feat.tools.list_feat``'s
+``from ._io import read_feat``) keeps working with zero changes to its own
+import line. See ``._cache``'s module docstring for why ``read_feat`` had
+to move out of this module in the first place (avoiding a circular import
+between ``_io.py`` and ``_paths.py``) and for the module-level cache
+singleton it now reads through.
+
 ## Functions
 
 ### `load_by_id(base_dir: 'Path', id_: 'str') -> 'tuple[Path, FeatDocument]'`
@@ -37,19 +46,4 @@ Raises
 ------
 FeatNotFoundError
     If no folder matches (propagated from :func:`._paths.find_feat_path_by_id`).
-
-
-### `read_feat(path: 'Path') -> 'FeatDocument'`
-
-Read and parse the feature document at ``path``.
-
-Parameters
-----------
-path:
-    The filesystem path to the feature's ``README.md`` file.
-
-Returns
--------
-FeatDocument
-    The parsed, validated document.
 

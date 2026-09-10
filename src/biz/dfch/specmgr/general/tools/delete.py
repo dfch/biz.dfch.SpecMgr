@@ -70,40 +70,52 @@ import shutil
 from collections.abc import Callable
 from typing import Literal
 
+from ...dec.tools._cache import invalidate_dec_cache
 from ...dec.tools._io import load_by_id as load_dec_by_id
 from ...dec.tools._lock import dec_lock
 from ...dec.tools._paths import dec_base_dir
+from ...feat.tools._cache import invalidate_feat_cache
 from ...feat.tools._io import load_by_id as load_feat_by_id
 from ...feat.tools._lock import feat_lock
 from ...feat.tools._paths import feat_base_dir
+from ...gol.tools._cache import invalidate_gol_cache
 from ...gol.tools._io import load_by_id as load_gol_by_id
 from ...gol.tools._lock import gol_lock
 from ...gol.tools._paths import gol_base_dir
+from ...prb.tools._cache import invalidate_prb_cache
 from ...prb.tools._io import load_by_id as load_prb_by_id
 from ...prb.tools._lock import prb_lock
 from ...prb.tools._paths import prb_base_dir
+from ...qa.tools._cache import invalidate_qa_cache
 from ...qa.tools._io import load_by_id as load_qa_by_id
 from ...qa.tools._lock import qa_lock
 from ...qa.tools._paths import qa_base_dir
+from ...req.tools._cache import invalidate_req_cache
 from ...req.tools._io import load_by_id as load_req_by_id
 from ...req.tools._lock import req_lock
 from ...req.tools._paths import req_base_dir
+from ...rsk.tools._cache import invalidate_rsk_cache
 from ...rsk.tools._io import load_by_id as load_rsk_by_id
 from ...rsk.tools._lock import rsk_lock
 from ...rsk.tools._paths import rsk_base_dir
 from ...server import mcp
+from ...sop.tools._cache import invalidate_sop_cache
 from ...sop.tools._io import load_by_id as load_sop_by_id
 from ...sop.tools._lock import sop_lock
 from ...sop.tools._paths import sop_base_dir
+from ...sysrs.tools._cache import invalidate_sysrs_cache
 from ...sysrs.tools._io import load_by_id as load_sysrs_by_id
 from ...sysrs.tools._lock import sysrs_lock
 from ...sysrs.tools._paths import sysrs_base_dir
+from ...tsk.tools._cache import invalidate_tsk_cache
 from ...tsk.tools._io import load_by_id as load_tsk_by_id
 from ...tsk.tools._lock import tsk_lock
 from ...tsk.tools._paths import tsk_base_dir
+from ...uc.tools._cache import invalidate_uc_cache
 from ...uc.tools._io import load_by_id as load_uc_by_id
 from ...uc.tools._lock import uc_lock
 from ...uc.tools._paths import uc_base_dir
+from ...vcr.tools._cache import invalidate_vcr_cache
 from ...vcr.tools._io import load_by_id as load_vcr_by_id
 from ...vcr.tools._lock import vcr_lock
 from ...vcr.tools._paths import vcr_base_dir
@@ -134,7 +146,10 @@ def _delete_req(id_: str) -> str:
     the resolved path to the requirement base directory, and removes the
     single ``*.md`` file. The domain's own ``ReqNotFoundError`` propagates
     unchanged; an ``unlink`` I/O failure re-raises as
-    :class:`DeleteError`.
+    :class:`DeleteError`. On a successful ``unlink``, the cache entry for
+    ``path`` is invalidated immediately (feat-107-doc-cache Phase 3,
+    REQ-004) -- not invalidated at all if ``unlink`` itself raises, since
+    the file is still on disk in that case.
     """
     base_dir = req_base_dir()
     with req_lock(id_):  # REQ-004
@@ -144,6 +159,7 @@ def _delete_req(id_: str) -> str:
             path.unlink()  # REQ-006
         except OSError as ex:
             raise DeleteError(f"failed to delete {path}: {ex}") from ex  # REQ-005
+        invalidate_req_cache(path)  # feat-107-doc-cache Phase 3, REQ-004
     return str(path)  # REQ-001
 
 
@@ -160,6 +176,7 @@ def _delete_uc(id_: str) -> str:
             path.unlink()  # REQ-006
         except OSError as ex:
             raise DeleteError(f"failed to delete {path}: {ex}") from ex  # REQ-005
+        invalidate_uc_cache(path)  # feat-107-doc-cache Phase 4, REQ-004
     return str(path)  # REQ-001
 
 
@@ -176,6 +193,7 @@ def _delete_tsk(id_: str) -> str:
             path.unlink()  # REQ-006
         except OSError as ex:
             raise DeleteError(f"failed to delete {path}: {ex}") from ex  # REQ-005
+        invalidate_tsk_cache(path)  # feat-107-doc-cache Phase 4, REQ-004
     return str(path)  # REQ-001
 
 
@@ -192,6 +210,7 @@ def _delete_qa(id_: str) -> str:
             path.unlink()  # REQ-006
         except OSError as ex:
             raise DeleteError(f"failed to delete {path}: {ex}") from ex  # REQ-005
+        invalidate_qa_cache(path)  # feat-107-doc-cache Phase 4, REQ-004
     return str(path)  # REQ-001
 
 
@@ -208,6 +227,7 @@ def _delete_prb(id_: str) -> str:
             path.unlink()  # REQ-006
         except OSError as ex:
             raise DeleteError(f"failed to delete {path}: {ex}") from ex  # REQ-005
+        invalidate_prb_cache(path)  # feat-107-doc-cache Phase 4, REQ-004
     return str(path)  # REQ-001
 
 
@@ -224,6 +244,7 @@ def _delete_gol(id_: str) -> str:
             path.unlink()  # REQ-006
         except OSError as ex:
             raise DeleteError(f"failed to delete {path}: {ex}") from ex  # REQ-005
+        invalidate_gol_cache(path)  # feat-107-doc-cache Phase 4, REQ-004
     return str(path)  # REQ-001
 
 
@@ -240,6 +261,7 @@ def _delete_rsk(id_: str) -> str:
             path.unlink()  # REQ-006
         except OSError as ex:
             raise DeleteError(f"failed to delete {path}: {ex}") from ex  # REQ-005
+        invalidate_rsk_cache(path)  # feat-107-doc-cache Phase 4, REQ-004
     return str(path)  # REQ-001
 
 
@@ -256,6 +278,7 @@ def _delete_dec(id_: str) -> str:
             path.unlink()  # REQ-006
         except OSError as ex:
             raise DeleteError(f"failed to delete {path}: {ex}") from ex  # REQ-005
+        invalidate_dec_cache(path)  # feat-107-doc-cache Phase 4, REQ-004
     return str(path)  # REQ-001
 
 
@@ -269,6 +292,7 @@ def _delete_sop(id_: str) -> str:
             path.unlink()  # REQ-006
         except OSError as ex:
             raise DeleteError(f"failed to delete {path}: {ex}") from ex  # REQ-005
+        invalidate_sop_cache(path)  # feat-107-doc-cache Phase 4, REQ-004
     return str(path)  # REQ-001
 
 
@@ -280,7 +304,12 @@ def _delete_feat(id_: str) -> str:
     ``shutil.rmtree`` -- deleting ``README.md``, any ``history.md``, and
     any session transcripts in that folder), not the ``README.md`` file,
     and the folder path is what is returned -- see :func:`_delete_req` for
-    the shared resolve/lock/safety semantics.
+    the shared resolve/lock/safety semantics. On a successful ``rmtree``,
+    the cache entry for ``path`` (the ``README.md`` file, the ``feat``
+    cache's own key -- not the folder ``rmtree`` actually removed) is
+    invalidated immediately (feat-107-doc-cache Phase 4, Task 4.1a,
+    REQ-004) -- not invalidated at all if ``rmtree`` itself raises, since
+    the folder is still on disk in that case.
     """
     base_dir = feat_base_dir()
     with feat_lock(id_):  # REQ-004
@@ -291,6 +320,7 @@ def _delete_feat(id_: str) -> str:
             shutil.rmtree(folder)  # REQ-006: whole folder
         except OSError as ex:
             raise DeleteError(f"failed to delete {folder}: {ex}") from ex  # REQ-005
+        invalidate_feat_cache(path)  # feat-107-doc-cache Phase 4, Task 4.1a, REQ-004
     return str(folder)  # REQ-001
 
 
@@ -307,6 +337,7 @@ def _delete_vcr(id_: str) -> str:
             path.unlink()  # REQ-006
         except OSError as ex:
             raise DeleteError(f"failed to delete {path}: {ex}") from ex  # REQ-005
+        invalidate_vcr_cache(path)  # feat-107-doc-cache Phase 4, REQ-004
     return str(path)  # REQ-001
 
 
@@ -323,6 +354,7 @@ def _delete_sysrs(id_: str) -> str:
             path.unlink()  # REQ-006
         except OSError as ex:
             raise DeleteError(f"failed to delete {path}: {ex}") from ex  # REQ-005
+        invalidate_sysrs_cache(path)  # feat-107-doc-cache Phase 4, REQ-004
     return str(path)  # REQ-001
 
 

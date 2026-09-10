@@ -1,6 +1,6 @@
 # `biz.dfch.specmgr.uc.tools._io`
 
-Thin file read helpers over ``parse_uc`` (Task 3.1.5).
+Thin file read helpers over ``parse_uc`` (feat-107-doc-cache Phase 4).
 
 Read-only, mirroring ``req.tools._io`` exactly: there is no
 ``write_uc``/``render_uc`` counterpart here, since ``create_uc`` and the
@@ -12,6 +12,15 @@ added speculatively here.
 No ``mcp`` dependency here either -- these are plain file-I/O adapters, kept
 separate from any future ``@mcp.tool()``-decorated function so they stay
 independently testable.
+
+``read_uc`` itself now lives in ``._cache`` (feat-107-doc-cache Phase 4) --
+it is re-exported here unchanged (same name, same signature) so every
+existing external caller (e.g. ``uc.tools.list_uc``'s
+``from ._io import read_uc``) keeps working with zero changes to its own
+import line. See ``._cache``'s module docstring for why ``read_uc`` had to
+move out of this module in the first place (avoiding a circular import
+between ``_io.py`` and ``_paths.py``) and for the module-level cache
+singleton it now reads through.
 
 ## Functions
 
@@ -36,19 +45,4 @@ Raises
 ------
 UcNotFoundError
     If no file matches (propagated from :func:`._paths.find_uc_path`).
-
-
-### `read_uc(path: 'Path') -> 'UcDocument'`
-
-Read and parse the use case at ``path``.
-
-Parameters
-----------
-path:
-    The filesystem path to the use-case ``.md`` file.
-
-Returns
--------
-UcDocument
-    The parsed, validated document.
 

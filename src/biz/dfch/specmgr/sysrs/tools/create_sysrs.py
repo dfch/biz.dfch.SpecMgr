@@ -41,6 +41,7 @@ from ...models.md._errors import BODY_CHANNEL, wrap_tool_errors
 from ...models.md._markdown import format_text
 from ...server import mcp
 from ..models.v1 import Sysrs, SysrsFrontmatter
+from ._io import read_sysrs
 from ._paths import ensure_sysrs_base_dir
 from ._write import write_sysrs_file
 
@@ -117,5 +118,7 @@ def create_sysrs(content: str) -> SysrsFrontmatter:
     )
     filename = f"sysrs-{new_id}-{slugify(body.text)}.md"
     base_dir = ensure_sysrs_base_dir()
-    write_sysrs_file(base_dir / filename, new_frontmatter, content)
+    path = base_dir / filename
+    write_sysrs_file(path, new_frontmatter, content)
+    read_sysrs(path)  # warm the cache with this write's own validated content (feat-107-doc-cache Phase 4, REQ-003)
     return new_frontmatter

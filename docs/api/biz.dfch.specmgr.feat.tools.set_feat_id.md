@@ -39,6 +39,13 @@ the rename, then written back verbatim under the new frontmatter -- no
 reference to the old id anywhere else in the repository is searched for or
 touched (REQ-008 is explicitly out of scope for this tool).
 
+**Cache-entry move (feat-107-doc-cache Phase 4, Task 4.1a, REQ-004).**
+``feat.tools._cache.move_feat_cache_entry(old_path, new_path)`` is called
+as the *last* step, only after ``write_feat_file(new_path, ...)`` has
+already succeeded -- never at the earlier ``old_path.parent.rename(...)``
+step -- so a failure between the rename and the write never leaves a cache
+entry addressing a file that was never actually written.
+
 ## Functions
 
 ### `set_feat_id(id: 'str', new_id: 'str') -> 'FeatFrontmatter'`

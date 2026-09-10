@@ -41,6 +41,7 @@ from ...models.md._errors import BODY_CHANNEL, wrap_tool_errors
 from ...models.md._markdown import format_text
 from ...server import mcp
 from ..models.v1 import DecFrontmatter, Decision
+from ._io import read_dec
 from ._paths import ensure_dec_base_dir
 from ._write import write_dec_file
 
@@ -117,5 +118,7 @@ def create_dec(content: str) -> DecFrontmatter:
     )
     filename = f"dec-{new_id}-{slugify(body.text)}.md"
     base_dir = ensure_dec_base_dir()
-    write_dec_file(base_dir / filename, new_frontmatter, content)
+    path = base_dir / filename
+    write_dec_file(path, new_frontmatter, content)
+    read_dec(path)  # warm the cache with this write's own validated content (feat-107-doc-cache Phase 4, REQ-003)
     return new_frontmatter

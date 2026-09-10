@@ -61,7 +61,8 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.dec.resources.dec_schema`](biz.dfch.specmgr.dec.resources.dec_schema.md) — Resource: specmgr://dec/schema (feat-21 Task 3.4, packaged data).
 - [`biz.dfch.specmgr.dec.resources.dec_template`](biz.dfch.specmgr.dec.resources.dec_template.md) — Resource: specmgr://dec/template (feat-21 Task 3.4).
 - [`biz.dfch.specmgr.dec.tools`](biz.dfch.specmgr.dec.tools.md) — MCP tool wrappers for decisions (mirrors ``gol/tools/``'s own shape).
-- [`biz.dfch.specmgr.dec.tools._io`](biz.dfch.specmgr.dec.tools._io.md) — Thin file read helpers over ``parse_dec`` (Task 2.1).
+- [`biz.dfch.specmgr.dec.tools._cache`](biz.dfch.specmgr.dec.tools._cache.md) — Per-domain content-hash-validated read cache singleton for decisions (feat-107-doc-cache Phase 4).
+- [`biz.dfch.specmgr.dec.tools._io`](biz.dfch.specmgr.dec.tools._io.md) — Thin file read helpers over ``parse_dec`` (feat-107-doc-cache Phase 4).
 - [`biz.dfch.specmgr.dec.tools._lock`](biz.dfch.specmgr.dec.tools._lock.md) — Per-document in-process lock guarding decision mutations.
 - [`biz.dfch.specmgr.dec.tools._paths`](biz.dfch.specmgr.dec.tools._paths.md) — Decision base directory resolution and id -> path lookup (Task 2.1).
 - [`biz.dfch.specmgr.dec.tools._write`](biz.dfch.specmgr.dec.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_dec`` and
@@ -88,6 +89,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.feat.resources.feat_schema`](biz.dfch.specmgr.feat.resources.feat_schema.md) — Resource: specmgr://feat/schema (feat-31 Task 3.5, packaged data).
 - [`biz.dfch.specmgr.feat.resources.feat_template`](biz.dfch.specmgr.feat.resources.feat_template.md) — Resource: specmgr://feat/template (feat-31 Task 3.5).
 - [`biz.dfch.specmgr.feat.tools`](biz.dfch.specmgr.feat.tools.md) — MCP tool wrappers for features (mirrors ``dec/tools/``'s own shape).
+- [`biz.dfch.specmgr.feat.tools._cache`](biz.dfch.specmgr.feat.tools._cache.md) — Per-domain content-hash-validated read cache singleton for features (feat-107-doc-cache Phase 4, Task 4.1a).
 - [`biz.dfch.specmgr.feat.tools._io`](biz.dfch.specmgr.feat.tools._io.md) — Thin file read helpers over ``parse_feat`` (Task 2.2).
 - [`biz.dfch.specmgr.feat.tools._lock`](biz.dfch.specmgr.feat.tools._lock.md) — Per-document and global in-process locks guarding feature mutations (Task 2.2).
 - [`biz.dfch.specmgr.feat.tools._paths`](biz.dfch.specmgr.feat.tools._paths.md) — Feature (FEAT) base directory resolution and id -> path lookup (Task 2.1).
@@ -147,7 +149,8 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.gol.resources.gol_schema`](biz.dfch.specmgr.gol.resources.gol_schema.md) — Resource: specmgr://gol/schema (Task 3.11, packaged data).
 - [`biz.dfch.specmgr.gol.resources.gol_template`](biz.dfch.specmgr.gol.resources.gol_template.md) — Resource: specmgr://gol/template (Task 3.11).
 - [`biz.dfch.specmgr.gol.tools`](biz.dfch.specmgr.gol.tools.md) — MCP tool wrappers for goals (mirrors ``prb/tools/``'s own shape).
-- [`biz.dfch.specmgr.gol.tools._io`](biz.dfch.specmgr.gol.tools._io.md) — Thin file read helpers over ``parse_gol`` (Task 3.1).
+- [`biz.dfch.specmgr.gol.tools._cache`](biz.dfch.specmgr.gol.tools._cache.md) — Per-domain content-hash-validated read cache singleton for goals (feat-107-doc-cache Phase 4).
+- [`biz.dfch.specmgr.gol.tools._io`](biz.dfch.specmgr.gol.tools._io.md) — Thin file read helpers over ``parse_gol`` (feat-107-doc-cache Phase 4).
 - [`biz.dfch.specmgr.gol.tools._lock`](biz.dfch.specmgr.gol.tools._lock.md) — Per-document in-process lock guarding goal mutations.
 - [`biz.dfch.specmgr.gol.tools._paths`](biz.dfch.specmgr.gol.tools._paths.md) — Goal base directory resolution and id -> path lookup (Task 3.1).
 - [`biz.dfch.specmgr.gol.tools._write`](biz.dfch.specmgr.gol.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_gol`` and
@@ -219,7 +222,8 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.prb.resources.prb_schema`](biz.dfch.specmgr.prb.resources.prb_schema.md) — Resource: specmgr://prb/schema (Task 3.11).
 - [`biz.dfch.specmgr.prb.resources.prb_template`](biz.dfch.specmgr.prb.resources.prb_template.md) — Resource: specmgr://prb/template (Task 3.11).
 - [`biz.dfch.specmgr.prb.tools`](biz.dfch.specmgr.prb.tools.md) — MCP tool wrappers for problem statements (mirrors ``tsk/tools/``'s own shape).
-- [`biz.dfch.specmgr.prb.tools._io`](biz.dfch.specmgr.prb.tools._io.md) — Thin file read helpers over ``parse_prb`` (Task 3.1).
+- [`biz.dfch.specmgr.prb.tools._cache`](biz.dfch.specmgr.prb.tools._cache.md) — Per-domain content-hash-validated read cache singleton for problem statements (feat-107-doc-cache Phase 4).
+- [`biz.dfch.specmgr.prb.tools._io`](biz.dfch.specmgr.prb.tools._io.md) — Thin file read helpers over ``parse_prb`` (feat-107-doc-cache Phase 4).
 - [`biz.dfch.specmgr.prb.tools._lock`](biz.dfch.specmgr.prb.tools._lock.md) — Per-document in-process lock guarding problem statement mutations.
 - [`biz.dfch.specmgr.prb.tools._paths`](biz.dfch.specmgr.prb.tools._paths.md) — Problem statement base directory resolution and id -> path lookup (Task 3.1).
 - [`biz.dfch.specmgr.prb.tools._write`](biz.dfch.specmgr.prb.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_prb`` and
@@ -248,7 +252,8 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.qa.resources.qa_schema`](biz.dfch.specmgr.qa.resources.qa_schema.md) — Resource: specmgr://qa/schema (Phase 4, Task 4.2).
 - [`biz.dfch.specmgr.qa.resources.qa_template`](biz.dfch.specmgr.qa.resources.qa_template.md) — Resource: specmgr://qa/template (Phase 4, Task 4.2).
 - [`biz.dfch.specmgr.qa.tools`](biz.dfch.specmgr.qa.tools.md) — MCP tool wrappers for Question and Answer (QA) documents (mirrors ``req/tools/``'s own shape).
-- [`biz.dfch.specmgr.qa.tools._io`](biz.dfch.specmgr.qa.tools._io.md) — Thin file read helpers over ``parse_qa`` (Phase 4, Task 4.1).
+- [`biz.dfch.specmgr.qa.tools._cache`](biz.dfch.specmgr.qa.tools._cache.md) — Per-domain content-hash-validated read cache singleton for QA documents (feat-107-doc-cache Phase 4).
+- [`biz.dfch.specmgr.qa.tools._io`](biz.dfch.specmgr.qa.tools._io.md) — Thin file read helpers over ``parse_qa`` (feat-107-doc-cache Phase 4).
 - [`biz.dfch.specmgr.qa.tools._lock`](biz.dfch.specmgr.qa.tools._lock.md) — Per-document in-process lock guarding Question and Answer (QA) mutations.
 - [`biz.dfch.specmgr.qa.tools._paths`](biz.dfch.specmgr.qa.tools._paths.md) — Question and Answer (QA) base directory resolution and id -> path lookup (Phase 4, Task 4.1).
 - [`biz.dfch.specmgr.qa.tools._write`](biz.dfch.specmgr.qa.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_qa`` and
@@ -267,6 +272,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.req.resources.req_schema`](biz.dfch.specmgr.req.resources.req_schema.md) — Resource: specmgr://req/schema (Task 3.5, packaged data since Task 3.8).
 - [`biz.dfch.specmgr.req.resources.req_template`](biz.dfch.specmgr.req.resources.req_template.md) — Resource: specmgr://req/template (Task 3.7).
 - [`biz.dfch.specmgr.req.tools`](biz.dfch.specmgr.req.tools.md) — MCP tool wrappers for requirements (mirrors ``uc/tools/``'s own shape).
+- [`biz.dfch.specmgr.req.tools._cache`](biz.dfch.specmgr.req.tools._cache.md) — Per-domain content-hash-validated read cache singleton for requirements (feat-107-doc-cache Phase 3).
 - [`biz.dfch.specmgr.req.tools._io`](biz.dfch.specmgr.req.tools._io.md) — Thin file read helpers over ``parse_req`` (Task 3.11).
 - [`biz.dfch.specmgr.req.tools._lock`](biz.dfch.specmgr.req.tools._lock.md) — Per-document in-process lock guarding requirement mutations.
 - [`biz.dfch.specmgr.req.tools._paths`](biz.dfch.specmgr.req.tools._paths.md) — Requirement base directory resolution and id -> path lookup (Task 3.11).
@@ -299,7 +305,8 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.rsk.resources.rsk_template`](biz.dfch.specmgr.rsk.resources.rsk_template.md) — Resource: specmgr://rsk/template (Task 3.11).
 - [`biz.dfch.specmgr.rsk.resources.tara`](biz.dfch.specmgr.rsk.resources.tara.md) — Resource: specmgr://rsk/tara (Task 3.15).
 - [`biz.dfch.specmgr.rsk.tools`](biz.dfch.specmgr.rsk.tools.md) — MCP tool wrappers for risks (mirrors ``tsk/tools/``'s own shape).
-- [`biz.dfch.specmgr.rsk.tools._io`](biz.dfch.specmgr.rsk.tools._io.md) — Thin file read helpers over ``parse_rsk`` (Task 3.1).
+- [`biz.dfch.specmgr.rsk.tools._cache`](biz.dfch.specmgr.rsk.tools._cache.md) — Per-domain content-hash-validated read cache singleton for risks (feat-107-doc-cache Phase 4).
+- [`biz.dfch.specmgr.rsk.tools._io`](biz.dfch.specmgr.rsk.tools._io.md) — Thin file read helpers over ``parse_rsk`` (feat-107-doc-cache Phase 4).
 - [`biz.dfch.specmgr.rsk.tools._lock`](biz.dfch.specmgr.rsk.tools._lock.md) — Per-document in-process lock guarding risk mutations.
 - [`biz.dfch.specmgr.rsk.tools._paths`](biz.dfch.specmgr.rsk.tools._paths.md) — Risk base directory resolution and id -> path lookup (Task 3.1).
 - [`biz.dfch.specmgr.rsk.tools._sentinel`](biz.dfch.specmgr.rsk.tools._sentinel.md) — RSK's sentinel-document construction for ``list_rsk``'s failed-entry rows (feat-81-83-validation Phase 3, Task 3.2).
@@ -328,7 +335,8 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.sop.resources.sop_schema`](biz.dfch.specmgr.sop.resources.sop_schema.md) — Resource: specmgr://sop/schema (feat-30 Task 3.7, packaged data).
 - [`biz.dfch.specmgr.sop.resources.sop_template`](biz.dfch.specmgr.sop.resources.sop_template.md) — Resource: specmgr://sop/template (feat-30 Task 3.7).
 - [`biz.dfch.specmgr.sop.tools`](biz.dfch.specmgr.sop.tools.md) — MCP tool wrappers for Standard Operating Procedures (mirrors ``dec/tools/``'s own shape).
-- [`biz.dfch.specmgr.sop.tools._io`](biz.dfch.specmgr.sop.tools._io.md) — Thin file read helpers over ``parse_sop`` (Task 2.1).
+- [`biz.dfch.specmgr.sop.tools._cache`](biz.dfch.specmgr.sop.tools._cache.md) — Per-domain content-hash-validated read cache singleton for SOPs (feat-107-doc-cache Phase 4).
+- [`biz.dfch.specmgr.sop.tools._io`](biz.dfch.specmgr.sop.tools._io.md) — Thin file read helpers over ``parse_sop`` (feat-107-doc-cache Phase 4).
 - [`biz.dfch.specmgr.sop.tools._lock`](biz.dfch.specmgr.sop.tools._lock.md) — Per-document in-process lock guarding SOP mutations.
 - [`biz.dfch.specmgr.sop.tools._paths`](biz.dfch.specmgr.sop.tools._paths.md) — SOP base directory resolution and id -> path lookup (Task 2.1).
 - [`biz.dfch.specmgr.sop.tools._write`](biz.dfch.specmgr.sop.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_sop`` and
@@ -355,7 +363,8 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.sysrs.resources.sysrs_schema`](biz.dfch.specmgr.sysrs.resources.sysrs_schema.md) — Resource: specmgr://sysrs/schema (Task 4.5, packaged data).
 - [`biz.dfch.specmgr.sysrs.resources.sysrs_template`](biz.dfch.specmgr.sysrs.resources.sysrs_template.md) — Resource: specmgr://sysrs/template (Task 4.5).
 - [`biz.dfch.specmgr.sysrs.tools`](biz.dfch.specmgr.sysrs.tools.md) — MCP tool wrappers for System Requirements Specification (SYSRS) documents (mirrors ``vcr/tools/``'s own shape).
-- [`biz.dfch.specmgr.sysrs.tools._io`](biz.dfch.specmgr.sysrs.tools._io.md) — Thin file read helpers over ``parse_sysrs`` (Task 3.1).
+- [`biz.dfch.specmgr.sysrs.tools._cache`](biz.dfch.specmgr.sysrs.tools._cache.md) — Per-domain content-hash-validated read cache singleton for SYSRS documents (feat-107-doc-cache Phase 4).
+- [`biz.dfch.specmgr.sysrs.tools._io`](biz.dfch.specmgr.sysrs.tools._io.md) — Thin file read helpers over ``parse_sysrs`` (feat-107-doc-cache Phase 4).
 - [`biz.dfch.specmgr.sysrs.tools._lock`](biz.dfch.specmgr.sysrs.tools._lock.md) — Per-document in-process lock guarding System Requirements Specification mutations.
 - [`biz.dfch.specmgr.sysrs.tools._paths`](biz.dfch.specmgr.sysrs.tools._paths.md) — System Requirements Specification (SYSRS) base directory resolution and id -> path lookup (Task 3.1).
 - [`biz.dfch.specmgr.sysrs.tools._write`](biz.dfch.specmgr.sysrs.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_sysrs`` and
@@ -384,7 +393,8 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.tsk.resources.tsk_schema`](biz.dfch.specmgr.tsk.resources.tsk_schema.md) — Resource: specmgr://tsk/schema (Task 3.10).
 - [`biz.dfch.specmgr.tsk.resources.tsk_template`](biz.dfch.specmgr.tsk.resources.tsk_template.md) — Resource: specmgr://tsk/template (Task 3.11).
 - [`biz.dfch.specmgr.tsk.tools`](biz.dfch.specmgr.tsk.tools.md) — MCP tool wrappers for task lists (mirrors ``req/tools/``'s own shape).
-- [`biz.dfch.specmgr.tsk.tools._io`](biz.dfch.specmgr.tsk.tools._io.md) — Thin file read helpers over ``parse_tsk`` (Task 3.1).
+- [`biz.dfch.specmgr.tsk.tools._cache`](biz.dfch.specmgr.tsk.tools._cache.md) — Per-domain content-hash-validated read cache singleton for task lists (feat-107-doc-cache Phase 4).
+- [`biz.dfch.specmgr.tsk.tools._io`](biz.dfch.specmgr.tsk.tools._io.md) — Thin file read helpers over ``parse_tsk`` (feat-107-doc-cache Phase 4).
 - [`biz.dfch.specmgr.tsk.tools._lock`](biz.dfch.specmgr.tsk.tools._lock.md) — Per-document in-process lock guarding task list mutations.
 - [`biz.dfch.specmgr.tsk.tools._paths`](biz.dfch.specmgr.tsk.tools._paths.md) — Task list base directory resolution and id -> path lookup (Task 3.1).
 - [`biz.dfch.specmgr.tsk.tools._write`](biz.dfch.specmgr.tsk.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_tsk`` and
@@ -427,7 +437,8 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.uc.resources.uc_schema`](biz.dfch.specmgr.uc.resources.uc_schema.md) — Resource: specmgr://uc/schema (Task 3.1.4).
 - [`biz.dfch.specmgr.uc.resources.uc_template`](biz.dfch.specmgr.uc.resources.uc_template.md) — Resource: specmgr://uc/template (Task 3.1.4).
 - [`biz.dfch.specmgr.uc.tools`](biz.dfch.specmgr.uc.tools.md) — MCP tool wrappers for use cases (mirrors ``req/tools/``'s own shape).
-- [`biz.dfch.specmgr.uc.tools._io`](biz.dfch.specmgr.uc.tools._io.md) — Thin file read helpers over ``parse_uc`` (Task 3.1.5).
+- [`biz.dfch.specmgr.uc.tools._cache`](biz.dfch.specmgr.uc.tools._cache.md) — Per-domain content-hash-validated read cache singleton for use cases (feat-107-doc-cache Phase 4).
+- [`biz.dfch.specmgr.uc.tools._io`](biz.dfch.specmgr.uc.tools._io.md) — Thin file read helpers over ``parse_uc`` (feat-107-doc-cache Phase 4).
 - [`biz.dfch.specmgr.uc.tools._lock`](biz.dfch.specmgr.uc.tools._lock.md) — Per-document in-process lock guarding use-case mutations.
 - [`biz.dfch.specmgr.uc.tools._paths`](biz.dfch.specmgr.uc.tools._paths.md) — Use-case base directory resolution and id -> path lookup (Task 3.1.5).
 - [`biz.dfch.specmgr.uc.tools._write`](biz.dfch.specmgr.uc.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_uc`` and
@@ -454,7 +465,8 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.vcr.resources.vcr_schema`](biz.dfch.specmgr.vcr.resources.vcr_schema.md) — Resource: specmgr://vcr/schema (Task 3.1, packaged data).
 - [`biz.dfch.specmgr.vcr.resources.vcr_template`](biz.dfch.specmgr.vcr.resources.vcr_template.md) — Resource: specmgr://vcr/template (Task 3.1).
 - [`biz.dfch.specmgr.vcr.tools`](biz.dfch.specmgr.vcr.tools.md) — MCP tool wrappers for verification case records (mirrors ``dec/tools/``'s own shape).
-- [`biz.dfch.specmgr.vcr.tools._io`](biz.dfch.specmgr.vcr.tools._io.md) — Thin file read helpers over ``parse_vcr`` (Task 2.1).
+- [`biz.dfch.specmgr.vcr.tools._cache`](biz.dfch.specmgr.vcr.tools._cache.md) — Per-domain content-hash-validated read cache singleton for verification case records (feat-107-doc-cache Phase 4).
+- [`biz.dfch.specmgr.vcr.tools._io`](biz.dfch.specmgr.vcr.tools._io.md) — Thin file read helpers over ``parse_vcr`` (feat-107-doc-cache Phase 4).
 - [`biz.dfch.specmgr.vcr.tools._lock`](biz.dfch.specmgr.vcr.tools._lock.md) — Per-document in-process lock guarding verification case record mutations.
 - [`biz.dfch.specmgr.vcr.tools._paths`](biz.dfch.specmgr.vcr.tools._paths.md) — Verification case record base directory resolution and id -> path lookup (Task 2.1).
 - [`biz.dfch.specmgr.vcr.tools._write`](biz.dfch.specmgr.vcr.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_vcr`` and

@@ -85,7 +85,12 @@ is the entire containing ``<base>/<id_>/`` folder (removed via
 ``shutil.rmtree`` -- deleting ``README.md``, any ``history.md``, and
 any session transcripts in that folder), not the ``README.md`` file,
 and the folder path is what is returned -- see :func:`_delete_req` for
-the shared resolve/lock/safety semantics.
+the shared resolve/lock/safety semantics. On a successful ``rmtree``,
+the cache entry for ``path`` (the ``README.md`` file, the ``feat``
+cache's own key -- not the folder ``rmtree`` actually removed) is
+invalidated immediately (feat-107-doc-cache Phase 4, Task 4.1a,
+REQ-004) -- not invalidated at all if ``rmtree`` itself raises, since
+the folder is still on disk in that case.
 
 
 ### `_delete_gol(id_: 'str') -> 'str'`
@@ -120,7 +125,10 @@ guarantees a valid, parseable document before removal), takes
 the resolved path to the requirement base directory, and removes the
 single ``*.md`` file. The domain's own ``ReqNotFoundError`` propagates
 unchanged; an ``unlink`` I/O failure re-raises as
-:class:`DeleteError`.
+:class:`DeleteError`. On a successful ``unlink``, the cache entry for
+``path`` is invalidated immediately (feat-107-doc-cache Phase 3,
+REQ-004) -- not invalidated at all if ``unlink`` itself raises, since
+the file is still on disk in that case.
 
 
 ### `_delete_rsk(id_: 'str') -> 'str'`
