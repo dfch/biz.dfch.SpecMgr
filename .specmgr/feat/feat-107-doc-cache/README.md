@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-09 22:40:39.484+02:00'
 id: feat-107-doc-cache
-status: planning
+status: done
 type: feat
-updated: '2026-09-09 22:40:39.484+02:00'
+updated: '2026-09-10 08:37:17.235+02:00'
 version: 1.0.0
 ---
 
@@ -32,21 +32,21 @@ version: 1.0.0
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: A test asserts a `get_req` call against a fixture directory invokes the underlying `parse_req` function exactly once per call, not twice, verifying the existing matched-file double-parse bug is fixed.
+- [x] ACC-001: A test asserts a `get_req` call against a fixture directory invokes the underlying `parse_req` function exactly once per call, not twice, verifying the existing matched-file double-parse bug is fixed. Evidence: `tests/req/tools/test_doc_cache_wiring.py::TestAcc001SingleGetReqParsesOnce::test_get_req_invokes_parse_req_exactly_once`, passes.
 
-- [ ] ACC-002: A test asserts N sequential `get_req(id)` calls against an unchanged file invoke `parse_req` exactly once total across all N calls, not once per call.
+- [x] ACC-002: A test asserts N sequential `get_req(id)` calls against an unchanged file invoke `parse_req` exactly once total across all N calls, not once per call. Evidence: `tests/req/tools/test_doc_cache_wiring.py::TestAcc002RepeatedGetReqParsesOnceTotal::test_n_total_calls_including_the_first_produce_exactly_one_parse`, passes.
 
-- [ ] ACC-003: A test asserts that modifying a cached file's content directly on disk, bypassing every specmgr tool, causes the next `get_*`/`list_*` call touching that file to re-parse it and return the updated content.
+- [x] ACC-003: A test asserts that modifying a cached file's content directly on disk, bypassing every specmgr tool, causes the next `get_*`/`list_*` call touching that file to re-parse it and return the updated content. Evidence: `tests/req/tools/test_doc_cache_wiring.py::TestAcc003ContentChangeIsDetected` (both `get_req` and `list_req` variants), passes.
 
-- [ ] ACC-004: A test asserts that deleting a file directly on disk, bypassing the generic `delete` tool, causes the cache to no longer hold an entry for that path after the next `get_*`/`list_*` call that scans its directory.
+- [x] ACC-004: A test asserts that deleting a file directly on disk, bypassing the generic `delete` tool, causes the cache to no longer hold an entry for that path after the next `get_*`/`list_*` call that scans its directory. Evidence: `tests/req/tools/test_doc_cache_wiring.py::TestAcc004OrphanReconciledOnScan::test_list_req_reconcile_drops_entry_for_a_file_deleted_outside_specmgr`, passes; generalized across all 12 domains by `tests/general/tools/test_doc_cache_structural.py::TestAcc008FindDocPathByIdReconcilesForEveryNonFeatDomain`.
 
-- [ ] ACC-005: A test asserts that calling the generic `delete` tool immediately invalidates that document's cache entry.
+- [x] ACC-005: A test asserts that calling the generic `delete` tool immediately invalidates that document's cache entry. Evidence: `tests/req/tools/test_doc_cache_wiring.py::TestAcc005DeleteInvalidatesImmediately::test_delete_immediately_drops_the_cache_entry_with_no_further_trigger_call`, passes.
 
-- [ ] ACC-006: A concurrency test asserts N threads calling `get_req` on the same already-warm id simultaneously invoke `parse_req` at most once total, allowing only for a small, bounded number of legitimate cold-start races.
+- [x] ACC-006: A concurrency test asserts N threads calling `get_req` on the same already-warm id simultaneously invoke `parse_req` at most once total, allowing only for a small, bounded number of legitimate cold-start races. Evidence: `tests/req/tools/test_doc_cache_wiring.py::TestAcc006ConcurrentReadsOfAnAlreadyWarmIdParseOnce::test_20_concurrent_get_req_calls_against_an_already_warm_id_parse_exactly_once_total` (0 additional parses against an already-warm id), plus the supplementary `TestAcc006ColdConcurrentReadsStayBounded::test_20_concurrent_reads_of_a_cold_path_never_exceed_thread_count_parses` documenting the bounded cold-start race window; both pass.
 
-- [ ] ACC-007: The new ADR documenting this cache design and its relationship to ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3 is created before Phase 2's implementation work begins.
+- [x] ACC-007: The new ADR documenting this cache design and its relationship to ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3 is created before Phase 2's implementation work begins. Evidence: `docs/adr/bfd76370-b59b-4d65-b550-a969f6c93c9d-add-a-content-hash-validated-per-domain-in-memory-read-cache.md`, created in Phase 1 (2026-09-10 09:15 entry, before Phase 2's 10:30 entry), still present and unchanged.
 
-- [ ] ACC-008: A structural test enumerates all 12 generic whole-body domains and confirms each one's `read_<domain>` helper and `find_doc_path_by_id` scan are routed through that domain's cache instance.
+- [x] ACC-008: A structural test enumerates all 12 generic whole-body domains and confirms each one's `read_<domain>` helper and `find_doc_path_by_id` scan are routed through that domain's cache instance. Evidence: `tests/general/tools/test_doc_cache_structural.py` (6 tests across `TestAcc008NonFeatDomainsExposeTheExpectedCacheApi`, `TestAcc008ReadFnIsCacheBackedForEveryNonFeatDomain`, `TestAcc008FindDocPathByIdReconcilesForEveryNonFeatDomain`, `TestAcc008FeatCacheModuleExposesTheExpectedApi`, `TestAcc008FeatFindPathByIdIsCacheBackedAndSetFeatIdMovesTheEntry`), all pass.
 
 ### Scope
 
@@ -148,21 +148,35 @@ Lock ordering: the cache's own lock (REQ-006) is always the innermost lock acqui
 
 #### Phase 5: Verification and Docs
 
-- [ ] Task 5.1: Run the full quality gate (`ruff format --check`, `ruff check`, `vulture`, full `pytest -n auto` suite).
+- [x] Task 5.1: Run the full quality gate (`ruff format --check`, `ruff check`, `vulture`, full `pytest -n auto` suite).
 
-- [ ] Task 5.2: Update `AGENTS.md` noting the new cache module, its wiring, and that ADR is deliberately excluded; additionally grep for and update the near-verbatim "always re-reads from disk, no in-memory cache" claim repeated across ~40+ per-domain docstrings (every in-scope domain's `get_<d>.py`, `_paths.py`, etc.) so documentation no longer contradicts the shipped behavior.
+- [x] Task 5.2: Update `AGENTS.md` noting the new cache module, its wiring, and that ADR is deliberately excluded; additionally grep for and update the near-verbatim "always re-reads from disk, no in-memory cache" claim repeated across ~40+ per-domain docstrings (every in-scope domain's `get_<d>.py`, `_paths.py`, etc.) so documentation no longer contradicts the shipped behavior.
 
-- [ ] Task 5.3: Regenerate `docs/GENERATED.md`/`docs/api/` via `specmgr docs` if any touched docstrings changed.
+- [x] Task 5.3: Regenerate `docs/GENERATED.md`/`docs/api/` via `specmgr docs` if any touched docstrings changed.
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-09-10**: Phase 4 complete -- all 12 generic whole-body domains (`req`, `uc`, `tsk`, `qa`, `prb`, `gol`, `rsk`, `dec`, `sop`, `feat`, `vcr`, `sysrs`) are now fully wired through the content-hash-validated cache (scan, write-path warming, delete invalidation, list reconcile-on-scan; `feat`'s own bespoke integration additionally covers its cache-backed `find_feat_path_by_id` single-file read and `set_feat_id`'s move-after-write cache-entry relocation). The full test suite is green again: `3405 passed, 1706 subtests passed` (`pytest -n auto`) and `Ran 3405 tests ... OK` (serial `unittest discover`) -- zero failures. ACC-008's structural test (`tests/general/tools/test_doc_cache_structural.py`) passes, confirming every domain's cache routing exists mechanically. `ruff format --check`, `ruff check`, and `vulture` are all clean. Phase 5 (verification and docs) may now begin.
+**As of 2026-09-10**: **FEATURE COMPLETE -- all 5 phases done.** Phase 5 (verification and docs) confirmed the full quality gate green with zero code changes needed (`ruff format --check`, `ruff check`, `vulture`, and `pytest -n auto` -- `3405 passed` -- were already clean from Phase 4), then swept the codebase for the now-stale "no in-memory cache, always re-reads from disk" docstring claim: a targeted grep confirmed the true scope was 21 files (not the plan's own ~40+ estimate, which predated the actual grep), all now corrected to describe the shipped content-hash-validated cache while leaving every `adr/`-domain file's identical-looking claim untouched (ADR genuinely has no cache). `AGENTS.md` gained a new cross-cutting paragraph describing the cache module, its wiring, and ADR's permanent exclusion. `docs/GENERATED.md`/`docs/api/`/`docs/MCP.md` were regenerated via `specmgr docs`/`specmgr mcp-docs`, producing exactly the expected 22 updated `docs/api/*.md` files (one per edited `get_<d>.py`/`create_<d>.py`, all `@mcp.tool()`-decorated) and no unexpected changes elsewhere. The full test suite remains green after these docstring-only edits (`3405 passed`). All 8 acceptance criteria (ACC-001 through ACC-008) are confirmed satisfied against the current, full state of the codebase. Frontmatter `status` bumped from `planning` to `done`.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-10 08:37:17.235+02:00 - Phase 5 complete: verification and docs -- feature fully done
+
+Ran the full quality gate as a baseline before touching anything (Task 5.1): `ruff format --check` (1693 files already formatted), `ruff check` (all checks passed), `vulture src/ whitelist.py --min-confidence 60` (no output), and `pytest -n auto --cov=src --cov-report=` (`3405 passed`) -- all already green from Phase 4, confirming no regression before this phase's own edits began.
+
+Docstring sweep (Task 5.2): the plan's own suggested grep (`no in-memory cache of a parsed|there is no in-memory cache|always re-reads and re-parses the current on-disk|re-reads and re-parses the current on-disk state on every call`) confirmed the real scope was exactly 21 files -- `req/tools/get_req.py`; `get_<d>.py` and `create_<d>.py` for `uc`, `tsk`, `qa`, `prb`, `gol`, `rsk`, `dec`, `sop`, `vcr`, `sysrs` (10 domains x 2 files = 20); plus `feat/tools/get_feat.py` (`feat`'s own `create_feat.py` already carried no such claim, confirmed by inspection). `req/tools/create_req.py` was independently confirmed to already carry the corrected wording from Phase 3 and was used as the template for the 10 still-unfixed `create_<domain>.py` files' fix shape. Each file's replacement text varies in surrounding prose (matching each file's own voice, e.g. "Mirrors `prb.tools.get_prb`..." vs. "Mirrors `dec.tools.get_dec`...") rather than being a single pasted block, per instructions, while all converging on the same substance: the `.md` file remains the sole source of truth (ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3), and a content-hash-validated, per-domain cache (ADR bfd76370-b59b-4d65-b550-a969f6c93c9d, `<domain>/tools/_cache.py`) now backs `load_by_id`/`read_<domain>`, making a stale entry structurally impossible. A broader independent search (multiple grep passes across `list_<domain>.py`, `_write.py`, `resources/*.py`, `prompts/*.py`, plus phrasings like "sole source of truth", "in-memory cache", "no cache", "fresh on every call") turned up no additional true positives outside the 21 -- every other hit was either already-corrected Phase 3/4 wiring code (`_paths.py`/`_cache.py`/`list_<domain>.py`), or a genuinely unrelated, still-accurate "no cache" claim about packaged static resources (`resources/*_schema.py`, `get_*_example.py`, `get_*_template.py` reading packaged JSON/example/template files, never domain documents) or Confluence env-var config -- none of these were touched, since they are correctly out of this feature's scope. A final independent re-run of the same grep pattern confirms zero remaining true positives outside `adr/` (six `adr/tools/*.py` hits remain, correctly untouched, since ADR genuinely has no cache). The real count (21) is smaller than the plan's own "~40+" estimate, which was written before the actual grep was run.
+
+`AGENTS.md` gained one new cross-cutting paragraph (placed after the `feat-99-list-item` paragraph, in the same free-text style, not as a bullet inside the per-domain list) describing the cache module, its wiring across all 12 domains plus `feat`'s bespoke integration, ADR's permanent exclusion, and the relationship to ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3's "filesystem is the sole source of truth" invariant. The "Still genuinely missing / not yet done" section was checked and needed no update -- neither of its two existing bullets (pre-commit/CI enforcement of `validate_adr`/`validate`, and the not-yet-built `ac` domain) is made stale by this feature landing.
+
+Regenerated `docs/GENERATED.md`/`docs/api/` via `specmgr docs` and `docs/MCP.md` via `specmgr mcp-docs` (Task 5.3): produced exactly 22 updated `docs/api/*.md` files, one per edited `get_<d>.py`/`create_<d>.py` (all `@mcp.tool()`-decorated, so their docstrings feed the generated API docs), with `docs/GENERATED.md` and `docs/MCP.md` themselves unchanged (neither the module/test counts nor any `@mcp.tool()` `description=` string changed, only docstring prose) -- confirmed via `git status`/`git diff --stat` showing no unexpected files touched.
+
+Final quality gate re-run after all edits: `ruff format --check` (clean), `ruff check` (all checks passed), `vulture` (no output), `pytest -n auto --cov=src --cov-report=` (`3405 passed`, unchanged from baseline, confirming the docstring-only edits caused zero test impact).
+
+Final acceptance criteria walkthrough: all of ACC-001 through ACC-008 re-confirmed against the current, full state of the codebase (see the checked boxes and evidence pointers in the Acceptance Criteria section above) -- every one passes as of this phase's own final test run, not merely "as tested at the time." This closes out feat-107-doc-cache: all 5 phases (ADR/design lock-in, generic cache module, req pilot, remaining 11 domains, verification/docs) are complete, the full suite is green, and documentation (both `AGENTS.md` and every affected per-domain docstring) accurately reflects the shipped cache-backed behavior.
 
 #### 2026-09-10 18:00:00.000Z - Phase 4 complete: all 11 remaining domains wired through the content-hash cache
 

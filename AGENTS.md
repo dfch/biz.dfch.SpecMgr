@@ -601,6 +601,37 @@ already uses `re.DOTALL` (e.g. `rsk.QuadrantItem`/`MitigationItem`/
 `.specmgr/conventions.md`'s "Markdown Authoring (List Items Must Not
 Soft-Wrap)" section for the full authoring/implementation convention.
 
+`feat-107-doc-cache` (GitHub issue #107) added a process-local,
+per-domain, content-hash-validated in-memory read cache
+(`general/tools/_doc_cache.py`'s `DocCache` class, one module-level
+singleton per domain in each domain's own `tools/_cache.py`, mirroring the
+existing per-domain `threading.Lock` registries in `_lock.py`) for the 12
+generic whole-body domains (`req`, `uc`, `tsk`, `qa`, `prb`, `gol`, `rsk`,
+`dec`, `sop`, `feat`, `vcr`, `sysrs`), eliminating the redundant
+markdown-it/Pydantic re-parsing cost `get_*`/`list_*` previously paid on
+every single call against an unchanged file — the real fix for the
+CPU-bound, GIL-holding bottleneck behind issue #107's reported timeouts
+(the MCP SDK already thread-pools every sync tool call via
+`anyio.to_thread.run_sync`, so a second thread pool would not have
+helped). Wired into each domain's `read_<domain>`, `find_<domain>_path`'s
+scan (via `general.tools._doc_paths.find_doc_path_by_id`'s `read_fn`/
+`reconcile_fn` parameters), `list_<domain>`'s reconcile-on-scan, write-path
+cache warming (`create_<domain>`, and the generic `update`/`set_status`/
+`set_classification` tools), and cache invalidation (the generic `delete`
+tool) — plus `feat`'s own bespoke integration (`feat/tools/_cache.py`,
+since its hand-rolled `_paths.py`/`set_feat_id` never route through
+`general.tools._doc_paths`), including `set_feat_id`'s cache-entry move
+from the old path to the new one, hooked in only after `write_feat_file`
+succeeds. ADR (`models/adr/v1`) is explicitly, permanently excluded from
+this cache mechanism, since it is expected to be phased out later and does
+not justify its own independently-implemented cache module — see ADR
+bfd76370-b59b-4d65-b550-a969f6c93c9d for the full rationale. That ADR
+refines, not replaces, ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3's
+"filesystem is the sole source of truth" invariant: every cache access
+re-validates the file's current content hash before deciding whether to
+skip re-parsing, so a stale entry is structurally impossible — it can only
+ever cost one extra parse, never an incorrect result.
+
 `.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md` §10 ("Next steps") tracks per-item done/not-done
 status for the ADR feature specifically and should be kept in sync with
 `src/` as this evolves; treat it as current-state tracking, not just a

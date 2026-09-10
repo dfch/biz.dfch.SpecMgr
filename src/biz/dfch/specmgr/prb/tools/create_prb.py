@@ -24,9 +24,11 @@ already-validated ``content`` text is persisted byte-for-byte, and only the
 small frontmatter YAML block is code-generated and prepended -- mirrors
 ``tsk.tools.create_tsk``/``qa.tools.create_qa`` exactly.
 
-Thin file-I/O adapter; there is no in-memory cache of a parsed
-:class:`~biz.dfch.specmgr.prb.models.v1.PrbDocument` -- the ``.md`` file
-itself is always the source of truth, matching every other tool in this
+Thin file-I/O adapter. The ``.md`` file itself is always the source of
+truth (ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3); the in-memory cache
+warmed after the write below (feat-107-doc-cache Phase 4, REQ-003) is only
+ever a content-hash-validated memoization of that file's own current
+state, never an independent fact, matching every other tool in this
 codebase.
 """
 
