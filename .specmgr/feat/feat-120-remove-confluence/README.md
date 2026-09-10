@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-10 19:09:06.111+02:00'
 id: feat-120-remove-confluence
-status: planning
+status: done
 type: feat
-updated: '2026-09-10 19:09:06.111+02:00'
+updated: '2026-09-10 21:56:21.311+02:00'
 version: 1.0.0
 ---
 
@@ -29,13 +29,13 @@ The specmgr MCP server currently bundles Confluence-specific tools (`confluence_
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: No `confluence_fetch` or `confluence_update` tool or prompt is registered by the MCP server after startup.
-- [ ] ACC-002: The full quality gate is green: `ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, and `pytest -n auto` with no confluence-related test collection errors.
-- [ ] ACC-003: No remaining `import httpx`/`from httpx` reference exists anywhere under `src/`, and `httpx` no longer appears in `pyproject.toml` or `NOTICE`.
-- [ ] ACC-004: Regenerating docs (`specmgr docs`, `specmgr mcp-docs`) produces zero `git status` diff, confirming no stale confluence references remain in `docs/GENERATED.md`, `docs/MCP.md`, or `docs/api/`.
-- [ ] ACC-005: A new ADR documenting the removal exists, and ADR a156fdf9-052c-4f43-93a2-eeec04a91eac's status reads `superseded by <new ADR id>`.
-- [ ] ACC-006: `.specmgr/feat/feat-50-confluence/README.md` is left untouched as a historical record.
-- [ ] ACC-007: `README.md` no longer documents `SPECMGR_CONFLUENCE_BASE_URL`/`SPECMGR_CONFLUENCE_BEARER`.
+- [x] ACC-001: No `confluence_fetch` or `confluence_update` tool or prompt is registered by the MCP server after startup.
+- [x] ACC-002: The full quality gate is green: `ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, and `pytest -n auto` with no confluence-related test collection errors.
+- [x] ACC-003: No remaining `import httpx`/`from httpx` reference exists anywhere under `src/`, and `httpx` no longer appears in `pyproject.toml` or `NOTICE`.
+- [x] ACC-004: Regenerating docs (`specmgr docs`, `specmgr mcp-docs`) produces zero `git status` diff, confirming no stale confluence references remain in `docs/GENERATED.md`, `docs/MCP.md`, or `docs/api/`.
+- [x] ACC-005: A new ADR documenting the removal exists, and ADR a156fdf9-052c-4f43-93a2-eeec04a91eac's status reads `superseded by <new ADR id>`.
+- [x] ACC-006: `.specmgr/feat/feat-50-confluence/README.md` is left untouched as a historical record.
+- [x] ACC-007: `README.md` no longer documents `SPECMGR_CONFLUENCE_BASE_URL`/`SPECMGR_CONFLUENCE_BEARER`.
 
 ### Scope
 
@@ -80,19 +80,23 @@ MCP tools in this server should stay domain-focused on system-specification arti
 
 #### Phase 3: Verification
 
-- [ ] Task 3.1: Run the full quality gate (`ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, `pytest -n auto`) and confirm it is green.
-- [ ] Task 3.2: Confirm `specmgr docs`/`specmgr mcp-docs` produce zero `git status` diff.
-- [ ] Task 3.3: Verify every Acceptance Criteria item, check them off, and set this feature's status to `done`.
+- [x] Task 3.1: Run the full quality gate (`ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, `pytest -n auto`) and confirm it is green.
+- [x] Task 3.2: Confirm `specmgr docs`/`specmgr mcp-docs` produce zero `git status` diff.
+- [x] Task 3.3: Verify every Acceptance Criteria item, check them off, and set this feature's status to `done`.
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-09-10**: Phase 2 (Removal) is complete. All Confluence-specific source, test, prompt, and packaged-data modules (`confluence_fetch`/`confluence_update` tools and prompts, `_confluence_config.py`/`_confluence_url.py` helpers, their instruction data files, and their 6 test files) were deleted; `general/tools/__init__.py`, `general/prompts/__init__.py`, and `general/__init__.py` had their imports/`__all__`/docstrings updated to drop confluence references; `server.py`'s module docstring, `README.md`'s environment-variables section, and `CHANGELOG.md`'s `[Unreleased]` section were updated; the now-unused `httpx` dependency was removed from `pyproject.toml`'s `mcp` extra, `NOTICE`'s corresponding license block, and `uv.lock` (via `uv lock`/`uv sync --all-extras`); and `docs/GENERATED.md`/`docs/MCP.md`/`docs/api/` were regenerated, auto-pruning the 6 orphaned `docs/api/*confluence*.md` pages. The full quality gate (`ruff format --check`, `ruff check`, `vulture`, `pytest -n auto`, 3248 tests) is green, and re-running `specmgr docs`/`specmgr mcp-docs` produces no further diff. `.specmgr/feat/feat-50-confluence/README.md` was left untouched. Phase 3 (Verification) is next.
+**As of 2026-09-10**: Feature complete. Phase 3 (Verification) confirmed every Acceptance Criteria item (ACC-001 through ACC-007) with concrete evidence: no `confluence_fetch`/`confluence_update` tool or prompt is registered (grep of `server.py` plus live `mcp._tool_manager._tools` introspection both confirm zero matches); the full quality gate is green (`ruff format --check`, `ruff check`, `vulture`, `pytest -n auto` — 3248 tests passed, no confluence-related collection errors); no `import httpx`/`from httpx` reference remains under `src/`, and `httpx` no longer appears in `pyproject.toml` or `NOTICE`; re-running `specmgr docs`/`specmgr mcp-docs` after Phase 2 produced zero further `git status` diff; the new ADR `92cc4ce8-2cdd-45a7-9ae4-85de5abaf94c` exists and ADR `a156fdf9-052c-4f43-93a2-eeec04a91eac`'s status reads `superseded by 92cc4ce8-2cdd-45a7-9ae4-85de5abaf94c`; `.specmgr/feat/feat-50-confluence/README.md` has zero diff and zero commits on this branch (verified via `git diff`/`git log` against the `dev` merge-base); and `README.md` no longer documents `SPECMGR_CONFLUENCE_BASE_URL`/`SPECMGR_CONFLUENCE_BEARER`. All Acceptance Criteria and Task List items are checked off; feature status set to `done`.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-10 15:00:00.000Z - Phase 3 (Verification) complete
+
+Ran the full quality gate from the repo root: `ruff format --check` (1644 files already formatted), `ruff check` (all checks passed), `vulture src/ whitelist.py --min-confidence 60` (no findings), and `pytest -n auto` (3248 passed in ~21s, no confluence-related test collection errors) — all green. Re-ran `specmgr docs` and `specmgr mcp-docs`; `git status --porcelain` showed zero diff both before and after, confirming no stale confluence references remain in `docs/GENERATED.md`, `docs/MCP.md`, or `docs/api/`. Verified all seven Acceptance Criteria with concrete evidence: ACC-001 via `grep -rn "confluence" src/biz/dfch/specmgr/server.py` (zero matches) plus a live introspection of `server.mcp._tool_manager._tools` confirming neither `confluence_fetch` nor `confluence_update` is registered; ACC-002 via the quality gate above; ACC-003 via `grep -rn "import httpx\|from httpx" src/`, `grep -n httpx pyproject.toml`, and `grep -n httpx NOTICE` (all zero matches); ACC-004 via the doc-regeneration diff check above; ACC-005 via locating `docs/adr/92cc4ce8-2cdd-45a7-9ae4-85de5abaf94c-*.md` and confirming the old ADR's frontmatter reads `status: superseded by 92cc4ce8-2cdd-45a7-9ae4-85de5abaf94c`; ACC-006 via `git diff $(git merge-base HEAD dev)...HEAD -- .specmgr/feat/feat-50-confluence/README.md` and `git log --oneline dev..HEAD -- .specmgr/feat/feat-50-confluence/README.md` (both empty); ACC-007 via `grep -n "SPECMGR_CONFLUENCE_BASE_URL\|SPECMGR_CONFLUENCE_BEARER" README.md` (zero matches). Checked off all 7 Acceptance Criteria and all 3 Phase 3 tasks, updated Current Status, and set the feature's frontmatter `status` to `done`. No `src/`/`tests/`/`docs/adr/` files were touched in this phase; `.specmgr/feat/feat-50-confluence/README.md` remains untouched.
 
 #### 2026-09-10 14:00:00.000Z - Phase 2 (Removal) complete
 
