@@ -4,7 +4,7 @@ created: '2026-09-09 22:40:39.484+02:00'
 id: feat-107-doc-cache
 status: progress
 type: feat
-updated: '2026-09-10 20:00:00.000+02:00'
+updated: '2026-09-10 21:15:00.000+02:00'
 version: 1.0.0
 ---
 
@@ -36,6 +36,12 @@ version: 1.0.0
 
 - REQ-009 (Phase 6): `DocCache` must normalize path keys (e.g. via `Path.resolve()`) before every dict access (`read`/`invalidate`/`reconcile`/`move`), so two different string forms of the same on-disk file (e.g. relative vs. resolved) cannot produce independently-invalidated duplicate cache entries.
 
+- REQ-010 (Phase 6, added following a second review of the Phase 6 remediation plan, before any Phase 6 code was written): `general/tools/_doc_paths.py`'s `find_doc_path_by_id` must skip a `yaml.YAMLError` the same way it already skips an `AssertionError`/`ValueError` during its id-lookup scan. Today its `except (AssertionError, ValueError)` clause does not catch `yaml.YAMLError` (not a `ValueError` subclass), even though every `parse_<domain>` genuinely raises it unwrapped for malformed frontmatter YAML (`models/md/_frontmatter_parse.py`), `DocCache`'s own `CACHEABLE_ERROR_TYPES` explicitly names it a first-class, skippable failure, and `general/tools/_listing.py`'s `build_summaries` (the `list_*` read callback) already catches it. A domain directory with one file whose frontmatter YAML is malformed therefore crashes `get_<domain>`/`create_<domain>`'s id-lookup scan with an uncaught `yaml.YAMLError` for *any* id in that domain, not just the malformed file's own id. Confirmed pre-existing (unchanged since before Phase 3, verified via `git show` on the pre-cache revision) and not caused by this feature, but it directly contradicts the cache's own failure-handling contract and sits in code this feature already touches, so it is folded into this same remediation pass rather than filed separately.
+
+- REQ-011 (Phase 6, added following the same second review): a cache hit on a previously-failed parse must re-raise a fresh, equivalent exception, never the exact same stored exception instance, on every hit. Task 6.3's planned `model_copy(deep=True)` copy-on-hit fix for REQ-008 explicitly falls back to the raw stored value for a non-`BaseModel` result -- which includes the exception branch -- so a persistently malformed file's stored exception would otherwise be re-raised as the identical object on every subsequent hit for as long as its content hash doesn't change, with each `raise` extending that one object's `__traceback__` and eventually producing a traceback that mixes frames from unrelated call stacks.
+
+- REQ-012 (Phase 6, added following the same second review): a concurrent, lock-free read (`get_feat`/`list_feat`, which by design -- per ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3 -- take no domain lock) that races `set_feat_id`'s folder rename (`old_path.parent.rename(new_path.parent)`) must not surface an uncaught `FileNotFoundError`. Today, in the narrow window after the rename but before `move_feat_cache_entry` runs, `old_path` is genuinely absent from disk; a `read_feat(old_path)` call landing in that window has its `path.read_text()` raise `FileNotFoundError`, which is not in `CACHEABLE_ERROR_TYPES` and therefore propagates uncaught out of `DocCache.read`. This is unique to `feat`'s rename-based cache integration -- no other domain's write path ever makes an existing document's own path disappear out from under an in-flight, lock-free reader; every other domain's writes are in-place content replacements of a path that continues to exist throughout.
+
 ### Acceptance Criteria
 
 - [x] ACC-001: A test asserts a `get_req` call against a fixture directory invokes the underlying `parse_req` function exactly once per call, not twice, verifying the existing matched-file double-parse bug is fixed. Evidence: `tests/req/tools/test_doc_cache_wiring.py::TestAcc001SingleGetReqParsesOnce::test_get_req_invokes_parse_req_exactly_once`, passes.
@@ -59,6 +65,12 @@ version: 1.0.0
 - [ ] ACC-010 (Phase 6): A test proves two calls to `DocCache.read` for the same path return distinct object instances, so mutating the object returned by one call does not affect the object returned by another.
 
 - [ ] ACC-011 (Phase 6): A test proves `DocCache.read`/`invalidate`/`move` given two different but equivalent `Path` values for the same file (e.g. a relative path and its `.resolve()`d form) operate on one cache entry, not two independently-tracked ones.
+
+- [ ] ACC-012 (Phase 6): A test asserts that scanning a domain directory containing one file with deliberately malformed YAML frontmatter alongside a second, valid file does not crash `find_<domain>_path`'s lookup of the valid file's id -- the malformed file is silently skipped, mirroring `build_summaries`'s existing behavior for the same input.
+
+- [ ] ACC-013 (Phase 6): A test asserts that two `DocCache.read` calls against a path whose cached entry is a stored parse failure raise two exception objects that are `is`-distinct (not the same instance), while still comparing equal in type and message.
+
+- [ ] ACC-014 (Phase 6): A test asserts that a `get_feat`/`list_feat` read of `old_path` racing exactly against `set_feat_id`'s folder-rename step does not propagate an uncaught `FileNotFoundError` to the caller.
 
 ### Scope
 
@@ -126,6 +138,14 @@ Lock ordering: the cache's own lock (REQ-006) is always the innermost lock acqui
 
 3. **Shared mutable cache entries / unnormalized keys (REQ-008, REQ-009).** `DocCache.read()` returned the exact same object instance on every cache hit, and none of the 12 domains' Pydantic document models are `frozen=True`; no current call site mutates a document returned from `read_<domain>`/`get_<domain>`, but nothing enforced that invariant either, so a future accidental in-place mutation would silently corrupt the shared cached entry for every subsequent caller. Separately, cache entries were keyed by raw, unnormalized `Path` objects with no `.resolve()`, so two different string forms of the same on-disk file (relative vs. resolved, for instance) could in principle produce two independently-tracked, independently-invalidated cache entries for one physical file, though no call site in this codebase is currently known to construct paths inconsistently enough to trigger it.
 
+**Three further, adjacent findings from a second review of this same Phase 6 remediation plan (before any Phase 6 code was written; REQ-010/011/012):**
+
+4. **`find_doc_path_by_id` does not skip `yaml.YAMLError` (REQ-010).** `general/tools/_doc_paths.py`'s id-lookup scan skips a parse failure via `except (AssertionError, ValueError)` only. `yaml.YAMLError` is not a `ValueError` subclass, yet every `parse_<domain>` genuinely raises it unwrapped for malformed frontmatter YAML (`models/md/_frontmatter_parse.py`), and `DocCache`'s own `CACHEABLE_ERROR_TYPES` plus `general/tools/_listing.py`'s `build_summaries` (the `list_*` read callback) both already treat it as a normal, skippable failure. A domain directory with one file whose frontmatter YAML is malformed therefore crashes `get_<domain>`/`create_<domain>`'s id-lookup scan with an uncaught `yaml.YAMLError` for *any* id in that domain, not just the malformed file's own id. Confirmed pre-existing and unrelated to the cache itself (verified unchanged since before Phase 3, via `git show` on the pre-cache revision of `_doc_paths.py`), but folded into this same remediation pass since it directly contradicts the cache's own failure-handling contract and sits in code this feature already touches.
+
+5. **Cached-failure re-raise identity (REQ-011).** Task 6.3's planned `model_copy(deep=True)` copy-on-hit fix for REQ-008 explicitly falls back to the raw stored value for a non-`BaseModel` result, which includes the exception branch. Left as originally scoped, a cache hit on a previously-failed parse would keep re-raising the *exact same exception instance* on every hit for as long as the file's content hash doesn't change, with each `raise` extending that one object's `__traceback__` and eventually producing a traceback that mixes frames from unrelated call stacks -- a residual gap in Task 6.3's own fix, not a new bug distinct from REQ-008.
+
+6. **`set_feat_id` rename races a lock-free read (REQ-012).** Reads intentionally take no domain lock (ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3), so a concurrent `get_feat`/`list_feat` call is not blocked by `set_feat_id`'s `feat_create_lock`/`feat_lock`. In the narrow window after `old_path.parent.rename(new_path.parent)` succeeds but before `move_feat_cache_entry` runs, `old_path` is genuinely absent from disk; a `read_feat(old_path)` call landing in that window has its `path.read_text()` raise `FileNotFoundError`, which is not in `CACHEABLE_ERROR_TYPES` and therefore propagates uncaught out of `DocCache.read`. Unique to `feat`'s rename-based cache integration -- no other domain's write path ever makes an existing document's own path disappear out from under an in-flight, lock-free reader; every other domain's writes are in-place content replacements of a path that continues to exist throughout.
+
 ### Related Decisions
 
 - 33c5ab08-ff58-4c73-8c32-23abaf3838e3 (ADR): filesystem is the sole source of truth; this feature's cache design must refine this invariant via hash validation, not remove it.
@@ -174,7 +194,7 @@ Lock ordering: the cache's own lock (REQ-006) is always the innermost lock acqui
 
 - [x] Task 5.3: Regenerate `docs/GENERATED.md`/`docs/api/` via `specmgr docs` if any touched docstrings changed.
 
-#### Phase 6: Fix Hash/Parse Race, move() Rationale, and Two Latent Design Risks (post-closeout review finding)
+#### Phase 6: Fix Hash/Parse Race, move() Rationale, Two Latent Design Risks, and Three Adjacent Findings (post-closeout review + second review, both pre-implementation)
 
 - [ ] Task 6.1: Change `general/tools/_doc_cache.py`'s `DocCache.read`'s `parse_fn` parameter from `Callable[[Path], _DocT]` to `Callable[[str], _DocT]`: read `path` once, hash that text, and pass that same text to `parse_fn` on a miss -- no second file read (REQ-007).
 
@@ -188,21 +208,35 @@ Lock ordering: the cache's own lock (REQ-006) is always the innermost lock acqui
 
 - [ ] Task 6.6: Correct `DocCache.move`'s docstring and this README's Design Notes to stop claiming `set_feat_id`'s rename produces byte-identical content; document the self-healing-miss behavior instead.
 
-- [ ] Task 6.7: Amend ADR bfd76370-b59b-4d65-b550-a969f6c93c9d (or add a short follow-up ADR) to qualify the "a stale entry is structurally impossible" claim with the now-fixed preconditions (single-read hash/parse, copy-on-hit, normalized keys).
+- [ ] Task 6.7: Amend ADR bfd76370-b59b-4d65-b550-a969f6c93c9d to qualify the "a stale entry is structurally impossible" claim with the now-fixed preconditions (single-read hash/parse, copy-on-hit, normalized keys).
 
-- [ ] Task 6.8: Run the full quality gate (`ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, `pytest -n auto --cov=src --cov-report=`) and update this feature's Current Status/Updates once green.
+- [ ] Task 6.9 (second review): Change `general/tools/_doc_paths.py`'s `find_doc_path_by_id` skip-on-parse-failure clause from `except (AssertionError, ValueError)` to also catch `yaml.YAMLError`, matching `DocCache`'s `CACHEABLE_ERROR_TYPES` and `general/tools/_listing.py`'s `build_summaries` (REQ-010). Add the ACC-012 regression test (a domain-directory fixture with one malformed-YAML-frontmatter file alongside a second, valid file, asserting the valid file's id still resolves).
+
+- [ ] Task 6.10 (second review): Change `DocCache.read`'s cache-hit-on-failure branch to raise a freshly reconstructed, equivalent exception (same type/args/message) rather than the stored instance itself, on every hit (REQ-011). Add the ACC-013 regression test asserting two hits on the same failed entry raise `is`-distinct exception objects.
+
+- [ ] Task 6.11 (second review): Close the `set_feat_id` rename-vs-lock-free-read race (REQ-012) -- e.g. by having `set_feat_id` invalidate (not move) `old_path`'s cache entry immediately before the rename, so a reader landing in the window sees a clean cache miss on `old_path` and its own natural `FileNotFoundError`/not-found handling instead of one that bypasses `DocCache`'s failure-caching path, or by another approach found during implementation; if a full fix proves disproportionate for this narrow a window, explicitly document the accepted risk in `DocCache`'s and `set_feat_id`'s docstrings and this README instead of leaving it unmentioned. Add the ACC-014 regression test.
+
+- [ ] Task 6.12: Run the full quality gate (`ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, `pytest -n auto --cov=src --cov-report=`) and update this feature's Current Status/Updates once green.
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-09-10 (Phase 6 reopened)**: Phases 1-5 shipped and merged via PR #119 (all green, `3405 passed`, ACC-001 through ACC-008 satisfied -- see below). An independent post-closeout review of the merged implementation then found a real correctness bug in `DocCache.read()` (a hash/parse TOCTOU race that can, in a narrow but real scenario, serve a document that does not correspond to the content its stored hash represents) plus two latent design risks (shared mutable cache entries, unnormalized `Path` keys) and one stale design-notes claim (`move()`'s "byte-identical content" rationale, false for its only caller `set_feat_id`). Frontmatter `status` reverted from `done` to `progress`; Phase 6 (REQ-007/008/009, ACC-009/010/011, Tasks 6.1-6.8) tracks the fix. See Decisions Made and Design Notes below for the full finding, and Phase 6 in the Task List for the remediation plan.
+**As of 2026-09-10 (Phase 6 reopened, plan updated after a second review, still no code changed)**: Phases 1-5 shipped and merged via PR #119 (all green, `3405 passed`, ACC-001 through ACC-008 satisfied -- see below). An independent post-closeout review of the merged implementation then found a real correctness bug in `DocCache.read()` (a hash/parse TOCTOU race that can, in a narrow but real scenario, serve a document that does not correspond to the content its stored hash represents) plus two latent design risks (shared mutable cache entries, unnormalized `Path` keys) and one stale design-notes claim (`move()`'s "byte-identical content" rationale, false for its only caller `set_feat_id`). Frontmatter `status` reverted from `done` to `progress`. A second review -- of the Phase 6 remediation plan itself, verified against the actual on-disk state of the merged code (confirmed via `git log`: only a docs-only commit exists since Phase 4, so none of Phase 6's fixes have been coded yet) -- then found three further, adjacent gaps not covered by the first review's Tasks 6.1-6.8: `find_doc_path_by_id`'s skip-on-parse-failure clause does not catch `yaml.YAMLError` (REQ-010); Task 6.3's planned copy-on-hit fix does not stop a cached parse failure from re-raising the identical exception instance on every hit (REQ-011); and `set_feat_id`'s folder rename can race a concurrent, lock-free `get_feat`/`list_feat` read into an uncaught `FileNotFoundError` (REQ-012). Phase 6 now covers REQ-007 through REQ-012, ACC-009 through ACC-014, and Tasks 6.1-6.12 (the former Task 6.8 quality-gate run renumbered to Task 6.12, so it still runs last, after every Phase 6 fix). See Decisions Made and Design Notes below for both reviews' full findings, and Phase 6 in the Task List for the remediation plan. No implementation work has started on Phase 6.
 
 **Phases 1-5 status (2026-09-10, pre-Phase-6)**: Phase 5 (verification and docs) confirmed the full quality gate green with zero code changes needed (`ruff format --check`, `ruff check`, `vulture`, and `pytest -n auto` -- `3405 passed` -- were already clean from Phase 4), then swept the codebase for the now-stale "no in-memory cache, always re-reads from disk" docstring claim: a targeted grep confirmed the true scope was 21 files (not the plan's own ~40+ estimate, which predated the actual grep), all now corrected to describe the shipped content-hash-validated cache while leaving every `adr/`-domain file's identical-looking claim untouched (ADR genuinely has no cache). `AGENTS.md` gained a new cross-cutting paragraph describing the cache module, its wiring, and ADR's permanent exclusion. `docs/GENERATED.md`/`docs/api/`/`docs/MCP.md` were regenerated via `specmgr docs`/`specmgr mcp-docs`, producing exactly the expected 22 updated `docs/api/*.md` files (one per edited `get_<d>.py`/`create_<d>.py`, all `@mcp.tool()`-decorated) and no unexpected changes elsewhere. The full test suite remains green after these docstring-only edits (`3405 passed`). All 8 acceptance criteria (ACC-001 through ACC-008) are confirmed satisfied against the current, full state of the codebase.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-10 21:15:00.000+02:00 - Second review folded into Phase 6: three adjacent findings, plan updated, no code changed
+
+A second review -- verifying the Phase 6 remediation plan itself, and the actual on-disk state of the merged Phase 1-5 code, against the four findings from the first post-closeout review below -- confirmed via `git log` that only a docs-only commit (`docs(feat-107): update plan to fix implementation`) exists since Phase 4's `c24ae64`, so none of Phase 6's fixes (Tasks 6.1-6.8) have been coded yet; `general/tools/_doc_cache.py`'s `DocCache.read()` and every domain's `_cache.py::_parse` (including `feat`) still perform the two independent reads REQ-007 targets, `DocCache.move()`'s docstring still claims byte-identical content, `DocCache.read()` still returns the same shared object on every hit, and no cache key is normalized -- all four findings are still exactly as documented.
+
+The same review additionally found three further, adjacent gaps not covered by the first review: (1) `general/tools/_doc_paths.py`'s `find_doc_path_by_id` skips a parse failure via `except (AssertionError, ValueError)` only -- `yaml.YAMLError` is not a `ValueError` subclass, yet every `parse_<domain>` genuinely raises it unwrapped for malformed frontmatter YAML, and both `DocCache`'s own `CACHEABLE_ERROR_TYPES` and `general/tools/_listing.py`'s `build_summaries` (the `list_*` read callback) already treat it as a normal, skippable failure -- so one file with malformed YAML frontmatter in a domain directory crashes `get_<domain>`/`create_<domain>`'s id-lookup scan with an uncaught `yaml.YAMLError` for *any* id in that domain, not just its own; confirmed pre-existing and unrelated to the cache itself via `git show` on the pre-Phase-3 revision of `_doc_paths.py`, but folded into this remediation pass since it sits in code this feature already touches; (2) Task 6.3's planned `model_copy(deep=True)` copy-on-hit fix for REQ-008 explicitly falls back to the raw stored value for the exception branch, so a cached parse failure would still be re-raised as the identical exception instance on every hit, extending its `__traceback__` indefinitely; (3) `set_feat_id`'s folder rename (`old_path.parent.rename(new_path.parent)`) briefly makes `old_path` genuinely absent from disk while a concurrent, by-design lock-free `get_feat`/`list_feat` read (ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3) can race it, surfacing an uncaught `FileNotFoundError` out of `DocCache.read` instead of a graceful not-found.
+
+Added REQ-010/011/012, ACC-012/013/014, and Tasks 6.9-6.11 to Phase 6, renumbering the former Task 6.8 (full quality-gate run) to Task 6.12 so it still runs last, after all nine Phase 6 fixes. No source code has changed as a result of either review -- this entry documents findings and plan updates only; implementation of Phase 6 (Tasks 6.1-6.12) remains entirely future work, not started.
 
 #### 2026-09-10 20:00:00.000+02:00 - Phase 6 opened: post-closeout review found a hash/parse race, reopening the feature
 
@@ -287,6 +321,10 @@ Created this feature to reframe GitHub issue #107 ("Use a thread pool with concu
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-10 21:15:00.000+02:00 - Second review's three findings folded into Phase 6 rather than a new phase
+
+Decided to fold the second review's three findings (REQ-010/011/012: `find_doc_path_by_id` not skipping `yaml.YAMLError`, Task 6.3's copy-on-hit fix not covering the cached-exception-identity case, and `set_feat_id`'s rename racing a lock-free read) into the existing, not-yet-started Phase 6 rather than opening a Phase 7, since none of Phase 6's code has been written yet (confirmed via `git log`) and all three sit in the same module (`general/tools/_doc_cache.py`, `general/tools/_doc_paths.py`) or the same bespoke integration point (`feat/tools/set_feat_id.py`) Phase 6 already touches. Task 6.11's fix approach for the `set_feat_id` race is left open (invalidate-before-rename is suggested but not mandated) rather than prescribed exactly, since the right approach depends on implementation-time findings about `DocCache`'s API; if no clean fix is found, the task explicitly allows documenting the accepted risk instead of forcing a fix. The former Task 6.8 (full quality gate) was renumbered to Task 6.12 so it continues to run last, after every Phase 6 fix including the three new ones. No implementation was started for either review's findings -- this decision covers plan structure only.
 
 #### 2026-09-10 20:00:00.000+02:00 - Post-closeout review found a hash/parse TOCTOU race; reopening for Phase 6
 
