@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-09 22:40:39.484+02:00'
 id: feat-107-doc-cache
-status: done
+status: progress
 type: feat
-updated: '2026-09-10 08:37:17.235+02:00'
+updated: '2026-09-10 20:00:00.000+02:00'
 version: 1.0.0
 ---
 
@@ -30,6 +30,12 @@ version: 1.0.0
 
 - REQ-006: The cache's own internal lock must guard only its dict lookups/inserts/deletes, never the file read or `parse_fn` call itself, so concurrent reads of different files never block each other on the cache's own bookkeeping. The cache lock must also always be the innermost lock in any call stack -- acquired after any domain-level per-id lock (`req_lock`, `feat_create_lock`/`feat_lock`, etc.), never before -- introducing no lock-ordering rule inconsistent with `set_feat_id`'s existing fixed `feat_create_lock` -> `feat_lock` order.
 
+- REQ-007 (Phase 6, added following an independent post-closeout review): `DocCache.read` must compute the content hash from the exact same text that gets passed to `parse_fn` -- no second, independent file read may occur between hashing and parsing. This closes a TOCTOU race in the shipped implementation, where `read()` hashed one `path.read_text()` call and then called `parse_fn(path)`, which every domain's `_parse` wrapper implemented as its own second, independent `path.read_text()` call; a write racing between the two reads could produce a cache entry whose stored hash does not correspond to its stored result.
+
+- REQ-008 (Phase 6): A document object returned from a cache hit must never be the same object instance stored in the cache's own dict, so a future accidental in-place mutation by caller code cannot corrupt the cached entry for every subsequent caller. No current call site mutates a returned document, but no code enforced this invariant either.
+
+- REQ-009 (Phase 6): `DocCache` must normalize path keys (e.g. via `Path.resolve()`) before every dict access (`read`/`invalidate`/`reconcile`/`move`), so two different string forms of the same on-disk file (e.g. relative vs. resolved) cannot produce independently-invalidated duplicate cache entries.
+
 ### Acceptance Criteria
 
 - [x] ACC-001: A test asserts a `get_req` call against a fixture directory invokes the underlying `parse_req` function exactly once per call, not twice, verifying the existing matched-file double-parse bug is fixed. Evidence: `tests/req/tools/test_doc_cache_wiring.py::TestAcc001SingleGetReqParsesOnce::test_get_req_invokes_parse_req_exactly_once`, passes.
@@ -47,6 +53,12 @@ version: 1.0.0
 - [x] ACC-007: The new ADR documenting this cache design and its relationship to ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3 is created before Phase 2's implementation work begins. Evidence: `docs/adr/bfd76370-b59b-4d65-b550-a969f6c93c9d-add-a-content-hash-validated-per-domain-in-memory-read-cache.md`, created in Phase 1 (2026-09-10 09:15 entry, before Phase 2's 10:30 entry), still present and unchanged.
 
 - [x] ACC-008: A structural test enumerates all 12 generic whole-body domains and confirms each one's `read_<domain>` helper and `find_doc_path_by_id` scan are routed through that domain's cache instance. Evidence: `tests/general/tools/test_doc_cache_structural.py` (6 tests across `TestAcc008NonFeatDomainsExposeTheExpectedCacheApi`, `TestAcc008ReadFnIsCacheBackedForEveryNonFeatDomain`, `TestAcc008FindDocPathByIdReconcilesForEveryNonFeatDomain`, `TestAcc008FeatCacheModuleExposesTheExpectedApi`, `TestAcc008FeatFindPathByIdIsCacheBackedAndSetFeatIdMovesTheEntry`), all pass.
+
+- [ ] ACC-009 (Phase 6): A test proves `DocCache.read`'s hash and parsed result always originate from one read -- the fixed contract has `parse_fn` receive text, never a `Path`, so no second file read can observe different content than what was hashed.
+
+- [ ] ACC-010 (Phase 6): A test proves two calls to `DocCache.read` for the same path return distinct object instances, so mutating the object returned by one call does not affect the object returned by another.
+
+- [ ] ACC-011 (Phase 6): A test proves `DocCache.read`/`invalidate`/`move` given two different but equivalent `Path` values for the same file (e.g. a relative path and its `.resolve()`d form) operate on one cache entry, not two independently-tracked ones.
 
 ### Scope
 
@@ -106,6 +118,14 @@ Post-write cache warming (REQ-003) always re-parses once via the domain's own ca
 
 Lock ordering: the cache's own lock (REQ-006) is always the innermost lock acquired in any call stack, after any domain-level per-id lock. `set_feat_id` already documents and enforces a fixed `feat_create_lock` -> `feat_lock` order; the cache lock must not invent a conflicting order, so it is always acquired last, held only for the instant of a dict get/set/pop, and never held across a domain lock acquisition.
 
+**Known issues found in an independent post-closeout review (Phase 6):**
+
+1. **Hash/parse TOCTOU race (REQ-007).** `DocCache.read()`'s content hash and its parsed result were not derived from one atomic read: `read()` read `path` once via `path.read_text()` to compute the hash, then called `parse_fn(path)`, which every domain's `_parse` helper (`req`, `uc`, `tsk`, `qa`, `prb`, `gol`, `rsk`, `dec`, `sop`, `vcr`, `sysrs`, `feat`) implemented as its own second, independent `path.read_text()` call. Reads intentionally take no domain lock (ADR 33c5ab08), so a concurrent `update`/`set_status`/`set_classification` write racing between the two reads could produce a cache entry shaped `(hash_of_the_first_read, document_parsed_from_the_second_read)`. That mismatched entry is inert until the file's content later reverts to exactly the bytes the first read saw (e.g. an idempotent `set_status`/`set_classification` no-op), at which point a subsequent reader gets a cache **hit** serving a document that was never actually parsed from what is now on disk -- a real, if narrow, violation of the "a stale entry is structurally impossible" invariant this feature and ADR bfd76370-b59b-4d65-b550-a969f6c93c9d both claim. Fix: change `DocCache.read`'s `parse_fn` contract from `Callable[[Path], _DocT]` (path in) to `Callable[[str], _DocT]` (text in), so the exact text that was hashed is also the text that gets parsed, with zero intervening file I/O.
+
+2. **`move()`'s stale rationale.** The original design notes justified `DocCache.move()`'s hash-preserving relocation by claiming the rename case produces "byte-identical content, the realistic `set_feat_id` case." This is factually wrong for `move()`'s only caller: `set_feat_id` always rewrites both the `id` and `updated` frontmatter fields before calling `write_feat_file`, so old and new content are never byte-identical. This is not a correctness bug -- the moved entry's stale hash simply mismatches on the very next read of `new_path`, forcing a harmless re-parse that self-heals the entry -- but the documented justification was wrong and needed correcting.
+
+3. **Shared mutable cache entries / unnormalized keys (REQ-008, REQ-009).** `DocCache.read()` returned the exact same object instance on every cache hit, and none of the 12 domains' Pydantic document models are `frozen=True`; no current call site mutates a document returned from `read_<domain>`/`get_<domain>`, but nothing enforced that invariant either, so a future accidental in-place mutation would silently corrupt the shared cached entry for every subsequent caller. Separately, cache entries were keyed by raw, unnormalized `Path` objects with no `.resolve()`, so two different string forms of the same on-disk file (relative vs. resolved, for instance) could in principle produce two independently-tracked, independently-invalidated cache entries for one physical file, though no call site in this codebase is currently known to construct paths inconsistently enough to trigger it.
+
 ### Related Decisions
 
 - 33c5ab08-ff58-4c73-8c32-23abaf3838e3 (ADR): filesystem is the sole source of truth; this feature's cache design must refine this invariant via hash validation, not remove it.
@@ -154,15 +174,39 @@ Lock ordering: the cache's own lock (REQ-006) is always the innermost lock acqui
 
 - [x] Task 5.3: Regenerate `docs/GENERATED.md`/`docs/api/` via `specmgr docs` if any touched docstrings changed.
 
+#### Phase 6: Fix Hash/Parse Race, move() Rationale, and Two Latent Design Risks (post-closeout review finding)
+
+- [ ] Task 6.1: Change `general/tools/_doc_cache.py`'s `DocCache.read`'s `parse_fn` parameter from `Callable[[Path], _DocT]` to `Callable[[str], _DocT]`: read `path` once, hash that text, and pass that same text to `parse_fn` on a miss -- no second file read (REQ-007).
+
+- [ ] Task 6.2: Update all 12 domains' `_cache.py` `_parse` helper (`req`, `uc`, `tsk`, `qa`, `prb`, `gol`, `rsk`, `dec`, `sop`, `vcr`, `sysrs`, `feat`) to accept text and call `parse_<domain>(text)` directly, dropping the redundant re-read. `read_<domain>`'s external signature (`Path` in, document out) and `find_doc_path_by_id`'s `read_fn` contract are unaffected -- only `DocCache.read`'s internal `parse_fn` typing changes.
+
+- [ ] Task 6.3: Make `DocCache.read` return `result.model_copy(deep=True)` (falling back to the raw result for a non-`BaseModel`/exception result) on a cache hit, so callers can never mutate the stored instance itself (REQ-008).
+
+- [ ] Task 6.4: Normalize every `DocCache` key via `Path.resolve()` on entry to `read`/`invalidate`/`reconcile`/`move` (REQ-009).
+
+- [ ] Task 6.5: Add ACC-009/ACC-010/ACC-011 regression tests to `tests/general/tools/test__doc_cache.py`, plus any needed updates to the 12 domains' own `_cache.py` unit tests and `tests/general/tools/test_doc_cache_structural.py` for the new `parse_fn` contract.
+
+- [ ] Task 6.6: Correct `DocCache.move`'s docstring and this README's Design Notes to stop claiming `set_feat_id`'s rename produces byte-identical content; document the self-healing-miss behavior instead.
+
+- [ ] Task 6.7: Amend ADR bfd76370-b59b-4d65-b550-a969f6c93c9d (or add a short follow-up ADR) to qualify the "a stale entry is structurally impossible" claim with the now-fixed preconditions (single-read hash/parse, copy-on-hit, normalized keys).
+
+- [ ] Task 6.8: Run the full quality gate (`ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, `pytest -n auto --cov=src --cov-report=`) and update this feature's Current Status/Updates once green.
+
 ## Progress
 
 ### Current Status
 
-**As of 2026-09-10**: **FEATURE COMPLETE -- all 5 phases done.** Phase 5 (verification and docs) confirmed the full quality gate green with zero code changes needed (`ruff format --check`, `ruff check`, `vulture`, and `pytest -n auto` -- `3405 passed` -- were already clean from Phase 4), then swept the codebase for the now-stale "no in-memory cache, always re-reads from disk" docstring claim: a targeted grep confirmed the true scope was 21 files (not the plan's own ~40+ estimate, which predated the actual grep), all now corrected to describe the shipped content-hash-validated cache while leaving every `adr/`-domain file's identical-looking claim untouched (ADR genuinely has no cache). `AGENTS.md` gained a new cross-cutting paragraph describing the cache module, its wiring, and ADR's permanent exclusion. `docs/GENERATED.md`/`docs/api/`/`docs/MCP.md` were regenerated via `specmgr docs`/`specmgr mcp-docs`, producing exactly the expected 22 updated `docs/api/*.md` files (one per edited `get_<d>.py`/`create_<d>.py`, all `@mcp.tool()`-decorated) and no unexpected changes elsewhere. The full test suite remains green after these docstring-only edits (`3405 passed`). All 8 acceptance criteria (ACC-001 through ACC-008) are confirmed satisfied against the current, full state of the codebase. Frontmatter `status` bumped from `planning` to `done`.
+**As of 2026-09-10 (Phase 6 reopened)**: Phases 1-5 shipped and merged via PR #119 (all green, `3405 passed`, ACC-001 through ACC-008 satisfied -- see below). An independent post-closeout review of the merged implementation then found a real correctness bug in `DocCache.read()` (a hash/parse TOCTOU race that can, in a narrow but real scenario, serve a document that does not correspond to the content its stored hash represents) plus two latent design risks (shared mutable cache entries, unnormalized `Path` keys) and one stale design-notes claim (`move()`'s "byte-identical content" rationale, false for its only caller `set_feat_id`). Frontmatter `status` reverted from `done` to `progress`; Phase 6 (REQ-007/008/009, ACC-009/010/011, Tasks 6.1-6.8) tracks the fix. See Decisions Made and Design Notes below for the full finding, and Phase 6 in the Task List for the remediation plan.
+
+**Phases 1-5 status (2026-09-10, pre-Phase-6)**: Phase 5 (verification and docs) confirmed the full quality gate green with zero code changes needed (`ruff format --check`, `ruff check`, `vulture`, and `pytest -n auto` -- `3405 passed` -- were already clean from Phase 4), then swept the codebase for the now-stale "no in-memory cache, always re-reads from disk" docstring claim: a targeted grep confirmed the true scope was 21 files (not the plan's own ~40+ estimate, which predated the actual grep), all now corrected to describe the shipped content-hash-validated cache while leaving every `adr/`-domain file's identical-looking claim untouched (ADR genuinely has no cache). `AGENTS.md` gained a new cross-cutting paragraph describing the cache module, its wiring, and ADR's permanent exclusion. `docs/GENERATED.md`/`docs/api/`/`docs/MCP.md` were regenerated via `specmgr docs`/`specmgr mcp-docs`, producing exactly the expected 22 updated `docs/api/*.md` files (one per edited `get_<d>.py`/`create_<d>.py`, all `@mcp.tool()`-decorated) and no unexpected changes elsewhere. The full test suite remains green after these docstring-only edits (`3405 passed`). All 8 acceptance criteria (ACC-001 through ACC-008) are confirmed satisfied against the current, full state of the codebase.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-10 20:00:00.000+02:00 - Phase 6 opened: post-closeout review found a hash/parse race, reopening the feature
+
+An independent post-closeout review of PR #119 (the merged Phase 1-5 implementation) found that `general/tools/_doc_cache.py`'s `DocCache.read()` computes its content hash from one `path.read_text()` call, then calls `parse_fn(path)`, which every domain's `_parse` helper implements as its own second, independent `path.read_text()` call -- the two reads are not atomic, and a concurrent write (reads take no domain lock by design) racing between them can produce a cache entry whose stored hash does not correspond to its stored, parsed result. This is a real, if narrow, violation of the "a stale entry is structurally impossible" guarantee this feature and ADR bfd76370-b59b-4d65-b550-a969f6c93c9d both claim. The same review also found `DocCache.move()`'s "byte-identical content" rationale is factually wrong for its only caller (`set_feat_id` always changes `id`/`updated`), and two latent, currently-untriggered design risks: cache hits return the same shared mutable object every time (no domain model is `frozen=True`), and cache keys are unnormalized `Path` objects. Added REQ-007/008/009, ACC-009/010/011, and a new Phase 6 (Tasks 6.1-6.8) to fix all four findings; reverted frontmatter `status` from `done` to `progress`. No code changed yet -- this entry documents the finding and the remediation plan only.
 
 #### 2026-09-10 08:37:17.235+02:00 - Phase 5 complete: verification and docs -- feature fully done
 
@@ -243,6 +287,10 @@ Created this feature to reframe GitHub issue #107 ("Use a thread pool with concu
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-10 20:00:00.000+02:00 - Post-closeout review found a hash/parse TOCTOU race; reopening for Phase 6
+
+An independent post-closeout review of PR #119 found that `DocCache.read()` (`general/tools/_doc_cache.py`) hashes the file via one `path.read_text()` call, then calls `parse_fn(path)`, which every domain's `_parse` wrapper implements as its own second, independent `path.read_text()` call. The two reads are not atomic: if the file's content changes between them (a concurrent `update`/`set_status`/`set_classification` write -- reads intentionally take no lock, per ADR 33c5ab08), the cache can store `(hash_of_the_first_read, document_parsed_from_the_second_read)`. That mismatched entry is inert until the file's content later reverts to exactly the bytes that produced the stored hash (e.g. an idempotent `set_status`/`set_classification` no-op), at which point a subsequent reader gets a cache hit and is served a document that was never actually parsed from the content now on disk. This contradicts the "a stale entry is structurally impossible" invariant claimed in ADR bfd76370-b59b-4d65-b550-a969f6c93c9d and this feature's own REQ-001. Two further, lower-severity findings from the same review are folded into the same phase: (1) `DocCache.move()`'s docstring/design-notes rationale ("byte-identical content, the realistic set_feat_id case") is factually wrong for its only caller, since `set_feat_id` always rewrites both `id` and `updated` before writing; (2) `DocCache.read()` returns the same shared, mutable Pydantic object on every cache hit (none of the 12 domains' models are `frozen=True`), and cache entries are keyed by unnormalized `Path` objects with no `.resolve()`, both latent risks with no known current trigger but worth closing defensively. Reopening as Phase 6 rather than a separate issue, since every fix is scoped to the module this feature introduced. `status` reverted from `done` to `progress`.
 
 #### 2026-09-09 13:00:00.000Z - Four open design questions resolved before implementation
 
