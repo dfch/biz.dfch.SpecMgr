@@ -71,12 +71,12 @@ MCP tools in this server should stay domain-focused on system-specification arti
 
 #### Phase 2: Removal
 
-- [ ] Task 2.1: Delete the confluence tool/prompt/helper/data source modules listed in Scope > Included.
-- [ ] Task 2.2: Delete the confluence test files listed in Scope > Included.
-- [ ] Task 2.3: Update `general/tools/__init__.py` and `general/prompts/__init__.py` imports, `__all__`, and docstrings to remove confluence references.
-- [ ] Task 2.4: Update `server.py`'s module docstring, `README.md`'s environment-variables section, and add a `CHANGELOG.md` `[Unreleased]` removal entry.
-- [ ] Task 2.5: Remove the `httpx` dependency from `pyproject.toml` and `NOTICE` after confirming it is unused elsewhere in `src/`.
-- [ ] Task 2.6: Regenerate `docs/GENERATED.md`, `docs/MCP.md`, and `docs/api/` via `specmgr docs`/`specmgr mcp-docs`, and remove any stale orphaned generated files.
+- [x] Task 2.1: Delete the confluence tool/prompt/helper/data source modules listed in Scope > Included.
+- [x] Task 2.2: Delete the confluence test files listed in Scope > Included.
+- [x] Task 2.3: Update `general/tools/__init__.py` and `general/prompts/__init__.py` imports, `__all__`, and docstrings to remove confluence references.
+- [x] Task 2.4: Update `server.py`'s module docstring, `README.md`'s environment-variables section, and add a `CHANGELOG.md` `[Unreleased]` removal entry.
+- [x] Task 2.5: Remove the `httpx` dependency from `pyproject.toml` and `NOTICE` after confirming it is unused elsewhere in `src/`.
+- [x] Task 2.6: Regenerate `docs/GENERATED.md`, `docs/MCP.md`, and `docs/api/` via `specmgr docs`/`specmgr mcp-docs`, and remove any stale orphaned generated files.
 
 #### Phase 3: Verification
 
@@ -88,11 +88,15 @@ MCP tools in this server should stay domain-focused on system-specification arti
 
 ### Current Status
 
-**As of 2026-09-10**: Phase 1 (ADR) is complete. A new ADR (92cc4ce8-2cdd-45a7-9ae4-85de5abaf94c) has been written documenting the decision to remove the Confluence tools, and ADR a156fdf9-052c-4f43-93a2-eeec04a91eac has been marked superseded by it. No `src/`/`tests/` source changes have been made yet; those are Phase 2's job.
+**As of 2026-09-10**: Phase 2 (Removal) is complete. All Confluence-specific source, test, prompt, and packaged-data modules (`confluence_fetch`/`confluence_update` tools and prompts, `_confluence_config.py`/`_confluence_url.py` helpers, their instruction data files, and their 6 test files) were deleted; `general/tools/__init__.py`, `general/prompts/__init__.py`, and `general/__init__.py` had their imports/`__all__`/docstrings updated to drop confluence references; `server.py`'s module docstring, `README.md`'s environment-variables section, and `CHANGELOG.md`'s `[Unreleased]` section were updated; the now-unused `httpx` dependency was removed from `pyproject.toml`'s `mcp` extra, `NOTICE`'s corresponding license block, and `uv.lock` (via `uv lock`/`uv sync --all-extras`); and `docs/GENERATED.md`/`docs/MCP.md`/`docs/api/` were regenerated, auto-pruning the 6 orphaned `docs/api/*confluence*.md` pages. The full quality gate (`ruff format --check`, `ruff check`, `vulture`, `pytest -n auto`, 3248 tests) is green, and re-running `specmgr docs`/`specmgr mcp-docs` produces no further diff. `.specmgr/feat/feat-50-confluence/README.md` was left untouched. Phase 3 (Verification) is next.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-10 14:00:00.000Z - Phase 2 (Removal) complete
+
+Deleted all Confluence-specific source modules (`general/tools/confluence_fetch.py`, `general/tools/confluence_update.py`, `general/tools/_confluence_config.py`, `general/tools/_confluence_url.py`, `general/prompts/confluence_fetch.py`, `general/prompts/confluence_update.py`, and their two `general/data/*.md` instruction files) and all 6 corresponding test files under `tests/general/tools/` and `tests/general/prompts/`. Updated `general/tools/__init__.py` and `general/prompts/__init__.py` (imports, `__all__`, docstrings) and `general/__init__.py`'s own docstring to drop confluence mentions. Removed the confluence-related docstring paragraphs from `server.py` (tools and prompts sections) without touching any executable code. Removed the `confluence_fetch` environment-variables bullet from `README.md`. Added a `### Removed` entry under `CHANGELOG.md`'s `[Unreleased]` heading referencing GitHub issue #120 and ADR 92cc4ce8-2cdd-45a7-9ae4-85de5abaf94c. Confirmed via `grep -rn "httpx" src/ --include=*.py` that no remaining module imports `httpx` after the deletions, then removed `"httpx>=0.27",` from `pyproject.toml`'s `mcp` extra and the entire `httpx (optional "mcp" extra)` BSD-3-Clause block from `NOTICE`. Ran `uv lock` (network-accessible in this environment) followed by `uv sync --all-extras`, which removed `httpx`/`httpcore` from `uv.lock` and the local environment. Regenerated `docs/GENERATED.md`, `docs/MCP.md`, and `docs/api/` via `specmgr docs`/`specmgr mcp-docs`; the doc generator auto-pruned the 6 now-orphaned `docs/api/*confluence*.md` pages, and re-running both commands afterward produced no further diff. Quality gate: `ruff format --check` (1644 files formatted), `ruff check` (all checks passed), `vulture src/ whitelist.py --min-confidence 60` (no findings, no confluence-related whitelist entries existed), and `pytest -n auto` (3248 passed) all green. Left `.specmgr/feat/feat-50-confluence/README.md` untouched.
 
 #### 2026-09-10 13:00:00.000Z - Phase 1 (ADR) complete
 

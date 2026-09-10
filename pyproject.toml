@@ -63,7 +63,6 @@ cli = [
 mcp = [
     "biz-dfch-specmgr[cli]",
     "mcp>=2.0.0",
-    "httpx>=0.27",
 ]
 
 test = [
