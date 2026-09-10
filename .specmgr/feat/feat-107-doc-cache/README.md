@@ -110,13 +110,15 @@ Lock ordering: the cache's own lock (REQ-006) is always the innermost lock acqui
 
 - 33c5ab08-ff58-4c73-8c32-23abaf3838e3 (ADR): filesystem is the sole source of truth; this feature's cache design must refine this invariant via hash validation, not remove it.
 
+- bfd76370-b59b-4d65-b550-a969f6c93c9d (ADR): "Add a content-hash-validated, per-domain in-memory read cache for the 12 generic whole-body domains" -- the ADR this feature's Phase 1 produced, establishing the cache design, its reconciliation with ADR 33c5ab08, the ADR domain's explicit exclusion from scope, and the cache lock's fixed innermost-ordering rule.
+
 ### Task List
 
 #### Phase 1: ADR and Design Lock-in
 
-- [ ] Task 1.1: Draft and create the new ADR describing the content-hash-validated per-domain read cache, explicitly referencing and reconciling with ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3, explicitly recording that the ADR domain itself is out of scope, and explicitly pinning the cache lock's fixed ordering rule (always innermost, after any domain-level per-id lock, consistent with `set_feat_id`'s existing `feat_create_lock` -> `feat_lock` order).
+- [x] Task 1.1: Draft and create the new ADR describing the content-hash-validated per-domain read cache, explicitly referencing and reconciling with ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3, explicitly recording that the ADR domain itself is out of scope, and explicitly pinning the cache lock's fixed ordering rule (always innermost, after any domain-level per-id lock, consistent with `set_feat_id`'s existing `feat_create_lock` -> `feat_lock` order).
 
-- [ ] Task 1.2: Update this feature's Related Decisions section with the new ADR's id once created.
+- [x] Task 1.2: Update this feature's Related Decisions section with the new ADR's id once created.
 
 #### Phase 2: Generic Cache Module
 
@@ -161,6 +163,10 @@ Lock ordering: the cache's own lock (REQ-006) is always the innermost lock acqui
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-10 09:15:00.000Z - Phase 1 complete: ADR created and design locked in
+
+Created ADR bfd76370-b59b-4d65-b550-a969f6c93c9d ("Add a content-hash-validated, per-domain in-memory read cache for the 12 generic whole-body domains"), documenting the cache design, its reconciliation with ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3 (the cache refines rather than violates the "filesystem is the sole source of truth" invariant, since a stale entry is structurally impossible under hash validation), the explicit exclusion of the ADR domain from this cache mechanism, and the cache lock's fixed always-innermost ordering rule (after any domain-level per-id lock, consistent with `set_feat_id`'s existing `feat_create_lock` -> `feat_lock` order). Regenerated `docs/adr/README.md` via `specmgr adr-toc` to list the new ADR. ACC-007 is satisfied; Phase 2 implementation work may now begin.
 
 #### 2026-09-09 13:00:00.000Z - Plan refined against actual code before implementation
 
