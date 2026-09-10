@@ -66,8 +66,8 @@ MCP tools in this server should stay domain-focused on system-specification arti
 
 #### Phase 1: ADR
 
-- [ ] Task 1.1: Write a new ADR documenting the decision to remove the Confluence tools from the MCP server, referencing GitHub issue #120.
-- [ ] Task 1.2: Mark ADR a156fdf9-052c-4f43-93a2-eeec04a91eac as superseded by the new ADR via the generic `set_status` tool (`type="adr"`, `superseded_by=<new ADR id>`).
+- [x] Task 1.1: Write a new ADR documenting the decision to remove the Confluence tools from the MCP server, referencing GitHub issue #120.
+- [x] Task 1.2: Mark ADR a156fdf9-052c-4f43-93a2-eeec04a91eac as superseded by the new ADR via the generic `set_status` tool (`type="adr"`, `superseded_by=<new ADR id>`).
 
 #### Phase 2: Removal
 
@@ -88,11 +88,15 @@ MCP tools in this server should stay domain-focused on system-specification arti
 
 ### Current Status
 
-**As of 2026-09-10**: this feature is in the planning stage only. No source, test, or documentation changes have been made yet; this README documents the intended plan for GitHub issue #120.
+**As of 2026-09-10**: Phase 1 (ADR) is complete. A new ADR (92cc4ce8-2cdd-45a7-9ae4-85de5abaf94c) has been written documenting the decision to remove the Confluence tools, and ADR a156fdf9-052c-4f43-93a2-eeec04a91eac has been marked superseded by it. No `src/`/`tests/` source changes have been made yet; those are Phase 2's job.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-10 13:00:00.000Z - Phase 1 (ADR) complete
+
+Created a new ADR, "Remove the Confluence tools (`confluence_fetch`, `confluence_update`) from the MCP server" (id `92cc4ce8-2cdd-45a7-9ae4-85de5abaf94c`), documenting the decision to remove the Confluence-specific MCP tools per GitHub issue #120, and explicitly superseding ADR a156fdf9-052c-4f43-93a2-eeec04a91eac. Marked the old ADR's status as `superseded by 92cc4ce8-2cdd-45a7-9ae4-85de5abaf94c` via the generic `set_status` tool. Regenerated `docs/adr/README.md` via `specmgr adr-toc`. No `src/`/`tests/` files were touched (Phase 2's job).
 
 #### 2026-09-10 12:00:00.000Z - Created
 
