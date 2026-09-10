@@ -45,5 +45,14 @@ tuple[Path, FeatDocument]
 Raises
 ------
 FeatNotFoundError
-    If no folder matches (propagated from :func:`._paths.find_feat_path_by_id`).
+    If no folder matches (propagated from :func:`._paths.find_feat_path_by_id`),
+    or if ``path`` -- already resolved successfully by
+    :func:`._paths.find_feat_path_by_id` an instant earlier -- vanishes
+    out from under this function's own subsequent :func:`._cache.read_feat`
+    call, racing a concurrent ``set_feat_id`` rename in the same narrow
+    window :func:`._paths.find_feat_path_by_id`'s own docstring describes
+    (feat-107-doc-cache Phase 6, REQ-012): this second, independent read
+    has exactly the same ``FileNotFoundError`` exposure as the first one
+    does, and is translated into the same :class:`._paths.FeatNotFoundError`
+    here rather than left to propagate uncaught.
 

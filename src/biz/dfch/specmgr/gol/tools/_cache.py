@@ -72,11 +72,17 @@ __all__ = ["invalidate_gol_cache", "read_gol", "reconcile_gol_cache", "reset_gol
 _cache: DocCache[GolDocument] = DocCache()
 
 
-def _parse(path: Path) -> GolDocument:
-    """Read and parse ``path``'s full text into a :class:`GolDocument` (the cache's own ``parse_fn``)."""
-    assert isinstance(path, Path), type(path)
+def _parse(text: str) -> GolDocument:
+    """Parse ``text`` into a :class:`GolDocument` (the cache's own ``parse_fn`` -- Phase 6: text in, not ``Path``).
 
-    result = parse_gol(path.read_text(encoding="utf-8"))
+    Receives the exact text :meth:`~biz.dfch.specmgr.general.tools._doc_cache.DocCache.read`
+    already read (and hashed) for this same call -- this function must not
+    re-read the file itself (feat-107-doc-cache Phase 6, REQ-007: closes the
+    hash/parse TOCTOU race the previous two-independent-reads shape had).
+    """
+    assert isinstance(text, str), type(text)
+
+    result = parse_gol(text)
     return result
 
 

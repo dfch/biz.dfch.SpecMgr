@@ -74,11 +74,17 @@ __all__ = ["invalidate_req_cache", "read_req", "reconcile_req_cache", "reset_req
 _cache: DocCache[ReqDocument] = DocCache()
 
 
-def _parse(path: Path) -> ReqDocument:
-    """Read and parse ``path``'s full text into a :class:`ReqDocument` (the cache's own ``parse_fn``)."""
-    assert isinstance(path, Path), type(path)
+def _parse(text: str) -> ReqDocument:
+    """Parse ``text`` into a :class:`ReqDocument` (the cache's own ``parse_fn`` -- Phase 6: text in, not ``Path``).
 
-    result = parse_req(path.read_text(encoding="utf-8"))
+    Receives the exact text :meth:`~biz.dfch.specmgr.general.tools._doc_cache.DocCache.read`
+    already read (and hashed) for this same call -- this function must not
+    re-read the file itself (feat-107-doc-cache Phase 6, REQ-007: closes the
+    hash/parse TOCTOU race the previous two-independent-reads shape had).
+    """
+    assert isinstance(text, str), type(text)
+
+    result = parse_req(text)
     return result
 
 

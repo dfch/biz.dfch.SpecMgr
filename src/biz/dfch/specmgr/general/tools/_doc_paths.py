@@ -52,6 +52,20 @@ file reads. The filesystem nonetheless remains the sole source of truth
 memoization keyed by a validated content hash, so a stale entry is
 structurally impossible -- it can only ever cost one extra parse, never an
 incorrect result.
+
+**Skip-on-parse-failure now also catches ``yaml.YAMLError`` (feat-107-doc-cache
+Phase 6, REQ-010).** :func:`find_doc_path_by_id`'s per-file scan loop skips
+a file that fails to parse so one broken file never blocks lookup of a
+different, valid id. Before Phase 6 this only caught ``AssertionError``/
+``ValueError``, which does not include ``yaml.YAMLError`` (not a
+``ValueError`` subclass) -- even though every ``parse_<domain>`` genuinely
+raises it unwrapped for malformed frontmatter YAML, and both ``DocCache``'s
+own ``CACHEABLE_ERROR_TYPES`` and ``general.tools._listing.build_summaries``
+already treated it as a normal, skippable failure. This was confirmed
+pre-existing and unrelated to the cache mechanism itself (unchanged since
+before Phase 3), but folded into this same remediation pass since it sits
+in code this feature already touches and directly contradicts the cache's
+own failure-handling contract.
 """
 
 from __future__ import annotations
@@ -61,6 +75,8 @@ import re
 from collections.abc import Callable, Iterable, Iterator
 from pathlib import Path
 from typing import TypeVar
+
+import yaml
 
 __all__ = [
     "DEFAULT_DOCS_ROOT",
@@ -222,8 +238,17 @@ def find_doc_path_by_id(
     ``get_id_fn(parsed)`` against ``id_``. A file that fails to parse
     (``AssertionError`` or ``ValueError``, which ``pydantic.ValidationError``
     and every parser-specific error in this codebase -- e.g.
-    ``AdrParseError`` -- subclass) is silently skipped -- one broken file
-    must not prevent lookup of a different, valid id.
+    ``AdrParseError`` -- subclass; or ``yaml.YAMLError``, raised unwrapped
+    for malformed frontmatter YAML by every ``parse_<domain>`` function,
+    Phase 6, REQ-010) is silently skipped -- one broken file must not
+    prevent lookup of a different, valid id. Before Phase 6, ``yaml.YAMLError``
+    was not caught here (it is not a ``ValueError`` subclass), even though
+    ``DocCache``'s own ``CACHEABLE_ERROR_TYPES`` and
+    ``general.tools._listing.build_summaries`` (the ``list_*`` read
+    callback) both already treated it as a normal, skippable failure -- a
+    domain directory with one file whose frontmatter YAML was malformed
+    crashed this scan with an uncaught ``yaml.YAMLError`` for *any* id in
+    that domain, not just the malformed file's own id.
 
     Parameters
     ----------
@@ -270,7 +295,7 @@ def find_doc_path_by_id(
     for path in paths:
         try:
             doc = read_fn(path)
-        except (AssertionError, ValueError):
+        except (AssertionError, ValueError, yaml.YAMLError):
             continue
         if get_id_fn(doc) == id_:
             return path

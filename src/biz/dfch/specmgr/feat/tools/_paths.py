@@ -66,6 +66,24 @@ match the folder name it lives in" -- so ``load_by_id``/``get_feat``/every
 mutating tool built on this module gets one single, consistent
 not-found-shaped error to handle, without needing to separately catch
 ``AssertionError``/``ValidationError`` themselves.
+
+**A concurrent, lock-free read racing ``set_feat_id``'s rename is also
+treated as not-found (feat-107-doc-cache Phase 6, REQ-012).** ``get_feat``/
+``list_feat`` intentionally take no domain lock (ADR
+33c5ab08-ff58-4c73-8c32-23abaf3838e3), so a call landing in the narrow
+window after ``set_feat_id``'s ``old_path.parent.rename(new_path.parent)``
+succeeds but before its cache-entry move runs would otherwise see
+``old_path`` genuinely absent from disk mid-read -- the earlier
+``path.exists()`` check above can pass and then the file can vanish before
+the cache-backed :func:`~._cache.read_feat` call's own internal read
+completes, raising a plain ``FileNotFoundError`` that is not one of
+``DocCache``'s own ``CACHEABLE_ERROR_TYPES`` and therefore, before this fix,
+propagated uncaught instead of resolving to the same not-found-shaped error
+every other parse failure already produces. ``FileNotFoundError`` is now
+caught alongside ``AssertionError``/``ValidationError`` around that
+``read_feat`` call, below, and translated into the same
+:class:`FeatNotFoundError` -- a reader racing the rename this way now sees
+a graceful "not found" instead of an uncaught, unrelated-looking OS error.
 """
 
 from __future__ import annotations
@@ -251,9 +269,12 @@ def find_feat_path_by_id(base_dir: Path, id_: str) -> Path:
     FeatNotFoundError
         If ``<base_dir>/<id_>/README.md`` does not exist, if it exists but
         fails to parse (``AssertionError``/``pydantic.ValidationError``),
-        or if it parses but its frontmatter ``id`` does not match ``id_``
-        (a folder/frontmatter mismatch, surfaced rather than silently
-        worked around).
+        if it vanishes out from under a concurrent, lock-free read racing
+        ``set_feat_id``'s rename (``FileNotFoundError``, feat-107-doc-cache
+        Phase 6, REQ-012 -- see this module's own docstring), or if it
+        parses but its frontmatter ``id`` does not match ``id_`` (a
+        folder/frontmatter mismatch, surfaced rather than silently worked
+        around).
     """
     assert isinstance(base_dir, Path), type(base_dir)
     assert isinstance(id_, str), type(id_)
@@ -269,7 +290,13 @@ def find_feat_path_by_id(base_dir: Path, id_: str) -> Path:
 
     try:
         doc = read_feat(path)  # feat-107-doc-cache Phase 4, Task 4.1a: cache-backed, fixes the double-parse bug
-    except (AssertionError, ValidationError) as ex:
+    except (AssertionError, ValidationError, FileNotFoundError) as ex:
+        # FileNotFoundError (feat-107-doc-cache Phase 6, REQ-012): the file existed at the
+        # path.exists() check above but can still vanish before read_feat's own internal read
+        # completes, if this call races set_feat_id's rename in the narrow window before its
+        # cache-entry move runs -- get_feat/list_feat intentionally take no domain lock (ADR
+        # 33c5ab08-ff58-4c73-8c32-23abaf3838e3), so this is a real, if narrow, possibility, not
+        # a defensive-only catch.
         raise FeatNotFoundError(
             f"feature folder {id_!r} exists at {path}, but its content could not be parsed as a valid "
             f"feature document ({type(ex).__name__}: {ex})."

@@ -20,12 +20,14 @@
 from __future__ import annotations
 
 import os
+import shutil
 import tempfile
 import textwrap
 import unittest
 from pathlib import Path
 from unittest import mock
 
+from biz.dfch.specmgr.feat.tools import _paths as feat_paths_module
 from biz.dfch.specmgr.feat.tools._paths import (
     DEFAULT_FEAT_DIR,
     FEAT_DIR_ENV_VAR,
@@ -234,6 +236,40 @@ class TestFindFeatPathById(unittest.TestCase):
                 find_feat_path_by_id(base, "feat-1-broken")
             message = str(ctx.exception)
             self.assertIn("could not be parsed", message)
+
+    def test_acc014_a_read_racing_set_feat_ids_rename_raises_feat_not_found_not_a_bare_file_not_found_error(
+        self,
+    ) -> None:
+        """ACC-014 (feat-107-doc-cache Phase 6, REQ-012): a lock-free read racing set_feat_id's
+        rename must not surface an uncaught FileNotFoundError.
+
+        Simulates the narrow window after `set_feat_id`'s
+        `old_path.parent.rename(new_path.parent)` succeeds but before its
+        cache-entry move runs: `path.exists()` above has already passed
+        (the file existed a moment ago), but by the time the cache-backed
+        `read_feat(path)` call's own internal `path.read_text()` actually
+        runs, the folder has vanished -- deterministically reproduced here
+        by having a patched `read_feat` delete the folder itself, then
+        delegate to the real (now genuinely file-missing) cache-backed
+        read, so the exact same `FileNotFoundError` this race would
+        produce in production propagates out of the patched call.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            expected_path = _write_feat_folder(base, "feat-1-mid-rename", "feat-1-mid-rename")
+            real_read_feat = feat_paths_module.read_feat
+
+            def _vanish_then_read(path: Path):
+                shutil.rmtree(path.parent)
+                return real_read_feat(path)
+
+            with mock.patch.object(feat_paths_module, "read_feat", side_effect=_vanish_then_read):
+                with self.assertRaises(FeatNotFoundError) as ctx:
+                    find_feat_path_by_id(base, "feat-1-mid-rename")
+            message = str(ctx.exception)
+            self.assertIn("could not be parsed", message)
+            self.assertIn("FileNotFoundError", message)
+            self.assertFalse(expected_path.exists())
 
 
 if __name__ == "__main__":

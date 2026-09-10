@@ -52,10 +52,26 @@ from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.general.tools.delete import delete
 from biz.dfch.specmgr.req.models.v1 import parse_req
 from biz.dfch.specmgr.req.tools._cache import _cache, read_req, reset_req_cache
-from biz.dfch.specmgr.req.tools._paths import ensure_req_base_dir
+from biz.dfch.specmgr.req.tools._paths import ensure_req_base_dir, find_req_path
 from biz.dfch.specmgr.req.tools.create_req import create_req
 from biz.dfch.specmgr.req.tools.get_req import get_req
 from biz.dfch.specmgr.req.tools.list_req import list_req
+
+#: Deliberately malformed YAML (an unterminated flow sequence) inside an otherwise well-formed
+#: frontmatter block -- triggers a genuine, unwrapped `yaml.YAMLError` from `parse_req` (via
+#: `models.md._frontmatter_parse.parse_frontmatter`), not a `pydantic.ValidationError`.
+_MALFORMED_YAML_FRONTMATTER_DOC = (
+    "---\n"
+    "id: [this is not valid yaml because the flow sequence is never closed\n"
+    "type: req\n"
+    "version: 1.0.0\n"
+    "status: draft\n"
+    "created: '2026-08-05 00:00:00.000Z'\n"
+    "updated: '2026-08-05 00:00:00.000Z'\n"
+    "---\n"
+    "\n"
+    "# Malformed Frontmatter Fixture\n"
+)
 
 _MINIMAL_BODY = textwrap.dedent(
     """\
@@ -310,6 +326,37 @@ class TestAcc006ConcurrentReadsOfAnAlreadyWarmIdParseOnce(unittest.TestCase):
 
         self.assertEqual(errors, [])
         self.assertEqual(spy.call_count, 0)  # the warm-up call above already happened outside the patch
+
+
+class TestAcc012FindReqPathSkipsMalformedYamlFrontmatter(unittest.TestCase):
+    """ACC-012 (feat-107-doc-cache Phase 6, REQ-010): a malformed-YAML-frontmatter file must not
+    crash the id-lookup scan for a *different*, valid file's id.
+
+    Regression test for ``general.tools._doc_paths.find_doc_path_by_id``'s
+    skip-on-parse-failure clause not previously catching ``yaml.YAMLError``
+    (not a ``ValueError`` subclass) -- before this fix, a domain directory
+    with one file whose frontmatter YAML was malformed crashed the scan
+    with an uncaught ``yaml.YAMLError`` for *any* id in that domain, not
+    just the malformed file's own id.
+    """
+
+    def setUp(self) -> None:
+        reset_req_cache()
+        self.docs_root = Path(self.enterContext(tempfile.TemporaryDirectory()))
+        self.enterContext(mock.patch.dict("os.environ", {DOCS_DIR_ENV_VAR: str(self.docs_root)}))
+
+    def tearDown(self) -> None:
+        reset_req_cache()
+
+    def test_valid_files_id_still_resolves_alongside_a_malformed_yaml_sibling(self) -> None:
+        created = create_req(_MINIMAL_BODY)
+        base_dir = ensure_req_base_dir()
+
+        malformed_path = base_dir / "malformed-yaml-frontmatter.md"
+        malformed_path.write_text(_MALFORMED_YAML_FRONTMATTER_DOC, encoding="utf-8")
+
+        good_path = next(p for p in base_dir.glob("*.md") if created.id in p.name)
+        self.assertEqual(find_req_path(base_dir, created.id), good_path)
 
 
 class TestAcc006ColdConcurrentReadsStayBounded(unittest.TestCase):

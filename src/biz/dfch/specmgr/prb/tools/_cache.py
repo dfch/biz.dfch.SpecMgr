@@ -72,11 +72,17 @@ __all__ = ["invalidate_prb_cache", "read_prb", "reconcile_prb_cache", "reset_prb
 _cache: DocCache[PrbDocument] = DocCache()
 
 
-def _parse(path: Path) -> PrbDocument:
-    """Read and parse ``path``'s full text into a :class:`PrbDocument` (the cache's own ``parse_fn``)."""
-    assert isinstance(path, Path), type(path)
+def _parse(text: str) -> PrbDocument:
+    """Parse ``text`` into a :class:`PrbDocument` (the cache's own ``parse_fn`` -- Phase 6: text in, not ``Path``).
 
-    result = parse_prb(path.read_text(encoding="utf-8"))
+    Receives the exact text :meth:`~biz.dfch.specmgr.general.tools._doc_cache.DocCache.read`
+    already read (and hashed) for this same call -- this function must not
+    re-read the file itself (feat-107-doc-cache Phase 6, REQ-007: closes the
+    hash/parse TOCTOU race the previous two-independent-reads shape had).
+    """
+    assert isinstance(text, str), type(text)
+
+    result = parse_prb(text)
     return result
 
 

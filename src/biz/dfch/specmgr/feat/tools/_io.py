@@ -42,9 +42,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from pydantic import ValidationError
+
 from ..models.v1 import FeatDocument
 from ._cache import read_feat
-from ._paths import find_feat_path_by_id
+from ._paths import FeatNotFoundError, find_feat_path_by_id
 
 __all__ = ["load_by_id", "read_feat"]
 
@@ -69,12 +71,28 @@ def load_by_id(base_dir: Path, id_: str) -> tuple[Path, FeatDocument]:
     Raises
     ------
     FeatNotFoundError
-        If no folder matches (propagated from :func:`._paths.find_feat_path_by_id`).
+        If no folder matches (propagated from :func:`._paths.find_feat_path_by_id`),
+        or if ``path`` -- already resolved successfully by
+        :func:`._paths.find_feat_path_by_id` an instant earlier -- vanishes
+        out from under this function's own subsequent :func:`._cache.read_feat`
+        call, racing a concurrent ``set_feat_id`` rename in the same narrow
+        window :func:`._paths.find_feat_path_by_id`'s own docstring describes
+        (feat-107-doc-cache Phase 6, REQ-012): this second, independent read
+        has exactly the same ``FileNotFoundError`` exposure as the first one
+        does, and is translated into the same :class:`._paths.FeatNotFoundError`
+        here rather than left to propagate uncaught.
     """
     assert isinstance(base_dir, Path), type(base_dir)
     assert isinstance(id_, str), type(id_)
     assert id_.strip()
 
     path = find_feat_path_by_id(base_dir, id_)
-    result = (path, read_feat(path))
+    try:
+        doc = read_feat(path)
+    except (AssertionError, ValidationError, FileNotFoundError) as ex:
+        raise FeatNotFoundError(
+            f"feature folder {id_!r} exists at {path}, but its content could not be read as a valid "
+            f"feature document on this second read ({type(ex).__name__}: {ex})."
+        ) from ex
+    result = (path, doc)
     return result

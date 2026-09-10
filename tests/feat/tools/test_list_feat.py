@@ -34,6 +34,8 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
+from importlib import import_module
+
 from biz.dfch.specmgr.feat.models.v1 import FeatSummary
 from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR, README_FILENAME, ensure_feat_base_dir
 from biz.dfch.specmgr.feat.tools.create_feat import create_feat
@@ -142,6 +144,38 @@ class TestListFeat(unittest.TestCase):
         self.assertTrue(failed.path.endswith(f"feat-99-broken/{README_FILENAME}"))
         self.assertTrue(Path(failed.path).exists())
         self.assertIsNotNone(failed.error)
+
+    def test_acc014_a_folder_vanishing_mid_scan_is_reported_as_a_failed_entry_not_an_uncaught_error(self) -> None:
+        """ACC-014 (feat-107-doc-cache Phase 6, REQ-012): a folder racing set_feat_id's rename
+        mid-scan (its README.md vanishes between the directory glob and the per-file read) must
+        appear as a failed entry, not propagate an uncaught FileNotFoundError out of this tool.
+        """
+        # Fetched via import_module (not `from ... import list_feat as m`/`import ... as m`,
+        # both of which resolve through `feat.tools.__init__`'s own attribute lookup -- and that
+        # package's `__init__.py` rebinds its own `list_feat` attribute to the *function* via
+        # `from .list_feat import list_feat`, shadowing the submodule): `import_module` instead
+        # looks the submodule up directly in `sys.modules`, unaffected by that shadowing.
+        list_feat_module = import_module("biz.dfch.specmgr.feat.tools.list_feat")
+
+        created = create_feat(_MINIMAL_BODY)
+        base_dir = ensure_feat_base_dir()
+        path = base_dir / created.id / README_FILENAME
+        real_read_feat = list_feat_module.read_feat
+
+        def _vanish_then_read(candidate_path: Path):
+            if candidate_path == path:
+                raise FileNotFoundError(f"simulated mid-scan rename race for {candidate_path}")
+            return real_read_feat(candidate_path)
+
+        with mock.patch.object(list_feat_module, "read_feat", side_effect=_vanish_then_read):
+            sut = list_feat()
+
+        self.assertEqual(sut.total, 1)
+        self.assertEqual(sut.error_count, 1)
+        failed = sut.results[0]
+        self.assertIsNone(failed.id)
+        self.assertEqual(failed.title, "<failed to parse>")
+        self.assertIn("simulated mid-scan rename race", failed.error or "")
 
     def test_empty_result_for_missing_directory(self) -> None:
         self.assertFalse(self.feat_root.exists())

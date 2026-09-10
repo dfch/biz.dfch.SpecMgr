@@ -45,9 +45,14 @@ template Phase 4 repeats for the other 11 generic whole-body domains).
 
 ## Functions
 
-### `_parse(path: 'Path') -> 'ReqDocument'`
+### `_parse(text: 'str') -> 'ReqDocument'`
 
-Read and parse ``path``'s full text into a :class:`ReqDocument` (the cache's own ``parse_fn``).
+Parse ``text`` into a :class:`ReqDocument` (the cache's own ``parse_fn`` -- Phase 6: text in, not ``Path``).
+
+Receives the exact text :meth:`~biz.dfch.specmgr.general.tools._doc_cache.DocCache.read`
+already read (and hashed) for this same call -- this function must not
+re-read the file itself (feat-107-doc-cache Phase 6, REQ-007: closes the
+hash/parse TOCTOU race the previous two-independent-reads shape had).
 
 
 ### `invalidate_req_cache(path: 'Path') -> 'None'`

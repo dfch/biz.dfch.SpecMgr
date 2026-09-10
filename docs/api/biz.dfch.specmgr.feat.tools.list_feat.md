@@ -54,10 +54,15 @@ document must not break listing every other valid one. This includes
 every one of the pre-existing, hand-authored feature folders that
 predate this schema (out of scope for that feature, see its own
 README's Scope section) -- they are no longer invisible, just reported
-with an ``error``. The complete list (successes and failures both) is
-materialized first, then paginated in memory, so the returned
-``total``/``error_count`` always reflect the whole directory,
-independent of paging.
+with an ``error``. A folder whose ``README.md`` vanishes mid-scan,
+racing a concurrent ``set_feat_id`` rename (``FileNotFoundError``,
+feat-107-doc-cache Phase 6, REQ-012 -- unique to ``feat``'s rename-based
+cache integration, see :data:`_FEAT_ERROR_TYPES`) is caught the same way
+and appears as the same shape of failed entry, rather than propagating
+an uncaught OS-level error out of this tool. The complete list
+(successes and failures both) is materialized first, then paginated in
+memory, so the returned ``total``/``error_count`` always reflect the
+whole directory, independent of paging.
 
 Parameters
 ----------
