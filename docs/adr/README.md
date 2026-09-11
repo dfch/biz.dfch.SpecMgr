@@ -76,6 +76,11 @@ Index of all ADRs in this repository.
   - Id: 8cf940c5-3100-485c-a12d-14b59b631712
   - Status: accepted
   - Decision-makers: dfch
+- [Remove the Confluence tools (`confluence_fetch`, `confluence_update`) from the MCP server](92cc4ce8-2cdd-45a7-9ae4-85de5abaf94c-remove-the-confluence-tools-confluence-fetch-confluence-upda.md)
+  - Id: 92cc4ce8-2cdd-45a7-9ae4-85de5abaf94c
+  - Status: accepted
+  - Date: 2026-09-10
+  - Decision-makers: dfch
 - [Enforce doc generation, lint, and tests locally via pre-commit hook, not just CI](9c687bb1-8ee7-41c8-84ec-07606356bc73-enforce-doc-generation-lint-and-tests-locally-via-pre-commit.md)
   - Id: 9c687bb1-8ee7-41c8-84ec-07606356bc73
   - Status: accepted
@@ -86,7 +91,7 @@ Index of all ADRs in this repository.
   - Decision-makers: dfch
 - [Rename `webfetch` to `confluence_fetch`, add `confluence_update`, and self-construct Confluence REST API URLs instead of relying on a non-existent "confluence skill"](a156fdf9-052c-4f43-93a2-eeec04a91eac-rename-webfetch-to-confluence-fetch-add-confluence-update-an.md)
   - Id: a156fdf9-052c-4f43-93a2-eeec04a91eac
-  - Status: accepted
+  - Status: superseded by 92cc4ce8-2cdd-45a7-9ae4-85de5abaf94c
   - Date: 2026-09-01
   - Decision-makers: dfch
 - [Extend the non-raising structured-result workaround to set_status's invalid-status case](b399f1ce-ed42-4929-b01c-7a57d18e8014-extend-the-non-raising-structured-result-workaround-to-set-s.md)

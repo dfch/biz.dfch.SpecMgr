@@ -1,5 +1,5 @@
 ---
-status: accepted
+status: superseded by 92cc4ce8-2cdd-45a7-9ae4-85de5abaf94c
 date: '2026-09-01'
 decision-makers: dfch
 id: a156fdf9-052c-4f43-93a2-eeec04a91eac
