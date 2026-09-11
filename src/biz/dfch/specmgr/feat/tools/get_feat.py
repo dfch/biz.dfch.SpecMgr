@@ -19,10 +19,13 @@
 
 """``@mcp.tool()`` wrapper: get_feat (Task 2.3).
 
-Mirrors ``dec.tools.get_dec`` -- a thin file-I/O/id-lookup adapter that
-re-reads and re-parses the current on-disk state on every call; there is no
-in-memory cache of a parsed :class:`FeatDocument`: the ``README.md`` file
-itself is always the source of truth.
+Mirrors ``dec.tools.get_dec`` -- a thin file-I/O/id-lookup adapter. The
+``README.md`` file itself remains the sole source of truth (ADR
+33c5ab08-ff58-4c73-8c32-23abaf3838e3); the underlying single-file read now
+routes through ``feat``'s own bespoke content-hash-validated in-memory
+cache (ADR bfd76370-b59b-4d65-b550-a969f6c93c9d, ``._cache``) that skips
+re-parsing when a file's content hash is unchanged since its last read, so
+a stale entry is structurally impossible.
 
 This tool is the sole id-based read path for FEAT: there is no
 ``specmgr://feat/{id}`` resource (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614,

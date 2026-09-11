@@ -9,9 +9,11 @@ already-validated ``content`` text is persisted byte-for-byte, and only the
 small frontmatter YAML block is code-generated and prepended -- mirrors
 ``vcr.tools.create_vcr``/``dec.tools.create_dec`` file-for-file.
 
-Thin file-I/O adapter; there is no in-memory cache of a parsed
-:class:`~biz.dfch.specmgr.sysrs.models.v1.SysrsDocument` -- the ``.md`` file
-itself is always the source of truth, matching every other tool in this
+Thin file-I/O adapter. The ``.md`` file itself is always the source of
+truth (ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3); the in-memory cache
+warmed after the write below (feat-107-doc-cache Phase 4, REQ-003) is only
+ever a content-hash-validated memoization of that file's own current
+state, never an independent fact, matching every other tool in this
 codebase.
 
 ## Functions

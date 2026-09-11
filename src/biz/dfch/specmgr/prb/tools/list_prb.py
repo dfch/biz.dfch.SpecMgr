@@ -43,6 +43,7 @@ from ...general.tools._listing import build_summaries, default_failed_summary
 from ...general.tools._paging import normalize_paging, paginate
 from ...server import mcp
 from ..models.v1 import PrbDocument, PrbSummary
+from ._cache import reconcile_prb_cache
 from ._io import read_prb
 from ._paths import iter_prb_paths
 
@@ -111,5 +112,7 @@ def list_prb(max_results: int | None = None, offset: int | None = None) -> Paged
         if the base directory does not exist, holds no problem statements,
         or ``offset`` is past the end of the full list.
     """
-    summaries, error_count = build_summaries(iter_prb_paths(), read_prb, _to_summary, _to_failed_summary)
+    paths = list(iter_prb_paths())
+    reconcile_prb_cache(paths)  # feat-107-doc-cache Phase 4, REQ-005
+    summaries, error_count = build_summaries(paths, read_prb, _to_summary, _to_failed_summary)
     return paginate(summaries, *normalize_paging(max_results, offset), error_count=error_count)

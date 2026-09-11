@@ -24,9 +24,11 @@ already-validated ``content`` text is persisted byte-for-byte, and only the
 small frontmatter YAML block is code-generated and prepended -- mirrors
 ``dec.tools.create_dec`` file-for-file.
 
-Thin file-I/O adapter; there is no in-memory cache of a parsed
-:class:`~biz.dfch.specmgr.sop.models.v1.SopDocument` -- the ``.md`` file
-itself is always the source of truth, matching every other tool in this
+Thin file-I/O adapter. The ``.md`` file itself is always the source of
+truth (ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3); the in-memory cache
+warmed after the write below (feat-107-doc-cache Phase 4, REQ-003) is only
+ever a content-hash-validated memoization of that file's own current
+state, never an independent fact, matching every other tool in this
 codebase.
 """
 
@@ -41,6 +43,7 @@ from ...models.md._errors import BODY_CHANNEL, wrap_tool_errors
 from ...models.md._markdown import format_text
 from ...server import mcp
 from ..models.v1 import Sop, SopFrontmatter
+from ._io import read_sop
 from ._paths import ensure_sop_base_dir
 from ._write import write_sop_file
 
@@ -116,5 +119,7 @@ def create_sop(content: str) -> SopFrontmatter:
     )
     filename = f"sop-{new_id}-{slugify(body.text)}.md"
     base_dir = ensure_sop_base_dir()
-    write_sop_file(base_dir / filename, new_frontmatter, content)
+    path = base_dir / filename
+    write_sop_file(path, new_frontmatter, content)
+    read_sop(path)  # warm the cache with this write's own validated content (feat-107-doc-cache Phase 4, REQ-003)
     return new_frontmatter

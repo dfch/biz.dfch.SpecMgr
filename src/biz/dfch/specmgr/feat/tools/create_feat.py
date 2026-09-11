@@ -51,6 +51,7 @@ from ...models.md._errors import BODY_CHANNEL, wrap_tool_errors
 from ...models.md._markdown import format_text
 from ...server import mcp
 from ..models.v1 import FeatFrontmatter, Feature
+from ._cache import read_feat
 from ._lock import feat_create_lock
 from ._paths import README_FILENAME, ensure_feat_base_dir, feature_title, slugify
 from ._write import write_feat_file
@@ -178,4 +179,7 @@ def create_feat(content: str, id: str | None = None) -> FeatFrontmatter:
             version=CURRENT_SCHEMA_VERSION,
         )
         write_feat_file(target_path, new_frontmatter, content)
+        read_feat(
+            target_path
+        )  # warm the cache with this write's own validated content (feat-107-doc-cache Phase 4, REQ-003)
     return new_frontmatter

@@ -2,10 +2,13 @@
 
 ``@mcp.tool()`` wrapper: get_rsk (Task 3.8).
 
-Mirrors ``tsk.tools.get_tsk`` -- a thin file-I/O/id-lookup adapter that
-re-reads and re-parses the current on-disk state on every call; there is no
-in-memory cache of a parsed :class:`RskDocument`: the ``.md`` file itself is
-always the source of truth.
+Mirrors ``tsk.tools.get_tsk`` -- a thin file-I/O/id-lookup adapter. The
+``.md`` file itself remains the sole source of truth (ADR
+33c5ab08-ff58-4c73-8c32-23abaf3838e3); its underlying ``load_by_id`` now
+routes through a content-hash-validated, per-domain in-memory cache (ADR
+bfd76370-b59b-4d65-b550-a969f6c93c9d, ``._cache``) that skips re-parsing
+when a file's content hash is unchanged since its last read, so a stale
+entry is structurally impossible.
 
 Implemented as a tool, not a resource, from the start -- id-based single-
 document reads for RSK never had a ``specmgr://rsk/{id}`` resource in the

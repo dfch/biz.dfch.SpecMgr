@@ -25,10 +25,22 @@ document type and its id accessor differ. 1:1 port of ``req.tools._paths``.
 Mirrors ``adr.tools._paths``'s/``req.tools._paths``'s read-only/write split:
 :func:`qa_base_dir` never creates the directory (a read-only tool shouldn't
 have that side effect), only :func:`ensure_qa_base_dir` does, for the
-``create_qa`` tool. There is deliberately no in-memory id -> path cache
-either -- every lookup re-scans the base directory and re-parses each file,
-matching this codebase's "the on-disk file is the sole source of truth"
-design.
+``create_qa`` tool.
+
+**Cache-backed scan (feat-107-doc-cache Phase 4).** :func:`find_qa_path`
+now scans through the content-hash-validated per-domain cache (ADR
+bfd76370-b59b-4d65-b550-a969f6c93c9d): it passes ``._cache``'s own
+``read_qa`` (not ``parse_qa``) as ``find_doc_path_by_id``'s ``read_fn``,
+so a file whose on-disk content hash is unchanged since its last read is
+not re-parsed, and it passes ``._cache``'s ``reconcile_qa_cache`` as
+``reconcile_fn`` so an orphaned cache entry (a file deleted outside
+specmgr's own tooling) is dropped before any per-file work on every scan.
+``read_qa``/``reconcile_qa_cache`` are imported from ``._cache``, not
+``._io``, to avoid a circular import -- see ``._cache``'s own module
+docstring for the full rationale. The filesystem remains the sole source
+of truth (ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3): a cache entry is only
+ever a memoization keyed by validated content hash, never an independent
+fact about what exists on disk.
 """
 
 from __future__ import annotations
@@ -43,7 +55,8 @@ from ...general.tools._doc_paths import (
     find_doc_path_by_id,
     iter_doc_paths,
 )
-from ..models.v2 import QaDocument, parse_qa
+from ..models.v2 import QaDocument
+from ._cache import read_qa, reconcile_qa_cache
 
 __all__ = [
     "QA_TYPE_NAME",
@@ -123,13 +136,18 @@ def _get_qa_id(doc: QaDocument) -> str | None:
 def find_qa_path(base_dir: Path, id_: str) -> Path:
     """Resolve an ``id`` to its on-disk file path under ``base_dir``.
 
-    Scans every ``*.md`` file under ``base_dir``, parsing each via
-    :func:`~biz.dfch.specmgr.qa.models.v2.parse_qa` and comparing
-    ``frontmatter.id`` against ``id_``. A file that fails to parse
+    Scans every ``*.md`` file under ``base_dir``, reading each through the
+    cache-backed :func:`~._cache.read_qa` (feat-107-doc-cache Phase 4) and
+    comparing ``frontmatter.id`` against ``id_`` -- a file whose on-disk
+    content hash is unchanged since its last read is not re-parsed. A file
+    that fails to parse
     (``AssertionError``/``pydantic.ValidationError``) is silently skipped --
     one broken file must not prevent lookup of a different, valid id.
     Mirrors ``adr.tools._paths.find_adr_path``'s/``req.tools._paths.find_req_path``'s
-    own skip-on-parse-failure rule.
+    own skip-on-parse-failure rule. Before scanning, the cache is reconciled
+    against the freshly materialized live path listing
+    (:func:`~._cache.reconcile_qa_cache`), dropping any cached entry for a
+    file deleted outside specmgr's own tooling (REQ-005).
 
     Parameters
     ----------
@@ -153,7 +171,7 @@ def find_qa_path(base_dir: Path, id_: str) -> Path:
     assert id_.strip()
 
     try:
-        result = find_doc_path_by_id(base_dir, id_, parse_qa, _get_qa_id)
+        result = find_doc_path_by_id(base_dir, id_, read_qa, _get_qa_id, reconcile_fn=reconcile_qa_cache)
     except DocNotFoundError as ex:
         raise QaNotFoundError(
             f"no Question and Answer (QA) document found with id {id_!r}. The id must be the bare document "

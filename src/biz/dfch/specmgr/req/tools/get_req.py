@@ -19,10 +19,14 @@
 
 """``@mcp.tool()`` wrapper: get_req (feat-7-various-improvements Task 0.9).
 
-Mirrors ``adr.tools.get_adr`` -- a thin file-I/O/id-lookup adapter that
-re-reads and re-parses the current on-disk state on every call; there is no
-in-memory cache of a parsed :class:`ReqDocument`: the ``.md`` file itself is
-always the source of truth.
+Mirrors ``adr.tools.get_adr`` -- a thin file-I/O/id-lookup adapter. The
+``.md`` file itself remains the sole source of truth (ADR
+33c5ab08-ff58-4c73-8c32-23abaf3838e3); its underlying ``load_by_id`` (see
+``._io``) now routes through a content-hash-validated, per-domain in-memory
+cache (ADR bfd76370-b59b-4d65-b550-a969f6c93c9d, ``._cache``) that skips
+re-parsing when a file's content hash is unchanged since its last read, so a
+stale entry is structurally impossible -- it can only ever cost one extra
+parse, never an incorrect result.
 
 This tool replaces the earlier ``specmgr://req/{id}`` resource
 (``req.resources.req_get``, Task 3.17 in feat-6-requirement-artifact), which

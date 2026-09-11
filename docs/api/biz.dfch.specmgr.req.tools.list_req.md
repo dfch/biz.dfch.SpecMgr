@@ -20,6 +20,12 @@ fails to parse now appears inline in ``results`` as a failed entry (marker
 both ``total`` and the new ``error_count``, instead of being silently
 skipped.
 
+feat-107-doc-cache Phase 3 (REQ-005) routes ``read_req`` through the
+content-hash-validated per-domain cache (see ``._cache``) and reconciles
+that cache against this call's own freshly materialized path listing
+before ``build_summaries`` reads any of them, dropping any cached entry
+for a file deleted outside specmgr's own tooling.
+
 ## Functions
 
 ### `_to_failed_summary(path: 'Path', error: 'Exception') -> 'ReqSummary'`

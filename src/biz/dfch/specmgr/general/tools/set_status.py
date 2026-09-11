@@ -111,11 +111,13 @@ from ...adr.tools._paths import adr_base_dir
 from ...dec.models.v1 import DecFrontmatter
 from ...dec.models.v1.frontmatter import _ALLOWED_STATUSES as _DEC_ALLOWED_STATUSES
 from ...dec.tools._io import load_by_id as load_dec_by_id
+from ...dec.tools._io import read_dec
 from ...dec.tools._lock import dec_lock
 from ...dec.tools._paths import dec_base_dir
 from ...dec.tools._write import write_dec_file
 from ...feat.models.v1 import FeatFrontmatter
 from ...feat.models.v1.frontmatter import _ALLOWED_STATUSES as _FEAT_ALLOWED_STATUSES
+from ...feat.tools._cache import read_feat
 from ...feat.tools._io import load_by_id as load_feat_by_id
 from ...feat.tools._lock import feat_lock
 from ...feat.tools._paths import feat_base_dir
@@ -124,6 +126,7 @@ from ...general.models import InvalidStatusResult
 from ...gol.models.v1 import GolFrontmatter
 from ...gol.models.v1.frontmatter import _ALLOWED_STATUSES as _GOL_ALLOWED_STATUSES
 from ...gol.tools._io import load_by_id as load_gol_by_id
+from ...gol.tools._io import read_gol
 from ...gol.tools._lock import gol_lock
 from ...gol.tools._paths import gol_base_dir
 from ...gol.tools._write import write_gol_file
@@ -135,24 +138,28 @@ from ...models.md._errors import FRONTMATTER_CHANNEL, wrap_tool_errors
 from ...prb.models.v1 import PrbFrontmatter
 from ...prb.models.v1.frontmatter import _ALLOWED_STATUSES as _PRB_ALLOWED_STATUSES
 from ...prb.tools._io import load_by_id as load_prb_by_id
+from ...prb.tools._io import read_prb
 from ...prb.tools._lock import prb_lock
 from ...prb.tools._paths import prb_base_dir
 from ...prb.tools._write import write_prb_file
 from ...qa.models.v2 import QaFrontmatter
 from ...qa.models.v2.frontmatter import _ALLOWED_STATUSES as _QA_ALLOWED_STATUSES
 from ...qa.tools._io import load_by_id as load_qa_by_id
+from ...qa.tools._io import read_qa
 from ...qa.tools._lock import qa_lock
 from ...qa.tools._paths import qa_base_dir
 from ...qa.tools._write import write_qa_file
 from ...req.models.v1 import ReqFrontmatter
 from ...req.models.v1.frontmatter import _ALLOWED_STATUSES as _REQ_ALLOWED_STATUSES
 from ...req.tools._io import load_by_id as load_req_by_id
+from ...req.tools._io import read_req
 from ...req.tools._lock import req_lock
 from ...req.tools._paths import req_base_dir
 from ...req.tools._write import write_req_file
 from ...rsk.models.v1 import RskFrontmatter
 from ...rsk.models.v1.frontmatter import _ALLOWED_STATUSES as _RSK_ALLOWED_STATUSES
 from ...rsk.tools._io import load_by_id as load_rsk_by_id
+from ...rsk.tools._io import read_rsk
 from ...rsk.tools._lock import rsk_lock
 from ...rsk.tools._paths import rsk_base_dir
 from ...rsk.tools._write import write_rsk_file
@@ -160,30 +167,35 @@ from ...server import mcp
 from ...sop.models.v1 import SopFrontmatter
 from ...sop.models.v1.frontmatter import _ALLOWED_STATUSES as _SOP_ALLOWED_STATUSES
 from ...sop.tools._io import load_by_id as load_sop_by_id
+from ...sop.tools._io import read_sop
 from ...sop.tools._lock import sop_lock
 from ...sop.tools._paths import sop_base_dir
 from ...sop.tools._write import write_sop_file
 from ...sysrs.models.v1 import SysrsFrontmatter
 from ...sysrs.models.v1.frontmatter import _ALLOWED_STATUSES as _SYSRS_ALLOWED_STATUSES
 from ...sysrs.tools._io import load_by_id as load_sysrs_by_id
+from ...sysrs.tools._io import read_sysrs
 from ...sysrs.tools._lock import sysrs_lock
 from ...sysrs.tools._paths import sysrs_base_dir
 from ...sysrs.tools._write import write_sysrs_file
 from ...tsk.models.v1 import TskFrontmatter
 from ...tsk.models.v1.frontmatter import _ALLOWED_STATUSES as _TSK_ALLOWED_STATUSES
 from ...tsk.tools._io import load_by_id as load_tsk_by_id
+from ...tsk.tools._io import read_tsk
 from ...tsk.tools._lock import tsk_lock
 from ...tsk.tools._paths import tsk_base_dir
 from ...tsk.tools._write import write_tsk_file
 from ...uc.models.v2 import UcFrontmatter
 from ...uc.models.v2.frontmatter import _ALLOWED_STATUSES as _UC_ALLOWED_STATUSES
 from ...uc.tools._io import load_by_id as load_uc_by_id
+from ...uc.tools._io import read_uc
 from ...uc.tools._lock import uc_lock
 from ...uc.tools._paths import uc_base_dir
 from ...uc.tools._write import write_uc_file
 from ...vcr.models.v1 import VcrFrontmatter
 from ...vcr.models.v1.frontmatter import _ALLOWED_STATUSES as _VCR_ALLOWED_STATUSES
 from ...vcr.tools._io import load_by_id as load_vcr_by_id
+from ...vcr.tools._io import read_vcr
 from ...vcr.tools._lock import vcr_lock
 from ...vcr.tools._paths import vcr_base_dir
 from ...vcr.tools._write import write_vcr_file
@@ -303,6 +315,7 @@ def _set_status_req(id_: str, status: str, superseded_by: str | None) -> ReqFron
         with wrap_tool_errors(domain="req", tool="set_status", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = ReqFrontmatter(**fm_data)
         write_req_file(path, new_frontmatter, raw_body)
+        read_req(path)  # warm the cache (feat-107-doc-cache Phase 3, REQ-003)
     return new_frontmatter
 
 
@@ -329,6 +342,7 @@ def _set_status_uc(id_: str, status: str, superseded_by: str | None) -> UcFrontm
         with wrap_tool_errors(domain="uc", tool="set_status", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = UcFrontmatter(**fm_data)
         write_uc_file(path, new_frontmatter, raw_body)
+        read_uc(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
     return new_frontmatter
 
 
@@ -355,6 +369,7 @@ def _set_status_tsk(id_: str, status: str, superseded_by: str | None) -> TskFron
         with wrap_tool_errors(domain="tsk", tool="set_status", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = TskFrontmatter(**fm_data)
         write_tsk_file(path, new_frontmatter, raw_body)
+        read_tsk(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
     return new_frontmatter
 
 
@@ -381,6 +396,7 @@ def _set_status_qa(id_: str, status: str, superseded_by: str | None) -> QaFrontm
         with wrap_tool_errors(domain="qa", tool="set_status", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = QaFrontmatter(**fm_data)
         write_qa_file(path, new_frontmatter, raw_body)
+        read_qa(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
     return new_frontmatter
 
 
@@ -408,6 +424,7 @@ def _set_status_prb(id_: str, status: str, superseded_by: str | None) -> PrbFron
         with wrap_tool_errors(domain="prb", tool="set_status", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = PrbFrontmatter(**fm_data)
         write_prb_file(path, new_frontmatter, raw_body)
+        read_prb(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
     return new_frontmatter
 
 
@@ -434,6 +451,7 @@ def _set_status_gol(id_: str, status: str, superseded_by: str | None) -> GolFron
         with wrap_tool_errors(domain="gol", tool="set_status", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = GolFrontmatter(**fm_data)
         write_gol_file(path, new_frontmatter, raw_body)
+        read_gol(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
     return new_frontmatter
 
 
@@ -460,6 +478,7 @@ def _set_status_rsk(id_: str, status: str, superseded_by: str | None) -> RskFron
         with wrap_tool_errors(domain="rsk", tool="set_status", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = RskFrontmatter(**fm_data)
         write_rsk_file(path, new_frontmatter, raw_body)
+        read_rsk(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
     return new_frontmatter
 
 
@@ -488,6 +507,7 @@ def _set_status_dec(id_: str, status: str, superseded_by: str | None) -> DecFron
         with wrap_tool_errors(domain="dec", tool="set_status", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = DecFrontmatter(**fm_data)
         write_dec_file(path, new_frontmatter, raw_body)
+        read_dec(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
     return new_frontmatter
 
 
@@ -517,6 +537,7 @@ def _set_status_feat(id_: str, status: str, superseded_by: str | None) -> FeatFr
         with wrap_tool_errors(domain="feat", tool="set_status", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = FeatFrontmatter(**fm_data)
         write_feat_file(path, new_frontmatter, raw_body)
+        read_feat(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
     return new_frontmatter
 
 
@@ -545,6 +566,7 @@ def _set_status_sop(id_: str, status: str, superseded_by: str | None) -> SopFron
         with wrap_tool_errors(domain="sop", tool="set_status", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = SopFrontmatter(**fm_data)
         write_sop_file(path, new_frontmatter, raw_body)
+        read_sop(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
     return new_frontmatter
 
 
@@ -571,6 +593,7 @@ def _set_status_vcr(id_: str, status: str, superseded_by: str | None) -> VcrFron
         with wrap_tool_errors(domain="vcr", tool="set_status", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = VcrFrontmatter(**fm_data)
         write_vcr_file(path, new_frontmatter, raw_body)
+        read_vcr(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
     return new_frontmatter
 
 
@@ -598,6 +621,7 @@ def _set_status_sysrs(id_: str, status: str, superseded_by: str | None) -> Sysrs
         with wrap_tool_errors(domain="sysrs", tool="set_status", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = SysrsFrontmatter(**fm_data)
         write_sysrs_file(path, new_frontmatter, raw_body)
+        read_sysrs(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
     return new_frontmatter
 
 

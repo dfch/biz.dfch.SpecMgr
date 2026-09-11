@@ -24,9 +24,11 @@ already-validated ``content`` text is persisted byte-for-byte, and only the
 small frontmatter YAML block is code-generated and prepended -- mirrors
 ``gol.tools.create_gol`` file-for-file.
 
-Thin file-I/O adapter; there is no in-memory cache of a parsed
-:class:`~biz.dfch.specmgr.dec.models.v1.DecDocument` -- the ``.md`` file
-itself is always the source of truth, matching every other tool in this
+Thin file-I/O adapter. The ``.md`` file itself is always the source of
+truth (ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3); the in-memory cache
+warmed after the write below (feat-107-doc-cache Phase 4, REQ-003) is only
+ever a content-hash-validated memoization of that file's own current
+state, never an independent fact, matching every other tool in this
 codebase.
 """
 
@@ -41,6 +43,7 @@ from ...models.md._errors import BODY_CHANNEL, wrap_tool_errors
 from ...models.md._markdown import format_text
 from ...server import mcp
 from ..models.v1 import DecFrontmatter, Decision
+from ._io import read_dec
 from ._paths import ensure_dec_base_dir
 from ._write import write_dec_file
 
@@ -117,5 +120,7 @@ def create_dec(content: str) -> DecFrontmatter:
     )
     filename = f"dec-{new_id}-{slugify(body.text)}.md"
     base_dir = ensure_dec_base_dir()
-    write_dec_file(base_dir / filename, new_frontmatter, content)
+    path = base_dir / filename
+    write_dec_file(path, new_frontmatter, content)
+    read_dec(path)  # warm the cache with this write's own validated content (feat-107-doc-cache Phase 4, REQ-003)
     return new_frontmatter

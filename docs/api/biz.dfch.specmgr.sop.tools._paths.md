@@ -10,10 +10,22 @@ shape, only the parsed document type and its id accessor differ. Mirrors
 
 Mirrors ``dec.tools._paths``'s read-only/write split: :func:`sop_base_dir`
 never creates the directory (a read-only tool shouldn't have that side
-effect), only :func:`ensure_sop_base_dir` does, for ``create_sop``. There is
-deliberately no in-memory id -> path cache either -- every lookup re-scans
-the base directory and re-parses each file, matching this codebase's "the
-on-disk file is the sole source of truth" design.
+effect), only :func:`ensure_sop_base_dir` does, for ``create_sop``.
+
+**Cache-backed scan (feat-107-doc-cache Phase 4).** :func:`find_sop_path`
+now scans through the content-hash-validated per-domain cache (ADR
+bfd76370-b59b-4d65-b550-a969f6c93c9d): it passes ``._cache``'s own
+``read_sop`` (not ``parse_sop``) as ``find_doc_path_by_id``'s ``read_fn``,
+so a file whose on-disk content hash is unchanged since its last read is
+not re-parsed, and it passes ``._cache``'s ``reconcile_sop_cache`` as
+``reconcile_fn`` so an orphaned cache entry (a file deleted outside
+specmgr's own tooling) is dropped before any per-file work on every scan.
+``read_sop``/``reconcile_sop_cache`` are imported from ``._cache``, not
+``._io``, to avoid a circular import -- see ``._cache``'s own module
+docstring for the full rationale. The filesystem remains the sole source
+of truth (ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3): a cache entry is only
+ever a memoization keyed by validated content hash, never an independent
+fact about what exists on disk.
 
 ## Classes
 
@@ -61,13 +73,18 @@ Path
 
 Resolve an ``id`` to its on-disk file path under ``base_dir``.
 
-Scans every ``*.md`` file under ``base_dir``, parsing each via
-:func:`~biz.dfch.specmgr.sop.models.v1.parse_sop` and comparing
-``frontmatter.id`` against ``id_``. A file that fails to parse
+Scans every ``*.md`` file under ``base_dir``, reading each through the
+cache-backed :func:`~._cache.read_sop` (feat-107-doc-cache Phase 4) and
+comparing ``frontmatter.id`` against ``id_`` -- a file whose on-disk
+content hash is unchanged since its last read is not re-parsed. A file
+that fails to parse
 (``AssertionError``/``pydantic.ValidationError``) is silently skipped --
 one broken file must not prevent lookup of a different, valid id.
 Mirrors ``dec.tools._paths.find_dec_path``'s own skip-on-parse-failure
-rule.
+rule. Before scanning, the cache is reconciled
+against the freshly materialized live path listing
+(:func:`~._cache.reconcile_sop_cache`), dropping any cached entry for a
+file deleted outside specmgr's own tooling (REQ-005).
 
 Parameters
 ----------

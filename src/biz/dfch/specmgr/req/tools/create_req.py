@@ -27,10 +27,11 @@ design). There is therefore no ``write_req``/``render_req`` in
 composition is factored into ``req.tools._write.write_req_file`` instead,
 shared with the generic ``update`` tool in ``general.tools``.
 
-Thin file-I/O adapter; there is no in-memory cache of a parsed
-:class:`~biz.dfch.specmgr.req.models.v1.ReqDocument` -- the ``.md`` file
-itself is always the source of truth, matching every other tool in this
-codebase.
+Thin file-I/O adapter. The ``.md`` file itself is always the source of
+truth (ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3); the in-memory cache
+warmed after the write below (feat-107-doc-cache Phase 3, REQ-003) is only
+ever a content-hash-validated memoization of that file's own current
+state, never an independent fact.
 """
 
 from __future__ import annotations
@@ -44,6 +45,7 @@ from ...models.md._errors import BODY_CHANNEL, wrap_tool_errors
 from ...models.md._markdown import format_text
 from ...server import mcp
 from ..models.v1 import ReqFrontmatter, Requirement
+from ._io import read_req
 from ._paths import ensure_req_base_dir
 from ._write import write_req_file
 
@@ -120,5 +122,7 @@ def create_req(content: str) -> ReqFrontmatter:
     )
     filename = f"req-{new_id}-{slugify(body.text)}.md"
     base_dir = ensure_req_base_dir()
-    write_req_file(base_dir / filename, new_frontmatter, content)
+    path = base_dir / filename
+    write_req_file(path, new_frontmatter, content)
+    read_req(path)  # warm the cache with this write's own validated content (feat-107-doc-cache Phase 3, REQ-003)
     return new_frontmatter

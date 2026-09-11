@@ -20,12 +20,14 @@
 from __future__ import annotations
 
 import os
+import shutil
 import tempfile
 import textwrap
 import unittest
 from pathlib import Path
 from unittest import mock
 
+from biz.dfch.specmgr.feat.tools import _paths as feat_paths_module
 from biz.dfch.specmgr.feat.tools._paths import (
     DEFAULT_FEAT_DIR,
     FEAT_DIR_ENV_VAR,
@@ -232,6 +234,74 @@ class TestFindFeatPathById(unittest.TestCase):
 
             with self.assertRaises(FeatNotFoundError) as ctx:
                 find_feat_path_by_id(base, "feat-1-broken")
+            message = str(ctx.exception)
+            self.assertIn("could not be parsed", message)
+
+    def test_acc014_a_read_racing_set_feat_ids_rename_raises_feat_not_found_not_a_bare_file_not_found_error(
+        self,
+    ) -> None:
+        """ACC-014 (feat-107-doc-cache Phase 6, REQ-012): a lock-free read racing set_feat_id's
+        rename must not surface an uncaught FileNotFoundError.
+
+        Simulates the narrow window after `set_feat_id`'s
+        `old_path.parent.rename(new_path.parent)` succeeds but before its
+        cache-entry move runs: `path.exists()` above has already passed
+        (the file existed a moment ago), but by the time the cache-backed
+        `read_feat(path)` call's own internal `path.read_text()` actually
+        runs, the folder has vanished -- deterministically reproduced here
+        by having a patched `read_feat` delete the folder itself, then
+        delegate to the real (now genuinely file-missing) cache-backed
+        read, so the exact same `FileNotFoundError` this race would
+        produce in production propagates out of the patched call.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            expected_path = _write_feat_folder(base, "feat-1-mid-rename", "feat-1-mid-rename")
+            real_read_feat = feat_paths_module.read_feat
+
+            def _vanish_then_read(path: Path):
+                shutil.rmtree(path.parent)
+                return real_read_feat(path)
+
+            with mock.patch.object(feat_paths_module, "read_feat", side_effect=_vanish_then_read):
+                with self.assertRaises(FeatNotFoundError) as ctx:
+                    find_feat_path_by_id(base, "feat-1-mid-rename")
+            message = str(ctx.exception)
+            self.assertIn("could not be parsed", message)
+            self.assertIn("FileNotFoundError", message)
+            self.assertFalse(expected_path.exists())
+
+    def test_acc015_malformed_yaml_frontmatter_raises_feat_not_found_not_a_bare_yaml_error(self) -> None:
+        """ACC-015 (feat-107-doc-cache Phase 7, REQ-013): a feature folder whose README.md has
+        deliberately malformed YAML frontmatter must raise FeatNotFoundError, not an uncaught
+        yaml.YAMLError.
+
+        Mirrors ACC-012's fixture/assertion shape (``tests/req/tools/test_doc_cache_wiring.py``),
+        adapted to feat's single-folder shortcut lookup: there is no sibling-file scan here to
+        demonstrate skip-on-failure with, since find_feat_path_by_id never scans -- it shortcuts
+        directly to the one target folder, so the only assertion possible is that the malformed
+        file's own lookup itself resolves to the graceful not-found error, not a crash.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            folder = base / "feat-1-malformed-yaml"
+            folder.mkdir(parents=True)
+            (folder / README_FILENAME).write_text(
+                "---\n"
+                "id: [this is not valid yaml because the flow sequence is never closed\n"
+                "type: feat\n"
+                "version: 1.0.0\n"
+                "status: planning\n"
+                "created: '2026-08-30 00:00:00.000Z'\n"
+                "updated: '2026-08-30 00:00:00.000Z'\n"
+                "---\n"
+                "\n"
+                "# Feature: Malformed Frontmatter Fixture\n",
+                encoding="utf-8",
+            )
+
+            with self.assertRaises(FeatNotFoundError) as ctx:
+                find_feat_path_by_id(base, "feat-1-malformed-yaml")
             message = str(ctx.exception)
             self.assertIn("could not be parsed", message)
 

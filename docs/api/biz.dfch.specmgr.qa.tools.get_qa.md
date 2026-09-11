@@ -3,9 +3,12 @@
 ``@mcp.tool()`` wrapper: get_qa (Phase 4, Task 4.1).
 
 Mirrors ``adr.tools.get_adr``/``req.tools.get_req`` -- a thin
-file-I/O/id-lookup adapter that re-reads and re-parses the current on-disk
-state on every call; there is no in-memory cache of a parsed
-:class:`QaDocument`: the ``.md`` file itself is always the source of truth.
+file-I/O/id-lookup adapter. The ``.md`` file itself remains the sole source
+of truth (ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3); its underlying
+``load_by_id`` now routes through a content-hash-validated, per-domain
+in-memory cache (ADR bfd76370-b59b-4d65-b550-a969f6c93c9d, ``._cache``)
+that skips re-parsing when a file's content hash is unchanged since its
+last read, so a stale entry is structurally impossible.
 
 There is no ``specmgr://qa/{id}`` resource -- id-based reads go through
 this tool only, mirroring REQ's own choice; see ADR

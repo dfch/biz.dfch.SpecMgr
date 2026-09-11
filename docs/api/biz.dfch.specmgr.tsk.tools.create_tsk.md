@@ -22,10 +22,11 @@ own instructional text that demonstrate/instruct seeding a first entry (e.g.
 ``### Created``) so a caller drafting new content naturally satisfies the
 constraint.
 
-Thin file-I/O adapter; there is no in-memory cache of a parsed
-:class:`~biz.dfch.specmgr.tsk.models.v1.TskDocument` -- the ``.md`` file
-itself is always the source of truth, matching every other tool in this
-codebase.
+Thin file-I/O adapter. The ``.md`` file itself is always the source of
+truth (ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3); the in-memory cache
+warmed after the write below (feat-107-doc-cache Phase 4, REQ-003) is only
+ever a content-hash-validated memoization of that file's own current
+state, never an independent fact.
 
 ## Functions
 

@@ -43,6 +43,7 @@ from ...general.tools._listing import build_summaries, default_failed_summary
 from ...general.tools._paging import normalize_paging, paginate
 from ...server import mcp
 from ..models.v1 import GolDocument, GolSummary
+from ._cache import reconcile_gol_cache
 from ._io import read_gol
 from ._paths import iter_gol_paths
 
@@ -110,5 +111,7 @@ def list_gol(max_results: int | None = None, offset: int | None = None) -> Paged
         if the base directory does not exist, holds no goals, or ``offset``
         is past the end of the full list.
     """
-    summaries, error_count = build_summaries(iter_gol_paths(), read_gol, _to_summary, _to_failed_summary)
+    paths = list(iter_gol_paths())
+    reconcile_gol_cache(paths)  # feat-107-doc-cache Phase 4, REQ-005
+    summaries, error_count = build_summaries(paths, read_gol, _to_summary, _to_failed_summary)
     return paginate(summaries, *normalize_paging(max_results, offset), error_count=error_count)

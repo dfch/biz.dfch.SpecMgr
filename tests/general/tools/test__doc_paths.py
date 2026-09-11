@@ -44,9 +44,14 @@ class _FakeDoc:
         self.id = id_
 
 
-def _parse_fake(text: str) -> _FakeDoc:
-    """Parse fixture text into a ``_FakeDoc``; ``"BROKEN"`` simulates a parse failure."""
-    stripped = text.strip()
+def _read_fake(path: Path) -> _FakeDoc:
+    """Read and parse ``path``'s fixture text into a ``_FakeDoc`` (the ``read_fn`` shape, Path in).
+
+    ``"BROKEN"`` simulates a parse failure -- mirrors the shape a domain's
+    own cache-backed ``read_<domain>`` (e.g. ``req.tools._cache.read_req``)
+    has: takes a ``Path``, reads its text itself.
+    """
+    stripped = path.read_text(encoding="utf-8").strip()
     if stripped == "BROKEN":
         raise ValueError("simulated parse failure")
     return _FakeDoc(id_=stripped or None)
@@ -173,7 +178,7 @@ class TestFindDocPathById(unittest.TestCase):
             base = Path(tmp)
             path = base / "target.md"
             path.write_text("target-id", encoding="utf-8")
-            self.assertEqual(find_doc_path_by_id(base, "target-id", _parse_fake, _get_id), path)
+            self.assertEqual(find_doc_path_by_id(base, "target-id", _read_fake, _get_id), path)
 
     def test_raises_not_found_for_unknown_id(self):
         """An id with no matching file must raise DocNotFoundError with the standardized message."""
@@ -181,7 +186,7 @@ class TestFindDocPathById(unittest.TestCase):
             base = Path(tmp)
             (base / "one.md").write_text("one-id", encoding="utf-8")
             with self.assertRaises(DocNotFoundError) as ctx:
-                find_doc_path_by_id(base, "missing-id", _parse_fake, _get_id)
+                find_doc_path_by_id(base, "missing-id", _read_fake, _get_id)
             message = str(ctx.exception)
             self.assertIn("no document found with id 'missing-id'", message)
             self.assertIn("bare document UUID", message)
@@ -191,7 +196,7 @@ class TestFindDocPathById(unittest.TestCase):
         """An empty base_dir must raise DocNotFoundError, not e.g. StopIteration."""
         with tempfile.TemporaryDirectory() as tmp:
             with self.assertRaises(DocNotFoundError):
-                find_doc_path_by_id(Path(tmp), "missing-id", _parse_fake, _get_id)
+                find_doc_path_by_id(Path(tmp), "missing-id", _read_fake, _get_id)
 
     def test_skips_malformed_file_and_still_finds_valid_one(self):
         """A file that fails to parse must not prevent finding a different, valid id."""
@@ -200,17 +205,17 @@ class TestFindDocPathById(unittest.TestCase):
             (base / "broken.md").write_text("BROKEN", encoding="utf-8")
             good_path = base / "good.md"
             good_path.write_text("good-id", encoding="utf-8")
-            self.assertEqual(find_doc_path_by_id(base, "good-id", _parse_fake, _get_id), good_path)
+            self.assertEqual(find_doc_path_by_id(base, "good-id", _read_fake, _get_id), good_path)
 
     def test_is_generic_over_doc_type_via_parse_and_get_id_functions(self):
-        """A different parse_fn/get_id_fn pair must work independently (no ADR/REQ coupling)."""
+        """A different read_fn/get_id_fn pair must work independently (no ADR/REQ coupling)."""
 
         class _OtherDoc:
             def __init__(self, ident: str) -> None:
                 self.ident = ident
 
-        def _parse_other(text: str) -> _OtherDoc:
-            return _OtherDoc(ident=text.strip())
+        def _read_other(path: Path) -> _OtherDoc:
+            return _OtherDoc(ident=path.read_text(encoding="utf-8").strip())
 
         def _get_other_id(doc: _OtherDoc) -> str:
             return doc.ident
@@ -219,7 +224,29 @@ class TestFindDocPathById(unittest.TestCase):
             base = Path(tmp)
             path = base / "other.md"
             path.write_text("other-id", encoding="utf-8")
-            self.assertEqual(find_doc_path_by_id(base, "other-id", _parse_other, _get_other_id), path)
+            self.assertEqual(find_doc_path_by_id(base, "other-id", _read_other, _get_other_id), path)
+
+    def test_reconcile_fn_is_called_with_the_materialized_live_path_listing_before_any_per_file_work(self):
+        """`reconcile_fn`, when given, is invoked once with the full live path listing."""
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            path = base / "target.md"
+            path.write_text("target-id", encoding="utf-8")
+            calls: list[list[Path]] = []
+
+            def _reconcile(live_paths):
+                calls.append(list(live_paths))
+
+            self.assertEqual(find_doc_path_by_id(base, "target-id", _read_fake, _get_id, reconcile_fn=_reconcile), path)
+            self.assertEqual(calls, [[path]])
+
+    def test_reconcile_fn_defaults_to_none_and_is_never_called_if_omitted(self):
+        """Omitting `reconcile_fn` must not raise -- it defaults to a no-op (None)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            path = base / "target.md"
+            path.write_text("target-id", encoding="utf-8")
+            self.assertEqual(find_doc_path_by_id(base, "target-id", _read_fake, _get_id), path)
 
 
 if __name__ == "__main__":

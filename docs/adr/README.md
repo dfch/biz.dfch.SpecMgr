@@ -107,6 +107,10 @@ Index of all ADRs in this repository.
   - Id: bc5e18ad-6bbf-4265-bae4-3e34984a2d29
   - Status: accepted
   - Decision-makers: dfch
+- [Add a content-hash-validated, per-domain in-memory read cache for the 12 generic whole-body domains](bfd76370-b59b-4d65-b550-a969f6c93c9d-add-a-content-hash-validated-per-domain-in-memory-read-cache.md)
+  - Id: bfd76370-b59b-4d65-b550-a969f6c93c9d
+  - Status: accepted
+  - Decision-makers: dfch
 - [Base the ADR template on MADR 4.0.0](c73e4f9d-81f3-495d-bd3a-f660ab992ed3-base-the-adr-template-on-madr-4-0-0.md)
   - Id: c73e4f9d-81f3-495d-bd3a-f660ab992ed3
   - Status: accepted
