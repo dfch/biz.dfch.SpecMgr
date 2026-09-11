@@ -16,9 +16,9 @@ microsecond precision :meth:`datetime.datetime.isoformat` produces by
 default).
 
 :func:`now_timestamp` REPLACES every one of this codebase's previous
-``datetime.now().isoformat(timespec="microseconds")`` call sites (the 11
-``create_<d>`` tools, the 22 ``update`` adapter sites, and the 11
-``set_status`` adapter sites -- Task 3.3) with one shared, consistently
+``datetime.now().isoformat(timespec="microseconds")`` call sites (every
+``create_<d>`` tool, the 22 ``update`` adapter sites, and every
+``set_status`` adapter site -- Task 3.3) with one shared, consistently
 formatted implementation. :func:`format_timestamp` is the pure formatting
 core :func:`now_timestamp` delegates to, exposed separately so the D7/D8
 repo-document and test-fixture migrations (Tasks 3.4/3.5) can reuse the

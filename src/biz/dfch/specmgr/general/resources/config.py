@@ -19,15 +19,15 @@
 
 The MCP server resolves every per-domain base directory relative to its own
 process's current working directory unless a domain's own ``SPECMGR_*_DIR``
-env var (or the shared ``SPECMGR_DOCS_DIR`` root eleven of the thirteen
-domains share) is explicitly set. This resource lets a client self-diagnose
-"am I pointed where I think I am?" by reporting, for all thirteen domains,
+env var (or the shared ``SPECMGR_DOCS_DIR`` root most domains share) is
+explicitly set. This resource lets a client self-diagnose
+"am I pointed where I think I am?" by reporting, for every domain,
 the resolved *absolute* base directory and whether the relevant env var was
 explicitly set -- without requiring shell access to the server's host
 (REQ-001/ACC-001).
 
 **Never discloses arbitrary environment variables (REQ-002/ACC-002).** Only
-the twelve known ``SPECMGR_*_DIR`` env var *names* are read here, and only
+the known ``SPECMGR_*_DIR`` env var *names* are read here, and only
 their *presence* (``os.environ.get(name) is not None``), never their value
 and never any other environment variable -- this module never iterates over
 or dumps ``os.environ`` wholesale.
@@ -64,7 +64,7 @@ from ...vcr.tools._paths import vcr_base_dir
     name="config",
     title="SpecMgr Resolved Base Directory Configuration",
     description=(
-        "For all thirteen document domains (adr, req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, "
+        "For every document domain (adr, req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, "
         "vcr, sysrs), the resolved absolute base directory and whether the domain's SPECMGR_*_DIR "
         "environment variable is explicitly set. Never discloses the value of any environment "
         "variable, only whether the relevant directory-path env var is present."
@@ -77,16 +77,16 @@ def config_info() -> ConfigInfo:
 
     Explicitly enumerates the known ``SPECMGR_*_DIR`` env var names and
     reads only those from the environment (REQ-002) -- ``adr`` and ``feat``
-    each have their own dedicated env var; the other eleven domains (``req``,
+    each have their own dedicated env var; every other domain (``req``,
     ``uc``, ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``,
-    ``vcr``, ``sysrs``) all share the one root ``SPECMGR_DOCS_DIR`` env var,
+    ``vcr``, ``sysrs``) shares the one root ``SPECMGR_DOCS_DIR`` env var,
     so their ``env_var``/``env_var_set`` fields are identical by design, not
     a bug.
 
     Returns
     -------
     ConfigInfo
-        The resolved base directory configuration for all thirteen domains.
+        The resolved base directory configuration for every domain.
     """
     docs_dir_set = os.environ.get(DOCS_DIR_ENV_VAR) is not None
 

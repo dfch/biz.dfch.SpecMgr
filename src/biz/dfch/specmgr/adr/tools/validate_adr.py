@@ -26,7 +26,7 @@ of truth.
 
 ADR's own structural error channel is :class:`~biz.dfch.specmgr.models.adr.
 v1.parser.AdrParseError` (a plain ``ValueError`` subclass), not
-``AssertionError`` like the eleven whole-body domains -- see that module's
+``AssertionError`` like the whole-body domains -- see that module's
 own docstring for the full two-channel split. :func:`~biz.dfch.specmgr.
 models.md._errors.wrap_tool_errors` is given ``also_catch=(AdrParseError,)``
 here so that channel gets the same domain/tool context prefix as

@@ -3,7 +3,7 @@
 ``@mcp.tool()`` wrapper: validate (feat-81-83-validation, Phase 2).
 
 The generic, cross-domain, type-dispatched dry-run validation tool for the
-twelve whole-body document types
+whole-body document types
 (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/
 ``feat``/``vcr``/``sysrs``). It dispatches on the explicit ``type``
 parameter to a private per-domain adapter (``_validate_<d>``), each a
@@ -18,10 +18,10 @@ label, mirroring ``update``'s/``set_status``'s own generic-tool-name
 convention rather than the retired per-domain tool name.
 
 Unlike ``update``/``set_status``/``set_classification``/``delete``,
-``validate`` is disk-free and id-free (a content-based dry run) for all
-twelve domains -- no lock, no filesystem access, no id resolution is
-needed, exactly like every one of today's per-domain ``validate_<d>`` tools
-already was.
+``validate`` is disk-free and id-free (a content-based dry run) for
+every one of the whole-body domains -- no lock, no filesystem access, no
+id resolution is needed, exactly like every one of today's per-domain
+``validate_<d>`` tools already was.
 
 **Non-raising contract (REQ-004)**: unlike every other generic tool in this
 package, ``validate`` never raises for a content-validation failure. The
@@ -48,7 +48,7 @@ any adapter runs at all.
 
 ADR is deliberately *not* a ``type`` here, mirroring ``update``'s/
 ``set_classification``'s/``delete``'s own exclusion: ``validate_adr`` is
-structurally the odd one out among the (previously) thirteen
+structurally the odd one out among the (previously) separate per-domain
 ``validate_<d>`` tools -- ``id``-based and disk-touching, with no ``full``
 parameter, and its own structural-failure channel is ``AdrParseError``
 (a ``ValueError`` subclass) rather than ``AssertionError`` -- so it is kept
@@ -265,7 +265,7 @@ ValidateResult
 Raises
 ------
 ValueError
-    ``type`` is not one of the twelve supported domains (including
+    ``type`` is not one of the supported domains (including
     ``"adr"``), or ``full`` does not match whether ``content`` carries
     a frontmatter block.
 

@@ -20,7 +20,7 @@
 """``@mcp.tool()`` wrapper: update (feat-22-consolidate-mutation-tools, Phase 2).
 
 The generic, cross-domain whole-body *and* line-range replace tool for the
-twelve whole-body document types (``req``/``uc``/``tsk``/``qa``/``prb``/
+whole-body document types (``req``/``uc``/``tsk``/``qa``/``prb``/
 ``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``). It dispatches on the
 explicit ``type`` parameter to a private per-domain adapter (``_update_<d>``),
 each a **verbatim port** of
@@ -39,12 +39,12 @@ per-domain tool.
 
 The parameter is intentionally named ``type`` (it matches the frontmatter
 field vocabulary the client already knows); no enabled ruff rule objects to
-the builtin shadow. The 12-way union return type is annotation-only -- the
+the builtin shadow. The union return type is annotation-only -- the
 MCP input schema is built from the parameters, and the SDK serializes
 whichever concrete document is returned.
 
 ``feat`` is the one domain whose adapter (``_update_feat``) diverges from
-the other ten's identical shape in how it resolves ``id``: via
+every other domain's identical shape in how it resolves ``id``: via
 ``feat.tools._paths``'s bespoke folder-per-document shortcut, not a
 flat-file directory scan (see
 ``.specmgr/feat/feat-31-feature/README.md`` Design Notes, "Addressing").
@@ -152,7 +152,7 @@ from ._timestamps import now_timestamp
 
 __all__ = ["update"]
 
-#: The generic tool's 12-way return union -- annotation-only (see module docstring).
+#: The generic tool's return union -- annotation-only (see module docstring).
 _UpdateFrontmatter = (
     ReqFrontmatter
     | UcFrontmatter
@@ -717,7 +717,7 @@ _ADAPTERS: dict[str, Callable[[str, str, int | None, int | None], _UpdateFrontma
     name="update",
     title="Update document",
     description=(
-        "Whole-body or line-range replace of an existing document's content across the twelve "
+        "Whole-body or line-range replace of an existing document's content across the "
         "whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, "
         "sysrs), preserving its id/type/status/created/version; only `updated` changes. With no `offset`/`limit`, "
         "`content` is the full replacement body (body markdown only, no frontmatter block). With "
@@ -740,7 +740,7 @@ def update(
 ) -> _UpdateFrontmatter:
     """Replace the body of an existing document, in whole-body or line-range mode.
 
-        Cross-domain generic for the twelve whole-body document types
+        Cross-domain generic for the whole-body document types
         (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``);
         dispatches on ``type`` to the domain's own ported adapter (same lock,
         same id resolution, same frontmatter carry-over, same verbatim
@@ -783,8 +783,8 @@ def update(
         Safety (REQ-009, feat-38-39-41-43-44 Phase 4, mirroring ``delete``'s
         own REQ-003): ``id`` is validated via ``_path_safety.validate_id`` (no
         ``/``, no ``\\``, no ``..``, plus the dispatched domain's own format --
-        canonical lowercase-hex UUID for the ten UUID domains, ``feat-NNN-slug``
-        for ``feat``) **before** any filesystem access, so a path-injection
+        canonical lowercase-hex UUID for every domain other than ``feat``,
+        ``feat-NNN-slug`` for ``feat``) **before** any filesystem access, so a path-injection
         attempt or a wrong-format id is a ``ValueError`` raised before dispatch.
         Each adapter additionally confines the resolved path to the domain's
         own base directory with ``_path_safety.assert_within`` inside the

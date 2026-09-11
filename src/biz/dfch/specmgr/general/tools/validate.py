@@ -20,7 +20,7 @@
 """``@mcp.tool()`` wrapper: validate (feat-81-83-validation, Phase 2).
 
 The generic, cross-domain, type-dispatched dry-run validation tool for the
-twelve whole-body document types
+whole-body document types
 (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/
 ``feat``/``vcr``/``sysrs``). It dispatches on the explicit ``type``
 parameter to a private per-domain adapter (``_validate_<d>``), each a
@@ -35,10 +35,10 @@ label, mirroring ``update``'s/``set_status``'s own generic-tool-name
 convention rather than the retired per-domain tool name.
 
 Unlike ``update``/``set_status``/``set_classification``/``delete``,
-``validate`` is disk-free and id-free (a content-based dry run) for all
-twelve domains -- no lock, no filesystem access, no id resolution is
-needed, exactly like every one of today's per-domain ``validate_<d>`` tools
-already was.
+``validate`` is disk-free and id-free (a content-based dry run) for
+every one of the whole-body domains -- no lock, no filesystem access, no
+id resolution is needed, exactly like every one of today's per-domain
+``validate_<d>`` tools already was.
 
 **Non-raising contract (REQ-004)**: unlike every other generic tool in this
 package, ``validate`` never raises for a content-validation failure. The
@@ -65,7 +65,7 @@ any adapter runs at all.
 
 ADR is deliberately *not* a ``type`` here, mirroring ``update``'s/
 ``set_classification``'s/``delete``'s own exclusion: ``validate_adr`` is
-structurally the odd one out among the (previously) thirteen
+structurally the odd one out among the (previously) separate per-domain
 ``validate_<d>`` tools -- ``id``-based and disk-touching, with no ``full``
 parameter, and its own structural-failure channel is ``AdrParseError``
 (a ``ValueError`` subclass) rather than ``AssertionError`` -- so it is kept
@@ -109,7 +109,7 @@ from ...vcr.models.v1 import Vcr, parse_vcr
 
 __all__ = ["validate"]
 
-#: The twelve whole-body domains the generic validate tool covers (ADR excluded).
+#: The whole-body domains the generic validate tool covers (ADR excluded).
 _VALIDATE_TYPES = ("req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "feat", "vcr", "sysrs")
 
 #: Exactly the three content-validation-failure channels REQ-004 requires be caught and turned
@@ -524,7 +524,7 @@ _ADAPTERS: dict[str, Callable[[str, bool], None]] = {
     name="validate",
     title="Validate document content",
     description=(
-        "Disk-free, id-free dry run validating document content across the twelve whole-body "
+        "Disk-free, id-free dry run validating document content across the whole-body "
         "domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs; "
         "`adr` is not supported -- use `validate_adr` instead). `full=False` (default) validates "
         "body-only content (no frontmatter); `full=True` validates a complete document "
@@ -535,7 +535,7 @@ _ADAPTERS: dict[str, Callable[[str, bool], None]] = {
         "returned verbatim without limit. A `full`/content-shape mismatch, or an unsupported "
         "`type`, is a caller-usage error and still raises `ValueError` before any validation "
         "runs. This is the sole "
-        "validate entry point for these twelve domains -- the former per-domain `validate_<d>` "
+        "validate entry point for these domains -- the former per-domain `validate_<d>` "
         "tools are removed; `validate_adr` remains a separate, unchanged, id-based tool."
     ),
 )
@@ -605,7 +605,7 @@ def validate(
     Raises
     ------
     ValueError
-        ``type`` is not one of the twelve supported domains (including
+        ``type`` is not one of the supported domains (including
         ``"adr"``), or ``full`` does not match whether ``content`` carries
         a frontmatter block.
     """

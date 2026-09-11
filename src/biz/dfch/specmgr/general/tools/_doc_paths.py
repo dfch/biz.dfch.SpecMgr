@@ -81,7 +81,7 @@ caught here, even though it is the identical race class REQ-012 (Phase 6)
 closed for ``feat`` alone, whose rename-based cache integration REQ-012
 originally (and, per its own now-corrected text, incorrectly) claimed was
 the only trigger for this class of bug -- the generic ``delete`` tool
-triggers the exact same race for every one of the other 11 domains. A file
+triggers the exact same race for every one of the other domains. A file
 vanishing mid-scan this way is now skipped exactly like any other
 unparseable file, and the scan continues looking for the target id.
 """

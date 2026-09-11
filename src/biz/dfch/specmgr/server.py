@@ -122,8 +122,8 @@ specmgr://ears --       The EARS (Easy Approach to Requirements Syntax) five
                         Event-driven requirements, Unwanted behaviours, State-driven
                         requirements, Optional features) and when to use each -- raw
                         markdown domain-knowledge guidance.
-specmgr://config --     For all twelve document domains (adr, req, uc, tsk, qa, prb, gol,
-                        rsk, dec, sop, feat, vcr), the resolved absolute base directory and
+specmgr://config --     For every document domain (adr, req, uc, tsk, qa, prb, gol,
+                        rsk, dec, sop, feat, vcr, sysrs), the resolved absolute base directory and
                         whether the domain's ``SPECMGR_*_DIR`` environment variable is
                         explicitly set (feat-51-mcp-cwd REQ-001) -- lets a client
                         self-diagnose a CWD/env-var misconfiguration without shell access to
@@ -256,7 +256,7 @@ windowed with read-style ``offset``/``limit`` (raw-only, clamping)), ``list_feat
   generic ``delete`` tool (``type="sysrs"``).
   General tools (``general/tools/``): ``mdformat`` -- format markdown files in place,
 preserving YAML frontmatter blocks; ``update`` -- whole-body or line-range replace of an
-existing document's content across the twelve whole-body domains (``type`` is one of
+existing document's content across the whole-body domains (``type`` is one of
  ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``;
  optional read-style
  ``offset``/``limit`` body-line coordinates -- ``offset`` = 1-based first line,
@@ -264,14 +264,14 @@ existing document's content across the twelve whole-body domains (``type`` is on
  pure insert, ``offset = N+1`` = the virtual end-of-body append position;
  strict validation; the spliced result is validated as a whole document
  before anything is written); ``set_status`` --
-replace an existing document's status across all thirteen domains (``type`` is one of
+replace an existing document's status across every domain (``type`` is one of
 ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``adr``),
 also bumping
-``updated`` (the twelve whole-body domains) and leaving the body untouched;
+``updated`` (the whole-body domains) and leaving the body untouched;
 ``superseded_by`` is ``adr``-only (it composes the status as
 ``"superseded by {superseded_by}"``);
 ``set_classification`` -- replace the free-text ``classification``
-frontmatter field of an existing document across the twelve whole-body
+frontmatter field of an existing document across the whole-body
 domains (``type`` is one of
 ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``;
 ``adr`` is not supported), also bumping ``updated`` and leaving the body
@@ -279,7 +279,7 @@ and every other frontmatter field untouched; a blank/whitespace-only value
 clears ``classification`` back to ``None``/absent; no ``create_<d>`` tool
 accepts a ``classification`` argument at all -- this is the sole
 classification-change entry point;
-``delete`` -- the generic type-dispatched hard-delete for the twelve
+``delete`` -- the generic type-dispatched hard-delete for the
 whole-body domains (``type`` is one of ``req``/``uc``/``tsk``/``qa``/``prb``/
 ``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``; ``adr`` is not supported),
 resolves by ``id``, takes the domain lock, and returns the deleted path; a
@@ -287,21 +287,21 @@ resolves by ``id``, takes the domain lock, and returns the deleted path; a
 domain's ``XNotFoundError`` for missing documents, and a ``DeleteError`` for
 I/O failures;
 ``validate`` (feat-81-83-validation, ADR 078bf395-0a5f-4afd-84f6-b7a2191a00e6) --
-the generic, disk-free/id-free dry-run content validator for the twelve
+the generic, disk-free/id-free dry-run content validator for the
 whole-body domains (``type`` is one of
 ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``;
 ``adr`` is not supported -- use ``validate_adr`` instead), replacing the
-twelve former per-domain ``validate_<d>`` tools; unlike every other generic
+former per-domain ``validate_<d>`` tools; unlike every other generic
 tool above, it never raises for a content-validation failure -- it always
 returns ``{valid: bool, errors: list[{message: str}]}`` (``errors`` empty
 when ``valid`` is ``True``), only raising ``ValueError`` for a ``full``/
 content-shape mismatch or an unsupported ``type``.
 Path safety (feat-38-39-41-43-44 Phase 4, REQ-009, extending feat-36-delete's
-``delete``-only guards, ADR 1af6787b-eaab-4e8f-888f-531c1e76c19d): every one of the thirteen
+``delete``-only guards, ADR 1af6787b-eaab-4e8f-888f-531c1e76c19d): every one of the
 ``get_<d>`` tools (including ``get_adr``), the generic ``update``, and the generic
 ``set_status`` now validate ``id`` via ``general.tools._path_safety.validate_id`` (no
 ``/``, no ``\\``, no ``..``, plus the dispatched/fixed domain's own format --
-canonical lowercase-hex UUID for the twelve UUID domains including ``adr``,
+canonical lowercase-hex UUID for every domain other than ``feat``, including ``adr``,
 ``feat-NNN-slug`` for ``feat``) before any filesystem access, raising ``ValueError``
 before dispatch on a path-injection attempt or a wrong-format id, and additionally
 confine the resolved path to the domain's own base directory with

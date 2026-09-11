@@ -21,7 +21,7 @@ document type (``req``, ``gol``, ``sysrs``, ...), not owned by any single
 domain's own schema, mirroring ``dtais``'s cross-domain placement
 rationale. ``config`` registers the ``specmgr://config`` diagnostic
 resource (feat-51-mcp-cwd REQ-001) -- the resolved absolute base directory
-and env-var-set flag for all twelve document domains, so a client can
+and env-var-set flag for every document domain, so a client can
 self-diagnose a CWD/env-var misconfiguration without shell access to the
 server's host; it never discloses the value of any environment variable,
 only whether a domain's own ``SPECMGR_*_DIR`` is set (REQ-002). Domain-specific

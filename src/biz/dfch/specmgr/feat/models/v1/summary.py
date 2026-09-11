@@ -27,7 +27,7 @@ exist. feat-81-83-validation Phase 3/4 (REQ-007) generalized ``path`` (and
 ``error``) onto the shared
 :class:`~biz.dfch.specmgr.general.models.summary.DocSummary` base for
 *every* whole-body domain, retrofitting ``FeatSummary.path`` to the same
-resolved (absolute) form the other eleven domains use -- so
+resolved (absolute) form every other domain uses -- so
 ``FeatSummary``'s own separate ``path`` field declaration was removed in
 that same pass; it is now inherited, not redeclared. ``feat``'s own
 workflow still treats ``path`` as a first-class, sanctioned direct-read

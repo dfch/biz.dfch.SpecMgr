@@ -437,7 +437,7 @@ base_dir:
 env_var:
     The name of the environment variable that can override ``base_dir``
     (e.g. ``"SPECMGR_ADR_DIR"``, or the shared ``"SPECMGR_DOCS_DIR"``
-    for the eleven domains rooted under it).
+    for the other domains rooted under it).
 env_var_set:
     Whether ``env_var`` is explicitly set in the current process
     environment (``os.environ.get(env_var) is not None``) -- never the

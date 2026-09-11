@@ -41,7 +41,7 @@ See ADR bfd76370-b59b-4d65-b550-a969f6c93c9d for the full cache design this
 module wires up for the ``req`` domain, and
 ``.specmgr/feat/feat-107-doc-cache/README.md`` for the feature plan this
 implements (Phase 3, the pilot domain -- this module's shape is the
-template Phase 4 repeats for the other 11 generic whole-body domains).
+template Phase 4 repeats for every other generic whole-body domain).
 
 ## Functions
 
