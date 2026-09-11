@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-09 22:40:39.484+02:00'
 id: feat-107-doc-cache
-status: done
+status: in-progress
 type: feat
-updated: '2026-09-10 22:30:00.000+02:00'
+updated: '2026-09-11 09:00:00.000+02:00'
 version: 1.0.0
 ---
 
@@ -42,6 +42,8 @@ version: 1.0.0
 
 - REQ-012 (Phase 6, added following the same second review): a concurrent, lock-free read (`get_feat`/`list_feat`, which by design -- per ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3 -- take no domain lock) that races `set_feat_id`'s folder rename (`old_path.parent.rename(new_path.parent)`) must not surface an uncaught `FileNotFoundError`. Today, in the narrow window after the rename but before `move_feat_cache_entry` runs, `old_path` is genuinely absent from disk; a `read_feat(old_path)` call landing in that window has its `path.read_text()` raise `FileNotFoundError`, which is not in `CACHEABLE_ERROR_TYPES` and therefore propagates uncaught out of `DocCache.read`. This is unique to `feat`'s rename-based cache integration -- no other domain's write path ever makes an existing document's own path disappear out from under an in-flight, lock-free reader; every other domain's writes are in-place content replacements of a path that continues to exist throughout.
 
+- REQ-013 (Phase 7, added following a post-closeout review of the "done" feature): `feat/tools/_paths.py`'s `find_feat_path_by_id` and `feat/tools/_io.py`'s `load_by_id` must skip-and-translate a `yaml.YAMLError` from their cache-backed `read_feat` call the same way they already do for `AssertionError`/`pydantic.ValidationError`/`FileNotFoundError`, surfacing the domain's own `FeatNotFoundError` instead of letting `yaml.YAMLError` propagate uncaught. This mirrors REQ-010's fix to the generic `general/tools/_doc_paths.py::find_doc_path_by_id` and matches `feat/tools/list_feat.py`'s existing `DEFAULT_ERROR_TYPES` handling of the same failure class -- `feat`'s bespoke, non-generic path lookup was the one call site Phase 6 (REQ-010, Task 6.9) didn't reach, since that task only touched the generic module. Confirmed pre-existing (present since before Phase 3, unrelated to caching itself) but left inconsistent with every other domain and with `list_feat` in the same file, and directly reachable given `feat`'s `README.md` is a sanctioned direct hand/agent-edit surface (per AGENTS.md).
+
 ### Acceptance Criteria
 
 - [x] ACC-001: A test asserts a `get_req` call against a fixture directory invokes the underlying `parse_req` function exactly once per call, not twice, verifying the existing matched-file double-parse bug is fixed. Evidence: `tests/req/tools/test_doc_cache_wiring.py::TestAcc001SingleGetReqParsesOnce::test_get_req_invokes_parse_req_exactly_once`, passes.
@@ -71,6 +73,8 @@ version: 1.0.0
 - [x] ACC-013 (Phase 6): A test asserts that two `DocCache.read` calls against a path whose cached entry is a stored parse failure raise two exception objects that are `is`-distinct (not the same instance), while still comparing equal in type and message. Evidence: `tests/general/tools/test__doc_cache.py::TestDocCacheRead::test_acc013_two_hits_on_a_failed_entry_raise_is_distinct_exception_objects` (`AssertionError`) and `::test_acc013_validation_error_hits_are_also_is_distinct_with_equal_type_and_message` (`pydantic.ValidationError`, the special-cased reconstruction path), both pass.
 
 - [x] ACC-014 (Phase 6): A test asserts that a `get_feat`/`list_feat` read of `old_path` racing exactly against `set_feat_id`'s folder-rename step does not propagate an uncaught `FileNotFoundError` to the caller. Evidence: `tests/feat/tools/test__paths.py::TestFindFeatPathById::test_acc014_a_read_racing_set_feat_ids_rename_raises_feat_not_found_not_a_bare_file_not_found_error`, `tests/feat/tools/test__io.py::TestLoadById::test_acc014_a_second_read_racing_set_feat_ids_rename_raises_feat_not_found`, and `tests/feat/tools/test_list_feat.py::TestListFeat::test_acc014_a_folder_vanishing_mid_scan_is_reported_as_a_failed_entry_not_an_uncaught_error`, all pass.
+
+- [ ] ACC-015 (Phase 7): A test asserts that a feature folder whose `README.md` has deliberately malformed YAML frontmatter causes `find_feat_path_by_id` (and, transitively, `get_feat`) to raise `FeatNotFoundError`, not an uncaught `yaml.YAMLError` -- mirroring ACC-012's fixture/assertion shape, adapted to `feat`'s single-folder shortcut lookup (no sibling-file scan to demonstrate skip-on-failure with).
 
 ### Scope
 
@@ -218,9 +222,23 @@ Lock ordering: the cache's own lock (REQ-006) is always the innermost lock acqui
 
 - [x] Task 6.12: Run the full quality gate (`ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, `pytest -n auto --cov=src --cov-report=`) and update this feature's Current Status/Updates once green.
 
+#### Phase 7: Fix feat's Missing yaml.YAMLError Handling (post-closeout gap review)
+
+- [ ] Task 7.1: Add `yaml.YAMLError` to `find_feat_path_by_id`'s except clause in `feat/tools/_paths.py` (alongside `AssertionError`/`ValidationError`/`FileNotFoundError`), translating it into the same `FeatNotFoundError` shape as every other parse failure at this shortcut. Update the function's and module's docstrings to document this (mirroring `general/tools/_doc_paths.py`'s REQ-010 docstring language) (REQ-013).
+
+- [ ] Task 7.2: Add `yaml.YAMLError` to `load_by_id`'s except clause in `feat/tools/_io.py` for the same consistency/defense-in-depth reason (currently moot in practice since `find_feat_path_by_id` already raises first on the shared cache-backed read, but the two call sites should not diverge) (REQ-013).
+
+- [ ] Task 7.3: Add the ACC-015 regression test to `tests/feat/tools/test__paths.py` (`TestFindFeatPathById`, mirroring `req`'s ACC-012 fixture/assertion shape) and a corresponding case to `tests/feat/tools/test__io.py` for `load_by_id`.
+
+- [ ] Task 7.4: Run the full quality gate (`ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, `pytest -n auto --cov=src --cov-report=`) and regenerate `docs/GENERATED.md`/`docs/api/` via `specmgr docs` (the two touched docstrings changed).
+
+- [ ] Task 7.5: Update this feature's frontmatter `status` back to `done` and add a Progress/Updates entry recording Phase 7's fix, once green.
+
 ## Progress
 
 ### Current Status
+
+**As of 2026-09-11 09:00 (Phase 7 opened -- feature reopened after a post-closeout gap review, no code changed yet)**: An independent post-closeout review of the merged, "done" (Phases 1-6) implementation found that `feat`'s bespoke path lookup (`feat/tools/_paths.py::find_feat_path_by_id`, and transitively `feat/tools/_io.py::load_by_id`) never got REQ-010's `yaml.YAMLError`-skipping fix: its except clause is `(AssertionError, ValidationError, FileNotFoundError)`, missing `yaml.YAMLError`, even though `parse_feat` raises it unwrapped for malformed frontmatter YAML exactly like every other `parse_<domain>`, and `feat/tools/list_feat.py` (in the same package) already handles it via `DEFAULT_ERROR_TYPES`. Reproduced directly: a feature folder with malformed YAML frontmatter causes `get_feat`/`update`/`set_status`/`set_classification`/`delete` (`type="feat"`) to raise an uncaught `yaml.YAMLError` instead of the graceful `FeatNotFoundError` every other domain (post-Phase-6) and `list_feat` itself already produce for the identical failure. Confirmed pre-existing (unrelated to caching itself, present since before this feature) but left inconsistent by Phase 6 (Task 6.9 only touched the generic `general/tools/_doc_paths.py`, not this bespoke, `feat`-only call site it did not revisit despite Task 6.11 editing this same function's except clause for REQ-012 in the same phase). Frontmatter `status` reverted from `done` to `in-progress`. REQ-013, ACC-015, and Phase 7 (Tasks 7.1-7.5) added to remediate. No implementation work has started on Phase 7.
 
 **As of 2026-09-10 22:30 (Phase 6 complete -- feature fully done, all 6 phases)**: Phase 6 (Tasks 6.1-6.7, 6.9-6.12) closed out all six findings from the two Phase-6-triggering reviews: the hash/parse TOCTOU race (REQ-007, `DocCache.read`'s `parse_fn` now takes text, not a `Path`, closing the second-independent-read gap in all 12 domains' `_cache.py::_parse`), shared mutable cache entries (REQ-008, a fresh `model_copy(deep=True)` on every successful-parse cache hit), unnormalized cache keys (REQ-009, every `DocCache` public method now normalizes via `Path.resolve()`), `find_doc_path_by_id` not skipping `yaml.YAMLError` (REQ-010), a cached parse failure re-raising the identical exception instance on every hit (REQ-011, closed by `_fresh_exception`'s type-specific reconstruction), and `set_feat_id`'s rename racing a lock-free `get_feat`/`list_feat` read into an uncaught `FileNotFoundError` (REQ-012, closed on the reader side: `find_feat_path_by_id`/`load_by_id`/`list_feat` now all catch that specific `FileNotFoundError` and translate it into the same graceful not-found/failed-entry shape a genuinely-deleted feature already produces). `DocCache.move`'s docstring and this README's Design Notes no longer claim `set_feat_id`'s rename produces byte-identical content; ADR bfd76370-b59b-4d65-b550-a969f6c93c9d was amended in place (following the precedent of ADR 519d1206-4d2a-4500-9046-6db635209996's own Phase-6 amendment in a sibling feature) to qualify its "a stale entry is structurally impossible" claim with these three now-fixed preconditions. ACC-009 through ACC-014 are all satisfied with passing regression tests (see the checked boxes above). Full quality gate green: `ruff format --check` (1693 files already formatted), `ruff check` (all checks passed), `vulture src/ whitelist.py --min-confidence 60` (clean), `pytest -n auto --cov=src --cov-report=` (`3416 passed`, up from Phase 5's `3405` by the 11 new Phase 6 regression tests). `docs/GENERATED.md`/`docs/api/` regenerated via `specmgr docs` (22 expected files touched: the 12 domains' `_cache.py` docs, `general/tools/_doc_cache.py`/`_doc_paths.py`, `feat/tools/_cache.py`/`_io.py`/`_paths.py`/`list_feat.py`/`set_feat_id.py`, plus `docs/GENERATED.md`/`docs/api/README.md` themselves); `docs/adr/README.md` regenerated via `specmgr adr-toc` with no changes (no new/renamed ADR). Frontmatter `status` bumped from `progress` to `done`. This closes out feat-107-doc-cache: all 6 phases (ADR/design lock-in, generic cache module, req pilot, remaining 11 domains, verification/docs, and this hardening phase) are complete.
 
@@ -231,6 +249,10 @@ Lock ordering: the cache's own lock (REQ-006) is always the innermost lock acqui
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-11 09:00:00.000+02:00 - Phase 7 opened: feat's find_feat_path_by_id/load_by_id don't skip yaml.YAMLError, plan updated, no code changed
+
+A post-closeout review of the merged, `done` (Phases 1-6) implementation found that `feat`'s bespoke path lookup never received REQ-010's `yaml.YAMLError`-skipping fix: `feat/tools/_paths.py::find_feat_path_by_id` and `feat/tools/_io.py::load_by_id` catch `(AssertionError, ValidationError, FileNotFoundError)` around their cache-backed `read_feat` call, but not `yaml.YAMLError` -- even though `parse_feat` raises it unwrapped for malformed frontmatter YAML exactly like every other `parse_<domain>`, `general/tools/_doc_paths.py::find_doc_path_by_id` was fixed for this exact class in Phase 6 (REQ-010, Task 6.9), and `feat/tools/list_feat.py` (in the same package) already handles it via `DEFAULT_ERROR_TYPES`. Reproduced directly against a live checkout: a feature folder with malformed YAML frontmatter causes `get_feat`/`update`/`set_status`/`set_classification`/`delete` (`type="feat"`) to raise an uncaught `yaml.YAMLError` instead of the graceful `FeatNotFoundError` every other domain and `list_feat` itself already produce for the identical failure. Confirmed pre-existing (unrelated to caching itself) but left inconsistent by Phase 6, whose Task 6.11 edited this exact function's except clause (adding `FileNotFoundError` for REQ-012) in the same phase without also adding `yaml.YAMLError`. Full test suite (`3416 passed`), `ruff check`, and `vulture` all remained green throughout -- this gap has no regression test today (unlike `req`'s dedicated ACC-012 malformed-YAML test), so the passing suite did not catch it. Frontmatter `status` reverted from `done` to `in-progress`. REQ-013, ACC-015, and a new Phase 7 (Tasks 7.1-7.5) added to the Task List to remediate: catch `yaml.YAMLError` in both call sites, add the ACC-015 regression test, and rerun the full quality gate. No implementation work has started on Phase 7.
 
 #### 2026-09-10 22:30:00.000+02:00 - Phase 6 complete: hash/parse race, move() rationale, and all three second-review findings fixed -- feature fully done
 
