@@ -50,35 +50,12 @@ generic tool here, it never raises for a content-validation failure --
 it always returns ``{valid: bool, errors: list[{message: str}]}``, only
 raising ``ValueError`` for a ``full``/content-shape mismatch or an
 unsupported ``type`` (feat-81-83-validation, ADR
-078bf395-0a5f-4afd-84f6-b7a2191a00e6). ``confluence_fetch`` (renamed from
-``webfetch``, ADR a156fdf9-052c-4f43-93a2-eeec04a91eac) -- a
-bearer-authenticated HTTP GET fetch restricted to a configured Confluence
-base URL; automatically converts a normal, browsable Confluence page URL
-(Cloud-style ``/pages/<id>/<title>`` or Server-style ``?pageId=<id>``) into
-the equivalent ``{base}/rest/api/content/{id}?expand=body.storage`` REST
-API URL, rejects ``/x/<tinyid>`` tiny links outright, raises on an
-SSO-redirect off the configured base URL's host, and downloads
-non-text/binary content (e.g. images) to a caller-supplied
-``destination_path`` instead of returning it as text. ``confluence_update``
-(ADR a156fdf9-052c-4f43-93a2-eeec04a91eac, feat-50-confluence Phases 3-4) --
-writes a local Markdown file's rendered HTML into an existing Confluence
-page's body via the REST API: resolves ``page_url_or_id`` (bare page id,
-browsable page URL, or REST content URL) to a page id, ``GET``\\ s the
-page's current ``version.number``/``title``, renders the Markdown file via
-``markdown-it-py``, best-effort uploads every local image the Markdown
-references as a Confluence attachment (``POST .../child/attachment``,
-falling back to updating an existing attachment's content if the filename
-already exists) and rewrites the corresponding ``<img>`` tags into
-Confluence's ``<ac:image>``/``<ri:attachment>`` storage-format macro, then
-``PUT``\\ s the incremented version with that (possibly rewritten) HTML
-fragment as the new body.
+078bf395-0a5f-4afd-84f6-b7a2191a00e6).
 Import this package to register all general tools at once::
 
     from biz.dfch.specmgr.general import tools  # noqa: F401 (side-effects only)
 """
 
-from .confluence_fetch import confluence_fetch
-from .confluence_update import confluence_update
 from .delete import delete
 from .mdformat import mdformat
 from .set_classification import set_classification
@@ -87,8 +64,6 @@ from .update import update
 from .validate import validate
 
 __all__ = [
-    "confluence_fetch",
-    "confluence_update",
     "delete",
     "mdformat",
     "set_classification",

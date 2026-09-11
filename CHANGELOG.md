@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- **BREAKING**: removed the `confluence_fetch` and `confluence_update` MCP
+  tools (and their `general/prompts/` prompts of the same names), added by
+  feat-50-confluence. Also removed the `SPECMGR_CONFLUENCE_BASE_URL`/
+  `SPECMGR_CONFLUENCE_BEARER` environment variables and the now-unused
+  `httpx` dependency from the `mcp` extra. MCP tools in this server should
+  stay focused on system-specification artifact management, not
+  Confluence wiki/CMS synchronization (GitHub issue #120). See ADR
+  92cc4ce8-2cdd-45a7-9ae4-85de5abaf94c, which supersedes
+  a156fdf9-052c-4f43-93a2-eeec04a91eac.
+
 ## [0.26.0] - 2026-09-09
 
 ### Security

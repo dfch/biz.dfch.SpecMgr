@@ -295,34 +295,8 @@ twelve former per-domain ``validate_<d>`` tools; unlike every other generic
 tool above, it never raises for a content-validation failure -- it always
 returns ``{valid: bool, errors: list[{message: str}]}`` (``errors`` empty
 when ``valid`` is ``True``), only raising ``ValueError`` for a ``full``/
-content-shape mismatch or an unsupported ``type``;
-``confluence_fetch`` (renamed from ``webfetch``, ADR
-a156fdf9-052c-4f43-93a2-eeec04a91eac) -- fetch a URL over HTTP GET with a
-bearer token, restricted to a configured base URL (``SPECMGR_CONFLUENCE_BASE_URL``,
-``SPECMGR_CONFLUENCE_BEARER``); automatically converts a browsable Confluence
-page URL (Cloud-style ``/pages/<id>/<title>`` or Server-style
-``?pageId=<id>``) into ``{base}/rest/api/content/{id}?expand=body.storage``,
-rejects ``/x/<tinyid>`` tiny links, raises on an SSO-redirect off the
-configured base URL's host, and downloads non-text/binary content to an
-optional ``destination_path`` instead of returning it as text.
-``confluence_update`` (ADR a156fdf9-052c-4f43-93a2-eeec04a91eac,
-feat-50-confluence Phases 3-4) -- write a local Markdown file's rendered HTML
-into an existing Confluence page's body via the REST API: ``page_url_or_id``
-(a bare page id, browsable page URL, or REST content URL; a ``/x/<tinyid>``
-tiny link is rejected the same way ``confluence_fetch`` rejects it) is
-resolved to a page id, its current ``version.number``/``title`` are read via
-a ``GET``, ``markdown_file_path`` is rendered via ``markdown-it-py``, every
-local image it references (a relative/absolute filesystem path, not an
-``http(s)://`` URL) that exists on disk is best-effort uploaded as a
-Confluence attachment (``POST .../child/attachment``, falling back to
-``.../child/attachment/{id}/data`` if the filename already exists) with its
-``<img>`` tag rewritten to ``<ac:image><ri:attachment ri:filename="..." />
-</ac:image>`` on success (a missing file or a failed upload just leaves that
-one ``<img>`` tag unrewritten), and the incremented version is written via a
-``PUT`` with the (possibly rewritten) HTML fragment as the new
-``body.storage.value`` and the title unchanged; reuses the same two
-environment variables as ``confluence_fetch``, no new configuration surface.
-  Path safety (feat-38-39-41-43-44 Phase 4, REQ-009, extending feat-36-delete's
+content-shape mismatch or an unsupported ``type``.
+Path safety (feat-38-39-41-43-44 Phase 4, REQ-009, extending feat-36-delete's
 ``delete``-only guards, ADR 1af6787b-eaab-4e8f-888f-531c1e76c19d): every one of the thirteen
 ``get_<d>`` tools (including ``get_adr``), the generic ``update``, and the generic
 ``set_status`` now validate ``id`` via ``general.tools._path_safety.validate_id`` (no
@@ -397,12 +371,7 @@ line-range via ``get_sysrs(id, raw=True)``) -- ``sysrs`` has no per-domain
 General prompts (``general/prompts/``): ``compact_history`` -- guides rotating
 older ``### Recent Updates`` entries out of any `.specmgr` feature folder's
 ``README.md`` into an optional sibling ``history.md``, per ADR
-e369ee2e-3353-4f92-991c-6367d76d832e; plus ``confluence_update``/
-``confluence_fetch`` -- thin, single-tool-call prompts sharing their
-respective tools' exact names (see the ``confluence_update``/``confluence_fetch``
-tools above), each returning instructional text that tells the LLM to call
-the matching tool with the given parameters, never calling it themselves
-(feat-50-confluence Phase 8, REQ-012/REQ-013).
+e369ee2e-3353-4f92-991c-6367d76d832e.
 
 Modules are grouped domain-first
 (ADR ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by

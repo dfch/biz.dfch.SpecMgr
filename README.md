@@ -116,13 +116,6 @@ tool call, so hand-editing a file between calls is safe.
 - Features (FEAT): base directory defaults to `.specmgr/feat`, configurable
   via the `SPECMGR_FEAT_DIR` environment variable. This is FEAT-specific,
   like ADRs above, and not shared via `SPECMGR_DOCS_DIR`.
-- The `confluence_fetch` tool (renamed from `webfetch`; bearer-authenticated,
-  URL-filtered HTTP GET, intended primarily for Confluence instances using
-  PAT authentication) requires two environment variables:
-  `SPECMGR_CONFLUENCE_BASE_URL` (the base URL requested URLs must
-  case-insensitively start with) and `SPECMGR_CONFLUENCE_BEARER` (the
-  bearer token sent as the `Authorization` header). Both must be set or the
-  tool raises an error; there are no defaults.
 
 All of the base directories above are resolved relative to the MCP server
 process's own current working directory unless overridden by their env var
