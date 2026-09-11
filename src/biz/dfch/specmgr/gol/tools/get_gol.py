@@ -19,10 +19,13 @@
 
 """``@mcp.tool()`` wrapper: get_gol (Task 3.8).
 
-Mirrors ``prb.tools.get_prb`` -- a thin file-I/O/id-lookup adapter that
-re-reads and re-parses the current on-disk state on every call; there is no
-in-memory cache of a parsed :class:`GolDocument`: the ``.md`` file itself is
-always the source of truth.
+Mirrors ``prb.tools.get_prb`` -- a thin file-I/O/id-lookup adapter. The
+``.md`` file itself remains the sole source of truth (ADR
+33c5ab08-ff58-4c73-8c32-23abaf3838e3); its underlying ``load_by_id`` now
+routes through a content-hash-validated, per-domain in-memory cache (ADR
+bfd76370-b59b-4d65-b550-a969f6c93c9d, ``._cache``) that skips re-parsing
+when a file's content hash is unchanged since its last read, so a stale
+entry is structurally impossible.
 
 This tool is the sole id-based read path for GOL: there is no
 ``specmgr://gol/{id}`` resource (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614,

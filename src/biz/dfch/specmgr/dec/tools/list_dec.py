@@ -45,6 +45,7 @@ from ...general.tools._listing import build_summaries, default_failed_summary
 from ...general.tools._paging import normalize_paging, paginate
 from ...server import mcp
 from ..models.v1 import DecDocument, DecSummary
+from ._cache import reconcile_dec_cache
 from ._io import read_dec
 from ._paths import iter_dec_paths
 
@@ -112,5 +113,7 @@ def list_dec(max_results: int | None = None, offset: int | None = None) -> Paged
         if the base directory does not exist, holds no decisions, or
         ``offset`` is past the end of the full list.
     """
-    summaries, error_count = build_summaries(iter_dec_paths(), read_dec, _to_summary, _to_failed_summary)
+    paths = list(iter_dec_paths())
+    reconcile_dec_cache(paths)  # feat-107-doc-cache Phase 4, REQ-005
+    summaries, error_count = build_summaries(paths, read_dec, _to_summary, _to_failed_summary)
     return paginate(summaries, *normalize_paging(max_results, offset), error_count=error_count)

@@ -43,6 +43,7 @@ from ...general.tools._listing import build_summaries, default_failed_summary
 from ...general.tools._paging import normalize_paging, paginate
 from ...server import mcp
 from ..models.v2 import UcDocument, UcSummary
+from ._cache import reconcile_uc_cache
 from ._io import read_uc
 from ._paths import iter_uc_paths
 
@@ -111,5 +112,7 @@ def list_uc(max_results: int | None = None, offset: int | None = None) -> PagedR
         if the base directory does not exist, holds no use cases, or
         ``offset`` is past the end of the full list.
     """
-    summaries, error_count = build_summaries(iter_uc_paths(), read_uc, _to_summary, _to_failed_summary)
+    paths = list(iter_uc_paths())
+    reconcile_uc_cache(paths)  # feat-107-doc-cache Phase 4, REQ-005
+    summaries, error_count = build_summaries(paths, read_uc, _to_summary, _to_failed_summary)
     return paginate(summaries, *normalize_paging(max_results, offset), error_count=error_count)

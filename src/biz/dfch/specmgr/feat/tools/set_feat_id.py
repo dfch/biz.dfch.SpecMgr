@@ -53,6 +53,33 @@ re-read via the frontmatter-stripping
 the rename, then written back verbatim under the new frontmatter -- no
 reference to the old id anywhere else in the repository is searched for or
 touched (REQ-008 is explicitly out of scope for this tool).
+
+**Cache-entry move (feat-107-doc-cache Phase 4, Task 4.1a, REQ-004).**
+``feat.tools._cache.move_feat_cache_entry(old_path, new_path)`` is called
+as the *last* step, only after ``write_feat_file(new_path, ...)`` has
+already succeeded -- never at the earlier ``old_path.parent.rename(...)``
+step -- so a failure between the rename and the write never leaves a cache
+entry addressing a file that was never actually written.
+
+**A concurrent, lock-free reader can still race the rename step itself
+(feat-107-doc-cache Phase 6, REQ-012) -- closed on the *reader* side, not
+here.** ``get_feat``/``list_feat`` intentionally take no domain lock (ADR
+33c5ab08-ff58-4c73-8c32-23abaf3838e3), so a call landing in the narrow
+window after ``old_path.parent.rename(new_path.parent)`` above succeeds but
+before :func:`~biz.dfch.specmgr.feat.tools._cache.move_feat_cache_entry`
+runs would, without a fix, see ``old_path`` genuinely absent from disk and
+have its ``FileNotFoundError`` propagate uncaught out of
+``DocCache.read`` -- this window is not eliminated by anything in this
+function (no invalidate-before-rename step was added here, since doing so
+would only narrow, not close, the same race for a reader landing a moment
+earlier or later in the sequence). Instead, every read path that can land
+in this window (:func:`~biz.dfch.specmgr.feat.tools._paths.find_feat_path_by_id`,
+:func:`~biz.dfch.specmgr.feat.tools._io.load_by_id`, and
+:func:`~biz.dfch.specmgr.feat.tools.list_feat.list_feat`'s scan) now catches
+that specific ``FileNotFoundError`` and translates it into the same
+graceful not-found/failed-entry shape it would already produce for a
+genuinely-deleted feature, rather than an uncaught OS-level error -- see
+each of those functions' own docstrings for the detail.
 """
 
 from __future__ import annotations
@@ -62,6 +89,7 @@ from ...general.tools._splice import body_text
 from ...general.tools._timestamps import now_timestamp
 from ...server import mcp
 from ..models.v1 import FeatFrontmatter
+from ._cache import move_feat_cache_entry
 from ._io import load_by_id
 from ._lock import feat_create_lock, feat_lock
 from ._paths import README_FILENAME, feat_base_dir
@@ -155,4 +183,5 @@ def set_feat_id(id: str, new_id: str) -> FeatFrontmatter:
         new_frontmatter = FeatFrontmatter(**fm_data)
 
         write_feat_file(new_path, new_frontmatter, raw_body)
+        move_feat_cache_entry(old_path, new_path)  # feat-107-doc-cache Phase 4, REQ-004: only after the write succeeds
     return new_frontmatter

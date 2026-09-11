@@ -10,10 +10,11 @@ in ``uc.tools._io`` for this tool to call -- the frontmatter+content
 composition is factored into ``uc.tools._write.write_uc_file`` instead,
 shared with the generic ``update`` tool in ``general.tools``.
 
-Thin file-I/O adapter; there is no in-memory cache of a parsed
-:class:`~biz.dfch.specmgr.uc.models.v2.UcDocument` -- the ``.md`` file
-itself is always the source of truth, matching every other tool in this
-codebase.
+Thin file-I/O adapter. The ``.md`` file itself is always the source of
+truth (ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3); the in-memory cache
+warmed after the write below (feat-107-doc-cache Phase 4, REQ-003) is only
+ever a content-hash-validated memoization of that file's own current
+state, never an independent fact.
 
 ## Functions
 

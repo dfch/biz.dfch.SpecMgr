@@ -54,6 +54,7 @@ from ...general.tools._listing import build_summaries
 from ...general.tools._paging import normalize_paging, paginate
 from ...server import mcp
 from ..models.v1 import RskDocument, RskSummary
+from ._cache import reconcile_rsk_cache
 from ._io import read_rsk
 from ._paths import iter_rsk_paths
 from ._sentinel import build_failed_rsk_summary
@@ -118,5 +119,7 @@ def list_rsk(max_results: int | None = None, offset: int | None = None) -> Paged
         if the base directory does not exist, holds no risks, or ``offset``
         is past the end of the full list.
     """
-    summaries, error_count = build_summaries(iter_rsk_paths(), read_rsk, _to_summary, build_failed_rsk_summary)
+    paths = list(iter_rsk_paths())
+    reconcile_rsk_cache(paths)  # feat-107-doc-cache Phase 4, REQ-005
+    summaries, error_count = build_summaries(paths, read_rsk, _to_summary, build_failed_rsk_summary)
     return paginate(summaries, *normalize_paging(max_results, offset), error_count=error_count)
