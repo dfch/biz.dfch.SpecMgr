@@ -17,8 +17,8 @@
 
 """Tests for the generic ``set_classification`` ``@mcp.tool()`` wrapper (feat-56-classification, Phase 2).
 
-Parameterized over the twelve whole-body document types (``adr`` is out of
-scope for this feature, unlike ``set_status``'s thirteen); seeds a real,
+Parameterized over the whole-body document types (``adr`` is out of
+scope for this feature, unlike ``set_status``, which also covers ``adr``); seeds a real,
 persisted document per type via the domain's own ``create_<d>`` tool in a
 temp ``SPECMGR_DOCS_DIR``/``SPECMGR_FEAT_DIR`` (mirroring the fixture
 strategy of ``tests/general/tools/test_set_status.py``), and covers:
@@ -418,7 +418,7 @@ _FEAT_MINIMAL_BODY = textwrap.dedent(
 
 @dataclass(frozen=True)
 class _Case:
-    """Per-type test data for the twelve whole-body document types."""
+    """Per-type test data for the whole-body document types."""
 
     doc_type: str
     create: Callable[[str], Any]
@@ -437,7 +437,7 @@ class _Case:
 #: A well-formed but non-existent canonical UUID, for the unknown-id not-found cases.
 _MISSING_UUID = "00000000-0000-0000-0000-000000000000"
 
-#: A well-formed feat-NNN-slug folder name (the wrong-format id for the eleven UUID domains).
+#: A well-formed feat-NNN-slug folder name (the wrong-format id for every UUID domain).
 _FEAT_SLUG_ID = "feat-36-delete"
 
 _CASES: list[_Case] = [
@@ -633,7 +633,7 @@ class TestSetClassificationAssertWithinSpy(TempDocsDirTestCase):
     """``assert_within`` is actually invoked (not just present in source) during a valid set_classification."""
 
     def test_assert_within_is_called_with_base_dir_and_resolved_path(self) -> None:
-        """For each of the twelve whole-body domains, a valid classification change must call ``assert_within``."""
+        """For each of the whole-body domains, a valid classification change must call ``assert_within``."""
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case)

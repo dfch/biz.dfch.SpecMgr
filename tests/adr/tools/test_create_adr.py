@@ -53,7 +53,7 @@ class TestCreateAdr(TempAdrDirTestCase):
 
     def test_response_is_full_document_with_body_intact(self):
         """feat-69 regression: create_adr is explicitly out of scope -- it must keep returning the
-        full `Adr` document (frontmatter and body both intact), unlike the 11 whole-body domains'
+        full `Adr` document (frontmatter and body both intact), unlike the whole-body domains'
         own `create_<d>` tools, which now return frontmatter only."""
         new_body = body(title="A Document With A Body")
         result = create_adr(AdrFrontmatter(status="proposed"), new_body)

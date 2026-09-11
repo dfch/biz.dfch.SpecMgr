@@ -27,12 +27,12 @@ lock-free ``get_*``/``list_*`` call (ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3).
 **ACC-016**: ``general.tools._doc_paths.find_doc_path_by_id``'s per-file
 scan loop must skip (not propagate) a ``FileNotFoundError`` raised by
 ``read_fn`` for a file that vanishes between the scan's directory-listing
-snapshot and that file's own turn in the loop -- table-driven across the 11
+snapshot and that file's own turn in the loop -- table-driven across the
 non-``feat`` domains, exercising the generic function directly (mirroring
 ``test_doc_cache_structural.py``'s own "why ``find_doc_path_by_id`` directly"
 rationale).
 
-**ACC-017**: each of the 11 non-``feat`` domains' own
+**ACC-017**: each of the non-``feat`` domains' own
 ``<domain>.tools._io.load_by_id`` must translate a ``FileNotFoundError``
 from its own second, independent ``read_<domain>(path)`` call (the one
 right after ``find_<domain>_path`` already resolved and read the same path
@@ -42,11 +42,11 @@ mirroring ``feat.tools._io.load_by_id``'s already-shipped ACC-014 test
 module's own bound ``read_<domain>`` name (not ``_paths.py``'s separate,
 unaffected reference) so only this second read is simulated to fail.
 
-**ACC-018**: each of the 11 non-``feat`` domains' own ``list_<domain>`` tool
+**ACC-018**: each of the non-``feat`` domains' own ``list_<domain>`` tool
 must silently omit (not report as a failed entry, not propagate an uncaught
 error) a path whose ``README.md``/``*.md`` vanishes between the
 directory-listing snapshot and this tool's own per-path read call --
-table-driven here for the 11 non-``feat`` domains. ``feat``'s own coverage
+table-driven here for the non-``feat`` domains. ``feat``'s own coverage
 of the identical case lives in
 ``tests/feat/tools/test_list_feat.py::TestListFeat::test_acc018_a_folder_vanishing_mid_scan_is_silently_omitted_not_reported_as_a_failed_entry``
 (the renamed, rewritten former ACC-014 sub-test, per Task 8.2/ACC-018) --
@@ -75,7 +75,7 @@ from unittest import mock
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR, find_doc_path_by_id
 from biz.dfch.specmgr.general.tools._packaged_data import read_packaged_text
 
-#: The 11 non-``feat`` generic whole-body domains, all wired identically
+#: The non-``feat`` generic whole-body domains, all wired identically
 #: through the shared ``general.tools._doc_paths.find_doc_path_by_id``.
 _NON_FEAT_DOMAINS = ["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "vcr", "sysrs"]
 

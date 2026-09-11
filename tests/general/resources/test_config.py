@@ -29,10 +29,10 @@ from biz.dfch.specmgr.general.resources.config import config_info
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.models import ConfigInfo
 
-#: All thirteen document domains this resource must report on (REQ-001).
+#: All document domains this resource must report on (REQ-001).
 _ALL_DOMAINS = ["adr", "req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "feat", "vcr", "sysrs"]
 
-#: The eleven domains sharing the single SPECMGR_DOCS_DIR root env var.
+#: The domains sharing the single SPECMGR_DOCS_DIR root env var.
 _DOCS_DIR_DOMAINS = ["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "vcr", "sysrs"]
 
 #: The env vars this resource is allowed to read/report on at all.
@@ -48,7 +48,7 @@ class TestConfigResource(unittest.TestCase):
         self.assertIsInstance(result, ConfigInfo)
 
     def test_all_twelve_domains_present(self):
-        """ACC-001: every one of the thirteen domains must have an entry."""
+        """ACC-001: every one of the domains must have an entry."""
         result = config_info()
         self.assertEqual(set(result.domains.keys()), set(_ALL_DOMAINS))
 
@@ -74,7 +74,7 @@ class TestConfigResource(unittest.TestCase):
         self.assertEqual(result.domains["feat"].env_var, FEAT_DIR_ENV_VAR)
 
     def test_ten_domains_share_docs_dir_env_var(self):
-        """The eleven non-adr/feat domains all report the shared `SPECMGR_DOCS_DIR` env var."""
+        """The non-adr/feat domains all report the shared `SPECMGR_DOCS_DIR` env var."""
         result = config_info()
         for domain in _DOCS_DIR_DOMAINS:
             with self.subTest(domain=domain):
@@ -125,7 +125,7 @@ class TestConfigResourceNonDisclosure(unittest.TestCase):
                 self.assertNotIn(secret_value, cfg.env_var)
 
     def test_only_known_env_vars_are_ever_reported_as_env_var_field(self):
-        """Every domain's `env_var` field must be one of the twelve known SPECMGR_*_DIR names."""
+        """Every domain's `env_var` field must be one of the known `SPECMGR_*_DIR` names."""
         result = config_info()
         for domain, cfg in result.domains.items():
             with self.subTest(domain=domain):

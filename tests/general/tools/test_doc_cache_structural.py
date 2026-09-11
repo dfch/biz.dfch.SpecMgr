@@ -15,10 +15,10 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""ACC-008 structural test: cache routing exists for all 12 generic whole-body domains (feat-107-doc-cache Phase 4, Task 4.2).
+"""ACC-008 structural test: cache routing exists for every generic whole-body domain (feat-107-doc-cache Phase 4, Task 4.2).
 
 ACC-008's own claim (``.specmgr/feat/feat-107-doc-cache/README.md``) is
-narrow: "a structural test enumerates all 12 generic whole-body domains and
+narrow: "a structural test enumerates every generic whole-body domain and
 confirms each one's ``read_<domain>`` helper and ``find_doc_path_by_id``
 scan are routed through that domain's cache instance." This is deliberately
 *not* a re-implementation of every domain's own ACC-001..ACC-006 suite (that
@@ -29,14 +29,14 @@ domain, so a future domain that forgets to wire its own ``_cache.py`` in is
 caught by one shared test rather than needing its own bespoke wiring test.
 
 **Fixture strategy.** Rather than hand-writing a minimal valid body per
-domain (eleven different schemas), every non-``feat`` domain's own packaged
+domain (a different schema per domain), every non-``feat`` domain's own packaged
 *template* file (``general.tools._packaged_data.read_packaged_text(domain,
 "template")`` -- the same file backing that domain's ``get_<domain>_template``
 tool) is reused as a guaranteed-valid document fixture, with only its
 frontmatter ``id: ...`` line substituted via :func:`_with_id` -- ``id`` is a
 free-form string on the shared ``models.md.frontmatter.MarkdownFrontmatter``
 base (no format constraint at the pydantic-model level for any of these
-eleven domains), so substituting it is always safe and never risks
+domains), so substituting it is always safe and never risks
 invalidating the rest of the document. ``feat`` is handled separately (its
 own template's id ``must`` equal the containing folder name, and its
 lifecycle is exercised through the real ``create_feat``/``set_feat_id``
@@ -70,7 +70,7 @@ from biz.dfch.specmgr.feat.tools.set_feat_id import set_feat_id
 from biz.dfch.specmgr.general.tools._doc_paths import find_doc_path_by_id
 from biz.dfch.specmgr.general.tools._packaged_data import read_packaged_text
 
-#: The 11 non-``feat`` generic whole-body domains, all wired identically
+#: The non-``feat`` generic whole-body domains, all wired identically
 #: through the shared ``general.tools._doc_paths.find_doc_path_by_id``.
 _NON_FEAT_DOMAINS = ["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "vcr", "sysrs"]
 
@@ -146,7 +146,7 @@ def _cache_module(domain: str) -> Any:
 
 
 class TestAcc008NonFeatDomainsExposeTheExpectedCacheApi(unittest.TestCase):
-    """ACC-008 (part 1): every one of the 11 non-``feat`` domains' ``_cache.py`` exposes the expected API."""
+    """ACC-008 (part 1): every one of the non-``feat`` domains' ``_cache.py`` exposes the expected API."""
 
     def test_every_domain_cache_module_has_the_four_expected_functions(self) -> None:
         for domain in _NON_FEAT_DOMAINS:
