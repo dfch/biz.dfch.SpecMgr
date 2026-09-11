@@ -271,6 +271,40 @@ class TestFindFeatPathById(unittest.TestCase):
             self.assertIn("FileNotFoundError", message)
             self.assertFalse(expected_path.exists())
 
+    def test_acc015_malformed_yaml_frontmatter_raises_feat_not_found_not_a_bare_yaml_error(self) -> None:
+        """ACC-015 (feat-107-doc-cache Phase 7, REQ-013): a feature folder whose README.md has
+        deliberately malformed YAML frontmatter must raise FeatNotFoundError, not an uncaught
+        yaml.YAMLError.
+
+        Mirrors ACC-012's fixture/assertion shape (``tests/req/tools/test_doc_cache_wiring.py``),
+        adapted to feat's single-folder shortcut lookup: there is no sibling-file scan here to
+        demonstrate skip-on-failure with, since find_feat_path_by_id never scans -- it shortcuts
+        directly to the one target folder, so the only assertion possible is that the malformed
+        file's own lookup itself resolves to the graceful not-found error, not a crash.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            folder = base / "feat-1-malformed-yaml"
+            folder.mkdir(parents=True)
+            (folder / README_FILENAME).write_text(
+                "---\n"
+                "id: [this is not valid yaml because the flow sequence is never closed\n"
+                "type: feat\n"
+                "version: 1.0.0\n"
+                "status: planning\n"
+                "created: '2026-08-30 00:00:00.000Z'\n"
+                "updated: '2026-08-30 00:00:00.000Z'\n"
+                "---\n"
+                "\n"
+                "# Feature: Malformed Frontmatter Fixture\n",
+                encoding="utf-8",
+            )
+
+            with self.assertRaises(FeatNotFoundError) as ctx:
+                find_feat_path_by_id(base, "feat-1-malformed-yaml")
+            message = str(ctx.exception)
+            self.assertIn("could not be parsed", message)
+
 
 if __name__ == "__main__":
     unittest.main()

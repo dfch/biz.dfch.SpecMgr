@@ -36,12 +36,23 @@ import line. See ``._cache``'s module docstring for why ``read_feat`` had
 to move out of this module in the first place (avoiding a circular import
 between ``_io.py`` and ``_paths.py``) and for the module-level cache
 singleton it now reads through.
+
+**Malformed frontmatter YAML is also skipped, not left to crash uncaught
+(feat-107-doc-cache Phase 7, REQ-013).** :func:`load_by_id`'s own second,
+independent ``read_feat(path)`` call now also catches ``yaml.YAMLError``
+alongside ``AssertionError``/``ValidationError``/``FileNotFoundError`` and
+translates it into the same :class:`._paths.FeatNotFoundError` --
+consistency/defense-in-depth with :func:`._paths.find_feat_path_by_id`'s
+own identical fix, even though this call site is currently moot in
+practice since ``find_feat_path_by_id`` already raises first on the shared
+cache-backed read.
 """
 
 from __future__ import annotations
 
 from pathlib import Path
 
+import yaml
 from pydantic import ValidationError
 
 from ..models.v1 import FeatDocument
@@ -72,7 +83,7 @@ def load_by_id(base_dir: Path, id_: str) -> tuple[Path, FeatDocument]:
     ------
     FeatNotFoundError
         If no folder matches (propagated from :func:`._paths.find_feat_path_by_id`),
-        or if ``path`` -- already resolved successfully by
+        if ``path`` -- already resolved successfully by
         :func:`._paths.find_feat_path_by_id` an instant earlier -- vanishes
         out from under this function's own subsequent :func:`._cache.read_feat`
         call, racing a concurrent ``set_feat_id`` rename in the same narrow
@@ -80,7 +91,13 @@ def load_by_id(base_dir: Path, id_: str) -> tuple[Path, FeatDocument]:
         (feat-107-doc-cache Phase 6, REQ-012): this second, independent read
         has exactly the same ``FileNotFoundError`` exposure as the first one
         does, and is translated into the same :class:`._paths.FeatNotFoundError`
-        here rather than left to propagate uncaught.
+        here rather than left to propagate uncaught; or if this second read
+        raises ``yaml.YAMLError`` for malformed frontmatter YAML
+        (feat-107-doc-cache Phase 7, REQ-013 -- consistency/defense-in-depth
+        with :func:`._paths.find_feat_path_by_id`'s own identical fix, even
+        though this call site is currently moot in practice since
+        ``find_feat_path_by_id`` already raises first on the shared
+        cache-backed read).
     """
     assert isinstance(base_dir, Path), type(base_dir)
     assert isinstance(id_, str), type(id_)
@@ -89,7 +106,7 @@ def load_by_id(base_dir: Path, id_: str) -> tuple[Path, FeatDocument]:
     path = find_feat_path_by_id(base_dir, id_)
     try:
         doc = read_feat(path)
-    except (AssertionError, ValidationError, FileNotFoundError) as ex:
+    except (AssertionError, ValidationError, FileNotFoundError, yaml.YAMLError) as ex:
         raise FeatNotFoundError(
             f"feature folder {id_!r} exists at {path}, but its content could not be read as a valid "
             f"feature document on this second read ({type(ex).__name__}: {ex})."

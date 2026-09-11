@@ -84,6 +84,24 @@ caught alongside ``AssertionError``/``ValidationError`` around that
 ``read_feat`` call, below, and translated into the same
 :class:`FeatNotFoundError` -- a reader racing the rename this way now sees
 a graceful "not found" instead of an uncaught, unrelated-looking OS error.
+
+**Malformed frontmatter YAML is also skipped, not left to crash uncaught
+(feat-107-doc-cache Phase 7, REQ-013).** :func:`find_feat_path_by_id`'s
+``read_feat`` call now also catches ``yaml.YAMLError`` alongside
+``AssertionError``/``ValidationError``/``FileNotFoundError`` and translates
+it into the same :class:`FeatNotFoundError`. ``parse_feat`` raises
+``yaml.YAMLError`` unwrapped for malformed frontmatter YAML exactly like
+every other ``parse_<domain>`` (``models/md/_frontmatter_parse.py``), and
+this mirrors REQ-010's fix to the generic
+``general.tools._doc_paths.find_doc_path_by_id`` (Phase 6) and matches
+``feat.tools.list_feat``'s own ``DEFAULT_ERROR_TYPES`` handling of the same
+failure class -- this bespoke, non-generic path lookup was the one call
+site Phase 6 (Task 6.9) didn't reach, since that task only touched the
+generic module. Before this fix, a feature folder with malformed YAML
+frontmatter crashed ``find_feat_path_by_id`` (and, transitively, ``get_feat``
+and every mutating tool built on it) with an uncaught ``yaml.YAMLError``
+instead of the same graceful not-found-shaped error every other parse
+failure at this shortcut already produces.
 """
 
 from __future__ import annotations
@@ -92,6 +110,7 @@ import os
 from collections.abc import Iterator
 from pathlib import Path
 
+import yaml
 from pydantic import ValidationError
 
 from ...general.tools._doc_paths import slugify
@@ -268,13 +287,14 @@ def find_feat_path_by_id(base_dir: Path, id_: str) -> Path:
     ------
     FeatNotFoundError
         If ``<base_dir>/<id_>/README.md`` does not exist, if it exists but
-        fails to parse (``AssertionError``/``pydantic.ValidationError``),
-        if it vanishes out from under a concurrent, lock-free read racing
-        ``set_feat_id``'s rename (``FileNotFoundError``, feat-107-doc-cache
-        Phase 6, REQ-012 -- see this module's own docstring), or if it
-        parses but its frontmatter ``id`` does not match ``id_`` (a
-        folder/frontmatter mismatch, surfaced rather than silently worked
-        around).
+        fails to parse (``AssertionError``/``pydantic.ValidationError``/
+        ``yaml.YAMLError`` for malformed frontmatter YAML, feat-107-doc-cache
+        Phase 7, REQ-013 -- see this module's own docstring), if it vanishes
+        out from under a concurrent, lock-free read racing ``set_feat_id``'s
+        rename (``FileNotFoundError``, feat-107-doc-cache Phase 6, REQ-012 --
+        see this module's own docstring), or if it parses but its
+        frontmatter ``id`` does not match ``id_`` (a folder/frontmatter
+        mismatch, surfaced rather than silently worked around).
     """
     assert isinstance(base_dir, Path), type(base_dir)
     assert isinstance(id_, str), type(id_)
@@ -290,13 +310,18 @@ def find_feat_path_by_id(base_dir: Path, id_: str) -> Path:
 
     try:
         doc = read_feat(path)  # feat-107-doc-cache Phase 4, Task 4.1a: cache-backed, fixes the double-parse bug
-    except (AssertionError, ValidationError, FileNotFoundError) as ex:
+    except (AssertionError, ValidationError, FileNotFoundError, yaml.YAMLError) as ex:
         # FileNotFoundError (feat-107-doc-cache Phase 6, REQ-012): the file existed at the
         # path.exists() check above but can still vanish before read_feat's own internal read
         # completes, if this call races set_feat_id's rename in the narrow window before its
         # cache-entry move runs -- get_feat/list_feat intentionally take no domain lock (ADR
         # 33c5ab08-ff58-4c73-8c32-23abaf3838e3), so this is a real, if narrow, possibility, not
         # a defensive-only catch.
+        #
+        # yaml.YAMLError (feat-107-doc-cache Phase 7, REQ-013): parse_feat raises it unwrapped for
+        # malformed frontmatter YAML exactly like every other parse_<domain> -- mirrors REQ-010's
+        # fix to the generic general.tools._doc_paths.find_doc_path_by_id (Phase 6) and matches
+        # feat.tools.list_feat's own DEFAULT_ERROR_TYPES handling of the same failure class.
         raise FeatNotFoundError(
             f"feature folder {id_!r} exists at {path}, but its content could not be parsed as a valid "
             f"feature document ({type(ex).__name__}: {ex})."

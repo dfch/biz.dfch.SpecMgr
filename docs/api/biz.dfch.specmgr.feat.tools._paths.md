@@ -70,6 +70,24 @@ caught alongside ``AssertionError``/``ValidationError`` around that
 :class:`FeatNotFoundError` -- a reader racing the rename this way now sees
 a graceful "not found" instead of an uncaught, unrelated-looking OS error.
 
+**Malformed frontmatter YAML is also skipped, not left to crash uncaught
+(feat-107-doc-cache Phase 7, REQ-013).** :func:`find_feat_path_by_id`'s
+``read_feat`` call now also catches ``yaml.YAMLError`` alongside
+``AssertionError``/``ValidationError``/``FileNotFoundError`` and translates
+it into the same :class:`FeatNotFoundError`. ``parse_feat`` raises
+``yaml.YAMLError`` unwrapped for malformed frontmatter YAML exactly like
+every other ``parse_<domain>`` (``models/md/_frontmatter_parse.py``), and
+this mirrors REQ-010's fix to the generic
+``general.tools._doc_paths.find_doc_path_by_id`` (Phase 6) and matches
+``feat.tools.list_feat``'s own ``DEFAULT_ERROR_TYPES`` handling of the same
+failure class -- this bespoke, non-generic path lookup was the one call
+site Phase 6 (Task 6.9) didn't reach, since that task only touched the
+generic module. Before this fix, a feature folder with malformed YAML
+frontmatter crashed ``find_feat_path_by_id`` (and, transitively, ``get_feat``
+and every mutating tool built on it) with an uncaught ``yaml.YAMLError``
+instead of the same graceful not-found-shaped error every other parse
+failure at this shortcut already produces.
+
 ## Classes
 
 ### `FeatNotFoundError`
@@ -167,13 +185,14 @@ Raises
 ------
 FeatNotFoundError
     If ``<base_dir>/<id_>/README.md`` does not exist, if it exists but
-    fails to parse (``AssertionError``/``pydantic.ValidationError``),
-    if it vanishes out from under a concurrent, lock-free read racing
-    ``set_feat_id``'s rename (``FileNotFoundError``, feat-107-doc-cache
-    Phase 6, REQ-012 -- see this module's own docstring), or if it
-    parses but its frontmatter ``id`` does not match ``id_`` (a
-    folder/frontmatter mismatch, surfaced rather than silently worked
-    around).
+    fails to parse (``AssertionError``/``pydantic.ValidationError``/
+    ``yaml.YAMLError`` for malformed frontmatter YAML, feat-107-doc-cache
+    Phase 7, REQ-013 -- see this module's own docstring), if it vanishes
+    out from under a concurrent, lock-free read racing ``set_feat_id``'s
+    rename (``FileNotFoundError``, feat-107-doc-cache Phase 6, REQ-012 --
+    see this module's own docstring), or if it parses but its
+    frontmatter ``id`` does not match ``id_`` (a folder/frontmatter
+    mismatch, surfaced rather than silently worked around).
 
 
 ### `iter_feat_paths(base_dir: 'Path') -> 'Iterator[Path]'`
