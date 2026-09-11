@@ -36,15 +36,35 @@ import line. See ``._cache``'s module docstring for why ``read_sysrs`` had to
 move out of this module in the first place (avoiding a circular import
 between ``_io.py`` and ``_paths.py``) and for the module-level cache
 singleton it now reads through.
+
+**The second, independent ``read_sysrs`` call is also guarded against a
+vanished file (feat-107-doc-cache Phase 8, REQ-015).** :func:`load_by_id`
+calls ``read_sysrs(path)`` again immediately after ``find_sysrs_path``
+already resolved and read the same ``path`` once during its own scan. The
+generic ``delete`` tool in ``general.tools`` only holds the *target*
+document's own per-id lock, never a whole-domain lock, while
+``get_sysrs``/``list_sysrs`` intentionally take no lock at all (ADR
+33c5ab08-ff58-4c73-8c32-23abaf3838e3) -- so a concurrent ``delete`` of this
+same document can remove ``path`` in the narrow window between
+``find_sysrs_path``'s own read and this one, raising ``FileNotFoundError``.
+This mirrors ``feat.tools._io.load_by_id``'s already-shipped shape exactly
+(the identical race, closed there in Phase 6 for REQ-012's narrower,
+rename-only claim): ``AssertionError``/``pydantic.ValidationError``/
+``yaml.YAMLError``/``FileNotFoundError`` around this second read are all
+translated into :class:`._paths.SysrsNotFoundError` here, rather than left
+to propagate uncaught.
 """
 
 from __future__ import annotations
 
 from pathlib import Path
 
+import yaml
+from pydantic import ValidationError
+
 from ..models.v1 import SysrsDocument
 from ._cache import read_sysrs
-from ._paths import find_sysrs_path
+from ._paths import SysrsNotFoundError, find_sysrs_path
 
 __all__ = ["load_by_id", "read_sysrs"]
 
@@ -68,12 +88,27 @@ def load_by_id(base_dir: Path, id_: str) -> tuple[Path, SysrsDocument]:
     Raises
     ------
     SysrsNotFoundError
-        If no file matches (propagated from :func:`._paths.find_sysrs_path`).
+        If no file matches (propagated from :func:`._paths.find_sysrs_path`),
+        or if ``path`` -- already resolved successfully by
+        :func:`._paths.find_sysrs_path` an instant earlier -- fails this
+        function's own second, independent :func:`._cache.read_sysrs` call
+        (``AssertionError``/``pydantic.ValidationError``/``yaml.YAMLError``/
+        ``FileNotFoundError``, feat-107-doc-cache Phase 8, REQ-015 -- e.g. a
+        concurrent ``delete`` tool call racing this lock-free read, the
+        same race class ``feat.tools._io.load_by_id`` already guards
+        against).
     """
     assert isinstance(base_dir, Path), type(base_dir)
     assert isinstance(id_, str), type(id_)
     assert id_.strip()
 
     path = find_sysrs_path(base_dir, id_)
-    result = (path, read_sysrs(path))
+    try:
+        doc = read_sysrs(path)
+    except (AssertionError, ValidationError, yaml.YAMLError, FileNotFoundError) as ex:
+        raise SysrsNotFoundError(
+            f"System Requirements Specification {id_!r} exists at {path}, but its content could not be "
+            f"read as a valid document on this second read ({type(ex).__name__}: {ex})."
+        ) from ex
+    result = (path, doc)
     return result

@@ -44,6 +44,23 @@ and failed entries) to the same resolved, absolute
 (``.resolve()``d) form the other eleven whole-body domains already use --
 Phase 3 had deliberately left it in its pre-existing unresolved
 ``str(path)`` form; that divergence no longer exists.
+
+**A folder vanishing mid-scan is silently omitted, not reported as a failed
+entry (feat-107-doc-cache Phase 8, REQ-016).** Phase 6 (REQ-012) had this
+tool pass its own, ``feat``-only ``_FEAT_ERROR_TYPES = (*DEFAULT_ERROR_TYPES,
+FileNotFoundError)`` to ``build_summaries``, reporting a folder whose
+``README.md`` vanishes between the directory-listing snapshot and this
+tool's own per-path read (e.g. a concurrent ``set_feat_id`` rename racing
+this lock-free scan) as a failed entry. Phase 8 corrected that choice:
+``general.tools._listing.build_summaries``'s own new ``silent_skip_types``
+default (``(FileNotFoundError,)``, REQ-016) now silently omits this case
+instead -- the same rule every one of the other 11 whole-body domains'
+``list_<domain>`` gets, and the same treatment REQ-005's reconcile-on-scan
+already gives a deletion that completes *before* the scan starts (see the
+feature's own README, Decisions Made, for the full rationale). ``_FEAT_ERROR_TYPES``
+is therefore no longer needed here -- this tool now relies on
+``build_summaries``'s own defaults for both ``error_types`` and
+``silent_skip_types``.
 """
 
 from __future__ import annotations
@@ -51,22 +68,13 @@ from __future__ import annotations
 from pathlib import Path
 
 from ...general.models import PagedResult
-from ...general.tools._listing import DEFAULT_ERROR_TYPES, build_summaries, default_failed_summary
+from ...general.tools._listing import build_summaries, default_failed_summary
 from ...general.tools._paging import normalize_paging, paginate
 from ...server import mcp
 from ..models.v1 import FeatDocument, FeatSummary
 from ._cache import reconcile_feat_cache
 from ._io import read_feat
 from ._paths import feat_base_dir, feature_title, iter_feat_paths
-
-#: DEFAULT_ERROR_TYPES (AssertionError, pydantic.ValidationError, yaml.YAMLError) plus
-#: FileNotFoundError, scoped to `feat` only (feat-107-doc-cache Phase 6, REQ-012): a concurrent,
-#: lock-free `list_feat` scan can race `set_feat_id`'s rename into reading a `README.md` path
-#: that has just vanished from disk (the same narrow window `feat.tools._paths.find_feat_path_by_id`'s
-#: own docstring documents) -- unique to `feat`'s rename-based cache integration, so this extended
-#: tuple is deliberately local to this module and never folded into the generic
-#: `general.tools._listing.DEFAULT_ERROR_TYPES` the other 11 domains' own `list_<domain>` still use.
-_FEAT_ERROR_TYPES: tuple[type[Exception], ...] = (*DEFAULT_ERROR_TYPES, FileNotFoundError)
 
 
 def _to_summary(doc: FeatDocument, path: Path) -> FeatSummary:
@@ -112,14 +120,17 @@ def list_feat(max_results: int | None = None, offset: int | None = None) -> Page
     predate this schema (out of scope for that feature, see its own
     README's Scope section) -- they are no longer invisible, just reported
     with an ``error``. A folder whose ``README.md`` vanishes mid-scan,
-    racing a concurrent ``set_feat_id`` rename (``FileNotFoundError``,
-    feat-107-doc-cache Phase 6, REQ-012 -- unique to ``feat``'s rename-based
-    cache integration, see :data:`_FEAT_ERROR_TYPES`) is caught the same way
-    and appears as the same shape of failed entry, rather than propagating
-    an uncaught OS-level error out of this tool. The complete list
-    (successes and failures both) is materialized first, then paginated in
-    memory, so the returned ``total``/``error_count`` always reflect the
-    whole directory, independent of paging.
+    racing a concurrent ``set_feat_id`` rename or a concurrent ``delete``
+    (``FileNotFoundError``), is instead silently omitted from the returned
+    page -- contributing to neither ``results``, ``total``, nor
+    ``error_count`` -- via ``build_summaries``'s own ``silent_skip_types``
+    default (feat-107-doc-cache Phase 8, REQ-016; this corrects Phase 6's
+    original choice, REQ-012, to report this exact case as a failed entry
+    via a now-removed, ``feat``-only ``_FEAT_ERROR_TYPES``). The complete
+    list (successes and failures both, excluding any silently omitted
+    path) is materialized first, then paginated in memory, so the returned
+    ``total``/``error_count`` always reflect the whole directory,
+    independent of paging.
 
     Parameters
     ----------
@@ -144,7 +155,5 @@ def list_feat(max_results: int | None = None, offset: int | None = None) -> Page
     """
     paths = list(iter_feat_paths(feat_base_dir()))
     reconcile_feat_cache(paths)  # feat-107-doc-cache Phase 4, REQ-005
-    summaries, error_count = build_summaries(
-        paths, read_feat, _to_summary, _to_failed_summary, error_types=_FEAT_ERROR_TYPES
-    )
+    summaries, error_count = build_summaries(paths, read_feat, _to_summary, _to_failed_summary)
     return paginate(summaries, *normalize_paging(max_results, offset), error_count=error_count)

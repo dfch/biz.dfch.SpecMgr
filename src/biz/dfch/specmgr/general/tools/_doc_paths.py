@@ -66,6 +66,24 @@ pre-existing and unrelated to the cache mechanism itself (unchanged since
 before Phase 3), but folded into this same remediation pass since it sits
 in code this feature already touches and directly contradicts the cache's
 own failure-handling contract.
+
+**Skip-on-parse-failure now also catches ``FileNotFoundError`` (feat-107-doc-cache
+Phase 8, REQ-014).** This scan iterates over a path list materialized at
+one point in time (the directory-listing snapshot up front), but the
+generic ``delete`` tool in ``general.tools`` only holds the *target*
+document's own per-id lock, never a whole-domain lock, while ``get_*``/
+``list_*`` intentionally take no lock at all (ADR
+33c5ab08-ff58-4c73-8c32-23abaf3838e3) -- so a concurrent ``delete`` of *any
+other* document in the same domain can remove a file between the scan's
+directory listing and that file's own turn in the loop, raising
+``FileNotFoundError`` out of ``read_fn``. Before Phase 8 this was not
+caught here, even though it is the identical race class REQ-012 (Phase 6)
+closed for ``feat`` alone, whose rename-based cache integration REQ-012
+originally (and, per its own now-corrected text, incorrectly) claimed was
+the only trigger for this class of bug -- the generic ``delete`` tool
+triggers the exact same race for every one of the other 11 domains. A file
+vanishing mid-scan this way is now skipped exactly like any other
+unparseable file, and the scan continues looking for the target id.
 """
 
 from __future__ import annotations
@@ -238,9 +256,13 @@ def find_doc_path_by_id(
     ``get_id_fn(parsed)`` against ``id_``. A file that fails to parse
     (``AssertionError`` or ``ValueError``, which ``pydantic.ValidationError``
     and every parser-specific error in this codebase -- e.g.
-    ``AdrParseError`` -- subclass; or ``yaml.YAMLError``, raised unwrapped
+    ``AdrParseError`` -- subclass; ``yaml.YAMLError``, raised unwrapped
     for malformed frontmatter YAML by every ``parse_<domain>`` function,
-    Phase 6, REQ-010) is silently skipped -- one broken file must not
+    Phase 6, REQ-010; or ``FileNotFoundError``, raised by ``read_fn`` when
+    a file vanishes between this function's own directory-listing
+    snapshot and its own turn in the per-file scan loop -- e.g. a
+    concurrent ``delete`` tool call racing this lock-free scan, Phase 8,
+    REQ-014) is silently skipped -- one broken (or vanished) file must not
     prevent lookup of a different, valid id. Before Phase 6, ``yaml.YAMLError``
     was not caught here (it is not a ``ValueError`` subclass), even though
     ``DocCache``'s own ``CACHEABLE_ERROR_TYPES`` and
@@ -248,7 +270,11 @@ def find_doc_path_by_id(
     callback) both already treated it as a normal, skippable failure -- a
     domain directory with one file whose frontmatter YAML was malformed
     crashed this scan with an uncaught ``yaml.YAMLError`` for *any* id in
-    that domain, not just the malformed file's own id.
+    that domain, not just the malformed file's own id. Before Phase 8,
+    ``FileNotFoundError`` was likewise not caught here, even though it is
+    the identical delete/scan race class REQ-012 (Phase 6) closed for
+    ``feat`` alone -- see this module's own docstring above for the full
+    explanation.
 
     Parameters
     ----------
@@ -295,7 +321,7 @@ def find_doc_path_by_id(
     for path in paths:
         try:
             doc = read_fn(path)
-        except (AssertionError, ValueError, yaml.YAMLError):
+        except (AssertionError, ValueError, yaml.YAMLError, FileNotFoundError):
             continue
         if get_id_fn(doc) == id_:
             return path

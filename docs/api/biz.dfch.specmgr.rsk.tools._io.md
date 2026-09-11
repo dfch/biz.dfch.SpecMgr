@@ -22,6 +22,23 @@ move out of this module in the first place (avoiding a circular import
 between ``_io.py`` and ``_paths.py``) and for the module-level cache
 singleton it now reads through.
 
+**The second, independent ``read_rsk`` call is also guarded against a
+vanished file (feat-107-doc-cache Phase 8, REQ-015).** :func:`load_by_id`
+calls ``read_rsk(path)`` again immediately after ``find_rsk_path`` already
+resolved and read the same ``path`` once during its own scan. The generic
+``delete`` tool in ``general.tools`` only holds the *target* document's own
+per-id lock, never a whole-domain lock, while ``get_rsk``/``list_rsk``
+intentionally take no lock at all (ADR
+33c5ab08-ff58-4c73-8c32-23abaf3838e3) -- so a concurrent ``delete`` of this
+same document can remove ``path`` in the narrow window between
+``find_rsk_path``'s own read and this one, raising ``FileNotFoundError``.
+This mirrors ``feat.tools._io.load_by_id``'s already-shipped shape exactly
+(the identical race, closed there in Phase 6 for REQ-012's narrower,
+rename-only claim): ``AssertionError``/``pydantic.ValidationError``/
+``yaml.YAMLError``/``FileNotFoundError`` around this second read are all
+translated into :class:`._paths.RskNotFoundError` here, rather than left to
+propagate uncaught.
+
 ## Functions
 
 ### `load_by_id(base_dir: 'Path', id_: 'str') -> 'tuple[Path, RskDocument]'`
@@ -44,5 +61,13 @@ tuple[Path, RskDocument]
 Raises
 ------
 RskNotFoundError
-    If no file matches (propagated from :func:`._paths.find_rsk_path`).
+    If no file matches (propagated from :func:`._paths.find_rsk_path`),
+    or if ``path`` -- already resolved successfully by
+    :func:`._paths.find_rsk_path` an instant earlier -- fails this
+    function's own second, independent :func:`._cache.read_rsk` call
+    (``AssertionError``/``pydantic.ValidationError``/``yaml.YAMLError``/
+    ``FileNotFoundError``, feat-107-doc-cache Phase 8, REQ-015 -- e.g. a
+    concurrent ``delete`` tool call racing this lock-free read, the
+    same race class ``feat.tools._io.load_by_id`` already guards
+    against).
 

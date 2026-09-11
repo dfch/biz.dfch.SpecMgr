@@ -30,6 +30,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import yaml
 from pydantic import BaseModel, ValidationError
 from pydantic_core import InitErrorDetails, PydanticCustomError
 
@@ -77,6 +78,23 @@ _EXCEPTION_TYPES_BY_NAME: dict[str, type[Exception]] = {
     "RuntimeError": RuntimeError,
     "OSError": OSError,
 }
+
+
+def _make_marked_yaml_error() -> yaml.YAMLError:
+    """Build a real ``yaml.error.MarkedYAMLError`` by actually parsing deliberately malformed YAML.
+
+    A genuine, unmocked construction (mirroring ``tests/req/tools/test_doc_cache_wiring.py``'s
+    own ``_MALFORMED_YAML_FRONTMATTER_DOC`` fixture text) rather than a hand-built instance, so
+    :func:`~biz.dfch.specmgr.general.tools._doc_cache._fresh_exception`'s ``MarkedYAMLError``
+    reconstruction branch is exercised against the exact same shape of exception every real
+    ``parse_<domain>`` failure in this codebase actually raises.
+    """
+    try:
+        yaml.safe_load("[this is not valid yaml because the flow sequence is never closed")
+    except yaml.YAMLError as exc:
+        assert isinstance(exc, yaml.error.MarkedYAMLError), type(exc)
+        return exc
+    raise AssertionError("expected yaml.safe_load to raise on malformed YAML")
 
 
 def _make_validation_error(message: str) -> ValidationError:
@@ -260,6 +278,28 @@ class TestDocCacheRead(unittest.TestCase):
             model_cache.read(path, _always_raises_validation_error)
         with self.assertRaises(ValidationError) as ctx2:
             model_cache.read(path, _always_raises_validation_error)
+
+        self.assertIsNot(ctx1.exception, ctx2.exception)
+        self.assertIs(type(ctx1.exception), type(ctx2.exception))
+        self.assertEqual(str(ctx1.exception), str(ctx2.exception))
+
+    def test_acc019_marked_yaml_error_hits_are_also_is_distinct_with_equal_type_and_message(self) -> None:
+        """ACC-019 (feat-107-doc-cache Phase 8): the third CACHEABLE_ERROR_TYPES member --
+        ``yaml.error.MarkedYAMLError`` -- round-trips a cache hit the same way ACC-013 already
+        proves for AssertionError/ValidationError. Closes the gap where `_fresh_exception`'s own
+        docstring claimed all three CACHEABLE_ERROR_TYPES members are "verified to round-trip ...
+        via ACC-013's regression tests" when only two of the three actually were.
+        """
+        model_cache: DocCache[_FakeModelDoc] = DocCache()
+        path = self._write("a.md", "irrelevant text -- the fake parser always raises")
+
+        def _always_raises_marked_yaml_error(_text: str) -> _FakeModelDoc:
+            raise _make_marked_yaml_error()
+
+        with self.assertRaises(yaml.YAMLError) as ctx1:
+            model_cache.read(path, _always_raises_marked_yaml_error)
+        with self.assertRaises(yaml.YAMLError) as ctx2:
+            model_cache.read(path, _always_raises_marked_yaml_error)
 
         self.assertIsNot(ctx1.exception, ctx2.exception)
         self.assertIs(type(ctx1.exception), type(ctx2.exception))

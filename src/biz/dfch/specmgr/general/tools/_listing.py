@@ -34,6 +34,27 @@ an empty or misconfigured directory (issue #83(b)). **After this feature**,
 exception's message in ``error``) so it appears inline in ``results`` and
 contributes to both ``total`` and the new ``error_count``. This module has
 no ``mcp`` import dependency, same as ``_doc_paths.py``/``_paging.py``.
+
+**A file vanishing mid-scan is silently omitted, not reported as a failed
+entry (feat-107-doc-cache Phase 8, REQ-016).** :func:`build_summaries` now
+takes a ``silent_skip_types`` parameter (default ``(FileNotFoundError,)``),
+checked *before* ``error_types``: a path whose ``read`` call raises one of
+these types contributes to neither ``results`` nor ``total`` nor
+``error_count`` -- as if it had never been in the directory listing to
+begin with. A file that vanishes between ``list_<domain>``'s
+directory-listing snapshot and this function's own per-path ``read(path)``
+call (e.g. a concurrent ``delete`` tool call racing this lock-free scan,
+ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3) is the same "deleted outside
+specmgr's own tooling" event REQ-005's reconcile-on-scan already handles
+*silently* when the deletion completes *before* the scan starts -- treating
+a deletion that lands *during* the scan identically, rather than as a
+distinct, error-worthy outcome, keeps the two deletion-timing cases
+indistinguishable to the caller, which they should be (see the feature's
+own README, Decisions Made, for the full rationale). This also corrects
+``feat.tools.list_feat``'s own previously-shipped, ``feat``-only divergent
+behavior for the identical case (a failed entry via its own
+``_FEAT_ERROR_TYPES``, added in Phase 6/REQ-012) to match this same
+silent-omission rule every domain now gets.
 """
 
 from __future__ import annotations
@@ -137,13 +158,19 @@ def build_summaries(
     to_summary: Callable[[_DocT, Path], _SummaryT],
     to_failed_summary: Callable[[Path, Exception], _SummaryT],
     error_types: tuple[type[Exception], ...] = DEFAULT_ERROR_TYPES,
+    silent_skip_types: tuple[type[Exception], ...] = (FileNotFoundError,),
 ) -> tuple[list[_SummaryT], int]:
     """Read and summarize every path, turning a parse failure into its own entry rather than skipping it.
 
     For each ``path`` in ``paths``: ``read(path)`` is called inside a
-    ``try``/``except error_types``. On success, ``to_summary(doc, path)``
-    builds the entry. On a caught failure, ``to_failed_summary(path, exc)``
-    builds a failed entry instead -- the file is never silently dropped
+    ``try``/``except silent_skip_types``, checked *before*
+    ``except error_types`` (feat-107-doc-cache Phase 8, REQ-016). On
+    success, ``to_summary(doc, path)`` builds the entry. On a failure
+    caught by ``silent_skip_types``, ``path`` is silently omitted --
+    contributing to neither ``results`` nor ``error_count`` -- as if it had
+    never been in the directory listing to begin with. On a failure caught
+    by ``error_types`` instead, ``to_failed_summary(path, exc)`` builds a
+    failed entry -- the file is never silently dropped
     (feat-81-83-validation Phase 3, REQ-006).
 
     Parameters
@@ -153,25 +180,42 @@ def build_summaries(
         ``iter_<domain>_paths()`` generator.
     read:
         Reads and parses one path into a domain document object (e.g.
-        ``read_req``). Any exception in ``error_types`` it raises is caught;
-        anything else propagates.
+        ``read_req``). Any exception in ``silent_skip_types`` or
+        ``error_types`` it raises is caught; anything else propagates.
     to_summary:
         Builds one summary entry from a successfully-parsed document and
         its path (e.g. constructing a ``ReqSummary``).
     to_failed_summary:
-        Builds one summary entry for a path whose ``read`` call raised a
-        caught exception (e.g. :func:`default_failed_summary` bound to the
-        domain's own summary type, or ``rsk``'s sentinel-based builder).
+        Builds one summary entry for a path whose ``read`` call raised an
+        exception caught by ``error_types`` (e.g.
+        :func:`default_failed_summary` bound to the domain's own summary
+        type, or ``rsk``'s sentinel-based builder). Never called for a
+        ``silent_skip_types`` match.
     error_types:
-        The exception types to catch from ``read``. Defaults to
-        :data:`DEFAULT_ERROR_TYPES`.
+        The exception types to catch from ``read`` and turn into a failed
+        entry. Defaults to :data:`DEFAULT_ERROR_TYPES`.
+    silent_skip_types:
+        The exception types to catch from ``read`` and silently omit --
+        checked before ``error_types``, so a type listed in both is
+        silently omitted, never turned into a failed entry. Defaults to
+        ``(FileNotFoundError,)`` (feat-107-doc-cache Phase 8, REQ-016): a
+        file vanishing between the directory-listing snapshot that
+        produced ``paths`` and this function's own per-path ``read(path)``
+        call (e.g. a concurrent ``delete`` tool call racing this
+        intentionally lock-free scan, ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3)
+        is the same "deleted outside specmgr's own tooling" event
+        REQ-005's reconcile-on-scan already handles silently for a
+        deletion that completes *before* the scan starts -- a deletion
+        landing *during* the scan is treated identically, not as a
+        distinct, error-worthy outcome.
 
     Returns
     -------
     tuple[list[_SummaryT], int]
         ``(summaries, error_count)`` -- every path's entry (success or
-        failure) in the same order as ``paths``, and the count of failed
-        entries among them.
+        failure) in the same order as ``paths``, excluding any path
+        silently omitted via ``silent_skip_types``, and the count of
+        failed entries among them.
     """
     summaries: list[_SummaryT] = []
     error_count = 0
@@ -179,6 +223,8 @@ def build_summaries(
     for path in paths:
         try:
             doc = read(path)
+        except silent_skip_types:
+            continue
         except error_types as exc:
             summaries.append(to_failed_summary(path, exc))
             error_count += 1

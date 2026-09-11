@@ -145,10 +145,12 @@ class TestListFeat(unittest.TestCase):
         self.assertTrue(Path(failed.path).exists())
         self.assertIsNotNone(failed.error)
 
-    def test_acc014_a_folder_vanishing_mid_scan_is_reported_as_a_failed_entry_not_an_uncaught_error(self) -> None:
-        """ACC-014 (feat-107-doc-cache Phase 6, REQ-012): a folder racing set_feat_id's rename
-        mid-scan (its README.md vanishes between the directory glob and the per-file read) must
-        appear as a failed entry, not propagate an uncaught FileNotFoundError out of this tool.
+    def test_acc018_a_folder_vanishing_mid_scan_is_silently_omitted_not_reported_as_a_failed_entry(self) -> None:
+        """ACC-018 (feat-107-doc-cache Phase 8, REQ-016): a folder racing set_feat_id's rename (or
+        a concurrent delete) mid-scan (its README.md vanishes between the directory glob and the
+        per-file read) must be silently omitted from the returned page -- contributing to neither
+        results, total, nor error_count -- not appear as a failed entry (Phase 6/REQ-012's original,
+        now-superseded choice) and not propagate an uncaught FileNotFoundError out of this tool.
         """
         # Fetched via import_module (not `from ... import list_feat as m`/`import ... as m`,
         # both of which resolve through `feat.tools.__init__`'s own attribute lookup -- and that
@@ -158,6 +160,7 @@ class TestListFeat(unittest.TestCase):
         list_feat_module = import_module("biz.dfch.specmgr.feat.tools.list_feat")
 
         created = create_feat(_MINIMAL_BODY)
+        second = create_feat(_OTHER_BODY)
         base_dir = ensure_feat_base_dir()
         path = base_dir / created.id / README_FILENAME
         real_read_feat = list_feat_module.read_feat
@@ -171,11 +174,10 @@ class TestListFeat(unittest.TestCase):
             sut = list_feat()
 
         self.assertEqual(sut.total, 1)
-        self.assertEqual(sut.error_count, 1)
-        failed = sut.results[0]
-        self.assertIsNone(failed.id)
-        self.assertEqual(failed.title, "<failed to parse>")
-        self.assertIn("simulated mid-scan rename race", failed.error or "")
+        self.assertEqual(sut.error_count, 0)
+        self.assertEqual(len(sut.results), 1)
+        remaining_ids = {summary.id for summary in sut.results}
+        self.assertEqual(remaining_ids, {second.id})
 
     def test_empty_result_for_missing_directory(self) -> None:
         self.assertFalse(self.feat_root.exists())

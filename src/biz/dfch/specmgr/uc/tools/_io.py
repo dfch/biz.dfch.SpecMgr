@@ -36,15 +36,35 @@ import line. See ``._cache``'s module docstring for why ``read_uc`` had to
 move out of this module in the first place (avoiding a circular import
 between ``_io.py`` and ``_paths.py``) and for the module-level cache
 singleton it now reads through.
+
+**The second, independent ``read_uc`` call is also guarded against a
+vanished file (feat-107-doc-cache Phase 8, REQ-015).** :func:`load_by_id`
+calls ``read_uc(path)`` again immediately after ``find_uc_path`` already
+resolved and read the same ``path`` once during its own scan. The generic
+``delete`` tool in ``general.tools`` only holds the *target* document's own
+per-id lock, never a whole-domain lock, while ``get_uc``/``list_uc``
+intentionally take no lock at all (ADR
+33c5ab08-ff58-4c73-8c32-23abaf3838e3) -- so a concurrent ``delete`` of this
+same document can remove ``path`` in the narrow window between
+``find_uc_path``'s own read and this one, raising ``FileNotFoundError``.
+This mirrors ``feat.tools._io.load_by_id``'s already-shipped shape exactly
+(the identical race, closed there in Phase 6 for REQ-012's narrower,
+rename-only claim): ``AssertionError``/``pydantic.ValidationError``/
+``yaml.YAMLError``/``FileNotFoundError`` around this second read are all
+translated into :class:`._paths.UcNotFoundError` here, rather than left to
+propagate uncaught.
 """
 
 from __future__ import annotations
 
 from pathlib import Path
 
+import yaml
+from pydantic import ValidationError
+
 from ..models.v2 import UcDocument
 from ._cache import read_uc
-from ._paths import find_uc_path
+from ._paths import UcNotFoundError, find_uc_path
 
 __all__ = ["load_by_id", "read_uc"]
 
@@ -68,12 +88,27 @@ def load_by_id(base_dir: Path, id_: str) -> tuple[Path, UcDocument]:
     Raises
     ------
     UcNotFoundError
-        If no file matches (propagated from :func:`._paths.find_uc_path`).
+        If no file matches (propagated from :func:`._paths.find_uc_path`),
+        or if ``path`` -- already resolved successfully by
+        :func:`._paths.find_uc_path` an instant earlier -- fails this
+        function's own second, independent :func:`._cache.read_uc` call
+        (``AssertionError``/``pydantic.ValidationError``/``yaml.YAMLError``/
+        ``FileNotFoundError``, feat-107-doc-cache Phase 8, REQ-015 -- e.g. a
+        concurrent ``delete`` tool call racing this lock-free read, the
+        same race class ``feat.tools._io.load_by_id`` already guards
+        against).
     """
     assert isinstance(base_dir, Path), type(base_dir)
     assert isinstance(id_, str), type(id_)
     assert id_.strip()
 
     path = find_uc_path(base_dir, id_)
-    result = (path, read_uc(path))
+    try:
+        doc = read_uc(path)
+    except (AssertionError, ValidationError, yaml.YAMLError, FileNotFoundError) as ex:
+        raise UcNotFoundError(
+            f"use case {id_!r} exists at {path}, but its content could not be read as a valid "
+            f"use case document on this second read ({type(ex).__name__}: {ex})."
+        ) from ex
+    result = (path, doc)
     return result
