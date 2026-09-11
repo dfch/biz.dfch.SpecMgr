@@ -59,7 +59,7 @@ def _schema_type_str(prop_schema: dict[str, Any]) -> str:
     ``#/$defs/AdrBody`` -> ``AdrBody``), collapses ``anyOf`` (typically an
     optional field's ``[T, null]`` union) into ``T | None``, renders
     ``array`` as ``list[T]``, and surfaces a closed ``enum`` (e.g. the
-    generic ``update`` tool's 7-value ``type``) as
+    generic ``update`` tool's multi-value ``type``) as
     ``T (enum: v1, v2, ...)`` -- the enum's values are part of the
     contract, not an implementation detail. Falls back to ``"any"`` when
     no recognizable shape is present -- this is a best-effort summary for

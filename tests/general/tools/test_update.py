@@ -664,7 +664,7 @@ _MISSING_UUID = "00000000-0000-0000-0000-000000000000"
 
 @dataclass(frozen=True)
 class _Case:
-    """Per-type test data for the eight whole-body document types."""
+    """Per-type test data for the whole-body document types."""
 
     doc_type: str
     create: Callable[[str], Any]
@@ -993,7 +993,7 @@ class TempDocsDirTestCase(unittest.TestCase):
 
 
 class TestUpdateWholeBody(TempDocsDirTestCase):
-    """ACC-001: whole-body mode (no ``offset``/``limit``) across all eight types."""
+    """ACC-001: whole-body mode (no ``offset``/``limit``) across all whole-body document types."""
 
     def test_replaces_body_preserving_id_type_status_created_version(self) -> None:
         """Whole-body mode must replace the body but preserve every frontmatter field but ``updated``."""
@@ -1071,7 +1071,7 @@ class TestUpdateWholeBody(TempDocsDirTestCase):
 
 
 class TestUpdateRange(TempDocsDirTestCase):
-    """ACC-002: range mode (``offset``/``limit``) across all eight types."""
+    """ACC-002: range mode (``offset``/``limit``) across all whole-body document types."""
 
     def test_middle_range_replace_leaves_out_of_range_lines_byte_identical(self) -> None:
         """A single middle-line replace must change only that line, leaving every other line identical."""

@@ -242,6 +242,31 @@ def process_data(data: list[str]) -> str:
     return result
 ```
 
+**Requirement:** Do not restate a generic tool's (or any cross-domain concept's) supported-domain
+count as a cardinal number in prose -- neither as a word (`ten`/`eleven`/`twelve`/`thirteen`, ...)
+nor as a digit (`10`/`11`/`12`/`13`, ...). Use an explicit domain list, or relational phrasing that
+does not depend on a count staying in sync, instead.
+
+- A hardcoded count silently goes stale every time a domain is added -- most recently `sysrs` --
+  and no test or lint rule currently catches the mismatch.
+- Prefer an explicit, already-accurate domain list (e.g. `req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/
+  `dec`/`sop`/`feat`/`vcr`/`sysrs`) over a count adjective in front of it.
+- Prefer relational phrasing over a count when describing a set by contrast to another (e.g.
+  "every domain except `feat`", "every domain except `adr`") rather than restating how many that
+  leaves.
+
+**Example:**
+```python
+# ✗ Before: a bare cardinal number that has to be hand-updated whenever a domain is added
+"""Dispatches the generic update across the eleven whole-body domains."""
+
+# ✓ After: an explicit, self-verifying domain list -- nothing to keep in sync by hand
+"""Dispatches the generic update across req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs."""
+
+# ✓ After: relational phrasing when contrasting against one excluded domain
+"""Dispatches the generic update across every whole-body domain except `feat`."""
+```
+
 ### Error Handling
 
 ```python
