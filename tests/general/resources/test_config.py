@@ -47,7 +47,7 @@ class TestConfigResource(unittest.TestCase):
         result = config_info()
         self.assertIsInstance(result, ConfigInfo)
 
-    def test_all_twelve_domains_present(self):
+    def test_all_domains_present(self):
         """ACC-001: every one of the domains must have an entry."""
         result = config_info()
         self.assertEqual(set(result.domains.keys()), set(_ALL_DOMAINS))
