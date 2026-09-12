@@ -2,7 +2,7 @@
 
 ``@mcp.tool()`` wrapper: set_status (feat-22-consolidate-mutation-tools, Phase 4).
 
-The generic, cross-domain status-change tool for all thirteen document types
+The generic, cross-domain status-change tool for every document type
 (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``adr``).
 It dispatches on the explicit ``type`` parameter to a private per-domain
 adapter (``_set_status_<d>``), each a **verbatim port** of the
@@ -21,8 +21,8 @@ previous per-domain ADR status tool's function body (same ``adr_lock``,
 36905d5b): its ``_set_status_sop`` adapter was written directly in this
 shape rather than ported from a retired per-domain tool.
 
-The ``feat`` adapter (``_set_status_feat``) diverges from the other ten
-whole-body domains' identical shape in the same way ``_update_feat``
+The ``feat`` adapter (``_set_status_feat``) diverges from every other
+whole-body domain's identical shape in the same way ``_update_feat``
 (in ``update.py``) does: it resolves ``id`` via
 ``feat.tools._paths``'s bespoke folder-per-document shortcut, not a
 flat-file directory scan (see
@@ -34,8 +34,8 @@ reversed for cross-domain consistency; see that feature's Decisions Made.
 
 The parameter is intentionally named ``type`` (it matches the frontmatter
 field vocabulary the client already knows); no enabled ruff rule objects
-to the builtin shadow. The 13-way union return type is annotation-only --
-the MCP input schema is built from the parameters, and the SDK
+to the builtin shadow. The union return type is annotation-only -- the
+MCP input schema is built from the parameters, and the SDK
 serializes whichever concrete document is returned.
 
 ``superseded_by`` is accepted only for ``type="adr"``: the
@@ -250,14 +250,14 @@ Mirrors :func:`_set_status_dec`'s shape (same ``vcr_lock``,
 
 ### `set_status(id: 'str', type: "Literal['req', 'uc', 'tsk', 'qa', 'prb', 'gol', 'rsk', 'dec', 'sop', 'feat', 'vcr', 'sysrs', 'adr']", status: 'str', superseded_by: 'str | None' = None) -> '_SetStatusFrontmatter | InvalidStatusResult'`
 
-Replace the status of an existing document, across all thirteen domains.
+Replace the status of an existing document, across every domain.
 
     Cross-domain generic for every document type
     (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``adr``);
     dispatches on ``type`` to the domain's own ported adapter (same lock,
     same id resolution, same body handling, same domain not-found error).
 
-    For the eleven whole-body domains the existing file's frontmatter is
+    For the whole-body domains the existing file's frontmatter is
     carried over with every field preserved except ``status`` (replaced)
     and ``updated`` (bumped to the current date+time timestamp, via
     ``general.tools._timestamps.now_timestamp()``); the
@@ -272,15 +272,15 @@ Replace the status of an existing document, across all thirteen domains.
     frontmatter is reconstructed through the domain's own
     ``XFrontmatter`` constructor, so the domain's own validator enforces
     its set. Where that set lives is documented per domain -- see each
-    ``XFrontmatter.status`` field (the twelve whole-body domains'
+    ``XFrontmatter.status`` field (each whole-body domain's own
     ``models/<v>/frontmatter.py`` and ``models/adr/v1/frontmatter.py``)
     rather than any list in this docstring.
 
     Safety (REQ-009, feat-38-39-41-43-44 Phase 4, mirroring ``delete``'s
     own REQ-003): ``id`` is validated via ``_path_safety.validate_id`` (no
     ``/``, no ``\``, no ``..``, plus the dispatched domain's own format --
-    canonical lowercase-hex UUID for the twelve UUID domains including
-    ``adr``, ``feat-NNN-slug`` for ``feat``) **before** any filesystem
+    canonical lowercase-hex UUID for every domain other than ``feat``,
+    including ``adr``, ``feat-NNN-slug`` for ``feat``) **before** any filesystem
     access, so a path-injection attempt or a wrong-format id is a
     ``ValueError`` raised before dispatch. Each adapter additionally
     confines the resolved path to the domain's own base directory with
@@ -310,9 +310,9 @@ ReqFrontmatter | UcFrontmatter | TskFrontmatter | QaFrontmatter | PrbFrontmatter
 GolFrontmatter | RskFrontmatter | DecFrontmatter | FeatFrontmatter | SopFrontmatter |
 VcrFrontmatter | SysrsFrontmatter | Adr | InvalidStatusResult
     The updated document's frontmatter only (no body) of the dispatched domain type
-    for the twelve whole-body domains; for ``type="adr"`` (unchanged, out of scope for
+    for the whole-body domains; for ``type="adr"`` (unchanged, out of scope for
     this feature) the full ``Adr`` document, as before. Use the corresponding
-    ``get_<d>`` tool to fetch the full document afterward for the twelve whole-body
+    ``get_<d>`` tool to fetch the full document afterward for the whole-body
     domains. When ``status`` is not in the dispatched domain's closed vocabulary,
     returns an :class:`~biz.dfch.specmgr.general.models.InvalidStatusResult` instead
     (ADR b399f1ce-ed42-4929-b01c-7a57d18e8014) -- see the Raises section below for

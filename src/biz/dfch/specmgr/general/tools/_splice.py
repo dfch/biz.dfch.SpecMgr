@@ -20,7 +20,7 @@ windowing for the generic ``update`` tool (feat-22-consolidate-mutation-tools,
 Phase 2) and the ``get_<d>`` tools (feat-28-get-update, Phase 2).
 
 Three small, doc-type-agnostic text helpers shared by the generic ``update``
-tool's range mode and the eleven ``get_<d>`` tools' ``raw=True`` reads:
+tool's range mode and every ``get_<d>`` tool's ``raw=True`` reads:
 
 - :func:`body_text` extracts a document file's frontmatter-stripped body text
   using the established ``frontmatter.loads(path.read_text(encoding="utf-8")).
@@ -45,8 +45,8 @@ of "the body text" in this codebase: every ``get_<d>(raw=True)`` read
 :func:`body_text`, so *what the client counts is what the server splices* --
 the line numbers a client sees in any ``get_<d>(raw=True)`` read, windowed or
 not, index byte-for-byte into the same text the server splices against;
-:func:`window_body` is the single windowing definition shared by all eleven
-``get_<d>`` tools.
+:func:`window_body` is the single windowing definition shared by every
+``get_<d>`` tool.
 
 As with :mod:`_doc_paths`, this module has no ``mcp`` dependency -- plain
 file I/O and text manipulation only, kept separately from any

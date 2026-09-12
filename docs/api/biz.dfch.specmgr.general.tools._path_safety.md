@@ -16,7 +16,7 @@ touch.)
 
 The generic ``delete`` tool (``.specmgr/feat/feat-36-delete/README.md``,
 Design Notes sections 2-6) was the first caller. The five functions are
-now also called by the thirteen ``get_<d>`` tools (including ``get_adr``,
+now also called by every ``get_<d>`` tool (including ``get_adr``,
 and ``get_sysrs`` since feat-32-sysrs Phase 3)
 and by the generic ``update`` and ``set_status`` tools
 (``.specmgr/feat/feat-38-39-41-43-44/README.md``, Phase 4, REQ-009): they
@@ -74,7 +74,7 @@ ValueError
 
 Reject any id that is not a canonical lowercase-hex v4-shaped UUID.
 
-Enforced for the ten :data:`_UUID_TYPES` domains. (Subsumes
+Enforced for every :data:`_UUID_TYPES` domain. (Subsumes
 :func:`assert_no_traversal` for well-formed input, but both are applied
 so the error message is precise.)
 
@@ -125,15 +125,15 @@ tool (including ``get_adr``) call before any filesystem access.
 Parameters
 ----------
 type_:
-    The document type name: one of the thirteen document types (the
-    twelve whole-body domains, or ``adr``).
+    The document type name: one of the whole-body domains, or
+    ``adr``.
 id_:
     The id to check.
 
 Raises
 ------
 ValueError
-    ``type_`` is not one of the thirteen document type names, or the
+    ``type_`` is not one of the supported document type names, or the
     id fails :func:`assert_no_traversal` or the type's own format
     check; the message names the offending value.
 

@@ -30,7 +30,7 @@ without adding an ``mcp`` dependency to the dependency-free base library)
 -- it was originally asserted to be fully *structurally* equivalent (same
 field names, same annotations), but feat-81-83-validation Phase 3
 (REQ-006/REQ-007) added ``path``/``error`` to :class:`DocSummary` for the
-twelve whole-body domains only -- ``adr`` is explicitly out of scope for
+whole-body domains only -- ``adr`` is explicitly out of scope for
 that feature (``list_adr`` untouched), so ``AdrSummary`` deliberately keeps
 its original four-field shape and the two are no longer expected to match
 field-for-field. ``AdrSummary`` is instead asserted to still share
@@ -53,7 +53,7 @@ from biz.dfch.specmgr.uc.models.v2.summary import UcSummary
 _ADR_FIELD_NAMES = ["id", "title", "status", "ref"]
 
 #: The current shared `DocSummary` base's fields -- the four original ones plus `path`/`error`,
-#: added in feat-81-83-validation Phase 3 (REQ-006/REQ-007) for the twelve whole-body domains only.
+#: added in feat-81-83-validation Phase 3 (REQ-006/REQ-007) for the whole-body domains only.
 _EXPECTED_FIELD_NAMES = ["id", "title", "status", "ref", "path", "error"]
 
 
@@ -137,7 +137,7 @@ class TestAdrSummaryIsStructurallyEquivalent(unittest.TestCase):
     """Tests that AdrSummary, though not a DocSummary subclass, still shares DocSummary's original four fields.
 
     feat-81-83-validation Phase 3 added ``path``/``error`` to
-    :class:`DocSummary` for the twelve whole-body domains only -- ``adr`` is
+    :class:`DocSummary` for the whole-body domains only -- ``adr`` is
     explicitly out of scope, so ``AdrSummary`` deliberately does NOT gain
     those two fields, and the two models' field sets are no longer expected
     to match field-for-field (see this module's own docstring).

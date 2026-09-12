@@ -29,7 +29,7 @@ own out-of-vocabulary-status failure mode is pre-checked *before* dispatch and n
 ``wrap_tool_errors`` at all -- see ``TestGenericSetStatusToolErrorContext``'s own docstring below
 for how it still identifies the domain, via the non-raising ``InvalidStatusResult`` instead.
 
-Unlike ``tests/general/tools/test_update.py``'s exhaustive, all-eleven-domain parametrization,
+Unlike ``tests/general/tools/test_update.py``'s exhaustive, all-domain parametrization,
 this file only needs one representative domain pair to prove the wrapper is actually wired in
 at the tool boundary -- the wrapper's own mechanics (all three channels, ``also_catch``,
 pass-through) are already fully covered by ``tests/models/md/test_errors.py``.

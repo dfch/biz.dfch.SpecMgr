@@ -31,7 +31,7 @@ touch.)
 
 The generic ``delete`` tool (``.specmgr/feat/feat-36-delete/README.md``,
 Design Notes sections 2-6) was the first caller. The five functions are
-now also called by the thirteen ``get_<d>`` tools (including ``get_adr``,
+now also called by every ``get_<d>`` tool (including ``get_adr``,
 and ``get_sysrs`` since feat-32-sysrs Phase 3)
 and by the generic ``update`` and ``set_status`` tools
 (``.specmgr/feat/feat-38-39-41-43-44/README.md``, Phase 4, REQ-009): they
@@ -55,8 +55,8 @@ __all__ = [
     "validate_id",
 ]
 
-#: The twelve UUID domains whose ``id`` is a server-generated v4 UUID: the
-#: eleven whole-body domains plus ``adr`` (feat-38-39-41-43-44 Phase 4,
+#: The UUID domains whose ``id`` is a server-generated v4 UUID: every
+#: whole-body domain other than ``feat``, plus ``adr`` (feat-38-39-41-43-44 Phase 4,
 #: REQ-009; ``sysrs`` added feat-32-sysrs Phase 3) -- ADR ids are canonical
 #: lowercase-hex UUIDs of the exact same
 #: shape (see ``adr.tools._paths.find_adr_path``/any ``docs/adr/*.md``
@@ -114,7 +114,7 @@ def assert_no_traversal(id_: str) -> None:
 def assert_uuid(id_: str) -> None:
     """Reject any id that is not a canonical lowercase-hex v4-shaped UUID.
 
-    Enforced for the ten :data:`_UUID_TYPES` domains. (Subsumes
+    Enforced for every :data:`_UUID_TYPES` domain. (Subsumes
     :func:`assert_no_traversal` for well-formed input, but both are applied
     so the error message is precise.)
 
@@ -175,15 +175,15 @@ def validate_id(type_: str, id_: str) -> None:
     Parameters
     ----------
     type_:
-        The document type name: one of the thirteen document types (the
-        twelve whole-body domains, or ``adr``).
+        The document type name: one of the whole-body domains, or
+        ``adr``.
     id_:
         The id to check.
 
     Raises
     ------
     ValueError
-        ``type_`` is not one of the thirteen document type names, or the
+        ``type_`` is not one of the supported document type names, or the
         id fails :func:`assert_no_traversal` or the type's own format
         check; the message names the offending value.
     """
@@ -198,7 +198,7 @@ def validate_id(type_: str, id_: str) -> None:
         assert_feat_id(id_)
     else:
         raise ValueError(
-            f"unknown document type {type_!r}; expected 'feat' or one of the twelve UUID domains "
+            f"unknown document type {type_!r}; expected 'feat' or one of the UUID domains "
             f"(req/uc/tsk/qa/prb/gol/rsk/dec/sop/vcr/sysrs/adr)"
         )
 

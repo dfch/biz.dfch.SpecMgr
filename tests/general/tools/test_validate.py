@@ -17,8 +17,8 @@
 
 """Tests for the generic ``validate`` ``@mcp.tool()`` wrapper (feat-81-83-validation, Phase 2).
 
-Parameterized over the twelve whole-body document types the generic tool covers (``adr`` is
-excluded, mirroring ``update``/``set_classification``/``delete``'s own 12-way precedent); the
+Parameterized over the whole-body document types the generic tool covers (``adr`` is
+excluded, mirroring ``update``/``set_classification``/``delete``'s own precedent); the
 per-domain fixture bodies below are 1:1 ports of the retired per-domain ``test_validate_<d>.py``
 files' own ``_MINIMAL_BODY``/``_MALFORMED_BODY``/``_FULL_DOCUMENT`` constants (Task 2.5's
 coverage-superseded rationale).
@@ -26,7 +26,7 @@ coverage-superseded rationale).
 Covers, per REQ-004/ACC-004:
 
 - A valid body-only content and a valid complete document both validate successfully
-  (``{valid: True, errors: []}``) for all twelve domains.
+  (``{valid: True, errors: []}``) for all domains.
 - A structurally invalid body-only content never raises -- it returns
   ``{valid: False, errors: [{message: str}]}`` (the ``AssertionError`` channel).
 - A field/cross-field-invalid body-only content likewise never raises -- same shape (the
@@ -711,7 +711,7 @@ _CASES: list[_Case] = [
 
 
 class TestValidateAllDomains(unittest.TestCase):
-    """ACC-003/ACC-004: the generic tool across all twelve applicable domains."""
+    """ACC-003/ACC-004: the generic tool across all applicable domains."""
 
     def test_returns_valid_true_for_body_only_content(self) -> None:
         for case in _CASES:

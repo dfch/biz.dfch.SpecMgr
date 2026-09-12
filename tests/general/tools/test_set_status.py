@@ -17,13 +17,13 @@
 
 """Tests for the generic ``set_status`` ``@mcp.tool()`` wrapper (feat-22-consolidate-mutation-tools, Phase 4).
 
-Parameterized over all thirteen document types (ACC-004); seeds a real,
-persisted document per type -- the twelve whole-body domains via the
+Parameterized over all document types (ACC-004); seeds a real,
+persisted document per type -- the whole-body domains via the
 domain's own ``create_<d>`` tool in a temp ``SPECMGR_DOCS_DIR`` (mirroring
 the fixture strategy of ``tests/general/tools/test_update.py``), the ADR
 by rendering a minimal valid model into a temp ``SPECMGR_ADR_DIR`` -- and
 covers: status changed + ``updated`` bumped (microsecond timestamp) + body
-untouched (twelve domains: raw body byte-identical; ADR: re-render round-
+untouched (whole-body domains: raw body byte-identical; ADR: re-render round-
 trip equal apart from status); each domain's closed-vocabulary
 enforcement (positive value from the domain's own ``_ALLOWED_STATUSES``;
 negative value valid in one domain but invalid in the tested one -- each a
@@ -397,7 +397,7 @@ _SYSRS_MINIMAL_BODY = textwrap.dedent(
 
 @dataclass(frozen=True)
 class _Case:
-    """Per-type test data for the twelve whole-body document types."""
+    """Per-type test data for the whole-body document types."""
 
     doc_type: str
     create: Callable[[str], Any]
@@ -589,7 +589,7 @@ class TempDocsDirTestCase(unittest.TestCase):
 
 
 class TestSetStatusWholeBodyDomains(TempDocsDirTestCase):
-    """ACC-004: the twelve whole-body domains -- status changed, ``updated`` bumped, body untouched."""
+    """ACC-004: the whole-body domains -- status changed, ``updated`` bumped, body untouched."""
 
     def test_case_data_matches_the_domains_own_closed_sets(self) -> None:
         """Each ``valid_status``/``invalid_status`` pair must be exactly as claimed against the domain's own set."""
@@ -799,7 +799,7 @@ class TestSetStatusSupersededByGuard(TempDocsDirTestCase):
 
 @dataclass(frozen=True)
 class _InjectionCase:
-    """Per-type test data for ``_path_safety`` coverage (ACC-008), across all thirteen document types."""
+    """Per-type test data for ``_path_safety`` coverage (ACC-008), across all document types."""
 
     doc_type: str
     create: Callable[[str], Any]
@@ -813,11 +813,11 @@ class _InjectionCase:
 #: The pinned path-injection shapes (mirrors ``test_delete.py``'s own ``_TRAVERSAL_IDS``).
 _TRAVERSAL_IDS = ("../x", "a/b", "a\\b", "..")
 
-#: A well-formed feat-NNN-slug folder name (the wrong-format id for the twelve UUID domains).
+#: A well-formed feat-NNN-slug folder name (the wrong-format id for the UUID domains).
 _FEAT_SLUG_ID = "feat-36-delete"
 
 #: A minimal, valid feat body (ACC-008's injection coverage: feat is the one whole-body domain
-#: whose id shape differs from the eleven UUID domains, mirroring ``test_delete.py``'s own fixture).
+#: whose id shape differs from every other domain here, mirroring ``test_delete.py``'s own fixture).
 _FEAT_MINIMAL_BODY = textwrap.dedent(
     """\
     # Feature: Example Widget
@@ -885,7 +885,7 @@ _INJECTION_CASES: list[_InjectionCase] = [
 class TempSetStatusInjectionDirTestCase(unittest.TestCase):
     """Common fixture for ACC-008: temp dirs for SPECMGR_DOCS_DIR, SPECMGR_FEAT_DIR, and
     SPECMGR_ADR_DIR (mirrors ``test_delete.py``'s ``TempDeleteDirTestCase``, since injection
-    coverage spans all thirteen document types, feat and adr included)."""
+    coverage spans all document types, feat and adr included)."""
 
     def setUp(self) -> None:
         self.docs_root = Path(self.enterContext(tempfile.TemporaryDirectory()))
@@ -954,7 +954,7 @@ class TestSetStatusAssertWithinSpy(TempSetStatusInjectionDirTestCase):
     """ACC-008: ``assert_within`` is actually invoked (not just present in source) during a valid set_status."""
 
     def test_assert_within_is_called_with_base_dir_and_resolved_path(self) -> None:
-        """For each of the twelve whole-body domains, a valid status change must call ``assert_within(base_dir, path)``."""
+        """For each of the whole-body domains, a valid status change must call ``assert_within(base_dir, path)``."""
         for case in _INJECTION_CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = case.create(case.minimal_body)

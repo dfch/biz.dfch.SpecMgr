@@ -2,7 +2,7 @@
 
 ``@mcp.tool()`` wrapper: delete (feat-36-delete, Phase 2).
 
-The generic, cross-domain hard-delete tool for the twelve whole-body
+The generic, cross-domain hard-delete tool for the whole-body
 document types (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/
 ``dec``/``sop``/``feat``/``vcr``/``sysrs``). It dispatches on the explicit ``type``
 parameter to a private per-domain adapter (``_delete_<d>``), each of which
@@ -13,7 +13,8 @@ the path is needed), takes the domain's own per-id lock around the whole
 resolve-then-delete sequence (the very lock the generic ``update`` and
 ``set_status`` tools take for the same id, so a concurrent same-id mutation
 cannot interleave with the delete), and hard-deletes the document from
-disk: the single ``*.md`` file for the eleven flat domains
+disk: the single ``*.md`` file for every flat domain (i.e. every
+whole-body domain except ``feat``)
 (``Path.unlink``), or the entire ``<base>/<id>/`` folder for ``feat``
 (``shutil.rmtree`` -- deleting ``README.md``, any ``history.md``, and any
 session transcripts in that folder; ``feat`` is folder-per-document, ADR
@@ -22,8 +23,8 @@ session transcripts in that folder; ``feat`` is folder-per-document, ADR
 
 Safety (REQ-003): the public :func:`delete` validates ``id`` via
 :func:`_path_safety.validate_id` (no ``/``, no ``\``, no ``..``, plus the
-domain's own format -- canonical lowercase-hex UUID for the ten UUID
-domains, ``feat-NNN-slug`` for ``feat``) **before** any filesystem access,
+domain's own format -- canonical lowercase-hex UUID for every domain
+other than ``feat``, ``feat-NNN-slug`` for ``feat``) **before** any filesystem access,
 so a path-injection attempt or a wrong-format id is a ``ValueError`` raised
 before dispatch. Each adapter additionally confines the resolved path to
 the domain's own base directory with :func:`_path_safety.assert_within`
@@ -173,21 +174,22 @@ Same resolve/lock/safety semantics as :func:`_delete_req`.
 
 ### `delete(id: 'str', type: "Literal['req', 'uc', 'tsk', 'qa', 'prb', 'gol', 'rsk', 'dec', 'sop', 'feat', 'vcr', 'sysrs']") -> 'str'`
 
-Permanently delete an existing document from disk, across the twelve whole-body domains.
+Permanently delete an existing document from disk, across the whole-body domains.
 
 Cross-domain generic for every whole-body document type
 (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/
 ``sop``/``feat``/``vcr``/``sysrs``); dispatches on ``type`` to the domain's own
 private adapter (same id resolution via the domain's ``load_by_id``,
 same per-id domain lock around the whole resolve-then-delete sequence,
-same domain not-found error). The eleven flat domains remove their single
+same domain not-found error). Every flat domain (every whole-body domain
+except ``feat``) removes its single
 ``*.md`` file; ``feat`` removes its entire ``<base>/<id>/`` folder
 (``README.md``, any ``history.md``, any session transcripts --
 folder-per-document, ADR 8cf940c5).
 
 The ``id`` is validated before any filesystem access: a path-injection
 attempt (``/``, ``\``, or ``..``) or a wrong-format id (not a canonical
-lowercase-hex UUID for the ten UUID domains, or not a
+lowercase-hex UUID for every domain other than ``feat``, or not a
 ``feat-NNN-slug`` for ``feat``) is a ``ValueError`` raised before
 dispatch. The resolved path is additionally confined to the domain's
 own base directory (defense-in-depth) inside the lock.
@@ -209,8 +211,8 @@ type:
 Returns
 -------
 str
-    The deleted path: the ``*.md`` file path for the eleven flat
-    domains, the folder path for ``feat``.
+    The deleted path: the ``*.md`` file path for every flat domain
+    (every whole-body domain except ``feat``), the folder path for ``feat``.
 
 Raises
 ------

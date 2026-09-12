@@ -158,8 +158,8 @@ def build_failed_rsk_summary(path: Path, error: Exception) -> RskSummary:
         :meth:`RskSummary.from_document` (so every risk-specific field is
         genuinely derived, never hand-typed), with ``id``/``title``/
         ``status``/``path``/``error`` overridden -- the five fields no
-        document could ever supply (``title``, unlike the other eleven
-        domains, is one of those five here -- see this module's own
+        document could ever supply (``title``, unlike every other
+        domain, is one of those five here -- see this module's own
         docstring).
     """
     assert isinstance(path, Path), type(path)

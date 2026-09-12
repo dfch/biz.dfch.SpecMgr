@@ -382,8 +382,8 @@ type or cross-cutting:
   `feat`'s own workflow -- direct hand/agent editing of
   `.specmgr/feat/<id>/README.md` -- treats this shared `path` as a
   first-class, sanctioned read/edit entry point by original design, not
-  merely an incidental convenience the other eleven domains only gained
-  later. See `.specmgr/feat/feat-31-feature/README.md` for the full
+   merely an incidental convenience every other domain only gained
+   later. See `.specmgr/feat/feat-31-feature/README.md` for the full
   design.
 - **`vcr/`** (Verification Case Record) — same tools/resources/prompts
   shape as `req/`/`prb/`/`dec/` but for how a single REQ/UC is verified: a
@@ -478,38 +478,38 @@ type or cross-cutting:
   - **`general/`** — cross-cutting, non-domain-specific package:
     `general/tools/` (`mdformat`, formats a markdown file in place while
     preserving YAML frontmatter blocks; `update`, the generic whole-body
-    *and* line-range replace for the twelve whole-body domains — `type` is
-    one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs, read-style
-    `offset`/`limit` body-line coordinates (`offset` = 1-based first line,
-    `limit` = count; omitted `limit` = through end of body, `0` = pure
-    insert, `offset` `N+1` = append; strict validation, never clamped),
-    splice-then-validate-whole; `set_status`, the generic status change for
-    all thirteen
-    domains incl. adr — `superseded_by` is ADR-only, composing
-    `"superseded by X"`; `set_classification`, the generic free-text
-    `classification` frontmatter field change for the twelve whole-body
-    domains only — `type` is one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs
-    (`adr` excluded, same as `update`/`delete`, since ADR's separate
-    `AdrFrontmatter` model is out of scope), bumping `updated` and leaving
-    the body and every other frontmatter field untouched, with a
-    blank/whitespace-only value clearing `classification` back to
-    `None`/absent; `delete`, the generic type-dispatched hard-delete
-    for the twelve whole-body domains — `type` is one of
-    req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs (`adr` excluded), all twelve
-     domains implement a `delete` adapter in that one tool (a future domain
-     adds its own adapter there, never a per-domain `delete_<d>` tool),
-      resolving by `id`, taking the domain's own lock, and returning the
-      deleted path; `validate`, the generic, disk-free/id-free dry-run
-      content validator for the same twelve whole-body domains (`adr`
-      excluded, `validate_adr` remains its own standalone tool) —
-      replacing the former twelve per-domain `validate_<d>` tools
-      (feat-81-83-validation, ADR 078bf395-0a5f-4afd-84f6-b7a2191a00e6);
-      unlike every other generic tool here, it never raises for a
-      content-validation failure, always returning
-      `{valid: bool, errors: list[{message: str}]}`, only raising
-      `ValueError` for a `full`/content-shape mismatch or an unsupported
-      `type`. On a successful write, `update`, `set_status` (its twelve
-     non-`adr` adapters), `set_classification`, and every per-domain
+     *and* line-range replace for the whole-body domains — `type` is
+     one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs, read-style
+     `offset`/`limit` body-line coordinates (`offset` = 1-based first line,
+     `limit` = count; omitted `limit` = through end of body, `0` = pure
+     insert, `offset` `N+1` = append; strict validation, never clamped),
+     splice-then-validate-whole; `set_status`, the generic status change for
+     every
+     domain incl. adr — `superseded_by` is ADR-only, composing
+     `"superseded by X"`; `set_classification`, the generic free-text
+     `classification` frontmatter field change for the whole-body
+     domains only — `type` is one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs
+     (`adr` excluded, same as `update`/`delete`, since ADR's separate
+     `AdrFrontmatter` model is out of scope), bumping `updated` and leaving
+     the body and every other frontmatter field untouched, with a
+     blank/whitespace-only value clearing `classification` back to
+     `None`/absent; `delete`, the generic type-dispatched hard-delete
+     for the whole-body domains — `type` is one of
+     req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs (`adr` excluded), every one of these
+      domains implements a `delete` adapter in that one tool (a future domain
+      adds its own adapter there, never a per-domain `delete_<d>` tool),
+       resolving by `id`, taking the domain's own lock, and returning the
+       deleted path; `validate`, the generic, disk-free/id-free dry-run
+       content validator for the same whole-body domains (`adr`
+       excluded, `validate_adr` remains its own standalone tool) —
+       replacing the former per-domain `validate_<d>` tools
+       (feat-81-83-validation, ADR 078bf395-0a5f-4afd-84f6-b7a2191a00e6);
+       unlike every other generic tool here, it never raises for a
+       content-validation failure, always returning
+       `{valid: bool, errors: list[{message: str}]}`, only raising
+       `ValueError` for a `full`/content-shape mismatch or an unsupported
+       `type`. On a successful write, `update`, `set_status` (its
+      non-`adr` adapters), `set_classification`, and every per-domain
      `create_<d>` tool now return the domain's frontmatter object only (no
      body) — small and bounded regardless of document size, unlike an
      append-only document's ever-growing body — with the `adr` dispatch
@@ -525,12 +525,13 @@ type or cross-cutting:
     RASCI responsibility-assignment framework, REQ-011; motivated by `sop`
     but not scoped to it), and `general/prompts/` (`compact_history` — rotates
      older `Recent Updates` entries out of any feature folder's `README.md`
-     into a sibling `history.md`). The twelve `get_<d>` tools additionally
-   take a `raw: bool = False` parameter — `raw=True` returns the
-   frontmatter-stripped body text as-is (the text `update`'s
-   `offset`/`limit` index into), with optional read-style `offset`/`limit`
-   windowing of that raw read (raw-only; out-of-range values clamp, never
-   error). `get_<d>` (all thirteen, incl. `get_adr`), `update`, and
+      into a sibling `history.md`). Every `get_<d>` tool for the whole-body
+    domains additionally
+    takes a `raw: bool = False` parameter — `raw=True` returns the
+    frontmatter-stripped body text as-is (the text `update`'s
+    `offset`/`limit` index into), with optional read-style `offset`/`limit`
+    windowing of that raw read (raw-only; out-of-range values clamp, never
+    error). `get_<d>` (every domain, incl. `get_adr`), `update`, and
    `set_status` apply the same `general/tools/_path_safety` guards `delete`
    already had (feat-38-39-41-43-44 Phase 4, extending feat-36-delete, ADR
    1af6787b-eaab-4e8f-888f-531c1e76c19d): validate `id` for path-injection/
@@ -558,7 +559,7 @@ it whenever you add/remove/rename a resource, tool, or prompt.
 mirror of that same registration and must never be hand-edited.
 
 Still genuinely missing / not yet done (don't assume otherwise):
-- No `validate_adr` (or the generic `validate` tool, for the other twelve
+- No `validate_adr` (or the generic `validate` tool, for the other
   whole-body domains) tool runs over the repo's
   own documents yet via pre-commit or CI. (ADR
   9c687bb1-8ee7-41c8-84ec-07606356bc73: "Enforce doc generation/lint/tests
@@ -590,8 +591,8 @@ soft-wrapped (CommonMark lazy-continuation) list item with an actionable
 lazy-continuation list items are not supported" cause, and a "join onto
 one physical line" fix hint), called before a domain's own marker/pattern
 regex ever runs against `.text`. Wired into every structurally-checked
-`MarkdownListItem` subclass found across all twelve `models/md` whole-body
-domains: `tsk.TaskItem.checked`/`.description`, `feat.RequirementItem.
+`MarkdownListItem` subclass found across every `models/md` whole-body
+domain: `tsk.TaskItem.checked`/`.description`, `feat.RequirementItem.
 description` (`feat.AcceptanceCriterionItem.criterion_description` is
 covered transitively via `TaskItem.description`, no direct wiring needed),
 `rsk.ThresholdItem.low`/`.high`/`.zone`, and `rsk.StrategyItem.strategy`.
@@ -605,8 +606,8 @@ Soft-Wrap)" section for the full authoring/implementation convention.
 per-domain, content-hash-validated in-memory read cache
 (`general/tools/_doc_cache.py`'s `DocCache` class, one module-level
 singleton per domain in each domain's own `tools/_cache.py`, mirroring the
-existing per-domain `threading.Lock` registries in `_lock.py`) for the 12
-generic whole-body domains (`req`, `uc`, `tsk`, `qa`, `prb`, `gol`, `rsk`,
+existing per-domain `threading.Lock` registries in `_lock.py`) for every
+generic whole-body domain (`req`, `uc`, `tsk`, `qa`, `prb`, `gol`, `rsk`,
 `dec`, `sop`, `feat`, `vcr`, `sysrs`), eliminating the redundant
 markdown-it/Pydantic re-parsing cost `get_*`/`list_*` previously paid on
 every single call against an unchanged file — the real fix for the

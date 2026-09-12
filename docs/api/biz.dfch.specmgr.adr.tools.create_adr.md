@@ -6,7 +6,7 @@ Thin file-I/O adapter -- writes a brand-new ``.md`` file; there is no
 in-memory cache of a parsed :class:`Adr` (plan §7, §9a): the ``.md`` file
 itself is always the source of truth.
 
-Unlike the eleven whole-body domains' ``create_<d>`` tools, ``frontmatter``/
+Unlike the whole-body domains' ``create_<d>`` tools, ``frontmatter``/
 ``body`` here are already-typed Pydantic models (validated by the MCP SDK's
 own parameter parsing *before* this function body ever runs) rather than a
 raw ``content: str`` this function validates itself -- so there is little

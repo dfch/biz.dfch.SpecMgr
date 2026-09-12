@@ -17,7 +17,7 @@
 
 """Tests for the generic ``update`` ``@mcp.tool()`` wrapper (feat-22-consolidate-mutation-tools, Phase 2).
 
-Parameterized over all ten whole-body document types; seeds a real,
+Parameterized over all whole-body document types; seeds a real,
 persisted document per type in a temp ``SPECMGR_DOCS_DIR`` via the domain's
 own ``create_<d>`` tool (mirroring the fixture strategy of the per-domain
 ``tests/<d>/tools/test_update_<d>.py`` files still on disk at this phase).
@@ -601,7 +601,7 @@ _SYSRS_MINIMAL_BODY = textwrap.dedent(
 _SYSRS_UPDATED_BODY = _SYSRS_MINIMAL_BODY.replace("Onboarding only.", "Onboarding and renewals.")
 
 #: A minimal, valid feat body (ACC-008's injection coverage: feat is the one whole-body domain
-#: whose id shape differs from the ten UUID domains, mirroring ``test_delete.py``'s own fixture).
+#: whose id shape differs from every other domain here, mirroring ``test_delete.py``'s own fixture).
 _FEAT_MINIMAL_BODY = textwrap.dedent(
     """\
     # Feature: Example Widget
@@ -664,7 +664,7 @@ _MISSING_UUID = "00000000-0000-0000-0000-000000000000"
 
 @dataclass(frozen=True)
 class _Case:
-    """Per-type test data for the eight whole-body document types."""
+    """Per-type test data for the whole-body document types."""
 
     doc_type: str
     create: Callable[[str], Any]
@@ -993,7 +993,7 @@ class TempDocsDirTestCase(unittest.TestCase):
 
 
 class TestUpdateWholeBody(TempDocsDirTestCase):
-    """ACC-001: whole-body mode (no ``offset``/``limit``) across all eight types."""
+    """ACC-001: whole-body mode (no ``offset``/``limit``) across all whole-body document types."""
 
     def test_replaces_body_preserving_id_type_status_created_version(self) -> None:
         """Whole-body mode must replace the body but preserve every frontmatter field but ``updated``."""
@@ -1071,7 +1071,7 @@ class TestUpdateWholeBody(TempDocsDirTestCase):
 
 
 class TestUpdateRange(TempDocsDirTestCase):
-    """ACC-002: range mode (``offset``/``limit``) across all eight types."""
+    """ACC-002: range mode (``offset``/``limit``) across all whole-body document types."""
 
     def test_middle_range_replace_leaves_out_of_range_lines_byte_identical(self) -> None:
         """A single middle-line replace must change only that line, leaving every other line identical."""
@@ -1290,7 +1290,7 @@ class TestUpdateRange(TempDocsDirTestCase):
 
 
 class TestUpdateRegistration(unittest.TestCase):
-    """Task 2.8: the live ``mcp`` registration carries ``update`` with the 12-value ``type`` enum and
+    """Task 2.8: the live ``mcp`` registration carries ``update`` with the full ``type`` enum and
     optional integer ``offset``/``limit`` in its input schema (and no ``begin``/``end`` any more)."""
 
     @classmethod
@@ -1300,7 +1300,7 @@ class TestUpdateRegistration(unittest.TestCase):
         cls._tools = asyncio.run(mcp.list_tools())
 
     def test_update_registered_with_type_enum_and_optional_range(self) -> None:
-        """``update`` must be registered once, with the 12-value ``type`` enum and optional int ``offset``/``limit``."""
+        """``update`` must be registered once, with the full ``type`` enum and optional int ``offset``/``limit``."""
         matching = [t for t in self._tools if t.name == "update"]
         self.assertEqual(len(matching), 1)
 
@@ -1322,7 +1322,7 @@ class TestUpdateRegistration(unittest.TestCase):
 
 @dataclass(frozen=True)
 class _InjectionCase:
-    """Per-type test data for the twelve whole-body domains' ``_path_safety`` coverage (ACC-008)."""
+    """Per-type test data for the whole-body domains' ``_path_safety`` coverage (ACC-008)."""
 
     doc_type: str
     create: Callable[[str], Any]
@@ -1335,7 +1335,7 @@ class _InjectionCase:
 #: The pinned path-injection shapes (mirrors ``test_delete.py``'s own ``_TRAVERSAL_IDS``).
 _TRAVERSAL_IDS = ("../x", "a/b", "a\\b", "..")
 
-#: A well-formed feat-NNN-slug folder name (the wrong-format id for the ten UUID domains).
+#: A well-formed feat-NNN-slug folder name (the wrong-format id for every UUID domain).
 _FEAT_SLUG_ID = "feat-36-delete"
 
 _INJECTION_CASES: list[_InjectionCase] = [
@@ -1357,7 +1357,7 @@ _INJECTION_CASES: list[_InjectionCase] = [
 class TempUpdateInjectionDirTestCase(unittest.TestCase):
     """Common fixture for ACC-008: temp dirs for both SPECMGR_DOCS_DIR and SPECMGR_FEAT_DIR
     (mirrors ``test_delete.py``'s ``TempDeleteDirTestCase``, since injection coverage spans
-    all eleven whole-body domains, feat included)."""
+    all whole-body domains, feat included)."""
 
     def setUp(self) -> None:
         self.docs_root = Path(self.enterContext(tempfile.TemporaryDirectory()))
@@ -1403,7 +1403,7 @@ class TestUpdateAssertWithinSpy(TempUpdateInjectionDirTestCase):
     """ACC-008: ``assert_within`` is actually invoked (not just present in source) during a valid update."""
 
     def test_assert_within_is_called_with_base_dir_and_resolved_path(self) -> None:
-        """For each of the twelve domains, a valid whole-body update must call ``assert_within(base_dir, path)``."""
+        """For each of the whole-body domains, a valid whole-body update must call ``assert_within(base_dir, path)``."""
         for case in _INJECTION_CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = case.create(case.minimal_body)

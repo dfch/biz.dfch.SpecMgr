@@ -26,7 +26,7 @@ of scope for that feature, see its own README's Scope section), which are
 therefore no longer invisible, just reported with an ``error``.
 Phase 4 (Task 4.2) retrofitted ``FeatSummary.path`` (both for successful
 and failed entries) to the same resolved, absolute
-(``.resolve()``d) form the other eleven whole-body domains already use --
+(``.resolve()``d) form every other whole-body domain already uses --
 Phase 3 had deliberately left it in its pre-existing unresolved
 ``str(path)`` form; that divergence no longer exists.
 
@@ -39,7 +39,7 @@ tool's own per-path read (e.g. a concurrent ``set_feat_id`` rename racing
 this lock-free scan) as a failed entry. Phase 8 corrected that choice:
 ``general.tools._listing.build_summaries``'s own new ``silent_skip_types``
 default (``(FileNotFoundError,)``, REQ-016) now silently omits this case
-instead -- the same rule every one of the other 11 whole-body domains'
+instead -- the same rule every one of the other whole-body domains'
 ``list_<domain>`` gets, and the same treatment REQ-005's reconcile-on-scan
 already gives a deletion that completes *before* the scan starts (see the
 feature's own README, Decisions Made, for the full rationale). ``_FEAT_ERROR_TYPES``

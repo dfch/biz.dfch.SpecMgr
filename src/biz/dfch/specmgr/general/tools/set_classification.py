@@ -19,15 +19,16 @@
 
 """``@mcp.tool()`` wrapper: set_classification (feat-56-classification, Phase 2).
 
-The generic, cross-domain classification-change tool for the twelve
+The generic, cross-domain classification-change tool for the
 whole-body document types
 (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``).
-Unlike the 13-way ``set_status`` (``general/tools/set_status.py``), ``adr``
-is deliberately excluded here: ADR's separate ``AdrFrontmatter`` model
+Unlike ``set_status`` (``general/tools/set_status.py``), which also
+dispatches on ``adr``, ``adr`` is deliberately excluded here: ADR's
+separate ``AdrFrontmatter`` model
 (``models/adr/``) is out of scope for the ``classification`` field entirely
 (``.specmgr/feat/feat-56-classification-attribute-in-frontmatter/README.md``
 Scope section) -- there is no ADR adapter, no ``superseded_by``-style
-parameter, and no 12th entry in the dispatch table.
+parameter, and no entry for it in the dispatch table.
 
 It dispatches on the explicit ``type`` parameter to a private per-domain
 adapter (``_set_classification_<d>``), each shaped exactly like
@@ -42,8 +43,8 @@ rather than ported from any retired per-domain tool -- true of every
 adapter in this module, since ``set_classification`` itself is new
 (there was never a per-domain ``set_classification_<d>`` tool to port).
 
-The ``feat`` adapter (``_set_classification_feat``) diverges from the other
-ten whole-body domains' identical shape in the same way
+The ``feat`` adapter (``_set_classification_feat``) diverges from every
+other whole-body domain's identical shape in the same way
 ``_update_feat``/``_set_status_feat`` do: it resolves ``id`` via
 ``feat.tools._paths``'s bespoke folder-per-document shortcut, not a
 flat-file directory scan (see ``.specmgr/feat/feat-31-feature/README.md``
@@ -52,8 +53,8 @@ Design Notes). It bumps ``updated`` to the same shared date+time timestamp
 
 The parameter is intentionally named ``type`` (it matches the frontmatter
 field vocabulary the client already knows); no enabled ruff rule objects
-to the builtin shadow. The 12-way union return type is annotation-only --
-the MCP input schema is built from the parameters, and the SDK serializes
+to the builtin shadow. The union return type is annotation-only -- the MCP
+input schema is built from the parameters, and the SDK serializes
 whichever concrete document is returned.
 
 Blank/whitespace-only ``classification`` values clear the field back to
@@ -171,7 +172,7 @@ from ._timestamps import now_timestamp
 
 __all__ = ["set_classification"]
 
-#: The generic tool's 12-way return union -- annotation-only (see module docstring).
+#: The generic tool's return union -- annotation-only (see module docstring).
 _SetClassificationFrontmatter = (
     ReqFrontmatter
     | UcFrontmatter
@@ -502,8 +503,8 @@ _ADAPTERS: dict[str, Callable[[str, str], _SetClassificationFrontmatter]] = {
     title="Set document classification",
     description=(
         "Replace the free-text `classification` frontmatter field of an existing document across "
-        "the twelve whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, "
-        "feat, vcr; `adr` is not supported), also bumping `updated` and leaving the body and every "
+        "the whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, "
+        "feat, vcr, sysrs; `adr` is not supported), also bumping `updated` and leaving the body and every "
         "other frontmatter field untouched. `classification` is fully free-text -- no closed "
         "vocabulary; a blank or whitespace-only value clears it back to `None`/absent. No `create_*` "
         "tool accepts a `classification` argument at all -- this is the sole classification-change "
@@ -520,8 +521,8 @@ def set_classification(
 ) -> _SetClassificationFrontmatter:
     """Replace the ``classification`` frontmatter field of an existing document.
 
-    Cross-domain generic for the twelve whole-body document types
-    (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``);
+    Cross-domain generic for the whole-body document types
+    (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``);
     dispatches on ``type`` to the domain's own adapter (same lock, same id
     resolution, same body handling, same domain not-found error). ``adr``
     is deliberately excluded (its separate ``AdrFrontmatter`` model is out
@@ -544,8 +545,8 @@ def set_classification(
     Safety (mirroring ``set_status``'s/``update``'s/``delete``'s own
     REQ-009/REQ-003): ``id`` is validated via ``_path_safety.validate_id``
     (no ``/``, no ``\\``, no ``..``, plus the dispatched domain's own
-    format -- canonical lowercase-hex UUID for the eleven UUID domains,
-    ``feat-NNN-slug`` for ``feat``) **before** any filesystem access, so a
+        format -- canonical lowercase-hex UUID for every domain other than
+        ``feat``, ``feat-NNN-slug`` for ``feat``) **before** any filesystem access, so a
     path-injection attempt, a wrong-format id, or an unsupported ``type``
     is a ``ValueError`` raised before dispatch. Each adapter additionally
     confines the resolved path to the domain's own base directory with
@@ -576,7 +577,7 @@ def set_classification(
     ------
     ValueError
         ``id`` is a path-injection attempt or not in the dispatched
-        domain's own format, or ``type`` is not one of the twelve
+        domain's own format, or ``type`` is not one of the
         supported domains (raised before any filesystem access; nothing
         is written).
     ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /

@@ -22,8 +22,8 @@ to parse no longer silently disappears from the listing -- it appears
 inline in ``results`` as a failed entry and contributes to both ``total``
 and the new ``error_count``. feat-81-83-validation Phase 4 (Task 4.2,
 REQ-007) retrofitted ``FeatSummary.path`` (both successful and failed
-entries) to the same resolved, absolute (``.resolve()``d) form the other
-eleven whole-body domains already use.
+entries) to the same resolved, absolute (``.resolve()``d) form every other
+whole-body domain already uses.
 """
 
 from __future__ import annotations
