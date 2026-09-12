@@ -73,7 +73,7 @@ class TestConfigResource(unittest.TestCase):
         self.assertEqual(result.domains["adr"].env_var, ADR_DIR_ENV_VAR)
         self.assertEqual(result.domains["feat"].env_var, FEAT_DIR_ENV_VAR)
 
-    def test_ten_domains_share_docs_dir_env_var(self):
+    def test_docs_dir_domains_share_env_var(self):
         """The non-adr/feat domains all report the shared `SPECMGR_DOCS_DIR` env var."""
         result = config_info()
         for domain in _DOCS_DIR_DOMAINS:
