@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.27.0] - 2026-09-12
+
+### Added
+
+- A process-local, per-domain, content-hash-validated in-memory read cache
+  for all twelve generic whole-body domains (`req`, `uc`, `tsk`, `qa`,
+  `prb`, `gol`, `rsk`, `dec`, `sop`, `feat`, `vcr`, `sysrs`), eliminating
+  redundant markdown/Pydantic re-parsing on repeated reads of an unchanged
+  document. A cache entry is only ever skipped when the file's content
+  hash still matches, so a stale read is structurally impossible -- the
+  filesystem remains the sole source of truth (GitHub issue #107).
+
 ### Removed
 
 - **BREAKING**: removed the `confluence_fetch` and `confluence_update` MCP
@@ -18,6 +30,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Confluence wiki/CMS synchronization (GitHub issue #120). See ADR
   92cc4ce8-2cdd-45a7-9ae4-85de5abaf94c, which supersedes
   a156fdf9-052c-4f43-93a2-eeec04a91eac.
+
+### Fixed
+
+- `server.json`'s `environmentVariables` list was missing
+  `SPECMGR_DOCS_DIR` (shared base directory for the `req`/`uc`/`tsk`/`qa`/
+  `prb`/`gol`/`rsk`/`dec`/`sop`/`vcr`/`sysrs` domains) and
+  `SPECMGR_FEAT_DIR` (feature folders) -- only `SPECMGR_ADR_DIR` was
+  documented. Both are now listed (GitHub issue #126).
 
 ## [0.26.0] - 2026-09-09
 
