@@ -14,38 +14,61 @@
 An artifact manager for system specifications.
 
 This project is an **MCP server** that you can use to manage different
-specification artifacts.
-
-At this time, we have these artifact types:
-
-- Architecture Decision Record (ADR) (deprecated, will be phased out, use DEC instead)
-- Decision (DEC)
-- Feature (FEAT)
-- Goal (GOL)
-- Problem Statement (PRB)
-- Question and Answer (QA)
-- Requirement (REQ)
-- Risk (RSK)
-- Standard Operating Procedure (SOP)
-- System Requirements Specification (SYSRS)
-- Task List (TSK)
-- Use Case (UC)
-- Verification Case Record (VCR)
-
-See [MCP Server](#mcp-server) and [docs/MCP.md](docs/MCP.md) for details.
+specification artifacts — see [Concepts](#concepts) for the full list of
+artifact types and how they relate, and [MCP Server](#mcp-server) /
+[docs/MCP.md](docs/MCP.md) for the tool/resource/prompt reference.
 
 The **MCP server** (and the management **CLI**) are optional. You install
 them as "extras" (see [Installation](#installation)).
 
 ## Table of Contents
 
+- [Concepts](#concepts)
 - [Installation](#installation)
 - [CLI Usage](#cli-usage)
 - [MCP Server](#mcp-server)
+- [Usage](#usage)
 - [Development](#development)
 - [Testing](#testing)
 - [Make a Release](#make-a-release)
 - [License](#license)
+
+## Concepts
+
+Every artifact is a plain markdown file with a YAML frontmatter block on
+disk — git-friendly, diffable, and readable/editable by hand. The
+filesystem is always the source of truth; the MCP server wraps it with
+structured, validated read/write/list/status tools (see
+[Usage](#usage)).
+
+| Type | Purpose |
+| --- | --- |
+| QA — Question and Answer | Structured elicitation interview (organized by ISO/IEC 25010 characteristic) capturing stakeholder Q&A; usually where a new spec effort *starts* |
+| GOL — Goal | High-level business goal — what the organization wants to achieve, above individual requirements |
+| PRB — Problem Statement | Six-Sigma-style problem statement describing the problem a goal/requirement addresses |
+| REQ — Requirement | A single system requirement (EARS-style phrasing), classified by ISO/IEC 25010 characteristic |
+| UC — Use Case | Actor/system interaction describing a specific usage scenario |
+| RSK — Risk | Risk-register entry: cause/trigger/consequence, 5x5 probability/impact assessment (initial + residual), TARA response strategy |
+| DEC — Decision | General-purpose decision record (MADR-style), not limited to architecture |
+| ADR — Architecture Decision Record | Architecture-specific decision record; **deprecated**, use DEC instead |
+| TSK — Task List | Checklist of implementation tasks, e.g. for a requirement or feature |
+| VCR — Verification Case Record | Verifies **exactly one** REQ or UC; holds a collection of `AC-NNN` acceptance criteria (each with a DTAIS verification method) plus one overall coverage outcome (full/partial/none) |
+| SOP — Standard Operating Procedure | Step-by-step operational procedure with RASCI responsibility assignment and approval lifecycle |
+| FEAT — Feature | Development work-unit plan/progress tracking (`.specmgr/feat/<id>/README.md`) |
+| SYSRS — System Requirements Spec | Aggregates GOL/PRB/QA/UC/REQ/RSK/DEC-ADR/VCR via cross-reference lists into one navigable spec; its structure follows **ISO/IEC/IEEE 29148:2018** (Systems and software engineering — Life cycle processes — Requirements engineering), with a few specmgr-only additions (e.g. `## Decisions`, `## Risks`) |
+
+A typical spec effort starts with a **QA** elicitation interview, which
+surfaces **GOL**s (goals) and **PRB**s (problems). Those inform **REQ**s
+and **UC**s, which get risk-assessed (**RSK**) and backed by
+**DEC**isions, verified via one **VCR** per REQ/UC (each collecting its
+acceptance criteria), and tracked via **TSK** task lists. A **SYSRS**
+ties all of it together into one ISO/IEC/IEEE 29148-structured
+specification. **SOP** and **FEAT** support the process itself rather
+than sitting in this chain.
+
+```
+QA -> GOL / PRB -> REQ / UC -> RSK / DEC -> TSK, VCR -> SYSRS (ISO/IEC/IEEE 29148, aggregates all)
+```
 
 ## Installation
 
@@ -220,6 +243,30 @@ To add the `specmgr` MCP server to your OpenCode configuration:
    explicitly set.
 
 3. Save the file and restart OpenCode
+
+## Usage
+
+Once connected, your AI assistant sees two kinds of tools per document
+domain: **per-domain** tools (`create_<d>`, `get_<d>`, `list_<d>`,
+`parse_<d>`, plus `get_<d>_example`/`get_<d>_template`), and **generic
+dispatch** tools that take a `type=` parameter and behave the same way
+across every domain: `update` (whole-body or line-range edits),
+`set_status`, `set_classification`, `delete`, and `validate` (ADR is the
+one exception, predating this pattern, with its own dedicated tools
+instead). See [docs/MCP.md](docs/MCP.md) for the full list.
+
+The server also ships **prompts** (e.g. `create_req`, `update_req`,
+`implement_task`) — guided, multi-turn interview flows that are the
+intended way to author documents conversationally, rather than calling
+tools one by one. Most MCP hosts surface these as slash commands or a
+prompt picker.
+
+Day to day, you don't need to know any tool names at all — just ask your
+connected AI assistant in plain language, e.g.:
+
+- "Create a new goal for reducing customer onboarding time."
+- "List all open risks and show me the high-severity ones."
+- "Draft a task list for requirement `<id>`."
 
 ## Development
 
