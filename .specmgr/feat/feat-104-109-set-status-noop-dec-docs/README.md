@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-14 12:11:30.116+02:00'
 id: feat-104-109-set-status-noop-dec-docs
-status: planning
+status: done
 type: feat
-updated: '2026-09-14 12:11:30.116+02:00'
+updated: '2026-09-14 21:14:01.842Z'
 version: 1.0.0
 ---
 
@@ -36,9 +36,9 @@ Bundles two small, independently-scoped GitHub issues found during a backlog tri
 
 - [x] ACC-003: The existing "status changed, `updated` bumped" tests (`test_changes_status_bumps_updated_leaves_body_untouched`, `test_changes_plain_status_with_superseded_by_none`, `test_superseded_by_composes_status_string_in_file`) still pass unmodified, proving the no-op path is additive, not a regression to the changed-status path.
 
-- [ ] ACC-004: `parse_dec(dec_example())` (and/or `dec_template()`) still succeeds after the documentation edit, and the edited entry's heading uses the full-timestamp form verbatim, demonstrating REQ-004.
+- [x] ACC-004: `parse_dec(dec_example())` (and/or `dec_template()`) still succeeds after the documentation edit, and the edited entry's heading uses the full-timestamp form verbatim, demonstrating REQ-004.
 
-- [ ] ACC-005: The existing `tests/dec/resources/test_dec_example.py`/`test_dec_template.py` tests pass unmodified (they assert entry *count* and structural facts, not exact heading text, so no test changes are expected -- if one does turn out to need updating, that is itself flagged as a Progress update).
+- [x] ACC-005: The existing `tests/dec/resources/test_dec_example.py`/`test_dec_template.py` tests pass unmodified (they assert entry *count* and structural facts, not exact heading text, so no test changes are expected -- if one does turn out to need updating, that is itself flagged as a Progress update).
 
 ### Scope
 
@@ -88,21 +88,45 @@ Read-only investigation performed 2026-09-14 (no code changed yet, per explicit 
 
 #### Phase 2: DEC Updates timestamp documentation (#104)
 
-- [ ] Task 2.1: Edit `dec/data/dec_example.md` to show the full-timestamp `## Updates` heading form on one existing entry.
+- [x] Task 2.1: Edit `dec/data/dec_example.md` to show the full-timestamp `## Updates` heading form on one existing entry.
 
-- [ ] Task 2.2: Decide (don't assume) whether `dec/data/dec_template.md` also needs a full-timestamp example, or whether `dec_example.md` alone satisfies REQ-004.
+- [x] Task 2.2: RESOLVED by the user: also update `dec/data/dec_template.md`'s single `## Updates` entry to the full-timestamp form (not example-only -- both files now show it).
 
-- [ ] Task 2.3: Confirm `tests/dec/resources/test_dec_example.py`/`test_dec_template.py` still pass unmodified (ACC-005); run the full test suite.
+- [x] Task 2.3: Confirm `tests/dec/resources/test_dec_example.py`/`test_dec_template.py` still pass unmodified (ACC-005); run the full test suite.
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-09-14**: Phase 1 (`set_status` no-op, #109) is complete -- all 3 tasks done, quality gate green. Phase 2 (DEC Updates timestamp documentation, #104) is pending.
+**As of 2026-09-14**: Both phases complete -- Phase 1 (`set_status` no-op, #109) and Phase 2 (DEC Updates timestamp documentation, #104). Feature done.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-14 21:14:01.842Z - Phase 2 complete: DEC Updates timestamp documentation (#104)
+
+Converted one existing `## Updates` entry's heading in each of `dec/data/dec_example.md`
+(`### 2026-07-28 : Accepted` -> `### 2026-07-28 09:15:42.317Z : Accepted`) and
+`dec/data/dec_template.md` (`### 2026-08-27 - Created` -> `### 2026-08-27 09:14:27.512Z - Created`)
+to the full-timestamp `yyyy-MM-dd HH:mm:ss.fff(Z|±HH:mm)` form, demonstrating REQ-004 without
+touching `dec/models/v1/body.py`'s `_UPDATE_ENTRY_HEADING_PATTERN`/`@alias` (REQ-005). Task 2.2
+("decide whether `dec_template.md` also needs a full-timestamp example") was RESOLVED by the user
+before implementation: update BOTH `dec_example.md` and `dec_template.md`, not `dec_example.md`
+alone. Entry counts were kept unchanged in both files (2 in the example, 1 in the template) per
+the plan's Design Notes, so `test_packaged_example_parses_and_exercises_every_section`'s
+`len(updates.updates) == 2` assertion and every other structural assertion in
+`tests/dec/resources/test_dec_example.py`/`test_dec_template.py` needed no changes at all
+(ACC-005 held exactly as predicted). Verified `parse_dec(dec_example())`/`parse_dec(dec_template())`
+still succeed and the edited headings' computed `.timestamp` round-trips verbatim (ACC-004). One
+adjustment beyond the plan's literal wording: the first millisecond value chosen for the example
+entry (`09:15:00.000Z`) tripped the pre-existing `tests/regression/test_issue_67.py` "no round
+placeholder timestamp" regression test (feat-67-70-71 ACC-001, `_ROUND_MILLISECONDS_PATTERN`
+`\.000[Z+-]`) -- replaced with a non-round value (`09:15:42.317Z`); the template's chosen value
+(`09:14:27.512Z`) was already non-round and needed no change. Quality gate green: `ruff format
+--check`, `ruff check`, `vulture`, `pytest tests/dec/` (228 passed), full `pytest` suite (3307
+passed), `specmgr docs` (no diff beyond the two edited data files -- `docs/dec_schema.json` is
+schema-derived, not example-derived, and was confirmed unchanged), `specmgr adr-toc` (no changes).
 
 #### 2026-09-14 17:37:32.000Z - Phase 1 complete: set_status no-op (#109)
 
