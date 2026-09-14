@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.28.0] - 2026-09-14
+
+### Changed
+
+- `set_status` is now a no-op when the requested target status already
+  equals the document's current on-disk status (all 12 whole-body domains
+  plus ADR's `superseded_by` composition) -- no write, no `updated` bump,
+  no cache re-warm (GitHub issue #109).
+
+### Fixed
+
+- `dec`: the example and template documents now also show the
+  full-timestamp form of an `## Updates` heading
+  (`yyyy-MM-dd HH:mm:ss.fff(Z|±HH:mm)`), which was already accepted by
+  the parser but never demonstrated (GitHub issue #104).
+
 ## [0.27.0] - 2026-09-12
 
 ### Added
