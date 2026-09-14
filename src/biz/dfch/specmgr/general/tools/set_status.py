@@ -65,6 +65,22 @@ Neither any ``create_<d>`` tool nor the generic :func:`update` tool
 accepts a ``status`` argument at all -- this tool is the sole
 status-change entry point for every domain.
 
+No-op on an unchanged status (GitHub issue #109): each ``_set_status_<d>``
+adapter compares the requested target status against the document's
+current on-disk status -- for the 12 whole-body domains, plainly
+``existing.frontmatter.status == status``; for ``adr``, against the same
+composed target (``status`` or ``f"superseded by {superseded_by}"``)
+``models.adr.v1.mutations.set_status`` would compute -- immediately after
+``assert_within`` and before any write. When they are equal, the adapter
+returns the already-loaded value unchanged: no write to disk, no
+``updated`` bump, and no cache re-warm (there is nothing new to warm the
+cache with). This is a success, not an error, and returns the exact same
+value shape (the domain's own ``XFrontmatter`` for the whole-body domains,
+the full ``Adr`` for ``type="adr"``) a changed-status call would return.
+The pre-dispatch out-of-vocabulary ``InvalidStatusResult`` check below
+still runs first, unaffected -- the no-op check only ever applies to an
+already-valid ``status``.
+
 An out-of-vocabulary ``status`` for the dispatched ``type`` (ADR
 b399f1ce-ed42-4929-b01c-7a57d18e8014, "Extend the non-raising
 structured-result workaround to set_status's invalid-status case") is
@@ -306,6 +322,8 @@ def _set_status_req(id_: str, status: str, superseded_by: str | None) -> ReqFron
     with req_lock(id_):
         path, existing = load_req_by_id(base_dir, id_)
         assert_within(base_dir, path)
+        if existing.frontmatter.status == status:
+            return existing.frontmatter
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
         now = now_timestamp()
@@ -333,6 +351,8 @@ def _set_status_uc(id_: str, status: str, superseded_by: str | None) -> UcFrontm
     with uc_lock(id_):
         path, existing = load_uc_by_id(base_dir, id_)
         assert_within(base_dir, path)
+        if existing.frontmatter.status == status:
+            return existing.frontmatter
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
         now = now_timestamp()
@@ -360,6 +380,8 @@ def _set_status_tsk(id_: str, status: str, superseded_by: str | None) -> TskFron
     with tsk_lock(id_):
         path, existing = load_tsk_by_id(base_dir, id_)
         assert_within(base_dir, path)
+        if existing.frontmatter.status == status:
+            return existing.frontmatter
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
         now = now_timestamp()
@@ -387,6 +409,8 @@ def _set_status_qa(id_: str, status: str, superseded_by: str | None) -> QaFrontm
     with qa_lock(id_):
         path, existing = load_qa_by_id(base_dir, id_)
         assert_within(base_dir, path)
+        if existing.frontmatter.status == status:
+            return existing.frontmatter
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
         now = now_timestamp()
@@ -415,6 +439,8 @@ def _set_status_prb(id_: str, status: str, superseded_by: str | None) -> PrbFron
     with prb_lock(id_):
         path, existing = load_prb_by_id(base_dir, id_)
         assert_within(base_dir, path)
+        if existing.frontmatter.status == status:
+            return existing.frontmatter
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
         now = now_timestamp()
@@ -442,6 +468,8 @@ def _set_status_gol(id_: str, status: str, superseded_by: str | None) -> GolFron
     with gol_lock(id_):
         path, existing = load_gol_by_id(base_dir, id_)
         assert_within(base_dir, path)
+        if existing.frontmatter.status == status:
+            return existing.frontmatter
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
         now = now_timestamp()
@@ -469,6 +497,8 @@ def _set_status_rsk(id_: str, status: str, superseded_by: str | None) -> RskFron
     with rsk_lock(id_):
         path, existing = load_rsk_by_id(base_dir, id_)
         assert_within(base_dir, path)
+        if existing.frontmatter.status == status:
+            return existing.frontmatter
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
         now = now_timestamp()
@@ -498,6 +528,8 @@ def _set_status_dec(id_: str, status: str, superseded_by: str | None) -> DecFron
     with dec_lock(id_):
         path, existing = load_dec_by_id(base_dir, id_)
         assert_within(base_dir, path)
+        if existing.frontmatter.status == status:
+            return existing.frontmatter
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
         now = now_timestamp()
@@ -528,6 +560,8 @@ def _set_status_feat(id_: str, status: str, superseded_by: str | None) -> FeatFr
     with feat_lock(id_):
         path, existing = load_feat_by_id(base_dir, id_)
         assert_within(base_dir, path)
+        if existing.frontmatter.status == status:
+            return existing.frontmatter
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
         now = now_timestamp()
@@ -557,6 +591,8 @@ def _set_status_sop(id_: str, status: str, superseded_by: str | None) -> SopFron
     with sop_lock(id_):
         path, existing = load_sop_by_id(base_dir, id_)
         assert_within(base_dir, path)
+        if existing.frontmatter.status == status:
+            return existing.frontmatter
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
         now = now_timestamp()
@@ -584,6 +620,8 @@ def _set_status_vcr(id_: str, status: str, superseded_by: str | None) -> VcrFron
     with vcr_lock(id_):
         path, existing = load_vcr_by_id(base_dir, id_)
         assert_within(base_dir, path)
+        if existing.frontmatter.status == status:
+            return existing.frontmatter
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
         now = now_timestamp()
@@ -612,6 +650,8 @@ def _set_status_sysrs(id_: str, status: str, superseded_by: str | None) -> Sysrs
     with sysrs_lock(id_):
         path, existing = load_sysrs_by_id(base_dir, id_)
         assert_within(base_dir, path)
+        if existing.frontmatter.status == status:
+            return existing.frontmatter
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
         now = now_timestamp()
@@ -639,6 +679,9 @@ def _set_status_adr(id_: str, status: str, superseded_by: str | None) -> Adr:
     with adr_lock(id_):
         path, adr = load_adr_by_id(base_dir, id_)
         assert_within(base_dir, path)
+        target_status = status if superseded_by is None else f"superseded by {superseded_by}"
+        if adr.frontmatter.status == target_status:
+            return adr
         with wrap_tool_errors(domain="adr", tool="set_status", channel=FRONTMATTER_CHANNEL):
             new_adr = mutations.set_status(adr, status, superseded_by)
         write_adr(path, new_adr)
@@ -669,11 +712,15 @@ _ADAPTERS: dict[str, Callable[[str, str, str | None], _SetStatusFrontmatter]] = 
     description=(
         "Replace the status of an existing document across every domain (`type` is one of "
         "req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs, adr), also bumping `updated` (the "
-        "whole-body domains) and leaving the body untouched. The new `status` must be one of the "
-        "domain's own closed vocabulary values (see the domain's `XFrontmatter.status` field); "
-        "an out-of-vocabulary `status` does NOT raise -- it returns a structured, non-raising "
-        "`InvalidStatusResult` ({valid: false, type, status, allowed_values, message}) instead, so "
-        "the allowed-values detail survives MCP clients that truncate error content. `superseded_by` "
+        'whole-body domains) and leaving the body untouched. When `status` (or, for `type="adr"` '
+        'with `superseded_by` given, the composed "superseded by X" value) already equals the '
+        "document's current status, this is a no-op -- no write, no `updated` bump -- and still "
+        "returns the same value shape a changed-status call would (issue #109). The new `status` "
+        "must be one of the domain's own closed vocabulary values (see the domain's "
+        "`XFrontmatter.status` field); an out-of-vocabulary `status` does NOT raise -- it returns a "
+        "structured, non-raising `InvalidStatusResult` ({valid: false, type, status, allowed_values, "
+        "message}) instead, so the allowed-values detail survives MCP clients that truncate error "
+        "content. `superseded_by` "
         'is accepted only for `type="adr"` -- it composes the status as "superseded by '
         '{superseded_by}"; with any other `type` it is a `ValueError`. Neither `create_*` nor '
         "the generic `update` tool accepts a `status` argument at all -- this is the sole "
@@ -706,6 +753,16 @@ def set_status(
         ``models.adr.v1.mutations.set_status`` (which composes ``status`` as
         ``"superseded by {superseded_by}"`` when ``superseded_by`` is given)
         and re-renders the full file via the ``write_adr`` round-trip.
+
+        No-op on an unchanged status (issue #109): when the requested target
+        status (``status`` itself, or for ``type="adr"`` with
+        ``superseded_by`` given, the composed ``"superseded by
+        {superseded_by}"`` value) already equals the document's current
+        on-disk status, nothing is written and ``updated`` is not bumped --
+        the already-loaded value is returned as-is. This is a success, not
+        an error, and returns the exact same value shape a changed-status
+        call would (the domain's own ``XFrontmatter`` for the whole-body
+        domains, the full ``Adr`` for ``type="adr"``).
 
         The new ``status`` must be in the domain's own closed vocabulary: the
         frontmatter is reconstructed through the domain's own
@@ -752,7 +809,10 @@ def set_status(
         for the whole-body domains; for ``type="adr"`` (unchanged, out of scope for
         this feature) the full ``Adr`` document, as before. Use the corresponding
         ``get_<d>`` tool to fetch the full document afterward for the whole-body
-        domains. When ``status`` is not in the dispatched domain's closed vocabulary,
+        domains. When the requested target status already equals the document's
+        current status, the same value shape is returned unchanged, with no write
+        and no ``updated`` bump (issue #109's no-op case). When ``status`` is not
+        in the dispatched domain's closed vocabulary,
         returns an :class:`~biz.dfch.specmgr.general.models.InvalidStatusResult` instead
         (ADR b399f1ce-ed42-4929-b01c-7a57d18e8014) -- see the Raises section below for
         why this one case no longer raises.

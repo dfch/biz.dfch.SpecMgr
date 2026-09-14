@@ -698,6 +698,33 @@ class TestSetStatusWholeBodyDomains(TempDocsDirTestCase):
                 with self.assertRaises(case.not_found_error):
                     set_status(id=_MISSING_UUID, type=case.doc_type, status=case.valid_status)
 
+    def test_same_status_is_a_noop_leaves_file_and_updated_untouched(self) -> None:
+        """ACC-001: calling ``set_status`` again with the SAME status already on disk must not write.
+
+        First call establishes ``case.valid_status`` as the current status (this write DOES
+        happen and bumps ``updated`` once, since a freshly created document's default status
+        won't equal ``case.valid_status``). The second call, with the same ``status``, is the
+        actual no-op case under test (issue #109): the file's bytes/mtime must be unchanged
+        since the first call, and the returned frontmatter must equal the first call's result.
+        """
+        for case in _CASES:
+            with self.subTest(doc_type=case.doc_type):
+                created = self._seed(case, case.minimal_body)
+                path = self._doc_path(case)
+
+                first_result = set_status(id=created.id, type=case.doc_type, status=case.valid_status)
+                bytes_after_first = path.read_bytes()
+                mtime_after_first = path.stat().st_mtime_ns
+
+                second_result = set_status(id=created.id, type=case.doc_type, status=case.valid_status)
+
+                self.assertIsInstance(second_result, case.frontmatter_type)
+                self.assertEqual(second_result, first_result)
+                self.assertEqual(second_result.status, first_result.status)
+                self.assertEqual(second_result.updated, first_result.updated)
+                self.assertEqual(path.read_bytes(), bytes_after_first)
+                self.assertEqual(path.stat().st_mtime_ns, mtime_after_first)
+
 
 class TestSetStatusAdr(TempDocsDirTestCase):
     """ACC-004: the ADR -- status changed (render round-trip), body untouched, ``superseded_by`` composition."""
@@ -732,6 +759,42 @@ class TestSetStatusAdr(TempDocsDirTestCase):
         self.assertEqual(result.frontmatter.status, "superseded by other-decision")
         on_disk = parse_adr(path.read_text(encoding="utf-8"))
         self.assertEqual(on_disk.frontmatter.status, "superseded by other-decision")
+
+    def test_same_plain_status_is_a_noop_leaves_file_untouched(self) -> None:
+        """ACC-002: calling ``set_status`` again with the same plain status must not write.
+
+        First call establishes ``"accepted"`` as the current status. The second call, with
+        the exact same ``status="accepted"``, is the no-op case under test (issue #109): the
+        file bytes must be unchanged between the two calls, and the returned ``Adr`` must
+        equal what a fresh ``parse_adr`` of the file produces (no drift).
+        """
+        path = self._seed_adr()
+
+        set_status(id=_ADR_ID, type="adr", status="accepted")
+        bytes_after_first = path.read_bytes()
+
+        result = set_status(id=_ADR_ID, type="adr", status="accepted")
+
+        self.assertEqual(path.read_bytes(), bytes_after_first)
+        self.assertEqual(result, parse_adr(path.read_text(encoding="utf-8")))
+
+    def test_same_superseded_by_composition_is_a_noop_leaves_file_untouched(self) -> None:
+        """ACC-002: calling ``set_status`` again with the SAME ``superseded_by`` must not write.
+
+        First call composes and persists ``"superseded by other-decision"`` as the current
+        status. The second call, with the same ``superseded_by="other-decision"``, is the
+        no-op case under test (issue #109): the file bytes must be unchanged between the two
+        calls.
+        """
+        path = self._seed_adr()
+
+        set_status(id=_ADR_ID, type="adr", status="ignored-value", superseded_by="other-decision")
+        bytes_after_first = path.read_bytes()
+
+        result = set_status(id=_ADR_ID, type="adr", status="ignored-value", superseded_by="other-decision")
+
+        self.assertEqual(result.frontmatter.status, "superseded by other-decision")
+        self.assertEqual(path.read_bytes(), bytes_after_first)
 
     def test_out_of_vocabulary_status_raises_validation_error_file_untouched(self) -> None:
         """A status valid in one domain but not ADR's must return a non-raising

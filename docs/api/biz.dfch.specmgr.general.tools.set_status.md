@@ -48,6 +48,22 @@ Neither any ``create_<d>`` tool nor the generic :func:`update` tool
 accepts a ``status`` argument at all -- this tool is the sole
 status-change entry point for every domain.
 
+No-op on an unchanged status (GitHub issue #109): each ``_set_status_<d>``
+adapter compares the requested target status against the document's
+current on-disk status -- for the 12 whole-body domains, plainly
+``existing.frontmatter.status == status``; for ``adr``, against the same
+composed target (``status`` or ``f"superseded by {superseded_by}"``)
+``models.adr.v1.mutations.set_status`` would compute -- immediately after
+``assert_within`` and before any write. When they are equal, the adapter
+returns the already-loaded value unchanged: no write to disk, no
+``updated`` bump, and no cache re-warm (there is nothing new to warm the
+cache with). This is a success, not an error, and returns the exact same
+value shape (the domain's own ``XFrontmatter`` for the whole-body domains,
+the full ``Adr`` for ``type="adr"``) a changed-status call would return.
+The pre-dispatch out-of-vocabulary ``InvalidStatusResult`` check below
+still runs first, unaffected -- the no-op check only ever applies to an
+already-valid ``status``.
+
 An out-of-vocabulary ``status`` for the dispatched ``type`` (ADR
 b399f1ce-ed42-4929-b01c-7a57d18e8014, "Extend the non-raising
 structured-result workaround to set_status's invalid-status case") is
@@ -268,6 +284,16 @@ Replace the status of an existing document, across every domain.
     ``"superseded by {superseded_by}"`` when ``superseded_by`` is given)
     and re-renders the full file via the ``write_adr`` round-trip.
 
+    No-op on an unchanged status (issue #109): when the requested target
+    status (``status`` itself, or for ``type="adr"`` with
+    ``superseded_by`` given, the composed ``"superseded by
+    {superseded_by}"`` value) already equals the document's current
+    on-disk status, nothing is written and ``updated`` is not bumped --
+    the already-loaded value is returned as-is. This is a success, not
+    an error, and returns the exact same value shape a changed-status
+    call would (the domain's own ``XFrontmatter`` for the whole-body
+    domains, the full ``Adr`` for ``type="adr"``).
+
     The new ``status`` must be in the domain's own closed vocabulary: the
     frontmatter is reconstructed through the domain's own
     ``XFrontmatter`` constructor, so the domain's own validator enforces
@@ -313,7 +339,10 @@ VcrFrontmatter | SysrsFrontmatter | Adr | InvalidStatusResult
     for the whole-body domains; for ``type="adr"`` (unchanged, out of scope for
     this feature) the full ``Adr`` document, as before. Use the corresponding
     ``get_<d>`` tool to fetch the full document afterward for the whole-body
-    domains. When ``status`` is not in the dispatched domain's closed vocabulary,
+    domains. When the requested target status already equals the document's
+    current status, the same value shape is returned unchanged, with no write
+    and no ``updated`` bump (issue #109's no-op case). When ``status`` is not
+    in the dispatched domain's closed vocabulary,
     returns an :class:`~biz.dfch.specmgr.general.models.InvalidStatusResult` instead
     (ADR b399f1ce-ed42-4929-b01c-7a57d18e8014) -- see the Raises section below for
     why this one case no longer raises.
