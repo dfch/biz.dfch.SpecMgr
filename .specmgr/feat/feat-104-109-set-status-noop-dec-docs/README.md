@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-14 12:11:30.116+02:00'
 id: feat-104-109-set-status-noop-dec-docs
-status: planning
+status: done
 type: feat
-updated: '2026-09-14 12:11:30.116+02:00'
+updated: '2026-09-14 21:14:01.842Z'
 version: 1.0.0
 ---
 
@@ -30,15 +30,15 @@ Bundles two small, independently-scoped GitHub issues found during a backlog tri
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: A parametrized regression test (extending `tests/general/tools/test_set_status.py`'s existing `_CASES` table) calls `set_status` with each whole-body domain's own current status and asserts the file's bytes/mtime are unchanged, the returned frontmatter's `updated` field is unchanged, and the returned object equals the pre-call frontmatter.
+- [x] ACC-001: A parametrized regression test (extending `tests/general/tools/test_set_status.py`'s existing `_CASES` table) calls `set_status` with each whole-body domain's own current status and asserts the file's bytes/mtime are unchanged, the returned frontmatter's `updated` field is unchanged, and the returned object equals the pre-call frontmatter.
 
-- [ ] ACC-002: A dedicated ADR test calls `set_status(type="adr", status=<current status>)`, and separately calls it with `superseded_by=<X>` where the document's current status is already `"superseded by X"`, and asserts no write occurs (file bytes unchanged) in both cases.
+- [x] ACC-002: A dedicated ADR test calls `set_status(type="adr", status=<current status>)`, and separately calls it with `superseded_by=<X>` where the document's current status is already `"superseded by X"`, and asserts no write occurs (file bytes unchanged) in both cases.
 
-- [ ] ACC-003: The existing "status changed, `updated` bumped" tests (`test_changes_status_bumps_updated_leaves_body_untouched`, `test_changes_plain_status_with_superseded_by_none`, `test_superseded_by_composes_status_string_in_file`) still pass unmodified, proving the no-op path is additive, not a regression to the changed-status path.
+- [x] ACC-003: The existing "status changed, `updated` bumped" tests (`test_changes_status_bumps_updated_leaves_body_untouched`, `test_changes_plain_status_with_superseded_by_none`, `test_superseded_by_composes_status_string_in_file`) still pass unmodified, proving the no-op path is additive, not a regression to the changed-status path.
 
-- [ ] ACC-004: `parse_dec(dec_example())` (and/or `dec_template()`) still succeeds after the documentation edit, and the edited entry's heading uses the full-timestamp form verbatim, demonstrating REQ-004.
+- [x] ACC-004: `parse_dec(dec_example())` (and/or `dec_template()`) still succeeds after the documentation edit, and the edited entry's heading uses the full-timestamp form verbatim, demonstrating REQ-004.
 
-- [ ] ACC-005: The existing `tests/dec/resources/test_dec_example.py`/`test_dec_template.py` tests pass unmodified (they assert entry *count* and structural facts, not exact heading text, so no test changes are expected -- if one does turn out to need updating, that is itself flagged as a Progress update).
+- [x] ACC-005: The existing `tests/dec/resources/test_dec_example.py`/`test_dec_template.py` tests pass unmodified (they assert entry *count* and structural facts, not exact heading text, so no test changes are expected -- if one does turn out to need updating, that is itself flagged as a Progress update).
 
 ### Scope
 
@@ -80,29 +80,57 @@ Read-only investigation performed 2026-09-14 (no code changed yet, per explicit 
 
 #### Phase 1: set_status no-op (#109)
 
-- [ ] Task 1.1: Add the no-op early-return to each of the 13 `_set_status_<d>` adapters in `general/tools/set_status.py`.
+- [x] Task 1.1: Add the no-op early-return to each of the 13 `_set_status_<d>` adapters in `general/tools/set_status.py`.
 
-- [ ] Task 1.2: Update `set_status`'s module docstring and `@mcp.tool()` description to document the no-op behavior.
+- [x] Task 1.2: Update `set_status`'s module docstring and `@mcp.tool()` description to document the no-op behavior.
 
-- [ ] Task 1.3: Add/extend regression tests in `tests/general/tools/test_set_status.py` (ACC-001, ACC-002) and confirm ACC-003's existing tests still pass.
+- [x] Task 1.3: Add/extend regression tests in `tests/general/tools/test_set_status.py` (ACC-001, ACC-002) and confirm ACC-003's existing tests still pass.
 
 #### Phase 2: DEC Updates timestamp documentation (#104)
 
-- [ ] Task 2.1: Edit `dec/data/dec_example.md` to show the full-timestamp `## Updates` heading form on one existing entry.
+- [x] Task 2.1: Edit `dec/data/dec_example.md` to show the full-timestamp `## Updates` heading form on one existing entry.
 
-- [ ] Task 2.2: Decide (don't assume) whether `dec/data/dec_template.md` also needs a full-timestamp example, or whether `dec_example.md` alone satisfies REQ-004.
+- [x] Task 2.2: RESOLVED by the user: also update `dec/data/dec_template.md`'s single `## Updates` entry to the full-timestamp form (not example-only -- both files now show it).
 
-- [ ] Task 2.3: Confirm `tests/dec/resources/test_dec_example.py`/`test_dec_template.py` still pass unmodified (ACC-005); run the full test suite.
+- [x] Task 2.3: Confirm `tests/dec/resources/test_dec_example.py`/`test_dec_template.py` still pass unmodified (ACC-005); run the full test suite.
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-09-14**: Feature folder created, planning only. No implementation has started -- both phases are pending. This entry was written before any code change, per the user's explicit "do not implement" instruction.
+**As of 2026-09-14**: Both phases complete -- Phase 1 (`set_status` no-op, #109) and Phase 2 (DEC Updates timestamp documentation, #104). Feature done.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-14 21:14:01.842Z - Phase 2 complete: DEC Updates timestamp documentation (#104)
+
+Converted one existing `## Updates` entry's heading in each of `dec/data/dec_example.md`
+(`### 2026-07-28 : Accepted` -> `### 2026-07-28 09:15:42.317Z : Accepted`) and
+`dec/data/dec_template.md` (`### 2026-08-27 - Created` -> `### 2026-08-27 09:14:27.512Z - Created`)
+to the full-timestamp `yyyy-MM-dd HH:mm:ss.fff(Z|±HH:mm)` form, demonstrating REQ-004 without
+touching `dec/models/v1/body.py`'s `_UPDATE_ENTRY_HEADING_PATTERN`/`@alias` (REQ-005). Task 2.2
+("decide whether `dec_template.md` also needs a full-timestamp example") was RESOLVED by the user
+before implementation: update BOTH `dec_example.md` and `dec_template.md`, not `dec_example.md`
+alone. Entry counts were kept unchanged in both files (2 in the example, 1 in the template) per
+the plan's Design Notes, so `test_packaged_example_parses_and_exercises_every_section`'s
+`len(updates.updates) == 2` assertion and every other structural assertion in
+`tests/dec/resources/test_dec_example.py`/`test_dec_template.py` needed no changes at all
+(ACC-005 held exactly as predicted). Verified `parse_dec(dec_example())`/`parse_dec(dec_template())`
+still succeed and the edited headings' computed `.timestamp` round-trips verbatim (ACC-004). One
+adjustment beyond the plan's literal wording: the first millisecond value chosen for the example
+entry (`09:15:00.000Z`) tripped the pre-existing `tests/regression/test_issue_67.py` "no round
+placeholder timestamp" regression test (feat-67-70-71 ACC-001, `_ROUND_MILLISECONDS_PATTERN`
+`\.000[Z+-]`) -- replaced with a non-round value (`09:15:42.317Z`); the template's chosen value
+(`09:14:27.512Z`) was already non-round and needed no change. Quality gate green: `ruff format
+--check`, `ruff check`, `vulture`, `pytest tests/dec/` (228 passed), full `pytest` suite (3307
+passed), `specmgr docs` (no diff beyond the two edited data files -- `docs/dec_schema.json` is
+schema-derived, not example-derived, and was confirmed unchanged), `specmgr adr-toc` (no changes).
+
+#### 2026-09-14 17:37:32.000Z - Phase 1 complete: set_status no-op (#109)
+
+Added the no-op early-return (`if existing.frontmatter.status == status: return existing.frontmatter`) to each of the 12 whole-body `_set_status_<d>` adapters in `general/tools/set_status.py`, and the ADR-specific composed-target equivalent (`target_status = status if superseded_by is None else f"superseded by {superseded_by}"`) to `_set_status_adr` -- all 13 adapters covered, each check placed right after `assert_within` and before any write, inside the existing domain lock. Updated the module docstring, the `@mcp.tool()` `description=`, and the `set_status` function's own docstring body (behavior prose + Returns section) to document the no-op behavior. Extended `tests/general/tools/test_set_status.py` with `test_same_status_is_a_noop_leaves_file_and_updated_untouched` (iterates `_CASES`, ACC-001) and two dedicated ADR tests, `test_same_plain_status_is_a_noop_leaves_file_untouched` and `test_same_superseded_by_composition_is_a_noop_leaves_file_untouched` (ACC-002); confirmed the 3 existing "status changed" tests (`test_changes_status_bumps_updated_leaves_body_untouched`, `test_changes_plain_status_with_superseded_by_none`, `test_superseded_by_composes_status_string_in_file`) still pass unmodified (ACC-003). Quality gate green: `ruff format --check`, `ruff check`, `vulture`, `pytest tests/general/tools/test_set_status.py` (19 passed), full `pytest` suite (3307 passed), `specmgr docs` (regenerated `docs/api/biz.dfch.specmgr.general.tools.set_status.md` to reflect the docstring changes, nothing else), `specmgr adr-toc` (no changes). No design decisions needed beyond what the plan already specified -- the mechanics matched the Design Notes exactly.
 
 #### 2026-09-14 09:14:27.512Z - Created
 
