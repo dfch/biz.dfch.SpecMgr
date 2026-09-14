@@ -67,7 +67,7 @@ specification. **SOP** and **FEAT** support the process itself rather
 than sitting in this chain.
 
 ```
-QA -> GOL / PRB -> REQ / UC -> RSK / DEC -> TSK, VCR -> SYSRS (ISO/IEC/IEEE 29148, aggregates all)
+QA -> GOL / PRB -> REQ / UC -> RSK / DEC -> TSK, VCR -> SYSRS (aggregates all)
 ```
 
 ## Installation
