@@ -128,9 +128,9 @@ Orchestration handoff (see REQ-010): Phases 0-3 were implemented inline in one l
 
 #### Phase 4: Prompts
 
-- [ ] Task 4.1: Update `dec/prompts/create_dec.py` instructions to mention the three new sections and reference `specmgr://rasci` for RASCI role definitions.
-- [ ] Task 4.2: Update `dec/prompts/update_dec.py` instructions similarly.
-- [ ] Task 4.3: Run this phase's full quality gate (REQ-009) and commit.
+- [x] Task 4.1: Update `dec/prompts/create_dec.py` instructions to mention the three new sections and reference `specmgr://rasci` for RASCI role definitions.
+- [x] Task 4.2: Update `dec/prompts/update_dec.py` instructions similarly.
+- [x] Task 4.3: Run this phase's full quality gate (REQ-009) and commit.
 
 #### Phase 5: Docs and Housekeeping
 
@@ -145,7 +145,7 @@ Orchestration handoff (see REQ-010): Phases 0-3 were implemented inline in one l
 
 ### Current Status
 
-**As of 2026-09-17**: Phases 0-3 done and committed on branch `feat-29-dec-source-roles` (commits `be8abc5` Phase 0, `19b6675` Phase 1, `a7fd4fd` Phase 2+3). Working tree is clean -- a partial, uncommitted Phase 4 edit (`dec_create_instructions.md`) was discarded at handoff. Phase 4 (prompts) and Phase 5 (docs/housekeeping) are not started and are queued for dispatch to dedicated `phase-implementer` subagents (REQ-010), one phase at a time, each producing its own commit and its own entry in this Progress section.
+**As of 2026-09-17**: Phases 0-3 done and committed on branch `feat-29-dec-source-roles` (commits `be8abc5` Phase 0, `19b6675` Phase 1, `a7fd4fd` Phase 2+3). Phase 4 (prompts) is implemented and its quality gate is green, but **not yet committed** -- ready for the orchestrator's review and commit. Phase 5 (docs/housekeeping) is not started and remains queued for dispatch to a dedicated `phase-implementer` subagent (REQ-010).
 
 ### Blockers
 
@@ -154,6 +154,41 @@ Orchestration handoff (see REQ-010): Phases 0-3 were implemented inline in one l
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-17 13:05:53.000Z - Phase 4 complete: prompt instructions updated
+
+Updated `dec/data/dec_create_instructions.md` and `dec/data/dec_update_instructions.md`
+(mirroring `sop_create_instructions.md`/`sop_update_instructions.md`'s RASCI
+narration precedent) to document the three new body sections in their
+correct position (`## Roles and Responsibilities` mandatory RASCI
+composite, `## Tags` optional, `## Source` mandatory, between `##
+Decision Outcome` and `## Related Artifacts`), added a new "Read the
+RASCI role definitions" step referencing `specmgr://rasci` before
+drafting (create flow: worded as never-skippable, since DEC's section is
+mandatory as a whole, unlike SOP's optional one; update flow: worded
+with SOP's own "skip this step if the change does not touch the roles
+section" caveat, since that caveat is about the edit, not the section's
+optionality), and updated the "Structure recap"/"Section order is
+binding"/"Build a todo list"/"Show which sections are present"/"Map the
+requested change to the right tool" passages accordingly, renumbering
+the remaining steps. Also updated `create_dec.py`/`update_dec.py`'s own
+module docstrings, which already enumerated DEC's body sections/tool
+surface, to mention the three new sections and the `specmgr://rasci`
+resource for consistency with the instructions text. Updated
+`tests/dec/prompts/test_create_dec.py`/`test_update_dec.py`: fixed one
+existing assertion whose exact-text expectation changed
+(`test_mentions_mandatory_fields`), and added four new assertions
+covering the new sections' presence and the RASCI-resource narration
+(both the never-skippable create-flow wording and the
+skip-if-not-touched update-flow wording). Ran the full quality gate:
+`ruff format --check`/`ruff check` clean, `vulture` clean, `specmgr
+docs`/`mcp-docs` regenerated (only the two touched prompts' own API doc
+pages changed), `specmgr schema` regenerated all 12 `docs/*_schema.json`
+with **no content changes** (expected -- only `.md` data files were
+touched this phase, not `.py` schema files), full `pytest -n auto` suite
+green at 3329 tests (up from 3326, +3 new test methods net), `specmgr
+coverage-badge` unchanged (99%). Not yet committed -- left for the
+orchestrator to review and commit.
 
 #### 2026-09-17 00:00:06.000Z - Session handoff: reset Phase 4, queue phase-implementer dispatches
 
