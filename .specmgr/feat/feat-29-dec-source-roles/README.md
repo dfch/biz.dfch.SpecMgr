@@ -4,7 +4,7 @@ created: '2026-09-17 14:06:49.067+02:00'
 id: feat-29-dec-source-roles
 status: planning
 type: feat
-updated: '2026-09-17 14:36:45.827+02:00'
+updated: '2026-09-17 14:44:13.142+02:00'
 version: 1.0.0
 ---
 
@@ -27,6 +27,7 @@ GitHub issue #29 originally asked for `DecFrontmatter` to gain ADR-style attribu
 - REQ-007: No new ADR is written for the shared-base-class decision; a "Decisions Made" log entry in this feature's own README documents the rationale instead.
 - REQ-008: `feat-133-tags-dec-rsk` (issue #133) is rescoped to RSK-only once this feature ships DEC's Tags section, with a note in its own README pointing at this feature, and a brief comment posted on GitHub issue #133 noting the absorption.
 - REQ-009: Every phase of this feature's own Task List that touches any `src/**/*.py` file ends with a full local quality gate (`ruff format --check`, `ruff check`, `vulture`, `specmgr docs`, `specmgr mcp-docs`, `specmgr schema` for all 12 registered types plus their packaged per-domain copies, `pytest -n auto --cov=src --cov-report=`, `specmgr coverage-badge`) run and passing before that phase's own commit, since `models/md` and every domain's `models/v1`(or `v2`) package are matched by the `specmgr-schema*` pre-commit hooks' file-scope regex and force full-repo schema regeneration on every touch, not just the touched domain's own.
+- REQ-010: Every remaining phase (Phase 4 onward) is implemented by a dedicated `phase-implementer` subagent dispatch, one phase per dispatch, driven by a `phase-orchestrator`-style main session that reads this README and reports back between phases -- not implemented inline in one long-running session, to keep each phase's own context small and this plan document the single source of truth for what is/isn't done.
 
 ### Acceptance Criteria
 
@@ -38,6 +39,7 @@ GitHub issue #29 originally asked for `DecFrontmatter` to gain ADR-style attribu
 - [x] ACC-006: Verifies REQ-006 -- `dec/models/v1/body.py::RolesAndResponsibilities`/`Source` subclass the shared bases and correctly match their expected headings without redeclaring `@alias`, confirmed by a unit test.
 - [ ] ACC-007: Verifies REQ-008 -- `feat-133-tags-dec-rsk/README.md`'s Requirements/Acceptance Criteria/Task List no longer mention `dec`, and a comment referencing this feature is posted on GitHub issue #133.
 - [ ] ACC-008: Verifies REQ-009 -- every phase's commit in this feature's history passes the full local pre-commit hook chain with no follow-up "fix docs/schema drift" commit needed afterward.
+- [ ] ACC-009: Verifies REQ-010 -- Phase 4 and Phase 5 are each implemented by a distinct `phase-implementer` dispatch, each producing its own commit and its own Progress-section update in this README.
 
 ### Scope
 
@@ -90,6 +92,8 @@ Existing DEC test fixtures required updating across ~15 test files once `## Role
 
 No DEC schema `version` bump was needed (Task 2.4 originally assumed one): investigation of `dec/models/v1/_util.py`'s `SCHEMA_COMMENT_VERSION` and `models/md/_util.py`'s `CURRENT_SCHEMA_VERSION` (plus git history showing REQ's own `## Tags` addition never bumped either) confirmed neither is bumped for additive, non-breaking field changes -- `SCHEMA_COMMENT_VERSION` only bumps for a breaking generated-schema-structure change needing a new `vN` sibling package, and `CURRENT_SCHEMA_VERSION` is a single value shared across every domain's frontmatter default, not a per-domain schema version at all.
 
+Orchestration handoff (see REQ-010): Phases 0-3 were implemented inline in one long-running planning-and-implementation session, which grew large enough to warrant a fresh start for the remaining work. Phase 4 had a partial, uncommitted edit to `dec_create_instructions.md` at handoff time; it was discarded (`git checkout --`) so the `phase-implementer` dispatch for Phase 4 starts clean from this README's own Task List rather than from a half-finished, unreviewed draft.
+
 ### Related Decisions
 
 - None yet -- see this feature's own "Decisions Made" log below for the shared-base-class rationale instead of a dedicated ADR.
@@ -141,7 +145,7 @@ No DEC schema `version` bump was needed (Task 2.4 originally assumed one): inves
 
 ### Current Status
 
-**As of 2026-09-17**: Phases 0-3 done. DEC now has mandatory `## Roles and Responsibilities`/`## Source` and optional `## Tags` sections, built on the Phase 1 shared base classes. Packaged template/example updated. Full quality gate green (3326 tests passing, up from 3317). Phase 4 (prompts) not started.
+**As of 2026-09-17**: Phases 0-3 done and committed on branch `feat-29-dec-source-roles` (commits `be8abc5` Phase 0, `19b6675` Phase 1, `a7fd4fd` Phase 2+3). Working tree is clean -- a partial, uncommitted Phase 4 edit (`dec_create_instructions.md`) was discarded at handoff. Phase 4 (prompts) and Phase 5 (docs/housekeeping) are not started and are queued for dispatch to dedicated `phase-implementer` subagents (REQ-010), one phase at a time, each producing its own commit and its own entry in this Progress section.
 
 ### Blockers
 
@@ -150,6 +154,10 @@ No DEC schema `version` bump was needed (Task 2.4 originally assumed one): inves
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-17 00:00:06.000Z - Session handoff: reset Phase 4, queue phase-implementer dispatches
+
+Ended the long-running planning-and-implementation session after Phase 3. Discarded a partial, uncommitted Phase 4 edit to `dec_create_instructions.md` (`git checkout --`) so the next session starts Phase 4 clean from this README's Task List rather than a half-finished draft. Added REQ-010/ACC-009 and this "Orchestration handoff" Design Notes paragraph documenting the decision to implement Phases 4-5 via dedicated `phase-implementer` subagent dispatches instead of continuing inline, to keep each phase's own context small. No code changed in this update; only this README.
 
 #### 2026-09-17 00:00:05.000Z - Phases 2-3 complete: DEC schema, tests, templates/examples
 
@@ -167,6 +175,10 @@ Feature created from GitHub issue #29 ("Artifact type 'Decision' (DEC) need addi
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
+#### 2026-09-17 00:00:07.000Z - Restart remaining phases via phase-orchestrator/phase-implementer dispatch
+
+After Phase 3 landed, the planning-and-implementation session's own context had grown large enough that continuing inline risked losing fidelity. Decided to end that session and, for Phase 4 onward, use the intended division of labor instead: a `phase-orchestrator`-style main session reads this README, dispatches exactly one `phase-implementer` subagent per remaining phase, and reports back between dispatches -- never implementing a phase inline itself. This README (not the orchestrating session's own context) remains the single source of truth for what is/isn't done, which is what makes the handoff safe.
+
 #### 2026-09-17 00:00:03.000Z - Absorbed feat-133's DEC half
 
 Decided to absorb the DEC half of `feat-133-tags-dec-rsk` (issue #133, `## Tags` section) into this feature rather than keep it as a separate dependency, since both touch `dec/models/v1/body.py` in the same pass. `feat-133-tags-dec-rsk` is rescoped to RSK-only as part of this feature's Phase 5, with a comment posted on issue #133 noting the absorption.
@@ -183,6 +195,7 @@ Chose to implement `Source` and the RASCI classes as shared base classes in `mod
 
 - [Issue #29](https://github.com/dfch/biz.dfch.SpecMgr/issues/29): tracking issue for this feature.
 - [Issue #133](https://github.com/dfch/biz.dfch.SpecMgr/issues/133): DEC's `## Tags` half absorbed from this issue; `feat-133-tags-dec-rsk` retains the RSK half.
+- Branch `feat-29-dec-source-roles`: `be8abc5` (Phase 0), `19b6675` (Phase 1), `a7fd4fd` (Phase 2+3).
 
 ### More Information
 
