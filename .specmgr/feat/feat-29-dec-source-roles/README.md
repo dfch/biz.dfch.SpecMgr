@@ -4,7 +4,7 @@ created: '2026-09-17 14:06:49.067+02:00'
 id: feat-29-dec-source-roles
 status: planning
 type: feat
-updated: '2026-09-17 14:06:49.067+02:00'
+updated: '2026-09-17 14:16:17.882+02:00'
 version: 1.0.0
 ---
 
@@ -34,8 +34,8 @@ GitHub issue #29 originally asked for `DecFrontmatter` to gain ADR-style attribu
 - [ ] ACC-002: Verifies REQ-003 -- a `dec` document with `## Tags` parses/validates/round-trips through `create_dec`/`get_dec`/`validate` (`type="dec"`), and a `dec` document without `## Tags` still parses successfully (optional).
 - [ ] ACC-003: Verifies REQ-004 -- a `dec` document with `## Source` present parses, and a `dec` document missing `## Source` fails validation.
 - [ ] ACC-004: Verifies REQ-005 -- a `dec` document with the new sections out of their required relative order fails validation.
-- [ ] ACC-005: Verifies REQ-006 -- `req/models/v1/body.py::Source` and `sop/models/v1/body.py`'s six RASCI classes are refactored to subclass the new `models/md/common_sections.py` base classes, and the full existing REQ and SOP test suites still pass unchanged.
-- [ ] ACC-006: Verifies REQ-006 -- `dec/models/v1/body.py::RolesAndResponsibilities`/`Source` subclass the shared bases and correctly match their expected headings without redeclaring `@alias`, confirmed by a unit test.
+- [x] ACC-005: Verifies REQ-006 -- `req/models/v1/body.py::Source` and `sop/models/v1/body.py`'s six RASCI classes are refactored to subclass the new `models/md/common_sections.py` base classes, and the full existing REQ and SOP test suites still pass unchanged.
+- [x] ACC-006: Verifies REQ-006 -- `dec/models/v1/body.py::RolesAndResponsibilities`/`Source` subclass the shared bases and correctly match their expected headings without redeclaring `@alias`, confirmed by a unit test.
 - [ ] ACC-007: Verifies REQ-008 -- `feat-133-tags-dec-rsk/README.md`'s Requirements/Acceptance Criteria/Task List no longer mention `dec`, and a comment referencing this feature is posted on GitHub issue #133.
 - [ ] ACC-008: Verifies REQ-009 -- every phase's commit in this feature's history passes the full local pre-commit hook chain with no follow-up "fix docs/schema drift" commit needed afterward.
 
@@ -76,13 +76,15 @@ GitHub issue #29 originally asked for `DecFrontmatter` to gain ADR-style attribu
 
 RASCI shape decision: DEC intentionally diverges from SOP's own cardinality. SOP made the whole `## Roles and Responsibilities` section optional (a procedure might not need explicit roles), with `### Accountable`/`### Responsible` only forced once the section is present. DEC makes the whole section mandatory on every document, because a decision must always have a named accountable owner -- there is no such thing as a decision with nobody responsible for it. `### Support`/`### Consulted`/`### Informed` stay independently optional under DEC too, exactly like SOP.
 
-Alias inheritance, verified empirically: `@alias(...)` sets `cls._alias_metadata` as a plain Python class attribute at decoration time, and `match_alias()` reads it via `getattr(cls, "_alias_metadata", None)`, which follows normal MRO-based attribute lookup. A live test during planning confirmed a subclass that never redeclares `_alias_metadata` correctly inherits it from its base class, and `match_alias` matches correctly against the inherited value. Consequence: `@alias(value="Roles and Responsibilities", type=AliasType.LITERAL)` needs to be declared exactly once, on the shared `RolesAndResponsibilitiesBase` in `models/md/common_sections.py` -- `sop.RolesAndResponsibilities` and `dec.RolesAndResponsibilities` both inherit it automatically and do not need to redeclare `@alias` themselves. `Source`/`Accountable`/`Responsible`/`Support`/`Consulted`/`Informed` need no `@alias` at all, base or subclass, since their default `SPACE_SEPARATED`-derived heading text (computed from the actual runtime class's own `__name__` at match time, not at decoration time) already equals the desired heading text for those already-matching class names.
+Alias inheritance, verified empirically: `@alias(...)` sets `cls._alias_metadata` as a plain Python class attribute at decoration time, and `match_alias()` reads it via `getattr(cls, "_alias_metadata", None)`, which follows normal MRO-based attribute lookup. A live test during planning confirmed a subclass that never redeclares `_alias_metadata` correctly inherits it from its base class, and `match_alias` matches correctly against the inherited value. Consequence: `@alias(value="Roles and Responsibilities", type=AliasType.LITERAL)` needs to be declared exactly once, on the shared `RolesAndResponsibilitiesBase` in `models/md/common_sections.py` -- `sop.RolesAndResponsibilities` and `dec.RolesAndResponsibilities` both inherit it automatically and do not need to redeclare `@alias` themselves. `Source`/`Accountable`/`Responsible`/`Support`/`Consulted`/`Informed` need no `@alias` at all, base or subclass, since their default `SPACE_SEPARATED`-derived heading text (computed from the actual runtime class's own `__name__` at match time, not at decoration time) already equals the desired heading text for those already-matching class names. **Verified empirically twice**: once with a standalone `Base`/`Derived` pair during planning (plan-mode conversation), and again during Phase 1 implementation with a dedicated `tests/models/md/test_common_sections.py` -- the `*Base` classes are NOT parseable directly (their own suffixed class name, e.g. `"AccountableBase"`, derives the wrong default heading `"Accountable Base"`); only a bare, correctly-named concrete subclass (e.g. `class Accountable(AccountableBase): pass`) is ever used as an actual Pydantic field type.
+
+Field-narrowing pattern (added during Phase 1 implementation): `RolesAndResponsibilitiesBase` types its `accountable`/`responsible`/`support`/`consulted`/`informed` fields to the shared `*Base` leaf classes, but every domain's own concrete `RolesAndResponsibilities` subclass re-declares those same fields narrowed to that domain's own concrete `Accountable`/`Responsible`/`Support`/`Consulted`/`Informed` subclasses. Verified with a standalone Pydantic v2 test during planning that a subclass may narrow an inherited field's type to a subtype, with validation enforced against the narrowed type (a plain base-class instance is rejected). This narrowing is what makes `cls.__name__` resolve to the domain's own class name at parse time, required for the default `SPACE_SEPARATED` alias match to succeed. The narrowed field re-declarations trigger a `pyright`/pylance "invariant mutable attribute" warning (not enforced by this repo's `ruff`/`pylint`/`vulture` gates) suppressed with `# type: ignore`, mirroring `DecFrontmatter`'s own existing precedent for a similar narrowing pattern (`type: Literal["dec"] = "dec"  # type: ignore`).
 
 Section order: mirrors REQ's own precedent of `## Tags` immediately preceding `## Source` (REQ's field order is Priority, then Tags, then Source). DEC's new block sits right after `## Decision Outcome` (its `### Consequences`/`### Confirmation` sub-sections) and right before `## Related Artifacts`.
 
 Tags absorption: `feat-133-tags-dec-rsk` (issue #133) already independently planned an identical `## Tags` shape for both `dec` and `rsk`. Since this feature touches `dec/models/v1/body.py` anyway, it absorbs the DEC half of that work in the same pass, leaving `feat-133-tags-dec-rsk` scoped to RSK only.
 
-Pre-commit hook scope, verified by reading `.pre-commit-config.yaml`: the `specmgr-schema` hook (and its 12 per-domain `specmgr-schema-{type}-package` siblings) match any `.py` file under the `dec`/`feat`/`gol`/`prb`/`qa`/`req`/`rsk`/`sop`/`sysrs`/`tsk`/`uc`/`vcr` `models/v1`(or `v2`) packages, or `models/md`. Because `models/md` is one of the literal alternation branches, editing `models/md/common_sections.py` in Phase 1 alone -- before `dec` is even touched -- already forces regeneration of every registered domain's `docs/*_schema.json` and packaged copy, by design (a shared-model change can change any domain's generated tool parameter schema). Every phase from Phase 1 onward must therefore run the full regen/verify checklist in REQ-009, not just a final "docs" phase at the end.
+Pre-commit hook scope, verified by reading `.pre-commit-config.yaml`: the `specmgr-schema` hook (and its 12 per-domain `specmgr-schema-{type}-package` siblings) match any `.py` file under the `dec`/`feat`/`gol`/`prb`/`qa`/`req`/`rsk`/`sop`/`sysrs`/`tsk`/`uc`/`vcr` `models/v1`(or `v2`) packages, or `models/md`. Because `models/md` is one of the literal alternation branches, editing `models/md/common_sections.py` in Phase 1 alone -- before `dec` is even touched -- already forces regeneration of every registered domain's `docs/*_schema.json` and packaged copy, by design (a shared-model change can change any domain's generated tool parameter schema). Every phase from Phase 1 onward must therefore run the full regen/verify checklist in REQ-009, not just a final "docs" phase at the end. **Confirmed in practice during Phase 1**: `specmgr schema` regenerated all 12 `docs/*_schema.json` files, but only `req` and `sop` actually changed content (the other 10 regenerated byte-identically), exactly as predicted.
 
 ### Related Decisions
 
@@ -96,10 +98,10 @@ Pre-commit hook scope, verified by reading `.pre-commit-config.yaml`: the `specm
 
 #### Phase 1: Shared Base Classes
 
-- [ ] Task 1.1: Add `models/md/common_sections.py` with `SourceBase`, `AccountableBase`, `ResponsibleBase`, `SupportBase`, `ConsultedBase`, `InformedBase`, `RolesAndResponsibilitiesBase` (the last decorated once with `@alias(value="Roles and Responsibilities", type=AliasType.LITERAL)`).
-- [ ] Task 1.2: Refactor `req/models/v1/body.py::Source` to subclass `SourceBase`; confirm REQ's existing test suite passes unchanged.
-- [ ] Task 1.3: Refactor `sop/models/v1/body.py`'s six RASCI classes to subclass the new bases; confirm SOP's existing test suite passes unchanged.
-- [ ] Task 1.4: Run this phase's full quality gate (REQ-009) and commit.
+- [x] Task 1.1: Add `models/md/common_sections.py` with `SourceBase`, `AccountableBase`, `ResponsibleBase`, `SupportBase`, `ConsultedBase`, `InformedBase`, `RolesAndResponsibilitiesBase` (the last decorated once with `@alias(value="Roles and Responsibilities", type=AliasType.LITERAL)`).
+- [x] Task 1.2: Refactor `req/models/v1/body.py::Source` to subclass `SourceBase`; confirm REQ's existing test suite passes unchanged.
+- [x] Task 1.3: Refactor `sop/models/v1/body.py`'s six RASCI classes to subclass the new bases; confirm SOP's existing test suite passes unchanged.
+- [x] Task 1.4: Run this phase's full quality gate (REQ-009) and commit.
 
 #### Phase 2: DEC Schema
 
@@ -135,7 +137,7 @@ Pre-commit hook scope, verified by reading `.pre-commit-config.yaml`: the `specm
 
 ### Current Status
 
-**As of 2026-09-17**: Planning complete; Phase 0 (this README) done. Phase 1 not started.
+**As of 2026-09-17**: Phase 0 and Phase 1 done. `models/md/common_sections.py` added; `req`'s `Source` and `sop`'s six RASCI classes refactored to subclass it, both domains' existing test suites green unchanged, plus a new dedicated `tests/models/md/test_common_sections.py` (10 tests). Full quality gate green (3317 tests passing, up from 3307). Phase 2 (DEC schema) not started.
 
 ### Blockers
 
@@ -144,6 +146,10 @@ Pre-commit hook scope, verified by reading `.pre-commit-config.yaml`: the `specm
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-17 00:00:04.000Z - Phase 1 complete: shared base classes
+
+Added `models/md/common_sections.py` (`SourceBase`, `AccountableBase`, `ResponsibleBase`, `SupportBase`, `ConsultedBase`, `InformedBase`, `RolesAndResponsibilitiesBase`), exported from `models/md/__init__.py`. Refactored `req/models/v1/body.py::Source` and `sop/models/v1/body.py`'s six RASCI classes to subclass the new bases (behavior-preserving; both domains' existing test suites pass unchanged). Added `tests/models/md/test_common_sections.py` (10 tests) covering the base classes' own parsing and, most importantly, the `@alias` inheritance mechanism the design depends on. Ran the full quality gate: `ruff format --check`/`ruff check` clean, `vulture` clean, `specmgr docs`/`mcp-docs` regenerated (only `docs/GENERATED.md`'s test count and the two touched domains' API docs changed), `specmgr schema` regenerated all 12 `docs/*_schema.json` (only `req`/`sop` changed content, exactly as the Design Notes predicted), full `pytest -n auto` suite green at 3317 tests (up from 3307), `specmgr coverage-badge` unchanged (99%).
 
 #### 2026-09-17 00:00:00.000Z - Created
 

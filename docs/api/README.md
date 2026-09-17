@@ -177,6 +177,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.models.md.alias`](biz.dfch.specmgr.models.md.alias.md) — Alias decorator for MarkdownStr class name transformation.
 - [`biz.dfch.specmgr.models.md.alias_match`](biz.dfch.specmgr.models.md.alias_match.md) — Match a parsed heading's actual text against a class's declared `@alias`.
 - [`biz.dfch.specmgr.models.md.alias_type`](biz.dfch.specmgr.models.md.alias_type.md) — Alias type enumeration for MarkdownStr class name transformation.
+- [`biz.dfch.specmgr.models.md.common_sections`](biz.dfch.specmgr.models.md.common_sections.md) — Shared base classes for whole-section fields that recur, byte-identically, across domains.
 - [`biz.dfch.specmgr.models.md.frontmatter`](biz.dfch.specmgr.models.md.frontmatter.md) — Generic base frontmatter model shared by every markdown-backed document type.
 - [`biz.dfch.specmgr.models.md.markdown`](biz.dfch.specmgr.models.md.markdown.md) — No documentation available.
 - [`biz.dfch.specmgr.models.md.markdown_block_quote`](biz.dfch.specmgr.models.md.markdown_block_quote.md) — A markdown block quote ("blockquote"), grouping every consecutive '>' line as one instance.

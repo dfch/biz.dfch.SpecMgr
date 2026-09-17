@@ -21,7 +21,7 @@
       "type": "object"
     },
     "Accountable": {
-      "description": "`### Accountable` under `## Roles and Responsibilities` -- the single\nowner who is ultimately answerable for the SOP.\n\nA single mandatory paragraph (never a bullet list): exactly one owner,\nstructurally discouraging multiple owners. See the general\n`specmgr://rasci` resource for RASCI role definitions.\n\nParameters\n----------\nvalue:\n    The single paragraph naming the accountable party. Mandatory.",
+      "description": "`### Accountable` under `## Roles and Responsibilities` -- the single\nowner who is ultimately answerable for the SOP.\n\nSubclasses the shared `models.md.AccountableBase` (feat-29-dec-source-roles)\n-- see the general `specmgr://rasci` resource for RASCI role definitions.",
       "properties": {
         "value": {
           "$ref": "#/$defs/MarkdownParagraph",
@@ -35,7 +35,7 @@
       "type": "object"
     },
     "Consulted": {
-      "description": "`### Consulted` under `## Roles and Responsibilities` -- those whose\nopinions are sought before or during the work.\n\nAn optional bullet list that MAY be present with zero list items (an\nintentional \"considered, currently empty\" placeholder distinct from\nomitting the heading entirely). See the general `specmgr://rasci` resource\nfor RASCI role definitions.\n\nParameters\n----------\nitems:\n    Bullet list naming the consulted parties, or ``None`` when the heading\n    is present with no items. Optional as a whole.",
+      "description": "`### Consulted` under `## Roles and Responsibilities` -- those whose\nopinions are sought before or during the work.\n\nSubclasses the shared `models.md.ConsultedBase` (feat-29-dec-source-roles)\n-- see the general `specmgr://rasci` resource for RASCI role definitions.",
       "properties": {
         "items": {
           "anyOf": [
@@ -102,7 +102,7 @@
       "type": "object"
     },
     "Informed": {
-      "description": "`### Informed` under `## Roles and Responsibilities` -- those who are\nkept up to date on progress or outcomes.\n\nAn optional bullet list that MAY be present with zero list items (an\nintentional \"considered, currently empty\" placeholder distinct from\nomitting the heading entirely). See the general `specmgr://rasci` resource\nfor RASCI role definitions.\n\nParameters\n----------\nitems:\n    Bullet list naming the informed parties, or ``None`` when the heading\n    is present with no items. Optional as a whole.",
+      "description": "`### Informed` under `## Roles and Responsibilities` -- those who are\nkept up to date on progress or outcomes.\n\nSubclasses the shared `models.md.InformedBase` (feat-29-dec-source-roles)\n-- see the general `specmgr://rasci` resource for RASCI role definitions.",
       "properties": {
         "items": {
           "anyOf": [
@@ -260,7 +260,7 @@
       "type": "object"
     },
     "Responsible": {
-      "description": "`### Responsible` under `## Roles and Responsibilities` -- those who do\nthe work the SOP describes.\n\nA mandatory bullet list (>=1 entry). See the general `specmgr://rasci`\nresource for RASCI role definitions.\n\nParameters\n----------\nitems:\n    Bullet list naming the responsible parties; must contain at least one\n    item.",
+      "description": "`### Responsible` under `## Roles and Responsibilities` -- those who do\nthe work the SOP describes.\n\nSubclasses the shared `models.md.ResponsibleBase` (feat-29-dec-source-roles)\n-- see the general `specmgr://rasci` resource for RASCI role definitions.",
       "properties": {
         "items": {
           "description": "Bullet list naming the responsible parties; must contain at least one item.",
@@ -279,7 +279,7 @@
       "type": "object"
     },
     "RolesAndResponsibilities": {
-      "description": "`## Roles and Responsibilities` -- the RASCI responsibility assignment\nfor this SOP. Optional as a whole; once present, `### Accountable` and\n`### Responsible` are both mandatory (strict-RACI \"always has an owner and\na doer\"), while `### Support`/`### Consulted`/`### Informed` stay\nindependently optional and MAY each be present with zero list items. See\nthe general `specmgr://rasci` resource for RASCI role definitions.\n\nParameters\n----------\naccountable:\n    `### Accountable` sub-section (single paragraph). Mandatory once this\n    container is present.\nresponsible:\n    `### Responsible` sub-section (bullet list, >=1 item). Mandatory once\n    this container is present.\nsupport:\n    `### Support` sub-section (bullet list, MAY be empty). Optional.\nconsulted:\n    `### Consulted` sub-section (bullet list, MAY be empty). Optional.\ninformed:\n    `### Informed` sub-section (bullet list, MAY be empty). Optional.",
+      "description": "`## Roles and Responsibilities` -- the RASCI responsibility assignment\nfor this SOP. Optional as a whole; once present, `### Accountable` and\n`### Responsible` are both mandatory (strict-RACI \"always has an owner and\na doer\"), while `### Support`/`### Consulted`/`### Informed` stay\nindependently optional and MAY each be present with zero list items. See\nthe general `specmgr://rasci` resource for RASCI role definitions.\n\nSubclasses the shared `models.md.RolesAndResponsibilitiesBase`\n(feat-29-dec-source-roles), which also carries the `@alias(value=\"Roles\nand Responsibilities\", ...)` override this class needs -- inherited\nautomatically, not redeclared here. The fields below narrow the base\nclass's field types to `sop`'s own concrete `Accountable`/`Responsible`/\n`Support`/`Consulted`/`Informed` subclasses declared above.\n\nParameters\n----------\naccountable:\n    `### Accountable` sub-section (single paragraph). Mandatory once this\n    container is present.\nresponsible:\n    `### Responsible` sub-section (bullet list, >=1 item). Mandatory once\n    this container is present.\nsupport:\n    `### Support` sub-section (bullet list, MAY be empty). Optional.\nconsulted:\n    `### Consulted` sub-section (bullet list, MAY be empty). Optional.\ninformed:\n    `### Informed` sub-section (bullet list, MAY be empty). Optional.",
       "properties": {
         "accountable": {
           "$ref": "#/$defs/Accountable",
@@ -547,7 +547,7 @@
       "type": "object"
     },
     "Support": {
-      "description": "`### Support` under `## Roles and Responsibilities` -- those who\nprovide resources or assistance to the responsible parties.\n\nAn optional bullet list that MAY be present with zero list items (an\nintentional \"considered, currently empty\" placeholder distinct from\nomitting the heading entirely). See the general `specmgr://rasci` resource\nfor RASCI role definitions.\n\nParameters\n----------\nitems:\n    Bullet list naming the support parties, or ``None`` when the heading\n    is present with no items. Optional as a whole.",
+      "description": "`### Support` under `## Roles and Responsibilities` -- those who\nprovide resources or assistance to the responsible parties.\n\nSubclasses the shared `models.md.SupportBase` (feat-29-dec-source-roles)\n-- see the general `specmgr://rasci` resource for RASCI role definitions.",
       "properties": {
         "items": {
           "anyOf": [
