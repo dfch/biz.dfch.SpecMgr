@@ -25,14 +25,21 @@ structure (MADR-style headings, an `Options` collection) but is built on the
 generic engine with the simple surface used by GOL/RSK/QA (see
 `.specmgr/feat/feat-21-decision/README.md` Design Notes).
 
-Field declaration order on `Decision`/`DecisionOutcome`/`RelatedArtifacts`/
-`ProsAndCons`/`Updates` enforces markdown order (Context and Problem
-Statement -> Decision Drivers -> Considered Options -> Decision Outcome
-(-> Consequences -> Confirmation) -> Related Artifacts (-> Requirements ->
-Decisions -> Goals -> Acceptance Criteria) -> Pros and Cons (-> Option 1: ->
-Option 2: -> ...) -> More Information -> Updates (-> entry 1 -> entry 2 ->
-...)), since `models.md`'s `MarkdownStr.from_text` distributes text among
-declared fields in that same order.
+Field declaration order on `Decision`/`DecisionOutcome`/`RolesAndResponsibilities`/
+`RelatedArtifacts`/`ProsAndCons`/`Updates` enforces markdown order (Context
+and Problem Statement -> Decision Drivers -> Considered Options -> Decision
+Outcome (-> Consequences -> Confirmation) -> Roles and Responsibilities
+(-> Accountable -> Responsible -> Support -> Consulted -> Informed) -> Tags
+-> Source -> Related Artifacts (-> Requirements -> Decisions -> Goals ->
+Acceptance Criteria) -> Pros and Cons (-> Option 1: -> Option 2: -> ...) ->
+More Information -> Updates (-> entry 1 -> entry 2 -> ...)), since
+`models.md`'s `MarkdownStr.from_text` distributes text among declared fields
+in that same order. `## Roles and Responsibilities` and `## Source` are
+mandatory on every `dec` document (feat-29-dec-source-roles, GitHub issue
+#29) -- a decision must always name an accountable owner and record where it
+originated, unlike `sop`'s own optional `## Roles and Responsibilities`.
+`## Tags` is optional, absorbed from the DEC half of
+`feat-133-tags-dec-rsk` (issue #133).
 """
 
 from __future__ import annotations
@@ -43,11 +50,19 @@ from pydantic import Field, computed_field, model_validator
 
 from ....models.md import (
     MarkdownListItem,
+    MarkdownListItemWithNotes,
     MarkdownParagraph,
     MarkdownSection1,
     MarkdownSection2,
     MarkdownSection2WithComment,
     MarkdownSection3,
+    AccountableBase,
+    ResponsibleBase,
+    SupportBase,
+    ConsultedBase,
+    InformedBase,
+    RolesAndResponsibilitiesBase,
+    SourceBase,
     alias,
     AliasType,
 )
@@ -108,6 +123,124 @@ class DecisionOutcome(MarkdownSection2):
     )
     consequences: Consequences | None = Field(default=None, description="`### Consequences` sub-section. Optional.")
     confirmation: Confirmation | None = Field(default=None, description="`### Confirmation` sub-section. Optional.")
+
+
+class Accountable(AccountableBase):
+    """`### Accountable` under `## Roles and Responsibilities` -- the single
+    owner ultimately answerable for this decision.
+
+    Subclasses the shared `models.md.AccountableBase` (feat-29-dec-source-roles)
+    -- see the general `specmgr://rasci` resource for RASCI role definitions.
+    Mandatory: `## Roles and Responsibilities` is itself mandatory on every
+    `dec` document, so every decision always names an accountable owner.
+    """
+
+
+class Responsible(ResponsibleBase):
+    """`### Responsible` under `## Roles and Responsibilities` -- those who
+    carry out the decision or its consequences.
+
+    Subclasses the shared `models.md.ResponsibleBase` (feat-29-dec-source-roles)
+    -- see the general `specmgr://rasci` resource for RASCI role definitions.
+    """
+
+
+class Support(SupportBase):
+    """`### Support` under `## Roles and Responsibilities` -- those who
+    provide resources or assistance to the responsible parties.
+
+    Subclasses the shared `models.md.SupportBase` (feat-29-dec-source-roles)
+    -- see the general `specmgr://rasci` resource for RASCI role definitions.
+    """
+
+
+class Consulted(ConsultedBase):
+    """`### Consulted` under `## Roles and Responsibilities` -- those whose
+    opinions were sought before or during the decision.
+
+    Subclasses the shared `models.md.ConsultedBase` (feat-29-dec-source-roles)
+    -- see the general `specmgr://rasci` resource for RASCI role definitions.
+    """
+
+
+class Informed(InformedBase):
+    """`### Informed` under `## Roles and Responsibilities` -- those who are
+    kept up to date on the decision or its outcome.
+
+    Subclasses the shared `models.md.InformedBase` (feat-29-dec-source-roles)
+    -- see the general `specmgr://rasci` resource for RASCI role definitions.
+    """
+
+
+class RolesAndResponsibilities(RolesAndResponsibilitiesBase):
+    """`## Roles and Responsibilities` -- the RASCI responsibility assignment
+    for this decision. Mandatory on every `dec` document (unlike `sop`'s own
+    optional equivalent) -- a decision must always have a named accountable
+    owner. `### Accountable` and `### Responsible` are both mandatory (strict-
+    RACI "always has an owner and a doer"), while `### Support`/
+    `### Consulted`/`### Informed` stay independently optional and MAY each
+    be present with zero list items. See the general `specmgr://rasci`
+    resource for RASCI role definitions.
+
+    Subclasses the shared `models.md.RolesAndResponsibilitiesBase`
+    (feat-29-dec-source-roles), which also carries the `@alias(value="Roles
+    and Responsibilities", ...)` override this class needs -- inherited
+    automatically, not redeclared here. The fields below narrow the base
+    class's field types to `dec`'s own concrete `Accountable`/`Responsible`/
+    `Support`/`Consulted`/`Informed` subclasses declared above.
+
+    Parameters
+    ----------
+    accountable:
+        `### Accountable` sub-section (single paragraph). Mandatory.
+    responsible:
+        `### Responsible` sub-section (bullet list, >=1 item). Mandatory.
+    support:
+        `### Support` sub-section (bullet list, MAY be empty). Optional.
+    consulted:
+        `### Consulted` sub-section (bullet list, MAY be empty). Optional.
+    informed:
+        `### Informed` sub-section (bullet list, MAY be empty). Optional.
+    """
+
+    accountable: Accountable = Field(  # type: ignore
+        description="`### Accountable` sub-section (single paragraph). Mandatory once this container is present."
+    )
+    responsible: Responsible = Field(  # type: ignore
+        description="`### Responsible` sub-section (bullet list, >=1 item). Mandatory once this container is present."
+    )
+    support: Support | None = Field(  # type: ignore
+        default=None, description="`### Support` sub-section. Optional; MAY be empty."
+    )
+    consulted: Consulted | None = Field(  # type: ignore
+        default=None, description="`### Consulted` sub-section. Optional; MAY be empty."
+    )
+    informed: Informed | None = Field(  # type: ignore
+        default=None, description="`### Informed` sub-section. Optional; MAY be empty."
+    )
+
+
+class Tags(MarkdownSection2):
+    """`## Tags` -- bullet list of free-form labels for grouping/filtering
+    decisions. Optional. Absorbed from the DEC half of
+    `feat-133-tags-dec-rsk` (issue #133), structurally identical to `req`'s
+    existing `Tags` model.
+    """
+
+    items: list[MarkdownListItemWithNotes] = Field(
+        min_length=1,
+        description="Bullet list of free-form labels for grouping/filtering decisions; must contain at least one item.",
+    )
+
+
+class Source(SourceBase):
+    """`## Source` -- single-line value naming the origin/authority of this
+    decision (e.g. an issue, a meeting, a stakeholder request). Mandatory.
+
+    Subclasses the shared `models.md.SourceBase` (feat-29-dec-source-roles) --
+    the field declaration itself lives there; this class exists so `dec`
+    still declares and owns its own concrete `Source` type.
+    """
 
 
 class Requirements(MarkdownSection3):
@@ -427,6 +560,14 @@ class Decision(MarkdownSection1):
     outcome:
         `## Decision Outcome` (mandatory lead paragraph + optional
         `### Consequences`/`### Confirmation`). Mandatory.
+    roles_and_responsibilities:
+        `## Roles and Responsibilities` (RASCI composite). Mandatory (unlike
+        `sop`'s own optional equivalent) -- a decision must always have a
+        named accountable owner.
+    tags:
+        `## Tags`. Optional.
+    source:
+        `## Source`. Mandatory.
     related_artifacts:
         `## Related Artifacts` (four all-optional H3 bullet lists). Optional.
     pros_and_cons:
@@ -442,6 +583,11 @@ class Decision(MarkdownSection1):
     drivers: DecisionDrivers | None = Field(default=None, description="`## Decision Drivers` section. Optional.")
     considered: ConsideredOptions | None = Field(default=None, description="`## Considered Options` section. Optional.")
     outcome: DecisionOutcome = Field(description="`## Decision Outcome` section. Mandatory.")
+    roles_and_responsibilities: RolesAndResponsibilities = Field(
+        description="`## Roles and Responsibilities` section (RASCI composite). Mandatory."
+    )
+    tags: Tags | None = Field(default=None, description="`## Tags` section. Optional.")
+    source: Source = Field(description="`## Source` section. Mandatory.")
     related_artifacts: RelatedArtifacts | None = Field(
         default=None, description="`## Related Artifacts` section. Optional."
     )

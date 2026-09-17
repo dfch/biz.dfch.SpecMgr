@@ -391,42 +391,82 @@ _RSK_FULL_DOCUMENT = (
     + _RSK_MINIMAL_BODY
 )
 
-_DEC_MINIMAL_BODY = textwrap.dedent(
-    """\
-    # Choose a Document Store
+_DEC_MINIMAL_BODY = (
+    textwrap.dedent(
+        """\
+        # Choose a Document Store
 
-    ## Context and Problem Statement
+        ## Context and Problem Statement
 
-    The current store cannot serve the dashboard read path.
+        The current store cannot serve the dashboard read path.
 
-    ## Decision Outcome
+        ## Decision Outcome
 
-    We chose the document store.
-    """
+        We chose the document store.
+        """
+    )
+    + "\n"
+    + textwrap.dedent(
+        """\
+        ## Roles and Responsibilities
+
+        ### Accountable
+
+        The platform architecture lead.
+
+        ### Responsible
+
+        - The order service team.
+
+        ## Source
+
+        The customer dashboard latency incident review meeting.
+        """
+    )
 )
 _DEC_MALFORMED_BODY = "# Title\n\nJust a paragraph, no recognized decision sections.\n"
-_DEC_BAD_FIELD_BODY = textwrap.dedent(
-    """\
-    # Choose a Document Store
+_DEC_BAD_FIELD_BODY = (
+    textwrap.dedent(
+        """\
+        # Choose a Document Store
 
-    ## Context and Problem Statement
+        ## Context and Problem Statement
 
-    The current store cannot serve the dashboard read path.
+        The current store cannot serve the dashboard read path.
 
-    ## Decision Outcome
+        ## Decision Outcome
 
-    We chose the document store.
+        We chose the document store.
+        """
+    )
+    + "\n"
+    + textwrap.dedent(
+        """\
+        ## Roles and Responsibilities
 
-    ## Pros and Cons
+        ### Accountable
 
-    ### Option 1: Document Store
+        The platform architecture lead.
 
-    Meets the latency budget.
+        ### Responsible
 
-    ### Option 1: Key-Value Store
+        - The order service team.
 
-    Even faster reads.
-    """
+        ## Source
+
+        The customer dashboard latency incident review meeting.
+
+        ## Pros and Cons
+
+        ### Option 1: Document Store
+
+        Meets the latency budget.
+
+        ### Option 1: Key-Value Store
+
+        Even faster reads.
+        """
+    )
 )
 _DEC_FULL_DOCUMENT = (
     textwrap.dedent(
