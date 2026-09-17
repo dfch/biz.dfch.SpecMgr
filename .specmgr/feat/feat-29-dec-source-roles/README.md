@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-17 14:06:49.067+02:00'
 id: feat-29-dec-source-roles
-status: planning
+status: done
 type: feat
-updated: '2026-09-17 14:44:13.142+02:00'
+updated: '2026-09-17 16:00:00.000+02:00'
 version: 1.0.0
 ---
 
@@ -37,9 +37,9 @@ GitHub issue #29 originally asked for `DecFrontmatter` to gain ADR-style attribu
 - [x] ACC-004: Verifies REQ-005 -- a `dec` document with the new sections out of their required relative order fails validation.
 - [x] ACC-005: Verifies REQ-006 -- `req/models/v1/body.py::Source` and `sop/models/v1/body.py`'s six RASCI classes are refactored to subclass the new `models/md/common_sections.py` base classes, and the full existing REQ and SOP test suites still pass unchanged.
 - [x] ACC-006: Verifies REQ-006 -- `dec/models/v1/body.py::RolesAndResponsibilities`/`Source` subclass the shared bases and correctly match their expected headings without redeclaring `@alias`, confirmed by a unit test.
-- [ ] ACC-007: Verifies REQ-008 -- `feat-133-tags-dec-rsk/README.md`'s Requirements/Acceptance Criteria/Task List no longer mention `dec`, and a comment referencing this feature is posted on GitHub issue #133.
-- [ ] ACC-008: Verifies REQ-009 -- every phase's commit in this feature's history passes the full local pre-commit hook chain with no follow-up "fix docs/schema drift" commit needed afterward.
-- [ ] ACC-009: Verifies REQ-010 -- Phase 4 and Phase 5 are each implemented by a distinct `phase-implementer` dispatch, each producing its own commit and its own Progress-section update in this README.
+- [x] ACC-007: Verifies REQ-008 -- `feat-133-tags-dec-rsk/README.md`'s Requirements/Acceptance Criteria/Task List no longer mention `dec`, and a comment referencing this feature is posted on GitHub issue #133.
+- [x] ACC-008: Verifies REQ-009 -- every phase's commit in this feature's history passes the full local pre-commit hook chain with no follow-up "fix docs/schema drift" commit needed afterward.
+- [x] ACC-009: Verifies REQ-010 -- Phase 4 and Phase 5 are each implemented by a distinct `phase-implementer` dispatch, each producing its own commit and its own Progress-section update in this README.
 
 ### Scope
 
@@ -134,18 +134,18 @@ Orchestration handoff (see REQ-010): Phases 0-3 were implemented inline in one l
 
 #### Phase 5: Docs and Housekeeping
 
-- [ ] Task 5.1: Update `AGENTS.md`'s `dec/` bullet to mention the three new sections and the shared-base-class refactor.
-- [ ] Task 5.2: Update `feat-7-various-improvements/README.md`'s Task 0.33 entry to "split out into `feat-29-dec-source-roles`".
-- [ ] Task 5.3: Update `feat-133-tags-dec-rsk/README.md` to drop DEC from scope, pointing at this feature for the DEC half.
-- [ ] Task 5.4: Post a comment on GitHub issue #29 summarizing the shipped design.
-- [ ] Task 5.5: Post a comment on GitHub issue #133 noting DEC's Tags half was absorbed into issue #29.
-- [ ] Task 5.6: Run this phase's full quality gate (REQ-009), commit, and mark this feature's status `done`.
+- [x] Task 5.1: Update `AGENTS.md`'s `dec/` bullet to mention the three new sections and the shared-base-class refactor.
+- [x] Task 5.2: Update `feat-7-various-improvements/README.md`'s Task 0.33 entry to "split out into `feat-29-dec-source-roles`".
+- [x] Task 5.3: Update `feat-133-tags-dec-rsk/README.md` to drop DEC from scope, pointing at this feature for the DEC half.
+- [x] Task 5.4: Post a comment on GitHub issue #29 summarizing the shipped design.
+- [x] Task 5.5: Post a comment on GitHub issue #133 noting DEC's Tags half was absorbed into issue #29.
+- [x] Task 5.6: Run this phase's full quality gate (REQ-009), commit, and mark this feature's status `done`.
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-09-17**: Phases 0-3 done and committed on branch `feat-29-dec-source-roles` (commits `be8abc5` Phase 0, `19b6675` Phase 1, `a7fd4fd` Phase 2+3). Phase 4 (prompts) is implemented and its quality gate is green, but **not yet committed** -- ready for the orchestrator's review and commit. Phase 5 (docs/housekeeping) is not started and remains queued for dispatch to a dedicated `phase-implementer` subagent (REQ-010).
+**As of 2026-09-17**: **Feature complete.** All 6 phases (0-5) are done; all 9 acceptance criteria (ACC-001 through ACC-009) are met. Both GitHub issue comments (summarizing the shipped design on issue #29, and noting the DEC-half absorption on issue #133) are posted and confirmed live. Commits on branch `feat-29-dec-source-roles`: `be8abc5` (Phase 0), `19b6675` (Phase 1), `a7fd4fd` (Phase 2+3), `c8d5a92` (Phase 4), Phase 5 (this commit -- hash not yet known at the time of this edit, since the orchestrator commits after this final sign-off). Frontmatter `status` bumped to `done`.
 
 ### Blockers
 
@@ -154,6 +154,41 @@ Orchestration handoff (see REQ-010): Phases 0-3 were implemented inline in one l
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-17 15:30:00.000Z - Phase 5 complete: docs and housekeeping
+
+Updated `AGENTS.md`'s `dec/` bullet to document the three new body
+sections (mandatory `## Roles and Responsibilities`, optional `## Tags`,
+mandatory `## Source`) and the `models/md/common_sections.py`
+shared-base-class refactor, referencing this feature. Updated
+`.specmgr/feat/feat-7-various-improvements/README.md`'s Task 0.33:
+checkbox `[x]`, status set to "split out into `feat-29-dec-source-roles`
+... **is now complete**" (mirroring Task 0.32's own precedent exactly),
+plus a new "Update 2026-09-17 (Task 0.33 split-out feature complete)"
+Recent Updates entry and a frontmatter `updated` bump. Rescoped
+`.specmgr/feat/feat-133-tags-dec-rsk/README.md` to RSK-only: dropped
+every `dec`-related requirement/acceptance-criterion/task (renumbered
+contiguously rather than left as gaps, since nothing outside that file
+referenced the old numbering), rewrote its Overview/title/Scope/Design
+Notes to reflect the narrower scope, added an "Explicitly Out Of Scope"
+bullet pointing at this feature for the DEC half, and added a dated
+Decisions Made entry plus a Related PRs/Commits cross-reference back to
+this feature. Posted the two GitHub issue comments exactly as approved
+by the user (no rewording):
+[issue #29 comment](https://github.com/dfch/biz.dfch.SpecMgr/issues/29#issuecomment-5714986670)
+and
+[issue #133 comment](https://github.com/dfch/biz.dfch.SpecMgr/issues/133#issuecomment-5714987415).
+Ran the full quality gate: `ruff format --check`/`ruff check` clean,
+`vulture` clean, `specmgr docs`/`mcp-docs` regenerated with **no content
+changes** (expected -- only `.md` non-packaged docs were touched this
+phase, no `src/**/*.py`), `specmgr schema` regenerated all 12
+`docs/*_schema.json` with **no content changes**, full `pytest -n auto`
+suite green at 3329 tests (unchanged from Phase 4), `specmgr
+coverage-badge` unchanged (99%). **Orchestrator sign-off (same day)**:
+independently re-verified the file diffs, both comment URLs (confirmed
+live with the exact approved text), and the full quality gate (all
+green, no drift, 3329 tests, 99% coverage) -- accepted. ACC-007/ACC-008/
+ACC-009 checked, frontmatter `status` bumped to `done`.
 
 #### 2026-09-17 13:05:53.000Z - Phase 4 complete: prompt instructions updated
 
@@ -229,8 +264,10 @@ Chose to implement `Source` and the RASCI classes as shared base classes in `mod
 ### Related PRs / Commits
 
 - [Issue #29](https://github.com/dfch/biz.dfch.SpecMgr/issues/29): tracking issue for this feature.
+- [Issue #29 comment](https://github.com/dfch/biz.dfch.SpecMgr/issues/29#issuecomment-5714986670): Phase 5 summary of the shipped design, posted on the tracking issue.
 - [Issue #133](https://github.com/dfch/biz.dfch.SpecMgr/issues/133): DEC's `## Tags` half absorbed from this issue; `feat-133-tags-dec-rsk` retains the RSK half.
-- Branch `feat-29-dec-source-roles`: `be8abc5` (Phase 0), `19b6675` (Phase 1), `a7fd4fd` (Phase 2+3).
+- [Issue #133 comment](https://github.com/dfch/biz.dfch.SpecMgr/issues/133#issuecomment-5714987415): Phase 5 note on issue #133 that its DEC half was absorbed here.
+- Branch `feat-29-dec-source-roles`: `be8abc5` (Phase 0), `19b6675` (Phase 1), `a7fd4fd` (Phase 2+3), `c8d5a92` (Phase 4).
 
 ### More Information
 
