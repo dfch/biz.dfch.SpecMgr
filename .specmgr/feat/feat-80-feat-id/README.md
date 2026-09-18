@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-04 16:27:34.938+02:00'
 id: feat-80-feat-id
-status: planning
+status: done
 type: feat
-updated: '2026-09-04 16:36:04.291+02:00'
+updated: '2026-09-18 13:25:13.577+02:00'
 version: 1.0.0
 ---
 
@@ -106,7 +106,7 @@ The fix mirrors feat-69's mechanical recipe exactly: drop the `FeatDocument(...)
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
-#### 2026-09-04 - Phase 1 implemented: set_feat_id returns frontmatter-only
+#### 2026-09-04 16:36:04.000+02:00 - Phase 1 implemented: set_feat_id returns frontmatter-only
 
 Changed `set_feat_id`'s return type annotation from `FeatDocument` to `FeatFrontmatter` in
 `src/biz/dfch/specmgr/feat/tools/set_feat_id.py`: dropped the now-unused `FeatDocument` import and
