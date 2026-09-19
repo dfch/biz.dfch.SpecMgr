@@ -42,6 +42,8 @@ _MINIMAL_BODY = textwrap.dedent(
     """\
     # Simple Problem Statement
 
+    The current process is causing delays, for users because of missing automation.
+
     ## Current State
 
     ### Summary
@@ -157,7 +159,7 @@ class TestGetPrb(unittest.TestCase):
         created = create_prb(_MINIMAL_BODY)
         doc_id = created.id
         lines = get_prb(doc_id, raw=True).splitlines()
-        k, m = 5, 3
+        k, m = 7, 3
         window = get_prb(doc_id, raw=True, offset=k, limit=m)
         self.assertEqual(window, "\n".join(lines[k - 1 : k - 1 + m]) + "\n")
         replacement = "### Summary\n\nSomething is very wrong."

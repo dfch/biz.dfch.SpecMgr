@@ -245,8 +245,8 @@ First-line docstrings from each module, organized by domain:
 - `prb/models/v1/parser.py` — Parse raw Problem Statement (PRB) ``.md`` text into a :class:`PrbDocument` (Phase 2, Task 2.2).
 - `prb/models/v1/summary.py` — Pydantic model for one line of PRB listing output (Phase 2, Task 2.3).
 - `prb/prompts/__init__.py` — MCP prompt wrappers for Problem Statements (Tasks 3.14-3.15).
-- `prb/prompts/create_prb.py` — ``@mcp.prompt()``: create_prb (Task 3.14).
-- `prb/prompts/update_prb.py` — ``@mcp.prompt()``: update_prb (Task 3.15).
+- `prb/prompts/create_prb.py` — ``@mcp.prompt()``: create_prb (Task 3.14, feat-132-prb-update Phase 2).
+- `prb/prompts/update_prb.py` — ``@mcp.prompt()``: update_prb (Task 3.15, feat-132-prb-update Phase 2).
 - `prb/resources/__init__.py` — MCP resource registrations for Problem Statement (PRB) documents (Task 3.11).
 - `prb/resources/prb_example.py` — Resource: specmgr://prb/example (Task 3.11).
 - `prb/resources/prb_schema.py` — Resource: specmgr://prb/schema (Task 3.11).
@@ -538,4 +538,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 357
+**Test files**: 358

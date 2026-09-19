@@ -329,7 +329,11 @@ characteristics.
 Problem statement prompts (``prb/prompts/``): ``create_prb``, ``update_prb`` --
 instructional text guiding an LLM through a ``TodoWrite`` + ``question``-tool-
 driven 5W2H interview flow, including agent-synthesized ``Summary``/``Gap``
-text.
+text. ``create_prb`` accepts an optional ``qa_id`` that carries over
+already-answered 5W2H questions from a linked QA document instead of
+re-asking them, and both prompts narrate composing the mandatory,
+code-level-validated ``problem_statement`` lead sentence every PRB now
+carries.
 Goal prompts (``gol/prompts/``): ``create_gol``, ``update_gol`` --
 instructional text guiding an LLM through a ``TodoWrite`` +
 ``question``-tool-driven interview flow over the goal's mandatory

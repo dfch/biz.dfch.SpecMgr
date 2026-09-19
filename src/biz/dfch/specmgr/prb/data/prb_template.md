@@ -11,6 +11,8 @@ version: 1.0.0
 
 <!-- Optional HTML comment giving context for this problem statement, such as who raised it and when. -->
 
+The current process is causing delays, for users because of missing automation.
+
 ## Current State
 
 ### Summary

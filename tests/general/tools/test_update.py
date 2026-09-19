@@ -303,6 +303,8 @@ _PRB_MINIMAL_BODY = textwrap.dedent(
     """\
     # Simple Problem Statement
 
+    The current process is causing delays, for users because of missing automation.
+
     ## Current State
 
     ### Summary
@@ -322,6 +324,8 @@ _PRB_MINIMAL_BODY = textwrap.dedent(
 _PRB_UPDATED_BODY = textwrap.dedent(
     """\
     # Simple Problem Statement
+
+    The current process is causing delays, for users because of missing automation.
 
     ## Current State
 

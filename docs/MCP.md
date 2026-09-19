@@ -1364,7 +1364,7 @@ Re-read and re-parse an ADR by id, letting the models' own Pydantic validators r
 | [`create_dec`](#prompt-create_dec) | Guides the LLM through checking for an existing similar decision, gathering the required information, and driving create_dec/validate to author a new DEC document. |
 | [`create_feat`](#prompt-create_feat) | Guides the LLM through checking for an existing similar feature, gathering the required information, and driving create_feat/validate to author a new FEAT document. |
 | [`create_gol`](#prompt-create_gol) | Guides the LLM through checking for an existing similar goal, gathering the required information, and driving create_gol/validate to author a new GOL document. |
-| [`create_prb`](#prompt-create_prb) | Guides the LLM through checking for an existing similar problem statement, interviewing the user for the 5W2H current-state questions, synthesizing the Summary and Gap, and driving create_prb/validate to author a new PRB document. |
+| [`create_prb`](#prompt-create_prb) | Guides the LLM through checking for an existing similar problem statement, optionally carrying over already-answered 5W2H questions from a linked QA document (qa_id), interviewing the user for whichever 5W2H current-state questions remain, synthesizing the Summary and Gap, composing the mandatory Problem Statement lead sentence, and driving create_prb/validate to author a new PRB document. |
 | [`create_qa`](#prompt-create_qa) | Guides the LLM through checking for an existing similar QA document, gathering answers to ISO/IEC 25010:2023 characteristic-relevant questions, and driving create_qa/validate to author a new QA document. |
 | [`create_req`](#prompt-create_req) | Guides the LLM through checking for an existing similar requirement, gathering the required information, and driving create_req/validate to author a new REQ document. |
 | [`create_risk`](#prompt-create_risk) | Guides the LLM through checking for an existing similar risk, gathering the required information, and driving create_rsk/validate to author a new RSK document. |
@@ -1380,7 +1380,7 @@ Re-read and re-parse an ADR by id, letting the models' own Pydantic validators r
 | [`update_dec`](#prompt-update_dec) | Guides the LLM through revising an existing decision by id: reading current state, applying the requested change with the right tool, and validating. |
 | [`update_feat`](#prompt-update_feat) | Guides the LLM through revising an existing feature by id: reading current state, applying the requested change with the right tool, and validating. |
 | [`update_gol`](#prompt-update_gol) | Guides the LLM through revising an existing goal by id: reading current state, showing which sections are present vs. empty, eliciting revisions, applying the change with the right tool, and validating. |
-| [`update_prb`](#prompt-update_prb) | Guides the LLM through revising an existing problem statement by id: reading current state, showing which of the 7 5W2H questions are answered, eliciting revisions, re-synthesizing Summary/Gap, applying the change with the right tool, and validating. |
+| [`update_prb`](#prompt-update_prb) | Guides the LLM through revising an existing problem statement by id: reading current state (recovering an old-shape document missing the mandatory lead sentence via a raw re-read if needed), showing which of the 7 5W2H questions are answered, eliciting revisions, re-synthesizing Summary/Gap, applying the change with the right tool, and validating. |
 | [`update_qa`](#prompt-update_qa) | Guides the LLM through revising an existing QA document by id: reading current state, applying the requested change with the right tool, and validating. |
 | [`update_req`](#prompt-update_req) | Guides the LLM through revising an existing requirement by id: reading current state, applying the requested change with the right tool, and validating. |
 | [`update_risk`](#prompt-update_risk) | Guides the LLM through revising an existing risk by id: reading current state, applying the requested change with the right tool, and validating. |
@@ -1447,11 +1447,12 @@ Guides the LLM through checking for an existing similar goal, gathering the requ
 
 ### Prompt: create_prb
 
-Guides the LLM through checking for an existing similar problem statement, interviewing the user for the 5W2H current-state questions, synthesizing the Summary and Gap, and driving create_prb/validate to author a new PRB document.
+Guides the LLM through checking for an existing similar problem statement, optionally carrying over already-answered 5W2H questions from a linked QA document (qa_id), interviewing the user for whichever 5W2H current-state questions remain, synthesizing the Summary and Gap, composing the mandatory Problem Statement lead sentence, and driving create_prb/validate to author a new PRB document.
 
 | Argument | Required | Description |
 | --- | --- | --- |
 | `topic` | Yes |  |
+| `qa_id` | No |  |
 
 ### Prompt: create_qa
 
@@ -1580,7 +1581,7 @@ Guides the LLM through revising an existing goal by id: reading current state, s
 
 ### Prompt: update_prb
 
-Guides the LLM through revising an existing problem statement by id: reading current state, showing which of the 7 5W2H questions are answered, eliciting revisions, re-synthesizing Summary/Gap, applying the change with the right tool, and validating.
+Guides the LLM through revising an existing problem statement by id: reading current state (recovering an old-shape document missing the mandatory lead sentence via a raw re-read if needed), showing which of the 7 5W2H questions are answered, eliciting revisions, re-synthesizing Summary/Gap, applying the change with the right tool, and validating.
 
 | Argument | Required | Description |
 | --- | --- | --- |

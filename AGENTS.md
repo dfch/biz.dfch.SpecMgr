@@ -147,13 +147,13 @@ type or cross-cutting:
   through the generic `set_classification` tool (`type="prb"`), deletions
   through the generic `delete` tool (`type="prb"`), and the `get_prb` tool
   takes `raw: bool = False` — `raw=True` returns the frontmatter-stripped
-   body text as-is (the text `update`'s `offset`/`limit` index into), with
-   optional read-style `offset`/`limit` windowing of that raw read
-   (raw-only; out-of-range values clamp, never error); disk-free/id-free
-   dry-run content validation through the generic `validate` tool
-   (`type="prb"`) — the former `validate_prb` tool was removed in favor
-   of it (feat-81-83-validation); `prb/resources/`
-   (`specmgr://prb/schema`,
+  body text as-is (the text `update`'s `offset`/`limit` index into), with
+  optional read-style `offset`/`limit` windowing of that raw read
+  (raw-only; out-of-range values clamp, never error); disk-free/id-free
+  dry-run content validation through the generic `validate` tool
+  (`type="prb"`) — the former `validate_prb` tool was removed in favor
+  of it (feat-81-83-validation); `prb/resources/`
+  (`specmgr://prb/schema`,
   `specmgr://prb/example`, `specmgr://prb/template`; no
   `specmgr://prb/{id}` — id-based reads are `get_prb`-only, ADR
   ddfb1109-422d-4507-8dbc-dc5e4bec9614; no `specmgr://prb/list` — listing
@@ -162,10 +162,25 @@ type or cross-cutting:
   failed-to-parse document inline (with a resolved `path`) rather than
   silently dropping it,
   feat-81-83-validation Phase 3);
-   `prb/prompts/` (`create_prb`/`update_prb`, narrated `TodoWrite` +
-   `question`-tool-driven 5W2H interview flows). Schema at
-   `prb/models/v1/`, inside the domain package, not top-level
-   `models/`.
+  `prb/prompts/` (`create_prb`/`update_prb`, narrated `TodoWrite` +
+  `question`-tool-driven 5W2H interview flows). `create_prb` accepts an
+  optional `qa_id` parameter that carries over already-answered 5W2H
+  questions from a linked QA document, scanning all 10 Q&A-holding
+  categories (`## Elicitation Context` plus the nine ISO/IEC 25010:2023
+  characteristics), not just `## Elicitation Context`, pre-filling only
+  the sub-questions a QA pair actually answers and asking the rest via
+  the `question` tool as before. Every PRB now also carries a mandatory
+  `problem_statement` lead paragraph (no heading of its own, directly
+  under the H1, before `## Current State`) holding one sentence following
+  a fixed template, enforced by a code-level `field_validator` — an
+  in-place, **BREAKING** `prb/models/v1` schema evolution (not a new
+  `prb/models/v2`): a pre-existing PRB document without the lead
+  paragraph fails `parse_prb`/`get_prb` until it is added, and
+  `update_prb`'s prompt instructions guide that recovery (re-read via
+  `get_prb(id, raw=True)`, derive/confirm the sentence, insert it under
+  the H1, then proceed) (feat-132-prb-update). Schema at
+  `prb/models/v1/`, inside the domain package, not top-level
+  `models/`.
 - **`gol/`** (Goal) — same tools/resources/prompts shape as
   `req/`/`prb/` but for high-level business goals (the strategic
   "what the organization wants to achieve" level that sits above
@@ -709,7 +724,7 @@ documentation in `docs/`:
 - **Frontmatter**: every feature `README.md` starts with a minimal YAML
   frontmatter block — `id` (the `feat-NNN-slug` folder name itself, not a
   generated UUID), `version` (semver, starts at `1.0.0`), `status`
-  (`planning` | `in-progress` | `review` | `done`), and `created`/`updated`
+  (`planning` | `progress` | `review` | `done`), and `created`/`updated`
   (`YYYY-MM-DD`, `updated` bumped on every substantive edit). There is no
   separate `GitHub Issue` field/body-line: the issue number is the `NNN`
   infix already embedded in `id`/the folder name (`feat-NNN-slug`) — `0`

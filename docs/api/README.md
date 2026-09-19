@@ -210,8 +210,8 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.prb.models.v1.parser`](biz.dfch.specmgr.prb.models.v1.parser.md) — Parse raw Problem Statement (PRB) ``.md`` text into a :class:`PrbDocument` (Phase 2, Task 2.2).
 - [`biz.dfch.specmgr.prb.models.v1.summary`](biz.dfch.specmgr.prb.models.v1.summary.md) — Pydantic model for one line of PRB listing output (Phase 2, Task 2.3).
 - [`biz.dfch.specmgr.prb.prompts`](biz.dfch.specmgr.prb.prompts.md) — MCP prompt wrappers for Problem Statements (Tasks 3.14-3.15).
-- [`biz.dfch.specmgr.prb.prompts.create_prb`](biz.dfch.specmgr.prb.prompts.create_prb.md) — ``@mcp.prompt()``: create_prb (Task 3.14).
-- [`biz.dfch.specmgr.prb.prompts.update_prb`](biz.dfch.specmgr.prb.prompts.update_prb.md) — ``@mcp.prompt()``: update_prb (Task 3.15).
+- [`biz.dfch.specmgr.prb.prompts.create_prb`](biz.dfch.specmgr.prb.prompts.create_prb.md) — ``@mcp.prompt()``: create_prb (Task 3.14, feat-132-prb-update Phase 2).
+- [`biz.dfch.specmgr.prb.prompts.update_prb`](biz.dfch.specmgr.prb.prompts.update_prb.md) — ``@mcp.prompt()``: update_prb (Task 3.15, feat-132-prb-update Phase 2).
 - [`biz.dfch.specmgr.prb.resources`](biz.dfch.specmgr.prb.resources.md) — MCP resource registrations for Problem Statement (PRB) documents (Task 3.11).
 - [`biz.dfch.specmgr.prb.resources.prb_example`](biz.dfch.specmgr.prb.resources.prb_example.md) — Resource: specmgr://prb/example (Task 3.11).
 - [`biz.dfch.specmgr.prb.resources.prb_schema`](biz.dfch.specmgr.prb.resources.prb_schema.md) — Resource: specmgr://prb/schema (Task 3.11).

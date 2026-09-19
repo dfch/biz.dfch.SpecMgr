@@ -39,6 +39,8 @@ _VALID_DOC = textwrap.dedent(
 
     # Simple Problem Statement
 
+    The current process is causing delays, for users because of missing automation.
+
     ## Current State
 
     ### Summary

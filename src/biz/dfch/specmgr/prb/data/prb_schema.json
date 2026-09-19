@@ -123,6 +123,12 @@
       "title": "MarkdownComment",
       "type": "object"
     },
+    "MarkdownParagraph": {
+      "description": "A markdown paragraph (\"p\"), the non-heading sibling of `MarkdownSection`.\n\nA paragraph has no level, so there is a single `MarkdownParagraph` class\n(no `MarkdownParagraph1`..`6` spectrum) and no `@alias` check -- a\nparagraph's content is free-form prose, not a title.\n\nLeaf (no declared nested fields): `_value` holds the paragraph's own line\nspan, verbatim. Composite (declares fields): `_value` holds only the\nparagraph's own inline text (e.g. a lead-in sentence); the remaining text\nis delegated to nested field parsing, bounded by the next heading of any\nlevel (a paragraph can never itself contain a heading). See\n`get_extent`/`from_text`/`__str__` docstrings below for the full\nmechanics.",
+      "properties": {},
+      "title": "MarkdownParagraph",
+      "type": "object"
+    },
     "MoreInformation": {
       "description": "`## More Information` -- free-form optional supplementary text, no fixed format. Optional.",
       "properties": {},
@@ -130,7 +136,7 @@
       "type": "object"
     },
     "Prb": {
-      "description": "The `prb` body: a single H1 section with the fields below.\n\nThe H1 heading text is free-form. `comment` is inherited from\n`MarkdownSection1WithComment` (see its own docstring) -- not\nredeclared here.\n\nParameters\n----------\ncomment:\n    Optional explanatory HTML comment (`<!-- ... -->`) preceding\n    `current_state`. Inherited from `MarkdownSection1WithComment`.\ncurrent_state:\n    `## Current State`. Mandatory.\ngap:\n    `## Gap`. Mandatory.\nimpact:\n    `## Impact`. Optional.\nfuture_state:\n    `## Future State`. Mandatory.\nreferences:\n    `## References`. Optional.\nmore_information:\n    `## More Information`. Optional.",
+      "description": "The `prb` body: a single H1 section with the fields below.\n\nThe H1 heading text is free-form. `comment` is inherited from\n`MarkdownSection1WithComment` (see its own docstring) -- not\nredeclared here.\n\nParameters\n----------\ncomment:\n    Optional explanatory HTML comment (`<!-- ... -->`) preceding\n    `problem_statement`. Inherited from `MarkdownSection1WithComment`.\nproblem_statement:\n    The mandatory lead paragraph directly under the H1 title (no\n    heading of its own), holding exactly one sentence following the\n    fixed template `[Current state] is causing [specific issue], for\n    [stakeholder] because [underlying cause].`. Mandatory. Declared\n    first among `Prb`'s own fields so it lands between the inherited\n    `comment` and `current_state` (see the module docstring).\ncurrent_state:\n    `## Current State`. Mandatory.\ngap:\n    `## Gap`. Mandatory.\nimpact:\n    `## Impact`. Optional.\nfuture_state:\n    `## Future State`. Mandatory.\nreferences:\n    `## References`. Optional.\nmore_information:\n    `## More Information`. Optional.",
       "properties": {
         "comment": {
           "anyOf": [
@@ -180,6 +186,10 @@
           "default": null,
           "description": "`## More Information` section. Optional."
         },
+        "problem_statement": {
+          "$ref": "#/$defs/MarkdownParagraph",
+          "description": "Mandatory lead paragraph directly under the H1 title, holding exactly one sentence following the fixed template `[Current state] is causing [specific issue], for [stakeholder] because [underlying cause].`."
+        },
         "references": {
           "anyOf": [
             {
@@ -194,6 +204,7 @@
         }
       },
       "required": [
+        "problem_statement",
         "current_state",
         "gap",
         "future_state"
