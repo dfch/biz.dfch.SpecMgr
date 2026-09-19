@@ -118,14 +118,14 @@ schema-checked opening framing before the existing 5W2H/Gap/Impact/Future State 
   `problem_statement` lead paragraph directly under the H1 (before `## Current     State`), with an actionable structural error, *and* reject a present lead paragraph
   whose text does not match the template skeleton, with an actionable field-validation
   error naming the expected template and the actual text.
-- [ ] ACC-002: Given a QA id whose document has 5W2H-matching answers spread across
+- [x] ACC-002: Given a QA id whose document has 5W2H-matching answers spread across
   multiple categories (e.g. one in `## Elicitation Context`, one in `## Reliability`),
   running `create_prb` with that QA id pre-fills those answers into `## Current State`
   without re-asking them, with each QA pair mapped to at most one sub-question.
-- [ ] ACC-003: Given a QA id whose document leaves 3 of the 7 5W2H questions unanswered
+- [x] ACC-003: Given a QA id whose document leaves 3 of the 7 5W2H questions unanswered
   (including any non-committal answers, which count as unanswered), running
   `create_prb` asks (via the `question` tool) only for those 3, not the other 4.
-- [ ] ACC-004: Running `create_prb` with a nonexistent QA id surfaces the failure and asks
+- [x] ACC-004: Running `create_prb` with a nonexistent QA id surfaces the failure and asks
   whether to proceed standalone or retry with a corrected id (REQ-004). Running it
   without a QA id still works standalone, asking for all 7 5W2H sub-questions plus the
   4 lead-paragraph blanks as fresh questions (nothing is pre-filled to derive them
@@ -133,11 +133,11 @@ schema-checked opening framing before the existing 5W2H/Gap/Impact/Future State 
 - [x] ACC-005: `get_prb_template`/`get_prb_example`, `docs/prb_schema.json`, and the
   packaged `specmgr://prb/schema` copy all show the new mandatory `problem_statement`
   lead paragraph directly under the H1, before `## Current State`.
-- [ ] ACC-006: In a QA-linked run with at least one pre-filled 5W2H answer, the lead
+- [x] ACC-006: In a QA-linked run with at least one pre-filled 5W2H answer, the lead
   sentence's blanks are derived from those answers and the composed sentence is
   confirmed with the user (not asked as 4 fresh questions, REQ-006); the composed
   sentence passes the code-level template validator.
-- [ ] ACC-007: Running `update_prb` against an old-shape PRB (no `problem_statement`
+- [x] ACC-007: Running `update_prb` against an old-shape PRB (no `problem_statement`
   paragraph) recovers via `get_prb(id, raw=True)` plus sentence insertion (REQ-008),
   then applies the originally requested change, leaving the result parseable by
   `get_prb`.
@@ -274,30 +274,30 @@ wording is now reworded rather than merely preserved (REQ-009).
 
 #### Phase 2: Prompts
 
-- [ ] Task 2.1: Update `prb/prompts/create_prb.py`'s signature to
+- [x] Task 2.1: Update `prb/prompts/create_prb.py`'s signature to
   `create_prb(topic: str, qa_id: str | None = None)`, substituting a "(not given ...)"
   fallback when absent (the existing `update_prb` instructions pattern); update the
   module docstring (step count/flow) and the `@mcp.prompt` description to mention the
   optional QA carry-over.
-- [ ] Task 2.2: Update `prb/data/prb_create_instructions.md`: when a QA id is supplied,
+- [x] Task 2.2: Update `prb/data/prb_create_instructions.md`: when a QA id is supplied,
   instruct fetching the QA document via `get_qa` with explicit bad-id handling
   (`QaNotFoundError` -> surface + ask standalone-or-corrected-id, REQ-004); scan every
   Q&A-holding category for answers matching the PRB's 7 5W2H sub-questions under the
   one-pair-to-one-question / non-committal-counts-as-unanswered rules (REQ-003),
   pre-filling matches into `## Current State`.
-- [ ] Task 2.3: Instruct the flow (same file) to use the `question` tool to ask only for
+- [x] Task 2.3: Instruct the flow (same file) to use the `question` tool to ask only for
   whichever of the 7 5W2H sub-questions remain unanswered (or all 7 if no QA id given
   or it didn't resolve, skips still allowed), and to compose the lead-paragraph
   sentence: derive-then-confirm its 4 blanks from pre-filled What/Who/Why answers in
   QA-linked mode (REQ-006), or elicit all 4 as fresh questions in standalone mode.
-- [ ] Task 2.4: Update the structure recap in `prb/data/prb_create_instructions.md` to
+- [x] Task 2.4: Update the structure recap in `prb/data/prb_create_instructions.md` to
   include the new mandatory lead paragraph, and reword the "no `## Root Cause`
   section ... free of assumed causes" note per REQ-009.
-- [ ] Task 2.5: Update `prb/prompts/update_prb.py` and `prb/data/prb_update_instructions.md`
+- [x] Task 2.5: Update `prb/prompts/update_prb.py` and `prb/data/prb_update_instructions.md`
   to guide recovery of old-shape PRB drafts (REQ-008): on the missing-lead-paragraph
   parse error from `get_prb`, re-read via `get_prb(id, raw=True)`, elicit/confirm or
   derive the 4 blanks, insert the sentence under the H1, then proceed.
-- [ ] Task 2.6: Add/update prompt tests in `tests/prb/prompts/`: `qa_id`
+- [x] Task 2.6: Add/update prompt tests in `tests/prb/prompts/`: `qa_id`
   interpolation/fallback, `get_qa` mention plus bad-id handling, the
   one-pair-to-one-question rule, the derive-then-confirm flow, and old-shape recovery
   via raw re-read; rewrite `test_mentions_no_root_cause_section` per REQ-009.
@@ -325,17 +325,18 @@ wording is now reworded rather than merely preserved (REQ-009).
 
 ### Current Status
 
-**As of 2026-09-19**: Phase 1 (Schema) is complete -- ACC-001 and ACC-005 are fully
-met. `prb/models/v1/body.py`'s `Prb` model now carries the mandatory
-`problem_statement: MarkdownParagraph` lead field with its code-level template-skeleton
-`field_validator`; the packaged template/example and both JSON schema copies
-(`docs/prb_schema.json`, `src/biz/dfch/specmgr/prb/data/prb_schema.json`) reflect it;
-every PRB-body fixture across `tests/prb/` and the cross-domain generic-tool tests
-under `tests/general/tools/` was swept to include the new lead sentence, plus new
-dedicated tests for the mandatory-field/malformed-template/old-shape-rejection cases.
-The full quality gate (`ruff format --check`, `ruff check`, `vulture`, the full
-`pytest` suite) is green. Phase 2 (Prompts: `qa_id` carry-over, old-shape recovery
-guidance) and Phase 3 (docs/CHANGELOG/verification) have not started.
+**As of 2026-09-19**: Phase 1 (Schema) and Phase 2 (Prompts) are both complete --
+ACC-001, ACC-002, ACC-003, ACC-004, ACC-005, ACC-006, and ACC-007 are all fully met.
+`prb/models/v1/body.py`'s `Prb` model carries the mandatory `problem_statement:
+MarkdownParagraph` lead field with its code-level template-skeleton `field_validator`;
+the packaged template/example and both JSON schema copies (`docs/prb_schema.json`,
+`src/biz/dfch/specmgr/prb/data/prb_schema.json`) reflect it. `create_prb`'s prompt now
+accepts an optional `qa_id`, narrating a `get_qa`-backed carry-over of already-answered
+5W2H questions across all 10 QA categories (with explicit `QaNotFoundError` handling
+and a derive-then-confirm lead-sentence flow), and `update_prb`'s prompt narrates a
+raw-re-read-based recovery flow for old-shape PRB drafts. The full quality gate (`ruff
+format --check`, `ruff check`, `vulture`, the full `pytest` suite) is green. Phase 3
+(docs/CHANGELOG/verification) has not started.
 
 ### Blockers
 
@@ -344,6 +345,50 @@ guidance) and Phase 3 (docs/CHANGELOG/verification) have not started.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-19 15:20:00.000Z - Phase 2 (Prompts) implemented
+
+Implemented Task 2.1-2.6 in full, updating only the `prb` prompt modules/data files
+and their own tests (no `prb/models/v1/`, `prb/data/prb_template.md`/`prb_example.md`,
+JSON schema, or `tests/prb/models/v1/` changes -- Phase 1 territory, left untouched).
+`prb/prompts/create_prb.py`'s signature is now `create_prb(topic: str, qa_id: str |
+None = None)`, substituting `"(not given -- proceed standalone, asking all 7 5W2H
+questions)"` when `qa_id` is absent (mirroring `update_prb`'s existing fallback
+pattern); its module docstring and `@mcp.prompt` description now describe the optional
+QA carry-over. `prb/data/prb_create_instructions.md` was extended from a 0-10-step to
+a 0-12-step flow: a new step 2 instructs fetching the linked QA via `get_qa(qa_id)`,
+with explicit `QaNotFoundError` handling (surface the failure, then use the `question`
+tool to ask standalone-vs-corrected-id, REQ-004) and scanning all 10 `_QaCategory`-
+shaped sections (`Elicitation Context` plus the 9 ISO/IEC 25010:2023 characteristics)
+for 5W2H-matching Q&A pairs, under the one-pair-to-one-question and non-committal-
+counts-as-unanswered rules (REQ-003, explicitly calling out QA's own literal
+`_(awaiting response)_` placeholder as a non-committal example); step 3 now asks only
+for whichever 5W2H sub-questions remain unanswered (REQ-005); a new step 9 composes the
+lead-paragraph sentence via derive-then-confirm from pre-filled What/Who/Why answers in
+QA-linked mode, or fresh elicitation of all 4 blanks in standalone mode (REQ-006). The
+structure recap (step 1) now includes the mandatory lead paragraph, and the root-cause
+note is reworded per REQ-009 ("no `## Root Cause` section exists; the lead sentence
+carries the best-known cause by design; formal root-cause analysis remains a separate,
+later activity"). `prb/prompts/update_prb.py`'s docstring/description and
+`prb/data/prb_update_instructions.md`'s step 1 now narrate an old-shape-PRB recovery
+sub-flow (REQ-008): on a `get_prb(id)` parse failure caused by the missing mandatory
+lead paragraph, re-read via `get_prb(id, raw=True)`, derive/confirm (or elicit) the 4
+blanks from the document's own What/Who/Why answers mirroring `create_prb`'s own
+derive-then-confirm flow, insert the composed sentence under the H1, `update` the whole
+body, then re-verify via `get_prb(id)` before proceeding with the originally requested
+change. Added 10 new tests across `tests/prb/prompts/test_create_prb.py` (`qa_id`
+interpolation/fallback, `get_qa`/`QaNotFoundError` handling, scanning all 10 QA
+categories, the one-pair-to-one-question/non-committal rules, asking only remaining
+questions, the derive-then-confirm lead sentence) and
+`tests/prb/prompts/test_update_prb.py` (old-shape recovery via raw re-read, deriving/
+eliciting the lead-sentence blanks, inserting under the H1 then proceeding), and
+rewrote `test_mentions_no_root_cause_section` per REQ-009's new wording. Both touched
+instruction `.md` files were run through the `specmgr_mdformat` tool for house-style
+consistency, which reflowed a few existing lines in the process (cosmetic, no wording
+changes to unrelated content). Quality gate green: `ruff format
+--check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, and the full
+`pytest -n auto --cov=src` suite (3324 passed, up from 3314 at the end of Phase 1 --
+the 10 new prompt tests). No Phase 3 work was touched.
 
 #### 2026-09-19 13:00:00.000Z - Phase 1 (Schema) implemented
 
@@ -436,6 +481,19 @@ confirmation.
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-19 15:20:00.000Z - Prompt renumbering and recovery-flow placement
+
+`prb_create_instructions.md`'s flow was renumbered from steps 0-10 to steps 0-12 (new
+step 2 for the QA fetch/scan, new step 9 for composing the lead sentence, everything
+after shifted down) rather than using decimal sub-steps (e.g. "2a"), matching this
+file's existing plain-integer house style. For `prb_update_instructions.md`, the
+old-shape recovery sub-flow (REQ-008) was nested as a lettered/numbered sub-list
+*inside* step 1 ("Read current state first") rather than promoted to its own top-level
+numbered step -- it is conditional (only triggered by a specific parse failure) and
+logically still part of "read current state", so adding it as a new step 2 would have
+forced renumbering every later step for a flow most runs never enter. This was a
+judgment call, not specified by the plan's task wording.
 
 #### 2026-09-18 15:33:31.717Z - Code-level template enforcement
 

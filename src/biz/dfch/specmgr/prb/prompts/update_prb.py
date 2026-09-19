@@ -17,16 +17,16 @@
 
 # pylint: disable=redefined-builtin  # id/type intentionally shadow the builtins: public tool API, issue #41
 
-"""``@mcp.prompt()``: update_prb (Task 3.15).
+"""``@mcp.prompt()``: update_prb (Task 3.15, feat-132-prb-update Phase 2).
 
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through revising an existing Problem Statement (PRB) document by id, using
 the existing ``prb/tools/`` surface (``get_prb``, generic ``validate`` tool) plus
 the generic ``update``/``set_status`` tools in ``general/tools/`` (called
 with ``type="prb"``; ``get_prb``'s ``raw=True`` parameter serves the
-line-range flow's line numbers). There is no ``specmgr://prb/{id}``
-resource to point at -- id-based reads always go through the ``get_prb``
-tool only.
+line-range flow's line numbers, and also serves the old-shape recovery flow
+below). There is no ``specmgr://prb/{id}`` resource to point at -- id-based
+reads always go through the ``get_prb`` tool only.
 
 Unlike ``adr.prompts.update_adr``, there is no ``update_frontmatter``/
 ``option_*`` equivalent here: PRB's lifecycle surface is deliberately small
@@ -35,8 +35,21 @@ Unlike ``adr.prompts.update_adr``, there is no ``update_frontmatter``/
 ``set_status`` tool with ``type="prb"``) -- mirroring
 ``tsk.prompts.update_task``/``qa.prompts.update_qa``.
 
-This prompt only ever *narrates* an 9-step revision flow (reading current
-state via `get_prb`, showing which of the 7 questions are already answered,
+**Old-shape recovery (feat-132-prb-update, REQ-008).** A PRB drafted before
+the mandatory ``problem_statement`` lead paragraph was added will fail to
+parse via ``get_prb(id)`` -- the paragraph is a mandatory field now, so a
+document missing it raises an ``AssertionError``. This prompt instructs the
+LLM to recognize that specific failure, re-read the raw body via
+``get_prb(id, raw=True)`` (which never parses, so it always succeeds),
+elicit/confirm or derive the lead sentence's 4 blanks from the document's
+own What/Who/Why answers (mirroring ``create_prb``'s own derive-then-confirm
+flow), insert the composed sentence directly under the H1, and only then
+proceed with whatever change was originally requested.
+
+This prompt only ever *narrates* a 9-step revision flow (reading current
+state via `get_prb` -- with a nested recovery sub-flow for an old-shape
+document that fails to parse, re-reading it via `get_prb(id, raw=True)`
+instead -- showing which of the 7 questions are already answered,
 eliciting revisions via the `question` tool, re-synthesizing `Summary` and
 `Gap`, optionally revising `Impact`/`Future State`/`References`/
 `More Information`, then calling the generic `update` tool with
@@ -68,9 +81,10 @@ from ...server import mcp
     title="Update a problem statement",
     description=(
         "Guides the LLM through revising an existing problem statement by id: reading "
-        "current state, showing which of the 7 5W2H questions are answered, eliciting "
-        "revisions, re-synthesizing Summary/Gap, applying the change with the right tool, "
-        "and validating."
+        "current state (recovering an old-shape document missing the mandatory lead sentence "
+        "via a raw re-read if needed), showing which of the 7 5W2H questions are answered, "
+        "eliciting revisions, re-synthesizing Summary/Gap, applying the change with the right "
+        "tool, and validating."
     ),
 )
 def update_prb(id: str, instructions: str | None = None) -> str:

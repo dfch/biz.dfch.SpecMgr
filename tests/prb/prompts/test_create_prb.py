@@ -15,14 +15,15 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Tests for the ``create_prb`` ``@mcp.prompt()`` (Task 3.14, ACC-006).
+"""Tests for the ``create_prb`` ``@mcp.prompt()`` (Task 3.14; feat-132-prb-update
+Phase 2, ACC-002/ACC-003/ACC-004/ACC-006).
 
 ``create_prb`` (the prompt) only ever returns instructional text -- it never
-calls ``TodoWrite``/``question``/``list_prb``/``create_prb`` (the tool)
-itself -- so these are string-content/ordering assertions on the narrated
-text confirming every required step from the feature README's Design Notes
-is actually present, in the right order, rather than behavioral tests of a
-live agent run.
+calls ``TodoWrite``/``question``/``list_prb``/``get_qa``/``create_prb`` (the
+tool) itself -- so these are string-content/ordering assertions on the
+narrated text confirming every required step from the feature README's
+Design Notes is actually present, in the right order, rather than
+behavioral tests of a live agent run.
 """
 
 import tempfile
@@ -41,6 +42,79 @@ class TestCreatePrbPrompt(unittest.TestCase):
         """The topic argument must be interpolated into the returned text."""
         result = create_prb("Widget registry migration rollback failures")
         self.assertIn("Widget registry migration rollback failures", result)
+
+    def test_mentions_qa_id_when_given(self):
+        """A given qa_id must be interpolated into the returned text verbatim."""
+        result = create_prb("Some topic", qa_id="11111111-1111-1111-1111-111111111111")
+        self.assertIn("11111111-1111-1111-1111-111111111111", result)
+
+    def test_qa_id_fallback_when_absent(self):
+        """Absent qa_id must fall back to a standalone-mode explanation, not a blank/None."""
+        result = create_prb("Some topic")
+        self.assertIn("(not given -- proceed standalone, asking all 7 5W2H questions)", result)
+
+    def test_mentions_get_qa_and_bad_id_handling(self):
+        """The prompt must instruct fetching the linked QA via get_qa, with explicit
+        QaNotFoundError handling that surfaces the failure and offers a standalone-or-
+        corrected-id choice via the question tool (REQ-004) -- never a silent fallback."""
+        result = create_prb("Some topic")
+        self.assertIn("get_qa(qa_id)", result)
+        self.assertIn("QaNotFoundError", result)
+        self.assertIn("tell the user the lookup failed", result)
+        self.assertIn("retry with a corrected QA id", result)
+        self.assertIn("Never silently fall through", result)
+
+    def test_mentions_scanning_every_qa_category(self):
+        """The prompt must instruct scanning all 10 QA categories (Elicitation Context
+        plus the 9 ISO/IEC 25010:2023 characteristics), not only Elicitation Context."""
+        result = create_prb("Some topic")
+        self.assertIn("Elicitation Context", result)
+        for characteristic in (
+            "Functional Suitability",
+            "Performance Efficiency",
+            "Compatibility",
+            "Interaction Capability",
+            "Reliability",
+            "Security",
+            "Maintainability",
+            "Flexibility",
+            "Safety",
+        ):
+            self.assertIn(characteristic, result)
+        self.assertIn("not only `Elicitation Context`", result)
+
+    def test_mentions_one_pair_to_one_question_rule(self):
+        """The prompt must state the one-pair-to-one-question matching rule and the
+        non-committal-counts-as-unanswered rule (REQ-003)."""
+        result = create_prb("Some topic")
+        self.assertIn("at most one", result)
+        self.assertIn("duplicated across two sub-questions", result)
+        self.assertIn("Non-committal counts as unanswered", result)
+        self.assertIn("_(awaiting response)_", result)
+
+    def test_mentions_asking_only_remaining_questions(self):
+        """The prompt must instruct asking only whichever 5W2H questions were not
+        pre-filled from the linked QA, or all 7 if standalone (REQ-005)."""
+        result = create_prb("Some topic")
+        self.assertIn("only whichever of the 7 5W2H answers were", result)
+        self.assertIn("pre-filled in step 2", result)
+
+    def test_mentions_derive_then_confirm_lead_sentence(self):
+        """The prompt must instruct deriving the lead sentence's 4 blanks from
+        pre-filled What/Who/Why answers and confirming (not re-asking) them in
+        QA-linked mode, versus eliciting all 4 fresh in standalone mode (REQ-006)."""
+        result = create_prb("Some topic")
+        self.assertIn("QA-linked mode", result)
+        self.assertIn("[Current state]", result)
+        self.assertIn("[specific issue]", result)
+        self.assertIn("[stakeholder]", result)
+        self.assertIn("[underlying cause]", result)
+        self.assertIn("`What` -> both `[Current state]` and `[specific issue]`", result)
+        self.assertIn("`Who` -> `[stakeholder]`", result)
+        self.assertIn("`Why` -> `[underlying cause]`", result)
+        self.assertIn("Standalone mode", result)
+        self.assertIn("elicit all 4", result)
+        self.assertIn("never ask all 4 blanks as fresh", result)
 
     def test_mentions_duplicate_check_tool(self):
         """The prompt must instruct the LLM to check the list_prb tool first."""
@@ -96,11 +170,16 @@ class TestCreatePrbPrompt(unittest.TestCase):
         """The prompt must not narrate a `## Root Cause` heading as part of the structure
         recap -- deliberately excluded by design, though the prompt is allowed to explain
         the exclusion in prose (which does mention "Root Cause" by name, quoted as a
-        code span, never as its own heading line)."""
+        code span, never as its own heading line). Per REQ-009, the rationale text now
+        acknowledges the mandatory lead sentence carries the best-known cause by design,
+        rather than claiming the problem statement stays "free of assumed causes"."""
         result = create_prb("Some topic")
         heading_lines = [line for line in result.splitlines() if line.strip() == "## Root Cause"]
         self.assertEqual(heading_lines, [])
-        self.assertIn("No `## Root Cause` section exists", result)
+        self.assertIn("No `## Root Cause` section exists; the lead sentence carries the", result)
+        self.assertIn("best-known cause by design", result)
+        self.assertIn("formal root-cause analysis remains a separate, later activity", result.lower())
+        self.assertNotIn("free of assumed causes", result)
 
     def test_mentions_starting_point_resources(self):
         """The prompt must point at the template/example/schema resources."""
