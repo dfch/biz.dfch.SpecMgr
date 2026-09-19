@@ -108,6 +108,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general.models.invalid_status_result`](biz.dfch.specmgr.general.models.invalid_status_result.md) — The generic ``set_status`` tool's own non-raising, structured result for its one narrowly-scoped
 - [`biz.dfch.specmgr.general.models.paged_result`](biz.dfch.specmgr.general.models.paged_result.md) — Generic paged-result wrapper shared by every ``list_<domain>`` MCP tool (feat-13 Task 1.1).
 - [`biz.dfch.specmgr.general.models.rasci`](biz.dfch.specmgr.general.models.rasci.md) — Pydantic schema and parser for the RASCI responsibility-assignment guidance
+- [`biz.dfch.specmgr.general.models.similarity_hit`](biz.dfch.specmgr.general.models.similarity_hit.md) — One ranked hit row of the two similarity tools (feat-134, Phase 3, ACC-001/ACC-002).
 - [`biz.dfch.specmgr.general.models.similarity_unavailable`](biz.dfch.specmgr.general.models.similarity_unavailable.md) — The two similarity tools' shared non-raising, structured "unavailable" result (feat-134, REQ-003).
 - [`biz.dfch.specmgr.general.models.summary`](biz.dfch.specmgr.general.models.summary.md) — Common base for every domain's one-line listing summary (feat-13 Task 1.3, REQ-003/ACC-001).
 - [`biz.dfch.specmgr.general.models.validate_result`](biz.dfch.specmgr.general.models.validate_result.md) — The generic ``validate`` tool's non-raising, structured result shape (feat-81-83-validation Phase 2, REQ-004).
@@ -132,10 +133,13 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general.tools._path_safety`](biz.dfch.specmgr.general.tools._path_safety.md) — Reusable, doc-type-agnostic path-safety assertions for document ids and
 - [`biz.dfch.specmgr.general.tools._similarity_corpus`](biz.dfch.specmgr.general.tools._similarity_corpus.md) — Candidate enumeration and source resolution for the similarity engine (feat-134, Phase 2, Task 2.1).
 - [`biz.dfch.specmgr.general.tools._similarity_ranking`](biz.dfch.specmgr.general.tools._similarity_ranking.md) — Pure-Python cosine (dot-on-normalized) ranking (feat-134, Phase 2, Task 2.4).
+- [`biz.dfch.specmgr.general.tools._similarity_search`](biz.dfch.specmgr.general.tools._similarity_search.md) — Shared per-candidate collection, hit-row assembly, and background warmup (feat-134, Phase 3).
 - [`biz.dfch.specmgr.general.tools._similarity_text`](biz.dfch.specmgr.general.tools._similarity_text.md) — Embedding-input text extraction for the similarity engine (feat-134, Phase 2, Task 2.2).
 - [`biz.dfch.specmgr.general.tools._splice`](biz.dfch.specmgr.general.tools._splice.md) — Frontmatter-stripped body extraction, body-line splicing, and body-line
 - [`biz.dfch.specmgr.general.tools._timestamps`](biz.dfch.specmgr.general.tools._timestamps.md) — Shared, private timestamp-formatting helpers (feat-38-39-41-43-44 Phase 3, Task 3.1).
 - [`biz.dfch.specmgr.general.tools.delete`](biz.dfch.specmgr.general.tools.delete.md) — ``@mcp.tool()`` wrapper: delete (feat-36-delete, Phase 2).
+- [`biz.dfch.specmgr.general.tools.find_related`](biz.dfch.specmgr.general.tools.find_related.md) — ``@mcp.tool()`` wrapper: find_related (feat-134, Phase 3, Task 3.1).
+- [`biz.dfch.specmgr.general.tools.find_similar_text`](biz.dfch.specmgr.general.tools.find_similar_text.md) — ``@mcp.tool()`` wrapper: find_similar_text (feat-134, Phase 3, Task 3.2).
 - [`biz.dfch.specmgr.general.tools.mdformat`](biz.dfch.specmgr.general.tools.mdformat.md) — ``@mcp.tool()`` wrapper: mdformat.
 - [`biz.dfch.specmgr.general.tools.set_classification`](biz.dfch.specmgr.general.tools.set_classification.md) — ``@mcp.tool()`` wrapper: set_classification (feat-56-classification, Phase 2).
 - [`biz.dfch.specmgr.general.tools.set_status`](biz.dfch.specmgr.general.tools.set_status.md) — ``@mcp.tool()`` wrapper: set_status (feat-22-consolidate-mutation-tools, Phase 4).

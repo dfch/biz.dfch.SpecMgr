@@ -3,7 +3,7 @@
 Auto-generated from the live `biz.dfch.specmgr.server:mcp` registration --
 do not edit by hand, run `specmgr mcp-docs` instead (see `AGENTS.md`).
 
-44 resource(s), 1 resource template(s), 90 tool(s), 31 prompt(s).
+44 resource(s), 1 resource template(s), 92 tool(s), 31 prompt(s).
 
 ## Table of Contents
 
@@ -400,6 +400,8 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`create_uc`](#tool-create_uc) | Create a new use case: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the use-case base directory. Returns the newly created document's frontmatter only (no body); use the corresponding `get_uc` tool to fetch the full document afterward. |
 | [`create_vcr`](#tool-create_vcr) | Create a new verification case record: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the verification case record base directory. Returns the newly created document's frontmatter only (no body); use the corresponding `get_vcr` tool to fetch the full document afterward. |
 | [`delete`](#tool-delete) | Permanently delete an existing document from disk across the whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs; `adr` is not supported). Resolves the document by `id`, takes the domain lock, and removes it: the single `*.md` file for every flat domain (every whole-body domain except `feat`), or the entire `<base>/<id>/` folder for `feat`. Returns the deleted path as a string. An invalid `id` (path-injection attempt or wrong format) is a `ValueError` raised before any file access; a missing document is the domain's own `XNotFoundError`; an I/O failure is a `DeleteError`. This is the sole delete entry point -- the former per-domain `delete_<d>` tools are removed. |
+| [`find_related`](#tool-find_related) | Find the documents most semantically related to an existing document, given its `type`/`id`, ranked by cosine similarity of local sentence embeddings (`fastembed`/`bge-small`, the `similarity` extra). By default every whole-body domain is searched (req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs; `adr` is excluded structurally) -- restrict with `target_types`; the source document itself is excluded from the results. Returns up to `top_k` (default 10, validated 1..100) hits as `{type, id, title, status, path, score}` rows, sorted by `score` descending; `min_score` (default: no filter) is an inclusive cosine lower bound. An unparseable candidate still appears, embedded from its full raw text, with `id = null` and the `<failed to parse>` marker title/status. When the embedding feature is unavailable (`SPECMGR_SIMILARITY_DISABLED` present, or the backend/model fails to load), returns the structured `{available: false, reason, message}` result instead of raising. A bad `type`/`id`/`target_types`/`top_k` is a `ValueError` before any filesystem access; a missing source is the domain's own `XNotFoundError`. |
+| [`find_similar_text`](#tool-find_similar_text) | Find the documents most semantically similar to a free-form `query` text (for pre-creation dedup/discovery checks), ranked by cosine similarity of local sentence embeddings (`fastembed`/`bge-small`, the `similarity` extra). By default every whole-body domain is searched (req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs; `adr` is excluded structurally) -- restrict with `target_types`. Returns up to `top_k` (default 10, validated 1..100) hits as `{type, id, title, status, path, score}` rows, sorted by `score` descending; `min_score` (default: no filter) is an inclusive cosine lower bound. An unparseable candidate still appears, embedded from its full raw text, with `id = null` and the `<failed to parse>` marker title/status. When the embedding feature is unavailable (`SPECMGR_SIMILARITY_DISABLED` present, or the backend/model fails to load), returns the structured `{available: false, reason, message}` result instead of raising. A bad `target_types`/`top_k` is a `ValueError` before any filesystem access. |
 | [`get_adr`](#tool-get_adr) | Read, parse, and return a full ADR document (frontmatter and body) by its id. An invalid id (path-injection attempt or wrong format) is a ValueError raised before any file access. |
 | [`get_dec`](#tool-get_dec) | Read, parse, and return a full decision document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. With raw=True, optional read-style `offset`/`limit` window the raw read: `offset` (1-based, default 1) is the first body line to return, `limit` (line count, default through end of body) how many; out-of-range values clamp (`offset > N` returns the empty string), and coordinates with raw=False raise ValueError. An invalid id (path-injection attempt or wrong format) is also a ValueError, raised before any file access. |
 | [`get_dec_example`](#tool-get_dec_example) | Return a complete, valid sample decision document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example. |
@@ -619,6 +621,33 @@ Permanently delete an existing document from disk across the whole-body domains 
 | --- | --- | --- |
 | `id` | `string` | Yes |
 | `type` | `string (enum: req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs)` | Yes |
+
+### Tool: find_related
+
+**Find related documents**
+
+Find the documents most semantically related to an existing document, given its `type`/`id`, ranked by cosine similarity of local sentence embeddings (`fastembed`/`bge-small`, the `similarity` extra). By default every whole-body domain is searched (req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs; `adr` is excluded structurally) -- restrict with `target_types`; the source document itself is excluded from the results. Returns up to `top_k` (default 10, validated 1..100) hits as `{type, id, title, status, path, score}` rows, sorted by `score` descending; `min_score` (default: no filter) is an inclusive cosine lower bound. An unparseable candidate still appears, embedded from its full raw text, with `id = null` and the `<failed to parse>` marker title/status. When the embedding feature is unavailable (`SPECMGR_SIMILARITY_DISABLED` present, or the backend/model fails to load), returns the structured `{available: false, reason, message}` result instead of raising. A bad `type`/`id`/`target_types`/`top_k` is a `ValueError` before any filesystem access; a missing source is the domain's own `XNotFoundError`.
+
+| Parameter | Type | Required |
+| --- | --- | --- |
+| `type` | `string (enum: req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs)` | Yes |
+| `id` | `string` | Yes |
+| `target_types` | `list[string] | None` | No |
+| `top_k` | `integer` | No |
+| `min_score` | `number | None` | No |
+
+### Tool: find_similar_text
+
+**Find documents similar to text**
+
+Find the documents most semantically similar to a free-form `query` text (for pre-creation dedup/discovery checks), ranked by cosine similarity of local sentence embeddings (`fastembed`/`bge-small`, the `similarity` extra). By default every whole-body domain is searched (req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs; `adr` is excluded structurally) -- restrict with `target_types`. Returns up to `top_k` (default 10, validated 1..100) hits as `{type, id, title, status, path, score}` rows, sorted by `score` descending; `min_score` (default: no filter) is an inclusive cosine lower bound. An unparseable candidate still appears, embedded from its full raw text, with `id = null` and the `<failed to parse>` marker title/status. When the embedding feature is unavailable (`SPECMGR_SIMILARITY_DISABLED` present, or the backend/model fails to load), returns the structured `{available: false, reason, message}` result instead of raising. A bad `target_types`/`top_k` is a `ValueError` before any filesystem access.
+
+| Parameter | Type | Required |
+| --- | --- | --- |
+| `query` | `string` | Yes |
+| `target_types` | `list[string] | None` | No |
+| `top_k` | `integer` | No |
+| `min_score` | `number | None` | No |
 
 ### Tool: get_adr
 

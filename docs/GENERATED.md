@@ -128,6 +128,7 @@ First-line docstrings from each module, organized by domain:
 - `general/models/invalid_status_result.py` — The generic ``set_status`` tool's own non-raising, structured result for its one narrowly-scoped
 - `general/models/paged_result.py` — Generic paged-result wrapper shared by every ``list_<domain>`` MCP tool (feat-13 Task 1.1).
 - `general/models/rasci.py` — Pydantic schema and parser for the RASCI responsibility-assignment guidance
+- `general/models/similarity_hit.py` — One ranked hit row of the two similarity tools (feat-134, Phase 3, ACC-001/ACC-002).
 - `general/models/similarity_unavailable.py` — The two similarity tools' shared non-raising, structured "unavailable" result (feat-134, REQ-003).
 - `general/models/summary.py` — Common base for every domain's one-line listing summary (feat-13 Task 1.3, REQ-003/ACC-001).
 - `general/models/validate_result.py` — The generic ``validate`` tool's non-raising, structured result shape (feat-81-83-validation Phase 2, REQ-004).
@@ -152,10 +153,13 @@ First-line docstrings from each module, organized by domain:
 - `general/tools/_path_safety.py` — Reusable, doc-type-agnostic path-safety assertions for document ids and
 - `general/tools/_similarity_corpus.py` — Candidate enumeration and source resolution for the similarity engine (feat-134, Phase 2, Task 2.1).
 - `general/tools/_similarity_ranking.py` — Pure-Python cosine (dot-on-normalized) ranking (feat-134, Phase 2, Task 2.4).
+- `general/tools/_similarity_search.py` — Shared per-candidate collection, hit-row assembly, and background warmup (feat-134, Phase 3).
 - `general/tools/_similarity_text.py` — Embedding-input text extraction for the similarity engine (feat-134, Phase 2, Task 2.2).
 - `general/tools/_splice.py` — Frontmatter-stripped body extraction, body-line splicing, and body-line
 - `general/tools/_timestamps.py` — Shared, private timestamp-formatting helpers (feat-38-39-41-43-44 Phase 3, Task 3.1).
 - `general/tools/delete.py` — ``@mcp.tool()`` wrapper: delete (feat-36-delete, Phase 2).
+- `general/tools/find_related.py` — ``@mcp.tool()`` wrapper: find_related (feat-134, Phase 3, Task 3.1).
+- `general/tools/find_similar_text.py` — ``@mcp.tool()`` wrapper: find_similar_text (feat-134, Phase 3, Task 3.2).
 - `general/tools/mdformat.py` — ``@mcp.tool()`` wrapper: mdformat.
 - `general/tools/set_classification.py` — ``@mcp.tool()`` wrapper: set_classification (feat-56-classification, Phase 2).
 - `general/tools/set_status.py` — ``@mcp.tool()`` wrapper: set_status (feat-22-consolidate-mutation-tools, Phase 4).

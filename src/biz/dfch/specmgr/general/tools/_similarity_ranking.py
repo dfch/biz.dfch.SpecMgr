@@ -24,9 +24,11 @@ vectors (== cosine), the candidates are sorted by score descending,
 to ``max_results``; default 10, ACC-001/ACC-002), and an optional
 ``min_score`` filter (cosine lives in [-1, 1]; ``None`` returns up to
 ``top_k`` hits regardless of score). ``find_related``'s own self-exclusion
-of the source document is a Phase 3 concern (Task 3.1, the tool body --
-this function ranks whatever candidates it is handed), as is the hit
-shape's assembly from the ranked keys.
+of the source document and the hit shape's assembly from the ranked keys
+are the Phase 3 tools' own concern (Task 3.1/3.2, in
+``find_related.py``/``find_similar_text.py`` and
+``_similarity_search.to_similarity_hit`` -- this function ranks whatever
+candidates it is handed).
 
 **Numpy-free on purpose.** The chunker and the ranking are plain Python
 (the dependency-light constraint: this module imports only
@@ -71,6 +73,7 @@ __all__ = [
     "MIN_TOP_K",
     "dot_product",
     "rank_candidates",
+    "validate_ranking_bounds",
 ]
 
 #: The smallest valid ``top_k`` (REQ-009).
@@ -98,8 +101,60 @@ KeyT = TypeVar("KeyT")
 
 
 def _assert_vector(vector: Vector) -> None:
-    """Assert ``vector`` is a read-only sequence of numbers (not a string/bytes)."""
-    assert isinstance(vector, Sequence) and not isinstance(vector, (str, bytes)), type(vector)
+    """Assert ``vector`` is a read-only sequence of numbers (not a string/bytes).
+
+    A structural check (``__getitem__`` + ``__len__`` present) on purpose,
+    **not** ``isinstance(vector, collections.abc.Sequence)``: the default
+    provider's native arrays (``numpy.ndarray`` -- the fast-path vectors
+    the embedding cache stores and returns) are *not* virtual subclasses
+    of ``collections.abc.Sequence`` (``isinstance`` reports ``False`` even
+    though the array is fully indexable and length-carrying), so the
+    ABC check would reject exactly the production vector type. The
+    structural check accepts everything the :data:`Vector` contract
+    means: plain ``list[float]`` (a pooled vector, or a test fake) and
+    the backend's native arrays alike, while still rejecting
+    strings/bytes (the ``str``/``bytes`` guard -- a string is indexable
+    and length-carrying too, but it is not a vector).
+    """
+    assert not isinstance(vector, (str, bytes)), type(vector)
+    assert hasattr(vector, "__getitem__") and hasattr(vector, "__len__"), type(vector)
+
+
+def validate_ranking_bounds(top_k: int, min_score: float | None) -> None:
+    """Reject a ``top_k`` outside 1..100 or a ``min_score`` outside [-1, 1] (REQ-009).
+
+    The exact bounds check :func:`rank_candidates` applies to its own
+    arguments, factored out so the Phase 3 similarity tools
+    (``find_related``/``find_similar_text``) can run it **before any
+    filesystem access** (the path-safety convention, REQ-009/ACC-015)
+    instead of only at the end of the call -- :func:`rank_candidates`
+    itself runs after the corpus walk (it needs the walked candidates'
+    vectors to score), so a tool that deferred its ``top_k``/``min_score``
+    validation to that point would have already read the source document
+    and every candidate file before rejecting an invalid bound.
+
+    Args:
+        top_k: The maximum number of hits to return (1..100, REQ-009).
+        min_score: The inclusive minimum cosine score ([-1, 1]); ``None``
+            (no filter) is always valid.
+
+    Raises:
+        ValueError:
+            ``top_k`` outside 1..100, or ``min_score`` outside [-1, 1] --
+            raised before any scoring or filesystem access, naming the
+            offending value and its bounds.
+    """
+    assert isinstance(top_k, int) and not isinstance(top_k, bool), type(top_k)
+    assert min_score is None or (isinstance(min_score, (int, float)) and not isinstance(min_score, bool)), type(
+        min_score
+    )
+
+    if not MIN_TOP_K <= top_k <= MAX_TOP_K:
+        raise ValueError(f"top_k must be between {MIN_TOP_K} and {MAX_TOP_K} (inclusive); got {top_k}")
+    if min_score is not None and not MIN_SCORE_BOUND <= min_score <= MAX_SCORE_BOUND:
+        raise ValueError(
+            f"min_score must be between {MIN_SCORE_BOUND} and {MAX_SCORE_BOUND} (inclusive); got {min_score}"
+        )
 
 
 def dot_product(a: Vector, b: Vector) -> float:
@@ -175,17 +230,8 @@ def rank_candidates(
     """
     _assert_vector(query_vector)
     assert isinstance(candidates, Sequence) and not isinstance(candidates, (str, bytes)), type(candidates)
-    assert isinstance(top_k, int) and not isinstance(top_k, bool), type(top_k)
-    assert min_score is None or (isinstance(min_score, (int, float)) and not isinstance(min_score, bool)), type(
-        min_score
-    )
 
-    if not MIN_TOP_K <= top_k <= MAX_TOP_K:
-        raise ValueError(f"top_k must be between {MIN_TOP_K} and {MAX_TOP_K} (inclusive); got {top_k}")
-    if min_score is not None and not MIN_SCORE_BOUND <= min_score <= MAX_SCORE_BOUND:
-        raise ValueError(
-            f"min_score must be between {MIN_SCORE_BOUND} and {MAX_SCORE_BOUND} (inclusive); got {min_score}"
-        )
+    validate_ranking_bounds(top_k, min_score)  # ValueError (top_k/min_score) before any scoring
 
     scored: list[tuple[KeyT, float]] = [(key, dot_product(query_vector, vector)) for key, vector in candidates]
     if min_score is not None:

@@ -62,15 +62,19 @@ repo's own env-flag convention, ``general.resources.config``). One code
 path, two triggers. ``None`` means "available -- proceed with the real
 ranking logic".
 
-**What this module does NOT do yet (later phases).** The two tools
-themselves (Phase 3, Task 3.1/3.2, in their own ``general/tools/``
-modules) and the background warmup (Phase 3, Task 3.7, which gates on
-this module's :data:`SIMILARITY_DISABLED_ENV_VAR`). The sibling Phase 2
+**Phase 3 consumers.** The two tools themselves (Phase 3, Task 3.1/3.2,
+in their own ``general/tools/`` modules -- ``find_related.py``/
+``find_similar_text.py``) and the background warmup (Phase 3, Task 3.7,
+``general/tools/_similarity_search.start_similarity_warmup``, called from
+``server.py``'s own ``_lifespan`` -- it gates on this module's
+:data:`SIMILARITY_DISABLED_ENV_VAR` through :func:`_similarity_availability`)
+consume this module's provider/availability seam. The sibling Phase 2
 concerns live in their own modules: the embedding-input text extraction
 (``general/tools/_similarity_text.py``, Task 2.2), the candidate
 enumeration / source resolution (``general/tools/_similarity_corpus.py``,
-Task 2.1), and the pure-Python ranking (``general/tools/_similarity_ranking.py``,
-Task 2.4).
+Task 2.1), the shared per-candidate collection + warmup
+(``general/tools/_similarity_search.py``, Phase 3), and the pure-Python
+ranking (``general/tools/_similarity_ranking.py``, Task 2.4).
 
 ## Classes
 
