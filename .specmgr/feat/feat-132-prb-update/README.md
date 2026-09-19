@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-17 09:57:31.305+02:00'
 id: feat-132-prb-update
-status: planning
+status: in-progress
 type: feat
-updated: '2026-09-19 10:40:00.000+02:00'
+updated: '2026-09-19 13:00:00.000+02:00'
 version: 1.0.0
 ---
 
@@ -114,7 +114,7 @@ schema-checked opening framing before the existing 5W2H/Gap/Impact/Future State 
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: `create_prb`/`validate(type="prb")` reject a PRB body missing the mandatory
+- [x] ACC-001: `create_prb`/`validate(type="prb")` reject a PRB body missing the mandatory
   `problem_statement` lead paragraph directly under the H1 (before `## Current     State`), with an actionable structural error, *and* reject a present lead paragraph
   whose text does not match the template skeleton, with an actionable field-validation
   error naming the expected template and the actual text.
@@ -130,7 +130,7 @@ schema-checked opening framing before the existing 5W2H/Gap/Impact/Future State 
   without a QA id still works standalone, asking for all 7 5W2H sub-questions plus the
   4 lead-paragraph blanks as fresh questions (nothing is pre-filled to derive them
   from).
-- [ ] ACC-005: `get_prb_template`/`get_prb_example`, `docs/prb_schema.json`, and the
+- [x] ACC-005: `get_prb_template`/`get_prb_example`, `docs/prb_schema.json`, and the
   packaged `specmgr://prb/schema` copy all show the new mandatory `problem_statement`
   lead paragraph directly under the H1, before `## Current State`.
 - [ ] ACC-006: In a QA-linked run with at least one pre-filled 5W2H answer, the lead
@@ -248,23 +248,23 @@ wording is now reworded rather than merely preserved (REQ-009).
 
 #### Phase 1: Schema (atomic -- model, template, example, both schema copies, and every affected test fixture land together, since the integration drift-guard test parses the packaged template/example against the model)
 
-- [ ] Task 1.1: Add the new mandatory `problem_statement: MarkdownParagraph` field to
+- [x] Task 1.1: Add the new mandatory `problem_statement: MarkdownParagraph` field to
   `prb/models/v1/body.py`'s `Prb` model, declared first among `Prb`'s own fields, with
   a `field_validator` enforcing the template skeleton `[Current state] is causing     [specific issue], for [stakeholder] because [underlying cause].` via a
   `re.DOTALL` regex fullmatch on the paragraph's `.text`, mirroring
   `rsk.models.v1.body.Strategy._validate_value`. Update the module docstring's layout
   diagram and the `Prb` class docstring's Parameters section, and reword the "no
   Root Cause section" texts per REQ-009.
-- [ ] Task 1.2: Update `prb/data/prb_template.md` and `prb/data/prb_example.md` to show
+- [x] Task 1.2: Update `prb/data/prb_template.md` and `prb/data/prb_example.md` to show
   the new mandatory lead paragraph following the template; reword the example's
   `## More Information` "no root cause analysis ... by design" line per REQ-009.
-- [ ] Task 1.3: Regenerate both JSON schema copies (`specmgr schema` for
+- [x] Task 1.3: Regenerate both JSON schema copies (`specmgr schema` for
   `docs/prb_schema.json`; `specmgr schema --type prb --output-dir     src/biz/dfch/specmgr/prb/data` for the packaged copy) and confirm `problem_statement`
   appears in both.
-- [ ] Task 1.4: Add/update unit tests in `tests/prb/models/v1/` covering the new field
+- [x] Task 1.4: Add/update unit tests in `tests/prb/models/v1/` covering the new field
   (present + valid, absent -> actionable structural error, present but malformed
   template -> actionable field-validation error).
-- [ ] Task 1.5: Sweep every hand-written PRB-body fixture across `tests/prb/`
+- [x] Task 1.5: Sweep every hand-written PRB-body fixture across `tests/prb/`
   (`models/v1/test_parser.py`, `tools/test_integration.py`, `tools/test_parse_prb.py`,
   `tools/test_get_prb.py`, `tools/test_create_prb.py`, `tools/test_list_prb.py`,
   `tools/test__io.py`, `tools/test__paths.py`, `tools/test__write.py`) to insert the new
@@ -325,14 +325,17 @@ wording is now reworded rather than merely preserved (REQ-009).
 
 ### Current Status
 
-**As of 2026-09-19**: Planning complete and reviewed. The design was confirmed by the
-issue reporter on GitHub (2026-09-17), and the four open implementation decisions --
-code-level template enforcement, in-place `prb/models/v1` evolution, and the
-`problem_statement` field name -- were resolved 2026-09-18 (see Decisions Made) and
-folded into the Requirements/Acceptance Criteria/Task List above. A 2026-09-19 review
-pass against the current codebase found and corrected six wording/scope-precision
-issues (see Updates); no requirement, acceptance criterion, or task numbering changed.
-Implementation has not started.
+**As of 2026-09-19**: Phase 1 (Schema) is complete -- ACC-001 and ACC-005 are fully
+met. `prb/models/v1/body.py`'s `Prb` model now carries the mandatory
+`problem_statement: MarkdownParagraph` lead field with its code-level template-skeleton
+`field_validator`; the packaged template/example and both JSON schema copies
+(`docs/prb_schema.json`, `src/biz/dfch/specmgr/prb/data/prb_schema.json`) reflect it;
+every PRB-body fixture across `tests/prb/` and the cross-domain generic-tool tests
+under `tests/general/tools/` was swept to include the new lead sentence, plus new
+dedicated tests for the mandatory-field/malformed-template/old-shape-rejection cases.
+The full quality gate (`ruff format --check`, `ruff check`, `vulture`, the full
+`pytest` suite) is green. Phase 2 (Prompts: `qa_id` carry-over, old-shape recovery
+guidance) and Phase 3 (docs/CHANGELOG/verification) have not started.
 
 ### Blockers
 
@@ -341,6 +344,42 @@ Implementation has not started.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-19 13:00:00.000Z - Phase 1 (Schema) implemented
+
+Implemented Task 1.1-1.5 in full: added the mandatory `problem_statement:
+MarkdownParagraph` field (declared first among `Prb`'s own fields) to
+`prb/models/v1/body.py`, with a `field_validator` (`_validate_problem_statement`)
+enforcing the fixed template skeleton via a `re.DOTALL` regex fullmatch against
+`.text`, mirroring `rsk.models.v1.body.Strategy._validate_value`; updated the module
+docstring's layout diagram and the `Prb` class docstring's Parameters section, and
+reworded the "No `Root Cause` section" texts per REQ-009. Updated
+`prb/data/prb_template.md`/`prb/data/prb_example.md` to show the new lead paragraph
+and reworded the example's `## More Information` root-cause note. Regenerated both
+JSON schema copies (`docs/prb_schema.json`,
+`src/biz/dfch/specmgr/prb/data/prb_schema.json`) via `specmgr schema`; confirmed
+`problem_statement` appears in both. Added new tests in `tests/prb/models/v1/`
+(`test_body.py`'s `TestProblemStatementMandatoryAndTemplateValidated`/
+`TestParsePrbRejectsMissingLeadParagraph`, `test_parser.py`'s
+`test_malformed_problem_statement_raises_validation_error`/
+`test_old_shape_without_problem_statement_raises_assertion_error`) covering
+present+valid, absent (structural `AssertionError`), and malformed-template
+(`ValidationError`) cases, plus the dedicated old-shape-rejection test against
+`Prb.from_text`. Swept every hand-written PRB-body fixture across `tests/prb/`
+(all 9 files named in Task 1.5) and, since the generic `general/tools` test suite
+also carries its own per-domain PRB body fixtures, the same sweep was additionally
+required (not originally itemized in Task 1.5) across `tests/general/tools/
+test_update.py`/`test_set_status.py`/`test_set_classification.py`/`test_delete.py`/
+`test_validate.py`'s `_PRB_MINIMAL_BODY`/`_PRB_UPDATED_BODY`/`_PRB_FULL_DOCUMENT`
+fixtures and one hardcoded line-offset constant in
+`tests/prb/tools/test_get_prb.py::test_windowed_raw_read_coordinates_index_into_the_splice_target`
+(shifted by the 2 new lead-paragraph lines). Also updated the `.specmgr/feat/
+feat-16-problem-statement/prb_reference.md` fixture file (read by
+`test_parser.py::test_parses_full_reference_document`) with the new lead sentence and
+reworded root-cause note. Quality gate green: `ruff format --check`, `ruff check`,
+`vulture src/ whitelist.py --min-confidence 60` (after adding
+`_._validate_problem_statement` to `whitelist.py`'s Pydantic-validator group), and the
+full `pytest -n auto --cov=src` suite (3314 passed). No Phase 2/3 work was touched.
 
 #### 2026-09-19 10:40:00.000Z - Plan corrected after a review pass
 

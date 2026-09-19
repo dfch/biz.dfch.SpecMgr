@@ -26,10 +26,11 @@ container:
 ```
 # {H1 title}                                    Prb (free-form title)
 <!-- optional leading comment -->               comment: MarkdownComment | None (inherited)
+{fixed-template lead sentence}                  problem_statement: MarkdownParagraph
 
 ## Current State                                current_state: CurrentState
 ### Summary                                     summary: Summary
-### What Is the Problem?                        question_1: Question1 | None
+### What Is the Problem?                         question_1: Question1 | None
 ### Why Is It a Problem?                         question_2: Question2 | None
 ### Where Is the Problem Observed?               question_3: Question3 | None
 ### Who Is Impacted?                             question_4: Question4 | None
@@ -45,11 +46,19 @@ container:
 ```
 
 Field declaration order on `Prb`/`CurrentState` enforces markdown order
-(title -> optional comment (inherited) -> `current_state` -> `gap` ->
-`impact` -> `future_state` -> `references` -> `more_information`, and within
-`CurrentState`: `summary` -> `question_1` .. `question_7`), since
-`models.md`'s `MarkdownStr.from_text` distributes text among declared
-fields in that same order.
+(title -> optional comment (inherited) -> `problem_statement` ->
+`current_state` -> `gap` -> `impact` -> `future_state` -> `references` ->
+`more_information`, and within `CurrentState`: `summary` -> `question_1`
+.. `question_7`), since `models.md`'s `MarkdownStr.from_text` distributes
+text among declared fields in that same order. `problem_statement` is
+declared *first* among `Prb`'s own fields precisely because `comment` is
+*inherited* from `MarkdownSection1WithComment` rather than declared on
+`Prb` itself -- Pydantic orders `model_fields` base-class-first, so
+declaring `problem_statement` first among `Prb`'s own fields is what
+actually places it between `comment` and `current_state` (mirroring
+`general.models.rasci.Rasci.intro`/`general.models.ears.Ears.intro`'s
+mandatory-lead-paragraph-under-the-H1 shape, though neither of those has
+an inherited field ahead of its own `intro`).
 
 Every `Question{N}`/`Summary`/`Gap`/`Impact`/`FutureState`/`References`/
 `MoreInformation` class is a bare leaf subclass with no further declared
@@ -57,20 +66,38 @@ fields -- the same "opaque, captures any remaining markdown verbatim"
 pattern already used by REQ's `MoreInformation`/`Notes` and QA's
 `RawRequirements`/`MoreInformation`.
 
-**No `Root Cause` section** -- a deliberate, Six-Sigma-discipline-driven
-omission, not an oversight (see the feature README's Scope/Design Notes).
+**No `Root Cause` section** exists; the mandatory `problem_statement` lead
+sentence's `because [underlying cause]` clause carries the best-known
+cause by design (see the feature README's Scope/Design Notes) -- formal
+root-cause analysis remains a separate, later activity.
 """
 
 from __future__ import annotations
 
-from pydantic import Field
+import re
+
+from pydantic import Field, field_validator
 
 from ....models.md import (
+    MarkdownParagraph,
     MarkdownSection1WithComment,
     MarkdownSection2,
     MarkdownSection3,
     alias,
     AliasType,
+)
+
+#: The fixed Problem Statement template skeleton (GitHub issue #132): every
+#: `problem_statement` lead sentence must fill in the four bracketed blanks
+#: while keeping the surrounding wording, punctuation, and single trailing
+#: period verbatim. `re.DOTALL` is required: a soft-wrapped sentence's
+#: `.text` retains the embedded line breaks of its continuation lines
+#: (`mdformat` does not reflow), and `.` would not otherwise match them --
+#: the same reasoning as `general.models.rasci._ROLE_ITEM_PATTERN`.
+_PROBLEM_STATEMENT_PATTERN = re.compile(
+    r"^(?P<current_state>.+) is causing (?P<specific_issue>.+), "
+    r"for (?P<stakeholder>.+) because (?P<underlying_cause>.+)\.$",
+    re.DOTALL,
 )
 
 # --------------------------------------------------------------------------
@@ -254,7 +281,14 @@ class Prb(MarkdownSection1WithComment):
     ----------
     comment:
         Optional explanatory HTML comment (`<!-- ... -->`) preceding
-        `current_state`. Inherited from `MarkdownSection1WithComment`.
+        `problem_statement`. Inherited from `MarkdownSection1WithComment`.
+    problem_statement:
+        The mandatory lead paragraph directly under the H1 title (no
+        heading of its own), holding exactly one sentence following the
+        fixed template `[Current state] is causing [specific issue], for
+        [stakeholder] because [underlying cause].`. Mandatory. Declared
+        first among `Prb`'s own fields so it lands between the inherited
+        `comment` and `current_state` (see the module docstring).
     current_state:
         `## Current State`. Mandatory.
     gap:
@@ -269,6 +303,13 @@ class Prb(MarkdownSection1WithComment):
         `## More Information`. Optional.
     """
 
+    problem_statement: MarkdownParagraph = Field(
+        description=(
+            "Mandatory lead paragraph directly under the H1 title, holding exactly one sentence "
+            "following the fixed template `[Current state] is causing [specific issue], for "
+            "[stakeholder] because [underlying cause].`."
+        )
+    )
     current_state: CurrentState = Field(description="`## Current State` section. Mandatory.")
     gap: Gap = Field(description="`## Gap` section. Mandatory.")
     impact: Impact | None = Field(default=None, description="`## Impact` section. Optional.")
@@ -277,3 +318,23 @@ class Prb(MarkdownSection1WithComment):
     more_information: MoreInformation | None = Field(
         default=None, description="`## More Information` section. Optional."
     )
+
+    @field_validator("problem_statement")
+    @classmethod
+    def _validate_problem_statement(cls, value: MarkdownParagraph) -> MarkdownParagraph:
+        """Enforce the fixed Problem Statement template skeleton against `value.text`.
+
+        `value` is a `MarkdownParagraph` (a model, not a `str`), so a
+        `Field(pattern=...)` string constraint cannot be applied directly --
+        pydantic only applies `pattern` to string-typed schemas. This
+        validator re-implements the same check against `value.text`, the
+        paragraph's own inline text, mirroring
+        `rsk.models.v1.body.Strategy._validate_value`.
+        """
+        if not _PROBLEM_STATEMENT_PATTERN.fullmatch(value.text):
+            raise ValueError(
+                "problem_statement must match the template "
+                "'[Current state] is causing [specific issue], for [stakeholder] because "
+                f"[underlying cause].', got {value.text!r}"
+            )
+        return value

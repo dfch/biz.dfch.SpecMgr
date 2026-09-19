@@ -33,6 +33,7 @@ from pydantic import ValidationError
 
 from biz.dfch.specmgr.models.md._markdown import format_text
 from biz.dfch.specmgr.models.md.alias_match import match_alias
+from biz.dfch.specmgr.models.md.markdown_paragraph import MarkdownParagraph
 from biz.dfch.specmgr.prb.models.v1.body import (
     CurrentState,
     FutureState,
@@ -51,6 +52,9 @@ from biz.dfch.specmgr.prb.models.v1.body import (
     Summary,
 )
 
+#: A minimal, valid `problem_statement` lead paragraph matching the fixed template skeleton.
+_VALID_PROBLEM_STATEMENT_TEXT = "The current process is causing delays, for users because of missing automation."
+
 # Every `Question{N}` class alongside the exact canonical heading text it
 # must -- and only it must -- match (verbatim from the iSixSigma 5W2H list,
 # see the feature README's Design Notes).
@@ -64,14 +68,25 @@ _QUESTION_CLASSES_AND_HEADINGS = [
     (Question7, "How Often Is the Problem Observed?"),
 ]
 
+# The fixed Problem Statement template's lead sentence for the reference
+# document scenario, matching `prb_reference.md`/`prb_example.md`.
+_LEAD_SENTENCE = (
+    "The migration tool's lack of a rollback step is causing widgets to become\n"
+    "half-migrated, for the on-call platform engineer because the\n"
+    "WidgetRegistryV1 de-registration call sometimes fails after the\n"
+    "WidgetRegistryV2 write succeeds."
+)
+
 # The reference document's body (`prb_reference.md`, frontmatter stripped),
 # exercising every field: all 7 5W2H questions answered, `Impact`/
 # `References`/`More Information` all present.
 _REFERENCE_TEXT = format_text(
-    """\
+    f"""\
 # Widget Registry Migration Rollback Failures
 
 <!-- Captured during the platform team's weekly incident review. -->
+
+{_LEAD_SENTENCE}
 
 ## Current State
 
@@ -155,8 +170,9 @@ half-migrated state, and no manual recovery is required.
 ## More Information
 
 This problem statement was drafted after the third rollback incident, once
-a clear pattern across all three occurrences had emerged. No root cause
-analysis is included here by design; a separate root-cause investigation is
+a clear pattern across all three occurrences had emerged. No `## Root Cause`
+section exists; the lead sentence above carries the best-known cause by
+design. Formal root-cause analysis remains a separate, later activity,
 tracked internally and will be linked from `References` once complete.
 """
 )
@@ -177,6 +193,7 @@ A short placeholder summary.
 
 def _minimal_prb_kwargs() -> dict:
     return {
+        "problem_statement": MarkdownParagraph.from_text(format_text(_VALID_PROBLEM_STATEMENT_TEXT)),
         "current_state": _minimal_current_state(),
         "gap": Gap.from_text(format_text("## Gap\n\nSome gap text.\n")),
         "future_state": FutureState.from_text(format_text("## Future State\n\nSome future state text.\n")),
@@ -336,6 +353,86 @@ class TestGapFutureStateMandatory(unittest.TestCase):
             Prb(**kwargs)
 
 
+class TestProblemStatementMandatoryAndTemplateValidated(unittest.TestCase):
+    """`Prb.problem_statement` is mandatory and its text must match the fixed template skeleton (ACC-001).
+
+    Covers direct-construction absence (`ValidationError`, structural
+    "field required") and the code-level template-skeleton `field_validator`
+    (`ValidationError`, naming the expected template and the actual text) --
+    plus, separately (`TestParsePrbRejectsMissingLeadParagraph` below), the
+    structural `AssertionError` raised when the paragraph is missing
+    entirely from the markdown text (`Prb.from_text`, not direct
+    construction).
+    """
+
+    def test_present_and_valid_parses(self) -> None:
+        sut = Prb(**_minimal_prb_kwargs())
+
+        self.assertEqual(sut.problem_statement.text, _VALID_PROBLEM_STATEMENT_TEXT)
+
+    def test_missing_problem_statement_raises_validation_error(self) -> None:
+        kwargs = _minimal_prb_kwargs()
+        del kwargs["problem_statement"]
+
+        with self.assertRaises(ValidationError):
+            Prb(**kwargs)
+
+    def test_malformed_template_raises_validation_error_naming_template_and_text(self) -> None:
+        kwargs = _minimal_prb_kwargs()
+        kwargs["problem_statement"] = MarkdownParagraph.from_text(
+            format_text("This sentence does not follow the fixed template at all.")
+        )
+
+        with self.assertRaises(ValidationError) as ctx:
+            Prb(**kwargs)
+        message = str(ctx.exception)
+        self.assertIn("problem_statement", message)
+        self.assertIn("is causing", message)
+        self.assertIn("This sentence does not follow the fixed template at all.", message)
+
+
+class TestParsePrbRejectsMissingLeadParagraph(unittest.TestCase):
+    """`Prb.from_text` structurally rejects a body with no lead paragraph at all (ACC-001, REQ-008 trigger).
+
+    This is the pre-change (feat-16) PRB shape: no `problem_statement`
+    paragraph directly under the H1 title. Documents this pre-existing-
+    document recovery trigger (`update_prb`'s REQ-008 flow, Phase 2) --
+    `Prb.from_text` itself raises an actionable `AssertionError` naming the
+    missing `problem_statement` field, not a `ValidationError`, since the
+    paragraph is entirely absent from the markdown text (a structural
+    failure, not a field-value failure -- see `models.md.markdown_str.
+    MarkdownStr.process_field`).
+    """
+
+    def test_old_shape_without_problem_statement_fails_with_actionable_error(self) -> None:
+        old_shape_text = format_text(
+            """\
+# Widget Registry Migration Rollback Failures
+
+<!-- Captured during the platform team's weekly incident review. -->
+
+## Current State
+
+### Summary
+
+A short placeholder summary.
+
+## Gap
+
+Some gap text.
+
+## Future State
+
+Some future state text.
+"""
+        )
+
+        with self.assertRaises(AssertionError) as ctx:
+            Prb.from_text(old_shape_text)
+        message = str(ctx.exception)
+        self.assertIn("problem_statement", message)
+
+
 class TestImpactReferencesMoreInformationOptional(unittest.TestCase):
     """`Prb.impact`/`references`/`more_information` are independently optional (ACC-002)."""
 
@@ -393,6 +490,12 @@ class TestPrbReferenceDocumentRoundTrips(unittest.TestCase):
         self.assertEqual(sut.text, "Widget Registry Migration Rollback Failures")
         self.assertIsNotNone(sut.comment)
         self.assertIn("Captured during the platform team's weekly incident review.", sut.comment.text)
+
+    def test_problem_statement_present_and_matches_template(self) -> None:
+        sut = Prb.from_text(_REFERENCE_TEXT)
+
+        self.assertIn("is causing widgets to become", sut.problem_statement.text)
+        self.assertIn("because the", sut.problem_statement.text)
 
     def test_all_seven_questions_are_present(self) -> None:
         sut = Prb.from_text(_REFERENCE_TEXT)

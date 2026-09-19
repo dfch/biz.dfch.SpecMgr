@@ -51,9 +51,16 @@ from biz.dfch.specmgr.prb.tools.get_prb_example import get_prb_example
 from biz.dfch.specmgr.prb.tools.get_prb_template import get_prb_template
 from biz.dfch.specmgr.prb.tools.list_prb import list_prb
 
+_LEAD_SENTENCE = (
+    "Mobile checkout failing for many customers is causing lost revenue, for the "
+    "mobile team because the checkout service intermittently times out."
+)
+
 _INITIAL_BODY = textwrap.dedent(
-    """\
+    f"""\
     # Checkout Errors Spike on Mobile
+
+    {_LEAD_SENTENCE}
 
     ## Current State
 
@@ -78,8 +85,10 @@ _INITIAL_BODY = textwrap.dedent(
 )
 
 _REVISED_BODY = textwrap.dedent(
-    """\
+    f"""\
     # Checkout Errors Spike on Mobile
+
+    {_LEAD_SENTENCE}
 
     ## Current State
 
