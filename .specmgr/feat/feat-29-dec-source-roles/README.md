@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-17 14:06:49.067+02:00'
 id: feat-29-dec-source-roles
-status: done
+status: in-progress
 type: feat
-updated: '2026-09-19 12:15:00.000+02:00'
+updated: '2026-09-19 13:00:00.000+02:00'
 version: 1.0.0
 ---
 
@@ -32,6 +32,10 @@ GitHub issue #29 originally asked for `DecFrontmatter` to gain ADR-style attribu
 - REQ-012: `tests/dec/models/v1/test_body.py::TestDecisionMisordering::test_updates_before_more_information_raises_assertion_error` and `::test_related_artifacts_after_pros_and_cons_raises_assertion_error` are corrected so their fixtures satisfy the mandatory `## Roles and Responsibilities`/`## Source` sections ahead of the actual misordering trigger they exist to test, and each additionally asserts on the raised `AssertionError`'s message content (not just its type), so a recurrence of "passes for the wrong reason" is caught automatically.
 - REQ-013: The mandatory-vs-optional cardinality question for `## Roles and Responsibilities`/`## Source`, raised during external PR review, is explicitly revisited and the decision to keep both mandatory (accepting the resulting backward incompatibility as a documented, intentional breaking change on this pre-1.0 project) is recorded in this feature's Decisions Made log.
 - REQ-014: This feature's own README records, in a new "Known Limitations" section (mirroring `feat-8-coverage-badge/README.md`'s precedent), that the unmerged `feat-46-remove-adr` branch's own plan assumes GitHub issue #29 would be resolved via new `DecFrontmatter` fields (including `date`) for ADR-to-DEC conversion fidelity -- a different, incompatible resolution from what this feature actually shipped (body sections, no frontmatter change, no `date` field) -- so a future reader has that context without needing to consult a closed PR description.
+- REQ-015: `TestDecisionMisordering` (or a new, dedicated test class) in `tests/dec/models/v1/test_body.py` gains at least one regression test that puts one of the three new sections out of their required relative order -- e.g. `## Source` before `## Roles and Responsibilities`, `## Tags` after `## Source`, or the whole new block before `## Decision Outcome`/after `## Related Artifacts` -- and asserts on the raised `AssertionError`, closing the gap a follow-up `feat-reviewer` review of this feature found: ACC-004 claims this case is covered, but every existing misordering test only exercises pre-existing sections.
+- REQ-016: The wording drift the same review found between `SourceBase.value`'s `Field(description=...)` in `models/md/common_sections.py` (genericized to "this document" during the Phase 1 refactor) and `req.Source`'s/`dec.Source`'s own class-level docstrings (still domain-specific, "requirement"/"decision") is resolved by making the generic wording an explicit, documented policy choice -- e.g. a short comment in `common_sections.py` explaining why the shared field description is domain-neutral by design, and/or a one-line note added to `req.Source`'s docstring pointing this out -- rather than leaving it as an unremarked side effect of the refactor.
+- REQ-017: `tests/dec/models/v1/test_parser.py`'s module-level `_MANDATORY_ROLES_AND_SOURCE` constant (byte-identical to `tests/dec/tools/_helpers.py::MANDATORY_ROLES_AND_SOURCE`) is removed in favor of importing the shared helper, completing the de-duplication `_helpers.py` was introduced for in Phase 2 but that this one file was missed by.
+- REQ-018: `tests/general/tools/test_validate.py`'s `_DEC_MINIMAL_BODY`/`_DEC_BAD_FIELD_BODY` fixtures, currently built by concatenating two-to-three separate `textwrap.dedent(...)` calls with `+`, are rewritten to use the single-`textwrap.dedent`-call style every sibling generic test file (`test_update.py`, `test_delete.py`, `test_set_status.py`, `test_set_classification.py`) already uses for its own `dec` fixtures, removing the unexplained style divergence the same review found.
 
 ### Acceptance Criteria
 
@@ -48,6 +52,10 @@ GitHub issue #29 originally asked for `DecFrontmatter` to gain ADR-style attribu
 - [x] ACC-011: Verifies REQ-012 -- both corrected tests fail again if the mandatory-section-first fix is reverted (spot-check this during implementation, then restore the fix), and pass with the fix in place, asserting on message content.
 - [x] ACC-012: Verifies REQ-013 -- a dated Decisions Made entry records the cardinality decision and its rationale.
 - [x] ACC-013: Verifies REQ-014 -- a "Known Limitations" section exists and cross-references `feat-46-remove-adr`.
+- [ ] ACC-014: Verifies REQ-015 -- a new misordering regression test covering the three new sections exists and fails (with an `AssertionError`) when the fix is temporarily reverted, then passes with the fix restored.
+- [ ] ACC-015: Verifies REQ-016 -- `models/md/common_sections.py` and/or `req.Source`'s docstring explicitly document the domain-neutral field-description wording as an intentional choice.
+- [ ] ACC-016: Verifies REQ-017 -- `tests/dec/models/v1/test_parser.py` no longer defines its own `_MANDATORY_ROLES_AND_SOURCE` constant and imports the shared one instead; the full DEC test suite still passes unchanged.
+- [ ] ACC-017: Verifies REQ-018 -- `tests/general/tools/test_validate.py`'s DEC fixtures use a single `textwrap.dedent` call each, matching sibling generic test files; the full `test_validate.py` suite still passes unchanged.
 
 ### Scope
 
@@ -64,6 +72,7 @@ GitHub issue #29 originally asked for `DecFrontmatter` to gain ADR-style attribu
 - `feat-7-various-improvements/README.md` Task 0.33 update (split out into this feature, mirroring Task 0.32's own precedent).
 - `feat-133-tags-dec-rsk/README.md` rescoping to RSK-only.
 - GitHub issue #29 and #133 comments.
+- A new misordering regression test, a documentation note on the domain-neutral `Source.value` field description, and two test-fixture cleanups (`tests/dec/models/v1/test_parser.py`, `tests/general/tools/test_validate.py`) identified by a follow-up `feat-reviewer` review (see Phase 7).
 
 #### Explicitly Out Of Scope
 
@@ -163,11 +172,20 @@ Orchestration handoff (see REQ-010): Phases 0-3 were implemented inline in one l
 - [x] Task 6.5: Run the full local quality gate (REQ-009's existing checklist) and report the evidence. Do NOT commit.
 - [x] Task 6.6: Update this README's Progress section (Current Status, a new dated Updates entry, frontmatter `status` back to `done`, `updated` bumped) once Tasks 6.1-6.5 are complete.
 
+#### Phase 7: External Review Remediation (Round 2)
+
+- [ ] Task 7.1: Add a regression test to `tests/dec/models/v1/test_body.py` covering misordering of the three new sections per REQ-015 (ACC-014); spot-check by temporarily reverting the ordering guard and confirming the new test fails, then restore.
+- [ ] Task 7.2: Document the domain-neutral `SourceBase.value` field-description wording as an intentional choice per REQ-016 (ACC-015).
+- [ ] Task 7.3: Remove the duplicated `_MANDATORY_ROLES_AND_SOURCE` constant from `tests/dec/models/v1/test_parser.py` and import the shared `tests/dec/tools/_helpers.py::MANDATORY_ROLES_AND_SOURCE` instead per REQ-017 (ACC-016).
+- [ ] Task 7.4: Rewrite `tests/general/tools/test_validate.py`'s `_DEC_MINIMAL_BODY`/`_DEC_BAD_FIELD_BODY` fixtures to use a single `textwrap.dedent` call each per REQ-018 (ACC-017).
+- [ ] Task 7.5: Run this phase's full quality gate (REQ-009) and commit.
+- [ ] Task 7.6: Update this README's Progress section (Current Status, a new dated Updates entry, frontmatter `status` back to `done`, `updated` bumped) once Tasks 7.1-7.5 are complete.
+
 ## Progress
 
 ### Current Status
 
-**As of 2026-09-19**: **Feature complete, including post-review remediation.** All 7 phases (0-6) are done; all 13 acceptance criteria (ACC-001 through ACC-013) are met. Phase 6 addressed two gaps an external code review of the resulting PR (#136) found: (1) two `TestDecisionMisordering` tests that were passing for the wrong reason (missing-mandatory-section failure, not the intended misordering failure) are now fixed and assert on message content; (2) the mandatory-section backward incompatibility is now explicitly documented via a `CHANGELOG.md [Unreleased]` entry (with a migration snippet), a Decisions Made log entry confirming the cardinality was reconsidered and intentionally kept, and a new "Known Limitations" section cross-referencing the unmerged `feat-46-remove-adr` branch's conflicting plan for issue #29. Both GitHub issue comments (summarizing the shipped design on issue #29, and noting the DEC-half absorption on issue #133) remain posted and live. Commits on branch `feat-29-dec-source-roles`: `be8abc5` (Phase 0), `19b6675` (Phase 1), `a7fd4fd` (Phase 2+3), `c8d5a92` (Phase 4), Phase 5, Phase 6 (this commit -- hash not yet known at the time of this edit, since the orchestrator commits after this final sign-off). Frontmatter `status` bumped back to `done`.
+**As of 2026-09-19**: **Phase 7 planned, not yet implemented.** Phases 0-6 are done; ACC-001 through ACC-013 are met. A follow-up `feat-reviewer` review of the completed feature (post-Phase-6) found one test-coverage gap, one small wording inconsistency, and two test-fixture code smells; REQ-015 through REQ-018, ACC-014 through ACC-017, and a new "Phase 7: External Review Remediation (Round 2)" Task List block were added to this README to track fixing them, but none of Tasks 7.1-7.6 have been started yet -- this is planning only. Frontmatter `status` set to `in-progress` until Phase 7 lands. Commits on branch `feat-29-dec-source-roles`: `be8abc5` (Phase 0), `19b6675` (Phase 1), `a7fd4fd` (Phase 2+3), `c8d5a92` (Phase 4), Phase 5, Phase 6.
 
 ### Blockers
 
@@ -176,6 +194,37 @@ Orchestration handoff (see REQ-010): Phases 0-3 were implemented inline in one l
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-19 13:00:00.000Z - Phase 7 planned (not implemented): second-round review findings
+
+A follow-up `feat-reviewer` review of the completed feature (run after
+Phase 6 landed) found four items, none of them functional defects: (1) a
+**gap** -- ACC-004 claims new-section misordering is covered, but every
+existing `TestDecisionMisordering` test only exercises pre-existing
+sections (`## Updates`/`## Related Artifacts`), not the three new ones
+added by this feature; manually verified the underlying engine still
+rejects the new-section case correctly, so this is a missing regression
+test, not a bug. (2) an **inconsistency** -- extracting `SourceBase.value`
+to the shared base in Phase 1 genericized its `Field(description=...)`
+wording from domain-specific ("origin/authority of this requirement"/
+"decision") to generic ("this document"), while `req.Source`'s/
+`dec.Source`'s own class-level docstrings still use the domain-specific
+wording, an unremarked drift between the generated JSON Schema and the
+class docstring. (3)-(4) two **code smells** in tests added/touched by
+this feature: `tests/dec/models/v1/test_parser.py` duplicates the
+`MANDATORY_ROLES_AND_SOURCE` constant instead of importing it from
+`tests/dec/tools/_helpers.py` (the module Phase 2 introduced specifically
+to avoid this duplication), and `tests/general/tools/test_validate.py`'s
+DEC fixtures build bodies via concatenated `textwrap.dedent` calls
+instead of the single-call style every sibling generic test file uses.
+Added REQ-015 through REQ-018 (Requirements), ACC-014 through ACC-017
+(Acceptance Criteria, unchecked), a Scope/Included bullet, and a new
+"Phase 7: External Review Remediation (Round 2)" Task List block (Tasks
+7.1-7.6, all unchecked) to this README to track fixing these items.
+**No code, tests, or docs were changed as part of this update** -- this
+is planning only, per explicit instruction; frontmatter `status` set
+back to `in-progress` to reflect the newly added, not-yet-done Task
+List items.
 
 #### 2026-09-19 10:15:00.000Z - Phase 6 complete: post-review remediation
 
