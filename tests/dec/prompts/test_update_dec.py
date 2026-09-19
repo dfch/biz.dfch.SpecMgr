@@ -102,14 +102,34 @@ class TestUpdateDecPrompt(unittest.TestCase):
         for section in (
             "## Context and Problem Statement",
             "## Decision Outcome",
+            "## Roles and Responsibilities",
+            "## Source",
             "## Decision Drivers",
             "## Considered Options",
+            "## Tags",
             "## Related Artifacts",
             "## Pros and Cons",
             "## More Information",
             "## Updates",
         ):
             self.assertIn(section, result)
+
+    def test_mentions_rasci_resource_when_roles_touched(self):
+        """The prompt must instruct fetching the cross-cutting specmgr://rasci resource before
+        revising `## Roles and Responsibilities`, with a caveat that this step is skippable when
+        the requested change does not touch that section."""
+        result = update_dec("id-abc-123")
+        self.assertIn("specmgr://rasci", result)
+        normalized = " ".join(result.split())
+        self.assertIn("Skip this step if the change does not touch the roles section", normalized)
+
+    def test_mentions_roles_and_source_and_tags_body_fields(self):
+        """The `roles_and_responsibilities`, `tags`, and `source` body fields must be named
+        alongside the existing body fields in the tool-mapping step."""
+        result = " ".join(update_dec("id-abc-123").split())
+        self.assertIn("roles_and_responsibilities", result)
+        self.assertIn("`tags`", result)
+        self.assertIn("`source`", result)
 
     def test_mentions_eliciting_revisions_via_question_tool(self):
         """The prompt must instruct using the question tool to elicit new/revised text."""

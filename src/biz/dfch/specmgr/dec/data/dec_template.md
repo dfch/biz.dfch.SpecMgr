@@ -33,6 +33,36 @@ What follows from the chosen outcome.
 
 How the outcome was or will be confirmed.
 
+## Roles and Responsibilities
+
+### Accountable
+
+The single owner ultimately answerable for this decision.
+
+### Responsible
+
+- A bullet list naming those who carry out the decision or its consequences.
+
+### Support
+
+- A bullet list naming those who provide resources or assistance. Optional; may be empty.
+
+### Consulted
+
+- A bullet list naming those whose opinions were sought. Optional; may be empty.
+
+### Informed
+
+- A bullet list naming those kept up to date on the decision. Optional; may be empty.
+
+## Tags
+
+- A bullet list of free-form labels for grouping/filtering decisions. Optional.
+
+## Source
+
+The origin/authority of this decision, e.g. an issue, a meeting, or a stakeholder request.
+
 ## Related Artifacts
 
 ### Requirements

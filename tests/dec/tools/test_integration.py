@@ -61,36 +61,44 @@ from biz.dfch.specmgr.general.tools.set_status import set_status
 from biz.dfch.specmgr.general.tools.update import update
 from biz.dfch.specmgr.general.tools.validate import validate
 
-_INITIAL_BODY = textwrap.dedent(
-    """\
-    # Choose a Document Store
+from ._helpers import MANDATORY_ROLES_AND_SOURCE
 
-    ## Context and Problem Statement
+_INITIAL_BODY = (
+    textwrap.dedent(
+        """\
+        # Choose a Document Store
 
-    The current store cannot serve the dashboard read path.
+        ## Context and Problem Statement
 
-    ## Decision Outcome
+        The current store cannot serve the dashboard read path.
 
-    We chose the document store.
-    """
+        ## Decision Outcome
+
+        We chose the document store.
+        """
+    )
+    + MANDATORY_ROLES_AND_SOURCE
 )
 
-_REVISED_BODY = textwrap.dedent(
-    """\
-    # Choose a Document Store
+_REVISED_BODY = (
+    textwrap.dedent(
+        """\
+        # Choose a Document Store
 
-    ## Context and Problem Statement
+        ## Context and Problem Statement
 
-    The current store cannot serve the dashboard read path.
+        The current store cannot serve the dashboard read path.
 
-    ## Decision Drivers
+        ## Decision Drivers
 
-    - Latency under 100 ms at p95.
+        - Latency under 100 ms at p95.
 
-    ## Decision Outcome
+        ## Decision Outcome
 
-    We chose the document store.
-    """
+        We chose the document store.
+        """
+    )
+    + MANDATORY_ROLES_AND_SOURCE
 )
 
 

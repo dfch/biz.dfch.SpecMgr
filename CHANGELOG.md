@@ -18,6 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   instead of re-asking them (GitHub issue #132).
 - `update_prb`'s prompt now guides recovery of a pre-existing PRB document
   that lacks the new mandatory lead paragraph (GitHub issue #132).
+- `dec` documents gain three new body sections between `## Decision
+  Outcome` and `## Related Artifacts`: a mandatory `## Roles and
+  Responsibilities` (RASCI: `### Accountable` + `### Responsible`
+  required, `### Support`/`### Consulted`/`### Informed` optional), an
+  optional `## Tags`, and a mandatory `## Source`. `Source`/RASCI field
+  logic is now shared with `req`/`sop` via a new
+  `models/md/common_sections.py` module (GitHub issue #29).
 
 ### Changed
 
@@ -25,6 +32,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `problem_statement` lead paragraph will fail `parse_prb`/`get_prb` until
   the paragraph is added; use the `update_prb` prompt's guided recovery
   flow (GitHub issue #132).
+- **BREAKING**: any `dec` document created before this release now
+  fails to parse via `get_dec`/`parse_dec`/`update`/`create_dec`
+  round-trips unless it is updated to add the two new mandatory
+  sections, `## Roles and Responsibilities` and `## Source`
+  (`list_dec` is unaffected -- it reports such a document as a failed
+  entry inline rather than raising). Add both sections to any
+  pre-existing `dec` document, e.g.:
+
+  ```diff
+   ## Decision Outcome
+
+   We chose the shared office days arrangement.
+  +
+  +## Roles and Responsibilities
+  +
+  +### Accountable
+  +
+  +The VP of Engineering.
+  +
+  +### Responsible
+  +
+  +- Engineering managers.
+  +
+  +## Source
+  +
+  +The engineering leadership offsite on 2025-02-20.
+
+   ## Related Artifacts
+  ```
 
 ## [0.28.0] - 2026-09-14
 

@@ -210,6 +210,7 @@ First-line docstrings from each module, organized by domain:
 - `models/md/alias.py` — Alias decorator for MarkdownStr class name transformation.
 - `models/md/alias_match.py` — Match a parsed heading's actual text against a class's declared `@alias`.
 - `models/md/alias_type.py` — Alias type enumeration for MarkdownStr class name transformation.
+- `models/md/common_sections.py` — Shared base classes for whole-section fields that recur, byte-identically, across domains.
 - `models/md/frontmatter.py` — Generic base frontmatter model shared by every markdown-backed document type.
 - `models/md/markdown_block_quote.py` — A markdown block quote ("blockquote"), grouping every consecutive '>' line as one instance.
 - `models/md/markdown_code_block.py` — A leaf-only fenced ("```") code block, never subclassable with declared fields.
@@ -537,4 +538,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 357
+**Test files**: 358

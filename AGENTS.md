@@ -289,7 +289,32 @@ type or cross-cutting:
   headings, `Options` collection) but is built on the generic
   `models/md` parser with the GOL/RSK/QA simple surface — no
   fine-grained mutation tools, no renderer: writes persist the
-  caller's raw validated body byte-for-byte.
+  caller's raw validated body byte-for-byte. Since `feat-29-dec-source-roles`
+  (GitHub issue #29), a `dec` document also carries three new body
+  sections between `## Decision Outcome` and `## Related Artifacts`: a
+  mandatory `## Roles and Responsibilities` (RASCI — `### Accountable`
+  single mandatory paragraph and `### Responsible` mandatory bullet list
+  (>=1 item) are always required, unlike SOP's own optional-as-a-whole
+  equivalent, since a decision must always have a named accountable
+  owner; `### Support`/`### Consulted`/`### Informed` stay independently
+  optional), an optional `## Tags` (bullet list of free-form labels,
+  structurally identical to `req`'s own, absorbing the DEC half of
+  `feat-133-tags-dec-rsk`, issue #133), and a mandatory `## Source`
+  (structurally identical to `req`'s own). This is what the original
+  issue's "ADR-style attributes such as `source`/`owner`" request
+  resolved to — new **body** sections, not new `DecFrontmatter` fields;
+  `DecFrontmatter` itself is unchanged. `Source` and the six RASCI
+  classes (`Accountable`/`Responsible`/`Support`/`Consulted`/`Informed`/
+  `RolesAndResponsibilities`) now live as shared base classes in the
+  top-level `models/md/common_sections.py`, which `req`'s own `Source`
+  and `sop`'s own six RASCI classes were refactored to subclass instead
+  of duplicating the field/validator logic — `dec`'s new concrete
+  classes subclass the same bases, each domain still declaring and
+  owning its own concrete leaf class per the domain-first convention;
+  see the "models location" note below for why this shared-base-class
+  module, unlike a document type's own schema, is intentionally
+  top-level rather than domain-local. See
+  `.specmgr/feat/feat-29-dec-source-roles/README.md` for the full design.
 - **`sop/`** (Standard Operating Procedure) — same tools/resources/prompts
   shape as `dec/` but for structured, step-by-step operational documents
   with a RASCI-style responsibility assignment and a closed

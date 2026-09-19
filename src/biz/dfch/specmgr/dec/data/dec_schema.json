@@ -20,6 +20,20 @@
       "title": "AcceptanceCriteria",
       "type": "object"
     },
+    "Accountable": {
+      "description": "`### Accountable` under `## Roles and Responsibilities` -- the single\nowner ultimately answerable for this decision.\n\nSubclasses the shared `models.md.AccountableBase` (feat-29-dec-source-roles)\n-- see the general `specmgr://rasci` resource for RASCI role definitions.\nMandatory: `## Roles and Responsibilities` is itself mandatory on every\n`dec` document, so every decision always names an accountable owner.",
+      "properties": {
+        "value": {
+          "$ref": "#/$defs/MarkdownParagraph",
+          "description": "The single paragraph naming the accountable party. Mandatory; never a bullet list."
+        }
+      },
+      "required": [
+        "value"
+      ],
+      "title": "Accountable",
+      "type": "object"
+    },
     "Confirmation": {
       "description": "`### Confirmation` under `## Decision Outcome` -- how the outcome was\nor will be confirmed. Optional, free-form prose.",
       "properties": {},
@@ -36,6 +50,29 @@
       "description": "`## Considered Options` -- a free-form summary of the options that\nwere weighed. Optional, free-form prose; the structured per-option\ncontent lives under `## Pros and Cons`.",
       "properties": {},
       "title": "ConsideredOptions",
+      "type": "object"
+    },
+    "Consulted": {
+      "description": "`### Consulted` under `## Roles and Responsibilities` -- those whose\nopinions were sought before or during the decision.\n\nSubclasses the shared `models.md.ConsultedBase` (feat-29-dec-source-roles)\n-- see the general `specmgr://rasci` resource for RASCI role definitions.",
+      "properties": {
+        "items": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/MarkdownListItem"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Bullet list naming the consulted parties, or ``None`` when the heading is present with no items. Optional; the heading MAY appear with zero items.",
+          "title": "Items"
+        }
+      },
+      "title": "Consulted",
       "type": "object"
     },
     "Context": {
@@ -118,7 +155,7 @@
       "type": "object"
     },
     "Decision": {
-      "description": "The `dec` body: a single H1 section with the fields below.\n\nThe H1 heading text is free-form. Keeps the ADR's general structure\n(MADR headings + an options collection) on the generic `models.md`\nengine -- see the module docstring.\n\nParameters\n----------\ncontext:\n    `## Context and Problem Statement`. Mandatory.\ndrivers:\n    `## Decision Drivers`. Optional.\nconsidered:\n    `## Considered Options`. Optional.\noutcome:\n    `## Decision Outcome` (mandatory lead paragraph + optional\n    `### Consequences`/`### Confirmation`). Mandatory.\nrelated_artifacts:\n    `## Related Artifacts` (four all-optional H3 bullet lists). Optional.\npros_and_cons:\n    `## Pros and Cons` (`### Option {N}: {name}` entries, >=1 if\n    present). Optional.\nmore_information:\n    `## More Information`. Optional.\nupdates:\n    `## Updates` (>=1 entry if present). Optional; last section.",
+      "description": "The `dec` body: a single H1 section with the fields below.\n\nThe H1 heading text is free-form. Keeps the ADR's general structure\n(MADR headings + an options collection) on the generic `models.md`\nengine -- see the module docstring.\n\nParameters\n----------\ncontext:\n    `## Context and Problem Statement`. Mandatory.\ndrivers:\n    `## Decision Drivers`. Optional.\nconsidered:\n    `## Considered Options`. Optional.\noutcome:\n    `## Decision Outcome` (mandatory lead paragraph + optional\n    `### Consequences`/`### Confirmation`). Mandatory.\nroles_and_responsibilities:\n    `## Roles and Responsibilities` (RASCI composite). Mandatory (unlike\n    `sop`'s own optional equivalent) -- a decision must always have a\n    named accountable owner.\ntags:\n    `## Tags`. Optional.\nsource:\n    `## Source`. Mandatory.\nrelated_artifacts:\n    `## Related Artifacts` (four all-optional H3 bullet lists). Optional.\npros_and_cons:\n    `## Pros and Cons` (`### Option {N}: {name}` entries, >=1 if\n    present). Optional.\nmore_information:\n    `## More Information`. Optional.\nupdates:\n    `## Updates` (>=1 entry if present). Optional; last section.",
       "properties": {
         "considered": {
           "anyOf": [
@@ -188,6 +225,26 @@
           "default": null,
           "description": "`## Related Artifacts` section. Optional."
         },
+        "roles_and_responsibilities": {
+          "$ref": "#/$defs/RolesAndResponsibilities",
+          "description": "`## Roles and Responsibilities` section (RASCI composite). Mandatory."
+        },
+        "source": {
+          "$ref": "#/$defs/Source",
+          "description": "`## Source` section. Mandatory."
+        },
+        "tags": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Tags"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`## Tags` section. Optional."
+        },
         "updates": {
           "anyOf": [
             {
@@ -203,7 +260,9 @@
       },
       "required": [
         "context",
-        "outcome"
+        "outcome",
+        "roles_and_responsibilities",
+        "source"
       ],
       "title": "Decision",
       "type": "object"
@@ -290,6 +349,29 @@
       "title": "Goals",
       "type": "object"
     },
+    "Informed": {
+      "description": "`### Informed` under `## Roles and Responsibilities` -- those who are\nkept up to date on the decision or its outcome.\n\nSubclasses the shared `models.md.InformedBase` (feat-29-dec-source-roles)\n-- see the general `specmgr://rasci` resource for RASCI role definitions.",
+      "properties": {
+        "items": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/MarkdownListItem"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Bullet list naming the informed parties, or ``None`` when the heading is present with no items. Optional; the heading MAY appear with zero items.",
+          "title": "Items"
+        }
+      },
+      "title": "Informed",
+      "type": "object"
+    },
     "MarkdownComment": {
       "description": "A standalone HTML comment block (`\"html_block\"`, e.g. `<!-- some note -->`).\n\nDeliberately leaf-only, like `MarkdownCodeBlock`. Declare an optional\n`comment: MarkdownComment | None` field on any `MarkdownStr` subclass to\nlet a value be preceded by such an explanatory comment without it\nbreaking that class's own structural field matching. See `get_extent`/\n`from_text`/`text` for the full mechanics.",
       "properties": {},
@@ -300,6 +382,28 @@
       "description": "One item (\"li\") of a markdown bullet or numbered list.\n\nUsed only as `items: list[MarkdownListItem]` (or `list[MarkdownListItem] |\nNone`) on a `MarkdownSection`/`MarkdownParagraph`/`MarkdownListItem` --\nthere is no separate list-container class, and a bare item cannot be\nparsed as a top-level/scalar field on its own; every item is assumed to\nstart with at least one paragraph (its own lead text).\n\nLeaf (no declared nested fields, the default): `_value` holds the item's\ncomplete extent verbatim, marker included. Composite (a subclass declares\nfields): `_value` holds only the item's own leading paragraph, marker\nincluded -- the marker cannot be reconstructed from class metadata alone,\nso it is kept verbatim -- and the remainder is dedented and delegated to\nnested field parsing; `__str__` re-indents the children's rendered output\nby the marker's own width before recombining.\n\nRound-trip note: a tight source list currently round-trips to a\nstructurally-equivalent loose list rather than byte-exact (loose lists\nremain byte-exact) -- an accepted, documented exception; see\n`from_text`/`__str__` docstrings below for the full mechanics.",
       "properties": {},
       "title": "MarkdownListItem",
+      "type": "object"
+    },
+    "MarkdownListItemWithNotes": {
+      "description": "One list item that captures continuation paragraphs (loose-list notes) via a declared `notes` field.\n\nMirrors `ExtensionItem`'s docstring: adds `notes` for captured continuation\nparagraphs inside a list item, so they appear in ``model_dump()``/JSON output\ninstead of being lost to Pydantic's private-attribute invisibility. Delegates\n``get_extent()`` / ``from_text()`` / ``__str__()`` to the inherited\n``MarkdownListItem`` (no new extent logic needed; ``MarkdownStr.process_list_field()``\niterates items by ``get_extent()`` and the field-distribution loop picks up\nremaining text).",
+      "properties": {
+        "notes": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/MarkdownParagraph"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Notes"
+        }
+      },
+      "title": "MarkdownListItemWithNotes",
       "type": "object"
     },
     "MarkdownParagraph": {
@@ -411,6 +515,136 @@
         "items"
       ],
       "title": "Requirements",
+      "type": "object"
+    },
+    "Responsible": {
+      "description": "`### Responsible` under `## Roles and Responsibilities` -- those who\ncarry out the decision or its consequences.\n\nSubclasses the shared `models.md.ResponsibleBase` (feat-29-dec-source-roles)\n-- see the general `specmgr://rasci` resource for RASCI role definitions.",
+      "properties": {
+        "items": {
+          "description": "Bullet list naming the responsible parties; must contain at least one item.",
+          "items": {
+            "$ref": "#/$defs/MarkdownListItem"
+          },
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "Responsible",
+      "type": "object"
+    },
+    "RolesAndResponsibilities": {
+      "description": "`## Roles and Responsibilities` -- the RASCI responsibility assignment\nfor this decision. Mandatory on every `dec` document (unlike `sop`'s own\noptional equivalent) -- a decision must always have a named accountable\nowner. `### Accountable` and `### Responsible` are both mandatory (strict-\nRACI \"always has an owner and a doer\"), while `### Support`/\n`### Consulted`/`### Informed` stay independently optional and MAY each\nbe present with zero list items. See the general `specmgr://rasci`\nresource for RASCI role definitions.\n\nSubclasses the shared `models.md.RolesAndResponsibilitiesBase`\n(feat-29-dec-source-roles), which also carries the `@alias(value=\"Roles\nand Responsibilities\", ...)` override this class needs -- inherited\nautomatically, not redeclared here. The fields below narrow the base\nclass's field types to `dec`'s own concrete `Accountable`/`Responsible`/\n`Support`/`Consulted`/`Informed` subclasses declared above.\n\nParameters\n----------\naccountable:\n    `### Accountable` sub-section (single paragraph). Mandatory.\nresponsible:\n    `### Responsible` sub-section (bullet list, >=1 item). Mandatory.\nsupport:\n    `### Support` sub-section (bullet list, MAY be empty). Optional.\nconsulted:\n    `### Consulted` sub-section (bullet list, MAY be empty). Optional.\ninformed:\n    `### Informed` sub-section (bullet list, MAY be empty). Optional.",
+      "properties": {
+        "accountable": {
+          "$ref": "#/$defs/Accountable",
+          "description": "`### Accountable` sub-section (single paragraph). Mandatory once this container is present."
+        },
+        "consulted": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Consulted"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### Consulted` sub-section. Optional; MAY be empty."
+        },
+        "informed": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Informed"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### Informed` sub-section. Optional; MAY be empty."
+        },
+        "responsible": {
+          "$ref": "#/$defs/Responsible",
+          "description": "`### Responsible` sub-section (bullet list, >=1 item). Mandatory once this container is present."
+        },
+        "support": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Support"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### Support` sub-section. Optional; MAY be empty."
+        }
+      },
+      "required": [
+        "accountable",
+        "responsible"
+      ],
+      "title": "RolesAndResponsibilities",
+      "type": "object"
+    },
+    "Source": {
+      "description": "`## Source` -- single-line value naming the origin/authority of this\ndecision (e.g. an issue, a meeting, a stakeholder request). Mandatory.\n\nSubclasses the shared `models.md.SourceBase` (feat-29-dec-source-roles) --\nthe field declaration itself lives there; this class exists so `dec`\nstill declares and owns its own concrete `Source` type. Note: the\ngenerated JSON Schema's `value` field description comes from\n`SourceBase` and is intentionally domain-neutral (\"this document\"),\nnot the domain-specific \"this decision\" wording used above -- see\n`SourceBase`'s own comment for the rationale (REQ-016).",
+      "properties": {
+        "value": {
+          "$ref": "#/$defs/MarkdownParagraph",
+          "description": "Single-line value naming the origin/authority of this document."
+        }
+      },
+      "required": [
+        "value"
+      ],
+      "title": "Source",
+      "type": "object"
+    },
+    "Support": {
+      "description": "`### Support` under `## Roles and Responsibilities` -- those who\nprovide resources or assistance to the responsible parties.\n\nSubclasses the shared `models.md.SupportBase` (feat-29-dec-source-roles)\n-- see the general `specmgr://rasci` resource for RASCI role definitions.",
+      "properties": {
+        "items": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/MarkdownListItem"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Bullet list naming the support parties, or ``None`` when the heading is present with no items. Optional; the heading MAY appear with zero items.",
+          "title": "Items"
+        }
+      },
+      "title": "Support",
+      "type": "object"
+    },
+    "Tags": {
+      "description": "`## Tags` -- bullet list of free-form labels for grouping/filtering\ndecisions. Optional. Absorbed from the DEC half of\n`feat-133-tags-dec-rsk` (issue #133), structurally identical to `req`'s\nexisting `Tags` model.",
+      "properties": {
+        "items": {
+          "description": "Bullet list of free-form labels for grouping/filtering decisions; must contain at least one item.",
+          "items": {
+            "$ref": "#/$defs/MarkdownListItemWithNotes"
+          },
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "Tags",
       "type": "object"
     },
     "UpdateEntry": {

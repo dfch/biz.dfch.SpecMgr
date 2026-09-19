@@ -866,14 +866,8 @@ cross-references to acceptance criteria, one per line
 `### Accountable` under `## Roles and Responsibilities` -- the single
 owner who is ultimately answerable for the SOP.
 
-A single mandatory paragraph (never a bullet list): exactly one owner,
-structurally discouraging multiple owners. See the general
-`specmgr://rasci` resource for RASCI role definitions.
-
-Parameters
-----------
-value:
-    The single paragraph naming the accountable party. Mandatory.
+Subclasses the shared `models.md.AccountableBase` (feat-29-dec-source-roles)
+-- see the general `specmgr://rasci` resource for RASCI role definitions.
 
 **Methods:**
 
@@ -1714,16 +1708,8 @@ value:
 `### Consulted` under `## Roles and Responsibilities` -- those whose
 opinions are sought before or during the work.
 
-An optional bullet list that MAY be present with zero list items (an
-intentional "considered, currently empty" placeholder distinct from
-omitting the heading entirely). See the general `specmgr://rasci` resource
-for RASCI role definitions.
-
-Parameters
-----------
-items:
-    Bullet list naming the consulted parties, or ``None`` when the heading
-    is present with no items. Optional as a whole.
+Subclasses the shared `models.md.ConsultedBase` (feat-29-dec-source-roles)
+-- see the general `specmgr://rasci` resource for RASCI role definitions.
 
 **Methods:**
 
@@ -5081,16 +5067,8 @@ to goals, one per line (e.g. "GOL-0007: <title>").
 `### Informed` under `## Roles and Responsibilities` -- those who are
 kept up to date on progress or outcomes.
 
-An optional bullet list that MAY be present with zero list items (an
-intentional "considered, currently empty" placeholder distinct from
-omitting the heading entirely). See the general `specmgr://rasci` resource
-for RASCI role definitions.
-
-Parameters
-----------
-items:
-    Bullet list naming the informed parties, or ``None`` when the heading
-    is present with no items. Optional as a whole.
+Subclasses the shared `models.md.InformedBase` (feat-29-dec-source-roles)
+-- see the general `specmgr://rasci` resource for RASCI role definitions.
 
 **Methods:**
 
@@ -10138,14 +10116,8 @@ cross-references to requirements, one per line
 `### Responsible` under `## Roles and Responsibilities` -- those who do
 the work the SOP describes.
 
-A mandatory bullet list (>=1 entry). See the general `specmgr://rasci`
-resource for RASCI role definitions.
-
-Parameters
-----------
-items:
-    Bullet list naming the responsible parties; must contain at least one
-    item.
+Subclasses the shared `models.md.ResponsibleBase` (feat-29-dec-source-roles)
+-- see the general `specmgr://rasci` resource for RASCI role definitions.
 
 **Methods:**
 
@@ -10989,6 +10961,13 @@ for this SOP. Optional as a whole; once present, `### Accountable` and
 a doer"), while `### Support`/`### Consulted`/`### Informed` stay
 independently optional and MAY each be present with zero list items. See
 the general `specmgr://rasci` resource for RASCI role definitions.
+
+Subclasses the shared `models.md.RolesAndResponsibilitiesBase`
+(feat-29-dec-source-roles), which also carries the `@alias(value="Roles
+and Responsibilities", ...)` override this class needs -- inherited
+automatically, not redeclared here. The fields below narrow the base
+class's field types to `sop`'s own concrete `Accountable`/`Responsible`/
+`Support`/`Consulted`/`Informed` subclasses declared above.
 
 Parameters
 ----------
@@ -16090,16 +16069,8 @@ name:
 `### Support` under `## Roles and Responsibilities` -- those who
 provide resources or assistance to the responsible parties.
 
-An optional bullet list that MAY be present with zero list items (an
-intentional "considered, currently empty" placeholder distinct from
-omitting the heading entirely). See the general `specmgr://rasci` resource
-for RASCI role definitions.
-
-Parameters
-----------
-items:
-    Bullet list naming the support parties, or ``None`` when the heading
-    is present with no items. Optional as a whole.
+Subclasses the shared `models.md.SupportBase` (feat-29-dec-source-roles)
+-- see the general `specmgr://rasci` resource for RASCI role definitions.
 
 **Methods:**
 
