@@ -104,6 +104,12 @@ from ....models.md import (
 #: only makes `.` match `\n`, not a literal space) -- `\s+` matches both a
 #: plain space and a soft-wrapped newline in its place (REQ-010).
 #:
+#: `_validate_problem_statement` below applies this pattern via `fullmatch()`,
+#: not `match()`/`search()` -- belt-and-suspenders with the pattern's own
+#: `^`/`$` anchors -- so a partial match against only a prefix or suffix of
+#: `value.text` is rejected, without needing to cross-reference that
+#: validator to confirm it.
+#:
 #: Known, accepted trade-off (REQ-013): each blank's `(?:.+)` is greedy and
 #: can backtrack across an embedded joiner phrase inside a *blank's own*
 #: free text. For example, a `[Current state]` blank whose own text

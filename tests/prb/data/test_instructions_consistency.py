@@ -49,12 +49,9 @@ _DERIVE_MAPPING_CLAUSE = (
 class TestDeriveMappingClauseConsistency(unittest.TestCase):
     """`_DERIVE_MAPPING_CLAUSE` must appear verbatim in both packaged instruction files."""
 
-    def test_clause_appears_verbatim_in_create_instructions(self) -> None:
-        text = read_packaged_text("prb", "create_instructions", "md")
+    def test_clause_appears_verbatim_in_both_instruction_files(self) -> None:
+        for stem in ("create_instructions", "update_instructions"):
+            with self.subTest(stem=stem):
+                text = read_packaged_text("prb", stem, "md")
 
-        self.assertIn(_DERIVE_MAPPING_CLAUSE, text)
-
-    def test_clause_appears_verbatim_in_update_instructions(self) -> None:
-        text = read_packaged_text("prb", "update_instructions", "md")
-
-        self.assertIn(_DERIVE_MAPPING_CLAUSE, text)
+                self.assertIn(_DERIVE_MAPPING_CLAUSE, text)

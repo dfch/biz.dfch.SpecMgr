@@ -445,6 +445,38 @@ class TestProblemStatementMandatoryAndTemplateValidated(unittest.TestCase):
 
         self.assertIn("is causing extra work is causing delays", sut.problem_statement.text)
 
+    def test_specific_issue_blank_containing_a_literal_for_joiner_substring_still_matches_documented_trade_off(
+        self,
+    ) -> None:
+        """REQ-016: a second documentation test, covering the `, for` joiner boundary.
+
+        Mirrors `test_blank_containing_a_literal_joiner_substring_still_matches_documented_trade_off`
+        above (which covers the `is causing` joiner) but at a different
+        joiner boundary: here the sentence contains a second, literal
+        ", for" occurrence ahead of the real one. Greedy backtracking always
+        resolves the actual ", for" delimiter against the *rightmost*
+        occurrence in the sentence, so the earlier occurrence is absorbed
+        into the `[specific issue]` blank's own captured text rather than
+        rejected -- the same accepted, documented trade-off (see the
+        pattern's explanatory comment block), demonstrated at a second
+        joiner. (Embedding the extra occurrence inside the *following*
+        `[stakeholder]` blank instead was considered but is not achievable:
+        because backtracking always treats the rightmost ", for" occurrence
+        as the actual delimiter, a `[stakeholder]` blank can structurally
+        never itself retain a literal ", for" substring while the sentence
+        still matches -- confirmed empirically before writing this test.)
+        """
+        kwargs = _minimal_prb_kwargs()
+        kwargs["problem_statement"] = MarkdownParagraph.from_text(
+            format_text(
+                "The current process is causing delays, for users, for contractors because of missing automation."
+            )
+        )
+
+        sut = Prb(**kwargs)
+
+        self.assertIn("delays, for users, for contractors", sut.problem_statement.text)
+
 
 class TestParsePrbRejectsMissingLeadParagraph(unittest.TestCase):
     """`Prb.from_text` structurally rejects a body with no lead paragraph at all (ACC-001, REQ-008 trigger).

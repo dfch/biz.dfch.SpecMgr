@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-17 09:57:31.305+02:00'
 id: feat-132-prb-update
-status: progress
+status: review
 type: feat
-updated: '2026-09-19 14:06:32.446+02:00'
+updated: '2026-09-19 23:15:00.000+02:00'
 version: 1.0.0
 ---
 
@@ -81,10 +81,10 @@ schema-checked opening framing before the existing 5W2H/Gap/Impact/Future State 
 - [x] ACC-009: `_PROBLEM_STATEMENT_PATTERN`'s comment block explicitly names the greedy-backtracking trade-off (REQ-013); a test in `tests/prb/models/v1/test_body.py` demonstrates the documented, accepted edge case.
 - [x] ACC-010: `prb_create_instructions.md` contains a worked example of the one-pair-to-one-question tie-break (REQ-014); `tests/prb/prompts/test_create_prb.py` asserts its presence.
 - [x] ACC-011: The `What`/`Who`/`Why` -> 4-blank derive-mapping clause is byte-identical between `prb_create_instructions.md` and `prb_update_instructions.md` (REQ-015), enforced by a dedicated consistency test that fails on future drift.
-- [ ] ACC-012: `tests/prb/models/v1/test_body.py` contains a second greedy-backtracking demonstration test covering a different joiner from the existing one (REQ-016), and the malformed-template rejection test continues to pass.
-- [ ] ACC-013: No live (frontmatter or generated-doc) reference to the invalid status value `"in-progress"` remains, and this file's own `### Updates`/`### Decisions Made` narrative reconciles or annotates its historical `"in-progress"` mentions per REQ-017.
-- [ ] ACC-014: The `### Decisions Made` log accurately reflects the actual two-column split confirmed by review (REQ-018), via a follow-up entry.
-- [ ] ACC-015: `AGENTS.md`'s `prb` bullet uses consistent 2-space continuation indentation matching sibling bullets (REQ-019).
+- [x] ACC-012: `tests/prb/models/v1/test_body.py` contains a second greedy-backtracking demonstration test covering a different joiner from the existing one (REQ-016), and the malformed-template rejection test continues to pass.
+- [x] ACC-013: No live (frontmatter or generated-doc) reference to the invalid status value `"in-progress"` remains, and this file's own `### Updates`/`### Decisions Made` narrative reconciles or annotates its historical `"in-progress"` mentions per REQ-017.
+- [x] ACC-014: The `### Decisions Made` log accurately reflects the actual two-column split confirmed by review (REQ-018), via a follow-up entry.
+- [x] ACC-015: `AGENTS.md`'s `prb` bullet uses consistent 2-space continuation indentation matching sibling bullets (REQ-019).
 
 ### Scope
 
@@ -231,13 +231,13 @@ wording is now reworded rather than merely preserved (REQ-009).
 
 #### Phase 6: Second External-Review Hardening (found during a second external `feat-reviewer` review pass after Phase 5, not part of GitHub issue #132's original request)
 
-- [ ] Task 6.1: In `tests/prb/models/v1/test_body.py`, add a second greedy-backtracking documentation test (REQ-016, ACC-012) demonstrating the accepted trade-off at a different joiner boundary than the existing `"is causing"` case (e.g. a `[stakeholder]` blank whose text itself contains a literal `", for "` substring), asserting `Prb(**kwargs)` still succeeds; leave `test_malformed_template_raises_validation_error_naming_template_and_text` unchanged.
-- [ ] Task 6.2: Reconcile this file's own historical `### Updates` narrative mentions of the out-of-vocabulary status word `"in-progress"` (REQ-017, ACC-013) -- add a short clarifying note near the top of `### Updates` (or at each affected entry) stating that those entries predate the correction to the actual `FeatFrontmatter.status` value `progress`, without rewriting the entries themselves.
-- [ ] Task 6.3: Add a new, dated `### Decisions Made` entry (append-only, REQ-018, ACC-014) correcting the 2026-09-19 21:00:00.000Z entry's "every row ... column 50" claim to accurately state the file's actual two-column split (comment column 48 for the H1/comment/`problem_statement`/`## Current State`/`### Summary` rows, 49 for the rest), confirming the originally-targeted `### What Is the Problem?` row itself is still correctly aligned with its own block.
-- [ ] Task 6.4: Reformat `AGENTS.md`'s `prb` bullet-continuation lines to the surrounding 2-space convention (REQ-019, ACC-015), e.g. via `specmgr_mdformat` or a manual rewrap; no wording change.
-- [ ] Task 6.5 (optional, Improvement, no ACC): In `prb/models/v1/body.py`, add one sentence to `_PROBLEM_STATEMENT_PATTERN`'s explanatory comment block noting the pattern is matched via `fullmatch()` (belt-and-suspenders with the regex itself), so a reader does not need to cross-reference `_validate_problem_statement` to confirm partial matches are rejected.
-- [ ] Task 6.6 (optional, Improvement, no ACC): Consider collapsing `tests/prb/data/test_instructions_consistency.py`'s two near-duplicate test methods (`test_clause_appears_verbatim_in_create_instructions`/`..._update_instructions`) into one parametrized test over `("create_instructions", "update_instructions")`.
-- [ ] Task 6.7: Run the full quality gate (`ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, `pytest -n auto --cov=src`), update Progress (Current Status, a dated Updates entry, a Decisions Made entry noting Phase 6 originated from a second external `feat-reviewer` review rather than the GitHub issue), and flip `status` back to `review`.
+- [x] Task 6.1: In `tests/prb/models/v1/test_body.py`, add a second greedy-backtracking documentation test (REQ-016, ACC-012) demonstrating the accepted trade-off at a different joiner boundary than the existing `"is causing"` case (e.g. a `[stakeholder]` blank whose text itself contains a literal `", for "` substring), asserting `Prb(**kwargs)` still succeeds; leave `test_malformed_template_raises_validation_error_naming_template_and_text` unchanged.
+- [x] Task 6.2: Reconcile this file's own historical `### Updates` narrative mentions of the out-of-vocabulary status word `"in-progress"` (REQ-017, ACC-013) -- add a short clarifying note near the top of `### Updates` (or at each affected entry) stating that those entries predate the correction to the actual `FeatFrontmatter.status` value `progress`, without rewriting the entries themselves.
+- [x] Task 6.3: Add a new, dated `### Decisions Made` entry (append-only, REQ-018, ACC-014) correcting the 2026-09-19 21:00:00.000Z entry's "every row ... column 50" claim to accurately state the file's actual two-column split (comment column 48 for the H1/comment/`problem_statement`/`## Current State`/`### Summary` rows, 49 for the rest), confirming the originally-targeted `### What Is the Problem?` row itself is still correctly aligned with its own block.
+- [x] Task 6.4: Reformat `AGENTS.md`'s `prb` bullet-continuation lines to the surrounding 2-space convention (REQ-019, ACC-015), e.g. via `specmgr_mdformat` or a manual rewrap; no wording change.
+- [x] Task 6.5 (optional, Improvement, no ACC): In `prb/models/v1/body.py`, add one sentence to `_PROBLEM_STATEMENT_PATTERN`'s explanatory comment block noting the pattern is matched via `fullmatch()` (belt-and-suspenders with the regex itself), so a reader does not need to cross-reference `_validate_problem_statement` to confirm partial matches are rejected.
+- [x] Task 6.6 (optional, Improvement, no ACC): Consider collapsing `tests/prb/data/test_instructions_consistency.py`'s two near-duplicate test methods (`test_clause_appears_verbatim_in_create_instructions`/`..._update_instructions`) into one parametrized test over `("create_instructions", "update_instructions")`.
+- [x] Task 6.7: Run the full quality gate (`ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, `pytest -n auto --cov=src`), update Progress (Current Status, a dated Updates entry, a Decisions Made entry noting Phase 6 originated from a second external `feat-reviewer` review rather than the GitHub issue), and flip `status` back to `review`.
 
 ## Progress
 
@@ -291,9 +291,49 @@ has two distinct comment columns); and a few `AGENTS.md` `prb`-bullet
 continuation lines carry inconsistent leading whitespace -- plus two
 optional, non-blocking Improvement suggestions (documenting the regex's
 `fullmatch()` anchoring; parametrizing two near-duplicate consistency tests).
-These are tracked as REQ-016 through REQ-019/ACC-012 through ACC-015 and a
-new Phase 6 (Tasks 6.1-6.7) above; none has been implemented yet -- `status`
-is reopened from `review` to `progress` pending Phase 6.
+These are tracked as REQ-016 through REQ-019/ACC-012 through ACC-015 and
+Phase 6 (Tasks 6.1-6.7) above.
+
+**Update, same day**: Phase 6 (Second External-Review Hardening) is now also
+complete -- Tasks 6.1-6.7, including both optional Improvement tasks (6.5,
+6.6), all implemented. `tests/prb/models/v1/test_body.py` now has a second
+greedy-backtracking documentation test covering the `, for` joiner boundary
+(REQ-016, ACC-012) alongside the existing `is causing` one; the malformed-
+template rejection test remains unchanged and still fails correctly on
+genuinely non-matching text. This file's own `### Updates` log now carries a
+clarifying note (added directly below the "prepend new entries" comment)
+stating that its five historical `"in-progress"` mentions predate the
+correction to the actual `FeatFrontmatter.status` value `progress` (REQ-017,
+ACC-013), without rewriting those entries. A new, dated `### Decisions Made`
+entry corrects the 2026-09-19 21:00:00.000Z entry's "every row ... column 50"
+overgeneralization: the module docstring diagram in
+`prb/models/v1/body.py` was re-measured directly and genuinely has two
+distinct comment-start columns (48 for the H1/comment/`problem_statement`/
+`## Current State`/`### Summary` rows, 49 for every other row), matching the
+plan's own REQ-018/Task 6.3 numbers exactly; the originally-targeted
+`### What Is the Problem?` row is confirmed still correctly aligned with its
+own sibling block (REQ-018, ACC-014). `AGENTS.md`'s `prb` bullet's
+continuation lines (previously 3-space indented in several places) are now
+reformatted to the surrounding 2-space convention, with no wording change
+(REQ-019, ACC-015) -- confirmed scoped to only the `prb` bullet, since a
+full-file `specmgr_mdformat` pass would have reflowed several *other*,
+unrelated bullets' own pre-existing indentation inconsistencies as well, out
+of this feature's scope. `_PROBLEM_STATEMENT_PATTERN`'s explanatory comment
+block now also notes the pattern is matched via `fullmatch()`, belt-and-
+suspenders with the pattern's own `^`/`$` anchors (Task 6.5, optional,
+no ACC). `tests/prb/data/test_instructions_consistency.py`'s two near-
+duplicate test methods were collapsed into one, looping over
+`("create_instructions", "update_instructions")` with `self.subTest`,
+mirroring the house `_Case`/`subTest` parametrization style already used by
+`tests/general/tools/test_validate.py` (Task 6.6, optional, no ACC -- judged
+low-risk and net-positive; `subTest` still names the failing file on any
+future regression, so no clarity was lost). All 15 acceptance criteria
+(ACC-001 through ACC-015) are now met. The full quality gate (`ruff format
+--check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, the
+full `pytest -n auto --cov=src` suite -- 3331 passed, unchanged from the end
+of Phase 5: Task 6.1 added one test, Task 6.6 removed one by collapsing two
+into one) is green at the end of Phase 6. `status` moves from `progress`
+back to `review`. Final sign-off is now pending review.
 
 ### Blockers
 
@@ -302,6 +342,73 @@ is reopened from `review` to `progress` pending Phase 6.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+> **Note (Task 6.2, REQ-017, added 2026-09-19):** the five entries below dated
+> 2026-09-19 15:20:00.000Z through 2026-09-19 21:00:00.000Z narrate the
+> feature's `status` transitioning to/from the literal word `"in-progress"`.
+> That word is not a value in `FeatFrontmatter.status`'s closed vocabulary
+> (`planning`/`progress`/`review`/`done`); those entries predate the
+> correction to the actual value, `progress`, which `AGENTS.md` and this
+> file's own frontmatter already reflect. They are left as-is (append-only
+> historical log) rather than silently rewritten -- read `"in-progress"`
+> there as `progress` throughout.
+
+#### 2026-09-19 23:00:00.000Z - Phase 6 (Second External-Review Hardening) implemented
+
+Implemented Task 6.1-6.7 in full (including both optional Improvement tasks,
+6.5 and 6.6), touching only `tests/prb/models/v1/test_body.py`,
+`tests/prb/data/test_instructions_consistency.py`,
+`src/biz/dfch/specmgr/prb/models/v1/body.py`, and `AGENTS.md` -- no other
+Phase 1-5 territory was touched. Added
+`test_specific_issue_blank_containing_a_literal_for_joiner_substring_still_matches_documented_trade_off`
+to `TestProblemStatementMandatoryAndTemplateValidated`, demonstrating the
+accepted greedy-backtracking trade-off at the `, for` joiner boundary
+(REQ-016, ACC-012): a sentence with two literal ", for" occurrences still
+parses, with the earlier occurrence absorbed into the `[specific issue]`
+blank's own captured text rather than rejected. Verified empirically (before
+writing the test) that the plan's own parenthetical suggestion -- embedding
+the duplicate ", for" inside the *`[stakeholder]`* blank instead -- is not
+actually achievable: because `(?:.+)` backtracks against the *rightmost*
+occurrence of a joiner literal, any earlier occurrence is always absorbed by
+the *preceding* blank, never the following one, so a `[stakeholder]` blank
+can never itself retain a literal ", for" substring while the sentence still
+matches; the test's docstring records this. The existing
+`test_malformed_template_raises_validation_error_naming_template_and_text`
+was left unchanged and still correctly fails on genuinely non-matching text.
+Added a clarifying blockquote note directly below this section's own
+"prepend new entries" comment (Task 6.2, REQ-017, ACC-013), and a new, dated
+`### Decisions Made` entry (2026-09-19 22:30:00.000Z, below) correcting the
+2026-09-19 21:00:00.000Z entry's "every row ... column 50" overgeneralization
+(Task 6.3, REQ-018, ACC-014) -- re-measured `prb/models/v1/body.py`'s module
+docstring diagram directly (a 0-indexed column check of every non-blank
+line 27-45) rather than trusting either the plan's or the prior entry's
+numbers blindly, and confirmed the plan's own REQ-018/Task 6.3 claim (comment
+column 48 for the H1/comment/`problem_statement`/`## Current State`/
+`### Summary` rows, 49 for every other row) is exactly accurate; the
+originally-targeted `### What Is the Problem?` row is confirmed still
+correctly aligned with its own sibling block. Reformatted `AGENTS.md`'s `prb`
+bullet-continuation lines from a mix of 3- and 2-space indentation to a
+uniform 2 spaces, with zero wording change (Task 6.4, REQ-019, ACC-015);
+deliberately did *not* run the whole file through `specmgr_mdformat`, since
+that reflowed several *other*, unrelated bullets' own pre-existing
+indentation inconsistencies too -- out of this feature's scope, reverted
+after inspection, and the targeted manual fix applied instead (see Decisions
+Made). Added one sentence to `_PROBLEM_STATEMENT_PATTERN`'s explanatory
+comment block noting `_validate_problem_statement` applies the pattern via
+`fullmatch()`, belt-and-suspenders with the pattern's own `^`/`$` anchors, so
+a reader does not need to cross-reference that validator to confirm a
+partial match is rejected (Task 6.5, optional, no ACC). Collapsed
+`tests/prb/data/test_instructions_consistency.py`'s two near-duplicate test
+methods into one, looping over `("create_instructions", "update_instructions")`
+with `self.subTest(stem=...)`, mirroring the house `_Case`/`subTest`
+parametrization style already used by `tests/general/tools/test_validate.py`
+(Task 6.6, optional, no ACC -- see Decisions Made for the low-risk/
+net-positive judgment call). Quality gate green: `ruff format --check`,
+`ruff check`, `vulture src/ whitelist.py --min-confidence 60`, and the full
+`pytest -n auto --cov=src` suite (3331 passed, unchanged from the end of
+Phase 5 -- Task 6.1's one new test offset by Task 6.6's two-methods-into-one
+collapse). All 15 acceptance criteria (ACC-001 through ACC-015) are now met;
+the feature's status moves from `progress` back to `review`.
 
 #### 2026-09-19 22:00:00.000Z - Phase 6 (Second External-Review Hardening) planned from another external `feat-reviewer` review pass
 
@@ -633,6 +740,71 @@ confirmation.
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-19 23:00:00.000Z - Phase 6 originated from a second external `feat-reviewer` review, not the GitHub issue
+
+Like Phases 4 and 5, Phase 6 (REQ-016 through REQ-019, ACC-012 through
+ACC-015, Tasks 6.1-6.7) was found during a second, independent external
+`feat-reviewer` review pass of the merged, Phase-5-complete implementation --
+not part of GitHub issue #132's original request. Recorded here explicitly,
+per this task's own instruction, since the "Related PRs / Commits" section
+below still only cites issue #132 and could otherwise read as if every task
+in this plan traces back to it.
+
+#### 2026-09-19 22:45:00.000Z - Task 6.4 fixed only the `prb` bullet, not the whole `AGENTS.md` file
+
+Running the whole `AGENTS.md` file through the `specmgr_mdformat` tool (as
+Task 6.4 suggested as one option) was tried and then reverted: it reflowed
+several *other* bullets' (`uc`, `tsk`, `qa`, `gol`, `rsk`, ...) own
+pre-existing 3-space-vs-2-space indentation inconsistencies too, none of
+which this feature touched or is scoped to fix (REQ-019 names only the `prb`
+bullet, "touched by this feature's own edits"). A manual, targeted rewrap of
+just the `prb` bullet's continuation lines was applied instead, confirmed via
+`git diff`'s hunk markers to touch only that bullet's own two affected line
+ranges. Fixing the other bullets' pre-existing indentation is left to
+whichever future change actually touches them, consistent with this
+feature's narrow `prb`-domain scope.
+
+#### 2026-09-19 22:40:00.000Z - Task 6.6 collapse: parametrize via `subTest`, not the `parameterized` package
+
+Collapsed `tests/prb/data/test_instructions_consistency.py`'s two
+near-duplicate test methods into one, looping over
+`("create_instructions", "update_instructions")` with `self.subTest`, rather
+than skipping the optional task or reaching for the third-party
+`parameterized` package (not a dependency of this project). `subTest` is
+already the codebase's own house style for this exact shape of parametrized
+case (e.g. `tests/general/tools/test_validate.py`'s `_Case`/`subTest` loop,
+`tests/prb/models/v1/test_body.py`'s own `_QUESTION_CLASSES_AND_HEADINGS`
+loop), keeps per-case failure clarity (`subTest(stem=...)` still names which
+packaged file failed), and needed no new dependency -- judged low-risk and
+net-positive, so the optional refactor was done rather than skipped.
+
+#### 2026-09-19 22:30:00.000Z - Correcting the Task 5.3 entry's "column 50"/"every row" claim (REQ-018)
+
+A second external `feat-reviewer` review measured `prb/models/v1/body.py`'s
+module docstring ASCII layout diagram directly and found two distinct
+comment-start columns across its rows, not the single uniform "column 50"
+the 2026-09-19 21:00:00.000Z entry below claims for "every row". Re-measured
+the diagram myself (a 0-indexed column check of every non-blank line 27-45,
+i.e. every row from `# {H1 title}` through `## More Information`) before
+writing this entry, rather than trusting either the plan's or the prior
+entry's numbers blindly: the actual split is comment column **48** for the
+H1 row, the `<!-- optional leading comment -->` row, the
+`{fixed-template lead sentence}` (`problem_statement`) row, the
+`## Current State` row, and the `### Summary` row; and column **49** for
+every remaining row (`### What Is the Problem?` through
+`### How Often Is the Problem Observed?`, and `## Gap` through
+`## More Information`). This matches the plan's own REQ-018/Task 6.3 numbers
+exactly (48/49), so no further correction to those specific numbers is
+needed beyond recording them here. The specific,
+originally-Task-5.3-targeted `### What Is the Problem?` row is genuinely
+aligned with its own sibling block (all seven `### ...` question rows plus
+`## Gap`/`## Impact`/`## Future State`/`## References`/`## More Information`
+share column 49) -- Task 5.3's own conclusion that no code change was needed
+for that specific row stands. Only the prior entry's broader "every row ...
+same position" generalization was inaccurate, and it stays below unedited
+(append-only log) with this entry as its correction, per the plan's own
+ADR-vs-feature-decision convention for scoped-to-this-feature corrections.
 
 #### 2026-09-19 21:00:00.000Z - Task 5.3 made no code change: the targeted misalignment was already resolved
 
