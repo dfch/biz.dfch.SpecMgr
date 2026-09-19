@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-17 09:57:31.305+02:00'
 id: feat-132-prb-update
-status: review
+status: in-progress
 type: feat
-updated: '2026-09-19 16:30:00.000+02:00'
+updated: '2026-09-19 17:15:00.000+02:00'
 version: 1.0.0
 ---
 
@@ -112,6 +112,27 @@ schema-checked opening framing before the existing 5W2H/Gap/Impact/Future State 
   old wording (`tests/prb/prompts/test_create_prb.py::test_mentions_no_root_cause_section`)
   to match.
 
+- REQ-010: `prb/models/v1/body.py`'s `_PROBLEM_STATEMENT_PATTERN` must tolerate a
+  `problem_statement` paragraph whose soft-wrap lands exactly at one of its three fixed
+  literal joiners (`" is causing "`, `", for "`, `" because "`), since
+  `MarkdownParagraph.text` preserves a soft-wrapped sentence's embedded line breaks
+  verbatim (`mdformat` never reflows) and a literal single space would otherwise not
+  match an embedded `\n` even under `re.DOTALL` (which only makes `.` match `\n`, not a
+  literal `" "`). Fix by replacing each literal single space in the three joiners with
+  `\s+`, keeping `re.DOTALL` for the four blank captures. Found during a post-Phase-3
+  self-review, not part of GitHub issue #132's original request.
+
+- REQ-011: `_PROBLEM_STATEMENT_PATTERN`'s four named capture groups
+  (`current_state`/`specific_issue`/`stakeholder`/`underlying_cause`) are dead code --
+  only `fullmatch()`'s truthiness is ever checked, the groups themselves are never read.
+  Convert them to non-capturing groups (`(?:.+)`); no behavior or error-message change.
+
+- REQ-012: `prb/prompts/create_prb.py`'s module docstring says "a 12-step interview
+  flow", but `prb_create_instructions.md` numbers `## 0.` through `## 12.` -- 13
+  sections, an off-by-one drift versus `update_prb.py`'s own "N-step = section count"
+  convention (its "9-step revision flow" correctly counts `prb_update_instructions.md`'s
+  9 numbered sections). Reword to "13-step interview flow".
+
 ### Acceptance Criteria
 
 - [x] ACC-001: `create_prb`/`validate(type="prb")` reject a PRB body missing the mandatory
@@ -141,6 +162,9 @@ schema-checked opening framing before the existing 5W2H/Gap/Impact/Future State 
   paragraph) recovers via `get_prb(id, raw=True)` plus sentence insertion (REQ-008),
   then applies the originally requested change, leaving the result parseable by
   `get_prb`.
+- [ ] ACC-008: A `problem_statement` paragraph whose soft-wrap lands exactly at any of
+  the three literal joiners ("is causing"/"for"/"because") still passes `Prb`'s
+  `field_validator`/`create_prb`/`validate(type="prb")` (REQ-010).
 
 ### Scope
 
@@ -180,8 +204,7 @@ schema-checked opening framing before the existing 5W2H/Gap/Impact/Future State 
   recovery path, not an automated migration.
 - Creating a `prb/models/v2` package (considered and rejected -- see Decisions Made).
 - Any change to `sysrs`'s `### Problem Statement` cross-reference bullet shape
-  (`sysrs.models.v1.body.ProblemStatement`, nested under `## Business Context and
-  Goals`).
+  (`sysrs.models.v1.body.ProblemStatement`, nested under `## Business Context and Goals`).
 - Any change to the shared `models/md` parsing framework itself (confirmed unnecessary;
   see Design Notes).
 - Recording the linked QA as a structured `QA <uuid>: <title>` bullet in the new PRB's
@@ -321,13 +344,36 @@ wording is now reworded rather than merely preserved (REQ-009).
   shape, or the old "free of assumed causes" rationale, remain in `AGENTS.md`/
   `server.py` docstrings or the instruction data files.
 
+#### Phase 4: Post-Review Hardening (found during a self-review pass after Phase 3, not part of GitHub issue #132's original request)
+
+- [ ] Task 4.1: In `prb/models/v1/body.py`, update `_PROBLEM_STATEMENT_PATTERN`:
+  replace the three literal `" "` joiners (`" is causing "`, `", for "`,
+  `" because "`) with `\s+` so a soft-wrap landing exactly at one of them still
+  matches (REQ-010); convert the four named capture groups to non-capturing
+  `(?:.+)` (REQ-011), keeping `re.DOTALL`. Extend the pattern's explanatory comment
+  to cover the `\s+` rationale alongside the existing `re.DOTALL` rationale.
+- [ ] Task 4.2: Add 3 regression tests to `tests/prb/models/v1/test_body.py` --
+  one `problem_statement` paragraph per joiner (`is causing`/`for`/`because`), each
+  soft-wrapped exactly at that joiner, asserting `Prb(**kwargs)` still succeeds
+  (ACC-008). Leave the existing malformed-template rejection test
+  (`test_malformed_template_raises_validation_error_naming_template_and_text`)
+  unchanged -- it must keep failing on genuinely non-matching text.
+- [ ] Task 4.3: Fix `prb/prompts/create_prb.py`'s module docstring wording per
+  REQ-012 ("12-step" -> "13-step").
+- [ ] Task 4.4: Run the full quality gate (`ruff format --check`, `ruff check`,
+  `vulture src/ whitelist.py --min-confidence 60`, `pytest -n auto --cov=src`),
+  update Progress (Current Status, a dated Updates entry, a Decisions Made entry
+  noting Phase 4 originated from a self-review rather than the GitHub issue), and
+  flip `status` back to `review`.
+
 ## Progress
 
 ### Current Status
 
-**As of 2026-09-19**: All 3 phases are complete -- Phase 1 (Schema), Phase 2
-(Prompts), and Phase 3 (Verification and Docs). ACC-001 through ACC-007 are all
-fully met. `prb/models/v1/body.py`'s `Prb` model carries the mandatory
+**As of 2026-09-19**: Phases 1-3 are complete -- Phase 1 (Schema), Phase 2
+(Prompts), and Phase 3 (Verification and Docs); Phase 4 (Post-Review Hardening,
+added after a self-review pass) is planned but not yet implemented. ACC-001
+through ACC-007 are fully met; ACC-008 is pending Phase 4. `prb/models/v1/body.py`'s `Prb` model carries the mandatory
 `problem_statement: MarkdownParagraph` lead field with its code-level
 template-skeleton `field_validator`; the packaged template/example and both JSON
 schema copies (`docs/prb_schema.json`,
@@ -341,7 +387,8 @@ docstring, `AGENTS.md`'s `prb` bullet, and `CHANGELOG.md`'s `[Unreleased]` secti
 all reflect the feature; both JSON schema copies confirmed drift-free via a fresh
 `specmgr schema --type prb` run. The full quality gate (`ruff format --check`,
 `ruff check`, `vulture`, the full `pytest -n auto --cov=src` suite -- 3324 passed)
-is green. The feature is fully implemented and ready for final sign-off.
+was green at the end of Phase 3. Phase 4 (Task 4.1-4.4) is not yet implemented; the
+feature is not ready for final sign-off until it lands.
 
 ### Blockers
 
@@ -350,6 +397,23 @@ is green. The feature is fully implemented and ready for final sign-off.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-19 17:15:00.000Z - Phase 4 (Post-Review Hardening) planned from a self-review pass
+
+A post-Phase-3 review of the merged implementation (commits `c6ccad6`, `aedf6e6`,
+`def911f`) against the plan found three issues, none blocking but all worth fixing:
+(1) `_PROBLEM_STATEMENT_PATTERN`'s three literal single-space joiners (`" is causing "`,
+`", for "`, `" because "`) do not tolerate a soft-wrap landing exactly at one of them --
+`MarkdownParagraph.text` preserves embedded line breaks verbatim and `re.DOTALL` only
+makes `.` match `\n`, not a literal `" "` -- so an otherwise-valid sentence could be
+rejected purely due to word-wrap placement, with no existing test covering this edge
+case; (2) the pattern's four named capture groups are dead code, never read outside
+`fullmatch()`'s truthiness check; (3) `create_prb.py`'s module docstring says "a
+12-step interview flow" but `prb_create_instructions.md` numbers 13 sections (`## 0.`
+through `## 12.`), an off-by-one versus `update_prb.py`'s own "N-step = section count"
+convention. Added REQ-010/011/012, ACC-008, and Phase 4 (Tasks 4.1-4.4) to this plan to
+track the fixes; reopened `status` from `review` to `in-progress` pending Phase 4.
+Nothing under Phase 1-3's `prb/` code was touched by this update -- planning only.
 
 #### 2026-09-19 16:30:00.000Z - Phase 3 (Verification and Docs) implemented
 
@@ -370,8 +434,7 @@ without the lead paragraph fail `parse_prb`/`get_prb` until it is added, with
 `create_prb`'s `qa_id`/carry-over, `update_prb`'s recovery guidance) and
 `### Changed` (1 **BREAKING** bullet) entries, all citing GitHub issue #132,
 matching the file's existing heading/bullet/citation style. Regenerated
-`docs/api/`/`docs/GENERATED.md` via `specmgr docs` and `docs/MCP.md` via `specmgr
-mcp-docs` after the `server.py` docstring edit: confirmed regeneration is
+`docs/api/`/`docs/GENERATED.md` via `specmgr docs` and `docs/MCP.md` via `specmgr mcp-docs` after the `server.py` docstring edit: confirmed regeneration is
 idempotent -- the only diff produced was `docs/api/biz.dfch.specmgr.server.md`'s
 mirror of the docstring edit itself; `docs/GENERATED.md` and `docs/MCP.md` showed
 zero diff, confirming Phase 2's earlier regeneration already covered the `qa_id`
@@ -385,8 +448,7 @@ reference; only historical session logs and this README's own history retain the
 old phrasing, which is expected and correct). Confirmed
 `tests/prb/prompts/test_create_prb.py::test_mentions_no_root_cause_section`'s
 asserted wording still matches `prb/data/prb_create_instructions.md`'s current text
-verbatim. Quality gate green: `ruff format --check`, `ruff check`, `vulture src/
-whitelist.py --min-confidence 60`, and the full `pytest -n auto --cov=src` suite
+verbatim. Quality gate green: `ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, and the full `pytest -n auto --cov=src` suite
 (3324 passed, unchanged from the end of Phase 2 since Phase 3 added no new tests).
 All 7 acceptance criteria (ACC-001 through ACC-007) are met; the feature's status
 moves from `in-progress` to `review`.
@@ -396,9 +458,7 @@ moves from `in-progress` to `review`.
 Implemented Task 2.1-2.6 in full, updating only the `prb` prompt modules/data files
 and their own tests (no `prb/models/v1/`, `prb/data/prb_template.md`/`prb_example.md`,
 JSON schema, or `tests/prb/models/v1/` changes -- Phase 1 territory, left untouched).
-`prb/prompts/create_prb.py`'s signature is now `create_prb(topic: str, qa_id: str |
-None = None)`, substituting `"(not given -- proceed standalone, asking all 7 5W2H
-questions)"` when `qa_id` is absent (mirroring `update_prb`'s existing fallback
+`prb/prompts/create_prb.py`'s signature is now `create_prb(topic: str, qa_id: str | None = None)`, substituting `"(not given -- proceed standalone, asking all 7 5W2H questions)"` when `qa_id` is absent (mirroring `update_prb`'s existing fallback
 pattern); its module docstring and `@mcp.prompt` description now describe the optional
 QA carry-over. `prb/data/prb_create_instructions.md` was extended from a 0-10-step to
 a 0-12-step flow: a new step 2 instructs fetching the linked QA via `get_qa(qa_id)`,
@@ -430,15 +490,13 @@ eliciting the lead-sentence blanks, inserting under the H1 then proceeding), and
 rewrote `test_mentions_no_root_cause_section` per REQ-009's new wording. Both touched
 instruction `.md` files were run through the `specmgr_mdformat` tool for house-style
 consistency, which reflowed a few existing lines in the process (cosmetic, no wording
-changes to unrelated content). Quality gate green: `ruff format
---check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, and the full
+changes to unrelated content). Quality gate green: `ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, and the full
 `pytest -n auto --cov=src` suite (3324 passed, up from 3314 at the end of Phase 1 --
 the 10 new prompt tests). No Phase 3 work was touched.
 
 #### 2026-09-19 13:00:00.000Z - Phase 1 (Schema) implemented
 
-Implemented Task 1.1-1.5 in full: added the mandatory `problem_statement:
-MarkdownParagraph` field (declared first among `Prb`'s own fields) to
+Implemented Task 1.1-1.5 in full: added the mandatory `problem_statement: MarkdownParagraph` field (declared first among `Prb`'s own fields) to
 `prb/models/v1/body.py`, with a `field_validator` (`_validate_problem_statement`)
 enforcing the fixed template skeleton via a `re.DOTALL` regex fullmatch against
 `.text`, mirroring `rsk.models.v1.body.Strategy._validate_value`; updated the module
@@ -458,13 +516,11 @@ present+valid, absent (structural `AssertionError`), and malformed-template
 `Prb.from_text`. Swept every hand-written PRB-body fixture across `tests/prb/`
 (all 9 files named in Task 1.5) and, since the generic `general/tools` test suite
 also carries its own per-domain PRB body fixtures, the same sweep was additionally
-required (not originally itemized in Task 1.5) across `tests/general/tools/
-test_update.py`/`test_set_status.py`/`test_set_classification.py`/`test_delete.py`/
+required (not originally itemized in Task 1.5) across `tests/general/tools/ test_update.py`/`test_set_status.py`/`test_set_classification.py`/`test_delete.py`/
 `test_validate.py`'s `_PRB_MINIMAL_BODY`/`_PRB_UPDATED_BODY`/`_PRB_FULL_DOCUMENT`
 fixtures and one hardcoded line-offset constant in
 `tests/prb/tools/test_get_prb.py::test_windowed_raw_read_coordinates_index_into_the_splice_target`
-(shifted by the 2 new lead-paragraph lines). Also updated the `.specmgr/feat/
-feat-16-problem-statement/prb_reference.md` fixture file (read by
+(shifted by the 2 new lead-paragraph lines). Also updated the `.specmgr/feat/ feat-16-problem-statement/prb_reference.md` fixture file (read by
 `test_parser.py::test_parses_full_reference_document`) with the new lead sentence and
 reworded root-cause note. Quality gate green: `ruff format --check`, `ruff check`,
 `vulture src/ whitelist.py --min-confidence 60` (after adding
@@ -477,8 +533,7 @@ A review of the plan against the current codebase found six issues, all now corr
 in the sections above: (1) Task 1.5's fixture-sweep list was missing four test files
 with their own hand-rolled PRB body fixtures (`tools/test_create_prb.py`,
 `tools/test_list_prb.py`, `tools/test__io.py`, `tools/test__paths.py`) -- added; (2) the
-Scope exclusion cited the wrong `sysrs` cross-reference heading (`## Problem
-Statements`, plural H2) instead of the actual `### Problem Statement` (singular, H3,
+Scope exclusion cited the wrong `sysrs` cross-reference heading (`## Problem Statements`, plural H2) instead of the actual `### Problem Statement` (singular, H3,
 under `## Business Context and Goals`) -- corrected; (3) REQ-009's `body.py`-docstring
 reword target was imprecise (the literal "free of assumed causes" phrase doesn't appear
 there; only "No Root Cause section" wording does) -- clarified per-file; (4) Design
@@ -526,6 +581,17 @@ confirmation.
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-19 17:15:00.000Z - Drop the dead capture groups rather than use them for a richer error
+
+REQ-011's fix converts `_PROBLEM_STATEMENT_PATTERN`'s four named capture groups to
+non-capturing groups rather than wiring them into a per-blank diagnostic error message.
+The existing error (full template plus the actual offending text) is already actionable
+enough for a 4-blank template; a per-blank diagnosis would need partial-match logic
+(which blank, if any, is the first to fail) for marginal benefit over the simpler fix,
+and would reintroduce exactly the greedy-backtracking ambiguity (a blank's own free text
+could contain one of the three joiners) that made the groups risky to rely on in the
+first place.
 
 #### 2026-09-19 15:20:00.000Z - Prompt renumbering and recovery-flow placement
 
