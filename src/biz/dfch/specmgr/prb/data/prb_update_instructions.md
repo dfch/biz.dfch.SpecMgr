@@ -24,12 +24,10 @@ fatal error:
    `### Who Is Impacted?`, and `### Why Is It a Problem?` answers (if
    present) under `## Current State`. Derive a first draft of the lead
    sentence's 4 blanks from them the same way `create_prb`'s own
-   derive-then-confirm flow does: `What` -> both `[Current state]` and
-   `[specific issue]` (draft your best split of the single answer across
-   the two blanks), `Who` -> `[stakeholder]`, `Why` ->
-   `[underlying cause]`. For any blank with no answer to derive from, use
-   the `question` tool to ask for it directly. Then show the fully
-   composed sentence -- `[Current state] is causing [specific issue], for [stakeholder] because [underlying cause].` -- to the user and use
+   derive-then-confirm flow does: `What` -> both `[Current state]` and `[specific issue]` (a single `What` answer must populate two distinct blanks, so draft your best split of it across the two -- e.g. the underlying condition into `[Current state]`, the concrete symptom into `[specific issue]`); `Who` -> `[stakeholder]`; `Why` -> `[underlying cause]`.
+   For any blank with no answer to derive from, use the `question` tool
+   to ask for it directly. Then show the fully composed sentence --
+   `[Current state] is causing [specific issue], for [stakeholder] because [underlying cause].` -- to the user and use
    the `question` tool to confirm or refine it.
 3. Insert the confirmed sentence as its own paragraph directly under the
    H1 title (after any existing leading comment, before `## Current State`) into the raw body text from step 1.

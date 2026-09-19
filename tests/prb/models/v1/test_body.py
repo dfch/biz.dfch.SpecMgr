@@ -423,6 +423,28 @@ class TestProblemStatementMandatoryAndTemplateValidated(unittest.TestCase):
 
         self.assertIn("users\nbecause", sut.problem_statement.text)
 
+    def test_blank_containing_a_literal_joiner_substring_still_matches_documented_trade_off(self) -> None:
+        """REQ-013: a documentation test, not a behavior change.
+
+        `_PROBLEM_STATEMENT_PATTERN`'s greedy `(?:.+)` blanks can backtrack
+        across a joiner-shaped substring that happens to sit inside a
+        blank's own free text. Here the `[Current state]`/`[specific
+        issue]` blank text itself contains a second, literal "is causing"
+        occurrence -- the pattern still fulfills its own accepted, documented
+        trade-off (see the pattern's explanatory comment block) by matching
+        anyway, rather than rejecting the sentence.
+        """
+        kwargs = _minimal_prb_kwargs()
+        kwargs["problem_statement"] = MarkdownParagraph.from_text(
+            format_text(
+                "The current process is causing extra work is causing delays, for users because of missing automation."
+            )
+        )
+
+        sut = Prb(**kwargs)
+
+        self.assertIn("is causing extra work is causing delays", sut.problem_statement.text)
+
 
 class TestParsePrbRejectsMissingLeadParagraph(unittest.TestCase):
     """`Prb.from_text` structurally rejects a body with no lead paragraph at all (ACC-001, REQ-008 trigger).

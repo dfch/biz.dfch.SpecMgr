@@ -92,6 +92,17 @@ class TestCreatePrbPrompt(unittest.TestCase):
         self.assertIn("Non-committal counts as unanswered", result)
         self.assertIn("_(awaiting response)_", result)
 
+    def test_one_pair_to_one_question_rule_has_a_worked_example(self):
+        """REQ-014/ACC-010: the one-pair-to-one-question rule must include a worked
+        example of a QA pair that could plausibly answer two of the 7 5W2H
+        sub-questions, and how "best match only" resolves the tie-break."""
+        result = create_prb("Some topic")
+        self.assertIn("Worked example:", result)
+        self.assertIn("When does the checkout page time out?", result)
+        self.assertIn("During peak traffic hours, right at the payment confirmation", result)
+        self.assertIn("Best match only:", result)
+        self.assertIn('since the QA question literally asks "when"', result)
+
     def test_mentions_asking_only_remaining_questions(self):
         """The prompt must instruct asking only whichever 5W2H questions were not
         pre-filled from the linked QA, or all 7 if standalone (REQ-005)."""

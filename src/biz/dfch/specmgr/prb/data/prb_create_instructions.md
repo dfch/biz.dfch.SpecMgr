@@ -82,7 +82,16 @@ standalone, asking all 7 5W2H questions)", call `get_qa(qa_id)`.
   (What/Why/Where/Who/When/How/How Often). Apply these rules:
   - **One pair, at most one question**: a single QA pair maps to *at
     most one* 5W2H sub-question -- the single best match, never
-    duplicated across two sub-questions.
+    duplicated across two sub-questions. Worked example: a QA pair whose
+    question is "When does the checkout page time out?" and whose answer
+    is "During peak traffic hours, right at the payment confirmation
+    step" could plausibly answer both `### When Was the Problem First Observed?` (the "peak traffic hours" timing) and
+    `### Where Is the Problem Observed?` (the "payment confirmation
+    step" location). Best match only: pick the single sub-question the
+    pair's own *question wording* most directly matches -- here, `When`,
+    since the QA question literally asks "when" -- and leave the other
+    sub-question (`Where`) unanswered rather than copying the same pair
+    into both.
   - **Non-committal counts as unanswered**: if the QA pair's answer is
     non-committal (e.g. "unknown", "not yet answered", "TBD", or the
     literal `_(awaiting response)_` placeholder QA uses for a question
@@ -146,16 +155,11 @@ The lead sentence has four blanks: `[Current state]`, `[specific issue]`, `[stak
 - **QA-linked mode** (a QA id was given, resolved, and at least one of
   `What`/`Who`/`Why` was pre-filled in step 2): derive a first draft of
   the blanks from those pre-filled answers before asking anything fresh:
-  `What` -> both `[Current state]` and `[specific issue]` (a single
-  `What` answer must populate two distinct blanks, so draft your best
-  split of it across the two -- e.g. the underlying condition into
-  `[Current state]`, the concrete symptom into `[specific issue]`);
-  `Who` -> `[stakeholder]`; `Why` -> `[underlying cause]`. For any blank
-  with no pre-filled answer to derive from, use the `question` tool to
-  ask for it directly. Then show the fully composed sentence to the user
-  and use the `question` tool to **confirm** it (this confirmation step
-  is what catches a bad `What` split) -- never ask all 4 blanks as fresh
-  questions in this mode.
+  `What` -> both `[Current state]` and `[specific issue]` (a single `What` answer must populate two distinct blanks, so draft your best split of it across the two -- e.g. the underlying condition into `[Current state]`, the concrete symptom into `[specific issue]`); `Who` -> `[stakeholder]`; `Why` -> `[underlying cause]`.
+  For any blank with no pre-filled answer to derive from, use the
+  `question` tool to ask for it directly. Then show the fully composed
+  sentence to the user and use the `question` tool to **confirm** it
+  (this confirmation step is what catches a bad `What` split) -- never ask all 4 blanks as fresh questions in this mode.
 - **Standalone mode** (no QA id was given, it did not resolve, or
   nothing was pre-filled): use the `question` tool to elicit all 4
   blanks as fresh questions, then compose and show the sentence for

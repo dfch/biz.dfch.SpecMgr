@@ -103,6 +103,20 @@ from ....models.md import (
 #: a literal `" "` would not match that `\n` even under `re.DOTALL` (which
 #: only makes `.` match `\n`, not a literal space) -- `\s+` matches both a
 #: plain space and a soft-wrapped newline in its place (REQ-010).
+#:
+#: Known, accepted trade-off (REQ-013): each blank's `(?:.+)` is greedy and
+#: can backtrack across an embedded joiner phrase inside a *blank's own*
+#: free text. For example, a `[Current state]` blank whose own text
+#: literally contains the substring " is causing " can still produce a
+#: false-positive match against a sentence that does not actually follow
+#: the intended 4-blank structure -- the regex has no way to distinguish
+#: "the real joiner" from "a joiner-shaped substring that happens to sit
+#: inside a blank's free text". This is deliberately left unfixed (see the
+#: feature README's Decisions Made log, 2026-09-19 17:15:00.000Z entry): a
+#: per-blank diagnosis would need partial-match logic and would reintroduce
+#: the very same ambiguity it would be meant to resolve, for marginal
+#: benefit over the existing, already-actionable error (the full template
+#: plus the actual offending text).
 _PROBLEM_STATEMENT_PATTERN = re.compile(
     r"^(?:.+)\s+is\s+causing\s+(?:.+),"
     r"\s+for\s+(?:.+)\s+because\s+(?:.+)\.$",

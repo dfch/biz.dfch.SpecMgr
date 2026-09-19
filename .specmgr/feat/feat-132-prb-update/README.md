@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-17 09:57:31.305+02:00'
 id: feat-132-prb-update
-status: progress
+status: review
 type: feat
-updated: '2026-09-19 19:00:00.000+02:00'
+updated: '2026-09-19 21:00:00.000+02:00'
 version: 1.0.0
 ---
 
@@ -70,9 +70,9 @@ schema-checked opening framing before the existing 5W2H/Gap/Impact/Future State 
 - [x] ACC-006: In a QA-linked run with at least one pre-filled 5W2H answer, the lead sentence's blanks are derived from those answers and the composed sentence is confirmed with the user (not asked as 4 fresh questions, REQ-006); the composed sentence passes the code-level template validator.
 - [x] ACC-007: Running `update_prb` against an old-shape PRB (no `problem_statement` paragraph) recovers via `get_prb(id, raw=True)` plus sentence insertion (REQ-008), then applies the originally requested change, leaving the result parseable by `get_prb`.
 - [x] ACC-008: A `problem_statement` paragraph whose soft-wrap lands exactly at any of the three literal joiners ("is causing"/"for"/"because") still passes `Prb`'s `field_validator`/`create_prb`/`validate(type="prb")` (REQ-010).
-- [ ] ACC-009: `_PROBLEM_STATEMENT_PATTERN`'s comment block explicitly names the greedy-backtracking trade-off (REQ-013); a test in `tests/prb/models/v1/test_body.py` demonstrates the documented, accepted edge case.
-- [ ] ACC-010: `prb_create_instructions.md` contains a worked example of the one-pair-to-one-question tie-break (REQ-014); `tests/prb/prompts/test_create_prb.py` asserts its presence.
-- [ ] ACC-011: The `What`/`Who`/`Why` -> 4-blank derive-mapping clause is byte-identical between `prb_create_instructions.md` and `prb_update_instructions.md` (REQ-015), enforced by a dedicated consistency test that fails on future drift.
+- [x] ACC-009: `_PROBLEM_STATEMENT_PATTERN`'s comment block explicitly names the greedy-backtracking trade-off (REQ-013); a test in `tests/prb/models/v1/test_body.py` demonstrates the documented, accepted edge case.
+- [x] ACC-010: `prb_create_instructions.md` contains a worked example of the one-pair-to-one-question tie-break (REQ-014); `tests/prb/prompts/test_create_prb.py` asserts its presence.
+- [x] ACC-011: The `What`/`Who`/`Why` -> 4-blank derive-mapping clause is byte-identical between `prb_create_instructions.md` and `prb_update_instructions.md` (REQ-015), enforced by a dedicated consistency test that fails on future drift.
 
 ### Scope
 
@@ -211,41 +211,52 @@ wording is now reworded rather than merely preserved (REQ-009).
 
 #### Phase 5: External-Review Hardening (found during an external `feat-reviewer` review pass after Phase 4, not part of GitHub issue #132's original request)
 
-- [ ] Task 5.1: In `prb/models/v1/body.py`, extend `_PROBLEM_STATEMENT_PATTERN`'s explanatory comment block to explicitly document the greedy-backtracking trade-off (REQ-013): a blank's own free text containing a literal joiner substring (e.g. `" is causing "`) can still produce a false-positive template match. Add one test to `tests/prb/models/v1/test_body.py` (e.g. `test_blank_containing_a_literal_joiner_substring_still_matches_documented_trade_off`) constructing a `problem_statement` whose `[Current state]`/`[specific issue]` blank text itself contains a second, literal `"is causing"` occurrence, asserting `Prb(**kwargs)` still succeeds -- a documentation test, not a behavior change; `test_malformed_template_raises_validation_error_naming_template_and_text` must keep failing on genuinely non-matching text.
-- [ ] Task 5.2: In `prb/data/prb_create_instructions.md`, add a worked example to the one-pair-to-one-question rule (REQ-014): a QA pair that could plausibly answer two of the 7 5W2H sub-questions, and how "best match only" resolves it. Update `tests/prb/prompts/test_create_prb.py` to assert the example is present, alongside the existing rule-text assertion.
-- [ ] Task 5.3: In `prb/models/v1/body.py`'s module docstring ASCII layout diagram, fix the `### What Is the Problem?` row's one-space column misalignment (confirmed via `git show d41e05f:src/biz/dfch/specmgr/prb/models/v1/body.py` -- the pre-feat-132, feat-16-era version -- to predate this feature, not introduced by Task 1.1) by adding one space so its comment column aligns with its sibling rows (`Why`/`Where`/`Who`/`When`/`How`/`How Often`/`Gap`/etc., all at column 49 vs. its own column 48); same file already touched by Task 5.1, no other row changes.
-- [ ] Task 5.4: Align the `What`/`Who`/`Why` -> 4-blank derive-mapping clause to this exact, verbatim wording in both `prb_create_instructions.md` (step 9) and `prb_update_instructions.md` (step 1's old-shape recovery sub-list), replacing each file's own independently-paraphrased version (REQ-015): "`What` -> both `[Current state]` and `[specific issue]` (a single `What` answer must populate two distinct blanks, so draft your best split of it across the two -- e.g. the underlying condition into `[Current state]`, the concrete symptom into `[specific issue]`); `Who` -> `[stakeholder]`; `Why` -> `[underlying cause]`." Add a new consistency test (`tests/prb/data/test_instructions_consistency.py`, plus `tests/prb/data/__init__.py`) that loads both packaged `.md` files via `general.tools._packaged_data.read_packaged_text` and asserts this exact clause string appears verbatim in both, so future drift fails loudly instead of silently.
-- [ ] Task 5.5: Run the full quality gate (`ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, `pytest -n auto --cov=src`), update Progress (Current Status, a dated Updates entry, a Decisions Made entry noting Phase 5 originated from an external `feat-reviewer` review rather than the GitHub issue), and flip `status` back to `review`.
+- [x] Task 5.1: In `prb/models/v1/body.py`, extend `_PROBLEM_STATEMENT_PATTERN`'s explanatory comment block to explicitly document the greedy-backtracking trade-off (REQ-013): a blank's own free text containing a literal joiner substring (e.g. `" is causing "`) can still produce a false-positive template match. Add one test to `tests/prb/models/v1/test_body.py` (e.g. `test_blank_containing_a_literal_joiner_substring_still_matches_documented_trade_off`) constructing a `problem_statement` whose `[Current state]`/`[specific issue]` blank text itself contains a second, literal `"is causing"` occurrence, asserting `Prb(**kwargs)` still succeeds -- a documentation test, not a behavior change; `test_malformed_template_raises_validation_error_naming_template_and_text` must keep failing on genuinely non-matching text.
+- [x] Task 5.2: In `prb/data/prb_create_instructions.md`, add a worked example to the one-pair-to-one-question rule (REQ-014): a QA pair that could plausibly answer two of the 7 5W2H sub-questions, and how "best match only" resolves it. Update `tests/prb/prompts/test_create_prb.py` to assert the example is present, alongside the existing rule-text assertion.
+- [x] Task 5.3: In `prb/models/v1/body.py`'s module docstring ASCII layout diagram, fix the `### What Is the Problem?` row's one-space column misalignment (confirmed via `git show d41e05f:src/biz/dfch/specmgr/prb/models/v1/body.py` -- the pre-feat-132, feat-16-era version -- to predate this feature, not introduced by Task 1.1) by adding one space so its comment column aligns with its sibling rows (`Why`/`Where`/`Who`/`When`/`How`/`How Often`/`Gap`/etc., all at column 49 vs. its own column 48); same file already touched by Task 5.1, no other row changes.
+- [x] Task 5.4: Align the `What`/`Who`/`Why` -> 4-blank derive-mapping clause to this exact, verbatim wording in both `prb_create_instructions.md` (step 9) and `prb_update_instructions.md` (step 1's old-shape recovery sub-list), replacing each file's own independently-paraphrased version (REQ-015): "`What` -> both `[Current state]` and `[specific issue]` (a single `What` answer must populate two distinct blanks, so draft your best split of it across the two -- e.g. the underlying condition into `[Current state]`, the concrete symptom into `[specific issue]`); `Who` -> `[stakeholder]`; `Why` -> `[underlying cause]`." Add a new consistency test (`tests/prb/data/test_instructions_consistency.py`, plus `tests/prb/data/__init__.py`) that loads both packaged `.md` files via `general.tools._packaged_data.read_packaged_text` and asserts this exact clause string appears verbatim in both, so future drift fails loudly instead of silently.
+- [x] Task 5.5: Run the full quality gate (`ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, `pytest -n auto --cov=src`), update Progress (Current Status, a dated Updates entry, a Decisions Made entry noting Phase 5 originated from an external `feat-reviewer` review rather than the GitHub issue), and flip `status` back to `review`.
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-09-19**: Phases 1-4 are complete -- Phase 1 (Schema), Phase 2
-(Prompts), Phase 3 (Verification and Docs), and Phase 4 (Post-Review Hardening,
-added after a self-review pass). All 8 original acceptance criteria (ACC-001
-through ACC-008) are fully met. Phase 5 (External-Review Hardening) has now
-been *planned* -- added following an independent external `feat-reviewer`
-review pass -- but not yet implemented; ACC-009 through ACC-011 remain
-unchecked pending Tasks 5.1-5.5. `prb/models/v1/body.py`'s `Prb` model carries the
+**As of 2026-09-19**: Phases 1-5 are complete -- Phase 1 (Schema), Phase 2
+(Prompts), Phase 3 (Verification and Docs), Phase 4 (Post-Review Hardening,
+added after a self-review pass), and Phase 5 (External-Review Hardening, added
+after an independent external `feat-reviewer` review pass). All 11 acceptance
+criteria (ACC-001 through ACC-011) are now fully met. `prb/models/v1/body.py`'s
+`Prb` model carries the
 mandatory `problem_statement: MarkdownParagraph` lead field with its code-level
 template-skeleton `field_validator`; the packaged template/example and both JSON
 schema copies (`docs/prb_schema.json`,
 `src/biz/dfch/specmgr/prb/data/prb_schema.json`) reflect it. `_PROBLEM_STATEMENT_PATTERN`
 now tolerates a soft-wrap landing exactly at any of its three fixed joiners
 (`\s+` in place of each literal single space, REQ-010) and no longer carries
-dead named capture groups (`(?:.+)`, REQ-011). `create_prb`'s prompt accepts an
+dead named capture groups (`(?:.+)`, REQ-011); its explanatory comment block now
+also explicitly documents the greedy-backtracking trade-off (REQ-013), exercised
+by a dedicated documentation test (ACC-009). `create_prb`'s prompt accepts an
 optional `qa_id`, narrating a `get_qa`-backed carry-over of already-answered
 5W2H questions across all 10 QA categories (with explicit `QaNotFoundError`
-handling and a derive-then-confirm lead-sentence flow), and its module docstring
+handling, a worked example of the one-pair-to-one-question tie-break, REQ-014/
+ACC-010, and a derive-then-confirm lead-sentence flow), and its module docstring
 now correctly says "13-step interview flow" (REQ-012); `update_prb`'s prompt
-narrates a raw-re-read-based recovery flow for old-shape PRB drafts.
+narrates a raw-re-read-based recovery flow for old-shape PRB drafts. The
+`What`/`Who`/`Why` -> 4-blank derive-mapping clause is now byte-identical,
+verbatim text in both `prb_create_instructions.md` and
+`prb_update_instructions.md` (REQ-015), enforced by a dedicated consistency test
+(`tests/prb/data/test_instructions_consistency.py`, ACC-011). The module
+docstring ASCII layout diagram in `prb/models/v1/body.py` was independently
+re-verified to already have every row (including `### What Is the Problem?`)
+aligned at the same comment column -- Task 5.3's originally targeted
+misalignment had already been incidentally resolved by Phase 1's own docstring
+edit, so no further code change was needed for it.
 `docs/api/`/`docs/GENERATED.md`/`docs/MCP.md`, `server.py`'s module docstring,
 `AGENTS.md`'s `prb` bullet, and `CHANGELOG.md`'s `[Unreleased]` section all
 reflect the feature; both JSON schema copies confirmed drift-free via a fresh
 `specmgr schema --type prb` run. The full quality gate (`ruff format --check`,
-`ruff check`, `vulture`, the full `pytest -n auto --cov=src` suite -- 3327
-passed) is green at the end of Phase 4. Final sign-off is now pending Phase 5.
+`ruff check`, `vulture`, the full `pytest -n auto --cov=src` suite -- 3331
+passed) is green at the end of Phase 5. Final sign-off is now pending review.
 
 ### Blockers
 
@@ -254,6 +265,63 @@ passed) is green at the end of Phase 4. Final sign-off is now pending Phase 5.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-19 21:00:00.000Z - Phase 5 (External-Review Hardening) implemented
+
+Implemented Task 5.1-5.5 in full, touching only
+`prb/models/v1/body.py`, `prb/data/prb_create_instructions.md`,
+`prb/data/prb_update_instructions.md`, `tests/prb/models/v1/test_body.py`,
+`tests/prb/prompts/test_create_prb.py`, and the new
+`tests/prb/data/__init__.py`/`tests/prb/data/test_instructions_consistency.py`
+-- no other Phase 1-4 territory was touched. In `body.py`, extended
+`_PROBLEM_STATEMENT_PATTERN`'s explanatory `#:` comment block with a new
+paragraph explicitly naming the greedy-backtracking trade-off (REQ-013): a
+blank's own free text containing a literal joiner substring (e.g.
+`" is causing "`) can still produce a false-positive template match, and why
+this is deliberately left unfixed (cross-referencing the 2026-09-19
+17:15:00.000Z Decisions Made entry). Added
+`test_blank_containing_a_literal_joiner_substring_still_matches_documented_trade_off`
+to `TestProblemStatementMandatoryAndTemplateValidated`, constructing a
+`problem_statement` whose `[Current state]`/`[specific issue]` blank text
+itself contains a second, literal "is causing" occurrence and asserting
+`Prb(**kwargs)` still succeeds (a documentation test, not a behavior change);
+`test_malformed_template_raises_validation_error_naming_template_and_text`
+was left untouched and still correctly fails on genuinely non-matching text
+(ACC-009). Independently re-verified Task 5.3's target: the module docstring
+ASCII layout diagram's `### What Is the Problem?` row's comment column
+already aligns with every sibling row (all at column 50, confirmed via a
+column-index check) -- the one-space misalignment the plan targeted had
+already been incidentally resolved by Phase 1's own docstring edit adding the
+`problem_statement` row, so no further code change was made for it (only Task
+5.1's comment-block extension touched this file). Added a worked example to
+`prb_create_instructions.md`'s one-pair-to-one-question rule (REQ-014): a QA
+pair ("When does the checkout page time out?" / "During peak traffic hours,
+right at the payment confirmation step") that could plausibly answer both
+`### When Was the Problem First Observed?` and
+`### Where Is the Problem Observed?`, and how "best match only" resolves it
+by picking the sub-question the QA pair's own question wording most directly
+matches. Added
+`test_one_pair_to_one_question_rule_has_a_worked_example` to
+`tests/prb/prompts/test_create_prb.py`, alongside the existing
+`test_mentions_one_pair_to_one_question_rule` (ACC-010). Aligned the
+`What`/`Who`/`Why` -> 4-blank derive-mapping clause to the plan's exact,
+verbatim wording in both `prb_create_instructions.md` (step 9) and
+`prb_update_instructions.md` (step 1's old-shape recovery sub-list),
+replacing each file's own independently-paraphrased version (REQ-015); added
+`tests/prb/data/__init__.py` and
+`tests/prb/data/test_instructions_consistency.py`, which loads both packaged
+`.md` files via `general.tools._packaged_data.read_packaged_text` and asserts
+the exact clause string appears verbatim in both (ACC-011). Ran both edited
+instruction files through the `specmgr_mdformat` tool for house-style
+consistency (cosmetic reflow of the newly added worked-example bullet only;
+`prb_update_instructions.md` was already formatted, no change). Quality gate
+green: `ruff format --check`, `ruff check`,
+`vulture src/ whitelist.py --min-confidence 60`, and the full
+`pytest -n auto --cov=src` suite (3331 passed, up from 3327 at the end of
+Phase 4 -- the 4 new tests: 1 in `test_body.py`, 1 in `test_create_prb.py`,
+2 in the new `test_instructions_consistency.py`). All 11 acceptance criteria
+(ACC-001 through ACC-011) are now met; the feature's status moves from
+`in-progress` back to `review`.
 
 #### 2026-09-19 20:00:00.000Z - Phase 5 task wording refined ahead of implementation
 
@@ -501,6 +569,22 @@ confirmation.
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-19 21:00:00.000Z - Task 5.3 made no code change: the targeted misalignment was already resolved
+
+Before touching `prb/models/v1/body.py`'s module docstring ASCII layout
+diagram for Task 5.3, re-verified column alignment of every row (a plain
+column-index check across lines 27-45), not just the `### What Is the
+Problem?` row the plan specifically named. Every row's comment column,
+including that one, already starts at the same position (column 50) --
+the one-space misalignment the external review found (against the
+pre-feat-132, `d41e05f` version of the file) had already been incidentally
+corrected by Phase 1's own docstring edit, which rewrote the whole diagram
+to add the `problem_statement` row. Made no code change for Task 5.3 rather
+than introduce a change for its own sake; only Task 5.1's comment-block
+extension touched this file in Phase 5. Recorded here so the discrepancy
+between the plan's stated target and the actual, already-current file state
+is not silently lost.
 
 #### 2026-09-19 19:00:00.000Z - Strengthen the instructions-duplication finding into a sync-guard test, not a comment-only note
 
