@@ -407,6 +407,46 @@ never soft-wrap (CommonMark lazy continuation) across two physical source lines.
   even under heavy load.
 ```
 
+## Verification Case Records (VCR) -- Author Early, Extend as Implementation Lands
+
+**Requirement:** For any REQ(s) produced through the doc-driven pipeline (QA -> REQ -> ADR ->
+feature), author the corresponding VCR(s) as early as possible -- immediately once the REQ(s)
+reach a stable, reviewed state, not after implementation. Populate each initial VCR only with
+the Acceptance Criteria that are genuinely derivable from its REQ's specified
+behavior/configuration contract alone (`## Coverage: partial`), and extend the *same* VCR
+document (via the generic `update` tool, not a rewrite) at the end of each feature-plan phase
+that makes a previously-undecided criterion concretely verifiable, moving `## Coverage` to
+`full` once every criterion is demonstrably covered.
+
+- Writing a VCR only after implementation risks ceremony: acceptance criteria end up describing
+  whatever was built, rather than being independently re-derived from the requirement.
+- Writing the VCR early and extending it phase by phase surfaces a genuine deviation between the
+  intended design and the actual implementation immediately, at the phase boundary where it is
+  cheapest to fix -- not retroactively at final verification.
+- A criterion that cannot yet be made concrete (e.g. an exact test ID, an exact metric name
+  implementation hasn't chosen yet) is legitimately deferred -- `## Coverage: partial` records
+  that honestly -- but the VCR document itself must exist from the start, not be postponed as a
+  whole.
+- A VCR's `## Verifies` section is single-valued (exactly one `REQ`/`UC` reference): when a
+  feature produces multiple REQs, author one VCR per REQ rather than one combined VCR.
+
+**Example:**
+```markdown
+<!-- ✗ Before: VCR drafted only after implementation, describing whatever got built -->
+<!-- (no VCR exists until the feature's final verification phase) -->
+
+<!-- ✓ After: VCR authored immediately once the REQ is finalized, `Coverage: partial` -->
+## Coverage
+
+partial
+
+### AC-001 (Demonstration): Feature is off by default
+
+With no relevant environment variables set, the feature emits no observable behavior.
+
+<!-- Extended later, in a following implementation phase, once concrete tests exist -->
+```
+
 ## TODO
 
 * Use "uv", do not use "pip"
@@ -437,3 +477,6 @@ These conventions were chosen to:
 - **2026-09-02:** Added markdown line-wrapping convention (avoid breaking inside inline spans)
 - **2026-09-09:** Added markdown list-item soft-wrap convention (structurally-checked list items
   must stay on one physical line; call `MarkdownListItem.single_line_text()`)
+- **2026-09-19:** Added the VCR authored-early convention (write immediately once REQs
+  stabilize, extend to full coverage phase-by-phase, not after implementation; one VCR per REQ
+  since `## Verifies` is single-valued)
