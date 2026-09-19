@@ -4,7 +4,7 @@ created: '2026-09-17 14:06:49.067+02:00'
 id: feat-29-dec-source-roles
 status: done
 type: feat
-updated: '2026-09-17 16:00:00.000+02:00'
+updated: '2026-09-19 12:15:00.000+02:00'
 version: 1.0.0
 ---
 
@@ -28,6 +28,10 @@ GitHub issue #29 originally asked for `DecFrontmatter` to gain ADR-style attribu
 - REQ-008: `feat-133-tags-dec-rsk` (issue #133) is rescoped to RSK-only once this feature ships DEC's Tags section, with a note in its own README pointing at this feature, and a brief comment posted on GitHub issue #133 noting the absorption.
 - REQ-009: Every phase of this feature's own Task List that touches any `src/**/*.py` file ends with a full local quality gate (`ruff format --check`, `ruff check`, `vulture`, `specmgr docs`, `specmgr mcp-docs`, `specmgr schema` for all 12 registered types plus their packaged per-domain copies, `pytest -n auto --cov=src --cov-report=`, `specmgr coverage-badge`) run and passing before that phase's own commit, since `models/md` and every domain's `models/v1`(or `v2`) package are matched by the `specmgr-schema*` pre-commit hooks' file-scope regex and force full-repo schema regeneration on every touch, not just the touched domain's own.
 - REQ-010: Every remaining phase (Phase 4 onward) is implemented by a dedicated `phase-implementer` subagent dispatch, one phase per dispatch, driven by a `phase-orchestrator`-style main session that reads this README and reports back between phases -- not implemented inline in one long-running session, to keep each phase's own context small and this plan document the single source of truth for what is/isn't done.
+- REQ-011: `CHANGELOG.md` gains an `[Unreleased]` entry for this feature's shipped changes: the three new `dec` body sections, explicitly marked `**BREAKING**` where it says that any existing `dec` document created before this release fails to parse via `get_dec`/`parse_dec`/`update`/`create_dec` round-trips until the two new mandatory sections are added, including a short before/after markdown snippet showing the fix.
+- REQ-012: `tests/dec/models/v1/test_body.py::TestDecisionMisordering::test_updates_before_more_information_raises_assertion_error` and `::test_related_artifacts_after_pros_and_cons_raises_assertion_error` are corrected so their fixtures satisfy the mandatory `## Roles and Responsibilities`/`## Source` sections ahead of the actual misordering trigger they exist to test, and each additionally asserts on the raised `AssertionError`'s message content (not just its type), so a recurrence of "passes for the wrong reason" is caught automatically.
+- REQ-013: The mandatory-vs-optional cardinality question for `## Roles and Responsibilities`/`## Source`, raised during external PR review, is explicitly revisited and the decision to keep both mandatory (accepting the resulting backward incompatibility as a documented, intentional breaking change on this pre-1.0 project) is recorded in this feature's Decisions Made log.
+- REQ-014: This feature's own README records, in a new "Known Limitations" section (mirroring `feat-8-coverage-badge/README.md`'s precedent), that the unmerged `feat-46-remove-adr` branch's own plan assumes GitHub issue #29 would be resolved via new `DecFrontmatter` fields (including `date`) for ADR-to-DEC conversion fidelity -- a different, incompatible resolution from what this feature actually shipped (body sections, no frontmatter change, no `date` field) -- so a future reader has that context without needing to consult a closed PR description.
 
 ### Acceptance Criteria
 
@@ -40,6 +44,10 @@ GitHub issue #29 originally asked for `DecFrontmatter` to gain ADR-style attribu
 - [x] ACC-007: Verifies REQ-008 -- `feat-133-tags-dec-rsk/README.md`'s Requirements/Acceptance Criteria/Task List no longer mention `dec`, and a comment referencing this feature is posted on GitHub issue #133.
 - [x] ACC-008: Verifies REQ-009 -- every phase's commit in this feature's history passes the full local pre-commit hook chain with no follow-up "fix docs/schema drift" commit needed afterward.
 - [x] ACC-009: Verifies REQ-010 -- Phase 4 and Phase 5 are each implemented by a distinct `phase-implementer` dispatch, each producing its own commit and its own Progress-section update in this README.
+- [x] ACC-010: Verifies REQ-011 -- `CHANGELOG.md` has a new `[Unreleased]` entry documenting this feature, with a `**BREAKING**`-marked bullet and a migration snippet.
+- [x] ACC-011: Verifies REQ-012 -- both corrected tests fail again if the mandatory-section-first fix is reverted (spot-check this during implementation, then restore the fix), and pass with the fix in place, asserting on message content.
+- [x] ACC-012: Verifies REQ-013 -- a dated Decisions Made entry records the cardinality decision and its rationale.
+- [x] ACC-013: Verifies REQ-014 -- a "Known Limitations" section exists and cross-references `feat-46-remove-adr`.
 
 ### Scope
 
@@ -94,6 +102,11 @@ No DEC schema `version` bump was needed (Task 2.4 originally assumed one): inves
 
 Orchestration handoff (see REQ-010): Phases 0-3 were implemented inline in one long-running planning-and-implementation session, which grew large enough to warrant a fresh start for the remaining work. Phase 4 had a partial, uncommitted edit to `dec_create_instructions.md` at handoff time; it was discarded (`git checkout --`) so the `phase-implementer` dispatch for Phase 4 starts clean from this README's own Task List rather than from a half-finished, unreviewed draft.
 
+### Known Limitations
+
+- **Backward compatibility**: `## Roles and Responsibilities` and `## Source` are mandatory on every `dec` document. Any `dec` document created before this feature shipped and lacking those two sections will fail to parse via `get_dec`/`parse_dec`/`update`/`create_dec` round-trips (though `list_dec` degrades gracefully, reporting it as a failed entry inline rather than raising). This is an accepted, documented breaking change on this pre-1.0 project (see Decisions Made) -- see `CHANGELOG.md` for the migration snippet.
+- **Conflicts with feat-46-remove-adr's own plan**: the unmerged `feat-46-remove-adr` branch (not present on `dev`) plans to resolve GitHub issue #29 via new `DecFrontmatter` fields (`date`/`decision-makers`/`consulted`/`informed`) as a hard prerequisite for ADR-to-DEC conversion fidelity, since 28 of 30 real ADRs populate `date`/`decision-makers`. This feature resolved issue #29 differently (body sections, no frontmatter change) and does not provide a `date` field. Whoever resumes `feat-46-remove-adr` will need to reconcile its own Phase 0 (which currently assumes #29 is still open and assigned to it) with the fact that #29 will already be closed by this feature's shipped, incompatible design.
+
 ### Related Decisions
 
 - None yet -- see this feature's own "Decisions Made" log below for the shared-base-class rationale instead of a dedicated ADR.
@@ -141,11 +154,20 @@ Orchestration handoff (see REQ-010): Phases 0-3 were implemented inline in one l
 - [x] Task 5.5: Post a comment on GitHub issue #133 noting DEC's Tags half was absorbed into issue #29.
 - [x] Task 5.6: Run this phase's full quality gate (REQ-009), commit, and mark this feature's status `done`.
 
+#### Phase 6: Post-Review Remediation
+
+- [x] Task 6.1: Add a dated Decisions Made entry recording that `## Roles and Responsibilities`/`## Source` stay mandatory as shipped, and the resulting backward incompatibility is an accepted, documented breaking change rather than a design reversal (REQ-013).
+- [x] Task 6.2: Fix `tests/dec/models/v1/test_body.py::TestDecisionMisordering::test_updates_before_more_information_raises_assertion_error` and `::test_related_artifacts_after_pros_and_cons_raises_assertion_error` per REQ-012.
+- [x] Task 6.3: Add the `CHANGELOG.md [Unreleased]` entry per REQ-011, including a short before/after migration snippet.
+- [x] Task 6.4: Add the "Known Limitations" section per REQ-014.
+- [x] Task 6.5: Run the full local quality gate (REQ-009's existing checklist) and report the evidence. Do NOT commit.
+- [x] Task 6.6: Update this README's Progress section (Current Status, a new dated Updates entry, frontmatter `status` back to `done`, `updated` bumped) once Tasks 6.1-6.5 are complete.
+
 ## Progress
 
 ### Current Status
 
-**As of 2026-09-17**: **Feature complete.** All 6 phases (0-5) are done; all 9 acceptance criteria (ACC-001 through ACC-009) are met. Both GitHub issue comments (summarizing the shipped design on issue #29, and noting the DEC-half absorption on issue #133) are posted and confirmed live. Commits on branch `feat-29-dec-source-roles`: `be8abc5` (Phase 0), `19b6675` (Phase 1), `a7fd4fd` (Phase 2+3), `c8d5a92` (Phase 4), Phase 5 (this commit -- hash not yet known at the time of this edit, since the orchestrator commits after this final sign-off). Frontmatter `status` bumped to `done`.
+**As of 2026-09-19**: **Feature complete, including post-review remediation.** All 7 phases (0-6) are done; all 13 acceptance criteria (ACC-001 through ACC-013) are met. Phase 6 addressed two gaps an external code review of the resulting PR (#136) found: (1) two `TestDecisionMisordering` tests that were passing for the wrong reason (missing-mandatory-section failure, not the intended misordering failure) are now fixed and assert on message content; (2) the mandatory-section backward incompatibility is now explicitly documented via a `CHANGELOG.md [Unreleased]` entry (with a migration snippet), a Decisions Made log entry confirming the cardinality was reconsidered and intentionally kept, and a new "Known Limitations" section cross-referencing the unmerged `feat-46-remove-adr` branch's conflicting plan for issue #29. Both GitHub issue comments (summarizing the shipped design on issue #29, and noting the DEC-half absorption on issue #133) remain posted and live. Commits on branch `feat-29-dec-source-roles`: `be8abc5` (Phase 0), `19b6675` (Phase 1), `a7fd4fd` (Phase 2+3), `c8d5a92` (Phase 4), Phase 5, Phase 6 (this commit -- hash not yet known at the time of this edit, since the orchestrator commits after this final sign-off). Frontmatter `status` bumped back to `done`.
 
 ### Blockers
 
@@ -154,6 +176,48 @@ Orchestration handoff (see REQ-010): Phases 0-3 were implemented inline in one l
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-19 10:15:00.000Z - Phase 6 complete: post-review remediation
+
+Added Phase 6 to this README's own Plan section (REQ-011 through REQ-014,
+ACC-010 through ACC-013, a new "Known Limitations" section, and a new
+"Phase 6: Post-Review Remediation" Task List block), then executed it, to
+remediate two gaps an external code review of PR #136 found. Fixed
+`tests/dec/models/v1/test_body.py::TestDecisionMisordering::test_updates_before_more_information_raises_assertion_error`
+and `::test_related_artifacts_after_pros_and_cons_raises_assertion_error`:
+both fixtures now include a valid `## Roles and Responsibilities`/`##
+Source` block between `## Decision Outcome` and the actual misordering
+trigger, and both now assert on the raised `AssertionError`'s message
+content (`"More Information"`/`"Related Artifacts"` respectively) instead
+of only its type. Verified the fix matters by temporarily reverting it
+locally: both tests then failed with a *different* message (about
+`RolesAndResponsibilities`, not the intended heading), confirming the
+tests previously passed for the wrong reason; restored the fix
+afterward, leaving no reverted state in the final diff. Added a new `##
+[Unreleased]` entry to `CHANGELOG.md` documenting the three new `dec`
+body sections under `### Added` and a `**BREAKING**`-marked `###
+Changed` bullet with a before/after `diff` migration snippet showing how
+to add the two mandatory sections to a pre-existing `dec` document.
+Added a new "Known Limitations" section to this README (`###` level,
+placed next to `### Design Notes`, mirroring
+`feat-8-coverage-badge/README.md`'s precedent) documenting the backward-
+incompatibility and its cross-reference to the unmerged
+`feat-46-remove-adr` branch's own, incompatible plan for GitHub issue
+#29. Added a new dated Decisions Made entry recording that the
+mandatory-vs-optional cardinality question was explicitly revisited
+and the decision was made to keep both sections mandatory, accepting
+the resulting breaking change rather than reversing the design. Ran the
+full quality gate: `ruff format --check`/`ruff check` clean, `vulture`
+clean, `specmgr docs`/`mcp-docs` regenerated with **no content changes**
+(expected -- no `src/**/*.py` touched this phase, only `.md`/tests/
+`CHANGELOG.md`), `specmgr schema` regenerated all 12 `docs/*_schema.json`
+with **no content changes**, full `pytest -n auto` suite green at 3329
+tests (unchanged count from Phase 5, since Phase 6 only corrected two
+existing tests' fixtures/assertions rather than adding new ones; `tests/dec/`
+(240 tests + 69 subtests) and `tests/general/tools/` (252 tests + 852
+subtests) individually re-verified green), `specmgr coverage-badge`
+unchanged (99%). Not yet committed -- left for the orchestrator to
+review and commit.
 
 #### 2026-09-17 15:30:00.000Z - Phase 5 complete: docs and housekeeping
 
@@ -244,6 +308,10 @@ Feature created from GitHub issue #29 ("Artifact type 'Decision' (DEC) need addi
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-19 10:05:00.000Z - Kept Roles and Responsibilities/Source mandatory; accepted as breaking
+
+An external code review of the resulting PR (#136) flagged that making `## Roles and Responsibilities`/`## Source` mandatory breaks parsing of any pre-existing `dec` document lacking them, with no version bump or CHANGELOG signal. Reconsidered reverting to optional-as-a-whole (mirroring SOP's own precedent) versus keeping mandatory and documenting the break. Decided to keep both sections mandatory -- reverting would undo this feature's own core design intent (a decision must always name an accountable owner) and issue #29's original ask. Instead, the incompatibility is treated as an intentional, accepted breaking change on this pre-1.0 project, made explicit via a new `CHANGELOG.md [Unreleased]` entry (with a migration snippet) and this Decisions Made record, rather than a schema-version fork or a cardinality reversal.
 
 #### 2026-09-17 00:00:07.000Z - Restart remaining phases via phase-orchestrator/phase-implementer dispatch
 

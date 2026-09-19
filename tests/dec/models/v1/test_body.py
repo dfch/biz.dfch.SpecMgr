@@ -961,6 +961,13 @@ class TestDecisionMisordering(unittest.TestCase):
             "Some context prose.\n\n"
             "## Decision Outcome\n\n"
             "Some outcome prose.\n\n"
+            "## Roles and Responsibilities\n\n"
+            "### Accountable\n\n"
+            "Some owner.\n\n"
+            "### Responsible\n\n"
+            "- Some doer.\n\n"
+            "## Source\n\n"
+            "Some source.\n\n"
             "## Updates\n\n"
             "### 2026-08-26 - Created\n\n"
             "Some update text.\n\n"
@@ -968,8 +975,9 @@ class TestDecisionMisordering(unittest.TestCase):
             "Some more information text.\n"
         )
 
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(AssertionError) as ctx:
             Decision.from_text(text)
+        self.assertIn("More Information", str(ctx.exception))
 
     def test_related_artifacts_after_pros_and_cons_raises_assertion_error(self) -> None:
         text = format_text(
@@ -978,6 +986,13 @@ class TestDecisionMisordering(unittest.TestCase):
             "Some context prose.\n\n"
             "## Decision Outcome\n\n"
             "Some outcome prose.\n\n"
+            "## Roles and Responsibilities\n\n"
+            "### Accountable\n\n"
+            "Some owner.\n\n"
+            "### Responsible\n\n"
+            "- Some doer.\n\n"
+            "## Source\n\n"
+            "Some source.\n\n"
             "## Pros and Cons\n\n"
             "### Option 1: Some option\n\n"
             "Some option body.\n\n"
@@ -986,8 +1001,9 @@ class TestDecisionMisordering(unittest.TestCase):
             "- REQ-0001: Some requirement.\n"
         )
 
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(AssertionError) as ctx:
             Decision.from_text(text)
+        self.assertIn("Related Artifacts", str(ctx.exception))
 
     def test_consequences_under_h1_outside_outcome_raises_assertion_error(self) -> None:
         text = format_text(
