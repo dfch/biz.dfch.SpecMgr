@@ -150,3 +150,10 @@ Index of all ADRs in this repository.
   - Id: ece4554b-725c-4f76-bc04-5d2b760363d2
   - Status: accepted
   - Decision-makers: dfch
+- [Adopt stdlib logging and OpenTelemetry for SpecMgr logging and telemetry](fdbb6d22-278a-4ecf-b2f6-db208bc49fc6-adopt-stdlib-logging-and-opentelemetry-for-specmgr-logging-a.md)
+  - Id: fdbb6d22-278a-4ecf-b2f6-db208bc49fc6
+  - Status: accepted
+  - Date: 2026-09-19
+  - Decision-makers: dfch (issue #139 owner), AI agent (feat-139-logging-telemetry session)
+  - Consulted: GitHub issue #139 planning comment
+  - Informed: REQ bc356fc9-964a-4274-93ec-4627c5aeb2e5, REQ dacd01f4-ffd8-4363-a20b-5ac1ce11eef2
