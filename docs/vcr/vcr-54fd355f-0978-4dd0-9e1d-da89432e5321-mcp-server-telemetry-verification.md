@@ -4,7 +4,7 @@ created: '2026-09-19 13:19:26.971+02:00'
 id: 54fd355f-0978-4dd0-9e1d-da89432e5321
 status: draft
 type: vcr
-updated: '2026-09-19 14:33:10.271+02:00'
+updated: '2026-09-19 16:10:07.708+02:00'
 version: 1.0.0
 ---
 
@@ -33,15 +33,17 @@ partial
 
 ### AC-001 (Demonstration): Telemetry is off by default
 
-With no `SPECMGR_OTEL_*` environment variables set, running `specmgr
-mcp` emits zero telemetry and writes nothing to stdout beyond the
+With no `SPECMGR_OTEL_*` environment variables set, running `specmgr mcp` emits zero telemetry and writes nothing to stdout beyond the
 JSON-RPC channel.
 
-### AC-002 (Test): Every MCP item produces a trace span
+### AC-002 (Test): Every MCP tool call, resource read, and prompt invocation is correlated, not tools only
 
 With `SPECMGR_OTEL_ENABLED=true`, invoking a tool, a resource, and a
-prompt each produce one trace span, correlated with the logging
-correlation ID.
+prompt each has its correlation ID matching the trace/span ID of the
+span the SDK's built-in `OpenTelemetryMiddleware` creates for that
+request (that middleware spans every JSON-RPC method regardless, out
+of this feature's control; only the correlation behavior is scoped to
+actual invocations).
 
 ### AC-003 (Test): An unreachable OTLP endpoint degrades gracefully
 
@@ -72,15 +74,19 @@ the accepted always-on-sampling decision.
 
 ### AC-007 (Test): Span content is redacted, including spans the SDK's own built-in middleware creates
 
-With `SPECMGR_OTEL_ENABLED=true`, an error raised during a tool call
-never results in an exported span whose attributes or exception event
-contain a full document body, an absolute filesystem path, or a
-document/artifact title -- even though the span itself is created by
-the MCP SDK's own built-in `OpenTelemetryMiddleware`, not by this
-feature's own middleware. A global, `TracerProvider`-level
-`SpanProcessor` is required to satisfy this, since scoping redaction
-to only this feature's own attributes would not reach that
-SDK-created span.
+With `SPECMGR_OTEL_ENABLED=true`, this feature's own code (middleware,
+meter) never itself attaches a full document body, an absolute
+filesystem path, or a document/artifact title as a dedicated span or
+metric attribute value -- on any span, including one created entirely
+by the MCP SDK's own built-in `OpenTelemetryMiddleware`, not only ones
+this feature's own middleware would create. A global,
+`TracerProvider`-level `SpanProcessor` (required to reach an
+SDK-created span at all) additionally runs a best-effort scrub for
+absolute-filesystem-path-shaped substrings in a span's attributes and
+exception-event message text; the specific exception messages already
+known to embed a document/artifact title are reworded at their source
+instead, since no generic filter can reliably detect free-form title
+text.
 
 ### AC-008 (Test): Metrics are recorded with correct values and attributes
 

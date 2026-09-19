@@ -4,7 +4,7 @@ created: '2026-09-19 13:18:34.380+02:00'
 id: 0a1c2f63-9576-4463-bf40-8f771f14fefb
 status: draft
 type: vcr
-updated: '2026-09-19 13:18:34.380+02:00'
+updated: '2026-09-19 16:09:26.135+02:00'
 version: 1.0.0
 ---
 
@@ -40,17 +40,24 @@ channel.
 3. Confirm no log output is produced and stdout contains only JSON-RPC
    frames.
 
-### AC-002 (Test): Every MCP item is logged, not tools only
+### AC-002 (Test): Every MCP tool call, resource read, and prompt invocation is logged, not tools only
 
 With `SPECMGR_LOG_ENABLED=true`, invoking a tool, a resource, and a
 prompt each produce a start and a completion (or error) log record,
-tagged with a per-invocation correlation ID.
+tagged with a per-invocation correlation ID; a non-invocation request
+sharing the same server-side dispatch mechanism (e.g. a capability-
+listing request) produces no such record.
 
 ### AC-003 (Test): Log content is redacted
 
 A log record includes the invoked item's `id` and `type` (and, for
-`set_status`, the new status value), but never the full content of an
-item, an absolute filesystem path, or a document/artifact title.
+`set_status`, the new status value); this feature's own logging code
+never itself attaches the full content of an item, an absolute
+filesystem path, or a document/artifact title as a dedicated field.
+Free-text log content is additionally passed through a best-effort
+absolute-path scrub; the specific exception messages already known to
+embed a document/artifact title are reworded at their source instead,
+since no generic filter can reliably detect free-form title text.
 
 ### AC-004 (Test): Correlation ID appears only in error responses
 

@@ -4,7 +4,7 @@ created: '2026-09-19 12:17:45.447+02:00'
 id: dacd01f4-ffd8-4363-a20b-5ac1ce11eef2
 status: draft
 type: req
-updated: '2026-09-19 14:32:47.209+02:00'
+updated: '2026-09-19 16:08:54.237+02:00'
 version: 1.0.0
 ---
 
@@ -28,12 +28,25 @@ telemetry backbone has a low incremental dependency cost.
 
 This requirement covers metrics (tool-call latency histogram, tool-call
 counts by tool/domain, error counts by exception type, the `feat-107`
-document-cache hit/miss rate, and per-domain lock wait/contention time) and
-distributed tracing (one span per MCP tool, resource, or prompt invocation
--- not tool invocations only -- correlated with the structured-logging
-correlation ID), entirely opt-in and off by default, and never attaching
-full document body content, absolute filesystem paths, or document/
-artifact titles to any span or metric attribute.
+document-cache hit/miss rate, and per-domain lock wait/contention time),
+recorded only for actual tool-call, resource-read, and prompt-invocation
+requests (not tool invocations only, but also not every other JSON-RPC
+method a single shared server-side instrumentation point may also
+observe), and distributed tracing correlated with the structured-logging
+correlation ID for that same request. The underlying distributed-tracing
+mechanism this requirement builds on may span additional, non-invocation
+JSON-RPC traffic it does not control; this requirement's own correlation
+and metric-recording behavior is scoped to actual invocations regardless.
+This is entirely opt-in and off by default. This requirement's own code
+must never itself attach full document body content, an absolute
+filesystem path, or a document/artifact title as a dedicated span or
+metric attribute value; a best-effort scrub for absolute-filesystem-
+path-shaped substrings additionally runs against free-text span content
+(e.g. an exception's message) as a backstop, since a document/artifact
+title embedded in such free text has no comparable detectable shape and
+is instead addressed by rewording the specific, already-known exception
+messages that embed one, rather than relied on to be caught by a generic
+filter.
 
 Metric and span names follow the spirit of OpenTelemetry's semantic
 conventions (structured names, standard units, histogram buckets) using
