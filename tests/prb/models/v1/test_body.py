@@ -27,6 +27,7 @@ each of the 7 questions individually absent/present, and
 
 from __future__ import annotations
 
+import re
 import unittest
 
 from pydantic import ValidationError
@@ -54,6 +55,22 @@ from biz.dfch.specmgr.prb.models.v1.body import (
 
 #: A minimal, valid `problem_statement` lead paragraph matching the fixed template skeleton.
 _VALID_PROBLEM_STATEMENT_TEXT = "The current process is causing delays, for users because of missing automation."
+
+#: Test-only mirror of `_PROBLEM_STATEMENT_PATTERN`
+#: (`prb/models/v1/body.py`) with the four blanks made *capturing* instead
+#: of non-capturing. Production code intentionally keeps them non-capturing
+#: (REQ-011) since it only ever checks `fullmatch()` truthiness and never
+#: reads the groups; this copy exists solely so the two
+#: "...still_matches_documented_trade_off" tests below can assert exactly
+#: which blank absorbed a joiner-shaped substring during backtracking,
+#: instead of only asserting that construction did not raise. Keep the two
+#: patterns' literal joiner/anchor text in sync by hand if
+#: `_PROBLEM_STATEMENT_PATTERN` ever changes.
+_CAPTURING_PROBLEM_STATEMENT_PATTERN = re.compile(
+    r"^(.+)\s+is\s+causing\s+(.+),"
+    r"\s+for\s+(.+)\s+because\s+(.+)\.$",
+    re.DOTALL,
+)
 
 # Every `Question{N}` class alongside the exact canonical heading text it
 # must -- and only it must -- match (verbatim from the iSixSigma 5W2H list,
@@ -444,6 +461,14 @@ class TestProblemStatementMandatoryAndTemplateValidated(unittest.TestCase):
         sut = Prb(**kwargs)
 
         self.assertIn("is causing extra work is causing delays", sut.problem_statement.text)
+        # Prove *which* "is causing" backtracking actually treated as the real
+        # joiner: the rightmost one, absorbing the first, literal "is causing"
+        # occurrence into the `[Current state]`/`[specific issue]` blank's own
+        # captured text rather than rejecting the sentence.
+        match = _CAPTURING_PROBLEM_STATEMENT_PATTERN.fullmatch(sut.problem_statement.text)
+        assert match is not None
+        self.assertEqual("The current process is causing extra work", match.group(1))
+        self.assertEqual("delays", match.group(2))
 
     def test_specific_issue_blank_containing_a_literal_for_joiner_substring_still_matches_documented_trade_off(
         self,
@@ -476,6 +501,14 @@ class TestProblemStatementMandatoryAndTemplateValidated(unittest.TestCase):
         sut = Prb(**kwargs)
 
         self.assertIn("delays, for users, for contractors", sut.problem_statement.text)
+        # Prove the actual ", for" delimiter resolves to the rightmost
+        # occurrence: the earlier ", for users" is absorbed into the
+        # `[specific issue]` blank's own captured text, not treated as the
+        # real delimiter.
+        match = _CAPTURING_PROBLEM_STATEMENT_PATTERN.fullmatch(sut.problem_statement.text)
+        assert match is not None
+        self.assertEqual("delays, for users", match.group(2))
+        self.assertEqual("contractors", match.group(3))
 
 
 class TestParsePrbRejectsMissingLeadParagraph(unittest.TestCase):
