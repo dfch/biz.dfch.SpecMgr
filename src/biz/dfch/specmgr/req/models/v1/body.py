@@ -35,6 +35,7 @@ from ....models.md import (
     MarkdownListItem,
     MarkdownListItemWithNotes,
     MarkdownComment,
+    SourceBase,
     alias,
     AliasType,
 )
@@ -143,12 +144,18 @@ class Tags(MarkdownSection2):
     )
 
 
-class Source(MarkdownSection2):
+class Source(SourceBase):
     """`## Source` -- single-line value naming the origin/authority of this
     requirement. Mandatory.
-    """
 
-    value: MarkdownParagraph = Field(description="Single-line value naming the origin/authority of this requirement.")
+    Subclasses the shared `models.md.SourceBase` (feat-29-dec-source-roles) --
+    the field declaration itself lives there; this class exists so `req`
+    still declares and owns its own concrete `Source` type. Note: the
+    generated JSON Schema's `value` field description comes from
+    `SourceBase` and is intentionally domain-neutral ("this document"),
+    not the domain-specific "this requirement" wording used above --
+    see `SourceBase`'s own comment for the rationale (REQ-016).
+    """
 
 
 class Requirements(MarkdownSection3):

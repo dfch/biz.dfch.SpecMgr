@@ -33,23 +33,27 @@ from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.general.tools._splice import body_text
 from biz.dfch.specmgr.general.tools.update import update
 
+from ._helpers import MANDATORY_ROLES_AND_SOURCE
 
 #: A well-formed but non-existent canonical UUID (feat-38-39-41-43-44 Phase 4: the id
 #: must be well-formed to reach the domain's own not-found error past the new
 #: ``validate_id`` guard).
 _MISSING_UUID = "00000000-0000-0000-0000-000000000000"
-_MINIMAL_BODY = textwrap.dedent(
-    """\
-    # Choose a Document Store
+_MINIMAL_BODY = (
+    textwrap.dedent(
+        """\
+        # Choose a Document Store
 
-    ## Context and Problem Statement
+        ## Context and Problem Statement
 
-    The current store cannot serve the dashboard read path.
+        The current store cannot serve the dashboard read path.
 
-    ## Decision Outcome
+        ## Decision Outcome
 
-    We chose the document store.
-    """
+        We chose the document store.
+        """
+    )
+    + MANDATORY_ROLES_AND_SOURCE
 )
 
 

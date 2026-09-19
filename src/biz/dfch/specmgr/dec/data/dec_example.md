@@ -55,6 +55,38 @@ The arrangement is reviewed after one quarter, with office occupancy
 and onboarding feedback as the criteria. If the review finds no
 problem, the arrangement becomes the standing default.
 
+## Roles and Responsibilities
+
+### Accountable
+
+The VP of Engineering is accountable for this decision and its
+continued application across the organization.
+
+### Responsible
+
+- Engineering managers enforce the common office days within their
+  own teams and escalate scheduling conflicts.
+
+### Consulted
+
+- Facilities was consulted on desk and meeting-room capacity for the
+  three common office days.
+
+### Informed
+
+- All engineering staff are informed of the arrangement and any
+  changes to it via the engineering-wide announcement channel.
+
+## Tags
+
+- hybrid-work
+- engineering-policy
+
+## Source
+
+The engineering leadership offsite on 2025-02-20, following two years
+of per-team improvisation with no company-level rule.
+
 ## Related Artifacts
 
 ### Requirements

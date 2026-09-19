@@ -466,6 +466,20 @@ _DEC_MINIMAL_BODY = textwrap.dedent(
     ## Decision Outcome
 
     We chose the structured arrangement.
+
+    ## Roles and Responsibilities
+
+    ### Accountable
+
+    The platform architecture lead.
+
+    ### Responsible
+
+    - The order service team.
+
+    ## Source
+
+    The customer dashboard latency incident review meeting.
     """
 )
 
@@ -480,6 +494,20 @@ _DEC_UPDATED_BODY = textwrap.dedent(
     ## Decision Outcome
 
     We chose the revised arrangement.
+
+    ## Roles and Responsibilities
+
+    ### Accountable
+
+    The platform architecture lead.
+
+    ### Responsible
+
+    - The order service team.
+
+    ## Source
+
+    The customer dashboard latency incident review meeting.
     """
 )
 
@@ -870,8 +898,8 @@ _CASES: list[_Case] = [
         middle_marker="Something is wrong with the status quo.",
         middle_replacement="Something is very wrong with the status quo.",
         append_fragment="\n## More Information\n\nSome notes.\n",
-        eof_marker="## Decision Outcome",
-        eof_fragment="## Decision Outcome\n\nWe chose the revised arrangement.\n",
+        eof_marker="## Source",
+        eof_fragment="## Source\n\nThe revised customer dashboard latency incident review meeting.\n",
         deletable_suffix="\n## More Information\n\nSome notes.\n",
         field_error_marker="## Decision Outcome",
         field_error_fragment=(

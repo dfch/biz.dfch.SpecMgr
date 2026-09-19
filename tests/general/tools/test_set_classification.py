@@ -292,6 +292,20 @@ _DEC_MINIMAL_BODY = textwrap.dedent(
     ## Decision Outcome
 
     We chose the structured arrangement.
+
+    ## Roles and Responsibilities
+
+    ### Accountable
+
+    The platform architecture lead.
+
+    ### Responsible
+
+    - The order service team.
+
+    ## Source
+
+    The customer dashboard latency incident review meeting.
     """
 )
 

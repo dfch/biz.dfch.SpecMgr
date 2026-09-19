@@ -57,7 +57,7 @@ class TestCreateDecPrompt(unittest.TestCase):
 
     def test_mentions_todowrite_list(self):
         """The prompt must instruct building a todo list covering the mandatory
-        `context` + `outcome` + each optional section."""
+        `context` + `outcome` + `roles and responsibilities` + `source` + each optional section."""
         result = create_dec("Some topic")
         self.assertIn("todo list", result)
         for section in (
@@ -65,12 +65,24 @@ class TestCreateDecPrompt(unittest.TestCase):
             "Decision Drivers",
             "Considered Options",
             "Decision Outcome",
+            "Roles and Responsibilities",
+            "Tags",
+            "Source",
             "Related Artifacts",
             "Pros and Cons",
             "More Information",
             "Updates",
         ):
             self.assertIn(section, result)
+
+    def test_mentions_rasci_resource_for_roles_and_responsibilities(self):
+        """The prompt must instruct fetching the cross-cutting specmgr://rasci resource before
+        drafting the mandatory `## Roles and Responsibilities` section, and must not caveat this
+        step as skippable (unlike SOP, DEC's section is always present)."""
+        result = create_dec("Some topic")
+        self.assertIn("specmgr://rasci", result)
+        normalized = " ".join(result.split())
+        self.assertIn("this step is never skipped", normalized)
 
     def test_mentions_question_tool(self):
         """The prompt must instruct using the question tool to elicit information."""
@@ -114,10 +126,13 @@ class TestCreateDecPrompt(unittest.TestCase):
         self.assertEqual(positions, sorted(positions))
 
     def test_mentions_mandatory_fields(self):
-        """The mandatory DEC fields (context + outcome) must be named as the mandatory ones,
-        elicited before each optional field."""
+        """The mandatory DEC fields (context, outcome, roles and responsibilities, source) must
+        be named as the mandatory ones, elicited before each optional field."""
         result = " ".join(create_dec("Some topic").split())
-        self.assertIn("mandatory fields first -- the context and the outcome", result)
+        self.assertIn(
+            "mandatory fields first -- the context, the outcome, the roles and responsibilities, and the source",
+            result,
+        )
         self.assertIn("then each optional field in turn", result)
 
     def test_mentions_update_dec_for_later_revisions(self):
