@@ -18,6 +18,7 @@ This document defines the general coding requirements and conventions used throu
   - Use `int`, `float`, etc. directly over `Integer`, `Float`, etc.
 
 **Example:**
+
 ```python
 # ✓ Modern Python (3.11+)
 def process_items(items: list[str], filter_enabled: bool = True) -> str | None:
@@ -37,6 +38,7 @@ def process_items(items: list[str], filter_enabled: bool = True) -> str | None:
 **Rule 3:** Do not use assert for user-controlled flow control; use it only for program invariants and input validation.
 
 **Example:**
+
 ```python
 def calculate_discount(value: str, price: float, discount_rate: float) -> float:
 
@@ -53,6 +55,7 @@ def calculate_discount(value: str, price: float, discount_rate: float) -> float:
 ```
 
 **Best Practices:**
+
 - Define numeric and string constants for thresholds, minimums, maximums, and standard states
 - Place constants at module level with clear documentation
 - Use constants in assert statements to make conditions self-documenting and maintainable
@@ -89,6 +92,7 @@ def calculate_total(items: list[str]) -> int:
 - Apply this pattern to all equality checks (`==`, `!=`, `is`, `is not`), inequality checks (`<`, `>`, `<=`, `>=`), and membership checks (`in`, `not in`)
 
 **Example:**
+
 ```python
 # ✓ Use constant for comparison value
 VALID_STATUS = "active"
@@ -114,12 +118,14 @@ if filename.endswith(tuple(ALLOWED_FILE_EXT)):
 ```
 
 **Best Practices:**
+
 - Place constants at the top of the module or in a dedicated configuration section
 - Use `ALL_CAPS` naming convention for constants to distinguish them from variables
 - Group related constants together for easy maintenance
 - Document the purpose and allowed values of each constant
 
 **Example Module-Level Constants:**
+
 ```python
 # Constants for string comparisons
 DEFAULT_ENCODING = "utf-8"
@@ -146,6 +152,7 @@ STATUS_PENDING = "pending"
   - Variables outside functions when they are not inferred from context
 
 **Example:**
+
 ```python
 def load_config(filename: str) -> dict[str, str]:
     content: str = ""
@@ -172,6 +179,7 @@ def load_config(filename: str) -> dict[str, str]:
 - Maintain formal, concise documentation; avoid obvious statements
 
 **Example:**
+
 ```python
 class DataProcessor:
     """Process and validate data entries.
@@ -256,6 +264,7 @@ does not depend on a count staying in sync, instead.
   leaves.
 
 **Example:**
+
 ```python
 # ✗ Before: a bare cardinal number that has to be hand-updated whenever a domain is added
 """Dispatches the generic update across the eleven whole-body domains."""
@@ -303,7 +312,7 @@ def load_file(path: str) -> str:
 -[ ] Test methods start with `test_`
 -[ ] Use descriptive names that show what the test does and under what conditions
 -[ ] Do not use docstrings for test methods
--[ ] Tests have one *subject under test*. The subject variable name is `sut`. 
+-[ ] Tests have one *subject under test*. The subject variable name is `sut`.
 -[ ] Tests have a clear *arrange*-*act*-*assert* (AAA) structure
 -[ ] Place shared test fixtures in `fixtures` directory
 -[ ] Avoid complex setup/teardown; prefer simple, isolated tests
@@ -360,6 +369,7 @@ emphasis, or a `[link](url)` label) when hand-wrapping markdown prose to a fixed
   surprisingly large diff for what looks like a purely cosmetic operation.
 
 **Example:**
+
 ```markdown
 <!-- ✗ Before: line break lands inside the backtick code span -->
 See the `## Operational
@@ -370,6 +380,7 @@ See the `## Operational Concept and Scenarios` section for details.
 ```
 
 **Best Practices:**
+
 - Prefer not hand-wrapping markdown prose at all -- one long logical line per paragraph is what
   most of this codebase's already-`mdformat`-clean domain body content does.
 - If you do hard-wrap for editor readability, always break at a plain word boundary that falls
@@ -398,6 +409,7 @@ never soft-wrap (CommonMark lazy continuation) across two physical source lines.
   to keep tolerating soft-wraps unchanged.
 
 **Example:**
+
 ```markdown
 <!-- ✓ Single physical line -->
 - REQ-001: The widget must render within 200ms.
@@ -407,10 +419,104 @@ never soft-wrap (CommonMark lazy continuation) across two physical source lines.
   even under heavy load.
 ```
 
+## Verification Case Records (VCR) -- Author Early, Extend as Implementation Lands
+
+**Requirement:** For any REQ(s) produced through the doc-driven pipeline (QA -> REQ -> ADR ->
+feature), author the corresponding VCR(s) as early as possible -- immediately once the REQ(s)
+reach a stable, reviewed state, not after implementation. Populate each initial VCR only with
+the Acceptance Criteria that are genuinely derivable from its REQ's specified
+behavior/configuration contract alone (`## Coverage: partial`), and extend the *same* VCR
+document (via the generic `update` tool, not a rewrite) at the end of each feature-plan phase
+that makes a previously-undecided criterion concretely verifiable, moving `## Coverage` to
+`full` once every criterion is demonstrably covered.
+
+- Writing a VCR only after implementation risks ceremony: acceptance criteria end up describing
+  whatever was built, rather than being independently re-derived from the requirement.
+- Writing the VCR early and extending it phase by phase surfaces a genuine deviation between the
+  intended design and the actual implementation immediately, at the phase boundary where it is
+  cheapest to fix -- not retroactively at final verification.
+- A criterion that cannot yet be made concrete (e.g. an exact test ID, an exact metric name
+  implementation hasn't chosen yet) is legitimately deferred -- `## Coverage: partial` records
+  that honestly -- but the VCR document itself must exist from the start, not be postponed as a
+  whole.
+- A VCR's `## Verifies` section is single-valued (exactly one `REQ`/`UC` reference): when a
+  feature produces multiple REQs, author one VCR per REQ rather than one combined VCR.
+
+**Example:**
+
+```markdown
+<!-- ✗ Before: VCR drafted only after implementation, describing whatever got built -->
+<!-- (no VCR exists until the feature's final verification phase) -->
+
+<!-- ✓ After: VCR authored immediately once the REQ is finalized, `Coverage: partial` -->
+## Coverage
+
+partial
+
+### AC-001 (Demonstration): Feature is off by default
+
+With no relevant environment variables set, the feature emits no observable behavior.
+
+<!-- Extended later, in a following implementation phase, once concrete tests exist -->
+```
+
+## Observability Degrades Gracefully, Application Logic Never Does
+
+**Requirement:** Logging/telemetry code may catch an exception, log/warn once, and continue
+running in a degraded (partially or fully disabled) state instead of propagating the exception --
+but this "fail open" behavior is reserved exclusively for observability infrastructure itself. It
+must never be used to paper over an application-logic failure, which continues to follow the
+normal `### Error Handling` convention above (raise a typed exception, never silently swallow it).
+
+- Observability (logging, metrics, tracing) exists to describe what the application is doing --
+  its own failure must never become the application's failure. A tool call that would otherwise
+  succeed must keep succeeding even if, say, the configured OTLP endpoint is unreachable or a
+  third-party SDK's middleware contract changed underneath it.
+- This is a deliberate, narrow exception to `### Error Handling`, not a general license to swallow
+  exceptions: it applies only to code whose sole purpose is emitting logs/metrics/traces about a
+  call, never to the code that implements the call's own behavior (parsing, validation, disk I/O,
+  ...), which must keep raising as before.
+- A degradation must not be silent forever: log at most one message per distinct failure episode
+  (not once per call) so an operator can still notice and fix the underlying problem, without
+  flooding stderr for as long as the condition persists.
+- Distinguish *runtime* degradation (an unreachable network endpoint, an incompatible third-party
+  API surface discovered at call time) -- which fails open -- from *static misconfiguration* (an
+  invalid or incomplete environment variable combination discoverable at startup, before any call
+  is made) -- which still fails closed, i.e. raises immediately at startup, consistent with every
+  other `SPECMGR_*` environment variable in this codebase.
+
+**Example:**
+
+```python
+# ✓ Observability failure: fails open, one message per episode, application keeps working
+try:
+    exporter.export(spans)
+except ExporterUnreachableError:
+    if not _already_warned_for_this_outage:
+        logger.warning("OTLP exporter unreachable; telemetry export disabled until it recovers.")
+        _already_warned_for_this_outage = True
+    # Deliberately swallowed: a broken exporter must never fail the underlying tool call.
+
+
+# ✗ Application logic failure: must still raise, never silently degrade
+def read_req(id_: str) -> ReqDocument:
+    path = find_doc_path_by_id(id_)
+    if path is None:
+        raise ReqNotFoundError(id_)  # not: logger.warning(...); return None
+    return parse_req(path)
+
+
+# ✓ Static misconfiguration at startup: fails closed, same as every other SPECMGR_* env var
+def parse_telemetry_config() -> TelemetryConfig:
+    if _env_true("SPECMGR_LOG_FILE_ENABLED") and not os.environ.get("SPECMGR_LOG_FILE_PATH"):
+        raise ValueError("SPECMGR_LOG_FILE_PATH is required when SPECMGR_LOG_FILE_ENABLED=true")
+    ...
+```
+
 ## TODO
 
-* Use "uv", do not use "pip"
-* Use "setuptools", do not use "hatchling"
+- Use "uv", do not use "pip"
+- Use "setuptools", do not use "hatchling"
 
 ## Rationale
 
@@ -437,3 +543,9 @@ These conventions were chosen to:
 - **2026-09-02:** Added markdown line-wrapping convention (avoid breaking inside inline spans)
 - **2026-09-09:** Added markdown list-item soft-wrap convention (structurally-checked list items
   must stay on one physical line; call `MarkdownListItem.single_line_text()`)
+- **2026-09-19:** Added the VCR authored-early convention (write immediately once REQs
+  stabilize, extend to full coverage phase-by-phase, not after implementation; one VCR per REQ
+  since `## Verifies` is single-valued)
+- **2026-09-19:** Added the observability-fails-open convention (logging/telemetry code may
+  degrade gracefully and log once per failure episode; application logic never does; static
+  misconfiguration still fails closed at startup)
