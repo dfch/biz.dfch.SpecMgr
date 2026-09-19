@@ -4,7 +4,7 @@ created: '2026-09-19 12:17:45.447+02:00'
 id: dacd01f4-ffd8-4363-a20b-5ac1ce11eef2
 status: draft
 type: req
-updated: '2026-09-19 13:17:48.577+02:00'
+updated: '2026-09-19 14:32:47.209+02:00'
 version: 1.0.0
 ---
 
@@ -40,8 +40,12 @@ conventions (structured names, standard units, histogram buckets) using
 MCP-specific names (e.g. `mcp.tool.duration`, attributes `mcp.tool.name`/
 `mcp.domain`) rather than the literal RPC semantic-convention names (e.g.
 `rpc.server.duration`), since MCP has no registered `rpc.system` value and
-resource/prompt calls do not map cleanly onto RPC semantics. Trace sampling
-is always-on (100%); no sample-rate configuration is provided by this
+resource/prompt calls do not map cleanly onto RPC semantics. Every
+metric/span additionally carries an `mcp.item.type` attribute
+(`tool`/`resource`/`prompt`) alongside `mcp.tool.name`/`mcp.domain`, so a
+resource or prompt invocation recorded under the `mcp.tool.*` metric
+namespace is not mistaken for a literal tool call. Trace sampling is
+always-on (100%); no sample-rate configuration is provided by this
 requirement.
 
 Telemetry must never break a tool call. If the configured OTLP exporter
