@@ -27,10 +27,13 @@ own minimal ``dec`` body text.
 from __future__ import annotations
 
 #: The mandatory `## Roles and Responsibilities` (`### Accountable` +
-#: `### Responsible`) and `## Source` sections, as a markdown snippet with a
-#: single trailing newline (no leading blank line) -- append after the
-#: `## Decision Outcome` section's own content in a hand-built minimal `dec`
-#: body fixture.
+#: `### Responsible`) and `## Source` sections, as a markdown snippet. Carries
+#: both a leading and a trailing newline -- the leading `\n` lets a caller
+#: concatenate this directly onto fixture text that already ends in a single
+#: `\n`, producing the blank line markdown needs between sections, without
+#: the caller having to add its own trailing blank line first. Append after
+#: the `## Decision Outcome` section's own content in a hand-built minimal
+#: `dec` body fixture.
 MANDATORY_ROLES_AND_SOURCE = (
     "\n"
     "## Roles and Responsibilities\n"
