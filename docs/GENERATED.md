@@ -144,12 +144,15 @@ First-line docstrings from each module, organized by domain:
 - `general/tools/_doc_cache.py` — Generic, doc-type-agnostic content-hash-validated in-memory read cache (feat-107-doc-cache, Phase 2/Phase 6).
 - `general/tools/_doc_paths.py` — Generic, doc-type-agnostic base directory resolution, filename slugification,
 - `general/tools/_domains.py` — The shared ``WHOLE_BODY_DOMAINS`` registry (feat-134, Phase 1, REQ-012).
-- `general/tools/_embedding.py` — Pluggable embedding provider seam plus the shared similarity-availability check (feat-134, Phase 1).
+- `general/tools/_embedding.py` — Pluggable embedding provider seam plus the shared similarity-availability check (feat-134, Phase 1 + Phase 2).
 - `general/tools/_embedding_cache.py` — Global, content-hash-validated in-memory embedding cache (feat-134, Phase 1, REQ-004).
 - `general/tools/_listing.py` — Generic, doc-type-agnostic ``list_<domain>`` summary construction (feat-81-83-validation Phase 3, Task 3.1).
 - `general/tools/_packaged_data.py` — Generic, doc-type-agnostic access to packaged example/template/schema data
 - `general/tools/_paging.py` — Generic, doc-type-agnostic paging helpers (feat-13 Task 1.2).
 - `general/tools/_path_safety.py` — Reusable, doc-type-agnostic path-safety assertions for document ids and
+- `general/tools/_similarity_corpus.py` — Candidate enumeration and source resolution for the similarity engine (feat-134, Phase 2, Task 2.1).
+- `general/tools/_similarity_ranking.py` — Pure-Python cosine (dot-on-normalized) ranking (feat-134, Phase 2, Task 2.4).
+- `general/tools/_similarity_text.py` — Embedding-input text extraction for the similarity engine (feat-134, Phase 2, Task 2.2).
 - `general/tools/_splice.py` — Frontmatter-stripped body extraction, body-line splicing, and body-line
 - `general/tools/_timestamps.py` — Shared, private timestamp-formatting helpers (feat-38-39-41-43-44 Phase 3, Task 3.1).
 - `general/tools/delete.py` — ``@mcp.tool()`` wrapper: delete (feat-36-delete, Phase 2).

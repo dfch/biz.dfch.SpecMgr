@@ -15,10 +15,11 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Pluggable embedding provider seam plus the shared similarity-availability check (feat-134, Phase 1).
+"""Pluggable embedding provider seam plus the shared similarity-availability check (feat-134, Phase 1 + Phase 2).
 
-Backs ADR 750842b2-aca4-4649-ba0c-855ec8e1f505's two Phase-1 sub-decisions:
-the **provider seam** (REQ-002) and the **availability contract** (REQ-003).
+Backs ADR 750842b2-aca4-4649-ba0c-855ec8e1f505's **provider seam** (REQ-002),
+**long documents** (REQ-010), and **availability contract** (REQ-003)
+sub-decisions.
 
 **Provider seam (REQ-002).** :class:`EmbeddingProvider` is the protocol the
 two similarity tools (Phase 3, ``find_related``/``find_similar_text``) depend
@@ -27,6 +28,29 @@ different backend can be substituted later without changing tool code.
 :class:`FastEmbedProvider` is the shipped default: a thin wrapper over
 ``fastembed.TextEmbedding`` running ``BAAI/bge-small-en-v1.5``
 (ONNX Runtime, CPU-only, 384-dim -- the model is fixed for v1, REQ-001).
+
+**Long documents (REQ-010).** ``bge-small``'s 512-token max sequence length
+would otherwise silently truncate long inputs -- and the corpus contains
+documents (the ``.specmgr/feat`` READMEs, 5k-40k tokens) far beyond it.
+:meth:`FastEmbedProvider.embed` therefore splits any input longer than
+:data:`_CHUNK_SIZE` characters into whitespace-boundary character chunks
+(:func:`_chunk_text` -- character-based on purpose, no private tokenizer
+API; each chunk is at most :data:`_CHUNK_SIZE` characters and never splits
+a word), embeds every chunk, and pools the document vector as
+``normalize(mean(chunk_vectors))`` (:func:`_mean_pool` -- renormalizing
+after the mean keeps cosine == dot-product comparability across documents
+of different lengths). Input at/below :data:`_CHUNK_SIZE` characters takes
+the single-embed fast path (every current spec artifact does).
+:data:`_MAX_CHUNKS_PER_DOC` (evenly sampled above it, :func:`_evenly_sample`)
+bounds worst-case per-document cost, so the embedding cost per document is
+capped at ``min(chunk_count, _MAX_CHUNKS_PER_DOC)`` backend calls regardless
+of file size. The backend's own ``truncate`` default guards any slight
+per-chunk character/token overflow. The whole strategy lives *inside* the
+provider: the protocol still returns exactly one vector per input, so tool
+code (Phase 3) never sees per-chunk vectors. :meth:`FastEmbedProvider.
+embed_query` prepends ``bge-small``'s retrieval instruction
+(:data:`_QUERY_INSTRUCTION` -- "Represent this sentence for searching
+relevant passages:") and never chunks (queries are short).
 
 **Lazy import, never at module level (REQ-003).** ``fastembed`` is imported
 only inside :func:`get_default_provider` -- not at this module's import
@@ -53,17 +77,20 @@ repo's own env-flag convention, ``general.resources.config``). One code
 path, two triggers. ``None`` means "available -- proceed with the real
 ranking logic".
 
-**What this module does NOT do yet (later phases).** The chunk + mean-pool
-long-document strategy and the ``embed_query`` retrieval-instruction prefix
-(Phase 2, Task 2.3 -- :class:`FastEmbedProvider`'s two methods are the
-deliberate slot points), text extraction (Phase 2, Task 2.2), ranking
-(Phase 2, Task 2.4), the two tools themselves (Phase 3), and the background
-warmup (Phase 3, Task 3.7, which gates on this module's
-:data:`SIMILARITY_DISABLED_ENV_VAR`).
+**What this module does NOT do yet (later phases).** The two tools
+themselves (Phase 3, Task 3.1/3.2, in their own ``general/tools/``
+modules) and the background warmup (Phase 3, Task 3.7, which gates on
+this module's :data:`SIMILARITY_DISABLED_ENV_VAR`). The sibling Phase 2
+concerns live in their own modules: the embedding-input text extraction
+(``general/tools/_similarity_text.py``, Task 2.2), the candidate
+enumeration / source resolution (``general/tools/_similarity_corpus.py``,
+Task 2.1), and the pure-Python ranking (``general/tools/_similarity_ranking.py``,
+Task 2.4).
 """
 
 from __future__ import annotations
 
+import math
 import os
 import threading
 from collections.abc import Iterable, Sequence
@@ -102,6 +129,176 @@ SIMILARITY_DISABLED_ENV_VAR = "SPECMGR_SIMILARITY_DISABLED"
 #: sub-decision: configurability is deferred -- a quality upgrade means a
 #: provider substitution, which the protocol exists to allow).
 _DEFAULT_MODEL_NAME = "BAAI/bge-small-en-v1.5"
+
+#: The per-chunk character budget -- and the single-embed fast-path
+#: threshold (REQ-010). Input at/below this many characters is embedded
+#: whole, in one backend call, with no chunking (every current spec
+#: artifact does); input above it is split into whitespace-boundary
+#: chunks of at most this many characters each. ``bge-small``'s own 512-
+#: token max sequence length is approximated by this character budget
+#: (~2000 characters for English text at the model's ~4 characters/token
+#: ratio) -- character-based on purpose, since the backend exposes no
+#: public tokenizer API, and the backend's own ``truncate`` default
+#: guards any slight per-chunk overflow. A future model swap (deferred,
+#: v1 fixes the model) updates this constant alongside the chunker.
+_CHUNK_SIZE = 2000
+
+#: The safety cap on the number of chunks one document may contribute to
+#: a single :meth:`FastEmbedProvider.embed` call (REQ-010/ADR 750842b2:
+#: "evenly sampled above it"): a document that would split into more than
+#: this many chunks is reduced to this many, sampled evenly across its
+#: length (first and last chunk kept, the interior at equal spacing), so
+#: worst-case per-document cost is bounded at
+#: ``min(chunk_count, _MAX_CHUNKS_PER_DOC)`` backend calls regardless of
+#: file size.
+_MAX_CHUNKS_PER_DOC = 128
+
+#: ``bge-small``'s own retrieval instruction, prepended to every query-
+#: side input (REQ-010/ADR 750842b2, **provider seam** sub-decision).
+#: ``bge-small-en-v1.5`` is a retrieval model: its training used this
+#: instruction on the query side (and none on the passage side), so a
+#: query embedded without it scores systematically lower against the
+#: document-side vectors the same model produced for the corpus. A
+#: trailing space separates the instruction from the query text (the
+#: model card's own ``"Represent this sentence for searching relevant
+#: passages: {query}"`` shape).
+_QUERY_INSTRUCTION = "Represent this sentence for searching relevant passages:"
+
+#: The whitespace characters :func:`_chunk_text` may break on (the
+#: ``str.isspace()`` set restricted to the characters that occur in
+#: practice in markdown sources): the chunk boundary always lands *at*
+#: one of these, so a word is never split across two chunks.
+_WHITESPACE = " \t\n\r\x0b\x0c"
+
+
+def _chunk_text(text: str) -> list[str]:
+    """Split ``text`` into whitespace-boundary chunks of at most :data:`_CHUNK_SIZE` characters.
+
+    Greedy fill: each chunk runs from the current position to the last
+    whitespace character strictly before ``start + _CHUNK_SIZE`` (the
+    separator itself is dropped -- it is pure whitespace between chunks
+    and carries no embedding signal), so every chunk is at most
+    :data:`_CHUNK_SIZE` characters long and never splits a word. A run
+    with no whitespace at all (a single token longer than the budget)
+    hard-splits at the budget. Whitespace-only text yields a single
+    chunk containing the text unchanged (degenerate; the backend's own
+    ``truncate`` handles it).
+
+    Args:
+        text: The input text to split (non-empty in practice -- the
+            caller only routes text above the fast-path threshold here).
+
+    Returns:
+        The chunks, in order; every chunk is a substring of ``text``
+        (no re-joining, no character changes other than the dropped
+        boundary whitespace), at most :data:`_CHUNK_SIZE` characters
+        long, and non-empty.
+    """
+    assert isinstance(text, str), type(text)
+
+    chunks: list[str] = []
+    start = 0
+    length = len(text)
+    while start < length:
+        while start < length and text[start] in _WHITESPACE:
+            start += 1
+        if start >= length:
+            break
+        end = min(start + _CHUNK_SIZE, length)
+        if end < length:
+            boundary = max(text.rfind(char, start, end) for char in _WHITESPACE)
+            if boundary > start:
+                end = boundary
+        chunks.append(text[start:end])
+        start = end
+    if not chunks:
+        chunks.append(text)
+    result = chunks
+    return result
+
+
+def _evenly_sample(chunks: list[str]) -> list[str]:
+    """Apply the :data:`_MAX_CHUNKS_PER_DOC` safety cap by even sampling (REQ-010).
+
+    At or below the cap, ``chunks`` is returned unchanged. Above it,
+    exactly :data:`_MAX_CHUNKS_PER_DOC` chunks are kept: the first and
+    the last (the document's opening -- carrying the double-weighted
+    title -- and its closing) plus the interior at equal spacing, so no
+    region of the document is over- or under-represented in the pool.
+
+    Args:
+        chunks: The :func:`_chunk_text` output to cap.
+
+    Returns:
+        ``chunks`` unchanged at/below the cap, else exactly
+        :data:`_MAX_CHUNKS_PER_DOC` of its elements (first and last
+        included), in order.
+    """
+    assert isinstance(chunks, list), type(chunks)
+    assert chunks, "sampling needs at least one chunk"
+
+    if len(chunks) <= _MAX_CHUNKS_PER_DOC:
+        result = chunks
+        return result
+
+    count = len(chunks)
+    step = (count - 1) / (_MAX_CHUNKS_PER_DOC - 1)
+    result = [chunks[round(i * step)] for i in range(_MAX_CHUNKS_PER_DOC)]
+    return result
+
+
+def _mean_pool(chunk_vectors: list[Vector]) -> list[float]:
+    """Pool a document's chunk vectors as ``normalize(mean(chunk_vectors))`` (REQ-010).
+
+    Element-wise arithmetic mean of the equally-weighted chunk vectors,
+    then L2 renormalization -- renormalizing after the mean keeps cosine
+    == dot-product comparability between documents of different chunk
+    counts (the ADR's own rationale). Pure Python on purpose (no
+    ``numpy`` import, module-level or otherwise -- the dependency-light
+    constraint): the backend's ``numpy.ndarray`` chunks are iterated as
+    read-only :data:`Vector` sequences, and the pooled vector is a plain
+    ``list[float]``. The embedding cache (``_embedding_cache``) stores
+    whatever the provider returns unconverted, so the cache's own
+    "native arrays" note applies to the single-embed fast path (the
+    backend's own arrays, returned as-is); a pooled vector is a list by
+    construction -- at most ~128 x 384 floats per chunked document, a
+    negligible fraction of the whole-corpus cache.
+
+    Args:
+        chunk_vectors: One document's per-chunk vectors (two or more in
+            practice -- the caller mean-pools only the chunked inputs;
+            a single vector is returned by the fast path un-pooled).
+
+    Returns:
+        The renormalized mean as a plain ``list[float]``. A mean that is
+        the zero vector (possible only for degenerate all-zero chunk
+        vectors) is returned un-normalized -- dividing by a zero norm is
+        undefined, and there is nothing to rank against it anyway.
+
+    Raises:
+        AssertionError: The chunk vectors disagree on dimension (program
+            invariant -- one backend, one model, one fixed dimension).
+    """
+    assert isinstance(chunk_vectors, list), type(chunk_vectors)
+    assert chunk_vectors, "a mean-pool needs at least one chunk vector"
+
+    dimension = len(chunk_vectors[0])
+    assert all(len(vector) == dimension for vector in chunk_vectors), "all chunk vectors must share one dimension"
+
+    count = len(chunk_vectors)
+    sums = [0.0] * dimension
+    for vector in chunk_vectors:
+        for i in range(dimension):
+            sums[i] += vector[i]
+
+    mean = [total / count for total in sums]
+    norm = math.sqrt(sum(component * component for component in mean))
+    if norm == 0.0:
+        result: list[float] = mean
+        return result
+
+    result = [component / norm for component in mean]
+    return result
 
 
 class EmbeddingProvider(Protocol):
@@ -170,14 +367,15 @@ class FastEmbedProvider:
     imports ``fastembed`` and never constructs the model: it is a pure,
     directly-testable wrapper.
 
-    Phase 1 (this module): both methods call the underlying
-    ``TextEmbedding.embed`` directly, one vector per input. Phase 2,
-    Task 2.3 slots the chunk + mean-pool long-document strategy into
-    :meth:`embed` (whitespace-boundary character chunks, single-embed fast
-    path at/below the model max length, ``_MAX_CHUNKS_PER_DOC`` even-
-    sampling cap, ``normalize(mean(chunk_vectors))`` pooling) and the BGE
-    retrieval-instruction prefix into :meth:`embed_query` -- without any
-    change to this class's public surface.
+    Phase 2, Task 2.3 (this module): :meth:`embed` applies the chunk +
+    mean-pool long-document strategy (single-embed fast path at/below
+    :data:`_CHUNK_SIZE` characters; above it, whitespace-boundary
+    character chunks capped by :data:`_MAX_CHUNKS_PER_DOC` even sampling,
+    pooled as ``normalize(mean(chunk_vectors))``) and :meth:`embed_query`
+    prepends the BGE retrieval-instruction prefix -- both still returning
+    exactly one vector per input, without any change to this class's
+    public surface (REQ-010: the strategy lives inside the provider, so
+    tool code never sees per-chunk vectors).
 
     Attributes:
         text_embedding: The wrapped ``fastembed.TextEmbedding`` instance
@@ -196,31 +394,87 @@ class FastEmbedProvider:
         assert text_embedding is not None, type(text_embedding)
         self.text_embedding = text_embedding
 
-    def embed(self, texts: list[str]) -> list[Vector]:
-        """Embed document-side inputs, one vector per input (REQ-002).
+    def _backend_inputs(self, text: str) -> list[str]:
+        """The backend input(s) for one document-side text (REQ-010).
 
-        Phase 1: direct ``TextEmbedding.embed`` call. Phase 2, Task 2.3
-        replaces the body with the chunk + mean-pool strategy (the backend's
-        own ``truncate`` default guards any slight per-chunk overflow).
+        The single-embed fast path for text at/below :data:`_CHUNK_SIZE`
+        characters (the text itself, unchanged); above it, the
+        whitespace-boundary character chunks (never splitting a word, each
+        at most :data:`_CHUNK_SIZE` characters) reduced by the
+        :data:`_MAX_CHUNKS_PER_DOC` even-sampling cap.
+
+        Args:
+            text: One document-side input string.
+
+        Returns:
+            The one (fast path) or several (chunked) strings to hand to
+            the backend for this input.
+        """
+        assert isinstance(text, str), type(text)
+
+        if len(text) <= _CHUNK_SIZE:
+            result: list[str] = [text]
+            return result
+
+        result = _evenly_sample(_chunk_text(text))
+        return result
+
+    def embed(self, texts: list[str]) -> list[Vector]:
+        """Embed document-side inputs, one vector per input (REQ-002/REQ-010).
+
+        Every input at/below :data:`_CHUNK_SIZE` characters is embedded
+        whole (the single-embed fast path, the backend's own array
+        returned unconverted); every longer input is split into
+        whitespace-boundary character chunks (capped at
+        :data:`_MAX_CHUNKS_PER_DOC` by even sampling), the chunks are
+        embedded, and the input's vector is their renormalized mean
+        (:func:`_mean_pool`) -- never silent truncation (REQ-010). All
+        inputs' backend strings are collected first and handed to the
+        backend in **one** ``TextEmbedding.embed`` call (the backend's
+        own batching is preserved across the chunk expansion), then the
+        per-input vectors are reassembled in input order.
 
         Args:
             texts: The document-side input strings.
 
         Returns:
             One :data:`Vector` per input string, in input order -- the
-            backend's native arrays, stored and returned unconverted.
+            backend's native arrays on the fast path, plain
+            ``list[float]`` renormalized means for chunked inputs.
         """
         assert isinstance(texts, list), type(texts)
 
-        result: list[Vector] = [vector for vector in self.text_embedding.embed(texts)]
+        groups: list[list[str]] = [self._backend_inputs(text) for text in texts]
+        flat: list[str] = [chunk for group in groups for chunk in group]
+        if not flat:
+            result: list[Vector] = []
+            return result
+
+        flat_vectors: list[Vector] = [vector for vector in self.text_embedding.embed(flat)]
+        assert len(flat_vectors) == len(flat), f"backend returned {len(flat_vectors)} vectors for {len(flat)} inputs"
+
+        result = []
+        offset = 0
+        for group in groups:
+            group_vectors = flat_vectors[offset : offset + len(group)]
+            offset += len(group)
+            if len(group_vectors) == 1:
+                result.append(group_vectors[0])
+            else:
+                result.append(_mean_pool(group_vectors))
         return result
 
     def embed_query(self, texts: list[str]) -> list[Vector]:
-        """Embed query-side inputs, one vector per input (REQ-002).
+        """Embed query-side inputs, one vector per input (REQ-002/REQ-010).
 
-        Phase 1: direct ``TextEmbedding.embed`` call, identical to
-        :meth:`embed`. Phase 2, Task 2.3 prepends the backend's retrieval
-        instruction prefix and guarantees queries are never chunked.
+        Prepends :data:`_QUERY_INSTRUCTION` (``bge-small``'s own retrieval
+        instruction -- the model was trained with it on the query side, so
+        queries embedded without it score systematically lower against the
+        corpus's document-side vectors) to every input and hands the
+        prefixed inputs to the backend in one call. Queries are **never
+        chunked** (they are short -- the chunk + mean-pool strategy is a
+        document-side concern, REQ-010): no input length check, no
+        fallback.
 
         Args:
             texts: The query-side input strings.
@@ -230,7 +484,12 @@ class FastEmbedProvider:
         """
         assert isinstance(texts, list), type(texts)
 
-        result: list[Vector] = [vector for vector in self.text_embedding.embed(texts)]
+        prefixed: list[str] = [f"{_QUERY_INSTRUCTION} {text}" for text in texts]
+        if not prefixed:
+            result: list[Vector] = []
+            return result
+
+        result = [vector for vector in self.text_embedding.embed(prefixed)]
         return result
 
 

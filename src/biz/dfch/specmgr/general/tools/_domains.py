@@ -36,11 +36,17 @@ sub-decision) makes this module the single place the set is spelled out:
   and every tool's own dispatch domain set re-derives from it.
 - :class:`WholeBodyDomain` + the module-scope ``_DOMAINS`` mapping --
   the per-domain adapters every cross-domain consumer needs: the
-  base-dir resolver, the path iterator, and ``load_by_id`` -- the same
-  per-domain adapter shape ``general/tools/delete.py`` already imports at
-  module level. ``feat``'s ``<base>/<id>/README.md`` folder shape is the
-  one bespoke path iterator (``iter_feat_paths``); every other domain uses
-  the shared flat-file ``iter_doc_paths``.
+  base-dir resolver, the path iterator, ``load_by_id``, and the pure text
+  parser (``parse_text``) -- the same per-domain adapter shape
+  ``general/tools/delete.py`` already imports at module level. ``feat``'s
+  ``<base>/<id>/README.md`` folder shape is the one bespoke path iterator
+  (``iter_feat_paths``); every other domain uses the shared flat-file
+  ``iter_doc_paths``. ``parse_text`` (added feat-134 Phase 2, Task 2.1)
+  backs the similarity engine's per-candidate parseability check -- a
+  document is unparseable when its domain's own text parser raises on any
+  of the three parse-failure channels (REQ-009) -- and its candidate
+  enumeration / source resolution live in
+  ``general/tools/_similarity_corpus.py``, built on this registry.
 - :data:`WholeBodyType` / :data:`WholeBodyOrAdrType` -- the derived
   ``Literal`` ``type``-parameter annotations for the generic tools.
 - :func:`whole_body_domain` -- the ``name -> WholeBodyDomain`` lookup with
@@ -66,30 +72,42 @@ from __future__ import annotations
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal, TypeAlias
+from typing import Any, Literal, TypeAlias
 
+from ...dec.models.v1.parser import parse_dec
 from ...dec.tools._io import load_by_id as load_dec_by_id
 from ...dec.tools._paths import dec_base_dir
+from ...feat.models.v1.parser import parse_feat
 from ...feat.tools._io import load_by_id as load_feat_by_id
 from ...feat.tools._paths import feat_base_dir, iter_feat_paths
+from ...gol.models.v1.parser import parse_gol
 from ...gol.tools._io import load_by_id as load_gol_by_id
 from ...gol.tools._paths import gol_base_dir
+from ...prb.models.v1.parser import parse_prb
 from ...prb.tools._io import load_by_id as load_prb_by_id
 from ...prb.tools._paths import prb_base_dir
+from ...qa.models.v2.parser import parse_qa
 from ...qa.tools._io import load_by_id as load_qa_by_id
 from ...qa.tools._paths import qa_base_dir
+from ...req.models.v1.parser import parse_req
 from ...req.tools._io import load_by_id as load_req_by_id
 from ...req.tools._paths import req_base_dir
+from ...rsk.models.v1.parser import parse_rsk
 from ...rsk.tools._io import load_by_id as load_rsk_by_id
 from ...rsk.tools._paths import rsk_base_dir
+from ...sop.models.v1.parser import parse_sop
 from ...sop.tools._io import load_by_id as load_sop_by_id
 from ...sop.tools._paths import sop_base_dir
+from ...sysrs.models.v1.parser import parse_sysrs
 from ...sysrs.tools._io import load_by_id as load_sysrs_by_id
 from ...sysrs.tools._paths import sysrs_base_dir
+from ...tsk.models.v1.parser import parse_tsk
 from ...tsk.tools._io import load_by_id as load_tsk_by_id
 from ...tsk.tools._paths import tsk_base_dir
+from ...uc.models.v2.parser import parse_uc
 from ...uc.tools._io import load_by_id as load_uc_by_id
 from ...uc.tools._paths import uc_base_dir
+from ...vcr.models.v1.parser import parse_vcr
 from ...vcr.tools._io import load_by_id as load_vcr_by_id
 from ...vcr.tools._paths import vcr_base_dir
 from ._doc_paths import iter_doc_paths
@@ -139,12 +157,26 @@ class WholeBodyDomain:
             function actually returns); registry callers that only need
             the path (the generic ``delete`` adapters' own
             resolve-then-act pattern) discard it.
+        parse_text:
+            The domain's own pure text parser -- the ``parse_<d>(text)``
+            function from the domain's ``models`` package (no file I/O, no
+            ``mcp``): the single call that decides whether a document's
+            exact text is parseable at all, raising the domain's three
+            parse-failure channels (structural ``AssertionError``,
+            ``pydantic.ValidationError``, ``yaml.YAMLError`` --
+            ``general.tools._listing.DEFAULT_ERROR_TYPES``) on failure.
+            On success it yields the validated document (the return slot
+            is typed ``Any`` -- each domain's own concrete document type,
+            whose ``.frontmatter`` the feat-134 Phase 2 candidate
+            extraction reads for the result-row ``id``/``status``);
+            ``general/tools/_similarity_corpus.py`` is the first caller.
     """
 
     name: str
     base_dir: Callable[[], Path]
     iter_paths: Callable[[Path], Iterator[Path]]
     load_by_id: Callable[[Path, str], tuple[Path, object]]
+    parse_text: Callable[[str], Any]
 
 
 #: The whole-body domains, in registry order -- the one source of the domain
@@ -177,72 +209,84 @@ _DOMAINS: dict[str, WholeBodyDomain] = {
         base_dir=req_base_dir,
         iter_paths=iter_doc_paths,
         load_by_id=load_req_by_id,
+        parse_text=parse_req,
     ),
     "uc": WholeBodyDomain(
         name="uc",
         base_dir=uc_base_dir,
         iter_paths=iter_doc_paths,
         load_by_id=load_uc_by_id,
+        parse_text=parse_uc,
     ),
     "tsk": WholeBodyDomain(
         name="tsk",
         base_dir=tsk_base_dir,
         iter_paths=iter_doc_paths,
         load_by_id=load_tsk_by_id,
+        parse_text=parse_tsk,
     ),
     "qa": WholeBodyDomain(
         name="qa",
         base_dir=qa_base_dir,
         iter_paths=iter_doc_paths,
         load_by_id=load_qa_by_id,
+        parse_text=parse_qa,
     ),
     "prb": WholeBodyDomain(
         name="prb",
         base_dir=prb_base_dir,
         iter_paths=iter_doc_paths,
         load_by_id=load_prb_by_id,
+        parse_text=parse_prb,
     ),
     "gol": WholeBodyDomain(
         name="gol",
         base_dir=gol_base_dir,
         iter_paths=iter_doc_paths,
         load_by_id=load_gol_by_id,
+        parse_text=parse_gol,
     ),
     "rsk": WholeBodyDomain(
         name="rsk",
         base_dir=rsk_base_dir,
         iter_paths=iter_doc_paths,
         load_by_id=load_rsk_by_id,
+        parse_text=parse_rsk,
     ),
     "dec": WholeBodyDomain(
         name="dec",
         base_dir=dec_base_dir,
         iter_paths=iter_doc_paths,
         load_by_id=load_dec_by_id,
+        parse_text=parse_dec,
     ),
     "sop": WholeBodyDomain(
         name="sop",
         base_dir=sop_base_dir,
         iter_paths=iter_doc_paths,
         load_by_id=load_sop_by_id,
+        parse_text=parse_sop,
     ),
     "feat": WholeBodyDomain(
         name="feat",
         base_dir=feat_base_dir,
         iter_paths=iter_feat_paths,
         load_by_id=load_feat_by_id,
+        parse_text=parse_feat,
     ),
     "vcr": WholeBodyDomain(
         name="vcr",
         base_dir=vcr_base_dir,
         iter_paths=iter_doc_paths,
         load_by_id=load_vcr_by_id,
+        parse_text=parse_vcr,
     ),
     "sysrs": WholeBodyDomain(
         name="sysrs",
         base_dir=sysrs_base_dir,
         iter_paths=iter_doc_paths,
         load_by_id=load_sysrs_by_id,
+        parse_text=parse_sysrs,
     ),
 }
 
