@@ -85,6 +85,12 @@ class SourceBase(MarkdownSection2):
         Single-line value naming the origin/authority of this document. Mandatory.
     """
 
+    # Intentionally domain-neutral ("this document", not "this requirement"/"this decision"):
+    # every domain-specific subclass (`req.Source`, `dec.Source`, ...) inherits this exact
+    # `Field(description=...)` verbatim into its own generated JSON Schema, so wording specific
+    # to one domain here would be misleading for every other domain that reuses this base
+    # (feat-29-dec-source-roles, REQ-016). Domain-specific wording belongs on the concrete
+    # subclass's own class-level docstring instead (see `req.Source`/`dec.Source`), not here.
     value: MarkdownParagraph = Field(description="Single-line value naming the origin/authority of this document.")
 
 

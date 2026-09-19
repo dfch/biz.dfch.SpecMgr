@@ -16939,7 +16939,11 @@ decision (e.g. an issue, a meeting, a stakeholder request). Mandatory.
 
 Subclasses the shared `models.md.SourceBase` (feat-29-dec-source-roles) --
 the field declaration itself lives there; this class exists so `dec`
-still declares and owns its own concrete `Source` type.
+still declares and owns its own concrete `Source` type. Note: the
+generated JSON Schema's `value` field description comes from
+`SourceBase` and is intentionally domain-neutral ("this document"),
+not the domain-specific "this decision" wording used above -- see
+`SourceBase`'s own comment for the rationale (REQ-016).
 
 **Methods:**
 

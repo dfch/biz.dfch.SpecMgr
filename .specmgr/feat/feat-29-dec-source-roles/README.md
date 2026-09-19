@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-17 14:06:49.067+02:00'
 id: feat-29-dec-source-roles
-status: in-progress
+status: done
 type: feat
-updated: '2026-09-19 13:00:00.000+02:00'
+updated: '2026-09-19 16:30:00.000+02:00'
 version: 1.0.0
 ---
 
@@ -52,10 +52,10 @@ GitHub issue #29 originally asked for `DecFrontmatter` to gain ADR-style attribu
 - [x] ACC-011: Verifies REQ-012 -- both corrected tests fail again if the mandatory-section-first fix is reverted (spot-check this during implementation, then restore the fix), and pass with the fix in place, asserting on message content.
 - [x] ACC-012: Verifies REQ-013 -- a dated Decisions Made entry records the cardinality decision and its rationale.
 - [x] ACC-013: Verifies REQ-014 -- a "Known Limitations" section exists and cross-references `feat-46-remove-adr`.
-- [ ] ACC-014: Verifies REQ-015 -- a new misordering regression test covering the three new sections exists and fails (with an `AssertionError`) when the fix is temporarily reverted, then passes with the fix restored.
-- [ ] ACC-015: Verifies REQ-016 -- `models/md/common_sections.py` and/or `req.Source`'s docstring explicitly document the domain-neutral field-description wording as an intentional choice.
-- [ ] ACC-016: Verifies REQ-017 -- `tests/dec/models/v1/test_parser.py` no longer defines its own `_MANDATORY_ROLES_AND_SOURCE` constant and imports the shared one instead; the full DEC test suite still passes unchanged.
-- [ ] ACC-017: Verifies REQ-018 -- `tests/general/tools/test_validate.py`'s DEC fixtures use a single `textwrap.dedent` call each, matching sibling generic test files; the full `test_validate.py` suite still passes unchanged.
+- [x] ACC-014: Verifies REQ-015 -- a new misordering regression test covering the three new sections exists and fails (with an `AssertionError`) when the fix is temporarily reverted, then passes with the fix restored.
+- [x] ACC-015: Verifies REQ-016 -- `models/md/common_sections.py` and/or `req.Source`'s docstring explicitly document the domain-neutral field-description wording as an intentional choice.
+- [x] ACC-016: Verifies REQ-017 -- `tests/dec/models/v1/test_parser.py` no longer defines its own `_MANDATORY_ROLES_AND_SOURCE` constant and imports the shared one instead; the full DEC test suite still passes unchanged.
+- [x] ACC-017: Verifies REQ-018 -- `tests/general/tools/test_validate.py`'s DEC fixtures use a single `textwrap.dedent` call each, matching sibling generic test files; the full `test_validate.py` suite still passes unchanged.
 
 ### Scope
 
@@ -174,18 +174,18 @@ Orchestration handoff (see REQ-010): Phases 0-3 were implemented inline in one l
 
 #### Phase 7: External Review Remediation (Round 2)
 
-- [ ] Task 7.1: Add a regression test to `tests/dec/models/v1/test_body.py` covering misordering of the three new sections per REQ-015 (ACC-014); spot-check by temporarily reverting the ordering guard and confirming the new test fails, then restore.
-- [ ] Task 7.2: Document the domain-neutral `SourceBase.value` field-description wording as an intentional choice per REQ-016 (ACC-015).
-- [ ] Task 7.3: Remove the duplicated `_MANDATORY_ROLES_AND_SOURCE` constant from `tests/dec/models/v1/test_parser.py` and import the shared `tests/dec/tools/_helpers.py::MANDATORY_ROLES_AND_SOURCE` instead per REQ-017 (ACC-016).
-- [ ] Task 7.4: Rewrite `tests/general/tools/test_validate.py`'s `_DEC_MINIMAL_BODY`/`_DEC_BAD_FIELD_BODY` fixtures to use a single `textwrap.dedent` call each per REQ-018 (ACC-017).
-- [ ] Task 7.5: Run this phase's full quality gate (REQ-009) and commit.
-- [ ] Task 7.6: Update this README's Progress section (Current Status, a new dated Updates entry, frontmatter `status` back to `done`, `updated` bumped) once Tasks 7.1-7.5 are complete.
+- [x] Task 7.1: Add a regression test to `tests/dec/models/v1/test_body.py` covering misordering of the three new sections per REQ-015 (ACC-014); spot-check by temporarily reverting the ordering guard and confirming the new test fails, then restore.
+- [x] Task 7.2: Document the domain-neutral `SourceBase.value` field-description wording as an intentional choice per REQ-016 (ACC-015).
+- [x] Task 7.3: Remove the duplicated `_MANDATORY_ROLES_AND_SOURCE` constant from `tests/dec/models/v1/test_parser.py` and import the shared `tests/dec/tools/_helpers.py::MANDATORY_ROLES_AND_SOURCE` instead per REQ-017 (ACC-016).
+- [x] Task 7.4: Rewrite `tests/general/tools/test_validate.py`'s `_DEC_MINIMAL_BODY`/`_DEC_BAD_FIELD_BODY` fixtures to use a single `textwrap.dedent` call each per REQ-018 (ACC-017).
+- [x] Task 7.5: Run this phase's full quality gate (REQ-009) and commit.
+- [x] Task 7.6: Update this README's Progress section (Current Status, a new dated Updates entry, frontmatter `status` back to `done`, `updated` bumped) once Tasks 7.1-7.5 are complete.
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-09-19**: **Phase 7 planned, not yet implemented.** Phases 0-6 are done; ACC-001 through ACC-013 are met. A follow-up `feat-reviewer` review of the completed feature (post-Phase-6) found one test-coverage gap, one small wording inconsistency, and two test-fixture code smells; REQ-015 through REQ-018, ACC-014 through ACC-017, and a new "Phase 7: External Review Remediation (Round 2)" Task List block were added to this README to track fixing them, but none of Tasks 7.1-7.6 have been started yet -- this is planning only. Frontmatter `status` set to `in-progress` until Phase 7 lands. Commits on branch `feat-29-dec-source-roles`: `be8abc5` (Phase 0), `19b6675` (Phase 1), `a7fd4fd` (Phase 2+3), `c8d5a92` (Phase 4), Phase 5, Phase 6.
+**As of 2026-09-19**: **Feature complete.** Phases 0-7 are all done; ACC-001 through ACC-017 are all met. Phase 7 (External Review Remediation, Round 2) closed the four items a follow-up `feat-reviewer` review found after Phase 6: a missing new-section misordering regression test, an unremarked wording drift in the shared `SourceBase.value` field description, a duplicated test fixture constant, and a test-fixture style divergence. Frontmatter `status` set back to `done`. Commits on branch `feat-29-dec-source-roles`: `be8abc5` (Phase 0), `19b6675` (Phase 1), `a7fd4fd` (Phase 2+3), `c8d5a92` (Phase 4), Phase 5, Phase 6, Phase 7.
 
 ### Blockers
 
@@ -194,6 +194,77 @@ Orchestration handoff (see REQ-010): Phases 0-3 were implemented inline in one l
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-19 16:30:00.000Z - Phase 7 complete: external review remediation (round 2)
+
+Executed Phase 7, closing all four items the second-round `feat-reviewer`
+review found. **Task 7.1 (REQ-015/ACC-014)**: added
+`test_source_before_roles_and_responsibilities_raises_assertion_error` to
+`tests/dec/models/v1/test_body.py::TestDecisionMisordering` -- a `## Source`
+placed ahead of the mandatory `## Roles and Responsibilities` -- closing the
+gap where every existing misordering test only exercised pre-existing
+sections. Verified the test matters by temporarily reordering `Decision`'s
+own field declarations (`source` before `roles_and_responsibilities`) to
+mirror the misordered fixture: the new test then failed with
+`AssertionError: AssertionError not raised`, confirming it genuinely
+depends on the field-order guard; restored the original order immediately
+afterward, leaving no reverted state in the diff. **Task 7.2
+(REQ-016/ACC-015)**: added a comment above `SourceBase.value`'s
+`Field(description=...)` in `models/md/common_sections.py` explaining the
+domain-neutral wording is an intentional policy choice (every domain
+subclass inherits it verbatim into its own generated JSON Schema), plus a
+one-line cross-reference note in both `req.Source`'s and `dec.Source`'s own
+docstrings. This turned out to change generated schema content after all
+(`specmgr schema`'s `req`/`dec` output changed) -- Pydantic embeds a
+model's class docstring as its JSON Schema-level `description`, so the
+`req.Source`/`dec.Source` docstring edits (not the `common_sections.py`
+comment, which sits beside a field, not a docstring) did affect
+`docs/req_schema.json`/`docs/dec_schema.json` and their packaged
+`req/data/`/`dec/data/` copies; this is expected, correct drift, not a bug.
+**Task 7.3 (REQ-017/ACC-016)**: before touching this file, verified the
+plan's own "byte-identical" premise by importing both constants directly
+and diffing them -- they were **not** byte-identical:
+`tests/dec/tools/_helpers.py::MANDATORY_ROLES_AND_SOURCE` carries a leading
+`\n` that `tests/dec/models/v1/test_parser.py`'s own local
+`_MANDATORY_ROLES_AND_SOURCE` does not, since each was written for its own
+call sites' surrounding-text conventions (the shared helper's callers in
+`tests/dec/tools/*.py` need the leading blank line; `test_parser.py`'s two
+use sites already end their preceding fixture text with a blank line and
+would double up on it). Stopped and reported this discrepancy rather than
+guessing; the user/orchestrator weighed the three options previously laid
+out (import anyway relying on mdformat normalization; leave as-is and
+correct REQ-017's wording; normalize both constants to be genuinely
+byte-identical) and chose **option 1** -- import the shared constant
+anyway, since literal byte-identity wasn't worth a wider diff or a worse
+helper contract, and the swap had already been verified
+mdformat-normalization-safe for both of `test_parser.py`'s current use
+sites (`format_text` collapses the extra blank line before `parse_dec`
+ever sees it). Removed the local `_MANDATORY_ROLES_AND_SOURCE` constant,
+added `from tests.dec.tools._helpers import MANDATORY_ROLES_AND_SOURCE`,
+and added a comment at the constant's former definition site documenting
+why the swap is safe despite the literal difference, so this isn't
+"rediscovered" as confusing later. Re-ran `tests.dec.models.v1.test_parser`
+(28 tests, including the two specifically-affected tests by name) and the
+full `tests/dec/` suite -- both green. **Task 7.4 (REQ-018/ACC-017)**:
+rewrote `tests/general/tools/test_validate.py`'s `_DEC_MINIMAL_BODY`/
+`_DEC_BAD_FIELD_BODY` fixtures from two-to-three concatenated
+`textwrap.dedent` calls to a single call each, matching
+`test_update.py`/`test_delete.py`/`test_set_status.py`/
+`test_set_classification.py`'s own established style; verified byte-for-
+byte identical rendered output both via a standalone Python diff and by
+running `tests.general.tools.test_validate` (20 tests) before and after.
+Ran the full quality gate (**Task 7.5**): `ruff format --check`/`ruff
+check` clean, `vulture` clean, `specmgr docs` (only
+`docs/api/biz.dfch.specmgr.dec.models.v1.body.md` changed, from the Task
+7.2 docstring edit), `specmgr mcp-docs` (no content changes), `specmgr
+schema` for all 12 registered types plus their packaged per-domain copies
+(`docs/{req,dec}_schema.json` and `src/biz/dfch/specmgr/{req,dec}/data/
+{req,dec}_schema.json` changed, exactly matching Task 7.2's docstring
+edits; the other 10 types unchanged), full `pytest -n auto --cov=src`
+suite green at **3330 tests** (up from 3329, +1 for the new Task 7.1
+test), `specmgr coverage-badge` unchanged (99%). No unexplained drift in
+any generated file. Checked ACC-014 through ACC-017 and all six Phase 7
+task boxes; frontmatter `status` bumped back to `done`.
 
 #### 2026-09-19 13:00:00.000Z - Phase 7 planned (not implemented): second-round review findings
 
@@ -384,7 +455,7 @@ Chose to implement `Source` and the RASCI classes as shared base classes in `mod
 - [Issue #29 comment](https://github.com/dfch/biz.dfch.SpecMgr/issues/29#issuecomment-5714986670): Phase 5 summary of the shipped design, posted on the tracking issue.
 - [Issue #133](https://github.com/dfch/biz.dfch.SpecMgr/issues/133): DEC's `## Tags` half absorbed from this issue; `feat-133-tags-dec-rsk` retains the RSK half.
 - [Issue #133 comment](https://github.com/dfch/biz.dfch.SpecMgr/issues/133#issuecomment-5714987415): Phase 5 note on issue #133 that its DEC half was absorbed here.
-- Branch `feat-29-dec-source-roles`: `be8abc5` (Phase 0), `19b6675` (Phase 1), `a7fd4fd` (Phase 2+3), `c8d5a92` (Phase 4).
+- Branch `feat-29-dec-source-roles`: `be8abc5` (Phase 0), `19b6675` (Phase 1), `a7fd4fd` (Phase 2+3), `c8d5a92` (Phase 4), `3b33598` (Phase 5), `da492d5` (Phase 6), `5ec76b2` (Phase 7 planning), `06ad643` (Phase 7 implementation).
 
 ### More Information
 

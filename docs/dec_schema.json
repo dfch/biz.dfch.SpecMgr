@@ -592,7 +592,7 @@
       "type": "object"
     },
     "Source": {
-      "description": "`## Source` -- single-line value naming the origin/authority of this\ndecision (e.g. an issue, a meeting, a stakeholder request). Mandatory.\n\nSubclasses the shared `models.md.SourceBase` (feat-29-dec-source-roles) --\nthe field declaration itself lives there; this class exists so `dec`\nstill declares and owns its own concrete `Source` type.",
+      "description": "`## Source` -- single-line value naming the origin/authority of this\ndecision (e.g. an issue, a meeting, a stakeholder request). Mandatory.\n\nSubclasses the shared `models.md.SourceBase` (feat-29-dec-source-roles) --\nthe field declaration itself lives there; this class exists so `dec`\nstill declares and owns its own concrete `Source` type. Note: the\ngenerated JSON Schema's `value` field description comes from\n`SourceBase` and is intentionally domain-neutral (\"this document\"),\nnot the domain-specific \"this decision\" wording used above -- see\n`SourceBase`'s own comment for the rationale (REQ-016).",
       "properties": {
         "value": {
           "$ref": "#/$defs/MarkdownParagraph",

@@ -36,6 +36,8 @@ from biz.dfch.specmgr.dec.models.v1 import DecDocument
 from biz.dfch.specmgr.dec.models.v1.parser import parse_dec
 from biz.dfch.specmgr.models.md._markdown import format_text
 
+from tests.dec.tools._helpers import MANDATORY_ROLES_AND_SOURCE
+
 # Zero optional sections: the H1, the mandatory `## Context and Problem
 # Statement`, the mandatory `## Decision Outcome` (with its lead
 # paragraph), the mandatory `## Roles and Responsibilities` (with its
@@ -180,25 +182,19 @@ _FULL_DOC = textwrap.dedent(
 )
 
 # The mandatory `## Roles and Responsibilities` + `## Source` block, reused
-# verbatim by tests below that build their own minimal fixture text and only
-# need these two now-mandatory sections satisfied, not exercised.
-_MANDATORY_ROLES_AND_SOURCE = textwrap.dedent(
-    """\
-    ## Roles and Responsibilities
-
-    ### Accountable
-
-    The platform architecture lead.
-
-    ### Responsible
-
-    - The order service team.
-
-    ## Source
-
-    The customer dashboard latency incident review meeting.
-    """
-)
+# by tests below that build their own minimal fixture text and only need
+# these two now-mandatory sections satisfied, not exercised. Imported from
+# the shared `tests/dec/tools/_helpers.py` fixture (feat-29-dec-source-roles
+# Phase 7, REQ-017/ACC-016) instead of duplicating it locally, as this file
+# used to.
+#
+# Note: `MANDATORY_ROLES_AND_SOURCE` carries a leading `\n` that neither of
+# this file's own two use sites below strictly needs (each already
+# concatenates it after fixture text that ends in its own trailing blank
+# line) -- verified empirically that the swap is safe anyway, since
+# `format_text`'s mdformat normalization collapses the resulting extra
+# blank line before `parse_dec` ever sees it, so both use sites parse to an
+# identical result whether or not the leading `\n` is present.
 
 
 class TestParseDec(unittest.TestCase):
@@ -307,7 +303,7 @@ class TestParseDec(unittest.TestCase):
 
                 """
             )
-            + _MANDATORY_ROLES_AND_SOURCE
+            + MANDATORY_ROLES_AND_SOURCE
             + textwrap.dedent(
                 """\
 
@@ -346,7 +342,7 @@ class TestParseDec(unittest.TestCase):
 
                 """
             )
-            + _MANDATORY_ROLES_AND_SOURCE
+            + MANDATORY_ROLES_AND_SOURCE
             + "\n## Related Artifacts\n"
         )
 

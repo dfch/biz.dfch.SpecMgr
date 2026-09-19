@@ -1005,6 +1005,29 @@ class TestDecisionMisordering(unittest.TestCase):
             Decision.from_text(text)
         self.assertIn("Related Artifacts", str(ctx.exception))
 
+    def test_source_before_roles_and_responsibilities_raises_assertion_error(self) -> None:
+        """`## Source` misordered ahead of the mandatory `## Roles and Responsibilities`
+        (feat-29-dec-source-roles, REQ-015/ACC-014) -- closes the gap where every prior
+        misordering test only exercised pre-existing sections, not the three new ones."""
+        text = format_text(
+            "# A Decision\n\n"
+            "## Context and Problem Statement\n\n"
+            "Some context prose.\n\n"
+            "## Decision Outcome\n\n"
+            "Some outcome prose.\n\n"
+            "## Source\n\n"
+            "Some source.\n\n"
+            "## Roles and Responsibilities\n\n"
+            "### Accountable\n\n"
+            "Some owner.\n\n"
+            "### Responsible\n\n"
+            "- Some doer.\n"
+        )
+
+        with self.assertRaises(AssertionError) as ctx:
+            Decision.from_text(text)
+        self.assertIn("Roles and Responsibilities", str(ctx.exception))
+
     def test_consequences_under_h1_outside_outcome_raises_assertion_error(self) -> None:
         text = format_text(
             "# A Decision\n\n"

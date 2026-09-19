@@ -391,82 +391,70 @@ _RSK_FULL_DOCUMENT = (
     + _RSK_MINIMAL_BODY
 )
 
-_DEC_MINIMAL_BODY = (
-    textwrap.dedent(
-        """\
-        # Choose a Document Store
+_DEC_MINIMAL_BODY = textwrap.dedent(
+    """\
+    # Choose a Document Store
 
-        ## Context and Problem Statement
+    ## Context and Problem Statement
 
-        The current store cannot serve the dashboard read path.
+    The current store cannot serve the dashboard read path.
 
-        ## Decision Outcome
+    ## Decision Outcome
 
-        We chose the document store.
-        """
-    )
-    + "\n"
-    + textwrap.dedent(
-        """\
-        ## Roles and Responsibilities
+    We chose the document store.
 
-        ### Accountable
+    ## Roles and Responsibilities
 
-        The platform architecture lead.
+    ### Accountable
 
-        ### Responsible
+    The platform architecture lead.
 
-        - The order service team.
+    ### Responsible
 
-        ## Source
+    - The order service team.
 
-        The customer dashboard latency incident review meeting.
-        """
-    )
+    ## Source
+
+    The customer dashboard latency incident review meeting.
+    """
 )
 _DEC_MALFORMED_BODY = "# Title\n\nJust a paragraph, no recognized decision sections.\n"
-_DEC_BAD_FIELD_BODY = (
-    textwrap.dedent(
-        """\
-        # Choose a Document Store
+_DEC_BAD_FIELD_BODY = textwrap.dedent(
+    """\
+    # Choose a Document Store
 
-        ## Context and Problem Statement
+    ## Context and Problem Statement
 
-        The current store cannot serve the dashboard read path.
+    The current store cannot serve the dashboard read path.
 
-        ## Decision Outcome
+    ## Decision Outcome
 
-        We chose the document store.
-        """
-    )
-    + "\n"
-    + textwrap.dedent(
-        """\
-        ## Roles and Responsibilities
+    We chose the document store.
 
-        ### Accountable
+    ## Roles and Responsibilities
 
-        The platform architecture lead.
+    ### Accountable
 
-        ### Responsible
+    The platform architecture lead.
 
-        - The order service team.
+    ### Responsible
 
-        ## Source
+    - The order service team.
 
-        The customer dashboard latency incident review meeting.
+    ## Source
 
-        ## Pros and Cons
+    The customer dashboard latency incident review meeting.
 
-        ### Option 1: Document Store
+    ## Pros and Cons
 
-        Meets the latency budget.
+    ### Option 1: Document Store
 
-        ### Option 1: Key-Value Store
+    Meets the latency budget.
 
-        Even faster reads.
-        """
-    )
+    ### Option 1: Key-Value Store
+
+    Even faster reads.
+    """
 )
 _DEC_FULL_DOCUMENT = (
     textwrap.dedent(
