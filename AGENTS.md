@@ -699,7 +699,7 @@ documentation in `docs/`:
 - **Frontmatter**: every feature `README.md` starts with a minimal YAML
   frontmatter block — `id` (the `feat-NNN-slug` folder name itself, not a
   generated UUID), `version` (semver, starts at `1.0.0`), `status`
-  (`planning` | `in-progress` | `review` | `done`), and `created`/`updated`
+  (`planning` | `progress` | `review` | `done`), and `created`/`updated`
   (`YYYY-MM-DD`, `updated` bumped on every substantive edit). There is no
   separate `GitHub Issue` field/body-line: the issue number is the `NNN`
   infix already embedded in `id`/the folder name (`feat-NNN-slug`) — `0`
