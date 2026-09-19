@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-17 09:57:31.305+02:00'
 id: feat-132-prb-update
-status: review
+status: in-progress
 type: feat
-updated: '2026-09-19 18:00:00.000+02:00'
+updated: '2026-09-19 19:00:00.000+02:00'
 version: 1.0.0
 ---
 
@@ -133,6 +133,33 @@ schema-checked opening framing before the existing 5W2H/Gap/Impact/Future State 
   convention (its "9-step revision flow" correctly counts `prb_update_instructions.md`'s
   9 numbered sections). Reword to "13-step interview flow".
 
+- REQ-013 (Phase 5, found during an external `feat-reviewer` review pass, not part of
+  GitHub issue #132's original request): `_PROBLEM_STATEMENT_PATTERN`'s greedy `.+`
+  blanks under `re.DOTALL` can still backtrack across an embedded joiner phrase inside a
+  blank's own free text (e.g. a `[Current state]` blank whose text literally contains the
+  substring `" is causing "`), producing a false-positive match against a sentence that
+  does not actually follow the intended 4-blank structure. This trade-off is already
+  acknowledged in this file's own Decisions Made log (2026-09-19 17:15:00.000Z entry) but
+  is not documented anywhere in the code itself, nor exercised by any test. Extend the
+  pattern's explanatory comment to name this limitation explicitly, and add a test that
+  demonstrates (not "fixes") the current, accepted behavior.
+
+- REQ-014 (Phase 5): `prb_create_instructions.md`'s one-pair-to-one-question /
+  best-match-only rule (REQ-003) is stated as prose with no worked example illustrating a
+  QA pair that could plausibly match two of the 7 5W2H sub-questions and how the
+  tie-break should be resolved in practice. Add one concrete worked example to the
+  instructions; the existing prompt test
+  (`tests/prb/prompts/test_create_prb.py::test_mentions_one_pair_to_one_question_rule`)
+  must be extended to also assert the example is present.
+
+- REQ-015 (Phase 5): The `What -> [Current state]/[specific issue]`, `Who -> [stakeholder]`, `Why -> [underlying cause]` derive-mapping clause is currently
+  paraphrased independently in `prb_create_instructions.md` (step 9) and
+  `prb_update_instructions.md` (step 1's old-shape recovery sub-list), with no mechanism
+  keeping the two in sync. Align the mapping clause itself (not necessarily its
+  surrounding sentence, which may legitimately differ by context) to identical, verbatim
+  wording in both files, and add a dedicated consistency test that loads both packaged
+  `.md` files and fails if the shared clause ever drifts apart again.
+
 ### Acceptance Criteria
 
 - [x] ACC-001: `create_prb`/`validate(type="prb")` reject a PRB body missing the mandatory
@@ -165,6 +192,15 @@ schema-checked opening framing before the existing 5W2H/Gap/Impact/Future State 
 - [x] ACC-008: A `problem_statement` paragraph whose soft-wrap lands exactly at any of
   the three literal joiners ("is causing"/"for"/"because") still passes `Prb`'s
   `field_validator`/`create_prb`/`validate(type="prb")` (REQ-010).
+- [ ] ACC-009: `_PROBLEM_STATEMENT_PATTERN`'s comment block explicitly names the
+  greedy-backtracking trade-off (REQ-013); a test in `tests/prb/models/v1/test_body.py`
+  demonstrates the documented, accepted edge case.
+- [ ] ACC-010: `prb_create_instructions.md` contains a worked example of the
+  one-pair-to-one-question tie-break (REQ-014); `tests/prb/prompts/test_create_prb.py`
+  asserts its presence.
+- [ ] ACC-011: The `What`/`Who`/`Why` -> 4-blank derive-mapping clause is byte-identical
+  between `prb_create_instructions.md` and `prb_update_instructions.md` (REQ-015),
+  enforced by a dedicated consistency test that fails on future drift.
 
 ### Scope
 
@@ -366,14 +402,47 @@ wording is now reworded rather than merely preserved (REQ-009).
   noting Phase 4 originated from a self-review rather than the GitHub issue), and
   flip `status` back to `review`.
 
+#### Phase 5: External-Review Hardening (found during an external `feat-reviewer` review pass after Phase 4, not part of GitHub issue #132's original request)
+
+- [ ] Task 5.1: In `prb/models/v1/body.py`, extend `_PROBLEM_STATEMENT_PATTERN`'s
+  explanatory comment block to explicitly document the greedy-backtracking trade-off
+  (REQ-013): a blank's own free text containing a literal joiner substring (e.g.
+  `" is causing "`) can still produce a false-positive template match. Add one test to
+  `tests/prb/models/v1/test_body.py` constructing such a blank and asserting the
+  current, accepted match behavior (a documentation test, not a behavior change;
+  `test_malformed_template_raises_validation_error_naming_template_and_text` must keep
+  failing on genuinely non-matching text).
+- [ ] Task 5.2: In `prb/data/prb_create_instructions.md`, add a worked example to the
+  one-pair-to-one-question rule (REQ-014): a QA pair that could plausibly answer two of
+  the 7 5W2H sub-questions, and how "best match only" resolves it. Update
+  `tests/prb/prompts/test_create_prb.py` to assert the example is present, alongside the
+  existing rule-text assertion.
+- [ ] Task 5.3: In `prb/models/v1/body.py:35`'s module docstring, fix the one-space
+  column misalignment in the ASCII layout diagram (the `### What Is the Problem?` row),
+  same file already touched by Task 5.1.
+- [ ] Task 5.4: Align the `What -> [Current state]/[specific issue]`, `Who -> [stakeholder]`, `Why -> [underlying cause]` derive-mapping clause to identical,
+  verbatim wording in both `prb_create_instructions.md` and `prb_update_instructions.md`
+  (REQ-015). Add a new consistency test (e.g.
+  `tests/prb/data/test_instructions_consistency.py`) that loads both packaged `.md`
+  files and asserts the shared clause matches exactly, so future drift fails loudly
+  instead of silently.
+- [ ] Task 5.5: Run the full quality gate (`ruff format --check`, `ruff check`,
+  `vulture src/ whitelist.py --min-confidence 60`, `pytest -n auto --cov=src`), update
+  Progress (Current Status, a dated Updates entry, a Decisions Made entry noting Phase 5
+  originated from an external `feat-reviewer` review rather than the GitHub issue), and
+  flip `status` back to `review`.
+
 ## Progress
 
 ### Current Status
 
-**As of 2026-09-19**: All four phases are complete -- Phase 1 (Schema), Phase 2
+**As of 2026-09-19**: Phases 1-4 are complete -- Phase 1 (Schema), Phase 2
 (Prompts), Phase 3 (Verification and Docs), and Phase 4 (Post-Review Hardening,
-added after a self-review pass). All 8 acceptance criteria (ACC-001 through
-ACC-008) are fully met. `prb/models/v1/body.py`'s `Prb` model carries the
+added after a self-review pass). All 8 original acceptance criteria (ACC-001
+through ACC-008) are fully met. Phase 5 (External-Review Hardening) has now
+been *planned* -- added following an independent external `feat-reviewer`
+review pass -- but not yet implemented; ACC-009 through ACC-011 remain
+unchecked pending Tasks 5.1-5.5. `prb/models/v1/body.py`'s `Prb` model carries the
 mandatory `problem_statement: MarkdownParagraph` lead field with its code-level
 template-skeleton `field_validator`; the packaged template/example and both JSON
 schema copies (`docs/prb_schema.json`,
@@ -391,8 +460,7 @@ narrates a raw-re-read-based recovery flow for old-shape PRB drafts.
 reflect the feature; both JSON schema copies confirmed drift-free via a fresh
 `specmgr schema --type prb` run. The full quality gate (`ruff format --check`,
 `ruff check`, `vulture`, the full `pytest -n auto --cov=src` suite -- 3327
-passed) is green at the end of Phase 4. The feature is ready for final
-sign-off.
+passed) is green at the end of Phase 4. Final sign-off is now pending Phase 5.
 
 ### Blockers
 
@@ -401,6 +469,31 @@ sign-off.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-19 19:00:00.000Z - Phase 5 (External-Review Hardening) planned from an external `feat-reviewer` review pass
+
+An independent `feat-reviewer` review of the merged, Phase-4-complete implementation
+(against `dev` at the time) found five items, none blocking (zero Errors; all 8
+original acceptance criteria confirmed still met): (1) `_PROBLEM_STATEMENT_PATTERN`'s
+greedy-backtracking trade-off is acknowledged in this file's own history but not
+documented in the code itself, nor exercised by a test; (2) the one-pair-to-one-question
+rule in `prb_create_instructions.md` has no worked example of an ambiguous QA-pair
+tie-break; (3) commit `b97ccf3` bundled unrelated `.opencode/agent/feat-reviewer.md` and
+`.opencode/command/review-feature.md` additions into an otherwise `prb`-scoped docs
+commit; (4) `prb/models/v1/body.py:35`'s module docstring layout diagram has a
+pre-existing, one-space column misalignment on the `### What Is the Problem?` row that
+this feature's own edits touched without correcting; (5) the `What`/`Who`/`Why` -> blank
+derive-mapping clause is paraphrased independently (and could silently drift) between
+`prb_create_instructions.md` and `prb_update_instructions.md`.
+
+Items (1), (2), (4), and (5) were accepted and added as REQ-013/014/015, ACC-009/010/011,
+and Phase 5 (Tasks 5.1-5.5) above; `status` reopened from `review` to `in-progress`
+pending Phase 5. Item (5) was escalated beyond the reviewer's own "accepted trade-off"
+suggestion to a dedicated consistency test (see Decisions Made) rather than left
+undocumented. Item (3) was explicitly declined as a Phase 5 task -- see Decisions Made --
+since it concerns commit-history hygiene, not `prb/` code, and this feature has no
+mechanism (nor mandate) to rewrite already-pushed git history. This entry is planning
+only; no `prb/` source, test, or data file has been touched yet.
 
 #### 2026-09-19 18:00:00.000Z - Phase 4 (Post-Review Hardening) implemented
 
@@ -620,6 +713,31 @@ confirmation.
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-19 19:00:00.000Z - Strengthen the instructions-duplication finding into a sync-guard test, not a comment-only note
+
+The external review flagged `prb_create_instructions.md`/`prb_update_instructions.md`'s
+duplicated `What`/`Who`/`Why` -> blank derive-mapping clause as a drift risk but
+suggested leaving it as an accepted trade-off (a text-diff test between two prose files
+was called "brittle for low payoff"). Decided instead to align the mapping clause itself
+to verbatim-identical wording in both files and add a dedicated test asserting that
+exact match (Task 5.4) -- the mapping clause is a short, precisely-bounded phrase (not
+the surrounding free prose), so a substring-equality test against it is neither brittle
+nor high-maintenance, and the project's own conventions already favor drift-guard tests
+over documentation-only trade-offs wherever a mechanical check is feasible (e.g. the
+packaged-template/example drift-guard test, `docs/prb_schema.json` vs. the packaged copy,
+`docs/GENERATED.md` regeneration checks).
+
+#### 2026-09-19 19:00:00.000Z - Decline a Phase 5 task for the unrelated `.opencode/` commit bundling
+
+The external review noted that commit `b97ccf3` bundled unrelated `.opencode/agent/ feat-reviewer.md` and `.opencode/command/review-feature.md` additions into an otherwise
+`prb`-scoped docs commit -- scope creep, but harmless (neither file affects `prb/`
+runtime behavior, tests, or docs generation) and already merged/pushed. No Phase 5 task
+was added for this: it is a commit-history hygiene concern, not a code defect, this
+feature's task list has no mandate or mechanism to rewrite already-pushed git history,
+and doing so risks disrupting collaborators who may have already based work on this
+branch. Recorded here purely so the finding is not silently dropped; future commits
+should keep unrelated tooling/config changes in their own commit.
 
 #### 2026-09-19 17:15:00.000Z - Drop the dead capture groups rather than use them for a richer error
 
