@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-17 09:57:31.305+02:00'
 id: feat-132-prb-update
-status: in-progress
+status: review
 type: feat
-updated: '2026-09-19 17:15:00.000+02:00'
+updated: '2026-09-19 18:00:00.000+02:00'
 version: 1.0.0
 ---
 
@@ -162,7 +162,7 @@ schema-checked opening framing before the existing 5W2H/Gap/Impact/Future State 
   paragraph) recovers via `get_prb(id, raw=True)` plus sentence insertion (REQ-008),
   then applies the originally requested change, leaving the result parseable by
   `get_prb`.
-- [ ] ACC-008: A `problem_statement` paragraph whose soft-wrap lands exactly at any of
+- [x] ACC-008: A `problem_statement` paragraph whose soft-wrap lands exactly at any of
   the three literal joiners ("is causing"/"for"/"because") still passes `Prb`'s
   `field_validator`/`create_prb`/`validate(type="prb")` (REQ-010).
 
@@ -346,21 +346,21 @@ wording is now reworded rather than merely preserved (REQ-009).
 
 #### Phase 4: Post-Review Hardening (found during a self-review pass after Phase 3, not part of GitHub issue #132's original request)
 
-- [ ] Task 4.1: In `prb/models/v1/body.py`, update `_PROBLEM_STATEMENT_PATTERN`:
+- [x] Task 4.1: In `prb/models/v1/body.py`, update `_PROBLEM_STATEMENT_PATTERN`:
   replace the three literal `" "` joiners (`" is causing "`, `", for "`,
   `" because "`) with `\s+` so a soft-wrap landing exactly at one of them still
   matches (REQ-010); convert the four named capture groups to non-capturing
   `(?:.+)` (REQ-011), keeping `re.DOTALL`. Extend the pattern's explanatory comment
   to cover the `\s+` rationale alongside the existing `re.DOTALL` rationale.
-- [ ] Task 4.2: Add 3 regression tests to `tests/prb/models/v1/test_body.py` --
+- [x] Task 4.2: Add 3 regression tests to `tests/prb/models/v1/test_body.py` --
   one `problem_statement` paragraph per joiner (`is causing`/`for`/`because`), each
   soft-wrapped exactly at that joiner, asserting `Prb(**kwargs)` still succeeds
   (ACC-008). Leave the existing malformed-template rejection test
   (`test_malformed_template_raises_validation_error_naming_template_and_text`)
   unchanged -- it must keep failing on genuinely non-matching text.
-- [ ] Task 4.3: Fix `prb/prompts/create_prb.py`'s module docstring wording per
+- [x] Task 4.3: Fix `prb/prompts/create_prb.py`'s module docstring wording per
   REQ-012 ("12-step" -> "13-step").
-- [ ] Task 4.4: Run the full quality gate (`ruff format --check`, `ruff check`,
+- [x] Task 4.4: Run the full quality gate (`ruff format --check`, `ruff check`,
   `vulture src/ whitelist.py --min-confidence 60`, `pytest -n auto --cov=src`),
   update Progress (Current Status, a dated Updates entry, a Decisions Made entry
   noting Phase 4 originated from a self-review rather than the GitHub issue), and
@@ -370,25 +370,29 @@ wording is now reworded rather than merely preserved (REQ-009).
 
 ### Current Status
 
-**As of 2026-09-19**: Phases 1-3 are complete -- Phase 1 (Schema), Phase 2
-(Prompts), and Phase 3 (Verification and Docs); Phase 4 (Post-Review Hardening,
-added after a self-review pass) is planned but not yet implemented. ACC-001
-through ACC-007 are fully met; ACC-008 is pending Phase 4. `prb/models/v1/body.py`'s `Prb` model carries the mandatory
-`problem_statement: MarkdownParagraph` lead field with its code-level
+**As of 2026-09-19**: All four phases are complete -- Phase 1 (Schema), Phase 2
+(Prompts), Phase 3 (Verification and Docs), and Phase 4 (Post-Review Hardening,
+added after a self-review pass). All 8 acceptance criteria (ACC-001 through
+ACC-008) are fully met. `prb/models/v1/body.py`'s `Prb` model carries the
+mandatory `problem_statement: MarkdownParagraph` lead field with its code-level
 template-skeleton `field_validator`; the packaged template/example and both JSON
 schema copies (`docs/prb_schema.json`,
-`src/biz/dfch/specmgr/prb/data/prb_schema.json`) reflect it. `create_prb`'s prompt
-accepts an optional `qa_id`, narrating a `get_qa`-backed carry-over of
-already-answered 5W2H questions across all 10 QA categories (with explicit
-`QaNotFoundError` handling and a derive-then-confirm lead-sentence flow), and
-`update_prb`'s prompt narrates a raw-re-read-based recovery flow for old-shape PRB
-drafts. `docs/api/`/`docs/GENERATED.md`/`docs/MCP.md`, `server.py`'s module
-docstring, `AGENTS.md`'s `prb` bullet, and `CHANGELOG.md`'s `[Unreleased]` section
-all reflect the feature; both JSON schema copies confirmed drift-free via a fresh
+`src/biz/dfch/specmgr/prb/data/prb_schema.json`) reflect it. `_PROBLEM_STATEMENT_PATTERN`
+now tolerates a soft-wrap landing exactly at any of its three fixed joiners
+(`\s+` in place of each literal single space, REQ-010) and no longer carries
+dead named capture groups (`(?:.+)`, REQ-011). `create_prb`'s prompt accepts an
+optional `qa_id`, narrating a `get_qa`-backed carry-over of already-answered
+5W2H questions across all 10 QA categories (with explicit `QaNotFoundError`
+handling and a derive-then-confirm lead-sentence flow), and its module docstring
+now correctly says "13-step interview flow" (REQ-012); `update_prb`'s prompt
+narrates a raw-re-read-based recovery flow for old-shape PRB drafts.
+`docs/api/`/`docs/GENERATED.md`/`docs/MCP.md`, `server.py`'s module docstring,
+`AGENTS.md`'s `prb` bullet, and `CHANGELOG.md`'s `[Unreleased]` section all
+reflect the feature; both JSON schema copies confirmed drift-free via a fresh
 `specmgr schema --type prb` run. The full quality gate (`ruff format --check`,
-`ruff check`, `vulture`, the full `pytest -n auto --cov=src` suite -- 3324 passed)
-was green at the end of Phase 3. Phase 4 (Task 4.1-4.4) is not yet implemented; the
-feature is not ready for final sign-off until it lands.
+`ruff check`, `vulture`, the full `pytest -n auto --cov=src` suite -- 3327
+passed) is green at the end of Phase 4. The feature is ready for final
+sign-off.
 
 ### Blockers
 
@@ -397,6 +401,41 @@ feature is not ready for final sign-off until it lands.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-19 18:00:00.000Z - Phase 4 (Post-Review Hardening) implemented
+
+Implemented Task 4.1-4.4 in full, touching only `prb/models/v1/body.py`,
+`tests/prb/models/v1/test_body.py`, and `prb/prompts/create_prb.py` -- no other
+Phase 1/2/3 territory was touched. In `body.py`, replaced
+`_PROBLEM_STATEMENT_PATTERN`'s three literal single-space joiners
+(`" is causing "`, `", for "`, `" because "`) with `\s+` at each embedded space
+(REQ-010), so a soft-wrap landing exactly at one of those spaces (which
+`MarkdownParagraph.text` preserves verbatim as an embedded `\n`) still matches;
+converted the four named capture groups (`current_state`/`specific_issue`/
+`stakeholder`/`underlying_cause`) to non-capturing groups (`(?:.+)`, REQ-011),
+keeping `re.DOTALL`. Extended the pattern's explanatory `#:` comment block to
+cover both the `\s+`-for-soft-wrap-tolerance rationale and the
+non-capturing-groups rationale, alongside the existing `re.DOTALL` rationale.
+Added 3 regression tests to `tests/prb/models/v1/test_body.py`'s
+`TestProblemStatementMandatoryAndTemplateValidated` class -- one
+`problem_statement` paragraph per joiner (`is causing`/`for`/`because`), each
+constructed with an embedded newline landing exactly at that joiner's space
+(mid-joiner for "is causing", right after the comma for "for", right before
+the word for "because"), asserting `Prb(**kwargs)` still succeeds and that the
+embedded newline survives in `.text` (ACC-008). The existing malformed-template
+rejection test (`test_malformed_template_raises_validation_error_naming_template_and_text`)
+was left unchanged and still correctly fails on genuinely non-matching text.
+Fixed `prb/prompts/create_prb.py`'s module docstring per REQ-012: "a 12-step
+interview flow" -> "a 13-step interview flow" (the generated
+`docs/api/biz.dfch.specmgr.prb.prompts.create_prb.md` mirror of this docstring
+was intentionally left as-is, since Phase 4's quality gate does not include a
+`specmgr docs` regeneration step and no other Phase 4 task calls for it; it
+will pick up the fix the next time `specmgr docs` runs). Quality gate green:
+`ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`,
+and the full `pytest -n auto --cov=src` suite (3327 passed, up from 3324 at the
+end of Phase 3 -- the 3 new regression tests). All 8 acceptance criteria
+(ACC-001 through ACC-008) are now met; the feature's status moves from
+`in-progress` back to `review`.
 
 #### 2026-09-19 17:15:00.000Z - Phase 4 (Post-Review Hardening) planned from a self-review pass
 

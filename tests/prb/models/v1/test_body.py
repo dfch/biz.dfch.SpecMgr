@@ -390,6 +390,39 @@ class TestProblemStatementMandatoryAndTemplateValidated(unittest.TestCase):
         self.assertIn("is causing", message)
         self.assertIn("This sentence does not follow the fixed template at all.", message)
 
+    def test_soft_wrap_landing_at_is_causing_joiner_still_matches(self) -> None:
+        """ACC-008/REQ-010: a soft-wrap landing exactly at the `is causing` joiner still parses."""
+        kwargs = _minimal_prb_kwargs()
+        kwargs["problem_statement"] = MarkdownParagraph.from_text(
+            format_text("The current process is\ncausing delays, for users because of missing automation.")
+        )
+
+        sut = Prb(**kwargs)
+
+        self.assertIn("is\ncausing", sut.problem_statement.text)
+
+    def test_soft_wrap_landing_at_for_joiner_still_matches(self) -> None:
+        """ACC-008/REQ-010: a soft-wrap landing exactly at the `for` joiner still parses."""
+        kwargs = _minimal_prb_kwargs()
+        kwargs["problem_statement"] = MarkdownParagraph.from_text(
+            format_text("The current process is causing delays,\nfor users because of missing automation.")
+        )
+
+        sut = Prb(**kwargs)
+
+        self.assertIn(",\nfor", sut.problem_statement.text)
+
+    def test_soft_wrap_landing_at_because_joiner_still_matches(self) -> None:
+        """ACC-008/REQ-010: a soft-wrap landing exactly at the `because` joiner still parses."""
+        kwargs = _minimal_prb_kwargs()
+        kwargs["problem_statement"] = MarkdownParagraph.from_text(
+            format_text("The current process is causing delays, for users\nbecause of missing automation.")
+        )
+
+        sut = Prb(**kwargs)
+
+        self.assertIn("users\nbecause", sut.problem_statement.text)
+
 
 class TestParsePrbRejectsMissingLeadParagraph(unittest.TestCase):
     """`Prb.from_text` structurally rejects a body with no lead paragraph at all (ACC-001, REQ-008 trigger).

@@ -22,7 +22,7 @@ the MCP protocol keeps prompts and tools in separate registries
 so the two are not mistaken for the same registration (same precedent as
 ``req.prompts.create_req``).
 
-This prompt only ever *narrates* a 12-step interview flow (checking for a
+This prompt only ever *narrates* a 13-step interview flow (checking for a
 duplicate via `list_prb`, fetching an optionally-linked QA document via
 `get_qa` and scanning it for already-answered 5W2H questions, building a
 ``TodoWrite`` list, eliciting only the still-unanswered 5W2H answers via the

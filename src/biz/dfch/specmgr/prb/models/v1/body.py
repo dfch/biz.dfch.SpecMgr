@@ -90,13 +90,22 @@ from ....models.md import (
 #: The fixed Problem Statement template skeleton (GitHub issue #132): every
 #: `problem_statement` lead sentence must fill in the four bracketed blanks
 #: while keeping the surrounding wording, punctuation, and single trailing
-#: period verbatim. `re.DOTALL` is required: a soft-wrapped sentence's
+#: period verbatim. The four blanks are matched with non-capturing groups
+#: (`(?:.+)`) -- `fullmatch()`'s truthiness is all that is ever checked, the
+#: groups themselves are never read, so there is no reason to pay for named
+#: captures (REQ-011). `re.DOTALL` is required: a soft-wrapped sentence's
 #: `.text` retains the embedded line breaks of its continuation lines
 #: (`mdformat` does not reflow), and `.` would not otherwise match them --
-#: the same reasoning as `general.models.rasci._ROLE_ITEM_PATTERN`.
+#: the same reasoning as `general.models.rasci._ROLE_ITEM_PATTERN`. The
+#: three fixed joiners (`is causing`/`for`/`because`) use `\s+`, not a
+#: literal single space, for the same reason: a soft-wrap can land exactly
+#: at one of those spaces, turning it into an embedded `\n` in `.text`, and
+#: a literal `" "` would not match that `\n` even under `re.DOTALL` (which
+#: only makes `.` match `\n`, not a literal space) -- `\s+` matches both a
+#: plain space and a soft-wrapped newline in its place (REQ-010).
 _PROBLEM_STATEMENT_PATTERN = re.compile(
-    r"^(?P<current_state>.+) is causing (?P<specific_issue>.+), "
-    r"for (?P<stakeholder>.+) because (?P<underlying_cause>.+)\.$",
+    r"^(?:.+)\s+is\s+causing\s+(?:.+),"
+    r"\s+for\s+(?:.+)\s+because\s+(?:.+)\.$",
     re.DOTALL,
 )
 
