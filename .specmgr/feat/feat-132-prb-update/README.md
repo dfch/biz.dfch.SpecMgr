@@ -4,7 +4,7 @@ created: '2026-09-17 09:57:31.305+02:00'
 id: feat-132-prb-update
 status: planning
 type: feat
-updated: '2026-09-18 17:33:31.717+02:00'
+updated: '2026-09-19 10:40:00.000+02:00'
 version: 1.0.0
 ---
 
@@ -37,8 +37,8 @@ schema-checked opening framing before the existing 5W2H/Gap/Impact/Future State 
   title, no heading of its own), holding exactly one sentence following the template
   `[Current state] is causing [specific issue], for [stakeholder] because [underlying cause].` -- mirroring the `general.models.rasci.Rasci.intro`/`general.models.ears.Ears.intro`
   precedent. The template skeleton is enforced at the code level by a `field_validator`
-  applying a regex fullmatch against the paragraph's own whitespace-collapsed inline text
-  (the sentence can soft-wrap across lines), mirroring
+  applying a `re.DOTALL` regex fullmatch against the paragraph's own inline text (the
+  sentence can soft-wrap across lines, retaining embedded line breaks in `.text`), mirroring
   `rsk.models.v1.body.Strategy._validate_value`'s `MarkdownParagraph`-value precedent --
   raising an actionable `pydantic.ValidationError` naming the expected template and the
   actual text. Requires zero changes to `models/md`.
@@ -74,7 +74,11 @@ schema-checked opening framing before the existing 5W2H/Gap/Impact/Future State 
   `[Current state]`/`[specific issue]`, `Who` -> `[stakeholder]`, `Why` -> `[underlying cause]`) and the composed sentence *confirmed* with the user via the `question` tool,
   rather than asked as 4 fresh questions; only a blank no pre-filled answer supports is
   asked for directly. In standalone mode (no QA id, or nothing pre-filled), all 4 blanks
-  are elicited via the `question` tool as before.
+  are elicited via the `question` tool as before. Because a single `What` answer must
+  populate two distinct blanks (`[Current state]` and `[specific issue]`), the prompt
+  should draft its best split of that answer across both blanks and rely on the required
+  user confirmation step (not a fresh derivation rule) to catch a bad split -- this is a
+  judgment call for the prompt-driving agent, not a code-level concern.
 
 - REQ-007: The `prb` template/example resources (`get_prb_template`, `get_prb_example`)
   and both generated JSON Schema copies (`docs/prb_schema.json` and the packaged
@@ -95,13 +99,18 @@ schema-checked opening framing before the existing 5W2H/Gap/Impact/Future State 
 - REQ-009: The existing "problem statements stay free of assumed causes by design"
   design texts must be reconciled with the new lead sentence, which by design now
   carries the best-known cause in its `because [underlying cause]` clause. Reword, in the
-  same commit as REQ-001: `prb/models/v1/body.py`'s module and `Prb` class docstrings,
-  `prb/data/prb_create_instructions.md`'s structure-recap note, and
-  `prb/data/prb_example.md`'s `## More Information` paragraph -- from "a problem
-  statement stays free of assumed causes by design" to "no `## Root Cause` section
-  exists; the lead sentence carries the best-known cause by design; formal root-cause
-  analysis remains a separate, later activity" (or equivalent wording) -- and rewrite the
-  prompt test asserting the old wording (`tests/prb/prompts/test_create_prb.py:: test_mentions_no_root_cause_section`) to match.
+  same commit as REQ-001: `prb/models/v1/body.py`'s module and `Prb` class docstrings
+  (currently phrased as "No `Root Cause` section... a deliberate,
+  Six-Sigma-discipline-driven omission" -- not the literal "free of assumed causes"
+  wording, which only appears in the instructions/example files below),
+  `prb/data/prb_create_instructions.md`'s structure-recap note ("a problem statement
+  stays free of assumed causes by design"), and `prb/data/prb_example.md`'s
+  `## More Information` paragraph ("No root cause analysis is included here by
+  design...") -- all reworded to "no `## Root Cause` section exists; the lead sentence
+  carries the best-known cause by design; formal root-cause analysis remains a separate,
+  later activity" (or equivalent wording) -- and rewrite the prompt test asserting the
+  old wording (`tests/prb/prompts/test_create_prb.py::test_mentions_no_root_cause_section`)
+  to match.
 
 ### Acceptance Criteria
 
@@ -170,7 +179,9 @@ schema-checked opening framing before the existing 5W2H/Gap/Impact/Future State 
   evolution (see Decisions Made); the `update_prb` prompt (REQ-008) is the guided
   recovery path, not an automated migration.
 - Creating a `prb/models/v2` package (considered and rejected -- see Decisions Made).
-- Any change to `sysrs`'s `## Problem Statements` cross-reference bullet shape.
+- Any change to `sysrs`'s `### Problem Statement` cross-reference bullet shape
+  (`sysrs.models.v1.body.ProblemStatement`, nested under `## Business Context and
+  Goals`).
 - Any change to the shared `models/md` parsing framework itself (confirmed unnecessary;
   see Design Notes).
 - Recording the linked QA as a structured `QA <uuid>: <title>` bullet in the new PRB's
@@ -197,9 +208,13 @@ The new mandatory Problem Statement sentence is placed as a lead `MarkdownParagr
 directly under the PRB's H1 title (no heading of its own), confirmed feasible with
 zero changes to the shared `models/md` parsing framework: `general/models/rasci.py`'s
 `Rasci.intro` and `general/models/ears.py`'s `Ears.intro` are live, tested precedents
-of exactly this H1 -> (mandatory lead paragraph) -> first H2 shape, both built on the
-same, unmodified `MarkdownParagraph`/`MarkdownSection.from_text` machinery `prb` will
-reuse. Because `comment` is *inherited* from `MarkdownSection1WithComment` rather than
+of the H1 -> (mandatory lead paragraph) -> first H2 shape, built on the same,
+unmodified `MarkdownParagraph`/`MarkdownSection.from_text` machinery `prb` will reuse
+-- note both are plain `MarkdownSection1` with no inherited field ahead of `intro`, so
+they don't themselves exercise the "own-declared-first places it after an inherited
+field" nuance `Prb` needs (that part is separately confirmed via
+`MarkdownStr._get_field_names()`'s base-class-first Pydantic field ordering, next
+paragraph). Because `comment` is *inherited* from `MarkdownSection1WithComment` rather than
 declared on `Prb` itself, `problem_statement` must be declared *first* among `Prb`'s
 own fields -- Pydantic orders `model_fields` base-class-first, and `MarkdownStr.from_text`'s
 distribution loop walks fields in that same declaration order, so this ordering (not an
@@ -210,10 +225,11 @@ The template skeleton itself is validated at the code level, not left to prompt
 guidance alone: `rsk.models.v1.body.Strategy._validate_value` is a live precedent for
 applying a `field_validator`/regex check against a `MarkdownParagraph` field's own
 `.text` (Pydantic's `Field(pattern=...)` cannot apply to a model-typed field directly).
-The regex must first collapse internal whitespace before matching, since a soft-wrapped
-sentence's `.text` retains its embedded line breaks (mirroring
-`general.models.rasci._ROLE_ITEM_PATTERN`'s `re.DOTALL` reasoning for the same
-soft-wrap issue).
+Because a soft-wrapped sentence's `.text` retains its embedded line breaks, the regex
+must use `re.DOTALL` (not whitespace-collapsing, for which there is no codebase
+precedent) so `.` also matches `\n`, mirroring
+`general.models.rasci._ROLE_ITEM_PATTERN`'s existing `re.DOTALL` handling of the same
+soft-wrap issue.
 
 **No `Root Cause` *section*** remains absent -- a deliberate, Six-Sigma-discipline-driven
 omission carried over from feat-16 -- but the *rationale* text changes: the new lead
@@ -235,7 +251,7 @@ wording is now reworded rather than merely preserved (REQ-009).
 - [ ] Task 1.1: Add the new mandatory `problem_statement: MarkdownParagraph` field to
   `prb/models/v1/body.py`'s `Prb` model, declared first among `Prb`'s own fields, with
   a `field_validator` enforcing the template skeleton `[Current state] is causing     [specific issue], for [stakeholder] because [underlying cause].` via a
-  whitespace-collapsed regex fullmatch on the paragraph's `.text`, mirroring
+  `re.DOTALL` regex fullmatch on the paragraph's `.text`, mirroring
   `rsk.models.v1.body.Strategy._validate_value`. Update the module docstring's layout
   diagram and the `Prb` class docstring's Parameters section, and reword the "no
   Root Cause section" texts per REQ-009.
@@ -250,9 +266,11 @@ wording is now reworded rather than merely preserved (REQ-009).
   template -> actionable field-validation error).
 - [ ] Task 1.5: Sweep every hand-written PRB-body fixture across `tests/prb/`
   (`models/v1/test_parser.py`, `tools/test_integration.py`, `tools/test_parse_prb.py`,
-  `tools/test_get_prb.py`, `tools/test__write.py`) to insert the new lead sentence;
-  add a dedicated old-shape-rejection test asserting a pre-change-shaped body fails
-  `Prb.from_text` with an actionable error (documents the REQ-008 recovery trigger).
+  `tools/test_get_prb.py`, `tools/test_create_prb.py`, `tools/test_list_prb.py`,
+  `tools/test__io.py`, `tools/test__paths.py`, `tools/test__write.py`) to insert the new
+  lead sentence; add a dedicated old-shape-rejection test asserting a pre-change-shaped
+  body fails `Prb.from_text` with an actionable error (documents the REQ-008 recovery
+  trigger).
 
 #### Phase 2: Prompts
 
@@ -307,11 +325,14 @@ wording is now reworded rather than merely preserved (REQ-009).
 
 ### Current Status
 
-**As of 2026-09-18**: Planning complete. The design was confirmed by the issue reporter
-on GitHub (2026-09-17), and the four open implementation decisions -- code-level
-template enforcement, in-place `prb/models/v1` evolution, and the `problem_statement`
-field name -- were resolved 2026-09-18 (see Decisions Made) and folded into the
-Requirements/Acceptance Criteria/Task List above. Implementation has not started.
+**As of 2026-09-19**: Planning complete and reviewed. The design was confirmed by the
+issue reporter on GitHub (2026-09-17), and the four open implementation decisions --
+code-level template enforcement, in-place `prb/models/v1` evolution, and the
+`problem_statement` field name -- were resolved 2026-09-18 (see Decisions Made) and
+folded into the Requirements/Acceptance Criteria/Task List above. A 2026-09-19 review
+pass against the current codebase found and corrected six wording/scope-precision
+issues (see Updates); no requirement, acceptance criterion, or task numbering changed.
+Implementation has not started.
 
 ### Blockers
 
@@ -320,6 +341,28 @@ Requirements/Acceptance Criteria/Task List above. Implementation has not started
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-19 10:40:00.000Z - Plan corrected after a review pass
+
+A review of the plan against the current codebase found six issues, all now corrected
+in the sections above: (1) Task 1.5's fixture-sweep list was missing four test files
+with their own hand-rolled PRB body fixtures (`tools/test_create_prb.py`,
+`tools/test_list_prb.py`, `tools/test__io.py`, `tools/test__paths.py`) -- added; (2) the
+Scope exclusion cited the wrong `sysrs` cross-reference heading (`## Problem
+Statements`, plural H2) instead of the actual `### Problem Statement` (singular, H3,
+under `## Business Context and Goals`) -- corrected; (3) REQ-009's `body.py`-docstring
+reword target was imprecise (the literal "free of assumed causes" phrase doesn't appear
+there; only "No Root Cause section" wording does) -- clarified per-file; (4) Design
+Notes conflated "collapse whitespace" with `re.DOTALL` for the soft-wrapped-paragraph
+regex -- corrected to specify `re.DOTALL` (the codebase's actual, only precedent) rather
+than an unprecedented whitespace-collapsing step; (5) Design Notes overstated what the
+`Rasci.intro`/`Ears.intro` precedent proves (both are plain `MarkdownSection1` with no
+inherited field ahead of `intro`, so they don't exercise the "own-declared-first after
+an inherited field" nuance `Prb` needs) -- scoped precisely; (6) REQ-006 left
+unspecified how a single `What` QA answer should populate two distinct blanks
+(`[Current state]`/`[specific issue]`) -- added guidance that the prompt drafts its best
+split and relies on the required confirmation step to catch a bad one. No requirement,
+acceptance criterion, or task numbering changed; only wording/scope precision.
 
 #### 2026-09-18 15:33:31.717Z - Plan revised: blocker cleared, four open decisions resolved
 
