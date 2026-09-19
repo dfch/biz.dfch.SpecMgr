@@ -255,6 +255,8 @@ _PRB_MINIMAL_BODY = textwrap.dedent(
     """\
     # Simple Problem Statement
 
+    The current process is causing delays, for users because of missing automation.
+
     ## Current State
 
     ### Summary
@@ -402,6 +404,20 @@ _DEC_MINIMAL_BODY = textwrap.dedent(
     ## Decision Outcome
 
     We chose the document store.
+
+    ## Roles and Responsibilities
+
+    ### Accountable
+
+    The platform architecture lead.
+
+    ### Responsible
+
+    - The order service team.
+
+    ## Source
+
+    The customer dashboard latency incident review meeting.
     """
 )
 _DEC_MALFORMED_BODY = "# Title\n\nJust a paragraph, no recognized decision sections.\n"
@@ -416,6 +432,20 @@ _DEC_BAD_FIELD_BODY = textwrap.dedent(
     ## Decision Outcome
 
     We chose the document store.
+
+    ## Roles and Responsibilities
+
+    ### Accountable
+
+    The platform architecture lead.
+
+    ### Responsible
+
+    - The order service team.
+
+    ## Source
+
+    The customer dashboard latency incident review meeting.
 
     ## Pros and Cons
 

@@ -55,6 +55,20 @@ _VALID_DOC = textwrap.dedent(
 
     Reporting reads from the nightly export.
 
+    ## Roles and Responsibilities
+
+    ### Accountable
+
+    The platform architecture lead.
+
+    ### Responsible
+
+    - The order service team.
+
+    ## Source
+
+    The customer dashboard latency incident review meeting.
+
     ## More Information
 
     Harness config in the platform repository.

@@ -61,6 +61,7 @@ _._validate_ac_numbers_unique
 _._validate_option_numbers_unique
 _._validate_step_numbers_unique
 _._validate_partial_title
+_._validate_problem_statement
 _._validate_status
 _._validate_type_non_blank
 _._validate_value

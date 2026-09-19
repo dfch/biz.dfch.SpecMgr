@@ -20,19 +20,38 @@ want to change before calling any write tool.
 ## 3. Show which sections are present and which are empty
 
 Show the user which of the sections -- the mandatory `## Context and
-Problem Statement` and `## Decision Outcome` (always present), and the
-optional `## Decision Drivers`, `## Considered Options`, `## Related
+Problem Statement`, `## Decision Outcome`, `## Roles and
+Responsibilities`, and `## Source` (always present), and the optional
+`## Decision Drivers`, `## Considered Options`, `## Tags`, `## Related
 Artifacts`, `## Pros and Cons`, `## More Information`, `## Updates` --
 are already present with content and which are still absent. Use the
 `question` tool to ask which ones (if any) they want to add to or
 revise.
 
-## 4. Map the requested change to the right tool
+## 4. Read the RASCI role definitions before revising `## Roles and Responsibilities`
+
+If the requested change touches `## Roles and Responsibilities` (editing
+the existing RASCI assignment -- the section itself is always present,
+so this is never about adding it), fetch the cross-cutting
+`specmgr://rasci` resource first and read the generic RASCI
+(Responsible/Accountable/Support/Consulted/Informed) role definitions.
+The `dec` schema does not duplicate those definitions -- use the
+resource as the single source of truth for what each role means, then
+map the decision's actual people/teams onto the five roles following
+the binding sub-section order (Accountable, Responsible, Support,
+Consulted, Informed) and the structural rules (Accountable is a single
+paragraph; Responsible needs at least one bullet; Support/Consulted/
+Informed may each be present with zero items). Skip this step if the
+change does not touch the roles section.
+
+## 5. Map the requested change to the right tool
 
 - A change to the body -- the `context`, `drivers`, `considered`,
   `outcome` (lead paragraph, `### Consequences`, `### Confirmation`),
-  `related_artifacts`, `pros_and_cons` options, `more_information`, or
-  `updates` entries -- -> the generic `update` tool called with
+  `roles_and_responsibilities` (Accountable/Responsible/Support/
+  Consulted/Informed), `tags`, `source`, `related_artifacts`,
+  `pros_and_cons` options, `more_information`, or `updates` entries --
+  -> the generic `update` tool called with
   `type="dec"`: a **line-range replace** for a localized change, or a
   **whole-body replace** otherwise. `content` is body markdown only (no
   frontmatter block) in both cases.
@@ -72,7 +91,7 @@ revise.
   `update` never accepts or changes `classification`. Fully free-text;
   a blank or whitespace-only value clears it back to `None`/absent.
 
-## 5. Check the schema, and validate before writing if useful
+## 6. Check the schema, and validate before writing if useful
 
 Fetch `specmgr://dec/schema` to confirm field names and constraints
 before drafting the replacement body. Optionally call

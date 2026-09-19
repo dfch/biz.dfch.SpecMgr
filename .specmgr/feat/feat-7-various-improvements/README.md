@@ -2,7 +2,7 @@
 created: '2026-08-15 00:00:00.000Z'
 id: feat-7-various-improvements
 status: planning
-updated: '2026-09-02 00:00:00.000Z'
+updated: '2026-09-17 00:00:00.000Z'
 version: 1.0.0
 ---
 
@@ -877,11 +877,19 @@ progresses (edit, don't duplicate).
    for this to be tracked here; it was never recorded in this task list
    (found during the 2026-08-31 stale-issue review).
 
-- [ ] Task 0.33: Per GitHub issue #29 ("Artifact type 'Decision' (DEC)
+- [x] Task 0.33: Per GitHub issue #29 ("Artifact type 'Decision' (DEC)
    need additional attributes from ADR frontmatter"): extend
    `DecFrontmatter` (`dec/models/v1/frontmatter.py`) with the ADR-style
    attributes a decision in general is missing, e.g. `source` or
-   `owner` — depends on: none — status: not-started
+   `owner` — depends on: none — status: split out into
+   `feat-29-dec-source-roles` (GitHub issue #29,
+   `.specmgr/feat/feat-29-dec-source-roles/README.md`) on 2026-09-17;
+   the revised design (three new DEC body sections -- mandatory
+   `## Roles and Responsibilities`/optional `## Tags`/mandatory
+   `## Source` -- not new `DecFrontmatter` fields, plus a
+   shared-base-class refactor in `models/md/common_sections.py`) is
+   recorded in the feat-29 plan. **`feat-29-dec-source-roles` is now
+   complete**.
 
    Background: `DecFrontmatter` currently narrows only `type`
    (`Literal["dec"]`) and `status` (closed six-value set) on top of the
@@ -1018,6 +1026,25 @@ already-compacted folder).
 
 See `history.md` for updates before 2026-08-18 (rotated out per ADR
 e369ee2e-3353-4f92-991c-6367d76d832e once this section grew too long).
+
+#### Update 2026-09-17 (Task 0.33 split-out feature complete)
+
+- Completed: the split-out feature `feat-29-dec-source-roles` (GitHub
+  issue #29 — "Artifact type 'Decision' (DEC) need additional attributes
+  from ADR frontmatter") is now complete. Analysis during that feature's
+  planning concluded the requested attributes (`source`, `owner`, and
+  similar ADR-style fields) map onto two existing concepts rather than
+  new `DecFrontmatter` fields, so `DecFrontmatter` itself is unchanged;
+  instead `dec` documents gained three new **body** sections between
+  `## Decision Outcome` and `## Related Artifacts` — a mandatory
+  `## Roles and Responsibilities` (RASCI), an optional `## Tags`
+  (absorbing the DEC half of `feat-133-tags-dec-rsk`, issue #133), and a
+  mandatory `## Source` — plus a shared-base-class refactor
+  (`models/md/common_sections.py`) so `req`'s existing `Source` and
+  `sop`'s existing RASCI classes stop duplicating field/validator logic.
+  Per that feature's own REQ-007, no dedicated ADR was written for the
+  shared-base-class decision; the rationale is recorded in
+  `feat-29-dec-source-roles`'s own "Decisions Made" log instead.
 
 #### Update 2026-09-02 (Task 0.32 split-out feature complete)
 

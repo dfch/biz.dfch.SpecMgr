@@ -12,6 +12,31 @@ Call `get_prb(id)` to load the document's current frontmatter and body.
 Never assume prior state -- the on-disk file is always the source of
 truth and may have been hand-edited since you last saw it.
 
+**Old-shape recovery.** If this call fails to parse because the body is
+missing the mandatory lead sentence directly under the H1 (a document
+drafted before that field became mandatory), do not treat this as a
+fatal error:
+
+1. Re-read the body verbatim via `get_prb(id, raw=True)` -- this never
+   parses the body, so it always succeeds even for an old-shape
+   document.
+2. Look at the document's own `### What Is the Problem?`,
+   `### Who Is Impacted?`, and `### Why Is It a Problem?` answers (if
+   present) under `## Current State`. Derive a first draft of the lead
+   sentence's 4 blanks from them the same way `create_prb`'s own
+   derive-then-confirm flow does: `What` -> both `[Current state]` and `[specific issue]` (a single `What` answer must populate two distinct blanks, so draft your best split of it across the two -- e.g. the underlying condition into `[Current state]`, the concrete symptom into `[specific issue]`); `Who` -> `[stakeholder]`; `Why` -> `[underlying cause]`.
+   For any blank with no answer to derive from, use the `question` tool
+   to ask for it directly. Then show the fully composed sentence --
+   `[Current state] is causing [specific issue], for [stakeholder] because [underlying cause].` -- to the user and use
+   the `question` tool to confirm or refine it.
+3. Insert the confirmed sentence as its own paragraph directly under the
+   H1 title (after any existing leading comment, before `## Current State`) into the raw body text from step 1.
+4. Call `update(id, type="prb", content)` with that spliced body (a
+   whole-body replace, since the insertion touches line numbers you have
+   not yet re-counted) so the document becomes parseable again, then
+   call `get_prb(id)` once more -- it must now succeed -- before
+   proceeding to step 2 below with the originally requested change.
+
 ## 2. If no change was specified
 
 If "Requested change" above says "(not given)", ask the user what they

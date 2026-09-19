@@ -28,27 +28,32 @@ from biz.dfch.specmgr.dec.models.v1 import DecDocument
 from biz.dfch.specmgr.dec.tools._io import load_by_id, read_dec
 from biz.dfch.specmgr.dec.tools._paths import DecNotFoundError
 
-_DOC_TEMPLATE = textwrap.dedent(
-    """\
-    ---
-    id: {id}
-    type: dec
-    version: 1.0.0
-    status: draft
-    created: '2026-08-26 00:00:00.000Z'
-    updated: '2026-08-26 00:00:00.000Z'
-    ---
+from ._helpers import MANDATORY_ROLES_AND_SOURCE
 
-    # Choose a Document Store
+_DOC_TEMPLATE = (
+    textwrap.dedent(
+        """\
+        ---
+        id: {id}
+        type: dec
+        version: 1.0.0
+        status: draft
+        created: '2026-08-26 00:00:00.000Z'
+        updated: '2026-08-26 00:00:00.000Z'
+        ---
 
-    ## Context and Problem Statement
+        # Choose a Document Store
 
-    The current store cannot serve the dashboard read path.
+        ## Context and Problem Statement
 
-    ## Decision Outcome
+        The current store cannot serve the dashboard read path.
 
-    We chose the document store.
-    """
+        ## Decision Outcome
+
+        We chose the document store.
+        """
+    )
+    + MANDATORY_ROLES_AND_SOURCE
 )
 
 
