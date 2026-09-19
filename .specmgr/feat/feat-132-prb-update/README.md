@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-17 09:57:31.305+02:00'
 id: feat-132-prb-update
-status: in-progress
+status: review
 type: feat
-updated: '2026-09-19 13:00:00.000+02:00'
+updated: '2026-09-19 16:30:00.000+02:00'
 version: 1.0.0
 ---
 
@@ -304,20 +304,20 @@ wording is now reworded rather than merely preserved (REQ-009).
 
 #### Phase 3: Verification and Docs
 
-- [ ] Task 3.1: Regenerate `docs/api/`/`docs/GENERATED.md` via `specmgr docs` and
+- [x] Task 3.1: Regenerate `docs/api/`/`docs/GENERATED.md` via `specmgr docs` and
   `docs/MCP.md` via `specmgr mcp-docs` (the new `qa_id` prompt parameter changes the
   generated prompt schema).
-- [ ] Task 3.2: Update `server.py`'s "Problem statement prompts" docstring line and the
+- [x] Task 3.2: Update `server.py`'s "Problem statement prompts" docstring line and the
   `prb` bullet in `AGENTS.md` (optional `qa_id`, mandatory validated lead paragraph,
   in-place-v1 **BREAKING** note).
-- [ ] Task 3.3: Add `CHANGELOG.md` `[Unreleased]` entries: **Added** (mandatory
+- [x] Task 3.3: Add `CHANGELOG.md` `[Unreleased]` entries: **Added** (mandatory
   `problem_statement` lead paragraph + template validator; `create_prb`'s optional
   `qa_id` and QA carry-over; `update_prb`'s old-shape recovery) and **Changed
   (BREAKING)** (pre-existing PRB documents without the lead paragraph fail
   `parse_prb`/`get_prb` until it is added; `update_prb` guides the recovery).
-- [ ] Task 3.4: Run the full quality gate (`ruff format --check`, `ruff check`,
+- [x] Task 3.4: Run the full quality gate (`ruff format --check`, `ruff check`,
   `vulture`, `pytest -n auto --cov=src`).
-- [ ] Task 3.5: Final review confirming no stale references to the old (pre-change) PRB
+- [x] Task 3.5: Final review confirming no stale references to the old (pre-change) PRB
   shape, or the old "free of assumed causes" rationale, remain in `AGENTS.md`/
   `server.py` docstrings or the instruction data files.
 
@@ -325,18 +325,23 @@ wording is now reworded rather than merely preserved (REQ-009).
 
 ### Current Status
 
-**As of 2026-09-19**: Phase 1 (Schema) and Phase 2 (Prompts) are both complete --
-ACC-001, ACC-002, ACC-003, ACC-004, ACC-005, ACC-006, and ACC-007 are all fully met.
-`prb/models/v1/body.py`'s `Prb` model carries the mandatory `problem_statement:
-MarkdownParagraph` lead field with its code-level template-skeleton `field_validator`;
-the packaged template/example and both JSON schema copies (`docs/prb_schema.json`,
-`src/biz/dfch/specmgr/prb/data/prb_schema.json`) reflect it. `create_prb`'s prompt now
-accepts an optional `qa_id`, narrating a `get_qa`-backed carry-over of already-answered
-5W2H questions across all 10 QA categories (with explicit `QaNotFoundError` handling
-and a derive-then-confirm lead-sentence flow), and `update_prb`'s prompt narrates a
-raw-re-read-based recovery flow for old-shape PRB drafts. The full quality gate (`ruff
-format --check`, `ruff check`, `vulture`, the full `pytest` suite) is green. Phase 3
-(docs/CHANGELOG/verification) has not started.
+**As of 2026-09-19**: All 3 phases are complete -- Phase 1 (Schema), Phase 2
+(Prompts), and Phase 3 (Verification and Docs). ACC-001 through ACC-007 are all
+fully met. `prb/models/v1/body.py`'s `Prb` model carries the mandatory
+`problem_statement: MarkdownParagraph` lead field with its code-level
+template-skeleton `field_validator`; the packaged template/example and both JSON
+schema copies (`docs/prb_schema.json`,
+`src/biz/dfch/specmgr/prb/data/prb_schema.json`) reflect it. `create_prb`'s prompt
+accepts an optional `qa_id`, narrating a `get_qa`-backed carry-over of
+already-answered 5W2H questions across all 10 QA categories (with explicit
+`QaNotFoundError` handling and a derive-then-confirm lead-sentence flow), and
+`update_prb`'s prompt narrates a raw-re-read-based recovery flow for old-shape PRB
+drafts. `docs/api/`/`docs/GENERATED.md`/`docs/MCP.md`, `server.py`'s module
+docstring, `AGENTS.md`'s `prb` bullet, and `CHANGELOG.md`'s `[Unreleased]` section
+all reflect the feature; both JSON schema copies confirmed drift-free via a fresh
+`specmgr schema --type prb` run. The full quality gate (`ruff format --check`,
+`ruff check`, `vulture`, the full `pytest -n auto --cov=src` suite -- 3324 passed)
+is green. The feature is fully implemented and ready for final sign-off.
 
 ### Blockers
 
@@ -345,6 +350,46 @@ format --check`, `ruff check`, `vulture`, the full `pytest` suite) is green. Pha
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-19 16:30:00.000Z - Phase 3 (Verification and Docs) implemented
+
+Implemented Task 3.1-3.5 in full, touching only `server.py`'s module docstring,
+`AGENTS.md`'s `prb` bullet, `CHANGELOG.md`, and the generated doc artifacts -- no
+`prb/models/v1/`, template/example, JSON schema, or `prb/prompts/`/`prb/data/`
+content was touched (Phase 1/2 territory, already committed). Reworded
+`server.py`'s "Problem statement prompts" docstring line to mention `create_prb`'s
+optional `qa_id` QA carry-over and the mandatory, code-level-validated
+`problem_statement` lead sentence. Updated `AGENTS.md`'s `prb/` bullet in place,
+matching the house style of neighboring bullets (e.g. `gol/`/`rsk/`): it now
+documents the optional `qa_id` parameter and its 10-category QA scan, the mandatory
+`problem_statement` lead paragraph and its code-level `field_validator`, and the
+in-place, **BREAKING** `prb/models/v1` schema evolution (pre-existing PRB documents
+without the lead paragraph fail `parse_prb`/`get_prb` until it is added, with
+`update_prb`'s guided recovery), citing `feat-132-prb-update`. Added `CHANGELOG.md`
+`[Unreleased]` `### Added` (3 bullets: the mandatory lead paragraph + validator,
+`create_prb`'s `qa_id`/carry-over, `update_prb`'s recovery guidance) and
+`### Changed` (1 **BREAKING** bullet) entries, all citing GitHub issue #132,
+matching the file's existing heading/bullet/citation style. Regenerated
+`docs/api/`/`docs/GENERATED.md` via `specmgr docs` and `docs/MCP.md` via `specmgr
+mcp-docs` after the `server.py` docstring edit: confirmed regeneration is
+idempotent -- the only diff produced was `docs/api/biz.dfch.specmgr.server.md`'s
+mirror of the docstring edit itself; `docs/GENERATED.md` and `docs/MCP.md` showed
+zero diff, confirming Phase 2's earlier regeneration already covered the `qa_id`
+prompt-schema change. Independently confirmed both JSON schema copies
+(`docs/prb_schema.json`, `src/biz/dfch/specmgr/prb/data/prb_schema.json`) still
+match a fresh `specmgr schema --type prb` run (no drift). Ran the Task 3.5 final
+review: grepped `AGENTS.md`, `server.py`, and `src/biz/dfch/specmgr/prb/data/*.md`
+for the old "free of assumed causes" wording and any other stale pre-change PRB
+shape references -- none found (Phases 1/2 had already reworded every live
+reference; only historical session logs and this README's own history retain the
+old phrasing, which is expected and correct). Confirmed
+`tests/prb/prompts/test_create_prb.py::test_mentions_no_root_cause_section`'s
+asserted wording still matches `prb/data/prb_create_instructions.md`'s current text
+verbatim. Quality gate green: `ruff format --check`, `ruff check`, `vulture src/
+whitelist.py --min-confidence 60`, and the full `pytest -n auto --cov=src` suite
+(3324 passed, unchanged from the end of Phase 2 since Phase 3 added no new tests).
+All 7 acceptance criteria (ACC-001 through ACC-007) are met; the feature's status
+moves from `in-progress` to `review`.
 
 #### 2026-09-19 15:20:00.000Z - Phase 2 (Prompts) implemented
 

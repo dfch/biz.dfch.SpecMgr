@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Every `prb` (Problem Statement) document now carries a mandatory
+  `problem_statement` lead paragraph directly under its H1 title, holding
+  one sentence that follows a fixed template, enforced by a code-level
+  template-skeleton validator (GitHub issue #132).
+- `create_prb`'s prompt now accepts an optional `qa_id` parameter that
+  carries over already-answered 5W2H questions from a linked QA document
+  instead of re-asking them (GitHub issue #132).
+- `update_prb`'s prompt now guides recovery of a pre-existing PRB document
+  that lacks the new mandatory lead paragraph (GitHub issue #132).
+
+### Changed
+
+- **BREAKING**: a pre-existing `prb` document without the new mandatory
+  `problem_statement` lead paragraph will fail `parse_prb`/`get_prb` until
+  the paragraph is added; use the `update_prb` prompt's guided recovery
+  flow (GitHub issue #132).
+
 ## [0.28.0] - 2026-09-14
 
 ### Changed
