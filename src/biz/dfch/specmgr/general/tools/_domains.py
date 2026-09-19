@@ -1,0 +1,295 @@
+# Copyright (C) 2026 Ronald Rink, d-fens GmbH, http://d-fens.ch
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+"""The shared ``WHOLE_BODY_DOMAINS`` registry (feat-134, Phase 1, REQ-012).
+
+The one source of the whole-body domain set. Before this registry, the set
+(req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs) was copy-pasted as
+``Literal``/tuple literals across the five existing generic tools in this
+package (``update``'s/``set_status``'s/``set_classification``'s/``delete``'s/
+``validate``'s own ``type`` parameter literals, plus ``delete.py``'s and
+``validate.py``'s own module-scope tuples) -- and the two new similarity
+tools (Phase 3) would have been the sixth and seventh copies. REQ-012
+(ADR 750842b2-aca4-4649-ba0c-855ec8e1f505, **corpus and registry**
+sub-decision) makes this module the single place the set is spelled out:
+
+- :data:`WHOLE_BODY_DOMAINS` -- the 12-domain tuple itself. The five
+  existing generic tools' ``type`` parameter annotations are now derived
+  from it (``Literal[WHOLE_BODY_DOMAINS]`` /
+  ``Literal[WHOLE_BODY_DOMAINS + ("adr",)]`` via the
+  :data:`WholeBodyType`/:data:`WholeBodyOrAdrType` aliases below), so a
+  future domain (e.g. the reserved ``ac``) is added in exactly one place
+  and every tool's own dispatch domain set re-derives from it.
+- :class:`WholeBodyDomain` + the module-scope ``_DOMAINS`` mapping --
+  the per-domain adapters every cross-domain consumer needs: the
+  base-dir resolver, the path iterator, and ``load_by_id`` -- the same
+  per-domain adapter shape ``general/tools/delete.py`` already imports at
+  module level. ``feat``'s ``<base>/<id>/README.md`` folder shape is the
+  one bespoke path iterator (``iter_feat_paths``); every other domain uses
+  the shared flat-file ``iter_doc_paths``.
+- :data:`WholeBodyType` / :data:`WholeBodyOrAdrType` -- the derived
+  ``Literal`` ``type``-parameter annotations for the generic tools.
+- :func:`whole_body_domain` -- the ``name -> WholeBodyDomain`` lookup with
+  the path-safety-convention ``ValueError`` for an unknown name (raised
+  before any filesystem access).
+
+**``adr`` is structurally excluded** (issue #46, "Remove adr artifact
+type": ADR is being removed as an artifact type entirely, so it is not a
+useful similarity target/source, and it never had a whole-body
+replace/status/classification/delete/validate adapter of its own to begin
+with -- ``set_status``'s own ``adr`` branch is the single generic-tool
+exception, hence the separate :data:`WholeBodyOrAdrType`).
+
+**No ``mcp`` dependency here**, like every other private ``general/tools/``
+support module: the registry is plain data plus the per-domain adapter
+imports (the same imports ``delete.py``/``update.py``/``set_status.py``/
+``set_classification.py`` already make at module level), so importing it
+never registers or touches a tool.
+"""
+
+from __future__ import annotations
+
+from collections.abc import Callable, Iterator
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Literal, TypeAlias
+
+from ...dec.tools._io import load_by_id as load_dec_by_id
+from ...dec.tools._paths import dec_base_dir
+from ...feat.tools._io import load_by_id as load_feat_by_id
+from ...feat.tools._paths import feat_base_dir, iter_feat_paths
+from ...gol.tools._io import load_by_id as load_gol_by_id
+from ...gol.tools._paths import gol_base_dir
+from ...prb.tools._io import load_by_id as load_prb_by_id
+from ...prb.tools._paths import prb_base_dir
+from ...qa.tools._io import load_by_id as load_qa_by_id
+from ...qa.tools._paths import qa_base_dir
+from ...req.tools._io import load_by_id as load_req_by_id
+from ...req.tools._paths import req_base_dir
+from ...rsk.tools._io import load_by_id as load_rsk_by_id
+from ...rsk.tools._paths import rsk_base_dir
+from ...sop.tools._io import load_by_id as load_sop_by_id
+from ...sop.tools._paths import sop_base_dir
+from ...sysrs.tools._io import load_by_id as load_sysrs_by_id
+from ...sysrs.tools._paths import sysrs_base_dir
+from ...tsk.tools._io import load_by_id as load_tsk_by_id
+from ...tsk.tools._paths import tsk_base_dir
+from ...uc.tools._io import load_by_id as load_uc_by_id
+from ...uc.tools._paths import uc_base_dir
+from ...vcr.tools._io import load_by_id as load_vcr_by_id
+from ...vcr.tools._paths import vcr_base_dir
+from ._doc_paths import iter_doc_paths
+
+__all__ = [
+    "WHOLE_BODY_DOMAINS",
+    "WholeBodyDomain",
+    "WholeBodyOrAdrType",
+    "WholeBodyType",
+    "whole_body_domain",
+]
+
+#: The one generic tool's own extra ``type`` value: ``set_status`` dispatches on
+#: ``adr`` in addition to every whole-body domain (the ``"superseded by X"``
+#: pattern is ADR-specific) -- the only generic tool that does (see the module
+#: docstring's ``adr``-exclusion note).
+_TYPE_ADR = "adr"
+
+
+@dataclass(frozen=True)
+class WholeBodyDomain:
+    """One whole-body domain's registry entry: its name plus its adapters (REQ-012).
+
+    Attributes:
+        name:
+            The domain's name: the ``type`` value the generic tools
+            dispatch on (``"req"``, ``"feat"``, ...).
+        base_dir:
+            The domain's base-dir resolver -- its own ``<d>.tools._paths``
+            function, reading the domain's own ``SPECMGR_*_DIR`` env var
+            with its own default (the shared ``SPECMGR_DOCS_DIR``-rooted
+            one for every domain other than ``feat``, ``SPECMGR_FEAT_DIR``
+            for ``feat``).
+        iter_paths:
+            The domain's document path iterator: the shared flat-file
+            ``iter_doc_paths`` (every ``*.md`` directly under the base
+            directory, sorted) for every domain other than ``feat``,
+            ``iter_feat_paths`` (``<base>/<id>/README.md``, sorted by
+            folder name) for ``feat`` -- the one bespoke,
+            folder-per-document domain (ADR 8cf940c5).
+        load_by_id:
+            The domain's ``load_by_id`` -- resolves ``id_`` under the given
+            base directory and parses the matching document, raising the
+            domain's own ``XNotFoundError``. The document slot is typed
+            ``object`` (each domain's own concrete document type --
+            ``tuple[Path, ReqDocument]`` and so on -- is what the specific
+            function actually returns); registry callers that only need
+            the path (the generic ``delete`` adapters' own
+            resolve-then-act pattern) discard it.
+    """
+
+    name: str
+    base_dir: Callable[[], Path]
+    iter_paths: Callable[[Path], Iterator[Path]]
+    load_by_id: Callable[[Path, str], tuple[Path, object]]
+
+
+#: The whole-body domains, in registry order -- the one source of the domain
+#: set (REQ-012). ``adr`` is structurally excluded (issue #46; see the module
+#: docstring). The five existing generic tools and the two Phase 3 similarity
+#: tools all derive their own ``type`` domain set from this tuple.
+WHOLE_BODY_DOMAINS: tuple[str, ...] = (
+    "req",
+    "uc",
+    "tsk",
+    "qa",
+    "prb",
+    "gol",
+    "rsk",
+    "dec",
+    "sop",
+    "feat",
+    "vcr",
+    "sysrs",
+)
+
+#: The per-domain adapter registry, keyed by :data:`WHOLE_BODY_DOMAINS`
+#: name, in the same order. ``feat`` is the one entry whose ``iter_paths``
+#: is not the shared flat-file ``iter_doc_paths`` (see the dataclass
+#: docstring); every entry's ``load_by_id`` is the domain's own, cache-
+#: backed ``<d>.tools._io.load_by_id``.
+_DOMAINS: dict[str, WholeBodyDomain] = {
+    "req": WholeBodyDomain(
+        name="req",
+        base_dir=req_base_dir,
+        iter_paths=iter_doc_paths,
+        load_by_id=load_req_by_id,
+    ),
+    "uc": WholeBodyDomain(
+        name="uc",
+        base_dir=uc_base_dir,
+        iter_paths=iter_doc_paths,
+        load_by_id=load_uc_by_id,
+    ),
+    "tsk": WholeBodyDomain(
+        name="tsk",
+        base_dir=tsk_base_dir,
+        iter_paths=iter_doc_paths,
+        load_by_id=load_tsk_by_id,
+    ),
+    "qa": WholeBodyDomain(
+        name="qa",
+        base_dir=qa_base_dir,
+        iter_paths=iter_doc_paths,
+        load_by_id=load_qa_by_id,
+    ),
+    "prb": WholeBodyDomain(
+        name="prb",
+        base_dir=prb_base_dir,
+        iter_paths=iter_doc_paths,
+        load_by_id=load_prb_by_id,
+    ),
+    "gol": WholeBodyDomain(
+        name="gol",
+        base_dir=gol_base_dir,
+        iter_paths=iter_doc_paths,
+        load_by_id=load_gol_by_id,
+    ),
+    "rsk": WholeBodyDomain(
+        name="rsk",
+        base_dir=rsk_base_dir,
+        iter_paths=iter_doc_paths,
+        load_by_id=load_rsk_by_id,
+    ),
+    "dec": WholeBodyDomain(
+        name="dec",
+        base_dir=dec_base_dir,
+        iter_paths=iter_doc_paths,
+        load_by_id=load_dec_by_id,
+    ),
+    "sop": WholeBodyDomain(
+        name="sop",
+        base_dir=sop_base_dir,
+        iter_paths=iter_doc_paths,
+        load_by_id=load_sop_by_id,
+    ),
+    "feat": WholeBodyDomain(
+        name="feat",
+        base_dir=feat_base_dir,
+        iter_paths=iter_feat_paths,
+        load_by_id=load_feat_by_id,
+    ),
+    "vcr": WholeBodyDomain(
+        name="vcr",
+        base_dir=vcr_base_dir,
+        iter_paths=iter_doc_paths,
+        load_by_id=load_vcr_by_id,
+    ),
+    "sysrs": WholeBodyDomain(
+        name="sysrs",
+        base_dir=sysrs_base_dir,
+        iter_paths=iter_doc_paths,
+        load_by_id=load_sysrs_by_id,
+    ),
+}
+
+# Program invariant (import-time): the adapter mapping and the domain tuple
+# must stay exactly in sync -- same names, same order -- so the tuple (the
+# single source of the set) and the adapters can never drift apart.
+assert tuple(_DOMAINS) == WHOLE_BODY_DOMAINS, (
+    "the _DOMAINS adapter mapping must match WHOLE_BODY_DOMAINS exactly, in order"
+)
+
+#: The ``type`` parameter annotation for a generic tool that covers exactly
+#: the whole-body domains -- derived from :data:`WHOLE_BODY_DOMAINS`
+#: (``Literal[tuple]`` unpacks to the same ``Literal`` an inline spelling
+#: would produce, so the generated MCP schema is unchanged) -- REQ-012:
+#: the set is derived, not duplicated.
+WholeBodyType: TypeAlias = Literal[WHOLE_BODY_DOMAINS]
+
+#: Same derivation, plus ``adr`` -- for the one generic tool that also
+#: dispatches on ``adr`` (``set_status``; see the module docstring).
+WholeBodyOrAdrType: TypeAlias = Literal[WHOLE_BODY_DOMAINS + (_TYPE_ADR,)]
+
+
+def whole_body_domain(name: str) -> WholeBodyDomain:
+    """Return the registry entry for the whole-body domain ``name``.
+
+    The ``name -> WholeBodyDomain`` lookup the Phase 3 similarity tools
+    (and any future cross-domain consumer) use to reach a domain's own
+    adapters without re-importing them per call site.
+
+    Args:
+        name:
+            The domain's name: one of :data:`WHOLE_BODY_DOMAINS`.
+
+    Returns:
+        The domain's :class:`WholeBodyDomain` registry entry.
+
+    Raises:
+        ValueError:
+            ``name`` is not one of the whole-body domains (e.g. ``"adr"``,
+            or a future unregistered name) -- raised before any filesystem
+            access (the path-safety convention), naming the offending value
+            and the allowed set.
+    """
+    assert isinstance(name, str), type(name)
+
+    try:
+        result = _DOMAINS[name]
+    except KeyError:
+        raise ValueError(f"unknown document type {name!r}; expected one of {'/'.join(WHOLE_BODY_DOMAINS)}") from None
+    return result

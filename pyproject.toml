@@ -77,8 +77,12 @@ test = [
     "pytest-cov>=6.0",
 ]
 
+similarity = [
+    "fastembed>=0.5.0",
+]
+
 dev = [
-    "biz-dfch-specmgr[cli,mcp,test]",
+    "biz-dfch-specmgr[cli,mcp,test,similarity]",
     "twine",
     "build",
     "uv",

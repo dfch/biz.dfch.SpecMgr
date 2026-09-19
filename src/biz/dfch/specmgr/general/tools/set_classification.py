@@ -89,7 +89,6 @@ enriched (field path + line reference + fix hint) shape.
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Literal
 
 import frontmatter
 
@@ -167,6 +166,7 @@ from ...vcr.tools._io import read_vcr
 from ...vcr.tools._lock import vcr_lock
 from ...vcr.tools._paths import vcr_base_dir
 from ...vcr.tools._write import write_vcr_file
+from ._domains import WholeBodyType
 from ._path_safety import assert_within, validate_id
 from ._timestamps import now_timestamp
 
@@ -516,7 +516,7 @@ _ADAPTERS: dict[str, Callable[[str, str], _SetClassificationFrontmatter]] = {
 )
 def set_classification(
     id: str,
-    type: Literal["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "feat", "vcr", "sysrs"],
+    type: WholeBodyType,
     classification: str,
 ) -> _SetClassificationFrontmatter:
     """Replace the ``classification`` frontmatter field of an existing document.

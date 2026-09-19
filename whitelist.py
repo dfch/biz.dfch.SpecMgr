@@ -237,6 +237,17 @@ definitions_and_acronyms
 env_var
 env_var_set
 
+# similarity (feat-134-related-artifact-similarity Phase 1):
+# `SimilarityUnavailableResult`'s `available`/`reason` fields and the
+# `WholeBodyDomain.iter_paths` adapter field, read only via
+# (de)serialization or by the not-yet-written Phase 2-3 registry
+# consumers; nothing in `src/` accesses them as plain attributes yet
+# (the sibling adapter fields `base_dir`/`load_by_id` need no entry:
+# those names already occur as local variables elsewhere in `src/`,
+# which vulture counts as name-level usage).
+available
+reason
+iter_paths
 # dtais (feat-92-resources Phase 2): `Dtais`/`CoverageRelationship` fields
 # read only via (de)serialization; nothing in `src/` accesses them as plain
 # attributes yet (the `general/resources/dtais.py` wiring comes later).
@@ -279,3 +290,20 @@ invalidate
 reconcile
 move
 reset
+
+# --- similarity (feat-134-related-artifact-similarity Phase 1) ------------------
+# Provider/availability seams whose first `src/` call sites are the Phase 3
+# `find_related`/`find_similar_text` tools (not yet written): `embed_query`
+# (one entry covers both the `EmbeddingProvider` protocol stub and the
+# `FastEmbedProvider` implementation, by name) is the query-side half of the
+# protocol, `_similarity_availability` is checked first thing inside both
+# tool bodies (REQ-003), and `documents` is the `_TextEmbeddingLike`
+# structural-protocol stub's own argument (a declaration, never a real
+# parameter). The `read_embedding`/`invalidate_embedding_cache`/
+# `move_embedding_cache`/`reset_embedding_cache` cache wrappers and the
+# `SimilarityUnavailableResult`/`WholeBodyDomain`/`WholeBodyType`/
+# `WholeBodyOrAdrType`/`whole_body_domain` registry names need no entries:
+# vulture treats `__all__`-listed names as used.
+embed_query
+_similarity_availability
+documents

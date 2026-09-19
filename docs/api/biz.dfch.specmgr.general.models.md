@@ -29,6 +29,18 @@ failure mode (ADR b399f1ce-ed42-4929-b01c-7a57d18e8014):
   ``pydantic.ValidationError`` propagate. Distinct from
   :class:`ValidateResult` -- a different tool's own model.
 
+Also backs feat-134-related-artifact-similarity's (Phase 3) two generic
+similarity tools' shared runtime-unavailability contract (REQ-003, ADR
+750842b2-aca4-4649-ba0c-855ec8e1f505):
+
+- :class:`SimilarityUnavailableResult` -- the non-raising, structured
+  ``{available, reason, message}`` result the ``find_related``/
+  ``find_similar_text`` tools return whenever the embedding backend is
+  unavailable (the ``SPECMGR_SIMILARITY_DISABLED`` opt-out env var is
+  present, or the backend fails to import or the model fails to load),
+  instead of raising. Mirrors :class:`InvalidStatusResult`'s own
+  non-raising precedent -- a different tool surface's own model.
+
 Also backs feat-92-resources's cross-cutting reference-resource
 model-backed drift-guard convention (ADR
 356d8781-e446-4c26-917a-eda85648ce9d, REQ-002/REQ-005/REQ-006):

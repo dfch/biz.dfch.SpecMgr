@@ -182,7 +182,7 @@ Mirrors :func:`_set_classification_dec`'s shape (same ``vcr_lock``,
 :func:`_set_classification_req` for the full semantics.
 
 
-### `set_classification(id: 'str', type: "Literal['req', 'uc', 'tsk', 'qa', 'prb', 'gol', 'rsk', 'dec', 'sop', 'feat', 'vcr', 'sysrs']", classification: 'str') -> '_SetClassificationFrontmatter'`
+### `set_classification(id: 'str', type: 'WholeBodyType', classification: 'str') -> '_SetClassificationFrontmatter'`
 
 Replace the ``classification`` frontmatter field of an existing document.
 

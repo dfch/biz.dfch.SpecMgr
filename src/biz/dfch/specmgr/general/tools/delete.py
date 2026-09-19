@@ -69,7 +69,6 @@ from __future__ import annotations
 
 import shutil
 from collections.abc import Callable
-from typing import Literal
 
 from ...dec.tools._cache import invalidate_dec_cache
 from ...dec.tools._io import load_by_id as load_dec_by_id
@@ -120,12 +119,10 @@ from ...vcr.tools._cache import invalidate_vcr_cache
 from ...vcr.tools._io import load_by_id as load_vcr_by_id
 from ...vcr.tools._lock import vcr_lock
 from ...vcr.tools._paths import vcr_base_dir
+from ._domains import WholeBodyType
 from ._path_safety import assert_within, validate_id
 
 __all__ = ["delete"]
-
-#: The whole-body domains the generic delete tool covers (ADR excluded).
-_DELETE_TYPES = ("req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "feat", "vcr", "sysrs")
 
 
 class DeleteError(OSError):
@@ -394,7 +391,7 @@ _ADAPTERS: dict[str, Callable[[str], str]] = {
 )
 def delete(
     id: str,
-    type: Literal["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "feat", "vcr", "sysrs"],
+    type: WholeBodyType,
 ) -> str:
     """Permanently delete an existing document from disk, across the whole-body domains.
 

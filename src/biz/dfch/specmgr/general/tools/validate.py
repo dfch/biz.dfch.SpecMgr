@@ -83,7 +83,6 @@ to the builtin shadow.
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Literal
 
 import frontmatter
 import yaml
@@ -106,11 +105,9 @@ from ...sysrs.models.v1 import Sysrs, parse_sysrs
 from ...tsk.models.v1 import Task, parse_tsk
 from ...uc.models.v2 import UseCase, parse_uc
 from ...vcr.models.v1 import Vcr, parse_vcr
+from ._domains import WHOLE_BODY_DOMAINS, WholeBodyType
 
 __all__ = ["validate"]
-
-#: The whole-body domains the generic validate tool covers (ADR excluded).
-_VALIDATE_TYPES = ("req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "feat", "vcr", "sysrs")
 
 #: Exactly the three content-validation-failure channels REQ-004 requires be caught and turned
 #: into a non-raising {valid: False, errors: [...]} result. A bare ValueError (the full/
@@ -540,7 +537,7 @@ _ADAPTERS: dict[str, Callable[[str, bool], None]] = {
     ),
 )
 def validate(
-    type: Literal["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "feat", "vcr", "sysrs"],
+    type: WholeBodyType,
     content: str,
     full: bool = False,
 ) -> ValidateResult:
@@ -611,8 +608,8 @@ def validate(
     """
     if type not in _ADAPTERS:
         raise ValueError(
-            f"unknown document type {type!r}; expected one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/"
-            "feat/vcr/sysrs ('adr' is not supported -- use validate_adr instead)"
+            f"unknown document type {type!r}; expected one of {'/'.join(WHOLE_BODY_DOMAINS)} "
+            "('adr' is not supported -- use validate_adr instead)"
         )
 
     adapter = _ADAPTERS[type]
