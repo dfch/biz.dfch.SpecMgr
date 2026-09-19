@@ -4,7 +4,7 @@ created: '2026-09-17 07:40:37.439+02:00'
 id: feat-134-related-artifact-similarity
 status: planning
 type: feat
-updated: '2026-09-18 17:29:13.993+02:00'
+updated: '2026-09-19 10:25:17.269+02:00'
 version: 1.0.0
 ---
 
@@ -117,13 +117,13 @@ Open questions/TODOs, not yet decided, to resolve during Phase 3: (1) does `find
 
 ### Related Decisions
 
-- New ADR to be written as part of Phase 1 (see Task List) -- not yet assigned an id. It will document the chunk + mean-pool strategy, the background warmup and its GIL rationale, the shared registry, the cache lifecycle wiring, and the corpus boundary (including the dev docs under `.specmgr/feat`).
+- ADR 750842b2-aca4-4649-ba0c-855ec8e1f505 (accepted 2026-09-19): documents the design -- pluggable CPU-only `EmbeddingProvider` protocol, chunk + mean-pool long-document strategy, in-memory-only hash-validated cache with delete/`set_feat_id` lifecycle wiring, new `similarity` extra, `adr`-domain exclusion, registration-vs-availability distinction, background warmup and its GIL rationale, the shared `WHOLE_BODY_DOMAINS` registry, and the corpus boundary (including the dev docs under `.specmgr/feat`).
 
 ### Task List
 
 #### Phase 1: Provider + Cache + Availability + Registry
 
-- [ ] Task 1.1: Write the ADR for this design (pluggable embedding provider with `embed`/`embed_query`, chunk + mean-pool long-document strategy, in-memory cache with delete/`set_feat_id` lifecycle wiring, new extra, ADR-domain exclusion, registration-vs-availability distinction from REQ-003, background warmup, shared `WHOLE_BODY_DOMAINS` registry, corpus boundary).
+- [x] Task 1.1: Write the ADR for this design (pluggable embedding provider with `embed`/`embed_query`, chunk + mean-pool long-document strategy, in-memory cache with delete/`set_feat_id` lifecycle wiring, new extra, ADR-domain exclusion, registration-vs-availability distinction from REQ-003, background warmup, shared `WHOLE_BODY_DOMAINS` registry, corpus boundary).
 - [ ] Task 1.2: Add `similarity` extra to `pyproject.toml` with `fastembed`; add it to the `dev` extra; regenerate `uv.lock`.
 - [ ] Task 1.3: Implement `EmbeddingProvider` protocol (`embed` + `embed_query`) plus `FastEmbedProvider` plus `get_default_provider()` (lazy import, model-load lock).
 - [ ] Task 1.4: Implement `SPECMGR_SIMILARITY_DISABLED` (presence-based) plus `_similarity_availability()` shared helper and its structured "unavailable" result type (`{available, reason, message}` with enablement hint).
@@ -162,7 +162,7 @@ Open questions/TODOs, not yet decided, to resolve during Phase 3: (1) does `find
 
 ### Current Status
 
-**As of 2026-09-18**: Planning stage; plan refined after an internal review (chunk + mean-pool long-document strategy, shared `WHOLE_BODY_DOMAINS` registry, embedding-cache lifecycle wiring, background warmup, error contract, pytest `addopts` exclusion, doc-regeneration trio). Not started.
+**As of 2026-09-19**: Planning stage; plan refined after an internal review (chunk + mean-pool long-document strategy, shared `WHOLE_BODY_DOMAINS` registry, embedding-cache lifecycle wiring, background warmup, error contract, pytest `addopts` exclusion, doc-regeneration trio). The design ADR (Task 1.1) has been written and **accepted** ahead of implementation (ADR 750842b2-aca4-4649-ba0c-855ec8e1f505). Implementation (Tasks 1.2 onward) is not yet started and will be driven phase-by-phase.
 
 ### Blockers
 
@@ -171,6 +171,10 @@ Open questions/TODOs, not yet decided, to resolve during Phase 3: (1) does `find
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-19 08:25:17.270Z - ADR written and accepted (Task 1.1) ahead of Phase 1
+
+At the user's request, the design ADR was written and accepted before implementation starts (ADR 750842b2-aca4-4649-ba0c-855ec8e1f505, `decision-makers: dfch`). It documents the full approved design: pluggable CPU-only provider protocol, chunk + mean-pool long-document strategy, hash-validated in-memory vector cache with `delete`/`set_feat_id` lifecycle wiring, presence-based opt-out flag, shared `WHOLE_BODY_DOMAINS` registry, background warmup (GIL rationale), the `adr` exclusion, and the corpus boundary. PR #137 opened against `dev`. Phase 1 implementation (Tasks 1.2-1.6) is deliberately not started here; it will be driven by the PhaseOrchestrator in a new session.
 
 #### 2026-09-18 15:29:13.994Z - Plan refined after internal review
 
@@ -223,6 +227,7 @@ A genuine (non-mocked) test against the real `fastembed` backend will exist, und
 ### Related PRs / Commits
 
 - [Issue #134](https://github.com/dfch/biz.dfch.SpecMgr/issues/134): tracking issue for this feature.
+- [PR #137](https://github.com/dfch/biz.dfch.SpecMgr/pull/137): plan + ADR against `dev`; implementation follows in this same branch as one commit per phase.
 
 ### More Information
 
