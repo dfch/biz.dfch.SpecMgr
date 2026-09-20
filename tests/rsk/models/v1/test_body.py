@@ -494,6 +494,83 @@ Free-form supplementary text.
         self.assertEqual(str(sut), text)
 
 
+class TestRiskTagsNotes(unittest.TestCase):
+    """`## Tags` items are `MarkdownListItemWithNotes` (issue #133).
+
+    A loose-list continuation paragraph under a tag (blank line, then a
+    marker-width-indented paragraph) is captured in the item's `notes` --
+    not dropped, not merged into the item text, and not leaked into the
+    following section. Plain single-line tags parse unchanged (the existing
+    fixtures' `[item.text ...]` assertions still hold), and the document
+    round-trips byte-exact.
+    """
+
+    def test_loose_continuation_captured_in_notes(self) -> None:
+        text = format_text(
+            """\
+# R1
+
+## Cause
+
+c
+
+## Trigger
+
+t
+
+## Consequence
+
+k
+
+## Scope
+
+- s1
+
+## Initial Assessment
+
+### Probability 1
+
+### Impact 1
+
+## Strategy
+
+accept
+
+## Mitigation
+
+none
+
+## Residual Assessment
+
+### Probability 1
+
+### Impact 1
+
+## Tags
+
+- security
+
+  Additional context on why this tag applies.
+
+## More Information
+
+Tracked in the incident-response backlog.
+"""
+        )
+
+        sut = Risk.from_text(text)
+
+        self.assertEqual([item.text for item in sut.tags.items], ["security"])
+        item = sut.tags.items[0]
+        self.assertIsNotNone(item.notes)
+        self.assertEqual(len(item.notes), 1)
+        self.assertEqual(item.notes[0].text, "Additional context on why this tag applies.")
+        self.assertEqual(
+            sut.more_information.text, "## More Information\n\nTracked in the incident-response backlog.\n"
+        )
+        self.assertEqual(str(sut), text)
+
+
 class TestReferenceDocumentBody(unittest.TestCase):
     """The feature plan's reference document body is exactly what `Risk.from_text` accepts.
 

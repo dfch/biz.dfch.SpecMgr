@@ -6607,7 +6607,13 @@ One of the four TARA words: `transfer`, `accept`, `reduce`, `avoid`.
 
 ### `Tags`
 
-`## Tags` -- bullet list of free-form labels for grouping/filtering risks. Optional.
+`## Tags` -- bullet list of free-form labels for grouping/filtering
+risks. Optional.
+
+Structurally identical to `req`/`dec`/`gol`'s own `Tags` (issue #133):
+each item is a `MarkdownListItemWithNotes`, so a loose-list continuation
+paragraph under a tag is captured in the item's `notes` instead of being
+silently dropped.
 
 **Methods:**
 

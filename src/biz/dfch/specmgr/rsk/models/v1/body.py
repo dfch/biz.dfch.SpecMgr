@@ -68,6 +68,7 @@ from pydantic import Field, field_validator
 
 from ....models.md import (
     MarkdownListItem,
+    MarkdownListItemWithNotes,
     MarkdownParagraph,
     MarkdownSection1WithComment,
     MarkdownSection2,
@@ -147,9 +148,16 @@ class Owner(MarkdownSection2):
 
 
 class Tags(MarkdownSection2):
-    """`## Tags` -- bullet list of free-form labels for grouping/filtering risks. Optional."""
+    """`## Tags` -- bullet list of free-form labels for grouping/filtering
+    risks. Optional.
 
-    items: list[MarkdownListItem] = Field(
+    Structurally identical to `req`/`dec`/`gol`'s own `Tags` (issue #133):
+    each item is a `MarkdownListItemWithNotes`, so a loose-list continuation
+    paragraph under a tag is captured in the item's `notes` instead of being
+    silently dropped.
+    """
+
+    items: list[MarkdownListItemWithNotes] = Field(
         min_length=1,
         description="Bullet list of free-form labels for grouping/filtering risks; must contain at least one item.",
     )

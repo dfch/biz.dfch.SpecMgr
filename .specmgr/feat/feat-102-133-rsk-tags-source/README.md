@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-17 07:38:35.189+02:00'
 id: feat-102-133-rsk-tags-source
-status: planning
+status: progress
 type: feat
-updated: '2026-09-21 00:06:15.836+02:00'
+updated: '2026-09-21 00:44:35.093+02:00'
 version: 1.0.0
 ---
 
@@ -119,16 +119,16 @@ The remaining scope is therefore:
 
 #### Phase 0: Branch + folder consolidation (setup; orchestrator-direct)
 
-- [ ] Task 0.1: Create branch `feat-102-133-rsk-tags-source` from `dev` (the working tree carries the planning-time README rewrite).
-- [ ] Task 0.2: Commit the README rewrite (this combined plan) -- commit message per REQ-016, e.g. `docs(rsk): plan feat-102-133 combined feature (rsk mandatory Source + Tags alignment) (#102) (#133)`.
-- [ ] Task 0.3: Run `set_feat_id(feat-133-tags-dec-rsk -> feat-102-133-rsk-tags-source)` (rewrites the frontmatter `id`, bumps `updated`, leaves the body byte-identical) -- commit per REQ-016, e.g. `docs(feat): rename feat-133-tags-dec-rsk to feat-102-133-rsk-tags-source (#102) (#133)`.
-- [ ] Task 0.4: Run the quality gate (REQ-014) -- docs-only, expected no-op; verify no drift before proceeding to Phase 1.
+- [x] Task 0.1: Create branch `feat-102-133-rsk-tags-source` from `dev` (the working tree carries the planning-time README rewrite).
+- [x] Task 0.2: Commit the README rewrite (this combined plan) -- commit message per REQ-016, e.g. `docs(rsk): plan feat-102-133 combined feature (rsk mandatory Source + Tags alignment) (#102) (#133)`.
+- [x] Task 0.3: Run `set_feat_id(feat-133-tags-dec-rsk -> feat-102-133-rsk-tags-source)` (rewrites the frontmatter `id`, bumps `updated`, leaves the body byte-identical) -- commit per REQ-016, e.g. `docs(feat): rename feat-133-tags-dec-rsk to feat-102-133-rsk-tags-source (#102) (#133)`.
+- [x] Task 0.4: Run the quality gate (REQ-014) -- docs-only, expected no-op; verify no drift before proceeding to Phase 1.
 
 #### Phase 1: #133 -- Tags item-type alignment (closes #133)
 
-- [ ] Task 1.1: In `rsk/models/v1/body.py`, change `Tags.items` from `list[MarkdownListItem]` to `list[MarkdownListItemWithNotes]` (update the import from `...models.md`; add a docstring note that rsk mirrors `req`/`dec`/`gol`'s `Tags` shape, per issue #133).
-- [ ] Task 1.2: In `tests/rsk/models/v1/test_body.py`, confirm plain tags parse unchanged (existing assertions still hold) and add a test: a tag with a loose-list continuation paragraph has it captured in `item.notes` and round-trips.
-- [ ] Task 1.3: Quality gate (REQ-014) -- expect changes in `rsk_schema.json` (both copies; the Tags items schema gains the `notes` property) and in the touched module's `docs/api/` page from the docstring note; commit per REQ-016, e.g. `feat(rsk): align ## Tags item type to MarkdownListItemWithNotes (req/dec/gol parity) (#102) (#133)`.
+- [x] Task 1.1: In `rsk/models/v1/body.py`, change `Tags.items` from `list[MarkdownListItem]` to `list[MarkdownListItemWithNotes]` (update the import from `...models.md`; add a docstring note that rsk mirrors `req`/`dec`/`gol`'s `Tags` shape, per issue #133).
+- [x] Task 1.2: In `tests/rsk/models/v1/test_body.py`, confirm plain tags parse unchanged (existing assertions still hold) and add a test: a tag with a loose-list continuation paragraph has it captured in `item.notes` and round-trips.
+- [x] Task 1.3: Quality gate (REQ-014) -- expect changes in `rsk_schema.json` (both copies; the Tags items schema gains the `notes` property) and in the touched module's `docs/api/` page from the docstring note; commit per REQ-016, e.g. `feat(rsk): align ## Tags item type to MarkdownListItemWithNotes (req/dec/gol parity) (#102) (#133)`.
 - [ ] Task 1.4: Post the GitHub comment on issue #133 per REQ-013 and close the issue.
 
 #### Phase 2: #102 -- mandatory `## Source` schema (BREAKING)
@@ -166,15 +166,21 @@ The remaining scope is therefore:
 
 ### Current Status
 
-**As of 2026-09-20**: **Planning.** This README has been replaced with the combined #102 + #133 plan (see Updates below); nothing is implemented yet. The remaining scope is small and fully scoped: one mandatory section added to one domain (`rsk` `## Source`, breaking per the feat-29 treatment) plus a one-line `## Tags` item-type alignment that closes #133. Implementation is deferred to a later session: an Orchestrator agent should execute Phase 0 directly, then dispatch Phases 1-5 one `phase-implementer` each (REQ-015), with the full quality gate after every phase (REQ-014) and both `#102` and `#133` in every commit message (REQ-016).
+**As of 2026-09-21**: **In progress -- Phases 0 and 1 complete.** Phase 0 (setup) ran orchestrator-direct: branch `feat-102-133-rsk-tags-source` created from `dev` at `9a82e80`, the folder renamed `feat-133-tags-dec-rsk` -> `feat-102-133-rsk-tags-source` via `set_feat_id` (committed as `4876af2`), and the full quality gate (REQ-014) passed green. Phase 1 (issue #133) is implemented: rsk's `## Tags` item type is aligned to `MarkdownListItemWithNotes` (req/dec/gol parity -- loose-list continuation paragraphs under a tag are captured in `item.notes` instead of being silently dropped), with a dedicated notes-capture test, `rsk_schema.json` regenerated in both copies, and a green full gate; the orchestrator commits the phase after this one. Remaining: Phases 2-5 (mandatory `## Source` schema + sentinel + fixtures, template/example, prompts, docs/close-out) per the Task List.
 
 ### Blockers
 
-- None.
+- Task 1.4 (post the GitHub comment on issue #133 per REQ-013 and close the issue) is blocked: this environment has no network access (DNS fails for all hosts) and the `gh` token is expired. Deferred to the feature's final step (alongside Task 5.4's #102 comment/close), pending the user restoring network/auth.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-20 22:29:05.000Z - Phase 0 executed orchestrator-direct; Phase 1 (rsk `## Tags` alignment) implemented, gate green
+
+Phase 0 ran orchestrator-direct (REQ-015 permits this for the pure-setup phase): branch `feat-102-133-rsk-tags-source` created from `dev` at `9a82e80`; the folder renamed `feat-133-tags-dec-rsk` -> `feat-102-133-rsk-tags-source` via `set_feat_id` and committed as `4876af2`; the full quality gate (REQ-014) passed green -- ruff/vulture clean, no `specmgr docs`/`mcp-docs`/`schema` drift, 3354 tests passed, 99% coverage. Minor deviation from the plan's assumption of an uncommitted working tree: Task 0.2 (commit the README rewrite) was already satisfied pre-branching by `dev` commit `9a82e80 docs(feat-133): add plan` -- that commit is outside the PR's commit range, so REQ-016's both-issues rule applies to the branch's own commits (`4876af2` onward) and the satisfied-early fact is recorded here instead.
+
+Phase 1 (issue #133) was then implemented by one `phase-implementer` dispatch (REQ-015): `Tags.items` in `src/biz/dfch/specmgr/rsk/models/v1/body.py` changed from `list[MarkdownListItem]` to `list[MarkdownListItemWithNotes]` (import + type + a docstring note that rsk mirrors `req`/`dec`/`gol`'s `Tags` shape per issue #133), a new `TestRiskTagsNotes::test_loose_continuation_captured_in_notes` in `tests/rsk/models/v1/test_body.py` (a loose-list continuation paragraph under a tag is captured in the item's `notes` -- not dropped, not merged into the item text, not leaked into the following section -- and the document round-trips byte-exact; the existing plain-tags assertions pass unchanged), and the full quality gate green: `rsk_schema.json` regenerated in both copies (the Tags items schema gains the optional `notes` property) and the touched module's `docs/api/` page updated for the docstring note -- no other domain's schema, no other api page, and no `docs/MCP.md` drift. Task 1.4 (GitHub comment + close #133) is blocked on network/auth -- see Blockers. Frontmatter `status` moved `planning` -> `progress`; `updated` bumped.
 
 #### 2026-09-20 08:07:44.000Z - Combined plan written (this README replaced); implementation deferred
 
