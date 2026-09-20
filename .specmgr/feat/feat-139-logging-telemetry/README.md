@@ -4,7 +4,7 @@ created: '2026-09-19 12:24:35.775+02:00'
 id: feat-139-logging-telemetry
 status: planning
 type: feat
-updated: '2026-09-20 05:40:18.003+02:00'
+updated: '2026-09-20 08:50:19.034+02:00'
 version: 1.0.0
 ---
 
@@ -133,7 +133,7 @@ Add opt-in structured logging and OpenTelemetry-based telemetry (metrics + traci
 - [x] Task 1a.4: Spike: point the OTLP exporter at a deliberately unreachable endpoint and observe the OTel SDK's actual batch-span-processor/periodic-metric-reader failure-logging behavior (does it log once per failed export cycle, once per failed attempt, or once per episode; under which logger name) to ground Task 4.5's de-duplication design in confirmed behavior rather than the Design Notes' previous "likely" assumption.
 - [x] Task 1a.5: Spike: prototype an OTel observable/asynchronous instrument (e.g. an observable counter with a callback) reading a throwaway stand-in for `DocCache.stats()`, confirming it behaves the way Task 5.4 assumes before that task is implemented against the real, 12-independent-instance `DocCache`.
 - [x] Task 1a.6: Record every finding from Tasks 1a.2-1a.5 as its own Decisions Made entry, and revise the affected Phase 4/5/6 Design Notes/Task List wording to match confirmed behavior wherever it differs from the current (assumption-based) text -- the re-evaluation gate this batch of tasks exists to reach before Phase 2 continues toward Phase 4-6's territory.
-- [ ] Task 1a.7: Quality gate.
+- [x] Task 1a.7: Quality gate.
 
 #### Phase 2: Structured logging
 
@@ -220,6 +220,10 @@ None currently.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-19 17:40:00.000Z - Task 1a.7 ran: full standard quality gate passed for the Phase 1a batch, completing Tasks 1a.1-1a.7
+
+Task 1a.7, the Phase 1a batch's own quality gate (per ACC-006), ran the full standard pre-commit/CI gate over the tree as left by Tasks 1a.1-1a.6 and every step passed: `ruff format --check` (1700 files already formatted), `ruff check` (all checks passed), `vulture src/ whitelist.py --min-confidence 60` (clean), the full `pytest -n auto` suite with coverage (3354 passed in ~39 s), and the two docs-regen drift checks -- `specmgr docs` (465 module files + `docs/GENERATED.md` rewritten, zero changed files in `git status` afterward) and `specmgr adr-toc` (`docs/adr/README.md` rewritten, zero changed files afterward). The batch's only on-disk changes had been `pyproject.toml`/`uv.lock` (Task 1a.1) and this plan (Tasks 1a.1/1a.6), so this confirms the whole batch left the tree green; the sole open follow-through is Task 7.1 re-confirming the SDK/exporter choice and applying the `opentelemetry-sdk` version-range narrowing recommended by the Task 1a.3 finding.
 
 #### 2026-09-19 17:35:00.000Z - Phase 1a spike batch (Tasks 1a.2-1a.6) ran: all four OpenTelemetry SDK behaviors empirically confirmed, plan revised at the re-evaluation gate
 
