@@ -48,6 +48,12 @@ from ....models.md import (
     MarkdownSection2,
     MarkdownSection2WithComment,
     MarkdownSection3,
+    AccountableBase,
+    ResponsibleBase,
+    SupportBase,
+    ConsultedBase,
+    InformedBase,
+    RolesAndResponsibilitiesBase,
     alias,
     AliasType,
 )
@@ -71,122 +77,65 @@ class Definitions(MarkdownSection2):
     reader. Optional, free-form prose."""
 
 
-class Accountable(MarkdownSection3):
+class Accountable(AccountableBase):
     """`### Accountable` under `## Roles and Responsibilities` -- the single
     owner who is ultimately answerable for the SOP.
 
-    A single mandatory paragraph (never a bullet list): exactly one owner,
-    structurally discouraging multiple owners. See the general
-    `specmgr://rasci` resource for RASCI role definitions.
-
-    Parameters
-    ----------
-    value:
-        The single paragraph naming the accountable party. Mandatory.
+    Subclasses the shared `models.md.AccountableBase` (feat-29-dec-source-roles)
+    -- see the general `specmgr://rasci` resource for RASCI role definitions.
     """
 
-    value: MarkdownParagraph = Field(
-        description="The single paragraph naming the accountable party. Mandatory; never a bullet list."
-    )
 
-
-class Responsible(MarkdownSection3):
+class Responsible(ResponsibleBase):
     """`### Responsible` under `## Roles and Responsibilities` -- those who do
     the work the SOP describes.
 
-    A mandatory bullet list (>=1 entry). See the general `specmgr://rasci`
-    resource for RASCI role definitions.
-
-    Parameters
-    ----------
-    items:
-        Bullet list naming the responsible parties; must contain at least one
-        item.
+    Subclasses the shared `models.md.ResponsibleBase` (feat-29-dec-source-roles)
+    -- see the general `specmgr://rasci` resource for RASCI role definitions.
     """
 
-    items: list[MarkdownListItem] = Field(
-        min_length=1,
-        description="Bullet list naming the responsible parties; must contain at least one item.",
-    )
 
-
-class Support(MarkdownSection3):
+class Support(SupportBase):
     """`### Support` under `## Roles and Responsibilities` -- those who
     provide resources or assistance to the responsible parties.
 
-    An optional bullet list that MAY be present with zero list items (an
-    intentional "considered, currently empty" placeholder distinct from
-    omitting the heading entirely). See the general `specmgr://rasci` resource
-    for RASCI role definitions.
-
-    Parameters
-    ----------
-    items:
-        Bullet list naming the support parties, or ``None`` when the heading
-        is present with no items. Optional as a whole.
+    Subclasses the shared `models.md.SupportBase` (feat-29-dec-source-roles)
+    -- see the general `specmgr://rasci` resource for RASCI role definitions.
     """
 
-    items: list[MarkdownListItem] | None = Field(
-        default=None,
-        description="Bullet list naming the support parties, or ``None`` when the heading is present "
-        "with no items. Optional; the heading MAY appear with zero items.",
-    )
 
-
-class Consulted(MarkdownSection3):
+class Consulted(ConsultedBase):
     """`### Consulted` under `## Roles and Responsibilities` -- those whose
     opinions are sought before or during the work.
 
-    An optional bullet list that MAY be present with zero list items (an
-    intentional "considered, currently empty" placeholder distinct from
-    omitting the heading entirely). See the general `specmgr://rasci` resource
-    for RASCI role definitions.
-
-    Parameters
-    ----------
-    items:
-        Bullet list naming the consulted parties, or ``None`` when the heading
-        is present with no items. Optional as a whole.
+    Subclasses the shared `models.md.ConsultedBase` (feat-29-dec-source-roles)
+    -- see the general `specmgr://rasci` resource for RASCI role definitions.
     """
 
-    items: list[MarkdownListItem] | None = Field(
-        default=None,
-        description="Bullet list naming the consulted parties, or ``None`` when the heading is present "
-        "with no items. Optional; the heading MAY appear with zero items.",
-    )
 
-
-class Informed(MarkdownSection3):
+class Informed(InformedBase):
     """`### Informed` under `## Roles and Responsibilities` -- those who are
     kept up to date on progress or outcomes.
 
-    An optional bullet list that MAY be present with zero list items (an
-    intentional "considered, currently empty" placeholder distinct from
-    omitting the heading entirely). See the general `specmgr://rasci` resource
-    for RASCI role definitions.
-
-    Parameters
-    ----------
-    items:
-        Bullet list naming the informed parties, or ``None`` when the heading
-        is present with no items. Optional as a whole.
+    Subclasses the shared `models.md.InformedBase` (feat-29-dec-source-roles)
+    -- see the general `specmgr://rasci` resource for RASCI role definitions.
     """
 
-    items: list[MarkdownListItem] | None = Field(
-        default=None,
-        description="Bullet list naming the informed parties, or ``None`` when the heading is present "
-        "with no items. Optional; the heading MAY appear with zero items.",
-    )
 
-
-@alias(value="Roles and Responsibilities", type=AliasType.LITERAL)
-class RolesAndResponsibilities(MarkdownSection2):
+class RolesAndResponsibilities(RolesAndResponsibilitiesBase):
     """`## Roles and Responsibilities` -- the RASCI responsibility assignment
     for this SOP. Optional as a whole; once present, `### Accountable` and
     `### Responsible` are both mandatory (strict-RACI "always has an owner and
     a doer"), while `### Support`/`### Consulted`/`### Informed` stay
     independently optional and MAY each be present with zero list items. See
     the general `specmgr://rasci` resource for RASCI role definitions.
+
+    Subclasses the shared `models.md.RolesAndResponsibilitiesBase`
+    (feat-29-dec-source-roles), which also carries the `@alias(value="Roles
+    and Responsibilities", ...)` override this class needs -- inherited
+    automatically, not redeclared here. The fields below narrow the base
+    class's field types to `sop`'s own concrete `Accountable`/`Responsible`/
+    `Support`/`Consulted`/`Informed` subclasses declared above.
 
     Parameters
     ----------
@@ -204,17 +153,21 @@ class RolesAndResponsibilities(MarkdownSection2):
         `### Informed` sub-section (bullet list, MAY be empty). Optional.
     """
 
-    accountable: Accountable = Field(
+    accountable: Accountable = Field(  # type: ignore
         description="`### Accountable` sub-section (single paragraph). Mandatory once this container is present."
     )
-    responsible: Responsible = Field(
+    responsible: Responsible = Field(  # type: ignore
         description="`### Responsible` sub-section (bullet list, >=1 item). Mandatory once this container is present."
     )
-    support: Support | None = Field(default=None, description="`### Support` sub-section. Optional; MAY be empty.")
-    consulted: Consulted | None = Field(
+    support: Support | None = Field(  # type: ignore
+        default=None, description="`### Support` sub-section. Optional; MAY be empty."
+    )
+    consulted: Consulted | None = Field(  # type: ignore
         default=None, description="`### Consulted` sub-section. Optional; MAY be empty."
     )
-    informed: Informed | None = Field(default=None, description="`### Informed` sub-section. Optional; MAY be empty.")
+    informed: Informed | None = Field(  # type: ignore
+        default=None, description="`### Informed` sub-section. Optional; MAY be empty."
+    )
 
 
 @alias(value="Safety and Precautions", type=AliasType.LITERAL)

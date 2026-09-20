@@ -33,6 +33,7 @@ from pydantic import ValidationError
 
 from biz.dfch.specmgr.dec.models.v1.body import (
     AcceptanceCriteria,
+    Accountable,
     Confirmation,
     Consequences,
     ConsideredOptions,
@@ -47,6 +48,10 @@ from biz.dfch.specmgr.dec.models.v1.body import (
     ProsAndCons,
     RelatedArtifacts,
     Requirements,
+    Responsible,
+    RolesAndResponsibilities,
+    Source,
+    Tags,
     UpdateEntry,
     Updates,
 )
@@ -107,6 +112,39 @@ from the nightly export instead.
 A two-week load test of the dashboard read path against the document store
 confirms the p95 latency target.
 
+## Roles and Responsibilities
+
+### Accountable
+
+The platform architecture lead is accountable for this decision and its
+outcome.
+
+### Responsible
+
+- The order service team implements the migration to the document store.
+
+### Support
+
+- The platform infrastructure team provisions the new document store cluster.
+
+### Consulted
+
+- The database reliability team is consulted on migration risk.
+
+### Informed
+
+- The reporting team is informed once the migration completes.
+
+## Tags
+
+- data-store
+
+- performance
+
+## Source
+
+The customer dashboard latency incident review meeting on 2026-08-20.
+
 ## Related Artifacts
 
 ### Requirements
@@ -166,10 +204,24 @@ def _outcome() -> DecisionOutcome:
     return DecisionOutcome.from_text(format_text("## Decision Outcome\n\nSome outcome prose.\n"))
 
 
+def _roles_and_responsibilities() -> RolesAndResponsibilities:
+    return RolesAndResponsibilities.from_text(
+        format_text(
+            "## Roles and Responsibilities\n\n### Accountable\n\nSome owner.\n\n### Responsible\n\n- Some doer.\n"
+        )
+    )
+
+
+def _source() -> Source:
+    return Source.from_text(format_text("## Source\n\nSome source.\n"))
+
+
 def _minimal_decision_kwargs() -> dict:
     return {
         "context": _context(),
         "outcome": _outcome(),
+        "roles_and_responsibilities": _roles_and_responsibilities(),
+        "source": _source(),
     }
 
 
@@ -318,6 +370,8 @@ class TestImplicitHeadingAliases(unittest.TestCase):
             (Confirmation, "Confirmation"),
             (MoreInformation, "More Information"),
             (Updates, "Updates"),
+            (Source, "Source"),
+            (Tags, "Tags"),
         ):
             with self.subTest(cls=cls.__name__):
                 self.assertTrue(match_alias(cls, heading))
@@ -330,9 +384,30 @@ class TestImplicitHeadingAliases(unittest.TestCase):
             (ConsideredOptions, "Considered Option"),
             (MoreInformation, "More Information "),
             (Updates, "Update"),
+            (Source, "source"),
+            (Tags, "Tag"),
         ):
             with self.subTest(cls=cls.__name__):
                 self.assertFalse(match_alias(cls, foreign))
+
+
+class TestRolesAndResponsibilitiesHeadingAlias(unittest.TestCase):
+    """`RolesAndResponsibilities` inherits its `@alias` from the shared
+    `models.md.RolesAndResponsibilitiesBase` (feat-29-dec-source-roles) --
+    it pins the literal "Roles and Responsibilities" wording, not the
+    `SPACE_SEPARATED` default its own class name would derive
+    ("Roles And Responsibilities", capital "And")."""
+
+    def test_accepts_canonical_heading(self) -> None:
+        self.assertTrue(match_alias(RolesAndResponsibilities, "Roles and Responsibilities"))
+
+    def test_rejects_the_space_separated_default(self) -> None:
+        self.assertFalse(match_alias(RolesAndResponsibilities, "Roles And Responsibilities"))
+
+    def test_rejects_other_wording(self) -> None:
+        for heading in ("Roles", "Responsibilities", "roles and responsibilities"):
+            with self.subTest(heading=heading):
+                self.assertFalse(match_alias(RolesAndResponsibilities, heading))
 
 
 class TestMandatorySections(unittest.TestCase):
@@ -359,6 +434,53 @@ class TestMandatorySections(unittest.TestCase):
 
         with self.assertRaises(ValidationError):
             Decision(**kwargs)
+
+    def test_missing_roles_and_responsibilities_raises_validation_error(self) -> None:
+        """`## Roles and Responsibilities` is mandatory on `dec` (unlike `sop`'s own optional
+        equivalent) -- a decision must always name an accountable owner (feat-29-dec-source-roles)."""
+        kwargs = _minimal_decision_kwargs()
+        del kwargs["roles_and_responsibilities"]
+
+        with self.assertRaises(ValidationError):
+            Decision(**kwargs)
+
+    def test_missing_source_raises_validation_error(self) -> None:
+        kwargs = _minimal_decision_kwargs()
+        del kwargs["source"]
+
+        with self.assertRaises(ValidationError):
+            Decision(**kwargs)
+
+    def test_from_text_missing_roles_and_responsibilities_raises_assertion_error(self) -> None:
+        text = format_text(
+            "# A Decision\n\n## Context and Problem Statement\n\nSome context prose.\n\n"
+            "## Decision Outcome\n\nSome outcome prose.\n\n## Source\n\nSome source.\n"
+        )
+
+        with self.assertRaises(AssertionError):
+            Decision.from_text(text)
+
+    def test_from_text_missing_source_raises_assertion_error(self) -> None:
+        text = format_text(
+            "# A Decision\n\n## Context and Problem Statement\n\nSome context prose.\n\n"
+            "## Decision Outcome\n\nSome outcome prose.\n\n## Roles and Responsibilities\n\n"
+            "### Accountable\n\nSome owner.\n\n### Responsible\n\n- Some doer.\n"
+        )
+
+        with self.assertRaises(AssertionError):
+            Decision.from_text(text)
+
+    def test_roles_and_responsibilities_missing_accountable_raises_validation_error(self) -> None:
+        """`### Accountable` is mandatory once `## Roles and Responsibilities` is present."""
+        with self.assertRaises(ValidationError):
+            RolesAndResponsibilities(
+                responsible=Responsible.from_text(format_text("### Responsible\n\n- Some doer.\n"))
+            )
+
+    def test_roles_and_responsibilities_missing_responsible_raises_validation_error(self) -> None:
+        """`### Responsible` is mandatory once `## Roles and Responsibilities` is present."""
+        with self.assertRaises(ValidationError):
+            RolesAndResponsibilities(accountable=Accountable.from_text(format_text("### Accountable\n\nSome owner.\n")))
 
     def test_from_text_missing_context_raises_assertion_error(self) -> None:
         text = format_text("# A Decision\n\n## Decision Outcome\n\nSome outcome prose.\n")
@@ -839,6 +961,13 @@ class TestDecisionMisordering(unittest.TestCase):
             "Some context prose.\n\n"
             "## Decision Outcome\n\n"
             "Some outcome prose.\n\n"
+            "## Roles and Responsibilities\n\n"
+            "### Accountable\n\n"
+            "Some owner.\n\n"
+            "### Responsible\n\n"
+            "- Some doer.\n\n"
+            "## Source\n\n"
+            "Some source.\n\n"
             "## Updates\n\n"
             "### 2026-08-26 - Created\n\n"
             "Some update text.\n\n"
@@ -846,8 +975,9 @@ class TestDecisionMisordering(unittest.TestCase):
             "Some more information text.\n"
         )
 
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(AssertionError) as ctx:
             Decision.from_text(text)
+        self.assertIn("More Information", str(ctx.exception))
 
     def test_related_artifacts_after_pros_and_cons_raises_assertion_error(self) -> None:
         text = format_text(
@@ -856,6 +986,13 @@ class TestDecisionMisordering(unittest.TestCase):
             "Some context prose.\n\n"
             "## Decision Outcome\n\n"
             "Some outcome prose.\n\n"
+            "## Roles and Responsibilities\n\n"
+            "### Accountable\n\n"
+            "Some owner.\n\n"
+            "### Responsible\n\n"
+            "- Some doer.\n\n"
+            "## Source\n\n"
+            "Some source.\n\n"
             "## Pros and Cons\n\n"
             "### Option 1: Some option\n\n"
             "Some option body.\n\n"
@@ -864,8 +1001,32 @@ class TestDecisionMisordering(unittest.TestCase):
             "- REQ-0001: Some requirement.\n"
         )
 
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(AssertionError) as ctx:
             Decision.from_text(text)
+        self.assertIn("Related Artifacts", str(ctx.exception))
+
+    def test_source_before_roles_and_responsibilities_raises_assertion_error(self) -> None:
+        """`## Source` misordered ahead of the mandatory `## Roles and Responsibilities`
+        (feat-29-dec-source-roles, REQ-015/ACC-014) -- closes the gap where every prior
+        misordering test only exercised pre-existing sections, not the three new ones."""
+        text = format_text(
+            "# A Decision\n\n"
+            "## Context and Problem Statement\n\n"
+            "Some context prose.\n\n"
+            "## Decision Outcome\n\n"
+            "Some outcome prose.\n\n"
+            "## Source\n\n"
+            "Some source.\n\n"
+            "## Roles and Responsibilities\n\n"
+            "### Accountable\n\n"
+            "Some owner.\n\n"
+            "### Responsible\n\n"
+            "- Some doer.\n"
+        )
+
+        with self.assertRaises(AssertionError) as ctx:
+            Decision.from_text(text)
+        self.assertIn("Roles and Responsibilities", str(ctx.exception))
 
     def test_consequences_under_h1_outside_outcome_raises_assertion_error(self) -> None:
         text = format_text(
@@ -950,6 +1111,19 @@ class TestDecisionReferenceDocumentRoundTrips(unittest.TestCase):
         self.assertIn("We chose the document store", sut.outcome.statement.text)
         self.assertIsNotNone(sut.outcome.consequences)
         self.assertIsNotNone(sut.outcome.confirmation)
+        self.assertIsNotNone(sut.roles_and_responsibilities)
+        self.assertIn("architecture lead is accountable", sut.roles_and_responsibilities.accountable.value.text)
+        self.assertEqual(
+            [item.text for item in sut.roles_and_responsibilities.responsible.items],
+            ["The order service team implements the migration to the document store."],
+        )
+        self.assertIsNotNone(sut.roles_and_responsibilities.support)
+        self.assertIsNotNone(sut.roles_and_responsibilities.consulted)
+        self.assertIsNotNone(sut.roles_and_responsibilities.informed)
+        self.assertIsNotNone(sut.tags)
+        self.assertEqual([item.text for item in sut.tags.items], ["data-store", "performance"])
+        self.assertIsNotNone(sut.source)
+        self.assertIn("incident review meeting", sut.source.value.text)
         self.assertIsNotNone(sut.more_information)
         self.assertIn("load-test harness configuration", sut.more_information.text)
 

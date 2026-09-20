@@ -36,6 +36,8 @@ _MINIMAL_BODY = textwrap.dedent(
     """\
     # Simple Problem Statement
 
+    The current process is causing delays, for users because of missing automation.
+
     ## Current State
 
     ### Summary
@@ -57,6 +59,8 @@ _MALFORMED_BODY = "# Title\n\nJust a paragraph, no recognized problem statement 
 _MISSING_FUTURE_STATE_BODY = textwrap.dedent(
     """\
     # Simple Problem Statement
+
+    The current process is causing delays, for users because of missing automation.
 
     ## Current State
 

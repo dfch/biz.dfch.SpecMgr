@@ -36,9 +36,13 @@ from biz.dfch.specmgr.dec.models.v1 import DecDocument
 from biz.dfch.specmgr.dec.models.v1.parser import parse_dec
 from biz.dfch.specmgr.models.md._markdown import format_text
 
+from tests.dec.tools._helpers import MANDATORY_ROLES_AND_SOURCE
+
 # Zero optional sections: the H1, the mandatory `## Context and Problem
-# Statement`, and the mandatory `## Decision Outcome` (with its lead
-# paragraph) -- nothing else. This is the shape a freshly created `dec`
+# Statement`, the mandatory `## Decision Outcome` (with its lead
+# paragraph), the mandatory `## Roles and Responsibilities` (with its
+# mandatory `### Accountable`/`### Responsible`), and the mandatory
+# `## Source` -- nothing else. This is the shape a freshly created `dec`
 # document may legitimately have (ACC-002: every optional section defaults
 # to `None` end to end through the full parser).
 _MINIMAL_DOC = textwrap.dedent(
@@ -61,6 +65,20 @@ _MINIMAL_DOC = textwrap.dedent(
     ## Decision Outcome
 
     We chose the document store.
+
+    ## Roles and Responsibilities
+
+    ### Accountable
+
+    The platform architecture lead.
+
+    ### Responsible
+
+    - The order service team.
+
+    ## Source
+
+    The customer dashboard latency incident review meeting.
     """
 )
 
@@ -105,6 +123,28 @@ _FULL_DOC = textwrap.dedent(
 
     A two-week load test.
 
+    ## Roles and Responsibilities
+
+    ### Accountable
+
+    The platform architecture lead.
+
+    ### Responsible
+
+    - The order service team.
+
+    ### Consulted
+
+    - The database reliability team.
+
+    ## Tags
+
+    - data-store
+
+    ## Source
+
+    The customer dashboard latency incident review meeting.
+
     ## Related Artifacts
 
     ### Requirements
@@ -140,6 +180,21 @@ _FULL_DOC = textwrap.dedent(
     Initial decision record drafted.
     """
 )
+
+# The mandatory `## Roles and Responsibilities` + `## Source` block, reused
+# by tests below that build their own minimal fixture text and only need
+# these two now-mandatory sections satisfied, not exercised. Imported from
+# the shared `tests/dec/tools/_helpers.py` fixture (feat-29-dec-source-roles
+# Phase 7, REQ-017/ACC-016) instead of duplicating it locally, as this file
+# used to.
+#
+# Note: `MANDATORY_ROLES_AND_SOURCE` carries a leading `\n` that neither of
+# this file's own two use sites below strictly needs (each already
+# concatenates it after fixture text that ends in its own trailing blank
+# line) -- verified empirically that the swap is safe anyway, since
+# `format_text`'s mdformat normalization collapses the resulting extra
+# blank line before `parse_dec` ever sees it, so both use sites parse to an
+# identical result whether or not the leading `\n` is present.
 
 
 class TestParseDec(unittest.TestCase):
@@ -233,24 +288,32 @@ class TestParseDec(unittest.TestCase):
 
     def test_related_artifacts_sub_lists_independently_optional(self) -> None:
         """Each of the four sub-lists can be present/absent independently (ACC-002)."""
-        text = textwrap.dedent(
-            """\
-            # Choose a Document Store
+        text = (
+            textwrap.dedent(
+                """\
+                # Choose a Document Store
 
-            ## Context and Problem Statement
+                ## Context and Problem Statement
 
-            The current store cannot serve the dashboard read path.
+                The current store cannot serve the dashboard read path.
 
-            ## Decision Outcome
+                ## Decision Outcome
 
-            We chose the document store.
+                We chose the document store.
 
-            ## Related Artifacts
+                """
+            )
+            + MANDATORY_ROLES_AND_SOURCE
+            + textwrap.dedent(
+                """\
 
-            ### Decisions
+                ## Related Artifacts
 
-            - DEC-2703: Nightly order export
-            """
+                ### Decisions
+
+                - DEC-2703: Nightly order export
+                """
+            )
         )
 
         document = parse_dec(text)
@@ -264,20 +327,23 @@ class TestParseDec(unittest.TestCase):
 
     def test_related_artifacts_with_zero_sub_lists_parses(self) -> None:
         """A `## Related Artifacts` H2 with none of the four sub-lists is valid (all children optional)."""
-        text = textwrap.dedent(
-            """\
-            # Choose a Document Store
+        text = (
+            textwrap.dedent(
+                """\
+                # Choose a Document Store
 
-            ## Context and Problem Statement
+                ## Context and Problem Statement
 
-            The current store cannot serve the dashboard read path.
+                The current store cannot serve the dashboard read path.
 
-            ## Decision Outcome
+                ## Decision Outcome
 
-            We chose the document store.
+                We chose the document store.
 
-            ## Related Artifacts
-            """
+                """
+            )
+            + MANDATORY_ROLES_AND_SOURCE
+            + "\n## Related Artifacts\n"
         )
 
         document = parse_dec(text)

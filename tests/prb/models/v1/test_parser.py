@@ -45,6 +45,8 @@ _MINIMAL_DOC = textwrap.dedent(
 
     # Simple Problem Statement
 
+    The current process is causing delays, for users because of missing automation.
+
     ## Current State
 
     ### Summary
@@ -133,6 +135,8 @@ class TestParsePrb(unittest.TestCase):
             """\
             # Simple Problem Statement
 
+            The current process is causing delays, for users because of missing automation.
+
             ## Current State
 
             ### Summary
@@ -153,6 +157,8 @@ class TestParsePrb(unittest.TestCase):
         text = textwrap.dedent(
             """\
             # Simple Problem Statement
+
+            The current process is causing delays, for users because of missing automation.
 
             ## Current State
 
@@ -175,6 +181,8 @@ class TestParsePrb(unittest.TestCase):
             """\
             # Simple Problem Statement
 
+            The current process is causing delays, for users because of missing automation.
+
             ## Gap
 
             Some gap text.
@@ -193,6 +201,8 @@ class TestParsePrb(unittest.TestCase):
         text = textwrap.dedent(
             """\
             # Simple Problem Statement
+
+            The current process is causing delays, for users because of missing automation.
 
             ## Current State
 
@@ -219,6 +229,42 @@ class TestParsePrb(unittest.TestCase):
 
         with self.assertRaises(ValidationError):
             parse_prb(text)
+
+    def test_malformed_problem_statement_raises_validation_error(self) -> None:
+        """A `problem_statement` lead paragraph not matching the fixed template is a `ValidationError` (ACC-001)."""
+        text = _MINIMAL_DOC.replace(
+            "The current process is causing delays, for users because of missing automation.",
+            "This lead sentence does not follow the fixed template at all.",
+        )
+
+        with self.assertRaises(ValidationError):
+            parse_prb(text)
+
+    def test_old_shape_without_problem_statement_raises_assertion_error(self) -> None:
+        """A pre-change (feat-16) body with no `problem_statement` paragraph is a structural failure (REQ-008 trigger)."""
+        text = textwrap.dedent(
+            """\
+            # Simple Problem Statement
+
+            ## Current State
+
+            ### Summary
+
+            A short placeholder summary.
+
+            ## Gap
+
+            Some gap text.
+
+            ## Future State
+
+            Some future state text.
+            """
+        )
+
+        with self.assertRaises(AssertionError) as ctx:
+            parse_prb(text)
+        self.assertIn("problem_statement", str(ctx.exception))
 
 
 if __name__ == "__main__":

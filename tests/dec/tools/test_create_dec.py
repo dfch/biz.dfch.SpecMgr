@@ -34,45 +34,57 @@ from biz.dfch.specmgr.dec.tools.get_dec import get_dec
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.models.md import CURRENT_SCHEMA_VERSION
 
-_MINIMAL_BODY = textwrap.dedent(
-    """\
-    # Choose a Document Store
+from ._helpers import MANDATORY_ROLES_AND_SOURCE
 
-    ## Context and Problem Statement
+_MINIMAL_BODY = (
+    textwrap.dedent(
+        """\
+        # Choose a Document Store
 
-    The current store cannot serve the dashboard read path.
+        ## Context and Problem Statement
 
-    ## Decision Outcome
+        The current store cannot serve the dashboard read path.
 
-    We chose the document store.
-    """
+        ## Decision Outcome
+
+        We chose the document store.
+        """
+    )
+    + MANDATORY_ROLES_AND_SOURCE
 )
 
 # Structurally valid, but a field/cross-field failure: two `### Option 1:`
 # headings are duplicate option numbers (the `Decision` after-validator's
 # `ValidationError` channel).
-_BAD_OPTION_BODY = textwrap.dedent(
-    """\
-    # Choose a Document Store
+_BAD_OPTION_BODY = (
+    textwrap.dedent(
+        """\
+        # Choose a Document Store
 
-    ## Context and Problem Statement
+        ## Context and Problem Statement
 
-    The current store cannot serve the dashboard read path.
+        The current store cannot serve the dashboard read path.
 
-    ## Decision Outcome
+        ## Decision Outcome
 
-    We chose the document store.
+        We chose the document store.
+        """
+    )
+    + MANDATORY_ROLES_AND_SOURCE
+    + textwrap.dedent(
+        """\
 
-    ## Pros and Cons
+        ## Pros and Cons
 
-    ### Option 1: Document Store
+        ### Option 1: Document Store
 
-    Meets the latency budget.
+        Meets the latency budget.
 
-    ### Option 1: Key-Value Store
+        ### Option 1: Key-Value Store
 
-    Even faster reads.
-    """
+        Even faster reads.
+        """
+    )
 )
 
 _MALFORMED_BODY = "# Title\n\nJust a paragraph, no recognized decision sections.\n"

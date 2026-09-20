@@ -41,6 +41,15 @@ from .markdown_section3_with_comment import MarkdownSection3WithComment
 from .markdown_section4_with_comment import MarkdownSection4WithComment
 from .markdown_section5_with_comment import MarkdownSection5WithComment
 from .markdown_section6_with_comment import MarkdownSection6WithComment
+from .common_sections import (
+    SourceBase,
+    AccountableBase,
+    ResponsibleBase,
+    SupportBase,
+    ConsultedBase,
+    InformedBase,
+    RolesAndResponsibilitiesBase,
+)
 
 __all__ = [
     "markdown",
@@ -69,4 +78,11 @@ __all__ = [
     "MarkdownSection4WithComment",
     "MarkdownSection5WithComment",
     "MarkdownSection6WithComment",
+    "SourceBase",
+    "AccountableBase",
+    "ResponsibleBase",
+    "SupportBase",
+    "ConsultedBase",
+    "InformedBase",
+    "RolesAndResponsibilitiesBase",
 ]

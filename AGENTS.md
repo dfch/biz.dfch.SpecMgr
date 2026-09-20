@@ -147,13 +147,13 @@ type or cross-cutting:
   through the generic `set_classification` tool (`type="prb"`), deletions
   through the generic `delete` tool (`type="prb"`), and the `get_prb` tool
   takes `raw: bool = False` — `raw=True` returns the frontmatter-stripped
-   body text as-is (the text `update`'s `offset`/`limit` index into), with
-   optional read-style `offset`/`limit` windowing of that raw read
-   (raw-only; out-of-range values clamp, never error); disk-free/id-free
-   dry-run content validation through the generic `validate` tool
-   (`type="prb"`) — the former `validate_prb` tool was removed in favor
-   of it (feat-81-83-validation); `prb/resources/`
-   (`specmgr://prb/schema`,
+  body text as-is (the text `update`'s `offset`/`limit` index into), with
+  optional read-style `offset`/`limit` windowing of that raw read
+  (raw-only; out-of-range values clamp, never error); disk-free/id-free
+  dry-run content validation through the generic `validate` tool
+  (`type="prb"`) — the former `validate_prb` tool was removed in favor
+  of it (feat-81-83-validation); `prb/resources/`
+  (`specmgr://prb/schema`,
   `specmgr://prb/example`, `specmgr://prb/template`; no
   `specmgr://prb/{id}` — id-based reads are `get_prb`-only, ADR
   ddfb1109-422d-4507-8dbc-dc5e4bec9614; no `specmgr://prb/list` — listing
@@ -162,10 +162,25 @@ type or cross-cutting:
   failed-to-parse document inline (with a resolved `path`) rather than
   silently dropping it,
   feat-81-83-validation Phase 3);
-   `prb/prompts/` (`create_prb`/`update_prb`, narrated `TodoWrite` +
-   `question`-tool-driven 5W2H interview flows). Schema at
-   `prb/models/v1/`, inside the domain package, not top-level
-   `models/`.
+  `prb/prompts/` (`create_prb`/`update_prb`, narrated `TodoWrite` +
+  `question`-tool-driven 5W2H interview flows). `create_prb` accepts an
+  optional `qa_id` parameter that carries over already-answered 5W2H
+  questions from a linked QA document, scanning all 10 Q&A-holding
+  categories (`## Elicitation Context` plus the nine ISO/IEC 25010:2023
+  characteristics), not just `## Elicitation Context`, pre-filling only
+  the sub-questions a QA pair actually answers and asking the rest via
+  the `question` tool as before. Every PRB now also carries a mandatory
+  `problem_statement` lead paragraph (no heading of its own, directly
+  under the H1, before `## Current State`) holding one sentence following
+  a fixed template, enforced by a code-level `field_validator` — an
+  in-place, **BREAKING** `prb/models/v1` schema evolution (not a new
+  `prb/models/v2`): a pre-existing PRB document without the lead
+  paragraph fails `parse_prb`/`get_prb` until it is added, and
+  `update_prb`'s prompt instructions guide that recovery (re-read via
+  `get_prb(id, raw=True)`, derive/confirm the sentence, insert it under
+  the H1, then proceed) (feat-132-prb-update). Schema at
+  `prb/models/v1/`, inside the domain package, not top-level
+  `models/`.
 - **`gol/`** (Goal) — same tools/resources/prompts shape as
   `req/`/`prb/` but for high-level business goals (the strategic
   "what the organization wants to achieve" level that sits above
@@ -274,7 +289,32 @@ type or cross-cutting:
   headings, `Options` collection) but is built on the generic
   `models/md` parser with the GOL/RSK/QA simple surface — no
   fine-grained mutation tools, no renderer: writes persist the
-  caller's raw validated body byte-for-byte.
+  caller's raw validated body byte-for-byte. Since `feat-29-dec-source-roles`
+  (GitHub issue #29), a `dec` document also carries three new body
+  sections between `## Decision Outcome` and `## Related Artifacts`: a
+  mandatory `## Roles and Responsibilities` (RASCI — `### Accountable`
+  single mandatory paragraph and `### Responsible` mandatory bullet list
+  (>=1 item) are always required, unlike SOP's own optional-as-a-whole
+  equivalent, since a decision must always have a named accountable
+  owner; `### Support`/`### Consulted`/`### Informed` stay independently
+  optional), an optional `## Tags` (bullet list of free-form labels,
+  structurally identical to `req`'s own, absorbing the DEC half of
+  `feat-133-tags-dec-rsk`, issue #133), and a mandatory `## Source`
+  (structurally identical to `req`'s own). This is what the original
+  issue's "ADR-style attributes such as `source`/`owner`" request
+  resolved to — new **body** sections, not new `DecFrontmatter` fields;
+  `DecFrontmatter` itself is unchanged. `Source` and the six RASCI
+  classes (`Accountable`/`Responsible`/`Support`/`Consulted`/`Informed`/
+  `RolesAndResponsibilities`) now live as shared base classes in the
+  top-level `models/md/common_sections.py`, which `req`'s own `Source`
+  and `sop`'s own six RASCI classes were refactored to subclass instead
+  of duplicating the field/validator logic — `dec`'s new concrete
+  classes subclass the same bases, each domain still declaring and
+  owning its own concrete leaf class per the domain-first convention;
+  see the "models location" note below for why this shared-base-class
+  module, unlike a document type's own schema, is intentionally
+  top-level rather than domain-local. See
+  `.specmgr/feat/feat-29-dec-source-roles/README.md` for the full design.
 - **`sop/`** (Standard Operating Procedure) — same tools/resources/prompts
   shape as `dec/` but for structured, step-by-step operational documents
   with a RASCI-style responsibility assignment and a closed
@@ -699,9 +739,9 @@ documentation in `docs/`:
   feature folder. See feat-93 for the consolidation.
 - **Frontmatter**: every feature `README.md` starts with a minimal YAML
   frontmatter block — `id` (the `feat-NNN-slug` folder name itself, not a
-   generated UUID), `version` (semver, starts at `1.0.0`), `status`
-   (`planning` | `progress` | `review` | `done`), and `created`/`updated`
-   (`YYYY-MM-DD`, `updated` bumped on every substantive edit). There is no
+  generated UUID), `version` (semver, starts at `1.0.0`), `status`
+  (`planning` | `progress` | `review` | `done`), and `created`/`updated`
+  (`YYYY-MM-DD`, `updated` bumped on every substantive edit). There is no
   separate `GitHub Issue` field/body-line: the issue number is the `NNN`
   infix already embedded in `id`/the folder name (`feat-NNN-slug`) — `0`
   means no issue yet — so it is never duplicated elsewhere in the file. See

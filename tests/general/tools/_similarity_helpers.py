@@ -247,7 +247,11 @@ _GOL_TEMPLATE = textwrap.dedent(
 )
 
 #: A minimal, valid ``dec`` body: vocabulary words live ONLY in the
-#: ``## Context and Problem Statement`` section.
+#: ``## Context and Problem Statement`` section. The now-mandatory
+#: ``## Roles and Responsibilities`` (``### Accountable`` single paragraph +
+#: ``### Responsible`` bullet list, feat-29-dec-source-roles, GitHub issue
+#: #29) and ``## Source`` sections are vocabulary-neutral, so a document's
+#: vector is still determined solely by its ``{context}``.
 _DEC_TEMPLATE = textwrap.dedent(
     """\
     # {title}
@@ -259,6 +263,20 @@ _DEC_TEMPLATE = textwrap.dedent(
     ## Decision Outcome
 
     We chose the structured arrangement.
+
+    ## Roles and Responsibilities
+
+    ### Accountable
+
+    The platform architecture lead.
+
+    ### Responsible
+
+    - The order service team.
+
+    ## Source
+
+    The customer dashboard latency incident review meeting.
     """
 )
 
