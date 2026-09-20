@@ -1,10 +1,10 @@
 ---
 classification: null
 created: '2026-09-17 07:38:35.189+02:00'
-id: feat-133-tags-dec-rsk
+id: feat-102-133-rsk-tags-source
 status: planning
 type: feat
-updated: '2026-09-20 10:07:44.000+02:00'
+updated: '2026-09-21 00:06:15.836+02:00'
 version: 1.0.0
 ---
 
