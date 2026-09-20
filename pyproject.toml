@@ -191,3 +191,15 @@ filterwarnings = [
     # noisy across 24 test files that import it.
     "ignore::pytest.PytestCollectionWarning",
 ]
+markers = [
+    # feat-134: the single real-backend similarity test (loads the actual
+    # fastembed/bge-small model, downloading it on first use). Excluded from
+    # every default pytest invocation (CI matrix step and the pre-commit hook)
+    # via `addopts` below; developers opt in locally with `-m embedding_model`.
+    "embedding_model: real fastembed/bge-small backend test (downloads the model on first use; excluded from CI and default runs)",
+]
+# feat-134: keep the model-loading similarity test out of every default run
+# (CI + pre-commit + local) without editing ci.yml/.pre-commit-config.yaml.
+# An explicit `-m embedding_model` on the command line takes precedence over
+# this addopts expression, so `pytest -m embedding_model` still selects it.
+addopts = '-m "not embedding_model"'

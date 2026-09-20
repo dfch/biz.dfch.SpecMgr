@@ -506,10 +506,26 @@ type or cross-cutting:
        (feat-81-83-validation, ADR 078bf395-0a5f-4afd-84f6-b7a2191a00e6);
        unlike every other generic tool here, it never raises for a
        content-validation failure, always returning
-       `{valid: bool, errors: list[{message: str}]}`, only raising
-       `ValueError` for a `full`/content-shape mismatch or an unsupported
-       `type`. On a successful write, `update`, `set_status` (its
-      non-`adr` adapters), `set_classification`, and every per-domain
+        `{valid: bool, errors: list[{message: str}]}`, only raising
+        `ValueError` for a `full`/content-shape mismatch or an unsupported
+        `type`; `find_related`, the generic cross-domain semantic-similarity
+        search for the documents most related to an existing document, given
+        its `type`/`id`, across every whole-body domain (`adr` excluded
+        structurally), ranked by cosine similarity of local sentence
+        embeddings (the `similarity` extra, `fastembed`/`bge-small`),
+        excluding the source document itself; `find_similar_text`, the same
+        ranking for a free-form `query` text (the pre-creation
+        dedup/discovery companion of `find_related`). Both return up to
+        `top_k` (default 10, validated 1..100) ranked `{type, id, title,
+        status, path, score}` hit rows (an unparseable candidate appears with
+        `id = null` and the `<failed to parse>` marker title/status), and
+        both return the structured, non-raising `{available: false, reason,
+        message}` result whenever the embedding feature is unavailable
+        (`SPECMGR_SIMILARITY_DISABLED` present, or the backend/model fails to
+        load) — the tools always register; availability is decided at call
+        time (feat-134-related-artifact-similarity, ADR
+        750842b2-aca4-4649-ba0c-855ec8e1f505). On a successful write, `update`, `set_status` (its
+       non-`adr` adapters), `set_classification`, and every per-domain
      `create_<d>` tool now return the domain's frontmatter object only (no
      body) — small and bounded regardless of document size, unlike an
      append-only document's ever-growing body — with the `adr` dispatch
@@ -683,9 +699,9 @@ documentation in `docs/`:
   feature folder. See feat-93 for the consolidation.
 - **Frontmatter**: every feature `README.md` starts with a minimal YAML
   frontmatter block — `id` (the `feat-NNN-slug` folder name itself, not a
-  generated UUID), `version` (semver, starts at `1.0.0`), `status`
-  (`planning` | `in-progress` | `review` | `done`), and `created`/`updated`
-  (`YYYY-MM-DD`, `updated` bumped on every substantive edit). There is no
+   generated UUID), `version` (semver, starts at `1.0.0`), `status`
+   (`planning` | `progress` | `review` | `done`), and `created`/`updated`
+   (`YYYY-MM-DD`, `updated` bumped on every substantive edit). There is no
   separate `GitHub Issue` field/body-line: the issue number is the `NNN`
   infix already embedded in `id`/the folder name (`feat-NNN-slug`) — `0`
   means no issue yet — so it is never duplicated elsewhere in the file. See

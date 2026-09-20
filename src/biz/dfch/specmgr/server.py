@@ -286,17 +286,34 @@ resolves by ``id``, takes the domain lock, and returns the deleted path; a
 ``ValueError`` for injection/wrong-format ids before any file access, the
 domain's ``XNotFoundError`` for missing documents, and a ``DeleteError`` for
 I/O failures;
-``validate`` (feat-81-83-validation, ADR 078bf395-0a5f-4afd-84f6-b7a2191a00e6) --
-the generic, disk-free/id-free dry-run content validator for the
-whole-body domains (``type`` is one of
-``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``;
-``adr`` is not supported -- use ``validate_adr`` instead), replacing the
-former per-domain ``validate_<d>`` tools; unlike every other generic
-tool above, it never raises for a content-validation failure -- it always
-returns ``{valid: bool, errors: list[{message: str}]}`` (``errors`` empty
-when ``valid`` is ``True``), only raising ``ValueError`` for a ``full``/
-content-shape mismatch or an unsupported ``type``.
-Path safety (feat-38-39-41-43-44 Phase 4, REQ-009, extending feat-36-delete's
+ ``validate`` (feat-81-83-validation, ADR 078bf395-0a5f-4afd-84f6-b7a2191a00e6) --
+ the generic, disk-free/id-free dry-run content validator for the
+ whole-body domains (``type`` is one of
+ ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``;
+ ``adr`` is not supported -- use ``validate_adr`` instead), replacing the
+ former per-domain ``validate_<d>`` tools; unlike every other generic
+ tool above, it never raises for a content-validation failure -- it always
+ returns ``{valid: bool, errors: list[{message: str}]}`` (``errors`` empty
+ when ``valid`` is ``True``), only raising ``ValueError`` for a ``full``/
+ content-shape mismatch or an unsupported ``type``;
+ ``find_related`` -- find the documents most semantically related to an
+ existing document, given its ``type``/``id``, across every whole-body domain
+ (``type`` is one of ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/
+ ``dec``/``sop``/``feat``/``vcr``/``sysrs``; ``adr`` is excluded structurally),
+ ranked by cosine similarity of local sentence embeddings (the ``similarity``
+ extra, ``fastembed``/``bge-small``), excluding the source document itself;
+ ``find_similar_text`` -- the same ranking for a free-form ``query`` text (the
+ pre-creation dedup/discovery companion of ``find_related``). Both return up
+ to ``top_k`` (default 10, validated 1..100) ranked ``{type, id, title,
+ status, path, score}`` hit rows (an unparseable candidate appears with
+ ``id = null`` and the ``<failed to parse>`` marker title/status), and both
+ return the structured, non-raising ``{available: false, reason, message}``
+ result whenever the embedding feature is unavailable (the
+ ``SPECMGR_SIMILARITY_DISABLED`` flag present, or the backend/model fails to
+ load) -- the tools always register; availability is decided at call time
+ (feat-134-related-artifact-similarity, ADR
+ 750842b2-aca4-4649-ba0c-855ec8e1f505).
+ Path safety (feat-38-39-41-43-44 Phase 4, REQ-009, extending feat-36-delete's
 ``delete``-only guards, ADR 1af6787b-eaab-4e8f-888f-531c1e76c19d): every one of the
 ``get_<d>`` tools (including ``get_adr``), the generic ``update``, and the generic
 ``set_status`` now validate ``id`` via ``general.tools._path_safety.validate_id`` (no
