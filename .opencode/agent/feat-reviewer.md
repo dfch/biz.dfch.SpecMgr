@@ -15,14 +15,19 @@ permission:
   question: allow
   todowrite: allow
   external_directory:
-    "~/.local/share/opencode/**": allow
     "*": ask
+    "~/.local/share/opencode/**": allow
   edit: deny
   write: deny
   task: deny
   bash:
-    "git *": allow
     "*": ask
+    "git branch*": allow
+    "git status*": allow
+    "git rev-parse*": allow
+    "git merge-base*": allow
+    "git log*": allow
+    "git diff*": allow
 ---
 
 # Feature Reviewer
