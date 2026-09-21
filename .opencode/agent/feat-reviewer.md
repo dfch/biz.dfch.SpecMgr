@@ -8,6 +8,15 @@ description: >-
 mode: subagent
 temperature: 0.1
 permission:
+  read: allow
+  glob: allow
+  grep: allow
+  list: allow
+  question: allow
+  todowrite: allow
+  external_directory:
+    "~/.local/share/opencode/**": allow
+    "*": ask
   edit: deny
   write: deny
   task: deny
