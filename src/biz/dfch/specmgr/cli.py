@@ -30,10 +30,35 @@ additionally requires the ``mcp`` extra
 (``pip install biz-dfch-specmgr[mcp]``).
 """
 
+import sys
+
 import typer
 from dotenv import find_dotenv, load_dotenv
 
-from .commands import adr_toc, coverage_badge, docs, mcp, mcp_docs, mdformat, req_parse, schema, unused_code, version
+from .telemetry.config import TelemetryConfigError
+
+try:
+    from .commands import (
+        adr_toc,
+        coverage_badge,
+        docs,
+        mcp,
+        mcp_docs,
+        mdformat,
+        req_parse,
+        schema,
+        unused_code,
+        version,
+    )
+except TelemetryConfigError as ex:
+    # ACC-011 (feat-139-logging-telemetry): this import chain transitively
+    # executes server.py's module scope -- where the telemetry config is
+    # validated unconditionally at startup (Task 1.6) -- before any command
+    # function runs. Surface a static misconfiguration as a single clear
+    # stderr line naming the offending env var(s) plus exit code 1,
+    # mirroring commands/mcp.py's own handling of the same error.
+    typer.echo(str(ex), err=True)
+    sys.exit(1)
 
 # ---------------------------------------------------------------------------
 # .env loading

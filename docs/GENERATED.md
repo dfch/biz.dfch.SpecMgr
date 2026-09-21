@@ -138,6 +138,7 @@ First-line docstrings from each module, organized by domain:
 - `general/resources/ears.py` — Resource: specmgr://ears -- the EARS requirement-phrasing templates (feat-92-resources REQ-006).
 - `general/resources/iso25010.py` — Resource: specmgr://iso25010 (Task 0.8.3; feat-92-resources Phase 1).
 - `general/resources/rasci.py` — Resource: specmgr://rasci (feat-30 Task 3.5, REQ-011).
+- `general/resources/telemetry_status.py` — Resource: specmgr://telemetry/status -- current logging/telemetry state.
 - `general/resources/version.py` — Resource: specmgr://version — MCP server package version number.
 - `general/tools/__init__.py` — MCP tool wrappers for general-purpose utilities (mirrors ``adr/tools/``'s shape).
 - `general/tools/_doc_cache.py` — Generic, doc-type-agnostic content-hash-validated in-memory read cache (feat-107-doc-cache, Phase 2/Phase 6).
@@ -426,6 +427,11 @@ First-line docstrings from each module, organized by domain:
 - `sysrs/tools/list_sysrs.py` — ``@mcp.tool()`` wrapper: list_sysrs (Task 3.2).
 - `sysrs/tools/parse_sysrs.py` — ``@mcp.tool()`` wrapper: parse_sysrs (Task 3.2).
 
+**telemetry/**
+
+- `telemetry/__init__.py` — Shared logging/telemetry infrastructure for the MCP server (feat-139-logging-telemetry).
+- `telemetry/config.py` — Parse and validate the ``SPECMGR_LOG_*``/``SPECMGR_OTEL_*`` environment
+
 **tsk/**
 
 - `tsk/__init__.py` — TaskList (TSK) domain -- lightweight task/todo-list specifications.
@@ -538,4 +544,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 358
+**Test files**: 360

@@ -123,13 +123,22 @@ specmgr://ears --       The EARS (Easy Approach to Requirements Syntax) five
                         requirements, Optional features) and when to use each -- raw
                         markdown domain-knowledge guidance.
 specmgr://config --     For every document domain (adr, req, uc, tsk, qa, prb, gol,
-                        rsk, dec, sop, feat, vcr, sysrs), the resolved absolute base directory and
-                        whether the domain's ``SPECMGR_*_DIR`` environment variable is
-                        explicitly set (feat-51-mcp-cwd REQ-001) -- lets a client
-                        self-diagnose a CWD/env-var misconfiguration without shell access to
-                        the server's host. Never discloses the value of any environment
-                        variable, only whether the relevant directory-path env var is present
-                        (REQ-002).
+                         rsk, dec, sop, feat, vcr, sysrs), the resolved absolute base directory and
+                         whether the domain's ``SPECMGR_*_DIR`` environment variable is
+                         explicitly set (feat-51-mcp-cwd REQ-001) -- lets a client
+                         self-diagnose a CWD/env-var misconfiguration without shell access to
+                         the server's host. Never discloses the value of any environment
+                         variable, only whether the relevant directory-path env var is present
+                         (REQ-002).
+specmgr://telemetry/status -- The current logging/telemetry enablement state of this
+                         server process as a list of two strings: one line for logging
+                         (``logging: disabled`` or ``logging: enabled (level=<LEVEL>,
+                         format=<rich|json>, file=<on|off>)``) and one line for telemetry
+                         (``telemetry: disabled`` or ``telemetry: enabled
+                         (exporter=<console|otlp>)``) (feat-139-logging-telemetry, REQ
+                         41444084-6821-426d-84a2-028a3f4fed0b) -- read-only; reflects the
+                         ``SPECMGR_LOG_*``/``SPECMGR_OTEL_*`` environment the process
+                         started with.
 
 REQ has no ``specmgr://req/{id}`` resource, unlike ADR -- id-based reads go
 through the ``get_req`` tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
@@ -405,12 +414,23 @@ from contextlib import asynccontextmanager
 
 from mcp.server import MCPServer
 
+from .telemetry.config import load_telemetry_config
+
 
 @asynccontextmanager
 async def _lifespan(_server: MCPServer) -> AsyncGenerator[None, None]:
     """Placeholder lifespan: no shared state to initialise yet."""
     yield
 
+
+# feat-139-logging-telemetry (Task 1.6, ACC-011): validate the
+# ``SPECMGR_LOG_*``/``SPECMGR_OTEL_*`` environment unconditionally, before the
+# server is constructed, so a static misconfiguration makes ``specmgr mcp``
+# refuse to start (``telemetry.config.TelemetryConfigError``) instead of
+# running half-broken. Later phases append the logging setup (Task 2.5) and
+# the OTel bootstrap (Task 4.9) at this same module-scope point, in that
+# order (config, logging, OTel, middleware).
+load_telemetry_config()
 
 mcp = MCPServer(
     name="specmgr",
