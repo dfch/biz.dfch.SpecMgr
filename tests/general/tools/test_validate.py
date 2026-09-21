@@ -373,6 +373,10 @@ _RSK_MINIMAL_BODY = textwrap.dedent(
     ### Probability 2
 
     ### Impact 3
+
+    ## Source
+
+    The QA interview on 2026-09-17 that elicited this risk.
     """
 )
 _RSK_MALFORMED_BODY = "# Title\n\nJust a paragraph, no recognized risk sections.\n"

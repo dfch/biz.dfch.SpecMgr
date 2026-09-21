@@ -55,6 +55,10 @@ The responsible person or role.
 
 - An optional tag
 
+## Source
+
+The origin or authority of this risk -- the QA document, discussion, or report it derives from.
+
 ## More Information
 
 Free-form supplementary text.

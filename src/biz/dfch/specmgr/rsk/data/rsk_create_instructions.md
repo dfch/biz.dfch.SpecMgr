@@ -40,13 +40,17 @@ genuinely a new risk.
 - `## Owner` -- optional single-line value: the responsible
   person/role.
 - `## Tags` -- optional bullet list of free-form labels.
+- `## Source` -- mandatory single-line value: the origin or
+  authority of this risk (e.g. the QA document, discussion, or
+  report it derives from).
 - `## More Information` -- optional free-form supplementary text.
 
 ## 2. Gather information before calling any tool
 Elicit (asking the user if not already given): the cause, trigger and
 consequence of the risk, the affected systems, the initial and
 residual 5x5 coordinates, and the chosen TARA strategy with its
-mitigation measures, and optionally owner, tags, and more information.
+mitigation measures, and the source (the origin/authority of the
+risk), and optionally owner, tags, and more information.
 
 ## 3. Use the template/example/schema and the domain knowledge as references
 Fetch `specmgr://rsk/template` or `specmgr://rsk/example` as a
