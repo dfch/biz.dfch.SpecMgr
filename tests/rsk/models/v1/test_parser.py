@@ -90,6 +90,10 @@ _MINIMAL_DOC = textwrap.dedent(
     ### Probability 2
 
     ### Impact 3
+
+    ## Source
+
+    The QA interview on 2026-09-17 that elicited this risk.
     """
 )
 
@@ -126,6 +130,7 @@ class TestParseRsk(unittest.TestCase):
         self.assertEqual(document.body.residual_assessment.level, LEVEL_MEDIUM)
         self.assertIsNone(document.body.owner)
         self.assertIsNone(document.body.tags)
+        self.assertEqual(document.body.source.value.text, "The QA interview on 2026-09-17 that elicited this risk.")
         self.assertIsNone(document.body.more_information)
 
     def test_parses_full_reference_document(self) -> None:
@@ -155,6 +160,10 @@ class TestParseRsk(unittest.TestCase):
         self.assertEqual(document.body.residual_assessment.level, LEVEL_MEDIUM)
         self.assertEqual(document.body.owner.value.text, "Ronald Rink")
         self.assertEqual([item.text for item in document.body.tags.items], ["security", "upload pipeline"])
+        self.assertEqual(
+            document.body.source.value.text,
+            "QA interview 2026-09-17 -- risk elicitation for the document-processing upload pipeline (issue #15's worked example).",
+        )
         self.assertIsNotNone(document.body.more_information)
 
         # Re-round-trip stability: the rendered body equals the formatted body text.
@@ -189,6 +198,48 @@ class TestParseRsk(unittest.TestCase):
 
         with self.assertRaises(AssertionError):
             parse_rsk(text)
+
+    def test_missing_source_section_raises_assertion_error(self) -> None:
+        """A missing mandatory `## Source` section is a structural failure (feat-102-133-rsk-tags-source,
+        GitHub issue #102) -- the raised message names the expected field and a 1-based line reference
+        (feat-27-validation convention); the content is asserted, not just the exception type (ACC-002)."""
+        text = _MINIMAL_DOC.replace("\n## Source\n\nThe QA interview on 2026-09-17 that elicited this risk.\n", "")
+
+        with self.assertRaises(AssertionError) as ctx:
+            parse_rsk(text)
+        message = str(ctx.exception)
+        self.assertIn("Risk > Source", message)
+        self.assertIn("expected Source (heading 'Source')", message)
+        self.assertIn("found no match", message)
+
+    def test_source_before_tags_raises_assertion_error(self) -> None:
+        """`## Source` placed ahead of `## Tags` is a structural failure (ACC-003): the tag list ends up
+        left over with no declared field to consume it, and the message names the leftover section.
+        `_MINIMAL_DOC`'s `## Source` already sits at the body's end, so appending `## Tags` after it
+        puts Source ahead of Tags."""
+        text = _MINIMAL_DOC + "\n## Tags\n\n- security\n"
+
+        with self.assertRaises(AssertionError) as ctx:
+            parse_rsk(text)
+        message = str(ctx.exception)
+        self.assertIn("text left over after processing all fields", message)
+        self.assertIn("## Tags", message)
+
+    def test_source_after_more_information_raises_assertion_error(self) -> None:
+        """`## Source` placed behind `## More Information` is a structural failure (ACC-003): the mandatory
+        `## Source` field finds its heading only behind foreign text, and the message names both the
+        expected field and the section it actually found first."""
+        text = _MINIMAL_DOC.replace(
+            "## Source\n", "## More Information\n\nFree-form supplementary text.\n\n## Source\n", 1
+        )
+
+        with self.assertRaises(AssertionError) as ctx:
+            parse_rsk(text)
+        message = str(ctx.exception)
+        self.assertIn("Risk > Source", message)
+        self.assertIn("expected Source (heading 'Source')", message)
+        self.assertIn("found no match", message)
+        self.assertIn("## More Information", message)
 
     def test_wrong_section_order_raises_assertion_error(self) -> None:
         """Assessment sections in the wrong order (residual before initial) is a structural failure."""

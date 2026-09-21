@@ -58,6 +58,10 @@ Ronald Rink
 
 - upload pipeline
 
+## Source
+
+QA interview 2026-09-17 -- risk elicitation for the document-processing upload pipeline (issue #15's worked example).
+
 ## More Information
 
 Tracked in the incident-response backlog; revisit at the next library audit.

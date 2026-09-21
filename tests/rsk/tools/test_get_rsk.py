@@ -33,51 +33,56 @@ from biz.dfch.specmgr.rsk.tools._paths import RskNotFoundError
 from biz.dfch.specmgr.rsk.tools.create_rsk import create_rsk
 from biz.dfch.specmgr.rsk.tools.get_rsk import get_rsk
 
+from ._helpers import MANDATORY_SOURCE
+
 
 #: A well-formed but non-existent canonical UUID (feat-38-39-41-43-44 Phase 4: the id
 #: must be well-formed to reach the domain's own not-found error past the new
 #: ``validate_id`` guard).
 _MISSING_UUID = "00000000-0000-0000-0000-000000000000"
-_MINIMAL_BODY = textwrap.dedent(
-    """\
-    # Sample Risk
+_MINIMAL_BODY = (
+    textwrap.dedent(
+        """\
+        # Sample Risk
 
-    ## Cause
+        ## Cause
 
-    A root condition.
+        A root condition.
 
-    ## Trigger
+        ## Trigger
 
-    An event that sets the risk in motion.
+        An event that sets the risk in motion.
 
-    ## Consequence
+        ## Consequence
 
-    A bounded consequence.
+        A bounded consequence.
 
-    ## Scope
+        ## Scope
 
-    - Sample subsystem
+        - Sample subsystem
 
-    ## Initial Assessment
+        ## Initial Assessment
 
-    ### Probability 4
+        ### Probability 4
 
-    ### Impact 3
+        ### Impact 3
 
-    ## Strategy
+        ## Strategy
 
-    reduce
+        reduce
 
-    ## Mitigation
+        ## Mitigation
 
-    Sample treatment measures.
+        Sample treatment measures.
 
-    ## Residual Assessment
+        ## Residual Assessment
 
-    ### Probability 2
+        ### Probability 2
 
-    ### Impact 3
-    """
+        ### Impact 3
+        """
+    )
+    + MANDATORY_SOURCE
 )
 
 

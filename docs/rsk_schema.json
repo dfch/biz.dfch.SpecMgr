@@ -130,7 +130,7 @@
       "type": "object"
     },
     "Risk": {
-      "description": "The `rsk` body: a single H1 section with the fields below.\n\nThe H1 heading text is free-form. `comment` is inherited from\n`MarkdownSection1WithComment` (see its own docstring) -- not redeclared\nhere.\n\nParameters\n----------\ncomment:\n    Optional explanatory HTML comment (`<!-- ... -->`) preceding `cause`.\n    Inherited from `MarkdownSection1WithComment`.\ncause:\n    `## Cause`. Mandatory.\ntrigger:\n    `## Trigger`. Mandatory.\nconsequence:\n    `## Consequence`. Mandatory.\nscope:\n    `## Scope`. Mandatory, at least one entry.\ninitial_assessment:\n    `## Initial Assessment` (5x5, before mitigation). Mandatory.\nstrategy:\n    `## Strategy` (TARA 4-value closed set). Mandatory.\nmitigation:\n    `## Mitigation`. Mandatory.\nresidual_assessment:\n    `## Residual Assessment` (5x5, after mitigation). Mandatory.\nowner:\n    `## Owner`. Optional.\ntags:\n    `## Tags`. Optional.\nmore_information:\n    `## More Information`. Optional.",
+      "description": "The `rsk` body: a single H1 section with the fields below.\n\nThe H1 heading text is free-form. `comment` is inherited from\n`MarkdownSection1WithComment` (see its own docstring) -- not redeclared\nhere.\n\nParameters\n----------\ncomment:\n    Optional explanatory HTML comment (`<!-- ... -->`) preceding `cause`.\n    Inherited from `MarkdownSection1WithComment`.\ncause:\n    `## Cause`. Mandatory.\ntrigger:\n    `## Trigger`. Mandatory.\nconsequence:\n    `## Consequence`. Mandatory.\nscope:\n    `## Scope`. Mandatory, at least one entry.\ninitial_assessment:\n    `## Initial Assessment` (5x5, before mitigation). Mandatory.\nstrategy:\n    `## Strategy` (TARA 4-value closed set). Mandatory.\nmitigation:\n    `## Mitigation`. Mandatory.\nresidual_assessment:\n    `## Residual Assessment` (5x5, after mitigation). Mandatory.\nowner:\n    `## Owner`. Optional.\ntags:\n    `## Tags`. Optional.\nsource:\n    `## Source`. Mandatory.\nmore_information:\n    `## More Information`. Optional.",
       "properties": {
         "cause": {
           "$ref": "#/$defs/Cause",
@@ -192,6 +192,10 @@
           "$ref": "#/$defs/Scope",
           "description": "`## Scope` section (>=1 affected system/component). Mandatory."
         },
+        "source": {
+          "$ref": "#/$defs/Source",
+          "description": "`## Source` section. Mandatory."
+        },
         "strategy": {
           "$ref": "#/$defs/Strategy",
           "description": "`## Strategy` section (TARA 4-value closed set). Mandatory."
@@ -221,7 +225,8 @@
         "initial_assessment",
         "strategy",
         "mitigation",
-        "residual_assessment"
+        "residual_assessment",
+        "source"
       ],
       "title": "Risk",
       "type": "object"
@@ -316,6 +321,20 @@
         "items"
       ],
       "title": "Scope",
+      "type": "object"
+    },
+    "Source": {
+      "description": "`## Source` -- single-line value naming the origin/authority of this\nrisk (e.g. the QA document, discussion, or report it derives from).\nMandatory.\n\nSubclasses the shared `models.md.SourceBase` (feat-29-dec-source-roles) --\nthe field declaration itself lives there; this class exists so `rsk`\nstill declares and owns its own concrete `Source` type. Note: the\ngenerated JSON Schema's `value` field description comes from\n`SourceBase` and is intentionally domain-neutral (\"this document\"),\nnot the domain-specific \"this risk\" wording used above -- see\n`SourceBase`'s own comment for the rationale (REQ-016).",
+      "properties": {
+        "value": {
+          "$ref": "#/$defs/MarkdownParagraph",
+          "description": "Single-line value naming the origin/authority of this document."
+        }
+      },
+      "required": [
+        "value"
+      ],
+      "title": "Source",
       "type": "object"
     },
     "Strategy": {

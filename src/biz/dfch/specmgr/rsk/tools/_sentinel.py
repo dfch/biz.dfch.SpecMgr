@@ -130,6 +130,10 @@ none
 
 ### Impact 5
 
+## Source
+
+Internal sentinel (feat-81-83-validation Phase 3) -- never a real risk.
+
 ## More Information
 
 Parsed once at import time via the real parse_rsk pipeline (no validation bypass) to back a failed
