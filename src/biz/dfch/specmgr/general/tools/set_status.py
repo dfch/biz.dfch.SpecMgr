@@ -215,14 +215,11 @@ from ...vcr.tools._io import read_vcr
 from ...vcr.tools._lock import vcr_lock
 from ...vcr.tools._paths import vcr_base_dir
 from ...vcr.tools._write import write_vcr_file
+from ._domains import ADR
 from ._path_safety import assert_within, validate_id
 from ._timestamps import now_timestamp
 
 __all__ = ["set_status"]
-
-#: The only ``type`` whose status can be composed via ``superseded_by``
-#: (the ``"superseded by X"`` pattern is ADR-specific).
-_TYPE_ADR = "adr"
 
 #: The generic tool's return union -- annotation-only (see module docstring).
 _SetStatusFrontmatter = (
@@ -259,7 +256,7 @@ _ALLOWED_STATUSES_BY_TYPE: dict[str, frozenset[str]] = {
     "feat": _FEAT_ALLOWED_STATUSES,
     "vcr": _VCR_ALLOWED_STATUSES,
     "sysrs": _SYSRS_ALLOWED_STATUSES,
-    _TYPE_ADR: _ADR_FIXED_STATUSES,
+    ADR: _ADR_FIXED_STATUSES,
 }
 
 
@@ -282,7 +279,7 @@ def _check_status_allowed(type_: str, status: str, superseded_by: str | None) ->
     :class:`InvalidStatusResult` (never raises) on a miss, or ``None`` when ``status`` is valid
     (or ignored, per the ``adr``+``superseded_by`` case above).
     """
-    if type_ == _TYPE_ADR:
+    if type_ == ADR:
         if superseded_by is not None:
             return None
         if status in _ADR_FIXED_STATUSES or _ADR_SUPERSEDED_PATTERN.match(status):
@@ -702,7 +699,7 @@ _ADAPTERS: dict[str, Callable[[str, str, str | None], _SetStatusFrontmatter]] = 
     "sop": _set_status_sop,
     "vcr": _set_status_vcr,
     "sysrs": _set_status_sysrs,
-    _TYPE_ADR: _set_status_adr,
+    ADR: _set_status_adr,
 }
 
 
@@ -847,9 +844,9 @@ def set_status(
     """
     # REQ-009: validate before any filesystem access (injection prevention).
     validate_id(type, id)
-    if superseded_by is not None and type != _TYPE_ADR:
+    if superseded_by is not None and type != ADR:
         raise ValueError(
-            f'superseded_by is only accepted for type={_TYPE_ADR!r} (the "superseded by X" '
+            f'superseded_by is only accepted for type={ADR!r} (the "superseded by X" '
             f"pattern is ADR-specific), got type={type!r} with superseded_by={superseded_by!r}"
         )
 

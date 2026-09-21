@@ -4,7 +4,7 @@ created: '2026-09-21 17:06:37.403Z'
 id: feat-125-domain-lists
 status: progress
 type: feat
-updated: '2026-09-21 19:59:42.000Z'
+updated: '2026-09-21 21:18:05.000Z'
 version: 1.0.0
 ---
 
@@ -140,10 +140,10 @@ feat-122) -- it touches real code: constants, `Literal[...]` type hints, dead-co
 
 #### Phase 2: The shared source
 
-- [ ] Task 2.1: Create `general/tools/_domains.py` (REQ-001): copyright header, NumPy docstring, `__all__`, `WHOLE_BODY_DOMAINS` + the three derived tuples + `ADR`/`FEAT` singletons; `git add` so `pylint` sees it
-- [ ] Task 2.2: Rewire `_path_safety.py` (REQ-004): `_UUID_TYPES = frozenset(UUID_DOMAINS)`, `_TYPE_FEAT` -> shared `FEAT`, docstring `:data:` references updated, unknown-type error message derived (REQ-003)
-- [ ] Task 2.3: Rewire `set_status.py`'s `_TYPE_ADR` -> shared `ADR` at all 6 sites (REQ-004)
-- [ ] Task 2.4: Phase gate: server-import smoke test (`python -c "import biz.dfch.specmgr.server"`), full suite
+- [x] Task 2.1: Create `general/tools/_domains.py` (REQ-001): copyright header, NumPy docstring, `__all__`, `WHOLE_BODY_DOMAINS` + the three derived tuples + `ADR`/`FEAT` singletons; `git add` so `pylint` sees it
+- [x] Task 2.2: Rewire `_path_safety.py` (REQ-004): `_UUID_TYPES = frozenset(UUID_DOMAINS)`, `_TYPE_FEAT` -> shared `FEAT`, docstring `:data:` references updated, unknown-type error message derived (REQ-003)
+- [x] Task 2.3: Rewire `set_status.py`'s `_TYPE_ADR` -> shared `ADR` at all 6 sites (REQ-004)
+- [x] Task 2.4: Phase gate: server-import smoke test (`python -c "import biz.dfch.specmgr.server"`), full suite
 
 #### Phase 3: src rewiring
 
@@ -175,11 +175,15 @@ feat-122) -- it touches real code: constants, `Literal[...]` type hints, dead-co
 
 ### Current Status
 
-**As of 2026-09-21**: Implementation started -- Phase 1 (quick wins: the `sysrs` test gap, the two dead-constant removals, the `feat` docstring rewording) is complete and gate-green. The issue's 23-site inventory was verified against the code during planning: all sites confirmed (line numbers in the issue are approximate -- e.g. the registration-test inline lists sit at `test_delete.py:791`/`test_update.py:1351` today), plus two extra singletons found (`set_status.py`'s `_TYPE_ADR`, `_path_safety.py`'s `_TYPE_FEAT`), plus one site audited out of scope (`commands/schema.py`'s `_GENERATORS` registry). Both planning-time decisions were resolved with the issue author: the 13-domain set is adr-first (accepting `set_status`'s harmless enum reorder), and the six decorator description strings are derived from the shared source. A 2026-09-21 pre-implementation audit (full tree + issue #125 text) verified the plan against the current code and folded in four deltas -- see Updates/Decisions Made.
+**As of 2026-09-21**: Implementation in progress -- Phases 1-2 are complete and gate-green. Phase 1 (quick wins: the `sysrs` test gap, the two dead-constant removals, the `feat` docstring rewording) and Phase 2 (the shared `general/tools/_domains.py` source, with `_path_safety.py`'s `_UUID_TYPES`/`_TYPE_FEAT` and `set_status.py`'s `_TYPE_ADR` rewired onto it and `validate_id`'s unknown-type error message derived from it) are done. The issue's 23-site inventory was verified against the code during planning: all sites confirmed (line numbers in the issue are approximate -- e.g. the registration-test inline lists sit at `test_delete.py:791`/`test_update.py:1351` today), plus two extra singletons found (`set_status.py`'s `_TYPE_ADR`, `_path_safety.py`'s `_TYPE_FEAT`), plus one site audited out of scope (`commands/schema.py`'s `_GENERATORS` registry). Both planning-time decisions were resolved with the issue author: the 13-domain set is adr-first (accepting `set_status`'s harmless enum reorder), and the six decorator description strings are derived from the shared source. A 2026-09-21 pre-implementation audit (full tree + issue #125 text) verified the plan against the current code and folded in four deltas -- see Updates/Decisions Made.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-21 21:18:05.000Z - Phase 2 complete
+
+Phase 2 (the shared source) is implemented and gate-green. `general/tools/_domains.py` now carries the canonical domain names: `WHOLE_BODY_DOMAINS` (the 12 whole-body domains in the canonical order, the only hand-listed tuple) plus the derived `WHOLE_BODY_NO_FEAT_DOMAINS` (without `feat`), `UUID_DOMAINS` (those plus `adr`), `ALL_DOMAINS` (`adr` prefixed to the whole-body domains), and the `ADR`/`FEAT` singletons (Task 2.1, REQ-001). `_path_safety.py`'s `_UUID_TYPES` is now `frozenset(UUID_DOMAINS)` (name and O(1) membership kept), its local `_TYPE_FEAT` singleton -- 2 occurrences (definition + 1 use site) -- is deleted in favor of the shared `FEAT`, and `validate_id`'s unknown-type error message now lists the UUID domains via `', '.join(UUID_DOMAINS)`: the same 12 members as before (`req, uc, tsk, qa, prb, gol, rsk, dec, sop, vcr, sysrs, adr`), only the derivation and separator changed (Tasks 2.2, REQ-003/004). `set_status.py`'s local `_TYPE_ADR` singleton -- 6 occurrences (definition + 5 use sites: the `_ALLOWED_STATUSES_BY_TYPE` key, the `_check_status_allowed` comparison, the `_ADAPTERS` key, and both `superseded_by`-guard sites) -- is deleted in favor of the shared `ADR`; the `Literal[...]` signature, `_ADAPTERS` key order, and tool description are untouched (Phase 3, Task 3.2) (Task 2.3, REQ-004). Gate (Task 2.4): `uv run --frozen ruff format --check` (1694 files already formatted), `uv run --frozen ruff check` (All checks passed), `uv run --frozen vulture src/ whitelist.py --min-confidence 60` (clean), the `--all-extras` server-import smoke test (exit 0, no output), and `uv run --frozen pytest -n auto --cov=src --cov-report=` (3365 passed) -- all green. `specmgr docs` produced only the new `_domains` API page plus its one index entry in `docs/GENERATED.md`/`docs/api/README.md` (the `_path_safety`/`set_status` pages are byte-identical -- their module and public docstrings were untouched), and `specmgr mcp-docs` left `docs/MCP.md` unchanged.
 
 #### 2026-09-21 19:59:42.000Z - Phase 1 complete
 
