@@ -415,6 +415,7 @@ from contextlib import asynccontextmanager
 from mcp.server import MCPServer
 
 from .telemetry.config import load_telemetry_config
+from .telemetry.logging import setup_logging
 
 
 @asynccontextmanager
@@ -427,10 +428,22 @@ async def _lifespan(_server: MCPServer) -> AsyncGenerator[None, None]:
 # ``SPECMGR_LOG_*``/``SPECMGR_OTEL_*`` environment unconditionally, before the
 # server is constructed, so a static misconfiguration makes ``specmgr mcp``
 # refuse to start (``telemetry.config.TelemetryConfigError``) instead of
-# running half-broken. Later phases append the logging setup (Task 2.5) and
-# the OTel bootstrap (Task 4.9) at this same module-scope point, in that
-# order (config, logging, OTel, middleware).
-load_telemetry_config()
+# running half-broken. The OTel bootstrap (Task 4.9) appends at this same
+# module-scope point too, in that order (config, logging, OTel, middleware).
+telemetry_config = load_telemetry_config()
+
+# feat-139-logging-telemetry (Task 2.5, ACC-001/ACC-009): apply the
+# validated config's structured logging to the root logger at this same
+# module-scope point, still before the server is constructed, so
+# ``SPECMGR_LOG_ENABLED``/``SPECMGR_LOG_FORMAT`` take effect the moment
+# ``specmgr mcp`` runs. The setup is a no-op when logging is disabled (the
+# default) -- so the MCP SDK's own ``configure_logging()`` call inside
+# ``MCPServer.__init__`` below (a ``logging.basicConfig``, hence a no-op
+# once the root has handlers) runs afterwards and cannot override the
+# enabled configuration; when logging is enabled the setup explicitly
+# replaces the root handler set, so it is effective in either handler
+# state (idempotent, never a silent no-op).
+setup_logging(telemetry_config)
 
 mcp = MCPServer(
     name="specmgr",

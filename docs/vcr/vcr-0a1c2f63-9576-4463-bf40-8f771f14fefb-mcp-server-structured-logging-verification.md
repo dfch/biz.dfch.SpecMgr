@@ -4,7 +4,7 @@ created: '2026-09-19 13:18:34.380+02:00'
 id: 0a1c2f63-9576-4463-bf40-8f771f14fefb
 status: draft
 type: vcr
-updated: '2026-09-21 06:19:22.916+02:00'
+updated: '2026-09-21 16:46:46.639+02:00'
 version: 1.0.0
 ---
 
@@ -31,7 +31,7 @@ partial
 
 With no `SPECMGR_LOG_*` environment variables set, running `specmgr mcp`
 emits zero log records and writes nothing to stdout beyond the JSON-RPC
-channel.
+channel. Verified by `tests/telemetry/test_logging.py::TestSetupDisabled::test_disabled_config_is_a_no_op_on_the_root_logger` (the setup is a no-op when disabled, so the default configuration adds nothing to the existing root handler set), `tests/telemetry/test_logging.py::TestServerModuleScopeWiring::test_fresh_server_import_with_the_default_config_keeps_the_sdk_default_handlers` (a fresh `specmgr mcp` import under the default environment leaves the SDK's own `configure_logging()` handler set in place), and the stdout-safety pair `tests/telemetry/test_logging.py::TestStdoutSafety::test_rich_format_never_writes_stdout` / `tests/telemetry/test_logging.py::TestStdoutSafety::test_json_format_never_writes_stdout` (neither format ever writes to stdout).
 
 #### Test Steps
 
@@ -72,18 +72,35 @@ With `SPECMGR_LOG_ENABLED=true` and the file-sink sub-switch enabled, a
 log file at the configured path receives structured JSON records; with
 the file sink left at its default (disabled), no such file is written;
 the file sink always emits JSON, even when the console format is set to
-`rich`.
+`rich`. Verified by `tests/telemetry/test_logging.py::TestFileSink::test_file_sink_receives_json_records_when_both_switches_are_on` (JSON records land at the configured path when both switches are enabled), `tests/telemetry/test_logging.py::TestFileSink::test_file_sink_is_json_even_when_the_console_format_is_rich` (always JSON, even when the console format is `rich`), `tests/telemetry/test_logging.py::TestFileSink::test_file_sink_writes_one_json_object_per_line` (line-delimited JSON records), `tests/telemetry/test_logging.py::TestFileSink::test_file_sink_inactive_when_the_file_switch_is_off` (no file written when the sub-switch is at its default), and `tests/telemetry/test_logging.py::TestFileSink::test_file_sink_inactive_when_logging_is_disabled` (no file written while `SPECMGR_LOG_ENABLED` is off, regardless of the sub-switch).
 
 ## More Information
 
-Coverage is `partial`: the Test Steps above describe intended,
-specified behavior only, since no implementation exists yet. Concrete
-test references (pytest test IDs) will be added, and `## Coverage` moved
-to `full`, as each relevant phase of `feat-139-logging-telemetry` lands.
+Coverage is `partial`: AC-001 and AC-005 now carry their concrete test
+references above, from feat-139-logging-telemetry Phase 2 (Tasks
+2.1/2.2/2.5: `telemetry/logging.py`'s `JsonFormatter`/
+`SpecmgrRichHandler`/`setup_logging`, wired into `server.py`'s module
+scope). AC-002/AC-004 (every invocation logged; correlation ID on error
+only) remain pending Phase 3's middleware, and AC-003 (redaction)
+remains pending Phase 6; `## Coverage` moves to `full` when those land.
 
 ## Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+### 2026-09-21 16:35:22.494+02:00 - Phase 2 landed: AC-001/AC-005 carry concrete test references; coverage stays partial
+
+feat-139-logging-telemetry Phase 2 (Tasks 2.1-2.5) implemented
+`telemetry/logging.py` -- the pinned record shape in `JsonFormatter`
+(JSON) and `SpecmgrRichHandler` (rich, built on the SDK's own rich
+handler), plus the explicit, idempotent root-logger setup
+`setup_logging` gated by `SPECMGR_LOG_ENABLED`, with the opt-in
+always-JSON file sink -- and wired it unconditionally into `server.py`'s
+module scope, before `MCPServer` is constructed, so the SDK's own
+`configure_logging()` (a `logging.basicConfig`) cannot override the
+enabled configuration. AC-001 and AC-005 now carry the concrete test
+references above; AC-002/AC-004 (Phase 3) and AC-003 (Phase 6) remain
+pending, so `## Coverage` stays `partial`.
 
 ### 2026-09-21 05:45:00.000+02:00 - Aligned AC-003 rewording clause to the post-exploration re-evaluation
 

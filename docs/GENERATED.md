@@ -431,6 +431,7 @@ First-line docstrings from each module, organized by domain:
 
 - `telemetry/__init__.py` — Shared logging/telemetry infrastructure for the MCP server (feat-139-logging-telemetry).
 - `telemetry/config.py` — Parse and validate the ``SPECMGR_LOG_*``/``SPECMGR_OTEL_*`` environment
+- `telemetry/logging.py` — Structured logging for the MCP server (feat-139-logging-telemetry, Phase 2, Task 2.1).
 
 **tsk/**
 
@@ -544,4 +545,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 360
+**Test files**: 361

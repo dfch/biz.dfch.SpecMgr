@@ -280,3 +280,9 @@ invalidate
 reconcile
 move
 reset
+
+# telemetry (feat-139-logging-telemetry Phase 2): `JsonFormatter.format` is
+# invoked by the stdlib logging framework's own handler-emit path (the
+# ``Handler.emit`` -> ``formatter.format(record)`` dynamic dispatch), never
+# by a direct call in ``src/``; the name scopes to that single method today.
+format
