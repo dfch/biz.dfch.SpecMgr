@@ -222,8 +222,21 @@ type or cross-cutting:
   AFTER mitigation (`## Residual Assessment`) with the value in the H3
   heading itself (`### Probability {1..5}` / `### Impact {1..5}`, regex
   `@alias`-constrained, derived zone `level` always computed from the
-  product), and a TARA response strategy `## Strategy` (closed 4-value set
-  `transfer`/`accept`/`reduce`/`avoid`))
+  product), a TARA response strategy `## Strategy` (closed 4-value set
+  `transfer`/`accept`/`reduce`/`avoid`), plus, after `## Residual
+  Assessment`, the tail sections in body order: an optional `## Owner`
+  (single-line value naming the responsible person/role), an optional
+  `## Tags` (bullet list of free-form labels; `Tags.items` is now
+  `list[MarkdownListItemWithNotes]`, so a loose-list continuation
+  paragraph under a tag is captured in the item's `notes` instead of
+  being silently dropped — structurally identical to `req`/`dec`/`gol`'s
+  own `Tags`, `feat-102-133-rsk-tags-source`, GitHub issue #133), a
+  mandatory `## Source` (single-line value naming the origin/authority of
+  the risk, e.g. the QA document, discussion, or report it derives from —
+  a thin `SourceBase` subclass in `rsk/models/v1/body.py`, each domain
+  declaring and owning its own concrete leaf class per the domain-first
+  convention, added by `feat-102-133-rsk-tags-source`, GitHub issue #102),
+  and an optional `## More Information` (free-form))
   (`parse_rsk`, `get_rsk`, `list_rsk`, `get_rsk_example`,
   `get_rsk_template`, `create_rsk`); whole-body and line-range updates
   go through the generic `update` tool in `general/tools/`

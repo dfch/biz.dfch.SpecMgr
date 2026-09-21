@@ -301,6 +301,10 @@ _RSK_MINIMAL_BODY = textwrap.dedent(
     ### Probability 2
 
     ### Impact 3
+
+    ## Source
+
+    The QA interview on 2026-09-17 that elicited this risk.
     """
 )
 

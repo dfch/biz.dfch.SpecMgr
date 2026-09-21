@@ -28,6 +28,21 @@ permission:
     "git merge-base*": allow
     "git log*": allow
     "git diff*": allow
+    "git worktree*": allow
+    "ls *": allow
+    "grep *": allow
+    "head *": allow
+    "echo *": allow
+    "sed *": allow
+    "cat *": allow
+    "tail *": allow
+    "uv *": allow
+    "find *": allow
+    "python3 *": allow
+    "wc *": allow
+    "sort *": allow
+    "uniq *": allow
+    "du *": allow
 ---
 
 # Feature Reviewer
@@ -53,6 +68,8 @@ file, that is a signal to describe the fix in your report instead.
    - If the branch doesn't match `<id>`, or there is no such branch, use the
      `question` tool to ask for an explicit `base..head` ref range rather
      than guessing.
+   - Run every shell command standalone (no `cd ... &&` prefix, no `;`/`&&`
+     chaining) so the permission prefix rule can match it.
 3. **Read every changed file in full**, not just diff hunks -- code, tests,
    prompt/data files, and every artifact this codebase requires to move
    together (see the Consistency checklist below). Understanding a change

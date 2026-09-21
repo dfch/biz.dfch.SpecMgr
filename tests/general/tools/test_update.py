@@ -414,6 +414,10 @@ _RSK_MINIMAL_BODY = textwrap.dedent(
     ### Probability 2
 
     ### Impact 3
+
+    ## Source
+
+    The QA interview on 2026-09-17 that elicited this risk.
     """
 )
 
@@ -456,6 +460,10 @@ _RSK_UPDATED_BODY = textwrap.dedent(
     ### Probability 1
 
     ### Impact 2
+
+    ## Source
+
+    The revised QA interview that elicited this risk.
     """
 )
 
@@ -880,10 +888,10 @@ _CASES: list[_Case] = [
         updated_body=_RSK_UPDATED_BODY,
         middle_marker="A root condition.",
         middle_replacement="A revised root condition.",
-        append_fragment="\n## Owner\n\nThe safety team.\n",
-        eof_marker="## Residual Assessment",
-        eof_fragment="## Residual Assessment\n\n### Probability 1\n\n### Impact 2\n",
-        deletable_suffix="\n## Owner\n\nThe safety team.\n",
+        append_fragment="\n## More Information\n\nSome notes.\n",
+        eof_marker="## Source",
+        eof_fragment="## Source\n\nThe revised QA interview that elicited this risk.\n",
+        deletable_suffix="\n## More Information\n\nSome notes.\n",
         field_error_marker="reduce",
         field_error_fragment="not-a-strategy",
         field_error_is_append=False,

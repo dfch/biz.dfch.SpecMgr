@@ -45,46 +45,51 @@ from biz.dfch.specmgr.rsk.tools._paths import ensure_rsk_base_dir
 from biz.dfch.specmgr.rsk.tools.create_rsk import create_rsk
 from biz.dfch.specmgr.rsk.tools.list_rsk import list_rsk
 
-_MINIMAL_BODY = textwrap.dedent(
-    """\
-    # Sample Risk
+from ._helpers import MANDATORY_SOURCE
 
-    ## Cause
+_MINIMAL_BODY = (
+    textwrap.dedent(
+        """\
+        # Sample Risk
 
-    A root condition.
+        ## Cause
 
-    ## Trigger
+        A root condition.
 
-    An event that sets the risk in motion.
+        ## Trigger
 
-    ## Consequence
+        An event that sets the risk in motion.
 
-    A bounded consequence.
+        ## Consequence
 
-    ## Scope
+        A bounded consequence.
 
-    - Sample subsystem
+        ## Scope
 
-    ## Initial Assessment
+        - Sample subsystem
 
-    ### Probability 4
+        ## Initial Assessment
 
-    ### Impact 3
+        ### Probability 4
 
-    ## Strategy
+        ### Impact 3
 
-    reduce
+        ## Strategy
 
-    ## Mitigation
+        reduce
 
-    Sample treatment measures.
+        ## Mitigation
 
-    ## Residual Assessment
+        Sample treatment measures.
 
-    ### Probability 2
+        ## Residual Assessment
 
-    ### Impact 3
-    """
+        ### Probability 2
+
+        ### Impact 3
+        """
+    )
+    + MANDATORY_SOURCE
 )
 
 _OTHER_BODY = _MINIMAL_BODY.replace("Sample Risk", "Another Risk")
