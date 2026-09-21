@@ -4,7 +4,7 @@ created: '2026-09-19 13:18:34.380+02:00'
 id: 0a1c2f63-9576-4463-bf40-8f771f14fefb
 status: draft
 type: vcr
-updated: '2026-09-19 16:09:26.135+02:00'
+updated: '2026-09-21 06:19:22.916+02:00'
 version: 1.0.0
 ---
 
@@ -55,9 +55,11 @@ A log record includes the invoked item's `id` and `type` (and, for
 never itself attaches the full content of an item, an absolute
 filesystem path, or a document/artifact title as a dedicated field.
 Free-text log content is additionally passed through a best-effort
-absolute-path scrub; the specific exception messages already known to
-embed a document/artifact title are reworded at their source instead,
-since no generic filter can reliably detect free-form title text.
+absolute-path scrub; the title-embedding exception messages already
+known in non-deprecated domains are reworded at their source instead
+(the deprecated ADR domain's title sites are an accepted residual gap;
+path-embedding messages are scrub-covered), since no generic filter can
+reliably detect free-form title text.
 
 ### AC-004 (Test): Correlation ID appears only in error responses
 
@@ -82,6 +84,17 @@ to `full`, as each relevant phase of `feat-139-logging-telemetry` lands.
 ## Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+### 2026-09-21 05:45:00.000+02:00 - Aligned AC-003 rewording clause to the post-exploration re-evaluation
+
+AC-003's rewording clause was aligned to the feat-139-logging-telemetry
+post-exploration re-evaluation's Task 6.7 scope decision: the mandatory
+rewording set is the title-embedding sites in non-deprecated domains
+(today the 13 `UcParseError` sites in `uc/models/v1/parser.py`), the
+deprecated ADR domain's 9 title sites are an accepted residual gap
+(the domain is planned for phase-out), and the path-embedding sites
+are scrub-covered. No implementation exists yet; `## Coverage` stays
+`partial`.
 
 ### 2026-09-19 13:25:00.000+02:00 - Initial draft created (partial coverage)
 

@@ -4,7 +4,7 @@ created: '2026-09-19 13:19:26.971+02:00'
 id: 54fd355f-0978-4dd0-9e1d-da89432e5321
 status: draft
 type: vcr
-updated: '2026-09-19 16:10:07.708+02:00'
+updated: '2026-09-21 06:15:58.258+02:00'
 version: 1.0.0
 ---
 
@@ -83,10 +83,11 @@ this feature's own middleware would create. A global,
 `TracerProvider`-level `SpanProcessor` (required to reach an
 SDK-created span at all) additionally runs a best-effort scrub for
 absolute-filesystem-path-shaped substrings in a span's attributes and
-exception-event message text; the specific exception messages already
-known to embed a document/artifact title are reworded at their source
-instead, since no generic filter can reliably detect free-form title
-text.
+exception-event message text; the title-embedding exception messages
+already known in non-deprecated domains are reworded at their source
+instead (the deprecated ADR domain's title sites are an accepted
+residual gap; path-embedding messages are scrub-covered), since no
+generic filter can reliably detect free-form title text.
 
 ### AC-008 (Test): Metrics are recorded with correct values and attributes
 
@@ -94,8 +95,11 @@ With `SPECMGR_OTEL_ENABLED=true`, invoking a tool, a resource, and a
 prompt each increments the `mcp.tool.call.count` counter tagged with
 the correct `mcp.tool.name`/`mcp.domain`/`mcp.item.type` attributes,
 records a latency observation on the `mcp.tool.duration` histogram,
-and a raised exception increments the `mcp.tool.error.count` counter
-tagged with the exception's type; the `feat-107` document-cache
+and a failure increments the `mcp.tool.error.count` counter tagged
+with the per-channel error-type signal (the exception's type where
+observable at the middleware layer, the SDK's `tool_error` value for
+`tools/call` `isError` results, the JSON-RPC error code for wrapped
+errors); the `feat-107` document-cache
 hit/miss counters and the per-domain lock wait-time histogram both
 reflect real cache/lock activity observed during the same calls.
 
@@ -122,6 +126,17 @@ for AC-007).
 ## Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+### 2026-09-21 05:45:00.000+02:00 - Aligned AC-007/AC-008 wording to the post-exploration re-evaluation
+
+AC-007's rewording clause and AC-008's error-counter tagging were
+aligned to the feat-139-logging-telemetry post-exploration
+re-evaluation: the per-method error-channel model verified against the
+installed mcp 2.0.0 SDK (`tools/call` failures arrive as `isError`
+results, not raised exceptions), and the Task 6.7 scope decision (the
+deprecated ADR domain's title sites excluded from rewording as an
+accepted residual gap; path sites scrub-covered). No implementation
+exists yet; `## Coverage` stays `partial`.
 
 ### 2026-09-19 15:32:00.000+02:00 - Added AC-008 (metrics correctness) during a plan-consistency review
 
