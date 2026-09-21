@@ -45,7 +45,7 @@ _VALID_FEAT_ID = "feat-36-delete"
 
 #: The UUID domains whose id is a server-generated UUID (every domain other
 #: than ``feat``, plus ``adr``, feat-38-39-41-43-44 Phase 4).
-_UUID_DOMAINS = ("req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "vcr", "adr")
+_UUID_DOMAINS = ("req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "vcr", "sysrs", "adr")
 
 #: The feat document type name.
 _FEAT_TYPE = "feat"

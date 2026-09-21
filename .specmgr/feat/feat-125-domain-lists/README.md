@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-21 17:06:37.403Z'
 id: feat-125-domain-lists
-status: planning
+status: progress
 type: feat
-updated: '2026-09-21 18:32:15.287Z'
+updated: '2026-09-21 19:59:42.000Z'
 version: 1.0.0
 ---
 
@@ -132,11 +132,11 @@ feat-122) -- it touches real code: constants, `Literal[...]` type hints, dead-co
 
 #### Phase 1: Quick wins (no shared source needed)
 
-- [ ] Task 1.1: Close the `sysrs` gap in `tests/general/tools/test__path_safety.py`'s `_UUID_DOMAINS` (issue follow-up #1; subsumed by Task 4.1 -- landed first as the minimal standalone fix)
-- [ ] Task 1.2: Remove `general/tools/delete.py`'s dead `_DELETE_TYPES` (REQ-005)
-- [ ] Task 1.3: Remove `general/tools/validate.py`'s dead `_VALIDATE_TYPES` (REQ-005)
-- [ ] Task 1.4: Reword `feat/tools/__init__.py`'s "the eight lifecycle tools below" to relational phrasing and its stale "assigns the next `feat-NNN-slug` id" sentence (REQ-009)
-- [ ] Task 1.5: Phase gate: `ruff format --check` + `ruff check`, `vulture`, targeted tests (`test_delete`, `test_validate`, `test__path_safety`)
+- [x] Task 1.1: Close the `sysrs` gap in `tests/general/tools/test__path_safety.py`'s `_UUID_DOMAINS` (issue follow-up #1; subsumed by Task 4.1 -- landed first as the minimal standalone fix)
+- [x] Task 1.2: Remove `general/tools/delete.py`'s dead `_DELETE_TYPES` (REQ-005)
+- [x] Task 1.3: Remove `general/tools/validate.py`'s dead `_VALIDATE_TYPES` (REQ-005)
+- [x] Task 1.4: Reword `feat/tools/__init__.py`'s "the eight lifecycle tools below" to relational phrasing and its stale "assigns the next `feat-NNN-slug` id" sentence (REQ-009)
+- [x] Task 1.5: Phase gate: `ruff format --check` + `ruff check`, `vulture`, targeted tests (`test_delete`, `test_validate`, `test__path_safety`)
 
 #### Phase 2: The shared source
 
@@ -175,11 +175,15 @@ feat-122) -- it touches real code: constants, `Literal[...]` type hints, dead-co
 
 ### Current Status
 
-**As of 2026-09-21**: Planned. The issue's 23-site inventory was verified against the code during planning: all sites confirmed (line numbers in the issue are approximate -- e.g. the registration-test inline lists sit at `test_delete.py:791`/`test_update.py:1351` today), plus two extra singletons found (`set_status.py`'s `_TYPE_ADR`, `_path_safety.py`'s `_TYPE_FEAT`), plus one site audited out of scope (`commands/schema.py`'s `_GENERATORS` registry). Both planning-time decisions were resolved with the issue author: the 13-domain set is adr-first (accepting `set_status`'s harmless enum reorder), and the six decorator description strings are derived from the shared source. A 2026-09-21 pre-implementation audit (full tree + issue #125 text) verified the plan against the current code and folded in four deltas -- see Updates/Decisions Made.
+**As of 2026-09-21**: Implementation started -- Phase 1 (quick wins: the `sysrs` test gap, the two dead-constant removals, the `feat` docstring rewording) is complete and gate-green. The issue's 23-site inventory was verified against the code during planning: all sites confirmed (line numbers in the issue are approximate -- e.g. the registration-test inline lists sit at `test_delete.py:791`/`test_update.py:1351` today), plus two extra singletons found (`set_status.py`'s `_TYPE_ADR`, `_path_safety.py`'s `_TYPE_FEAT`), plus one site audited out of scope (`commands/schema.py`'s `_GENERATORS` registry). Both planning-time decisions were resolved with the issue author: the 13-domain set is adr-first (accepting `set_status`'s harmless enum reorder), and the six decorator description strings are derived from the shared source. A 2026-09-21 pre-implementation audit (full tree + issue #125 text) verified the plan against the current code and folded in four deltas -- see Updates/Decisions Made.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-21 19:59:42.000Z - Phase 1 complete
+
+Phase 1 (quick wins) is implemented and gate-green. `tests/general/tools/test__path_safety.py`'s local `_UUID_DOMAINS` now includes `sysrs` (between `vcr` and `adr`, matching `src`'s own `_UUID_TYPES` order), so `validate_id`'s two per-domain loop tests actually exercise the `sysrs` domain (Task 1.1; fully subsumed by Task 4.1's shared-source rewire). `general/tools/delete.py`'s dead `_DELETE_TYPES` and `general/tools/validate.py`'s dead `_VALIDATE_TYPES` were removed after a repo-wide grep confirmed zero code references for each (only prose mentions in historical `.specmgr/` feature docs, which stay untouched) (Tasks 1.2/1.3). `feat/tools/__init__.py`'s module docstring was reworded in one pass (Task 1.4): "underpins the eight lifecycle tools below" became the cardinal-free "underpins the lifecycle tools below" (relational phrasing per the feat-122 Docstring Style rule), and the pre-feat-48 sentence "``create_feat`` assigns the next ``feat-NNN-slug`` id" now states the real behavior -- optional caller-chosen ``id`` validated against the ``feat-NNN-slug`` shape before any lock/filesystem access, ``feat-0-<slug-from-title>`` default when omitted (no max+1 auto-generation), and a pre-write existence check raising ``FileExistsError`` if the resulting id/folder already exists -- mirroring ``create_feat.py``'s own docstring facts. Gate (Task 1.5): `uv run --frozen ruff format --check` (1693 files already formatted), `uv run --frozen ruff check` (All checks passed), `uv run --frozen vulture src/ whitelist.py --min-confidence 60` (clean, no findings), and `uv run --frozen pytest -n auto tests/general/tools/test_delete.py tests/general/tools/test_validate.py tests/general/tools/test__path_safety.py` (53 passed) -- all green.
 
 #### 2026-09-21 18:32:15.287Z - Plan audit: four deltas folded in
 

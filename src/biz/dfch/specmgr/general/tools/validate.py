@@ -109,9 +109,6 @@ from ...vcr.models.v1 import Vcr, parse_vcr
 
 __all__ = ["validate"]
 
-#: The whole-body domains the generic validate tool covers (ADR excluded).
-_VALIDATE_TYPES = ("req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "feat", "vcr", "sysrs")
-
 #: Exactly the three content-validation-failure channels REQ-004 requires be caught and turned
 #: into a non-raising {valid: False, errors: [...]} result. A bare ValueError (the full/
 #: content-shape-mismatch case, or an unsupported type) is deliberately NOT in this tuple, so it

@@ -124,9 +124,6 @@ from ._path_safety import assert_within, validate_id
 
 __all__ = ["delete"]
 
-#: The whole-body domains the generic delete tool covers (ADR excluded).
-_DELETE_TYPES = ("req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "feat", "vcr", "sysrs")
-
 
 class DeleteError(OSError):
     """A delete failed at the filesystem layer (I/O error, permission, or race).
