@@ -4,7 +4,7 @@ created: '2026-09-21 17:06:37.403Z'
 id: feat-125-domain-lists
 status: planning
 type: feat
-updated: '2026-09-21 17:06:37.403Z'
+updated: '2026-09-21 18:32:15.287Z'
 version: 1.0.0
 ---
 
@@ -44,19 +44,19 @@ feat-122) -- it touches real code: constants, `Literal[...]` type hints, dead-co
 
 - REQ-002: The public `type: Literal[...]` signatures of the five generic tools (`update`, `set_status`, `set_classification`, `delete`, `validate`) are re-derived from the shared source via PEP 692 unpacking (`Literal[*WHOLE_BODY_DOMAINS]` / `Literal[*ALL_DOMAINS]`), so the MCP-registered `type` enum can no longer drift from the source. All six consumer files already carry `from __future__ import annotations`, and every registered enum stays set-equal to today's -- only `set_status`'s enum value ordering changes (`adr` moves to the front).
 
-- REQ-003: The domain lists inside the six `@mcp.tool(description=...)`/`@mcp.resource(description=...)` strings (`update`, `set_status`, `set_classification`, `delete`, `validate`, `specmgr://config`) are derived via f-string (`", ".join(...)`) from the shared source, so a future domain addition touches no prose copy. Function docstrings stay string literals (the `specmgr docs` generator requires them) and keep their explicit, convention-sanctioned prose domain lists.
+- REQ-003: The domain lists inside the six `@mcp.tool(description=...)`/`@mcp.resource(description=...)` strings (`update`, `set_status`, `set_classification`, `delete`, `validate`, `specmgr://config`) **and the two runtime error messages** (`_path_safety.py`'s `validate_id` unknown-type message and `validate.py`'s unsupported-type message -- neither is pinned by any test) are derived via f-string (`", ".join(...)`) from the shared source, so a future domain addition touches no prose copy. Function docstrings stay string literals (the `specmgr docs` generator requires them) and keep their explicit, convention-sanctioned prose domain lists.
 
 - REQ-004: `general/tools/_path_safety.py`'s `_UUID_TYPES` becomes `frozenset(UUID_DOMAINS)` (preserving O(1) membership and behavior), the local `_TYPE_FEAT = "feat"` singleton is replaced by the shared `FEAT`, and `general/tools/set_status.py`'s local `_TYPE_ADR = "adr"` singleton is replaced by the shared `ADR` at all 6 use sites.
 
 - REQ-005: The dead constants `general/tools/delete.py`'s `_DELETE_TYPES` and `general/tools/validate.py`'s `_VALIDATE_TYPES` (each confirmed zero-reference; `vulture` does not flag them) are removed.
 
-- REQ-006: The five generic tools' `_ADAPTERS` dispatch tables are reordered so every domain-name artifact in the repo shares one canonical ordering (fixing the `feat`-before-`sop` deviation in `update`/`set_status`/`set_classification`), and each `_ADAPTERS` carries a module-level set-equality assert against the shared source (with an actionable message) so a future adapter add/remove that forgets the source -- or vice versa -- fails loudly at import.
+- REQ-006: The five generic tools' `_ADAPTERS` dispatch tables are reordered so every domain-name artifact in the repo shares one canonical ordering (fixing the `feat`-before-`sop` deviation in `update`/`set_status`/`set_classification`), and each `_ADAPTERS` carries a module-level set-equality assert against the shared source (with an actionable message) so a future adapter add/remove that forgets the source -- or vice versa -- fails loudly at import. The same assert covers `set_status.py`'s own 13-key `_ALLOWED_STATUSES_BY_TYPE` dict (issue inventory item #4's second dict, initially missed by this REQ): its keys are already canonical (no reorder), and its `_TYPE_ADR` key is absorbed by the shared `ADR` in the REQ-004 pass.
 
 - REQ-007: `general/resources/config.py`'s `config_info()` builds its 13-entry `domains` dict with a set-equality assert against `ALL_DOMAINS` (insertion order unchanged: `adr` first) and derives its resource description's domain list from `ALL_DOMAINS`.
 
-- REQ-008: Every test-side hand-listed domain set imports the shared source instead: `test__path_safety.py`'s `_UUID_DOMAINS` (11 entries, missing `sysrs` -- closed by construction) and its local `_FEAT_TYPE`, `test_config.py`'s `_ALL_DOMAINS`/`_DOCS_DIR_DOMAINS`, the byte-identical duplicate `_NON_FEAT_DOMAINS` in `test_doc_cache_structural.py` and `test_doc_cache_delete_scan_race.py`, and the inline enum expectations in `test_delete.py`'s and `test_update.py`'s registration tests (derived from `list(WHOLE_BODY_DOMAINS)`).
+- REQ-008: Every test-side hand-listed domain set imports the shared source instead: `test__path_safety.py`'s `_UUID_DOMAINS` (11 entries, missing `sysrs` -- closed by construction) and its local `_FEAT_TYPE`, `test_delete.py`'s own local `_TYPE_FEAT` singleton (5 use sites), `test_config.py`'s `_ALL_DOMAINS`/`_DOCS_DIR_DOMAINS`, the byte-identical duplicate `_NON_FEAT_DOMAINS` in `test_doc_cache_structural.py` and `test_doc_cache_delete_scan_race.py`, and the inline enum expectations in `test_delete.py`'s and `test_update.py`'s registration tests (derived from `list(WHOLE_BODY_DOMAINS)`).
 
-- REQ-009: `feat/tools/__init__.py`'s module docstring "the eight lifecycle tools below" (actually 7) is reworded per the issue's flagged side item, using relational phrasing (no cardinal number, per feat-122's convention).
+- REQ-009: `feat/tools/__init__.py`'s module docstring "the eight lifecycle tools below" (actually 7) is reworded per the issue's flagged side item, using relational phrasing (no cardinal number, per feat-122's convention), and the same docstring's second stale sentence -- "``create_feat`` assigns the next ``feat-NNN-slug`` id" (pre-feat-48 phrasing; `create_feat.py`'s own docstring is accurate) -- is reworded in the same pass.
 
 - REQ-010: Generated artifacts are regenerated and committed with zero residual drift: `docs/MCP.md` (`specmgr mcp-docs` -- enum ordering + derived descriptions), `docs/api/` + `docs/GENERATED.md` (`specmgr docs` -- new `_domains.py` module), `docs/adr/README.md` (`specmgr adr-toc` -- new ADR).
 
@@ -66,12 +66,12 @@ feat-122) -- it touches real code: constants, `Literal[...]` type hints, dead-co
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: A repo-wide sweep (the issue's inventory plus the planning-time extras) confirms every hand-listed domain-name site in `src/`/`tests/` is either rewired to `general/tools/_domains.py` or removed; the only remaining hand-listed domain tuple in `src/` is `WHOLE_BODY_DOMAINS` itself.
+- [ ] ACC-001: A repo-wide sweep (the issue's inventory plus the planning-time extras) confirms every hand-listed domain-name site in `src/`/`tests/` is either rewired to `general/tools/_domains.py`, removed, or explicitly classified as kept by the Design Notes' sweep ruling; the only remaining hand-listed domain tuple in `src/` is `WHOLE_BODY_DOMAINS` itself.
 - [ ] ACC-002: The existing registration tests pass with expected enums derived from `WHOLE_BODY_DOMAINS`; every registered `type` enum is set-equal to today's (only `set_status`'s ordering differs: `adr` first).
 - [ ] ACC-003: `tests/general/tools/test__path_safety.py`'s UUID-domain loop exercises `sysrs` (via the imported `UUID_DOMAINS`), and the suite passes.
 - [ ] ACC-004: `delete.py`/`validate.py` carry no `_DELETE_TYPES`/`_VALIDATE_TYPES`; `uv run --frozen vulture src/ whitelist.py --min-confidence 60` is clean.
 - [ ] ACC-005: Every `_ADAPTERS` dict's keys are in the single canonical order and each has its set-equality assert (verified by temporarily breaking one side during development: import fails with the actionable message).
-- [ ] ACC-006: The six decorator description strings contain no hand-typed domain list; `specmgr mcp-docs` regenerates `docs/MCP.md` with only the intended changes.
+- [ ] ACC-006: The eight derived strings (six decorator descriptions + two error messages) contain no hand-typed domain list; `specmgr mcp-docs` regenerates `docs/MCP.md` with only the intended changes.
 - [ ] ACC-007: No byte-identical duplicate domain list remains across the two doc-cache test files.
 - [ ] ACC-008: `feat/tools/__init__.py`'s docstring carries no stale cardinal tool count.
 - [ ] ACC-009: `specmgr docs`, `specmgr mcp-docs`, `specmgr adr-toc`, and `specmgr schema` all produce zero further `git status` diff after regeneration (the feat-122 REQ-004 equivalent).
@@ -86,7 +86,7 @@ feat-122) -- it touches real code: constants, `Literal[...]` type hints, dead-co
 - Rewiring of `_path_safety.py`, `update.py`, `set_status.py`, `set_classification.py`, `delete.py`, `validate.py`, and `general/resources/config.py`.
 - Dead-code removal (`_DELETE_TYPES`, `_VALIDATE_TYPES`).
 - Test-side rewiring of six files (`test__path_safety.py`, `test_config.py`, `test_doc_cache_structural.py`, `test_doc_cache_delete_scan_race.py`, `test_delete.py`, `test_update.py`).
-- The one-line `feat/tools/__init__.py` docstring fix (issue's flagged side item, folded in).
+- The `feat/tools/__init__.py` docstring fixes (issue's flagged side item -- stale cardinal tool count -- plus the second stale `create_feat` id sentence, folded in).
 - New ADR, `AGENTS.md` future-domain paragraph, `.specmgr/conventions.md` rule, `CHANGELOG.md` entry, and regeneration of all generated docs.
 
 #### Explicitly Out Of Scope
@@ -119,6 +119,7 @@ feat-122) -- it touches real code: constants, `Literal[...]` type hints, dead-co
 - **`config_info()`** keeps its explicit per-domain `DomainConfig` entries (each domain has distinct env-var semantics: `adr`/`feat` dedicated vars, the rest shared `SPECMGR_DOCS_DIR`) -- what is derived is the membership check (assert) and the description text, not the construction.
 - **Test strategy** -- the existing `update`/`delete` registration tests become the drift canaries (their expected enums derive from the shared source); the `assert_uuid` loop gains `sysrs` coverage by construction.
 - **`whitelist.py`** -- the dead tuples carry no vulture whitelist entries today; removal needs none.
+- **Sweep classification (2026-09-21 audit)** -- the fresh repo-wide sweep (REQ-001's baseline-not-ceiling) classified every remaining hand-listed domain-name site as explicitly kept, not rewired: prose docstrings (``general/tools/__init__.py``, ``_listing.py``, ``models/config_info.py``, ``server.py``'s own registration docstring) stay string literals per the feat-122 Docstring Style rule and the ``specmgr docs`` generator's requirement; the per-domain ``_Case``/``_InjectionCase`` dataclass rows in ``test_update.py``/``test_delete.py``/``test_set_status.py``/``test_set_classification.py``/``test_validate.py`` are per-domain fixture data, not sets; ``test_mcp_docs.py``'s 7-value enum is a ``_schema_type_str`` render fixture, not a domain list; and inline single-domain ``"feat"`` comparisons (``test_set_status.py``/``test_set_classification.py``/``test_update.py``) are single-name, not set-level -- ``test_delete.py``'s *named* ``_TYPE_FEAT`` constant is the one that gets rewired (REQ-008), since a named local constant is the drift vector. ``commands/schema.py``'s ``_GENERATORS`` stays audited-out per Scope.
 
 ### Related Decisions
 
@@ -134,23 +135,23 @@ feat-122) -- it touches real code: constants, `Literal[...]` type hints, dead-co
 - [ ] Task 1.1: Close the `sysrs` gap in `tests/general/tools/test__path_safety.py`'s `_UUID_DOMAINS` (issue follow-up #1; subsumed by Task 4.1 -- landed first as the minimal standalone fix)
 - [ ] Task 1.2: Remove `general/tools/delete.py`'s dead `_DELETE_TYPES` (REQ-005)
 - [ ] Task 1.3: Remove `general/tools/validate.py`'s dead `_VALIDATE_TYPES` (REQ-005)
-- [ ] Task 1.4: Reword `feat/tools/__init__.py`'s "the eight lifecycle tools below" to relational phrasing (REQ-009)
+- [ ] Task 1.4: Reword `feat/tools/__init__.py`'s "the eight lifecycle tools below" to relational phrasing and its stale "assigns the next `feat-NNN-slug` id" sentence (REQ-009)
 - [ ] Task 1.5: Phase gate: `ruff format --check` + `ruff check`, `vulture`, targeted tests (`test_delete`, `test_validate`, `test__path_safety`)
 
 #### Phase 2: The shared source
 
 - [ ] Task 2.1: Create `general/tools/_domains.py` (REQ-001): copyright header, NumPy docstring, `__all__`, `WHOLE_BODY_DOMAINS` + the three derived tuples + `ADR`/`FEAT` singletons; `git add` so `pylint` sees it
-- [ ] Task 2.2: Rewire `_path_safety.py` (REQ-004): `_UUID_TYPES = frozenset(UUID_DOMAINS)`, `_TYPE_FEAT` -> shared `FEAT`, docstring `:data:` references updated
+- [ ] Task 2.2: Rewire `_path_safety.py` (REQ-004): `_UUID_TYPES = frozenset(UUID_DOMAINS)`, `_TYPE_FEAT` -> shared `FEAT`, docstring `:data:` references updated, unknown-type error message derived (REQ-003)
 - [ ] Task 2.3: Rewire `set_status.py`'s `_TYPE_ADR` -> shared `ADR` at all 6 sites (REQ-004)
 - [ ] Task 2.4: Phase gate: server-import smoke test (`python -c "import biz.dfch.specmgr.server"`), full suite
 
 #### Phase 3: src rewiring
 
 - [ ] Task 3.1: `update.py` (REQ-002/003/006): `Literal[*WHOLE_BODY_DOMAINS]`, `_ADAPTERS` keys reordered (drop `feat`-before-`sop`), set-equality assert, description derived
-- [ ] Task 3.2: `set_status.py`: `Literal[*ALL_DOMAINS]`, dict keys reordered, assert, description derived
+- [ ] Task 3.2: `set_status.py`: `Literal[*ALL_DOMAINS]`, `_ADAPTERS` keys reordered, set-equality asserts on `_ADAPTERS` and (already-canonical) `_ALLOWED_STATUSES_BY_TYPE`, description derived
 - [ ] Task 3.3: `set_classification.py`: 12-domain treatment, dict keys reordered, assert, description derived
 - [ ] Task 3.4: `delete.py`: `Literal[*WHOLE_BODY_DOMAINS]`, assert, description derived (dict already canonical)
-- [ ] Task 3.5: `validate.py`: same as Task 3.4
+- [ ] Task 3.5: `validate.py`: same as Task 3.4, plus unsupported-type error message derived (REQ-003)
 - [ ] Task 3.6: `config.py` (REQ-007): set-equality assert in `config_info()`, description derived from `ALL_DOMAINS`
 - [ ] Task 3.7: Phase gate: full suite; `specmgr mcp-docs` dry run to sanity-check the emitted enums
 
@@ -159,7 +160,7 @@ feat-122) -- it touches real code: constants, `Literal[...]` type hints, dead-co
 - [ ] Task 4.1: `test__path_safety.py`: import `UUID_DOMAINS`/`FEAT`, replace local constants (subsumes Task 1.1) (REQ-008)
 - [ ] Task 4.2: `test_config.py`: import `ALL_DOMAINS`/`WHOLE_BODY_NO_FEAT_DOMAINS` (REQ-008)
 - [ ] Task 4.3: `test_doc_cache_structural.py` + `test_doc_cache_delete_scan_race.py`: import `WHOLE_BODY_NO_FEAT_DOMAINS` (REQ-008)
-- [ ] Task 4.4: `test_delete.py` + `test_update.py` registration tests: expected enums derived from `list(WHOLE_BODY_DOMAINS)` (REQ-008)
+- [ ] Task 4.4: `test_delete.py` + `test_update.py` registration tests: expected enums derived from `list(WHOLE_BODY_DOMAINS)`; `test_delete.py`'s local `_TYPE_FEAT` -> shared `FEAT` (REQ-008)
 - [ ] Task 4.5: Phase gate: `pytest -n auto`, full suite
 
 #### Phase 5: Docs, ADR, conventions, quality gate
@@ -174,11 +175,15 @@ feat-122) -- it touches real code: constants, `Literal[...]` type hints, dead-co
 
 ### Current Status
 
-**As of 2026-09-21**: Planned. The issue's 23-site inventory was verified against the code during planning: all sites confirmed (line numbers in the issue are approximate -- e.g. the registration-test inline lists sit at `test_delete.py:791`/`test_update.py:1351` today), plus two extra singletons found (`set_status.py`'s `_TYPE_ADR`, `_path_safety.py`'s `_TYPE_FEAT`), plus one site audited out of scope (`commands/schema.py`'s `_GENERATORS` registry). Both planning-time decisions were resolved with the issue author: the 13-domain set is adr-first (accepting `set_status`'s harmless enum reorder), and the six decorator description strings are derived from the shared source.
+**As of 2026-09-21**: Planned. The issue's 23-site inventory was verified against the code during planning: all sites confirmed (line numbers in the issue are approximate -- e.g. the registration-test inline lists sit at `test_delete.py:791`/`test_update.py:1351` today), plus two extra singletons found (`set_status.py`'s `_TYPE_ADR`, `_path_safety.py`'s `_TYPE_FEAT`), plus one site audited out of scope (`commands/schema.py`'s `_GENERATORS` registry). Both planning-time decisions were resolved with the issue author: the 13-domain set is adr-first (accepting `set_status`'s harmless enum reorder), and the six decorator description strings are derived from the shared source. A 2026-09-21 pre-implementation audit (full tree + issue #125 text) verified the plan against the current code and folded in four deltas -- see Updates/Decisions Made.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-21 18:32:15.287Z - Plan audit: four deltas folded in
+
+Pre-implementation audit of this plan against the current tree and the issue #125 text (implementation itself starts separately via the phase orchestrator). Verified correct: all 23 inventory sites, the `sysrs` test-coverage gap, the zero-reference dead tuples, the byte-identical `_NON_FEAT_DOMAINS` duplicate, the `feat`-before-`sop` deviation (exactly the `update`/`set_status`/`set_classification` dicts), the 6-site/2-site singleton counts, that only `set_status`'s registered enum reorders (no test pins it; `test_delete.py:790`/`test_update.py:1350` are the only enum asserts), and that 5 of the 6 description derivations are byte-identical while only `set_status`'s text changes (adr-first). Core PEP 692 mechanism test-run on the pinned stack (pydantic 2.13.4, mcp 2.0.0): `Literal[*T]` under `from __future__ import annotations` emits the enum in tuple order through the MCP SDK's `TypeAdapter`-over-function schema path. Four deltas folded in, each decided with the plan author as recommended: (1) `set_status.py`'s 13-key `_ALLOWED_STATUSES_BY_TYPE` dict (issue item #4's second dict) joins REQ-006's assert scope -- keys already canonical, no reorder; (2) `test_delete.py:101`'s local `_TYPE_FEAT` singleton (5 use sites) joins REQ-008/Task 4.4; (3) `feat/tools/__init__.py`'s second stale sentence ("``create_feat`` assigns the next ``feat-NNN-slug`` id", pre-feat-48 phrasing) joins REQ-009/Task 1.4; (4) REQ-003's derived-string scope grows from six to eight, adding `_path_safety.py`'s `validate_id` unknown-type message and `validate.py`'s unsupported-type message (no test pins either; ACC-006 updated to match). Design Notes gains a sweep-classification ruling for every remaining hand-listed site.
 
 #### 2026-09-21 16:56:13.772Z - Created
 
@@ -187,6 +192,10 @@ Planned from GitHub issue #125 ("Consolidate the ~23 independently hand-maintain
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-21 18:32:15.287Z - Audit deltas: _ALLOWED_STATUSES_BY_TYPE assert, test_delete _TYPE_FEAT rewire, second feat docstring sentence, eight derived strings
+
+The 2026-09-21 pre-implementation audit found four plan gaps, each resolved with the plan author by taking the recommended option. `set_status.py`'s `_ALLOWED_STATUSES_BY_TYPE` (13-key dict with literal domain keys -- issue inventory item #4's "dict keys x2") gets the same module-level set-equality assert vs `ALL_DOMAINS` as the `_ADAPTERS` tables (REQ-006): its keys are already canonical so no reorder is needed, and its `_TYPE_ADR` key is absorbed by the shared `ADR` in the REQ-004 pass. `test_delete.py`'s local `_TYPE_FEAT` singleton (5 use sites) is rewired to the shared `FEAT` (REQ-008) -- the same miniature drift vector the planning pass already caught on the `src/` side (`_TYPE_ADR`/`_TYPE_FEAT`). `feat/tools/__init__.py`'s second stale sentence ("``create_feat`` assigns the next ``feat-NNN-slug`` id" -- predates feat-48-feat-id's caller-chosen-`id`/`feat-0-<slug>`-default behavior) is reworded in the same pass as the "eight lifecycle tools" fix (REQ-009). REQ-003's derived-string scope grows from six decorator descriptions to eight, adding the two runtime error messages (`_path_safety.py`'s `validate_id` unknown-type, `validate.py`'s unsupported-type): runtime f-strings carry no doc-generator constraint and no test pins their text, so deriving them kills the last code-level drift vector at zero test impact. The remaining hand-listed sites are classified as explicitly kept (Design Notes sweep ruling): prose docstrings, per-domain `_Case`/`_InjectionCase` fixture rows, `test_mcp_docs.py`'s render fixture, and inline single-domain comparisons.
 
 #### 2026-09-21 16:56:13.772Z - Canonical ordering: adr-first for the 13-domain set
 
