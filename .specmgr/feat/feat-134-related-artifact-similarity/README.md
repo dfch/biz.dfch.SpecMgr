@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-17 07:40:37.439+02:00'
 id: feat-134-related-artifact-similarity
-status: progress
+status: review
 type: feat
-updated: '2026-09-20 10:41:40.538+02:00'
+updated: '2026-09-21 08:09:28.836+02:00'
 version: 1.0.0
 ---
 
