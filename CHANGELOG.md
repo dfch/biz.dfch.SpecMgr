@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **BREAKING**: Every `rsk` (Risk) document now carries a **mandatory**
+  `## Source` section (single-line value naming the origin/authority of
+  the risk, e.g. the QA document, discussion, or report it derives
+  from), declared between `## Tags` and `## More Information`,
+  implemented as a thin `SourceBase` subclass in `rsk/models/v1` (GitHub
+  issue #102). Any `rsk` document created before this change now fails
+  to parse via `get_rsk`/`parse_rsk`/`update`/`create_rsk` round-trips
+  unless it is updated to add the section (`list_rsk` is unaffected --
+  it reports such a document as a failed entry inline rather than
+  raising). Add `## Source` to any pre-existing `rsk` document, e.g.:
+
+  ```diff
+   ## Residual Assessment
+
+   ### Probability 2
+
+   ### Impact 3
+  +
+  +## Source
+  +
+  +The QA interview on 2026-09-17.
+
+   ## More Information
+  ```
+
+### Changed
+
+- `rsk`'s `## Tags` item type is aligned from plain `MarkdownListItem`
+  to `MarkdownListItemWithNotes`, matching `req`/`dec`/`gol` (GitHub
+  issue #133) -- non-breaking: plain single-line tags parse unchanged;
+  a loose-list continuation paragraph under a tag is now captured in the
+  item's `notes` instead of being silently dropped.
+
 ## [0.29.0] - 2026-09-19
 
 ### Added
