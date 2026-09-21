@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Two new generic MCP tools for cross-domain semantic similarity
+  (GitHub issue #134): `find_related` finds the documents most related to
+  an existing document, given its `type`/`id`, and `find_similar_text`
+  finds the documents most similar to a free-form `query` (for
+  pre-creation dedup/discovery checks). Both rank by cosine similarity of
+  local sentence embeddings across every whole-body domain (req, uc, tsk,
+  qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs; `adr` is excluded
+  structurally), returning up to `top_k` (default 10, validated 1..100)
+  `{type, id, title, status, path, score}` rows sorted by score
+  descending; an unparseable candidate still appears, embedded from its
+  full raw text, with the `<failed to parse>` marker title/status and
+  `id = null`.
+- A new optional `similarity` dependency extra holding the embedding
+  backend (`fastembed` + `BAAI/bge-small-en-v1.5`, CPU-only via ONNX
+  Runtime) (GitHub issue #134) -- install with
+  `pip install 'biz-dfch-specmgr[similarity]'`; the model is downloaded
+  once on first use, after which inference is fully local.
+- The presence-based `SPECMGR_SIMILARITY_DISABLED` environment variable
+  (any value) to opt out of the similarity feature at runtime (GitHub
+  issue #134).
+- A structured, non-raising `{available: false, reason, message}`
+  result that both similarity tools return instead of raising whenever
+  the embedding backend is unavailable (the `similarity` extra not
+  installed, the model failing to load, or the opt-out flag present) --
+  the tools always register and stay in the tool list (GitHub issue
+  #134).
+
 ## [0.30.0] - 2026-09-21
 
 ### Added
