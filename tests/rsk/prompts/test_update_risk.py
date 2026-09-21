@@ -66,6 +66,17 @@ class TestUpdateRiskPrompt(unittest.TestCase):
             result.index('update(id, type="rsk", content, offset=..., limit=...)'),
         )
 
+    def test_mentions_source_as_mandatory_body_field(self):
+        """The step 3 body-change enumeration must name the `source` value
+        as a mandatory body field (issue #102), ahead of the optional
+        `owner`/`tags`/`more_information` enumeration."""
+        result = update_risk("abc-123")
+        self.assertIn("the `source` value", result)
+        self.assertLess(
+            result.index("the `source` value"),
+            result.index("any of the optional"),
+        )
+
     def test_instructions_interpolated_when_given(self):
         """A given instructions string must appear verbatim in the returned text."""
         result = update_risk("abc-123", instructions="Move the residual risk one zone down.")
