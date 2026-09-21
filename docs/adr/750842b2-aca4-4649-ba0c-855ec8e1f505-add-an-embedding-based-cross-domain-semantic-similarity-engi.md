@@ -2,7 +2,7 @@
 status: accepted
 decision-makers: dfch
 id: 750842b2-aca4-4649-ba0c-855ec8e1f505
-version: 1.0.0
+version: 1.1.0
 ---
 
 # Add an embedding-based, cross-domain semantic similarity engine (find_related / find_similar_text) with a pluggable CPU-only provider
@@ -33,7 +33,7 @@ Chosen option: (1), with these sub-decisions (each normative for implementation)
 - **Corpus and registry:** the default target set is every whole-body domain (req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs) via a new shared `WHOLE_BODY_DOMAINS` registry in `general/tools` -- per-domain base-dir resolver, path iterator (`feat`'s `<base>/<id>/README.md` folder shape the one bespoke iterator), and `load_by_id`. The five existing generic tools (`update`, `set_status`, `set_classification`, `delete`, `validate`) are re-pointed at it. `adr` is excluded structurally (issue #46). The registry deliberately includes the dev docs under `.specmgr/feat` (`DEFAULT_FEAT_DIR`).
 - **Embedding input:** title + frontmatter minus bookkeeping keys `{id, type, version, created, updated, status}` + the raw frontmatter-stripped body (split via the base-dependency `python-frontmatter`; across all 12 domains only `classification` survives the exclusion). Unparseable documents embed their full raw file text and surface in results with the `FAILED_TO_PARSE_MARKER` title/status and `id = None`.
 - **Ranking:** dot product on normalized vectors (== cosine), sorted descending; `top_k` default 10, validated 1..100 (the `list_*` cap); optional `min_score`; `find_related` excludes the source document itself.
-- **Warmup:** `server.py`'s `_lifespan` starts a daemon thread at startup that embeds the full default corpus, gated on the extra being importable and the flag being absent; it never raises out of startup and is a no-op when unavailable. This is safe to background because ONNX Runtime runs its inference in C++ outside the GIL -- unlike the GIL-holding markdown/Pydantic parsing that ADR bfd76370 addresses.
+- **Warmup:** `server.py`'s `_lifespan` starts a daemon thread at startup that embeds the full default corpus. The startup gate is the `SPECMGR_SIMILARITY_DISABLED` flag only (lightweight and synchronous); the full availability probe (the extra importable, the model loadable -- including the one-time first-use download) runs inside the daemon thread, so server startup is never blocked by the embedding backend. When unavailable the thread exits immediately without cache writes. It never raises out of startup and is a no-op (no thread) when the flag is present. This is safe to background because ONNX Runtime runs its inference in C++ outside the GIL -- unlike the GIL-holding markdown/Pydantic parsing that ADR bfd76370 addresses.
 - **Tests:** deterministic fake-provider unit tests in CI; a `FastEmbedProvider` wrapper unit test with `fastembed.TextEmbedding` monkeypatched (CI-covered); one real (non-mocked) backend test under the `embedding_model` pytest marker, excluded from every default pytest invocation via `[tool.pytest.ini_options] addopts` (no `ci.yml`/`.pre-commit-config.yaml` edits).
 
 ### Consequences
@@ -75,5 +75,7 @@ To be confirmed by the feat-134 acceptance criteria (ACC-001..ACC-015) as the im
 - Neutral: feat-135's format validation improves explicit links but not discovery.
 
 ## More Information
+
+Revised 2026-09-21 (v1.1.0): rewrote the **Warmup** sub-decision to match the shipped implementation after the feat-134 feat-reviewer pass (2026-09-21) found that `start_similarity_warmup` ran the full availability probe (`_similarity_availability()`, i.e. `get_default_provider()`'s eager model load, including the one-time first-use download) on the server's startup path, so server readiness could be delayed on a first/air-gapped run (a gap against the feature plan's REQ-011 "Warmup MUST NOT block server startup" strict reading). The startup gate is now the `SPECMGR_SIMILARITY_DISABLED` flag only (lightweight and synchronous); the full probe runs inside the daemon thread (`warmup_similarity_cache`'s first step), where unavailability is an info-logged early return with no cache writes. No behavior change when available; the tools' own REQ-003 demand-path contract is untouched. Tracked in `.specmgr/feat/feat-134-related-artifact-similarity/README.md` (Phase 5, Task 5.2; GitHub issue #134).
 
 GitHub issue #134; `.specmgr/feat/feat-134-related-artifact-similarity/README.md` (full plan: REQ-001..REQ-012, ACC-001..ACC-015, phased task list); siblings feat-133-tags-dec-rsk (#133) and feat-135-related-artifacts-risks (#135); ADRs 33c5ab08-ff58-4c73-8c32-23abaf3838e3 (filesystem sole source of truth), bfd76370-b59b-4d65-b550-a969f6c93c9d (DocCache), 36905d5b-8057-4294-8665-c7eed5534db0 (dispatch-only generic tools), 1af6787b-eaab-4e8f-888f-531c1e76c19d (path safety), 519d1206-4d2a-4500-9046-6db635209996/b399f1ce-ed42-4929-b01c-7a57d18e8014 (non-raising structured results), 078bf395-0a5f-4afd-84f6-b7a2191a00e6 (generic validate); `BAAI/bge-small-en-v1.5` model card; `fastembed` project.

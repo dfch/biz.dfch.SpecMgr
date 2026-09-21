@@ -407,19 +407,26 @@ Server lifespan: start the background similarity warmup, then run (feat-134, REQ
 
 At startup (before the first ``yield`` -- i.e. before any tool call
 can run), ``general.tools._similarity_search.start_similarity_warmup``
-gates on the feature's own availability (the same check both
-similarity tools run first thing in their bodies, REQ-003:
-``SPECMGR_SIMILARITY_DISABLED`` absent **and** the embedding backend
-importable/model loadable) and, when available, starts a daemon
-thread embedding the full default corpus into the content-hash-
-validated embedding cache. The gate + thread start never raise (a
-mid-warmup failure is logged and swallowed inside the thread, leaving
-the cache partially warm and the demand path working), and this
-lifespan does not wait for the thread -- startup is never blocked by
-the warmup, and the daemon thread dies with the process (REQ-011,
-ADR 750842b2-aca4-4649-ba0c-855ec8e1f505's **Warmup** sub-decision).
-When the feature is unavailable the helper is a no-op (no thread
-started at all) and the server runs exactly as before.
+checks **only** the lightweight, synchronous
+``SPECMGR_SIMILARITY_DISABLED`` presence gate and, when the flag is
+absent, starts a daemon thread embedding the full default corpus into
+the content-hash-validated embedding cache -- without joining it. The
+full availability probe (the same check both similarity tools run
+first thing in their bodies, REQ-003: the lazy ``import fastembed``
+plus the eager model load, including the one-time first-use download)
+runs **inside that daemon thread** (``warmup_similarity_cache``'s
+first step; Phase 5, Task 5.2), never on this startup path -- so
+server startup is never blocked by the embedding backend (REQ-011's
+"warmup must not block server startup" strict reading), and on a
+first/air-gapped run the model download, if it happens at all, is
+backgrounded. The thread start never raises: when the feature is
+unavailable the thread exits immediately without cache writes (a
+mid-warmup failure is likewise logged and swallowed inside the thread,
+leaving the cache partially warm and the demand path working), and when
+the flag is present no thread is started at all (a no-op, and the
+server runs exactly as before). This lifespan does not wait for the
+thread, and the daemon thread dies with the process (REQ-011, ADR
+750842b2-aca4-4649-ba0c-855ec8e1f505's **Warmup** sub-decision).
 
 The import is function-level on purpose: the ``general.tools``
 package (via its own ``__init__``'s tool-module imports) imports this

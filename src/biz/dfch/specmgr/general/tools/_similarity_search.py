@@ -52,14 +52,23 @@ pattern instead of triplicating it (ADR 750842b2-aca4-4649-ba0c-855ec8e1f505,
   ``score``, ACC-001/ACC-002) from a collected candidate and its score.
 - :func:`warmup_similarity_cache` / :func:`start_similarity_warmup` -- the
   REQ-011 background warmup: the full default corpus (no ``target_types``
-  restriction) through the same :func:`collect_candidates` path. The gate
-  is ``_embedding._similarity_availability()`` (the same check both tool
-  bodies run first thing, REQ-003): a structured unavailable result means
-  no thread is started at all (a no-op). When started, the thread is a
-  daemon (it dies with the process -- no shutdown join logic), its entire
-  body is wrapped so that no exception escapes it (logged and swallowed --
-  a mid-warmup failure leaves the cache partially warm and the demand path
-  keeps working), and it never blocks the caller (no join at startup).
+  restriction) through the same :func:`collect_candidates` path. The startup
+  gate (:func:`start_similarity_warmup`, called from ``server.py``'s own
+  ``_lifespan``) is the ``SPECMGR_SIMILARITY_DISABLED`` presence flag
+  **only** -- lightweight and synchronous, so server startup is never
+  blocked by the embedding backend (Phase 5, Task 5.2, REQ-011's strict
+  reading); the flag present means no thread is started at all (a no-op).
+  The full availability probe (``_embedding._similarity_availability()``,
+  the same check both tool bodies run first thing, REQ-003 -- the lazy
+  ``import fastembed`` plus the eager model load, including the one-time
+  first-use download) runs **inside** the daemon thread
+  (:func:`warmup_similarity_cache`'s first step): a structured unavailable
+  result means the thread exits immediately, without cache writes. When
+  started, the thread is a daemon (it dies with the process -- no shutdown
+  join logic), its entire body is wrapped so that no exception escapes it
+  (logged and swallowed -- a mid-warmup failure leaves the cache partially
+  warm and the demand path keeps working), and it never blocks the caller
+  (no join at startup).
 
 **Dependency-light.** Standard library + ``python-frontmatter`` (base
 dependency) + the Phase 1/2 ``general.tools`` siblings and the base
@@ -73,13 +82,20 @@ backend.
 from __future__ import annotations
 
 import logging
+import os
 import threading
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 from pathlib import Path
 
 from ..models import SimilarityHit
-from ._embedding import EmbeddingProvider, Vector, _similarity_availability, get_default_provider
+from ._embedding import (
+    EmbeddingProvider,
+    SIMILARITY_DISABLED_ENV_VAR,
+    Vector,
+    _similarity_availability,
+    get_default_provider,
+)
 from ._embedding_cache import read_embedding
 from ._similarity_corpus import candidate_similarity_text, iter_candidate_paths
 from ._similarity_text import SimilarityText
@@ -281,9 +297,19 @@ def to_similarity_hit(candidate: CollectedCandidate, score: float) -> Similarity
 def warmup_similarity_cache() -> None:
     """Embed the full default corpus into the cache, never raising (REQ-011).
 
-    The background warmup's thread body: the default provider (already
-    constructed -- the caller, :func:`start_similarity_warmup`, ran the
-    availability check first), then the **full** default corpus
+    The background warmup's thread body. Runs
+    :func:`_embedding._similarity_availability` **first thing** (the same
+    check both similarity tools run first thing in their bodies, REQ-003)
+    -- this is where the full availability probe (the lazy
+    ``import fastembed`` plus the eager model load, including the one-time
+    first-use download) happens, i.e. *inside this thread* and never on
+    the server's startup path (REQ-011's "warmup must not block server
+    startup" strict reading; Phase 5, Task 5.2). When the probe returns a
+    structured unavailable result, this logs at info level and returns --
+    no cache writes, and still never raising. Otherwise the default
+    provider is already constructed (the probe's own
+    :func:`get_default_provider` call loaded it into the process
+    singleton), and this embeds the **full** default corpus
     (``iter_candidate_paths()`` with no ``target_types`` restriction --
     every whole-body domain, the registry set) through the same
     :func:`collect_candidates` path the two similarity tools use, so the
@@ -303,6 +329,10 @@ def warmup_similarity_cache() -> None:
         log record), not a return value.
     """
     try:
+        unavailable = _similarity_availability()
+        if unavailable is not None:
+            _logger.info("similarity warmup skipped: %s", unavailable.reason)
+            return
         provider = get_default_provider()
         candidates = collect_candidates(provider, iter_candidate_paths())
         _logger.info("similarity warmup finished: %d candidate(s) embedded into the cache", len(candidates))
@@ -311,29 +341,43 @@ def warmup_similarity_cache() -> None:
 
 
 def start_similarity_warmup() -> threading.Thread | None:
-    """Gate on availability and start the daemon warmup thread, if enabled (REQ-011).
+    """Gate on the opt-out flag and start the daemon warmup thread, if enabled (REQ-011).
 
-    The entry point ``server.py``'s ``_lifespan`` calls at startup. Runs
-    :func:`_embedding._similarity_availability` first (the same check both
-    similarity tools run first thing in their bodies, REQ-003): when it
-    returns a structured unavailable result (``SPECMGR_SIMILARITY_DISABLED``
-    present, or the backend failed to import / the model failed to load,
-    including a first-use download failure), this starts **no thread at
-    all** -- a no-op -- and returns ``None``. Otherwise it starts a
-    daemon thread running :func:`warmup_similarity_cache` and returns the
-    thread **without joining it** (REQ-011: warmup must not block server
-    startup -- the thread runs in the background, and as a daemon it dies
-    with the process; no shutdown join logic is added).
+    The entry point ``server.py``'s ``_lifespan`` calls at startup.
+    Synchronously it checks **only** the lightweight, synchronous
+    ``SPECMGR_SIMILARITY_DISABLED`` presence gate
+    (``os.environ.get(SIMILARITY_DISABLED_ENV_VAR) is not None`` -- the
+    repo's own env-flag convention, REQ-003): when the flag is present it
+    starts **no thread at all** -- a no-op -- and returns ``None``. When
+    the flag is absent it starts a daemon thread running
+    :func:`warmup_similarity_cache` and returns the thread **without
+    joining it** (REQ-011: warmup must not block server startup -- the
+    thread runs in the background, and as a daemon it dies with the
+    process; no shutdown join logic is added).
+
+    The full availability probe -- the lazy ``import fastembed`` plus the
+    eager model load, including the one-time first-use download (
+    :func:`_embedding._similarity_availability`, the same check both
+    similarity tools run first thing in their bodies, REQ-003) -- runs
+    **inside that daemon thread** (:func:`warmup_similarity_cache`'s first
+    step; Phase 5, Task 5.2), never on this startup path: server readiness
+    is therefore never blocked by the embedding backend, and on a
+    first/air-gapped run the model download -- if it happens at all -- is
+    backgrounded. When the probe is unavailable the thread exits
+    immediately without cache writes (the demand path serves the structured
+    unavailable result); when it is available the thread embeds the full
+    default corpus.
 
     Args:
-        (none -- the gate reads the environment and the default-provider
-        seam itself).
+        (none -- the gate reads only the environment; the backend probe
+        runs in the thread the gate starts).
 
     Returns:
-        The started daemon thread, or ``None`` when the feature is
-        unavailable and no thread was started.
+        The started daemon thread, or ``None`` when the
+        ``SPECMGR_SIMILARITY_DISABLED`` flag is present and no thread was
+        started.
     """
-    if _similarity_availability() is not None:
+    if os.environ.get(SIMILARITY_DISABLED_ENV_VAR) is not None:
         result: threading.Thread | None = None
         return result
 

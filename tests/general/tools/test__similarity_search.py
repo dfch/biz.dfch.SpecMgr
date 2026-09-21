@@ -19,14 +19,16 @@
 (feat-134, Phase 3, Task 3.7 + the shared per-candidate loop).
 
 Covers ACC-014 (the warmup seam: enabled -> a daemon thread named
-``specmgr-similarity-warmup`` populates the cache without blocking; flag set or
-backend missing -> ``start_similarity_warmup`` returns ``None`` and starts no
-thread; ``warmup_similarity_cache`` swallows a mid-corpus provider failure,
-leaving the cache partially warm, never raising; ``server._lifespan`` completes
-without raising in both the enabled and disabled cases) plus the unit behavior
-of ``collect_candidates`` (the vanished-file skip), ``to_similarity_hit`` (field
-assembly, plain-``float`` score), and ``make_embed_fn`` (embeds the candidate's
-own embedding text).
+``specmgr-similarity-warmup`` populates the cache without blocking; flag set ->
+``start_similarity_warmup`` returns ``None`` and starts no thread; backend
+missing -> the thread still starts (the startup gate is the flag only, Phase
+5, Task 5.2), runs the availability probe inside itself, and exits without
+cache writes or a provider installed; ``warmup_similarity_cache`` swallows a
+mid-corpus provider failure, leaving the cache partially warm, never raising;
+``server._lifespan`` completes without raising in both the enabled and disabled
+cases) plus the unit behavior of ``collect_candidates`` (the vanished-file
+skip), ``to_similarity_hit`` (field assembly, plain-``float`` score), and
+``make_embed_fn`` (embeds the candidate's own embedding text).
 """
 
 from __future__ import annotations
@@ -35,6 +37,7 @@ import asyncio
 import threading
 import unittest
 
+from biz.dfch.specmgr.general.tools import _embedding as embedding_module
 from biz.dfch.specmgr.general.tools._embedding_cache import _cache as embedding_cache_singleton
 from biz.dfch.specmgr.general.tools._similarity_corpus import candidate_similarity_text, iter_candidate_paths
 from biz.dfch.specmgr.general.tools._similarity_search import (
@@ -80,14 +83,25 @@ class TestStartSimilarityWarmup(SimilarityTestCase):
         self.assertEqual(len(embedding_cache_singleton._entries), 0)  # pylint: disable=protected-access
         self.assertFalse(any(t.name == _WARMUP_THREAD_NAME for t in threading.enumerate()))
 
-    def test_backend_missing_returns_none(self) -> None:
+    def test_backend_missing_starts_a_thread_that_exits_without_cache_writes(self) -> None:
         self.seed_req("Doc A", "alpha")
         reset_default_provider()
 
+        # The startup gate is the env flag only (Phase 5, Task 5.2): with the
+        # backend missing, a thread is still started. Join it *inside* the
+        # import blocker, so the thread's own availability probe (the lazy
+        # ``import fastembed``) is guaranteed to run against the blocked
+        # boundary and fail, not after the blocker is restored.
         with block_fastembed_import():
             thread = start_similarity_warmup()
+            self.assertIsInstance(thread, threading.Thread)
+            self.assertTrue(thread.daemon)
+            self.assertEqual(thread.name, _WARMUP_THREAD_NAME)
+            thread.join(timeout=15)
 
-        self.assertIsNone(thread)
+        self.assertFalse(thread.is_alive())
+        self.assertEqual(len(embedding_cache_singleton._entries), 0)  # pylint: disable=protected-access
+        self.assertIs(embedding_module._default_provider, None)  # pylint: disable=protected-access
 
 
 class TestWarmupSimilarityCache(SimilarityTestCase):
