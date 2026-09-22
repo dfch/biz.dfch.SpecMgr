@@ -4,7 +4,7 @@ created: '2026-09-21 17:06:37.403Z'
 id: feat-125-domain-lists
 status: progress
 type: feat
-updated: '2026-09-22 00:14:34.000Z'
+updated: '2026-09-22 02:32:29.000Z'
 version: 1.0.0
 ---
 
@@ -157,11 +157,11 @@ feat-122) -- it touches real code: constants, `Literal[...]` type hints, dead-co
 
 #### Phase 4: Test rewiring
 
-- [ ] Task 4.1: `test__path_safety.py`: import `UUID_DOMAINS`/`FEAT`, replace local constants (subsumes Task 1.1) (REQ-008)
-- [ ] Task 4.2: `test_config.py`: import `ALL_DOMAINS`/`WHOLE_BODY_NO_FEAT_DOMAINS` (REQ-008)
-- [ ] Task 4.3: `test_doc_cache_structural.py` + `test_doc_cache_delete_scan_race.py`: import `WHOLE_BODY_NO_FEAT_DOMAINS` (REQ-008)
-- [ ] Task 4.4: `test_delete.py` + `test_update.py` registration tests: expected enums derived from `list(WHOLE_BODY_DOMAINS)`; `test_delete.py`'s local `_TYPE_FEAT` -> shared `FEAT` (REQ-008)
-- [ ] Task 4.5: Phase gate: `pytest -n auto`, full suite
+- [x] Task 4.1: `test__path_safety.py`: import `UUID_DOMAINS`/`FEAT`, replace local constants (subsumes Task 1.1) (REQ-008)
+- [x] Task 4.2: `test_config.py`: import `ALL_DOMAINS`/`WHOLE_BODY_NO_FEAT_DOMAINS` (REQ-008)
+- [x] Task 4.3: `test_doc_cache_structural.py` + `test_doc_cache_delete_scan_race.py`: import `WHOLE_BODY_NO_FEAT_DOMAINS` (REQ-008)
+- [x] Task 4.4: `test_delete.py` + `test_update.py` registration tests: expected enums derived from `list(WHOLE_BODY_DOMAINS)`; `test_delete.py`'s local `_TYPE_FEAT` -> shared `FEAT` (REQ-008)
+- [x] Task 4.5: Phase gate: `pytest -n auto`, full suite
 
 #### Phase 5: Docs, ADR, conventions, quality gate
 
@@ -175,11 +175,15 @@ feat-122) -- it touches real code: constants, `Literal[...]` type hints, dead-co
 
 ### Current Status
 
-**As of 2026-09-22**: Implementation in progress -- Phases 1-3 are complete and gate-green. Phase 1 (quick wins: the `sysrs` test gap, the two dead-constant removals, the `feat` docstring rewording), Phase 2 (the shared `general/tools/_domains.py` source, with `_path_safety.py`'s `_UUID_TYPES`/`_TYPE_FEAT` and `set_status.py`'s `_TYPE_ADR` rewired onto it and `validate_id`'s unknown-type error message derived from it), and Phase 3 (src rewiring: the five generic tools' `type` signatures PEP 692 re-derived from the shared source, the `_ADAPTERS`/`_ALLOWED_STATUSES_BY_TYPE` key sets normalized and guarded by set-equality asserts, the eight derived description/error-message strings, and `config.py`'s membership assert plus derived description) are done. The issue's 23-site inventory was verified against the code during planning: all sites confirmed (line numbers in the issue are approximate -- e.g. the registration-test inline lists sit at `test_delete.py:791`/`test_update.py:1351` today), plus two extra singletons found (`set_status.py`'s `_TYPE_ADR`, `_path_safety.py`'s `_TYPE_FEAT`), plus one site audited out of scope (`commands/schema.py`'s `_GENERATORS` registry). Both planning-time decisions were resolved with the issue author: the 13-domain set is adr-first (accepting `set_status`'s harmless enum reorder), and the six decorator description strings are derived from the shared source. A 2026-09-21 pre-implementation audit (full tree + issue #125 text) verified the plan against the current code and folded in four deltas -- see Updates/Decisions Made.
+**As of 2026-09-22**: Implementation in progress -- Phases 1-4 are complete and gate-green. Phase 1 (quick wins: the `sysrs` test gap, the two dead-constant removals, the `feat` docstring rewording), Phase 2 (the shared `general/tools/_domains.py` source, with `_path_safety.py`'s `_UUID_TYPES`/`_TYPE_FEAT` and `set_status.py`'s `_TYPE_ADR` rewired onto it and `validate_id`'s unknown-type error message derived from it), Phase 3 (src rewiring: the five generic tools' `type` signatures PEP 692 re-derived from the shared source, the `_ADAPTERS`/`_ALLOWED_STATUSES_BY_TYPE` key sets normalized and guarded by set-equality asserts, the eight derived description/error-message strings, and `config.py`'s membership assert plus derived description), and Phase 4 (test rewiring: all six test-side hand-listed domain constants deleted in favor of the shared source, the two registration tests' expected enums now derived from `list(WHOLE_BODY_DOMAINS)`) are done. The issue's 23-site inventory was verified against the code during planning: all sites confirmed (line numbers in the issue are approximate -- e.g. the registration-test inline lists sit at `test_delete.py:791`/`test_update.py:1351` today), plus two extra singletons found (`set_status.py`'s `_TYPE_ADR`, `_path_safety.py`'s `_TYPE_FEAT`), plus one site audited out of scope (`commands/schema.py`'s `_GENERATORS` registry). Both planning-time decisions were resolved with the issue author: the 13-domain set is adr-first (accepting `set_status`'s harmless enum reorder), and the six decorator description strings are derived from the shared source. A 2026-09-21 pre-implementation audit (full tree + issue #125 text) verified the plan against the current code and folded in four deltas -- see Updates/Decisions Made.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-22 02:32:29.000Z - Phase 4 complete
+
+Phase 4 (test rewiring) is implemented and gate-green. `test__path_safety.py`'s local `_UUID_DOMAINS` tuple and `_FEAT_TYPE` singleton are deleted in favor of the shared `UUID_DOMAINS`/`FEAT` import, so `validate_id`'s two per-domain loops now exercise every UUID domain (incl. `sysrs`) by construction (Task 4.1, REQ-008/ACC-003); `test_config.py`'s `_ALL_DOMAINS`/`_DOCS_DIR_DOMAINS` lists are deleted in favor of `ALL_DOMAINS`/`WHOLE_BODY_NO_FEAT_DOMAINS` (Task 4.2); the byte-identical duplicate `_NON_FEAT_DOMAINS` lists in `test_doc_cache_structural.py` and `test_doc_cache_delete_scan_race.py` are both deleted in favor of the shared `WHOLE_BODY_NO_FEAT_DOMAINS` (Task 4.3, closing ACC-007); and `test_delete.py`'s local `_TYPE_FEAT` singleton is deleted in favor of the shared `FEAT` at all 5 use sites (Task 4.4). The two registration tests' inline expected enums (`test_delete.py`'s `test_delete_registered_with_12_value_type_enum`, `test_update.py`'s `test_update_registered_with_type_enum_and_optional_range`) now assert against `list(WHOLE_BODY_DOMAINS)` instead of a hand-typed 12-value literal, making them the plan's drift canaries (Task 4.4). Each replaced constant was verified member- and order-identical to its shared counterpart before rewiring (REQ-012 zero-behavior-change), and the sweep-classified kept sites (per-domain `_Case`/`_InjectionCase` fixture rows, `test_mcp_docs.py`'s render fixture, inline single-domain comparisons, docstring prose) are untouched. Gate (Task 4.5): `uv run --frozen ruff format --check` (1695 files already formatted), `uv run --frozen ruff check` (All checks passed), `uv run --frozen vulture src/ whitelist.py --min-confidence 60` (clean), the six rewired test files (74 passed, 574 subtests passed -- `test__path_safety.py` 25, `test_config.py` 10, `test_doc_cache_structural.py` 6, `test_doc_cache_delete_scan_race.py` 3, `test_delete.py` 8, `test_update.py` 22), and `uv run --frozen pytest -n auto --cov=src --cov-report=` (3365 passed -- same total as the Phase 3 gate); `git status --short` shows only the six test files (plus this README) changed -- no `src/`/`docs/` edits, so no docs regeneration is needed until Phase 5.
 
 #### 2026-09-22 00:14:34.000Z - Phase 3 complete
 
