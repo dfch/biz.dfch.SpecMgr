@@ -416,6 +416,7 @@ from mcp.server import MCPServer
 
 from .telemetry.config import load_telemetry_config
 from .telemetry.logging import setup_logging
+from .telemetry.middleware import SpecmgrTelemetryMiddleware, logger as telemetry_logger
 
 
 @asynccontextmanager
@@ -450,6 +451,28 @@ mcp = MCPServer(
     instructions="An artifact manager for system specifications.",
     lifespan=_lifespan,
 )
+
+# feat-139-logging-telemetry (Task 3.2, ACC-008/ACC-010): append the
+# correlation-ID/call-observability middleware to the server's own
+# ``middleware`` chain, right after the server is constructed (the Task
+# 4.9 OTel bootstrap inserts its call at the same module-scope point,
+# above this append, keeping the config -> logging -> OTel -> middleware
+# order). The append is wrapped in a minimal try/except: ``Server.
+# middleware`` is a provisional API (the ADR's flagged risk), and an
+# incompatible contract must not crash ``specmgr mcp`` at startup even
+# before Phase 4's full fail-open policy (Task 4.3) exists -- a single
+# warning, and the server continues with logging/telemetry unappended.
+# Task 4.3 upgrades this guard into the complete config-aware
+# disable-with-warning behavior; it is not a second, independent guard.
+try:
+    mcp.middleware.append(SpecmgrTelemetryMiddleware(telemetry_config))
+except Exception as e:
+    telemetry_logger.warning(
+        "could not append the specmgr telemetry middleware to mcp.middleware "
+        "(incompatible Server.middleware contract?); the server continues "
+        "without call observability: %s",
+        e,
+    )
 
 # ---------------------------------------------------------------------------
 # Resource/tool/prompt registration (side-effect: registers everything on

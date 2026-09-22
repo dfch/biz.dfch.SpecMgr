@@ -373,6 +373,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.telemetry`](biz.dfch.specmgr.telemetry.md) — Shared logging/telemetry infrastructure for the MCP server (feat-139-logging-telemetry).
 - [`biz.dfch.specmgr.telemetry.config`](biz.dfch.specmgr.telemetry.config.md) — Parse and validate the ``SPECMGR_LOG_*``/``SPECMGR_OTEL_*`` environment
 - [`biz.dfch.specmgr.telemetry.logging`](biz.dfch.specmgr.telemetry.logging.md) — Structured logging for the MCP server (feat-139-logging-telemetry, Phase 2, Task 2.1).
+- [`biz.dfch.specmgr.telemetry.middleware`](biz.dfch.specmgr.telemetry.middleware.md) — The specmgr ``ServerMiddleware``: correlation IDs and call logging (feat-139-logging-telemetry, Phase 3, Task 3.1).
 - [`biz.dfch.specmgr.tsk`](biz.dfch.specmgr.tsk.md) — TaskList (TSK) domain -- lightweight task/todo-list specifications.
 - [`biz.dfch.specmgr.tsk.models`](biz.dfch.specmgr.tsk.models.md) — TaskList (TSK) models -- Pydantic schema powered by the generic ``models/md`` engine.
 - [`biz.dfch.specmgr.tsk.models.v1`](biz.dfch.specmgr.tsk.models.v1.md) — TaskList (TSK) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.

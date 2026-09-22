@@ -35,9 +35,10 @@ Modules (per the feature plan's Design Notes, "Package location"):
 - ``redact``: the body/path/title redaction safeguard (Phase 6).
 """
 
-from . import config, logging  # noqa: F401
+from . import config, logging, middleware  # noqa: F401
 
 __all__ = [
     "config",
     "logging",
+    "middleware",
 ]
