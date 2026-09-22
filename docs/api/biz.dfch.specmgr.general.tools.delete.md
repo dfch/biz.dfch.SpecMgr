@@ -172,7 +172,7 @@ Hard-delete the verification case record ``id_`` from disk (REQ-001/004/005/006)
 Same resolve/lock/safety semantics as :func:`_delete_req`.
 
 
-### `delete(id: 'str', type: "Literal['req', 'uc', 'tsk', 'qa', 'prb', 'gol', 'rsk', 'dec', 'sop', 'feat', 'vcr', 'sysrs']") -> 'str'`
+### `delete(id: 'str', type: 'Literal[*WHOLE_BODY_DOMAINS,]') -> 'str'`
 
 Permanently delete an existing document from disk, across the whole-body domains.
 

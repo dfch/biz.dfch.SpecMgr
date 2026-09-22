@@ -167,6 +167,7 @@ from ...vcr.tools._io import read_vcr
 from ...vcr.tools._lock import vcr_lock
 from ...vcr.tools._paths import vcr_base_dir
 from ...vcr.tools._write import write_vcr_file
+from ._domains import WHOLE_BODY_DOMAINS
 from ._path_safety import assert_within, validate_id
 from ._timestamps import now_timestamp
 
@@ -491,11 +492,16 @@ _ADAPTERS: dict[str, Callable[[str, str], _SetClassificationFrontmatter]] = {
     "gol": _set_classification_gol,
     "rsk": _set_classification_rsk,
     "dec": _set_classification_dec,
-    "feat": _set_classification_feat,
     "sop": _set_classification_sop,
+    "feat": _set_classification_feat,
     "vcr": _set_classification_vcr,
     "sysrs": _set_classification_sysrs,
 }
+
+assert set(_ADAPTERS) == set(WHOLE_BODY_DOMAINS), (
+    "_ADAPTERS keys drifted from the shared general.tools._domains.WHOLE_BODY_DOMAINS source -- add or "
+    "remove the domain in both places (feat-125-domain-lists, REQ-006)"
+)
 
 
 @mcp.tool(
@@ -503,9 +509,9 @@ _ADAPTERS: dict[str, Callable[[str, str], _SetClassificationFrontmatter]] = {
     title="Set document classification",
     description=(
         "Replace the free-text `classification` frontmatter field of an existing document across "
-        "the whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, "
-        "feat, vcr, sysrs; `adr` is not supported), also bumping `updated` and leaving the body and every "
-        "other frontmatter field untouched. `classification` is fully free-text -- no closed "
+        f"the whole-body domains (`type` is one of {', '.join(WHOLE_BODY_DOMAINS)}; `adr` is not supported), "
+        "also bumping `updated` and leaving the body and every other frontmatter field untouched. "
+        "`classification` is fully free-text -- no closed "
         "vocabulary; a blank or whitespace-only value clears it back to `None`/absent. No `create_*` "
         "tool accepts a `classification` argument at all -- this is the sole classification-change "
         "entry point. An invalid `id` (path-injection attempt or wrong format for `type`) or an "
@@ -516,7 +522,7 @@ _ADAPTERS: dict[str, Callable[[str, str], _SetClassificationFrontmatter]] = {
 )
 def set_classification(
     id: str,
-    type: Literal["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "feat", "vcr", "sysrs"],
+    type: Literal[*WHOLE_BODY_DOMAINS],
     classification: str,
 ) -> _SetClassificationFrontmatter:
     """Replace the ``classification`` frontmatter field of an existing document.

@@ -4,7 +4,7 @@ created: '2026-09-21 17:06:37.403Z'
 id: feat-125-domain-lists
 status: progress
 type: feat
-updated: '2026-09-21 21:18:05.000Z'
+updated: '2026-09-22 00:14:34.000Z'
 version: 1.0.0
 ---
 
@@ -147,13 +147,13 @@ feat-122) -- it touches real code: constants, `Literal[...]` type hints, dead-co
 
 #### Phase 3: src rewiring
 
-- [ ] Task 3.1: `update.py` (REQ-002/003/006): `Literal[*WHOLE_BODY_DOMAINS]`, `_ADAPTERS` keys reordered (drop `feat`-before-`sop`), set-equality assert, description derived
-- [ ] Task 3.2: `set_status.py`: `Literal[*ALL_DOMAINS]`, `_ADAPTERS` keys reordered, set-equality asserts on `_ADAPTERS` and (already-canonical) `_ALLOWED_STATUSES_BY_TYPE`, description derived
-- [ ] Task 3.3: `set_classification.py`: 12-domain treatment, dict keys reordered, assert, description derived
-- [ ] Task 3.4: `delete.py`: `Literal[*WHOLE_BODY_DOMAINS]`, assert, description derived (dict already canonical)
-- [ ] Task 3.5: `validate.py`: same as Task 3.4, plus unsupported-type error message derived (REQ-003)
-- [ ] Task 3.6: `config.py` (REQ-007): set-equality assert in `config_info()`, description derived from `ALL_DOMAINS`
-- [ ] Task 3.7: Phase gate: full suite; `specmgr mcp-docs` dry run to sanity-check the emitted enums
+- [x] Task 3.1: `update.py` (REQ-002/003/006): `Literal[*WHOLE_BODY_DOMAINS]`, `_ADAPTERS` keys reordered (drop `feat`-before-`sop`), set-equality assert, description derived
+- [x] Task 3.2: `set_status.py`: `Literal[*ALL_DOMAINS]`, `_ADAPTERS` keys reordered, set-equality asserts on `_ADAPTERS` and (already-canonical) `_ALLOWED_STATUSES_BY_TYPE`, description derived
+- [x] Task 3.3: `set_classification.py`: 12-domain treatment, dict keys reordered, assert, description derived
+- [x] Task 3.4: `delete.py`: `Literal[*WHOLE_BODY_DOMAINS]`, assert, description derived (dict already canonical)
+- [x] Task 3.5: `validate.py`: same as Task 3.4, plus unsupported-type error message derived (REQ-003)
+- [x] Task 3.6: `config.py` (REQ-007): set-equality assert in `config_info()`, description derived from `ALL_DOMAINS`
+- [x] Task 3.7: Phase gate: full suite; `specmgr mcp-docs` dry run to sanity-check the emitted enums
 
 #### Phase 4: Test rewiring
 
@@ -175,11 +175,15 @@ feat-122) -- it touches real code: constants, `Literal[...]` type hints, dead-co
 
 ### Current Status
 
-**As of 2026-09-21**: Implementation in progress -- Phases 1-2 are complete and gate-green. Phase 1 (quick wins: the `sysrs` test gap, the two dead-constant removals, the `feat` docstring rewording) and Phase 2 (the shared `general/tools/_domains.py` source, with `_path_safety.py`'s `_UUID_TYPES`/`_TYPE_FEAT` and `set_status.py`'s `_TYPE_ADR` rewired onto it and `validate_id`'s unknown-type error message derived from it) are done. The issue's 23-site inventory was verified against the code during planning: all sites confirmed (line numbers in the issue are approximate -- e.g. the registration-test inline lists sit at `test_delete.py:791`/`test_update.py:1351` today), plus two extra singletons found (`set_status.py`'s `_TYPE_ADR`, `_path_safety.py`'s `_TYPE_FEAT`), plus one site audited out of scope (`commands/schema.py`'s `_GENERATORS` registry). Both planning-time decisions were resolved with the issue author: the 13-domain set is adr-first (accepting `set_status`'s harmless enum reorder), and the six decorator description strings are derived from the shared source. A 2026-09-21 pre-implementation audit (full tree + issue #125 text) verified the plan against the current code and folded in four deltas -- see Updates/Decisions Made.
+**As of 2026-09-22**: Implementation in progress -- Phases 1-3 are complete and gate-green. Phase 1 (quick wins: the `sysrs` test gap, the two dead-constant removals, the `feat` docstring rewording), Phase 2 (the shared `general/tools/_domains.py` source, with `_path_safety.py`'s `_UUID_TYPES`/`_TYPE_FEAT` and `set_status.py`'s `_TYPE_ADR` rewired onto it and `validate_id`'s unknown-type error message derived from it), and Phase 3 (src rewiring: the five generic tools' `type` signatures PEP 692 re-derived from the shared source, the `_ADAPTERS`/`_ALLOWED_STATUSES_BY_TYPE` key sets normalized and guarded by set-equality asserts, the eight derived description/error-message strings, and `config.py`'s membership assert plus derived description) are done. The issue's 23-site inventory was verified against the code during planning: all sites confirmed (line numbers in the issue are approximate -- e.g. the registration-test inline lists sit at `test_delete.py:791`/`test_update.py:1351` today), plus two extra singletons found (`set_status.py`'s `_TYPE_ADR`, `_path_safety.py`'s `_TYPE_FEAT`), plus one site audited out of scope (`commands/schema.py`'s `_GENERATORS` registry). Both planning-time decisions were resolved with the issue author: the 13-domain set is adr-first (accepting `set_status`'s harmless enum reorder), and the six decorator description strings are derived from the shared source. A 2026-09-21 pre-implementation audit (full tree + issue #125 text) verified the plan against the current code and folded in four deltas -- see Updates/Decisions Made.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-22 00:14:34.000Z - Phase 3 complete
+
+Phase 3 (src rewiring) is implemented and gate-green. The five generic tools' public `type: Literal[...]` signatures are now PEP 692 re-derivations from the shared source: `update`/`set_classification`/`delete`/`validate` use `Literal[*WHOLE_BODY_DOMAINS]` and `set_status` uses `Literal[*ALL_DOMAINS]` (Tasks 3.1-3.5, REQ-002) -- every emitted JSON-schema enum verified live against `mcp.list_tools()` as set-equal to today's, the only ordering change anywhere being `set_status`'s `adr` moving to the front (the plan's accepted public impact). The `feat`-before-`sop` `_ADAPTERS` key-order deviation was fixed in `update.py`, `set_status.py`, and `set_classification.py` (`delete.py`/`validate.py`'s dicts were already canonical), with `set_status`'s `ADR` key staying last in both `_ADAPTERS` and `_ALLOWED_STATUSES_BY_TYPE` -- the internal dispatch tables keep their established shape; adr-first applies to the derived tuple/enum/description, not to them. Six new set-equality asserts guard the key sets: one per `_ADAPTERS` (vs `WHOLE_BODY_DOMAINS`, or vs `ALL_DOMAINS` for `set_status`) plus `set_status`'s `_ALLOWED_STATUSES_BY_TYPE` (vs `ALL_DOMAINS`; its keys were already canonical, so no reorder), each with an actionable message naming the shared `general.tools/_domains.py` source and the fix (feat-125, REQ-006); ACC-005 verified them by temporarily breaking one side during development -- dropping `update.py`'s `_ADAPTERS` `req` entry failed the module import with `AssertionError: _ADAPTERS keys drifted from the shared general.tools._domains.WHOLE_BODY_DOMAINS source -- add or remove the domain in both places (feat-125-domain-lists, REQ-006)`, and dropping `set_status.py`'s `_ALLOWED_STATUSES_BY_TYPE` `req` entry failed with the matching `_ALLOWED_STATUSES_BY_TYPE ... ALL_DOMAINS` message; both were restored and clean re-imports confirmed. All eight derived strings now carry no hand-typed domain list: the five decorator descriptions are f-string-derived via `", ".join(...)` (byte-identical final text for `update`/`set_classification`/`delete`/`validate`, verified programmatically against the `git HEAD` originals; `set_status`'s text is the only one that changed -- its domain list now runs adr-first), `validate`'s unsupported-type error message is derived with the sanctioned `/` -> `, ` separator change, and `specmgr://config`'s resource description is derived from `ALL_DOMAINS` (byte-identical) with a new function-level set-equality assert on its 13-entry `domains` dict inside `config_info()` (insertion order kept, adr first; Tasks 3.5/3.6, REQ-003/007). Gate (Task 3.7): `uv run --frozen ruff format --check` (1695 files already formatted), `uv run --frozen ruff check` (All checks passed), `uv run --frozen vulture src/ whitelist.py --min-confidence 60` (clean), the `--all-extras` server-import smoke test (exit 0, no output), `uv run --frozen pytest -n auto --cov=src --cov-report=` (3365 passed), and `uv run --frozen --all-extras specmgr mcp-docs` (the `docs/MCP.md` diff is exactly the sanctioned `set_status` scope: the registered `type` enum reordered with `adr` first plus its two description occurrences now listing the domains adr-first; every other tool/resource's enum and description is byte-identical) -- `uv run --frozen --all-extras specmgr docs` then re-rendered only the five tool modules' function-signature headings in `docs/api/` (the PEP 692 annotation form, e.g. `type: 'Literal[*WHOLE_BODY_DOMAINS,]'`; CPython stores the raw annotation text including the subscript's trailing comma, and the raw form was verified to evaluate to the identical `Literal` as the clean form, so runtime behavior is unchanged), with `docs/GENERATED.md` byte-identical and no module docstrings touched.
 
 #### 2026-09-21 21:18:05.000Z - Phase 2 complete
 
