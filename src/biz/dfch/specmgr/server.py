@@ -416,13 +416,25 @@ from mcp.server import MCPServer
 
 from .telemetry.config import load_telemetry_config
 from .telemetry.logging import setup_logging
-from .telemetry.middleware import SpecmgrTelemetryMiddleware, logger as telemetry_logger
+from .telemetry.middleware import SpecmgrTelemetryMiddleware, logger as telemetry_logger, middleware_contract_compatible
+from .telemetry.otel import bootstrap_telemetry, shutdown_telemetry
 
 
 @asynccontextmanager
 async def _lifespan(_server: MCPServer) -> AsyncGenerator[None, None]:
-    """Placeholder lifespan: no shared state to initialise yet."""
+    """Lifespan: shut down the Phase 4 OTel providers at process exit (Task 4.1's exit pin).
+
+    The post-``yield`` section runs after serving ends (stdin EOF / client
+    disconnect). ``shutdown_telemetry()`` performs the ``MeterProvider``'s
+    final metric collection and the ``BatchSpanProcessor``'s final span
+    flush -- by then mcp 2.0.0's stdio transport has restored fd 1, so
+    this is the only place that final export can safely land on the
+    ``out=sys.stderr``-redirected console exporters (or over OTLP) rather
+    than contaminating the real stdout. A no-op when telemetry was
+    disabled at startup (the default).
+    """
     yield
+    shutdown_telemetry()
 
 
 # feat-139-logging-telemetry (Task 1.6, ACC-011): validate the
@@ -446,26 +458,52 @@ telemetry_config = load_telemetry_config()
 # state (idempotent, never a silent no-op).
 setup_logging(telemetry_config)
 
+# feat-139-logging-telemetry (Task 4.9, ACC-003): bootstrap the
+# OpenTelemetry SDK (``TracerProvider``/``MeterProvider`` + the
+# ``SPECMGR_OTEL_EXPORTER``-selected exporter) at this same module-scope
+# point, after the logging setup and before the server is constructed, so
+# ``SPECMGR_OTEL_ENABLED`` takes effect the moment ``specmgr mcp`` runs.
+# It is a no-op when telemetry is disabled (the default) -- setting
+# nothing, so the SDK's built-in ``OpenTelemetryMiddleware`` keeps creating
+# inert non-recording spans through the API's no-provider proxy. When
+# enabled it installs the providers via the global API, which the SDK's
+# import-time-fetched proxy tracer (``mcp/shared/_otel.py``) resolves
+# against -- that is why bootstrapping here, before ``MCPServer(...)``
+# construction, still engages the SDK's built-in middleware (Task 4.2
+# confirms it end to end). Keeping the config -> logging -> OTel ->
+# middleware order, the middleware append below stays last.
+bootstrap_telemetry(telemetry_config)
+
 mcp = MCPServer(
     name="specmgr",
     instructions="An artifact manager for system specifications.",
     lifespan=_lifespan,
 )
 
-# feat-139-logging-telemetry (Task 3.2, ACC-008/ACC-010): append the
-# correlation-ID/call-observability middleware to the server's own
-# ``middleware`` chain, right after the server is constructed (the Task
-# 4.9 OTel bootstrap inserts its call at the same module-scope point,
-# above this append, keeping the config -> logging -> OTel -> middleware
-# order). The append is wrapped in a minimal try/except: ``Server.
-# middleware`` is a provisional API (the ADR's flagged risk), and an
-# incompatible contract must not crash ``specmgr mcp`` at startup even
-# before Phase 4's full fail-open policy (Task 4.3) exists -- a single
-# warning, and the server continues with logging/telemetry unappended.
-# Task 4.3 upgrades this guard into the complete config-aware
-# disable-with-warning behavior; it is not a second, independent guard.
+# feat-139-logging-telemetry (Task 3.2, upgraded by Task 4.3;
+# ACC-008/ACC-010): append the correlation-ID/call-observability
+# middleware to the server's own ``middleware`` chain, right after the
+# server is constructed. The append is wrapped in the Task 4.3 fail-open
+# policy (the upgrade of Task 3.2's minimal guard -- the same mechanism,
+# not a second independent one): ``Server.middleware`` is a provisional
+# API (the ADR's flagged risk), so the installed SDK's contract is checked
+# first (``middleware_contract_compatible``: the ``middleware`` list type
+# and the ``ServerMiddleware.__call__`` signature vs. this middleware's
+# own), and an incompatible contract -- or a check/append that raises --
+# logs exactly one warning via the ``biz.dfch.specmgr.telemetry`` logger
+# and the server continues operating without call observability, rather
+# than failing to start. (The call-time half of the policy lives in the
+# middleware itself: a first contract violation at request time logs one
+# warning and disables observability for the process.)
 try:
-    mcp.middleware.append(SpecmgrTelemetryMiddleware(telemetry_config))
+    if middleware_contract_compatible(mcp):
+        mcp.middleware.append(SpecmgrTelemetryMiddleware(telemetry_config))
+    else:
+        telemetry_logger.warning(
+            "the installed MCP SDK's Server.middleware contract is incompatible with the "
+            "specmgr telemetry middleware; the server continues operating without call "
+            "observability (one warning per episode)"
+        )
 except Exception as e:
     telemetry_logger.warning(
         "could not append the specmgr telemetry middleware to mcp.middleware "

@@ -395,5 +395,14 @@ registers all three.
 
 ### `_lifespan(_server: 'MCPServer') -> 'AsyncGenerator[None, None]'`
 
-Placeholder lifespan: no shared state to initialise yet.
+Lifespan: shut down the Phase 4 OTel providers at process exit (Task 4.1's exit pin).
+
+The post-``yield`` section runs after serving ends (stdin EOF / client
+disconnect). ``shutdown_telemetry()`` performs the ``MeterProvider``'s
+final metric collection and the ``BatchSpanProcessor``'s final span
+flush -- by then mcp 2.0.0's stdio transport has restored fd 1, so
+this is the only place that final export can safely land on the
+``out=sys.stderr``-redirected console exporters (or over OTLP) rather
+than contaminating the real stdout. A no-op when telemetry was
+disabled at startup (the default).
 

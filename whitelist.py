@@ -286,3 +286,15 @@ reset
 # ``Handler.emit`` -> ``formatter.format(record)`` dynamic dispatch), never
 # by a direct call in ``src/``; the name scopes to that single method today.
 format
+
+# telemetry (feat-139-logging-telemetry Phase 4): `OtlpExporterWrapper`'s
+# public state accessors, exercised only by its own unit tests so far (the
+# wrapper's internal logic reads the same state directly under its lock):
+# `failing` (whether a failure episode is in progress -- the Task 4.5 pin's
+# observable episode state) and `armed` (whether the suppression filter is
+# attached -- armed at each `export()` attempt's start, disarmed on a
+# `SUCCESS` return or `shutdown`). `exporter` is the read-only seam exposing
+# the wrapped OTLP exporter for the same tests.
+failing
+armed
+exporter

@@ -95,21 +95,38 @@ base-library-safe.
 The ``ServerMiddleware`` contract is a provisional API (the ADR's flagged
 risk). This middleware therefore never asserts on the SDK-provided
 ``ctx``/``call_next`` inside ``__call__`` -- a future contract change must
-degrade (Task 4.2's guard / Task 4.3's fail-open policy), not raise on
-every request; the input validation the repo convention requires lives in
-``__init__`` instead, where Task 3.2's startup guard already wraps the call.
+degrade (Task 4.3's fail-open policy), not raise on every request; the
+input validation the repo convention requires lives in ``__init__``
+instead. Task 4.3's policy has two surfaces, one warning per episode via
+the ``biz.dfch.specmgr.telemetry`` logger:
+
+- *startup* -- :func:`middleware_contract_compatible` checks the installed
+  SDK's ``Server.middleware`` list type and the
+  ``ServerMiddleware.__call__`` signature against this middleware's own
+  implementation before ``server.py`` appends it; an incompatible
+  contract (or an append that raises) logs one warning and the server
+  continues operating without call observability, rather than failing to
+  start (this upgrades Task 3.2's minimal append guard -- same mechanism,
+  not a second, independent one);
+- *call time* -- ``__call__`` guards the middleware-contract surfaces
+  (the pre-call ``ctx`` reads, the post-call result processing) and, on
+  the first ``AttributeError``/``TypeError`` there, logs one warning,
+  disables observability for the rest of the process, and still completes
+  the request unmodified -- never double-executing ``call_next``.
 """
 
 from __future__ import annotations
 
+import inspect
 import logging
+import threading
 import time
 import traceback
 import uuid
 from collections.abc import Mapping
 from typing import Any
 
-from mcp.server.context import CallNext, HandlerResult, ServerRequestContext
+from mcp.server.context import CallNext, HandlerResult, ServerMiddleware, ServerRequestContext
 from mcp.shared.exceptions import MCPError
 from mcp_types import CallToolResult, INTERNAL_ERROR, INVALID_PARAMS
 from opentelemetry import trace
@@ -237,6 +254,79 @@ def new_correlation_id() -> str:
             result = format(span_context.trace_id, _TRACE_ID_HEX_WIDTH)
             return result
     result = uuid.uuid4().hex
+    return result
+
+
+#: The provisional ``ServerMiddleware`` contract this middleware implements:
+#: an async ``__call__`` taking exactly the two positional parameters
+#: ``(ctx, call_next)`` (besides ``self``). Task 4.4's canary test pins the
+#: installed SDK's side of this shape.
+_MW_PARAM_CTX = "ctx"
+_MW_PARAM_CALL_NEXT = "call_next"
+_MIDDLEWARE_CONTRACT_PARAMS = (_MW_PARAM_CTX, _MW_PARAM_CALL_NEXT)
+
+
+def _callable_contract_params(callable_object: object) -> tuple[str, ...] | None:
+    """Return a callable's positional parameter names (besides ``self``), if it fits the contract shape.
+
+    ``None`` when the object is not a coroutine function or its signature
+    cannot be inspected (a contract that no longer looks like the pinned
+    async two-argument shape).
+
+    Args:
+        callable_object: A ``__call__`` implementation to inspect (the
+            SDK's ``ServerMiddleware.__call__`` protocol method or this
+            middleware's own ``__call__``).
+
+    Returns:
+        The positional parameter names (besides ``self``), or ``None``.
+    """
+    if not inspect.iscoroutinefunction(callable_object):
+        return None
+    try:
+        parameters = list(inspect.signature(callable_object).parameters.values())
+    except (TypeError, ValueError):
+        return None
+    positional = [
+        parameter.name
+        for parameter in parameters
+        if parameter.kind in (inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD)
+    ]
+    if not positional or positional[0] != "self":
+        return None
+    result = tuple(positional[1:])
+    return result
+
+
+def middleware_contract_compatible(server: object) -> bool:
+    """Whether the installed SDK's provisional ``Server.middleware`` contract still fits (Task 4.3).
+
+    The startup half of the Task 4.3 fail-open policy, evaluated by
+    ``server.py``'s module scope before the middleware is appended. Checks,
+    without mutating anything: (1) the server's ``middleware`` chain is a
+    ``list`` (the appendable shape this feature relies on), and (2) both
+    the SDK's ``ServerMiddleware.__call__`` protocol and this middleware's
+    own ``__call__`` are async two-argument callables taking exactly
+    ``(ctx, call_next)``. A ``False`` result (or an exception raised while
+    checking -- e.g. the ``middleware`` attribute itself is gone) means the
+    contract changed underneath us: the caller logs one warning and
+    continues operating without call observability, rather than failing to
+    start (ACC-010).
+
+    Args:
+        server: The constructed ``MCPServer`` whose ``middleware`` chain is
+            checked (any object exposing the SDK's ``middleware`` list).
+
+    Returns:
+        ``True`` when appending :class:`SpecmgrTelemetryMiddleware` is
+        contract-compatible with the installed SDK.
+    """
+    chain = server.middleware
+    if not isinstance(chain, list):
+        return False
+    if _callable_contract_params(ServerMiddleware.__call__) != _MIDDLEWARE_CONTRACT_PARAMS:
+        return False
+    result = _callable_contract_params(SpecmgrTelemetryMiddleware.__call__) == _MIDDLEWARE_CONTRACT_PARAMS
     return result
 
 
@@ -458,7 +548,8 @@ class SpecmgrTelemetryMiddleware:
     dispatcher's already-serialized wire dict for a success and the raised
     exception for a failure. See the module docstring for the enablement
     gating, the ACC-013 method filter, the per-method identity extraction,
-    and the three per-channel error behaviors.
+    the three per-channel error behaviors, and the Task 4.3 call-time
+    fail-open guard.
 
     Attributes:
         config: The parsed, validated telemetry configuration the
@@ -478,16 +569,21 @@ class SpecmgrTelemetryMiddleware:
         assert isinstance(config, TelemetryConfig), type(config)
         self.config = config
         self._enabled = config.log_enabled or config.otel_enabled
+        self._disabled = False
+        self._disable_lock = threading.Lock()
 
     @property
     def enabled(self) -> bool:
-        """Whether observability engages (at least one feature enabled).
+        """Whether observability engages (at least one feature enabled, not yet failed open).
 
         ``False`` makes :meth:`__call__` a pure pass-through for every
-        method; ``server.py``'s startup guard and the Phase 4 fail-open
-        policy (Task 4.3) and the Phase 3 unit tests read it.
+        method; ``server.py``'s startup guard, the Phase 3 unit tests, and
+        anything else reading the effective observability state read it.
+        It turns ``False`` -- and stays ``False`` for the rest of the
+        process -- once the Task 4.3 call-time fail-open guard has
+        disabled observability after a first contract violation.
         """
-        result = self._enabled
+        result = self._enabled and not self._disabled
         return result
 
     async def __call__(
@@ -497,12 +593,23 @@ class SpecmgrTelemetryMiddleware:
     ) -> HandlerResult:
         """Run one inbound request/notification through the middleware.
 
-        When :attr:`enabled` is ``False`` (both features off, the default)
-        or ``ctx.method`` is not one of the three invocation methods, the
-        request is passed straight to ``call_next(ctx)`` unmodified and
-        unobserved. Otherwise the invocation is observed per the module
-        docstring (identity extraction, correlation ID, start/completion/
-        error records, per-channel error attachment/conversion).
+        When :attr:`enabled` is ``False`` (both features off, the default,
+        or the Task 4.3 call-time guard has failed open), the request is
+        passed straight to ``call_next(ctx)`` unmodified and unobserved.
+        When ``ctx.method`` is not one of the three invocation methods,
+        the request is passed straight through unobserved (ACC-013).
+        Otherwise the invocation is observed per the module docstring
+        (identity extraction, correlation ID, start/completion/error
+        records, per-channel error attachment/conversion).
+
+        The middleware-contract surfaces (the ``ctx.method`` read here,
+        the pre-call extraction and post-call result processing in
+        :meth:`_observe`) are guarded per the Task 4.3 fail-open policy:
+        a first ``AttributeError``/``TypeError`` there -- a future SDK
+        whose provisional contract no longer matches this implementation
+        -- logs one warning, disables observability for the rest of the
+        process, and still completes the request unmodified (``call_next``
+        is never called twice).
 
         Args:
             ctx: The per-request context (``ctx.method``/``ctx.params``
@@ -514,20 +621,28 @@ class SpecmgrTelemetryMiddleware:
         """
         if not self.enabled:
             return await call_next(ctx)
-        if ctx.method not in _METHOD_ITEM_TYPE:
+        try:
+            method = ctx.method
+        except (AttributeError, TypeError) as e:
+            self._fail_open_once(e)
             return await call_next(ctx)
-        return await self._observe(ctx, call_next)
+        if method not in _METHOD_ITEM_TYPE:
+            return await call_next(ctx)
+        return await self._observe(ctx, call_next, method)
 
     async def _observe(
         self,
         ctx: ServerRequestContext[Any, Any],
         call_next: CallNext,
+        method: str,
     ) -> HandlerResult:
         """Observe one invocation of one of the three methods (see :meth:`__call__`).
 
         Args:
             ctx: The per-request context.
             call_next: The rest of the middleware chain.
+            method: The already-extracted ``ctx.method`` (one of the three
+                invocation methods; ``__call__``'s guarded read).
 
         Returns:
             The (possibly annotated) result of ``call_next``.
@@ -538,15 +653,18 @@ class SpecmgrTelemetryMiddleware:
                 ``ValidationError``/other raw exception (channel (c), the
                 converted, wire-identical error).
         """
-        method = ctx.method
-        item_type = _METHOD_ITEM_TYPE[method]
-        params: Mapping[str, Any] | None = ctx.params if isinstance(ctx.params, Mapping) else None
-        raw_item = params.get(_METHOD_PARAMS_KEY[method]) if params is not None else None
-        item_name: str | None = raw_item if isinstance(raw_item, str) else None
-        status = _set_status_value(method, item_name, params)
-        correlation_id = new_correlation_id()
-        started = time.monotonic()
-        self._log(_PHASE_START, logging.INFO, method, item_type, item_name, correlation_id, status=status)
+        try:
+            item_type = _METHOD_ITEM_TYPE[method]
+            params: Mapping[str, Any] | None = ctx.params if isinstance(ctx.params, Mapping) else None
+            raw_item = params.get(_METHOD_PARAMS_KEY[method]) if params is not None else None
+            item_name: str | None = raw_item if isinstance(raw_item, str) else None
+            status = _set_status_value(method, item_name, params)
+            correlation_id = new_correlation_id()
+            started = time.monotonic()
+            self._log(_PHASE_START, logging.INFO, method, item_type, item_name, correlation_id, status=status)
+        except (AttributeError, TypeError) as e:
+            self._fail_open_once(e)
+            return await call_next(ctx)
         try:
             result = await call_next(ctx)
         except MCPError as e:
@@ -589,32 +707,66 @@ class SpecmgrTelemetryMiddleware:
                 exception=_raised_exception_field(e),
             )
             raise _converted_mcp_error(e, correlation_id) from e
-        duration_ms = _duration_ms(started)
-        if method == METH_TOOLS_CALL and _is_tool_error_result(result):
+        try:
+            duration_ms = _duration_ms(started)
+            if method == METH_TOOLS_CALL and _is_tool_error_result(result):
+                self._log(
+                    _PHASE_FAILED,
+                    logging.ERROR,
+                    method,
+                    item_type,
+                    item_name,
+                    correlation_id,
+                    status=status,
+                    duration_ms=duration_ms,
+                    exception=_tool_error_field(result),
+                )
+                _attach_correlation_id_to_result(result, correlation_id)
+                return result
             self._log(
-                _PHASE_FAILED,
-                logging.ERROR,
+                _PHASE_COMPLETED,
+                logging.INFO,
                 method,
                 item_type,
                 item_name,
                 correlation_id,
                 status=status,
                 duration_ms=duration_ms,
-                exception=_tool_error_field(result),
             )
-            _attach_correlation_id_to_result(result, correlation_id)
             return result
-        self._log(
-            _PHASE_COMPLETED,
-            logging.INFO,
-            method,
-            item_type,
-            item_name,
-            correlation_id,
-            status=status,
-            duration_ms=duration_ms,
+        except (AttributeError, TypeError) as e:
+            # Post-call contract surface (the SDK-returned result shape):
+            # fail open once and return the result the chain produced,
+            # unannotated -- the request itself already succeeded.
+            self._fail_open_once(e)
+            return result
+
+    def _fail_open_once(self, exc: Exception) -> None:
+        """The Task 4.3 call-time fail-open: one warning, then observability off.
+
+        On the first middleware-contract violation at call time (an
+        ``AttributeError``/``TypeError`` from one of the guarded
+        contract surfaces), log exactly one warning via the
+        ``biz.dfch.specmgr.telemetry`` logger and disable observability
+        for the rest of the process: every later request is a pure
+        pass-through (no records, no IDs, no attachment, no conversion).
+        The server keeps operating normally -- the request that hit the
+        violation still completes (see the guarded call sites).
+
+        Args:
+            exc: The contract-violation exception (named in the warning).
+        """
+        with self._disable_lock:
+            if self._disabled:
+                return
+            self._disabled = True
+        logger.warning(
+            "the installed MCP SDK's Server.middleware contract is incompatible with the "
+            "specmgr telemetry middleware at call time (%s: %s); call observability is "
+            "disabled for the rest of this process (one message per episode)",
+            type(exc).__name__,
+            exc,
         )
-        return result
 
     def _log(
         self,

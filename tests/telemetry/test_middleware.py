@@ -41,6 +41,7 @@ same as ``telemetry/middleware.py`` itself.
 
 import asyncio
 import importlib
+import inspect
 import logging
 import os
 import sys
@@ -72,6 +73,7 @@ from biz.dfch.specmgr.telemetry.middleware import (
     INTERNAL_ERROR_MESSAGE,
     INVALID_PARAMS_MESSAGE,
     SpecmgrTelemetryMiddleware,
+    middleware_contract_compatible,
     new_correlation_id,
 )
 
@@ -771,6 +773,172 @@ class TestServerWiring(_MiddlewareTestCase):
         self.assertEqual(len(warnings), 1)
         self.assertIn("could not append the specmgr telemetry middleware", warnings[0].getMessage())
         self.assertEqual(len(self.records), 1)
+
+    def test_an_incompatible_sdk_contract_fails_open_at_startup_with_one_warning(self):
+        # Task 4.4(b): simulate a future SDK whose ``ServerMiddleware.__call__``
+        # contract changed (a renamed parameter) and assert the Task 4.3
+        # fail-open policy engages through ``server.py``'s real startup path:
+        # one warning, no middleware appended, the server still constructed
+        # and operating.
+        from mcp.server.context import ServerMiddleware
+
+        async def _incompatible(self: object, context: object) -> object:
+            return None
+
+        with mock.patch.object(ServerMiddleware, "__call__", new=_incompatible):
+            module = self._fresh_import_server({ENV_LOG_ENABLED: "true"})
+
+        self.assertIsInstance(module.mcp, MCPServer)
+        lowlevel_chain = module.mcp._lowlevel_server.middleware
+        self.assertFalse(any(isinstance(entry, SpecmgrTelemetryMiddleware) for entry in lowlevel_chain))
+        warnings = [record for record in self.records if record.levelno == logging.WARNING]
+        self.assertEqual(len(warnings), 1)
+        self.assertIn("Server.middleware contract is incompatible", warnings[0].getMessage())
+        self.assertEqual(len(self.records), 1)
+
+
+class TestMiddlewareContractCanary(_MiddlewareTestCase):
+    """Task 4.4(a): pin the installed SDK's provisional ``Server.middleware`` contract.
+
+    A future ``mcp`` upgrade that changes the ``middleware`` list type or
+    the ``ServerMiddleware.__call__`` signature trips these canaries in CI
+    before the runtime fail-open policy ever needs to engage (the ADR's
+    flagged risk).
+    """
+
+    def test_the_installed_sdk_middleware_chain_is_a_list(self):
+        server = MCPServer(name="canary", instructions="canary")
+
+        self.assertIs(type(server.middleware), list)
+
+    def test_the_installed_sdk_servermiddleware_call_signature_is_the_pinned_shape(self):
+        from mcp.server.context import ServerMiddleware
+
+        self.assertTrue(inspect.iscoroutinefunction(ServerMiddleware.__call__))
+        parameters = list(inspect.signature(ServerMiddleware.__call__).parameters.values())
+        positional = [
+            parameter.name
+            for parameter in parameters
+            if parameter.kind in (inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD)
+        ]
+
+        self.assertEqual(positional, ["self", "ctx", "call_next"])
+
+    def test_the_contract_check_passes_on_the_installed_sdk(self):
+        server = MCPServer(name="canary", instructions="canary")
+
+        self.assertTrue(middleware_contract_compatible(server))
+
+    def test_the_contract_check_rejects_a_non_list_chain(self):
+        class _TupleChain:
+            middleware = (object(),)
+
+        self.assertFalse(middleware_contract_compatible(_TupleChain()))
+
+    def test_the_contract_check_rejects_a_renamed_protocol_param(self):
+        from mcp.server.context import ServerMiddleware
+
+        server = MCPServer(name="canary", instructions="canary")
+
+        async def _renamed(self: object, context: object) -> object:
+            return None
+
+        with mock.patch.object(ServerMiddleware, "__call__", new=_renamed):
+            self.assertFalse(middleware_contract_compatible(server))
+
+    def test_the_contract_check_rejects_a_sync_protocol(self):
+        from mcp.server.context import ServerMiddleware
+
+        server = MCPServer(name="canary", instructions="canary")
+
+        def _sync(self: object, ctx: object, call_next: object) -> object:
+            return None
+
+        with mock.patch.object(ServerMiddleware, "__call__", new=_sync):
+            self.assertFalse(middleware_contract_compatible(server))
+
+
+class TestCallTimeFailOpen(_MiddlewareTestCase):
+    """Task 4.3's call-time half: a first contract violation at request time fails open once (ACC-010)."""
+
+    def _fail_open_count(self) -> int:
+        return len(
+            [
+                record
+                for record in self.records
+                if "incompatible with the specmgr telemetry middleware at call time" in record.getMessage()
+            ]
+        )
+
+    def test_a_broken_ctx_method_at_call_time_fails_open_with_one_warning_and_completes_the_request(self):
+        class _BrokenMethodCtx:
+            """A ctx double whose ``method`` read raises (a future SDK contract change)."""
+
+            params = None
+
+            @property
+            def method(self) -> str:
+                raise AttributeError("the method attribute is gone")
+
+        sut = SpecmgrTelemetryMiddleware(_config(log_enabled=True))
+        sentinel = {"result": True}
+        ctx = _BrokenMethodCtx()
+
+        first = _invoke(sut, ctx, _returns(sentinel))
+        second = _invoke(sut, ctx, _returns(sentinel))
+
+        self.assertIs(first, sentinel)
+        self.assertIs(second, sentinel)
+        self.assertEqual(self._fail_open_count(), 1)
+        self.assertFalse(sut.enabled)
+
+    def test_a_broken_ctx_params_at_call_time_fails_open_with_one_warning(self):
+        class _BrokenParamsCtx:
+            method = "tools/call"
+
+            @property
+            def params(self) -> object:
+                raise AttributeError("the params attribute is gone")
+
+        sut = SpecmgrTelemetryMiddleware(_config(log_enabled=True))
+        sentinel = {"result": True}
+
+        result = _invoke(sut, _BrokenParamsCtx(), _returns(sentinel))
+
+        self.assertIs(result, sentinel)
+        self.assertEqual(self._fail_open_count(), 1)
+        self.assertFalse(sut.enabled)
+        # No start/completion records: observability is off.
+        self.assertEqual([record for record in self.records if record.levelno in (logging.INFO,)], [])
+
+    def test_a_broken_result_shape_after_call_next_returns_the_result_and_fails_open(self):
+        class _BrokenResult(dict):
+            def get(self, *args: object, **kwargs: object) -> object:
+                raise TypeError("the result contract changed")
+
+        sut = SpecmgrTelemetryMiddleware(_config(log_enabled=True))
+        ctx = _make_ctx("tools/call", {"name": "get_req", "arguments": {"id": "x"}})
+        broken = _BrokenResult()
+
+        result = _invoke(sut, ctx, _returns(broken))
+
+        self.assertIs(result, broken)
+        self.assertEqual(self._fail_open_count(), 1)
+        self.assertFalse(sut.enabled)
+
+    def test_an_app_exception_is_not_misread_as_a_contract_violation(self):
+        sut = SpecmgrTelemetryMiddleware(_config(log_enabled=True))
+        ctx = _make_ctx("tools/call", {"name": "get_req", "arguments": {"id": "x"}})
+
+        with self.assertRaises(MCPError) as cm:
+            _invoke(sut, ctx, _raises(RuntimeError("boom")))
+
+        self.assertEqual(cm.exception.error.code, INTERNAL_ERROR)
+        self.assertEqual(self._fail_open_count(), 0)
+        self.assertTrue(sut.enabled)
+        self.assertEqual(
+            [record.getMessage() for record in self.records], ["tool get_req start", "tool get_req failed"]
+        )
 
 
 if __name__ == "__main__":

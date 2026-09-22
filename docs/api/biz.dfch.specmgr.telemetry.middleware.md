@@ -80,9 +80,24 @@ base-library-safe.
 The ``ServerMiddleware`` contract is a provisional API (the ADR's flagged
 risk). This middleware therefore never asserts on the SDK-provided
 ``ctx``/``call_next`` inside ``__call__`` -- a future contract change must
-degrade (Task 4.2's guard / Task 4.3's fail-open policy), not raise on
-every request; the input validation the repo convention requires lives in
-``__init__`` instead, where Task 3.2's startup guard already wraps the call.
+degrade (Task 4.3's fail-open policy), not raise on every request; the
+input validation the repo convention requires lives in ``__init__``
+instead. Task 4.3's policy has two surfaces, one warning per episode via
+the ``biz.dfch.specmgr.telemetry`` logger:
+
+- *startup* -- :func:`middleware_contract_compatible` checks the installed
+  SDK's ``Server.middleware`` list type and the
+  ``ServerMiddleware.__call__`` signature against this middleware's own
+  implementation before ``server.py`` appends it; an incompatible
+  contract (or an append that raises) logs one warning and the server
+  continues operating without call observability, rather than failing to
+  start (this upgrades Task 3.2's minimal append guard -- same mechanism,
+  not a second, independent one);
+- *call time* -- ``__call__`` guards the middleware-contract surfaces
+  (the pre-call ``ctx`` reads, the post-call result processing) and, on
+  the first ``AttributeError``/``TypeError`` there, logs one warning,
+  disables observability for the rest of the process, and still completes
+  the request unmodified -- never double-executing ``call_next``.
 
 ## Classes
 
@@ -95,7 +110,8 @@ Appended to ``mcp.middleware`` by ``server.py``'s module scope (Task
 dispatcher's already-serialized wire dict for a success and the raised
 exception for a failure. See the module docstring for the enablement
 gating, the ACC-013 method filter, the per-method identity extraction,
-and the three per-channel error behaviors.
+the three per-channel error behaviors, and the Task 4.3 call-time
+fail-open guard.
 
 Attributes:
     config: The parsed, validated telemetry configuration the
@@ -136,6 +152,23 @@ never receives the ID.
 Args:
     result: The error result to annotate (mutated in place).
     correlation_id: The invocation's correlation ID.
+
+
+### `_callable_contract_params(callable_object: 'object') -> 'tuple[str, ...] | None'`
+
+Return a callable's positional parameter names (besides ``self``), if it fits the contract shape.
+
+``None`` when the object is not a coroutine function or its signature
+cannot be inspected (a contract that no longer looks like the pinned
+async two-argument shape).
+
+Args:
+    callable_object: A ``__call__`` implementation to inspect (the
+        SDK's ``ServerMiddleware.__call__`` protocol method or this
+        middleware's own ``__call__``).
+
+Returns:
+    The positional parameter names (besides ``self``), or ``None``.
 
 
 ### `_converted_mcp_error(exc: 'Exception', correlation_id: 'str') -> 'MCPError'`
@@ -246,6 +279,31 @@ Args:
 
 Returns:
     The ``{"type": "tool_error", "message": ...}`` mapping.
+
+
+### `middleware_contract_compatible(server: 'object') -> 'bool'`
+
+Whether the installed SDK's provisional ``Server.middleware`` contract still fits (Task 4.3).
+
+The startup half of the Task 4.3 fail-open policy, evaluated by
+``server.py``'s module scope before the middleware is appended. Checks,
+without mutating anything: (1) the server's ``middleware`` chain is a
+``list`` (the appendable shape this feature relies on), and (2) both
+the SDK's ``ServerMiddleware.__call__`` protocol and this middleware's
+own ``__call__`` are async two-argument callables taking exactly
+``(ctx, call_next)``. A ``False`` result (or an exception raised while
+checking -- e.g. the ``middleware`` attribute itself is gone) means the
+contract changed underneath us: the caller logs one warning and
+continues operating without call observability, rather than failing to
+start (ACC-010).
+
+Args:
+    server: The constructed ``MCPServer`` whose ``middleware`` chain is
+        checked (any object exposing the SDK's ``middleware`` list).
+
+Returns:
+    ``True`` when appending :class:`SpecmgrTelemetryMiddleware` is
+    contract-compatible with the installed SDK.
 
 
 ### `new_correlation_id() -> 'str'`
