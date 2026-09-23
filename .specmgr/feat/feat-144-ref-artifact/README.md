@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-21 21:31:30.254+02:00'
 id: feat-144-ref-artifact
-status: planning
+status: done
 type: feat
-updated: '2026-09-23 08:16:53.812+02:00'
+updated: '2026-09-23 08:37:54.006+02:00'
 version: 1.0.0
 ---
 
@@ -129,19 +129,23 @@ All open choices are now locked (Phase 1 complete). The design:
 
 #### Phase 6: Verification & Closeout
 
-- [ ] Task 6.1: Run the full quality gate with tests as the final verification pass
-- [ ] Task 6.2: Update `### Current Status` and `### Updates`, and set the feature status via the generic `set_status` tool (`type="feat"`)
-- [ ] Task 6.3: Commit the phase as a single commit (no push)
+- [x] Task 6.1: Run the full quality gate with tests as the final verification pass
+- [x] Task 6.2: Update `### Current Status` and `### Updates`, and set the feature status via the generic `set_status` tool (`type="feat"`)
+- [x] Task 6.3: Commit the phase as a single commit (no push)
 
 ## Progress
 
 ### Current Status
 
-Phase 5 (Documentation) complete: `list_references` is now registered in `server.py`'s module docstring, `AGENTS.md`'s `general/tools/` enumeration, the root `README.md` (new `## Referencing Artifacts` section + table-of-contents entry + a one-line pointer in `## Usage`), and `CHANGELOG.md` (`[Unreleased]` → `### Added`, with the #145 follow-up pointer). `docs/api/` + `docs/GENERATED.md` regenerated via `specmgr docs` (the server page is purely additive; the test-file count moved 358 → 361, reflecting Phase 3's three new test files) and `docs/MCP.md` via `specmgr mcp-docs` (no diff — the registration has not changed since Phase 2); `vulture` is clean with no new `whitelist.py` entries. The full quality gate is green (`ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, `pytest -n auto --cov=src --cov-report=` — 3401 passed). Per Task 4.4, Phase 4's changes (`.opencode/command/refs.md`, `.opencode/agent/ref-finder.md`) ship in this same (folded) commit. Phase 6 (Verification & Closeout) remains.
+Phase 6 (Verification & Closeout) complete — all phases of feat-144 are now done. Final quality gate (Task 6.1) is green: `ruff format --check` (1705 files already formatted), `ruff check` (all checks passed), `vulture src/ whitelist.py --min-confidence 60` (clean, no new `whitelist.py` entries), `pytest -n auto --cov=src --cov-report=` (3401 passed) — every command exit 0. The frontmatter `status` was set `planning` → `done` via the generic `set_status` tool (`type="feat"`), and the document parses before and after that change (PARSE_OK). The feature itself was end-to-end smoke-verified against this plan document: `list_references(type='feat', id='feat-144-ref-artifact')` returns `total=5, truncated=False, error_count=0` — the five `### Related Decisions` ADR references all resolve on disk. ACC-001..ACC-009 are all satisfied. The feature is ready for review (PR); nothing is outstanding except the follow-up #145 (per-domain batched resolution), which is explicitly out of scope by design.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-23 06:35:52.091Z - Phase 6 verification and closeout: final gate green, feature marked done (this phase's commit is the closeout commit)
+
+Implemented Tasks 6.1-6.3. Task 6.1 (final verification pass): the full quality gate run from the worktree root, every command exit 0 — `uv run --frozen ruff format --check` (1705 files already formatted), `uv run --frozen ruff check` (all checks passed), `uv run --frozen vulture src/ whitelist.py --min-confidence 60` (clean, no new `whitelist.py` entries), `uv run --frozen pytest -n auto --cov=src --cov-report=` (3401 passed in ~42 s). Task 6.2: `### Current Status` rewritten as the final closeout paragraph (all phases complete, gate green, feature ready for review; the only outstanding item is the #145 follow-up, explicitly out of scope by design), this entry prepended, and the frontmatter `updated` bumped in the same edit. Status change: `status: planning` → `status: done` via the generic `set_status` tool (`type="feat"`, `id="feat-144-ref-artifact"`) — frontmatter-only, body untouched; the document parses before the change (PARSE_OK) and after it (PARSE_OK again). End-to-end smoke of the feature itself against this plan document: `list_references(type='feat', id='feat-144-ref-artifact')` → `total=5, truncated=False, error_count=0` — the five `### Related Decisions` ADR references all resolve on disk. Task 6.3: the phase commit (single commit, no push) is the closeout commit — the checked Task 6.3 box above documents the intent it fulfills. No new design decisions were made in this phase (verification/closeout only), so `### Decisions Made` is unchanged. ACC-001..ACC-009: all satisfied (ACC-001..ACC-006/ACC-009 via the Phase 3 test classes, ACC-007 via the Phase 2/5 registrations + this green gate, ACC-008 via the Phase 4 conformance + smoke verification).
 
 #### 2026-09-23 06:16:53.813Z - Phase 5 documentation complete; full quality gate green (Phase 4 folded into this commit)
 
