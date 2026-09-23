@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-21 21:31:30.254+02:00'
 id: feat-144-ref-artifact
-status: done
+status: progress
 type: feat
-updated: '2026-09-23 08:37:54.006+02:00'
+updated: '2026-09-23 13:38:41.899+02:00'
 version: 1.0.0
 ---
 
@@ -31,15 +31,15 @@ specmgr documents cross-reference each other via type-tagged lines (VCR's `## Ve
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: `list_references(type, id)` on a fixture SYSRS document referencing REQ/GOL/RSK artifacts returns a `PagedResult` with one row per unique reference, each carrying the correct `type`, `id`, `title` (from the resolved document), and `path` (resolved absolute).
-- [ ] ACC-002: A document with no cross-references returns an empty `results` list (`total` 0, `truncated` false), not an error.
-- [ ] ACC-003: A reference to a uuid that does not exist on disk appears as a row with null `title`/`path` and an `error` carrying the domain not-found message, and does not raise.
-- [ ] ACC-004: Duplicate references to the same `(type, id)` yield exactly one row.
-- [ ] ACC-005: An invalid source `type` or `id` raises ValueError before any filesystem access.
-- [ ] ACC-006: A source document that does not exist on disk (valid shape, no file) raises the domain's not-found error, identical to `get_<d>`.
-- [ ] ACC-007: `specmgr mcp-docs`/`specmgr docs` output regenerated; `server.py` docstring, `AGENTS.md`, `README.md`, and `CHANGELOG.md` list the tool and command; and the full quality gate (`ruff format --check`, `ruff check`, `vulture`, `pytest -n auto`) is green.
-- [ ] ACC-008: The `/refs <type> <id>` command resolves through the `ref-finder` subagent and reports the `list_references` rows (flagging any not-found references); `ref-finder.md` declares read-only permissions (`edit`/`write` denied), consistent with `feat-reviewer.md`.
-- [ ] ACC-009: Paging mirrors the `list_*` tools: a source with more than 25 unique references returns `truncated=true` and a page of at most `max_results` rows with correct `total`; `offset` advances the window; `max_results` clamps to [1,100] and `offset` floors to 0 (out-of-range values clamp, never error).
+- [x] ACC-001: `list_references(type, id)` on a fixture SYSRS document referencing REQ/GOL/RSK artifacts returns a `PagedResult` with one row per unique reference, each carrying the correct `type`, `id`, `title` (from the resolved document), and `path` (resolved absolute). Verified in `tests/general/tools/test_list_references.py` (ACC-001 fixture).
+- [x] ACC-002: A document with no cross-references returns an empty `results` list (`total` 0, `truncated` false), not an error. Verified in `test_list_references.py` (ACC-002 fixture).
+- [x] ACC-003: A reference to a uuid that does not exist on disk appears as a row with null `title`/`path` and an `error` carrying the domain not-found message, and does not raise. Verified in `test_list_references.py` (ACC-003 fixture) and end-to-end via the Phase 4 `/refs` not-found smoke exercise.
+- [x] ACC-004: Duplicate references to the same `(type, id)` yield exactly one row. Verified in `test_list_references.py` (ACC-004 fixture).
+- [x] ACC-005: An invalid source `type` or `id` raises ValueError before any filesystem access. Verified in `test_list_references.py` (ACC-005 fixture: nonexistent domain-root env vars prove the guard fires before any read).
+- [x] ACC-006: A source document that does not exist on disk (valid shape, no file) raises the domain's not-found error, identical to `get_<d>`. Verified in `test_list_references.py` across req/uc/sysrs/gol/rsk/feat/adr sources.
+- [x] ACC-007: `specmgr mcp-docs`/`specmgr docs` output regenerated; `server.py` docstring, `AGENTS.md`, `README.md`, and `CHANGELOG.md` list the tool and command; and the full quality gate (`ruff format --check`, `ruff check`, `vulture`, `pytest -n auto`) is green. Verified in Phase 5 (Tasks 5.1-5.2) and the Phase 6 closeout gate (Task 6.1).
+- [x] ACC-008: The `/refs <type> <id>` command resolves through the `ref-finder` subagent and reports the `list_references` rows (flagging any not-found references); `ref-finder.md` declares read-only permissions (`edit`/`write` denied), consistent with `feat-reviewer.md`. Verified in Phase 4 (Task 4.3 conformance check + end-to-end smoke test against a live document).
+- [x] ACC-009: Paging mirrors the `list_*` tools: a source with more than 25 unique references returns `truncated=true` and a page of at most `max_results` rows with correct `total`; `offset` advances the window; `max_results` clamps to [1,100] and `offset` floors to 0 (out-of-range values clamp, never error). Verified in `test_list_references.py` (30-unique-reference paging test).
 
 ### Scope
 
@@ -84,6 +84,7 @@ All open choices are now locked (Phase 1 complete). The design:
 - **Result model**: `general/models/reference.py` defines Pydantic `ReferenceRow(type: str, id: str, title: str | None, path: str | None, error: str | None)`. The tool materializes the full deduplicated row list (first-occurrence order), then wraps it in `PagedResult[ReferenceRow]` via `normalize_paging` + `paginate` (the exact `list_*` mechanism): `total` = unique-reference count, `error_count` = not-found count, `truncated` when more references exist beyond the page.
 - **Command + subagent** (staged ahead of the tool, per `### Decisions Made`): `.opencode/command/refs.md` (`/refs <type> <id>`, frontmatter `agent: ref-finder`) delegating to the read-only `.opencode/agent/ref-finder.md` subagent, both following the `review-feature`/`feat-reviewer` conventions. They live under `.opencode/` (config, not `src/`), so no packaging/CI impact, and are inert until `list_references` is registered.
 - **Caveat**: DEC `## Related Artifacts` items are free-form `TYPE-NNNN:` (not uuid-shaped) and are ignored, as are any non-uuid references — only the 10-tag + canonical-uuid shape is extracted.
+- **Caveat (code spans, planned — Phase 7)**: the extraction regex scans the raw body text unconditionally, including inside fenced code blocks and inline code spans; a document that *quotes/illustrates* the `<TAG> <uuid>` syntax as a literal example (rather than a live reference) is still picked up and resolved/reported as if it were real. This is an accepted v1 tradeoff of the regex-based, schema-agnostic extractor (matching the DEC caveat above) — to be pinned by a dedicated test rather than left silently unspecified (Task 7.6).
 
 ### Related Decisions
 
@@ -133,15 +134,30 @@ All open choices are now locked (Phase 1 complete). The design:
 - [x] Task 6.2: Update `### Current Status` and `### Updates`, and set the feature status via the generic `set_status` tool (`type="feat"`)
 - [x] Task 6.3: Commit the phase as a single commit (no push)
 
+#### Phase 7: Follow-Up Fixes (Review Remediation)
+
+- [ ] Task 7.1: Fix the docstring splice in `general/tools/__init__.py` (stray leading-space artifact from inserting the `list_references` paragraph mid-sentence into the existing `validate` docstring text); regenerate `docs/api/biz.dfch.specmgr.general.tools.md` (`specmgr docs`).
+- [ ] Task 7.2: Replace `list_references.py`'s hand-written `Literal["req", "uc", ..., "adr"]` `type` parameter with `Literal[*ALL_DOMAINS]` (imported from `general.tools._domains`), matching `set_status.py`/`update.py`/`delete.py`/`set_classification.py`/`validate.py`'s existing pattern (feat-125-domain-lists).
+- [ ] Task 7.3: Add the missing drift guard for `_SOURCE_LOADERS` in `list_references.py`: `assert set(_SOURCE_LOADERS) == set(ALL_DOMAINS), "..."` at module scope, identical in shape to `set_status.py`'s `_ADAPTERS`/`ALL_DOMAINS` guard. No restructuring of the data-driven dict itself (Phase 2's documented design choice stands).
+- [ ] Task 7.4: In `_references.py`, add `assert set(_TARGET_RESOLVERS) == set(REFERENCE_TYPES), "..."` at module scope, and narrow `resolve_reference`'s `except LookupError` so a `KeyError` from a missing `_TARGET_RESOLVERS` entry (a programming error) is not silently folded into the same not-found `ReferenceRow` path as a legitimate domain `XNotFoundError`.
+- [x] Task 7.5: Tick `ACC-001`..`ACC-009` to `[x]` in the Acceptance Criteria section, each with an inline evidence sentence (repo convention, e.g. `feat-36-delete/README.md:52-59`). (Done in this same doc-only edit.)
+- [ ] Task 7.6: Document the accepted code-fence/inline-code-span extraction caveat in `_references.py`'s module docstring (the Design Notes bullet above is staged); add one test in `test__references.py` pinning the (accepted) behavior of a reference-shaped string inside a fenced/inline code span.
+- [ ] Task 7.7: Replace the Unicode em dash "—" with ASCII "--" in `.opencode/agent/ref-finder.md`'s `description` field and `.opencode/command/refs.md`'s body, matching `feat-reviewer.md`/`review-feature.md`/`phase-implementer.md`'s typographic convention.
+- [ ] Task 7.8: Run the full quality gate (`ruff format --check`, `ruff check`, `vulture`, `pytest -n auto --cov=src`); reopen the feature status via `set_status` (`type="feat"`, `done` -> `progress`) at phase start (done in this edit) and set it back to `done` on closeout; update `### Current Status`/`### Updates`; commit as a single phase commit on the existing `feat-144-ref-artifact` branch (amending open PR #147, no push unless instructed).
+
 ## Progress
 
 ### Current Status
 
-Phase 6 (Verification & Closeout) complete — all phases of feat-144 are now done. Final quality gate (Task 6.1) is green: `ruff format --check` (1705 files already formatted), `ruff check` (all checks passed), `vulture src/ whitelist.py --min-confidence 60` (clean, no new `whitelist.py` entries), `pytest -n auto --cov=src --cov-report=` (3401 passed) — every command exit 0. The frontmatter `status` was set `planning` → `done` via the generic `set_status` tool (`type="feat"`), and the document parses before and after that change (PARSE_OK). The feature itself was end-to-end smoke-verified against this plan document: `list_references(type='feat', id='feat-144-ref-artifact')` returns `total=5, truncated=False, error_count=0` — the five `### Related Decisions` ADR references all resolve on disk. ACC-001..ACC-009 are all satisfied. The feature is ready for review (PR); nothing is outstanding except the follow-up #145 (per-domain batched resolution), which is explicitly out of scope by design.
+Phase 6 (Verification & Closeout) landed and the feature was marked `done`; a subsequent independent `feat-reviewer` review of open PR #147 found two Gaps (a hand-rolled domain `Literal` and a missing drift-guard `assert`, both diverging from the feat-125-domain-lists convention every sibling generic tool already follows), one Code Smell (`_TARGET_RESOLVERS` dispatch silently folding a hypothetical `KeyError` into the not-found row path), one Inconsistency (ACC-001..009 left unticked despite the narrative claiming all satisfied), one Error (a cosmetic docstring-splice whitespace artifact), and two Improvements (an undocumented/untested code-span extraction caveat; em-dash vs. this repo's ASCII "--" convention in the new `.opencode/` files). Phase 7 (Follow-Up Fixes) was added to track remediation on the same branch/PR. **This edit is doc-only**: ACC-001..009 are now ticked with evidence (Task 7.5), the code-span caveat is recorded in Design Notes, and Phase 7's task list is staged — none of Tasks 7.1-7.4/7.6-7.8's actual code/test/docstring changes have been made yet. Status is reopened `done` -> `progress` to reflect the outstanding Phase 7 work.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-23 11:36:14.148Z - Phase 7 staged (doc-only): review findings recorded, ACC checkboxes ticked with evidence, code-span caveat added; no code changes yet
+
+An independent `feat-reviewer` review of open PR #147 (post-Phase-6) reported: **Errors** -- a stray leading-space artifact in `general/tools/__init__.py`'s docstring where the `list_references` paragraph was spliced mid-sentence into the existing `validate` text. **Gaps** -- `list_references.py`'s `type` parameter is a hand-written 13-name `Literal` instead of `Literal[*ALL_DOMAINS]` (the `general.tools._domains` single source every sibling generic tool -- `set_status`/`update`/`delete`/`set_classification`/`validate` -- already uses post-feat-125); `_SOURCE_LOADERS` has no `assert set(_SOURCE_LOADERS) == set(ALL_DOMAINS)` drift guard, unlike every sibling adapter table. **Code Smell** -- `_references.py`'s `resolve_reference` catches `LookupError` around a `_TARGET_RESOLVERS[ref_type]` dict lookup; since `KeyError` subclasses `LookupError`, a future `REFERENCE_TYPES` addition missing a resolver entry would silently become a bogus not-found row instead of failing loudly, and there is no `assert set(_TARGET_RESOLVERS) == set(REFERENCE_TYPES)` guard. **Inconsistency** -- the Acceptance Criteria checkboxes were all left `[ ]` despite Phase 6's own narrative asserting all nine were satisfied, diverging from this repo's tick-with-evidence convention (e.g. `feat-36-delete`). **Improvements** -- the extraction regex matches inside fenced/inline code spans unconditionally, an accepted but previously undocumented/untested tradeoff; `.opencode/agent/ref-finder.md`/`.opencode/command/refs.md` use a Unicode em dash where the rest of the `.opencode/` convention set uses ASCII "--". Agreed remediation: a new Phase 7 (Follow-Up Fixes) on this same branch, amending PR #147 rather than opening a new feature/issue. This edit implements only the documentation-safe portion of that remediation: ACC-001..ACC-009 ticked `[x]` with inline evidence sentences (Task 7.5, done), a new Design Notes "Caveat (code spans)" bullet recording the code-span tradeoff (staging Task 7.6's docstring/test follow-up), and Phase 7's full task list (7.1-7.8) staged with 7.1-7.4/7.6-7.8 left unchecked -- no `src/`/`tests/`/`.opencode/` file was touched, and the quality gate was not re-run, since no code changed. Frontmatter `status` reopened `done` -> `progress` via the generic `set_status` tool (`type="feat"`) to reflect that Phase 7 is now open with outstanding work.
 
 #### 2026-09-23 06:35:52.091Z - Phase 6 verification and closeout: final gate green, feature marked done (this phase's commit is the closeout commit)
 
@@ -165,7 +181,7 @@ Implemented Tasks 2.1-2.3: the new `ReferenceRow` model (`general/models/referen
 
 #### 2026-09-22 05:56:23.152Z - Design locked; plan finalized, follow-up #145 opened, /refs + ref-finder artifacts staged
 
-Locked all Phase 1 open choices in the Plan: the tool is `list_references(type, id, max_results, offset) -> PagedResult[ReferenceRow]`; extraction is a case-insensitive, anywhere-in-body regex over the 10 reference tags (GOL/PRB/QA/UC/REQ/RSK/DEC/ADR/VCR/SYSRS) tolerant of a space or dash separator; the source is read as raw frontmatter-stripped body (`body_text`), targets via cache-backed `load_by_id`; a not-found reference is a row with `error` (list*-style), a missing source raises the domain not-found error (same as `get_<d>`); results are paged with the shared `list_*` mechanism. Resolution is naive per-ref in v1 — recorded as a DEC below, with the per-domain batched optimization tracked in #145. Staged `.opencode/command/refs.md` and `.opencode/agent/ref-finder.md`.
+Locked all Phase 1 open choices in the Plan: the tool is `list_references(type, id, max_results, offset) -> PagedResult[ReferenceRow]`; extraction is a case-insensitive, anywhere-in-body regex over the 10 reference tags (GOL/PRB/QA/UC/REQ/RSK/DEC/ADR/VCR/SYSRS) tolerant of a space or dash separator; the source is read as raw frontmatter-stripped body (`body_text`), targets via cache-backed `load_by_id`; a not-found reference is a row with `error` (list\*-style), a missing source raises the domain not-found error (same as `get_<d>`); results are paged with the shared `list_*` mechanism. Resolution is naive per-ref in v1 — recorded as a DEC below, with the per-domain batched optimization tracked in #145. Staged `.opencode/command/refs.md` and `.opencode/agent/ref-finder.md`.
 
 #### 2026-09-21 19:30:35.557Z - Decision: ship the /refs command and the ref-finder subagent
 
@@ -207,3 +223,4 @@ Issue #144 asks to also consider adding a `/command` and a subagent for the refe
 
 - GitHub issue: https://github.com/dfch/biz.dfch.SpecMgr/issues/144 (opened by dfch on 2026-09-21).
 - Follow-up (per-domain batched resolution for large reference lists): https://github.com/dfch/biz.dfch.SpecMgr/issues/145.
+- Pull request (Phases 1-6, opened against `dev` from branch `feat-144-ref-artifact`): https://github.com/dfch/biz.dfch.SpecMgr/pull/147. Phase 7 (this branch's follow-up remediation) lands as additional commits on the same branch/PR -- it is not a separate PR or feature id.
