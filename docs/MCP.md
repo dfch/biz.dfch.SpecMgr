@@ -3,7 +3,7 @@
 Auto-generated from the live `biz.dfch.specmgr.server:mcp` registration --
 do not edit by hand, run `specmgr mcp-docs` instead (see `AGENTS.md`).
 
-44 resource(s), 1 resource template(s), 90 tool(s), 31 prompt(s).
+44 resource(s), 1 resource template(s), 91 tool(s), 31 prompt(s).
 
 ## Table of Contents
 
@@ -443,6 +443,7 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`list_gol`](#tool-list_gol) | Ids, titles, statuses, and refs of goals in the configured goal base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_gol tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
 | [`list_prb`](#tool-list_prb) | Ids, titles, statuses, and refs of problem statements in the configured problem statement base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_prb tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
 | [`list_qa`](#tool-list_qa) | Ids, titles, statuses, and refs of QA documents in the configured QA base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_qa tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
+| [`list_references`](#tool-list_references) | Cross-references of one source document, resolved and paged. `type` is the source document's domain (one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs, adr) and `id` the source's own identifier. The tool scans the source's frontmatter-stripped body for `<TYPE> <uuid>` references (the shared reference-tag vocabulary in general.tools._references: case-insensitive tag, space or dash separator, anywhere in a line), dedupes repeated occurrences (first-occurrence order preserved), and resolves each unique reference to the referenced document in its own target domain. Returns a `PagedResult` of one `ReferenceRow` per unique reference: `type`, `id`, `title` (the referenced document's H1), and `path` (the referenced document's resolved absolute file path). A reference that cannot be resolved on disk is a row with null `title`/`path` and the target domain's not-found message in `error` -- it never raises. `max_results`/`offset` control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. An invalid `id` (path-injection attempt or wrong format for `type`) is a `ValueError` raised before any file access; a missing source document is the source domain's own `XNotFoundError`. |
 | [`list_req`](#tool-list_req) | Ids, titles, statuses, and refs of requirements in the configured requirement base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_req tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
 | [`list_rsk`](#tool-list_rsk) | Ids, titles, statuses, and refs of risks in the configured risk base directory, one page at a time, for context before addressing one by id. Each line also carries the initial/residual 5x5 zone levels, the TARA strategy word, the first `## Scope` entry, and the residual-risk coordinates (residual_probability/residual_impact/residual_product). 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_rsk tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
 | [`list_sop`](#tool-list_sop) | Ids, titles, statuses, and refs of Standard Operating Procedures in the configured SOP base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_sop tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
@@ -993,6 +994,19 @@ Ids, titles, statuses, and refs of QA documents in the configured QA base direct
 
 | Parameter | Type | Required |
 | --- | --- | --- |
+| `max_results` | `integer | None` | No |
+| `offset` | `integer | None` | No |
+
+### Tool: list_references
+
+**List referenced artifacts**
+
+Cross-references of one source document, resolved and paged. `type` is the source document's domain (one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs, adr) and `id` the source's own identifier. The tool scans the source's frontmatter-stripped body for `<TYPE> <uuid>` references (the shared reference-tag vocabulary in general.tools._references: case-insensitive tag, space or dash separator, anywhere in a line), dedupes repeated occurrences (first-occurrence order preserved), and resolves each unique reference to the referenced document in its own target domain. Returns a `PagedResult` of one `ReferenceRow` per unique reference: `type`, `id`, `title` (the referenced document's H1), and `path` (the referenced document's resolved absolute file path). A reference that cannot be resolved on disk is a row with null `title`/`path` and the target domain's not-found message in `error` -- it never raises. `max_results`/`offset` control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. An invalid `id` (path-injection attempt or wrong format for `type`) is a `ValueError` raised before any file access; a missing source document is the source domain's own `XNotFoundError`.
+
+| Parameter | Type | Required |
+| --- | --- | --- |
+| `type` | `string (enum: req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs, adr)` | Yes |
+| `id` | `string` | Yes |
 | `max_results` | `integer | None` | No |
 | `offset` | `integer | None` | No |
 

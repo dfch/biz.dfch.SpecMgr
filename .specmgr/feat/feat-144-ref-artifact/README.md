@@ -4,7 +4,7 @@ created: '2026-09-21 21:31:30.254+02:00'
 id: feat-144-ref-artifact
 status: planning
 type: feat
-updated: '2026-09-22 07:56:23.155+02:00'
+updated: '2026-09-22 23:02:41.263+02:00'
 version: 1.0.0
 ---
 
@@ -102,10 +102,10 @@ All open choices are now locked (Phase 1 complete). The design:
 
 #### Phase 2: Implementation
 
-- [ ] Task 2.1: Add the shared reference-extraction regex, 10-tag type vocabulary, and per-domain resolution dispatch in `general/tools/_references.py`
-- [ ] Task 2.2: Add the `ReferenceRow` model in `general/models/reference.py`
-- [ ] Task 2.3: Implement the `list_references` tool (source `validate_id` + `load_by_id` + `assert_within` + `body_text`; per-ref target resolution; `PagedResult` wrap) with `_path_safety` guards, registered in `general/tools/__init__.py` and `server.py`
-- [ ] Task 2.4: Run the full quality gate with tests and commit the phase as a single commit (no push)
+- [x] Task 2.1: Add the shared reference-extraction regex, 10-tag type vocabulary, and per-domain resolution dispatch in `general/tools/_references.py`
+- [x] Task 2.2: Add the `ReferenceRow` model in `general/models/reference.py`
+- [x] Task 2.3: Implement the `list_references` tool (source `validate_id` + `load_by_id` + `assert_within` + `body_text`; per-ref target resolution; `PagedResult` wrap) with `_path_safety` guards, registered in `general/tools/__init__.py` and `server.py`
+- [x] Task 2.4: Run the full quality gate with tests and commit the phase as a single commit (no push)
 
 #### Phase 3: Tests
 
@@ -137,11 +137,15 @@ All open choices are now locked (Phase 1 complete). The design:
 
 ### Current Status
 
-Design complete (Phase 1). All open choices are locked and recorded in the Plan (exact extraction regex, `ReferenceRow` + `PagedResult` shape, the 10-tag vocabulary, the source raw-read vs. target cached-read split, and naive per-ref resolution as a DEC); the follow-up perf issue #145 is opened. The two opencode artifacts (`.opencode/command/refs.md`, `.opencode/agent/ref-finder.md`) are staged. No Python written — implementation (Phases 2, 3), doc registration + regeneration (Phase 5), the `/refs` smoke-test (Task 4.3), and closeout (Phase 6) remain.
+Phase 2 implementation landed. The `list_references` generic dispatch-only MCP tool (new public module `general/tools/list_references.py`), its no-`mcp`-import engine (`general/tools/_references.py`: shared extraction regex, 10-tag `REFERENCE_TYPES` vocabulary, per-target-domain resolution dispatch with ADR special-cased), and the `ReferenceRow` model (`general/models/reference.py`, exported from `general/models/__init__.py`) are in place and registered through `general/tools/__init__.py` (the `server.py` import cascades; tool registration verified against the live MCP server). The full quality gate is green (ruff format/check, vulture with no new whitelist entries, all 3365 tests passing). The two opencode artifacts (`.opencode/command/refs.md`, `.opencode/agent/ref-finder.md`) remain staged from Phase 1. Unit tests (Phase 3), the `/refs` smoke-test (Task 4.3), doc registration + regeneration (Phase 5), and closeout (Phase 6) remain; the phase commit is made by the orchestrator per the phase instructions.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-22 21:02:41.263Z - Phase 2 implementation landed; full quality gate green (commit deferred to orchestrator)
+
+Implemented Tasks 2.1-2.3: the new `ReferenceRow` model (`general/models/reference.py`, exported from `general/models/__init__.py`); the private, no-`mcp`-import engine `general/tools/_references.py` (`REFERENCE_TYPES` 10-tag vocabulary, the derived `_REFERENCE_PATTERN`, `find_references`, and `resolve_reference` plus per-target-domain `_load_<d>` resolvers — ADR special-cased: no doc-cache, `doc.body.title`); and the public `@mcp.tool()` module `general/tools/list_references.py` (source `validate_id` -> source-domain `load_by_id` -> `assert_within` -> raw `body_text`; first-occurrence dedup; per-ref resolution; `PagedResult[ReferenceRow]` wrap via `normalize_paging`/`paginate`). Registered in `general/tools/__init__.py` (docstring + import + `__all__`); `server.py` itself needed no change (its `general` import cascades) — tool registration verified against the live MCP server. Gate green: `ruff format --check`, `ruff check`, `vulture` (no new whitelist entries needed), `pytest -n auto` (3365 passed). Task 2.4's commit is deferred to the orchestrator per the phase instructions.
 
 #### 2026-09-22 05:56:23.152Z - Design locked; plan finalized, follow-up #145 opened, /refs + ref-finder artifacts staged
 
@@ -158,6 +162,10 @@ Drafted the feature plan from GitHub issue #144 'list referenced artifacts': a n
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-22 21:02:41.263Z - Helper naming and two implementation-shape choices (Phase 2)
+
+Choices beyond what the Plan locked: engine function names `find_references(text) -> list[tuple[str, str]]` (pairs lowercased, first-occurrence order, no dedup) and `resolve_reference(ref_type, ref_id) -> ReferenceRow`, with the vocabulary constant `REFERENCE_TYPES`. `_REFERENCE_PATTERN`'s tag group is **derived** from `REFERENCE_TYPES` (`"|".join(tag.upper() ...)`), so the vocabulary and the pattern cannot drift apart; the expanded regex is byte-identical to the Plan's literal `GOL|PRB|QA|UC|REQ|RSK|DEC|ADR|VCR|SYSRS` alternation. The 13-source-domain read is implemented as a data-driven `_SOURCE_LOADERS` table of `(<d>_base_dir, load_<d>_by_id)` pairs plus a single `_load_source_path` helper rather than 13 named adapter functions — every adapter body would have been the identical two lines, and the table keeps the source set visible in one place (the import style still mirrors `set_status.py`).
 
 #### 2026-09-22 05:56:23.152Z - Resolution strategy: naive per-reference `load_by_id` (not batched per-domain)
 
