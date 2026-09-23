@@ -7,80 +7,64 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.31.0] - 2026-09-23
+
 ### Added
 
 - `list_references`, a new generic, cross-domain MCP tool in
-  `general/tools/` (dispatch-only, per ADR 36905d5b) that lists the
-  cross-references of one source document, resolved and paged
-  (feat-144-ref-artifact, GitHub issue #144): it takes a source
-  document's `type` (one of
+  `general/tools/` (feat-144-ref-artifact, GitHub issue #144): it takes a
+  source document's `type` (one of
   adr/req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs) and `id`, scans
   the source's frontmatter-stripped body for `<TYPE> <uuid>` references
   (a shared 10-tag reference vocabulary:
-  GOL/PRB/QA/UC/REQ/RSK/DEC/ADR/VCR/SYSRS; case-insensitive tag, space or
-  dash separator, anywhere in a line), dedupes repeated occurrences
-  (first-occurrence order), resolves each unique reference in its target
-  domain (cache-backed; ADR excluded from the doc cache), and returns a
-  paged `PagedResult[ReferenceRow]` -- one row per unique reference
-  carrying `type`/`id`/`title` (the referenced document's H1, re-derived
-  from the resolved document)/`path` (the referenced document's resolved
-  absolute file path). A reference that cannot be resolved on disk is a
-  row with null `title`/`path` and the target domain's not-found message
-  in `error` -- the tool never raises for an unresolvable reference;
-  `max_results`/`offset` follow the shared `list_*` paging contract
-  (default page size 25, capped at 100; out-of-range values clamp, never
-  error). The same path-safety guards apply to the source: an invalid
-  `type`/`id` (path-injection attempt or wrong format) is a `ValueError`
-  before any filesystem access, and a missing source document raises the
-  source domain's not-found error, identical to `get_<d>`. Resolution is
-  naive per-reference in v1; per-domain batched resolution for large
-  reference lists is tracked separately as GitHub issue #145.
+  GOL/PRB/QA/UC/REQ/RSK/DEC/ADR/VCR/SYSRS; case-insensitive tag), dedupes
+  them (first-occurrence order), and resolves each unique reference in its
+  target domain (cache-backed; ADR excluded from the doc cache), returning
+  one paged row per reference carrying `type`/`id`/`title` (the referenced
+  document's H1)/`path` (its resolved absolute file path). A reference that
+  cannot be resolved on disk is a row with null `title`/`path` and the
+  target domain's not-found message in `error` -- the tool never raises for
+  an unresolvable reference; `max_results`/`offset` follow the shared
+  `list_*` paging contract (default page size 25, capped at 100). The same
+  path-safety guards apply to the source: an invalid `type`/`id` (path
+  injection attempt or wrong format) is a `ValueError` before any
+  filesystem access, and a missing source document raises the source
+  domain's not-found error, identical to `get_<d>`. Per-domain batched
+  resolution for large reference lists is tracked separately as GitHub
+  issue #145.
 - The `/refs <type> <id>` opencode slash command
   (`.opencode/command/refs.md`) and the read-only `ref-finder` subagent
   (`.opencode/agent/ref-finder.md`), issue #144's secondary request: the
   command delegates to the subagent, which calls `list_references` and
   reports the rows, flagging any **NOT FOUND** references.
-
-- A new shared `general/tools/_domains.py` module: the single source of
-  truth for the document-type domain names. `WHOLE_BODY_DOMAINS` (the
-  whole-body domains in the canonical order `req`/`uc`/`tsk`/`qa`/`prb`/
-  `gol`/`rsk`/`dec`/`sop`/`feat`/`vcr`/`sysrs`) is the only hand-listed
-  domain tuple in the repo; `WHOLE_BODY_NO_FEAT_DOMAINS`, `UUID_DOMAINS`,
-  `ALL_DOMAINS`, and the `ADR`/`FEAT` singletons are all derived from it,
-  so a new domain registers its name there once and every other site picks
-  it up by construction (GitHub issue #125).
+- A new shared `general/tools/_domains.py` module (GitHub issue #125): the
+  single source of truth for the document-type domain names, so a new
+  domain registers its name there once and every other site picks it up by
+  construction.
 
 ### Changed
 
 - The ~23 independently hand-maintained domain-list sites across `src/`
-  and `tests/` are consolidated onto the new shared
-  `general/tools/_domains.py` source (GitHub issue #125): the generic
-  tools' (`update`/`set_status`/`set_classification`/`delete`/`validate`)
-  `type` signatures are re-derived from it via PEP 692 unpacking
-  (`Literal[*WHOLE_BODY_DOMAINS]`/`Literal[*ALL_DOMAINS]`), so the
-  MCP-registered `type` enums can no longer drift from the dispatch
-  tables. Each `_ADAPTERS` table (and `set_status`'s
-  `_ALLOWED_STATUSES_BY_TYPE` and the `specmgr://config` `domains` dict)
-  is guarded by a module-level set-equality assert that fails loudly at
-  import time with an actionable message, the tools' descriptions and the
-  two runtime error messages (`_path_safety.validate_id`'s unknown-type,
-  `validate`'s unsupported-type) are derived from the shared source, every
-  test-side hand-listed domain constant imports the shared name instead,
-  and the dead `_DELETE_TYPES`/`_VALIDATE_TYPES` constants are removed.
-  **Note**: `set_status`'s registered `type` enum now lists `adr` first
-  (ordering-only, non-normative; every enum is otherwise set-equal to
-  before). New ADR c4efbde6-fd19-4aa8-8668-95316ed62dcc refines ADR
-  36905d5b-8057-4294-8665-c7eed5534db0's future-domain convention: a new
-  domain now also registers its name in `general/tools/_domains.py`'s
-  `WHOLE_BODY_DOMAINS` in addition to the existing dispatch entries.
+  and `tests/` are consolidated onto the shared `general/tools/_domains.py`
+  source (GitHub issue #125): the generic tools'
+  (`update`/`set_status`/`set_classification`/`delete`/`validate`) `type`
+  enums, descriptions, and runtime error messages are derived from it,
+  guarded at import time by set-equality asserts that fail loudly with an
+  actionable message, so the MCP-registered `type` enums can no longer
+  drift from the dispatch tables. **Note**: `set_status`'s registered
+  `type` enum now lists `adr` first (ordering-only, non-normative). New
+  ADR c4efbde6-fd19-4aa8-8668-95316ed62dcc refines the future-domain
+  convention: a new domain now also registers its name in
+  `general/tools/_domains.py`'s `WHOLE_BODY_DOMAINS` in addition to the
+  existing dispatch entries.
 
 ### Fixed
 
 - `tests/general/tools/test__path_safety.py`'s UUID-domain coverage now
-  includes `sysrs` -- the prior hand-listed domain set was missing it, so
-  the `assert_uuid` loop silently never exercised the `sysrs` domain; the
-  gap is closed by construction via the shared `UUID_DOMAINS` import
-  (GitHub issue #125).
+  includes `sysrs` (GitHub issue #125) -- the prior hand-listed domain set
+  was missing it, so the `assert_uuid` loop silently never exercised the
+  `sysrs` domain; the gap is closed by construction via the shared
+  `UUID_DOMAINS` import.
 
 ## [0.30.0] - 2026-09-21
 
