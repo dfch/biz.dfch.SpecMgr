@@ -516,15 +516,20 @@ _ADAPTERS: dict[str, Callable[[str, bool], None]] = {
     "sysrs": _validate_sysrs,
 }
 
+assert set(_ADAPTERS) == set(WHOLE_BODY_DOMAINS), (
+    "_ADAPTERS keys drifted from the shared general.tools._domains.WHOLE_BODY_DOMAINS source -- add or "
+    "remove the domain in both places (feat-125-domain-lists, REQ-006)"
+)
+
 
 @mcp.tool(
     name="validate",
     title="Validate document content",
     description=(
         "Disk-free, id-free dry run validating document content across the whole-body "
-        "domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs; "
-        "`adr` is not supported -- use `validate_adr` instead). `full=False` (default) validates "
-        "body-only content (no frontmatter); `full=True` validates a complete document "
+        f"domains (`type` is one of {', '.join(WHOLE_BODY_DOMAINS)}; `adr` is not supported -- use "
+        "`validate_adr` instead). `full=False` (default) validates body-only content "
+        "(no frontmatter); `full=True` validates a complete document "
         "(frontmatter + body). Never raises for a content-validation failure: always returns "
         "`{valid: bool, errors: list[{message: str}]}` -- `errors` is empty when `valid` is "
         "`True`, and each `message` is truncated to at most `_MAX_VALIDATE_ERROR_CHARS` (300) "
@@ -608,7 +613,7 @@ def validate(
     """
     if type not in _ADAPTERS:
         raise ValueError(
-            f"unknown document type {type!r}; expected one of {'/'.join(WHOLE_BODY_DOMAINS)} "
+            f"unknown document type {type!r}; expected one of {', '.join(WHOLE_BODY_DOMAINS)} "
             "('adr' is not supported -- use validate_adr instead)"
         )
 

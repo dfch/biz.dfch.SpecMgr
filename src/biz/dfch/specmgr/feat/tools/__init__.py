@@ -20,7 +20,7 @@
 Bespoke, folder-per-document addressing (``_paths.py``, ``_io.py``,
 ``_lock.py``, ``_write.py`` -- *not* built on
 ``general/tools/_doc_paths.py``, since ``feat`` documents live one per
-folder at ``<base>/<id>/README.md`` with a non-UUID id) underpins the eight
+folder at ``<base>/<id>/README.md`` with a non-UUID id) underpins the
 lifecycle tools below.
 
 ``parse_feat`` reads a raw filepath, parses, and validates it into a
@@ -36,10 +36,15 @@ sole id-based read path for FEAT (there is no ``specmgr://feat/{id}``
 resource, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614). ``list_feat`` returns
 one page of id/title/status/ref/path summaries of every feature, shipped as
 a paged tool from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
-``create_feat`` assigns the next ``feat-NNN-slug`` id, builds the
+``create_feat`` takes an optional caller-chosen ``id`` (a
+``feat-NNN-slug``, validated against that shape before any lock/filesystem
+access) or, when ``id`` is omitted, defaults it to
+``feat-0-<slug-from-title>`` -- no max+1 auto-generation -- builds the
 frontmatter itself, and writes a new document (body markdown only, no
 frontmatter) under ``<base>/<id>/README.md`` (``feat.tools._paths``/
-``_lock``/``_io``/``_write``). Whole-body and line-range updates of an
+``_lock``/``_io``/``_write``); a pre-write existence check for the
+resulting id/folder raises ``FileExistsError`` before anything is
+written. Whole-body and line-range updates of an
 existing document go through the generic ``update`` tool in
 ``general.tools`` (``type="feat"``), preserving every frontmatter field
 except ``updated``. Status changes of an existing document go through the

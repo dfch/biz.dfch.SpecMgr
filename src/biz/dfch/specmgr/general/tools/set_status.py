@@ -214,15 +214,11 @@ from ...vcr.tools._io import read_vcr
 from ...vcr.tools._lock import vcr_lock
 from ...vcr.tools._paths import vcr_base_dir
 from ...vcr.tools._write import write_vcr_file
-from ._domains import WholeBodyOrAdrType
+from ._domains import ADR, ALL_DOMAINS, WholeBodyOrAdrType
 from ._path_safety import assert_within, validate_id
 from ._timestamps import now_timestamp
 
 __all__ = ["set_status"]
-
-#: The only ``type`` whose status can be composed via ``superseded_by``
-#: (the ``"superseded by X"`` pattern is ADR-specific).
-_TYPE_ADR = "adr"
 
 #: The generic tool's return union -- annotation-only (see module docstring).
 _SetStatusFrontmatter = (
@@ -259,8 +255,13 @@ _ALLOWED_STATUSES_BY_TYPE: dict[str, frozenset[str]] = {
     "feat": _FEAT_ALLOWED_STATUSES,
     "vcr": _VCR_ALLOWED_STATUSES,
     "sysrs": _SYSRS_ALLOWED_STATUSES,
-    _TYPE_ADR: _ADR_FIXED_STATUSES,
+    ADR: _ADR_FIXED_STATUSES,
 }
+
+assert set(_ALLOWED_STATUSES_BY_TYPE) == set(ALL_DOMAINS), (
+    "_ALLOWED_STATUSES_BY_TYPE keys drifted from the shared general.tools._domains.ALL_DOMAINS source -- "
+    "add or remove the domain in both places (feat-125-domain-lists, REQ-006)"
+)
 
 
 def _check_status_allowed(type_: str, status: str, superseded_by: str | None) -> InvalidStatusResult | None:
@@ -282,7 +283,7 @@ def _check_status_allowed(type_: str, status: str, superseded_by: str | None) ->
     :class:`InvalidStatusResult` (never raises) on a miss, or ``None`` when ``status`` is valid
     (or ignored, per the ``adr``+``superseded_by`` case above).
     """
-    if type_ == _TYPE_ADR:
+    if type_ == ADR:
         if superseded_by is not None:
             return None
         if status in _ADR_FIXED_STATUSES or _ADR_SUPERSEDED_PATTERN.match(status):
@@ -698,12 +699,17 @@ _ADAPTERS: dict[str, Callable[[str, str, str | None], _SetStatusFrontmatter]] = 
     "gol": _set_status_gol,
     "rsk": _set_status_rsk,
     "dec": _set_status_dec,
-    "feat": _set_status_feat,
     "sop": _set_status_sop,
+    "feat": _set_status_feat,
     "vcr": _set_status_vcr,
     "sysrs": _set_status_sysrs,
-    _TYPE_ADR: _set_status_adr,
+    ADR: _set_status_adr,
 }
+
+assert set(_ADAPTERS) == set(ALL_DOMAINS), (
+    "_ADAPTERS keys drifted from the shared general.tools._domains.ALL_DOMAINS source -- add or "
+    "remove the domain in both places (feat-125-domain-lists, REQ-006)"
+)
 
 
 @mcp.tool(
@@ -711,8 +717,8 @@ _ADAPTERS: dict[str, Callable[[str, str, str | None], _SetStatusFrontmatter]] = 
     title="Set document status",
     description=(
         "Replace the status of an existing document across every domain (`type` is one of "
-        "req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs, adr), also bumping `updated` (the "
-        'whole-body domains) and leaving the body untouched. When `status` (or, for `type="adr"` '
+        f"{', '.join(ALL_DOMAINS)}), also bumping `updated` (the whole-body domains) and leaving the "
+        'body untouched. When `status` (or, for `type="adr"` '
         'with `superseded_by` given, the composed "superseded by X" value) already equals the '
         "document's current status, this is a no-op -- no write, no `updated` bump -- and still "
         "returns the same value shape a changed-status call would (issue #109). The new `status` "
@@ -847,9 +853,9 @@ def set_status(
     """
     # REQ-009: validate before any filesystem access (injection prevention).
     validate_id(type, id)
-    if superseded_by is not None and type != _TYPE_ADR:
+    if superseded_by is not None and type != ADR:
         raise ValueError(
-            f'superseded_by is only accepted for type={_TYPE_ADR!r} (the "superseded by X" '
+            f'superseded_by is only accepted for type={ADR!r} (the "superseded by X" '
             f"pattern is ADR-specific), got type={type!r} with superseded_by={superseded_by!r}"
         )
 

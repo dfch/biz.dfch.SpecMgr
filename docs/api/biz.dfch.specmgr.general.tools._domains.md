@@ -1,28 +1,46 @@
 # `biz.dfch.specmgr.general.tools._domains`
 
-The shared ``WHOLE_BODY_DOMAINS`` registry (feat-134, Phase 1, REQ-012).
+The shared document-type domain names and per-domain adapter registry (feat-125-domain-lists
++ feat-134, Phase 1, REQ-012).
 
-The one source of the whole-body domain set. Before this registry, the set
+This module is the single source of truth for the document-type domain
+**names** (feat-125-domain-lists, REQ-001, ADR c4efbde6-fd19-4aa8-8668-
+95316ed62dcc "Single source of truth for the document-type domain-name
+set") and for the per-domain **adapters** every cross-domain consumer
+needs (feat-134, Phase 1, REQ-012, ADR 750842b2-aca4-4649-ba0c-855ec8e1f505,
+**corpus and registry** sub-decision).
+
+Every other module that names a set of document types imports the names
+from here instead of hand-listing them itself (the feat-125 sweep
+ruling: no other ``src/`` or ``tests/`` module may hand-list a
+domain-name set). Before the feat-134 registry, the same set
 (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs) was copy-pasted as
-``Literal``/tuple literals across the five existing generic tools in this
-package (``update``'s/``set_status``'s/``set_classification``'s/``delete``'s/
-``validate``'s own ``type`` parameter literals, plus ``delete.py``'s and
-``validate.py``'s own module-scope tuples) -- and the two new similarity
-tools (Phase 3) would have been the sixth and seventh copies. REQ-012
-(ADR 750842b2-aca4-4649-ba0c-855ec8e1f505, **corpus and registry**
-sub-decision) makes this module the single place the set is spelled out:
+``Literal``/tuple literals across the five existing generic tools in
+this package (``update``'s/``set_status``'s/``set_classification``'s/
+``delete``'s/``validate``'s own ``type`` parameter literals, plus
+``delete.py``'s and ``validate.py``'s own module-scope tuples) -- and
+the two new similarity tools (Phase 3) would have been the sixth and
+seventh copies.
 
-- :data:`WHOLE_BODY_DOMAINS` -- the 12-domain tuple itself. The five
-  existing generic tools' ``type`` parameter annotations are now derived
-  from it (``Literal[WHOLE_BODY_DOMAINS]`` /
-  ``Literal[WHOLE_BODY_DOMAINS + ("adr",)]`` via the
+- :data:`WHOLE_BODY_DOMAINS` -- the 12-domain tuple itself: the only
+  hand-listed tuple in the module, the whole-body document types in the
+  canonical order ``req``, ``uc``, ``tsk``, ``qa``, ``prb``, ``gol``,
+  ``rsk``, ``dec``, ``sop``, ``feat``, ``vcr``, ``sysrs``. Every other
+  name-set constant is derived from it, never hand-listed a second
+  time: :data:`WHOLE_BODY_NO_FEAT_DOMAINS` is the whole-body domains
+  without ``feat``, :data:`UUID_DOMAINS` is those plus ``adr``, and
+  :data:`ALL_DOMAINS` is ``adr`` prefixed to the whole-body domains.
+  :data:`ADR` and :data:`FEAT` are the two name singletons. The five
+  existing generic tools' and the two Phase 3 similarity tools' ``type``
+  parameter annotations are derived from it (via the
   :data:`WholeBodyType`/:data:`WholeBodyOrAdrType` aliases below), so a
-  future domain (e.g. the reserved ``ac``) is added in exactly one place
-  and every tool's own dispatch domain set re-derives from it.
+  new document type (e.g. the reserved ``ac``) registers its name in
+  :data:`WHOLE_BODY_DOMAINS` once and every derived tuple and tool
+  domain set picks it up by construction.
 - :class:`WholeBodyDomain` + the module-scope ``_DOMAINS`` mapping --
   the per-domain adapters every cross-domain consumer needs: the
-  base-dir resolver, the path iterator, ``load_by_id``, and the pure text
-  parser (``parse_text``) -- the same per-domain adapter shape
+  base-dir resolver, the path iterator, ``load_by_id``, and the pure
+  text parser (``parse_text``) -- the same per-domain adapter shape
   ``general/tools/delete.py`` already imports at module level. ``feat``'s
   ``<base>/<id>/README.md`` folder shape is the one bespoke path iterator
   (``iter_feat_paths``); every other domain uses the shared flat-file
@@ -38,12 +56,15 @@ sub-decision) makes this module the single place the set is spelled out:
   the path-safety-convention ``ValueError`` for an unknown name (raised
   before any filesystem access).
 
-**``adr`` is structurally excluded** (issue #46, "Remove adr artifact
-type": ADR is being removed as an artifact type entirely, so it is not a
-useful similarity target/source, and it never had a whole-body
+**``adr`` is structurally excluded** from :data:`WHOLE_BODY_DOMAINS`
+(issue #46, "Remove adr artifact type": ADR is being removed as an
+artifact type entirely, so it is not a useful similarity target/source,
+and it never had a whole-body
 replace/status/classification/delete/validate adapter of its own to begin
 with -- ``set_status``'s own ``adr`` branch is the single generic-tool
-exception, hence the separate :data:`WholeBodyOrAdrType`).
+exception, hence the separate :data:`WholeBodyOrAdrType`; ``adr`` enters
+the name-set constants only through :data:`UUID_DOMAINS` and
+:data:`ALL_DOMAINS`).
 
 **No ``mcp`` dependency here**, like every other private ``general/tools/``
 support module: the registry is plain data plus the per-domain adapter

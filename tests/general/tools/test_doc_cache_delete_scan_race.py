@@ -73,11 +73,13 @@ from typing import Any
 from unittest import mock
 
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR, find_doc_path_by_id
-from biz.dfch.specmgr.general.tools._packaged_data import read_packaged_text
 
-#: The non-``feat`` generic whole-body domains, all wired identically
-#: through the shared ``general.tools._doc_paths.find_doc_path_by_id``.
-_NON_FEAT_DOMAINS = ["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "vcr", "sysrs"]
+#: The non-``feat`` generic whole-body domains (the shared
+#: ``general.tools._domains`` source, feat-125-domain-lists Phase 4, REQ-008),
+#: all wired identically through the shared
+#: ``general.tools._doc_paths.find_doc_path_by_id``.
+from biz.dfch.specmgr.general.tools._domains import WHOLE_BODY_NO_FEAT_DOMAINS
+from biz.dfch.specmgr.general.tools._packaged_data import read_packaged_text
 
 #: Every ``*.md`` packaged template's frontmatter ``id: ...`` line, unquoted, own line.
 _ID_LINE_PATTERN = re.compile(r"^id: .+$", re.MULTILINE)
@@ -121,7 +123,7 @@ def _list_module(domain: str) -> Any:
 
 
 def _reset_all_non_feat_caches() -> None:
-    for domain in _NON_FEAT_DOMAINS:
+    for domain in WHOLE_BODY_NO_FEAT_DOMAINS:
         getattr(_cache_module(domain), f"reset_{domain}_cache")()
 
 
@@ -138,7 +140,7 @@ class TestAcc016FindDocPathByIdSkipsAFileThatVanishesMidScan(unittest.TestCase):
         _reset_all_non_feat_caches()
 
     def test_scan_skips_the_vanished_file_and_still_resolves_a_different_valid_id(self) -> None:
-        for domain in _NON_FEAT_DOMAINS:
+        for domain in WHOLE_BODY_NO_FEAT_DOMAINS:
             with self.subTest(domain=domain):
                 cache_module = _cache_module(domain)
                 real_read_fn = getattr(cache_module, f"read_{domain}")
@@ -178,7 +180,7 @@ class TestAcc017LoadByIdTranslatesAVanishedSecondRead(unittest.TestCase):
         _reset_all_non_feat_caches()
 
     def test_second_read_racing_a_concurrent_delete_raises_the_domains_own_not_found_error(self) -> None:
-        for domain in _NON_FEAT_DOMAINS:
+        for domain in WHOLE_BODY_NO_FEAT_DOMAINS:
             with self.subTest(domain=domain):
                 io_module = _io_module(domain)
                 paths_module = _paths_module(domain)
@@ -211,7 +213,7 @@ class TestAcc018ListDomainSilentlyOmitsAVanishedFile(unittest.TestCase):
         _reset_all_non_feat_caches()
 
     def test_a_file_vanishing_mid_scan_is_silently_omitted_for_every_non_feat_domain(self) -> None:
-        for domain in _NON_FEAT_DOMAINS:
+        for domain in WHOLE_BODY_NO_FEAT_DOMAINS:
             with self.subTest(domain=domain):
                 list_module = _list_module(domain)
                 real_read_fn = getattr(list_module, f"read_{domain}")

@@ -115,6 +115,11 @@ Index of all ADRs in this repository.
   - Id: bfd76370-b59b-4d65-b550-a969f6c93c9d
   - Status: accepted
   - Decision-makers: dfch
+- [Single source of truth for the document-type domain-name set](c4efbde6-fd19-4aa8-8668-95316ed62dcc-single-source-of-truth-for-the-document-type-domain-name-set.md)
+  - Id: c4efbde6-fd19-4aa8-8668-95316ed62dcc
+  - Status: accepted
+  - Date: 2026-09-22
+  - Decision-makers: OpenCode agent + user decision
 - [Base the ADR template on MADR 4.0.0](c73e4f9d-81f3-495d-bd3a-f660ab992ed3-base-the-adr-template-on-madr-4-0-0.md)
   - Id: c73e4f9d-81f3-495d-bd3a-f660ab992ed3
   - Status: accepted

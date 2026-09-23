@@ -145,7 +145,7 @@ from ...vcr.tools._io import read_vcr
 from ...vcr.tools._lock import vcr_lock
 from ...vcr.tools._paths import vcr_base_dir
 from ...vcr.tools._write import write_vcr_file
-from ._domains import WholeBodyType
+from ._domains import WHOLE_BODY_DOMAINS, WholeBodyType
 from ._path_safety import assert_within, validate_id
 from ._splice import body_text, splice_body
 from ._timestamps import now_timestamp
@@ -706,11 +706,16 @@ _ADAPTERS: dict[str, Callable[[str, str, int | None, int | None], _UpdateFrontma
     "gol": _update_gol,
     "rsk": _update_rsk,
     "dec": _update_dec,
-    "feat": _update_feat,
     "sop": _update_sop,
+    "feat": _update_feat,
     "vcr": _update_vcr,
     "sysrs": _update_sysrs,
 }
+
+assert set(_ADAPTERS) == set(WHOLE_BODY_DOMAINS), (
+    "_ADAPTERS keys drifted from the shared general.tools._domains.WHOLE_BODY_DOMAINS source -- add or "
+    "remove the domain in both places (feat-125-domain-lists, REQ-006)"
+)
 
 
 @mcp.tool(
@@ -718,8 +723,8 @@ _ADAPTERS: dict[str, Callable[[str, str, int | None, int | None], _UpdateFrontma
     title="Update document",
     description=(
         "Whole-body or line-range replace of an existing document's content across the "
-        "whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, "
-        "sysrs), preserving its id/type/status/created/version; only `updated` changes. With no `offset`/`limit`, "
+        f"whole-body domains (`type` is one of {', '.join(WHOLE_BODY_DOMAINS)}), preserving its "
+        "id/type/status/created/version; only `updated` changes. With no `offset`/`limit`, "
         "`content` is the full replacement body (body markdown only, no frontmatter block). With "
         "`offset`, `content` replaces the body line(s) starting at 1-based line `offset` of the current "
         "on-disk body: `limit` is the number of lines to replace (`offset`..`offset+limit-1`; `limit` "
