@@ -27,13 +27,13 @@ from biz.dfch.specmgr.adr.tools._paths import ADR_DIR_ENV_VAR
 from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR
 from biz.dfch.specmgr.general.resources.config import config_info
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
+
+#: The shared domain-name source (feat-125-domain-lists Phase 4, REQ-008):
+#: ``ALL_DOMAINS`` -- all document domains this resource must report on
+#: (REQ-001) -- and ``WHOLE_BODY_NO_FEAT_DOMAINS`` -- the domains sharing the
+#: single SPECMGR_DOCS_DIR root env var.
+from biz.dfch.specmgr.general.tools._domains import ALL_DOMAINS, WHOLE_BODY_NO_FEAT_DOMAINS
 from biz.dfch.specmgr.models import ConfigInfo
-
-#: All document domains this resource must report on (REQ-001).
-_ALL_DOMAINS = ["adr", "req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "feat", "vcr", "sysrs"]
-
-#: The domains sharing the single SPECMGR_DOCS_DIR root env var.
-_DOCS_DIR_DOMAINS = ["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "vcr", "sysrs"]
 
 #: The env vars this resource is allowed to read/report on at all.
 _KNOWN_ENV_VARS = {ADR_DIR_ENV_VAR, FEAT_DIR_ENV_VAR, DOCS_DIR_ENV_VAR}
@@ -50,7 +50,7 @@ class TestConfigResource(unittest.TestCase):
     def test_all_domains_present(self):
         """ACC-001: every one of the domains must have an entry."""
         result = config_info()
-        self.assertEqual(set(result.domains.keys()), set(_ALL_DOMAINS))
+        self.assertEqual(set(result.domains.keys()), set(ALL_DOMAINS))
 
     def test_every_domain_has_non_empty_base_dir_and_env_var(self):
         """Every domain's `base_dir`/`env_var` must be non-empty strings."""
@@ -76,7 +76,7 @@ class TestConfigResource(unittest.TestCase):
     def test_docs_dir_domains_share_env_var(self):
         """The non-adr/feat domains all report the shared `SPECMGR_DOCS_DIR` env var."""
         result = config_info()
-        for domain in _DOCS_DIR_DOMAINS:
+        for domain in WHOLE_BODY_NO_FEAT_DOMAINS:
             with self.subTest(domain=domain):
                 self.assertEqual(result.domains[domain].env_var, DOCS_DIR_ENV_VAR)
 
@@ -90,7 +90,7 @@ class TestConfigResource(unittest.TestCase):
             result = config_info()
             self.assertFalse(result.domains["adr"].env_var_set)
             self.assertFalse(result.domains["feat"].env_var_set)
-            for domain in _DOCS_DIR_DOMAINS:
+            for domain in WHOLE_BODY_NO_FEAT_DOMAINS:
                 self.assertFalse(result.domains[domain].env_var_set, domain)
 
         with mock.patch.dict(os.environ, {ADR_DIR_ENV_VAR: "/tmp/custom-adr"}, clear=False):
@@ -101,7 +101,7 @@ class TestConfigResource(unittest.TestCase):
 
         with mock.patch.dict(os.environ, {DOCS_DIR_ENV_VAR: "/tmp/custom-docs"}, clear=False):
             result = config_info()
-            for domain in _DOCS_DIR_DOMAINS:
+            for domain in WHOLE_BODY_NO_FEAT_DOMAINS:
                 with self.subTest(domain=domain):
                     self.assertTrue(result.domains[domain].env_var_set)
 

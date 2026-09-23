@@ -57,6 +57,10 @@ from biz.dfch.specmgr.dec.tools.create_dec import create_dec
 from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR, feat_base_dir
 from biz.dfch.specmgr.feat.tools.create_feat import create_feat
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
+
+#: The shared domain-name source (feat-125-domain-lists Phase 4, REQ-008): the
+#: whole-body document types the registration test's expected enum derives from.
+from biz.dfch.specmgr.general.tools._domains import WHOLE_BODY_DOMAINS
 from biz.dfch.specmgr.general.tools._splice import body_text
 from biz.dfch.specmgr.gol.models.v1 import GolDocument, GolFrontmatter
 from biz.dfch.specmgr.gol.tools._paths import GolNotFoundError, gol_base_dir
@@ -1346,10 +1350,7 @@ class TestUpdateRegistration(unittest.TestCase):
 
         schema = matching[0].input_schema
         type_prop = schema["properties"]["type"]
-        self.assertEqual(
-            type_prop["enum"],
-            ["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "feat", "vcr", "sysrs"],
-        )
+        self.assertEqual(type_prop["enum"], list(WHOLE_BODY_DOMAINS))
         self.assertEqual(type_prop["type"], "string")
         for name in ("offset", "limit"):
             prop = schema["properties"][name]

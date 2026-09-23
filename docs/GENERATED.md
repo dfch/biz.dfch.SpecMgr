@@ -142,6 +142,7 @@ First-line docstrings from each module, organized by domain:
 - `general/tools/__init__.py` — MCP tool wrappers for general-purpose utilities (mirrors ``adr/tools/``'s shape).
 - `general/tools/_doc_cache.py` — Generic, doc-type-agnostic content-hash-validated in-memory read cache (feat-107-doc-cache, Phase 2/Phase 6).
 - `general/tools/_doc_paths.py` — Generic, doc-type-agnostic base directory resolution, filename slugification,
+- `general/tools/_domains.py` — The single source of truth for the document-type domain names (feat-125-domain-lists, REQ-001).
 - `general/tools/_listing.py` — Generic, doc-type-agnostic ``list_<domain>`` summary construction (feat-81-83-validation Phase 3, Task 3.1).
 - `general/tools/_packaged_data.py` — Generic, doc-type-agnostic access to packaged example/template/schema data
 - `general/tools/_paging.py` — Generic, doc-type-agnostic paging helpers (feat-13 Task 1.2).

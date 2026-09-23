@@ -68,11 +68,13 @@ from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR, README_FILENAME
 from biz.dfch.specmgr.feat.tools.create_feat import create_feat
 from biz.dfch.specmgr.feat.tools.set_feat_id import set_feat_id
 from biz.dfch.specmgr.general.tools._doc_paths import find_doc_path_by_id
-from biz.dfch.specmgr.general.tools._packaged_data import read_packaged_text
 
-#: The non-``feat`` generic whole-body domains, all wired identically
-#: through the shared ``general.tools._doc_paths.find_doc_path_by_id``.
-_NON_FEAT_DOMAINS = ["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "vcr", "sysrs"]
+#: The non-``feat`` generic whole-body domains (the shared
+#: ``general.tools._domains`` source, feat-125-domain-lists Phase 4, REQ-008),
+#: all wired identically through the shared
+#: ``general.tools._doc_paths.find_doc_path_by_id``.
+from biz.dfch.specmgr.general.tools._domains import WHOLE_BODY_NO_FEAT_DOMAINS
+from biz.dfch.specmgr.general.tools._packaged_data import read_packaged_text
 
 #: Every ``*.md`` packaged template's frontmatter ``id: ...`` line, unquoted, own line.
 _ID_LINE_PATTERN = re.compile(r"^id: .+$", re.MULTILINE)
@@ -149,7 +151,7 @@ class TestAcc008NonFeatDomainsExposeTheExpectedCacheApi(unittest.TestCase):
     """ACC-008 (part 1): every one of the non-``feat`` domains' ``_cache.py`` exposes the expected API."""
 
     def test_every_domain_cache_module_has_the_four_expected_functions(self) -> None:
-        for domain in _NON_FEAT_DOMAINS:
+        for domain in WHOLE_BODY_NO_FEAT_DOMAINS:
             with self.subTest(domain=domain):
                 module = _cache_module(domain)
                 self.assertTrue(callable(getattr(module, f"read_{domain}", None)))
@@ -178,15 +180,15 @@ class TestAcc008ReadFnIsCacheBackedForEveryNonFeatDomain(unittest.TestCase):
     """ACC-008 (part 2): each non-``feat`` domain's ``read_<domain>`` is cache-backed (calls ``parse_<domain>`` once)."""
 
     def setUp(self) -> None:
-        for domain in _NON_FEAT_DOMAINS:
+        for domain in WHOLE_BODY_NO_FEAT_DOMAINS:
             getattr(_cache_module(domain), f"reset_{domain}_cache")()
 
     def tearDown(self) -> None:
-        for domain in _NON_FEAT_DOMAINS:
+        for domain in WHOLE_BODY_NO_FEAT_DOMAINS:
             getattr(_cache_module(domain), f"reset_{domain}_cache")()
 
     def test_second_read_of_an_unchanged_file_does_not_reinvoke_the_real_parse_fn(self) -> None:
-        for domain in _NON_FEAT_DOMAINS:
+        for domain in WHOLE_BODY_NO_FEAT_DOMAINS:
             with self.subTest(domain=domain):
                 module = _cache_module(domain)
                 read_fn: Callable[[Path], Any] = getattr(module, f"read_{domain}")
@@ -206,15 +208,15 @@ class TestAcc008FindDocPathByIdReconcilesForEveryNonFeatDomain(unittest.TestCase
     """ACC-008 (part 3): ``find_doc_path_by_id``'s scan routes through each non-``feat`` domain's own cache."""
 
     def setUp(self) -> None:
-        for domain in _NON_FEAT_DOMAINS:
+        for domain in WHOLE_BODY_NO_FEAT_DOMAINS:
             getattr(_cache_module(domain), f"reset_{domain}_cache")()
 
     def tearDown(self) -> None:
-        for domain in _NON_FEAT_DOMAINS:
+        for domain in WHOLE_BODY_NO_FEAT_DOMAINS:
             getattr(_cache_module(domain), f"reset_{domain}_cache")()
 
     def test_scan_warms_both_entries_then_reconcile_drops_the_deleted_one(self) -> None:
-        for domain in _NON_FEAT_DOMAINS:
+        for domain in WHOLE_BODY_NO_FEAT_DOMAINS:
             with self.subTest(domain=domain):
                 module = _cache_module(domain)
                 read_fn: Callable[[Path], Any] = getattr(module, f"read_{domain}")
