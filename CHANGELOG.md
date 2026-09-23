@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `list_references`, a new generic, cross-domain MCP tool in
+  `general/tools/` (dispatch-only, per ADR 36905d5b) that lists the
+  cross-references of one source document, resolved and paged
+  (feat-144-ref-artifact, GitHub issue #144): it takes a source
+  document's `type` (one of
+  req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/adr) and `id`, scans
+  the source's frontmatter-stripped body for `<TYPE> <uuid>` references
+  (a shared 10-tag reference vocabulary:
+  GOL/PRB/QA/UC/REQ/RSK/DEC/ADR/VCR/SYSRS; case-insensitive tag, space or
+  dash separator, anywhere in a line), dedupes repeated occurrences
+  (first-occurrence order), resolves each unique reference in its target
+  domain (cache-backed; ADR excluded from the doc cache), and returns a
+  paged `PagedResult[ReferenceRow]` -- one row per unique reference
+  carrying `type`/`id`/`title` (the referenced document's H1, re-derived
+  from the resolved document)/`path` (the referenced document's resolved
+  absolute file path). A reference that cannot be resolved on disk is a
+  row with null `title`/`path` and the target domain's not-found message
+  in `error` -- the tool never raises for an unresolvable reference;
+  `max_results`/`offset` follow the shared `list_*` paging contract
+  (default page size 25, capped at 100; out-of-range values clamp, never
+  error). The same path-safety guards apply to the source: an invalid
+  `type`/`id` (path-injection attempt or wrong format) is a `ValueError`
+  before any filesystem access, and a missing source document raises the
+  source domain's not-found error, identical to `get_<d>`. Resolution is
+  naive per-reference in v1; per-domain batched resolution for large
+  reference lists is tracked separately as GitHub issue #145.
+- The `/refs <type> <id>` opencode slash command
+  (`.opencode/command/refs.md`) and the read-only `ref-finder` subagent
+  (`.opencode/agent/ref-finder.md`), issue #144's secondary request: the
+  command delegates to the subagent, which calls `list_references` and
+  reports the rows, flagging any **NOT FOUND** references.
+
 ## [0.30.0] - 2026-09-21
 
 ### Added
