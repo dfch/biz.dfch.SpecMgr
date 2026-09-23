@@ -560,8 +560,29 @@ type or cross-cutting:
        unlike every other generic tool here, it never raises for a
        content-validation failure, always returning
        `{valid: bool, errors: list[{message: str}]}`, only raising
-       `ValueError` for a `full`/content-shape mismatch or an unsupported
-       `type`. On a successful write, `update`, `set_status` (its
+        `ValueError` for a `full`/content-shape mismatch or an unsupported
+        `type`; `list_references`, the generic, cross-domain cross-reference
+        listing tool (feat-144-ref-artifact, GitHub issue #144) — takes a
+        *source* document's `type` (one of
+        adr/req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs) + `id`,
+        regex-scans the source's frontmatter-stripped body for `<TYPE>
+        <uuid>` references (the 10-tag reference vocabulary
+        GOL/PRB/QA/UC/REQ/RSK/DEC/ADR/VCR/SYSRS; case-insensitive tag,
+        space or dash separator, anywhere in a line), dedupes repeated
+        occurrences (first-occurrence order), resolves each unique
+        reference in its target domain (cache-backed; ADR excluded from
+        the cache), and returns a paged `PagedResult[ReferenceRow]` — one
+        row per unique reference carrying `type`/`id`/`title` (the
+        referenced document's H1)/`path` (resolved absolute file path); a
+        reference that cannot be resolved on disk is a row with null
+        `title`/`path` and the target domain's not-found message in
+        `error` — it never raises; `max_results`/`offset` paging with the
+        same clamp-not-error contract as every `list_*` tool (default 25,
+        cap 100). It applies the same `_path_safety` guards: an invalid
+        source `type`/`id` (path-injection attempt or wrong-format id) is
+        a `ValueError` before any filesystem access, and a missing source
+        raises the source domain's not-found error, identical to `get_<d>`.
+        On a successful write, `update`, `set_status` (its
       non-`adr` adapters), `set_classification`, and every per-domain
      `create_<d>` tool now return the domain's frontmatter object only (no
      body) — small and bounded regardless of document size, unlike an

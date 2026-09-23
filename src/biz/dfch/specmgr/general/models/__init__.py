@@ -61,6 +61,18 @@ model-backed drift-guard convention (ADR
   backing ``specmgr://ears``, purely to fail fast on structural drift (the
   parsed result is discarded by the resource itself).
 
+Also backs feat-144-ref-artifact's generic ``list_references`` tool
+(REQ-002/REQ-003/REQ-004):
+
+- :class:`ReferenceRow` -- one row of that tool's
+  ``PagedResult[ReferenceRow]`` result: a single cross-reference extracted
+  from a source document's frontmatter-stripped body, carrying the
+  reference's own ``type`` (lowercase tag) and ``id`` plus the referenced
+  document's ``title`` (its H1) and absolute on-disk ``path`` -- or, for a
+  reference that could not be resolved, ``None`` for both and the target
+  domain's not-found message in ``error`` (a never-raising, ``list_*``-
+  style inline failure).
+
 Import this package to use either model directly::
 
     from biz.dfch.specmgr.general.models import DocSummary, PagedResult
@@ -87,6 +99,7 @@ from .ears import (
 from .invalid_status_result import InvalidStatusResult
 from .paged_result import PagedResult
 from .rasci import Rasci, RasciVsRaci, RoleItem, Roles, parse_rasci
+from .reference import ReferenceRow
 from .summary import DocSummary
 from .validate_result import ValidateResult, ValidationErrorEntry
 
@@ -104,6 +117,7 @@ __all__ = [
     "Patterns",
     "Rasci",
     "RasciVsRaci",
+    "ReferenceRow",
     "RoleItem",
     "Roles",
     "ValidateResult",
