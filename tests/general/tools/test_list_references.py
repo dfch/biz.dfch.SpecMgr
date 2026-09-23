@@ -47,6 +47,10 @@ from biz.dfch.specmgr.feat.tools.create_feat import create_feat
 from biz.dfch.specmgr.general.models.paged_result import PagedResult
 from biz.dfch.specmgr.general.models.reference import ReferenceRow
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
+
+#: The shared domain-name source (feat-125-domain-lists): ``ALL_DOMAINS``,
+#: the registration test's expected ``type`` enum derivation (feat-144-ref-artifact, Task 7.2).
+from biz.dfch.specmgr.general.tools._domains import ALL_DOMAINS
 from biz.dfch.specmgr.general.tools.list_references import list_references
 from biz.dfch.specmgr.gol.tools._paths import GolNotFoundError
 from biz.dfch.specmgr.gol.tools.create_gol import create_gol
@@ -748,10 +752,7 @@ class TestListReferencesRegistration(unittest.TestCase):
 
         schema = matching[0].input_schema
         type_prop = schema["properties"]["type"]
-        self.assertEqual(
-            type_prop["enum"],
-            ["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "feat", "vcr", "sysrs", "adr"],
-        )
+        self.assertEqual(type_prop["enum"], list(ALL_DOMAINS))
         self.assertEqual(type_prop["type"], "string")
         self.assertEqual(schema["properties"]["id"]["type"], "string")
         self.assertEqual(set(schema["required"]), {"id", "type"})

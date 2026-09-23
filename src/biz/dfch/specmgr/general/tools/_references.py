@@ -33,11 +33,20 @@ generic ``list_references`` tool (``general.tools.list_references``):
 - :func:`resolve_reference` resolves one unique reference into a
   :class:`~biz.dfch.specmgr.general.models.reference.ReferenceRow` by
   dispatching on the reference's tag to the target domain's own
-  cache-backed ``load_by_id`` and ``<d>_base_dir``. Resolution **never
-  raises**: a reference whose target is absent on disk (a ``LookupError``
-  from ``load_by_id`` -- every domain's ``XNotFoundError`` subclasses
-  ``LookupError``) yields a row with ``title=None``, ``path=None``, and
-  the not-found message in ``error``.
+  cache-backed ``load_by_id`` and ``<d>_base_dir``. Target resolution
+  **never raises for a missing document**: a reference whose target is
+  absent on disk (a ``LookupError`` from ``load_by_id`` -- every domain's
+  ``XNotFoundError`` subclasses ``LookupError``) yields a row with
+  ``title=None``, ``path=None``, and the not-found message in ``error``.
+  An unknown ``ref_type`` (a tag with no ``_TARGET_RESOLVERS`` entry) is
+  a programming error that propagates as a ``KeyError`` (feat-144-ref-artifact, Task 7.4).
+- Caveat (accepted v1 tradeoff of the regex-based, schema-agnostic
+  extractor; pinned by a dedicated test -- feat-144-ref-artifact Task 7.6):
+  :data:`_REFERENCE_PATTERN` scans the raw, frontmatter-stripped body text
+  **unconditionally**, including inside fenced code blocks and inline code
+  spans. A document that quotes/illustrates the ``<TAG> <uuid>`` syntax as
+  a literal example (rather than as a live reference) is still extracted
+  and resolved/reported as if it were real.
 
 The reference *tag* vocabulary is the nine tags the SYSRS/VCR structured
 patterns validate as reference targets plus ``sysrs`` (the aggregator
@@ -279,6 +288,12 @@ _TARGET_RESOLVERS: dict[str, Callable[[str], tuple[str, Path]]] = {
     "adr": _load_adr,
 }
 
+assert set(_TARGET_RESOLVERS) == set(REFERENCE_TYPES), (
+    "_TARGET_RESOLVERS keys drifted from this module's REFERENCE_TYPES reference-tag vocabulary -- "
+    "add or remove the missing target domain's _load_<d> resolver in both places (feat-144-ref-artifact, "
+    "Task 7.4)"
+)
+
 
 def resolve_reference(ref_type: str, ref_id: str) -> ReferenceRow:
     """Resolve one unique reference into a :class:`ReferenceRow` (feat-144 REQ-003/REQ-004).
@@ -290,11 +305,16 @@ def resolve_reference(ref_type: str, ref_id: str) -> ReferenceRow:
     resolved document on disk, and its ``path`` the referenced document's
     resolved absolute file path (``str(path.resolve())``).
 
-    Resolution **never raises**: a ``LookupError`` from ``load_by_id``
-    (every domain's ``XNotFoundError`` subclasses ``LookupError``) -- i.e.
-    a reference whose target is absent on disk -- yields a row with
-    ``title=None``, ``path=None``, and the not-found message in ``error``
-    (``list_*``-style inline failure). Only the source read (in the
+    Target resolution **never raises for a missing document**: a
+    ``LookupError`` from ``load_by_id`` (every domain's
+    ``XNotFoundError`` subclasses ``LookupError``) -- i.e. a reference
+    whose target is absent on disk -- yields a row with ``title=None``,
+    ``path=None``, and the not-found message in ``error``
+    (``list_*``-style inline failure). An unknown ``ref_type`` (a tag
+    with no ``_TARGET_RESOLVERS`` entry) is a programming error that
+    propagates as a ``KeyError`` (feat-144-ref-artifact, Task 7.4); the
+    module-scope drift guard above makes the missing-entry case
+    impossible by construction. Only the source read (in the
     ``list_references`` tool itself) raises for a missing document.
 
     Parameters
@@ -309,12 +329,20 @@ def resolve_reference(ref_type: str, ref_id: str) -> ReferenceRow:
     ReferenceRow
         The resolved row (``title``/``path`` populated, ``error`` ``None``)
         or the not-found row (``title``/``path`` ``None``, ``error`` set).
+
+    Raises
+    ------
+    KeyError
+        ``ref_type`` is not one of :data:`REFERENCE_TYPES` (no
+        ``_TARGET_RESOLVERS`` entry) -- a programming error, never
+        expected by construction (the module-scope drift guard above).
     """
     assert isinstance(ref_type, str), type(ref_type)
     assert isinstance(ref_id, str), type(ref_id)
 
+    resolver = _TARGET_RESOLVERS[ref_type]  # feat-144 Task 7.4: a KeyError here is a programming error
     try:
-        title, path = _TARGET_RESOLVERS[ref_type](ref_id)
+        title, path = resolver(ref_id)  # only the domain's own XNotFoundError (a LookupError) is caught
     except LookupError as exc:
         result = ReferenceRow(type=ref_type, id=ref_id, error=str(exc))
         return result

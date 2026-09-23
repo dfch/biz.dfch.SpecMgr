@@ -94,6 +94,7 @@ from ...uc.tools._io import load_by_id as load_uc_by_id
 from ...uc.tools._paths import uc_base_dir
 from ...vcr.tools._io import load_by_id as load_vcr_by_id
 from ...vcr.tools._paths import vcr_base_dir
+from ._domains import ALL_DOMAINS
 from ._paging import normalize_paging, paginate
 from ._path_safety import assert_within, validate_id
 from ._references import find_references, resolve_reference
@@ -123,6 +124,12 @@ _SOURCE_LOADERS: dict[str, tuple[Callable[[], Path], Callable[[Path, str], tuple
     "sysrs": (sysrs_base_dir, load_sysrs_by_id),
     "adr": (adr_base_dir, load_adr_by_id),
 }
+
+assert set(_SOURCE_LOADERS) == set(ALL_DOMAINS), (
+    "_SOURCE_LOADERS keys drifted from the shared general.tools._domains.ALL_DOMAINS source -- add or "
+    "remove the missing source domain's (<d>_base_dir, load_<d>_by_id) pair in both places "
+    "(feat-144-ref-artifact, Task 7.3)"
+)
 
 
 def _load_source_path(type_: str, id_: str) -> tuple[Path, Path]:
@@ -167,7 +174,7 @@ def _load_source_path(type_: str, id_: str) -> tuple[Path, Path]:
     ),
 )
 def list_references(
-    type: Literal["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "feat", "vcr", "sysrs", "adr"],
+    type: Literal[*ALL_DOMAINS],
     id: str,
     max_results: int | None = None,
     offset: int | None = None,

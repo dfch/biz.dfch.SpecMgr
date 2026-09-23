@@ -1005,7 +1005,7 @@ Cross-references of one source document, resolved and paged. `type` is the sourc
 
 | Parameter | Type | Required |
 | --- | --- | --- |
-| `type` | `string (enum: req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs, adr)` | Yes |
+| `type` | `string (enum: adr, req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs)` | Yes |
 | `id` | `string` | Yes |
 | `max_results` | `integer | None` | No |
 | `offset` | `integer | None` | No |

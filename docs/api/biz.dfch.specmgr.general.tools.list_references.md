@@ -54,7 +54,7 @@ propagates unchanged (a source that does not exist on disk is this
 tool's only not-found *raise* -- ACC-006, identical to ``get_<d>``).
 
 
-### `list_references(type: "Literal['req', 'uc', 'tsk', 'qa', 'prb', 'gol', 'rsk', 'dec', 'sop', 'feat', 'vcr', 'sysrs', 'adr']", id: 'str', max_results: 'int | None' = None, offset: 'int | None' = None) -> 'PagedResult[ReferenceRow]'`
+### `list_references(type: 'Literal[*ALL_DOMAINS,]', id: 'str', max_results: 'int | None' = None, offset: 'int | None' = None) -> 'PagedResult[ReferenceRow]'`
 
 List the cross-references of one source document, resolved and paged.
 

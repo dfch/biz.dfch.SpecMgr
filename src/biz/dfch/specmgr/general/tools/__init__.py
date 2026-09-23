@@ -48,19 +48,19 @@ req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs; ``adr`` is not supported,
 ``validate_adr`` remains its own standalone tool); unlike every other
 generic tool here, it never raises for a content-validation failure --
 it always returns ``{valid: bool, errors: list[{message: str}]}``, only
- raising ``ValueError`` for a ``full``/content-shape mismatch or an
- unsupported ``type`` (feat-81-83-validation, ADR
- 078bf395-0a5f-4afd-84f6-b7a2191a00e6). ``list_references`` -- the
- generic, cross-domain cross-reference listing tool (``type`` is one of
- req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/adr): scans the source
- document's frontmatter-stripped body for ``<TYPE> <uuid>`` references
- (the shared reference-tag vocabulary in ``general.tools._references``),
- dedupes repeated occurrences (first-occurrence order preserved), resolves
- each unique reference to the referenced document in its own target domain,
- and returns a paged ``PagedResult`` of one ``ReferenceRow`` per unique
- reference (``type``/``id``/``title``/``path``, plus ``error`` for
- references that could not be resolved -- the shared ``list_*`` paging
- mechanism, ADR ec9f5262; feat-144-ref-artifact).
+raising ``ValueError`` for a ``full``/content-shape mismatch or an
+unsupported ``type`` (feat-81-83-validation, ADR
+078bf395-0a5f-4afd-84f6-b7a2191a00e6). ``list_references`` -- the
+generic, cross-domain cross-reference listing tool (``type`` is one of
+req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/adr): scans the source
+document's frontmatter-stripped body for ``<TYPE> <uuid>`` references
+(the shared reference-tag vocabulary in ``general.tools._references``),
+dedupes repeated occurrences (first-occurrence order preserved), resolves
+each unique reference to the referenced document in its own target domain,
+and returns a paged ``PagedResult`` of one ``ReferenceRow`` per unique
+reference (``type``/``id``/``title``/``path``, plus ``error`` for
+references that could not be resolved -- the shared ``list_*`` paging
+mechanism, ADR ec9f5262; feat-144-ref-artifact).
 Import this package to register all general tools at once::
 
     from biz.dfch.specmgr.general import tools  # noqa: F401 (side-effects only)

@@ -389,6 +389,21 @@ class TestFindReferences(unittest.TestCase):
             with self.subTest(text=text):
                 self.assertEqual(find_references(text), [(ref_type, _UUID)])
 
+    def test_a_reference_inside_code_fences_and_inline_code_spans_is_still_extracted(self):
+        """Task 7.6 pins the accepted v1 tradeoff recorded in the plan's Design Notes caveat
+        bullet and ``_references.py``'s module docstring: the extraction regex scans the raw
+        frontmatter-stripped body text unconditionally -- including inside fenced code blocks
+        and inline code spans -- so a reference-shaped line that merely quotes the
+        <TAG> <uuid> syntax (rather than naming a live reference) is still extracted."""
+        text = (
+            f"```\nREQ {_UUID}: a literal example, not a live reference\n```\n\n"
+            f"See the `GOL-{_UUID2}` tag for the inline variant."
+        )
+
+        result = find_references(text)
+
+        self.assertEqual(result, [("req", _UUID), ("gol", _UUID2)])
+
     def test_tags_outside_the_vocabulary_do_not_match(self):
         """SOP/TSK/FEAT (and longer words containing a tag) must not match."""
         for text in (
