@@ -4,7 +4,7 @@ created: '2026-09-21 21:31:30.254+02:00'
 id: feat-144-ref-artifact
 status: planning
 type: feat
-updated: '2026-09-22 23:02:41.263+02:00'
+updated: '2026-09-23 06:34:19.374+02:00'
 version: 1.0.0
 ---
 
@@ -109,10 +109,10 @@ All open choices are now locked (Phase 1 complete). The design:
 
 #### Phase 3: Tests
 
-- [ ] Task 3.1: Unit tests for extraction (per tag + case/dash/anywhere variants), deduplication, resolved-vs-not-found rows, and the empty-list case (tmp `SPECMGR_DOCS_DIR`/`SPECMGR_ADR_DIR` fixtures with real referenced artifacts)
-- [ ] Task 3.2: Path-safety tests (invalid source `type`/`id` raise before any filesystem access) and source-missing (raises the domain not-found error)
-- [ ] Task 3.3: Paging tests (`total`/`truncated`/`error_count` correct, `offset` advances, `max_results` clamps to [1,100], `offset` floors to 0)
-- [ ] Task 3.4: Run the full quality gate with tests and commit the phase as a single commit (no push)
+- [x] Task 3.1: Unit tests for extraction (per tag + case/dash/anywhere variants), deduplication, resolved-vs-not-found rows, and the empty-list case (tmp `SPECMGR_DOCS_DIR`/`SPECMGR_ADR_DIR` fixtures with real referenced artifacts)
+- [x] Task 3.2: Path-safety tests (invalid source `type`/`id` raise before any filesystem access) and source-missing (raises the domain not-found error)
+- [x] Task 3.3: Paging tests (`total`/`truncated`/`error_count` correct, `offset` advances, `max_results` clamps to [1,100], `offset` floors to 0)
+- [x] Task 3.4: Run the full quality gate with tests and commit the phase as a single commit (no push)
 
 #### Phase 4: Command + Subagent
 
@@ -137,11 +137,15 @@ All open choices are now locked (Phase 1 complete). The design:
 
 ### Current Status
 
-Phase 2 implementation landed. The `list_references` generic dispatch-only MCP tool (new public module `general/tools/list_references.py`), its no-`mcp`-import engine (`general/tools/_references.py`: shared extraction regex, 10-tag `REFERENCE_TYPES` vocabulary, per-target-domain resolution dispatch with ADR special-cased), and the `ReferenceRow` model (`general/models/reference.py`, exported from `general/models/__init__.py`) are in place and registered through `general/tools/__init__.py` (the `server.py` import cascades; tool registration verified against the live MCP server). The full quality gate is green (ruff format/check, vulture with no new whitelist entries, all 3365 tests passing). The two opencode artifacts (`.opencode/command/refs.md`, `.opencode/agent/ref-finder.md`) remain staged from Phase 1. Unit tests (Phase 3), the `/refs` smoke-test (Task 4.3), doc registration + regeneration (Phase 5), and closeout (Phase 6) remain; the phase commit is made by the orchestrator per the phase instructions.
+Phase 3 tests landed: three new unittest modules (36 tests, 153 subtests) covering the extraction engine (`tests/general/tools/test__references.py`: all 10 tags, case/dash/separator/anywhere-in-line variants, non-match guards incl. the overlong-hex-tail and `feat-NNN-slug` shapes, first-occurrence order without engine-level dedup, and `resolve_reference`'s resolved rows for every flat target domain plus the ADR special case and its never-raising not-found rows), the tool contract (`tests/general/tools/test_list_references.py`: ACC-001 resolved rows from a seeded SYSRS source, ACC-002 the empty-list case, ACC-003 the never-raising not-found row, ACC-004 first-occurrence dedup, ACC-005 path-safety ValueErrors proven to fire before any filesystem access (a nonexistent docs root), ACC-006 the source-missing domain not-found errors for req/uc/sysrs/gol/rsk/feat/adr, ACC-009 the full paging contract on a 30-reference source, the feat/ADR source-domain spread, and a live-`mcp` registration smoke test), and the `ReferenceRow` model shape (`tests/general/models/test_reference.py`). The full quality gate is green (ruff format/check, vulture, all 3401 tests passing) with 100% coverage on all three new `src/` files (`_references.py`, `list_references.py`, `reference.py`). The phase commit is made by the orchestrator per the phase instructions. Phases 5 (doc registration + regeneration) and 6 (verification & closeout) remain; Task 4.3's `/refs` smoke-test is deferred per the plan.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-23 06:34:19.374Z - Phase 3 tests landed; full quality gate green with 100% coverage on the new src files (commit deferred to orchestrator)
+
+Implemented Tasks 3.1-3.3: `tests/general/tools/test__references.py` (engine: `find_references` per all 10 tags + case/separator/anywhere-in-line variants + non-match guards (out-of-vocabulary tags, non-hex uuids, overlong hex tail, feat-NNN-slug ids), first-occurrence order, no engine-level dedup; `resolve_reference` resolved rows for every flat target domain + the ADR special case + never-raising not-found rows), `tests/general/tools/test_list_references.py` (ACC-001/002/003/004/005/006/009, the feat/ADR source-domain spread, and a live-`mcp` registration smoke test), and `tests/general/models/test_reference.py` (`ReferenceRow` field order, defaults, and `model_dump()` shape). 36 tests / 153 subtests, all passing; no implementation bug was exposed, so no `src/` change was needed. Gate green: `ruff format --check`, `ruff check`, `vulture` (no new whitelist entries), `pytest -n auto --cov=src` (3401 passed; 100% coverage on `_references.py`/`list_references.py`/`reference.py`). Task 3.4's commit is deferred to the orchestrator per the phase instructions.
 
 #### 2026-09-22 21:02:41.263Z - Phase 2 implementation landed; full quality gate green (commit deferred to orchestrator)
 
@@ -162,6 +166,10 @@ Drafted the feature plan from GitHub issue #144 'list referenced artifacts': a n
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-23 06:34:19.374Z - Test fixture strategy choices (Phase 3)
+
+Choices beyond what the Plan locked: (1) the ACC-005 path-safety fixture points `SPECMGR_DOCS_DIR`/`SPECMGR_FEAT_DIR`/`SPECMGR_ADR_DIR` at paths that **do not exist** — a source lookup that ever reached the filesystem would surface as the domain's own `LookupError` (not-found), not `ValueError`, so asserting `ValueError` on those roots proves the guard fires before any filesystem access; (2) the ACC-001 SYSRS fixture puts the `RSK` reference in the optional `## Risks` section (SYSRS's `## Requirements` H3s accept only `REQ` bullets and `### Goals` only `GOL` bullets), so the canonical `GOL`/`RSK`/`REQ` bullet spread stays a *valid* SYSRS body; (3) the engine's resolved-row test exercises every one of the nine flat target domains (the Plan required two) plus the ADR special case — each `_load_<d>` is a four-line dispatcher, so the loop is cheap and takes `_references.py` to 100% coverage; (4) REQ-source fixtures place their reference lines in the free-form `## Description`/`## More Information` sections (a structurally-checked REQ section cannot hold a `<TAG> <uuid>` line).
 
 #### 2026-09-22 21:02:41.263Z - Helper naming and two implementation-shape choices (Phase 2)
 
