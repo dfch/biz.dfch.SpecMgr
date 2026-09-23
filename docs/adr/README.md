@@ -72,6 +72,11 @@ Index of all ADRs in this repository.
   - Id: 898bfcd0-85f9-462f-93a8-747bda4166c8
   - Status: accepted
   - Decision-makers: dfch
+- [Use full ISO 8601 date+time timestamps in all entry headings and frontmatter (accept T or space, write T)](8c889262-152b-4b8e-ae2c-75371f7a9edf-use-full-iso-8601-date-time-timestamps-in-all-entry-headings.md)
+  - Id: 8c889262-152b-4b8e-ae2c-75371f7a9edf
+  - Status: draft
+  - Date: 2026-09-23
+  - Decision-makers: dfch
 - [id/filename/addressing scheme: server-generated UUID, {id}-{slug}.md, directory-scan resolution](8cf940c5-3100-485c-a12d-14b59b631712-id-filename-addressing-scheme-server-generated-uuid-id-slug.md)
   - Id: 8cf940c5-3100-485c-a12d-14b59b631712
   - Status: accepted
