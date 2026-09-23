@@ -564,7 +564,7 @@ type or cross-cutting:
         `type`; `list_references`, the generic, cross-domain cross-reference
         listing tool (feat-144-ref-artifact, GitHub issue #144) — takes a
         *source* document's `type` (one of
-        req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/adr) + `id`,
+        adr/req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs) + `id`,
         regex-scans the source's frontmatter-stripped body for `<TYPE>
         <uuid>` references (the 10-tag reference vocabulary
         GOL/PRB/QA/UC/REQ/RSK/DEC/ADR/VCR/SYSRS; case-insensitive tag,

@@ -299,7 +299,7 @@ content-shape mismatch or an unsupported ``type``.
 ``list_references`` (feat-144-ref-artifact, GitHub issue #144) -- the
 generic, cross-domain cross-reference listing tool: takes a *source*
 document's ``type`` (one of
-``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``adr``)
+``adr``/``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``)
 and its ``id``, scans the source's frontmatter-stripped body for
 ``<TYPE> <uuid>`` references (the shared 10-tag reference vocabulary
 ``GOL``/``PRB``/``QA``/``UC``/``REQ``/``RSK``/``DEC``/``ADR``/``VCR``/``SYSRS``:

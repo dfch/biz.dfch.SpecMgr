@@ -157,9 +157,9 @@ def _load_source_path(type_: str, id_: str) -> tuple[Path, Path]:
     title="List referenced artifacts",
     description=(
         "Cross-references of one source document, resolved and paged. `type` is the source "
-        "document's domain (one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs, "
-        "adr) and `id` the source's own identifier. The tool scans the source's frontmatter-"
-        "stripped body for `<TYPE> <uuid>` references (the shared reference-tag vocabulary in "
+        f"document's domain (one of {', '.join(ALL_DOMAINS)}) and `id` the source's own "
+        "identifier. The tool scans the source's frontmatter-stripped body for `<TYPE> <uuid>` "
+        "references (the shared reference-tag vocabulary in "
         "general.tools._references: case-insensitive tag, space or dash separator, anywhere in a "
         "line), dedupes repeated occurrences (first-occurrence order preserved), and resolves each "
         "unique reference to the referenced document in its own target domain. Returns a "
@@ -216,9 +216,9 @@ def list_references(
     Parameters
     ----------
     type:
-        The source document's type / domain: one of ``req``, ``uc``,
-        ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``,
-        ``feat``, ``vcr``, ``sysrs``, ``adr``.
+        The source document's type / domain: one of ``adr``, ``req``,
+        ``uc``, ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``,
+        ``sop``, ``feat``, ``vcr``, ``sysrs``.
     id:
         The source document's specmgr-assigned identifier (the
         ``feat-NNN-slug`` folder name for ``feat``).

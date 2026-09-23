@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   cross-references of one source document, resolved and paged
   (feat-144-ref-artifact, GitHub issue #144): it takes a source
   document's `type` (one of
-  req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/adr) and `id`, scans
+  adr/req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs) and `id`, scans
   the source's frontmatter-stripped body for `<TYPE> <uuid>` references
   (a shared 10-tag reference vocabulary:
   GOL/PRB/QA/UC/REQ/RSK/DEC/ADR/VCR/SYSRS; case-insensitive tag, space or

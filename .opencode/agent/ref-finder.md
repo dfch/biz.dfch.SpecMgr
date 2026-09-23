@@ -34,7 +34,7 @@ everything else you report is that tool's output.
 ## Workflow
 
 1. **Parse the input.** You receive a `<type> <id>` pair (e.g.
-   `sysrs 3f2a1b3c-…`, `dec 9c1f…`, or `feat feat-144-ref-artifact`). `type` is
+   `sysrs 3f2a1b3c-...`, `dec 9c1f...`, or `feat feat-144-ref-artifact`). `type` is
    one of the specmgr document domains (`req`/`uc`/`tsk`/`qa`/`prb`/`gol`/
    `rsk`/`dec`/`sop`/`feat`/`vcr`/`sysrs`/`adr`); `id` is that document's
    identifier -- a lowercase-hex uuid for every domain except `feat`, which is a

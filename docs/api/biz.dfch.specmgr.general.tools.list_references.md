@@ -93,9 +93,9 @@ more references exist beyond the page (ACC-009).
 Parameters
 ----------
 type:
-    The source document's type / domain: one of ``req``, ``uc``,
-    ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``,
-    ``feat``, ``vcr``, ``sysrs``, ``adr``.
+    The source document's type / domain: one of ``adr``, ``req``,
+    ``uc``, ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``,
+    ``sop``, ``feat``, ``vcr``, ``sysrs``.
 id:
     The source document's specmgr-assigned identifier (the
     ``feat-NNN-slug`` folder name for ``feat``).

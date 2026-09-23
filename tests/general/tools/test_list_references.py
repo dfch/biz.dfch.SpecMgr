@@ -42,6 +42,7 @@ from unittest import mock
 
 from biz.dfch.specmgr.adr.tools._paths import ADR_DIR_ENV_VAR, AdrNotFoundError
 from biz.dfch.specmgr.adr.tools.create_adr import create_adr
+from biz.dfch.specmgr.dec.tools._paths import DecNotFoundError
 from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR, FeatNotFoundError
 from biz.dfch.specmgr.feat.tools.create_feat import create_feat
 from biz.dfch.specmgr.general.models.paged_result import PagedResult
@@ -55,13 +56,18 @@ from biz.dfch.specmgr.general.tools.list_references import list_references
 from biz.dfch.specmgr.gol.tools._paths import GolNotFoundError
 from biz.dfch.specmgr.gol.tools.create_gol import create_gol
 from biz.dfch.specmgr.models.adr import AdrBody, AdrFrontmatter
+from biz.dfch.specmgr.prb.tools._paths import PrbNotFoundError
+from biz.dfch.specmgr.qa.tools._paths import QaNotFoundError
 from biz.dfch.specmgr.req.tools._paths import ReqNotFoundError
 from biz.dfch.specmgr.req.tools.create_req import create_req
 from biz.dfch.specmgr.rsk.tools._paths import RskNotFoundError
 from biz.dfch.specmgr.rsk.tools.create_rsk import create_rsk
+from biz.dfch.specmgr.sop.tools._paths import SopNotFoundError
 from biz.dfch.specmgr.sysrs.tools._paths import SysrsNotFoundError
 from biz.dfch.specmgr.sysrs.tools.create_sysrs import create_sysrs
+from biz.dfch.specmgr.tsk.tools._paths import TskNotFoundError
 from biz.dfch.specmgr.uc.tools._paths import UcNotFoundError
+from biz.dfch.specmgr.vcr.tools._paths import VcrNotFoundError
 
 #: A well-formed but non-existent canonical UUID (the unknown-id case for every UUID domain).
 _MISSING_UUID = "00000000-0000-0000-0000-000000000000"
@@ -581,9 +587,15 @@ class TestListReferencesSourceMissing(TempListReferencesDirTestCase):
         cases: list[tuple[str, str, type[Exception]]] = [
             ("req", _MISSING_UUID, ReqNotFoundError),
             ("uc", _MISSING_UUID, UcNotFoundError),
+            ("tsk", _MISSING_UUID, TskNotFoundError),
+            ("qa", _MISSING_UUID, QaNotFoundError),
+            ("prb", _MISSING_UUID, PrbNotFoundError),
             ("sysrs", _MISSING_UUID, SysrsNotFoundError),
             ("gol", _MISSING_UUID, GolNotFoundError),
             ("rsk", _MISSING_UUID, RskNotFoundError),
+            ("dec", _MISSING_UUID, DecNotFoundError),
+            ("sop", _MISSING_UUID, SopNotFoundError),
+            ("vcr", _MISSING_UUID, VcrNotFoundError),
             ("feat", _MISSING_FEAT_ID, FeatNotFoundError),
             ("adr", _MISSING_UUID, AdrNotFoundError),
         ]
