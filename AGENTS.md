@@ -641,11 +641,13 @@ Still genuinely missing / not yet done (don't assume otherwise):
 - No `ac` (Acceptance Criteria) domain exists yet, despite `server.py`'s
   docstring already reserving a spot for it ("... and later `ac`") — the
   convention for adding it (or any future domain) is fixed by ADR
-  36905d5b-8057-4294-8665-c7eed5534db0: one dispatch entry to each of the
-  two generic tools in `general/tools/` (`update`'s `type`,
-  `set_status`'s `type`), one `delete` adapter in the generic `delete`
-  tool, plus a `raw` parameter on the new `get_<d>` tool — not new
-  `update_<d>`/`set_status_<d>`/`delete_<d>` tools.
+  36905d5b-8057-4294-8665-c7eed5534db0, refined by ADR
+  c4efbde6-fd19-4aa8-8668-95316ed62dcc: first register the domain's name
+  in `general/tools/_domains.py`'s `WHOLE_BODY_DOMAINS` once (in canonical
+  position), then one dispatch entry to each of the two generic tools in
+  `general/tools/` (`update`'s `type`, `set_status`'s `type`), one `delete`
+  adapter in the generic `delete` tool, plus a `raw` parameter on the new
+  `get_<d>` tool — not new `update_<d>`/`set_status_<d>`/`delete_<d>` tools.
 
 `feat-27-validation` (closed 2026-09-01, GitHub issue #27, subsuming feat-7's
 Task 0.29) made every `parse_<d>`/`create_<d>`/`validate_<d>` tool's and the

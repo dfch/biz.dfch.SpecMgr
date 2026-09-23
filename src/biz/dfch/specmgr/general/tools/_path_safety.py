@@ -47,6 +47,8 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from ._domains import FEAT, UUID_DOMAINS
+
 __all__ = [
     "assert_feat_id",
     "assert_no_traversal",
@@ -55,19 +57,17 @@ __all__ = [
     "validate_id",
 ]
 
-#: The UUID domains whose ``id`` is a server-generated v4 UUID: every
-#: whole-body domain other than ``feat``, plus ``adr`` (feat-38-39-41-43-44 Phase 4,
-#: REQ-009; ``sysrs`` added feat-32-sysrs Phase 3) -- ADR ids are canonical
-#: lowercase-hex UUIDs of the exact same
-#: shape (see ``adr.tools._paths.find_adr_path``/any ``docs/adr/*.md``
-#: frontmatter ``id`` value). ``delete``'s own ``Literal`` type still
-#: excludes ``"adr"`` (its behavior is unchanged, D-Phase-4) -- this
-#: addition is purely for use by ``get_<d>``/``update``/``set_status``.
-_UUID_TYPES = frozenset({"req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "vcr", "sysrs", "adr"})
-
-#: The ``feat`` document type: the one whole-body domain whose ``id`` is a
-#: chosen ``feat-NNN-slug`` folder name, not a server-generated UUID.
-_TYPE_FEAT = "feat"
+#: The UUID domains whose ``id`` is a server-generated v4 UUID: derived
+#: from the shared :data:`_domains.UUID_DOMAINS` source (feat-125-domain-
+#: lists Phase 2, REQ-004) -- every whole-body domain other than ``feat``,
+#: plus ``adr`` (feat-38-39-41-43-44 Phase 4, REQ-009; ``sysrs`` added
+#: feat-32-sysrs Phase 3) -- ADR ids are canonical lowercase-hex UUIDs of
+#: the exact same shape (see ``adr.tools._paths.find_adr_path``/any
+#: ``docs/adr/*.md`` frontmatter ``id`` value). The ``frozenset`` keeps
+#: O(1) membership. ``delete``'s own ``Literal`` type still excludes
+#: ``"adr"`` (its behavior is unchanged, D-Phase-4) -- this addition is
+#: purely for use by ``get_<d>``/``update``/``set_status``.
+_UUID_TYPES = frozenset(UUID_DOMAINS)
 
 #: Canonical 8-4-4-4-12 lowercase-hex UUID shape (the form ``uuid.uuid4().str`` produces,
 #: which is what every ``create_<d>`` tool writes into the frontmatter ``id``).
@@ -194,12 +194,11 @@ def validate_id(type_: str, id_: str) -> None:
     assert_no_traversal(id_)
     if type_ in _UUID_TYPES:
         assert_uuid(id_)
-    elif type_ == _TYPE_FEAT:
+    elif type_ == FEAT:
         assert_feat_id(id_)
     else:
         raise ValueError(
-            f"unknown document type {type_!r}; expected 'feat' or one of the UUID domains "
-            f"(req/uc/tsk/qa/prb/gol/rsk/dec/sop/vcr/sysrs/adr)"
+            f"unknown document type {type_!r}; expected 'feat' or one of the UUID domains ({', '.join(UUID_DOMAINS)})"
         )
 
 

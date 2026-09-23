@@ -29,6 +29,11 @@ import tempfile
 import unittest
 from pathlib import Path
 
+#: The shared domain-name source (feat-125-domain-lists Phase 4, REQ-008):
+#: ``UUID_DOMAINS`` -- every domain other than ``feat``, plus ``adr``
+#: (feat-38-39-41-43-44 Phase 4) -- and ``FEAT``.
+from biz.dfch.specmgr.general.tools._domains import FEAT, UUID_DOMAINS
+
 from biz.dfch.specmgr.general.tools._path_safety import (
     assert_feat_id,
     assert_no_traversal,
@@ -42,13 +47,6 @@ _VALID_UUID = "0d8f4c2a-1b3e-4f5a-9c7d-2e6b8a0f1c3d"
 
 #: A well-formed feat-NNN-slug folder name.
 _VALID_FEAT_ID = "feat-36-delete"
-
-#: The UUID domains whose id is a server-generated UUID (every domain other
-#: than ``feat``, plus ``adr``, feat-38-39-41-43-44 Phase 4).
-_UUID_DOMAINS = ("req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "vcr", "adr")
-
-#: The feat document type name.
-_FEAT_TYPE = "feat"
 
 
 class TestAssertNoTraversal(unittest.TestCase):
@@ -148,25 +146,25 @@ class TestValidateId(unittest.TestCase):
 
     def test_accepts_a_uuid_for_each_uuid_domain(self):
         """For each of the UUID domains, a canonical UUID must pass."""
-        for type_ in _UUID_DOMAINS:
+        for type_ in UUID_DOMAINS:
             with self.subTest(type_=type_):
                 validate_id(type_, _VALID_UUID)
 
     def test_rejects_a_feat_id_for_each_uuid_domain(self):
         """For each of the UUID domains, a feat-NNN-slug id must raise a ValueError."""
-        for type_ in _UUID_DOMAINS:
+        for type_ in UUID_DOMAINS:
             with self.subTest(type_=type_):
                 with self.assertRaises(ValueError):
                     validate_id(type_, _VALID_FEAT_ID)
 
     def test_accepts_a_feat_id_for_the_feat_domain(self):
         """For the feat domain, a feat-NNN-slug id must pass."""
-        validate_id(_FEAT_TYPE, _VALID_FEAT_ID)
+        validate_id(FEAT, _VALID_FEAT_ID)
 
     def test_rejects_a_uuid_for_the_feat_domain(self):
         """For the feat domain, a UUID must raise a ValueError."""
         with self.assertRaises(ValueError):
-            validate_id(_FEAT_TYPE, _VALID_UUID)
+            validate_id(FEAT, _VALID_UUID)
 
     def test_rejects_a_traversal_id(self):
         """A path-injection id must raise a ValueError before any format check."""
