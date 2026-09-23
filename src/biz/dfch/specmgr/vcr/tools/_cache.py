@@ -69,7 +69,7 @@ __all__ = ["invalidate_vcr_cache", "read_vcr", "reconcile_vcr_cache", "reset_vcr
 
 #: Module-level singleton, one per process, for the lifetime of the process
 #: (mirrors ``_lock.py``'s ``_locks`` registry). See the module docstring.
-_cache: DocCache[VcrDocument] = DocCache()
+_cache: DocCache[VcrDocument] = DocCache("vcr")
 
 
 def _parse(text: str) -> VcrDocument:

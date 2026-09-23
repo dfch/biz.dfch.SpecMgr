@@ -1,6 +1,6 @@
 # `biz.dfch.specmgr.telemetry.middleware`
 
-The specmgr ``ServerMiddleware``: correlation IDs and call logging (feat-139-logging-telemetry, Phase 3, Task 3.1).
+The specmgr ``ServerMiddleware``: correlation IDs, call logging, and call metrics (Phase 3/5, Tasks 3.1/5.2/5.3).
 
 The single instrumentation point this feature adds to the MCP server: an
 ``mcp.server.context.ServerMiddleware`` implementation that
@@ -32,11 +32,16 @@ For an observed invocation it:
   params key (``ctx.params["name"]`` for ``tools/call``/``prompts/get``,
   ``ctx.params["uri"]`` for ``resources/read`` -- the Design Notes'
   "Per-method target extraction" bullet);
+- derives the invocation's document domain via
+  ``telemetry/domain_mapping.py`` (Task 5.1's explicit mapping: generic
+  dispatch tools by their own ``type`` argument, domain-specific
+  tools/prompts by registered name, resources by their ``uri``'s first
+  path segment; no domain -> the attribute/extra is *omitted*, never
+  empty) and carries it as the ``domain`` extra on every record;
 - generates the per-invocation correlation ID via
   :func:`new_correlation_id` (the active span's trace ID when a recording
   span is current -- which Phase 4's ``SPECMGR_OTEL_ENABLED`` makes the
-  SDK's built-in middleware true -- else a fresh ``uuid4().hex``; Phase 3
-  always takes the ``uuid4()`` branch);
+  SDK's built-in middleware true -- else a fresh ``uuid4().hex``);
 - logs a start record (before ``call_next``) and a completion or error
   record (after), carrying, for a ``set_status`` tool call, the new status
   value (REQ ``bc356fc9-964a-4274-93ec-4627c5aeb2e5``). The record messages
@@ -67,10 +72,21 @@ pre-existing ``_meta``), (b) an ``MCPError`` gets the ID merged into
 ``e.error.data`` (preserving the SDK's own ``uri`` entry where present),
 and (c) a converted error carries the ID in its ``data``.
 
-This phase creates and increments no OTel counter/histogram: no
-``MeterProvider`` exists until Phase 4, and the metrics are Task 5.2/5.3's
-responsibility (the Design Notes' "Phase 3/Phase 5 division of labor"
-bullet).
+Call metrics (Phase 5, Tasks 5.2/5.3; the Design Notes' "Phase 3/Phase 5
+division of labor" bullet's second half): once Phase 4's bootstrap has
+stored its ``Meter`` in the ``telemetry/metrics.py`` slot, this middleware
+lazily creates -- on first observation, once, then cached -- its own
+``mcp.tool.duration`` histogram (unit ``ms``), ``mcp.tool.call.count``
+counter (exactly one increment per observed invocation, whatever its
+outcome), and ``mcp.tool.error.count`` counter (attributed by the
+per-channel ``error.type`` signal: ``tool_error`` for a ``tools/call``
+``isError: true`` result, the ``MCPError``'s JSON-RPC code as a string for
+SDK-wrapped errors, ``type(exc).__qualname__`` for raw exceptions), all
+carrying the ``mcp.tool.name``/``mcp.item.type``/``mcp.domain`` (when the
+Task 5.1 mapping yields one) attributes. While the slot is ``None``
+(telemetry disabled) the metrics path is a fast no-op that allocates
+nothing per call; a metrics-recording failure fails open once (one
+warning, recording off for the process) and never breaks the call.
 
 Like ``telemetry/logging.py``, this module imports ``mcp``/``mcp_types``/
 ``opentelemetry`` symbols and is only imported from ``server.py`` (which

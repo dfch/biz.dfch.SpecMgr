@@ -54,11 +54,21 @@ Task 1a.2/1a.4's confirmed spike findings):
   ``OTEL_EXPORTER_OTLP_ENDPOINT`` env-var fallback, not to an explicit
   ``endpoint=`` argument (verified against the 1.44.0 source; the
   ``endpoint=`` value is POSTed as-is), so the bootstrap appends them.
-- this phase creates no counter/histogram instruments (the Design Notes'
-  "Phase 3/Phase 5 division of labor for counters" bullet): the ``Meter``
-  is fetched once, via the global API, into the module-level
-  :data:`_meter` slot (``None`` when telemetry is disabled) for Phase 5's
-  increments, which are a no-op until the slot is set by this bootstrap.
+- the Phase 3/Phase 5 division of labor for counters, as Phase 5 landed
+  it (the orchestrator's instrument-creation pin): the ``Meter`` is
+  fetched once, via the global API, into the module-level
+  :data:`_meter` slot (``None`` when telemetry is disabled) *and* the
+  ``telemetry/metrics.py`` slot the middleware and the ``_lock.py``
+  helpers read; this bootstrap creates the ``mcp.lock.wait_time``
+  histogram (with the ``telemetry/metrics.py`` slot set to it) and the
+  ``mcp.cache.hit``/``mcp.cache.miss`` observable counters (callbacks
+  registered at instrument creation), and builds the ``MeterProvider``
+  with the pinned explicit-bucket Views for ``mcp.tool.duration``/
+  ``mcp.lock.wait_time`` (registered before any instrument is created);
+  the middleware's own ``mcp.tool.duration``/``mcp.tool.call.count``/
+  ``mcp.tool.error.count`` instruments are created lazily by the
+  middleware on first observation from that same slot (a no-op path that
+  allocates nothing while the slot is ``None``).
 - :func:`shutdown_telemetry` shuts both providers down -- ``server.py``'s
   ``_lifespan`` post-``yield`` section calls it at process exit, which is
   where the ``MeterProvider``'s final metric collection and the
@@ -253,6 +263,25 @@ Returns:
     The span exporter to hand to the ``BatchSpanProcessor``.
 
 
+### `_instrument_views() -> 'list[View]'`
+
+The explicit-bucket :class:`View`s the ``MeterProvider`` is built with (Task 5.2/5.5).
+
+The Design Notes' "OTel bootstrap pins" bucket advice, expressed in
+the installed SDK 1.44.0's API: one ``View`` per pinned histogram,
+matched by instrument type + name + unit and carrying an
+``ExplicitBucketHistogramAggregation`` with the pinned boundaries
+(``mcp.tool.duration``: 5..10000 ms; ``mcp.lock.wait_time``: 1..500
+ms). Views must be registered *before* the instruments are created
+-- so the bootstrap passes them to the ``MeterProvider``
+constructor, and the middleware's own ``mcp.tool.duration`` histogram
+(created lazily from the same provider's ``Meter`` on first
+observation) picks its View up automatically.
+
+Returns:
+    The two pinned Views.
+
+
 ### `_with_otlp_path(base_url: 'str', export_path: 'str') -> 'str'`
 
 Extend an OTLP base URL with the spec-mandated export path.
@@ -274,7 +303,7 @@ Returns:
 
 ### `bootstrap_telemetry(config: 'TelemetryConfig') -> 'None'`
 
-Configure the global OpenTelemetry providers for this process (Task 4.1).
+Configure the global OpenTelemetry providers for this process (Task 4.1, extended by Task 5.2/5.4/5.5).
 
 Called unconditionally at ``server.py``'s module scope (Task 4.9,
 after the config validation and the logging setup, before
@@ -290,8 +319,19 @@ import-time-fetched proxy tracer/meter resolve against -- a
 exporter) and a ``MeterProvider`` (a ``PeriodicExportingMetricReader``
 with the configured metric exporter), both carrying a ``Resource``
 with the fixed ``service.name = "specmgr"`` attribute, and fetches the
-``Meter`` once into the module-level :data:`_meter` slot for Phase 5's
-increments. A repeated call in an already-bootstrapped process is a
+``Meter`` once. Phase 5's instrument split (the orchestrator's pin)
+then runs from that ``Meter``: the ``MeterProvider`` is built with
+the pinned explicit-bucket :func:`_instrument_views`; the
+``mcp.lock.wait_time`` histogram and the ``mcp.cache.hit``/
+``mcp.cache.miss`` observable counters (the ``telemetry/metrics.py``
+callbacks, registered at instrument creation per Task 1a.5's
+confirmed SDK 1.44.0 API) are created here, at bootstrap; the
+middleware's own ``mcp.tool.duration``/``mcp.tool.call.count``/
+``mcp.tool.error.count`` instruments stay middleware-created on first
+observation. The ``Meter`` and the ``mcp.lock.wait_time`` histogram
+are stored in the ``telemetry/metrics.py`` slots (this module's own
+:data:`_meter` keeps mirroring the ``Meter`` for the Phase 4 tests'
+assertions). A repeated call in an already-bootstrapped process is a
 no-op (the global setters are set-once per process).
 
 Args:

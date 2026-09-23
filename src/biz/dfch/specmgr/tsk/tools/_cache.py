@@ -69,7 +69,7 @@ __all__ = ["invalidate_tsk_cache", "read_tsk", "reconcile_tsk_cache", "reset_tsk
 
 #: Module-level singleton, one per process, for the lifetime of the process
 #: (mirrors ``_lock.py``'s ``_locks`` registry). See the module docstring.
-_cache: DocCache[TskDocument] = DocCache()
+_cache: DocCache[TskDocument] = DocCache("tsk")
 
 
 def _parse(text: str) -> TskDocument:

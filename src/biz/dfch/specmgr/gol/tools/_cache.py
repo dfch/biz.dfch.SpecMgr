@@ -69,7 +69,7 @@ __all__ = ["invalidate_gol_cache", "read_gol", "reconcile_gol_cache", "reset_gol
 
 #: Module-level singleton, one per process, for the lifetime of the process
 #: (mirrors ``_lock.py``'s ``_locks`` registry). See the module docstring.
-_cache: DocCache[GolDocument] = DocCache()
+_cache: DocCache[GolDocument] = DocCache("gol")
 
 
 def _parse(text: str) -> GolDocument:

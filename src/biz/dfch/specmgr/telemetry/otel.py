@@ -69,11 +69,21 @@ Task 1a.2/1a.4's confirmed spike findings):
   ``OTEL_EXPORTER_OTLP_ENDPOINT`` env-var fallback, not to an explicit
   ``endpoint=`` argument (verified against the 1.44.0 source; the
   ``endpoint=`` value is POSTed as-is), so the bootstrap appends them.
-- this phase creates no counter/histogram instruments (the Design Notes'
-  "Phase 3/Phase 5 division of labor for counters" bullet): the ``Meter``
-  is fetched once, via the global API, into the module-level
-  :data:`_meter` slot (``None`` when telemetry is disabled) for Phase 5's
-  increments, which are a no-op until the slot is set by this bootstrap.
+- the Phase 3/Phase 5 division of labor for counters, as Phase 5 landed
+  it (the orchestrator's instrument-creation pin): the ``Meter`` is
+  fetched once, via the global API, into the module-level
+  :data:`_meter` slot (``None`` when telemetry is disabled) *and* the
+  ``telemetry/metrics.py`` slot the middleware and the ``_lock.py``
+  helpers read; this bootstrap creates the ``mcp.lock.wait_time``
+  histogram (with the ``telemetry/metrics.py`` slot set to it) and the
+  ``mcp.cache.hit``/``mcp.cache.miss`` observable counters (callbacks
+  registered at instrument creation), and builds the ``MeterProvider``
+  with the pinned explicit-bucket Views for ``mcp.tool.duration``/
+  ``mcp.lock.wait_time`` (registered before any instrument is created);
+  the middleware's own ``mcp.tool.duration``/``mcp.tool.call.count``/
+  ``mcp.tool.error.count`` instruments are created lazily by the
+  middleware on first observation from that same slot (a no-op path that
+  allocates nothing while the slot is ``None``).
 - :func:`shutdown_telemetry` shuts both providers down -- ``server.py``'s
   ``_lifespan`` post-``yield`` section calls it at process exit, which is
   where the ``MeterProvider``'s final metric collection and the
@@ -115,17 +125,19 @@ from typing import Any
 from opentelemetry import metrics, trace
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
-from opentelemetry.metrics import Meter
+from opentelemetry.metrics import Histogram, Meter
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import (
     ConsoleMetricExporter,
     MetricExporter,
     PeriodicExportingMetricReader,
 )
+from opentelemetry.sdk.metrics.view import ExplicitBucketHistogramAggregation, View
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter, SpanExporter
 
+from . import metrics as telemetry_metrics
 from .config import TelemetryConfig
 
 #: The logger this module emits its single fail-open/episode warnings on
@@ -583,8 +595,42 @@ def _build_metric_exporter(config: TelemetryConfig) -> MetricExporter:
     return result
 
 
+def _instrument_views() -> list[View]:
+    """The explicit-bucket :class:`View`s the ``MeterProvider`` is built with (Task 5.2/5.5).
+
+    The Design Notes' "OTel bootstrap pins" bucket advice, expressed in
+    the installed SDK 1.44.0's API: one ``View`` per pinned histogram,
+    matched by instrument type + name + unit and carrying an
+    ``ExplicitBucketHistogramAggregation`` with the pinned boundaries
+    (``mcp.tool.duration``: 5..10000 ms; ``mcp.lock.wait_time``: 1..500
+    ms). Views must be registered *before* the instruments are created
+    -- so the bootstrap passes them to the ``MeterProvider``
+    constructor, and the middleware's own ``mcp.tool.duration`` histogram
+    (created lazily from the same provider's ``Meter`` on first
+    observation) picks its View up automatically.
+
+    Returns:
+        The two pinned Views.
+    """
+    result = [
+        View(
+            instrument_type=Histogram,
+            instrument_name=telemetry_metrics.MCP_TOOL_DURATION,
+            instrument_unit=telemetry_metrics.UNIT_MS,
+            aggregation=ExplicitBucketHistogramAggregation(boundaries=telemetry_metrics.TOOL_DURATION_BUCKET_BOUNDS),
+        ),
+        View(
+            instrument_type=Histogram,
+            instrument_name=telemetry_metrics.MCP_LOCK_WAIT,
+            instrument_unit=telemetry_metrics.UNIT_MS,
+            aggregation=ExplicitBucketHistogramAggregation(boundaries=telemetry_metrics.LOCK_WAIT_BUCKET_BOUNDS),
+        ),
+    ]
+    return result
+
+
 def bootstrap_telemetry(config: TelemetryConfig) -> None:
-    """Configure the global OpenTelemetry providers for this process (Task 4.1).
+    """Configure the global OpenTelemetry providers for this process (Task 4.1, extended by Task 5.2/5.4/5.5).
 
     Called unconditionally at ``server.py``'s module scope (Task 4.9,
     after the config validation and the logging setup, before
@@ -600,8 +646,19 @@ def bootstrap_telemetry(config: TelemetryConfig) -> None:
     exporter) and a ``MeterProvider`` (a ``PeriodicExportingMetricReader``
     with the configured metric exporter), both carrying a ``Resource``
     with the fixed ``service.name = "specmgr"`` attribute, and fetches the
-    ``Meter`` once into the module-level :data:`_meter` slot for Phase 5's
-    increments. A repeated call in an already-bootstrapped process is a
+    ``Meter`` once. Phase 5's instrument split (the orchestrator's pin)
+    then runs from that ``Meter``: the ``MeterProvider`` is built with
+    the pinned explicit-bucket :func:`_instrument_views`; the
+    ``mcp.lock.wait_time`` histogram and the ``mcp.cache.hit``/
+    ``mcp.cache.miss`` observable counters (the ``telemetry/metrics.py``
+    callbacks, registered at instrument creation per Task 1a.5's
+    confirmed SDK 1.44.0 API) are created here, at bootstrap; the
+    middleware's own ``mcp.tool.duration``/``mcp.tool.call.count``/
+    ``mcp.tool.error.count`` instruments stay middleware-created on first
+    observation. The ``Meter`` and the ``mcp.lock.wait_time`` histogram
+    are stored in the ``telemetry/metrics.py`` slots (this module's own
+    :data:`_meter` keeps mirroring the ``Meter`` for the Phase 4 tests'
+    assertions). A repeated call in an already-bootstrapped process is a
     no-op (the global setters are set-once per process).
 
     Args:
@@ -621,12 +678,31 @@ def bootstrap_telemetry(config: TelemetryConfig) -> None:
         meter_provider = MeterProvider(
             metric_readers=[PeriodicExportingMetricReader(_build_metric_exporter(config))],
             resource=resource,
+            views=_instrument_views(),
         )
         trace.set_tracer_provider(tracer_provider)
         metrics.set_meter_provider(meter_provider)
         _tracer_provider = tracer_provider
         _meter_provider = meter_provider
-        _meter = metrics.get_meter(_METER_NAME)
+        meter = metrics.get_meter(_METER_NAME)
+        _meter = meter
+        telemetry_metrics.set_meter(meter)
+        lock_wait_histogram = meter.create_histogram(
+            telemetry_metrics.MCP_LOCK_WAIT,
+            unit=telemetry_metrics.UNIT_MS,
+            description="Time a domain-lock acquire() waited before the lock was granted",
+        )
+        telemetry_metrics.set_lock_wait_histogram(lock_wait_histogram)
+        meter.create_observable_counter(
+            telemetry_metrics.MCP_CACHE_HIT,
+            description="Doc-cache reads served from a hash-matched entry without re-parsing",
+            callbacks=[telemetry_metrics.cache_hit_callback],
+        )
+        meter.create_observable_counter(
+            telemetry_metrics.MCP_CACHE_MISS,
+            description="Doc-cache reads that had to (re-)parse",
+            callbacks=[telemetry_metrics.cache_miss_callback],
+        )
 
 
 def shutdown_telemetry() -> None:
@@ -656,3 +732,4 @@ def shutdown_telemetry() -> None:
         meter_provider.shutdown()
     if tracer_provider is not None:
         tracer_provider.shutdown()
+    telemetry_metrics.clear_instrument_slots()

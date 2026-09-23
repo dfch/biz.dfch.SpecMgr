@@ -431,8 +431,10 @@ First-line docstrings from each module, organized by domain:
 
 - `telemetry/__init__.py` — Shared logging/telemetry infrastructure for the MCP server (feat-139-logging-telemetry).
 - `telemetry/config.py` — Parse and validate the ``SPECMGR_LOG_*``/``SPECMGR_OTEL_*`` environment
+- `telemetry/domain_mapping.py` — The explicit tool/resource/prompt-name -> document-domain mapping (feat-139-logging-telemetry, Phase 5, Task 5.1).
 - `telemetry/logging.py` — Structured logging for the MCP server (feat-139-logging-telemetry, Phase 2, Task 2.1).
-- `telemetry/middleware.py` — The specmgr ``ServerMiddleware``: correlation IDs and call logging (feat-139-logging-telemetry, Phase 3, Task 3.1).
+- `telemetry/metrics.py` — Shared metric names, instrument slots, and the lock-wait helper (feat-139 Phase 5, Tasks 5.2-5.5).
+- `telemetry/middleware.py` — The specmgr ``ServerMiddleware``: correlation IDs, call logging, and call metrics (Phase 3/5, Tasks 3.1/5.2/5.3).
 - `telemetry/otel.py` — OpenTelemetry SDK bootstrap (feat-139-logging-telemetry, Phase 4, Task 4.1).
 
 **tsk/**
@@ -547,4 +549,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 364
+**Test files**: 367

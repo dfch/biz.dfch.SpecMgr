@@ -34,7 +34,12 @@ import yaml
 from pydantic import BaseModel, ValidationError
 from pydantic_core import InitErrorDetails, PydanticCustomError
 
-from biz.dfch.specmgr.general.tools._doc_cache import CACHEABLE_ERROR_TYPES, DocCache
+from biz.dfch.specmgr.general.tools._doc_cache import (
+    CACHEABLE_ERROR_TYPES,
+    DOC_CACHE_REGISTRY,
+    DocCache,
+    reset_doc_cache_registry,
+)
 
 
 class _FakeDoc:
@@ -501,6 +506,121 @@ class TestDocCacheReset(unittest.TestCase):
         self.sut.read(path, self.parser)
 
         self.assertEqual(self.parser.calls, 2)
+
+
+class TestDocCacheStatsAndRegistry(unittest.TestCase):
+    """feat-139-logging-telemetry Phase 5 (Task 5.4): hit/miss counters, ``stats()``, and the domain registry.
+
+    The counters are plain ints incremented at :meth:`DocCache.read`'s real
+    hit/miss decision points (a hash-matched entry -- a cached success or a
+    cached failure alike -- is a hit; anything that re-invokes ``parse_fn``
+    is a miss), exposed via the small ``stats()`` mapping the telemetry
+    observable ``mcp.cache.hit``/``mcp.cache.miss`` callbacks read (the
+    callbacks' own behavior is covered by
+    ``tests/telemetry/test_metrics.py``).
+    """
+
+    def setUp(self) -> None:
+        self.tmp_path = Path(self.enterContext(tempfile.TemporaryDirectory()))
+        reset_doc_cache_registry()
+        self.parser = _CountingParser()
+
+    def tearDown(self) -> None:
+        reset_doc_cache_registry()
+
+    def _write(self, name: str, content: str) -> Path:
+        path = self.tmp_path / name
+        path.write_text(content, encoding="utf-8")
+        return path
+
+    def test_stats_starts_at_zero_with_the_pinned_shape(self) -> None:
+        sut: DocCache[_FakeDoc] = DocCache()
+
+        self.assertEqual(sut.stats(), {"hits": 0, "misses": 0})
+
+    def test_a_bare_instance_does_not_register(self) -> None:
+        sut: DocCache[_FakeDoc] = DocCache()
+
+        self.assertEqual(DOC_CACHE_REGISTRY, {})
+        self.assertIsNone(sut.domain)
+
+    def test_a_named_instance_self_registers_under_its_domain(self) -> None:
+        sut: DocCache[_FakeDoc] = DocCache("req")
+
+        self.assertIs(DOC_CACHE_REGISTRY["req"], sut)
+        self.assertEqual(sut.domain, "req")
+
+    def test_the_registry_is_last_wins(self) -> None:
+        first: DocCache[_FakeDoc] = DocCache("req")
+        second: DocCache[_FakeDoc] = DocCache("req")
+
+        self.assertIs(DOC_CACHE_REGISTRY["req"], second)
+        self.assertEqual(len(DOC_CACHE_REGISTRY), 1)
+        self.assertEqual(first.domain, "req")  # its own name, regardless of the registry
+
+    def test_reset_doc_cache_registry_clears_every_entry(self) -> None:
+        DocCache("req")
+        DocCache("uc")
+
+        reset_doc_cache_registry()
+
+        self.assertEqual(DOC_CACHE_REGISTRY, {})
+
+    def test_rejecting_an_empty_domain_name(self) -> None:
+        with self.assertRaises(AssertionError):
+            DocCache("")
+
+    def test_the_first_read_counts_a_miss_and_the_second_a_hit(self) -> None:
+        sut: DocCache[_FakeDoc] = DocCache()
+        path = self._write("a.md", "hello")
+
+        sut.read(path, self.parser)
+        self.assertEqual(sut.stats(), {"hits": 0, "misses": 1})
+
+        sut.read(path, self.parser)
+        self.assertEqual(sut.stats(), {"hits": 1, "misses": 1})
+        self.assertEqual(self.parser.calls, 1)  # the hit did not re-parse
+
+    def test_a_cached_failure_counts_a_hit_on_re_raise(self) -> None:
+        sut: DocCache[_FakeDoc] = DocCache()
+        path = self._write("a.md", "RAISE:AssertionError:nope")
+
+        with self.assertRaises(AssertionError):
+            sut.read(path, self.parser)
+        self.assertEqual(sut.stats(), {"hits": 0, "misses": 1})
+
+        with self.assertRaises(AssertionError):
+            sut.read(path, self.parser)
+        self.assertEqual(sut.stats(), {"hits": 1, "misses": 1})
+        self.assertEqual(self.parser.calls, 1)  # the re-raise did not re-parse
+
+    def test_changed_content_counts_a_fresh_miss(self) -> None:
+        sut: DocCache[_FakeDoc] = DocCache()
+        path = self._write("a.md", "v1")
+        sut.read(path, self.parser)
+        path.write_text("v2", encoding="utf-8")
+
+        sut.read(path, self.parser)
+
+        self.assertEqual(sut.stats(), {"hits": 0, "misses": 2})
+
+    def test_an_uncacheable_error_propagates_and_counts_a_miss(self) -> None:
+        sut: DocCache[_FakeDoc] = DocCache()
+        path = self._write("a.md", "RAISE:RuntimeError:boom")
+
+        with self.assertRaises(RuntimeError):
+            sut.read(path, self.parser)
+
+        self.assertEqual(sut.stats(), {"hits": 0, "misses": 1})
+
+    def test_the_counters_survive_reset(self) -> None:
+        sut: DocCache[_FakeDoc] = DocCache()
+        path = self._write("a.md", "hello")
+        sut.read(path, self.parser)
+
+        sut.reset()  # clears entries only, not the cumulative counters
+
+        self.assertEqual(sut.stats(), {"hits": 0, "misses": 1})
 
 
 if __name__ == "__main__":

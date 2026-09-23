@@ -59,8 +59,11 @@ host, not multiple concurrent processes/writers.
 from __future__ import annotations
 
 import threading
+import time
 from collections.abc import Iterator
 from contextlib import contextmanager
+
+from ...telemetry.metrics import record_lock_wait
 
 __all__ = ["adr_lock"]
 
@@ -73,6 +76,9 @@ _registry_lock = threading.Lock()
 #: the id space is small and long-lived relative to a server process's
 #: lifetime, so there is no meaningful growth/cleanup concern here.
 _locks: dict[str, threading.Lock] = {}
+
+
+_LOCK_DOMAIN = "adr"
 
 
 def _lock_for(id_: str) -> threading.Lock:
@@ -93,7 +99,21 @@ def adr_lock(id_: str) -> Iterator[None]:
     ``write_adr`` sequence in ``with adr_lock(id):`` so two concurrent calls
     targeting the same id run one after another instead of interleaving,
     preventing the lost-update race described in this module's docstring.
+
+    Wait time (the time ``acquire()`` blocks before the lock is granted)
+    is recorded to the feat-139 ``mcp.lock.wait_time`` histogram via
+    ``telemetry.metrics.record_lock_wait`` (a pure no-op while telemetry
+    is disabled) -- which is why the acquire/release control flow here is
+    explicit rather than a bare ``with lock:`` (a naive wrap of that
+    shape would measure acquire-plus-hold, not wait). The lock is
+    released on every exit path, including a ``yield``-wrapped body that
+    raises (feat-139, Task 5.5/5.6).
     """
     lock = _lock_for(id_)
-    with lock:
+    started = time.monotonic()
+    lock.acquire()
+    record_lock_wait(_LOCK_DOMAIN, (time.monotonic() - started) * 1000.0)
+    try:
         yield
+    finally:
+        lock.release()

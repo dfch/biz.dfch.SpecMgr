@@ -69,7 +69,7 @@ __all__ = ["invalidate_sysrs_cache", "read_sysrs", "reconcile_sysrs_cache", "res
 
 #: Module-level singleton, one per process, for the lifetime of the process
 #: (mirrors ``_lock.py``'s ``_locks`` registry). See the module docstring.
-_cache: DocCache[SysrsDocument] = DocCache()
+_cache: DocCache[SysrsDocument] = DocCache("sysrs")
 
 
 def _parse(text: str) -> SysrsDocument:

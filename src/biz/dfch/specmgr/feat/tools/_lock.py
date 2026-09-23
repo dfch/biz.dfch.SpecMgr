@@ -53,8 +53,11 @@ concurrently.
 from __future__ import annotations
 
 import threading
+import time
 from collections.abc import Iterator
 from contextlib import contextmanager
+
+from ...telemetry.metrics import record_lock_wait
 
 __all__ = ["feat_create_lock", "feat_lock"]
 
@@ -73,6 +76,9 @@ _locks: dict[str, threading.Lock] = {}
 #: directory's folder listing), so -- unlike `_locks` above -- no per-key
 #: registry is needed: one module-level instance suffices.
 _create_lock = threading.Lock()
+
+
+_LOCK_DOMAIN = "feat"
 
 
 def _lock_for(id_: str) -> threading.Lock:
@@ -94,10 +100,24 @@ def feat_lock(id_: str) -> Iterator[None]:
     concurrent calls targeting the same id run one after another instead of
     interleaving, preventing the lost-update race described in this
     module's docstring.
+
+    Wait time (the time ``acquire()`` blocks before the lock is granted)
+    is recorded to the feat-139 ``mcp.lock.wait_time`` histogram via
+    ``telemetry.metrics.record_lock_wait`` (a pure no-op while telemetry
+    is disabled) -- which is why the acquire/release control flow here is
+    explicit rather than a bare ``with lock:`` (a naive wrap of that
+    shape would measure acquire-plus-hold, not wait). The lock is
+    released on every exit path, including a ``yield``-wrapped body that
+    raises (feat-139, Task 5.5/5.6).
     """
     lock = _lock_for(id_)
-    with lock:
+    started = time.monotonic()
+    lock.acquire()
+    record_lock_wait(_LOCK_DOMAIN, (time.monotonic() - started) * 1000.0)
+    try:
         yield
+    finally:
+        lock.release()
 
 
 @contextmanager
@@ -110,6 +130,20 @@ def feat_create_lock() -> Iterator[None]:
     in ``with feat_create_lock():``, so two overlapping calls run one after
     another instead of both reading the same pre-create "last NNN" and
     colliding on the same new id.
+
+    Wait time (the time ``acquire()`` blocks before the lock is granted)
+    is recorded to the feat-139 ``mcp.lock.wait_time`` histogram via
+    ``telemetry.metrics.record_lock_wait`` (a pure no-op while telemetry
+    is disabled) -- which is why the acquire/release control flow here is
+    explicit rather than a bare ``with lock:`` (a naive wrap of that
+    shape would measure acquire-plus-hold, not wait). The lock is
+    released on every exit path, including a ``yield``-wrapped body that
+    raises (feat-139, Task 5.5/5.6).
     """
-    with _create_lock:
+    started = time.monotonic()
+    _create_lock.acquire()
+    record_lock_wait(_LOCK_DOMAIN, (time.monotonic() - started) * 1000.0)
+    try:
         yield
+    finally:
+        _create_lock.release()

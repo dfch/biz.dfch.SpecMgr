@@ -4,7 +4,7 @@ created: '2026-09-19 13:19:26.971+02:00'
 id: 54fd355f-0978-4dd0-9e1d-da89432e5321
 status: draft
 type: vcr
-updated: '2026-09-22 12:49:41.000+02:00'
+updated: '2026-09-22 22:40:00.000+02:00'
 version: 1.0.0
 ---
 
@@ -63,15 +63,18 @@ failing to start. Verified by `tests/telemetry/test_middleware.py::TestServerWir
 ### AC-005 (Inspection): Metric/span names follow the MCP-specific naming scheme
 
 A source review confirms metric/span names use the `mcp.*` namespace
-(e.g. `mcp.tool.duration`, `mcp.tool.name`, `mcp.domain`,
-`mcp.item.type`), not the raw OpenTelemetry `rpc.*` semantic-convention
-names.
+(`mcp.tool.duration`, `mcp.tool.call.count`, `mcp.tool.error.count`,
+`mcp.cache.hit`/`mcp.cache.miss`, `mcp.lock.wait_time`, with the
+`mcp.tool.name`/`mcp.domain`/`mcp.item.type`/`error.type` attributes),
+not the raw OpenTelemetry `rpc.*` semantic-convention names. Verified
+by `tests/telemetry/test_metrics.py::TestMiddlewareCallCount::test_a_success_is_counted_once_with_the_pinned_attributes` (the exported instrument carries the pinned `mcp.tool.call.count` name with the `mcp.tool.name`/`mcp.item.type`/`mcp.domain` attribute keys), `tests/telemetry/test_metrics.py::TestBootstrapInstruments::test_lock_wait_records_land_in_the_bootstrap_histogram_with_the_pinned_buckets` (the bootstrap-created `mcp.lock.wait_time` histogram, its `ms` unit, and the pinned explicit bucket boundaries), `tests/telemetry/test_metrics.py::TestBootstrapInstruments::test_the_cache_observables_carry_one_series_per_registered_domain` (the `mcp.cache.hit`/`mcp.cache.miss` observable counters, one `mcp.domain`-attributed series per registered doc-cache domain), and `tests/telemetry/test_domain_mapping.py` (the name/uri -> domain mapping behind the `mcp.domain` attribute, including the live-registration drift test that keeps it in sync with what `server.py` actually registers).
 
 ### AC-006 (Analysis): Trace sampling is always-on
 
 A review of the documented environment variables confirms no
 `SPECMGR_OTEL_*` sample-rate configuration is exposed, consistent with
-the accepted always-on-sampling decision.
+the accepted always-on-sampling decision. Verified by
+`tests/telemetry/test_metrics.py::TestBootstrapSampler::test_the_config_module_defines_exactly_the_pinned_eight_env_vars` (the config module defines exactly the pinned eight `SPECMGR_LOG_*`/`SPECMGR_OTEL_*` environment variables -- no sample-rate variable exists) and `tests/telemetry/test_metrics.py::TestBootstrapSampler::test_the_bootstrap_passes_no_sampler_to_the_tracer_provider` (the bootstrap constructs the `TracerProvider` without a `sampler=` argument, i.e. the SDK's default always-on sampler); that the default configuration actually exports every span is demonstrated end to end by `tests/telemetry/test_otel.py::TestSpanCorrelationRealImportOrder::test_every_invocation_correlation_id_matches_the_sdk_span_trace_id` (a real stdio session exports the SDK span for every one of the three invocations under the default, unconfigured sampling).
 
 ### AC-007 (Test): Span content is redacted, including spans the SDK's own built-in middleware creates
 
@@ -103,6 +106,7 @@ observable at the middleware layer, the SDK's `tool_error` value for
 errors); the `feat-107` document-cache
 hit/miss counters and the per-domain lock wait-time histogram both
 reflect real cache/lock activity observed during the same calls.
+Verified by `tests/telemetry/test_metrics.py::TestMiddlewareCallCount` (exactly one `mcp.tool.call.count` increment per observed invocation, whatever its outcome, with the pinned attributes; an unobserved protocol method is never counted; a `None` meter slot allocates nothing per call), `tests/telemetry/test_metrics.py::TestMiddlewareItemTypesAndDomains` (a tool/resource/prompt invocation is tagged with its per-method identity key -- `name` for tools/prompts, `uri` for resources -- the `mcp.item.type` value, and the Task 5.1-mapped `mcp.domain`, which is omitted entirely, never empty, for the no-domain items and for a generic dispatch tool called without a `type` argument), `tests/telemetry/test_metrics.py::TestMiddlewareDurationHistogram` (one `mcp.tool.duration` observation per invocation, unit `ms`), `tests/telemetry/test_metrics.py::TestMiddlewareErrorCount` (the per-channel `error.type` signal: `tool_error` for a `tools/call` `isError: true` result, the `MCPError`'s JSON-RPC code as a string for SDK-wrapped errors, and `type(exc).__qualname__` for raw/`ValidationError` exceptions), `tests/telemetry/test_metrics.py::TestBootstrapInstruments::test_the_cache_observables_carry_one_series_per_registered_domain` (the `mcp.cache.hit`/`mcp.cache.miss` values reflect real `DocCache` activity per domain), `tests/telemetry/test_lock_wait.py::TestLockWaitRecording` (each of the thirteen domain locks records its acquire wait -- not hold -- to the `mcp.lock.wait_time` histogram with its `mcp.domain` attribute), and the underlying DocCache counters/registry by `tests/general/tools/test__doc_cache.py::TestDocCacheStatsAndRegistry` and the `mcp.domain` mapping by `tests/telemetry/test_domain_mapping.py`.
 
 ## More Information
 
@@ -128,13 +132,38 @@ wait time) had no corresponding acceptance criterion either -- see
 `.specmgr/feat/feat-139-logging-telemetry/README.md`'s Decisions Made
 log ("Redaction widened to a global SpanProcessor after a follow-up
 clarification" and "Metrics-correctness VCR gap closed with a new AC
-instead of folded into an existing one"). AC-005/AC-006/AC-008 remain
-pending Phase 5's metrics instrumentation, and AC-007 pending Phase 6's
-span-redaction extension; `## Coverage` moves to `full` when they land.
+instead of folded into an existing one"). AC-005/AC-006/AC-008 now
+carry their concrete test references above (feat-139-logging-telemetry
+Phase 5's metrics instrumentation); only AC-007 remains pending
+Phase 6's span-redaction extension, and `## Coverage` moves to `full`
+when it lands.
 
 ## Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+### 2026-09-22 22:40:00.000+02:00 - Phase 5 landed: AC-005/AC-006/AC-008 carry concrete test references; coverage stays partial
+
+feat-139-logging-telemetry Phase 5 (Tasks 5.1-5.8) implemented the
+metrics instrumentation this VCR's AC-008 was written for: the Task 5.1
+explicit name/uri -> domain mapping (`telemetry/domain_mapping.py`,
+with a live-registration drift test), the middleware's lazily created
+`mcp.tool.duration`/`mcp.tool.call.count`/`mcp.tool.error.count`
+instruments (the pinned `mcp.tool.name`/`mcp.item.type`/`mcp.domain`
+attributes, the domain omitted for the no-domain case, and the
+per-channel `error.type` signal), the bootstrap-created
+`mcp.lock.wait_time` histogram and `mcp.cache.hit`/`mcp.cache.miss`
+observable counters (the `telemetry/metrics.py` callbacks reading the
+new `DocCache` registry, the `stats()` accessor, and the plain-int
+hit/miss counters at `DocCache.read`'s real decision points), and the
+thirteen `_lock.py` context managers' acquire/release refactor around
+the shared `record_lock_wait` helper (with its release-on-exception
+regression tests). AC-005 (the MCP-specific naming scheme), AC-006
+(always-on sampling -- no sample-rate variable on the config surface,
+no `sampler=` in the bootstrap), and AC-008 (the metrics recorded with
+correct values/attributes) now carry the concrete test references
+above; only AC-007 (Phase 6's span redaction) remains outstanding, so
+`## Coverage` stays `partial`.
 
 ### 2026-09-22 12:49:41.000+02:00 - Phase 4 landed: AC-001 through AC-004 carry concrete test references; coverage stays partial
 

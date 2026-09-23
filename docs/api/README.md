@@ -372,8 +372,10 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.sysrs.tools.parse_sysrs`](biz.dfch.specmgr.sysrs.tools.parse_sysrs.md) — ``@mcp.tool()`` wrapper: parse_sysrs (Task 3.2).
 - [`biz.dfch.specmgr.telemetry`](biz.dfch.specmgr.telemetry.md) — Shared logging/telemetry infrastructure for the MCP server (feat-139-logging-telemetry).
 - [`biz.dfch.specmgr.telemetry.config`](biz.dfch.specmgr.telemetry.config.md) — Parse and validate the ``SPECMGR_LOG_*``/``SPECMGR_OTEL_*`` environment
+- [`biz.dfch.specmgr.telemetry.domain_mapping`](biz.dfch.specmgr.telemetry.domain_mapping.md) — The explicit tool/resource/prompt-name -> document-domain mapping (feat-139-logging-telemetry, Phase 5, Task 5.1).
 - [`biz.dfch.specmgr.telemetry.logging`](biz.dfch.specmgr.telemetry.logging.md) — Structured logging for the MCP server (feat-139-logging-telemetry, Phase 2, Task 2.1).
-- [`biz.dfch.specmgr.telemetry.middleware`](biz.dfch.specmgr.telemetry.middleware.md) — The specmgr ``ServerMiddleware``: correlation IDs and call logging (feat-139-logging-telemetry, Phase 3, Task 3.1).
+- [`biz.dfch.specmgr.telemetry.metrics`](biz.dfch.specmgr.telemetry.metrics.md) — Shared metric names, instrument slots, and the lock-wait helper (feat-139 Phase 5, Tasks 5.2-5.5).
+- [`biz.dfch.specmgr.telemetry.middleware`](biz.dfch.specmgr.telemetry.middleware.md) — The specmgr ``ServerMiddleware``: correlation IDs, call logging, and call metrics (Phase 3/5, Tasks 3.1/5.2/5.3).
 - [`biz.dfch.specmgr.telemetry.otel`](biz.dfch.specmgr.telemetry.otel.md) — OpenTelemetry SDK bootstrap (feat-139-logging-telemetry, Phase 4, Task 4.1).
 - [`biz.dfch.specmgr.tsk`](biz.dfch.specmgr.tsk.md) — TaskList (TSK) domain -- lightweight task/todo-list specifications.
 - [`biz.dfch.specmgr.tsk.models`](biz.dfch.specmgr.tsk.models.md) — TaskList (TSK) models -- Pydantic schema powered by the generic ``models/md`` engine.

@@ -69,7 +69,7 @@ __all__ = ["invalidate_uc_cache", "read_uc", "reconcile_uc_cache", "reset_uc_cac
 
 #: Module-level singleton, one per process, for the lifetime of the process
 #: (mirrors ``_lock.py``'s ``_locks`` registry). See the module docstring.
-_cache: DocCache[UcDocument] = DocCache()
+_cache: DocCache[UcDocument] = DocCache("uc")
 
 
 def _parse(text: str) -> UcDocument:

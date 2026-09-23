@@ -69,7 +69,7 @@ __all__ = ["invalidate_rsk_cache", "read_rsk", "reconcile_rsk_cache", "reset_rsk
 
 #: Module-level singleton, one per process, for the lifetime of the process
 #: (mirrors ``_lock.py``'s ``_locks`` registry). See the module docstring.
-_cache: DocCache[RskDocument] = DocCache()
+_cache: DocCache[RskDocument] = DocCache("rsk")
 
 
 def _parse(text: str) -> RskDocument:

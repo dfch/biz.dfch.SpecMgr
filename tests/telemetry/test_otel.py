@@ -649,17 +649,21 @@ class TestStdoutSafetySubprocess(_StdioSessionTestCase):
 
         self._assert_stdout_is_json_rpc_only(stdout, [1, 2])
         # The Task 4.5 wrapper's end-to-end behavior: exactly one stderr
-        # message for the span exporter's failure episode, never repeating
+        # message per exporter's failure episode, never repeating
         # (ACC-010). The span episode occurs because the SDK's built-in
-        # middleware creates a span for the request; the metric exporter
-        # produces no episode yet, because this phase creates no metric
-        # instrument (Phase 5's work) -- an empty collection returns
-        # ``None`` and never calls ``export()``. The metric wrapper's
-        # episode de-duplication is unit-covered by
+        # middleware creates a span for the request; the metric episode
+        # occurs -- since Phase 5 -- because the bootstrap creates metric
+        # instruments (the ``mcp.cache.*`` observables, plus the
+        # middleware's lazily created ``mcp.tool.*`` instruments from the
+        # observed tool call), so the ``MeterProvider``'s final collection
+        # at shutdown is non-empty and the metric exporter calls
+        # ``export()`` against the unreachable endpoint. Both wrappers'
+        # episode de-duplication is also unit-covered by
         # ``test_otel_exporter_wrapper.py``.
         span_lines = [line for line in stderr.splitlines() if _SPAN_EXPORT_FAILURE_MESSAGE in line]
         self.assertEqual(len(span_lines), 1)
-        self.assertEqual([line for line in stderr.splitlines() if _METRIC_EXPORT_FAILURE_MESSAGE in line], [])
+        metric_lines = [line for line in stderr.splitlines() if _METRIC_EXPORT_FAILURE_MESSAGE in line]
+        self.assertEqual(len(metric_lines), 1)
         # The Phase 4 re-evaluation fix: the SDK logs its per-attempt
         # failure lines DURING the export attempt (before the first
         # FAILURE return), so the wrapper's suppression filter must be

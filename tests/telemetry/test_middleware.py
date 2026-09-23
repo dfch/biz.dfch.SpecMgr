@@ -630,10 +630,44 @@ class TestLogRecordShape(_MiddlewareTestCase):
 
         _invoke(sut, ctx, _returns({"content": [{"type": "text", "text": "boom"}], "isError": True}))
 
-        error = self.records[1]
-        for absent in ("item_name",):
-            self.assertTrue(hasattr(error, absent))
-        self.assertEqual(getattr(error, "domain", "absent"), "absent")
+        start, error = self.records
+        for record in self.records:
+            for present in ("item_name",):
+                self.assertTrue(hasattr(record, present))
+            # Phase 5 (Tasks 5.1/5.2, the Phase 3 pin's second half): the
+            # Task 5.1 mapping yields a domain for get_req, so both records
+            # carry it as the ``domain`` extra (Phase 3 omitted the extra
+            # because no mapping existed yet).
+            self.assertEqual(record.domain, "req")
+
+    def test_a_no_domain_invocation_carries_no_domain_extra(self):
+        # The no-domain case (Task 5.1): the attribute/extra is omitted
+        # entirely, never an empty string.
+        sut = SpecmgrTelemetryMiddleware(_config(log_enabled=True))
+        ctx = _make_ctx("tools/call", {"name": "mdformat"})
+
+        _invoke(sut, ctx, _returns({"resultType": "complete"}))
+
+        for record in self.records:
+            self.assertFalse(hasattr(record, "domain"))
+
+    def test_a_no_domain_resource_read_carries_no_domain_extra(self):
+        sut = SpecmgrTelemetryMiddleware(_config(log_enabled=True))
+        ctx = _make_ctx("resources/read", {"uri": "specmgr://version"})
+
+        _invoke(sut, ctx, _returns({"resultType": "complete"}))
+
+        for record in self.records:
+            self.assertFalse(hasattr(record, "domain"))
+
+    def test_a_domain_resource_read_carries_the_domain_extra(self):
+        sut = SpecmgrTelemetryMiddleware(_config(log_enabled=True))
+        ctx = _make_ctx("resources/read", {"uri": "specmgr://req/schema"})
+
+        _invoke(sut, ctx, _returns({"resultType": "complete"}))
+
+        for record in self.records:
+            self.assertEqual(record.domain, "req")
 
     def test_a_set_status_call_records_the_new_status_value(self):
         sut = SpecmgrTelemetryMiddleware(_config(log_enabled=True))

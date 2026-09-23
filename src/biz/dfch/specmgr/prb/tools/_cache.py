@@ -69,7 +69,7 @@ __all__ = ["invalidate_prb_cache", "read_prb", "reconcile_prb_cache", "reset_prb
 
 #: Module-level singleton, one per process, for the lifetime of the process
 #: (mirrors ``_lock.py``'s ``_locks`` registry). See the module docstring.
-_cache: DocCache[PrbDocument] = DocCache()
+_cache: DocCache[PrbDocument] = DocCache("prb")
 
 
 def _parse(text: str) -> PrbDocument:

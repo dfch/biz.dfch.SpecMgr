@@ -69,7 +69,7 @@ __all__ = ["invalidate_qa_cache", "read_qa", "reconcile_qa_cache", "reset_qa_cac
 
 #: Module-level singleton, one per process, for the lifetime of the process
 #: (mirrors ``_lock.py``'s ``_locks`` registry). See the module docstring.
-_cache: DocCache[QaDocument] = DocCache()
+_cache: DocCache[QaDocument] = DocCache("qa")
 
 
 def _parse(text: str) -> QaDocument:
