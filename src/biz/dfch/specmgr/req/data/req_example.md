@@ -1,9 +1,9 @@
 ---
-created: '2025-01-06 08:15:42.395Z'
+created: '2025-01-06T08:15:42.395Z'
 id: deaddead-dead-dead-dead-deaddeaddead
 status: draft
 type: req
-updated: '2025-01-19 03:27:27.842Z'
+updated: '2025-01-19T03:27:27.842Z'
 version: 1.0.0
 ---
 

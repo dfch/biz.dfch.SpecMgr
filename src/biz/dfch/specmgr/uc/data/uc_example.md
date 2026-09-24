@@ -3,8 +3,8 @@ id: uc-001
 type: uc
 version: 1.0.0
 status: draft
-created: '2025-02-03 08:15:42.283Z'
-updated: '2025-02-16 03:27:27.671Z'
+created: '2025-02-03T08:15:42.283Z'
+updated: '2025-02-16T03:27:27.671Z'
 ---
 
 # Buy Goods

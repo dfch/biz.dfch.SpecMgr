@@ -229,7 +229,7 @@ class TestFeatLifecycleIntegration(TempFeatDirTestCase):
         self.assertEqual(updated.created, created.created)
         self.assertEqual(updated.status, "planning")
         self.assertEqual(updated.version, created.version)
-        self.assertRegex(updated.updated or "", r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})$")
+        self.assertRegex(updated.updated or "", r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}(?:Z|[+-]\d{2}:\d{2})$")
         self.assertEqual(len(get_feat(feat_id).body.plan.requirements.items), 2)
 
         # 4b. update (type="feat", line-range): a single-line splice must round-trip
@@ -250,9 +250,7 @@ class TestFeatLifecycleIntegration(TempFeatDirTestCase):
         self.assertEqual(in_progress.status, "progress")
         self.assertEqual(in_progress.id, updated.id)
         self.assertEqual(in_progress.created, updated.created)
-        self.assertRegex(
-            in_progress.updated or "", r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})$"
-        )
+        self.assertRegex(in_progress.updated or "", r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}(?:Z|[+-]\d{2}:\d{2})$")
         self.assertEqual(len(get_feat(feat_id).body.plan.requirements.items), 2)
 
         # 6. get_feat: must reflect the latest on-disk state.

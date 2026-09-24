@@ -20098,9 +20098,9 @@ phases:
 The timestamp format is deliberately not the same format as frontmatter
 `created`/`updated` (the shared date+time variant produced by
 `general.tools._timestamps.now_timestamp()`, e.g.
-`2026-08-30 14:23:01.123Z`) -- this format is scoped to
-`### Updates`/`### Decisions Made` entry headings only, hand/LLM-authored
-body content, not tool-generated frontmatter.
+`2026-08-30T14:23:01.123Z` -- `T`-separated since feat-146) -- this
+format is scoped to `### Updates`/`### Decisions Made` entry headings
+only, hand/LLM-authored body content, not tool-generated frontmatter.
 
 Parameters
 ----------

@@ -4,7 +4,7 @@ created: '2026-09-23 22:33:23.868+02:00'
 id: feat-146-date-time
 status: planning
 type: feat
-updated: '2026-09-23 23:22:17.685+02:00'
+updated: '2026-09-24T06:09:11.544Z'
 version: 1.0.0
 ---
 
@@ -99,11 +99,11 @@ No external dependencies; this feature is self-contained.
 
 #### Phase 1: Frontmatter/write core + frontmatter sweep
 
-- [ ] Task 1.1: `general/tools/_timestamps.py`: `format_timestamp` space→`T`; remove `format_date` (+ `__all__`); docstring updates.
-- [ ] Task 1.2: `models/md/frontmatter.py`: `_DATE_TIME_PATTERN` → `[T ]`; comment block + field docstrings.
-- [ ] Task 1.3: `_stringify_metadata`: `datetime` → `T`-canonical with milliseconds (shared path + per-domain copies).
-- [ ] Task 1.4: Sweep: 24 packaged frontmatters → `T`; `feat_reference.md` → `T`; ~44 test files (writer-output assertions + fixtures → `T`, keep explicit space-acceptance tests); `test__timestamps.py` (12 tests); `test_frontmatter.py` matrix.
-- [ ] Task 1.5: `specmgr schema` (all twelve) + `specmgr docs`; full quality gate.
+- [x] Task 1.1: `general/tools/_timestamps.py`: `format_timestamp` space→`T`; remove `format_date` (+ `__all__`); docstring updates.
+- [x] Task 1.2: `models/md/frontmatter.py`: `_DATE_TIME_PATTERN` → `[T ]`; comment block + field docstrings.
+- [x] Task 1.3: `_stringify_metadata`: `datetime` → `T`-canonical with milliseconds (shared path + per-domain copies).
+- [x] Task 1.4: Sweep: 24 packaged frontmatters → `T`; `feat_reference.md` → `T`; ~44 test files (writer-output assertions + fixtures → `T`, keep explicit space-acceptance tests); `test__timestamps.py` (12 tests); `test_frontmatter.py` matrix.
+- [x] Task 1.5: `specmgr schema` (all twelve) + `specmgr docs`; full quality gate.
 
 #### Phase 2: Entry headings (six domains)
 
@@ -131,20 +131,74 @@ No external dependencies; this feature is self-contained.
 
 ### Current Status
 
-**As of 2026-09-23**: Phase 0 complete: ADR 8c889262-152b-4b8e-ae2c-75371f7a9edf created (draft), this
-feature folder created, `docs/adr/README.md` regenerated via `specmgr adr-toc`, and the phase-end
-full quality gate green (ruff format/check, vulture, `pytest -n auto --cov` -- 3402 passed). All
-format decisions are confirmed with the requester (uniform full date+time across all twelve
-whole-body domains, ADR excluded, UC via v2; both `T` and space accepted; MCP writes frontmatter
-in `T`; examples/templates keep space in section titles; full quality gate after each phase; brief
-supersession notes for affected previous features; issue #146's error-message claim verified
-non-reproducible server-side, so no prose rewording is in scope -- the raw `@alias` regex in the
-error is the intentional machine-readable contract). Phases 1-4 (implementation) are deliberately
-not started yet.
+**As of 2026-09-24**: Phase 1 complete: the frontmatter/write core and the frontmatter sweep are
+done. `general/tools/_timestamps.py`'s write side emits the `T`-separated canonical form
+(`format_timestamp` space→`T`; `format_date` removed, zero callers), the shared frontmatter pattern
+`MarkdownFrontmatter._DATE_TIME_PATTERN` now accepts `[T ]`, and every whole-body domain's
+`_stringify_metadata` normalizes PyYAML-coerced `datetime` values to the `T`-canonical form with
+milliseconds (a new shared `models/md/_timestamps.py` core; six-digit-fraction unquoted values
+stay rejected instead of being lossily truncated). All 24 packaged template/example frontmatters,
+`tests/feat/models/v1/data/feat_reference.md`, and 53 test files were swept to `T` (explicit
+space-acceptance tests kept); all twelve `docs/*_schema.json` and their packaged `data/` copies
+regenerated, `docs/api/` + `docs/GENERATED.md` regenerated. Phase-end full quality gate green
+(ruff format/check, vulture, `pytest -n auto --cov` -- 3429 passed; pylint 1837 findings both
+before and after, only three pre-existing findings' numeric counters shifted). Phases 2-4
+(entry headings, repo document migration, previous-feature notes + closeout) are still pending.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-24 06:09:11.544Z - Phase 1 fix: coverage-badge regression repaired (12 parser-level unquoted-timestamp tests; badge back to 99%)
+
+Orchestrator verification of the Phase 1 commit found the pre-commit `specmgr coverage-badge`
+hook failing: the Phase 1 `_stringify_metadata` rewrite added 3 previously-uncovered lines per
+whole-body-domain parser (the `datetime`-coercion branch and the `str()` else branch of the new
+loop, 36 lines total) -- no per-domain parser test ever fed an unquoted full timestamp through
+PyYAML, so suite coverage dropped to 162 missed (98.46%) and the hook rewrote
+`docs/coverage.svg` to 98%. Fix (no design change -- Phase 1's `Decisions Made` entry stands
+unchanged): one new focused test per domain in each of the twelve `tests/<d>/models/v*/
+test_parser.py` (`TestUnquotedTimestampNormalization.test_unquoted_timestamps_converges_to_t_canonical_form`,
+12 new tests total, mirroring each file's own minimal-document fixture style and reusing its
+existing `ValidationError` import): it parses the domain's minimal document with `created`
+unquoted `T`-form and `updated` unquoted space-form (both PyYAML-coerced to `datetime`), asserts
+both converge to the `T`-canonical form (REQ-006), and asserts an unquoted date-only `created`
+still raises `ValidationError` (REQ-003 -- that failing parse is what covers the `str()` else
+branch). Result: all 12 whole-body parsers back to 100% (22/22 statements, 0 missed), TOTAL back
+to exactly the pre-Phase-1 126 missed (10557 statements, 99%), `docs/coverage.svg` regenerated
+to 99%. Full gate re-run green: ruff format/check (1715 files), vulture (clean), `specmgr
+schema` 12/12 `(unchanged)` + `specmgr docs` drift-free (no working-tree changes),
+`pytest -n auto --cov` 3429 passed (3417 + 12), pylint 1837 findings / 8.92 -- identical to the
+pre-change baseline apart from the three Phase-1 numeric shifts already noted below. The `qa`
+file (the only one without a `_MINIMAL_DOC` constant) uses its own `_VALID_DOC` fixture.
+
+#### 2026-09-24 04:45:51.954Z - Phase 1 complete: T-canonical frontmatter write/read core, [T ] pattern, 53-file test sweep, schemas/docs regenerated, full gate green
+
+Implemented Tasks 1.1-1.5. Write side: `general/tools/_timestamps.py`'s `format_timestamp`/
+`now_timestamp` now emit `yyyy-MM-ddTHH:mm:ss.fff` + (`Z`|`±HH:mm`) (delegating to the new shared
+core), `format_date` removed (its only callers were its own two tests). Read side:
+`MarkdownFrontmatter._DATE_TIME_PATTERN` widened to `[T ]` (date-only, six-digit-fraction, and
+timezone-less values still rejected; the D5 validator message/docstrings updated), and all twelve
+whole-body domain parsers' `_stringify_metadata` copies now normalize PyYAML-coerced `datetime`
+values to the `T`-canonical form via the new shared `models/md/_timestamps.py`
+(`format_timestamp` + `normalize_yaml_datetime` with a sub-millisecond guard so an unquoted
+six-digit fraction is left for the pattern's actionable rejection rather than silently truncated
+into an accepted shape). Sweep: 24 packaged template/example frontmatters +
+`tests/feat/models/v1/data/feat_reference.md` (byte-identical to `feat_example.md`, verified) +
+`rsk/tools/_sentinel.py`'s own fixture to `T`; 53 test files' space-form frontmatter fixtures/
+writer-output assertions to `T` (explicit space-acceptance tests kept in
+`tests/models/md/test_frontmatter.py` -- `reject_t_separator` flipped to `accept_t_separator`,
+new `accept_space_separator`), `tests/general/tools/test__timestamps.py` rewritten to the `T`
+form (12 tests kept: two `format_date` tests replaced by two `T`-separator tests), new
+`tests/models/md/test__timestamps.py` (14 tests) covering the shared core + the unquoted-value
+matrix (T/space/Z/second-precision accepted; six-digit, date-only, naive rejected). `specmgr
+schema` regenerated all twelve `docs/*_schema.json` + their packaged `data/` copies (the
+pre-commit hook's `--output-dir` syncs), `specmgr docs` regenerated 470 `docs/api/` files +
+`docs/GENERATED.md`. Full quality gate green: ruff format/check (1715 files), vulture (clean),
+`pytest -n auto --cov` 3417 passed (baseline 3402: +14 new shared-module tests, +1 new
+space-acceptance test, +2 new `T`-separator tests, -2 removed `format_date` tests), pylint 1837
+findings before and after with only three pre-existing findings' numeric counters shifted (no new
+findings). Phases 2-4 remain.
 
 #### 2026-09-23 20:40:25.711Z - Phase 0 complete: adr-toc regenerated, full quality gate green
 
@@ -163,6 +217,27 @@ confirmed with the requester, and the ADR (8c889262-152b-4b8e-ae2c-75371f7a9edf)
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-24 04:45:51.954Z - Phase 1 design: shared `T`-core in `models/md/_timestamps.py`; six-digit unquoted fractions stay rejected (sub-millisecond guard)
+
+Two decisions beyond the plan's literal file list, both forced by invariants the plan
+does not name. (1) The T-canonical formatting core now lives in a new, dependency-free
+`src/biz/dfch/specmgr/models/md/_timestamps.py` (`format_timestamp` +
+`normalize_yaml_datetime`), with `general/tools/_timestamps.format_timestamp` delegating to it:
+`models/*` must not import anything under `general` (`general`'s own `__init__` transitively
+imports `server.mcp`, an `mcp`-extra-only dependency that would silently land on the
+dependency-free base library -- the precedent documented in `models/adr/v1/summary.py`'s
+module docstring), so the domain parsers' `_stringify_metadata` copies cannot reuse
+`general.tools._timestamps` directly; one shared core under `models/md` serves both the read
+side (the 12 parsers) and the write side (the general helper). (2) `normalize_yaml_datetime`
+carries a sub-millisecond guard: a PyYAML-coerced `datetime` whose `microsecond` is not a whole
+number of milliseconds (i.e. the original unquoted text had a six-digit fraction) is returned as
+bare `str()` text instead of being truncated into the canonical form -- ACC-002/REQ-003 require
+six-digit fractions to remain rejected, and silent truncation would turn a rejected unquoted
+value into an accepted one. Consequence: an unquoted second-precision value
+(`2026-09-23T12:00:00+02:00`) normalizes to the accepted `.000` canonical form, while the same
+value *quoted* is still rejected by the pattern (quoted text is matched verbatim) -- the
+asymmetry is the read path converging, not the pattern loosening.
 
 #### 2026-09-23 20:31:28.001Z - No error-message prose requirement: the raw regex in the error is the contract
 

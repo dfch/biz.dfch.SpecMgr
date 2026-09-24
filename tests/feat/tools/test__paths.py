@@ -47,8 +47,8 @@ _DOC_TEMPLATE = textwrap.dedent(
     type: feat
     version: 1.0.0
     status: planning
-    created: '2026-08-30 00:00:00.000Z'
-    updated: '2026-08-30 00:00:00.000Z'
+    created: '2026-08-30T00:00:00.000Z'
+    updated: '2026-08-30T00:00:00.000Z'
     ---
 
     # Feature: Example Widget
@@ -292,8 +292,8 @@ class TestFindFeatPathById(unittest.TestCase):
                 "type: feat\n"
                 "version: 1.0.0\n"
                 "status: planning\n"
-                "created: '2026-08-30 00:00:00.000Z'\n"
-                "updated: '2026-08-30 00:00:00.000Z'\n"
+                "created: '2026-08-30T00:00:00.000Z'\n"
+                "updated: '2026-08-30T00:00:00.000Z'\n"
                 "---\n"
                 "\n"
                 "# Feature: Malformed Frontmatter Fixture\n",

@@ -1,9 +1,9 @@
 ---
-created: '2025-03-11 08:24:37.612Z'
+created: '2025-03-11T08:24:37.612Z'
 id: 3f6c1a2e-8b4d-4e7a-9c2f-5d8e1b6a7c90
 status: accepted
 type: dec
-updated: '2025-03-25 19:58:03.947Z'
+updated: '2025-03-25T19:58:03.947Z'
 version: 1.0.0
 ---
 

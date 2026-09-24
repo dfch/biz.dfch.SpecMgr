@@ -51,8 +51,8 @@ _MINIMAL_DOC = textwrap.dedent(
     type: feat
     version: 1.0.0
     status: planning
-    created: '2026-08-26 00:00:00.000Z'
-    updated: '2026-08-26 00:00:00.000Z'
+    created: '2026-08-26T00:00:00.000Z'
+    updated: '2026-08-26T00:00:00.000Z'
     ---
 
     # Feature: A Widget
@@ -116,7 +116,7 @@ class TestParseFeat(unittest.TestCase):
         self.assertEqual(document.frontmatter.id, "feat-1-widget")
         self.assertEqual(document.frontmatter.type, "feat")
         self.assertEqual(document.frontmatter.status, "planning")
-        self.assertEqual(document.frontmatter.created, "2026-08-26 00:00:00.000Z")
+        self.assertEqual(document.frontmatter.created, "2026-08-26T00:00:00.000Z")
         self.assertEqual(document.body.text, "Feature: A Widget")
         self.assertIsNone(document.body.plan.dependencies)
         self.assertIsNone(document.body.plan.design_notes)
@@ -488,6 +488,29 @@ class TestParseFeatStructuralViolations(unittest.TestCase):
 
         with self.assertRaises(AssertionError):
             parse_feat(text)
+
+
+class TestUnquotedTimestampNormalization(unittest.TestCase):
+    """The `_stringify_metadata` datetime-coercion branch (feat-146 REQ-006/REQ-003).
+
+    An unquoted frontmatter `created`/`updated` timestamp is coerced by PyYAML to a
+    `datetime` before this domain's own `_stringify_metadata` runs -- such a value
+    must parse and converge to the `T`-canonical form, and an unquoted date-only
+    value must still be rejected by the frontmatter's own date+time pattern.
+    """
+
+    def test_unquoted_timestamps_converge_to_t_canonical_form(self) -> None:
+        """Unquoted `T`- and space-separated timestamps parse and converge to the `T`-canonical
+        form; an unquoted date-only value still fails the frontmatter pattern."""
+        text = _MINIMAL_DOC.replace("created: '2026-08-26T00:00:00.000Z'", "created: 2026-08-26T00:00:00.000Z").replace(
+            "updated: '2026-08-26T00:00:00.000Z'", "updated: 2026-08-26 00:00:00.000Z"
+        )
+        document = parse_feat(text)
+        self.assertEqual(document.frontmatter.created, "2026-08-26T00:00:00.000Z")
+        self.assertEqual(document.frontmatter.updated, "2026-08-26T00:00:00.000Z")
+
+        with self.assertRaises(ValidationError):
+            parse_feat(text.replace("created: 2026-08-26T00:00:00.000Z", "created: 2026-08-26"))
 
 
 if __name__ == "__main__":

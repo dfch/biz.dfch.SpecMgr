@@ -1,9 +1,9 @@
 ---
-created: '2025-12-01 05:29:14.386Z'
+created: '2025-12-01T05:29:14.386Z'
 id: deaddead-face-face-face-deaddeadface
 status: active
 type: tsk
-updated: '2025-12-13 18:52:47.209Z'
+updated: '2025-12-13T18:52:47.209Z'
 version: 1.0.0
 ---
 

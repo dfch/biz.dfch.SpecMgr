@@ -1,9 +1,9 @@
 ---
-created: '2025-05-01 07:23:46.815Z'
+created: '2025-05-01T07:23:46.815Z'
 id: deadbeef-dead-dead-dead-deadbeefdead
 status: draft
 type: sop
-updated: '2025-05-14 19:58:32.271Z'
+updated: '2025-05-14T19:58:32.271Z'
 version: 1.0.0
 ---
 

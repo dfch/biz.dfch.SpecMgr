@@ -96,9 +96,10 @@ from biz.dfch.specmgr.vcr.tools.create_vcr import create_vcr
 update_module = importlib.import_module("biz.dfch.specmgr.general.tools.update")
 update = update_module.update
 
-#: The canonical date+time timestamp shape (D4/D7) the ``updated`` bump must match: space-separated,
-#: exactly three millisecond digits, `Z` or a signed `±HH:mm` offset.
-_DATE_TIME_TIMESTAMP = r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})"
+#: The canonical date+time timestamp shape (feat-146) the ``updated`` bump must match:
+#: `T`-separated (the machine-written canonical form), exactly three millisecond digits,
+#: `Z` or a signed `±HH:mm` offset.
+_DATE_TIME_TIMESTAMP = r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})"
 
 _REQ_MINIMAL_BODY = textwrap.dedent(
     """\

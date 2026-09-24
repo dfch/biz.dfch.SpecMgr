@@ -1,9 +1,9 @@
 ---
-created: '2025-03-02 08:15:42.804Z'
+created: '2025-03-02T08:15:42.804Z'
 id: deaddead-face-face-face-deaddeadface
 status: draft
 type: vcr
-updated: '2025-03-15 21:07:36.259Z'
+updated: '2025-03-15T21:07:36.259Z'
 version: 1.0.0
 ---
 

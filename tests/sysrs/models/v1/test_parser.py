@@ -21,11 +21,13 @@ Covers the ACC-004 (structural violations -> engine `AssertionError`) and
 ACC-005 (model-level violations -> `pydantic.ValidationError`) matrices from
 `.specmgr/feat/feat-32-sysrs/README.md`, plus a full round-trip of
 `sysrs-example.md`'s content (the frontmatter `created`/`updated` values are
-quoted here, unlike the on-disk feature-folder file, to avoid PyYAML's
-auto-datetime-coercion hazard the "Phase 1 outcome record"'s "Frontmatter
-probe" note pins -- an unquoted `yyyy-MM-dd HH:mm:ss.fff` + `Z` value parses
-as an aware `datetime` and loses its millisecond precision on
-`_stringify_metadata`'s `str()` round trip).
+quoted here, unlike the on-disk feature-folder file; since feat-146 Phase 1,
+`_stringify_metadata` normalizes a PyYAML-coerced unquoted timestamp to the
+`T`-canonical form via `models.md._timestamps.normalize_yaml_datetime` --
+the pre-feat-146 hazard was that an unquoted value parsed as an aware
+`datetime` and then lost its millisecond precision on `_stringify_metadata`'s
+bare `str()` round trip, rendering a zero UTC offset as `+00:00` -- so the
+quoting here is stylistic, not a workaround).
 """
 
 from __future__ import annotations
@@ -58,8 +60,8 @@ _MINIMAL_DOC = textwrap.dedent(
     type: sysrs
     version: 1.0.0
     status: draft
-    created: '2026-08-30 00:00:00.000Z'
-    updated: '2026-08-30 00:00:00.000Z'
+    created: '2026-08-30T00:00:00.000Z'
+    updated: '2026-08-30T00:00:00.000Z'
     ---
 
     # System Requirements Specification: Minimal Example
@@ -106,11 +108,11 @@ _MINIMAL_DOC = textwrap.dedent(
 # `## Requirements`, 8 REQ under `## Other Characteristics`, 3 VCR).
 _EXAMPLE_DOC = """\
 ---
-created: '2026-08-30 00:00:00.000Z'
+created: '2026-08-30T00:00:00.000Z'
 id: 3f7a1c9e-8d2b-4e6f-a5c3-9b0d4e8f2a71
 status: draft
 type: sysrs
-updated: '2026-09-14 00:00:00.000Z'
+updated: '2026-09-14T00:00:00.000Z'
 version: 1.0.0
 ---
 
@@ -660,7 +662,7 @@ class TestParseSysrs(unittest.TestCase):
         self.assertEqual(document.frontmatter.id, "sysrs-001")
         self.assertEqual(document.frontmatter.type, "sysrs")
         self.assertEqual(document.frontmatter.status, "draft")
-        self.assertEqual(document.frontmatter.created, "2026-08-30 00:00:00.000Z")
+        self.assertEqual(document.frontmatter.created, "2026-08-30T00:00:00.000Z")
         self.assertEqual(document.body.text, "System Requirements Specification: Minimal Example")
         self.assertIn("Provision partner accounts", document.body.system_purpose.text)
         self.assertIsNone(document.body.stakeholder_needs_and_elicitation)
@@ -683,8 +685,8 @@ class TestParseSysrs(unittest.TestCase):
 
         self.assertEqual(document.frontmatter.id, "3f7a1c9e-8d2b-4e6f-a5c3-9b0d4e8f2a71")
         self.assertEqual(document.frontmatter.status, "draft")
-        self.assertEqual(document.frontmatter.created, "2026-08-30 00:00:00.000Z")
-        self.assertEqual(document.frontmatter.updated, "2026-09-14 00:00:00.000Z")
+        self.assertEqual(document.frontmatter.created, "2026-08-30T00:00:00.000Z")
+        self.assertEqual(document.frontmatter.updated, "2026-09-14T00:00:00.000Z")
         self.assertEqual(document.body.text, "System Requirements Specification: Example Widget Platform")
 
         body = document.body
@@ -904,6 +906,29 @@ class TestParseSysrsStructuralViolations(unittest.TestCase):
 
         with self.assertRaises(AssertionError):
             parse_sysrs(text)
+
+
+class TestUnquotedTimestampNormalization(unittest.TestCase):
+    """The `_stringify_metadata` datetime-coercion branch (feat-146 REQ-006/REQ-003).
+
+    An unquoted frontmatter `created`/`updated` timestamp is coerced by PyYAML to a
+    `datetime` before this domain's own `_stringify_metadata` runs -- such a value
+    must parse and converge to the `T`-canonical form, and an unquoted date-only
+    value must still be rejected by the frontmatter's own date+time pattern.
+    """
+
+    def test_unquoted_timestamps_converge_to_t_canonical_form(self) -> None:
+        """Unquoted `T`- and space-separated timestamps parse and converge to the `T`-canonical
+        form; an unquoted date-only value still fails the frontmatter pattern."""
+        text = _MINIMAL_DOC.replace("created: '2026-08-30T00:00:00.000Z'", "created: 2026-08-30T00:00:00.000Z").replace(
+            "updated: '2026-08-30T00:00:00.000Z'", "updated: 2026-08-30 00:00:00.000Z"
+        )
+        document = parse_sysrs(text)
+        self.assertEqual(document.frontmatter.created, "2026-08-30T00:00:00.000Z")
+        self.assertEqual(document.frontmatter.updated, "2026-08-30T00:00:00.000Z")
+
+        with self.assertRaises(ValidationError):
+            parse_sysrs(text.replace("created: 2026-08-30T00:00:00.000Z", "created: 2026-08-30"))
 
 
 if __name__ == "__main__":

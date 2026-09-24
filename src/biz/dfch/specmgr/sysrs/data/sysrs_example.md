@@ -1,9 +1,9 @@
 ---
-created: '2025-11-02 07:34:29.518Z'
+created: '2025-11-02T07:34:29.518Z'
 id: 3f7a1c9e-8d2b-4e6f-a5c3-9b0d4e8f2a71
 status: draft
 type: sysrs
-updated: '2025-11-21 15:47:02.963Z'
+updated: '2025-11-21T15:47:02.963Z'
 version: 1.0.0
 ---
 
