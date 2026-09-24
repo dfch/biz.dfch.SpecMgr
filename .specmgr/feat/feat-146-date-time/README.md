@@ -4,7 +4,7 @@ created: '2026-09-23 22:33:23.868+02:00'
 id: feat-146-date-time
 status: planning
 type: feat
-updated: '2026-09-24T16:56:53.646Z'
+updated: '2026-09-24T18:26:19.805Z'
 version: 1.0.0
 ---
 
@@ -122,16 +122,35 @@ No external dependencies; this feature is self-contained.
 
 #### Phase 4: Previous-feature notes + closeout
 
-- [ ] Task 4.1: Brief supersession notes (one blockquote each, citing the ADR id) in: feat-38-39-41-43-44, feat-32-sysrs, feat-67-70-71, feat-104-109-set-status-noop-dec-docs, feat-94-frontmatter-schema; verify-by-grep candidates (feat-31-feature, feat-33-vcr, feat-10-add-artifact-type-tasklist, feat-21-decision, feat-5-md-model-parser, feat-93-feat-template) get notes only if they carry format decisions.
-- [ ] Task 4.2: `CHANGELOG.md` `[Unreleased]` BREAKING entry; AGENTS.md touch-up (now_timestamp shared format → `T` write, both accepted).
-- [ ] Task 4.3: Final doc regeneration (`specmgr docs`, `specmgr mcp-docs`, `specmgr adr-toc`); ADR `set_status` → `accepted`; GitHub comment on issue #146.
-- [ ] Task 4.4: Full quality gate.
+- [x] Task 4.1: Brief supersession notes (one blockquote each, citing the ADR id) in: feat-38-39-41-43-44, feat-32-sysrs, feat-67-70-71, feat-104-109-set-status-noop-dec-docs, feat-94-frontmatter-schema; verify-by-grep candidates (feat-31-feature, feat-33-vcr, feat-10-add-artifact-type-tasklist, feat-21-decision, feat-5-md-model-parser, feat-93-feat-template) get notes only if they carry format decisions.
+- [x] Task 4.2: `CHANGELOG.md` `[Unreleased]` BREAKING entry; AGENTS.md touch-up (now_timestamp shared format → `T` write, both accepted).
+- [x] Task 4.3: Final doc regeneration (`specmgr docs`, `specmgr mcp-docs`, `specmgr adr-toc`); ADR `set_status` → `accepted`; GitHub comment on issue #146.
+- [x] Task 4.4: Full quality gate.
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-09-24**: Phase 3 complete: the 3 `docs/` date-only entry headings
+**As of 2026-09-24**: Phase 4 complete: all four implementation phases are done and the
+feature is ready for review (the frontmatter `status` change to `review` is the
+orchestrator's closeout step, not this phase's). Task 4.1 added 8 brief supersession
+notes (one blockquote each, citing ADR 8c889262-152b-4b8e-ae2c-75371f7a9edf) to previous
+feature READMEs -- the 5 unconditional ones (feat-38-39-41-43-44, feat-32-sysrs,
+feat-67-70-71, feat-104-109-set-status-noop-dec-docs, feat-94-frontmatter-schema) plus 3 of
+the 6 verify-by-grep candidates that carry timestamp-format decisions (feat-31-feature,
+feat-10-add-artifact-type-tasklist, feat-21-decision); the other 3 candidates (feat-33-vcr,
+feat-5-md-model-parser, feat-93-feat-template) carry no format decisions and got no note;
+every file's `parse_feat` before/after status is unchanged (see Decisions Made). Task 4.2
+added the `CHANGELOG.md` `[Unreleased]` `### Breaking Changes` entry and the AGENTS.md
+feature-frontmatter convention touch-up. Task 4.3 set the ADR to `accepted` (via the generic
+`set_status`, `type="adr"`), regenerated the ADR TOC (`specmgr adr-toc` -- only
+`docs/adr/README.md` changed; `specmgr docs` and `specmgr mcp-docs` were no-ops), and posted
+the closeout comment on GitHub issue #146. Task 4.4 full quality gate green: ruff
+format/check + vulture clean, `pytest -n auto --cov` 3440 passed (exact Phase 3 baseline),
+coverage TOTAL 10551/122 = 99% (badge byte-identical), pylint 8.92/10 (+0.00),
+`specmgr schema` 12/12 unchanged.
+
+**As of 2026-09-24 (Phase 3)**: Phase 3 complete: the 3 `docs/` date-only entry headings
 (`docs/tsk` x2, `docs/sysrs` x1) are migrated to space-form midnight UTC per the ADR
 (`### {date} - {title}` → `### {date} 00:00:00.000Z - {title}`), with nothing else
 changed in those files (frontmatter mass-migration out of scope). The Task 3.2 parse
@@ -146,27 +165,64 @@ midnight-migration-heading exclusion holds), coverage TOTAL 10551/122 = 99% (bad
 unchanged), pylint 8.92/10 (+0.00), `specmgr docs`/`specmgr schema` drift-free.
 Phase 4 (previous-feature notes + closeout) is still pending.
 
-**As of 2026-09-24 (Phase 2)**: Phase 2 complete: the six entry-heading domains
-(`tsk`/`dec`/`vcr`/`sysrs` tightened, `feat`/`sop` widened) now accept exactly the shared full
-date+time fragment `\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})` in every
-`## Recent Updates`/`## Updates`/`### Updates`/`### Decisions Made` entry heading -- date-only
-rejected everywhere, `T` and space both accepted; `models/md/_ordering.py`'s now-dead
-mixed-granularity branch is deleted (plain aware `datetime.fromisoformat` comparison). The 8
-packaged date-only entry headings migrated to space-form midnight UTC, the 8 tsk/dec/vcr/sysrs
-instruction files rewritten to the full form only (feat/sop create instructions' wording aligned
-too), and the test suite swept (date-only fixtures → full form; the 4 domain test files flipped
-date-only accept→reject; `T`-accept tests added per domain; `test_issue_67.py`'s moot date-only
-exclusion replaced by a narrow exclusion of the documented midnight-UTC migration heading shape).
-Phase-end full quality gate green (ruff format/check, vulture, `specmgr schema` 6/12 changed +
-6 packaged copies, `specmgr docs`/`specmgr adr-toc` drift-free, `pytest -n auto --cov` -- 3440
-passed, coverage TOTAL 10551/122 = 99% badge unchanged; pylint 8.92/10 with only pre-existing
-finding types' numeric counters shifted). Phases 3-4 (repo document migration of the 3 `docs/`
-entry headings -- now expected to fail parsing until migrated -- and previous-feature notes +
-closeout) are still pending.
-
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-24 18:26:19.805Z - Phase 4 complete: 8 previous-feature supersession notes, CHANGELOG/AGENTS.md closeout, ADR accepted + TOC regenerated, issue #146 commented, full gate green
+
+Task 4.1: added one brief supersession blockquote (each citing ADR
+8c889262-152b-4b8e-ae2c-75371f7a9edf) to 8 of the 11 previous feature READMEs -- the 5
+unconditional ones (feat-38-39-41-43-44, feat-32-sysrs, feat-67-70-71,
+feat-104-109-set-status-noop-dec-docs, feat-94-frontmatter-schema) plus 3 of the 6
+verify-by-grep candidates that carry timestamp-format decisions: feat-31-feature (its pinned
+`### Updates`/`### Decisions Made` heading regex and its frontmatter plain-`YYYY-MM-DD`-to-
+microsecond-timestamp decision), feat-10-add-artifact-type-tasklist (its free-form `## Recent
+Updates` entry-heading decision), and feat-21-decision (its TSK-style free-form `## Updates`
+entry decision plus its date-only `created`/`updated: YYYY-MM-DD` frontmatter wording). The
+other 3 candidates carry no format decisions and got no note (grep evidence: feat-33-vcr has
+only `{timestamp}` placeholders describing heading nesting, no format pinned; feat-5-md-model-
+parser only self-referential "Recent Updates" mentions of its own progress log; feat-93-feat-
+template only feat-parser-compliance wording about the canonical heading format it migrated
+to). Per-file `parse_feat` before/after status: OK→OK for feat-38-39-41-43-44, feat-67-70-71,
+feat-104-109 (the 3 parseable files, verified by re-parsing after the edit); FAIL→FAIL with
+the same pre-existing error for feat-32-sysrs, feat-94-frontmatter-schema, feat-31-feature,
+feat-10-add-artifact-type-tasklist, feat-21-decision (line numbers shifted +4 only);
+feat-33-vcr/feat-5/feat-93 untouched. Note placement: directly below the H1 is structurally
+impossible in the 3 parseable READMEs (the feat parser requires `## Plan` as the first token
+after the H1 -- verified empirically before any edit), so per the plan's adjust clause all 8
+notes were placed at the end of the `### Overview` section instead, consistently (see
+Decisions Made). No doc repair of those READMEs per the plan (pre-existing parse failures stay
+out of scope, tracked by `docs/tsk/tsk-2687d267`).
+Task 4.2: `CHANGELOG.md` gained a `### Breaking Changes` entry under `[Unreleased]`
+(uniform full date+time contract: frontmatter `created`/`updated` of all twelve whole-body
+domains now written `T`-separated (machine canonical) and accepting `T` or space; tsk/dec/vcr/
+sysrs dated entry headings tightened from date-or-full to full date+time only, with the
+repo-owned inventory migrated in the same change; feat/sop entry headings additionally accept
+`T`; newest-first ordering now compares full timestamps as aware datetimes), citing the ADR +
+GitHub issue #146 (feat-146-date-time); AGENTS.md's feature-frontmatter convention line was
+updated from (`YYYY-MM-DD`, ...) to the new full date+time contract with the ADR cited -- only
+that wording touched.
+Task 4.3: the ADR was set to `accepted` via the generic `set_status` (`type="adr"`,
+`id="8c889262-152b-4b8e-ae2c-75371f7a9edf"`); `get_adr` confirms `status: accepted` and the
+on-disk ADR file diffed to exactly one line (`status: draft` → `status: accepted` -- ADR
+frontmatter has no `created`/`updated`, only the free-form `date`, left untouched).
+Regenerations: `specmgr adr-toc` changed `docs/adr/README.md` (the 8c889262 entry's
+"Status: draft" → "Status: accepted", the only diff); `specmgr docs` (470 api files +
+GENERATED.md) and `specmgr mcp-docs` (docs/MCP.md) were both no-ops with zero working-tree
+changes (no src/ docstring changes and no new tools/resources/prompts this feature). Posted
+the closeout comment on GitHub issue #146
+(https://github.com/dfch/biz.dfch.SpecMgr/issues/146#issuecomment-5819537651, comment id
+5819537651, posted 2026-09-24T18:09:45Z): fix summary + branch `feat-146-date-time` (PR
+pending) + ADR reference; deliberately no "fixes #146" (that belongs in the PR body) and the
+issue was left open.
+Task 4.4: full quality gate green -- `ruff format --check` (1715 files already formatted) +
+`ruff check` (All checks passed), vulture clean (no output), `pytest -n auto --cov=src
+--cov-report=` **3440 passed** (exact Phase 3 baseline), `coverage report -m` TOTAL
+**10551/122 = 99%** (`docs/coverage.svg` byte-identical, no changes), pylint **8.92/10
+(+0.00)** (src untouched this phase), `specmgr schema` 12/12 `(unchanged)`. Files changed by
+Phase 4 overall: the 8 supersession notes, CHANGELOG.md, AGENTS.md, the ADR frontmatter line,
+docs/adr/README.md, and this plan README; everything left uncommitted for the orchestrator.
 
 #### 2026-09-24 16:56:53.646Z - Phase 3 complete: 3 docs/ headings migrated to midnight UTC, parse gate green (sysrs appendix excluded per user ruling)
 
@@ -346,6 +402,33 @@ confirmed with the requester, and the ADR (8c889262-152b-4b8e-ae2c-75371f7a9edf)
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-24 18:26:19.805Z - Phase 4: supersession notes placed at the end of `### Overview` (not directly below the H1); verify-by-grep outcomes
+
+Two items beyond the plan's literal wording. (1) Note placement: the plan says "directly
+below the H1 title line, before any other content -- adjust only if a file's structure makes
+that impossible", and in the 3 READMEs that parse through `parse_feat` before the edit
+(feat-38-39-41-43-44, feat-67-70-71, feat-104-109) it is structurally impossible: the feat
+parser requires `## Plan` to be the first token after the H1 (a blockquote between H1 and
+`## Plan` fails with "Feature > Plan: expected Plan (heading 'Plan'), found no match" --
+verified empirically on a throwaway in-memory parse before any file was touched). The hard
+constraint "if it parsed before your edit, it must still parse after" outranks the preferred
+placement, so all 8 notes were placed at the end of the `### Overview` section instead --
+one consistent placement across every file that got a note, still near the top of the
+document, and parse-safe (verified OK→OK on the 3 parseable files after the edits). (2)
+Verify-by-grep outcomes: 3 of the 6 candidates carry timestamp-format decisions and got
+notes (feat-31-feature: the pinned `### Updates`/`### Decisions Made` heading regex with
+space-only separator/em-dash joiner, plus the frontmatter plain-`YYYY-MM-DD`-divergence
+decision reversed to microsecond timestamps in its own Phase 6; feat-10-add-artifact-type-
+tasklist: the `## Recent Updates` entries decided as free-form-title H3 leaves with no
+timestamp requirement; feat-21-decision: the `## Updates` entry decision as TSK-style
+free-form `### {title}` headings, plus the `created`/`updated: YYYY-MM-DD` frontmatter
+wording in its structure example), and 3 do not and got none (feat-33-vcr: only a
+`{timestamp}` placeholder describing the heading's nesting level relative to `feat`'s own,
+no timestamp format pinned; feat-5-md-model-parser: only self-referential "Recent Updates"
+mentions of its own progress log; feat-93-feat-template: only compliance wording about
+migrating its own `### Decisions Made` to the feat parser's canonical heading format, which
+is a feat-31/feat-38 decision, not feat-93's).
 
 #### 2026-09-24 16:56:53.646Z - Phase 3: `docs/sysrs/*-appendix.md` excluded from the docs/ parse gate as not a real sysrs document (user ruling)
 
