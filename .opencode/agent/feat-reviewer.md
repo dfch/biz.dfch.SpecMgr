@@ -22,19 +22,22 @@ permission:
   task: deny
   bash:
     "*": ask
-    "git branch*": allow
-    "git status*": allow
-    "git rev-parse*": allow
-    "git merge-base*": allow
-    "git log*": allow
-    "git diff*": allow
-    "git worktree*": allow
+    "git branch *": allow
+    "git status *": allow
+    "git rev-parse *": allow
+    "git merge-base *": allow
+    "git log *": allow
+    "git diff *": allow
+    "git worktree *": allow
+    "git show *": allow
     "ls *": allow
     "grep *": allow
     "head *": allow
     "echo *": allow
+    "awk *": allow
     "sed *": allow
     "cat *": allow
+    "cut *": allow
     "tail *": allow
     "uv *": allow
     "find *": allow
@@ -43,6 +46,8 @@ permission:
     "sort *": allow
     "uniq *": allow
     "du *": allow
+    "timeout *": allow
+    "xargs *": allow
 ---
 
 # Feature Reviewer
