@@ -31,6 +31,7 @@ from __future__ import annotations
 import asyncio
 import math
 import tempfile
+import textwrap
 import unittest
 from pathlib import Path
 from typing import Any
@@ -43,7 +44,9 @@ from biz.dfch.specmgr.general.models import (
     SimilarityUnavailableResult,
 )
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
+from biz.dfch.specmgr.general.tools._embedding_cache import _cache as embedding_cache_singleton
 from biz.dfch.specmgr.general.tools._listing import FAILED_TO_PARSE_MARKER
+from biz.dfch.specmgr.general.tools._similarity_search import warmup_similarity_cache
 from biz.dfch.specmgr.general.tools.find_similar_text import find_similar_text
 
 from ._similarity_helpers import (
@@ -154,6 +157,32 @@ class TestFindSimilarTextAvailability(SimilarityTestCase):
         self.assertIsInstance(result, SimilarityUnavailableResult)
         self.assertEqual(result.reason, REASON_BACKEND_UNAVAILABLE)
 
+    def test_backend_missing_returns_unavailable_even_with_invalid_arguments(self) -> None:
+        # REQ-003's normative ordering (feat-134, Phase 6, Task 6.2): a
+        # disabled/backend-missing environment short-circuits **before**
+        # any argument validation -- every invalid-argument shape below
+        # returns the structured unavailable result instead of the
+        # ValueError it would raise in an available environment.
+        reset_default_provider()
+
+        with block_fastembed_import():
+            with self.subTest(top_k=0):
+                result = find_similar_text(query="alpha", top_k=0)  # outside 1..100 -> ValueError when available
+                self.assertIsInstance(result, SimilarityUnavailableResult)
+                self.assertFalse(result.available)
+                self.assertEqual(result.reason, REASON_BACKEND_UNAVAILABLE)
+            with self.subTest(target_types=["adr"]):
+                # structurally excluded -> ValueError when available
+                result = find_similar_text(query="alpha", target_types=["adr"])
+                self.assertIsInstance(result, SimilarityUnavailableResult)
+                self.assertFalse(result.available)
+                self.assertEqual(result.reason, REASON_BACKEND_UNAVAILABLE)
+            with self.subTest(min_score=1.5):
+                result = find_similar_text(query="alpha", min_score=1.5)  # outside [-1, 1] -> ValueError when available
+                self.assertIsInstance(result, SimilarityUnavailableResult)
+                self.assertFalse(result.available)
+                self.assertEqual(result.reason, REASON_BACKEND_UNAVAILABLE)
+
 
 class TestFindSimilarTextErrorContract(SimilarityTestCase):
     """ACC-015: bad ``target_types``/``top_k``/``min_score`` are a ``ValueError`` before filesystem access."""
@@ -196,6 +225,73 @@ class TestFindSimilarTextErrorContract(SimilarityTestCase):
         with self._nonexistent_docs_dir():
             with self.assertRaises(ValueError):
                 find_similar_text(query="alpha", target_types=["bogus"])
+
+
+class TestSetextH1EndToEnd(SimilarityTestCase):
+    """ACC-016: a parseable setext-H1 document yields the correct row and never breaks the corpus walk.
+
+    The end-to-end regression for the Phase 6 setext fix: a ``req``
+    document whose H1 uses setext syntax (``Title`` over ``===``) is
+    parseable by the domain parser (markdown-it emits the same ``h1``
+    token) -- before the fix, the ATX-only title scan returned ``None``
+    for it and the ``_similarity_corpus`` assert crashed every
+    ``find_similar_text``/``find_related`` call and aborted the startup
+    warmup mid-corpus.
+    """
+
+    _SETEXT_REQ_BODY = textwrap.dedent(
+        """\
+        Setext Titled Requirement
+        =========================
+
+        WHILE the engine is running, THE temperature must be a maximum of 80 °C.
+
+        ## Description
+
+        alpha alpha beta
+
+        ## Characteristics
+
+        1. Safety
+
+        ## Level
+
+        MUST
+
+        ## Source
+
+        The International Safety Board Association (TISBA)
+        """
+    )
+
+    def _seed_setext_req(self) -> Any:
+        from biz.dfch.specmgr.req.tools.create_req import create_req
+
+        return create_req(self._SETEXT_REQ_BODY)
+
+    def test_find_similar_text_yields_the_setext_title_id_and_status(self) -> None:
+        fm = self._seed_setext_req()
+        self.seed_req("Second Doc", "gamma")
+        self.install_fake()
+
+        hits = find_similar_text(query="alpha")
+
+        top = hits[0]
+        self.assertEqual(top.type, "req")
+        self.assertEqual(top.id, fm.id)
+        self.assertEqual(top.title, "Setext Titled Requirement")
+        self.assertEqual(top.status, "draft")
+
+    def test_warmup_completes_the_full_corpus_with_a_setext_doc(self) -> None:
+        self._seed_setext_req()
+        self.seed_req("Second Doc", "gamma")
+        fake = self.install_fake()
+
+        warmup_similarity_cache()  # must complete the full corpus, not abort mid-walk
+
+        self.assertEqual(fake.embed_calls, 2)  # every corpus document embedded
+        stored_titles = {entry[2].title for entry in embedding_cache_singleton._entries.values()}
+        self.assertEqual(stored_titles, {"Setext Titled Requirement", "Second Doc"})
 
 
 if __name__ == "__main__":

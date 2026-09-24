@@ -91,10 +91,12 @@ Rank ``candidates`` against ``query_vector`` by cosine similarity (REQ-009).
 
 Every candidate is scored with :func:`dot_product` (cosine, on the
 protocol's normalized vectors), the ``min_score`` filter is applied
-(inclusive: a score exactly at the threshold is kept), the surviving
-scores are sorted descending (stable: equal scores keep the
-candidates' input order -- deterministic for a deterministic corpus
-enumeration), and the result is truncated to ``top_k``.
+(inclusive plus :data:`_MIN_SCORE_EPSILON`: a score exactly at the
+threshold is kept, and a score within float32 accumulation error
+below it is kept too), the surviving scores are sorted descending
+(stable: equal scores keep the candidates' input order --
+deterministic for a deterministic corpus enumeration), and the
+result is truncated to ``top_k``.
 
 Args:
     query_vector: The query-side vector (an ``embed_query`` output)

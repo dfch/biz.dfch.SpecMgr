@@ -233,6 +233,39 @@ class TestFindRelatedAvailability(SimilarityTestCase):
         self.assertIsInstance(result, SimilarityUnavailableResult)
         self.assertEqual(result.reason, REASON_BACKEND_UNAVAILABLE)
 
+    def test_backend_missing_returns_unavailable_even_with_invalid_arguments(self) -> None:
+        # REQ-003's normative ordering (feat-134, Phase 6, Task 6.2): a
+        # disabled/backend-missing environment short-circuits **before**
+        # any argument validation -- every invalid-argument shape below
+        # returns the structured unavailable result instead of the
+        # ValueError (or the domain's XNotFoundError, for the missing
+        # source) it would raise in an available environment.
+        source = self.seed_req("Source Doc", "alpha")
+        reset_default_provider()
+
+        with block_fastembed_import():
+            with self.subTest(top_k=0):
+                result = find_related(type="req", id=source.id, top_k=0)  # outside 1..100 -> ValueError when available
+                self.assertIsInstance(result, SimilarityUnavailableResult)
+                self.assertFalse(result.available)
+                self.assertEqual(result.reason, REASON_BACKEND_UNAVAILABLE)
+            with self.subTest(target_types=["adr"]):
+                # structurally excluded -> ValueError when available
+                result = find_related(type="req", id=source.id, target_types=["adr"])
+                self.assertIsInstance(result, SimilarityUnavailableResult)
+                self.assertFalse(result.available)
+                self.assertEqual(result.reason, REASON_BACKEND_UNAVAILABLE)
+            with self.subTest(type="bogus"):
+                result = find_related(type="bogus", id=source.id)  # unknown type -> ValueError when available
+                self.assertIsInstance(result, SimilarityUnavailableResult)
+                self.assertFalse(result.available)
+                self.assertEqual(result.reason, REASON_BACKEND_UNAVAILABLE)
+            with self.subTest(id=_MISSING_UUID):
+                result = find_related(type="req", id=_MISSING_UUID)  # missing source -> ReqNotFoundError when available
+                self.assertIsInstance(result, SimilarityUnavailableResult)
+                self.assertFalse(result.available)
+                self.assertEqual(result.reason, REASON_BACKEND_UNAVAILABLE)
+
 
 class TestFindRelatedCaching(SimilarityTestCase, _RankedCorpusMixin):
     """ACC-005/ACC-006: unchanged documents reuse the cache; a content change re-embeds exactly once."""

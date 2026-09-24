@@ -18,11 +18,15 @@
 """Unit tests for the content-hash-validated in-memory embedding cache (feat-134, Phase 1, REQ-004).
 
 Covers ACC-005 (a read against an unchanged document is a cache hit: the
-``embed_fn`` is not re-invoked and the same vector object is returned), ACC-006
-(a content change invalidates the entry: the ``embed_fn`` runs again), and the
-``invalidate``/``move``/``reset`` lifecycle operations the generic ``delete``
-and ``set_feat_id`` tools wire into (ACC-011 -- the tool-level wiring itself is
-tested in ``test_find_related.py``).
+``embed_fn`` is not re-invoked and the same vector object **and** the same
+row-metadata object are returned), ACC-006 (a content change invalidates
+the entry: the ``embed_fn`` runs again), ACC-017 (on a cache hit the
+result-row metadata is served from the entry without re-reading or
+re-parsing -- the ``embed_fn``, which is the only parse site, runs once
+for a cold read and not at all for a warm one), and the
+``invalidate``/``move``/``reset`` lifecycle operations the generic
+``delete`` and ``set_feat_id`` tools wire into (ACC-011 -- the
+tool-level wiring itself is tested in ``test_find_related.py``).
 """
 
 from __future__ import annotations
@@ -39,6 +43,7 @@ from biz.dfch.specmgr.general.tools._embedding_cache import (
     read_embedding,
     reset_embedding_cache,
 )
+from biz.dfch.specmgr.general.tools._similarity_text import SimilarityText
 
 
 class _CountingEmbedFn:
@@ -48,10 +53,12 @@ class _CountingEmbedFn:
         self.calls: int = 0
         self.inputs: list[str] = []
 
-    def __call__(self, text: str) -> list[float]:
+    def __call__(self, text: str) -> tuple[list[float], SimilarityText]:
         self.calls += 1
         self.inputs.append(text)
-        result: list[float] = [float(len(text))]
+        vector: list[float] = [float(len(text))]
+        similarity_text = SimilarityText(embedding_text=text, title="t", id_=None, status="s")
+        result: tuple[list[float], SimilarityText] = (vector, similarity_text)
         return result
 
 
@@ -67,24 +74,36 @@ class EmbeddingCacheTestCase(unittest.TestCase):
 
 
 class TestRead(EmbeddingCacheTestCase):
-    """ACC-005/ACC-006: hit on unchanged content, recompute on changed content."""
+    """ACC-005/ACC-006/ACC-017: hit on unchanged content, recompute on changed content, metadata served on a hit."""
 
     def test_miss_then_hit_returns_same_vector_without_reembedding(self) -> None:
-        first = self.cache.read("req", self.path, self.fn)
-        second = self.cache.read("req", self.path, self.fn)
+        first_vector, _first_text = self.cache.read("req", self.path, self.fn)
+        second_vector, _second_text = self.cache.read("req", self.path, self.fn)
 
         self.assertEqual(self.fn.calls, 1)  # the second read is a hit
-        self.assertIs(second, first)  # the same stored array object is returned
-        self.assertEqual(list(first), [float(len("initial content"))])
+        self.assertIs(second_vector, first_vector)  # the same stored array object is returned
+        self.assertEqual(list(first_vector), [float(len("initial content"))])
+
+    def test_hit_serves_the_stored_row_metadata_without_reembedding(self) -> None:
+        # ACC-017: on a hash match the stored SimilarityText is served as-is
+        # (the embed_fn -- the only parse site -- runs exactly once, for the
+        # cold read; the warm read neither embeds nor parses).
+        _first_vector, first_text = self.cache.read("req", self.path, self.fn)
+        _second_vector, second_text = self.cache.read("req", self.path, self.fn)
+
+        self.assertEqual(self.fn.calls, 1)
+        self.assertIs(second_text, first_text)  # the same stored metadata object is served
+        self.assertEqual(second_text.embedding_text, "initial content")
 
     def test_content_change_recomputes(self) -> None:
         self.cache.read("req", self.path, self.fn)
         self.path.write_text("different content now", encoding="utf-8")
 
-        second = self.cache.read("req", self.path, self.fn)
+        second_vector, second_text = self.cache.read("req", self.path, self.fn)
 
         self.assertEqual(self.fn.calls, 2)  # the changed hash forces one re-embed
-        self.assertEqual(list(second), [float(len("different content now"))])
+        self.assertEqual(list(second_vector), [float(len("different content now"))])
+        self.assertEqual(second_text.embedding_text, "different content now")
 
     def test_embed_fn_receives_the_exact_text_read(self) -> None:
         self.cache.read("req", self.path, self.fn)
@@ -194,14 +213,14 @@ class TestModuleLevelWrappers(unittest.TestCase):
         reset_embedding_cache()
 
     def test_read_embedding_then_invalidate_then_reread(self) -> None:
-        first = read_embedding("req", self.path, self.fn)
+        first_vector, _first_text = read_embedding("req", self.path, self.fn)
         self.assertEqual(self.fn.calls, 1)
 
         invalidate_embedding_cache("req", self.path)
 
-        second = read_embedding("req", self.path, self.fn)
+        second_vector, _second_text = read_embedding("req", self.path, self.fn)
         self.assertEqual(self.fn.calls, 2)
-        self.assertEqual(list(first), list(second))
+        self.assertEqual(list(first_vector), list(second_vector))
 
     def test_move_embedding_cache(self) -> None:
         new_path = self.dir / "renamed.md"

@@ -101,11 +101,13 @@ the text to ``_similarity_text``'s domain-agnostic extraction:
   ``id = None`` (REQ-009).
 
 Purely a function of ``(domain, text)`` -- no file I/O of its own:
-called on the exact already-read file text, both directly by the
-Phase 3 tools (for the result-row metadata) and inside the embedding
-cache's ``embed_fn`` closures (for the embedding input on a cache
-miss), where re-reading the file would break the cache's own
-hash-then-embed TOCTOU contract (ADR bfd76370).
+called on the exact already-read file text inside the embedding
+cache's ``embed_fn`` closures (the demand path's one parse site since
+Phase 6 -- the cache stores the resulting ``SimilarityText`` with its
+vector, so a warm read serves the stored metadata instead of re-running
+this), where re-reading the file would break the cache's own
+hash-then-embed TOCTOU contract (ADR bfd76370); the tests call it
+directly.
 
 Args:
     domain:
@@ -134,6 +136,11 @@ the three parse-failure channels -- structural
 (malformed frontmatter) -- ``_listing.DEFAULT_ERROR_TYPES``, exactly
 the channel set ``list_<domain>``'s own failed entries use. Any
 other exception (a parser bug) propagates uncaught.
+
+:func:`candidate_similarity_text` deliberately inlines this same
+parseability decision (one parser run, not a second, separate one)
+instead of calling this function -- it is kept public and is the
+direct entry point the tests use.
 
 Args:
     domain:

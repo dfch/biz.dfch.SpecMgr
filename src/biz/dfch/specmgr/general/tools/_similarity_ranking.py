@@ -93,6 +93,16 @@ MIN_SCORE_BOUND = -1.0
 #: Cosine's upper bound -- the largest meaningful ``min_score``.
 MAX_SCORE_BOUND = 1.0
 
+#: The inclusive ``min_score`` comparison's float32 epsilon (feat-134,
+#: Phase 6): with the default provider's float32 vectors, an exact
+#: self-match's dot product (float32 dot-product accumulation error --
+#: the backend normalizes in float32, so the components' sum of squares
+#: is ``1.0`` only to float32 precision) can come out as
+#: ``0.9999999...`` instead of exactly ``1.0``, and a bare
+#: ``score >= min_score`` would then drop it at ``min_score = 1.0`` --
+#: the epsilon keeps it.
+_MIN_SCORE_EPSILON = 1e-6
+
 #: The candidate-key type :func:`rank_candidates` is generic over (Phase 3
 #: passes the candidate's own list index; the key is carried through
 #: uninterpreted -- never inspected, compared, or reordered by score ties
@@ -199,10 +209,12 @@ def rank_candidates(
 
     Every candidate is scored with :func:`dot_product` (cosine, on the
     protocol's normalized vectors), the ``min_score`` filter is applied
-    (inclusive: a score exactly at the threshold is kept), the surviving
-    scores are sorted descending (stable: equal scores keep the
-    candidates' input order -- deterministic for a deterministic corpus
-    enumeration), and the result is truncated to ``top_k``.
+    (inclusive plus :data:`_MIN_SCORE_EPSILON`: a score exactly at the
+    threshold is kept, and a score within float32 accumulation error
+    below it is kept too), the surviving scores are sorted descending
+    (stable: equal scores keep the candidates' input order --
+    deterministic for a deterministic corpus enumeration), and the
+    result is truncated to ``top_k``.
 
     Args:
         query_vector: The query-side vector (an ``embed_query`` output)
@@ -235,7 +247,11 @@ def rank_candidates(
 
     scored: list[tuple[KeyT, float]] = [(key, dot_product(query_vector, vector)) for key, vector in candidates]
     if min_score is not None:
-        scored = [pair for pair in scored if pair[1] >= min_score]
+        # The float32 epsilon keeps an exact self-match at min_score=1.0
+        # (a float32 dot product can score 0.9999999... -- see
+        # _MIN_SCORE_EPSILON) and any other score within float32 rounding
+        # of the inclusive threshold.
+        scored = [pair for pair in scored if pair[1] + _MIN_SCORE_EPSILON >= min_score]
     scored.sort(key=lambda pair: pair[1], reverse=True)
     result = scored[:top_k]
     return result

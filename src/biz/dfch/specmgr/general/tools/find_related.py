@@ -201,7 +201,9 @@ def find_related(
     )  # ValueError (type/id) before fs; XNotFoundError for a missing source
 
     provider = get_default_provider()
-    source_vector = read_embedding(type_, source_path, make_embed_fn(provider, type_))
+    source_vector, _source_text = read_embedding(
+        type_, source_path, make_embed_fn(provider, type_)
+    )  # the source's row metadata is unused: the source itself never appears in the hits
     candidates = collect_candidates(provider, candidates_iter)
 
     # ACC-001: the source document itself is excluded (by resolved-path comparison).

@@ -17,11 +17,14 @@
 
 """Unit tests for the domain-agnostic embedding-input text extraction (feat-134, Phase 2, Task 2.2).
 
-Covers the REQ-005/REQ-009 extraction contract: the title (first H1), the
-frontmatter fields minus the bookkeeping keys (only ``classification``
-survives across the whole-body domains), and the raw frontmatter-stripped body
-for a parseable document; and the ``FAILED_TO_PARSE_MARKER`` degradation
-(full raw text, ``id = None``) for an unparseable one.
+Covers the REQ-005/REQ-009 extraction contract: the title (first H1 --
+both level-1 syntaxes, ATX and setext, with fenced-code-block tracking and
+CommonMark's 0-3 leading-space indent tolerance, feat-134 Phase 6,
+Task 6.1), the frontmatter fields minus the bookkeeping keys (only
+``classification`` survives across the whole-body domains), and the raw
+frontmatter-stripped body for a parseable document; and the
+``FAILED_TO_PARSE_MARKER`` degradation (full raw text, ``id = None``) for
+an unparseable one.
 """
 
 from __future__ import annotations
@@ -71,6 +74,111 @@ class TestFirstH1(unittest.TestCase):
         result = first_h1("# Padded Title   \n\nBody.")
 
         self.assertEqual(result, "Padded Title")
+
+
+class TestFirstH1Setext(unittest.TestCase):
+    """Both level-1 syntaxes: setext (fence-tracked, 0-3 indent tolerance, multi-line paragraphs)."""
+
+    def test_setext_single_line(self) -> None:
+        body = "My Title\n========\n\nSome prose."
+
+        result = first_h1(body)
+
+        self.assertEqual(result, "My Title")
+
+    def test_setext_after_a_blank_line(self) -> None:
+        body = "Intro line.\n\nMy Title\n========\n\nSome prose."
+
+        result = first_h1(body)
+
+        self.assertEqual(result, "My Title")
+
+    def test_setext_indented(self) -> None:
+        body = "   My Title\n   ========\n\nSome prose."
+
+        result = first_h1(body)
+
+        self.assertEqual(result, "My Title")
+
+    def test_atx_indented(self) -> None:
+        body = "   # My Title\n\nSome prose."
+
+        result = first_h1(body)
+
+        self.assertEqual(result, "My Title")
+
+    def test_setext_multi_line_paragraph_joins_the_stripped_lines(self) -> None:
+        body = "My\nMulti-line Title\n==============\n\nSome prose."
+
+        result = first_h1(body)
+
+        self.assertEqual(result, "My Multi-line Title")
+
+    def test_setext_paragraph_lines_are_stripped_before_joining(self) -> None:
+        body = "  Line One  \n   Line Two\n====\n"
+
+        result = first_h1(body)
+
+        self.assertEqual(result, "Line One Line Two")
+
+    def test_setext_dash_underline_is_an_h2_not_an_h1(self) -> None:
+        body = "My Title\n--------\n\nSome prose."
+
+        result = first_h1(body)
+
+        self.assertIsNone(result)
+
+    def test_setext_underline_after_an_atx_h2_is_not_an_h1(self) -> None:
+        body = "## My Heading\n========\n\nSome prose."
+
+        result = first_h1(body)
+
+        self.assertIsNone(result)
+
+    def test_setext_underline_after_a_setext_h2_is_not_an_h1(self) -> None:
+        body = "Level Two\n-----\n\nSome prose."
+
+        result = first_h1(body)
+
+        self.assertIsNone(result)
+
+    def test_backtick_fence_never_matches(self) -> None:
+        body = "```\n# fake atx\nfake setext\n==========\n```\n\nReal Title\n==========\n"
+
+        result = first_h1(body)
+
+        self.assertEqual(result, "Real Title")
+
+    def test_tilde_fence_never_matches(self) -> None:
+        body = "~~~\n# fake atx\nfake setext\n==========\n~~~\n\nReal Title\n==========\n"
+
+        result = first_h1(body)
+
+        self.assertEqual(result, "Real Title")
+
+    def test_unclosed_fence_swallows_the_rest_of_the_body(self) -> None:
+        body = "Intro.\n\n```\n# fake atx\nfake setext\n=========="
+
+        result = first_h1(body)
+
+        self.assertIsNone(result)
+
+    def test_closing_fence_must_match_char_and_length(self) -> None:
+        body = "````\n```\n# fake atx\n````\n\n# Real Title\n"
+
+        result = first_h1(body)
+
+        self.assertEqual(result, "Real Title")
+
+    def test_backtick_fence_with_backtick_in_info_is_not_a_fence(self) -> None:
+        # CommonMark: a backtick fence's info string may not contain
+        # backticks -- such a line is paragraph text, so the "# ..." line
+        # after it is live (a title), not fence content.
+        body = "``` `\n# Real Title\n"
+
+        result = first_h1(body)
+
+        self.assertEqual(result, "Real Title")
 
 
 class TestBookkeepingKeys(unittest.TestCase):

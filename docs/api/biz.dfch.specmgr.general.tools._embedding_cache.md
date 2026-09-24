@@ -22,14 +22,30 @@ call re-reads ``path``'s full on-disk text and computes its
 hit/miss -- and hands that *same* text to the caller-supplied ``embed_fn``
 on a miss (the DocCache Phase 6, REQ-007 TOCTOU closure: the exact text
 that gets hashed is the exact text embedded, with zero intervening file
-I/O, so the stored hash and the stored vector can never originate from
-different on-disk snapshots of ``path``). When the computed hash matches
-the hash stored for ``(domain, path)`` at its last read, the stored vector
-is returned without re-embedding. A stale entry is structurally impossible
--- it can only ever cost one extra embed, never an incorrect result. This
+I/O, so the stored hash, the stored vector, and the stored row metadata
+can never originate from different on-disk snapshots of ``path``). When
+the computed hash matches the hash stored for ``(domain, path)`` at its
+last read, the stored vector **and** the stored row metadata (the
+candidate's ``SimilarityText`` -- see below) are returned without
+re-embedding or re-parsing. A stale entry is structurally impossible --
+it can only ever cost one extra embed, never an incorrect result. This
 refines, rather than violates, ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3's
 "the filesystem is the sole source of truth" invariant, exactly as ADR
 bfd76370-b59b-4d65-b550-a969f6c93c9d did for parsing.
+
+**Row metadata is cached with the vector (feat-134, Phase 6).** An entry
+is ``(hash, vector, similarity_text)``: alongside the vector, the cache
+stores the candidate's result-row metadata (its ``SimilarityText`` --
+the exact embedding input plus the validated ``id``/``title``/``status``
+the ranked hit row carries). ``SimilarityText`` is a pure function of
+``(domain, text)`` -- and a hash match means the text is byte-identical
+to the one the entry was stored from -- so on a hit the stored metadata
+is still exactly valid and can be served without re-reading or
+re-parsing the file: a warm candidate costs one file read and no parse,
+a cold one one file read and one parse (the ``embed_fn`` closure's own
+``candidate_similarity_text`` run on the cache's read text), instead of
+the pre-Phase-6 demand path's separate metadata read plus the cache's
+own vector read.
 
 **Vectors are stored in the provider's native arrays.** A stored vector is
 whatever :data:`~biz.dfch.specmgr.general.tools._embedding.Vector` the
@@ -60,12 +76,15 @@ mismatch the rewritten frontmatter on the next :meth:`read` -- a guaranteed,
 harmless miss, the same self-healing ``DocCache.move`` documents).
 
 **Dependency-light by construction.** This module imports only the
-standard library (plus :mod:`._embedding`, which itself imports nothing
-beyond the standard library and the base ``pydantic``-backed
-``general.models``) -- no ``fastembed``, no ``numpy``. It is therefore
-importable on a base/``mcp``-only install, where the similarity tools
-register fine and simply return the structured unavailable result
-(REQ-003) without ever touching this cache.
+standard library (plus the siblings :mod:`._embedding` -- which itself
+imports nothing beyond the standard library and the base
+``pydantic``-backed ``general.models`` -- and :mod:`._similarity_text`
+for the entry's row-metadata type, itself stdlib + the base
+``python-frontmatter`` dependency only, feat-134 Phase 6) -- no
+``fastembed``, no ``numpy``. It is therefore importable on a base/
+``mcp``-only install, where the similarity tools register fine and
+simply return the structured unavailable result (REQ-003) without ever
+touching this cache.
 
 **Explicitly out of scope** (mirroring both ADRs): no TTL/size-based
 eviction, no on-disk persistence, and no ``stat()``-based (mtime/size)
@@ -78,15 +97,19 @@ pre-check fast path -- content-hash-only for v1.
 A process-local, content-hash-validated in-memory embedding cache.
 
 Shaped as ``dict[tuple[domain, resolved_path], tuple[content_hash,
-vector]]`` (ADR 750842b2), where ``content_hash`` is the
-``hashlib.blake2b`` digest of ``path``'s full on-disk text at the last
-:meth:`read` and ``vector`` is the :data:`Vector` that read produced
-(stored in the provider's native array type, unconverted). One
-:class:`EmbeddingCache` instance exists per process -- the module-level
-:data:`_cache` singleton below, created once at import time and reused
-for the process's lifetime (mirroring ``_lock.py``'s per-id lock
-registries); no call site threads an explicit cache instance through
-function signatures.
+vector, similarity_text]]`` (ADR 750842b2, as revised in Phase 6),
+where ``content_hash`` is the ``hashlib.blake2b`` digest of
+``path``'s full on-disk text at the last :meth:`read`, ``vector`` is
+the :data:`Vector` that read produced (stored in the provider's
+native array type, unconverted), and ``similarity_text`` is the
+candidate's :class:`SimilarityText` row metadata that the same read
+produced (see the module docstring's row-metadata paragraph -- a
+pure function of ``(domain, text)``, so still valid on any hit). One
+:class:`EmbeddingCache` instance exists per process -- the
+module-level :data:`_cache` singleton below, created once at import
+time and reused for the process's lifetime (mirroring
+``_lock.py``'s per-id lock registries); no call site threads an
+explicit cache instance through function signatures.
 
 **Every public method normalizes its ``Path`` argument(s) via
 ``.resolve()`` before touching the internal dict**, so two different
@@ -125,8 +148,9 @@ result); this class does not attempt to de-duplicate in-flight embeds.
 
   For a rename case (``set_feat_id``'s only caller, Phase 3, Task
   3.6): a no-op if ``(domain, old_path)`` has no cached entry.
-  Otherwise, moves the entry's stored ``(hash, vector)`` pair as-is,
-  without re-validating it against ``new_path``'s actual on-disk
+  Otherwise, moves the entry's stored ``(hash, vector,
+  similarity_text)`` triple as-is, without re-validating it against
+  ``new_path``'s actual on-disk
   content -- exactly ``DocCache.move``'s documented semantics:
   ``set_feat_id`` always rewrites the ``id``/``updated`` frontmatter
   before writing the new path, so the moved entry's stale hash
@@ -149,23 +173,30 @@ result); this class does not attempt to de-duplicate in-flight embeds.
           The cache entry's new key. Normalized via ``.resolve()``
           before use.
 
-- `read(self, domain: 'str', path: 'Path', embed_fn: '_EmbedFn') -> 'Vector'`
-  Return the cached or freshly-computed embedding vector for ``(domain, path)``.
+- `read(self, domain: 'str', path: 'Path', embed_fn: '_EmbedFn') -> 'tuple[Vector, SimilarityText]'`
+  Return the cached or freshly-computed vector plus row metadata for ``(domain, path)``.
 
   Reads ``path``'s full on-disk text and computes its content hash
   exactly once per call, regardless of hit/miss (mirroring DocCache
   Phase 6, REQ-007): that same text is both what gets hashed and, on a
   miss, what gets handed to ``embed_fn`` -- there is no second,
-  independent file read between the two, so the stored hash and the
-  stored vector can never originate from different on-disk snapshots
-  of ``path``.
+  independent file read between the two, so the stored hash, the
+  stored vector, and the stored row metadata can never originate
+  from different on-disk snapshots of ``path``.
 
   When the computed hash matches the hash stored for ``(domain,
-  path)`` at its last read, the stored vector is returned as-is (the
-  same array object the cache holds -- see the module docstring's
-  read-only-vectors rule) without invoking ``embed_fn`` again. On a
-  hash mismatch or cache miss, ``embed_fn(text)`` is called fresh and
-  the new ``(hash, vector)`` pair is stored before returning.
+  path)`` at its last read, the stored vector **and** the stored
+  ``SimilarityText`` row metadata are returned as-is (the vector is
+  the same array object the cache holds -- see the module
+  docstring's read-only-vectors rule -- and the metadata is the same
+  object, still exactly valid because it is a pure function of the
+  hashed text) without invoking ``embed_fn`` again: a warm read is
+  one file read and no parse (feat-134, Phase 6). On a hash mismatch
+  or cache miss, ``embed_fn(text)`` is called fresh and the new
+  ``(hash, vector, similarity_text)`` triple is stored before
+  returning: a cold read is one file read and one parse (the
+  ``embed_fn`` closure's own text extraction run on this read's
+  text).
 
   Only the dict get/set around ``embed_fn`` is guarded by this
   instance's lock; the file read and the ``embed_fn`` call itself
@@ -185,16 +216,17 @@ result); this class does not attempt to de-duplicate in-flight embeds.
           change which file is read, only which key addresses its
           entry).
       embed_fn:
-          Computes the document's single :data:`Vector` from the given
-          text on a cache miss (Phase 2/3's text extraction plus the
-          provider's :meth:`~biz.dfch.specmgr.general.tools._embedding.
+          Computes the document's ``(Vector, SimilarityText)`` pair
+          from the given text on a cache miss (Phase 2/3's text
+          extraction plus the provider's
+          :meth:`~biz.dfch.specmgr.general.tools._embedding.
           EmbeddingProvider.embed`). Receives the *exact* text this
-          call already read and hashed -- it must not re-read ``path``
-          itself.
+          call already read and hashed -- it must not re-read
+          ``path`` itself.
 
   Returns:
-      The cached (same array object, on a hit) or freshly-computed
-      vector for ``(domain, path)``.
+      The cached (same objects, on a hit) or freshly-computed
+      ``(vector, similarity_text)`` pair for ``(domain, path)``.
 
   Raises:
       Exception:
@@ -252,16 +284,17 @@ Args:
         The post-rename ``README.md`` path.
 
 
-### `read_embedding(domain: 'str', path: 'Path', embed_fn: '_EmbedFn') -> 'Vector'`
+### `read_embedding(domain: 'str', path: 'Path', embed_fn: '_EmbedFn') -> 'tuple[Vector, SimilarityText]'`
 
-Read and, if needed, compute the cached embedding vector for ``(domain, path)``.
+Read and, if needed, compute the cached vector plus row metadata for ``(domain, path)``.
 
 The public read entry point over the module-level :data:`_cache`
 singleton (Phase 3's similarity tools are the first callers): a file is
 only ever re-embedded when its on-disk content hash no longer matches
 the hash recorded at the last read of ``(domain, path)`` (ADR
 750842b2/REQ-004) -- see :meth:`EmbeddingCache.read` for the full
-contract.
+contract, including the Phase 6 row-metadata serving (a warm read is
+one file read and no parse; a cold one, one of each).
 
 Args:
     domain:
@@ -270,13 +303,13 @@ Args:
     path:
         The filesystem path to the document file.
     embed_fn:
-        Computes the document's vector from the exact, already-read and
-        already-hashed file text on a cache miss (must not re-read
-        ``path`` itself).
+        Computes the document's ``(vector, similarity_text)`` pair from
+        the exact, already-read and already-hashed file text on a cache
+        miss (must not re-read ``path`` itself).
 
 Returns:
-    The cached or freshly-computed vector (read-only -- see the module
-    docstring).
+    The cached or freshly-computed ``(vector, similarity_text)`` pair
+    (the vector read-only -- see the module docstring).
 
 
 ### `reset_embedding_cache() -> 'None'`

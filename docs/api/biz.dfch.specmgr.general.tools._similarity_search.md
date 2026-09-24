@@ -15,19 +15,23 @@ pattern instead of triplicating it (ADR 750842b2-aca4-4649-ba0c-855ec8e1f505,
   hashed* (the cache's own TOCTOU contract, ADR bfd76370: the stored
   vector's content always matches the stored hash), then embeds just the
   resulting ``embedding_text`` through the provider's document-side
-  :meth:`~biz.dfch.specmgr.general.tools._embedding.EmbeddingProvider.embed`.
-  It must never close over a separately-read copy of the file's text --
-  that would store a vector whose content does not match the stored hash.
+  :meth:`~biz.dfch.specmgr.general.tools._embedding.EmbeddingProvider.embed`
+  and returns the ``(vector, similarity_text)`` pair -- the cache stores
+  the row metadata with the vector (feat-134, Phase 6), so the metadata a
+  warm read serves came from exactly the text the stored hash covers. It
+  must never close over a separately-read copy of the file's text -- that
+  would store a vector whose content does not match the stored hash.
 - :func:`collect_candidates` -- walks an already-materialized
   ``iter_candidate_paths`` iterator (the caller created it, so the
   caller's own argument-validation ordering -- REQ-009's "``ValueError``
   before any filesystem access" -- is under the caller's control) and, per
-  candidate ``(domain, path)``, reads the file text **once** for the
-  result-row metadata (``candidate_similarity_text``: title/id/status, the
-  marker rows for unparseable documents) and gets the vector through
-  ``_embedding_cache.read_embedding`` (content-hash-validated: a candidate
-  whose on-disk content is unchanged since its last read is never
-  re-embedded). A candidate file vanishing mid-walk (a concurrent
+  candidate ``(domain, path)``, gets **both** the result-row metadata
+  (title/id/status, the marker rows for unparseable documents) and the
+  vector from the same ``_embedding_cache.read_embedding`` call (one file
+  read per candidate, content-hash-validated: a candidate whose on-disk
+  content is unchanged since its last read is never re-embedded -- and,
+  since the row metadata is stored with the vector (Phase 6), never
+  re-parsed either). A candidate file vanishing mid-walk (a concurrent
   ``delete`` racing this intentionally lock-free scan, the same event
   ``general.tools._listing.build_summaries``'s ``silent_skip_types``
   handles for ``list_<domain>``) is skipped, not raised.
@@ -103,16 +107,17 @@ Attributes:
 Walk every candidate ``(domain, path)`` and collect its row metadata plus cached vector.
 
 The shared per-candidate loop (see the module docstring): for every
-candidate, the file text is read **once** for the result-row metadata
-(``candidate_similarity_text``) and the vector comes from
-``read_embedding`` with the :func:`make_embed_fn` closure for the
-candidate's own domain -- so a candidate whose on-disk content is
-unchanged since its last read is never re-embedded (REQ-004's
-content-hash-validated cache), and the one-write-staleness window
-between the metadata read and the cache's own vector read is
-acceptable and self-healing (the vector's hash always matches the text
-it was computed from; the displayed row metadata is at most one
-concurrent write behind).
+candidate, both the result-row metadata (title/id/status, the marker
+rows for unparseable documents) and the vector come from the same
+``read_embedding`` call, with the :func:`make_embed_fn` closure for
+the candidate's own domain -- so a candidate whose on-disk content is
+unchanged since its last read is never re-embedded *and* never
+re-parsed (REQ-004's content-hash-validated cache; the row metadata
+is stored with the vector, feat-134 Phase 6). A cold candidate costs
+exactly one file read and one parse (the closure's own
+``candidate_similarity_text`` run on the cache's read text); a warm
+one, one file read and no parse. The metadata and the vector always
+originate from the same on-disk snapshot of the file.
 
 Args:
     provider:
@@ -142,7 +147,7 @@ Raises:
         miss, a parser invariant break) propagates uncaught.
 
 
-### `make_embed_fn(provider: 'EmbeddingProvider', domain: 'str') -> 'Callable[[str], Vector]'`
+### `make_embed_fn(provider: 'EmbeddingProvider', domain: 'str') -> 'Callable[[str], tuple[Vector, SimilarityText]]'`
 
 The TOCTOU-safe embedding-cache ``embed_fn`` closure for one ``(provider, domain)``.
 
@@ -151,10 +156,15 @@ The closure hands the *given* text -- the exact text the cache
 separately-read copy (ADR bfd76370's TOCTOU contract: the stored
 vector's content must match the stored hash) -- through
 ``candidate_similarity_text`` (the unparseable-text decision, plus the
-marker degradation, REQ-009) and embeds just the resulting
+marker degradation, REQ-009), embeds just the resulting
 ``embedding_text`` through the provider's document-side ``embed``
 (one vector per input, the protocol contract -- the chunk + mean-pool
-long-document strategy lives inside the provider, REQ-010).
+long-document strategy lives inside the provider, REQ-010), and
+returns the ``(vector, similarity_text)`` pair -- the same
+``SimilarityText`` the embedding was computed from, so the cache's
+stored row metadata always matches its stored hash (feat-134, Phase 6).
+The text extraction runs exactly once per miss (the vector and the
+metadata share it).
 
 Args:
     provider:
@@ -166,8 +176,8 @@ Args:
         ``candidate_similarity_text``).
 
 Returns:
-    The ``embed_fn`` callable (``text -> Vector``) to pass to
-    ``read_embedding`` for candidates of this domain.
+    The ``embed_fn`` callable (``text -> (Vector, SimilarityText)``)
+    to pass to ``read_embedding`` for candidates of this domain.
 
 
 ### `start_similarity_warmup() -> 'threading.Thread | None'`
@@ -257,8 +267,8 @@ singleton), and this embeds the **full** default corpus
 every whole-body domain, the registry set) through the same
 :func:`collect_candidates` path the two similarity tools use, so the
 warm cache is exactly the demand path's own cache (one
-``(domain, resolved path) -> (hash, vector)`` entry per corpus
-document, content-hash-validated).
+``(domain, resolved path) -> (hash, vector, similarity_text)`` entry
+per corpus document, content-hash-validated).
 
 The entire body is wrapped so that **no exception escapes it** (REQ-011:
 warmup never raises out of startup): any failure (a provider failure

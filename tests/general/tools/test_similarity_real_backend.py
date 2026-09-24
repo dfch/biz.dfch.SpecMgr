@@ -103,8 +103,31 @@ class TestRealBackendSimilarity(SimilarityTestCase):
         # single-embed fast path and store the backend's own array unconverted).
         import numpy as np
 
-        vectors = [vector for _hash, vector in embedding_cache_singleton._entries.values()]  # pylint: disable=protected-access
+        vectors = [
+            vector
+            for _hash, vector, _text in embedding_cache_singleton._entries.values()  # pylint: disable=protected-access
+        ]
         self.assertTrue(any(isinstance(vector, np.ndarray) for vector in vectors))
+
+    def test_exact_self_match_survives_min_score_one(self) -> None:
+        # feat-134 Phase 6, Task 6.5: the float32 min_score epsilon. With
+        # the real backend's float32 vectors, the dot product of a vector
+        # with itself comes out as 0.9999999... (float32 dot-product
+        # accumulation error -- the backend normalizes in float32, so the
+        # components' sum of squares is 1.0 only to float32 precision),
+        # which a bare ``score >= min_score`` would drop at
+        # ``min_score=1.0`` -- the epsilon keeps the exact self-match.
+        from biz.dfch.specmgr.general.tools._embedding import get_default_provider
+        from biz.dfch.specmgr.general.tools._similarity_ranking import rank_candidates
+
+        provider = get_default_provider()
+        text = "The quick brown fox jumps over the lazy dog while the hydraulic piston is pressurized. " * 4
+        vector = provider.embed([text])[0]
+
+        ranked = rank_candidates(vector, [(0, vector)], top_k=1, min_score=1.0)
+
+        self.assertEqual(len(ranked), 1)  # the exact self-match is kept at min_score=1.0
+        self.assertLess(ranked[0][1], 1.0)  # the premise: this text's float32 self-dot is below 1.0
 
     def test_long_document_is_actually_chunked(self) -> None:
         # Guard the premise of the retrieval test: the long body exceeds the fast-path

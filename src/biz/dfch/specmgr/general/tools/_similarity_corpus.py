@@ -254,6 +254,11 @@ def is_parseable(domain: str, text: str) -> bool:
     the channel set ``list_<domain>``'s own failed entries use. Any
     other exception (a parser bug) propagates uncaught.
 
+    :func:`candidate_similarity_text` deliberately inlines this same
+    parseability decision (one parser run, not a second, separate one)
+    instead of calling this function -- it is kept public and is the
+    direct entry point the tests use.
+
     Args:
         domain:
             The domain name: one of :data:`WHOLE_BODY_DOMAINS`.
@@ -296,11 +301,13 @@ def candidate_similarity_text(domain: str, text: str) -> SimilarityText:
       ``id = None`` (REQ-009).
 
     Purely a function of ``(domain, text)`` -- no file I/O of its own:
-    called on the exact already-read file text, both directly by the
-    Phase 3 tools (for the result-row metadata) and inside the embedding
-    cache's ``embed_fn`` closures (for the embedding input on a cache
-    miss), where re-reading the file would break the cache's own
-    hash-then-embed TOCTOU contract (ADR bfd76370).
+    called on the exact already-read file text inside the embedding
+    cache's ``embed_fn`` closures (the demand path's one parse site since
+    Phase 6 -- the cache stores the resulting ``SimilarityText`` with its
+    vector, so a warm read serves the stored metadata instead of re-running
+    this), where re-reading the file would break the cache's own
+    hash-then-embed TOCTOU contract (ADR bfd76370); the tests call it
+    directly.
 
     Args:
         domain:
@@ -330,7 +337,10 @@ def candidate_similarity_text(domain: str, text: str) -> SimilarityText:
     post = frontmatter.loads(text)  # the YAML channel already succeeded inside the domain parse: cannot raise here
     body: str = post.content
     title = first_h1(body)
-    assert title is not None, "a parsed document's body always carries its own mandatory first H1"
+    assert title is not None, (
+        "a parsed document's body always carries its own mandatory first H1 (ATX `# ...` or setext "
+        "`Title` over a `===` underline -- the only two syntaxes markdown-it emits as an `h1` token)"
+    )
 
     embedding_text = compose_embedding_text(title, doc.frontmatter.model_dump(), body)
     result = SimilarityText(

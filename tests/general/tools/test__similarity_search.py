@@ -201,19 +201,20 @@ class TestToSimilarityHit(SimilarityTestCase):
 
 
 class TestMakeEmbedFn(SimilarityTestCase):
-    """The TOCTOU-safe ``embed_fn`` embeds the candidate's own embedding text."""
+    """The TOCTOU-safe ``embed_fn`` embeds the candidate's own embedding text and returns its row metadata."""
 
-    def test_embeds_the_candidates_embedding_text(self) -> None:
+    def test_embeds_the_candidates_embedding_text_and_returns_the_metadata(self) -> None:
         doc = self.seed_req("Doc A", "alpha beta")
         fake = self.install_fake()
         fn = make_embed_fn(fake, "req")
         text = self.path_for_id("req", doc.id).read_text(encoding="utf-8")
 
-        vector = fn(text)
+        vector, similarity_text = fn(text)
 
-        expected = candidate_similarity_text("req", text).embedding_text
-        self.assertEqual(fake.embed_inputs, [expected])
-        self.assertEqual(list(vector), fake.vector(expected))
+        expected = candidate_similarity_text("req", text)
+        self.assertEqual(fake.embed_inputs, [expected.embedding_text])
+        self.assertEqual(list(vector), fake.vector(expected.embedding_text))
+        self.assertEqual(similarity_text, expected)  # the vector and the metadata share the one extraction
 
 
 if __name__ == "__main__":

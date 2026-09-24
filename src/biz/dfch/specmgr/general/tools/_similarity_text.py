@@ -36,14 +36,25 @@ convention (reused from ``_listing``, not redefined) with ``id = None``
 from similarity results.
 
 **Domain-agnostic by design.** No per-domain field extraction: the title
-is the document's first H1 (scanned off the raw body -- it is also
-present in the body text, the plan's own deliberate double weighting of
-the title signal, no dedup), the frontmatter mapping is filtered by the
-shared bookkeeping-key set alone, and the body is the raw
-``python-frontmatter``-split text (base dependency, never a private
-tokenizer). A document parsed in another domain's shape but structurally
-valid here still extracts identically -- the embedding input is a text
-concern, not a model concern.
+is the document's first H1 -- both level-1 heading syntaxes markdown-it
+emits as an ``h1`` token, ATX (``# Title``) and setext (``Title`` over a
+``=`` underline), scanned off the raw body with fenced-code-block
+tracking -- it is also present in the body text, the plan's own
+deliberate double weighting of the title signal, no dedup. The frontmatter
+mapping is filtered by the shared bookkeeping-key set alone, and the body
+is the raw ``python-frontmatter``-split text (base dependency, never a
+private tokenizer). A document parsed in another domain's shape but
+structurally valid here still extracts identically -- the embedding
+input is a text concern, not a model concern.
+
+**No corpus-shape invariant is assumed.** The corpus is *not*
+mdformat-normalized: there is no mdformat pre-commit hook, the write
+tools persist raw validated bytes, and the hand-edited
+``.specmgr/feat`` READMEs sit in the default corpus via
+``DEFAULT_FEAT_DIR``. The domain parsers (markdown-it) therefore accept
+any CommonMark heading shape in a raw body, and :func:`first_h1`'s own
+scan covers exactly that -- both H1 syntaxes, 0-3 leading-space indent,
+fenced-code-block tracking (feat-134, Phase 6, Task 6.1).
 
 **Dependency-light.** Standard library + ``python-frontmatter`` (base
 dependency) + ``_listing`` (itself dependency-light) only -- no
@@ -79,12 +90,39 @@ __all__ = [
 #: ``classification``.
 BOOKKEEPING_FRONTMATTER_KEYS: frozenset[str] = frozenset({"id", "type", "version", "created", "updated", "status"})
 
-#: A level-1 ATX heading at the start of a physical line: ``#`` + one or
-#: more spaces/tabs + a non-empty title. A level-2 line (``## ...``)
-#: never matches -- its second character is ``#``, not whitespace.
-#: Column-0 headings only: the corpus is mdformat-normalized, and every
-#: domain body model carries its mandatory H1 at the body's own start.
-_H1_PATTERN = re.compile(r"^#[ \t]+(.+?)[ \t]*$")
+#: A level-1 ATX heading: 0-3 leading spaces (CommonMark's indent
+#: tolerance -- a heading indented by 4 or more is code, not a heading),
+#: ``#`` + one or more spaces/tabs + a non-empty title. A level-2 line
+#: (``## ...``) never matches -- its second character is ``#``, not
+#: whitespace. The corpus is NOT mdformat-normalized (see the module
+#: docstring), so the indent tolerance is load-bearing: markdown-it
+#: accepts indented headings in a raw body.
+_H1_ATX_PATTERN = re.compile(r"^ {0,3}#[ \t]+(.+?)[ \t]*$")
+
+#: An ATX heading of *any* level (1-6 ``#``s, then a space/tab or end of
+#: line -- ``#`` alone is an empty heading, ``#x`` and seven-or-more
+#: ``#``s are paragraph text). Used only to recognize level-2+ lines as
+#: leaf blocks that end a paragraph, so they can never be a setext title
+#: line; :data:`_H1_ATX_PATTERN` does the actual H1 return.
+_ATX_HEADING_PATTERN = re.compile(r"^ {0,3}#{1,6}(?:[ \t].*)?$")
+
+#: A setext level-1 underline: 0-3 leading spaces, one or more ``=`` and
+#: nothing but trailing whitespace. A ``-`` underline is a setext
+#: level-2 heading and never matches here.
+_SETEXT_H1_PATTERN = re.compile(r"^ {0,3}=+[ \t]*$")
+
+#: A setext level-2 underline (the ``-`` twin of
+#: :data:`_SETEXT_H1_PATTERN`): a leaf block that ends a paragraph, so it
+#: can never be a setext title line either.
+_SETEXT_H2_PATTERN = re.compile(r"^ {0,3}-+[ \t]*$")
+
+#: A fenced code block line: 0-3 leading spaces + 3-or-more backticks or
+#: tildes (CommonMark), plus the line's remainder (an info string on an
+#: opening fence, nothing on a closing one). :func:`first_h1` tracks
+#: fences so a ``# ...``/``===`` line inside one is never a title -- the
+#: corpus is raw, and a code sample showing a heading is a natural
+#: corpus shape (feat-134, Phase 6, Task 6.1).
+_FENCE_PATTERN = re.compile(r"^ {0,3}(`{3,}|~{3,})[ \t]*(.*)$")
 
 
 @dataclass(frozen=True)
@@ -124,30 +162,118 @@ class SimilarityText:
     status: str
 
 
-def first_h1(body: str) -> str | None:
-    """Return the body's first level-1 ATX heading's title, or ``None`` if it has none.
+def _fence_open(line: str) -> tuple[str, int] | None:
+    """Whether ``line`` opens a fenced code block: its ``(fence char, fence length)``.
 
-    A plain line scan (no markdown parsing): every document this engine
-    embeds carries its mandatory H1 as the body's own first heading
-    line, so the first physical line matching :data:`_H1_PATTERN` is the
-    title. (The scan does not track fenced code blocks -- a corpus
-    invariant, since mdformat-normalized domain bodies start with their
-    H1 before any fence.)
+    A CommonMark opening fence: 0-3 leading spaces + 3-or-more backticks
+    or tildes. A backtick fence's info string may not contain backticks
+    (such a line is paragraph text, not a fence).
+    """
+    match = _FENCE_PATTERN.match(line)
+    if match is None:
+        result: tuple[str, int] | None = None
+        return result
+    marker = match.group(1)
+    if marker.startswith("`") and "`" in match.group(2):
+        result = None
+        return result
+    result = (marker[0], len(marker))
+    return result
+
+
+def _fence_close(line: str, fence_char: str, fence_length: int) -> bool:
+    """Whether ``line`` closes the open ``fence_char`` fence of ``fence_length`` chars.
+
+    A CommonMark closing fence: the same character, at least as long as
+    the opening fence, and nothing but trailing whitespace.
+    """
+    match = _FENCE_PATTERN.match(line)
+    if match is None:
+        return False
+    marker = match.group(1)
+    result = marker[0] == fence_char and len(marker) >= fence_length and not match.group(2)
+    return result
+
+
+def first_h1(body: str) -> str | None:
+    """Return the body's first level-1 heading's title (ATX or setext), or ``None``.
+
+    A plain line scan (no markdown parsing) covering **both** level-1
+    heading syntaxes markdown-it emits as an ``h1`` token -- so the scan
+    can never miss the mandatory H1 of a parsed document (the
+    ``_similarity_corpus.candidate_similarity_text`` invariant):
+
+    - **ATX** -- :data:`_H1_ATX_PATTERN`: 0-3 leading spaces
+      (CommonMark's indent tolerance) + ``#`` + a non-empty title.
+    - **setext** -- a :data:`_SETEXT_H1_PATTERN` underline (0-3 leading
+      spaces + ``=``s) immediately under a non-empty paragraph; the
+      title is the stripped paragraph line(s) above it, joined with
+      single spaces (a multi-line setext paragraph renders as one line
+      of inline content, soft breaks included).
+
+    Fence-aware: a fenced code block (``` / ~~~, 3-or-more chars, the
+    closing fence the same character at least as long) is tracked, and a
+    ``# ...``/``===`` line inside one is never a title. Leaf blocks that
+    end a paragraph -- ATX headings of level 2-6 and setext level-2
+    (``-``) underlines -- are recognized so they can never be a setext
+    title line. The corpus is NOT mdformat-normalized (see the module
+    docstring: no such pre-commit hook, the write tools persist raw
+    validated bytes, and the hand-edited ``.specmgr/feat`` READMEs sit
+    in the default corpus), so any raw CommonMark shape can appear.
 
     Args:
         body: The raw frontmatter-stripped body text.
 
     Returns:
-        The first H1's title (the heading text, no ``#`` marker), or
-        ``None`` when the body carries no level-1 heading at all.
+        The first H1's title (the heading text, no ``#`` marker and no
+        setext underline), or ``None`` when the body carries no level-1
+        heading at all.
     """
     assert isinstance(body, str), type(body)
 
+    paragraph: list[str] = []
+    fence_char: str | None = None
+    fence_length = 0
+
     for line in body.splitlines():
-        match = _H1_PATTERN.match(line)
+        if fence_char is not None:
+            if _fence_close(line, fence_char, fence_length):
+                fence_char = None
+                paragraph = []
+            continue
+
+        opened = _fence_open(line)
+        if opened is not None:
+            fence_char, fence_length = opened
+            paragraph = []
+            continue
+
+        if not line.strip():
+            paragraph = []
+            continue
+
+        if _SETEXT_H1_PATTERN.match(line) is not None:
+            if paragraph:
+                result = " ".join(part.strip() for part in paragraph)
+                return result
+            paragraph.append(line)  # no paragraph above: plain paragraph text
+            continue
+
+        match = _H1_ATX_PATTERN.match(line)
         if match is not None:
             result = match.group(1)
             return result
+
+        if _ATX_HEADING_PATTERN.match(line) is not None:
+            paragraph = []  # an ATX heading of level 2-6 is a leaf block
+            continue
+
+        if _SETEXT_H2_PATTERN.match(line) is not None:
+            paragraph = []  # a setext level-2 heading is a leaf block
+            continue
+
+        paragraph.append(line)
+
     result = None
     return result
 

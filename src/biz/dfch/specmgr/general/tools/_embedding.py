@@ -502,9 +502,13 @@ class FastEmbedProvider:
 
 #: The process's single default provider instance, constructed at most once
 #: (lazily, under :data:`_load_lock`); ``None`` until the first successful
-#: :func:`get_default_provider` call -- and reset back to ``None`` by a
-#: failed load (so a later call can retry once the model is downloadable)
-#: or by the test-only :func:`reset_default_provider` hook.
+#: :func:`get_default_provider` call. A failed load merely *remains*
+#: ``None`` here -- the exception propagates out of
+#: :func:`get_default_provider` before the assignment, so no reset
+#: happens -- which is exactly why a later call can retry once the model
+#: is downloadable. The test-only :func:`reset_default_provider` hook is
+#: the one path that drops a previously successful instance back to
+#: ``None``.
 _default_provider: EmbeddingProvider | None = None
 
 #: Guards the double-checked construction in :func:`get_default_provider` --

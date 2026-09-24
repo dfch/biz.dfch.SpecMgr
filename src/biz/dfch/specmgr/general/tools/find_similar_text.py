@@ -158,9 +158,13 @@ def find_similar_text(
     candidates_iter = iter_candidate_paths(target_types)  # ValueError (target_types), before any filesystem access
 
     provider = get_default_provider()
+    # The query embed runs before the corpus walk (feat-134, Phase 6): a
+    # query-embedding failure surfaces immediately instead of after the
+    # walk's file reads, while bad arguments still read and embed nothing
+    # (REQ-009/ACC-015 -- the validation above precedes this call).
+    query_vector = provider.embed_query([query])[0]
     candidates = collect_candidates(provider, candidates_iter)
 
-    query_vector = provider.embed_query([query])[0]
     ranked = rank_candidates(
         query_vector,
         [(index, candidate.vector) for index, candidate in enumerate(candidates)],
