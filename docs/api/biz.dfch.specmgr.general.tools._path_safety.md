@@ -28,6 +28,28 @@ delete-specific concern, not a reusable safety primitive.
 
 ## Functions
 
+### `_uuid_types() -> 'frozenset[str]'`
+
+The UUID domains as a ``frozenset`` (O(1) membership in :func:`validate_id`).
+
+The UUID domains whose ``id`` is a server-generated v4 UUID: derived
+from the shared :data:`_domains.UUID_DOMAINS` source (feat-125-domain-
+lists Phase 2, REQ-004) -- every whole-body domain other than ``feat``,
+plus ``adr`` (feat-38-39-41-43-44 Phase 4, REQ-009; ``sysrs`` added
+feat-32-sysrs Phase 3) -- ADR ids are canonical lowercase-hex UUIDs of
+the exact same shape (see ``adr.tools._paths.find_adr_path``/any
+``docs/adr/*.md`` frontmatter ``id`` value). The ``frozenset`` keeps
+O(1) membership. ``delete``'s own ``Literal`` type still excludes
+``"adr"`` (its behavior is unchanged, D-Phase-4) -- that addition is
+purely for use by ``get_<d>``/``update``/``set_status``.
+
+The ``_domains`` import is deferred into this helper (called once per
+:func:`validate_id` call, not at module import) because ``_domains``
+pulls in every domain's own adapter imports (the feat-134 registry,
+ADR 750842b2) and this module is imported from every ``get_<d>``
+tool -- a module-level import here would be an import cycle.
+
+
 ### `assert_feat_id(id_: 'str') -> 'None'`
 
 Reject any id that is not a well-formed ``feat-NNN-slug`` folder name.
@@ -74,7 +96,7 @@ ValueError
 
 Reject any id that is not a canonical lowercase-hex v4-shaped UUID.
 
-Enforced for every :data:`_UUID_TYPES` domain. (Subsumes
+Enforced for every :func:`_uuid_types` domain. (Subsumes
 :func:`assert_no_traversal` for well-formed input, but both are applied
 so the error message is precise.)
 
@@ -116,7 +138,7 @@ ValueError
 
 Convenience dispatcher: :func:`assert_no_traversal` plus the type's format check.
 
-``type_`` in :data:`_UUID_TYPES` -> :func:`assert_uuid`;
+``type_`` in :func:`_uuid_types` -> :func:`assert_uuid`;
 ``type_ == "feat"`` -> :func:`assert_feat_id`; any other ``type_`` ->
 ``ValueError`` (unknown type). This is the single entry point the
 generic ``delete``, ``update``, ``set_status``, and every ``get_<d>``

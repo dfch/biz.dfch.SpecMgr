@@ -280,7 +280,24 @@ former per-domain ``validate_<d>`` tools; unlike every other generic
 tool above, it never raises for a content-validation failure -- it always
 returns ``{valid: bool, errors: list[{message: str}]}`` (``errors`` empty
 when ``valid`` is ``True``), only raising ``ValueError`` for a ``full``/
-content-shape mismatch or an unsupported ``type``.
+content-shape mismatch or an unsupported ``type``;
+``find_related`` -- find the documents most semantically related to an
+existing document, given its ``type``/``id``, across every whole-body domain
+(``type`` is one of ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/
+``dec``/``sop``/``feat``/``vcr``/``sysrs``; ``adr`` is excluded structurally),
+ranked by cosine similarity of local sentence embeddings (the ``similarity``
+extra, ``fastembed``/``bge-small``), excluding the source document itself;
+``find_similar_text`` -- the same ranking for a free-form ``query`` text (the
+pre-creation dedup/discovery companion of ``find_related``). Both return up
+to ``top_k`` (default 10, validated 1..100) ranked ``{type, id, title,
+status, path, score}`` hit rows (an unparseable candidate appears with
+``id = null`` and the ``<failed to parse>`` marker title/status), and both
+return the structured, non-raising ``{available: false, reason, message}``
+result whenever the embedding feature is unavailable (the
+``SPECMGR_SIMILARITY_DISABLED`` flag present, or the backend/model fails to
+load) -- the tools always register; availability is decided at call time
+(feat-134-related-artifact-similarity, ADR
+750842b2-aca4-4649-ba0c-855ec8e1f505);
 ``list_references`` (feat-144-ref-artifact, GitHub issue #144) -- the
 generic, cross-domain cross-reference listing tool: takes a *source*
 document's ``type`` (one of
@@ -411,5 +428,34 @@ registers all three.
 
 ### `_lifespan(_server: 'MCPServer') -> 'AsyncGenerator[None, None]'`
 
-Placeholder lifespan: no shared state to initialise yet.
+Server lifespan: start the background similarity warmup, then run (feat-134, REQ-011).
+
+At startup (before the first ``yield`` -- i.e. before any tool call
+can run), ``general.tools._similarity_search.start_similarity_warmup``
+checks **only** the lightweight, synchronous
+``SPECMGR_SIMILARITY_DISABLED`` presence gate and, when the flag is
+absent, starts a daemon thread embedding the full default corpus into
+the content-hash-validated embedding cache -- without joining it. The
+full availability probe (the same check both similarity tools run
+first thing in their bodies, REQ-003: the lazy ``import fastembed``
+plus the eager model load, including the one-time first-use download)
+runs **inside that daemon thread** (``warmup_similarity_cache``'s
+first step; Phase 5, Task 5.2), never on this startup path -- so
+server startup is never blocked by the embedding backend (REQ-011's
+"warmup must not block server startup" strict reading), and on a
+first/air-gapped run the model download, if it happens at all, is
+backgrounded. The thread start never raises: when the feature is
+unavailable the thread exits immediately without cache writes (a
+mid-warmup failure is likewise logged and swallowed inside the thread,
+leaving the cache partially warm and the demand path working), and when
+the flag is present no thread is started at all (a no-op, and the
+server runs exactly as before). This lifespan does not wait for the
+thread, and the daemon thread dies with the process (REQ-011, ADR
+750842b2-aca4-4649-ba0c-855ec8e1f505's **Warmup** sub-decision).
+
+The import is function-level on purpose: the ``general.tools``
+package (via its own ``__init__``'s tool-module imports) imports this
+very module (``from ...server import mcp``) for the ``@mcp.tool()``
+decorators, so a module-level import here would be a circular import
+that fails on the partially-initialised ``mcp`` name.
 

@@ -549,41 +549,57 @@ type or cross-cutting:
      `None`/absent; `delete`, the generic type-dispatched hard-delete
      for the whole-body domains — `type` is one of
      req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs (`adr` excluded), every one of these
-      domains implements a `delete` adapter in that one tool (a future domain
-      adds its own adapter there, never a per-domain `delete_<d>` tool),
-       resolving by `id`, taking the domain's own lock, and returning the
-       deleted path; `validate`, the generic, disk-free/id-free dry-run
-       content validator for the same whole-body domains (`adr`
-       excluded, `validate_adr` remains its own standalone tool) —
-       replacing the former per-domain `validate_<d>` tools
-       (feat-81-83-validation, ADR 078bf395-0a5f-4afd-84f6-b7a2191a00e6);
-       unlike every other generic tool here, it never raises for a
-       content-validation failure, always returning
-       `{valid: bool, errors: list[{message: str}]}`, only raising
-        `ValueError` for a `full`/content-shape mismatch or an unsupported
-        `type`; `list_references`, the generic, cross-domain cross-reference
-        listing tool (feat-144-ref-artifact, GitHub issue #144) — takes a
-        *source* document's `type` (one of
-        adr/req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs) + `id`,
-        regex-scans the source's frontmatter-stripped body for `<TYPE>
-        <uuid>` references (the 10-tag reference vocabulary
-        GOL/PRB/QA/UC/REQ/RSK/DEC/ADR/VCR/SYSRS; case-insensitive tag,
-        space or dash separator, anywhere in a line), dedupes repeated
-        occurrences (first-occurrence order), resolves each unique
-        reference in its target domain (cache-backed; ADR excluded from
-        the cache), and returns a paged `PagedResult[ReferenceRow]` — one
-        row per unique reference carrying `type`/`id`/`title` (the
-        referenced document's H1)/`path` (resolved absolute file path); a
-        reference that cannot be resolved on disk is a row with null
-        `title`/`path` and the target domain's not-found message in
-        `error` — it never raises; `max_results`/`offset` paging with the
-        same clamp-not-error contract as every `list_*` tool (default 25,
-        cap 100). It applies the same `_path_safety` guards: an invalid
-        source `type`/`id` (path-injection attempt or wrong-format id) is
-        a `ValueError` before any filesystem access, and a missing source
-        raises the source domain's not-found error, identical to `get_<d>`.
-        On a successful write, `update`, `set_status` (its
-      non-`adr` adapters), `set_classification`, and every per-domain
+     domains implements a `delete` adapter in that one tool (a future domain
+     adds its own adapter there, never a per-domain `delete_<d>` tool),
+     resolving by `id`, taking the domain's own lock, and returning the
+     deleted path; `validate`, the generic, disk-free/id-free dry-run
+     content validator for the same whole-body domains (`adr`
+     excluded, `validate_adr` remains its own standalone tool) —
+     replacing the former per-domain `validate_<d>` tools
+     (feat-81-83-validation, ADR 078bf395-0a5f-4afd-84f6-b7a2191a00e6);
+     unlike every other generic tool here, it never raises for a
+     content-validation failure, always returning
+     `{valid: bool, errors: list[{message: str}]}`, only raising
+     `ValueError` for a `full`/content-shape mismatch or an unsupported
+     `type`; `find_related`, the generic cross-domain semantic-similarity
+     search for the documents most related to an existing document, given
+     its `type`/`id`, across every whole-body domain (`adr` excluded
+     structurally), ranked by cosine similarity of local sentence
+     embeddings (the `similarity` extra, `fastembed`/`bge-small`),
+     excluding the source document itself; `find_similar_text`, the same
+     ranking for a free-form `query` text (the pre-creation
+     dedup/discovery companion of `find_related`). Both return up to
+     `top_k` (default 10, validated 1..100) ranked `{type, id, title,
+     status, path, score}` hit rows (an unparseable candidate appears with
+     `id = null` and the `<failed to parse>` marker title/status), and
+     both return the structured, non-raising `{available: false, reason,
+     message}` result whenever the embedding feature is unavailable
+     (`SPECMGR_SIMILARITY_DISABLED` present, or the backend/model fails to
+     load) — the tools always register; availability is decided at call
+     time (feat-134-related-artifact-similarity, ADR
+     750842b2-aca4-4649-ba0c-855ec8e1f505). `list_references`, the generic,
+     cross-domain cross-reference listing tool (feat-144-ref-artifact,
+     GitHub issue #144) — takes a *source* document's `type` (one of
+     adr/req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs) + `id`,
+     regex-scans the source's frontmatter-stripped body for `<TYPE>
+     <uuid>` references (the 10-tag reference vocabulary
+     GOL/PRB/QA/UC/REQ/RSK/DEC/ADR/VCR/SYSRS; case-insensitive tag,
+     space or dash separator, anywhere in a line), dedupes repeated
+     occurrences (first-occurrence order), resolves each unique
+     reference in its target domain (cache-backed; ADR excluded from
+     the cache), and returns a paged `PagedResult[ReferenceRow]` — one
+     row per unique reference carrying `type`/`id`/`title` (the
+     referenced document's H1)/`path` (resolved absolute file path); a
+     reference that cannot be resolved on disk is a row with null
+     `title`/`path` and the target domain's not-found message in
+     `error` — it never raises; `max_results`/`offset` paging with the
+     same clamp-not-error contract as every `list_*` tool (default 25,
+     cap 100). It applies the same `_path_safety` guards: an invalid
+     source `type`/`id` (path-injection attempt or wrong-format id) is
+     a `ValueError` before any filesystem access, and a missing source
+     raises the source domain's not-found error, identical to `get_<d>`.
+     On a successful write, `update`, `set_status` (its
+     non-`adr` adapters), `set_classification`, and every per-domain
      `create_<d>` tool now return the domain's frontmatter object only (no
      body) — small and bounded regardless of document size, unlike an
      append-only document's ever-growing body — with the `adr` dispatch
@@ -835,9 +851,12 @@ locally via pre-commit hook, not just CI")
 
 `dependencies` in `pyproject.toml` is only `pydantic` + `python-dotenv`, so the
 library is usable standalone. `typer`/`rich` live in the `cli` extra, `mcp` in
-the `mcp` extra. **Never** import `cli.py` or `server.py` from
-`src/biz/dfch/specmgr/__init__.py` — that would force those extras onto every
-consumer of the base library.
+the `mcp` extra, and `fastembed` (the local sentence-embedding backend behind
+`general/tools/find_related`/`find_similar_text`) in the `similarity` extra —
+opt-in on top of `mcp`, not bundled with it, so installing `mcp` alone never
+pulls in the embedding model/backend. **Never** import `cli.py` or
+`server.py` from `src/biz/dfch/specmgr/__init__.py` — that would force those
+extras onto every consumer of the base library.
 
 ## CLI (`cli.py`)
 

@@ -109,6 +109,8 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general.models.paged_result`](biz.dfch.specmgr.general.models.paged_result.md) — Generic paged-result wrapper shared by every ``list_<domain>`` MCP tool (feat-13 Task 1.1).
 - [`biz.dfch.specmgr.general.models.rasci`](biz.dfch.specmgr.general.models.rasci.md) — Pydantic schema and parser for the RASCI responsibility-assignment guidance
 - [`biz.dfch.specmgr.general.models.reference`](biz.dfch.specmgr.general.models.reference.md) — One row of the generic ``list_references`` tool's ``PagedResult`` (feat-144-ref-artifact Phase 2).
+- [`biz.dfch.specmgr.general.models.similarity_hit`](biz.dfch.specmgr.general.models.similarity_hit.md) — One ranked hit row of the two similarity tools (feat-134, Phase 3, ACC-001/ACC-002).
+- [`biz.dfch.specmgr.general.models.similarity_unavailable`](biz.dfch.specmgr.general.models.similarity_unavailable.md) — The two similarity tools' shared non-raising, structured "unavailable" result (feat-134, REQ-003).
 - [`biz.dfch.specmgr.general.models.summary`](biz.dfch.specmgr.general.models.summary.md) — Common base for every domain's one-line listing summary (feat-13 Task 1.3, REQ-003/ACC-001).
 - [`biz.dfch.specmgr.general.models.validate_result`](biz.dfch.specmgr.general.models.validate_result.md) — The generic ``validate`` tool's non-raising, structured result shape (feat-81-83-validation Phase 2, REQ-004).
 - [`biz.dfch.specmgr.general.prompts`](biz.dfch.specmgr.general.prompts.md) — MCP prompt registrations that are not specific to any single document
@@ -123,15 +125,23 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general.tools`](biz.dfch.specmgr.general.tools.md) — MCP tool wrappers for general-purpose utilities (mirrors ``adr/tools/``'s shape).
 - [`biz.dfch.specmgr.general.tools._doc_cache`](biz.dfch.specmgr.general.tools._doc_cache.md) — Generic, doc-type-agnostic content-hash-validated in-memory read cache (feat-107-doc-cache, Phase 2/Phase 6).
 - [`biz.dfch.specmgr.general.tools._doc_paths`](biz.dfch.specmgr.general.tools._doc_paths.md) — Generic, doc-type-agnostic base directory resolution, filename slugification,
-- [`biz.dfch.specmgr.general.tools._domains`](biz.dfch.specmgr.general.tools._domains.md) — The single source of truth for the document-type domain names (feat-125-domain-lists, REQ-001).
+- [`biz.dfch.specmgr.general.tools._domains`](biz.dfch.specmgr.general.tools._domains.md) — The shared document-type domain names and per-domain adapter registry (feat-125-domain-lists
+- [`biz.dfch.specmgr.general.tools._embedding`](biz.dfch.specmgr.general.tools._embedding.md) — Pluggable embedding provider seam plus the shared similarity-availability check (feat-134, Phase 1 + Phase 2).
+- [`biz.dfch.specmgr.general.tools._embedding_cache`](biz.dfch.specmgr.general.tools._embedding_cache.md) — Global, content-hash-validated in-memory embedding cache (feat-134, Phase 1, REQ-004).
 - [`biz.dfch.specmgr.general.tools._listing`](biz.dfch.specmgr.general.tools._listing.md) — Generic, doc-type-agnostic ``list_<domain>`` summary construction (feat-81-83-validation Phase 3, Task 3.1).
 - [`biz.dfch.specmgr.general.tools._packaged_data`](biz.dfch.specmgr.general.tools._packaged_data.md) — Generic, doc-type-agnostic access to packaged example/template/schema data
 - [`biz.dfch.specmgr.general.tools._paging`](biz.dfch.specmgr.general.tools._paging.md) — Generic, doc-type-agnostic paging helpers (feat-13 Task 1.2).
 - [`biz.dfch.specmgr.general.tools._path_safety`](biz.dfch.specmgr.general.tools._path_safety.md) — Reusable, doc-type-agnostic path-safety assertions for document ids and
 - [`biz.dfch.specmgr.general.tools._references`](biz.dfch.specmgr.general.tools._references.md) — Shared cross-reference extraction and per-domain target resolution
+- [`biz.dfch.specmgr.general.tools._similarity_corpus`](biz.dfch.specmgr.general.tools._similarity_corpus.md) — Candidate enumeration and source resolution for the similarity engine (feat-134, Phase 2, Task 2.1).
+- [`biz.dfch.specmgr.general.tools._similarity_ranking`](biz.dfch.specmgr.general.tools._similarity_ranking.md) — Pure-Python cosine (dot-on-normalized) ranking (feat-134, Phase 2, Task 2.4).
+- [`biz.dfch.specmgr.general.tools._similarity_search`](biz.dfch.specmgr.general.tools._similarity_search.md) — Shared per-candidate collection, hit-row assembly, and background warmup (feat-134, Phase 3).
+- [`biz.dfch.specmgr.general.tools._similarity_text`](biz.dfch.specmgr.general.tools._similarity_text.md) — Embedding-input text extraction for the similarity engine (feat-134, Phase 2, Task 2.2).
 - [`biz.dfch.specmgr.general.tools._splice`](biz.dfch.specmgr.general.tools._splice.md) — Frontmatter-stripped body extraction, body-line splicing, and body-line
 - [`biz.dfch.specmgr.general.tools._timestamps`](biz.dfch.specmgr.general.tools._timestamps.md) — Shared, private timestamp-formatting helpers (feat-38-39-41-43-44 Phase 3, Task 3.1).
 - [`biz.dfch.specmgr.general.tools.delete`](biz.dfch.specmgr.general.tools.delete.md) — ``@mcp.tool()`` wrapper: delete (feat-36-delete, Phase 2).
+- [`biz.dfch.specmgr.general.tools.find_related`](biz.dfch.specmgr.general.tools.find_related.md) — ``@mcp.tool()`` wrapper: find_related (feat-134, Phase 3, Task 3.1).
+- [`biz.dfch.specmgr.general.tools.find_similar_text`](biz.dfch.specmgr.general.tools.find_similar_text.md) — ``@mcp.tool()`` wrapper: find_similar_text (feat-134, Phase 3, Task 3.2).
 - [`biz.dfch.specmgr.general.tools.list_references`](biz.dfch.specmgr.general.tools.list_references.md) — ``@mcp.tool()`` wrapper: list_references (feat-144-ref-artifact, Phase 2).
 - [`biz.dfch.specmgr.general.tools.mdformat`](biz.dfch.specmgr.general.tools.mdformat.md) — ``@mcp.tool()`` wrapper: mdformat.
 - [`biz.dfch.specmgr.general.tools.set_classification`](biz.dfch.specmgr.general.tools.set_classification.md) — ``@mcp.tool()`` wrapper: set_classification (feat-56-classification, Phase 2).

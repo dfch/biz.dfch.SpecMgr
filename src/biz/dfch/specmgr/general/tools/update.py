@@ -69,7 +69,6 @@ after ``load_by_id``, inside the domain lock.
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Literal
 
 from ...dec.models.v1 import DecFrontmatter, Decision
 from ...dec.tools._io import load_by_id as load_dec_by_id
@@ -146,7 +145,7 @@ from ...vcr.tools._io import read_vcr
 from ...vcr.tools._lock import vcr_lock
 from ...vcr.tools._paths import vcr_base_dir
 from ...vcr.tools._write import write_vcr_file
-from ._domains import WHOLE_BODY_DOMAINS
+from ._domains import WHOLE_BODY_DOMAINS, WholeBodyType
 from ._path_safety import assert_within, validate_id
 from ._splice import body_text, splice_body
 from ._timestamps import now_timestamp
@@ -739,7 +738,7 @@ assert set(_ADAPTERS) == set(WHOLE_BODY_DOMAINS), (
 )
 def update(
     id: str,
-    type: Literal[*WHOLE_BODY_DOMAINS],
+    type: WholeBodyType,
     content: str,
     offset: int | None = None,
     limit: int | None = None,

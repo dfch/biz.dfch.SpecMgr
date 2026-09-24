@@ -59,7 +59,14 @@ touched (REQ-008 is explicitly out of scope for this tool).
 as the *last* step, only after ``write_feat_file(new_path, ...)`` has
 already succeeded -- never at the earlier ``old_path.parent.rename(...)``
 step -- so a failure between the rename and the write never leaves a cache
-entry addressing a file that was never actually written.
+entry addressing a file that was never actually written. The feature's own
+embedding-cache entry follows in the same spot (feat-134 Phase 3, Task
+3.6, REQ-008): ``general.tools._embedding_cache.move_embedding_cache(
+"feat", old_path, new_path)``, called only after the write has succeeded
+as well -- the ``feat`` entry moves from the old ``README.md`` path to the
+new one, and its stored hash mismatches the rewritten frontmatter on the
+next read (a guaranteed, harmless miss that self-heals, the same
+``DocCache.move`` semantics ``move_feat_cache_entry`` documents).
 
 **A concurrent, lock-free reader can still race the rename step itself
 (feat-107-doc-cache Phase 6, REQ-012) -- closed on the *reader* side, not
@@ -84,6 +91,7 @@ each of those functions' own docstrings for the detail.
 
 from __future__ import annotations
 
+from ...general.tools._embedding_cache import move_embedding_cache
 from ...general.tools._path_safety import assert_feat_id
 from ...general.tools._splice import body_text
 from ...general.tools._timestamps import now_timestamp
@@ -184,4 +192,7 @@ def set_feat_id(id: str, new_id: str) -> FeatFrontmatter:
 
         write_feat_file(new_path, new_frontmatter, raw_body)
         move_feat_cache_entry(old_path, new_path)  # feat-107-doc-cache Phase 4, REQ-004: only after the write succeeds
+        move_embedding_cache(
+            "feat", old_path, new_path
+        )  # feat-134 Phase 3, Task 3.6, REQ-008: only after the write succeeds
     return new_frontmatter

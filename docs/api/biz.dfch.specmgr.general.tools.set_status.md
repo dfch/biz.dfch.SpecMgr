@@ -264,7 +264,7 @@ Mirrors :func:`_set_status_dec`'s shape (same ``vcr_lock``,
 ``adr``, so ``superseded_by`` must never be given.
 
 
-### `set_status(id: 'str', type: 'Literal[*ALL_DOMAINS,]', status: 'str', superseded_by: 'str | None' = None) -> '_SetStatusFrontmatter | InvalidStatusResult'`
+### `set_status(id: 'str', type: 'WholeBodyOrAdrType', status: 'str', superseded_by: 'str | None' = None) -> '_SetStatusFrontmatter | InvalidStatusResult'`
 
 Replace the status of an existing document, across every domain.
 

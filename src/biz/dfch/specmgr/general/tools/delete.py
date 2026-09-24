@@ -69,7 +69,6 @@ from __future__ import annotations
 
 import shutil
 from collections.abc import Callable
-from typing import Literal
 
 from ...dec.tools._cache import invalidate_dec_cache
 from ...dec.tools._io import load_by_id as load_dec_by_id
@@ -120,7 +119,8 @@ from ...vcr.tools._cache import invalidate_vcr_cache
 from ...vcr.tools._io import load_by_id as load_vcr_by_id
 from ...vcr.tools._lock import vcr_lock
 from ...vcr.tools._paths import vcr_base_dir
-from ._domains import WHOLE_BODY_DOMAINS
+from ._domains import WHOLE_BODY_DOMAINS, WholeBodyType
+from ._embedding_cache import invalidate_embedding_cache
 from ._path_safety import assert_within, validate_id
 
 __all__ = ["delete"]
@@ -148,7 +148,10 @@ def _delete_req(id_: str) -> str:
     :class:`DeleteError`. On a successful ``unlink``, the cache entry for
     ``path`` is invalidated immediately (feat-107-doc-cache Phase 3,
     REQ-004) -- not invalidated at all if ``unlink`` itself raises, since
-    the file is still on disk in that case.
+    the file is still on disk in that case -- and the document's own
+    embedding-cache entry for ``(req, path)`` is invalidated in the same
+    spot (feat-134 Phase 3, Task 3.6, REQ-008), so a deleted document's
+    stale vector is never served.
     """
     base_dir = req_base_dir()
     with req_lock(id_):  # REQ-004
@@ -159,6 +162,7 @@ def _delete_req(id_: str) -> str:
         except OSError as ex:
             raise DeleteError(f"failed to delete {path}: {ex}") from ex  # REQ-005
         invalidate_req_cache(path)  # feat-107-doc-cache Phase 3, REQ-004
+        invalidate_embedding_cache("req", path)  # feat-134 Phase 3, Task 3.6, REQ-008
     return str(path)  # REQ-001
 
 
@@ -176,6 +180,7 @@ def _delete_uc(id_: str) -> str:
         except OSError as ex:
             raise DeleteError(f"failed to delete {path}: {ex}") from ex  # REQ-005
         invalidate_uc_cache(path)  # feat-107-doc-cache Phase 4, REQ-004
+        invalidate_embedding_cache("uc", path)  # feat-134 Phase 3, Task 3.6, REQ-008
     return str(path)  # REQ-001
 
 
@@ -193,6 +198,7 @@ def _delete_tsk(id_: str) -> str:
         except OSError as ex:
             raise DeleteError(f"failed to delete {path}: {ex}") from ex  # REQ-005
         invalidate_tsk_cache(path)  # feat-107-doc-cache Phase 4, REQ-004
+        invalidate_embedding_cache("tsk", path)  # feat-134 Phase 3, Task 3.6, REQ-008
     return str(path)  # REQ-001
 
 
@@ -210,6 +216,7 @@ def _delete_qa(id_: str) -> str:
         except OSError as ex:
             raise DeleteError(f"failed to delete {path}: {ex}") from ex  # REQ-005
         invalidate_qa_cache(path)  # feat-107-doc-cache Phase 4, REQ-004
+        invalidate_embedding_cache("qa", path)  # feat-134 Phase 3, Task 3.6, REQ-008
     return str(path)  # REQ-001
 
 
@@ -227,6 +234,7 @@ def _delete_prb(id_: str) -> str:
         except OSError as ex:
             raise DeleteError(f"failed to delete {path}: {ex}") from ex  # REQ-005
         invalidate_prb_cache(path)  # feat-107-doc-cache Phase 4, REQ-004
+        invalidate_embedding_cache("prb", path)  # feat-134 Phase 3, Task 3.6, REQ-008
     return str(path)  # REQ-001
 
 
@@ -244,6 +252,7 @@ def _delete_gol(id_: str) -> str:
         except OSError as ex:
             raise DeleteError(f"failed to delete {path}: {ex}") from ex  # REQ-005
         invalidate_gol_cache(path)  # feat-107-doc-cache Phase 4, REQ-004
+        invalidate_embedding_cache("gol", path)  # feat-134 Phase 3, Task 3.6, REQ-008
     return str(path)  # REQ-001
 
 
@@ -261,6 +270,7 @@ def _delete_rsk(id_: str) -> str:
         except OSError as ex:
             raise DeleteError(f"failed to delete {path}: {ex}") from ex  # REQ-005
         invalidate_rsk_cache(path)  # feat-107-doc-cache Phase 4, REQ-004
+        invalidate_embedding_cache("rsk", path)  # feat-134 Phase 3, Task 3.6, REQ-008
     return str(path)  # REQ-001
 
 
@@ -278,6 +288,7 @@ def _delete_dec(id_: str) -> str:
         except OSError as ex:
             raise DeleteError(f"failed to delete {path}: {ex}") from ex  # REQ-005
         invalidate_dec_cache(path)  # feat-107-doc-cache Phase 4, REQ-004
+        invalidate_embedding_cache("dec", path)  # feat-134 Phase 3, Task 3.6, REQ-008
     return str(path)  # REQ-001
 
 
@@ -292,6 +303,7 @@ def _delete_sop(id_: str) -> str:
         except OSError as ex:
             raise DeleteError(f"failed to delete {path}: {ex}") from ex  # REQ-005
         invalidate_sop_cache(path)  # feat-107-doc-cache Phase 4, REQ-004
+        invalidate_embedding_cache("sop", path)  # feat-134 Phase 3, Task 3.6, REQ-008
     return str(path)  # REQ-001
 
 
@@ -308,7 +320,11 @@ def _delete_feat(id_: str) -> str:
     cache's own key -- not the folder ``rmtree`` actually removed) is
     invalidated immediately (feat-107-doc-cache Phase 4, Task 4.1a,
     REQ-004) -- not invalidated at all if ``rmtree`` itself raises, since
-    the folder is still on disk in that case.
+    the folder is still on disk in that case -- and the feature's own
+    embedding-cache entry for ``(feat, path)`` (the same ``README.md``
+    key, not the removed folder) is invalidated in the same spot
+    (feat-134 Phase 3, Task 3.6, REQ-008), so a deleted feature's stale
+    vector is never served.
     """
     base_dir = feat_base_dir()
     with feat_lock(id_):  # REQ-004
@@ -320,6 +336,7 @@ def _delete_feat(id_: str) -> str:
         except OSError as ex:
             raise DeleteError(f"failed to delete {folder}: {ex}") from ex  # REQ-005
         invalidate_feat_cache(path)  # feat-107-doc-cache Phase 4, Task 4.1a, REQ-004
+        invalidate_embedding_cache("feat", path)  # feat-134 Phase 3, Task 3.6, REQ-008
     return str(folder)  # REQ-001
 
 
@@ -337,6 +354,7 @@ def _delete_vcr(id_: str) -> str:
         except OSError as ex:
             raise DeleteError(f"failed to delete {path}: {ex}") from ex  # REQ-005
         invalidate_vcr_cache(path)  # feat-107-doc-cache Phase 4, REQ-004
+        invalidate_embedding_cache("vcr", path)  # feat-134 Phase 3, Task 3.6, REQ-008
     return str(path)  # REQ-001
 
 
@@ -354,6 +372,7 @@ def _delete_sysrs(id_: str) -> str:
         except OSError as ex:
             raise DeleteError(f"failed to delete {path}: {ex}") from ex  # REQ-005
         invalidate_sysrs_cache(path)  # feat-107-doc-cache Phase 4, REQ-004
+        invalidate_embedding_cache("sysrs", path)  # feat-134 Phase 3, Task 3.6, REQ-008
     return str(path)  # REQ-001
 
 
@@ -397,7 +416,7 @@ assert set(_ADAPTERS) == set(WHOLE_BODY_DOMAINS), (
 )
 def delete(
     id: str,
-    type: Literal[*WHOLE_BODY_DOMAINS],
+    type: WholeBodyType,
 ) -> str:
     """Permanently delete an existing document from disk, across the whole-body domains.
 

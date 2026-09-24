@@ -129,6 +129,8 @@ First-line docstrings from each module, organized by domain:
 - `general/models/paged_result.py` — Generic paged-result wrapper shared by every ``list_<domain>`` MCP tool (feat-13 Task 1.1).
 - `general/models/rasci.py` — Pydantic schema and parser for the RASCI responsibility-assignment guidance
 - `general/models/reference.py` — One row of the generic ``list_references`` tool's ``PagedResult`` (feat-144-ref-artifact Phase 2).
+- `general/models/similarity_hit.py` — One ranked hit row of the two similarity tools (feat-134, Phase 3, ACC-001/ACC-002).
+- `general/models/similarity_unavailable.py` — The two similarity tools' shared non-raising, structured "unavailable" result (feat-134, REQ-003).
 - `general/models/summary.py` — Common base for every domain's one-line listing summary (feat-13 Task 1.3, REQ-003/ACC-001).
 - `general/models/validate_result.py` — The generic ``validate`` tool's non-raising, structured result shape (feat-81-83-validation Phase 2, REQ-004).
 - `general/prompts/__init__.py` — MCP prompt registrations that are not specific to any single document
@@ -143,15 +145,23 @@ First-line docstrings from each module, organized by domain:
 - `general/tools/__init__.py` — MCP tool wrappers for general-purpose utilities (mirrors ``adr/tools/``'s shape).
 - `general/tools/_doc_cache.py` — Generic, doc-type-agnostic content-hash-validated in-memory read cache (feat-107-doc-cache, Phase 2/Phase 6).
 - `general/tools/_doc_paths.py` — Generic, doc-type-agnostic base directory resolution, filename slugification,
-- `general/tools/_domains.py` — The single source of truth for the document-type domain names (feat-125-domain-lists, REQ-001).
+- `general/tools/_domains.py` — The shared document-type domain names and per-domain adapter registry (feat-125-domain-lists
+- `general/tools/_embedding.py` — Pluggable embedding provider seam plus the shared similarity-availability check (feat-134, Phase 1 + Phase 2).
+- `general/tools/_embedding_cache.py` — Global, content-hash-validated in-memory embedding cache (feat-134, Phase 1, REQ-004).
 - `general/tools/_listing.py` — Generic, doc-type-agnostic ``list_<domain>`` summary construction (feat-81-83-validation Phase 3, Task 3.1).
 - `general/tools/_packaged_data.py` — Generic, doc-type-agnostic access to packaged example/template/schema data
 - `general/tools/_paging.py` — Generic, doc-type-agnostic paging helpers (feat-13 Task 1.2).
 - `general/tools/_path_safety.py` — Reusable, doc-type-agnostic path-safety assertions for document ids and
 - `general/tools/_references.py` — Shared cross-reference extraction and per-domain target resolution
+- `general/tools/_similarity_corpus.py` — Candidate enumeration and source resolution for the similarity engine (feat-134, Phase 2, Task 2.1).
+- `general/tools/_similarity_ranking.py` — Pure-Python cosine (dot-on-normalized) ranking (feat-134, Phase 2, Task 2.4).
+- `general/tools/_similarity_search.py` — Shared per-candidate collection, hit-row assembly, and background warmup (feat-134, Phase 3).
+- `general/tools/_similarity_text.py` — Embedding-input text extraction for the similarity engine (feat-134, Phase 2, Task 2.2).
 - `general/tools/_splice.py` — Frontmatter-stripped body extraction, body-line splicing, and body-line
 - `general/tools/_timestamps.py` — Shared, private timestamp-formatting helpers (feat-38-39-41-43-44 Phase 3, Task 3.1).
 - `general/tools/delete.py` — ``@mcp.tool()`` wrapper: delete (feat-36-delete, Phase 2).
+- `general/tools/find_related.py` — ``@mcp.tool()`` wrapper: find_related (feat-134, Phase 3, Task 3.1).
+- `general/tools/find_similar_text.py` — ``@mcp.tool()`` wrapper: find_similar_text (feat-134, Phase 3, Task 3.2).
 - `general/tools/list_references.py` — ``@mcp.tool()`` wrapper: list_references (feat-144-ref-artifact, Phase 2).
 - `general/tools/mdformat.py` — ``@mcp.tool()`` wrapper: mdformat.
 - `general/tools/set_classification.py` — ``@mcp.tool()`` wrapper: set_classification (feat-56-classification, Phase 2).
@@ -542,4 +552,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 361
+**Test files**: 371

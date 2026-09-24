@@ -91,7 +91,11 @@ the cache entry for ``path`` (the ``README.md`` file, the ``feat``
 cache's own key -- not the folder ``rmtree`` actually removed) is
 invalidated immediately (feat-107-doc-cache Phase 4, Task 4.1a,
 REQ-004) -- not invalidated at all if ``rmtree`` itself raises, since
-the folder is still on disk in that case.
+the folder is still on disk in that case -- and the feature's own
+embedding-cache entry for ``(feat, path)`` (the same ``README.md``
+key, not the removed folder) is invalidated in the same spot
+(feat-134 Phase 3, Task 3.6, REQ-008), so a deleted feature's stale
+vector is never served.
 
 
 ### `_delete_gol(id_: 'str') -> 'str'`
@@ -129,7 +133,10 @@ unchanged; an ``unlink`` I/O failure re-raises as
 :class:`DeleteError`. On a successful ``unlink``, the cache entry for
 ``path`` is invalidated immediately (feat-107-doc-cache Phase 3,
 REQ-004) -- not invalidated at all if ``unlink`` itself raises, since
-the file is still on disk in that case.
+the file is still on disk in that case -- and the document's own
+embedding-cache entry for ``(req, path)`` is invalidated in the same
+spot (feat-134 Phase 3, Task 3.6, REQ-008), so a deleted document's
+stale vector is never served.
 
 
 ### `_delete_rsk(id_: 'str') -> 'str'`
@@ -172,7 +179,7 @@ Hard-delete the verification case record ``id_`` from disk (REQ-001/004/005/006)
 Same resolve/lock/safety semantics as :func:`_delete_req`.
 
 
-### `delete(id: 'str', type: 'Literal[*WHOLE_BODY_DOMAINS,]') -> 'str'`
+### `delete(id: 'str', type: 'WholeBodyType') -> 'str'`
 
 Permanently delete an existing document from disk, across the whole-body domains.
 

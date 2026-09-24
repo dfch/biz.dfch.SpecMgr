@@ -91,10 +91,17 @@ With the MCP server:
 pip install "biz-dfch-specmgr[mcp]"
 ```
 
+With semantic-similarity search (`find_related`/`find_similar_text`, see
+[MCP Server](#mcp-server) below), add the `similarity` extra on top of `mcp`:
+
+```bash
+pip install "biz-dfch-specmgr[mcp,similarity]"
+```
+
 Or with [uv](https://docs.astral.sh/uv/):
 
 ```bash
-uv add "biz-dfch-specmgr[cli,mcp]"
+uv add "biz-dfch-specmgr[cli,mcp,similarity]"
 ```
 
 ## CLI Usage
@@ -140,6 +147,15 @@ tool call, so hand-editing a file between calls is safe.
 - Features (FEAT): base directory defaults to `.specmgr/feat`, configurable
   via the `SPECMGR_FEAT_DIR` environment variable. This is FEAT-specific,
   like ADRs above, and not shared via `SPECMGR_DOCS_DIR`.
+
+The `find_related`/`find_similar_text` tools (semantic-similarity search,
+requires the `similarity` extra) load a local sentence-embedding model
+(`fastembed`/`bge-small`) on first use. Set the `SPECMGR_SIMILARITY_DISABLED`
+environment variable (to any non-empty value) to turn this feature off —
+e.g. to skip the model download/load entirely, or if the `similarity` extra
+isn't installed. Both tools stay registered either way; when disabled (or
+when the backend/model fails to load), they return a structured
+`{available: false, reason, message}` result instead of raising.
 
 All of the base directories above are resolved relative to the MCP server
 process's own current working directory unless overridden by their env var

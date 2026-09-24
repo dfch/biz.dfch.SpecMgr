@@ -44,6 +44,23 @@ failure mode (ADR b399f1ce-ed42-4929-b01c-7a57d18e8014):
   ``pydantic.ValidationError`` propagate. Distinct from
   :class:`ValidateResult` -- a different tool's own model.
 
+Also backs feat-134-related-artifact-similarity's (Phase 3) two generic
+similarity tools (ADR 750842b2-aca4-4649-ba0c-855ec8e1f505):
+
+- :class:`SimilarityUnavailableResult` -- the non-raising, structured
+  ``{available, reason, message}`` result the ``find_related``/
+  ``find_similar_text`` tools return whenever the embedding backend is
+  unavailable (the ``SPECMGR_SIMILARITY_DISABLED`` opt-out env var is
+  present, or the backend fails to import or the model fails to load),
+  instead of raising. Mirrors :class:`InvalidStatusResult`'s own
+  non-raising precedent -- a different tool surface's own model.
+- :class:`SimilarityHit` -- one ranked hit row (the plan's own hit shape
+  ``{type, id, title, status, path, score}``, ACC-001/ACC-002) the
+  ``find_related``/``find_similar_text`` tools return, sorted by
+  ``score`` descending; an unparseable candidate's row carries
+  ``id = None`` and the ``"<failed to parse>"`` marker title/status
+  (REQ-009).
+
 Also backs feat-92-resources's cross-cutting reference-resource
 model-backed drift-guard convention (ADR
 356d8781-e446-4c26-917a-eda85648ce9d, REQ-002/REQ-005/REQ-006):
@@ -100,6 +117,12 @@ from .invalid_status_result import InvalidStatusResult
 from .paged_result import PagedResult
 from .rasci import Rasci, RasciVsRaci, RoleItem, Roles, parse_rasci
 from .reference import ReferenceRow
+from .similarity_hit import SimilarityHit
+from .similarity_unavailable import (
+    REASON_BACKEND_UNAVAILABLE,
+    REASON_DISABLED,
+    SimilarityUnavailableResult,
+)
 from .summary import DocSummary
 from .validate_result import ValidateResult, ValidationErrorEntry
 
@@ -115,11 +138,15 @@ __all__ = [
     "PagedResult",
     "PatternItem",
     "Patterns",
+    "REASON_BACKEND_UNAVAILABLE",
+    "REASON_DISABLED",
     "Rasci",
     "RasciVsRaci",
     "ReferenceRow",
     "RoleItem",
     "Roles",
+    "SimilarityHit",
+    "SimilarityUnavailableResult",
     "ValidateResult",
     "ValidationErrorEntry",
     "WhenToApply",
