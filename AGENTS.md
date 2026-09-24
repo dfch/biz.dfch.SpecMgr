@@ -851,9 +851,12 @@ locally via pre-commit hook, not just CI")
 
 `dependencies` in `pyproject.toml` is only `pydantic` + `python-dotenv`, so the
 library is usable standalone. `typer`/`rich` live in the `cli` extra, `mcp` in
-the `mcp` extra. **Never** import `cli.py` or `server.py` from
-`src/biz/dfch/specmgr/__init__.py` — that would force those extras onto every
-consumer of the base library.
+the `mcp` extra, and `fastembed` (the local sentence-embedding backend behind
+`general/tools/find_related`/`find_similar_text`) in the `similarity` extra —
+opt-in on top of `mcp`, not bundled with it, so installing `mcp` alone never
+pulls in the embedding model/backend. **Never** import `cli.py` or
+`server.py` from `src/biz/dfch/specmgr/__init__.py` — that would force those
+extras onto every consumer of the base library.
 
 ## CLI (`cli.py`)
 

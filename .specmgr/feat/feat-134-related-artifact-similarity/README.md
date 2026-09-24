@@ -4,7 +4,7 @@ created: '2026-09-17 07:40:37.439+02:00'
 id: feat-134-related-artifact-similarity
 status: review
 type: feat
-updated: '2026-09-23 21:40:53.230+02:00'
+updated: '2026-09-24 09:15:00.000+02:00'
 version: 1.0.0
 ---
 
@@ -195,6 +195,10 @@ Open questions/TODOs, not yet decided, to resolve during Phase 3: (2) should the
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-24 07:15:00.000Z - Doc-drift remediation (top-level README + AGENTS.md), no new phase
+
+A third feat-reviewer pass (2026-09-24, focused on "is the top-level README up to date on activation/deactivation and env vars") found the underlying generated docs (`docs/MCP.md`, `docs/GENERATED.md`, `CHANGELOG.md`) already document `find_related`/`find_similar_text`, the `similarity` extra, and `SPECMGR_SIMILARITY_DISABLED` correctly, but the hand-authored top-level `README.md` -- never in this feature's own Scope/doc-target list, and confirmed untouched by `git diff <base>..HEAD --stat` -- had zero mentions of any of the three. Fixed directly, without opening a new `feat-NNN` folder or phase (the change is documentation-only plus two trivial code nits, with no new design decision, schema change, or test surface to plan): (1) `README.md`'s `## Installation` section gains a `pip install "biz-dfch-specmgr[mcp,similarity]"` line and the `uv add` example is extended to `[cli,mcp,similarity]`; its `### Environment Variables` section gains a paragraph describing `SPECMGR_SIMILARITY_DISABLED` (presence-based opt-out; the tools stay registered either way and return the structured `{available: false, reason, message}` result when disabled or when the backend/model fails to load). (2) `AGENTS.md`'s `## Extras split` section (previously only naming `cli`/`mcp`) now also names the `similarity` extra (`fastembed`) and its opt-in-on-top-of-`mcp` relationship, matching the wording already used in the `general/` domain bullet elsewhere in the same file. (3) Two reviewer-flagged nits fixed alongside: `general/tools/delete.py`'s `_embedding_cache`/`_domains` local imports reordered alphabetically (a convention slip `ruff`'s configured rule set, `select = ["E", "F", "W"]`, doesn't catch since import-sort isn't enabled); `_similarity_text._H1_ATX_PATTERN` now strips an optional CommonMark ATX closing sequence (trailing ``#``s preceded by a space, e.g. `# Title #`) from the extracted H1 title, with a regression check that a title genuinely ending in `#` with no preceding space (e.g. `C#`) is left untouched. Verified: `ruff format --check` + `ruff check` clean on the touched files; `specmgr docs` regenerated with no diff (the touched module-level `#:` comments aren't picked up by the API-doc generator, only docstrings are); the `general/tools/` similarity/embedding/delete/domains test slice: 192 passed, 458 subtests. No CHANGELOG entry added -- this is documentation catch-up for already-shipped, already-changelogged behavior, not new user-visible behavior.
 
 #### 2026-09-23 19:40:53.000Z - Phase 6 complete (Tasks 6.1-6.8): setext-H1 crash fixed, second-review findings remediated, all gates green
 

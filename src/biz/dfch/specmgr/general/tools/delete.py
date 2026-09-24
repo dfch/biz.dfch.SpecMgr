@@ -119,8 +119,8 @@ from ...vcr.tools._cache import invalidate_vcr_cache
 from ...vcr.tools._io import load_by_id as load_vcr_by_id
 from ...vcr.tools._lock import vcr_lock
 from ...vcr.tools._paths import vcr_base_dir
-from ._embedding_cache import invalidate_embedding_cache
 from ._domains import WHOLE_BODY_DOMAINS, WholeBodyType
+from ._embedding_cache import invalidate_embedding_cache
 from ._path_safety import assert_within, validate_id
 
 __all__ = ["delete"]

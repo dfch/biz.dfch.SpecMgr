@@ -92,12 +92,15 @@ BOOKKEEPING_FRONTMATTER_KEYS: frozenset[str] = frozenset({"id", "type", "version
 
 #: A level-1 ATX heading: 0-3 leading spaces (CommonMark's indent
 #: tolerance -- a heading indented by 4 or more is code, not a heading),
-#: ``#`` + one or more spaces/tabs + a non-empty title. A level-2 line
-#: (``## ...``) never matches -- its second character is ``#``, not
-#: whitespace. The corpus is NOT mdformat-normalized (see the module
-#: docstring), so the indent tolerance is load-bearing: markdown-it
-#: accepts indented headings in a raw body.
-_H1_ATX_PATTERN = re.compile(r"^ {0,3}#[ \t]+(.+?)[ \t]*$")
+#: ``#`` + one or more spaces/tabs + a non-empty title, with an optional
+#: CommonMark closing sequence (one or more trailing ``#``s, preceded by
+#: a space/tab so ``C#`` in a title is never mistaken for one) stripped
+#: from the captured title. A level-2 line (``## ...``) never matches --
+#: its second character is ``#``, not whitespace. The corpus is NOT
+#: mdformat-normalized (see the module docstring), so the indent
+#: tolerance is load-bearing: markdown-it accepts indented headings in a
+#: raw body.
+_H1_ATX_PATTERN = re.compile(r"^ {0,3}#[ \t]+(.+?)(?:[ \t]+#+)?[ \t]*$")
 
 #: An ATX heading of *any* level (1-6 ``#``s, then a space/tab or end of
 #: line -- ``#`` alone is an empty heading, ``#x`` and seven-or-more
