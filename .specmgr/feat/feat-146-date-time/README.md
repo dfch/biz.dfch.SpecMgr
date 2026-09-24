@@ -4,7 +4,7 @@ created: '2026-09-23 22:33:23.868+02:00'
 id: feat-146-date-time
 status: planning
 type: feat
-updated: '2026-09-24T09:18:11.741Z'
+updated: '2026-09-24T16:56:53.646Z'
 version: 1.0.0
 ---
 
@@ -117,8 +117,8 @@ No external dependencies; this feature is self-contained.
 
 #### Phase 3: Repo documents migration
 
-- [ ] Task 3.1: Migrate 3 `docs/` entry headings → space midnight UTC (`docs/tsk` x2, `docs/sysrs` x1).
-- [ ] Task 3.2: Parse gate: every `docs/` document through its own domain tools; full quality gate.
+- [x] Task 3.1: Migrate 3 `docs/` entry headings → space midnight UTC (`docs/tsk` x2, `docs/sysrs` x1).
+- [x] Task 3.2: Parse gate: every `docs/` document through its own domain tools; full quality gate.
 
 #### Phase 4: Previous-feature notes + closeout
 
@@ -131,7 +131,22 @@ No external dependencies; this feature is self-contained.
 
 ### Current Status
 
-**As of 2026-09-24**: Phase 2 complete: the six entry-heading domains
+**As of 2026-09-24**: Phase 3 complete: the 3 `docs/` date-only entry headings
+(`docs/tsk` x2, `docs/sysrs` x1) are migrated to space-form midnight UTC per the ADR
+(`### {date} - {title}` → `### {date} 00:00:00.000Z - {title}`), with nothing else
+changed in those files (frontmatter mass-migration out of scope). The Task 3.2 parse
+gate (throwaway script; no existing test walks `docs/`) is green: every real `docs/`
+document parses through its own domain's tools -- **57 OK / 0 FAIL** (adr=36, gol=2,
+req=14, sop=1, sysrs=1, tsk=3), including the 3 migrated documents -- with
+`docs/sysrs/*-appendix.md` excluded as not a real sysrs document per user ruling (its
+pre-existing raw-HTML H1 issue is out of scope and tracked nowhere yet; see Decisions
+Made). Phase-end full quality gate green: ruff format/check + vulture clean,
+`pytest -n auto --cov` 3440 passed (baseline; `test_issue_67.py`'s narrow
+midnight-migration-heading exclusion holds), coverage TOTAL 10551/122 = 99% (badge
+unchanged), pylint 8.92/10 (+0.00), `specmgr docs`/`specmgr schema` drift-free.
+Phase 4 (previous-feature notes + closeout) is still pending.
+
+**As of 2026-09-24 (Phase 2)**: Phase 2 complete: the six entry-heading domains
 (`tsk`/`dec`/`vcr`/`sysrs` tightened, `feat`/`sop` widened) now accept exactly the shared full
 date+time fragment `\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})` in every
 `## Recent Updates`/`## Updates`/`### Updates`/`### Decisions Made` entry heading -- date-only
@@ -152,6 +167,71 @@ closeout) are still pending.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-24 16:56:53.646Z - Phase 3 complete: 3 docs/ headings migrated to midnight UTC, parse gate green (sysrs appendix excluded per user ruling)
+
+Per the orchestrator-relayed user ruling (final), `docs/sysrs/sysrs-8d752304-...-appendix.md`
+is **not** a real sysrs document (it is a manual feat-84 concatenation of all referenced
+artifacts, commit bca1a87) and is excluded from the Task 3.2 parse gate -- its raw-HTML H1
+issue is out of scope and was left unrepaired (recorded in Decisions Made). With the
+exclusion in place, the throwaway gate script re-ran clean: **57 parsed OK, 0 FAIL, 1
+excluded** -- per-domain tally: adr=36 (`models.adr.v1.parse_adr`), gol=2, req=14, sop=1,
+sysrs=1 (the real sysrs document; the 3 migrated `docs/tsk` x2 + `docs/sysrs` x1 headings
+all parse), tsk=3; `docs/adr/README.md` (generated TOC) and the generated/binary artifacts
+(`docs/api/`, `docs/GENERATED.md`, `docs/coverage.svg`, `docs/MCP.md`, `docs/*_schema.json`,
+2 `.pdf` files) skipped as non-documents. Phase-end full quality gate re-run on the finished
+tree, all green: `ruff format --check` (1715 files already formatted) + `ruff check` (All
+checks passed), vulture clean, `pytest -n auto --cov=src --cov-report=` **3440 passed**
+(exact Phase 2 baseline), `coverage report -m` TOTAL **10551/122 = 99%** (`docs/coverage.svg`
+byte-identical, no `coverage-badge` re-run needed), pylint **8.92/10 (+0.00)** (src untouched
+this phase), `specmgr schema` 12/12 `(unchanged)` + `specmgr docs` (470 api files +
+GENERATED.md) with zero working-tree changes (drift-free). Task 3.2 marked `[x]`; the earlier
+"Phase 3 blocked" entry stands as history. Files changed by Phase 3 overall: the 3 `docs/`
+heading lines (Task 3.1) + this plan README; everything left uncommitted for the orchestrator.
+
+#### 2026-09-24 09:57:29.222Z - Phase 3 blocked: docs/ 3-heading migration done (Task 3.1); parse gate 57/58 pass with one pre-existing unrelated failure (Task 3.2)
+
+Task 3.1: migrated the 3 and only 3 date-only entry headings in `docs/` (verified
+by grep `^#{2,4} \d{4}-\d{2}-\d{2} -` returning exactly these 3 before the change) to
+space-form midnight UTC, preserving date, separator glyph, and title:
+`docs/tsk/tsk-699432f5-...-extract-mcp-instance-py-to-break-domain-server-cyclic-import.md:24`
+`### 2026-08-19 - Created` → `### 2026-08-19 00:00:00.000Z - Created`;
+`docs/tsk/tsk-602740af-...-fix-markdownlistitem-get-extent-for-numbered-lists.md:36`
+`### 2026-08-18 - Created` → `### 2026-08-18 00:00:00.000Z - Created`;
+`docs/sysrs/sysrs-8d752304-...-system-requirements-specification-biz-dfch-specmgr.md:213`
+`### 2026-09-03 - Created` → `### 2026-09-03 00:00:00.000Z - Created`. No other
+bytes changed (frontmatter mass-migration explicitly out of scope; `git diff --stat`:
+3 files, +3/-3). Task 3.2 (parse gate): no existing test or script walks `docs/`
+(checked `tests/`), so a throwaway script parsed every `docs/<domain>/*.md` through
+its own domain's model parser (`gol/req/sop/sysrs/tsk.models.v1.parser.parse_<d>`)
+plus `docs/adr/*.md` (36 ADRs, README.md skipped as generated TOC) through
+`models.adr.v1.parse_adr` -- 58 files total: **57 OK, 1 FAIL**. The 3 migrated
+documents all parse. The one failure is pre-existing and unrelated to timestamps
+(both the file and `src/` are unmodified at HEAD b526c21):
+`docs/sysrs/sysrs-8d752304-...-appendix.md` fails with ```AssertionError: raw HTML is
+not permitted in a parsed document at line 362 (relative to this text's own
+numbering): html_inline '<domain>'; fix: wrap it in a code span (e.g. `<domain>`) or
+write it as an HTML comment (e.g. `<!-- <domain> -->`) instead``` -- the appendix
+(manual feat-84 concatenation, commit bca1a87) embeds ADR ec9f5262's own H1 heading
+verbatim (`# Expose <domain>_list as paged MCP tools (list_<domain>), not
+resources`) into sysrs body text, which the sysrs body parser rejects while
+`parse_adr` accepts it fine as an ADR H1. This file is not tracked by the
+`.specmgr/feat` README failure list `docs/tsk/tsk-2687d267` either. Per the plan's
+hard-constraint hazard clause ("if any `docs/` document fails for a reason unrelated
+to timestamps (a pre-existing failure), STOP and report it with the error instead of
+fixing it"), the failure is reported and Task 3.2 left open for orchestrator triage;
+fixing it (wrapping the bare `<domain>` tokens in code spans/HTML comments) would be
+a one-line content repair to a file outside this phase's allowed change set. Quality
+gate on the migrated tree (all green): `ruff format --check` (1715 files already
+formatted) + `ruff check` (all checks passed), vulture (clean), `pytest -n auto
+--cov` **3440 passed** (exact Phase 2 baseline; `test_issue_67.py` -- whose narrow
+midnight-migration-heading exclusion exists precisely so the 3 migrated headings
+don't trip it -- passes in the suite), `coverage report` TOTAL **10551/122 = 99%**
+(`docs/coverage.svg` byte-unchanged, no `coverage-badge` re-run needed), pylint
+**8.92/10 (+0.00)** (src untouched this phase), `specmgr docs` (470 api files +
+GENERATED.md, zero working-tree changes) and `specmgr schema` (12/12 `(unchanged)`)
+drift-free. Files changed by this phase so far: the 3 `docs/` heading lines + this
+plan README.
 
 #### 2026-09-24 09:18:11.741Z - Phase 2 complete: six entry-heading domains on the shared full date+time fragment ([T ] accepted, date-only rejected), _ordering mixed-granularity branch deleted, packaged data + 10 instruction files + test suite migrated
 
@@ -266,6 +346,26 @@ confirmed with the requester, and the ADR (8c889262-152b-4b8e-ae2c-75371f7a9edf)
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-24 16:56:53.646Z - Phase 3: `docs/sysrs/*-appendix.md` excluded from the docs/ parse gate as not a real sysrs document (user ruling)
+
+The Task 3.2 parse gate surfaced a pre-existing, timestamp-unrelated parse failure in
+`docs/sysrs/sysrs-8d752304-b076-4bad-89af-f8032158dd21-system-requirements-specification-biz-dfch-specmgr-appendix.md`
+(the manual feat-84 concatenation of all referenced artifacts, commit bca1a87): the embedded
+ADR ec9f5262's own H1 heading -- which carries bare `<domain>` tokens (e.g.
+`# Expose <domain>_list as paged MCP tools (list_<domain>), not resources`) -- violates the
+sysrs body parser's raw-HTML ban (feat-27), a ban `parse_adr` itself does not apply to ADR H1s.
+Per the plan's hazard clause it was stopped-and-reported without being fixed. The user then
+ruled (final) that the `sysrs-*-appendix.md` file is **not** a real sysrs document, so it is
+excluded from the Task 3.2 parse gate (and its `.pdf` sibling was already skipped as binary)
+instead of being repaired: the gate's contract is "every real `docs/` document parses through
+its own domain's tools," and with the exclusion the gate is 57/57. Consequences: (1) the
+appendix's raw-HTML H1 issue stays in place, is out of scope for this feature, and is tracked
+nowhere yet -- a future docs-repair effort (a sibling of `docs/tsk/tsk-2687d267`'s scope)
+should either wrap those bare `<domain>` tokens in code spans/HTML comments or treat the file
+as a non-document by construction; (2) the gate script records the exclusion explicitly
+(`EXCLUDED ... user ruling`, counted in the summary line rather than silently skipped), so it
+is auditable and re-derivable.
 
 #### 2026-09-24 09:18:11.741Z - Phase 2: `tsk_reference.md` test fixture migrated now (not in Phase 3); `test_issue_67.py` gains a narrow midnight-migration-heading exclusion
 
