@@ -4,7 +4,7 @@ created: '2026-09-19 13:19:26.971+02:00'
 id: 54fd355f-0978-4dd0-9e1d-da89432e5321
 status: draft
 type: vcr
-updated: '2026-09-22 22:40:00.000+02:00'
+updated: '2026-09-24 09:15:13.217+02:00'
 version: 1.0.0
 ---
 
@@ -27,7 +27,7 @@ feat-139-logging-telemetry's implementation.
 
 ## Coverage
 
-partial
+full
 
 ## Acceptance Criteria
 
@@ -91,7 +91,8 @@ exception-event message text; the title-embedding exception messages
 already known in non-deprecated domains are reworded at their source
 instead (the deprecated ADR domain's title sites are an accepted
 residual gap; path-embedding messages are scrub-covered), since no
-generic filter can reliably detect free-form title text.
+generic filter can reliably detect free-form title text. Verified by
+`tests/telemetry/test_redact.py::TestSpanProcessorScrub::test_a_span_attribute_carrying_a_path_is_scrubbed_and_non_string_attributes_pass_through` (the global processor replaces a span attribute carrying an absolute path with the pinned `<redacted-path>` token; non-string attributes pass through untouched), `tests/telemetry/test_redact.py::TestSpanProcessorScrub::test_a_span_exception_event_message_and_stacktrace_are_scrubbed_and_type_is_not` (the `exception.message`/`exception.stacktrace` keys `record_exception` sets are scrubbed -- the stacktrace carries the raising file's own absolute path -- while `exception.type`/`exception.escaped` are unchanged), `tests/telemetry/test_redact.py::TestSpanProcessorScrub::test_the_batch_chain_export_sees_the_scrubbed_containers` (the production `BatchSpanProcessor`/export path reads the replaced containers), `tests/telemetry/test_redact.py::TestSpanProcessorScrub::test_a_span_created_entirely_by_the_sdk_builtin_middleware_is_scrubbed` (a span created entirely by the SDK's built-in `OpenTelemetryMiddleware` -- the exception recorded by the middleware's own `record_exception`/`set_status` calls -- exports with its exception-event paths scrubbed), `tests/telemetry/test_redact.py::TestSpanProcessorCanary` (the canary pinning the installed SDK's `ReadableSpan._attributes`/`_events`/`Event._attributes` private containers and the end-to-end visibility of the processor's replacement, so a future SDK restructure fails loudly in CI), `tests/telemetry/test_redact.py::TestTelemetryWiring` (the bootstrap installs the processor before the `BatchSpanProcessor`, and a path-carrying attribute plus exception event export scrubbed through the real production chain), and the rewording at the source by `tests/uc/models/v1/test_parser.py::TestParseErrorMessagesOmitTitles` (the 13 reworded `UcParseError` sites no longer embed the heading title, so the `record_exception`/`set_status(str(e))` payload of those messages no longer carries it).
 
 ### AC-008 (Test): Metrics are recorded with correct values and attributes
 
@@ -110,37 +111,74 @@ Verified by `tests/telemetry/test_metrics.py::TestMiddlewareCallCount` (exactly 
 
 ## More Information
 
-Coverage is `partial`: AC-001 through AC-004 now carry their concrete
-test references above -- AC-001 (off by default) and AC-002 (correlation
-ID matches the SDK span's trace ID) from feat-139-logging-telemetry
-Phase 4's OpenTelemetry SDK bootstrap (`telemetry/otel.py`, Tasks
-4.1/4.2/4.9/4.11: providers + exporters installed only when
-`SPECMGR_OTEL_ENABLED=true`, called at `server.py`'s module scope in
-the config -> logging -> OTel -> middleware order, with the
-`service.name = "specmgr"` resource confirmed on every exported span
-and metric), AC-003 (unreachable-OTLP graceful degradation) from the
-Task 4.5 exporter wrapper's episode de-duplication, and AC-004 (broken
-`Server.middleware` contract fails open) from the Task 4.3 fail-open
-policy and its Task 4.4 canary/simulation tests. AC-007 was added
-during a pre-Phase-1 implementation-readiness review that identified it
-as a REQ dacd01f4 clause (span/metric-attribute redaction) not yet
-covered by any acceptance criterion in this VCR's initial Phase 0
-draft, and AC-008 was added during a later plan-consistency review
-that found REQ dacd01f4's central metrics clause (tool-call
-latency/count, error-type counts, doc-cache hit/miss rate, domain-lock
-wait time) had no corresponding acceptance criterion either -- see
+Coverage is `full`: every acceptance criterion now carries its
+concrete test references above -- AC-001 (off by default) and AC-002
+(correlation ID matches the SDK span's trace ID) from
+feat-139-logging-telemetry Phase 4's OpenTelemetry SDK bootstrap
+(`telemetry/otel.py`, Tasks 4.1/4.2/4.9/4.11: providers + exporters
+installed only when `SPECMGR_OTEL_ENABLED=true`, called at
+`server.py`'s module scope in the config -> logging -> OTel ->
+middleware order, with the `service.name = "specmgr"` resource
+confirmed on every exported span and metric), AC-003
+(unreachable-OTLP graceful degradation) from the Task 4.5 exporter
+wrapper's episode de-duplication, AC-004 (broken `Server.middleware`
+contract fails open) from the Task 4.3 fail-open policy and its Task
+4.4 canary/simulation tests, AC-005/AC-006/AC-008 from Phase 5's
+metrics instrumentation, and AC-007 (span redaction) from Phase 6
+(Tasks 6.1/6.2: `telemetry/redact.py`'s global
+`RedactionSpanProcessor`, added to the `TracerProvider` before the
+exporting `BatchSpanProcessor`, scrubbing every span's attributes and
+exception events -- incl. the SDK's built-in middleware's spans -- by
+replacing the SDK's private attribute containers, per Task 1a.3's
+confirmed mechanism, with the Task 6.3 canary pinning that reliance;
+plus the Task 6.7 rewording of the 13 `UcParseError` title sites at
+the source). AC-007 was added during a pre-Phase-1
+implementation-readiness review that identified it as a REQ dacd01f4
+clause (span/metric-attribute redaction) not yet covered by any
+acceptance criterion in this VCR's initial Phase 0 draft, and AC-008
+was added during a later plan-consistency review that found REQ
+dacd01f4's central metrics clause (tool-call latency/count,
+error-type counts, doc-cache hit/miss rate, domain-lock wait time) had
+no corresponding acceptance criterion either -- see
 `.specmgr/feat/feat-139-logging-telemetry/README.md`'s Decisions Made
 log ("Redaction widened to a global SpanProcessor after a follow-up
 clarification" and "Metrics-correctness VCR gap closed with a new AC
-instead of folded into an existing one"). AC-005/AC-006/AC-008 now
-carry their concrete test references above (feat-139-logging-telemetry
-Phase 5's metrics instrumentation); only AC-007 remains pending
-Phase 6's span-redaction extension, and `## Coverage` moves to `full`
-when it lands.
+instead of folded into an existing one").
 
 ## Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+### 2026-09-24 06:00:00.000+02:00 - Phase 6 landed: AC-007 carries concrete test references; coverage is full
+
+feat-139-logging-telemetry Phase 6 (Tasks 6.1-6.8) implemented
+`telemetry/redact.py`'s span-side half: the global,
+`TracerProvider`-level `RedactionSpanProcessor` (Task 6.1), added by
+the Task 6.2 bootstrap wiring *before* the exporting
+`BatchSpanProcessor` (the provider invokes `on_end` in add order, so
+the scrub runs before the span reaches the export path), covering
+every span the process creates -- including the SDK's own built-in
+`OpenTelemetryMiddleware`'s spans, this feature creating none of its
+own. Per Task 1a.3's confirmed mechanism (no public mutation API on
+`ReadableSpan`; the span's `BoundedAttributes` locked immutable at
+`end()`), the processor scrubs by replacing the private containers
+(`readable_span._attributes` and each `event._attributes` with fresh
+`BoundedAttributes` copies, only when the scrub changed a value),
+which both the in-memory/console export paths and the OTLP protobuf
+encoder see at export time. AC-007 now carries the concrete test
+references above -- the attribute/event scrub, the batch-chain
+visibility, the SDK-built-in-middleware span case (an exception whose
+message carries a fake absolute path is injected through the
+middleware's own `record_exception`/`set_status` calls and the
+exported span no longer contains it), the Task 6.3 canary (the
+installed SDK's `ReadableSpan._attributes`/`_events`/`Event.
+_attributes` containers exist and the replacement is visible end to
+end, so a future SDK restructure fails loudly in CI), and the Task 6.7
+rewording of the 13 `UcParseError` title sites (the
+`record_exception`/`set_status(str(e))` payload of those messages no
+longer carries a title). Every acceptance criterion (AC-001 through
+AC-008) is now demonstrably covered, so `## Coverage` moves from
+`partial` to `full`.
 
 ### 2026-09-22 22:40:00.000+02:00 - Phase 5 landed: AC-005/AC-006/AC-008 carry concrete test references; coverage stays partial
 

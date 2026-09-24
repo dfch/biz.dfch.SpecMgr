@@ -436,6 +436,7 @@ First-line docstrings from each module, organized by domain:
 - `telemetry/metrics.py` — Shared metric names, instrument slots, and the lock-wait helper (feat-139 Phase 5, Tasks 5.2-5.5).
 - `telemetry/middleware.py` — The specmgr ``ServerMiddleware``: correlation IDs, call logging, and call metrics (Phase 3/5, Tasks 3.1/5.2/5.3).
 - `telemetry/otel.py` — OpenTelemetry SDK bootstrap (feat-139-logging-telemetry, Phase 4, Task 4.1).
+- `telemetry/redact.py` — Free-text redaction backstop for log records and spans (feat-139-logging-telemetry, Phase 6, Tasks 6.1/6.2).
 
 **tsk/**
 
@@ -549,4 +550,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 367
+**Test files**: 368

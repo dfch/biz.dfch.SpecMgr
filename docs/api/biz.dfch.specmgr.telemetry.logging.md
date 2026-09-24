@@ -50,10 +50,17 @@ imported from ``server.py`` (which already requires the ``mcp`` extra)
 and its tests, so it is not base-library-safe.
 
 The formatter-level absolute-path scrub the Design Notes' "Redaction
-scope and limits" bullet defines is wired onto these same handlers'
-formatters by Task 6.2 (Phase 6); each formatter here keeps its final
-rendered string in a single seam (``JsonFormatter.format``,
-``SpecmgrRichHandler.render_message``) so that hook slots in cleanly.
+scope and limits" bullet defines is wired onto these handlers'
+construction (Task 6.2, Phase 6, in ``telemetry/redact.py``): the JSON
+console handler and the always-JSON file sink carry a
+``ScrubbingFormatter`` around their ``JsonFormatter`` (the scrub runs
+on the final rendered string, where the ``exc_text`` traceback exists),
+and the rich console handler is ``ScrubbingSpecmgrRichHandler`` (the
+scrub runs on the combined message text at the ``render_message``
+seam). ``telemetry/redact.py`` imports this module's
+``SpecmgrRichHandler`` at its own module level (the rich subclass
+needs the base class at definition time), so the imports below are
+deliberately function-local to keep that the only edge of the pair.
 
 ## Classes
 
@@ -62,14 +69,15 @@ rendered string in a single seam (``JsonFormatter.format``,
 A ``logging.Formatter`` rendering each record as one JSON object.
 
 The record shape is the pinned one (see the module docstring): the
-four base fields always, the structured fields and ``exception`` only
-when the record carries them. The output is always a single physical
-line (embedded newlines JSON-escaped), so records written by a file
-sink are line-delimited JSON (JSONL).
+four base fields always, the structured fields and ``exception``
+only when the record carries them. The output is always a single
+physical line (embedded newlines JSON-escaped), so records written
+by a file sink are line-delimited JSON (JSONL).
 
-``format`` is the formatter's final rendered string -- the seam the
-Task 6.2 (Phase 6) path scrub hooks onto for the JSON console handler
-and the file sink.
+``format`` is the formatter's final rendered string -- the seam
+``telemetry/redact.py``'s ``ScrubbingFormatter`` (Task 6.2, Phase
+6) wraps for the JSON console handler and the file sink, so the
+absolute-path scrub runs on exactly this output.
 
 **Methods:**
 
@@ -139,8 +147,8 @@ separately when the record carries one.
 
 :meth:`render_message` is the handler's single message-text funnel
 (both the plain and the ``exc_info`` paths of ``RichHandler.emit``
-pass through it) -- the rich-format seam the Task 6.2 (Phase 6) path
-scrub hooks onto.
+pass through it) -- the rich-format seam ``telemetry/redact.py``'s
+``ScrubbingSpecmgrRichHandler`` (Task 6.2, Phase 6) hooks onto.
 
 **Methods:**
 
@@ -274,18 +282,34 @@ scrub hooks onto.
 
 Build the stderr console handler for the config's selected format.
 
+Task 6.2 (Phase 6): both branches carry the absolute-path scrub --
+the rich branch is ``telemetry/redact.py``'s
+``ScrubbingSpecmgrRichHandler`` (the scrub at the ``render_message``
+seam) and the JSON branch a ``StreamHandler`` whose
+``JsonFormatter`` is wrapped in the ``ScrubbingFormatter`` (the
+scrub on the final rendered string). The imports are function-local
+on purpose: ``telemetry/redact.py`` imports this module's
+``SpecmgrRichHandler`` at its own module level (the rich subclass
+needs the base at definition time), so a module-level import here
+would be a cycle.
+
 Args:
     config: The parsed, validated telemetry configuration.
 
 Returns:
-    A :class:`SpecmgrRichHandler` (mirroring the SDK's own rich
-    handler) for ``FORMAT_RICH``, or a ``StreamHandler`` on
-    ``sys.stderr`` with a :class:`JsonFormatter` for ``FORMAT_JSON``.
+    A scrub-wired rich handler for ``FORMAT_RICH``, or a
+    ``StreamHandler`` on ``sys.stderr`` with a scrub-wired
+    :class:`JsonFormatter` for ``FORMAT_JSON``.
 
 
 ### `_build_file_handler(path: 'str') -> 'logging.Handler'`
 
 Build the opt-in file-sink handler: always JSON, regardless of the console format (ACC-009).
+
+Task 6.2 (Phase 6): the :class:`JsonFormatter` is wrapped in
+``telemetry/redact.py``'s ``ScrubbingFormatter`` (the import is
+function-local for the same cycle reason as
+:func:`_build_console_handler`'s).
 
 Args:
     path: The file-sink path (``SPECMGR_LOG_FILE_PATH``; guaranteed
@@ -293,7 +317,7 @@ Args:
         enabled).
 
 Returns:
-    A ``FileHandler`` (append mode, UTF-8) with a
+    A ``FileHandler`` (append mode, UTF-8) with a scrub-wired
     :class:`JsonFormatter`.
 
 

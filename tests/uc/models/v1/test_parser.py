@@ -182,6 +182,131 @@ class TestParseUcStructuralErrors(unittest.TestCase):
             parse_uc(text)
 
 
+_FRONTMATTER = "---\nid: uc-001\nversion: 1.0.0\nstatus: draft\ncreated: 2026-08-05\nupdated: 2026-08-05\n---\n\n"
+
+
+def _doc(body: str) -> str:
+    """Build a full use case document (frontmatter + body) for error-case tests."""
+    result = _FRONTMATTER + body
+    return result
+
+
+def _expect_parse_error_without_title(
+    test_case: "TestParseErrorMessagesOmitTitles", text: str, hidden_title: str, expected_message: str
+) -> None:
+    """Assert parse_uc raises UcParseError (unchanged type/raise condition) with the exact
+    reworded message, which no longer contains the offending heading title."""
+    sut = parse_uc
+
+    with test_case.assertRaises(UcParseError) as ctx:
+        sut(text)
+
+    message = str(ctx.exception)
+    test_case.assertNotIn(hidden_title, message)
+    test_case.assertEqual(message, expected_message)
+
+
+class TestParseErrorMessagesOmitTitles(unittest.TestCase):
+    """feat-139 Task 6.7: the 13 reworded UcParseError sites no longer embed the heading title.
+
+    One test per reworded call site: each builds a document that triggers
+    exactly that site with a distinctive title and asserts the new message
+    (a) no longer contains the title and (b) is the pinned reworded text --
+    the exception's type (UcParseError) and raise condition are unchanged.
+    The deprecated ADR domain's 9 title sites are an accepted residual gap
+    (not tested here, not reworded); the path-embedding sites are
+    scrub-covered and deliberately not reworded.
+    """
+
+    def test_the_second_h1_title_is_omitted_from_the_multiple_h1_message(self):
+        hidden = "Secret Title Alpha"
+        text = _doc(
+            f"# Buy Goods\n\n# {hidden}\n\n## Characteristic Information\n\n### Goal in Context\n\nBuyer issues request.\n"
+        )
+
+        _expect_parse_error_without_title(self, text, hidden, "more than one top-level (H1) heading found")
+
+    def test_the_h4_title_under_h1_is_omitted_from_the_level_message(self):
+        hidden = "Secret Title Bravo"
+        text = _doc(f"# Buy Goods\n\n#### {hidden}\n\nSome text.\n")
+
+        _expect_parse_error_without_title(self, text, hidden, "heading level H4 is not part of the use case schema")
+
+    def test_the_unrecognized_h2_title_is_omitted_from_the_unrecognized_h2_message(self):
+        hidden = "Secret Title Charlie"
+        text = _doc(f"# Buy Goods\n\n## {hidden}\n\nSome text.\n")
+
+        _expect_parse_error_without_title(self, text, hidden, "unrecognized H2 heading")
+
+    def test_the_h4_title_under_characteristic_information_is_omitted_from_the_level_message(self):
+        hidden = "Secret Title Delta"
+        text = _doc(f"# Buy Goods\n\n## Characteristic Information\n\n#### {hidden}\n\nSome text.\n")
+
+        _expect_parse_error_without_title(self, text, hidden, "heading level H4 is not part of the use case schema")
+
+    def test_the_unrecognized_h3_title_under_characteristic_information_is_omitted(self):
+        hidden = "Secret Title Echo"
+        text = _doc(f"# Buy Goods\n\n## Characteristic Information\n\n### {hidden}\n\nValue.\n")
+
+        _expect_parse_error_without_title(
+            self, text, hidden, "unrecognized H3 heading under Characteristic Information"
+        )
+
+    def test_the_duplicate_h3_title_under_characteristic_information_is_omitted(self):
+        # The duplicated heading is a fixed schema title ("Scope") -- the
+        # reworded message omits it just like a document-specific title.
+        hidden = "Scope"
+        text = _doc("# Buy Goods\n\n## Characteristic Information\n\n### Scope\n\nA.\n\n### Scope\n\nB.\n")
+
+        _expect_parse_error_without_title(self, text, hidden, "duplicate H3 heading")
+
+    def test_the_h4_title_under_related_information_is_omitted_from_the_level_message(self):
+        hidden = "Secret Title Foxtrot"
+        text = _doc(f"# Buy Goods\n\n## Related Information\n\n#### {hidden}\n\nSome text.\n")
+
+        _expect_parse_error_without_title(self, text, hidden, "heading level H4 is not part of the use case schema")
+
+    def test_the_unrecognized_h3_title_under_related_information_is_omitted(self):
+        hidden = "Secret Title Golf"
+        text = _doc(f"# Buy Goods\n\n## Related Information\n\n### {hidden}\n\n- x\n")
+
+        _expect_parse_error_without_title(self, text, hidden, "unrecognized H3 heading under Related Information")
+
+    def test_the_duplicate_h3_title_under_related_information_is_omitted(self):
+        hidden = "Notes"
+        text = _doc("# Buy Goods\n\n## Related Information\n\n### Notes\n\n- a\n\n### Notes\n\n- b\n")
+
+        _expect_parse_error_without_title(self, text, hidden, "duplicate H3 heading")
+
+    def test_the_h4_title_under_extensions_is_omitted_from_the_level_message(self):
+        hidden = "Secret Title Hotel"
+        text = _doc(f"# Buy Goods\n\n## Extensions\n\n#### {hidden}\n\nSome text.\n")
+
+        _expect_parse_error_without_title(self, text, hidden, "heading level H4 is not part of the use case schema")
+
+    def test_the_unrecognized_extension_heading_title_is_omitted(self):
+        hidden = "Secret Title India"
+        text = _doc(f"# Buy Goods\n\n## Extensions\n\n### {hidden}\n\n3a1. Some action.\n")
+
+        _expect_parse_error_without_title(
+            self, text, hidden, "unrecognized Extension heading (expected '{stepRef}. {condition}')"
+        )
+
+    def test_the_h4_title_under_sub_variations_is_omitted_from_the_level_message(self):
+        hidden = "Secret Title Juliet"
+        text = _doc(f"# Buy Goods\n\n## Sub-Variations\n\n#### {hidden}\n\nSome text.\n")
+
+        _expect_parse_error_without_title(self, text, hidden, "heading level H4 is not part of the use case schema")
+
+    def test_the_unrecognized_sub_variation_heading_title_is_omitted(self):
+        hidden = "Secret Title Kilo"
+        text = _doc(f"# Buy Goods\n\n## Sub-Variations\n\n### {hidden}\n\n- Some variation\n")
+
+        _expect_parse_error_without_title(
+            self, text, hidden, "unrecognized Sub-Variation heading (expected 'Step {N}: {label}')"
+        )
+
+
 class TestParseUcValidationErrors(unittest.TestCase):
     """Structurally-sound documents with invalid field values/invariants raise ValidationError."""
 

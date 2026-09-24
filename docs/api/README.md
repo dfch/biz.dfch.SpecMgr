@@ -377,6 +377,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.telemetry.metrics`](biz.dfch.specmgr.telemetry.metrics.md) — Shared metric names, instrument slots, and the lock-wait helper (feat-139 Phase 5, Tasks 5.2-5.5).
 - [`biz.dfch.specmgr.telemetry.middleware`](biz.dfch.specmgr.telemetry.middleware.md) — The specmgr ``ServerMiddleware``: correlation IDs, call logging, and call metrics (Phase 3/5, Tasks 3.1/5.2/5.3).
 - [`biz.dfch.specmgr.telemetry.otel`](biz.dfch.specmgr.telemetry.otel.md) — OpenTelemetry SDK bootstrap (feat-139-logging-telemetry, Phase 4, Task 4.1).
+- [`biz.dfch.specmgr.telemetry.redact`](biz.dfch.specmgr.telemetry.redact.md) — Free-text redaction backstop for log records and spans (feat-139-logging-telemetry, Phase 6, Tasks 6.1/6.2).
 - [`biz.dfch.specmgr.tsk`](biz.dfch.specmgr.tsk.md) — TaskList (TSK) domain -- lightweight task/todo-list specifications.
 - [`biz.dfch.specmgr.tsk.models`](biz.dfch.specmgr.tsk.models.md) — TaskList (TSK) models -- Pydantic schema powered by the generic ``models/md`` engine.
 - [`biz.dfch.specmgr.tsk.models.v1`](biz.dfch.specmgr.tsk.models.v1.md) — TaskList (TSK) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.

@@ -298,3 +298,10 @@ format
 failing
 armed
 exporter
+
+# telemetry (feat-139-logging-telemetry Phase 6): `RedactionSpanProcessor.
+# on_end` is invoked by the OpenTelemetry SDK's own span-processor dispatch
+# (the `TracerProvider`'s `SynchronousMultiSpanProcessor` calls `on_end` on
+# each registered processor when a span ends), never by a direct call in
+# `src/`; the name scopes to that single method today.
+on_end

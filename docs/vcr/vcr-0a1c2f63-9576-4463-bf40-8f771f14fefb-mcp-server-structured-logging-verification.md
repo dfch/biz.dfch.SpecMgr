@@ -4,7 +4,7 @@ created: '2026-09-19 13:18:34.380+02:00'
 id: 0a1c2f63-9576-4463-bf40-8f771f14fefb
 status: draft
 type: vcr
-updated: '2026-09-21 22:25:40.952+02:00'
+updated: '2026-09-24 08:51:11.816+02:00'
 version: 1.0.0
 ---
 
@@ -23,7 +23,7 @@ requirement, ahead of `feat-139-logging-telemetry`'s implementation.
 
 ## Coverage
 
-partial
+full
 
 ## Acceptance Criteria
 
@@ -60,7 +60,38 @@ absolute-path scrub; the title-embedding exception messages already
 known in non-deprecated domains are reworded at their source instead
 (the deprecated ADR domain's title sites are an accepted residual gap;
 path-embedding messages are scrub-covered), since no generic filter can
-reliably detect free-form title text.
+reliably detect free-form title text. Verified by
+`tests/telemetry/test_redact.py::TestScrubPaths` (the scrub's regex:
+POSIX two-or-more-segment paths, Windows drive paths, and UNC paths --
+raw and JSON-escaped alike -- are replaced by the pinned
+`<redacted-path>` token, while single-slash tokens, `scheme://`/
+`specmgr://` shapes, URLs without multi-segment paths, and
+version-matrix tokens are left alone, pinning the documented
+false-positive/negative limits),
+`tests/telemetry/test_redact.py::TestFormatterScrub::test_a_path_in_the_message_is_scrubbed_from_the_final_rendered_string`
+(the scrub runs at formatter level on the final rendered JSON string),
+`tests/telemetry/test_redact.py::TestFormatterScrub::test_a_path_in_the_exception_extra_is_scrubbed_from_the_final_rendered_string`
+(the middleware's own `exception` extra -- type + message + traceback --
+is scrubbed in the rendered record),
+`tests/telemetry/test_redact.py::TestFormatterScrub::test_a_formatter_rendered_exc_text_traceback_is_scrubbed`
+(a record's standard `exc_info` -- whose formatter-rendered `exc_text`
+embeds absolute file paths that a handler-attached `logging.Filter`
+cannot see -- is scrubbed in the final rendered string),
+`tests/telemetry/test_redact.py::TestFormatterScrub::test_a_third_party_originating_logger_is_covered_too`
+(every rendered record reaching a specmgr-installed handler is covered,
+regardless of the record's originating logger),
+`tests/telemetry/test_redact.py::TestFormatterScrub::test_the_file_sink_handler_carries_the_scrubbing_formatter_and_scrubs_what_it_writes`
+(the opt-in file sink's records land on disk scrubbed),
+`tests/telemetry/test_redact.py::TestRichHandlerScrub::test_a_path_in_the_rich_message_text_is_scrubbed` /
+`tests/telemetry/test_redact.py::TestRichHandlerScrub::test_a_path_in_the_rich_structured_exception_field_is_scrubbed`
+(the rich format's `render_message` seam scrubs the combined message
+text, documented residual: the rich-rendered traceback itself), and the
+rewording at the source by `tests/uc/models/v1/test_parser.py::TestParseErrorMessagesOmitTitles`
+(the 13 reworded `UcParseError` sites -- one test per site -- no longer
+embed the heading title, the exception's type and raise condition
+unchanged; the deprecated ADR domain's 9 title sites are the accepted
+residual gap, the path-embedding sites are scrub-covered and
+deliberately not reworded).
 
 ### AC-004 (Test): Correlation ID appears only in error responses
 
@@ -78,22 +109,46 @@ the file sink always emits JSON, even when the console format is set to
 
 ## More Information
 
-Coverage is `partial`: AC-001, AC-002, AC-004, and AC-005 now carry
-their concrete test references above -- AC-001/AC-005 from
-feat-139-logging-telemetry Phase 2 (Tasks 2.1/2.2/2.5:
-`telemetry/logging.py`'s `JsonFormatter`/`SpecmgrRichHandler`/
-`setup_logging`, wired into `server.py`'s module scope) and
-AC-002/AC-004 from Phase 3 (Tasks 3.1/3.4/3.7:
-`telemetry/middleware.py`'s `SpecmgrTelemetryMiddleware`, appended to
-`mcp.middleware` by `server.py`'s module scope under the Task 3.2
-startup guard). AC-003 (redaction) remains pending Phase 6 -- its
-id/type-only identity clause (incl. `set_status`'s new status value) is
-already pinned by `tests/telemetry/test_middleware.py::TestLogRecordShape::test_a_set_status_call_records_the_new_status_value` and
-`tests/telemetry/test_middleware.py::TestLogRecordShape::test_record_messages_carry_id_and_type_only`, while its scrub/rewording half awaits Phase 6's `telemetry/redact.py`; `## Coverage` moves to `full` when it lands.
+Coverage is `full`: every acceptance criterion now carries its concrete
+test references above -- AC-001/AC-005 from feat-139-logging-telemetry
+Phase 2 (Tasks 2.1/2.2/2.5: `telemetry/logging.py`'s
+`JsonFormatter`/`SpecmgrRichHandler`/`setup_logging`, wired into
+`server.py`'s module scope), AC-002/AC-004 from Phase 3 (Tasks
+3.1/3.4/3.7: `telemetry/middleware.py`'s
+`SpecmgrTelemetryMiddleware`, appended to `mcp.middleware` by
+`server.py`'s module scope under the Task 3.2 startup guard), and
+AC-003 (redaction) from Phase 6 (Tasks 6.1/6.2/6.7:
+`telemetry/redact.py`'s formatter-level `<redacted-path>` scrub wired
+onto every specmgr-installed handler plus the 13 reworded
+`UcParseError` title sites in `uc/models/v1/parser.py`, with the
+deprecated ADR domain's 9 title sites as the accepted residual gap and
+the path-embedding sites scrub-covered).
 
 ## Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+### 2026-09-24 06:00:00.000+02:00 - Phase 6 landed: AC-003 carries concrete test references; coverage is full
+
+feat-139-logging-telemetry Phase 6 (Tasks 6.1-6.8) implemented
+`telemetry/redact.py` -- the free-text redaction backstop: the shared
+`scrub_paths` regex (POSIX two-or-more-segment absolute paths, Windows
+drive paths, and UNC paths, raw and JSON-escaped alike, replaced by the
+pinned `<redacted-path>` token), the formatter-level scrub
+(`ScrubbingFormatter` around the JSON console handler's and the file
+sink's `JsonFormatter` -- on the final rendered string, where the
+`exc_text` traceback exists; `ScrubbingSpecmgrRichHandler` at the rich
+`render_message` seam), wired onto every handler `setup_logging`
+installs (Task 6.2), so every rendered record reaching those handlers
+is covered regardless of originating logger. AC-003 now carries the
+concrete test references above (incl. the `exc_text` traceback case and
+the Task 6.7 rewording at the source: the 13 `UcParseError` title sites
+in `uc/models/v1/parser.py` reworded to omit the title -- exception
+type and raise condition unchanged -- with the deprecated ADR domain's
+9 title sites as the accepted residual gap and the path-embedding sites
+scrub-covered, deliberately not reworded). Every acceptance criterion
+is now demonstrably covered, so `## Coverage` moves from `partial` to
+`full`.
 
 ### 2026-09-21 21:20:00.000+02:00 - Phase 3 landed: AC-002/AC-004 carry concrete test references; coverage stays partial
 

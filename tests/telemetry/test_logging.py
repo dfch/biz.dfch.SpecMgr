@@ -61,6 +61,7 @@ from biz.dfch.specmgr.telemetry.logging import (
     SpecmgrRichHandler,
     setup_logging,
 )
+from biz.dfch.specmgr.telemetry.redact import ScrubbingFormatter
 
 #: The logger name used for every test record (no specmgr handler is ever
 #: attached to it; records are emitted through the root logger).
@@ -464,7 +465,9 @@ class TestSetupOverridesSdkDefault(_RootLoggerTestCase):
         self.assertEqual(len(handlers), 1)
         self.assertIsInstance(handlers[0], logging.StreamHandler)
         self.assertNotIsInstance(handlers[0], RichHandler)
-        self.assertIsInstance(handlers[0].formatter, JsonFormatter)
+        # Task 6.2: the JSON console formatter is the scrub-wrapped one.
+        self.assertIsInstance(handlers[0].formatter, ScrubbingFormatter)
+        self.assertIsInstance(handlers[0].formatter._delegate, JsonFormatter)
         self.assertEqual(self.root.level, logging.DEBUG)
         logging.getLogger(_LOGGER_NAME).info("effective json")
         parsed = json.loads(stderr.getvalue().strip())
@@ -501,7 +504,9 @@ class TestSetupOverridesSdkDefault(_RootLoggerTestCase):
             self.assertIsInstance(self.root.handlers[0], SpecmgrRichHandler)
             file_handler = self.root.handlers[1]
             self.assertIsInstance(file_handler, logging.FileHandler)
-            self.assertIsInstance(file_handler.formatter, JsonFormatter)
+            # Task 6.2: the file sink's JSON formatter is the scrub-wrapped one.
+            self.assertIsInstance(file_handler.formatter, ScrubbingFormatter)
+            self.assertIsInstance(file_handler.formatter._delegate, JsonFormatter)
             self.assertEqual(file_handler.baseFilename, os.path.abspath(path))
 
     def _setup_with_file_sink_bare(self, tmp: str) -> str:
@@ -567,7 +572,9 @@ class TestServerModuleScopeWiring(_RootLoggerTestCase):
         self.assertEqual(len(handlers), 1)
         self.assertIsInstance(handlers[0], logging.StreamHandler)
         self.assertNotIsInstance(handlers[0], RichHandler)
-        self.assertIsInstance(handlers[0].formatter, JsonFormatter)
+        # Task 6.2: the JSON console formatter is the scrub-wrapped one.
+        self.assertIsInstance(handlers[0].formatter, ScrubbingFormatter)
+        self.assertIsInstance(handlers[0].formatter._delegate, JsonFormatter)
         self.assertEqual(self.root.level, logging.INFO)
 
     def test_fresh_server_import_with_the_default_config_keeps_the_sdk_default_handlers(self):

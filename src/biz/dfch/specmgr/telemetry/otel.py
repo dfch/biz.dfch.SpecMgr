@@ -46,6 +46,13 @@ Task 1a.2/1a.4's confirmed spike findings):
   endpoint would block each span's ``end()`` synchronously for the
   exporter's timeout, stalling every tool call; the batch path's
   background failure is what :class:`OtlpExporterWrapper` de-duplicates.
+- the ``TracerProvider`` also carries the Task 6.1/6.2
+  :class:`~biz.dfch.specmgr.telemetry.redact.RedactionSpanProcessor`,
+  added *before* the ``BatchSpanProcessor`` (the provider invokes
+  ``on_end`` on its processors in add order, so the scrub of every
+  ended span's attributes/exception events runs before the span reaches
+  the export path -- covering the SDK's own built-in
+  ``OpenTelemetryMiddleware``'s spans, ACC-012).
 - the ``console`` exporter (the default ``SPECMGR_OTEL_EXPORTER`` value)
   is constructed with its output stream explicitly redirected to stderr --
   ``ConsoleSpanExporter(out=sys.stderr)`` / ``ConsoleMetricExporter(
@@ -139,6 +146,7 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExport
 
 from . import metrics as telemetry_metrics
 from .config import TelemetryConfig
+from .redact import RedactionSpanProcessor
 
 #: The logger this module emits its single fail-open/episode warnings on
 #: (the same ``biz.dfch.specmgr.telemetry`` logger the middleware uses).
@@ -642,10 +650,12 @@ def bootstrap_telemetry(config: TelemetryConfig) -> None:
 
     When enabled, it installs -- via the global API, which the SDK's
     import-time-fetched proxy tracer/meter resolve against -- a
-    ``TracerProvider`` (a ``BatchSpanProcessor`` with the configured span
-    exporter) and a ``MeterProvider`` (a ``PeriodicExportingMetricReader``
-    with the configured metric exporter), both carrying a ``Resource``
-    with the fixed ``service.name = "specmgr"`` attribute, and fetches the
+    ``TracerProvider`` (the Task 6.2 :class:`RedactionSpanProcessor`
+    first, then the ``BatchSpanProcessor`` with the configured span
+    exporter -- add order matters, see the module docstring) and a
+    ``MeterProvider`` (a ``PeriodicExportingMetricReader`` with the
+    configured metric exporter), both carrying a ``Resource`` with the
+    fixed ``service.name = "specmgr"`` attribute, and fetches the
     ``Meter`` once. Phase 5's instrument split (the orchestrator's pin)
     then runs from that ``Meter``: the ``MeterProvider`` is built with
     the pinned explicit-bucket :func:`_instrument_views`; the
@@ -674,6 +684,13 @@ def bootstrap_telemetry(config: TelemetryConfig) -> None:
             return
         resource = Resource.create({_SERVICE_NAME_KEY: SERVICE_NAME})
         tracer_provider = TracerProvider(resource=resource)
+        # Task 6.2 (Phase 6): the redaction SpanProcessor is added BEFORE
+        # the exporting BatchSpanProcessor -- the provider's
+        # SynchronousMultiSpanProcessor invokes on_end on its processors
+        # in add order, so the scrub (which replaces the span's private
+        # attribute containers; see telemetry/redact.py) runs before the
+        # span is handed to the export path.
+        tracer_provider.add_span_processor(RedactionSpanProcessor())
         tracer_provider.add_span_processor(BatchSpanProcessor(_build_span_exporter(config)))
         meter_provider = MeterProvider(
             metric_readers=[PeriodicExportingMetricReader(_build_metric_exporter(config))],
