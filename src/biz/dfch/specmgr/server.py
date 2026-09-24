@@ -286,34 +286,59 @@ resolves by ``id``, takes the domain lock, and returns the deleted path; a
 ``ValueError`` for injection/wrong-format ids before any file access, the
 domain's ``XNotFoundError`` for missing documents, and a ``DeleteError`` for
 I/O failures;
- ``validate`` (feat-81-83-validation, ADR 078bf395-0a5f-4afd-84f6-b7a2191a00e6) --
- the generic, disk-free/id-free dry-run content validator for the
- whole-body domains (``type`` is one of
- ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``;
- ``adr`` is not supported -- use ``validate_adr`` instead), replacing the
- former per-domain ``validate_<d>`` tools; unlike every other generic
- tool above, it never raises for a content-validation failure -- it always
- returns ``{valid: bool, errors: list[{message: str}]}`` (``errors`` empty
- when ``valid`` is ``True``), only raising ``ValueError`` for a ``full``/
- content-shape mismatch or an unsupported ``type``;
- ``find_related`` -- find the documents most semantically related to an
- existing document, given its ``type``/``id``, across every whole-body domain
- (``type`` is one of ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/
- ``dec``/``sop``/``feat``/``vcr``/``sysrs``; ``adr`` is excluded structurally),
- ranked by cosine similarity of local sentence embeddings (the ``similarity``
- extra, ``fastembed``/``bge-small``), excluding the source document itself;
- ``find_similar_text`` -- the same ranking for a free-form ``query`` text (the
- pre-creation dedup/discovery companion of ``find_related``). Both return up
- to ``top_k`` (default 10, validated 1..100) ranked ``{type, id, title,
- status, path, score}`` hit rows (an unparseable candidate appears with
- ``id = null`` and the ``<failed to parse>`` marker title/status), and both
- return the structured, non-raising ``{available: false, reason, message}``
- result whenever the embedding feature is unavailable (the
- ``SPECMGR_SIMILARITY_DISABLED`` flag present, or the backend/model fails to
- load) -- the tools always register; availability is decided at call time
- (feat-134-related-artifact-similarity, ADR
- 750842b2-aca4-4649-ba0c-855ec8e1f505).
- Path safety (feat-38-39-41-43-44 Phase 4, REQ-009, extending feat-36-delete's
+``validate`` (feat-81-83-validation, ADR 078bf395-0a5f-4afd-84f6-b7a2191a00e6) --
+the generic, disk-free/id-free dry-run content validator for the
+whole-body domains (``type`` is one of
+``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``;
+``adr`` is not supported -- use ``validate_adr`` instead), replacing the
+former per-domain ``validate_<d>`` tools; unlike every other generic
+tool above, it never raises for a content-validation failure -- it always
+returns ``{valid: bool, errors: list[{message: str}]}`` (``errors`` empty
+when ``valid`` is ``True``), only raising ``ValueError`` for a ``full``/
+content-shape mismatch or an unsupported ``type``;
+``find_related`` -- find the documents most semantically related to an
+existing document, given its ``type``/``id``, across every whole-body domain
+(``type`` is one of ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/
+``dec``/``sop``/``feat``/``vcr``/``sysrs``; ``adr`` is excluded structurally),
+ranked by cosine similarity of local sentence embeddings (the ``similarity``
+extra, ``fastembed``/``bge-small``), excluding the source document itself;
+``find_similar_text`` -- the same ranking for a free-form ``query`` text (the
+pre-creation dedup/discovery companion of ``find_related``). Both return up
+to ``top_k`` (default 10, validated 1..100) ranked ``{type, id, title,
+status, path, score}`` hit rows (an unparseable candidate appears with
+``id = null`` and the ``<failed to parse>`` marker title/status), and both
+return the structured, non-raising ``{available: false, reason, message}``
+result whenever the embedding feature is unavailable (the
+``SPECMGR_SIMILARITY_DISABLED`` flag present, or the backend/model fails to
+load) -- the tools always register; availability is decided at call time
+(feat-134-related-artifact-similarity, ADR
+750842b2-aca4-4649-ba0c-855ec8e1f505);
+``list_references`` (feat-144-ref-artifact, GitHub issue #144) -- the
+generic, cross-domain cross-reference listing tool: takes a *source*
+document's ``type`` (one of
+``adr``/``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``)
+and its ``id``, scans the source's frontmatter-stripped body for
+``<TYPE> <uuid>`` references (the shared 10-tag reference vocabulary
+``GOL``/``PRB``/``QA``/``UC``/``REQ``/``RSK``/``DEC``/``ADR``/``VCR``/``SYSRS``:
+case-insensitive tag, one or more space/tab/dash separators, anywhere in
+a line), dedupes repeated occurrences of the same reference
+(first-occurrence order preserved), and resolves each unique reference in
+its target domain (the target domains' own cache-backed ``load_by_id``;
+``adr`` excluded from the cache, ADR bfd76370-b59b-4d65-b550-a969f6c93c9d),
+returning a paged ``PagedResult[ReferenceRow]`` -- one row per unique
+reference carrying ``type``/``id``/``title`` (the referenced document's
+H1, re-derived from the resolved document)/``path`` (the referenced
+document's resolved absolute file path); a reference that cannot be
+resolved on disk is a row with null ``title``/``path`` and the target
+domain's not-found message in ``error`` -- it never raises;
+``max_results``/``offset`` control paging with the same clamp-not-error
+contract as every ``list_*`` tool (default page size 25, capped at 100).
+It applies the same ``_path_safety`` guards: an invalid source
+``type``/``id`` (unknown type, path-injection attempt, or wrong-format
+id) is a ``ValueError`` before any filesystem access, and a source
+document that does not exist on disk raises the source domain's own
+``XNotFoundError`` (identical to ``get_<d>``).
+Path safety (feat-38-39-41-43-44 Phase 4, REQ-009, extending feat-36-delete's
 ``delete``-only guards, ADR 1af6787b-eaab-4e8f-888f-531c1e76c19d): every one of the
 ``get_<d>`` tools (including ``get_adr``), the generic ``update``, and the generic
 ``set_status`` now validate ``id`` via ``general.tools._path_safety.validate_id`` (no

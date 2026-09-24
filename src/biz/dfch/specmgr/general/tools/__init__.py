@@ -65,7 +65,17 @@ parse>`` marker title/status), and both return the structured,
 non-raising ``{available: false, reason, message}`` result whenever the
 embedding feature is unavailable (``SPECMGR_SIMILARITY_DISABLED`` present
 or the backend/model failed to load) -- the tools always register,
-availability is decided at call time (REQ-003).
+availability is decided at call time (REQ-003). ``list_references`` -- the
+generic, cross-domain cross-reference listing tool (``type`` is one of
+req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/adr): scans the source
+document's frontmatter-stripped body for ``<TYPE> <uuid>`` references
+(the shared reference-tag vocabulary in ``general.tools._references``),
+dedupes repeated occurrences (first-occurrence order preserved), resolves
+each unique reference to the referenced document in its own target domain,
+and returns a paged ``PagedResult`` of one ``ReferenceRow`` per unique
+reference (``type``/``id``/``title``/``path``, plus ``error`` for
+references that could not be resolved -- the shared ``list_*`` paging
+mechanism, ADR ec9f5262; feat-144-ref-artifact).
 Import this package to register all general tools at once::
 
     from biz.dfch.specmgr.general import tools  # noqa: F401 (side-effects only)
@@ -74,6 +84,7 @@ Import this package to register all general tools at once::
 from .delete import delete
 from .find_related import find_related
 from .find_similar_text import find_similar_text
+from .list_references import list_references
 from .mdformat import mdformat
 from .set_classification import set_classification
 from .set_status import set_status
@@ -84,6 +95,7 @@ __all__ = [
     "delete",
     "find_related",
     "find_similar_text",
+    "list_references",
     "mdformat",
     "set_classification",
     "set_status",
