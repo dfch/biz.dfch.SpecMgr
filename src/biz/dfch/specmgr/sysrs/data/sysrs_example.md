@@ -532,13 +532,13 @@ Worked example — key rotation timeline (REQ c94e1b7a-2d8f-4a3e-8b5c-
 
 ## Updates
 
-### 2026-09-14 - Added Security Requirements
+### 2026-09-14 00:00:00.000Z - Added Security Requirements
 
 Two Security requirements added (see Security under Requirements
 above) after the partner security review flagged unencrypted key
 storage; System Context diagram updated to show the KMS boundary.
 
-### 2026-08-30 - Initial draft created
+### 2026-08-30 00:00:00.000Z - Initial draft created
 
 Initial system specification drafted from the linked Goals/Problem
 Statement/Scenarios; no Requirements or Decisions cross-referenced

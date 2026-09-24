@@ -171,11 +171,11 @@ _FULL_DOC = textwrap.dedent(
 
     ## Updates
 
-    ### 2026-08-27 : Confirmed
+    ### 2026-08-27 00:00:00.000Z : Confirmed
 
     Load test passed.
 
-    ### 2026-08-26 - Created
+    ### 2026-08-26 00:00:00.000Z - Created
 
     Initial decision record drafted.
     """
@@ -565,7 +565,7 @@ class TestParseDecStructuralViolations(unittest.TestCase):
 
             ## Updates
 
-            ### 2026-08-26 - Created
+            ### 2026-08-26 00:00:00.000Z - Created
             """
         )
 
@@ -588,7 +588,7 @@ class TestParseDecStructuralViolations(unittest.TestCase):
 
             ## Updates
 
-            ### 2026-08-26 - Created
+            ### 2026-08-26 00:00:00.000Z - Created
 
             Some update text.
 

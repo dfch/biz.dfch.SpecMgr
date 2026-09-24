@@ -133,7 +133,7 @@ their own arrangements.
 The arrangement was accepted at the monthly engineering meeting. The
 first quarterly review is scheduled for end of October 2026.
 
-### 2026-07-14 - Created
+### 2026-07-14 00:00:00.000Z - Created
 
 The decision record was drafted by the engineering leadership team
 after two years of per-team improvisation.

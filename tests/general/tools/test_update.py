@@ -241,7 +241,7 @@ _TSK_MINIMAL_BODY = textwrap.dedent(
 
     ## Recent Updates
 
-    ### 2026-08-19 - Kickoff
+    ### 2026-08-19 00:00:00.000Z - Kickoff
 
     Started the task list.
     """
@@ -256,11 +256,11 @@ _TSK_UPDATED_BODY = textwrap.dedent(
 
     ## Recent Updates
 
-    ### 2026-08-19 - Kickoff
+    ### 2026-08-19 00:00:00.000Z - Kickoff
 
     Started the task list.
 
-    ### 2026-08-19 - Progress
+    ### 2026-08-19 00:00:00.000Z - Progress
 
     Finished the first item.
     """
@@ -809,10 +809,10 @@ _CASES: list[_Case] = [
         updated_body=_TSK_UPDATED_BODY,
         middle_marker="Started the task list.",
         middle_replacement="Started the task list with a kickoff note.",
-        append_fragment="\n### 2026-08-19 - Progress\n\nFinished the first item.\n",
+        append_fragment="\n### 2026-08-19 00:00:00.000Z - Progress\n\nFinished the first item.\n",
         eof_marker="## Recent Updates",
-        eof_fragment="## Recent Updates\n\n### 2026-08-19 - Kickoff\n\nStarted the task list.\n",
-        deletable_suffix="\n### 2026-08-19 - Progress\n\nFinished the first item.\n",
+        eof_fragment="## Recent Updates\n\n### 2026-08-19 00:00:00.000Z - Kickoff\n\nStarted the task list.\n",
+        deletable_suffix="\n### 2026-08-19 00:00:00.000Z - Progress\n\nFinished the first item.\n",
         field_error_marker="- [ ] Do the first thing",
         field_error_fragment="- [z] Not a valid checkbox marker",
         field_error_is_append=False,

@@ -54,9 +54,11 @@ step 1 if this is genuinely a new feature.
   - `### Updates` -- mandatory, an optional leading HTML comment (e.g. an
     ordering hint) followed by at least one
     `#### {timestamp} ( - | : ) {title}` entry, newest-first, where
-    `{timestamp}` is `yyyy-MM-dd HH:mm:ss.fff±HH:mm` (or `Z` for UTC) and
-    the separator is `" - "` or `" : "` (the em-dash separator is
-    rejected), each with a lead paragraph.
+    `{timestamp}` is the full date+time form `yyyy-MM-dd[T
+    ]HH:mm:ss.fff` + `Z` or `±HH:mm` (the date/time separator may be `T`
+    or a space; a date-only timestamp is rejected), joined to the title
+    by `" - "` or `" : "` (the em-dash separator is rejected), each with
+    a lead paragraph.
   - `### Decisions Made` -- optional, same shape as `### Updates` (same
     timestamp format, same newest-first ordering, at least one entry once
     the section is present at all).

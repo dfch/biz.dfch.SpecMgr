@@ -233,6 +233,6 @@ section.
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
-### 2026-08-30 - Created
+### 2026-08-30 00:00:00.000Z - Created
 
 Blind text describing this update.

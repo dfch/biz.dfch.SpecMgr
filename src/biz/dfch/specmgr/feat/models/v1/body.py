@@ -428,30 +428,32 @@ class Blockers(MarkdownSection3):
 
 
 #: Matches a `{timestamp} ( - | : ) {title}` heading line, capturing the
-#: ISO8601 timestamp (named group `timestamp`) and the title (named group
-#: `title`). Shared verbatim between `UpdateEntry` and `DecisionEntry`
-#: (identical shape, see both classes' docstrings).
+#: full ISO 8601 date+time timestamp (named group `timestamp`) and the
+#: title (named group `title`). Shared verbatim between `UpdateEntry` and
+#: `DecisionEntry` (identical shape, see both classes' docstrings).
 _ENTRY_HEADING_PATTERN = re.compile(
-    r"^(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2}))(?: - | : )(?P<title>.+)$"
+    r"^(?P<timestamp>\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2}))(?: - | : )(?P<title>.+)$"
 )
 
 #: The `@alias` REGEX value shared verbatim by `UpdateEntry` and
-#: `DecisionEntry` -- ISO8601 date + space + time + milliseconds + explicit
-#: UTC offset (`+02:00`, `-05:00`) or `Z` for UTC, joined to the title by
-#: either `" - "` or `" : "` (the em-dash separator is rejected).
-_ENTRY_HEADING_ALIAS = r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})(?: - | : ).+$"
+#: `DecisionEntry` -- full ISO 8601 date+time (date + `T` or space + time +
+#: milliseconds + explicit UTC offset (`+02:00`, `-05:00`) or `Z` for UTC;
+#: date-only is rejected, per ADR
+#: 8c889262-152b-4b8e-ae2c-75371f7a9edf), joined to the title by either
+#: `" - "` or `" : "` (the em-dash separator is rejected).
+_ENTRY_HEADING_ALIAS = r"^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})(?: - | : ).+$"
 
 
 @alias(value=_ENTRY_HEADING_ALIAS, type=AliasType.REGEX)
 class UpdateEntry(MarkdownSection4):
     """`#### {timestamp} ( - | : ) {title}` under `### Updates` -- one update entry.
 
-    The timestamp format is deliberately not the same format as frontmatter
-    `created`/`updated` (the shared date+time variant produced by
-    `general.tools._timestamps.now_timestamp()`, e.g.
-    `2026-08-30T14:23:01.123Z` -- `T`-separated since feat-146) -- this
-    format is scoped to `### Updates`/`### Decisions Made` entry headings
-    only, hand/LLM-authored body content, not tool-generated frontmatter.
+    The timestamp is the full ISO 8601 date+time form `yyyy-MM-dd` + (`T`
+    or space) + `HH:mm:ss.fff` + explicit UTC offset (`+02:00`, `-05:00`)
+    or `Z` for UTC -- the same format as frontmatter `created`/`updated`
+    (both separators accepted, the `T`-separated form the machine-written
+    canonical variant, date-only rejected; ADR
+    8c889262-152b-4b8e-ae2c-75371f7a9edf). E.g. `2026-08-30 14:23:01.123Z`.
 
     Parameters
     ----------

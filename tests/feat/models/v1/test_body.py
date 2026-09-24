@@ -197,6 +197,9 @@ class TestUpdateEntryAndDecisionEntryHeadingAlias(unittest.TestCase):
                 "2026-08-30 16:47:59.981Z : Paused for review",
                 "2026-08-30 14:02:11.123+02:00 : Initial scaffolding",
                 "2026-08-30 09:15:00.000-05:00 : x",
+                "2026-08-30T16:47:59.981Z - Paused for review",
+                "2026-08-30T14:02:11.123+02:00 - Initial scaffolding",
+                "2026-08-30T09:15:00.000-05:00 : x",
             ):
                 with self.subTest(cls=cls.__name__, heading=heading):
                     self.assertTrue(match_alias(cls, heading))
@@ -206,7 +209,7 @@ class TestUpdateEntryAndDecisionEntryHeadingAlias(unittest.TestCase):
             for heading in (
                 "2026-08-30 16:47:59Z - Missing milliseconds",
                 "2026-08-30 16:47:59.981 - Missing offset",
-                "2026-08-30T16:47:59.981Z - Wrong timestamp separator",
+                "2026-08-30 - Missing time",
                 "Anything Goes",
                 "2026-08-30 16:47:59.981Z",
                 "2026-08-30 16:47:59.981Z - ",
@@ -459,6 +462,32 @@ class TestUpdateEntryAndDecisionEntry(unittest.TestCase):
         self.assertEqual(sut.timestamp, "2026-08-30 17:10:00.000Z")
         self.assertEqual(sut.title, "Deferred mobile gestures")
         self.assertEqual(str(sut), text)
+
+    def test_update_entry_parses_t_separator(self) -> None:
+        text = format_text("#### 2026-08-30T16:47:59.981Z - Paused for review\n\nSome update text.\n")
+
+        sut = UpdateEntry.from_text(text)
+
+        self.assertEqual(sut.content.text, "Some update text.")
+        self.assertEqual(sut.timestamp, "2026-08-30T16:47:59.981Z")
+        self.assertEqual(sut.title, "Paused for review")
+        self.assertEqual(str(sut), text)
+
+    def test_decision_entry_parses_t_separator(self) -> None:
+        text = format_text("#### 2026-08-30T17:10:00.000Z - Deferred mobile gestures\n\nSome decision text.\n")
+
+        sut = DecisionEntry.from_text(text)
+
+        self.assertEqual(sut.content.text, "Some decision text.")
+        self.assertEqual(sut.timestamp, "2026-08-30T17:10:00.000Z")
+        self.assertEqual(sut.title, "Deferred mobile gestures")
+        self.assertEqual(str(sut), text)
+
+    def test_entry_with_date_only_heading_raises_assertion_error(self) -> None:
+        for cls in (UpdateEntry, DecisionEntry):
+            with self.subTest(cls=cls.__name__):
+                with self.assertRaises(AssertionError):
+                    cls.from_text(format_text("#### 2026-08-30 - Missing time\n\nSome text.\n"))
 
     def test_entry_without_lead_paragraph_raises_assertion_error(self) -> None:
         for cls in (UpdateEntry, DecisionEntry):

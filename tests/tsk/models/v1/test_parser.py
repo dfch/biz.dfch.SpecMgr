@@ -53,7 +53,7 @@ _MINIMAL_DOC = textwrap.dedent(
 
     ## Recent Updates
 
-    ### 2026-08-16 - Kickoff
+    ### 2026-08-16 00:00:00.000Z - Kickoff
 
     Started the task list.
     """
@@ -148,7 +148,7 @@ class TestParseTsk(unittest.TestCase):
 
             ## Recent Updates
 
-            ### 2026-08-16 - Kickoff
+            ### 2026-08-16 00:00:00.000Z - Kickoff
 
             Started the task list.
             """
@@ -176,11 +176,11 @@ class TestParseTsk(unittest.TestCase):
 
             ## Recent Updates
 
-            ### 2026-08-17 - Follow-up
+            ### 2026-08-17 00:00:00.000Z - Follow-up
 
             Made more progress.
 
-            ### 2026-08-16 - Kickoff
+            ### 2026-08-16 00:00:00.000Z - Kickoff
 
             Started the task list.
             """

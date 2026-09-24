@@ -637,13 +637,13 @@ Worked example — key rotation timeline (REQ c94e1b7a-2d8f-4a3e-8b5c-
 
 ## Updates
 
-### 2026-09-14 - Added Security Requirements
+### 2026-09-14 00:00:00.000Z - Added Security Requirements
 
 Two Security requirements added (see Security under Requirements
 above) after the partner security review flagged unencrypted key
 storage; System Context diagram updated to show the KMS boundary.
 
-### 2026-08-30 - Initial draft created
+### 2026-08-30 00:00:00.000Z - Initial draft created
 
 Initial system specification drafted from the linked Goals/Problem
 Statement/Scenarios; no Requirements or Decisions cross-referenced
@@ -740,7 +740,10 @@ class TestParseSysrs(unittest.TestCase):
         self.assertIsNotNone(body.more_information)
         self.assertIsNotNone(body.appendix)
         self.assertIsNotNone(body.definitions_and_acronyms)
-        self.assertEqual([entry.timestamp for entry in body.updates.updates], ["2026-09-14", "2026-08-30"])
+        self.assertEqual(
+            [entry.timestamp for entry in body.updates.updates],
+            ["2026-09-14 00:00:00.000Z", "2026-08-30 00:00:00.000Z"],
+        )
 
     def test_full_example_document_round_trips_except_documented_references_exception(self) -> None:
         """The body round-trips byte-exact except the documented tight->loose `## References` re-render (Phase 1 pin)."""
@@ -828,7 +831,10 @@ class TestParseSysrsValueViolations(unittest.TestCase):
 
     def test_updates_out_of_order_raises_validation_error(self) -> None:
         """Decided 2026-09-02: out-of-order `## Updates` entries are `ValidationError`, not `AssertionError`."""
-        text = _MINIMAL_DOC + "\n## Updates\n\n### 2026-08-30 - Older\n\nx\n\n### 2026-09-14 - Newer\n\ny\n"
+        text = (
+            _MINIMAL_DOC
+            + "\n## Updates\n\n### 2026-08-30 00:00:00.000Z - Older\n\nx\n\n### 2026-09-14 00:00:00.000Z - Newer\n\ny\n"
+        )
 
         with self.assertRaises(ValidationError):
             parse_sysrs(text)

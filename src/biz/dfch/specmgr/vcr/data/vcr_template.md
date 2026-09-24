@@ -51,6 +51,6 @@ This optional section can contain additional information. There is no defined fo
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
-### 2026-08-31 - Created
+### 2026-08-31 00:00:00.000Z - Created
 
 Blind text describing this update.

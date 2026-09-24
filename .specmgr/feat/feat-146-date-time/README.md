@@ -4,7 +4,7 @@ created: '2026-09-23 22:33:23.868+02:00'
 id: feat-146-date-time
 status: planning
 type: feat
-updated: '2026-09-24T06:09:11.544Z'
+updated: '2026-09-24T09:18:11.741Z'
 version: 1.0.0
 ---
 
@@ -107,13 +107,13 @@ No external dependencies; this feature is self-contained.
 
 #### Phase 2: Entry headings (six domains)
 
-- [ ] Task 2.1: Widen `feat` (body.py:435/442) + `sop` (body.py:372/377) to `[T ]`.
-- [ ] Task 2.2: Tighten `tsk` (body.py:69/74), `dec` (body.py:424/429), `vcr` (body.py:320/326), `sysrs` (body.py:996/1002): mandatory time + `[T ]`.
-- [ ] Task 2.3: `models/md/_ordering.py`: delete `_DATE_ONLY_LENGTH` + mixed-granularity branch; docstrings.
-- [ ] Task 2.4: Body docstrings: drop leniency wording ("REQ-004", "locked post-sibling shape", feat body.py:449-454 "deliberately not the same format as frontmatter"); cite the ADR.
-- [ ] Task 2.5: Packaged data: 8 date-only headings → space midnight UTC (`dec_example:136`, `sysrs_example:535/541`, `sysrs_template:236`, `tsk_example:25/29`, `tsk_template:22`, `vcr_template:54`); rewrite 8 tsk/dec/vcr/sysrs instruction files (full form only, space examples); check feat/sop/other instruction wording.
-- [ ] Task 2.6: Tests: flip date-only accept→reject (4 files); `test__ordering.py` drop date-only/mixed cases; add `T`-accept per domain; review `test_issue_67.py` exclusion + comment.
-- [ ] Task 2.7: `specmgr schema` + full quality gate.
+- [x] Task 2.1: Widen `feat` (body.py:435/442) + `sop` (body.py:372/377) to `[T ]`.
+- [x] Task 2.2: Tighten `tsk` (body.py:69/74), `dec` (body.py:424/429), `vcr` (body.py:320/326), `sysrs` (body.py:996/1002): mandatory time + `[T ]`.
+- [x] Task 2.3: `models/md/_ordering.py`: delete `_DATE_ONLY_LENGTH` + mixed-granularity branch; docstrings.
+- [x] Task 2.4: Body docstrings: drop leniency wording ("REQ-004", "locked post-sibling shape", feat body.py:449-454 "deliberately not the same format as frontmatter"); cite the ADR.
+- [x] Task 2.5: Packaged data: 8 date-only headings → space midnight UTC (`dec_example:136`, `sysrs_example:535/541`, `sysrs_template:236`, `tsk_example:25/29`, `tsk_template:22`, `vcr_template:54`); rewrite 8 tsk/dec/vcr/sysrs instruction files (full form only, space examples); check feat/sop/other instruction wording.
+- [x] Task 2.6: Tests: flip date-only accept→reject (4 files); `test__ordering.py` drop date-only/mixed cases; add `T`-accept per domain; review `test_issue_67.py` exclusion + comment.
+- [x] Task 2.7: `specmgr schema` + full quality gate.
 
 #### Phase 3: Repo documents migration
 
@@ -131,23 +131,72 @@ No external dependencies; this feature is self-contained.
 
 ### Current Status
 
-**As of 2026-09-24**: Phase 1 complete: the frontmatter/write core and the frontmatter sweep are
-done. `general/tools/_timestamps.py`'s write side emits the `T`-separated canonical form
-(`format_timestamp` space→`T`; `format_date` removed, zero callers), the shared frontmatter pattern
-`MarkdownFrontmatter._DATE_TIME_PATTERN` now accepts `[T ]`, and every whole-body domain's
-`_stringify_metadata` normalizes PyYAML-coerced `datetime` values to the `T`-canonical form with
-milliseconds (a new shared `models/md/_timestamps.py` core; six-digit-fraction unquoted values
-stay rejected instead of being lossily truncated). All 24 packaged template/example frontmatters,
-`tests/feat/models/v1/data/feat_reference.md`, and 53 test files were swept to `T` (explicit
-space-acceptance tests kept); all twelve `docs/*_schema.json` and their packaged `data/` copies
-regenerated, `docs/api/` + `docs/GENERATED.md` regenerated. Phase-end full quality gate green
-(ruff format/check, vulture, `pytest -n auto --cov` -- 3429 passed; pylint 1837 findings both
-before and after, only three pre-existing findings' numeric counters shifted). Phases 2-4
-(entry headings, repo document migration, previous-feature notes + closeout) are still pending.
+**As of 2026-09-24**: Phase 2 complete: the six entry-heading domains
+(`tsk`/`dec`/`vcr`/`sysrs` tightened, `feat`/`sop` widened) now accept exactly the shared full
+date+time fragment `\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})` in every
+`## Recent Updates`/`## Updates`/`### Updates`/`### Decisions Made` entry heading -- date-only
+rejected everywhere, `T` and space both accepted; `models/md/_ordering.py`'s now-dead
+mixed-granularity branch is deleted (plain aware `datetime.fromisoformat` comparison). The 8
+packaged date-only entry headings migrated to space-form midnight UTC, the 8 tsk/dec/vcr/sysrs
+instruction files rewritten to the full form only (feat/sop create instructions' wording aligned
+too), and the test suite swept (date-only fixtures → full form; the 4 domain test files flipped
+date-only accept→reject; `T`-accept tests added per domain; `test_issue_67.py`'s moot date-only
+exclusion replaced by a narrow exclusion of the documented midnight-UTC migration heading shape).
+Phase-end full quality gate green (ruff format/check, vulture, `specmgr schema` 6/12 changed +
+6 packaged copies, `specmgr docs`/`specmgr adr-toc` drift-free, `pytest -n auto --cov` -- 3440
+passed, coverage TOTAL 10551/122 = 99% badge unchanged; pylint 8.92/10 with only pre-existing
+finding types' numeric counters shifted). Phases 3-4 (repo document migration of the 3 `docs/`
+entry headings -- now expected to fail parsing until migrated -- and previous-feature notes +
+closeout) are still pending.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-24 09:18:11.741Z - Phase 2 complete: six entry-heading domains on the shared full date+time fragment ([T ] accepted, date-only rejected), _ordering mixed-granularity branch deleted, packaged data + 10 instruction files + test suite migrated
+
+Implemented Tasks 2.1-2.7. Entry headings: `feat` (`UpdateEntry`/`DecisionEntry` alias +
+pattern) and `sop` (`UpdateEntry` alias + pattern) widened to `[T ]`; `tsk`
+(`RecentUpdates`), `dec`/`vcr`/`sysrs` (`Updates`) tightened to the mandatory full form with
+`[T ]` -- all six sites now accept exactly the shared fragment
+`\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})`, the same fragment as
+Phase 1's frontmatter pattern (verbatim, per the plan's Design Notes). `models/md/_ordering.py`
+dropped `_DATE_ONLY_LENGTH` and its mixed date-only/date+time day-granularity branch (now a
+plain aware `datetime.fromisoformat` comparison; module + function docstrings updated), and the
+five `Updates`/`RecentUpdates` `_validate_newest_first` delegate docstrings plus the six body
+docstrings' leniency wording (REQ-004 / "locked post-sibling shape" / "deliberately not the
+same format as frontmatter") were rewritten to cite ADR
+8c889262-152b-4b8e-ae2c-75371f7a9edf; `models/md/frontmatter.py`'s now-stale "until feat-146
+Phase 2 tightens those too" note was updated to state all six entry-heading aliases enforce the
+same full fragment. Packaged data: the 8 date-only entry headings
+(`dec_example:136`, `sysrs_example:535/541`, `sysrs_template:236`, `tsk_example:25/29`,
+`tsk_template:22`, `vcr_template:54`) became space-form midnight UTC
+(`### {date} 00:00:00.000Z - {title}`), and all 12 of the six domains' example/template files
+still parse through their own parsers. The 8 tsk/dec/vcr/sysrs instruction files were rewritten
+to describe the full form only with space-form examples (the 4 update instructions gained an
+explicit heading-format note where they previously had none), and the feat/sop create
+instructions' format wording was aligned (both separators accepted; the sop "different format
+from the frontmatter dates" claim dropped -- it is the same full format now); `tsk_implement`/
+`feat_update`/`sop_update` were checked and carry no format wording. Tests: the 4 domain test
+files (tsk/dec/vcr/sysrs `test_body.py`) flipped date-only accept→reject (alias `match_alias`
+rejections + `from_text` `AssertionError` rejections, mirroring the existing rejection-test
+style), every date-only entry-heading fixture in the suite (21 files, incl. the
+tsk/tools + general/tools + regression fixtures) migrated to full form, `test__ordering.py`
+dropped its 7 date-only/mixed-granularity cases and gained same-day `T`-vs-space ordering cases,
+`T`-accept tests were added for all six domains (11 new tests net, suite now 3440 passed), and
+`test_issue_67.py`'s date-only-heading exclusion (moot per the ADR's consequences) was replaced
+by a narrow exclusion of the documented midnight-UTC migration heading shape, which the
+migrated packaged headings would otherwise trip (see Decisions Made). Gate: `specmgr schema`
+regenerated 6 of 12 `docs/*_schema.json` (dec/feat/sop/sysrs/tsk/vcr -- the six entry-heading
+domains) + their packaged `data/` copies (the other 6 unchanged), `specmgr docs` regenerated 7
+`docs/api/` files, `specmgr adr-toc`/`specmgr schema`/`specmgr docs` all drift-free on re-run,
+ruff format/check + vulture clean, coverage TOTAL 10551 stmts / 122 missed = 99% (down from
+10557/126 -- the deleted `_ordering` branch removed covered statements; `docs/coverage.svg`
+still reads 99%, byte-identical), pylint 8.92/10 unchanged with only pre-existing types'
+numeric counters shifted (+11 C0116 from the new docstring-less tests matching file convention,
++1 C0301 long string-literal line, +1 R0801 duplicate-code pair). Note: the 3 `docs/` entry
+headings (`docs/tsk` x2, `docs/sysrs` x1) now fail to parse -- expected at Phase 2 end,
+migrated in Phase 3.
 
 #### 2026-09-24 06:09:11.544Z - Phase 1 fix: coverage-badge regression repaired (12 parser-level unquoted-timestamp tests; badge back to 99%)
 
@@ -217,6 +266,28 @@ confirmed with the requester, and the ADR (8c889262-152b-4b8e-ae2c-75371f7a9edf)
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-24 09:18:11.741Z - Phase 2: `tsk_reference.md` test fixture migrated now (not in Phase 3); `test_issue_67.py` gains a narrow midnight-migration-heading exclusion
+
+Two decisions the plan did not spell out, both forced by invariants it does name. (1) The plan's
+Phase 3 (Task 3.1) lists only the 3 `docs/` entry headings for migration, but
+`.specmgr/feat/feat-10-add-artifact-type-tasklist/tsk_reference.md` -- a *test fixture* parsed
+by `tests/tsk/models/v1/test_parser.py::test_parses_full_reference_document` -- carries 2 of
+its own date-only `## Recent Updates` headings. It is not a `docs/` repository document (the
+hard constraint Phase 3 owns), and leaving it unmigrated would red-light the Phase 2 suite
+(impossible per the Decisions Made "suite green at each phase end" convention), so its 2
+headings were migrated to space-form midnight UTC in Phase 2, same shape as the 8 packaged
+headings. (2) The plan says to "review `test_issue_67.py` exclusion + comment" and the ADR's
+consequences note says the date-only-heading exclusion "becomes moot" after Task 2.5 -- but the
+moot exclusion was precisely what kept the issue-67 test's two round-timestamp patterns
+(`\d{2}:\d{2}:\d{2}\.000[Z+-]`, `\.000[Z+-]`) from tripping on entry headings, and the mandated
+migration shape (`### {date} 00:00:00.000Z - {title}`) *does* match both patterns. The exclusion
+paragraph was therefore rewritten to explain the new, narrower exemption: a line matching the
+documented midnight-UTC migration heading shape (`^#{3,4} \d{4}-\d{2}-\d{2} 00:00:00\.000Z(?: -
+| : )\S`) is skipped by both checks -- a convention-fixed faithful representation of a
+time-of-day-less entry (the ADR's decision outcome prescribes the shape), not a copy-paste
+placeholder -- while any other round timestamp (frontmatter or non-migration headings) still
+fails the test.
 
 #### 2026-09-24 04:45:51.954Z - Phase 1 design: shared `T`-core in `models/md/_timestamps.py`; six-digit unquoted fractions stay rejected (sub-millisecond guard)
 
