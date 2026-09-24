@@ -4,7 +4,7 @@ created: '2026-09-19 12:24:35.775+02:00'
 id: feat-139-logging-telemetry
 status: done
 type: feat
-updated: '2026-09-25 00:21:28.000+02:00'
+updated: '2026-09-25 01:28:02.522+02:00'
 version: 1.0.0
 ---
 
@@ -449,6 +449,7 @@ See ADR `fdbb6d22-278a-4ecf-b2f6-db208bc49fc6` for the full rationale: stdlib `l
 - `e1d4692` -- feat(feat-139): add redaction safeguards: formatter-level path scrub, global span scrubber, uc title rewording (Tasks 6.1-6.8).
 - `0d897b1` -- build(feat-139): narrow opentelemetry-sdk and OTLP exporter to <2.0.0 and re-confirm the exporter choice (Tasks 7.1-7.3).
 - `66ebb7f` -- docs(feat-139): document the logging/telemetry env vars, status resource, and usage in README and AGENTS.md (Tasks 8.1-8.3).
+- `e0b63d8` -- docs(feat-139): pass final verification -- all 13 ACCs demonstrated end to end, close feature at done (Tasks 9.1-9.3).
 
 ### More Information
 
