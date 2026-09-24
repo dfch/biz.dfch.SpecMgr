@@ -75,6 +75,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the `assert_uuid` loop silently never exercised the `sysrs` domain; the
   gap is closed by construction via the shared `UUID_DOMAINS` import
   (GitHub issue #125).
+- The similarity engine's title scan (`first_h1` in
+  `general/tools/_similarity_text.py`) now accepts both level-1 heading
+  syntaxes markdown-it emits as an `h1` token -- ATX (`# Title`) and
+  setext (`Title` over a `===` underline, with fenced-code-block tracking
+  and CommonMark's 0-3 leading-space indent tolerance) (GitHub issue
+  #134): a single parseable document with a setext H1 previously made the
+  engine's "parsed documents carry their own mandatory H1" invariant
+  fire, crashing every `find_related`/`find_similar_text` call and
+  aborting the startup warmup mid-corpus.
+- The similarity engine's remaining second-review findings (GitHub issue
+  #134): the availability-before-validation ordering (a
+  disabled/backend-missing environment returns the structured
+  unavailable result even for invalid arguments) is now pinned by
+  committed tests instead of an ad hoc smoke script; the embedding cache
+  stores each candidate's result-row metadata (`id`/`title`/`status`)
+  alongside its vector, so a warm candidate is one file read and no
+  parse (a cold one, one of each) instead of the prior two reads and up
+  to two parses; the `find_similar_text` query is now embedded before the
+  corpus walk (a query-embedding failure surfaces immediately, bad
+  arguments still read and embed nothing); and the `min_score` filter
+  applies a float32 accumulation epsilon (`1e-6`), so an exact
+  self-match scoring `0.9999999...` is no longer dropped by
+  `min_score=1.0`.
 
 ## [0.30.0] - 2026-09-21
 
