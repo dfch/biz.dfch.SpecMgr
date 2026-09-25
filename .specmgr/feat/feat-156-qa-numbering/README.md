@@ -4,7 +4,7 @@ created: '2026-09-25T10:44:57.323+02:00'
 id: feat-156-qa-numbering
 status: review
 type: feat
-updated: '2026-09-25T17:26:27.158+02:00'
+updated: '2026-09-25T18:57:15.150+02:00'
 version: 1.0.0
 ---
 
@@ -116,6 +116,10 @@ Introduce a fixed, permanent numbering scheme for question/answer pairs inside Q
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-25T18:57:15.150+02:00 - Post-review polish (M1/M2)
+
+Applied two precisely-scoped post-review fixes. (M1) `prb/data/prb_create_instructions.md` still described QA pair shape as `> {question}` in the step-2 paragraph (the file this feature already touched in Phase 2) -- reworded to the post-feat-156 live shape `> **<d>.<NNNN>**: {question}` with the surrounding lines reflowed (2-space continuation indent preserved, ~76-100 char lines); nothing else in that file changed. (M2) `qa/models/v2/question_answer.py`'s `_validate_question` docstring overclaimed that feat-27's `wrap_tool_errors` adds "the document-relative field path and tool/domain context automatically" -- for a field-level `ValidationError` it adds only the `"{domain} {tool} ({channel})"` label, and the field name is pydantic's own standard rendering (the same shape the cited VCR `Verifies`/`Coverage` validators produce); reworded that sentence accordingly, docstring otherwise intact. Verification: `git diff` of both files shows only the intended hunks (M1: 2 lines replaced by 3; M2: 3 lines replaced by 3); `uv run --frozen ruff format --check` ("1716 files already formatted") and `uv run --frozen ruff check` ("All checks passed!"); `uv run --frozen specmgr docs` regenerated 470 module files and `git status --short -- docs/` is empty -- no docs/ delta from either fix (M1 as required; M2's method docstring is not embedded in the generated `docs/api/biz.dfch.specmgr.qa.models.v2.question_answer.md` page, which carries no method docstrings at all, so its absence is expected); `uv run --frozen pytest -n auto -q tests/prb/prompts/ tests/qa/` is green (231 passed, 37 subtests passed) -- the prb prompt test's asserted substrings ("at most one", "duplicated across two sub-questions", "Non-committal counts as unanswered", "TODO: answer pending") are untouched by the M1 reword.
 
 #### 2026-09-25T15:07:01Z - Phase 3 (close-out) implemented
 

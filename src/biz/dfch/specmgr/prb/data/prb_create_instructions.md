@@ -76,8 +76,9 @@ standalone, asking all 7 5W2H questions)", call `get_qa(qa_id)`.
   `Performance Efficiency`, `Compatibility`, `Interaction Capability`,
   `Reliability`, `Security`, `Maintainability`, `Flexibility`, `Safety`)
   -- not only `Elicitation Context`. Each category holds zero or more
-  adjacent `> {question}` block-quote-plus-free-prose-answer pairs, with
-  no heading of its own per pair. For each pair, judge whether its
+  adjacent `> **<d>.<NNNN>**: {question}`
+  block-quote-plus-free-prose-answer pairs, with no heading of its own
+  per pair. For each pair, judge whether its
   question/answer best matches one of the PRB's 7 5W2H sub-questions
   (What/Why/Where/Who/When/How/How Often). Apply these rules:
   - **One pair, at most one question**: a single QA pair maps to *at

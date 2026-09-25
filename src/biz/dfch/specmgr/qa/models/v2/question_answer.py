@@ -251,9 +251,9 @@ class QaQuestionAnswer(MarkdownStr):
         `MarkdownStr.from_text` ends with, so every `parse_qa`/`create_qa`/
         `validate`/`update` path reaches it; the shared feat-27 error
         wrapping (`models/md/_errors.wrap_tool_errors`) adds the
-        document-relative field path and tool/domain context automatically
-        (the same precedent `vcr`'s own `Verifies`/`Coverage` validators
-        follow -- no wrapping of its own here).
+        tool/domain label automatically (the field name is pydantic's own
+        standard rendering for field-level errors -- the same shape the
+        cited `vcr` validators produce -- so no wrapping of its own here).
         """
         if question is not None and not re.match(_QUESTION_NUMBER_PREFIX, question.text):
             raise ValueError(
