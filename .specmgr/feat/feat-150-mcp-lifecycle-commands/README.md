@@ -4,7 +4,7 @@ created: '2026-09-23 23:16:12.456+02:00'
 id: feat-150-mcp-lifecycle-commands
 status: planning
 type: feat
-updated: '2026-09-25 02:20:42.702+02:00'
+updated: '2026-09-25 02:55:55.868+02:00'
 version: 1.0.0
 ---
 
@@ -275,8 +275,8 @@ Chosen over an uncapped loop to bound the automatic review-to-fix-to-re-review c
 No rename needed -- OpenCode accepts singular and plural directory names at both global and project scope.
 
 ### Related PRs / Commits
+
 - PR: https://github.com/dfch/biz.dfch.SpecMgr/pull/155 (plan refinement, 2026-09-24)
-- (none yet)
 
 ### More Information
 
