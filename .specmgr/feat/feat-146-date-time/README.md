@@ -4,7 +4,7 @@ created: '2026-09-23 22:33:23.868+02:00'
 id: feat-146-date-time
 status: review
 type: feat
-updated: '2026-09-24T21:01:53.394+02:00'
+updated: '2026-09-25T08:39:06.050+02:00'
 version: 1.0.0
 ---
 
@@ -131,6 +131,22 @@ No external dependencies; this feature is self-contained.
 
 ### Current Status
 
+**As of 2026-09-25**: Post-review fixes applied on user direction, layered on the Phase 4
+closeout. (a) The three soft-wrapped example code spans in the `dec`/`vcr`/`sysrs` create
+instructions -- the `## Updates` timestamp example, whose backtick pair opened at the end of
+one physical line and closed on the next -- were reflowed so each example span sits on a
+single physical line (the same defect class bd63a9a repaired in the `feat` create
+instruction); the `yyyy-MM-dd[T ]HH:mm:ss.fff` format literal and the 3-space
+list-continuation indentation are preserved and nothing else in those three files changed.
+(b) The `feat` and `sop` update instructions, which Task 2.5 deliberately left check-only,
+gained the explicit full date+time timestamp-format note on new `### Updates`/`### Decisions
+Made` (`####` entries) and `## Updates` (`###` entries) headings respectively, so the
+guidance is uniform across all six entry-heading domains (see Decisions Made). (c) On
+user direction, the 3 pre-existing split section-name code spans in
+`sop_update_instructions.md`'s section-3 paragraph (a pre-feature defect -- the file's
+last prior commit predates this feature) were also reflowed onto one physical line each,
+the same defect class as (a).
+
 **As of 2026-09-24**: Phase 4 complete: all four implementation phases are done and the
 feature is ready for review (the frontmatter `status` change to `review` is the
 orchestrator's closeout step, not this phase's). Task 4.1 added 8 brief supersession
@@ -168,6 +184,26 @@ Phase 4 (previous-feature notes + closeout) is still pending.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-25 06:39:06.047Z - Post-review fixes: 3 soft-wrapped code spans reflowed, feat/sop update-instruction timestamp notes added
+
+Two user-directed post-review fixes, both layered on the Phase 4 closeout. (a) The `##
+Updates` timestamp example in the `dec`/`vcr`/`sysrs` create instructions was a soft-wrapped
+code span: its backtick pair opened at the end of one physical line and closed on the next,
+so the example rendered as two broken spans (CommonMark preserves the newline inside a code
+span). Each was reflowed so the example span sits on a single physical line -- the same defect
+class bd63a9a repaired in the `feat` create instruction -- with the
+`yyyy-MM-dd[T ]HH:mm:ss.fff` format literal unbroken and the 3-space list-continuation
+indentation preserved; nothing else in those three files changed. (b) The `feat` and `sop`
+update instructions, deliberately left check-only by Task 2.5, now carry the explicit full
+date+time timestamp-format note on new entries that their four sibling domains
+(`tsk`/`dec`/`vcr`/`sysrs`) already had: the `feat` note uses the `####` entry-heading level
+and ends "a lead paragraph", the `sop` note uses the `###` level and ends "a mandatory lead
+paragraph", each matching its own file's wording, and both note code spans are unbroken on a
+single physical line. (c) On user direction, the 3 pre-existing split section-name code spans
+in `sop_update_instructions.md`'s section-3 paragraph (a pre-feature defect -- the file's last
+prior commit predates this feature) were also reflowed onto one physical line each, the same
+defect class as (a).
 
 #### 2026-09-24 18:26:19.805Z - Phase 4 complete: 8 previous-feature supersession notes, CHANGELOG/AGENTS.md closeout, ADR accepted + TOC regenerated, issue #146 commented, full gate green
 
@@ -402,6 +438,18 @@ confirmed with the requester, and the ADR (8c889262-152b-4b8e-ae2c-75371f7a9edf)
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-25 06:39:06.047Z - Task 2.5 scope extended on user direction: feat/sop update instructions gain the timestamp-format note
+
+The plan's Task 2.5 scoped the `feat`/`sop` update instructions as check-only (verify their
+existing format wording, do not extend it), while the four `tsk`/`dec`/`vcr`/`sysrs` update
+instructions each gained an explicit note spelling out what a new Updates-entry heading must
+look like. On user direction that note is now added to `feat` and `sop` as well, so the
+agent-facing guidance is uniform across all six entry-heading domains. The wording is adapted
+to each file's own entry-heading level and lead-paragraph convention -- `####` ("a lead
+paragraph") for `feat`, whose entries sit under `### Updates`/`### Decisions Made`, and `###`
+("a mandatory lead paragraph") for `sop`, whose entries sit under `## Updates` -- mirroring
+each file's create-instruction wording.
 
 #### 2026-09-24 18:26:19.805Z - Phase 4: supersession notes placed at the end of `### Overview` (not directly below the H1); verify-by-grep outcomes
 
