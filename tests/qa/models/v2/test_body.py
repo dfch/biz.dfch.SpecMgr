@@ -26,7 +26,12 @@ and several categories with zero pairs (`Performance Efficiency`,
 made in v1 and carried over to v2: each of the 10 `_QaCategory`-shaped
 classes shares a private `_QaCategory` intermediate base, and this file
 explicitly verifies each still resolves its own, distinct heading alias
-correctly (not an accidentally-shared one).
+correctly (not an accidentally-shared one). The reference document's
+questions carry the bold `**<d>.<NNNN>**: ` number prefix (feat-156), and
+the file additionally verifies (feat-156) that the prefix is purely
+format-checked at the document level: the category digit is never checked
+against the section holding the question, so `**9.0010**` under
+`## Elicitation Context` parses without complaint.
 """
 
 from __future__ import annotations
@@ -96,7 +101,7 @@ The frobnicator must handle at least 500 widgets/minute.
 
 ## Elicitation Context
 
-> Who are the primary stakeholders for this system?
+> **0.0010**: Who are the primary stakeholders for this system?
 
 Product management and the on-call SRE team.
 
@@ -104,13 +109,13 @@ Product management and the on-call SRE team.
 
 <!-- comment belongs to the question right after it -->
 
-> What happens when the input queue is empty?
+> **1.0010**: What happens when the input queue is empty?
 
 The frobnicator idles and polls every 100ms.
 
 That polling interval is configurable via `poll_interval_ms`.
 
-> How should malformed widgets be handled?
+> **1.0020**: How should malformed widgets be handled?
 
 Malformed widgets are rejected and logged. The rejection flow is:
 
@@ -390,7 +395,7 @@ class TestQaReferenceDocumentRoundTrips(unittest.TestCase):
         self.assertIsNotNone(sut.elicitation_context.questions)
         self.assertGreaterEqual(len(sut.elicitation_context.questions), 1)
         pair = sut.elicitation_context.questions[0]
-        self.assertEqual(pair.question.text, "Who are the primary stakeholders for this system?")
+        self.assertEqual(pair.question.text, "**0.0010**: Who are the primary stakeholders for this system?")
         self.assertEqual(pair.answer.text.strip(), "Product management and the on-call SRE team.")
 
     def test_categories_with_zero_pairs_have_questions_none(self) -> None:
@@ -414,12 +419,12 @@ class TestQaReferenceDocumentRoundTrips(unittest.TestCase):
         first, second = sut.functional_suitability.questions
 
         self.assertIsNotNone(first.comment)
-        self.assertEqual(first.question.text, "What happens when the input queue is empty?")
+        self.assertEqual(first.question.text, "**1.0010**: What happens when the input queue is empty?")
         self.assertIn("The frobnicator idles and polls every 100ms.", first.answer.text)
         self.assertIn("poll_interval_ms", first.answer.text)
 
         self.assertIsNone(second.comment)
-        self.assertEqual(second.question.text, "How should malformed widgets be handled?")
+        self.assertEqual(second.question.text, "**1.0020**: How should malformed widgets be handled?")
         self.assertIn("Validate the widget schema.", second.answer.text)
         self.assertIn("Log the failure with the widget's id.", second.answer.text)
         self.assertIn("Increment the `rejected_total` counter.", second.answer.text)
@@ -430,6 +435,66 @@ class TestQaReferenceDocumentRoundTrips(unittest.TestCase):
 
         self.assertIsNotNone(sut.more_information)
         self.assertIn("See the original ticket for background on throughput targets.", sut.more_information.text)
+
+
+class TestQaQuestionNumberSectionIndependence(unittest.TestCase):
+    """The number's category digit is never checked against the section holding it
+    (feat-156 REQ-003/Design Note 4: the digit-to-section mapping and the
+    start-at/step-by convention are human authoring guidelines only) -- a
+    `**9.0010**` question under `## Elicitation Context` and a `**0.0010**`
+    question under `## Safety` both parse without complaint.
+    """
+
+    def test_cross_digit_numbers_parse_in_any_section(self) -> None:
+        text = format_text(
+            """\
+# Widget Frobnicator Q&A
+
+## General
+
+### Introduction
+
+Some intro text.
+
+### Raw Requirements
+
+Some raw requirements text.
+
+## Elicitation Context
+
+> **9.0010**: What is the expected load?
+
+An answer.
+
+## Functional Suitability
+
+## Performance Efficiency
+
+## Compatibility
+
+## Interaction Capability
+
+## Reliability
+
+## Security
+
+## Maintainability
+
+## Flexibility
+
+## Safety
+
+> **0.0010**: What is the expected load?
+
+An answer.
+"""
+        )
+
+        sut = Qa.from_text(text)
+
+        self.assertEqual(str(sut), text)
+        self.assertEqual(sut.elicitation_context.questions[0].question.text, "**9.0010**: What is the expected load?")
+        self.assertEqual(sut.safety.questions[0].question.text, "**0.0010**: What is the expected load?")
 
 
 if __name__ == "__main__":

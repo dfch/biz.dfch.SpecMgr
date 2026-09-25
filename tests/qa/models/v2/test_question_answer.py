@@ -30,6 +30,8 @@ from __future__ import annotations
 
 import unittest
 
+from pydantic import ValidationError
+
 from biz.dfch.specmgr.models.md._markdown import format_text
 from biz.dfch.specmgr.qa.models.v2.question_answer import QaAnswer, QaQuestionAnswer
 
@@ -49,7 +51,7 @@ class TestQaAnswerGetExtentStopsAtEachTerminatorKind(unittest.TestCase):
                 self.assertEqual(result, stop_line)
 
     def test_stops_before_a_depth_zero_block_quote(self) -> None:
-        text = format_text("First para.\n\nSecond para.\n\n> A question\n\nmore stuff after\n")
+        text = format_text("First para.\n\nSecond para.\n\n> **0.0010**: A question\n\nmore stuff after\n")
         lines = text.splitlines()
         stop_line = next(i for i, line in enumerate(lines) if line.startswith(">"))
 
@@ -130,7 +132,7 @@ class TestQaQuestionAnswerQuestionAndAnswerOnly(unittest.TestCase):
     """`comment` may be absent while `question`/`answer` are both present."""
 
     def test_round_trips(self) -> None:
-        text = format_text("> Question?\n\nAnswer prose.\n")
+        text = format_text("> **0.0010**: Question?\n\nAnswer prose.\n")
 
         extent = QaQuestionAnswer.get_extent(text)
         sut = QaQuestionAnswer.from_text(format_text("\n".join(text.splitlines()[:extent])))
@@ -138,7 +140,7 @@ class TestQaQuestionAnswerQuestionAndAnswerOnly(unittest.TestCase):
         self.assertEqual(extent, len(text.splitlines()))
         self.assertIsNone(sut.comment)
         self.assertIsNotNone(sut.question)
-        self.assertEqual(sut.question.text, "Question?")
+        self.assertEqual(sut.question.text, "**0.0010**: Question?")
         self.assertIsNotNone(sut.answer)
         self.assertEqual(sut.answer.text.strip(), "Answer prose.")
         self.assertEqual(str(sut), text)
@@ -148,7 +150,7 @@ class TestQaQuestionAnswerFullTriple(unittest.TestCase):
     """`comment`, `question`, and `answer` are all present at once."""
 
     def test_round_trips(self) -> None:
-        text = format_text("<!-- comment -->\n\n> Question?\n\nAnswer prose.\n")
+        text = format_text("<!-- comment -->\n\n> **0.0010**: Question?\n\nAnswer prose.\n")
 
         extent = QaQuestionAnswer.get_extent(text)
         sut = QaQuestionAnswer.from_text(format_text("\n".join(text.splitlines()[:extent])))
@@ -156,7 +158,7 @@ class TestQaQuestionAnswerFullTriple(unittest.TestCase):
         self.assertEqual(extent, len(text.splitlines()))
         self.assertIsNotNone(sut.comment)
         self.assertIsNotNone(sut.question)
-        self.assertEqual(sut.question.text, "Question?")
+        self.assertEqual(sut.question.text, "**0.0010**: Question?")
         self.assertIsNotNone(sut.answer)
         self.assertEqual(sut.answer.text.strip(), "Answer prose.")
         self.assertEqual(str(sut), text)
@@ -170,7 +172,7 @@ class TestQaQuestionAnswerMultiParagraphAnswerWithOrderedList(unittest.TestCase)
             """\
 <!-- comment belongs to the question right after it -->
 
-> How should malformed widgets be handled?
+> **1.0010**: How should malformed widgets be handled?
 
 Malformed widgets are rejected and logged. The rejection flow is:
 
@@ -204,11 +206,11 @@ class TestQaQuestionAnswerAdjacentPairs(unittest.TestCase):
             """\
 <!-- comment -->
 
-> First question?
+> **0.0010**: First question?
 
 First answer.
 
-> Second question?
+> **0.0020**: Second question?
 
 Second answer.
 """
@@ -225,26 +227,26 @@ Second answer.
         assert isinstance(first, QaQuestionAnswer)
         assert isinstance(second, QaQuestionAnswer)
         self.assertIsNotNone(first.comment)
-        self.assertEqual(first.question.text, "First question?")
+        self.assertEqual(first.question.text, "**0.0010**: First question?")
         self.assertEqual(first.answer.text.strip(), "First answer.")
         self.assertIsNone(second.comment)
-        self.assertEqual(second.question.text, "Second question?")
+        self.assertEqual(second.question.text, "**0.0020**: Second question?")
         self.assertEqual(second.answer.text.strip(), "Second answer.")
 
     def test_three_adjacent_pairs(self) -> None:
         text = format_text(
             """\
-> Q1?
+> **0.0010**: Q1?
 
 A1.
 
 <!-- c2 -->
 
-> Q2?
+> **0.0020**: Q2?
 
 A2.
 
-> Q3?
+> **0.0030**: Q3?
 
 A3.
 """
@@ -262,11 +264,11 @@ A3.
         assert isinstance(second, QaQuestionAnswer)
         assert isinstance(third, QaQuestionAnswer)
         self.assertIsNone(first.comment)
-        self.assertEqual(first.question.text, "Q1?")
+        self.assertEqual(first.question.text, "**0.0010**: Q1?")
         self.assertIsNotNone(second.comment)
-        self.assertEqual(second.question.text, "Q2?")
+        self.assertEqual(second.question.text, "**0.0020**: Q2?")
         self.assertIsNone(third.comment)
-        self.assertEqual(third.question.text, "Q3?")
+        self.assertEqual(third.question.text, "**0.0030**: Q3?")
 
 
 class TestQaQuestionAnswerTrailingDanglingComment(unittest.TestCase):
@@ -275,7 +277,7 @@ class TestQaQuestionAnswerTrailingDanglingComment(unittest.TestCase):
     def test_dangling_comment_after_a_full_pair_becomes_its_own_pair(self) -> None:
         text = format_text(
             """\
-> Q1?
+> **0.0010**: Q1?
 
 A1.
 
@@ -293,7 +295,7 @@ A1.
         first, second = items
         assert isinstance(first, QaQuestionAnswer)
         assert isinstance(second, QaQuestionAnswer)
-        self.assertEqual(first.question.text, "Q1?")
+        self.assertEqual(first.question.text, "**0.0010**: Q1?")
         self.assertIsNotNone(second.comment)
         self.assertIsNone(second.question)
         self.assertIsNone(second.answer)
@@ -301,7 +303,7 @@ A1.
     def test_dangling_comment_followed_by_a_heading_still_becomes_its_own_pair(self) -> None:
         text = format_text(
             """\
-> Q1?
+> **0.0010**: Q1?
 
 A1.
 
@@ -335,6 +337,139 @@ class TestQaQuestionAnswerEmptyCategoryIsLegitimate(unittest.TestCase):
 
         self.assertIsNone(items)
         self.assertEqual(remaining, text)
+
+
+class TestQaQuestionAnswerNumberPrefix(unittest.TestCase):
+    """`QaQuestionAnswer`'s own `field_validator("question")` enforces the bold `**<d>.<NNNN>**: `
+    question-number prefix (feat-156 ACC-001, REQ-001/004).
+
+    Every malformed shape in ACC-001 rejects with `pydantic.ValidationError`
+    (the validator's own `ValueError`, channeled by pydantic at `from_text`'s
+    final `cls(**kwargs)`); the number prefix is the *only* constraint on the
+    number -- gaps, in-between numbers, and any category digit all parse
+    (REQ-003, Design Notes 4), and a pair with no `question` at all skips the
+    validator entirely (Design Note 3).
+    """
+
+    def _parse_pair(self, question: str) -> QaQuestionAnswer:
+        """Parse one `question` block quote plus a free-form answer into a `QaQuestionAnswer`."""
+        text = format_text(f"{question}\n\nAn answer.\n")
+        return QaQuestionAnswer.from_text(text)
+
+    def test_single_line_numbered_question_parses(self) -> None:
+        sut = self._parse_pair("> **0.0010**: What is the expected load?")
+
+        self.assertEqual(sut.question.text, "**0.0010**: What is the expected load?")
+
+    def test_numbered_question_round_trips(self) -> None:
+        text = format_text("> **1.0020**: What is the expected load?\n\nAn answer.\n")
+
+        sut = QaQuestionAnswer.from_text(text)
+
+        self.assertEqual(str(sut), text)
+
+    def test_multi_line_numbered_question_parses(self) -> None:
+        """The prefix is a start-anchored check: the question text itself stays free-form
+        and may span several quoted lines."""
+        sut = self._parse_pair("> **0.0010**: What is the\n> expected load?")
+
+        self.assertEqual(sut.question.text, "**0.0010**: What is the\nexpected load?")
+
+    def test_line_break_after_the_colon_is_accepted(self) -> None:
+        """The `\\s` after the colon also accepts a line break (feat-156 Design Note 13's
+        one documented softness, accepted as-is): the number alone on the first quoted
+        line, the question continuing on the next."""
+        sut = self._parse_pair("> **0.0010**:\n> What is the expected load?")
+
+        self.assertEqual(sut.question.text, "**0.0010**:\nWhat is the expected load?")
+
+    def test_missing_prefix_rejects(self) -> None:
+        with self.assertRaises(ValidationError) as ctx:
+            self._parse_pair("> What is the expected load?")
+
+        self.assertIn("question must start with the bold question-number prefix", str(ctx.exception))
+
+    def test_bare_number_only_line_rejects(self) -> None:
+        """A `**<d>.<NNNN>**: ` line with no question text after it rejects -- `format_text`
+        strips the trailing space, so the `\\s` after the colon has nothing to match."""
+        with self.assertRaises(ValidationError) as ctx:
+            self._parse_pair("> **0.0010**: ")
+
+        self.assertIn("question must start with the bold question-number prefix", str(ctx.exception))
+
+    def test_three_digit_sequence_rejects(self) -> None:
+        with self.assertRaises(ValidationError):
+            self._parse_pair("> **0.010**: What is the expected load?")
+
+    def test_five_digit_sequence_rejects(self) -> None:
+        with self.assertRaises(ValidationError):
+            self._parse_pair("> **0.00100**: What is the expected load?")
+
+    def test_two_digit_sequence_rejects(self) -> None:
+        with self.assertRaises(ValidationError):
+            self._parse_pair("> **0.10**: What is the expected load?")
+
+    def test_two_digit_category_rejects(self) -> None:
+        with self.assertRaises(ValidationError):
+            self._parse_pair("> **10.0010**: What is the expected load?")
+
+    def test_missing_colon_rejects(self) -> None:
+        with self.assertRaises(ValidationError):
+            self._parse_pair("> **0.0010** What is the expected load?")
+
+    def test_space_before_the_colon_rejects(self) -> None:
+        with self.assertRaises(ValidationError):
+            self._parse_pair("> **0.0010 **: What is the expected load?")
+
+    def test_number_not_at_the_start_rejects(self) -> None:
+        with self.assertRaises(ValidationError):
+            self._parse_pair("> Q **0.0010**: What is the expected load?")
+
+    def test_question_absent_skips_the_validator(self) -> None:
+        """A comment-only pair (no `question`) parses fine -- the validator runs only when
+        `question` is present (feat-156 Design Note 3)."""
+        text = format_text("<!-- just a note -->\n")
+        extent = QaQuestionAnswer.get_extent(text)
+
+        sut = QaQuestionAnswer.from_text(format_text("\n".join(text.splitlines()[:extent])))
+
+        self.assertIsNone(sut.question)
+
+
+class TestQaQuestionAnswerNumberGapsAndNonTenSteps(unittest.TestCase):
+    """Gaps and in-between numbers (e.g. `0.0015` between `0.0010` and `0.0020`) parse
+    without complaint -- the parser never enforces the start-at/step-by convention
+    (feat-156 ACC-002, REQ-003, Design Note 4)."""
+
+    def test_gaps_and_in_between_numbers_parse(self) -> None:
+        text = format_text(
+            """\
+> **0.0010**: First question?
+
+First answer.
+
+> **0.0015**: In-between question?
+
+In-between answer.
+
+> **0.0030**: Third question?
+
+Third answer.
+"""
+        )
+
+        remaining, items = QaQuestionAnswer.process_list_field("questions", QaQuestionAnswer, text, optional=True)
+
+        self.assertIsNotNone(items)
+        assert items is not None
+        self.assertEqual(len(items), 3)
+        self.assertEqual(remaining, "")
+
+        numbers = [item.question.text for item in items]
+        self.assertEqual(
+            numbers,
+            ["**0.0010**: First question?", "**0.0015**: In-between question?", "**0.0030**: Third question?"],
+        )
 
 
 if __name__ == "__main__":

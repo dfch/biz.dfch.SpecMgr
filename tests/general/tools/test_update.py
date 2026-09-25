@@ -29,11 +29,14 @@ Note on the per-type out-of-vocabulary field-value cases: ``req``, ``uc``,
 field-level ``pydantic.ValidationError`` path in their body schema (closed
 vocabularies or cross-field validators -- for ``dec``/``sop``/``vcr``, a
 duplicated ``### Option``/``### Step``/``### AC-NNN`` number), while ``qa``
-and ``prb`` bodies are
-free-form text only -- no closed vocabulary, no field constraint -- so their
-out-of-vocabulary input (an unrecognized section heading) fails structurally
-with ``AssertionError`` instead. Each type's case data flags which of the
-two its field-error input raises.
+and ``prb`` have no *closed-vocabulary* field, so their out-of-vocabulary
+input (an unrecognized section heading) fails structurally with
+``AssertionError`` instead. ``qa`` additionally gained a genuine field-level
+constraint in feat-156 (the bold question-number prefix on
+``QaQuestionAnswer.question``), which its case data does not exercise through
+this input -- the structurally-bad heading raises before any field validator
+runs. Each type's case data flags which of the two its field-error input
+raises.
 """
 
 from __future__ import annotations
