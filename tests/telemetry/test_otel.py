@@ -57,6 +57,7 @@ import selectors
 import socket
 import subprocess
 import sys
+import threading
 import time
 import unittest
 from pathlib import Path
@@ -208,6 +209,32 @@ def _parse_json_objects(text: str) -> list[dict[str, object]]:
     return result
 
 
+def _drain_stream(stream: io.TextIOBase, sink: list[str]) -> None:
+    """Read ``stream`` to EOF (blocking), appending the text to ``sink``.
+
+    Runs in its own worker thread, one per pipe: the child writes
+    potentially large console/OTLP export output to stderr at shutdown,
+    after its last stdout response, so stdout and stderr must drain
+    concurrently -- a sequential drain (stdout to EOF, then stderr) can
+    block the child on a full stderr pipe buffer and deadlock. See
+    ``_StdioSessionTestCase._run_session`` for the full wiring.
+
+    Args:
+        stream: The pipe end to drain (``proc.stdout`` or
+            ``proc.stderr``); read by exactly this thread (the
+            incremental stdout read in the main thread has already
+            finished by the time the drain threads start).
+        sink: The list the drained text is appended to, owned by the
+            caller (appended from exactly this one thread, so no
+            locking is needed).
+    """
+    while True:
+        chunk = stream.read(1 << 16)
+        if not chunk:
+            break
+        sink.append(chunk)
+
+
 class _StdioSessionTestCase(unittest.TestCase):
     """Run a real ``specmgr mcp`` stdio subprocess session (fresh child process).
 
@@ -244,7 +271,7 @@ class _StdioSessionTestCase(unittest.TestCase):
             cwd=_REPO_ROOT,
             text=True,
         )
-        assert proc.stdin is not None and proc.stdout is not None
+        assert proc.stdin is not None and proc.stdout is not None and proc.stderr is not None
         frames = [
             {
                 "jsonrpc": "2.0",
@@ -258,6 +285,8 @@ class _StdioSessionTestCase(unittest.TestCase):
             }
         ]
         stdout = ""
+        drained_stdout: list[str] = []
+        drained_stderr: list[str] = []
         try:
             for frame in frames:
                 proc.stdin.write(json.dumps(frame) + "\n")
@@ -291,11 +320,47 @@ class _StdioSessionTestCase(unittest.TestCase):
                 stdout += line + "\n"
             selector.close()
         finally:
+            # Drain the remaining stdout AND all of stderr concurrently, one
+            # reader thread per pipe (NOT sequentially: the child writes
+            # potentially large console/OTLP export output to stderr at
+            # shutdown, after its last stdout response, so a
+            # stdout-to-EOF-then-stderr drain can block the child on a full
+            # stderr pipe buffer and deadlock). The threads must run before
+            # stdin is closed, since the close is what triggers the child's
+            # shutdown flush. (A ``communicate()`` here would not work: it
+            # raises ``ValueError: I/O operation on closed file`` on
+            # Python 3.11/3.12 once stdin is already closed.)
+            stdout_thread = threading.Thread(
+                target=_drain_stream,
+                args=(proc.stdout, drained_stdout),
+                name="specmgr-test-stdout-drain",
+                daemon=True,
+            )
+            stderr_thread = threading.Thread(
+                target=_drain_stream,
+                args=(proc.stderr, drained_stderr),
+                name="specmgr-test-stderr-drain",
+                daemon=True,
+            )
+            stdout_thread.start()
+            stderr_thread.start()
             if proc.stdin and not proc.stdin.closed:
                 proc.stdin.close()
-        stdout_text, stderr_text = proc.communicate(timeout=timeout)
-        # communicate() returns only the bytes NOT yet read; the incremental
-        # stdout read above saw the rest. Reassemble the full stdout.
+            deadline = time.monotonic() + timeout
+            for thread in (stdout_thread, stderr_thread):
+                thread.join(timeout=max(0.0, deadline - time.monotonic()))
+            if stdout_thread.is_alive() or stderr_thread.is_alive():
+                # The child did not flush its pipes within the deadline:
+                # kill it and reap, so the test fails on the partial output
+                # below instead of leaking the process.
+                proc.kill()
+                for thread in (stdout_thread, stderr_thread):
+                    thread.join(timeout=10.0)
+            proc.wait(timeout=timeout)
+        # The drain threads captured only the bytes NOT read by the
+        # incremental stdout read above; reassemble the full stdout.
+        stdout_text = "".join(drained_stdout)
+        stderr_text = "".join(drained_stderr)
         full_stdout = stdout + stdout_text
         self.assertEqual(proc.returncode, 0, f"child exited {proc.returncode}; stderr: {stderr_text[:2000]}")
         return full_stdout, stderr_text
