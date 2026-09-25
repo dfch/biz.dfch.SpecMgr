@@ -4,7 +4,7 @@ created: '2026-09-19 13:18:34.380+02:00'
 id: 0a1c2f63-9576-4463-bf40-8f771f14fefb
 status: draft
 type: vcr
-updated: '2026-09-24 08:51:11.816+02:00'
+updated: '2026-09-25T12:59:01.952+02:00'
 version: 1.0.0
 ---
 
@@ -47,7 +47,7 @@ prompt each produce a start and a completion (or error) log record,
 tagged with a per-invocation correlation ID; a non-invocation request
 sharing the same server-side dispatch mechanism (e.g. a capability-
 listing request) produces no such record. Verified by
-`tests/telemetry/test_middleware.py::TestMethodFilter::test_the_three_invocation_methods_produce_start_and_completion_records` (with `SPECMGR_LOG_ENABLED=true`, a `tools/call`, a `resources/read`, and a `prompts/get` each produce a start and a completion record tagged with the same per-invocation correlation ID), `tests/telemetry/test_middleware.py::TestMethodFilter::test_non_invocation_methods_produce_no_record_and_no_attachment` (`initialize`, `tools/list`, `resources/list`, `prompts/list`, `ping`, and a `notifications/*` message produce no record and pass through unmodified), `tests/telemetry/test_middleware.py::TestIdentityExtraction::test_resource_read_identity_comes_from_the_uri_param` (a resource read's logged identity comes from its `uri` param -- resources are observed, not tools only), and `tests/telemetry/test_middleware.py::TestEnablementGate::test_logging_only_engages_the_observability_path` (the records engage under `SPECMGR_LOG_ENABLED=true` alone).
+`tests/telemetry/test_middleware.py::TestMethodFilter::test_the_three_invocation_methods_produce_start_and_completion_records` (with `SPECMGR_LOG_ENABLED=true`, a `tools/call`, a `resources/read`, and a `prompts/get` each produce a start and a completion record tagged with the same per-invocation correlation ID), `tests/telemetry/test_middleware.py::TestMethodFilter::test_non_invocation_methods_produce_no_record_and_no_attachment` (`initialize`, `tools/list`, `resources/list`, `prompts/list`, `ping`, and a `notifications/*` message produce no record and pass through unmodified), `tests/telemetry/test_middleware.py::TestIdentityExtraction::test_resource_read_identity_comes_from_the_uri_param` (a resource read's logged identity comes from its `uri` param -- resources are observed, not tools only), and `tests/telemetry/test_middleware.py::TestEnablementGate::test_logging_only_engages_the_observability_path` (the records engage under `SPECMGR_LOG_ENABLED=true` alone). The enablement's own configuration path is additionally pinned by `tests/test_cli.py::TestDotenvTelemetryOrdering` (the project `.env`'s `SPECMGR_LOG_ENABLED=true`/`SPECMGR_LOG_FORMAT=json` alone, in a fresh child with a clean `SPECMGR_*`-stripped process environment, installs the configured scrub-wired JSON console handler on the root logger at CLI import time -- i.e. the `.env` value reaches `server.py`'s import-scope config read; its companion test pins the `.env`-only static misconfiguration refusing to start with exit code 1, empty stdout, and exactly one stderr line -- the `TelemetryConfigError` message, ACC-011. Both are the post-close review's ordering fix, Phase 10 Task 10.3).
 
 ### AC-003 (Test): Log content is redacted
 
@@ -122,11 +122,15 @@ AC-003 (redaction) from Phase 6 (Tasks 6.1/6.2/6.7:
 onto every specmgr-installed handler plus the 13 reworded
 `UcParseError` title sites in `uc/models/v1/parser.py`, with the
 deprecated ADR domain's 9 title sites as the accepted residual gap and
-the path-embedding sites scrub-covered).
+the path-embedding sites scrub-covered). AC-002 additionally carries the Phase 10 post-close review pin of the project-`.env` configuration path (`tests/test_cli.py::TestDotenvTelemetryOrdering`).
 
 ## Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+### 2026-09-25T12:40:09.000+02:00 - Post-close review (Phase 10): AC-002 carries the .env configuration-path pin; coverage stays full
+
+feat-139-logging-telemetry's post-close review (feat-reviewer) found the one real defect, in the enablement's configuration path: cli.py's command import chain transitively executes server.py's module scope -- where load_telemetry_config()/setup_logging()/bootstrap_telemetry() read os.environ at import time -- before cli.py's own \_load_default_dotenv() ran, so a project .env's `SPECMGR_LOG_*`/`SPECMGR_OTEL_*` values were silently ignored: a .env-only SPECMGR_LOG_ENABLED=true left the feature disabled at import scope, and a .env-only static misconfiguration bypassed the ACC-011 fail-closed refusal while the status resource (which re-parses the env at read time) reported the enabled configuration that was not in effect (ACC-007). Phase 10 Task 10.3 moved the .env load above the command import chain (find_dotenv's frame-walk start is cli.py itself in either position, so discovery semantics are unchanged) and pinned both directions with the new tests/test_cli.py::TestDotenvTelemetryOrdering subprocess pair (a fresh child per test, the `SPECMGR_*`-stripped process environment, the temp .env the child's only telemetry configuration): the .env-only enablement now installs the configured scrub-wired JSON console handler on the root logger at import time, and the .env-only misconfiguration refuses with exit code 1, empty stdout, and exactly one stderr line -- the TelemetryConfigError message naming the offending env var(s). Both tests are red against the pre-fix ordering. Every acceptance criterion remains demonstrably covered, so ## Coverage stays full.
 
 ### 2026-09-24 06:00:00.000+02:00 - Phase 6 landed: AC-003 carries concrete test references; coverage is full
 
