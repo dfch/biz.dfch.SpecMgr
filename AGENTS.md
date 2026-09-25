@@ -124,9 +124,18 @@ type or cross-cutting:
   (`create_qa`/`update_qa`, plus `refine`). Schema at `qa/models/v2/`,
   inside the domain package, not `models/qa/` — QA is a single-schema
   (v2-only) domain: every question/answer category holds zero or more
-  adjacent, un-headed pairs (`<!-- optional comment -->` + `> {question}`
-  block quote + free-form answer prose) directly inside a category section,
-  no heading of its own per pair, plus a `## Elicitation Context` section
+  adjacent, un-headed pairs (`<!-- optional comment -->` +
+  `> **<d>.<NNNN>**: {question}` block quote + free-form answer prose)
+  directly inside a category section, no heading of its own per pair —
+  each question carries the mandatory bold question-number prefix
+  `**<d>.<NNNN>**: ` (single category digit per Q&A-bearing section,
+  4-digit zero-padded per-category sequence; enforced by
+  `QaQuestionAnswer`'s own `field_validator` in `qa/models/v2/`,
+  feat-156), and an unanswered question carries a `TODO: ` placeholder
+  (e.g. `TODO: answer pending`) as its answer text — a pure authoring
+  convention, not parsed or validated — which replaced the legacy
+  `_(awaiting response)_` marker the `refine` prompt previously shipped
+  (feat-156 REQ-007/009) — plus a `## Elicitation Context` section
   (structurally identical to, but not one of, the 9 ISO/IEC 25010:2023
   characteristic sections) between `## General` and
   `## Functional Suitability`. An earlier `qa/models/v1/` schema (one
