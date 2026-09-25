@@ -53,6 +53,7 @@ import io
 import json
 import logging
 import sys
+import threading
 import unittest
 from pathlib import Path
 from types import TracebackType
@@ -650,6 +651,28 @@ class TestSpanProcessorFailOpen(unittest.TestCase):
 
         sut.on_end(TestSpanProcessorFailOpen._BogusSpan())
         sut.on_end(TestSpanProcessorFailOpen._BogusSpan())
+
+        self.assertEqual(len(self._capture.messages), 1)
+        self.assertIn("span redaction is disabled", self._capture.messages[0])
+
+    def test_concurrent_fail_open_engagements_log_exactly_one_warning(self):
+        """``on_end`` runs concurrently (each thread ends its own spans), so two
+        simultaneously-first failures must not both pass the one-shot flag and
+        log the warning twice (the "at most one message per failure episode"
+        convention, under the flag's lock)."""
+        sut = redact.RedactionSpanProcessor()
+        n_threads = 16
+        barrier = threading.Barrier(n_threads)
+
+        def _worker() -> None:
+            barrier.wait()
+            sut.on_end(TestSpanProcessorFailOpen._BogusSpan())
+
+        threads = [threading.Thread(target=_worker, name=f"specmgr-redact-fail-open-{i}") for i in range(n_threads)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
 
         self.assertEqual(len(self._capture.messages), 1)
         self.assertIn("span redaction is disabled", self._capture.messages[0])

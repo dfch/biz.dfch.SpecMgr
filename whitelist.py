@@ -281,10 +281,12 @@ reconcile
 move
 reset
 
-# telemetry (feat-139-logging-telemetry Phase 2): `JsonFormatter.format` is
-# invoked by the stdlib logging framework's own handler-emit path (the
+# telemetry (feat-139-logging-telemetry Phase 2/6): `JsonFormatter.format`
+# (telemetry/logging.py) and `ScrubbingFormatter.format`
+# (telemetry/redact.py, the wrapper whose delegate is the JsonFormatter)
+# are invoked by the stdlib logging framework's own handler-emit path (the
 # ``Handler.emit`` -> ``formatter.format(record)`` dynamic dispatch), never
-# by a direct call in ``src/``; the name scopes to that single method today.
+# by a direct call in ``src/``; the name scopes to those two methods today.
 format
 
 # telemetry (feat-139-logging-telemetry Phase 4): `OtlpExporterWrapper`'s

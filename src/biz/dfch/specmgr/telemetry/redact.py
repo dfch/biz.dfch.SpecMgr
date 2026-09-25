@@ -107,6 +107,7 @@ from __future__ import annotations
 
 import logging
 import re
+import threading
 from collections.abc import Mapping
 from typing import Any
 
@@ -427,8 +428,13 @@ class RedactionSpanProcessor(SpanProcessor):
         """Build the processor (no configuration; the scrub is fixed)."""
         super().__init__()
         # One-shot fail-open flag: at most one warning per process (the
-        # "at most one message per failure episode" convention).
+        # "at most one message per failure episode" convention). ``on_end``
+        # can run concurrently (each thread ends its own spans), so the
+        # flag's check-and-set takes the lock -- the same discipline as the
+        # other fail-open sites in this feature (the middleware's
+        # ``_disable_lock``, the OTLP wrapper's episode lock).
         self._fail_open_announced = False
+        self._fail_open_lock = threading.Lock()
 
     def on_end(self, readable_span: ReadableSpan) -> None:
         """Scrub the ended span's attributes and events (fail-open on an unexpected shape).
@@ -448,9 +454,10 @@ class RedactionSpanProcessor(SpanProcessor):
         Args:
             ex: The unexpected exception the scrub hit.
         """
-        if self._fail_open_announced:
-            return
-        self._fail_open_announced = True
+        with self._fail_open_lock:
+            if self._fail_open_announced:
+                return
+            self._fail_open_announced = True
         logger.warning(
             "span redaction is disabled for the rest of this process: the installed "
             "OpenTelemetry SDK's private span containers are not in the expected shape "

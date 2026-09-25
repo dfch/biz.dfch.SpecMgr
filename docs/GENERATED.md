@@ -151,7 +151,7 @@ First-line docstrings from each module, organized by domain:
 - `general/tools/_path_safety.py` — Reusable, doc-type-agnostic path-safety assertions for document ids and
 - `general/tools/_references.py` — Shared cross-reference extraction and per-domain target resolution
 - `general/tools/_splice.py` — Frontmatter-stripped body extraction, body-line splicing, and body-line
-- `general/tools/_timestamps.py` — Shared, private timestamp-formatting helpers (feat-38-39-41-43-44 Phase 3, Task 3.1).
+- `general/tools/_timestamps.py` — Shared, private timestamp-formatting helpers for the MCP write side (feat-38-39-41-43-44 Phase 3,
 - `general/tools/delete.py` — ``@mcp.tool()`` wrapper: delete (feat-36-delete, Phase 2).
 - `general/tools/list_references.py` — ``@mcp.tool()`` wrapper: list_references (feat-144-ref-artifact, Phase 2).
 - `general/tools/mdformat.py` — ``@mcp.tool()`` wrapper: mdformat.
@@ -211,6 +211,7 @@ First-line docstrings from each module, organized by domain:
 - `models/md/_frontmatter_parse.py` — Shared frontmatter-parsing error enrichment (feat-27-validation Phase 2, Tasks 2.1/2.2).
 - `models/md/_markdown.py` — Markdown shared instance.
 - `models/md/_ordering.py` — Shared, private newest-first ordering validation helper for `models.md` domain body models.
+- `models/md/_timestamps.py` — Shared, private ``T``-canonical datetime-formatting helpers for the ``models.md`` frontmatter
 - `models/md/_util.py` — Shared, private validation helpers for the ``models.md`` subpackage.
 - `models/md/alias.py` — Alias decorator for MarkdownStr class name transformation.
 - `models/md/alias_match.py` — Match a parsed heading's actual text against a class's declared `@alias`.
@@ -554,4 +555,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 371
+**Test files**: 372

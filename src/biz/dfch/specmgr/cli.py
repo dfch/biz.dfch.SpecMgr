@@ -37,6 +37,27 @@ from dotenv import find_dotenv, load_dotenv
 
 from .telemetry.config import TelemetryConfigError
 
+# ---------------------------------------------------------------------------
+# .env loading
+# ---------------------------------------------------------------------------
+
+
+def _load_default_dotenv() -> None:
+    """Load ``.env`` walking upward from this file, then from CWD as fallback."""
+    dotenv_path = find_dotenv(usecwd=False) or find_dotenv(usecwd=True)
+    if dotenv_path:
+        load_dotenv(dotenv_path, verbose=False)
+
+
+# Must run before the command imports below: that import chain transitively
+# executes server.py's module scope, where the telemetry config is validated,
+# the structured logging is set up, and the OTel providers are bootstrapped
+# -- all of them reading os.environ at import time (feat-139-logging-telemetry
+# Tasks 1.6/2.5/4.9). A project .env's SPECMGR_LOG_*/SPECMGR_OTEL_* values
+# only take effect if loaded before that point, like every other SPECMGR_*
+# variable family (which the command functions read lazily at call time).
+_load_default_dotenv()
+
 try:
     from .commands import (
         adr_toc,
@@ -54,25 +75,14 @@ except TelemetryConfigError as ex:
     # ACC-011 (feat-139-logging-telemetry): this import chain transitively
     # executes server.py's module scope -- where the telemetry config is
     # validated unconditionally at startup (Task 1.6) -- before any command
-    # function runs. Surface a static misconfiguration as a single clear
-    # stderr line naming the offending env var(s) plus exit code 1,
-    # mirroring commands/mcp.py's own handling of the same error.
+    # function runs, but after _load_default_dotenv() above, so a project
+    # .env's SPECMGR_LOG_*/SPECMGR_OTEL_* values are seen by the validation
+    # and fail closed on a .env-only misconfiguration too. Surface a static
+    # misconfiguration as a single clear stderr line naming the offending
+    # env var(s) plus exit code 1, mirroring commands/mcp.py's own handling
+    # of the same error.
     typer.echo(str(ex), err=True)
     sys.exit(1)
-
-# ---------------------------------------------------------------------------
-# .env loading
-# ---------------------------------------------------------------------------
-
-
-def _load_default_dotenv() -> None:
-    """Load ``.env`` walking upward from this file, then from CWD as fallback."""
-    dotenv_path = find_dotenv(usecwd=False) or find_dotenv(usecwd=True)
-    if dotenv_path:
-        load_dotenv(dotenv_path, verbose=False)
-
-
-_load_default_dotenv()
 
 # ---------------------------------------------------------------------------
 # Typer application
