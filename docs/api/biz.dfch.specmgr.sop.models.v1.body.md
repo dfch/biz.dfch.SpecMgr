@@ -16910,19 +16910,21 @@ Subclasses the shared `models.md.SupportBase` (feat-29-dec-source-roles)
 
 `### {ISO8601 timestamp} ( - | : ) {title}` under `## Updates` -- one update entry.
 
-The H3 heading text carries an ISO8601 timestamp and a title, joined by
-either ``" - "`` (space, hyphen, space) or ``" : "`` (space, colon,
-space): e.g. `### 2026-08-30 14:30:00.000+02:00 - Approved` or
-`### 2026-08-30 14:30:00.000+02:00 : Approved`. The em-dash separator is
-rejected. The format is ``yyyy-MM-dd HH:mm:ss.fff`` with an explicit UTC
-offset (``+02:00``, ``-05:00``) or ``Z`` for UTC -- deliberately **not**
-the same format as frontmatter ``created``/``updated`` (which keep the
-shared generic tools' format); this format is scoped to `## Updates`
-entry headings only, which are hand/LLM-authored body content.
-Constrained by the regex `@alias` above and enforced by `match_alias`
-(`re.fullmatch`) at parse time -- a wrong timestamp format, a missing
-offset, an em-dash separator, or a missing `` - ``/`` : `` title all
-fail the parse eagerly.
+The H3 heading text carries a full ISO 8601 date+time timestamp and a
+title, joined by either ``" - "`` (space, hyphen, space) or ``" : "``
+(space, colon, space): e.g. `### 2026-08-30 14:30:00.000+02:00 -
+Approved` or `### 2026-08-30T14:30:00.000+02:00 : Approved`. The
+em-dash separator is rejected. The format is ``yyyy-MM-dd`` + (``T`` or
+space) + ``HH:mm:ss.fff`` with an explicit UTC offset (``+02:00``,
+``-05:00``) or ``Z`` for UTC -- the same full format as frontmatter
+``created``/``updated`` (both separators accepted, date-only rejected;
+ADR 8c889262-152b-4b8e-ae2c-75371f7a9edf); this format is scoped to
+`## Updates` entry headings only, which are hand/LLM-authored body
+content. Constrained by the regex `@alias` above and enforced by
+`match_alias` (`re.fullmatch`) at parse time -- a wrong timestamp
+format (including a date-only value), a missing offset, an em-dash
+separator, or a missing `` - ``/`` : `` title all fail the parse
+eagerly.
 
 Parameters
 ----------

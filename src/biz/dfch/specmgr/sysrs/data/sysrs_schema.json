@@ -917,7 +917,7 @@
             }
           ],
           "default": null,
-          "pattern": "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}(?:Z|[+-]\\d{2}:\\d{2})$",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}[T ]\\d{2}:\\d{2}:\\d{2}\\.\\d{3}(?:Z|[+-]\\d{2}:\\d{2})$",
           "title": "Created"
         },
         "id": {
@@ -953,7 +953,7 @@
             }
           ],
           "default": null,
-          "pattern": "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}(?:Z|[+-]\\d{2}:\\d{2})$",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}[T ]\\d{2}:\\d{2}:\\d{2}\\.\\d{3}(?:Z|[+-]\\d{2}:\\d{2})$",
           "title": "Updated"
         },
         "version": {
@@ -1064,7 +1064,7 @@
       "type": "object"
     },
     "UpdateEntry": {
-      "description": "`### {timestamp} ( - | : ) {title}` under `## Updates` -- one update\nentry (a change to the `sysrs` document itself, not to the system it\nspecifies).\n\nThe H3 heading text carries a timestamp and a title, joined by either\n``\" - \"`` (space, hyphen, space) or ``\" : \"`` (space, colon, space):\ne.g. `### 2026-08-31 - Created` or\n`### 2026-08-31 07:40:12.500+02:00 : Created`. The em-dash separator is\nrejected. The timestamp is either a bare ``yyyy-MM-dd`` date or the\nfull ``yyyy-MM-dd HH:mm:ss.fff`` + explicit UTC offset (``+02:00``,\n``-05:00``) or ``Z`` for UTC variant. Mirrors DEC's/VCR's `UpdateEntry`\nshape exactly (feat-38-39-41-43-44 D2/D3, adopted from day one).\n\nParameters\n----------\ncontent:\n    The lead paragraph right after the H3 heading -- this entry's own\n    update text. Mandatory.\ntimestamp:\n    Computed. The timestamp carried by the heading, verbatim. Never\n    stored separately -- derived from the retained heading text.\ntitle:\n    Computed. The title carried by the heading (the text after\n    ``\" - \"``/``\" : \"``). Never stored separately -- derived from the\n    retained heading text.",
+      "description": "`### {timestamp} ( - | : ) {title}` under `## Updates` -- one update\nentry (a change to the `sysrs` document itself, not to the system it\nspecifies).\n\nThe H3 heading text carries a full date+time timestamp and a title,\njoined by either ``\" - \"`` (space, hyphen, space) or ``\" : \"`` (space,\ncolon, space): e.g. `### 2026-08-31 07:40:12.500+02:00 - Created` or\n`### 2026-08-31T07:40:12.500+02:00 : Created`. The em-dash separator is\nrejected. The timestamp is the full ``yyyy-MM-dd`` + (``T`` or space) +\n``HH:mm:ss.fff`` + explicit UTC offset (``+02:00``, ``-05:00``) or\n``Z`` for UTC variant -- date-only is rejected (ADR\n8c889262-152b-4b8e-ae2c-75371f7a9edf). Mirrors DEC's/VCR's\n`UpdateEntry` shape exactly.\n\nParameters\n----------\ncontent:\n    The lead paragraph right after the H3 heading -- this entry's own\n    update text. Mandatory.\ntimestamp:\n    Computed. The timestamp carried by the heading, verbatim. Never\n    stored separately -- derived from the retained heading text.\ntitle:\n    Computed. The title carried by the heading (the text after\n    ``\" - \"``/``\" : \"``). Never stored separately -- derived from the\n    retained heading text.",
       "properties": {
         "content": {
           "$ref": "#/$defs/MarkdownParagraph",

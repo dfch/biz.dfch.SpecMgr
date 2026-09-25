@@ -59,31 +59,32 @@ from ....models.md import (
 from ....models.md._ordering import validate_newest_first
 from .task_item import TaskItem
 
-#: Matches a `{yyyy-MM-dd or full date+time} ( - | : ) {title}` heading line
-#: as retained in a composite `MarkdownSection3`'s `.text` (which carries the
-#: heading's inline content, no `###` marker), capturing the timestamp
-#: (named group `timestamp`) and the title (named group `title`). Mirrors
+#: Matches a `{full date+time} ( - | : ) {title}` heading line as retained in
+#: a composite `MarkdownSection3`'s `.text` (which carries the heading's
+#: inline content, no `###` marker), capturing the timestamp (named group
+#: `timestamp`) and the title (named group `title`). Mirrors
 #: `dec.models.v1.body._UPDATE_ENTRY_HEADING_PATTERN`/`vcr.models.v1.body._UPDATE_ENTRY_HEADING_PATTERN`
 #: exactly.
 _UPDATE_ENTRY_HEADING_PATTERN = re.compile(
-    r"(?P<timestamp>\d{4}-\d{2}-\d{2}(?: \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2}))?)(?: - | : )(?P<title>.+)"
+    r"(?P<timestamp>\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2}))(?: - | : )(?P<title>.+)"
 )
 
 
 @alias(
-    value=r"^\d{4}-\d{2}-\d{2}(?: \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2}))?(?: - | : ).+$",
+    value=r"^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})(?: - | : ).+$",
     type=AliasType.REGEX,
 )
 class UpdateEntry(MarkdownSection3):
     """`### {timestamp} ( - | : ) {title}` under `## Recent Updates` -- one update entry.
 
-    The H3 heading text carries a timestamp and a title, joined by either
-    ``" - "`` (space, hyphen, space) or ``" : "`` (space, colon, space):
-    e.g. `### 2026-08-19 - Kickoff` or
-    `### 2026-08-19 05:42:00.000+02:00 : Kickoff`. The em-dash separator is
-    rejected. The timestamp is either a bare ``yyyy-MM-dd`` date or the
-    full ``yyyy-MM-dd HH:mm:ss.fff`` + explicit UTC offset (``+02:00``,
-    ``-05:00``) or ``Z`` for UTC variant (REQ-004). Mirrors DEC/VCR's own
+    The H3 heading text carries a full date+time timestamp and a title,
+    joined by either ``" - "`` (space, hyphen, space) or ``" : "`` (space,
+    colon, space): e.g. `### 2026-08-19 05:42:00.000+02:00 - Kickoff` or
+    `### 2026-08-19T05:42:00.000Z : Kickoff`. The em-dash separator is
+    rejected. The timestamp is the full ``yyyy-MM-dd`` + (``T`` or space) +
+    ``HH:mm:ss.fff`` + explicit UTC offset (``+02:00``, ``-05:00``) or
+    ``Z`` for UTC variant -- date-only is rejected (ADR
+    8c889262-152b-4b8e-ae2c-75371f7a9edf). Mirrors DEC/VCR's own
     `UpdateEntry` shape exactly.
 
     Parameters
@@ -107,7 +108,7 @@ class UpdateEntry(MarkdownSection3):
     @computed_field  # type: ignore
     @property
     def timestamp(self) -> str:
-        """The timestamp carried by this heading (e.g. `2026-08-19` or `2026-08-19 05:42:00.000+02:00`).
+        """The timestamp carried by this heading (e.g. `2026-08-19 05:42:00.000+02:00`).
 
         Returns:
             The timestamp string parsed from the retained heading text.
@@ -125,7 +126,7 @@ class UpdateEntry(MarkdownSection3):
     @computed_field  # type: ignore
     @property
     def title(self) -> str:
-        """The title carried by this heading (e.g. `Kickoff` for `### 2026-08-19 - Kickoff`).
+        """The title carried by this heading (e.g. `Kickoff` for `### 2026-08-19 05:42:00.000+02:00 - Kickoff`).
 
         Returns:
             The title parsed from the retained heading text (the text
@@ -182,8 +183,8 @@ class RecentUpdates(MarkdownSection2WithComment):
         """Reject entries that are not in newest-first order.
 
         Delegates to the shared `models.md._ordering.validate_newest_first`
-        helper (mixed date-only/date+time day-granularity rule, equal
-        values allowed) -- mirrors `feat.models.v1.body.Updates._validate_newest_first`
+        helper (full date+time aware-datetime comparison, equal values
+        allowed) -- mirrors `feat.models.v1.body.Updates._validate_newest_first`
         without duplicating its logic. Raises on the first out-of-order pair.
         """
         validate_newest_first([update.timestamp for update in self.updates], "RecentUpdates")

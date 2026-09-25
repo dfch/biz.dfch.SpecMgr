@@ -807,7 +807,11 @@ documentation in `docs/`:
   frontmatter block — `id` (the `feat-NNN-slug` folder name itself, not a
   generated UUID), `version` (semver, starts at `1.0.0`), `status`
   (`planning` | `progress` | `review` | `done`), and `created`/`updated`
-  (`YYYY-MM-DD`, `updated` bumped on every substantive edit). There is no
+  (full ISO 8601 date+time — `yyyy-MM-dd` + `T` or space + `HH:mm:ss.fff` +
+  `Z`/`±HH:mm`; the MCP writes the `T`-separated canonical form and both
+  separators are accepted on read, ADR
+  8c889262-152b-4b8e-ae2c-75371f7a9edf; `updated` bumped on every
+  substantive edit). There is no
   separate `GitHub Issue` field/body-line: the issue number is the `NNN`
   infix already embedded in `id`/the folder name (`feat-NNN-slug`) — `0`
   means no issue yet — so it is never duplicated elsewhere in the file. See

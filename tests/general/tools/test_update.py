@@ -96,9 +96,10 @@ from biz.dfch.specmgr.vcr.tools.create_vcr import create_vcr
 update_module = importlib.import_module("biz.dfch.specmgr.general.tools.update")
 update = update_module.update
 
-#: The canonical date+time timestamp shape (D4/D7) the ``updated`` bump must match: space-separated,
-#: exactly three millisecond digits, `Z` or a signed `±HH:mm` offset.
-_DATE_TIME_TIMESTAMP = r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})"
+#: The canonical date+time timestamp shape (feat-146) the ``updated`` bump must match:
+#: `T`-separated (the machine-written canonical form), exactly three millisecond digits,
+#: `Z` or a signed `±HH:mm` offset.
+_DATE_TIME_TIMESTAMP = r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})"
 
 _REQ_MINIMAL_BODY = textwrap.dedent(
     """\
@@ -240,7 +241,7 @@ _TSK_MINIMAL_BODY = textwrap.dedent(
 
     ## Recent Updates
 
-    ### 2026-08-19 - Kickoff
+    ### 2026-08-19 00:00:00.000Z - Kickoff
 
     Started the task list.
     """
@@ -255,11 +256,11 @@ _TSK_UPDATED_BODY = textwrap.dedent(
 
     ## Recent Updates
 
-    ### 2026-08-19 - Kickoff
+    ### 2026-08-19 00:00:00.000Z - Kickoff
 
     Started the task list.
 
-    ### 2026-08-19 - Progress
+    ### 2026-08-19 00:00:00.000Z - Progress
 
     Finished the first item.
     """
@@ -808,10 +809,10 @@ _CASES: list[_Case] = [
         updated_body=_TSK_UPDATED_BODY,
         middle_marker="Started the task list.",
         middle_replacement="Started the task list with a kickoff note.",
-        append_fragment="\n### 2026-08-19 - Progress\n\nFinished the first item.\n",
+        append_fragment="\n### 2026-08-19 00:00:00.000Z - Progress\n\nFinished the first item.\n",
         eof_marker="## Recent Updates",
-        eof_fragment="## Recent Updates\n\n### 2026-08-19 - Kickoff\n\nStarted the task list.\n",
-        deletable_suffix="\n### 2026-08-19 - Progress\n\nFinished the first item.\n",
+        eof_fragment="## Recent Updates\n\n### 2026-08-19 00:00:00.000Z - Kickoff\n\nStarted the task list.\n",
+        deletable_suffix="\n### 2026-08-19 00:00:00.000Z - Progress\n\nFinished the first item.\n",
         field_error_marker="- [ ] Do the first thing",
         field_error_fragment="- [z] Not a valid checkbox marker",
         field_error_is_append=False,
