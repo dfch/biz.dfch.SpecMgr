@@ -707,6 +707,7 @@ class SpecmgrTelemetryMiddleware:
         try:
             result = await call_next(ctx)
         except MCPError as e:
+            duration_ms = _duration_ms(started)
             self._log(
                 _PHASE_FAILED,
                 logging.ERROR,
@@ -716,13 +717,14 @@ class SpecmgrTelemetryMiddleware:
                 correlation_id,
                 domain=domain,
                 status=status,
-                duration_ms=_duration_ms(started),
+                duration_ms=duration_ms,
                 exception=_raised_exception_field(e),
             )
-            self._record_metrics(item_type, item_name, domain, _duration_ms(started), error_type=str(e.error.code))
+            self._record_metrics(item_type, item_name, domain, duration_ms, error_type=str(e.error.code))
             _attach_correlation_id_to_mcp_error(e, correlation_id)
             raise
         except ValidationError as e:
+            duration_ms = _duration_ms(started)
             self._log(
                 _PHASE_FAILED,
                 logging.ERROR,
@@ -732,12 +734,13 @@ class SpecmgrTelemetryMiddleware:
                 correlation_id,
                 domain=domain,
                 status=status,
-                duration_ms=_duration_ms(started),
+                duration_ms=duration_ms,
                 exception=_raised_exception_field(e),
             )
-            self._record_metrics(item_type, item_name, domain, _duration_ms(started), error_type=type(e).__qualname__)
+            self._record_metrics(item_type, item_name, domain, duration_ms, error_type=type(e).__qualname__)
             raise _converted_mcp_error(e, correlation_id) from e
         except Exception as e:
+            duration_ms = _duration_ms(started)
             self._log(
                 _PHASE_FAILED,
                 logging.ERROR,
@@ -747,10 +750,10 @@ class SpecmgrTelemetryMiddleware:
                 correlation_id,
                 domain=domain,
                 status=status,
-                duration_ms=_duration_ms(started),
+                duration_ms=duration_ms,
                 exception=_raised_exception_field(e),
             )
-            self._record_metrics(item_type, item_name, domain, _duration_ms(started), error_type=type(e).__qualname__)
+            self._record_metrics(item_type, item_name, domain, duration_ms, error_type=type(e).__qualname__)
             raise _converted_mcp_error(e, correlation_id) from e
         try:
             duration_ms = _duration_ms(started)
