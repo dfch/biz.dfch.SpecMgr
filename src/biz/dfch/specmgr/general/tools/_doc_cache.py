@@ -95,6 +95,23 @@ attempt to acquire another lock.
 **Explicitly out of scope** (mirroring the feature's own Scope section): no
 TTL/size-based eviction, and no ``stat()``-based (mtime/size) pre-check fast
 path -- content-hash-only for this first version.
+
+**feat-139-logging-telemetry Phase 5 (Task 5.4): hit/miss counters, a
+``stats()`` accessor, and the domain registry.** ``DocCache.__init__``
+gains an optional ``domain`` parameter: a named instance self-registers
+into the module-level :data:`DOC_CACHE_REGISTRY` (domain-keyed,
+last-wins) at construction time, and the module gains a test-only
+:func:`reset_doc_cache_registry` mirroring :meth:`DocCache.reset`. Every
+instance carries plain-int hit/miss counters incremented at :meth:`read`'s
+real hit/miss decision points (a hash-matched entry -- success or cached
+failure alike -- is a hit; anything that re-invokes ``parse_fn`` is a
+miss), exposed through :meth:`DocCache.stats` as
+``{"hits": int, "misses": int}``. The registry + counters are what the
+feature's ``mcp.cache.hit``/``mcp.cache.miss`` observable counters
+(``telemetry/metrics.py``'s callbacks, registered at bootstrap) read per
+``mcp.domain``. This module itself stays free of ``opentelemetry.*``
+imports -- plain ints, base-library-safe; the observable instruments
+live in ``telemetry/``.
 """
 
 from __future__ import annotations
@@ -110,7 +127,7 @@ import yaml.error
 from pydantic import BaseModel, ValidationError
 from pydantic_core import InitErrorDetails, PydanticCustomError
 
-__all__ = ["CACHEABLE_ERROR_TYPES", "DocCache"]
+__all__ = ["CACHEABLE_ERROR_TYPES", "DOC_CACHE_REGISTRY", "DocCache", "reset_doc_cache_registry"]
 
 #: The exact failure channel every ``parse_<domain>`` function in this
 #: codebase can raise (mirrors ``general.tools._listing.DEFAULT_ERROR_TYPES``):
@@ -125,6 +142,35 @@ CACHEABLE_ERROR_TYPES: tuple[type[Exception], ...] = (AssertionError, Validation
 
 #: Parsed-document type produced by a caller-supplied ``parse_fn``.
 _DocT = TypeVar("_DocT")
+
+#: The registry of live, domain-named :class:`DocCache` instances
+#: (feat-139-logging-telemetry, Task 5.4): one entry per domain, keyed by
+#: domain name, populated by each domain's own ``tools/_cache.py``
+#: singleton self-registering at import time (``DocCache("<domain>")``).
+#: Domain-keyed, last-wins: re-importing a domain package (a test's fresh
+#: import) replaces its entry. The telemetry observable
+#: ``mcp.cache.hit``/``mcp.cache.miss`` callbacks (``telemetry/metrics.
+#: py``) iterate it -- via a lazy import inside the callback body, never
+#: at this module's own import time -- to attribute cache activity per
+#: ``mcp.domain``. Plain Python, no ``opentelemetry.*`` import here.
+DOC_CACHE_REGISTRY: dict[str, "DocCache"] = {}
+#: Guards :data:`DOC_CACHE_REGISTRY` get/set (the same discipline as
+#: :attr:`DocCache._lock`, which guards only one instance's own entries).
+_registry_lock = threading.Lock()
+
+
+def reset_doc_cache_registry() -> None:
+    """Clear every domain -> :class:`DocCache` registry entry (test-only).
+
+    Mirrors :meth:`DocCache.reset` (clear one instance's entries) at the
+    registry level: tests that build their own named ``DocCache``
+    instances -- or freshly import a domain's ``tools/_cache.py``
+    singleton -- call this in ``setUp``/``tearDown`` so neither their own
+    throwaway instances nor another test's fresh import leak into the
+    telemetry observable counters' iteration. Not for production use.
+    """
+    with _registry_lock:
+        DOC_CACHE_REGISTRY.clear()
 
 
 def _fresh_exception(exc: Exception) -> Exception:
@@ -245,13 +291,61 @@ class DocCache(Generic[_DocT]):
     this class does not attempt to de-duplicate in-flight parses.
     """
 
-    def __init__(self) -> None:
-        """Initialize an empty cache."""
+    def __init__(self, domain: str | None = None) -> None:
+        """Initialize an empty cache, optionally registered under ``domain``.
+
+        Parameters
+        ----------
+        domain:
+            The document-domain name this cache serves (e.g. ``"req"``).
+            A non-``None`` domain self-registers the instance into
+            :data:`DOC_CACHE_REGISTRY` (domain-keyed, last-wins) so the
+            feat-139 telemetry observable cache counters can attribute
+            ``mcp.cache.hit``/``mcp.cache.miss`` per ``mcp.domain``
+            (Task 5.4). ``None`` (the default) leaves the instance
+            unregistered -- throwaway test instances need no registry
+            presence, and a bare instance can therefore never pollute the
+            registry.
+        """
+        assert domain is None or (isinstance(domain, str) and domain), domain
         self._lock = threading.Lock()
         #: Maps a resolved path to its ``(content_hash, result)`` entry,
         #: where ``result`` is either the successfully parsed document or
         #: the exception a failed parse raised.
         self._entries: dict[Path, tuple[bytes, _DocT | Exception]] = {}
+        #: The domain name this cache registered under (``None`` when it
+        #: did not register at all).
+        self._domain = domain
+        #: :meth:`read` calls served from a hash-matched entry (no
+        #: re-parse) -- a cached success or a cached failure alike.
+        self._hits = 0
+        #: :meth:`read` calls that had to (re-)invoke ``parse_fn``.
+        self._misses = 0
+        if domain is not None:
+            with _registry_lock:
+                DOC_CACHE_REGISTRY[domain] = self
+
+    @property
+    def domain(self) -> str | None:
+        """The domain name this cache registered under (``None`` when unregistered)."""
+        result = self._domain
+        return result
+
+    def stats(self) -> dict[str, int]:
+        """Return this cache's hit/miss counters (feat-139, Task 5.4).
+
+        The small mapping the telemetry observable
+        ``mcp.cache.hit``/``mcp.cache.miss`` callbacks read (they iterate
+        the :data:`DOC_CACHE_REGISTRY` and call this per entry). Plain
+        ints, read under this instance's own lock; no
+        ``opentelemetry.*`` involvement in this module.
+
+        Returns:
+            ``{"hits": <int>, "misses": <int>}``.
+        """
+        with self._lock:
+            result: dict[str, int] = {"hits": self._hits, "misses": self._misses}
+        return result
 
     def read(self, path: Path, parse_fn: Callable[[str], _DocT]) -> _DocT:
         """Return the cached or freshly-parsed result for ``path``.
@@ -339,9 +433,16 @@ class DocCache(Generic[_DocT]):
         text = path.read_text(encoding="utf-8")
         content_hash = hashlib.blake2b(text.encode("utf-8")).digest()
 
+        # The hit/miss decision point (feat-139, Task 5.4): a hash-matched
+        # entry -- a cached success or a cached failure alike -- is a hit
+        # (no re-parse), anything else a miss (``parse_fn`` runs below).
+        # Each branch increments its own counter under this instance's
+        # lock, so a call counts exactly once, for the outcome it took.
         with self._lock:
             cached = self._entries.get(resolved_path)
         if cached is not None and cached[0] == content_hash:
+            with self._lock:
+                self._hits += 1
             cached_result = cached[1]
             if isinstance(cached_result, Exception):
                 raise _fresh_exception(cached_result)
@@ -349,6 +450,8 @@ class DocCache(Generic[_DocT]):
                 copied_result: _DocT = cached_result.model_copy(deep=True)
                 return copied_result
             return cached_result
+        with self._lock:
+            self._misses += 1
 
         try:
             result: _DocT = parse_fn(text)

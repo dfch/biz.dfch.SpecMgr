@@ -595,9 +595,19 @@ type or cross-cutting:
     quality model, `specmgr://dtais` — the DTAIS verification-method
     vocabulary VCR's `## Acceptance Criteria` depends on, kept here rather
     than under `vcr/resources/` since it is domain-knowledge other document
-    types may also want to reference, and `specmgr://rasci` — the generic
+    types may also want to reference, `specmgr://rasci` — the generic
     RASCI responsibility-assignment framework, REQ-011; motivated by `sop`
-    but not scoped to it), and `general/prompts/` (`compact_history` — rotates
+    but not scoped to it, `specmgr://ears` — the EARS
+    requirement-phrasing templates for requirement-phrasing document
+    types (feat-92-resources REQ-006), and `specmgr://config` — every
+    document domain's resolved absolute base directory plus whether its
+    `SPECMGR_*_DIR` env var is explicitly set, never disclosing the env
+    var's value (feat-51-mcp-cwd REQ-001/REQ-002). Plus
+    `specmgr://telemetry/status` — the current logging/telemetry
+    enablement state as a two-line `list[str]`, registered from
+    `general/resources/telemetry_status.py` since `telemetry/` is shared
+    infrastructure, not a document domain (feat-139-logging-telemetry
+    REQ-003)), and `general/prompts/` (`compact_history` — rotates
      older `Recent Updates` entries out of any feature folder's `README.md`
       into a sibling `history.md`). Every `get_<d>` tool for the whole-body
     domains additionally
@@ -612,6 +622,42 @@ type or cross-cutting:
    wrong-format before any filesystem access, and confine the resolved path
    to the domain's own base directory after resolution — `_path_safety`'s
    UUID-shaped domains now include `adr`; `delete` itself is unchanged.
+  - **`telemetry/`** — cross-cutting shared infrastructure for the MCP
+    server's opt-in structured logging and OpenTelemetry metrics/tracing
+    (feat-139-logging-telemetry, ADR fdbb6d22-278a-4ecf-b2f6-db208bc49fc6) —
+    NOT a document domain: `telemetry/config.py` (fail-closed
+    parsing/validation of the eight `SPECMGR_LOG_*`/`SPECMGR_OTEL_*` env
+    vars into a typed, stdlib-only `TelemetryConfig`),
+    `telemetry/logging.py` (the dual rich/JSON console handlers on stderr,
+    the opt-in always-JSON file sink, and the explicit idempotent
+    root-logger setup), `telemetry/middleware.py` (the `ServerMiddleware`:
+    per-invocation correlation ID, id/type-only start/completion/error log
+    records for `tools/call`/`resources/read`/`prompts/get`, the
+    correlation-ID-on-error-response attachment, and the `mcp.tool.*`
+    call metrics; a pure pass-through when both features are off),
+    `telemetry/otel.py` (the OTel SDK bootstrap — `TracerProvider`/
+    `MeterProvider` + `console`/OTLP-HTTP exporter, fixed
+    `service.name = "specmgr"` resource, the `OtlpExporterWrapper`
+    de-duplicating OTLP-unreachable failure noise to one message per
+    episode, and provider shutdown at process exit),
+    `telemetry/metrics.py` (the shared metric names/attribute keys, the
+    instrument slots, and the `record_lock_wait` helper —
+    base-library-safe, no `opentelemetry.*` import, the only telemetry
+    module the 13 `<domain>/tools/_lock.py` files import),
+    `telemetry/domain_mapping.py` (the explicit tool/resource/prompt
+    name+uri -> `mcp.domain` mapping), and `telemetry/redact.py` (the
+    best-effort absolute-path scrub — fixed `<redacted-path>` token —
+    applied at formatter level to every specmgr-installed log handler and,
+    via a global `SpanProcessor`, to every span the process exports). Its
+    read-only status surface is the `specmgr://telemetry/status` resource
+    (registered from `general/resources/telemetry_status.py`, see the
+    `general/` bullet above). Its modules are imported individually where
+    needed — `server.py`'s startup wiring (config -> logging -> OTel ->
+    middleware, at module scope), `cli.py`/`commands/mcp.py` (the
+    `TelemetryConfigError` refusal),
+    `general/resources/telemetry_status.py`, and the `_lock.py` modules
+    (for `metrics`) — never from `biz.dfch.specmgr`'s own `__init__.py`,
+    so the base library stays free of the `mcp`/OpenTelemetry extras.
 
 **Models location — a real, intentional divergence, not an oversight**:
 the rule is domain-first — every document type keeps its schema inside
@@ -715,8 +761,8 @@ status for the ADR feature specifically and should be kept in sync with
 historical design doc. Don't assume any domain package exists beyond the
 per-domain bullets in the Status section above (each with its respective
 `tools`/`prompts`/`resources` sub-packages, per the exceptions noted
-there), or anything in `general/resources/` beyond `version`/`iso25010` —
-check first.
+there), or anything in `general/resources/` beyond what the `general/`
+bullet above enumerates — check first.
 
 ## Project Shape
 

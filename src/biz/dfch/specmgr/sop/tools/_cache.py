@@ -69,7 +69,7 @@ __all__ = ["invalidate_sop_cache", "read_sop", "reconcile_sop_cache", "reset_sop
 
 #: Module-level singleton, one per process, for the lifetime of the process
 #: (mirrors ``_lock.py``'s ``_locks`` registry). See the module docstring.
-_cache: DocCache[SopDocument] = DocCache()
+_cache: DocCache[SopDocument] = DocCache("sop")
 
 
 def _parse(text: str) -> SopDocument:

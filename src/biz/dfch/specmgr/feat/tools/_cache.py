@@ -85,7 +85,7 @@ __all__ = [
 
 #: Module-level singleton, one per process, for the lifetime of the process
 #: (mirrors ``_lock.py``'s ``_locks`` registry). See the module docstring.
-_cache: DocCache[FeatDocument] = DocCache()
+_cache: DocCache[FeatDocument] = DocCache("feat")
 
 
 def _parse(text: str) -> FeatDocument:

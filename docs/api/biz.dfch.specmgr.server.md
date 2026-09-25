@@ -108,13 +108,22 @@ specmgr://ears --       The EARS (Easy Approach to Requirements Syntax) five
                         requirements, Optional features) and when to use each -- raw
                         markdown domain-knowledge guidance.
 specmgr://config --     For every document domain (adr, req, uc, tsk, qa, prb, gol,
-                        rsk, dec, sop, feat, vcr, sysrs), the resolved absolute base directory and
-                        whether the domain's ``SPECMGR_*_DIR`` environment variable is
-                        explicitly set (feat-51-mcp-cwd REQ-001) -- lets a client
-                        self-diagnose a CWD/env-var misconfiguration without shell access to
-                        the server's host. Never discloses the value of any environment
-                        variable, only whether the relevant directory-path env var is present
-                        (REQ-002).
+                         rsk, dec, sop, feat, vcr, sysrs), the resolved absolute base directory and
+                         whether the domain's ``SPECMGR_*_DIR`` environment variable is
+                         explicitly set (feat-51-mcp-cwd REQ-001) -- lets a client
+                         self-diagnose a CWD/env-var misconfiguration without shell access to
+                         the server's host. Never discloses the value of any environment
+                         variable, only whether the relevant directory-path env var is present
+                         (REQ-002).
+specmgr://telemetry/status -- The current logging/telemetry enablement state of this
+                         server process as a list of two strings: one line for logging
+                         (``logging: disabled`` or ``logging: enabled (level=<LEVEL>,
+                         format=<rich|json>, file=<on|off>)``) and one line for telemetry
+                         (``telemetry: disabled`` or ``telemetry: enabled
+                         (exporter=<console|otlp>)``) (feat-139-logging-telemetry, REQ
+                         41444084-6821-426d-84a2-028a3f4fed0b) -- read-only; reflects the
+                         ``SPECMGR_LOG_*``/``SPECMGR_OTEL_*`` environment the process
+                         started with.
 
 REQ has no ``specmgr://req/{id}`` resource, unlike ADR -- id-based reads go
 through the ``get_req`` tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
@@ -411,5 +420,14 @@ registers all three.
 
 ### `_lifespan(_server: 'MCPServer') -> 'AsyncGenerator[None, None]'`
 
-Placeholder lifespan: no shared state to initialise yet.
+Lifespan: shut down the Phase 4 OTel providers at process exit (Task 4.1's exit pin).
+
+The post-``yield`` section runs after serving ends (stdin EOF / client
+disconnect). ``shutdown_telemetry()`` performs the ``MeterProvider``'s
+final metric collection and the ``BatchSpanProcessor``'s final span
+flush -- by then mcp 2.0.0's stdio transport has restored fd 1, so
+this is the only place that final export can safely land on the
+``out=sys.stderr``-redirected console exporters (or over OTLP) rather
+than contaminating the real stdout. A no-op when telemetry was
+disabled at startup (the default).
 

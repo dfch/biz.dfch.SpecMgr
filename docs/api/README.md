@@ -119,6 +119,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general.resources.ears`](biz.dfch.specmgr.general.resources.ears.md) — Resource: specmgr://ears -- the EARS requirement-phrasing templates (feat-92-resources REQ-006).
 - [`biz.dfch.specmgr.general.resources.iso25010`](biz.dfch.specmgr.general.resources.iso25010.md) — Resource: specmgr://iso25010 (Task 0.8.3; feat-92-resources Phase 1).
 - [`biz.dfch.specmgr.general.resources.rasci`](biz.dfch.specmgr.general.resources.rasci.md) — Resource: specmgr://rasci (feat-30 Task 3.5, REQ-011).
+- [`biz.dfch.specmgr.general.resources.telemetry_status`](biz.dfch.specmgr.general.resources.telemetry_status.md) — Resource: specmgr://telemetry/status -- current logging/telemetry state.
 - [`biz.dfch.specmgr.general.resources.version`](biz.dfch.specmgr.general.resources.version.md) — Resource: specmgr://version — MCP server package version number.
 - [`biz.dfch.specmgr.general.tools`](biz.dfch.specmgr.general.tools.md) — MCP tool wrappers for general-purpose utilities (mirrors ``adr/tools/``'s shape).
 - [`biz.dfch.specmgr.general.tools._doc_cache`](biz.dfch.specmgr.general.tools._doc_cache.md) — Generic, doc-type-agnostic content-hash-validated in-memory read cache (feat-107-doc-cache, Phase 2/Phase 6).
@@ -374,6 +375,14 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.sysrs.tools.get_sysrs_template`](biz.dfch.specmgr.sysrs.tools.get_sysrs_template.md) — ``@mcp.tool()`` wrapper: get_sysrs_template (Task 3.2).
 - [`biz.dfch.specmgr.sysrs.tools.list_sysrs`](biz.dfch.specmgr.sysrs.tools.list_sysrs.md) — ``@mcp.tool()`` wrapper: list_sysrs (Task 3.2).
 - [`biz.dfch.specmgr.sysrs.tools.parse_sysrs`](biz.dfch.specmgr.sysrs.tools.parse_sysrs.md) — ``@mcp.tool()`` wrapper: parse_sysrs (Task 3.2).
+- [`biz.dfch.specmgr.telemetry`](biz.dfch.specmgr.telemetry.md) — Shared logging/telemetry infrastructure for the MCP server (feat-139-logging-telemetry).
+- [`biz.dfch.specmgr.telemetry.config`](biz.dfch.specmgr.telemetry.config.md) — Parse and validate the ``SPECMGR_LOG_*``/``SPECMGR_OTEL_*`` environment
+- [`biz.dfch.specmgr.telemetry.domain_mapping`](biz.dfch.specmgr.telemetry.domain_mapping.md) — The explicit tool/resource/prompt-name -> document-domain mapping (feat-139-logging-telemetry, Phase 5, Task 5.1).
+- [`biz.dfch.specmgr.telemetry.logging`](biz.dfch.specmgr.telemetry.logging.md) — Structured logging for the MCP server (feat-139-logging-telemetry, Phase 2, Task 2.1).
+- [`biz.dfch.specmgr.telemetry.metrics`](biz.dfch.specmgr.telemetry.metrics.md) — Shared metric names, instrument slots, and the lock-wait helper (feat-139 Phase 5, Tasks 5.2-5.5).
+- [`biz.dfch.specmgr.telemetry.middleware`](biz.dfch.specmgr.telemetry.middleware.md) — The specmgr ``ServerMiddleware``: correlation IDs, call logging, and call metrics (Phase 3/5, Tasks 3.1/5.2/5.3).
+- [`biz.dfch.specmgr.telemetry.otel`](biz.dfch.specmgr.telemetry.otel.md) — OpenTelemetry SDK bootstrap (feat-139-logging-telemetry, Phase 4, Task 4.1).
+- [`biz.dfch.specmgr.telemetry.redact`](biz.dfch.specmgr.telemetry.redact.md) — Free-text redaction backstop for log records and spans (feat-139-logging-telemetry, Phase 6, Tasks 6.1/6.2).
 - [`biz.dfch.specmgr.tsk`](biz.dfch.specmgr.tsk.md) — TaskList (TSK) domain -- lightweight task/todo-list specifications.
 - [`biz.dfch.specmgr.tsk.models`](biz.dfch.specmgr.tsk.models.md) — TaskList (TSK) models -- Pydantic schema powered by the generic ``models/md`` engine.
 - [`biz.dfch.specmgr.tsk.models.v1`](biz.dfch.specmgr.tsk.models.v1.md) — TaskList (TSK) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.

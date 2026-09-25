@@ -174,16 +174,20 @@ def parse_uc(text: str) -> UseCase:
         raise UcParseError("the document must start with a single top-level (H1) title heading")
     title = roots[0].title
     if len(roots) > 1:
-        raise UcParseError(f"more than one top-level (H1) heading found; second one is {roots[1].title!r}")
+        # feat-139 Task 6.7: the second H1 is the document's own title -- the
+        # message omits it (the exception type/raise condition are unchanged).
+        raise UcParseError("more than one top-level (H1) heading found")
 
     fields: dict[str, object] = {}
     seen_h2: set[str] = set()
     for node in roots[0].children:
         if node.level != 2:
-            raise UcParseError(f"heading level H{node.level} is not part of the use case schema: {node.title!r}")
+            # feat-139 Task 6.7: heading level only, not the heading's title.
+            raise UcParseError(f"heading level H{node.level} is not part of the use case schema")
         field_name = _H2_FIELD_BY_TITLE.get(_strip_annotation(node.title))
         if field_name is None:
-            raise UcParseError(f"unrecognized H2 heading {node.title!r}")
+            # feat-139 Task 6.7: heading kind only, not the heading's title.
+            raise UcParseError("unrecognized H2 heading")
         if field_name in seen_h2:
             raise UcParseError(f"duplicate H2 heading for {field_name!r}")
         seen_h2.add(field_name)
@@ -213,7 +217,8 @@ def _parse_characteristic_information(node: _Node, lines: list[str]) -> Characte
     seen_h3: set[str] = set()
     for child in node.children:
         if child.level != 3:
-            raise UcParseError(f"heading level H{child.level} is not part of the use case schema: {child.title!r}")
+            # feat-139 Task 6.7: heading level only, not the heading's title.
+            raise UcParseError(f"heading level H{child.level} is not part of the use case schema")
         title = _strip_annotation(child.title)
         if title == "Related Use Cases":
             fields["related_use_cases"] = _parse_related_use_cases(lines[child.content_start : child.end])
@@ -221,10 +226,12 @@ def _parse_characteristic_information(node: _Node, lines: list[str]) -> Characte
             continue
         entry = _CHARACTERISTIC_INFORMATION_FIELDS.get(title)
         if entry is None:
-            raise UcParseError(f"unrecognized H3 heading under Characteristic Information: {child.title!r}")
+            # feat-139 Task 6.7: heading kind/section only, not the title.
+            raise UcParseError("unrecognized H3 heading under Characteristic Information")
         field_name, kind = entry
         if field_name in seen_h3:
-            raise UcParseError(f"duplicate H3 heading {child.title!r}")
+            # feat-139 Task 6.7: heading kind only, not the heading's title.
+            raise UcParseError("duplicate H3 heading")
         seen_h3.add(field_name)
         section_lines = lines[child.content_start : child.end]
         fields[field_name] = _parse_bullet_list(section_lines) if kind == "list" else _join_text(section_lines)
@@ -254,13 +261,16 @@ def _parse_related_information(node: _Node, lines: list[str]) -> RelatedInformat
     seen_h3: set[str] = set()
     for child in node.children:
         if child.level != 3:
-            raise UcParseError(f"heading level H{child.level} is not part of the use case schema: {child.title!r}")
+            # feat-139 Task 6.7: heading level only, not the heading's title.
+            raise UcParseError(f"heading level H{child.level} is not part of the use case schema")
         title = _strip_annotation(child.title)
         field_name = _RELATED_INFORMATION_FIELDS.get(title)
         if field_name is None:
-            raise UcParseError(f"unrecognized H3 heading under Related Information: {child.title!r}")
+            # feat-139 Task 6.7: heading kind/section only, not the title.
+            raise UcParseError("unrecognized H3 heading under Related Information")
         if field_name in seen_h3:
-            raise UcParseError(f"duplicate H3 heading {child.title!r}")
+            # feat-139 Task 6.7: heading kind only, not the heading's title.
+            raise UcParseError("duplicate H3 heading")
         seen_h3.add(field_name)
         fields[field_name] = _parse_bullet_list(lines[child.content_start : child.end])
     return RelatedInformation(**fields)
@@ -268,10 +278,12 @@ def _parse_related_information(node: _Node, lines: list[str]) -> RelatedInformat
 
 def _parse_extension(node: _Node, lines: list[str]) -> Extension:
     if node.level != 3:
-        raise UcParseError(f"heading level H{node.level} is not part of the use case schema: {node.title!r}")
+        # feat-139 Task 6.7: heading level only, not the heading's title.
+        raise UcParseError(f"heading level H{node.level} is not part of the use case schema")
     match = _EXTENSION_HEADING_PATTERN.match(node.title)
     if match is None:
-        raise UcParseError(f"unrecognized Extension heading (expected '{{stepRef}}. {{condition}}'): {node.title!r}")
+        # feat-139 Task 6.7: the expected shape only, not the heading's title.
+        raise UcParseError("unrecognized Extension heading (expected '{stepRef}. {condition}')")
     step_reference = match.group("step_reference")
     condition = match.group("condition").strip()
     items = _parse_numbered_items(lines[node.content_start : node.end])
@@ -281,10 +293,12 @@ def _parse_extension(node: _Node, lines: list[str]) -> Extension:
 
 def _parse_sub_variation(node: _Node, lines: list[str]) -> SubVariation:
     if node.level != 3:
-        raise UcParseError(f"heading level H{node.level} is not part of the use case schema: {node.title!r}")
+        # feat-139 Task 6.7: heading level only, not the heading's title.
+        raise UcParseError(f"heading level H{node.level} is not part of the use case schema")
     match = _SUB_VARIATION_HEADING_PATTERN.match(_strip_annotation(node.title))
     if match is None:
-        raise UcParseError(f"unrecognized Sub-Variation heading (expected 'Step {{N}}: {{label}}'): {node.title!r}")
+        # feat-139 Task 6.7: the expected shape only, not the heading's title.
+        raise UcParseError("unrecognized Sub-Variation heading (expected 'Step {N}: {label}')")
     step_reference = match.group("step_reference")
     variations = _parse_bullet_list(lines[node.content_start : node.end])
     return SubVariation(step_reference=step_reference, variations=variations)

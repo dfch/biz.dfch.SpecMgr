@@ -123,13 +123,22 @@ specmgr://ears --       The EARS (Easy Approach to Requirements Syntax) five
                         requirements, Optional features) and when to use each -- raw
                         markdown domain-knowledge guidance.
 specmgr://config --     For every document domain (adr, req, uc, tsk, qa, prb, gol,
-                        rsk, dec, sop, feat, vcr, sysrs), the resolved absolute base directory and
-                        whether the domain's ``SPECMGR_*_DIR`` environment variable is
-                        explicitly set (feat-51-mcp-cwd REQ-001) -- lets a client
-                        self-diagnose a CWD/env-var misconfiguration without shell access to
-                        the server's host. Never discloses the value of any environment
-                        variable, only whether the relevant directory-path env var is present
-                        (REQ-002).
+                         rsk, dec, sop, feat, vcr, sysrs), the resolved absolute base directory and
+                         whether the domain's ``SPECMGR_*_DIR`` environment variable is
+                         explicitly set (feat-51-mcp-cwd REQ-001) -- lets a client
+                         self-diagnose a CWD/env-var misconfiguration without shell access to
+                         the server's host. Never discloses the value of any environment
+                         variable, only whether the relevant directory-path env var is present
+                         (REQ-002).
+specmgr://telemetry/status -- The current logging/telemetry enablement state of this
+                         server process as a list of two strings: one line for logging
+                         (``logging: disabled`` or ``logging: enabled (level=<LEVEL>,
+                         format=<rich|json>, file=<on|off>)``) and one line for telemetry
+                         (``telemetry: disabled`` or ``telemetry: enabled
+                         (exporter=<console|otlp>)``) (feat-139-logging-telemetry, REQ
+                         41444084-6821-426d-84a2-028a3f4fed0b) -- read-only; reflects the
+                         ``SPECMGR_LOG_*``/``SPECMGR_OTEL_*`` environment the process
+                         started with.
 
 REQ has no ``specmgr://req/{id}`` resource, unlike ADR -- id-based reads go
 through the ``get_req`` tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
@@ -430,18 +439,103 @@ from contextlib import asynccontextmanager
 
 from mcp.server import MCPServer
 
+from .telemetry.config import load_telemetry_config
+from .telemetry.logging import setup_logging
+from .telemetry.middleware import SpecmgrTelemetryMiddleware, logger as telemetry_logger, middleware_contract_compatible
+from .telemetry.otel import bootstrap_telemetry, shutdown_telemetry
+
 
 @asynccontextmanager
 async def _lifespan(_server: MCPServer) -> AsyncGenerator[None, None]:
-    """Placeholder lifespan: no shared state to initialise yet."""
-    yield
+    """Lifespan: shut down the Phase 4 OTel providers at process exit (Task 4.1's exit pin).
 
+    The post-``yield`` section runs after serving ends (stdin EOF / client
+    disconnect). ``shutdown_telemetry()`` performs the ``MeterProvider``'s
+    final metric collection and the ``BatchSpanProcessor``'s final span
+    flush -- by then mcp 2.0.0's stdio transport has restored fd 1, so
+    this is the only place that final export can safely land on the
+    ``out=sys.stderr``-redirected console exporters (or over OTLP) rather
+    than contaminating the real stdout. A no-op when telemetry was
+    disabled at startup (the default).
+    """
+    yield
+    shutdown_telemetry()
+
+
+# feat-139-logging-telemetry (Task 1.6, ACC-011): validate the
+# ``SPECMGR_LOG_*``/``SPECMGR_OTEL_*`` environment unconditionally, before the
+# server is constructed, so a static misconfiguration makes ``specmgr mcp``
+# refuse to start (``telemetry.config.TelemetryConfigError``) instead of
+# running half-broken. The OTel bootstrap (Task 4.9) appends at this same
+# module-scope point too, in that order (config, logging, OTel, middleware).
+telemetry_config = load_telemetry_config()
+
+# feat-139-logging-telemetry (Task 2.5, ACC-001/ACC-009): apply the
+# validated config's structured logging to the root logger at this same
+# module-scope point, still before the server is constructed, so
+# ``SPECMGR_LOG_ENABLED``/``SPECMGR_LOG_FORMAT`` take effect the moment
+# ``specmgr mcp`` runs. The setup is a no-op when logging is disabled (the
+# default) -- so the MCP SDK's own ``configure_logging()`` call inside
+# ``MCPServer.__init__`` below (a ``logging.basicConfig``, hence a no-op
+# once the root has handlers) runs afterwards and cannot override the
+# enabled configuration; when logging is enabled the setup explicitly
+# replaces the root handler set, so it is effective in either handler
+# state (idempotent, never a silent no-op).
+setup_logging(telemetry_config)
+
+# feat-139-logging-telemetry (Task 4.9, ACC-003): bootstrap the
+# OpenTelemetry SDK (``TracerProvider``/``MeterProvider`` + the
+# ``SPECMGR_OTEL_EXPORTER``-selected exporter) at this same module-scope
+# point, after the logging setup and before the server is constructed, so
+# ``SPECMGR_OTEL_ENABLED`` takes effect the moment ``specmgr mcp`` runs.
+# It is a no-op when telemetry is disabled (the default) -- setting
+# nothing, so the SDK's built-in ``OpenTelemetryMiddleware`` keeps creating
+# inert non-recording spans through the API's no-provider proxy. When
+# enabled it installs the providers via the global API, which the SDK's
+# import-time-fetched proxy tracer (``mcp/shared/_otel.py``) resolves
+# against -- that is why bootstrapping here, before ``MCPServer(...)``
+# construction, still engages the SDK's built-in middleware (Task 4.2
+# confirms it end to end). Keeping the config -> logging -> OTel ->
+# middleware order, the middleware append below stays last.
+bootstrap_telemetry(telemetry_config)
 
 mcp = MCPServer(
     name="specmgr",
     instructions="An artifact manager for system specifications.",
     lifespan=_lifespan,
 )
+
+# feat-139-logging-telemetry (Task 3.2, upgraded by Task 4.3;
+# ACC-008/ACC-010): append the correlation-ID/call-observability
+# middleware to the server's own ``middleware`` chain, right after the
+# server is constructed. The append is wrapped in the Task 4.3 fail-open
+# policy (the upgrade of Task 3.2's minimal guard -- the same mechanism,
+# not a second independent one): ``Server.middleware`` is a provisional
+# API (the ADR's flagged risk), so the installed SDK's contract is checked
+# first (``middleware_contract_compatible``: the ``middleware`` list type
+# and the ``ServerMiddleware.__call__`` signature vs. this middleware's
+# own), and an incompatible contract -- or a check/append that raises --
+# logs exactly one warning via the ``biz.dfch.specmgr.telemetry`` logger
+# and the server continues operating without call observability, rather
+# than failing to start. (The call-time half of the policy lives in the
+# middleware itself: a first contract violation at request time logs one
+# warning and disables observability for the process.)
+try:
+    if middleware_contract_compatible(mcp):
+        mcp.middleware.append(SpecmgrTelemetryMiddleware(telemetry_config))
+    else:
+        telemetry_logger.warning(
+            "the installed MCP SDK's Server.middleware contract is incompatible with the "
+            "specmgr telemetry middleware; the server continues operating without call "
+            "observability (one warning per episode)"
+        )
+except Exception as e:
+    telemetry_logger.warning(
+        "could not append the specmgr telemetry middleware to mcp.middleware "
+        "(incompatible Server.middleware contract?); the server continues "
+        "without call observability: %s",
+        e,
+    )
 
 # ---------------------------------------------------------------------------
 # Resource/tool/prompt registration (side-effect: registers everything on

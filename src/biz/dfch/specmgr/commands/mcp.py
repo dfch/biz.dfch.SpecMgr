@@ -55,6 +55,8 @@ from typing import Annotated
 
 import typer
 
+from ..telemetry.config import TelemetryConfigError
+
 
 def _warn_on_public_binding(host: str) -> None:
     """Warn when binding to all interfaces outside a container."""
@@ -111,6 +113,13 @@ def mcp(
         from ..server import mcp as mcp_server  # noqa: PLC0415
     except ImportError as ex:
         typer.echo("You must install the `mcp` extra to start this command (`biz-dfch-specmgr[mcp]`).")
+        raise typer.Exit(1) from ex
+    except TelemetryConfigError as ex:
+        # ACC-011 (feat-139-logging-telemetry): a static misconfiguration of
+        # the SPECMGR_LOG_*/SPECMGR_OTEL_* env vars fails closed -- refuse to
+        # start with a single clear stderr line naming the offending env
+        # var(s) (the exception's own single-line message), not a traceback.
+        typer.echo(str(ex), err=True)
         raise typer.Exit(1) from ex
 
     if transport.lower() == "sse":

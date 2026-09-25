@@ -280,3 +280,30 @@ invalidate
 reconcile
 move
 reset
+
+# telemetry (feat-139-logging-telemetry Phase 2/6): `JsonFormatter.format`
+# (telemetry/logging.py) and `ScrubbingFormatter.format`
+# (telemetry/redact.py, the wrapper whose delegate is the JsonFormatter)
+# are invoked by the stdlib logging framework's own handler-emit path (the
+# ``Handler.emit`` -> ``formatter.format(record)`` dynamic dispatch), never
+# by a direct call in ``src/``; the name scopes to those two methods today.
+format
+
+# telemetry (feat-139-logging-telemetry Phase 4): `OtlpExporterWrapper`'s
+# public state accessors, exercised only by its own unit tests so far (the
+# wrapper's internal logic reads the same state directly under its lock):
+# `failing` (whether a failure episode is in progress -- the Task 4.5 pin's
+# observable episode state) and `armed` (whether the suppression filter is
+# attached -- armed at each `export()` attempt's start, disarmed on a
+# `SUCCESS` return or `shutdown`). `exporter` is the read-only seam exposing
+# the wrapped OTLP exporter for the same tests.
+failing
+armed
+exporter
+
+# telemetry (feat-139-logging-telemetry Phase 6): `RedactionSpanProcessor.
+# on_end` is invoked by the OpenTelemetry SDK's own span-processor dispatch
+# (the `TracerProvider`'s `SynchronousMultiSpanProcessor` calls `on_end` on
+# each registered processor when a span ends), never by a direct call in
+# `src/`; the name scopes to that single method today.
+on_end

@@ -69,7 +69,7 @@ __all__ = ["invalidate_dec_cache", "read_dec", "reconcile_dec_cache", "reset_dec
 
 #: Module-level singleton, one per process, for the lifetime of the process
 #: (mirrors ``_lock.py``'s ``_locks`` registry). See the module docstring.
-_cache: DocCache[DecDocument] = DocCache()
+_cache: DocCache[DecDocument] = DocCache("dec")
 
 
 def _parse(text: str) -> DecDocument:

@@ -81,6 +81,23 @@ attempt to acquire another lock.
 TTL/size-based eviction, and no ``stat()``-based (mtime/size) pre-check fast
 path -- content-hash-only for this first version.
 
+**feat-139-logging-telemetry Phase 5 (Task 5.4): hit/miss counters, a
+``stats()`` accessor, and the domain registry.** ``DocCache.__init__``
+gains an optional ``domain`` parameter: a named instance self-registers
+into the module-level :data:`DOC_CACHE_REGISTRY` (domain-keyed,
+last-wins) at construction time, and the module gains a test-only
+:func:`reset_doc_cache_registry` mirroring :meth:`DocCache.reset`. Every
+instance carries plain-int hit/miss counters incremented at :meth:`read`'s
+real hit/miss decision points (a hash-matched entry -- success or cached
+failure alike -- is a hit; anything that re-invokes ``parse_fn`` is a
+miss), exposed through :meth:`DocCache.stats` as
+``{"hits": int, "misses": int}``. The registry + counters are what the
+feature's ``mcp.cache.hit``/``mcp.cache.miss`` observable counters
+(``telemetry/metrics.py``'s callbacks, registered at bootstrap) read per
+``mcp.domain``. This module itself stays free of ``opentelemetry.*``
+imports -- plain ints, base-library-safe; the observable instruments
+live in ``telemetry/``.
+
 ## Classes
 
 ### `DocCache`
@@ -261,6 +278,18 @@ this class does not attempt to de-duplicate in-flight parses.
   domain's cache instance is otherwise a module-level singleton that
   persists for the whole test process's lifetime.
 
+- `stats(self) -> 'dict[str, int]'`
+  Return this cache's hit/miss counters (feat-139, Task 5.4).
+
+  The small mapping the telemetry observable
+  ``mcp.cache.hit``/``mcp.cache.miss`` callbacks read (they iterate
+  the :data:`DOC_CACHE_REGISTRY` and call this per entry). Plain
+  ints, read under this instance's own lock; no
+  ``opentelemetry.*`` involvement in this module.
+
+  Returns:
+      ``{"hits": <int>, "misses": <int>}``.
+
 
 ## Functions
 
@@ -325,4 +354,16 @@ Exception
     A new exception instance (``is``-distinct from ``exc``) of the
     same type, with an equivalent (for the codebase's own real usage,
     identical) message.
+
+
+### `reset_doc_cache_registry() -> 'None'`
+
+Clear every domain -> :class:`DocCache` registry entry (test-only).
+
+Mirrors :meth:`DocCache.reset` (clear one instance's entries) at the
+registry level: tests that build their own named ``DocCache``
+instances -- or freshly import a domain's ``tools/_cache.py``
+singleton -- call this in ``setUp``/``tearDown`` so neither their own
+throwaway instances nor another test's fresh import leak into the
+telemetry observable counters' iteration. Not for production use.
 

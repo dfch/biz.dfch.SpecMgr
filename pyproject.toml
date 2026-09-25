@@ -63,6 +63,8 @@ cli = [
 mcp = [
     "biz-dfch-specmgr[cli]",
     "mcp>=2.0.0",
+    "opentelemetry-sdk>=1.44.0,<2.0.0",
+    "opentelemetry-exporter-otlp-proto-http>=1.44.0,<2.0.0",
 ]
 
 test = [

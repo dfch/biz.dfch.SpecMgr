@@ -56,3 +56,12 @@ Every mutating tool wraps its whole ``load_by_id`` -> mutate ->
 targeting the same id run one after another instead of interleaving,
 preventing the lost-update race described in this module's docstring.
 
+Wait time (the time ``acquire()`` blocks before the lock is granted)
+is recorded to the feat-139 ``mcp.lock.wait_time`` histogram via
+``telemetry.metrics.record_lock_wait`` (a pure no-op while telemetry
+is disabled) -- which is why the acquire/release control flow here is
+explicit rather than a bare ``with lock:`` (a naive wrap of that
+shape would measure acquire-plus-hold, not wait). The lock is
+released on every exit path, including a ``yield``-wrapped body that
+raises (feat-139, Task 5.5/5.6).
+

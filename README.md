@@ -180,6 +180,99 @@ specmgr mcp --transport streamable-http --host localhost --port 8000
 | `--host` / `-h` | `SPECMGR_MCP_HOST` | `localhost` | Bind address (SSE/streamable-http mode only) |
 | `--port` / `-p` | `SPECMGR_MCP_PORT` | `8000` | TCP port (SSE/streamable-http mode only) |
 
+### Logging and Telemetry
+
+The MCP server has opt-in structured logging and opt-in OpenTelemetry
+telemetry (metrics + tracing), configured by eight environment variables.
+Everything is **off by default**: with none of them set, the server emits
+zero log records and zero telemetry, and under the `stdio` transport
+stdout stays the pure JSON-RPC channel. When enabled, all log output goes
+to **stderr**, never stdout — the console in either format, the optional
+file sink, and even the telemetry `console` exporter's output.
+
+| Env var | Default | Accepted values |
+| --- | --- | --- |
+| `SPECMGR_LOG_ENABLED` | `false` | `true`/`false` (case-insensitive) — master switch for logging |
+| `SPECMGR_LOG_LEVEL` | `INFO` | `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL` (case-insensitive) |
+| `SPECMGR_LOG_FORMAT` | `rich` | `rich` (human-readable) or `json` (one JSON object per line) — case-sensitive |
+| `SPECMGR_LOG_FILE_ENABLED` | `false` | `true`/`false` (case-insensitive) — effective only when `SPECMGR_LOG_ENABLED=true` |
+| `SPECMGR_LOG_FILE_PATH` | *(none)* | path to the log file; required non-blank when `SPECMGR_LOG_FILE_ENABLED=true`. The file sink always emits JSON (one record per line, appended across restarts), regardless of `SPECMGR_LOG_FORMAT` |
+| `SPECMGR_OTEL_ENABLED` | `false` | `true`/`false` (case-insensitive) — master switch for telemetry |
+| `SPECMGR_OTEL_EXPORTER` | `console` | `console` or `otlp` — case-sensitive |
+| `SPECMGR_OTEL_ENDPOINT` | *(none)* | the OTLP **base URL**; required non-blank when `SPECMGR_OTEL_EXPORTER=otlp`. The server appends the spec-mandated `/v1/traces` and `/v1/metrics` paths itself — do not include them in the value |
+
+**What gets logged.** With `SPECMGR_LOG_ENABLED=true`, every tool call
+(`tools/call`), resource read (`resources/read`), and prompt invocation
+(`prompts/get`) produces a start record and a completion or error record
+on stderr, tagged with a per-invocation correlation ID. Protocol
+bookkeeping (`initialize`, `tools/list`, `resources/list`, `prompts/list`,
+`ping`, `notifications/*`) is not logged. When at least one of logging or
+telemetry is enabled, a *failing* call's error response carries the same
+correlation ID for log lookup — `_meta.correlationId` on a `tools/call`
+error result, `error.data.correlationId` on a JSON-RPC error — and
+successful results never carry one. With both features off (the default),
+error responses are byte-for-byte the SDK's own.
+
+**Status.** The read-only `specmgr://telemetry/status` resource reports
+what a running server process has active — it reflects the environment
+the process *started* with, so changing the variables requires a restart.
+It returns a `list[str]` of exactly two lines:
+
+- `logging: disabled`, or `logging: enabled (level=<LEVEL>, format=<rich|json>, file=<on|off>)`
+- `telemetry: disabled`, or `telemetry: enabled (exporter=<console|otlp>)`
+
+**What gets measured.** With `SPECMGR_OTEL_ENABLED=true`, every observed
+call is recorded as metrics and a trace span (the span's trace ID *is* the
+logging correlation ID): `mcp.tool.duration`, `mcp.tool.call.count`, and
+`mcp.tool.error.count` for call latency/counts/errors, `mcp.cache.hit`
+and `mcp.cache.miss` for the per-domain doc cache, and
+`mcp.lock.wait_time` for per-domain lock acquisition waits — attributed by
+`mcp.tool.name`, `mcp.domain`, and `mcp.item.type`
+(`tool`/`resource`/`prompt`). The `console` exporter (the default) writes
+to stderr; the `otlp` exporter sends OTLP/HTTP+protobuf to a collector's
+base URL (e.g. `http://localhost:4318`). An unreachable OTLP endpoint
+never breaks a tool call — at most one stderr warning per failure
+episode. As a redaction backstop, absolute filesystem paths in free-text
+log or span content are scrubbed to a fixed `<redacted-path>` token, and
+no log record or span this feature builds carries a document body,
+absolute path, or title as a structured field.
+
+**Misconfiguration fails closed.** An invalid or incomplete combination —
+`SPECMGR_LOG_FILE_ENABLED=true` without a non-blank
+`SPECMGR_LOG_FILE_PATH`, `SPECMGR_OTEL_EXPORTER=otlp` without a non-blank
+`SPECMGR_OTEL_ENDPOINT`, a value outside a variable's accepted set, or a
+boolean flag set to anything other than `true`/`false` — makes the server
+refuse to start with a single clear stderr line naming the offending
+variable(s) and exit code 1. The validation runs when the server module is
+imported, so in practice *every* `specmgr` command (not only `specmgr
+mcp`) refuses to start under a broken combination.
+
+**Examples.** Local development — human-readable rich console on stderr:
+
+```bash
+SPECMGR_LOG_ENABLED=true specmgr mcp
+```
+
+Production — machine-readable JSON console, with or without the opt-in
+JSON file sink:
+
+```bash
+SPECMGR_LOG_ENABLED=true SPECMGR_LOG_FORMAT=json specmgr mcp
+SPECMGR_LOG_ENABLED=true SPECMGR_LOG_FORMAT=json \
+  SPECMGR_LOG_FILE_ENABLED=true SPECMGR_LOG_FILE_PATH=/var/log/specmgr-server.json specmgr mcp
+```
+
+Production telemetry — to a real OTLP collector:
+
+```bash
+SPECMGR_OTEL_ENABLED=true SPECMGR_OTEL_EXPORTER=otlp \
+  SPECMGR_OTEL_ENDPOINT=http://localhost:4318 specmgr mcp
+```
+
+For a host-configured server (e.g. the OpenCode JSON in the next
+section), add the variables you want to the `environment` block alongside
+the `SPECMGR_*_DIR` ones.
+
 ### Add to OpenCode
 
 To add the `specmgr` MCP server to your OpenCode configuration:

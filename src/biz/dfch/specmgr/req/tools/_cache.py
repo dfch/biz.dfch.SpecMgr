@@ -71,7 +71,7 @@ __all__ = ["invalidate_req_cache", "read_req", "reconcile_req_cache", "reset_req
 
 #: Module-level singleton, one per process, for the lifetime of the process
 #: (mirrors ``_lock.py``'s ``_locks`` registry). See the module docstring.
-_cache: DocCache[ReqDocument] = DocCache()
+_cache: DocCache[ReqDocument] = DocCache("req")
 
 
 def _parse(text: str) -> ReqDocument:

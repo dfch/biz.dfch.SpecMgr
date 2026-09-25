@@ -24,7 +24,14 @@ resource (feat-51-mcp-cwd REQ-001) -- the resolved absolute base directory
 and env-var-set flag for every document domain, so a client can
 self-diagnose a CWD/env-var misconfiguration without shell access to the
 server's host; it never discloses the value of any environment variable,
-only whether a domain's own ``SPECMGR_*_DIR`` is set (REQ-002). Domain-specific
+only whether a domain's own ``SPECMGR_*_DIR`` is set (REQ-002).
+``telemetry_status`` registers the read-only
+``specmgr://telemetry/status`` resource (feat-139-logging-telemetry
+REQ-003) -- the current logging/telemetry enablement state of the server
+process as a two-line ``list[str]`` (logging enablement plus
+level/format/file-sink mode; telemetry enablement plus exporter), built
+from the same parsed, fail-closed-validated config object the server
+startup reads (``telemetry/config.py``). Domain-specific
 resources (e.g. ``adr_list``/``adr_get``)
 live under their own domain package instead (``biz.dfch.specmgr.adr.resources``).
 Import this package to load all cross-cutting resources at once::
