@@ -276,6 +276,46 @@ does not depend on a count staying in sync, instead.
 """Dispatches the generic update across every whole-body domain except `feat`."""
 ```
 
+### Domain-List Constants
+
+**Requirement:** The document-type domain names live in ONE place --
+`src/biz/dfch/specmgr/general/tools/_domains.py`. Every `src/` and `tests/`
+module that names a set of document types imports the shared names
+(`WHOLE_BODY_DOMAINS`, `WHOLE_BODY_NO_FEAT_DOMAINS`, `UUID_DOMAINS`,
+`ALL_DOMAINS`, `ADR`, `FEAT`) instead of hand-listing the set itself.
+`WHOLE_BODY_DOMAINS` is the only hand-listed domain tuple in the repo; a new
+domain registers its name there once (in canonical position), per ADR
+c4efbde6-fd19-4aa8-8668-95316ed62dcc ("Single source of truth for the
+document-type domain-name set", feat-125-domain-lists).
+
+- The forbidden pattern is a hand-listed literal domain-name set in code --
+  a tuple/list/frozenset, a `Literal[...]` annotation, or a dict-key set --
+  that would have to be kept in sync with the shared source by hand.
+- The allowed patterns are (1) importing the shared names, and (2) explicit
+  prose domain lists in docstrings: the `specmgr docs` generator requires
+  string literals, so docstring prose is the sanctioned exception (the
+  Docstring Style rule above governs how that prose is written).
+- A named local constant holding a domain-name set (e.g. a test file's own
+  `_UUID_DOMAINS`) is the same drift vector as a hand-listed literal and must
+  be imported from the shared source instead.
+
+**Example:**
+```python
+# ✓ Import the shared source; guard a natural dispatch table against it
+from biz.dfch.specmgr.general.tools._domains import WHOLE_BODY_DOMAINS
+
+assert set(_ADAPTERS) == set(WHOLE_BODY_DOMAINS), (
+    "_ADAPTERS keys drifted from the shared general.tools._domains.WHOLE_BODY_DOMAINS source -- add or "
+    "remove the domain in both places (feat-125-domain-lists, REQ-006)"
+)
+
+# ✗ A hand-listed literal domain-name set that silently drifts from the shared source
+_UUID_DOMAINS = ("req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "vcr", "sysrs", "adr")
+
+# ✓ An explicit prose domain list in a docstring -- the sanctioned exception
+"""Dispatches the generic update across req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs."""
+```
+
 ### Error Handling
 
 ```python

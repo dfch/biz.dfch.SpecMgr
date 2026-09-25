@@ -28,6 +28,7 @@ them as "extras" (see [Installation](#installation)).
 - [CLI Usage](#cli-usage)
 - [MCP Server](#mcp-server)
 - [Usage](#usage)
+- [Referencing Artifacts](#referencing-artifacts)
 - [Development](#development)
 - [Testing](#testing)
 - [Make a Release](#make-a-release)
@@ -360,6 +361,28 @@ connected AI assistant in plain language, e.g.:
 - "Create a new goal for reducing customer onboarding time."
 - "List all open risks and show me the high-severity ones."
 - "Draft a task list for requirement `<id>`."
+
+To resolve the cross-references an artifact already carries, see
+[Referencing Artifacts](#referencing-artifacts).
+
+## Referencing Artifacts
+
+specmgr documents cross-reference each other via `<TYPE> <uuid>` lines
+(VCR's `## Verifies`, SYSRS's per-section bullet lists, DEC's `## Related
+Artifacts`). The `list_references` MCP tool resolves those references:
+point your assistant at any artifact (`<type> <id>`) and it lists every
+`<TYPE> <uuid>` cross-reference in the artifact's body, each resolved to
+the referenced document's type, id, title (its H1), and on-disk path.
+Results are paged like every `list_*` tool; references that do not
+resolve on disk come back as rows carrying an `error` (not a failure),
+and free-form or non-uuid references are ignored.
+
+In [opencode](https://opencode.ai), the `/refs <type> <id>` slash command
+(`.opencode/command/refs.md`) wraps the same tool: it delegates to the
+read-only `ref-finder` subagent (`.opencode/agent/ref-finder.md`), which
+calls `list_references` and reports the rows, flagging any **NOT FOUND**
+references. `/refs` requires opencode — the tool itself is plain MCP,
+callable directly from any MCP client.
 
 ## Development
 

@@ -18,8 +18,9 @@ want to change before calling any write tool.
 ## 3. Map the requested change to the right tool
 - A change to the body -- the `cause`, `trigger`, `consequence`,
   `scope` entries, the `### Probability`/`### Impact` heading values of
-  either assessment, the `strategy` TARA word, the `mitigation`, or any
-  of the optional `owner`/`tags`/`more_information` sections -- -> the
+  either assessment, the `strategy` TARA word, the `mitigation`,
+  the `source` value, or any of the optional `owner`/`tags`/
+  `more_information` sections -- -> the
   generic `update` tool called with `type="rsk"`: a **line-range replace**
   for a localized change, or a **whole-body replace** otherwise.
   `content` is body markdown only (no frontmatter block) in both cases.

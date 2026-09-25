@@ -120,12 +120,10 @@ from ...vcr.tools._cache import invalidate_vcr_cache
 from ...vcr.tools._io import load_by_id as load_vcr_by_id
 from ...vcr.tools._lock import vcr_lock
 from ...vcr.tools._paths import vcr_base_dir
+from ._domains import WHOLE_BODY_DOMAINS
 from ._path_safety import assert_within, validate_id
 
 __all__ = ["delete"]
-
-#: The whole-body domains the generic delete tool covers (ADR excluded).
-_DELETE_TYPES = ("req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "feat", "vcr", "sysrs")
 
 
 class DeleteError(OSError):
@@ -375,14 +373,19 @@ _ADAPTERS: dict[str, Callable[[str], str]] = {
     "sysrs": _delete_sysrs,
 }
 
+assert set(_ADAPTERS) == set(WHOLE_BODY_DOMAINS), (
+    "_ADAPTERS keys drifted from the shared general.tools._domains.WHOLE_BODY_DOMAINS source -- add or "
+    "remove the domain in both places (feat-125-domain-lists, REQ-006)"
+)
+
 
 @mcp.tool(
     name="delete",
     title="Delete document",
     description=(
         "Permanently delete an existing document from disk across the whole-body "
-        "domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs; "
-        "`adr` is not supported). Resolves the document by `id`, takes the domain lock, "
+        f"domains (`type` is one of {', '.join(WHOLE_BODY_DOMAINS)}; `adr` is not supported). Resolves "
+        "the document by `id`, takes the domain lock, "
         "and removes it: the single `*.md` file for every flat domain (every whole-body domain "
         "except `feat`), or the entire "
         "`<base>/<id>/` folder for `feat`. Returns the deleted path as a string. "
@@ -394,7 +397,7 @@ _ADAPTERS: dict[str, Callable[[str], str]] = {
 )
 def delete(
     id: str,
-    type: Literal["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "feat", "vcr", "sysrs"],
+    type: Literal[*WHOLE_BODY_DOMAINS],
 ) -> str:
     """Permanently delete an existing document from disk, across the whole-body domains.
 

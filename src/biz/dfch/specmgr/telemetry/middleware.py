@@ -186,7 +186,7 @@ PARAMS_KEY_ARGUMENTS = "arguments"
 PARAMS_KEY_STATUS = "status"
 #: The generic dispatch tools' argument carrying the target domain (the
 #: ``type`` argument ``update``/``set_status``/``set_classification``/
-#: ``delete``/``validate`` all take).
+#: ``delete``/``validate``/``list_references`` all take).
 PARAMS_KEY_TYPE = "type"
 
 #: The tool name whose invocations additionally log the new status value.

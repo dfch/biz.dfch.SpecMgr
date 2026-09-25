@@ -45,6 +45,7 @@ from ...adr.tools._paths import ADR_DIR_ENV_VAR, adr_base_dir
 from ...dec.tools._paths import dec_base_dir
 from ...feat.tools._paths import FEAT_DIR_ENV_VAR, feat_base_dir
 from ...general.tools._doc_paths import DOCS_DIR_ENV_VAR
+from ...general.tools._domains import ALL_DOMAINS
 from ...gol.tools._paths import gol_base_dir
 from ...models import ConfigInfo, DomainConfig
 from ...prb.tools._paths import prb_base_dir
@@ -64,10 +65,10 @@ from ...vcr.tools._paths import vcr_base_dir
     name="config",
     title="SpecMgr Resolved Base Directory Configuration",
     description=(
-        "For every document domain (adr, req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, "
-        "vcr, sysrs), the resolved absolute base directory and whether the domain's SPECMGR_*_DIR "
-        "environment variable is explicitly set. Never discloses the value of any environment "
-        "variable, only whether the relevant directory-path env var is present."
+        "For every document domain ("
+        f"{', '.join(ALL_DOMAINS)}), the resolved absolute base directory and whether the domain's "
+        "SPECMGR_*_DIR environment variable is explicitly set. Never discloses the value of any "
+        "environment variable, only whether the relevant directory-path env var is present."
     ),
     mime_type="application/json",
 )
@@ -157,6 +158,11 @@ def config_info() -> ConfigInfo:
             env_var_set=docs_dir_set,
         ),
     }
+
+    assert set(domains) == set(ALL_DOMAINS), (
+        "the specmgr://config domains dict drifted from the shared general.tools._domains.ALL_DOMAINS "
+        "source -- add or remove the domain in both places (feat-125-domain-lists, REQ-007)"
+    )
 
     result = ConfigInfo(domains=domains)
     return result

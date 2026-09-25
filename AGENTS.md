@@ -222,8 +222,21 @@ type or cross-cutting:
   AFTER mitigation (`## Residual Assessment`) with the value in the H3
   heading itself (`### Probability {1..5}` / `### Impact {1..5}`, regex
   `@alias`-constrained, derived zone `level` always computed from the
-  product), and a TARA response strategy `## Strategy` (closed 4-value set
-  `transfer`/`accept`/`reduce`/`avoid`))
+  product), a TARA response strategy `## Strategy` (closed 4-value set
+  `transfer`/`accept`/`reduce`/`avoid`), plus, after `## Residual
+  Assessment`, the tail sections in body order: an optional `## Owner`
+  (single-line value naming the responsible person/role), an optional
+  `## Tags` (bullet list of free-form labels; `Tags.items` is now
+  `list[MarkdownListItemWithNotes]`, so a loose-list continuation
+  paragraph under a tag is captured in the item's `notes` instead of
+  being silently dropped — structurally identical to `req`/`dec`/`gol`'s
+  own `Tags`, `feat-102-133-rsk-tags-source`, GitHub issue #133), a
+  mandatory `## Source` (single-line value naming the origin/authority of
+  the risk, e.g. the QA document, discussion, or report it derives from —
+  a thin `SourceBase` subclass in `rsk/models/v1/body.py`, each domain
+  declaring and owning its own concrete leaf class per the domain-first
+  convention, added by `feat-102-133-rsk-tags-source`, GitHub issue #102),
+  and an optional `## More Information` (free-form))
   (`parse_rsk`, `get_rsk`, `list_rsk`, `get_rsk_example`,
   `get_rsk_template`, `create_rsk`); whole-body and line-range updates
   go through the generic `update` tool in `general/tools/`
@@ -547,8 +560,29 @@ type or cross-cutting:
        unlike every other generic tool here, it never raises for a
        content-validation failure, always returning
        `{valid: bool, errors: list[{message: str}]}`, only raising
-       `ValueError` for a `full`/content-shape mismatch or an unsupported
-       `type`. On a successful write, `update`, `set_status` (its
+        `ValueError` for a `full`/content-shape mismatch or an unsupported
+        `type`; `list_references`, the generic, cross-domain cross-reference
+        listing tool (feat-144-ref-artifact, GitHub issue #144) — takes a
+        *source* document's `type` (one of
+        adr/req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs) + `id`,
+        regex-scans the source's frontmatter-stripped body for `<TYPE>
+        <uuid>` references (the 10-tag reference vocabulary
+        GOL/PRB/QA/UC/REQ/RSK/DEC/ADR/VCR/SYSRS; case-insensitive tag,
+        space or dash separator, anywhere in a line), dedupes repeated
+        occurrences (first-occurrence order), resolves each unique
+        reference in its target domain (cache-backed; ADR excluded from
+        the cache), and returns a paged `PagedResult[ReferenceRow]` — one
+        row per unique reference carrying `type`/`id`/`title` (the
+        referenced document's H1)/`path` (resolved absolute file path); a
+        reference that cannot be resolved on disk is a row with null
+        `title`/`path` and the target domain's not-found message in
+        `error` — it never raises; `max_results`/`offset` paging with the
+        same clamp-not-error contract as every `list_*` tool (default 25,
+        cap 100). It applies the same `_path_safety` guards: an invalid
+        source `type`/`id` (path-injection attempt or wrong-format id) is
+        a `ValueError` before any filesystem access, and a missing source
+        raises the source domain's not-found error, identical to `get_<d>`.
+        On a successful write, `update`, `set_status` (its
       non-`adr` adapters), `set_classification`, and every per-domain
      `create_<d>` tool now return the domain's frontmatter object only (no
      body) — small and bounded regardless of document size, unlike an
@@ -653,11 +687,13 @@ Still genuinely missing / not yet done (don't assume otherwise):
 - No `ac` (Acceptance Criteria) domain exists yet, despite `server.py`'s
   docstring already reserving a spot for it ("... and later `ac`") — the
   convention for adding it (or any future domain) is fixed by ADR
-  36905d5b-8057-4294-8665-c7eed5534db0: one dispatch entry to each of the
-  two generic tools in `general/tools/` (`update`'s `type`,
-  `set_status`'s `type`), one `delete` adapter in the generic `delete`
-  tool, plus a `raw` parameter on the new `get_<d>` tool — not new
-  `update_<d>`/`set_status_<d>`/`delete_<d>` tools.
+  36905d5b-8057-4294-8665-c7eed5534db0, refined by ADR
+  c4efbde6-fd19-4aa8-8668-95316ed62dcc: first register the domain's name
+  in `general/tools/_domains.py`'s `WHOLE_BODY_DOMAINS` once (in canonical
+  position), then one dispatch entry to each of the two generic tools in
+  `general/tools/` (`update`'s `type`, `set_status`'s `type`), one `delete`
+  adapter in the generic `delete` tool, plus a `raw` parameter on the new
+  `get_<d>` tool — not new `update_<d>`/`set_status_<d>`/`delete_<d>` tools.
 
 `feat-27-validation` (closed 2026-09-01, GitHub issue #27, subsuming feat-7's
 Task 0.29) made every `parse_<d>`/`create_<d>`/`validate_<d>` tool's and the

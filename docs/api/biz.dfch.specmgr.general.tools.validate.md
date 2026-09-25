@@ -202,7 +202,7 @@ Validate ``content`` as verification case record markdown -- verbatim port of th
 See :func:`_validate_req` for the shared semantics.
 
 
-### `validate(type: "Literal['req', 'uc', 'tsk', 'qa', 'prb', 'gol', 'rsk', 'dec', 'sop', 'feat', 'vcr', 'sysrs']", content: 'str', full: 'bool' = False) -> 'ValidateResult'`
+### `validate(type: 'Literal[*WHOLE_BODY_DOMAINS,]', content: 'str', full: 'bool' = False) -> 'ValidateResult'`
 
 Validate ``content`` as markdown of the given document ``type``, without reading or writing any file.
 

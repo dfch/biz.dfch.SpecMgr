@@ -57,6 +57,10 @@ from biz.dfch.specmgr.dec.tools.create_dec import create_dec
 from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR, feat_base_dir
 from biz.dfch.specmgr.feat.tools.create_feat import create_feat
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
+
+#: The shared domain-name source (feat-125-domain-lists Phase 4, REQ-008): the
+#: whole-body document types the registration test's expected enum derives from.
+from biz.dfch.specmgr.general.tools._domains import WHOLE_BODY_DOMAINS
 from biz.dfch.specmgr.general.tools._splice import body_text
 from biz.dfch.specmgr.gol.models.v1 import GolDocument, GolFrontmatter
 from biz.dfch.specmgr.gol.tools._paths import GolNotFoundError, gol_base_dir
@@ -414,6 +418,10 @@ _RSK_MINIMAL_BODY = textwrap.dedent(
     ### Probability 2
 
     ### Impact 3
+
+    ## Source
+
+    The QA interview on 2026-09-17 that elicited this risk.
     """
 )
 
@@ -456,6 +464,10 @@ _RSK_UPDATED_BODY = textwrap.dedent(
     ### Probability 1
 
     ### Impact 2
+
+    ## Source
+
+    The revised QA interview that elicited this risk.
     """
 )
 
@@ -880,10 +892,10 @@ _CASES: list[_Case] = [
         updated_body=_RSK_UPDATED_BODY,
         middle_marker="A root condition.",
         middle_replacement="A revised root condition.",
-        append_fragment="\n## Owner\n\nThe safety team.\n",
-        eof_marker="## Residual Assessment",
-        eof_fragment="## Residual Assessment\n\n### Probability 1\n\n### Impact 2\n",
-        deletable_suffix="\n## Owner\n\nThe safety team.\n",
+        append_fragment="\n## More Information\n\nSome notes.\n",
+        eof_marker="## Source",
+        eof_fragment="## Source\n\nThe revised QA interview that elicited this risk.\n",
+        deletable_suffix="\n## More Information\n\nSome notes.\n",
         field_error_marker="reduce",
         field_error_fragment="not-a-strategy",
         field_error_is_append=False,
@@ -1338,10 +1350,7 @@ class TestUpdateRegistration(unittest.TestCase):
 
         schema = matching[0].input_schema
         type_prop = schema["properties"]["type"]
-        self.assertEqual(
-            type_prop["enum"],
-            ["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "feat", "vcr", "sysrs"],
-        )
+        self.assertEqual(type_prop["enum"], list(WHOLE_BODY_DOMAINS))
         self.assertEqual(type_prop["type"], "string")
         for name in ("offset", "limit"):
             prop = schema["properties"][name]

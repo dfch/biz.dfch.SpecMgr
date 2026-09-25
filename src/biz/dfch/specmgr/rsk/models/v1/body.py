@@ -48,6 +48,8 @@ optional-leading-comment pattern. `Risk` is the top-level H1 container:
 {responsible person / role}
 ## Tags                                  tags: Tags | None
 - {tag}
+## Source                                source: Source
+{origin / authority}
 ## More Information                      more_information: MoreInformation | None
 {free-form}
 ```
@@ -55,9 +57,11 @@ optional-leading-comment pattern. `Risk` is the top-level H1 container:
 Field declaration order on `Risk` enforces the markdown order (title ->
 optional comment (inherited) -> Cause -> Trigger -> Consequence -> Scope ->
 Initial Assessment -> Strategy -> Mitigation -> Residual Assessment ->
-optional Owner -> optional Tags -> optional More Information), since
-`models.md`'s `MarkdownStr.from_text` distributes text among declared fields
-in that same order.
+optional Owner -> optional Tags -> Source (mandatory) -> optional More
+Information), since `models.md`'s `MarkdownStr.from_text` distributes text
+among declared fields in that same order. `## Source` is mandatory on every
+`rsk` document (feat-102-133-rsk-tags-source, GitHub issue #102) -- a risk
+must always record where it originated.
 """
 
 from __future__ import annotations
@@ -68,9 +72,11 @@ from pydantic import Field, field_validator
 
 from ....models.md import (
     MarkdownListItem,
+    MarkdownListItemWithNotes,
     MarkdownParagraph,
     MarkdownSection1WithComment,
     MarkdownSection2,
+    SourceBase,
     alias,
     AliasType,
 )
@@ -147,12 +153,34 @@ class Owner(MarkdownSection2):
 
 
 class Tags(MarkdownSection2):
-    """`## Tags` -- bullet list of free-form labels for grouping/filtering risks. Optional."""
+    """`## Tags` -- bullet list of free-form labels for grouping/filtering
+    risks. Optional.
 
-    items: list[MarkdownListItem] = Field(
+    Structurally identical to `req`/`dec`/`gol`'s own `Tags` (issue #133):
+    each item is a `MarkdownListItemWithNotes`, so a loose-list continuation
+    paragraph under a tag is captured in the item's `notes` instead of being
+    silently dropped.
+    """
+
+    items: list[MarkdownListItemWithNotes] = Field(
         min_length=1,
         description="Bullet list of free-form labels for grouping/filtering risks; must contain at least one item.",
     )
+
+
+class Source(SourceBase):
+    """`## Source` -- single-line value naming the origin/authority of this
+    risk (e.g. the QA document, discussion, or report it derives from).
+    Mandatory.
+
+    Subclasses the shared `models.md.SourceBase` (feat-29-dec-source-roles) --
+    the field declaration itself lives there; this class exists so `rsk`
+    still declares and owns its own concrete `Source` type. Note: the
+    generated JSON Schema's `value` field description comes from
+    `SourceBase` and is intentionally domain-neutral ("this document"),
+    not the domain-specific "this risk" wording used above -- see
+    `SourceBase`'s own comment for the rationale (REQ-016).
+    """
 
 
 class MoreInformation(MarkdownSection2):
@@ -192,6 +220,8 @@ class Risk(MarkdownSection1WithComment):
         `## Owner`. Optional.
     tags:
         `## Tags`. Optional.
+    source:
+        `## Source`. Mandatory.
     more_information:
         `## More Information`. Optional.
     """
@@ -210,6 +240,7 @@ class Risk(MarkdownSection1WithComment):
     )
     owner: Owner | None = Field(default=None, description="`## Owner` section. Optional.")
     tags: Tags | None = Field(default=None, description="`## Tags` section. Optional.")
+    source: Source = Field(description="`## Source` section. Mandatory.")
     more_information: MoreInformation | None = Field(
         default=None, description="`## More Information` section. Optional."
     )

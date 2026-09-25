@@ -37,7 +37,8 @@ registrations across every domain package and ``general``:
   ``update_adr_test`` -> ``adr``);
 - **generic dispatch tools** (:data:`GENERIC_DISPATCH_TOOLS` --
   ``update``/``set_status``/``set_classification``/``delete``/
-  ``validate``) carry the domain in their own ``type`` argument at call
+  ``validate``/``list_references``) carry the domain in their own
+  ``type`` argument at call
   time, so they map via that argument (a ``type`` value that is not one
   of the :data:`DOMAINS` yields no domain -- the tool will fail its own
   closed-vocabulary validation anyway);
@@ -98,7 +99,9 @@ DOMAINS: frozenset[str] = frozenset(
 
 #: The generic dispatch tools whose domain lives in their own ``type``
 #: argument at call time, not in their registered name.
-GENERIC_DISPATCH_TOOLS: frozenset[str] = frozenset({"update", "set_status", "set_classification", "delete", "validate"})
+GENERIC_DISPATCH_TOOLS: frozenset[str] = frozenset(
+    {"update", "set_status", "set_classification", "delete", "validate", "list_references"}
+)
 
 #: The resource uri's scheme prefix (every registered resource uses it).
 URI_SCHEME_PREFIX = "specmgr://"

@@ -78,6 +78,7 @@ class TestCreateRiskPrompt(unittest.TestCase):
             "Strategy",
             "Mitigation",
             "Residual Assessment",
+            "Source",
         ):
             self.assertIn(heading, result)
 

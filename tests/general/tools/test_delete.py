@@ -65,6 +65,11 @@ from biz.dfch.specmgr.gol.tools._io import load_by_id as load_gol_by_id
 from biz.dfch.specmgr.gol.tools._paths import GolNotFoundError, gol_base_dir
 from biz.dfch.specmgr.gol.tools.create_gol import create_gol
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
+
+#: The shared domain-name source (feat-125-domain-lists Phase 4, REQ-008):
+#: ``FEAT`` -- the feat document type name (the one folder-per-document domain) --
+#: and ``WHOLE_BODY_DOMAINS``, the registration test's expected enum derivation.
+from biz.dfch.specmgr.general.tools._domains import FEAT, WHOLE_BODY_DOMAINS
 from biz.dfch.specmgr.prb.tools._io import load_by_id as load_prb_by_id
 from biz.dfch.specmgr.prb.tools._paths import PrbNotFoundError, prb_base_dir
 from biz.dfch.specmgr.prb.tools.create_prb import create_prb
@@ -96,9 +101,6 @@ from biz.dfch.specmgr.vcr.tools.create_vcr import create_vcr
 delete_module = importlib.import_module("biz.dfch.specmgr.general.tools.delete")
 delete = delete_module.delete
 DeleteError = delete_module.DeleteError
-
-#: The feat document type name (the one folder-per-document domain).
-_TYPE_FEAT = "feat"
 
 #: The pinned path-injection shapes (ACC-005), in addition to each type's own wrong-format id.
 _TRAVERSAL_IDS = ("../x", "a/b", "a\\b", "..")
@@ -301,6 +303,10 @@ _RSK_MINIMAL_BODY = textwrap.dedent(
     ### Probability 2
 
     ### Impact 3
+
+    ## Source
+
+    The QA interview on 2026-09-17 that elicited this risk.
     """
 )
 
@@ -610,7 +616,7 @@ class TempDeleteDirTestCase(unittest.TestCase):
 
     def _target(self, case: _Case, doc_id: str) -> Path:
         """The deletion target: the ``*.md`` file for the flat domains, the folder for ``feat``."""
-        if case.doc_type == _TYPE_FEAT:
+        if case.doc_type == FEAT:
             result = feat_base_dir() / doc_id
         else:
             result = self._flat_path(case)
@@ -649,7 +655,7 @@ class TestDeleteWholeBodyDomains(TempDeleteDirTestCase):
         history = folder / "history.md"
         history.write_text("# History\n\nAn archived older update entry.\n", encoding="utf-8")
 
-        result = delete(id=feat_id, type=_TYPE_FEAT)
+        result = delete(id=feat_id, type=FEAT)
 
         self.assertEqual(result, str(folder))
         self.assertFalse(folder.exists())
@@ -664,7 +670,7 @@ class TestDeleteWholeBodyDomains(TempDeleteDirTestCase):
                 created = self._seed(case)
                 doc_id = created.id
                 target = self._target(case, doc_id)
-                missing_id = _MISSING_FEAT_ID if case.doc_type == _TYPE_FEAT else _MISSING_UUID
+                missing_id = _MISSING_FEAT_ID if case.doc_type == FEAT else _MISSING_UUID
 
                 with self.assertRaises(case.not_found_error):
                     delete(id=missing_id, type=case.doc_type)
@@ -697,7 +703,7 @@ class TestDeleteIoFailure(TempDeleteDirTestCase):
     def test_unlink_failure_raises_delete_error_with_cause_and_path(self) -> None:
         """For every flat domain (every whole-body domain except ``feat``), a mocked Path.unlink OSError must raise DeleteError wrapping that exact OSError."""
         for case in _CASES:
-            if case.doc_type == _TYPE_FEAT:
+            if case.doc_type == FEAT:
                 continue
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case)
@@ -724,7 +730,7 @@ class TestDeleteIoFailure(TempDeleteDirTestCase):
 
         with mock.patch("shutil.rmtree", side_effect=failure):
             with self.assertRaises(DeleteError) as ctx:
-                delete(id=feat_id, type=_TYPE_FEAT)
+                delete(id=feat_id, type=FEAT)
 
         self.assertIsInstance(ctx.exception, OSError)
         self.assertIs(ctx.exception.__cause__, failure)
@@ -782,10 +788,7 @@ class TestDeleteRegistration(unittest.TestCase):
 
         schema = matching[0].input_schema
         type_prop = schema["properties"]["type"]
-        self.assertEqual(
-            type_prop["enum"],
-            ["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "feat", "vcr", "sysrs"],
-        )
+        self.assertEqual(type_prop["enum"], list(WHOLE_BODY_DOMAINS))
         self.assertEqual(type_prop["type"], "string")
         self.assertEqual(schema["properties"]["id"]["type"], "string")
         self.assertEqual(schema["required"], ["id", "type"])

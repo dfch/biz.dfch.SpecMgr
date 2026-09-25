@@ -7,6 +7,102 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.31.0] - 2026-09-23
+
+### Added
+
+- `list_references`, a new generic, cross-domain MCP tool in
+  `general/tools/` (feat-144-ref-artifact, GitHub issue #144): it takes a
+  source document's `type` (one of
+  adr/req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs) and `id`, scans
+  the source's frontmatter-stripped body for `<TYPE> <uuid>` references
+  (a shared 10-tag reference vocabulary:
+  GOL/PRB/QA/UC/REQ/RSK/DEC/ADR/VCR/SYSRS; case-insensitive tag), dedupes
+  them (first-occurrence order), and resolves each unique reference in its
+  target domain (cache-backed; ADR excluded from the doc cache), returning
+  one paged row per reference carrying `type`/`id`/`title` (the referenced
+  document's H1)/`path` (its resolved absolute file path). A reference that
+  cannot be resolved on disk is a row with null `title`/`path` and the
+  target domain's not-found message in `error` -- the tool never raises for
+  an unresolvable reference; `max_results`/`offset` follow the shared
+  `list_*` paging contract (default page size 25, capped at 100). The same
+  path-safety guards apply to the source: an invalid `type`/`id` (path
+  injection attempt or wrong format) is a `ValueError` before any
+  filesystem access, and a missing source document raises the source
+  domain's not-found error, identical to `get_<d>`. Per-domain batched
+  resolution for large reference lists is tracked separately as GitHub
+  issue #145.
+- The `/refs <type> <id>` opencode slash command
+  (`.opencode/command/refs.md`) and the read-only `ref-finder` subagent
+  (`.opencode/agent/ref-finder.md`), issue #144's secondary request: the
+  command delegates to the subagent, which calls `list_references` and
+  reports the rows, flagging any **NOT FOUND** references.
+- A new shared `general/tools/_domains.py` module (GitHub issue #125): the
+  single source of truth for the document-type domain names, so a new
+  domain registers its name there once and every other site picks it up by
+  construction.
+
+### Changed
+
+- The ~23 independently hand-maintained domain-list sites across `src/`
+  and `tests/` are consolidated onto the shared `general/tools/_domains.py`
+  source (GitHub issue #125): the generic tools'
+  (`update`/`set_status`/`set_classification`/`delete`/`validate`) `type`
+  enums, descriptions, and runtime error messages are derived from it,
+  guarded at import time by set-equality asserts that fail loudly with an
+  actionable message, so the MCP-registered `type` enums can no longer
+  drift from the dispatch tables. **Note**: `set_status`'s registered
+  `type` enum now lists `adr` first (ordering-only, non-normative). New
+  ADR c4efbde6-fd19-4aa8-8668-95316ed62dcc refines the future-domain
+  convention: a new domain now also registers its name in
+  `general/tools/_domains.py`'s `WHOLE_BODY_DOMAINS` in addition to the
+  existing dispatch entries.
+
+### Fixed
+
+- `tests/general/tools/test__path_safety.py`'s UUID-domain coverage now
+  includes `sysrs` (GitHub issue #125) -- the prior hand-listed domain set
+  was missing it, so the `assert_uuid` loop silently never exercised the
+  `sysrs` domain; the gap is closed by construction via the shared
+  `UUID_DOMAINS` import.
+
+## [0.30.0] - 2026-09-21
+
+### Added
+
+- **BREAKING**: Every `rsk` (Risk) document now carries a **mandatory**
+  `## Source` section (single-line value naming the origin/authority of
+  the risk, e.g. the QA document, discussion, or report it derives
+  from), declared between `## Tags` and `## More Information`,
+  implemented as a thin `SourceBase` subclass in `rsk/models/v1` (GitHub
+  issue #102). Any `rsk` document created before this change now fails
+  to parse via `get_rsk`/`parse_rsk`/`update`/`create_rsk` round-trips
+  unless it is updated to add the section (`list_rsk` is unaffected --
+  it reports such a document as a failed entry inline rather than
+  raising). Add `## Source` to any pre-existing `rsk` document, e.g.:
+
+  ```diff
+   ## Residual Assessment
+
+   ### Probability 2
+
+   ### Impact 3
+  +
+  +## Source
+  +
+  +The QA interview on 2026-09-17.
+
+   ## More Information
+  ```
+
+### Changed
+
+- `rsk`'s `## Tags` item type is aligned from plain `MarkdownListItem`
+  to `MarkdownListItemWithNotes`, matching `req`/`dec`/`gol` (GitHub
+  issue #133) -- non-breaking: plain single-line tags parse unchanged;
+  a loose-list continuation paragraph under a tag is now captured in the
+  item's `notes` instead of being silently dropped.
+
 ## [0.29.0] - 2026-09-19
 
 ### Added
