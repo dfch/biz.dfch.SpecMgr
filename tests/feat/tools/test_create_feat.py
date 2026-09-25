@@ -134,7 +134,7 @@ class TestCreateFeat(TempFeatDirTestCase):
         self.assertEqual(result.status, "planning")
         self.assertIsNotNone(result.created)
         self.assertEqual(result.created, result.updated)
-        self.assertRegex(result.created or "", r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}(?:Z|[+-]\d{2}:\d{2})$")
+        self.assertRegex(result.created or "", r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})$")
         self.assertEqual(result.version, CURRENT_SCHEMA_VERSION)
 
         fetched = get_feat(result.id)

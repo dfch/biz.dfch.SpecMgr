@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Breaking Changes
+### Changed
 
 - **BREAKING**: Every whole-body document type's timestamps now use one
   uniform full ISO 8601 date+time form (`yyyy-MM-dd` + `T` or space +

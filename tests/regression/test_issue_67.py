@@ -60,10 +60,11 @@ _ROUND_MILLISECONDS_PATTERN = re.compile(r"\.000[Z+-]")
 
 #: The feat-146 Phase 2 midnight-UTC migration shape for formerly date-only entry headings
 #: (ADR 8c889262-152b-4b8e-ae2c-75371f7a9edf): a `###`/`####` heading whose timestamp is
-#: exactly `yyyy-MM-dd 00:00:00.000Z`, followed by the entry's own `" - "`/`" : "` separator.
+#: exactly `yyyy-MM-dd 00:00:00.000Z` (either the space- or the `T`-separated form, matching
+#: the documented "both separators accepted" contract), followed by the entry's own `" - "`/`" : "` separator.
 #: Such a heading is a documented, convention-fixed migration of a time-of-day-less entry,
 #: not a round placeholder -- excluded from both checks below.
-_MIGRATED_MIDNIGHT_HEADING_PATTERN = re.compile(r"^#{3,4} \d{4}-\d{2}-\d{2} 00:00:00\.000Z(?: - | : )\S")
+_MIGRATED_MIDNIGHT_HEADING_PATTERN = re.compile(r"^#{3,4} \d{4}-\d{2}-\d{2}[T ]00:00:00\.000Z(?: - | : )\S")
 
 #: Repo root, resolved from this test file's own location (`tests/regression/test_issue_67.py`).
 _REPO_ROOT = Path(__file__).resolve().parents[2]
