@@ -1,0 +1,134 @@
+---
+classification: null
+created: '2026-09-25T19:42:03.316+02:00'
+id: feat-123-test-gap-cache
+status: planning
+type: feat
+updated: '2026-09-25T19:42:03.316+02:00'
+version: 1.0.0
+---
+
+# Feature: Close the Write-Path Cache-Wiring Test Gap for the 11 Non-req Domains (feat-107 follow-up)
+
+## Plan
+
+### Overview
+
+`feat-107-doc-cache` (issue #107) shipped a per-domain, content-hash-validated in-memory read cache for the 12 generic whole-body domains (`req`, `uc`, `tsk`, `qa`, `prb`, `gol`, `rsk`, `dec`, `sop`, `feat`, `vcr`, `sysrs`) and wired it into every read and write path: post-write cache warming in each `create_<domain>` tool and in the generic `update`/`set_status`/`set_classification` adapters, eager invalidation in the generic `delete` adapters, and reconcile-on-scan in every `list_<domain>` tool and in `find_doc_path_by_id`'s scan.
+
+A post-closeout review (issue #123) confirmed the shipped implementation is correct across all 12 domains -- no live bug -- but found a real, unaddressed test coverage gap: only `req` has a dedicated wiring-test file (`tests/req/tools/test_doc_cache_wiring.py`) that exercises cache behavior end-to-end through the real MCP tools, while the other 11 domains (the 10 flat non-`req` domains plus `feat`'s own bespoke, folder-per-document integration) are covered only by the narrow, existence-of-routing structural test (`tests/general/tools/test_doc_cache_structural.py`), which never proves that a `create_<domain>`/`update`/`set_status`/`set_classification` write actually warms the cache, that a `delete` actually invalidates it, or that a `list_<domain>` actually reconciles it.
+
+This feature closes that gap: a future refactor that silently drops one of those cache-wiring call sites for any one of those 11 domains would today ship unnoticed; after this feature, a table-driven test fails on the exact domain row whose call site was dropped.
+
+### Requirements
+
+- REQ-001: A table-driven test must prove that `create_<domain>` warms the cache after a successful write for every whole-body domain, by asserting that the `read_<domain>` name bound into `create_<domain>`'s own module is invoked with the just-written document path.
+- REQ-002: A table-driven test must prove that the generic `update` tool warms the cache for every whole-body domain on both the whole-body replace path (no `offset`/`limit`) and the range-splice path (with `offset`/`limit`), by asserting that the `read_<domain>` name bound into `general/tools/update.py` is invoked with the written path on each branch.
+- REQ-003: A table-driven test must prove that the generic `set_status` tool warms the cache for every whole-body domain, using a real (non-no-op) status transition per domain, by asserting that the `read_<domain>` name bound into `general/tools/set_status.py` is invoked with the written path.
+- REQ-004: A table-driven test must prove that the generic `set_classification` tool warms the cache for every whole-body domain, by asserting that the `read_<domain>` name bound into `general/tools/set_classification.py` is invoked with the written path.
+- REQ-005: A table-driven test must prove that the generic `delete` tool invalidates the cache for every whole-body domain, by asserting that the `invalidate_<domain>_cache` name bound into `general/tools/delete.py` is invoked with the deleted path and that the path is subsequently absent from the domain's own `_cache` singleton entries.
+- REQ-006: A table-driven test must prove that `list_<domain>` reconciles the cache for every whole-body domain, by asserting that the `reconcile_<domain>_cache` name bound into the domain's own `list_<domain>` module is invoked with the live path listing before summary building.
+- REQ-007: The table-driven tests must patch each caller module's own bound name of the cache helper (never the helper's definition site in `_cache.py`/`_io.py`) with `mock.patch(..., wraps=<real function>)`, so the real write path still executes end-to-end while the call count and arguments of the documented call site are recorded -- the same mocking discipline `tests/req/tools/test_doc_cache_wiring.py` documents for its `parse_req` spy.
+- REQ-008: The table-driven tests must reuse `tests/general/tools/test_doc_cache_structural.py`'s fixture strategy -- each flat domain's own packaged template (via `general.tools._packaged_data.read_packaged_text`) with only its frontmatter `id` line substituted, plus a per-domain cache `reset_<domain>_cache()` in both `setUp` and `tearDown` -- so no test observes another test's cached state under `pytest-xdist`.
+- REQ-009: The flat-domain table rows must be driven from the shared `general.tools._domains` source of truth (not a hand-listed domain tuple, per the feat-125-domain-lists sweep ruling), with `feat`'s distinct fixture shape (folder-per-document addressing, `SPECMGR_FEAT_DIR` env override, `create_feat` lifecycle) handled by a dedicated `feat` test class in the same file, mirroring `test_doc_cache_structural.py`'s own flat/feat split -- together covering all 12 whole-body domains, so a future 13th flat domain is picked up by construction.
+
+### Acceptance Criteria
+
+- [ ] ACC-001: For every whole-body domain, a table row asserts that a real `create_<domain>` call invokes the caller-bound `read_<domain>` exactly once with the written path, and the row fails if that call site is dropped, mistyped, or re-pointed. Evidence: the create class in the new `tests/general/tools/test_doc_cache_write_wiring.py`, green in the final quality gate.
+- [ ] ACC-002: For every whole-body domain, table rows assert that a real `update` call (whole-body path and range-splice path), a real non-no-op `set_status` call, and a real `set_classification` call each invoke the caller-bound `read_<domain>` with the written path. Evidence: the write-tools classes in the new file, green in the final quality gate.
+- [ ] ACC-003: For every whole-body domain, a table row asserts that a real `delete` call invokes the caller-bound `invalidate_<domain>_cache` with the deleted path, and that the path is absent from the domain's `_cache` entries immediately afterward. Evidence: the delete class in the new file, green in the final quality gate.
+- [ ] ACC-004: For every whole-body domain, a table row asserts that a real `list_<domain>` call invokes the caller-bound `reconcile_<domain>_cache` with the live path listing. Evidence: the list class in the new file, green in the final quality gate.
+- [ ] ACC-005: A mutation check confirms the new tests actually bite: for each of the four gap classes, temporarily dropping one domain's cache call site makes the matching table row fail, and restoring the call site turns the suite green again. Evidence: the Phase 2 mutation-check `### Updates` entry recording all four drop/restore cycles.
+- [ ] ACC-006: The full quality gate is green with no regressions: `uv run --frozen ruff format --check`, `uv run --frozen ruff check`, `uv run --frozen vulture src/ whitelist.py --min-confidence 60`, and `uv run --frozen pytest -n auto --cov=src --cov-report=` (every pre-existing test still passing), plus `uv run --frozen specmgr docs` showing no unexpected drift.
+
+### Scope
+
+#### Included
+
+- The new table-driven test file `tests/general/tools/test_doc_cache_write_wiring.py` covering the four write-path/list cache-wiring gaps (create-warm, update/set_status/set_classification-warm, delete-invalidate, list-reconcile) across all 12 whole-body domains.
+- Per-domain fixture and env-var setup: packaged-template + `SPECMGR_DOCS_DIR` for the 11 flat domains, `create_feat`/minimal-body + `SPECMGR_FEAT_DIR` for `feat`, plus a per-domain non-no-op `set_status` pair derived from each domain's own closed status vocabulary.
+- The ACC-005 mutation check (drop one call site per gap class, confirm failure, restore).
+- Progress tracking in this feature document (updates, decisions, status transitions to `progress` and `done`).
+
+#### Explicitly Out Of Scope
+
+- Any change to `src/` production code: the post-closeout review confirmed the shipped implementation is correct across all 12 domains, so this feature adds tests only -- if a new test surfaced a real bug, that fix would be a separate feature.
+- Re-implementation or duplication of `req`'s dedicated end-to-end wiring-test behaviors (`tests/req/tools/test_doc_cache_wiring.py`: exact parse counts, content-change detection, orphan reconciliation, concurrency) -- the `req` rows in the new table cover only the four call-site gaps.
+- Any coverage of `adr`, which is permanently excluded from the cache mechanism (ADR bfd76370-b59b-4d65-b550-a969f6c93c9d).
+- The `find_doc_path_by_id` reconcile-on-scan wiring, already covered by `tests/general/tools/test_doc_cache_structural.py`.
+- Refactoring the existing structural test or `req`'s wiring test into the new table -- both stay as-is.
+
+### Dependencies
+
+#### Depends On
+
+- feat-107-doc-cache (done): the per-domain cache singletons and every write-path cache call site this feature's tests pin down.
+- feat-125-domain-lists (review): the shared `general.tools._domains` domain-name source of truth the table drives from (REQ-009) -- already present in this branch's code, so no gating is expected.
+
+#### Blocks
+
+- None identified.
+
+### Design Notes
+
+**Why caller-bound-name spies, not definition-site spies or parse counts.** Each caller module imports the cache helper into its own namespace (`from ._io import read_req` in `create_req.py`, `from ...req.tools._io import read_req` in `general/tools/update.py`, and so on), so the wiring contract "this call site calls this documented helper" is only observable by patching the caller module's own bound name. A pure parse-count assertion (the style of `req`'s dedicated wiring test) would still pass if a future refactor inlined `DocCache.read(path)` directly at a call site, silently breaking the per-domain helper convention every other domain follows; spying the bound name with `wraps=` keeps the real write path running (the file is genuinely written, parsed, and cached) while recording exactly whether the documented call site fired with the right path. For `delete`, one behavioral assertion on top (path absent from `_cache` entries after the call) additionally guards against a call that fires with the wrong path.
+
+**Per-domain `set_status` pairs must be real transitions.** `set_status` is a no-op for an unchanged status (feat-104-109): it returns early before any write and before the cache-warm call, so a row that transitions a domain to its own current status would see zero spy calls and fail. Each row therefore picks a per-domain pair -- the template frontmatter's status -> another value in that domain's own `_ALLOWED_STATUSES` closed vocabulary -- read from each domain's frontmatter model, never hardcoded in prose.
+
+**`set_classification` is uniformly a real write.** The packaged templates ship without a `classification` frontmatter field, so setting any non-blank value (the tests use `internal`) is a real write -- and therefore a real cache warm -- for every domain.
+
+**`update`'s two branches per domain.** `general/tools/update.py` carries one warm call site per domain per branch (24 total): the whole-body replace path and the range-splice path. The table exercises both per domain; the range-splice row uses `offset=1, limit=1` replacing the body's H1 line with a valid H1 (`# {title}` for the 11 flat domains, `# Feature: {title}` for `feat`, whose model enforces the prefix).
+
+**File shape.** One new file, `tests/general/tools/test_doc_cache_write_wiring.py`, with one test class per gap (create / update / set_status / set_classification / delete / list) looping the flat domains with `self.subTest(domain=...)`, plus the dedicated `feat` counterpart classes -- the same flat/feat split `test_doc_cache_structural.py` already uses. License header, module docstring naming issue #123 as the feat-107 follow-up, shared `_with_id`-style fixture helpers, and `reset_<domain>_cache()` in both `setUp` and `tearDown` per class.
+
+**Pre-commit interaction.** The pre-commit `pytest` hook runs the full suite (`-n auto`) on every commit touching `src/`/`tests/`, and the `specmgr docs`/`adr-toc`/drift hooks run alongside it, so every Phase 2 commit is already a full-suite gate; Phase 3's explicit quality-gate run is the final independent verification before the status flips to `done`, not a new mechanism.
+
+**Size budget.** 12 domains x 6 gap rows (1 create, 2 update, 1 set_status, 1 set_classification, 1 delete, 1 list) = 72 subtest rows, each writing one small temp file and parsing one document -- the same per-domain cost profile as the existing structural test's loops, negligible against the full suite's runtime.
+
+### Related Decisions
+
+- bfd76370-b59b-4d65-b550-a969f6c93c9d (ADR): the per-domain, content-hash-validated read cache design these tests protect, including its explicit, permanent `adr`-domain exclusion.
+- 33c5ab08-ff58-4c73-8c32-23abaf3838e3 (ADR): "filesystem is the sole source of truth" -- the cache refines, never overrides, this invariant, and the new tests pin down the write paths that maintain it.
+- 36905d5b-8057-4294-8665-c7eed5534db0 (ADR): the dispatch-only convention for the generic `update`/`set_status`/`set_classification`/`delete` tools -- the very per-domain dispatch arms these tests pin down.
+
+### Task List
+
+#### Phase 1: Audit and Confirm the Gap
+
+- [ ] Task 1.1: Verify the shipped call-site inventory by inspection/grep (12 `create_<domain>` warm sites; 24 `update` + 12 `set_status` + 12 `set_classification` warm sites; 12 `delete` invalidate sites; 12 `list_<domain>` reconcile sites) and confirm no test exercises them for the 11 non-`req` domains (issue #123's gap statement).
+- [ ] Task 1.2: Determine each flat domain's template frontmatter status and its non-no-op `set_status` pair from that domain's own `_ALLOWED_STATUSES`, and verify the uniform H1 range-splice content per domain (including `feat`'s `Feature: ` prefix).
+- [ ] Task 1.3: Set this feature's status to `progress` via the generic `set_status` tool (`type="feat"`).
+
+#### Phase 2: Implement the Table-Driven Wiring Tests
+
+- [ ] Task 2.1: Create `tests/general/tools/test_doc_cache_write_wiring.py` with the license header, the module docstring naming issue #123 as the feat-107 follow-up, the shared `_with_id`-style fixture helpers (REQ-008), and per-domain cache resets in `setUp`/`tearDown`.
+- [ ] Task 2.2: Implement the create-warm flat-domain table class (REQ-001, ACC-001) with caller-bound `read_<domain>` spies.
+- [ ] Task 2.3: Implement the update / set_status / set_classification warm flat-domain table classes (REQ-002/003/004, ACC-002), update covering both the whole-body and range-splice paths.
+- [ ] Task 2.4: Implement the delete-invalidate flat-domain table class (REQ-005, ACC-003) including the `_cache` entries behavioral assertion.
+- [ ] Task 2.5: Implement the list-reconcile flat-domain table class (REQ-006, ACC-004).
+- [ ] Task 2.6: Implement the dedicated `feat` counterpart classes for Tasks 2.2--2.5 (REQ-009) using `SPECMGR_FEAT_DIR` + `create_feat` fixtures, and drive every flat class from `general.tools._domains`.
+- [ ] Task 2.7: Run the new file standalone (`uv run --frozen pytest tests/general/tools/test_doc_cache_write_wiring.py -v`) and confirm every row passes against the shipped code.
+- [ ] Task 2.8: Run the ACC-005 mutation check: for each of the four gap classes, drop one domain's call site, confirm the matching row fails, restore, and confirm green -- record the four drop/restore cycles in an `### Updates` entry.
+
+#### Phase 3: Verification and Closeout
+
+- [ ] Task 3.1: Run the full quality gate (ACC-006): `uv run --frozen ruff format --check`, `uv run --frozen ruff check`, `uv run --frozen vulture src/ whitelist.py --min-confidence 60`, `uv run --frozen pytest -n auto --cov=src --cov-report=`, and `uv run --frozen specmgr docs` (no unexpected drift).
+- [ ] Task 3.2: Check off the satisfied ACCs in this file, add the closeout `### Updates` entry, and set this feature's status to `done` via the generic `set_status` tool (`type="feat"`).
+
+## Progress
+
+### Current Status
+
+**As of 2026-09-25**: Planned. Issue #123's gap statement is confirmed against the current branch: the full write-path call-site inventory exists in `src/` (12 create-warm, 24 update-warm, 12 set_status-warm, 12 set_classification-warm, 12 delete-invalidate, 12 list-reconcile sites), only `req` has end-to-end wiring coverage, and the structural test never exercises the write paths. No implementation work has started.
+
+### Updates
+
+<!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-25 17:39:18.000Z - Created
+
+Feature created from GitHub issue #123 ("test: close write-path cache-wiring test gap for 10 non-req domains (feat-107 follow-up)"), with scope refined per planning: the issue's gap list names the 10 flat non-`req` domains plus `feat`'s own bespoke integration (11 domains), and the new table includes `req` rows as well so all 12 whole-body domains are pinned uniformly -- the `req` rows do not duplicate its dedicated end-to-end wiring-test file, which stays as-is.
+
+### Related PRs / Commits
+
+- [Issue #123](https://github.com/dfch/biz.dfch.SpecMgr/issues/123): the tracking issue for this feature (the post-closeout review of feat-107-doc-cache that found the gap).
