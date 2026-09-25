@@ -56,7 +56,11 @@ revise.
     is typically a line-range insert directly below the section's
     optional leading comment (or directly below the `### Updates`/
     `### Decisions Made` heading if no comment is present) -- new entries
-    go first, since both sections are newest-first, enforced.
+    go first, since both sections are newest-first, enforced. Each entry's heading is
+    `#### {timestamp} ( - | : ) {title}`, where `{timestamp}` is the full
+    date+time form `yyyy-MM-dd[T ]HH:mm:ss.fff` + `Z` or `±HH:mm` (the
+    date/time separator may be `T` or a space; a date-only timestamp is
+    rejected), followed by a lead paragraph.
   - **Whole-body replace** (a multi-section change, or whenever you are
     uncertain about the line range): call `update(id, type="feat", content)`
     with no `offset`/`limit` -- `content` is then the full replacement body:

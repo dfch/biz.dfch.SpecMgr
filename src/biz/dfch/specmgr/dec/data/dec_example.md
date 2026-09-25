@@ -1,9 +1,9 @@
 ---
-created: '2025-03-11 08:24:37.612Z'
+created: '2025-03-11T08:24:37.612Z'
 id: 3f6c1a2e-8b4d-4e7a-9c2f-5d8e1b6a7c90
 status: accepted
 type: dec
-updated: '2025-03-25 19:58:03.947Z'
+updated: '2025-03-25T19:58:03.947Z'
 version: 1.0.0
 ---
 
@@ -133,7 +133,7 @@ their own arrangements.
 The arrangement was accepted at the monthly engineering meeting. The
 first quarterly review is scheduled for end of October 2026.
 
-### 2026-07-14 - Created
+### 2026-07-14 00:00:00.000Z - Created
 
 The decision record was drafted by the engineering leadership team
 after two years of per-team improvisation.

@@ -164,8 +164,8 @@ def _make_document(body: str, version: str = "1.0.0") -> str:
         type: qa
         version: {version}
         status: draft
-        created: '2026-08-23 00:00:00.000Z'
-        updated: '2026-08-23 00:00:00.000Z'
+        created: '2026-08-23T00:00:00.000Z'
+        updated: '2026-08-23T00:00:00.000Z'
         ---
 
         """
@@ -231,6 +231,29 @@ class TestQaDocumentFrontmatterIsSharedQaFrontmatter(unittest.TestCase):
         field_info = QaDocument.model_fields["frontmatter"]
 
         self.assertIs(field_info.annotation, QaFrontmatter)
+
+
+class TestUnquotedTimestampNormalization(unittest.TestCase):
+    """The `_stringify_metadata` datetime-coercion branch (feat-146 REQ-006/REQ-003).
+
+    An unquoted frontmatter `created`/`updated` timestamp is coerced by PyYAML to a
+    `datetime` before this domain's own `_stringify_metadata` runs -- such a value
+    must parse and converge to the `T`-canonical form, and an unquoted date-only
+    value must still be rejected by the frontmatter's own date+time pattern.
+    """
+
+    def test_unquoted_timestamps_converge_to_t_canonical_form(self) -> None:
+        """Unquoted `T`- and space-separated timestamps parse and converge to the `T`-canonical
+        form; an unquoted date-only value still fails the frontmatter pattern."""
+        text = _VALID_DOC.replace("created: '2026-08-23T00:00:00.000Z'", "created: 2026-08-23T00:00:00.000Z").replace(
+            "updated: '2026-08-23T00:00:00.000Z'", "updated: 2026-08-23 00:00:00.000Z"
+        )
+        document = parse_qa(text)
+        self.assertEqual(document.frontmatter.created, "2026-08-23T00:00:00.000Z")
+        self.assertEqual(document.frontmatter.updated, "2026-08-23T00:00:00.000Z")
+
+        with self.assertRaises(ValidationError):
+            parse_qa(text.replace("created: 2026-08-23T00:00:00.000Z", "created: 2026-08-23"))
 
 
 if __name__ == "__main__":

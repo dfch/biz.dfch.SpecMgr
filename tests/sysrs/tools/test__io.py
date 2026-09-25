@@ -38,8 +38,8 @@ _DOC_TEMPLATE = textwrap.dedent(
     type: sysrs
     version: 1.0.0
     status: draft
-    created: '2026-08-30 00:00:00.000Z'
-    updated: '2026-08-30 00:00:00.000Z'
+    created: '2026-08-30T00:00:00.000Z'
+    updated: '2026-08-30T00:00:00.000Z'
     ---
 
     # System Requirements Specification: Sample Document

@@ -83,10 +83,10 @@ __all__ = ["build_failed_rsk_summary"]
 #: strategy/status-keyed downstream automation.
 _SENTINEL_RSK_TEXT = """\
 ---
-created: '2026-01-01 00:00:00.000Z'
+created: '2026-01-01T00:00:00.000Z'
 status: dropped
 type: rsk
-updated: '2026-01-01 00:00:00.000Z'
+updated: '2026-01-01T00:00:00.000Z'
 version: 1.0.0
 ---
 

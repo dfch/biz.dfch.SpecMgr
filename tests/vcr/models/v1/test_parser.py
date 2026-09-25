@@ -47,8 +47,8 @@ _MINIMAL_DOC = textwrap.dedent(
     type: vcr
     version: 1.0.0
     status: draft
-    created: '2026-08-31 00:00:00.000Z'
-    updated: '2026-08-31 00:00:00.000Z'
+    created: '2026-08-31T00:00:00.000Z'
+    updated: '2026-08-31T00:00:00.000Z'
     ---
 
     # API Key Revocation Latency Verification
@@ -84,8 +84,8 @@ _FULL_DOC = textwrap.dedent(
     type: vcr
     version: 1.0.0
     status: complete
-    created: '2026-08-31 00:00:00.000Z'
-    updated: '2026-08-31 00:00:00.000Z'
+    created: '2026-08-31T00:00:00.000Z'
+    updated: '2026-08-31T00:00:00.000Z'
     ---
 
     # API Key Revocation Latency Verification
@@ -127,11 +127,11 @@ _FULL_DOC = textwrap.dedent(
 
     ## Updates
 
-    ### 2026-08-27 : Confirmed
+    ### 2026-08-27 00:00:00.000Z : Confirmed
 
     AC-001 and AC-003 executed against staging.
 
-    ### 2026-08-26 - Created
+    ### 2026-08-26 00:00:00.000Z - Created
 
     Initial verification case drafted.
     """
@@ -149,7 +149,7 @@ class TestParseVcr(unittest.TestCase):
         self.assertEqual(document.frontmatter.id, "vcr-001")
         self.assertEqual(document.frontmatter.type, "vcr")
         self.assertEqual(document.frontmatter.status, "draft")
-        self.assertEqual(document.frontmatter.created, "2026-08-31 00:00:00.000Z")
+        self.assertEqual(document.frontmatter.created, "2026-08-31T00:00:00.000Z")
         self.assertEqual(document.body.text, "API Key Revocation Latency Verification")
         self.assertIn("closes the exposure window", document.body.verifies.notes.text)
         self.assertEqual(document.body.coverage.value.text, "partial")
@@ -494,7 +494,7 @@ class TestParseVcrStructuralViolations(unittest.TestCase):
 
             ## Updates
 
-            ### 2026-08-26 - Created
+            ### 2026-08-26 00:00:00.000Z - Created
 
             Some update text.
 
@@ -589,6 +589,29 @@ class TestParseVcrStructuralViolations(unittest.TestCase):
 
         with self.assertRaises(AssertionError):
             parse_vcr(text)
+
+
+class TestUnquotedTimestampNormalization(unittest.TestCase):
+    """The `_stringify_metadata` datetime-coercion branch (feat-146 REQ-006/REQ-003).
+
+    An unquoted frontmatter `created`/`updated` timestamp is coerced by PyYAML to a
+    `datetime` before this domain's own `_stringify_metadata` runs -- such a value
+    must parse and converge to the `T`-canonical form, and an unquoted date-only
+    value must still be rejected by the frontmatter's own date+time pattern.
+    """
+
+    def test_unquoted_timestamps_converge_to_t_canonical_form(self) -> None:
+        """Unquoted `T`- and space-separated timestamps parse and converge to the `T`-canonical
+        form; an unquoted date-only value still fails the frontmatter pattern."""
+        text = _MINIMAL_DOC.replace("created: '2026-08-31T00:00:00.000Z'", "created: 2026-08-31T00:00:00.000Z").replace(
+            "updated: '2026-08-31T00:00:00.000Z'", "updated: 2026-08-31 00:00:00.000Z"
+        )
+        document = parse_vcr(text)
+        self.assertEqual(document.frontmatter.created, "2026-08-31T00:00:00.000Z")
+        self.assertEqual(document.frontmatter.updated, "2026-08-31T00:00:00.000Z")
+
+        with self.assertRaises(ValidationError):
+            parse_vcr(text.replace("created: 2026-08-31T00:00:00.000Z", "created: 2026-08-31"))
 
 
 if __name__ == "__main__":

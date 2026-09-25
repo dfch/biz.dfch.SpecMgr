@@ -111,9 +111,10 @@ from biz.dfch.specmgr.vcr.tools.create_vcr import create_vcr
 
 set_status_module = importlib.import_module("biz.dfch.specmgr.general.tools.set_status")
 
-#: The canonical date+time timestamp shape (D4/D7) the ``updated`` bump must match: space-separated,
-#: exactly three millisecond digits, `Z` or a signed `±HH:mm` offset.
-_DATE_TIME_TIMESTAMP = r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})"
+#: The canonical date+time timestamp shape (feat-146) the ``updated`` bump must match:
+#: `T`-separated (the machine-written canonical form), exactly three millisecond digits,
+#: `Z` or a signed `±HH:mm` offset.
+_DATE_TIME_TIMESTAMP = r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})"
 
 _REQ_MINIMAL_BODY = textwrap.dedent(
     """\
@@ -189,7 +190,7 @@ _TSK_MINIMAL_BODY = textwrap.dedent(
 
     ## Recent Updates
 
-    ### 2026-08-19 - Kickoff
+    ### 2026-08-19 00:00:00.000Z - Kickoff
 
     Started the task list.
     """

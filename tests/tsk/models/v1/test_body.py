@@ -46,11 +46,11 @@ _NO_COMMENT_TEXT = format_text(
 
 ## Recent Updates
 
-### 2026-08-15 - Progress
+### 2026-08-15 00:00:00.000Z - Progress
 
 Migrated one widget so far.
 
-### 2026-08-01 - Kickoff
+### 2026-08-01 00:00:00.000Z - Kickoff
 
 Started the migration.
 """
@@ -68,7 +68,7 @@ _WITH_COMMENT_TEXT = format_text(
 
 ## Recent Updates
 
-### 2026-08-01 - Kickoff
+### 2026-08-01 00:00:00.000Z - Kickoff
 
 Started the migration.
 """
@@ -120,7 +120,7 @@ class TestTaskItemsValidation(unittest.TestCase):
                 """\
 ## Recent Updates
 
-### 2026-08-01 - Kickoff
+### 2026-08-01 00:00:00.000Z - Kickoff
 
 Started.
 """
@@ -154,7 +154,7 @@ class TestTaskItemMarkerValidatedEagerly(unittest.TestCase):
 
 ## Recent Updates
 
-### 2026-08-01 - Kickoff
+### 2026-08-01 00:00:00.000Z - Kickoff
 
 Started.
 """
@@ -187,7 +187,7 @@ class TestRecentUpdatesSingleEntry(unittest.TestCase):
             """\
 ## Recent Updates
 
-### 2026-08-01 - Kickoff
+### 2026-08-01 00:00:00.000Z - Kickoff
 
 Started the migration.
 """
@@ -197,7 +197,7 @@ Started the migration.
 
         self.assertEqual(len(sut.updates), 1)
         self.assertEqual(sut.updates[0].title, "Kickoff")
-        self.assertEqual(sut.updates[0].timestamp, "2026-08-01")
+        self.assertEqual(sut.updates[0].timestamp, "2026-08-01 00:00:00.000Z")
         self.assertEqual(sut.updates[0].content.text, "Started the migration.")
         self.assertEqual(str(sut), text)
 
@@ -210,15 +210,15 @@ class TestRecentUpdatesMultipleEntries(unittest.TestCase):
             """\
 ## Recent Updates
 
-### 2026-08-15 - Wrapping up
+### 2026-08-15 00:00:00.000Z - Wrapping up
 
 Only the shim removal is left.
 
-### 2026-08-08 - Halfway there
+### 2026-08-08 00:00:00.000Z - Halfway there
 
 Migrated half of the widgets.
 
-### 2026-08-01 - Kickoff
+### 2026-08-01 00:00:00.000Z - Kickoff
 
 Started the migration.
 """
@@ -241,11 +241,11 @@ Started the migration.
             """\
 ## Recent Updates
 
-### 2026-08-01 - Kickoff
+### 2026-08-01 00:00:00.000Z - Kickoff
 
 Started the migration.
 
-### 2026-08-15 - Wrapping up
+### 2026-08-15 00:00:00.000Z - Wrapping up
 
 Only the shim removal is left.
 """
@@ -259,11 +259,11 @@ Only the shim removal is left.
             """\
 ## Recent Updates
 
-### 2026-08-01 - First
+### 2026-08-01 00:00:00.000Z - First
 
 First entry text.
 
-### 2026-08-01 - Second
+### 2026-08-01 00:00:00.000Z - Second
 
 Second entry text.
 """
@@ -280,7 +280,7 @@ Second entry text.
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
-### 2026-08-01 - Kickoff
+### 2026-08-01 00:00:00.000Z - Kickoff
 
 Started the migration.
 """
@@ -293,17 +293,22 @@ Started the migration.
 
 
 class TestUpdateEntryHeadingAlias(unittest.TestCase):
-    """`UpdateEntry`'s regex alias requires a `yyyy-MM-dd` (or full date+time) timestamp + ` - `/` : ` + `title`."""
+    """`UpdateEntry`'s regex alias requires a full date+time timestamp + ` - `/` : ` + `title`."""
 
-    def test_accepts_date_only_and_date_time_headings(self) -> None:
+    def test_accepts_full_date_time_headings(self) -> None:
         for heading in (
-            "2026-08-01 - Kickoff",
-            "2026-08-01 : Kickoff",
             "2026-08-01 05:42:00.000+02:00 - Kickoff",
             "2026-08-01 05:42:00.000Z : Kickoff",
+            "2026-08-01T05:42:00.000+02:00 - Kickoff",
+            "2026-08-01T05:42:00.000Z : Kickoff",
         ):
             with self.subTest(heading=heading):
                 self.assertTrue(match_alias(UpdateEntry, heading))
+
+    def test_rejects_date_only_headings(self) -> None:
+        for heading in ("2026-08-01 - Kickoff", "2026-08-01 : Kickoff"):
+            with self.subTest(heading=heading):
+                self.assertFalse(match_alias(UpdateEntry, heading))
 
     def test_rejects_non_timestamp_led_headings(self) -> None:
         for heading in ("Anything Goes Here 123", "Kickoff", "2026-8-1 - Kickoff"):
@@ -314,10 +319,10 @@ class TestUpdateEntryHeadingAlias(unittest.TestCase):
 class TestUpdateEntryComputedFields(unittest.TestCase):
     """`UpdateEntry.timestamp`/`UpdateEntry.title` are computed from the heading (ACC-002)."""
 
-    def test_parses_timestamp_and_title_date_only(self) -> None:
+    def test_parses_timestamp_and_title_date_time(self) -> None:
         text = format_text(
             """\
-### 2026-08-01 - Kickoff
+### 2026-08-01 00:00:00.000Z - Kickoff
 
 Some update text.
 """
@@ -325,7 +330,7 @@ Some update text.
 
         sut = UpdateEntry.from_text(text)
 
-        self.assertEqual(sut.timestamp, "2026-08-01")
+        self.assertEqual(sut.timestamp, "2026-08-01 00:00:00.000Z")
         self.assertEqual(sut.title, "Kickoff")
         self.assertEqual(sut.content.text, "Some update text.")
         self.assertEqual(str(sut), text)
@@ -335,6 +340,18 @@ Some update text.
 
         self.assertEqual(sut.timestamp, "2026-08-01 05:42:00.000+02:00")
         self.assertEqual(sut.title, "Kickoff")
+
+    def test_parses_timestamp_and_title_t_separator(self) -> None:
+        sut = UpdateEntry.from_text(format_text("### 2026-08-01T05:42:00.000Z - Kickoff\n\nBody.\n"))
+
+        self.assertEqual(sut.timestamp, "2026-08-01T05:42:00.000Z")
+        self.assertEqual(sut.title, "Kickoff")
+
+    def test_rejects_date_only_heading_at_parse_time(self) -> None:
+        for heading in ("### 2026-08-01 - Kickoff", "### 2026-08-01 : Kickoff"):
+            with self.subTest(heading=heading):
+                with self.assertRaises(AssertionError):
+                    UpdateEntry.from_text(format_text(f"{heading}\n\nSome update text.\n"))
 
     def test_rejects_non_timestamp_led_heading_at_parse_time(self) -> None:
         with self.assertRaises(AssertionError):

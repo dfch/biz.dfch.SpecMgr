@@ -1,9 +1,9 @@
 ---
-created: '2025-11-02 07:34:29.518Z'
+created: '2025-11-02T07:34:29.518Z'
 id: 3f7a1c9e-8d2b-4e6f-a5c3-9b0d4e8f2a71
 status: draft
 type: sysrs
-updated: '2025-11-21 15:47:02.963Z'
+updated: '2025-11-21T15:47:02.963Z'
 version: 1.0.0
 ---
 
@@ -532,13 +532,13 @@ Worked example — key rotation timeline (REQ c94e1b7a-2d8f-4a3e-8b5c-
 
 ## Updates
 
-### 2026-09-14 - Added Security Requirements
+### 2026-09-14 00:00:00.000Z - Added Security Requirements
 
 Two Security requirements added (see Security under Requirements
 above) after the partner security review flagged unencrypted key
 storage; System Context diagram updated to show the KMS boundary.
 
-### 2026-08-30 - Initial draft created
+### 2026-08-30 00:00:00.000Z - Initial draft created
 
 Initial system specification drafted from the linked Goals/Problem
 Statement/Scenarios; no Requirements or Decisions cross-referenced

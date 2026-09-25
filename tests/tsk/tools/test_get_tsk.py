@@ -46,7 +46,7 @@ _MINIMAL_BODY = textwrap.dedent(
 
     ## Recent Updates
 
-    ### 2026-08-19 - Kickoff
+    ### 2026-08-19 00:00:00.000Z - Kickoff
 
     Started the task list.
     """
@@ -154,7 +154,7 @@ class TestGetTsk(unittest.TestCase):
         k, m = 7, 3
         window = get_tsk(doc_id, raw=True, offset=k, limit=m)
         self.assertEqual(window, "\n".join(lines[k - 1 : k - 1 + m]) + "\n")
-        replacement = "### 2026-08-19 - Kickoff\n\nStarted the task list with a kickoff note."
+        replacement = "### 2026-08-19 00:00:00.000Z - Kickoff\n\nStarted the task list with a kickoff note."
 
         update(id=doc_id, type="tsk", content=replacement, offset=k, limit=m)
 

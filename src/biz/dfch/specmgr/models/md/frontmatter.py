@@ -51,15 +51,24 @@ from ._util import CURRENT_SCHEMA_VERSION, blank_to_none, default_if_blank, vali
 #: Default ``status`` value when omitted or blank/``None``.
 DEFAULT_STATUS = "draft"
 
-#: The canonical date+time variant (D4/D5/D7,
-#: ``.specmgr/feat/feat-38-39-41-43-44/README.md`` Design Notes):
-#: space-separated ``yyyy-MM-dd HH:mm:ss.fff``, followed by either ``Z``
-#: (UTC) or a signed ``±HH:mm`` offset. Date-only, ``T``-separated,
-#: microsecond, and timezone-less values all fail this pattern -- ``created``/
-#: ``updated`` are the two fields that are strictly date+time-only (D5); a
-#: date-only value is legitimate elsewhere (e.g. a DEC/VCR/TSK ``UpdateEntry``
-#: heading) but never here.
-_DATE_TIME_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})$")
+#: The date+time variant accepted for ``created``/``updated`` (feat-146,
+#: ADR 8c889262-152b-4b8e-ae2c-75371f7a9edf): ``yyyy-MM-dd`` + (``T`` or
+#: space) + ``HH:mm:ss.fff`` (exactly three millisecond digits), followed by
+#: either ``Z`` (UTC) or a signed ``±HH:mm`` offset. The machine-written
+#: canonical form is the ``T``-separated one (the MCP is the only writer of
+#: frontmatter; ``general.tools._timestamps.format_timestamp`` emits it);
+#: the space separator remains accepted so existing space-form values keep
+#: parsing until their next write converges them to ``T``. Date-only,
+#: six-digit-fraction (microsecond), and timezone-less values all fail this
+#: pattern -- ``created``/``updated`` are the two fields that are strictly
+#: date+time-only (feat-38-39-41-43-44 D5, retained); the entry-heading
+#: aliases of the six log-entry domains (``tsk``'s ``RecentUpdates``,
+#: ``dec``/``sop``/``vcr``/``sysrs``'s ``Updates``, ``feat``'s
+#: ``Updates``/``DecisionsMade``) enforce this same full date+time fragment
+#: as of feat-146 Phase 2, so a date-only value is rejected everywhere, not
+#: just here. Supersedes feat-38-39-41-43-44 D5's ``T`` rejection and D4's
+#: space-canonical write form.
+_DATE_TIME_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})$")
 
 
 class MarkdownFrontmatter(BaseModel):
@@ -84,14 +93,16 @@ class MarkdownFrontmatter(BaseModel):
         needing to know that beforehand. Must not be blank.
     created:
         Free-form date/timestamp the document was first created. Optional.
-        The generated JSON Schema carries a ``pattern`` key (derived from
-        :data:`_DATE_TIME_PATTERN`, the same regex :meth:`_validate_date_time_format`
-        enforces at runtime) documenting the required ``yyyy-MM-dd
-        HH:mm:ss.fff`` + ``Z``/``±HH:mm`` format -- this is schema-level
-        documentation only, added via ``json_schema_extra`` rather than
-        ``Field(pattern=...)`` so that pydantic-core does not itself enforce
-        the pattern (which would fire before, and mask the message of,
-        :meth:`_validate_date_time_format`).
+        The required shape is ``yyyy-MM-dd`` + (``T`` or space) +
+        ``HH:mm:ss.fff`` + ``Z``/``±HH:mm``; the machine-written canonical
+        form is the ``T``-separated one (the MCP is the only writer of
+        frontmatter). The generated JSON Schema carries a ``pattern`` key
+        (derived from :data:`_DATE_TIME_PATTERN`, the same regex
+        :meth:`_validate_date_time_format` enforces at runtime) documenting
+        that shape -- this is schema-level documentation only, added via
+        ``json_schema_extra`` rather than ``Field(pattern=...)`` so that
+        pydantic-core does not itself enforce the pattern (which would fire
+        before, and mask the message of, :meth:`_validate_date_time_format`).
     updated:
         Free-form date/timestamp the document was last updated. Optional.
         Carries the same schema-level ``pattern`` documentation as
@@ -157,21 +168,22 @@ class MarkdownFrontmatter(BaseModel):
     @field_validator("created", "updated", mode="after")
     @classmethod
     def _validate_date_time_format(cls, value: str | None) -> str | None:
-        """Reject any non-``None`` ``created``/``updated`` value that isn't the date+time variant (D5).
+        """Reject any non-``None`` ``created``/``updated`` value that isn't the date+time variant (feat-146).
 
         Runs after :meth:`_optional_blank_to_none` (mode="before" validators
         on a class run before mode="after" validators on the same class),
         so this validator only ever sees ``None`` or an already-non-blank
         string. ``None`` passes through unchanged; any other value must
         :func:`re.fullmatch` :data:`_DATE_TIME_PATTERN` -- date-only,
-        ``T``-separated, microsecond, and timezone-less values are all
-        rejected here.
+        six-digit-fraction (microsecond), and timezone-less values are all
+        rejected here; both the ``T`` and the space separator are accepted
+        (the machine-written canonical form is the ``T`` one).
         """
         if value is None:
             return value
         if not _DATE_TIME_PATTERN.fullmatch(value):
             raise ValueError(
                 f"created/updated {value!r} must be the date+time variant "
-                f"'yyyy-MM-dd HH:mm:ss.fff' followed by 'Z' or a signed '+HH:mm'/'-HH:mm' offset"
+                f"'yyyy-MM-dd' + 'T' or space + 'HH:mm:ss.fff' followed by 'Z' or a signed '+HH:mm'/'-HH:mm' offset"
             )
         return value

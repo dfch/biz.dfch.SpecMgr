@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **BREAKING**: Every whole-body document type's timestamps now use one
+  uniform full ISO 8601 date+time form (`yyyy-MM-dd` + `T` or space +
+  `HH:mm:ss.fff` + `Z`/`±HH:mm`) (ADR 8c889262-152b-4b8e-ae2c-75371f7a9edf,
+  GitHub issue #146, feat-146-date-time):
+  - Frontmatter `created`/`updated` of all twelve whole-body domains (ADR
+    excluded) are now written in the `T`-separated canonical form by the
+    MCP (the sole writer of frontmatter), and both `T`- and
+    space-separated values are accepted on read; date-only, six-digit
+    fraction, and timezone-less values remain rejected, as before, and
+    pre-existing space-separated values stay valid.
+  - The dated entry headings of `tsk`/`dec`/`vcr`/`sysrs` (`## Recent
+    Updates`/`## Updates`) are tightened from date-or-full-date+time to
+    full date+time only: a document with date-only entry headings (e.g.
+    `### 2026-08-19 - Created`) now fails to parse with an actionable
+    error. The repo-owned inventory (packaged templates/examples/
+    instructions and `docs/`) was migrated to space-form midnight UTC
+    (`### 2026-08-19 00:00:00.000Z - Created`) in the same change; the
+    `feat`/`sop` entry headings additionally accept the `T` separator now.
+  - The newest-first ordering checks compare full timestamps as aware
+    datetimes: the mixed date-only/date+time day-granularity rule is gone
+    (same-day `T`- vs space-separated pairs order by their time component,
+    equal timestamps remain allowed).
+
 ## [0.31.0] - 2026-09-23
 
 ### Added

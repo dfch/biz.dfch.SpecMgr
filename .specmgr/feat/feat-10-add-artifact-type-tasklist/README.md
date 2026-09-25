@@ -21,6 +21,10 @@ is too much. `tsk` follows the domain-first hierarchy and MCP surface already
 established by `req` (ADR ece4554b-725c-4f76-bc04-5d2b760363d2), reusing its
 tools/resources shape almost exactly (per GitHub issue #10).
 
+> **Superseded timestamp-format decisions (feat-146-date-time, 2026-09-24):** ADR `8c889262-152b-4b8e-ae2c-75371f7a9edf` supersedes this feature's free-form `## Recent Updates` entry-heading
+> decision (H3 titles with no timestamp requirement): `tsk` `## Recent Updates` entries now require the timestamp-led full date+time heading form (date-only rejected; `T` written,
+> `T`-or-space accepted), the same as every other entry-heading domain.
+
 ### Requirements
 
 - [x] REQ-001: Define the `tsk` markdown schema — frontmatter (`type="tsk"`,

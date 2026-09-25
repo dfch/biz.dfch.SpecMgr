@@ -97,8 +97,8 @@ _REQ_FULL_DOCUMENT = (
     type: req
     version: 1.0.0
     status: draft
-    created: '2026-08-05 00:00:00.000Z'
-    updated: '2026-08-05 00:00:00.000Z'
+    created: '2026-08-05T00:00:00.000Z'
+    updated: '2026-08-05T00:00:00.000Z'
     ---
 
     """
@@ -158,8 +158,8 @@ _UC_FULL_DOCUMENT = (
     type: uc
     version: 1.0.0
     status: draft
-    created: '2026-08-05 00:00:00.000Z'
-    updated: '2026-08-05 00:00:00.000Z'
+    created: '2026-08-05T00:00:00.000Z'
+    updated: '2026-08-05T00:00:00.000Z'
     ---
 
     """
@@ -175,7 +175,7 @@ _TSK_MINIMAL_BODY = textwrap.dedent(
 
     ## Recent Updates
 
-    ### 2026-08-19 - Kickoff
+    ### 2026-08-19 00:00:00.000Z - Kickoff
 
     Started the task list.
     """
@@ -189,8 +189,8 @@ _TSK_FULL_DOCUMENT = (
     type: tsk
     version: 1.0.0
     status: draft
-    created: '2026-08-16 00:00:00.000Z'
-    updated: '2026-08-16 00:00:00.000Z'
+    created: '2026-08-16T00:00:00.000Z'
+    updated: '2026-08-16T00:00:00.000Z'
     ---
 
     """
@@ -242,8 +242,8 @@ _QA_FULL_DOCUMENT = (
     type: qa
     version: 1.0.0
     status: draft
-    created: '2026-08-18 00:00:00.000Z'
-    updated: '2026-08-18 00:00:00.000Z'
+    created: '2026-08-18T00:00:00.000Z'
+    updated: '2026-08-18T00:00:00.000Z'
     ---
 
     """
@@ -281,8 +281,8 @@ _PRB_FULL_DOCUMENT = (
     type: prb
     version: 1.0.0
     status: draft
-    created: '2026-08-25 00:00:00.000Z'
-    updated: '2026-08-25 00:00:00.000Z'
+    created: '2026-08-25T00:00:00.000Z'
+    updated: '2026-08-25T00:00:00.000Z'
     ---
 
     """
@@ -325,8 +325,8 @@ _GOL_FULL_DOCUMENT = (
     type: gol
     version: 1.0.0
     status: draft
-    created: '2026-08-25 00:00:00.000Z'
-    updated: '2026-08-25 00:00:00.000Z'
+    created: '2026-08-25T00:00:00.000Z'
+    updated: '2026-08-25T00:00:00.000Z'
     ---
 
     """
@@ -388,8 +388,8 @@ _RSK_FULL_DOCUMENT = (
     type: rsk
     version: 1.0.0
     status: open
-    created: '2026-08-24 00:00:00.000Z'
-    updated: '2026-08-24 00:00:00.000Z'
+    created: '2026-08-24T00:00:00.000Z'
+    updated: '2026-08-24T00:00:00.000Z'
     ---
 
     """
@@ -470,8 +470,8 @@ _DEC_FULL_DOCUMENT = (
     type: dec
     version: 1.0.0
     status: draft
-    created: '2026-08-26 00:00:00.000Z'
-    updated: '2026-08-26 00:00:00.000Z'
+    created: '2026-08-26T00:00:00.000Z'
+    updated: '2026-08-26T00:00:00.000Z'
     ---
 
     """
@@ -522,8 +522,8 @@ _SOP_FULL_DOCUMENT = (
     type: sop
     version: 1.0.0
     status: draft
-    created: '2026-08-30 00:00:00.000Z'
-    updated: '2026-08-30 00:00:00.000Z'
+    created: '2026-08-30T00:00:00.000Z'
+    updated: '2026-08-30T00:00:00.000Z'
     ---
 
     """
@@ -591,8 +591,8 @@ _FEAT_FULL_DOCUMENT = (
     type: feat
     version: 1.0.0
     status: planning
-    created: '2026-08-30 00:00:00.000Z'
-    updated: '2026-08-30 00:00:00.000Z'
+    created: '2026-08-30T00:00:00.000Z'
+    updated: '2026-08-30T00:00:00.000Z'
     ---
 
     """
@@ -649,8 +649,8 @@ _VCR_FULL_DOCUMENT = (
     type: vcr
     version: 1.0.0
     status: draft
-    created: '2026-08-31 00:00:00.000Z'
-    updated: '2026-08-31 00:00:00.000Z'
+    created: '2026-08-31T00:00:00.000Z'
+    updated: '2026-08-31T00:00:00.000Z'
     ---
 
     """
@@ -705,8 +705,8 @@ _SYSRS_FULL_DOCUMENT = (
     type: sysrs
     version: 1.0.0
     status: draft
-    created: '2026-08-31 00:00:00.000Z'
-    updated: '2026-08-31 00:00:00.000Z'
+    created: '2026-08-31T00:00:00.000Z'
+    updated: '2026-08-31T00:00:00.000Z'
     ---
 
     """
@@ -844,8 +844,8 @@ class TestValidateIssue83Regressions(unittest.TestCase):
     def test_req_naive_isoformat_timestamp_repro(self) -> None:
         """A `req` document with naive-isoformat `created`/`updated` (no `Z`/offset)."""
         text = _REQ_FULL_DOCUMENT.replace(
-            "created: '2026-08-05 00:00:00.000Z'", "created: '2026-08-05T08:15:42'"
-        ).replace("updated: '2026-08-05 00:00:00.000Z'", "updated: '2026-08-06T03:27:27'")
+            "created: '2026-08-05T00:00:00.000Z'", "created: '2026-08-05T08:15:42'"
+        ).replace("updated: '2026-08-05T00:00:00.000Z'", "updated: '2026-08-06T03:27:27'")
 
         result = validate(type="req", content=text, full=True)
 
@@ -853,8 +853,8 @@ class TestValidateIssue83Regressions(unittest.TestCase):
         self.assertEqual(len(result.errors), 1)
         message = result.errors[0].message
         self.assertIn(
-            "must be the date+time variant 'yyyy-MM-dd HH:mm:ss.fff' followed by 'Z' or a signed "
-            "'+HH:mm'/'-HH:mm' offset",
+            "must be the date+time variant 'yyyy-MM-dd' + 'T' or space + 'HH:mm:ss.fff' followed by 'Z' "
+            "or a signed '+HH:mm'/'-HH:mm' offset",
             message,
         )
 
@@ -869,8 +869,8 @@ class TestValidateIssue83Regressions(unittest.TestCase):
             type: dec
             version: 1.0.0
             status: draft
-            created: '2026-08-27 00:00:00.000Z'
-            updated: '2026-08-27 00:00:00.000Z'
+            created: '2026-08-27T00:00:00.000Z'
+            updated: '2026-08-27T00:00:00.000Z'
             ---
 
             """

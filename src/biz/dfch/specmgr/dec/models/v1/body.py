@@ -414,38 +414,38 @@ class MoreInformation(MarkdownSection2):
     fixed format. Optional."""
 
 
-#: Matches a `{yyyy-MM-dd or full date+time} ( - | : ) {title}` heading line
-#: as retained in a composite `MarkdownSection3`'s `.text` (which carries the
-#: heading's inline content, no `###` marker), capturing the timestamp
-#: (named group `timestamp`) and the title (named group `title`). Mirrors
-#: `sop.models.v1.body._UPDATE_ENTRY_HEADING_PATTERN`, except the date+time
-#: variant's time-of-day/milliseconds/offset is entirely optional here --
-#: a bare `yyyy-MM-dd` date is also accepted (REQ-004).
+#: Matches a `{full date+time} ( - | : ) {title}` heading line as retained in
+#: a composite `MarkdownSection3`'s `.text` (which carries the heading's
+#: inline content, no `###` marker), capturing the timestamp (named group
+#: `timestamp`) and the title (named group `title`). Mirrors
+#: `sop.models.v1.body._UPDATE_ENTRY_HEADING_PATTERN` exactly.
 _UPDATE_ENTRY_HEADING_PATTERN = re.compile(
-    r"(?P<timestamp>\d{4}-\d{2}-\d{2}(?: \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2}))?)(?: - | : )(?P<title>.+)"
+    r"(?P<timestamp>\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2}))(?: - | : )(?P<title>.+)"
 )
 
 
 @alias(
-    value=r"^\d{4}-\d{2}-\d{2}(?: \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2}))?(?: - | : ).+$",
+    value=r"^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})(?: - | : ).+$",
     type=AliasType.REGEX,
 )
 class UpdateEntry(MarkdownSection3):
     """`### {timestamp} ( - | : ) {title}` under `## Updates` -- one update entry.
 
-    The H3 heading text carries a timestamp and a title, joined by either
-    ``" - "`` (space, hyphen, space) or ``" : "`` (space, colon, space):
-    e.g. `### 2026-08-27 - Confirmed` or
-    `### 2026-08-27 14:30:00.000+02:00 : Confirmed`. The em-dash separator
-    is rejected. The timestamp is either a bare ``yyyy-MM-dd`` date or the
-    full ``yyyy-MM-dd HH:mm:ss.fff`` + explicit UTC offset (``+02:00``,
-    ``-05:00``) or ``Z`` for UTC variant (REQ-004) -- deliberately **not**
-    the same format as frontmatter ``created``/``updated``; this format is
+    The H3 heading text carries a full date+time timestamp and a title,
+    joined by either ``" - "`` (space, hyphen, space) or ``" : "`` (space,
+    colon, space): e.g. `### 2026-08-27 14:30:00.000+02:00 - Confirmed` or
+    `### 2026-08-27T14:30:00.000+02:00 : Confirmed`. The em-dash separator
+    is rejected. The timestamp is the full ``yyyy-MM-dd`` + (``T`` or
+    space) + ``HH:mm:ss.fff`` + explicit UTC offset (``+02:00``,
+    ``-05:00``) or ``Z`` for UTC variant -- the same full format as
+    frontmatter ``created``/``updated`` (both separators accepted, date-only
+    rejected; ADR 8c889262-152b-4b8e-ae2c-75371f7a9edf); this format is
     scoped to `## Updates` entry headings only, which are hand/LLM-authored
     body content. Constrained by the regex `@alias` above and enforced by
     `match_alias` (`re.fullmatch`) at parse time -- a heading that does not
-    start with a valid date, an em-dash separator, or a missing
-    `` - ``/`` : `` title all fail the parse eagerly.
+    start with a valid full timestamp (a date-only value fails too), an
+    em-dash separator, or a missing `` - ``/`` : `` title all fail the
+    parse eagerly.
 
     Parameters
     ----------
@@ -468,7 +468,7 @@ class UpdateEntry(MarkdownSection3):
     @computed_field  # type: ignore
     @property
     def timestamp(self) -> str:
-        """The timestamp carried by this heading (e.g. `2026-08-27` or `2026-08-27 14:30:00.000+02:00`).
+        """The timestamp carried by this heading (e.g. `2026-08-27 14:30:00.000+02:00`).
 
         Returns:
             The timestamp string parsed from the retained heading text.
@@ -486,7 +486,7 @@ class UpdateEntry(MarkdownSection3):
     @computed_field  # type: ignore
     @property
     def title(self) -> str:
-        """The title carried by this heading (e.g. `Confirmed` for `### 2026-08-27 - Confirmed`).
+        """The title carried by this heading (e.g. `Confirmed` for `### 2026-08-27 14:30:00.000+02:00 - Confirmed`).
 
         Returns:
             The title parsed from the retained heading text (the text
@@ -537,8 +537,8 @@ class Updates(MarkdownSection2WithComment):
         """Reject entries that are not in newest-first order.
 
         Delegates to the shared `models.md._ordering.validate_newest_first`
-        helper (mixed date-only/date+time day-granularity rule, equal
-        values allowed) -- mirrors `feat.models.v1.body.Updates._validate_newest_first`
+        helper (full date+time aware-datetime comparison, equal values
+        allowed) -- mirrors `feat.models.v1.body.Updates._validate_newest_first`
         without duplicating its logic. Raises on the first out-of-order pair.
         """
         validate_newest_first([update.timestamp for update in self.updates], "Updates")

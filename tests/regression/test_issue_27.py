@@ -70,7 +70,7 @@ _ISSUE_27_BODY = textwrap.dedent(
 
     ## Recent Updates
 
-    ### 2026-08-27 - Created
+    ### 2026-08-27 00:00:00.000Z - Created
 
     repro
     """
@@ -88,7 +88,7 @@ _ISSUE_27_VALID_SEED_BODY = textwrap.dedent(
 
     ## Recent Updates
 
-    ### 2026-08-27 - Created
+    ### 2026-08-27 00:00:00.000Z - Created
 
     repro
     """
@@ -116,7 +116,7 @@ _FEAT_7_TASK_0_29_BODY = textwrap.dedent(
 
     ## Recent Updates
 
-    ### 2026-08-29 - Diagram persisted
+    ### 2026-08-29 00:00:00.000Z - Diagram persisted
 
     Persisted the diagram to disk, deciding to keep the diagram's own
     + group-block style as final layout for the sequence.
@@ -133,7 +133,7 @@ _FEAT_7_TASK_0_29_VALID_SEED_BODY = textwrap.dedent(
 
     ## Recent Updates
 
-    ### 2026-08-29 - Diagram persisted
+    ### 2026-08-29 00:00:00.000Z - Diagram persisted
 
     Persisted the diagram to disk, deciding to keep the diagram's own
     group-block style as final layout for the sequence.
