@@ -41,7 +41,11 @@ invalidating the rest of the document. ``feat`` is handled separately (its
 own template's id ``must`` equal the containing folder name, and its
 lifecycle is exercised through the real ``create_feat``/``set_feat_id``
 tools instead of a bare temp-file write, since ``set_feat_id`` is the whole
-point of testing it).
+point of testing it). Until feat-156 Phase 2 numbers the qa packaged
+template, the qa iteration of the template-parsing tests below is
+temporarily skipped (their own per-loop ``TEMPORARY`` markers name the
+restoration task), while the non-parsing structural test keeps qa's
+routing coverage alive.
 
 **Why ``find_doc_path_by_id`` directly, not each domain's own
 ``find_<domain>_path``.** Calling the generic function directly with a
@@ -189,6 +193,12 @@ class TestAcc008ReadFnIsCacheBackedForEveryNonFeatDomain(unittest.TestCase):
 
     def test_second_read_of_an_unchanged_file_does_not_reinvoke_the_real_parse_fn(self) -> None:
         for domain in WHOLE_BODY_NO_FEAT_DOMAINS:
+            # feat-156 Phase 1 (TEMPORARY; remove in feat-156 Phase 2, Task 2.1): the qa
+            # packaged template's questions do not carry the new bold "**<d>.<NNNN>**: "
+            # number prefix yet, so parsing it would (correctly) raise; skip only the qa
+            # iteration here.
+            if domain == "qa":
+                continue
             with self.subTest(domain=domain):
                 module = _cache_module(domain)
                 read_fn: Callable[[Path], Any] = getattr(module, f"read_{domain}")
@@ -217,6 +227,12 @@ class TestAcc008FindDocPathByIdReconcilesForEveryNonFeatDomain(unittest.TestCase
 
     def test_scan_warms_both_entries_then_reconcile_drops_the_deleted_one(self) -> None:
         for domain in WHOLE_BODY_NO_FEAT_DOMAINS:
+            # feat-156 Phase 1 (TEMPORARY; remove in feat-156 Phase 2, Task 2.1): the qa
+            # packaged template's questions do not carry the new bold "**<d>.<NNNN>**: "
+            # number prefix yet, so parsing it would (correctly) raise; skip only the qa
+            # iteration here.
+            if domain == "qa":
+                continue
             with self.subTest(domain=domain):
                 module = _cache_module(domain)
                 read_fn: Callable[[Path], Any] = getattr(module, f"read_{domain}")

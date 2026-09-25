@@ -4,12 +4,18 @@ One adjacent question/answer pair with no heading of its own (QA v2).
 
 Many Q&A pairs can appear directly one after another inside a single
 ISO/IEC 25010:2023 characteristic section, each shaped as
-`<!-- optional comment -->` + `> {question}` (a block quote) + free-form
-answer prose -- with **no heading of its own** per pair:
+`<!-- optional comment -->` + `> **<d>.<NNNN>**: {question}` (a block quote
+whose own text starts with the bold question-number prefix -- a single
+category digit and a 4-digit zero-padded per-category sequence, enforced by
+`QaQuestionAnswer`'s own `field_validator("question")`; feat-156) +
+free-form answer prose (an unanswered question carries a `TODO: `
+placeholder, e.g. `TODO: answer pending`, in the answer text -- a pure
+authoring convention, not parsed or validated) -- with **no heading of its
+own** per pair:
 
 ```
 <!-- optional comment -->                comment: MarkdownComment | None
-> {question}                             question: MarkdownBlockQuote | None
+> **<d>.<NNNN>**: {question}             question: MarkdownBlockQuote | None
 {free-form answer prose}                 answer: QaAnswer | None
 ```
 
@@ -35,6 +41,12 @@ feature adds zero changes to that shared engine.
 ### `QaAnswer`
 
 One `QaQuestionAnswer`'s free-form prose answer -- an opaque, unparsed markdown blob.
+
+An unanswered question carries a `TODO: ` placeholder (e.g.
+`TODO: answer pending`) as its answer text, replaced by the real answer
+once the question is answered -- the placeholder is a pure authoring
+convention, never parsed or validated by this class (feat-156
+REQ-007/008).
 
 Deliberately **not** heading-anchored: since further adjacent Q&A pairs
 can follow within the same enclosing category section, the base
@@ -859,11 +871,23 @@ Parameters
 ----------
 comment:
     Optional leading `<!-- ... -->` comment, belonging to the question
-    that follows it.
+    that follows it. Keeps its original free-form purpose (who/when a
+    pair was elicited) -- the question's number never lives here (the
+    number lives in exactly one place: the `question` prefix, feat-156
+    REQ-001).
 question:
-    The interviewer's question, as a block quote. Optional.
+    The interviewer's question, as a block quote whose own text must
+    start with the bold question-number prefix `**<d>.<NNNN>**: ` (see
+    `_QUESTION_NUMBER_PREFIX`/`_validate_question`): a single category
+    digit and a 4-digit zero-padded per-category sequence. Once
+    assigned, a number is permanent -- never reused, never renumbered;
+    a removed question leaves a gap (feat-156 REQ-005). Optional.
 answer:
-    The interviewee's free-form prose answer. Optional.
+    The interviewee's free-form prose answer. An unanswered question is
+    marked by a `TODO: ` placeholder (e.g. `TODO: answer pending`) as
+    its answer text, replaced by the real answer once the question is
+    answered -- a pure authoring convention, not parsed or validated
+    (feat-156 REQ-007/008). Optional.
 
 **Methods:**
 

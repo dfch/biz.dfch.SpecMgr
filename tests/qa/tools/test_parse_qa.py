@@ -53,7 +53,7 @@ _VALID_DOC = textwrap.dedent(
 
     ## Functional Suitability
 
-    > Is this acceptable?
+    > **1.0010**: Is this acceptable?
 
     Yes, it is acceptable.
 
@@ -152,7 +152,7 @@ _V1_SHAPED_DOC = textwrap.dedent(
 
     ### What must happen?
 
-    > Is this acceptable?
+    > **1.0010**: Is this acceptable?
 
     Yes, it is acceptable.
 
@@ -227,7 +227,7 @@ class TestParseQaTool(unittest.TestCase):
             self.assertIn("additional information", body["more_information"]["text"])
             item = body["functional_suitability"]["questions"][0]
             self.assertIn("Yes, it is acceptable.", item["answer"]["text"])
-            self.assertIn("Is this acceptable?", item["question"]["text"])
+            self.assertIn("**1.0010**: Is this acceptable?", item["question"]["text"])
 
     def test_model_dump_surfaces_non_paragraph_introduction_body_content(self) -> None:
         """Regression test: `model_dump()` must surface real bullet-list content for a
@@ -287,6 +287,26 @@ class TestParseQaTool(unittest.TestCase):
 
             with self.assertRaises(AssertionError):
                 parse_qa(str(path))
+
+    def test_raises_validation_error_for_unnumbered_question(self) -> None:
+        """A v2-shaped document whose question lacks the bold `**<d>.<NNNN>**: ` number
+        prefix (feat-156) must fail with the validator's own actionable
+        `pydantic.ValidationError` -- the tool's `wrap_tool_errors` re-raise
+        keeps the type and the domain/tool label (feat-156 ACC-001).
+        """
+        text = _VALID_DOC.replace("> **1.0010**: Is this acceptable?", "> Is this acceptable?")
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "test.md"
+            path.write_text(text, encoding="utf-8")
+
+            with self.assertRaises(ValidationError) as ctx:
+                parse_qa(str(path))
+
+            message = str(ctx.exception)
+            self.assertIn("qa parse_qa", message)
+            self.assertIn("question must start with the bold question-number prefix", message)
+            self.assertIn("Is this acceptable?", message)
 
 
 if __name__ == "__main__":

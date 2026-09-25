@@ -19,12 +19,18 @@
 
 Many Q&A pairs can appear directly one after another inside a single
 ISO/IEC 25010:2023 characteristic section, each shaped as
-`<!-- optional comment -->` + `> {question}` (a block quote) + free-form
-answer prose -- with **no heading of its own** per pair:
+`<!-- optional comment -->` + `> **<d>.<NNNN>**: {question}` (a block quote
+whose own text starts with the bold question-number prefix -- a single
+category digit and a 4-digit zero-padded per-category sequence, enforced by
+`QaQuestionAnswer`'s own `field_validator("question")`; feat-156) +
+free-form answer prose (an unanswered question carries a `TODO: `
+placeholder, e.g. `TODO: answer pending`, in the answer text -- a pure
+authoring convention, not parsed or validated) -- with **no heading of its
+own** per pair:
 
 ```
 <!-- optional comment -->                comment: MarkdownComment | None
-> {question}                             question: MarkdownBlockQuote | None
+> **<d>.<NNNN>**: {question}             question: MarkdownBlockQuote | None
 {free-form answer prose}                 answer: QaAnswer | None
 ```
 
@@ -48,8 +54,10 @@ feature adds zero changes to that shared engine.
 
 from __future__ import annotations
 
+import re
+
 from markdown_it.token import Token
-from pydantic import Field, computed_field
+from pydantic import Field, computed_field, field_validator
 
 from ....models.md import MarkdownBlockQuote, MarkdownComment, MarkdownStr
 from ....models.md._markdown import format_text, parse
@@ -59,6 +67,23 @@ from ....models.md._markdown import format_text, parse
 #: into that module's private constant, per this feature's "zero changes to, and no reuse
 #: of internals from, `models/md/`" design constraint.
 _HEADING_TAGS = ("h1", "h2", "h3", "h4", "h5", "h6")
+
+#: Matches `QaQuestionAnswer.question`'s own mandatory bold question-number
+#: prefix (feat-156 REQ-001/004): a single category digit, a dot, a 4-digit
+#: zero-padded per-category sequence, closing `**`, a colon, and whitespace --
+#: e.g. `> **0.0010**: What is the expected load?`. `MarkdownBlockQuote.text`
+#: strips the `>` marker per line but preserves inline markdown verbatim (see
+#: `models/md/markdown_block_quote.py`), so this is a start-anchored prefix
+#: match (not a `fullmatch`) against `question.text`: the question text itself
+#: stays free-form and may span several quoted lines (and the `\s` after the
+#: colon also accepts a line break, so the question may continue on the next
+#: quoted line). The sequence's start-at/step-by convention and the
+#: digit-to-section mapping are human authoring guidelines only -- never
+#: enforced here, so gaps and in-between numbers (e.g. `0.0015`) always parse
+#: (feat-156 REQ-003, Design Notes 4). A `field_validator` is invisible to
+#: `model_json_schema()`, so the scheme is documented via the `question`/
+#: `answer` field descriptions instead (feat-156 Design Note 11).
+_QUESTION_NUMBER_PREFIX = r"\A\*\*\d\.\d{4}\*\*:\s"
 
 
 def _is_heading(tok: Token) -> bool:
@@ -81,6 +106,12 @@ def _is_comment(tok: Token) -> bool:
 
 class QaAnswer(MarkdownStr):
     """One `QaQuestionAnswer`'s free-form prose answer -- an opaque, unparsed markdown blob.
+
+    An unanswered question carries a `TODO: ` placeholder (e.g.
+    `TODO: answer pending`) as its answer text, replaced by the real answer
+    once the question is answered -- the placeholder is a pure authoring
+    convention, never parsed or validated by this class (feat-156
+    REQ-007/008).
 
     Deliberately **not** heading-anchored: since further adjacent Q&A pairs
     can follow within the same enclosing category section, the base
@@ -163,20 +194,74 @@ class QaQuestionAnswer(MarkdownStr):
     ----------
     comment:
         Optional leading `<!-- ... -->` comment, belonging to the question
-        that follows it.
+        that follows it. Keeps its original free-form purpose (who/when a
+        pair was elicited) -- the question's number never lives here (the
+        number lives in exactly one place: the `question` prefix, feat-156
+        REQ-001).
     question:
-        The interviewer's question, as a block quote. Optional.
+        The interviewer's question, as a block quote whose own text must
+        start with the bold question-number prefix `**<d>.<NNNN>**: ` (see
+        `_QUESTION_NUMBER_PREFIX`/`_validate_question`): a single category
+        digit and a 4-digit zero-padded per-category sequence. Once
+        assigned, a number is permanent -- never reused, never renumbered;
+        a removed question leaves a gap (feat-156 REQ-005). Optional.
     answer:
-        The interviewee's free-form prose answer. Optional.
+        The interviewee's free-form prose answer. An unanswered question is
+        marked by a `TODO: ` placeholder (e.g. `TODO: answer pending`) as
+        its answer text, replaced by the real answer once the question is
+        answered -- a pure authoring convention, not parsed or validated
+        (feat-156 REQ-007/008). Optional.
     """
 
     comment: MarkdownComment | None = Field(
         default=None, description="Optional explanatory HTML comment (`<!-- ... -->`), belongs to `question`."
     )
     question: MarkdownBlockQuote | None = Field(
-        default=None, description="The interviewer's question, as a block quote. Optional."
+        default=None,
+        description=(
+            "The interviewer's question, as a block quote whose text must start with the bold "
+            "question-number prefix '**<d>.<NNNN>**: ' -- a single category digit (0=Elicitation "
+            "Context, then the 9 ISO/IEC 25010:2023 characteristics in document order) and a "
+            "4-digit zero-padded per-category sequence (e.g. '> **1.0010**: What is the expected "
+            "load?'). The prefix is enforced by a field validator (invisible to this JSON Schema "
+            "itself); once assigned, a number is permanent (never renumbered or reused; removals "
+            "leave gaps) and the increment-by-10 convention is a human authoring guideline only. "
+            "Optional."
+        ),
     )
-    answer: QaAnswer | None = Field(default=None, description="Free-form prose answer. Optional.")
+    answer: QaAnswer | None = Field(
+        default=None,
+        description=(
+            "Free-form prose answer. Optional. An unanswered question is marked by a 'TODO: ' "
+            "placeholder as its answer text (e.g. 'TODO: answer pending'), replaced by the real "
+            "answer once the question is answered -- a pure authoring convention, not parsed or "
+            "validated."
+        ),
+    )
+
+    @field_validator("question")
+    @classmethod
+    def _validate_question(cls, question: MarkdownBlockQuote | None) -> MarkdownBlockQuote | None:
+        """Enforce `_QUESTION_NUMBER_PREFIX` at the start of `question.text` (mirrors VCR's `Verifies`/`Coverage`).
+
+        Runs only when `question` is present -- a pair may legitimately omit
+        it (see this class's docstring), in which case the validator is a
+        no-op. A missing/malformed prefix raises `ValueError`, which pydantic
+        channels into `ValidationError` on the very `cls(**kwargs)` call
+        `MarkdownStr.from_text` ends with, so every `parse_qa`/`create_qa`/
+        `validate`/`update` path reaches it; the shared feat-27 error
+        wrapping (`models/md/_errors.wrap_tool_errors`) adds the
+        document-relative field path and tool/domain context automatically
+        (the same precedent `vcr`'s own `Verifies`/`Coverage` validators
+        follow -- no wrapping of its own here).
+        """
+        if question is not None and not re.match(_QUESTION_NUMBER_PREFIX, question.text):
+            raise ValueError(
+                "question must start with the bold question-number prefix '**<d>.<NNNN>**: ' "
+                "(a single category digit and a 4-digit zero-padded per-category sequence, e.g. "
+                f"'> **0.0010**: What is the expected load?'), got {question.text!r}"
+            )
+        return question
 
     @classmethod
     def get_extent(cls, text: str) -> int:
