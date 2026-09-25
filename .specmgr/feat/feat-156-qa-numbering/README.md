@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-25T10:44:57.323+02:00'
 id: feat-156-qa-numbering
-status: planning
+status: review
 type: feat
-updated: '2026-09-25T17:07:01.314+02:00'
+updated: '2026-09-25T17:26:27.158+02:00'
 version: 1.0.0
 ---
 
