@@ -4,11 +4,11 @@ created: '2026-09-23 23:16:12.456+02:00'
 id: feat-150-mcp-lifecycle-commands
 status: planning
 type: feat
-updated: '2026-09-25 02:55:55.868+02:00'
+updated: '2026-09-25 08:06:37.934+02:00'
 version: 1.0.0
 ---
 
-# Feature: MCP-Native Feature-Lifecycle Commands (make_valid, refine_feat, implement_feat, review_feat) + OpenCode Distribution
+# Feature: MCP-Native Feature-Lifecycle Commands (repair, refine_feat, implement_feat, review_feat) + OpenCode Distribution
 
 ## Plan
 
@@ -18,15 +18,15 @@ GitHub issue #150 asks for five related capabilities that round out the feature/
 
 The unifying design principle (see Design Notes) is: every new capability gets a **portable MCP prompt** (narration-only text, works in any MCP host, following the existing `create_*`/`update_*`/`implement_task`/`refine`/`compact_history` precedent) *and*, where real file-editing/iteration/multi-agent delegation is required, a **richer OpenCode-native subagent + command** with real permission enforcement (mirroring the existing `phase-orchestrator`/`phase-implementer`/`feat-reviewer`/`ref-finder` precedent). The portable prompt narrates delegation via the *host's own* subagent-delegation tool (e.g. OpenCode's `task` tool) when available, exactly like every existing prompt already narrates host-native tools it doesn't implement itself (`question`, `TodoWrite`) -- it degrades to direct single-session implementation when no such tool exists.
 
-**Phase ordering is deliberately make_valid-first**: `make_valid` (Phase 1) has no dependency on the ADR that Phase 4 (implement_feat/review_feat) needs, so it can be implemented, tested, and shipped standalone before any other phase.
+**Phase ordering is deliberately repair-first**: `repair` (Phase 1) has no dependency on the ADR that Phase 4 (implement_feat/review_feat) needs, so it can be implemented, tested, and shipped standalone before any other phase.
 
 **Phase discipline (user requirement, 2026-09-24)**: every phase ends with the full quality gate (ruff format/check, vulture, the full pytest suite, and every doc-drift check the phase touches) and exactly one Conventional Commit; the phase's docs sync travels inside that same commit (see Design Notes, and the phase-end gate task at the end of every phase in the Task List).
 
 ### Requirements
 
-- REQ-001: A new `general/prompts/make_valid.py` MCP prompt, signature `make_valid(type, id=None)`, narrates discovering a failed-to-parse document (with `id`: confirm via `get_<d>(id)`'s wrapped parse error; without `id`: scan `list_<d>()` for the failed row, whose `title`/`status` carry the `<failed to parse>` marker and whose `id` is null while `ref`/`path`/`error` are populated), reading the raw file via the host's own file-read tool (no MCP tool can return raw content of a document that fails to parse: `get_<d>(raw=True)` and the generic `update` both re-parse the existing document first, and `update`'s per-domain adapters convert that failure into the domain's not-found error before any write), fixing only what the enriched error addresses while preserving the frontmatter `id`/`created`/`status`/`version` byte-for-byte (and leaving `updated` untouched -- a repair is not an edit), looping the generic `validate(type, content, full=True)` tool over the full raw text until green, and writing the repaired full text back to the same path via the host's own file-write tool -- explicitly NOT via the generic `update` tool, which is structurally unable to repair a document that fails to parse; when the host has no file read/write tools the prompt degrades to diagnose-only (report the error and the proposed fix, touch nothing); `type` is one of the 12 whole-body domains -- ADR is explicitly out of scope (it has no generic `validate`/`parse` tooling).
+- REQ-001: A new `general/prompts/repair.py` MCP prompt, signature `repair(type, id=None)`, narrates discovering a failed-to-parse document (with `id`: confirm via `get_<d>(id)`'s wrapped parse error; without `id`: scan `list_<d>()` for the failed row, whose `title`/`status` carry the `<failed to parse>` marker and whose `id` is null while `ref`/`path`/`error` are populated), reading the raw file via the host's own file-read tool (no MCP tool can return raw content of a document that fails to parse: `get_<d>(raw=True)` and the generic `update` both re-parse the existing document first, and `update`'s per-domain adapters convert that failure into the domain's not-found error before any write), fixing only what the enriched error addresses while preserving the frontmatter `id`/`created`/`status`/`version` byte-for-byte (and leaving `updated` untouched -- a repair is not an edit), looping the generic `validate(type, content, full=True)` tool over the full raw text until green, writing the repaired full text back to the same path via the host's own file-write tool -- explicitly NOT via the generic `update` tool, which is structurally unable to repair a document that fails to parse -- and then confirming the repair actually succeeded by calling `get_<d>(id)` again (or, when no `id` was given, `list_<d>()` again to confirm the row's `<failed to parse>` marker and `error` are gone) against the file as it now exists on disk, since the host's file-write tool operates outside the MCP server's control and could still produce a file that differs from the text that was validated (encoding, line-ending, or partial-write differences); when the host has no file read/write tools the prompt degrades to diagnose-only (report the error and the proposed fix, touch nothing); `type` is one of the 12 whole-body domains -- ADR is explicitly out of scope (it has no generic `validate`/`parse` tooling).
 
-- REQ-002: A new `.opencode/agent/doc-fixer.md` subagent implements REQ-001's loop with real file access, declaring every permission it relies on explicitly: `read`/`glob`/`grep`/`list`/`question`/`todowrite` allowed, `edit`/`write` allowed workspace-wide (the broken document may live under any domain base directory), `task` denied, `bash` denied -- plus a `.opencode/command/make-valid.md` (`/make-valid <type> [id]`, `$1`/`$2` positionals, `agent: doc-fixer`) wrapper.
+- REQ-002: A new `.opencode/agent/doc-repairer.md` subagent implements REQ-001's loop with real file access, declaring every permission it relies on explicitly: `read`/`glob`/`grep`/`list`/`question`/`todowrite` allowed, `edit`/`write` allowed workspace-wide (the broken document may live under any domain base directory), `task` denied, `bash` denied -- plus a `.opencode/command/repair.md` (`/repair <type> [id]`, `$1`/`$2` positionals, `agent: doc-repairer`) wrapper.
 
 - REQ-003: A new `feat/prompts/refine_feat.py` MCP prompt, signature `refine_feat(id)`, narrates a pre-implementation plan-readiness review (testable ACs, phase ordering/dependencies, scope clarity, unresolved decisions) that is fully MCP-native: read via `get_feat(id, raw=True)`, ask the user via the `question` tool, apply edits via the generic `update(type="feat", id, content, offset/limit)` tool (line-range preferred), and re-check via `validate(type="feat", content, full=True)` -- host file tools only as a fallback when those specmgr tools are unavailable.
 
@@ -46,11 +46,13 @@ The unifying design principle (see Design Notes) is: every new capability gets a
 
 - REQ-011: README.md gains a new section placed immediately after the existing "Add to OpenCode" section (which it references for MCP server setup rather than duplicating): the CLI installer (usage, what gets copied, target semantics) plus the manual/Claude-Code path -- Claude Code's structurally similar `.claude/agents/*.md`/`.claude/commands/*.md` convention is called out explicitly with a short hand-ported frontmatter example, along with the permission-model gap (OpenCode's per-pattern bash/edit rules vs. Claude Code's coarse tool allow-list) that means these are hand-ported, simplified equivalents, not an automatic translation.
 
+- REQ-012: A new `.opencode/skill/repair/SKILL.md` OpenCode Skill (added 2026-09-25 following a design-clarification pass -- see QA 76229d40-55e9-4640-9249-c391e1f3e84c question 0.0020), `name: repair`, whose `description` frontmatter triggers the model when it organically encounters a failed-to-parse document mid-execution (not only via an explicit `/repair` invocation); its body stays thin, deferring to the `doc-repairer` subagent via the `task` tool when available and otherwise narrating the same condensed host-native loop `general.prompts.repair` describes, so the workflow has no fourth independent copy to keep in sync.
+
 ### Acceptance Criteria
 
-- [ ] ACC-001: `make_valid(type, id=None)` MCP prompt exists, is registered, and its instructions name `list_<d>`'s failed-row discovery and `get_<d>`'s failure confirmation, direct the raw read and the write-back at the host's own file tools with an explicit note that the generic `update` tool cannot repair a document that fails to parse, loop the generic `validate(type, content, full=True)` tool, state the diagnose-only degradation, and state the ADR exclusion.
+- [ ] ACC-001: `repair(type, id=None)` MCP prompt exists, is registered, and its instructions name `list_<d>`'s failed-row discovery and `get_<d>`'s failure confirmation, direct the raw read and the write-back at the host's own file tools with an explicit note that the generic `update` tool cannot repair a document that fails to parse, loop the generic `validate(type, content, full=True)` tool, require a post-write confirmation via `get_<d>(id)`/`list_<d>()` against the file as it now exists on disk, state the diagnose-only degradation, and state the ADR exclusion.
 
-- [ ] ACC-002: `/make-valid <type> <id>` successfully drives `doc-fixer` to repair a deliberately-broken fixture document (parse fails before, succeeds after) in a manual smoke test.
+- [ ] ACC-002: `/repair <type> <id>` successfully drives `doc-repairer` to repair a deliberately-broken fixture document (parse fails before, succeeds after) in a manual smoke test.
 
 - [ ] ACC-003: `refine_feat(id)` MCP prompt exists, is registered, and its instructions name `get_feat(id, raw=True)`, the generic `update` tool (`type="feat"`), and `validate` (`type="feat"`, `full=True`) as the read/apply/re-check path.
 
@@ -74,13 +76,17 @@ The unifying design principle (see Design Notes) is: every new capability gets a
 
 - [ ] ACC-013: A new ADR documents the "portable MCP prompt narrates optional host-native subagent delegation" pattern.
 
+- [ ] ACC-014: `.opencode/skill/repair/SKILL.md` exists with a `name: repair` and a trigger `description` covering an organically-encountered failed-to-parse document, and its body defers to `doc-repairer` via the `task` tool when available, else narrates the condensed host-native loop.
+
 ### Scope
 
 #### Included
 
-- 4 new MCP prompts (`make_valid`, `refine_feat`, `implement_feat`, `review_feat`) and their packaged instruction data files.
+- 4 new MCP prompts (`repair`, `refine_feat`, `implement_feat`, `review_feat`) and their packaged instruction data files.
 
-- 2 new OpenCode subagents (`doc-fixer`, `feat-planner`) and 2 new OpenCode commands (`/make-valid`, `/refine-feature`).
+- 2 new OpenCode subagents (`doc-repairer`, `feat-planner`) and 2 new OpenCode commands (`/repair`, `/refine-feature`).
+
+- 1 new OpenCode skill (`.opencode/skill/repair/SKILL.md`, REQ-012) for organic, non-`/repair`-invoked discovery of a failed-to-parse document.
 
 - Targeted edits to the 4 existing OpenCode files: `feat-reviewer.md` (the Proposed Fix Phase section) and `phase-orchestrator.md` (the review-fix loop) for the review-fix loop, `implement-feature.md` (doc update mentioning the automatic review-fix step, plus its "a a" typo fix), and `review-feature.md` (its body re-enumerates the report sections and would go stale without the new conditional section).
 
@@ -110,21 +116,23 @@ The unifying design principle (see Design Notes) is: every new capability gets a
 
 - Enforcing any of this via pre-commit/CI (matches the repo's existing "no `validate_adr`-in-CI yet" gap, unaffected by this feature) -- except the REQ-009 package-copy drift check, which is a build-consistency gate in the same class as the existing `specmgr-schema-*` hooks, not a document-validation gate.
 
+- Extending the REQ-009/REQ-010 packaging/installer (`specmgr opencode sync`/`install`) to also cover the new `.opencode/skill/` directory -- Phase 5's scope stays `{agent,command}` only for this feature, as originally worded; broadening it to include `skill/` is a natural, low-risk follow-up, deliberately left as an open item rather than silently folded into REQ-009/010 here.
+
 ### Dependencies
 
 #### Depends On
 
-- ADR 36905d5b-8057-4294-8665-c7eed5534db0 / c4efbde6-fd19-4aa8-8668-95316ed62dcc (dispatch-only domain convention, followed by `make_valid`'s generic shape).
+- ADR 36905d5b-8057-4294-8665-c7eed5534db0 / c4efbde6-fd19-4aa8-8668-95316ed62dcc (dispatch-only domain convention, followed by `repair`'s generic shape).
 
 - ADR e369ee2e-3353-4f92-991c-6367d76d832e (`.specmgr/feat/` conventions).
 
-- feat-27-validation / feat-81-83-validation (the enriched validate errors and the failed-row `list_<d>` mechanism `make_valid` builds on).
+- feat-27-validation / feat-81-83-validation (the enriched validate errors and the failed-row `list_<d>` mechanism `repair` builds on).
 
 - feat-31-feature (the `feat` domain itself, whose generic `update`/`validate` adapters make `refine_feat` fully MCP-native).
 
 - The `specmgr-schema-*` pre-commit hooks as the model for REQ-009's package-copy drift hook (the same two-copy + regenerate + fail-on-diff pattern).
 
-- Phase 4 (implement_feat/review_feat) depends on Phase 3's new ADR (its UUID is an input to Phase 4's instruction files); Phase 1 (make_valid) deliberately does not.
+- Phase 4 (implement_feat/review_feat) depends on Phase 3's new ADR (its UUID is an input to Phase 4's instruction files); Phase 1 (repair) deliberately does not.
 
 #### Blocks
 
@@ -134,9 +142,11 @@ The unifying design principle (see Design Notes) is: every new capability gets a
 
 **Phase discipline (user requirement, 2026-09-24).** Every phase ends with the full quality gate -- `uv run --frozen ruff format --check`, `uv run --frozen ruff check`, `uv run --frozen vulture src/ whitelist.py --min-confidence 60`, the full test suite `uv run --frozen pytest -n auto --cov=src --cov-report=`, plus every doc-drift check the phase touches (`specmgr docs`, `specmgr mcp-docs`, and `specmgr adr-toc` for Phase 3) -- and exactly one Conventional Commit for that phase; the phase's docs sync (server.py docstring, AGENTS.md bullet(s), CHANGELOG entry, regenerated docs) travels inside that same commit, never as a follow-up. The Task List makes this explicit with a phase-end gate task (Task N.5/N.6/N.7/N.8) at the end of every phase.
 
-**Why `make_valid` cannot use the generic `update` for the write-back.** `update`'s per-domain adapters resolve the existing document via `load_by_id`, which fully re-parses it; a document that fails to parse converts that failure into the domain's not-found error before anything is written (`req/tools/_io.py:72-112`; every `_update_<d>` adapter in `general/tools/update.py` takes the same shape). The raw read and the raw write-back therefore must be host-native file tools -- the same precedent `compact_history` already sets (its instructions "rely entirely on the LLM's own file read/edit/write tools, not on any specmgr tool"). A host without file tools gets the diagnose-only degradation: the prompt still reports the enriched error and the proposed fix, it just cannot apply it.
+**Why `repair` cannot use the generic `update` for the write-back.** `update`'s per-domain adapters resolve the existing document via `load_by_id`, which fully re-parses it; a document that fails to parse converts that failure into the domain's not-found error before anything is written (`req/tools/_io.py:72-112`; every `_update_<d>` adapter in `general/tools/update.py` takes the same shape). The raw read and the raw write-back therefore must be host-native file tools -- the same precedent `compact_history` already sets (its instructions "rely entirely on the LLM's own file read/edit/write tools, not on any specmgr tool"). A host without file tools gets the diagnose-only degradation: the prompt still reports the enriched error and the proposed fix, it just cannot apply it.
 
-**`refine_feat` is MCP-native (unlike `make_valid`).** The plan README is a parseable document, so its whole read/apply/re-check path is specmgr tooling: `get_feat(id, raw=True)`, the generic `update(type="feat", id, content, offset/limit)` (line-range preferred, so unchanged regions stay byte-identical), and `validate(type="feat", content, full=True)`. Host file tools are only a fallback for hosts that cannot reach those tools.
+**Post-write confirmation closes the loop (REQ-001, added 2026-09-25 following a design-clarification pass).** Looping `validate(type, content, full=True)` over the in-memory text before writing only proves the text `repair` is *about* to write is well-formed -- it says nothing about the bytes the host's file-write tool actually put on disk (encoding, line-ending, or partial-write differences are all outside the MCP server's control, since the write itself is host-native, not a specmgr tool call). `repair`'s loop therefore does not end at a green `validate` result: it makes one more, real MCP tool call after the write -- `get_<d>(id)` (or, when no `id` was given, `list_<d>()` again, checking that the row's `<failed to parse>` marker and `error` are gone) -- against the file as it now exists on disk. Only a real parse of the real file counts as success. This also answers what Task 1.3's own unit test can and cannot prove: since `repair` is a narration-only MCP prompt (it returns text, it never executes a repair itself), `test_repair.py` can only assert that the *returned instructions* mention this post-write confirmation step, not that a real repair round-trips -- the real end-to-end proof is ACC-002's manual smoke test against a genuinely broken fixture document.
+
+**`refine_feat` is MCP-native (unlike `repair`).** The plan README is a parseable document, so its whole read/apply/re-check path is specmgr tooling: `get_feat(id, raw=True)`, the generic `update(type="feat", id, content, offset/limit)` (line-range preferred, so unchanged regions stay byte-identical), and `validate(type="feat", content, full=True)`. Host file tools are only a fallback for hosts that cannot reach those tools.
 
 **Portable-prompt-narrates-delegation pattern (the item-2 resolution).** An MCP prompt never executes tool calls itself -- it returns text to whatever LLM session invoked it, exactly like every existing prompt in this codebase (`create_req` says "use the `question` tool"; neither `question` nor `TodoWrite` is implemented by this MCP server). `implement_feat`/`review_feat` extend this same precedent one step further: they narrate delegating work to a subagent via "your host's task-delegation tool, if one exists." Inside OpenCode, that's a real instruction to use the `task` tool (genuine multi-agent orchestration, since OpenCode exposes both the `specmgr` MCP tools and its own native tools in the same session). On a host with no such tool, the same text degrades to "implement it yourself, one phase at a time" -- never a hard failure. This is the subject of the new ADR (ACC-013), needed before Phase 4 but not before Phase 1.
 
@@ -146,11 +156,13 @@ The unifying design principle (see Design Notes) is: every new capability gets a
 
 **Packaging: root-canonical, generated package copy (user decision, 2026-09-24).** The wheel only ships what lives under `src/` (`pyproject.toml`'s `[tool.setuptools.packages.find] where = ["src"]` + explicit `[tool.setuptools.package-data]` globs; there is no `MANIFEST.in`), so the installable `.opencode` copy is a generated artifact under `general/data/opencode/{agent,command}/`. The repo-root `.opencode/` stays the canonical working copy; `specmgr opencode sync` regenerates the package copy from it, and a pre-commit local drift hook (sync + fail on diff, scoped to `^.opencode/(agent|command)/.*\.md$`) plus a CI parity check (3.13 job, alongside `specmgr docs`/`specmgr adr-toc`) keep the two from drifting -- the same two-copy pattern the repo already runs for the 12 packaged JSON Schema copies (the `specmgr-schema-*` hooks in `.pre-commit-config.yaml`). The installer reads the package copy via `importlib.resources` (the `_packaged_data` convention), so it works identically from an editable checkout and a real PyPI install.
 
-**Distribution target semantics.** `specmgr opencode install` copies all 12 files (6 agents + 6 commands, existing + new) by design -- the new commands' dependency closure needs the existing agents (`/implement-feature` drives `phase-orchestrator` -> `phase-implementer`; `/refs` drives `ref-finder`). OpenCode accepts both singular and plural directory names at project and global scope (its documentation; this machine itself uses `agent/`+`command/` in-project and `agents/` globally), so the installer detects an existing `agent(s)/`/`command(s)/` sibling at the target and defaults to singular `agent/`+`command/`. Per file: identical content is a silent no-op (re-install is idempotent), differing content is refused with the file list unless `--force`. The installer never touches `opencode.json` -- MCP server setup (including the documented unsafe-bare-`uvx` caveat) stays the README's "Add to OpenCode" section's job.
+**Distribution target semantics.** `specmgr opencode install` copies all 12 files (6 agents + 6 commands, existing + new) by design -- the new commands' dependency closure needs the existing agents (`/implement-feature` drives `phase-orchestrator` -> `phase-implementer`; `/refs` drives `ref-finder`). OpenCode accepts both singular and plural directory names at project and global scope (its documentation; this machine itself uses `agent/`+`command/` in-project and `agents/` globally), so the installer detects an existing `agent(s)/`/`command(s)/` sibling at the target and defaults to singular `agent/`+`command/`. Per file: identical content is a silent no-op (re-install is idempotent), differing content is refused with the file list unless `--force`. The installer never touches `opencode.json` -- MCP server setup (including the documented unsafe-bare-`uvx` caveat) stays the README's "Add to OpenCode" section's job. It does not yet cover the new `.opencode/skill/` directory (see Explicitly Out Of Scope).
 
 **OpenCode permission model for the new agents.** `edit` permission patterns match file paths with the last matching rule winning (opencode.ai/docs/permissions), so `feat-planner`'s plan-README-only scope is mechanically enforced (`{"*": deny, ".specmgr/feat/**/README.md": allow}` on `edit`/`write`), not just prose discipline. Both new agents deny `bash` and `task` and declare every permission they rely on explicitly (`read`/`glob`/`grep`/`list`/`question`/`todowrite`), matching the existing agents' explicitness.
 
-**Naming.** New OpenCode files: `doc-fixer.md` (agent) / `make-valid.md` (command); `feat-planner.md` (agent) / `refine-feature.md` (command). New MCP prompts follow the existing `<verb>_<domain>` convention: `general.prompts.make_valid` (cross-cutting, takes `type` + optional `id` -- shaped like `general.tools.list_references`, which is itself the id-based cross-domain generic; `general/tools/validate.py` is disk-free/id-free and is the loop's check tool, not the prompt's shape model), and `feat.prompts.refine_feat`/`implement_feat`/`review_feat`.
+**OpenCode Skill for organic discovery (REQ-012, added 2026-09-25 via QA 76229d40-55e9-4640-9249-c391e1f3e84c question 0.0020).** The `/repair` command and `doc-repairer` subagent both need an explicit human (or orchestrator) invocation; neither helps when an agent organically stumbles onto a failed-to-parse document mid-task, with no human around to type `/repair`. OpenCode Skills close that gap: they are listed automatically in every agent's system prompt and self-trigger when a task matches the skill's own `description`, per OpenCode's Skills documentation. `.opencode/skill/repair/SKILL.md` is kept deliberately thin -- a trigger `description` plus an instruction to prefer delegating to `doc-repairer` via the `task` tool when available, falling back to the same condensed host-native loop `general.prompts.repair` already narrates -- rather than a fourth independent copy of the repair workflow to keep in sync (see "Prompt/agent/command text duplication is unavoidable" above, which this skill now also participates in).
+
+**Naming.** New OpenCode files: `doc-repairer.md` (agent) / `repair.md` (command) / `.opencode/skill/repair/SKILL.md` (skill, `name: repair`, singular directory matching this repo's existing `agent/`+`command/` convention); `feat-planner.md` (agent) / `refine-feature.md` (command). `general.prompts.repair` is a deliberate exception to the `<verb>_<domain>` prompt-naming convention: it is cross-cutting (takes `type` + optional `id`, not tied to one domain), so it instead follows the short, bare-word precedent this repo already uses for cross-cutting, type-dispatched tools -- `validate`, `delete`, `list_references` -- and pairs naturally with `validate` in a "validate, then repair" idiom; the domain-scoped `feat.prompts.refine_feat`/`implement_feat`/`review_feat` keep the `<verb>_<domain>` convention as usual (decision recorded in the linked QA, question 0.0010).
 
 ### Related Decisions
 
@@ -160,15 +172,17 @@ The unifying design principle (see Design Notes) is: every new capability gets a
 
 ### Task List
 
-#### Phase 1: make_valid (no ADR dependency -- implement first)
+#### Phase 1: repair (no ADR dependency -- implement first)
 
-- [ ] Task 1.1: `general/data/general_make_valid_instructions.md` (host-native read/write, the explicit no-`update` note, the diagnose-only degradation, the frontmatter-preservation rule, the ADR exclusion) + `general/prompts/make_valid.py` (`make_valid(type, id=None)`) + registration in `general/prompts/__init__.py`.
+- [ ] Task 1.1: `general/data/general_repair_instructions.md` (host-native read/write, the explicit no-`update` note, the post-write `get_<d>`/`list_<d>` confirmation step, the diagnose-only degradation, the frontmatter-preservation rule, the ADR exclusion) + `general/prompts/repair.py` (`repair(type, id=None)`) + registration in `general/prompts/__init__.py`.
 
-- [ ] Task 1.2: `.opencode/agent/doc-fixer.md` (full explicit permission frontmatter per REQ-002) + `.opencode/command/make-valid.md` (`$1`/`$2`, `agent: doc-fixer`).
+- [ ] Task 1.2: `.opencode/agent/doc-repairer.md` (full explicit permission frontmatter per REQ-002) + `.opencode/command/repair.md` (`$1`/`$2`, `agent: doc-repairer`).
 
-- [ ] Task 1.3: `tests/general/prompts/test_make_valid.py` (registration + template substitution, matching existing prompt test patterns).
+- [ ] Task 1.2b: `.opencode/skill/repair/SKILL.md` (REQ-012: `name: repair` frontmatter, a trigger `description` covering an organically-encountered failed-to-parse document, a thin body deferring to `doc-repairer` via the `task` tool when available, else narrating the condensed host-native loop mirroring `general/data/general_repair_instructions.md`).
 
-- [ ] Task 1.4: Docs sync: `AGENTS.md`'s `general/` bullet, `server.py`'s module docstring, `specmgr docs`/`specmgr mcp-docs` regeneration, `CHANGELOG.md` entry.
+- [ ] Task 1.3: `tests/general/prompts/test_repair.py` (registration + template substitution + asserting the rendered instructions mention the post-write `get_<d>`/`list_<d>` confirmation step, matching existing prompt test patterns -- since `repair` is narration-only text, this test can only check what the instructions say, not execute an actual repair; the real end-to-end proof is ACC-002's manual smoke test).
+
+- [ ] Task 1.4: Docs sync: `AGENTS.md`'s `general/` bullet (including the new `.opencode/skill/repair/` skill), `server.py`'s module docstring, `specmgr docs`/`specmgr mcp-docs` regeneration, `CHANGELOG.md` entry.
 
 - [ ] Task 1.5: Phase-end gate: full quality gate green (ruff format/check, vulture, full pytest, `specmgr docs`/`specmgr mcp-docs` drift), then exactly one Conventional Commit for the phase.
 
@@ -224,7 +238,7 @@ The unifying design principle (see Design Notes) is: every new capability gets a
 
 #### Phase 6: Final Verification
 
-- [ ] Task 6.1: Walk every Acceptance Criterion above (ACC-001..ACC-013) with concrete evidence.
+- [ ] Task 6.1: Walk every Acceptance Criterion above (ACC-001..ACC-014) with concrete evidence.
 
 - [ ] Task 6.2: Phase-end gate: full quality gate green, then exactly one Conventional Commit for the phase.
 
@@ -232,7 +246,7 @@ The unifying design principle (see Design Notes) is: every new capability gets a
 
 ### Current Status
 
-**As of 2026-09-24**: Plan refined after a full review pass against the codebase (see Updates): `make_valid`'s repair loop corrected to host-native file read/write (the generic `update` tool is structurally unable to repair a document that fails to parse), `refine_feat` made fully MCP-native, the old REQ-009 split into packaging (REQ-009: root-canonical + generated package copy + `specmgr opencode sync` + pre-commit/CI drift check, per user decision) and the installer command (REQ-010: all 12 files, sibling-directory detection, per-file no-op/refuse/`--force`, never touches `opencode.json`), the review-fix loop's exit criterion aligned to Errors/Gaps/Inconsistencies (per user decision), and one-commit-per-phase + full-quality-gate discipline added (per user requirement). Not yet started -- a subsequent agent/session should pick up Phase 1 first (see Task List).
+**As of 2026-09-24**: Plan refined after a full review pass against the codebase (see Updates): `repair`'s fix loop corrected to host-native file read/write (the generic `update` tool is structurally unable to repair a document that fails to parse), `refine_feat` made fully MCP-native, the old REQ-009 split into packaging (REQ-009: root-canonical + generated package copy + `specmgr opencode sync` + pre-commit/CI drift check, per user decision) and the installer command (REQ-010: all 12 files, sibling-directory detection, per-file no-op/refuse/`--force`, never touches `opencode.json`), the review-fix loop's exit criterion aligned to Errors/Gaps/Inconsistencies (per user decision), and one-commit-per-phase + full-quality-gate discipline added (per user requirement). Not yet started -- a subsequent agent/session should pick up Phase 1 first (see Task List).
 
 ### Updates
 
@@ -240,11 +254,19 @@ The unifying design principle (see Design Notes) is: every new capability gets a
 
 #### 2026-09-24 20:57:10.000Z - Plan refined after full review pass
 
-Reviewed the plan against the codebase, the OpenCode docs/config schema, and issue #150's five items (all remain covered). Corrected `make_valid`'s write-back mechanism (host-native file write, not the generic `update` tool -- whose adapters re-parse the existing document and raise the domain not-found error before any write: `req/tools/_io.py:72-112`), made `refine_feat` fully MCP-native via `get_feat(raw=True)`/`update(type="feat")`/`validate(type="feat")`, split the old REQ-009 into packaging (REQ-009) and the installer command (REQ-010), aligned the review-fix loop's exit criterion with its task-derivation set (Errors/Gaps/Inconsistencies), added the ready-to-paste fix-phase block shape and the implementer-appends delegation step, extended scope to the 4th existing OpenCode file (`review-feature.md`'s stale section enumeration, plus `implement-feature.md`'s "a a" typo), added per-phase docs-sync tasks (Phases 2/4/5) and phase-end gate + one-commit tasks (all phases), moved the README section to directly after "Add to OpenCode", and renumbered the acceptance criteria to ACC-001..ACC-013.
+Reviewed the plan against the codebase, the OpenCode docs/config schema, and issue #150's five items (all remain covered). Corrected `repair`'s write-back mechanism (host-native file write, not the generic `update` tool -- whose adapters re-parse the existing document and raise the domain not-found error before any write: `req/tools/_io.py:72-112`), made `refine_feat` fully MCP-native via `get_feat(raw=True)`/`update(type="feat")`/`validate(type="feat")`, split the old REQ-009 into packaging (REQ-009) and the installer command (REQ-010), aligned the review-fix loop's exit criterion with its task-derivation set (Errors/Gaps/Inconsistencies), added the ready-to-paste fix-phase block shape and the implementer-appends delegation step, extended scope to the 4th existing OpenCode file (`review-feature.md`'s stale section enumeration, plus `implement-feature.md`'s "a a" typo), added per-phase docs-sync tasks (Phases 2/4/5) and phase-end gate + one-commit tasks (all phases), moved the README section to directly after "Add to OpenCode", and renumbered the acceptance criteria to ACC-001..ACC-013.
 
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-25 08:30:00.000Z - Added REQ-012 (OpenCode Skill) and REQ-001's post-write confirmation step
+
+Two follow-up decisions from QA 76229d40-55e9-4640-9249-c391e1f3e84c: (1) Added REQ-012/ACC-014/Task 1.2b for `.opencode/skill/repair/SKILL.md` (question 0.0020), a thin skill that self-triggers on an organically-encountered failed-to-parse document and defers to `doc-repairer` via the `task` tool; flagged as a known, deliberately deferred gap that Phase 5's REQ-009/REQ-010 packaging/installer does not yet cover the new `skill/` directory. (2) Extended REQ-001/ACC-001/Task 1.1/Task 1.3 with a post-write confirmation step: after the host-native write-back, `repair` must call `get_<d>(id)` (or `list_<d>()` without an `id`) again to confirm the file as it now exists on disk actually parses, since the pre-write in-memory `validate` result cannot prove what the host's file-write tool put on disk; Task 1.3's own test can only assert the instructions narrate this step, since an MCP prompt is narration-only and cannot execute a real repair itself.
+
+#### 2026-09-25 08:00:00.000Z - Renamed `make_valid`/`doc-fixer` to `repair`/`doc-repairer`
+
+Resolved via QA 76229d40-55e9-4640-9249-c391e1f3e84c, question 0.0010 (reopened after an earlier "confirmed as-is" pass): `make_valid` broke the repo's short, bare-word naming precedent for cross-cutting, type-dispatched tools/prompts (`validate`, `delete`, `list_references`) and did not match the `doc-fixer` subagent's own fix-oriented naming. Renamed the MCP prompt to `general.prompts.repair(type, id=None)`, the OpenCode command to `/repair` (`.opencode/command/repair.md`), and the OpenCode subagent to `.opencode/agent/doc-repairer.md` -- `repair` pairs naturally with the existing `validate` tool ("validate, then repair") and `doc-repairer` now shares the same verb root as the prompt/command it wraps. Applied throughout this README (Requirements, Acceptance Criteria, Scope, Dependencies, Design Notes, Task List) before Phase 1 implementation started, so this is a pure planning-doc rename with zero migration cost.
 
 #### 2026-09-24 20:57:09.000Z - Phase discipline: one commit per phase, full quality gate before it
 
@@ -258,9 +280,9 @@ Chosen over "no Errors/Gaps" so the loop's exit criterion matches REQ-007's task
 
 The wheel only ships what lives under `src/`, so the installable OpenCode file copy is generated under `general/data/opencode/{agent,command}/` from the repo-root `.opencode/` by `specmgr opencode sync`, guarded by a pre-commit local drift hook and a CI parity check -- the same two-copy pattern the repo already runs for the packaged JSON Schema copies. Alternatives considered and rejected: package-copy-canonical (changes the repo's own dev workflow) and a build-time copy hook (non-standard build machinery).
 
-#### 2026-09-23 09:03:00.000Z - make_valid implemented first, independent of the new ADR
+#### 2026-09-23 09:03:00.000Z - repair implemented first, independent of the new ADR
 
-The portable-prompt-narrates-delegation ADR (Phase 3) is only needed by Phase 4 (`implement_feat`/`review_feat`); `make_valid` has no such dependency, so it was moved to Phase 1 and the ADR moved to Phase 3.
+The portable-prompt-narrates-delegation ADR (Phase 3) is only needed by Phase 4 (`implement_feat`/`review_feat`); `repair` has no such dependency, so it was moved to Phase 1 and the ADR moved to Phase 3.
 
 #### 2026-09-23 09:02:00.000Z - Portable prompt + optional host-delegation pattern
 
