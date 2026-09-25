@@ -94,7 +94,7 @@ standalone, asking all 7 5W2H questions)", call `get_qa(qa_id)`.
     into both.
   - **Non-committal counts as unanswered**: if the QA pair's answer is
     non-committal (e.g. "unknown", "not yet answered", "TBD", or the
-    literal `_(awaiting response)_` placeholder QA uses for a question
+    literal `TODO: answer pending` placeholder QA uses for a question
     nobody has answered yet), treat that sub-question as *not*
     pre-filled -- do not carry over a non-answer.
   - A matched, committal answer is pre-filled directly into the

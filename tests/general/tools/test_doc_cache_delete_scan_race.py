@@ -58,10 +58,7 @@ would not fit this file's shared, flat-file fixture helpers.
 -- each non-``feat`` domain's packaged *template* file
 (``general.tools._packaged_data.read_packaged_text(domain, "template")``)
 is reused as a guaranteed-valid document fixture, with only its
-frontmatter ``id: ...`` line substituted via :func:`_with_id`. Until
-feat-156 Phase 2 numbers the qa packaged template, the qa iteration of the
-template-parsing tests below is temporarily skipped (their own per-loop
-``TEMPORARY`` markers name the restoration task).
+frontmatter ``id: ...`` line substituted via :func:`_with_id`.
 """
 
 from __future__ import annotations
@@ -144,12 +141,6 @@ class TestAcc016FindDocPathByIdSkipsAFileThatVanishesMidScan(unittest.TestCase):
 
     def test_scan_skips_the_vanished_file_and_still_resolves_a_different_valid_id(self) -> None:
         for domain in WHOLE_BODY_NO_FEAT_DOMAINS:
-            # feat-156 Phase 1 (TEMPORARY; remove in feat-156 Phase 2, Task 2.1): the qa
-            # packaged template's questions do not carry the new bold "**<d>.<NNNN>**: "
-            # number prefix yet, so parsing it would (correctly) raise; skip only the qa
-            # iteration here.
-            if domain == "qa":
-                continue
             with self.subTest(domain=domain):
                 cache_module = _cache_module(domain)
                 real_read_fn = getattr(cache_module, f"read_{domain}")
@@ -190,12 +181,6 @@ class TestAcc017LoadByIdTranslatesAVanishedSecondRead(unittest.TestCase):
 
     def test_second_read_racing_a_concurrent_delete_raises_the_domains_own_not_found_error(self) -> None:
         for domain in WHOLE_BODY_NO_FEAT_DOMAINS:
-            # feat-156 Phase 1 (TEMPORARY; remove in feat-156 Phase 2, Task 2.1): the qa
-            # packaged template's questions do not carry the new bold "**<d>.<NNNN>**: "
-            # number prefix yet, so parsing it would (correctly) raise; skip only the qa
-            # iteration here.
-            if domain == "qa":
-                continue
             with self.subTest(domain=domain):
                 io_module = _io_module(domain)
                 paths_module = _paths_module(domain)
@@ -229,12 +214,6 @@ class TestAcc018ListDomainSilentlyOmitsAVanishedFile(unittest.TestCase):
 
     def test_a_file_vanishing_mid_scan_is_silently_omitted_for_every_non_feat_domain(self) -> None:
         for domain in WHOLE_BODY_NO_FEAT_DOMAINS:
-            # feat-156 Phase 1 (TEMPORARY; remove in feat-156 Phase 2, Task 2.1): the qa
-            # packaged template's questions do not carry the new bold "**<d>.<NNNN>**: "
-            # number prefix yet, so parsing it would (correctly) raise; skip only the qa
-            # iteration here.
-            if domain == "qa":
-                continue
             with self.subTest(domain=domain):
                 list_module = _list_module(domain)
                 real_read_fn = getattr(list_module, f"read_{domain}")

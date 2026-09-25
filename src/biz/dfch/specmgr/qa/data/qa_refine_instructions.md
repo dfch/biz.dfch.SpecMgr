@@ -64,9 +64,17 @@ if the category was empty), phrased as a genuine open question relevant
 to that category (grounded in its ISO/IEC 25010:2023 definition from step
 3, where applicable). Each new pair has **no heading of its own** and
 consists of exactly:
-- `> {the question}` as a block quote, and
+- `> **<d>.<NNNN>**: {the question}` as a block quote, where `<d>` is the
+  category's own fixed digit (0=`Elicitation Context`, then the nine
+  ISO/IEC 25010:2023 characteristics in document order, 1 through 9) and
+  `<NNNN>` the category's own next number: that category's existing max
+  sequence + 10 (e.g. append the first two new questions after a category
+  whose last existing question is `**2.0020**` as `**2.0030**` and
+  `**2.0040**`), or `0010` when the category holds no numbered question
+  yet. A question's number, once assigned, is permanent -- never reuse,
+  renumber, or touch any existing question's number.
 - immediately below it, on its own line, the literal placeholder text
-  `_(awaiting response)_` -- nothing else.
+  `TODO: answer pending` -- nothing else.
 This placeholder is not the interviewee's answer -- it only marks where
 a human will later type their actual answer directly into the document.
 Do not add an HTML comment to these new pairs: that is only ever added
@@ -95,7 +103,7 @@ line range:
 Once `update` succeeds, tell the user:
 - exactly how many questions you added, and to which characteristic(s);
 - that they should now open the document and answer each new question
-  by replacing its `_(awaiting response)_` placeholder with their own
+  by replacing its `TODO: answer pending` placeholder with their own
   answer, directly in the file;
 - that once they are done answering, they should run the `/resolve`
   command to continue to the next step.

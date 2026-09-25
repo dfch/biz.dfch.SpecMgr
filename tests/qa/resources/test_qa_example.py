@@ -46,11 +46,6 @@ class TestQaExampleResource(unittest.TestCase):
         """The resource and the tool must return identical content -- same underlying reader."""
         self.assertEqual(qa_example(), get_qa_example())
 
-    @unittest.skip(
-        "feat-156 Phase 1: the packaged example's questions do not carry the new bold "
-        "'**<d>.<NNNN>**: ' number prefix yet, so `parse_qa` now (correctly) rejects it; "
-        "feat-156 Phase 2 (Task 2.1) numbers the example and this test simply re-enables."
-    )
     def test_parses_successfully_as_a_v2_document(self):
         """The packaged example must actually parse as a v2 document (ACC-006)."""
         result = parse_qa(qa_example())

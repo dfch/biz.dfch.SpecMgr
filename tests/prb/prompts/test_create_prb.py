@@ -85,12 +85,14 @@ class TestCreatePrbPrompt(unittest.TestCase):
 
     def test_mentions_one_pair_to_one_question_rule(self):
         """The prompt must state the one-pair-to-one-question matching rule and the
-        non-committal-counts-as-unanswered rule (REQ-003)."""
+        non-committal-counts-as-unanswered rule (REQ-003) -- citing QA's own
+        `TODO: answer pending` placeholder (feat-156 REQ-009), which replaced the
+        retired legacy awaiting-response placeholder (feat-156 ACC-006)."""
         result = create_prb("Some topic")
         self.assertIn("at most one", result)
         self.assertIn("duplicated across two sub-questions", result)
         self.assertIn("Non-committal counts as unanswered", result)
-        self.assertIn("_(awaiting response)_", result)
+        self.assertIn("TODO: answer pending", result)
 
     def test_one_pair_to_one_question_rule_has_a_worked_example(self):
         """REQ-014/ACC-010: the one-pair-to-one-question rule must include a worked

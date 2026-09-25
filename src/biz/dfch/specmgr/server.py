@@ -347,10 +347,11 @@ text guiding an LLM through the TSK tool sequence above, plus ``implement_task``
 reads an existing task list via ``get_tsk``, builds a ``TodoWrite`` list from its
 items, and uses the ``question`` tool to resolve ambiguity before proceeding.
 QA prompts (``qa/prompts/``): ``create_qa``, ``update_qa``, plus ``refine`` --
-appends a fresh batch of unanswered interview questions (each with an empty
-`_(awaiting response)_` placeholder) to an existing QA document, for
-``Elicitation Context`` or one or more of the nine ISO/IEC 25010:2023 quality
-characteristics.
+appends a fresh batch of unanswered interview questions (each numbered with
+its target category's next `**<d>.<NNNN>**: ` prefix and carrying the
+`TODO: answer pending` placeholder in place of an answer) to an existing
+QA document, for ``Elicitation Context`` or one or more of the nine
+ISO/IEC 25010:2023 quality characteristics.
 Problem statement prompts (``prb/prompts/``): ``create_prb``, ``update_prb`` --
 instructional text guiding an LLM through a ``TodoWrite`` + ``question``-tool-
 driven 5W2H interview flow, including agent-synthesized ``Summary``/``Gap``

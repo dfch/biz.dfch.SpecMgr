@@ -78,9 +78,21 @@ class TestRefinePrompt(unittest.TestCase):
             self.assertIn(characteristic, result)
 
     def test_mentions_response_placeholder(self):
-        """The literal empty-answer placeholder must be present."""
+        """The literal empty-answer placeholder must be present -- `TODO: answer
+        pending` (feat-156 REQ-009), the convention that replaced the retired
+        legacy awaiting-response placeholder (feat-156 ACC-007)."""
         result = refine("abc-123")
-        self.assertIn("_(awaiting response)_", result)
+        self.assertIn("TODO: answer pending", result)
+
+    def test_mentions_next_number_rule(self):
+        """Each appended question must be written with its target category's next
+        number in `**<d>.<NNNN>**: ` form (that category's existing max sequence +
+        10, or `0010` when the category holds no numbered question yet) --
+        feat-156 REQ-010/ACC-007."""
+        result = refine("abc-123")
+        self.assertIn("**<d>.<NNNN>**: ", result)
+        self.assertIn("+ 10", result)
+        self.assertIn("0010", result)
 
     def test_scope_interpolated_when_given(self):
         """A given scope string must appear verbatim in the returned text."""
