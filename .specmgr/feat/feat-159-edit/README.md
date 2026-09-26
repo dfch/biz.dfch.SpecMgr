@@ -4,7 +4,7 @@ created: '2026-09-25T18:10:37.035+02:00'
 id: feat-159-edit
 status: planning
 type: feat
-updated: '2026-09-26T21:18:14.835+02:00'
+updated: '2026-09-26T22:29:21.223+02:00'
 version: 1.0.0
 ---
 
@@ -138,11 +138,11 @@ edit.py carries its own module-level `assert set(_ADAPTERS) == set(WHOLE_BODY_DO
 
 #### Phase 2: Implementation
 
-- [ ] Task 2.1: Add `general/tools/edit.py` — public dispatcher (guard order per REQ-008, explicit `type` check per REQ-004) plus 12 per-domain adapters, `_ADAPTERS` dispatch table with its own module-level drift assert, the `@mcp.tool(description=...)` text (read-before-edit client convention; `edit` vs `update` guidance; body-only; 2-fold behaviour; byte-exact/no-EOL-normalization note; nothing written on failure), and the `general/tools/__init__.py` wiring (import, `__all__`, package-docstring enumeration)
+- [x] Task 2.1: Add `general/tools/edit.py` — public dispatcher (guard order per REQ-008, explicit `type` check per REQ-004) plus 12 per-domain adapters, `_ADAPTERS` dispatch table with its own module-level drift assert, the `@mcp.tool(description=...)` text (read-before-edit client convention; `edit` vs `update` guidance; body-only; 2-fold behaviour; byte-exact/no-EOL-normalization note; nothing written on failure), and the `general/tools/__init__.py` wiring (import, `__all__`, package-docstring enumeration) — status: done (2026-09-26)
 
-- [ ] Task 2.2: Implement stage-1 exact-match logic with the pinned verbatim OC error messages (identical; empty `old_str` adapted; not found; multiple matches) as plain `ValueError`s with no wrap prefix (REQ-008/REQ-009)
+- [x] Task 2.2: Implement stage-1 exact-match logic with the pinned verbatim OC error messages (identical; empty `old_str` adapted; not found; multiple matches) as plain `ValueError`s with no wrap prefix (REQ-008/REQ-009) — status: done (2026-09-26)
 
-- [ ] Task 2.3: Implement stage-2 whole-document validation with the disk write strictly after validation passes (the domain lock held across read → match → validate → write), frontmatter carry-over (`updated` bump), verbatim persist (incl. the empty-`new_str` deletion case), cache warm
+- [x] Task 2.3: Implement stage-2 whole-document validation with the disk write strictly after validation passes (the domain lock held across read → match → validate → write), frontmatter carry-over (`updated` bump), verbatim persist (incl. the empty-`new_str` deletion case), cache warm — status: done (2026-09-26)
 
 #### Phase 3: Tests
 
@@ -164,11 +164,15 @@ edit.py carries its own module-level `assert set(_ADAPTERS) == set(WHOLE_BODY_DO
 
 ### Current Status
 
-**As of 2026-09-26**: Feature drafted for GitHub issue #159 and refined after a full plan-review pass (2026-09-26) that verified every codebase and OC-source claim and recorded decisions D1–D7 (Decisions Made); design decisions confirmed with the author; implementation not started.
+**As of 2026-09-26**: Phase 2 (Implementation) complete: `general/tools/edit.py` added — public `edit` dispatcher with the pinned guard order (`validate_id` → explicit pre-dispatch `ValueError` for unknown/`adr` `type` → identical-input → empty-`old_str`, all before any filesystem access), the domain-agnostic `_match_and_replace` stage-1 helper carrying the verbatim OC messages as plain `ValueError`s, 12 per-domain adapters holding the domain lock across read → match → validate → write (stage-2 wrapped, write strictly after validation, verbatim persist, `updated` bump, cache warm), its own `_ADAPTERS` drift assert, and the `@mcp.tool` registration — plus the `general/tools/__init__.py` wiring (import, `__all__`, package-docstring enumeration). The live MCP input schema was verified against the pinned contract (`required == [id, type, old_str, new_str]`, 12-value `type` enum excluding `adr`, optional `replace_all` defaulting to `false`, no `minLength` on `new_str`), and the phase-end quality gate is green (full suite: 3440 passed). Phase 3 (Tests) not started.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-26T22:29:21.223+02:00 - Phase 2 implemented (Tasks 2.1–2.3 done)
+
+Implemented `src/biz/dfch/specmgr/general/tools/edit.py` per the pinned contract: the public `edit(id, type, old_str, new_str, replace_all=False)` dispatcher runs the guard order `validate_id` → explicit `type not in _ADAPTERS` `ValueError` (pinned message `unknown document type {type!r}; expected one of ... ('adr' is not supported)`, the deliberate REQ-004/D4 divergence from `update`'s inherited `KeyError`) → identical-input guard → empty-`old_str` guard, all before any filesystem access (REQ-008/ACC-009); stage 1 is factored into one domain-agnostic `_match_and_replace(body, old_str, new_str, replace_all)` helper (pure byte-exact over `body_text(path)`, the verbatim OC not-found/multiple-matches messages as plain `ValueError`s with no wrap prefix); the 12 per-domain `_edit_<d>` adapters mirror `update.py`'s import set and adapter shape exactly (same lock/`load_by_id`/`assert_within`/`write_<d>_file`/frontmatter carry-over with only `updated` bumped via `now_timestamp()`/cache-warm `read_<d>` — feat's `read_feat` from `...feat.tools._cache` like `update.py`), holding the domain lock across read → match → validate → write with the disk write strictly after the stage-2 `<Domain>.from_text(format_text(edited))` validation under `wrap_tool_errors(domain=..., tool="edit", channel=BODY_CHANNEL)` (REQ-003); `_ADAPTERS` carries its own module-level drift assert referencing feat-159-edit. `general/tools/__init__.py` now imports `edit` (alphabetical), lists it in `__all__`, and enumerates it in the package docstring in the existing prose style. Verified in this phase (proper unit/tool tests are Phase 3): the live `mcp.list_tools()` schema matches the pinned contract, and an end-to-end smoke run against a temp `SPECMGR_DOCS_DIR` confirmed all pinned behaviours — guard firing before file access (incl. for a non-existent id), the `type="adr"` explicit `ValueError`, traversal-`id` rejection, byte-unchanged file on every failure path (not-found, multiple-match, stage-2 invalid-result incl. H1 deletion), `replace_all`, empty-`new_str` deletion of optional sections, the CRLF byte-exact pin (a `\n` `old_str` is not found in a CRLF body), frontmatter carry-over with `updated` bump, and the wrapped `req edit (body):` stage-2 error prefix. Two implementation-level refinements recorded in Decisions Made (D8/D9): no cardinal domain count in the description/docstring prose (conventions.md rule; explicit list instead), and the two longer pinned OC messages written as implicit string concatenations to stay within ruff's 120-char line limit (runtime values byte-identical to the pinned strings). Phase-end quality gate green: `ruff format --check` (1717 files already formatted), `ruff check` (all checks passed), `vulture src/ whitelist.py --min-confidence 60` (no dead code), `pytest -n auto --cov=src --cov-report=` (3440 passed, no regressions).
 
 #### 2026-09-26T21:18:14.835+02:00 - Refined the plan after a full review pass
 
@@ -189,6 +193,10 @@ Feature drafted for GitHub issue #159 (specmgr replace tool with OC parity). Man
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-26T22:29:21.223+02:00 - Phase 2 implementation-level refinements (D8, D9)
+
+D8: the `@mcp.tool` description and the `general/tools/__init__.py` package-docstring enumeration name the supported domains by the explicit list (the `', '.join(WHOLE_BODY_DOMAINS)` interpolation in the description, the prose list in the docstring) rather than a cardinal "12 whole-body domains" — per `.specmgr/conventions.md`'s docstring-style rule against restating a generic tool's supported-domain count as a cardinal in prose (hardcoded counts silently go stale; the explicit list is self-verifying). This mirrors `update.py`'s own description, which likewise interpolates the domain list without a count. D9: the two longer pinned OC stage-1 messages (the not-found and the adapted empty-`old_str` message) are written in the source as implicit string concatenations (adjacent string literals) so every physical line stays within ruff's 120-char limit — the runtime string values are byte-identical to the pinned OC-parity strings (REQ-002), verified by the Phase 2 smoke run and to be pinned by the Phase 3 tests. No other deviation from the pinned contract: guard order, messages, plain-`ValueError` stage-1 / wrapped stage-2 split, lock scope, verbatim persist, cache warm, `_ADAPTERS` drift assert, and the explicit `ValueError` for unknown/`adr` `type` are implemented exactly as pinned.
 
 #### 2026-09-26T21:18:14.835+02:00 - Refined design decisions (D1–D7)
 
