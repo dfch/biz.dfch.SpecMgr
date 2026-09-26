@@ -50,7 +50,7 @@ class TestQaTemplateResource(unittest.TestCase):
         self.assertEqual(qa_template(), get_qa_template())
 
     def test_contains_elicitation_context_section(self):
-        """Confirms the template was updated for v2 (ACC-006), without over-asserting on placeholder prose."""
+        """Confirms the template was updated for v2 (feat-14 ACC-006), without over-asserting on placeholder prose."""
         result = qa_template()
 
         self.assertIn("## Elicitation Context", result)

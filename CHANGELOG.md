@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- A fixed, permanent numbering scheme for question/answer pairs inside
+  `qa` (Question and Answer) documents (`qa/models/v2`): every question
+  carries its number `<category-digit>.<sequence>` as a bold prefix in
+  the question text itself (`` > **<d>.<NNNN>**: {question} ``) -- a
+  single category digit (0=`Elicitation Context`, then the nine ISO/IEC
+  25010:2023 quality characteristics in document order) and a 4-digit
+  zero-padded per-category sequence starting at `0010` -- enforced by
+  `QaQuestionAnswer`'s own `field_validator` in `qa/models/v2/` (no
+  shared `models/md/` parser change); once assigned, a number is
+  permanent (never reused, never renumbered -- removals leave gaps) and
+  the increment-by-10 step is a human authoring guideline only, so
+  in-between numbers (e.g. `0.0015`) always parse. An unanswered
+  question is additionally marked by a `TODO: ` placeholder (e.g.
+  `TODO: answer pending`) as its answer text -- a pure authoring
+  convention demonstrated in the packaged template/example, explicitly
+  not parsed or validated -- and the `refine` prompt's instructions are
+  updated so each appended question is written with its target
+  category's next number (that category's existing max sequence + 10, or
+  `0010` when the category holds no numbered question yet) and the
+  `TODO: answer pending` placeholder, retiring the legacy
+  `_(awaiting response)_` marker it previously shipped (REQ-009)
+  (feat-156-qa-numbering, GitHub issue #156).
+
+### Changed
+
+- **BREAKING**: a `qa` question lacking the new `**<d>.<NNNN>**: ` bold
+  number prefix now fails `parse_qa`/`get_qa`/`update`/`create_qa`
+  validation with an actionable error (feat-156-qa-numbering, GitHub
+  issue #156). No repo-internal migration is needed: no `qa` documents
+  exist under `docs/qa/` on this branch.
+
 ## [0.32.0] - 2026-09-25
 
 ### Changed

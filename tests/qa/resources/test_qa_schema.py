@@ -43,7 +43,7 @@ class TestQaSchemaResource(unittest.TestCase):
         self.assertIn("body", result["properties"])
 
     def test_reflects_v2_body_shape(self):
-        """Confirms the schema is really v2's `Qa`/`_QaCategory` shape (ACC-006), not v1's `QaSection`."""
+        """Confirms the schema is really v2's `Qa`/`_QaCategory` shape (feat-14 ACC-006), not v1's `QaSection`."""
         sut = qa_schema
 
         result = sut()

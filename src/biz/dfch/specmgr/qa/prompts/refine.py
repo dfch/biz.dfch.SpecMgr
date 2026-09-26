@@ -68,8 +68,10 @@ from ...server import mcp
     title="Add interview questions to a QA document",
     description=(
         "Guides the LLM through appending a batch of new, unanswered interview questions "
-        "(each with an empty placeholder answer) to an existing QA document, for one or more "
-        "of the nine ISO/IEC 25010:2023 quality characteristics."
+        "(each numbered with its target category's next `**<d>.<NNNN>**: ` prefix and "
+        "carrying the `TODO: answer pending` placeholder in place of an answer) to an "
+        "existing QA document, for `Elicitation Context` or one or more of the nine ISO/IEC "
+        "25010:2023 quality characteristics."
     ),
 )
 def refine(id_or_name: str, scope: str | None = None) -> str:
