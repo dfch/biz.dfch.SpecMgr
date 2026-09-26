@@ -42,7 +42,8 @@ delete-invalidate (the generic ``delete`` invokes the caller-bound
 ``invalidate_<d>_cache`` with the deleted path AND the path is absent from
 the domain's own ``_cache`` entries immediately after), and list-reconcile
 (``list_<d>`` invokes the caller-bound ``reconcile_<d>_cache`` with the live
-path listing). That is one subtest row per domain per row type.
+path listing, before summary building). That is one subtest row per domain
+per row type.
 
 **Mocking discipline (REQ-007).** Each row patches the CALLER module's OWN
 bound name of the cache helper (``read_<d>`` as bound into the domain's own
@@ -141,10 +142,21 @@ _FRONTMATTER_BLOCK_PATTERN = re.compile(r"\A---\n.*?\n---\n", re.DOTALL)
 #: The H1 prefix a domain's own body model mandates on the H1 line (the empty default is the
 #: free-H1 shape): ``sysrs`` and ``feat`` enforce their own literal prefix -- a bare
 #: ``# {title}`` fails parsing for both (the ``sysrs`` entry is the Phase-1-corrected fact).
+#: This table is intentionally sparse: only the domains whose body model mandates a prefix
+#: carry an entry, so a future domain that mandates one must add its own entry here -- a
+#: missing entry surfaces as the update range-splice rows' own parse ``AssertionError``
+#: instead of a self-documenting sync obligation. The import-time drift guard below pins
+#: the table's keys against the shared ``WHOLE_BODY_DOMAINS`` source (a full-equality guard
+#: is inapplicable here, unlike the ``_SET_STATUS_TARGETS_BY_DOMAIN`` guard).
 _H1_PREFIX_BY_DOMAIN: dict[str, str] = {
     FEAT: "Feature: ",
     "sysrs": "System Requirements Specification: ",
 }
+
+assert set(_H1_PREFIX_BY_DOMAIN) <= set(WHOLE_BODY_DOMAINS), (
+    "_H1_PREFIX_BY_DOMAIN carries a stale or misspelled domain key -- every key must be one of the shared "
+    "general.tools._domains.WHOLE_BODY_DOMAINS (feat-123)"
+)
 
 #: The per-domain set_status row target status: the first member of the domain's own closed
 #: vocabulary (its ``_ALLOWED_STATUSES`` source-literal order) other than the fixture's own
@@ -448,7 +460,7 @@ class TestAcc003DeleteInvalidatesForEveryFlatDomain(_FlatDomainWiringTestCase):
 
 
 class TestAcc004ListReconcilesForEveryFlatDomain(_FlatDomainWiringTestCase):
-    """ACC-004 (flat): a real ``list_<domain>`` invokes its caller-bound ``reconcile_<domain>_cache`` exactly once, with the live listing."""
+    """ACC-004 (flat): a real ``list_<domain>`` invokes its caller-bound ``reconcile_<domain>_cache`` exactly once, with the live listing, before summary building."""
 
     def test_list_invokes_the_caller_bound_reconcile_exactly_once_with_the_live_listing(self) -> None:
         for domain in WHOLE_BODY_NO_FEAT_DOMAINS:
@@ -458,13 +470,35 @@ class TestAcc004ListReconcilesForEveryFlatDomain(_FlatDomainWiringTestCase):
                 list_module = import_module(f"biz.dfch.specmgr.{domain}.tools.list_{domain}")
                 list_fn = getattr(list_module, f"list_{domain}")
                 real_reconcile = getattr(list_module, f"reconcile_{domain}_cache")
+                real_build = list_module.build_summaries
+                call_order: list[str] = []
 
-                with mock.patch.object(list_module, f"reconcile_{domain}_cache", wraps=real_reconcile) as spy:
+                def _reconcile_side_effect(*args: Any, **kwargs: Any) -> Any:
+                    call_order.append("reconcile")
+                    return mock.DEFAULT
+
+                def _build_side_effect(*args: Any, **kwargs: Any) -> Any:
+                    # REQ-006 pins the ordering, not just the call: the reconcile must have
+                    # fired before summary building (a refactor that moved it after fails here).
+                    self.assertEqual(call_order, ["reconcile"], "reconcile must fire before summary building")
+                    call_order.append("build")
+                    return real_build(*args, **kwargs)
+
+                with (
+                    mock.patch.object(
+                        list_module,
+                        f"reconcile_{domain}_cache",
+                        wraps=real_reconcile,
+                        side_effect=_reconcile_side_effect,
+                    ) as spy,
+                    mock.patch.object(list_module, "build_summaries", side_effect=_build_side_effect) as build_spy,
+                ):
                     result = list_fn()
 
                 self.assertEqual(result.total, 1)
                 # The fixture dir holds exactly one document, so the live path listing is that single path.
                 spy.assert_called_once_with([path])
+                build_spy.assert_called_once()
 
 
 class TestAcc001CreateWarmForFeat(_FeatWiringTestCase):
@@ -572,7 +606,7 @@ class TestAcc003DeleteInvalidatesForFeat(_FeatWiringTestCase):
 
 
 class TestAcc004ListReconcilesForFeat(_FeatWiringTestCase):
-    """ACC-004 (feat): a real ``list_feat`` invokes its caller-bound ``reconcile_feat_cache`` exactly once, with the live listing."""
+    """ACC-004 (feat): a real ``list_feat`` invokes its caller-bound ``reconcile_feat_cache`` exactly once, with the live listing, before summary building."""
 
     def test_list_invokes_the_caller_bound_reconcile_exactly_once_with_the_live_listing(self) -> None:
         with self.subTest(domain=FEAT):
@@ -580,13 +614,32 @@ class TestAcc004ListReconcilesForFeat(_FeatWiringTestCase):
             list_module = import_module("biz.dfch.specmgr.feat.tools.list_feat")
             list_fn = getattr(list_module, "list_feat")
             real_reconcile = getattr(list_module, "reconcile_feat_cache")
+            real_build = list_module.build_summaries
+            call_order: list[str] = []
 
-            with mock.patch.object(list_module, "reconcile_feat_cache", wraps=real_reconcile) as spy:
+            def _reconcile_side_effect(*args: Any, **kwargs: Any) -> Any:
+                call_order.append("reconcile")
+                return mock.DEFAULT
+
+            def _build_side_effect(*args: Any, **kwargs: Any) -> Any:
+                # REQ-006 pins the ordering, not just the call: the reconcile must have
+                # fired before summary building (a refactor that moved it after fails here).
+                self.assertEqual(call_order, ["reconcile"], "reconcile must fire before summary building")
+                call_order.append("build")
+                return real_build(*args, **kwargs)
+
+            with (
+                mock.patch.object(
+                    list_module, "reconcile_feat_cache", wraps=real_reconcile, side_effect=_reconcile_side_effect
+                ) as spy,
+                mock.patch.object(list_module, "build_summaries", side_effect=_build_side_effect) as build_spy,
+            ):
                 result = list_fn()
 
             self.assertEqual(result.total, 1)
             # The fixture dir holds exactly one feature folder, so the live path listing is that single path.
             spy.assert_called_once_with([path])
+            build_spy.assert_called_once()
 
 
 if __name__ == "__main__":
