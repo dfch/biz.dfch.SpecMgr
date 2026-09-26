@@ -36,6 +36,7 @@ from biz.dfch.specmgr.feat.tools._paths import (
     ensure_feat_base_dir,
     feat_base_dir,
     feature_title,
+    find_feat_parse_failure,
     find_feat_path_by_id,
     iter_feat_paths,
 )
@@ -304,6 +305,41 @@ class TestFindFeatPathById(unittest.TestCase):
                 find_feat_path_by_id(base, "feat-1-malformed-yaml")
             message = str(ctx.exception)
             self.assertIn("could not be parsed", message)
+
+
+class TestFindFeatParseFailure(unittest.TestCase):
+    """Tests for find_feat_parse_failure (feat-150-mcp-lifecycle-commands Phase 1a, ADR 9080b37c)."""
+
+    def test_missing_folder_returns_none(self) -> None:
+        """A missing folder (no README.md) must return None -- not a parse failure."""
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+
+            self.assertIsNone(find_feat_parse_failure(base, "feat-1-missing"))
+
+    def test_parse_failure_returns_path_and_error(self) -> None:
+        """An existing folder whose README.md fails to parse must return (path, str(exc))."""
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            folder = base / "feat-1-broken"
+            folder.mkdir(parents=True)
+            path = folder / README_FILENAME
+            path.write_text("not a valid document, no headings at all\n", encoding="utf-8")
+
+            result = find_feat_parse_failure(base, "feat-1-broken")
+
+            self.assertIsNotNone(result)
+            assert result is not None
+            self.assertEqual(result[0], path)
+            self.assertTrue(result[1])
+
+    def test_healthy_document_returns_none(self) -> None:
+        """An existing folder whose README.md parses cleanly must return None."""
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            _write_feat_folder(base, "feat-1-ok", "feat-1-ok")
+
+            self.assertIsNone(find_feat_parse_failure(base, "feat-1-ok"))
 
 
 if __name__ == "__main__":

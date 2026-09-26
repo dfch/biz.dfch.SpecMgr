@@ -32,6 +32,8 @@ from biz.dfch.specmgr.sysrs.models.v1 import SysrsDocument
 from biz.dfch.specmgr.sysrs.tools._paths import SysrsNotFoundError
 from biz.dfch.specmgr.sysrs.tools.create_sysrs import create_sysrs
 from biz.dfch.specmgr.sysrs.tools.get_sysrs import get_sysrs
+from biz.dfch.specmgr.sysrs.tools.list_sysrs import list_sysrs
+from biz.dfch.specmgr.general.models import ParseFailureResult
 
 #: A well-formed but non-existent canonical UUID (feat-38-39-41-43-44 Phase 4: the id
 #: must be well-formed to reach the domain's own not-found error past the new
@@ -210,6 +212,46 @@ class TestGetSysrs(unittest.TestCase):
             get_sysrs(_MISSING_UUID, raw=True, offset=2, limit=3)
         with self.assertRaises(SysrsNotFoundError):
             get_sysrs(_MISSING_UUID, raw=False)
+
+    def test_broken_document_returns_parse_failure_result(self) -> None:
+        """get_sysrs must return a ParseFailureResult (not raise) for an id whose on-disk file fails to parse."""
+        created = create_sysrs(_MINIMAL_BODY)
+        self._doc_path().write_text("not a valid document, no headings at all\n", encoding="utf-8")
+
+        result = get_sysrs(created.id)
+
+        self.assertIsInstance(result, ParseFailureResult)
+        self.assertEqual(result.id, created.id)
+        self.assertEqual(result.path, str(self._doc_path().resolve()))
+        self.assertTrue(result.error)
+        self.assertNotIsInstance(result, SysrsDocument)
+
+    def test_broken_document_raw_true_returns_parse_failure_result_never_str(self) -> None:
+        """raw=True on a broken document must return a ParseFailureResult, never a raw str."""
+        created = create_sysrs(_MINIMAL_BODY)
+        self._doc_path().write_text("not a valid document, no headings at all\n", encoding="utf-8")
+
+        result = get_sysrs(created.id, raw=True)
+
+        self.assertIsInstance(result, ParseFailureResult)
+        self.assertNotIsInstance(result, str)
+
+    def test_broken_document_error_matches_list_failed_row(self) -> None:
+        """ParseFailureResult.error must equal list_sysrs's failed-row error for the same broken file."""
+        created = create_sysrs(_MINIMAL_BODY)
+        self._doc_path().write_text("not a valid document, no headings at all\n", encoding="utf-8")
+
+        get_result = get_sysrs(created.id)
+        failed = [summary for summary in list_sysrs().results if summary.title == "<failed to parse>"]
+
+        self.assertIsInstance(get_result, ParseFailureResult)
+        self.assertEqual(len(failed), 1)
+        self.assertEqual(get_result.error, failed[0].error)
+
+    def test_invalid_id_shape_raises_value_error(self) -> None:
+        """An id that is not a well-formed canonical UUID must raise ValueError before any file access."""
+        with self.assertRaises(ValueError):
+            get_sysrs("not-a-well-formed-uuid")
 
 
 if __name__ == "__main__":

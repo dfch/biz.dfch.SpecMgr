@@ -332,6 +332,18 @@ before dispatch on a path-injection attempt or a wrong-format id, and additional
 confine the resolved path to the domain's own base directory with
 ``general.tools._path_safety.assert_within`` after id resolution (defense-in-depth).
 ``delete`` itself is unchanged by this phase.
+Parse-failure error channel (feat-150-mcp-lifecycle-commands Phase 1a, ADR
+9080b37c-82b3-4f63-81f1-79641d0bf14c): every ``get_<d>`` tool for the 12
+whole-body domains (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/
+``feat``/``vcr``/``sysrs``; ``get_adr`` excluded) additionally returns a
+structured, non-raising ``ParseFailureResult`` (``error``/``path``/``id``) for a
+document that exists but fails to parse, instead of raising the domain's
+not-found error -- the ``error`` text is identical to that domain's ``list_<d>``
+tool's failed-row ``error`` for the same file, and ``raw=True`` on a broken
+document still returns the result (never a raw ``str``); a healthy document's
+shape and every other ``get_<d>`` outcome are unchanged. This is the third
+extension of the ADR 519d1206 client-side-``isError``-truncation workaround
+chain after ``validate`` and ``set_status``'s invalid-status case.
 
 Prompts
 -------
@@ -400,7 +412,15 @@ line-range via ``get_sysrs(id, raw=True)``) -- ``sysrs`` has no per-domain
 General prompts (``general/prompts/``): ``compact_history`` -- guides rotating
 older ``### Recent Updates`` entries out of any `.specmgr` feature folder's
 ``README.md`` into an optional sibling ``history.md``, per ADR
-e369ee2e-3353-4f92-991c-6367d76d832e.
+e369ee2e-3353-4f92-991c-6367d76d832e; ``repair`` -- guides repairing a
+whole-body document (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/
+``dec``/``sop``/``feat``/``vcr``/``sysrs``; ADR out of scope) that fails to
+parse via a host-native raw read, a generic ``validate`` (``full=True``)
+loop, a host-native write-back (never the generic ``update`` tool, which is
+structurally unable to repair a document that fails to parse), and a
+post-write ``get_<d>``/``list_<d>`` confirmation against the file as it now
+exists on disk; degrades to diagnose-only on a host without file tools
+(feat-150-mcp-lifecycle-commands, Phase 1).
 
 Modules are grouped domain-first
 (ADR ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by
@@ -410,7 +430,8 @@ domain (``adr``, ``uc``, ``req``, ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, ``
 top-level package with its own ``tools``/``prompts``/``resources`` sub-packages,
 self-registered via the domain package's own ``__init__.py``. Cross-cutting, non-domain-specific
 tools/resources/prompts (e.g. ``specmgr://version``/``specmgr://iso25010``/``specmgr://dtais``
-resources, the ``mdformat`` tool, or the ``compact_history`` prompt) stay under the top-level
+resources, the ``mdformat`` tool, or the ``compact_history``/``repair``
+prompts) stay under the top-level
 ``general`` package instead (``general.tools``/``general.resources``/``general.prompts``).
 Add a new domain by
 creating its top-level package and importing it at the bottom of this

@@ -597,15 +597,54 @@ type or cross-cutting:
     than under `vcr/resources/` since it is domain-knowledge other document
     types may also want to reference, and `specmgr://rasci` — the generic
     RASCI responsibility-assignment framework, REQ-011; motivated by `sop`
-    but not scoped to it), and `general/prompts/` (`compact_history` — rotates
-     older `Recent Updates` entries out of any feature folder's `README.md`
-      into a sibling `history.md`). Every `get_<d>` tool for the whole-body
+     but not scoped to it), and `general/prompts/` (`compact_history` — rotates
+      older `Recent Updates` entries out of any feature folder's `README.md`
+       into a sibling `history.md`; `repair` (feat-150-mcp-lifecycle-commands,
+      GitHub issue #150, Phase 1) — cross-cutting, takes `type` (one of the
+      whole-body domains; ADR is explicitly out of scope — it is not a
+      whole-body domain and has no generic dry-run `validate` tooling) plus an
+      optional `id`, and narrates the host-native repair loop for a document
+      that fails to parse: discover it via `get_<d>(id)`'s wrapped enriched
+      parse error (with an `id`) or `list_<d>()`'s `<failed to parse>` failed
+      row (without one), read the raw file with the host's own file-read tool
+      (no specmgr MCP tool can return the raw content of a document that fails
+      to parse, and the generic `update` tool is structurally unable to repair
+      one — its per-domain adapters re-parse the existing document first and
+      convert the failure into the domain's not-found error before any write),
+      fix only what the enriched error addresses while preserving the
+      frontmatter `id`/`created`/`status`/`version` byte-for-byte and leaving
+      `updated` untouched (a repair is not an edit), loop the generic
+      `validate` tool with `full=True` over the full raw text until green,
+      write the repaired text back to the same path via the host's own
+      file-write tool — never via `update` — and then confirm the repair
+      against the file as it now exists on disk with one more real
+      `get_<d>(id)`/`list_<d>()` call, degrading to diagnose-only (report the
+      error and the proposed fix, touch nothing) on a host without file
+      read/write tools; the OpenCode-native counterparts are the
+      `doc-repairer` subagent (`.opencode/agent/doc-repairer.md`), the
+      `/repair <type> [id]` command (`.opencode/command/repair.md`,
+      `agent: doc-repairer`), and the self-triggering `repair` OpenCode Skill
+      (`.opencode/skill/repair/SKILL.md`, REQ-012) that defers to
+      `doc-repairer` via the `task` tool when available). Every `get_<d>` tool for the whole-body
     domains additionally
     takes a `raw: bool = False` parameter — `raw=True` returns the
     frontmatter-stripped body text as-is (the text `update`'s
     `offset`/`limit` index into), with optional read-style `offset`/`limit`
     windowing of that raw read (raw-only; out-of-range values clamp, never
-    error). `get_<d>` (every domain, incl. `get_adr`), `update`, and
+    error). `get_<d>` for the 12 whole-body domains
+    (`req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr`/`sysrs`;
+    `get_adr` excluded) additionally returns a structured, non-raising
+    `ParseFailureResult` (`general/models/parse_failure_result.py`;
+    `error`/`path`/`id`) for a document that exists but fails to parse,
+    instead of raising the domain's not-found error — its `error` text is
+    identical to that domain's `list_<d>` failed-row `error` for the same
+    file, and `raw=True` on a broken document still returns the result
+    (never a raw `str`); a healthy document's shape and every other outcome
+    are unchanged (feat-150-mcp-lifecycle-commands Phase 1a, ADR
+    9080b37c-82b3-4f63-81f1-79641d0bf14c — the third extension of the
+    ADR 519d1206 client-side-`isError`-truncation workaround chain after
+    `validate` and `set_status`'s invalid-status case). `get_<d>` (every
+    domain, incl. `get_adr`), `update`, and
    `set_status` apply the same `general/tools/_path_safety` guards `delete`
    already had (feat-38-39-41-43-44 Phase 4, extending feat-36-delete, ADR
    1af6787b-eaab-4e8f-888f-531c1e76c19d): validate `id` for path-injection/

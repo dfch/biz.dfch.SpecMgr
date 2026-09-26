@@ -76,6 +76,11 @@ Index of all ADRs in this repository.
   - Id: 8cf940c5-3100-485c-a12d-14b59b631712
   - Status: accepted
   - Decision-makers: dfch
+- [Extend the non-raising structured-result workaround to get_<d>'s parse-failure case](9080b37c-82b3-4f63-81f1-79641d0bf14c-extend-the-non-raising-structured-result-workaround-to-get-d.md)
+  - Id: 9080b37c-82b3-4f63-81f1-79641d0bf14c
+  - Status: accepted
+  - Date: 2026-09-25
+  - Decision-makers: OpenCode agent + user decision
 - [Remove the Confluence tools (`confluence_fetch`, `confluence_update`) from the MCP server](92cc4ce8-2cdd-45a7-9ae4-85de5abaf94c-remove-the-confluence-tools-confluence-fetch-confluence-upda.md)
   - Id: 92cc4ce8-2cdd-45a7-9ae4-85de5abaf94c
   - Status: accepted

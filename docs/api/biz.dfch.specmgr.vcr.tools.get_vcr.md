@@ -27,7 +27,7 @@ out-of-range values, never erroring).
 
 ## Functions
 
-### `get_vcr(id: 'str', raw: 'bool' = False, offset: 'int | None' = None, limit: 'int | None' = None) -> 'VcrDocument | str'`
+### `get_vcr(id: 'str', raw: 'bool' = False, offset: 'int | None' = None, limit: 'int | None' = None) -> 'VcrDocument | str | ParseFailureResult'`
 
 Read and return the verification case record identified by ``id``.
 
@@ -53,10 +53,16 @@ limit:
 
 Returns
 -------
-VcrDocument | str
+VcrDocument | str | ParseFailureResult
     With ``raw=False``: the current on-disk document, freshly re-read
     and re-parsed. With ``raw=True``: the body text (or its
-    ``offset``/``limit`` window) as a plain string.
+    ``offset``/``limit`` window) as a plain string. When the document
+    exists but fails to parse, a
+    :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
+    (``error``/``path``/``id``) is returned instead of raising --
+    ``error`` is identical to the domain's own ``list`` tool's failed-row
+    ``error`` for the same file (ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c);
+    ``raw=True`` never returns a broken document's raw text.
     Raises :class:`._paths.VcrNotFoundError` if no verification case
     record has this id.
 

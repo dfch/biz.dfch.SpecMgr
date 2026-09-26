@@ -32,6 +32,8 @@ from biz.dfch.specmgr.tsk.models.v1 import TskDocument
 from biz.dfch.specmgr.tsk.tools._paths import TskNotFoundError
 from biz.dfch.specmgr.tsk.tools.create_tsk import create_tsk
 from biz.dfch.specmgr.tsk.tools.get_tsk import get_tsk
+from biz.dfch.specmgr.tsk.tools.list_tsk import list_tsk
+from biz.dfch.specmgr.general.models import ParseFailureResult
 
 
 #: A well-formed but non-existent canonical UUID (feat-38-39-41-43-44 Phase 4: the id
@@ -184,6 +186,46 @@ class TestGetTsk(unittest.TestCase):
             get_tsk(_MISSING_UUID, raw=True, offset=2, limit=3)
         with self.assertRaises(TskNotFoundError):
             get_tsk(_MISSING_UUID, raw=False)
+
+    def test_broken_document_returns_parse_failure_result(self) -> None:
+        """get_tsk must return a ParseFailureResult (not raise) for an id whose on-disk file fails to parse."""
+        created = create_tsk(_MINIMAL_BODY)
+        self._doc_path().write_text("not a valid document, no headings at all\n", encoding="utf-8")
+
+        result = get_tsk(created.id)
+
+        self.assertIsInstance(result, ParseFailureResult)
+        self.assertEqual(result.id, created.id)
+        self.assertEqual(result.path, str(self._doc_path().resolve()))
+        self.assertTrue(result.error)
+        self.assertNotIsInstance(result, TskDocument)
+
+    def test_broken_document_raw_true_returns_parse_failure_result_never_str(self) -> None:
+        """raw=True on a broken document must return a ParseFailureResult, never a raw str."""
+        created = create_tsk(_MINIMAL_BODY)
+        self._doc_path().write_text("not a valid document, no headings at all\n", encoding="utf-8")
+
+        result = get_tsk(created.id, raw=True)
+
+        self.assertIsInstance(result, ParseFailureResult)
+        self.assertNotIsInstance(result, str)
+
+    def test_broken_document_error_matches_list_failed_row(self) -> None:
+        """ParseFailureResult.error must equal list_tsk's failed-row error for the same broken file."""
+        created = create_tsk(_MINIMAL_BODY)
+        self._doc_path().write_text("not a valid document, no headings at all\n", encoding="utf-8")
+
+        get_result = get_tsk(created.id)
+        failed = [summary for summary in list_tsk().results if summary.title == "<failed to parse>"]
+
+        self.assertIsInstance(get_result, ParseFailureResult)
+        self.assertEqual(len(failed), 1)
+        self.assertEqual(get_result.error, failed[0].error)
+
+    def test_invalid_id_shape_raises_value_error(self) -> None:
+        """An id that is not a well-formed canonical UUID must raise ValueError before any file access."""
+        with self.assertRaises(ValueError):
+            get_tsk("not-a-well-formed-uuid")
 
 
 if __name__ == "__main__":

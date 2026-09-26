@@ -4,7 +4,7 @@ created: '2026-09-23 23:16:12.456+02:00'
 id: feat-150-mcp-lifecycle-commands
 status: planning
 type: feat
-updated: '2026-09-25 08:06:37.934+02:00'
+updated: '2026-09-25 21:49:40.414+02:00'
 version: 1.0.0
 ---
 
@@ -48,6 +48,8 @@ The unifying design principle (see Design Notes) is: every new capability gets a
 
 - REQ-012: A new `.opencode/skill/repair/SKILL.md` OpenCode Skill (added 2026-09-25 following a design-clarification pass -- see QA 76229d40-55e9-4640-9249-c391e1f3e84c question 0.0020), `name: repair`, whose `description` frontmatter triggers the model when it organically encounters a failed-to-parse document mid-execution (not only via an explicit `/repair` invocation); its body stays thin, deferring to the `doc-repairer` subagent via the `task` tool when available and otherwise narrating the same condensed host-native loop `general.prompts.repair` describes, so the workflow has no fourth independent copy to keep in sync.
 
+- REQ-013: A `get_<d>` parse-failure error channel (feat-150-mcp-lifecycle-commands Phase 1a, the narrow third extension of the ADR 519d1206-4d2a-4500-9046-6db635209996 non-raising structured-result workaround chain after `validate` and `set_status`'s invalid-status case): a new shared `ParseFailureResult` model (`general/models/parse_failure_result.py`, fields `error`/`path`/`id`) returned by all 12 `get_<d>` tools (`req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr`/`sysrs`; ADR excluded) when the requested id resolves to an on-disk file that exists but fails to parse, instead of raising the domain's `XNotFoundError` -- for both `raw=False` and `raw=True` (a broken document never returns raw text, preserving the invariant that no specmgr MCP tool can return the raw content of a document that fails to parse); `error` is byte-identical to the domain's `list_<d>` failed-row `error` for the same file, and the success wire shape stays byte-identical via the SDK's `model_dump(exclude_none=True)`; a truly absent id still raises the domain's not-found error and an invalid id shape still raises `ValueError` before any file access. Backed by a new shared `find_parse_failure(base_dir, id_, read_fn)` helper for the 11 flat-file domains (which does NOT change `find_doc_path_by_id`'s documented skip behavior) and a bespoke `find_feat_parse_failure(base_dir, id_)` for `feat`; `update`/`delete`/`set_status`/`set_classification`/`validate`/`list_references` are unchanged.
+
 ### Acceptance Criteria
 
 - [ ] ACC-001: `repair(type, id=None)` MCP prompt exists, is registered, and its instructions name `list_<d>`'s failed-row discovery and `get_<d>`'s failure confirmation, direct the raw read and the write-back at the host's own file tools with an explicit note that the generic `update` tool cannot repair a document that fails to parse, loop the generic `validate(type, content, full=True)` tool, require a post-write confirmation via `get_<d>(id)`/`list_<d>()` against the file as it now exists on disk, state the diagnose-only degradation, and state the ADR exclusion.
@@ -78,6 +80,10 @@ The unifying design principle (see Design Notes) is: every new capability gets a
 
 - [ ] ACC-014: `.opencode/skill/repair/SKILL.md` exists with a `name: repair` and a trigger `description` covering an organically-encountered failed-to-parse document, and its body defers to `doc-repairer` via the `task` tool when available, else narrates the condensed host-native loop.
 
+- [ ] ACC-015: `get_<d>` on a broken document returns `ParseFailureResult` with `error` + absolute `path` for all 12 whole-body domains (incl. `feat`), `error` text equals `list_<d>`'s failed-row `error` for the same file, healthy-document results are byte-identical to the pre-change shape, and a truly absent id still raises the domain's not-found error.
+
+- [ ] ACC-016: A new ADR in `docs/adr/` documents the decision, is status `accepted`, and is recorded in Related Decisions.
+
 ### Scope
 
 #### Included
@@ -99,6 +105,8 @@ The unifying design principle (see Design Notes) is: every new capability gets a
 - AGENTS.md/CHANGELOG/generated-docs/server.py-docstring updates, one per phase, inside that phase's own single commit.
 
 - One new ADR for the portable-prompt-narrates-delegation pattern.
+
+- The `ParseFailureResult` model (`general/models/parse_failure_result.py`) + the 12 `get_<d>` parse-failure conversions (+ the shared `find_parse_failure` helper and the bespoke `feat` one) + Phase 1a's own ADR (REQ-013, ACC-015/ACC-016) -- the `get_<d>` parse-failure error channel, implemented and committed before Phase 1's narration refinement and commit.
 
 #### Explicitly Out Of Scope
 
@@ -134,6 +142,8 @@ The unifying design principle (see Design Notes) is: every new capability gets a
 
 - Phase 4 (implement_feat/review_feat) depends on Phase 3's new ADR (its UUID is an input to Phase 4's instruction files); Phase 1 (repair) deliberately does not.
 
+- Phase 1's `repair` with-id narration is written against REQ-013's `get_<d>` parse-failure contract (Phase 1a); Phase 1a is implemented and committed before Phase 1's narration refinement and commit.
+
 #### Blocks
 
 - None known.
@@ -166,23 +176,41 @@ The unifying design principle (see Design Notes) is: every new capability gets a
 
 ### Related Decisions
 
+- ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c ("Extend the non-raising structured-result workaround to get_<d>'s parse-failure case", Phase 1a, status `accepted`): the narrow third extension of the ADR 519d1206 client-side-`isError`-truncation workaround chain after `validate` and `set_status`'s invalid-status case (ADR b399f1ce), backing REQ-013 (the `get_<d>` parse-failure error channel).
+
 - New ADR (Phase 3, before Phase 4): "Portable MCP prompts may narrate optional host-native subagent delegation, degrading gracefully when absent" -- architecture-level, affects any future `<verb>_feat`-style prompt, so it gets a full ADR per this repo's own ADR-vs-feature-log convention. Its UUID is an input to Phase 4's instruction files and is recorded here once created.
 
 - User decisions recorded in the Decisions Made log below (2026-09-24): one commit per phase with the full quality gate; the review-fix loop's exit criterion (Errors/Gaps/Inconsistencies); the root-canonical/generated-package-copy packaging strategy.
 
 ### Task List
 
+#### Phase 1a: get_<d> parse-failure error channel (repair prerequisite -- implement before Phase 1's commit)
+
+- [x] Task 1a.1: `ParseFailureResult` model in `general/models/parse_failure_result.py` (fields `error`/`path`/`id`, mirroring `invalid_status_result.py`'s shape) + registration in `general/models/__init__.py`.
+
+- [x] Task 1a.2: the shared `find_parse_failure(base_dir, id_, read_fn) -> tuple[Path, str] | None` helper in `general/tools/_doc_paths.py` (scans for the file whose stem encodes `id_` as a hyphen-bounded token -- the flat-file naming is `<type>-<id>-<slug>.md` -- and reports a parse-failing file's `(path, str(exc))`, `None` otherwise; `find_doc_path_by_id`'s documented skip behavior unchanged) + the bespoke `find_feat_parse_failure(base_dir, id_)` in `feat/tools/_paths.py` (no scan -- the folder name IS the id).
+
+- [x] Task 1a.3: the 12 `get_<d>` conversions (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs): on `<D>NotFoundError` from `load_by_id`, run the helper, `assert_within`, return `ParseFailureResult(error, path, id)`; re-raise otherwise. Union return annotation `<D>Document | str | ParseFailureResult`, description/docstring note (consistent across all 12), `raw=True` never returns a broken document's raw text.
+
+- [x] Task 1a.4: the new ADR in `docs/adr/` ("Extend the non-raising structured-result workaround to get_<d>'s parse-failure case", status `accepted`, ADR 519d1206-chain third case) + `specmgr adr-toc` regeneration.
+
+- [x] Task 1a.5: tests -- per-domain (all 12: broken → `ParseFailureResult` with `error`/`path`/`id` (no raise); healthy → today's exact shape (raw=False model, raw=True str); absent id → domain `XNotFoundError`; `raw=True` on broken → `ParseFailureResult` (never a str); invalid id shape → `ValueError`), the `error`-text consistency vs `list_<d>` (all 12), the shared-helper unit tests, and the `ParseFailureResult` model test.
+
+- [x] Task 1a.6: docs sync -- `server.py` module docstring (the `get_<d>` `ParseFailureResult` note), `AGENTS.md` `general/` bullet, `CHANGELOG.md` (`Added` for the model/helpers + `Changed` for the `get_*` contract), `specmgr docs`/`specmgr mcp-docs` regeneration (also picks up the uncommitted Phase 1 `repair` prompt -- expected).
+
+- [ ] Task 1a.7: Phase-end gate: full quality gate green (ruff format/check, vulture, full pytest, `specmgr docs`/`specmgr mcp-docs`/`specmgr adr-toc` drift), then exactly one Conventional Commit for the phase.
+
 #### Phase 1: repair (no ADR dependency -- implement first)
 
-- [ ] Task 1.1: `general/data/general_repair_instructions.md` (host-native read/write, the explicit no-`update` note, the post-write `get_<d>`/`list_<d>` confirmation step, the diagnose-only degradation, the frontmatter-preservation rule, the ADR exclusion) + `general/prompts/repair.py` (`repair(type, id=None)`) + registration in `general/prompts/__init__.py`.
+- [x] Task 1.1: `general/data/general_repair_instructions.md` (host-native read/write, the explicit no-`update` note, the post-write `get_<d>`/`list_<d>` confirmation step, the diagnose-only degradation, the frontmatter-preservation rule, the ADR exclusion) + `general/prompts/repair.py` (`repair(type, id=None)`) + registration in `general/prompts/__init__.py`.
 
-- [ ] Task 1.2: `.opencode/agent/doc-repairer.md` (full explicit permission frontmatter per REQ-002) + `.opencode/command/repair.md` (`$1`/`$2`, `agent: doc-repairer`).
+- [x] Task 1.2: `.opencode/agent/doc-repairer.md` (full explicit permission frontmatter per REQ-002) + `.opencode/command/repair.md` (`$1`/`$2`, `agent: doc-repairer`).
 
-- [ ] Task 1.2b: `.opencode/skill/repair/SKILL.md` (REQ-012: `name: repair` frontmatter, a trigger `description` covering an organically-encountered failed-to-parse document, a thin body deferring to `doc-repairer` via the `task` tool when available, else narrating the condensed host-native loop mirroring `general/data/general_repair_instructions.md`).
+- [x] Task 1.2b: `.opencode/skill/repair/SKILL.md` (REQ-012: `name: repair` frontmatter, a trigger `description` covering an organically-encountered failed-to-parse document, a thin body deferring to `doc-repairer` via the `task` tool when available, else narrating the condensed host-native loop mirroring `general/data/general_repair_instructions.md`).
 
-- [ ] Task 1.3: `tests/general/prompts/test_repair.py` (registration + template substitution + asserting the rendered instructions mention the post-write `get_<d>`/`list_<d>` confirmation step, matching existing prompt test patterns -- since `repair` is narration-only text, this test can only check what the instructions say, not execute an actual repair; the real end-to-end proof is ACC-002's manual smoke test).
+- [x] Task 1.3: `tests/general/prompts/test_repair.py` (registration + template substitution + asserting the rendered instructions mention the post-write `get_<d>`/`list_<d>` confirmation step, matching existing prompt test patterns -- since `repair` is narration-only text, this test can only check what the instructions say, not execute an actual repair; the real end-to-end proof is ACC-002's manual smoke test).
 
-- [ ] Task 1.4: Docs sync: `AGENTS.md`'s `general/` bullet (including the new `.opencode/skill/repair/` skill), `server.py`'s module docstring, `specmgr docs`/`specmgr mcp-docs` regeneration, `CHANGELOG.md` entry.
+- [x] Task 1.4: Docs sync: `AGENTS.md`'s `general/` bullet (including the new `.opencode/skill/repair/` skill), `server.py`'s module docstring, `specmgr docs`/`specmgr mcp-docs` regeneration, `CHANGELOG.md` entry.
 
 - [ ] Task 1.5: Phase-end gate: full quality gate green (ruff format/check, vulture, full pytest, `specmgr docs`/`specmgr mcp-docs` drift), then exactly one Conventional Commit for the phase.
 
@@ -246,11 +274,21 @@ The unifying design principle (see Design Notes) is: every new capability gets a
 
 ### Current Status
 
-**As of 2026-09-24**: Plan refined after a full review pass against the codebase (see Updates): `repair`'s fix loop corrected to host-native file read/write (the generic `update` tool is structurally unable to repair a document that fails to parse), `refine_feat` made fully MCP-native, the old REQ-009 split into packaging (REQ-009: root-canonical + generated package copy + `specmgr opencode sync` + pre-commit/CI drift check, per user decision) and the installer command (REQ-010: all 12 files, sibling-directory detection, per-file no-op/refuse/`--force`, never touches `opencode.json`), the review-fix loop's exit criterion aligned to Errors/Gaps/Inconsistencies (per user decision), and one-commit-per-phase + full-quality-gate discipline added (per user requirement). Not yet started -- a subsequent agent/session should pick up Phase 1 first (see Task List).
+**As of 2026-09-25**: Phase 1a (get_<d> parse-failure error channel) is implemented and its gate is green (Tasks 1a.1-1a.6 done; Task 1a.7 gate/commit pending): the new shared `ParseFailureResult` model (`general/models/parse_failure_result.py`), the shared `find_parse_failure` helper (`general/tools/_doc_paths.py`) + the bespoke `feat` one (`feat/tools/_paths.py`), the 12 `get_<d>` conversions, the new ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c (+ `specmgr adr-toc`), the per-domain/helper/model tests, and the docs sync (AGENTS.md, `server.py` docstring, CHANGELOG, regenerated `docs/api/`+`docs/GENERATED.md`+`docs/MCP.md`) are all in the working tree, awaiting the orchestrator's single Conventional Commit (Task 1a.7). Phase 1 (repair, Tasks 1.1-1.4) is still implemented and uncommitted alongside it; its with-id narration refinement (against REQ-013's `get_<d>` contract) is pending after Phase 1a's commit, then Phase 1's own gate/commit (Task 1.5).
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-25 19:49:40.000Z - Phase 1a (get_<d> parse-failure error channel) implemented, gate green
+
+Implemented Tasks 1a.1-1a.6 (REQ-013 / ACC-015 / ACC-016): (1) a new shared, non-raising `ParseFailureResult` model (`general/models/parse_failure_result.py`, fields `error`/`path`/`id`) mirroring `InvalidStatusResult`'s shape and registered in `general/models/__init__.py` -- the third member of the ADR 519d1206 client-side-`isError`-truncation workaround chain after `validate` and `set_status`'s invalid-status case (ADR b399f1ce). (2) A new shared helper `general.tools._doc_paths.find_parse_failure(base_dir, id_, read_fn) -> tuple[Path, str] | None` for the 11 flat-file domains (scans for the single file whose stem encodes `id_` as a hyphen-bounded token -- the flat-file naming is `<type>-<id>-<slug>.md`, so a bare `stem.startswith(f"{id_}-")` prefix would never match -- and reports a parse-failing file's `(path, str(exc))`, `None` otherwise; `find_doc_path_by_id`'s documented skip behavior is unchanged) plus a bespoke `feat.tools._paths.find_feat_parse_failure(base_dir, id_)` for `feat` (no scan -- the folder name IS the id). (3) All 12 `get_<d>` tools now, on the domain's `XNotFoundError` from `load_by_id`, run the helper, `assert_within`, and return `ParseFailureResult(error, path, id)` (a truly absent id still re-raises; `raw=True` on a broken document never returns raw text); the return annotation widens to `<D>Document | str | ParseFailureResult` and the description/docstring note is worded consistently across all 12. (4) A new ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c ("Extend the non-raising structured-result workaround to get_<d>'s parse-failure case", status `accepted`) + `specmgr adr-toc`. (5) Tests: per-domain (all 12: broken / `raw=True`-broken / healthy / absent / invalid-shape), the `error`-text consistency vs `list_<d>` (all 12), the shared-helper unit tests, and the model test. (6) Docs sync: `server.py` module docstring, `AGENTS.md` `general/` bullet, `CHANGELOG.md` (`Added` + `Changed`), `specmgr docs`/`specmgr mcp-docs` (which also pick up the uncommitted Phase 1 `repair` prompt -- expected and flagged for the commit message).
+
+The `error`-text consistency invariant holds because both `ParseFailureResult.error` and the `list_<d>` failed-row `error` are `str()` of the same domain parse exception captured through the same cache-backed `read_<d>` reader; the `get_<d>` path deliberately does NOT reuse `load_by_id`'s own wrapped "could not be read as a valid ... document" message (which prepends tool-specific framing that `list_<d>` does not carry).
+
+#### 2026-09-25 09:08:00.000Z - Phase 1 (repair) implemented, gate green
+
+Implemented Tasks 1.1-1.4: (1) `general/prompts/repair.py` (`repair(type, id=None)`, registered in `general/prompts/__init__.py`) with its instructions in `general/data/general_repair_instructions.md` -- the full REQ-001 loop: discovery (`get_<d>(id)`'s wrapped enriched parse error with an id, `list_<d>()`'s `<failed to parse>` failed row without), the host-native raw read and write-back with the explicit note that no specmgr MCP tool can return the raw content of a document that fails to parse and that the generic `update` tool is structurally unable to repair one, the frontmatter `id`/`created`/`status`/`version` byte-for-byte preservation + `updated`-untouched rule, the `validate(type, content, full=True)` loop, the post-write `get_<d>(id)`/`list_<d>()` confirmation against the file as it now exists on disk, the diagnose-only degradation, and the ADR exclusion; `type` validates against `general.tools._domains.WHOLE_BODY_DOMAINS` (single source of truth) and fails fast with an actionable `ValueError` for `adr`/unknown/blank inputs, case-insensitively. (2) `.opencode/agent/doc-repairer.md` (explicit `read`/`glob`/`grep`/`list`/`question`/`todowrite` allows, workspace-wide `edit`/`write` allows, `task`/`bash` denies, plus an explicit `external_directory: deny` -- see Decisions Made) and `.opencode/command/repair.md` (`$1`/`$2` positionals, `agent: doc-repairer`). (3) `.opencode/skill/repair/SKILL.md` (REQ-012: `name: repair`, a trigger description for organically-encountered failed-to-parse documents, a thin body deferring to `doc-repairer` via `task` when available, else the condensed host-native loop). (4) `tests/general/prompts/test_repair.py` (21 tests: content assertions on the rendered instructions including ACC-001's key post-write-confirmation assertion, fast-fail `ValueError` tests, packaged-data fresh-read/`FileNotFoundError` tests, and live `mcp.list_prompts()` registration), plus the docs sync (AGENTS.md `general/` bullet, `server.py` module docstring, regenerated `docs/api/`+`docs/GENERATED.md`+`docs/MCP.md`, CHANGELOG `## [Unreleased]` entry). Task 1.5's quality gate is green; the orchestrator makes the single Conventional Commit.
 
 #### 2026-09-24 20:57:10.000Z - Plan refined after full review pass
 
@@ -259,6 +297,14 @@ Reviewed the plan against the codebase, the OpenCode docs/config schema, and iss
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-25 19:49:40.000Z - get_<d> parse-failure error channel: explicit error attribute on the result, narrow get-only scope
+
+User decision (2026-09-25), after cost analysis: an explicit error attribute on the `get_*` result (a non-raising `ParseFailureResult`), chosen over exception enrichment. Rationale: ~0 tokens on the success path (the MCP SDK serializes with `model_dump(exclude_none=True)`, so the new union member only materializes on the failure path); host-independent delivery per the ADR 519d1206 chain (today's smoke test reproduced the truncation on this OpenCode host -- `get_req`'s exception text was swallowed to a bare "Error executing tool get_req" while `list_req()`'s failed-row `error` passed intact); and the union-result precedent already twice established (b399f1ce). Scope is deliberately narrow and get-only: a shared `find_parse_failure` helper for the 11 flat-file domains + a bespoke `feat` one, with `find_doc_path_by_id`'s skip behavior and `update`/`delete`/`set_*`/`validate`/`list_references` all unchanged. This is the third documented asymmetric tool contract in the ADR 519d1206 chain (after `validate` and `set_status`'s invalid-status case), recorded in ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c.
+
+#### 2026-09-25 09:08:00.000Z - doc-repairer: explicit external_directory deny (workspace-only writes)
+
+REQ-002's permission list names `read`/`glob`/`grep`/`list`/`question`/`todowrite` (allow), `edit`/`write` (allow workspace-wide), `task`/`bash` (deny) but leaves `external_directory` open. Chosen: an explicit `external_directory: {"*": deny}` entry, over (a) leaving it at OpenCode's default `ask` and (b) mirroring `ref-finder`'s allow-list. Rationale: `doc-repairer` is the one agent in the set that WRITES document files, so an out-of-workspace write surface should be a deliberate, user-approved act -- an explicit deny makes the scope boundary mechanical (a `SPECMGR_*_DIR` pointing outside the workspace is a misconfiguration the agent reports, not a file it silently edits), and it keeps REQ-002's "declare every permission it relies on explicitly" reading consistent: the agent relies on workspace-only file access. The agent body's Hard rules name this explicitly ("Stay inside the workspace ... stop and report"). `ref-finder` stays unchanged (read-only, its allow-list is about its own global-config reads).
 
 #### 2026-09-25 08:30:00.000Z - Added REQ-012 (OpenCode Skill) and REQ-001's post-write confirmation step
 
