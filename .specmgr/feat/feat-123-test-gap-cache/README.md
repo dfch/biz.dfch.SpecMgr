@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-25T19:42:03.316+02:00'
 id: feat-123-test-gap-cache
-status: planning
+status: progress
 type: feat
-updated: '2026-09-26T12:29:49.478+02:00'
+updated: '2026-09-26T14:12:24.672+02:00'
 version: 1.0.0
 ---
 
@@ -99,9 +99,9 @@ This feature closes that gap: a future refactor that silently drops one of those
 
 #### Phase 1: Audit and Confirm the Gap
 
-- [ ] Task 1.1: Verify the shipped call-site inventory by inspection/grep (12 `create_<domain>` warm sites; 24 `update` + 12 `set_status` + 12 `set_classification` warm sites; 12 `delete` invalidate sites; 12 `list_<domain>` reconcile sites) and confirm no test exercises them for the 11 non-`req` domains (issue #123's gap statement).
-- [ ] Task 1.2: Determine each domain's non-no-op `set_status` pair from the fixture's own frontmatter `status` value (template `draft`, `rsk` `open`, `feat` `planning`) and the shared `general/tools/set_status.py::_ALLOWED_STATUSES_BY_TYPE` mapping, and verify the uniform H1 range-splice content per domain (including `feat`'s `Feature: ` prefix).
-- [ ] Task 1.3: Set this feature's status to `progress` via the generic `set_status` tool (`type="feat"`).
+- [x] Task 1.1: Verify the shipped call-site inventory by inspection/grep (12 `create_<domain>` warm sites; 24 `update` + 12 `set_status` + 12 `set_classification` warm sites; 12 `delete` invalidate sites; 12 `list_<domain>` reconcile sites) and confirm no test exercises them for the 11 non-`req` domains (issue #123's gap statement).
+- [x] Task 1.2: Determine each domain's non-no-op `set_status` pair from the fixture's own frontmatter `status` value (template `draft`, `rsk` `open`, `feat` `planning`) and the shared `general/tools/set_status.py::_ALLOWED_STATUSES_BY_TYPE` mapping, and verify the uniform H1 range-splice content per domain (including `feat`'s `Feature: ` prefix).
+- [x] Task 1.3: Set this feature's status to `progress` via the generic `set_status` tool (`type="feat"`).
 
 #### Phase 2: Implement the Table-Driven Wiring Tests
 
@@ -123,11 +123,15 @@ This feature closes that gap: a future refactor that silently drops one of those
 
 ### Current Status
 
-**As of 2026-09-26**: Planned (refined after a code-level verification pass). Issue #123's gap statement is confirmed against the current branch: the full write-path call-site inventory exists in `src/` (12 create-warm, 24 update-warm, 12 set_status-warm, 12 set_classification-warm, 12 delete-invalidate, 12 list-reconcile sites), only `req` has end-to-end wiring coverage, and the structural test never exercises the write paths. The 2026-09-26 pass re-confirmed that inventory and the plan's key premises, and fixed two plan errors (the size-budget row count; REQ-008's create-fixture shape) plus several gaps (seven-cycle mutation check, shared status-vocabulary source, expected `docs/GENERATED.md` drift, create-row path derivation). No implementation work has started.
+**As of 2026-09-26**: Phase 1 audit complete and confirmed — the full shipped call-site inventory was re-verified in place (12 create-warm, 24 update-warm, 12 set_status-warm, 12 set_classification-warm, 12 delete-invalidate, 12 list-reconcile sites), issue #123's gap was confirmed (no test asserts any of the seven wiring row types for the 11 non-`req` domains), the per-domain `set_status` pairs and H1 splice content were derived, and this document's status was flipped to `progress` via the generic `set_status` tool. One plan premise was corrected in the process: `sysrs` also mandates an H1 prefix (`System Requirements Specification: `), so its Phase 2 range-splice row uses that prefix (see Decisions Made). No implementation work yet; Phase 2 is next.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-26 12:13:14.000Z - Phase 1 Audit Complete
+
+Task 1.1 — call-site inventory and gap, confirmed. `general/tools/_domains.py:55` lists the 12 whole-body domains in canonical order, and all six shipped site classes exist exactly as the plan claims: 12 create-warms, one per domain's own `create_<d>` tool after the successful write (`req/tools/create_req.py:127`, `uc/tools/create_uc.py:125`, `tsk/tools/create_tsk.py:140`, `qa/tools/create_qa.py:128`, `prb/tools/create_prb.py:125`, `gol/tools/create_gol.py:125`, `rsk/tools/create_rsk.py:126`, `dec/tools/create_dec.py:125`, `sop/tools/create_sop.py:124`, `vcr/tools/create_vcr.py:125`, `sysrs/tools/create_sysrs.py:125`, and `feat/tools/create_feat.py:182` — whose `read_feat` import at `create_feat.py:54` comes directly from `feat.tools._cache`, matching the plan's description); 24 update-warms in `general/tools/update.py`, two per domain — the range-splice branch (`:202, :245, :288, :331, :374, :417, :460, :505, :550, :595, :637, :681`) and the whole-body branch (`:217, :260, :303, :346, :389, :432, :475, :520, :565, :610, :652, :696`); 12 set_status-warms in `general/tools/set_status.py` (`:338, :367, :396, :425, :455, :484, :513, :544, :576, :607, :636, :666`), the `adr` dispatch branch (`_set_status_adr`, `:670–690`) not warming, as expected; 12 set_classification-warms in `general/tools/set_classification.py` (`:216, :239, :262, :285, :308, :331, :354, :377, :405, :431, :455, :481`); 12 delete-invalidates in `general/tools/delete.py` (`:161, :178, :195, :212, :229, :246, :263, :280, :294, :322, :339, :356`), each after a successful `unlink()`; and 12 list-reconciles, one per domain's own `list_<d>` module, called with the live path listing immediately before summary building (`req/tools/list_req.py:124`, `uc/tools/list_uc.py:116`, `tsk/tools/list_tsk.py:116`, `qa/tools/list_qa.py:118`, `prb/tools/list_prb.py:116`, `gol/tools/list_gol.py:115`, `rsk/tools/list_rsk.py:123`, `dec/tools/list_dec.py:117`, `sop/tools/list_sop.py:115`, `vcr/tools/list_vcr.py:116`, `sysrs/tools/list_sysrs.py:116`, `feat/tools/list_feat.py:157`). The gap is confirmed: `tests/req/tools/test_doc_cache_wiring.py` is req-only (8 classes, feat-107's ACC-001–006/012); `tests/general/tools/test_doc_cache_structural.py` checks existence-of-routing only (every `_cache.py`'s API, `read_<d>`'s cache-backing via direct helper calls, the `find_doc_path_by_id` scan — its `feat` part invokes the real `create_feat` solely as a fixture writer and discards its warming at `:270`, and asserts `set_feat_id`'s own entry move); `tests/general/tools/test_doc_cache_delete_scan_race.py` (ACC-016/017/018) calls `find_doc_path_by_id`/`_io.load_by_id` directly and, while it does invoke the real `list_<d>` tool, asserts only vanishing-file omission, never the reconcile wiring; `tests/general/tools/test__doc_cache.py` covers the domain-agnostic `DocCache` mechanism; so no test asserts any of the seven row types (create, update whole-body, update range-splice, set_status, set_classification, delete, list) for any of the 11 non-`req` domains. Task 1.2 — per-domain `set_status` pairs and H1 splice content, derived. Fixture starting statuses (each packaged template's own frontmatter, resolved via `general.tools._packaged_data.read_packaged_text`): `draft` for req/uc/tsk/qa/prb/gol/dec/sop/vcr/sysrs, `open` for rsk, `planning` for feat (`feat_template.md`'s frontmatter; `create_feat.py:176` always writes `status="planning"`). Non-no-op pairs (starting → target, the target being the first member of the domain's own allowed vocabulary other than the starting value, from each domain's `_ALLOWED_STATUSES` constant as imported into `general/tools/set_status.py:246–260`'s `_ALLOWED_STATUSES_BY_TYPE`; the allowed-list source in parentheses): req draft→proposed (`req/models/v1/frontmatter.py:35`), uc draft→proposed (`uc/models/v2/frontmatter.py:43`), tsk draft→active (`tsk/models/v1/frontmatter.py:38`), qa draft→active (`qa/models/v2/frontmatter.py:46`), prb draft→active (`prb/models/v1/frontmatter.py:43`), gol draft→proposed (`gol/models/v1/frontmatter.py:42`), rsk open→mitigating (`rsk/models/v1/frontmatter.py:50`), dec draft→proposed (`dec/models/v1/frontmatter.py:43`), sop draft→review (`sop/models/v1/frontmatter.py:44`), feat planning→progress (`feat/models/v1/frontmatter.py:53`), vcr draft→progress (`vcr/models/v1/frontmatter.py:45`), sysrs draft→review (`sysrs/models/v1/frontmatter.py:49`). H1 splice verification: for all 12 packaged templates, `body_text()`'s line 1 is the H1 (empirically, via the same `frontmatter` parse `general/tools/_splice.py:68` uses — the frontmatter block plus its one following blank line is dropped), and an in-memory splice of line 1 followed by a full re-parse succeeded for all 12 — `# {title}` for the ten free-H1 domains and `# Feature: {title}` for `feat` (`feat/models/v1/body.py:726`); one plan premise corrected in the process, the `sysrs` model also mandates an H1 prefix (`@alias(value=r"^System Requirements Specification: .+$", type=AliasType.REGEX)` at `sysrs/models/v1/body.py:1121`, "unlike every other domain's free-form H1"), and a negative control confirmed a bare `# {title}` fails `sysrs` parsing with `AssertionError`, so Phase 2's `sysrs` range-splice row must splice `# System Requirements Specification: {title}` (see Decisions Made). Task 1.3 — done: the generic `set_status` tool (`type="feat"`) flipped this document's status to `progress`, bumping `updated` to `2026-09-26T14:12:24.672+02:00` by the tool itself.
 
 #### 2026-09-26 10:29:49.000Z - Plan Refined After Code-Level Verification Pass
 
@@ -136,6 +140,14 @@ The plan was verified line-by-line against the current branch before implementat
 #### 2026-09-25 17:39:18.000Z - Created
 
 Feature created from GitHub issue #123 ("test: close write-path cache-wiring test gap for 10 non-req domains (feat-107 follow-up)"), with scope refined per planning: the issue's gap list names the 10 flat non-`req` domains plus `feat`'s own bespoke integration (11 domains), and the new table includes `req` rows as well so all 12 whole-body domains are pinned uniformly -- the `req` rows do not duplicate its dedicated end-to-end wiring-test file, which stays as-is.
+
+### Decisions Made
+
+<!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-26 12:13:14.000Z - The sysrs Range-Splice H1 Carries the Domain's Own Mandatory Prefix
+
+Phase 1's H1 verification found that the `sysrs` body model mandates the H1 prefix `System Requirements Specification: ` (`sysrs/models/v1/body.py:1121`, `@alias(value=r"^System Requirements Specification: .+$", type=AliasType.REGEX)`), not just `feat`'s `Feature: ` prefix as the Design Notes' "`# {title}` for the 11 flat domains" wording assumes; a bare `# {title}` fails `sysrs` parsing (empirical negative control, `AssertionError`). Decision: Phase 2's `sysrs` range-splice row splices `# System Requirements Specification: {title}`; the other ten flat domains keep `# {title}`, and `feat` keeps `# Feature: {title}`.
 
 ### Related PRs / Commits
 
