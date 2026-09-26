@@ -20,13 +20,13 @@
 feat-107-doc-cache shipped the per-domain, content-hash-validated read cache
 and wired it into every write path (post-create and post-update/post-
 set_status/post-set_classification cache warming, eager delete invalidation,
-and list reconcile-on-scan) across all 12 whole-body domains, but only
+and list reconcile-on-scan) across every whole-body domain, but only
 ``req`` ever got tests proving that its own call sites actually fire
-(``tests/req/tools/test_doc_cache_wiring.py``) -- the other 11 domains are
+(``tests/req/tools/test_doc_cache_wiring.py``) -- the other domains are
 pinned only by the narrow, existence-of-routing structural test (``tests/
 general/tools/test_doc_cache_structural.py``), which never executes a write.
 A future refactor that silently drops one of those cache-wiring call sites
-for any one of those 11 domains would therefore ship unnoticed. This file
+for any one of those domains would therefore ship unnoticed. This file
 closes that gap: one test class per wiring row type, table-driven across
 every whole-body domain, so the exact domain row whose call site was dropped
 is the one that fails.
@@ -42,7 +42,7 @@ delete-invalidate (the generic ``delete`` invokes the caller-bound
 ``invalidate_<d>_cache`` with the deleted path AND the path is absent from
 the domain's own ``_cache`` entries immediately after), and list-reconcile
 (``list_<d>`` invokes the caller-bound ``reconcile_<d>_cache`` with the live
-path listing). That is 12 domains x 7 row types = 84 subtest rows.
+path listing). That is one subtest row per domain per row type.
 
 **Mocking discipline (REQ-007).** Each row patches the CALLER module's OWN
 bound name of the cache helper (``read_<d>`` as bound into the domain's own
@@ -78,7 +78,7 @@ mirroring the structural test's own flat/feat split.
 
 **Per-row ``set_status`` targets.** Each row transitions the fixture from its
 own starting status (the packaged template's frontmatter ``status`` --
-``draft`` for the ten flat templates, ``open`` for ``rsk``; ``planning`` for
+``draft`` for the flat templates, ``open`` for ``rsk``; ``planning`` for
 ``feat``, which ``create_feat`` always writes) to the first member of the
 domain's own closed status vocabulary (in the domain's own
 ``_ALLOWED_STATUSES`` source-literal order) other than that starting value --
@@ -90,7 +90,7 @@ instead of sending a no-op (zero-spy-call) status.
 **Per-domain H1 splice content.** The update range-splice rows replace the
 body's line 1 (the H1 -- verified to be line 1 of every packaged template's
 ``body_text()``) with the domain's own valid H1 carrying a `` (updated)``
-suffix: ``# {title} (updated)`` for the ten free-H1 flat domains,
+suffix: ``# {title} (updated)`` for the free-H1 flat domains,
 ``# System Requirements Specification: {title} (updated)`` for ``sysrs``
 (its body model mandates the prefix -- the Phase-1-corrected fact in this
 feature's Decisions Made entry), and ``# Feature: {title} (updated)`` for
@@ -113,7 +113,7 @@ from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR, README_FILENAME
 from biz.dfch.specmgr.feat.tools.create_feat import create_feat
 from biz.dfch.specmgr.general.models import InvalidStatusResult
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR, doc_base_dir
-from biz.dfch.specmgr.general.tools._domains import FEAT, WHOLE_BODY_NO_FEAT_DOMAINS
+from biz.dfch.specmgr.general.tools._domains import FEAT, WHOLE_BODY_DOMAINS, WHOLE_BODY_NO_FEAT_DOMAINS
 from biz.dfch.specmgr.general.tools._packaged_data import read_packaged_text
 from biz.dfch.specmgr.general.tools.delete import delete
 from biz.dfch.specmgr.general.tools.set_classification import set_classification
@@ -150,7 +150,9 @@ _H1_PREFIX_BY_DOMAIN: dict[str, str] = {
 #: vocabulary (its ``_ALLOWED_STATUSES`` source-literal order) other than the fixture's own
 #: starting status -- Phase 1 (Task 1.2) derivation, re-checked on every row (see the module
 #: docstring). A future 13th domain must add its own entry here (and, if it mandates one, its
-#: own ``_H1_PREFIX_BY_DOMAIN`` entry) -- the missing entry fails the row loudly, not silently.
+#: own ``_H1_PREFIX_BY_DOMAIN`` entry) -- the missing entry fails the row loudly, not silently,
+#: and the import-time drift guard below pins this table's keys against the shared
+#: ``WHOLE_BODY_DOMAINS`` source.
 _SET_STATUS_TARGETS_BY_DOMAIN: dict[str, str] = {
     "req": "proposed",
     "uc": "proposed",
@@ -166,8 +168,17 @@ _SET_STATUS_TARGETS_BY_DOMAIN: dict[str, str] = {
     "sysrs": "review",
 }
 
+assert set(_SET_STATUS_TARGETS_BY_DOMAIN) == set(WHOLE_BODY_DOMAINS), (
+    "_SET_STATUS_TARGETS_BY_DOMAIN drifted from the shared general.tools._domains.WHOLE_BODY_DOMAINS source -- "
+    "add the new domain's non-no-op set_status target here (feat-123)"
+)
+
 #: The set_classification rows' uniformly-real classification value.
 _CLASSIFICATION_VALUE = "internal"
+
+#: The status ``create_feat`` always writes (``create_feat.py``'s own frontmatter construction) --
+#: the feat set_status rows' starting status.
+_FEAT_CREATE_STATUS = "planning"
 
 #: A minimal, valid feat body for the feat rows' fixtures (the feat counterpart of the flat
 #: rows' packaged-template fixture source -- ``create_feat`` builds its own frontmatter).
@@ -369,7 +380,7 @@ class TestAcc002UpdateWarmForEveryFlatDomain(_FlatDomainWiringTestCase):
                 spy.assert_called_once_with(path)
 
 
-class TestAcc003SetStatusWarmForEveryFlatDomain(_FlatDomainWiringTestCase):
+class TestAcc002SetStatusWarmForEveryFlatDomain(_FlatDomainWiringTestCase):
     """ACC-002 (flat, set_status): a real, non-no-op ``set_status`` invokes its caller-bound ``read_<domain>`` exactly once."""
 
     def test_set_status_invokes_the_caller_bound_read_exactly_once(self) -> None:
@@ -391,7 +402,7 @@ class TestAcc003SetStatusWarmForEveryFlatDomain(_FlatDomainWiringTestCase):
                 spy.assert_called_once_with(path)
 
 
-class TestAcc004SetClassificationWarmForEveryFlatDomain(_FlatDomainWiringTestCase):
+class TestAcc002SetClassificationWarmForEveryFlatDomain(_FlatDomainWiringTestCase):
     """ACC-002 (flat, set_classification): a real ``set_classification`` invokes its caller-bound ``read_<domain>`` exactly once."""
 
     def test_set_classification_invokes_the_caller_bound_read_exactly_once(self) -> None:
@@ -408,7 +419,7 @@ class TestAcc004SetClassificationWarmForEveryFlatDomain(_FlatDomainWiringTestCas
                 spy.assert_called_once_with(path)
 
 
-class TestAcc005DeleteInvalidatesForEveryFlatDomain(_FlatDomainWiringTestCase):
+class TestAcc003DeleteInvalidatesForEveryFlatDomain(_FlatDomainWiringTestCase):
     """ACC-003 (flat): a real ``delete`` invokes its caller-bound ``invalidate_<domain>_cache`` exactly once and drops the entry."""
 
     def test_delete_invokes_the_caller_bound_invalidate_exactly_once_and_drops_the_entry(self) -> None:
@@ -427,13 +438,16 @@ class TestAcc005DeleteInvalidatesForEveryFlatDomain(_FlatDomainWiringTestCase):
                 # The delete's own load_by_id scan read the target through the domain cache before the
                 # unlink, so the entry exists at invalidation time: with the invalidate call site dropped,
                 # it would remain, and this behavioral assertion -- beyond the spy count -- is what makes
-                # the row bite (no pre-warming step is needed).
+                # the row bite (no pre-warming step is needed). The cache keys every entry via
+                # path.resolve() (its own key normalization), so membership is checked with the resolved
+                # path -- environment-independent even where the temp root carries a symlink component
+                # (e.g. macOS /tmp -> /private/tmp).
                 entries = cache_module._cache._entries  # pylint: disable=protected-access
-                self.assertNotIn(path, entries)
+                self.assertNotIn(path.resolve(), entries)
                 self.assertFalse(path.exists())
 
 
-class TestAcc006ListReconcilesForEveryFlatDomain(_FlatDomainWiringTestCase):
+class TestAcc004ListReconcilesForEveryFlatDomain(_FlatDomainWiringTestCase):
     """ACC-004 (flat): a real ``list_<domain>`` invokes its caller-bound ``reconcile_<domain>_cache`` exactly once, with the live listing."""
 
     def test_list_invokes_the_caller_bound_reconcile_exactly_once_with_the_live_listing(self) -> None:
@@ -497,13 +511,13 @@ class TestAcc002UpdateWarmForFeat(_FeatWiringTestCase):
             spy.assert_called_once_with(path)
 
 
-class TestAcc003SetStatusWarmForFeat(_FeatWiringTestCase):
+class TestAcc002SetStatusWarmForFeat(_FeatWiringTestCase):
     """ACC-002 (feat, set_status): a real, non-no-op ``set_status`` (planning -> progress) invokes its caller-bound ``read_feat`` once."""
 
     def test_set_status_invokes_the_caller_bound_read_exactly_once(self) -> None:
         with self.subTest(domain=FEAT):
             path = self._create_feat_fixture("feat-0-ww-set-status")
-            starting = "planning"  # create_feat always writes planning (create_feat.py's own frontmatter construction)
+            starting = _FEAT_CREATE_STATUS
             target = _SET_STATUS_TARGETS_BY_DOMAIN[FEAT]
             self.assertIn(target, _ALLOWED_STATUSES_BY_TYPE[FEAT])
             self.assertNotEqual(target, starting)
@@ -517,7 +531,7 @@ class TestAcc003SetStatusWarmForFeat(_FeatWiringTestCase):
             spy.assert_called_once_with(path)
 
 
-class TestAcc004SetClassificationWarmForFeat(_FeatWiringTestCase):
+class TestAcc002SetClassificationWarmForFeat(_FeatWiringTestCase):
     """ACC-002 (feat, set_classification): a real ``set_classification`` (type='feat') invokes its caller-bound ``read_feat`` exactly once."""
 
     def test_set_classification_invokes_the_caller_bound_read_exactly_once(self) -> None:
@@ -532,7 +546,7 @@ class TestAcc004SetClassificationWarmForFeat(_FeatWiringTestCase):
             spy.assert_called_once_with(path)
 
 
-class TestAcc005DeleteInvalidatesForFeat(_FeatWiringTestCase):
+class TestAcc003DeleteInvalidatesForFeat(_FeatWiringTestCase):
     """ACC-003 (feat): a real ``delete`` (type='feat') invokes its caller-bound ``invalidate_feat_cache`` exactly once and drops the entry."""
 
     def test_delete_invokes_the_caller_bound_invalidate_exactly_once_and_drops_the_entry(self) -> None:
@@ -549,12 +563,15 @@ class TestAcc005DeleteInvalidatesForFeat(_FeatWiringTestCase):
             spy.assert_called_once_with(path)
             # create_feat's own write-path warming populated the entry before the delete, so with the
             # invalidate call site dropped it would remain -- the behavioral assertion is what bites.
+            # The cache keys every entry via path.resolve() (its own key normalization), so membership
+            # is checked with the resolved path -- environment-independent even where the temp root
+            # carries a symlink component (e.g. macOS /tmp -> /private/tmp).
             entries = cache_module._cache._entries  # pylint: disable=protected-access
-            self.assertNotIn(path, entries)
+            self.assertNotIn(path.resolve(), entries)
             self.assertFalse(path.exists())
 
 
-class TestAcc006ListReconcilesForFeat(_FeatWiringTestCase):
+class TestAcc004ListReconcilesForFeat(_FeatWiringTestCase):
     """ACC-004 (feat): a real ``list_feat`` invokes its caller-bound ``reconcile_feat_cache`` exactly once, with the live listing."""
 
     def test_list_invokes_the_caller_bound_reconcile_exactly_once_with_the_live_listing(self) -> None:

@@ -4,7 +4,7 @@ created: '2026-09-25T19:42:03.316+02:00'
 id: feat-123-test-gap-cache
 status: review
 type: feat
-updated: '2026-09-26T16:35:43.463+02:00'
+updated: '2026-09-26T18:20:24.550+02:00'
 version: 1.0.0
 ---
 
@@ -119,15 +119,29 @@ This feature closes that gap: a future refactor that silently drops one of those
 - [x] Task 3.1: Run the full quality gate (ACC-006): `uv run --frozen ruff format --check`, `uv run --frozen ruff check`, `uv run --frozen vulture src/ whitelist.py --min-confidence 60`, `uv run --frozen pytest -n auto --cov=src --cov-report=`, and `uv run --frozen specmgr docs`, committing the regenerated `docs/GENERATED.md` (whose `**Test files**` count is expected to bump from 362 to 363 for the new file; no other drift).
 - [x] Task 3.2: Check off the satisfied ACCs in this file, add the closeout `### Updates` entry, and set this feature's status to `done` via the generic `set_status` tool (`type="feat"`).
 
+#### Phase 4: Address Post-Implementation Review Findings
+
+- [x] Task 4.1: Rename the eight row classes to the ACC numbering they implement (post-implementation review minor #1): the set_status classes to `TestAcc002SetStatusWarm...`, the set_classification classes to `TestAcc002SetClassificationWarm...`, the delete classes to `TestAcc003DeleteInvalidates...`, and the list classes to `TestAcc004ListReconciles...` (flat and feat counterparts alike); the create (`Acc001`) and update (`Acc002`) classes keep their names.
+- [x] Task 4.2: Make the delete rows' `_cache` entries behavioral assertion environment-independent by checking `path.resolve()` (the cache's own key normalization, minor #2) in both the flat and feat delete classes.
+- [x] Task 4.3: Add the import-time drift guard `assert set(_SET_STATUS_TARGETS_BY_DOMAIN) == set(WHOLE_BODY_DOMAINS)` with a self-documenting sync-obligation message (minor #3), mirroring `general/tools/set_status.py`'s own mapping guard idiom.
+- [x] Task 4.4: Nit cleanups in the test file: count-free docstring phrasing for the domain count (nit #4) and a named module constant for feat's `create_feat`-written `planning` status (nit #6).
+- [x] Task 4.5: Add PR #160 to this plan's Related PRs / Commits section (nit #7).
+- [x] Task 4.6: Run the Phase 4 quality gate: `uv run --frozen ruff format --check`, `uv run --frozen ruff check`, `uv run --frozen vulture src/ whitelist.py --min-confidence 60`, the new file standalone (`uv run --frozen pytest tests/general/tools/test_doc_cache_write_wiring.py -v`, expected 12 passed / 84 subtests), the full suite (`uv run --frozen pytest -n auto --cov=src --cov-report=`, expected 3452 passed), and `uv run --frozen specmgr docs` (expected zero drift — no test files added or removed, the `**Test files**` count stays at 363).
+- [x] Task 4.7: Check off this phase's tasks, add the closeout `### Updates` entry (review verdict, finding-to-fix mapping, gate evidence), and rewrite `### Current Status` (which must reflect status `review`, the committed `docs/GENERATED.md`, and the open PR #160 — replacing the stale Phase 3 prose).
+
 ## Progress
 
 ### Current Status
 
-**As of 2026-09-26**: All three phases are complete and the feature is `done`. The full ACC-006 quality gate is green — `ruff format --check` and `ruff check` clean, `vulture` clean (no findings), the full suite `3452 passed in 67.61s` including the new `tests/general/tools/test_doc_cache_write_wiring.py` (12 test methods, 84 subtest rows = 12 domains x 7 row types), and `specmgr docs` exit 0 with the single expected drift (`docs/GENERATED.md` `**Test files**` 362 → 363) — and all six acceptance criteria (ACC-001..ACC-006) are satisfied and checked off. The feature is ready for review/PR; the regenerated `docs/GENERATED.md` stays in the working tree for the orchestrator's Phase 3 commit.
+**As of 2026-09-26**: All four phases are complete and the feature is `review` -- closed for implementation, with PR #160 open against `dev` (CI green). Phases 1-3 shipped and verified the feature (the table-driven `tests/general/tools/test_doc_cache_write_wiring.py` plus the regenerated `docs/GENERATED.md`, committed in 13f441e with its `**Test files**` count at 363); Phase 4 addressed the post-implementation review's PASS WITH NITS verdict (three minor findings, four nits) with the Phase 4 quality gate green, as recorded in the newest `### Updates` entry. No further implementation is expected before merge; the frontmatter status stays `review`.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-26 16:20:24.000Z - Phase 4 Post-Implementation Review Findings Addressed
+
+Phase 4 is complete: the post-implementation review (feat-reviewer agent) returned PASS WITH NITS -- no blockers, no majors -- and all seven findings are addressed in the one test file and this plan README only (no `src/` change, no status change, no commit). Finding-to-fix mapping: minor #1 renamed the eight row classes to the ACC numbering they implement -- the set_status classes to `TestAcc002SetStatusWarm...`, the set_classification classes to `TestAcc002SetClassificationWarm...`, the delete classes to `TestAcc003DeleteInvalidates...`, and the list classes to `TestAcc004ListReconciles...` (flat and feat counterparts alike; the create `Acc001` and update `Acc002` classes keep their names, and a repo-wide grep for the eight old names returns zero occurrences); minor #2 made the delete rows' `_cache`-entries behavioral assertion environment-independent by checking `path.resolve()` -- the cache's own key normalization -- in both the flat and feat delete classes, with the adjacent comments now naming that normalization (the primary `assert_called_once_with(path)` spy assertions are unchanged); minor #3 added the import-time drift guard `assert set(_SET_STATUS_TARGETS_BY_DOMAIN) == set(WHOLE_BODY_DOMAINS)` with a self-documenting sync-obligation message, mirroring `general/tools/set_status.py`'s own mapping guard idiom (the dict's comment now names the reinforced guard); nit #4 de-counted the module docstring's domain-count cardinals -- "all 12 whole-body domains" -> "every whole-body domain", "the other 11 domains" -> "the other domains", "those 11 domains" -> "those domains", "12 domains x 7 row types = 84 subtest rows" -> "one subtest row per domain per row type", "the ten flat templates" -> "the flat templates", "the ten free-H1 flat domains" -> "the free-H1 flat domains" -- while the stable structural counts of this file's own row types and classes stay; nit #6 introduced the named module constant `_FEAT_CREATE_STATUS = "planning"` (the status `create_feat` always writes) in place of the inline literal in the feat set_status row; nit #7 listed PR #160 under Related PRs / Commits; nit #5 is this rewrite of `### Current Status` (replacing the stale Phase 3 "done"/working-tree prose with the accurate closed-for-review state). Task 4.6 quality gate: `uv run --frozen ruff format --check` clean (1717 files already formatted), `uv run --frozen ruff check` clean (All checks passed!), `uv run --frozen vulture src/ whitelist.py --min-confidence 60` clean (no findings, exit 0), the new file standalone green (`12 passed, 84 subtests passed in 31.03s`), the full suite green (`3452 passed in 70.96s (0:01:10)`), and `uv run --frozen specmgr docs` exit 0 with zero drift -- `git status --short` shows only the test file and this plan README as modified, nothing under `docs/`, the `**Test files**` count staying at 363.
 
 #### 2026-09-26 14:29:00.000Z - Phase 3 Verification and Closeout
 
@@ -164,3 +178,4 @@ Phase 1's H1 verification found that the `sysrs` body model mandates the H1 pref
 ### Related PRs / Commits
 
 - [Issue #123](https://github.com/dfch/biz.dfch.SpecMgr/issues/123): the tracking issue for this feature (the post-closeout review of feat-107-doc-cache that found the gap).
+- [PR #160](https://github.com/dfch/biz.dfch.SpecMgr/pull/160): the implementation PR for this feature (open against dev).
