@@ -14,8 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `repair(type, id=None)` narrates repairing a whole-body document
   (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs; ADR is explicitly out
   of scope) that currently fails to parse -- discover it via
-  `get_<d>(id)`'s wrapped enriched parse error (with an `id`) or
-  `list_<d>()`'s `<failed to parse>` failed row (without one, whose
+  `get_<d>(id)`'s non-raising `ParseFailureResult`-shaped result (with an
+  `id` -- the result carries `error`, the parse-failure message
+  byte-identical to `list_<d>()`'s failed-row `error` for the same file,
+  plus `path`, the absolute on-disk file; a truly absent id still raises
+  the domain's not-found error; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c)
+  or `list_<d>()`'s `<failed to parse>` failed row (without one, whose
   `title`/`status` carry the marker and whose `id` is null while
   `ref`/`path`/`error` are populated), read the raw file with the host's
   own file-read tool, fix only what the enriched error addresses while

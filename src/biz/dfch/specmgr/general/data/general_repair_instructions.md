@@ -22,23 +22,30 @@ ambiguous -- do not guess.
 ## 1. Discover the failing document and its error
 
 - **With an id** (the `id:` line above is a real id, not the literal
-  `(not given --` placeholder text): call `get_$type` with that id. The
-  call fails with the domain's not-found error wrapping the enriched parse
-  error -- read that wrapped error: it carries a document-relative field
-  path, a 1-based line reference into the body, and a cause/fix hint
-  (feat-27 style). That error is the defect you will fix. If the call
-  instead succeeds (the document parses cleanly), there is nothing to
-  repair -- report that and stop.
+  `(not given --` placeholder text): call `get_$type` with that id. A
+  document that exists but fails to parse is returned, NOT raised: the
+  result carries `error` (the parse-failure message -- field path and
+  cause, plus a 1-based line reference and fix hint for structural
+  failures -- the same text `list_$type()`'s failed row carries) and
+  `path` (the absolute on-disk file you will read in step 2 and write
+  back in step 5). That `error` is the defect you will fix. If the id is
+  truly absent, `get_$type` raises the domain's not-found error -- in
+  that case there is nothing to repair under that id: use the `question`
+  tool to ask for the right id (or scan `list_$type()`'s failed rows)
+  rather than guessing. If the call instead returns the parsed document
+  (it parses cleanly), there is nothing to repair -- report that and
+  stop.
 - **Without an id**: call `list_$type()` and scan its rows for the failed
   one: its `title` and `status` carry the fixed `<failed to parse>`
   marker, its `id` is `null`, and its `ref`/`path`/`error` are populated.
-  Its `error` holds the enriched parse error (field path, 1-based line,
-  cause/fix hint) -- read it. Remember the row's `path` (the on-disk file
-  you will read and later write) and, if the document carries an id in its
-  frontmatter, its `id` as well. If no row carries the `<failed to parse>`
-  marker, nothing is failing -- report that and stop. If more than one row
-  does, use the `question` tool to ask which document to repair -- do not
-  guess.
+  Its `error` holds the parse failure (field path and cause -- a 1-based
+  line reference and fix hint for structural failures, the violated
+  pattern and offending value for closed-vocabulary failures) -- read
+  it. Remember the row's `path` (the on-disk file you will read and later
+  write) and, if the document carries an id in its frontmatter, its `id`
+  as well. If no row carries the `<failed to parse>` marker, nothing is
+  failing -- report that and stop. If more than one row does, use the
+  `question` tool to ask which document to repair -- do not guess.
 
 ## 2. Read the raw file with your own file-read tool
 
@@ -91,8 +98,11 @@ disk (encoding, line-ending, or partial-write differences are all outside
 the MCP server's control, since the write itself was host-native, not a
 specmgr tool call). So the loop does not end at step 5:
 - **With an id**: call `get_$type` with the same id again. The repair
-  succeeded only if this real parse of the real file on disk returns the
-  document without error.
+  succeeded only if this call now returns the parsed document (a real
+  parse of the real file on disk) rather than a result carrying
+  `error`; if it still returns the `error`/`path` result, the on-disk
+  file is still broken -- re-read, compare against the validated text,
+  fix the difference, and repeat from step 4.
 - **Without an id**: call `list_$type()` again. The repair succeeded only
   if the row at the same `path`/`ref` no longer carries the
   `<failed to parse>` marker in its `title`/`status` and its `error` is
@@ -106,7 +116,7 @@ differently, and repeat from step 4.
 ## Diagnose-only degradation
 
 If your host has no file read/write tools, you cannot apply the repair at
-all: do not touch the file. Report (1) the enriched parse error you found
+all: do not touch the file. Report (1) the parse failure you found
 in step 1, (2) the exact fix you would apply per step 3, and (3) the file
 `path` the human must edit -- then stop.
 

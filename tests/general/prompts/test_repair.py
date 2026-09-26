@@ -74,16 +74,20 @@ class TestRepairPrompt(unittest.TestCase):
 
     def test_failed_row_discovery_named(self):
         """list_<d>'s failed row (marker, null id, populated ref/path/error) must be named."""
-        result = repair_fn("req")
+        result = _one_line(repair_fn("req"))
         self.assertIn("<failed to parse>", result)
         self.assertIn("list_req", result)
         self.assertIn("`ref`/`path`/`error`", result)
+        self.assertIn("holds the parse failure (field path and cause", result)
+        self.assertIn("closed-vocabulary failures", result)
 
-    def test_get_failure_confirmation_named(self):
-        """get_<d>'s wrapped parse error must be named for the with-id discovery path."""
-        result = repair_fn("req", _ID)
+    def test_get_parse_failure_result_named(self):
+        """get_<d>'s non-raising parse-failure result (error/path, list-row-identical text) must be named."""
+        result = _one_line(repair_fn("req", _ID))
         self.assertIn("get_req", result)
-        self.assertIn("wrapping the enriched parse", result)
+        self.assertIn("returned, NOT raised", result)
+        self.assertIn("the same text `list_req()`'s failed row carries", result)
+        self.assertIn("truly absent, `get_req` raises the domain's not-found error", result)
 
     def test_host_file_tools_directed(self):
         """The raw read and the write-back must point at the host's own file tools."""
@@ -125,6 +129,11 @@ class TestRepairPrompt(unittest.TestCase):
         self.assertIn("Confirm the repair against the file as it now exists on disk", result_with_id)
         self.assertIn("real parse of the real file counts as success", result_with_id)
         self.assertIn("`get_req` with the same id again", result_with_id)
+        self.assertIn(
+            "returns the parsed document (a real parse of the real file on disk) rather than a result carrying `error`",
+            result_with_id,
+        )
+        self.assertIn("if it still returns the `error`/`path` result, the on-disk file is still broken", result_with_id)
         result_without_id = _one_line(repair_fn("req"))
         self.assertIn("Confirm the repair against the file as it now exists on disk", result_without_id)
         self.assertIn("`list_req()` again", result_without_id)

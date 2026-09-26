@@ -50,17 +50,26 @@ must be host-native.
 ## Workflow
 
 1. **Discover the failure.**
-   - With an `id`: call `get_<type>(id)`. It fails with the domain's
-     not-found error wrapping the enriched parse error -- read that wrapped
-     error: it carries a document-relative field path, a 1-based line
-     reference, and a cause/fix hint. If it instead succeeds, nothing is
-     broken -- report that and stop.
+   - With an `id`: call `get_<type>(id)`. A document that exists but fails
+     to parse is returned, not raised: the result carries `error` (the
+     parse-failure message -- field path and cause, plus a 1-based line
+     reference and fix hint for structural failures -- the same text
+     `list_<type>()`'s failed row carries) and `path` (the absolute on-disk
+     file). That `error` is the defect you will fix. If the id is truly
+     absent, the call raises the domain's not-found error -- use the
+     `question` tool to ask for the right id (or scan `list_<type>()`'s
+     failed rows) rather than guessing. If it instead returns the parsed
+     document (it parses cleanly), nothing is broken -- report that and
+     stop.
    - Without an `id`: call `list_<type>()` and find the failed row: its
      `title`/`status` carry the `<failed to parse>` marker, its `id` is
      `null`, and its `ref`/`path`/`error` are populated. Its `error` holds
-     the enriched parse error -- read it. Remember the row's `path`. If no
-     row is failing, report that and stop; if more than one is, use the
-     `question` tool to ask which document to repair -- do not guess.
+     the parse failure (field path and cause -- a 1-based line reference
+     and fix hint for structural failures, the violated pattern and
+     offending value for closed-vocabulary failures) -- read it. Remember
+     the row's `path`. If no row is failing, report that and stop; if
+     more than one is, use the `question` tool to ask which document to
+     repair -- do not guess.
 2. **Read the raw file.** With your host's own file-read tool, read the
    complete file at the document's `path` -- YAML frontmatter and body
    together.
@@ -82,14 +91,15 @@ must be host-native.
 6. **Confirm the repair against the file on disk.** A green `validate`
    only proves the in-memory text was well-formed, not what the host's
    write actually put on disk. So call `get_<type>(id)` again (with an
-   `id`), or `list_<type>()` again (without -- the row at the same
-   `path`/`ref` must no longer carry the `<failed to parse>` marker and
-   its `error` must be `null`). Only a real parse of the real file counts
-   as success. If the confirmation fails, re-read the file, compare it
-   against the validated text, fix the difference, and loop from step 4.
-7. **Report.** Return: the `path`, the original enriched error, the fix
-   you applied, and the post-write confirmation outcome (the successful
-   `get_<type>(id)`/`list_<type>()` result, or the failure).
+   `id` -- success is the parsed document, not an `error`-carrying result),
+   or `list_<type>()` again (without -- the row at the same `path`/`ref`
+   must no longer carry the `<failed to parse>` marker and its `error`
+   must be `null`). Only a real parse of the real file counts as success.
+   If the confirmation fails, re-read the file, compare it against the
+   validated text, fix the difference, and loop from step 4.
+7. **Report.** Return: the `path`, the original parse failure (`error`),
+   the fix you applied, and the post-write confirmation outcome (the
+   successful `get_<type>(id)`/`list_<type>()` result, or the failure).
 
 ## Scope discipline
 

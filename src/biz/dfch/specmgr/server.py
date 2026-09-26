@@ -415,11 +415,16 @@ older ``### Recent Updates`` entries out of any `.specmgr` feature folder's
 e369ee2e-3353-4f92-991c-6367d76d832e; ``repair`` -- guides repairing a
 whole-body document (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/
 ``dec``/``sop``/``feat``/``vcr``/``sysrs``; ADR out of scope) that fails to
-parse via a host-native raw read, a generic ``validate`` (``full=True``)
+parse: discover it via ``get_<d>``'s non-raising parse-failure result
+(``error``/``path``/``id``, the ``error`` text byte-identical to
+``list_<d>``'s failed row for the same file; ADR
+9080b37c-82b3-4f63-81f1-79641d0bf14c) or ``list_<d>``'s ``<failed to parse>``
+failed row, then a host-native raw read, a generic ``validate`` (``full=True``)
 loop, a host-native write-back (never the generic ``update`` tool, which is
 structurally unable to repair a document that fails to parse), and a
 post-write ``get_<d>``/``list_<d>`` confirmation against the file as it now
-exists on disk; degrades to diagnose-only on a host without file tools
+exists on disk (success: the parsed document, not an ``error``-carrying
+result); degrades to diagnose-only on a host without file tools
 (feat-150-mcp-lifecycle-commands, Phase 1).
 
 Modules are grouped domain-first

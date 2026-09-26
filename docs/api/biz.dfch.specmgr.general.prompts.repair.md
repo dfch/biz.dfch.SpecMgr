@@ -4,8 +4,13 @@
 
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through repairing a whole-body specmgr document that currently fails to
-parse: discovering it (with an ``id``: ``get_<d>(id)``'s wrapped enriched
-parse error; without one: ``list_<d>()``'s failed row, whose
+parse: discovering it (with an ``id``: ``get_<d>(id)`` -- a document that
+exists but fails to parse is returned, not raised: the result carries
+``error`` (the parse-failure message, byte-identical to ``list_<d>``'s
+failed-row ``error`` for the same file) and ``path`` (the absolute on-disk
+file), for every one of the whole-body domains per ADR
+9080b37c-82b3-4f63-81f1-79641d0bf14c; a truly absent id still raises the
+domain's not-found error. Without one: ``list_<d>()``'s failed row, whose
 ``title``/``status`` carry the fixed ``"<failed to parse>"`` marker and
 whose ``id`` is null while ``ref``/``path``/``error`` are populated),
 reading the raw file via the host's own file-read tool (no specmgr MCP tool
@@ -13,7 +18,7 @@ can return the raw content of a document that fails to parse:
 ``get_<d>(raw=True)`` and the generic ``update`` tool both re-parse the
 existing document first, and ``update``'s per-domain adapters convert that
 failure into the domain's not-found error before any write), fixing only
-what the enriched error addresses while preserving the frontmatter
+what the error addresses while preserving the frontmatter
 ``id``/``created``/``status``/``version`` byte-for-byte and leaving
 ``updated`` untouched (a repair is not an edit), looping the generic
 ``validate(type, content, full=True)`` tool over the full raw text until
@@ -21,7 +26,8 @@ green, writing the repaired text back to the same path via the host's own
 file-write tool -- explicitly NOT via the generic ``update`` tool, which is
 structurally unable to repair a document that fails to parse -- and then
 confirming the repair actually succeeded by calling ``get_<d>(id)`` again
-(or, without an ``id``, ``list_<d>()`` again, checking that the row's
+(success: the parsed document, not an ``error``-carrying result; or,
+without an ``id``, ``list_<d>()`` again, checking that the row's
 ``"<failed to parse>"`` marker and ``error`` are gone) against the file as
 it now exists on disk. On a host without file read/write tools the
 instructions degrade to diagnose-only (report the error and the proposed
