@@ -4,7 +4,7 @@ created: '2026-09-25T18:10:37.035+02:00'
 id: feat-159-edit
 status: planning
 type: feat
-updated: '2026-09-26T22:29:21.223+02:00'
+updated: '2026-09-27T00:55:06.845+02:00'
 version: 1.0.0
 ---
 
@@ -146,13 +146,13 @@ edit.py carries its own module-level `assert set(_ADAPTERS) == set(WHOLE_BODY_DO
 
 #### Phase 3: Tests
 
-- [ ] Task 3.1: Unit tests for the match stage (0/1/n occurrences, `replace_all`, `new_str == old_str` guard, empty `old_str` guard, empty `new_str` deletion, the guard-order / fire-before-file-access cases, the pure-byte-exact CRLF pin per ACC-010)
+- [x] Task 3.1: Unit tests for the match stage (0/1/n occurrences, `replace_all`, `new_str == old_str` guard, empty `old_str` guard, empty `new_str` deletion, the guard-order / fire-before-file-access cases, the pure-byte-exact CRLF pin per ACC-010) — status: done (2026-09-27)
 
-- [ ] Task 3.2: Tool tests across all 12 whole-body domains (happy path, not found, multiple matches, invalid result, invalid id) mirroring `test_update.py`'s per-domain `_Case` harness and `SPECMGR_DOCS_DIR` temp fixture
+- [x] Task 3.2: Tool tests across all 12 whole-body domains (happy path, not found, multiple matches, invalid result, invalid id) mirroring `test_update.py`'s per-domain `_Case` harness and `SPECMGR_DOCS_DIR` temp fixture — status: done (2026-09-27)
 
-- [ ] Task 3.3: Regression: the file is byte-unchanged on every failure path (including the invalid-result path)
+- [x] Task 3.3: Regression: the file is byte-unchanged on every failure path (including the invalid-result path) — status: done (2026-09-27)
 
-- [ ] Task 3.4: Registration/schema test mirroring `TestUpdateRegistration` (live `mcp.list_tools()`: `type` enum == `WHOLE_BODY_DOMAINS`, `required == [id, type, old_str, new_str]`, `replace_all` optional bool default false, no `minLength` on `new_str`) plus the pinned `type="adr"` explicit-`ValueError` test (REQ-004)
+- [x] Task 3.4: Registration/schema test mirroring `TestUpdateRegistration` (live `mcp.list_tools()`: `type` enum == `WHOLE_BODY_DOMAINS`, `required == [id, type, old_str, new_str]`, `replace_all` optional bool default false, no `minLength` on `new_str`) plus the pinned `type="adr"` explicit-`ValueError` test (REQ-004) — status: done (2026-09-27)
 
 #### Phase 4: Docs & Quality Gate
 
@@ -164,11 +164,15 @@ edit.py carries its own module-level `assert set(_ADAPTERS) == set(WHOLE_BODY_DO
 
 ### Current Status
 
-**As of 2026-09-26**: Phase 2 (Implementation) complete: `general/tools/edit.py` added — public `edit` dispatcher with the pinned guard order (`validate_id` → explicit pre-dispatch `ValueError` for unknown/`adr` `type` → identical-input → empty-`old_str`, all before any filesystem access), the domain-agnostic `_match_and_replace` stage-1 helper carrying the verbatim OC messages as plain `ValueError`s, 12 per-domain adapters holding the domain lock across read → match → validate → write (stage-2 wrapped, write strictly after validation, verbatim persist, `updated` bump, cache warm), its own `_ADAPTERS` drift assert, and the `@mcp.tool` registration — plus the `general/tools/__init__.py` wiring (import, `__all__`, package-docstring enumeration). The live MCP input schema was verified against the pinned contract (`required == [id, type, old_str, new_str]`, 12-value `type` enum excluding `adr`, optional `replace_all` defaulting to `false`, no `minLength` on `new_str`), and the phase-end quality gate is green (full suite: 3440 passed). Phase 3 (Tests) not started.
+**As of 2026-09-27**: Phase 3 (Tests) complete: `tests/general/tools/test_edit.py` added — 28 test methods (252 per-domain subtests on top) mirroring `test_update.py`'s per-domain `_Case` harness over all 12 whole-body domains (temp `SPECMGR_DOCS_DIR` + `SPECMGR_FEAT_DIR`), pinning every ACC except ACC-007 (docs, Phase 4): the match-stage unit tests (0/1/n occurrences, `replace_all`, empty-`new_str` deletion, the CRLF pin at the `_match_and_replace` level), the public-guard order tests (fire-before-file-access, incl. for a non-existent document, in every domain), the per-domain happy path / not-found / multiple-matches / invalid-result / invalid-id / domain-not-found tool tests, the raw-byte byte-unchanged-on-every-failure-path regression, the `assert_within` spy, the live `mcp.list_tools()` registration/schema test, and the pinned `type="adr"` explicit-`ValueError` test (REQ-004). `edit.py` has 100% statement coverage (290/290) from this file alone, and the phase-end quality gate is green (full suite: 3468 passed, incl. the 28 new). Phase 4 (Docs & Quality Gate) not started.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-27T00:55:06.845+02:00 - Phase 3 implemented (Tasks 3.1–3.4 done)
+
+Added `tests/general/tools/test_edit.py` (single file, 28 test methods; the 12 per-domain tool/guard classes each loop all whole-body domains in `subTest`s, 252 of them on top) mirroring `test_update.py`'s organization: the same per-domain `_Case` frozen-dataclass harness (ported to edit-specific fields: `edit_marker`/`edit_replacement`, `h1_line`, `deletable_suffix`, `multi_marker`/`multi_replacement`/`multi_seed_suffix`, `field_error_*` + `field_error_is_validation`, `missing_id`/`wrong_format_id`), the same temp `SPECMGR_DOCS_DIR` fixture (extended with `SPECMGR_FEAT_DIR` so `feat` — unlike `test_update.py`, where feat only appears in the injection class — gets the full happy/not-found/multiple/invalid/invalid-id treatment), the same `now_timestamp`-patching (`_FIXED_TIMESTAMP`) and `_MISSING_UUID` conventions, and the same wrapped-prefix assertion style (`"<d> edit (body): "`, exact for the structural `AssertionError` channel, containment for the per-field-prefixed `pydantic.ValidationError` channel). Coverage per ACC: ACC-001 (unique-match rewrite + frontmatter carry-over with `updated` bumped to the patched timestamp, body read back via `body_text`); ACC-002/ACC-003 (OC not-found / multiple-matches messages pinned by full-message equality — which also pins the plain-`ValueError`-no-wrap-prefix contract — file byte-unchanged, plus `replace_all` full-text-equality success); ACC-004 (H1 deletion → wrapped `AssertionError` in all 12 domains, per-domain field-error edit → the pinned channel, nothing written); ACC-005 (traversal + wrong-format ids in every domain, seeded file byte-unchanged; well-formed non-existent id → the domain's own `XNotFoundError`); ACC-006 (live `mcp.list_tools()`: `edit` registered once, `type` enum == `WHOLE_BODY_DOMAINS` (12 values, no `adr`), `required == [id, type, old_str, new_str]`, `replace_all` optional bool defaulting to `false`, no `minLength` on `new_str`; pinned `type="adr"` explicit `ValueError` with the exact message, before any filesystem access — both temp dirs verified empty afterwards); ACC-008 (empty `new_str` deleting a valid optional section succeeds per domain; deleting the mandatory H1 fails wrapped, byte-unchanged); ACC-009 (identical-input and empty-`old_str` guards pinned verbatim, firing for a non-existent document — the guard's `ValueError`, not the not-found error — with the order `validate_id` → explicit `type` → identical → empty `old_str` pinned by cross-firing calls); ACC-010 (the CRLF pin at the `_match_and_replace` unit level, per D10, plus a positive CRLF-match control). Two derivation notes from the per-domain schema work (recorded as D10/D11): `prb`'s multi-occurrence case seeds a dedicated optional `## More Information` section because its template-validated lead paragraph must not be rewritten, and the `replace_all` success asserts full-text equality against `before.replace(marker, replacement)` — stronger than a replacement-count assertion, which misfires when the replacement occurs as a substring elsewhere (e.g. `gol`: `"that are"` contains `"at "`). `edit.py` reaches 100% statement coverage (290/290) from this file alone. Phase-end quality gate green: `ruff format --check` (1719 files), `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, full suite `pytest -n auto --cov=src` — 3468 passed (3440 pre-existing + 28 new).
 
 #### 2026-09-26T22:29:21.223+02:00 - Phase 2 implemented (Tasks 2.1–2.3 done)
 
@@ -193,6 +197,10 @@ Feature drafted for GitHub issue #159 (specmgr replace tool with OC parity). Man
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-27T00:55:06.845+02:00 - Phase 3 test-derivation decisions (D10, D11)
+
+D10: the ACC-010 pure-byte-exact CRLF pin is asserted at the `_match_and_replace` unit level (a CRLF body string does not match an `old_str` containing `\n`), not through the public `edit` tool against a CRLF file on disk. Empirically confirmed while deriving the tests: a CRLF body is persisted verbatim to disk by the `create_<d>` write path, but the shared `body_text` read helper — the single definition of "the body text", the same text `get_<d>(id, raw=True)` returns — reads it back as LF text (python-frontmatter's `loads` goes through `Path.read_text`'s universal-newline translation). REQ-009's byte-exactness claim is therefore about the *matcher* performing no OC-style dominant-EOL conversion of `old_str`/`new_str`, and the unit-level pin tests exactly that; a tool-level CRLF test would instead pin `body_text`'s own read contract (shared with `update`/`get_<d>`), which is outside this feature's scope. D11: `prb`'s multi-occurrence test case seeds a dedicated optional `## More Information` section carrying the marker three times (`"The gap"` → `"The wider gap"`), because `prb`'s mandatory lead paragraph is template-validated by a `field_validator` (`[Current state] is causing [specific issue], for [stakeholder] because [underlying cause].`) and a natural whole-body marker (e.g. `" is "`) would break it. Both decisions refine, not deviate from, the pinned contract; no `src/` change was needed.
 
 #### 2026-09-26T22:29:21.223+02:00 - Phase 2 implementation-level refinements (D8, D9)
 
