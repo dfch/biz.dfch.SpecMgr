@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-25T19:42:03.316+02:00'
 id: feat-123-test-gap-cache
-status: progress
+status: done
 type: feat
-updated: '2026-09-26T15:54:52.000+02:00'
+updated: '2026-09-26T16:30:02.877+02:00'
 version: 1.0.0
 ---
 
@@ -34,12 +34,12 @@ This feature closes that gap: a future refactor that silently drops one of those
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: For every whole-body domain, a table row asserts that a real `create_<domain>` call invokes the caller-bound `read_<domain>` exactly once with the written path, and the row fails if that call site is dropped, mistyped, or re-pointed. Evidence: the create class in the new `tests/general/tools/test_doc_cache_write_wiring.py`, green in the final quality gate.
-- [ ] ACC-002: For every whole-body domain, table rows assert that a real `update` call (whole-body path and range-splice path), a real non-no-op `set_status` call, and a real `set_classification` call each invoke the caller-bound `read_<domain>` exactly once with the written path. Evidence: the write-tools classes in the new file, green in the final quality gate.
-- [ ] ACC-003: For every whole-body domain, a table row asserts that a real `delete` call invokes the caller-bound `invalidate_<domain>_cache` exactly once with the deleted path, and that the path is absent from the domain's `_cache` entries immediately afterward. Evidence: the delete class in the new file, green in the final quality gate.
-- [ ] ACC-004: For every whole-body domain, a table row asserts that a real `list_<domain>` call invokes the caller-bound `reconcile_<domain>_cache` exactly once with the live path listing. Evidence: the list class in the new file, green in the final quality gate.
-- [ ] ACC-005: A mutation check confirms the new tests actually bite: for each of the seven row types (create, update whole-body, update range-splice, set_status, set_classification, delete, list), temporarily dropping one domain's cache call site makes the matching table row fail, and restoring the call site turns the suite green again -- issue #123's four gap classes are covered this way with the bundled write-tools class verified row type by row type. Evidence: the Phase 2 mutation-check `### Updates` entry recording all seven drop/restore cycles.
-- [ ] ACC-006: The full quality gate is green with no regressions: `uv run --frozen ruff format --check`, `uv run --frozen ruff check`, `uv run --frozen vulture src/ whitelist.py --min-confidence 60`, and `uv run --frozen pytest -n auto --cov=src --cov-report=` (every pre-existing test still passing), plus `uv run --frozen specmgr docs` showing exactly one expected drift -- the `docs/GENERATED.md` `**Test files**` count bumping from 362 to 363 for the new file -- which is regenerated and committed with the change (the pre-commit `specmgr docs` hook is scoped to `src/**` changes and will not fire on a tests-only commit, but CI's drift check requires the regenerated file).
+- [x] ACC-001: For every whole-body domain, a table row asserts that a real `create_<domain>` call invokes the caller-bound `read_<domain>` exactly once with the written path, and the row fails if that call site is dropped, mistyped, or re-pointed. Evidence: the create class in the new `tests/general/tools/test_doc_cache_write_wiring.py`, green in the final quality gate.
+- [x] ACC-002: For every whole-body domain, table rows assert that a real `update` call (whole-body path and range-splice path), a real non-no-op `set_status` call, and a real `set_classification` call each invoke the caller-bound `read_<domain>` exactly once with the written path. Evidence: the write-tools classes in the new file, green in the final quality gate.
+- [x] ACC-003: For every whole-body domain, a table row asserts that a real `delete` call invokes the caller-bound `invalidate_<domain>_cache` exactly once with the deleted path, and that the path is absent from the domain's `_cache` entries immediately afterward. Evidence: the delete class in the new file, green in the final quality gate.
+- [x] ACC-004: For every whole-body domain, a table row asserts that a real `list_<domain>` call invokes the caller-bound `reconcile_<domain>_cache` exactly once with the live path listing. Evidence: the list class in the new file, green in the final quality gate.
+- [x] ACC-005: A mutation check confirms the new tests actually bite: for each of the seven row types (create, update whole-body, update range-splice, set_status, set_classification, delete, list), temporarily dropping one domain's cache call site makes the matching table row fail, and restoring the call site turns the suite green again -- issue #123's four gap classes are covered this way with the bundled write-tools class verified row type by row type. Evidence: the Phase 2 mutation-check `### Updates` entry recording all seven drop/restore cycles.
+- [x] ACC-006: The full quality gate is green with no regressions: `uv run --frozen ruff format --check`, `uv run --frozen ruff check`, `uv run --frozen vulture src/ whitelist.py --min-confidence 60`, and `uv run --frozen pytest -n auto --cov=src --cov-report=` (every pre-existing test still passing), plus `uv run --frozen specmgr docs` showing exactly one expected drift -- the `docs/GENERATED.md` `**Test files**` count bumping from 362 to 363 for the new file -- which is regenerated and committed with the change (the pre-commit `specmgr docs` hook is scoped to `src/**` changes and will not fire on a tests-only commit, but CI's drift check requires the regenerated file).
 
 ### Scope
 
@@ -116,18 +116,22 @@ This feature closes that gap: a future refactor that silently drops one of those
 
 #### Phase 3: Verification and Closeout
 
-- [ ] Task 3.1: Run the full quality gate (ACC-006): `uv run --frozen ruff format --check`, `uv run --frozen ruff check`, `uv run --frozen vulture src/ whitelist.py --min-confidence 60`, `uv run --frozen pytest -n auto --cov=src --cov-report=`, and `uv run --frozen specmgr docs`, committing the regenerated `docs/GENERATED.md` (whose `**Test files**` count is expected to bump from 362 to 363 for the new file; no other drift).
-- [ ] Task 3.2: Check off the satisfied ACCs in this file, add the closeout `### Updates` entry, and set this feature's status to `done` via the generic `set_status` tool (`type="feat"`).
+- [x] Task 3.1: Run the full quality gate (ACC-006): `uv run --frozen ruff format --check`, `uv run --frozen ruff check`, `uv run --frozen vulture src/ whitelist.py --min-confidence 60`, `uv run --frozen pytest -n auto --cov=src --cov-report=`, and `uv run --frozen specmgr docs`, committing the regenerated `docs/GENERATED.md` (whose `**Test files**` count is expected to bump from 362 to 363 for the new file; no other drift).
+- [x] Task 3.2: Check off the satisfied ACCs in this file, add the closeout `### Updates` entry, and set this feature's status to `done` via the generic `set_status` tool (`type="feat"`).
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-09-26**: Phase 2 complete — the new table-driven wiring test file `tests/general/tools/test_doc_cache_write_wiring.py` (12 test classes, 84 subtest rows = 12 domains x 7 row types) is green against the shipped code, and the ACC-005 mutation check confirmed all seven row types bite on domain `uc` (each dropped call site made the matching uc subtest fail; every restore was byte-exact and re-ran green; zero `src/` changes remain — the only working-tree changes are the new test file and this plan document). Phase 3 (verification and closeout: the full quality gate incl. the `specmgr docs` test-file count drift 362 -> 363, ACC check-off, status -> `done`) is next.
+**As of 2026-09-26**: All three phases are complete and the feature is `done`. The full ACC-006 quality gate is green — `ruff format --check` and `ruff check` clean, `vulture` clean (no findings), the full suite `3452 passed in 67.61s` including the new `tests/general/tools/test_doc_cache_write_wiring.py` (12 test methods, 84 subtest rows = 12 domains x 7 row types), and `specmgr docs` exit 0 with the single expected drift (`docs/GENERATED.md` `**Test files**` 362 → 363) — and all six acceptance criteria (ACC-001..ACC-006) are satisfied and checked off. The feature is ready for review/PR; the regenerated `docs/GENERATED.md` stays in the working tree for the orchestrator's Phase 3 commit.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-26 14:29:00.000Z - Phase 3 Verification and Closeout
+
+Phase 3 is complete and the feature is closed out. Task 3.1 ran the full ACC-006 quality gate in order: `uv run --frozen ruff format --check` clean (1717 files already formatted), `uv run --frozen ruff check` clean (All checks passed!), `uv run --frozen vulture src/ whitelist.py --min-confidence 60` clean (no findings, exit 0), `uv run --frozen pytest -n auto --cov=src --cov-report=` green with final summary line `3452 passed in 67.61s (0:01:07)` — including the new `tests/general/tools/test_doc_cache_write_wiring.py`'s 12 test methods (84 subtest rows = 12 domains x 7 row types) all passing, and `uv run --frozen specmgr docs` exit 0 (regenerated `docs/api/` and `docs/GENERATED.md`). The only drift `git status`/`git diff` showed was `M docs/GENERATED.md`, and within it the only change was the `**Test files**` count line bumping `362` → `363` for the new test file — exactly the single expected drift named in ACC-006/Task 3.1 (no other line in `docs/GENERATED.md`, nothing under `docs/api/`), and the regenerated file was left in the working tree for the orchestrator's Phase 3 commit. Task 3.2 then checked off ACC-001 through ACC-006 and marked Tasks 3.1/3.2 done in place: ACC-001..ACC-004 are satisfied by the four flat+feat row-class pairs in the new file (create, update/set_status/set_classification write tools, delete, list) green in this gate run; ACC-005 by the seven drop/restore mutation cycles recorded in the Phase 2 `### Updates` entry (each dropped call site on domain `uc` made the matching subtest fail, every restore byte-exact and re-run green); ACC-006 by this gate run and the 362→363 docs drift. The feature's status is set to `done` via the generic `set_status` tool (`type="feat"`), and the document re-parses cleanly afterward.
 
 #### 2026-09-26 13:54:52.000Z - Phase 2 Table-Driven Wiring Tests Implemented
 
