@@ -32,6 +32,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `_(awaiting response)_` marker it previously shipped (REQ-009)
   (feat-156-qa-numbering, GitHub issue #156).
 
+- `edit`, a new generic, cross-domain MCP tool in `general/tools/`
+  (feat-159-edit, GitHub issue #159): a surgical, exact-match string
+  replacement of an existing document's frontmatter-stripped body,
+  dispatched on an explicit `type` parameter across all twelve
+  whole-body domains (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs).
+  `adr` is deliberately not a `type` here: the public `edit` raises an
+  explicit pre-dispatch `ValueError` for it (the generic `validate`
+  tool's precedent, unlike `update`'s inherited `KeyError`), since
+  ADR's section-level MADR mutation contract has no whole-body replace
+  by design. Matching is byte-exact over the text `get_<d>(id,
+  raw=True)` returns: no line-ending normalization (an `old_str`
+  containing `\n` will not match a CRLF body), no BOM handling, no
+  fuzzy/regex fallback; `old_str` must be unique unless `replace_all`
+  rewrites every exact occurrence, and an empty `new_str` is a pure
+  deletion. The 2-fold contract: the document is written to disk only
+  if the match succeeds **and** the edited body still validates as a
+  whole document (via the domain's own model under the shared error
+  wrapper); on any failure nothing is written and the file stays
+  byte-unchanged. On success the existing frontmatter is carried over
+  with only `updated` bumped and the updated frontmatter only is
+  returned (no body). The domain lock is held across the entire read,
+  match, validate, and write sequence, so the match runs against
+  on-disk content with no TOCTOU race (the deliberate improvement over
+  `update`'s whole-body mode). The same `_path_safety` guards apply:
+  an invalid `id` (path-injection attempt or wrong format) is a
+  `ValueError` before any filesystem access, and a missing document
+  raises the domain's own not-found error.
+
 ### Changed
 
 - **BREAKING**: a `qa` question lacking the new `**<d>.<NNNN>**: ` bold

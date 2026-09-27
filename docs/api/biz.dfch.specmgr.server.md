@@ -247,8 +247,25 @@ existing document's content across the whole-body domains (``type`` is one of
  ``offset``/``limit`` body-line coordinates -- ``offset`` = 1-based first line,
  ``limit`` = number of lines, omitted ``limit`` = through end of body, ``0`` =
  pure insert, ``offset = N+1`` = the virtual end-of-body append position;
- strict validation; the spliced result is validated as a whole document
- before anything is written); ``set_status`` --
+  strict validation; the spliced result is validated as a whole document
+  before anything is written);
+  ``edit`` (feat-159-edit, GitHub issue #159) -- surgical, exact-match string
+  replacement of an existing document's frontmatter-stripped body across the
+  whole-body domains (``type`` is one of
+  ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``;
+  ``adr`` is not supported -- an explicit pre-dispatch ``ValueError``, unlike
+  ``update``'s inherited ``KeyError``, following the generic ``validate`` tool's
+  precedent, ADR 078bf395-0a5f-4afd-84f6-b7a2191a00e6); ``old_str`` must match
+  the on-disk body byte-exactly (no line-ending normalization -- an
+  ``old_str`` containing a ``\n`` will not match a CRLF body -- no BOM
+  handling, no fuzzy/regex fallback) and must be unique unless ``replace_all``
+  rewrites every exact occurrence; the edit is 2-fold: then the *edited* body
+  must still validate as a whole document, and the document is written to disk
+  only if both stages pass, and nothing is written on any failure (the file
+  stays byte-unchanged); an empty ``new_str`` is a pure deletion, legal iff
+  the edited body validates; returns the updated frontmatter only (no body;
+  ``updated`` bumped), with an invalid ``id`` a ``ValueError`` before any file
+  access; ``set_status`` --
 replace an existing document's status across every domain (``type`` is one of
 ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``adr``),
 also bumping

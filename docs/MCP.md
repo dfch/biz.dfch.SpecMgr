@@ -3,7 +3,7 @@
 Auto-generated from the live `biz.dfch.specmgr.server:mcp` registration --
 do not edit by hand, run `specmgr mcp-docs` instead (see `AGENTS.md`).
 
-44 resource(s), 1 resource template(s), 91 tool(s), 31 prompt(s).
+44 resource(s), 1 resource template(s), 92 tool(s), 31 prompt(s).
 
 ## Table of Contents
 
@@ -400,6 +400,7 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`create_uc`](#tool-create_uc) | Create a new use case: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the use-case base directory. Returns the newly created document's frontmatter only (no body); use the corresponding `get_uc` tool to fetch the full document afterward. |
 | [`create_vcr`](#tool-create_vcr) | Create a new verification case record: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the verification case record base directory. Returns the newly created document's frontmatter only (no body); use the corresponding `get_vcr` tool to fetch the full document afterward. |
 | [`delete`](#tool-delete) | Permanently delete an existing document from disk across the whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs; `adr` is not supported). Resolves the document by `id`, takes the domain lock, and removes it: the single `*.md` file for every flat domain (every whole-body domain except `feat`), or the entire `<base>/<id>/` folder for `feat`. Returns the deleted path as a string. An invalid `id` (path-injection attempt or wrong format) is a `ValueError` raised before any file access; a missing document is the domain's own `XNotFoundError`; an I/O failure is a `DeleteError`. This is the sole delete entry point -- the former per-domain `delete_<d>` tools are removed. |
+| [`edit`](#tool-edit) | Surgical, exact-match string replacement of an existing document's frontmatter-stripped body across the whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs; `adr` is not supported -- an explicit pre-dispatch `ValueError`, unlike `update`'s inherited `KeyError`). Read the current body via the corresponding `get_<d>(id, raw=True)` first -- the read-before-edit step is a client convention, not server-enforced. Use `edit` for a surgical string replacement within an existing body; use the generic `update` tool for a whole-body or line-range replacement instead. The YAML frontmatter is never addressable (body only). The edit is 2-fold: stage 1 requires `old_str` to match the on-disk body byte-exactly -- uniquely, unless `replace_all` is `true`, in which case every exact occurrence is rewritten -- and stage 2 validates the *edited* body as a whole document; the document is written to disk only if both stages pass, and nothing is written on any failure (the file stays byte-unchanged). An empty `new_str` is a pure deletion (legal iff stage 2 validates). Matching is pure byte-exact with no line-ending normalization (an `old_str` containing `\n` will not match a CRLF body), no BOM handling, and no fuzzy/regex fallback. An invalid `id` (path-injection attempt or wrong format for `type`) is a `ValueError` raised before any file access. Returns the updated frontmatter only (no body; `updated` bumped); use the corresponding `get_<d>` tool to fetch the full document afterward. |
 | [`get_adr`](#tool-get_adr) | Read, parse, and return a full ADR document (frontmatter and body) by its id. An invalid id (path-injection attempt or wrong format) is a ValueError raised before any file access. |
 | [`get_dec`](#tool-get_dec) | Read, parse, and return a full decision document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. With raw=True, optional read-style `offset`/`limit` window the raw read: `offset` (1-based, default 1) is the first body line to return, `limit` (line count, default through end of body) how many; out-of-range values clamp (`offset > N` returns the empty string), and coordinates with raw=False raise ValueError. An invalid id (path-injection attempt or wrong format) is also a ValueError, raised before any file access. |
 | [`get_dec_example`](#tool-get_dec_example) | Return a complete, valid sample decision document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example. |
@@ -620,6 +621,20 @@ Permanently delete an existing document from disk across the whole-body domains 
 | --- | --- | --- |
 | `id` | `string` | Yes |
 | `type` | `string (enum: req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs)` | Yes |
+
+### Tool: edit
+
+**Edit document**
+
+Surgical, exact-match string replacement of an existing document's frontmatter-stripped body across the whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs; `adr` is not supported -- an explicit pre-dispatch `ValueError`, unlike `update`'s inherited `KeyError`). Read the current body via the corresponding `get_<d>(id, raw=True)` first -- the read-before-edit step is a client convention, not server-enforced. Use `edit` for a surgical string replacement within an existing body; use the generic `update` tool for a whole-body or line-range replacement instead. The YAML frontmatter is never addressable (body only). The edit is 2-fold: stage 1 requires `old_str` to match the on-disk body byte-exactly -- uniquely, unless `replace_all` is `true`, in which case every exact occurrence is rewritten -- and stage 2 validates the *edited* body as a whole document; the document is written to disk only if both stages pass, and nothing is written on any failure (the file stays byte-unchanged). An empty `new_str` is a pure deletion (legal iff stage 2 validates). Matching is pure byte-exact with no line-ending normalization (an `old_str` containing `\n` will not match a CRLF body), no BOM handling, and no fuzzy/regex fallback. An invalid `id` (path-injection attempt or wrong format for `type`) is a `ValueError` raised before any file access. Returns the updated frontmatter only (no body; `updated` bumped); use the corresponding `get_<d>` tool to fetch the full document afterward.
+
+| Parameter | Type | Required |
+| --- | --- | --- |
+| `id` | `string` | Yes |
+| `type` | `string (enum: req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs)` | Yes |
+| `old_str` | `string` | Yes |
+| `new_str` | `string` | Yes |
+| `replace_all` | `boolean` | No |
 
 ### Tool: get_adr
 

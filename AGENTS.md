@@ -545,7 +545,21 @@ type or cross-cutting:
      `offset`/`limit` body-line coordinates (`offset` = 1-based first line,
      `limit` = count; omitted `limit` = through end of body, `0` = pure
      insert, `offset` `N+1` = append; strict validation, never clamped),
-     splice-then-validate-whole; `set_status`, the generic status change for
+      splice-then-validate-whole; `edit`, the generic surgical exact-match
+      string replacement of an existing document's frontmatter-stripped body
+      across the whole-body domains (`type` is one of
+      req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs; `adr` excluded —
+      unlike `update`/`delete`/`set_classification`, an explicit pre-dispatch
+      `ValueError` for an unknown or `adr` `type`, following the generic
+      `validate` tool's precedent): `old_str` must match the on-disk body
+      byte-exactly (no line-ending normalization), must be unique unless
+      `replace_all`, then the *edited* body must still validate as a whole
+      document — written to disk only if both stages pass, nothing written on
+      any failure (the file stays byte-unchanged; an empty `new_str` is a
+      pure deletion, legal iff the edited body validates); returns the
+      updated frontmatter only (`updated` bumped), with an invalid `id` a
+      `ValueError` before any file access (feat-159-edit, GitHub issue #159);
+      `set_status`, the generic status change for
      every
      domain incl. adr — `superseded_by` is ADR-only, composing
      `"superseded by X"`; `set_classification`, the generic free-text
@@ -654,8 +668,9 @@ Still genuinely missing / not yet done (don't assume otherwise):
   c4efbde6-fd19-4aa8-8668-95316ed62dcc: first register the domain's name
   in `general/tools/_domains.py`'s `WHOLE_BODY_DOMAINS` once (in canonical
   position), then one dispatch entry to each of the two generic tools in
-  `general/tools/` (`update`'s `type`, `set_status`'s `type`), one `delete`
-  adapter in the generic `delete` tool, plus a `raw` parameter on the new
+   `general/tools/` (`update`'s `type`, `set_status`'s `type`), one `delete`
+   adapter in the generic `delete` tool, one `edit` adapter in the generic
+   `edit` tool, plus a `raw` parameter on the new
   `get_<d>` tool — not new `update_<d>`/`set_status_<d>`/`delete_<d>` tools.
 
 `feat-27-validation` (closed 2026-09-01, GitHub issue #27, subsuming feat-7's
