@@ -4,7 +4,7 @@ created: '2026-09-26T18:33:23.901+02:00'
 id: feat-153-off-by-n
 status: planning
 type: feat
-updated: '2026-09-26T20:30:29.936+02:00'
+updated: '2026-09-27T15:23:01.000+02:00'
 version: 1.0.0
 ---
 
@@ -28,7 +28,7 @@ Note that the snippet (fix #2) is detection, not prevention: since `dry_run` is 
 
 - REQ-003: In whole-body mode (no `offset`), `update` returns the same wrapper type with `snippet=None`, so the return shape is uniform across both modes and every whole-body domain.
 
-- REQ-004: Every whole-body domain's `get_<d>` tool gains a new `numbered: bool = False` parameter, meaningful only combined with `raw=True`: when `True`, each line of the returned raw text is prefixed with its 1-based body-line number in `"<n>: "` form (mirroring this environment's own file-reading tool's convention); the default (`False`) preserves today's exact byte-verbatim `raw=True` output. When `numbered=True` is combined with `offset`/`limit` windowing, the printed numbers are the line's **absolute** position in the full body (matching `update`'s own coordinate space), never a 1-based restart at the first line of the returned window -- this is the entire point of the feature: a caller must be able to feed a number seen here straight back into `update`'s `offset`.
+- REQ-004: Every whole-body domain's `get_<d>` tool gains a new `numbered: bool = False` parameter, meaningful only combined with `raw=True`: when `True`, each line of the returned raw text is prefixed with its 1-based body-line number in `"<n>: "` form (mirroring this environment's own file-reading tool's convention); the default (`False`) preserves today's exact byte-verbatim `raw=True` output. When `numbered=True` is combined with `offset`/`limit` windowing, the printed numbers are the line's **absolute** position in the full body (matching `update`'s own coordinate space), starting at the **clamped** offset `max(1, k)` (a `k < 1` window starts at `1`; a `k > N` window is empty and prints no numbers) and never restarting at `1` within a valid window -- this is the entire point of the feature: a caller must be able to feed a number seen here straight back into `update`'s `offset`.
 
 - REQ-005: `numbered=True` combined with `raw=False` raises `ValueError` before any file access, mirroring the existing rule that `offset`/`limit` combined with `raw=False` already raises `ValueError`.
 
@@ -36,7 +36,7 @@ Note that the snippet (fix #2) is detection, not prevention: since `dry_run` is 
 
 - REQ-007: Both changes (the REQ-002/REQ-003 snippet and the REQ-004/REQ-005 `numbered` parameter) apply uniformly across all 12 whole-body domains (`req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr`/`sysrs`); `adr` remains excluded, consistent with `update`'s existing scope.
 
-- REQ-008: `server.py`'s module docstring, the regenerated `docs/MCP.md`, `AGENTS.md`, all 11 `update_<d>` prompt files that narrate the "`get_<d>(raw=True)` -> compute offset -> `update`" workflow, and `CHANGELOG.md` are updated to reflect the new `UpdateResult` return shape, the coordinate-mismatch warning, and the new `numbered` parameter.
+- REQ-008: `server.py`'s module docstring, the regenerated `docs/MCP.md`, the regenerated `docs/api/`, `AGENTS.md`, all 12 `update_<d>` prompt files that narrate the "`get_<d>(raw=True)` -> compute offset -> `update`" workflow, and `CHANGELOG.md` are updated to reflect the new `UpdateResult` return shape, the coordinate-mismatch warning, and the new `numbered` parameter.
 
 - REQ-009: A new ADR is authored and accepted documenting that `update`'s return contract is revised from feature feat-69-update-context's "frontmatter-only" precedent to `frontmatter` + optional `snippet`, scoped to `update` alone -- `create_<d>`, `set_status`, and `set_classification` are unaffected and keep returning bare frontmatter.
 
@@ -62,9 +62,9 @@ Note that the snippet (fix #2) is detection, not prevention: since `dry_run` is 
 
 - [ ] ACC-010: `CHANGELOG.md`'s `[Unreleased]` section gains a `**BREAKING**` entry describing `update`'s new `frontmatter` + `snippet` return shape.
 
-- [ ] ACC-011: `get_<d>(id, raw=True, numbered=True, offset=k, ...)` returns numbers starting at `k` (the requested offset), not restarting at `1`, confirming numbered output stays in `update`'s absolute coordinate space even when combined with windowing.
+- [ ] ACC-011: `get_<d>(id, raw=True, numbered=True, offset=k, ...)` returns numbers starting at the **clamped** offset `max(1, k)` (a `k < 1` window starts at `1`; a `k > N` window returns the empty string with no numbers), never restarting at `1` within a valid window and never using the raw requested `k` when it differs from the clamp, confirming numbered output stays in `update`'s absolute coordinate space even when combined with windowing.
 
-- [ ] ACC-012: All 11 `update_<d>` prompt files that narrate the raw-read-then-offset workflow (`req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr`/`sysrs` minus `adr`) mention the `numbered` option and the coordinate-mismatch warning.
+- [ ] ACC-012: All 12 `update_<d>` prompt files that narrate the raw-read-then-offset workflow (one per whole-body domain: `req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr`/`sysrs`) mention the `numbered` option and the coordinate-mismatch warning.
 
 ### Scope
 
@@ -84,7 +84,7 @@ Note that the snippet (fix #2) is detection, not prevention: since `dry_run` is 
 
 - A new ADR documenting the revision to `update`'s return contract.
 
-- `server.py` docstring, `docs/MCP.md`, `docs/api/`, `AGENTS.md`, all 11 `update_<d>` prompt files, and `CHANGELOG.md` updates.
+- `server.py` docstring, `docs/MCP.md`, `docs/api/`, `AGENTS.md`, all 12 `update_<d>` prompt files, and `CHANGELOG.md` updates.
 
 - Unit and tool tests across all 12 whole-body domains.
 
@@ -94,7 +94,7 @@ Note that the snippet (fix #2) is detection, not prevention: since `dry_run` is 
 
 - Any change to `adr`'s own `update_section`/`option_*`/`update_frontmatter` tools (ADR stays excluded from the generic `update` tool).
 
-- The separate generic `replace` tool proposed in feat-159-replace (a different, independent tool). feat-159's own REQ-006 currently assumes `update`'s *current* bare-frontmatter return shape as its precedent; whichever of the two features lands second should reconcile this divergence deliberately -- not part of this feature's own scope, but flagged in Related Decisions below.
+- The already-merged generic `edit` tool (feat-159-edit, GitHub issue #159). `edit` is a different tool -- exact-match `old_str`/`new_str` with no `offset`/`limit` range mode -- so issue #153's off-by-N corruption risk does not apply to it, and its before/after is self-evident from the match itself. It independently documents a frontmatter-only return and does not share `update`'s return shape, so **no `edit` code or doc change is required by this feature**; declared out of scope here and in Related Decisions below.
 
 - Server-side enforcement that prevents direct raw-file hand-editing of `feat` READMEs -- the sanctioned workflow itself is unchanged; only the coordinate-computation guidance changes.
 
@@ -128,7 +128,7 @@ A size-changing replacement (e.g. 1 line removed, 3 lines inserted) does not:
 
 `update`'s return type changes from the current per-domain `FooFrontmatter` union to a new `UpdateResult` wrapper (exact name TBD during implementation) exposing `frontmatter: FooFrontmatter` and `snippet: str | None` (populated only in range mode); this is a deliberate, documented narrowing of feature feat-69-update-context's "frontmatter-only" precedent, scoped to `update` alone -- `create_<d>`, `set_status`, and `set_classification` keep returning bare frontmatter, unchanged. Because this reverses a repo-wide precedent for a generic tool used by all 12 whole-body domains, it is recorded in a new ADR (REQ-009) rather than only in this feature's own Decisions Made log.
 
-The `numbered` parameter reuses `window_body`'s existing line-splitting logic, adding an `f"{n}: "` prefix per returned line only when requested (mirroring the `<line>: <content>` convention this environment's own file-reading tool already uses), with `n` always the line's absolute position in the full body -- not a per-window restart -- so a number seen in a windowed, numbered read can be fed straight back into `update`'s `offset`. No change to `body_text`/`splice_body`, which stay numbering-agnostic since `update`'s range coordinates must keep addressing the *unprefixed* line count.
+The `numbered` parameter is implemented by extending `window_body` with a `numbered: bool = False` argument -- `window_body` already computes the clamped `start`, so the `f"{n}: "` prefix reuses that same clamped start directly and is added per returned line only when requested (mirroring the `<line>: <content>` convention this environment's own file-reading tool already uses), with `n` always the line's absolute position in the full body -- not a per-window restart -- so a number seen in a windowed, numbered read can be fed straight back into `update`'s `offset`. No change to `body_text`/`splice_body`, which stay numbering-agnostic since `update`'s range coordinates must keep addressing the *unprefixed* line count.
 
 While touching all 12 `get_<d>.py` files anyway, consider factoring the existing (already hand-duplicated 12x) "`offset`/`limit` combined with `raw=False` raises `ValueError`" guard together with the new "`numbered` combined with `raw=False` raises `ValueError`" guard into one shared helper, rather than hand-duplicating a second near-identical guard into all 12 files. This is an opportunistic improvement, not a hard requirement.
 
@@ -136,7 +136,7 @@ While touching all 12 `get_<d>.py` files anyway, consider factoring the existing
 
 - Feature feat-69-update-context: established `update`'s current "frontmatter-only" return contract; this feature deliberately revises it for `update` specifically (adds a bounded `snippet` alongside `frontmatter`), without touching `create_<d>`/`set_status`/`set_classification`. Unlike feat-69 itself, this revision is recorded in a new ADR (REQ-009), since it reverses a repo-wide precedent for a tool shared by all 12 domains.
 
-- feat-159-replace: an independent, unmerged proposal for a new exact-match `replace` tool; related in that it touches the same `general/tools/update.py`-shaped dispatch pattern, and its current REQ-006 explicitly copies `update`'s *pre-this-feature* bare-frontmatter return shape as precedent. Not a dependency of this feature, but whichever of the two features lands second should revisit feat-159's REQ-006 in light of `update`'s new `UpdateResult` shape.
+- feat-159-edit (the `edit` tool, already merged -- status `done`): shares the same `general/tools/` dispatch pattern but is a distinct tool (exact-match, no `offset`/`limit` range mode). It independently returns the updated frontmatter only and is unaffected by `update`'s new `UpdateResult` shape, so no reconciliation is needed and `edit` is declared out of scope above; no `edit` code or doc change is required by this feature.
 
 ### Task List
 
@@ -158,7 +158,7 @@ While touching all 12 `get_<d>.py` files anyway, consider factoring the existing
 
 #### Phase 3: Implementation -- numbered raw reads
 
-- [ ] Task 3.1: Add the `numbered: bool = False` parameter to every one of the 12 domains' `get_<d>` tools, wired through the shared `window_body`/`body_text` helpers, always reporting absolute body-line numbers
+- [ ] Task 3.1: Add the `numbered: bool = False` parameter to every one of the 12 domains' `get_<d>` tools, wired through the extended `window_body` (new `numbered` argument) and `body_text` helpers, always reporting absolute body-line numbers
 
 - [ ] Task 3.2: Enforce `ValueError` for `numbered=True` combined with `raw=False`, before any file access (consider factoring this together with the pre-existing, already-duplicated `offset`/`limit`-with-`raw=False` guard into one shared helper while touching all 12 files anyway)
 
@@ -166,9 +166,9 @@ While touching all 12 `get_<d>.py` files anyway, consider factoring the existing
 
 #### Phase 4: Docs
 
-- [ ] Task 4.1: Update AGENTS.md's `feat` entry and the `general`/`update` bullet with the coordinate-mismatch warning and the new `UpdateResult`/`numbered` capabilities; correct AGENTS.md's existing "ADR feat-69-update-context" mislabeling (it is a feature, not an ADR) in the same edit
+- [ ] Task 4.1: Update AGENTS.md's `feat` entry and the `general`/`update` bullet with the coordinate-mismatch warning and the new `UpdateResult`/`numbered` capabilities
 
-- [ ] Task 4.2: Update all 11 `update_<d>` prompt files (`req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr`/`sysrs`) that narrate the raw-read-then-offset workflow to mention `numbered=True` and the coordinate-mismatch warning
+- [ ] Task 4.2: Update all 12 `update_<d>` prompt files (one per whole-body domain: `req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr`/`sysrs`) that narrate the raw-read-then-offset workflow to mention `numbered=True` and the coordinate-mismatch warning
 
 - [ ] Task 4.3: Add a `CHANGELOG.md` `[Unreleased]` `**BREAKING**` entry for `update`'s new `frontmatter` + `snippet` return shape
 
@@ -188,11 +188,15 @@ While touching all 12 `get_<d>.py` files anyway, consider factoring the existing
 
 ### Current Status
 
-**As of 2026-09-26**: Feature drafted for GitHub issue #153; design decisions confirmed with the author (three of the issue's four suggested fixes adopted -- explicit documentation, a bounded before/after snippet via a new `UpdateResult` wrapper, and an opt-in `numbered` parameter on `get_<d>(raw=True)`; the optional `dry_run` parameter was explicitly deferred). A follow-up review pinned down the snippet's pre-splice/post-splice numbering split for size-changing replacements, confirmed `numbered` reports absolute (not window-relative) body-line numbers, added a new ADR requirement for the return-contract revision, and added missing `CHANGELOG.md`/prompt-file update tasks. Implementation has not started.
+**As of 2026-09-27**: Feature drafted for GitHub issue #153; design decisions confirmed with the author (three of the issue's four suggested fixes adopted -- explicit documentation, a bounded before/after snippet via a new `UpdateResult` wrapper, and an opt-in `numbered` parameter on `get_<d>(raw=True)`; the optional `dry_run` parameter is explicitly **not** adopted). A follow-up review pinned down the snippet's pre-splice/post-splice numbering split for size-changing replacements, confirmed `numbered` reports absolute (not window-relative) body-line numbers, added a new ADR requirement for the return-contract revision, and added missing `CHANGELOG.md`/prompt-file update tasks. A second refinement pass corrected factual references (12, not 11, `update_<d>` prompt files; the related tool is the already-merged `edit`, not an unmerged `replace`), removed a dead AGENTS.md sub-task, added the regenerated `docs/api/` to REQ-008, and pinned the numbered-read start to the clamped offset. No implementation started.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-27T13:23:01.000Z - Second refinement pass: corrected factual references, pinned numbered clamping
+
+A second review (read-only findings, applied in place) corrected: (1) the `update_<d>` prompt-file count is **12, not 11** -- all 12 whole-body domains narrate the raw-read-then-offset workflow, and the old "minus `adr`" phrasing was wrong since `adr` is not one of the 12 (REQ-008, ACC-012, Scope, and Task 4.2 updated; the historical 13:00 note's "11" is left as-is for log integrity); (2) the related-feature cross-reference named a non-existent "feat-159-replace" / unmerged `replace` tool -- it is actually the **already-merged `edit` tool** (feat-159-edit, status `done`), a different tool (exact-match, no `offset`/`limit`) that independently returns frontmatter-only, so it is unaffected by `update`'s new `UpdateResult` shape and needs no code/doc change (Out-of-Scope and Related-Decisions bullets rewritten, `edit` declared out of scope with rationale); (3) removed Task 4.1's instruction to "correct AGENTS.md's existing 'ADR feat-69-update-context' mislabeling" -- no such string exists (AGENTS.md already cites feat-69 correctly as a feature); (4) added the regenerated `docs/api/` to REQ-008 for parity with ACC-007; (5) pinned the numbered-read start to the **clamped** offset `max(1, k)` (a `k < 1` window starts at `1`, a `k > N` window is empty) and named the mechanism: `window_body` gains a `numbered: bool = False` argument so numbering reuses its already-computed clamped start (REQ-004, ACC-011, Design Notes, Task 3.1). No scope change: `dry_run` remains explicitly **not** adopted, `edit` remains out of scope. No implementation started.
 
 #### 2026-09-26T13:00:00.000Z - Refinement pass: fixed gaps, inconsistencies, and an ADR requirement
 
