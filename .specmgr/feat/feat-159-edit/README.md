@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-25T18:10:37.035+02:00'
 id: feat-159-edit
-status: review
+status: done
 type: feat
-updated: '2026-09-27T10:46:29.504+02:00'
+updated: '2026-09-27T11:45:34.984+02:00'
 version: 1.0.0
 ---
 
@@ -185,6 +185,10 @@ edit.py carries its own module-level `assert set(_ADAPTERS) == set(WHOLE_BODY_DO
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-27T11:45:48.349+02:00 - Feature closeout (author review approved, status set to `done`)
+
+The author reviewed the feature, including the Phase 5 (external `feat-reviewer`) fixes, and approved it for merge. Frontmatter `status` set to `done` via the generic `set_status` tool (`type="feat"`); the feature merges to `dev` via PR #161.
 
 #### 2026-09-27T10:46:29.504+02:00 - Phase 5 implemented (external-review hardening, Tasks 5.1–5.7 done)
 
