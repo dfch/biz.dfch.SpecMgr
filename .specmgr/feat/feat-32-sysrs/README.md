@@ -23,6 +23,10 @@ is expected to land on the "simple surface" used by GOL/RSK/QA/DEC/SOP
 
 Domain key: `sysrs` (decided 2026-08-30 — see Decisions Made).
 
+> **Superseded timestamp-format decisions (feat-146-date-time, 2026-09-24):** ADR `8c889262-152b-4b8e-ae2c-75371f7a9edf` supersedes the locked lenient `## Updates` entry shape this feature
+> adopted from the feat-38-39-41-43-44 sibling design (date-only or full date+time): `sysrs` `## Updates` headings now require the full date+time form only (date-only rejected), and the
+> frontmatter `created`/`updated` use the same uniform full date+time contract (`T` written, `T`-or-space accepted).
+
 ### Requirements
 
 - REQ-001 (research, done): Survey existing external standards/templates

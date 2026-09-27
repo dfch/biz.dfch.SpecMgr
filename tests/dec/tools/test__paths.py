@@ -46,8 +46,8 @@ _DOC_TEMPLATE = (
         type: dec
         version: 1.0.0
         status: draft
-        created: '2026-08-26 00:00:00.000Z'
-        updated: '2026-08-26 00:00:00.000Z'
+        created: '2026-08-26T00:00:00.000Z'
+        updated: '2026-08-26T00:00:00.000Z'
         ---
 
         # Choose a Document Store

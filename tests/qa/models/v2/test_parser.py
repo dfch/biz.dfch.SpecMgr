@@ -32,6 +32,10 @@ Covers:
   v2's `parse_qa`, raising the same structural `AssertionError`
   `Qa.from_text` raises on its own -- with no fallback to v1 parsing (there
   is no v1 code path reachable here at all).
+- A v2-shaped body whose question lacks the bold `**<d>.<NNNN>**: ` number
+  prefix (feat-156) fails `parse_qa` with an actionable
+  `pydantic.ValidationError` -- the `field_validator("question")`'s own
+  `ValueError`, channeled by pydantic (feat-156 ACC-001).
 - ACC-003 cross-check: `QaDocument.frontmatter`'s declared type really is
   `qa.models.v2.frontmatter.QaFrontmatter` itself, not a lookalike duplicate
   (feat-14 Phase 8: `QaFrontmatter` moved from the now-removed `qa/models/v1/`
@@ -71,7 +75,7 @@ The frobnicator must handle at least 500 widgets/minute.
 
 ## Elicitation Context
 
-> Who are the primary stakeholders for this system?
+> **0.0010**: Who are the primary stakeholders for this system?
 
 Product management and the on-call SRE team.
 
@@ -79,13 +83,13 @@ Product management and the on-call SRE team.
 
 <!-- comment belongs to the question right after it -->
 
-> What happens when the input queue is empty?
+> **1.0010**: What happens when the input queue is empty?
 
 The frobnicator idles and polls every 100ms.
 
 That polling interval is configurable via `poll_interval_ms`.
 
-> How should malformed widgets be handled?
+> **1.0020**: How should malformed widgets be handled?
 
 Malformed widgets are rejected and logged. The rejection flow is:
 
@@ -115,6 +119,15 @@ No retry is attempted for malformed input.
 
 See the original ticket for background on throughput targets.
 """
+)
+
+# A v2-shaped body whose single `Elicitation Context` question lacks the bold
+# `**<d>.<NNNN>**: ` number prefix (feat-156) -- structurally sound, but
+# rejected by `QaQuestionAnswer`'s own `field_validator("question")` with an
+# actionable `pydantic.ValidationError` (feat-156 ACC-001).
+_REFERENCE_BODY_UNNUMBERED = _REFERENCE_BODY.replace(
+    "> **0.0010**: Who are the primary stakeholders for this system?",
+    "> Who are the primary stakeholders for this system?",
 )
 
 # A v1-shaped body: every ISO/IEC 25010:2023 category is present, but the
@@ -164,8 +177,8 @@ def _make_document(body: str, version: str = "1.0.0") -> str:
         type: qa
         version: {version}
         status: draft
-        created: '2026-08-23 00:00:00.000Z'
-        updated: '2026-08-23 00:00:00.000Z'
+        created: '2026-08-23T00:00:00.000Z'
+        updated: '2026-08-23T00:00:00.000Z'
         ---
 
         """
@@ -219,6 +232,21 @@ class TestParseQaRejectsV1ShapedBody(unittest.TestCase):
             parse_qa(text)
 
 
+class TestParseQaRejectsUnnumberedQuestion(unittest.TestCase):
+    """A question missing its own bold `**<d>.<NNNN>**: ` number prefix fails `parse_qa`
+    with an actionable `pydantic.ValidationError` (feat-156 ACC-001, REQ-001/004)."""
+
+    def test_unnumbered_question_raises_actionable_validation_error(self) -> None:
+        text = _make_document(_REFERENCE_BODY_UNNUMBERED)
+
+        with self.assertRaises(ValidationError) as ctx:
+            parse_qa(text)
+
+        message = str(ctx.exception)
+        self.assertIn("question must start with the bold question-number prefix", message)
+        self.assertIn("Who are the primary stakeholders for this system?", message)
+
+
 class TestQaDocumentFrontmatterIsSharedQaFrontmatter(unittest.TestCase):
     """ACC-003: `QaDocument.frontmatter`'s declared type is `qa.models.v2.frontmatter.QaFrontmatter` itself."""
 
@@ -231,6 +259,29 @@ class TestQaDocumentFrontmatterIsSharedQaFrontmatter(unittest.TestCase):
         field_info = QaDocument.model_fields["frontmatter"]
 
         self.assertIs(field_info.annotation, QaFrontmatter)
+
+
+class TestUnquotedTimestampNormalization(unittest.TestCase):
+    """The `_stringify_metadata` datetime-coercion branch (feat-146 REQ-006/REQ-003).
+
+    An unquoted frontmatter `created`/`updated` timestamp is coerced by PyYAML to a
+    `datetime` before this domain's own `_stringify_metadata` runs -- such a value
+    must parse and converge to the `T`-canonical form, and an unquoted date-only
+    value must still be rejected by the frontmatter's own date+time pattern.
+    """
+
+    def test_unquoted_timestamps_converge_to_t_canonical_form(self) -> None:
+        """Unquoted `T`- and space-separated timestamps parse and converge to the `T`-canonical
+        form; an unquoted date-only value still fails the frontmatter pattern."""
+        text = _VALID_DOC.replace("created: '2026-08-23T00:00:00.000Z'", "created: 2026-08-23T00:00:00.000Z").replace(
+            "updated: '2026-08-23T00:00:00.000Z'", "updated: 2026-08-23 00:00:00.000Z"
+        )
+        document = parse_qa(text)
+        self.assertEqual(document.frontmatter.created, "2026-08-23T00:00:00.000Z")
+        self.assertEqual(document.frontmatter.updated, "2026-08-23T00:00:00.000Z")
+
+        with self.assertRaises(ValidationError):
+            parse_qa(text.replace("created: 2026-08-23T00:00:00.000Z", "created: 2026-08-23"))
 
 
 if __name__ == "__main__":

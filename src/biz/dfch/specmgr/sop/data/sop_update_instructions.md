@@ -24,12 +24,11 @@ want to change before calling any write tool.
 ## 3. Show which sections are present and which are empty
 
 Show the user which of the sections -- the mandatory `## Purpose` and
-`## Procedure` (always present), and the optional `## Scope`, `##
-Definitions`, `## Roles and Responsibilities`, `## Safety and
-Precautions`, `## Related Artifacts`, `## More Information`, `##
-Updates` -- are already present with content and which are still
-absent. Use the `question` tool to ask which ones (if any) they want to
-add to or revise.
+`## Procedure` (always present), and the optional `## Scope`,
+`## Definitions`, `## Roles and Responsibilities`, `## Safety and Precautions`,
+`## Related Artifacts`, `## More Information`, `## Updates` -- are
+already present with content and which are still absent. Use the
+`question` tool to ask which ones (if any) they want to add to or revise.
 
 ## 4. Read the RASCI role definitions before revising `## Roles and Responsibilities`
 
@@ -71,7 +70,11 @@ touch the roles section.
     line-range insert directly below the section's optional leading
     comment (or directly below the `## Updates` heading if no comment
     is present) -- new entries go first, since the section is
-    newest-first, enforced.
+    newest-first, enforced. Each entry's heading is
+    `### {timestamp} ( - | : ) {title}`, where `{timestamp}` is the full
+    date+time form `yyyy-MM-dd[T ]HH:mm:ss.fff` + `Z` or `±HH:mm` (the
+    date/time separator may be `T` or a space; a date-only timestamp is
+    rejected), followed by a mandatory lead paragraph.
   - **Whole-body replace** (a multi-section change, or whenever you are
     uncertain about the line range): call
     `update(id, type="sop", content)` with no `offset`/`limit` --

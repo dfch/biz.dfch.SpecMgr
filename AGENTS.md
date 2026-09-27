@@ -124,9 +124,18 @@ type or cross-cutting:
   (`create_qa`/`update_qa`, plus `refine`). Schema at `qa/models/v2/`,
   inside the domain package, not `models/qa/` — QA is a single-schema
   (v2-only) domain: every question/answer category holds zero or more
-  adjacent, un-headed pairs (`<!-- optional comment -->` + `> {question}`
-  block quote + free-form answer prose) directly inside a category section,
-  no heading of its own per pair, plus a `## Elicitation Context` section
+  adjacent, un-headed pairs (`<!-- optional comment -->` +
+  `> **<d>.<NNNN>**: {question}` block quote + free-form answer prose)
+  directly inside a category section, no heading of its own per pair —
+  each question carries the mandatory bold question-number prefix
+  `**<d>.<NNNN>**: ` (single category digit per Q&A-bearing section,
+  4-digit zero-padded per-category sequence; enforced by
+  `QaQuestionAnswer`'s own `field_validator` in `qa/models/v2/`,
+  feat-156), and an unanswered question carries a `TODO: ` placeholder
+  (e.g. `TODO: answer pending`) as its answer text — a pure authoring
+  convention, not parsed or validated — which replaced the legacy
+  `_(awaiting response)_` marker the `refine` prompt previously shipped
+  (feat-156 REQ-007/009) — plus a `## Elicitation Context` section
   (structurally identical to, but not one of, the 9 ISO/IEC 25010:2023
   characteristic sections) between `## General` and
   `## Functional Suitability`. An earlier `qa/models/v1/` schema (one
@@ -536,7 +545,21 @@ type or cross-cutting:
      `offset`/`limit` body-line coordinates (`offset` = 1-based first line,
      `limit` = count; omitted `limit` = through end of body, `0` = pure
      insert, `offset` `N+1` = append; strict validation, never clamped),
-     splice-then-validate-whole; `set_status`, the generic status change for
+      splice-then-validate-whole; `edit`, the generic surgical exact-match
+      string replacement of an existing document's frontmatter-stripped body
+      across the whole-body domains (`type` is one of
+      req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs; `adr` excluded —
+      unlike `update`/`delete`/`set_classification`, an explicit pre-dispatch
+      `ValueError` for an unknown or `adr` `type`, following the generic
+      `validate` tool's precedent): `old_str` must match the on-disk body
+      byte-exactly (no line-ending normalization), must be unique unless
+      `replace_all`, then the *edited* body must still validate as a whole
+      document — written to disk only if both stages pass, nothing written on
+      any failure (the file stays byte-unchanged; an empty `new_str` is a
+      pure deletion, legal iff the edited body validates); returns the
+      updated frontmatter only (`updated` bumped), with an invalid `id` a
+      `ValueError` before any file access (feat-159-edit, GitHub issue #159);
+      `set_status`, the generic status change for
      every
      domain incl. adr — `superseded_by` is ADR-only, composing
      `"superseded by X"`; `set_classification`, the generic free-text
@@ -695,8 +718,9 @@ Still genuinely missing / not yet done (don't assume otherwise):
   c4efbde6-fd19-4aa8-8668-95316ed62dcc: first register the domain's name
   in `general/tools/_domains.py`'s `WHOLE_BODY_DOMAINS` once (in canonical
   position), then one dispatch entry to each of the two generic tools in
-  `general/tools/` (`update`'s `type`, `set_status`'s `type`), one `delete`
-  adapter in the generic `delete` tool, plus a `raw` parameter on the new
+   `general/tools/` (`update`'s `type`, `set_status`'s `type`), one `delete`
+   adapter in the generic `delete` tool, one `edit` adapter in the generic
+   `edit` tool, plus a `raw` parameter on the new
   `get_<d>` tool — not new `update_<d>`/`set_status_<d>`/`delete_<d>` tools.
 
 `feat-27-validation` (closed 2026-09-01, GitHub issue #27, subsuming feat-7's
@@ -811,7 +835,11 @@ documentation in `docs/`:
   frontmatter block — `id` (the `feat-NNN-slug` folder name itself, not a
   generated UUID), `version` (semver, starts at `1.0.0`), `status`
   (`planning` | `progress` | `review` | `done`), and `created`/`updated`
-  (`YYYY-MM-DD`, `updated` bumped on every substantive edit). There is no
+  (full ISO 8601 date+time — `yyyy-MM-dd` + `T` or space + `HH:mm:ss.fff` +
+  `Z`/`±HH:mm`; the MCP writes the `T`-separated canonical form and both
+  separators are accepted on read, ADR
+  8c889262-152b-4b8e-ae2c-75371f7a9edf; `updated` bumped on every
+  substantive edit). There is no
   separate `GitHub Issue` field/body-line: the issue number is the `NNN`
   infix already embedded in `id`/the folder name (`feat-NNN-slug`) — `0`
   means no issue yet — so it is never duplicated elsewhere in the file. See

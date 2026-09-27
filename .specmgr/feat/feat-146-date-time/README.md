@@ -1,0 +1,583 @@
+---
+classification: null
+created: '2026-09-23 22:33:23.868+02:00'
+id: feat-146-date-time
+status: review
+type: feat
+updated: '2026-09-25T08:39:06.050+02:00'
+version: 1.0.0
+---
+
+# Feature: Uniform Full ISO 8601 Date+Time Timestamps (T-Canonical Frontmatter, Both Separators Accepted)
+
+## Plan
+
+### Overview
+
+GitHub issue #146 exposed that `feat`'s `### Updates`/`### Decisions Made` entry headings require a full
+ISO 8601 date+time timestamp while `tsk`/`dec`/`vcr`/`sysrs` accept a bare `yyyy-MM-dd` date -- a
+cross-domain inconsistency deliberately introduced by feat-38-39-41-43-44 (REQ-004). This feature
+establishes one uniform, full date+time timestamp format for every timestamp location in every
+whole-body artifact type (ADR excluded): the `## Recent Updates`/`## Updates`/`### Updates`/
+`### Decisions Made` entry headings of the six domains that have them, and the frontmatter
+`created`/`updated` fields of all twelve whole-body domains. The accepted format is `yyyy-MM-dd` +
+(`T` or space) + `HH:mm:ss` + `.` + exactly 3-digit milliseconds + (`Z` or `±HH:MM`); date-only is
+rejected everywhere. The MCP write side (frontmatter only, which the MCP always owns) emits the
+`T`-separated canonical form; examples, templates, and migrated documents keep the space-separated
+form in entry-heading section titles for readability.
+
+### Requirements
+
+- REQ-001: Entry headings in `tsk.RecentUpdates`, `dec.Updates`, `vcr.Updates`, `sysrs.Updates` accept only the full date+time form (`yyyy-MM-dd[T ]HH:mm:ss.fff` + `Z`/`±HH:MM`); date-only is rejected with an actionable error.
+- REQ-002: Entry headings in `feat.Updates`, `feat.DecisionsMade`, and `sop.Updates` additionally accept the `T` separator (space and `T` both valid).
+- REQ-003: Frontmatter `created`/`updated` accept both `T` and space separators in all twelve whole-body domains (shared `MarkdownFrontmatter._DATE_TIME_PATTERN`); date-only, 6-digit fractions, and timezone-less values remain rejected.
+- REQ-004: The MCP write side emits `T`-separated frontmatter values: `general/tools/_timestamps.py::format_timestamp` (and `now_timestamp`) switch to the `T` form; all create/update/set_status sites inherit the change with no per-site edits.
+- REQ-005: `models/md/_ordering.py::validate_newest_first` drops its now-dead mixed date-only/date+time day-granularity branch (plain aware `datetime.fromisoformat` comparison); `format_date` is removed (zero callers after REQ-001).
+- REQ-006: `_stringify_metadata` (shared parse path + per-domain copies) normalizes PyYAML-coerced `datetime` objects to the `T`-canonical form with 3-digit milliseconds instead of bare `str()` (which drops milliseconds and yields a rejected shape).
+- REQ-007: Packaged data migrated to the conventions: the 24 template/example frontmatters use the `T` form; the 8 date-only entry headings (dec/vcr/sysrs/tsk templates + examples) become space-form midnight UTC (`yyyy-MM-dd 00:00:00.000Z`); the 8 tsk/dec/vcr/sysrs create/update instruction files describe full form only with space-form examples.
+- REQ-008: The repo's own documents parse after the change: the 3 date-only entry headings in `docs/tsk` (x2) and `docs/sysrs` (x1) are migrated to space-form midnight UTC; no frontmatter mass-migration in `docs/` (space remains valid and converges on write).
+- REQ-009: A new ADR documents the uniform format, the `T` write convention, the space-in-section-titles convention, and the supersession of feat-38-39-41-43-44 D4/D5/D7/D11/REQ-004/ACC-004/ACC-005 and feat-32-sysrs' locked lenient shape; brief supersession notes are added to the affected previous feature READMEs.
+- REQ-010: All twelve `*_schema.json` files are regenerated (`specmgr schema`), `docs/api`/`docs/GENERATED.md`/`docs/adr/README.md` are regenerated, `CHANGELOG.md` gains an `[Unreleased]` BREAKING entry, and GitHub issue #146 is commented with the fix + ADR reference.
+
+### Acceptance Criteria
+
+- [ ] ACC-001: A date-only entry heading fails to parse in `tsk`/`dec`/`vcr`/`sysrs` with an actionable `AssertionError` (field path + line + expected format), and a full timestamp with either `T` or space parses in all six entry-heading domains.
+- [ ] ACC-002: Frontmatter `created`/`updated` values with either separator parse in all twelve domains (quoted, and unquoted via the REQ-006 normalization); date-only values remain rejected.
+- [ ] ACC-003: Every `create_<d>`/`update`/`set_status` write emits `T`-separated `created`/`updated` values, verified by write + byte-exact read-back round-trip.
+- [ ] ACC-004: Newest-first ordering compares full timestamps as aware datetimes (no day-granularity rule; same-day `T` vs space pairs order by the time component), equal timestamps allowed, out-of-order pairs rejected in all six domains.
+- [ ] ACC-005: Every packaged template/example/instruction file parses through its own domain's tool and shows the conventions (frontmatter `T`, entry-heading examples space).
+- [ ] ACC-006: Every document under `docs/` parses through its own domain's tools; the 3 migrated headings carry space-form midnight UTC values.
+- [ ] ACC-007: The `specmgr schema`/`specmgr docs`/`specmgr adr-toc` drift checks are green; the ADR appears in `docs/adr/README.md` and is `accepted`; the CHANGELOG entry and the issue #146 comment exist.
+- [ ] ACC-008: The full quality gate (ruff format/check, vulture, `pytest -n auto --cov`, pylint baseline unchanged) is green after every phase.
+
+### Scope
+
+#### Included
+
+- The six `body.py` entry-heading regex pairs (`feat` x2 sections, `sop`, `tsk`, `dec`, `vcr`, `sysrs`).
+- `models/md/_ordering.py` (mixed-granularity branch removal), `models/md/frontmatter.py` (D5 pattern), `general/tools/_timestamps.py` (write form, `format_date` removal).
+- `_stringify_metadata` normalization across the shared parse path and per-domain copies.
+- All 24 packaged template/example frontmatters, the 8 packaged date-only entry headings, the 8 tsk/dec/vcr/sysrs instruction files, and `tests/feat/models/v1/data/feat_reference.md`.
+- The 3 `docs/` entry-heading migrations and the repo-wide docs parse gate.
+- Test updates: the ~44 files pinning space-form frontmatter, the 4 files with date-only entry fixtures, `tests/models/md/test__ordering.py`, `tests/general/tools/test__timestamps.py`, `tests/models/md/test_frontmatter.py`, and `tests/regression/test_issue_67.py`'s now-moot date-only exclusion.
+- The new ADR, the brief previous-feature supersession notes, CHANGELOG, AGENTS.md touch-up, and doc regeneration.
+
+#### Explicitly Out Of Scope
+
+- The ADR domain (own frontmatter, free-form `date`, no `created`/`updated`, no `now_timestamp` usage).
+- UC v1 (legacy, `date`-typed frontmatter, referenced by no tool; UC v2 is covered via the shared base).
+- Frontmatter mass-migration of existing `docs/` files (space remains accepted; values converge on write).
+- The ~28 pre-existing `.specmgr/feat/*/README.md` parse failures (tracked separately by `docs/tsk/tsk-2687d267`).
+- Any new MCP tools, resources, or prompts.
+
+### Design Notes
+
+The accepted timestamp regex fragment is shared verbatim across the six entry-heading sites and the D5 frontmatter pattern: `\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})`.
+
+Write/read split: frontmatter is system-owned (the MCP is its only writer) and therefore always written `T`-separated; entry headings are hand/agent-authored body content where both separators are accepted and examples/templates use space for readability. This matches ADR 23a14195's ISO 8601 combined form (`T`) while keeping the human-facing convention unchanged.
+
+PyYAML hazard (verified): unquoted values in either separator coerce to `datetime` and bare `str()` drops milliseconds (and renders `+00:00`), which is why D5 rejects the coerced shape today; REQ-006's normalization makes unquoted values parse and converge to the `T` canonical form. The write path is already safe: `frontmatter.dumps` auto single-quotes timestamp-like strings (verified byte-exact round-trip).
+
+Schema evolution is in-place on `models/v1` (no v2) per the prb/feat-132 breaking-evolution precedent; the ADR records the explicit supersession of the lenient decisions.
+
+No external dependencies; this feature is self-contained.
+
+### Related Decisions
+
+- ADR 8c889262-152b-4b8e-ae2c-75371f7a9edf ("Use full ISO 8601 date+time timestamps in all entry headings and frontmatter (accept T or space, write T)"): created by this feature, Phase 0.
+- ADR 23a14195-339c-48af-99d2-97c9964041ae ("Use ISO 8601 for all dates and times"): aligned, not superseded -- the `T` combined form becomes canonical for machine-written values.
+- feat-38-39-41-43-44 (D4/D5/D7/D11, REQ-004/REQ-006): superseded in part -- see the ADR.
+- feat-32-sysrs (locked lenient `## Updates` shape): superseded in part -- see the ADR.
+
+### Task List
+
+#### Phase 0: ADR + feature folder
+
+- [x] Task 0.1: Create the ADR via `create_adr` (status `draft`), capturing context/drivers/options/decision/consequences per this plan.
+- [x] Task 0.2: Create this feature folder via `create_feat` (id `feat-146-date-time`) with the plan above, citing the ADR id.
+- [x] Task 0.3: Run `specmgr adr-toc`; full quality gate.
+
+#### Phase 1: Frontmatter/write core + frontmatter sweep
+
+- [x] Task 1.1: `general/tools/_timestamps.py`: `format_timestamp` space→`T`; remove `format_date` (+ `__all__`); docstring updates.
+- [x] Task 1.2: `models/md/frontmatter.py`: `_DATE_TIME_PATTERN` → `[T ]`; comment block + field docstrings.
+- [x] Task 1.3: `_stringify_metadata`: `datetime` → `T`-canonical with milliseconds (shared path + per-domain copies).
+- [x] Task 1.4: Sweep: 24 packaged frontmatters → `T`; `feat_reference.md` → `T`; ~44 test files (writer-output assertions + fixtures → `T`, keep explicit space-acceptance tests); `test__timestamps.py` (12 tests); `test_frontmatter.py` matrix.
+- [x] Task 1.5: `specmgr schema` (all twelve) + `specmgr docs`; full quality gate.
+
+#### Phase 2: Entry headings (six domains)
+
+- [x] Task 2.1: Widen `feat` (body.py:435/442) + `sop` (body.py:372/377) to `[T ]`.
+- [x] Task 2.2: Tighten `tsk` (body.py:69/74), `dec` (body.py:424/429), `vcr` (body.py:320/326), `sysrs` (body.py:996/1002): mandatory time + `[T ]`.
+- [x] Task 2.3: `models/md/_ordering.py`: delete `_DATE_ONLY_LENGTH` + mixed-granularity branch; docstrings.
+- [x] Task 2.4: Body docstrings: drop leniency wording ("REQ-004", "locked post-sibling shape", feat body.py:449-454 "deliberately not the same format as frontmatter"); cite the ADR.
+- [x] Task 2.5: Packaged data: 8 date-only headings → space midnight UTC (`dec_example:136`, `sysrs_example:535/541`, `sysrs_template:236`, `tsk_example:25/29`, `tsk_template:22`, `vcr_template:54`); rewrite 8 tsk/dec/vcr/sysrs instruction files (full form only, space examples); check feat/sop/other instruction wording.
+- [x] Task 2.6: Tests: flip date-only accept→reject (4 files); `test__ordering.py` drop date-only/mixed cases; add `T`-accept per domain; review `test_issue_67.py` exclusion + comment.
+- [x] Task 2.7: `specmgr schema` + full quality gate.
+
+#### Phase 3: Repo documents migration
+
+- [x] Task 3.1: Migrate 3 `docs/` entry headings → space midnight UTC (`docs/tsk` x2, `docs/sysrs` x1).
+- [x] Task 3.2: Parse gate: every `docs/` document through its own domain tools; full quality gate.
+
+#### Phase 4: Previous-feature notes + closeout
+
+- [x] Task 4.1: Brief supersession notes (one blockquote each, citing the ADR id) in: feat-38-39-41-43-44, feat-32-sysrs, feat-67-70-71, feat-104-109-set-status-noop-dec-docs, feat-94-frontmatter-schema; verify-by-grep candidates (feat-31-feature, feat-33-vcr, feat-10-add-artifact-type-tasklist, feat-21-decision, feat-5-md-model-parser, feat-93-feat-template) get notes only if they carry format decisions.
+- [x] Task 4.2: `CHANGELOG.md` `[Unreleased]` BREAKING entry; AGENTS.md touch-up (now_timestamp shared format → `T` write, both accepted).
+- [x] Task 4.3: Final doc regeneration (`specmgr docs`, `specmgr mcp-docs`, `specmgr adr-toc`); ADR `set_status` → `accepted`; GitHub comment on issue #146.
+- [x] Task 4.4: Full quality gate.
+
+## Progress
+
+### Current Status
+
+**As of 2026-09-25**: Post-review fixes applied on user direction, layered on the Phase 4
+closeout. (a) The three soft-wrapped example code spans in the `dec`/`vcr`/`sysrs` create
+instructions -- the `## Updates` timestamp example, whose backtick pair opened at the end of
+one physical line and closed on the next -- were reflowed so each example span sits on a
+single physical line (the same defect class bd63a9a repaired in the `feat` create
+instruction); the `yyyy-MM-dd[T ]HH:mm:ss.fff` format literal and the 3-space
+list-continuation indentation are preserved and nothing else in those three files changed.
+(b) The `feat` and `sop` update instructions, which Task 2.5 deliberately left check-only,
+gained the explicit full date+time timestamp-format note on new `### Updates`/`### Decisions
+Made` (`####` entries) and `## Updates` (`###` entries) headings respectively, so the
+guidance is uniform across all six entry-heading domains (see Decisions Made). (c) On
+user direction, the 3 pre-existing split section-name code spans in
+`sop_update_instructions.md`'s section-3 paragraph (a pre-feature defect -- the file's
+last prior commit predates this feature) were also reflowed onto one physical line each,
+the same defect class as (a).
+
+**As of 2026-09-24**: Phase 4 complete: all four implementation phases are done and the
+feature is ready for review (the frontmatter `status` change to `review` is the
+orchestrator's closeout step, not this phase's). Task 4.1 added 8 brief supersession
+notes (one blockquote each, citing ADR 8c889262-152b-4b8e-ae2c-75371f7a9edf) to previous
+feature READMEs -- the 5 unconditional ones (feat-38-39-41-43-44, feat-32-sysrs,
+feat-67-70-71, feat-104-109-set-status-noop-dec-docs, feat-94-frontmatter-schema) plus 3 of
+the 6 verify-by-grep candidates that carry timestamp-format decisions (feat-31-feature,
+feat-10-add-artifact-type-tasklist, feat-21-decision); the other 3 candidates (feat-33-vcr,
+feat-5-md-model-parser, feat-93-feat-template) carry no format decisions and got no note;
+every file's `parse_feat` before/after status is unchanged (see Decisions Made). Task 4.2
+added the `CHANGELOG.md` `[Unreleased]` `### Breaking Changes` entry and the AGENTS.md
+feature-frontmatter convention touch-up. Task 4.3 set the ADR to `accepted` (via the generic
+`set_status`, `type="adr"`), regenerated the ADR TOC (`specmgr adr-toc` -- only
+`docs/adr/README.md` changed; `specmgr docs` and `specmgr mcp-docs` were no-ops), and posted
+the closeout comment on GitHub issue #146. Task 4.4 full quality gate green: ruff
+format/check + vulture clean, `pytest -n auto --cov` 3440 passed (exact Phase 3 baseline),
+coverage TOTAL 10551/122 = 99% (badge byte-identical), pylint 8.92/10 (+0.00),
+`specmgr schema` 12/12 unchanged.
+
+**As of 2026-09-24 (Phase 3)**: Phase 3 complete: the 3 `docs/` date-only entry headings
+(`docs/tsk` x2, `docs/sysrs` x1) are migrated to space-form midnight UTC per the ADR
+(`### {date} - {title}` → `### {date} 00:00:00.000Z - {title}`), with nothing else
+changed in those files (frontmatter mass-migration out of scope). The Task 3.2 parse
+gate (throwaway script; no existing test walks `docs/`) is green: every real `docs/`
+document parses through its own domain's tools -- **57 OK / 0 FAIL** (adr=36, gol=2,
+req=14, sop=1, sysrs=1, tsk=3), including the 3 migrated documents -- with
+`docs/sysrs/*-appendix.md` excluded as not a real sysrs document per user ruling (its
+pre-existing raw-HTML H1 issue is out of scope and tracked nowhere yet; see Decisions
+Made). Phase-end full quality gate green: ruff format/check + vulture clean,
+`pytest -n auto --cov` 3440 passed (baseline; `test_issue_67.py`'s narrow
+midnight-migration-heading exclusion holds), coverage TOTAL 10551/122 = 99% (badge
+unchanged), pylint 8.92/10 (+0.00), `specmgr docs`/`specmgr schema` drift-free.
+Phase 4 (previous-feature notes + closeout) is still pending.
+
+### Updates
+
+<!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-25 06:39:06.047Z - Post-review fixes: 3 soft-wrapped code spans reflowed, feat/sop update-instruction timestamp notes added
+
+Two user-directed post-review fixes, both layered on the Phase 4 closeout. (a) The `##
+Updates` timestamp example in the `dec`/`vcr`/`sysrs` create instructions was a soft-wrapped
+code span: its backtick pair opened at the end of one physical line and closed on the next,
+so the example rendered as two broken spans (CommonMark preserves the newline inside a code
+span). Each was reflowed so the example span sits on a single physical line -- the same defect
+class bd63a9a repaired in the `feat` create instruction -- with the
+`yyyy-MM-dd[T ]HH:mm:ss.fff` format literal unbroken and the 3-space list-continuation
+indentation preserved; nothing else in those three files changed. (b) The `feat` and `sop`
+update instructions, deliberately left check-only by Task 2.5, now carry the explicit full
+date+time timestamp-format note on new entries that their four sibling domains
+(`tsk`/`dec`/`vcr`/`sysrs`) already had: the `feat` note uses the `####` entry-heading level
+and ends "a lead paragraph", the `sop` note uses the `###` level and ends "a mandatory lead
+paragraph", each matching its own file's wording, and both note code spans are unbroken on a
+single physical line. (c) On user direction, the 3 pre-existing split section-name code spans
+in `sop_update_instructions.md`'s section-3 paragraph (a pre-feature defect -- the file's last
+prior commit predates this feature) were also reflowed onto one physical line each, the same
+defect class as (a).
+
+#### 2026-09-24 18:26:19.805Z - Phase 4 complete: 8 previous-feature supersession notes, CHANGELOG/AGENTS.md closeout, ADR accepted + TOC regenerated, issue #146 commented, full gate green
+
+Task 4.1: added one brief supersession blockquote (each citing ADR
+8c889262-152b-4b8e-ae2c-75371f7a9edf) to 8 of the 11 previous feature READMEs -- the 5
+unconditional ones (feat-38-39-41-43-44, feat-32-sysrs, feat-67-70-71,
+feat-104-109-set-status-noop-dec-docs, feat-94-frontmatter-schema) plus 3 of the 6
+verify-by-grep candidates that carry timestamp-format decisions: feat-31-feature (its pinned
+`### Updates`/`### Decisions Made` heading regex and its frontmatter plain-`YYYY-MM-DD`-to-
+microsecond-timestamp decision), feat-10-add-artifact-type-tasklist (its free-form `## Recent
+Updates` entry-heading decision), and feat-21-decision (its TSK-style free-form `## Updates`
+entry decision plus its date-only `created`/`updated: YYYY-MM-DD` frontmatter wording). The
+other 3 candidates carry no format decisions and got no note (grep evidence: feat-33-vcr has
+only `{timestamp}` placeholders describing heading nesting, no format pinned; feat-5-md-model-
+parser only self-referential "Recent Updates" mentions of its own progress log; feat-93-feat-
+template only feat-parser-compliance wording about the canonical heading format it migrated
+to). Per-file `parse_feat` before/after status: OK→OK for feat-38-39-41-43-44, feat-67-70-71,
+feat-104-109 (the 3 parseable files, verified by re-parsing after the edit); FAIL→FAIL with
+the same pre-existing error for feat-32-sysrs, feat-94-frontmatter-schema, feat-31-feature,
+feat-10-add-artifact-type-tasklist, feat-21-decision (line numbers shifted +4 only);
+feat-33-vcr/feat-5/feat-93 untouched. Note placement: directly below the H1 is structurally
+impossible in the 3 parseable READMEs (the feat parser requires `## Plan` as the first token
+after the H1 -- verified empirically before any edit), so per the plan's adjust clause all 8
+notes were placed at the end of the `### Overview` section instead, consistently (see
+Decisions Made). No doc repair of those READMEs per the plan (pre-existing parse failures stay
+out of scope, tracked by `docs/tsk/tsk-2687d267`).
+Task 4.2: `CHANGELOG.md` gained a `### Breaking Changes` entry under `[Unreleased]`
+(uniform full date+time contract: frontmatter `created`/`updated` of all twelve whole-body
+domains now written `T`-separated (machine canonical) and accepting `T` or space; tsk/dec/vcr/
+sysrs dated entry headings tightened from date-or-full to full date+time only, with the
+repo-owned inventory migrated in the same change; feat/sop entry headings additionally accept
+`T`; newest-first ordering now compares full timestamps as aware datetimes), citing the ADR +
+GitHub issue #146 (feat-146-date-time); AGENTS.md's feature-frontmatter convention line was
+updated from (`YYYY-MM-DD`, ...) to the new full date+time contract with the ADR cited -- only
+that wording touched.
+Task 4.3: the ADR was set to `accepted` via the generic `set_status` (`type="adr"`,
+`id="8c889262-152b-4b8e-ae2c-75371f7a9edf"`); `get_adr` confirms `status: accepted` and the
+on-disk ADR file diffed to exactly one line (`status: draft` → `status: accepted` -- ADR
+frontmatter has no `created`/`updated`, only the free-form `date`, left untouched).
+Regenerations: `specmgr adr-toc` changed `docs/adr/README.md` (the 8c889262 entry's
+"Status: draft" → "Status: accepted", the only diff); `specmgr docs` (470 api files +
+GENERATED.md) and `specmgr mcp-docs` (docs/MCP.md) were both no-ops with zero working-tree
+changes (no src/ docstring changes and no new tools/resources/prompts this feature). Posted
+the closeout comment on GitHub issue #146
+(https://github.com/dfch/biz.dfch.SpecMgr/issues/146#issuecomment-5819537651, comment id
+5819537651, posted 2026-09-24T18:09:45Z): fix summary + branch `feat-146-date-time` (PR
+pending) + ADR reference; deliberately no "fixes #146" (that belongs in the PR body) and the
+issue was left open.
+Task 4.4: full quality gate green -- `ruff format --check` (1715 files already formatted) +
+`ruff check` (All checks passed), vulture clean (no output), `pytest -n auto --cov=src
+--cov-report=` **3440 passed** (exact Phase 3 baseline), `coverage report -m` TOTAL
+**10551/122 = 99%** (`docs/coverage.svg` byte-identical, no changes), pylint **8.92/10
+(+0.00)** (src untouched this phase), `specmgr schema` 12/12 `(unchanged)`. Files changed by
+Phase 4 overall: the 8 supersession notes, CHANGELOG.md, AGENTS.md, the ADR frontmatter line,
+docs/adr/README.md, and this plan README; everything left uncommitted for the orchestrator.
+
+#### 2026-09-24 16:56:53.646Z - Phase 3 complete: 3 docs/ headings migrated to midnight UTC, parse gate green (sysrs appendix excluded per user ruling)
+
+Per the orchestrator-relayed user ruling (final), `docs/sysrs/sysrs-8d752304-...-appendix.md`
+is **not** a real sysrs document (it is a manual feat-84 concatenation of all referenced
+artifacts, commit bca1a87) and is excluded from the Task 3.2 parse gate -- its raw-HTML H1
+issue is out of scope and was left unrepaired (recorded in Decisions Made). With the
+exclusion in place, the throwaway gate script re-ran clean: **57 parsed OK, 0 FAIL, 1
+excluded** -- per-domain tally: adr=36 (`models.adr.v1.parse_adr`), gol=2, req=14, sop=1,
+sysrs=1 (the real sysrs document; the 3 migrated `docs/tsk` x2 + `docs/sysrs` x1 headings
+all parse), tsk=3; `docs/adr/README.md` (generated TOC) and the generated/binary artifacts
+(`docs/api/`, `docs/GENERATED.md`, `docs/coverage.svg`, `docs/MCP.md`, `docs/*_schema.json`,
+2 `.pdf` files) skipped as non-documents. Phase-end full quality gate re-run on the finished
+tree, all green: `ruff format --check` (1715 files already formatted) + `ruff check` (All
+checks passed), vulture clean, `pytest -n auto --cov=src --cov-report=` **3440 passed**
+(exact Phase 2 baseline), `coverage report -m` TOTAL **10551/122 = 99%** (`docs/coverage.svg`
+byte-identical, no `coverage-badge` re-run needed), pylint **8.92/10 (+0.00)** (src untouched
+this phase), `specmgr schema` 12/12 `(unchanged)` + `specmgr docs` (470 api files +
+GENERATED.md) with zero working-tree changes (drift-free). Task 3.2 marked `[x]`; the earlier
+"Phase 3 blocked" entry stands as history. Files changed by Phase 3 overall: the 3 `docs/`
+heading lines (Task 3.1) + this plan README; everything left uncommitted for the orchestrator.
+
+#### 2026-09-24 09:57:29.222Z - Phase 3 blocked: docs/ 3-heading migration done (Task 3.1); parse gate 57/58 pass with one pre-existing unrelated failure (Task 3.2)
+
+Task 3.1: migrated the 3 and only 3 date-only entry headings in `docs/` (verified
+by grep `^#{2,4} \d{4}-\d{2}-\d{2} -` returning exactly these 3 before the change) to
+space-form midnight UTC, preserving date, separator glyph, and title:
+`docs/tsk/tsk-699432f5-...-extract-mcp-instance-py-to-break-domain-server-cyclic-import.md:24`
+`### 2026-08-19 - Created` → `### 2026-08-19 00:00:00.000Z - Created`;
+`docs/tsk/tsk-602740af-...-fix-markdownlistitem-get-extent-for-numbered-lists.md:36`
+`### 2026-08-18 - Created` → `### 2026-08-18 00:00:00.000Z - Created`;
+`docs/sysrs/sysrs-8d752304-...-system-requirements-specification-biz-dfch-specmgr.md:213`
+`### 2026-09-03 - Created` → `### 2026-09-03 00:00:00.000Z - Created`. No other
+bytes changed (frontmatter mass-migration explicitly out of scope; `git diff --stat`:
+3 files, +3/-3). Task 3.2 (parse gate): no existing test or script walks `docs/`
+(checked `tests/`), so a throwaway script parsed every `docs/<domain>/*.md` through
+its own domain's model parser (`gol/req/sop/sysrs/tsk.models.v1.parser.parse_<d>`)
+plus `docs/adr/*.md` (36 ADRs, README.md skipped as generated TOC) through
+`models.adr.v1.parse_adr` -- 58 files total: **57 OK, 1 FAIL**. The 3 migrated
+documents all parse. The one failure is pre-existing and unrelated to timestamps
+(both the file and `src/` are unmodified at HEAD b526c21):
+`docs/sysrs/sysrs-8d752304-...-appendix.md` fails with ```AssertionError: raw HTML is
+not permitted in a parsed document at line 362 (relative to this text's own
+numbering): html_inline '<domain>'; fix: wrap it in a code span (e.g. `<domain>`) or
+write it as an HTML comment (e.g. `<!-- <domain> -->`) instead``` -- the appendix
+(manual feat-84 concatenation, commit bca1a87) embeds ADR ec9f5262's own H1 heading
+verbatim (`# Expose <domain>_list as paged MCP tools (list_<domain>), not
+resources`) into sysrs body text, which the sysrs body parser rejects while
+`parse_adr` accepts it fine as an ADR H1. This file is not tracked by the
+`.specmgr/feat` README failure list `docs/tsk/tsk-2687d267` either. Per the plan's
+hard-constraint hazard clause ("if any `docs/` document fails for a reason unrelated
+to timestamps (a pre-existing failure), STOP and report it with the error instead of
+fixing it"), the failure is reported and Task 3.2 left open for orchestrator triage;
+fixing it (wrapping the bare `<domain>` tokens in code spans/HTML comments) would be
+a one-line content repair to a file outside this phase's allowed change set. Quality
+gate on the migrated tree (all green): `ruff format --check` (1715 files already
+formatted) + `ruff check` (all checks passed), vulture (clean), `pytest -n auto
+--cov` **3440 passed** (exact Phase 2 baseline; `test_issue_67.py` -- whose narrow
+midnight-migration-heading exclusion exists precisely so the 3 migrated headings
+don't trip it -- passes in the suite), `coverage report` TOTAL **10551/122 = 99%**
+(`docs/coverage.svg` byte-unchanged, no `coverage-badge` re-run needed), pylint
+**8.92/10 (+0.00)** (src untouched this phase), `specmgr docs` (470 api files +
+GENERATED.md, zero working-tree changes) and `specmgr schema` (12/12 `(unchanged)`)
+drift-free. Files changed by this phase so far: the 3 `docs/` heading lines + this
+plan README.
+
+#### 2026-09-24 09:18:11.741Z - Phase 2 complete: six entry-heading domains on the shared full date+time fragment ([T ] accepted, date-only rejected), _ordering mixed-granularity branch deleted, packaged data + 10 instruction files + test suite migrated
+
+Implemented Tasks 2.1-2.7. Entry headings: `feat` (`UpdateEntry`/`DecisionEntry` alias +
+pattern) and `sop` (`UpdateEntry` alias + pattern) widened to `[T ]`; `tsk`
+(`RecentUpdates`), `dec`/`vcr`/`sysrs` (`Updates`) tightened to the mandatory full form with
+`[T ]` -- all six sites now accept exactly the shared fragment
+`\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})`, the same fragment as
+Phase 1's frontmatter pattern (verbatim, per the plan's Design Notes). `models/md/_ordering.py`
+dropped `_DATE_ONLY_LENGTH` and its mixed date-only/date+time day-granularity branch (now a
+plain aware `datetime.fromisoformat` comparison; module + function docstrings updated), and the
+five `Updates`/`RecentUpdates` `_validate_newest_first` delegate docstrings plus the six body
+docstrings' leniency wording (REQ-004 / "locked post-sibling shape" / "deliberately not the
+same format as frontmatter") were rewritten to cite ADR
+8c889262-152b-4b8e-ae2c-75371f7a9edf; `models/md/frontmatter.py`'s now-stale "until feat-146
+Phase 2 tightens those too" note was updated to state all six entry-heading aliases enforce the
+same full fragment. Packaged data: the 8 date-only entry headings
+(`dec_example:136`, `sysrs_example:535/541`, `sysrs_template:236`, `tsk_example:25/29`,
+`tsk_template:22`, `vcr_template:54`) became space-form midnight UTC
+(`### {date} 00:00:00.000Z - {title}`), and all 12 of the six domains' example/template files
+still parse through their own parsers. The 8 tsk/dec/vcr/sysrs instruction files were rewritten
+to describe the full form only with space-form examples (the 4 update instructions gained an
+explicit heading-format note where they previously had none), and the feat/sop create
+instructions' format wording was aligned (both separators accepted; the sop "different format
+from the frontmatter dates" claim dropped -- it is the same full format now); `tsk_implement`/
+`feat_update`/`sop_update` were checked and carry no format wording. Tests: the 4 domain test
+files (tsk/dec/vcr/sysrs `test_body.py`) flipped date-only accept→reject (alias `match_alias`
+rejections + `from_text` `AssertionError` rejections, mirroring the existing rejection-test
+style), every date-only entry-heading fixture in the suite (21 files, incl. the
+tsk/tools + general/tools + regression fixtures) migrated to full form, `test__ordering.py`
+dropped its 7 date-only/mixed-granularity cases and gained same-day `T`-vs-space ordering cases,
+`T`-accept tests were added for all six domains (11 new tests net, suite now 3440 passed), and
+`test_issue_67.py`'s date-only-heading exclusion (moot per the ADR's consequences) was replaced
+by a narrow exclusion of the documented midnight-UTC migration heading shape, which the
+migrated packaged headings would otherwise trip (see Decisions Made). Gate: `specmgr schema`
+regenerated 6 of 12 `docs/*_schema.json` (dec/feat/sop/sysrs/tsk/vcr -- the six entry-heading
+domains) + their packaged `data/` copies (the other 6 unchanged), `specmgr docs` regenerated 7
+`docs/api/` files, `specmgr adr-toc`/`specmgr schema`/`specmgr docs` all drift-free on re-run,
+ruff format/check + vulture clean, coverage TOTAL 10551 stmts / 122 missed = 99% (down from
+10557/126 -- the deleted `_ordering` branch removed covered statements; `docs/coverage.svg`
+still reads 99%, byte-identical), pylint 8.92/10 unchanged with only pre-existing types'
+numeric counters shifted (+11 C0116 from the new docstring-less tests matching file convention,
++1 C0301 long string-literal line, +1 R0801 duplicate-code pair). Note: the 3 `docs/` entry
+headings (`docs/tsk` x2, `docs/sysrs` x1) now fail to parse -- expected at Phase 2 end,
+migrated in Phase 3.
+
+#### 2026-09-24 06:09:11.544Z - Phase 1 fix: coverage-badge regression repaired (12 parser-level unquoted-timestamp tests; badge back to 99%)
+
+Orchestrator verification of the Phase 1 commit found the pre-commit `specmgr coverage-badge`
+hook failing: the Phase 1 `_stringify_metadata` rewrite added 3 previously-uncovered lines per
+whole-body-domain parser (the `datetime`-coercion branch and the `str()` else branch of the new
+loop, 36 lines total) -- no per-domain parser test ever fed an unquoted full timestamp through
+PyYAML, so suite coverage dropped to 162 missed (98.46%) and the hook rewrote
+`docs/coverage.svg` to 98%. Fix (no design change -- Phase 1's `Decisions Made` entry stands
+unchanged): one new focused test per domain in each of the twelve `tests/<d>/models/v*/
+test_parser.py` (`TestUnquotedTimestampNormalization.test_unquoted_timestamps_converges_to_t_canonical_form`,
+12 new tests total, mirroring each file's own minimal-document fixture style and reusing its
+existing `ValidationError` import): it parses the domain's minimal document with `created`
+unquoted `T`-form and `updated` unquoted space-form (both PyYAML-coerced to `datetime`), asserts
+both converge to the `T`-canonical form (REQ-006), and asserts an unquoted date-only `created`
+still raises `ValidationError` (REQ-003 -- that failing parse is what covers the `str()` else
+branch). Result: all 12 whole-body parsers back to 100% (22/22 statements, 0 missed), TOTAL back
+to exactly the pre-Phase-1 126 missed (10557 statements, 99%), `docs/coverage.svg` regenerated
+to 99%. Full gate re-run green: ruff format/check (1715 files), vulture (clean), `specmgr
+schema` 12/12 `(unchanged)` + `specmgr docs` drift-free (no working-tree changes),
+`pytest -n auto --cov` 3429 passed (3417 + 12), pylint 1837 findings / 8.92 -- identical to the
+pre-change baseline apart from the three Phase-1 numeric shifts already noted below. The `qa`
+file (the only one without a `_MINIMAL_DOC` constant) uses its own `_VALID_DOC` fixture.
+
+#### 2026-09-24 04:45:51.954Z - Phase 1 complete: T-canonical frontmatter write/read core, [T ] pattern, 53-file test sweep, schemas/docs regenerated, full gate green
+
+Implemented Tasks 1.1-1.5. Write side: `general/tools/_timestamps.py`'s `format_timestamp`/
+`now_timestamp` now emit `yyyy-MM-ddTHH:mm:ss.fff` + (`Z`|`±HH:mm`) (delegating to the new shared
+core), `format_date` removed (its only callers were its own two tests). Read side:
+`MarkdownFrontmatter._DATE_TIME_PATTERN` widened to `[T ]` (date-only, six-digit-fraction, and
+timezone-less values still rejected; the D5 validator message/docstrings updated), and all twelve
+whole-body domain parsers' `_stringify_metadata` copies now normalize PyYAML-coerced `datetime`
+values to the `T`-canonical form via the new shared `models/md/_timestamps.py`
+(`format_timestamp` + `normalize_yaml_datetime` with a sub-millisecond guard so an unquoted
+six-digit fraction is left for the pattern's actionable rejection rather than silently truncated
+into an accepted shape). Sweep: 24 packaged template/example frontmatters +
+`tests/feat/models/v1/data/feat_reference.md` (byte-identical to `feat_example.md`, verified) +
+`rsk/tools/_sentinel.py`'s own fixture to `T`; 53 test files' space-form frontmatter fixtures/
+writer-output assertions to `T` (explicit space-acceptance tests kept in
+`tests/models/md/test_frontmatter.py` -- `reject_t_separator` flipped to `accept_t_separator`,
+new `accept_space_separator`), `tests/general/tools/test__timestamps.py` rewritten to the `T`
+form (12 tests kept: two `format_date` tests replaced by two `T`-separator tests), new
+`tests/models/md/test__timestamps.py` (14 tests) covering the shared core + the unquoted-value
+matrix (T/space/Z/second-precision accepted; six-digit, date-only, naive rejected). `specmgr
+schema` regenerated all twelve `docs/*_schema.json` + their packaged `data/` copies (the
+pre-commit hook's `--output-dir` syncs), `specmgr docs` regenerated 470 `docs/api/` files +
+`docs/GENERATED.md`. Full quality gate green: ruff format/check (1715 files), vulture (clean),
+`pytest -n auto --cov` 3417 passed (baseline 3402: +14 new shared-module tests, +1 new
+space-acceptance test, +2 new `T`-separator tests, -2 removed `format_date` tests), pylint 1837
+findings before and after with only three pre-existing findings' numeric counters shifted (no new
+findings). Phases 2-4 remain.
+
+#### 2026-09-23 20:40:25.711Z - Phase 0 complete: adr-toc regenerated, full quality gate green
+
+Created the ADR (8c889262-152b-4b8e-ae2c-75371f7a9edf, `draft`), created this feature folder,
+regenerated `docs/adr/README.md` via `specmgr adr-toc`, and ran the phase-end full quality gate
+green (ruff format/check, vulture, `pytest -n auto --cov` -- 3402 passed). Implementation
+(Phases 1-4) is deliberately not started yet.
+
+#### 2026-09-23 20:31:28.001Z - Created
+
+Feature created for GitHub issue #146 (`create_feat` fails on date-only `Updates`/`Decisions Made`
+timestamps, inconsistent with `create_tsk`); plan finalized after the format decisions were
+confirmed with the requester, and the ADR (8c889262-152b-4b8e-ae2c-75371f7a9edf) was created as
+`draft` ahead of this folder.
+
+### Decisions Made
+
+<!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-25 06:39:06.047Z - Task 2.5 scope extended on user direction: feat/sop update instructions gain the timestamp-format note
+
+The plan's Task 2.5 scoped the `feat`/`sop` update instructions as check-only (verify their
+existing format wording, do not extend it), while the four `tsk`/`dec`/`vcr`/`sysrs` update
+instructions each gained an explicit note spelling out what a new Updates-entry heading must
+look like. On user direction that note is now added to `feat` and `sop` as well, so the
+agent-facing guidance is uniform across all six entry-heading domains. The wording is adapted
+to each file's own entry-heading level and lead-paragraph convention -- `####` ("a lead
+paragraph") for `feat`, whose entries sit under `### Updates`/`### Decisions Made`, and `###`
+("a mandatory lead paragraph") for `sop`, whose entries sit under `## Updates` -- mirroring
+each file's create-instruction wording.
+
+#### 2026-09-24 18:26:19.805Z - Phase 4: supersession notes placed at the end of `### Overview` (not directly below the H1); verify-by-grep outcomes
+
+Two items beyond the plan's literal wording. (1) Note placement: the plan says "directly
+below the H1 title line, before any other content -- adjust only if a file's structure makes
+that impossible", and in the 3 READMEs that parse through `parse_feat` before the edit
+(feat-38-39-41-43-44, feat-67-70-71, feat-104-109) it is structurally impossible: the feat
+parser requires `## Plan` to be the first token after the H1 (a blockquote between H1 and
+`## Plan` fails with "Feature > Plan: expected Plan (heading 'Plan'), found no match" --
+verified empirically on a throwaway in-memory parse before any file was touched). The hard
+constraint "if it parsed before your edit, it must still parse after" outranks the preferred
+placement, so all 8 notes were placed at the end of the `### Overview` section instead --
+one consistent placement across every file that got a note, still near the top of the
+document, and parse-safe (verified OK→OK on the 3 parseable files after the edits). (2)
+Verify-by-grep outcomes: 3 of the 6 candidates carry timestamp-format decisions and got
+notes (feat-31-feature: the pinned `### Updates`/`### Decisions Made` heading regex with
+space-only separator/em-dash joiner, plus the frontmatter plain-`YYYY-MM-DD`-divergence
+decision reversed to microsecond timestamps in its own Phase 6; feat-10-add-artifact-type-
+tasklist: the `## Recent Updates` entries decided as free-form-title H3 leaves with no
+timestamp requirement; feat-21-decision: the `## Updates` entry decision as TSK-style
+free-form `### {title}` headings, plus the `created`/`updated: YYYY-MM-DD` frontmatter
+wording in its structure example), and 3 do not and got none (feat-33-vcr: only a
+`{timestamp}` placeholder describing the heading's nesting level relative to `feat`'s own,
+no timestamp format pinned; feat-5-md-model-parser: only self-referential "Recent Updates"
+mentions of its own progress log; feat-93-feat-template: only compliance wording about
+migrating its own `### Decisions Made` to the feat parser's canonical heading format, which
+is a feat-31/feat-38 decision, not feat-93's).
+
+#### 2026-09-24 16:56:53.646Z - Phase 3: `docs/sysrs/*-appendix.md` excluded from the docs/ parse gate as not a real sysrs document (user ruling)
+
+The Task 3.2 parse gate surfaced a pre-existing, timestamp-unrelated parse failure in
+`docs/sysrs/sysrs-8d752304-b076-4bad-89af-f8032158dd21-system-requirements-specification-biz-dfch-specmgr-appendix.md`
+(the manual feat-84 concatenation of all referenced artifacts, commit bca1a87): the embedded
+ADR ec9f5262's own H1 heading -- which carries bare `<domain>` tokens (e.g.
+`# Expose <domain>_list as paged MCP tools (list_<domain>), not resources`) -- violates the
+sysrs body parser's raw-HTML ban (feat-27), a ban `parse_adr` itself does not apply to ADR H1s.
+Per the plan's hazard clause it was stopped-and-reported without being fixed. The user then
+ruled (final) that the `sysrs-*-appendix.md` file is **not** a real sysrs document, so it is
+excluded from the Task 3.2 parse gate (and its `.pdf` sibling was already skipped as binary)
+instead of being repaired: the gate's contract is "every real `docs/` document parses through
+its own domain's tools," and with the exclusion the gate is 57/57. Consequences: (1) the
+appendix's raw-HTML H1 issue stays in place, is out of scope for this feature, and is tracked
+nowhere yet -- a future docs-repair effort (a sibling of `docs/tsk/tsk-2687d267`'s scope)
+should either wrap those bare `<domain>` tokens in code spans/HTML comments or treat the file
+as a non-document by construction; (2) the gate script records the exclusion explicitly
+(`EXCLUDED ... user ruling`, counted in the summary line rather than silently skipped), so it
+is auditable and re-derivable.
+
+#### 2026-09-24 09:18:11.741Z - Phase 2: `tsk_reference.md` test fixture migrated now (not in Phase 3); `test_issue_67.py` gains a narrow midnight-migration-heading exclusion
+
+Two decisions the plan did not spell out, both forced by invariants it does name. (1) The plan's
+Phase 3 (Task 3.1) lists only the 3 `docs/` entry headings for migration, but
+`.specmgr/feat/feat-10-add-artifact-type-tasklist/tsk_reference.md` -- a *test fixture* parsed
+by `tests/tsk/models/v1/test_parser.py::test_parses_full_reference_document` -- carries 2 of
+its own date-only `## Recent Updates` headings. It is not a `docs/` repository document (the
+hard constraint Phase 3 owns), and leaving it unmigrated would red-light the Phase 2 suite
+(impossible per the Decisions Made "suite green at each phase end" convention), so its 2
+headings were migrated to space-form midnight UTC in Phase 2, same shape as the 8 packaged
+headings. (2) The plan says to "review `test_issue_67.py` exclusion + comment" and the ADR's
+consequences note says the date-only-heading exclusion "becomes moot" after Task 2.5 -- but the
+moot exclusion was precisely what kept the issue-67 test's two round-timestamp patterns
+(`\d{2}:\d{2}:\d{2}\.000[Z+-]`, `\.000[Z+-]`) from tripping on entry headings, and the mandated
+migration shape (`### {date} 00:00:00.000Z - {title}`) *does* match both patterns. The exclusion
+paragraph was therefore rewritten to explain the new, narrower exemption: a line matching the
+documented midnight-UTC migration heading shape (`^#{3,4} \d{4}-\d{2}-\d{2} 00:00:00\.000Z(?: -
+| : )\S`) is skipped by both checks -- a convention-fixed faithful representation of a
+time-of-day-less entry (the ADR's decision outcome prescribes the shape), not a copy-paste
+placeholder -- while any other round timestamp (frontmatter or non-migration headings) still
+fails the test.
+
+#### 2026-09-24 04:45:51.954Z - Phase 1 design: shared `T`-core in `models/md/_timestamps.py`; six-digit unquoted fractions stay rejected (sub-millisecond guard)
+
+Two decisions beyond the plan's literal file list, both forced by invariants the plan
+does not name. (1) The T-canonical formatting core now lives in a new, dependency-free
+`src/biz/dfch/specmgr/models/md/_timestamps.py` (`format_timestamp` +
+`normalize_yaml_datetime`), with `general/tools/_timestamps.format_timestamp` delegating to it:
+`models/*` must not import anything under `general` (`general`'s own `__init__` transitively
+imports `server.mcp`, an `mcp`-extra-only dependency that would silently land on the
+dependency-free base library -- the precedent documented in `models/adr/v1/summary.py`'s
+module docstring), so the domain parsers' `_stringify_metadata` copies cannot reuse
+`general.tools._timestamps` directly; one shared core under `models/md` serves both the read
+side (the 12 parsers) and the write side (the general helper). (2) `normalize_yaml_datetime`
+carries a sub-millisecond guard: a PyYAML-coerced `datetime` whose `microsecond` is not a whole
+number of milliseconds (i.e. the original unquoted text had a six-digit fraction) is returned as
+bare `str()` text instead of being truncated into the canonical form -- ACC-002/REQ-003 require
+six-digit fractions to remain rejected, and silent truncation would turn a rejected unquoted
+value into an accepted one. Consequence: an unquoted second-precision value
+(`2026-09-23T12:00:00+02:00`) normalizes to the accepted `.000` canonical form, while the same
+value *quoted* is still rejected by the pattern (quoted text is matched verbatim) -- the
+asymmetry is the read path converging, not the pattern loosening.
+
+#### 2026-09-23 20:31:28.001Z - No error-message prose requirement: the raw regex in the error is the contract
+
+GitHub issue #146's second suggested fix (surface a friendlier validation error) is not a
+requirement of this feature: it was verified non-reproducible server-side (the MCP SDK 2.0.0
+propagates the full enriched message -- field path, line, raw `@alias` regex, offending text --
+and the reporter's bare error was client-side display truncation). Most consumers of these
+messages are agents, for whom the raw regex is the machine-readable format contract; the requester
+confirmed the current message shape is acceptable as-is. The ADR records this verification.
+
+#### 2026-09-23 20:31:28.001Z - Full quality gate after each phase; brief previous-feature notes
+
+Every phase ends with the full gate (ruff format/check, vulture, `pytest -n auto --cov`, pylint
+baseline unchanged) and phases are self-contained so the suite is green at each phase end.
+Affected previous feature READMEs get one brief blockquote note each stating their timestamp
+decisions are superseded, without doc repair (pre-existing parse failures stay out of scope,
+tracked by `docs/tsk/tsk-2687d267`).
+
+#### 2026-09-23 20:31:28.001Z - Separator: accept `T` or space; frontmatter written `T`; section titles keep space
+
+Both `T` and space are accepted in entry headings and frontmatter. Frontmatter is MCP-owned and
+therefore always written `T`-separated (`now_timestamp` changes). Examples, templates, and
+migrated documents keep the space-separated form in entry-heading section titles for readability.
+This amends feat-38-39-41-43-44 D4 (space canonical write form) and D5/ACC-005 (T rejection) --
+recorded in the ADR.
+
+#### 2026-09-23 20:31:28.001Z - Scope: all twelve whole-body domains, ADR excluded, UC via v2
+
+Every artifact type uses the uniform full date+time format except the (deprecated) ADR domain;
+UC is covered through its v2 schema, which inherits the shared `MarkdownFrontmatter` (v1 is
+legacy, referenced by no tool). `feat` was already strict and `sop` stays strict; `tsk`/`dec`/
+`vcr`/`sysrs` tighten, and all six entry-heading domains widen to accept `T`.
+
+### More Information
+
+- GitHub issue: https://github.com/dfch/biz.dfch.SpecMgr/issues/146
+- Decision: ADR 8c889262-152b-4b8e-ae2c-75371f7a9edf (created with this feature, Phase 0).
+- Superseded prior decisions: feat-38-39-41-43-44 (REQ-004/REQ-006, D4/D5/D7/D11), feat-32-sysrs
+  (locked lenient `## Updates` shape), feat-67-70-71 ("deliberately supported alternate
+  granularity" declaration), feat-104-109-set-status-noop-dec-docs ("already accepts both forms"
+  finding), feat-94-frontmatter-schema (space-form pattern pinned into the JSON schemas).

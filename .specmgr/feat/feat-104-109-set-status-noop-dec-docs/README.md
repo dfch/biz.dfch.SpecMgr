@@ -16,6 +16,10 @@ version: 1.0.0
 
 Bundles two small, independently-scoped GitHub issues found during a backlog triage. They are functionally unrelated -- one is a generic cross-domain tool behavior change, the other is a documentation-only fix scoped to a single domain -- but each is small enough on its own that pairing them in one feature folder is more efficient than opening two separate ones (precedent: `feat-67-70-71`, `feat-73-74-76`, `feat-81-83-validation`, `feat-38-39-41-43-44`). GitHub issue #109 asks that `set_status` become a no-op (no write, no `updated` bump) when the caller passes a `status` identical to the document's current status. GitHub issue #104 asks that DEC's `## Updates` section documents, via its template/example, that its heading accepts both a bare `yyyy-MM-dd` date and a full `yyyy-MM-dd HH:mm:ss.fff(Z|±HH:mm)` timestamp -- today only the date-only form is shown anywhere a human or agent would look first.
 
+> **Superseded timestamp-format decisions (feat-146-date-time, 2026-09-24):** ADR `8c889262-152b-4b8e-ae2c-75371f7a9edf` supersedes this feature's finding that DEC's `## Updates` heading
+> "already accepts both forms" (date-only and full timestamp): the date-only form is now rejected everywhere, and all entry headings and frontmatter `created`/`updated` use the uniform
+> full date+time contract (`T` written, `T`-or-space accepted). The full-timestamp examples this feature added to `dec_example.md`/`dec_template.md` remain valid.
+
 ### Requirements
 
 - REQ-001: `set_status(id, type, status, superseded_by=None)` must return without writing to disk or bumping `updated` when `status` (or, for `type="adr"` with `superseded_by` given, the composed `f"superseded by {superseded_by}"` value) is identical to the document's current on-disk status, for every dispatched domain (`req`, `uc`, `tsk`, `qa`, `prb`, `gol`, `rsk`, `dec`, `sop`, `feat`, `vcr`, `sysrs`, `adr`).

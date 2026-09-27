@@ -1,9 +1,9 @@
 ---
-created: '2025-06-03 06:27:41.558Z'
+created: '2025-06-03T06:27:41.558Z'
 id: feat-0-template
 status: planning
 type: feat
-updated: '2025-06-15 13:09:56.732Z'
+updated: '2025-06-15T13:09:56.732Z'
 version: 1.0.0
 ---
 

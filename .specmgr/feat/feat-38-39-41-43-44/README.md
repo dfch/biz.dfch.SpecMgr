@@ -15,6 +15,10 @@ version: 1.0.0
 
 This feature bundles five open issues into one sequential effort: #38 (drop the enforced em-dash from update-entry headings in favor of ` - ` or ` : `), #39 (SOP `## Updates` must be newest-first, generalized to parse-enforced ordering across DEC/VCR/TSK as well), #41 (remove the pylint W0622 redefined-builtin warnings for the intentional `id`/`type` parameter names), #43 (extend feat-36-delete's `_path_safety` guards to `get_<d>`, `update`, and `set_status`), and #44 (unify every artifact timestamp into exactly two variants, `yyyy-MM-dd` and `yyyy-MM-dd HH:mm:ss.fff` + (`Z` or `±HH:mm`), with frontmatter `created`/`updated` strictly enforced as date+time). Each issue is its own phase (Phases 1 to 5). Phases 1 to 3 share the update-entry surface and are strictly ordered; Phases 4 and 5 are independent of each other and slot in after Phase 3. No phase implements another phase's scope.
 
+> **Superseded timestamp-format decisions (feat-146-date-time, 2026-09-24):** ADR `8c889262-152b-4b8e-ae2c-75371f7a9edf` supersedes this feature's D4/D5/D7/D11 and REQ-004/ACC-004/ACC-005:
+> entry headings in the six entry-heading domains and frontmatter `created`/`updated` in all twelve whole-body domains now share one uniform full date+time form (date-only rejected everywhere);
+> the MCP write side emits `T`-separated values, and the space-separated form is still accepted on read.
+
 ### Requirements
 
 - REQ-001: The SOP `UpdateEntry` and the FEAT `UpdateEntry`/`DecisionEntry` heading regexes accept exactly ` - ` or ` : ` as the separator between timestamp and title and reject the em-dash `—` (strictly: em-dash entries fail to parse).

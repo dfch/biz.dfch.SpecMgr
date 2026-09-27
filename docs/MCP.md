@@ -3,7 +3,7 @@
 Auto-generated from the live `biz.dfch.specmgr.server:mcp` registration --
 do not edit by hand, run `specmgr mcp-docs` instead (see `AGENTS.md`).
 
-44 resource(s), 1 resource template(s), 91 tool(s), 32 prompt(s).
+44 resource(s), 1 resource template(s), 92 tool(s), 32 prompt(s).
 
 ## Table of Contents
 
@@ -400,6 +400,7 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`create_uc`](#tool-create_uc) | Create a new use case: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the use-case base directory. Returns the newly created document's frontmatter only (no body); use the corresponding `get_uc` tool to fetch the full document afterward. |
 | [`create_vcr`](#tool-create_vcr) | Create a new verification case record: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the verification case record base directory. Returns the newly created document's frontmatter only (no body); use the corresponding `get_vcr` tool to fetch the full document afterward. |
 | [`delete`](#tool-delete) | Permanently delete an existing document from disk across the whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs; `adr` is not supported). Resolves the document by `id`, takes the domain lock, and removes it: the single `*.md` file for every flat domain (every whole-body domain except `feat`), or the entire `<base>/<id>/` folder for `feat`. Returns the deleted path as a string. An invalid `id` (path-injection attempt or wrong format) is a `ValueError` raised before any file access; a missing document is the domain's own `XNotFoundError`; an I/O failure is a `DeleteError`. This is the sole delete entry point -- the former per-domain `delete_<d>` tools are removed. |
+| [`edit`](#tool-edit) | Surgical, exact-match string replacement of an existing document's frontmatter-stripped body across the whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs; `adr` is not supported -- an explicit pre-dispatch `ValueError`, unlike `update`'s inherited `KeyError`). Read the current body via the corresponding `get_<d>(id, raw=True)` first -- the read-before-edit step is a client convention, not server-enforced. Use `edit` for a surgical string replacement within an existing body; use the generic `update` tool for a whole-body or line-range replacement instead. The YAML frontmatter is never addressable (body only). The edit is 2-fold: stage 1 requires `old_str` to match the on-disk body byte-exactly -- uniquely, unless `replace_all` is `true`, in which case every exact occurrence is rewritten -- and stage 2 validates the *edited* body as a whole document; the document is written to disk only if both stages pass, and nothing is written on any failure (the file stays byte-unchanged). An empty `new_str` is a pure deletion (legal iff stage 2 validates). Matching is pure byte-exact with no line-ending normalization (an `old_str` containing `\n` will not match a CRLF body), no BOM handling, and no fuzzy/regex fallback. An invalid `id` (path-injection attempt or wrong format for `type`) is a `ValueError` raised before any file access. Returns the updated frontmatter only (no body; `updated` bumped); use the corresponding `get_<d>` tool to fetch the full document afterward. |
 | [`get_adr`](#tool-get_adr) | Read, parse, and return a full ADR document (frontmatter and body) by its id. An invalid id (path-injection attempt or wrong format) is a ValueError raised before any file access. |
 | [`get_dec`](#tool-get_dec) | Read, parse, and return a full decision document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. With raw=True, optional read-style `offset`/`limit` window the raw read: `offset` (1-based, default 1) is the first body line to return, `limit` (line count, default through end of body) how many; out-of-range values clamp (`offset > N` returns the empty string), and coordinates with raw=False raise ValueError. A document that exists but fails to parse returns a `ParseFailureResult` (`error`/`path`/`id`) instead of raising; its `error` text carries the same parse defect as the domain's own `list` tool's failed-row `error` for the same file (identical field path and cause, though the trailing pydantic documentation line may differ by read order/cache state; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c, Option B, 2026-09-26 -- the str-faithful reconstruction is tracked as a follow-up issue). An invalid id (path-injection attempt or wrong format) is also a ValueError, raised before any file access. |
 | [`get_dec_example`](#tool-get_dec_example) | Return a complete, valid sample decision document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example. |
@@ -620,6 +621,20 @@ Permanently delete an existing document from disk across the whole-body domains 
 | --- | --- | --- |
 | `id` | `string` | Yes |
 | `type` | `string (enum: req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs)` | Yes |
+
+### Tool: edit
+
+**Edit document**
+
+Surgical, exact-match string replacement of an existing document's frontmatter-stripped body across the whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs; `adr` is not supported -- an explicit pre-dispatch `ValueError`, unlike `update`'s inherited `KeyError`). Read the current body via the corresponding `get_<d>(id, raw=True)` first -- the read-before-edit step is a client convention, not server-enforced. Use `edit` for a surgical string replacement within an existing body; use the generic `update` tool for a whole-body or line-range replacement instead. The YAML frontmatter is never addressable (body only). The edit is 2-fold: stage 1 requires `old_str` to match the on-disk body byte-exactly -- uniquely, unless `replace_all` is `true`, in which case every exact occurrence is rewritten -- and stage 2 validates the *edited* body as a whole document; the document is written to disk only if both stages pass, and nothing is written on any failure (the file stays byte-unchanged). An empty `new_str` is a pure deletion (legal iff stage 2 validates). Matching is pure byte-exact with no line-ending normalization (an `old_str` containing `\n` will not match a CRLF body), no BOM handling, and no fuzzy/regex fallback. An invalid `id` (path-injection attempt or wrong format for `type`) is a `ValueError` raised before any file access. Returns the updated frontmatter only (no body; `updated` bumped); use the corresponding `get_<d>` tool to fetch the full document afterward.
+
+| Parameter | Type | Required |
+| --- | --- | --- |
+| `id` | `string` | Yes |
+| `type` | `string (enum: req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs)` | Yes |
+| `old_str` | `string` | Yes |
+| `new_str` | `string` | Yes |
+| `replace_all` | `boolean` | No |
 
 ### Tool: get_adr
 
@@ -1388,7 +1403,7 @@ Re-read and re-parse an ADR by id, letting the models' own Pydantic validators r
 | [`create_uc`](#prompt-create_uc) | Guides the LLM through checking for an existing similar use case, gathering the required information, and driving create_uc/validate to author a new UC document. |
 | [`create_vcr`](#prompt-create_vcr) | Guides the LLM through checking for an existing similar verification case record, gathering the required information, and driving create_vcr/validate to author a new VCR document. |
 | [`implement_task`](#prompt-implement_task) | Reads an existing task list by id, builds a TodoWrite list from its items, and uses the question tool to resolve ambiguity before proceeding. |
-| [`refine`](#prompt-refine) | Guides the LLM through appending a batch of new, unanswered interview questions (each with an empty placeholder answer) to an existing QA document, for one or more of the nine ISO/IEC 25010:2023 quality characteristics. |
+| [`refine`](#prompt-refine) | Guides the LLM through appending a batch of new, unanswered interview questions (each numbered with its target category's next `**<d>.<NNNN>**: ` prefix and carrying the `TODO: answer pending` placeholder in place of an answer) to an existing QA document, for `Elicitation Context` or one or more of the nine ISO/IEC 25010:2023 quality characteristics. |
 | [`repair`](#prompt-repair) | Guides the LLM through repairing a whole-body specmgr document that currently fails to parse: discover it via get_<d>(id)'s non-raising parse-failure result (error/path/id -- the error text carrying the same parse defect as list_<d>()'s failed row for the same file, modulo a possibly-missing trailing pydantic documentation line; every whole-body domain, ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c) when an id is given, or list_<d>()'s '<failed to parse>' failed row without one; read the raw file with the host's own file-read tool, fix only what the error addresses while preserving the frontmatter id/created/status/version byte-for-byte (a repair is not an edit), loop validate(type, content, full=True) until green, write the repaired text back to the same path with the host's own file-write tool (never via the generic update tool, which is structurally unable to repair a document that fails to parse), then confirm the repair against the file as it now exists on disk with one more real get_<d>(id)/list_<d>() call (success: the parsed document, not an error-carrying result). Degrades to diagnose-only on a host without file read/write tools. ADR is out of scope. |
 | [`update_adr`](#prompt-update_adr) | Guides the LLM through revising an existing ADR by id: reading current state, applying the requested change with the right tool, and validating. |
 | [`update_adr_test`](#prompt-update_adr_test) | Experimental, strictly step-gated variant of update_adr for A/B comparison: the same read-first/map-to-tool/validate-last flow, rewritten as hard numbered gates instead of narrated steps. |
@@ -1543,7 +1558,7 @@ Reads an existing task list by id, builds a TodoWrite list from its items, and u
 
 ### Prompt: refine
 
-Guides the LLM through appending a batch of new, unanswered interview questions (each with an empty placeholder answer) to an existing QA document, for one or more of the nine ISO/IEC 25010:2023 quality characteristics.
+Guides the LLM through appending a batch of new, unanswered interview questions (each numbered with its target category's next `**<d>.<NNNN>**: ` prefix and carrying the `TODO: answer pending` placeholder in place of an answer) to an existing QA document, for `Elicitation Context` or one or more of the nine ISO/IEC 25010:2023 quality characteristics.
 
 | Argument | Required | Description |
 | --- | --- | --- |

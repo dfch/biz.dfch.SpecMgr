@@ -19466,19 +19466,21 @@ existing `Tags` model.
 
 `### {timestamp} ( - | : ) {title}` under `## Updates` -- one update entry.
 
-The H3 heading text carries a timestamp and a title, joined by either
-``" - "`` (space, hyphen, space) or ``" : "`` (space, colon, space):
-e.g. `### 2026-08-27 - Confirmed` or
-`### 2026-08-27 14:30:00.000+02:00 : Confirmed`. The em-dash separator
-is rejected. The timestamp is either a bare ``yyyy-MM-dd`` date or the
-full ``yyyy-MM-dd HH:mm:ss.fff`` + explicit UTC offset (``+02:00``,
-``-05:00``) or ``Z`` for UTC variant (REQ-004) -- deliberately **not**
-the same format as frontmatter ``created``/``updated``; this format is
+The H3 heading text carries a full date+time timestamp and a title,
+joined by either ``" - "`` (space, hyphen, space) or ``" : "`` (space,
+colon, space): e.g. `### 2026-08-27 14:30:00.000+02:00 - Confirmed` or
+`### 2026-08-27T14:30:00.000+02:00 : Confirmed`. The em-dash separator
+is rejected. The timestamp is the full ``yyyy-MM-dd`` + (``T`` or
+space) + ``HH:mm:ss.fff`` + explicit UTC offset (``+02:00``,
+``-05:00``) or ``Z`` for UTC variant -- the same full format as
+frontmatter ``created``/``updated`` (both separators accepted, date-only
+rejected; ADR 8c889262-152b-4b8e-ae2c-75371f7a9edf); this format is
 scoped to `## Updates` entry headings only, which are hand/LLM-authored
 body content. Constrained by the regex `@alias` above and enforced by
 `match_alias` (`re.fullmatch`) at parse time -- a heading that does not
-start with a valid date, an em-dash separator, or a missing
-`` - ``/`` : `` title all fail the parse eagerly.
+start with a valid full timestamp (a date-only value fails too), an
+em-dash separator, or a missing `` - ``/`` : `` title all fail the
+parse eagerly.
 
 Parameters
 ----------

@@ -19,10 +19,10 @@ version: 1.0.0
 
 ## Recent Updates
 
-### 2026-08-20 - Migration in progress
+### 2026-08-20 00:00:00.000Z - Migration in progress
 
 Migrated 5 of 12 widgets so far; no regressions found.
 
-### 2026-08-16 - Kickoff
+### 2026-08-16 00:00:00.000Z - Kickoff
 
 Started the migration; inventoried 12 widgets currently registered against WidgetRegistryV1.

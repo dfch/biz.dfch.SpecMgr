@@ -24,38 +24,33 @@ package deliberately does not refactor -- see
 factored out here so the newer `sop.Updates`/`dec.Updates`/`vcr.Updates`/
 `tsk.RecentUpdates` containers share one implementation instead of four
 near-identical copies of the same `model_validator`.
+
+Every caller only ever passes full date+time timestamps (the shared
+`yyyy-MM-dd` + (`T` or space) + `HH:mm:ss.fff` + `Z`/`±HH:MM` fragment all
+six entry-heading domains' own `@alias` regexes enforce; date-only values
+are rejected at parse time -- ADR
+8c889262-152b-4b8e-ae2c-75371f7a9edf), so the comparison below is a plain
+aware `datetime.fromisoformat` pair comparison, with no mixed-granularity
+(day-granularity for date-only pairs) rule.
 """
 
 from __future__ import annotations
 
 from datetime import datetime
 
-#: A date-only timestamp (`yyyy-MM-dd`) is always exactly 10 characters;
-#: anything longer carries a time component. Every caller only ever passes
-#: strings that already matched their own `@alias` regex (either the bare
-#: date variant or the full date+time+milliseconds+offset variant), so this
-#: length check is a reliable, allocation-free way to tell them apart
-#: without re-deriving/duplicating that regex here.
-_DATE_ONLY_LENGTH = 10
-
 
 def validate_newest_first(timestamps: list[str], label: str) -> None:
     """Assert that `timestamps` are ordered newest-first (non-increasing).
 
     Each consecutive pair is compared with `datetime.fromisoformat` (aware
-    comparison; `Z` is supported by `fromisoformat` on Python 3.11+, this
-    package's floor). Mixed-granularity rule: when either side of a pair is
-    a date-only value (`yyyy-MM-dd`, no time component), the comparison
-    happens at day granularity (`.date()`) instead of full `datetime`
-    precision -- a date-only entry and a same-day date+time entry are
-    therefore treated as equal, not ordered against each other by the time
-    component neither, or only one, of them carries. Equal values (same
-    day, or identical timestamps) are always allowed (`>=`, not `>`),
-    matching the FEAT precedent's own non-strict "newest-first" semantics.
+    comparison; `Z` and the space separator are both supported by
+    `fromisoformat` on Python 3.11+, this package's floor). Equal
+    timestamps are always allowed (`>=`, not `>`), matching the FEAT
+    precedent's own non-strict "newest-first" semantics.
 
     Args:
-        timestamps: The entries' own timestamp strings, in document order
-            (index 0 is the first/topmost entry).
+        timestamps: The entries' own full date+time timestamp strings, in
+            document order (index 0 is the first/topmost entry).
         label: The calling container's own name (e.g. `"Updates"`,
             `"RecentUpdates"`), used only to prefix the assertion message.
 
@@ -67,12 +62,4 @@ def validate_newest_first(timestamps: list[str], label: str) -> None:
     for earlier, later in zip(timestamps, timestamps[1:]):
         earlier_dt = datetime.fromisoformat(earlier)
         later_dt = datetime.fromisoformat(later)
-        if len(earlier) == _DATE_ONLY_LENGTH or len(later) == _DATE_ONLY_LENGTH:
-            earlier_value: datetime | object = earlier_dt.date()
-            later_value: datetime | object = later_dt.date()
-        else:
-            earlier_value = earlier_dt
-            later_value = later_dt
-        assert earlier_value >= later_value, (  # type: ignore[operator]
-            f"{label}: entries must be newest-first; {earlier!r} precedes {later!r}"
-        )
+        assert earlier_dt >= later_dt, f"{label}: entries must be newest-first; {earlier!r} precedes {later!r}"

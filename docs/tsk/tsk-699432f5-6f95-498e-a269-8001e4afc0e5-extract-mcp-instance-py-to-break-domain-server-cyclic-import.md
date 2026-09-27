@@ -21,6 +21,6 @@ version: 1.0.0
 
 ## Recent Updates
 
-### 2026-08-19 - Created
+### 2026-08-19 00:00:00.000Z - Created
 
 Created from feat-7-various-improvements Task 0.22, following ADR 3bf0326f-065a-424c-a2b9-87e5d5bcfa99's decision to extract the `MCPServer` singleton into a leaf module. No implementation started yet.

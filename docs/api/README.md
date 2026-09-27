@@ -132,8 +132,9 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general.tools._path_safety`](biz.dfch.specmgr.general.tools._path_safety.md) — Reusable, doc-type-agnostic path-safety assertions for document ids and
 - [`biz.dfch.specmgr.general.tools._references`](biz.dfch.specmgr.general.tools._references.md) — Shared cross-reference extraction and per-domain target resolution
 - [`biz.dfch.specmgr.general.tools._splice`](biz.dfch.specmgr.general.tools._splice.md) — Frontmatter-stripped body extraction, body-line splicing, and body-line
-- [`biz.dfch.specmgr.general.tools._timestamps`](biz.dfch.specmgr.general.tools._timestamps.md) — Shared, private timestamp-formatting helpers (feat-38-39-41-43-44 Phase 3, Task 3.1).
+- [`biz.dfch.specmgr.general.tools._timestamps`](biz.dfch.specmgr.general.tools._timestamps.md) — Shared, private timestamp-formatting helpers for the MCP write side (feat-38-39-41-43-44 Phase 3,
 - [`biz.dfch.specmgr.general.tools.delete`](biz.dfch.specmgr.general.tools.delete.md) — ``@mcp.tool()`` wrapper: delete (feat-36-delete, Phase 2).
+- [`biz.dfch.specmgr.general.tools.edit`](biz.dfch.specmgr.general.tools.edit.md) — ``@mcp.tool()`` wrapper: edit (feat-159-edit, GitHub issue #159).
 - [`biz.dfch.specmgr.general.tools.list_references`](biz.dfch.specmgr.general.tools.list_references.md) — ``@mcp.tool()`` wrapper: list_references (feat-144-ref-artifact, Phase 2).
 - [`biz.dfch.specmgr.general.tools.mdformat`](biz.dfch.specmgr.general.tools.mdformat.md) — ``@mcp.tool()`` wrapper: mdformat.
 - [`biz.dfch.specmgr.general.tools.set_classification`](biz.dfch.specmgr.general.tools.set_classification.md) — ``@mcp.tool()`` wrapper: set_classification (feat-56-classification, Phase 2).
@@ -179,6 +180,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.models.md._frontmatter_parse`](biz.dfch.specmgr.models.md._frontmatter_parse.md) — Shared frontmatter-parsing error enrichment (feat-27-validation Phase 2, Tasks 2.1/2.2).
 - [`biz.dfch.specmgr.models.md._markdown`](biz.dfch.specmgr.models.md._markdown.md) — Markdown shared instance.
 - [`biz.dfch.specmgr.models.md._ordering`](biz.dfch.specmgr.models.md._ordering.md) — Shared, private newest-first ordering validation helper for `models.md` domain body models.
+- [`biz.dfch.specmgr.models.md._timestamps`](biz.dfch.specmgr.models.md._timestamps.md) — Shared, private ``T``-canonical datetime-formatting helpers for the ``models.md`` frontmatter
 - [`biz.dfch.specmgr.models.md._util`](biz.dfch.specmgr.models.md._util.md) — Shared, private validation helpers for the ``models.md`` subpackage.
 - [`biz.dfch.specmgr.models.md.alias`](biz.dfch.specmgr.models.md.alias.md) — Alias decorator for MarkdownStr class name transformation.
 - [`biz.dfch.specmgr.models.md.alias_match`](biz.dfch.specmgr.models.md.alias_match.md) — Match a parsed heading's actual text against a class's declared `@alias`.
@@ -244,10 +246,10 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.qa.models.v2.parser`](biz.dfch.specmgr.qa.models.v2.parser.md) — Parse raw Question and Answer (QA) ``.md`` text into a :class:`QaDocument` (v2).
 - [`biz.dfch.specmgr.qa.models.v2.question_answer`](biz.dfch.specmgr.qa.models.v2.question_answer.md) — One adjacent question/answer pair with no heading of its own (QA v2).
 - [`biz.dfch.specmgr.qa.models.v2.summary`](biz.dfch.specmgr.qa.models.v2.summary.md) — Pydantic model for one line of QA listing output.
-- [`biz.dfch.specmgr.qa.prompts`](biz.dfch.specmgr.qa.prompts.md) — MCP prompt registrations for Question and Answer (QA) documents (Phase 4, Task 4.3).
-- [`biz.dfch.specmgr.qa.prompts.create_qa`](biz.dfch.specmgr.qa.prompts.create_qa.md) — ``@mcp.prompt()``: create_qa (Phase 4, Task 4.3).
-- [`biz.dfch.specmgr.qa.prompts.refine`](biz.dfch.specmgr.qa.prompts.refine.md) — ``@mcp.prompt()``: refine (Phase 4, Task 4.3).
-- [`biz.dfch.specmgr.qa.prompts.update_qa`](biz.dfch.specmgr.qa.prompts.update_qa.md) — ``@mcp.prompt()``: update_qa (Phase 4, Task 4.3).
+- [`biz.dfch.specmgr.qa.prompts`](biz.dfch.specmgr.qa.prompts.md) — MCP prompt registrations for Question and Answer (QA) documents (feat-12-qa-artifact Phase 4, Task 4.3).
+- [`biz.dfch.specmgr.qa.prompts.create_qa`](biz.dfch.specmgr.qa.prompts.create_qa.md) — ``@mcp.prompt()``: create_qa (feat-12-qa-artifact Phase 4, Task 4.3).
+- [`biz.dfch.specmgr.qa.prompts.refine`](biz.dfch.specmgr.qa.prompts.refine.md) — ``@mcp.prompt()``: refine (feat-7-various-improvements Phase 0, Task 0.19).
+- [`biz.dfch.specmgr.qa.prompts.update_qa`](biz.dfch.specmgr.qa.prompts.update_qa.md) — ``@mcp.prompt()``: update_qa (feat-12-qa-artifact Phase 4, Task 4.3).
 - [`biz.dfch.specmgr.qa.resources`](biz.dfch.specmgr.qa.resources.md) — MCP resource registrations for Question and Answer (QA) documents (Phase 4, Task 4.2).
 - [`biz.dfch.specmgr.qa.resources.qa_example`](biz.dfch.specmgr.qa.resources.qa_example.md) — Resource: specmgr://qa/example (Phase 4, Task 4.2).
 - [`biz.dfch.specmgr.qa.resources.qa_schema`](biz.dfch.specmgr.qa.resources.qa_schema.md) — Resource: specmgr://qa/schema (Phase 4, Task 4.2).
