@@ -282,10 +282,10 @@ First-line docstrings from each module, organized by domain:
 - `qa/models/v2/parser.py` — Parse raw Question and Answer (QA) ``.md`` text into a :class:`QaDocument` (v2).
 - `qa/models/v2/question_answer.py` — One adjacent question/answer pair with no heading of its own (QA v2).
 - `qa/models/v2/summary.py` — Pydantic model for one line of QA listing output.
-- `qa/prompts/__init__.py` — MCP prompt registrations for Question and Answer (QA) documents (Phase 4, Task 4.3).
-- `qa/prompts/create_qa.py` — ``@mcp.prompt()``: create_qa (Phase 4, Task 4.3).
-- `qa/prompts/refine.py` — ``@mcp.prompt()``: refine (Phase 4, Task 4.3).
-- `qa/prompts/update_qa.py` — ``@mcp.prompt()``: update_qa (Phase 4, Task 4.3).
+- `qa/prompts/__init__.py` — MCP prompt registrations for Question and Answer (QA) documents (feat-12-qa-artifact Phase 4, Task 4.3).
+- `qa/prompts/create_qa.py` — ``@mcp.prompt()``: create_qa (feat-12-qa-artifact Phase 4, Task 4.3).
+- `qa/prompts/refine.py` — ``@mcp.prompt()``: refine (feat-7-various-improvements Phase 0, Task 0.19).
+- `qa/prompts/update_qa.py` — ``@mcp.prompt()``: update_qa (feat-12-qa-artifact Phase 4, Task 4.3).
 - `qa/resources/__init__.py` — MCP resource registrations for Question and Answer (QA) documents (Phase 4, Task 4.2).
 - `qa/resources/qa_example.py` — Resource: specmgr://qa/example (Phase 4, Task 4.2).
 - `qa/resources/qa_schema.py` — Resource: specmgr://qa/schema (Phase 4, Task 4.2).

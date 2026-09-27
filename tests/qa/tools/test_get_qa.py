@@ -99,7 +99,7 @@ _V1_SHAPED_DOC = textwrap.dedent(
 
     ### What must happen?
 
-    > Is this acceptable?
+    > **1.0010**: Is this acceptable?
 
     Yes, it is acceptable.
 

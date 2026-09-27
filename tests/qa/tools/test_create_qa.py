@@ -25,6 +25,8 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
+from pydantic import ValidationError
+
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.models.md import CURRENT_SCHEMA_VERSION
 from biz.dfch.specmgr.qa.models.v2 import QaDocument, QaFrontmatter, parse_qa
@@ -69,6 +71,49 @@ _MINIMAL_BODY = textwrap.dedent(
 )
 
 _MALFORMED_BODY = "# Title\n\nJust a paragraph, no recognized QA sections.\n"
+
+# A structurally valid v2 body whose single question lacks the bold
+# `**<d>.<NNNN>**: ` number prefix (feat-156) -- `create_qa` must reject it
+# with the validator's own `pydantic.ValidationError` and write no file.
+_UNNUMBERED_QUESTION_BODY = textwrap.dedent(
+    """\
+    # Some QA Title
+
+    ## General
+
+    ### Introduction
+
+    Some intro text.
+
+    ### Raw Requirements
+
+    Some raw requirements text.
+
+    ## Elicitation Context
+
+    ## Functional Suitability
+
+    > Is this acceptable?
+
+    Yes, it is acceptable.
+
+    ## Performance Efficiency
+
+    ## Compatibility
+
+    ## Interaction Capability
+
+    ## Reliability
+
+    ## Security
+
+    ## Maintainability
+
+    ## Flexibility
+
+    ## Safety
+    """
+)
 
 
 class TempQaDirTestCase(unittest.TestCase):
@@ -129,15 +174,27 @@ class TestCreateQa(TempQaDirTestCase):
     def test_invalid_content_raises_and_writes_nothing(self) -> None:
         """A structurally invalid body must raise AssertionError and write no file at all.
 
-        Unlike `req.tools.create_req` (whose body has a field with a closed-set
-        validator, e.g. `## Level`), `qa`'s body has no caller-controllable field
-        that can trigger `pydantic.ValidationError` on its own -- every category
-        heading is either fixed text (a structural match, not a field value) or
-        fully optional. So there is only one error channel to exercise here.
+        The other error channel -- a field-level `pydantic.ValidationError` --
+        is exercised by `test_invalid_question_prefix_raises_validation_error_and_writes_nothing`
+        (a question lacking its own bold `**<d>.<NNNN>**: ` number prefix,
+        feat-156), which gives `qa` the same caller-controllable field-level
+        `pydantic.ValidationError` path `req.tools.create_req`'s closed-set
+        fields (e.g. `## Level`) already had.
         """
         with self.assertRaises(AssertionError):
             create_qa(_MALFORMED_BODY)
 
+        self.assertFalse(qa_base_dir().exists())
+
+    def test_invalid_question_prefix_raises_validation_error_and_writes_nothing(self) -> None:
+        """A structurally valid body whose question lacks the bold `**<d>.<NNNN>**: `
+        number prefix (feat-156) must raise `pydantic.ValidationError` and write no
+        file at all (feat-156 ACC-001).
+        """
+        with self.assertRaises(ValidationError) as ctx:
+            create_qa(_UNNUMBERED_QUESTION_BODY)
+
+        self.assertIn("question must start with the bold question-number prefix", str(ctx.exception))
         self.assertFalse(qa_base_dir().exists())
 
 

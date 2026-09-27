@@ -1403,7 +1403,7 @@ Re-read and re-parse an ADR by id, letting the models' own Pydantic validators r
 | [`create_uc`](#prompt-create_uc) | Guides the LLM through checking for an existing similar use case, gathering the required information, and driving create_uc/validate to author a new UC document. |
 | [`create_vcr`](#prompt-create_vcr) | Guides the LLM through checking for an existing similar verification case record, gathering the required information, and driving create_vcr/validate to author a new VCR document. |
 | [`implement_task`](#prompt-implement_task) | Reads an existing task list by id, builds a TodoWrite list from its items, and uses the question tool to resolve ambiguity before proceeding. |
-| [`refine`](#prompt-refine) | Guides the LLM through appending a batch of new, unanswered interview questions (each with an empty placeholder answer) to an existing QA document, for one or more of the nine ISO/IEC 25010:2023 quality characteristics. |
+| [`refine`](#prompt-refine) | Guides the LLM through appending a batch of new, unanswered interview questions (each numbered with its target category's next `**<d>.<NNNN>**: ` prefix and carrying the `TODO: answer pending` placeholder in place of an answer) to an existing QA document, for `Elicitation Context` or one or more of the nine ISO/IEC 25010:2023 quality characteristics. |
 | [`update_adr`](#prompt-update_adr) | Guides the LLM through revising an existing ADR by id: reading current state, applying the requested change with the right tool, and validating. |
 | [`update_adr_test`](#prompt-update_adr_test) | Experimental, strictly step-gated variant of update_adr for A/B comparison: the same read-first/map-to-tool/validate-last flow, rewritten as hard numbered gates instead of narrated steps. |
 | [`update_dec`](#prompt-update_dec) | Guides the LLM through revising an existing decision by id: reading current state, applying the requested change with the right tool, and validating. |
@@ -1557,7 +1557,7 @@ Reads an existing task list by id, builds a TodoWrite list from its items, and u
 
 ### Prompt: refine
 
-Guides the LLM through appending a batch of new, unanswered interview questions (each with an empty placeholder answer) to an existing QA document, for one or more of the nine ISO/IEC 25010:2023 quality characteristics.
+Guides the LLM through appending a batch of new, unanswered interview questions (each numbered with its target category's next `**<d>.<NNNN>**: ` prefix and carrying the `TODO: answer pending` placeholder in place of an answer) to an existing QA document, for `Elicitation Context` or one or more of the nine ISO/IEC 25010:2023 quality characteristics.
 
 | Argument | Required | Description |
 | --- | --- | --- |

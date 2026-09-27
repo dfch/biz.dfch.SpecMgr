@@ -325,7 +325,7 @@
       "type": "object"
     },
     "QaAnswer": {
-      "description": "One `QaQuestionAnswer`'s free-form prose answer -- an opaque, unparsed markdown blob.\n\nDeliberately **not** heading-anchored: since further adjacent Q&A pairs\ncan follow within the same enclosing category section, the base\n`MarkdownStr.get_extent`'s \"swallow everything remaining\" (correct for a\nfield declared *last* in a heading-bounded section) would be wrong here\n-- so this class overrides `get_extent` to stop at the first depth-0\noccurrence of a heading (any level), a block quote, or a comment, and\nonly runs to the end of the given text when none of those follow.\n\nAdds a `text` computed property (mirroring\n`MarkdownParagraph.text`/`MarkdownSection.text`) so this otherwise-private\n`_value` is reachable through `model_dump()`/`model_dump_json()`.",
+      "description": "One `QaQuestionAnswer`'s free-form prose answer -- an opaque, unparsed markdown blob.\n\nAn unanswered question carries a `TODO: ` placeholder (e.g.\n`TODO: answer pending`) as its answer text, replaced by the real answer\nonce the question is answered -- the placeholder is a pure authoring\nconvention, never parsed or validated by this class (feat-156\nREQ-007/008).\n\nDeliberately **not** heading-anchored: since further adjacent Q&A pairs\ncan follow within the same enclosing category section, the base\n`MarkdownStr.get_extent`'s \"swallow everything remaining\" (correct for a\nfield declared *last* in a heading-bounded section) would be wrong here\n-- so this class overrides `get_extent` to stop at the first depth-0\noccurrence of a heading (any level), a block quote, or a comment, and\nonly runs to the end of the given text when none of those follow.\n\nAdds a `text` computed property (mirroring\n`MarkdownParagraph.text`/`MarkdownSection.text`) so this otherwise-private\n`_value` is reachable through `model_dump()`/`model_dump_json()`.",
       "properties": {},
       "title": "QaAnswer",
       "type": "object"
@@ -404,7 +404,7 @@
       "type": "object"
     },
     "QaQuestionAnswer": {
-      "description": "One adjacent question/answer pair, with no heading of its own (QA v2).\n\nAll three fields are independently optional. A comment with nothing\nrecognizable following it (end of section, or another heading right\nafter) becomes its own final `QaQuestionAnswer` with only `comment` set\n(`question`/`answer` both `None`) -- accepted, not an error.\n\nNo override of `from_text`/`__str__`/`_get_field_names()` is needed --\nall three fields are plain `Optional[SingleClass]`, which the generic,\nunmodified `MarkdownStr` engine already distributes/renders correctly.\n\nParameters\n----------\ncomment:\n    Optional leading `<!-- ... -->` comment, belonging to the question\n    that follows it.\nquestion:\n    The interviewer's question, as a block quote. Optional.\nanswer:\n    The interviewee's free-form prose answer. Optional.",
+      "description": "One adjacent question/answer pair, with no heading of its own (QA v2).\n\nAll three fields are independently optional. A comment with nothing\nrecognizable following it (end of section, or another heading right\nafter) becomes its own final `QaQuestionAnswer` with only `comment` set\n(`question`/`answer` both `None`) -- accepted, not an error.\n\nNo override of `from_text`/`__str__`/`_get_field_names()` is needed --\nall three fields are plain `Optional[SingleClass]`, which the generic,\nunmodified `MarkdownStr` engine already distributes/renders correctly.\n\nParameters\n----------\ncomment:\n    Optional leading `<!-- ... -->` comment, belonging to the question\n    that follows it. Keeps its original free-form purpose (who/when a\n    pair was elicited) -- the question's number never lives here (the\n    number lives in exactly one place: the `question` prefix, feat-156\n    REQ-001).\nquestion:\n    The interviewer's question, as a block quote whose own text must\n    start with the bold question-number prefix `**<d>.<NNNN>**: ` (see\n    `_QUESTION_NUMBER_PREFIX`/`_validate_question`): a single category\n    digit and a 4-digit zero-padded per-category sequence. Once\n    assigned, a number is permanent -- never reused, never renumbered;\n    a removed question leaves a gap (feat-156 REQ-005). Optional.\nanswer:\n    The interviewee's free-form prose answer. An unanswered question is\n    marked by a `TODO: ` placeholder (e.g. `TODO: answer pending`) as\n    its answer text, replaced by the real answer once the question is\n    answered -- a pure authoring convention, not parsed or validated\n    (feat-156 REQ-007/008). Optional.",
       "properties": {
         "answer": {
           "anyOf": [
@@ -416,7 +416,7 @@
             }
           ],
           "default": null,
-          "description": "Free-form prose answer. Optional."
+          "description": "Free-form prose answer. Optional. An unanswered question is marked by a 'TODO: ' placeholder as its answer text (e.g. 'TODO: answer pending'), replaced by the real answer once the question is answered -- a pure authoring convention, not parsed or validated."
         },
         "comment": {
           "anyOf": [
@@ -440,7 +440,7 @@
             }
           ],
           "default": null,
-          "description": "The interviewer's question, as a block quote. Optional."
+          "description": "The interviewer's question, as a block quote whose text must start with the bold question-number prefix '**<d>.<NNNN>**: ' -- a single category digit (0=Elicitation Context, then the 9 ISO/IEC 25010:2023 characteristics in document order) and a 4-digit zero-padded per-category sequence (e.g. '> **1.0010**: What is the expected load?'). The prefix is enforced by a field validator (invisible to this JSON Schema itself); once assigned, a number is permanent (never renumbered or reused; removals leave gaps) and the increment-by-10 convention is a human authoring guideline only. Optional."
         }
       },
       "title": "QaQuestionAnswer",

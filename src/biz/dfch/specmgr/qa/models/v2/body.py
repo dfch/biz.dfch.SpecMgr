@@ -36,13 +36,13 @@ category section. `Qa` is the top-level H1 container:
 
 ## Elicitation Context                          elicitation_context: ElicitationContext
 <!-- optional comment -->                       questions: list[QaQuestionAnswer] | None
-> {question}
+> **<d>.<NNNN>**: {question}
 {opaque answer prose}
 ...
 
 ## Functional Suitability                       functional_suitability: FunctionalSuitability
 <!-- optional comment -->                       questions: list[QaQuestionAnswer] | None
-> {question}
+> **<d>.<NNNN>**: {question}
 {opaque answer prose}
 ...
 

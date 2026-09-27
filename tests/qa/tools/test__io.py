@@ -24,6 +24,8 @@ import textwrap
 import unittest
 from pathlib import Path
 
+from pydantic import ValidationError
+
 from biz.dfch.specmgr.qa.models.v2 import QaDocument
 from biz.dfch.specmgr.qa.tools._io import load_by_id, read_qa
 from biz.dfch.specmgr.qa.tools._paths import QaNotFoundError
@@ -100,6 +102,59 @@ _V1_SHAPED_DOC_TEMPLATE = textwrap.dedent(
 
     ### What must happen?
 
+    > **1.0010**: Is this acceptable?
+
+    Yes, it is acceptable.
+
+    ## Performance Efficiency
+
+    ## Compatibility
+
+    ## Interaction Capability
+
+    ## Reliability
+
+    ## Security
+
+    ## Maintainability
+
+    ## Flexibility
+
+    ## Safety
+    """
+)
+
+# A v2-shaped document (every mandatory section present) whose single question
+# lacks the bold `**<d>.<NNNN>**: ` number prefix (feat-156) -- structurally
+# sound, so `read_qa` must fail with the validator's own actionable
+# `pydantic.ValidationError`, not a structural `AssertionError`.
+_UNNUMBERED_QUESTION_DOC_TEMPLATE = textwrap.dedent(
+    """\
+    ---
+    id: {id}
+    type: qa
+    version: 1.0.0
+    status: draft
+    created: '2026-08-18T00:00:00.000Z'
+    updated: '2026-08-18T00:00:00.000Z'
+    ---
+
+    # Some QA Title
+
+    ## General
+
+    ### Introduction
+
+    Some intro text.
+
+    ### Raw Requirements
+
+    Some raw requirements text.
+
+    ## Elicitation Context
+
+    ## Functional Suitability
+
     > Is this acceptable?
 
     Yes, it is acceptable.
@@ -135,6 +190,13 @@ def _v1_shaped_qa_text(id_: str) -> str:
     return _V1_SHAPED_DOC_TEMPLATE.format(id=id_)
 
 
+def _unnumbered_question_qa_text(id_: str) -> str:
+    """Render a v2-shaped document's text (feat-156) whose single question lacks
+    the bold `**<d>.<NNNN>**: ` number prefix -- now rejected by `qa.models.v2`.
+    """
+    return _UNNUMBERED_QUESTION_DOC_TEMPLATE.format(id=id_)
+
+
 class TestReadQa(unittest.TestCase):
     """Tests for read_qa."""
 
@@ -164,6 +226,21 @@ class TestReadQa(unittest.TestCase):
 
             with self.assertRaises(AssertionError):
                 read_qa(path)
+
+    def test_raises_validation_error_for_unnumbered_question(self) -> None:
+        """A v2-shaped document whose question lacks the bold `**<d>.<NNNN>**: `
+        number prefix (feat-156) must fail `read_qa` with the validator's own
+        actionable `pydantic.ValidationError`, not a structural
+        `AssertionError` (feat-156 ACC-001).
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "doc.md"
+            path.write_text(_unnumbered_question_qa_text("some-id"), encoding="utf-8")
+
+            with self.assertRaises(ValidationError) as ctx:
+                read_qa(path)
+
+            self.assertIn("question must start with the bold question-number prefix", str(ctx.exception))
 
 
 class TestLoadById(unittest.TestCase):

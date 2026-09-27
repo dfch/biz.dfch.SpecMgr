@@ -234,6 +234,45 @@ _QA_MINIMAL_BODY = textwrap.dedent(
     """
 )
 _QA_MALFORMED_BODY = "# Title\n\nJust a paragraph, no recognized QA sections.\n"
+_QA_BAD_FIELD_BODY = textwrap.dedent(
+    """\
+    # Some QA Title
+
+    ## General
+
+    ### Introduction
+
+    Some intro text.
+
+    ### Raw Requirements
+
+    Some raw requirements text.
+
+    ## Elicitation Context
+
+    > A question that lacks the mandatory number prefix.
+
+    An answer to the unnumbered question.
+
+    ## Functional Suitability
+
+    ## Performance Efficiency
+
+    ## Compatibility
+
+    ## Interaction Capability
+
+    ## Reliability
+
+    ## Security
+
+    ## Maintainability
+
+    ## Flexibility
+
+    ## Safety
+    """
+)
 _QA_FULL_DOCUMENT = (
     textwrap.dedent(
         """\
@@ -732,7 +771,7 @@ _CASES: list[_Case] = [
     _Case("req", _REQ_MINIMAL_BODY, _REQ_MALFORMED_BODY, _REQ_FULL_DOCUMENT, _REQ_BAD_FIELD_BODY),
     _Case("uc", _UC_MINIMAL_BODY, _UC_MALFORMED_BODY, _UC_FULL_DOCUMENT, _UC_BAD_FIELD_BODY),
     _Case("tsk", _TSK_MINIMAL_BODY, _TSK_MALFORMED_BODY, _TSK_FULL_DOCUMENT, None),
-    _Case("qa", _QA_MINIMAL_BODY, _QA_MALFORMED_BODY, _QA_FULL_DOCUMENT, None),
+    _Case("qa", _QA_MINIMAL_BODY, _QA_MALFORMED_BODY, _QA_FULL_DOCUMENT, _QA_BAD_FIELD_BODY),
     _Case("prb", _PRB_MINIMAL_BODY, _PRB_MALFORMED_BODY, _PRB_FULL_DOCUMENT, None),
     _Case("gol", _GOL_MINIMAL_BODY, _GOL_MALFORMED_BODY, _GOL_FULL_DOCUMENT, _GOL_BAD_FIELD_BODY),
     _Case("rsk", _RSK_MINIMAL_BODY, _RSK_MALFORMED_BODY, _RSK_FULL_DOCUMENT, None),

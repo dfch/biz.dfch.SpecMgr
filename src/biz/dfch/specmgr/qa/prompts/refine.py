@@ -15,7 +15,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""``@mcp.prompt()``: refine (Phase 4, Task 4.3).
+"""``@mcp.prompt()``: refine (feat-7-various-improvements Phase 0, Task 0.19).
 
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through adding a fresh batch of open interview questions to an *existing*
@@ -24,9 +24,11 @@ Question and Answer (QA) document, one or more of the nine ISO/IEC
 Functional Suitability, Security, Maintainability", or "3 questions for
 each of the 9 main characteristics"). Unlike ``create_qa``/``update_qa``,
 this prompt never elicits or writes an actual answer itself -- each new
-question is appended with an empty ``_(awaiting response)_`` placeholder in
-place of an answer, for a human to fill in directly in the document
-afterwards.
+question is appended numbered with its target category's next
+``**<d>.<NNNN>**: `` prefix (that category's existing max sequence + 10, or
+``0010`` when the category holds no numbered question yet) and carrying the
+``TODO: answer pending`` placeholder in place of an answer, for a human to
+fill in directly in the document afterwards.
 
 Like the ``update_qa`` prompt, this targets an existing document via the
 ``qa/tools/`` surface (``get_qa``, ``list_qa`` -- the last to resolve a
@@ -66,8 +68,10 @@ from ...server import mcp
     title="Add interview questions to a QA document",
     description=(
         "Guides the LLM through appending a batch of new, unanswered interview questions "
-        "(each with an empty placeholder answer) to an existing QA document, for one or more "
-        "of the nine ISO/IEC 25010:2023 quality characteristics."
+        "(each numbered with its target category's next `**<d>.<NNNN>**: ` prefix and "
+        "carrying the `TODO: answer pending` placeholder in place of an answer) to an "
+        "existing QA document, for `Elicitation Context` or one or more of the nine ISO/IEC "
+        "25010:2023 quality characteristics."
     ),
 )
 def refine(id_or_name: str, scope: str | None = None) -> str:

@@ -17,7 +17,7 @@
 
 # pylint: disable=redefined-builtin  # id/type intentionally shadow the builtins: public tool API, issue #41
 
-"""``@mcp.prompt()``: update_qa (Phase 4, Task 4.3).
+"""``@mcp.prompt()``: update_qa (feat-12-qa-artifact Phase 4, Task 4.3).
 
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through revising an existing Question and Answer (QA) document by id, using
