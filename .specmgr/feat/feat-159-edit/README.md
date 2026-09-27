@@ -4,7 +4,7 @@ created: '2026-09-25T18:10:37.035+02:00'
 id: feat-159-edit
 status: planning
 type: feat
-updated: '2026-09-27T00:55:06.845+02:00'
+updated: '2026-09-27T02:19:10.688+02:00'
 version: 1.0.0
 ---
 
@@ -49,25 +49,25 @@ issue #159.
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: A unique exact match rewrites the body and returns the frontmatter with `updated` bumped.
+- [x] ACC-001: A unique exact match rewrites the body and returns the frontmatter with `updated` bumped. Verified in `TestEditHappyPath` (unique-match rewrite + `updated` bump to the patched timestamp, all other frontmatter carried over).
 
-- [ ] ACC-002: A missing `old_str` raises the OC not-found error verbatim (`Could not find oldString in the file. It must match exactly, including whitespace, indentation, and line endings.`) as a plain `ValueError` with no `domain tool (channel)` prefix; the file is byte-unchanged.
+- [x] ACC-002: A missing `old_str` raises the OC not-found error verbatim (`Could not find oldString in the file. It must match exactly, including whitespace, indentation, and line endings.`) as a plain `ValueError` with no `domain tool (channel)` prefix; the file is byte-unchanged. Verified in `TestEditMatchStageOnDisk` + `TestMatchStageUnit` (OC not-found message by full-message equality, plain `ValueError`, byte-unchanged).
 
-- [ ] ACC-003: Multiple matches without `replace_all` raise the OC multiple-matches error verbatim (`Found multiple matches for oldString. Provide more surrounding context to make the match unique.`) as a plain `ValueError` with no `domain tool (channel)` prefix, file byte-unchanged; with `replace_all` all occurrences are rewritten.
+- [x] ACC-003: Multiple matches without `replace_all` raise the OC multiple-matches error verbatim (`Found multiple matches for oldString. Provide more surrounding context to make the match unique.`) as a plain `ValueError` with no `domain tool (channel)` prefix, file byte-unchanged; with `replace_all` all occurrences are rewritten. Verified in `TestEditMatchStageOnDisk` (multiple-matches verbatim, byte-unchanged; `replace_all` full-text-equality success).
 
-- [ ] ACC-004: An edit that yields an invalid document raises the wrapped validation error and nothing is written — the disk write happens only after whole-document validation passes.
+- [x] ACC-004: An edit that yields an invalid document raises the wrapped validation error and nothing is written — the disk write happens only after whole-document validation passes. Verified in `TestEditInvalidResult` (wrapped stage-2 error, per-domain channel, nothing written).
 
-- [ ] ACC-005: An invalid or path-injection `id` raises `ValueError` before any filesystem access, in every domain.
+- [x] ACC-005: An invalid or path-injection `id` raises `ValueError` before any filesystem access, in every domain. Verified in `TestEditInvalidId` + `TestEditDomainNotFound`.
 
-- [ ] ACC-006: All 12 whole-body domains are accepted; the MCP input schema's `type` enum excludes `adr`, and a direct call with `type="adr"` (well-formed UUID `id`) raises the explicit `ValueError` before any filesystem access (pinned test, REQ-004).
+- [x] ACC-006: All 12 whole-body domains are accepted; the MCP input schema's `type` enum excludes `adr`, and a direct call with `type="adr"` (well-formed UUID `id`) raises the explicit `ValueError` before any filesystem access (pinned test, REQ-004). Verified in `TestEditRegistration` (live schema: 12-value enum, `required`, `replace_all`, no `minLength`) + `TestEditUnsupportedType` (pinned `type="adr"` explicit `ValueError` before filesystem access).
 
-- [ ] ACC-007: The `server.py` docstring, `docs/MCP.md`, and `AGENTS.md` reflect the new tool (drift checks pass).
+- [x] ACC-007: The `server.py` docstring, `docs/MCP.md`, and `AGENTS.md` reflect the new tool (drift checks pass). Verified in this phase (Task 4.1): the `server.py` docstring + `docs/MCP.md` + `AGENTS.md`, plus the Task 4.2 drift checks (a second generation run changed nothing).
 
-- [ ] ACC-008: An empty `new_str` deletes the matched text: deleting an optional section succeeds and the document still validates; deleting a mandatory part (e.g. the H1) raises the wrapped validation error and the file is byte-unchanged.
+- [x] ACC-008: An empty `new_str` deletes the matched text: deleting an optional section succeeds and the document still validates; deleting a mandatory part (e.g. the H1) raises the wrapped validation error and the file is byte-unchanged. Verified in `TestEditHappyPath` (empty `new_str` optional-section deletion) + `TestEditInvalidResult` (mandatory H1 deletion → wrapped error, byte-unchanged).
 
-- [ ] ACC-009: The identical-input guard (`No changes to apply: oldString and newString are identical.`) and the empty-`old_str` guard fire before any filesystem access — including for a non-existent document (the guard's `ValueError`, not the domain's not-found error) — in that order.
+- [x] ACC-009: The identical-input guard (`No changes to apply: oldString and newString are identical.`) and the empty-`old_str` guard fire before any filesystem access — including for a non-existent document (the guard's `ValueError`, not the domain's not-found error) — in that order. Verified in `TestEditPublicGuards` (both guards fire before file access, incl. non-existent document, in pinned order).
 
-- [ ] ACC-010: Pure byte-exact matching is pinned: an `old_str` containing `\n` is *not found* in a CRLF-body document (no line-ending normalization, REQ-009).
+- [x] ACC-010: Pure byte-exact matching is pinned: an `old_str` containing `\n` is *not found* in a CRLF-body document (no line-ending normalization, REQ-009). Verified in `TestMatchStageUnit` (the CRLF pin at the `_match_and_replace` level per D10, plus the positive CRLF control).
 
 ### Scope
 
@@ -156,19 +156,23 @@ edit.py carries its own module-level `assert set(_ADAPTERS) == set(WHOLE_BODY_DO
 
 #### Phase 4: Docs & Quality Gate
 
-- [ ] Task 4.1: Update the `server.py` docstring, regenerate `docs/MCP.md` and `docs/api/`, update `AGENTS.md` (the `general/tools/` paragraph names `edit`, including its deliberate `ValueError` divergence from `update`'s `KeyError` for `type="adr"`)
+- [x] Task 4.1: Update the `server.py` docstring, regenerate `docs/MCP.md` and `docs/api/`, update `AGENTS.md` (the `general/tools/` paragraph names `edit`, including its deliberate `ValueError` divergence from `update`'s `KeyError` for `type="adr"`) — status: done (2026-09-27)
 
-- [ ] Task 4.2: Run ruff/pylint/vulture and the full test suite (phase-end quality gate)
+- [x] Task 4.2: Run ruff/pylint/vulture and the full test suite (phase-end quality gate) — status: done (2026-09-27)
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-09-27**: Phase 3 (Tests) complete: `tests/general/tools/test_edit.py` added — 28 test methods (252 per-domain subtests on top) mirroring `test_update.py`'s per-domain `_Case` harness over all 12 whole-body domains (temp `SPECMGR_DOCS_DIR` + `SPECMGR_FEAT_DIR`), pinning every ACC except ACC-007 (docs, Phase 4): the match-stage unit tests (0/1/n occurrences, `replace_all`, empty-`new_str` deletion, the CRLF pin at the `_match_and_replace` level), the public-guard order tests (fire-before-file-access, incl. for a non-existent document, in every domain), the per-domain happy path / not-found / multiple-matches / invalid-result / invalid-id / domain-not-found tool tests, the raw-byte byte-unchanged-on-every-failure-path regression, the `assert_within` spy, the live `mcp.list_tools()` registration/schema test, and the pinned `type="adr"` explicit-`ValueError` test (REQ-004). `edit.py` has 100% statement coverage (290/290) from this file alone, and the phase-end quality gate is green (full suite: 3468 passed, incl. the 28 new). Phase 4 (Docs & Quality Gate) not started.
+**As of 2026-09-27**: All four phases implemented and the phase-end quality gate is green. Phase 2 shipped the tool (`src/biz/dfch/specmgr/general/tools/edit.py` + the `general/tools/__init__.py` wiring), Phase 3 shipped the tests (`tests/general/tools/test_edit.py` — 28 test methods, 252 per-domain subtests, `edit.py` at 100% statement coverage), and Phase 4 shipped the documentation (the `server.py` module-docstring `edit` entry in the "General tools" paragraph, the matching `AGENTS.md` entries — `general/` bullet and the future-domain convention sentence — and the regenerated `docs/api/` + `docs/GENERATED.md`, with `docs/MCP.md` proven a byte-identical no-op and a second generation run changing nothing, i.e. converged drift). ACC-001…ACC-010 are all verified — see the per-ACC evidence annotations in the Acceptance Criteria section above (ACC-007 pinned to this phase's docs edits + the Task 4.2 drift checks). Gate evidence: `ruff format --check` (1719 files already formatted), `ruff check` (all checks passed), `vulture src/ whitelist.py --min-confidence 60` (clean), full suite `pytest -n auto --cov=src` (3468 passed), and the advisory `pylint` run at 8.92/10 (previous run 8.92, +0.00 — no finding on any line this feature touched, beyond the same-class findings `test_edit.py` shares with its `test_update.py` mirror). Awaiting review — the feature's frontmatter `status` will be set to `review` by the orchestrator via the generic `set_status` tool immediately after this phase's commit.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-27T02:19:10.688+02:00 - Phase 4 implemented + feature closeout (Tasks 4.1–4.2 done, ACC-001…ACC-010 verified)
+
+Phase 4 (Docs & Quality Gate) and the feature closeout. Docs (Task 4.1): the `server.py` module docstring's "General tools" paragraph now carries the `edit` entry immediately after `update` — surgical exact-match replacement of the frontmatter-stripped body across the 12 whole-body domains, `adr` excluded via an explicit pre-dispatch `ValueError` (unlike `update`'s inherited `KeyError`, the generic `validate` tool's precedent, ADR 078bf395-0a5f-4afd-84f6-b7a2191a00e6), byte-exact matching with no line-ending normalization (an `old_str` containing `\n` will not match a CRLF body), no BOM handling, no fuzzy/regex fallback, unique unless `replace_all` rewrites every exact occurrence, the 2-fold contract (the *edited* body must still validate as a whole document; written only if both stages pass, nothing written on any failure), an empty `new_str` as a pure deletion legal iff the edited body validates, frontmatter-only return with `updated` bumped, and an invalid `id` a `ValueError` before any file access; the feat-38-39-41-43-44 path-safety note below the enumeration was left untouched (the `edit` entry carries its own safety statement). `AGENTS.md`'s `general/` bullet gained the matching `edit` entry right after `update`, and the "Still genuinely missing / not yet done" future-domain convention sentence now also names one `edit` adapter in the generic `edit` tool (the `edit.py` module-level `_ADAPTERS` drift assert makes a missed entry fail at import); the per-domain bullets were not touched (their "updates go through the generic `update` tool" sentences remain true; per-domain prompt-flow updates are a follow-up feature per D5). Regeneration: `specmgr docs` updated `docs/api/biz.dfch.specmgr.server.md` (the docstring) and `docs/GENERATED.md` (test-file count 362 → 363, converging the Phase-3 delta); `specmgr mcp-docs` was a byte-identical no-op on `docs/MCP.md` (already regenerated by the Phase-2 pre-commit hook); `git status` shows exactly the four intended files; a second full generation run of both commands changed nothing (drift converged). Quality gate (Task 4.2): `uv run --frozen ruff format --check` — 1719 files already formatted; `uv run --frozen ruff check` — all checks passed; `uv run --frozen vulture src/ whitelist.py --min-confidence 60` — clean (exit 0); `uv run --frozen pylint $(git ls-files '*.py')` — advisory score 8.92/10 (previous run 8.92/10, +0.00, exit 30): zero findings on `edit.py` and `general/tools/__init__.py`, and `server.py`'s only findings (the C0413 + 14× W0611 on the intentional trailing side-effect import line) verified identical against the pre-phase file — none on any line this phase touched; `test_edit.py` (Phase 3) carries only same-class findings its `test_update.py` mirror also has (missing test-method docstrings, one line-too-long, too-many-lines, protected-access, consider-using-with, import-outside-toplevel); full suite `uv run --frozen pytest -n auto --cov=src --cov-report=` — 3468 passed (31.12s); docs drift check — a second `specmgr docs` + `specmgr mcp-docs` run left every regenerated file byte-identical. Closeout: all ten acceptance criteria marked done with the test-class evidence annotations above (each verified against `tests/general/tools/test_edit.py`'s actual class/method names), Tasks 4.1/4.2 marked done, and Current Status rewritten as the final awaiting-review state. The frontmatter `status` is deliberately left as-is here — the orchestrator flips it to `review` via the generic `set_status` tool immediately after this phase's commit; only the frontmatter `updated` timestamp was bumped in this phase.
 
 #### 2026-09-27T00:55:06.845+02:00 - Phase 3 implemented (Tasks 3.1–3.4 done)
 
