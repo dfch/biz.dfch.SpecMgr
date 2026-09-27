@@ -15,7 +15,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Tests for the QA v2 `QaAnswer`/`QaQuestionAnswer` models (ACC-001).
+"""Tests for the QA v2 `QaAnswer`/`QaQuestionAnswer` models (feat-14 ACC-001).
 
 Covers `QaAnswer.get_extent`'s bounded terminator scan (heading/block
 quote/comment, independently, and "runs to end of text" when none follow)

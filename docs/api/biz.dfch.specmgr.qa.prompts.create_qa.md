@@ -1,6 +1,6 @@
 # `biz.dfch.specmgr.qa.prompts.create_qa`
 
-``@mcp.prompt()``: create_qa (Phase 4, Task 4.3).
+``@mcp.prompt()``: create_qa (feat-12-qa-artifact Phase 4, Task 4.3).
 
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through drafting a brand-new Question and Answer (QA) document using the

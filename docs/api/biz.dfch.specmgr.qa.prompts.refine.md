@@ -1,6 +1,6 @@
 # `biz.dfch.specmgr.qa.prompts.refine`
 
-``@mcp.prompt()``: refine (Phase 4, Task 4.3).
+``@mcp.prompt()``: refine (feat-7-various-improvements Phase 0, Task 0.19).
 
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through adding a fresh batch of open interview questions to an *existing*

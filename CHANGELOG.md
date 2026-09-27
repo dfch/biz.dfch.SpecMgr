@@ -36,9 +36,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **BREAKING**: a `qa` question lacking the new `**<d>.<NNNN>**: ` bold
   number prefix now fails `parse_qa`/`get_qa`/`update`/`create_qa`
-  validation with an actionable error (feat-156-qa-numbering, GitHub
-  issue #156). No repo-internal migration is needed: no `qa` documents
-  exist under `docs/qa/` on this branch.
+  validation with an actionable error, and a `list_qa` of a directory
+  holding such a document reports it as an inline failed entry (the
+  `<failed to parse>` marker, counted in `error_count`) rather than
+  dropping it silently (feat-156-qa-numbering, GitHub issue #156). No
+  repo-internal migration is needed: no `qa` documents exist under
+  `docs/qa/` on this branch.
 
 ## [0.32.0] - 2026-09-25
 

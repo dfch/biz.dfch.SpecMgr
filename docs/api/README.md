@@ -243,10 +243,10 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.qa.models.v2.parser`](biz.dfch.specmgr.qa.models.v2.parser.md) — Parse raw Question and Answer (QA) ``.md`` text into a :class:`QaDocument` (v2).
 - [`biz.dfch.specmgr.qa.models.v2.question_answer`](biz.dfch.specmgr.qa.models.v2.question_answer.md) — One adjacent question/answer pair with no heading of its own (QA v2).
 - [`biz.dfch.specmgr.qa.models.v2.summary`](biz.dfch.specmgr.qa.models.v2.summary.md) — Pydantic model for one line of QA listing output.
-- [`biz.dfch.specmgr.qa.prompts`](biz.dfch.specmgr.qa.prompts.md) — MCP prompt registrations for Question and Answer (QA) documents (Phase 4, Task 4.3).
-- [`biz.dfch.specmgr.qa.prompts.create_qa`](biz.dfch.specmgr.qa.prompts.create_qa.md) — ``@mcp.prompt()``: create_qa (Phase 4, Task 4.3).
-- [`biz.dfch.specmgr.qa.prompts.refine`](biz.dfch.specmgr.qa.prompts.refine.md) — ``@mcp.prompt()``: refine (Phase 4, Task 4.3).
-- [`biz.dfch.specmgr.qa.prompts.update_qa`](biz.dfch.specmgr.qa.prompts.update_qa.md) — ``@mcp.prompt()``: update_qa (Phase 4, Task 4.3).
+- [`biz.dfch.specmgr.qa.prompts`](biz.dfch.specmgr.qa.prompts.md) — MCP prompt registrations for Question and Answer (QA) documents (feat-12-qa-artifact Phase 4, Task 4.3).
+- [`biz.dfch.specmgr.qa.prompts.create_qa`](biz.dfch.specmgr.qa.prompts.create_qa.md) — ``@mcp.prompt()``: create_qa (feat-12-qa-artifact Phase 4, Task 4.3).
+- [`biz.dfch.specmgr.qa.prompts.refine`](biz.dfch.specmgr.qa.prompts.refine.md) — ``@mcp.prompt()``: refine (feat-7-various-improvements Phase 0, Task 0.19).
+- [`biz.dfch.specmgr.qa.prompts.update_qa`](biz.dfch.specmgr.qa.prompts.update_qa.md) — ``@mcp.prompt()``: update_qa (feat-12-qa-artifact Phase 4, Task 4.3).
 - [`biz.dfch.specmgr.qa.resources`](biz.dfch.specmgr.qa.resources.md) — MCP resource registrations for Question and Answer (QA) documents (Phase 4, Task 4.2).
 - [`biz.dfch.specmgr.qa.resources.qa_example`](biz.dfch.specmgr.qa.resources.qa_example.md) — Resource: specmgr://qa/example (Phase 4, Task 4.2).
 - [`biz.dfch.specmgr.qa.resources.qa_schema`](biz.dfch.specmgr.qa.resources.qa_schema.md) — Resource: specmgr://qa/schema (Phase 4, Task 4.2).
