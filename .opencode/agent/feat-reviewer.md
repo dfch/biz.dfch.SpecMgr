@@ -17,7 +17,6 @@ permission:
   external_directory:
     "*": ask
     "~/.local/share/opencode/**": allow
-    "/tmp/opencode*": allow
   edit: deny
   write: deny
   task: allow
