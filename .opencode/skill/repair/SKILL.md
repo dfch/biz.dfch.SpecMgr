@@ -38,15 +38,15 @@ propagate: repair it, or report it clearly.
   2. **Raw read**: read the complete file at the row's `path` with your
      own host file-read tool. No specmgr MCP tool can return the raw
      content of a document that fails to parse, and the generic `update`
-     tool cannot repair it (its adapters re-parse first and convert the
-     failure into the domain's not-found error).
+     (or `edit`) tool cannot repair it (its adapters re-parse first and
+     convert the failure into the domain's not-found error).
   3. **Fix minimally**: only what the enriched error names (field path,
      1-based line, cause/fix hint). Preserve the frontmatter
      `id`/`created`/`status`/`version` byte-for-byte; leave `updated`
      untouched -- a repair is not an edit.
   4. **Validate loop**: `validate(type="<type>", content=<full raw text>, full=True)` until `valid: true`.
   5. **Write back**: the green text to the same `path` via your own host
-     file-write tool -- never via `update`.
+     file-write tool -- never via `update` (or `edit`).
   6. **Confirm on disk**: `get_<type>(id)` again (success is the parsed
      document, not an `error`-carrying result) or `list_<type>()` again
      -- the row's marker and `error` must be gone. Only a real parse of

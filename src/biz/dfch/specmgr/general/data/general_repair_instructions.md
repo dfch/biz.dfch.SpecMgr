@@ -8,8 +8,8 @@ Follow this sequence exactly. The raw read in step 2 and the write-back in
 step 5 use YOUR OWN host file read/write tools (e.g. `read`/`write`), not
 any specmgr MCP tool: no specmgr MCP tool can return the raw content of a
 document that fails to parse -- `get_$type` with `raw=True` and the generic
-`update` tool both re-parse the existing document first, and
-`update`'s per-domain adapters convert that parse failure into the
+`update` (or `edit`) tool both re-parse the existing document first, and
+their per-domain adapters convert that parse failure into the
 domain's not-found error before anything is written -- so a document that
 fails to parse is structurally unreachable through the MCP server for both
 reading and writing. If your host has no file read/write tools, skip
@@ -88,10 +88,11 @@ step 3's rules, and call `validate` again. Repeat until it returns
 Write the final, `validate`-green text -- the complete raw text,
 frontmatter and body -- back to the SAME on-disk `path` with your host's
 own file-write tool, preserving the file's existing encoding and line
-endings. NEVER write it back via the generic `update` MCP tool: `update`
-re-parses the existing document first, and for a document that fails to
-parse that parse failure becomes the domain's not-found error before any
-write happens -- `update` is structurally unable to repair this document.
+endings. NEVER write it back via the generic `update` (or `edit`) MCP tool:
+`update` (or `edit`) re-parses the existing document first, and for a
+document that fails to parse that parse failure becomes the domain's
+not-found error before any write happens -- `update` (or `edit`) is
+structurally unable to repair this document.
 
 ## 6. Confirm the repair against the file as it now exists on disk
 

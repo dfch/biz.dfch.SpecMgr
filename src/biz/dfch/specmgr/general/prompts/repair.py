@@ -34,9 +34,9 @@ domain's not-found error. Without one: ``list_<d>()``'s failed row, whose
 whose ``id`` is null while ``ref``/``path``/``error`` are populated),
 reading the raw file via the host's own file-read tool (no specmgr MCP tool
 can return the raw content of a document that fails to parse:
-``get_<d>(raw=True)`` and the generic ``update`` tool both re-parse the
-existing document first, and ``update``'s per-domain adapters convert that
-failure into the domain's not-found error before any write), fixing only
+``get_<d>(raw=True)`` and the generic ``update`` (or ``edit``) tool both
+re-parse the existing document first, and their per-domain adapters convert
+that failure into the domain's not-found error before any write), fixing only
 what the error addresses while preserving the frontmatter
 ``id``/``created``/``status``/``version`` byte-for-byte and leaving
 ``updated`` untouched (a repair is not an edit), looping the generic
@@ -103,10 +103,10 @@ _ID_NOT_GIVEN_TEMPLATE = (
         "host's own file-read tool, fix only what the error addresses while preserving the "
         "frontmatter id/created/status/version byte-for-byte (a repair is not an edit), loop "
         "validate(type, content, full=True) until green, write the repaired text back to the same "
-        "path with the host's own file-write tool (never via the generic update tool, which is "
-        "structurally unable to repair a document that fails to parse), then confirm the repair "
-        "against the file as it now exists on disk with one more real get_<d>(id)/list_<d>() call "
-        "(success: the parsed document, not an error-carrying result). Degrades to diagnose-only "
+        "path with the host's own file-write tool (never via the generic update (or edit) tool, "
+        "which is structurally unable to repair a document that fails to parse), then confirm the "
+        "repair against the file as it now exists on disk with one more real get_<d>(id)/list_<d>() "
+        "call (success: the parsed document, not an error-carrying result). Degrades to diagnose-only "
         "on a host without file read/write tools. ADR is out of scope."
     ),
 )

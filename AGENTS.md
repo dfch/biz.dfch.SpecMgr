@@ -639,7 +639,7 @@ type or cross-cutting:
        to parse>` failed row (without one), read the raw file with the host's
        own file-read tool
       (no specmgr MCP tool can return the raw content of a document that fails
-      to parse, and the generic `update` tool is structurally unable to repair
+      to parse, and the generic `update` (or `edit`) tool is structurally unable to repair
       one — its per-domain adapters re-parse the existing document first and
       convert the failure into the domain's not-found error before any write),
       fix only what the enriched error addresses while preserving the
@@ -647,7 +647,7 @@ type or cross-cutting:
       `updated` untouched (a repair is not an edit), loop the generic
       `validate` tool with `full=True` over the full raw text until green,
       write the repaired text back to the same path via the host's own
-      file-write tool — never via `update` — and then confirm the repair
+      file-write tool — never via `update` (or `edit`) — and then confirm the repair
       against the file as it now exists on disk with one more real
       `get_<d>(id)`/`list_<d>()` call, degrading to diagnose-only (report the
       error and the proposed fix, touch nothing) on a host without file

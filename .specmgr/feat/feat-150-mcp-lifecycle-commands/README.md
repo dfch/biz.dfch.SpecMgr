@@ -4,7 +4,7 @@ created: '2026-09-23 23:16:12.456+02:00'
 id: feat-150-mcp-lifecycle-commands
 status: review
 type: feat
-updated: '2026-09-27T18:03:27.309+02:00'
+updated: '2026-09-27T21:22:54.000+02:00'
 version: 1.0.0
 ---
 
@@ -78,7 +78,7 @@ The unifying design principle (see Design Notes) is: every new capability gets a
 
 - [ ] ACC-013: A new ADR documents the "portable MCP prompt narrates optional host-native subagent delegation" pattern.
 
-- [ ] ACC-014: `.opencode/skill/repair/SKILL.md` exists with a `name: repair` and a trigger `description` covering an organically-encountered failed-to-parse document, and its body defers to `doc-repairer` via the `task` tool when available, else narrates the condensed host-native loop.
+- [x] ACC-014: `.opencode/skill/repair/SKILL.md` exists with a `name: repair` and a trigger `description` covering an organically-encountered failed-to-parse document, and its body defers to `doc-repairer` via the `task` tool when available, else narrates the condensed host-native loop.
 
 - [x] ACC-015: `get_<d>` on a broken document returns `ParseFailureResult` with `error` + absolute `path` for all 12 whole-body domains (incl. `feat`), `error` text carries the same parse defect as `list_<d>`'s failed-row `error` for the same file (identical field path and cause; the trailing pydantic documentation line may differ by read order/cache state -- Option B, 2026-09-26), healthy-document results are byte-identical to the pre-change shape, and a truly absent id still raises the domain's not-found error.
 
@@ -278,11 +278,15 @@ The unifying design principle (see Design Notes) is: every new capability gets a
 
 ### Current Status
 
-**As of 2026-09-27**: Phase 1a (`get_<d>` parse-failure error channel, REQ-013/ACC-015/ACC-016) and Phase 1 (repair, REQ-001/REQ-002/REQ-012), including Task 1a.8's Option B amendment pass, are implemented, gate-green, and committed (5c94030, b82eef4, af93f96, 10a4b62). ACC-001, ACC-002, ACC-015, and ACC-016 are met. The plan's own parse failure (bare `<d>` html_inline tokens, plus two further model violations the `<d>` error had masked: the `Phase 1a:` Task List heading and the two-paragraph 2026-09-25 19:49:40.000Z update entry) was repaired as part of this closeout. Status moves to `review` via the orchestrator's `set_status` call; remaining: push, PR, post-implementation review. Phases 2-6 remain unstarted (user scope: Phase 1 only).
+**As of 2026-09-27**: Phase 1a (`get_<d>` parse-failure error channel, REQ-013/ACC-015/ACC-016) and Phase 1 (repair, REQ-001/REQ-002/REQ-012), including Task 1a.8's Option B amendment pass, are implemented, gate-green, and committed (5c94030, b82eef4, af93f96, 10a4b62). ACC-001, ACC-002, ACC-014, ACC-015, and ACC-016 are met; post-implementation review (PR #155) approved with two doc fixes, now applied (the no-generic-write-tool narration extended to the merged `edit` tool; ACC-014 checked). The plan's own parse failure (bare `<d>` html_inline tokens, plus two further model violations the `<d>` error had masked: the `Phase 1a:` Task List heading and the two-paragraph 2026-09-25 19:49:40.000Z update entry) was repaired as part of this closeout. Status moves to `review` via the orchestrator's `set_status` call; remaining: push, PR, post-implementation review. Phases 2-6 remain unstarted (user scope: Phase 1 only).
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-27 19:22:54.000Z - Post-implementation review fixes (PR #155)
+
+Post-implementation review of the Phase 1 scope (PR #155) approved with minor doc fixes only -- no Errors, Gaps, or Inconsistencies in scope. Fixes now applied: (1) the merged dev tree (feat-159) added a second generic write tool, `edit`, whose per-domain adapters re-parse the existing document first (each calls the domain's `load_by_id`) and so convert a parse failure into the domain's not-found error before any write, exactly like `update` -- the no-generic-write-tool narration therefore now names both tools at every site: `general/data/general_repair_instructions.md` (intro note + step 5), `general/prompts/repair.py` (module docstring + `@mcp.prompt` description), `.opencode/agent/doc-repairer.md` (frontmatter description, intro mechanism note, step 5), `.opencode/skill/repair/SKILL.md` (step 2 note, step 5), `AGENTS.md`'s `repair` description (both of its no-write-tool clauses), `server.py`'s General-prompts `repair` line, and the CHANGELOG `repair` `Added` entry; (2) `server.py`'s Path-safety paragraph now also enumerates `edit` among the tools applying the `general/tools/_path_safety` guards (its registration text mentions only the id-`ValueError` half); (3) ACC-014 checked -- the review verified `.opencode/skill/repair/SKILL.md` exists and meets every sub-claim. Docs regenerated (`specmgr docs`/`specmgr mcp-docs`) and the full quality gate re-run green.
 
 #### 2026-09-27 14:26:34.000Z - Feature closeout (Phase 1 scope)
 

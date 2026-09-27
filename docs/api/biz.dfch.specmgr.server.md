@@ -325,8 +325,8 @@ document that does not exist on disk raises the source domain's own
 ``XNotFoundError`` (identical to ``get_<d>``).
 Path safety (feat-38-39-41-43-44 Phase 4, REQ-009, extending feat-36-delete's
 ``delete``-only guards, ADR 1af6787b-eaab-4e8f-888f-531c1e76c19d): every one of the
-``get_<d>`` tools (including ``get_adr``), the generic ``update``, and the generic
-``set_status`` now validate ``id`` via ``general.tools._path_safety.validate_id`` (no
+``get_<d>`` tools (including ``get_adr``), the generic ``update``, the generic
+``edit``, and the generic ``set_status`` now validate ``id`` via ``general.tools._path_safety.validate_id`` (no
 ``/``, no ``\``, no ``..``, plus the dispatched/fixed domain's own format --
 canonical lowercase-hex UUID for every domain other than ``feat``, including ``adr``,
 ``feat-NNN-slug`` for ``feat``) before any filesystem access, raising ``ValueError``
@@ -427,7 +427,7 @@ defect as ``list_<d>``'s failed row for the same file, modulo a possibly-
 missing trailing pydantic documentation line; ADR
 9080b37c-82b3-4f63-81f1-79641d0bf14c) or ``list_<d>``'s ``<failed to parse>``
 failed row, then a host-native raw read, a generic ``validate`` (``full=True``)
-loop, a host-native write-back (never the generic ``update`` tool, which is
+loop, a host-native write-back (never the generic ``update`` (or ``edit``) tool, which is
 structurally unable to repair a document that fails to parse), and a
 post-write ``get_<d>``/``list_<d>`` confirmation against the file as it now
 exists on disk (success: the parsed document, not an ``error``-carrying

@@ -29,13 +29,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   byte-for-byte and leaving `updated` untouched (a repair is not an edit),
   loop the generic `validate(type, content, full=True)` tool over the full
   raw text until green, write the repaired text back to the same path via
-  the host's own file-write tool -- never via the generic `update` tool,
-  which re-parses the existing document first and is structurally unable to
-  repair a document that fails to parse -- and then confirm the repair
-  against the file as it now exists on disk with one more real
-  `get_<d>(id)`/`list_<d>()` call; on a host without file read/write tools
-  it degrades to diagnose-only (report the error and the proposed fix,
-  touch nothing). `type` is validated against
+  the host's own file-write tool -- never via the generic `update` (or
+  `edit`) tool, which re-parses the existing document first and is
+  structurally unable to repair a document that fails to parse -- and then
+  confirm the repair against the file as it now exists on disk with one
+  more real `get_<d>(id)`/`list_<d>()` call; on a host without file
+  read/write tools it degrades to diagnose-only (report the error and the
+  proposed fix, touch nothing). `type` is validated against
   `general.tools._domains.WHOLE_BODY_DOMAINS` (single source of truth) and
   fails fast with an actionable `ValueError` for `adr` and unknown domains.
 - The `doc-repairer` subagent (`.opencode/agent/doc-repairer.md`) and the

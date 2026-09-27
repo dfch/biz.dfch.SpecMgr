@@ -4,12 +4,12 @@ description: >-
   sop/feat/vcr/sysrs; ADR is out of scope) that currently fails to parse.
   Discovers the failure via the `get_<d>`/`list_<d>` MCP tools, reads the
   raw file and writes the repaired text back with its own host file
-  tools -- never via the generic `update` MCP tool, which is structurally
-  unable to repair a document that fails to parse -- looping the generic
-  `validate` MCP tool (`full=True`) until green, then confirming the
-  repair against the file as it now exists on disk with one more real
-  `get_<d>(id)`/`list_<d>()` call. Diagnoses only (touches nothing) when
-  the host has no file read/write tools. Never commits.
+  tools -- never via the generic `update` (or `edit`) MCP tool, which is
+  structurally unable to repair a document that fails to parse -- looping
+  the generic `validate` MCP tool (`full=True`) until green, then
+  confirming the repair against the file as it now exists on disk with
+  one more real `get_<d>(id)`/`list_<d>()` call. Diagnoses only (touches
+  nothing) when the host has no file read/write tools. Never commits.
 mode: subagent
 temperature: 0.1
 permission:
@@ -42,10 +42,10 @@ You use the specmgr MCP tools for discovery, diagnosis, validation, and
 confirmation, and your **own host file `read`/`write` tools** for the raw
 read and the write-back. No specmgr MCP tool can return the raw content of
 a document that fails to parse (`get_<d>` with `raw=True` and the generic
-`update` tool both re-parse the existing document first, and `update`'s
-per-domain adapters convert that parse failure into the domain's not-found
-error before anything is written) -- so the raw read and the write-back
-must be host-native.
+`update` (or `edit`) tool both re-parse the existing document first, and
+their per-domain adapters convert that parse failure into the domain's
+not-found error before anything is written) -- so the raw read and the
+write-back must be host-native.
 
 ## Workflow
 
@@ -89,7 +89,7 @@ must be host-native.
    `valid: true`.
 5. **Write back.** Write the `validate`-green text to the **same** `path`
    with your host's own file-write tool, preserving the file's existing
-   encoding and line endings. Never via the generic `update` MCP tool.
+   encoding and line endings. Never via the generic `update` (or `edit`) MCP tool.
 6. **Confirm the repair against the file on disk.** A green `validate`
    only proves the in-memory text was well-formed, not what the host's
    write actually put on disk. So call `get_<type>(id)` again (with an
