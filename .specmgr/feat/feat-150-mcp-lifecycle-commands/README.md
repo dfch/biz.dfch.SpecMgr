@@ -4,7 +4,7 @@ created: '2026-09-23 23:16:12.456+02:00'
 id: feat-150-mcp-lifecycle-commands
 status: review
 type: feat
-updated: '2026-09-27T16:55:43.838+02:00'
+updated: '2026-09-27T18:03:27.309+02:00'
 version: 1.0.0
 ---
 
@@ -370,7 +370,7 @@ No rename needed -- OpenCode accepts singular and plural directory names at both
 
 ### Related PRs / Commits
 
-- PR: https://github.com/dfch/biz.dfch.SpecMgr/pull/155 (plan refinement, 2026-09-24)
+- PR: https://github.com/dfch/biz.dfch.SpecMgr/pull/155 (plan refinement, 2026-09-24; implementation of the Phase 1 scope merged into the same PR, 2026-09-27)
 
 - Commits: 5c94030 (Phase 1a + Phase 1 initial), b82eef4 (Phase 1 narration refinement), af93f96 (Option B decision record), 10a4b62 (Task 1a.8 Option B amendment pass, issue #162)
 
