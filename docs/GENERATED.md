@@ -152,6 +152,7 @@ First-line docstrings from each module, organized by domain:
 - `general/tools/_splice.py` — Frontmatter-stripped body extraction, body-line splicing, and body-line
 - `general/tools/_timestamps.py` — Shared, private timestamp-formatting helpers for the MCP write side (feat-38-39-41-43-44 Phase 3,
 - `general/tools/delete.py` — ``@mcp.tool()`` wrapper: delete (feat-36-delete, Phase 2).
+- `general/tools/edit.py` — ``@mcp.tool()`` wrapper: edit (feat-159-edit, GitHub issue #159).
 - `general/tools/list_references.py` — ``@mcp.tool()`` wrapper: list_references (feat-144-ref-artifact, Phase 2).
 - `general/tools/mdformat.py` — ``@mcp.tool()`` wrapper: mdformat.
 - `general/tools/set_classification.py` — ``@mcp.tool()`` wrapper: set_classification (feat-56-classification, Phase 2).
@@ -543,4 +544,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 363
+**Test files**: 364

@@ -132,6 +132,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general.tools._splice`](biz.dfch.specmgr.general.tools._splice.md) — Frontmatter-stripped body extraction, body-line splicing, and body-line
 - [`biz.dfch.specmgr.general.tools._timestamps`](biz.dfch.specmgr.general.tools._timestamps.md) — Shared, private timestamp-formatting helpers for the MCP write side (feat-38-39-41-43-44 Phase 3,
 - [`biz.dfch.specmgr.general.tools.delete`](biz.dfch.specmgr.general.tools.delete.md) — ``@mcp.tool()`` wrapper: delete (feat-36-delete, Phase 2).
+- [`biz.dfch.specmgr.general.tools.edit`](biz.dfch.specmgr.general.tools.edit.md) — ``@mcp.tool()`` wrapper: edit (feat-159-edit, GitHub issue #159).
 - [`biz.dfch.specmgr.general.tools.list_references`](biz.dfch.specmgr.general.tools.list_references.md) — ``@mcp.tool()`` wrapper: list_references (feat-144-ref-artifact, Phase 2).
 - [`biz.dfch.specmgr.general.tools.mdformat`](biz.dfch.specmgr.general.tools.mdformat.md) — ``@mcp.tool()`` wrapper: mdformat.
 - [`biz.dfch.specmgr.general.tools.set_classification`](biz.dfch.specmgr.general.tools.set_classification.md) — ``@mcp.tool()`` wrapper: set_classification (feat-56-classification, Phase 2).
