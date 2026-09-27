@@ -120,7 +120,7 @@ from biz.dfch.specmgr.vcr.tools.create_vcr import create_vcr
 
 edit_module = importlib.import_module("biz.dfch.specmgr.general.tools.edit")
 edit = edit_module.edit
-_match_and_replace = edit_module._match_and_replace
+_match_and_replace = edit_module._match_and_replace  # pylint: disable=protected-access
 
 #: The OC-parity stage-1 messages, pinned verbatim (REQ-002, feat-159-edit's
 #: Design Notes; parity target: opencode dev commit
@@ -905,33 +905,40 @@ class TestMatchStageUnit(unittest.TestCase):
     """
 
     def test_zero_occurrences_raises_oc_not_found_message_verbatim(self) -> None:
+        """REQ-002/ACC-002: zero occurrences raise the OC not-found message verbatim as a plain ``ValueError``."""
         with self.assertRaises(ValueError) as ctx:
             _match_and_replace("line one\nline two\nline three", "absent text", "replacement", replace_all=False)
 
         self.assertEqual(str(ctx.exception), _NOT_FOUND_MESSAGE)
 
     def test_single_occurrence_rewrites_exactly_once(self) -> None:
+        """REQ-009: a single exact occurrence is rewritten exactly once, nothing else touched."""
         result = _match_and_replace("alpha marker beta", "marker", "pin", replace_all=False)
 
         self.assertEqual(result, "alpha pin beta")
 
     def test_single_occurrence_with_replace_all_rewrites_that_one_occurrence(self) -> None:
+        """REQ-009: ``replace_all`` with a single occurrence rewrites that one occurrence (no error)."""
         result = _match_and_replace("alpha marker beta", "marker", "pin", replace_all=True)
 
         self.assertEqual(result, "alpha pin beta")
 
     def test_multiple_occurrences_without_replace_all_raises_oc_multiple_message_verbatim(self) -> None:
+        """REQ-002/ACC-003: multiple occurrences without ``replace_all`` raise the OC
+        multiple-matches message verbatim."""
         with self.assertRaises(ValueError) as ctx:
             _match_and_replace("alpha marker beta marker gamma", "marker", "pin", replace_all=False)
 
         self.assertEqual(str(ctx.exception), _MULTIPLE_MATCHES_MESSAGE)
 
     def test_multiple_occurrences_with_replace_all_rewrites_every_occurrence(self) -> None:
+        """REQ-009/ACC-003: ``replace_all`` rewrites every exact occurrence."""
         result = _match_and_replace("alpha marker beta marker gamma", "marker", "pin", replace_all=True)
 
         self.assertEqual(result, "alpha pin beta pin gamma")
 
     def test_empty_new_str_deletes_the_match(self) -> None:
+        """REQ-001/D1: an empty ``new_str`` deletes the match (a pure deletion)."""
         result = _match_and_replace("hello brave new world", "brave new ", "", replace_all=False)
 
         self.assertEqual(result, "hello world")
@@ -960,6 +967,7 @@ class TestEditPublicGuards(TempEditDirTestCase):
     ``ValueError``, not the domain's not-found error), in every domain."""
 
     def test_identical_input_guard_fires_before_file_access_for_nonexistent_document(self) -> None:
+        """REQ-008/ACC-009: the identical-input guard fires before any file access, even for a non-existent document."""
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
                 with self.assertRaises(ValueError) as ctx:
@@ -968,6 +976,7 @@ class TestEditPublicGuards(TempEditDirTestCase):
                 self.assertEqual(str(ctx.exception), _IDENTICAL_INPUT_MESSAGE)
 
     def test_empty_old_str_guard_fires_before_file_access_for_nonexistent_document(self) -> None:
+        """REQ-008/ACC-009: the empty-``old_str`` guard fires before any file access, even for a missing document."""
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
                 with self.assertRaises(ValueError) as ctx:
@@ -997,6 +1006,7 @@ class TestEditPublicGuards(TempEditDirTestCase):
                 )
 
     def test_identical_input_guard_leaves_existing_document_byte_unchanged(self) -> None:
+        """REQ-008: the identical-input guard leaves an existing document byte-unchanged."""
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case, case.minimal_body)
@@ -1010,6 +1020,7 @@ class TestEditPublicGuards(TempEditDirTestCase):
                 self.assertEqual(path.read_bytes(), before)
 
     def test_empty_old_str_guard_leaves_existing_document_byte_unchanged(self) -> None:
+        """REQ-008: the empty-``old_str`` guard leaves an existing document byte-unchanged."""
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case, case.minimal_body)
@@ -1029,6 +1040,8 @@ class TestEditUnsupportedType(TempEditDirTestCase):
     inherited ``KeyError``), before any filesystem access."""
 
     def test_adr_type_raises_explicit_value_error_before_any_filesystem_access(self) -> None:
+        """REQ-004/ACC-006: ``type="adr"`` raises the edit-specific explicit pre-dispatch
+        ``ValueError``, before any filesystem access."""
         with self.assertRaises(ValueError) as ctx:
             edit(id=_MISSING_UUID, type="adr", old_str="old text", new_str="new text")  # type: ignore[arg-type]
 
@@ -1044,6 +1057,13 @@ class TestEditUnsupportedType(TempEditDirTestCase):
         self.assertEqual(str(ctx.exception), _unknown_type_message("adr"))
 
     def test_unknown_type_raises_value_error(self) -> None:
+        """REQ-004: an unknown non-``adr`` type is rejected with a plain pre-dispatch ``ValueError``.
+
+        Containment (not full equality) is deliberate: for every type other than ``"adr"``,
+        ``validate_id`` -- which runs before ``edit``'s own explicit check -- raises first with
+        its own message (naming the UUID domains, ``adr`` included); the edit-specific message
+        is reachable only for ``type="adr"`` (pinned by full equality in the adjacent test).
+        """
         with self.assertRaises(ValueError) as ctx:
             edit(id=_MISSING_UUID, type="bogus", old_str="old text", new_str="new text")  # type: ignore[arg-type]
 
@@ -1056,6 +1076,8 @@ class TestEditHappyPath(TempEditDirTestCase):
     an optional section and the document still validates."""
 
     def test_unique_exact_match_rewrites_body_and_returns_bumped_frontmatter(self) -> None:
+        """ACC-001/REQ-006: a unique exact match rewrites the body on disk and returns the
+        frontmatter with every field carried over and only ``updated`` bumped."""
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case, case.minimal_body)
@@ -1086,6 +1108,7 @@ class TestEditHappyPath(TempEditDirTestCase):
                 )
 
     def test_empty_new_str_deletes_optional_section_and_still_validates(self) -> None:
+        """ACC-008/REQ-001: an empty ``new_str`` deletes an optional section and the document still validates."""
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case, case.minimal_body + case.deletable_suffix)
@@ -1110,6 +1133,7 @@ class TestEditMatchStageOnDisk(TempEditDirTestCase):
     ``replace_all`` success path."""
 
     def test_old_str_not_found_raises_oc_message_verbatim_file_byte_unchanged(self) -> None:
+        """ACC-002: an absent ``old_str`` raises the OC not-found message verbatim; the file stays byte-unchanged."""
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case, case.minimal_body)
@@ -1123,6 +1147,8 @@ class TestEditMatchStageOnDisk(TempEditDirTestCase):
                 self.assertEqual(path.read_bytes(), before)
 
     def test_multiple_matches_without_replace_all_raises_oc_message_verbatim_file_byte_unchanged(self) -> None:
+        """ACC-003: multiple matches without ``replace_all`` raise the OC multiple-matches
+        message verbatim; the file stays byte-unchanged."""
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case, case.minimal_body + case.multi_seed_suffix)
@@ -1142,6 +1168,7 @@ class TestEditMatchStageOnDisk(TempEditDirTestCase):
                 self.assertEqual(path.read_bytes(), before)
 
     def test_replace_all_rewrites_every_occurrence(self) -> None:
+        """ACC-003: ``replace_all`` rewrites every exact occurrence (full-text equality), nothing else touched."""
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case, case.minimal_body + case.multi_seed_suffix)
@@ -1169,6 +1196,8 @@ class TestEditInvalidResult(TempEditDirTestCase):
     is written -- the disk write happens only after whole-document validation passes."""
 
     def test_deleting_mandatory_h1_raises_wrapped_assertion_error_file_byte_unchanged(self) -> None:
+        """ACC-004: deleting the mandatory H1 raises the wrapped ``AssertionError`` (the
+        per-domain ``"<d> edit (body):"`` prefix); the file stays byte-unchanged."""
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case, case.minimal_body)
@@ -1182,6 +1211,8 @@ class TestEditInvalidResult(TempEditDirTestCase):
                 self.assertEqual(path.read_bytes(), before)
 
     def test_edit_producing_field_error_raises_wrapped_error_file_byte_unchanged(self) -> None:
+        """ACC-004: an edit producing a per-domain field error raises the wrapped error;
+        the file stays byte-unchanged."""
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case, case.minimal_body)
@@ -1201,6 +1232,36 @@ class TestEditInvalidResult(TempEditDirTestCase):
                     self.assertTrue(message.startswith(prefix), message)
                 self.assertEqual(path.read_bytes(), before)
 
+    def test_replace_all_invalid_edit_raises_wrapped_error_file_byte_unchanged(self) -> None:
+        """The 2-fold contract under ``replace_all=True``: an edit that yields an invalid
+        document raises the wrapped validation error and nothing is written -- the same
+        behavior as the single-match path (``_match_and_replace`` does not branch on the
+        occurrence count after the replacement)."""
+        for case in _CASES:
+            with self.subTest(doc_type=case.doc_type):
+                created = self._seed(case, case.minimal_body)
+                path = self._doc_path(case, created.id)
+                before = path.read_bytes()
+                field_error_old, field_error_new = _field_error_edit(case)
+                expected_error = ValidationError if case.field_error_is_validation else AssertionError
+
+                with self.assertRaises(expected_error) as ctx:
+                    edit(
+                        id=created.id,
+                        type=case.doc_type,
+                        old_str=field_error_old,
+                        new_str=field_error_new,
+                        replace_all=True,
+                    )
+
+                message = str(ctx.exception)
+                prefix = _wrapped_prefix(case.doc_type)
+                if case.field_error_is_validation:
+                    self.assertIn(prefix, message, message)
+                else:
+                    self.assertTrue(message.startswith(prefix), message)
+                self.assertEqual(path.read_bytes(), before)
+
 
 class TestEditInvalidId(TempEditDirTestCase):
     """ACC-005: path-injection and wrong-format ids raise ``ValueError`` before any
@@ -1208,6 +1269,8 @@ class TestEditInvalidId(TempEditDirTestCase):
     stays byte-unchanged."""
 
     def test_traversal_and_wrong_format_ids_raise_value_error_before_file_access(self) -> None:
+        """ACC-005: path-injection and wrong-format ids raise ``ValueError`` before any
+        filesystem access; the seeded document stays byte-unchanged."""
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case, case.minimal_body)
@@ -1226,6 +1289,7 @@ class TestEditDomainNotFound(TempEditDirTestCase):
     raises the domain's own ``XNotFoundError``, unchanged from the per-domain tools."""
 
     def test_well_formed_nonexistent_id_raises_domain_not_found_error(self) -> None:
+        """ACC-005: a well-formed but non-existent id raises the domain's own not-found error."""
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
                 self._seed(case, case.minimal_body)
@@ -1239,6 +1303,7 @@ class TestEditAssertWithinSpy(TempEditDirTestCase):
     successful edit, in every domain."""
 
     def test_assert_within_is_called_with_base_dir_and_resolved_path(self) -> None:
+        """REQ-005: ``assert_within`` is invoked with the base dir and the resolved path during a successful edit."""
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case, case.minimal_body)
@@ -1264,6 +1329,8 @@ class TestEditRegistration(unittest.TestCase):
         cls._tools = asyncio.run(mcp.list_tools())
 
     def test_edit_registered_exactly_once_with_pinned_input_schema(self) -> None:
+        """ACC-006: the live MCP registration carries ``edit`` exactly once, with the
+        12-value ``type`` enum (no ``adr``)."""
         matching = [t for t in self._tools if t.name == "edit"]
         self.assertEqual(len(matching), 1)
 

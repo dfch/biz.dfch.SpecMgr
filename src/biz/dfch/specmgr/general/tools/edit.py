@@ -34,6 +34,12 @@ validate -> write**, because the match runs against *on-disk* content
 content before taking the lock) -- reading the body outside the lock would
 be a TOCTOU race.
 
+``feat`` is the one domain whose adapter (``_edit_feat``) diverges from
+every other domain's identical shape in how it resolves ``id``: via
+``feat.tools._paths``'s bespoke folder-per-document shortcut, not a
+flat-file directory scan (see
+``.specmgr/feat/feat-31-feature/README.md`` Design Notes, "Addressing").
+
 The signature and the stage-1 runtime error strings mirror the OpenCode
 ``edit`` tool (parity pinned to opencode dev commit
 ``236cfcbbc31530fde6a9e65318703f40adad8455``,
@@ -722,7 +728,10 @@ def edit(
         ``id`` is a path-injection attempt or not in the dispatched
         domain's own format (raised before any filesystem access);
         ``type`` is not one of the supported domains, including
-        ``"adr"`` (raised before dispatch, REQ-004); ``old_str`` is
+        ``"adr"`` (raised before dispatch, REQ-004 -- ``"adr"`` with a
+        well-formed UUID id reaches the edit-specific message; any other
+        unknown type is rejected first by ``validate_id``'s own
+        message); ``old_str`` is
         identical to ``new_str`` or empty (raised before any filesystem
         access); or the stage-1 match fails -- ``old_str`` not found, or
         multiple matches without ``replace_all`` (raised under the domain
@@ -751,7 +760,10 @@ def edit(
     # REQ-005: validate before any filesystem access (injection prevention).
     validate_id(type, id)
     # REQ-004: explicit type check before dispatch (the `validate` tool's precedent; a deliberate
-    # divergence from `update`'s inherited `KeyError` for `type="adr"`, D4).
+    # divergence from `update`'s inherited `KeyError` for `type="adr"`, D4). This check is the only
+    # path to the edit-specific message below: `validate_id` (above) already rejects every other
+    # unknown type with its own message (which lists the UUID domains, `adr` included), and a
+    # well-formed UUID id passes it for `type="adr"` -- so only `type="adr"` reaches here.
     if type not in _ADAPTERS:
         raise ValueError(
             f"unknown document type {type!r}; expected one of {', '.join(WHOLE_BODY_DOMAINS)} ('adr' is not supported)"
