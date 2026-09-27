@@ -6,8 +6,10 @@ Returns instructional text -- not itself a tool call -- that guides an LLM
 through repairing a whole-body specmgr document that currently fails to
 parse: discovering it (with an ``id``: ``get_<d>(id)`` -- a document that
 exists but fails to parse is returned, not raised: the result carries
-``error`` (the parse-failure message, byte-identical to ``list_<d>``'s
-failed-row ``error`` for the same file) and ``path`` (the absolute on-disk
+``error`` (the parse-failure message, the same parse defect as
+``list_<d>``'s failed-row ``error`` for the same file -- identical field
+path and cause, though the trailing pydantic documentation line may
+differ by read order/cache state) and ``path`` (the absolute on-disk
 file), for every one of the whole-body domains per ADR
 9080b37c-82b3-4f63-81f1-79641d0bf14c; a truly absent id still raises the
 domain's not-found error. Without one: ``list_<d>()``'s failed row, whose

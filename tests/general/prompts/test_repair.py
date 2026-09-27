@@ -82,11 +82,12 @@ class TestRepairPrompt(unittest.TestCase):
         self.assertIn("closed-vocabulary failures", result)
 
     def test_get_parse_failure_result_named(self):
-        """get_<d>'s non-raising parse-failure result (error/path, list-row-identical text) must be named."""
+        """get_<d>'s non-raising parse-failure result (error/path, the same parse defect as the list row) must be named."""
         result = _one_line(repair_fn("req", _ID))
         self.assertIn("get_req", result)
         self.assertIn("returned, NOT raised", result)
-        self.assertIn("the same text `list_req()`'s failed row carries", result)
+        self.assertIn("the same parse defect `list_req()`'s failed row carries for the same file", result)
+        self.assertIn("treat the two texts as the same defect, not byte-equal", result)
         self.assertIn("truly absent, `get_req` raises the domain's not-found error", result)
 
     def test_host_file_tools_directed(self):

@@ -323,8 +323,11 @@ whole-body domains (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec`
 ``feat``/``vcr``/``sysrs``; ``get_adr`` excluded) additionally returns a
 structured, non-raising ``ParseFailureResult`` (``error``/``path``/``id``) for a
 document that exists but fails to parse, instead of raising the domain's
-not-found error -- the ``error`` text is identical to that domain's ``list_<d>``
-tool's failed-row ``error`` for the same file, and ``raw=True`` on a broken
+not-found error -- the ``error`` text carries the same parse defect as that
+domain's ``list_<d>`` tool's failed-row ``error`` for the same file (identical
+field path and cause; the trailing pydantic documentation line may differ by
+read order/cache state -- Option B, 2026-09-26, follow-up issue #162), and
+``raw=True`` on a broken
 document still returns the result (never a raw ``str``); a healthy document's
 shape and every other ``get_<d>`` outcome are unchanged. This is the third
 extension of the ADR 519d1206 client-side-``isError``-truncation workaround
@@ -401,8 +404,9 @@ e369ee2e-3353-4f92-991c-6367d76d832e; ``repair`` -- guides repairing a
 whole-body document (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/
 ``dec``/``sop``/``feat``/``vcr``/``sysrs``; ADR out of scope) that fails to
 parse: discover it via ``get_<d>``'s non-raising parse-failure result
-(``error``/``path``/``id``, the ``error`` text byte-identical to
-``list_<d>``'s failed row for the same file; ADR
+(``error``/``path``/``id``, the ``error`` text carrying the same parse
+defect as ``list_<d>``'s failed row for the same file, modulo a possibly-
+missing trailing pydantic documentation line; ADR
 9080b37c-82b3-4f63-81f1-79641d0bf14c) or ``list_<d>``'s ``<failed to parse>``
 failed row, then a host-native raw read, a generic ``validate`` (``full=True``)
 loop, a host-native write-back (never the generic ``update`` tool, which is

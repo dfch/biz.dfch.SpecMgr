@@ -15,8 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs; ADR is explicitly out
   of scope) that currently fails to parse -- discover it via
   `get_<d>(id)`'s non-raising `ParseFailureResult`-shaped result (with an
-  `id` -- the result carries `error`, the parse-failure message
-  byte-identical to `list_<d>()`'s failed-row `error` for the same file,
+  `id` -- the result carries `error`, the parse-failure message, the same
+  parse defect as `list_<d>()`'s failed-row `error` for the same file
+  (identical field path and cause; the trailing pydantic documentation
+  line may differ by read order/cache state -- Option B, 2026-09-26),
   plus `path`, the absolute on-disk file; a truly absent id still raises
   the domain's not-found error; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c)
   or `list_<d>()`'s `<failed to parse>` failed row (without one, whose
@@ -73,14 +75,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   now returns the non-raising `ParseFailureResult` (`error`/`path`/`id`) for
   a document that exists but fails to parse, instead of raising the domain's
   not-found error (feat-150-mcp-lifecycle-commands, GitHub issue #150,
-  Phase 1a, ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c). The `error` text is
-  identical to the domain's `list_<d>` tool's failed-row `error` for the same
-  file, and `raw=True` on a broken document still returns the result (never a
-  raw `str`); a healthy document's return shape, a truly absent id (still
-  raises the domain's not-found error), and an invalid id shape (still a
-  `ValueError` before any file access) are all unchanged. This unblocks
-  Phase 1's `repair` prompt with-id branch, which narrates reading the wrapped
-  parse error from `get_<d>(id)`.
+  Phase 1a, ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c). The `error` text
+  carries the same parse defect as the domain's `list_<d>` tool's failed-row
+  `error` for the same file (identical field path and cause; the trailing
+  pydantic documentation line may differ by read order/cache state --
+  Option B, 2026-09-26, the str-faithful reconstruction tracked as
+  follow-up issue #162), and `raw=True` on a broken document still returns
+  the result (never a raw `str`); a healthy document's return shape, a truly
+  absent id (still raises the domain's not-found error), and an invalid id
+  shape (still a `ValueError` before any file access) are all unchanged.
+  This unblocks Phase 1's `repair` prompt with-id branch, which narrates
+  reading the non-raising `ParseFailureResult`-shaped result from
+  `get_<d>(id)`.
 
 ## [0.31.0] - 2026-09-23
 

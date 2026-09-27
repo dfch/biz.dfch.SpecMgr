@@ -6,7 +6,8 @@ description: >-
   marker (null `id`, populated `ref`/`path`/`error`), or a `get_<d>` call
   that returns the non-raising parse-failure result (a document that
   exists but fails to parse: `error`/`path`/`id` fields, the `error` text
-  the same as `list_<d>`'s failed row) -- whether surfaced by
+  carrying the same parse defect as `list_<d>`'s failed row) -- whether
+  surfaced by
   an explicit `/repair` request or organically while you are working with
   specmgr documents mid-task. Whole-body domains only (req/uc/tsk/qa/prb/
   gol/rsk/dec/sop/feat/vcr/sysrs); ADR is out of scope.
@@ -29,8 +30,9 @@ propagate: repair it, or report it clearly.
 - **Otherwise, run the condensed loop yourself** (the same workflow the
   specmgr `repair` MCP prompt narrates):
   1. **Discover**: with an id, `get_<type>(id)` -- a broken document is
-     returned, not raised: read the result's `error` (the parse failure,
-     same text as `list_<type>()`'s failed row) and its `path`; without,
+      returned, not raised: read the result's `error` (the parse failure,
+      the same defect `list_<type>()`'s failed row carries) and its `path`;
+      without,
      `list_<type>()` -- find the failed row (`<failed to parse>` marker
      in `title`/`status`, null `id`, populated `path`/`error`).
   2. **Raw read**: read the complete file at the row's `path` with your

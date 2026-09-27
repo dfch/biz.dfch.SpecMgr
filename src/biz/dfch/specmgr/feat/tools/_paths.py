@@ -351,10 +351,13 @@ def find_feat_parse_failure(base_dir: Path, id_: str) -> tuple[Path, str] | None
     :func:`._cache.read_feat` raises a parse error (``AssertionError``/
     ``pydantic.ValidationError``/``yaml.YAMLError`` -- the same channels
     :func:`general.tools._listing.build_summaries` catches for the
-    ``list_feat`` failed row) it returns ``(path, str(exc))`` -- byte-identical
-    to that row's ``error`` field -- and ``None`` otherwise (the folder/file is
-    missing, it vanishes mid-scan, or it parses cleanly, i.e. a frontmatter-id
-    mismatch). feat-150-mcp-lifecycle-commands Phase 1a, ADR
+    ``list_feat`` failed row) it returns ``(path, str(exc))`` -- carrying the
+    same parse defect as that row's ``error`` field (identical field path and
+    cause; the trailing pydantic documentation line may differ by read
+    order/cache state, since the ``DocCache``'s exception reconstruction drops
+    it on warm re-raises -- Option B, 2026-09-26, follow-up issue #162) -- and
+    ``None`` otherwise (the folder/file is missing, it vanishes mid-scan, or it
+    parses cleanly, i.e. a frontmatter-id mismatch). feat-150-mcp-lifecycle-commands Phase 1a, ADR
     9080b37c-82b3-4f63-81f1-79641d0bf14c: ``get_feat`` calls this on
     :class:`FeatNotFoundError` and returns a non-raising
     :class:`~biz.dfch.specmgr.general.models.ParseFailureResult` for a

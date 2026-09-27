@@ -19,6 +19,7 @@
 
 from __future__ import annotations
 
+import re
 import tempfile
 import textwrap
 import unittest
@@ -81,6 +82,19 @@ _MINIMAL_BODY = textwrap.dedent(
     Free-form prose describing what happened in this update.
     """
 )
+
+
+def _strip_pydantic_footer(text: str) -> str:
+    """Strip the optional trailing pydantic documentation line from a parse-error text.
+
+    The ``DocCache``'s exception reconstruction drops pydantic's "For further
+    information visit https://errors.pydantic.dev/..." line on warm re-raises,
+    so the ``get_feat``/``list_feat`` error-text identity is asserted modulo
+    that line (Option B, 2026-09-26; the str-faithful reconstruction is
+    tracked as follow-up issue #162).
+    """
+    result = re.sub(r"[ \t]*For further information visit https://errors\.pydantic\.dev/.*$", "", text, flags=re.S)
+    return result
 
 
 class TestGetFeat(unittest.TestCase):
@@ -237,7 +251,8 @@ class TestGetFeat(unittest.TestCase):
         self.assertNotIsInstance(result, str)
 
     def test_broken_document_error_matches_list_failed_row(self) -> None:
-        """ParseFailureResult.error must equal list_feat's failed-row error for the same broken file."""
+        """ParseFailureResult.error must carry the same parse defect as list_feat's failed-row error for the same
+        broken file (identical field path and cause; the trailing pydantic documentation line is modulo)."""
         created = create_feat(_MINIMAL_BODY)
         self._doc_path(created.id).write_text("not a valid document, no headings at all\n", encoding="utf-8")
 
@@ -246,7 +261,11 @@ class TestGetFeat(unittest.TestCase):
 
         self.assertIsInstance(get_result, ParseFailureResult)
         self.assertEqual(len(failed), 1)
-        self.assertEqual(get_result.error, failed[0].error)
+        # Option B (2026-09-26): identity is modulo the trailing pydantic line; restore plain equality with issue #162.
+        self.assertEqual(_strip_pydantic_footer(get_result.error), _strip_pydantic_footer(failed[0].error))
+        # The core defect content (this fixture's structural parse failure) must be present in both texts.
+        self.assertIn("Token[0]: expected 'heading_open', got 'paragraph_open'.", get_result.error)
+        self.assertIn("Token[0]: expected 'heading_open', got 'paragraph_open'.", failed[0].error)
 
     def test_invalid_id_shape_raises_value_error(self) -> None:
         """An id that is not a well-formed feat-NNN-slug must raise ValueError before any file access."""

@@ -39,9 +39,13 @@ requested id resolves to an on-disk file whose content fails to parse. ``raw=Tru
 deliberately excluded from this path: a broken document must never return its raw text
 through ``get_<d>`` -- the invariant that no specmgr MCP tool can return the raw content of
 a document that fails to parse is load-bearing for the ``repair`` prompt's design (REQ-001).
-The ``error`` text is byte-identical to the domain's own ``list_<d>`` tool's failed-row
-``error`` field for the same broken file, since both are the string form of the same
-domain parse exception -- a testable consistency invariant, not a loose convention.
+The ``error`` text carries the same parse defect as the domain's own ``list_<d>`` tool's
+failed-row ``error`` field for the same broken file -- identical field path and cause,
+since both are the string form of the same domain parse exception; the trailing pydantic
+documentation line may differ by read order/cache state (the ``DocCache``'s exception
+reconstruction drops it on warm re-raises), so treat the two as the same defect, not
+byte-equal text (Option B, 2026-09-26; the str-faithful reconstruction is tracked as
+follow-up issue #162) -- a testable consistency invariant, not a loose convention.
 """
 
 from __future__ import annotations
@@ -67,8 +71,11 @@ class ParseFailureResult(BaseModel):
     error:
         The parse-failure message -- the string form (``str()``) of the domain's own parse
         exception, captured by the domain's cache-backed ``read_<d>`` reader exactly as the
-        domain's own ``list_<d>`` tool captures it for its failed row, so it is byte-identical
-        to ``list_<d>``'s failed-row ``error`` field for the same broken file.
+        domain's own ``list_<d>`` tool captures it for its failed row, so it carries the same
+        parse defect as ``list_<d>``'s failed-row ``error`` field for the same broken file
+        (identical field path and cause; the trailing pydantic documentation line may differ
+        by read order/cache state, since the ``DocCache``'s exception reconstruction drops
+        it on warm re-raises -- Option B, 2026-09-26, follow-up issue #162).
     path:
         The absolute, on-disk path (``Path.resolve()``d) of the file that failed to parse.
     id:
