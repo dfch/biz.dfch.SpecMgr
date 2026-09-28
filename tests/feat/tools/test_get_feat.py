@@ -19,6 +19,7 @@
 
 from __future__ import annotations
 
+import re
 import tempfile
 import textwrap
 import unittest
@@ -29,6 +30,8 @@ from biz.dfch.specmgr.feat.models.v1 import FeatDocument
 from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR, FeatNotFoundError
 from biz.dfch.specmgr.feat.tools.create_feat import create_feat
 from biz.dfch.specmgr.feat.tools.get_feat import get_feat
+from biz.dfch.specmgr.feat.tools.list_feat import list_feat
+from biz.dfch.specmgr.general.models import ParseFailureResult
 from biz.dfch.specmgr.general.tools._splice import body_text
 from biz.dfch.specmgr.general.tools.update import update
 
@@ -79,6 +82,19 @@ _MINIMAL_BODY = textwrap.dedent(
     Free-form prose describing what happened in this update.
     """
 )
+
+
+def _strip_pydantic_footer(text: str) -> str:
+    """Strip the optional trailing pydantic documentation line from a parse-error text.
+
+    The ``DocCache``'s exception reconstruction drops pydantic's "For further
+    information visit https://errors.pydantic.dev/..." line on warm re-raises,
+    so the ``get_feat``/``list_feat`` error-text identity is asserted modulo
+    that line (Option B, 2026-09-26; the str-faithful reconstruction is
+    tracked as follow-up issue #162).
+    """
+    result = re.sub(r"[ \t]*For further information visit https://errors\.pydantic\.dev/.*$", "", text, flags=re.S)
+    return result
 
 
 class TestGetFeat(unittest.TestCase):
@@ -210,6 +226,51 @@ class TestGetFeat(unittest.TestCase):
             get_feat("feat-99-no-such-id", raw=True, offset=2, limit=3)
         with self.assertRaises(FeatNotFoundError):
             get_feat("feat-99-no-such-id", raw=False)
+
+    def test_broken_document_returns_parse_failure_result(self) -> None:
+        """get_feat must return a ParseFailureResult (not raise) for an id whose on-disk file fails to parse."""
+        created = create_feat(_MINIMAL_BODY)
+        self._doc_path(created.id).write_text("not a valid document, no headings at all\n", encoding="utf-8")
+
+        result = get_feat(created.id)
+
+        self.assertIsInstance(result, ParseFailureResult)
+        self.assertEqual(result.id, created.id)
+        self.assertEqual(result.path, str(self._doc_path(created.id).resolve()))
+        self.assertTrue(result.error)
+        self.assertNotIsInstance(result, FeatDocument)
+
+    def test_broken_document_raw_true_returns_parse_failure_result_never_str(self) -> None:
+        """raw=True on a broken document must return a ParseFailureResult, never a raw str."""
+        created = create_feat(_MINIMAL_BODY)
+        self._doc_path(created.id).write_text("not a valid document, no headings at all\n", encoding="utf-8")
+
+        result = get_feat(created.id, raw=True)
+
+        self.assertIsInstance(result, ParseFailureResult)
+        self.assertNotIsInstance(result, str)
+
+    def test_broken_document_error_matches_list_failed_row(self) -> None:
+        """ParseFailureResult.error must carry the same parse defect as list_feat's failed-row error for the same
+        broken file (identical field path and cause; the trailing pydantic documentation line is modulo)."""
+        created = create_feat(_MINIMAL_BODY)
+        self._doc_path(created.id).write_text("not a valid document, no headings at all\n", encoding="utf-8")
+
+        get_result = get_feat(created.id)
+        failed = [summary for summary in list_feat().results if summary.title == "<failed to parse>"]
+
+        self.assertIsInstance(get_result, ParseFailureResult)
+        self.assertEqual(len(failed), 1)
+        # Option B (2026-09-26): identity is modulo the trailing pydantic line; restore plain equality with issue #162.
+        self.assertEqual(_strip_pydantic_footer(get_result.error), _strip_pydantic_footer(failed[0].error))
+        # The core defect content (this fixture's structural parse failure) must be present in both texts.
+        self.assertIn("Token[0]: expected 'heading_open', got 'paragraph_open'.", get_result.error)
+        self.assertIn("Token[0]: expected 'heading_open', got 'paragraph_open'.", failed[0].error)
+
+    def test_invalid_id_shape_raises_value_error(self) -> None:
+        """An id that is not a well-formed feat-NNN-slug must raise ValueError before any file access."""
+        with self.assertRaises(ValueError):
+            get_feat("not-a-feat-id")
 
 
 if __name__ == "__main__":

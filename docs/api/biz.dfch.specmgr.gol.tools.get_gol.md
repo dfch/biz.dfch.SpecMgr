@@ -28,7 +28,7 @@ out-of-range values, never erroring).
 
 ## Functions
 
-### `get_gol(id: 'str', raw: 'bool' = False, offset: 'int | None' = None, limit: 'int | None' = None) -> 'GolDocument | str'`
+### `get_gol(id: 'str', raw: 'bool' = False, offset: 'int | None' = None, limit: 'int | None' = None) -> 'GolDocument | str | ParseFailureResult'`
 
 Read and return the goal identified by ``id``.
 
@@ -54,10 +54,20 @@ limit:
 
 Returns
 -------
-GolDocument | str
+GolDocument | str | ParseFailureResult
     With ``raw=False``: the current on-disk document, freshly re-read
     and re-parsed. With ``raw=True``: the body text (or its
-    ``offset``/``limit`` window) as a plain string.
+    ``offset``/``limit`` window) as a plain string. When the document
+    exists but fails to parse, a
+    :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
+    (``error``/``path``/``id``) is returned instead of raising --
+    ``error`` carries the same parse defect as the domain's own ``list``
+    tool's failed-row ``error`` for the same file (identical field path
+    and cause, though the trailing pydantic documentation line may
+    differ by read order/cache state; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c,
+    Option B, 2026-09-26 -- the str-faithful reconstruction is tracked
+    as a follow-up issue);
+    ``raw=True`` never returns a broken document's raw text.
     Raises :class:`._paths.GolNotFoundError` if no goal has this id.
 
 Raises

@@ -45,12 +45,14 @@ out-of-range values, never erroring).
 
 from __future__ import annotations
 
+from ...general.models import ParseFailureResult
+from ...general.tools._doc_paths import find_parse_failure
 from ...general.tools._path_safety import assert_within, validate_id
 from ...general.tools._splice import body_text, window_body
 from ...server import mcp
 from ..models.v1 import SysrsDocument
-from ._io import load_by_id
-from ._paths import sysrs_base_dir
+from ._io import load_by_id, read_sysrs
+from ._paths import SysrsNotFoundError, sysrs_base_dir
 
 
 @mcp.tool(
@@ -63,11 +65,19 @@ from ._paths import sysrs_base_dir
         "`offset` (1-based, default 1) is the first body line to return, `limit` (line count, "
         "default through end of body) how many; out-of-range values clamp (`offset > N` returns "
         "the empty string), and coordinates with raw=False raise ValueError."
-        " An invalid id (path-injection attempt "
-        "or wrong format) is also a ValueError, raised before any file access."
+        " A document that exists but fails to parse returns a `ParseFailureResult` "
+        "(`error`/`path`/`id`) instead of raising; its `error` text carries the same parse defect as the "
+        "domain's own `list` tool's failed-row `error` for the same file (identical field path and cause, "
+        "though the trailing pydantic documentation line may differ by read order/cache state; ADR "
+        "9080b37c-82b3-4f63-81f1-79641d0bf14c, Option B, 2026-09-26 -- the str-faithful reconstruction "
+        "is tracked as a follow-up issue). "
+        "An invalid id (path-injection attempt or wrong format) is also a ValueError, raised before "
+        "any file access."
     ),
 )
-def get_sysrs(id: str, raw: bool = False, offset: int | None = None, limit: int | None = None) -> SysrsDocument | str:
+def get_sysrs(
+    id: str, raw: bool = False, offset: int | None = None, limit: int | None = None
+) -> SysrsDocument | str | ParseFailureResult:
     """Read and return the System Requirements Specification identified by ``id``.
 
     Parameters
@@ -92,10 +102,20 @@ def get_sysrs(id: str, raw: bool = False, offset: int | None = None, limit: int 
 
     Returns
     -------
-    SysrsDocument | str
+    SysrsDocument | str | ParseFailureResult
         With ``raw=False``: the current on-disk document, freshly re-read
         and re-parsed. With ``raw=True``: the body text (or its
-        ``offset``/``limit`` window) as a plain string.
+        ``offset``/``limit`` window) as a plain string. When the document
+        exists but fails to parse, a
+        :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
+        (``error``/``path``/``id``) is returned instead of raising --
+        ``error`` carries the same parse defect as the domain's own ``list``
+        tool's failed-row ``error`` for the same file (identical field path
+        and cause, though the trailing pydantic documentation line may
+        differ by read order/cache state; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c,
+        Option B, 2026-09-26 -- the str-faithful reconstruction is tracked
+        as a follow-up issue);
+        ``raw=True`` never returns a broken document's raw text.
         Raises :class:`._paths.SysrsNotFoundError` if no System Requirements
         Specification has this id.
 
@@ -112,7 +132,15 @@ def get_sysrs(id: str, raw: bool = False, offset: int | None = None, limit: int 
         raise ValueError(f"offset/limit are only valid with raw=True, got offset={offset!r}, limit={limit!r}")
 
     base_dir = sysrs_base_dir()
-    path, doc = load_by_id(base_dir, id)
+    try:
+        path, doc = load_by_id(base_dir, id)
+    except SysrsNotFoundError:
+        parse_failure = find_parse_failure(base_dir, id, read_sysrs)
+        if parse_failure is None:
+            raise
+        failure_path, failure_error = parse_failure
+        assert_within(base_dir, failure_path)
+        return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id)
     assert_within(base_dir, path)
     if raw:
         text = body_text(path)
