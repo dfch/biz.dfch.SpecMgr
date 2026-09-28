@@ -9,6 +9,11 @@ Index of all ADRs in this repository.
   - Status: accepted
   - Date: 2026-09-04
   - Decision-makers: OpenCode agent + user decision
+- [Revise the generic update tool's success return to frontmatter plus an optional before/after snippet](19ff316b-cd11-41a7-a616-ffd84917da51-revise-the-generic-update-tool-s-success-return-to-frontmatt.md)
+  - Id: 19ff316b-cd11-41a7-a616-ffd84917da51
+  - Status: accepted
+  - Date: 2026-09-28
+  - Decision-makers: OpenCode agent + user decision
 - [Replace domain-specific delete tools with a generic type-dispatched delete tool](1af6787b-eaab-4e8f-888f-531c1e76c19d-replace-domain-specific-delete-tools-with-a-generic-type-dis.md)
   - Id: 1af6787b-eaab-4e8f-888f-531c1e76c19d
   - Status: accepted
