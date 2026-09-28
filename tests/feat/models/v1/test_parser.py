@@ -83,9 +83,9 @@ _MINIMAL_DOC = textwrap.dedent(
 
     ### Task List
 
-    #### Phase 0: Scaffolding
+    #### Phase 100: Scaffolding
 
-    - [x] Task 0.1: Set up
+    - [x] Task 100.100: Set up
 
     ## Progress
 
@@ -162,6 +162,28 @@ class TestParseFeat(unittest.TestCase):
         self.assertEqual(document.frontmatter.status, "planning")
         self.assertEqual(document.frontmatter.version, "1.0.0")
 
+    def test_parses_in_between_phase_and_task_numbers(self) -> None:
+        text = _MINIMAL_DOC.replace("#### Phase 100: Scaffolding", "#### Phase 105: Scaffolding").replace(
+            "- [x] Task 100.100: Set up", "- [x] Task 105.105: Set up"
+        )
+
+        document = parse_feat(text)
+
+        phase = document.body.plan.task_list.phases[0]
+        self.assertEqual(phase.number, 105)
+        self.assertEqual(phase.items[0].task_description, "Set up")
+
+    def test_parses_task_number_mismatched_with_enclosing_phase_number(self) -> None:
+        # REQ-004: a task's phase component is NOT cross-checked against the
+        # enclosing phase's own number -- `Task 100.100` under `Phase 110` parses.
+        text = _MINIMAL_DOC.replace("#### Phase 100: Scaffolding", "#### Phase 110: Scaffolding")
+
+        document = parse_feat(text)
+
+        phase = document.body.plan.task_list.phases[0]
+        self.assertEqual(phase.number, 110)
+        self.assertEqual(phase.items[0].task_description, "Set up")
+
 
 class TestParseFeatValueViolations(unittest.TestCase):
     """Model-level violations raise `pydantic.ValidationError` (ACC-001)."""
@@ -196,6 +218,30 @@ class TestParseFeatValueViolations(unittest.TestCase):
         with self.assertRaises(ValidationError):
             parse_feat(text)
 
+    def test_legacy_or_malformed_task_number_raises_actionable_validation_error(self) -> None:
+        # REQ-002/REQ-005: the `Task NNN.MMM: ` prefix is enforced eagerly at parse
+        # time; the message names the item's field path, 1-based line, and the
+        # expected shape.
+        for legacy_item in (
+            "- [x] Task 0.1: Set up",
+            "- [x] Task 1.1: Set up",
+            "- [x] Task 100.10: Set up",
+            "- [x] Task 1000.100: Set up",
+            "- [x] Task 100-100: Set up",
+            "- [x] Task 100.100 Set up",
+            "- [x] Set up without any task number",
+        ):
+            with self.subTest(legacy_item=legacy_item):
+                text = _MINIMAL_DOC.replace("- [x] Task 100.100: Set up", legacy_item)
+
+                with self.assertRaises(ValidationError) as ctx:
+                    parse_feat(text)
+
+                message = str(ctx.exception)
+                self.assertIn("FeatTaskItem", message)
+                self.assertIn("(line ", message)
+                self.assertIn("expected 'Task NNN.MMM: <description>'", message)
+
     def test_out_of_order_updates_entry_raises_validation_error(self) -> None:
         text = textwrap.dedent(
             """\
@@ -227,9 +273,9 @@ class TestParseFeatValueViolations(unittest.TestCase):
 
             ### Task List
 
-            #### Phase 0: Scaffolding
+            #### Phase 100: Scaffolding
 
-            - [x] Task 0.1: Set up
+            - [x] Task 100.100: Set up
 
             ## Progress
 
@@ -287,9 +333,9 @@ class TestParseFeatStructuralViolations(unittest.TestCase):
 
             ### Task List
 
-            #### Phase 0: Scaffolding
+            #### Phase 100: Scaffolding
 
-            - [x] Task 0.1: Set up
+            - [x] Task 100.100: Set up
 
             ## Unknown Section
 
@@ -339,9 +385,9 @@ class TestParseFeatStructuralViolations(unittest.TestCase):
 
             ### Task List
 
-            #### Phase 0: Scaffolding
+            #### Phase 100: Scaffolding
 
-            - [x] Task 0.1: Set up
+            - [x] Task 100.100: Set up
 
             ## Progress
 
@@ -361,10 +407,24 @@ class TestParseFeatStructuralViolations(unittest.TestCase):
             parse_feat(text)
 
     def test_malformed_phase_heading_raises_assertion_error(self) -> None:
-        text = _MINIMAL_DOC.replace("#### Phase 0: Scaffolding", "#### Phase Zero: Scaffolding")
+        text = _MINIMAL_DOC.replace("#### Phase 100: Scaffolding", "#### Phase Zero: Scaffolding")
 
         with self.assertRaises(AssertionError):
             parse_feat(text)
+
+    def test_legacy_unpadded_phase_heading_raises_assertion_error(self) -> None:
+        for legacy_heading in ("#### Phase 0: Scaffolding", "#### Phase 1: Scaffolding", "#### Phase 12: Scaffolding"):
+            with self.subTest(legacy_heading=legacy_heading):
+                text = _MINIMAL_DOC.replace("#### Phase 100: Scaffolding", legacy_heading)
+
+                with self.assertRaises(AssertionError) as ctx:
+                    parse_feat(text)
+
+                message = str(ctx.exception)
+                self.assertIn("expected list[Phase]", message)
+                # `describe_alias` renders the REGEX alias via `!r`, so the
+                # pattern's own backslash is escaped in the message.
+                self.assertIn(r"^Phase \\d{3}: .+$", message)
 
     def test_malformed_update_entry_heading_raises_assertion_error(self) -> None:
         text = _MINIMAL_DOC.replace("#### 2026-08-26 09:00:00.000Z - Created", "#### Not A Timestamp - Created")
@@ -460,9 +520,9 @@ class TestParseFeatStructuralViolations(unittest.TestCase):
 
             ### Task List
 
-            #### Phase 0: Scaffolding
+            #### Phase 100: Scaffolding
 
-            - [x] Task 0.1: Set up
+            - [x] Task 100.100: Set up
 
             ## Progress
 

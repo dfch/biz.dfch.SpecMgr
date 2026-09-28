@@ -4,7 +4,7 @@ created: '2026-09-27T16:03:36.781+02:00'
 id: feat-163-feat-numbering
 status: progress
 type: feat
-updated: '2026-09-28T05:45:10.313+02:00'
+updated: '2026-09-28T08:35:13.728+02:00'
 version: 1.0.0
 ---
 
@@ -88,9 +88,9 @@ The scheme (confirmed against issue #163):
 
 #### Phase 110: Schema
 
-- [ ] Task 110.100: Update the `Phase` alias and `_PHASE_HEADING_PATTERN` to the 3-digit shape (`^Phase \d{3}: .+$`), including the computed `number`/`title` and their error messages.
-- [ ] Task 110.110: Add the feat-local task-item class enforcing the `Task NNN.MMM: ` prefix and wire it into `Phase.items` with eager validation (mirroring `AcceptanceCriterionItem`).
-- [ ] Task 110.120: Add model tests: the phase-alias + task-prefix accept/reject matrix (gaps, in-betweens, legacy rejections with actionable messages).
+- [x] Task 110.100: Update the `Phase` alias and `_PHASE_HEADING_PATTERN` to the 3-digit shape (`^Phase \d{3}: .+$`), including the computed `number`/`title` and their error messages.
+- [x] Task 110.110: Add the feat-local task-item class enforcing the `Task NNN.MMM: ` prefix and wire it into `Phase.items` with eager validation (mirroring `AcceptanceCriterionItem`).
+- [x] Task 110.120: Add model tests: the phase-alias + task-prefix accept/reject matrix (gaps, in-betweens, legacy rejections with actionable messages).
 
 #### Phase 120: Data, Prompts, Generated Artifacts
 
@@ -114,14 +114,71 @@ The scheme (confirmed against issue #163):
 
 ### Current Status
 
-**As of 2026-09-28**: Phase 100 (Audit and Baseline) complete -- the legacy-surface
-enumeration (Task 100.100), the prompt-vs-schema optionality audit (Task 100.110, verdict:
-no discrepancies), and the confirmed design decisions (Task 100.120) are recorded in the
-Updates entries below. Implementation (Phase 110, the schema change) has not started.
+**As of 2026-09-28**: Phase 110 (Schema) complete -- `feat/models/v1/body.py` now
+enforces the 3-digit `Phase NNN: {title}` heading shape and the `Task NNN.MMM: ` item
+prefix (new feat-local `FeatTaskItem`, eager validation in `Phase._validate_items_eagerly`),
+with the feat model tests fully green under the new schema; the packaged data, prompts,
+generated artifacts, and the remaining fixture bodies stay legacy-shape until Phases
+120/140 per the plan (the expected-red set and the pre-approved schema/docs drift are
+recorded in the Updates entry below).
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-28 08:35:13.728+02:00 - Phase 110 (Schema): 3-digit Phase/Task shapes, FeatTaskItem, eager validation
+
+Updated `feat/models/v1/body.py` to the new numbering scheme: `Phase`'s `@alias` is now `^Phase \d{3}: .+$` and
+`_PHASE_HEADING_PATTERN` is `^Phase (?P<number>\d{3}): (?P<title>.+)$`, with the computed `number`/`title` kept as
+an `int`/`str` derived from the heading (docstring examples re-pointed to `#### Phase 100: X` and the assertion
+messages now read `expected heading 'Phase NNN: <title>'`); a new feat-local `FeatTaskItem` (declared in `body.py`,
+exported from `feat.models.v1`) subclasses `tsk`'s own `TaskItem` and adds exactly one computed field,
+`task_description`, re-matching `_FEAT_TASK_ITEM_PATTERN` (`^Task \d{3}\.\d{3}: (?P<description>.+)$`) against the
+inherited, checkbox-stripped `description` with the same actionable message shape as
+`AcceptanceCriterionItem.criterion_description` (`expected 'Task NNN.MMM: <description>'`, plus the item's own
+field path and 1-based line); `Phase.items` is now `list[FeatTaskItem]` (min_length=1, field description naming
+the new `- [ ] Task NNN.MMM: ...` shape), and `Phase._validate_items_eagerly` now forces both `.checked` and
+`.task_description` for every item, so a malformed task fails at parse time rather than lazily. Only the shapes
+are enforced: the step-10 increment, uniqueness, and the cross-check between a task's phase component and the
+enclosing `Phase.number` stay authoring conventions, so `Phase 105`, `Task 100.105`, and `Task 999.999` parse and
+no assigned number is ever renumbered. All legacy-shape prose in `body.py` was re-pointed per the Phase 100
+enumeration (the module docstring's `TaskItem`-reuse sentence, the pattern comment, the `Phase` class docstring,
+both computed fields' docstrings/messages, and the `TaskList` docstring plus `phases` field description). Tests
+(Task 110.120): `test_body.py`'s alias matrix was redone for the 3-digit shape (accepts `Phase 100: X`,
+`Phase 105: A: B`, `Phase 999: X`; rejects title-less headings, legacy `Phase 0`/`Phase 1`/`Phase 12`, 4-digit
+`Phase 1000`, non-numeric `Phase one: X`, lowercase `phase 100: X`, `Phases 100: X`, `Phase100: X`); new
+`TestFeatTaskItem` (unit-level accept/reject matrix with the exact actionable message for `Task 1.1`,
+`Task 100.10`, `Task 1000.100`, `Task 100-100`, a missing colon, and a bare unprefixed item, plus the soft-wrap
+guard and checked/unchecked parsing) and `TestPhaseTaskItemEagerValidation` (Phase-level eager acceptance of
+`Task 100.100`/`Task 100.110`/`Task 105.105`/`Task 999.999` -- including a task whose phase component mismatches
+its enclosing phase -- and eager rejection of every malformed shape above); `TestPhaseComputedFields`/
+`TestTaskListComposite`/`_minimal_plan` moved to the new shapes (including a gap/in-between phase test,
+`Phase 100`/`Phase 105`/`Phase 120`); `test_parser.py`'s `_MINIMAL_DOC` and the four inline docs were re-pointed
+(`Phase 0`/`Task 0.1` to `Phase 100`/`Task 100.100`), the "Phase Zero" negative test's `.replace` source literal
+updated, and new whole-document tests added: in-between numbers parse, a task phase component mismatched against
+the enclosing phase number still parses (REQ-004), legacy unpadded phase headings raise the engine `AssertionError`
+naming the `^Phase \d{3}: .+$` alias, and legacy/malformed task numbers raise an actionable `ValidationError`
+naming `FeatTaskItem`, a 1-based line, and the expected shape. Gate outcome: `ruff format --check`, `ruff check`,
+and `vulture src/ whitelist.py --min-confidence 60` are all green (no new whitelist entry needed -- `FeatTaskItem`
+and `task_description` are referenced by the eager validator and the `Phase.items` annotation); the feat model
+tests (`tests/feat/models/v1`) are fully green at 122 tests; the full suite shows 98 unique failing tests, of
+which 97 lie inside the expected-red fixture list and every one of them was verified to fail for the legacy-shape
+reason (a phase-alias `expected list[Phase]` assertion or a task-prefix `expected 'Task NNN.MMM: <description>'`
+assertion on the still-legacy packaged-data, tool, prompt, general-tool, and regression fixture bodies); the
+single failing test outside that list, `tests.feat.resources.test_feat_schema.TestFeatSchemaResource.
+test_matches_fresh_generate_feat_schema_output`, is the in-suite mirror of the pre-approved schema drift -- the
+stale packaged `feat/data/feat_schema.json` still carries the old `TaskItem` `$defs` while a fresh
+`generate_feat_schema()` now emits `FeatTaskItem`, and regenerating it is Task 120.120's job; the drift checks
+confirm it: `specmgr schema --type feat` exits 1 with `docs/feat_schema.json` rewritten (reverted afterwards) and
+`specmgr docs` rewrites only `docs/api/biz.dfch.specmgr.feat.models.v1.body.md` (also reverted; `docs/GENERATED.md`
+unchanged), i.e. the generated-doc drift is present and limited to `feat`. `tests/regression/test_issue_70`'s feat
+class stays green (not in the failing set) because its raw-HTML token check fires at tokenization time, before any
+phase alias matching. One boundary call, flagged for the orchestrator: the test-local reference fixture
+`tests/feat/models/v1/data/feat_reference.md` (Task 120.100's) was moved to the new scheme in this phase --
+`Phase 0`/`Phase 1` to `Phase 100`/`Phase 110` and `Task 0.1`/`Task 1.1`/`Task 1.2` to `Task 100.100`/
+`Task 110.100`/`Task 110.110`, the plan's exact target mapping -- because the phase gate requires the feat model
+tests fully green and the reference round-trip tests read that fixture; Task 120.100 now only has to bring the
+packaged `feat_example.md`/`feat_template.md` to the same state and re-verify the byte-identity.
 
 #### 2026-09-28 05:45:10.313+02:00 - Task 100.120: Confirmed design decisions restated
 
