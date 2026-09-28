@@ -60,7 +60,23 @@ revise.
     `#### {timestamp} ( - | : ) {title}`, where `{timestamp}` is the full
     date+time form `yyyy-MM-dd[T ]HH:mm:ss.fff` + `Z` or `±HH:mm` (the
     date/time separator may be `T` or a space; a date-only timestamp is
-    rejected), followed by a lead paragraph.
+    rejected), followed by a lead paragraph. Adding a new phase or task
+    to the `### Task List` section is the same kind of line-range insert
+    of one new, numbered line -- never a renumber of the existing lines.
+    Task List numbering scheme: phases carry 3-digit zero-padded numbers
+    starting at 100, step 10 (`Phase 100`, `Phase 110`, `Phase 120`,
+    ...); each task line is `- [ ] Task NNN.MMM: {text}` (or `- [x] ...`
+    once done), where `NNN` is the enclosing phase's number and `MMM` is
+    a 3-digit zero-padded task number starting at 100, step 10, within
+    its phase (`Task 100.100`, `Task 100.110`, ...). The schema enforces
+    only the number SHAPES -- `#### Phase NNN: {title}` and the
+    `Task NNN.MMM: ` prefix -- not the step-10 increments, not
+    uniqueness, and not the match between a task's `NNN` and its
+    enclosing phase's number: those are authoring conventions. Gaps are
+    deliberate: to insert a new phase or task, pick the number between
+    its neighbours (e.g. `Phase 105`, `Task 100.105`) so existing numbers
+    never renumber; once assigned, a number is permanent, and removals
+    leave gaps.
   - **Whole-body replace** (a multi-section change, or whenever you are
     uncertain about the line range): call `update(id, type="feat", content)`
     with no `offset`/`limit` -- `content` is then the full replacement body:

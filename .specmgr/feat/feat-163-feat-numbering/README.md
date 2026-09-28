@@ -4,7 +4,7 @@ created: '2026-09-27T16:03:36.781+02:00'
 id: feat-163-feat-numbering
 status: progress
 type: feat
-updated: '2026-09-28T08:35:13.728+02:00'
+updated: '2026-09-28T10:33:54.476+02:00'
 version: 1.0.0
 ---
 
@@ -94,10 +94,10 @@ The scheme (confirmed against issue #163):
 
 #### Phase 120: Data, Prompts, Generated Artifacts
 
-- [ ] Task 120.100: Update `feat_template.md`, `feat_example.md`, and the `feat_reference.md` fixture to the new scheme (Phase 100/110, Task 100.100/110.100/110.110).
-- [ ] Task 120.110: Update `feat_create_instructions.md` + `feat_update_instructions.md` with the numbering-scheme description and the Task 100.110 optionality fixes.
-- [ ] Task 120.120: Regenerate the packaged `feat_schema.json`, `docs/feat_schema.json`, `docs/MCP.md`, `docs/api/` + `docs/GENERATED.md`.
-- [ ] Task 120.130: Consistency sweep: code docstrings, `whitelist.py`, the `tests/regression/test_issue_70.py` fixture (to `Phase 300`/`Task 300.100`), and the TSK document's FEAT-shape text.
+- [x] Task 120.100: Update `feat_template.md`, `feat_example.md`, and the `feat_reference.md` fixture to the new scheme (Phase 100/110, Task 100.100/110.100/110.110).
+- [x] Task 120.110: Update `feat_create_instructions.md` + `feat_update_instructions.md` with the numbering-scheme description and the Task 100.110 optionality fixes.
+- [x] Task 120.120: Regenerate the packaged `feat_schema.json`, `docs/feat_schema.json`, `docs/MCP.md`, `docs/api/` + `docs/GENERATED.md`.
+- [x] Task 120.130: Consistency sweep: code docstrings, `whitelist.py`, the `tests/regression/test_issue_70.py` fixture (to `Phase 300`/`Task 300.100`), and the TSK document's FEAT-shape text.
 
 #### Phase 130: Agent Skill
 
@@ -114,17 +114,70 @@ The scheme (confirmed against issue #163):
 
 ### Current Status
 
-**As of 2026-09-28**: Phase 110 (Schema) complete -- `feat/models/v1/body.py` now
-enforces the 3-digit `Phase NNN: {title}` heading shape and the `Task NNN.MMM: ` item
-prefix (new feat-local `FeatTaskItem`, eager validation in `Phase._validate_items_eagerly`),
-with the feat model tests fully green under the new schema; the packaged data, prompts,
-generated artifacts, and the remaining fixture bodies stay legacy-shape until Phases
-120/140 per the plan (the expected-red set and the pre-approved schema/docs drift are
-recorded in the Updates entry below).
+**As of 2026-09-28**: Phase 120 (Data, Prompts, Generated Artifacts) complete -- the packaged
+template/example (and the byte-identical reference fixture), both prompt instruction files (the
+canonical scheme wording plus the two Task 100.110 wording fixes), the two JSON Schema artifacts,
+the `body.md` API doc, and the TSK document's FEAT-shape entry all reflect the new numbering scheme,
+and the consistency sweep renumbered the regression fixtures and the 18 inline test fixtures
+(`docs/MCP.md` and `docs/GENERATED.md` came out byte-identical); the only legacy-shape surfaces left
+are the two prompt walkthrough BODY fixtures in `tests/feat/prompts/`, owned by Phase 140
+(Task 140.100) -- the full suite fails only those two tests, for the legacy-walkthrough-body reason.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-28 10:33:54.474+02:00 - Phase 120 (Data, Prompts, Generated Artifacts): data, prompts, fixtures
+
+Updated the packaged data to the new scheme: `feat_template.md` (`Phase 1`/`Task 1.1` to `Phase 100`/
+`Task 100.100`) and `feat_example.md` (`Phase 0`/`Phase 1` to `Phase 100`/`Phase 110`, `Task 0.1`/
+`Task 1.1`/`Task 1.2` to `Task 100.100`/`Task 110.100`/`Task 110.110`) -- no frontmatter or other line
+changed -- both still parsing via `parse_feat`/`validate`, and `feat_example.md` re-verified
+byte-identical (`cmp`) to the `feat_reference.md` fixture already moved in Phase 110. Both prompt
+instruction files now carry the canonical Task List numbering-scheme wording: phases are 3-digit
+zero-padded starting at 100, step 10, task lines are `- [ ] Task NNN.MMM: {text}` (or `- [x] ...` once
+done) with `MMM` a 3-digit zero-padded number starting at 100, step 10, within its phase, the schema
+enforces only the number SHAPES (`#### Phase NNN: {title}` and the `Task NNN.MMM: ` prefix) and not
+the step-10 increments, not uniqueness, not the task-to-phase match, and gaps are deliberate with
+in-between insertion (e.g. `Phase 105`, `Task 100.105`) so existing numbers never renumber and a
+number is permanent once assigned. In the create prompt, step 1's `### Task List` bullet was rewritten
+to name the new shapes with the scheme paragraph following it; in the update prompt, step 4's
+line-range guidance gained the same paragraph plus the note that adding a phase or task is a
+line-range insert of one new numbered line, never a renumber. The two Task 100.110 wording-level fixes
+were applied (the Phase 100.110 optionality audit found NO optionality discrepancies): create step 1's
+`Related Decisions` bullet now reads 'optional free-form cross-reference list; entries may reference
+an ADR id, a dec id, or any other decision record' and its `Blockers` bullet 'optional free-form list
+of open blockers', both matching the model's docstrings; every static substring the prompt tests assert
+against the instruction text was preserved verbatim (only the two walkthrough BODY fixtures in
+`tests/feat/prompts/` remain legacy-shape, off-limits until Phase 140). All four artifacts were
+regenerated: `specmgr schema --type feat --output-dir src/biz/dfch/specmgr/feat/data` (packaged
+`feat_schema.json` rewritten, second run exit 0), `specmgr schema` (only `docs/feat_schema.json`
+changed, second run exit 0), `specmgr mcp-docs` (`docs/MCP.md` byte-identical -- the instruction files
+are runtime-loaded, not embedded in registration) and `specmgr docs` (only
+`docs/api/biz.dfch.specmgr.feat.models.v1.body.md` changed -- Phase 110's docstring edits;
+`docs/GENERATED.md` byte-identical, no test files added this phase); re-running every generator leaves
+`docs/` unchanged. Consistency sweep: no legacy FEAT-shape prose remained in `src/` after Phase 110
+(re-grep clean; the `tools/_cache.py` 'Phase 6' and feat-14/feat-144 references are immutable history
+cross-references to other features' own numbering); `whitelist.py`'s feat block re-verified as a no-op
+(bare field names plus the immutable 'feat-31 Phase 1' comment, `vulture` exit 0);
+`tests/regression/test_issue_70.py`'s `_FEAT_BAD_BODY` renumbered to `Phase 300`/`Task 300.100` with
+the title kept verbatim (the raw-HTML `<d>` token is the point of the regression) and the docstring
+sentences describing the fixture's current shape re-pointed to `Phase 300`, while the historical quote
+of the issue's own literal reported heading stays; `tests/regression/test_issue_71.py`'s
+`_FEAT_VALID_BASE_BODY` renumbered to `Phase 100`/`Task 100.100` with the `_MALFORMED_HEADING`
+'(Phase 1)' literal (the issue-#71 repro, asserted verbatim) and every feat-67-70-71 self-reference
+untouched; the 18 inline test fixtures across `tests/feat/tools/` (9 files, 10 bodies --
+`test_integration.py` carries two) and `tests/general/tools/` (9 files -- `Phase 0: N/A`/
+`Task 0.1: Not a real task.` in the two doc-cache files, 8-space indentation in
+`test_list_references.py` preserved) all moved to `Phase 100`/`Task 100.100` with every
+title/description verbatim; and the TSK document `tsk-2687d267`'s single 'The required FEAT document
+shape' entry now mandates `#### Phase NNN: {title}` (3-digit; first phase 100, step 10 by authoring
+convention, shape-only enforcement, in-between insertion allowed) with `- [ ]/- [x] Task NNN.MMM:
+{text}` items -- still one prose paragraph, every other entry byte-identical, frontmatter `updated`
+bumped, and the full document's `validate` (`type="tsk"`, `full=True`) printing exactly `True`. Gate:
+`ruff format --check` (1724 files), `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, and
+the feat (253 tests), general (403), and regression (21) suites are all green; the full suite (3519
+tests) fails ONLY the two Phase 140 walkthrough tests, both for the legacy-walkthrough-body reason.
 
 #### 2026-09-28 08:35:13.728+02:00 - Phase 110 (Schema): 3-digit Phase/Task shapes, FeatTaskItem, eager validation
 

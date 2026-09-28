@@ -42,15 +42,31 @@ step 1 if this is genuinely a new feature.
   - `### Dependencies` -- optional container, no own text, holding two
     independently optional leaves: `#### Depends On` and `#### Blocks`.
   - `### Design Notes` -- optional prose.
-  - `### Related Decisions` -- optional bullet list of related ADR/DEC
-    ids with a short description each.
+  - `### Related Decisions` -- optional free-form cross-reference list;
+    entries may reference an ADR id, a dec id, or any other decision
+    record.
   - `### Task List` -- mandatory container, no own text, holding at
-    least one `#### Phase N: {title}` entry (unpadded phase number, e.g.
-    "Phase 1"), each with its own flat checklist of at least one
-    `- [ ] .../- [x] ...` task item.
+    least one `#### Phase NNN: {title}` entry (3-digit zero-padded phase
+    number, e.g. "Phase 100"), each with its own flat checklist of at
+    least one `- [ ] Task NNN.MMM: {text}` (or `- [x] Task NNN.MMM:
+    {text}` once done) task item.
+    Task List numbering scheme: phases carry 3-digit zero-padded numbers
+    starting at 100, step 10 (`Phase 100`, `Phase 110`, `Phase 120`,
+    ...); each task line is `- [ ] Task NNN.MMM: {text}` (or `- [x] ...`
+    once done), where `NNN` is the enclosing phase's number and `MMM` is
+    a 3-digit zero-padded task number starting at 100, step 10, within
+    its phase (`Task 100.100`, `Task 100.110`, ...). The schema enforces
+    only the number SHAPES -- `#### Phase NNN: {title}` and the
+    `Task NNN.MMM: ` prefix -- not the step-10 increments, not
+    uniqueness, and not the match between a task's `NNN` and its
+    enclosing phase's number: those are authoring conventions. Gaps are
+    deliberate: to insert a new phase or task, pick the number between
+    its neighbours (e.g. `Phase 105`, `Task 100.105`) so existing numbers
+    never renumber; once assigned, a number is permanent, and removals
+    leave gaps.
 - `## Progress` -- mandatory container, no own text:
   - `### Current Status` -- mandatory prose: where things stand today.
-  - `### Blockers` -- optional prose/list of open blockers.
+  - `### Blockers` -- optional free-form list of open blockers.
   - `### Updates` -- mandatory, an optional leading HTML comment (e.g. an
     ordering hint) followed by at least one
     `#### {timestamp} ( - | : ) {title}` entry, newest-first, where
