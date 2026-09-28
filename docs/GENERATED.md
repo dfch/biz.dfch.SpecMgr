@@ -127,6 +127,7 @@ First-line docstrings from each module, organized by domain:
 - `general/models/ears.py` — Pydantic schema and parser for the EARS requirement-phrasing-templates guidance
 - `general/models/invalid_status_result.py` — The generic ``set_status`` tool's own non-raising, structured result for its one narrowly-scoped
 - `general/models/paged_result.py` — Generic paged-result wrapper shared by every ``list_<domain>`` MCP tool (feat-13 Task 1.1).
+- `general/models/parse_failure_result.py` — The ``get_<d>`` tools' own non-raising, structured result for the one narrowly-scoped
 - `general/models/rasci.py` — Pydantic schema and parser for the RASCI responsibility-assignment guidance
 - `general/models/reference.py` — One row of the generic ``list_references`` tool's ``PagedResult`` (feat-144-ref-artifact Phase 2).
 - `general/models/similarity_hit.py` — One ranked hit row of the two similarity tools (feat-134, Phase 3, ACC-001/ACC-002).
@@ -135,6 +136,7 @@ First-line docstrings from each module, organized by domain:
 - `general/models/validate_result.py` — The generic ``validate`` tool's non-raising, structured result shape (feat-81-83-validation Phase 2, REQ-004).
 - `general/prompts/__init__.py` — MCP prompt registrations that are not specific to any single document
 - `general/prompts/compact_history.py` — ``@mcp.prompt()``: compact_history (Various improvements, Task 0.21).
+- `general/prompts/repair.py` — ``@mcp.prompt()``: repair (feat-150-mcp-lifecycle-commands, Phase 1).
 - `general/resources/__init__.py` — MCP resource registrations that are not specific to any single document
 - `general/resources/config.py` — Resource: specmgr://config -- resolved base directory diagnostics (feat-51-mcp-cwd).
 - `general/resources/dtais.py` — Resource: specmgr://dtais -- the DTAIS verification-method vocabulary (feat-33-vcr Task 3.3).
@@ -554,4 +556,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 374
+**Test files**: 376

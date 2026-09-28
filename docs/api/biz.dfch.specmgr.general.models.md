@@ -46,6 +46,16 @@ similarity tools (ADR 750842b2-aca4-4649-ba0c-855ec8e1f505):
   ``id = None`` and the ``"<failed to parse>"`` marker title/status
   (REQ-009).
 
+Also backs feat-150-mcp-lifecycle-commands Phase 1a's narrow extension of
+that same non-raising workaround to the ``get_<d>`` tools' own parse-
+failure case (ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c):
+
+- :class:`ParseFailureResult` -- the non-raising, structured result every
+  ``get_<d>`` tool returns when the requested id resolves to an on-disk
+  file whose content fails to parse, instead of letting the domain's
+  ``XNotFoundError`` propagate. Distinct from :class:`ValidateResult` and
+  :class:`InvalidStatusResult` -- a different tool's own model.
+
 Also backs feat-92-resources's cross-cutting reference-resource
 model-backed drift-guard convention (ADR
 356d8781-e446-4c26-917a-eda85648ce9d, REQ-002/REQ-005/REQ-006):

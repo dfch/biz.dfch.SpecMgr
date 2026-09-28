@@ -158,6 +158,47 @@ str
     ``@alias`` regex) -- returned unchanged otherwise.
 
 
+### `find_feat_parse_failure(base_dir: 'Path', id_: 'str') -> 'tuple[Path, str] | None'`
+
+Resolve the parse-failure for a ``feat`` id whose folder exists but is unparseable.
+
+The ``feat``-specific companion to
+:func:`general.tools._doc_paths.find_parse_failure`, for the flat-file
+domains' shared name-prefix scan. Since a ``feat`` id *is* the containing
+folder's own name (ADR 8cf940c5), there is no directory scan to fall back
+on: the target file is always ``<base_dir>/<id_>/README.md``. This helper
+checks that single path -- if it exists and the domain's own cache-backed
+:func:`._cache.read_feat` raises a parse error (``AssertionError``/
+``pydantic.ValidationError``/``yaml.YAMLError`` -- the same channels
+:func:`general.tools._listing.build_summaries` catches for the
+``list_feat`` failed row) it returns ``(path, str(exc))`` -- carrying the
+same parse defect as that row's ``error`` field (identical field path and
+cause; the trailing pydantic documentation line may differ by read
+order/cache state, since the ``DocCache``'s exception reconstruction drops
+it on warm re-raises -- Option B, 2026-09-26, follow-up issue #162) -- and
+``None`` otherwise (the folder/file is missing, it vanishes mid-scan, or it
+parses cleanly, i.e. a frontmatter-id mismatch). feat-150-mcp-lifecycle-commands Phase 1a, ADR
+9080b37c-82b3-4f63-81f1-79641d0bf14c: ``get_feat`` calls this on
+:class:`FeatNotFoundError` and returns a non-raising
+:class:`~biz.dfch.specmgr.general.models.ParseFailureResult` for a
+non-``None`` result.
+
+Parameters
+----------
+base_dir:
+    The feature base directory.
+id_:
+    The id (= the containing folder's own name) whose file may be
+    unparseable.
+
+Returns
+-------
+tuple[Path, str] | None
+    ``(path, error_text)`` for the unparseable
+    ``<base_dir>/<id_>/README.md``, or ``None`` if there is no parse
+    failure to surface.
+
+
 ### `find_feat_path_by_id(base_dir: 'Path', id_: 'str') -> 'Path'`
 
 Resolve ``id_`` to its on-disk ``README.md`` path under ``base_dir``.
