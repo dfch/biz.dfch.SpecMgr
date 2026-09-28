@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-27T16:03:36.781+02:00'
 id: feat-163-feat-numbering
-status: progress
+status: review
 type: feat
-updated: '2026-09-28T12:49:46.129+02:00'
+updated: '2026-09-28T13:24:17.281+02:00'
 version: 1.0.0
 ---
 
