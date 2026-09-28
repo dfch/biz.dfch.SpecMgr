@@ -4,7 +4,7 @@ created: '2026-09-27T16:03:36.781+02:00'
 id: feat-163-feat-numbering
 status: review
 type: feat
-updated: '2026-09-28T13:24:17.281+02:00'
+updated: '2026-09-28T18:50:40.838+02:00'
 version: 1.0.0
 ---
 
@@ -124,6 +124,18 @@ for review.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-28 18:50:40.838+02:00 - Merged upstream dev (feat-150 repair command + v0.33.0) into the feature branch
+
+After the implementation was complete and the feature status had been set to review, upstream dev moved ahead with
+feat-150's MCP-native repair command + get_* parse-failure error channel (issue #155) and the v0.33.0 release bump,
+adding two test files, so the PR's CI docs-drift check (which runs on the branch merged with dev) regenerated
+docs/GENERATED.md with 368 test files against the 366 committed on the branch. Merged origin/dev into
+feat-163-feat-numbering (clean, no conflicts); the full gate on the merged tree is green -- ruff format/check and
+vulture clean, pytest -n auto 3616 passed (3533 from this feature plus the 83 new feat-150 tests, no interaction
+breakage), specmgr docs/mcp-docs/schema all idempotent with only docs/GENERATED.md changing (test count 366 -> 368),
+and docs/coverage.svg byte-identical at 99% coverage.
+
 
 #### 2026-09-28 12:49:46.129+02:00 - Phase 140 (Tests and Quality Gate): fixtures moved, optionality test, gate green
 
