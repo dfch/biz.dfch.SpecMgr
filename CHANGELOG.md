@@ -7,6 +7,86 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `repair`, a new cross-cutting MCP prompt in `general/prompts/`
+  (feat-150-mcp-lifecycle-commands, GitHub issue #150, Phase 1):
+  `repair(type, id=None)` narrates repairing a whole-body document
+  (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs; ADR is explicitly out
+  of scope) that currently fails to parse -- discover it via
+  `get_<d>(id)`'s non-raising `ParseFailureResult`-shaped result (with an
+  `id` -- the result carries `error`, the parse-failure message, the same
+  parse defect as `list_<d>()`'s failed-row `error` for the same file
+  (identical field path and cause; the trailing pydantic documentation
+  line may differ by read order/cache state -- Option B, 2026-09-26),
+  plus `path`, the absolute on-disk file; a truly absent id still raises
+  the domain's not-found error; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c)
+  or `list_<d>()`'s `<failed to parse>` failed row (without one, whose
+  `title`/`status` carry the marker and whose `id` is null while
+  `ref`/`path`/`error` are populated), read the raw file with the host's
+  own file-read tool, fix only what the enriched error addresses while
+  preserving the frontmatter `id`/`created`/`status`/`version`
+  byte-for-byte and leaving `updated` untouched (a repair is not an edit),
+  loop the generic `validate(type, content, full=True)` tool over the full
+  raw text until green, write the repaired text back to the same path via
+  the host's own file-write tool -- never via the generic `update` (or
+  `edit`) tool, which re-parses the existing document first and is
+  structurally unable to repair a document that fails to parse -- and then
+  confirm the repair against the file as it now exists on disk with one
+  more real `get_<d>(id)`/`list_<d>()` call; on a host without file
+  read/write tools it degrades to diagnose-only (report the error and the
+  proposed fix, touch nothing). `type` is validated against
+  `general.tools._domains.WHOLE_BODY_DOMAINS` (single source of truth) and
+  fails fast with an actionable `ValueError` for `adr` and unknown domains.
+- The `doc-repairer` subagent (`.opencode/agent/doc-repairer.md`) and the
+  `/repair <type> [id]` opencode command
+  (`.opencode/command/repair.md`, `$1`/`$2` positionals,
+  `agent: doc-repairer`) implementing the same repair loop with real file
+  access: workspace-wide `edit`/`write` permissions (the broken document
+  may live under any domain base directory), explicit
+  `read`/`glob`/`grep`/`list`/`question`/`todowrite` allows, and
+  `task`/`bash`/`external_directory` denies (feat-150-mcp-lifecycle-
+  commands, GitHub issue #150, Phase 1).
+- The self-triggering `repair` OpenCode Skill
+  (`.opencode/skill/repair/SKILL.md`, `name: repair`), which activates when
+  an agent organically encounters a failed-to-parse specmgr document
+  mid-task (not only via an explicit `/repair` invocation) and defers to
+  the `doc-repairer` subagent via the `task` tool when available, else
+  narrates the same condensed host-native loop (feat-150-mcp-lifecycle-
+  commands, GitHub issue #150, Phase 1, REQ-012).
+- `ParseFailureResult`, a new shared, non-raising Pydantic model in
+  `general/models/` (feat-150-mcp-lifecycle-commands, GitHub issue #150,
+  Phase 1a, ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c) -- the third member of
+  the ADR 519d1206 client-side-`isError`-truncation workaround chain (after
+  `validate`'s `{valid, errors}` and `set_status`'s `InvalidStatusResult`):
+  fields `error` (the parse-failure message), `path` (absolute on-disk file
+  path), and `id` (the requested id, echoed). Backed by a new shared helper
+  `general.tools._doc_paths.find_parse_failure(base_dir, id_, read_fn)` for
+  the 11 flat-file domains (scans for the single file whose stem encodes
+  `id_` as a hyphen-bounded token -- the flat-file naming is
+  `<type>-<id>-<slug>.md` -- and reports a parse-failing file's
+  `(path, str(exc))`) and a bespoke `feat.tools._paths.find_feat_parse_failure
+  (base_dir, id_)` for `feat` (the folder name IS the id, so no scan).
+
+### Changed
+
+- Every `get_<d>` tool for the 12 whole-body domains
+  (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs; `get_adr` unchanged)
+  now returns the non-raising `ParseFailureResult` (`error`/`path`/`id`) for
+  a document that exists but fails to parse, instead of raising the domain's
+  not-found error (feat-150-mcp-lifecycle-commands, GitHub issue #150,
+  Phase 1a, ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c). The `error` text
+  carries the same parse defect as the domain's `list_<d>` tool's failed-row
+  `error` for the same file (identical field path and cause; the trailing
+  pydantic documentation line may differ by read order/cache state --
+  Option B, 2026-09-26, the str-faithful reconstruction tracked as
+  follow-up issue #162), and `raw=True` on a broken document still returns
+  the result (never a raw `str`); a healthy document's return shape, a truly
+  absent id (still raises the domain's not-found error), and an invalid id
+  shape (still a `ValueError` before any file access) are all unchanged.
+  This unblocks Phase 1's `repair` prompt with-id branch, which narrates
+  reading the non-raising `ParseFailureResult`-shaped result from
+  `get_<d>(id)`.
 ## [0.33.0] - 2026-09-27
 
 ### Added
