@@ -4,7 +4,7 @@ created: '2026-09-23 23:16:12.456+02:00'
 id: feat-150-mcp-lifecycle-commands
 status: review
 type: feat
-updated: '2026-09-28T04:57:00.917+02:00'
+updated: '2026-09-28T05:48:30.994+02:00'
 version: 1.0.0
 ---
 
@@ -284,6 +284,10 @@ The unifying design principle (see Design Notes) is: every new capability gets a
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
+#### 2026-09-28 03:46:33.000Z - Split: Phases 2-6 moved to feat-167-mcp-lifecycle-commands-2 (GitHub issue #167)
+
+This feature's scope is hereby fixed to Phase 0 (`get_<d>` parse-failure error channel) and Phase 1 (`repair`) only, both already implemented and merged (PR #155); the remaining four items from this feature's own GitHub issue #150 -- `refine_feat`/`feat-planner` (Phase 2), the portable-prompt-narrates-delegation ADR (Phase 3), `implement_feat`/`review_feat` plus the review-fix loop (Phase 4), and OpenCode distribution (Phase 5), plus their own final verification (Phase 6) -- are split into a new feature, feat-167-mcp-lifecycle-commands-2, tracked under a new GitHub issue, #167 (cross-referenced both ways: this note here, and a comment on issue #150 pointing at #167), because GitHub issue #163 (feat-163-feat-numbering) introduces a stricter FEAT Task List numbering scheme (`Phase NNN`/`Task NNN.MMM`) with an explicit no-migration policy for existing plan documents, and continuing Phases 2-6 inside this already-merged plan would have meant either mixing schemes in one document or renumbering already-shipped Phase 0/1 content referenced elsewhere in the repo (AGENTS.md, ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c, `CHANGELOG.md`, `server.py`'s docstring); the Phase 2-6 sections, REQ-003..012, and ACC-003..013 above are left exactly as originally planned, as historical context only -- they are not implemented under this feature and their checkboxes are not expected to be checked here.
+
 #### 2026-09-28 02:57:00.000Z - Post-review polish: repair narration wording (A3/A4) fixed, find_parse_failure edge-case tests added (B2)
 
 Additional small findings from an earlier informal review pass (not the formal PR #155 feat-reviewer, which already approved with its own two fixes in 4ac7d41) are now applied. (1) `general/data/general_repair_instructions.md`'s without-id discovery bullet no longer tells the model to "remember the row's `id`" for a failed list row -- a failed row's `id` is always `null` by construction, so there was nothing to remember there; the frontmatter id, if any, only becomes recoverable after the raw read in step 2. (2) Both `general_repair_instructions.md` and `.opencode/agent/doc-repairer.md`'s post-write confirmation steps now say the healthy row's `error` field is "absent" rather than "`null`", matching the actual `exclude_none` serialization. (3) `find_parse_failure`'s previously-untested defensive branches now have coverage: `tests/general/tools/test__doc_paths.py` gains the prefix-only-match arm (`<id>-<slug>.md`, no type prefix), the two-name-matches-are-ambiguous arm (returns `None`), and the vanished-file-mid-scan (`FileNotFoundError`) arm (returns `None`); `tests/feat/tools/test__paths.py` gains the equivalent vanished-file arm for `find_feat_parse_failure` (no multi-match case applies there -- the folder name IS the id, there is no scan). No behavior change anywhere.
@@ -330,7 +334,7 @@ User decision (2026-09-26), after the ACC-002 re-run audit refuted the byte-iden
 
 #### 2026-09-26 13:15:00.000Z - Wording-refinement scope: the doc-repairer/SKILL copies updated too
 
-The refinement's explicit change list named `general_repair_instructions.md`, `repair.py`, `test_repair.py`, and the `repair`-specific wording in AGENTS.md/CHANGELOG/`server.py`, but not the `.opencode/agent/doc-repairer.md` and `.opencode/skill/repair/SKILL.md` copies. Settled: apply the same minimal wording updates there (with-id discovery, step-6 confirmation shapes, the skill's trigger description) as well, because those files narrate the same with-id mechanism to a runtime LLM -- leaving them stale would ship instructions factually wrong for 11 of the 12 whole-body domains under REQ-013 (`get_<d>` returns a result, it does not raise the wrapped error) -- and the plan's own Design Notes make prompt <-> agent <-> command wording sync a standing review-checklist item. If the orchestrator prefers the `.opencode` files to stay as-committed until a later pass, that is a revert of a few small hunks.
+The refinement's explicit change list named `general_repair_instructions.md`, `repair.py`, `test_repair.py`, and the `repair`-specific wording in AGENTS.md/CHANGELOG/`server.py`, but not the `.opencode/agent/doc-repairer.md` and `.opencode/skill/repair/SKILL.md` copies. Settled: apply the same minimal wording updates there (with-id discovery, step-6 confirmation shapes, the skill's trigger description) as well, because those files narrate the same with-id mechanism to a runtime LLM -- leaving them stale would ship instructions factually wrong for 11 of the 12 whole-body domains under REQ-013 (`get_<d>` returns a result, it does not raise the wrapped error) -- and the plan's own Design Notes make prompt \<-> agent \<-> command wording sync a standing review-checklist item. If the orchestrator prefers the `.opencode` files to stay as-committed until a later pass, that is a revert of a few small hunks.
 
 #### 2026-09-25 19:49:40.000Z - `get_<d>` parse-failure error channel: explicit error attribute on the result, narrow get-only scope
 
