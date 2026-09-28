@@ -303,6 +303,45 @@ class TestFindParseFailure(unittest.TestCase):
 
             self.assertIsNone(result)
 
+    def test_prefix_only_match_parse_fail_returns_path_and_error(self) -> None:
+        """A file matching the id-prefix form (`<id>-<slug>.md`, no type prefix) that fails to parse must return (path, str(exc))."""
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            path = base / "deadbeef-0000-0000-0000-000000000000-broken.md"
+            path.write_text("BROKEN", encoding="utf-8")
+
+            result = find_parse_failure(base, "deadbeef-0000-0000-0000-000000000000", _read_broken)
+
+            self.assertIsNotNone(result)
+            assert result is not None
+            self.assertEqual(result[0], path)
+            self.assertEqual(result[1], "simulated structural parse failure")
+
+    def test_two_name_matches_are_ambiguous_returns_none(self) -> None:
+        """Two files both name-matching the same id (however that happened) must return None -- ambiguous, skip."""
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            (base / "req-deadbeef-0000-0000-0000-000000000000-a.md").write_text("BROKEN", encoding="utf-8")
+            (base / "req-deadbeef-0000-0000-0000-000000000000-b.md").write_text("BROKEN", encoding="utf-8")
+
+            result = find_parse_failure(base, "deadbeef-0000-0000-0000-000000000000", _read_broken)
+
+            self.assertIsNone(result)
+
+    def test_vanished_file_mid_scan_returns_none(self) -> None:
+        """A name-matching file whose read_fn raises FileNotFoundError (vanished mid-scan) must return None."""
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            path = base / "req-deadbeef-0000-0000-0000-000000000000-x.md"
+            path.write_text("irrelevant", encoding="utf-8")
+
+            def _read_vanished(_path: Path) -> _FakeDoc:
+                raise FileNotFoundError("simulated vanish mid-scan")
+
+            result = find_parse_failure(base, "deadbeef-0000-0000-0000-000000000000", _read_vanished)
+
+            self.assertIsNone(result)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -341,6 +341,20 @@ class TestFindFeatParseFailure(unittest.TestCase):
 
             self.assertIsNone(find_feat_parse_failure(base, "feat-1-ok"))
 
+    def test_vanished_file_mid_scan_returns_none(self) -> None:
+        """A README.md that exists at scan time but whose read_feat call raises FileNotFoundError must return None."""
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            folder = base / "feat-1-vanishing"
+            folder.mkdir(parents=True)
+            path = folder / README_FILENAME
+            path.write_text("irrelevant", encoding="utf-8")
+
+            with mock.patch.object(feat_paths_module, "read_feat", side_effect=FileNotFoundError("simulated vanish")):
+                result = find_feat_parse_failure(base, "feat-1-vanishing")
+
+            self.assertIsNone(result)
+
 
 if __name__ == "__main__":
     unittest.main()
