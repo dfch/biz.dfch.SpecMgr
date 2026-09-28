@@ -4,7 +4,7 @@ created: '2026-09-23 23:16:12.456+02:00'
 id: feat-150-mcp-lifecycle-commands
 status: review
 type: feat
-updated: '2026-09-27T21:22:54.000+02:00'
+updated: '2026-09-28T04:57:00.917+02:00'
 version: 1.0.0
 ---
 
@@ -283,6 +283,10 @@ The unifying design principle (see Design Notes) is: every new capability gets a
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-28 02:57:00.000Z - Post-review polish: repair narration wording (A3/A4) fixed, find_parse_failure edge-case tests added (B2)
+
+Additional small findings from an earlier informal review pass (not the formal PR #155 feat-reviewer, which already approved with its own two fixes in 4ac7d41) are now applied. (1) `general/data/general_repair_instructions.md`'s without-id discovery bullet no longer tells the model to "remember the row's `id`" for a failed list row -- a failed row's `id` is always `null` by construction, so there was nothing to remember there; the frontmatter id, if any, only becomes recoverable after the raw read in step 2. (2) Both `general_repair_instructions.md` and `.opencode/agent/doc-repairer.md`'s post-write confirmation steps now say the healthy row's `error` field is "absent" rather than "`null`", matching the actual `exclude_none` serialization. (3) `find_parse_failure`'s previously-untested defensive branches now have coverage: `tests/general/tools/test__doc_paths.py` gains the prefix-only-match arm (`<id>-<slug>.md`, no type prefix), the two-name-matches-are-ambiguous arm (returns `None`), and the vanished-file-mid-scan (`FileNotFoundError`) arm (returns `None`); `tests/feat/tools/test__paths.py` gains the equivalent vanished-file arm for `find_feat_parse_failure` (no multi-match case applies there -- the folder name IS the id, there is no scan). No behavior change anywhere.
 
 #### 2026-09-27 19:22:54.000Z - Post-implementation review fixes (PR #155)
 

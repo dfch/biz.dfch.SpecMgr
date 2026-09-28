@@ -45,8 +45,7 @@ ambiguous -- do not guess.
   line reference and fix hint for structural failures, the violated
   pattern and offending value for closed-vocabulary failures) -- read
   it. Remember the row's `path` (the on-disk file you will read and later
-  write) and, if the document carries an id in its frontmatter, its `id`
-  as well. If no row carries the `<failed to parse>` marker, nothing is
+  write). If no row carries the `<failed to parse>` marker, nothing is
   failing -- report that and stop. If more than one row does, use the
   `question` tool to ask which document to repair -- do not guess.
 
@@ -110,7 +109,7 @@ specmgr tool call). So the loop does not end at step 5:
 - **Without an id**: call `list_$type()` again. The repair succeeded only
   if the row at the same `path`/`ref` no longer carries the
   `<failed to parse>` marker in its `title`/`status` and its `error` is
-  `null` (its `id` is populated only if the document actually carries an
+  absent (its `id` is populated only if the document actually carries an
   id in its frontmatter).
 Only a real parse of the real file counts as success. If the confirmation
 fails, re-read the file with your own file-read tool, compare it against

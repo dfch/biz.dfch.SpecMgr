@@ -96,7 +96,7 @@ write-back must be host-native.
    `id` -- success is the parsed document, not an `error`-carrying result),
    or `list_<type>()` again (without -- the row at the same `path`/`ref`
    must no longer carry the `<failed to parse>` marker and its `error`
-   must be `null`). Only a real parse of the real file counts as success.
+   must be absent). Only a real parse of the real file counts as success.
    If the confirmation fails, re-read the file, compare it against the
    validated text, fix the difference, and loop from step 4.
 7. **Report.** Return: the `path`, the original parse failure (`error`),
