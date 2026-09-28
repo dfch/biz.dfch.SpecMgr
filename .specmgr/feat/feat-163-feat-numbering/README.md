@@ -4,7 +4,7 @@ created: '2026-09-27T16:03:36.781+02:00'
 id: feat-163-feat-numbering
 status: progress
 type: feat
-updated: '2026-09-28T11:52:18.732+02:00'
+updated: '2026-09-28T12:49:46.129+02:00'
 version: 1.0.0
 ---
 
@@ -106,28 +106,63 @@ The scheme (confirmed against issue #163):
 
 #### Phase 140: Tests and Quality Gate
 
-- [ ] Task 140.100: Update the prompt walkthrough tests and the resource parse tests to the new shapes.
-- [ ] Task 140.110: Add the prompt ↔ schema optionality regression test (REQ-008/ACC-005).
-- [ ] Task 140.120: Run the full quality gate (`ruff format --check`, `ruff check`, `vulture`, `pytest -n auto --cov`) and fix fallout.
+- [x] Task 140.100: Update the prompt walkthrough tests and the resource parse tests to the new shapes.
+- [x] Task 140.110: Add the prompt ↔ schema optionality regression test (REQ-008/ACC-005).
+- [x] Task 140.120: Run the full quality gate (`ruff format --check`, `ruff check`, `vulture`, `pytest -n auto --cov`) and fix fallout.
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-09-28**: Phase 130 (Agent Skill) complete -- the repo's first project OpenCode skill
-`.opencode/skills/feat-numbering/SKILL.md` is committed (exactly the two spec-required frontmatter
-keys, a third-person description front-loading the four trigger keywords, and a body that mirrors
-the prompts' canonical scheme paragraph verbatim plus the three `specmgr://feat/*` resource
-pointers), and the new `tests/opencode/` package (12 tests) pins its frontmatter validity, scheme
-agreement with both prompt instruction files, cross-agreement with the packaged template/example,
-and the absence of any stale legacy numbering wording; the only legacy-shape surfaces left in the
-repo are the two prompt walkthrough BODY fixtures in `tests/feat/prompts/`, owned by Phase 140
-(Task 140.100) -- the full suite (3531 tests) fails only those two tests, for the
-legacy-walkthrough-body reason, and `docs/GENERATED.md` reflects the new test-file count (365).
+**As of 2026-09-28**: All five phases (100-140) complete -- the full quality gate is green (3533
+tests passed, 0 failures; 99% coverage; `ruff format --check`, `ruff check`, and `vulture` clean;
+`specmgr schema`, `specmgr mcp-docs`, and `specmgr docs` all report no drift, with
+`docs/GENERATED.md` regenerated to the new test-file count 366), the two last legacy-shape
+surfaces (the prompt walkthrough body fixtures) are on the new scheme, and the feature is ready
+for review.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-28 12:49:46.129+02:00 - Phase 140 (Tests and Quality Gate): fixtures moved, optionality test, gate green
+
+Moved the last two legacy-shape surfaces in the repo to the new scheme (Task 140.100): the
+`tests/feat/prompts/test_create_feat.py` `_WALKTHROUGH_BODY` and the
+`tests/feat/prompts/test_update_feat.py` `_INITIAL_BODY` fixtures now read `#### Phase 100:
+Scaffolding` / `- [x] Task 100.100: Create branch and package skeleton` (nothing else in either
+body changed), and both walkthrough tests are green with no line-offset fix needed -- the update
+walkthrough derives its splice coordinates from `raw_lines.index("Short description.")` rather
+than hardcoding them, and the fixture kept its line count. The resource parse tests
+(`tests/feat/resources/test_feat_template.py`/`test_feat_example.py` plus the
+`get_feat_template`/`get_feat_example` tool tests) were re-run and confirmed still green against
+the new-shape packaged data. New regression test (Task 140.110, REQ-008/ACC-005)
+`tests/feat/prompts/test_prompt_schema_optionality.py` (2 tests) pins the mandatory/optional
+section sets claimed by both packaged prompt instruction files against the model's own
+required/optional field sets: the model side is derived programmatically from `Plan.model_fields`
+and `Progress.model_fields` via each Pydantic v2 field's `is_required()` (7 required --
+`overview`, `requirements`, `acceptance_criteria`, `scope`, `task_list`, `current_status`,
+`updates`; 7 optional -- `dependencies`, `design_notes`, `related_decisions`, `blockers`,
+`decisions_made`, `related_prs_commits`, `more_information`), and the prompt side parses create
+step 2's "one entry per: the mandatory ..." sentence and update step 3's "the sections -- the
+mandatory ... (always present) ..." sentence with two narrow, well-commented regexes each (one
+per list), maps every backtick-quoted display name through an explicit 18-entry table (the 14 H3
+container sections plus the 4 H4 leaves, each leaf to its parent container's field, since the
+prompts' lists name the H3 sections and a leaf and its container share optionality), and asserts,
+for both prompts, that the parsed mandatory set equals the model's required set, the parsed
+optional set equals the model's optional set, and the two sets partition the 14 container
+sections with nothing missing and nothing extra; an unknown display name or a drifted anchor
+sentence is a hard failure (a four-case mutation check -- an optionality swap in each prompt, an
+invented section name, and a reworded anchor sentence -- confirmed the test fails loudly on all
+four). Full quality gate (Task 140.120): `ruff format --check` (1728 files), `ruff check`, and
+`vulture src/ whitelist.py --min-confidence 60` (exit 0, no findings) are clean, and `pytest -n
+auto --cov=src` is fully green -- 3533 tests passed in 62.24s with 0 failures (up from the 3531
+that failed only the two walkthrough tests), total coverage 99% (10860 statements, 122 missed),
+with `specmgr coverage-badge` regenerating a byte-identical `docs/coverage.svg`; the drift checks
+are all clean: `specmgr schema` (both runs exit 0, all 12 artifacts unchanged), `specmgr
+mcp-docs` (`docs/MCP.md` byte-identical), and `specmgr docs` (only `docs/GENERATED.md` changed,
+test-file count 365 -> 366, and a second run left `docs/` byte-identical per before/after md5
+snapshot).
 
 #### 2026-09-28 11:52:18.732+02:00 - Phase 130 (Agent Skill): feat-numbering skill and ACC-006 consistency test
 
