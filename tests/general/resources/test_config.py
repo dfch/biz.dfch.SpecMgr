@@ -15,10 +15,12 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Tests for the specmgr://config resource (feat-51-mcp-cwd)."""
+"""Tests for the specmgr://config resource (feat-51-mcp-cwd, plus the static similarity section, feat-134 Phase 7)."""
 
 import json
 import os
+import sys
+import tempfile
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -33,7 +35,8 @@ from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 #: (REQ-001) -- and ``WHOLE_BODY_NO_FEAT_DOMAINS`` -- the domains sharing the
 #: single SPECMGR_DOCS_DIR root env var.
 from biz.dfch.specmgr.general.tools._domains import ALL_DOMAINS, WHOLE_BODY_NO_FEAT_DOMAINS
-from biz.dfch.specmgr.models import ConfigInfo
+from biz.dfch.specmgr.general.tools._embedding import SIMILARITY_DISABLED_ENV_VAR, SIMILARITY_MODEL_NAME
+from biz.dfch.specmgr.models import ConfigInfo, SimilarityConfig
 
 #: The env vars this resource is allowed to read/report on at all.
 _KNOWN_ENV_VARS = {ADR_DIR_ENV_VAR, FEAT_DIR_ENV_VAR, DOCS_DIR_ENV_VAR}
@@ -138,6 +141,82 @@ class TestConfigResourceNonDisclosure(unittest.TestCase):
             result = config_info()
             as_json = result.model_dump_json()
             self.assertNotIn(fake_pat, as_json)
+
+
+class TestConfigResourceSimilarity(unittest.TestCase):
+    """The static ``similarity`` section (feat-134 Phase 7, REQ-013/ACC-018).
+
+    ``specmgr://config`` reports the similarity feature's static
+    install/runtime configuration -- extra installed?, opt-out flag set?,
+    model name, resolved cache directory -- without ever importing
+    ``fastembed`` or creating any directory (the resource's own
+    side-effect-free contract, ACC-018). The section is static
+    configuration only: the tools' own dynamic availability is their
+    structured ``{available, reason, message}`` result, deliberately not
+    part of this payload.
+    """
+
+    def test_returns_a_similarity_config(self):
+        """The payload must carry a `SimilarityConfig` section."""
+        result = config_info()
+        self.assertIsInstance(result.similarity, SimilarityConfig)
+
+    def test_extra_installed_reports_true_when_fastembed_spec_found(self):
+        """ACC-018 matrix: the `similarity` extra installed -> `extra_installed` is True (spec lookup only)."""
+        with mock.patch("biz.dfch.specmgr.general.resources.config.find_spec", return_value=object()):
+            self.assertTrue(config_info().similarity.extra_installed)
+
+    def test_extra_not_installed_reports_false_when_fastembed_spec_missing(self):
+        """ACC-018 matrix: the `similarity` extra not installed -> `extra_installed` is False."""
+        with mock.patch("biz.dfch.specmgr.general.resources.config.find_spec", return_value=None):
+            self.assertFalse(config_info().similarity.extra_installed)
+
+    def test_disabled_flag_unset_reports_false(self):
+        """ACC-018 matrix: `SPECMGR_SIMILARITY_DISABLED` absent -> `disabled` is False."""
+        with mock.patch.dict(os.environ, {}, clear=False):
+            os.environ.pop(SIMILARITY_DISABLED_ENV_VAR, None)
+            self.assertFalse(config_info().similarity.disabled)
+
+    def test_disabled_flag_set_reports_true(self):
+        """ACC-018 matrix: `SPECMGR_SIMILARITY_DISABLED` present (any value) -> `disabled` is True."""
+        with mock.patch.dict(os.environ, {SIMILARITY_DISABLED_ENV_VAR: "1"}, clear=False):
+            self.assertTrue(config_info().similarity.disabled)
+
+    def test_model_name_is_the_shared_constant(self):
+        """ACC-020: `model_name` must be the shared `SIMILARITY_MODEL_NAME` constant (no duplicated literal)."""
+        result = config_info()
+        self.assertEqual(result.similarity.model_name, SIMILARITY_MODEL_NAME)
+        self.assertEqual(result.similarity.model_name, "BAAI/bge-small-en-v1.5")
+
+    def test_cache_dir_defaults_to_tempdir_when_unset(self):
+        """ACC-018: `FASTEMBED_CACHE_PATH` unset -> the resolved `<tempdir>/fastembed_cache` default."""
+        with mock.patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("FASTEMBED_CACHE_PATH", None)
+            expected = str((Path(tempfile.gettempdir()) / "fastembed_cache").resolve())
+            self.assertEqual(config_info().similarity.cache_dir, expected)
+
+    def test_cache_dir_uses_fastembed_cache_path_when_set(self):
+        """ACC-018: `FASTEMBED_CACHE_PATH` set -> that path resolved to absolute, never created by the read."""
+        with tempfile.TemporaryDirectory() as tmp:
+            target = str(Path(tmp) / "not-created-by-config-read")
+            with mock.patch.dict(os.environ, {"FASTEMBED_CACHE_PATH": target}, clear=False):
+                result = config_info()
+            self.assertEqual(result.similarity.cache_dir, str(Path(target).resolve()))
+            self.assertFalse(
+                Path(result.similarity.cache_dir).exists(),
+                "reading specmgr://config must never create the cache directory",
+            )
+
+    def test_config_info_never_imports_fastembed(self):
+        """ACC-018: `config_info()` must leave `sys.modules` byte-identical (no import at all, `fastembed` in particular)."""
+        self.assertNotIn("fastembed", sys.modules, "fastembed must not already be imported by the test suite here")
+
+        before = set(sys.modules)
+        config_info()
+        after = set(sys.modules)
+
+        self.assertEqual(after, before, "config_info() must not import any module (side-effect-free)")
+        self.assertNotIn("fastembed", sys.modules)
 
 
 if __name__ == "__main__":

@@ -239,8 +239,19 @@ definitions_and_acronyms
 
 # config (feat-51-mcp-cwd Phase 1): `DomainConfig` fields read only via
 # (de)serialization; nothing in `src/` accesses them as plain attributes yet.
+# (Constructor keyword arguments don't count as name references for vulture's
+# name-based "used" decision -- that is why these entries exist while
+# `base_dir` needs none: a local variable of that name in
+# `general.tools._similarity_corpus` already marks it used.)
 env_var
 env_var_set
+# config (feat-134 Phase 7): `SimilarityConfig` fields read only via
+# (de)serialization; nothing in `src/` accesses them as plain attributes
+# (`cache_dir` needs no entry -- the local variable of that name in
+# `general.resources.config._similarity_cache_dir` already marks it used).
+extra_installed
+disabled
+model_name
 
 # similarity (feat-134-related-artifact-similarity):
 # `SimilarityUnavailableResult`'s `available`/`reason` fields are written in

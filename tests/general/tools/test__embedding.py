@@ -40,7 +40,6 @@ from biz.dfch.specmgr.general.models import (
 )
 from biz.dfch.specmgr.general.tools._embedding import (
     _CHUNK_SIZE,
-    _DEFAULT_MODEL_NAME,
     _MAX_CHUNKS_PER_DOC,
     _QUERY_INSTRUCTION,
     _chunk_text,
@@ -48,6 +47,7 @@ from biz.dfch.specmgr.general.tools._embedding import (
     _mean_pool,
     _similarity_availability,
     FastEmbedProvider,
+    SIMILARITY_MODEL_NAME,
     get_default_provider,
     reset_default_provider,
 )
@@ -315,7 +315,7 @@ class TestGetDefaultProvider(SimilarityTestCase):
         self.assertIsInstance(first, FastEmbedProvider)
         self.assertIs(first, second)  # constructed at most once
         self.assertEqual(len(self._constructed), 1)
-        self.assertEqual(self._constructed[0], _DEFAULT_MODEL_NAME)
+        self.assertEqual(self._constructed[0], SIMILARITY_MODEL_NAME)
 
     def test_import_failure_propagates_out_of_get_default_provider(self) -> None:
         reset_default_provider()

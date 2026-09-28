@@ -109,6 +109,7 @@ __all__ = [
     "EmbeddingProvider",
     "FastEmbedProvider",
     "SIMILARITY_DISABLED_ENV_VAR",
+    "SIMILARITY_MODEL_NAME",
     "Vector",
     "get_default_provider",
     "reset_default_provider",
@@ -134,8 +135,12 @@ SIMILARITY_DISABLED_ENV_VAR = "SPECMGR_SIMILARITY_DISABLED"
 
 #: The default backend's model name, fixed for v1 (ADR 750842b2, Backend
 #: sub-decision: configurability is deferred -- a quality upgrade means a
-#: provider substitution, which the protocol exists to allow).
-_DEFAULT_MODEL_NAME = "BAAI/bge-small-en-v1.5"
+#: provider substitution, which the protocol exists to allow). Public
+#: (not module-private) since feat-134 Phase 7: it is the single source
+#: both :func:`get_default_provider` and the ``specmgr://config``
+#: resource's own ``similarity.model_name`` field read -- no duplicated
+#: string literal (ACC-020).
+SIMILARITY_MODEL_NAME = "BAAI/bge-small-en-v1.5"
 
 #: The per-chunk character budget -- and the single-embed fast-path
 #: threshold (REQ-010). Input at/below this many characters is embedded
@@ -523,7 +528,7 @@ def get_default_provider() -> EmbeddingProvider:
     The single construction point for the default backend (REQ-002/REQ-003):
     performs the lazy ``import fastembed`` (never at module level -- see the
     module docstring) and constructs ``fastembed.TextEmbedding(
-    _DEFAULT_MODEL_NAME)`` -- eager model load, including the one-time
+    SIMILARITY_MODEL_NAME)`` -- eager model load, including the one-time
     first-use download, guarded by the double-checked
     :data:`_load_lock` so concurrent first calls load the model exactly
     once. The constructed provider is cached in
@@ -553,7 +558,7 @@ def get_default_provider() -> EmbeddingProvider:
         if cached_provider is None:
             import fastembed  # REQ-003: lazy -- never at module level
 
-            text_embedding = fastembed.TextEmbedding(_DEFAULT_MODEL_NAME)
+            text_embedding = fastembed.TextEmbedding(SIMILARITY_MODEL_NAME)
             cached_provider = FastEmbedProvider(text_embedding)
             _default_provider = cached_provider
 
@@ -619,7 +624,7 @@ def _similarity_availability() -> SimilarityUnavailableResult | None:
             reason=REASON_BACKEND_UNAVAILABLE,
             message=(
                 "The embedding backend is unavailable: the `similarity` extra (fastembed) is not "
-                f"installed, or the {_DEFAULT_MODEL_NAME} model failed to load (including a "
+                f"installed, or the {SIMILARITY_MODEL_NAME} model failed to load (including a "
                 "first-use download failure, e.g. no network). Install it with "
                 "`pip install 'biz-dfch-specmgr[similarity]'` to enable find_related/"
                 "find_similar_text."

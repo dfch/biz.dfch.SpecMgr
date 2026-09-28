@@ -320,7 +320,7 @@ Return the process's default :class:`FastEmbedProvider`, constructing it on firs
 The single construction point for the default backend (REQ-002/REQ-003):
 performs the lazy ``import fastembed`` (never at module level -- see the
 module docstring) and constructs ``fastembed.TextEmbedding(
-_DEFAULT_MODEL_NAME)`` -- eager model load, including the one-time
+SIMILARITY_MODEL_NAME)`` -- eager model load, including the one-time
 first-use download, guarded by the double-checked
 :data:`_load_lock` so concurrent first calls load the model exactly
 once. The constructed provider is cached in

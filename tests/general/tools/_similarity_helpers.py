@@ -179,7 +179,7 @@ def fail_fastembed_model_load() -> Iterator[None]:
 
     Installs a stub ``fastembed`` module in ``sys.modules`` whose
     ``TextEmbedding`` constructor raises, so ``get_default_provider``'s import
-    succeeds but ``fastembed.TextEmbedding(_DEFAULT_MODEL_NAME)`` does not. The
+    succeeds but ``fastembed.TextEmbedding(SIMILARITY_MODEL_NAME)`` does not. The
      previous ``sys.modules["fastembed"]`` entry (if any) is restored on exit.
     """
     saved: Any = sys.modules.get(_FASTEMBED)

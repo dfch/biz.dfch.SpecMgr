@@ -8,7 +8,11 @@ Registers the following resources and tools so far (plan §8, §9a):
 
 Resources
 ---------
-specmgr://version --    Installed version number of the ``biz-dfch-specmgr`` package.
+specmgr://version --    Installed version number of the ``biz-dfch-specmgr`` package, plus the
+                        installed ``fastembed`` package version (the ``similarity`` extra's
+                        embedding backend) or null when that extra is not installed -- read via
+                        ``importlib.metadata``, never an import of ``fastembed`` itself (feat-134
+                        Phase 7, REQ-014).
 specmgr://adr/{id} --    Full ADR document for a given id (``.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md``).
 specmgr://req/schema -- The generated REQ JSON Schema, read from a packaged data copy
                         (kept in sync with ``docs/req_schema.json``) so it works from a
@@ -114,7 +118,18 @@ specmgr://config --     For every document domain (adr, req, uc, tsk, qa, prb, g
                         self-diagnose a CWD/env-var misconfiguration without shell access to
                         the server's host. Never discloses the value of any environment
                         variable, only whether the relevant directory-path env var is present
-                        (REQ-002).
+                        (REQ-002). Plus a static ``similarity`` section for the
+                        semantic-similarity feature (feat-134 Phase 7, REQ-013): whether the
+                        ``similarity`` extra (``fastembed``) is installed (a spec lookup, never
+                        an import), whether the presence-based
+                        ``SPECMGR_SIMILARITY_DISABLED`` opt-out flag is set, the fixed model
+                        name (the shared ``SIMILARITY_MODEL_NAME`` constant, the single source
+                        both ``get_default_provider()`` and the section read), and the resolved
+                        model cache directory (``FASTEMBED_CACHE_PATH`` if set, else
+                        ``<tempdir>/fastembed_cache`` -- reported, never created). Static
+                        configuration only: the tools' own dynamic runtime availability is
+                        their structured ``{available, reason, message}`` result, not part of
+                        this resource (no ``loaded`` field).
 
 REQ has no ``specmgr://req/{id}`` resource, unlike ADR -- id-based reads go
 through the ``get_req`` tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
