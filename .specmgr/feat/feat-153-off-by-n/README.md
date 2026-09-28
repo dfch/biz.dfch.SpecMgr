@@ -152,7 +152,7 @@ While touching all 12 `get_<d>.py` files anyway, consider factoring the existing
 
 - [x] Task 0.4: Record Phase 0 in Progress: prepend an Updates note (clean merge, green gate, reconciliation per Task 0.3), update Current Status's "As of" date, bump frontmatter `updated`, check boxes 0.1--0.4, and commit (docs only; the merge commit already exists from Task 0.1).
 
-- [ ] Task 0.5: `git push` and verify PR #164 is OPEN and shows the merge commit plus the Task 0.4 commit (never merge or close the PR); check this box, commit, and push again.
+- [x] Task 0.5: `git push` and verify PR #164 is OPEN and shows the merge commit plus the Task 0.4 commit (never merge or close the PR); check this box, commit, and push again.
 
 #### Phase 1: Design
 
