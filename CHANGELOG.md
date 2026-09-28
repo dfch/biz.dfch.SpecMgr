@@ -35,6 +35,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   installed, the model failing to load, or the opt-out flag present) --
   the tools always register and stay in the tool list (GitHub issue
   #134).
+- A static `similarity` section on the `specmgr://config` resource for
+  the semantic-similarity feature (GitHub issue #134, feat-134 Phase
+  7): whether the `similarity` extra (`fastembed`) is installed (an
+  `importlib.util.find_spec` spec lookup, never an import), whether the
+  presence-based `SPECMGR_SIMILARITY_DISABLED` opt-out flag is set, the
+  fixed model name (`BAAI/bge-small-en-v1.5`), and the resolved model
+  cache directory (`FASTEMBED_CACHE_PATH` if set, else
+  `<tempdir>/fastembed_cache`) -- reported, never created: reading the
+  resource stays side-effect-free (no model load, no directory
+  creation). It reports static configuration only; the tools' own
+  dynamic runtime availability remains their structured
+  `{available: false, reason, message}` result (no `loaded` field).
+- The installed `fastembed` package version on the `specmgr://version`
+  resource (GitHub issue #134, feat-134 Phase 7), or `null` when the
+  `similarity` extra is not installed -- read via `importlib.metadata`,
+  never by importing `fastembed` itself.
+- A consolidated `### Semantic Similarity Search` subsection in the
+  README's `## MCP Server` section (GitHub issue #134, feat-134 Phase
+  7): what `find_related`/`find_similar_text` do (and that both always
+  register regardless of install/runtime state), the install commands
+  (cross-referenced with the `## Installation` section), the
+  backend/model identity (`fastembed` + `BAAI/bge-small-en-v1.5`,
+  CPU-only ONNX Runtime), the non-blocking background warmup thread at
+  server startup (correcting the prior "on first use" wording), the
+  model cache location/override (`FASTEMBED_CACHE_PATH`), the
+  `SPECMGR_SIMILARITY_DISABLED` opt-out, and pointers to the extended
+  `specmgr://config`/`specmgr://version` resources for runtime
+  introspection.
 
 ### Fixed
 

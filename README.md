@@ -92,7 +92,8 @@ pip install "biz-dfch-specmgr[mcp]"
 ```
 
 With semantic-similarity search (`find_related`/`find_similar_text`, see
-[MCP Server](#mcp-server) below), add the `similarity` extra on top of `mcp`:
+[Semantic Similarity Search](#semantic-similarity-search) below), add the
+`similarity` extra on top of `mcp`:
 
 ```bash
 pip install "biz-dfch-specmgr[mcp,similarity]"
@@ -149,13 +150,13 @@ tool call, so hand-editing a file between calls is safe.
   like ADRs above, and not shared via `SPECMGR_DOCS_DIR`.
 
 The `find_related`/`find_similar_text` tools (semantic-similarity search,
-requires the `similarity` extra) load a local sentence-embedding model
-(`fastembed`/`bge-small`) on first use. Set the `SPECMGR_SIMILARITY_DISABLED`
-environment variable (to any non-empty value) to turn this feature off —
-e.g. to skip the model download/load entirely, or if the `similarity` extra
-isn't installed. Both tools stay registered either way; when disabled (or
-when the backend/model fails to load), they return a structured
-`{available: false, reason, message}` result instead of raising.
+requires the `similarity` extra) are turned off by setting the
+`SPECMGR_SIMILARITY_DISABLED` environment variable (any value;
+presence-based) — see [Semantic Similarity Search](#semantic-similarity-search)
+below for the full behavior (install, the non-blocking background warmup at
+server startup, the model cache location, and the structured unavailable
+result both tools return when the feature is disabled or the backend/model
+fails to load).
 
 All of the base directories above are resolved relative to the MCP server
 process's own current working directory unless overridden by their env var
@@ -166,6 +167,55 @@ per [Add to OpenCode](#add-to-opencode) below — read the `specmgr://config`
 resource to see every domain's actually-resolved absolute base directory
 and whether its env var is explicitly set, without needing shell access to
 the server's host.
+
+### Semantic Similarity Search
+
+The `find_related` and `find_similar_text` tools rank documents by
+semantic similarity using local sentence embeddings (no API keys, no
+network at inference time). `find_related(type, id)` finds the documents
+most related to an existing document; `find_similar_text(query)` finds the
+documents most similar to a free-form query — e.g. a draft you have not
+saved yet, for pre-creation dedup/discovery. Both tools always appear in
+the tool list, regardless of whether the feature is installed or enabled:
+when it is unavailable, each call returns a structured
+`{available: false, reason, message}` result instead of raising.
+
+**Install.** The tools need the optional `similarity` extra on top of
+`mcp` — the exact commands are in [Installation](#installation)
+(`pip install "biz-dfch-specmgr[mcp,similarity]"` or
+`uv add "biz-dfch-specmgr[cli,mcp,similarity]"`). The backend is
+`fastembed` running `BAAI/bge-small-en-v1.5` (CPU-only, ONNX Runtime,
+384-dim).
+
+**Model download and cache.** The model is downloaded once from the
+Hugging Face Hub the first time it is loaded (network required at that
+point only; after that, inference is fully offline). It is cached in
+`$FASTEMBED_CACHE_PATH` if that environment variable is set, otherwise in
+`<tempdir>/fastembed_cache` (e.g. `/tmp/fastembed_cache` on Linux).
+
+**Background warmup at server startup.** When the feature is enabled
+(extra installed and `SPECMGR_SIMILARITY_DISABLED` not set), the server
+starts a background daemon thread at startup that embeds the full document
+corpus into the in-memory cache. The thread is non-blocking — server
+startup never waits for it (the model load/download, if needed, happens
+inside the thread, not on the startup path) — and a mid-warmup failure is
+logged and swallowed, leaving the cache partially warm. Its purpose is to
+keep the first tool call fast: against a cold cache the tools embed the
+corpus on demand, which can cost minutes of CPU.
+
+**Opt-out.** Set `SPECMGR_SIMILARITY_DISABLED` (any value; presence-based)
+to disable the feature without uninstalling the extra — e.g. to skip the
+model download entirely, on a host where the model was never downloaded,
+or to free the memory the model and cache use. Both tools stay registered
+either way.
+
+**Introspection.** Read the `specmgr://config` resource for the feature's
+static configuration — its `similarity` section reports whether the
+`similarity` extra is installed, whether the opt-out flag is set, the
+model name, and the resolved cache directory (static facts only; reading
+the resource never loads the model or creates the cache directory) — and
+the `specmgr://version` resource for the installed `fastembed` version
+(`null` when the extra is not installed).
 
 ### Start the MCP Server
 
