@@ -4,7 +4,7 @@ created: '2026-09-17 07:40:37.439+02:00'
 id: feat-134-related-artifact-similarity
 status: review
 type: feat
-updated: '2026-09-24 09:15:00.000+02:00'
+updated: '2026-09-28 03:53:39.000Z'
 version: 1.0.0
 ---
 
@@ -195,6 +195,16 @@ Open questions/TODOs, not yet decided, to resolve during Phase 3: (2) should the
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-28 03:53:39.000Z - Synced PR #137 with dev (merge only, no new phase); merge deliberately not completed yet
+
+Merged `dev` (HEAD `639ba07`, "chore(release): bump version to v0.33.0") into `feat-134-related-artifact-similarity` in a dedicated worktree (`/home/user/src/biz.dfch.SpecMgr.worktrees/feat-134-related-artifact-similarity`), from merge-base `9363dbe` up through `dev`'s three intervening releases (0.31.0, 0.32.0, 0.33.0 -- QA question numbering, the new generic `edit` tool, and the full-ISO-8601-timestamp change), producing merge commit `e403977`. Exactly the five conflicting files anticipated by the prior dry-run analysis conflicted, no others: (1) `src/biz/dfch/specmgr/general/tools/__init__.py`: kept all three new entries side by side, alphabetically sorted -- dev's `edit` import/`__all__` entry plus this feature's own `find_related`/`find_similar_text` import/`__all__` entries. (2) `CHANGELOG.md`: moved this feature's `### Added`/`### Fixed` bullets (the two-tool similarity engine, the `similarity` extra, the `SPECMGR_SIMILARITY_DISABLED` opt-out, the structured unavailable result, and the setext-H1/second-review fixes) from the conflicting `## [Unreleased]` block to sit above dev's already-released `## [0.33.0] - 2026-09-27` section, under the now-empty `[Unreleased]` heading -- no content lost or duplicated on either side. (3) `docs/GENERATED.md`, `docs/MCP.md`, `docs/api/README.md`: left conflict-marked, not hand-resolved; regenerated cleanly via `uv run --frozen specmgr docs` and `uv run --frozen specmgr mcp-docs` (plus `uv run --frozen specmgr adr-toc` for `docs/adr/README.md`, which had auto-merged without conflict but is regenerated as part of the same step), then `git add`ed as the resolution.
+
+Quality gate, run in the merge worktree after the merge commit (and again standalone per the task's explicit step list): `ruff format --check` ("1755 files already formatted"), `ruff check` ("All checks passed!"), `vulture src/ whitelist.py --min-confidence 60` (no output, i.e. clean), and `pytest -n auto --cov=src --cov-report=` -- **3663 passed** in 66.38s, zero failures. Re-ran `specmgr docs`/`mcp-docs`/`adr-toc` a second time after the commit and confirmed `git status` reports no further diff (idempotent generation). Pushed the merge commit to `origin/feat-134-related-artifact-similarity` (`71c9d4b..e403977`). Polled `gh pr checks 137` (manually, not `--watch`) until every check reached a final state: `Analyze (actions/java-kotlin/python)` and `CodeQL` passed quickly, `build (3.11/3.12/3.13)` took ~7-8 minutes each (dependency install plus the full suite) and all three finished `pass`. Confirmed via `gh pr view 137 --json mergeable,mergeStateStatus,state`: `mergeable: MERGEABLE`, `mergeStateStatus: CLEAN`, `state: OPEN`.
+
+Per this feature's own established precedent (see the 2026-09-24 "Doc-drift remediation ... no new phase" entry below), **this sync is not tracked as a new Phase**: no new REQ-*/ACC-*/Task List items were added, since it is pure dev-sync/merge bookkeeping, not new feature scope -- the existing Phase 1-4 plan (plus the later Phase 5/6 review remediations) and all eight original ACCs are unaffected.
+
+**PR #137 was deliberately NOT merged into `dev`** as part of this sync. Merging is intentionally deferred: the user wants to complete a separate, unrelated investigation first before landing this PR, so its continued "open, all-ACs-checked, CI-green" state after this dev-sync is expected, not an oversight -- do not merge it without that separate check first.
 
 #### 2026-09-24 07:15:00.000Z - Doc-drift remediation (top-level README + AGENTS.md), no new phase
 
