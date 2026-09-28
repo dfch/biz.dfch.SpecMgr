@@ -32,6 +32,7 @@ from biz.dfch.specmgr.general.tools._doc_paths import (
     doc_base_dir,
     ensure_doc_base_dir,
     find_doc_path_by_id,
+    find_parse_failure,
     iter_doc_paths,
     slugify,
 )
@@ -59,6 +60,19 @@ def _read_fake(path: Path) -> _FakeDoc:
 
 def _get_id(doc: _FakeDoc) -> str | None:
     return doc.id
+
+
+def _read_broken(path: Path) -> _FakeDoc:
+    """``read_fn`` that fails to parse a file whose content is ``"BROKEN"`` (a structural ``AssertionError``).
+
+    Distinct from :func:`_read_fake` (which raises a plain ``ValueError``) -- :func:`find_parse_failure`
+    catches the exact parse-failure channels a domain's ``parse_<d>`` raises (``AssertionError``/
+    ``pydantic.ValidationError``/``yaml.YAMLError``), so the simulated failure must be one of those.
+    """
+    stripped = path.read_text(encoding="utf-8").strip()
+    if stripped == "BROKEN":
+        raise AssertionError("simulated structural parse failure")
+    return _FakeDoc(id_=stripped or None)
 
 
 class TestSlugify(unittest.TestCase):
@@ -247,6 +261,86 @@ class TestFindDocPathById(unittest.TestCase):
             path = base / "target.md"
             path.write_text("target-id", encoding="utf-8")
             self.assertEqual(find_doc_path_by_id(base, "target-id", _read_fake, _get_id), path)
+
+
+class TestFindParseFailure(unittest.TestCase):
+    """Tests for find_parse_failure (feat-150-mcp-lifecycle-commands Phase 1a, ADR 9080b37c)."""
+
+    def test_name_match_parse_fail_returns_path_and_error(self) -> None:
+        """A name-matching file that fails to parse must return (path, str(exc))."""
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            path = base / "req-deadbeef-0000-0000-0000-000000000000-broken.md"
+            path.write_text("BROKEN", encoding="utf-8")
+
+            result = find_parse_failure(base, "deadbeef-0000-0000-0000-000000000000", _read_broken)
+
+            self.assertIsNotNone(result)
+            assert result is not None
+            self.assertEqual(result[0], path)
+            self.assertEqual(result[1], "simulated structural parse failure")
+
+    def test_name_match_parse_ok_returns_none(self) -> None:
+        """A name-matching file that parses cleanly (a frontmatter-id mismatch, not our document) must return None."""
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            healthy = base / "req-deadbeef-0000-0000-0000-000000000000-healthy.md"
+            healthy.write_text("some-other-id", encoding="utf-8")
+
+            result = find_parse_failure(base, "deadbeef-0000-0000-0000-000000000000", _read_broken)
+
+            self.assertIsNone(result)
+
+    def test_no_name_match_returns_none(self) -> None:
+        """No name-matching file must return None."""
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            (base / "req-11111111-1111-1111-1111-111111111111-x.md").write_text(
+                "11111111-1111-1111-1111-111111111111", encoding="utf-8"
+            )
+
+            result = find_parse_failure(base, "deadbeef-0000-0000-0000-000000000000", _read_broken)
+
+            self.assertIsNone(result)
+
+    def test_prefix_only_match_parse_fail_returns_path_and_error(self) -> None:
+        """A file matching the id-prefix form (`<id>-<slug>.md`, no type prefix) that fails to parse must return (path, str(exc))."""
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            path = base / "deadbeef-0000-0000-0000-000000000000-broken.md"
+            path.write_text("BROKEN", encoding="utf-8")
+
+            result = find_parse_failure(base, "deadbeef-0000-0000-0000-000000000000", _read_broken)
+
+            self.assertIsNotNone(result)
+            assert result is not None
+            self.assertEqual(result[0], path)
+            self.assertEqual(result[1], "simulated structural parse failure")
+
+    def test_two_name_matches_are_ambiguous_returns_none(self) -> None:
+        """Two files both name-matching the same id (however that happened) must return None -- ambiguous, skip."""
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            (base / "req-deadbeef-0000-0000-0000-000000000000-a.md").write_text("BROKEN", encoding="utf-8")
+            (base / "req-deadbeef-0000-0000-0000-000000000000-b.md").write_text("BROKEN", encoding="utf-8")
+
+            result = find_parse_failure(base, "deadbeef-0000-0000-0000-000000000000", _read_broken)
+
+            self.assertIsNone(result)
+
+    def test_vanished_file_mid_scan_returns_none(self) -> None:
+        """A name-matching file whose read_fn raises FileNotFoundError (vanished mid-scan) must return None."""
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            path = base / "req-deadbeef-0000-0000-0000-000000000000-x.md"
+            path.write_text("irrelevant", encoding="utf-8")
+
+            def _read_vanished(_path: Path) -> _FakeDoc:
+                raise FileNotFoundError("simulated vanish mid-scan")
+
+            result = find_parse_failure(base, "deadbeef-0000-0000-0000-000000000000", _read_vanished)
+
+            self.assertIsNone(result)
 
 
 if __name__ == "__main__":

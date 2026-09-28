@@ -28,12 +28,12 @@ itself cross-cutting: it operates on *any* feature folder under
 ``.specmgr/feat/<feature_id>/``, not on a specific document domain, so it
 lives under ``general.prompts`` rather than any single domain package.
 
-Unlike every domain document type (ADR/REQ/UC/TSK/QA), feature folders have
-no dedicated parser/get/update MCP tools of their own -- there is no
-``get_feature``/``update_feature`` to call here. This prompt's instructions
-therefore rely entirely on the LLM's own file read/edit/write tools
-operating directly on ``README.md``/``history.md``, not on any specmgr
-tool.
+Feature folders DO have their own ``get_feat`` and generic ``update``
+(``type="feat"``) MCP tools since feat-31-feature -- but this prompt's
+instructions still rely entirely on the LLM's own file read/edit/write
+tools operating directly on ``README.md``/``history.md``, not on those
+specmgr tools, because rotating entries between two files (``README.md``
+and ``history.md``) is a multi-file operation neither tool supports.
 
 The actual instructional text lives in its own packaged data file,
 ``general/data/general_compact_history_instructions.md``, read fresh on
