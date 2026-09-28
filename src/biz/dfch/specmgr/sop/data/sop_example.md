@@ -1,9 +1,9 @@
 ---
-created: '2025-04-01 06:18:52.437Z'
+created: '2025-04-01T06:18:52.437Z'
 id: c4e7b8a3-1f2d-4e9c-8b6a-3d5f7e9c1a2b
 status: active
 type: sop
-updated: '2025-04-27 14:39:07.916Z'
+updated: '2025-04-27T14:39:07.916Z'
 version: 1.0.0
 ---
 

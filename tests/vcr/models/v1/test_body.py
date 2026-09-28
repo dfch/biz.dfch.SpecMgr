@@ -107,11 +107,11 @@ Verification performed against the staging gateway (build 2026.08.30-rc3).
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
-### 2026-08-27 : Confirmed
+### 2026-08-27 00:00:00.000Z : Confirmed
 
 AC-001 and AC-003 executed against staging.
 
-### 2026-08-26 - Created
+### 2026-08-26 00:00:00.000Z - Created
 
 Initial verification case drafted.
 """
@@ -431,17 +431,22 @@ class TestAcceptanceCriteriaZeroEntries(unittest.TestCase):
 
 
 class TestUpdateEntryHeadingAlias(unittest.TestCase):
-    """`UpdateEntry`'s regex alias requires a `yyyy-MM-dd` (or full date+time) timestamp + ` - `/` : ` + `title`."""
+    """`UpdateEntry`'s regex alias requires a full date+time timestamp + ` - `/` : ` + `title`."""
 
-    def test_accepts_date_only_and_date_time_headings(self) -> None:
+    def test_accepts_full_date_time_headings(self) -> None:
         for heading in (
-            "2026-08-26 - Created",
-            "2026-08-26 : Created",
             "2026-08-26 14:30:00.000+02:00 - Confirmed",
             "2026-08-26 14:30:00.000Z : Confirmed",
+            "2026-08-26T14:30:00.000+02:00 - Confirmed",
+            "2026-08-26T14:30:00.000Z : Confirmed",
         ):
             with self.subTest(heading=heading):
                 self.assertTrue(match_alias(UpdateEntry, heading))
+
+    def test_rejects_date_only_headings(self) -> None:
+        for heading in ("2026-08-26 - Created", "2026-08-26 : Created"):
+            with self.subTest(heading=heading):
+                self.assertFalse(match_alias(UpdateEntry, heading))
 
     def test_rejects_non_timestamp_led_headings(self) -> None:
         for heading in ("A Note", "x", "2026-8-26 - Created", "Created"):
@@ -450,6 +455,18 @@ class TestUpdateEntryHeadingAlias(unittest.TestCase):
 
     def test_update_entry_rejects_empty_h3_text(self) -> None:
         self.assertFalse(match_alias(UpdateEntry, ""))
+
+    def test_update_entry_rejects_date_only_heading_at_parse_time(self) -> None:
+        for heading in ("### 2026-08-26 - Created", "### 2026-08-26 : Created"):
+            with self.subTest(heading=heading):
+                with self.assertRaises(AssertionError):
+                    UpdateEntry.from_text(format_text(f"{heading}\n\nSome update text.\n"))
+
+    def test_parses_timestamp_and_title_t_separator(self) -> None:
+        sut = UpdateEntry.from_text(format_text("### 2026-08-26T14:30:00.000Z - Created\n\nBody.\n"))
+
+        self.assertEqual(sut.timestamp, "2026-08-26T14:30:00.000Z")
+        self.assertEqual(sut.title, "Created")
 
 
 class TestImplicitHeadingAliases(unittest.TestCase):
@@ -555,7 +572,9 @@ class TestOptionalSectionsIndividuallyOptional(unittest.TestCase):
 
     def test_updates_present(self) -> None:
         kwargs = _minimal_vcr_kwargs()
-        kwargs["updates"] = Updates.from_text(format_text("## Updates\n\n### 2026-08-26 - Created\n\nSome text.\n"))
+        kwargs["updates"] = Updates.from_text(
+            format_text("## Updates\n\n### 2026-08-26 00:00:00.000Z - Created\n\nSome text.\n")
+        )
 
         sut = Vcr(**kwargs)
 
@@ -571,7 +590,7 @@ class TestOptionalSectionsIndividuallyOptional(unittest.TestCase):
         # outline), mirroring `feat`'s own `Updates(MarkdownSection3WithComment)`.
         text = format_text(
             "## Updates\n\n<!-- Newest entry first -- prepend new entries directly below this comment. -->\n\n"
-            "### 2026-08-26 - Created\n\nSome text.\n"
+            "### 2026-08-26 00:00:00.000Z - Created\n\nSome text.\n"
         )
 
         sut = Updates.from_text(text)
@@ -619,7 +638,7 @@ class TestVcrMisordering(unittest.TestCase):
             "## Acceptance Criteria\n\n"
             "### AC-001 (Test): Some criterion\n\n"
             "## Updates\n\n"
-            "### 2026-08-26 - Created\n\n"
+            "### 2026-08-26 00:00:00.000Z - Created\n\n"
             "Some update text.\n\n"
             "## More Information\n\n"
             "Some more information text.\n"

@@ -1,9 +1,9 @@
 ---
-created: '2025-10-03 06:52:47.365Z'
+created: '2025-10-03T06:52:47.365Z'
 id: deadbeef-risk-risk-risk-deadbeefrisk
 status: open
 type: rsk
-updated: '2025-10-16 20:19:11.708Z'
+updated: '2025-10-16T20:19:11.708Z'
 version: 1.0.0
 ---
 

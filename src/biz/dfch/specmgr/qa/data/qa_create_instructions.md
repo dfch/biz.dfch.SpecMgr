@@ -41,9 +41,17 @@ step 1 if this is genuinely a new interview.
   any pair. Each pair may optionally include, in this order:
   - an HTML comment (`<!-- ... -->`), giving context (e.g. when/by whom
     this was elicited) for the question that immediately follows it;
-  - `> {the interviewer's question}` as a block quote;
+  - `> **<d>.<NNNN>**: {the interviewer's question}` as a block quote --
+    every question carries its own mandatory, bold number prefix: `<d>` is
+    the category's own fixed digit (0=`Elicitation Context`, then the nine
+    ISO/IEC 25010:2023 characteristics in document order, 1 through 9),
+    and `<NNNN>` a 4-digit zero-padded per-category sequence (start at
+    `0010`, increment by 10 -- a human guideline, never parser-enforced,
+    so gaps and in-between numbers always work; once assigned, a number
+    is permanent, never renumbered or reused);
   - the interviewee's free-form prose answer, as plain paragraphs
-    immediately after the block quote.
+    immediately after the block quote (an unanswered question carries the
+    `TODO: answer pending` placeholder as its answer text).
   All three of comment/question/answer are optional on every Q&A pair --
   include whichever apply.
 - `## More Information` -- optional freeform supplementary text (e.g.

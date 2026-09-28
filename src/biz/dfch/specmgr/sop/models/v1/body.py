@@ -370,27 +370,29 @@ class MoreInformation(MarkdownSection2):
 #: so its `.text` returns only the heading text, not the full extent --
 #: hence no `### ` prefix here.
 _UPDATE_ENTRY_HEADING_PATTERN = re.compile(
-    r"(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2}))(?: - | : )(?P<title>.+)"
+    r"(?P<timestamp>\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2}))(?: - | : )(?P<title>.+)"
 )
 
 
-@alias(value=r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})(?: - | : ).+$", type=AliasType.REGEX)
+@alias(value=r"^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})(?: - | : ).+$", type=AliasType.REGEX)
 class UpdateEntry(MarkdownSection3):
     """`### {ISO8601 timestamp} ( - | : ) {title}` under `## Updates` -- one update entry.
 
-    The H3 heading text carries an ISO8601 timestamp and a title, joined by
-    either ``" - "`` (space, hyphen, space) or ``" : "`` (space, colon,
-    space): e.g. `### 2026-08-30 14:30:00.000+02:00 - Approved` or
-    `### 2026-08-30 14:30:00.000+02:00 : Approved`. The em-dash separator is
-    rejected. The format is ``yyyy-MM-dd HH:mm:ss.fff`` with an explicit UTC
-    offset (``+02:00``, ``-05:00``) or ``Z`` for UTC -- deliberately **not**
-    the same format as frontmatter ``created``/``updated`` (which keep the
-    shared generic tools' format); this format is scoped to `## Updates`
-    entry headings only, which are hand/LLM-authored body content.
-    Constrained by the regex `@alias` above and enforced by `match_alias`
-    (`re.fullmatch`) at parse time -- a wrong timestamp format, a missing
-    offset, an em-dash separator, or a missing `` - ``/`` : `` title all
-    fail the parse eagerly.
+    The H3 heading text carries a full ISO 8601 date+time timestamp and a
+    title, joined by either ``" - "`` (space, hyphen, space) or ``" : "``
+    (space, colon, space): e.g. `### 2026-08-30 14:30:00.000+02:00 -
+    Approved` or `### 2026-08-30T14:30:00.000+02:00 : Approved`. The
+    em-dash separator is rejected. The format is ``yyyy-MM-dd`` + (``T`` or
+    space) + ``HH:mm:ss.fff`` with an explicit UTC offset (``+02:00``,
+    ``-05:00``) or ``Z`` for UTC -- the same full format as frontmatter
+    ``created``/``updated`` (both separators accepted, date-only rejected;
+    ADR 8c889262-152b-4b8e-ae2c-75371f7a9edf); this format is scoped to
+    `## Updates` entry headings only, which are hand/LLM-authored body
+    content. Constrained by the regex `@alias` above and enforced by
+    `match_alias` (`re.fullmatch`) at parse time -- a wrong timestamp
+    format (including a date-only value), a missing offset, an em-dash
+    separator, or a missing `` - ``/`` : `` title all fail the parse
+    eagerly.
 
     Parameters
     ----------
@@ -489,8 +491,8 @@ class Updates(MarkdownSection2WithComment):
         """Reject entries that are not in newest-first order.
 
         Delegates to the shared `models.md._ordering.validate_newest_first`
-        helper (mixed date-only/date+time day-granularity rule, equal
-        values allowed) -- mirrors `feat.models.v1.body.Updates._validate_newest_first`
+        helper (full date+time aware-datetime comparison, equal values
+        allowed) -- mirrors `feat.models.v1.body.Updates._validate_newest_first`
         without duplicating its logic. Raises on the first out-of-order pair.
         """
         validate_newest_first([update.timestamp for update in self.updates], "Updates")

@@ -21,11 +21,13 @@ Covers the ACC-004 (structural violations -> engine `AssertionError`) and
 ACC-005 (model-level violations -> `pydantic.ValidationError`) matrices from
 `.specmgr/feat/feat-32-sysrs/README.md`, plus a full round-trip of
 `sysrs-example.md`'s content (the frontmatter `created`/`updated` values are
-quoted here, unlike the on-disk feature-folder file, to avoid PyYAML's
-auto-datetime-coercion hazard the "Phase 1 outcome record"'s "Frontmatter
-probe" note pins -- an unquoted `yyyy-MM-dd HH:mm:ss.fff` + `Z` value parses
-as an aware `datetime` and loses its millisecond precision on
-`_stringify_metadata`'s `str()` round trip).
+quoted here, unlike the on-disk feature-folder file; since feat-146 Phase 1,
+`_stringify_metadata` normalizes a PyYAML-coerced unquoted timestamp to the
+`T`-canonical form via `models.md._timestamps.normalize_yaml_datetime` --
+the pre-feat-146 hazard was that an unquoted value parsed as an aware
+`datetime` and then lost its millisecond precision on `_stringify_metadata`'s
+bare `str()` round trip, rendering a zero UTC offset as `+00:00` -- so the
+quoting here is stylistic, not a workaround).
 """
 
 from __future__ import annotations
@@ -58,8 +60,8 @@ _MINIMAL_DOC = textwrap.dedent(
     type: sysrs
     version: 1.0.0
     status: draft
-    created: '2026-08-30 00:00:00.000Z'
-    updated: '2026-08-30 00:00:00.000Z'
+    created: '2026-08-30T00:00:00.000Z'
+    updated: '2026-08-30T00:00:00.000Z'
     ---
 
     # System Requirements Specification: Minimal Example
@@ -106,11 +108,11 @@ _MINIMAL_DOC = textwrap.dedent(
 # `## Requirements`, 8 REQ under `## Other Characteristics`, 3 VCR).
 _EXAMPLE_DOC = """\
 ---
-created: '2026-08-30 00:00:00.000Z'
+created: '2026-08-30T00:00:00.000Z'
 id: 3f7a1c9e-8d2b-4e6f-a5c3-9b0d4e8f2a71
 status: draft
 type: sysrs
-updated: '2026-09-14 00:00:00.000Z'
+updated: '2026-09-14T00:00:00.000Z'
 version: 1.0.0
 ---
 
@@ -635,13 +637,13 @@ Worked example — key rotation timeline (REQ c94e1b7a-2d8f-4a3e-8b5c-
 
 ## Updates
 
-### 2026-09-14 - Added Security Requirements
+### 2026-09-14 00:00:00.000Z - Added Security Requirements
 
 Two Security requirements added (see Security under Requirements
 above) after the partner security review flagged unencrypted key
 storage; System Context diagram updated to show the KMS boundary.
 
-### 2026-08-30 - Initial draft created
+### 2026-08-30 00:00:00.000Z - Initial draft created
 
 Initial system specification drafted from the linked Goals/Problem
 Statement/Scenarios; no Requirements or Decisions cross-referenced
@@ -660,7 +662,7 @@ class TestParseSysrs(unittest.TestCase):
         self.assertEqual(document.frontmatter.id, "sysrs-001")
         self.assertEqual(document.frontmatter.type, "sysrs")
         self.assertEqual(document.frontmatter.status, "draft")
-        self.assertEqual(document.frontmatter.created, "2026-08-30 00:00:00.000Z")
+        self.assertEqual(document.frontmatter.created, "2026-08-30T00:00:00.000Z")
         self.assertEqual(document.body.text, "System Requirements Specification: Minimal Example")
         self.assertIn("Provision partner accounts", document.body.system_purpose.text)
         self.assertIsNone(document.body.stakeholder_needs_and_elicitation)
@@ -683,8 +685,8 @@ class TestParseSysrs(unittest.TestCase):
 
         self.assertEqual(document.frontmatter.id, "3f7a1c9e-8d2b-4e6f-a5c3-9b0d4e8f2a71")
         self.assertEqual(document.frontmatter.status, "draft")
-        self.assertEqual(document.frontmatter.created, "2026-08-30 00:00:00.000Z")
-        self.assertEqual(document.frontmatter.updated, "2026-09-14 00:00:00.000Z")
+        self.assertEqual(document.frontmatter.created, "2026-08-30T00:00:00.000Z")
+        self.assertEqual(document.frontmatter.updated, "2026-09-14T00:00:00.000Z")
         self.assertEqual(document.body.text, "System Requirements Specification: Example Widget Platform")
 
         body = document.body
@@ -738,7 +740,10 @@ class TestParseSysrs(unittest.TestCase):
         self.assertIsNotNone(body.more_information)
         self.assertIsNotNone(body.appendix)
         self.assertIsNotNone(body.definitions_and_acronyms)
-        self.assertEqual([entry.timestamp for entry in body.updates.updates], ["2026-09-14", "2026-08-30"])
+        self.assertEqual(
+            [entry.timestamp for entry in body.updates.updates],
+            ["2026-09-14 00:00:00.000Z", "2026-08-30 00:00:00.000Z"],
+        )
 
     def test_full_example_document_round_trips_except_documented_references_exception(self) -> None:
         """The body round-trips byte-exact except the documented tight->loose `## References` re-render (Phase 1 pin)."""
@@ -826,7 +831,10 @@ class TestParseSysrsValueViolations(unittest.TestCase):
 
     def test_updates_out_of_order_raises_validation_error(self) -> None:
         """Decided 2026-09-02: out-of-order `## Updates` entries are `ValidationError`, not `AssertionError`."""
-        text = _MINIMAL_DOC + "\n## Updates\n\n### 2026-08-30 - Older\n\nx\n\n### 2026-09-14 - Newer\n\ny\n"
+        text = (
+            _MINIMAL_DOC
+            + "\n## Updates\n\n### 2026-08-30 00:00:00.000Z - Older\n\nx\n\n### 2026-09-14 00:00:00.000Z - Newer\n\ny\n"
+        )
 
         with self.assertRaises(ValidationError):
             parse_sysrs(text)
@@ -904,6 +912,29 @@ class TestParseSysrsStructuralViolations(unittest.TestCase):
 
         with self.assertRaises(AssertionError):
             parse_sysrs(text)
+
+
+class TestUnquotedTimestampNormalization(unittest.TestCase):
+    """The `_stringify_metadata` datetime-coercion branch (feat-146 REQ-006/REQ-003).
+
+    An unquoted frontmatter `created`/`updated` timestamp is coerced by PyYAML to a
+    `datetime` before this domain's own `_stringify_metadata` runs -- such a value
+    must parse and converge to the `T`-canonical form, and an unquoted date-only
+    value must still be rejected by the frontmatter's own date+time pattern.
+    """
+
+    def test_unquoted_timestamps_converge_to_t_canonical_form(self) -> None:
+        """Unquoted `T`- and space-separated timestamps parse and converge to the `T`-canonical
+        form; an unquoted date-only value still fails the frontmatter pattern."""
+        text = _MINIMAL_DOC.replace("created: '2026-08-30T00:00:00.000Z'", "created: 2026-08-30T00:00:00.000Z").replace(
+            "updated: '2026-08-30T00:00:00.000Z'", "updated: 2026-08-30 00:00:00.000Z"
+        )
+        document = parse_sysrs(text)
+        self.assertEqual(document.frontmatter.created, "2026-08-30T00:00:00.000Z")
+        self.assertEqual(document.frontmatter.updated, "2026-08-30T00:00:00.000Z")
+
+        with self.assertRaises(ValidationError):
+            parse_sysrs(text.replace("created: 2026-08-30T00:00:00.000Z", "created: 2026-08-30"))
 
 
 if __name__ == "__main__":

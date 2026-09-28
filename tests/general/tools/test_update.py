@@ -29,11 +29,14 @@ Note on the per-type out-of-vocabulary field-value cases: ``req``, ``uc``,
 field-level ``pydantic.ValidationError`` path in their body schema (closed
 vocabularies or cross-field validators -- for ``dec``/``sop``/``vcr``, a
 duplicated ``### Option``/``### Step``/``### AC-NNN`` number), while ``qa``
-and ``prb`` bodies are
-free-form text only -- no closed vocabulary, no field constraint -- so their
-out-of-vocabulary input (an unrecognized section heading) fails structurally
-with ``AssertionError`` instead. Each type's case data flags which of the
-two its field-error input raises.
+and ``prb`` have no *closed-vocabulary* field, so their out-of-vocabulary
+input (an unrecognized section heading) fails structurally with
+``AssertionError`` instead. ``qa`` additionally gained a genuine field-level
+constraint in feat-156 (the bold question-number prefix on
+``QaQuestionAnswer.question``), which its case data does not exercise through
+this input -- the structurally-bad heading raises before any field validator
+runs. Each type's case data flags which of the two its field-error input
+raises.
 """
 
 from __future__ import annotations
@@ -96,9 +99,10 @@ from biz.dfch.specmgr.vcr.tools.create_vcr import create_vcr
 update_module = importlib.import_module("biz.dfch.specmgr.general.tools.update")
 update = update_module.update
 
-#: The canonical date+time timestamp shape (D4/D7) the ``updated`` bump must match: space-separated,
-#: exactly three millisecond digits, `Z` or a signed `±HH:mm` offset.
-_DATE_TIME_TIMESTAMP = r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})"
+#: The canonical date+time timestamp shape (feat-146) the ``updated`` bump must match:
+#: `T`-separated (the machine-written canonical form), exactly three millisecond digits,
+#: `Z` or a signed `±HH:mm` offset.
+_DATE_TIME_TIMESTAMP = r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})"
 
 _REQ_MINIMAL_BODY = textwrap.dedent(
     """\
@@ -240,7 +244,7 @@ _TSK_MINIMAL_BODY = textwrap.dedent(
 
     ## Recent Updates
 
-    ### 2026-08-19 - Kickoff
+    ### 2026-08-19 00:00:00.000Z - Kickoff
 
     Started the task list.
     """
@@ -255,11 +259,11 @@ _TSK_UPDATED_BODY = textwrap.dedent(
 
     ## Recent Updates
 
-    ### 2026-08-19 - Kickoff
+    ### 2026-08-19 00:00:00.000Z - Kickoff
 
     Started the task list.
 
-    ### 2026-08-19 - Progress
+    ### 2026-08-19 00:00:00.000Z - Progress
 
     Finished the first item.
     """
@@ -808,10 +812,10 @@ _CASES: list[_Case] = [
         updated_body=_TSK_UPDATED_BODY,
         middle_marker="Started the task list.",
         middle_replacement="Started the task list with a kickoff note.",
-        append_fragment="\n### 2026-08-19 - Progress\n\nFinished the first item.\n",
+        append_fragment="\n### 2026-08-19 00:00:00.000Z - Progress\n\nFinished the first item.\n",
         eof_marker="## Recent Updates",
-        eof_fragment="## Recent Updates\n\n### 2026-08-19 - Kickoff\n\nStarted the task list.\n",
-        deletable_suffix="\n### 2026-08-19 - Progress\n\nFinished the first item.\n",
+        eof_fragment="## Recent Updates\n\n### 2026-08-19 00:00:00.000Z - Kickoff\n\nStarted the task list.\n",
+        deletable_suffix="\n### 2026-08-19 00:00:00.000Z - Progress\n\nFinished the first item.\n",
         field_error_marker="- [ ] Do the first thing",
         field_error_fragment="- [z] Not a valid checkbox marker",
         field_error_is_append=False,

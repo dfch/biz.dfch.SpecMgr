@@ -26,16 +26,31 @@ leaves its own two error channels uncaught.
 
 Coerce YAML-native scalar types back to ``str`` (or ``None``).
 
-``python-frontmatter`` parses the YAML block with a standard YAML
-loader, which auto-converts an unquoted date/timestamp (e.g.
-``created: 2026-08-05T08:15:42``) into a ``datetime.date``/
-``datetime.datetime`` -- but every :class:`UcFrontmatter` field
-inherited from :class:`~biz.dfch.specmgr.models.md.MarkdownFrontmatter`
-is ``str | None``, so a raw non-``str`` object would fail Pydantic's
-(deliberately non-coercive) string validation. Converting via ``str()``
-reproduces the same text a human would have written. ``None`` (an empty
-YAML key) is passed through so the field's own optional-ness applies
-normally. Mirrors `models.adr.v1.parser._stringify_metadata` verbatim.
+``python-frontmatter`` parses the YAML block using PyYAML's standard loader,
+which auto-converts unquoted dates/timestamps into Python ``datetime``/
+``date`` objects, but every :class:`UcFrontmatter` field inherited from
+:class:`~biz.dfch.specmgr.models.md.MarkdownFrontmatter` is ``str | None``,
+so a raw non-``str`` object would fail Pydantic's (deliberately non-coercive)
+string validation. ``None`` (from an empty YAML key like ``version:``) is
+passed through so the field's own optional-ness applies normally.
+
+A coerced ``datetime`` (an unquoted timestamp in either the ``T`` or the
+space separator) is normalized to the ``T``-canonical form with exactly
+three millisecond digits via
+:func:`~biz.dfch.specmgr.models.md._timestamps.normalize_yaml_datetime`
+(feat-146, REQ-006): a bare ``str()`` would drop the milliseconds of a
+whole-millisecond value (rendering six fraction digits -- a rejected
+shape), render a zero UTC offset as ``+00:00`` instead of ``Z``, and keep
+the space separator instead of converging to the machine-written ``T``
+form. That same helper's own guard returns a bare ``str()`` for a
+six-digit-fraction unquoted timestamp instead, so it reaches the
+frontmatter's date+time pattern validator in a rejected, actionable shape
+rather than being silently truncated into an accepted one. A coerced
+``date`` (an unquoted date-only value) still stringifies via ``str()`` to
+its ``yyyy-MM-dd`` text, where the same pattern validator rejects it --
+date-only and six-digit fractions remain rejected (feat-146 REQ-003).
+
+Mirrors the same helper in ``req/models/v1/parser._stringify_metadata``.
 
 
 ### `parse_uc(text: 'str') -> 'UcDocument'`

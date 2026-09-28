@@ -17,32 +17,14 @@ permission:
   external_directory:
     "*": ask
     "~/.local/share/opencode/**": allow
+    "/tmp/opencode/*": allow
+    "/tmp/*": allow
   edit: deny
   write: deny
-  task: deny
+  task: allow
   bash:
-    "*": ask
-    "git branch*": allow
-    "git status*": allow
-    "git rev-parse*": allow
-    "git merge-base*": allow
-    "git log*": allow
-    "git diff*": allow
-    "git worktree*": allow
-    "ls *": allow
-    "grep *": allow
-    "head *": allow
-    "echo *": allow
-    "sed *": allow
-    "cat *": allow
-    "tail *": allow
-    "uv *": allow
-    "find *": allow
-    "python3 *": allow
-    "wc *": allow
-    "sort *": allow
-    "uniq *": allow
-    "du *": allow
+    "*": allow
+    "git commit *": deny
 ---
 
 # Feature Reviewer

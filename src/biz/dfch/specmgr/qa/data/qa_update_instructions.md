@@ -38,7 +38,14 @@ want to change before calling any write tool.
     passing only the replacement lines. The server splices the fragment
     into the current on-disk body and validates the result as a whole
     document before writing anything, so every out-of-range line stays
-    byte-identical.
+    byte-identical. When the replacement touches a question's own
+    block-quote lines, carry the question's existing bold `**<d>.<NNNN>**: `
+    number prefix forward verbatim -- a replaced or edited question keeps
+    its number (numbers are permanent, never renumbered or reused), while
+    a question you insert takes a new number for its own category (that
+    category's existing max sequence + 10, or `0010` when the category
+    holds no numbered question yet) and, if left unanswered, the
+    `TODO: answer pending` placeholder as its answer text.
   - **Whole-body replace** (a multi-section change, or whenever you are
     uncertain about the line range): call `update(id, type="qa", content)`
     with no `offset`/`limit` -- `content` is then the full replacement body:

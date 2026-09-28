@@ -43,8 +43,8 @@ _MINIMAL_DOC = textwrap.dedent(
     type: tsk
     version: 1.0.0
     status: draft
-    created: '2026-08-16 00:00:00.000Z'
-    updated: '2026-08-16 00:00:00.000Z'
+    created: '2026-08-16T00:00:00.000Z'
+    updated: '2026-08-16T00:00:00.000Z'
     ---
 
     # Simple Task List
@@ -53,7 +53,7 @@ _MINIMAL_DOC = textwrap.dedent(
 
     ## Recent Updates
 
-    ### 2026-08-16 - Kickoff
+    ### 2026-08-16 00:00:00.000Z - Kickoff
 
     Started the task list.
     """
@@ -148,7 +148,7 @@ class TestParseTsk(unittest.TestCase):
 
             ## Recent Updates
 
-            ### 2026-08-16 - Kickoff
+            ### 2026-08-16 00:00:00.000Z - Kickoff
 
             Started the task list.
             """
@@ -166,8 +166,8 @@ class TestParseTsk(unittest.TestCase):
             type: tsk
             version: 1.0.0
             status: draft
-            created: '2026-08-16 00:00:00.000Z'
-            updated: '2026-08-16 00:00:00.000Z'
+            created: '2026-08-16T00:00:00.000Z'
+            updated: '2026-08-16T00:00:00.000Z'
             ---
 
             # Simple Task List
@@ -176,11 +176,11 @@ class TestParseTsk(unittest.TestCase):
 
             ## Recent Updates
 
-            ### 2026-08-17 - Follow-up
+            ### 2026-08-17 00:00:00.000Z - Follow-up
 
             Made more progress.
 
-            ### 2026-08-16 - Kickoff
+            ### 2026-08-16 00:00:00.000Z - Kickoff
 
             Started the task list.
             """
@@ -215,6 +215,29 @@ class TestParseTsk(unittest.TestCase):
 
         with self.assertRaises(AssertionError):
             parse_tsk(text)
+
+
+class TestUnquotedTimestampNormalization(unittest.TestCase):
+    """The `_stringify_metadata` datetime-coercion branch (feat-146 REQ-006/REQ-003).
+
+    An unquoted frontmatter `created`/`updated` timestamp is coerced by PyYAML to a
+    `datetime` before this domain's own `_stringify_metadata` runs -- such a value
+    must parse and converge to the `T`-canonical form, and an unquoted date-only
+    value must still be rejected by the frontmatter's own date+time pattern.
+    """
+
+    def test_unquoted_timestamps_converge_to_t_canonical_form(self) -> None:
+        """Unquoted `T`- and space-separated timestamps parse and converge to the `T`-canonical
+        form; an unquoted date-only value still fails the frontmatter pattern."""
+        text = _MINIMAL_DOC.replace("created: '2026-08-16T00:00:00.000Z'", "created: 2026-08-16T00:00:00.000Z").replace(
+            "updated: '2026-08-16T00:00:00.000Z'", "updated: 2026-08-16 00:00:00.000Z"
+        )
+        document = parse_tsk(text)
+        self.assertEqual(document.frontmatter.created, "2026-08-16T00:00:00.000Z")
+        self.assertEqual(document.frontmatter.updated, "2026-08-16T00:00:00.000Z")
+
+        with self.assertRaises(ValidationError):
+            parse_tsk(text.replace("created: 2026-08-16T00:00:00.000Z", "created: 2026-08-16"))
 
 
 if __name__ == "__main__":

@@ -1,9 +1,9 @@
 ---
-created: '2025-11-03 09:16:53.407Z'
+created: '2025-11-03T09:16:53.407Z'
 id: deaddead-sysr-sysr-sysr-deaddeadsysr
 status: draft
 type: sysrs
-updated: '2025-11-14 22:38:17.641Z'
+updated: '2025-11-14T22:38:17.641Z'
 version: 1.0.0
 ---
 
@@ -233,6 +233,6 @@ section.
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
-### 2026-08-30 - Created
+### 2026-08-30 00:00:00.000Z - Created
 
 Blind text describing this update.

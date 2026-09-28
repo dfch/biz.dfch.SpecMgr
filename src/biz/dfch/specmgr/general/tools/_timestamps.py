@@ -15,122 +15,93 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Shared, private timestamp-formatting helpers (feat-38-39-41-43-44 Phase 3, Task 3.1).
+"""Shared, private timestamp-formatting helpers for the MCP write side (feat-38-39-41-43-44 Phase 3,
+Task 3.1; the ``T``-canonical form since feat-146 Phase 1).
 
 A private, cross-domain helper in the same package and in the same style as
 :mod:`_path_safety`, :mod:`_doc_paths`, and :mod:`_splice`: it has **no**
 ``mcp`` dependency and performs **no filesystem access** -- the functions
 only inspect/format :class:`~datetime.datetime` values and return ``str``.
 
-This module is the single source of the canonical date+time variant (D4/D7,
-``.specmgr/feat/feat-38-39-41-43-44/README.md`` Design Notes):
-``yyyy-MM-dd HH:mm:ss.fff`` followed by either ``Z`` (UTC, i.e. a zero UTC
-offset) or a signed ``±HH:mm`` offset -- space-separated (not ``T``), and
-milliseconds truncated to *exactly* three digits (not the six-digit
-microsecond precision :meth:`datetime.datetime.isoformat` produces by
-default).
+The machine-written canonical date+time variant (feat-146, ADR
+8c889262-152b-4b8e-ae2c-75371f7a9edf) is ``yyyy-MM-ddTHH:mm:ss.fff``
+(``T``-separated -- ISO 8601's standard extended combined form per ADR
+23a14195) followed by either ``Z`` (UTC, i.e. a zero UTC offset) or a signed
+``±HH:mm`` offset, with milliseconds truncated to *exactly* three digits.
+The read side (``MarkdownFrontmatter``'s ``created``/``updated`` pattern)
+accepts the space separator as well, but the MCP is the only writer of
+frontmatter and always writes the ``T`` form. The formatting core itself
+lives in :mod:`biz.dfch.specmgr.models.md._timestamps` (dependency-free, so
+the domain parsers' own frontmatter read path can use it too -- ``models``
+must not import ``general``); :func:`format_timestamp` below delegates to it,
+and :func:`now_timestamp` is the one-line call site every
+``create_<d>``/``update``/``set_status``/``set_classification`` adapter uses.
 
 :func:`now_timestamp` REPLACES every one of this codebase's previous
 ``datetime.now().isoformat(timespec="microseconds")`` call sites (every
 ``create_<d>`` tool, the 22 ``update`` adapter sites, and every
 ``set_status`` adapter site -- Task 3.3) with one shared, consistently
-formatted implementation. :func:`format_timestamp` is the pure formatting
-core :func:`now_timestamp` delegates to, exposed separately so the D7/D8
-repo-document and test-fixture migrations (Tasks 3.4/3.5) can reuse the
-exact same formatting logic for arbitrary, already-constructed
-:class:`~datetime.datetime` values (e.g. a first-commit timestamp reinterpreted
-as UTC, or a manually built midnight-UTC value) instead of re-deriving the
-shape by hand. :func:`format_date` is a narrower helper for the handful of
-callers that legitimately want just the ``yyyy-MM-dd`` portion (e.g. a
-DEC/VCR/TSK ``UpdateEntry`` heading, which -- unlike frontmatter
-``created``/``updated``, D5 -- is allowed to be date-only); frontmatter never
-uses it.
+formatted implementation. (The previous ``format_date`` helper -- a
+narrower ``yyyy-MM-dd``-only variant for the date-only entry-heading bodies
+feat-38-39-41-43-44 D4/REQ-004 allowed -- was removed in feat-146 Phase 1:
+entry headings are date+time-only in every domain now, so it had zero
+callers.)
 """
 
 from __future__ import annotations
 
 from datetime import datetime
 
-__all__ = ["format_date", "format_timestamp", "now_timestamp"]
+from biz.dfch.specmgr.models.md._timestamps import format_timestamp as _shared_format_timestamp
 
-#: Milliseconds are truncated (not rounded) from a `datetime`'s microsecond
-#: component to exactly three digits -- simpler than rounding, and matches
-#: this feature's "milliseconds truncated to exactly three digits" wording
-#: verbatim (REQ-007).
-_MICROSECONDS_PER_MILLISECOND = 1_000
-
-#: A zero UTC offset formats as the literal `Z`, not `+00:00`.
-_UTC_SUFFIX = "Z"
+__all__ = ["format_timestamp", "now_timestamp"]
 
 
 def format_timestamp(dt: datetime) -> str:
-    """Format `dt` as the canonical date+time variant (D4/D7).
+    """Format `dt` as the machine-written ``T``-canonical date+time form (feat-146).
 
-    Accepts either an aware or a naive `datetime`; a naive value is
-    formatted as-is (no UTC offset is invented for it), so its rendered
-    string carries no `Z`/offset suffix and will not match the date+time
-    `@alias`/`MarkdownFrontmatter` regex -- callers that need a suffixed
-    value (every current caller does) must pass an aware `datetime`, e.g.
-    via `datetime.now().astimezone()` (:func:`now_timestamp`'s own input)
-    or by attaching `timezone.utc` explicitly when migrating a legacy
-    value that is to be reinterpreted as UTC (D7).
+    Delegates to
+    :func:`biz.dfch.specmgr.models.md._timestamps.format_timestamp` (the
+    single formatting implementation, shared with the frontmatter read
+    path) and keeps its own contract verbatim: accepts either an aware or a
+    naive `datetime`; a naive value is formatted as-is (no UTC offset is
+    invented for it), so its rendered string carries no `Z`/offset suffix
+    and will not match the date+time `MarkdownFrontmatter` pattern --
+    callers that need a suffixed value (every current caller does) must pass
+    an aware `datetime`, e.g. via `datetime.now().astimezone()`
+    (:func:`now_timestamp`'s own input) or by attaching `timezone.utc`
+    explicitly when reinterpreting a legacy value as UTC.
 
     Args:
         dt: The datetime to format.
 
     Returns:
-        `yyyy-MM-dd HH:mm:ss.fff` followed by `Z` (`dt`'s UTC offset is
+        `yyyy-MM-ddTHH:mm:ss.fff` followed by `Z` (`dt`'s UTC offset is
         exactly zero) or `dt`'s own signed `±HH:mm` offset (aware `dt`),
         or with no suffix at all (naive `dt`). Milliseconds are truncated
         (not rounded) from `dt.microsecond`.
     """
     assert isinstance(dt, datetime), type(dt)
 
-    milliseconds = dt.microsecond // _MICROSECONDS_PER_MILLISECOND
-    base = f"{dt.strftime('%Y-%m-%d %H:%M:%S')}.{milliseconds:03d}"
-
-    offset = dt.utcoffset()
-    if offset is None:
-        return base
-    if offset.total_seconds() == 0:
-        return f"{base}{_UTC_SUFFIX}"
-    return f"{base}{dt.strftime('%z')[:3]}:{dt.strftime('%z')[3:]}"
+    result = _shared_format_timestamp(dt)
+    return result
 
 
 def now_timestamp() -> str:
-    """Return the current local time as the canonical date+time variant (D4/D7).
+    """Return the current local time as the machine-written ``T``-canonical date+time form (feat-146).
 
     The single shared replacement for this codebase's previous
     ``datetime.now().isoformat(timespec="microseconds")`` call sites (Task
     3.3): local time with its actual UTC offset
     (``datetime.now().astimezone()``), formatted by :func:`format_timestamp`
-    -- `Z` when that offset is exactly zero (e.g. under CI, which typically
-    runs UTC), else a signed `±HH:mm` offset, with milliseconds truncated to
-    exactly three digits.
+    -- `T`-separated (the machine-written canonical form; the read side
+    accepts the space separator too, but the MCP always writes `T`), `Z`
+    when the local UTC offset is exactly zero (e.g. under CI, which
+    typically runs UTC), else a signed `±HH:mm` offset, with milliseconds
+    truncated to exactly three digits.
 
     Returns:
         The current local date+time, formatted per :func:`format_timestamp`.
     """
     result = format_timestamp(datetime.now().astimezone())
-    return result
-
-
-def format_date(dt: datetime) -> str:
-    """Return just the `yyyy-MM-dd` portion of `dt`.
-
-    For the handful of body-entry-timestamp callers that legitimately allow
-    a date-only value (e.g. a DEC/VCR/TSK `UpdateEntry` heading, per Phase
-    2's alias) -- frontmatter `created`/`updated` never uses this (D5: those
-    two fields are date+time-only, enforced by
-    `models.md.frontmatter.MarkdownFrontmatter`'s own validator).
-
-    Args:
-        dt: The datetime to format.
-
-    Returns:
-        `dt.strftime("%Y-%m-%d")`.
-    """
-    assert isinstance(dt, datetime), type(dt)
-
-    result = dt.strftime("%Y-%m-%d")
     return result

@@ -39,8 +39,8 @@ _MINIMAL_DOC = textwrap.dedent(
     type: uc
     version: 1.0.0
     status: draft
-    created: '2026-08-05 00:00:00.000Z'
-    updated: '2026-08-05 00:00:00.000Z'
+    created: '2026-08-05T00:00:00.000Z'
+    updated: '2026-08-05T00:00:00.000Z'
     ---
 
     # Buy Goods
@@ -182,6 +182,29 @@ class TestParseUc(unittest.TestCase):
 
         with self.assertRaises(AssertionError):
             parse_uc(text)
+
+
+class TestUnquotedTimestampNormalization(unittest.TestCase):
+    """The `_stringify_metadata` datetime-coercion branch (feat-146 REQ-006/REQ-003).
+
+    An unquoted frontmatter `created`/`updated` timestamp is coerced by PyYAML to a
+    `datetime` before this domain's own `_stringify_metadata` runs -- such a value
+    must parse and converge to the `T`-canonical form, and an unquoted date-only
+    value must still be rejected by the frontmatter's own date+time pattern.
+    """
+
+    def test_unquoted_timestamps_converge_to_t_canonical_form(self) -> None:
+        """Unquoted `T`- and space-separated timestamps parse and converge to the `T`-canonical
+        form; an unquoted date-only value still fails the frontmatter pattern."""
+        text = _MINIMAL_DOC.replace("created: '2026-08-05T00:00:00.000Z'", "created: 2026-08-05T00:00:00.000Z").replace(
+            "updated: '2026-08-05T00:00:00.000Z'", "updated: 2026-08-05 00:00:00.000Z"
+        )
+        document = parse_uc(text)
+        self.assertEqual(document.frontmatter.created, "2026-08-05T00:00:00.000Z")
+        self.assertEqual(document.frontmatter.updated, "2026-08-05T00:00:00.000Z")
+
+        with self.assertRaises(ValidationError):
+            parse_uc(text.replace("created: 2026-08-05T00:00:00.000Z", "created: 2026-08-05"))
 
 
 if __name__ == "__main__":

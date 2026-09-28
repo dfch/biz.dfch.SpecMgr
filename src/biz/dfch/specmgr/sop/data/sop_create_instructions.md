@@ -53,13 +53,15 @@ step 1 if this is genuinely a new SOP.
 - `## More Information` -- optional freeform supplementary text.
 - `## Updates` -- optional, and the last section if present: an
   optional leading HTML comment (conventionally "Newest entry first"),
-  then `### {ISO8601 timestamp} ( - | : ) {title}` entries, newest-first
-  (e.g. `2026-08-30 14:30:00.000+02:00 - Created`), each with a
-  mandatory lead paragraph. The timestamp is `yyyy-MM-dd HH:mm:ss.fff`
-  with an explicit UTC offset (`+02:00`, `-05:00`) or `Z`, joined to the
-  title by `" - "` (space, hyphen, space) or `" : "` (space, colon,
-  space) -- the em-dash separator is rejected. This is a different
-  format from the frontmatter dates. New entries are prepended (newest
+  then `### {timestamp} ( - | : ) {title}` entries, newest-first (e.g.
+  `### 2026-08-30 14:30:00.000+02:00 - Created`), each with a mandatory
+  lead paragraph. The timestamp is the full date+time form
+  `yyyy-MM-dd[T ]HH:mm:ss.fff` with an explicit UTC offset (`+02:00`,
+  `-05:00`) or `Z` -- the same full format as the frontmatter
+  `created`/`updated` dates (the date/time separator may be `T` or a
+  space; a date-only timestamp is rejected) -- joined to the title by
+  `" - "` (space, hyphen, space) or `" : "` (space, colon, space): the
+  em-dash separator is rejected. New entries are prepended (newest
   first), not appended.
 
 Section order is binding: Purpose -> Scope -> Definitions -> Roles and

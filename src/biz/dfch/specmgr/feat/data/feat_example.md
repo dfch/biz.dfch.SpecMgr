@@ -1,9 +1,9 @@
 ---
-created: '2025-05-02 09:11:34.267Z'
+created: '2025-05-02T09:11:34.267Z'
 id: feat-99-example-widget
 status: progress
 type: feat
-updated: '2025-05-20 21:46:12.803Z'
+updated: '2025-05-20T21:46:12.803Z'
 version: 1.0.0
 ---
 

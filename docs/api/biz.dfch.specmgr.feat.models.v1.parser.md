@@ -40,13 +40,28 @@ equivalent); both error channels are plain ``AssertionError`` /
 Coerce YAML-native scalar types back to ``str`` (or ``None``).
 
 ``python-frontmatter`` parses the YAML block using PyYAML's standard loader,
-which auto-converts unquoted dates/timestamps into Python datetime objects,
-but every :class:`FeatFrontmatter` field inherited from
+which auto-converts unquoted dates/timestamps into Python ``datetime``/
+``date`` objects, but every :class:`FeatFrontmatter` field inherited from
 :class:`~biz.dfch.specmgr.models.md.MarkdownFrontmatter` is ``str | None``,
 so a raw non-``str`` object would fail Pydantic's (deliberately non-coercive)
-string validation. Converting via ``str()`` reproduces what a human would have
-written.  ``None`` (from an empty YAML key like ``version:``) is passed
-through so the field's own optional-ness applies normally.
+string validation. ``None`` (from an empty YAML key like ``version:``) is
+passed through so the field's own optional-ness applies normally.
+
+A coerced ``datetime`` (an unquoted timestamp in either the ``T`` or the
+space separator) is normalized to the ``T``-canonical form with exactly
+three millisecond digits via
+:func:`~biz.dfch.specmgr.models.md._timestamps.normalize_yaml_datetime`
+(feat-146, REQ-006): a bare ``str()`` would drop the milliseconds of a
+whole-millisecond value (rendering six fraction digits -- a rejected
+shape), render a zero UTC offset as ``+00:00`` instead of ``Z``, and keep
+the space separator instead of converging to the machine-written ``T``
+form. That same helper's own guard returns a bare ``str()`` for a
+six-digit-fraction unquoted timestamp instead, so it reaches the
+frontmatter's date+time pattern validator in a rejected, actionable shape
+rather than being silently truncated into an accepted one. A coerced
+``date`` (an unquoted date-only value) still stringifies via ``str()`` to
+its ``yyyy-MM-dd`` text, where the same pattern validator rejects it --
+date-only and six-digit fractions remain rejected (feat-146 REQ-003).
 
 Mirrors the same helper in ``dec/models/v1/parser._stringify_metadata``/
 ``gol/models/v1/parser._stringify_metadata``.

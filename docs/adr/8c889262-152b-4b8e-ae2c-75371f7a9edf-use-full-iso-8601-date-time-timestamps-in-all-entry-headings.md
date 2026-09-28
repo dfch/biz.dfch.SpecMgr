@@ -1,5 +1,5 @@
 ---
-status: draft
+status: accepted
 date: '2026-09-23'
 decision-makers: dfch
 id: 8c889262-152b-4b8e-ae2c-75371f7a9edf

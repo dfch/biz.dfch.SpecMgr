@@ -314,6 +314,18 @@ class TestUpdateEntryHeadingAlias(unittest.TestCase):
             with self.subTest(heading=heading):
                 self.assertTrue(match_alias(UpdateEntry, heading))
 
+    def test_accepts_t_separator_timestamps(self) -> None:
+        for heading in (
+            "2026-08-30T14:30:00.000+02:00 - Approved",
+            "2026-08-30T14:30:00.000-05:00 - Approved",
+            "2026-08-30T14:30:00.000Z - Approved",
+            "2026-01-02T03:04:05.678+00:00 - Created",
+            "2026-08-30T14:30:00.000+02:00 : Approved",
+            "2026-08-30T14:30:00.000Z : Approved",
+        ):
+            with self.subTest(heading=heading):
+                self.assertTrue(match_alias(UpdateEntry, heading))
+
     def test_rejects_em_dash_separator(self) -> None:
         """ACC-001: the em-dash separator is rejected -- only ` - `/` : ` are accepted."""
         for heading in (
@@ -348,7 +360,8 @@ class TestUpdateEntryHeadingAlias(unittest.TestCase):
         for heading in (
             "2026-8-30 14:30:00.000+02:00 - Approved",
             "2026-08-30 14:30:00+02:00 - Approved",
-            "2026-08-30T14:30:00.000+02:00 - Approved",
+            "2026-08-30 - Approved",
+            "2026-08-30 : Approved",
             "bad - Approved",
         ):
             with self.subTest(heading=heading):
@@ -867,6 +880,22 @@ class TestUpdateEntryComputedFields(unittest.TestCase):
 
         self.assertEqual(sut.timestamp, "2026-08-30 14:30:00.000Z")
         self.assertEqual(sut.title, "Created")
+
+    def test_parses_timestamp_and_title_t_separator(self) -> None:
+        text = format_text("### 2026-08-30T14:30:00.000+02:00 - Approved\n\nSigned off.\n")
+
+        sut = UpdateEntry.from_text(text)
+
+        self.assertEqual(sut.timestamp, "2026-08-30T14:30:00.000+02:00")
+        self.assertEqual(sut.title, "Approved")
+        self.assertEqual(sut.content.text, "Signed off.")
+        self.assertEqual(str(sut), text)
+
+    def test_rejects_date_only_heading_at_parse_time(self) -> None:
+        for heading in ("### 2026-08-30 - Approved", "### 2026-08-30 : Approved"):
+            with self.subTest(heading=heading):
+                with self.assertRaises(AssertionError):
+                    UpdateEntry.from_text(format_text(f"{heading}\n\nBody.\n"))
 
     def test_keeps_separator_inside_the_title(self) -> None:
         sut = UpdateEntry.from_text(format_text("### 2026-08-30 14:30:00.000+02:00 - A - B\n\nBody.\n"))

@@ -158,8 +158,9 @@ First-line docstrings from each module, organized by domain:
 - `general/tools/_similarity_search.py` — Shared per-candidate collection, hit-row assembly, and background warmup (feat-134, Phase 3).
 - `general/tools/_similarity_text.py` — Embedding-input text extraction for the similarity engine (feat-134, Phase 2, Task 2.2).
 - `general/tools/_splice.py` — Frontmatter-stripped body extraction, body-line splicing, and body-line
-- `general/tools/_timestamps.py` — Shared, private timestamp-formatting helpers (feat-38-39-41-43-44 Phase 3, Task 3.1).
+- `general/tools/_timestamps.py` — Shared, private timestamp-formatting helpers for the MCP write side (feat-38-39-41-43-44 Phase 3,
 - `general/tools/delete.py` — ``@mcp.tool()`` wrapper: delete (feat-36-delete, Phase 2).
+- `general/tools/edit.py` — ``@mcp.tool()`` wrapper: edit (feat-159-edit, GitHub issue #159).
 - `general/tools/find_related.py` — ``@mcp.tool()`` wrapper: find_related (feat-134, Phase 3, Task 3.1).
 - `general/tools/find_similar_text.py` — ``@mcp.tool()`` wrapper: find_similar_text (feat-134, Phase 3, Task 3.2).
 - `general/tools/list_references.py` — ``@mcp.tool()`` wrapper: list_references (feat-144-ref-artifact, Phase 2).
@@ -220,6 +221,7 @@ First-line docstrings from each module, organized by domain:
 - `models/md/_frontmatter_parse.py` — Shared frontmatter-parsing error enrichment (feat-27-validation Phase 2, Tasks 2.1/2.2).
 - `models/md/_markdown.py` — Markdown shared instance.
 - `models/md/_ordering.py` — Shared, private newest-first ordering validation helper for `models.md` domain body models.
+- `models/md/_timestamps.py` — Shared, private ``T``-canonical datetime-formatting helpers for the ``models.md`` frontmatter
 - `models/md/_util.py` — Shared, private validation helpers for the ``models.md`` subpackage.
 - `models/md/alias.py` — Alias decorator for MarkdownStr class name transformation.
 - `models/md/alias_match.py` — Match a parsed heading's actual text against a class's declared `@alias`.
@@ -290,10 +292,10 @@ First-line docstrings from each module, organized by domain:
 - `qa/models/v2/parser.py` — Parse raw Question and Answer (QA) ``.md`` text into a :class:`QaDocument` (v2).
 - `qa/models/v2/question_answer.py` — One adjacent question/answer pair with no heading of its own (QA v2).
 - `qa/models/v2/summary.py` — Pydantic model for one line of QA listing output.
-- `qa/prompts/__init__.py` — MCP prompt registrations for Question and Answer (QA) documents (Phase 4, Task 4.3).
-- `qa/prompts/create_qa.py` — ``@mcp.prompt()``: create_qa (Phase 4, Task 4.3).
-- `qa/prompts/refine.py` — ``@mcp.prompt()``: refine (Phase 4, Task 4.3).
-- `qa/prompts/update_qa.py` — ``@mcp.prompt()``: update_qa (Phase 4, Task 4.3).
+- `qa/prompts/__init__.py` — MCP prompt registrations for Question and Answer (QA) documents (feat-12-qa-artifact Phase 4, Task 4.3).
+- `qa/prompts/create_qa.py` — ``@mcp.prompt()``: create_qa (feat-12-qa-artifact Phase 4, Task 4.3).
+- `qa/prompts/refine.py` — ``@mcp.prompt()``: refine (feat-7-various-improvements Phase 0, Task 0.19).
+- `qa/prompts/update_qa.py` — ``@mcp.prompt()``: update_qa (feat-12-qa-artifact Phase 4, Task 4.3).
 - `qa/resources/__init__.py` — MCP resource registrations for Question and Answer (QA) documents (Phase 4, Task 4.2).
 - `qa/resources/qa_example.py` — Resource: specmgr://qa/example (Phase 4, Task 4.2).
 - `qa/resources/qa_schema.py` — Resource: specmgr://qa/schema (Phase 4, Task 4.2).
@@ -552,4 +554,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 371
+**Test files**: 374

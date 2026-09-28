@@ -62,6 +62,99 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   self-match scoring `0.9999999...` is no longer dropped by
   `min_score=1.0`.
 
+## [0.33.0] - 2026-09-27
+
+### Added
+
+- A fixed, permanent numbering scheme for question/answer pairs inside
+  `qa` (Question and Answer) documents (`qa/models/v2`): every question
+  carries its number `<category-digit>.<sequence>` as a bold prefix in
+  the question text itself (`` > **<d>.<NNNN>**: {question} ``) -- a
+  single category digit (0=`Elicitation Context`, then the nine ISO/IEC
+  25010:2023 quality characteristics in document order) and a 4-digit
+  zero-padded per-category sequence starting at `0010` -- enforced by
+  `QaQuestionAnswer`'s own `field_validator` in `qa/models/v2/` (no
+  shared `models/md/` parser change); once assigned, a number is
+  permanent (never reused, never renumbered -- removals leave gaps) and
+  the increment-by-10 step is a human authoring guideline only, so
+  in-between numbers (e.g. `0.0015`) always parse. An unanswered
+  question is additionally marked by a `TODO: ` placeholder (e.g.
+  `TODO: answer pending`) as its answer text -- a pure authoring
+  convention demonstrated in the packaged template/example, explicitly
+  not parsed or validated -- and the `refine` prompt's instructions are
+  updated so each appended question is written with its target
+  category's next number (that category's existing max sequence + 10, or
+  `0010` when the category holds no numbered question yet) and the
+  `TODO: answer pending` placeholder, retiring the legacy
+  `_(awaiting response)_` marker it previously shipped (REQ-009)
+  (feat-156-qa-numbering, GitHub issue #156).
+
+- `edit`, a new generic, cross-domain MCP tool in `general/tools/`
+  (feat-159-edit, GitHub issue #159): a surgical, exact-match string
+  replacement of an existing document's frontmatter-stripped body,
+  dispatched on an explicit `type` parameter across all twelve
+  whole-body domains (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs).
+  `adr` is deliberately not a `type` here: the public `edit` raises an
+  explicit pre-dispatch `ValueError` for it (the generic `validate`
+  tool's precedent, unlike `update`'s inherited `KeyError`), since
+  ADR's section-level MADR mutation contract has no whole-body replace
+  by design. Matching is byte-exact over the text `get_<d>(id,
+  raw=True)` returns: no line-ending normalization (an `old_str`
+  containing `\n` will not match a CRLF body), no BOM handling, no
+  fuzzy/regex fallback; `old_str` must be unique unless `replace_all`
+  rewrites every exact occurrence, and an empty `new_str` is a pure
+  deletion. The 2-fold contract: the document is written to disk only
+  if the match succeeds **and** the edited body still validates as a
+  whole document (via the domain's own model under the shared error
+  wrapper); on any failure nothing is written and the file stays
+  byte-unchanged. On success the existing frontmatter is carried over
+  with only `updated` bumped and the updated frontmatter only is
+  returned (no body). The domain lock is held across the entire read,
+  match, validate, and write sequence, so the match runs against
+  on-disk content with no TOCTOU race (the deliberate improvement over
+  `update`'s whole-body mode). The same `_path_safety` guards apply:
+  an invalid `id` (path-injection attempt or wrong format) is a
+  `ValueError` before any filesystem access, and a missing document
+  raises the domain's own not-found error.
+
+### Changed
+
+- **BREAKING**: a `qa` question lacking the new `**<d>.<NNNN>**: ` bold
+  number prefix now fails `parse_qa`/`get_qa`/`update`/`create_qa`
+  validation with an actionable error, and a `list_qa` of a directory
+  holding such a document reports it as an inline failed entry (the
+  `<failed to parse>` marker, counted in `error_count`) rather than
+  dropping it silently (feat-156-qa-numbering, GitHub issue #156). No
+  repo-internal migration is needed: no `qa` documents exist under
+  `docs/qa/` on this branch.
+
+## [0.32.0] - 2026-09-25
+
+### Changed
+
+- **BREAKING**: Every whole-body document type's timestamps now use one
+  uniform full ISO 8601 date+time form (`yyyy-MM-dd` + `T` or space +
+  `HH:mm:ss.fff` + `Z`/`±HH:mm`) (ADR 8c889262-152b-4b8e-ae2c-75371f7a9edf,
+  GitHub issue #146, feat-146-date-time):
+  - Frontmatter `created`/`updated` of all twelve whole-body domains (ADR
+    excluded) are now written in the `T`-separated canonical form by the
+    MCP (the sole writer of frontmatter), and both `T`- and
+    space-separated values are accepted on read; date-only, six-digit
+    fraction, and timezone-less values remain rejected, as before, and
+    pre-existing space-separated values stay valid.
+  - The dated entry headings of `tsk`/`dec`/`vcr`/`sysrs` (`## Recent
+    Updates`/`## Updates`) are tightened from date-or-full-date+time to
+    full date+time only: a document with date-only entry headings (e.g.
+    `### 2026-08-19 - Created`) now fails to parse with an actionable
+    error. The repo-owned inventory (packaged templates/examples/
+    instructions and `docs/`) was migrated to space-form midnight UTC
+    (`### 2026-08-19 00:00:00.000Z - Created`) in the same change; the
+    `feat`/`sop` entry headings additionally accept the `T` separator now.
+  - The newest-first ordering checks compare full timestamps as aware
+    datetimes: the mixed date-only/date+time day-granularity rule is gone
+    (same-day `T`- vs space-separated pairs order by their time component,
+    equal timestamps remain allowed).
+
 ## [0.31.0] - 2026-09-23
 
 ### Added

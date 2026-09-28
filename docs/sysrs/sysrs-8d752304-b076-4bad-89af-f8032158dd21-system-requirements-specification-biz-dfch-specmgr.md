@@ -210,6 +210,6 @@ Because this specification is retrospective, it also omits several optional sect
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
-### 2026-09-03 - Created
+### 2026-09-03 00:00:00.000Z - Created
 
 Initial retrospective System Requirements Specification drafted from feat-84-specmgr-sysrs, GitHub issue #84, aggregating the two GOL and fourteen REQ documents created for this purpose plus eight already-accepted architecturally significant ADRs in the Decisions section; only Functional Suitability and Maintainability have explicit REQ coverage as of this writing, per the documented gap in More Information above.

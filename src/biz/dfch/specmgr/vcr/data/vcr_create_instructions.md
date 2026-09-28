@@ -44,10 +44,12 @@ genuinely a new verification case record.
 - `## Updates` -- optional, and the last section if present: an
   optional leading HTML comment (conventionally "Newest entry first"),
   then timestamp-led `### {timestamp} ( - | : ) {title}` entries,
-  newest-first (e.g. `2026-08-31 - Created`, or the full date+time
-  variant `2026-08-31 07:40:12.500+02:00 - Created`), each with a
-  mandatory lead paragraph. New entries are prepended (newest first),
-  not appended.
+  newest-first, where `{timestamp}` is the full date+time form
+   `yyyy-MM-dd[T ]HH:mm:ss.fff` + `Z` or `±HH:mm` (e.g.
+   `### 2026-08-31 07:40:12.500+02:00 - Created`), each with a mandatory
+   lead paragraph.
+  The date/time separator may be `T` or a space; a date-only timestamp
+  is rejected. New entries are prepended (newest first), not appended.
 
 Section order is binding: Verifies -> Coverage -> Acceptance Criteria
 -> More Information -> Updates.

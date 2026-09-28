@@ -703,12 +703,12 @@ class TestReferencesList(unittest.TestCase):
 
 
 class TestUpdateEntryHeadingAlias(unittest.TestCase):
-    """`UpdateEntry`'s regex alias -- date-only or date+time lead, ` - `/` : ` separator."""
+    """`UpdateEntry`'s regex alias -- full date+time lead, ` - `/` : ` separator."""
 
-    def test_accepts_date_only_lead(self) -> None:
+    def test_rejects_date_only_lead(self) -> None:
         for heading in ("2026-08-30 - Created", "2026-08-30 : Created"):
             with self.subTest(heading=heading):
-                self.assertTrue(match_alias(UpdateEntry, heading))
+                self.assertFalse(match_alias(UpdateEntry, heading))
 
     def test_accepts_full_date_time_lead(self) -> None:
         for heading in (
@@ -716,9 +716,17 @@ class TestUpdateEntryHeadingAlias(unittest.TestCase):
             "2026-08-30 14:30:00.000Z - Approved",
             "2026-08-30 14:30:00.000+02:00 : Approved",
             "2026-08-30 14:30:00.000Z : Approved",
+            "2026-08-30T14:30:00.000+02:00 - Approved",
+            "2026-08-30T14:30:00.000Z : Approved",
         ):
             with self.subTest(heading=heading):
                 self.assertTrue(match_alias(UpdateEntry, heading))
+
+    def test_parses_timestamp_and_title_t_separator(self) -> None:
+        sut = UpdateEntry.from_text(format_text("### 2026-08-30T14:30:00.000Z - Created\n\nBody.\n"))
+
+        self.assertEqual(sut.timestamp, "2026-08-30T14:30:00.000Z")
+        self.assertEqual(sut.title, "Created")
 
     def test_rejects_em_dash_separator(self) -> None:
         for heading in ("2026-08-30 — Approved", "2026-08-30 14:30:00.000Z — Approved"):
@@ -738,15 +746,18 @@ class TestUpdateEntryHeadingAlias(unittest.TestCase):
 class TestUpdatesContainer(unittest.TestCase):
     """`Updates` -- dynamic newest-first collection of timestamp-led entries."""
 
-    def test_parses_date_only_entries_newest_first(self) -> None:
+    def test_parses_date_time_entries_newest_first(self) -> None:
         text = format_text(
-            "## Updates\n\n### 2026-09-14 - Added Security Requirements\n\nSome text.\n\n"
-            "### 2026-08-30 - Initial draft created\n\nSome other text.\n"
+            "## Updates\n\n### 2026-09-14 00:00:00.000Z - Added Security Requirements\n\nSome text.\n\n"
+            "### 2026-08-30 00:00:00.000Z - Initial draft created\n\nSome other text.\n"
         )
 
         sut = Updates.from_text(text)
 
-        self.assertEqual([entry.timestamp for entry in sut.updates], ["2026-09-14", "2026-08-30"])
+        self.assertEqual(
+            [entry.timestamp for entry in sut.updates],
+            ["2026-09-14 00:00:00.000Z", "2026-08-30 00:00:00.000Z"],
+        )
         self.assertEqual(str(sut), text)
 
     def test_parses_date_time_entries_with_colon_separator(self) -> None:
@@ -758,13 +769,17 @@ class TestUpdatesContainer(unittest.TestCase):
         self.assertEqual(sut.updates[0].title, "Approved")
 
     def test_out_of_order_entries_raise_validation_error(self) -> None:
-        text = format_text("## Updates\n\n### 2026-08-30 - Older\n\nx\n\n### 2026-09-14 - Newer\n\ny\n")
+        text = format_text(
+            "## Updates\n\n### 2026-08-30 00:00:00.000Z - Older\n\nx\n\n### 2026-09-14 00:00:00.000Z - Newer\n\ny\n"
+        )
 
         with self.assertRaises(ValidationError):
             Updates.from_text(text)
 
     def test_equal_timestamps_are_allowed(self) -> None:
-        text = format_text("## Updates\n\n### 2026-08-30 - First\n\nx\n\n### 2026-08-30 - Second\n\ny\n")
+        text = format_text(
+            "## Updates\n\n### 2026-08-30 00:00:00.000Z - First\n\nx\n\n### 2026-08-30 00:00:00.000Z - Second\n\ny\n"
+        )
 
         sut = Updates.from_text(text)
 
@@ -780,7 +795,7 @@ class TestUpdatesContainer(unittest.TestCase):
 
     def test_comment_is_optional(self) -> None:
         text = format_text(
-            "## Updates\n\n<!-- Newest entry first -- prepend below. -->\n\n### 2026-08-30 - Created\n\nx\n"
+            "## Updates\n\n<!-- Newest entry first -- prepend below. -->\n\n### 2026-08-30 00:00:00.000Z - Created\n\nx\n"
         )
 
         sut = Updates.from_text(text)

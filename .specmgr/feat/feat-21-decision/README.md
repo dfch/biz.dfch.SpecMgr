@@ -14,6 +14,10 @@ updated: '2026-08-27 00:00:00.000Z'
 
 New `dec` domain: decisions **in general** (not architecture-only), keeping the ADR's general structure (MADR headings, `Options` collection) but built on the **generic `models/md` parser** with the **simple surface** used by GOL/RSK/QA — no fine-grained ADR mutation tools, no `specmgr://dec/{id}` resource, no renderer (writes persist the caller's raw validated body byte-for-byte).
 
+> **Superseded timestamp-format decisions (feat-146-date-time, 2026-09-24):** ADR `8c889262-152b-4b8e-ae2c-75371f7a9edf` supersedes this feature's `## Updates` entry decision (TSK-style
+> free-form `### {title}` headings) and its date-only frontmatter wording: `dec` `## Updates` entries now require the timestamp-led full date+time heading form (date-only rejected; `T`
+> written, `T`-or-space accepted), and the frontmatter `created`/`updated` use the same uniform full date+time contract.
+
 ### Requirements
 
 - REQ-001: DEC schema + `parse_dec` on the generic `models/md` engine (`dec/models/v1/`: `frontmatter.py`, `body.py`, `document.py`, `parser.py`, `summary.py`, `_util.py` with `SCHEMA_COMMENT_VERSION = "v1"`)

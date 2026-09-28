@@ -37,6 +37,10 @@ Implementation happens on a dedicated branch `feat-31-feature`, created off
 artifact type" feature's own branch-per-feature convention (e.g.
 `feat-21-decision`, `feat-15-add-artifact-type-risk`).
 
+> **Superseded timestamp-format decisions (feat-146-date-time, 2026-09-24):** ADR `8c889262-152b-4b8e-ae2c-75371f7a9edf` supersedes this feature's `### Updates`/`### Decisions Made` heading
+> regex (space-only separator, em-dash joiner) and its frontmatter `created`/`updated` format decisions (plain `YYYY-MM-DD`, later reversed in Phase 6 to microsecond timestamps): entry
+> headings and frontmatter now share one uniform full date+time contract (`T` written, `T`-or-space accepted; date-only rejected).
+
 ### Requirements
 
 - REQ-001: Define the `feat` markdown schema — frontmatter (`type="feat"`,

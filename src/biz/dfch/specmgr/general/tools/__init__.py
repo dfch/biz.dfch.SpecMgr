@@ -41,7 +41,19 @@ generic, cross-domain hard-delete for the whole-body document types
 not supported), resolving the document by ``id``, taking the domain's own
 per-id lock, and removing it from disk (the single ``*.md`` file for the
 flat domains, the entire ``<base>/<id>/`` folder for ``feat``),
-returning the deleted path as a string. ``validate`` -- the generic,
+returning the deleted path as a string. ``edit`` -- the generic,
+cross-domain surgical, exact-match string replacement of an existing
+document's frontmatter-stripped body for the whole-body document types
+(``type`` is one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs; ``adr``
+is not supported -- an explicit pre-dispatch ``ValueError``, a deliberate
+divergence from ``update``'s inherited ``KeyError``): ``old_str`` must
+match the on-disk body byte-exactly (no line-ending normalization, no
+fuzzy/regex fallback) and be unique unless ``replace_all`` rewrites every
+exact occurrence, then the *edited* body must still validate as a whole
+document -- the 2-fold contract writes the document only if both stages
+pass, nothing is written on any failure (an empty ``new_str`` is a pure
+deletion, legal iff stage 2 validates) (feat-159-edit, GitHub issue #159).
+``validate`` -- the generic,
 cross-domain, disk-free/id-free dry-run content validator for the
 whole-body document types (``type`` is one of
 req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs; ``adr`` is not supported,
@@ -82,6 +94,7 @@ Import this package to register all general tools at once::
 """
 
 from .delete import delete
+from .edit import edit
 from .find_related import find_related
 from .find_similar_text import find_similar_text
 from .list_references import list_references
@@ -93,6 +106,7 @@ from .validate import validate
 
 __all__ = [
     "delete",
+    "edit",
     "find_related",
     "find_similar_text",
     "list_references",
