@@ -4,7 +4,7 @@ created: '2026-09-27T16:03:36.781+02:00'
 id: feat-163-feat-numbering
 status: progress
 type: feat
-updated: '2026-09-28T10:33:54.476+02:00'
+updated: '2026-09-28T11:52:18.732+02:00'
 version: 1.0.0
 ---
 
@@ -101,8 +101,8 @@ The scheme (confirmed against issue #163):
 
 #### Phase 130: Agent Skill
 
-- [ ] Task 130.100: Author `.opencode/skills/feat-numbering/SKILL.md` (name + trigger-keyword description frontmatter; body: start values, step, in-between insertion, permanence, pointers to the `specmgr://feat` resources).
-- [ ] Task 130.110: Add a test asserting the skill's scheme wording agrees with the prompts, template, and example (no stale "Phase N"/"Task N.M" wording).
+- [x] Task 130.100: Author `.opencode/skills/feat-numbering/SKILL.md` (name + trigger-keyword description frontmatter; body: start values, step, in-between insertion, permanence, pointers to the `specmgr://feat` resources).
+- [x] Task 130.110: Add a test asserting the skill's scheme wording agrees with the prompts, template, and example (no stale "Phase N"/"Task N.M" wording).
 
 #### Phase 140: Tests and Quality Gate
 
@@ -114,18 +114,59 @@ The scheme (confirmed against issue #163):
 
 ### Current Status
 
-**As of 2026-09-28**: Phase 120 (Data, Prompts, Generated Artifacts) complete -- the packaged
-template/example (and the byte-identical reference fixture), both prompt instruction files (the
-canonical scheme wording plus the two Task 100.110 wording fixes), the two JSON Schema artifacts,
-the `body.md` API doc, and the TSK document's FEAT-shape entry all reflect the new numbering scheme,
-and the consistency sweep renumbered the regression fixtures and the 18 inline test fixtures
-(`docs/MCP.md` and `docs/GENERATED.md` came out byte-identical); the only legacy-shape surfaces left
-are the two prompt walkthrough BODY fixtures in `tests/feat/prompts/`, owned by Phase 140
-(Task 140.100) -- the full suite fails only those two tests, for the legacy-walkthrough-body reason.
+**As of 2026-09-28**: Phase 130 (Agent Skill) complete -- the repo's first project OpenCode skill
+`.opencode/skills/feat-numbering/SKILL.md` is committed (exactly the two spec-required frontmatter
+keys, a third-person description front-loading the four trigger keywords, and a body that mirrors
+the prompts' canonical scheme paragraph verbatim plus the three `specmgr://feat/*` resource
+pointers), and the new `tests/opencode/` package (12 tests) pins its frontmatter validity, scheme
+agreement with both prompt instruction files, cross-agreement with the packaged template/example,
+and the absence of any stale legacy numbering wording; the only legacy-shape surfaces left in the
+repo are the two prompt walkthrough BODY fixtures in `tests/feat/prompts/`, owned by Phase 140
+(Task 140.100) -- the full suite (3531 tests) fails only those two tests, for the
+legacy-walkthrough-body reason, and `docs/GENERATED.md` reflects the new test-file count (365).
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-28 11:52:18.732+02:00 - Phase 130 (Agent Skill): feat-numbering skill and ACC-006 consistency test
+
+Created the repo's first project OpenCode skill at `.opencode/skills/feat-numbering/SKILL.md` (the
+default project skill path is scanned automatically, so no `opencode.json` was created or changed
+and no other `.opencode/` file touched). Its YAML frontmatter carries exactly the two spec-required
+keys: `name: feat-numbering` (matching the folder name, lowercase, at most 64 characters) and a
+single-sentence, third-person `description` front-loading the four plan-named trigger keywords
+FEAT, Task List, Phase, and specmgr. The body teaches the scheme by mirroring the prompts'
+canonical "Task List numbering scheme:" paragraph verbatim in its `## The scheme` section (3-digit
+zero-padded phase numbers starting at 100, step 10; `Task NNN.MMM:` task lines whose component
+starts at 100, step 10, within its phase; shape-only enforcement -- the schema enforces only
+`#### Phase NNN: {title}` and the `Task NNN.MMM: ` prefix, not the step-10 increments, not
+uniqueness, not the task-to-phase match; in-between insertion such as `Phase 105`/`Task 100.105`
+so existing numbers never renumber; numbers permanent once assigned, removals leave gaps), then
+directs agents to fetch `specmgr://feat/template`, `specmgr://feat/example`, and
+`specmgr://feat/schema` rather than rely on memory, and gives the practical rules: a new phase
+starts its own task series at 100 (the first task of `Phase 110` is `Task 110.100`), pick the
+number between its neighbours and insert the one new line (never renumber existing lines), and
+legacy documents written before the scheme are handled by the follow-up migration TSK
+tsk-2687d267 -- the body contains no legacy shape description at all (no short-number examples,
+no unpadded wording). New test package `tests/opencode/` (Task 130.110; 12 tests in
+`test_skill_feat_numbering.py`, AGPL header mirrored from the repo standard in both files):
+frontmatter validity (exactly two keys; folder-matching lowercase name; non-empty third-person
+description; all four trigger keywords, matched case-insensitively by deliberate choice), scheme
+agreement (the canonical paragraph extracted from BOTH packaged prompt instruction files is equal
+and occurs verbatim in the whitespace-normalized skill body, plus the key constants "starting at
+100", "step 10", "3-digit", `Phase 105`, `Task 100.105`, "permanent", and "The schema enforces
+only the number SHAPES"), the three `specmgr://feat/*` resource pointers, cross-agreement with the
+packaged data (every concrete example named in the skill -- `Phase 100`/`Task 100.100` in the
+template and the example, `Phase 110`/`Task 110.100`/`Task 110.110` in the example -- actually
+occurs there), and stale-wording regexes (no "unpadded" anywhere, no 1-2 digit phase number, no
+1-2 digit/1-2 digit task number, with negative lookarounds keeping the 3-digit examples clean).
+Gate: `ruff format --check` (1727 files), `ruff check`, and `vulture` are green; the new package's
+12 tests pass under `unittest discover -s tests/opencode`; `specmgr schema` (both runs, all
+unchanged) and `specmgr mcp-docs` (`docs/MCP.md` byte-identical) report no drift; `specmgr docs`
+changed `docs/GENERATED.md` only (test-file count 364 -> 365) and a second run left `docs/`
+byte-identical (before/after md5 snapshot). The full suite (3531 tests) fails ONLY the two Phase
+140 walkthrough tests, for the legacy-walkthrough-body reason.
 
 #### 2026-09-28 10:33:54.474+02:00 - Phase 120 (Data, Prompts, Generated Artifacts): data, prompts, fixtures
 
