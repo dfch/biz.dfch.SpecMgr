@@ -46,6 +46,7 @@ from biz.dfch.specmgr.feat.prompts.update_feat import update_feat
 from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR
 from biz.dfch.specmgr.feat.tools.create_feat import create_feat as create_feat_tool
 from biz.dfch.specmgr.feat.tools.get_feat import get_feat
+from biz.dfch.specmgr.general.models import UpdateResult
 from biz.dfch.specmgr.general.tools import _packaged_data
 from biz.dfch.specmgr.general.tools.set_status import set_status
 from biz.dfch.specmgr.general.tools.update import update
@@ -286,10 +287,14 @@ class TestUpdateFeatInstructionsWalkthrough(TempFeatDirTestCase):
             "- REQ-001: The widget must render within 200ms.",
             "- REQ-001: The widget must render within 200ms.\n\n- REQ-002: The widget must be keyboard-navigable.",
         )
+        # feat-153-off-by-n Phase 2: the return is the UpdateResult wrapper -- the
+        # frontmatter fields live under .frontmatter; whole-body mode's snippet is None.
         whole_body_result = update(feat_id, "feat", revised_body)
+        self.assertIsInstance(whole_body_result, UpdateResult)
+        self.assertIsNone(whole_body_result.snippet)
         self.assertEqual(len(get_feat(feat_id).body.plan.requirements.items), 2)
-        self.assertEqual(whole_body_result.id, feat_id)
-        self.assertEqual(whole_body_result.created, created.created)
+        self.assertEqual(whole_body_result.frontmatter.id, feat_id)
+        self.assertEqual(whole_body_result.frontmatter.created, created.created)
 
         # Step 4, status change: a separate, optional follow-up via the generic
         # set_status tool (never through `update`).

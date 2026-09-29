@@ -131,6 +131,7 @@ First-line docstrings from each module, organized by domain:
 - `general/models/rasci.py` — Pydantic schema and parser for the RASCI responsibility-assignment guidance
 - `general/models/reference.py` — One row of the generic ``list_references`` tool's ``PagedResult`` (feat-144-ref-artifact Phase 2).
 - `general/models/summary.py` — Common base for every domain's one-line listing summary (feat-13 Task 1.3, REQ-003/ACC-001).
+- `general/models/update_result.py` — The generic ``update`` tool's own success return shape (feat-153-off-by-n Phase 2,
 - `general/models/validate_result.py` — The generic ``validate`` tool's non-raising, structured result shape (feat-81-83-validation Phase 2, REQ-004).
 - `general/prompts/__init__.py` — MCP prompt registrations that are not specific to any single document
 - `general/prompts/compact_history.py` — ``@mcp.prompt()``: compact_history (Various improvements, Task 0.21).

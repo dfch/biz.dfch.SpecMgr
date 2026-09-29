@@ -111,6 +111,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general.models.rasci`](biz.dfch.specmgr.general.models.rasci.md) — Pydantic schema and parser for the RASCI responsibility-assignment guidance
 - [`biz.dfch.specmgr.general.models.reference`](biz.dfch.specmgr.general.models.reference.md) — One row of the generic ``list_references`` tool's ``PagedResult`` (feat-144-ref-artifact Phase 2).
 - [`biz.dfch.specmgr.general.models.summary`](biz.dfch.specmgr.general.models.summary.md) — Common base for every domain's one-line listing summary (feat-13 Task 1.3, REQ-003/ACC-001).
+- [`biz.dfch.specmgr.general.models.update_result`](biz.dfch.specmgr.general.models.update_result.md) — The generic ``update`` tool's own success return shape (feat-153-off-by-n Phase 2,
 - [`biz.dfch.specmgr.general.models.validate_result`](biz.dfch.specmgr.general.models.validate_result.md) — The generic ``validate`` tool's non-raising, structured result shape (feat-81-83-validation Phase 2, REQ-004).
 - [`biz.dfch.specmgr.general.prompts`](biz.dfch.specmgr.general.prompts.md) — MCP prompt registrations that are not specific to any single document
 - [`biz.dfch.specmgr.general.prompts.compact_history`](biz.dfch.specmgr.general.prompts.compact_history.md) — ``@mcp.prompt()``: compact_history (Various improvements, Task 0.21).

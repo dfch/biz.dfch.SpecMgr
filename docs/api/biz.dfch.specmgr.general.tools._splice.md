@@ -23,15 +23,23 @@ tool's range mode and every ``get_<d>`` tool's ``raw=True`` reads:
   at the remaining lines), clamping out-of-range values instead of erroring
   (the ``list_<d>`` "clamped, not errored" convention; reads are
   non-destructive).
+- :func:`splice_snippet` renders the before/after window of a range-mode
+  splice (the dropped lines, the inserted lines, and up to 2 unchanged
+  context lines per side, each labeled with its 1-based body-line number per
+  the pre-splice/post-splice split) as the ``snippet`` string the generic
+  ``update`` tool returns on success in range mode (feat-153-off-by-n
+  Phase 2, REQ-002, ADR 19ff316b-cd11-41a7-a616-ffd84917da51).
 
-**The raw/splice invariant.** All three helpers are the *single* definition
-of "the body text" in this codebase: every ``get_<d>(raw=True)`` read
-(windowed or not) and every ``update`` range splice go through
+**The raw/splice invariant.** The first three helpers are the *single*
+definition of "the body text" in this codebase: every ``get_<d>(raw=True)``
+read (windowed or not) and every ``update`` range splice go through
 :func:`body_text`, so *what the client counts is what the server splices* --
 the line numbers a client sees in any ``get_<d>(raw=True)`` read, windowed or
 not, index byte-for-byte into the same text the server splices against;
 :func:`window_body` is the single windowing definition shared by every
-``get_<d>`` tool.
+``get_<d>`` tool. :func:`splice_snippet` is the single snippet definition
+shared by the generic ``update`` tool's dispatcher (it consumes, never
+defines, the body text).
 
 As with :mod:`_doc_paths`, this module has no ``mcp`` dependency -- plain
 file I/O and text manipulation only, kept separately from any
@@ -131,6 +139,91 @@ ValueError
     naming the offending value(s) and the allowed range. Client-
     controlled input, so these are ``ValueError``s (not ``assert``s),
     per the project's user-controlled-flow-control rule.
+
+
+### `splice_snippet(pre_body: 'str', post_body: 'str', offset: 'int', limit: 'int | None') -> 'str'`
+
+Render the before/after snippet of the range-mode splice of ``pre_body`` at
+``offset``/``limit`` into ``post_body``.
+
+The single snippet definition behind the generic ``update`` tool's
+``UpdateResult.snippet`` (feat-153-off-by-n Phase 2, REQ-002, ADR
+19ff316b-cd11-41a7-a616-ffd84917da51's Decision Outcome items 2/3/4):
+given the pre-splice body, the post-splice body (the result of splicing
+``pre_body`` at these same coordinates via :func:`splice_body`), and the
+``offset``/``limit`` coordinates, returns the touched range's before/after
+window -- the dropped lines, the inserted lines, and up to
+:data:`_CONTEXT_LINES` unchanged context lines immediately above and below
+the touched range in the *post-splice* body, clamped at the body's
+start/end (clamped, never errored, mirroring :func:`window_body`) --
+rendered as the ADR's exact snippet line format:
+
+- Each snippet line is ``<marker> <n>: <line text>``: ``<marker>`` is
+  exactly one character -- ``-`` for a dropped line, ``+`` for an
+  inserted line, a single space for a context line; ``<n>`` is the plain
+  decimal line number (no zero padding, no fixed-width alignment); the
+  separator is exactly ``": "``; ``<line text>`` is the line's verbatim
+  text, so an empty body line renders as ``<marker> <n>: `` with a
+  trailing space (no empty-line special case).
+- Dropped lines are labeled with their **pre-splice** 1-based body-line
+  numbers (``offset..offset + drop_count - 1``; they no longer exist
+  afterward, so no post-splice number applies to them); inserted lines
+  (``offset..offset + insert_count - 1``) and context lines are labeled
+  with their **post-splice** numbers. The two numbering sequences are
+  independent and need not be contiguous or to overlap when the
+  replacement changes the line count -- expected, not a defect.
+- Line order: context-above, dropped, inserted, context-below.
+- The snippet text is its lines joined with ``"\n"`` plus a single
+  trailing ``"\n"``, or ``""`` when it contains no lines at all (only a
+  no-op splice on an empty body).
+- The window is bounded by the touched range, not the document size:
+  at most ``drop_count`` + ``insert_count`` + ``2 * _CONTEXT_LINES``
+  lines, no hard cap and no elision markers.
+
+Equivalent view (the format family shared with the ``get_<d>`` numbered
+read): every snippet line is a 2-character marker prefix (``"- "``/
+``"+ "``/``"  "``) prepended to exactly the line a
+``get_<d>(raw=True, numbered=True)`` read prints for that number.
+
+Doc-type-agnostic like its neighbors: no I/O, no schema knowledge -- the
+generic ``update`` tool's shared dispatcher computes the snippet once per
+call from the adapter's pre/post bodies and coordinates, never
+duplicating it into the per-domain adapters.
+
+Parameters
+----------
+pre_body:
+    The frontmatter-stripped body text as it existed before the splice
+    (e.g. from :func:`body_text`).
+post_body:
+    The frontmatter-stripped body text after the splice -- the result of
+    splicing ``pre_body`` at these same ``offset``/``limit`` coordinates
+    via :func:`splice_body`.
+offset:
+    The 1-based first line of the spliced range; must satisfy
+    :func:`splice_body`'s own coordinate contract (``1..N + 1``, where
+    ``N + 1`` is the virtual end-of-body position) -- the caller enforces
+    it, since the dispatcher only ever hands the helper coordinates
+    ``splice_body`` already accepted.
+limit:
+    The number of lines the spliced range spans; must satisfy
+    :func:`splice_body`'s own contract (``0`` = pure insert,
+    ``None`` (omitted) = through the last body line) -- enforced by the
+    caller as for ``offset``.
+
+Returns
+-------
+str
+    The rendered snippet (see the class of behavior above), or ``""``
+    when the window contains no lines at all.
+
+Raises
+------
+AssertionError
+    The inputs violate the helper's invariants (non-string bodies,
+    non-integer coordinates, or coordinates outside :func:`splice_body`'s
+    own contract) -- program-invariant failures only, never
+    user-controlled flow control.
 
 
 ### `window_body(text: 'str', offset: 'int' = 1, limit: 'int | None' = None) -> 'str'`

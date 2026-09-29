@@ -15,13 +15,14 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Tests for ``general.tools._splice``'s ``window_body`` and ``splice_body`` helpers (feat-28-get-update, Phase 2)."""
+"""Tests for ``general.tools._splice``'s ``window_body``, ``splice_body``, and ``splice_snippet`` helpers
+(feat-28-get-update, Phase 2; the snippet helper is feat-153-off-by-n, Phase 2)."""
 
 from __future__ import annotations
 
 import unittest
 
-from biz.dfch.specmgr.general.tools._splice import splice_body, window_body
+from biz.dfch.specmgr.general.tools._splice import splice_body, splice_snippet, window_body
 
 _BODY = "l1\nl2\nl3\nl4\n"
 
@@ -132,6 +133,117 @@ class TestSpliceBody(unittest.TestCase):
         self.assertIn("offset", message)
         self.assertIn("limit", message)
         self.assertIn("3", message)
+
+
+class TestSpliceSnippet(unittest.TestCase):
+    """Tests for the no-I/O splice_snippet helper (feat-153-off-by-n Phase 2, REQ-002, ADR 19ff316b).
+
+    The full ACC-002 matrix (all domains, every splice shape) is this
+    feature's Phase 5; this class pins the byte-exact line format (the ADR's
+    Decision Outcome item 3 worked example) and the boundary behavior the
+    dispatcher relies on.
+    """
+
+    def _snippet(self, offset: int, limit: int | None, content: str) -> str:
+        """Splice ``_BODY`` at the coordinates and render the snippet from both bodies."""
+        pre = _BODY
+        post = splice_body(pre, offset, limit, content)
+        result = splice_snippet(pre, post, offset, limit)
+        return result
+
+    def test_1_for_1_replace(self) -> None:
+        """offset=k, limit=1 replaced by 1 line: dropped/inserted share the number, 2 context per side."""
+        self.assertEqual(
+            self._snippet(2, 1, "x"),
+            "  1: l1\n- 2: l2\n+ 2: x\n  3: l3\n  4: l4\n",
+        )
+
+    def test_size_changing_replace_1_to_3(self) -> None:
+        """offset=k, limit=1 replaced by 3 lines: post numbers continue from the insert, context
+        below is renumbered (the pre-splice/post-splice split, not contiguous)."""
+        self.assertEqual(
+            self._snippet(2, 1, "a\nb\nc"),
+            "  1: l1\n- 2: l2\n+ 2: a\n+ 3: b\n+ 4: c\n  5: l3\n  6: l4\n",
+        )
+
+    def test_pure_insert_has_no_dropped_lines(self) -> None:
+        """limit=0: no `-` lines; the inserted lines take the offset's post numbers."""
+        self.assertEqual(
+            self._snippet(3, 0, "i"),
+            "  1: l1\n  2: l2\n+ 3: i\n  4: l3\n  5: l4\n",
+        )
+
+    def test_pure_delete_has_no_inserted_lines(self) -> None:
+        """Empty content: no `+` lines; the context below the gap takes the post (shifted) numbers."""
+        self.assertEqual(
+            self._snippet(2, 2, ""),
+            "  1: l1\n- 2: l2\n- 3: l3\n  2: l4\n",
+        )
+
+    def test_append_at_n_plus_one(self) -> None:
+        """offset=N+1, limit=0: context above is the body's last 2 lines; nothing below."""
+        self.assertEqual(
+            self._snippet(5, 0, "z"),
+            "  3: l3\n  4: l4\n+ 5: z\n",
+        )
+
+    def test_omitted_limit_through_end(self) -> None:
+        """Omitted limit: all lines from the offset are dropped; the insert ends the body."""
+        self.assertEqual(
+            self._snippet(3, None, "x\ny"),
+            "  1: l1\n  2: l2\n- 3: l3\n- 4: l4\n+ 3: x\n+ 4: y\n",
+        )
+
+    def test_context_clamps_at_body_start(self) -> None:
+        """offset=2: only one context line above (the body's first line)."""
+        self.assertEqual(
+            self._snippet(2, 1, "x"),
+            "  1: l1\n- 2: l2\n+ 2: x\n  3: l3\n  4: l4\n",
+        )
+
+    def test_context_clamps_at_body_end(self) -> None:
+        """Replacing the last 2 lines: no context below."""
+        self.assertEqual(
+            self._snippet(3, 2, "x"),
+            "  1: l1\n  2: l2\n- 3: l3\n- 4: l4\n+ 3: x\n",
+        )
+
+    def test_empty_body_no_op_returns_empty_string(self) -> None:
+        """A no-op splice on an empty body (degenerate helper input) yields ``""`` -- no lines at all."""
+        self.assertEqual(splice_snippet("", "", 1, None), "")
+        self.assertEqual(splice_snippet("", "", 1, 0), "")
+
+    def test_empty_lines_render_with_trailing_space(self) -> None:
+        """An empty body line is verbatim text: ``<marker> <n>: `` with the separator's trailing space."""
+        pre = "h1\n\nold\nnext\n"
+        post = splice_body(pre, 3, 1, "new")
+        snippet = splice_snippet(pre, post, 3, 1)
+        self.assertEqual(snippet, "  1: h1\n  2: \n- 3: old\n+ 3: new\n  4: next\n")
+        self.assertIn("  2: \n", snippet)
+
+    def test_adr_worked_example_byte_exact(self) -> None:
+        """ADR 19ff316b's Decision Outcome item 3 worked example, asserted verbatim."""
+        pre = "line one\n\n## Some Heading\n(the single old line that was replaced)\n(unchanged line)\n(final line)\n"
+        post = splice_body(pre, 4, 1, "first new line\nsecond new line\nthird new line\n")
+        snippet = splice_snippet(pre, post, 4, 1)
+        self.assertEqual(
+            snippet,
+            "  2: \n"
+            "  3: ## Some Heading\n"
+            "- 4: (the single old line that was replaced)\n"
+            "+ 4: first new line\n"
+            "+ 5: second new line\n"
+            "+ 6: third new line\n"
+            "  7: (unchanged line)\n"
+            "  8: (final line)\n",
+        )
+
+    def test_bad_coordinates_raise_assertion_error(self) -> None:
+        """Coordinates outside splice_body's own contract are program-invariant failures (AssertionError)."""
+        for offset, limit in [(0, 1), (6, 1), (2, -1), (2, 99)]:
+            with self.subTest(offset=offset, limit=limit):
+                with self.assertRaises(AssertionError):
+                    splice_snippet(_BODY, _BODY, offset, limit)
 
 
 if __name__ == "__main__":

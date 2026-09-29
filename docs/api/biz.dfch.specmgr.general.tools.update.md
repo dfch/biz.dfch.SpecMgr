@@ -22,9 +22,27 @@ per-domain tool.
 
 The parameter is intentionally named ``type`` (it matches the frontmatter
 field vocabulary the client already knows); no enabled ruff rule objects to
-the builtin shadow. The union return type is annotation-only -- the
-MCP input schema is built from the parameters, and the SDK serializes
-whichever concrete document is returned.
+the builtin shadow.
+
+Return shape (feat-153-off-by-n Phase 2, REQ-002/REQ-003, ADR
+19ff316b-cd11-41a7-a616-ffd84917da51, revising feature feat-69-
+update-context's "frontmatter-only" precedent for ``update`` alone): every
+successful call returns the shared
+:class:`~biz.dfch.specmgr.general.models.UpdateResult` wrapper -- its
+``frontmatter`` is the same per-domain frontmatter object feat-69 returned
+(carry-over with only ``updated`` bumped), and its ``snippet`` is, in range
+mode, the before/after window of the touched range (the dropped lines
+numbered pre-splice, the inserted lines numbered post-splice, up to 2
+unchanged context lines per side, each line ``<marker> <n>: <line text>``)
+computed once in the shared public dispatcher via
+:func:`._splice.splice_snippet`; ``snippet`` is ``None`` in whole-body mode
+(no ``offset``) and for the whole-body-equivalent range (``offset=1`` +
+omitted ``limit``). The adapters themselves return an internal
+:class:`_UpdateOutcome` (the new frontmatter plus, in range mode, the
+pre-splice body, the post-splice body, and the ``offset``/``limit``
+coordinates they used) so the dispatcher -- not any of the 12 adapters --
+assembles the ``UpdateResult``. The MCP input schema is built from the
+parameters, and the SDK serializes the returned wrapper.
 
 ``feat`` is the one domain whose adapter (``_update_feat``) diverges from
 every other domain's identical shape in how it resolves ``id``: via
@@ -48,9 +66,63 @@ validates ``id`` via ``_path_safety.validate_id`` before dispatch (a
 path to the domain's own base directory with ``_path_safety.assert_within``
 after ``load_by_id``, inside the domain lock.
 
+## Classes
+
+### `_UpdateOutcome`
+
+The generic ``update`` tool's internal per-domain adapter return (feat-153-off-by-n Phase 2, REQ-002/REQ-003).
+
+Carries everything the shared public dispatcher needs to assemble the
+public :class:`~biz.dfch.specmgr.general.models.UpdateResult`: the
+updated frontmatter, and -- in range mode only -- the pre-splice body,
+the post-splice body, and the ``offset``/``limit`` coordinates the
+adapter used (the same values it handed to
+:func:`~biz.dfch.specmgr.general.tools._splice.splice_body`). In
+whole-body mode the four range fields are all ``None`` and the dispatcher
+sets ``snippet=None``; so does it for the whole-body-equivalent range
+(``offset=1`` + omitted ``limit``), which the dispatcher detects from the
+coordinates. Never returned from the public tool itself -- the
+dispatcher converts every outcome to ``UpdateResult``.
+
+Parameters
+----------
+frontmatter:
+    The updated document's frontmatter only (no body) of the dispatched
+    domain type (feat-69-update-context's own return object, unchanged).
+pre_body:
+    Range mode only: the frontmatter-stripped body text as it existed
+    before the splice (``body_text`` of the on-disk file under the
+    domain lock).
+post_body:
+    Range mode only: the spliced body text -- the result of splicing
+    ``pre_body`` at the coordinates below via ``splice_body`` (the text
+    validated as a whole document and persisted).
+offset:
+    Range mode only: the 1-based first body line of the spliced range.
+limit:
+    Range mode only: the number of body lines the spliced range spans
+    (``0`` = pure insert; ``None`` = omitted, through the last body
+    line).
+
+
 ## Functions
 
-### `_update_dec(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'DecFrontmatter'`
+### `_assemble_result(outcome: '_UpdateOutcome') -> 'UpdateResult'`
+
+Assemble the public ``UpdateResult`` from one adapter's internal :class:`_UpdateOutcome`.
+
+The shared dispatcher's single point where the before/after ``snippet``
+is computed -- once per successful call, never inside a per-domain
+adapter (feat-153-off-by-n Phase 2, REQ-002/REQ-003, ADR
+19ff316b-cd11-41a7-a616-ffd84917da51). ``snippet`` is ``None`` in exactly
+two cases: whole-body mode (no ``offset``) and the whole-body-equivalent
+range (``offset=1`` + omitted ``limit`` -- the range :func:`_splice.
+splice_body` documents as equivalent to the no-range mode); every other
+range-mode call renders the touched range via :func:`_splice.splice_
+snippet` from the outcome's pre/post bodies and coordinates.
+
+
+### `_update_dec(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> '_UpdateOutcome'`
 
 Replace the body of the decision identified by ``id_`` (whole-body or line-range mode).
 
@@ -63,7 +135,7 @@ domain -- merged from dev while still on the old per-domain mechanism
 (see :func:`_update_req`).
 
 
-### `_update_feat(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'FeatFrontmatter'`
+### `_update_feat(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> '_UpdateOutcome'`
 
 Replace the body of the feature identified by ``id_`` (whole-body or line-range mode).
 
@@ -76,7 +148,7 @@ divergence (see the module docstring): ``id_`` resolves via
 other domain.
 
 
-### `_update_gol(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'GolFrontmatter'`
+### `_update_gol(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> '_UpdateOutcome'`
 
 Replace the body of the goal identified by ``id_`` (whole-body or line-range mode).
 
@@ -87,7 +159,7 @@ per-domain tool was retired in feat-22 Phase 3), plus the REQ-002 range
 branch (see :func:`_update_req`).
 
 
-### `_update_prb(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'PrbFrontmatter'`
+### `_update_prb(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> '_UpdateOutcome'`
 
 Replace the body of the problem statement identified by ``id_`` (whole-body or line-range mode).
 
@@ -98,7 +170,7 @@ carry-over with only ``updated`` bumped, ``write_prb_file``,
 Phase 3), plus the REQ-002 range branch (see :func:`_update_req`).
 
 
-### `_update_qa(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'QaFrontmatter'`
+### `_update_qa(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> '_UpdateOutcome'`
 
 Replace the body of the QA document identified by ``id_`` (whole-body or line-range mode).
 
@@ -109,7 +181,7 @@ that per-domain tool was retired in feat-22 Phase 3), plus the REQ-002
 range branch (see :func:`_update_req`).
 
 
-### `_update_req(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'ReqFrontmatter'`
+### `_update_req(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> '_UpdateOutcome'`
 
 Replace the body of the requirement identified by ``id_`` (whole-body or line-range mode).
 
@@ -122,10 +194,17 @@ without ``offset`` is rejected by the public :func:`update` guard
 before dispatch), the on-disk body is re-read via :func:`body_text`,
 spliced via :func:`splice_body` at the read-style ``offset``/``limit``
 coordinates, and the *spliced result* is validated and persisted
-verbatim instead of the raw fragment.
+verbatim instead of the raw fragment. As of feat-153-off-by-n Phase 2
+(REQ-002/REQ-003) the adapter returns the dispatcher's internal
+:class:`_UpdateOutcome` -- the new frontmatter plus, in range mode, the
+pre-splice body, the post-splice body, and the ``offset``/``limit``
+coordinates it used -- so the shared public dispatcher assembles the
+public :class:`~biz.dfch.specmgr.general.models.UpdateResult` (computing
+the ``snippet`` once via :func:`_splice.splice_snippet`) instead of
+returning the bare frontmatter; the write behavior itself is unchanged.
 
 
-### `_update_rsk(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'RskFrontmatter'`
+### `_update_rsk(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> '_UpdateOutcome'`
 
 Replace the body of the risk identified by ``id_`` (whole-body or line-range mode).
 
@@ -136,7 +215,7 @@ per-domain tool was retired in feat-22 Phase 3), plus the REQ-002 range
 branch (see :func:`_update_req`).
 
 
-### `_update_sop(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'SopFrontmatter'`
+### `_update_sop(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> '_UpdateOutcome'`
 
 Replace the body of the SOP identified by ``id_`` (whole-body or line-range mode).
 
@@ -149,7 +228,7 @@ directly in this shape), plus the REQ-002 range branch
 (see :func:`_update_req`).
 
 
-### `_update_sysrs(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'SysrsFrontmatter'`
+### `_update_sysrs(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> '_UpdateOutcome'`
 
 Replace the body of the System Requirements Specification identified by ``id_`` (whole-body or line-range mode).
 
@@ -161,7 +240,7 @@ from day one per ADR 36905d5b, so there was never a per-domain
 this shape), plus the REQ-002 range branch (see :func:`_update_req`).
 
 
-### `_update_tsk(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'TskFrontmatter'`
+### `_update_tsk(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> '_UpdateOutcome'`
 
 Replace the body of the task list identified by ``id_`` (whole-body or line-range mode).
 
@@ -172,7 +251,7 @@ that per-domain tool was retired in feat-22 Phase 3), plus the REQ-002
 range branch (see :func:`_update_req`).
 
 
-### `_update_uc(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'UcFrontmatter'`
+### `_update_uc(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> '_UpdateOutcome'`
 
 Replace the body of the use case identified by ``id_`` (whole-body or line-range mode).
 
@@ -183,7 +262,7 @@ per-domain tool was retired in feat-22 Phase 3), plus the REQ-002 range
 branch (see :func:`_update_req`).
 
 
-### `_update_vcr(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'VcrFrontmatter'`
+### `_update_vcr(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> '_UpdateOutcome'`
 
 Replace the body of the verification case record identified by ``id_`` (whole-body or line-range mode).
 
@@ -193,117 +272,153 @@ frontmatter carry-over with only ``updated`` bumped, ``write_vcr_file``,
 :func:`_update_req`).
 
 
-### `update(id: 'str', type: 'Literal[*WHOLE_BODY_DOMAINS,]', content: 'str', offset: 'int | None' = None, limit: 'int | None' = None) -> '_UpdateFrontmatter'`
+### `update(id: 'str', type: 'Literal[*WHOLE_BODY_DOMAINS,]', content: 'str', offset: 'int | None' = None, limit: 'int | None' = None) -> 'UpdateResult'`
 
 Replace the body of an existing document, in whole-body or line-range mode.
 
-    Cross-domain generic for the whole-body document types
-    (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``);
-    dispatches on ``type`` to the domain's own ported adapter (same lock,
-    same id resolution, same frontmatter carry-over, same verbatim
-    persistence, same domain not-found error).
+Cross-domain generic for the whole-body document types
+(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``);
+dispatches on ``type`` to the domain's own ported adapter (same lock,
+same id resolution, same frontmatter carry-over, same verbatim
+persistence, same domain not-found error).
 
-    **Whole-body mode** (no ``offset``/``limit``): ``content`` is body
-    markdown only, with no YAML frontmatter block -- the same shape the
-    per-domain ``update_<d>`` tools accept. Validated the same way: the
-    domain body model's ``from_text(format_text(content))``, letting
-    ``AssertionError`` (structural failure) or ``pydantic.ValidationError``
-    (field/cross-field failure) propagate uncaught, with nothing written in
-    either case.
+**Whole-body mode** (no ``offset``/``limit``): ``content`` is body
+markdown only, with no YAML frontmatter block -- the same shape the
+per-domain ``update_<d>`` tools accept. Validated the same way: the
+domain body model's ``from_text(format_text(content))``, letting
+``AssertionError`` (structural failure) or ``pydantic.ValidationError``
+(field/cross-field failure) propagate uncaught, with nothing written in
+either case.
 
-    **Range mode** (``offset`` given): ``content`` is a replacement
-    *fragment* addressed by read-style ``offset``/``limit`` coordinates,
-    where ``N`` is the number of lines of the current frontmatter-stripped
-    body (the text ``get_<d>(id, raw=True)`` returns) and ``N+1`` is the
-    virtual end-of-body position (one past the last line). ``offset`` is
-    the 1-based first body line to replace; ``limit`` is the number of
-    lines to replace -- the replaced range is ``offset..offset+limit-1``:
-    an omitted ``limit`` replaces through the last body line, ``limit=0``
-    is a pure insert of ``content``'s lines before line ``offset`` (with
-    ``offset=N+1`` that is the append case), and ``offset=N+1`` appends
-    after the last line. The on-disk body is re-read under the domain
-    lock, spliced (drop the range's lines, insert the fragment's lines at
-    position ``offset - 1``), and the *spliced result* -- not the fragment
-    -- is validated as a whole body exactly like whole-body mode and then
-    persisted verbatim, so unchanged regions of the on-disk body stay
-    byte-identical. An empty ``content`` deletes the range (legal iff the
-    result still validates). The YAML frontmatter is never addressable:
-    coordinates are body-relative by construction.
+**Range mode** (``offset`` given): ``content`` is a replacement
+*fragment* addressed by read-style ``offset``/``limit`` coordinates,
+where ``N`` is the number of lines of the current frontmatter-stripped
+body (the text ``get_<d>(id, raw=True)`` returns) and ``N+1`` is the
+virtual end-of-body position (one past the last line). ``offset`` is
+the 1-based first body line to replace; ``limit`` is the number of
+lines to replace -- the replaced range is ``offset..offset+limit-1``:
+an omitted ``limit`` replaces through the last body line, ``limit=0``
+is a pure insert of ``content``'s lines before line ``offset`` (with
+``offset=N+1`` that is the append case), and ``offset=N+1`` appends
+after the last line. The on-disk body is re-read under the domain
+lock, spliced (drop the range's lines, insert the fragment's lines at
+position ``offset - 1``), and the *spliced result* -- not the fragment
+-- is validated as a whole body exactly like whole-body mode and then
+persisted verbatim, so unchanged regions of the on-disk body stay
+byte-identical. An empty ``content`` deletes the range (legal iff the
+result still validates). The YAML frontmatter is never addressable:
+coordinates are body-relative by construction.
 
-    In both modes the existing file's frontmatter is carried over with
-    every field preserved except ``updated`` (bumped to the current
-    date+time timestamp, via ``general.tools._timestamps.now_timestamp()``);
-    ``status`` in particular is never settable through this tool -- the
-    generic ``set_status`` tool in ``general.tools`` is the only
-    status-change path.
+**Coordinate safety (feat-153-off-by-n, fix #1).** The
+``offset``/``limit`` coordinates address lines of the
+frontmatter-stripped body -- never lines of the raw on-disk ``.md``
+file. The file's YAML frontmatter block is variable-length (which
+fields it carries, and how they wrap, differ per document), so a raw
+file read's line numbers are never the same as body-line
+coordinates: computing an offset as "raw file line number minus an
+assumed frontmatter length" can land on a structurally similar line
+(e.g. a blank line instead of the intended list item) and still pass
+the whole-document validation, silently corrupting the body. The
+only safe source of coordinates is a ``get_<d>(id, raw=True)`` read
+of the same document -- never a raw file read minus an assumed
+constant.
 
-    Safety (REQ-009, feat-38-39-41-43-44 Phase 4, mirroring ``delete``'s
-    own REQ-003): ``id`` is validated via ``_path_safety.validate_id`` (no
-    ``/``, no ``\``, no ``..``, plus the dispatched domain's own format --
-    canonical lowercase-hex UUID for every domain other than ``feat``,
-    ``feat-NNN-slug`` for ``feat``) **before** any filesystem access, so a path-injection
-    attempt or a wrong-format id is a ``ValueError`` raised before dispatch.
-    Each adapter additionally confines the resolved path to the domain's
-    own base directory with ``_path_safety.assert_within`` inside the
-    lock -- defense-in-depth against any future gap in the id validation.
+**Numbered reads are not valid ``content`` (feat-153-off-by-n,
+fix #4's companion warning).** A ``get_<d>(raw=True,
+numbered=True)`` read prefixes every body line with its ``"<n>: "``
+1-based number; that numbered output must never be fed back verbatim
+into ``content`` -- strip the ``"<n>: "`` prefix from each line
+first -- and it is likewise never a valid ``edit`` ``old_str`` (it
+fails ``edit``'s byte-exact match safely).
 
-    Parameters
-    ----------
-    id:
-        The document's specmgr-assigned identifier.
-    type:
-        The document type / domain: one of ``req``, ``uc``, ``tsk``,
-        ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
-        ``vcr``, ``sysrs``.
-    content:
-        Whole-body mode: the replacement body markdown, with no
-        frontmatter block. Range mode: the replacement fragment for the
-        lines ``offset..offset+limit-1`` (may be empty to delete the
-        range).
-    offset:
-        Optional 1-based first body line to replace; allowed ``1..N+1``,
-        where ``N+1`` (one past the last body line) is the virtual
-        end-of-body position. A given ``offset`` enters range mode; on its
-        own it replaces through the last body line.
-    limit:
-        Optional number of lines to replace starting at ``offset``
-        (``0`` = pure insert); must be given together with ``offset``
-        (``limit`` without ``offset`` is a ``ValueError``).
+In both modes the existing file's frontmatter is carried over with
+every field preserved except ``updated`` (bumped to the current
+date+time timestamp, via ``general.tools._timestamps.now_timestamp()``);
+``status`` in particular is never settable through this tool -- the
+generic ``set_status`` tool in ``general.tools`` is the only
+status-change path.
 
-    Returns
-    -------
-ReqFrontmatter | UcFrontmatter | TskFrontmatter | QaFrontmatter | PrbFrontmatter |
-GolFrontmatter | RskFrontmatter | DecFrontmatter | FeatFrontmatter | SopFrontmatter |
-VcrFrontmatter | SysrsFrontmatter
-    The updated document's frontmatter only (no body) of the dispatched domain type;
-    use the corresponding ``get_<d>`` tool to fetch the full document afterward.
+Safety (REQ-009, feat-38-39-41-43-44 Phase 4, mirroring ``delete``'s
+own REQ-003): ``id`` is validated via ``_path_safety.validate_id`` (no
+``/``, no ``\``, no ``..``, plus the dispatched domain's own format --
+canonical lowercase-hex UUID for every domain other than ``feat``,
+``feat-NNN-slug`` for ``feat``) **before** any filesystem access, so a path-injection
+attempt or a wrong-format id is a ``ValueError`` raised before dispatch.
+Each adapter additionally confines the resolved path to the domain's
+own base directory with ``_path_safety.assert_within`` inside the
+lock -- defense-in-depth against any future gap in the id validation.
 
-    Raises
-    ------
-    ValueError
-        ``id`` is a path-injection attempt or not in the dispatched
-        domain's own format (raised before any filesystem access; nothing
-        is written). Also raised for misused range coordinates: ``limit``
-        given without ``offset`` (raised before any file access), or
-        ``offset < 1``, ``offset > N + 1``, ``limit < 0``, or
-        ``offset + limit - 1 > N`` (raised after the on-disk body is read;
-        the message names the offending value(s) and the allowed range).
-        Nothing is written in any of these cases.
-    AssertionError
-        The (spliced) body is structurally invalid (e.g. a range that
-        deletes the H1). The message is prefixed with domain/tool/channel
-        context (e.g. ``"tsk update (body): ..."``) by the shared
-        tool-boundary wrapper (:func:`~biz.dfch.specmgr.models.md._errors.
-        wrap_tool_errors`), layered on top of the engine's own
-        field-path/line/snippet enrichment (feat-27-validation Phases
-        1/2). Nothing is written.
-    pydantic.ValidationError
-        A field/cross-field validation failure in the (spliced) body (e.g.
-        a range producing an out-of-vocabulary value) -- similarly
-        prefixed. Nothing is written.
-    ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
-    PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
-    FeatNotFoundError / SopNotFoundError / VcrNotFoundError / SysrsNotFoundError
-        No document of the dispatched ``type`` has this id -- the
-        domain's own not-found error, unchanged from the per-domain tools.
+Parameters
+----------
+id:
+    The document's specmgr-assigned identifier.
+type:
+    The document type / domain: one of ``req``, ``uc``, ``tsk``,
+    ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
+    ``vcr``, ``sysrs``.
+content:
+    Whole-body mode: the replacement body markdown, with no
+    frontmatter block. Range mode: the replacement fragment for the
+    lines ``offset..offset+limit-1`` (may be empty to delete the
+    range).
+offset:
+    Optional 1-based first body line to replace; allowed ``1..N+1``,
+    where ``N+1`` (one past the last body line) is the virtual
+    end-of-body position. A given ``offset`` enters range mode; on its
+    own it replaces through the last body line.
+limit:
+    Optional number of lines to replace starting at ``offset``
+    (``0`` = pure insert); must be given together with ``offset``
+    (``limit`` without ``offset`` is a ``ValueError``).
+
+Returns
+-------
+UpdateResult
+    The updated document's
+    :class:`~biz.dfch.specmgr.general.models.UpdateResult` wrapper
+    (feat-153-off-by-n Phase 2, ADR 19ff316b-cd11-41a7-a616-ffd84917da51):
+    its ``frontmatter`` is the updated frontmatter only (no body) of
+    the dispatched domain type -- the same object feature
+    feat-69-update-context's "frontmatter-only" precedent returned --
+    and its ``snippet`` is, in range mode, the before/after window of
+    the touched range: up to 2 unchanged context lines above, the
+    dropped lines (numbered with their pre-splice 1-based body-line
+    numbers), the inserted lines (numbered with their post-splice
+    numbers), and up to 2 unchanged context lines below, each line
+    formatted ``<marker> <n>: <line text>`` (marker ``-``/``+``/
+    single space); the two numbering sequences are independent and
+    need not be contiguous when the replacement changes the line
+    count. ``snippet`` is ``None`` in exactly two cases: whole-body
+    mode (no ``offset``) and the whole-body-equivalent range
+    (``offset=1`` with omitted ``limit``). Use the corresponding
+    ``get_<d>`` tool to fetch the full document afterward.
+
+Raises
+------
+ValueError
+    ``id`` is a path-injection attempt or not in the dispatched
+    domain's own format (raised before any filesystem access; nothing
+    is written). Also raised for misused range coordinates: ``limit``
+    given without ``offset`` (raised before any file access), or
+    ``offset < 1``, ``offset > N + 1``, ``limit < 0``, or
+    ``offset + limit - 1 > N`` (raised after the on-disk body is read;
+    the message names the offending value(s) and the allowed range).
+    Nothing is written in any of these cases.
+AssertionError
+    The (spliced) body is structurally invalid (e.g. a range that
+    deletes the H1). The message is prefixed with domain/tool/channel
+    context (e.g. ``"tsk update (body): ..."``) by the shared
+    tool-boundary wrapper (:func:`~biz.dfch.specmgr.models.md._errors.
+    wrap_tool_errors`), layered on top of the engine's own
+    field-path/line/snippet enrichment (feat-27-validation Phases
+    1/2). Nothing is written.
+pydantic.ValidationError
+    A field/cross-field validation failure in the (spliced) body (e.g.
+    a range producing an out-of-vocabulary value) -- similarly
+    prefixed. Nothing is written.
+ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
+PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
+FeatNotFoundError / SopNotFoundError / VcrNotFoundError / SysrsNotFoundError
+    No document of the dispatched ``type`` has this id -- the
+    domain's own not-found error, unchanged from the per-domain tools.
 

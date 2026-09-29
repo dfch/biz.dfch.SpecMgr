@@ -61,7 +61,7 @@ from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR, FeatNotFoundErr
 from biz.dfch.specmgr.feat.tools.create_feat import create_feat
 from biz.dfch.specmgr.feat.tools.get_feat import get_feat
 from biz.dfch.specmgr.feat.tools.list_feat import list_feat
-from biz.dfch.specmgr.general.models import InvalidStatusResult
+from biz.dfch.specmgr.general.models import InvalidStatusResult, UpdateResult
 from biz.dfch.specmgr.general.tools.delete import delete
 from biz.dfch.specmgr.general.tools.set_status import set_status
 from biz.dfch.specmgr.general.tools.update import update
@@ -220,16 +220,28 @@ class TestFeatLifecycleIntegration(TempFeatDirTestCase):
         # 4. update (type="feat", whole-body): must bump only `updated` (the same
         #    microsecond timestamp format every other domain uses) and preserve
         #    id/type/status/created/version (ACC-004).
+        #    (feat-153-off-by-n Phase 2: the return is the UpdateResult wrapper -- the
+        #    frontmatter fields live under .frontmatter; whole-body mode's snippet is None.)
         updated = update(feat_id, "feat", _REVISED_BODY)
-        self.assertIsInstance(updated, FeatFrontmatter)
+        self.assertIsInstance(updated, UpdateResult)
+        self.assertIsNone(updated.snippet)
         self.assertNotIsInstance(updated, FeatDocument)
         self.assertFalse(hasattr(updated, "body"))
-        self.assertEqual(updated.id, created.id)
-        self.assertEqual(updated.type, created.type)
-        self.assertEqual(updated.created, created.created)
-        self.assertEqual(updated.status, "planning")
-        self.assertEqual(updated.version, created.version)
-        self.assertRegex(updated.updated or "", r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})$")
+        # NB: the local is named `updated_frontmatter` on purpose -- this test file also
+        # imports the `frontmatter` *library* (used in step 8), so a `frontmatter` local
+        # would shadow it for the rest of the method.
+        updated_frontmatter = updated.frontmatter
+        self.assertIsInstance(updated_frontmatter, FeatFrontmatter)
+        self.assertNotIsInstance(updated_frontmatter, FeatDocument)
+        self.assertFalse(hasattr(updated_frontmatter, "body"))
+        self.assertEqual(updated_frontmatter.id, created.id)
+        self.assertEqual(updated_frontmatter.type, created.type)
+        self.assertEqual(updated_frontmatter.created, created.created)
+        self.assertEqual(updated_frontmatter.status, "planning")
+        self.assertEqual(updated_frontmatter.version, created.version)
+        self.assertRegex(
+            updated_frontmatter.updated or "", r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})$"
+        )
         self.assertEqual(len(get_feat(feat_id).body.plan.requirements.items), 2)
 
         # 4b. update (type="feat", line-range): a single-line splice must round-trip
@@ -248,8 +260,8 @@ class TestFeatLifecycleIntegration(TempFeatDirTestCase):
         self.assertNotIsInstance(in_progress, FeatDocument)
         self.assertFalse(hasattr(in_progress, "body"))
         self.assertEqual(in_progress.status, "progress")
-        self.assertEqual(in_progress.id, updated.id)
-        self.assertEqual(in_progress.created, updated.created)
+        self.assertEqual(in_progress.id, updated.frontmatter.id)
+        self.assertEqual(in_progress.created, updated.frontmatter.created)
         self.assertRegex(
             in_progress.updated or "", r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})$"
         )

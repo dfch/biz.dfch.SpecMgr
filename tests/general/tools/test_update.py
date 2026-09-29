@@ -59,6 +59,7 @@ from biz.dfch.specmgr.dec.tools._paths import DecNotFoundError, dec_base_dir
 from biz.dfch.specmgr.dec.tools.create_dec import create_dec
 from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR, feat_base_dir
 from biz.dfch.specmgr.feat.tools.create_feat import create_feat
+from biz.dfch.specmgr.general.models import UpdateResult
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 
 #: The shared domain-name source (feat-125-domain-lists Phase 4, REQ-008): the
@@ -717,10 +718,12 @@ class _Case:
     doc_type: str
     create: Callable[[str], Any]
     not_found_error: type[Exception]
-    #: The domain's own frontmatter class -- the type ``update`` must return (feat-69).
+    #: The domain's own frontmatter class -- the type ``update``'s returned
+    #: ``UpdateResult.frontmatter`` must be (feat-69, revised by feat-153 Phase 2:
+    #: the wrapper itself is ``UpdateResult``, not this class).
     frontmatter_type: type
-    #: The domain's own document (frontmatter+body wrapper) class -- what ``update`` must
-    #: NOT return any more (feat-69).
+    #: The domain's own document (frontmatter+body wrapper) class -- what neither
+    #: ``UpdateResult`` nor its ``frontmatter`` member may be (feat-69).
     document_type: type
     minimal_body: str
     updated_body: str
@@ -1051,16 +1054,23 @@ class TestUpdateWholeBody(TempDocsDirTestCase):
 
                 result = update(id=created.id, type=case.doc_type, content=case.updated_body)
 
-                self.assertIsInstance(result, case.frontmatter_type)
+                # feat-153-off-by-n Phase 2 (REQ-003, ADR 19ff316b): the return is the
+                # UpdateResult wrapper -- the feat-69 frontmatter-only contract moved
+                # under result.frontmatter; whole-body mode carries snippet=None.
+                self.assertIsInstance(result, UpdateResult)
                 self.assertNotIsInstance(result, case.document_type)
-                self.assertFalse(hasattr(result, "body"))
-                self.assertEqual(result.id, created.id)
-                self.assertEqual(result.type, case.doc_type)
-                self.assertEqual(result.status, created.status)
-                self.assertEqual(result.created, created.created)
-                self.assertEqual(result.version, created.version)
-                self.assertNotEqual(result.updated, created.updated)
-                self.assertIsNotNone(re.fullmatch(_DATE_TIME_TIMESTAMP, result.updated))
+                frontmatter = result.frontmatter
+                self.assertIsInstance(frontmatter, case.frontmatter_type)
+                self.assertNotIsInstance(frontmatter, case.document_type)
+                self.assertFalse(hasattr(frontmatter, "body"))
+                self.assertEqual(frontmatter.id, created.id)
+                self.assertEqual(frontmatter.type, case.doc_type)
+                self.assertEqual(frontmatter.status, created.status)
+                self.assertEqual(frontmatter.created, created.created)
+                self.assertEqual(frontmatter.version, created.version)
+                self.assertNotEqual(frontmatter.updated, created.updated)
+                self.assertIsNotNone(re.fullmatch(_DATE_TIME_TIMESTAMP, frontmatter.updated))
+                self.assertIsNone(result.snippet)
                 self.assertEqual(body_text(self._doc_path(case)), case.updated_body.rstrip("\n"))
 
     def test_status_not_settable_through_update(self) -> None:
@@ -1118,8 +1128,61 @@ class TestUpdateWholeBody(TempDocsDirTestCase):
                     update(id=_MISSING_UUID, type=case.doc_type, content=case.minimal_body)
 
 
+#: Every snippet line's prefix: a 1-character marker (`-`/`+`/space) + one space +
+#: the plain decimal line number + the exact `": "` separator (feat-153-off-by-n
+#: Phase 2, REQ-002; ADR 19ff316b's Decision Outcome item 3).
+_SNIPPET_LINE_PREFIX = r"^[-+ ] \d+: "
+
+
 class TestUpdateRange(TempDocsDirTestCase):
     """ACC-002: range mode (``offset``/``limit``) across all whole-body document types."""
+
+    def test_range_mode_returns_update_result_with_snippet(self) -> None:
+        """A range-mode update must return the UpdateResult wrapper with a non-None snippet
+        naming the dropped and inserted lines (feat-153-off-by-n Phase 2, REQ-002)."""
+        for case in _CASES:
+            with self.subTest(doc_type=case.doc_type):
+                created = self._seed(case, case.minimal_body)
+                lines = body_text(self._doc_path(case)).splitlines()
+                k = _line_no(lines, case.middle_marker)
+
+                result = update(id=created.id, type=case.doc_type, content=case.middle_replacement, offset=k, limit=1)
+
+                self.assertIsInstance(result, UpdateResult)
+                self.assertIsInstance(result.frontmatter, case.frontmatter_type)
+                self.assertNotIsInstance(result.frontmatter, case.document_type)
+                self.assertFalse(hasattr(result.frontmatter, "body"))
+                self.assertEqual(result.frontmatter.id, created.id)
+                self.assertIsNotNone(result.snippet)
+                snippet_lines = result.snippet.splitlines()
+                for line in snippet_lines:
+                    self.assertRegex(line, _SNIPPET_LINE_PREFIX)
+                # the dropped line (pre-splice number k) and the inserted line
+                # (post-splice number k) are both present, verbatim
+                self.assertIn(f"- {k}: {case.middle_marker}", snippet_lines)
+                self.assertIn(f"+ {k}: {case.middle_replacement}", snippet_lines)
+                # and unchanged context is carried on at least one side
+                self.assertTrue(any(line.startswith("  ") for line in snippet_lines))
+
+    def test_pure_insert_snippet_has_no_dropped_lines_and_shifted_post_numbers(self) -> None:
+        """A ``limit = 0`` insert's snippet must carry no `-` lines, and the context below the
+        insert must be numbered post-splice (shifted by the insertion)."""
+        for case in _CASES:
+            with self.subTest(doc_type=case.doc_type):
+                created = self._seed(case, case.minimal_body)
+                lines = body_text(self._doc_path(case)).splitlines()
+                offset = _line_no(lines, case.insert_marker) - 1
+
+                result = update(id=created.id, type=case.doc_type, content=case.insert_line, offset=offset, limit=0)
+
+                self.assertIsInstance(result, UpdateResult)
+                self.assertIsNotNone(result.snippet)
+                snippet_lines = result.snippet.splitlines()
+                self.assertFalse(any(line.startswith("- ") for line in snippet_lines))
+                self.assertIn(f"+ {offset}: {case.insert_line}", snippet_lines)
+                # the line the insertion pushed down keeps its text but takes
+                # the post-splice number offset+1
+                self.assertIn(f"  {offset + 1}: {lines[offset - 1]}", snippet_lines)
 
     def test_middle_range_replace_leaves_out_of_range_lines_byte_identical(self) -> None:
         """A single middle-line replace must change only that line, leaving every other line identical."""
@@ -1186,7 +1249,7 @@ class TestUpdateRange(TempDocsDirTestCase):
                 lines = body_text(self._doc_path(case)).splitlines()
                 n_min = len(case.minimal_body.splitlines())
 
-                update(
+                result = update(
                     id=created.id,
                     type=case.doc_type,
                     content="",
@@ -1195,6 +1258,13 @@ class TestUpdateRange(TempDocsDirTestCase):
                 )
 
                 self.assertEqual(body_text(self._doc_path(case)), case.minimal_body.rstrip("\n"))
+                # feat-153-off-by-n Phase 2 (REQ-002): a pure delete's snippet
+                # carries the dropped lines (pre-splice numbers) and no `+` lines
+                self.assertIsInstance(result, UpdateResult)
+                self.assertIsNotNone(result.snippet)
+                snippet_lines = result.snippet.splitlines()
+                self.assertFalse(any(line.startswith("+ ") for line in snippet_lines))
+                self.assertIn(f"- {n_min + 1}: {lines[n_min]}", snippet_lines)
 
     def test_offset_one_equals_whole_body_mode(self) -> None:
         """``offset = 1`` (``limit`` omitted) must produce the same file as whole-body mode with the identical text."""
@@ -1203,12 +1273,20 @@ class TestUpdateRange(TempDocsDirTestCase):
                 created = self._seed(case, case.minimal_body)
                 doc_id = created.id
                 with mock.patch.object(update_module, "now_timestamp", return_value=_FIXED_TIMESTAMP):
-                    update(id=doc_id, type=case.doc_type, content=case.updated_body)
+                    whole_body = update(id=doc_id, type=case.doc_type, content=case.updated_body)
                     path = self._doc_path(case)
                     whole_body_file = path.read_text(encoding="utf-8")
 
-                    update(id=doc_id, type=case.doc_type, content=case.updated_body, offset=1)
+                    # feat-153-off-by-n Phase 2 (REQ-003, ADR 19ff316b): both the
+                    # whole-body mode and the whole-body-equivalent range return the
+                    # UpdateResult wrapper with snippet=None -- never a snippet.
+                    self.assertIsInstance(whole_body, UpdateResult)
+                    self.assertIsNone(whole_body.snippet)
 
+                    ranged = update(id=doc_id, type=case.doc_type, content=case.updated_body, offset=1)
+
+                    self.assertIsInstance(ranged, UpdateResult)
+                    self.assertIsNone(ranged.snippet)
                     self.assertEqual(path.read_text(encoding="utf-8"), whole_body_file)
 
     def test_limit_without_offset_raises_value_error_before_file_access(self) -> None:

@@ -43,7 +43,7 @@ from unittest import mock
 
 import frontmatter
 
-from biz.dfch.specmgr.general.models import InvalidStatusResult
+from biz.dfch.specmgr.general.models import InvalidStatusResult, UpdateResult
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.general.tools.delete import delete
 from biz.dfch.specmgr.general.tools.set_classification import set_classification
@@ -150,18 +150,26 @@ class TestSysrsLifecycleIntegration(TempSysrsDirTestCase):
         # 4. update (type="sysrs", whole-body): must bump only `updated` and preserve
         #    id/type/status/created/version.
         updated = update(sysrs_id, "sysrs", _REVISED_BODY)
-        self.assertEqual(updated.id, created.id)
-        self.assertEqual(updated.type, created.type)
-        self.assertEqual(updated.created, created.created)
-        self.assertEqual(updated.status, "draft")
-        self.assertEqual(updated.version, created.version)
-        self.assertNotEqual(updated.updated, created.updated)
+        # feat-153-off-by-n Phase 2: the return is the UpdateResult wrapper -- the
+        # frontmatter fields live under .frontmatter; whole-body mode's snippet is None.
+        self.assertIsInstance(updated, UpdateResult)
+        self.assertIsNone(updated.snippet)
+        self.assertEqual(updated.frontmatter.id, created.id)
+        self.assertEqual(updated.frontmatter.type, created.type)
+        self.assertEqual(updated.frontmatter.created, created.created)
+        self.assertEqual(updated.frontmatter.status, "draft")
+        self.assertEqual(updated.frontmatter.version, created.version)
+        self.assertNotEqual(updated.frontmatter.updated, created.updated)
         self.assertIn("Onboarding and renewals", get_sysrs(sysrs_id).body.system_scope.text)
 
         # 5. update (type="sysrs", line-range): replace just the "## System Purpose" body line.
         lines = get_sysrs(sysrs_id, raw=True).splitlines()
         k = lines.index("Provision partner accounts.") + 1
+        # feat-153-off-by-n Phase 2: the return is the UpdateResult wrapper -- range
+        # mode's frontmatter fields live under .frontmatter, and the snippet is set.
         ranged = update(sysrs_id, "sysrs", "Provision and manage partner accounts.", offset=k, limit=1)
+        self.assertIsInstance(ranged, UpdateResult)
+        self.assertIsNotNone(ranged.snippet)
         self.assertIn("Provision and manage partner accounts.", get_sysrs(sysrs_id).body.system_purpose.text)
         new_lines = get_sysrs(sysrs_id, raw=True).splitlines()
         self.assertEqual(new_lines[: k - 1] + new_lines[k:], lines[: k - 1] + lines[k:])
@@ -169,9 +177,9 @@ class TestSysrsLifecycleIntegration(TempSysrsDirTestCase):
         # 6. set_status (type="sysrs"): only status/updated may change.
         progressed = set_status(sysrs_id, "sysrs", "review")
         self.assertEqual(progressed.status, "review")
-        self.assertEqual(progressed.id, ranged.id)
-        self.assertEqual(progressed.created, ranged.created)
-        self.assertNotEqual(progressed.updated, ranged.updated)
+        self.assertEqual(progressed.id, ranged.frontmatter.id)
+        self.assertEqual(progressed.created, ranged.frontmatter.created)
+        self.assertNotEqual(progressed.updated, ranged.frontmatter.updated)
         # The body must be carried forward verbatim, untouched by the status change.
         self.assertIn("Onboarding and renewals", get_sysrs(sysrs_id).body.system_scope.text)
 

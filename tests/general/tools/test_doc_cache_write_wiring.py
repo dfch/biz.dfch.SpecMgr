@@ -112,7 +112,7 @@ from unittest import mock
 
 from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR, README_FILENAME, feat_base_dir
 from biz.dfch.specmgr.feat.tools.create_feat import create_feat
-from biz.dfch.specmgr.general.models import InvalidStatusResult
+from biz.dfch.specmgr.general.models import InvalidStatusResult, UpdateResult
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR, doc_base_dir
 from biz.dfch.specmgr.general.tools._domains import FEAT, WHOLE_BODY_DOMAINS, WHOLE_BODY_NO_FEAT_DOMAINS
 from biz.dfch.specmgr.general.tools._packaged_data import read_packaged_text
@@ -376,7 +376,10 @@ class TestAcc002UpdateWarmForEveryFlatDomain(_FlatDomainWiringTestCase):
                 with mock.patch.object(_UPDATE_MODULE, f"read_{domain}", wraps=real_read) as spy:
                     updated = update(id=fixture_id, type=domain, content=whole_body)
 
-                self.assertEqual(updated.id, fixture_id)
+                # feat-153-off-by-n Phase 2: UpdateResult wrapper; whole-body mode -> snippet=None.
+                self.assertIsInstance(updated, UpdateResult)
+                self.assertIsNone(updated.snippet)
+                self.assertEqual(updated.frontmatter.id, fixture_id)
                 spy.assert_called_once_with(path)
 
             with self.subTest(domain=domain, mode="range-splice"):
@@ -388,7 +391,10 @@ class TestAcc002UpdateWarmForEveryFlatDomain(_FlatDomainWiringTestCase):
                 with mock.patch.object(_UPDATE_MODULE, f"read_{domain}", wraps=real_read) as spy:
                     updated = update(id=fixture_id, type=domain, content=new_h1, offset=1, limit=1)
 
-                self.assertEqual(updated.id, fixture_id)
+                # feat-153-off-by-n Phase 2: UpdateResult wrapper; range mode (limit given) -> snippet set.
+                self.assertIsInstance(updated, UpdateResult)
+                self.assertIsNotNone(updated.snippet)
+                self.assertEqual(updated.frontmatter.id, fixture_id)
                 spy.assert_called_once_with(path)
 
 
@@ -530,7 +536,10 @@ class TestAcc002UpdateWarmForFeat(_FeatWiringTestCase):
             with mock.patch.object(_UPDATE_MODULE, "read_feat", wraps=real_read) as spy:
                 updated = update(id=path.parent.name, type=FEAT, content=whole_body)
 
-            self.assertEqual(updated.id, path.parent.name)
+            # feat-153-off-by-n Phase 2: UpdateResult wrapper; whole-body mode -> snippet=None.
+            self.assertIsInstance(updated, UpdateResult)
+            self.assertIsNone(updated.snippet)
+            self.assertEqual(updated.frontmatter.id, path.parent.name)
             spy.assert_called_once_with(path)
 
         with self.subTest(domain=FEAT, mode="range-splice"):
@@ -541,7 +550,10 @@ class TestAcc002UpdateWarmForFeat(_FeatWiringTestCase):
             with mock.patch.object(_UPDATE_MODULE, "read_feat", wraps=real_read) as spy:
                 updated = update(id=path.parent.name, type=FEAT, content=new_h1, offset=1, limit=1)
 
-            self.assertEqual(updated.id, path.parent.name)
+            # feat-153-off-by-n Phase 2: UpdateResult wrapper; range mode (limit given) -> snippet set.
+            self.assertIsInstance(updated, UpdateResult)
+            self.assertIsNotNone(updated.snippet)
+            self.assertEqual(updated.frontmatter.id, path.parent.name)
             spy.assert_called_once_with(path)
 
 
