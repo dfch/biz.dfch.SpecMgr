@@ -53,7 +53,7 @@ import re
 import unittest
 
 from biz.dfch.specmgr.feat.models.v1.body import Plan, Progress
-from biz.dfch.specmgr.general.tools._packaged_data import read_packaged_text
+from biz.dfch.specmgr.general.tools import _packaged_data
 
 #: Display-name -> model-field-name table for every backtick-quoted section
 #: name the two prompt lists can carry: the 14 H3 container sections plus
@@ -166,7 +166,7 @@ class TestPromptSchemaOptionality(unittest.TestCase):
 
     def test_create_prompt_section_optionality_matches_model(self) -> None:
         """Create step 2's mandatory/optional partition must equal Plan+Progress required/optional."""
-        instruction_text = read_packaged_text("feat", "create_instructions", "md")
+        instruction_text = _packaged_data.read_packaged_text("feat", "create_instructions", "md")
         self._assert_prompt_partition(
             instruction_text,
             _CREATE_MANDATORY_PATTERN,
@@ -176,7 +176,7 @@ class TestPromptSchemaOptionality(unittest.TestCase):
 
     def test_update_prompt_section_optionality_matches_model(self) -> None:
         """Update step 3's mandatory/optional partition must equal Plan+Progress required/optional."""
-        instruction_text = read_packaged_text("feat", "update_instructions", "md")
+        instruction_text = _packaged_data.read_packaged_text("feat", "update_instructions", "md")
         self._assert_prompt_partition(
             instruction_text,
             _UPDATE_MANDATORY_PATTERN,

@@ -4,7 +4,7 @@ created: '2026-09-27T16:03:36.781+02:00'
 id: feat-163-feat-numbering
 status: review
 type: feat
-updated: '2026-09-29T06:32:35.789+02:00'
+updated: '2026-09-29T09:03:06.007+02:00'
 version: 1.0.0
 ---
 
@@ -117,16 +117,68 @@ The scheme (confirmed against issue #163):
 **As of 2026-09-29**: All five phases (100-140) complete -- the full quality gate is green on the
 merged tree (3616 tests passed, 0 failures; 99% coverage; `ruff format --check`, `ruff check`,
 and `vulture` clean; `specmgr schema`, `specmgr mcp-docs`, and `specmgr docs` all report no
-drift) -- and the round-1 post-implementation review fixes are applied (the `CHANGELOG.md`
-`[Unreleased]` entry, all seven ACC boxes ticked, the stale "first skill" wording corrected, the
-AGENTS.md/conventions.md list-item enumerations extended with `FeatTaskItem`, the template's
-`Related Decisions` placeholder aligned, and the TSK `tsk-2687d267` failure-set note), keeping
+drift) -- and both rounds of post-implementation review fixes are applied: round 1 (the
+`CHANGELOG.md` `[Unreleased]` entry, all seven ACC boxes ticked, the stale "first skill" wording
+corrected, the AGENTS.md/conventions.md list-item enumerations extended with `FeatTaskItem`, the
+template's `Related Decisions` placeholder aligned, and the TSK `tsk-2687d267` failure-set note)
+and round 2 (the stale "first skill" test-module docstring corrected to name feat-150's `repair`
+skill as the first, the skill test's legacy-task-number guard widened from 1-2 digit/1-2 digit to
+any non-3-digit component with its three docstrings aligned, the `tests/opencode` package
+docstring naming both `.opencode/skill/` and `.opencode/skills/`, the issue-70 regression
+docstrings' "literal" claim scoped to the heading title with the `Phase 300` renumbering stated,
+the trailing-colon/empty-description boundary case added to the `FeatTaskItem` malformed-item
+subTest matrix, and the `_packaged_data` import style aligned in the optionality test), keeping
 the gate green with `docs/` and `docs/coverage.svg` byte-identical. The feature is in `review`
 status.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-29 09:03:06.007+02:00 - Round 2 post-implementation review fixes applied (feat-reviewer)
+
+Applied the round-2 post-implementation review fixes (feat-reviewer over the merged branch -- the
+review found no errors, only these six close-out items, per the feat-156/feat-159 round-N
+precedent). (1) `tests/opencode/test_skill_feat_numbering.py`: corrected the stale module-docstring
+claim that feat-numbering is the repo's first OpenCode skill -- it is the repo's second project
+skill, with feat-150's `repair` skill (`.opencode/skill/repair/SKILL.md`, landed on `dev` and
+merged into this branch during implementation) named as the first; only the sentence containing
+the stale claim was reworded, the remaining docstring sentences are unchanged. (2) Same file:
+replaced the under-sensitive legacy-task-number guard (`(?<!\d)Task \d{1,2}\.\d{1,2}(?!\d)`, which
+caught only 1-2 digit/1-2 digit numbers and let mixed-width `Task 99.100`/`Task 100.10` and
+over-width `Task 1000.100` slip through) with a two-capturing-group pattern
+`(?<!\d)Task (\d+)\.(\d+)(?!\d)` plus a module-level `_legacy_task_numbers(text)` helper returning
+every `Task X.Y` token whose components are not both exactly 3 digits -- the guard now flags any
+width drift (`Task 0.1`, `Task 1.1`, `Task 99.100`, `Task 100.10`, `Task 1000.100`) while the
+skill body's own 3-digit examples (`Task 100.100`, `Task 100.110`, `Task 100.105`, `Task 110.100`,
+`Task 110.110`) and the letter placeholder `Task NNN.MMM` stay clean; the test now asserts the
+helper's list is empty (a better failure message than `assertIsNone`), and the three docstrings
+that overclaimed the old 1-2 digit sensitivity (module, class, test) now state the actual one --
+the `_LEGACY_PHASE_PATTERN` guard and its docstrings were already correct and are untouched. (3)
+`tests/opencode/__init__.py`: the package docstring now names both project-skill locations the
+repo carries -- `.opencode/skill/` (singular, feat-150's `repair`) and `.opencode/skills/`
+(plural, feat-163's `feat-numbering`) -- matching opencode's `{skill,skills}/**/SKILL.md` project
+config-dir scan. (4) `tests/regression/test_issue_70.py`: the module-docstring bullet, the feat
+class docstring, and the section-divider comment above the fixture no longer overclaim that the
+whole renumbered heading is "the literal issue #70 reproduction" -- "literal" now applies only to
+the heading's title wording (`Per-domain create_<d> tools`), and all three state explicitly that
+the phase number is `Phase 300`, renumbered from the issue's `Phase 3` by the feat-163 numbering
+scheme; the historical quote of the issue's own reported heading and the `feat-67-70-71 Phase 3
+(REQ-003/ACC-002)` self-reference are untouched. (5) `tests/feat/models/v1/test_body.py`: added the trailing-colon/empty-description
+boundary entry `Task 100.100:` to `TestFeatTaskItem.test_malformed_item_raises_actionable_assertion_error_on_access`'s
+subTest matrix -- the `Task NNN.MMM:` prefix is present but the description after the colon is
+empty, and the loop's existing expected-message format handles it unchanged (7 subtests now, all
+green). (6) `tests/feat/prompts/test_prompt_schema_optionality.py`: switched the
+`read_packaged_text` import to the suite-dominant module-import form
+(`from biz.dfch.specmgr.general.tools import _packaged_data`) and updated both call sites to
+`_packaged_data.read_packaged_text(...)`, matching the three neighboring test files. Gate stays
+green on the merged tree: `ruff format --check` (1741 files already formatted), `ruff check`
+(all checks passed), `vulture src/ whitelist.py --min-confidence 60` (exit 0, no findings), and
+`pytest -n auto --cov=src --cov-report=` (3616 passed, 0 failures, in 60.61s; coverage 99% --
+11046 statements, 122 missed), with the drift checks all no-ops: `specmgr docs`, `specmgr
+mcp-docs`, and `specmgr schema` (all 12 artifacts reported unchanged) leave `docs/` byte-identical
+(`git status` shows only the five touched test files and this plan document).
+
 
 #### 2026-09-29 06:32:35.789+02:00 - Round 1 post-implementation review fixes applied (feat-reviewer)
 
