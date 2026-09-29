@@ -37,8 +37,9 @@ domain," not just ``feat`` (the domain issue #70 was literally filed against). T
 three domains with deliberately different body shapes, to exercise the shared parser through
 different structural paths rather than just one:
 
-1. **``feat``** -- the literal issue #70 reproduction: the bad token sits in a `` #### Phase 300: ``
-   ``Task List`` heading, using the issue's own literal wording
+1. **``feat``** -- the issue #70 reproduction: the bad token sits in a ``#### Phase 300:``
+   ``Task List`` heading -- the phase number renumbered from the issue's ``Phase 3`` by the
+   feat-163 numbering scheme -- using the issue's own literal title wording
    (``Per-domain create_<d> tools``), inside a folder-per-document, nested-container schema.
 2. **``req``** -- the bad token sits in a bullet list item inside a free-form ``## Description``
    prose section, inside a flat, single-file, WHILE/THE-grammar schema.
@@ -97,8 +98,9 @@ def _assert_actionable_message(message: str) -> None:
 
 
 # ---------------------------------------------------------------------------
-# feat: the literal issue #70 repro -- a bare `<word>`-shaped token in a
-# `#### Phase 300: ...` Task List heading, using the issue's own literal wording.
+# feat: the issue #70 repro (phase number renumbered to `Phase 300` under the feat-163
+# scheme) -- a bare `<word>`-shaped token in a `#### Phase 300: ...` Task List heading,
+# using the issue's own literal title wording.
 # ---------------------------------------------------------------------------
 
 _FEAT_BAD_BODY = textwrap.dedent(
@@ -205,7 +207,8 @@ _DEC_BAD_BODY = textwrap.dedent(
 
 
 class TestIssue70FeatBareHtmlTokenRegression(unittest.TestCase):
-    """The literal issue #70 repro (a bad `#### Phase 300: ...` heading), for `feat`."""
+    """Issue #70's repro with the phase number renumbered to `Phase 300` under the feat-163
+    scheme (the heading carries the issue's literal title), for `feat`."""
 
     def setUp(self) -> None:
         tmp = Path(self.enterContext(tempfile.TemporaryDirectory()))

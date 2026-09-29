@@ -425,6 +425,7 @@ class TestFeatTaskItem(unittest.TestCase):
             "Task 1000.100: Four-digit phase component",
             "Task 100-100: Wrong separator",
             "Task 100.100 No colon",
+            "Task 100.100:",
             "Not a task at all",
         ):
             with self.subTest(item_text=item_text):

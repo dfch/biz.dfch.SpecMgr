@@ -17,8 +17,9 @@
 
 """feat-163 Phase 130, Task 130.110: ACC-006 consistency test for the feat-numbering project skill.
 
-The repo's first OpenCode skill, ``.opencode/skills/feat-numbering/SKILL.md``, teaches the
-FEAT Task List numbering scheme. These tests pin: the file's location; its frontmatter
+The repo's second project OpenCode skill, ``.opencode/skills/feat-numbering/SKILL.md``
+(feat-150's ``repair`` skill, ``.opencode/skill/repair/SKILL.md``, being the first), teaches
+the FEAT Task List numbering scheme. These tests pin: the file's location; its frontmatter
 (exactly the ``name``/``description`` keys, ``name`` matching the folder, a non-empty
 third-person ``description`` carrying the four plan-named trigger keywords FEAT/Task
 List/Phase/specmgr -- keyword matching is case-insensitive, a deliberate choice documented
@@ -29,8 +30,8 @@ the skill body once whitespace is normalized, plus the key constants and the thr
 ``specmgr://feat/*`` resource pointers); the concrete examples (each must also occur in
 the packaged template or example, so the skill cannot drift from the packaged shapes);
 and the absence of stale legacy guidance (no ``unpadded`` wording anywhere, no 1-2 digit
-phase numbers, no 1-2 digit task numbers -- the negative lookarounds keep the 3-digit
-examples such as ``Phase 100``/``Task 100.100`` from matching).
+phase numbers, no task number with a non-3-digit component -- the negative lookarounds
+keep the 3-digit examples such as ``Phase 100``/``Task 100.100`` from matching).
 """
 
 from __future__ import annotations
@@ -67,7 +68,22 @@ _SCHEME_FRAGMENTS: tuple[str, ...] = (
 _EXAMPLES_IN_BOTH: tuple[str, ...] = ("Phase 100", "Task 100.100")
 _EXAMPLES_IN_EXAMPLE_ONLY: tuple[str, ...] = ("Phase 110", "Task 110.100", "Task 110.110")
 _LEGACY_PHASE_PATTERN = re.compile(r"(?<!\d)Phase \d{1,2}(?!\d)")
-_LEGACY_TASK_PATTERN = re.compile(r"(?<!\d)Task \d{1,2}\.\d{1,2}(?!\d)")
+_TASK_NUMBER_PATTERN = re.compile(r"(?<!\d)Task (\d+)\.(\d+)(?!\d)")
+
+
+def _legacy_task_numbers(text: str) -> list[str]:
+    """Return every ``Task X.Y`` token in ``text`` whose components are not both 3-digit.
+
+    Wider than the legacy 1-2 digit shape: any width drift (``Task 0.1``, ``Task 99.100``,
+    ``Task 1000.100``) is flagged, while the scheme's own 3-digit examples (``Task 100.100``
+    ...) and the letter placeholder ``Task NNN.MMM`` stay clean.
+    """
+    result: list[str] = []
+    for match in _TASK_NUMBER_PATTERN.finditer(text):
+        phase_component, task_component = match.groups()
+        if len(phase_component) != 3 or len(task_component) != 3:
+            result.append(f"Task {phase_component}.{task_component}")
+    return result
 
 
 def _skill_text() -> str:
@@ -228,8 +244,9 @@ class TestSkillNoStaleLegacyWording(unittest.TestCase):
 
     The lookarounds keep the 3-digit examples from matching: ``Phase 100`` fails
     ``Phase \\d{1,2}(?!\\d)`` because a third digit follows the first two, and
-    ``Task 100.100`` fails the task pattern because neither of its dot-separated
-    components is 1-2 digits long.
+    ``Task 100.100`` passes the task-number guard because both of its dot-separated
+    components are exactly 3 digits long (any other width -- ``Task 1.1``, ``Task 99.100``,
+    ``Task 1000.100`` -- is flagged).
     """
 
     def test_no_unpadded_wording_anywhere(self):
@@ -243,10 +260,10 @@ class TestSkillNoStaleLegacyWording(unittest.TestCase):
         self.assertIsNone(_LEGACY_PHASE_PATTERN.search(body))
 
     def test_no_legacy_short_task_numbers(self):
-        """No 1-2 digit/1-2 digit task number (``Task 0.1``/``Task 1.1`` style)."""
+        """No task number with a non-3-digit component (``Task 0.1``/``Task 99.100`` style)."""
         _, body = _split_frontmatter(_skill_text())
 
-        self.assertIsNone(_LEGACY_TASK_PATTERN.search(body))
+        self.assertEqual(_legacy_task_numbers(body), [])
 
 
 if __name__ == "__main__":
