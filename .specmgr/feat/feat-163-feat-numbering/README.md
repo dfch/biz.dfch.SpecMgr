@@ -4,7 +4,7 @@ created: '2026-09-27T16:03:36.781+02:00'
 id: feat-163-feat-numbering
 status: review
 type: feat
-updated: '2026-09-28T18:50:40.838+02:00'
+updated: '2026-09-29T06:32:35.789+02:00'
 version: 1.0.0
 ---
 
@@ -32,13 +32,13 @@ Introduces a stable, gap-friendly numbering scheme to the FEAT Task List, modele
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: A document with `#### Phase 100: X` and items `- [ ] Task 100.100: Y` / `- [x] Task 100.110: Z` parses via `parse_feat`/`create_feat`/`validate(type="feat")`, including an in-between item (`Task 100.105: ...`).
-- [ ] ACC-002: A legacy phase heading (`#### Phase 1: X`) or a task item lacking the number prefix (or carrying a legacy `Task 1.1:` number) is rejected with an actionable error naming the item's field path and 1-based line.
-- [ ] ACC-003: The packaged template and example (and the byte-identical reference fixture) parse via `parse_feat`, and the resource/tool parity tests stay green.
-- [ ] ACC-004: The create/update prompts contain the scheme description, and the create walkthrough test (`list_feat` -> `create_feat` against a temporary `SPECMGR_FEAT_DIR`) is green with a new-shape body.
-- [ ] ACC-005: The new regression test asserting the prompts' mandatory/optional section sets equal the model's required/optional field sets is green (after the REQ-008 fixes, if any).
-- [ ] ACC-006: The project skill exists at `.opencode/skills/feat-numbering/SKILL.md` with a valid `name`/`description` frontmatter, and its scheme wording agrees with the prompts, template, and example (no stale "Phase N"/"Task N.M" guidance).
-- [ ] ACC-007: `specmgr schema`, `specmgr mcp-docs`, and `specmgr docs` report no drift, and the full quality gate is green: `uv run --frozen ruff format --check`, `uv run --frozen ruff check`, `uv run --frozen vulture src/ whitelist.py --min-confidence 60`, `uv run --frozen pytest -n auto --cov=src`.
+- [x] ACC-001: A document with `#### Phase 100: X` and items `- [ ] Task 100.100: Y` / `- [x] Task 100.110: Z` parses via `parse_feat`/`create_feat`/`validate(type="feat")`, including an in-between item (`Task 100.105: ...`).
+- [x] ACC-002: A legacy phase heading (`#### Phase 1: X`) or a task item lacking the number prefix (or carrying a legacy `Task 1.1:` number) is rejected with an actionable error naming the item's field path and 1-based line.
+- [x] ACC-003: The packaged template and example (and the byte-identical reference fixture) parse via `parse_feat`, and the resource/tool parity tests stay green.
+- [x] ACC-004: The create/update prompts contain the scheme description, and the create walkthrough test (`list_feat` -> `create_feat` against a temporary `SPECMGR_FEAT_DIR`) is green with a new-shape body.
+- [x] ACC-005: The new regression test asserting the prompts' mandatory/optional section sets equal the model's required/optional field sets is green (after the REQ-008 fixes, if any).
+- [x] ACC-006: The project skill exists at `.opencode/skills/feat-numbering/SKILL.md` with a valid `name`/`description` frontmatter, and its scheme wording agrees with the prompts, template, and example (no stale "Phase N"/"Task N.M" guidance).
+- [x] ACC-007: `specmgr schema`, `specmgr mcp-docs`, and `specmgr docs` report no drift, and the full quality gate is green: `uv run --frozen ruff format --check`, `uv run --frozen ruff check`, `uv run --frozen vulture src/ whitelist.py --min-confidence 60`, `uv run --frozen pytest -n auto --cov=src`.
 
 ### Scope
 
@@ -46,7 +46,7 @@ Introduces a stable, gap-friendly numbering scheme to the FEAT Task List, modele
 
 - `feat/models/v1/body.py`: `Phase` alias/heading pattern + computed `number`/`title`, and the new feat-local task-item class with the `Task NNN.MMM: ` prefix + eager validation.
 - `feat/data/feat_template.md`, `feat_example.md`, `feat_schema.json`, `feat_create_instructions.md`, `feat_update_instructions.md`.
-- The new project skill `.opencode/skills/feat-numbering/SKILL.md` (first skill in this repo; the default project skill path is scanned automatically, so no `opencode.json` change is needed).
+- The new project skill `.opencode/skills/feat-numbering/SKILL.md` (the repo's second project skill -- feat-150's `repair` skill, `.opencode/skill/repair/SKILL.md`, landed on `dev` and was merged into this branch during implementation; the default project skill path is scanned automatically, so no `opencode.json` change is needed).
 - Regeneration of `docs/feat_schema.json`, `docs/MCP.md`, and `docs/api/` + `docs/GENERATED.md`.
 - Tests: `tests/feat/**` updates, the `tests/regression/test_issue_70.py` fixture update, the new prompt ↔ schema optionality regression test, and a skill-content consistency test.
 - `whitelist.py` vulture entries as needed.
@@ -70,7 +70,7 @@ The scheme (confirmed against issue #163):
 - Task: `- [ ] Task NNN.MMM: {text}` (the word `Task` is kept, confirmed). The `NNN.MMM` prefix is enforced by a new feat-local `TaskItem` subclass -- the same layering `AcceptanceCriterionItem` uses to re-match `ACC-NNN: ` against the inherited `description`. First task in a phase 100, step 10.
 - Deliberately NOT enforced (issue's explicit wishes, feat-156 precedent): the step-10 increments, uniqueness, and the match between a task's phase component and the enclosing phase number. Gaps and in-between numbers (e.g. `Phase 105`, `Task 100.105`) always parse, so inserting a phase or task never requires renumbering anything. Numbers are permanent; removals leave gaps.
 - Backward compatibility: strict, no migration (confirmed). The ~26 of 62 legacy `Phase N`/`Task N.M` documents that currently parse will fail parsing once this ships; the existing TSK `tsk-2687d267` ("fix remaining feat README.md documents to validate against the feat schema") is the natural follow-up vehicle. This document itself uses the new numbering and stays valid both before and after the schema change (`Phase 100` matches both the old unpadded-digits alias and the new 3-digit alias, and `Task 100.100:` is free-form text under the current schema).
-- The skill (the repo's first) lives at the default project skill path `.opencode/skills/feat-numbering/SKILL.md`; its frontmatter carries the required `name` plus a third-person `description` that front-loads the trigger keywords (FEAT, Task List, Phase, specmgr), and its body mirrors the prompts' scheme description and points agents at `specmgr://feat/template`/`specmgr://feat/example`/`specmgr://feat/schema` as the authoritative references.
+- The skill (the repo's second -- feat-150's `repair` skill, `.opencode/skill/repair/SKILL.md`, landed on `dev` and was merged into this branch during implementation) lives at the default project skill path `.opencode/skills/feat-numbering/SKILL.md`; its frontmatter carries the required `name` plus a third-person `description` that front-loads the trigger keywords (FEAT, Task List, Phase, specmgr), and its body mirrors the prompts' scheme description and points agents at `specmgr://feat/template`/`specmgr://feat/example`/`specmgr://feat/schema` as the authoritative references.
 - Authoring constraints for this document and every fixture it updates: each list item on a single physical line (the feat-99 `single_line_text` guard) and no bare raw-HTML-shaped tokens outside code spans (the issue-70 regression).
 
 ### Related Decisions
@@ -114,16 +114,61 @@ The scheme (confirmed against issue #163):
 
 ### Current Status
 
-**As of 2026-09-28**: All five phases (100-140) complete -- the full quality gate is green (3533
-tests passed, 0 failures; 99% coverage; `ruff format --check`, `ruff check`, and `vulture` clean;
-`specmgr schema`, `specmgr mcp-docs`, and `specmgr docs` all report no drift, with
-`docs/GENERATED.md` regenerated to the new test-file count 366), the two last legacy-shape
-surfaces (the prompt walkthrough body fixtures) are on the new scheme, and the feature is ready
-for review.
+**As of 2026-09-29**: All five phases (100-140) complete -- the full quality gate is green on the
+merged tree (3616 tests passed, 0 failures; 99% coverage; `ruff format --check`, `ruff check`,
+and `vulture` clean; `specmgr schema`, `specmgr mcp-docs`, and `specmgr docs` all report no
+drift) -- and the round-1 post-implementation review fixes are applied (the `CHANGELOG.md`
+`[Unreleased]` entry, all seven ACC boxes ticked, the stale "first skill" wording corrected, the
+AGENTS.md/conventions.md list-item enumerations extended with `FeatTaskItem`, the template's
+`Related Decisions` placeholder aligned, and the TSK `tsk-2687d267` failure-set note), keeping
+the gate green with `docs/` and `docs/coverage.svg` byte-identical. The feature is in `review`
+status.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-29 06:32:35.789+02:00 - Round 1 post-implementation review fixes applied (feat-reviewer)
+
+Applied the round-1 post-implementation review fixes (feat-reviewer over the merged branch -- the
+review found no errors, only these close-out items, per the feat-156/feat-159 round-N precedent).
+Added the missing `CHANGELOG.md` `[Unreleased]` entry in the file's existing style: an
+`### Added` pair (the fixed, permanent FEAT phase/task numbering scheme -- 3-digit zero-padded
+`Phase` headings starting at 100, step 10, `Task NNN.MMM: ` checklist prefixes enforced by the
+new feat-local `FeatTaskItem`, shape-only enforcement with in-between insertion -- and the
+`feat-numbering` project OpenCode Skill) and a `### Changed` triple (the **BREAKING** consequence
+for legacy unpadded `Phase N`/`Task N.M` documents, which now fail `parse_feat`/`list_feat`/
+`validate(type="feat")` until the follow-up migration renumbers them, tracked by TSK
+`tsk-2687d267`; the create/update prompt instruction updates -- the canonical scheme description
+plus the two wording alignments the REQ-008 optionality audit recommended, which confirmed zero
+optionality discrepancies -- with the new prompt↔schema optionality regression test; and the TSK
+document's normative FEAT-shape entry updated to the new scheme), all referencing GitHub issue
+#163 the way the existing entries reference theirs. Ticked all seven ACC checkboxes
+(ACC-001..ACC-007) per the reviewed-feature convention (feat-110-truncate-validation-errors,
+feat-123-test-gap-cache, and feat-132-prb-update all carry fully-ticked ACCs at `status:
+review`). Corrected the two stale forward-looking "first skill" claims (the Scope bullet and the
+Design Notes bullet) -- feat-150's `repair` skill, `.opencode/skill/repair/SKILL.md`, landed on
+`dev` and was merged into this branch during implementation, so this is the repo's second project
+skill; the dated `### Updates` entries were left as written at the time. Extended the AGENTS.md
+feat-99 paragraph and the conventions.md "Markdown Authoring (List Items Must Not Soft-Wrap)"
+enumeration with `feat.FeatTaskItem.task_description`, with the same transitive-coverage
+treatment as the existing `feat.AcceptanceCriterionItem.criterion_description` parenthetical
+(covered transitively via `TaskItem.description`'s `single_line_text` guard, no direct wiring
+needed). Aligned the packaged template's `### Related Decisions` placeholder bullet with
+`RelatedDecisions`' docstring and the create prompt's wording (the phase-100 optionality audit
+flagged the narrower "bullet list of related ADR or DEC ids" phrasing; phase 120 fixed it in the
+create prompt, the template still carried it). And appended one sentence to the TSK document
+`tsk-2687d267`'s header comment noting that, once feat-163 (GitHub issue #163) merges, its
+failure set grows by the ~26 previously-valid legacy `Phase N`/`Task N.M` documents (the strict
+no-migration policy), so the follow-up must renumber them to the new `Phase NNN`/`Task NNN.MMM`
+scheme. Gate on the merged tree stays green: `ruff format --check` (1741 files), `ruff check`,
+`vulture src/ whitelist.py --min-confidence 60`, and `pytest -n auto --cov=src` (3616 passed,
+0 failures, 99% coverage), `specmgr coverage-badge` byte-identical, and `specmgr
+docs`/`mcp-docs`/`schema` leave every generated `docs/` artifact unchanged (only this round's
+intentional TSK source edit shows in `git status`); both touched documents re-verified to parse
+(`validate(type="feat")` and `validate(type="tsk")` with `full=True`, both printing exactly
+`True`).
+
 
 #### 2026-09-28 18:50:40.838+02:00 - Merged upstream dev (feat-150 repair command + v0.33.0) into the feature branch
 

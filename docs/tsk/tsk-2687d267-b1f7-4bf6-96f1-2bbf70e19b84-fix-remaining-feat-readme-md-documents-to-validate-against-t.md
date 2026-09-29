@@ -4,7 +4,7 @@ created: '2026-09-05 00:20:55.989+02:00'
 id: 2687d267-b1f7-4bf6-96f1-2bbf70e19b84
 status: draft
 type: tsk
-updated: '2026-09-28 10:11:30.656+02:00'
+updated: '2026-09-29 06:32:35.789+02:00'
 version: 1.0.0
 ---
 
@@ -14,7 +14,10 @@ version: 1.0.0
 against the current `FeatDocument` schema (frontmatter + body), as reported by
 `specmgr_list_feat`/`specmgr_get_feat`. `feat-0-termxplorer-mcp` was already fixed
 as a worked example -- see the detailed method in "Recent Updates" below before
-starting any of these. Number the tasks so they are easier to track. -->
+starting any of these. Number the tasks so they are easier to track. Once feat-163
+(GitHub issue #163) merges, the failure set grows by the ~26 previously-valid legacy
+`Phase N`/`Task N.M` documents (its strict no-migration policy), so the follow-up
+must renumber them to the new `Phase NNN`/`Task NNN.MMM` scheme. -->
 
 - [ ] Task 1: Fix `feat-10-add-artifact-type-tasklist/README.md`. Known error: a `### Requirements` bullet has a leading `[x]` checkbox marker and wraps across multiple lines, both invalid for `RequirementItem`.
 
