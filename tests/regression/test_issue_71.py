@@ -137,9 +137,9 @@ _FEAT_VALID_BASE_BODY = textwrap.dedent(
 
     ### Task List
 
-    #### Phase 1: Placeholder Phase
+    #### Phase 100: Placeholder Phase
 
-    - [ ] Task 1.1: A short description.
+    - [ ] Task 100.100: A short description.
 
     ## Progress
 

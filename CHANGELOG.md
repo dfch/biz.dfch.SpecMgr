@@ -148,6 +148,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `<type>-<id>-<slug>.md` -- and reports a parse-failing file's
   `(path, str(exc))`) and a bespoke `feat.tools._paths.find_feat_parse_failure
   (base_dir, id_)` for `feat` (the folder name IS the id, so no scan).
+- A fixed, permanent numbering scheme for phases and tasks inside `feat`
+  (Feature) documents' `### Task List` (`feat/models/v1`), modeled on the
+  QA question numbering of feat-156 (GitHub issue #156): `Phase` headings
+  now carry 3-digit zero-padded numbers starting at 100, step 10
+  (`#### Phase 100: X`, `#### Phase 110: ...`, alias `^Phase \d{3}: .+$`),
+  and every Task List checklist item now carries a `Task NNN.MMM: ` number
+  prefix (3-digit phase component, dot, 3-digit task component, the task
+  component also starting at 100, step 10, within its phase) --
+  `- [ ] Task 100.100: Y` (or `- [x] ...` once done) -- enforced by a new
+  feat-local `FeatTaskItem` in `feat/models/v1/body.py` that subclasses
+  `tsk`'s own `TaskItem` and re-matches the prefix against the inherited,
+  checkbox-stripped `description` (the same layering
+  `AcceptanceCriterionItem` uses for `ACC-NNN: `), evaluated eagerly at
+  parse time with actionable errors (document-relative field path, 1-based
+  line, expected shape). Only the number SHAPES are enforced: the step-10
+  increment, uniqueness, and the match between a task's phase component and
+  the enclosing phase number stay authoring conventions, so gaps and
+  in-between numbers (e.g. `Phase 105`, `Task 100.105`) always parse and a
+  number is permanent once assigned (removals leave gaps). The packaged
+  template and example and both JSON schema artifacts use the new scheme
+  and round-trip through `parse_feat` (feat-163-feat-numbering, GitHub
+  issue #163).
+- The `feat-numbering` project OpenCode Skill
+  (`.opencode/skills/feat-numbering/SKILL.md`, `name: feat-numbering`):
+  teaches the FEAT Task List numbering scheme (3-digit zero-padded phase
+  numbers starting at 100, step 10; `Task NNN.MMM: ` task lines;
+  shape-only enforcement; in-between insertion without renumbering;
+  permanent numbers) by mirroring the prompts' canonical scheme paragraph,
+  directs agents to the authoritative `specmgr://feat/template`/
+  `specmgr://feat/example`/`specmgr://feat/schema` resources rather than
+  memory, and carries the required `name` plus a third-person
+  `description` front-loading the trigger keywords FEAT, Task List, Phase,
+  and specmgr (feat-163-feat-numbering, GitHub issue #163, REQ-009).
 
 ### Changed
 
@@ -168,6 +201,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   This unblocks Phase 1's `repair` prompt with-id branch, which narrates
   reading the non-raising `ParseFailureResult`-shaped result from
   `get_<d>(id)`.
+- **BREAKING**: `feat` (Feature) documents now require the 3-digit
+  zero-padded `Phase` heading shape (`#### Phase NNN: {title}`, alias
+  `^Phase \d{3}: .+$`) and the `Task NNN.MMM: ` prefix on every Task List
+  checklist item (see "Added" above): legacy documents written with
+  unpadded `Phase N` headings or `Task N.M` items -- ~26 of the
+  62 existing `.specmgr/feat/<id>/README.md` documents, which parsed
+  before -- now fail `parse_feat`/`list_feat`/`validate(type="feat")`
+  with an actionable error (field path, 1-based line, expected shape),
+  and a `list_feat` of `.specmgr/feat/` reports each as an inline failed
+  entry (`<failed to parse>` marker, counted in `error_count`) rather than
+  dropping it. This is the confirmed strict, no-migration policy: the
+  follow-up migration renumbers them to the new scheme and is tracked by
+  the existing TSK document `tsk-2687d267` ("Fix Remaining feat-* README.md
+  Documents to Validate Against the Current FEAT Schema")
+  (feat-163-feat-numbering, GitHub issue #163).
+- The `create_feat`/`update_feat` prompt instruction files
+  (`feat/data/feat_create_instructions.md`/`feat_update_instructions.md`)
+  now carry the canonical Task List numbering-scheme description (3-digit
+  zero-padded phase numbers starting at 100, step 10; `Task NNN.MMM: `
+  task lines; shape-only enforcement; in-between insertion; permanence)
+  and the two wording-level alignments the REQ-008 optionality audit
+  recommended -- the audit compared every section's mandatory/optional
+  claim in both prompts against `feat/models/v1/body.py` and confirmed
+  zero optionality discrepancies: the create prompt's `Related Decisions`
+  bullet now reads 'optional free-form cross-reference list; entries may
+  reference an ADR id, a dec id, or any other decision record' and its
+  `Blockers` bullet 'optional free-form list of open blockers', both
+  matching the model's docstrings. A new regression test
+  (`tests/feat/prompts/test_prompt_schema_optionality.py`) pins both
+  prompts' mandatory/optional section sets against the model's own
+  required/optional field sets and fails loudly on any drift
+  (feat-163-feat-numbering, GitHub issue #163, REQ-007/REQ-008).
+- The TSK document `tsk-2687d267` ("Fix Remaining feat-* README.md
+  Documents to Validate Against the Current FEAT Schema")'s normative
+  "required FEAT document shape" entry now mandates the new scheme
+  (`#### Phase NNN: {title}` with 3-digit zero-padded phase numbers,
+  first phase 100, step 10 by authoring convention, shape-only
+  enforcement, in-between insertion allowed, and `- [ ] Task NNN.MMM:
+  {text}` / `- [x] Task NNN.MMM: {text}` checklist items) instead of the
+  legacy `Phase N`/`Task N.M` shapes (feat-163-feat-numbering, GitHub
+  issue #163, REQ-011).
 
 ## [0.33.0] - 2026-09-27
 

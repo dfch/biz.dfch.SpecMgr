@@ -419,8 +419,9 @@ See the `## Operational Concept and Scenarios` section for details.
 
 **Requirement:** A structurally-checked list item -- one whose own domain model applies a
 marker/pattern regex directly against `MarkdownListItem.text` (e.g. `tsk.TaskItem`,
-`feat.RequirementItem`/`AcceptanceCriterionItem`, `rsk.ThresholdItem`/`StrategyItem`) -- must
-never soft-wrap (CommonMark lazy continuation) across two physical source lines.
+`feat.RequirementItem`/`AcceptanceCriterionItem`/`FeatTaskItem`,
+`rsk.ThresholdItem`/`StrategyItem`) -- must never soft-wrap (CommonMark lazy continuation)
+across two physical source lines.
 
 - **Authoring side:** keep such a bullet's text on a single physical line, however long, e.g.
   `- REQ-001: The widget must render within 200ms.`, never split across an indented continuation

@@ -224,9 +224,9 @@ _FEAT_MINIMAL_BODY = textwrap.dedent(
 
     ### Task List
 
-    #### Phase 0: N/A
+    #### Phase 100: N/A
 
-    - [ ] Task 0.1: Not a real task.
+    - [ ] Task 100.100: Not a real task.
 
     ## Progress
 
