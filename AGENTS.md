@@ -743,8 +743,9 @@ one physical line" fix hint), called before a domain's own marker/pattern
 regex ever runs against `.text`. Wired into every structurally-checked
 `MarkdownListItem` subclass found across every `models/md` whole-body
 domain: `tsk.TaskItem.checked`/`.description`, `feat.RequirementItem.
-description` (`feat.AcceptanceCriterionItem.criterion_description` is
-covered transitively via `TaskItem.description`, no direct wiring needed),
+description` (`feat.AcceptanceCriterionItem.criterion_description` and
+`feat.FeatTaskItem.task_description` are covered transitively via
+`TaskItem.description`, no direct wiring needed),
 `rsk.ThresholdItem.low`/`.high`/`.zone`, and `rsk.StrategyItem.strategy`.
 Free-form list items (e.g. `req`'s `## Tags`) and anything whose own regex
 already uses `re.DOTALL` (e.g. `rsk.QuadrantItem`/`MitigationItem`/

@@ -19,8 +19,9 @@
 
 Built on the generic `models.md` `MarkdownSection1`/`MarkdownSection2`/
 `MarkdownSection3`/`MarkdownSection3WithComment`/`MarkdownSection4`/
-`MarkdownParagraph`/`MarkdownListItem` engine, plus `tsk`'s own `TaskItem`
-(reused as-is, not reimplemented -- see `Phase.items` below). `Feature` is
+`MarkdownParagraph`/`MarkdownListItem` engine, plus a feat-local
+`FeatTaskItem` that subclasses `tsk`'s own `TaskItem` and enforces the
+`Task NNN.MMM: ` task-number prefix (see `Phase.items` below). `Feature` is
 the top-level H1 container, holding exactly two children, `Plan` and
 `Progress` -- see `.specmgr/feat/feat-31-feature/README.md` Design Notes
 ("Document structure"/"Model classes") for the full ASCII diagram this
@@ -42,8 +43,8 @@ cross-item invariant, not an eager-evaluation one): `Requirements`/
 evaluate during construction/parsing rather than lazily on first access,
 consistent with `tsk.Task`'s reasoning (a malformed item must not silently
 parse and only fail, if ever, whenever something later happens to read the
-computed field). `Phase` does the same for its own `items: list[TaskItem]`
-(forcing `.checked` eagerly), for the same reason.
+computed field). `Phase` does the same for its own `items: list[FeatTaskItem]`
+(forcing `.checked`/`.task_description` eagerly), for the same reason.
 """
 
 from __future__ import annotations
@@ -280,43 +281,96 @@ class RelatedDecisions(MarkdownSection3):
     `dec` id (or any other decision record). Optional."""
 
 
-#: Matches a `Phase N: {title}` heading line, capturing the phase number
-#: (named group `number`) and its title (named group `title`). Mirrors
-#: `dec`'s `_OPTION_HEADING_PATTERN`.
-_PHASE_HEADING_PATTERN = re.compile(r"^Phase (?P<number>\d+): (?P<title>.+)$")
+#: Matches a `Task NNN.MMM: {description}` `FeatTaskItem.description` value
+#: (already stripped of its `- [ ]`/`- [x]` marker), capturing the
+#: description (named group `description`). 3-digit zero-padded phase and
+#: task components; the step-10 increment, uniqueness, and the match
+#: against the enclosing phase's own number are authoring conventions,
+#: never validated (see `Phase`'s docstring).
+_FEAT_TASK_ITEM_PATTERN = re.compile(r"^Task \d{3}\.\d{3}: (?P<description>.+)$")
 
 
-@alias(value=r"^Phase \d+: .+$", type=AliasType.REGEX)
+class FeatTaskItem(TaskItem):
+    """`- [ ] Task NNN.MMM: {text}` -- one checklist task entry of a `Phase`'s flat item list.
+
+    Reuses `tsk.TaskItem`'s `checked`/`description`-from-checkbox split
+    as-is, adding one more computed field re-matching the `Task NNN.MMM: `
+    prefix against the inherited `description` -- the same layering
+    `AcceptanceCriterionItem` above uses for `ACC-NNN: `.
+
+    Parameters
+    ----------
+    task_description:
+        Computed. `.description` (already checkbox-stripped) with the
+        `Task NNN.MMM: ` prefix further stripped. Raises `AssertionError`
+        if `.description` does not match `Task \\d{3}\\.\\d{3}: .+`.
+    """
+
+    @computed_field  # type: ignore
+    @property
+    def task_description(self) -> str:
+        """This item's own description, with the `Task NNN.MMM: ` prefix further stripped.
+
+        Returns:
+            The description text following the `Task NNN.MMM: ` prefix.
+
+        Raises:
+            AssertionError: `.description` does not match
+                `^Task \\d{3}\\.\\d{3}: .+$`. The message names this item's
+                own path and 1-based line (REQ-001/REQ-002, via
+                `self._path`/`self._line`, threaded in by `models.md`'s
+                `MarkdownListItem.from_text`).
+        """
+        match = _FEAT_TASK_ITEM_PATTERN.fullmatch(self.description)
+        assert match, (
+            f"{self._path} (line {self._line}): expected 'Task NNN.MMM: <description>', got {self.description!r}"
+        )
+        result: str = match.group("description")
+        return result
+
+
+#: Matches a `Phase NNN: {title}` heading line, capturing the phase number
+#: (named group `number`, 3-digit zero-padded) and its title (named group
+#: `title`). Mirrors `dec`'s `_OPTION_HEADING_PATTERN`.
+_PHASE_HEADING_PATTERN = re.compile(r"^Phase (?P<number>\d{3}): (?P<title>.+)$")
+
+
+@alias(value=r"^Phase \d{3}: .+$", type=AliasType.REGEX)
 class Phase(MarkdownSection4):
-    """`#### Phase N: {title}` under `### Task List` -- one phase's own flat checklist.
+    """`#### Phase NNN: {title}` under `### Task List` -- one phase's own flat checklist.
 
-    Unpadded phase numbers (matching this very plan's own "Phase 0".."Phase
-    5" headings). Per-item metadata (`depends on:`/`status:`/`ETA`) stays
+    3-digit zero-padded phase numbers starting at 100, step 10 (`Phase
+    100`, `Phase 110`, ...) by authoring convention -- the schema enforces
+    only the `NNN` shape: gaps and in-between values (e.g. `Phase 105`)
+    always parse, and the step-10 increment is never validated. Each item
+    carries the `Task NNN.MMM: ` prefix enforced by `FeatTaskItem` (see
+    `items` below). Per-item metadata (`depends on:`/`status:`/`ETA`) stays
     unparsed free text inside each item's own description.
 
     Parameters
     ----------
     items:
-        The flat `- [ ] .../- [x] ...` checklist for this phase, reusing
-        `tsk.models.v1.task_item.TaskItem` as-is. At least one item.
+        The flat `- [ ] Task NNN.MMM: .../- [x] Task NNN.MMM: ...`
+        checklist for this phase, as `FeatTaskItem` entries. At least one
+        item.
     number:
-        Computed. The phase's number (e.g. `1` for `#### Phase 1: X`).
+        Computed. The phase's number (e.g. `100` for `#### Phase 100: X`).
         Never stored separately -- derived from the retained heading text.
     title:
         Computed. The phase's title (the heading text after `": "`). Never
         stored separately -- derived from the retained heading text.
     """
 
-    items: list[TaskItem] = Field(
+    items: list[FeatTaskItem] = Field(
         min_length=1,
-        description="The flat `- [ ] .../- [x] ...` checklist for this phase, in document order. "
-        "Must contain at least one item.",
+        description="The flat `- [ ] Task NNN.MMM: .../- [x] Task NNN.MMM: ...` checklist for this phase, in document "
+        "order. Must contain at least one item.",
     )
 
     @computed_field  # type: ignore
     @property
     def number(self) -> int:
-        """The phase's number carried by this heading (e.g. `1` for `#### Phase 1: X`).
+        """The phase's number carried by this heading (e.g. `100` for `#### Phase 100: X`).
 
         Returns:
             The integer number parsed from the retained heading text.
@@ -330,14 +384,14 @@ class Phase(MarkdownSection4):
                 by `models.md`'s `MarkdownSection.from_text`).
         """
         match = _PHASE_HEADING_PATTERN.fullmatch(self.text)
-        assert match, f"{self._path} (line {self._line}): expected heading 'Phase N: <title>', got {self.text!r}"
+        assert match, f"{self._path} (line {self._line}): expected heading 'Phase NNN: <title>', got {self.text!r}"
         result: int = int(match.group("number"))
         return result
 
     @computed_field  # type: ignore
     @property
     def title(self) -> str:
-        """The phase's title carried by this heading (e.g. `X` for `#### Phase 1: X`).
+        """The phase's title carried by this heading (e.g. `X` for `#### Phase 100: X`).
 
         Returns:
             The title parsed from the retained heading text (the heading
@@ -352,35 +406,37 @@ class Phase(MarkdownSection4):
                 by `models.md`'s `MarkdownSection.from_text`).
         """
         match = _PHASE_HEADING_PATTERN.fullmatch(self.text)
-        assert match, f"{self._path} (line {self._line}): expected heading 'Phase N: <title>', got {self.text!r}"
+        assert match, f"{self._path} (line {self._line}): expected heading 'Phase NNN: <title>', got {self.text!r}"
         result: str = match.group("title")
         return result
 
     @model_validator(mode="after")
     def _validate_items_eagerly(self) -> Phase:
-        """Force every item's `.checked` computed field to evaluate eagerly, not lazily.
+        """Force every item's `.checked`/`.task_description` computed fields to evaluate eagerly, not lazily.
 
-        Mirrors `tsk.models.v1.body.Task._validate_items_eagerly`.
+        Mirrors `tsk.models.v1.body.Task._validate_items_eagerly` and
+        `AcceptanceCriteria._validate_items_eagerly` above.
         """
         for item in self.items:
             _ = item.checked
+            _ = item.task_description
         return self
 
 
 class TaskList(MarkdownSection3):
-    """`### Task List` -- container for the `#### Phase N: ...` entries. No own text. Mandatory. At least
+    """`### Task List` -- container for the `#### Phase NNN: ...` entries. No own text. Mandatory. At least
     one phase.
 
     Parameters
     ----------
     phases:
-        The `#### Phase N: {title}` entries, in document order. At least
+        The `#### Phase NNN: {title}` entries, in document order. At least
         one phase.
     """
 
     phases: list[Phase] = Field(
         min_length=1,
-        description="The `#### Phase N: {title}` entries, in document order. Must contain at least one phase.",
+        description="The `#### Phase NNN: {title}` entries, in document order. Must contain at least one phase.",
     )
 
 

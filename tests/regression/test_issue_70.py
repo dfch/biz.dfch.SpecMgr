@@ -37,7 +37,7 @@ domain," not just ``feat`` (the domain issue #70 was literally filed against). T
 three domains with deliberately different body shapes, to exercise the shared parser through
 different structural paths rather than just one:
 
-1. **``feat``** -- the literal issue #70 reproduction: the bad token sits in a `` #### Phase N: ``
+1. **``feat``** -- the literal issue #70 reproduction: the bad token sits in a `` #### Phase 300: ``
    ``Task List`` heading, using the issue's own literal wording
    (``Per-domain create_<d> tools``), inside a folder-per-document, nested-container schema.
 2. **``req``** -- the bad token sits in a bullet list item inside a free-form ``## Description``
@@ -98,7 +98,7 @@ def _assert_actionable_message(message: str) -> None:
 
 # ---------------------------------------------------------------------------
 # feat: the literal issue #70 repro -- a bare `<word>`-shaped token in a
-# `#### Phase N: ...` Task List heading, using the issue's own literal wording.
+# `#### Phase 300: ...` Task List heading, using the issue's own literal wording.
 # ---------------------------------------------------------------------------
 
 _FEAT_BAD_BODY = textwrap.dedent(
@@ -131,9 +131,9 @@ _FEAT_BAD_BODY = textwrap.dedent(
 
     ### Task List
 
-    #### Phase 3: Per-domain create_<d> tools
+    #### Phase 300: Per-domain create_<d> tools
 
-    - [x] Task 3.1: Create branch and package skeleton
+    - [x] Task 300.100: Create branch and package skeleton
 
     ## Progress
 
@@ -205,7 +205,7 @@ _DEC_BAD_BODY = textwrap.dedent(
 
 
 class TestIssue70FeatBareHtmlTokenRegression(unittest.TestCase):
-    """The literal issue #70 repro (a bad `#### Phase N: ...` heading), for `feat`."""
+    """The literal issue #70 repro (a bad `#### Phase 300: ...` heading), for `feat`."""
 
     def setUp(self) -> None:
         tmp = Path(self.enterContext(tempfile.TemporaryDirectory()))

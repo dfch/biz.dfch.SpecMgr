@@ -227,6 +227,28 @@
       "title": "FeatFrontmatter",
       "type": "object"
     },
+    "FeatTaskItem": {
+      "description": "`- [ ] Task NNN.MMM: {text}` -- one checklist task entry of a `Phase`'s flat item list.\n\nReuses `tsk.TaskItem`'s `checked`/`description`-from-checkbox split\nas-is, adding one more computed field re-matching the `Task NNN.MMM: `\nprefix against the inherited `description` -- the same layering\n`AcceptanceCriterionItem` above uses for `ACC-NNN: `.\n\nParameters\n----------\ntask_description:\n    Computed. `.description` (already checkbox-stripped) with the\n    `Task NNN.MMM: ` prefix further stripped. Raises `AssertionError`\n    if `.description` does not match `Task \\d{3}\\.\\d{3}: .+`.",
+      "properties": {
+        "content": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/MarkdownParagraph"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Content"
+        }
+      },
+      "title": "FeatTaskItem",
+      "type": "object"
+    },
     "Feature": {
       "description": "The `feat` body: a single H1 section (`# Feature: {title}`) with the fields below.\n\nParameters\n----------\nplan:\n    `## Plan`. Mandatory.\nprogress:\n    `## Progress`. Mandatory.",
       "properties": {
@@ -277,12 +299,12 @@
       "type": "object"
     },
     "Phase": {
-      "description": "`#### Phase N: {title}` under `### Task List` -- one phase's own flat checklist.\n\nUnpadded phase numbers (matching this very plan's own \"Phase 0\"..\"Phase\n5\" headings). Per-item metadata (`depends on:`/`status:`/`ETA`) stays\nunparsed free text inside each item's own description.\n\nParameters\n----------\nitems:\n    The flat `- [ ] .../- [x] ...` checklist for this phase, reusing\n    `tsk.models.v1.task_item.TaskItem` as-is. At least one item.\nnumber:\n    Computed. The phase's number (e.g. `1` for `#### Phase 1: X`).\n    Never stored separately -- derived from the retained heading text.\ntitle:\n    Computed. The phase's title (the heading text after `\": \"`). Never\n    stored separately -- derived from the retained heading text.",
+      "description": "`#### Phase NNN: {title}` under `### Task List` -- one phase's own flat checklist.\n\n3-digit zero-padded phase numbers starting at 100, step 10 (`Phase\n100`, `Phase 110`, ...) by authoring convention -- the schema enforces\nonly the `NNN` shape: gaps and in-between values (e.g. `Phase 105`)\nalways parse, and the step-10 increment is never validated. Each item\ncarries the `Task NNN.MMM: ` prefix enforced by `FeatTaskItem` (see\n`items` below). Per-item metadata (`depends on:`/`status:`/`ETA`) stays\nunparsed free text inside each item's own description.\n\nParameters\n----------\nitems:\n    The flat `- [ ] Task NNN.MMM: .../- [x] Task NNN.MMM: ...`\n    checklist for this phase, as `FeatTaskItem` entries. At least one\n    item.\nnumber:\n    Computed. The phase's number (e.g. `100` for `#### Phase 100: X`).\n    Never stored separately -- derived from the retained heading text.\ntitle:\n    Computed. The phase's title (the heading text after `\": \"`). Never\n    stored separately -- derived from the retained heading text.",
       "properties": {
         "items": {
-          "description": "The flat `- [ ] .../- [x] ...` checklist for this phase, in document order. Must contain at least one item.",
+          "description": "The flat `- [ ] Task NNN.MMM: .../- [x] Task NNN.MMM: ...` checklist for this phase, in document order. Must contain at least one item.",
           "items": {
-            "$ref": "#/$defs/TaskItem"
+            "$ref": "#/$defs/FeatTaskItem"
           },
           "minItems": 1,
           "title": "Items",
@@ -488,33 +510,11 @@
       "title": "Scope",
       "type": "object"
     },
-    "TaskItem": {
-      "description": "One `- [ ] .../- [x] ...` checklist entry of a `Task`'s flat item list.\n\nA leaf `MarkdownListItem` subclass (declares no nested `MarkdownStr`\nfields of its own, only the two computed properties below), so it parses/\nrenders exactly like the base class -- `checked`/`description` are purely\nderived views over the inherited `.text`, computed lazily rather than\nstored, and therefore never interfere with `MarkdownStr`'s field-based\n`from_text`/`__str__` distribution (see `MarkdownStr._get_field_names`).\n\nParameters\n----------\nchecked:\n    Computed. `True` for a `[x]`/`[X]` marker, `False` for a `[ ]`\n    marker. Raises `AssertionError` if `.text` does not start with a\n    well-formed checkbox marker at all.\ndescription:\n    Computed. The item's own text with the leading checkbox marker\n    stripped, e.g. `\"Do the thing\"` for `\"- [ ] Do the thing\"`. Raises\n    `AssertionError` under the same condition as `checked`.\ncontent:\n    An optional list of paragraphs with details content of the task item.",
-      "properties": {
-        "content": {
-          "anyOf": [
-            {
-              "items": {
-                "$ref": "#/$defs/MarkdownParagraph"
-              },
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Content"
-        }
-      },
-      "title": "TaskItem",
-      "type": "object"
-    },
     "TaskList": {
-      "description": "`### Task List` -- container for the `#### Phase N: ...` entries. No own text. Mandatory. At least\none phase.\n\nParameters\n----------\nphases:\n    The `#### Phase N: {title}` entries, in document order. At least\n    one phase.",
+      "description": "`### Task List` -- container for the `#### Phase NNN: ...` entries. No own text. Mandatory. At least\none phase.\n\nParameters\n----------\nphases:\n    The `#### Phase NNN: {title}` entries, in document order. At least\n    one phase.",
       "properties": {
         "phases": {
-          "description": "The `#### Phase N: {title}` entries, in document order. Must contain at least one phase.",
+          "description": "The `#### Phase NNN: {title}` entries, in document order. Must contain at least one phase.",
           "items": {
             "$ref": "#/$defs/Phase"
           },
