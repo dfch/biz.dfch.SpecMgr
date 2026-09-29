@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-27T16:03:36.781+02:00'
 id: feat-163-feat-numbering
-status: review
+status: done
 type: feat
-updated: '2026-09-29T09:03:06.007+02:00'
+updated: '2026-09-29T17:36:54.847+02:00'
 version: 1.0.0
 ---
 
@@ -134,6 +134,19 @@ status.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-29 17:36:54.847+02:00 - Feature closeout (author review approved, status set to `done`)
+
+PR #165 (this feature's plan PR) was squash-merged into `dev` as `a5613e3` on 2026-09-29 and shipped in
+v0.34.0 before the round-2 review fixes were committed, so the round-2 commit `d49f9e3` (the stale 'first
+skill' test-module docstring correction, the widened legacy-task-number guard, the `tests/opencode` package
+docstring naming both project-skill directories, the issue-70 'literal' claims scoped to the heading title,
+the `FeatTaskItem` trailing-colon/empty-description boundary case, and the `_packaged_data` import-style
+alignment -- cosmetic only, no behavior change) lands via this follow-up branch, cherry-picked as `cabbfd8`.
+The author approved the feature for merge; frontmatter `status` set from `review` to `done` by direct edit
+in this worktree (the enabled specmgr MCP server is the packaged `uvx` build with its default base directory,
+not this repo, so the generic `set_status` tool was deliberately not used).
+
 
 #### 2026-09-29 09:03:06.007+02:00 - Round 2 post-implementation review fixes applied (feat-reviewer)
 
