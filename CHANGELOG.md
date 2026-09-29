@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.34.0] - 2026-09-29
+
 ### Added
 
 - Two new generic MCP tools for cross-domain semantic similarity
@@ -63,45 +65,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `SPECMGR_SIMILARITY_DISABLED` opt-out, and pointers to the extended
   `specmgr://config`/`specmgr://version` resources for runtime
   introspection.
-
-### Fixed
-
-- The `_similarity_availability` unavailable-backend message's install
-  instruction now names both extras together --
-  `pip install 'biz-dfch-specmgr[mcp,similarity]'` -- instead of
-  `[similarity]` alone (feat-134 follow-up, GitHub issue #134): in
-  practice `mcp` is always a prerequisite to even reach `find_related`/
-  `find_similar_text`, since every domain package's `__init__.py`
-  (including `general/__init__.py`, which `general/tools/_embedding.py`
-  lives under) unconditionally imports `prompts`/`resources`/`tools`,
-  and those transitively import `server.py`'s
-  `from mcp.server import MCPServer` -- so `[similarity]` alone was
-  never actually sufficient. Pinned by a new regression test
-  (`tests/general/tools/test__embedding.py::TestSimilarityAvailability::
-  test_backend_unavailable_message_wording_pinned`).
-- The similarity engine's title scan (`first_h1` in
-  `general/tools/_similarity_text.py`) now accepts both level-1 heading
-  syntaxes markdown-it emits as an `h1` token -- ATX (`# Title`) and
-  setext (`Title` over a `===` underline, with fenced-code-block tracking
-  and CommonMark's 0-3 leading-space indent tolerance) (GitHub issue
-  #134): a single parseable document with a setext H1 previously made the
-  engine's "parsed documents carry their own mandatory H1" invariant
-  fire, crashing every `find_related`/`find_similar_text` call and
-  aborting the startup warmup mid-corpus.
-- The similarity engine's remaining second-review findings (GitHub issue
-  #134): the availability-before-validation ordering (a
-  disabled/backend-missing environment returns the structured
-  unavailable result even for invalid arguments) is now pinned by
-  committed tests instead of an ad hoc smoke script; the embedding cache
-  stores each candidate's result-row metadata (`id`/`title`/`status`)
-  alongside its vector, so a warm candidate is one file read and no
-  parse (a cold one, one of each) instead of the prior two reads and up
-  to two parses; the `find_similar_text` query is now embedded before the
-  corpus walk (a query-embedding failure surfaces immediately, bad
-  arguments still read and embed nothing); and the `min_score` filter
-  applies a float32 accumulation epsilon (`1e-6`), so an exact
-  self-match scoring `0.9999999...` is no longer dropped by
-  `min_score=1.0`.
 
 - `repair`, a new cross-cutting MCP prompt in `general/prompts/`
   (feat-150-mcp-lifecycle-commands, GitHub issue #150, Phase 1):
@@ -270,6 +233,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   {text}` / `- [x] Task NNN.MMM: {text}` checklist items) instead of the
   legacy `Phase N`/`Task N.M` shapes (feat-163-feat-numbering, GitHub
   issue #163, REQ-011).
+
+### Fixed
+
+- The `_similarity_availability` unavailable-backend message's install
+  instruction now names both extras together --
+  `pip install 'biz-dfch-specmgr[mcp,similarity]'` -- instead of
+  `[similarity]` alone (feat-134 follow-up, GitHub issue #134): in
+  practice `mcp` is always a prerequisite to even reach `find_related`/
+  `find_similar_text`, since every domain package's `__init__.py`
+  (including `general/__init__.py`, which `general/tools/_embedding.py`
+  lives under) unconditionally imports `prompts`/`resources`/`tools`,
+  and those transitively import `server.py`'s
+  `from mcp.server import MCPServer` -- so `[similarity]` alone was
+  never actually sufficient. Pinned by a new regression test
+  (`tests/general/tools/test__embedding.py::TestSimilarityAvailability::
+  test_backend_unavailable_message_wording_pinned`).
+- The similarity engine's title scan (`first_h1` in
+  `general/tools/_similarity_text.py`) now accepts both level-1 heading
+  syntaxes markdown-it emits as an `h1` token -- ATX (`# Title`) and
+  setext (`Title` over a `===` underline, with fenced-code-block tracking
+  and CommonMark's 0-3 leading-space indent tolerance) (GitHub issue
+  #134): a single parseable document with a setext H1 previously made the
+  engine's "parsed documents carry their own mandatory H1" invariant
+  fire, crashing every `find_related`/`find_similar_text` call and
+  aborting the startup warmup mid-corpus.
+- The similarity engine's remaining second-review findings (GitHub issue
+  #134): the availability-before-validation ordering (a
+  disabled/backend-missing environment returns the structured
+  unavailable result even for invalid arguments) is now pinned by
+  committed tests instead of an ad hoc smoke script; the embedding cache
+  stores each candidate's result-row metadata (`id`/`title`/`status`)
+  alongside its vector, so a warm candidate is one file read and no
+  parse (a cold one, one of each) instead of the prior two reads and up
+  to two parses; the `find_similar_text` query is now embedded before the
+  corpus walk (a query-embedding failure surfaces immediately, bad
+  arguments still read and embed nothing); and the `min_score` filter
+  applies a float32 accumulation epsilon (`1e-6`), so an exact
+  self-match scoring `0.9999999...` is no longer dropped by
+  `min_score=1.0`.
 
 ## [0.33.0] - 2026-09-27
 
