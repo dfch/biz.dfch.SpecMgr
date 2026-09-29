@@ -9,6 +9,87 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Two new generic MCP tools for cross-domain semantic similarity
+  (GitHub issue #134): `find_related` finds the documents most related to
+  an existing document, given its `type`/`id`, and `find_similar_text`
+  finds the documents most similar to a free-form `query` (for
+  pre-creation dedup/discovery checks). Both rank by cosine similarity of
+  local sentence embeddings across every whole-body domain (req, uc, tsk,
+  qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs; `adr` is excluded
+  structurally), returning up to `top_k` (default 10, validated 1..100)
+  `{type, id, title, status, path, score}` rows sorted by score
+  descending; an unparseable candidate still appears, embedded from its
+  full raw text, with the `<failed to parse>` marker title/status and
+  `id = null`.
+- A new optional `similarity` dependency extra holding the embedding
+  backend (`fastembed` + `BAAI/bge-small-en-v1.5`, CPU-only via ONNX
+  Runtime) (GitHub issue #134) -- install with
+  `pip install 'biz-dfch-specmgr[similarity]'`; the model is downloaded
+  once on first use, after which inference is fully local.
+- The presence-based `SPECMGR_SIMILARITY_DISABLED` environment variable
+  (any value) to opt out of the similarity feature at runtime (GitHub
+  issue #134).
+- A structured, non-raising `{available: false, reason, message}`
+  result that both similarity tools return instead of raising whenever
+  the embedding backend is unavailable (the `similarity` extra not
+  installed, the model failing to load, or the opt-out flag present) --
+  the tools always register and stay in the tool list (GitHub issue
+  #134).
+- A static `similarity` section on the `specmgr://config` resource for
+  the semantic-similarity feature (GitHub issue #134, feat-134 Phase
+  7): whether the `similarity` extra (`fastembed`) is installed (an
+  `importlib.util.find_spec` spec lookup, never an import), whether the
+  presence-based `SPECMGR_SIMILARITY_DISABLED` opt-out flag is set, the
+  fixed model name (`BAAI/bge-small-en-v1.5`), and the resolved model
+  cache directory (`FASTEMBED_CACHE_PATH` if set, else
+  `<tempdir>/fastembed_cache`) -- reported, never created: reading the
+  resource stays side-effect-free (no model load, no directory
+  creation). It reports static configuration only; the tools' own
+  dynamic runtime availability remains their structured
+  `{available: false, reason, message}` result (no `loaded` field).
+- The installed `fastembed` package version on the `specmgr://version`
+  resource (GitHub issue #134, feat-134 Phase 7), or `null` when the
+  `similarity` extra is not installed -- read via `importlib.metadata`,
+  never by importing `fastembed` itself.
+- A consolidated `### Semantic Similarity Search` subsection in the
+  README's `## MCP Server` section (GitHub issue #134, feat-134 Phase
+  7): what `find_related`/`find_similar_text` do (and that both always
+  register regardless of install/runtime state), the install commands
+  (cross-referenced with the `## Installation` section), the
+  backend/model identity (`fastembed` + `BAAI/bge-small-en-v1.5`,
+  CPU-only ONNX Runtime), the non-blocking background warmup thread at
+  server startup (correcting the prior "on first use" wording), the
+  model cache location/override (`FASTEMBED_CACHE_PATH`), the
+  `SPECMGR_SIMILARITY_DISABLED` opt-out, and pointers to the extended
+  `specmgr://config`/`specmgr://version` resources for runtime
+  introspection.
+
+### Fixed
+
+- The similarity engine's title scan (`first_h1` in
+  `general/tools/_similarity_text.py`) now accepts both level-1 heading
+  syntaxes markdown-it emits as an `h1` token -- ATX (`# Title`) and
+  setext (`Title` over a `===` underline, with fenced-code-block tracking
+  and CommonMark's 0-3 leading-space indent tolerance) (GitHub issue
+  #134): a single parseable document with a setext H1 previously made the
+  engine's "parsed documents carry their own mandatory H1" invariant
+  fire, crashing every `find_related`/`find_similar_text` call and
+  aborting the startup warmup mid-corpus.
+- The similarity engine's remaining second-review findings (GitHub issue
+  #134): the availability-before-validation ordering (a
+  disabled/backend-missing environment returns the structured
+  unavailable result even for invalid arguments) is now pinned by
+  committed tests instead of an ad hoc smoke script; the embedding cache
+  stores each candidate's result-row metadata (`id`/`title`/`status`)
+  alongside its vector, so a warm candidate is one file read and no
+  parse (a cold one, one of each) instead of the prior two reads and up
+  to two parses; the `find_similar_text` query is now embedded before the
+  corpus walk (a query-embedding failure surfaces immediately, bad
+  arguments still read and embed nothing); and the `min_score` filter
+  applies a float32 accumulation epsilon (`1e-6`), so an exact
+  self-match scoring `0.9999999...` is no longer dropped by
+  `min_score=1.0`.
+
 - `repair`, a new cross-cutting MCP prompt in `general/prompts/`
   (feat-150-mcp-lifecycle-commands, GitHub issue #150, Phase 1):
   `repair(type, id=None)` narrates repairing a whole-body document
@@ -161,6 +242,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   {text}` / `- [x] Task NNN.MMM: {text}` checklist items) instead of the
   legacy `Phase N`/`Task N.M` shapes (feat-163-feat-numbering, GitHub
   issue #163, REQ-011).
+
 ## [0.33.0] - 2026-09-27
 
 ### Added

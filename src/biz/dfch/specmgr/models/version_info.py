@@ -29,6 +29,13 @@ class VersionInfo(BaseModel):
     ----------
     specmgr:
         Version of the ``biz-dfch-specmgr`` package.
+    fastembed:
+        Version of the installed ``fastembed`` package (the
+        ``similarity`` extra's embedding backend), or ``None`` when the
+        extra is not installed (``importlib.metadata.PackageNotFoundError``)
+        -- read via ``importlib.metadata`` without importing
+        ``fastembed`` itself (feat-134 Phase 7, REQ-014).
     """
 
     specmgr: str
+    fastembed: str | None

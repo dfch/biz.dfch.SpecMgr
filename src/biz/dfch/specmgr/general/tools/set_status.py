@@ -116,7 +116,6 @@ lock.
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Literal
 
 import frontmatter
 
@@ -215,7 +214,7 @@ from ...vcr.tools._io import read_vcr
 from ...vcr.tools._lock import vcr_lock
 from ...vcr.tools._paths import vcr_base_dir
 from ...vcr.tools._write import write_vcr_file
-from ._domains import ADR, ALL_DOMAINS
+from ._domains import ADR, ALL_DOMAINS, WholeBodyOrAdrType
 from ._path_safety import assert_within, validate_id
 from ._timestamps import now_timestamp
 
@@ -739,7 +738,7 @@ assert set(_ADAPTERS) == set(ALL_DOMAINS), (
 )
 def set_status(
     id: str,
-    type: Literal[*ALL_DOMAINS],
+    type: WholeBodyOrAdrType,
     status: str,
     superseded_by: str | None = None,
 ) -> _SetStatusFrontmatter | InvalidStatusResult:

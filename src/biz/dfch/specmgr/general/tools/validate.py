@@ -83,7 +83,6 @@ to the builtin shadow.
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Literal
 
 import frontmatter
 import yaml
@@ -106,7 +105,7 @@ from ...sysrs.models.v1 import Sysrs, parse_sysrs
 from ...tsk.models.v1 import Task, parse_tsk
 from ...uc.models.v2 import UseCase, parse_uc
 from ...vcr.models.v1 import Vcr, parse_vcr
-from ._domains import WHOLE_BODY_DOMAINS
+from ._domains import WHOLE_BODY_DOMAINS, WholeBodyType
 
 __all__ = ["validate"]
 
@@ -543,7 +542,7 @@ assert set(_ADAPTERS) == set(WHOLE_BODY_DOMAINS), (
     ),
 )
 def validate(
-    type: Literal[*WHOLE_BODY_DOMAINS],
+    type: WholeBodyType,
     content: str,
     full: bool = False,
 ) -> ValidateResult:

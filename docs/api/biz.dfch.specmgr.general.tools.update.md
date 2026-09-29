@@ -193,7 +193,7 @@ frontmatter carry-over with only ``updated`` bumped, ``write_vcr_file``,
 :func:`_update_req`).
 
 
-### `update(id: 'str', type: 'Literal[*WHOLE_BODY_DOMAINS,]', content: 'str', offset: 'int | None' = None, limit: 'int | None' = None) -> '_UpdateFrontmatter'`
+### `update(id: 'str', type: 'WholeBodyType', content: 'str', offset: 'int | None' = None, limit: 'int | None' = None) -> '_UpdateFrontmatter'`
 
 Replace the body of an existing document, in whole-body or line-range mode.
 

@@ -60,6 +60,10 @@ Index of all ADRs in this repository.
   - Id: 737858a9-7796-4f01-ae35-5afc1c707818
   - Status: accepted
   - Date: 2026-08-05
+- [Add an embedding-based, cross-domain semantic similarity engine (find_related / find_similar_text) with a pluggable CPU-only provider](750842b2-aca4-4649-ba0c-855ec8e1f505-add-an-embedding-based-cross-domain-semantic-similarity-engi.md)
+  - Id: 750842b2-aca4-4649-ba0c-855ec8e1f505
+  - Status: accepted
+  - Decision-makers: dfch
 - [Expose listing and by-id reads as MCP resources in addition to tools](7531106b-074b-4bd8-a83a-e433d01676e2-expose-listing-and-by-id-reads-as-mcp-resources-in-addition.md)
   - Id: 7531106b-074b-4bd8-a83a-e433d01676e2
   - Status: accepted
