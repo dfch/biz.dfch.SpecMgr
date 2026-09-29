@@ -7,7 +7,9 @@ through revising an existing Problem Statement (PRB) document by id, using
 the existing ``prb/tools/`` surface (``get_prb``, generic ``validate`` tool) plus
 the generic ``update``/``set_status`` tools in ``general/tools/`` (called
 with ``type="prb"``; ``get_prb``'s ``raw=True`` parameter serves the
-line-range flow's line numbers, and also serves the old-shape recovery flow
+line-range flow's line numbers -- with ``numbered=True`` additionally
+printing each line's 1-based body-line number, ready to feed into
+``update``'s ``offset`` -- and also serves the old-shape recovery flow
 below). There is no ``specmgr://prb/{id}`` resource to point at -- id-based
 reads always go through the ``get_prb`` tool only.
 

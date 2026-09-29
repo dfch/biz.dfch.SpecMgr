@@ -19,7 +19,9 @@ Like the ``update_qa`` prompt, this targets an existing document via the
 ``qa/tools/`` surface (``get_qa``, ``list_qa`` -- the last to resolve a
 title to an id when no id is given), the generic ``update`` tool in
 ``general/tools/`` (``type="qa"`` -- the ``N+1`` range appends the new
-pairs, the whole-body path carries the document forward), and the
+pairs, whose offset is counted from ``get_qa``'s ``raw=True``/
+``numbered=True`` read, the whole-body path carries the document
+forward), and the
 ``specmgr://iso25010`` resource (to ground each new question in that
 characteristic's actual definition).
 This prompt deliberately does not

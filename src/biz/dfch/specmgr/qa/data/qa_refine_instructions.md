@@ -87,10 +87,18 @@ The generic `update` tool is a whole-body replace unless you give it a
 line range:
 - **Clean append (the `N+1` range)**: when the new pairs all go at the
   very end of the body (every targeted category is the document's last
-  `##` section), call `get_qa(id, raw=True)` to count the body's lines
-  (`N`) and call `update(id, type="qa", content, offset=N+1)`
-  passing only the new pairs -- the `N+1` position is end-of-body, so
-  this appends without touching any existing line.
+  `##` section), call `get_qa(id, raw=True, numbered=True)` to count
+  the body's lines (`N`) -- the highest printed 1-based body-line number
+  is `N`, so no manual counting is needed and the number seen can be
+  fed straight back into `update`'s `offset` -- and call
+  `update(id, type="qa", content, offset=N+1)` passing only the new
+  pairs -- the `N+1` position is end-of-body, so this appends without
+  touching any existing line. `offset` addresses the frontmatter-
+  stripped body, never the raw on-disk `.md` file: the YAML frontmatter
+  block is variable-length, so a raw file read's line numbers are never
+  the same as body-line coordinates -- and never feed the
+  `numbered=True` output back verbatim as `content`: strip the
+  `"<n>: "` prefix from each line first.
 - **Otherwise (whole-body replace)**: carry forward every section of
   the document exactly as read in step 1 (including all ten fixed
   category headings, even ones you are not adding questions to this

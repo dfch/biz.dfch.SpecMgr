@@ -56,10 +56,13 @@ touch the roles section.
   replace** otherwise. `content` is body markdown only (no frontmatter
   block) in both cases.
   - **Line-range replace** (a localized change -- one paragraph, field,
-    or section): first call `get_sop(id, raw=True)` to see the exact
-    body text, identify the 1-based line to start at and how many lines
-    to replace -- `offset` is the first body line, `limit` the number of
-    lines (`offset`..`offset+limit-1`); `limit` omitted replaces through
+    or section): first call `get_sop(id, raw=True, numbered=True)` to
+    see the exact body text -- every line prefixed with its 1-based
+    body-line number, so no manual counting is needed and a number seen
+    can be fed straight back into `update`'s `offset` -- identify the
+    1-based line to start at and how many lines to replace -- `offset`
+    is the first body line, `limit` the number of lines
+    (`offset`..`offset+limit-1`); `limit` omitted replaces through
     the last body line, `limit=0` is a pure insert, and the `N+1`
     position is end-of-body: `offset = N+1` appends after the last line
     -- and call `update(id, type="sop", content, offset=..., limit=...)`
@@ -75,6 +78,12 @@ touch the roles section.
     date+time form `yyyy-MM-dd[T ]HH:mm:ss.fff` + `Z` or `±HH:mm` (the
     date/time separator may be `T` or a space; a date-only timestamp is
     rejected), followed by a mandatory lead paragraph.
+    `offset`/`limit` address the frontmatter-stripped body, never the
+    raw on-disk `.md` file: the YAML frontmatter block is variable-
+    length, so a raw file read's line numbers are never the same as
+    body-line coordinates -- and never feed the `numbered=True` output
+    back verbatim as `content`: strip the `"<n>: "` prefix from each
+    line first.
   - **Whole-body replace** (a multi-section change, or whenever you are
     uncertain about the line range): call
     `update(id, type="sop", content)` with no `offset`/`limit` --

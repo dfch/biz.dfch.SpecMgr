@@ -177,45 +177,90 @@ ADR tools (``adr/tools/``): ``get_adr``, ``list_adr``, ``create_adr``, ``update_
 ``option_update``, ``option_read``, ``option_delete``, ``validate_adr``.
 Use-case tools (``uc/tools/``): ``parse_uc``, ``get_uc`` (``raw=True`` returns the
 frontmatter-stripped body text verbatim instead of the parsed document, optionally
-windowed with read-style ``offset``/``limit`` (raw-only, clamping)), ``list_uc``,
+windowed with read-style ``offset``/``limit`` (raw-only, clamping), and, with
+``numbered=True`` (raw-only; ``ValueError`` with ``raw=False``, like
+``offset``/``limit``), prefixes every returned body line with its 1-based absolute
+body-line number in the ``"<n>: "`` form -- a windowed numbered read numbers from
+the clamped offset and never restarts, so a number seen can be fed straight back
+into the generic ``update`` tool's ``offset``)), ``list_uc``,
 ``get_uc_example``,
 ``get_uc_template``, ``create_uc``.
 Requirement tools (``req/tools/``): ``parse_req``, ``get_req`` (``raw=True`` returns the
 frontmatter-stripped body text verbatim instead of the parsed document, optionally
-windowed with read-style ``offset``/``limit`` (raw-only, clamping)), ``list_req``,
+windowed with read-style ``offset``/``limit`` (raw-only, clamping), and, with
+``numbered=True`` (raw-only; ``ValueError`` with ``raw=False``, like
+``offset``/``limit``), prefixes every returned body line with its 1-based absolute
+body-line number in the ``"<n>: "`` form -- a windowed numbered read numbers from
+the clamped offset and never restarts, so a number seen can be fed straight back
+into the generic ``update`` tool's ``offset``)), ``list_req``,
 ``get_req_example``,
 ``get_req_template``, ``create_req``.
 Task list tools (``tsk/tools/``): ``parse_tsk``, ``get_tsk`` (``raw=True`` returns the
 frontmatter-stripped body text verbatim instead of the parsed document, optionally
-windowed with read-style ``offset``/``limit`` (raw-only, clamping)), ``list_tsk``,
+windowed with read-style ``offset``/``limit`` (raw-only, clamping), and, with
+``numbered=True`` (raw-only; ``ValueError`` with ``raw=False``, like
+``offset``/``limit``), prefixes every returned body line with its 1-based absolute
+body-line number in the ``"<n>: "`` form -- a windowed numbered read numbers from
+the clamped offset and never restarts, so a number seen can be fed straight back
+into the generic ``update`` tool's ``offset``)), ``list_tsk``,
 ``get_tsk_example``,
 ``get_tsk_template``, ``create_tsk``.
 QA tools (``qa/tools/``): ``parse_qa``, ``get_qa`` (``raw=True`` returns the
 frontmatter-stripped body text verbatim instead of the parsed document, optionally
-windowed with read-style ``offset``/``limit`` (raw-only, clamping)), ``list_qa``,
+windowed with read-style ``offset``/``limit`` (raw-only, clamping), and, with
+``numbered=True`` (raw-only; ``ValueError`` with ``raw=False``, like
+``offset``/``limit``), prefixes every returned body line with its 1-based absolute
+body-line number in the ``"<n>: "`` form -- a windowed numbered read numbers from
+the clamped offset and never restarts, so a number seen can be fed straight back
+into the generic ``update`` tool's ``offset``)), ``list_qa``,
 ``get_qa_example``,
 ``get_qa_template``, ``create_qa``.
 Problem statement tools (``prb/tools/``): ``parse_prb``, ``get_prb`` (``raw=True`` returns
 the frontmatter-stripped body text verbatim instead of the parsed document, optionally
-windowed with read-style ``offset``/``limit`` (raw-only, clamping)), ``list_prb``,
+windowed with read-style ``offset``/``limit`` (raw-only, clamping), and, with
+``numbered=True`` (raw-only; ``ValueError`` with ``raw=False``, like
+``offset``/``limit``), prefixes every returned body line with its 1-based absolute
+body-line number in the ``"<n>: "`` form -- a windowed numbered read numbers from
+the clamped offset and never restarts, so a number seen can be fed straight back
+into the generic ``update`` tool's ``offset``)), ``list_prb``,
 ``get_prb_example``, ``get_prb_template``, ``create_prb``.
 Goal tools (``gol/tools/``): ``parse_gol``, ``get_gol`` (``raw=True`` returns the
 frontmatter-stripped body text verbatim instead of the parsed document, optionally
-windowed with read-style ``offset``/``limit`` (raw-only, clamping)), ``list_gol``,
+windowed with read-style ``offset``/``limit`` (raw-only, clamping), and, with
+``numbered=True`` (raw-only; ``ValueError`` with ``raw=False``, like
+``offset``/``limit``), prefixes every returned body line with its 1-based absolute
+body-line number in the ``"<n>: "`` form -- a windowed numbered read numbers from
+the clamped offset and never restarts, so a number seen can be fed straight back
+into the generic ``update`` tool's ``offset``)), ``list_gol``,
 ``get_gol_example``, ``get_gol_template``, ``create_gol``.
  Risk tools (``rsk/tools/``): ``parse_rsk``, ``get_rsk`` (``raw=True`` returns the
 frontmatter-stripped body text verbatim instead of the parsed document, optionally
-windowed with read-style ``offset``/``limit`` (raw-only, clamping)), ``list_rsk``,
+windowed with read-style ``offset``/``limit`` (raw-only, clamping), and, with
+``numbered=True`` (raw-only; ``ValueError`` with ``raw=False``, like
+``offset``/``limit``), prefixes every returned body line with its 1-based absolute
+body-line number in the ``"<n>: "`` form -- a windowed numbered read numbers from
+the clamped offset and never restarts, so a number seen can be fed straight back
+into the generic ``update`` tool's ``offset``)), ``list_rsk``,
  ``get_rsk_example``,
  ``get_rsk_template``, ``create_rsk``.
-   Decision tools (``dec/tools/``): ``parse_dec``, ``get_dec`` (``raw=True`` returns the
+    Decision tools (``dec/tools/``): ``parse_dec``, ``get_dec`` (``raw=True`` returns the
 frontmatter-stripped body text verbatim instead of the parsed document, optionally
-windowed with read-style ``offset``/``limit`` (raw-only, clamping)), ``list_dec``,
+windowed with read-style ``offset``/``limit`` (raw-only, clamping), and, with
+``numbered=True`` (raw-only; ``ValueError`` with ``raw=False``, like
+``offset``/``limit``), prefixes every returned body line with its 1-based absolute
+body-line number in the ``"<n>: "`` form -- a windowed numbered read numbers from
+the clamped offset and never restarts, so a number seen can be fed straight back
+into the generic ``update`` tool's ``offset``)), ``list_dec``,
     ``get_dec_example``,
     ``get_dec_template``, ``create_dec``.
-    SOP tools (``sop/tools/``): ``parse_sop``, ``get_sop`` (``raw=True`` returns the
+     SOP tools (``sop/tools/``): ``parse_sop``, ``get_sop`` (``raw=True`` returns the
 frontmatter-stripped body text verbatim instead of the parsed document, optionally
-windowed with read-style ``offset``/``limit`` (raw-only, clamping)), ``list_sop``,
+windowed with read-style ``offset``/``limit`` (raw-only, clamping), and, with
+``numbered=True`` (raw-only; ``ValueError`` with ``raw=False``, like
+``offset``/``limit``), prefixes every returned body line with its 1-based absolute
+body-line number in the ``"<n>: "`` form -- a windowed numbered read numbers from
+the clamped offset and never restarts, so a number seen can be fed straight back
+into the generic ``update`` tool's ``offset``)), ``list_sop``,
     ``get_sop_example``,
     ``get_sop_template``, ``create_sop``. SOP is the first domain with NO
     per-domain ``update_sop``/``set_status_sop`` tools at all -- whole-body and line-range
@@ -228,7 +273,12 @@ windowed with read-style ``offset``/``limit`` (raw-only, clamping)), ``list_sop`
     ``specmgr://rasci``.
   Feature tools (``feat/tools/``): ``parse_feat``, ``get_feat`` (``raw=True`` returns the
 frontmatter-stripped body text verbatim instead of the parsed document, optionally
-windowed with read-style ``offset``/``limit`` (raw-only, clamping)), ``list_feat``,
+windowed with read-style ``offset``/``limit`` (raw-only, clamping), and, with
+``numbered=True`` (raw-only; ``ValueError`` with ``raw=False``, like
+``offset``/``limit``), prefixes every returned body line with its 1-based absolute
+body-line number in the ``"<n>: "`` form -- a windowed numbered read numbers from
+the clamped offset and never restarts, so a number seen can be fed straight back
+into the generic ``update`` tool's ``offset``)), ``list_feat``,
   ``get_feat_example``,
   ``get_feat_template``, ``create_feat``, ``set_feat_id`` (renames an existing feature's
   ``feat-NNN-slug`` id: validates the new id's shape, refuses if the target folder already
@@ -241,12 +291,22 @@ windowed with read-style ``offset``/``limit`` (raw-only, clamping)), ``list_feat
   Verification case record tools (``vcr/tools/``): ``parse_vcr``, ``get_vcr``
   (``raw=True`` returns the frontmatter-stripped body text verbatim instead of the
   parsed document, optionally windowed with read-style ``offset``/``limit``
-  (raw-only, clamping)), ``list_vcr``, ``get_vcr_example``, ``get_vcr_template``,
+  (raw-only, clamping), and, with ``numbered=True`` (raw-only; ``ValueError`` with
+  ``raw=False``, like ``offset``/``limit``), prefixes every returned body line with
+  its 1-based absolute body-line number in the ``"<n>: "`` form -- a windowed
+  numbered read numbers from the clamped offset and never restarts, so a number
+  seen can be fed straight back into the generic ``update`` tool's
+  ``offset``)), ``list_vcr``, ``get_vcr_example``, ``get_vcr_template``,
   ``create_vcr``.
   System Requirements Specification tools (``sysrs/tools/``): ``parse_sysrs``,
   ``get_sysrs`` (``raw=True`` returns the frontmatter-stripped body text verbatim
   instead of the parsed document, optionally windowed with read-style
-  ``offset``/``limit`` (raw-only, clamping)), ``list_sysrs``, ``get_sysrs_example``,
+  ``offset``/``limit`` (raw-only, clamping), and, with ``numbered=True`` (raw-only;
+  ``ValueError`` with ``raw=False``, like ``offset``/``limit``), prefixes every
+  returned body line with its 1-based absolute body-line number in the
+  ``"<n>: "`` form -- a windowed numbered read numbers from the clamped offset and
+  never restarts, so a number seen can be fed straight back into the generic
+  ``update`` tool's ``offset``)), ``list_sysrs``, ``get_sysrs_example``,
   ``get_sysrs_template``, ``create_sysrs``. ``sysrs`` is an
   aggregator domain tying together already-existing artifacts (``gol``, ``prb``,
   ``qa``, ``uc``, ``req``, ``rsk``, ``dec``/``adr``, ``vcr``) via per-section
@@ -257,13 +317,28 @@ windowed with read-style ``offset``/``limit`` (raw-only, clamping)), ``list_feat
   General tools (``general/tools/``): ``mdformat`` -- format markdown files in place,
 preserving YAML frontmatter blocks; ``update`` -- whole-body or line-range replace of an
 existing document's content across the whole-body domains (``type`` is one of
- ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``;
- optional read-style
- ``offset``/``limit`` body-line coordinates -- ``offset`` = 1-based first line,
- ``limit`` = number of lines, omitted ``limit`` = through end of body, ``0`` =
- pure insert, ``offset = N+1`` = the virtual end-of-body append position;
-  strict validation; the spliced result is validated as a whole document
-  before anything is written);
+  ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``;
+  optional read-style
+  ``offset``/``limit`` body-line coordinates -- ``offset`` = 1-based first line,
+  ``limit`` = number of lines, omitted ``limit`` = through end of body, ``0`` =
+  pure insert, ``offset = N+1`` = the virtual end-of-body append position;
+   ``offset``/``limit`` address the frontmatter-stripped body, never the raw
+   on-disk ``.md`` file -- the YAML frontmatter block is variable-length, so a
+   raw file read's line numbers are never the same as body-line coordinates
+   (the only safe source of coordinates is a ``get_<d>(id, raw=True)`` read,
+   never a raw file read minus an assumed constant), and a
+   ``get_<d>(raw=True, numbered=True)`` read's numbered output must never be
+   fed back verbatim into ``content`` (strip the ``"<n>: "`` prefix from each
+   line first); strict validation; the spliced result is validated as a whole
+   document before anything is written; on success returns an
+   ``UpdateResult``: ``frontmatter`` (the updated frontmatter only, no body)
+   plus ``snippet`` -- in range mode, the before/after window of the touched
+   range (dropped lines numbered pre-splice, inserted lines numbered
+   post-splice, up to 2 unchanged context lines per side), bounded by the
+   touched range rather than the document size; ``snippet`` is ``None`` in
+   whole-body mode and for the whole-body-equivalent range (``offset=1`` with
+   ``limit`` omitted) (feat-153-off-by-n, GitHub issue #153, ADR
+   19ff316b-cd11-41a7-a616-ffd84917da51));
   ``edit`` (feat-159-edit, GitHub issue #159) -- surgical, exact-match string
   replacement of an existing document's frontmatter-stripped body across the
   whole-body domains (``type`` is one of

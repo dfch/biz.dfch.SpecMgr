@@ -441,12 +441,20 @@ type or cross-cutting:
   `path: str` field every other whole-body domain's summary also carries
   via the shared `DocSummary` base (feat-81-83-validation Phase 3/4), no
   longer a `feat`-only divergence. Unlike every other domain, though,
-  `feat`'s own workflow -- direct hand/agent editing of
-  `.specmgr/feat/<id>/README.md` -- treats this shared `path` as a
-  first-class, sanctioned read/edit entry point by original design, not
-   merely an incidental convenience every other domain only gained
-   later. See `.specmgr/feat/feat-31-feature/README.md` for the full
-  design.
+   `feat`'s own workflow -- direct hand/agent editing of
+   `.specmgr/feat/<id>/README.md` -- treats this shared `path` as a
+   first-class, sanctioned read/edit entry point by original design, not
+    merely an incidental convenience every other domain only gained
+    later. That direct-file-editing workflow must keep the generic
+    `update` tool's coordinate mismatch in mind: a raw on-disk `.md`
+    file's line numbers are never `update`'s `offset`/`limit` body-line
+    coordinates (the YAML frontmatter block is variable-length), so the
+    only safe source of coordinates is `get_feat(id, raw=True)`
+    (optionally `numbered=True`), never a raw file read minus an assumed
+    constant (feat-153-off-by-n, GitHub issue #153, ADR
+    19ff316b-cd11-41a7-a616-ffd84917da51). See
+   `.specmgr/feat/feat-31-feature/README.md` for the full
+   design.
 - **`vcr/`** (Verification Case Record) — same tools/resources/prompts
   shape as `req/`/`prb/`/`dec/` but for how a single REQ/UC is verified: a
   `## Verifies` single-value cross-reference (exactly one mandatory
@@ -541,11 +549,25 @@ type or cross-cutting:
     `general/tools/` (`mdformat`, formats a markdown file in place while
     preserving YAML frontmatter blocks; `update`, the generic whole-body
      *and* line-range replace for the whole-body domains — `type` is
-     one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs, read-style
-     `offset`/`limit` body-line coordinates (`offset` = 1-based first line,
-     `limit` = count; omitted `limit` = through end of body, `0` = pure
-     insert, `offset` `N+1` = append; strict validation, never clamped),
-      splice-then-validate-whole; `edit`, the generic surgical exact-match
+      one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs, read-style
+      `offset`/`limit` body-line coordinates (`offset` = 1-based first line,
+      `limit` = count; omitted `limit` = through end of body, `0` = pure
+      insert, `offset` `N+1` = append; strict validation, never clamped),
+      `offset`/`limit` address the frontmatter-stripped body, never the raw
+      on-disk `.md` file (the YAML frontmatter block is variable-length, so
+      a raw file read's line numbers are never the same as body-line
+      coordinates — the only safe source of coordinates is a
+      `get_<d>(id, raw=True)` read, never a raw file read minus an assumed
+      constant), and a success return of `UpdateResult` — `frontmatter`
+      (the updated frontmatter only, no body) plus `snippet`, `None` in
+      whole-body mode and, in range mode, the before/after window of the
+      touched range (dropped lines numbered pre-splice, inserted lines
+      numbered post-splice, up to 2 unchanged context lines per side),
+      bounded by the touched range rather than the document size (the
+      whole-body-equivalent `offset=1` + omitted-`limit` range returns
+      `snippet=None` too; feat-153-off-by-n, GitHub issue #153, ADR
+      19ff316b-cd11-41a7-a616-ffd84917da51),
+       splice-then-validate-whole; `edit`, the generic surgical exact-match
       string replacement of an existing document's frontmatter-stripped body
       across the whole-body domains (`type` is one of
       req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs; `adr` excluded —
@@ -605,15 +627,23 @@ type or cross-cutting:
         source `type`/`id` (path-injection attempt or wrong-format id) is
         a `ValueError` before any filesystem access, and a missing source
         raises the source domain's not-found error, identical to `get_<d>`.
-        On a successful write, `update`, `set_status` (its
-      non-`adr` adapters), `set_classification`, and every per-domain
-     `create_<d>` tool now return the domain's frontmatter object only (no
-     body) — small and bounded regardless of document size, unlike an
-     append-only document's ever-growing body — with the `adr` dispatch
-     branch of `set_status` and every ADR-specific tool (`create_adr`,
-     `update_frontmatter`, `update_section`, the `option_*` tools) excluded,
-     still returning the full document with `body` intact
-     (feat-69-update-context). `general/resources/`
+         On a successful write, `set_status` (its
+       non-`adr` adapters), `set_classification`, and every per-domain
+      `create_<d>` tool return the domain's frontmatter object only (no
+      body) — small and bounded regardless of document size, unlike an
+      append-only document's ever-growing body — with the `adr` dispatch
+      branch of `set_status` and every ADR-specific tool (`create_adr`,
+      `update_frontmatter`, `update_section`, the `option_*` tools) excluded,
+      still returning the full document with `body` intact
+      (feat-69-update-context); `update` is the deliberate exception to that
+      frontmatter-only precedent — since feat-153-off-by-n (GitHub issue
+      #153, ADR 19ff316b-cd11-41a7-a616-ffd84917da51) it returns the
+      `UpdateResult` wrapper instead: the same per-domain frontmatter object
+      under `frontmatter`, plus `snippet`, which is `None` in whole-body mode
+      and, in range mode, the before/after window of the touched range
+      (bounded by the touched range rather than the document size), so the
+      "small and bounded" property now holds for the snippet via that
+      bounded-by-touched-range contract. `general/resources/`
     (`specmgr://version`, `specmgr://iso25010` — the ISO/IEC 25010:2023
     quality model, `specmgr://dtais` — the DTAIS verification-method
     vocabulary VCR's `## Acceptance Criteria` depends on, kept here rather
@@ -656,13 +686,25 @@ type or cross-cutting:
       `/repair <type> [id]` command (`.opencode/command/repair.md`,
       `agent: doc-repairer`), and the self-triggering `repair` OpenCode Skill
       (`.opencode/skill/repair/SKILL.md`, REQ-012) that defers to
-      `doc-repairer` via the `task` tool when available). Every `get_<d>` tool for the whole-body
-    domains additionally
-    takes a `raw: bool = False` parameter — `raw=True` returns the
-    frontmatter-stripped body text as-is (the text `update`'s
-    `offset`/`limit` index into), with optional read-style `offset`/`limit`
-    windowing of that raw read (raw-only; out-of-range values clamp, never
-    error). `get_<d>` for the 12 whole-body domains
+       `doc-repairer` via the `task` tool when available). Every `get_<d>` tool for the whole-body
+     domains additionally
+     takes a `raw: bool = False` parameter — `raw=True` returns the
+     frontmatter-stripped body text as-is (the text `update`'s
+     `offset`/`limit` index into), with optional read-style `offset`/`limit`
+     windowing of that raw read (raw-only; out-of-range values clamp, never
+     error) and an optional `numbered: bool = False` parameter
+     (feat-153-off-by-n, GitHub issue #153, ADR
+     19ff316b-cd11-41a7-a616-ffd84917da51; raw-only — combining `numbered`
+     with `raw=False` raises `ValueError`, like `offset`/`limit`) — when
+     `numbered=True`, every returned body line is prefixed with its 1-based
+     absolute body-line number in the `"<n>: "` form (plain decimal, no
+     padding); windowed reads number from the clamped offset and never
+     restart at 1 within a window, so a number seen in the output can be fed
+     straight back into `update`'s `offset`; `numbered=False` output stays
+     byte-identical to the plain `raw=True` text; and, per feat-150's
+     precedent below, a numbered read of a document that exists but fails to
+     parse still returns the `ParseFailureResult`, never numbered text.
+     `get_<d>` for the 12 whole-body domains
     (`req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr`/`sysrs`;
     `get_adr` excluded) additionally returns a structured, non-raising
     `ParseFailureResult` (`general/models/parse_failure_result.py`;
