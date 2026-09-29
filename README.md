@@ -193,10 +193,14 @@ point only; after that, inference is fully offline). It is cached in
 `$FASTEMBED_CACHE_PATH` if that environment variable is set, otherwise in
 `<tempdir>/fastembed_cache` (e.g. `/tmp/fastembed_cache` on Linux).
 
-**Background warmup at server startup.** When the feature is enabled
-(extra installed and `SPECMGR_SIMILARITY_DISABLED` not set), the server
-starts a background daemon thread at startup that embeds the full document
-corpus into the in-memory cache. The thread is non-blocking — server
+**Background warmup at server startup.** Whenever
+`SPECMGR_SIMILARITY_DISABLED` is not set, the server starts a background
+daemon thread at startup that embeds the full document corpus into the
+in-memory cache — the gate is the opt-out flag only, regardless of whether
+the `similarity` extra is installed. With the extra missing, or with the
+model failing to load, the thread runs the availability probe inside
+itself and exits immediately without cache writes (still never raising).
+The thread is non-blocking — server
 startup never waits for it (the model load/download, if needed, happens
 inside the thread, not on the startup path) — and a mid-warmup failure is
 logged and swallowed, leaving the cache partially warm. Its purpose is to

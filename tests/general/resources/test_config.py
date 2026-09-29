@@ -207,6 +207,19 @@ class TestConfigResourceSimilarity(unittest.TestCase):
                 "reading specmgr://config must never create the cache directory",
             )
 
+    def test_cache_dir_set_but_empty_falls_back_to_default(self):
+        """The one documented deviation from `fastembed.common.utils.define_cache_dir` (which would treat `""` as CWD): a set-but-empty `FASTEMBED_CACHE_PATH` falls back to the resolved `<tempdir>/fastembed_cache` default (the plan's Decisions Made entry, feat-134 Phase 7)."""
+        with mock.patch.dict(os.environ, {"FASTEMBED_CACHE_PATH": ""}, clear=False):
+            expected = str((Path(tempfile.gettempdir()) / "fastembed_cache").resolve())
+            self.assertEqual(config_info().similarity.cache_dir, expected)
+
+    def test_disabled_flag_set_reports_true_for_empty_and_zero_values(self):
+        """The presence-based contract, symmetric with the tool-side pin (`test__embedding.py`'s `test_disabled_flag_is_presence_based_not_truthy`, which asserts the values `""`/`"0"` too): a `SPECMGR_SIMILARITY_DISABLED` of `""` or `"0"` also reports `disabled` as True."""
+        for value in ("", "0"):
+            with self.subTest(value=value):
+                with mock.patch.dict(os.environ, {SIMILARITY_DISABLED_ENV_VAR: value}, clear=False):
+                    self.assertTrue(config_info().similarity.disabled)
+
     def test_config_info_never_imports_fastembed(self):
         """ACC-018: `config_info()` must leave `sys.modules` byte-identical (no import at all, `fastembed` in particular)."""
         self.assertNotIn("fastembed", sys.modules, "fastembed must not already be imported by the test suite here")

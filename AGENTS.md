@@ -630,7 +630,14 @@ type or cross-cutting:
      `update_frontmatter`, `update_section`, the `option_*` tools) excluded,
      still returning the full document with `body` intact
      (feat-69-update-context). `general/resources/`
-    (`specmgr://version`, `specmgr://iso25010` — the ISO/IEC 25010:2023
+    (`specmgr://version` — the package version plus the installed
+    `fastembed` version (or `null` when the `similarity` extra is missing,
+    feat-134 Phase 7), `specmgr://config` — every domain's resolved base
+    directory plus whether its `SPECMGR_*_DIR` env var is set, and since
+    feat-134 Phase 7 a static `similarity` section
+    (`extra_installed`/`disabled`/`model_name`/`cache_dir`),
+    `specmgr://ears` — the EARS requirement-phrasing templates (feat-92),
+    `specmgr://iso25010` — the ISO/IEC 25010:2023
     quality model, `specmgr://dtais` — the DTAIS verification-method
     vocabulary VCR's `## Acceptance Criteria` depends on, kept here rather
     than under `vcr/resources/` since it is domain-knowledge other document
@@ -805,8 +812,8 @@ status for the ADR feature specifically and should be kept in sync with
 historical design doc. Don't assume any domain package exists beyond the
 per-domain bullets in the Status section above (each with its respective
 `tools`/`prompts`/`resources` sub-packages, per the exceptions noted
-there), or anything in `general/resources/` beyond `version`/`iso25010` —
-check first.
+there), or anything in `general/resources/` beyond the `general/` package
+bullet's own enumeration above — check first.
 
 ## Project Shape
 

@@ -46,7 +46,7 @@ Follow-ups (explicitly out of scope, file separately): `create_*` prompt adoptio
 
 ### Confirmation
 
-To be confirmed by the feat-134 acceptance criteria (ACC-001..ACC-015) as the implementation lands.
+To be confirmed by the feat-134 acceptance criteria (ACC-001..ACC-022) as the implementation lands.
 
 ## Pros and Cons of the Options
 
