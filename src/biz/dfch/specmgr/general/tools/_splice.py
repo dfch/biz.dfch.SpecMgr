@@ -19,8 +19,9 @@
 windowing for the generic ``update`` tool (feat-22-consolidate-mutation-tools,
 Phase 2) and the ``get_<d>`` tools (feat-28-get-update, Phase 2).
 
-Three small, doc-type-agnostic text helpers shared by the generic ``update``
-tool's range mode and every ``get_<d>`` tool's ``raw=True`` reads:
+Small, doc-type-agnostic helpers shared by the generic ``update`` tool's
+range mode and every ``get_<d>`` tool's ``raw=True`` reads (and the
+``get_<d>`` tools' own read-argument validation):
 
 - :func:`body_text` extracts a document file's frontmatter-stripped body text
   using the established ``frontmatter.loads(path.read_text(encoding="utf-8")).
@@ -37,28 +38,44 @@ tool's range mode and every ``get_<d>`` tool's ``raw=True`` reads:
   ``limit`` = number of lines, omitted = through the last body line, capped
   at the remaining lines), clamping out-of-range values instead of erroring
   (the ``list_<d>`` "clamped, not errored" convention; reads are
-  non-destructive).
+  non-destructive). With ``numbered=True``, each returned line is
+  additionally prefixed with its 1-based **absolute** body-line number
+  (numbering starts at the clamped offset and never restarts at 1 within a
+  window, so a number seen in a numbered read can be fed straight back into
+  the generic ``update`` tool's ``offset``; feat-153-off-by-n Phase 3,
+  REQ-004, ADR 19ff316b-cd11-41a7-a616-ffd84917da51's Decision Outcome item
+  6).
 - :func:`splice_snippet` renders the before/after window of a range-mode
   splice (the dropped lines, the inserted lines, and up to 2 unchanged
   context lines per side, each labeled with its 1-based body-line number per
   the pre-splice/post-splice split) as the ``snippet`` string the generic
   ``update`` tool returns on success in range mode (feat-153-off-by-n
   Phase 2, REQ-002, ADR 19ff316b-cd11-41a7-a616-ffd84917da51).
+- :func:`validate_read_args` raises ``ValueError`` for the ``get_<d>``
+  read-argument misuses -- the ``offset``/``limit`` windowing coordinates or
+  ``numbered=True`` combined with ``raw=False`` -- the single shared guard
+  behind all 12 ``get_<d>`` tools, which the caller runs before any file
+  access (feat-153-off-by-n Phase 3, REQ-005).
 
-**The raw/splice invariant.** The first three helpers are the *single*
-definition of "the body text" in this codebase: every ``get_<d>(raw=True)``
-read (windowed or not) and every ``update`` range splice go through
-:func:`body_text`, so *what the client counts is what the server splices* --
-the line numbers a client sees in any ``get_<d>(raw=True)`` read, windowed or
-not, index byte-for-byte into the same text the server splices against;
+**The raw/splice invariant.** The text helpers (:func:`body_text`,
+:func:`splice_body`, and :func:`window_body`) are the *single* definition of
+"the body text" in this codebase: every ``get_<d>(raw=True)`` read (windowed
+or not) and every ``update`` range splice go through :func:`body_text`, so
+*what the client counts is what the server splices* -- the line numbers a
+client sees in any ``get_<d>(raw=True)`` read, windowed or not, index
+byte-for-byte into the same text the server splices against;
 :func:`window_body` is the single windowing definition shared by every
-``get_<d>`` tool. :func:`splice_snippet` is the single snippet definition
+``get_<d>`` tool (its ``numbered`` argument only prefixes the window's lines
+with their absolute body-line numbers -- the unnumbered output is unchanged,
+and the splice coordinates keep addressing the *unprefixed* line count).
+:func:`splice_snippet` is the single snippet definition
 shared by the generic ``update`` tool's dispatcher (it consumes, never
 defines, the body text).
 
 As with :mod:`_doc_paths`, this module has no ``mcp`` dependency -- plain
-file I/O and text manipulation only, kept separately from any
-``@mcp.tool()``-decorated function so it stays independently testable.
+file I/O, text manipulation, and argument validation only, kept separately
+from any ``@mcp.tool()``-decorated function so it stays independently
+testable.
 """
 
 from __future__ import annotations
@@ -68,7 +85,7 @@ from pathlib import Path
 
 import frontmatter
 
-__all__ = ["body_text", "splice_body", "splice_snippet", "window_body"]
+__all__ = ["body_text", "splice_body", "splice_snippet", "validate_read_args", "window_body"]
 
 #: Minimum allowed 1-based body-line coordinate (the first line of the body).
 _MIN_LINE = 1
@@ -207,7 +224,7 @@ def splice_body(current_body: str, offset: int, limit: int | None, content: str)
     return result
 
 
-def window_body(text: str, offset: int = 1, limit: int | None = None) -> str:
+def window_body(text: str, offset: int = 1, limit: int | None = None, numbered: bool = False) -> str:
     """Return the body-line window ``offset..offset + limit - 1`` of ``text``.
 
     The single windowing definition behind every
@@ -225,15 +242,32 @@ def window_body(text: str, offset: int = 1, limit: int | None = None) -> str:
     - ``limit = None`` (omitted) extends the window through the last line;
       any given ``limit`` is capped at the remaining lines (``N - offset +
       1``), and a negative ``limit`` yields an empty window.
+    - With ``numbered=True`` (feat-153-off-by-n Phase 3, REQ-004, ACC-011;
+      ADR 19ff316b-cd11-41a7-a616-ffd84917da51's Decision Outcome item 6),
+      each returned line is additionally prefixed with its 1-based
+      **absolute** body-line number in the ``f"{n}: {text}"`` form (plain
+      decimal, no padding; the line text verbatim, so an empty body line
+      renders as ``"<n>: "`` with the separator's trailing space):
+      numbering starts at the clamped ``offset`` (``max(1, offset)``) and
+      increments by 1 per line -- never a per-window restart at 1 -- so a
+      number seen in a numbered, windowed read can be fed straight back
+      into the generic ``update`` tool's ``offset``. Non-empty numbered
+      output ends with exactly one trailing ``"\\n"`` regardless of whether
+      ``text`` had one (so a ``numbered=True`` no-window read and a
+      ``numbered=True`` whole-body-equivalent windowed read of the same
+      body are byte-identical); an empty window (or empty ``text``)
+      returns ``""`` as for the unnumbered case.
 
-    The result is the window's lines, each keeping its trailing newline --
-    ``""`` if the window is empty, else ``"\\n".join(lines[offset - 1 :
-    offset - 1 + count]) + "\\n"``. Consequently, :func:`window_body` with
-    the defaults (``offset = 1``, ``limit = None``) equals a normal
-    trailing-newline body byte-for-byte, and concatenating consecutive
-    non-overlapping windows reproduces the body -- the raw/splice invariant
-    holds for windowed reads exactly as for full raw reads (see the module
-    docstring).
+    The unnumbered result is the window's lines, each keeping its trailing
+    newline -- ``""`` if the window is empty, else ``"\\n".join(lines[
+    offset - 1 : offset - 1 + count]) + "\\n"``. Consequently,
+    :func:`window_body` with the defaults (``offset = 1``, ``limit = None``)
+    equals a normal trailing-newline body byte-for-byte, and concatenating
+    consecutive non-overlapping windows reproduces the body -- the
+    raw/splice invariant holds for windowed reads exactly as for full raw
+    reads (see the module docstring). ``numbered=False`` (the default) is
+    byte-identical to that current behavior, including for a ``text``
+    without a trailing newline.
 
     Parameters
     ----------
@@ -246,6 +280,10 @@ def window_body(text: str, offset: int = 1, limit: int | None = None) -> str:
         The number of body lines the window spans; ``None`` (omitted)
         extends the window through the last line, and the value is capped
         at the remaining lines (a negative value yields an empty window).
+    numbered:
+        When ``True``, prefix each returned line with its 1-based absolute
+        body-line number (see the third bullet above); ``False`` (the
+        default) returns the plain window.
 
     Returns
     -------
@@ -256,6 +294,7 @@ def window_body(text: str, offset: int = 1, limit: int | None = None) -> str:
     assert isinstance(text, str), type(text)
     assert isinstance(offset, int), type(offset)
     assert limit is None or isinstance(limit, int), type(limit)
+    assert isinstance(numbered, bool), type(numbered)
 
     lines = text.splitlines()
     n_lines = len(lines)
@@ -268,8 +307,62 @@ def window_body(text: str, offset: int = 1, limit: int | None = None) -> str:
     if count == 0:
         result = ""
         return result
-    result = "\n".join(lines[start - _MIN_LINE : start - _MIN_LINE + count]) + "\n"
+    window = lines[start - _MIN_LINE : start - _MIN_LINE + count]
+    if numbered:
+        numbered_lines = [f"{start + i}: {line}" for i, line in enumerate(window)]
+        result = "\n".join(numbered_lines) + "\n"
+    else:
+        result = "\n".join(window) + "\n"
     return result
+
+
+def validate_read_args(raw: bool, offset: int | None, limit: int | None, numbered: bool) -> None:
+    """Reject ``get_<d>`` read-argument misuses before any file access.
+
+    The single shared guard behind every ``get_<d>`` tool (feat-153-off-by-n
+    Phase 3, REQ-005, ACC-005) for the read-surface argument rules that were
+    formerly hand-duplicated inline in each of the 12 ``get_<d>.py`` files:
+    a parsed-document read (``raw=False``) requires the whole body, so the
+    raw-read-only arguments -- the ``offset``/``limit`` windowing
+    coordinates and ``numbered=True`` -- are misuses of the read surface
+    when combined with it. Client-controlled input, so these are
+    ``ValueError``s (not ``assert``s), per the project's
+    user-controlled-flow-control rule. The caller runs this guard after its
+    own ``validate_id`` and before the ``load_by_id`` attempt and the
+    post-feat-150 parse-failure channel, so a misused argument reports
+    ``ValueError`` even for a document that fails to parse (REQ-005).
+
+    Parameters
+    ----------
+    raw:
+        The tool's ``raw`` argument (``False`` = parsed document,
+        ``True`` = frontmatter-stripped body text).
+    offset:
+        The tool's ``offset`` argument (``None`` = not given).
+    limit:
+        The tool's ``limit`` argument (``None`` = not given).
+    numbered:
+        The tool's ``numbered`` argument (``False`` = unnumbered body
+        text, the default; ``True`` = line-numbered).
+
+    Raises
+    ------
+    ValueError
+        ``raw`` is ``False`` and ``offset`` or ``limit`` is given (the
+        message is byte-identical to the one each ``get_<d>`` raised
+        inline before this factorization), or ``raw`` is ``False`` and
+        ``numbered`` is ``True``; the ``numbered`` message mirrors the
+        ``offset``/``limit`` one and names the offending value.
+    """
+    assert isinstance(raw, bool), type(raw)
+    assert offset is None or isinstance(offset, int), type(offset)
+    assert limit is None or isinstance(limit, int), type(limit)
+    assert isinstance(numbered, bool), type(numbered)
+
+    if not raw and (offset is not None or limit is not None):
+        raise ValueError(f"offset/limit are only valid with raw=True, got offset={offset!r}, limit={limit!r}")
+    if not raw and numbered:
+        raise ValueError(f"numbered is only valid with raw=True, got numbered={numbered!r}")
 
 
 def splice_snippet(pre_body: str, post_body: str, offset: int, limit: int | None) -> str:

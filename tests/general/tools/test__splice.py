@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import unittest
 
-from biz.dfch.specmgr.general.tools._splice import splice_body, splice_snippet, window_body
+from biz.dfch.specmgr.general.tools._splice import splice_body, splice_snippet, validate_read_args, window_body
 
 _BODY = "l1\nl2\nl3\nl4\n"
 
@@ -74,6 +74,86 @@ class TestWindowBody(unittest.TestCase):
         """Concatenating consecutive non-overlapping windows must reproduce the body."""
         self.assertEqual(window_body(_BODY, 1, 2) + window_body(_BODY, 3, 2), _BODY)
         self.assertEqual(window_body(_BODY, 1, 1) + window_body(_BODY, 2, 2) + window_body(_BODY, 4), _BODY)
+
+
+class TestWindowBodyNumbered(unittest.TestCase):
+    """Tests for ``window_body``'s opt-in ``numbered=`` argument (feat-153-off-by-n Phase 3, REQ-004, ACC-011).
+
+    The full cross-domain tool-level matrix is this feature's Phase 5;
+    this class pins the byte-exact line-prefix format and the
+    clamped-offset numbering the 12 ``get_<d>`` tools rely on.
+    """
+
+    def test_numbered_full_window_prefixes_absolute_line_numbers(self) -> None:
+        """numbered=True over the whole body must prefix each line with ``f"{n}: "`` (1-based) plus a single
+        trailing newline."""
+        self.assertEqual(window_body(_BODY, 1, None, numbered=True), "1: l1\n2: l2\n3: l3\n4: l4\n")
+
+    def test_numbered_window_starts_at_the_clamped_offset_and_never_restarts(self) -> None:
+        """A windowed numbered read numbers from the clamped offset -- absolute, not window-relative (ACC-011)."""
+        self.assertEqual(window_body(_BODY, 2, 2, numbered=True), "2: l2\n3: l3\n")
+        self.assertEqual(window_body(_BODY, 3, None, numbered=True), "3: l3\n4: l4\n")
+
+    def test_numbered_offset_below_one_floors_to_one(self) -> None:
+        """An offset below 1 must floor to 1 for numbering as for windowing."""
+        self.assertEqual(window_body(_BODY, 0, 2, numbered=True), "1: l1\n2: l2\n")
+        self.assertEqual(window_body(_BODY, -5, numbered=True), "1: l1\n2: l2\n3: l3\n4: l4\n")
+
+    def test_numbered_empty_window_returns_empty_string(self) -> None:
+        """An offset past the last body line (or a zero/negative limit) must return the empty string, no numbers."""
+        self.assertEqual(window_body(_BODY, 5, numbered=True), "")
+        self.assertEqual(window_body(_BODY, 2, 0, numbered=True), "")
+        self.assertEqual(window_body(_BODY, 2, -1, numbered=True), "")
+        self.assertEqual(window_body("", 1, None, numbered=True), "")
+
+    def test_numbered_normalizes_the_trailing_newline(self) -> None:
+        """Non-empty numbered output ends with exactly one trailing newline regardless of the source body's own."""
+        self.assertEqual(window_body("a\nb", 1, None, numbered=True), "1: a\n2: b\n")
+
+    def test_numbered_empty_line_renders_with_trailing_space(self) -> None:
+        """An empty body line is verbatim text: ``"<n>: "`` with the separator's trailing space."""
+        self.assertEqual(window_body("h1\n\nh3\n", 1, None, numbered=True), "1: h1\n2: \n3: h3\n")
+
+    def test_numbered_default_off_is_byte_identical(self) -> None:
+        """numbered=False (the default) must stay byte-identical to the unnumbered window (ACC-004's helper
+        half)."""
+        self.assertEqual(window_body(_BODY, 2, 2, numbered=False), window_body(_BODY, 2, 2))
+        self.assertEqual(window_body("a\nb", numbered=False), window_body("a\nb"))
+
+
+class TestValidateReadArgs(unittest.TestCase):
+    """Tests for the shared ``get_<d>`` read-argument guard (feat-153-off-by-n Phase 3, REQ-005, ACC-005)."""
+
+    def test_raw_true_accepts_every_combination(self) -> None:
+        """raw=True: all read-argument combinations are legal (no raise)."""
+        validate_read_args(True, 2, 3, True)
+        validate_read_args(True, None, None, False)
+        validate_read_args(True, 1, None, True)
+
+    def test_offset_limit_with_raw_false_raise_value_error(self) -> None:
+        """offset/limit with raw=False must raise the byte-identical pre-factorization message (existing tests
+        assert on it)."""
+        with self.assertRaises(ValueError) as ctx:
+            validate_read_args(False, 2, 3, False)
+        self.assertEqual(str(ctx.exception), "offset/limit are only valid with raw=True, got offset=2, limit=3")
+        with self.assertRaises(ValueError) as ctx:
+            validate_read_args(False, None, 3, False)
+        self.assertIn("raw", str(ctx.exception))
+        self.assertIn("limit=3", str(ctx.exception))
+
+    def test_numbered_with_raw_false_raises_value_error(self) -> None:
+        """numbered=True with raw=False must raise ValueError naming the offending value."""
+        with self.assertRaises(ValueError) as ctx:
+            validate_read_args(False, None, None, True)
+        message = str(ctx.exception)
+        self.assertIn("numbered", message)
+        self.assertIn("raw", message)
+
+    def test_offset_limit_checked_before_numbered(self) -> None:
+        """Both misuses at once: the pre-existing offset/limit rule keeps priority."""
+        with self.assertRaises(ValueError) as ctx:
+            validate_read_args(False, 2, None, True)
+        self.assertIn("offset/limit", str(ctx.exception))
 
 
 class TestSpliceBody(unittest.TestCase):

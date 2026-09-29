@@ -20,11 +20,14 @@ against. With optional read-style ``offset``/``limit`` coordinates
 (feat-28-get-update, Phase 2), the same raw read instead returns the window
 of that text, served by the shared
 :func:`~biz.dfch.specmgr.general.tools._splice.window_body` helper (clamping
-out-of-range values, never erroring).
+out-of-range values, never erroring). With an optional ``numbered=True``
+(feat-153-off-by-n, Phase 3), each returned body line is additionally
+prefixed with its 1-based absolute body-line number in the ``"<n>: "``
+form.
 
 ## Functions
 
-### `get_uc(id: 'str', raw: 'bool' = False, offset: 'int | None' = None, limit: 'int | None' = None) -> 'UcDocument | str | ParseFailureResult'`
+### `get_uc(id: 'str', raw: 'bool' = False, offset: 'int | None' = None, limit: 'int | None' = None, numbered: 'bool' = False) -> 'UcDocument | str | ParseFailureResult'`
 
 Read and return the use case identified by ``id``.
 
@@ -47,13 +50,28 @@ limit:
     With ``raw=True`` only: the number of body lines the window spans
     (default through the end of the body; capped at the remaining
     lines, a negative value returns the empty string).
+numbered:
+    With ``raw=True`` only: when ``True``, prefix every returned body
+    line with its 1-based absolute body-line number in the ``"<n>: "``
+    form (plain decimal, no padding) -- under ``offset``/``limit``
+    windowing the numbers start at the clamped ``offset`` and never
+    restart at 1, so a number seen in the output can be fed straight
+    back into the generic ``update`` tool's ``offset``. Numbered
+    output must never be fed back verbatim as ``content`` for
+    ``update`` or ``create_uc`` -- strip the ``"<n>: "`` prefix from
+    each line first (it is likewise never a valid ``edit`` ``old_str``).
+    Combining it with ``raw=False`` raises ``ValueError`` (see
+    ``Raises``).
 
 Returns
 -------
 UcDocument | str | ParseFailureResult
     With ``raw=False``: the current on-disk document, freshly re-read
     and re-parsed. With ``raw=True``: the body text (or its
-    ``offset``/``limit`` window) as a plain string. When the document
+    ``offset``/``limit`` window) as a plain string. With
+    ``numbered=True``, every returned line is additionally prefixed
+    with its ``"<n>: "`` 1-based absolute body-line number. When the
+    document
     exists but fails to parse, a
     :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
     (``error``/``path``/``id``) is returned instead of raising --
@@ -71,6 +89,8 @@ Raises
 ValueError
     ``id`` is a path-injection attempt or not a well-formed id for this domain
     (raised before any filesystem access), or ``offset``/``limit`` coordinates
-    are given with ``raw=False`` (a parsed document requires the whole body;
-    also raised before any file access).
+    are given with ``raw=False`` (a parsed document requires the whole body),
+    or ``numbered=True`` is given with ``raw=False`` (numbering is a
+    ``raw=True``-only feature) -- both read-argument misuses raised before
+    any file access.
 
